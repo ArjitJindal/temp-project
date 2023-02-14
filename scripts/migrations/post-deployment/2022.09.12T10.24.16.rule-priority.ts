@@ -11,7 +11,6 @@ async function main() {
   for (const rule of rules) {
     console.log(`Migrate rule ${rule.id}`)
     rule.defaultCasePriority = 'P1'
-    rule.defaultCaseCreationType = 'TRANSACTION'
     await ruleRepo.createOrUpdateRule(rule)
   }
 }

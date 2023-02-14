@@ -15,8 +15,6 @@ import { getTestUser, setUpUsersHooks } from '@/test-utils/user-test-utils'
 import { Case } from '@/@types/openapi-internal/Case'
 import { RuleHitDirection } from '@/@types/openapi-public/RuleHitDirection'
 import { getMongoDbClient } from '@/utils/mongoDBUtils'
-import { CaseType } from '@/@types/openapi-public-management/CaseType'
-import { CaseTransaction } from '@/@types/openapi-internal/CaseTransaction'
 
 dynamoDbSetupHook()
 
@@ -411,66 +409,54 @@ describe('User cases', () => {
   })
 })
 
-describe('Transaction cases', () => {
-  describe('Run #1', () => {
-    const TEST_TENANT_ID = getTestTenantId()
-    setup(TEST_TENANT_ID, {
-      defaultCaseCreationType: 'USER',
+describe('Run #1', () => {
+  const TEST_TENANT_ID = getTestTenantId()
+  setup(TEST_TENANT_ID, {})
+
+  test('No prior cases', async () => {
+    const caseCreationService = await getService(TEST_TENANT_ID)
+
+    const transaction = getTestTransaction({
+      originUserId: TEST_USER_1.userId,
+      destinationUserId: undefined,
     })
 
-    test('No prior cases', async () => {
-      const caseCreationService = await getService(TEST_TENANT_ID)
+    const results = await bulkVerifyTransactions(TEST_TENANT_ID, [transaction])
+    expect(results.length).not.toEqual(0)
+    const [result] = results
 
-      const transaction = getTestTransaction({
-        originUserId: TEST_USER_1.userId,
-        destinationUserId: undefined,
-      })
-
-      const results = await bulkVerifyTransactions(TEST_TENANT_ID, [
-        transaction,
-      ])
-      expect(results.length).not.toEqual(0)
-      const [result] = results
-
-      const cases = await caseCreationService.handleTransaction({
-        ...transaction,
-        ...result,
-      })
-      expect(cases.length).toEqual(1)
-      expectTransactionCase(cases, {
-        transactions: [transaction as CaseTransaction],
-      })
+    const cases = await caseCreationService.handleTransaction({
+      ...transaction,
+      ...result,
     })
-  })
-
-  describe('Run #2', () => {
-    const TEST_TENANT_ID = getTestTenantId()
-    setup(TEST_TENANT_ID, {
-      defaultCaseCreationType: 'USER',
-    })
-
-    test('Check that cases are not created for missing users', async () => {
-      const caseCreationService = await getService(TEST_TENANT_ID)
-
-      const transaction = getTestTransaction({
-        originUserId: 'this_user_id_does_not_exists',
-        destinationUserId: 'this_user_id_does_not_exists_2',
-      })
-
-      const results = await bulkVerifyTransactions(TEST_TENANT_ID, [
-        transaction,
-      ])
-      expect(results.length).not.toEqual(0)
-      const [result] = results
-
-      const cases = await caseCreationService.handleTransaction({
-        ...transaction,
-        ...result,
-      })
-      expect(cases.length).toEqual(0)
-    })
+    expect(cases.length).toEqual(1)
   })
 })
+
+describe('Run #2', () => {
+  const TEST_TENANT_ID = getTestTenantId()
+  setup(TEST_TENANT_ID, {})
+
+  test('Check that cases are not created for missing users', async () => {
+    const caseCreationService = await getService(TEST_TENANT_ID)
+
+    const transaction = getTestTransaction({
+      originUserId: 'this_user_id_does_not_exists',
+      destinationUserId: 'this_user_id_does_not_exists_2',
+    })
+
+    const results = await bulkVerifyTransactions(TEST_TENANT_ID, [transaction])
+    expect(results.length).not.toEqual(0)
+    const [result] = results
+
+    const cases = await caseCreationService.handleTransaction({
+      ...transaction,
+      ...result,
+    })
+    expect(cases.length).toEqual(0)
+  })
+})
+
 /*
   Helpers
  */
@@ -479,7 +465,6 @@ function setup(
   tenantId: string,
   parameters: {
     hitDirections?: RuleHitDirection[]
-    defaultCaseCreationType?: CaseType
     rulesCount?: number
   } = {}
 ) {
@@ -488,7 +473,6 @@ function setup(
       {
         type: 'TRANSACTION',
         ruleImplementationName: 'tests/test-always-hit-rule',
-        defaultCaseCreationType: parameters.defaultCaseCreationType ?? 'USER',
         parameters: {
           hitDirections: parameters.hitDirections,
         },
@@ -506,9 +490,6 @@ function expectUserCase(
   } = {}
 ): Case {
   const caseItem = cases.find((x) => {
-    if (x.caseType !== 'USER') {
-      return false
-    }
     if (
       params.originUserId != null &&
       x.caseUsers?.origin?.userId != params.originUserId
@@ -533,22 +514,4 @@ function expectUserCase(
     )
   }
   return caseItem as Case
-}
-
-function expectTransactionCase(
-  cases: Case[],
-  params: {
-    transactions?: CaseTransaction[]
-  } = {}
-) {
-  const caseItems = cases.filter((x) => x.caseType === 'TRANSACTION')
-  if (params.transactions != null) {
-    const transactionIds = params.transactions.map((t) => t.transactionId)
-    caseItems.forEach((caseItem) => {
-      expect(caseItem.caseTransactionsIds).toEqual(transactionIds)
-      expect(caseItem.caseTransactions?.map((t) => t.transactionId)).toEqual(
-        transactionIds
-      )
-    })
-  }
 }

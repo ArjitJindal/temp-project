@@ -470,7 +470,6 @@ export class RulesEngineService {
           ruleHitMeta: ruleHit
             ? {
                 hitDirections: ruleHitDirections,
-                caseCreationType: ruleInstance.caseCreationType,
                 falsePositiveDetails: falsePositiveDetails?.length
                   ? falsePositiveDetails[0]
                   : {},

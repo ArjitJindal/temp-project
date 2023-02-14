@@ -35,7 +35,6 @@ describe('Verify hits-per-user statistics', () => {
     await caseRepository.addCaseMongo({
       caseId: 'C-1',
       createdTimestamp: timestamp,
-      caseType: 'TRANSACTION',
       caseTransactions: [transaction],
       caseTransactionsIds: [transaction.transactionId],
       caseUsers: {
@@ -56,10 +55,8 @@ describe('Verify hits-per-user statistics', () => {
           userId: originUserId,
           transactionsHit: 1,
           rulesHit: hitRules.length,
-          transactionCasesCount: 1,
-          userCasesCount: 0,
-          openTransactionCasesCount: 1,
-          openUserCasesCount: 0,
+          userCasesCount: 1,
+          openUserCasesCount: 1,
         }),
       ])
     }
@@ -74,10 +71,8 @@ describe('Verify hits-per-user statistics', () => {
           userId: destinationUserId,
           transactionsHit: 1,
           rulesHit: hitRules.length,
-          transactionCasesCount: 1,
-          userCasesCount: 0,
-          openTransactionCasesCount: 1,
-          openUserCasesCount: 0,
+          userCasesCount: 1,
+          openUserCasesCount: 1,
         }),
       ])
     }
@@ -110,7 +105,6 @@ describe('Verify hits-per-user statistics', () => {
     await caseRepository.addCaseMongo({
       caseId: 'C-1',
       createdTimestamp: timestamp,
-      caseType: 'TRANSACTION',
       caseTransactions: [transaction],
       caseTransactionsIds: [transaction.transactionId],
       caseUsers: {
@@ -131,10 +125,8 @@ describe('Verify hits-per-user statistics', () => {
           userId: originUserId,
           transactionsHit: 1,
           rulesHit: hitRules.length,
-          transactionCasesCount: 1,
-          userCasesCount: 0,
-          openTransactionCasesCount: 1,
-          openUserCasesCount: 0,
+          userCasesCount: 1,
+          openUserCasesCount: 1,
         }),
       ])
     }
@@ -149,10 +141,8 @@ describe('Verify hits-per-user statistics', () => {
           userId: destinationUserId,
           transactionsHit: 1,
           rulesHit: hitRules.length,
-          transactionCasesCount: 1,
-          userCasesCount: 0,
-          openTransactionCasesCount: 1,
-          openUserCasesCount: 0,
+          userCasesCount: 1,
+          openUserCasesCount: 1,
         }),
       ])
     }
@@ -188,7 +178,6 @@ describe('Verify hits-per-user statistics', () => {
       await caseRepository.addCaseMongo({
         caseId: `C-${i}`,
         createdTimestamp: timestamp,
-        caseType: 'USER',
         caseTransactions: [transaction],
         caseTransactionsIds: [transaction.transactionId],
         caseUsers: {
@@ -210,9 +199,7 @@ describe('Verify hits-per-user statistics', () => {
           userId: originUserId,
           transactionsHit: transactionsCount,
           rulesHit: hitRulesCount * transactionsCount,
-          transactionCasesCount: 0,
           userCasesCount: transactionsCount,
-          openTransactionCasesCount: 0,
           openUserCasesCount: transactionsCount,
         }),
       ])
@@ -228,9 +215,7 @@ describe('Verify hits-per-user statistics', () => {
           userId: destinationUserId,
           transactionsHit: transactionsCount,
           rulesHit: hitRulesCount * transactionsCount,
-          transactionCasesCount: 0,
           userCasesCount: transactionsCount,
-          openTransactionCasesCount: 0,
           openUserCasesCount: transactionsCount,
         }),
       ])
@@ -249,11 +234,11 @@ describe('Verify hits-per-user statistics', () => {
 
     const originUserId = 'test-user-id'
     const destinationUserId = 'test-user-id-2'
-    const transactionsCount = 100
+    const casesCount = 100
 
     const hitRules = [hitRule()]
 
-    for (let i = 0; i < transactionsCount; i += 1) {
+    for (let i = 0; i < casesCount; i += 1) {
       const timestamp = initialTimestamp + 3600 * 1000 * i
       const transaction = {
         ...getTestTransaction({
@@ -267,7 +252,6 @@ describe('Verify hits-per-user statistics', () => {
       await caseRepository.addCaseMongo({
         caseId: `C-${i}`,
         createdTimestamp: timestamp,
-        caseType: 'TRANSACTION',
         caseTransactions: [transaction],
         caseTransactionsIds: [transaction.transactionId],
         caseUsers: {
@@ -287,12 +271,10 @@ describe('Verify hits-per-user statistics', () => {
       expect(stats).toEqual([
         expect.objectContaining({
           userId: originUserId,
-          transactionsHit: transactionsCount,
-          rulesHit: transactionsCount,
-          transactionCasesCount: transactionsCount,
-          userCasesCount: 0,
-          openTransactionCasesCount: transactionsCount,
-          openUserCasesCount: 0,
+          transactionsHit: casesCount,
+          rulesHit: casesCount,
+          userCasesCount: casesCount,
+          openUserCasesCount: casesCount,
         }),
       ])
     }
@@ -305,12 +287,10 @@ describe('Verify hits-per-user statistics', () => {
       expect(stats).toEqual([
         expect.objectContaining({
           userId: destinationUserId,
-          transactionsHit: transactionsCount,
-          rulesHit: transactionsCount,
-          transactionCasesCount: transactionsCount,
-          userCasesCount: 0,
-          openTransactionCasesCount: transactionsCount,
-          openUserCasesCount: 0,
+          transactionsHit: casesCount,
+          rulesHit: casesCount,
+          userCasesCount: casesCount,
+          openUserCasesCount: casesCount,
         }),
       ])
     }
@@ -338,7 +318,6 @@ describe('Verify hits-per-user statistics', () => {
 
     await caseRepository.addCaseMongo({
       caseId: 'C-1',
-      caseType: 'TRANSACTION',
       caseTransactions: [transaction],
       caseTransactionsIds: [transaction.transactionId],
     })
@@ -398,7 +377,6 @@ describe('Verify hits-per-user statistics', () => {
     await caseRepository.addCaseMongo({
       caseId: 'C-1',
       createdTimestamp,
-      caseType: 'USER',
       caseTransactions: transactions,
       caseTransactionsIds: transactions.map((t) => t.transactionId),
       caseUsers: {

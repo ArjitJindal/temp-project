@@ -26,7 +26,6 @@ import { Case } from '@/@types/openapi-internal/Case'
 import { CaseStatusChange } from '@/@types/openapi-internal/CaseStatusChange'
 import { CasePriority } from '@/@types/openapi-internal/CasePriority'
 import { CASE_PRIORITY } from '@/@types/case/case-priority'
-import { CaseType } from '@/@types/openapi-internal/CaseType'
 import { User } from '@/@types/openapi-public/User'
 import { Business } from '@/@types/openapi-public/Business'
 import { Tag } from '@/@types/openapi-public/Tag'
@@ -361,13 +360,6 @@ export class CaseRepository {
       })
     }
 
-    if (params.filterCaseType != null) {
-      conditions.push({
-        caseType: {
-          $eq: params.filterCaseType,
-        },
-      })
-    }
     if (params.filterPriority != null) {
       conditions.push({
         priority: {
@@ -436,20 +428,13 @@ export class CaseRepository {
 
     preLimitPipeline.push({ $match: filter })
 
-    const sortUserCaseUserName =
-      params?.filterCaseType === 'USER' && params.sortField === '_userName'
-    const sortTransactionCaseUserName =
-      params?.filterCaseType === 'TRANSACTION' &&
-      (params.sortField === '_originUserName' ||
-        params.sortField === '_destinationUserName')
+    const sortUserCaseUserName = params.sortField === '_userName'
+
     const sortCaseTransactionsHit = params.sortField === '_transactionsHit'
-    if (params?.includeTransactionUsers || sortTransactionCaseUserName) {
+    if (params?.includeTransactionUsers) {
       // NOTE: we don't store originUser/destinationUser in caseTransactions. Sorting by
       // user name will not be performant
-      ;(sortTransactionCaseUserName
-        ? preLimitPipeline
-        : postLimitPipeline
-      ).push(
+      postLimitPipeline.push(
         ...[
           {
             $lookup: {
@@ -553,42 +538,6 @@ export class CaseRepository {
                       '$caseUsers.origin.legalEntity.companyGeneralDetails.legalName',
                     ],
                   },
-                ],
-              },
-            },
-          },
-        ]
-      )
-    } else if (sortTransactionCaseUserName) {
-      const sortField =
-        params.sortField === '_originUserName' ? 'origin' : 'destination'
-
-      preLimitPipeline.push(
-        ...[
-          {
-            $set: {
-              caseTransaction: {
-                $arrayElemAt: ['$caseTransactions', 0],
-              },
-            },
-          },
-          {
-            $set: {
-              caseTransactionCompanyName: `$caseTransaction.${sortField}User.legalEntity.companyGeneralDetails.legalName`,
-              caseTransactionUserName: {
-                $concat: [
-                  `$caseTransaction.${sortField}User.userDetails.name.firstName`,
-                  `$caseTransaction.${sortField}User.userDetails.name.lastName`,
-                ],
-              },
-            },
-          },
-          {
-            $set: {
-              [`_${sortField}UserName`]: {
-                $ifNull: [
-                  '$caseTransactionCompanyName',
-                  '$caseTransactionUserName',
                 ],
               },
             },
@@ -1092,15 +1041,11 @@ export class CaseRepository {
     }
   }
 
-  public async getCasesByTransactionId(
-    transactionId: string,
-    caseType: CaseType
-  ): Promise<Case[]> {
+  public async getCasesByTransactionId(transactionId: string): Promise<Case[]> {
     const db = this.mongoDb.db()
     const casesCollection = db.collection<Case>(CASES_COLLECTION(this.tenantId))
     return await casesCollection
       .find({
-        caseType,
         'caseTransactions.transactionId': transactionId,
       })
       .toArray()
@@ -1110,7 +1055,6 @@ export class CaseRepository {
     userId: string,
     params: {
       directions?: ('ORIGIN' | 'DESTINATION')[]
-      filterCaseType: CaseType
       filterMaxTransactions?: number
       filterOutCaseStatus?: CaseStatus
     }
@@ -1119,12 +1063,6 @@ export class CaseRepository {
     const casesCollection = db.collection<Case>(CASES_COLLECTION(this.tenantId))
 
     const filters: Filter<Case>[] = []
-
-    if (params.filterCaseType) {
-      filters.push({
-        caseType: params.filterCaseType,
-      })
-    }
 
     if (params.filterOutCaseStatus != null) {
       filters.push({
@@ -1185,14 +1123,12 @@ export class CaseRepository {
   }
 
   public async getCasesByTransactionIds(
-    transactionIds: string[],
-    caseType: CaseType
+    transactionIds: string[]
   ): Promise<Case[]> {
     const db = this.mongoDb.db()
     const casesCollection = db.collection<Case>(CASES_COLLECTION(this.tenantId))
     return await casesCollection
       .find({
-        caseType,
         caseTransactionsIds: { $in: transactionIds },
       })
       .toArray()

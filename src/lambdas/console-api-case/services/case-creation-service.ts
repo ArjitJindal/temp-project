@@ -82,12 +82,11 @@ export class CaseCreationService {
     }
   }
 
-  private getNewUserCase(
+  private getNewCase(
     direction: RuleHitDirection,
     user: InternalConsumerUser | InternalBusinessUser
   ): Case {
     const caseEntity: Case = {
-      caseType: 'USER',
       caseStatus: 'OPEN',
       caseUsers: {
         origin: direction === 'ORIGIN' ? user : undefined,
@@ -97,7 +96,7 @@ export class CaseCreationService {
     return caseEntity
   }
 
-  private async getOrCreateUserCases(
+  private async getOrCreateCases(
     hitUsers: Array<{
       user: InternalConsumerUser | InternalBusinessUser
       direction: RuleHitDirection
@@ -135,16 +134,12 @@ export class CaseCreationService {
           if (ruleInstance == null) {
             return false
           }
-          if (ruleInstance.caseCreationType !== 'USER') {
-            return false
-          }
           return true
         }),
       }
       if (userId != null) {
         const cases = await this.caseRepository.getCasesByUserId(userId, {
           filterOutCaseStatus: 'CLOSED',
-          filterCaseType: 'USER',
           filterMaxTransactions: MAX_TRANSACTION_IN_A_CASE,
         })
         const existedCase = cases.find(
@@ -178,7 +173,7 @@ export class CaseCreationService {
         } else {
           logger.info('Create a new user case for a transaction')
           result.push({
-            ...this.getNewUserCase(hitUser.direction, hitUser.user),
+            ...this.getNewCase(hitUser.direction, hitUser.user),
             createdTimestamp: params.createdTimestamp,
             latestTransactionArrivalTimestamp:
               params.latestTransactionArrivalTimestamp,
@@ -201,9 +196,6 @@ export class CaseCreationService {
     const result: Case[] = []
 
     const transactionUsers = await this.getTransactionUsers(transaction)
-    const transactionStatus = TransactionRepository.getAggregatedRuleStatus(
-      transaction.hitRules.map((rule) => rule.ruleAction)
-    )
     const ruleInstances =
       await this.ruleInstanceRepository.getRuleInstancesByIds(
         transaction.hitRules.map((hitRule) => hitRule.ruleInstanceId)
@@ -212,151 +204,51 @@ export class CaseCreationService {
       ruleInstances.map((ruleInstance) => ruleInstance.casePriority)
     )
 
-    let updateUserCase = false
-    let updateTransactionCase = false
-    for (const ruleInstance of ruleInstances) {
-      const caseCreationType = ruleInstance.caseCreationType
-      updateUserCase = updateUserCase || caseCreationType === 'USER'
-      updateTransactionCase =
-        updateTransactionCase || caseCreationType === 'TRANSACTION'
-      if (updateUserCase && updateTransactionCase) {
-        break
-      }
-    }
-
     const now = Date.now()
 
-    // Handle user cases
-    if (updateUserCase) {
-      logger.info(`Updating user cases`, {
-        transactionId: transaction.transactionId,
-      })
-      const hitUsers: Array<{
-        user: InternalConsumerUser | InternalBusinessUser
-        direction: RuleHitDirection
-      }> = []
+    logger.info(`Updating user cases`, {
+      transactionId: transaction.transactionId,
+    })
+    const hitUsers: Array<{
+      user: InternalConsumerUser | InternalBusinessUser
+      direction: RuleHitDirection
+    }> = []
 
-      // Collect all hit directions from rule hits
-      const hitDirections: Set<RuleHitDirection> = new Set()
-      for (const hitRule of transaction.hitRules) {
-        const ruleInstance = ruleInstances.find(
-          (x) => x.id === hitRule.ruleInstanceId
-        )
-        if (
-          ruleInstance &&
-          ruleInstance.caseCreationType === 'USER' &&
-          hitRule.ruleHitMeta?.hitDirections != null
-        ) {
-          for (const ruleHitDirection of hitRule.ruleHitMeta.hitDirections) {
-            hitDirections.add(ruleHitDirection)
-          }
-        }
-      }
-
-      // Create a hit user for every hit direction
-      for (const ruleHitDirection of hitDirections) {
-        const hitDirectionUser = transactionUsers[ruleHitDirection]
-        if (hitDirectionUser) {
-          hitUsers.push({
-            user: hitDirectionUser,
-            direction: ruleHitDirection,
-          })
-        }
-      }
-
-      const userCases = await this.getOrCreateUserCases(
-        hitUsers,
-        {
-          createdTimestamp: now,
-          latestTransactionArrivalTimestamp: now,
-          priority: casePriority,
-          transaction,
-        },
-        ruleInstances
+    // Collect all hit directions from rule hits
+    const hitDirections: Set<RuleHitDirection> = new Set()
+    for (const hitRule of transaction.hitRules) {
+      const ruleInstance = ruleInstances.find(
+        (x) => x.id === hitRule.ruleInstanceId
       )
-      result.push(...userCases)
+      if (ruleInstance && hitRule.ruleHitMeta?.hitDirections != null) {
+        for (const ruleHitDirection of hitRule.ruleHitMeta.hitDirections) {
+          hitDirections.add(ruleHitDirection)
+        }
+      }
     }
 
-    // Handle transaction cases
-    if (updateTransactionCase) {
-      logger.info(`Updating transaction cases`, {
-        transactionId: transaction.transactionId,
-        originUserId: transactionUsers.ORIGIN?.userId ?? null,
-        desinationUserId: transactionUsers.DESTINATION?.userId ?? null,
-      })
-      // Check if case is possible false positive
-      let isFalsePositive = true
-      let overallConfidenceScore = 0
-      for (const hitRule of transaction.hitRules) {
-        if (
-          !hitRule.ruleHitMeta ||
-          !hitRule.ruleHitMeta.falsePositiveDetails ||
-          !hitRule.ruleHitMeta.falsePositiveDetails?.isFalsePositive
-        ) {
-          isFalsePositive = false
-          break
-        }
-        overallConfidenceScore +=
-          hitRule.ruleHitMeta.falsePositiveDetails.confidenceScore
-      }
-      overallConfidenceScore = parseFloat(
-        (overallConfidenceScore / transaction.hitRules.length).toFixed(2)
-      )
-
-      // NOTE: We only create a case for a known user
-      if (
-        transactionUsers.ORIGIN != null ||
-        transactionUsers.DESTINATION != null
-      ) {
-        const existingTransactionCases =
-          await this.caseRepository.getCasesByTransactionId(
-            transaction.transactionId as string,
-            'TRANSACTION'
-          )
-        logger.info(`Updating transaction cases`, {
-          transactionId: transaction.transactionId,
+    // Create a hit user for every hit direction
+    for (const ruleHitDirection of hitDirections) {
+      const hitDirectionUser = transactionUsers[ruleHitDirection]
+      if (hitDirectionUser) {
+        hitUsers.push({
+          user: hitDirectionUser,
+          direction: ruleHitDirection,
         })
-        const existingCase = existingTransactionCases.find(
-          ({ caseStatus }) => caseStatus !== 'CLOSED'
-        )
-        const caseUsers = {
-          origin: transactionUsers.ORIGIN,
-          destination: transactionUsers.DESTINATION,
-        }
-        if (transactionStatus != 'ALLOW' && !existingCase) {
-          const caseEntity: Case = {
-            createdTimestamp: now,
-            latestTransactionArrivalTimestamp: now,
-            caseType: 'TRANSACTION',
-            caseStatus: 'OPEN',
-            caseTransactionsIds: [transaction.transactionId as string],
-            caseTransactions: [transaction],
-            caseUsers,
-            priority: casePriority,
-            falsePositiveDetails: isFalsePositive
-              ? {
-                  isFalsePositive: isFalsePositive,
-                  confidenceScore: overallConfidenceScore,
-                }
-              : undefined,
-          }
-          result.push(caseEntity)
-        }
-        if (existingCase) {
-          existingCase.caseUsers = caseUsers
-          existingCase.priority = casePriority
-          existingCase.caseTransactionsIds = [
-            transaction.transactionId as string,
-          ]
-          existingCase.caseTransactions = [transaction]
-          result.push(existingCase)
-        }
-      } else {
-        logger.info(
-          `Both users are not defined, do not update transaction cases`
-        )
       }
     }
+
+    const cases = await this.getOrCreateCases(
+      hitUsers,
+      {
+        createdTimestamp: now,
+        latestTransactionArrivalTimestamp: now,
+        priority: casePriority,
+        transaction,
+      },
+      ruleInstances
+    )
+    result.push(...cases)
 
     const savedCases = await Promise.all(
       result.map((caseItem) => this.caseRepository.addCaseMongo(caseItem))

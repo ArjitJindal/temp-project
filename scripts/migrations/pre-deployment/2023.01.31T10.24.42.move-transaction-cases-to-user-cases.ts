@@ -20,7 +20,6 @@ export async function migrateTenant(tenant: Tenant) {
 
   const queryParams: OptionalPagination<DefaultApiGetCaseListRequest> = {
     pageSize: 'DISABLED',
-    filterCaseType: 'TRANSACTION',
     includeTransactions: true,
     includeTransactionUsers: true,
   }
@@ -58,7 +57,7 @@ export async function migrateTenant(tenant: Tenant) {
       )
       await caseRepository.addCaseMongo(newCase)
       console.log(
-        `NEW CASE with type: ${newCase.caseType} with case ID: ${newCase.caseId} with origin User`
+        `NEW CASE with type: with case ID: ${newCase.caseId} with origin User`
       )
       transactionCase = await casesCursor.next()
       continue
@@ -79,9 +78,7 @@ export async function migrateTenant(tenant: Tenant) {
         'ORIGIN'
       )
       await caseRepository.addCaseMongo(newCase)
-      console.log(
-        `NEW CASE with type: ${newCase.caseType} with case ID: ${newCase.caseId} with origin User`
-      )
+      console.log(`NEW CASE with case ID: ${newCase.caseId} with origin User`)
     }
     if (
       (destination as InternalBusinessUser | InternalConsumerUser)
@@ -99,9 +96,7 @@ export async function migrateTenant(tenant: Tenant) {
         'DESTINATION'
       )
       await caseRepository.addCaseMongo(newCase)
-      console.log(
-        `NEW CASE with type: ${newCase.caseType} with case ID: ${newCase.caseId} with origin User`
-      )
+      console.log(`NEW CASE with case ID: ${newCase.caseId} with origin User`)
     }
     transactionCase = await casesCursor.next()
   }
@@ -124,7 +119,6 @@ function getCase(
   const caseEntity: Case = {
     ...transactionCase,
     caseUsers: caseUsers,
-    caseType: 'USER',
   }
   return caseEntity
 }

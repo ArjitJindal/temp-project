@@ -91,7 +91,6 @@ export class RuleRepository {
         tenantIds:
           this.tenantId === FLAGRIGHT_TENANT_ID ? item.tenantIds : undefined,
         defaultCasePriority: item.defaultCasePriority,
-        defaultCaseCreationType: item.defaultCaseCreationType,
       })) || []
     )
   }

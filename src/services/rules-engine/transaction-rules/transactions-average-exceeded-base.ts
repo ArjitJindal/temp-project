@@ -244,6 +244,7 @@ export default abstract class TransactionAverageExceededBaseRule<
     if (checkSender !== 'none') {
       directions.push('origin')
     }
+
     if (checkReceiver !== 'none') {
       directions.push('destination')
     }
@@ -324,10 +325,7 @@ export default abstract class TransactionAverageExceededBaseRule<
       const result = multiplierToPercents(multiplier) > maxMultiplier
       if (result && isWithinAvgThresholds) {
         let falsePositiveDetails
-        if (
-          this.ruleInstance.falsePositiveCheckEnabled &&
-          this.ruleInstance.caseCreationType === 'TRANSACTION'
-        ) {
+        if (this.ruleInstance.falsePositiveCheckEnabled) {
           if ((multiplier - maxMultiplier) / multiplier < 0.05) {
             falsePositiveDetails = {
               isFalsePositive: true,

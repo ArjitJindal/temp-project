@@ -52,7 +52,6 @@ paths:
                         VERY_LOW: FLAG
                       labels:
                         - string
-                      defaultCaseCreationType: USER
                       defaultCasePriority: P1
       operationId: get-rules
       description: >-
@@ -135,7 +134,6 @@ paths:
                     action: FLAG
                     parameters: {}
                     status: ACTIVE
-                    caseCreationType: TRANSACTION
                     casePriority: P1
                     createdAt: 0
                     updatedAt: 0
@@ -366,8 +364,6 @@ components:
           enum:
             - ACTIVE
             - INACTIVE
-        caseCreationType:
-          $ref: '#/components/schemas/CaseType'
         casePriority:
           $ref: '#/components/schemas/CasePriority'
     RuleAction:
@@ -396,12 +392,6 @@ components:
         - action
         - alias
       additionalProperties: false
-    CaseType:
-      type: string
-      title: CaseType
-      enum:
-        - USER
-        - TRANSACTION
     CasePriority:
       type: string
       title: CasePriority
@@ -500,8 +490,6 @@ components:
           type: array
           items:
             type: string
-        defaultCaseCreationType:
-          $ref: '#/components/schemas/CaseType'
         defaultCasePriority:
           $ref: '#/components/schemas/CasePriority'
         defaultNature:
@@ -514,7 +502,6 @@ components:
         - defaultParameters
         - defaultAction
         - labels
-        - defaultCaseCreationType
         - defaultCasePriority
         - defaultNature
     ErrorMessage:

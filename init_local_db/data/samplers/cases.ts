@@ -11,7 +11,6 @@ export function sampleTransactionCase(
 ): Case {
   return {
     caseId: `case-transaction-${sampleGuid(seed)}`,
-    caseType: 'TRANSACTION',
     caseStatus: 'OPEN',
     createdTimestamp: sampleTimestamp(seed),
     latestTransactionArrivalTimestamp: sampleTimestamp(seed) + 3600 * 1000,
@@ -41,7 +40,6 @@ export function sampleUserCase(
   const { transactions, user } = params
   return {
     caseId: `case-transaction-${sampleGuid(seed)}`,
-    caseType: 'USER',
     caseStatus: 'OPEN',
     createdTimestamp: sampleTimestamp(seed),
     latestTransactionArrivalTimestamp: sampleTimestamp(seed) + 3600 * 1000,

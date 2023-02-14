@@ -255,10 +255,7 @@ export default class TransactionsVolumeRule extends TransactionRule<
       }
 
       let falsePositiveDetails
-      if (
-        this.ruleInstance.falsePositiveCheckEnabled &&
-        this.ruleInstance.caseCreationType === 'TRANSACTION'
-      ) {
+      if (this.ruleInstance.falsePositiveCheckEnabled) {
         if (
           volumeDelta != null &&
           amount != null &&

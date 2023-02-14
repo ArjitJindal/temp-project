@@ -56,7 +56,6 @@ describe('Verify Transaction', () => {
             ruleHit: true,
             ruleHitMeta: {
               hitDirections: ['ORIGIN', 'DESTINATION'],
-              caseCreationType: 'USER',
             },
           },
         ],
@@ -69,7 +68,6 @@ describe('Verify Transaction', () => {
             ruleAction: 'FLAG',
             ruleHitMeta: {
               hitDirections: ['ORIGIN', 'DESTINATION'],
-              caseCreationType: 'USER',
             },
           },
         ],
@@ -193,7 +191,6 @@ describe('Verify Transaction', () => {
             ruleHit: true,
             ruleHitMeta: {
               hitDirections: ['DESTINATION'],
-              caseCreationType: 'USER',
             },
           },
         ],
@@ -206,7 +203,6 @@ describe('Verify Transaction', () => {
             ruleAction: 'FLAG',
             ruleHitMeta: {
               hitDirections: ['DESTINATION'],
-              caseCreationType: 'USER',
             },
           },
         ],
@@ -354,7 +350,6 @@ describe('Verify Transaction Event', () => {
               ruleHit: true,
               ruleHitMeta: {
                 hitDirections: ['ORIGIN', 'DESTINATION'],
-                caseCreationType: 'USER',
               },
             },
           ],
@@ -367,7 +362,6 @@ describe('Verify Transaction Event', () => {
               ruleAction: 'BLOCK',
               ruleHitMeta: {
                 hitDirections: ['ORIGIN', 'DESTINATION'],
-                caseCreationType: 'USER',
               },
             },
           ],
@@ -391,7 +385,6 @@ describe('Verify Transaction Event', () => {
             ruleHit: true,
             ruleHitMeta: {
               hitDirections: ['ORIGIN', 'DESTINATION'],
-              caseCreationType: 'USER',
             },
           },
         ],
@@ -404,7 +397,6 @@ describe('Verify Transaction Event', () => {
             ruleAction: 'FLAG',
             ruleHitMeta: {
               hitDirections: ['ORIGIN', 'DESTINATION'],
-              caseCreationType: 'USER',
             },
           },
         ],

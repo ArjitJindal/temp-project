@@ -5,69 +5,64 @@ import { getTestTransaction } from '@/test-utils/transaction-test-utils'
 import { getTestTenantId } from '@/test-utils/tenant-test-utils'
 import { logger } from '@/core/logger'
 import { getMongoDbClient } from '@/utils/mongoDBUtils'
-import { CaseType } from '@/@types/openapi-internal/CaseType'
 
 dynamoDbSetupHook()
 
-describe.each([{ caseType: 'TRANSACTION' }, { caseType: 'USER' }])(
-  '',
-  ({ caseType }) => {
-    test(`Single case - ${caseType}`, async () => {
-      const TENANT_ID = getTestTenantId()
-      const caseRepository = await getCaseRepo(TENANT_ID)
-      const statsRepository = await getStatsRepo(TENANT_ID)
+describe('Verify case stats', () => {
+  test(`Single case`, async () => {
+    const TENANT_ID = getTestTenantId()
+    const caseRepository = await getCaseRepo(TENANT_ID)
+    const statsRepository = await getStatsRepo(TENANT_ID)
 
-      const originUserId = 'test-user-id'
-      const destinationUserId = 'test-user-id-2'
-      const hitRules = [hitRule()]
-      const transactions = [
-        {
-          ...getTestTransaction({
-            timestamp: dayjs('2022-01-30T12:00:00.000Z').valueOf(),
-          }),
-          hitRules: hitRules,
-          executedRules: hitRules,
-          originUserId: originUserId,
-          destinationUserId: destinationUserId,
-        },
-        {
-          ...getTestTransaction({
-            timestamp: dayjs('2022-01-30T18:00:00.000Z').valueOf(),
-          }),
-          hitRules: hitRules,
-          executedRules: hitRules,
-          originUserId: originUserId,
-          destinationUserId: destinationUserId,
-        },
-      ]
+    const originUserId = 'test-user-id'
+    const destinationUserId = 'test-user-id-2'
+    const hitRules = [hitRule()]
+    const transactions = [
+      {
+        ...getTestTransaction({
+          timestamp: dayjs('2022-01-30T12:00:00.000Z').valueOf(),
+        }),
+        hitRules: hitRules,
+        executedRules: hitRules,
+        originUserId: originUserId,
+        destinationUserId: destinationUserId,
+      },
+      {
+        ...getTestTransaction({
+          timestamp: dayjs('2022-01-30T18:00:00.000Z').valueOf(),
+        }),
+        hitRules: hitRules,
+        executedRules: hitRules,
+        originUserId: originUserId,
+        destinationUserId: destinationUserId,
+      },
+    ]
 
-      const createdTimestamp = dayjs('2022-01-30T12:00:00.000Z').valueOf()
-      await caseRepository.addCaseMongo({
-        caseId: 'C-1',
-        createdTimestamp,
-        caseType: caseType as CaseType,
-        caseTransactions: transactions,
-        caseTransactionsIds: transactions.map((t) => t.transactionId),
-      })
-      await statsRepository.recalculateRuleHitStats(createdTimestamp)
-      const stats = await statsRepository.getRuleHitCountStats(
-        dayjs('2022-01-30T11:00:00.000Z').valueOf(),
-        dayjs('2022-01-30T13:00:00.000Z').valueOf()
-      )
-      expect(stats).toEqual([
-        {
-          ruleId: 'R-1',
-          ruleInstanceId: '1',
-          hitCount: 2,
-          transactionCasesCount: caseType === 'TRANSACTION' ? 1 : 0,
-          userCasesCount: caseType === 'USER' ? 1 : 0,
-          openTransactionCasesCount: caseType === 'TRANSACTION' ? 1 : 0,
-          openUserCasesCount: caseType === 'USER' ? 1 : 0,
-        },
-      ])
+    const createdTimestamp = dayjs('2022-01-30T12:00:00.000Z').valueOf()
+    await caseRepository.addCaseMongo({
+      caseId: 'C-1',
+      createdTimestamp,
+      caseTransactions: transactions,
+      caseTransactionsIds: transactions.map((t) => t.transactionId),
     })
-  }
-)
+    await statsRepository.recalculateRuleHitStats(createdTimestamp)
+    const stats = await statsRepository.getRuleHitCountStats(
+      dayjs('2022-01-30T11:00:00.000Z').valueOf(),
+      dayjs('2022-01-30T13:00:00.000Z').valueOf()
+    )
+    expect(stats).toEqual([
+      {
+        ruleId: 'R-1',
+        ruleInstanceId: '1',
+        hitCount: 2,
+        transactionCasesCount: 0,
+        userCasesCount: 1,
+        openTransactionCasesCount: 0,
+        openUserCasesCount: 1,
+      },
+    ])
+  })
+})
 
 test(`Multiple cases`, async () => {
   const TENANT_ID = getTestTenantId()
@@ -91,21 +86,18 @@ test(`Multiple cases`, async () => {
   await caseRepository.addCaseMongo({
     caseId: 'C-1',
     createdTimestamp: timestamp,
-    caseType: 'TRANSACTION',
     caseTransactions: [transaction],
     caseTransactionsIds: [transaction.transactionId],
   })
   await caseRepository.addCaseMongo({
     caseId: 'C-2',
     createdTimestamp: timestamp,
-    caseType: 'TRANSACTION',
     caseTransactions: [transaction],
     caseTransactionsIds: [transaction.transactionId],
   })
   await caseRepository.addCaseMongo({
     caseId: 'C-3',
     createdTimestamp: timestamp,
-    caseType: 'USER',
     caseTransactions: [transaction],
     caseTransactionsIds: [transaction.transactionId],
   })
@@ -119,10 +111,10 @@ test(`Multiple cases`, async () => {
       ruleId: 'R-1',
       ruleInstanceId: '1',
       hitCount: 3,
-      transactionCasesCount: 2,
-      userCasesCount: 1,
-      openTransactionCasesCount: 2,
-      openUserCasesCount: 1,
+      transactionCasesCount: 0,
+      userCasesCount: 3,
+      openTransactionCasesCount: 0,
+      openUserCasesCount: 3,
     },
   ])
 })
@@ -149,7 +141,6 @@ test(`Multiple cases - opened and closed`, async () => {
   await caseRepository.addCaseMongo({
     caseId: 'C-1',
     createdTimestamp: timestamp,
-    caseType: 'TRANSACTION',
     caseStatus: 'OPEN',
     caseTransactions: [transaction],
     caseTransactionsIds: [transaction.transactionId],
@@ -157,7 +148,6 @@ test(`Multiple cases - opened and closed`, async () => {
   await caseRepository.addCaseMongo({
     caseId: 'C-2',
     createdTimestamp: timestamp,
-    caseType: 'TRANSACTION',
     caseStatus: 'CLOSED',
     caseTransactions: [transaction],
     caseTransactionsIds: [transaction.transactionId],
@@ -165,7 +155,6 @@ test(`Multiple cases - opened and closed`, async () => {
   await caseRepository.addCaseMongo({
     caseId: 'C-3',
     createdTimestamp: timestamp,
-    caseType: 'USER',
     caseStatus: 'OPEN',
     caseTransactions: [transaction],
     caseTransactionsIds: [transaction.transactionId],
@@ -173,7 +162,6 @@ test(`Multiple cases - opened and closed`, async () => {
   await caseRepository.addCaseMongo({
     caseId: 'C-4',
     createdTimestamp: timestamp,
-    caseType: 'USER',
     caseStatus: 'REOPENED',
     caseTransactions: [transaction],
     caseTransactionsIds: [transaction.transactionId],
@@ -188,10 +176,10 @@ test(`Multiple cases - opened and closed`, async () => {
       ruleId: 'R-1',
       ruleInstanceId: '1',
       hitCount: 4,
-      transactionCasesCount: 2,
-      openTransactionCasesCount: 1,
-      userCasesCount: 2,
-      openUserCasesCount: 2,
+      transactionCasesCount: 0,
+      openTransactionCasesCount: 0,
+      userCasesCount: 4,
+      openUserCasesCount: 3,
     },
   ])
 })

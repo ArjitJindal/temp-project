@@ -48,10 +48,7 @@ export default class TransactionAmountRule extends TransactionRule<TransactionAm
     const hitResult: RuleHitResult = []
     if (thresholdHit != null) {
       let falsePositiveDetails
-      if (
-        this.ruleInstance.falsePositiveCheckEnabled &&
-        this.ruleInstance.caseCreationType === 'TRANSACTION'
-      ) {
+      if (this.ruleInstance.falsePositiveCheckEnabled) {
         if (
           this.transaction.originAmountDetails &&
           thresholdHit.min &&

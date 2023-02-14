@@ -13,7 +13,6 @@ export function toPublicRule(rule: Rule): PublicRule {
     defaultAction: rule.defaultAction,
     defaultRiskLevelActions: rule.defaultRiskLevelActions,
     labels: rule.labels,
-    defaultCaseCreationType: rule.defaultCaseCreationType,
     defaultCasePriority: rule.defaultCasePriority,
     defaultNature: rule.defaultNature,
   }

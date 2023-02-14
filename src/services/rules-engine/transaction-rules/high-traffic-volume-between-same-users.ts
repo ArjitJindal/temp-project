@@ -110,10 +110,7 @@ export default class HighTrafficVolumeBetweenSameUsers extends TransactionRule<
       transactionVolumeThreshold
     )
     let falsePositiveDetails
-    if (
-      this.ruleInstance.falsePositiveCheckEnabled &&
-      this.ruleInstance.caseCreationType === 'TRANSACTION'
-    ) {
+    if (this.ruleInstance.falsePositiveCheckEnabled) {
       if (
         volumeDelta != null &&
         transactionAmounts != null &&

@@ -24,7 +24,6 @@ async function migrateTenant(tenant: Tenant) {
   const cursor = await caseRepositry.getCasesCursor({
     includeTransactions: true,
     pageSize: 'DISABLED',
-    filterCaseType: 'USER',
   })
 
   for await (const c of cursor) {

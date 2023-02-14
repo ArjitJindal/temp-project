@@ -63,7 +63,6 @@ const _TRANSACTION_RULES_LIBRARY: Array<
     labels: [],
     defaultNature: 'AML',
     defaultCasePriority: 'P1',
-    defaultCaseCreationType: 'USER',
   }),
   () => {
     const defaultParameters: TransactionAmountRuleParameters = {
@@ -84,7 +83,6 @@ const _TRANSACTION_RULES_LIBRARY: Array<
       labels: [],
       defaultNature: 'AML',
       defaultCasePriority: 'P1',
-      defaultCaseCreationType: 'USER',
       defaultFalsePositiveCheckEnabled: true,
     }
   },
@@ -106,7 +104,6 @@ const _TRANSACTION_RULES_LIBRARY: Array<
       labels: [],
       defaultNature: 'AML',
       defaultCasePriority: 'P1',
-      defaultCaseCreationType: 'USER',
     }
   },
   () => {
@@ -127,7 +124,6 @@ const _TRANSACTION_RULES_LIBRARY: Array<
       labels: [],
       defaultNature: 'AML',
       defaultCasePriority: 'P1',
-      defaultCaseCreationType: 'USER',
     }
   },
   () => {
@@ -148,7 +144,6 @@ const _TRANSACTION_RULES_LIBRARY: Array<
       labels: [],
       defaultNature: 'AML',
       defaultCasePriority: 'P1',
-      defaultCaseCreationType: 'USER',
     }
   },
   () => {
@@ -169,7 +164,6 @@ const _TRANSACTION_RULES_LIBRARY: Array<
       labels: ['Sanctions', 'List'],
       defaultNature: 'AML',
       defaultCasePriority: 'P1',
-      defaultCaseCreationType: 'USER',
     }
   },
   () => {
@@ -196,7 +190,6 @@ const _TRANSACTION_RULES_LIBRARY: Array<
       labels: [],
       defaultNature: 'AML',
       defaultCasePriority: 'P1',
-      defaultCaseCreationType: 'USER',
     }
   },
   () => {
@@ -222,7 +215,6 @@ const _TRANSACTION_RULES_LIBRARY: Array<
       labels: [],
       defaultNature: 'AML',
       defaultCasePriority: 'P1',
-      defaultCaseCreationType: 'USER',
     }
   },
   () => {
@@ -247,7 +239,6 @@ const _TRANSACTION_RULES_LIBRARY: Array<
       labels: [],
       defaultNature: 'AML',
       defaultCasePriority: 'P1',
-      defaultCaseCreationType: 'USER',
     }
   },
   () => {
@@ -273,7 +264,6 @@ const _TRANSACTION_RULES_LIBRARY: Array<
       labels: [],
       defaultNature: 'AML',
       defaultCasePriority: 'P1',
-      defaultCaseCreationType: 'USER',
     }
   },
   () => {
@@ -296,7 +286,6 @@ const _TRANSACTION_RULES_LIBRARY: Array<
       labels: ['Risk Appetite', 'List'],
       defaultNature: 'FRAUD',
       defaultCasePriority: 'P1',
-      defaultCaseCreationType: 'USER',
     }
   },
   () => {
@@ -330,7 +319,6 @@ const _TRANSACTION_RULES_LIBRARY: Array<
       labels: ['Risk Appetite', 'List'],
       defaultNature: 'AML',
       defaultCasePriority: 'P1',
-      defaultCaseCreationType: 'USER',
     }
   },
   () => {
@@ -365,7 +353,6 @@ const _TRANSACTION_RULES_LIBRARY: Array<
       labels: ['Risk Appetite', 'List'],
       defaultNature: 'AML',
       defaultCasePriority: 'P1',
-      defaultCaseCreationType: 'USER',
     }
   },
   () => {
@@ -391,7 +378,6 @@ const _TRANSACTION_RULES_LIBRARY: Array<
       labels: ['Internal Fraud'],
       defaultNature: 'FRAUD',
       defaultCasePriority: 'P1',
-      defaultCaseCreationType: 'USER',
     }
   },
   () => {
@@ -412,7 +398,6 @@ const _TRANSACTION_RULES_LIBRARY: Array<
       labels: [],
       defaultNature: 'FRAUD',
       defaultCasePriority: 'P1',
-      defaultCaseCreationType: 'USER',
     }
   },
   () => {
@@ -437,7 +422,6 @@ const _TRANSACTION_RULES_LIBRARY: Array<
       labels: [],
       defaultNature: 'FRAUD',
       defaultCasePriority: 'P1',
-      defaultCaseCreationType: 'USER',
     }
   },
   () => {
@@ -463,7 +447,6 @@ const _TRANSACTION_RULES_LIBRARY: Array<
       labels: [],
       defaultNature: 'FRAUD',
       defaultCasePriority: 'P1',
-      defaultCaseCreationType: 'USER',
     }
   },
   () => {
@@ -492,7 +475,6 @@ const _TRANSACTION_RULES_LIBRARY: Array<
       labels: [],
       defaultNature: 'AML',
       defaultCasePriority: 'P1',
-      defaultCaseCreationType: 'USER',
       defaultFalsePositiveCheckEnabled: true,
     }
   },
@@ -516,7 +498,6 @@ const _TRANSACTION_RULES_LIBRARY: Array<
       labels: [],
       defaultNature: 'AML',
       defaultCasePriority: 'P1',
-      defaultCaseCreationType: 'USER',
     }
   },
   () => {
@@ -538,7 +519,6 @@ const _TRANSACTION_RULES_LIBRARY: Array<
       labels: [],
       defaultNature: 'AML',
       defaultCasePriority: 'P1',
-      defaultCaseCreationType: 'USER',
     }
   },
   () => {
@@ -555,7 +535,6 @@ const _TRANSACTION_RULES_LIBRARY: Array<
       labels: [],
       defaultNature: 'AML',
       defaultCasePriority: 'P1',
-      defaultCaseCreationType: 'USER',
       defaultFalsePositiveCheckEnabled: true,
     }
   },
@@ -580,7 +559,6 @@ const _TRANSACTION_RULES_LIBRARY: Array<
       labels: [],
       defaultNature: 'AML',
       defaultCasePriority: 'P1',
-      defaultCaseCreationType: 'USER',
     }
   },
   () => {
@@ -601,7 +579,6 @@ const _TRANSACTION_RULES_LIBRARY: Array<
       labels: [],
       defaultNature: 'AML',
       defaultCasePriority: 'P1',
-      defaultCaseCreationType: 'USER',
     }
   },
   () => {
@@ -626,7 +603,6 @@ const _TRANSACTION_RULES_LIBRARY: Array<
       labels: [],
       defaultNature: 'FRAUD',
       defaultCasePriority: 'P1',
-      defaultCaseCreationType: 'USER',
     }
   },
   () => {
@@ -647,7 +623,6 @@ const _TRANSACTION_RULES_LIBRARY: Array<
       labels: [],
       defaultNature: 'FRAUD',
       defaultCasePriority: 'P1',
-      defaultCaseCreationType: 'USER',
     }
   },
   () => {
@@ -673,7 +648,6 @@ const _TRANSACTION_RULES_LIBRARY: Array<
       labels: [],
       defaultNature: 'FRAUD',
       defaultCasePriority: 'P1',
-      defaultCaseCreationType: 'USER',
     }
   },
   () => {
@@ -698,7 +672,6 @@ const _TRANSACTION_RULES_LIBRARY: Array<
       labels: [],
       defaultNature: 'AML',
       defaultCasePriority: 'P1',
-      defaultCaseCreationType: 'USER',
     }
   },
   () => {
@@ -731,7 +704,6 @@ const _TRANSACTION_RULES_LIBRARY: Array<
       labels: [],
       defaultNature: 'FRAUD',
       defaultCasePriority: 'P1',
-      defaultCaseCreationType: 'USER',
     }
   },
   () => {
@@ -767,7 +739,6 @@ const _TRANSACTION_RULES_LIBRARY: Array<
       labels: [],
       defaultNature: 'FRAUD',
       defaultCasePriority: 'P1',
-      defaultCaseCreationType: 'USER',
       defaultFalsePositiveCheckEnabled: true,
     }
   },
@@ -795,7 +766,6 @@ const _TRANSACTION_RULES_LIBRARY: Array<
       labels: [],
       defaultNature: 'FRAUD',
       defaultCasePriority: 'P1',
-      defaultCaseCreationType: 'USER',
       defaultFalsePositiveCheckEnabled: true,
     }
   },
@@ -822,7 +792,6 @@ const _TRANSACTION_RULES_LIBRARY: Array<
       labels: [],
       defaultNature: 'FRAUD',
       defaultCasePriority: 'P1',
-      defaultCaseCreationType: 'USER',
     }
   },
   () => {
@@ -851,7 +820,6 @@ const _TRANSACTION_RULES_LIBRARY: Array<
       labels: [],
       defaultNature: 'AML',
       defaultCasePriority: 'P1',
-      defaultCaseCreationType: 'USER',
     }
   },
   () => {
@@ -880,7 +848,6 @@ const _TRANSACTION_RULES_LIBRARY: Array<
       labels: [],
       defaultNature: 'AML',
       defaultCasePriority: 'P1',
-      defaultCaseCreationType: 'USER',
     }
   },
   () => {
@@ -907,7 +874,6 @@ const _TRANSACTION_RULES_LIBRARY: Array<
       labels: ['List'],
       defaultNature: 'AML',
       defaultCasePriority: 'P1',
-      defaultCaseCreationType: 'USER',
     }
   },
   () => {
@@ -932,7 +898,6 @@ const _TRANSACTION_RULES_LIBRARY: Array<
       labels: [],
       defaultNature: 'AML',
       defaultCasePriority: 'P1',
-      defaultCaseCreationType: 'USER',
     }
   },
   () => {
@@ -958,7 +923,6 @@ const _TRANSACTION_RULES_LIBRARY: Array<
       labels: [],
       defaultNature: 'FRAUD',
       defaultCasePriority: 'P1',
-      defaultCaseCreationType: 'USER',
     }
   },
   () => {
@@ -978,7 +942,6 @@ const _TRANSACTION_RULES_LIBRARY: Array<
       labels: ['Risk Appetite', 'List'],
       defaultNature: 'FRAUD',
       defaultCasePriority: 'P1',
-      defaultCaseCreationType: 'USER',
     }
   },
   () => {
@@ -1009,7 +972,6 @@ const _TRANSACTION_RULES_LIBRARY: Array<
       labels: ['Internal Fraud'],
       defaultNature: 'FRAUD',
       defaultCasePriority: 'P1',
-      defaultCaseCreationType: 'USER',
     }
   },
   () => {
@@ -1031,7 +993,6 @@ const _TRANSACTION_RULES_LIBRARY: Array<
       labels: ['List'],
       defaultNature: 'FRAUD',
       defaultCasePriority: 'P3',
-      defaultCaseCreationType: 'USER',
     }
   },
   () => {
@@ -1059,7 +1020,6 @@ const _TRANSACTION_RULES_LIBRARY: Array<
       labels: [],
       defaultNature: 'FRAUD',
       defaultCasePriority: 'P1',
-      defaultCaseCreationType: 'USER',
     }
   },
 ]

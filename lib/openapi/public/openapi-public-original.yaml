@@ -3407,8 +3407,6 @@ components:
           type: array
           items:
             $ref: '#/components/schemas/RuleHitDirection'
-        caseCreationType:
-          $ref: '#/components/schemas/CaseCreationType'
         falsePositiveDetails:
           $ref: '#/components/schemas/FalsePositiveDetails'
     RuleHitDirection:
@@ -3417,12 +3415,6 @@ components:
       enum:
         - ORIGIN
         - DESTINATION
-    CaseCreationType:
-      type: string
-      title: CaseCreationType
-      enum:
-        - TRANSACTION
-        - USER
     TransactionEvent:
       description: Model for transaction-related events
       type: object

@@ -2218,10 +2218,6 @@ paths:
           in: query
           name: filterTransactionState
         - schema:
-            $ref: '#/components/schemas/CaseType'
-          in: query
-          name: filterCaseType
-        - schema:
             $ref: '#/components/schemas/CasePriority'
           in: query
           name: filterPriority
@@ -2679,8 +2675,6 @@ components:
           $ref: '#/components/schemas/RuleNature'
         defaultCasePriority:
           $ref: '#/components/schemas/CasePriority'
-        defaultCaseCreationType:
-          $ref: '#/components/schemas/CaseType'
         descriptionTemplate:
           type: string
         defaultRiskLevelParameters:
@@ -2711,7 +2705,6 @@ components:
         - labels
         - defaultNature
         - defaultCasePriority
-        - defaultCaseCreationType
     RuleFilters:
       title: RuleFilter
       type: object
@@ -2746,8 +2739,6 @@ components:
           type: object
         action:
           $ref: '#/components/schemas/RuleAction'
-        caseCreationType:
-          $ref: '#/components/schemas/CaseType'
         type:
           type: string
           enum:
@@ -2783,7 +2774,6 @@ components:
       required:
         - ruleId
         - casePriority
-        - caseCreationType
         - nature
     RuleAction:
       type: string
@@ -2826,12 +2816,6 @@ components:
       required:
         - level
         - alias
-    CaseType:
-      type: string
-      title: CaseType
-      enum:
-        - USER
-        - TRANSACTION
     CasePriority:
       type: string
       title: CasePriority
@@ -4012,8 +3996,6 @@ components:
           type: number
         latestTransactionArrivalTimestamp:
           type: number
-        caseType:
-          $ref: '#/components/schemas/CaseType'
         caseStatus:
           $ref: '#/components/schemas/CaseStatus'
         caseTransactions:
@@ -4155,6 +4137,8 @@ components:
           type: array
           items:
             $ref: '#/components/schemas/FileInfo'
+      x-examples: {}
+      description: ''
     CasesUpdateRequest:
       title: CasesUpdateRequest
       type: object

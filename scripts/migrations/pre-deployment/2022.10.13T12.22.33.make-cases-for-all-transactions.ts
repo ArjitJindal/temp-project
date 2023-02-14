@@ -62,12 +62,8 @@ export async function migrateTenant(tenant: Tenant) {
     let createCase = false
     if (
       transaction.transactionId != null &&
-      (
-        await caseRepository.getCasesByTransactionId(
-          transaction.transactionId,
-          'TRANSACTION'
-        )
-      ).length === 0
+      (await caseRepository.getCasesByTransactionId(transaction.transactionId))
+        .length === 0
     ) {
       createCase = false
     } else if (
@@ -88,8 +84,7 @@ export async function migrateTenant(tenant: Tenant) {
     if (createCase && transaction.transactionId) {
       // check existing case
       const existingCases = await caseRepository.getCasesByTransactionId(
-        transaction.transactionId,
-        'TRANSACTION'
+        transaction.transactionId
       )
       let id: number
       if (!existingCases.length) {
@@ -159,7 +154,6 @@ function getCase(
     assignments: transaction.assignments || [],
     createdTimestamp: transaction.timestamp,
     latestTransactionArrivalTimestamp: transaction.timestamp,
-    caseType: 'TRANSACTION',
     priority: 'P1',
     relatedCases: [],
     statusChanges: transaction.statusChanges || [],

@@ -45,51 +45,19 @@ const TRANSACTION_STATE_KEY_TO_RULE_ACTION: Map<
 ])
 
 const CASE_GROUP_KEYS = {
-  openTransactionCaseIds: {
-    $addToSet: {
-      $cond: {
-        if: {
-          $and: [
-            { $ne: ['$caseStatus', 'CLOSED'] },
-            { $eq: ['$caseType', 'TRANSACTION'] },
-          ],
-        },
-        then: '$caseId',
-        else: '$$REMOVE',
-      },
-    },
-  },
   openUserCaseIds: {
     $addToSet: {
       $cond: {
         if: {
-          $and: [
-            { $ne: ['$caseStatus', 'CLOSED'] },
-            { $eq: ['$caseType', 'USER'] },
-          ],
+          $ne: ['$caseStatus', 'CLOSED'],
         },
-        then: '$caseId',
-        else: '$$REMOVE',
-      },
-    },
-  },
-  transactionCaseIds: {
-    $addToSet: {
-      $cond: {
-        if: { $eq: ['$caseType', 'TRANSACTION'] },
         then: '$caseId',
         else: '$$REMOVE',
       },
     },
   },
   userCaseIds: {
-    $addToSet: {
-      $cond: {
-        if: { $eq: ['$caseType', 'USER'] },
-        then: '$caseId',
-        else: '$$REMOVE',
-      },
-    },
+    $addToSet: '$caseId',
   },
 }
 

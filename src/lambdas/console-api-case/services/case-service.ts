@@ -212,10 +212,7 @@ export class CaseService {
     transactionUpdates: TransactionUpdateRequest
   ) {
     const caseIds: string[] = (
-      await this.caseRepository.getCasesByTransactionIds(
-        transactionIds,
-        'TRANSACTION'
-      )
+      await this.caseRepository.getCasesByTransactionIds(transactionIds)
     ).map((caseEntity) => caseEntity.caseId as string)
     return this.updateCases(userId, caseIds, transactionUpdates)
   }
@@ -225,8 +222,7 @@ export class CaseService {
     comment: Comment
   ) {
     const cases = await this.caseRepository.getCasesByTransactionId(
-      transactionId,
-      'TRANSACTION'
+      transactionId
     )
     if (cases.length) {
       return this.saveCaseComment(cases[0].caseId as string, comment)
@@ -238,8 +234,7 @@ export class CaseService {
     commentId: string
   ) {
     const cases = await this.caseRepository.getCasesByTransactionId(
-      transactionId,
-      'TRANSACTION'
+      transactionId
     )
     if (cases.length) {
       return this.deleteCaseComment(cases[0].caseId as string, commentId)

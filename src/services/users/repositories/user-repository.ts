@@ -287,7 +287,6 @@ export class UserRepository {
           pipeline: [
             {
               $match: {
-                caseType: 'USER',
                 caseStatus: {
                   $ne: 'CLOSED',
                 },

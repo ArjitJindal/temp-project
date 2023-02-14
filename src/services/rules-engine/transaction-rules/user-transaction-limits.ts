@@ -224,11 +224,7 @@ export default class UserTransactionLimitsRule extends TransactionRule<UserTrans
     if (transactionAmountHit.isHit) {
       const { thresholdHit } = transactionAmountHit
       let falsePositiveDetails = undefined
-      if (
-        this.ruleInstance.falsePositiveCheckEnabled &&
-        thresholdHit != null &&
-        this.ruleInstance.caseCreationType === 'TRANSACTION'
-      ) {
+      if (this.ruleInstance.falsePositiveCheckEnabled && thresholdHit != null) {
         if (
           this.transaction.originAmountDetails &&
           thresholdHit.min &&

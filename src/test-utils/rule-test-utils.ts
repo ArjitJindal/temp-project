@@ -12,7 +12,6 @@ import { TransactionMonitoringResult } from '@/@types/openapi-public/Transaction
 import { UserMonitoringResult } from '@/@types/openapi-public/UserMonitoringResult'
 import { ConsumerUserEvent } from '@/@types/openapi-public/ConsumerUserEvent'
 import { User } from '@/@types/openapi-public/User'
-import { CaseType } from '@/@types/openapi-internal/CaseType'
 import { CasePriority } from '@/@types/openapi-internal/CasePriority'
 import { getDynamoDbClient } from '@/utils/dynamodb'
 import { RuleInstance } from '@/@types/openapi-internal/RuleInstance'
@@ -39,7 +38,6 @@ export async function createRule(
     defaultAction: 'FLAG',
     ruleImplementationName: 'first-payment',
     labels: [],
-    defaultCaseCreationType: 'USER',
     defaultCasePriority: 'P1',
     defaultNature: 'AML',
     ...rule,
@@ -53,7 +51,6 @@ export async function createRule(
       action: createdRule.defaultAction,
       riskLevelActions: createdRule.defaultRiskLevelActions,
       status: 'ACTIVE',
-      caseCreationType: createdRule.defaultCaseCreationType as CaseType,
       casePriority: createdRule.defaultCasePriority as CasePriority,
       nature: createdRule.defaultNature,
       ...ruleInstance,
