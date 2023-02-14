@@ -13,7 +13,7 @@ const logFormat = format.combine(
 class SentryTransport extends TransportStream {
   public log(info: any) {
     const { tags } = info
-    if (info['error']) {
+    if (info['level'] == 'error') {
       Sentry.captureException(
         Object.values(info).find((value) => value instanceof Error),
         { tags }
