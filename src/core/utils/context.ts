@@ -39,7 +39,7 @@ const asyncLocalStorage = new AsyncLocalStorage<Context>()
 export async function getInitialContext(
   event: APIGatewayProxyWithLambdaAuthorizerEvent<
     APIGatewayEventLambdaAuthorizerContext<
-      AWS.STS.Credentials & JWTAuthorizerResult
+      Partial<AWS.STS.Credentials & JWTAuthorizerResult>
     >
   >,
   lambdaContext: LambdaContext
@@ -55,7 +55,11 @@ export async function getInitialContext(
     } = event.requestContext?.authorizer || {}
 
     if (tenantId) {
-      const dynamoDb = getDynamoDbClientByEvent(event)
+      const dynamoDb = getDynamoDbClientByEvent(
+        event as APIGatewayProxyWithLambdaAuthorizerEvent<
+          APIGatewayEventLambdaAuthorizerContext<AWS.STS.Credentials>
+        >
+      )
       const tenantRepository = new TenantRepository(tenantId, { dynamoDb })
       features = (await tenantRepository.getTenantSettings(['features']))
         ?.features
@@ -64,7 +68,7 @@ export async function getInitialContext(
     // Create a map for O(1) lookup in permissions checks
     const permissions = new Map<Permission, boolean>()
     encodedPermissions
-      .split(',')
+      ?.split(',')
       .forEach((p) => permissions.set(p as Permission, true))
 
     const context: Context = {
@@ -94,7 +98,7 @@ export async function getInitialContext(
     return context
   } catch (e) {
     if (process.env.ENV !== 'local') {
-      winstonLogger.error(`Failed to initialize context`)
+      winstonLogger.error(`Failed to initialize context`, e)
     }
     return {}
   }
