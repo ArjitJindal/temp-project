@@ -59,7 +59,7 @@ export const DynamoDbKeys = {
     tenantId: string,
     userId: string | undefined,
     paymentDetails: PaymentDetails | undefined,
-    direction: 'sending' | 'receiving',
+    direction: 'sending' | 'receiving' | 'all',
     transactionType?: string,
     timestamp?: number
   ) => {
@@ -84,7 +84,7 @@ export const DynamoDbKeys = {
   NON_USER_TRANSACTION: (
     tenantId: string,
     paymentDetails: PaymentDetails,
-    direction: 'sending' | 'receiving',
+    direction: 'sending' | 'receiving' | 'all',
     transactionType?: string,
     timestamp?: number
   ) => {
@@ -203,7 +203,7 @@ export const DynamoDbKeys = {
   USER_TRANSACTION: (
     tenantId: string,
     userId: string,
-    direction: 'sending' | 'receiving',
+    direction: 'sending' | 'receiving' | 'all',
     transactionType?: string,
     timestamp?: number
   ) => {
@@ -260,11 +260,10 @@ export const DynamoDbKeys = {
     tenantId: string,
     userKeyId: string,
     ruleInstanceId: string,
-    direction: 'origin' | 'destination',
     version: string,
     timeLabel?: string
   ) => ({
-    PartitionKeyID: `${tenantId}#aggregation#${USER_ID_PREFIX}${userKeyId}#${RULE_INSTANCE_PREFIX}${ruleInstanceId}#${direction}#${version}`,
+    PartitionKeyID: `${tenantId}#aggregation#${USER_ID_PREFIX}${userKeyId}#${RULE_INSTANCE_PREFIX}${ruleInstanceId}#${version}`,
     SortKeyID: timeLabel,
   }),
   // Attributes: refer to User / Business

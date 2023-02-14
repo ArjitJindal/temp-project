@@ -13,7 +13,7 @@ import { generateRuleDescription, Vars } from './utils/format-description'
 import { Aggregators } from './aggregator'
 import { UserEventRepository } from './repositories/user-event-repository'
 import { TransactionAggregationRule } from './transaction-rules/aggregation-rule'
-import { RuleHitResult } from './rule'
+import { RuleHitResult, RuleHitResultItem } from './rule'
 import {
   TransactionFilters,
   TRANSACTION_FILTERS,
@@ -414,18 +414,17 @@ export class RulesEngineService {
         const ruleResult = shouldCompute
           ? await ruleClassInstance.computeRule()
           : null
-        const filteredRuleResult =
-          ruleResult && this.getFilteredRuleResult(ruleResult, ruleFilters)
+        const filteredRuleResult = ruleResult
+          ? this.getFilteredRuleResult(ruleResult, ruleFilters)
+          : []
 
-        if (shouldCompute) {
-          if (ruleClassInstance instanceof TransactionAggregationRule) {
-            await Promise.all([
-              ruleClassInstance.updateAggregation('origin'),
-              ruleClassInstance.updateAggregation('destination'),
-            ])
-          }
-          runSegment?.close()
+        if (ruleClassInstance instanceof TransactionAggregationRule) {
+          await Promise.all([
+            ruleClassInstance.updateAggregation('origin', shouldCompute),
+            ruleClassInstance.updateAggregation('destination', shouldCompute),
+          ])
         }
+        runSegment?.close()
 
         const ruleHit =
           (filteredRuleResult && filteredRuleResult.length > 0) ?? false
@@ -530,13 +529,14 @@ export class RulesEngineService {
   private getFilteredRuleResult(
     ruleResult: RuleHitResult,
     ruleFilters: TransactionFilters & UserFilters = {}
-  ): RuleHitResult {
+  ): RuleHitResultItem[] {
+    const filteredResult = ruleResult.filter(Boolean) as RuleHitResultItem[]
     if (ruleFilters.checkDirection) {
-      return ruleResult.filter(
+      return filteredResult.filter(
         (hitResult) => hitResult.direction === ruleFilters.checkDirection
       )
     }
-    return ruleResult
+    return filteredResult
   }
 
   private async getUserRiskLevel(

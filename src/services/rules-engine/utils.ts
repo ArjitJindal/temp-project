@@ -4,7 +4,8 @@ import { DynamoDbKeys } from '@/core/dynamodb/dynamodb-keys'
 export function getSenderKeys(
   tenantId: string,
   transaction: Transaction,
-  transactionType?: string
+  transactionType?: string,
+  disableDirection?: boolean
 ):
   | {
       PartitionKeyID: string
@@ -16,7 +17,7 @@ export function getSenderKeys(
     tenantId,
     transaction.originUserId,
     transaction.originPaymentDetails,
-    'sending',
+    disableDirection ? 'all' : 'sending',
     transactionType,
     transaction.timestamp
   )
@@ -24,9 +25,11 @@ export function getSenderKeys(
 
 export function getSenderKeyId(
   tenantId: string,
-  transaction: Transaction
+  transaction: Transaction,
+  disableDirection?: boolean
 ): string | undefined {
-  return getSenderKeys(tenantId, transaction)?.PartitionKeyID
+  return getSenderKeys(tenantId, transaction, undefined, disableDirection)
+    ?.PartitionKeyID
 }
 
 export function getUserSenderKeys(
@@ -70,7 +73,8 @@ export function getNonUserSenderKeys(
 export function getReceiverKeys(
   tenantId: string,
   transaction: Transaction,
-  transactionType?: string
+  transactionType?: string,
+  disableDirection?: boolean
 ):
   | {
       PartitionKeyID: string
@@ -82,7 +86,7 @@ export function getReceiverKeys(
     tenantId,
     transaction.destinationUserId,
     transaction.destinationPaymentDetails,
-    'receiving',
+    disableDirection ? 'all' : 'receiving',
     transactionType,
     transaction.timestamp
   )
@@ -90,9 +94,11 @@ export function getReceiverKeys(
 
 export function getReceiverKeyId(
   tenantId: string,
-  transaction: Transaction
+  transaction: Transaction,
+  disableDirection?: boolean
 ): string | undefined {
-  return getReceiverKeys(tenantId, transaction)?.PartitionKeyID
+  return getReceiverKeys(tenantId, transaction, undefined, disableDirection)
+    ?.PartitionKeyID
 }
 
 export function getUserReceiverKeys(

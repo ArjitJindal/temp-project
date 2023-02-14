@@ -322,7 +322,6 @@ export class AggregationRepository {
   public async refreshUserRuleTimeAggregations(
     userKeyId: string,
     ruleInstanceId: string,
-    direction: 'origin' | 'destination',
     aggregationData: {
       [hour: string]: any
     },
@@ -335,7 +334,6 @@ export class AggregationRepository {
             this.tenantId,
             userKeyId,
             ruleInstanceId,
-            direction,
             version,
             entry[0]
           ),
@@ -353,7 +351,6 @@ export class AggregationRepository {
   public async getUserRuleTimeAggregations<T>(
     userKeyId: string,
     ruleInstanceId: string,
-    direction: 'origin' | 'destination',
     afterTimestamp: number,
     beforeTimestamp: number,
     timeLabelFormat: string,
@@ -368,7 +365,6 @@ export class AggregationRepository {
           this.tenantId,
           userKeyId,
           ruleInstanceId,
-          direction,
           version
         ).PartitionKeyID,
         ':skfrom': dayjs(afterTimestamp).format(timeLabelFormat),
