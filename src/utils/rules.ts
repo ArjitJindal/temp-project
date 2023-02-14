@@ -2,14 +2,7 @@ import _ from 'lodash';
 import { useMemo } from 'react';
 import { useQuery } from './queries/hooks';
 import { RULES, RULE_INSTANCES } from './queries/keys';
-import {
-  CaseCreationType,
-  HitRulesDetails,
-  Rule,
-  RuleAction,
-  RuleInstance,
-  TransactionState,
-} from '@/apis';
+import { Rule, RuleAction, RuleInstance, TransactionState } from '@/apis';
 import { neverReturn } from '@/utils/lang';
 import COLORS from '@/components/ui/colors';
 import { useApi } from '@/api';
@@ -86,15 +79,4 @@ export function useRules(): { rules: RulesMap; ruleInstances: RuleInstanceMap } 
   }, [ruleInstanceResults.data]);
 
   return { rules: rulesMap, ruleInstances: ruleInstancesMap };
-}
-
-export function filterRulesHitByCaseCreationType(
-  rules: HitRulesDetails[],
-  caseCreationType: CaseCreationType,
-): HitRulesDetails[] {
-  return rules.filter(
-    (rule) =>
-      !rule?.ruleHitMeta?.caseCreationType ||
-      rule?.ruleHitMeta?.caseCreationType === caseCreationType,
-  );
 }

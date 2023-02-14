@@ -12,7 +12,7 @@ function TableList() {
 
   return (
     <PageWrapper title={i18n('menu.case-management')}>
-      <CaseTableWrapper caseType={'USER'} />
+      <CaseTableWrapper />
     </PageWrapper>
   );
 }

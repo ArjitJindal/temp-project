@@ -1,14 +1,13 @@
 import { RuleActionStatus } from '@/components/ui/RuleActionStatus';
 import { CaseTransaction } from '@/apis';
 import Table from '@/components/ui/Table';
-import { filterRulesHitByCaseCreationType } from '@/utils/rules';
 
 interface Props {
   transaction: CaseTransaction;
 }
 
 export default function RulesHitDetailsTable({ transaction }: Props) {
-  const hitRules = filterRulesHitByCaseCreationType(transaction.hitRules, 'USER');
+  const hitRules = transaction.hitRules;
   return (
     <Table
       rowKey={'ruleInstanceId'}

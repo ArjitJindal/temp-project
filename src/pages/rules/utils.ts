@@ -1,4 +1,4 @@
-import { CaseType, CasePriority, RuleNature } from '@/apis';
+import { CasePriority, RuleNature } from '@/apis';
 import { RuleAction } from '@/apis/models/RuleAction';
 import { RuleInstanceMap, RulesMap } from '@/utils/rules';
 
@@ -31,11 +31,6 @@ export function getRuleInstanceDisplay(
 ) {
   return ruleInstances[ruleInstanceId as string]?.ruleNameAlias || rules[ruleId]?.name || ruleId;
 }
-
-export const RULE_CASE_CREATION_TYPE_OPTIONS: { label: string; value: CaseType }[] = [
-  { label: 'Transaction', value: 'TRANSACTION' },
-  { label: 'User', value: 'USER' },
-];
 
 export const RULE_NATURE_OPTIONS: { label: string; value: RuleNature }[] = [
   { label: 'AML', value: 'AML' },

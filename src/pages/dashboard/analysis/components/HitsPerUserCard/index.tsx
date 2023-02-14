@@ -114,21 +114,6 @@ export default function HitsPerUserCard(props: Props) {
         }
         return (
           <>
-            <div>
-              <Link
-                to={makeUrl(
-                  '/case-management/transaction',
-                  {},
-                  {
-                    userId: entity.userId,
-                    userFilterMode: direction ? direction : 'ALL',
-                    createdTimestamp: `${startTimestamp},${endTimestamp}`,
-                  },
-                )}
-              >
-                {entity.openTransactionCasesCount} Transaction Cases
-              </Link>
-            </div>
             <Link
               to={makeUrl(
                 '/case-management/user',
@@ -140,7 +125,7 @@ export default function HitsPerUserCard(props: Props) {
                 },
               )}
             >
-              {entity.openUserCasesCount} User Cases
+              {entity.openUserCasesCount} Cases
             </Link>
           </>
         );

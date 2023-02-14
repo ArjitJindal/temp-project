@@ -51,7 +51,6 @@ const TableList = () => {
         ruleDescriptionAlias: basicDetailsStep.ruleDescription,
         filters: standardFiltersStep,
         casePriority: basicDetailsStep.casePriority,
-        caseCreationType: 'USER',
         nature: basicDetailsStep.ruleNature,
         parameters: undefined,
         ...(isPulseEnabled

@@ -1,17 +1,12 @@
 import { RangeValue } from 'rc-picker/es/interface';
 import { QueryKey } from '@tanstack/react-query';
 import { Dayjs } from '@/utils/dayjs';
-import { CaseType, ListType } from '@/apis';
+import { ListType } from '@/apis';
 import { TransactionsUniquesField } from '@/apis/models/TransactionsUniquesField';
 
 type AnyParameters = unknown;
 
-export const CASES_LIST = (type: CaseType, params: AnyParameters): QueryKey => [
-  'cases',
-  'list',
-  type,
-  { params },
-];
+export const CASES_LIST = (params: AnyParameters): QueryKey => ['cases', 'list', { params }];
 export const CASES_ITEM = (transactionId: string): QueryKey => ['cases', transactionId];
 export const CASES_ITEM_RULES = (caseId: string): QueryKey => ['cases', caseId, 'rules'];
 export const CASES_RULE_TRANSACTIONS = (

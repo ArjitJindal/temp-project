@@ -13,7 +13,6 @@ import { useBackUrl } from '@/utils/backUrl';
 import { useQuery } from '@/utils/queries/hooks';
 import AsyncResourceRenderer from '@/components/common/AsyncResourceRenderer';
 import { CASES_ITEM } from '@/utils/queries/keys';
-import TransactionCaseDetails from '@/pages/case-management-item/TransactionCaseDetails';
 import UserCaseDetails from '@/pages/case-management-item/UserCaseDetails';
 import Button from '@/components/ui/Button';
 import COLORS from '@/components/ui/colors';
@@ -116,23 +115,12 @@ function CaseManagementItemPage() {
               <PrintButton onClickAction={() => expandableContext.setExpandMode('EXPAND_ALL')} />
             </div>
             <Card.Section>
-              {caseItem.caseType === 'TRANSACTION' && (
-                <TransactionCaseDetails
-                  caseItem={caseItem}
-                  onCaseUpdate={handleCaseUpdate}
-                  onReload={onReload}
-                  updateCollapseState={updateCollapseState}
-                />
-              )}
-
-              {caseItem.caseType === 'USER' && (
-                <UserCaseDetails
-                  caseItem={caseItem}
-                  onCaseUpdate={handleCaseUpdate}
-                  updateCollapseState={updateCollapseState}
-                  onReload={onReload}
-                />
-              )}
+              <UserCaseDetails
+                caseItem={caseItem}
+                onCaseUpdate={handleCaseUpdate}
+                updateCollapseState={updateCollapseState}
+                onReload={onReload}
+              />
             </Card.Section>
           </>
         )}

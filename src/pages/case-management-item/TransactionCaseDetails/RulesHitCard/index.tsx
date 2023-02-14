@@ -3,7 +3,6 @@ import * as Card from '@/components/ui/Card';
 import Table from '@/components/ui/Table';
 import { HitRulesDetails } from '@/apis';
 import { RuleActionStatus } from '@/components/ui/RuleActionStatus';
-import { filterRulesHitByCaseCreationType } from '@/utils/rules';
 
 interface Props {
   rulesHit: HitRulesDetails[];
@@ -40,7 +39,7 @@ export default function RulesHitCard(props: Props) {
             },
           ]}
           data={{
-            items: filterRulesHitByCaseCreationType(rulesHit, 'TRANSACTION'),
+            items: rulesHit,
           }}
         />
       </Card.Section>

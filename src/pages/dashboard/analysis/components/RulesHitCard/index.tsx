@@ -78,20 +78,6 @@ export default function RuleHitCard() {
         }
         return (
           <>
-            <div>
-              <Link
-                to={makeUrl(
-                  '/case-management/transaction',
-                  {},
-                  {
-                    rulesHitFilter: entity.ruleInstanceId,
-                    createdTimestamp: `${startTimestamp},${endTimestamp}`,
-                  },
-                )}
-              >
-                {entity.openTransactionCasesCount} Transaction Cases
-              </Link>
-            </div>
             <Link
               to={makeUrl(
                 '/case-management/user',
@@ -102,7 +88,7 @@ export default function RuleHitCard() {
                 },
               )}
             >
-              {entity.openUserCasesCount} User Cases
+              {entity.openUserCasesCount} Cases
             </Link>
           </>
         );
