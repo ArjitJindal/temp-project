@@ -1709,6 +1709,17 @@ paths:
           description: OK
         '403':
           description: Not enough privileges
+  /me:
+    get:
+      summary: Get details about current user
+      operationId: me
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Account'
   /accounts:
     post:
       summary: Account - Invite

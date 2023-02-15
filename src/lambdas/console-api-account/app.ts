@@ -35,6 +35,10 @@ export const accountsHandler = lambdaApi()(
     const rolesService = new RoleService(config)
     const organization = await accountsService.getAccountTenant(userId)
 
+    if (event.httpMethod === 'GET' && event.resource === '/me') {
+      return await accountsService.getAccount(userId)
+    }
+
     if (event.httpMethod === 'GET' && event.resource === '/accounts') {
       // todo: this call can only return up to 1000 users, need to handle this
       const accounts: Account[] = await accountsService.getTenantAccounts(

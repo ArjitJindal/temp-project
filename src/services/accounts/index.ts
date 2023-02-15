@@ -217,6 +217,11 @@ export class AccountsService {
 
     return users.map(AccountsService.userToAccount)
   }
+  async getAccount(id: string): Promise<Account> {
+    const managementClient: ManagementClient<AppMetadata> =
+      await this.getManagementClient()
+    return AccountsService.userToAccount(await managementClient.getUser({ id }))
+  }
 
   async getTenants(): Promise<Tenant[]> {
     const managementClient = new ManagementClient(await this.getAuth0Client())
