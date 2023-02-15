@@ -45,7 +45,7 @@ export default function Select<Value extends InputType = InputType>(props: Props
     filterOption: (inputValue: string, option?: Option<Value>) => {
       const searchString = inputValue.toLowerCase();
       return (
-        (option?.label.toLowerCase().includes(searchString) ||
+        (option?.label?.toLowerCase().includes(searchString) ||
           option?.value?.toString().toLowerCase().includes(searchString)) ??
         false
       );
