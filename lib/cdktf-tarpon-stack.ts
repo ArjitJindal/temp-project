@@ -61,7 +61,7 @@ export class CdktfTarponStack extends TerraformStack {
 
     // TODO split out into modules to avoid if == prod statements
     let identifiers: string[] = [`${process.env.ENV as string}.api`]
-    if (process.env.ENV == 'prod') {
+    if (process.env.ENV?.startsWith('prod')) {
       identifiers = ['api', 'asia-1.api', 'asia-2.api', 'eu-1.api', 'us-1.api']
     }
 
