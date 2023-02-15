@@ -59,37 +59,49 @@ export class CdktfTarponStack extends TerraformStack {
       clientSecret: auth0ClientSecret,
     })
 
+    // TODO split out into modules to avoid if == prod statements
+    let identifiers: string[] = [`${process.env.ENV as string}.api`]
+    if (process.env.ENV == 'prod') {
+      identifiers = ['api', 'asia-1.api', 'asia-2.api', 'eu-1.api', 'us-1.api']
+    }
+
     const scopes = PERMISSIONS.map((p) => {
       return {
         description: p,
         value: p,
       }
     })
-    const apiGateway = new auth0.resourceServer.ResourceServer(
-      this,
-      'api-gateway',
-      {
-        name: 'APIGateway',
-        identifier: config.application.AUTH0_AUDIENCE,
-        signingAlg: 'RS256',
-        allowOfflineAccess: false,
-        tokenLifetime: 86400,
-        tokenLifetimeForWeb: 7200,
-        skipConsentForVerifiableFirstPartyClients: true,
-        enforcePolicies: true,
-        tokenDialect: 'access_token_authz',
-        scopes,
-      }
-    )
-
+    const resourceIdentifiers = identifiers.map((identifier) => {
+      const apiGateway = new auth0.resourceServer.ResourceServer(
+        this,
+        `api-gateway-${identifier}`,
+        {
+          name: `APIGateway (${identifier})`,
+          identifier: `https://${identifier}.flagright.com/`,
+          signingAlg: 'RS256',
+          allowOfflineAccess: false,
+          tokenLifetime: 86400,
+          tokenLifetimeForWeb: 7200,
+          skipConsentForVerifiableFirstPartyClients: true,
+          enforcePolicies: true,
+          tokenDialect: 'access_token_authz',
+          scopes,
+        }
+      )
+      return apiGateway.identifier
+    })
     DEFAULT_ROLES.map(
       ({ role, permissions }) =>
         new auth0.role.Role(this, role, {
           name: `default:${role}`,
-          permissions: permissions.map((p) => ({
-            name: p,
-            resourceServerIdentifier: apiGateway.identifier,
-          })),
+          permissions: resourceIdentifiers.flatMap(
+            (resourceServerIdentifier) => {
+              return permissions.map((p) => ({
+                name: p,
+                resourceServerIdentifier,
+              }))
+            }
+          ),
         })
     )
     const postLoginCode = fs.readFileSync('lib/auth0/post-login.js', 'utf8')
