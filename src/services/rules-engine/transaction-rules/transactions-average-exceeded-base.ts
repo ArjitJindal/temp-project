@@ -382,8 +382,8 @@ export default abstract class TransactionAverageExceededBaseRule<
         },
         ['timestamp', 'originAmountDetails', 'destinationAmountDetails']
       )
-    const sendingTransactionsToCheck = sendingTransactions
-    const receivingTransactionsToCheck = receivingTransactions
+    const sendingTransactionsToCheck = [...sendingTransactions]
+    const receivingTransactionsToCheck = [...receivingTransactions]
     if (direction === 'origin') {
       sendingTransactionsToCheck.push(this.transaction)
     } else {

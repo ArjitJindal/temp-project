@@ -115,8 +115,8 @@ export abstract class TransactionAggregationRule<
     )
     const userKeyId =
       direction === 'origin'
-        ? getSenderKeyId(this.tenantId, this.transaction)
-        : getReceiverKeyId(this.tenantId, this.transaction)
+        ? getSenderKeyId(this.tenantId, this.transaction, true)
+        : getReceiverKeyId(this.tenantId, this.transaction, true)
     if (!userKeyId) {
       return
     }
