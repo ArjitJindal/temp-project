@@ -38,6 +38,8 @@ export default {
   'menu.account.trigger': 'Trigger Error',
   'menu.account.logout': 'Logout',
   'menu.accounts': 'Team Management',
+  'menu.accounts.team': 'Team Accounts',
+  'menu.accounts.roles': 'Configure Roles',
   'menu.settings': 'Settings',
   'menu.auditlog': 'Audit Log',
   'menu.risk-levels': 'Risk Scoring',

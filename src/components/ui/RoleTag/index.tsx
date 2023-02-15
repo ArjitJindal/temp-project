@@ -19,7 +19,6 @@ function getColor(role: AccountRoleName): ColorSet {
     case 'approver':
     case 'auditor':
     case 'developer':
-    case 'qa_analyst':
       return COLORS.leafGreen;
   }
   return neverReturn(role, COLORS.brandBlue);

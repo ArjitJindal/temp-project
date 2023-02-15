@@ -1,12 +1,13 @@
-import { useRef } from 'react';
+import React, { useRef } from 'react';
 import { message } from 'antd';
 import { DrawerForm, ProFormInstance, ProFormSelect, ProFormText } from '@ant-design/pro-form';
 import { PlusOutlined } from '@ant-design/icons';
-import _ from 'lodash';
+import { sentenceCase } from '@antv/x6/es/util/string/format';
 import Button from '@/components/ui/Button';
 import { useApi } from '@/api';
-import { UserRole } from '@/utils/user-utils';
 import { Account } from '@/apis';
+import { ACCOUNT_ROLE_NAMES } from '@/apis/models-custom/AccountRoleName';
+import { useFeatureEnabled } from '@/components/AppWrapper/Providers/SettingsProvider';
 
 interface Props {
   editAccount: Account | null;
@@ -16,6 +17,11 @@ export default function AccountForm(props: Props) {
   const { editAccount, onSuccess } = props;
   const api = useApi();
   const formRef = useRef<ProFormInstance>();
+  let roles = ['admin', 'user'];
+  if (useFeatureEnabled('RBAC')) {
+    roles = ACCOUNT_ROLE_NAMES.filter((name) => ['root', 'user'].indexOf(name) == -1);
+  }
+
   const isEdit = editAccount !== null;
   // todo: i18n
   const initialValues =
@@ -23,7 +29,7 @@ export default function AccountForm(props: Props) {
       ? editAccount
       : {
           email: '',
-          role: 'user',
+          role: 'admin',
         };
   return (
     <DrawerForm<Account>
@@ -52,9 +58,9 @@ export default function AccountForm(props: Props) {
       onFinish={async (values) => {
         if (isEdit) {
           try {
-            await api.accountsPatch({
+            await api.accountsChangeRole({
               accountId: editAccount?.id,
-              AccountPatchPayload: {
+              ChangeRolePayload: {
                 role: values.role,
               },
             });
@@ -102,12 +108,10 @@ export default function AccountForm(props: Props) {
         width="md"
         name="role"
         label="Role"
-        options={Object.keys(UserRole)
-          .filter((key) => UserRole[key] !== UserRole.ROOT)
-          .map((key) => ({
-            value: UserRole[key],
-            label: _.capitalize(key),
-          }))}
+        options={roles.map((name) => ({
+          value: name,
+          label: sentenceCase(name),
+        }))}
         rules={[
           {
             required: true,

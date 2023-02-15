@@ -2,7 +2,11 @@ set -e
 
 rm -rf src/apis
 
-yarn exec openapi-generator-cli generate -- -i config/openapi.yaml -g typescript -o src/apis --additional-properties=modelPropertyNaming=original --template-dir build/openapi_generate_templates
+yarn exec openapi-generator-cli generate -- -i config/openapi.yaml -g typescript -o src/apis --additional-properties=modelPropertyNaming=original --template-dir build/openapi_generate_templates/overrides
+
+mkdir -p /tmp/flagright/phytoplankton || true
+yarn exec openapi-generator-cli generate -- -i config/openapi.yaml -g typescript -o /tmp/flagright/phytoplankton --additional-properties=modelPropertyNaming=original --template-dir build/openapi_generate_templates/custom
+mv /tmp/flagright/phytoplankton/models src/apis/models-custom
 
 # Fix wrong TS types
 if [ "$(uname)" = "Darwin" ]; then

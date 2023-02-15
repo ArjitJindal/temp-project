@@ -266,7 +266,10 @@ export default function Table<
 
   const tableOffsetTop = (tableElement.current && getClientOffset(tableElement.current))?.top || 0;
   return (
-    <div className={style.root} ref={tableElement}>
+    <div
+      className={cn(style.root, { [style.disableExpandedRowPadding]: disableExpandedRowPadding })}
+      ref={tableElement}
+    >
       <ProTable<TableRow<T>, Params>
         style={{
           ...(autoAdjustHeight
@@ -325,7 +328,6 @@ export default function Table<
           )
         }
         className={cn(style.table, className, {
-          [style.disableExpandedRowPadding]: disableExpandedRowPadding,
           [style.disableInternalPadding]: disableInternalPadding,
         })}
         locale={TABLE_LOCALE}

@@ -299,7 +299,18 @@ export function useRoutes(): RouteItem[] {
         icon: 'UsergroupAddOutlined',
         name: 'accounts',
         position: 'bottom',
-        component: AccountsPage,
+        hideChildrenInMenu: true,
+        routes: [
+          {
+            path: '/accounts',
+            redirect: '/accounts/team',
+          },
+          {
+            path: '/accounts/:section',
+            name: 'accounts-section',
+            component: AccountsPage,
+          },
+        ],
       },
       {
         path: '/',
