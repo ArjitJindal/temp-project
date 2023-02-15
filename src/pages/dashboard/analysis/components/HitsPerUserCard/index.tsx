@@ -116,7 +116,7 @@ export default function HitsPerUserCard(props: Props) {
           <>
             <Link
               to={makeUrl(
-                '/case-management/user',
+                '/case-management/cases',
                 {},
                 {
                   userId: entity.userId,

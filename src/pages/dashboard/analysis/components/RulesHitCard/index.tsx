@@ -80,7 +80,7 @@ export default function RuleHitCard() {
           <>
             <Link
               to={makeUrl(
-                '/case-management/user',
+                '/case-management/cases',
                 {},
                 {
                   rulesHitFilter: entity.ruleInstanceId,
