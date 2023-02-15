@@ -40,6 +40,7 @@ export function useAccountRole(): UserRole {
   const user = useAuth0User();
   return parseUserRole(user?.role ?? null);
 }
+
 export function usePermissions(): Map<Permission, boolean> {
   const user = useAuth0User();
   return user.permissions || new Map<Permission, boolean>();

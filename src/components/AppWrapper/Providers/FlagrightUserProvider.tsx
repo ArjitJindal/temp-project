@@ -9,6 +9,7 @@ import { useQuery } from '@/utils/queries/hooks';
 import { useAuth } from '@/components/AppWrapper/Providers/AuthProvider';
 import { getBranding } from '@/utils/branding';
 import { USER_INFO } from '@/utils/queries/keys';
+import { Permission } from '@/apis';
 
 const branding = getBranding();
 
@@ -32,6 +33,9 @@ export default function FlagrightUserProvider(props: { children: React.ReactNode
       const demoMode: boolean | null = user[`${NAMESPACE}/demoMode`];
       const role = user[`${NAMESPACE}/role`] ?? 'user';
       const userId = user[`${NAMESPACE}/userId`] ?? null;
+      const permissionsList: Permission[] = user[`permissions`] ?? [];
+      const permissions = new Map<Permission, boolean>();
+      permissionsList.map((p) => permissions.set(p, true));
 
       if (tenantConsoleApiUrl == null || tenantId == null || tenantName == null) {
         return 'ORPHAN';
@@ -47,6 +51,7 @@ export default function FlagrightUserProvider(props: { children: React.ReactNode
         tenantConsoleApiUrl: tenantConsoleApiUrl,
         verifiedEmail: verifiedEmail ?? null,
         demoMode: demoMode === true,
+        permissions,
       };
 
       return appUser;

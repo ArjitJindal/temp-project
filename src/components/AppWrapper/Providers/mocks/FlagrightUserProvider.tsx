@@ -1,7 +1,11 @@
 import React from 'react';
 import { Context } from '@/utils/user-utils';
+import { Permission } from '@/apis';
+import { PERMISSIONS } from '@/apis/models-custom/Permission';
 
 export default function FlagrightUserProviderMock(props: { children: React.ReactNode }) {
+  const permissions = new Map<Permission, boolean>();
+  PERMISSIONS.map((p) => permissions.set(p, true));
   return (
     <Context.Provider
       value={{
@@ -15,6 +19,7 @@ export default function FlagrightUserProviderMock(props: { children: React.React
           tenantName: 'Mock Tenant',
           tenantConsoleApiUrl: 'https://example.com/mock',
           demoMode: false,
+          permissions,
         },
       }}
     >

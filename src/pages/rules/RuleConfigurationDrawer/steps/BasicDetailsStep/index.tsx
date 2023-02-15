@@ -2,7 +2,7 @@ import React from 'react';
 import StepHeader from '../../StepHeader';
 import s from './style.module.less';
 import Label from '@/components/library/Label';
-import { CasePriority, Rule, RuleNature } from '@/apis';
+import { Priority, Rule, RuleNature } from '@/apis';
 import TextInput from '@/components/library/TextInput';
 import SelectionGroup from '@/components/library/SelectionGroup';
 import { RULE_CASE_PRIORITY } from '@/pages/rules/utils';
@@ -13,7 +13,7 @@ export interface FormValues {
   ruleName: string | undefined;
   ruleDescription: string | undefined;
   ruleNature: RuleNature;
-  casePriority: CasePriority;
+  casePriority: Priority;
 }
 
 export const INITIAL_VALUES: FormValues = {
@@ -94,11 +94,7 @@ function CaseCreationDetails() {
       <PropertyListLayout>
         <InputField<FormValues> name={'casePriority'} label={'Case priority'}>
           {(inputProps) => (
-            <SelectionGroup<CasePriority>
-              mode="SINGLE"
-              options={RULE_CASE_PRIORITY}
-              {...inputProps}
-            />
+            <SelectionGroup<Priority> mode="SINGLE" options={RULE_CASE_PRIORITY} {...inputProps} />
           )}
         </InputField>
       </PropertyListLayout>

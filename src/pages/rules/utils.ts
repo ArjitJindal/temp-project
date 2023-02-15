@@ -1,4 +1,4 @@
-import { CasePriority, RuleNature } from '@/apis';
+import { Priority, RuleNature } from '@/apis';
 import { RuleAction } from '@/apis/models/RuleAction';
 import { RuleInstanceMap, RulesMap } from '@/utils/rules';
 
@@ -37,7 +37,7 @@ export const RULE_NATURE_OPTIONS: { label: string; value: RuleNature }[] = [
   { label: 'Fraud', value: 'FRAUD' },
 ];
 
-export const RULE_CASE_PRIORITY: { label: string; value: CasePriority }[] = [
+export const RULE_CASE_PRIORITY: { label: string; value: Priority }[] = [
   { label: 'P1', value: 'P1' },
   { label: 'P2', value: 'P2' },
   { label: 'P3', value: 'P3' },

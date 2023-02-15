@@ -6,6 +6,7 @@ import { Small } from '@/components/ui/Typography';
 import UserTransactionHistoryTable from '@/pages/users-item/UserDetails/UserTransactionHistoryTable';
 import InsightsCard from '@/pages/case-management-item/UserCaseDetails/InsightsCard';
 import CommentsCard from '@/components/CommentsCard';
+import Authorized from '@/components/Authorized';
 
 interface Props {
   user?: InternalConsumerUser | InternalBusinessUser | MissingUser;
@@ -28,26 +29,27 @@ function UserDetails(props: Props) {
     onUserUpdate,
     uiSettings,
   } = props;
-
   if (user == null || !('type' in user)) {
     return <Small>No user details found</Small>;
   }
   return (
     <>
-      {user?.type === 'BUSINESS' && (
-        <BusinessUserDetails
-          user={user}
-          updateCollapseState={props.updateCollapseState}
-          uiSettings={uiSettings}
-        />
-      )}
-      {user?.type === 'CONSUMER' && (
-        <ConsumerUserDetails
-          user={user}
-          updateCollapseState={props.updateCollapseState}
-          uiSettings={uiSettings}
-        />
-      )}
+      <Authorized required={['users:user-details:read']}>
+        {user?.type === 'BUSINESS' && (
+          <BusinessUserDetails
+            user={user}
+            updateCollapseState={props.updateCollapseState}
+            uiSettings={uiSettings}
+          />
+        )}
+        {user?.type === 'CONSUMER' && (
+          <ConsumerUserDetails
+            user={user}
+            updateCollapseState={props.updateCollapseState}
+            uiSettings={uiSettings}
+          />
+        )}
+      </Authorized>
       {!hideHistory && (
         <UserTransactionHistoryTable
           userId={user.userId}
