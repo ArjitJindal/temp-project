@@ -2513,7 +2513,7 @@ paths:
       operationId: get-case
       x-flagright:
         permissions:
-          - case-management:case-overview:write
+          - case-management:case-overview:read
       responses:
         '200':
           description: OK
