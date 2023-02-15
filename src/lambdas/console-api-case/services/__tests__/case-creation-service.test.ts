@@ -71,6 +71,8 @@ describe('User cases', () => {
         ...result,
       })
       expect(cases.length).toEqual(1)
+      expect(cases[0].alerts).toBeDefined()
+
       expectUserCase(cases, {
         originUserId: TEST_USER_1.userId,
       })
@@ -99,6 +101,7 @@ describe('User cases', () => {
         ...result,
       })
       expect(cases.length).toEqual(1)
+      expect(cases[0].alerts).toBeDefined()
       expectUserCase(cases, {
         destinationUserId: TEST_USER_1.userId,
       })
@@ -137,6 +140,8 @@ describe('User cases', () => {
       })
       expect(case1.relatedCases).toHaveLength(1)
       expect(case2.relatedCases).toHaveLength(1)
+      expect(case1.alerts).toBeDefined()
+      expect(case2.alerts).toBeDefined()
       expect(case1.relatedCases?.[0]).toEqual(case2.caseId)
       expect(case2.relatedCases?.[0]).toEqual(case1.caseId)
     })

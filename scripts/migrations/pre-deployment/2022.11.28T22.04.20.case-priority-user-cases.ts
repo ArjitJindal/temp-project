@@ -5,7 +5,7 @@ import { RuleInstanceRepository } from '@/services/rules-engine/repositories/rul
 import { getDynamoDbClient } from '@/utils/dynamodb'
 import { getMongoDbClient } from '@/utils/mongoDBUtils'
 import { Tenant } from '@/services/accounts'
-import { CasePriority } from '@/@types/openapi-public-management/CasePriority'
+import { Priority } from '@/@types/openapi-public-management/Priority'
 
 async function migrateTenant(tenant: Tenant) {
   const mongoDb = await getMongoDbClient()
@@ -31,7 +31,7 @@ async function migrateTenant(tenant: Tenant) {
       continue
     }
     if (!c.priority) {
-      const priorities: CasePriority[] = []
+      const priorities: Priority[] = []
       if (c?.caseTransactions?.length) {
         for (const caseTransaction of c.caseTransactions) {
           for (const hitRule of caseTransaction.hitRules) {
@@ -47,7 +47,7 @@ async function migrateTenant(tenant: Tenant) {
 
         await caseRepositry.addCaseMongo({
           ...c,
-          priority: maxPriority ?? ('P4' as unknown as CasePriority),
+          priority: maxPriority ?? ('P4' as unknown as Priority),
         })
       }
     }

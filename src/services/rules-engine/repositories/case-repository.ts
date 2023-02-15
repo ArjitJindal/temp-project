@@ -24,8 +24,7 @@ import { EntityCounter } from '@/@types/openapi-internal/EntityCounter'
 import { CaseStatus } from '@/@types/openapi-internal/CaseStatus'
 import { Case } from '@/@types/openapi-internal/Case'
 import { CaseStatusChange } from '@/@types/openapi-internal/CaseStatusChange'
-import { CasePriority } from '@/@types/openapi-internal/CasePriority'
-import { CASE_PRIORITY } from '@/@types/case/case-priority'
+import { Priority } from '@/@types/openapi-internal/Priority'
 import { User } from '@/@types/openapi-public/User'
 import { Business } from '@/@types/openapi-public/Business'
 import { Tag } from '@/@types/openapi-public/Tag'
@@ -44,6 +43,7 @@ import {
   COUNT_QUERY_LIMIT,
 } from '@/utils/pagination'
 import { CaseTransaction } from '@/@types/openapi-internal/CaseTransaction'
+import { PRIORITYS } from '@/@types/openapi-internal-custom/Priority'
 
 export const MAX_TRANSACTION_IN_A_CASE = 1000
 
@@ -64,16 +64,14 @@ export class CaseRepository {
     this.dynamoDb = connections.dynamoDb as DynamoDBDocumentClient
   }
 
-  static getPriority(
-    ruleCasePriority: ReadonlyArray<CasePriority>
-  ): CasePriority {
+  static getPriority(ruleCasePriority: ReadonlyArray<Priority>): Priority {
     return ruleCasePriority.reduce((prev, curr) => {
-      if (CASE_PRIORITY.indexOf(curr) < CASE_PRIORITY.indexOf(prev)) {
+      if (PRIORITYS.indexOf(curr) < PRIORITYS.indexOf(prev)) {
         return curr
       } else {
         return prev
       }
-    }, CASE_PRIORITY[CASE_PRIORITY.length - 1])
+    }, PRIORITYS[PRIORITYS.length - 1])
   }
 
   async addCaseMongo(caseEntity: Case): Promise<Case> {
@@ -97,6 +95,32 @@ export class CaseRepository {
           ).value
           caseEntity._id = caseCount?.count
           caseEntity.caseId = `C-${caseEntity._id}`
+        }
+        if (caseEntity.alerts) {
+          caseEntity.alerts = await Promise.all(
+            caseEntity.alerts?.map(async (alert) => {
+              if (alert._id && alert.alertId) {
+                return alert
+              }
+              const counterCollection = db.collection<EntityCounter>(
+                COUNTER_COLLECTION(this.tenantId)
+              )
+              const alertCount = (
+                await counterCollection.findOneAndUpdate(
+                  { entity: 'Alert' },
+                  { $inc: { count: 1 } },
+                  { upsert: true, returnDocument: 'after' }
+                )
+              ).value
+
+              return {
+                _id: alertCount?.count,
+                alertId: `A-${alertCount?.count}`,
+                caseId: caseEntity.caseId,
+                ...alert,
+              }
+            })
+          )
         }
         await casesCollection.replaceOne(
           { caseId: caseEntity.caseId },

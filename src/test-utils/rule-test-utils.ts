@@ -12,7 +12,7 @@ import { TransactionMonitoringResult } from '@/@types/openapi-public/Transaction
 import { UserMonitoringResult } from '@/@types/openapi-public/UserMonitoringResult'
 import { ConsumerUserEvent } from '@/@types/openapi-public/ConsumerUserEvent'
 import { User } from '@/@types/openapi-public/User'
-import { CasePriority } from '@/@types/openapi-internal/CasePriority'
+import { Priority } from '@/@types/openapi-internal/Priority'
 import { getDynamoDbClient } from '@/utils/dynamodb'
 import { RuleInstance } from '@/@types/openapi-internal/RuleInstance'
 
@@ -51,7 +51,7 @@ export async function createRule(
       action: createdRule.defaultAction,
       riskLevelActions: createdRule.defaultRiskLevelActions,
       status: 'ACTIVE',
-      casePriority: createdRule.defaultCasePriority as CasePriority,
+      casePriority: createdRule.defaultCasePriority as Priority,
       nature: createdRule.defaultNature,
       ...ruleInstance,
     })

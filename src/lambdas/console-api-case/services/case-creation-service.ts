@@ -4,6 +4,7 @@ import {
   MAX_TRANSACTION_IN_A_CASE,
 } from '@/services/rules-engine/repositories/case-repository'
 import { Case } from '@/@types/openapi-internal/Case'
+import { Alert } from '@/@types/openapi-internal/Alert'
 import { UserRepository } from '@/services/users/repositories/user-repository'
 import { RuleInstanceRepository } from '@/services/rules-engine/repositories/rule-instance-repository'
 import { TransactionWithRulesResult } from '@/@types/openapi-public/TransactionWithRulesResult'
@@ -11,11 +12,12 @@ import { InternalConsumerUser } from '@/@types/openapi-internal/InternalConsumer
 import { InternalBusinessUser } from '@/@types/openapi-internal/InternalBusinessUser'
 import { TransactionRepository } from '@/services/rules-engine/repositories/transaction-repository'
 import { RuleHitDirection } from '@/@types/openapi-public/RuleHitDirection'
-import { CasePriority } from '@/@types/openapi-public-management/CasePriority'
-import { CASE_PRIORITY } from '@/@types/case/case-priority'
+import { Priority } from '@/@types/openapi-public-management/Priority'
 import { CaseTransaction } from '@/@types/openapi-internal/CaseTransaction'
 import { logger } from '@/core/logger'
 import { RuleInstance } from '@/@types/openapi-internal/RuleInstance'
+import { HitRulesDetails } from '@/@types/openapi-internal/HitRulesDetails'
+import { PRIORITYS } from '@/@types/openapi-internal-custom/Priority'
 
 export class CaseCreationService {
   caseRepository: CaseRepository
@@ -82,6 +84,104 @@ export class CaseCreationService {
     }
   }
 
+  private getOrCreateAlertsForExistingCase(
+    hitRules: HitRulesDetails[],
+    alerts: Alert[] | undefined,
+    ruleInstances: readonly RuleInstance[],
+    createdTimestamp: number,
+    latestTransactionArrivalTimestamp: number
+  ) {
+    if (alerts) {
+      const newRuleHits = hitRules.filter(
+        (hitRule) =>
+          !alerts.some(
+            (alert) => alert.ruleInstanceId === hitRule.ruleInstanceId
+          )
+      )
+      const newAlerts =
+        newRuleHits.length > 0
+          ? this.getAlertsForNewCase(
+              hitRules.filter(
+                (hitRule) =>
+                  !alerts.some(
+                    (alert) => alert.ruleInstanceId === hitRule.ruleInstanceId
+                  )
+              ),
+              ruleInstances,
+              createdTimestamp,
+              latestTransactionArrivalTimestamp
+            )
+          : []
+
+      const existingAlerts = alerts.filter((alert) =>
+        hitRules.some(
+          (hitRule) => hitRule.ruleInstanceId === alert.ruleInstanceId
+        )
+      )
+
+      const updatedExistingAlerts =
+        existingAlerts.length > 0
+          ? this.updateExistingAlerts(
+              existingAlerts,
+              latestTransactionArrivalTimestamp
+            )
+          : []
+
+      return [...updatedExistingAlerts, ...newAlerts]
+    } else {
+      return this.getAlertsForNewCase(
+        hitRules,
+        ruleInstances,
+        createdTimestamp,
+        latestTransactionArrivalTimestamp
+      )
+    }
+  }
+
+  private getAlertsForNewCase(
+    hitRules: HitRulesDetails[],
+    ruleInstances: readonly RuleInstance[],
+    createdTimestamp: number,
+    latestTransactionArrivalTimestamp: number
+  ): Alert[] {
+    const alerts: Alert[] = hitRules.map((hitRule: HitRulesDetails) => {
+      let priority
+      ruleInstances.map((ruleInstance: RuleInstance) => {
+        if (hitRule.ruleInstanceId === ruleInstance.id) {
+          priority = ruleInstance.casePriority
+        }
+      })
+      return {
+        createdTimestamp: createdTimestamp,
+        latestTransactionArrivalTimestamp: latestTransactionArrivalTimestamp,
+        alertStatus: 'OPEN',
+        ruleId: hitRule.ruleId,
+        ruleInstanceId: hitRule.ruleInstanceId,
+        ruleName: hitRule.ruleName,
+        ruleDescription: hitRule.ruleDescription,
+        ruleAction: hitRule.ruleAction,
+        numberOfTransactionsHit: 1,
+        priority: (priority ?? _.last(PRIORITYS)) as Priority,
+      }
+    })
+
+    return alerts
+  }
+
+  private updateExistingAlerts(
+    alerts: Alert[],
+    latestTransactionArrivalTimestamp: number
+  ): Alert[] {
+    const updatedAlerts = alerts.map((alert) => {
+      return {
+        ...alert,
+        latestTransactionArrivalTimestamp: latestTransactionArrivalTimestamp,
+        numberOfTransactionsHit: alert.numberOfTransactionsHit + 1,
+      }
+    })
+    return updatedAlerts
+  }
+
   private getNewCase(
     direction: RuleHitDirection,
     user: InternalConsumerUser | InternalBusinessUser
@@ -104,7 +204,7 @@ export class CaseCreationService {
     params: {
       createdTimestamp: number
       latestTransactionArrivalTimestamp: number
-      priority: CasePriority
+      priority: Priority
       transaction: CaseTransaction
     },
     ruleInstances: ReadonlyArray<RuleInstance>
@@ -166,9 +266,16 @@ export class CaseCreationService {
               filteredTransaction,
             ],
             priority: _.min([
-              existedCase.priority ?? _.last(CASE_PRIORITY),
+              existedCase.priority ?? _.last(PRIORITYS),
               params.priority,
-            ]) as CasePriority,
+            ]) as Priority,
+            alerts: this.getOrCreateAlertsForExistingCase(
+              params.transaction.hitRules,
+              existedCase.alerts,
+              ruleInstances,
+              params.createdTimestamp,
+              params.latestTransactionArrivalTimestamp
+            ),
           })
         } else {
           logger.info('Create a new user case for a transaction')
@@ -180,6 +287,12 @@ export class CaseCreationService {
             caseTransactionsIds: [filteredTransaction.transactionId as string],
             caseTransactions: [filteredTransaction],
             priority: params.priority,
+            alerts: this.getAlertsForNewCase(
+              params.transaction.hitRules,
+              ruleInstances,
+              params.createdTimestamp,
+              params.latestTransactionArrivalTimestamp
+            ),
           })
         }
       }

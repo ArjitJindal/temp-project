@@ -2426,7 +2426,7 @@ paths:
           in: query
           name: filterTransactionState
         - schema:
-            $ref: '#/components/schemas/CasePriority'
+            $ref: '#/components/schemas/Priority'
           in: query
           name: filterPriority
         - schema:
@@ -2924,7 +2924,7 @@ components:
         defaultNature:
           $ref: '#/components/schemas/RuleNature'
         defaultCasePriority:
-          $ref: '#/components/schemas/CasePriority'
+          $ref: '#/components/schemas/Priority'
         descriptionTemplate:
           type: string
         defaultRiskLevelParameters:
@@ -2984,7 +2984,7 @@ components:
         ruleId:
           type: string
         casePriority:
-          $ref: '#/components/schemas/CasePriority'
+          $ref: '#/components/schemas/Priority'
         parameters:
           type: object
         action:
@@ -3066,9 +3066,9 @@ components:
       required:
         - level
         - alias
-    CasePriority:
+    Priority:
       type: string
-      title: CasePriority
+      title: Priority
       enum:
         - P1
         - P2
@@ -4248,6 +4248,10 @@ components:
           type: array
           items:
             type: string
+        alerts:
+          type: array
+          items:
+            $ref: '#/components/schemas/Alert'
         caseUsers:
           type: object
           properties:
@@ -4282,13 +4286,65 @@ components:
           items:
             $ref: '#/components/schemas/CaseStatusChange'
         priority:
-          $ref: '#/components/schemas/CasePriority'
+          $ref: '#/components/schemas/Priority'
         relatedCases:
           type: array
           items:
             type: string
         falsePositiveDetails:
           $ref: ../public/openapi-public-original.yaml#/components/schemas/FalsePositiveDetails
+    Alert:
+      title: Alert
+      type: object
+      x-stoplight:
+        id: l0vs685p5ftya
+      properties:
+        _id:
+          type: integer
+        alertId:
+          type: string
+        createdTimestamp:
+          type: number
+        latestTransactionArrivalTimestamp:
+          type: number
+        caseId:
+          type: string
+        alertStatus:
+          $ref: '#/components/schemas/CaseStatus'
+        assignments:
+          type: array
+          items:
+            $ref: '#/components/schemas/Assignment'
+        ruleInstanceId:
+          type: string
+        ruleName:
+          type: string
+        ruleDescription:
+          type: string
+        ruleId:
+          type: string
+        ruleAction:
+          $ref: '#/components/schemas/RuleAction'
+        numberOfTransactionsHit:
+          type: integer
+        priority:
+          $ref: '#/components/schemas/Priority'
+        statusChanges:
+          type: array
+          items:
+            $ref: '#/components/schemas/CaseStatusChange'
+        falsePositiveDetails:
+          $ref: ../public/openapi-public-original.yaml#/components/schemas/FalsePositiveDetails
+      required:
+        - createdTimestamp
+        - latestTransactionArrivalTimestamp
+        - ruleInstanceId
+        - ruleName
+        - ruleDescription
+        - ruleId
+        - ruleAction
+        - numberOfTransactionsHit
+        - priority
     CasesListResponse:
       title: CasesListResponse
       type: object
@@ -4370,7 +4426,7 @@ components:
         caseStatus:
           $ref: '#/components/schemas/CaseStatus'
         priority:
-          $ref: '#/components/schemas/CasePriority'
+          $ref: '#/components/schemas/Priority'
         otherReason:
           type: string
         comment:
