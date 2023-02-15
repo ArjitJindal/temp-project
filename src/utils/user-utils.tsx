@@ -1,7 +1,7 @@
 import React, { useContext, useEffect, useState } from 'react';
 import _ from 'lodash';
 import { useApi } from '@/api';
-import { Account } from '@/apis';
+import { Account, Permission } from '@/apis';
 
 // todo: rename file and utils to use "account" instead of "user" in names
 export enum UserRole {
@@ -22,8 +22,8 @@ export interface FlagrightAuth0User {
   tenantName: string;
   tenantConsoleApiUrl: string;
   demoMode: boolean;
+  permissions?: Map<Permission, boolean>;
 }
-
 let cachedUsers: Promise<Account[]> | null = null;
 
 export const NAMESPACE = 'https://flagright.com';
@@ -39,6 +39,10 @@ export function useAuth0User(): FlagrightAuth0User {
 export function useAccountRole(): UserRole {
   const user = useAuth0User();
   return parseUserRole(user?.role ?? null);
+}
+export function usePermissions(): Map<Permission, boolean> {
+  const user = useAuth0User();
+  return user.permissions || new Map<Permission, boolean>();
 }
 
 export function parseUserRole(role: string | null): UserRole {

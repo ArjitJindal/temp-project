@@ -1,3 +1,5 @@
+import { Permission } from '@/apis';
+
 export interface RouteCommonProps {
   path: string;
   position?: 'top' | 'bottom';
@@ -9,6 +11,7 @@ export interface LeafRouteItem extends RouteCommonProps {
   hideInMenu?: boolean;
   component: React.FC<any>; // todo: improve types
   disabled?: boolean;
+  permissions?: Permission[];
 }
 
 export interface TreeRouteItem extends RouteCommonProps {
@@ -18,6 +21,7 @@ export interface TreeRouteItem extends RouteCommonProps {
   hideInMenu?: boolean;
   hideChildrenInMenu?: boolean;
   disabled?: boolean;
+  permissions?: Permission[];
 }
 
 export interface RedirectRouteItem extends RouteCommonProps {

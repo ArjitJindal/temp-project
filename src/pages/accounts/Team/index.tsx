@@ -88,7 +88,8 @@ export default function Team() {
       fixed: 'right',
       exportData: false,
       render: (_, item) => {
-        if (user.userId === item.id) {
+        // Do not let people edit themselves or roots.
+        if (user.userId === item.id || user.role == 'root') {
           return null;
         }
 

@@ -69,7 +69,9 @@ function permissionsToRows(permissions: Permission[]): PermissionRow[] {
       return;
     }
     const [, section, subsection, action] = matches;
-    permsMap[section][subsection][action] = true;
+    if (permsMap[section][subsection] !== undefined) {
+      permsMap[section][subsection][action] = true;
+    }
   });
 
   return Object.keys(permsMap)

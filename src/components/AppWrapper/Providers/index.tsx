@@ -9,6 +9,7 @@ import FlagrightUserProvider from './FlagrightUserProvider';
 import { Feature } from '@/apis';
 import SettingsProviderMock from '@/components/AppWrapper/Providers/mocks/SettingsProvider';
 import FlagrightUserProviderMock from '@/components/AppWrapper/Providers/mocks/FlagrightUserProvider';
+import TokenCheckProvider from '@/components/AppWrapper/Providers/TokenCheckProvider';
 
 interface Props {
   children?: React.ReactNode;
@@ -31,13 +32,15 @@ export default function Providers(props: Props) {
     <AntConfigProvider>
       <QueryClientProvider>
         <FlagrightUserProvider>
-          <SettingsProvider globalFeatures={FEATURES_ENABLED as Feature[]}>
-            <SideBarProvider>
-              <MixPanelProvider>
-                <DemoModeProvider>{props.children}</DemoModeProvider>
-              </MixPanelProvider>
-            </SideBarProvider>
-          </SettingsProvider>
+          <TokenCheckProvider>
+            <SettingsProvider globalFeatures={FEATURES_ENABLED as Feature[]}>
+              <SideBarProvider>
+                <MixPanelProvider>
+                  <DemoModeProvider>{props.children}</DemoModeProvider>
+                </MixPanelProvider>
+              </SideBarProvider>
+            </SettingsProvider>
+          </TokenCheckProvider>
         </FlagrightUserProvider>
       </QueryClientProvider>
     </AntConfigProvider>

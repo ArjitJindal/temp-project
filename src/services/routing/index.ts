@@ -19,11 +19,13 @@ import ListsItemPage from '@/pages/lists-item';
 import RulesPage from '@/pages/rules';
 import RequestNewPage from '@/pages/rules/request-new';
 import { useFeatureEnabled } from '@/components/AppWrapper/Providers/SettingsProvider';
-import { RouteItem } from '@/services/routing/types';
+import { isLeaf, isTree, RouteItem } from '@/services/routing/types';
 import SettingsPage from '@/pages/settings';
 import SanctionsPage from '@/pages/sanctions';
 import AuditLogPage from '@/pages/auditlog';
-import { isAtLeastAdmin, useAuth0User } from '@/utils/user-utils';
+import { isAtLeastAdmin, useAuth0User, usePermissions } from '@/utils/user-utils';
+import { Permission } from '@/apis';
+import ForbiddenPage from '@/pages/403';
 
 export function useRoutes(): RouteItem[] {
   const isRiskLevelsEnabled = useFeatureEnabled('PULSE');
@@ -37,6 +39,8 @@ export function useRoutes(): RouteItem[] {
   const [lastActiveSanctionsTab] = useLocalStorageState('sanctions-active-tab', 'search');
   const user = useAuth0User();
   const isAtLeastAdminUser = isAtLeastAdmin(user);
+  const rbacEnabled = useFeatureEnabled('RBAC');
+  const permissions = usePermissions();
 
   return useMemo((): RouteItem[] => {
     const routes: (RouteItem | boolean)[] = [
@@ -64,11 +68,13 @@ export function useRoutes(): RouteItem[] {
         icon: 'FlagOutlined',
         position: 'top',
         hideChildrenInMenu: true,
+        permissions: ['case-management:case-overview:read'],
         routes: [
           {
             path: '/case-management/case/:id',
             component: CaseManagementItemPage,
             name: 'item',
+            permissions: ['case-management:case-details:read'],
           },
           {
             path: '/case-management',
@@ -87,11 +93,13 @@ export function useRoutes(): RouteItem[] {
         name: 'transactions',
         hideChildrenInMenu: true,
         position: 'top',
+        permissions: ['transactions:overview:read'],
         routes: [
           {
             path: '/transactions/item/:id',
             component: TransactionsItemPage,
             name: 'transactions-item',
+            permissions: ['transactions:details:read'],
           },
           {
             name: 'transactions-list',
@@ -115,6 +123,7 @@ export function useRoutes(): RouteItem[] {
         name: 'users',
         hideChildrenInMenu: true,
         position: 'top',
+        permissions: ['users:user-overview:read'],
         routes: [
           {
             path: '/users',
@@ -190,22 +199,26 @@ export function useRoutes(): RouteItem[] {
             name: 'risk-level',
             path: '/risk-levels/risk-level/',
             component: RiskLevelPage,
+            permissions: ['risk-scoring:risk-factors:read'],
           },
           {
             name: 'risk-level',
             path: '/risk-levels/risk-level/:type',
             component: RiskLevelPage,
             hideInMenu: true,
+            permissions: ['risk-scoring:risk-factors:read'],
           },
           {
             name: 'configure',
             path: '/risk-levels/configure',
             component: RiskLevelsConfigurePage,
+            permissions: ['risk-scoring:risk-levels:read'],
           },
           {
             name: 'risk-algorithm',
             path: '/risk-levels/risk-algorithm',
             component: RiskAlgorithmTable,
+            permissions: ['risk-scoring:risk-algorithms:read'],
           },
         ],
       },
@@ -218,11 +231,13 @@ export function useRoutes(): RouteItem[] {
           {
             name: 'import-users',
             path: '/import/import-users',
+            permissions: ['users:import:write'],
             component: UsersUsersFilesPage,
           },
           {
             name: 'import-transactions',
             path: '/import/import-transactions',
+            permissions: ['transactions:import:write'],
             component: TransactionsFilesPage,
           },
         ],
@@ -233,6 +248,7 @@ export function useRoutes(): RouteItem[] {
         icon: 'UnorderedListOutlined',
         position: 'top',
         hideChildrenInMenu: true,
+        permissions: ['lists:all:read'],
         routes: [
           {
             path: '/lists/:type',
@@ -257,6 +273,7 @@ export function useRoutes(): RouteItem[] {
         hideChildrenInMenu: true,
         position: 'top',
         disabled: !isSanctionsEnabled,
+        permissions: ['sanctions:search:read'],
         routes: isSanctionsEnabled
           ? [
               {
@@ -285,6 +302,8 @@ export function useRoutes(): RouteItem[] {
           icon: 'ContainerOutlined',
           name: 'auditlog',
           position: 'bottom',
+          permissions: ['audit-log:export:read'],
+
           component: AuditLogPage,
         },
       {
@@ -292,6 +311,7 @@ export function useRoutes(): RouteItem[] {
         icon: 'SettingOutlined',
         name: 'settings',
         position: 'bottom',
+        permissions: ['settings:organisation:read'],
         component: SettingsPage,
       },
       {
@@ -324,7 +344,9 @@ export function useRoutes(): RouteItem[] {
       },
     ];
 
-    return routes.filter((x): x is RouteItem => x !== false);
+    return routes
+      .filter((x): x is RouteItem => x !== false)
+      .map((r) => (rbacEnabled ? disableForbiddenRoutes(r, permissions) : r));
   }, [
     lastActiveTab,
     lastActiveRuleTab,
@@ -336,5 +358,30 @@ export function useRoutes(): RouteItem[] {
     isAuditLogEnabled,
     lastActiveSanctionsTab,
     isAtLeastAdminUser,
+    permissions,
+    rbacEnabled,
   ]);
+}
+
+function disableForbiddenRoutes(r: RouteItem, permissions?: Map<Permission, boolean>): RouteItem {
+  if (!(isLeaf(r) || isTree(r))) {
+    return r;
+  }
+  if (r.permissions && r.permissions.filter((required) => !permissions?.has(required)).length > 0) {
+    r.disabled = true;
+    if (isLeaf(r)) {
+      r.component = ForbiddenPage;
+    }
+  }
+  if (isTree(r)) {
+    // If parent disabled, disable children.
+    if (r.disabled) {
+      r.routes = r.routes.map((r) => ({ ...r, disabled: true, component: ForbiddenPage }));
+    } else {
+      r.routes = r.routes.map((r) => {
+        return disableForbiddenRoutes(r, permissions);
+      });
+    }
+  }
+  return r;
 }
