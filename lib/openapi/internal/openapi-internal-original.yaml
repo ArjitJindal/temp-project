@@ -29,6 +29,9 @@ paths:
     get:
       summary: Rules - List
       tags: []
+      x-flagright:
+        permissions:
+          - rules:library:read
       responses:
         '200':
           description: OK
@@ -66,6 +69,9 @@ paths:
     get:
       summary: Rule Filters - List
       tags: []
+      x-flagright:
+        permissions:
+          - rules:library:read
       responses:
         '200':
           description: OK
@@ -133,6 +139,9 @@ paths:
     post:
       summary: Rule Instance - Create
       operationId: post-rule_instances
+      x-flagright:
+        permissions:
+          - rules:my-rules:write
       responses:
         '200':
           description: OK
@@ -160,6 +169,9 @@ paths:
     get:
       summary: Rule Instance - List
       operationId: get-rule_instances
+      x-flagright:
+        permissions:
+          - rules:my-rules:read
       responses:
         '200':
           description: OK
@@ -214,12 +226,18 @@ paths:
     delete:
       summary: Rule Instance - Delete
       operationId: delete-rule_instances-ruleInstanceId
+      x-flagright:
+        permissions:
+          - rules:my-rules:write
       responses:
         '200':
           description: OK
     put:
       summary: Rule Instance - Update
       operationId: put-rule_instances-ruleInstanceId
+      x-flagright:
+        permissions:
+          - rules:my-rules:write
       responses:
         '200':
           description: OK
@@ -302,6 +320,9 @@ paths:
     get:
       summary: Lists - Get All By Type
       tags: []
+      x-flagright:
+        permissions:
+          - lists:all:read
       parameters:
         - schema:
             type: string
@@ -321,6 +342,9 @@ paths:
     post:
       summary: Lists - Post
       tags: []
+      x-flagright:
+        permissions:
+          - lists:all:write
       requestBody:
         content:
           application/json:
@@ -344,14 +368,20 @@ paths:
     delete:
       summary: Lists - Delete
       tags: []
+      x-flagright:
+        permissions:
+          - lists:all:write
       responses:
         '200':
           description: OK
       operationId: delete-list
     patch:
-      summary: Lists - Path
+      summary: Lists - Patch
       tags: []
       operationId: patch-list
+      x-flagright:
+        permissions:
+          - lists:all:write
       requestBody:
         content:
           application/json:
@@ -368,6 +398,9 @@ paths:
       summary: Lists - Item header
       tags: []
       operationId: get-list
+      x-flagright:
+        permissions:
+          - lists:all:read
       responses:
         '200':
           description: OK
@@ -388,6 +421,9 @@ paths:
       summary: Lists - Items
       tags: []
       operationId: get-list-items
+      x-flagright:
+        permissions:
+          - lists:all:read
       parameters:
         - schema:
             type: number
@@ -408,6 +444,9 @@ paths:
       summary: Lists - Post Item
       tags: []
       operationId: post-list-item
+      x-flagright:
+        permissions:
+          - lists:all:write
       requestBody:
         content:
           application/json:
@@ -432,6 +471,9 @@ paths:
       summary: Lists - Items - delete
       tags: []
       operationId: delete-list-item
+      x-flagright:
+        permissions:
+          - lists:all:write
       responses:
         '200':
           description: OK
@@ -439,6 +481,9 @@ paths:
     get:
       summary: Transaction - List
       tags: []
+      x-flagright:
+        permissions:
+          - transactions:overview:read
       responses:
         '200':
           description: OK
@@ -575,6 +620,10 @@ paths:
     post:
       summary: Transactions - Update
       operationId: post-transactions
+      x-flagright:
+        permissions:
+          - transactions:overview:write
+          - transactions:details:write
       responses:
         '200':
           description: OK
@@ -587,6 +636,9 @@ paths:
     get:
       summary: Transaction - Export
       tags: []
+      x-flagright:
+        permissions:
+          - transactions:export:read
       responses:
         '200':
           description: OK
@@ -683,6 +735,10 @@ paths:
   /transactions/uniques:
     get:
       summary: Transaction - Unique values for different fields
+      x-flagright:
+        permissions:
+          - transactions:overview:read
+          - transactions:details:read
       parameters:
         - schema:
             $ref: '#/components/schemas/TransactionsUniquesField'
@@ -714,6 +770,10 @@ paths:
     get:
       summary: Transaction - Get
       operationId: get-transaction
+      x-flagright:
+        permissions:
+          - transactions:overview:read
+          - transactions:details:read
       responses:
         '200':
           description: OK
@@ -728,6 +788,9 @@ paths:
     get:
       summary: Transaction - Stats
       tags: []
+      x-flagright:
+        permissions:
+          - transactions:overview:read
       responses:
         '200':
           description: OK
@@ -863,6 +926,9 @@ paths:
     get:
       summary: Transaction - Stats
       tags: []
+      x-flagright:
+        permissions:
+          - transactions:overview:read
       responses:
         '200':
           description: OK
@@ -998,6 +1064,9 @@ paths:
     get:
       summary: Consumer Users - List
       tags: []
+      x-flagright:
+        permissions:
+          - users:user-overview:read
       responses:
         '200':
           description: OK
@@ -1049,6 +1118,9 @@ paths:
     get:
       summary: All Users - List
       tags: []
+      x-flagright:
+        permissions:
+          - users:user-overview:read
       responses:
         '200':
           description: OK
@@ -1110,6 +1182,9 @@ paths:
     post:
       summary: Create a User Comment
       operationId: post-user-comments
+      x-flagright:
+        permissions:
+          - users:user-overview:write
       responses:
         '200':
           description: OK
@@ -1137,6 +1212,9 @@ paths:
     delete:
       summary: Delete a User Comment
       operationId: delete-users-userId-comments-commentId
+      x-flagright:
+        permissions:
+          - users:user-overview:write
       responses:
         '200':
           description: OK
@@ -1144,6 +1222,9 @@ paths:
     get:
       summary: Consumer Users - Item - GET
       tags: []
+      x-flagright:
+        permissions:
+          - users:user-overview:read
       responses:
         '200':
           description: OK
@@ -1164,6 +1245,9 @@ paths:
     post:
       summary: Consumer Users - Item - POST
       operationId: post-consumer-users-userId
+      x-flagright:
+        permissions:
+          - users:user-overview:write
       responses:
         '200':
           description: OK
@@ -1182,6 +1266,9 @@ paths:
     post:
       summary: Consumer User Files - Create
       operationId: post-consumer-users-userId-files
+      x-flagright:
+        permissions:
+          - users:user-overview:write
       responses:
         '200':
           description: OK
@@ -1205,6 +1292,9 @@ paths:
     delete:
       summary: Consumer User Files - Delete
       operationId: delete-consumer-users-userId-files-fileId
+      x-flagright:
+        permissions:
+          - users:user-overview:write
       responses:
         '200':
           description: OK
@@ -1212,6 +1302,9 @@ paths:
     get:
       summary: Business Users - List
       tags: []
+      x-flagright:
+        permissions:
+          - users:user-overview:read
       responses:
         '200':
           description: OK
@@ -1269,6 +1362,9 @@ paths:
     get:
       summary: Business Users - Item - Get
       tags: []
+      x-flagright:
+        permissions:
+          - users:user-overview:read
       responses:
         '200':
           description: OK
@@ -1289,6 +1385,9 @@ paths:
     post:
       summary: Business Users - Item - POST
       operationId: post-business-users-userId
+      x-flagright:
+        permissions:
+          - users:user-overview:write
       responses:
         '200':
           description: OK
@@ -1307,6 +1406,9 @@ paths:
     post:
       summary: Business User Files - Create
       operationId: post-business-users-userId-files
+      x-flagright:
+        permissions:
+          - users:user-overview:write
       responses:
         '200':
           description: OK
@@ -1330,6 +1432,9 @@ paths:
     delete:
       summary: Business User Files - Delete
       operationId: delete-business-users-userId-files-fileId
+      x-flagright:
+        permissions:
+          - users:user-overview:write
       responses:
         '200':
           description: OK
@@ -1337,6 +1442,9 @@ paths:
     get:
       summary: User - Unique values for different fields
       tags: []
+      x-flagright:
+        permissions:
+          - users:user-overview:read
       responses:
         '200':
           description: OK
@@ -1349,6 +1457,9 @@ paths:
     get:
       summary: DashboardStats - Transactions
       tags: []
+      x-flagright:
+        permissions:
+          - dashboard:download-data:read
       responses:
         '200':
           description: OK
@@ -1381,6 +1492,9 @@ paths:
     get:
       summary: DashboardStats - Rule hit
       tags: []
+      x-flagright:
+        permissions:
+          - dashboard:download-data:read
       responses:
         '200':
           description: OK
@@ -1405,6 +1519,9 @@ paths:
     get:
       summary: DashboardStats - DRS Distribution
       tags: []
+      x-flagright:
+        permissions:
+          - dashboard:download-data:read
       responses:
         '200':
           description: OK
@@ -1421,6 +1538,9 @@ paths:
     get:
       summary: DashboardStats - Hits per user
       tags: []
+      x-flagright:
+        permissions:
+          - dashboard:download-data:read
       responses:
         '200':
           description: OK
@@ -1451,6 +1571,9 @@ paths:
     post:
       summary: Create a Transaction Comment
       operationId: post-transactions-comments
+      x-flagright:
+        permissions:
+          - transactions:overview:write
       responses:
         '200':
           description: OK
@@ -1484,6 +1607,9 @@ paths:
     delete:
       summary: Delete a Transaction Comment
       operationId: delete-transactions-transactionId-comments-commentId
+      x-flagright:
+        permissions:
+          - transactions:overview:write
       responses:
         '200':
           description: OK
@@ -1547,6 +1673,9 @@ paths:
       summary: Role - List
       operationId: get-roles
       tags: []
+      x-flagright:
+        permissions:
+          - settings:organisation:read
       responses:
         '200':
           description: OK
@@ -1561,6 +1690,9 @@ paths:
       summary: Permissions - List
       operationId: get-permissions
       tags: []
+      x-flagright:
+        permissions:
+          - settings:organisation:read
       parameters:
         - schema:
             type: string
@@ -1684,23 +1816,6 @@ paths:
         name: accountId
         in: path
         required: true
-    patch:
-      summary: Account - Patch
-      operationId: accounts-patch
-      requestBody:
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/AccountPatchPayload'
-      responses:
-        '200':
-          description: OK
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Account'
-        '403':
-          description: Not enough privileges
     delete:
       summary: Account - Delete
       operationId: accounts-delete
@@ -1754,6 +1869,9 @@ paths:
     get:
       summary: Risk classification - GET
       tags: []
+      x-flagright:
+        permissions:
+          - risk-scoring:risk-levels:read
       responses:
         '200':
           description: OK
@@ -1774,6 +1892,9 @@ paths:
     post:
       summary: Risk classification - POST
       operationId: post-pulse-risk-classification
+      x-flagright:
+        permissions:
+          - risk-scoring:risk-levels:write
       responses:
         '200':
           description: OK
@@ -1804,6 +1925,9 @@ paths:
     post:
       summary: Risk Level - Manual Assignment
       operationId: pulse-manual-risk-assignment
+      x-flagright:
+        permissions:
+          - risk-scoring:risk-levels:write
       requestBody:
         content:
           application/json:
@@ -1835,6 +1959,9 @@ paths:
     get:
       summary: Risk Level - Get Manual Assignment
       operationId: get-pulse-risk-assignment
+      x-flagright:
+        permissions:
+          - risk-scoring:risk-levels:read
       responses:
         '200':
           description: OK
@@ -1856,6 +1983,9 @@ paths:
     get:
       summary: KYC Risk Value
       operationId: get-krs-value
+      x-flagright:
+        permissions:
+          - risk-scoring:risk-levels:read
       responses:
         '200':
           description: OK
@@ -1877,6 +2007,9 @@ paths:
     get:
       summary: Action Risk Value
       operationId: get-ars-value
+      x-flagright:
+        permissions:
+          - risk-scoring:risk-levels:read
       responses:
         '200':
           description: OK
@@ -1898,6 +2031,9 @@ paths:
     get:
       summary: Dynamic Risk Value
       operationId: get-drs-value
+      x-flagright:
+        permissions:
+          - risk-scoring:risk-levels:read
       responses:
         '200':
           description: OK
@@ -1919,6 +2055,9 @@ paths:
     get:
       summary: AuditLog
       operationId: get-auditlog
+      x-flagright:
+        permissions:
+          - audit-log:export:read
       responses:
         '200':
           description: OK
@@ -1975,6 +2114,9 @@ paths:
     post:
       summary: Parameter Risk Level - POST
       operationId: post-pulse-risk-parameter
+      x-flagright:
+        permissions:
+          - risk-scoring:risk-factors:write
       requestBody:
         content:
           application/json:
@@ -2000,6 +2142,9 @@ paths:
     get:
       summary: Parameter Risk Level - GET
       operationId: get-pulse-risk-parameter
+      x-flagright:
+        permissions:
+          - risk-scoring:risk-factors:read
       responses:
         '200':
           description: OK
@@ -2031,6 +2176,9 @@ paths:
     post:
       summary: Create a new webhook
       operationId: post-webhooks
+      x-flagright:
+        permissions:
+          - settings:developers:write
       responses:
         '200':
           description: OK
@@ -2046,6 +2194,9 @@ paths:
     get:
       summary: Get all webhooks
       operationId: get-webhooks
+      x-flagright:
+        permissions:
+          - settings:developers:read
       responses:
         '200':
           description: OK
@@ -2059,6 +2210,9 @@ paths:
     post:
       summary: Update a webhook
       operationId: post-webhooks-webhookid
+      x-flagright:
+        permissions:
+          - settings:developers:write
       responses:
         '200':
           description: OK
@@ -2080,6 +2234,9 @@ paths:
     delete:
       summary: Delete a webhook
       operationId: delete-webhooks-webhookId
+      x-flagright:
+        permissions:
+          - settings:developers:write
       responses:
         '200':
           description: OK
@@ -2092,6 +2249,9 @@ paths:
         required: true
     get:
       summary: Get secret of a webhook
+      x-flagright:
+        permissions:
+          - settings:developers:read
       tags: []
       responses:
         '200':
@@ -2110,6 +2270,9 @@ paths:
         required: true
     get:
       summary: Get webhook deliveries
+      x-flagright:
+        permissions:
+          - settings:developers:read
       tags: []
       responses:
         '200':
@@ -2134,6 +2297,9 @@ paths:
     get:
       summary: Cases - List
       tags: []
+      x-flagright:
+        permissions:
+          - case-management:case-overview:read
       responses:
         '200':
           description: OK
@@ -2327,6 +2493,9 @@ paths:
       responses:
         '200':
           description: OK
+      x-flagright:
+        permissions:
+          - case-management:case-overview:write
       requestBody:
         content:
           application/json:
@@ -2342,6 +2511,9 @@ paths:
     get:
       summary: Create a Case Comment
       operationId: get-case
+      x-flagright:
+        permissions:
+          - case-management:case-overview:write
       responses:
         '200':
           description: OK
@@ -2373,6 +2545,10 @@ paths:
     get:
       summary: Get transactions related to case
       operationId: get-case-transactions
+      x-flagright:
+        permissions:
+          - case-management:case-details:read
+          - transactions:overview:read
       responses:
         '200':
           description: OK
@@ -2413,6 +2589,10 @@ paths:
     get:
       summary: Get transactions related to a case rule
       operationId: get-case-transactions-for-rule
+      x-flagright:
+        permissions:
+          - case-management:case-details:read
+          - transactions:overview:read
       responses:
         '200':
           description: OK
@@ -2433,6 +2613,10 @@ paths:
     get:
       summary: Get rules related to case
       operationId: get-case-rules
+      x-flagright:
+        permissions:
+          - case-management:case-details:read
+          - rules:my-rules:read
       responses:
         '200':
           description: OK
@@ -2455,6 +2639,9 @@ paths:
     post:
       summary: Create a Case Comment
       operationId: post-case-comments
+      x-flagright:
+        permissions:
+          - case-management:case-overview:write
       responses:
         '200':
           description: OK
@@ -2482,6 +2669,9 @@ paths:
     delete:
       summary: Delete a Case Comment
       operationId: delete-cases-caseId-comments-commentId
+      x-flagright:
+        permissions:
+          - case-management:case-overview:write
       responses:
         '200':
           description: OK
@@ -2489,6 +2679,9 @@ paths:
     post:
       summary: Search Sanctions
       operationId: post-sanctions
+      x-flagright:
+        permissions:
+          - sanctions:search:read
       responses:
         '200':
           description: OK
@@ -2504,6 +2697,9 @@ paths:
     get:
       summary: Get all search history
       operationId: get-sanctions-search
+      x-flagright:
+        permissions:
+          - sanctions:search:read
       responses:
         '200':
           description: OK
@@ -2526,6 +2722,9 @@ paths:
     get:
       summary: Get single search history
       tags: []
+      x-flagright:
+        permissions:
+          - sanctions:search:read
       responses:
         '200':
           description: OK
@@ -2544,6 +2743,9 @@ paths:
     post:
       summary: Create new simulation task
       operationId: post-simulation
+      x-flagright:
+        permissions:
+          - simulation:rules:write
       responses:
         '200':
           description: OK
@@ -2564,6 +2766,9 @@ paths:
     get:
       summary: Get simulation tasks
       operationId: get-simulations
+      x-flagright:
+        permissions:
+          - simulation:rules:read
       responses:
         '200':
           description: OK
@@ -2600,6 +2805,9 @@ paths:
     get:
       summary: Get a simulation task by test ID
       operationId: get-simulation-test-id
+      x-flagright:
+        permissions:
+          - simulation:rules:read
       responses:
         '200':
           description: OK
@@ -3871,11 +4079,10 @@ components:
         - case-management:case-overview:write
         - case-management:case-details:read
         - case-management:case-details:write
-        - case-management:download:read
+        - case-management:export:read
         - rules:my-rules:read
         - rules:my-rules:write
         - rules:library:read
-        - rules:library:write
         - risk-scoring:risk-levels:read
         - risk-scoring:risk-levels:write
         - risk-scoring:risk-factors:read
@@ -3884,29 +4091,23 @@ components:
         - users:user-overview:read
         - users:user-overview:write
         - users:user-details:read
+        - users:import:write
         - dashboard:download-data:read
         - settings:organisation:read
         - settings:organisation:write
-        - settings:billing:read
-        - settings:billing:write
-        - settings:nomenclature:read
-        - settings:nomenclature:write
-        - settings:addons:read
-        - settings:addons:write
-        - settings:alerts:read
-        - settings:alerts:write
         - settings:developers:read
         - settings:developers:write
+        - sanctions:search:read
         - transactions:overview:read
+        - transactions:overview:write
         - transactions:details:read
-        - transactions:download:read
-        - team-management:download:read
-        - audit-log:download:read
-        - lists:whitelist:read
-        - lists:whitelist:write
-        - lists:blacklist:read
-        - lists:blacklist:write
-        - lists:download:read
+        - transactions:details:write
+        - transactions:export:read
+        - transactions:import:write
+        - audit-log:export:read
+        - lists:all:read
+        - lists:all:write
+        - lists:export:read
         - simulation:rules:read
         - simulation:rules:write
         - simulation:risk-scoring:read

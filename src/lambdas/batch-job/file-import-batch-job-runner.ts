@@ -6,6 +6,7 @@ import { FileImportBatchJob } from '@/@types/batch-job'
 import { getDynamoDbClient } from '@/utils/dynamodb'
 import { getS3Client } from '@/utils/s3'
 import { getMongoDbClient } from '@/utils/mongoDBUtils'
+import { assertPermissions } from '@/@types/jwt'
 
 const { TMP_BUCKET, IMPORT_BUCKET } = process.env as FileImportConfig
 
@@ -38,10 +39,13 @@ export class FileImportBatchJobRunner extends BatchJobRunner {
     })
     try {
       if (importRequest.type === 'TRANSACTION') {
+        assertPermissions(['transactions:import:write'])
         importedCount = await importer.importTransactions(importRequest)
       } else if (importRequest.type === 'USER') {
+        assertPermissions(['users:import:write'])
         importedCount = await importer.importConsumerUsers(importRequest)
       } else if (importRequest.type === 'BUSINESS') {
+        assertPermissions(['users:import:write'])
         importedCount = await importer.importBusinessUsers(importRequest)
       }
       await importRepository.completeFileImport(importId, importedCount)
