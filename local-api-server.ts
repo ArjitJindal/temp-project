@@ -92,7 +92,9 @@ async function createServer(serverInfo: ServerInfo) {
     }
 
     try {
-      const apigatewayResponse = await lambdaHandler(apigatewayEvent, {})
+      const apigatewayResponse = await lambdaHandler(apigatewayEvent, {
+        functionName: lambdaName,
+      })
       Object.entries(apigatewayResponse?.headers || {}).forEach((entry) => {
         res.header(entry[0], entry[1] as any)
       })
