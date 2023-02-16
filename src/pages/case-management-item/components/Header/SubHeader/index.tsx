@@ -1,5 +1,5 @@
 import React, { useCallback, useState } from 'react';
-import { message } from 'antd';
+import { message } from '@/components/library/Message';
 import { Case } from '@/apis';
 import { useApi } from '@/api';
 import FileListLineIcon from '@/components/ui/icons/Remix/document/file-list-line.react.svg';
@@ -26,7 +26,7 @@ export default function SubHeader(props: Props) {
 
   const handleUpdateCase = useCallback(
     async (assignments) => {
-      const hideMessage = message.loading(`Saving...`, 0);
+      const hideMessage = message.loading(`Saving...`);
       try {
         await api.postCases({
           CasesUpdateRequest: {

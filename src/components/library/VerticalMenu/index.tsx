@@ -1,6 +1,7 @@
 import React from 'react';
 import cn from 'clsx';
 import s from './style.module.less';
+import SameWidthDiv from '@/components/library/SameWidthDiv';
 
 interface Props {
   items: {
@@ -26,9 +27,9 @@ export default function VerticalMenu(props: Props) {
             onClick={() => onChange(item.key)}
           >
             {item.icon && <div className={s.icon}>{item.icon}</div>}
-            <div className={s.title} title={item.title}>
+            <SameWidthDiv className={s.title} title={item.title}>
               {item.title}
-            </div>
+            </SameWidthDiv>
           </div>
         ))}
       </div>

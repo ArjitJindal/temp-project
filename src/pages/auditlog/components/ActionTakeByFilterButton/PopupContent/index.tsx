@@ -3,7 +3,7 @@ import React, { useState } from 'react';
 import { LoadingOutlined } from '@ant-design/icons';
 import s from './style.module.less';
 import * as Form from '@/components/ui/Form';
-import Button from '@/components/ui/Button';
+import Button from '@/components/library/Button';
 import { useUsers } from '@/utils/user-utils';
 
 interface Props {
@@ -51,7 +51,7 @@ export default function PopupContent(props: Props) {
           )}
         </Form.Layout.Label>
         <div className={s.buttons}>
-          <Button htmlType="submit" type="primary">
+          <Button htmlType="submit" type="PRIMARY">
             Confirm
           </Button>
           <Button onClick={onCancel}>Reset</Button>

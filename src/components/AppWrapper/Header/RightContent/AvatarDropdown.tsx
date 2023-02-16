@@ -55,7 +55,7 @@ const AvatarDropdown: React.FC<GlobalHeaderRightProps> = () => {
         {
           key: 'logout',
           icon: <LogoutOutlined />,
-          title: 'Logout',
+          label: 'Logout',
         },
       ]}
     />

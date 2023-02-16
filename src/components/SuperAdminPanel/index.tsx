@@ -3,7 +3,7 @@ import { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { CreateTenantModal } from './CreateTenantModal';
 import { useApi } from '@/api';
-import Button from '@/components/ui/Button';
+import Button from '@/components/library/Button';
 import { Feature } from '@/apis';
 import { useAuth0User } from '@/utils/user-utils';
 import { useFeatures } from '@/components/AppWrapper/Providers/SettingsProvider';
@@ -57,7 +57,7 @@ export default function SuperAdminPanel() {
   };
   const handleChangeFeatures = async (newFeatures: Feature[]) => {
     setFeatures(newFeatures);
-    const hideMessage = message.loading('Saving...', 0);
+    const hideMessage = message.loading('Saving...');
     try {
       await api.postTenantsSettings({ TenantSettings: { features: newFeatures } });
       hideMessage();
@@ -77,7 +77,7 @@ export default function SuperAdminPanel() {
 
   return (
     <>
-      <Button type="default" size="small" onClick={showModal}>
+      <Button size="SMALL" onClick={showModal}>
         {user.tenantName}
       </Button>
       <Modal
@@ -120,7 +120,7 @@ export default function SuperAdminPanel() {
           </Form.Item>
         </Form>
         <Divider />
-        <Button type="default" size="small" onClick={() => setShowCreateTenantModal(true)}>
+        <Button type="SECONDARY" size="SMALL" onClick={() => setShowCreateTenantModal(true)}>
           Create Tenant
         </Button>
       </Modal>

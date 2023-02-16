@@ -1,6 +1,7 @@
 import React from 'react';
 import cn from 'clsx';
 import { Select as AntSelect, SelectProps } from 'antd';
+import { SelectCommonPlacement } from 'antd/lib/_util/motion';
 import s from './style.module.less';
 import { InputProps } from '@/components/library/Form';
 
@@ -8,7 +9,7 @@ type InputType = string | number | boolean | undefined;
 
 export interface Option<Value extends InputType> {
   value: Value;
-  label: string;
+  label?: string;
   isDisabled?: boolean;
 }
 
@@ -18,6 +19,7 @@ interface CommonProps<Value extends InputType> {
   options: Option<Value>[];
   style?: React.CSSProperties;
   showSearch?: boolean;
+  dropdownPlacement?: SelectCommonPlacement;
 }
 
 interface SingleProps<Value extends InputType> extends CommonProps<Value>, InputProps<Value> {
@@ -36,7 +38,8 @@ type Props<Value extends InputType> = SingleProps<Value> | MultipleProps<Value> 
 
 export default function Select<Value extends InputType = InputType>(props: Props<Value>) {
   const { isDisabled, options, placeholder, size = 'DEFAULT', isError, onFocus, onBlur } = props;
-  const sharedProps = {
+
+  const antSelectProps: SelectProps<Value | Value[], Option<Value>> = {
     disabled: isDisabled,
     placeholder: placeholder,
     allowClear: true,
@@ -51,20 +54,17 @@ export default function Select<Value extends InputType = InputType>(props: Props
       );
     },
     showSearch: props.showSearch,
-  };
-
-  const AntSelectProps = {
-    ...sharedProps,
+    placement: props.dropdownPlacement,
     mode: props.mode === 'MULTIPLE' ? 'multiple' : props.mode === 'TAGS' ? 'tags' : undefined,
     value: props.value,
     onChange: (newValue: Value | Value[] | undefined) => {
       props.onChange?.(newValue as (Value & Value[]) | undefined);
     },
-  } as SelectProps<Value | Value[]>;
+  };
 
   return (
     <div className={cn(s.root, isError && s.isError, s[`size-${size}`])} style={props.style}>
-      <AntSelect {...AntSelectProps}>
+      <AntSelect {...antSelectProps}>
         {options?.map((option) => (
           <AntSelect.Option
             key={`${option.value}`}

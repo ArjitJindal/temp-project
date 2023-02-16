@@ -3,7 +3,7 @@ import filesize from 'filesize';
 import React, { forwardRef, useImperativeHandle } from 'react';
 import axios from 'axios';
 import { UploadOutlined } from '@ant-design/icons';
-import Button from '../ui/Button';
+import Button from '../library/Button';
 import { FileInfo } from '@/apis';
 import { useApi } from '@/api';
 
@@ -45,7 +45,7 @@ export const UploadFilesList = forwardRef((props: Props, ref: React.Ref<RemoveAl
       }}
       customRequest={async ({ file: f, onError, onSuccess }) => {
         const file = f as File;
-        const hideMessage = message.loading('Uploading...', 0);
+        const hideMessage = message.loading('Uploading...');
         try {
           // 1. Get S3 presigned URL
           const { presignedUrl, s3Key } = await api.postGetPresignedUrl({});
@@ -73,7 +73,7 @@ export const UploadFilesList = forwardRef((props: Props, ref: React.Ref<RemoveAl
       }}
     >
       {!props.disableUpload && (
-        <Button analyticsName="Attach files" size="small" icon={<UploadOutlined />}>
+        <Button analyticsName="Attach files" size="SMALL" icon={<UploadOutlined />}>
           Upload
         </Button>
       )}

@@ -33,7 +33,7 @@ export default function UserStateEditor({ user }: Props) {
       };
       setUserStateDetails(newStateDetails);
       updatedUserStateDetails[user.userId] = newStateDetails;
-      const hideMessage = message.loading(`Saving...`, 0);
+      const hideMessage = message.loading(`Saving...`);
       try {
         await (user.type === 'CONSUMER'
           ? api.postConsumerUsersUserId(params)

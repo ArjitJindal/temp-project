@@ -1,7 +1,6 @@
 import React, { useState } from 'react';
-import { SizeType } from 'antd/es/config-provider/SizeContext';
 import { CaseStatus, FileInfo } from '@/apis';
-import Button from '@/components/ui/Button';
+import Button, { ButtonSize } from '@/components/library/Button';
 import { CaseClosingReasons } from '@/apis/models/CaseClosingReasons';
 import COLORS from '@/components/ui/colors';
 import CasesStatusChangeModal from '@/pages/case-management/components/CasesStatusChangeModal';
@@ -11,7 +10,7 @@ interface Props {
   newCaseStatus: CaseStatus;
   initialValues?: FormValues;
   buttonProps?: {
-    size?: SizeType | undefined;
+    size?: ButtonSize | undefined;
     isBlue?: boolean;
     rounded?: boolean;
   };
@@ -68,7 +67,7 @@ export default function CasesStatusChangeButton(props: Props) {
         onClick={() => {
           setModalVisible(true);
         }}
-        disabled={!caseIds.length}
+        isDisabled={!caseIds.length}
         size={buttonProps.size}
       >
         {caseStatusToOperationName(newCaseStatus)}

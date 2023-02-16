@@ -2,8 +2,8 @@ import { useIsFetching } from '@tanstack/react-query';
 import _ from 'lodash';
 import { useEffect, useState } from 'react';
 import { Spin } from 'antd';
-import Button from '../Button';
 import COLORS from '../colors';
+import Button from '@/components/library/Button';
 
 interface Props {
   onClickAction: () => void;
@@ -26,7 +26,7 @@ const PrintButton = ({ onClickAction }: Props) => {
 
   return (
     <Button
-      type={'text'}
+      type={'TEXT'}
       onClick={() => {
         setLoading(true);
         onClickAction();
@@ -42,7 +42,7 @@ const PrintButton = ({ onClickAction }: Props) => {
         borderColor: COLORS.purpleGray.base,
         display: 'relative',
       }}
-      disabled={loading}
+      isLoading={loading}
     >
       Print
       {loading && (

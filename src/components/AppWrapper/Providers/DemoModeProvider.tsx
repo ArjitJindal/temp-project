@@ -1,6 +1,6 @@
 import React, { useContext, useMemo, useState } from 'react';
 import { useMutation } from '@tanstack/react-query';
-import { message } from 'antd';
+import { message } from '@/components/library/Message';
 import { useAuth0User } from '@/utils/user-utils';
 import { useFeatureEnabled } from '@/components/AppWrapper/Providers/SettingsProvider';
 import { useApi } from '@/api';

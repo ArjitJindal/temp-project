@@ -1,8 +1,8 @@
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
-import { message } from 'antd';
 import { useNavigate } from 'react-router';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { TableSearchParams } from './types';
+import { message } from '@/components/library/Message';
 import { dayjs } from '@/utils/dayjs';
 import { Case, CaseTransaction, CaseUpdateRequest, RuleAction, RuleInstance } from '@/apis';
 import { useApi } from '@/api';
@@ -211,7 +211,7 @@ export default function CaseTableWrapper() {
     if (prevIsLoading !== updateCasesMutation.isLoading && prevIsLoading === true) {
       if (updateCasesMutation.isLoading) {
         close();
-        const hideMessage = message.loading(`Saving...`, 0);
+        const hideMessage = message.loading(`Saving...`);
         setClose(() => hideMessage);
       } else {
         close();

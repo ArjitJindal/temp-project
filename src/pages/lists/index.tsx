@@ -7,7 +7,7 @@ import { useI18n } from '@/locales';
 import PageTabs from '@/components/ui/PageTabs';
 import ListTable, { ListTableRef } from '@/pages/lists/ListTable';
 import { makeUrl } from '@/utils/routing';
-import Button from '@/components/ui/Button';
+import Button from '@/components/library/Button';
 import NewListDrawer from '@/pages/lists/NewListDrawer';
 import { parseListType, stringifyListType } from '@/pages/lists/helpers';
 import { usePageViewTracker } from '@/utils/tracker';
@@ -37,8 +37,7 @@ export default function CreatedLists() {
               {listType === 'WHITELIST' && (
                 <>
                   <Button
-                    type="skeleton"
-                    size="large"
+                    size="LARGE"
                     onClick={() => {
                       setNewModalOpen(true);
                     }}
@@ -53,8 +52,7 @@ export default function CreatedLists() {
               {listType === 'BLACKLIST' && (
                 <>
                   <Button
-                    type="skeleton"
-                    size="large"
+                    size="LARGE"
                     onClick={() => {
                       setNewModalOpen(true);
                     }}

@@ -4,7 +4,7 @@ import s from './index.module.less';
 import { CommonParams, DEFAULT_PARAMS_STATE, TableActionType } from '@/components/ui/Table';
 import { ListHeader } from '@/apis';
 import { useApi } from '@/api';
-import Button from '@/components/ui/Button';
+import Button from '@/components/library/Button';
 import { getErrorMessage } from '@/utils/lang';
 import QueryResultsTable from '@/components/common/QueryResultsTable';
 import { usePaginatedQuery } from '@/utils/queries/hooks';
@@ -279,8 +279,9 @@ function UserListTable(props: Props) {
                 return (
                   <div className={s.actions}>
                     <Button
-                      type="primary"
-                      disabled={isAddUserLoading || !isNewUserValid}
+                      type="PRIMARY"
+                      isLoading={isAddUserLoading}
+                      isDisabled={!isNewUserValid}
                       onClick={handleAddItem}
                     >
                       Add
@@ -292,17 +293,17 @@ function UserListTable(props: Props) {
                   return (
                     <div className={s.actions}>
                       <Button
-                        size="small"
-                        type="primary"
+                        size="SMALL"
+                        type="PRIMARY"
                         onClick={handleSaveItem}
-                        disabled={isEditUserLoading || !isEditUserValid}
+                        isDisabled={isEditUserLoading || !isEditUserValid}
                       >
                         Save
                       </Button>
                       <Button
-                        size="small"
-                        type="ghost"
-                        disabled={isEditUserLoading}
+                        size="SMALL"
+                        type="SECONDARY"
+                        isDisabled={isEditUserLoading}
                         onClick={() => {
                           setEditUserData(null);
                         }}
@@ -315,9 +316,9 @@ function UserListTable(props: Props) {
                 return (
                   <div className={s.actions}>
                     <Button
-                      size="small"
-                      type="ghost"
-                      disabled={isUserDeleteLoading}
+                      size="SMALL"
+                      type="SECONDARY"
+                      isDisabled={isUserDeleteLoading}
                       onClick={() => {
                         setEditUserData(entity);
                       }}
@@ -325,10 +326,9 @@ function UserListTable(props: Props) {
                       Edit
                     </Button>
                     <Button
-                      size="small"
-                      danger={true}
-                      type="ghost"
-                      disabled={isUserDeleteLoading}
+                      size="SMALL"
+                      type="SECONDARY"
+                      isLoading={isUserDeleteLoading}
                       onClick={() => {
                         handleDeleteUser(entity.value ?? '');
                       }}

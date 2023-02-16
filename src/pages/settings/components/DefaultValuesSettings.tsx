@@ -2,7 +2,7 @@ import { Select, SelectProps, message } from 'antd';
 import { useState, useEffect } from 'react';
 import { useApi } from '@/api';
 import { useSettings } from '@/components/AppWrapper/Providers/SettingsProvider';
-import Button from '@/components/ui/Button';
+import Button from '@/components/library/Button';
 import Table from '@/components/ui/Table';
 import { CURRENCIES_SELECT_OPTIONS } from '@/utils/currencies';
 
@@ -89,11 +89,11 @@ export const DefaultValuesSettings = () => {
             key: 'action',
             render: (action, record) => (
               <Button
-                type="primary"
+                type="PRIMARY"
                 onClick={() => {
                   handleSave(record.valueType, value[record.valueType]);
                 }}
-                loading={saving}
+                isLoading={saving}
               >
                 Save
               </Button>

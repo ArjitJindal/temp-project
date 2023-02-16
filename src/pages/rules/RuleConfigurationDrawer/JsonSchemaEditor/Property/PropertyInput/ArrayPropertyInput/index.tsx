@@ -3,7 +3,7 @@ import cn from 'clsx';
 import { ExtendedSchema } from '../../../types';
 import PropertyInput from '../index';
 import s from './style.module.less';
-import Button from '@/components/ui/Button';
+import Button from '@/components/library/Button';
 import Select from '@/components/library/Select';
 import { isString } from '@/pages/rules/RuleConfigurationDrawer/JsonSchemaEditor/schema-utils';
 import DeleteBin7LineIcon from '@/components/ui/icons/Remix/system/delete-bin-7-line.react.svg';
@@ -59,7 +59,7 @@ export function GenericArrayPropertyInput(props: Props) {
             onChange={setNewItem}
             schema={schema.items as ExtendedSchema}
           />
-          <Button type="primary" onClick={handleClickAdd}>
+          <Button type="PRIMARY" onClick={handleClickAdd}>
             Add
           </Button>
         </>
@@ -74,7 +74,7 @@ export function GenericArrayPropertyInput(props: Props) {
             />
             <Button
               icon={<DeleteBin7LineIcon />}
-              type="text"
+              type="TEXT"
               onClick={() => {
                 const newValue = [...value];
                 newValue.splice(i, 1);

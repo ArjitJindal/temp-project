@@ -3,6 +3,7 @@ import { Navigate, Route, Routes } from 'react-router';
 import s from './index.module.less';
 import CategoriesMenu from './CategoriesMenu';
 import { makeUrl } from '@/utils/routing';
+import Button from '@/components/library/Button/story';
 import Label from '@/components/library/Label/story';
 import Checkbox from '@/components/library/Checkbox/story';
 import Select from '@/components/library/Select/story';
@@ -17,6 +18,11 @@ import Card from '@/components/ui/Card/story';
 import Form from '@/components/library/Form/story';
 import Drawer from '@/components/library/Drawer/story';
 import Alert from '@/components/library/Alert/story';
+import QuickFilter from '@/components/library/QuickFilter/story';
+import Pagination from '@/components/library/Pagination/story';
+import Message from '@/components/library/Message/story';
+import Dropdown from '@/components/library/Dropdown/story';
+import SegmentedControl from '@/components/library/SegmentedControl/story';
 import JsonSchemaEditor from '@/pages/rules/RuleConfigurationDrawer/JsonSchemaEditor/story';
 import { Component } from '@/pages/storybook/components';
 import Tooltip from '@/components/library/Tooltip/story';
@@ -40,8 +46,8 @@ type Config = Category[];
 
 const config: Config = [
   {
-    key: 'navigation',
-    category: 'Navigation',
+    key: 'library',
+    category: 'Library',
     components: [
       {
         component: 'VerticalMenu',
@@ -56,32 +62,36 @@ const config: Config = [
         story: StepButtons,
       },
       {
+        component: 'SegmentedControl',
+        story: SegmentedControl,
+      },
+      {
         component: 'Tabs',
         story: Tabs,
       },
-    ],
-  },
-  {
-    key: 'feedback',
-    category: 'Feedback',
-    components: [
+      {
+        component: 'Pagination',
+        story: Pagination,
+      },
       {
         component: 'Alert',
         story: Alert,
       },
       {
+        component: 'Message',
+        story: Message,
+      },
+      {
         component: 'Tooltip',
         story: Tooltip,
       },
-    ],
-  },
-  {
-    key: 'forms',
-    category: 'Forms',
-    components: [
       {
         component: 'Form',
         story: Form,
+      },
+      {
+        component: 'Button',
+        story: Button,
       },
       {
         component: 'Label',
@@ -115,12 +125,10 @@ const config: Config = [
         component: 'Toggle',
         story: Toggle,
       },
-    ],
-  },
-  {
-    key: 'layout',
-    category: 'Layout',
-    components: [
+      {
+        component: 'QuickFilter',
+        story: QuickFilter,
+      },
       {
         component: 'Drawer',
         story: Drawer,
@@ -128,6 +136,40 @@ const config: Config = [
       {
         component: 'Card',
         story: Card,
+      },
+      {
+        component: 'Dropdown',
+        story: Dropdown,
+      },
+    ],
+  },
+  {
+    key: 'FDT-85730_Implement_Case_Management_Console_Components',
+    category: '#FDT-85730: Implement Case Management Console Components',
+    components: [
+      {
+        component: 'SegmentedControl',
+        story: SegmentedControl,
+      },
+      {
+        component: 'Button',
+        story: Button,
+      },
+      {
+        component: 'QuickFilter',
+        story: QuickFilter,
+      },
+      {
+        component: 'Dropdown',
+        story: Dropdown,
+      },
+      {
+        component: 'Pagination',
+        story: Pagination,
+      },
+      {
+        component: 'Message',
+        story: Message,
       },
     ],
   },

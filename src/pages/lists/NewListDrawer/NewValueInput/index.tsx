@@ -5,7 +5,7 @@ import { DefaultOptionType } from 'antd/es/select';
 import { Metadata } from '../../helpers';
 import s from './index.module.less';
 import { ListSubtype, TransactionsUniquesField } from '@/apis';
-import Button from '@/components/ui/Button';
+import Button from '@/components/library/Button';
 import UserSearchPopup from '@/pages/transactions/components/UserSearchPopup';
 import { User } from '@/pages/transactions/components/UserSearchPopup/types';
 import { getUserName } from '@/utils/api/users';

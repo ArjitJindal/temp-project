@@ -5,7 +5,7 @@ import equal from 'fast-deep-equal';
 import { DeleteOutlined, LoadingOutlined } from '@ant-design/icons';
 import { WebhookDeliveryAttemptsTable } from './WebhookDeliveryAttemptsTable';
 import { WebhookConfiguration, WebhookEventType, WebhookSecrets } from '@/apis';
-import Button from '@/components/ui/Button';
+import Button from '@/components/library/Button';
 import { useApi } from '@/api';
 import { getBranding } from '@/utils/branding';
 
@@ -65,10 +65,10 @@ export const WebhookDetails: React.FC<Props> = ({
             Learn more about webhooks
           </a>
           <Button
-            type="primary"
-            size="small"
+            type="PRIMARY"
+            size="SMALL"
             onClick={() => handleSaveWebhook({ ...webhook, webhookUrl, events })}
-            disabled={!canSave}
+            isDisabled={!canSave}
           >
             Save
           </Button>
@@ -77,8 +77,8 @@ export const WebhookDetails: React.FC<Props> = ({
               analyticsName="Delete"
               icon={<DeleteOutlined />}
               onClick={() => handleDeleteWebhook(webhook)}
-              size="small"
-              danger
+              size="SMALL"
+              type="TETRIARY"
             >
               Delete
             </Button>

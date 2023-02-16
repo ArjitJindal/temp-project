@@ -1,9 +1,9 @@
 import React, { useRef } from 'react';
-import { message } from 'antd';
 import { DrawerForm, ProFormInstance, ProFormSelect, ProFormText } from '@ant-design/pro-form';
 import { PlusOutlined } from '@ant-design/icons';
 import { sentenceCase } from '@antv/x6/es/util/string/format';
-import Button from '@/components/ui/Button';
+import { message } from '@/components/library/Message';
+import Button from '@/components/library/Button';
 import { useApi } from '@/api';
 import { Account } from '@/apis';
 import { ACCOUNT_ROLE_NAMES } from '@/apis/models-custom/AccountRoleName';
@@ -38,7 +38,7 @@ export default function AccountForm(props: Props) {
       width={400}
       formRef={formRef}
       trigger={
-        <Button type={isEdit ? 'default' : 'primary'}>
+        <Button type="TETRIARY">
           {!isEdit && <PlusOutlined />}
           {isEdit ? 'Edit' : 'Invite'}
         </Button>
@@ -69,7 +69,7 @@ export default function AccountForm(props: Props) {
             return true;
           } catch (e) {
             const error = e instanceof Response ? (await e.json())?.message : e;
-            message.error(`Failed to update account - ${error}`, 10);
+            message.error(`Failed to update account - ${error}`);
             return false;
           }
         } else {
@@ -85,7 +85,7 @@ export default function AccountForm(props: Props) {
             return true;
           } catch (e) {
             const error = e instanceof Response ? (await e.json())?.message : e;
-            message.error(`Failed to invite user - ${error}`, 10);
+            message.error(`Failed to invite user - ${error}`);
             return false;
           }
         }

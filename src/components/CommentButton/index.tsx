@@ -2,7 +2,7 @@ import { message, Popover } from 'antd';
 import React, { useRef, useState } from 'react';
 import { useMutation } from '@tanstack/react-query';
 import s from './styles.module.less';
-import Button from '@/components/ui/Button';
+import Button from '@/components/library/Button';
 import CommentEditor, {
   CommentEditorRef,
   FormValues as CommentEditorFormValues,

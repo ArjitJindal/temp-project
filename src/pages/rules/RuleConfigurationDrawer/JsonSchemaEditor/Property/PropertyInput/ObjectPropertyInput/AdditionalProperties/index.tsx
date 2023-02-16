@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { ExtendedSchema } from '../../../../types';
 import PropertyInput from '../../index';
 import s from './style.module.less';
-import Button from '@/components/ui/Button';
+import Button from '@/components/library/Button';
 import TextInput from '@/components/library/TextInput';
 import DeleteBin7LineIcon from '@/components/ui/icons/Remix/system/delete-bin-7-line.react.svg';
 import { InputProps } from '@/components/library/Form';
@@ -41,8 +41,8 @@ export default function AdditionalProperties(props: Props) {
         schema={schema}
       />
       <Button
-        type="primary"
-        disabled={!newItem.key || !newItem.value}
+        type="PRIMARY"
+        isDisabled={!newItem.key || !newItem.value}
         onClick={() => {
           onChange?.({
             ...value,
@@ -80,7 +80,7 @@ export default function AdditionalProperties(props: Props) {
             />
             <Button
               icon={<DeleteBin7LineIcon />}
-              type="text"
+              type="TEXT"
               onClick={() => {
                 const newValue = { ...value };
                 delete newValue[name];

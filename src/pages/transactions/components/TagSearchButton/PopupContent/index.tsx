@@ -7,7 +7,7 @@ import { TRANSACTIONS_UNIQUES } from '@/utils/queries/keys';
 import { getOr, isLoading } from '@/utils/asyncResource';
 import { Value } from '@/pages/transactions/components/TagSearchButton/types';
 import * as Form from '@/components/ui/Form';
-import Button from '@/components/ui/Button';
+import Button from '@/components/library/Button';
 
 interface Props {
   initialState: Value;
@@ -60,7 +60,7 @@ export default function PopupContent(props: Props) {
           />
         </Form.Layout.Label>
         <div className={s.buttons}>
-          <Button htmlType="submit" type="primary">
+          <Button htmlType="submit" type="PRIMARY">
             Confirm
           </Button>
           <Button onClick={onCancel}>Cancel</Button>

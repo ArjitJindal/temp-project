@@ -18,11 +18,13 @@ interface Props {
 export function StorybookMockProviders(props: Props) {
   return (
     <AntConfigProvider>
-      <FlagrightUserProviderMock>
-        <SettingsProviderMock>
-          <SideBarProvider>{props.children}</SideBarProvider>
-        </SettingsProviderMock>
-      </FlagrightUserProviderMock>
+      <QueryClientProvider>
+        <FlagrightUserProviderMock>
+          <SettingsProviderMock>
+            <SideBarProvider>{props.children}</SideBarProvider>
+          </SettingsProviderMock>
+        </FlagrightUserProviderMock>
+      </QueryClientProvider>
     </AntConfigProvider>
   );
 }

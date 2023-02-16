@@ -2,7 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { message, Slider } from 'antd';
 import style from './style.module.less';
 import Table from '@/components/ui/Table';
-import Button from '@/components/ui/Button';
+import Button from '@/components/library/Button';
 import {
   AsyncResource,
   failed,
@@ -193,10 +193,10 @@ export default function RiskQualification() {
         items: LEVEL_ENTRIES,
       }}
       toolBarRender={() => [
-        <Button type="primary" onClick={handleSave} disabled={isLoading(syncRes)}>
+        <Button type="PRIMARY" onClick={handleSave} isDisabled={isLoading(syncRes)}>
           Save
         </Button>,
-        <Button onClick={handleCancel} disabled={isLoading(syncRes)}>
+        <Button onClick={handleCancel} isDisabled={isLoading(syncRes)}>
           Cancel
         </Button>,
       ]}

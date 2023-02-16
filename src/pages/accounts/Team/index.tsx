@@ -12,7 +12,7 @@ import { TableColumn } from '@/components/ui/Table/types';
 import { Account } from '@/apis';
 import RoleTag from '@/components/ui/RoleTag';
 import COLORS from '@/components/ui/colors';
-import Button from '@/components/ui/Button';
+import Button from '@/components/library/Button';
 import AccountForm from '@/pages/accounts/components/AccountForm';
 import QueryResultsTable from '@/components/common/QueryResultsTable';
 
@@ -109,7 +109,7 @@ export default function Team() {
                 }
               }}
             >
-              <Button analyticsName="Delete account" danger>
+              <Button analyticsName="Delete account" type="TETRIARY">
                 Delete
               </Button>
             </Popconfirm>

@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import Component from './index';
 import { UseCase } from '@/pages/storybook/components';
-import Button from '@/components/ui/Button';
+import Button from '@/components/library/Button';
 
 export default function (): JSX.Element {
   const [isVisible, setVisible] = useState(false);

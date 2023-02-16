@@ -2,7 +2,7 @@ import React from 'react';
 import GenericFormField from './GenericFormField';
 import Form from './index';
 import { UseCase } from '@/pages/storybook/components';
-import Button from '@/components/ui/Button';
+import Button from '@/components/library/Button';
 import FormValidationErrors from '@/components/library/Form/utils/validation/FormValidationErrors';
 import BasicInputField from '@/components/library/Form/BasicInputField';
 import TextInput from '@/components/library/TextInput';
@@ -72,7 +72,7 @@ export default function (): JSX.Element {
             <BasicInputField<FormValues> name={'name'} label={'User name'} input={TextInput} />
             <UseFormState>
               {({ isValid }) => (
-                <Button htmlType="submit" disabled={!isValid}>
+                <Button htmlType="submit" isDisabled={!isValid}>
                   Submit
                 </Button>
               )}
@@ -109,7 +109,7 @@ export default function (): JSX.Element {
             <UseFormState>
               {({ isValid }) => (
                 <>
-                  <Button htmlType="submit" disabled={!isValid}>
+                  <Button htmlType="submit" isDisabled={!isValid}>
                     Submit
                   </Button>
                 </>
@@ -173,7 +173,7 @@ export default function (): JSX.Element {
             <UseFormState>
               {({ isValid }) => (
                 <>
-                  <Button htmlType="submit" disabled={!isValid}>
+                  <Button htmlType="submit" isDisabled={!isValid}>
                     Submit
                   </Button>
                 </>
@@ -241,7 +241,7 @@ export default function (): JSX.Element {
             <UseFormState>
               {({ isValid }) => (
                 <>
-                  <Button htmlType="submit" disabled={!isValid}>
+                  <Button htmlType="submit" isDisabled={!isValid}>
                     Submit
                   </Button>
                 </>

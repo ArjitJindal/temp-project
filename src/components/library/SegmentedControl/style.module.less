@@ -1,0 +1,58 @@
+@import 'src/components/ui/colors';
+@import 'src/components/ui/animation';
+
+.root {
+  display: flex;
+  background: @fr-colors-v2-gray-1;
+  padding: 2px;
+  border-radius: 2px;
+
+  &.size-SMALL {
+    > .item {
+      padding: 0 12px;
+    }
+  }
+  &.size-MEDIUM {
+    > .item {
+      padding: 4px 12px;
+    }
+  }
+  &.size-LARGE {
+    > .item {
+      padding: 8px 12px;
+    }
+  }
+}
+
+.item {
+  color: @fr-colors-v2-gray-10;
+  cursor: pointer;
+  border-radius: 2px;
+  border: none;
+  background: transparent;
+  display: flex;
+  gap: 4px;
+  align-items: center;
+  line-height: 24px;
+  transition-property: background, color, box-shadow, font-weight;
+  transition-timing-function: @default-animation-function;
+  transition-duration: @default-animation-speed;
+
+  &:disabled {
+    pointer-events: none;
+    color: @fr-colors-v2-state-disabled;
+  }
+
+  &:not(:disabled).isActive {
+    background: white;
+    color: @fr-colors-v2-primary-flagrightBlue;
+    font-weight: 600;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+  }
+}
+
+.itemIcon {
+  display: flex;
+  width: 14px;
+  height: 14px;
+}

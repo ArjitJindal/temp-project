@@ -1,7 +1,7 @@
 import { message, Tree } from 'antd';
 import { useCallback, useState } from 'react';
 import { useSettings } from '@/components/AppWrapper/Providers/SettingsProvider';
-import Button from '@/components/ui/Button';
+import Button from '@/components/library/Button';
 import { useApi } from '@/api';
 import { UI_SETTINGS as TRANSACTION_CASE_DETAILS_UI_SETTINGS } from '@/pages/case-management-item/TransactionCaseDetails/ui-settings';
 import { UI_SETTINGS as USER_DETAILS_UI_SETTINGS } from '@/pages/users-item/ui-settings';
@@ -68,10 +68,10 @@ export const DefaultViewsSettings = () => {
           checkedKeys={expandedCardKeys}
         />
         <Button
-          type={'primary'}
+          type="PRIMARY"
           onClick={handleSave}
           style={{ marginTop: '1rem' }}
-          loading={saving}
+          isLoading={saving}
         >
           Save
         </Button>

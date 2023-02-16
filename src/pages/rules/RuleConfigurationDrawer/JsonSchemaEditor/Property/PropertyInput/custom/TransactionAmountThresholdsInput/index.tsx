@@ -3,7 +3,7 @@ import s from './style.module.less';
 import NumberInput from '@/components/library/NumberInput';
 import { InputProps } from '@/components/library/Form';
 import { Currency } from '@/utils/currencies';
-import Button from '@/components/ui/Button';
+import Button from '@/components/library/Button';
 import Money from '@/components/ui/Money';
 import DeleteBin7LineIcon from '@/components/ui/icons/Remix/system/delete-bin-7-line.react.svg';
 import { ExtendedSchema } from '@/pages/rules/RuleConfigurationDrawer/JsonSchemaEditor/types';
@@ -49,7 +49,7 @@ export default function TransactionAmountThresholdsInput(props: Props) {
         min={0}
         {...rest}
       />
-      <Button type="primary" onClick={handleAdd} disabled={isAddDisabled}>
+      <Button type="PRIMARY" onClick={handleAdd} isDisabled={isAddDisabled}>
         Add
       </Button>
       {value && Object.keys(value).length > 0 && (
@@ -69,7 +69,7 @@ export default function TransactionAmountThresholdsInput(props: Props) {
               <Money currency={currency} value={amount} />
               <Button
                 icon={<DeleteBin7LineIcon />}
-                type="text"
+                type="TEXT"
                 onClick={() => {
                   const newValue: ValueType = { ...(value ?? {}) };
                   delete newValue[currency];

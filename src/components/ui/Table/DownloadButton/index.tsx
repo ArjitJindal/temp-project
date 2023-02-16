@@ -3,7 +3,7 @@ import _ from 'lodash';
 import { message, Popover, Radio, Select } from 'antd';
 import s from './styles.module.less';
 import DownloadFillIcon from '@/components/ui/icons/Remix/system/download-fill.react.svg';
-import Button from '@/components/ui/Button';
+import Button from '@/components/library/Button';
 import { flatItems } from '@/components/ui/Table/utils';
 import { download } from '@/utils/browser';
 import { isGroupColumn, TableColumn, TableData } from '@/components/ui/Table/types';
@@ -140,7 +140,7 @@ export default function DownloadButton<T extends object>(props: Props<T>) {
                 ]}
               />
             </Form.Layout.Label>
-            <Button disabled={progress != null} htmlType="submit" type="primary">
+            <Button isDisabled={progress != null} htmlType="submit" type="PRIMARY">
               {progress == null
                 ? 'Download'
                 : `Downloading (${progress.page}/${progress.totalPages})...`}

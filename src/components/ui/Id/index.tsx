@@ -1,8 +1,8 @@
 import React from 'react';
 import { ButtonProps } from 'antd/es/button/button';
 import { Link } from 'react-router-dom';
-import { message } from 'antd';
 import style from './style.module.less';
+import { message } from '@/components/library/Message';
 import FileCopyLineIcon from '@/components/ui/icons/Remix/document/file-copy-line.react.svg';
 import { copyTextToClipboard } from '@/utils/browser';
 

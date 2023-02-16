@@ -7,7 +7,7 @@ import { DefaultValuesSettings } from './components/DefaultValuesSettings';
 import PageWrapper from '@/components/PageWrapper';
 import { useI18n } from '@/locales';
 import SidebarPanel, { MenuSection } from '@/components/ui/SidebarPanel';
-import Button from '@/components/ui/Button';
+import Button from '@/components/library/Button';
 import { usePageViewTracker } from '@/utils/tracker';
 import { DefaultViewsSettings } from '@/pages/settings/components/DefaultViewsSettings';
 import { getBranding } from '@/utils/branding';
@@ -61,13 +61,9 @@ export default function SettingsPage() {
             <>
               <div style={{ marginTop: '200px' }}>
                 <h3>Sanctions/PEP/Adverse media screening{'     '}</h3>
-                <Button
-                  href={`mailto:${branding.supportEmail}`}
-                  type="primary"
-                  className="justify-content"
-                >
-                  Request access
-                </Button>
+                <a href={`mailto:${branding.supportEmail}`}>
+                  <Button type="PRIMARY">Request access</Button>
+                </a>
               </div>
             </>
           ),
@@ -78,14 +74,9 @@ export default function SettingsPage() {
             <>
               <div style={{ marginTop: '200px' }}>
                 <h3>Sage: KYC/KYB Orchestrator{'     '}</h3>
-                <Button
-                  href={`mailto:${branding.supportEmail}`}
-                  type="primary"
-                  className="justify-content"
-                >
-                  {' '}
-                  Request access
-                </Button>
+                <a href={`mailto:${branding.supportEmail}`}>
+                  <Button type="PRIMARY">Request access</Button>
+                </a>
               </div>
             </>
           ),
@@ -96,14 +87,9 @@ export default function SettingsPage() {
             <>
               <div style={{ marginTop: '200px' }}>
                 <h3>Blockchain analytics{'     '}</h3>
-                <Button
-                  href={`mailto:${branding.supportEmail}`}
-                  type="primary"
-                  className="justify-content"
-                >
-                  {' '}
-                  Request access
-                </Button>
+                <a href={`mailto:${branding.supportEmail}`}>
+                  <Button type="PRIMARY"> Request access</Button>
+                </a>
               </div>
             </>
           ),
@@ -114,14 +100,9 @@ export default function SettingsPage() {
             <>
               <div style={{ marginTop: '200px' }}>
                 <h3>Launchpad: Get expert support for fintech licensing{'     '}</h3>
-                <Button
-                  href={`mailto:${branding.supportEmail}`}
-                  type="primary"
-                  className="justify-content"
-                >
-                  {' '}
-                  Request access
-                </Button>
+                <a href={`mailto:${branding.supportEmail}`}>
+                  <Button type="PRIMARY"> Request access</Button>
+                </a>
               </div>
             </>
           ),
@@ -147,14 +128,9 @@ export default function SettingsPage() {
           content: (
             <>
               <div style={{ marginTop: '200px' }}>
-                <Button
-                  href={`mailto:${branding.supportEmail}`}
-                  type="primary"
-                  className="justify-content"
-                >
-                  {' '}
-                  Request access
-                </Button>
+                <a href={`mailto:${branding.supportEmail}`}>
+                  <Button type="PRIMARY">Request access</Button>
+                </a>
               </div>
             </>
           ),

@@ -1,0 +1,111 @@
+@import 'src/components/ui/colors.less';
+@import 'src/components/ui/animation.less';
+
+.root {
+  display: flex;
+  gap: 4px;
+  align-items: center;
+  justify-content: center;
+  border-width: 1px;
+  border-style: solid;
+  border-radius: 2px;
+  padding: 0 16px;
+  cursor: pointer;
+  transition-duration: @default-animation-speed;
+  transition-timing-function: @default-animation-function;
+  transition-property: box-shadow, border-color, background, color;
+  outline: none;
+
+  &:focus {
+    box-shadow: 0 0 0 3px fade(@fr-colors-v2-primary-flagrightBlue, 30%);
+  }
+
+  &:disabled {
+    pointer-events: none;
+  }
+
+  &.type-PRIMARY {
+    border-color: @fr-colors-v2-primary-flagrightBlue;
+    background: @fr-colors-v2-primary-flagrightBlue;
+    color: white;
+
+    &:hover,
+    &:active {
+      background: @fr-colors-v2-state-hover;
+      border-color: @fr-colors-v2-state-hover;
+    }
+
+    &:disabled {
+      border-color: @fr-colors-v2-gray-1;
+      background: @fr-colors-v2-gray-1;
+      color: @fr-colors-v2-state-disabled;
+    }
+  }
+
+  &.type-SECONDARY {
+    border-color: @fr-colors-v2-primary-flagrightBlue;
+    background: white;
+    color: @fr-colors-v2-primary-flagrightBlue;
+
+    &:hover,
+    &:active {
+      border-color: @fr-colors-v2-state-hover;
+      color: @fr-colors-v2-state-hover;
+      background: @fr-colors-v2-highlight-flagrightBlue;
+    }
+
+    &:disabled {
+      border-color: @fr-colors-v2-gray-2;
+      background: @fr-colors-v2-gray-1;
+      color: @fr-colors-v2-state-disabled;
+    }
+  }
+
+  &.type-TETRIARY {
+    background: white;
+    border-color: @fr-colors-v2-gray-3;
+    color: @fr-colors-v2-gray-10;
+
+    &:hover,
+    &:active {
+      background: @fr-colors-v2-gray-1;
+    }
+
+    &:disabled {
+      border-color: @fr-colors-v2-gray-2;
+      background: @fr-colors-v2-gray-1;
+      color: @fr-colors-v2-state-disabled;
+    }
+  }
+
+  &.type-TEXT {
+    background: transparent;
+    border-color: transparent;
+    color: @fr-colors-v2-primary-flagrightBlue;
+
+    &:hover,
+    &:active {
+      background: @fr-colors-v2-highlight-flagrightBlue;
+    }
+
+    &:disabled {
+      color: @fr-colors-v2-state-disabled;
+    }
+  }
+
+  &.size-SMALL {
+    min-height: 24px;
+  }
+  &.size-MEDIUM {
+    min-height: 32px;
+  }
+  &.size-LARGE {
+    min-height: 40px;
+  }
+}
+
+.icon {
+  display: flex;
+  width: 14px;
+  height: 14px;
+}

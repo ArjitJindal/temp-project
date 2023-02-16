@@ -5,7 +5,7 @@ import { useCallback, useState } from 'react';
 import Dragger from 'antd/es/upload/Dragger';
 import filesize from 'filesize';
 import _ from 'lodash';
-import Button from '@/components/ui/Button';
+import Button from '@/components/library/Button';
 import { FileInfo, ImportRequestFormatEnum, ImportRequestTypeEnum } from '@/apis';
 import { useApi } from '@/api';
 import { sleep } from '@/utils/time-utils';
@@ -50,7 +50,7 @@ export const FileImportButton: React.FC<FileImportButtonProps> = ({ type, button
   const handleImport = useCallback(() => {
     async function startImport() {
       setLoading(true);
-      const hideMessage = message.loading('Importing...', 0);
+      const hideMessage = message.loading('Importing...');
       try {
         try {
           await api.postImport({
@@ -156,7 +156,7 @@ export const FileImportButton: React.FC<FileImportButtonProps> = ({ type, button
                 return;
               }
               setLoading(true);
-              const hideMessage = message.loading('Uploading...', 0);
+              const hideMessage = message.loading('Uploading...');
               try {
                 // 1. Get S3 presigned URL
                 const { presignedUrl, s3Key } = await api.postGetPresignedUrl({});

@@ -20,7 +20,7 @@ import { PaymentMethodTag } from '@/components/ui/PaymentTypeTag';
 import { paymethodOptions } from '@/utils/tags';
 import { CURRENCIES_SELECT_OPTIONS } from '@/utils/currencies';
 import { TransactionLimitsPaymentMethodLimits } from '@/apis/models/TransactionLimitsPaymentMethodLimits';
-import Button from '@/components/ui/Button';
+import Button from '@/components/library/Button';
 import { TransactionCountLimit } from '@/apis/models/TransactionCountLimit';
 import { TransactionAmountLimit } from '@/apis/models/TransactionAmountLimit';
 import { useApi } from '@/api';
@@ -144,7 +144,7 @@ const PaymentMethodLimitsEditor: React.FC<PaymentMethodLimitsEditorProps> = ({
       onClose={onClose}
       extra={
         <Space>
-          <Button type="primary" disabled={!paymentMethod} onClick={handleSave}>
+          <Button type="PRIMARY" isDisabled={!paymentMethod} onClick={handleSave}>
             {editMode === 'EDIT' ? 'Save limit' : 'Add limit'}
           </Button>
         </Space>
@@ -465,7 +465,7 @@ export default function ExpectedTransactionLimits(props: Props) {
           <Row align="middle">
             On payment method
             <Button
-              type="text"
+              type="TEXT"
               icon={<PlusOutlined />}
               style={{
                 color: COLORS.brandBlue.base,

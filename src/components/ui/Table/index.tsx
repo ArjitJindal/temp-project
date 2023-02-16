@@ -1,6 +1,6 @@
 import ProTable, { ProTableProps } from '@ant-design/pro-table';
 import React, { useCallback, useEffect, useImperativeHandle, useRef, useState } from 'react';
-import { Checkbox, Pagination, Select } from 'antd';
+import { Checkbox } from 'antd';
 import _ from 'lodash';
 import cn from 'clsx';
 import { ProColumns, ProColumnType } from '@ant-design/pro-table/es/typing';
@@ -14,10 +14,9 @@ import ResizableTitle from '@/utils/table-utils';
 import DownloadButton from '@/components/ui/Table/DownloadButton';
 import { PaginationParams } from '@/utils/queries/hooks';
 import { getClientOffset } from '@/utils/positions';
+import Pagination from '@/components/library/Pagination';
 
 const TABLE_SEARCH_SECTION_HEIGHT = 70;
-
-const PAGE_SIZE_OPTIONS = [10, 20, 50, 100];
 
 export type TableActionType = {
   reload: () => void;
@@ -393,11 +392,8 @@ export default function Table<
           }}
         >
           <Pagination
-            disabled={loading}
-            className={style.pagination}
-            showQuickJumper
-            showSizeChanger={false}
-            pageSize={params?.pageSize ?? DEFAULT_PAGE_SIZE}
+            isDisabled={loading}
+            pageSize={params?.pageSize}
             total={data.total ?? dataItems.length}
             current={params?.page}
             onChange={(page, pageSize) => {
@@ -405,38 +401,8 @@ export default function Table<
                 onChangeParams({ ...params, page, pageSize });
               }
             }}
-            showTotal={
-              showResultsInfo
-                ? (total) => (
-                    <span>
-                      {showResultsInfo && params?.pageSize && params?.page && (
-                        <>
-                          Showing {params.pageSize * (params.page - 1) + 1} -{' '}
-                          {Math.min(params.pageSize * params.page, total)} of {total} results
-                        </>
-                      )}
-                    </span>
-                  )
-                : undefined
-            }
+            showResultsInfo={showResultsInfo}
           />
-          <Select
-            defaultValue={DEFAULT_PAGE_SIZE}
-            onChange={(value) => {
-              if (params != null) {
-                onChangeParams({ ...params, pageSize: value });
-              }
-            }}
-            value={params?.pageSize}
-            dropdownMatchSelectWidth={false}
-            placement="topRight"
-          >
-            {PAGE_SIZE_OPTIONS.map((pageSize) => (
-              <Select.Option key={pageSize} value={pageSize}>
-                {pageSize} / page
-              </Select.Option>
-            ))}
-          </Select>
         </div>
       )}
     </div>

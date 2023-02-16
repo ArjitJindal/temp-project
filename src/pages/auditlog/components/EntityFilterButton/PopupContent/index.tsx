@@ -3,7 +3,7 @@ import React, { useState } from 'react';
 import s from './style.module.less';
 import { AuditLogType } from '@/apis';
 import * as Form from '@/components/ui/Form';
-import Button from '@/components/ui/Button';
+import Button from '@/components/library/Button';
 
 interface Props {
   initialState: AuditLogType[] | [];
@@ -47,7 +47,7 @@ export default function PopupContent(props: Props) {
           </Checkbox.Group>
         </Form.Layout.Label>
         <div className={s.buttons}>
-          <Button htmlType="submit" type="primary">
+          <Button htmlType="submit" type="PRIMARY">
             Confirm
           </Button>
           <Button onClick={onCancel}>Reset</Button>

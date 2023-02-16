@@ -2,7 +2,7 @@ import { useMemo } from 'react';
 import style from './style.module.less';
 import { Rule } from '@/apis';
 import { useApi } from '@/api';
-import Button from '@/components/ui/Button';
+import Button from '@/components/library/Button';
 import { RuleActionTag } from '@/components/rules/RuleActionTag';
 import { TableColumn } from '@/components/ui/Table/types';
 import { RecommendedTag } from '@/components/ui/RecommendedTag';
@@ -96,8 +96,8 @@ export const RulesTable: React.FC<Props> = ({ onSelectRule }) => {
             <span>
               <Button
                 analyticsName="Select"
-                size="middle"
-                type="primary"
+                size="MEDIUM"
+                type="PRIMARY"
                 onClick={() => onSelectRule(entity)}
               >
                 Configure

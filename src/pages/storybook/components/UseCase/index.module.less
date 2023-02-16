@@ -4,11 +4,13 @@
   display: flex;
   position: relative;
   flex-direction: column;
-  max-width: 800px;
+  max-width: 880px;
 }
 
 .header {
   display: flex;
+  align-items: center;
+  justify-content: space-between;
 }
 
 .title {
@@ -17,6 +19,12 @@
   padding: 0 4px;
   font-size: 10px;
   border: 1px solid var(--storybook-color-1);
+}
+
+.headerButtons {
+  display: flex;
+  gap: 4px;
+  align-items: center;
 }
 
 .content {
@@ -28,6 +36,7 @@
   padding: 1rem;
   flex-direction: column;
   gap: 1rem;
+  align-items: flex-start;
 }
 
 .description {
@@ -35,4 +44,34 @@
   font-size: 12px;
   color: #0000008a;
   text-align: right;
+}
+
+.button {
+  width: 12px;
+  height: 12px;
+  border: 1px solid black;
+  opacity: 0.25;
+
+  &:hover {
+    opacity: 1;
+  }
+}
+
+.changeColor {
+  cursor: pointer;
+  opacity: 0.25;
+
+  &:hover {
+    opacity: 1;
+  }
+}
+
+.fullWidth {
+  font-size: 8px;
+  line-height: 8px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: bold;
 }

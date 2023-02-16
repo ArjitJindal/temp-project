@@ -6,7 +6,7 @@ import { WebhookDetails } from './WebhookDetails';
 import { WebhookConfiguration, WebhookEventType } from '@/apis';
 import { useApi } from '@/api';
 import Colors from '@/components/ui/colors';
-import Button from '@/components/ui/Button';
+import Button from '@/components/library/Button';
 import { TableActionType } from '@/components/ui/Table';
 import { TableColumn } from '@/components/ui/Table/types';
 import { WEBHOOKS_LIST } from '@/utils/queries/keys';
@@ -141,7 +141,7 @@ export const WebhookSettings: React.FC = () => {
         pagination={false}
         queryResults={webhooksListResult}
         toolBarRender={() => [
-          <Button type="primary" onClick={handleCreateWebhook}>
+          <Button type="PRIMARY" onClick={handleCreateWebhook}>
             <PlusOutlined />
             Add endpoint
           </Button>,

@@ -14,7 +14,7 @@ import { useQuery } from '@/utils/queries/hooks';
 import AsyncResourceRenderer from '@/components/common/AsyncResourceRenderer';
 import { CASES_ITEM } from '@/utils/queries/keys';
 import UserCaseDetails from '@/pages/case-management-item/UserCaseDetails';
-import Button from '@/components/ui/Button';
+import Button from '@/components/library/Button';
 import COLORS from '@/components/ui/colors';
 import PrintButton from '@/components/ui/PrintButton';
 import {
@@ -98,7 +98,7 @@ function CaseManagementItemPage() {
               }}
             >
               <Button
-                type={'text'}
+                type={'TEXT'}
                 onClick={() =>
                   expandableContext.setExpandMode(isAllCollapsed ? 'EXPAND_ALL' : 'COLLAPSE_ALL')
                 }

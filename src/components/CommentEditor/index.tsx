@@ -1,10 +1,9 @@
-import { message } from 'antd';
 import React, { useCallback, useImperativeHandle, useRef, useState } from 'react';
 import Upload from 'antd/es/upload/Upload';
 import axios from 'axios';
-import { PaperClipOutlined } from '@ant-design/icons';
 import s from './styles.module.less';
-import Button from '@/components/ui/Button';
+import { message } from '@/components/library/Message';
+import Button from '@/components/library/Button';
 import { useApi } from '@/api';
 import { FileInfo } from '@/apis';
 import { FilesList } from '@/components/files/FilesList';
@@ -42,7 +41,7 @@ function CommentEditor(props: Props, ref: React.Ref<CommentEditorRef>) {
   );
 
   const editorRef = useRef<MarkdownEditor>(null);
-  const uploadRef = useRef<HTMLElement>(null);
+  const uploadRef = useRef<HTMLButtonElement>(null);
 
   useImperativeHandle(ref, () => ({
     reset: () => {
@@ -78,10 +77,10 @@ function CommentEditor(props: Props, ref: React.Ref<CommentEditorRef>) {
         <Button
           analyticsName="Add Comment"
           htmlType="submit"
-          loading={isLoading(submitRes)}
+          isLoading={isLoading(submitRes) || isUploadLoading}
           onClick={onSubmit}
-          type="primary"
-          disabled={isUploadLoading || (values.files.length === 0 && !values.comment)}
+          type="PRIMARY"
+          isDisabled={values.files.length === 0 && !values.comment}
         >
           Add Comment
         </Button>
@@ -117,7 +116,7 @@ function CommentEditor(props: Props, ref: React.Ref<CommentEditorRef>) {
               return;
             }
             setUploadLoading(true);
-            const hideMessage = message.loading('Uploading...', 0);
+            const hideMessage = message.loading('Uploading...');
             let fileS3Key = '';
             try {
               // 1. Get S3 presigned URL
@@ -151,15 +150,15 @@ function CommentEditor(props: Props, ref: React.Ref<CommentEditorRef>) {
             }
           }}
         >
-          <Button
-            ref={uploadRef}
-            className={s.uploadButton}
-            analyticsName="Attach files"
-            size="middle"
-            icon={<PaperClipOutlined />}
-            loading={isUploadLoading}
-            disabled={isLoading(submitRes)}
-          />
+          <div className={s.uploadButton}>
+            <Button
+              ref={uploadRef}
+              analyticsName="Attach files"
+              size="MEDIUM"
+              isLoading={isUploadLoading}
+              isDisabled={isLoading(submitRes)}
+            />
+          </div>
         </Upload>
       </div>
     </div>

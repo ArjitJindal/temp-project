@@ -3,7 +3,7 @@ import { message, Switch } from 'antd';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { ListHeader, ListMetadata, ListType } from '@/apis';
 import { useApi } from '@/api';
-import Button from '@/components/ui/Button';
+import Button from '@/components/library/Button';
 import DeleteListModal from '@/pages/lists/ListTable/DeleteListModal';
 import Id from '@/components/ui/Id';
 import { makeUrl } from '@/utils/routing';
@@ -159,7 +159,7 @@ function ListTable(props: Props, ref: ListTableRef) {
       render: (_, entity) => {
         return (
           <Button
-            danger
+            type="SECONDARY"
             onClick={() => {
               setListToDelete(entity);
             }}

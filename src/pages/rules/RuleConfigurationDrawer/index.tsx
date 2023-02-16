@@ -1,8 +1,8 @@
 import React, { useEffect, useState } from 'react';
-import { message } from 'antd';
 import s from './style.module.less';
 import TransactionIcon from './transaction-icon.react.svg';
-import Button from '@/components/ui/Button';
+import { message } from '@/components/library/Message';
+import Button from '@/components/library/Button';
 import BasicDetailsStep, {
   FormValues as BasicDetailsStepFormValues,
   INITIAL_VALUES as BASIC_DETAILS_STEP_INITIAL_VALUES,
@@ -232,7 +232,7 @@ export default function RuleConfigurationDrawer(props: Props) {
               setActiveTabKey(prevStep?.tabs[0]?.key);
             }}
           />
-          <Button form={formId} htmlType="submit" loading={isSubmitting}>
+          <Button htmlAttrs={{ form: formId }} htmlType="submit" isLoading={isSubmitting}>
             Done
           </Button>
         </div>

@@ -11,7 +11,7 @@ import { InternalBusinessUser, InternalConsumerUser, Comment } from '@/apis';
 import { useApi } from '@/api';
 import AsyncResourceRenderer from '@/components/common/AsyncResourceRenderer';
 import * as Card from '@/components/ui/Card';
-import Button from '@/components/ui/Button';
+import Button from '@/components/library/Button';
 import COLORS from '@/components/ui/colors';
 import {
   ExpandableContext,
@@ -88,7 +88,7 @@ function UserItem() {
           <>
             <Header user={user} onNewComment={handleNewComment} />
             <Button
-              type={'text'}
+              type={'TEXT'}
               onClick={() =>
                 expandableContext.setExpandMode(isAllCollapsed ? 'EXPAND_ALL' : 'COLLAPSE_ALL')
               }

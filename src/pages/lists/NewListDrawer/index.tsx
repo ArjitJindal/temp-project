@@ -7,7 +7,7 @@ import NewValueInput from './NewValueInput';
 import { useApi } from '@/api';
 import { getErrorMessage } from '@/utils/lang';
 import { ListSubtype, ListType } from '@/apis';
-import Button from '@/components/ui/Button';
+import Button from '@/components/library/Button';
 import { getListSubtypeTitle, SUBTYPES } from '@/pages/lists/helpers';
 
 interface FormValues {
@@ -137,8 +137,8 @@ export default function NewListDrawer(props: Props) {
                   const isValid = !!values.name && !!values.subtype;
                   return (
                     <Button
-                      className={s.button}
-                      disabled={handleFinishMutation.isLoading || !isValid}
+                      isLoading={handleFinishMutation.isLoading}
+                      isDisabled={!isValid}
                       htmlType={'submit'}
                     >{`Add new ${listType === 'WHITELIST' ? 'whitelist' : 'blacklist'}`}</Button>
                   );

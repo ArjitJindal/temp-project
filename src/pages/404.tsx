@@ -1,7 +1,7 @@
 import { Card, Result } from 'antd';
 import React from 'react';
 // import { history } from 'umi';
-import Button from '@/components/ui/Button';
+import Button from '@/components/library/Button';
 
 const NoFoundPage: React.FC = () => (
   <Card>
@@ -12,7 +12,7 @@ const NoFoundPage: React.FC = () => (
       extra={
         <Button
           analyticsName="Back home"
-          type="primary"
+          type="PRIMARY"
           onClick={() => {
             // navigate('/')
           }}
