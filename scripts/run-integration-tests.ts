@@ -57,11 +57,15 @@ async function main() {
         },
       ],
     },
-    (err) => {
+    (err, result) => {
       if (err) {
         throw err
       }
-      console.log('Tests complete')
+      if (result.run.failures.length > 0) {
+        throw new Error(
+          `There were ${result.run.failures.length} test failures`
+        )
+      }
     }
   )
 }
