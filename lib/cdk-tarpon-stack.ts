@@ -1379,6 +1379,7 @@ export class CdkTarponStack extends cdk.Stack {
         environment: {
           ...props.environment,
           ENV: this.config.stage,
+          REGION: this.config.region as string,
           ...{
             ...Object.entries(this.config.application).reduce(
               (acc: Record<string, string>, [key, value]) => ({

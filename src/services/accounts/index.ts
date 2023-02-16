@@ -42,6 +42,7 @@ export type Tenant = {
   name: string
   orgId: string
   apiAudience: string
+  region: string
 }
 
 export class AccountsService {
@@ -66,6 +67,7 @@ export class AccountsService {
       name: organization.display_name || tenantId,
       orgId: organization.id,
       apiAudience: organization.metadata?.apiAudience,
+      region: organization.metadata?.region,
     }
   }
 
@@ -346,13 +348,17 @@ export class AccountsService {
   ): Promise<Organization> {
     const managementClient = new ManagementClient(await this.getAuth0Client())
 
+    const auth0Audience = process.env.AUTH0_AUDIENCE?.split('https://')[1]
+    const regionPrefix =
+      process.env.ENV === 'prod' ? `${process.env.REGION}-` : ''
     const organization = await managementClient.organizations.create({
       name: tenantData.tenantName.toLowerCase(),
       display_name: tenantData?.auth0DisplayName?.replace(/[^a-zA-Z0-9]/g, '_'),
       metadata: {
         tenantId,
-        consoleApiUrl: `${process.env.AUTH0_AUDIENCE}console`,
+        consoleApiUrl: `https://${regionPrefix}${auth0Audience}console`,
         apiAudience: process.env.AUTH0_AUDIENCE as unknown as string,
+        region: process.env.REGION,
       },
     })
 
@@ -397,6 +403,7 @@ export class AccountsService {
           name: organization.name,
           orgId: organization.id,
           apiAudience: organization.metadata?.apiAudience,
+          region: organization.metadata?.region,
         },
         { email, role }
       )

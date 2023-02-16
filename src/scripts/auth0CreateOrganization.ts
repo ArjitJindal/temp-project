@@ -127,6 +127,7 @@ const createAuth0Organization = async (
         apiAudience: auth0Organization.metadata
           .apiAudience as unknown as string,
         orgId: auth0Organization.id as unknown as string,
+        region: auth0Organization.metadata.region,
       },
       { email: auth0Email, role: 'admin' }
     )

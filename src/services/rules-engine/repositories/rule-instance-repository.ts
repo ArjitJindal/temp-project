@@ -89,7 +89,7 @@ export class RuleInstanceRepository {
       id: ruleInstanceId,
       status: ruleInstance.status || 'ACTIVE',
       createdAt: ruleInstance.createdAt || now,
-      updatedAt: ruleInstance.updatedAt || now,
+      updatedAt: now,
       runCount: ruleInstance.runCount || 0,
       hitCount: ruleInstance.hitCount || 0,
     }

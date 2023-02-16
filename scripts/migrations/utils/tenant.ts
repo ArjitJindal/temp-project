@@ -11,13 +11,17 @@ export async function migrateAllTenants(
     config.application as AccountsConfig
   )
   const tenants = await accountsService.getTenants()
+  const targetTenants = tenants.filter(
+    (tenant) => config.stage !== 'prod' || tenant.region === config.region
+  )
+  if (targetTenants.length === 0) {
+    throw new Error('No tenants found for running the migration!')
+  }
 
-  for (const tenant of tenants) {
-    if (tenant.apiAudience === config.application.AUTH0_AUDIENCE) {
-      console.info(`Migrating tenant ${tenant.name} (ID: ${tenant.id})`)
-      await migrationCallback(tenant)
-      console.info(`Migrated tenant ${tenant.name} (ID: ${tenant.id})`)
-    }
+  for (const tenant of targetTenants) {
+    console.info(`Migrating tenant ${tenant.name} (ID: ${tenant.id})`)
+    await migrationCallback(tenant)
+    console.info(`Migrated tenant ${tenant.name} (ID: ${tenant.id})`)
   }
 
   console.info('Migration completed.')

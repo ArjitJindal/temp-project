@@ -109,8 +109,7 @@ export const ruleInstanceHandler = lambdaApi()(
         ...ruleInstance,
         ...ruleInstanceUpdatable,
       }
-      await ruleService.createOrUpdateRuleInstance(newRuleInstance)
-      return newRuleInstance
+      return ruleService.createOrUpdateRuleInstance(newRuleInstance)
     } else if (
       event.httpMethod === 'DELETE' &&
       event.resource === '/rule-instances/{ruleInstanceId}' &&
