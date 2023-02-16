@@ -15,7 +15,8 @@ export async function migrateAllTenants(
     (tenant) => config.stage !== 'prod' || tenant.region === config.region
   )
   if (targetTenants.length === 0) {
-    throw new Error('No tenants found for running the migration!')
+    console.warn('No tenants found for running the migration!')
+    return
   }
 
   for (const tenant of targetTenants) {
