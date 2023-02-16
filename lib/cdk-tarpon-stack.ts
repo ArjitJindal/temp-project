@@ -1553,7 +1553,7 @@ export class CdkTarponStack extends cdk.Stack {
     props?: Partial<KinesisEventSourceProps>
   ) {
     const eventSource = new KinesisEventSource(stream, {
-      batchSize: 10000,
+      batchSize: 100,
       maxBatchingWindow: Duration.seconds(10),
       startingPosition: StartingPosition.LATEST,
       ...props,
