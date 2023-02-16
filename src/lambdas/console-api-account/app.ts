@@ -40,7 +40,6 @@ export const accountsHandler = lambdaApi()(
     }
 
     if (event.httpMethod === 'GET' && event.resource === '/accounts') {
-      assertRole({ role, verifiedEmail }, 'admin')
       // todo: this call can only return up to 1000 users, need to handle this
       const accounts: Account[] = await accountsService.getTenantAccounts(
         organization
@@ -73,7 +72,7 @@ export const accountsHandler = lambdaApi()(
       event.httpMethod === 'POST' &&
       event.resource === '/accounts/{accountId}/change_role'
     ) {
-      assertRole({ role, verifiedEmail }, 'root')
+      assertRole({ role, verifiedEmail }, 'admin')
       const { pathParameters } = event
       const idToChange = pathParameters?.accountId
       if (!idToChange) {

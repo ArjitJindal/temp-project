@@ -104,6 +104,18 @@ export class CdktfTarponStack extends TerraformStack {
           ),
         })
     )
+
+    // Root
+    new auth0.role.Role(this, 'root', {
+      name: `root`,
+      permissions: resourceIdentifiers.flatMap((resourceServerIdentifier) => {
+        return PERMISSIONS.map((p) => ({
+          name: p,
+          resourceServerIdentifier,
+        }))
+      }),
+    })
+
     const postLoginCode = fs.readFileSync('lib/auth0/post-login.js', 'utf8')
 
     new auth0.action.Action(this, 'post-login', {
