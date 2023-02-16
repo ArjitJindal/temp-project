@@ -201,7 +201,7 @@
               "",
               "pm.test(\"Your test name\", function () {",
               "    var jsonData = pm.response.json();",
-              "    pm.expect(jsonData.message).to.eql(null);",
+              "    pm.expect(jsonData.Message).to.eql(\"User is not authorized to access this resource with an explicit deny\");",
               "});"
             ],
             "type": "text/javascript"
