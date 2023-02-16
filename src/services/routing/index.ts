@@ -23,7 +23,7 @@ import { isLeaf, isTree, RouteItem } from '@/services/routing/types';
 import SettingsPage from '@/pages/settings';
 import SanctionsPage from '@/pages/sanctions';
 import AuditLogPage from '@/pages/auditlog';
-import { usePermissions } from '@/utils/user-utils';
+import { isAtLeastAdmin, useAuth0User, usePermissions } from '@/utils/user-utils';
 import { Permission } from '@/apis';
 import ForbiddenPage from '@/pages/403';
 
@@ -39,6 +39,8 @@ export function useRoutes(): RouteItem[] {
   const [lastActiveSanctionsTab] = useLocalStorageState('sanctions-active-tab', 'search');
   const rbacEnabled = useFeatureEnabled('RBAC');
   const permissions = usePermissions();
+  const user = useAuth0User();
+  const isAtLeastAdminUser = isAtLeastAdmin(user);
 
   return useMemo((): RouteItem[] => {
     const routes: (RouteItem | boolean)[] = [
@@ -294,15 +296,16 @@ export function useRoutes(): RouteItem[] {
             ]
           : [],
       },
-      isAuditLogEnabled && {
-        path: '/auditlog',
-        icon: 'ContainerOutlined',
-        name: 'auditlog',
-        position: 'bottom',
-        permissions: ['audit-log:export:read'],
+      isAtLeastAdminUser &&
+        isAuditLogEnabled && {
+          path: '/auditlog',
+          icon: 'ContainerOutlined',
+          name: 'auditlog',
+          position: 'bottom',
+          permissions: ['audit-log:export:read'],
 
-        component: AuditLogPage,
-      },
+          component: AuditLogPage,
+        },
       {
         path: '/settings',
         icon: 'SettingOutlined',
@@ -355,6 +358,7 @@ export function useRoutes(): RouteItem[] {
     isSanctionsEnabled,
     isAuditLogEnabled,
     lastActiveSanctionsTab,
+    isAtLeastAdminUser,
     permissions,
     rbacEnabled,
   ]);
