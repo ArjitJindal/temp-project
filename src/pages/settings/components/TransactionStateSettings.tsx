@@ -9,6 +9,7 @@ import { TableColumn } from '@/components/ui/Table/types';
 
 interface TableItem {
   state: TransactionState;
+  description: string;
   stateAlias: string | undefined;
 }
 
@@ -64,34 +65,42 @@ export const TransactionStateSettings: React.FC = () => {
     () => [
       {
         state: 'CREATED',
+        description: 'When a transaction is initiated in your system',
         stateAlias: stateToAlias.get('CREATED'),
       },
       {
         state: 'PROCESSING',
+        description: 'When a transaction is under process',
         stateAlias: stateToAlias.get('PROCESSING'),
       },
       {
         state: 'SENT',
+        description: 'When a transaction is successful from the initiator',
         stateAlias: stateToAlias.get('SENT'),
       },
       {
         state: 'EXPIRED',
+        description: 'When a transaction is not settled',
         stateAlias: stateToAlias.get('EXPIRED'),
       },
       {
         state: 'SUSPENDED',
+        description: 'When a transaction is temporary on hold',
         stateAlias: stateToAlias.get('SUSPENDED'),
       },
       {
         state: 'REFUNDED',
+        description: 'When a transaction amount is processed back to the initiator',
         stateAlias: stateToAlias.get('REFUNDED'),
       },
       {
         state: 'DECLINED',
+        description: 'When a transaction is not processed',
         stateAlias: stateToAlias.get('DECLINED'),
       },
       {
         state: 'SUCCESSFUL',
+        description: 'When a transaction is completed successfully',
         stateAlias: stateToAlias.get('SUCCESSFUL'),
       },
     ],
@@ -103,6 +112,11 @@ export const TransactionStateSettings: React.FC = () => {
       title: <Typography.Text strong>State</Typography.Text>,
       width: '100px',
       dataIndex: 'state',
+    },
+    {
+      title: <Typography.Text strong>Description</Typography.Text>,
+      width: '250px',
+      dataIndex: 'description',
     },
     {
       title: (
