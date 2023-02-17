@@ -49,7 +49,10 @@ export default function Select<Value extends InputType = InputType>(props: Props
       const searchString = inputValue.toLowerCase();
       return (
         (option?.label?.toLowerCase().includes(searchString) ||
-          option?.value?.toString().toLowerCase().includes(searchString)) ??
+          option?.value?.toString().toLowerCase().includes(searchString) ||
+          // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+          // @ts-ignore
+          option?.children?.toString().toLowerCase().includes(searchString)) ??
         false
       );
     },
