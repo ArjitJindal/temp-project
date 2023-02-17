@@ -1,4 +1,5 @@
 import { LAMBDAS } from '@cdk/lambdas'
+import { logger } from '@/core/logger'
 
 type Api = 'CONSOLE' | 'PUBLIC' | 'PUBLIC_DEVICE_DATA' | 'PUBLIC_MANAGEMENT'
 export function determineApi(context: {
@@ -7,8 +8,9 @@ export function determineApi(context: {
   if (!context?.functionName) {
     return
   }
-  const codePath = LAMBDAS[context?.functionName].codePath
+  const codePath = LAMBDAS[context?.functionName]?.codePath
   if (!codePath) {
+    logger.error('Could not determine lambda from ', context?.functionName)
     return
   }
   const prefix = [
