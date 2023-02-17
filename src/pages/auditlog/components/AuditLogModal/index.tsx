@@ -77,8 +77,8 @@ type convertDataReturn = {
 const convertDataOldImageAndNewImageToArr = (data: AuditLog): convertDataReturn => {
   const changedDetails: object[] = [];
   const notChangedDetails: object[] = [];
-  const oldImage: any = flattenObject(data?.oldImage);
-  const newImage: any = flattenObject(data?.newImage);
+  const oldImage: any = data?.oldImage && flattenObject(data?.oldImage);
+  const newImage: any = data?.newImage && flattenObject(data?.newImage);
 
   const oldImageKeys = oldImage ? Object.keys(oldImage) : [];
   const newImageKeys = newImage ? Object.keys(newImage) : [];
