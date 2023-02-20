@@ -64,17 +64,17 @@ export const RuleActionSettings: React.FC = () => {
     () => [
       {
         action: 'FLAG',
-        description: 'Process the transaction but generate a case for investigation',
+        description: 'Process the transaction but generate a case for investigation.',
         actionAlias: actionToAlias.get('FLAG'),
       },
       {
         action: 'SUSPEND',
-        description: 'Stop the transaction from proceeding until the investigation is completed',
+        description: 'Stop the transaction from proceeding until the investigation is completed.',
         actionAlias: actionToAlias.get('SUSPEND'),
       },
       {
         action: 'BLOCK',
-        description: 'Decline the transaction automatically',
+        description: 'Decline the transaction automatically.',
         actionAlias: actionToAlias.get('BLOCK'),
       },
     ],
