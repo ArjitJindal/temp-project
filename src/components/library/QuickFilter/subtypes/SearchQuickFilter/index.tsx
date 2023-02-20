@@ -17,7 +17,7 @@ interface Props<T> {
   renderItem?: (item: T) => React.ReactNode;
 }
 
-export default function SelectQuickFilter<T extends ItemType>(props: Props<T>) {
+export default function SearchQuickFilter<T extends ItemType>(props: Props<T>) {
   const {
     title,
     searchResult,

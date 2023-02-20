@@ -144,6 +144,7 @@ export default function RulesHitTransactionTable(props: Props) {
               fieldProps: {
                 options: transactionType,
                 allowClear: true,
+                displayMode: 'list',
               },
               render: (dom, entity) => {
                 return <TransactionTypeTag transactionType={entity.caseTransactions.type} />;

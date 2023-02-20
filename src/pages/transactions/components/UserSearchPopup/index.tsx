@@ -4,7 +4,6 @@ import { TooltipPlacement } from 'antd/lib/tooltip';
 import PopupContent from './PopupContent';
 import s from './style.module.less';
 import { Mode, User } from './types';
-import { useTableScrollVisible } from '@/utils/hooks';
 
 interface Props {
   children: React.ReactNode;
@@ -26,26 +25,26 @@ export default function UserSearchPopup(props: Props) {
   } = props;
   const [visible, setVisible] = useState(false);
 
-  useTableScrollVisible(setVisible);
-
   return (
     <Popover
       overlayClassName={s.popover}
       overlayInnerStyle={{ padding: 0 }}
       content={
-        <PopupContent
-          initialSearch={initialSearch ?? ''}
-          initialMode={initialMode}
-          isVisible={visible}
-          showOriginAndDestination={showOriginAndDestination}
-          onConfirm={(user, mode) => {
-            onConfirm(user, mode);
-            setVisible(false);
-          }}
-          onCancel={() => {
-            setVisible(false);
-          }}
-        />
+        <div className={s.popupContentWrapper}>
+          <PopupContent
+            initialSearch={initialSearch ?? ''}
+            initialMode={initialMode}
+            isVisible={visible}
+            showOriginAndDestination={showOriginAndDestination}
+            onConfirm={(user, mode) => {
+              onConfirm(user, mode);
+              setVisible(false);
+            }}
+            onCancel={() => {
+              setVisible(false);
+            }}
+          />
+        </div>
       }
       trigger="click"
       placement={placement}

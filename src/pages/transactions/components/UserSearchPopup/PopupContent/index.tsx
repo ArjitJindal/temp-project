@@ -1,12 +1,11 @@
 import React, { useEffect, useState } from 'react';
-import { Radio, Input } from 'antd';
+import { Input, Radio } from 'antd';
 import { useDebounce } from 'ahooks';
 import { Mode, User } from '../types';
 import { useLastSearches, useUsers } from '../helpers';
 import s from './style.module.less';
 import UserList from './UserList';
 import LastSearchList from './LastSearchList';
-import UserFillIcon from '@/components/ui/icons/Remix/user/user-fill.react.svg';
 import SearchLineIcon from '@/components/ui/icons/Remix/system/search-line.react.svg';
 import { isSuccess } from '@/utils/asyncResource';
 
@@ -62,10 +61,6 @@ export default function PopupContent(props: Props) {
   return (
     <div className={s.root}>
       <div className={s.header}>
-        <div className={s.title}>
-          <UserFillIcon className={s.icon} />
-          <span>Find a user</span>
-        </div>
         <Input
           suffix={search === '' && <SearchLineIcon className={s.searchIcon} />}
           placeholder="Search user name or ID"

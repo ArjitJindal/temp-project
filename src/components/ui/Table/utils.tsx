@@ -1,6 +1,14 @@
 import { ResizeCallbackData } from 'react-resizable';
 import React from 'react';
-import { isMultiRows, TableDataItem, TableRow } from '@/components/ui/Table/types';
+import {
+  AutoFilter,
+  AutoFilterDataType,
+  isMultiRows,
+  isSimpleColumn,
+  TableColumn,
+  TableDataItem,
+  TableRow,
+} from '@/components/ui/Table/types';
 
 export const handleResize =
   (
@@ -68,3 +76,41 @@ export const TABLE_LOCALE = {
   collapse: 'Collapse',
   cancelSort: 'Cancel',
 };
+
+export function getAutoFilters<T extends object | unknown>(
+  columns: TableColumn<T>[],
+): AutoFilter[] {
+  return columns
+    .filter(
+      (column) =>
+        column != null && column.hideInSearch !== true && typeof column.dataIndex === 'string',
+    )
+    .filter((column) => isSimpleColumn(column) && typeof column.dataIndex === 'string')
+    .map((column): AutoFilter => {
+      const { fieldProps = {} } = column;
+      let dataType: AutoFilterDataType = { kind: 'string' };
+      if (column.valueType === 'dateRange') {
+        dataType = { kind: 'dateRange' };
+      } else if (column.valueType === 'select') {
+        const { options, mode, displayMode } = fieldProps;
+        dataType = {
+          kind: 'select',
+          options: options ?? [],
+          mode: mode === 'multiple' ? 'MULTIPLE' : mode === 'tags' ? 'TAGS' : 'SINGLE',
+          displayMode: displayMode === 'list' ? 'list' : 'select',
+        };
+      } else if (column.valueType === 'dateTimeRange') {
+        dataType = {
+          kind: 'dateTimeRange',
+        };
+      }
+      return {
+        kind: 'AUTO',
+        key: column.dataIndex as string,
+        title: column.title,
+        icon: fieldProps?.icon,
+        showFilterByDefault: fieldProps.showFilterByDefault === true,
+        dataType,
+      };
+    });
+}

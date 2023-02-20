@@ -1,10 +1,7 @@
-import React, { useState } from 'react';
-import { Popover } from 'antd';
-import s from './style.module.less';
+import React from 'react';
 import PopupContent from './PopupContent';
 import BriefcaseIcon from '@/components/ui/icons/Remix/business/briefcase-3-fill.react.svg';
-import ActionButton from '@/components/ui/Table/ActionButton';
-import { useTableScrollVisible } from '@/utils/hooks';
+import QuickFilterBase from '@/components/library/QuickFilter/QuickFilterBase';
 
 interface Props {
   businessIndustry: string[];
@@ -13,35 +10,24 @@ interface Props {
 
 export default function BusinessIndustryButton(props: Props) {
   const { businessIndustry, onConfirm } = props;
-  const [visible, setVisible] = useState(false);
 
-  const buttonText =
-    businessIndustry.length > 0 ? businessIndustry.join(', ') : 'Business Industry';
-
-  useTableScrollVisible(setVisible);
+  const isEmpty = businessIndustry.length === 0;
 
   return (
-    <Popover
-      overlayClassName={s.popover}
-      overlayInnerStyle={{ padding: 0 }}
-      content={<PopupContent value={businessIndustry} onConfirm={onConfirm} />}
-      trigger="click"
-      placement="bottomLeft"
-      visible={visible}
-      onVisibleChange={setVisible}
+    <QuickFilterBase
+      icon={<BriefcaseIcon />}
+      analyticsName="business-industry-filter"
+      title="Business industry"
+      buttonText={isEmpty ? undefined : businessIndustry.join(', ')}
+      onClear={
+        isEmpty
+          ? undefined
+          : () => {
+              onConfirm([]);
+            }
+      }
     >
-      <ActionButton
-        color="ORANGE"
-        icon={<BriefcaseIcon />}
-        analyticsName="business-industry-filter"
-        isActive={businessIndustry.length !== 0}
-        onClear={() => {
-          onConfirm([]);
-        }}
-        title={buttonText}
-      >
-        {buttonText}
-      </ActionButton>
-    </Popover>
+      <PopupContent value={businessIndustry} onConfirm={onConfirm} />
+    </QuickFilterBase>
   );
 }

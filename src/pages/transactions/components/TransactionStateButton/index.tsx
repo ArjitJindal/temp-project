@@ -1,15 +1,12 @@
-import React, { useState } from 'react';
-import { Popover } from 'antd';
-import s from './style.module.less';
+import React from 'react';
 import PopupContent from './PopupContent';
 import HealthLineIcon from '@/components/ui/icons/Remix/health/pulse-line.react.svg';
-import ActionButton from '@/components/ui/Table/ActionButton';
 import { TransactionState } from '@/apis';
 import {
   getTransactionStateLabel,
   useSettings,
 } from '@/components/AppWrapper/Providers/SettingsProvider';
-import { useTableScrollVisible } from '@/utils/hooks';
+import QuickFilterBase from '@/components/library/QuickFilter/QuickFilterBase';
 
 interface Props {
   transactionStates: TransactionState[];
@@ -19,39 +16,30 @@ interface Props {
 export function TransactionStateButton(props: Props) {
   const settings = useSettings();
   const { transactionStates, onConfirm } = props;
-  const [visible, setVisible] = useState(false);
 
-  const buttonText =
-    transactionStates.length > 0
-      ? transactionStates
-          .map((transactionState) => getTransactionStateLabel(transactionState, settings))
-          .join(', ')
-      : 'Transaction State';
+  const isEmpty = transactionStates.length === 0;
 
-  useTableScrollVisible(setVisible);
+  const buttonText = isEmpty
+    ? undefined
+    : transactionStates
+        .map((transactionState) => getTransactionStateLabel(transactionState, settings))
+        .join(', ');
 
   return (
-    <Popover
-      overlayClassName={s.popover}
-      overlayInnerStyle={{ padding: 0 }}
-      content={<PopupContent value={transactionStates} onConfirm={onConfirm} />}
-      trigger="click"
-      placement="bottomLeft"
-      visible={visible}
-      onVisibleChange={setVisible}
+    <QuickFilterBase
+      icon={<HealthLineIcon />}
+      analyticsName="state-filter"
+      title="Transaction state"
+      buttonText={buttonText}
+      onClear={
+        isEmpty
+          ? undefined
+          : () => {
+              onConfirm([]);
+            }
+      }
     >
-      <ActionButton
-        color="TURQUOISE"
-        icon={<HealthLineIcon />}
-        analyticsName="state-filter"
-        isActive={transactionStates.length !== 0}
-        onClear={() => {
-          onConfirm([]);
-        }}
-        title={buttonText}
-      >
-        {buttonText}
-      </ActionButton>
-    </Popover>
+      <PopupContent value={transactionStates} onConfirm={onConfirm} />
+    </QuickFilterBase>
   );
 }

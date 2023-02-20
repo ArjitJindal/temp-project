@@ -17,6 +17,12 @@ export default function (): JSX.Element {
       <UseCase title={'Disabled'}>
         <Component value={value} onChange={setValue} isDisabled={true} />
       </UseCase>
+      <UseCase
+        title={'Undetermined'}
+        description="Checkbox is in indeterminate state when receives undefined"
+      >
+        <Component value={undefined} onChange={() => {}} />
+      </UseCase>
     </>
   );
 }

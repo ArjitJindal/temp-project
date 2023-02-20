@@ -28,35 +28,24 @@ export default function PopupContent(props: Props) {
 
   return (
     <div className={s.root}>
-      <div
-        id="scrollableDiv"
-        style={{
-          maxHeight: 200,
-          overflow: 'auto',
-          width: 200,
-        }}
-      >
-        <List
-          dataSource={getOr(statesRes.data, [])}
-          loading={isLoading(statesRes.data)}
-          renderItem={(item) => (
-            <List.Item
-              className={cn(s.item, value.includes(item) && s.isActive)}
-              onClick={(e) => {
-                e.stopPropagation();
-                e.preventDefault();
-                onConfirm(
-                  !value.includes(item) ? [...value, item] : value.filter((x) => x !== item),
-                );
-              }}
-            >
-              <List.Item.Meta
-                title={<TransactionStateTag titleClassName={s.itemTitle} transactionState={item} />}
-              />
-            </List.Item>
-          )}
-        />
-      </div>
+      <List
+        dataSource={getOr(statesRes.data, [])}
+        loading={isLoading(statesRes.data)}
+        renderItem={(item) => (
+          <List.Item
+            className={cn(s.item, value.includes(item) && s.isActive)}
+            onClick={(e) => {
+              e.stopPropagation();
+              e.preventDefault();
+              onConfirm(!value.includes(item) ? [...value, item] : value.filter((x) => x !== item));
+            }}
+          >
+            <List.Item.Meta
+              title={<TransactionStateTag titleClassName={s.itemTitle} transactionState={item} />}
+            />
+          </List.Item>
+        )}
+      />
     </div>
   );
 }

@@ -4,7 +4,6 @@ import { HighlightOutlined } from '@ant-design/icons';
 import PopupContent from './PopupContent';
 import ActionButton from '@/components/ui/Table/ActionButton';
 import { useUsers } from '@/utils/user-utils';
-import { useTableScrollVisible } from '@/utils/hooks';
 
 interface Props {
   initialState: string[];
@@ -15,8 +14,6 @@ export default function ActionTakenByFilterButton(props: Props) {
   const { initialState, onConfirm } = props;
   const [visible, setVisible] = useState(false);
   const [users, loadingUsers] = useUsers();
-
-  useTableScrollVisible(setVisible);
 
   return (
     <Popover

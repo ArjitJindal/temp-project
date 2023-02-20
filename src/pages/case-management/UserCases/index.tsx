@@ -1,17 +1,17 @@
 import React, { useCallback, useMemo, useRef, useState } from 'react';
 import { Divider } from 'antd';
 import { ProFormInstance } from '@ant-design/pro-form';
-import _ from 'lodash';
 import { TransactionStateButton } from '../../transactions/components/TransactionStateButton';
 import { TableSearchParams } from '../types';
 import CasesStatusChangeButton from '../components/CasesStatusChangeButton';
+import GavelIcon from './gavel.react.svg';
 import { dayjs, DEFAULT_DATE_TIME_FORMAT } from '@/utils/dayjs';
 import { QueryResult } from '@/utils/queries/types';
 import { Case, CaseUpdateRequest } from '@/apis';
 import { useAuth0User, useUsers } from '@/utils/user-utils';
 import { makeUrl } from '@/utils/routing';
 import UserSearchButton from '@/pages/transactions/components/UserSearchButton';
-import { TableColumn, TableRow } from '@/components/ui/Table/types';
+import { ExtraFilter, TableColumn, TableRow } from '@/components/ui/Table/types';
 import QueryResultsTable from '@/components/common/QueryResultsTable';
 import { AllParams, TableActionType } from '@/components/ui/Table';
 import Id from '@/components/ui/Id';
@@ -31,9 +31,13 @@ import UserLink from '@/components/UserLink';
 import { PaginatedData } from '@/utils/queries/hooks';
 import { ClosingReasonTag } from '@/pages/case-management/components/ClosingReasonTag';
 import { ConsoleUserAvatar } from '@/pages/case-management/components/ConsoleUserAvatar';
-import BusinessIndustryButton from '@/pages/transactions/components/BusinessIndustryButton';
 import { useFeatureEnabled } from '@/components/AppWrapper/Providers/SettingsProvider';
+import { humanizeConstant } from '@/utils/humanize';
+import AccountCircleLineIcon from '@/components/ui/icons/Remix/user/account-circle-line.react.svg';
+import CalendarLineIcon from '@/components/ui/icons/Remix/business/calendar-line.react.svg';
+import StackLineIcon from '@/components/ui/icons/Remix/business/stack-line.react.svg';
 import { RiskLevelButton } from '@/pages/users/users-list/RiskLevelFilterButton';
+import BusinessIndustryButton from '@/pages/transactions/components/BusinessIndustryButton';
 
 interface Props {
   params: AllParams<TableSearchParams>;
@@ -108,6 +112,10 @@ export default function UserCases(props: Props) {
         hideInTable: true,
         valueType: 'text',
         width: 130,
+        fieldProps: {
+          icon: <StackLineIcon />,
+          showFilterByDefault: true,
+        },
       },
       {
         title: 'Created on',
@@ -116,6 +124,10 @@ export default function UserCases(props: Props) {
         exportData: (entity) => dayjs(entity.createdTimestamp).format(DEFAULT_DATE_TIME_FORMAT),
         sorter: true,
         width: 150,
+        fieldProps: {
+          icon: <CalendarLineIcon />,
+          showFilterByDefault: true,
+        },
         render: (_, entity) => {
           return <TimestampDisplay timestamp={entity.createdTimestamp} />;
         },
@@ -154,7 +166,7 @@ export default function UserCases(props: Props) {
         },
       },
       {
-        title: 'User Status',
+        title: 'User status',
         exportData: 'user.userStateDetails.state',
         width: 150,
         render: (_, entity) => {
@@ -163,17 +175,19 @@ export default function UserCases(props: Props) {
         },
         fieldProps: {
           options: USER_STATES.map((state) => ({
-            label: _.startCase(state),
+            label: humanizeConstant(state),
             value: state,
           })),
           allowClear: true,
           mode: 'multiple',
+          displayMode: 'list',
+          icon: <AccountCircleLineIcon />,
         },
         valueType: 'select',
         dataIndex: 'userStates',
       },
       {
-        title: 'KYC Status',
+        title: 'KYC status',
         exportData: 'user.kycStatusDetails',
         width: 150,
         render: (_, entity) => {
@@ -182,38 +196,43 @@ export default function UserCases(props: Props) {
         },
         fieldProps: {
           options: KYC_STATUSES.map((status) => ({
-            label: _.startCase(status),
+            label: humanizeConstant(status),
             value: status,
           })),
           allowClear: true,
           mode: 'multiple',
+          displayMode: 'list',
+          icon: <AccountCircleLineIcon />,
         },
         valueType: 'select',
         dataIndex: 'kycStatuses',
       },
-      isPulseEnabled
-        ? {
-            title: 'User Risk Level',
-            exportData: (entity) => {
-              const riskLevel =
-                entity?.caseUsers?.originUserRiskLevel ??
-                entity?.caseUsers?.destinationUserRiskLevel;
-              return riskLevel ?? '-';
-            },
-            width: 150,
-            render: (_, entity) => {
-              const riskLevel =
-                entity?.caseUsers?.originUserRiskLevel ??
-                entity?.caseUsers?.destinationUserRiskLevel;
+      ...(isPulseEnabled
+        ? [
+            {
+              title: 'User risk level',
+              exportData: (entity) => {
+                const riskLevel =
+                  entity?.caseUsers?.originUserRiskLevel ??
+                  entity?.caseUsers?.destinationUserRiskLevel;
+                return riskLevel ?? '-';
+              },
+              width: 150,
+              render: (_, entity) => {
+                const riskLevel =
+                  entity?.caseUsers?.originUserRiskLevel ??
+                  entity?.caseUsers?.destinationUserRiskLevel;
 
-              return riskLevel ? <RiskLevelTag level={riskLevel} /> : '-';
-            },
-            valueType: 'select',
-            dataIndex: 'riskLevels',
-          }
-        : {},
+                return riskLevel ? <RiskLevelTag level={riskLevel} /> : '-';
+              },
+              valueType: 'select',
+              dataIndex: 'riskLevels',
+              hideInSearch: true,
+            } as TableColumn<TableItem>,
+          ]
+        : []),
       {
-        title: 'Rules Hit',
+        title: 'Rules',
         hideInTable: true,
         width: 120,
         valueType: 'select',
@@ -222,6 +241,8 @@ export default function UserCases(props: Props) {
           options: props.rules,
           allowClear: true,
           mode: 'multiple',
+          icon: <GavelIcon />,
+          showFilterByDefault: true,
         },
       },
       {
@@ -252,7 +273,7 @@ export default function UserCases(props: Props) {
         },
       },
       {
-        title: 'Case Status',
+        title: 'Case status',
         exportData: 'caseStatus',
         hideInSearch: true,
         width: 150,
@@ -303,7 +324,7 @@ export default function UserCases(props: Props) {
             },
           },
           {
-            title: 'Closed By',
+            title: 'Closed by',
             exportData: 'lastStatusChange.userId',
             width: 250,
             hideInSearch: true,
@@ -321,7 +342,7 @@ export default function UserCases(props: Props) {
             },
           },
           {
-            title: 'Last Update Time',
+            title: 'Last update time',
             exportData: 'lastStatusChange.timestamp',
             width: 160,
             hideInSearch: true,
@@ -352,22 +373,16 @@ export default function UserCases(props: Props) {
 
   return (
     <QueryResultsTable<TableItem, TableSearchParams>
+      tableId="user-cases"
       queryResults={tableQueryResult}
       params={params}
       onChangeParams={onChangeParams}
-      actionsHeader={[
-        ({ params, setParams }) => (
-          <>
-            <CaseStatusButtons
-              status={params.caseStatus ?? 'OPEN'}
-              onChange={(newStatus) => {
-                setParams((state) => ({
-                  ...state,
-                  caseStatus: newStatus,
-                }));
-              }}
-            />
-            <Divider type="vertical" style={{ height: '32px' }} />
+      extraFilters={[
+        {
+          key: 'userId',
+          title: 'User ID/Name',
+          showFilterByDefault: true,
+          renderer: ({ params, setParams }) => (
             <UserSearchButton
               initialMode={params.userFilterMode ?? 'ALL'}
               userId={params.userId ?? null}
@@ -379,6 +394,13 @@ export default function UserCases(props: Props) {
                 }));
               }}
             />
+          ),
+        },
+        {
+          key: 'transactionState',
+          title: 'Transaction state',
+          showFilterByDefault: true,
+          renderer: ({ params, setParams }) => (
             <TransactionStateButton
               transactionStates={params.transactionState ?? []}
               onConfirm={(value) => {
@@ -388,6 +410,12 @@ export default function UserCases(props: Props) {
                 }));
               }}
             />
+          ),
+        },
+        {
+          key: 'tagKey',
+          title: 'Tags',
+          renderer: ({ params, setParams }) => (
             <TagSearchButton
               initialState={{
                 key: params.tagKey ?? null,
@@ -401,6 +429,13 @@ export default function UserCases(props: Props) {
                 }));
               }}
             />
+          ),
+        },
+        {
+          key: 'businessIndustryFilter',
+          title: 'Business industry',
+          showFilterByDefault: true,
+          renderer: ({ params, setParams }) => (
             <BusinessIndustryButton
               businessIndustry={params.businessIndustryFilter ?? []}
               onConfirm={(value) => {
@@ -410,17 +445,40 @@ export default function UserCases(props: Props) {
                 }));
               }}
             />
-            {isPulseEnabled && (
-              <RiskLevelButton
-                riskLevels={params.riskLevels ?? []}
-                onConfirm={(value) => {
-                  setParams((state) => ({
-                    ...state,
-                    riskLevels: value ?? undefined,
-                  }));
-                }}
-              />
-            )}
+          ),
+        },
+        ...((isPulseEnabled
+          ? [
+              {
+                key: 'riskLevels',
+                title: 'CRA',
+                renderer: ({ params, setParams }) => (
+                  <RiskLevelButton
+                    riskLevels={params.riskLevels ?? []}
+                    onConfirm={(value) => {
+                      setParams((state) => ({
+                        ...state,
+                        riskLevels: value ?? undefined,
+                      }));
+                    }}
+                  />
+                ),
+              },
+            ]
+          : []) as ExtraFilter<TableSearchParams>[]),
+      ]}
+      actionsHeader={[
+        ({ params, setParams }) => (
+          <>
+            <CaseStatusButtons
+              status={params.caseStatus ?? 'OPEN'}
+              onChange={(newStatus) => {
+                setParams((state) => ({
+                  ...state,
+                  caseStatus: newStatus,
+                }));
+              }}
+            />
             <Divider type="vertical" style={{ height: '32px' }} />
             <CasesStatusChangeButton
               caseIds={selectedEntities}

@@ -13,6 +13,7 @@ export function getBusinessUserColumns(): TableColumn<InternalBusinessUser>[] {
       exportData: 'userId',
       tip: 'Unique identification of user.',
       width: 180,
+      hideInSearch: true,
       render: (dom, entity) => {
         // todo: fix style
         return (
@@ -27,7 +28,7 @@ export function getBusinessUserColumns(): TableColumn<InternalBusinessUser>[] {
       },
     },
     {
-      title: 'Legal Name',
+      title: 'Legal name',
       exportData: 'legalEntity.companyGeneralDetails.legalName',
       width: 120,
       hideInSearch: true,
@@ -55,7 +56,7 @@ export function getBusinessUserColumns(): TableColumn<InternalBusinessUser>[] {
       valueType: 'textarea',
     },
     {
-      title: 'Expected Transaction Amount Per Month',
+      title: 'Expected transaction amount per month',
       width: 300,
       exportData: 'legalEntity.companyFinancialDetails.expectedTransactionAmountPerMonth',
       hideInSearch: true,
@@ -69,7 +70,7 @@ export function getBusinessUserColumns(): TableColumn<InternalBusinessUser>[] {
       valueType: 'textarea',
     },
     {
-      title: 'Expected Turnover Amount Per Month',
+      title: 'Expected turnover amount per month',
       exportData: 'legalEntity.companyFinancialDetails.expectedTurnoverPerMonth',
       width: 300,
       hideInSearch: true,
@@ -81,7 +82,7 @@ export function getBusinessUserColumns(): TableColumn<InternalBusinessUser>[] {
       valueType: 'textarea',
     },
     {
-      title: 'Maximum Daily Transaction Limit',
+      title: 'Maximum daily transaction limit',
       width: 300,
       hideInSearch: true,
       exportData: 'transactionLimits.maximumDailyTransactionLimit',
@@ -91,7 +92,7 @@ export function getBusinessUserColumns(): TableColumn<InternalBusinessUser>[] {
       },
     },
     {
-      title: 'Registration Identifier',
+      title: 'Registration identifier',
       width: 200,
       hideInSearch: true,
       exportData: 'legalEntity.companyRegistrationDetails.registrationIdentifier',
@@ -101,7 +102,7 @@ export function getBusinessUserColumns(): TableColumn<InternalBusinessUser>[] {
       valueType: 'textarea',
     },
     {
-      title: 'Registration Country',
+      title: 'Registration country',
       exportData: 'legalEntity.companyRegistrationDetails.registrationCountry',
       width: 200,
       hideInSearch: true,
@@ -111,7 +112,7 @@ export function getBusinessUserColumns(): TableColumn<InternalBusinessUser>[] {
       valueType: 'textarea',
     },
     {
-      title: 'Creation time',
+      title: 'Created on',
       width: 150,
       sorter: true,
       dataIndex: 'createdTimestamp',

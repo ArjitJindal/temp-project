@@ -1,11 +1,8 @@
-import React, { useState } from 'react';
-import { Popover } from 'antd';
-import s from './style.module.less';
+import React from 'react';
 import PopupContent from './PopupContent';
 import AlarmWarningFillIcon from '@/components/ui/icons/Remix/system/alarm-warning-fill.react.svg';
-import ActionButton from '@/components/ui/Table/ActionButton';
 import { RiskLevel } from '@/apis';
-import { useTableScrollVisible } from '@/utils/hooks';
+import QuickFilterBase from '@/components/library/QuickFilter/QuickFilterBase';
 
 interface Props {
   riskLevels: RiskLevel[];
@@ -14,34 +11,24 @@ interface Props {
 
 export function RiskLevelButton(props: Props) {
   const { riskLevels, onConfirm } = props;
-  const [visible, setVisible] = useState(false);
 
-  useTableScrollVisible(setVisible);
+  const isEmpty = riskLevels.length === 0;
 
-  const buttonText = riskLevels.length > 0 ? riskLevels.join(', ') : 'CRA';
   return (
-    <Popover
-      overlayClassName={s.popover}
-      overlayInnerStyle={{ padding: 0 }}
-      content={<PopupContent value={riskLevels} onConfirm={onConfirm} />}
-      trigger="click"
-      placement="bottomLeft"
-      visible={visible}
-      onVisibleChange={setVisible}
+    <QuickFilterBase
+      icon={<AlarmWarningFillIcon />}
+      analyticsName="risk-filter"
+      title="CRA"
+      buttonText={isEmpty ? undefined : riskLevels.join(', ')}
+      onClear={
+        isEmpty
+          ? undefined
+          : () => {
+              onConfirm([]);
+            }
+      }
     >
-      <ActionButton
-        color="LEAF_GREEN"
-        icon={<AlarmWarningFillIcon />}
-        analyticsName="risk-filter"
-        isActive={riskLevels.length !== 0}
-        onClear={() => {
-          onConfirm([]);
-        }}
-        title={buttonText}
-        toolTip={'Risk Level Filter'}
-      >
-        {buttonText}
-      </ActionButton>
-    </Popover>
+      <PopupContent value={riskLevels} onConfirm={onConfirm} />
+    </QuickFilterBase>
   );
 }

@@ -192,6 +192,7 @@ const UsersTab = <T extends InternalBusinessUser | InternalConsumerUser | Intern
 
   return (
     <QueryResultsTable<T, UserSearchParams>
+      tableId={'users-list'}
       form={{
         labelWrap: true,
       }}
@@ -199,33 +200,39 @@ const UsersTab = <T extends InternalBusinessUser | InternalConsumerUser | Intern
       search={{
         labelWidth: 120,
       }}
-      actionsHeader={[
-        ({ params, setParams }) => {
-          return (
-            <>
-              <UserSearchButton
-                initialMode={'ALL'}
-                userId={params.userId ?? null}
-                showOriginAndDestination={false}
-                onConfirm={(userId, mode) => {
-                  setParams((state) => ({
-                    ...state,
-                    userId: userId ?? undefined,
-                    userFilterMode: mode ?? undefined,
-                  }));
-                }}
-              />
-              <RiskLevelButton
-                riskLevels={params.riskLevels ?? []}
-                onConfirm={(riskLevels) => {
-                  setParams((state) => ({
-                    ...state,
-                    riskLevels: riskLevels ?? undefined,
-                  }));
-                }}
-              />
-            </>
-          );
+      extraFilters={[
+        {
+          key: 'userId',
+          title: 'User ID/Name',
+          renderer: ({ params, setParams }) => (
+            <UserSearchButton
+              initialMode={'ALL'}
+              userId={params.userId ?? null}
+              showOriginAndDestination={false}
+              onConfirm={(userId, mode) => {
+                setParams((state) => ({
+                  ...state,
+                  userId: userId ?? undefined,
+                  userFilterMode: mode ?? undefined,
+                }));
+              }}
+            />
+          ),
+        },
+        {
+          key: 'riskLevels',
+          title: 'CRA',
+          renderer: ({ params, setParams }) => (
+            <RiskLevelButton
+              riskLevels={params.riskLevels ?? []}
+              onConfirm={(riskLevels) => {
+                setParams((state) => ({
+                  ...state,
+                  riskLevels: riskLevels ?? undefined,
+                }));
+              }}
+            />
+          ),
         },
       ]}
       className={styles.table}

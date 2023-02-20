@@ -4,7 +4,7 @@ import s from './style.module.less';
 import { InputProps } from '@/components/library/Form';
 
 export interface Props extends InputProps<string> {
-  label: string;
+  label: React.ReactNode;
   children: React.ReactNode;
   position?: 'TOP' | 'RIGHT';
   level?: 1 | 2 | 3;

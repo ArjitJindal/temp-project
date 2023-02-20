@@ -18,6 +18,7 @@ export function getAllUserColumns(): TableColumn<InternalUser>[] {
       tip: 'Unique identification of user.',
       width: 180,
       exportData: 'userId',
+      hideInSearch: true,
       render: (dom, entity) => {
         return (
           <Link
@@ -49,7 +50,7 @@ export function getAllUserColumns(): TableColumn<InternalUser>[] {
       },
     },
     {
-      title: 'User Type',
+      title: 'User type',
       dataIndex: 'type',
       tip: 'Type of user.',
       hideInSearch: true,
@@ -65,9 +66,8 @@ export function getAllUserColumns(): TableColumn<InternalUser>[] {
         );
       },
     },
-
     {
-      title: 'KYC Status',
+      title: 'KYC status',
       dataIndex: 'kycStatus',
       exportData: (entity) => entity.kycStatusDetails?.status,
       hideInSearch: true,
@@ -79,7 +79,7 @@ export function getAllUserColumns(): TableColumn<InternalUser>[] {
       },
     },
     {
-      title: 'User Status',
+      title: 'User status',
       dataIndex: 'userStatus',
       tip: 'Status of user.',
       hideInSearch: true,
@@ -91,7 +91,7 @@ export function getAllUserColumns(): TableColumn<InternalUser>[] {
       exportData: (entity) => entity.userStateDetails?.state,
     },
     {
-      title: 'Created On',
+      title: 'Created on',
       dataIndex: 'createdTimestamp',
       valueType: 'dateRange',
       tip: 'Date and time when user was created.',

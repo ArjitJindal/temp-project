@@ -61,21 +61,30 @@
       font-weight: 600 !important;
     }
 
+    .ant-pro-table-list-toolbar {
+      display: flex;
+      justify-content: space-between;
+    }
+
     .ant-pro-table-list-toolbar-container {
       align-items: flex-start !important;
+      flex: 1 !important;
+      display: flex;
+    }
+
+    .ant-pro-table-list-toolbar-left {
+      flex: 1 !important;
+    }
+
+    .ant-pro-table-list-toolbar-title {
+      flex: 1 !important;
+      gap: 8px;
     }
 
     .ant-pro-table-list-toolbar-setting-item {
       &:hover {
         color: @fr-colors-brandBlue !important;
       }
-    }
-
-    .ant-pro-table-list-toolbar {
-      position: sticky;
-      top: 0;
-      z-index: 100;
-      background: white;
     }
 
     .ant-paginatiion-total-text {
@@ -114,6 +123,11 @@
 
     .ant-pagination-next {
       margin-left: 0 !important;
+    }
+
+    .ant-table-wrapper {
+      max-height: calc(100vh - 350px);
+      overflow-y: auto;
     }
   }
 
@@ -159,13 +173,11 @@
   }
 }
 
-.pagination {
-}
-
 .actionsHeaderWrapper {
   display: flex;
   flex-direction: column;
   gap: 1rem;
+  flex: 1;
 }
 
 .actionHeader {

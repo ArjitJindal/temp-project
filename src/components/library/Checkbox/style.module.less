@@ -67,3 +67,24 @@
   transition-duration: @default-animation-speed;
   transition-timing-function: @default-animation-function;
 }
+
+.indeterminate {
+  width: 10px;
+  height: 10px;
+  border-radius: 2px;
+  position: absolute;
+  background: @fr-colors-v2-primary-flagrightBlue;
+  display: block;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  opacity: 0;
+  transition-property: opacity;
+  transition-duration: @default-animation-speed;
+  transition-timing-function: @default-animation-function;
+  pointer-events: none;
+
+  &.isVisible {
+    opacity: 1;
+  }
+}

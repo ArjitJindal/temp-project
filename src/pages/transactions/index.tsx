@@ -10,7 +10,6 @@ import TransactionsTable, {
 } from '@/pages/transactions/components/TransactionsTable';
 import { usePaginatedQuery } from '@/utils/queries/hooks';
 import UserSearchButton from '@/pages/transactions/components/UserSearchButton';
-import { TransactionStateButton } from '@/pages/transactions/components/TransactionStateButton';
 import TagSearchButton from '@/pages/transactions/components/TagSearchButton';
 import { TRANSACTIONS_LIST } from '@/utils/queries/keys';
 import { DEFAULT_PARAMS_STATE } from '@/components/ui/Table';
@@ -109,9 +108,11 @@ const TableList = () => {
   return (
     <PageWrapper title={i18n('menu.transactions.transactions-list')}>
       <TransactionsTable
-        actionsHeader={[
-          ({ params, setParams }) => (
-            <>
+        extraFilters={[
+          {
+            key: 'userId',
+            title: 'User ID/name',
+            renderer: ({ params, setParams }) => (
               <UserSearchButton
                 initialMode={params.userFilterMode ?? 'ALL'}
                 userId={params.userId ?? null}
@@ -123,15 +124,12 @@ const TableList = () => {
                   }));
                 }}
               />
-              <TransactionStateButton
-                transactionStates={params.transactionState ?? []}
-                onConfirm={(value) => {
-                  setParams((state) => ({
-                    ...state,
-                    transactionState: value ?? undefined,
-                  }));
-                }}
-              />
+            ),
+          },
+          {
+            key: 'tagKey',
+            title: 'Tags',
+            renderer: ({ params, setParams }) => (
               <TagSearchButton
                 initialState={{
                   key: params.tagKey ?? null,
@@ -145,8 +143,8 @@ const TableList = () => {
                   }));
                 }}
               />
-            </>
-          ),
+            ),
+          },
         ]}
         queryResult={queryResult}
         params={params}

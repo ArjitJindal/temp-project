@@ -5,11 +5,11 @@ import { SelectCommonPlacement } from 'antd/lib/_util/motion';
 import s from './style.module.less';
 import { InputProps } from '@/components/library/Form';
 
-type InputType = string | number | boolean | undefined;
+export type InputType = string | number | boolean | undefined;
 
 export interface Option<Value extends InputType> {
   value: Value;
-  label?: string;
+  label?: React.ReactNode;
   isDisabled?: boolean;
 }
 
@@ -48,7 +48,7 @@ export default function Select<Value extends InputType = InputType>(props: Props
     filterOption: (inputValue: string, option?: Option<Value>) => {
       const searchString = inputValue.toLowerCase();
       return (
-        (option?.label?.toLowerCase().includes(searchString) ||
+        (option?.label?.toString().toLowerCase().includes(searchString) ||
           option?.value?.toString().toLowerCase().includes(searchString) ||
           // eslint-disable-next-line @typescript-eslint/ban-ts-comment
           // @ts-ignore

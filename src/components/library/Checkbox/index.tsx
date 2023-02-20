@@ -1,4 +1,5 @@
 import React, { useRef } from 'react';
+import cn from 'clsx';
 import s from './style.module.less';
 import CheckLineIcon from '@/components/ui/icons/Remix/system/check-line.react.svg';
 import { InputProps } from '@/components/library/Form';
@@ -22,6 +23,7 @@ export default function Checkbox(props: Props) {
         {...rest}
       />
       <div className={s.content}>
+        <div className={cn(s.indeterminate, value === undefined && s.isVisible)} />
         <CheckLineIcon className={s.icon} />
       </div>
     </div>

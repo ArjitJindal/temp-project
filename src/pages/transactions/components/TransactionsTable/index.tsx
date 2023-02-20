@@ -2,7 +2,7 @@ import React, { useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
 import DetailsViewButton from '../DetailsViewButton';
 import { TransactionCaseManagement, TransactionState, TransactionType } from '@/apis';
-import { TableColumn, TableData } from '@/components/ui/Table/types';
+import { ActionRenderer, TableColumn, TableData } from '@/components/ui/Table/types';
 import { makeUrl } from '@/utils/routing';
 import { paymethodOptions, transactionType } from '@/utils/tags';
 import { TransactionTypeTag } from '@/components/ui/TransactionTypeTag';
@@ -13,7 +13,7 @@ import { CURRENCIES_SELECT_OPTIONS } from '@/utils/currencies';
 import KeyValueTag from '@/components/ui/KeyValueTag';
 import QueryResultsTable from '@/components/common/QueryResultsTable';
 import { QueryResult } from '@/utils/queries/types';
-import { ActionRenderer, AllParams, CommonParams } from '@/components/ui/Table';
+import { AllParams, CommonParams } from '@/components/ui/Table';
 import { Mode } from '@/pages/transactions/components/UserSearchPopup/types';
 import Id from '@/components/ui/Id';
 import { dayjs, DEFAULT_DATE_TIME_FORMAT } from '@/utils/dayjs';
@@ -39,7 +39,11 @@ export interface TransactionsTableParams extends CommonParams {
 }
 
 type Props = {
-  actionsHeader?: ActionRenderer<TransactionsTableParams>[];
+  extraFilters?: {
+    key: string;
+    title: string;
+    renderer: ActionRenderer<TransactionsTableParams>;
+  }[];
   queryResult: QueryResult<TableData<TransactionCaseManagement>>;
   params?: TransactionsTableParams;
   onChangeParams?: (newState: AllParams<TransactionsTableParams>) => void;
@@ -57,7 +61,7 @@ export default function TransactionsTable(props: Props) {
     params,
     hideSearchForm,
     disableSorting,
-    actionsHeader,
+    extraFilters,
     onChangeParams,
     autoAdjustHeight,
   } = props;
@@ -99,7 +103,7 @@ export default function TransactionsTable(props: Props) {
           }
         : {},
       {
-        title: 'Transaction Type',
+        title: 'Transaction type',
         dataIndex: 'type',
         exportData: 'type',
         width: 175,
@@ -108,6 +112,7 @@ export default function TransactionsTable(props: Props) {
         fieldProps: {
           options: transactionType,
           allowClear: true,
+          displayMode: 'list',
         },
         render: (dom, entity) => {
           return <TransactionTypeTag transactionType={entity.type as TransactionType} />;
@@ -139,7 +144,7 @@ export default function TransactionsTable(props: Props) {
       },
 
       {
-        title: 'Origin User ID',
+        title: 'Origin user ID',
         tooltip: 'Origin is the Sender in a transaction',
         width: 200,
         dataIndex: 'originUserId',
@@ -151,7 +156,7 @@ export default function TransactionsTable(props: Props) {
         },
       },
       {
-        title: 'Origin User Name',
+        title: 'Origin user name',
         tooltip: 'Origin is the Sender in a transaction',
         exportData: (entity) => getUserName(entity.originUser),
         width: 220,
@@ -163,7 +168,7 @@ export default function TransactionsTable(props: Props) {
         },
       },
       {
-        title: showDetailsView ? 'Origin Payment Details' : 'Origin Method',
+        title: showDetailsView ? 'Origin payment details' : 'Origin method',
         exportData: 'originPaymentDetails.method',
         width: showDetailsView ? 600 : 160,
         hideInSearch: true,
@@ -175,7 +180,7 @@ export default function TransactionsTable(props: Props) {
         },
       },
       {
-        title: 'Origin Amount',
+        title: 'Origin amount',
         width: 150,
         exportData: 'originAmountDetails.transactionAmount',
         dataIndex: 'originAmountDetails.transactionAmount',
@@ -190,7 +195,7 @@ export default function TransactionsTable(props: Props) {
         },
       },
       {
-        title: 'Origin Currency',
+        title: 'Origin currency',
         exportData: 'originAmountDetails.transactionCurrency',
         dataIndex: 'originAmountDetails.transactionCurrency',
         width: 140,
@@ -200,7 +205,7 @@ export default function TransactionsTable(props: Props) {
         },
       },
       {
-        title: 'Origin Country',
+        title: 'Origin country',
         exportData: 'originAmountDetails.country',
         dataIndex: 'originAmountDetails.country',
         width: 140,
@@ -210,7 +215,7 @@ export default function TransactionsTable(props: Props) {
         },
       },
       {
-        title: 'Destination User ID',
+        title: 'Destination user ID',
         tooltip: 'Destination is the Receiver in a transaction',
         width: 170,
         dataIndex: 'destinationUserId',
@@ -222,7 +227,7 @@ export default function TransactionsTable(props: Props) {
         },
       },
       {
-        title: 'Destination User Name',
+        title: 'Destination user name',
         exportData: (entity) => getUserName(entity.destinationUser),
         dataIndex: 'destinationUser',
         sorter: !disableSorting,
@@ -234,7 +239,7 @@ export default function TransactionsTable(props: Props) {
         },
       },
       {
-        title: showDetailsView ? 'Destination Payment Details' : 'Destination Method',
+        title: showDetailsView ? 'Destination payment details' : 'Destination method',
         exportData: 'destinationPaymentDetails.method',
         width: showDetailsView ? 600 : 160,
         hideInSearch: true,
@@ -246,7 +251,7 @@ export default function TransactionsTable(props: Props) {
         },
       },
       {
-        title: 'Destination Amount',
+        title: 'Destination amount',
         exportData: 'destinationAmountDetails.transactionAmount',
         dataIndex: 'destinationAmountDetails.transactionAmount',
         width: 200,
@@ -263,7 +268,7 @@ export default function TransactionsTable(props: Props) {
         },
       },
       {
-        title: 'Destination Currency',
+        title: 'Destination currency',
         exportData: 'destinationAmountDetails.transactionCurrency',
         dataIndex: 'destinationAmountDetails.transactionCurrency',
         width: 200,
@@ -273,7 +278,7 @@ export default function TransactionsTable(props: Props) {
         },
       },
       {
-        title: 'Destination Country',
+        title: 'Destination country',
         exportData: 'destinationAmountDetails.country',
         dataIndex: 'destinationAmountDetails.country',
         width: 200,
@@ -283,7 +288,7 @@ export default function TransactionsTable(props: Props) {
         },
       },
       {
-        title: 'Origin Currencies',
+        title: 'Origin currencies',
         dataIndex: 'originCurrenciesFilter',
         hideInTable: true,
         width: 170,
@@ -295,7 +300,7 @@ export default function TransactionsTable(props: Props) {
         },
       },
       {
-        title: 'Destination Currencies',
+        title: 'Destination currencies',
         dataIndex: 'destinationCurrenciesFilter',
         hideInTable: true,
         width: 200,
@@ -307,7 +312,7 @@ export default function TransactionsTable(props: Props) {
         },
       },
       {
-        title: 'Origin Method',
+        title: 'Origin method',
         hideInTable: true,
         width: 120,
         dataIndex: 'originMethodFilter',
@@ -315,10 +320,11 @@ export default function TransactionsTable(props: Props) {
         fieldProps: {
           options: paymethodOptions,
           allowClear: true,
+          displayMode: 'list',
         },
       },
       {
-        title: 'Destination Method',
+        title: 'Destination method',
         hideInTable: true,
         width: 120,
         dataIndex: 'destinationMethodFilter',
@@ -326,6 +332,7 @@ export default function TransactionsTable(props: Props) {
         fieldProps: {
           options: paymethodOptions,
           allowClear: true,
+          displayMode: 'list',
         },
       },
       {
@@ -352,9 +359,10 @@ export default function TransactionsTable(props: Props) {
 
   return (
     <QueryResultsTable<TransactionCaseManagement, TransactionsTableParams>
+      tableId={'transactions-list'}
       params={params}
       onChangeParams={onChangeParams}
-      actionsHeader={actionsHeader}
+      extraFilters={extraFilters}
       disableInternalPadding={hideSearchForm}
       showResultsInfo
       form={{

@@ -1,22 +1,30 @@
 import ProTable, { ProTableProps } from '@ant-design/pro-table';
 import React, { useCallback, useEffect, useImperativeHandle, useRef, useState } from 'react';
-import { Checkbox } from 'antd';
 import _ from 'lodash';
 import cn from 'clsx';
 import { ProColumns, ProColumnType } from '@ant-design/pro-table/es/typing';
 import style from './style.module.less';
-import { flatItems, handleResize, TABLE_LOCALE } from './utils';
+import { flatItems, getAutoFilters, handleResize, TABLE_LOCALE } from './utils';
 import { DEFAULT_PAGE_SIZE } from './consts';
-import { isGroupColumn, isMultiRows, SortOrder, TableColumn, TableData, TableRow } from './types';
+import {
+  ActionRenderer,
+  ActionRendererProps,
+  ExtraFilter,
+  isGroupColumn,
+  isMultiRows,
+  SortOrder,
+  TableColumn,
+  TableData,
+  TableRow,
+} from './types';
+import Filters from './Filters';
 import { isEqual } from '@/utils/lang';
 import { usePrevious } from '@/utils/hooks';
 import ResizableTitle from '@/utils/table-utils';
 import DownloadButton from '@/components/ui/Table/DownloadButton';
 import { PaginationParams } from '@/utils/queries/hooks';
-import { getClientOffset } from '@/utils/positions';
 import Pagination from '@/components/library/Pagination';
-
-const TABLE_SEARCH_SECTION_HEIGHT = 70;
+import Checkbox from '@/components/library/Checkbox';
 
 export type TableActionType = {
   reload: () => void;
@@ -27,15 +35,6 @@ export interface CommonParams extends PaginationParams {
 }
 
 export type AllParams<Params> = Params & CommonParams;
-
-export type ActionRendererProps<Params extends object> = {
-  params: Params;
-  setParams: (cb: (oldState: AllParams<Params>) => AllParams<Params>) => void;
-};
-
-export type ActionRenderer<Params extends object> = (
-  props: ActionRendererProps<Params>,
-) => React.ReactNode;
 
 export interface RowSelection {
   selectedKeys: string[];
@@ -65,9 +64,10 @@ type PickUpProps<T, Params, ValueType> = Pick<
   | 'headerTitle'
 >;
 
-export interface Props<T extends object, Params extends object, ValueType>
+export interface Props<T extends object | unknown, Params extends object, ValueType>
   extends PickUpProps<TableRow<T>, Params, ValueType> {
   rowKey: string;
+  tableId?: string;
   className?: string;
   cardBordered?: boolean;
   disableStripedColoring?: boolean;
@@ -80,6 +80,7 @@ export interface Props<T extends object, Params extends object, ValueType>
   rowSelection?: RowSelection;
   params?: AllParams<Params>;
   isEvenRow?: (item: T) => boolean;
+  extraFilters?: ExtraFilter<Params>[];
   actionsHeader?: ActionRenderer<Params>[];
   controlsHeader?: ActionRenderer<Params>[];
   onChangeParams?: (newParams: AllParams<Params>) => void;
@@ -107,7 +108,8 @@ export default function Table<
     actionRef,
     headerTitle,
     headerSubtitle,
-    actionsHeader,
+    actionsHeader = [],
+    extraFilters = [],
     controlsHeader,
     rowSelection,
     loading,
@@ -117,7 +119,6 @@ export default function Table<
     columns,
     rowKey,
     expandable,
-    search,
     form,
     getPopupContainer,
     scroll,
@@ -132,7 +133,6 @@ export default function Table<
     onReset,
     onReload,
     showResultsInfo = true,
-    autoAdjustHeight = false,
   } = props;
   const tableElement = useRef<HTMLDivElement>(null);
 
@@ -180,35 +180,39 @@ export default function Table<
   }>({});
 
   function adjustColumns<T extends object>(
-    columns: TableColumn<T>[] | undefined | null,
+    columns: (TableColumn<T> | null)[],
     suffix = '',
   ): ProColumns<TableRow<T>>[] {
-    return (columns ?? []).map((col: TableColumn<T>, index): ProColumns<TableRow<T>> => {
-      const sortOrder = params?.sort.find(([field]) => field === col.dataIndex)?.[1];
-      const width = updatedColumnWidth[`${index}${suffix}`] ?? col.width;
-      const onHeaderCell = (column: unknown) => ({
-        width: (column as TableColumn<T>).width,
-        onResize: handleResize(`${index}${suffix}`, setUpdatedColumnWidth),
-      });
-      const sharedProps = {
-        ...col,
-        sortOrder,
-        width,
-        onHeaderCell,
-      };
+    return (columns ?? [])
+      .filter((column): column is TableColumn<T> => column != null)
+      .map((col: TableColumn<T>, index): ProColumns<TableRow<T>> => {
+        const sortOrder = params?.sort.find(([field]) => field === col.dataIndex)?.[1];
+        const width = updatedColumnWidth[`${index}${suffix}`] ?? col.width;
+        const onHeaderCell = (column: unknown) => ({
+          width: (column as TableColumn<T>).width,
+          onResize: handleResize(`${index}${suffix}`, setUpdatedColumnWidth),
+        });
+        const sharedProps = {
+          ...col,
+          sortOrder,
+          width,
+          onHeaderCell,
+          hideInSearch: true,
+        };
 
-      if (isGroupColumn(col)) {
+        if (isGroupColumn(col)) {
+          return {
+            ...sharedProps,
+            children: adjustColumns(col.children, `${suffix}-${index}`),
+          };
+        }
         return {
           ...sharedProps,
-          children: adjustColumns(col.children, `${suffix}-${index}`),
         };
-      }
-      return {
-        ...sharedProps,
-      };
-    });
+      });
   }
 
+  const allFilters = [...extraFilters, ...getAutoFilters(columns)];
   const adjustedColumns: ProColumnType<TableRow<T>>[] = adjustColumns(columns);
 
   if (rowSelection != null) {
@@ -225,10 +229,9 @@ export default function Table<
       hideInSetting: true,
       title: (
         <Checkbox
-          checked={allSelected}
-          indeterminate={someSelected && !allSelected}
-          onChange={(e) => {
-            rowSelection.onChange(e.target.checked ? dataKeys : []);
+          value={allSelected ? true : someSelected ? undefined : false}
+          onChange={(checked) => {
+            rowSelection.onChange(checked ? dataKeys : []);
           }}
         />
       ),
@@ -241,12 +244,10 @@ export default function Table<
         const isSelected = rowSelection?.selectedKeys.indexOf(key) != -1;
         return (
           <Checkbox
-            checked={isSelected}
-            onChange={(e) => {
+            value={isSelected}
+            onChange={(checked) => {
               const currentSelection = (rowSelection?.selectedKeys ?? []).filter((x) => x !== key);
-              rowSelection?.onChange(
-                e.target.checked ? [...currentSelection, key] : currentSelection,
-              );
+              rowSelection?.onChange(checked ? [...currentSelection, key] : currentSelection);
             }}
           />
         );
@@ -263,23 +264,18 @@ export default function Table<
     }
   };
 
-  const tableOffsetTop = (tableElement.current && getClientOffset(tableElement.current))?.top || 0;
+  const showFilters = params != null && allFilters.length > 0;
+  const showActionsHeader = actionsHeader.length > 0 && params != null;
+  const showBottomHeader = showFilters;
+  const showTopHeader = showActionsHeader || headerTitle || headerSubtitle;
+
   return (
     <div
       className={cn(style.root, { [style.disableExpandedRowPadding]: disableExpandedRowPadding })}
       ref={tableElement}
     >
       <ProTable<TableRow<T>, Params>
-        style={{
-          ...(autoAdjustHeight
-            ? {
-                maxHeight: `calc(100vh - ${
-                  tableOffsetTop + (search ? TABLE_SEARCH_SECTION_HEIGHT : 0)
-                }px)`,
-              }
-            : {}),
-          overflow: 'auto',
-        }}
+        search={false}
         toolBarRender={(action, rows) => {
           const result = [];
 
@@ -313,16 +309,30 @@ export default function Table<
         columns={adjustedColumns}
         rowKey={rowKey}
         headerTitle={
-          (actionsHeader || headerTitle || headerSubtitle) && (
+          (showTopHeader || showBottomHeader) && (
             <div className={style.actionsHeaderWrapper}>
-              {actionsHeader != null && params != null
-                ? renderActionHeader<Params>(actionsHeader, {
-                    params,
-                    setParams: (cb: (oldState: AllParams<Params>) => AllParams<Params>) =>
-                      onChangeParams(cb(params)),
-                  })
-                : headerTitle}
-              {headerSubtitle && <div className={style.subtitle}>{headerSubtitle}</div>}
+              {showTopHeader && (
+                <div className={style.actionsHeaderWrapperTop}>
+                  {showActionsHeader
+                    ? renderActionHeader<Params>(actionsHeader, {
+                        params,
+                        setParams: (cb: (oldState: AllParams<Params>) => AllParams<Params>) =>
+                          onChangeParams(cb(params)),
+                      })
+                    : headerTitle}
+                  {headerSubtitle && <div className={style.subtitle}>{headerSubtitle}</div>}
+                </div>
+              )}
+              {showBottomHeader && (
+                <div className={style.actionsHeaderWrapperBottom}>
+                  <Filters
+                    tableId={props.tableId}
+                    filters={allFilters}
+                    params={params}
+                    onChangeParams={onChangeParams}
+                  />
+                </div>
+              )}
             </div>
           )
         }
@@ -370,7 +380,6 @@ export default function Table<
           return false;
         }}
         expandable={expandable}
-        search={search}
         form={form}
         getPopupContainer={getPopupContainer}
         scroll={scroll}
@@ -434,3 +443,4 @@ function renderControlsHeader<Params extends object>(
     </div>
   );
 }
+export { getAutoFilters } from '@/components/ui/Table/utils';

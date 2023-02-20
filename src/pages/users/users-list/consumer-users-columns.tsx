@@ -16,6 +16,7 @@ export function getConsumerUserColumns(): TableColumn<InternalConsumerUser>[] {
       title: 'User ID',
       dataIndex: 'userId',
       exportData: 'userId',
+      hideInSearch: true,
       width: 100,
       tip: 'Unique identification of user.',
       render: (dom, entity) => {
@@ -42,7 +43,7 @@ export function getConsumerUserColumns(): TableColumn<InternalConsumerUser>[] {
       valueType: 'textarea',
     },
     {
-      title: 'Date of Birth',
+      title: 'Date of birth',
       exportData: 'userDetails.dateOfBirth',
       width: 120,
       hideInSearch: true,
@@ -74,7 +75,7 @@ export function getConsumerUserColumns(): TableColumn<InternalConsumerUser>[] {
       valueType: 'textarea',
     },
     {
-      title: 'KYC Status',
+      title: 'KYC status',
       exportData: 'kycStatusDetails.status',
       hideInSearch: true,
       width: 120,
@@ -84,7 +85,7 @@ export function getConsumerUserColumns(): TableColumn<InternalConsumerUser>[] {
       valueType: 'textarea',
     },
     {
-      title: 'KYC Status Reason',
+      title: 'KYC status reason',
       exportData: 'kycStatusDetails.reason',
       hideInSearch: true,
       hideInTable: false,
@@ -95,7 +96,7 @@ export function getConsumerUserColumns(): TableColumn<InternalConsumerUser>[] {
       valueType: 'textarea',
     },
     {
-      title: 'User State',
+      title: 'User state',
       exportData: 'userStateDetails.state',
       hideInSearch: true,
       hideInDescriptions: true,
@@ -124,7 +125,7 @@ export function getConsumerUserColumns(): TableColumn<InternalConsumerUser>[] {
       },
     },
     {
-      title: 'Created time',
+      title: 'Created on',
       width: 150,
       sorter: (a, b) => a.createdTimestamp - b.createdTimestamp,
       dataIndex: 'createdTimestamp',

@@ -1,10 +1,8 @@
-import React, { useState } from 'react';
-import { Popover } from 'antd';
+import React from 'react';
 import PopupContent from './PopupContent';
-import ActionButton from '@/components/ui/Table/ActionButton';
 import PriceTagIcon from '@/components/ui/icons/Remix/finance/price-tag-line.react.svg';
 import { Value } from '@/pages/transactions/components/TagSearchButton/types';
-import { useTableScrollVisible } from '@/utils/hooks';
+import QuickFilter from '@/components/library/QuickFilter';
 
 interface Props {
   initialState: Value;
@@ -13,45 +11,37 @@ interface Props {
 
 export default function TagSearchButton(props: Props) {
   const { initialState, onConfirm } = props;
-  const [visible, setVisible] = useState(false);
 
-  useTableScrollVisible(setVisible);
-
+  const isEmpty = initialState.key == null && initialState.value == null;
   return (
-    <Popover
-      content={
+    <QuickFilter
+      icon={<PriceTagIcon />}
+      analyticsName="tag-filter"
+      title="Filter by tag"
+      buttonText={isEmpty ? undefined : `${initialState.key ?? '*'}:${initialState.value ?? '*'}`}
+      onClear={
+        isEmpty
+          ? undefined
+          : () => {
+              onConfirm({
+                key: null,
+                value: null,
+              });
+            }
+      }
+    >
+      {({ setOpen }) => (
         <PopupContent
           initialState={initialState}
           onConfirm={(value) => {
             onConfirm(value);
-            setVisible(false);
+            setOpen(false);
           }}
           onCancel={() => {
-            setVisible(false);
+            setOpen(false);
           }}
         />
-      }
-      trigger="click"
-      placement="bottomLeft"
-      visible={visible}
-      onVisibleChange={setVisible}
-    >
-      <ActionButton
-        color="BLUE"
-        icon={<PriceTagIcon />}
-        analyticsName="user-filter"
-        isActive={initialState.key != null || initialState.value != null}
-        onClear={() => {
-          onConfirm({
-            key: null,
-            value: null,
-          });
-        }}
-      >
-        {initialState.key == null && initialState.value == null
-          ? 'Filter by tag'
-          : `${initialState.key ?? '*'}:${initialState.value ?? '*'}`}
-      </ActionButton>
-    </Popover>
+      )}
+    </QuickFilter>
   );
 }

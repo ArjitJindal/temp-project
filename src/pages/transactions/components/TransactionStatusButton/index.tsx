@@ -9,7 +9,6 @@ import {
   getRiskActionLabel,
   useSettings,
 } from '@/components/AppWrapper/Providers/SettingsProvider';
-import { useTableScrollVisible } from '@/utils/hooks';
 
 interface Props {
   status: RuleAction | undefined;
@@ -20,8 +19,6 @@ export default function StatusSearchButton(props: Props) {
   const { status, onConfirm } = props;
   const [visible, setVisible] = useState(false);
   const settings = useSettings();
-
-  useTableScrollVisible(setVisible);
 
   return (
     <Popover

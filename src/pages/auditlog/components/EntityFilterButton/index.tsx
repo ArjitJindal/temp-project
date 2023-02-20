@@ -4,7 +4,6 @@ import { ContactsOutlined } from '@ant-design/icons';
 import PopupContent from './PopupContent';
 import ActionButton from '@/components/ui/Table/ActionButton';
 import { AuditLogType } from '@/apis';
-import { useTableScrollVisible } from '@/utils/hooks';
 
 interface Props {
   initialState: AuditLogType[];
@@ -14,8 +13,6 @@ interface Props {
 export default function EntityFilterButton(props: Props) {
   const { initialState, onConfirm } = props;
   const [visible, setVisible] = useState(false);
-
-  useTableScrollVisible(setVisible);
 
   return (
     <Popover
