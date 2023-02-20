@@ -2745,7 +2745,7 @@ paths:
       operationId: post-simulation
       x-flagright:
         permissions:
-          - simulation:rules:write
+          - simulator:rules:write
       responses:
         '200':
           description: OK
@@ -2768,7 +2768,7 @@ paths:
       operationId: get-simulations
       x-flagright:
         permissions:
-          - simulation:rules:read
+          - simulator:rules:read
       responses:
         '200':
           description: OK
@@ -2807,7 +2807,7 @@ paths:
       operationId: get-simulation-test-id
       x-flagright:
         permissions:
-          - simulation:rules:read
+          - simulator:rules:read
       responses:
         '200':
           description: OK
@@ -4045,6 +4045,7 @@ components:
         - FALSE_POSITIVE_CHECK
         - DEMO_MODE
         - RBAC
+        - SIMULATOR
       description: ''
     AccountRoleName:
       type: string
@@ -4108,10 +4109,10 @@ components:
         - lists:all:read
         - lists:all:write
         - lists:export:read
-        - simulation:rules:read
-        - simulation:rules:write
-        - simulation:risk-scoring:read
-        - simulation:risk-scoring:write
+        - simulator:rules:read
+        - simulator:rules:write
+        - simulator:risk-scoring:read
+        - simulator:risk-scoring:write
     CaseStatus:
       type: string
       title: CaseStatus

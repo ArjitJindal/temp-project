@@ -35,8 +35,8 @@ export const DEFAULT_ROLES: {
       'lists:all:read',
       'lists:all:read',
       'lists:export:read',
-      'simulation:rules:read',
-      'simulation:risk-scoring:read',
+      'simulator:rules:read',
+      'simulator:risk-scoring:read',
     ],
   },
   {
@@ -76,8 +76,8 @@ export const DEFAULT_ROLES: {
       'lists:all:read',
       'lists:all:read',
       'lists:export:read',
-      'simulation:rules:read',
-      'simulation:risk-scoring:read',
+      'simulator:rules:read',
+      'simulator:risk-scoring:read',
     ],
   },
   {
@@ -103,8 +103,8 @@ export const DEFAULT_ROLES: {
       'audit-log:export:read',
       'lists:all:read',
       'lists:export:read',
-      'simulation:rules:read',
-      'simulation:risk-scoring:read',
+      'simulator:rules:read',
+      'simulator:risk-scoring:read',
     ],
   },
 ]
