@@ -90,6 +90,7 @@ export const casesHandler = lambdaApi()(
         filterUserKYCStatus,
         filterUserState,
         filterRiskLevel,
+        filterAssignmentsIds,
       } = event.queryStringParameters as any
       const params: DefaultApiGetCaseListRequest = {
         page,
@@ -154,6 +155,9 @@ export const casesHandler = lambdaApi()(
           : undefined,
         filterRiskLevel: filterRiskLevel
           ? filterRiskLevel.split(',')
+          : undefined,
+        filterAssignmentsIds: filterAssignmentsIds
+          ? filterAssignmentsIds.split(',')
           : undefined,
       }
       const caseGetSegment = await addNewSubsegment('Case Service', 'Get Cases')

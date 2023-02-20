@@ -425,6 +425,15 @@ export class CaseRepository {
         ],
       })
     }
+    if (params.filterAssignmentsIds != null) {
+      conditions.push({
+        assignments: {
+          $elemMatch: {
+            assigneeUserId: params.filterAssignmentsIds,
+          },
+        },
+      })
+    }
     return {
       filter: { $and: conditions },
     }
