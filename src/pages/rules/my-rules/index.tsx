@@ -3,6 +3,7 @@ import React, { useCallback, useMemo, useRef, useState } from 'react';
 import _ from 'lodash';
 import { DeleteOutlined, EditOutlined } from '@ant-design/icons';
 import { useMutation } from '@tanstack/react-query';
+import cn from 'clsx';
 import { RuleParametersTable } from '../RulesTable/RuleParametersTable';
 import { getRuleInstanceDisplayId } from '../utils';
 import s from './style.module.less';
@@ -20,11 +21,13 @@ import { useApiTime, usePageViewTracker } from '@/utils/tracker';
 import RuleConfigurationDrawer, { FormValues } from '@/pages/rules/RuleConfigurationDrawer';
 import { getErrorMessage } from '@/utils/lang';
 import { removeEmpty } from '@/utils/json';
+import { useHasPermissions } from '@/utils/user-utils';
 
 const MyRule = () => {
   usePageViewTracker('My Rule Page');
   const isPulseEnabled = useFeatureEnabled('PULSE');
   const api = useApi();
+  const canWriteRules = useHasPermissions(['rules:my-rules:write']);
   const [updatedRuleInstances, setUpdatedRuleInstances] = useState<{ [key: string]: RuleInstance }>(
     {},
   );
@@ -196,6 +199,7 @@ const MyRule = () => {
           const ruleInstance = updatedRuleInstances[entity.id as string] || entity;
           return (
             <Switch
+              disabled={!canWriteRules}
               checked={ruleInstance.status === 'ACTIVE'}
               onChange={(checked) => handleActivationChange(ruleInstance, checked)}
             />
@@ -211,9 +215,9 @@ const MyRule = () => {
           return (
             <>
               <a
-                className={s.actionIcons}
+                className={cn(s.actionIcons, { [s.disabledAction]: !canWriteRules })}
                 onClick={() => {
-                  if (!deleting) {
+                  if (canWriteRules && !deleting) {
                     setCurrentRow(entity);
                     setShowDetail(true);
                   }
@@ -222,9 +226,9 @@ const MyRule = () => {
                 <EditOutlined />
               </a>
               <a
-                className={s.actionIcons}
+                className={cn(s.actionIcons, { [s.disabledAction]: !canWriteRules })}
                 onClick={() => {
-                  handleDeleteRuleInstance(entity);
+                  canWriteRules && handleDeleteRuleInstance(entity);
                 }}
               >
                 <DeleteOutlined />
@@ -241,6 +245,7 @@ const MyRule = () => {
     isPulseEnabled,
     deleting,
     handleDeleteRuleInstance,
+    canWriteRules,
   ]);
   const measure = useApiTime();
   const rulesResult = usePaginatedQuery(GET_RULE_INSTANCES(), async () => {
@@ -319,6 +324,7 @@ const MyRule = () => {
       />
       <RuleConfigurationDrawer
         rule={rule}
+        readOnly={!canWriteRules}
         formInitialValues={
           ruleInstance
             ? {

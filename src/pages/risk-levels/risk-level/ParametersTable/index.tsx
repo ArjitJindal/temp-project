@@ -15,6 +15,7 @@ import { neverReturn } from '@/utils/lang';
 import ActivityIndicator from '@/pages/risk-levels/risk-level/ParametersTable/ActivityIndicator';
 import Table from '@/components/ui/Table';
 import { DATA_TYPE_TO_VALUE_TYPE } from '@/pages/risk-levels/risk-level/ParametersTable/consts';
+import { useHasPermissions } from '@/utils/user-utils';
 
 interface Props {
   parameters: RiskLevelTable;
@@ -28,6 +29,7 @@ interface Props {
 
 export default function ParametersTable(props: Props) {
   const { parameters, parameterSettings, onRefresh, onSaveValues, onActivate } = props;
+  const canEdit = useHasPermissions(['risk-scoring:risk-levels:write']);
 
   useEffect(() => {
     for (const parameter of parameters) {
@@ -96,7 +98,7 @@ export default function ParametersTable(props: Props) {
               const isActive = getOr(isActiveRes, false);
               return (
                 <Button
-                  disabled={isLoading(parameterRes)}
+                  disabled={isLoading(parameterRes) || !canEdit}
                   size="small"
                   type="ghost"
                   onClick={() => {

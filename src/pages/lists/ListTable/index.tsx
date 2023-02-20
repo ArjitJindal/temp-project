@@ -16,6 +16,7 @@ import { LISTS_OF_TYPE } from '@/utils/queries/keys';
 import { map } from '@/utils/asyncResource';
 import { getListSubtypeTitle, stringifyListType } from '@/pages/lists/helpers';
 import { useApiTime } from '@/utils/tracker';
+import { useHasPermissions } from '@/utils/user-utils';
 
 export type ListTableRef = React.Ref<{
   reload: () => void;
@@ -35,6 +36,7 @@ function ListTable(props: Props, ref: ListTableRef) {
     measure(() => api.getLists({ listType }), `Get List ${stringifyListType(listType)}`),
   );
 
+  const hasListWritePermissions = useHasPermissions(['lists:all:write']);
   useImperativeHandle(ref, () => ({
     reload: queryResults.refetch,
   }));
@@ -140,6 +142,7 @@ function ListTable(props: Props, ref: ListTableRef) {
       render: (_, entity) => (
         <Switch
           checked={entity.metadata?.status ?? false}
+          disabled={!hasListWritePermissions}
           onChange={(value) => {
             changeListMutation.mutate({
               listId: entity.listId,
@@ -163,6 +166,7 @@ function ListTable(props: Props, ref: ListTableRef) {
             onClick={() => {
               setListToDelete(entity);
             }}
+            isDisabled={!hasListWritePermissions}
           >
             Delete
           </Button>

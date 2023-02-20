@@ -15,6 +15,7 @@ import { RiskLevel } from '@/apis';
 import RiskLevelSwitch from '@/components/ui/RiskLevelSwitch';
 import { AsyncResource, isLoading, useLastSuccessValue } from '@/utils/asyncResource';
 import { DEFAULT_COUNTRY_RISK_VALUES } from '@/utils/defaultCountriesRiskLevel';
+import { useHasPermissions } from '@/utils/user-utils';
 
 interface Props {
   item: RiskLevelTableItem;
@@ -27,6 +28,7 @@ export default function ValuesTable(props: Props) {
   const { parameter, dataType, entity } = item;
   const lastValues = useLastSuccessValue(currentValuesRes, []);
   const [values, setValues] = useState(lastValues);
+  const hasWritePermissions = useHasPermissions(['risk-scoring:risk-factors:write']);
 
   useEffect(() => {
     setValues(lastValues);
@@ -211,13 +213,20 @@ export default function ValuesTable(props: Props) {
         )}
       </div>
       <div className={style.footer}>
-        <Button disabled={loading || isEqual} onClick={handleCancel}>
+        <Button disabled={loading || isEqual || !hasWritePermissions} onClick={handleCancel}>
           Cancel
         </Button>
-        <Button disabled={loading || isEqual} onClick={handleSave} type="primary">
+        <Button
+          disabled={loading || isEqual || !hasWritePermissions}
+          onClick={handleSave}
+          type="primary"
+        >
           Save
         </Button>
-        <Button disabled={loading || values.length === 0} onClick={handleClearValues}>
+        <Button
+          disabled={loading || values.length === 0 || !hasWritePermissions}
+          onClick={handleClearValues}
+        >
           Clear all
         </Button>
       </div>

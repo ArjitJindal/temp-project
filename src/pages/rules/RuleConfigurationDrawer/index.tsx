@@ -58,10 +58,19 @@ interface Props {
   formInitialValues?: Partial<FormValues>;
   onChangeVisibility: (isVisible: boolean) => void;
   onSubmit: (formValues: FormValues) => void;
+  readOnly?: boolean;
 }
 
 export default function RuleConfigurationDrawer(props: Props) {
-  const { isVisible, isSubmitting, formInitialValues, onChangeVisibility, rule, onSubmit } = props;
+  const {
+    isVisible,
+    isSubmitting,
+    formInitialValues,
+    onChangeVisibility,
+    rule,
+    onSubmit,
+    readOnly = false,
+  } = props;
   const isPulseEnabled = useFeatureEnabled('PULSE');
 
   const orderedProps = getOrderedProps(rule?.parametersSchema);
@@ -232,7 +241,12 @@ export default function RuleConfigurationDrawer(props: Props) {
               setActiveTabKey(prevStep?.tabs[0]?.key);
             }}
           />
-          <Button htmlAttrs={{ form: formId }} htmlType="submit" isLoading={isSubmitting}>
+          <Button
+            htmlAttrs={{ form: formId }}
+            htmlType="submit"
+            isLoading={isSubmitting}
+            isDisabled={readOnly}
+          >
             Done
           </Button>
         </div>

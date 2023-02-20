@@ -6,15 +6,17 @@ import { useAuth0User } from '@/utils/user-utils';
 export default function TokenCheckProvider(props: { children: React.ReactNode }) {
   const api = useApi();
   const user = useAuth0User();
-  const { logout } = useAuth();
+  const { refreshAccessToken } = useAuth();
 
   useEffect(() => {
-    api.me().then((me) => {
+    const checkToken = async () => {
+      const me = await api.me();
       if (me.role && user.role && me.role !== user.role) {
-        logout();
+        await refreshAccessToken();
       }
-    });
-  }, [api, logout, user.role]);
+    };
+    checkToken().catch(console.error);
+  }, [api, refreshAccessToken, user?.role]);
 
   return <>{props.children}</>;
 }

@@ -16,6 +16,7 @@ import { getErrorMessage } from '@/utils/lang';
 import { useApi } from '@/api';
 import { useFeatureEnabled } from '@/components/AppWrapper/Providers/SettingsProvider';
 import { removeEmpty } from '@/utils/json';
+import { useHasPermissions } from '@/utils/user-utils';
 
 const TableList = () => {
   usePageViewTracker('Rules Page');
@@ -27,6 +28,7 @@ const TableList = () => {
   );
   const [, setLocalStorageActiveTab] = useLocalStorageState('rule-active-tab', rule);
   const i18n = useI18n();
+  const canWriteRules = useHasPermissions(['rules:my-rules:write']);
 
   useEffect(() => {
     setLocalStorageActiveTab(rule);
@@ -118,6 +120,7 @@ const TableList = () => {
             onSubmit={(formValues) => {
               newInstanceMutation.mutate(formValues);
             }}
+            readOnly={!canWriteRules}
           />
         </Tabs.TabPane>
       </PageTabs>

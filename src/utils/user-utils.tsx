@@ -45,6 +45,11 @@ export function usePermissions(): Map<Permission, boolean> {
   const user = useAuth0User();
   return user.permissions || new Map<Permission, boolean>();
 }
+export function useHasPermissions(requiredPermissions: Permission[]): boolean {
+  const permissions = usePermissions();
+  const missingPermissions = requiredPermissions.filter((p) => !permissions.has(p));
+  return missingPermissions.length == 0;
+}
 
 export function parseUserRole(role: string | null): UserRole {
   switch (role) {

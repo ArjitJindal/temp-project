@@ -69,7 +69,8 @@ function permissionsToRows(permissions: Permission[]): PermissionRow[] {
       return;
     }
     const [, section, subsection, action] = matches;
-    if (permsMap[section][subsection] !== undefined) {
+
+    if (permsMap[section] && permsMap[section][subsection] !== undefined) {
       permsMap[section][subsection][action] = true;
     }
   });
@@ -82,6 +83,7 @@ function permissionsToRows(permissions: Permission[]): PermissionRow[] {
         .sort()
         .map((subsection) => ({
           name: subsection,
+          section,
           actions: Object.keys(permsMap[section][subsection])
             .sort()
             .map((action) => ({

@@ -11,6 +11,9 @@
     th {
       background: @fr-colors-gray-4;
     }
+    td {
+      cursor: pointer;
+    }
     .ant-pro-card-body {
       padding: 0 !important;
     }
@@ -30,12 +33,18 @@
   margin: 0 !important;
   padding-left: 48px;
   background: @fr-colors-gray-0 !important;
+  .disabled {
+    color: @fr-colors-gray-4;
+  }
   :global {
     .ant-pro-card-body {
       padding: 0 !important;
     }
     .ant-table {
       background: @fr-colors-gray-0 !important;
+    }
+    td {
+      cursor: default !important;
     }
   }
 }

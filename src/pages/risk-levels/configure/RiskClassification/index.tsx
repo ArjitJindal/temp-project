@@ -18,6 +18,7 @@ import { RISK_LEVEL_LABELS, RISK_LEVELS, RiskLevel } from '@/utils/risk-levels';
 import { useApi } from '@/api';
 import { RiskClassificationScore } from '@/apis';
 import { TableColumn } from '@/components/ui/Table/types';
+import { useHasPermissions } from '@/utils/user-utils';
 
 interface TableItem {
   key: RiskLevel;
@@ -57,6 +58,7 @@ export default function RiskQualification() {
   const api = useApi();
   const [syncRes, setSyncRes] = useState<AsyncResource<State>>(init());
   const [state, setState] = useState<State | null>(null);
+  const hasRiskLevelPermission = useHasPermissions(['risk-scoring:risk-levels:write']);
 
   useEffect(() => {
     let isCanceled = false;
@@ -143,7 +145,7 @@ export default function RiskQualification() {
         return (
           <Slider
             range={true}
-            disabled={isLoading(syncRes)}
+            disabled={isLoading(syncRes) || !hasRiskLevelPermission}
             min={0}
             max={100}
             value={[start, end]}
@@ -193,10 +195,14 @@ export default function RiskQualification() {
         items: LEVEL_ENTRIES,
       }}
       toolBarRender={() => [
-        <Button type="PRIMARY" onClick={handleSave} isDisabled={isLoading(syncRes)}>
+        <Button
+          type="PRIMARY"
+          onClick={handleSave}
+          isDisabled={isLoading(syncRes) || !hasRiskLevelPermission}
+        >
           Save
         </Button>,
-        <Button onClick={handleCancel} isDisabled={isLoading(syncRes)}>
+        <Button onClick={handleCancel} isDisabled={isLoading(syncRes) || !hasRiskLevelPermission}>
           Cancel
         </Button>,
       ]}

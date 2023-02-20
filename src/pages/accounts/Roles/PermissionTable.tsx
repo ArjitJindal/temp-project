@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { sentenceCase } from '@antv/x6/es/util/string/format';
 import ProTable from '@ant-design/pro-table';
 import { RenderExpandIcon } from 'rc-table/lib/interface';
@@ -9,6 +9,9 @@ import Label from '@/components/library/Label';
 import Checkbox from '@/components/library/Checkbox';
 import { TableColumn, TableRow } from '@/components/ui/Table/types';
 import { PermissionRow, PermissionSubsection } from '@/pages/accounts/Roles/types';
+import { useFeatures } from '@/components/AppWrapper/Providers/SettingsProvider';
+import { Feature } from '@/apis';
+import Button from '@/components/library/Button';
 
 const roleColumns: TableColumn<PermissionRow>[] = [
   { title: 'Feature', dataIndex: 'name', key: 'name', renderText: (text) => sentenceCase(text) },
@@ -42,66 +45,133 @@ const expandIcon: RenderExpandIcon<TableRow<PermissionRow>> = ({
   );
 };
 export default function PermissionTable({ role, items }: { role: string; items: PermissionRow[] }) {
-  return (
-    <Table<PermissionRow>
-      data={{ items }}
-      headerTitle={sentenceCase(role)}
-      headerSubtitle={`The following is the default permissions set for the ${sentenceCase(
-        role,
-      )} role.`}
-      rowKey={'name'}
-      columns={roleColumns}
-      disableExpandedRowPadding
-      pagination={false}
-      search={false}
-      className={s.rolesTable}
-      options={{
-        reload: false,
-        density: false,
-        setting: false,
-      }}
-      bordered={false}
-      expandable={{
-        defaultExpandAllRows: false,
-        expandIcon,
+  const features = useFeatures();
+  const [expandedRows, setExpandedRows] = useState<string[]>([]);
 
-        expandedRowRender: (record) => (
-          <ProTable<PermissionSubsection>
-            dataSource={record.subsections}
-            columns={[
-              {
-                title: 'Feature',
-                key: 'name',
-                dataIndex: 'name',
-                renderText: (text) => sentenceCase(text),
-              },
-              {
-                title: 'Actions',
-                key: 'actions',
-                dataIndex: 'actions',
-                width: 200,
-                render: (dom, subsection) => {
-                  return (
-                    <div className={s.actions}>
-                      {subsection.actions.map((action) => (
-                        <Label level={2} label={sentenceCase(action.name)} position={'RIGHT'}>
-                          <Checkbox value={action.enabled} isDisabled />
-                        </Label>
-                      ))}
-                    </div>
-                  );
+  const allExpanded = expandedRows.length === items.length;
+  return (
+    <>
+      <Table<PermissionRow>
+        data={{ items }}
+        headerTitle={sentenceCase(role)}
+        headerSubtitle={
+          <>
+            <div>{`The following is the default permissions set for the ${sentenceCase(
+              role,
+            )} role.`}</div>
+            <Button
+              type={'SECONDARY'}
+              style={{ marginTop: '10px', marginLeft: '3px' }}
+              onClick={() => {
+                if (allExpanded) {
+                  setExpandedRows([]);
+                } else {
+                  setExpandedRows(items.map((i) => i.name));
+                }
+              }}
+            >
+              {allExpanded ? 'Collapse all' : 'Show all'}
+            </Button>
+          </>
+        }
+        rowKey={'name'}
+        columns={roleColumns}
+        disableExpandedRowPadding
+        pagination={false}
+        search={false}
+        controlsHeader={[() => <h1>hello</h1>]}
+        className={s.rolesTable}
+        options={{
+          reload: false,
+          density: false,
+          setting: false,
+        }}
+        bordered={false}
+        expandable={{
+          showExpandColumn: true,
+          defaultExpandAllRows: false,
+          expandRowByClick: true,
+          expandedRowKeys: expandedRows,
+          onExpand: (expanded, record) => {
+            let newRows: string[] = expandedRows;
+            if (expanded && expandedRows.indexOf(record.entityKey) === -1) {
+              newRows = expandedRows.concat(record.entityKey);
+            }
+            if (!expanded) {
+              newRows = expandedRows.filter((r) => r !== record.entityKey);
+            }
+            setExpandedRows(newRows);
+          },
+          expandIcon,
+          expandedRowRender: (record) => (
+            <ProTable<PermissionSubsection>
+              key={record.entityKey}
+              dataSource={record.subsections}
+              columns={[
+                {
+                  title: 'Feature',
+                  key: 'name',
+                  dataIndex: 'name',
+                  render: (dom, subsection) => {
+                    return (
+                      <span
+                        className={
+                          featureEnabled(features, subsection.section, subsection.name)
+                            ? undefined
+                            : s.disabled
+                        }
+                      >
+                        {sentenceCase(subsection.name)}
+                      </span>
+                    );
+                  },
+                  readonly: true,
+                  disable: true,
                 },
-              },
-            ]}
-            className={s.expandedRow}
-            showHeader={false}
-            headerTitle={false}
-            search={false}
-            options={false}
-            pagination={false}
-          />
-        ),
-      }}
-    />
+                {
+                  title: 'Actions',
+                  key: 'actions',
+                  dataIndex: 'actions',
+                  width: 200,
+                  render: (dom, subsection) => {
+                    return (
+                      <div className={s.actions}>
+                        {subsection.actions.map((action) => (
+                          <Label
+                            level={2}
+                            label={sentenceCase(action.name)}
+                            position={'RIGHT'}
+                            key={action.name}
+                          >
+                            <Checkbox value={action.enabled} isDisabled />
+                          </Label>
+                        ))}
+                      </div>
+                    );
+                  },
+                },
+              ]}
+              className={s.expandedRow}
+              showHeader={false}
+              headerTitle={false}
+              search={false}
+              options={false}
+              pagination={false}
+            />
+          ),
+        }}
+      />
+    </>
   );
+}
+
+// Check permissions against feature flags.
+function featureEnabled(features: Feature[], section: string, subsection: string): boolean {
+  if (subsection == 'import' && !features.find((f) => f == 'IMPORT_FILES')) {
+    return false;
+  }
+  if (section == 'simulator' && !features.find((f) => (f as string) == 'SIMULATOR')) {
+    return false;
+  }
+  return true;
 }

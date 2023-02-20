@@ -36,7 +36,7 @@ interface AuthContextValue {
   accessToken: string | null;
   login: () => void;
   logout: () => void;
-  refreshAccessToken: () => void;
+  refreshAccessToken: () => Promise<void>;
 }
 
 const Context = React.createContext<AuthContextValue | null>(null);
@@ -107,7 +107,7 @@ export default function AuthProvider(props: { children: React.ReactNode }) {
         },
       );
     });
-  }, [accessToken, setStoredValue]);
+  }, [accessToken, setStoredValue, setAccessToken]);
 
   useEffect(() => {
     const now = Date.now();

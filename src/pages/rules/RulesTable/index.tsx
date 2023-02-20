@@ -10,6 +10,7 @@ import { usePaginatedQuery } from '@/utils/queries/hooks';
 import { GET_RULES } from '@/utils/queries/keys';
 import QueryResultsTable from '@/components/common/QueryResultsTable';
 import { getBranding } from '@/utils/branding';
+import { useHasPermissions } from '@/utils/user-utils';
 
 interface Props {
   onSelectRule: (rule: Rule) => void;
@@ -32,6 +33,7 @@ const branding = getBranding();
 
 export const RulesTable: React.FC<Props> = ({ onSelectRule }) => {
   const api = useApi();
+  const canWriteRules = useHasPermissions(['rules:my-rules:write']);
   const columns: TableColumn<Rule>[] = useMemo(() => {
     const caseCreationHeaders: TableColumn<Rule>[] = [
       {
@@ -99,6 +101,7 @@ export const RulesTable: React.FC<Props> = ({ onSelectRule }) => {
                 size="MEDIUM"
                 type="PRIMARY"
                 onClick={() => onSelectRule(entity)}
+                isDisabled={!canWriteRules}
               >
                 Configure
               </Button>
@@ -107,7 +110,7 @@ export const RulesTable: React.FC<Props> = ({ onSelectRule }) => {
         },
       },
     ];
-  }, [onSelectRule]);
+  }, [onSelectRule, canWriteRules]);
 
   const rulesResult = usePaginatedQuery(GET_RULES(), async () => {
     const rules = await api.getRules();

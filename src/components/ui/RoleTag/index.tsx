@@ -1,5 +1,6 @@
 import { Tag } from 'antd';
 import React from 'react';
+import { sentenceCase } from '@antv/x6/es/util/string/format';
 import { AccountRoleName } from '@/apis';
 import COLORS, { ColorSet } from '@/components/ui/colors';
 import { neverReturn } from '@/utils/lang';
@@ -28,6 +29,8 @@ export default function RoleTag(props: Props): JSX.Element {
   const { role } = props;
   const color = getColor(role);
   return (
-    <Tag style={{ background: color.tint, borderColor: color.base, color: color.base }}>{role}</Tag>
+    <Tag style={{ background: color.tint, borderColor: color.base, color: color.base }}>
+      {sentenceCase(role)}
+    </Tag>
   );
 }

@@ -11,6 +11,7 @@ import Button from '@/components/library/Button';
 import NewListDrawer from '@/pages/lists/NewListDrawer';
 import { parseListType, stringifyListType } from '@/pages/lists/helpers';
 import { usePageViewTracker } from '@/utils/tracker';
+import { useHasPermissions } from '@/utils/user-utils';
 
 export default function CreatedLists() {
   usePageViewTracker('Created Lists Page');
@@ -23,6 +24,7 @@ export default function CreatedLists() {
   const [isNewModalOpen, setNewModalOpen] = useState(false);
   const whitelistsTableRef: ListTableRef = useRef(null);
   const blacklistsTableRef: ListTableRef = useRef(null);
+  const hasListWritePermissions = useHasPermissions(['lists:all:write']);
 
   return (
     <>
@@ -38,6 +40,7 @@ export default function CreatedLists() {
                 <>
                   <Button
                     size="LARGE"
+                    isDisabled={!hasListWritePermissions}
                     onClick={() => {
                       setNewModalOpen(true);
                     }}
@@ -53,6 +56,7 @@ export default function CreatedLists() {
                 <>
                   <Button
                     size="LARGE"
+                    isDisabled={!hasListWritePermissions}
                     onClick={() => {
                       setNewModalOpen(true);
                     }}
