@@ -11,12 +11,6 @@ export const DEFAULT_ROLES: {
     permissions: PERMISSIONS, // Admin has all permissions
   },
   {
-    // Legacy role. It has all permissions since the important things have a
-    // check for "root" already.
-    role: 'user',
-    permissions: PERMISSIONS,
-  },
-  {
     role: 'auditor',
     permissions: [
       'case-management:case-overview:read',

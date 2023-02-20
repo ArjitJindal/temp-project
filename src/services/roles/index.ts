@@ -72,7 +72,7 @@ export class RoleService {
   async setRole(
     tenantId: string,
     userId: string,
-    roleName: string
+    roleName: AccountRoleName
   ): Promise<void> {
     if (!isValidAccountRoleName(roleName)) {
       throw new BadRequest(`"${roleName}" is an invalid role`)

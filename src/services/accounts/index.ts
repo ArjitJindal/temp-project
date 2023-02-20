@@ -212,6 +212,10 @@ export class AccountsService {
 
     const ids = members.map((x) => x.user_id)
 
+    if (ids.length == 0) {
+      return []
+    }
+
     // todo: this call support maximum 50 items per page, need to paginate
     const users = await managementClient.getUsers({
       q: `user_id:(${ids.map((id) => `"${id}"`).join(' OR ')})`,

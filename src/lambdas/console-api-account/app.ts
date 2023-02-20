@@ -82,7 +82,7 @@ export const accountsHandler = lambdaApi()(
         throw new BadRequest(`Body should not be empty`)
       }
       const { role: newRole } = JSON.parse(event.body) as ChangeRolePayload
-      await rolesService.setRole(tenantId, idToChange, newRole as string)
+      await rolesService.setRole(tenantId, idToChange, newRole)
       return true
     } else if (
       event.httpMethod === 'POST' &&
