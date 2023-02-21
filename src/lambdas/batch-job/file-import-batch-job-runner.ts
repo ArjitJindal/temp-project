@@ -7,6 +7,7 @@ import { getDynamoDbClient } from '@/utils/dynamodb'
 import { getS3Client } from '@/utils/s3'
 import { getMongoDbClient } from '@/utils/mongoDBUtils'
 import { assertPermissions } from '@/@types/jwt'
+import { assertUserError } from '@/utils/errors'
 
 const { TMP_BUCKET, IMPORT_BUCKET } = process.env as FileImportConfig
 
@@ -54,7 +55,7 @@ export class FileImportBatchJobRunner extends BatchJobRunner {
         importId,
         e instanceof Error ? e.message : 'Unknown'
       )
-      throw e
+      assertUserError(e)
     }
   }
 }

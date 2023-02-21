@@ -59,6 +59,9 @@ export const config: Config = {
     CASE_LAMBDA: {
       PROVISIONED_CONCURRENCY: 2,
     },
+    BATCH_JOB_LAMBDA: {
+      MEMORY_SIZE: 512,
+    },
     LAMBDA_VPC_ENABLED: true,
   },
   application: {
