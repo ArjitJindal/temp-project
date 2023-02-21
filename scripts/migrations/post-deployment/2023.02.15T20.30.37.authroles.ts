@@ -17,9 +17,11 @@ async function migrateTenant(tenant: Tenant) {
     dynamoDb,
   })
 
-  tenantRepository.tenantId = tenant.id
   const settings = await tenantRepository.getTenantSettings()
-  let features = settings.features
+  if (!settings) {
+    return
+  }
+  let features = settings.features || []
   if (settings.features?.indexOf('RBAC') == -1) {
     features = [...settings.features, 'RBAC']
   }
