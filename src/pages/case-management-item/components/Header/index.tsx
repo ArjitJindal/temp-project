@@ -62,11 +62,7 @@ export default function Header(props: Props) {
           />
           <CasesStatusChangeButton
             caseIds={[caseId as string]}
-            newCaseStatus={
-              caseItem.caseStatus === 'OPEN' || caseItem.caseStatus === 'REOPENED'
-                ? 'CLOSED'
-                : 'REOPENED'
-            }
+            caseStatus={caseItem.caseStatus}
             onSaved={() => {
               onReload();
             }}

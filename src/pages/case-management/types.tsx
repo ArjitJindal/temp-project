@@ -38,5 +38,6 @@ export type TableSearchParams = Partial<{
   kycStatuses: KYCStatus[];
   userStates: UserState[];
   riskLevels: RiskLevel[];
+  showCases: 'MY' | 'ALL';
 }> &
   CommonParams;

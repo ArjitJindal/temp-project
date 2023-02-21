@@ -4,16 +4,15 @@ import { Select as AntSelect, SelectProps } from 'antd';
 import { SelectCommonPlacement } from 'antd/lib/_util/motion';
 import s from './style.module.less';
 import { InputProps } from '@/components/library/Form';
+import { Comparable, key } from '@/utils/comparable';
 
-export type InputType = string | number | boolean | undefined;
-
-export interface Option<Value extends InputType> {
+export interface Option<Value extends Comparable> {
   value: Value;
   label?: React.ReactNode;
   isDisabled?: boolean;
 }
 
-interface CommonProps<Value extends InputType> {
+interface CommonProps<Value extends Comparable> {
   placeholder?: string;
   size?: 'DEFAULT' | 'LARGE';
   options: Option<Value>[];
@@ -22,21 +21,21 @@ interface CommonProps<Value extends InputType> {
   dropdownPlacement?: SelectCommonPlacement;
 }
 
-interface SingleProps<Value extends InputType> extends CommonProps<Value>, InputProps<Value> {
+interface SingleProps<Value extends Comparable> extends CommonProps<Value>, InputProps<Value> {
   mode?: 'SINGLE';
 }
 
-interface MultipleProps<Value extends InputType> extends CommonProps<Value>, InputProps<Value[]> {
+interface MultipleProps<Value extends Comparable> extends CommonProps<Value>, InputProps<Value[]> {
   mode: 'MULTIPLE';
 }
 
-interface TagsProps<Value extends InputType> extends CommonProps<Value>, InputProps<Value[]> {
+interface TagsProps<Value extends Comparable> extends CommonProps<Value>, InputProps<Value[]> {
   mode: 'TAGS';
 }
 
-type Props<Value extends InputType> = SingleProps<Value> | MultipleProps<Value> | TagsProps<Value>;
+type Props<Value extends Comparable> = SingleProps<Value> | MultipleProps<Value> | TagsProps<Value>;
 
-export default function Select<Value extends InputType = InputType>(props: Props<Value>) {
+export default function Select<Value extends Comparable = string>(props: Props<Value>) {
   const { isDisabled, options, placeholder, size = 'DEFAULT', isError, onFocus, onBlur } = props;
 
   const antSelectProps: SelectProps<Value | Value[], Option<Value>> = {
@@ -70,7 +69,7 @@ export default function Select<Value extends InputType = InputType>(props: Props
       <AntSelect {...antSelectProps}>
         {options?.map((option) => (
           <AntSelect.Option
-            key={`${option.value}`}
+            key={key(option.value)}
             value={option.value}
             disabled={option.isDisabled}
           >

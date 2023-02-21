@@ -1,5 +1,4 @@
 import React, { useCallback, useMemo, useRef, useState } from 'react';
-import { Divider } from 'antd';
 import { ProFormInstance } from '@ant-design/pro-form';
 import { TransactionStateButton } from '../../transactions/components/TransactionStateButton';
 import { TableSearchParams } from '../types';
@@ -36,6 +35,7 @@ import { humanizeConstant } from '@/utils/humanize';
 import AccountCircleLineIcon from '@/components/ui/icons/Remix/user/account-circle-line.react.svg';
 import CalendarLineIcon from '@/components/ui/icons/Remix/business/calendar-line.react.svg';
 import StackLineIcon from '@/components/ui/icons/Remix/business/stack-line.react.svg';
+import SegmentedControl from '@/components/library/SegmentedControl';
 import { RiskLevelButton } from '@/pages/users/users-list/RiskLevelFilterButton';
 import BusinessIndustryButton from '@/pages/transactions/components/BusinessIndustryButton';
 
@@ -293,7 +293,7 @@ export default function UserCases(props: Props) {
             entity?.caseId && (
               <CasesStatusChangeButton
                 caseIds={[entity.caseId]}
-                newCaseStatus={entity.caseStatus === 'OPEN' ? 'CLOSED' : 'REOPENED'}
+                caseStatus={entity.caseStatus}
                 onSaved={reloadTable}
               />
             )
@@ -470,6 +470,28 @@ export default function UserCases(props: Props) {
       actionsHeader={[
         ({ params, setParams }) => (
           <>
+            <SegmentedControl<'MY' | 'ALL'>
+              size="LARGE"
+              active={params.showCases === 'MY' ? 'MY' : 'ALL'}
+              onChange={(newValue) => {
+                setParams((oldState) => ({ ...oldState, showCases: newValue }));
+              }}
+              items={[
+                { value: 'ALL', label: 'All cases' },
+                { value: 'MY', label: 'My cases' },
+              ]}
+            />
+          </>
+        ),
+      ]}
+      actionsHeaderRight={[
+        ({ params, setParams }) => (
+          <>
+            <CasesStatusChangeButton
+              caseIds={selectedEntities}
+              onSaved={reloadTable}
+              caseStatus={params.caseStatus}
+            />
             <CaseStatusButtons
               status={params.caseStatus ?? 'OPEN'}
               onChange={(newStatus) => {
@@ -478,12 +500,6 @@ export default function UserCases(props: Props) {
                   caseStatus: newStatus,
                 }));
               }}
-            />
-            <Divider type="vertical" style={{ height: '32px' }} />
-            <CasesStatusChangeButton
-              caseIds={selectedEntities}
-              onSaved={reloadTable}
-              newCaseStatus={params.caseStatus === 'CLOSED' ? 'REOPENED' : 'CLOSED'}
             />
           </>
         ),

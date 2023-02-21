@@ -1,5 +1,12 @@
 import ProTable, { ProTableProps } from '@ant-design/pro-table';
-import React, { useCallback, useEffect, useImperativeHandle, useRef, useState } from 'react';
+import React, {
+  useCallback,
+  useEffect,
+  useImperativeHandle,
+  useLayoutEffect,
+  useRef,
+  useState,
+} from 'react';
 import _ from 'lodash';
 import cn from 'clsx';
 import { ProColumns, ProColumnType } from '@ant-design/pro-table/es/typing';
@@ -82,6 +89,7 @@ export interface Props<T extends object | unknown, Params extends object, ValueT
   isEvenRow?: (item: T) => boolean;
   extraFilters?: ExtraFilter<Params>[];
   actionsHeader?: ActionRenderer<Params>[];
+  actionsHeaderRight?: ActionRenderer<Params>[];
   controlsHeader?: ActionRenderer<Params>[];
   onChangeParams?: (newParams: AllParams<Params>) => void;
   columns: TableColumn<T>[];
@@ -109,8 +117,9 @@ export default function Table<
     headerTitle,
     headerSubtitle,
     actionsHeader = [],
+    actionsHeaderRight = [],
     extraFilters = [],
-    controlsHeader,
+    controlsHeader = [],
     rowSelection,
     loading,
     pagination,
@@ -266,8 +275,19 @@ export default function Table<
 
   const showFilters = params != null && allFilters.length > 0;
   const showActionsHeader = actionsHeader.length > 0 && params != null;
+  const showActionsHeaderRight = actionsHeaderRight.length > 0 && params != null;
   const showBottomHeader = showFilters;
-  const showTopHeader = showActionsHeader || headerTitle || headerSubtitle;
+  const showTopHeader =
+    showActionsHeader || showActionsHeaderRight || headerTitle || headerSubtitle;
+
+  const [toolbarWidth, setToolbarWidth] = useState(140);
+  useLayoutEffect(() => {
+    const toolbar = tableElement?.current?.querySelector('.ant-pro-table-list-toolbar-right');
+    if (toolbar) {
+      const { width } = toolbar.getBoundingClientRect();
+      setToolbarWidth(width);
+    }
+  }, []);
 
   return (
     <div
@@ -282,6 +302,7 @@ export default function Table<
           if (toolBarRender != null && toolBarRender !== false) {
             result.push(...toolBarRender(action, rows));
           }
+
           if (controlsHeader && params != null) {
             result.push(
               renderControlsHeader<Params>(controlsHeader, {
@@ -321,10 +342,20 @@ export default function Table<
                       })
                     : headerTitle}
                   {headerSubtitle && <div className={style.subtitle}>{headerSubtitle}</div>}
+                  {showActionsHeaderRight
+                    ? renderActionHeader<Params>(actionsHeaderRight, {
+                        params,
+                        setParams: (cb: (oldState: AllParams<Params>) => AllParams<Params>) =>
+                          onChangeParams(cb(params)),
+                      })
+                    : headerTitle}
                 </div>
               )}
               {showBottomHeader && (
-                <div className={style.actionsHeaderWrapperBottom}>
+                <div
+                  className={style.actionsHeaderWrapperBottom}
+                  style={{ marginRight: toolbarWidth }}
+                >
                   <Filters
                     tableId={props.tableId}
                     filters={allFilters}
@@ -443,4 +474,3 @@ function renderControlsHeader<Params extends object>(
     </div>
   );
 }
-export { getAutoFilters } from '@/components/ui/Table/utils';

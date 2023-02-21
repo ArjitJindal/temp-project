@@ -16,6 +16,7 @@ import UserCases from '@/pages/case-management/UserCases';
 import { useRules } from '@/utils/rules';
 import { DEFAULT_PAGE_SIZE } from '@/components/ui/Table/consts';
 import { useApiTime } from '@/utils/tracker';
+import { useAuth0User } from '@/utils/user-utils';
 
 export type CaseManagementItem = Case & {
   index: number;
@@ -31,6 +32,7 @@ export type CaseManagementItem = Case & {
 export default function CaseTableWrapper() {
   const api = useApi();
   const navigate = useNavigate();
+  const auth0user = useAuth0User();
 
   const pushParamsToNavigation = useCallback(
     (params: TableSearchParams) => {
@@ -93,6 +95,7 @@ export default function CaseTableWrapper() {
       kycStatuses,
       riskLevels,
       userStates,
+      showCases,
     } = params;
 
     const [sortField, sortOrder] = sort[0] ?? [];
@@ -144,6 +147,7 @@ export default function CaseTableWrapper() {
           filterUserKYCStatus: kycStatuses,
           filterRiskLevel: riskLevels,
           filterUserState: userStates,
+          filterAssignmentsIds: showCases === 'MY' ? [auth0user.userId] : undefined,
         }),
       'Get Cases List',
     );

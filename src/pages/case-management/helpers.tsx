@@ -39,6 +39,7 @@ export const queryAdapter: Adapter<TableSearchParams> = {
       kycStatuses: params.kycStatuses?.join(','),
       userStates: params.userStates?.join(','),
       riskLevels: params.riskLevels?.join(','),
+      showCases: params.showCases,
     };
   },
   deserializer: (raw): TableSearchParams => {
@@ -86,6 +87,7 @@ export const queryAdapter: Adapter<TableSearchParams> = {
       kycStatuses: raw.kycStatuses?.split(',') as unknown as TableSearchParams['kycStatuses'],
       userStates: raw.userStates?.split(',') as unknown as TableSearchParams['userStates'],
       riskLevels: raw.riskLevels?.split(',') as unknown as TableSearchParams['riskLevels'],
+      showCases: raw.showCases === 'MY' ? 'MY' : 'ALL',
     };
   },
 };

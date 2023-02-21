@@ -5,24 +5,25 @@ import QuickFilterBase from '../../QuickFilterBase';
 import s from './index.module.less';
 import { InputProps } from '@/components/library/Form';
 import { Props as QuickFilterProps } from '@/components/library/QuickFilter/QuickFilterBase';
-import { InputType, Option } from '@/components/library/Select';
+import { Option } from '@/components/library/Select';
 import { joinReactNodes } from '@/utils/react';
+import { Comparable, key } from '@/utils/comparable';
 
-interface SharedProps<Value extends InputType> extends QuickFilterProps {
+interface SharedProps<Value extends Comparable> extends QuickFilterProps {
   options: Option<Value>[];
 }
 
-interface MultipleProps<Value extends InputType> extends SharedProps<Value>, InputProps<Value[]> {
+interface MultipleProps<Value extends Comparable> extends SharedProps<Value>, InputProps<Value[]> {
   mode: 'MULTIPLE';
 }
 
-interface SingleProps<Value extends InputType> extends SharedProps<Value>, InputProps<Value> {
+interface SingleProps<Value extends Comparable> extends SharedProps<Value>, InputProps<Value> {
   mode: 'SINGLE';
 }
 
-type Props<Value extends InputType> = MultipleProps<Value> | SingleProps<Value>;
+type Props<Value extends Comparable> = MultipleProps<Value> | SingleProps<Value>;
 
-export default function ListQuickFilter<Value extends InputType>(props: Props<Value>) {
+export default function ListQuickFilter<Value extends Comparable>(props: Props<Value>) {
   const { options, onChange = () => {}, ...rest } = props;
 
   const valueArray: Value[] = props.value
@@ -56,6 +57,7 @@ export default function ListQuickFilter<Value extends InputType>(props: Props<Va
           dataSource={options}
           renderItem={(option: Option<Value>) => (
             <List.Item
+              key={key(option.value)}
               className={cn(s.item, valueArray.includes(option.value) && s.isActive)}
               onClick={(e) => {
                 e.stopPropagation();
