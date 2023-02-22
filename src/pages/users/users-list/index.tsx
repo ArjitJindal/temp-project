@@ -77,6 +77,23 @@ function getPulseColumns<
       hideInSearch: true,
     },
     {
+      title: 'Is Locked',
+      dataIndex: 'drsScore.isUpdatable',
+      exportData: (entity) => {
+        return !entity?.drsScore?.isUpdatable ? 'Yes' : 'No';
+      },
+      tip: 'Customer risk assessment score is locked',
+      search: false,
+      render: (dom, entity) => {
+        if (!entity?.drsScore?.isUpdatable) {
+          return <span>Yes</span>;
+        }
+        return <span>No</span>;
+      },
+      width: 150,
+      hideInSearch: true,
+    },
+    {
       title: 'KRS Risk Level',
       dataIndex: 'krsRiskLevel',
       exportData: (entity) => {
