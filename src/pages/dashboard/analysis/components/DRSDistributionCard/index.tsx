@@ -92,7 +92,7 @@ export default function DRSDistributionCard() {
                       <span className={s.drsTooltipValues}> {data[0]?.data.riskScoreRange}</span>
                     </p>
                     <p className={s.drsTooltipElements}>
-                      Users:
+                      Users:{' '}
                       <span className={s.drsTooltipValues}>
                         {data[0]?.data.count} ({data[0]?.data.percentage}%)
                       </span>

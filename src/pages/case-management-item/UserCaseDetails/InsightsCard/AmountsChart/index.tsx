@@ -58,7 +58,7 @@ export default function AmountsChart(props: Props) {
                   <div>
                     <b>Total no. of Transactions</b>
                   </div>
-                  <div>{_.sumBy(response, (x) => x.count)}</div>
+                  <div>{_.sumBy(response, (x) => x.count)?.toLocaleString()}</div>
                 </div>
               </div>
               <Chart

@@ -1,7 +1,6 @@
 import { Menu as AntMenu, Popover } from 'antd';
 import {
   BarChartOutlined,
-  FlagOutlined,
   ImportOutlined,
   MenuFoldOutlined,
   MenuUnfoldOutlined,
@@ -18,6 +17,7 @@ import { matchPath, useLocation } from 'react-router';
 import { useContext, useEffect } from 'react';
 import { SideBarContext } from '../Providers/SidebarProvider';
 import TeamOutlined from './Team_Outlined.react.svg';
+import Stack from './Stack.react.svg';
 import Dashboard from './Dashboard.react.svg';
 import Table from './Table.react.svg';
 import GavelIcon from './gavel.react.svg';
@@ -28,11 +28,7 @@ import { hasName, isTree, RouteItem } from '@/services/routing/types';
 import { getBranding } from '@/utils/branding';
 
 const icons = {
-  FlagOutlined: (
-    <span>
-      <FlagOutlined />
-    </span>
-  ),
+  FlagOutlined: <Stack />,
   UsergroupAddOutlined: <UsergroupAddOutlined />,
   UnorderedListOutlined: <UnorderedListOutlined />,
   Gavel: <GavelIcon />,

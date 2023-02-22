@@ -21,15 +21,12 @@ export function FinancialDetails(prop: Props) {
           <Card.Column className={s.col}>
             <Form.Layout.Label
               icon={<FingerprintLineIcon />}
-              title={'Expected TransactionAmount per month'}
+              title={'Expected Transaction Amount per month'}
             />
           </Card.Column>
           <Card.Column className={s.all}>
             <div>
-              {
-                user.legalEntity.companyFinancialDetails?.expectedTransactionAmountPerMonth
-                  ?.amountValue
-              }{' '}
+              {user.legalEntity.companyFinancialDetails?.expectedTransactionAmountPerMonth?.amountValue?.toLocaleString()}{' '}
               {
                 user.legalEntity.companyFinancialDetails?.expectedTransactionAmountPerMonth
                   ?.amountCurrency
@@ -46,7 +43,7 @@ export function FinancialDetails(prop: Props) {
           </Card.Column>
           <Card.Column className={s.all}>
             <span>
-              {user.legalEntity.companyFinancialDetails?.expectedTurnoverPerMonth?.amountValue}{' '}
+              {user.legalEntity.companyFinancialDetails?.expectedTurnoverPerMonth?.amountValue?.toLocaleString()}{' '}
               {user.legalEntity.companyFinancialDetails?.expectedTurnoverPerMonth?.amountCurrency}
             </span>
           </Card.Column>
