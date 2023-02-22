@@ -2322,6 +2322,13 @@ components:
           $ref: '#/components/schemas/CountryCode'
         countryOfNationality:
           $ref: '#/components/schemas/CountryCode'
+        gender:
+          type: string
+          enum:
+            - M
+            - F
+            - NB
+          description: Gender of the individual - Male, Female or Non-Binary
       required:
         - name
     CompanyGeneralDetails:
@@ -2349,6 +2356,15 @@ components:
           description: The key products and services provided by the company
           items:
             type: string
+        userSegment:
+          type: string
+          description: Segmentation of the business user
+          enum:
+            - SOLE_PROPRIETORSHIP
+            - SMB
+            - SMALL
+            - MEDIUM
+            - LARGE
         tags:
           type: array
           description: Additional information that can be added via tags
@@ -2639,8 +2655,6 @@ components:
           minimum: 1262300400000
           description: Timestamp when the user was created
           maximum: 4133890801000
-        riskLevel:
-          $ref: '#/components/schemas/RiskLevel'
       required:
         - userId
         - legalEntity
