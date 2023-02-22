@@ -118,11 +118,24 @@ export default function RulesHitTransactionTable(props: Props) {
             },
             isPulseEnabled
               ? {
-                  title: 'TRS level',
+                  title: 'TRS score',
                   width: 130,
                   ellipsis: true,
                   dataIndex: 'caseTransactions.arsScore.arsScore',
                   exportData: 'caseTransactions.arsScore.arsScore',
+                  hideInSearch: true,
+                  sorter: true,
+                  render: (_, entity) => entity?.caseTransactions?.arsScore?.arsScore,
+                  tooltip: 'Transaction Risk Score',
+                }
+              : {},
+            isPulseEnabled
+              ? {
+                  title: 'TRS level',
+                  width: 130,
+                  ellipsis: true,
+                  dataIndex: 'caseTransactions.arsScore.arsScore',
+                  exportData: 'caseTransactions.arsScore.riskLevel',
                   hideInSearch: true,
                   sorter: true,
                   render: (_, entity) => {

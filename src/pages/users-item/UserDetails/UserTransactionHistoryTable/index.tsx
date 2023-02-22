@@ -36,6 +36,7 @@ export type DataItem = {
   ruleName: string | null;
   ruleDescription: string | null;
   arsRiskLevel?: RiskLevel;
+  arsScore?: number;
 };
 
 export function Content(props: { userId: string }) {
@@ -143,6 +144,23 @@ export function Content(props: { userId: string }) {
                 );
               },
             },
+            isPulseEnabled
+              ? {
+                  title: 'TRS score',
+                  width: 130,
+                  ellipsis: true,
+                  dataIndex: 'arsScore.arsScore',
+                  exportData: 'arsScore',
+                  key: 'arsScore',
+                  hideInSearch: true,
+                  sorter: true,
+                  render: (_, entity) => entity?.arsScore,
+                  onCell: (_) => ({
+                    rowSpan: _.isFirstRow ? _.rowsCount : 0,
+                  }),
+                  tooltip: 'Transaction Risk Score',
+                }
+              : {},
             isPulseEnabled
               ? {
                   title: 'TRS level',

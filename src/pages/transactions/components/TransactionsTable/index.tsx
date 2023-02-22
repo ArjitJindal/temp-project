@@ -89,6 +89,19 @@ export default function TransactionsTable(props: Props) {
       },
       isPulseEnabled
         ? {
+            title: 'TRS score',
+            width: 130,
+            ellipsis: true,
+            dataIndex: 'arsScore.arsScore',
+            exportData: 'arsScore.arsScore',
+            hideInSearch: true,
+            sorter: true,
+            render: (_, entity) => entity?.arsScore?.arsScore,
+            tooltip: 'Transaction Risk Score',
+          }
+        : {},
+      isPulseEnabled
+        ? {
             title: 'TRS level',
             width: 130,
             ellipsis: true,

@@ -22,6 +22,7 @@ export function prepareTableData(
       ruleName: null,
       ruleDescription: null,
       arsRiskLevel: item.arsScore?.riskLevel,
+      arsScore: item.arsScore?.arsScore,
     };
     if (item.hitRules.length === 0) {
       return dataItem;
