@@ -2,6 +2,7 @@ import { StackConstants } from './constants'
 
 const DEFAULT_LAMBDA_EXPECTED_MAX_DURATION_SECONDS = 10
 const ASYNC_JOB_LAMBDA_EXPECTED_MAX_DURATION_SECONDS = 14 * 60 // 15 minutes is the hard timeout
+const KINESIS_CONSUMER_LAMBDA_EXPECTED_MAX_DURATION_SECONDS = 100
 
 export const LAMBDAS: {
   [key: string]: {
@@ -188,35 +189,41 @@ export const LAMBDAS: {
   [StackConstants.TARPON_CHANGE_CAPTURE_KINESIS_CONSUMER_FUNCTION_NAME]: {
     codePath: 'tarpon-change-mongodb-consumer',
     handlerName: 'tarponChangeMongoDbHandler',
-    expectedMaxDurationSeconds: DEFAULT_LAMBDA_EXPECTED_MAX_DURATION_SECONDS,
+    expectedMaxDurationSeconds:
+      KINESIS_CONSUMER_LAMBDA_EXPECTED_MAX_DURATION_SECONDS,
   },
   [StackConstants.HAMMERHEAD_CHANGE_CAPTURE_KINESIS_CONSUMER_FUNCTION_NAME]: {
     codePath: 'hammerhead-change-mongodb-consumer',
     handlerName: 'hammerheadChangeMongoDbHandler',
-    expectedMaxDurationSeconds: DEFAULT_LAMBDA_EXPECTED_MAX_DURATION_SECONDS,
+    expectedMaxDurationSeconds:
+      KINESIS_CONSUMER_LAMBDA_EXPECTED_MAX_DURATION_SECONDS,
   },
   [StackConstants.TARPON_CHANGE_CAPTURE_KINESIS_CONSUMER_RETRY_FUNCTION_NAME]: {
     codePath: 'tarpon-change-mongodb-consumer',
     handlerName: 'tarponChangeMongoDbRetryHandler',
-    expectedMaxDurationSeconds: DEFAULT_LAMBDA_EXPECTED_MAX_DURATION_SECONDS,
+    expectedMaxDurationSeconds:
+      KINESIS_CONSUMER_LAMBDA_EXPECTED_MAX_DURATION_SECONDS,
   },
   [StackConstants.HAMMERHEAD_CHANGE_CAPTURE_KINESIS_CONSUMER_RETRY_FUNCTION_NAME]:
     {
       codePath: 'hammerhead-change-mongodb-consumer',
       handlerName: 'hammerheadChangeMongoDbRetryHandler',
-      expectedMaxDurationSeconds: DEFAULT_LAMBDA_EXPECTED_MAX_DURATION_SECONDS,
+      expectedMaxDurationSeconds:
+        KINESIS_CONSUMER_LAMBDA_EXPECTED_MAX_DURATION_SECONDS,
     },
   [StackConstants.WEBHOOK_TARPON_CHANGE_CAPTURE_KINESIS_CONSUMER_FUNCTION_NAME]:
     {
       codePath: 'tarpon-change-webhook-consumer',
       handlerName: 'tarponChangeWebhookHandler',
-      expectedMaxDurationSeconds: DEFAULT_LAMBDA_EXPECTED_MAX_DURATION_SECONDS,
+      expectedMaxDurationSeconds:
+        KINESIS_CONSUMER_LAMBDA_EXPECTED_MAX_DURATION_SECONDS,
     },
   [StackConstants.WEBHOOK_TARPON_CHANGE_CAPTURE_KINESIS_CONSUMER_RETRY_FUNCTION_NAME]:
     {
       codePath: 'tarpon-change-webhook-consumer',
       handlerName: 'tarponChangeWebhookRetryHandler',
-      expectedMaxDurationSeconds: DEFAULT_LAMBDA_EXPECTED_MAX_DURATION_SECONDS,
+      expectedMaxDurationSeconds:
+        KINESIS_CONSUMER_LAMBDA_EXPECTED_MAX_DURATION_SECONDS,
     },
   [StackConstants.SANCTIONS_FUNCTION_NAME]: {
     codePath: 'sanctions',
