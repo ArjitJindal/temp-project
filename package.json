@@ -86,7 +86,8 @@
     "migration:post:down": "MIGRATION_TYPE=POST_DEPLOYMENT npm run _migrator down",
     "postman:integration:sandbox": "ENV=sandbox ts-node --transpileOnly scripts/run-integration-tests.ts",
     "postman:integration:dev": "ENV=dev ts-node --transpileOnly scripts/run-integration-tests.ts",
-    "postman:sync:collection": "ENV=local ts-node --transpileOnly scripts/sync-postman-collection.ts"
+    "postman:sync:collection": "ENV=local ts-node --transpileOnly scripts/sync-postman-collection.ts",
+    "db:export": "ENV=dev ts-node --transpileOnly scripts/export-anon-tenant-data.ts"
   },
   "repository": {
     "type": "git",
@@ -100,6 +101,7 @@
   "homepage": "https://github.com/flagright/tarpon#readme",
   "devDependencies": {
     "@aws-sdk/credential-providers": "^3.245.0",
+    "@faker-js/faker": "^7.6.0",
     "@openapitools/openapi-generator-cli": "^2.5.1",
     "@sentry/cli": "^2.8.1",
     "@slack/types": "^2.7.0",
@@ -179,8 +181,10 @@
     "@sentry/serverless": "^7.7.0",
     "@slack/web-api": "^6.7.2",
     "@slack/webhook": "^6.1.0",
+    "@types/faker": "^6.6.9",
     "@types/flat": "^5.0.2",
     "@types/newman": "^5.3.1",
+    "@types/progress": "^2.0.5",
     "ajv": "8.11.0",
     "auth0": "^2.40.0",
     "aws-xray-sdk-core": "^3.3.8",
