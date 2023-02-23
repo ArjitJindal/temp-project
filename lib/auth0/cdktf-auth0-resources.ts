@@ -57,10 +57,11 @@ export const createAuth0TenantResources = (
     getAuth0Domain(tenantConfig.tenantName, tenantConfig.region),
     ['clientId', 'clientSecret']
   )
-  new auth0.provider.Auth0Provider(
+  const provider = new auth0.provider.Auth0Provider(
     context,
     getTenantResourceId(tenantName, 'auth0'),
     {
+      alias: tenantName,
       domain: `${tenantName}.${region}.auth0.com`,
       audience: `https://${tenantName}.${region}.auth0.com/api/v2/`,
       clientId: auth0Creds.clientId,
@@ -72,6 +73,7 @@ export const createAuth0TenantResources = (
    * Applications::Applications
    */
   new auth0.client.Client(context, getTenantResourceId(tenantName, 'console'), {
+    provider,
     name: tenantConfig.consoleApplicationName,
     appType: 'spa',
     callbacks: tenantConfig.allowedOrigins,
@@ -94,33 +96,72 @@ export const createAuth0TenantResources = (
       rotationType: 'rotating',
       expirationType: 'expiring',
     },
+    logoUri: tenantConfig.branding.logoUrl,
+    initiateLoginUri: tenantConfig.consoleUrl,
   })
 
   /**
    * Applications::APIs
    */
-  const apiPrefix = config.stage === 'prod' ? '' : `${config.stage}.`
-  const apiGateway = new auth0.resourceServer.ResourceServer(
-    context,
-    getTenantResourceId(tenantName, 'api-gateway'),
-    {
-      name: `APIGateway`,
-      identifier: `https://${apiPrefix}api.flagright.com/`,
-      signingAlg: 'RS256',
-      allowOfflineAccess: false,
-      tokenLifetime: 86400,
-      tokenLifetimeForWeb: 7200,
-      skipConsentForVerifiableFirstPartyClients: true,
-      enforcePolicies: true,
-      tokenDialect: 'access_token_authz',
-      scopes: PERMISSIONS.map((p) => {
-        return {
-          description: p,
-          value: p,
-        }
-      }),
-    }
+
+  let apiPrefixs = [config.stage === 'prod' ? '' : `${config.stage}.`]
+  if (config.stage === 'prod' && tenantName === 'flagright') {
+    apiPrefixs = ['', 'asia-1.', 'asia-2.', 'eu-1.', 'us-1.']
+  }
+
+  apiPrefixs.map((apiPrefix) => {
+    new auth0.resourceServer.ResourceServer(
+      context,
+      getTenantResourceId(tenantName, `api-gateway-${apiPrefix}`),
+      {
+        provider,
+        name: `APIGateway (${apiPrefix}api)`,
+        identifier: `https://${apiPrefix}api.flagright.com/`,
+        signingAlg: 'RS256',
+        allowOfflineAccess: false,
+        tokenLifetime: 86400,
+        tokenLifetimeForWeb: 7200,
+        skipConsentForVerifiableFirstPartyClients: true,
+        enforcePolicies: true,
+        tokenDialect: 'access_token_authz',
+        scopes: PERMISSIONS.map((p) => {
+          return {
+            description: p,
+            value: p,
+          }
+        }),
+      }
+    )
+  })
+
+  /**
+   * User Management::Roles
+   */
+  DEFAULT_ROLES.map(
+    ({ role, permissions }) =>
+      new auth0.role.Role(context, getTenantResourceId(tenantName, role), {
+        provider,
+        name: `default:${role}`,
+        permissions: apiPrefixs.flatMap((apiPrefix) => {
+          return permissions.map((p) => ({
+            name: p,
+            resourceServerIdentifier: `https://${apiPrefix}api.flagright.com/`,
+          }))
+        }),
+      })
   )
+
+  // Root
+  new auth0.role.Role(context, getTenantResourceId(tenantName, `root`), {
+    provider,
+    name: `root`,
+    permissions: apiPrefixs.flatMap((apiPrefix) => {
+      return PERMISSIONS.map((p) => ({
+        name: p,
+        resourceServerIdentifier: `https://${apiPrefix}api.flagright.com/`,
+      }))
+    }),
+  })
 
   /**
    * Branding::Custom Domains
@@ -129,33 +170,11 @@ export const createAuth0TenantResources = (
     context,
     getTenantResourceId(tenantName, 'custom-domain'),
     {
+      provider,
       domain: tenantConfig.customDomain,
       type: 'auth0_managed_certs',
     }
   )
-
-  /**
-   * User Management::Roles
-   */
-  DEFAULT_ROLES.map(
-    ({ role, permissions }) =>
-      new auth0.role.Role(context, getTenantResourceId(tenantName, role), {
-        name: `default:${role}`,
-        permissions: permissions.map((p) => ({
-          name: p,
-          resourceServerIdentifier: apiGateway.identifier,
-        })),
-      })
-  )
-
-  // Root
-  new auth0.role.Role(context, 'root', {
-    name: `root`,
-    permissions: PERMISSIONS.map((p) => ({
-      name: p,
-      resourceServerIdentifier: apiGateway.identifier,
-    })),
-  })
 
   /**
    * Actions::Library::Custom
@@ -168,6 +187,7 @@ export const createAuth0TenantResources = (
     context,
     getTenantResourceId(tenantName, 'post-login'),
     {
+      provider,
       code: postLoginCode,
       name: 'Add user metadata to tokens',
       supportedTriggers: {
@@ -197,6 +217,7 @@ export const createAuth0TenantResources = (
     context,
     getTenantResourceId(tenantName, 'login-flow'),
     {
+      provider,
       trigger: 'post-login',
       actions: [{ displayName: postLoginAction.name, id: postLoginAction.id }],
     }
@@ -209,6 +230,7 @@ export const createAuth0TenantResources = (
     context,
     getTenantResourceId(tenantName, 'branding'),
     {
+      provider,
       logoUrl: tenantConfig.branding.logoUrl,
       colors: {
         primary: tenantConfig.branding.primaryColor,
@@ -217,12 +239,14 @@ export const createAuth0TenantResources = (
     }
   )
   new auth0.prompt.Prompt(context, getTenantResourceId(tenantName, 'prompt'), {
+    provider,
     universalLoginExperience: 'new',
   })
   new auth0.promptCustomText.PromptCustomText(
     context,
     getTenantResourceId(tenantName, 'prompt-custom-text-login-en'),
     {
+      provider,
       prompt: 'login',
       language: 'en',
       body: Fn.jsonencode({
@@ -274,6 +298,7 @@ export const createAuth0TenantResources = (
     context,
     getTenantResourceId(tenantName, 'email-provider'),
     {
+      provider,
       name: tenantConfig.emailProvider.type,
       enabled: true,
       defaultFromAddress: tenantConfig.emailProvider.fromAddress,
@@ -292,6 +317,7 @@ export const createAuth0TenantResources = (
     context,
     getTenantResourceId(tenantName, 'verify-email-template'),
     {
+      provider,
       dependsOn: [emailProvider],
       enabled: true,
       template: 'verify_email',
@@ -313,6 +339,7 @@ export const createAuth0TenantResources = (
     context,
     getTenantResourceId(tenantName, 'change-password-template'),
     {
+      provider,
       dependsOn: [emailProvider],
       enabled: true,
       template: 'reset_email',

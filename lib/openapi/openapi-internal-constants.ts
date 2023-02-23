@@ -13,6 +13,9 @@ export const ALLOWED_ORIGINS = {
   ],
   prod: [
     'https://console.flagright.com',
+    'https://asia-1.console.flagright.com',
+    'https://asia-2.console.flagright.com',
+    'https://eu-1.console.flagright.com',
     ...Object.values(WHITE_LABEL_ORIGINS).map((v) => v.prod),
   ],
 }

@@ -19,6 +19,6 @@ export const Auth0ProdBureauTenantConfig: Auth0TenantConfig = {
     type: 'sendgrid',
     // TODO: To be provided by Bureau
     credentialsAwsSecretName: 'bureau/auth0EmailProviderCreds',
-    fromAddress: '',
+    fromAddress: 'support@bureau.id',
   },
 }
