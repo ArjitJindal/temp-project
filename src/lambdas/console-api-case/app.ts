@@ -9,8 +9,8 @@ import { CaseAuditLogService } from './services/case-audit-log-service'
 import { lambdaApi } from '@/core/middlewares/lambda-api-middlewares'
 import { addNewSubsegment } from '@/core/xray'
 import {
-  DefaultApiGetCaseListRequest,
   DefaultApiGetAlertListRequest,
+  DefaultApiGetCaseListRequest,
 } from '@/@types/openapi-internal/RequestParameters'
 import { getS3ClientByEvent } from '@/utils/s3'
 import { Comment } from '@/@types/openapi-internal/Comment'
@@ -311,6 +311,7 @@ export const casesHandler = lambdaApi()(
         filterAlertId,
         filterOutCaseStatus,
         filterCaseStatus,
+        filterAssignmentsIds,
       } = event.queryStringParameters as Record<string, string>
       const params: DefaultApiGetAlertListRequest = {
         page: parseInt(page),
@@ -318,6 +319,7 @@ export const casesHandler = lambdaApi()(
         filterAlertId: filterAlertId,
         filterOutCaseStatus: filterOutCaseStatus as CaseStatus | undefined,
         filterCaseStatus: filterCaseStatus as CaseStatus | undefined,
+        filterAssignmentsIds: filterAssignmentsIds?.split(','),
       }
       return caseService.getAlerts(params)
     } else if (

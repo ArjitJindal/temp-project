@@ -780,6 +780,18 @@ export class CaseRepository {
         'alert.alertStatus': { $eq: params.filterCaseStatus },
       })
     }
+    if (
+      params.filterAssignmentsIds != null &&
+      params.filterAssignmentsIds.length > 0
+    ) {
+      conditions.push({
+        'alert.assignments': {
+          $elemMatch: {
+            assigneeUserId: { $in: params.filterAssignmentsIds },
+          },
+        },
+      })
+    }
     if (conditions.length > 0) {
       pipeline.push({
         $match: {

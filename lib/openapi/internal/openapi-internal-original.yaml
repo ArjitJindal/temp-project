@@ -2320,6 +2320,12 @@ paths:
           in: query
           name: page
         - schema:
+            type: array
+            items:
+              type: string
+          in: query
+          name: filterAssignmentsIds
+        - schema:
             type: string
           in: query
           name: filterAlertId

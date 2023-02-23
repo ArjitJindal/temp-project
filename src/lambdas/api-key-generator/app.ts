@@ -232,6 +232,9 @@ export const createMongoDBCollections = async (
     await casesCollection.createIndex({
       'alerts.alertStatus': 1,
     })
+    await casesCollection.createIndex({
+      'alerts.assignments.assigneeUserId': 1,
+    })
     await transactionCollection.createIndex({
       arsScore: 1,
     })
