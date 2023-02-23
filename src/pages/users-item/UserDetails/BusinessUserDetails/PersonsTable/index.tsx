@@ -37,11 +37,17 @@ export function expandedRowRender(person: Person) {
           },
           {
             title: 'Date of issue',
-            render: (_, document) => document.documentIssuedDate ?? '-',
+            render: (_, document) =>
+              document.documentIssuedDate
+                ? new Date(document.documentIssuedDate * 1000)?.toLocaleDateString()
+                : '-',
           },
           {
             title: 'Date of expiry',
-            render: (_, document) => document.documentExpirationDate ?? '-',
+            render: (_, document) =>
+              document.documentExpirationDate
+                ? new Date(document.documentExpirationDate * 1000)?.toLocaleDateString()
+                : '-',
           },
           {
             title: 'Tags',
