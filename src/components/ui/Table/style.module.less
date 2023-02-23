@@ -8,6 +8,15 @@
 
 .root {
   margin: 0 !important;
+
+  &:not(.disableScrolling) {
+    :global {
+      > .ant-pro-table > .ant-pro-card > .ant-pro-card-body > .ant-table-wrapper {
+        max-height: calc(100vh - 350px);
+        overflow-y: auto;
+      }
+    }
+  }
   :global {
     // declare detached ruleset
     @row-rules: {
@@ -130,11 +139,6 @@
       margin-left: 0 !important;
     }
 
-    .ant-table-wrapper {
-      max-height: calc(100vh - 350px);
-      overflow-y: auto;
-    }
-
     .ant-pro-table-list-toolbar-right {
       position: absolute;
       bottom: 16px;
@@ -213,10 +217,18 @@
 }
 
 .subtitle {
-  font-size: 14px !important;
-  line-height: 24px !important;
+  font-size: 16px !important;
+  line-height: 28px !important;
+  font-weight: 600;
 }
 
 .toolbar {
   margin-top: 0;
+}
+
+.twoLineTitle {
+  > div:nth-child(2) {
+    color: #989898;
+    font-size: 12px;
+  }
 }

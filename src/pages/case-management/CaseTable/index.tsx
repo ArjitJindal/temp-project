@@ -1,7 +1,7 @@
 import React, { useCallback, useMemo, useRef, useState } from 'react';
 import { ProFormInstance } from '@ant-design/pro-form';
 import { TransactionStateButton } from '../../transactions/components/TransactionStateButton';
-import { TableSearchParams } from '../types';
+import { CaseSearchParams } from '../types';
 import CasesStatusChangeButton from '../components/CasesStatusChangeButton';
 import GavelIcon from './gavel.react.svg';
 import { dayjs, DEFAULT_DATE_TIME_FORMAT } from '@/utils/dayjs';
@@ -17,8 +17,8 @@ import Id from '@/components/ui/Id';
 import { addBackUrlToRoute } from '@/utils/backUrl';
 import TagSearchButton from '@/pages/transactions/components/TagSearchButton';
 import CaseStatusButtons from '@/pages/transactions/components/CaseStatusButtons';
-import { useTableData } from '@/pages/case-management/UserCases/helpers';
-import { TableItem } from '@/pages/case-management/UserCases/types';
+import { useTableData } from '@/pages/case-management/CaseTable/helpers';
+import { TableItem } from '@/pages/case-management/CaseTable/types';
 import { getUserLink, getUserName, KYC_STATUSES, USER_STATES } from '@/utils/api/users';
 import UserKycStatusTag from '@/components/ui/UserKycStatusTag';
 import RiskLevelTag from '@/components/ui/RiskLevelTag';
@@ -35,25 +35,25 @@ import { humanizeConstant } from '@/utils/humanize';
 import AccountCircleLineIcon from '@/components/ui/icons/Remix/user/account-circle-line.react.svg';
 import CalendarLineIcon from '@/components/ui/icons/Remix/business/calendar-line.react.svg';
 import StackLineIcon from '@/components/ui/icons/Remix/business/stack-line.react.svg';
-import SegmentedControl from '@/components/library/SegmentedControl';
 import { RiskLevelButton } from '@/pages/users/users-list/RiskLevelFilterButton';
 import BusinessIndustryButton from '@/pages/transactions/components/BusinessIndustryButton';
+import ScopeSelector from '@/pages/case-management/components/ScopeSelector';
 
 interface Props {
-  params: AllParams<TableSearchParams>;
+  params: AllParams<CaseSearchParams>;
   queryResult: QueryResult<PaginatedData<Case>>;
-  onChangeParams: (newState: AllParams<TableSearchParams>) => void;
+  onChangeParams: (newState: AllParams<CaseSearchParams>) => void;
   onUpdateCases: (caseIds: string[], updates: CaseUpdateRequest) => void;
   rules: { value: string | undefined; label: string | undefined }[];
 }
 
-export default function UserCases(props: Props) {
+export default function CaseTable(props: Props) {
   const { queryResult, params, onUpdateCases, onChangeParams } = props;
 
   const tableQueryResult = useTableData(queryResult);
 
   const actionRef = useRef<TableActionType>(null);
-  const formRef = useRef<ProFormInstance<TableSearchParams>>();
+  const formRef = useRef<ProFormInstance<CaseSearchParams>>();
   const user = useAuth0User();
   const isPulseEnabled = useFeatureEnabled('PULSE');
 
@@ -372,7 +372,7 @@ export default function UserCases(props: Props) {
   ]);
 
   return (
-    <QueryResultsTable<TableItem, TableSearchParams>
+    <QueryResultsTable<TableItem, CaseSearchParams>
       tableId="user-cases"
       queryResults={tableQueryResult}
       params={params}
@@ -465,24 +465,10 @@ export default function UserCases(props: Props) {
                 ),
               },
             ]
-          : []) as ExtraFilter<TableSearchParams>[]),
+          : []) as ExtraFilter<CaseSearchParams>[]),
       ]}
       actionsHeader={[
-        ({ params, setParams }) => (
-          <>
-            <SegmentedControl<'MY' | 'ALL'>
-              size="LARGE"
-              active={params.showCases === 'MY' ? 'MY' : 'ALL'}
-              onChange={(newValue) => {
-                setParams((oldState) => ({ ...oldState, showCases: newValue }));
-              }}
-              items={[
-                { value: 'ALL', label: 'All cases' },
-                { value: 'MY', label: 'My cases' },
-              ]}
-            />
-          </>
-        ),
+        ({ params, setParams }) => <ScopeSelector params={params} onChangeParams={setParams} />,
       ]}
       actionsHeaderRight={[
         ({ params, setParams }) => (

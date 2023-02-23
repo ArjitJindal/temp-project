@@ -1,0 +1,232 @@
+import React, { useRef, useState } from 'react';
+import pluralize from 'pluralize';
+import { usePaginatedQuery } from '@/utils/queries/hooks';
+import { useApi } from '@/api';
+import { ALERT_LIST } from '@/utils/queries/keys';
+import QueryResultsTable from '@/components/common/QueryResultsTable';
+import { TableColumn, TableData } from '@/components/ui/Table/types';
+import StackLineIcon from '@/components/ui/icons/Remix/business/stack-line.react.svg';
+import { QueryResult } from '@/utils/queries/types';
+import { AllParams, TableActionType } from '@/components/ui/Table';
+import ScopeSelector from '@/pages/case-management/components/ScopeSelector';
+import { AlertSearchParams } from '@/pages/case-management/types';
+import CaseStatusButtons from '@/pages/transactions/components/CaseStatusButtons';
+import CaseStatusTag from '@/components/ui/CaseStatusTag';
+import { RuleActionTag } from '@/components/rules/RuleActionTag';
+import Id from '@/components/ui/Id';
+import { addBackUrlToRoute } from '@/utils/backUrl';
+import { makeUrl } from '@/utils/routing';
+import dayjs, { DEFAULT_DATE_TIME_FORMAT } from '@/utils/dayjs';
+import TimestampDisplay from '@/components/ui/TimestampDisplay';
+import { getUserName } from '@/utils/api/users';
+import ExpandedRowRenderer from '@/pages/case-management/AlertTable/ExpandedRowRenderer';
+import { TableAlertItem } from '@/pages/case-management/AlertTable/types';
+
+type AlertTableParams = AllParams<AlertSearchParams>;
+
+interface Props {
+  params: AlertSearchParams;
+  onChangeParams: (newState: AllParams<AlertSearchParams>) => void;
+}
+
+export default function AlertTable(props: Props) {
+  const { params, onChangeParams } = props;
+  const api = useApi();
+  const queryResults: QueryResult<TableData<TableAlertItem>> = usePaginatedQuery(
+    ALERT_LIST(params),
+    async () => {
+      const { page, pageSize, alertId, caseStatus } = params;
+      const result = await api.getAlertList({
+        page,
+        pageSize,
+        filterAlertId: alertId,
+        filterOutCaseStatus: caseStatus === 'CLOSED' ? undefined : 'CLOSED',
+        filterCaseStatus: caseStatus === 'CLOSED' ? 'CLOSED' : undefined,
+      });
+      return {
+        items: result.data.map(({ alert, ...rest }) => {
+          const caseUser = rest.caseUsers ?? {};
+          const user = caseUser.origin ?? caseUser.destination ?? undefined;
+          const duration = dayjs.duration(Date.now() - alert.createdTimestamp);
+          return {
+            ...alert,
+            caseCreatedTimestamp: rest.caseCreatedTimestamp,
+            caseUserName: getUserName(user),
+            age: pluralize('day', Math.floor(duration.asDays()), true),
+          };
+        }),
+        total: result.total,
+      };
+    },
+  );
+  const mergedColumns: TableColumn<TableAlertItem>[] = [
+    {
+      title: 'Alert ID',
+      dataIndex: 'alertId',
+      exportData: 'alertId',
+      valueType: 'text',
+      width: 130,
+      fieldProps: {
+        icon: <StackLineIcon />,
+        showFilterByDefault: true,
+      },
+      render: (dom, entity) => {
+        return <Id id={entity.alertId}>{entity.alertId}</Id>;
+      },
+    },
+    // { title: 'Alert risk', dataIndex: '' },
+    {
+      title: 'Priority',
+      dataIndex: 'priority',
+      exportData: 'priority',
+      width: 100,
+      valueType: 'text',
+      hideInSearch: true,
+    },
+    {
+      title: 'Alert age',
+      dataIndex: 'age',
+      exportData: 'age',
+      hideInSearch: true,
+      width: 100,
+    },
+    {
+      title: '#TX',
+      dataIndex: 'numberOfTransactionsHit',
+      exportData: 'numberOfTransactionsHit',
+      width: 100,
+      valueType: 'text',
+      hideInSearch: true,
+    },
+    {
+      title: 'User name',
+      dataIndex: 'caseUserName',
+      exportData: 'caseUserName',
+      width: 100,
+      hideInSearch: true,
+    },
+    {
+      title: 'Rule name',
+      dataIndex: 'ruleName',
+      exportData: 'ruleName',
+      width: 100,
+      valueType: 'text',
+      hideInSearch: true,
+    },
+    {
+      title: 'Rule description',
+      dataIndex: 'ruleDescription',
+      exportData: 'ruleDescription',
+      width: 100,
+      valueType: 'text',
+      hideInSearch: true,
+    },
+    {
+      title: 'Rule action',
+      dataIndex: 'ruleAction',
+      exportData: 'ruleAction',
+      width: 100,
+      valueType: 'text',
+      hideInSearch: true,
+      render: (_, entity) => {
+        return entity.ruleAction ? <RuleActionTag ruleAction={entity.ruleAction} /> : '-';
+      },
+    },
+    {
+      title: 'Alert status',
+      dataIndex: 'alertStatus',
+      exportData: 'alertStatus',
+      width: 100,
+      valueType: 'text',
+      hideInSearch: true,
+      render: (_, entity) => {
+        return entity.alertStatus ? <CaseStatusTag caseStatus={entity.alertStatus} /> : '-';
+      },
+    },
+    {
+      title: 'Case ID',
+      dataIndex: 'caseId',
+      exportData: 'caseId',
+      width: 100,
+      valueType: 'text',
+      hideInSearch: true,
+      render: (dom, entity) => {
+        return (
+          <Id
+            id={entity.caseId}
+            to={addBackUrlToRoute(
+              makeUrl(`/case-management/case/:caseId`, {
+                caseId: entity.caseId,
+              }),
+            )}
+          >
+            {entity.caseId}
+          </Id>
+        );
+      },
+    },
+    {
+      title: 'Case created at',
+      dataIndex: 'caseCreatedTimestamp',
+      valueType: 'dateRange',
+      hideInSearch: true,
+      exportData: (entity) =>
+        dayjs.dayjs(entity.caseCreatedTimestamp).format(DEFAULT_DATE_TIME_FORMAT),
+      width: 100,
+      render: (_, entity) => {
+        return <TimestampDisplay timestamp={entity.caseCreatedTimestamp} />;
+      },
+    },
+  ];
+
+  const [selectedEntities, setSelectedEntities] = useState<string[]>([]);
+
+  const actionRef = useRef<TableActionType>(null);
+  // const reloadTable = useCallback(() => {
+  //   actionRef.current?.reload();
+  // }, []);
+
+  return (
+    <QueryResultsTable<TableAlertItem, AlertTableParams>
+      tableId={'my-alerts'}
+      rowKey={'alertId'}
+      actionRef={actionRef}
+      columns={mergedColumns}
+      queryResults={queryResults}
+      params={params}
+      onChangeParams={onChangeParams}
+      actionsHeader={[
+        ({ params, setParams }) => (
+          <ScopeSelector<AlertTableParams> params={params} onChangeParams={setParams} />
+        ),
+      ]}
+      actionsHeaderRight={[
+        ({ params, setParams }) => (
+          <>
+            {/*<CasesStatusChangeButton*/}
+            {/*  caseIds={selectedEntities}*/}
+            {/*  onSaved={reloadTable}*/}
+            {/*  caseStatus={params.caseStatus}*/}
+            {/*/>*/}
+            <CaseStatusButtons
+              status={params.caseStatus ?? 'OPEN'}
+              onChange={(newStatus) => {
+                setParams((state) => ({
+                  ...state,
+                  caseStatus: newStatus,
+                }));
+              }}
+            />
+          </>
+        ),
+      ]}
+      rowSelection={{
+        selectedKeys: selectedEntities,
+        onChange: setSelectedEntities,
+      }}
+      expandable={{
+        expandedRowRender: (record) => <ExpandedRowRenderer alert={record} />,
+      }}
+    />
+  );
+}

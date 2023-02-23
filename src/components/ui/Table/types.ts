@@ -59,6 +59,7 @@ type GetValuePath<T> = T extends number
   : never;
 
 export type GroupColumn<T extends object | unknown> = ProColumnType<TableRow<T>> & {
+  subtitle?: string;
   children: TableColumn<T>[];
 };
 
@@ -69,11 +70,13 @@ type ExtraFieldProps = {
 
 export type SimpleColumn<T extends object | unknown, Value = unknown> =
   | (ProColumnType<TableRow<T>> & {
+      subtitle?: string;
       children?: never;
       fieldProps?: ProColumnType['fieldProps'] & ExtraFieldProps;
       exportData?: KeyPath<T> | ((entity: T) => Value) | false;
     })
   | (ProColumnType<TableRow<T>> & {
+      subtitle?: string;
       children?: never;
       hideInTable: true;
     });

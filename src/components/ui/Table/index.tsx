@@ -80,6 +80,7 @@ export interface Props<T extends object | unknown, Params extends object, ValueT
   disableStripedColoring?: boolean;
   disableExpandedRowPadding?: boolean;
   disableInternalPadding?: boolean;
+  disableScrolling?: boolean;
   actionRef?: React.Ref<TableActionType>;
   loading?: boolean;
   data: TableData<T>;
@@ -110,6 +111,7 @@ export default function Table<
     disableStripedColoring = false,
     disableExpandedRowPadding = false,
     disableInternalPadding = false,
+    disableScrolling = false,
     className,
     isEvenRow,
     options,
@@ -207,6 +209,14 @@ export default function Table<
           width,
           onHeaderCell,
           hideInSearch: true,
+          title: col.subtitle ? (
+            <div className={style.twoLineTitle}>
+              <div>{col.title}</div>
+              <div>{col.subtitle}</div>
+            </div>
+          ) : (
+            col.title
+          ),
         };
 
         if (isGroupColumn(col)) {
@@ -291,7 +301,10 @@ export default function Table<
 
   return (
     <div
-      className={cn(style.root, { [style.disableExpandedRowPadding]: disableExpandedRowPadding })}
+      className={cn(style.root, {
+        [style.disableExpandedRowPadding]: disableExpandedRowPadding,
+        [style.disableScrolling]: disableScrolling,
+      })}
       ref={tableElement}
     >
       <ProTable<TableRow<T>, Params>

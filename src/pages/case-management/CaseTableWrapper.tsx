@@ -1,69 +1,27 @@
-import React, { useCallback, useEffect, useMemo, useState } from 'react';
-import { useNavigate } from 'react-router';
+import React, { useEffect, useMemo, useState } from 'react';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
-import { TableSearchParams } from './types';
+import { CaseSearchParams, TableSearchParams } from './types';
+import CaseTable from './CaseTable';
 import { message } from '@/components/library/Message';
 import { dayjs } from '@/utils/dayjs';
-import { Case, CaseTransaction, CaseUpdateRequest, RuleAction, RuleInstance } from '@/apis';
+import { Case, CaseUpdateRequest, RuleInstance } from '@/apis';
 import { useApi } from '@/api';
-import { makeUrl, parseQueryString } from '@/utils/routing';
-import { useDeepEqualEffect, usePrevious } from '@/utils/hooks';
-import { queryAdapter } from '@/pages/case-management/helpers';
+import { usePrevious } from '@/utils/hooks';
 import { PaginatedData, usePaginatedQuery } from '@/utils/queries/hooks';
-import { AllParams, DEFAULT_PARAMS_STATE } from '@/components/ui/Table';
+import { AllParams } from '@/components/ui/Table';
 import { CASES_LIST } from '@/utils/queries/keys';
-import UserCases from '@/pages/case-management/UserCases';
 import { useRules } from '@/utils/rules';
-import { DEFAULT_PAGE_SIZE } from '@/components/ui/Table/consts';
 import { useApiTime } from '@/utils/tracker';
 import { useAuth0User } from '@/utils/user-utils';
 
-export type CaseManagementItem = Case & {
-  index: number;
-  rowKey: string;
-  ruleName?: string | null;
-  ruleDescription?: string | null;
-  ruleAction?: RuleAction | null;
-  transaction: CaseTransaction | null;
-  transactionFirstRow: boolean;
-  transactionsRowsCount: number;
-};
-
-export default function CaseTableWrapper() {
-  const api = useApi();
-  const navigate = useNavigate();
-  const auth0user = useAuth0User();
-
-  const pushParamsToNavigation = useCallback(
-    (params: TableSearchParams) => {
-      navigate(makeUrl('/case-management/cases', {}, queryAdapter.serializer(params)), {
-        replace: true,
-      });
-    },
-    [navigate],
-  );
-
-  const parsedParams = queryAdapter.deserializer(parseQueryString(location.search));
+export default function CaseTableWrapper(props: {
+  params: CaseSearchParams;
+  onChangeParams: (newState: AllParams<TableSearchParams>) => void;
+}) {
+  const { params, onChangeParams } = props;
   const measure = useApiTime();
-  const [params, setParams] = useState<AllParams<TableSearchParams>>({
-    ...DEFAULT_PARAMS_STATE,
-    ...parsedParams,
-  });
-
-  const handleChangeParams = (newParams: AllParams<TableSearchParams>) => {
-    pushParamsToNavigation(newParams);
-  };
-
-  useDeepEqualEffect(() => {
-    setParams((prevState: AllParams<TableSearchParams>) => ({
-      ...prevState,
-      ...parsedParams,
-      page: parsedParams.page ?? 1,
-      sort: parsedParams.sort ?? [],
-      pageSize: parsedParams.pageSize ?? DEFAULT_PAGE_SIZE,
-    }));
-  }, [parsedParams]);
-
+  const api = useApi();
+  const auth0user = useAuth0User();
   const queryResults = usePaginatedQuery<Case>(CASES_LIST(params), async (paginationParams) => {
     const {
       sort,
@@ -248,13 +206,13 @@ export default function CaseTableWrapper() {
   }, [rules.ruleInstances, rules.rules]);
 
   return (
-    <UserCases
+    <CaseTable
       params={params}
+      onChangeParams={onChangeParams}
       queryResult={queryResults}
       onUpdateCases={(caseIds, updates) => {
         updateCasesMutation.mutate({ caseIds, updates });
       }}
-      onChangeParams={handleChangeParams}
       rules={getRulesAndInstances}
     />
   );

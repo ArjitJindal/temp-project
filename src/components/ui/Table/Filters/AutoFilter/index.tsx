@@ -67,7 +67,7 @@ export function AutoFilter(props: Props): JSX.Element {
       />
     );
   }
-  return <InputQuickFilter<string> {...sharedProps} inputComponent={TextInput} />;
+  return <InputQuickFilter<string> {...sharedProps} debounce={true} inputComponent={TextInput} />;
 }
 
 function DateRangeInput(props: InputProps<[string | undefined, string | undefined]>) {

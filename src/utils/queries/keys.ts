@@ -97,3 +97,4 @@ export const WEBHOOKS = (id?: string): QueryKey => ['webhooks', id];
 export const WEBHOOKS_LIST = (): QueryKey => ['webhooks', 'list'];
 export const USERS = (type: string, params?: AnyParameters): QueryKey => ['users', type, params];
 export const USERS_ITEM = (userId: string): QueryKey => ['users', 'item', userId];
+export const ALERT_LIST = (params?: AnyParameters): QueryKey => ['alerts', 'list', params];
