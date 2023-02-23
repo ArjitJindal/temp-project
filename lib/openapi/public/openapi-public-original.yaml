@@ -552,8 +552,8 @@ paths:
                     userId: 96647cfd9e8fe66ee0f3362e011e34e8
                     userRiskScoreDetails:
                       kycRiskScore: 63.36
-                      actionRiskScore: 72.32
-                      dynamicRiskScore: 73.92
+                      transactionRiskScore: 72.32
+                      customerRiskAssessment: 73.92
         '400':
           description: Bad Request
         '401':
@@ -703,8 +703,8 @@ paths:
                     userId: 96647cfd9e8fe66ee0f3362e011e34e8
                     userRiskScoreDetails:
                       kycRiskScore: 63.36
-                      actionRiskScore: 72.32
-                      dynamicRiskScore: 73.92
+                      transactionRiskScore: 72.32
+                      customerRiskAssessment: 73.92
         '400':
           description: Bad Request
         '401':
@@ -2155,23 +2155,23 @@ components:
       title: RiskScoringResult
       required:
         - kycRiskScore
-        - actionRiskScore
+        - transactionRiskScore
       type: object
       properties:
         kycRiskScore:
           type: number
           description: Quantified KYC risk score
-        actionRiskScore:
+        transactionRiskScore:
           type: number
           description: Quantified action risk score
-        dynamicRiskScore:
+        customerRiskAssessment:
           type: number
           description: Quantified dynamic risk score
       description: Model for results from Risk Scoring
       example:
         kycRiskScore: 87.5
-        actionRiskScore: 58.33
-        dynamicRiskScore: 73.92
+        transactionRiskScore: 58.33
+        customerRiskAssessment: 73.92
     ConsumerName:
       title: ConsumerName
       required:
@@ -2951,8 +2951,8 @@ components:
           userId: string
           userRiskScoreDetails:
             kycRiskScore: 87.5
-            actionRiskScore: 58.33
-            dynamicRiskScore: 73.92
+            transactionRiskScore: 58.33
+            customerRiskAssessment: 73.92
       description: Model for consumer user risk score response
       properties:
         userId:
