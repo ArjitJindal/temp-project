@@ -1,4 +1,4 @@
-import React, { useRef, useState } from 'react';
+import React, { useCallback, useRef, useState } from 'react';
 import pluralize from 'pluralize';
 import { usePaginatedQuery } from '@/utils/queries/hooks';
 import { useApi } from '@/api';
@@ -21,6 +21,7 @@ import TimestampDisplay from '@/components/ui/TimestampDisplay';
 import { getUserName } from '@/utils/api/users';
 import ExpandedRowRenderer from '@/pages/case-management/AlertTable/ExpandedRowRenderer';
 import { TableAlertItem } from '@/pages/case-management/AlertTable/types';
+import AlertsStatusChangeButton from '@/pages/case-management/components/AlertsStatusChangeButton';
 
 type AlertTableParams = AllParams<AlertSearchParams>;
 
@@ -182,9 +183,9 @@ export default function AlertTable(props: Props) {
   const [selectedEntities, setSelectedEntities] = useState<string[]>([]);
 
   const actionRef = useRef<TableActionType>(null);
-  // const reloadTable = useCallback(() => {
-  //   actionRef.current?.reload();
-  // }, []);
+  const reloadTable = useCallback(() => {
+    actionRef.current?.reload();
+  }, []);
 
   return (
     <QueryResultsTable<TableAlertItem, AlertTableParams>
@@ -203,11 +204,11 @@ export default function AlertTable(props: Props) {
       actionsHeaderRight={[
         ({ params, setParams }) => (
           <>
-            {/*<CasesStatusChangeButton*/}
-            {/*  caseIds={selectedEntities}*/}
-            {/*  onSaved={reloadTable}*/}
-            {/*  caseStatus={params.caseStatus}*/}
-            {/*/>*/}
+            <AlertsStatusChangeButton
+              ids={selectedEntities}
+              onSaved={reloadTable}
+              caseStatus={params.caseStatus}
+            />
             <CaseStatusButtons
               status={params.caseStatus ?? 'OPEN'}
               onChange={(newStatus) => {

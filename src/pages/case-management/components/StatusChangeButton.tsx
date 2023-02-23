@@ -2,21 +2,8 @@ import React, { useState } from 'react';
 import { CaseStatus, FileInfo } from '@/apis';
 import Button, { ButtonSize } from '@/components/library/Button';
 import { CaseClosingReasons } from '@/apis/models/CaseClosingReasons';
-import CasesStatusChangeModal from '@/pages/case-management/components/CasesStatusChangeModal';
 import { neverReturn } from '@/utils/lang';
 import { humanizeConstant } from '@/utils/humanize';
-
-interface Props {
-  caseIds: string[];
-  caseStatus?: CaseStatus;
-  initialValues?: FormValues;
-  buttonProps?: {
-    size?: ButtonSize | undefined;
-    isBlue?: boolean;
-    rounded?: boolean;
-  };
-  onSaved: () => void;
-}
 
 export interface RemoveAllFilesRef {
   removeAllFiles: () => void;
@@ -55,44 +42,43 @@ export interface FormValues {
   files: FileInfo[];
 }
 
-export default function CasesStatusChangeButton(props: Props) {
-  const {
-    caseIds,
-    onSaved,
-    caseStatus,
-    initialValues = {
-      reasons: [],
-      reasonOther: null,
-      comment: '',
-      files: [],
-    },
-    buttonProps = {},
-  } = props;
+interface ChildrenProps {
+  isVisible: boolean;
+  setVisible: (newVisible: boolean) => void;
+  newCaseStatus: CaseStatus;
+}
+
+interface Props {
+  ids: string[];
+  caseStatus?: CaseStatus;
+  buttonProps?: {
+    size?: ButtonSize | undefined;
+    isBlue?: boolean;
+    rounded?: boolean;
+  };
+  children: (childrenProps: ChildrenProps) => React.ReactNode;
+}
+
+export default function StatusChangeButton(props: Props) {
+  const { ids, caseStatus, buttonProps = {}, children } = props;
   const [isModalVisible, setModalVisible] = useState(false);
   const newCaseStatus = getNextCaseStatus(caseStatus);
   return (
     <>
-      <Button
-        type="SECONDARY"
-        analyticsName="UpdateCaseStatus"
-        onClick={() => {
-          setModalVisible(true);
-        }}
-        isDisabled={!caseIds.length}
-        size={buttonProps.size}
-      >
-        {caseStatusToOperationName(newCaseStatus)}
-      </Button>
-      <CasesStatusChangeModal
-        isVisible={isModalVisible}
-        caseIds={caseIds}
-        newCaseStatus={newCaseStatus}
-        onSaved={onSaved}
-        initialValues={initialValues}
-        onClose={() => {
-          setModalVisible(false);
-        }}
-      />
+      {ids.length > 0 && (
+        <Button
+          type="SECONDARY"
+          analyticsName="UpdateStatus"
+          onClick={() => {
+            setModalVisible(true);
+          }}
+          isDisabled={!ids.length}
+          size={buttonProps.size}
+        >
+          {caseStatusToOperationName(newCaseStatus)}
+        </Button>
+      )}
+      {children({ isVisible: isModalVisible, setVisible: setModalVisible, newCaseStatus })}
     </>
   );
 }

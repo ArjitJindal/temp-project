@@ -39,6 +39,13 @@ async function main() {
   console.log(`ACCOUNT: ${ACCOUNT}`);
   console.log(`PROJECT: ${PROJECT}`);
 
+  if (BRANCH !== 'main') {
+    console.warn(
+      `ATTENTION: Right now fetching branches other than main is not supported, please go to 'https://flagright-internal.stoplight.io/docs/flagright-internal-api/branches/${BRANCH}/' and copy schema manually to '/config/openapi.yaml'`,
+    );
+    process.exit(0);
+  }
+
   const schema = await fetchSchema({
     branch: BRANCH,
     stoplightAccount: ACCOUNT,

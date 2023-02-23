@@ -1,11 +1,11 @@
-import React, { useCallback, useRef, useState } from 'react';
-import { Form, Input, message, Modal, Select } from 'antd';
-import { useApi } from '@/api';
+import React, { useCallback, useEffect, useRef, useState } from 'react';
+import { Form, Input, Modal, Select } from 'antd';
+import pluralize from 'pluralize';
+import { UseMutationResult } from '@tanstack/react-query';
 import { CaseStatus, FileInfo } from '@/apis';
 import { CaseClosingReasons } from '@/apis/models/CaseClosingReasons';
 import { UploadFilesList } from '@/components/files/UploadFilesList';
-import { useDeepEqualEffect } from '@/utils/hooks';
-import { getErrorMessage } from '@/utils/lang';
+import { useDeepEqualEffect, usePrevious } from '@/utils/hooks';
 
 export interface RemoveAllFilesRef {
   removeAllFiles: () => void;
@@ -42,18 +42,26 @@ export interface FormValues {
   files: FileInfo[];
 }
 
-interface Props {
+export interface Props {
+  entityName?: string;
   isVisible: boolean;
-  caseIds: string[];
+  ids: string[];
   newCaseStatus: CaseStatus;
   defaultReasons?: CaseClosingReasons[];
   initialValues?: FormValues;
   onSaved: () => void;
   onClose: () => void;
+  updateMutation: UseMutationResult<
+    unknown,
+    unknown,
+    { ids: string[]; newCaseStatus: CaseStatus; formValues?: FormValues }
+  >;
 }
-export default function CasesStatusChangeModal(props: Props) {
+
+export default function StatusChangeModal(props: Props) {
   const {
-    caseIds,
+    ids,
+    entityName = 'case',
     newCaseStatus,
     isVisible,
     defaultReasons,
@@ -65,13 +73,12 @@ export default function CasesStatusChangeModal(props: Props) {
     },
     onSaved,
     onClose,
+    updateMutation,
   } = props;
   const [isOtherReason, setIsOtherReason] = useState(false);
-  const [isSaving, setSaving] = useState(false);
   const [isAwaitingConfirmation, setAwaitingConfirmation] = useState(false);
   const [formValues, setFormValues] = useState<FormValues>(initialValues);
   const [form] = Form.useForm<FormValues>();
-  const api = useApi();
 
   const showConfirmation = isVisible && (newCaseStatus === 'REOPENED' || isAwaitingConfirmation);
 
@@ -80,66 +87,9 @@ export default function CasesStatusChangeModal(props: Props) {
     setFormValues(initialValues);
   }, [initialValues]);
 
-  const reopenCase = useCallback(async () => {
-    const hideMessage = message.loading(`Saving...`, 0);
-    try {
-      setSaving(true);
-      await api.postCases({
-        CasesUpdateRequest: {
-          caseIds,
-          updates: {
-            caseStatus: newCaseStatus,
-          },
-        },
-      });
-      message.success('Cases Reopened');
-      onClose();
-      onSaved();
-    } catch (e) {
-      message.error('Failed to save');
-    } finally {
-      hideMessage();
-      setSaving(false);
-    }
-  }, [onClose, onSaved, caseIds, api, newCaseStatus]);
-
-  const handleUpdateTransaction = useCallback(
-    async (values: FormValues) => {
-      const hideMessage = message.loading(`Saving...`, 0);
-      try {
-        setSaving(true);
-        await api.postCases({
-          CasesUpdateRequest: {
-            caseIds,
-            updates: {
-              caseStatus: newCaseStatus,
-              otherReason:
-                values.reasons.indexOf(OTHER_REASON) !== -1 ? values.reasonOther ?? '' : undefined,
-              reason: values.reasons,
-              files: values.files,
-              comment: values.comment ?? undefined,
-            },
-          },
-        });
-        message.success('Saved');
-        onClose();
-        onSaved();
-      } catch (e) {
-        message.error('Failed to save');
-      } finally {
-        hideMessage();
-        setSaving(false);
-      }
-    },
-    [api, caseIds, newCaseStatus, onSaved, onClose],
-  );
-
   const possibleReasons = [...COMMON_REASONS, ...CLOSING_REASONS];
-  // todo: i18n
-  const modalTitle = caseIds.length == 1 ? 'Close case' : `Close ${caseIds.length}  cases`;
-  const modalMessagePrefix = 'Are you sure you want to';
-  const modalMessageSuffix = `${caseIds.length} case${caseIds.length == 1 ? ' :' : 's :'}`;
-  const caseIdsString = caseIds.join(', ');
+  const modalTitle = `Close ${pluralize(entityName, ids.length, true)}`;
+  const caseIdsString = ids.join(', ');
   const uploadRef = useRef<RemoveAllFilesRef>(null);
 
   const removeFiles = useCallback(() => {
@@ -150,13 +100,29 @@ export default function CasesStatusChangeModal(props: Props) {
     uploadRef.current?.removeAllFiles();
   }, []);
 
+  const wasUpdateDone = usePrevious(updateMutation.isSuccess);
+  const isUpdateDone = updateMutation.isSuccess;
+  useEffect(() => {
+    if (!wasUpdateDone && isUpdateDone) {
+      removeFiles();
+      form.resetFields();
+      setIsOtherReason(false);
+      setAwaitingConfirmation(false);
+      onClose();
+      onSaved();
+    }
+  }, [wasUpdateDone, isUpdateDone, removeFiles, onSaved, onClose, form]);
+
+  const handleConfirm = () => {
+    updateMutation.mutate({ ids: ids, newCaseStatus, formValues });
+  };
   return (
     <>
       <Modal
         title={modalTitle}
         visible={isVisible && !showConfirmation}
         okButtonProps={{
-          disabled: isSaving,
+          disabled: updateMutation.isLoading,
         }}
         onOk={() => {
           form.validateFields().then((values) => {
@@ -205,7 +171,7 @@ export default function CasesStatusChangeModal(props: Props) {
           <Form.Item name="comment" label="Comment" rules={[{ max: 500 }]}>
             <Input.TextArea
               rows={4}
-              placeholder="Write a narrative explaning the case closure reason and findings, if any."
+              placeholder={`Write a narrative explaning the ${entityName} closure reason and findings, if any.`}
             />
           </Form.Item>
           <Form.Item name="files" label="Attach documents">
@@ -217,40 +183,18 @@ export default function CasesStatusChangeModal(props: Props) {
         title="ⓘ Confirm action"
         visible={showConfirmation}
         okButtonProps={{
-          disabled: isSaving,
+          disabled: updateMutation.isLoading,
         }}
         okText="Confirm"
-        onOk={() => {
-          if (newCaseStatus === 'CLOSED') {
-            handleUpdateTransaction(formValues as FormValues)
-              .then(() => {
-                removeFiles();
-                form.resetFields();
-                setIsOtherReason(false);
-                setAwaitingConfirmation(false);
-              })
-              .catch((e) => {
-                console.error(`Failed to save! ${getErrorMessage(e)}`);
-              });
-          } else {
-            reopenCase()
-              .then(() => {
-                removeFiles();
-                setAwaitingConfirmation(false);
-              })
-              .catch((e) => {
-                console.error(`Failed to re-open! ${getErrorMessage(e)}`);
-              });
-          }
-        }}
+        onOk={handleConfirm}
         onCancel={() => {
           removeFiles();
           setAwaitingConfirmation(false);
           onClose();
         }}
       >
-        {modalMessagePrefix} <b>{caseStatusToOperationName(newCaseStatus)}</b> {modalMessageSuffix}{' '}
-        <b>{caseIdsString}</b> ?
+        Are you sure you want to <b>{caseStatusToOperationName(newCaseStatus)}</b>{' '}
+        {pluralize(entityName, ids.length, true)} <b>{caseIdsString}</b> ?
       </Modal>
     </>
   );

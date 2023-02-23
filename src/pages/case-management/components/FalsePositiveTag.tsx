@@ -4,7 +4,7 @@ import style from './index.module.less';
 import BrainIcon from '@/components/ui/icons/brain-icon.react.svg';
 import COLORS from '@/components/ui/colors';
 import { CaseStatus } from '@/apis';
-import CasesStatusChangeModal from '@/pages/case-management/components/CasesStatusChangeModal';
+import CasesStatusChangeModal from '@/pages/case-management/components/CasesStatusChangeButton/CasesStatusChangeModal';
 
 interface Props {
   confidence: number;
@@ -40,8 +40,8 @@ export const FalsePositiveTag: React.FC<Props> = (props: Props) => {
         </Tooltip>
       </span>
       <CasesStatusChangeModal
+        ids={caseIds}
         isVisible={isModalVisible}
-        caseIds={caseIds}
         newCaseStatus={newCaseStatus}
         defaultReasons={newCaseStatus === 'CLOSED' ? ['False positive'] : []}
         onSaved={onSaved}
