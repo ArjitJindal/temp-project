@@ -2293,6 +2293,44 @@ paths:
             $ref: '#/components/schemas/Page'
           in: query
           name: page
+  /alerts:
+    get:
+      summary: Alerts - List
+      tags: []
+      x-flagright:
+        permissions:
+          - case-management:case-overview:read
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AlertListResponse'
+              examples: {}
+      operationId: get-alert-list
+      description: ''
+      parameters:
+        - schema:
+            $ref: '#/components/schemas/PageSize'
+          in: query
+          name: pageSize
+        - schema:
+            $ref: '#/components/schemas/Page'
+          in: query
+          name: page
+        - schema:
+            type: string
+          in: query
+          name: filterAlertId
+        - schema:
+            $ref: '#/components/schemas/CaseStatus'
+          in: query
+          name: filterOutCaseStatus
+        - schema:
+            $ref: '#/components/schemas/CaseStatus'
+          in: query
+          name: filterCaseStatus
   /cases:
     get:
       summary: Cases - List
@@ -4364,6 +4402,52 @@ components:
           type: array
           items:
             $ref: '#/components/schemas/Case'
+      required:
+        - total
+        - data
+    AlertListResponse:
+      title: AlertListResponse
+      type: object
+      description: ''
+      x-examples: {}
+      properties:
+        total:
+          type: number
+        data:
+          type: array
+          items:
+            type: object
+            title: AlertListResponseItem
+            properties:
+              alert:
+                $ref: '#/components/schemas/Alert'
+              caseCreatedTimestamp:
+                type: number
+              caseUsers:
+                type: object
+                properties:
+                  origin:
+                    oneOf:
+                      - $ref: '#/components/schemas/InternalConsumerUser'
+                      - $ref: '#/components/schemas/InternalBusinessUser'
+                      - $ref: '#/components/schemas/MissingUser'
+                  destination:
+                    oneOf:
+                      - $ref: '#/components/schemas/InternalConsumerUser'
+                      - $ref: '#/components/schemas/InternalBusinessUser'
+                      - $ref: '#/components/schemas/MissingUser'
+                  originUserDrsScore:
+                    type: number
+                  destinationUserDrsScore:
+                    type: number
+                  originUserRiskLevel:
+                    $ref: '#/components/schemas/RiskLevel'
+                  destinationUserRiskLevel:
+                    $ref: '#/components/schemas/RiskLevel'
+            required:
+              - alert
+              - caseCreatedTimestamp
+              - caseUsers
       required:
         - total
         - data

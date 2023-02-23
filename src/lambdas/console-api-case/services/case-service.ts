@@ -1,9 +1,13 @@
 import * as createError from 'http-errors'
 import { Comment } from '@/@types/openapi-internal/Comment'
 import { FileInfo } from '@/@types/openapi-internal/FileInfo'
-import { DefaultApiGetCaseListRequest } from '@/@types/openapi-internal/RequestParameters'
+import {
+  DefaultApiGetAlertListRequest,
+  DefaultApiGetCaseListRequest,
+} from '@/@types/openapi-internal/RequestParameters'
 import { CaseRepository } from '@/services/rules-engine/repositories/case-repository'
 import { Case } from '@/@types/openapi-internal/Case'
+import { AlertListResponse } from '@/@types/openapi-internal/AlertListResponse'
 import { CasesListResponse } from '@/@types/openapi-internal/CasesListResponse'
 import { CaseUpdateRequest } from '@/@types/openapi-internal/CaseUpdateRequest'
 import { CaseStatusChange } from '@/@types/openapi-internal/CaseStatusChange'
@@ -48,6 +52,20 @@ export class CaseService {
       this.getAugmentedCase(caseEntity)
     )
     return result
+  }
+
+  public async getAlerts(
+    params: DefaultApiGetAlertListRequest
+  ): Promise<AlertListResponse> {
+    const caseGetSegment = await addNewSubsegment(
+      'Case Service',
+      'Mongo Get Alerts Query'
+    )
+    try {
+      return await this.caseRepository.getAlerts(params)
+    } finally {
+      caseGetSegment?.close()
+    }
   }
 
   public async updateCases(

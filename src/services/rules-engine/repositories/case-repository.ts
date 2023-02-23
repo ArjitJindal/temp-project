@@ -19,7 +19,11 @@ import {
 } from '@/utils/mongoDBUtils'
 import { Comment } from '@/@types/openapi-internal/Comment'
 import { Assignment } from '@/@types/openapi-internal/Assignment'
-import { DefaultApiGetCaseListRequest } from '@/@types/openapi-internal/RequestParameters'
+import {
+  DefaultApiGetAlertListRequest,
+  DefaultApiGetCaseListRequest,
+} from '@/@types/openapi-internal/RequestParameters'
+import { TransactionCaseManagement } from '@/@types/openapi-internal/TransactionCaseManagement'
 import { EntityCounter } from '@/@types/openapi-internal/EntityCounter'
 import { CaseStatus } from '@/@types/openapi-internal/CaseStatus'
 import { Case } from '@/@types/openapi-internal/Case'
@@ -38,12 +42,14 @@ import {
 } from '@/services/risk-scoring/utils'
 import { hasFeature, hasFeatures } from '@/core/utils/context'
 import {
-  PaginationParams,
-  OptionalPagination,
   COUNT_QUERY_LIMIT,
+  OptionalPagination,
+  PaginationParams,
 } from '@/utils/pagination'
 import { CaseTransaction } from '@/@types/openapi-internal/CaseTransaction'
 import { PRIORITYS } from '@/@types/openapi-internal-custom/Priority'
+import { AlertListResponse } from '@/@types/openapi-internal/AlertListResponse'
+import { AlertListResponseItem } from '@/@types/openapi-internal/AlertListResponseItem'
 
 export const MAX_TRANSACTION_IN_A_CASE = 1000
 
@@ -693,6 +699,96 @@ export class CaseRepository {
       await collection.aggregate(pipeline, { allowDiskUse: true })
     const item = await result.next()
     return item?.count ?? 0
+  }
+
+  public async getAlerts(params: {
+    pageSize?: number
+    page?: number
+  }): Promise<AlertListResponse> {
+    const db = this.mongoDb.db()
+    const collection = db.collection<Case>(CASES_COLLECTION(this.tenantId))
+
+    const pipeline = this.getAlertsPipeline(params)
+
+    const itemsPipeline = [...pipeline]
+    itemsPipeline.push(...paginatePipeline(params))
+    const cursor = collection.aggregate<AlertListResponseItem>(itemsPipeline, {
+      allowDiskUse: true,
+    })
+    const itemsPromise = cursor.toArray()
+
+    const countPipeline = [...pipeline]
+    countPipeline.push({
+      $limit: COUNT_QUERY_LIMIT,
+    })
+    countPipeline.push({
+      $count: 'count',
+    })
+    const countPromise = collection
+      .aggregate<{ count: number }>(countPipeline, { allowDiskUse: true })
+      .next()
+      .then((item) => item?.count ?? 0)
+
+    return {
+      total: await countPromise,
+      data: await itemsPromise,
+    }
+  }
+
+  private getAlertsPipeline(
+    params: OptionalPagination<DefaultApiGetAlertListRequest>
+  ): Document[] {
+    const caseConditions: Filter<TransactionCaseManagement>[] = []
+    if (params.filterOutCaseStatus != null) {
+      caseConditions.push({ caseStatus: { $ne: params.filterOutCaseStatus } })
+    }
+    if (params.filterCaseStatus != null) {
+      caseConditions.push({ caseStatus: { $eq: params.filterCaseStatus } })
+    }
+
+    const pipeline: Document[] = [
+      ...(caseConditions.length > 0
+        ? [{ $match: { $and: caseConditions } }]
+        : []),
+      {
+        $unwind: {
+          path: '$alerts',
+        },
+      },
+      {
+        $project: {
+          alert: '$alerts',
+          caseCreatedTimestamp: '$createdTimestamp',
+          caseUsers: '$caseUsers',
+        },
+      },
+    ]
+
+    const conditions: Filter<AlertListResponseItem>[] = []
+    if (params.filterAlertId != null) {
+      conditions.push({
+        'alert.alertId': prefixRegexMatchFilter(params.filterAlertId),
+      })
+    }
+    if (params.filterOutCaseStatus != null) {
+      conditions.push({
+        'alert.alertStatus': { $ne: params.filterOutCaseStatus },
+      })
+    }
+    if (params.filterCaseStatus != null) {
+      conditions.push({
+        'alert.alertStatus': { $eq: params.filterCaseStatus },
+      })
+    }
+    if (conditions.length > 0) {
+      pipeline.push({
+        $match: {
+          $and: conditions,
+        },
+      })
+    }
+
+    return pipeline
   }
 
   public async getCases(

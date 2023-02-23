@@ -8,7 +8,10 @@ import { CaseService } from './services/case-service'
 import { CaseAuditLogService } from './services/case-audit-log-service'
 import { lambdaApi } from '@/core/middlewares/lambda-api-middlewares'
 import { addNewSubsegment } from '@/core/xray'
-import { DefaultApiGetCaseListRequest } from '@/@types/openapi-internal/RequestParameters'
+import {
+  DefaultApiGetCaseListRequest,
+  DefaultApiGetAlertListRequest,
+} from '@/@types/openapi-internal/RequestParameters'
 import { getS3ClientByEvent } from '@/utils/s3'
 import { Comment } from '@/@types/openapi-internal/Comment'
 import { getMongoDbClient } from '@/utils/mongoDBUtils'
@@ -16,6 +19,7 @@ import { JWTAuthorizerResult } from '@/@types/jwt'
 import { CaseRepository } from '@/services/rules-engine/repositories/case-repository'
 import { CasesUpdateRequest } from '@/@types/openapi-internal/CasesUpdateRequest'
 import { Case } from '@/@types/openapi-internal/Case'
+import { CaseStatus } from '@/@types/openapi-internal/CaseStatus'
 import { getDynamoDbClientByEvent } from '@/utils/dynamodb'
 
 export type CaseConfig = {
@@ -299,6 +303,22 @@ export const casesHandler = lambdaApi()(
         event.pathParameters.caseId,
         event.pathParameters.commentId
       )
+    } else if (event.httpMethod === 'GET' && event.resource === '/alerts') {
+      const {
+        page,
+        pageSize,
+        filterAlertId,
+        filterOutCaseStatus,
+        filterCaseStatus,
+      } = event.queryStringParameters as Record<string, string>
+      const params: DefaultApiGetAlertListRequest = {
+        page: parseInt(page),
+        pageSize: parseInt(pageSize),
+        filterAlertId: filterAlertId,
+        filterOutCaseStatus: filterOutCaseStatus as CaseStatus | undefined,
+        filterCaseStatus: filterCaseStatus as CaseStatus | undefined,
+      }
+      return caseService.getAlerts(params)
     }
     throw new NotFound('Unhandled request')
   }
