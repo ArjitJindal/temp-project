@@ -361,7 +361,7 @@ export default function Table<
                         setParams: (cb: (oldState: AllParams<Params>) => AllParams<Params>) =>
                           onChangeParams(cb(params)),
                       })
-                    : headerTitle}
+                    : showActionsHeader && headerTitle}
                 </div>
               )}
               {showBottomHeader && (
