@@ -1049,7 +1049,7 @@ components:
           - key: customKey
             value: customValue
     UserBase:
-      title: User
+      title: UserBase
       type: object
       description: Model for User details
       example:
@@ -1151,7 +1151,7 @@ components:
         - userId
         - createdTimestamp
     UserOptional:
-      title: User
+      title: UserOptional
       type: object
       description: Model for User details
       example:
@@ -1253,6 +1253,8 @@ components:
           $ref: '#/components/schemas/TransactionLimits'
         riskLevel:
           $ref: '#/components/schemas/RiskLevel'
+        acquisitionChannel:
+          $ref: '#/components/schemas/AcquisitionChannel'
         reasonForAccountOpening:
           type: array
           items:
@@ -2365,6 +2367,7 @@ components:
             - SMALL
             - MEDIUM
             - LARGE
+            - UNKNOWN
         tags:
           type: array
           description: Additional information that can be added via tags
@@ -2918,13 +2921,15 @@ components:
           type: array
           items:
             $ref: '#/components/schemas/PaymentMethods'
+        acquisitionChannel:
+          $ref: '#/components/schemas/AcquisitionChannel'
+        mccDetails:
+          $ref: '#/components/schemas/MCCDetails'
         tags:
           type: array
           description: Additional information that can be added via tags
           items:
             $ref: '#/components/schemas/Tag'
-        mccDetails:
-          $ref: '#/components/schemas/MCCDetails'
     BusinessUsersResponse:
       title: BusinessUsersResponse
       type: object
@@ -3716,6 +3721,20 @@ components:
         - SUCCESSFUL
       minLength: 1
       description: Model for transaction states. E.g. Processing, Refunded, Successful etc.
+    AcquisitionChannel:
+      type: string
+      title: AcquisitionChannel
+      minLength: 1
+      description: Model for User acquisition channel
+      x-stoplight:
+        id: e7674363b9512
+      enum:
+        - ORGANIC
+        - PAID
+        - REFERRAL
+        - OFFLINE
+        - GATHERING
+        - UNKNOWN
     UPIPaymentMethod:
       type: string
       title: UPIPaymentMethod
