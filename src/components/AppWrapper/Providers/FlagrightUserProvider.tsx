@@ -2,11 +2,11 @@ import React from 'react';
 import { Button } from 'antd';
 import jwtDecode from 'jwt-decode';
 import { Link } from 'react-router-dom';
+import { useAuth0 } from '@auth0/auth0-react';
 import ErrorPage from '@/components/ErrorPage';
 import { Context, FlagrightAuth0User, NAMESPACE } from '@/utils/user-utils';
 import AsyncResourceRenderer from '@/components/common/AsyncResourceRenderer';
 import { useQuery } from '@/utils/queries/hooks';
-import { useAuth } from '@/components/AppWrapper/Providers/AuthProvider';
 import { getBranding } from '@/utils/branding';
 import { USER_INFO } from '@/utils/queries/keys';
 import { Permission } from '@/apis';
@@ -14,11 +14,12 @@ import { Permission } from '@/apis';
 const branding = getBranding();
 
 export default function FlagrightUserProvider(props: { children: React.ReactNode }) {
-  const { accessToken } = useAuth();
+  const { getAccessTokenSilently } = useAuth0();
 
   const { data: userRes } = useQuery<FlagrightAuth0User | 'ORPHAN'>(
-    USER_INFO(accessToken),
+    USER_INFO('access_token'),
     async () => {
+      const accessToken = await getAccessTokenSilently();
       if (accessToken == null) {
         throw new Error(`Access token can not be null at this point`);
       }

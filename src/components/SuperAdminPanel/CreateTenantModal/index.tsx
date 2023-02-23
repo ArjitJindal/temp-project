@@ -21,6 +21,7 @@ interface FormDetails {
   tenantWebsite: string;
   tenantId?: string;
   auth0DisplayName: string;
+  auth0Domain: string;
   emailsOfAdmins: string[];
   featureFlags: string[];
   demoMode: boolean;
@@ -54,6 +55,7 @@ export const CreateTenantModal = (props: Props) => {
     featureFlags: [],
     demoMode: false,
     auth0DisplayName: '',
+    auth0Domain: '',
   });
 
   const api = useApi();
@@ -70,12 +72,19 @@ export const CreateTenantModal = (props: Props) => {
       tenantWebsite,
       tenantId,
       auth0DisplayName,
+      auth0Domain,
       emailsOfAdmins,
       featureFlags,
       demoMode,
     } = formDetails;
 
-    if (!tenantName || !tenantWebsite || !auth0DisplayName || !emailsOfAdmins?.length) {
+    if (
+      !tenantName ||
+      !tenantWebsite ||
+      !auth0DisplayName ||
+      !auth0Domain ||
+      !emailsOfAdmins?.length
+    ) {
       message.error('Please fill in all the required fields');
       return;
     }
@@ -83,6 +92,7 @@ export const CreateTenantModal = (props: Props) => {
     if (
       tenantName.includes(' ') ||
       tenantWebsite.includes(' ') ||
+      auth0Domain.includes(' ') ||
       auth0DisplayName.includes(' ') ||
       tenantId?.includes(' ') ||
       emailsOfAdmins.some((email) => email.includes(' '))
@@ -98,6 +108,7 @@ export const CreateTenantModal = (props: Props) => {
           tenantWebsite,
           ...(tenantId && { tenantId }),
           auth0DisplayName,
+          auth0Domain,
           adminEmails: emailsOfAdmins,
           features: demoMode
             ? [...(featureFlags as Feature[]), 'DEMO_MODE' as Feature]
@@ -119,7 +130,7 @@ export const CreateTenantModal = (props: Props) => {
         tenantName: {
           type: 'string',
           title: 'Tenant Name',
-          description: 'The ID of the tenant',
+          description: 'Tenant name (lowercase, no space)',
         },
         tenantWebsite: {
           type: 'string',
@@ -136,6 +147,11 @@ export const CreateTenantModal = (props: Props) => {
           type: 'string',
           title: 'Auth0 Display Name',
           description: 'The display name of the tenant in Auth0',
+        },
+        auth0Domain: {
+          type: 'string',
+          title: 'Auth0 Domain',
+          description: 'e.g flagright.eu.auth0.com',
         },
         emailsOfAdmins: {
           type: 'array',

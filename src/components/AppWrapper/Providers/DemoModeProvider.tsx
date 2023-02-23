@@ -5,7 +5,6 @@ import { useAuth0User } from '@/utils/user-utils';
 import { useFeatureEnabled } from '@/components/AppWrapper/Providers/SettingsProvider';
 import { useApi } from '@/api';
 import { AsyncResource, failed, loading, success } from '@/utils/asyncResource';
-import { useAuth } from '@/components/AppWrapper/Providers/AuthProvider';
 
 interface DemoModeContextValue {
   isDemoMode: AsyncResource<boolean>;
@@ -31,7 +30,6 @@ export function useDemoMode(): [AsyncResource<boolean>, (value: boolean) => void
 
 export default function DemoModeProvider(props: { children: React.ReactNode }) {
   const user = useAuth0User();
-  const { refreshAccessToken } = useAuth();
   const [isDemoMode, setDemoMode] = useState<AsyncResource<boolean>>(success(user.demoMode));
   const api = useApi();
 
@@ -43,7 +41,6 @@ export default function DemoModeProvider(props: { children: React.ReactNode }) {
           demoMode: event.demoMode,
         },
       });
-      await refreshAccessToken();
     },
     {
       onSuccess: (data, variables) => {

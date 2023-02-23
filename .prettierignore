@@ -21,4 +21,3 @@ yarn-error.log
 CNAME
 /public
 cdk.out
-src/components/AppWrapper/Providers/auth0Lock/lock-12.0.0.min.js

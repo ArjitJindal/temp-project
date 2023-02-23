@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import cn from 'clsx';
-import { Navigate, useLocation } from 'react-router';
+import { useLocation } from 'react-router';
 import Providers, { StorybookMockProviders } from './Providers';
 import Menu from './Menu';
 import Header from './Header';
@@ -9,9 +9,7 @@ import ErrorBoundary from '@/components/ErrorBoundary';
 import StorybookPage from '@/pages/storybook';
 import { useDemoMode } from '@/components/AppWrapper/Providers/DemoModeProvider';
 import { getOr } from '@/utils/asyncResource';
-import LoginPage from '@/pages/login';
-import LogoutPage from '@/pages/logout';
-import AuthProvider, { useAuth } from '@/components/AppWrapper/Providers/AuthProvider';
+import AuthProvider from '@/components/AppWrapper/Providers/AuthProvider';
 import RouterProvider from '@/components/AppWrapper/Providers/RouterProvider';
 
 interface Props {
@@ -36,7 +34,6 @@ function MainContent(props: Props) {
 }
 
 function SpecialRoutes(props: Props) {
-  const { accessToken } = useAuth();
   const location = useLocation();
 
   if (location.pathname.startsWith('/storybook')) {
@@ -45,18 +42,6 @@ function SpecialRoutes(props: Props) {
         <StorybookPage />
       </StorybookMockProviders>
     );
-  }
-
-  if (location.pathname.startsWith('/login')) {
-    return <LoginPage />;
-  }
-
-  if (location.pathname.startsWith('/logout')) {
-    return <LogoutPage />;
-  }
-
-  if (accessToken == null) {
-    return <Navigate to={'/login'} />;
   }
 
   return (

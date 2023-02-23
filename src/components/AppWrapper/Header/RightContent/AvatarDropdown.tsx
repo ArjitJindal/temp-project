@@ -3,10 +3,10 @@ import { LogoutOutlined } from '@ant-design/icons';
 import { Avatar, Menu, Spin } from 'antd';
 import type { MenuInfo } from 'rc-menu/es/interface';
 import { useNavigate } from 'react-router';
+import { useAuth0 } from '@auth0/auth0-react';
 import HeaderDropdown from '../../../HeaderDropdown';
 import styles from './index.module.less';
 import { useAuth0User } from '@/utils/user-utils';
-import { useAuth } from '@/components/AppWrapper/Providers/AuthProvider';
 
 export type GlobalHeaderRightProps = {
   menu?: boolean;
@@ -14,7 +14,7 @@ export type GlobalHeaderRightProps = {
 
 const AvatarDropdown: React.FC<GlobalHeaderRightProps> = () => {
   const user = useAuth0User();
-  const { logout } = useAuth();
+  const { logout } = useAuth0();
 
   const navigate = useNavigate();
 
@@ -22,7 +22,7 @@ const AvatarDropdown: React.FC<GlobalHeaderRightProps> = () => {
     (event: MenuInfo) => {
       const { key } = event;
       if (key === 'logout') {
-        logout();
+        logout({ returnTo: window.location.origin });
         return;
       }
       navigate(`/account/${key}`);

@@ -4,7 +4,8 @@ import BureauLogoSvg from '@/branding/bureau-logo.svg';
 
 interface BrandingSettings {
   apiBasePath?: string;
-  auth0ClientId?: string;
+  auth0Domain: string;
+  auth0ClientId: string;
   supportEmail: string;
   companyName: string;
   logoUrl: string;
@@ -17,6 +18,8 @@ interface BrandingSettings {
 }
 
 const DEFAULT_BRANDING: BrandingSettings = {
+  auth0Domain: AUTH0_DOMAIN,
+  auth0ClientId: AUTH0_CLIENT_ID,
   supportEmail: 'support@flagright.com',
   logoUrl: FlagrightLogoSvg,
   companyName: 'Flagright',
@@ -28,8 +31,7 @@ const DEFAULT_BRANDING: BrandingSettings = {
   },
 };
 
-const BUREAU_BRANDING: BrandingSettings = {
-  auth0ClientId: 'PlG7CuQne48LdsZQOXhL0VbPkH2J9vUu',
+const BUREAU_BRANDING: Omit<BrandingSettings, 'auth0Domain' | 'auth0ClientId'> = {
   supportEmail: 'helpdesk@bereau.com',
   logoUrl: BureauLogoSvg,
   demoModeLogoUrl: BureauLogoSvg,
@@ -42,18 +44,17 @@ const BUREAU_BRANDING: BrandingSettings = {
 
 export function getBranding(): BrandingSettings {
   if (window.location.hostname.endsWith('tm.bureau.id')) {
-    return BUREAU_BRANDING;
+    return {
+      ...BUREAU_BRANDING,
+      auth0Domain: 'bureau-flagright.eu.auth0.com',
+      auth0ClientId: 'XFllobU2SratClHKFrSfVSROlpRH8rUm',
+    };
   }
   if (window.location.hostname.endsWith('tm.sandbox.bureau.id')) {
     return {
       ...BUREAU_BRANDING,
-      auth0ClientId: '48FYDRh3BJIqwzq4dJDObpLYxTZpIBuR',
-    };
-  }
-  if (window.location.hostname.endsWith('bereau.flagright.com')) {
-    return {
-      ...BUREAU_BRANDING,
-      auth0ClientId: 'Rv2WwX2ZxZRuQ5w6ZC2M2RjkskLxV6hc',
+      auth0Domain: 'sandbox-bureau-flagright.eu.auth0.com',
+      auth0ClientId: 'JJHmTg7oupG4tUZRDpvAlghJvvVnbyoc',
     };
   }
   return DEFAULT_BRANDING;
