@@ -3,6 +3,7 @@ import { Alert, Button } from 'antd';
 import { DeleteFilled } from '@ant-design/icons';
 import _ from 'lodash';
 import {
+  DataType,
   Entity,
   ParameterName,
   ParameterValues,
@@ -23,6 +24,18 @@ interface Props {
   onSave: (parameter: ParameterName, newValues: ParameterValues, entity: Entity) => void;
 }
 
+const labelsExist: { [key in DataType]?: { input: boolean; value: boolean } } = {
+  DAY_RANGE: { input: true, value: true },
+  TIME_RANGE: { input: true, value: false },
+};
+
+const labelExistsStyle = (dataType: DataType, type: 'input' | 'value'): React.CSSProperties => {
+  if (labelsExist[dataType]?.[type]) {
+    return { marginTop: '1.8rem' };
+  }
+  return {};
+};
+
 export default function ValuesTable(props: Props) {
   const { currentValuesRes, item, onSave } = props;
   const { parameter, dataType, entity } = item;
@@ -41,7 +54,6 @@ export default function ValuesTable(props: Props) {
   const [newRiskLevel, setNewRiskLevel] = useState<RiskLevel | null>(null);
   const [shouldShowNewValueInput, setShouldShowNewValueInput] = useState(true);
   const [onlyDeleteLast, setOnlyDeleteLast] = useState(false);
-
   const handleUpdateValues = useCallback((cb: (oldValues: ParameterValues) => ParameterValues) => {
     setValues(cb);
   }, []);
@@ -151,14 +163,14 @@ export default function ValuesTable(props: Props) {
                   handleRemoveValue,
                 })}
               </div>
-              <div>
+              <div style={labelExistsStyle(dataType, 'value')}>
                 <RiskLevelSwitch
                   disabled={loading}
                   current={riskLevel}
                   onChange={handleChangeRiskLevel}
                 />
               </div>
-              <div>
+              <div style={labelExistsStyle(dataType, 'value')}>
                 <Button
                   className={style.deleteButton}
                   type="text"
@@ -185,14 +197,14 @@ export default function ValuesTable(props: Props) {
           </div>
           {shouldShowNewValueInput && (
             <>
-              <div>
+              <div style={labelExistsStyle(dataType, 'input')}>
                 <RiskLevelSwitch
                   disabled={loading}
                   current={newRiskLevel}
                   onChange={setNewRiskLevel}
                 />
               </div>
-              <div>
+              <div style={labelExistsStyle(dataType, 'input')}>
                 <Button
                   disabled={
                     loading ||

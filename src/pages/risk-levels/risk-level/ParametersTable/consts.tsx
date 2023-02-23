@@ -569,7 +569,7 @@ export const INPUT_RENDERERS: { [key in DataType]: InputRenderer<any> } = {
               <NumberInput
                 isDisabled={disabled || value?.endGranularity === 'INFINITE'}
                 htmlAttrs={{ type: 'number', style: { width: 100 } }}
-                value={value?.endGranularity !== 'INFINITE' ? value?.end : 0}
+                value={value?.endGranularity === 'INFINITE' ? undefined : value?.end}
                 onChange={(val) => {
                   onChange(
                     riskValueDayRange(
@@ -859,7 +859,7 @@ export const VALUE_RENDERERS: { [key in DataType]: ValueRenderer<any> } = {
     }
     return (
       <div style={{ display: 'grid', gridAutoFlow: 'column', gap: '.5rem' }}>
-        <p>
+        <p style={{ marginBottom: 0 }}>
           {timeIn24HourFormat(value?.startHour)} - {timeIn24HourFormat(value?.endHour)}{' '}
           {`(${timeZonesDataMap[value?.timezone]?.label})`}
         </p>
@@ -901,9 +901,14 @@ export const NEW_VALUE_VALIDATIONS: Validation<any>[] = [
           return 'Age ranges should not overlap';
         }
       } else if (newValue.kind === 'DAY_RANGE') {
+        if (!newValue.endGranularity) {
+          return 'Select end granularity';
+        }
+
         if (newValue.endGranularity === 'INFINITE') {
           return null;
         }
+
         let { start: x1 = 0, end: x2 = Number.MAX_SAFE_INTEGER } = newValue;
 
         if (x1 == null || x2 == null) {
