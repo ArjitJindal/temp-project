@@ -127,7 +127,6 @@ export default function Team() {
         labelWrap: true,
       }}
       search={false}
-      headerTitle="Team accounts"
       rowKey="id"
       toolBarRender={() => {
         return isAtLeastAdmin(user)

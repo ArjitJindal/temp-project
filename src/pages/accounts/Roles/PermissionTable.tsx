@@ -51,9 +51,9 @@ export default function PermissionTable({ role, items }: { role: string; items: 
   const allExpanded = expandedRows.length === items.length;
   return (
     <>
+      <h3>{sentenceCase(role)}</h3>
       <Table<PermissionRow>
         data={{ items }}
-        headerTitle={sentenceCase(role)}
         headerSubtitle={
           <>
             <div>{`The following is the default permissions set for the ${sentenceCase(
