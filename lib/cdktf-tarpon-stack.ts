@@ -11,7 +11,7 @@ export class CdktfTarponStack extends TerraformStack {
     super(scope, id)
 
     const awsRegion = config.env.region as string
-    const stateBucket = `flagright-terraform-state-${config.stage}-test`
+    const stateBucket = `flagright-terraform-state-${config.stage}`
 
     // AWS
     new cdktf.S3Backend(this, {
