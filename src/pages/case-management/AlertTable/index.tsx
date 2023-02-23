@@ -2,6 +2,7 @@ import React, { useCallback, useRef, useState } from 'react';
 import pluralize from 'pluralize';
 import { usePaginatedQuery } from '@/utils/queries/hooks';
 import { useApi } from '@/api';
+import { Account } from '@/apis';
 import { ALERT_LIST } from '@/utils/queries/keys';
 import QueryResultsTable from '@/components/common/QueryResultsTable';
 import { TableColumn, TableData } from '@/components/ui/Table/types';
@@ -22,6 +23,9 @@ import { getUserName } from '@/utils/api/users';
 import ExpandedRowRenderer from '@/pages/case-management/AlertTable/ExpandedRowRenderer';
 import { TableAlertItem } from '@/pages/case-management/AlertTable/types';
 import AlertsStatusChangeButton from '@/pages/case-management/components/AlertsStatusChangeButton';
+import AssignToButton from '@/pages/case-management/components/AssignToButton';
+import { useAuth0User } from '@/utils/user-utils';
+import { message } from '@/components/library/Message';
 
 type AlertTableParams = AllParams<AlertSearchParams>;
 
@@ -33,6 +37,7 @@ interface Props {
 export default function AlertTable(props: Props) {
   const { params, onChangeParams } = props;
   const api = useApi();
+  const user = useAuth0User();
   const queryResults: QueryResult<TableData<TableAlertItem>> = usePaginatedQuery(
     ALERT_LIST(params),
     async () => {
@@ -43,6 +48,7 @@ export default function AlertTable(props: Props) {
         filterAlertId: alertId,
         filterOutCaseStatus: caseStatus === 'CLOSED' ? undefined : 'CLOSED',
         filterCaseStatus: caseStatus === 'CLOSED' ? 'CLOSED' : undefined,
+        filterAssignmentsIds: [user.userId],
       });
       return {
         items: result.data.map(({ alert, ...rest }) => {
@@ -187,6 +193,35 @@ export default function AlertTable(props: Props) {
     actionRef.current?.reload();
   }, []);
 
+  const handleAssignTo = (account: Account) => {
+    const hideLoading = message.loading('Assigning alerts');
+    api
+      .postAlerts({
+        AlertsUpdateRequest: {
+          alertIds: selectedEntities,
+          updates: {
+            assignments: [
+              {
+                assigneeUserId: account.id,
+                assignedByUserId: user.userId,
+                timestamp: Date.now(),
+              },
+            ],
+          },
+        },
+      })
+      .then(() => {
+        message.success('Done!');
+        reloadTable();
+      })
+      .catch(() => {
+        message.success('Unable to reassign alerts!');
+      })
+      .finally(() => {
+        hideLoading();
+      });
+  };
+
   return (
     <QueryResultsTable<TableAlertItem, AlertTableParams>
       tableId={'my-alerts'}
@@ -204,6 +239,7 @@ export default function AlertTable(props: Props) {
       actionsHeaderRight={[
         ({ params, setParams }) => (
           <>
+            <AssignToButton ids={selectedEntities} onSelect={handleAssignTo} />
             <AlertsStatusChangeButton
               ids={selectedEntities}
               onSaved={reloadTable}

@@ -4,9 +4,9 @@ import { TransactionStateButton } from '../../transactions/components/Transactio
 import { CaseSearchParams } from '../types';
 import CasesStatusChangeButton from '../components/CasesStatusChangeButton';
 import GavelIcon from './gavel.react.svg';
+import { Account, Case, CaseUpdateRequest } from '@/apis';
 import { dayjs, DEFAULT_DATE_TIME_FORMAT } from '@/utils/dayjs';
 import { QueryResult } from '@/utils/queries/types';
-import { Case, CaseUpdateRequest } from '@/apis';
 import { useAuth0User, useUsers } from '@/utils/user-utils';
 import { makeUrl } from '@/utils/routing';
 import UserSearchButton from '@/pages/transactions/components/UserSearchButton';
@@ -38,6 +38,9 @@ import StackLineIcon from '@/components/ui/icons/Remix/business/stack-line.react
 import { RiskLevelButton } from '@/pages/users/users-list/RiskLevelFilterButton';
 import BusinessIndustryButton from '@/pages/transactions/components/BusinessIndustryButton';
 import ScopeSelector from '@/pages/case-management/components/ScopeSelector';
+import AssignToButton from '@/pages/case-management/components/AssignToButton';
+import { message } from '@/components/library/Message';
+import { useApi } from '@/api';
 
 interface Props {
   params: AllParams<CaseSearchParams>;
@@ -371,6 +374,36 @@ export default function CaseTable(props: Props) {
     isPulseEnabled,
   ]);
 
+  const api = useApi();
+
+  const handleAssignTo = (account: Account) => {
+    const hideLoading = message.loading('Assigning cases');
+    api
+      .postCases({
+        CasesUpdateRequest: {
+          caseIds: selectedEntities,
+          updates: {
+            assignments: [
+              {
+                assigneeUserId: account.id,
+                assignedByUserId: user.userId,
+                timestamp: Date.now(),
+              },
+            ],
+          },
+        },
+      })
+      .then(() => {
+        message.success('Done!');
+        reloadTable();
+      })
+      .catch(() => {
+        message.success('Unable to reassign cases!');
+      })
+      .finally(() => {
+        hideLoading();
+      });
+  };
   return (
     <QueryResultsTable<TableItem, CaseSearchParams>
       tableId="user-cases"
@@ -473,6 +506,7 @@ export default function CaseTable(props: Props) {
       actionsHeaderRight={[
         ({ params, setParams }) => (
           <>
+            <AssignToButton ids={selectedEntities} onSelect={handleAssignTo} />
             <CasesStatusChangeButton
               caseIds={selectedEntities}
               onSaved={reloadTable}
