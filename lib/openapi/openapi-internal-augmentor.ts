@@ -11,6 +11,7 @@ import _ from 'lodash'
 import mkdirp from 'mkdirp'
 import { StackConstants } from '../constants'
 import { getAugmentedOpenapi } from './openapi-augmentor-util'
+import { ALLOWED_ORIGINS } from './openapi-internal-constants'
 
 // We don't care about region
 const env = (process.env.ENV || 'prod').split(':')[0]
@@ -127,25 +128,6 @@ export const ConsoleApiPathToLambda: any = {
   '/sanctions/search/{searchId}': StackConstants.SANCTIONS_FUNCTION_NAME,
   '/simulation': StackConstants.CONSOLE_API_SIMULATION_FUNCTION_NAME,
   '/simulation/{taskId}': StackConstants.CONSOLE_API_SIMULATION_FUNCTION_NAME,
-}
-
-// NOTE: For white-label customers, add their console URLs here
-const WHITE_LABEL_ORIGINS = {
-  bureau: {
-    sandbox: 'https://tm.sandbox.bureau.id',
-    prod: 'https://tm.bureau.id',
-  },
-}
-const ALLOWED_ORIGINS = {
-  dev: ['*'],
-  sandbox: [
-    'https://sandbox.console.flagright.com',
-    ...Object.values(WHITE_LABEL_ORIGINS).map((v) => v.sandbox),
-  ],
-  prod: [
-    'https://console.flagright.com',
-    ...Object.values(WHITE_LABEL_ORIGINS).map((v) => v.prod),
-  ],
 }
 
 const openapi = getAugmentedOpenapi(

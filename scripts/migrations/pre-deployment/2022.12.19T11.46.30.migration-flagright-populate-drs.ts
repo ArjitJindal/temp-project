@@ -1,7 +1,5 @@
 import { MigrationFn } from 'umzug'
 import { StackConstants } from '@cdk/constants'
-import { getConfig } from '../utils/config'
-import { AccountsConfig } from '@/lambdas/console-api-account/app'
 import { Tenant, AccountsService } from '@/services/accounts'
 import { getMongoDbClient, USERS_COLLECTION } from '@/utils/mongoDBUtils'
 import { getDynamoDbClient } from '@/utils/dynamodb'
@@ -42,10 +40,9 @@ async function migrateTenant(tenant: Tenant | null, timestamp: number) {
 }
 
 export const up: MigrationFn = async () => {
-  const config = getConfig()
-  const accountsService = new AccountsService(
-    config.application as AccountsConfig
-  )
+  const accountsService = new AccountsService({
+    auth0Domain: 'flagright.eu.auth.com',
+  })
   const flagrightTenant = await accountsService.getTenantById('flagright')
   await migrateTenant(flagrightTenant, 1671446984000)
 }

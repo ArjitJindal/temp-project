@@ -7,19 +7,14 @@ import { RoleService } from '@/services/roles'
 import { lambdaApi } from '@/core/middlewares/lambda-api-middlewares'
 import { JWTAuthorizerResult } from '@/@types/jwt'
 
-export type AccountsConfig = {
-  AUTH0_DOMAIN: string
-  AUTH0_CONSOLE_CLIENT_ID: string
-}
-
 export const rolesHandler = lambdaApi({ requiredFeatures: ['RBAC'] })(
   async (
     event: APIGatewayProxyWithLambdaAuthorizerEvent<
       APIGatewayEventLambdaAuthorizerContext<JWTAuthorizerResult>
     >
   ) => {
-    const config = process.env as AccountsConfig
-    const rolesService = new RoleService(config)
+    const { auth0Domain } = event.requestContext.authorizer
+    const rolesService = new RoleService({ auth0Domain })
     const { tenantId } = event.requestContext.authorizer
 
     if (event.httpMethod === 'GET' && event.resource === '/roles') {

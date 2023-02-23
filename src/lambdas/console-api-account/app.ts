@@ -16,23 +16,17 @@ import { ChangeRolePayload } from '@/@types/openapi-internal/ChangeRolePayload'
 import { RoleService } from '@/services/roles'
 import { AccountPatchPayload } from '@/@types/openapi-internal/AccountPatchPayload'
 
-export type AccountsConfig = {
-  AUTH0_DOMAIN: string
-  AUTH0_CONSOLE_CLIENT_ID: string
-}
-
 export const accountsHandler = lambdaApi()(
   async (
     event: APIGatewayProxyWithLambdaAuthorizerEvent<
       APIGatewayEventLambdaAuthorizerContext<JWTAuthorizerResult>
     >
   ) => {
-    const { userId, verifiedEmail, role, tenantId } =
+    const { userId, verifiedEmail, role, tenantId, auth0Domain } =
       event.requestContext.authorizer
-    const config = process.env as AccountsConfig
 
-    const accountsService = new AccountsService(config)
-    const rolesService = new RoleService(config)
+    const accountsService = new AccountsService({ auth0Domain })
+    const rolesService = new RoleService({ auth0Domain })
     const organization = await accountsService.getAccountTenant(userId)
 
     if (event.httpMethod === 'GET' && event.resource === '/me') {

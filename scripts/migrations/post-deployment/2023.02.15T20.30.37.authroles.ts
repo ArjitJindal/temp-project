@@ -1,18 +1,17 @@
 import { migrateAllTenants } from '../utils/tenant'
-import { getConfig } from '../utils/config'
 import { AccountsService, Tenant } from '@/services/accounts'
-import { AccountsConfig } from '@/lambdas/console-api-account/app'
 import { RoleService } from '@/services/roles'
 import { TenantRepository } from '@/services/tenants/repositories/tenant-repository'
 import { getDynamoDbClient } from '@/utils/dynamodb'
 
 async function migrateTenant(tenant: Tenant) {
-  const config = getConfig()
   const dynamoDb = await getDynamoDbClient()
-  const accountsService = new AccountsService(
-    config.application as AccountsConfig
-  )
-  const rolesService = new RoleService(config.application as AccountsConfig)
+  const accountsService = new AccountsService({
+    auth0Domain: 'flagright.eu.auth.com',
+  })
+  const rolesService = new RoleService({
+    auth0Domain: 'flagright.eu.auth.com',
+  })
   const tenantRepository = new TenantRepository(tenant.id, {
     dynamoDb,
   })

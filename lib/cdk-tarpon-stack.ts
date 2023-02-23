@@ -411,8 +411,7 @@ export class CdkTarponStack extends cdk.Stack {
         {
           environment: {
             AUTH0_AUDIENCE: config.application.AUTH0_AUDIENCE,
-            AUTH0_TOKEN_ISSUER: config.application.AUTH0_TOKEN_ISSUER,
-            AUTH0_JWKS_URI: config.application.AUTH0_JWKS_URI,
+            AUTH0_DOMAIN: config.application.AUTH0_DOMAIN,
           },
         }
       )
@@ -566,18 +565,11 @@ export class CdkTarponStack extends cdk.Stack {
       {
         name: StackConstants.CONSOLE_API_ACCOUNT_FUNCTION_NAME,
       },
-      {
-        ...atlasFunctionProps,
-        environment: {
-          ...atlasFunctionProps.environment,
-          AUTH0_MANAGEMENT_CREDENTIALS_SECRET_ARN:
-            config.application.AUTH0_MANAGEMENT_CREDENTIALS_SECRET_ARN,
-        },
-      }
+      atlasFunctionProps
     )
-    this.grantSecretsManagerAccess(
+    this.grantSecretsManagerAccessByPattern(
       accountsFunctionAlias,
-      [this.config.application.AUTH0_MANAGEMENT_CREDENTIALS_SECRET_ARN],
+      'auth0.com',
       'READ'
     )
 
@@ -586,18 +578,11 @@ export class CdkTarponStack extends cdk.Stack {
       {
         name: StackConstants.CONSOLE_API_ROLE_FUNCTION_NAME,
       },
-      {
-        ...atlasFunctionProps,
-        environment: {
-          ...atlasFunctionProps.environment,
-          AUTH0_MANAGEMENT_CREDENTIALS_SECRET_ARN:
-            config.application.AUTH0_MANAGEMENT_CREDENTIALS_SECRET_ARN,
-        },
-      }
+      atlasFunctionProps
     )
-    this.grantSecretsManagerAccess(
+    this.grantSecretsManagerAccessByPattern(
       rolesFunctionAlias,
-      [this.config.application.AUTH0_MANAGEMENT_CREDENTIALS_SECRET_ARN],
+      'auth0.com',
       'READ'
     )
 
@@ -606,18 +591,11 @@ export class CdkTarponStack extends cdk.Stack {
       {
         name: StackConstants.CONSOLE_API_TENANT_FUNCTION_NAME,
       },
-      {
-        ...atlasFunctionProps,
-        environment: {
-          ...atlasFunctionProps.environment,
-          AUTH0_MANAGEMENT_CREDENTIALS_SECRET_ARN:
-            config.application.AUTH0_MANAGEMENT_CREDENTIALS_SECRET_ARN,
-        },
-      }
+      atlasFunctionProps
     )
-    this.grantSecretsManagerAccess(
+    this.grantSecretsManagerAccessByPattern(
       tenantsFunctionAlias,
-      [this.config.application.AUTH0_MANAGEMENT_CREDENTIALS_SECRET_ARN],
+      'auth0.com',
       'READ'
     )
 
@@ -1463,6 +1441,18 @@ export class CdkTarponStack extends cdk.Stack {
     this.grantSecretsManagerAccess(
       alias,
       [`arn:aws:secretsmanager:*:*:secret:*/${prefix}/*`],
+      mode
+    )
+  }
+
+  private grantSecretsManagerAccessByPattern(
+    alias: Alias,
+    pattern: string,
+    mode: 'READ' | 'WRITE' | 'READ_WRITE'
+  ) {
+    this.grantSecretsManagerAccess(
+      alias,
+      [`arn:aws:secretsmanager:*:*:secret:*${pattern}*`],
       mode
     )
   }

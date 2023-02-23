@@ -4,7 +4,6 @@ import {
 } from 'aws-lambda'
 import { BadRequest } from 'http-errors'
 import { customAlphabet } from 'nanoid'
-import { AccountsConfig } from '../console-api-account/app'
 import { AccountsService } from '../../services/accounts'
 import { TenantCreationRequest } from '@/@types/openapi-internal/TenantCreationRequest'
 import { lambdaApi } from '@/core/middlewares/lambda-api-middlewares'
@@ -27,9 +26,9 @@ export const tenantsHandler = lambdaApi()(
       role,
       principalId: tenantId,
       verifiedEmail,
+      auth0Domain,
     } = event.requestContext.authorizer
-    const config = process.env as AccountsConfig
-    const accountsService = new AccountsService(config)
+    const accountsService = new AccountsService({ auth0Domain })
 
     if (event.httpMethod === 'GET' && event.resource === '/tenants') {
       assertRole({ role, verifiedEmail }, 'root')
@@ -54,11 +53,11 @@ export const tenantsHandler = lambdaApi()(
       const bodyTenantId = (JSON.parse(event.body) as TenantCreationRequest)
         .tenantId
 
-      const tenantRepository = new TenantService(bodyTenantId ?? randomizedId, {
+      const tenantService = new TenantService(bodyTenantId ?? randomizedId, {
         dynamoDb: getDynamoDbClientByEvent(event),
       })
 
-      return tenantRepository.createTenant(JSON.parse(event.body))
+      return tenantService.createTenant(JSON.parse(event.body))
     } else if (event.resource === '/tenants/settings') {
       const dynamoDb = getDynamoDbClientByEvent(event)
       const tenantRepository = new TenantRepository(tenantId, { dynamoDb })

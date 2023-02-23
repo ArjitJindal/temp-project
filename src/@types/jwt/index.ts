@@ -70,4 +70,5 @@ export interface JWTAuthorizerResult extends AWS.STS.Credentials {
   tenantName: string
   encodedPermissions: string
   verifiedEmail: string
+  auth0Domain: string
 }

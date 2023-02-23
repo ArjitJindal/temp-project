@@ -47,12 +47,6 @@ export const config: Config = {
   application: {
     AUTH0_DOMAIN: 'dev-flagright.eu.auth0.com',
     AUTH0_AUDIENCE: 'https://dev.api.flagright.com/',
-    AUTH0_MANAGEMENT_API_AUDIENCE: 'https://dev-flagright.eu.auth0.com/api/v2/',
-    AUTH0_TOKEN_ISSUER: 'https://login.dev.console.flagright.com/',
-    AUTH0_JWKS_URI:
-      'https://login.dev.console.flagright.com/.well-known/jwks.json',
-    AUTH0_MANAGEMENT_CREDENTIALS_SECRET_ARN: `arn:aws:secretsmanager:${region}:${account}:secret:auth0ManagementAPICreds-f1T4yd`,
-    AUTH0_CONSOLE_CLIENT_ID: 'uGGbVNumU7d57NswPLD5UaTwvf17tc7y',
     ATLAS_CREDENTIALS_SECRET_ARN: `arn:aws:secretsmanager:${region}:${account}:secret:mongoAtlasCreds-RvzMVI`,
     COMPLYADVANTAGE_CREDENTIALS_SECRET_ARN: `arn:aws:secretsmanager:${region}:${account}:secret:complyAdvantageCreds-j8uTMO`,
     CONSOLE_URI: 'https://dev.console.flagright.com',

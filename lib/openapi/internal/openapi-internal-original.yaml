@@ -5060,11 +5060,14 @@ components:
             type: string
         tenantId:
           type: string
+        auth0Domain:
+          type: string
         auth0DisplayName:
           type: string
       required:
         - tenantName
         - tenantWebsite
+        - auth0Domain
         - auth0DisplayName
         - adminEmails
         - features

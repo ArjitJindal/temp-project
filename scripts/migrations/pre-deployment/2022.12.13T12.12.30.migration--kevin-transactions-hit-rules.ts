@@ -1,9 +1,7 @@
 import { MigrationFn } from 'umzug'
 import { StackConstants } from '@cdk/constants'
 import { UpdateCommand } from '@aws-sdk/lib-dynamodb'
-import { getConfig } from '../utils/config'
 import { TransactionCaseManagement } from '@/@types/openapi-internal/TransactionCaseManagement'
-import { AccountsConfig } from '@/lambdas/console-api-account/app'
 import { getMongoDbClient, TRANSACTIONS_COLLECTION } from '@/utils/mongoDBUtils'
 import { DynamoDbKeys } from '@/core/dynamodb/dynamodb-keys'
 import { getDynamoDbClient } from '@/utils/dynamodb'
@@ -41,10 +39,9 @@ async function migrateTenant(tenant: Tenant | null) {
 }
 
 export const up: MigrationFn = async () => {
-  const config = getConfig()
-  const accountsService = new AccountsService(
-    config.application as AccountsConfig
-  )
+  const accountsService = new AccountsService({
+    auth0Domain: 'flagright.eu.auth.com',
+  })
   const kevinTenant = await accountsService.getTenantById('QEO03JYKBT')
   await migrateTenant(kevinTenant)
 }

@@ -77,11 +77,6 @@ export type Config = {
   application: {
     AUTH0_DOMAIN: string
     AUTH0_AUDIENCE: string
-    AUTH0_TOKEN_ISSUER: string
-    AUTH0_MANAGEMENT_API_AUDIENCE: string
-    AUTH0_JWKS_URI: string
-    AUTH0_CONSOLE_CLIENT_ID: string
-    AUTH0_MANAGEMENT_CREDENTIALS_SECRET_ARN: string
     ATLAS_CREDENTIALS_SECRET_ARN: string
     COMPLYADVANTAGE_CREDENTIALS_SECRET_ARN: string
     CONSOLE_URI: string

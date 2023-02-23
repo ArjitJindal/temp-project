@@ -57,13 +57,6 @@ export const config: Config = {
   application: {
     AUTH0_DOMAIN: 'sandbox-flagright.eu.auth0.com',
     AUTH0_AUDIENCE: 'https://sandbox.api.flagright.com/',
-    AUTH0_MANAGEMENT_API_AUDIENCE:
-      'https://sandbox-flagright.eu.auth0.com/api/v2/',
-    AUTH0_TOKEN_ISSUER: 'https://login.sandbox.console.flagright.com/',
-    AUTH0_JWKS_URI:
-      'https://login.sandbox.console.flagright.com/.well-known/jwks.json',
-    AUTH0_CONSOLE_CLIENT_ID: 'dbinWZ63vFLquTEcbvg56o32HpVpuEJU',
-    AUTH0_MANAGEMENT_CREDENTIALS_SECRET_ARN: `arn:aws:secretsmanager:${region}:${account}:secret:auth0ManagementAPICreds-SJt0mU`,
     ATLAS_CREDENTIALS_SECRET_ARN: `arn:aws:secretsmanager:${region}:${account}:secret:mongoAtlasCreds-suQQec`,
     COMPLYADVANTAGE_CREDENTIALS_SECRET_ARN: `arn:aws:secretsmanager:${region}:${account}:secret:complyAdvantageCreds-w67BQP`,
     MAXIMUM_ALLOWED_EXPORT_SIZE: 10000,

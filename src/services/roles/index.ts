@@ -1,6 +1,5 @@
 import { ManagementClient, AuthenticationClient } from 'auth0'
 import { BadRequest, Conflict } from 'http-errors'
-import { AccountsConfig } from '../../lambdas/console-api-role/app'
 import { AccountRole } from '@/@types/openapi-internal/AccountRole'
 import { Permission } from '@/@types/openapi-internal/Permission'
 import { Permissions } from '@/@types/openapi-internal/Permissions'
@@ -10,20 +9,22 @@ import { isValidAccountRoleName } from '@/@types/openapi-internal-custom/Account
 
 export class RoleService {
   private authenticationClient: AuthenticationClient
-  private config: AccountsConfig
+  private config: { auth0Domain: string }
 
-  constructor(config: AccountsConfig) {
+  constructor(config: { auth0Domain: string }) {
     this.config = config
     const options = {
-      domain: config.AUTH0_DOMAIN,
+      domain: config.auth0Domain,
     }
     this.authenticationClient = new AuthenticationClient(options)
   }
 
   private async getAuth0Client() {
-    const { clientId, clientSecret } = await getAuth0Credentials()
+    const { clientId, clientSecret } = await getAuth0Credentials(
+      this.config.auth0Domain
+    )
     return {
-      domain: this.config.AUTH0_DOMAIN,
+      domain: this.config.auth0Domain,
       clientId,
       clientSecret,
     }

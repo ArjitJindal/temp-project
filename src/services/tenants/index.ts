@@ -7,11 +7,11 @@ import {
   GetUsagePlansCommand,
 } from '@aws-sdk/client-api-gateway'
 import { BadRequest } from 'http-errors'
+import { StackConstants } from '@cdk/constants'
 import { TenantCreationResponse } from '@/@types/openapi-internal/TenantCreationResponse'
 import { TenantCreationRequest } from '@/@types/openapi-internal/TenantCreationRequest'
 import { AccountsService } from '@/services/accounts'
 import { createNewApiKeyForTenant } from '@/services/api-key'
-import { AccountsConfig } from '@/lambdas/console-api-account/app'
 import { checkMultipleEmails } from '@/utils/helpers'
 
 export class TenantService {
@@ -38,7 +38,9 @@ export class TenantService {
       throw new BadRequest('Tenant name, website and website are required')
     }
 
-    const accountsService = new AccountsService(process.env as AccountsConfig)
+    const accountsService = new AccountsService({
+      auth0Domain: tenantData.auth0Domain,
+    })
 
     const existingOrganization = await accountsService.getOrganization(
       tenantData.tenantName
@@ -145,7 +147,10 @@ export class TenantService {
     return apiGatewaysFiltered.items
       .filter((x) => {
         if (
-          ['TarponApi', 'TarponManagementAPI'].includes(x.name ?? '') &&
+          [
+            StackConstants.TARPON_API_NAME,
+            StackConstants.TARPON_MANAGEMENT_API_NAME,
+          ].includes(x.name ?? '') &&
           x.id
         ) {
           return true

@@ -7,7 +7,6 @@ import {
   AuthenticationClient,
 } from 'auth0'
 import { UserMetadata } from 'aws-sdk/clients/elastictranscoder'
-import { AccountsConfig } from '../../lambdas/console-api-account/app'
 import { Account as ApiAccount } from '@/@types/openapi-internal/Account'
 import { AccountRoleName } from '@/@types/openapi-internal/AccountRoleName'
 import { logger } from '@/core/logger'
@@ -46,15 +45,10 @@ export type Tenant = {
 }
 
 export class AccountsService {
-  private authenticationClient: AuthenticationClient
-  private config: AccountsConfig
+  private config: { auth0Domain: string }
 
-  constructor(config: AccountsConfig) {
+  constructor(config: { auth0Domain: string }) {
     this.config = config
-    const options = {
-      domain: config.AUTH0_DOMAIN,
-    }
-    this.authenticationClient = new AuthenticationClient(options)
   }
 
   private static organizationToTenant(organization: Organization): Tenant {
@@ -94,9 +88,11 @@ export class AccountsService {
   }
 
   private async getAuth0Client() {
-    const { clientId, clientSecret } = await getAuth0Credentials()
+    const { clientId, clientSecret } = await getAuth0Credentials(
+      this.config.auth0Domain
+    )
     return {
-      domain: this.config.AUTH0_DOMAIN,
+      domain: this.config.auth0Domain,
       clientId,
       clientSecret,
     }
@@ -183,15 +179,22 @@ export class AccountsService {
       throw e
     }
 
+    const consoleClient = (
+      await managementClient.getClients({ app_type: ['spa'] })
+    ).filter((client) => client.client_metadata?.isConsole)[0]
+    if (!consoleClient) {
+      throw new Error('Cannot find Auth0 Console client!')
+    }
+
     await managementClient.sendEmailVerification({
       user_id: user.user_id as string,
-      client_id: this.config.AUTH0_CONSOLE_CLIENT_ID,
+      client_id: consoleClient.client_id,
     })
     logger.info(`Sent verification email`, {
       email: params.email,
     })
     await authenticationClient.requestChangePasswordEmail({
-      client_id: this.config.AUTH0_CONSOLE_CLIENT_ID,
+      client_id: consoleClient.client_id,
       connection: CONNECTION_NAME,
       email: params.email,
     })

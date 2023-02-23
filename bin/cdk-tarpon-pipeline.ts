@@ -13,14 +13,7 @@ import { config as prodConfigAsia1 } from '@cdk/configs/config-prod-asia-1'
 import { config as prodConfigUS1 } from '@cdk/configs/config-prod-us-1'
 import { config as prodConfigEu1 } from '@cdk/configs/config-prod-eu-1'
 import { config as prodConfigEu2 } from '@cdk/configs/config-prod-eu-2'
-
-const GITHUB_USERS = [
-  'amandugar',
-  'chialunwu',
-  'koluch',
-  'nadig',
-  'timrcoulson',
-]
+import { DEV_GITHUB_USERS } from './dev-github-users'
 
 const app = new cdk.App()
 
@@ -58,7 +51,7 @@ if (process.env.ENV === 'dev:user') {
   const usernameRegex = /^[a-z\d](?:[a-z\d]|-(?=[a-z\d])){0,38}$/i
   const serialNumberRegex = /^[1-3]$/
   if (
-    GITHUB_USERS.includes(githubUser) &&
+    DEV_GITHUB_USERS.includes(githubUser) &&
     usernameRegex.test(githubUser) &&
     serialNumberRegex.test(serialNumber)
   ) {

@@ -5,14 +5,21 @@ export type Auth0ManagementAPICreds = {
   clientSecret: string
 }
 
-let cacheAuth0ManagementAPICreds: Auth0ManagementAPICreds
+const cacheAuth0ManagementAPICreds: {
+  [auth0Domain: string]: Auth0ManagementAPICreds
+} = {}
 
-export async function getAuth0Credentials(): Promise<Auth0ManagementAPICreds> {
-  if (cacheAuth0ManagementAPICreds) {
-    return cacheAuth0ManagementAPICreds
+export async function getAuth0Credentials(
+  auth0Domain: string
+): Promise<Auth0ManagementAPICreds> {
+  if (cacheAuth0ManagementAPICreds[auth0Domain]) {
+    return cacheAuth0ManagementAPICreds[auth0Domain]
   }
-  cacheAuth0ManagementAPICreds = await getSecret<Auth0ManagementAPICreds>(
-    process.env.AUTH0_MANAGEMENT_CREDENTIALS_SECRET_ARN as string
-  )
-  return cacheAuth0ManagementAPICreds
+  const secrets = await getSecret<Auth0ManagementAPICreds>(auth0Domain)
+  cacheAuth0ManagementAPICreds[auth0Domain] = secrets
+  return cacheAuth0ManagementAPICreds[auth0Domain]
+}
+
+export function getAuth0Domain(tenantName: string, region: string) {
+  return `${tenantName}.${region}.auth0.com`
 }

@@ -9,6 +9,7 @@ import {
 import * as jwt from 'jsonwebtoken'
 import jwksClient from 'jwks-rsa'
 import { StackConstants } from '@cdk/constants'
+import { getAuth0TenantConfigs } from '@cdk/auth0/tenant-config'
 import PolicyBuilder from '@/core/policies/policy-generator'
 import { JWTAuthorizerResult } from '@/@types/jwt'
 import { lambdaAuthorizer } from '@/core/middlewares/lambda-authorizer-middlewares'
@@ -32,18 +33,6 @@ const UNAUTHORIZED_RESPONSE = {
 }
 
 const AUTH0_CUSTOM_CLAIMS_NAMESPACE = 'https://flagright.com'
-
-const jwtOptions = {
-  audience: process.env.AUTH0_AUDIENCE,
-  issuer: process.env.AUTH0_TOKEN_ISSUER,
-}
-
-const jwks = jwksClient({
-  cache: true,
-  rateLimit: true,
-  jwksRequestsPerMinute: 10, // Default value
-  jwksUri: process.env.AUTH0_JWKS_URI!,
-})
 
 async function getTenantScopeCredentials(
   tenantId: string,
@@ -114,6 +103,7 @@ export const jwtAuthorizer = lambdaAuthorizer()(
     updateLogMetadata({ jwtToken: token })
 
     let kid: string
+    let auth0Domain: string = process.env.AUTH0_DOMAIN as string
     try {
       const decoded = jwt.decode(token, { complete: true })
       if (!decoded?.header?.kid) {
@@ -121,21 +111,38 @@ export const jwtAuthorizer = lambdaAuthorizer()(
         return UNAUTHORIZED_RESPONSE
       }
       kid = decoded?.header?.kid
+      auth0Domain = (decoded.payload as jwt.JwtPayload)?.[
+        `${AUTH0_CUSTOM_CLAIMS_NAMESPACE}/auth0Domain`
+      ]
     } catch (e) {
       logger.warn('token failed to be decoded')
       return UNAUTHORIZED_RESPONSE
     }
 
+    const auth0TenantName = auth0Domain.split('.')[0]
+    const tenantConfig = getAuth0TenantConfigs(process.env.ENV as any).find(
+      (config) => config.tenantName === auth0TenantName
+    )
+    if (!tenantConfig) {
+      throw new Error(`Cannot find auth0 tenant config for ${auth0Domain}`)
+    }
+
+    const jwks = jwksClient({
+      cache: true,
+      rateLimit: true,
+      jwksRequestsPerMinute: 10, // Default value
+      jwksUri: `https://${tenantConfig.customDomain}/.well-known/jwks.json`,
+    })
     const key = await jwks.getSigningKey(kid)
     const signingKey = key.getPublicKey()
 
     let verifiedDecoded: jwt.JwtPayload
     try {
-      verifiedDecoded = jwt.verify(
-        token,
-        signingKey,
-        jwtOptions
-      ) as jwt.JwtPayload
+      verifiedDecoded = jwt.verify(token, signingKey, {
+        audience: process.env.AUTH0_AUDIENCE,
+        // IMPORTANT: The ending '/' is required
+        issuer: `https://${tenantConfig.customDomain}/`,
+      }) as jwt.JwtPayload
     } catch (e) {
       logger.warn('token failed to be verified')
       return UNAUTHORIZED_RESPONSE
@@ -192,6 +199,7 @@ export const jwtAuthorizer = lambdaAuthorizer()(
         tenantId,
         tenantName,
         encodedPermissions,
+        auth0Domain,
       } as JWTAuthorizerResult as unknown as APIGatewayAuthorizerResultContext,
     }
   }
