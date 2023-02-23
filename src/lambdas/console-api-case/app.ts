@@ -18,6 +18,7 @@ import { getMongoDbClient } from '@/utils/mongoDBUtils'
 import { JWTAuthorizerResult } from '@/@types/jwt'
 import { CaseRepository } from '@/services/rules-engine/repositories/case-repository'
 import { CasesUpdateRequest } from '@/@types/openapi-internal/CasesUpdateRequest'
+import { AlertsUpdateRequest } from '@/@types/openapi-internal/AlertsUpdateRequest'
 import { Case } from '@/@types/openapi-internal/Case'
 import { CaseStatus } from '@/@types/openapi-internal/CaseStatus'
 import { getDynamoDbClientByEvent } from '@/utils/dynamodb'
@@ -319,6 +320,34 @@ export const casesHandler = lambdaApi()(
         filterCaseStatus: filterCaseStatus as CaseStatus | undefined,
       }
       return caseService.getAlerts(params)
+    } else if (
+      event.httpMethod === 'POST' &&
+      event.resource === '/alerts' &&
+      event.body
+    ) {
+      const updateRequest = JSON.parse(event.body) as AlertsUpdateRequest
+      const alertIds = updateRequest?.alertIds || []
+      const { updates } = updateRequest
+      const alertUpdateSegment = await addNewSubsegment(
+        'Case Service',
+        'Alert Update'
+      )
+      try {
+        alertUpdateSegment?.addAnnotation('tenantId', tenantId)
+        alertUpdateSegment?.addAnnotation('alertIds', alertIds.toString())
+        const updateResult = await caseService.updateAlerts(
+          userId,
+          alertIds,
+          updates
+        )
+        await caseAuditLogService.handleAuditLogForAlertsUpdate(
+          alertIds,
+          updates
+        )
+        return updateResult
+      } finally {
+        alertUpdateSegment?.close()
+      }
     }
     throw new NotFound('Unhandled request')
   }

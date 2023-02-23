@@ -10,6 +10,8 @@ import { Case } from '@/@types/openapi-internal/Case'
 import { AlertListResponse } from '@/@types/openapi-internal/AlertListResponse'
 import { CasesListResponse } from '@/@types/openapi-internal/CasesListResponse'
 import { CaseUpdateRequest } from '@/@types/openapi-internal/CaseUpdateRequest'
+import { Alert } from '@/@types/openapi-internal/Alert'
+import { AlertUpdateRequest } from '@/@types/openapi-internal/AlertUpdateRequest'
 import { CaseStatusChange } from '@/@types/openapi-internal/CaseStatusChange'
 import { TransactionUpdateRequest } from '@/@types/openapi-internal/TransactionUpdateRequest'
 import { CaseTransactionsListResponse } from '@/@types/openapi-internal/CaseTransactionsListResponse'
@@ -109,6 +111,48 @@ export class CaseService {
     return 'OK'
   }
 
+  public async updateAlerts(
+    userId: string,
+    alertIds: string[],
+    updateRequest: AlertUpdateRequest
+  ) {
+    const statusChange: CaseStatusChange | undefined =
+      updateRequest.alertStatus && {
+        userId,
+        timestamp: Date.now(),
+        reason: updateRequest.reason,
+        caseStatus: updateRequest.alertStatus,
+        otherReason: updateRequest.otherReason,
+      }
+    const updates = {
+      assignments: updateRequest.assignments,
+      statusChange: statusChange,
+      alertStatus: updateRequest.alertStatus,
+    }
+    await this.caseRepository.updateAlerts(alertIds, updates)
+    // todo: implement comments update
+    // if (updateRequest.caseStatus) {
+    //   await Promise.all(
+    //     caseIds.map((caseId) =>
+    //       this.saveCaseComment(caseId, {
+    //         userId,
+    //         body:
+    //           `Case Status Changed to ${updateRequest.caseStatus}` +
+    //           (updateRequest.comment ? `. ${updateRequest.comment}` : ''),
+    //         files: updateRequest.files,
+    //       })
+    //     )
+    //   )
+    //   const cases = await this.caseRepository.getCasesByIds(caseIds)
+    //   await Promise.all(
+    //     cases.map((c) =>
+    //       this.dashboardStatsRepository.refreshCaseStats(c.createdTimestamp)
+    //     )
+    //   )
+    // }
+    return 'OK'
+  }
+
   public async getCase(
     caseId: string,
     params: {
@@ -125,6 +169,18 @@ export class CaseService {
     caseGetSegment?.close()
 
     return caseEntity && this.getAugmentedCase(caseEntity)
+  }
+
+  public async getAlert(alertId: string): Promise<Alert | null> {
+    const caseGetSegment = await addNewSubsegment(
+      'Case Service',
+      'Mongo Get Alert Query'
+    )
+    try {
+      return await this.caseRepository.getAlertById(alertId)
+    } finally {
+      caseGetSegment?.close()
+    }
   }
 
   public async getCaseTransactions(

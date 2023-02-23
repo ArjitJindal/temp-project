@@ -2331,6 +2331,20 @@ paths:
             $ref: '#/components/schemas/CaseStatus'
           in: query
           name: filterCaseStatus
+    post:
+      summary: Alerts - Update
+      operationId: post-alerts
+      responses:
+        '200':
+          description: OK
+      x-flagright:
+        permissions:
+          - case-management:case-overview:write
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AlertsUpdateRequest'
   /cases:
     get:
       summary: Cases - List
@@ -4528,6 +4542,32 @@ components:
             $ref: '#/components/schemas/FileInfo'
       x-examples: {}
       description: ''
+    AlertUpdateRequest:
+      title: AlertUpdateRequest
+      type: object
+      properties:
+        assignments:
+          type: array
+          items:
+            $ref: '#/components/schemas/Assignment'
+        reason:
+          type: array
+          items:
+            $ref: '#/components/schemas/CaseClosingReasons'
+        alertStatus:
+          $ref: '#/components/schemas/CaseStatus'
+        priority:
+          $ref: '#/components/schemas/Priority'
+        otherReason:
+          type: string
+        comment:
+          type: string
+        files:
+          type: array
+          items:
+            $ref: '#/components/schemas/FileInfo'
+      x-examples: {}
+      description: ''
     CasesUpdateRequest:
       title: CasesUpdateRequest
       type: object
@@ -4540,6 +4580,19 @@ components:
           $ref: '#/components/schemas/CaseUpdateRequest'
       required:
         - caseIds
+        - updates
+    AlertsUpdateRequest:
+      title: AlertsUpdateRequest
+      type: object
+      properties:
+        alertIds:
+          type: array
+          items:
+            type: string
+        updates:
+          $ref: '#/components/schemas/AlertUpdateRequest'
+      required:
+        - alertIds
         - updates
     CaseStatusChange:
       title: CaseStatusChange
@@ -4890,6 +4943,7 @@ components:
         - CASE
         - USER
         - PULSE
+        - ALERT
     Page:
       title: Page
       type: number

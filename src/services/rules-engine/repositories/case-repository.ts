@@ -18,6 +18,7 @@ import {
   USERS_COLLECTION,
 } from '@/utils/mongoDBUtils'
 import { Comment } from '@/@types/openapi-internal/Comment'
+import { Alert } from '@/@types/openapi-internal/Alert'
 import { Assignment } from '@/@types/openapi-internal/Assignment'
 import {
   DefaultApiGetAlertListRequest,
@@ -701,10 +702,9 @@ export class CaseRepository {
     return item?.count ?? 0
   }
 
-  public async getAlerts(params: {
-    pageSize?: number
-    page?: number
-  }): Promise<AlertListResponse> {
+  public async getAlerts(
+    params: OptionalPagination<DefaultApiGetAlertListRequest>
+  ): Promise<AlertListResponse> {
     const db = this.mongoDb.db()
     const collection = db.collection<Case>(CASES_COLLECTION(this.tenantId))
 
@@ -863,6 +863,56 @@ export class CaseRepository {
     )
   }
 
+  public async updateAlerts(
+    alertIds: string[],
+    updates: {
+      assignments?: Assignment[]
+      statusChange?: CaseStatusChange
+      alertStatus?: CaseStatus
+    }
+  ) {
+    const db = this.mongoDb.db()
+    const collection = db.collection<Case>(CASES_COLLECTION(this.tenantId))
+
+    const result: Promise<unknown>[] = []
+    const casesCursor = collection.find({
+      'alerts.alertId': { $in: alertIds },
+    })
+    while (await casesCursor.hasNext()) {
+      const caseItem = await casesCursor.next()
+      if (caseItem == null) {
+        break
+      }
+      const newAlerts = caseItem.alerts?.map((alert) => {
+        if (!alertIds.includes(alert.alertId as string)) {
+          return alert
+        }
+        return {
+          ...alert,
+          ...updates,
+          statusChanges: updates.statusChange
+            ? [...(alert.statusChanges ?? []), updates.statusChange]
+            : alert.statusChanges,
+        }
+      })
+      if (caseItem.caseId != null && newAlerts) {
+        result.push(
+          collection.updateOne(
+            {
+              caseId: caseItem.caseId,
+            },
+            {
+              $set: {
+                alerts: newAlerts,
+              },
+            }
+          )
+        )
+      }
+    }
+    await Promise.all(result)
+  }
+
   public async saveCaseComment(
     caseId: string,
     comment: Comment
@@ -916,6 +966,15 @@ export class CaseRepository {
       pageSize: 1,
     })
     return data?.find((c) => c.caseId === caseId) ?? null
+  }
+
+  public async getAlertById(alertId: string): Promise<Alert | null> {
+    const { data } = await this.getAlerts({
+      filterAlertId: alertId,
+      page: 1,
+      pageSize: 1,
+    })
+    return data?.find((c) => c.alert.alertId === alertId)?.alert ?? null
   }
 
   public async getCaseTransactions(
