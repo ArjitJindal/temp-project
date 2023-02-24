@@ -2330,13 +2330,173 @@ paths:
           in: query
           name: filterAlertId
         - schema:
+            type: number
+          in: query
+          name: afterTimestamp
+        - schema:
+            type: number
+          in: query
+          name: beforeTimestamp
+        - schema:
+            type: number
+          in: query
+          name: afterTransactionTimestamp
+        - schema:
+            type: number
+          in: query
+          name: beforeTransactionTimestamp
+        - schema:
+            type: string
+          in: query
+          name: filterId
+        - schema:
+            $ref: '#/components/schemas/RuleAction'
+          in: query
+          name: filterOutStatus
+        - schema:
             $ref: '#/components/schemas/CaseStatus'
           in: query
           name: filterOutCaseStatus
         - schema:
+            type: array
+            items:
+              type: string
+          in: query
+          name: filterRulesExecuted
+        - schema:
+            type: array
+            items:
+              type: string
+          in: query
+          name: filterRulesHit
+        - schema:
+            type: string
+          in: query
+          name: transactionType
+        - schema:
+            type: array
+            items:
+              type: string
+          in: query
+          name: filterOriginCurrencies
+        - schema:
+            type: array
+            items:
+              type: string
+          in: query
+          name: filterDestinationCurrencies
+        - schema:
+            type: array
+            items:
+              type: string
+          in: query
+          name: filterBusinessIndustries
+        - schema:
+            type: string
+          in: query
+          name: sortField
+        - schema:
+            $ref: '#/components/schemas/SortOrder'
+          in: query
+          name: sortOrder
+        - schema:
+            type: string
+          in: query
+          name: filterUserId
+        - schema:
+            type: string
+          in: query
+          name: filterOriginUserId
+        - schema:
+            type: string
+          in: query
+          name: filterDestinationUserId
+        - schema:
+            type: array
+            items:
+              $ref: '#/components/schemas/RuleAction'
+          in: query
+          name: filterStatus
+        - schema:
             $ref: '#/components/schemas/CaseStatus'
           in: query
           name: filterCaseStatus
+        - schema:
+            type: string
+          in: query
+          name: filterOriginPaymentMethod
+        - schema:
+            type: string
+          in: query
+          name: filterDestinationPaymentMethod
+        - schema:
+            type: array
+            items:
+              $ref: ../public/openapi-public-original.yaml#/components/schemas/TransactionState
+          in: query
+          name: filterTransactionState
+        - schema:
+            $ref: '#/components/schemas/Priority'
+          in: query
+          name: filterPriority
+        - schema:
+            type: string
+          in: query
+          name: filterTransactionTagKey
+        - schema:
+            type: string
+          in: query
+          name: filterTransactionTagValue
+        - schema:
+            type: boolean
+          in: query
+          name: includeTransactions
+        - schema:
+            type: boolean
+          in: query
+          name: includeTransactionUsers
+        - schema:
+            type: boolean
+          in: query
+          name: includeTransactionEvents
+        - schema:
+            type: string
+          in: query
+          name: filterTransactionId
+        - schema:
+            type: number
+          in: query
+          name: filterTransactionAmoutAbove
+        - schema:
+            type: number
+          in: query
+          name: filterTransactionAmoutBelow
+        - schema:
+            type: string
+          in: query
+          name: filterOriginCountry
+        - schema:
+            type: string
+          in: query
+          name: filterDestinationCountry
+        - schema:
+            type: array
+            items:
+              $ref: ../public/openapi-public-original.yaml#/components/schemas/KYCStatus
+          in: query
+          name: filterUserKYCStatus
+        - schema:
+            type: array
+            items:
+              $ref: ../public/openapi-public-original.yaml#/components/schemas/UserState
+          in: query
+          name: filterUserState
+        - schema:
+            type: array
+            items:
+              $ref: ../public/openapi-public-original.yaml#/components/schemas/RiskLevel
+          in: query
+          name: filterRiskLevel
     post:
       summary: Alerts - Update
       operationId: post-alerts

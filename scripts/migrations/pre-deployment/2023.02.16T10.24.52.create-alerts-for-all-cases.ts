@@ -1,4 +1,3 @@
-import _ from 'lodash'
 import { StackConstants } from '@cdk/constants'
 import { migrateAllTenants } from '../utils/tenant'
 import {
@@ -10,9 +9,9 @@ import { CaseRepository } from '@/services/rules-engine/repositories/case-reposi
 import { Tenant } from '@/@types/openapi-internal/Tenant'
 import { DefaultApiGetCaseListRequest } from '@/@types/openapi-internal/RequestParameters'
 import { OptionalPagination } from '@/utils/pagination'
-import { Alert } from '@/@types/openapi-internal/Alert'
 import { EntityCounter } from '@/@types/openapi-internal/EntityCounter'
 import { Case } from '@/@types/openapi-internal/Case'
+import { transactionsToAlerts } from '@/services/alerts'
 
 export async function migrateTenant(tenant: Tenant) {
   const mongodb = await getMongoDbClient(StackConstants.MONGO_DB_DATABASE_NAME)
@@ -34,33 +33,8 @@ export async function migrateTenant(tenant: Tenant) {
   let caseEntity = await casesCursor.next()
   while (caseEntity) {
     if (!caseEntity.alerts) {
-      const alertMap: { [key: string]: Alert } = {}
-      caseEntity.caseTransactions?.map((transaction) => {
-        transaction.hitRules.map(async (hitRule) => {
-          if (!(hitRule.ruleInstanceId in alertMap)) {
-            alertMap[hitRule.ruleInstanceId] = {
-              createdTimestamp: transaction.timestamp,
-              latestTransactionArrivalTimestamp: transaction.timestamp,
-              alertStatus: 'OPEN',
-              ruleId: hitRule.ruleId,
-              ruleInstanceId: hitRule.ruleInstanceId,
-              ruleName: hitRule.ruleName,
-              ruleDescription: hitRule.ruleDescription,
-              ruleAction: hitRule.ruleAction,
-              numberOfTransactionsHit: 1,
-              priority: 'P1',
-            }
-          } else {
-            alertMap[hitRule.ruleInstanceId] = {
-              ...alertMap[hitRule.ruleInstanceId],
-              numberOfTransactionsHit:
-                alertMap[hitRule.ruleInstanceId].numberOfTransactionsHit + 1,
-              latestTransactionArrivalTimestamp: transaction.timestamp,
-            }
-          }
-        })
-      })
-      caseEntity.alerts = Object.values(alertMap)
+      const transactions = caseEntity?.caseTransactions || []
+      caseEntity.alerts = transactionsToAlerts(transactions)
       const session = mongodb.startSession()
 
       await session.withTransaction(async () => {

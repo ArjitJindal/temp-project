@@ -31,6 +31,7 @@ export const localDev =
         tenantName: 'unset',
         userId: 'unset',
         role: 'user',
+        auth0Domain: 'dev-flagright.eu.auth0.com',
         ...authorizer,
       }
     } else if (process.env.ENV === 'local') {
@@ -66,6 +67,7 @@ export const localDev =
           userId: userInfo[`${CUSTOM_CLAIMS_NS}/userId`],
           encodedPermissions,
           role: userInfo[CUSTOM_CLAIMS_NS + '/role'],
+          auth0Domain: 'dev-flagright.eu.auth0.com',
           ...authorizer,
         }
         event.requestContext.authorizer = jwtAuthorizerResult

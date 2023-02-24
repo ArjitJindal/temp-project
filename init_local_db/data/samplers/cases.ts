@@ -4,6 +4,7 @@ import { Case } from '@/@types/openapi-internal/Case'
 import { User } from '@/@types/openapi-public/User'
 import { Business } from '@/@types/openapi-public/Business'
 import { CaseTransaction } from '@/@types/openapi-internal/CaseTransaction'
+import { transactionsToAlerts } from '@/services/alerts'
 
 export function sampleTransactionCase(
   transaction: CaseTransaction,
@@ -38,10 +39,11 @@ export function sampleUserCase(
   seed?: number
 ): Case {
   const { transactions, user } = params
+  const createdAt = sampleTimestamp(seed)
   return {
     caseId: `case-transaction-${sampleGuid(seed)}`,
     caseStatus: 'OPEN',
-    createdTimestamp: sampleTimestamp(seed),
+    createdTimestamp: createdAt,
     latestTransactionArrivalTimestamp: sampleTimestamp(seed) + 3600 * 1000,
     comments: [],
     assignments: [],
@@ -55,5 +57,8 @@ export function sampleUserCase(
     },
     caseTransactionsIds: transactions.map((t) => t.transactionId!),
     caseTransactions: transactions,
+    alerts: transactionsToAlerts(transactions).map((alert) => {
+      return { alertId: `alert-${sampleGuid(seed)}`, ...alert }
+    }),
   }
 }

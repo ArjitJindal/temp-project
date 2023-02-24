@@ -24,7 +24,6 @@ import {
   DefaultApiGetAlertListRequest,
   DefaultApiGetCaseListRequest,
 } from '@/@types/openapi-internal/RequestParameters'
-import { TransactionCaseManagement } from '@/@types/openapi-internal/TransactionCaseManagement'
 import { EntityCounter } from '@/@types/openapi-internal/EntityCounter'
 import { CaseStatus } from '@/@types/openapi-internal/CaseStatus'
 import { Case } from '@/@types/openapi-internal/Case'
@@ -141,9 +140,9 @@ export class CaseRepository {
     }
   }
 
-  private async getCasesMongoQuery(
+  private async getCasesConditions(
     params: OptionalPagination<DefaultApiGetCaseListRequest>
-  ): Promise<{ filter: Filter<Case> }> {
+  ): Promise<Filter<Case>[]> {
     const conditions: Filter<Case>[] = []
     conditions.push({
       createdTimestamp: {
@@ -433,21 +432,7 @@ export class CaseRepository {
       })
     }
 
-    if (
-      params.filterAssignmentsIds != null &&
-      params.filterAssignmentsIds.length > 0
-    ) {
-      conditions.push({
-        assignments: {
-          $elemMatch: {
-            assigneeUserId: { $in: params.filterAssignmentsIds },
-          },
-        },
-      })
-    }
-    return {
-      filter: { $and: conditions },
-    }
+    return conditions
   }
 
   public async getCasesMongoPipeline(
@@ -465,7 +450,21 @@ export class CaseRepository {
         : 'createdTimestamp'
     const sortOrder = params?.sortOrder === 'ascend' ? 1 : -1
 
-    const { filter } = await this.getCasesMongoQuery(params)
+    const conditions = await this.getCasesConditions(params)
+
+    if (
+      params.filterAssignmentsIds != null &&
+      params.filterAssignmentsIds.length > 0
+    ) {
+      conditions.push({
+        assignments: {
+          $elemMatch: {
+            assigneeUserId: { $in: params.filterAssignmentsIds },
+          },
+        },
+      })
+    }
+    const filter = { $and: conditions }
 
     const preLimitPipeline: Document[] = []
     const postLimitPipeline: Document[] = []
@@ -708,7 +707,7 @@ export class CaseRepository {
     const db = this.mongoDb.db()
     const collection = db.collection<Case>(CASES_COLLECTION(this.tenantId))
 
-    const pipeline = this.getAlertsPipeline(params)
+    const pipeline = await this.getAlertsPipeline(params)
 
     const itemsPipeline = [...pipeline]
     itemsPipeline.push(...paginatePipeline(params))
@@ -735,16 +734,10 @@ export class CaseRepository {
     }
   }
 
-  private getAlertsPipeline(
+  private async getAlertsPipeline(
     params: OptionalPagination<DefaultApiGetAlertListRequest>
-  ): Document[] {
-    const caseConditions: Filter<TransactionCaseManagement>[] = []
-    if (params.filterOutCaseStatus != null) {
-      caseConditions.push({ caseStatus: { $ne: params.filterOutCaseStatus } })
-    }
-    if (params.filterCaseStatus != null) {
-      caseConditions.push({ caseStatus: { $eq: params.filterCaseStatus } })
-    }
+  ): Promise<Document[]> {
+    const caseConditions: Filter<Case>[] = await this.getCasesConditions(params)
 
     const pipeline: Document[] = [
       ...(caseConditions.length > 0
@@ -780,6 +773,7 @@ export class CaseRepository {
         'alert.alertStatus': { $eq: params.filterCaseStatus },
       })
     }
+
     if (
       params.filterAssignmentsIds != null &&
       params.filterAssignmentsIds.length > 0
@@ -792,6 +786,7 @@ export class CaseRepository {
         },
       })
     }
+
     if (conditions.length > 0) {
       pipeline.push({
         $match: {
