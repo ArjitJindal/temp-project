@@ -860,27 +860,12 @@ export class CaseRepository {
           {
             assignments: updates.assignments,
             caseStatus: updates.caseStatus,
-            ...(updates.statusChange?.caseStatus === 'CLOSED'
-              ? { 'alerts.$[alertToUpdate].alertStatus': 'CLOSED' }
-              : {}),
           },
           _.isNil
         ),
         ...(updates.statusChange
-          ? {
-              $push: {
-                statusChanges: updates.statusChange,
-                'alerts.$[alertToUpdate].statusChanges': updates.statusChange,
-              },
-            }
+          ? { $push: { statusChanges: updates.statusChange } }
           : {}),
-      },
-      {
-        arrayFilters: [
-          {
-            'alertToUpdate.alertStatus': { $in: ['OPEN', 'REOPENED'] },
-          },
-        ],
       }
     )
   }
@@ -896,34 +881,43 @@ export class CaseRepository {
     const db = this.mongoDb.db()
     const collection = db.collection<Case>(CASES_COLLECTION(this.tenantId))
 
-    await collection.updateMany(
-      {
-        'alerts.alertId': { $in: alertIds },
-      },
-      {
-        $set: _.omitBy(
-          {
-            'alerts.$[alertToUpdate].assignments': updates.assignments,
-            'alerts.$[alertToUpdate].alertStatus': updates.alertStatus,
-          },
-          _.isNil
-        ),
-        ...(updates.statusChange
-          ? {
-              $push: {
-                'alerts.$[alertToUpdate].statusChanges': updates.statusChange,
+    const result: Promise<unknown>[] = []
+    const casesCursor = collection.find({
+      'alerts.alertId': { $in: alertIds },
+    })
+    while (await casesCursor.hasNext()) {
+      const caseItem = await casesCursor.next()
+      if (caseItem == null) {
+        break
+      }
+      const newAlerts = caseItem.alerts?.map((alert) => {
+        if (!alertIds.includes(alert.alertId as string)) {
+          return alert
+        }
+        return {
+          ...alert,
+          ...updates,
+          statusChanges: updates.statusChange
+            ? [...(alert.statusChanges ?? []), updates.statusChange]
+            : alert.statusChanges,
+        }
+      })
+      if (caseItem.caseId != null && newAlerts) {
+        result.push(
+          collection.updateOne(
+            {
+              caseId: caseItem.caseId,
+            },
+            {
+              $set: {
+                alerts: newAlerts,
               },
             }
-          : {}),
-      },
-      {
-        arrayFilters: [
-          {
-            'alertToUpdate.alertId': { $in: alertIds },
-          },
-        ],
+          )
+        )
       }
-    )
+    }
+    await Promise.all(result)
   }
 
   public async saveCaseComment(
