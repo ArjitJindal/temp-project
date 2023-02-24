@@ -66,7 +66,7 @@ export default function AgeRangeInput(props: Props) {
       />
       <Label label={'Max age'} level={2}>
         <NumberInput
-          min={minValue ?? MAX_AGE}
+          min={minValue ?? MIN_AGE}
           max={MAX_AGE}
           value={maxValue ?? MAX_AGE}
           onChange={(newValue) => {
