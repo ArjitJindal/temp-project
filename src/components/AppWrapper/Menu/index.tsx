@@ -160,7 +160,7 @@ export default function Menu(props: {
               sideBarCollapseContext.setCollapseSideBar('MANUAL');
               return onChangeCollapsed(!isCollapsed);
             },
-            icon: isCollapsed ? <MenuFoldOutlined /> : <MenuUnfoldOutlined />,
+            icon: isCollapsed ? <MenuUnfoldOutlined /> : <MenuFoldOutlined />,
             style: !isCollapsed ? { background: 'transparent' } : { background: 'transparent' },
           },
         ])}
