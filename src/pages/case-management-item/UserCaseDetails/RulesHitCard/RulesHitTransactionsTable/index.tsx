@@ -125,7 +125,8 @@ export default function RulesHitTransactionTable(props: Props) {
                   exportData: 'caseTransactions.arsScore.arsScore',
                   hideInSearch: true,
                   sorter: true,
-                  render: (_, entity) => entity?.caseTransactions?.arsScore?.arsScore,
+                  render: (node, entity) =>
+                    entity?.caseTransactions?.arsScore?.arsScore?.toFixed(2),
                   tooltip: 'Transaction Risk Score',
                 }
               : {},

@@ -154,7 +154,7 @@ export function Content(props: { userId: string }) {
                   key: 'arsScore',
                   hideInSearch: true,
                   sorter: true,
-                  render: (_, entity) => entity?.arsScore,
+                  render: (_, entity) => entity?.arsScore?.toFixed(2),
                   onCell: (_) => ({
                     rowSpan: _.isFirstRow ? _.rowsCount : 0,
                   }),

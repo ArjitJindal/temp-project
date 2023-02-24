@@ -96,7 +96,7 @@ export default function TransactionsTable(props: Props) {
             exportData: 'arsScore.arsScore',
             hideInSearch: true,
             sorter: true,
-            render: (_, entity) => entity?.arsScore?.arsScore,
+            render: (_, entity) => entity?.arsScore?.arsScore?.toFixed(2),
             tooltip: 'Transaction Risk Score',
           }
         : {},
