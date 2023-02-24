@@ -2,7 +2,7 @@ import { defineConfig } from 'cypress';
 
 export default defineConfig({
   env: {
-    loginUrl: 'https://dev.console.flagright.com/login',
+    loginUrl: 'https://login.dev.console.flagright.com/',
     auth0_domain: 'dev-flagright.eu.auth0.com',
     auth0_client_id: 'uGGbVNumU7d57NswPLD5UaTwvf17tc7y',
     auth0_audience: 'https://dev.api.flagright.com/',

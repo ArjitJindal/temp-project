@@ -5,10 +5,14 @@ Cypress.Commands.add('loginByForm', (username: string, password: string) => {
   cy.visit(loginUrl);
   cy.location('host').should('eq', new URL(loginUrl).host);
 
-  cy.get('input[name=email]').type(username);
-  cy.get('input[name=password]').type(password);
+  cy.get('input#username').type(username);
+  cy.get('input#password').type(password);
   cy.get('button[type=submit]').first().click();
-  cy.get('.auth0-lock.auth0-lock-opened').should('not.exist');
+
+  cy.location('host', { timeout: 10000 }).should(
+    'eq',
+    new URL(Cypress.config('baseUrl') as string).host,
+  );
 });
 
 Cypress.on('uncaught:exception', (err) => {
