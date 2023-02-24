@@ -172,6 +172,7 @@ export default function AlertTable(props: Props) {
         pageSize,
         alertId,
         caseStatus,
+        userId,
         transactionState,
         businessIndustryFilter,
         tagKey,
@@ -189,6 +190,7 @@ export default function AlertTable(props: Props) {
         filterBusinessIndustries: businessIndustryFilter,
         filterTransactionTagKey: tagKey,
         filterTransactionTagValue: tagValue,
+        filterUserId: userId,
       });
       return {
         items: presentAlertData(result.data),
