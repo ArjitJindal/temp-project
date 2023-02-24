@@ -1,7 +1,6 @@
 import React, { useCallback, useMemo, useRef, useState } from 'react';
 import { ProFormInstance } from '@ant-design/pro-form';
-import { TransactionStateButton } from '../../transactions/components/TransactionStateButton';
-import { CaseSearchParams } from '../types';
+import { TableSearchParams } from '../types';
 import CasesStatusChangeButton from '../components/CasesStatusChangeButton';
 import GavelIcon from './gavel.react.svg';
 import { Account, Case, CaseUpdateRequest } from '@/apis';
@@ -9,13 +8,11 @@ import { dayjs, DEFAULT_DATE_TIME_FORMAT } from '@/utils/dayjs';
 import { QueryResult } from '@/utils/queries/types';
 import { useAuth0User, useUsers } from '@/utils/user-utils';
 import { makeUrl } from '@/utils/routing';
-import UserSearchButton from '@/pages/transactions/components/UserSearchButton';
-import { ExtraFilter, TableColumn, TableRow } from '@/components/ui/Table/types';
+import { TableColumn, TableRow } from '@/components/ui/Table/types';
 import QueryResultsTable from '@/components/common/QueryResultsTable';
 import { AllParams, TableActionType } from '@/components/ui/Table';
 import Id from '@/components/ui/Id';
 import { addBackUrlToRoute } from '@/utils/backUrl';
-import TagSearchButton from '@/pages/transactions/components/TagSearchButton';
 import CaseStatusButtons from '@/pages/transactions/components/CaseStatusButtons';
 import { useTableData } from '@/pages/case-management/CaseTable/helpers';
 import { TableItem } from '@/pages/case-management/CaseTable/types';
@@ -35,17 +32,17 @@ import { humanizeConstant } from '@/utils/humanize';
 import AccountCircleLineIcon from '@/components/ui/icons/Remix/user/account-circle-line.react.svg';
 import CalendarLineIcon from '@/components/ui/icons/Remix/business/calendar-line.react.svg';
 import StackLineIcon from '@/components/ui/icons/Remix/business/stack-line.react.svg';
-import { RiskLevelButton } from '@/pages/users/users-list/RiskLevelFilterButton';
-import BusinessIndustryButton from '@/pages/transactions/components/BusinessIndustryButton';
 import ScopeSelector from '@/pages/case-management/components/ScopeSelector';
 import AssignToButton from '@/pages/case-management/components/AssignToButton';
 import { message } from '@/components/library/Message';
 import { useApi } from '@/api';
+import { SimpleAlertTable } from '@/pages/case-management/AlertTable';
+import { extraFilters } from '@/pages/case-management/helpers';
 
 interface Props {
-  params: AllParams<CaseSearchParams>;
+  params: AllParams<TableSearchParams>;
   queryResult: QueryResult<PaginatedData<Case>>;
-  onChangeParams: (newState: AllParams<CaseSearchParams>) => void;
+  onChangeParams: (newState: AllParams<TableSearchParams>) => void;
   onUpdateCases: (caseIds: string[], updates: CaseUpdateRequest) => void;
   rules: { value: string | undefined; label: string | undefined }[];
 }
@@ -56,7 +53,7 @@ export default function CaseTable(props: Props) {
   const tableQueryResult = useTableData(queryResult);
 
   const actionRef = useRef<TableActionType>(null);
-  const formRef = useRef<ProFormInstance<CaseSearchParams>>();
+  const formRef = useRef<ProFormInstance<TableSearchParams>>();
   const user = useAuth0User();
   const isPulseEnabled = useFeatureEnabled('PULSE');
 
@@ -405,101 +402,18 @@ export default function CaseTable(props: Props) {
       });
   };
   return (
-    <QueryResultsTable<TableItem, CaseSearchParams>
+    <QueryResultsTable<TableItem, TableSearchParams>
+      expandable={{
+        showExpandColumn: true,
+        defaultExpandAllRows: false,
+        expandRowByClick: true,
+        expandedRowRender: (record) => record.caseId && <SimpleAlertTable caseId={record.caseId} />,
+      }}
       tableId="user-cases"
       queryResults={tableQueryResult}
       params={params}
       onChangeParams={onChangeParams}
-      extraFilters={[
-        {
-          key: 'userId',
-          title: 'User ID/Name',
-          showFilterByDefault: true,
-          renderer: ({ params, setParams }) => (
-            <UserSearchButton
-              initialMode={params.userFilterMode ?? 'ALL'}
-              userId={params.userId ?? null}
-              onConfirm={(userId, mode) => {
-                setParams((state) => ({
-                  ...state,
-                  userId: userId ?? undefined,
-                  userFilterMode: mode ?? 'ALL',
-                }));
-              }}
-            />
-          ),
-        },
-        {
-          key: 'transactionState',
-          title: 'Transaction state',
-          showFilterByDefault: true,
-          renderer: ({ params, setParams }) => (
-            <TransactionStateButton
-              transactionStates={params.transactionState ?? []}
-              onConfirm={(value) => {
-                setParams((state) => ({
-                  ...state,
-                  transactionState: value ?? undefined,
-                }));
-              }}
-            />
-          ),
-        },
-        {
-          key: 'tagKey',
-          title: 'Tags',
-          renderer: ({ params, setParams }) => (
-            <TagSearchButton
-              initialState={{
-                key: params.tagKey ?? null,
-                value: params.tagValue ?? null,
-              }}
-              onConfirm={(value) => {
-                setParams((state) => ({
-                  ...state,
-                  tagKey: value.key ?? undefined,
-                  tagValue: value.value ?? undefined,
-                }));
-              }}
-            />
-          ),
-        },
-        {
-          key: 'businessIndustryFilter',
-          title: 'Business industry',
-          showFilterByDefault: true,
-          renderer: ({ params, setParams }) => (
-            <BusinessIndustryButton
-              businessIndustry={params.businessIndustryFilter ?? []}
-              onConfirm={(value) => {
-                setParams((state) => ({
-                  ...state,
-                  businessIndustryFilter: value ?? undefined,
-                }));
-              }}
-            />
-          ),
-        },
-        ...((isPulseEnabled
-          ? [
-              {
-                key: 'riskLevels',
-                title: 'CRA',
-                renderer: ({ params, setParams }) => (
-                  <RiskLevelButton
-                    riskLevels={params.riskLevels ?? []}
-                    onConfirm={(value) => {
-                      setParams((state) => ({
-                        ...state,
-                        riskLevels: value ?? undefined,
-                      }));
-                    }}
-                  />
-                ),
-              },
-            ]
-          : []) as ExtraFilter<CaseSearchParams>[]),
-      ]}
+      extraFilters={extraFilters(isPulseEnabled)}
       actionsHeader={[
         ({ params, setParams }) => <ScopeSelector params={params} onChangeParams={setParams} />,
       ]}

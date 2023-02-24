@@ -1,27 +1,26 @@
+import React from 'react';
 import { dayjs } from '@/utils/dayjs';
 import '../../components/ui/colors';
-
 import { Adapter } from '@/utils/routing';
 import { isRuleAction, isTransactionState } from '@/utils/rules';
-import { CaseSearchParams, TableSearchParams } from '@/pages/case-management/types';
+import { TableSearchParams } from '@/pages/case-management/types';
 import { isMode } from '@/pages/transactions/components/UserSearchPopup/types';
 import { defaultQueryAdapter } from '@/components/ui/Table/helpers/queryAdapter';
 import { neverReturn } from '@/utils/lang';
+import { ExtraFilter } from '@/components/ui/Table/types';
+import UserSearchButton from '@/pages/transactions/components/UserSearchButton';
+import { TransactionStateButton } from '@/pages/transactions/components/TransactionStateButton';
+import TagSearchButton from '@/pages/transactions/components/TagSearchButton';
+import BusinessIndustryButton from '@/pages/transactions/components/BusinessIndustryButton';
+import { RiskLevelButton } from '@/pages/users/users-list/RiskLevelFilterButton';
 
 export const queryAdapter: Adapter<TableSearchParams> = {
   serializer: (params) => {
-    if (params.showCases === 'MY_ALERTS') {
+    if (['MY', 'ALL', 'MY_ALERTS', 'ALL_ALERTS'].indexOf(params.showCases) > -1) {
       return {
         ...defaultQueryAdapter.serializer(params),
         showCases: params.showCases,
         alertId: params.alertId,
-        caseStatus: params.caseStatus,
-      };
-    }
-    if (params.showCases === 'MY' || params.showCases === 'ALL') {
-      return {
-        ...defaultQueryAdapter.serializer(params),
-        showCases: params.showCases,
         timestamp: params.timestamp?.map((x) => dayjs(x).valueOf()).join(','),
         createdTimestamp: params.createdTimestamp?.map((x) => dayjs(x).valueOf()).join(','),
         transactionTimestamp: params.transactionTimestamp?.map((x) => dayjs(x).valueOf()).join(','),
@@ -52,69 +51,153 @@ export const queryAdapter: Adapter<TableSearchParams> = {
         riskLevels: params.riskLevels?.join(','),
       };
     }
-    return neverReturn(params.showCases, {
+    return neverReturn(params.showCases as never, {
       ...defaultQueryAdapter.serializer(params),
       showCases: params.showCases,
     });
   },
   deserializer: (raw): TableSearchParams => {
-    const showCases =
-      raw.showCases === 'MY' ? 'MY' : raw.showCases === 'MY_ALERTS' ? 'MY_ALERTS' : 'ALL';
-    if (showCases === 'MY_ALERTS') {
-      return {
-        ...defaultQueryAdapter.deserializer(raw),
-        showCases: 'MY_ALERTS',
-        alertId: raw.alertId,
-        caseStatus:
-          raw.caseStatus === 'CLOSED' ? 'CLOSED' : raw.caseStatus === 'OPEN' ? 'OPEN' : undefined,
-      };
-    } else {
-      return {
-        ...defaultQueryAdapter.deserializer(raw),
-        timestamp: raw.timestamp
-          ? raw.timestamp.split(',').map((x) => dayjs(parseInt(x)).format())
+    const showCases = raw.showCases;
+
+    return {
+      ...defaultQueryAdapter.deserializer(raw),
+      timestamp: raw.timestamp
+        ? raw.timestamp.split(',').map((x) => dayjs(parseInt(x)).format())
+        : undefined,
+      createdTimestamp: raw.createdTimestamp
+        ? raw.createdTimestamp.split(',').map((x) => dayjs(parseInt(x)).format())
+        : undefined,
+      transactionTimestamp: raw.transactionTimestamp
+        ? raw.transactionTimestamp.split(',').map((x) => dayjs(parseInt(x)).format())
+        : undefined,
+      caseId: raw.caseId,
+      alertId: raw.alertId,
+      rulesHitFilter: raw.rulesHitFilter?.split(','),
+      rulesExecutedFilter: raw.rulesExecutedFilter?.split(','),
+      originCurrenciesFilter: raw.originCurrenciesFilter?.split(','),
+      destinationCurrenciesFilter: raw.destinationCurrenciesFilter?.split(','),
+      userId: raw.userId,
+      userFilterMode: isMode(raw.userFilterMode) ? raw.userFilterMode : undefined,
+      type: raw.type,
+      status: raw.status ? raw.status.split(',').filter(isRuleAction) : undefined,
+      originMethodFilter: raw.originMethodFilter,
+      destinationMethodFilter: raw.destinationMethodFilter,
+      transactionState:
+        raw.transactionState != null
+          ? raw.transactionState.split(',').filter(isTransactionState)
           : undefined,
-        createdTimestamp: raw.createdTimestamp
-          ? raw.createdTimestamp.split(',').map((x) => dayjs(parseInt(x)).format())
-          : undefined,
-        transactionTimestamp: raw.transactionTimestamp
-          ? raw.transactionTimestamp.split(',').map((x) => dayjs(parseInt(x)).format())
-          : undefined,
-        caseId: raw.caseId,
-        rulesHitFilter: raw.rulesHitFilter?.split(','),
-        rulesExecutedFilter: raw.rulesExecutedFilter?.split(','),
-        originCurrenciesFilter: raw.originCurrenciesFilter?.split(','),
-        destinationCurrenciesFilter: raw.destinationCurrenciesFilter?.split(','),
-        userId: raw.userId,
-        userFilterMode: isMode(raw.userFilterMode) ? raw.userFilterMode : undefined,
-        type: raw.type,
-        status: raw.status ? raw.status.split(',').filter(isRuleAction) : undefined,
-        originMethodFilter: raw.originMethodFilter,
-        destinationMethodFilter: raw.destinationMethodFilter,
-        transactionState:
-          raw.transactionState != null
-            ? raw.transactionState.split(',').filter(isTransactionState)
-            : undefined,
-        tagKey: raw.tagKey ?? undefined,
-        tagValue: raw.tagValue ?? undefined,
-        caseStatus:
-          raw.caseStatus === 'CLOSED' ? 'CLOSED' : raw.caseStatus === 'OPEN' ? 'OPEN' : undefined,
-        transactionId: raw.transactionId,
-        amountGreaterThanFilter: raw.amountGreaterThanFilter
-          ? parseInt(raw.amountGreaterThanFilter)
-          : undefined,
-        amountLessThanFilter: raw.amountLessThanFilter
-          ? parseInt(raw.amountLessThanFilter)
-          : undefined,
-        originCountryFilter: raw.originCountryFilter,
-        destinationCountryFilter: raw.destinationCountryFilter,
-        filterTypes: raw.filterTypes?.split(',') as unknown as CaseSearchParams['filterTypes'],
-        businessIndustryFilter: raw.businessIndustryFilter?.split(','),
-        kycStatuses: raw.kycStatuses?.split(',') as unknown as CaseSearchParams['kycStatuses'],
-        userStates: raw.userStates?.split(',') as unknown as CaseSearchParams['userStates'],
-        riskLevels: raw.riskLevels?.split(',') as unknown as CaseSearchParams['riskLevels'],
-        showCases: showCases,
-      };
-    }
+      tagKey: raw.tagKey ?? undefined,
+      tagValue: raw.tagValue ?? undefined,
+      caseStatus:
+        raw.caseStatus === 'CLOSED' ? 'CLOSED' : raw.caseStatus === 'OPEN' ? 'OPEN' : undefined,
+      transactionId: raw.transactionId,
+      amountGreaterThanFilter: raw.amountGreaterThanFilter
+        ? parseInt(raw.amountGreaterThanFilter)
+        : undefined,
+      amountLessThanFilter: raw.amountLessThanFilter
+        ? parseInt(raw.amountLessThanFilter)
+        : undefined,
+      originCountryFilter: raw.originCountryFilter,
+      destinationCountryFilter: raw.destinationCountryFilter,
+      filterTypes: raw.filterTypes?.split(',') as unknown as TableSearchParams['filterTypes'],
+      businessIndustryFilter: raw.businessIndustryFilter?.split(','),
+      kycStatuses: raw.kycStatuses?.split(',') as unknown as TableSearchParams['kycStatuses'],
+      userStates: raw.userStates?.split(',') as unknown as TableSearchParams['userStates'],
+      riskLevels: raw.riskLevels?.split(',') as unknown as TableSearchParams['riskLevels'],
+      showCases: showCases as 'MY' | 'ALL' | 'MY_ALERTS' | 'ALL_ALERTS',
+    };
   },
 };
+
+export const extraFilters: (isPulseEnabled: boolean) => ExtraFilter<TableSearchParams>[] = (
+  isPulseEnabled,
+) => [
+  {
+    key: 'userId',
+    title: 'User ID/Name',
+    showFilterByDefault: true,
+    renderer: ({ params, setParams }) => (
+      <UserSearchButton
+        initialMode={params.userFilterMode ?? 'ALL'}
+        userId={params.userId ?? null}
+        onConfirm={(userId, mode) => {
+          setParams((state) => ({
+            ...state,
+            userId: userId ?? undefined,
+            userFilterMode: mode ?? 'ALL',
+          }));
+        }}
+      />
+    ),
+  },
+  {
+    key: 'transactionState',
+    title: 'Transaction state',
+    showFilterByDefault: true,
+    renderer: ({ params, setParams }) => (
+      <TransactionStateButton
+        transactionStates={params.transactionState ?? []}
+        onConfirm={(value) => {
+          setParams((state) => ({
+            ...state,
+            transactionState: value ?? undefined,
+          }));
+        }}
+      />
+    ),
+  },
+  {
+    key: 'tagKey',
+    title: 'Tags',
+    renderer: ({ params, setParams }) => (
+      <TagSearchButton
+        initialState={{
+          key: params.tagKey ?? null,
+          value: params.tagValue ?? null,
+        }}
+        onConfirm={(value) => {
+          setParams((state) => ({
+            ...state,
+            tagKey: value.key ?? undefined,
+            tagValue: value.value ?? undefined,
+          }));
+        }}
+      />
+    ),
+  },
+  {
+    key: 'businessIndustryFilter',
+    title: 'Business industry',
+    showFilterByDefault: true,
+    renderer: ({ params, setParams }) => (
+      <BusinessIndustryButton
+        businessIndustry={params.businessIndustryFilter ?? []}
+        onConfirm={(value) => {
+          setParams((state) => ({
+            ...state,
+            businessIndustryFilter: value ?? undefined,
+          }));
+        }}
+      />
+    ),
+  },
+  ...((isPulseEnabled
+    ? [
+        {
+          key: 'riskLevels',
+          title: 'CRA',
+          renderer: ({ params, setParams }) => (
+            <RiskLevelButton
+              riskLevels={params.riskLevels ?? []}
+              onConfirm={(value) => {
+                setParams((state) => ({
+                  ...state,
+                  riskLevels: value ?? undefined,
+                }));
+              }}
+            />
+          ),
+        },
+      ]
+    : []) as ExtraFilter<TableSearchParams>[]),
+];

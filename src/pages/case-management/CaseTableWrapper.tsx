@@ -1,6 +1,6 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
-import { CaseSearchParams, TableSearchParams } from './types';
+import { TableSearchParams } from './types';
 import CaseTable from './CaseTable';
 import { message } from '@/components/library/Message';
 import { dayjs } from '@/utils/dayjs';
@@ -15,7 +15,7 @@ import { useApiTime } from '@/utils/tracker';
 import { useAuth0User } from '@/utils/user-utils';
 
 export default function CaseTableWrapper(props: {
-  params: CaseSearchParams;
+  params: TableSearchParams;
   onChangeParams: (newState: AllParams<TableSearchParams>) => void;
 }) {
   const { params, onChangeParams } = props;

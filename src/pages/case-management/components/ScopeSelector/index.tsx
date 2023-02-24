@@ -2,7 +2,7 @@ import React from 'react';
 import SegmentedControl from '@/components/library/SegmentedControl';
 import { AllParams } from '@/components/ui/Table';
 
-type ScopeSelectorValue = 'MY' | 'ALL' | 'MY_ALERTS';
+type ScopeSelectorValue = 'MY' | 'ALL' | 'ALL_ALERTS' | 'MY_ALERTS';
 
 interface Props<Params> {
   params: Params;
@@ -18,16 +18,15 @@ export default function ScopeSelector<
   return (
     <SegmentedControl<ScopeSelectorValue>
       size="LARGE"
-      active={
-        params.showCases === 'MY' ? 'MY' : params.showCases === 'MY_ALERTS' ? 'MY_ALERTS' : 'ALL'
-      }
+      active={params.showCases as ScopeSelectorValue}
       onChange={(newValue) => {
         onChangeParams((oldState) => ({ ...oldState, showCases: newValue }));
       }}
       items={[
         { value: 'ALL', label: 'All cases' },
-        { value: 'MY_ALERTS', label: 'All alerts' },
         { value: 'MY', label: 'My cases' },
+        { value: 'ALL_ALERTS', label: 'All alerts' },
+        { value: 'MY_ALERTS', label: 'My alerts' },
       ]}
     />
   );

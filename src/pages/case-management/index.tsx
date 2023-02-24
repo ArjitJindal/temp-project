@@ -51,7 +51,7 @@ export default function CaseManagementPage() {
 
   return (
     <PageWrapper title={i18n('menu.case-management')}>
-      {params.showCases === 'MY_ALERTS' ? (
+      {params.showCases === 'MY_ALERTS' || params.showCases === 'ALL_ALERTS' ? (
         <AlertTable params={params} onChangeParams={handleChangeParams} />
       ) : (
         <CaseTableWrapper params={params} onChangeParams={handleChangeParams} />
