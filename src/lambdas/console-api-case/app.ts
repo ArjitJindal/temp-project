@@ -22,6 +22,7 @@ import { AlertsUpdateRequest } from '@/@types/openapi-internal/AlertsUpdateReque
 import { Case } from '@/@types/openapi-internal/Case'
 import { CaseStatus } from '@/@types/openapi-internal/CaseStatus'
 import { getDynamoDbClientByEvent } from '@/utils/dynamodb'
+import { TransactionState } from '@/@types/openapi-internal/TransactionState'
 
 export type CaseConfig = {
   TMP_BUCKET: string
@@ -312,6 +313,11 @@ export const casesHandler = lambdaApi()(
         filterOutCaseStatus,
         filterCaseStatus,
         filterAssignmentsIds,
+        filterTransactionState,
+        filterBusinessIndustries,
+        filterTransactionTagKey,
+        filterTransactionTagValue,
+        filterUserId,
       } = event.queryStringParameters as Record<string, string>
       const params: DefaultApiGetAlertListRequest = {
         page: parseInt(page),
@@ -320,6 +326,13 @@ export const casesHandler = lambdaApi()(
         filterOutCaseStatus: filterOutCaseStatus as CaseStatus | undefined,
         filterCaseStatus: filterCaseStatus as CaseStatus | undefined,
         filterAssignmentsIds: filterAssignmentsIds?.split(','),
+        filterBusinessIndustries: filterBusinessIndustries?.split(','),
+        filterTransactionState: filterTransactionState?.split(',') as
+          | TransactionState[]
+          | undefined,
+        filterTransactionTagKey,
+        filterTransactionTagValue,
+        filterUserId,
       }
       return caseService.getAlerts(params)
     } else if (

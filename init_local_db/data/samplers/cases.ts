@@ -40,6 +40,7 @@ export function sampleUserCase(
 ): Case {
   const { transactions, user } = params
   const createdAt = sampleTimestamp(seed)
+  const caseId = `case-transaction-${sampleGuid(seed)}`
   return {
     caseId: `case-transaction-${sampleGuid(seed)}`,
     caseStatus: 'OPEN',
@@ -57,7 +58,7 @@ export function sampleUserCase(
     },
     caseTransactionsIds: transactions.map((t) => t.transactionId!),
     caseTransactions: transactions,
-    alerts: transactionsToAlerts(transactions).map((alert) => {
+    alerts: transactionsToAlerts(transactions, caseId).map((alert) => {
       return { alertId: `alert-${sampleGuid(seed)}`, ...alert }
     }),
   }
