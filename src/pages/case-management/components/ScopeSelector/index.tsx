@@ -26,7 +26,7 @@ export default function ScopeSelector<
       }}
       items={[
         { value: 'ALL', label: 'All cases' },
-        { value: 'MY_ALERTS', label: 'My alerts' },
+        { value: 'MY_ALERTS', label: 'All alerts' },
         { value: 'MY', label: 'My cases' },
       ]}
     />

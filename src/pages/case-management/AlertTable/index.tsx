@@ -48,7 +48,6 @@ export default function AlertTable(props: Props) {
         filterAlertId: alertId,
         filterOutCaseStatus: caseStatus === 'CLOSED' ? undefined : 'CLOSED',
         filterCaseStatus: caseStatus === 'CLOSED' ? 'CLOSED' : undefined,
-        filterAssignmentsIds: [user.userId],
       });
       return {
         items: result.data.map(({ alert, ...rest }) => {
@@ -158,6 +157,9 @@ export default function AlertTable(props: Props) {
       valueType: 'text',
       hideInSearch: true,
       render: (dom, entity) => {
+        if (!entity.caseId) {
+          return <>No case ID</>;
+        }
         return (
           <Id
             id={entity.caseId}
