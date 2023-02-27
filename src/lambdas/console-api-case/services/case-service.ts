@@ -19,6 +19,8 @@ import { RulesHitPerCase } from '@/@types/openapi-internal/RulesHitPerCase'
 import { PaginationParams } from '@/utils/pagination'
 import { DashboardStatsRepository } from '@/lambdas/console-api-dashboard/repositories/dashboard-stats-repository'
 import { addNewSubsegment } from '@/core/xray'
+import { sendWebhookTasks } from '@/services/webhook/utils'
+import { getContext } from '@/core/utils/context'
 
 export class CaseService {
   caseRepository: CaseRepository
@@ -89,18 +91,34 @@ export class CaseService {
       caseStatus: updateRequest.caseStatus,
     }
     await this.caseRepository.updateCases(caseIds, updates)
+    const tenantId = getContext()?.tenantId
+    if (!tenantId) {
+      throw new Error("Couldn't determine tenant")
+    }
     if (updateRequest.caseStatus) {
       await Promise.all(
-        caseIds.map((caseId) =>
-          this.saveCaseComment(caseId, {
-            userId,
-            body:
-              `Case Status Changed to ${updateRequest.caseStatus}` +
-              (updateRequest.comment ? `. ${updateRequest.comment}` : ''),
-            files: updateRequest.files,
-          })
-        )
+        caseIds.flatMap((caseId) => {
+          return [
+            this.saveCaseComment(caseId, {
+              userId,
+              body:
+                `Case Status Changed to ${updateRequest.caseStatus}` +
+                (updateRequest.comment ? `. ${updateRequest.comment}` : ''),
+              files: updateRequest.files,
+            }),
+            sendWebhookTasks(tenantId, [
+              {
+                event: 'CASE_STATUS_UPDATED',
+                payload: {
+                  caseId,
+                  status: updateRequest.caseStatus,
+                },
+              },
+            ]),
+          ]
+        })
       )
+
       const cases = await this.caseRepository.getCasesByIds(caseIds)
       await Promise.all(
         cases.map((c) =>

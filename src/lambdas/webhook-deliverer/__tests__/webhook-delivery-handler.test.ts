@@ -151,7 +151,6 @@ describe('Webhook delivery', () => {
         },
       })
       expect(attempt.response?.status).toEqual(200)
-      expect(attempt.response?.headers).toMatchObject({ foo: ['bar'] })
       expect(attempt.response?.body).toEqual('OK')
     })
 

@@ -17,6 +17,7 @@ import {
   SIMULATION_RESULT_COLLECTION,
   KRS_SCORES_COLLECTION,
   DRS_SCORES_COLLECTION,
+  WEBHOOK_COLLECTION,
 } from '@/utils/mongoDBUtils'
 import { TransactionCaseManagement } from '@/@types/openapi-internal/TransactionCaseManagement'
 import { Case } from '@/@types/openapi-internal/Case'
@@ -28,6 +29,7 @@ import { getCredentialsFromEvent } from '@/utils/credentials'
 import { DemoModeDataLoadBatchJob } from '@/@types/batch-job'
 import { getFullTenantId } from '@/lambdas/jwt-authorizer/app'
 import { createNewApiKeyForTenant } from '@/services/api-key'
+import { WebhookConfiguration } from '@/@types/openapi-internal/WebhookConfiguration'
 
 export type ApiKeyGeneratorQueryStringParameters = {
   tenantId: string
@@ -292,6 +294,18 @@ export const createMongoDBCollections = async (
     const drsScoresCollection = db.collection(DRS_SCORES_COLLECTION(tenantId))
     await drsScoresCollection.createIndex({
       userId: 1,
+    })
+
+    try {
+      await db.createCollection(WEBHOOK_COLLECTION(tenantId))
+    } catch (e) {
+      // ignore already exists
+    }
+    const webhookCollection = db.collection<WebhookConfiguration>(
+      WEBHOOK_COLLECTION(tenantId)
+    )
+    await webhookCollection.createIndex({
+      events: 1,
     })
   } catch (e) {
     logger.error(`Error in creating MongoDB collections: ${e}`)

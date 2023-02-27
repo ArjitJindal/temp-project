@@ -72,6 +72,7 @@ export async function getInitialContext(
       .forEach((p) => permissions.set(p as Permission, true))
 
     const context: Context = {
+      tenantId,
       logMetadata: {
         tenantId,
         functionName: lambdaContext?.functionName,

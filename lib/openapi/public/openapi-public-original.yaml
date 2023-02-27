@@ -3925,6 +3925,7 @@ components:
       x-stoplight:
         id: 5rtg1zffpod4f
       enum:
+        - CASE_STATUS_UPDATED
         - USER_STATE_UPDATED
     ListType:
       type: string

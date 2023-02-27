@@ -724,6 +724,7 @@ export class CdkTarponStack extends cdk.Stack {
         ...atlasFunctionProps,
         environment: {
           ...atlasFunctionProps.environment,
+          WEBHOOK_DELIVERY_QUEUE_URL: webhookDeliveryQueue.queueUrl,
           ...({
             TMP_BUCKET: tmpBucketName,
             DOCUMENT_BUCKET: documentBucketName,
@@ -1064,12 +1065,15 @@ export class CdkTarponStack extends cdk.Stack {
     webhookTarponChangeCaptureRetryQueue.grantSendMessages(
       webhookTarponChangeCaptureHandlerAlias
     )
+
+    webhookDeliveryQueue.grantSendMessages(caseAlias)
     webhookDeliveryQueue.grantSendMessages(
       webhookTarponChangeCaptureHandlerAlias
     )
     webhookDeliveryQueue.grantSendMessages(
       webhookTarponChangeCaptureHandlerRetryAlias
     )
+
     transientDynamoDbTable.grantReadWriteData(
       webhookTarponChangeCaptureHandlerAlias
     )

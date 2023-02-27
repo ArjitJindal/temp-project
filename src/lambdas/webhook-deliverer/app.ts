@@ -1,7 +1,10 @@
 import { createHmac } from 'node:crypto'
 import { SQSEvent, SQSRecord } from 'aws-lambda'
-
-import fetch, { Response } from 'node-fetch'
+// No types defined for this polyfill
+// eslint-disable-next-line @typescript-eslint/ban-ts-comment
+// @ts-ignore
+import { abortableFetch } from 'abortcontroller-polyfill/dist/cjs-ponyfill'
+import fetch, { Response } from 'cross-fetch'
 import timeoutSignal from 'timeout-signal'
 import { v4 as uuidv4 } from 'uuid'
 import { getWebhookSecrets } from '../../services/webhook/utils'
@@ -62,8 +65,11 @@ async function deliverWebhookEvent(
   const requestStartedAt = Date.now()
   let response: Response | undefined = undefined
   try {
-    response = await fetch(webhook.webhookUrl, fetchOptions)
-    if (response.status >= 300 && response.status < 600) {
+    response = await abortableFetch(fetch).fetch(
+      webhook.webhookUrl,
+      fetchOptions
+    )
+    if (response && response.status >= 300 && response.status < 600) {
       throw new Error(
         `Client server returned status ${response.status}. Will retry`
       )
@@ -101,7 +107,7 @@ async function deliverWebhookEvent(
       },
       response: response && {
         status: response.status,
-        headers: response.headers.raw(),
+        headers: JSON.stringify(response.headers),
         body: await response.text(),
       },
     })
