@@ -32,7 +32,7 @@ import { Priority } from '@/@types/openapi-internal/Priority'
 import { User } from '@/@types/openapi-public/User'
 import { Business } from '@/@types/openapi-public/Business'
 import { Tag } from '@/@types/openapi-public/Tag'
-import { CaseTransactionsListResponse } from '@/@types/openapi-internal/CaseTransactionsListResponse'
+import { TransactionsListResponse } from '@/@types/openapi-internal/TransactionsListResponse'
 import { TransactionRepository } from '@/services/rules-engine/repositories/transaction-repository'
 import { RulesHitPerCase } from '@/@types/openapi-internal/RulesHitPerCase'
 import { RiskRepository } from '@/services/risk-scoring/repositories/risk-repository'
@@ -758,19 +758,22 @@ export class CaseRepository {
     ]
 
     const conditions: Filter<AlertListResponseItem>[] = []
+    if (params.filterCaseId != null) {
+      conditions.push({
+        'alert.caseId': params.caseIdExactMatch
+          ? params.filterCaseId
+          : prefixRegexMatchFilter(params.filterCaseId),
+      })
+    }
     if (params.filterAlertId != null) {
       conditions.push({
         'alert.alertId': prefixRegexMatchFilter(params.filterAlertId),
       })
     }
-    if (params.filterOutCaseStatus != null) {
+    if (params.filterAlertStatus != null) {
       conditions.push({
-        'alert.alertStatus': { $ne: params.filterOutCaseStatus },
-      })
-    }
-    if (params.filterCaseStatus != null) {
-      conditions.push({
-        'alert.alertStatus': { $eq: params.filterCaseStatus },
+        'alert.alertStatus':
+          params.filterAlertStatus === 'CLOSED' ? 'CLOSED' : 'OPEN',
       })
     }
 
@@ -989,7 +992,7 @@ export class CaseRepository {
     params: PaginationParams & {
       includeUsers?: boolean
     }
-  ): Promise<CaseTransactionsListResponse> {
+  ): Promise<TransactionsListResponse> {
     const transactionsRepo = new TransactionRepository(this.tenantId, {
       mongoDb: this.mongoDb,
     })

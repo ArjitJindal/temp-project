@@ -14,7 +14,7 @@ import { Alert } from '@/@types/openapi-internal/Alert'
 import { AlertUpdateRequest } from '@/@types/openapi-internal/AlertUpdateRequest'
 import { CaseStatusChange } from '@/@types/openapi-internal/CaseStatusChange'
 import { TransactionUpdateRequest } from '@/@types/openapi-internal/TransactionUpdateRequest'
-import { CaseTransactionsListResponse } from '@/@types/openapi-internal/CaseTransactionsListResponse'
+import { TransactionsListResponse } from '@/@types/openapi-internal/TransactionsListResponse'
 import { RulesHitPerCase } from '@/@types/openapi-internal/RulesHitPerCase'
 import { PaginationParams } from '@/utils/pagination'
 import { DashboardStatsRepository } from '@/lambdas/console-api-dashboard/repositories/dashboard-stats-repository'
@@ -188,7 +188,7 @@ export class CaseService {
     params: PaginationParams & {
       includeUsers?: boolean
     }
-  ): Promise<CaseTransactionsListResponse> {
+  ): Promise<TransactionsListResponse> {
     return await this.caseRepository.getCaseTransactions(caseId, params)
   }
 

@@ -2497,6 +2497,18 @@ paths:
               $ref: ../public/openapi-public-original.yaml#/components/schemas/RiskLevel
           in: query
           name: filterRiskLevel
+        - schema:
+            type: string
+          in: query
+          name: filterCaseId
+        - schema:
+            type: boolean
+          in: query
+          name: caseIdExactMatch
+        - schema:
+            type: string
+          in: query
+          name: filterAlertStatus
     post:
       summary: Alerts - Update
       operationId: post-alerts
@@ -2779,7 +2791,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/CaseTransactionsListResponse'
+                $ref: '#/components/schemas/TransactionsListResponse'
         '404':
           description: Not found
   '/cases/{caseId}/rule/{rulesInstanceId}/transactions':
@@ -4643,21 +4655,6 @@ components:
           type: array
           items:
             $ref: '#/components/schemas/AuditLog'
-      required:
-        - total
-        - data
-    CaseTransactionsListResponse:
-      title: CasesListResponse
-      type: object
-      description: ''
-      x-examples: {}
-      properties:
-        total:
-          type: number
-        data:
-          type: array
-          items:
-            $ref: '#/components/schemas/CaseTransaction'
       required:
         - total
         - data
