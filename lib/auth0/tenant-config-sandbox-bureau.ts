@@ -4,7 +4,8 @@ import { Auth0TenantConfig } from './tenant-config'
 export const Auth0SandboxBureauTenantConfig: Auth0TenantConfig = {
   tenantName: 'sandbox-bureau-flagright',
   region: 'eu',
-  customDomain: 'login.tm.sandbox.bureau.id',
+  // TODO: set up custom domain
+  customDomain: 'sandbox-bureau-flagright.eu.auth0.com',
   consoleApplicationName: 'Bureau Console (Sandbox)',
   consoleUrl: 'https://tm.sandbox.bureau.id',
   allowedOrigins: [WHITE_LABEL_ORIGINS.bureau.sandbox],
@@ -19,6 +20,7 @@ export const Auth0SandboxBureauTenantConfig: Auth0TenantConfig = {
     type: 'sendgrid',
     // TODO: To be provided by Bureau
     credentialsAwsSecretName: 'bureau/auth0EmailProviderCreds',
-    fromAddress: 'support@bureau.id',
+    // TODO: Replace the from address after we get the email provider credentials from Bureau
+    fromAddress: 'support@flagright.com',
   },
 }

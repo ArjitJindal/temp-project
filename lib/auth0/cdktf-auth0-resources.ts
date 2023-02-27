@@ -166,15 +166,17 @@ export const createAuth0TenantResources = (
   /**
    * Branding::Custom Domains
    */
-  new auth0.customDomain.CustomDomain(
-    context,
-    getTenantResourceId(tenantName, 'custom-domain'),
-    {
-      provider,
-      domain: tenantConfig.customDomain,
-      type: 'auth0_managed_certs',
-    }
-  )
+  if (!tenantConfig.customDomain.includes('auth0.com')) {
+    new auth0.customDomain.CustomDomain(
+      context,
+      getTenantResourceId(tenantName, 'custom-domain'),
+      {
+        provider,
+        domain: tenantConfig.customDomain,
+        type: 'auth0_managed_certs',
+      }
+    )
+  }
 
   /**
    * Actions::Library::Custom
