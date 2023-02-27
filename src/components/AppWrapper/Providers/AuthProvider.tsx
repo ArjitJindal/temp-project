@@ -15,7 +15,7 @@ const providerConfig = {
   scope: 'openid profile email',
   cacheLocation: IS_SENTRY_INSTANCE ? ('localstorage' as const) : ('memory' as const),
   audience: AUTH0_AUDIENCE ?? undefined,
-  redirectUri: window.location.origin,
+  redirectUri: `${window.location.origin}${branding.redirectPath || ''}`,
 };
 
 const AuthProvider: React.FC = ({ children }) => {
