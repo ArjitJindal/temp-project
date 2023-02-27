@@ -171,6 +171,7 @@ export const SanctionsSearchTable: React.FC<Props> = ({ searchId }) => {
   ) : (
     <>
       <QueryResultsTable
+        enableLegacyFilters={true}
         queryResults={{
           data: searchEnabled
             ? map(queryResults.data, (response) => ({ items: withKey(response.data) }))

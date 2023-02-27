@@ -100,6 +100,7 @@ export interface Props<T extends object | unknown, Params extends object, ValueT
   onPaginateExportData?: (params: PaginationParams) => Promise<TableData<T>>;
   showResultsInfo?: boolean;
   autoAdjustHeight?: boolean;
+  enableLegacyFilters?: boolean; // We need this for sanctions table only
 }
 
 export default function Table<
@@ -112,6 +113,7 @@ export default function Table<
     disableExpandedRowPadding = false,
     disableInternalPadding = false,
     disableScrolling = false,
+    enableLegacyFilters = false,
     className,
     isEvenRow,
     options,
@@ -208,7 +210,7 @@ export default function Table<
           sortOrder,
           width,
           onHeaderCell,
-          hideInSearch: true,
+          hideInSearch: enableLegacyFilters ? col.hideInSearch : true,
           title: col.subtitle ? (
             <div className={style.twoLineTitle}>
               <div>{col.title}</div>
@@ -283,7 +285,7 @@ export default function Table<
     }
   };
 
-  const showFilters = params != null && allFilters.length > 0;
+  const showFilters = params != null && allFilters.length > 0 && !enableLegacyFilters;
   const showActionsHeader = actionsHeader.length > 0 && params != null;
   const showActionsHeaderRight = actionsHeaderRight.length > 0 && params != null;
   const showBottomHeader = showFilters;
@@ -308,7 +310,7 @@ export default function Table<
       ref={tableElement}
     >
       <ProTable<TableRow<T>, Params>
-        search={false}
+        search={enableLegacyFilters ? props.search : false}
         toolBarRender={(action, rows) => {
           const result = [];
 
