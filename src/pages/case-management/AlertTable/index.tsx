@@ -5,7 +5,7 @@ import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { getMutationAsyncResource, usePaginatedQuery } from '@/utils/queries/hooks';
 import { useApi } from '@/api';
 import { Account, AlertListResponseItem, Case } from '@/apis';
-import { ALERT_LIST, CASES_LIST } from '@/utils/queries/keys';
+import { ALERT_LIST, CASES_ITEM_ALERT_LIST, CASES_LIST } from '@/utils/queries/keys';
 import QueryResultsTable from '@/components/common/QueryResultsTable';
 import { TableColumn, TableData } from '@/components/ui/Table/types';
 import StackLineIcon from '@/components/ui/icons/Remix/business/stack-line.react.svg';
@@ -71,6 +71,7 @@ const mergedColumns = (
       width: 100,
       valueType: 'text',
       hideInSearch: true,
+      sorter: true,
     },
     {
       title: 'Alert age',
@@ -78,6 +79,7 @@ const mergedColumns = (
       exportData: 'age',
       hideInSearch: true,
       width: 100,
+      sorter: true,
     },
     {
       title: '#TX',
@@ -86,6 +88,7 @@ const mergedColumns = (
       width: 100,
       valueType: 'text',
       hideInSearch: true,
+      sorter: true,
     },
     {
       title: 'User name',
@@ -213,6 +216,7 @@ export default function AlertTable(props: Props) {
     ALERT_LIST(params),
     async () => {
       const {
+        sort,
         page,
         pageSize,
         alertId,
@@ -225,6 +229,8 @@ export default function AlertTable(props: Props) {
         showCases,
         caseId,
       } = params;
+      const [sortField, sortOrder] = sort[0] ?? [];
+
       const result = await api.getAlertList({
         page,
         pageSize,
@@ -238,6 +244,8 @@ export default function AlertTable(props: Props) {
         filterTransactionTagValue: tagValue,
         filterUserId: userId,
         filterCaseId: caseId,
+        sortField: sortField === 'age' ? 'createdTimestamp' : sortField,
+        sortOrder: sortOrder ?? undefined,
       });
       return {
         items: presentAlertData(result.data),
@@ -353,12 +361,16 @@ export const SimpleAlertTable = ({ caseId }: { caseId: string }) => {
   const queryClient = useQueryClient();
 
   const queryResults: QueryResult<TableData<TableAlertItem>> = usePaginatedQuery(
-    ALERT_LIST({ caseId }),
+    CASES_ITEM_ALERT_LIST(caseId, params),
     async () => {
+      const [sortField, sortOrder] = params.sort[0] ?? [];
       const result = await api.getAlertList({
         page: params.page,
         pageSize: params.pageSize,
         filterCaseId: caseId,
+        filterAlertId: params.alertId,
+        sortField,
+        sortOrder: sortOrder ?? undefined,
       });
       return {
         items: presentAlertData(result.data).map((a) => ({ ...a, caseId })),
@@ -392,7 +404,7 @@ export const SimpleAlertTable = ({ caseId }: { caseId: string }) => {
       onSuccess: async (response, variables) => {
         message.success(`New case ${response.caseId} successfully created`);
         await queryClient.invalidateQueries({
-          queryKey: ALERT_LIST({ caseId: variables.sourceCaseId }),
+          queryKey: CASES_ITEM_ALERT_LIST(variables.sourceCaseId),
         });
         await queryClient.invalidateQueries({
           queryKey: CASES_LIST({}),

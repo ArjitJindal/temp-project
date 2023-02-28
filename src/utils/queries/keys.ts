@@ -8,6 +8,13 @@ type AnyParameters = unknown;
 
 export const CASES_LIST = (params: AnyParameters): QueryKey => ['cases', 'list', { params }];
 export const CASES_ITEM = (transactionId: string): QueryKey => ['cases', transactionId];
+export const CASES_ITEM_ALERT_LIST = (caseId: string, params?: AnyParameters): QueryKey => [
+  'cases',
+  caseId,
+  'alerts',
+  'list',
+  params,
+];
 export const CASES_ITEM_RULES = (caseId: string): QueryKey => ['cases', caseId, 'rules'];
 export const CASES_RULE_TRANSACTIONS = (
   caseId: string,
