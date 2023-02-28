@@ -8,16 +8,17 @@ import { humanizeConstant } from '@/utils/humanize';
 interface Props {
   status: 'OPEN' | 'CLOSED';
   onChange: (newStatus: 'OPEN' | 'CLOSED') => void;
+  suffix: 'cases' | 'alerts';
 }
 
 const STATUSES = ['OPEN', 'CLOSED'] as const;
 
-export default function CaseStatusButtons(props: Props) {
-  const { status, onChange } = props;
+export default function StatusButtons(props: Props) {
+  const { status, onChange, suffix } = props;
 
   const options = STATUSES.map((status) => ({
     value: status,
-    label: `${humanizeConstant(status)} cases`,
+    label: `${humanizeConstant(status)} ${suffix}`,
   }));
 
   return (

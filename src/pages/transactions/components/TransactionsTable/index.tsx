@@ -50,6 +50,8 @@ type Props = {
   hideSearchForm?: boolean;
   disableSorting?: boolean;
   autoAdjustHeight?: boolean;
+  adjustPagination?: boolean;
+  headerSubtitle?: string;
 };
 
 export default function TransactionsTable(props: Props) {
@@ -64,6 +66,8 @@ export default function TransactionsTable(props: Props) {
     extraFilters,
     onChangeParams,
     autoAdjustHeight,
+    adjustPagination,
+    headerSubtitle,
   } = props;
 
   const columns: TableColumn<TransactionCaseManagement>[] = useMemo(
@@ -410,6 +414,8 @@ export default function TransactionsTable(props: Props) {
         persistenceKey: 'transaction-list-table',
       }}
       autoAdjustHeight={autoAdjustHeight}
+      headerSubtitle={headerSubtitle}
+      adjustPagination={adjustPagination}
     />
   );
 }

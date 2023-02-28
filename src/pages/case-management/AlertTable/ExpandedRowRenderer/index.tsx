@@ -1,11 +1,13 @@
 import { useState } from 'react';
-import TransactionsTable, { TransactionsTableParams } from './TransactionsTable';
 import { TableAlertItem } from '@/pages/case-management/AlertTable/types';
 import { useQuery } from '@/utils/queries/hooks';
 import { CASES_ITEM_TRANSACTIONS } from '@/utils/queries/keys';
 import { useApi } from '@/api';
 import { useApiTime } from '@/utils/tracker';
 import { DEFAULT_PARAMS_STATE } from '@/components/ui/Table';
+import TransactionsTable, {
+  TransactionsTableParams,
+} from '@/pages/transactions/components/TransactionsTable';
 
 interface Props {
   alert: TableAlertItem;
@@ -44,6 +46,8 @@ export default function ExpandedRowRenderer(props: Props) {
       queryResult={transactionsResponse}
       params={params}
       onChangeParams={setParams}
+      headerSubtitle={'Transaction details'}
+      adjustPagination={true}
     />
   );
 }

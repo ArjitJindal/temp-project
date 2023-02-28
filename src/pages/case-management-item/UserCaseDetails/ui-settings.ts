@@ -26,9 +26,9 @@ export const UI_SETTINGS = {
       title: 'Transaction History',
       key: 'user-case-details-transaction-history',
     },
-    RULES_HITS_AND_TRANSACTIONS: {
-      title: 'Rules Hits and Transactions',
-      key: 'user-case-details-rules-hits-and-transactions',
+    ALERTS: {
+      title: 'Alerts',
+      key: 'user-case-details-alerts',
     },
     TRANSACTION_INSIGHTS: {
       title: 'Transaction Insights',

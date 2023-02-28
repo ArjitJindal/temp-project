@@ -13,7 +13,7 @@ import QueryResultsTable from '@/components/common/QueryResultsTable';
 import { AllParams, TableActionType } from '@/components/ui/Table';
 import Id from '@/components/ui/Id';
 import { addBackUrlToRoute } from '@/utils/backUrl';
-import CaseStatusButtons from '@/pages/transactions/components/CaseStatusButtons';
+import StatusButtons from '@/pages/transactions/components/StatusButtons';
 import { useTableData } from '@/pages/case-management/CaseTable/helpers';
 import { TableItem } from '@/pages/case-management/CaseTable/types';
 import { getUserLink, getUserName, KYC_STATUSES, USER_STATES } from '@/utils/api/users';
@@ -426,7 +426,7 @@ export default function CaseTable(props: Props) {
               onSaved={reloadTable}
               caseStatus={params.caseStatus}
             />
-            <CaseStatusButtons
+            <StatusButtons
               status={params.caseStatus ?? 'OPEN'}
               onChange={(newStatus) => {
                 setParams((state) => ({
@@ -434,6 +434,7 @@ export default function CaseTable(props: Props) {
                   caseStatus: newStatus,
                 }));
               }}
+              suffix="cases"
             />
           </>
         ),

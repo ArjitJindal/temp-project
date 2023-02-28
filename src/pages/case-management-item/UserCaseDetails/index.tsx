@@ -1,5 +1,5 @@
 import CommentsCard from '../../../components/CommentsCard';
-import RulesHitCard from './RulesHitCard';
+import AlertsCard from './AlertsCard';
 import InsightsCard from './InsightsCard';
 import { UI_SETTINGS } from './ui-settings';
 import { Case } from '@/apis';
@@ -31,11 +31,11 @@ function UserCaseDetails(props: Props) {
         showCommentEditor={false}
         uiSettings={UI_SETTINGS}
       />
-      <RulesHitCard
+      <AlertsCard
         caseItem={caseItem}
         updateCollapseState={props.updateCollapseState}
-        title={UI_SETTINGS.cards.RULES_HITS_AND_TRANSACTIONS.title}
-        collapsableKey={UI_SETTINGS.cards.RULES_HITS_AND_TRANSACTIONS.key}
+        title={UI_SETTINGS.cards.ALERTS.title}
+        collapsableKey={UI_SETTINGS.cards.ALERTS.key}
       />
       {user?.userId && (
         <InsightsCard
