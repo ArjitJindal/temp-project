@@ -758,22 +758,19 @@ export class CaseRepository {
     ]
 
     const conditions: Filter<AlertListResponseItem>[] = []
-    if (params.filterCaseId != null) {
-      conditions.push({
-        'alert.caseId': params.caseIdExactMatch
-          ? params.filterCaseId
-          : prefixRegexMatchFilter(params.filterCaseId),
-      })
-    }
     if (params.filterAlertId != null) {
       conditions.push({
         'alert.alertId': prefixRegexMatchFilter(params.filterAlertId),
       })
     }
-    if (params.filterAlertStatus != null) {
+    if (params.filterOutCaseStatus != null) {
       conditions.push({
-        'alert.alertStatus':
-          params.filterAlertStatus === 'CLOSED' ? 'CLOSED' : 'OPEN',
+        'alert.alertStatus': { $ne: params.filterOutCaseStatus },
+      })
+    }
+    if (params.filterCaseStatus != null) {
+      conditions.push({
+        'alert.alertStatus': { $eq: params.filterCaseStatus },
       })
     }
 

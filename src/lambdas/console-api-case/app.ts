@@ -318,8 +318,6 @@ export const casesHandler = lambdaApi()(
         filterTransactionTagKey,
         filterTransactionTagValue,
         filterUserId,
-        filterCaseId,
-        filterAlertStatus,
       } = event.queryStringParameters as Record<string, string>
       const params: DefaultApiGetAlertListRequest = {
         page: parseInt(page),
@@ -335,8 +333,6 @@ export const casesHandler = lambdaApi()(
         filterTransactionTagKey,
         filterTransactionTagValue,
         filterUserId,
-        filterCaseId,
-        filterAlertStatus,
       }
       return caseService.getAlerts(params)
     } else if (
