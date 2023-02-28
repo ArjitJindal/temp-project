@@ -4247,6 +4247,7 @@ components:
             - _3dsDone
             - cardIssuedCountry
             - legalEntity.companyGeneralDetails.userRegistrationStatus
+            - legalEntity.companyGeneralDetails.userSegment
         isActive:
           type: boolean
         isDerived:
