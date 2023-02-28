@@ -1030,7 +1030,7 @@ export const TRANSACTION_RULES_LIBRARY: Array<Rule> =
     return {
       ...rule,
       parametersSchema:
-        TRANSACTION_RULES[rule.ruleImplementationName].getSchema(),
+        TRANSACTION_RULES[rule.ruleImplementationName]?.getSchema(),
     }
   })
 
