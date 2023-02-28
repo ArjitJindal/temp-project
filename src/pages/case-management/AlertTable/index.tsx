@@ -223,6 +223,7 @@ export default function AlertTable(props: Props) {
         tagKey,
         tagValue,
         showCases,
+        caseId,
       } = params;
       const result = await api.getAlertList({
         page,
@@ -236,6 +237,7 @@ export default function AlertTable(props: Props) {
         filterTransactionTagKey: tagKey,
         filterTransactionTagValue: tagValue,
         filterUserId: userId,
+        filterCaseId: caseId,
       });
       return {
         items: presentAlertData(result.data),
