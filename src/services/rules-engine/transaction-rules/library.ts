@@ -21,7 +21,6 @@ import { IpAddressMultipleUsersRuleParameters } from './ip-address-multiple-user
 import { TooManyUsersForSameCardParameters } from './too-many-users-for-same-card'
 import { SameUserUsingTooManyCardsParameters } from './same-user-using-too-many-cards'
 import { TransactionsVolumeRuleParameters } from './transactions-volume'
-import { ConsecutiveTransactionSameTypeRuleParameters } from './consecutive-transactions-same-type'
 import { SenderLocationChangesFrequencyRuleParameters } from './sender-location-changes-frequency'
 import { CardIssuedCountryRuleParameters } from './card-issued-country'
 import { TransactionMatchesPatternRuleParameters } from './transaction-amount-pattern'
@@ -536,29 +535,6 @@ const _TRANSACTION_RULES_LIBRARY: Array<
       defaultNature: 'AML',
       defaultCasePriority: 'P1',
       defaultFalsePositiveCheckEnabled: true,
-    }
-  },
-  () => {
-    const defaultParameters: ConsecutiveTransactionSameTypeRuleParameters = {
-      targetTransactionsThreshold: 5,
-      transactionTypes: ['DEPOSIT'],
-      otherTransactionTypes: ['EXTERNAL_PAYMENT'],
-      timeWindowInDays: 30,
-    }
-    return {
-      id: 'R-101',
-      type: 'TRANSACTION',
-      name: 'Isolated crypto users',
-      description:
-        'A user makes >= x crypto transactions without any fiat transactions',
-      descriptionTemplate:
-        "{{ if-sender 'Sender' 'Receiver' }} made {{ parameters.targetTransactionsThreshold }} or more crypto transactions without any fiat transactions",
-      defaultParameters,
-      defaultAction: 'FLAG',
-      ruleImplementationName: 'consecutive-transactions-same-type',
-      labels: [],
-      defaultNature: 'AML',
-      defaultCasePriority: 'P1',
     }
   },
   () => {

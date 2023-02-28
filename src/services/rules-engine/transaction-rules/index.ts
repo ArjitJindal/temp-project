@@ -1,6 +1,5 @@
 import { RuleHitResult } from '../rule'
 import CardIssuedCountryRule from './card-issued-country'
-import ConsecutiveTransactionsameTypeRule from './consecutive-transactions-same-type'
 import FirstActivityAfterLongTimeRule from './first-activity-after-time-period'
 import FirstPaymentRule from './first-payment'
 import HighRiskCurrencyRule from './high-risk-currency'
@@ -54,7 +53,6 @@ class TransactionRuleBase extends TransactionRule<unknown> {
 
 export const _TRANSACTION_RULES = {
   'card-issued-country': CardIssuedCountryRule,
-  'consecutive-transactions-same-type': ConsecutiveTransactionsameTypeRule,
   'first-activity-after-time-period': FirstActivityAfterLongTimeRule,
   'first-payment': FirstPaymentRule,
   'high-risk-currency': HighRiskCurrencyRule,
