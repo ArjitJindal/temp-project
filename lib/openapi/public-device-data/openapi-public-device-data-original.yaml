@@ -128,6 +128,8 @@ components:
           type: boolean
         networkOperator:
           type: string
+        referralDetails:
+          $ref: '#/components/schemas/ReferralDetails'
       required:
         - userId
         - timestamp
@@ -154,6 +156,18 @@ components:
           type: string
       required:
         - name
+    ReferralDetails:
+      title: ReferralDetails
+      x-stoplight:
+        id: w5wi7bhtvkkui
+      type: object
+      properties:
+        referrerUserId:
+          type: string
+        isOfflineAcquisition:
+          type: boolean
+        refreeCount:
+          type: integer
   securitySchemes:
     x-api-key:
       name: x-api-key
