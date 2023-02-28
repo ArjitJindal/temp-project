@@ -109,4 +109,5 @@ export type DataType =
   | 'TIME_RANGE'
   | 'BUSINESS_INDUSTRY'
   | 'BOOLEAN'
+  | 'USER_SEGMENT'
   | 'USER_REGISTRATION_STATUS';

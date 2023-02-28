@@ -92,6 +92,7 @@ export const DATA_TYPE_TO_VALUE_TYPE: { [key in DataType]: RiskValueType } = {
   BUSINESS_INDUSTRY: 'MULTIPLE',
   TIME_RANGE: 'TIME_RANGE',
   BOOLEAN: 'LITERAL',
+  USER_SEGMENT: 'MULTIPLE',
   USER_REGISTRATION_STATUS: 'MULTIPLE',
 };
 
@@ -172,6 +173,15 @@ const currentTimeZone = Intl.DateTimeFormat().resolvedOptions().timeZone;
 
 const timeZonesDataMap = _.keyBy(timeZonesData, 'value');
 
+const USER_SEGMENT_OPTIONS = [
+  { value: 'SOLE_PROPRIETORSHIP', label: 'Sole Proprietorship' },
+  { value: 'SMB', label: 'SMB' },
+  { value: 'SMALL', label: 'Small' },
+  { value: 'MEDIUM', label: 'Medium' },
+  { value: 'LARGE', label: 'Large' },
+  { value: 'UNKNOWN', label: 'Unknown' },
+];
+
 export const BUSINESS_RISK_PARAMETERS: RiskLevelTable = [
   {
     parameter: 'type',
@@ -227,6 +237,15 @@ export const BUSINESS_RISK_PARAMETERS: RiskLevelTable = [
     entity: 'BUSINESS',
     dataType: 'RANGE',
     isDerived: true,
+    parameterType: 'VARIABLE',
+  },
+  {
+    parameter: 'legalEntity.companyGeneralDetails.userSegment',
+    title: 'User Segment',
+    description: 'Risk based on business user segment',
+    entity: 'BUSINESS',
+    dataType: 'USER_SEGMENT',
+    isDerived: false,
     parameterType: 'VARIABLE',
   },
   {
@@ -487,6 +506,9 @@ export const INPUT_RENDERERS: { [key in DataType]: InputRenderer<any> } = {
   }) as InputRenderer<'MULTIPLE'>,
   BUSINESS_USER_TYPE: ((props) => {
     return <MultipleSelect options={businessType} {...props} />;
+  }) as InputRenderer<'MULTIPLE'>,
+  USER_SEGMENT: ((props) => {
+    return <MultipleSelect options={USER_SEGMENT_OPTIONS} {...props} />;
   }) as InputRenderer<'MULTIPLE'>,
   USER_REGISTRATION_STATUS: ((props) => {
     return <MultipleSelect options={USER_REGISTRATION_STATUS_OPTIONS} {...props} />;
@@ -869,6 +891,7 @@ export const VALUE_RENDERERS: { [key in DataType]: ValueRenderer<any> } = {
   }) as ValueRenderer<'MULTIPLE'>,
   CONSUMER_USER_TYPE: DEFAULT_MULTIPLE_RENDERER,
   BUSINESS_USER_TYPE: DEFAULT_MULTIPLE_RENDERER,
+  USER_SEGMENT: DEFAULT_MULTIPLE_RENDERER,
   USER_REGISTRATION_STATUS: DEFAULT_MULTIPLE_RENDERER,
   RANGE: DEFAULT_RANGE_RENDERER,
   DAY_RANGE: DEFAULT_DAY_RANGE_RENDERER,
