@@ -28,6 +28,7 @@ import { CaseCreationService } from '@/lambdas/console-api-case/services/case-cr
 import { UserRepository } from '@/services/users/repositories/user-repository'
 import { RuleInstanceRepository } from '@/services/rules-engine/repositories/rule-instance-repository'
 import { TransactionRepository } from '@/services/rules-engine/repositories/transaction-repository'
+import { isValidSortOrder } from '@/@types/openapi-internal-custom/SortOrder'
 
 export type CaseConfig = {
   TMP_BUCKET: string
@@ -335,6 +336,8 @@ export const casesHandler = lambdaApi()(
         filterTransactionTagValue,
         filterUserId,
         filterCaseId,
+        sortField,
+        sortOrder,
       } = event.queryStringParameters as Record<string, string>
       const params: DefaultApiGetAlertListRequest = {
         page: parseInt(page),
@@ -351,6 +354,8 @@ export const casesHandler = lambdaApi()(
         filterTransactionTagValue,
         filterUserId,
         filterCaseId,
+        sortField,
+        sortOrder: isValidSortOrder(sortOrder) ? sortOrder : undefined,
       }
       return caseService.getAlerts(params)
     } else if (

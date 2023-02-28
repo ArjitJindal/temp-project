@@ -758,6 +758,13 @@ export class CaseRepository {
           caseUsers: '$caseUsers',
         },
       },
+      {
+        $sort: {
+          [`alert.${params.sortField ?? '_id'}`]:
+            params?.sortOrder === 'ascend' ? 1 : -1,
+          [`alert._id`]: 1,
+        },
+      },
     ]
 
     const conditions: Filter<AlertListResponseItem>[] = []
