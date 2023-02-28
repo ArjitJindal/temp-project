@@ -1,10 +1,11 @@
 import { useCallback, useMemo, useRef, useState } from 'react';
 import pluralize from 'pluralize';
 import { Avatar } from 'antd';
-import { usePaginatedQuery } from '@/utils/queries/hooks';
+import { useMutation, useQueryClient } from '@tanstack/react-query';
+import { getMutationAsyncResource, usePaginatedQuery } from '@/utils/queries/hooks';
 import { useApi } from '@/api';
-import { Account, AlertListResponseItem } from '@/apis';
-import { ALERT_LIST } from '@/utils/queries/keys';
+import { Account, AlertListResponseItem, Case } from '@/apis';
+import { ALERT_LIST, CASES_LIST } from '@/utils/queries/keys';
 import QueryResultsTable from '@/components/common/QueryResultsTable';
 import { TableColumn, TableData } from '@/components/ui/Table/types';
 import StackLineIcon from '@/components/ui/icons/Remix/business/stack-line.react.svg';
@@ -29,6 +30,9 @@ import { message } from '@/components/library/Message';
 import { TableSearchParams } from '@/pages/case-management/types';
 import { extraFilters } from '@/pages/case-management/helpers';
 import { useFeatureEnabled } from '@/components/AppWrapper/Providers/SettingsProvider';
+import Button from '@/components/library/Button';
+import Confirm from '@/components/utils/Confirm';
+import { getErrorMessage } from '@/utils/lang';
 import Tooltip from '@/components/library/Tooltip';
 
 export type AlertTableParams = AllParams<TableSearchParams>;
@@ -196,7 +200,7 @@ export default function AlertTable(props: Props) {
     params,
     onChangeParams,
     hideCaseIdFilter = false,
-    disableInternalPadding,
+    disableInternalPadding = false,
     hideScopeSelector = false,
   } = props;
 
@@ -306,7 +310,6 @@ export default function AlertTable(props: Props) {
               onSaved={reloadTable}
               caseStatus={params.caseStatus}
             />
-
             <StatusButtons
               status={params.caseStatus ?? 'OPEN'}
               onChange={(newStatus) => {
@@ -344,6 +347,9 @@ export const SimpleAlertTable = ({ caseId }: { caseId: string }) => {
   });
   const [users, _] = useUsers();
 
+  const [selectedEntities, setSelectedEntities] = useState<string[]>([]);
+  const queryClient = useQueryClient();
+
   const queryResults: QueryResult<TableData<TableAlertItem>> = usePaginatedQuery(
     ALERT_LIST({ caseId }),
     async () => {
@@ -359,11 +365,49 @@ export const SimpleAlertTable = ({ caseId }: { caseId: string }) => {
     },
   );
 
+  const createNewCaseMutation = useMutation<
+    Case,
+    unknown,
+    {
+      sourceCaseId: string;
+      alertIds: string[];
+    }
+  >(
+    async ({ alertIds, sourceCaseId }) => {
+      const hideLoading = message.loading('Moving alerts to new case');
+      try {
+        return await api.alertsNoNewCase({
+          AlertsToNewCaseRequest: {
+            sourceCaseId,
+            alertIds,
+          },
+        });
+      } finally {
+        hideLoading();
+      }
+    },
+    {
+      onSuccess: async (response, variables) => {
+        message.success(`New case ${response.caseId} successfully created`);
+        await queryClient.invalidateQueries({
+          queryKey: ALERT_LIST({ caseId: variables.sourceCaseId }),
+        });
+        await queryClient.invalidateQueries({
+          queryKey: CASES_LIST({}),
+        });
+        setSelectedEntities([]);
+      },
+      onError: (e) => {
+        message.error(`Unable to create a new case! ${getErrorMessage(e)}`);
+      },
+    },
+  );
+
   const columns = useMemo(() => mergedColumns(true, users), [users]);
 
   return (
     <QueryResultsTable<TableAlertItem, AlertTableParams>
-      tableId={'my-alerts'}
+      tableId={'simple-alerts-table'}
       rowKey={'alertId'}
       actionRef={actionRef}
       columns={columns}
@@ -371,7 +415,35 @@ export const SimpleAlertTable = ({ caseId }: { caseId: string }) => {
       params={{ ...params, caseId }}
       onChangeParams={setParams}
       scroll={{ x: 1300 }}
-      disableInternalPadding={true}
+      rowSelection={{
+        selectedKeys: selectedEntities,
+        onChange: setSelectedEntities,
+      }}
+      actionsHeaderRight={[
+        () => (
+          <>
+            {selectedEntities.length > 0 && (
+              <Confirm
+                title="Are you sure you want to create a new Case?"
+                text="Please note that creating a new case would create a new case for this user with a new Case ID with the selected Alerts."
+                res={getMutationAsyncResource(createNewCaseMutation)}
+                onConfirm={() => {
+                  createNewCaseMutation.mutate({
+                    sourceCaseId: caseId,
+                    alertIds: selectedEntities,
+                  });
+                }}
+              >
+                {({ onClick }) => (
+                  <Button type="TETRIARY" onClick={onClick}>
+                    Create new case
+                  </Button>
+                )}
+              </Confirm>
+            )}
+          </>
+        ),
+      ]}
     />
   );
 };

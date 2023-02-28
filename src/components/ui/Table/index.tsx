@@ -291,7 +291,8 @@ export default function Table<
 
   const showFilters = params != null && allFilters.length > 0 && !enableLegacyFilters;
   const showActionsHeader = actionsHeader.length > 0 && params != null;
-  const showActionsHeaderRight = actionsHeaderRight.length > 0 && params != null;
+  const showActionsHeaderRight =
+    actionsHeaderRight.length > 0 && params != null && shouldShowActionsHeaderRight;
   const showBottomHeader = showFilters;
   const showTopHeader =
     showActionsHeader || showActionsHeaderRight || headerTitle || headerSubtitle;
@@ -361,7 +362,8 @@ export default function Table<
                       })
                     : headerTitle}
                   {headerSubtitle && <div className={style.subtitle}>{headerSubtitle}</div>}
-                  {showActionsHeaderRight && shouldShowActionsHeaderRight
+                  {!showActionsHeader && !headerSubtitle && !headerTitle && <div></div>}
+                  {showActionsHeaderRight
                     ? renderActionHeader<Params>(actionsHeaderRight, {
                         params,
                         setParams: (cb: (oldState: AllParams<Params>) => AllParams<Params>) =>

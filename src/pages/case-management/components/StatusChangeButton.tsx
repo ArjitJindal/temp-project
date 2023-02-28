@@ -67,7 +67,7 @@ export default function StatusChangeButton(props: Props) {
     <>
       {ids.length > 0 && (
         <Button
-          type="SECONDARY"
+          type="TETRIARY"
           analyticsName="UpdateStatus"
           onClick={() => {
             setModalVisible(true);

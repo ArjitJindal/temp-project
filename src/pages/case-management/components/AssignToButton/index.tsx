@@ -37,7 +37,7 @@ export default function AssignToButton(props: Props) {
 
   return (
     <AntDropdown overlay={menu} trigger={['click']}>
-      <Button type="SECONDARY" onClick={() => {}}>
+      <Button type="TETRIARY" onClick={() => {}}>
         Assign to
       </Button>
     </AntDropdown>

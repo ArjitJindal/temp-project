@@ -3,7 +3,7 @@ import { Modal as AntModal, Typography } from 'antd';
 import cn from 'clsx';
 import { ButtonProps } from 'antd/lib/button/button';
 import s from './style.module.less';
-import CloseCircleLineIcon from '@/components/ui/icons/Remix/system/close-circle-line.react.svg';
+import CloseCircleLineIcon from '@/components/ui/icons/Remix/system/close-fill.react.svg';
 
 interface Props {
   title: string;
@@ -21,6 +21,7 @@ export default function Modal(props: Props) {
   const { icon, title, isOpen, onOk, okText, okProps, cancelText, onCancel, children } = props;
   return (
     <AntModal
+      width={550}
       className={cn(s.root)}
       title={
         <div className={s.header}>
@@ -32,7 +33,6 @@ export default function Modal(props: Props) {
           </div>
           <button className={s.close} onClick={onCancel}>
             <CloseCircleLineIcon />
-            <span>Close</span>
           </button>
         </div>
       }
