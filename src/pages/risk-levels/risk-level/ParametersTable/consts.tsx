@@ -92,12 +92,18 @@ export const DATA_TYPE_TO_VALUE_TYPE: { [key in DataType]: RiskValueType } = {
   BUSINESS_INDUSTRY: 'MULTIPLE',
   TIME_RANGE: 'TIME_RANGE',
   BOOLEAN: 'LITERAL',
+  USER_REGISTRATION_STATUS: 'MULTIPLE',
 };
 
 const DAY_RANGE_GRANULARITY = [
   { value: 'DAYS', label: 'days' },
   { value: 'MONTHS', label: 'months' },
   { value: 'YEARS', label: 'years' },
+];
+
+const USER_REGISTRATION_STATUS_OPTIONS = [
+  { value: 'REGISTERED', label: 'Registered' },
+  { value: 'UNREGISTERED', label: 'Unregistered' },
 ];
 
 const EXTENDED_DAY_RANGE_GRANULARITY = [
@@ -221,6 +227,15 @@ export const BUSINESS_RISK_PARAMETERS: RiskLevelTable = [
     entity: 'BUSINESS',
     dataType: 'RANGE',
     isDerived: true,
+    parameterType: 'VARIABLE',
+  },
+  {
+    parameter: 'legalEntity.companyGeneralDetails.userRegistrationStatus',
+    title: 'User Registration Status',
+    description: 'Risk based on business user registration status',
+    entity: 'BUSINESS',
+    dataType: 'USER_REGISTRATION_STATUS',
+    isDerived: false,
     parameterType: 'VARIABLE',
   },
 ];
@@ -472,6 +487,9 @@ export const INPUT_RENDERERS: { [key in DataType]: InputRenderer<any> } = {
   }) as InputRenderer<'MULTIPLE'>,
   BUSINESS_USER_TYPE: ((props) => {
     return <MultipleSelect options={businessType} {...props} />;
+  }) as InputRenderer<'MULTIPLE'>,
+  USER_REGISTRATION_STATUS: ((props) => {
+    return <MultipleSelect options={USER_REGISTRATION_STATUS_OPTIONS} {...props} />;
   }) as InputRenderer<'MULTIPLE'>,
   PAYMENT_METHOD: ((props) => {
     return (
@@ -851,6 +869,7 @@ export const VALUE_RENDERERS: { [key in DataType]: ValueRenderer<any> } = {
   }) as ValueRenderer<'MULTIPLE'>,
   CONSUMER_USER_TYPE: DEFAULT_MULTIPLE_RENDERER,
   BUSINESS_USER_TYPE: DEFAULT_MULTIPLE_RENDERER,
+  USER_REGISTRATION_STATUS: DEFAULT_MULTIPLE_RENDERER,
   RANGE: DEFAULT_RANGE_RENDERER,
   DAY_RANGE: DEFAULT_DAY_RANGE_RENDERER,
   TIME_RANGE: (({ value }) => {

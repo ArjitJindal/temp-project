@@ -108,4 +108,5 @@ export type DataType =
   | 'RESIDENCE_TYPES'
   | 'TIME_RANGE'
   | 'BUSINESS_INDUSTRY'
-  | 'BOOLEAN';
+  | 'BOOLEAN'
+  | 'USER_REGISTRATION_STATUS';
