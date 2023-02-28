@@ -68,6 +68,31 @@ export class CaseAuditLogService {
     })
   }
 
+  public async handleAuditLogForAlerts(
+    caseId: string,
+    oldAlerts: Alert[] | undefined,
+    newAlerts: Alert[] | undefined
+  ): Promise<void> {
+    await this.createAuditLog({
+      caseId,
+      logAction: 'UPDATE',
+      newImage: {
+        alerts: newAlerts,
+      },
+      oldImage: {
+        alerts: oldAlerts,
+      },
+    })
+  }
+
+  public async handleAuditLogForNewCase(caseItem: Case): Promise<void> {
+    await this.createAuditLog({
+      caseId: caseItem.caseId ?? '',
+      logAction: 'CREATE',
+      newImage: caseItem,
+    })
+  }
+
   private async handleCaseUpdateAuditLog(
     caseId: string,
     logAction: AuditLogActionEnum,

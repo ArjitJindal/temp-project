@@ -19,10 +19,15 @@ import { JWTAuthorizerResult } from '@/@types/jwt'
 import { CaseRepository } from '@/services/rules-engine/repositories/case-repository'
 import { CasesUpdateRequest } from '@/@types/openapi-internal/CasesUpdateRequest'
 import { AlertsUpdateRequest } from '@/@types/openapi-internal/AlertsUpdateRequest'
+import { AlertsToNewCaseRequest } from '@/@types/openapi-internal/AlertsToNewCaseRequest'
 import { Case } from '@/@types/openapi-internal/Case'
 import { CaseStatus } from '@/@types/openapi-internal/CaseStatus'
 import { getDynamoDbClientByEvent } from '@/utils/dynamodb'
 import { TransactionState } from '@/@types/openapi-internal/TransactionState'
+import { CaseCreationService } from '@/lambdas/console-api-case/services/case-creation-service'
+import { UserRepository } from '@/services/users/repositories/user-repository'
+import { RuleInstanceRepository } from '@/services/rules-engine/repositories/rule-instance-repository'
+import { TransactionRepository } from '@/services/rules-engine/repositories/transaction-repository'
 
 export type CaseConfig = {
   TMP_BUCKET: string
@@ -40,10 +45,15 @@ export const casesHandler = lambdaApi()(
     const s3 = getS3ClientByEvent(event)
     const client = await getMongoDbClient()
     const dynamoDb = await getDynamoDbClientByEvent(event)
-    const caseRepository = new CaseRepository(tenantId, {
+    const dbs = {
       mongoDb: client,
       dynamoDb,
-    })
+    }
+    const caseRepository = new CaseRepository(tenantId, dbs)
+    const userService = new UserRepository(tenantId, dbs)
+    const ruleInstanceRepository = new RuleInstanceRepository(tenantId, dbs)
+    const transactionRepository = new TransactionRepository(tenantId, dbs)
+
     const dashboardStatsRepository = new DashboardStatsRepository(tenantId, {
       mongoDb: client,
     })
@@ -53,6 +63,12 @@ export const casesHandler = lambdaApi()(
       s3,
       TMP_BUCKET,
       DOCUMENT_BUCKET
+    )
+    const caseCreationService = new CaseCreationService(
+      caseRepository,
+      userService,
+      ruleInstanceRepository,
+      transactionRepository
     )
     const caseAuditLogService = new CaseAuditLogService(caseService, tenantId)
     if (event.httpMethod === 'GET' && event.resource === '/cases') {
@@ -364,6 +380,41 @@ export const casesHandler = lambdaApi()(
         return updateResult
       } finally {
         alertUpdateSegment?.close()
+      }
+    } else if (
+      event.httpMethod === 'POST' &&
+      event.resource === '/alerts/new-case' &&
+      event.body
+    ) {
+      const requestPayload = JSON.parse(event.body) as AlertsToNewCaseRequest
+      const sourceCaseId = requestPayload?.sourceCaseId
+      const alertIds = requestPayload?.alertIds || []
+      const segment = await addNewSubsegment(
+        'Case Service',
+        'Create new case from alerts'
+      )
+      try {
+        const sourceCase = await caseService.getCase(sourceCaseId)
+        if (sourceCase == null) {
+          throw new NotFound(
+            `Unable to find source case by id "${sourceCaseId}"`
+          )
+        }
+        const newCase = await caseCreationService.createNewCaseFromAlerts(
+          sourceCase,
+          alertIds
+        )
+        await caseAuditLogService.handleAuditLogForNewCase(newCase)
+        await caseAuditLogService.handleAuditLogForAlerts(
+          sourceCaseId,
+          sourceCase.alerts,
+          (
+            await caseService.getCase(sourceCaseId)
+          )?.alerts
+        )
+        return newCase
+      } finally {
+        segment?.close()
       }
     }
     throw new NotFound('Unhandled request')

@@ -196,6 +196,26 @@ export class CaseCreationService {
     return caseEntity
   }
 
+  public async createNewCaseFromAlerts(
+    sourceCase: Case,
+    alertIds: string[]
+  ): Promise<Case> {
+    const predicate = (x: Alert) =>
+      x.alertId != null && alertIds.includes(x.alertId)
+    const alerts = sourceCase.alerts?.filter(predicate)
+    const newCase = await this.caseRepository.addCaseMongo({
+      alerts,
+      createdTimestamp: Date.now(),
+      caseStatus: 'OPEN',
+      priority: sourceCase.priority,
+    })
+    await this.caseRepository.addCaseMongo({
+      ...sourceCase,
+      alerts: sourceCase.alerts?.filter((x) => !predicate(x)),
+    })
+    return newCase
+  }
+
   private async getOrCreateCases(
     hitUsers: Array<{
       user: InternalConsumerUser | InternalBusinessUser

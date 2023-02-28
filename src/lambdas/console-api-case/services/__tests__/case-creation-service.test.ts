@@ -462,6 +462,68 @@ describe('Run #2', () => {
   })
 })
 
+describe('Run #3', () => {
+  const TEST_TENANT_ID = getTestTenantId()
+  setup(TEST_TENANT_ID, {})
+
+  async function createCase(): Promise<Case> {
+    const caseCreationService = await getService(TEST_TENANT_ID)
+
+    const transaction = getTestTransaction({
+      originUserId: TEST_USER_1.userId,
+    })
+
+    const results = await bulkVerifyTransactions(TEST_TENANT_ID, [transaction])
+    expect(results.length).not.toEqual(0)
+    const [result] = results
+
+    const cases = await caseCreationService.handleTransaction({
+      ...transaction,
+      ...result,
+    })
+    expect(cases.length).toEqual(1)
+    const caseItem = expectUserCase(cases, {
+      originUserId: TEST_USER_1.userId,
+    })
+    return caseItem
+  }
+
+  test('Create case using existed alerts', async () => {
+    const caseCreationService = await getService(TEST_TENANT_ID)
+
+    const caseItem = await createCase()
+    expect(caseItem.caseId).toBeTruthy()
+    expect(caseItem.alerts?.length).toBeGreaterThan(0)
+
+    const [alert] = caseItem.alerts ?? []
+    expect(alert.alertId).toBeTruthy()
+
+    const newCase = await caseCreationService.createNewCaseFromAlerts(
+      caseItem,
+      [alert.alertId ?? '']
+    )
+    expect(newCase.caseId).toBeTruthy()
+    expect(newCase.caseId).not.toEqual(caseItem.caseId)
+    expect(newCase.alerts).toHaveLength(1)
+    expect(newCase?.alerts?.[0]?.alertId).toEqual(alert.alertId ?? '')
+
+    const oldCase = await caseCreationService.caseRepository.getCaseById(
+      caseItem.caseId ?? ''
+    )
+    expect(oldCase?.alerts).toHaveLength(0)
+
+    const newCase2 = await caseCreationService.caseRepository.getCaseById(
+      newCase.caseId ?? ''
+    )
+    expect(newCase2).toBeTruthy()
+    expect(newCase2?.alerts).toHaveLength(1)
+    expect(newCase2?.alerts?.[0]?.alertId).toEqual(alert.alertId)
+
+    const allCases = await caseCreationService.caseRepository.getCases({})
+    expect(allCases.data).toHaveLength(2)
+  })
+})
+
 /*
   Helpers
  */
@@ -509,7 +571,7 @@ function expectUserCase(
     }
     return true
   })
-  expect(caseItem).not.toBeNull()
+  expect(caseItem).toBeTruthy()
   if (params.originUserId != null) {
     expect(caseItem?.caseUsers?.origin?.userId).toEqual(params.originUserId)
   }

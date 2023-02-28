@@ -2515,6 +2515,25 @@ paths:
           application/json:
             schema:
               $ref: '#/components/schemas/AlertsUpdateRequest'
+  /alerts/new-case:
+    post:
+      summary: Alerts - New Case
+      operationId: alerts-no-new-case
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Case'
+      x-flagright:
+        permissions:
+          - case-management:case-overview:write
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AlertsToNewCaseRequest'
   /cases:
     get:
       summary: Cases - List
@@ -4749,6 +4768,19 @@ components:
       required:
         - alertIds
         - updates
+    AlertsToNewCaseRequest:
+      title: AlertsUpdateRequest
+      type: object
+      properties:
+        alertIds:
+          type: array
+          items:
+            type: string
+        sourceCaseId:
+          type: string
+      required:
+        - alertIds
+        - sourceCaseId
     CaseStatusChange:
       title: CaseStatusChange
       type: object

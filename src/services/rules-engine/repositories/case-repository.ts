@@ -106,7 +106,10 @@ export class CaseRepository {
           caseEntity.alerts = await Promise.all(
             caseEntity.alerts?.map(async (alert) => {
               if (alert._id && alert.alertId) {
-                return alert
+                return {
+                  ...alert,
+                  caseId: caseEntity.caseId,
+                }
               }
               const counterCollection = db.collection<EntityCounter>(
                 COUNTER_COLLECTION(this.tenantId)
@@ -120,10 +123,10 @@ export class CaseRepository {
               ).value
 
               return {
-                _id: alertCount?.count,
-                alertId: `A-${alertCount?.count}`,
-                caseId: caseEntity.caseId,
                 ...alert,
+                _id: alert._id ?? alertCount?.count,
+                alertId: alert.alertId ?? `A-${alertCount?.count}`,
+                caseId: caseEntity.caseId,
               }
             })
           )
@@ -971,6 +974,7 @@ export class CaseRepository {
       includeTransactionUsers?: boolean
     } = {}
   ): Promise<Case | null> {
+    // todo: we need to have an exact caseId search here, since if we have too many matched required cases can be on he other page
     const { data } = await this.getCases({
       filterId: caseId,
       includeTransactions: params.includeTransactions ?? false,
