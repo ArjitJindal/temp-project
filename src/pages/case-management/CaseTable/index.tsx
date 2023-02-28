@@ -404,9 +404,6 @@ export default function CaseTable(props: Props) {
   return (
     <QueryResultsTable<TableItem, TableSearchParams>
       expandable={{
-        showExpandColumn: true,
-        defaultExpandAllRows: false,
-        expandRowByClick: true,
         expandedRowRender: (record) => record.caseId && <SimpleAlertTable caseId={record.caseId} />,
       }}
       tableId="user-cases"
