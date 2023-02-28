@@ -2497,6 +2497,10 @@ paths:
               $ref: ../public/openapi-public-original.yaml#/components/schemas/RiskLevel
           in: query
           name: filterRiskLevel
+        - schema:
+            type: string
+          in: query
+          name: filterCaseId
     post:
       summary: Alerts - Update
       operationId: post-alerts

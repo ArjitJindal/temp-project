@@ -758,6 +758,13 @@ export class CaseRepository {
     ]
 
     const conditions: Filter<AlertListResponseItem>[] = []
+
+    if (params.filterCaseId != null) {
+      conditions.push({
+        'alert.caseId': params.filterCaseId,
+      })
+    }
+
     if (params.filterAlertId != null) {
       conditions.push({
         'alert.alertId': prefixRegexMatchFilter(params.filterAlertId),
