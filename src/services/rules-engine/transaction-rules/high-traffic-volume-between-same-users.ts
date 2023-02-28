@@ -284,9 +284,9 @@ export default class HighTrafficVolumeBetweenSameUsers extends TransactionAggreg
   protected async getUpdatedTargetAggregation(
     _direction: 'origin',
     targetAggregationData: AggregationData | undefined,
-    filtered: boolean
+    isTransactionFiltered: boolean
   ): Promise<AggregationData | null> {
-    if (!filtered) {
+    if (!isTransactionFiltered) {
       return null
     }
     const receiverKeyId = getReceiverKeyId(this.tenantId, this.transaction)

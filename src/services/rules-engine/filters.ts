@@ -103,6 +103,9 @@ const _TRANSACTION_FILTERS = [
   TransactionCountryRuleFilter,
   TransactionAmountRuleFilter,
   CheckDirectionRuleFilter,
+]
+
+const _TRANSACTION_HISTORICAL_FILTERS = [
   TransactionStateHistoricalRuleFilter,
   TransactionTypeHistoricalRuleFilter,
   PaymentMethodHistoricalRuleFilter,
@@ -162,15 +165,24 @@ class TransactionRuleFilterBase extends TransactionRuleFilter<unknown> {
 
 export const TRANSACTION_FILTERS =
   createFiltersMap<typeof TransactionRuleFilterBase>(_TRANSACTION_FILTERS)
+export const TRANSACTION_HISTORICAL_FILTERS = createFiltersMap<
+  typeof TransactionRuleFilterBase
+>(_TRANSACTION_HISTORICAL_FILTERS)
 export const USER_FILTERS =
   createFiltersMap<typeof UserRuleFilterBase>(_USER_FILTERS)
-export const TRANSACTION_FILTER_DEFAULT_VALUES =
-  createDefaultValuesMap<typeof TransactionRuleFilterBase>(_TRANSACTION_FILTERS)
+export const TRANSACTION_FILTER_DEFAULT_VALUES = createDefaultValuesMap<
+  typeof TransactionRuleFilterBase
+>([..._TRANSACTION_FILTERS, ..._TRANSACTION_HISTORICAL_FILTERS])
 
 if (
-  _TRANSACTION_FILTERS.length + _USER_FILTERS.length !==
-  new Set([...Object.keys(TRANSACTION_FILTERS), ...Object.keys(USER_FILTERS)])
-    .size
+  _TRANSACTION_FILTERS.length +
+    _USER_FILTERS.length +
+    _TRANSACTION_HISTORICAL_FILTERS.length !==
+  new Set([
+    ...Object.keys(TRANSACTION_FILTERS),
+    ...Object.keys(USER_FILTERS),
+    ...Object.keys(TRANSACTION_HISTORICAL_FILTERS),
+  ]).size
 ) {
   throw new Error('Duplicate rule filter keys found')
 }

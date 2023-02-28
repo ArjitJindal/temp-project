@@ -490,9 +490,9 @@ export default abstract class TransactionAverageExceededBaseRule<
   protected async getUpdatedTargetAggregation(
     direction: 'origin' | 'destination',
     targetAggregationData: AggregationData | undefined,
-    filtered: boolean
+    isTransactionFiltered: boolean
   ): Promise<AggregationData | null> {
-    if (!filtered) {
+    if (!isTransactionFiltered) {
       return null
     }
     const avgMethod = this.getAvgMethod()

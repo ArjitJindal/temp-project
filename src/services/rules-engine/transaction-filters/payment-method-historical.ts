@@ -1,6 +1,7 @@
 import { JSONSchemaType } from 'ajv'
 import { PAYMENT_METHOD_OPTIONAL_SCHEMA } from '../utils/rule-parameter-schemas'
 import { TransactionRuleFilter } from './filter'
+import { paymentMethodRuleFilterPredicate } from './payment-method'
 import { PaymentMethods } from '@/@types/openapi-public/PaymentMethods'
 
 export type PaymentMethodHistoricalRuleFilterParameter = {
@@ -20,6 +21,9 @@ export class PaymentMethodHistoricalRuleFilter extends TransactionRuleFilter<Pay
   }
 
   public async predicate(): Promise<boolean> {
-    return true
+    return paymentMethodRuleFilterPredicate(
+      this.transaction,
+      this.parameters.paymentMethodHistorical
+    )
   }
 }

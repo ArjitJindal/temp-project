@@ -13,6 +13,7 @@ import { Rule } from '@/@types/openapi-internal/Rule'
 import {
   TRANSACTION_FILTERS,
   TRANSACTION_FILTER_DEFAULT_VALUES,
+  TRANSACTION_HISTORICAL_FILTERS,
   USER_FILTERS,
 } from '@/services/rules-engine/filters'
 import { RuleAuditLogService } from '@/services/rules-engine/rules-audit-log-service'
@@ -48,6 +49,7 @@ export const ruleHandler = lambdaApi()(
       const filters = [
         ...Object.values(USER_FILTERS),
         ...Object.values(TRANSACTION_FILTERS),
+        ...Object.values(TRANSACTION_HISTORICAL_FILTERS),
       ].map((filterClass) => (filterClass.getSchema() as any)?.properties || {})
 
       const defaultValues = [

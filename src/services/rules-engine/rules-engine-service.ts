@@ -17,6 +17,7 @@ import { RuleHitResult, RuleHitResultItem } from './rule'
 import {
   TransactionFilters,
   TRANSACTION_FILTERS,
+  TRANSACTION_HISTORICAL_FILTERS,
   UserFilters,
   USER_FILTERS,
 } from './filters'
@@ -399,19 +400,24 @@ export class RulesEngineService {
             'Rule Filtering'
           )
         }
-        const shouldCompute = await this.computeRuleFilters(ruleFilters, data)
+        const {
+          isTransactionFiltered,
+          isTransactionHistoricalFiltered,
+          isUserFiltered,
+        } = await this.computeRuleFilters(ruleFilters, data)
+        const shouldRunRule = isTransactionFiltered && isUserFiltered
         if (!_.isEmpty(ruleFilters)) {
           filterSegment?.close()
         }
 
         let runSegment = undefined
-        if (shouldCompute) {
+        if (shouldRunRule) {
           runSegment = await addNewSubsegment(
             segmentNamespace,
             'Rule Execution'
           )
         }
-        const ruleResult = shouldCompute
+        const ruleResult = shouldRunRule
           ? await ruleClassInstance.computeRule()
           : null
         const filteredRuleResult = ruleResult
@@ -420,8 +426,14 @@ export class RulesEngineService {
 
         if (ruleClassInstance instanceof TransactionAggregationRule) {
           await Promise.all([
-            ruleClassInstance.updateAggregation('origin', shouldCompute),
-            ruleClassInstance.updateAggregation('destination', shouldCompute),
+            ruleClassInstance.updateAggregation(
+              'origin',
+              isTransactionHistoricalFiltered
+            ),
+            ruleClassInstance.updateAggregation(
+              'destination',
+              isTransactionHistoricalFiltered
+            ),
           ])
         }
         runSegment?.close()
@@ -488,7 +500,15 @@ export class RulesEngineService {
       senderUser?: User | Business
       receiverUser?: User | Business
     }
-  ) {
+  ): Promise<{
+    isTransactionFiltered: boolean
+    isTransactionHistoricalFiltered: boolean
+    isUserFiltered: boolean
+  }> {
+    let isTransactionFiltered = true
+    let isTransactionHistoricalFiltered = true
+    let isUserFiltered = true
+
     for (const filterKey in ruleFilters) {
       const UserRuleFilterClass = USER_FILTERS[filterKey]
       if (UserRuleFilterClass && ruleFilters[filterKey]) {
@@ -506,9 +526,12 @@ export class RulesEngineService {
             })
         )
         if (results.includes(false)) {
-          return false
+          isUserFiltered = false
+          break
         }
       }
+    }
+    for (const filterKey in ruleFilters) {
       const TransactionRuleFilterClass = TRANSACTION_FILTERS[filterKey]
       if (TransactionRuleFilterClass && ruleFilters[filterKey]) {
         const ruleFilter = new TransactionRuleFilterClass(
@@ -517,12 +540,33 @@ export class RulesEngineService {
           { [filterKey]: ruleFilters[filterKey] },
           this.dynamoDb
         )
-        if (!(await ruleFilter.predicate())) {
-          return false
+        isTransactionFiltered = await ruleFilter.predicate()
+        if (!isTransactionFiltered) {
+          break
         }
       }
     }
-    return true
+    for (const filterKey in ruleFilters) {
+      const TransactionRuleFilterClass =
+        TRANSACTION_HISTORICAL_FILTERS[filterKey]
+      if (TransactionRuleFilterClass && ruleFilters[filterKey]) {
+        const ruleFilter = new TransactionRuleFilterClass(
+          this.tenantId,
+          { transaction: data.transaction },
+          { [filterKey]: ruleFilters[filterKey] },
+          this.dynamoDb
+        )
+        isTransactionHistoricalFiltered = await ruleFilter.predicate()
+        if (!isTransactionHistoricalFiltered) {
+          break
+        }
+      }
+    }
+    return {
+      isTransactionFiltered,
+      isTransactionHistoricalFiltered,
+      isUserFiltered,
+    }
   }
 
   private getFilteredRuleResult(

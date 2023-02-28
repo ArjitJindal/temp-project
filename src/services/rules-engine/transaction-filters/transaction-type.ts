@@ -2,6 +2,14 @@ import { JSONSchemaType } from 'ajv'
 import { TRANSACTION_TYPES_OPTIONAL_SCHEMA } from '../utils/rule-parameter-schemas'
 import { TransactionRuleFilter } from './filter'
 import { TransactionType } from '@/@types/openapi-public/TransactionType'
+import { Transaction } from '@/@types/openapi-public/Transaction'
+
+export function transactionTypeRuleFilterPredicate(
+  transaction: Transaction,
+  transactionTypes?: TransactionType[]
+) {
+  return transactionTypes!.includes(transaction.type as TransactionType)
+}
 
 export type TransactionTypeRuleFilterParameter = {
   transactionTypes?: TransactionType[]
@@ -20,8 +28,9 @@ export class TransactionTypeRuleFilter extends TransactionRuleFilter<Transaction
   }
 
   public async predicate(): Promise<boolean> {
-    return this.parameters.transactionTypes!.includes(
-      this.transaction.type as TransactionType
+    return transactionTypeRuleFilterPredicate(
+      this.transaction,
+      this.parameters.transactionTypes
     )
   }
 }

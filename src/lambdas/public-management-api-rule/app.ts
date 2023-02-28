@@ -15,6 +15,7 @@ import { RuleInstance } from '@/@types/openapi-internal/RuleInstance'
 import { RuleInstance as PublicRuleInstance } from '@/@types/openapi-public-management/RuleInstance'
 import {
   TRANSACTION_FILTERS,
+  TRANSACTION_HISTORICAL_FILTERS,
   USER_FILTERS,
 } from '@/services/rules-engine/filters'
 
@@ -42,6 +43,7 @@ export const ruleHandler = lambdaApi()(
       const filters = [
         ...Object.values(USER_FILTERS),
         ...Object.values(TRANSACTION_FILTERS),
+        ...Object.values(TRANSACTION_HISTORICAL_FILTERS),
       ].map((filterClass) => (filterClass.getSchema() as any)?.properties || {})
       return {
         type: 'object',

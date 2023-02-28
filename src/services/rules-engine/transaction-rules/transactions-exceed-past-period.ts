@@ -73,9 +73,9 @@ export default class TransactionsExceedPastPeriodRule extends TransactionAggrega
   protected async getUpdatedTargetAggregation(
     _direction: 'origin' | 'destination',
     aggregation: AggregationData | undefined,
-    filtered: boolean
+    isTransactionFiltered: boolean
   ): Promise<AggregationData | null> {
-    if (!filtered) {
+    if (!isTransactionFiltered) {
       return null
     }
     return {

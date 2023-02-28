@@ -1,6 +1,7 @@
 import { JSONSchemaType } from 'ajv'
 import { TRANSACTION_STATES_OPTIONAL_SCHEMA } from '../utils/rule-parameter-schemas'
 import { TransactionRuleFilter } from './filter'
+import { transactionStateRuleFilterPredicate } from './transaction-state'
 import { TransactionState } from '@/@types/openapi-public/TransactionState'
 
 export type TransactionStateHistoricalRuleFilterParameter = {
@@ -22,6 +23,9 @@ export class TransactionStateHistoricalRuleFilter extends TransactionRuleFilter<
   }
 
   public async predicate(): Promise<boolean> {
-    return true
+    return transactionStateRuleFilterPredicate(
+      this.transaction,
+      this.parameters.transactionStatesHistorical
+    )
   }
 }

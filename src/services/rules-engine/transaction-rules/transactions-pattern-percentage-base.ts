@@ -74,9 +74,9 @@ export default abstract class TransactionsPatternPercentageBaseRule<
   protected async getUpdatedTargetAggregation(
     direction: 'origin' | 'destination',
     targetAggregationData: AggregationData | undefined,
-    filtered: boolean
+    isTransactionFiltered: boolean
   ): Promise<AggregationData | null> {
-    if (!filtered) {
+    if (!isTransactionFiltered) {
       return null
     }
     return {

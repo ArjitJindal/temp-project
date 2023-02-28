@@ -7,6 +7,9 @@ import dayjs, { duration } from '@/utils/dayjs'
 import { logger } from '@/core/logger'
 import { hasFeature } from '@/core/utils/context'
 
+// NOTE: Increment this version to invalidate the existing aggregation data of all the rules
+const AGGREGATION_VERSION = '1'
+
 const AGGREGATION_TIME_FORMAT = 'YYYYMMDDHH'
 
 export abstract class TransactionAggregationRule<
@@ -14,12 +17,10 @@ export abstract class TransactionAggregationRule<
   T extends object = object,
   A = unknown
 > extends TransactionRule<P, T> {
-  private aggregationVersion: number | undefined = undefined
-
   protected abstract getUpdatedTargetAggregation(
     direction: 'origin' | 'destination',
     aggregation: A | undefined,
-    filtered: boolean
+    isTransactionFiltered: boolean
   ): Promise<A | null>
 
   protected abstract getMaxTimeWindow(): TimeWindow
@@ -31,7 +32,7 @@ export abstract class TransactionAggregationRule<
 
   public async updateAggregation(
     direction: 'origin' | 'destination',
-    filtered: boolean
+    isTransactionFiltered: boolean
   ) {
     if (!this.shouldUseAggregation()) {
       return
@@ -75,7 +76,7 @@ export abstract class TransactionAggregationRule<
     const updatedAggregation = await this.getUpdatedTargetAggregation(
       direction,
       targetAggregations?.[0],
-      filtered
+      isTransactionFiltered
     )
     if (!updatedAggregation) {
       return
@@ -161,10 +162,8 @@ export abstract class TransactionAggregationRule<
   }
 
   private getAggregationVersion(): string {
-    if (!this.aggregationVersion) {
-      this.aggregationVersion = this.ruleInstance.updatedAt!
-    }
-    return `${this.aggregationVersion}-${this.getRuleAggregationVersion()}`
+    const ruleInstanceVersion = this.ruleInstance.updatedAt!
+    return `${AGGREGATION_VERSION}_${this.getRuleAggregationVersion()}_${ruleInstanceVersion}`
   }
 
   private getUpdatedTTLAttribute(): number {

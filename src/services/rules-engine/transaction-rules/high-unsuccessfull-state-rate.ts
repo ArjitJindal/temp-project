@@ -343,13 +343,13 @@ export default class HighUnsuccessfullStateRateRule extends TransactionAggregati
   protected async getUpdatedTargetAggregation(
     direction: 'origin' | 'destination',
     targetAggregationData: AggregationData | undefined,
-    filtered: boolean
+    isTransactionFiltered: boolean
   ): Promise<AggregationData> {
     const data = {
       ...targetAggregationData,
     }
     if (
-      filtered &&
+      isTransactionFiltered &&
       this.transaction.transactionState &&
       this.parameters.transactionStates.includes(
         this.transaction.transactionState
