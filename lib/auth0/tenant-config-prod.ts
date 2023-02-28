@@ -8,6 +8,7 @@ export const Auth0ProdTenantConfig: Auth0TenantConfig = {
   consoleApplicationName: 'Flagright Console',
   consoleUrl: 'https://console.flagright.com',
   allowedOrigins: ALLOWED_ORIGINS.prod,
+  allowedCallbackUrls: ALLOWED_ORIGINS.prod,
   branding: {
     logoUrl:
       'https://lh6.googleusercontent.com/tocqbH_zqQ_iBpNofXXCz_3OkzXjhiTELkjUwr6JkZe-9uDy346lRr5oE28W5uARzRE=w2400',

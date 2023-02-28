@@ -9,6 +9,10 @@ export const Auth0SandboxBureauTenantConfig: Auth0TenantConfig = {
   consoleApplicationName: 'Bureau Console (Sandbox)',
   consoleUrl: 'https://tm.sandbox.bureau.id',
   allowedOrigins: [WHITE_LABEL_ORIGINS.bureau.sandbox],
+  allowedCallbackUrls: [
+    WHITE_LABEL_ORIGINS.bureau.sandbox,
+    `${WHITE_LABEL_ORIGINS.bureau.sandbox}/dashboard/analysis`,
+  ],
   branding: {
     // TODO: To be provided by Bureau
     logoUrl: 'https://i.imgur.com/c1dqUxB.png',

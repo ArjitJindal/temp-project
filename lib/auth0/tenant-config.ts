@@ -11,6 +11,7 @@ export type Auth0TenantConfig = {
   consoleApplicationName: string
   consoleUrl: string
   allowedOrigins: string[]
+  allowedCallbackUrls: string[]
   branding: {
     logoUrl: string
     primaryColor: string

@@ -76,7 +76,7 @@ export const createAuth0TenantResources = (
     provider,
     name: tenantConfig.consoleApplicationName,
     appType: 'spa',
-    callbacks: tenantConfig.allowedOrigins,
+    callbacks: tenantConfig.allowedCallbackUrls,
     allowedOrigins: tenantConfig.allowedOrigins,
     allowedLogoutUrls: tenantConfig.allowedOrigins,
     webOrigins: tenantConfig.allowedOrigins,

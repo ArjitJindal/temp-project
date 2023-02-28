@@ -8,6 +8,10 @@ export const Auth0ProdBureauTenantConfig: Auth0TenantConfig = {
   consoleApplicationName: 'Bureau Console',
   consoleUrl: 'https://tm.bureau.id',
   allowedOrigins: [WHITE_LABEL_ORIGINS.bureau.prod],
+  allowedCallbackUrls: [
+    WHITE_LABEL_ORIGINS.bureau.prod,
+    `${WHITE_LABEL_ORIGINS.bureau.prod}/dashboard/analysis`,
+  ],
   branding: {
     // TODO: To be provided by Bureau
     logoUrl: 'https://i.imgur.com/c1dqUxB.png',

@@ -8,6 +8,7 @@ export const Auth0SandboxTenantConfig: Auth0TenantConfig = {
   consoleApplicationName: 'Flagright Console (Sandbox)',
   consoleUrl: 'https://sandbox.console.flagright.com',
   allowedOrigins: ALLOWED_ORIGINS.sandbox,
+  allowedCallbackUrls: ALLOWED_ORIGINS.sandbox,
   branding: {
     logoUrl:
       'https://lh6.googleusercontent.com/tocqbH_zqQ_iBpNofXXCz_3OkzXjhiTELkjUwr6JkZe-9uDy346lRr5oE28W5uARzRE=w2400',
