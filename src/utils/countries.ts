@@ -250,6 +250,7 @@ const COUNTRIES = {
   ZW: 'Zimbabwe',
   AX: 'Åland Islands',
   AN: 'Netherlands Antilles',
+  EEA: 'The European Economic Area',
 };
 
 export const COUNTRY_NAME_TO_CODE = Object.fromEntries(
