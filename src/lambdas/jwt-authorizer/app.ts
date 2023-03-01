@@ -103,7 +103,7 @@ export const jwtAuthorizer = lambdaAuthorizer()(
     updateLogMetadata({ jwtToken: token })
 
     let kid: string
-    let auth0Domain: string = process.env.AUTH0_DOMAIN as string
+    let auth0Domain: string
     try {
       const decoded = jwt.decode(token, { complete: true })
       if (!decoded?.header?.kid) {
@@ -111,9 +111,10 @@ export const jwtAuthorizer = lambdaAuthorizer()(
         return UNAUTHORIZED_RESPONSE
       }
       kid = decoded?.header?.kid
-      auth0Domain = (decoded.payload as jwt.JwtPayload)?.[
-        `${AUTH0_CUSTOM_CLAIMS_NAMESPACE}/auth0Domain`
-      ]
+      auth0Domain =
+        (decoded.payload as jwt.JwtPayload)?.[
+          `${AUTH0_CUSTOM_CLAIMS_NAMESPACE}/auth0Domain`
+        ] || (process.env.AUTH0_DOMAIN as string)
     } catch (e) {
       logger.warn('token failed to be decoded')
       return UNAUTHORIZED_RESPONSE
