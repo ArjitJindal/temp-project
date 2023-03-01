@@ -30,6 +30,9 @@ import { withFeatureHook } from '@/test-utils/feature-test-utils'
 import { Feature } from '@/@types/openapi-internal/Feature'
 import { RiskScoringService } from '@/services/risk-scoring'
 import { getMongoDbClient } from '@/utils/mongoDBUtils'
+import { UserService } from '@/lambdas/console-api-user/services/user-service'
+import { UserRepository } from '@/services/users/repositories/user-repository'
+import { getS3Client } from '@/utils/s3'
 
 const features: Feature[] = ['PULSE']
 
@@ -379,6 +382,7 @@ describe('Public API - Create a Business User Event', () => {
 
   test('returns updated user', async () => {
     const user = getTestBusiness({ userId: 'foo' })
+    const mongoDb = await getMongoDbClient()
     await userHandler(
       getApiGatewayPostEvent(TEST_TENANT_ID, '/business/users', user),
       null as any,
@@ -389,6 +393,11 @@ describe('Public API - Create a Business User Event', () => {
       userId: 'foo',
       updatedBusinessUserAttributes: {
         tags: [{ key: 'key', value: 'value' }],
+        legalEntity: {
+          companyGeneralDetails: {
+            legalName: 'legalName',
+          },
+        },
       },
     })
     const response = await userEventsHandler(
@@ -401,10 +410,32 @@ describe('Public API - Create a Business User Event', () => {
       null as any
     )
     expect(response?.statusCode).toBe(200)
-    expect(JSON.parse(response?.body as string)).toEqual({
+    const toMatchObject = {
       ...user,
       tags: [{ key: 'key', value: 'value' }],
-    })
+      legalEntity: {
+        companyGeneralDetails: {
+          legalName: 'legalName',
+        },
+      },
+    }
+    expect(JSON.parse(response?.body as string)).toEqual(toMatchObject)
+    const userService = new UserService(
+      TEST_TENANT_ID,
+      { mongoDb },
+      getS3Client({
+        accessKeyId: 'accessKeyId',
+        secretAccessKey: 'secretAccessKey',
+      }),
+      '',
+      ''
+    )
+    const businessUserMongo = await userService.getBusinessUser('foo')
+    expect(businessUserMongo).toMatchObject(toMatchObject)
+    const dynamoDb = getDynamoDbClient()
+    const userRepository = new UserRepository(TEST_TENANT_ID, { dynamoDb })
+    const businessUserDynamo = await userRepository.getBusinessUser('foo')
+    expect(businessUserDynamo).toMatchObject(toMatchObject)
   })
 })
 
