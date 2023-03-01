@@ -319,32 +319,30 @@ export default function AlertTable(props: Props) {
             ]
           : undefined
       }
-      actionsHeaderRight={
-        showActions
-          ? [
-              ({ params, setParams }) => (
-                <>
-                  <AssignToButton ids={selectedEntities} onSelect={handleAssignTo} />
-                  <AlertsStatusChangeButton
-                    ids={selectedEntities}
-                    onSaved={reloadTable}
-                    caseStatus={params.caseStatus}
-                  />
-                  <StatusButtons
-                    status={params.caseStatus ?? 'OPEN'}
-                    onChange={(newStatus) => {
-                      setParams((state) => ({
-                        ...state,
-                        caseStatus: newStatus,
-                      }));
-                    }}
-                    suffix="cases"
-                  />
-                </>
-              ),
-            ]
-          : undefined
-      }
+      actionsHeaderRight={[
+        ({ params, setParams }) => (
+          <>
+            <AssignToButton ids={selectedEntities} onSelect={handleAssignTo} />
+            <AlertsStatusChangeButton
+              ids={selectedEntities}
+              onSaved={reloadTable}
+              caseStatus={params.caseStatus}
+            />
+            {showActions && (
+              <StatusButtons
+                status={params.caseStatus ?? 'OPEN'}
+                onChange={(newStatus) => {
+                  setParams((state) => ({
+                    ...state,
+                    caseStatus: newStatus,
+                  }));
+                }}
+                suffix="cases"
+              />
+            )}
+          </>
+        ),
+      ]}
       rowSelection={{
         selectedKeys: selectedEntities,
         onChange: setSelectedEntities,
