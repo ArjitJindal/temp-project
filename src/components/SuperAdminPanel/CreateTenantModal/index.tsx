@@ -151,7 +151,8 @@ export const CreateTenantModal = (props: Props) => {
         auth0Domain: {
           type: 'string',
           title: 'Auth0 Domain',
-          description: 'e.g flagright.eu.auth0.com',
+          description:
+            'Required if the tenant belongs to our white-label customer. e.g bureau-flagright.eu.auth0.com',
         },
         emailsOfAdmins: {
           type: 'array',
