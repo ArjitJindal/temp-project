@@ -15,6 +15,7 @@ import { Business } from '@/@types/openapi-public/Business'
 import { RiskScoringService } from '@/services/risk-scoring'
 import { hasFeature, updateLogMetadata } from '@/core/utils/context'
 import { getMongoDbClient } from '@/utils/mongoDBUtils'
+import { UserManagementService } from '@/services/users'
 
 const handleRiskLevelParam = (
   tenantId: string,
@@ -90,9 +91,15 @@ export const userHandler = lambdaApi()(
         }
       }
 
-      const user = isConsumerUser
-        ? await userRepository.saveConsumerUser(userPayload)
-        : await userRepository.saveBusinessUser(userPayload)
+      const userManagementService = new UserManagementService(
+        tenantId,
+        dynamoDb
+      )
+
+      const user = await userManagementService.saveUser(
+        userPayload,
+        isConsumerUser ? 'CONSUMER' : 'BUSINESS'
+      )
 
       return {
         userId: user.userId,

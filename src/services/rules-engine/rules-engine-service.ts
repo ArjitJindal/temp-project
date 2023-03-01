@@ -11,7 +11,6 @@ import { RuleInstanceRepository } from './repositories/rule-instance-repository'
 import { TRANSACTION_RULES } from './transaction-rules'
 import { generateRuleDescription, Vars } from './utils/format-description'
 import { Aggregators } from './aggregator'
-import { UserEventRepository } from './repositories/user-event-repository'
 import { TransactionAggregationRule } from './transaction-rules/aggregation-rule'
 import { RuleHitResult, RuleHitResultItem } from './rule'
 import {
@@ -43,8 +42,6 @@ import { RuleHitDirection } from '@/@types/openapi-public/RuleHitDirection'
 import { TransactionEvent } from '@/@types/openapi-public/TransactionEvent'
 import { TransactionEventMonitoringResult } from '@/@types/openapi-public/TransactionEventMonitoringResult'
 import { TransactionWithRulesResult } from '@/@types/openapi-public/TransactionWithRulesResult'
-import { ConsumerUserEvent } from '@/@types/openapi-public/ConsumerUserEvent'
-import { BusinessUserEvent } from '@/@types/openapi-public/BusinessUserEvent'
 import { RULE_EXECUTION_TIME_MS_METRIC } from '@/core/cloudwatch/metrics'
 import { addNewSubsegment } from '@/core/xray'
 
@@ -66,7 +63,6 @@ export class RulesEngineService {
   ruleInstanceRepository: RuleInstanceRepository
   riskRepository: RiskRepository
   userRepository: UserRepository
-  userEventRepository: UserEventRepository
 
   constructor(tenantId: string, dynamoDb: DynamoDBDocumentClient) {
     this.dynamoDb = dynamoDb
@@ -89,7 +85,6 @@ export class RulesEngineService {
     this.userRepository = new UserRepository(tenantId, {
       dynamoDb,
     })
-    this.userEventRepository = new UserEventRepository(tenantId, { dynamoDb })
   }
 
   public async verifyTransaction(
@@ -223,42 +218,6 @@ export class RulesEngineService {
       executedRules,
       hitRules,
     }
-  }
-
-  public async verifyConsumerUserEvent(
-    userEvent: ConsumerUserEvent
-  ): Promise<User> {
-    const user = await this.userRepository.getConsumerUser(userEvent.userId)
-    if (!user) {
-      throw new NotFound(
-        `User ${userEvent.userId} not found. Please create the user ${userEvent.userId}`
-      )
-    }
-    const updatedConsumerUser: User = _.merge(
-      user,
-      userEvent.updatedConsumerUserAttributes || {}
-    )
-    await this.userEventRepository.saveUserEvent(userEvent, 'CONSUMER')
-    await this.userRepository.saveConsumerUser(updatedConsumerUser)
-    return updatedConsumerUser
-  }
-
-  public async verifyBusinessUserEvent(
-    userEvent: BusinessUserEvent
-  ): Promise<Business> {
-    const user = await this.userRepository.getBusinessUser(userEvent.userId)
-    if (!user) {
-      throw new NotFound(
-        `User ${userEvent.userId} not found. Please create the user ${userEvent.userId}`
-      )
-    }
-    const updatedBusinessUser: Business = _.merge(
-      user,
-      userEvent.updatedBusinessUserAttributes || {}
-    )
-    await this.userEventRepository.saveUserEvent(userEvent, 'BUSINESS')
-    await this.userRepository.saveBusinessUser(updatedBusinessUser)
-    return updatedBusinessUser
   }
 
   private async verifyTransactionIdempotent(transaction: Transaction): Promise<{

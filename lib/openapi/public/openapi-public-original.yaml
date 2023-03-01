@@ -2927,6 +2927,8 @@ components:
           type: array
           items:
             $ref: '#/components/schemas/PaymentMethods'
+        linkedEntities:
+          $ref: '#/components/schemas/BusinessEntityLink'
         acquisitionChannel:
           $ref: '#/components/schemas/AcquisitionChannel'
         mccDetails:
@@ -4695,6 +4697,18 @@ components:
       required:
         - isFalsePositive
         - confidenceScore
+    BusinessEntityLink:
+      title: BusinessEntityLink
+      x-stoplight:
+        id: qqn80q54vrs3w
+      type: object
+      properties:
+        parentUserId:
+          type: string
+        childUserIds:
+          type: array
+          items:
+            type: string
   securitySchemes:
     x-api-key:
       name: x-api-key

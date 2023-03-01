@@ -20,6 +20,7 @@ import { UserRepository } from '@/services/users/repositories/user-repository'
 import { updateLogMetadata } from '@/core/utils/context'
 import { logger } from '@/core/logger'
 import { addNewSubsegment } from '@/core/xray'
+import { UserManagementService } from '@/services/users'
 
 type MissingUserIdMap = { field: string; userId: string }
 
@@ -228,8 +229,11 @@ export const userEventsHandler = lambdaApi()(
       })
       logger.info(`Processing Consumer User Event`) // Need to log to show on the logs
 
-      const rulesEngine = new RulesEngineService(tenantId, dynamoDb)
-      return await rulesEngine.verifyConsumerUserEvent(userEvent)
+      const userManagementService = new UserManagementService(
+        tenantId,
+        dynamoDb
+      )
+      return await userManagementService.verifyConsumerUserEvent(userEvent)
     }
     if (
       event.httpMethod === 'POST' &&
@@ -243,8 +247,18 @@ export const userEventsHandler = lambdaApi()(
       })
       logger.info(`Processing Business User Event`) // Need to log to show on the logs
 
-      const rulesEngine = new RulesEngineService(tenantId, dynamoDb)
-      return await rulesEngine.verifyBusinessUserEvent(userEvent)
+      const userManagementService = new UserManagementService(
+        tenantId,
+        dynamoDb
+      )
+      const { updatedBusinessUserAttributes } = userEvent
+      if (updatedBusinessUserAttributes?.linkedEntities) {
+        await userManagementService.validateLinkedEntitiesAndEmitEvent(
+          updatedBusinessUserAttributes?.linkedEntities,
+          userEvent.userId
+        )
+      }
+      return await userManagementService.verifyBusinessUserEvent(userEvent)
     }
     throw new Error('Unhandled request')
   }

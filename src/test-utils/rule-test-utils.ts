@@ -15,6 +15,7 @@ import { User } from '@/@types/openapi-public/User'
 import { Priority } from '@/@types/openapi-internal/Priority'
 import { getDynamoDbClient } from '@/utils/dynamodb'
 import { RuleInstance } from '@/@types/openapi-internal/RuleInstance'
+import { UserManagementService } from '@/services/users'
 
 export async function createRule(
   testTenantId: string,
@@ -114,9 +115,9 @@ export async function bulkVerifyUserEvents(
 ): Promise<User[]> {
   const dynamoDb = getDynamoDbClient()
   const results = []
-  const rulesEngine = new RulesEngineService(tenantId, dynamoDb)
+  const userManagementService = new UserManagementService(tenantId, dynamoDb)
   for (const userEvent of userEvents) {
-    results.push(await rulesEngine.verifyConsumerUserEvent(userEvent))
+    results.push(await userManagementService.verifyConsumerUserEvent(userEvent))
   }
   return results
 }
