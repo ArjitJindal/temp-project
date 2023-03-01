@@ -101,7 +101,6 @@ export interface Props<T extends object | unknown, Params extends object, ValueT
   showResultsInfo?: boolean;
   autoAdjustHeight?: boolean;
   enableLegacyFilters?: boolean; // We need this for sanctions table only
-  shouldShowActionsHeaderRight?: boolean;
   adjustPagination?: boolean;
 }
 
@@ -148,7 +147,6 @@ export default function Table<
     onReset,
     onReload,
     showResultsInfo = true,
-    shouldShowActionsHeaderRight = true,
     adjustPagination = false,
   } = props;
   const tableElement = useRef<HTMLDivElement>(null);
@@ -291,8 +289,7 @@ export default function Table<
 
   const showFilters = params != null && allFilters.length > 0 && !enableLegacyFilters;
   const showActionsHeader = actionsHeader.length > 0 && params != null;
-  const showActionsHeaderRight =
-    actionsHeaderRight.length > 0 && params != null && shouldShowActionsHeaderRight;
+  const showActionsHeaderRight = actionsHeaderRight.length > 0 && params != null;
   const showBottomHeader = showFilters;
   const showTopHeader =
     showActionsHeader || showActionsHeaderRight || headerTitle || headerSubtitle;

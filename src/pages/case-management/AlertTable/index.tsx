@@ -178,7 +178,6 @@ const mergedColumns = (
       exportData: 'assignments',
       width: 100,
       render: (_, entity) => {
-        console.log(users);
         return (
           users &&
           entity.assignments?.map((assignment) => {
@@ -206,6 +205,7 @@ export default function AlertTable(props: Props) {
     disableInternalPadding = false,
     hideScopeSelector = false,
   } = props;
+  const showActions = !hideScopeSelector;
 
   const api = useApi();
   const user = useAuth0User();
@@ -235,8 +235,16 @@ export default function AlertTable(props: Props) {
         page,
         pageSize,
         filterAlertId: alertId,
-        filterOutCaseStatus: caseStatus === 'CLOSED' ? undefined : 'CLOSED',
-        filterCaseStatus: caseStatus === 'CLOSED' ? 'CLOSED' : undefined,
+        filterOutCaseStatus: showActions
+          ? caseStatus === 'CLOSED'
+            ? undefined
+            : 'CLOSED'
+          : undefined,
+        filterCaseStatus: showActions
+          ? caseStatus === 'CLOSED'
+            ? 'CLOSED'
+            : undefined
+          : undefined,
         filterAssignmentsIds: showCases === 'MY_ALERTS' ? [user.userId] : undefined,
         filterTransactionState: transactionState ?? undefined,
         filterBusinessIndustries: businessIndustryFilter,
@@ -303,36 +311,40 @@ export default function AlertTable(props: Props) {
       onChangeParams={onChangeParams}
       extraFilters={extraFilters(isPulseEnabled)}
       actionsHeader={
-        hideScopeSelector
-          ? undefined
-          : [
+        showActions
+          ? [
               ({ params, setParams }) => (
                 <ScopeSelector<AlertTableParams> params={params} onChangeParams={setParams} />
               ),
             ]
+          : undefined
       }
-      actionsHeaderRight={[
-        ({ params, setParams }) => (
-          <>
-            <AssignToButton ids={selectedEntities} onSelect={handleAssignTo} />
-            <AlertsStatusChangeButton
-              ids={selectedEntities}
-              onSaved={reloadTable}
-              caseStatus={params.caseStatus}
-            />
-            <StatusButtons
-              status={params.caseStatus ?? 'OPEN'}
-              onChange={(newStatus) => {
-                setParams((state) => ({
-                  ...state,
-                  caseStatus: newStatus,
-                }));
-              }}
-              suffix="cases"
-            />
-          </>
-        ),
-      ]}
+      actionsHeaderRight={
+        showActions
+          ? [
+              ({ params, setParams }) => (
+                <>
+                  <AssignToButton ids={selectedEntities} onSelect={handleAssignTo} />
+                  <AlertsStatusChangeButton
+                    ids={selectedEntities}
+                    onSaved={reloadTable}
+                    caseStatus={params.caseStatus}
+                  />
+                  <StatusButtons
+                    status={params.caseStatus ?? 'OPEN'}
+                    onChange={(newStatus) => {
+                      setParams((state) => ({
+                        ...state,
+                        caseStatus: newStatus,
+                      }));
+                    }}
+                    suffix="cases"
+                  />
+                </>
+              ),
+            ]
+          : undefined
+      }
       rowSelection={{
         selectedKeys: selectedEntities,
         onChange: setSelectedEntities,
@@ -342,7 +354,6 @@ export default function AlertTable(props: Props) {
       }}
       scroll={{ x: 1300 }}
       disableInternalPadding={disableInternalPadding}
-      shouldShowActionsHeaderRight={!hideScopeSelector}
     />
   );
 }

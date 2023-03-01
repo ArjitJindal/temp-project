@@ -30,7 +30,7 @@ export default function AlertsCard(props: Props) {
           onChangeParams={setParams}
           hideCaseIdFilter={true}
           hideScopeSelector={true}
-          disableInternalPadding={false}
+          disableInternalPadding={true}
         />
       </Card.Section>
     </Card.Root>
