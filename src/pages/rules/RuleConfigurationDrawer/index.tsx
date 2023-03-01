@@ -173,10 +173,7 @@ export default function RuleConfigurationDrawer(props: Props) {
       isUnfilled:
         validateField(fieldValidators.basicDetailsStep, formState?.basicDetailsStep) != null,
       description: 'Configure the basic details for this rule',
-      tabs: [
-        { key: 'rule_details', title: 'Rule details' },
-        { key: 'case_creation_details', title: 'Case creation details' },
-      ],
+      tabs: [{ key: 'rule_details', title: 'Rule details' }],
     },
     {
       key: STANDARD_FILTERS_STEP,

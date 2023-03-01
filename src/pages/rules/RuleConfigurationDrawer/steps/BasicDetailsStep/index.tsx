@@ -31,12 +31,7 @@ interface Props {
 export default function BasicDetailsStep(props: Props) {
   const { activeTab } = props;
 
-  return (
-    <div className={s.root}>
-      {activeTab === 'rule_details' && <RuleDetails {...props} />}
-      {activeTab === 'case_creation_details' && <CaseCreationDetails />}
-    </div>
-  );
+  return <div className={s.root}>{activeTab === 'rule_details' && <RuleDetails {...props} />}</div>;
 }
 
 function RuleDetails(props: Props) {
@@ -79,20 +74,11 @@ function RuleDetails(props: Props) {
             />
           )}
         </InputField>
-      </PropertyListLayout>
-    </>
-  );
-}
-
-function CaseCreationDetails() {
-  return (
-    <>
-      <StepHeader
-        title={'Case creation details'}
-        description={'Define how cases are created when this rule is hit.'}
-      />
-      <PropertyListLayout>
-        <InputField<FormValues> name={'casePriority'} label={'Case priority'}>
+        <InputField<FormValues>
+          name={'casePriority'}
+          label={'Rule Severity'}
+          description={'Define the severity of alerts created when this rule is hit.'}
+        >
           {(inputProps) => (
             <SelectionGroup<Priority> mode="SINGLE" options={RULE_CASE_PRIORITY} {...inputProps} />
           )}
