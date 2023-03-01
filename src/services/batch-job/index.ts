@@ -1,6 +1,7 @@
 import { SendMessageCommand, SQSClient } from '@aws-sdk/client-sqs'
 import { BatchJob } from '@/@types/batch-job'
 import { logger } from '@/core/logger'
+import { BatchJobRunnerFactory } from '@/lambdas/batch-job/batch-job-runner-factory'
 
 const sqsClient = new SQSClient({})
 
@@ -12,6 +13,16 @@ export async function sendBatchJobCommand(
     ...job,
     tenantId,
   }
+
+  if (
+    (process.env.ENV === 'local' || process.env.NODE_ENV === 'development') &&
+    process.env.NODE_ENV !== 'test'
+  ) {
+    const jobRunner = BatchJobRunnerFactory.getBatchJobRunner(job.type)
+    await jobRunner.run(batchJob as BatchJob)
+    return
+  }
+
   await sqsClient.send(
     new SendMessageCommand({
       MessageBody: JSON.stringify(batchJob),

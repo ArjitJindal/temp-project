@@ -6,12 +6,12 @@ import {
 import { SimulationTaskRepository } from './repositories/simulation-task-repository'
 import { JWTAuthorizerResult } from '@/@types/jwt'
 import { lambdaApi } from '@/core/middlewares/lambda-api-middlewares'
-import { SimulationPulseParameters } from '@/@types/openapi-internal/SimulationPulseParameters'
 import { sendBatchJobCommand } from '@/services/batch-job'
 import { SimulationPulseBatchJob } from '@/@types/batch-job'
 import { getMongoDbClient } from '@/utils/mongoDBUtils'
 import { DefaultApiGetSimulationsRequest } from '@/@types/openapi-internal/RequestParameters'
 import { getCredentialsFromEvent } from '@/utils/credentials'
+import { SimulationPulseParametersRequest } from '@/@types/openapi-internal/SimulationPulseParametersRequest'
 
 export const simulationHandler = lambdaApi()(
   async (
@@ -28,39 +28,47 @@ export const simulationHandler = lambdaApi()(
 
     if (event.resource === '/simulation') {
       if (event.httpMethod === 'GET') {
-        return simulationTaskRepository.getSimulationTasks(
+        return simulationTaskRepository.getSimulationJobs(
           event.queryStringParameters as any as DefaultApiGetSimulationsRequest
         )
       } else if (event.httpMethod === 'POST' && event.body) {
         const simulationParameters = JSON.parse(
           event.body
-        ) as SimulationPulseParameters
-        const taskId = await simulationTaskRepository.createSimulationTask(
-          simulationParameters
-        )
-        await sendBatchJobCommand(tenantId, {
-          type: 'SIMULATION_PULSE',
-          tenantId,
-          parameters: {
-            taskId,
-            ...simulationParameters,
-          },
-          awsCredentials: getCredentialsFromEvent(event),
-        } as SimulationPulseBatchJob)
-        return { taskId }
+        ) as SimulationPulseParametersRequest
+
+        const { taskIds, jobId } =
+          await simulationTaskRepository.createSimulationJob(
+            simulationParameters
+          )
+
+        for (let i = 0; i < taskIds.length; i++) {
+          if (taskIds[i] && simulationParameters.parameters[i])
+            await sendBatchJobCommand(tenantId, {
+              type: 'SIMULATION_PULSE',
+              tenantId,
+              parameters: {
+                taskId: taskIds[i],
+                jobId,
+                ...simulationParameters.parameters[i],
+              },
+              awsCredentials: getCredentialsFromEvent(event),
+            } as SimulationPulseBatchJob)
+        }
+
+        return { taskIds, jobId }
       }
     } else if (
-      event.resource === '/simulation/{taskId}' &&
+      event.resource === '/simulation/{jobId}' &&
       event.httpMethod === 'GET' &&
-      event.pathParameters?.taskId
+      event.pathParameters?.jobId
     ) {
-      const task = await simulationTaskRepository.getSimulationTask(
-        event.pathParameters.taskId
+      const job = await simulationTaskRepository.getSimulationJob(
+        event.pathParameters.jobId
       )
-      if (task == null) {
-        throw new NotFound(`Simulation task not found`)
+      if (job == null) {
+        throw new NotFound(`Simulation job not found`)
       }
-      return task
+      return job
     }
 
     throw new BadRequest('Unhandled request')

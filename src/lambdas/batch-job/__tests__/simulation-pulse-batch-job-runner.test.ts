@@ -3,7 +3,6 @@ import { SimulationPulseBatchJob } from '@/@types/batch-job'
 import { getTestTenantId } from '@/test-utils/tenant-test-utils'
 import { SimulationTaskRepository } from '@/lambdas/console-api-simulation/repositories/simulation-task-repository'
 import { getMongoDbClient } from '@/utils/mongoDBUtils'
-import { SimulationPulseParameters } from '@/@types/openapi-internal/SimulationPulseParameters'
 import { createConsumerUsers, getTestUser } from '@/test-utils/user-test-utils'
 import { RiskRepository } from '@/services/risk-scoring/repositories/risk-repository'
 import { getDynamoDbClient } from '@/utils/dynamodb'
@@ -11,6 +10,7 @@ import { dynamoDbSetupHook } from '@/test-utils/dynamodb-test-utils'
 import { SimulationResultRepository } from '@/lambdas/console-api-simulation/repositories/simulation-result-repository'
 import { TransactionRepository } from '@/services/rules-engine/repositories/transaction-repository'
 import { getTestTransaction } from '@/test-utils/transaction-test-utils'
+import { SimulationPulseParametersRequest } from '@/@types/openapi-internal/SimulationPulseParametersRequest'
 
 dynamoDbSetupHook()
 
@@ -52,26 +52,32 @@ describe('Simulation (Pulse) batch job runner', () => {
         upperBoundRiskScore: 100,
       },
     ])
-
-    const parameters: SimulationPulseParameters = {
-      type: 'PULSE',
-      classificationValues: [
+    const parameters: SimulationPulseParametersRequest = {
+      parameters: [
         {
-          riskLevel: 'LOW',
-          lowerBoundRiskScore: 0,
-          upperBoundRiskScore: 10,
-        },
-        {
-          riskLevel: 'MEDIUM',
-          lowerBoundRiskScore: 10,
-          upperBoundRiskScore: 100,
+          type: 'PULSE',
+          classificationValues: [
+            {
+              riskLevel: 'LOW',
+              lowerBoundRiskScore: 0,
+              upperBoundRiskScore: 10,
+            },
+            {
+              riskLevel: 'MEDIUM',
+              lowerBoundRiskScore: 10,
+              upperBoundRiskScore: 100,
+            },
+          ],
+          parameterAttributeRiskValues: [],
+          sampling: {
+            usersCount: 100,
+          },
+          name: 'test-simulation',
         },
       ],
-      parameterAttributeRiskValues: [],
-      sampling: {
-        usersCount: 100,
-      },
+      type: 'PULSE',
     }
+
     const simulationTaskRepository = new SimulationTaskRepository(
       tenantId,
       mongoDb
@@ -81,40 +87,45 @@ describe('Simulation (Pulse) batch job runner', () => {
       mongoDb
     )
 
-    const taskId = await simulationTaskRepository.createSimulationTask(
-      parameters
-    )
+    const { taskIds, jobId } =
+      await simulationTaskRepository.createSimulationJob(parameters)
+
     const testJob: SimulationPulseBatchJob = {
       type: 'SIMULATION_PULSE',
       tenantId: tenantId,
       parameters: {
-        taskId,
-        ...parameters,
+        taskId: taskIds[0],
+        jobId,
+        ...parameters.parameters[0],
       },
     }
 
     await jobRunnerHandler(testJob)
-
     expect(
-      await simulationTaskRepository.getSimulationTask(taskId)
+      await simulationTaskRepository.getSimulationJob(jobId)
     ).toMatchObject({
-      progress: 1,
-      statistics: {
-        current: [
-          { count: 1, riskLevel: 'LOW', riskType: 'DRS' },
-          { count: 1, riskLevel: 'MEDIUM', riskType: 'DRS' },
-        ],
-        simulated: [{ count: 2, riskLevel: 'MEDIUM', riskType: 'DRS' }],
-      },
-      latestStatus: { status: 'SUCCESS', timestamp: expect.any(Number) },
-      statuses: [
-        { status: 'PENDING', timestamp: expect.any(Number) },
-        { status: 'IN_PROGRESS', timestamp: expect.any(Number) },
-        { status: 'SUCCESS', timestamp: expect.any(Number) },
+      iterations: [
+        {
+          progress: 1,
+          statistics: {
+            current: [
+              { count: 1, riskLevel: 'LOW', riskType: 'DRS' },
+              { count: 1, riskLevel: 'MEDIUM', riskType: 'DRS' },
+            ],
+            simulated: [{ count: 2, riskLevel: 'MEDIUM', riskType: 'DRS' }],
+          },
+          latestStatus: { status: 'SUCCESS', timestamp: expect.any(Number) },
+          statuses: [
+            { status: 'PENDING', timestamp: expect.any(Number) },
+            { status: 'IN_PROGRESS', timestamp: expect.any(Number) },
+            { status: 'SUCCESS', timestamp: expect.any(Number) },
+          ],
+          name: 'test-simulation',
+        },
       ],
     })
     expect(
-      await simulationResultRepository.getSimulationResults(taskId)
+      await simulationResultRepository.getSimulationResults(taskIds[0])
     ).toEqual([
       {
         current: {
@@ -131,7 +142,7 @@ describe('Simulation (Pulse) batch job runner', () => {
           },
           krs: null,
         },
-        taskId,
+        taskId: taskIds[0],
         type: 'PULSE',
         userId: 'test-user-id-1',
       },
@@ -150,7 +161,7 @@ describe('Simulation (Pulse) batch job runner', () => {
           },
           krs: null,
         },
-        taskId,
+        taskId: taskIds[0],
         type: 'PULSE',
         userId: 'test-user-id-2',
       },
@@ -254,88 +265,93 @@ describe('Simulation (Pulse) batch job runner', () => {
         upperBoundRiskScore: 100,
       },
     ])
-
-    const parameters: SimulationPulseParameters = {
+    const parameters: SimulationPulseParametersRequest = {
       type: 'PULSE',
-      parameterAttributeRiskValues: [
+      parameters: [
         {
-          parameter: 'userDetails.countryOfResidence',
-          isActive: true,
-          isDerived: false,
-          riskEntityType: 'CONSUMER_USER',
-          riskLevelAssignmentValues: [
+          type: 'PULSE',
+          parameterAttributeRiskValues: [
             {
-              parameterValue: {
-                content: {
-                  kind: 'MULTIPLE',
-                  values: [
-                    {
-                      kind: 'LITERAL',
-                      content: 'IN',
+              parameter: 'userDetails.countryOfResidence',
+              isActive: true,
+              isDerived: false,
+              riskEntityType: 'CONSUMER_USER',
+              riskLevelAssignmentValues: [
+                {
+                  parameterValue: {
+                    content: {
+                      kind: 'MULTIPLE',
+                      values: [
+                        {
+                          kind: 'LITERAL',
+                          content: 'IN',
+                        },
+                      ],
                     },
-                  ],
+                  },
+                  riskLevel: 'LOW',
                 },
-              },
-              riskLevel: 'LOW',
+                {
+                  parameterValue: {
+                    content: {
+                      kind: 'MULTIPLE',
+                      values: [
+                        {
+                          kind: 'LITERAL',
+                          content: 'DE',
+                        },
+                      ],
+                    },
+                  },
+                  riskLevel: 'MEDIUM',
+                },
+              ],
+              parameterType: 'VARIABLE',
             },
             {
-              parameterValue: {
-                content: {
-                  kind: 'MULTIPLE',
-                  values: [
-                    {
-                      kind: 'LITERAL',
-                      content: 'DE',
+              parameter: 'originAmountDetails.country',
+              isActive: true,
+              isDerived: false,
+              riskEntityType: 'TRANSACTION',
+              riskLevelAssignmentValues: [
+                {
+                  parameterValue: {
+                    content: {
+                      kind: 'MULTIPLE',
+                      values: [
+                        {
+                          kind: 'LITERAL',
+                          content: 'IN',
+                        },
+                      ],
                     },
-                  ],
+                  },
+                  riskLevel: 'LOW',
                 },
-              },
-              riskLevel: 'MEDIUM',
+                {
+                  parameterValue: {
+                    content: {
+                      kind: 'MULTIPLE',
+                      values: [
+                        {
+                          kind: 'LITERAL',
+                          content: 'DE',
+                        },
+                      ],
+                    },
+                  },
+                  riskLevel: 'MEDIUM',
+                },
+              ],
+              parameterType: 'VARIABLE',
             },
           ],
-          parameterType: 'VARIABLE',
-        },
-        {
-          parameter: 'originAmountDetails.country',
-          isActive: true,
-          isDerived: false,
-          riskEntityType: 'TRANSACTION',
-          riskLevelAssignmentValues: [
-            {
-              parameterValue: {
-                content: {
-                  kind: 'MULTIPLE',
-                  values: [
-                    {
-                      kind: 'LITERAL',
-                      content: 'IN',
-                    },
-                  ],
-                },
-              },
-              riskLevel: 'LOW',
-            },
-            {
-              parameterValue: {
-                content: {
-                  kind: 'MULTIPLE',
-                  values: [
-                    {
-                      kind: 'LITERAL',
-                      content: 'DE',
-                    },
-                  ],
-                },
-              },
-              riskLevel: 'MEDIUM',
-            },
-          ],
-          parameterType: 'VARIABLE',
+          sampling: {
+            usersCount: 100,
+          },
+          name: 'test',
         },
       ],
-      sampling: {
-        usersCount: 100,
-      },
     }
     const simulationTaskRepository = new SimulationTaskRepository(
       tenantId,
@@ -346,51 +362,57 @@ describe('Simulation (Pulse) batch job runner', () => {
       mongoDb
     )
 
-    const taskId = await simulationTaskRepository.createSimulationTask(
-      parameters
-    )
+    const { taskIds, jobId } =
+      await simulationTaskRepository.createSimulationJob(parameters)
+
     const testJob: SimulationPulseBatchJob = {
       type: 'SIMULATION_PULSE',
       tenantId: tenantId,
       parameters: {
-        taskId,
-        ...parameters,
+        taskId: taskIds[0],
+        jobId,
+        ...parameters.parameters[0],
       },
     }
 
     await jobRunnerHandler(testJob)
 
     expect(
-      await simulationTaskRepository.getSimulationTask(taskId)
+      await simulationTaskRepository.getSimulationJob(jobId)
     ).toMatchObject({
-      progress: 1,
-      statistics: {
-        current: [
-          { count: 1, riskLevel: 'HIGH', riskType: 'KRS' },
-          { count: 1, riskLevel: 'LOW', riskType: 'KRS' },
-          { count: 1, riskLevel: 'HIGH', riskType: 'DRS' },
-          { count: 1, riskLevel: 'LOW', riskType: 'DRS' },
-          { count: 1, riskLevel: 'HIGH', riskType: 'ARS' },
-          { count: 1, riskLevel: 'LOW', riskType: 'ARS' },
-        ],
-        simulated: [
-          { count: 1, riskLevel: 'LOW', riskType: 'KRS' },
-          { count: 1, riskLevel: 'MEDIUM', riskType: 'KRS' },
-          { count: 1, riskLevel: 'LOW', riskType: 'DRS' },
-          { count: 1, riskLevel: 'MEDIUM', riskType: 'DRS' },
-          { count: 1, riskLevel: 'LOW', riskType: 'ARS' },
-          { count: 1, riskLevel: 'MEDIUM', riskType: 'ARS' },
-        ],
-      },
-      latestStatus: { status: 'SUCCESS', timestamp: expect.any(Number) },
-      statuses: [
-        { status: 'PENDING', timestamp: expect.any(Number) },
-        { status: 'IN_PROGRESS', timestamp: expect.any(Number) },
-        { status: 'SUCCESS', timestamp: expect.any(Number) },
+      iterations: [
+        {
+          progress: 1,
+          statistics: {
+            current: [
+              { count: 1, riskLevel: 'HIGH', riskType: 'KRS' },
+              { count: 1, riskLevel: 'LOW', riskType: 'KRS' },
+              { count: 1, riskLevel: 'HIGH', riskType: 'DRS' },
+              { count: 1, riskLevel: 'LOW', riskType: 'DRS' },
+              { count: 1, riskLevel: 'HIGH', riskType: 'ARS' },
+              { count: 1, riskLevel: 'LOW', riskType: 'ARS' },
+            ],
+            simulated: [
+              { count: 1, riskLevel: 'LOW', riskType: 'KRS' },
+              { count: 1, riskLevel: 'MEDIUM', riskType: 'KRS' },
+              { count: 1, riskLevel: 'LOW', riskType: 'DRS' },
+              { count: 1, riskLevel: 'MEDIUM', riskType: 'DRS' },
+              { count: 1, riskLevel: 'LOW', riskType: 'ARS' },
+              { count: 1, riskLevel: 'MEDIUM', riskType: 'ARS' },
+            ],
+          },
+          latestStatus: { status: 'SUCCESS', timestamp: expect.any(Number) },
+          statuses: [
+            { status: 'PENDING', timestamp: expect.any(Number) },
+            { status: 'IN_PROGRESS', timestamp: expect.any(Number) },
+            { status: 'SUCCESS', timestamp: expect.any(Number) },
+          ],
+          name: 'test',
+        },
       ],
     })
     expect(
-      await simulationResultRepository.getSimulationResults(taskId)
+      await simulationResultRepository.getSimulationResults(taskIds[0])
     ).toEqual([
       {
         current: {
@@ -413,7 +435,7 @@ describe('Simulation (Pulse) batch job runner', () => {
             riskScore: 25,
           },
         },
-        taskId,
+        taskId: taskIds[0],
         type: 'PULSE',
         userId: 'test-user-id-1',
       },
@@ -438,7 +460,7 @@ describe('Simulation (Pulse) batch job runner', () => {
             riskScore: 65,
           },
         },
-        taskId,
+        taskId: taskIds[0],
         type: 'PULSE',
         userId: 'test-user-id-2',
       },

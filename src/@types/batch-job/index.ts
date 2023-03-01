@@ -20,7 +20,7 @@ type SimulationPulseBatchJobType = 'SIMULATION_PULSE'
 export type SimulationPulseBatchJob = {
   type: SimulationPulseBatchJobType
   tenantId: string
-  parameters: SimulationPulseParameters & { taskId: string }
+  parameters: SimulationPulseParameters & { taskId: string; jobId: string }
   awsCredentials?: CredentialsOptions
 }
 

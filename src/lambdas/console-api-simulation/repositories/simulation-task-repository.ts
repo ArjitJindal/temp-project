@@ -5,14 +5,15 @@ import {
   SIMULATION_TASK_COLLECTION,
   paginateFindOptions,
 } from '@/utils/mongoDBUtils'
-import { SimulationPulseParameters } from '@/@types/openapi-internal/SimulationPulseParameters'
-import { SimulationPulseTask } from '@/@types/openapi-internal/SimulationPulseTask'
+import { SimulationPulseJob } from '@/@types/openapi-internal/SimulationPulseJob'
 import {
   TaskStatusChange,
   TaskStatusChangeStatusEnum,
 } from '@/@types/openapi-internal/TaskStatusChange'
 import { DefaultApiGetSimulationsRequest } from '@/@types/openapi-internal/RequestParameters'
 import { SimulationPulseStatisticsResult } from '@/@types/openapi-internal/SimulationPulseStatisticsResult'
+import { SimulationPulseParametersRequest } from '@/@types/openapi-internal/SimulationPulseParametersRequest'
+import { SimulationPulseIteration } from '@/@types/openapi-internal/SimulationPulseIteration'
 
 export class SimulationTaskRepository {
   tenantId: string
@@ -23,31 +24,71 @@ export class SimulationTaskRepository {
     this.mongoDb = mongoDb
   }
 
-  public async createSimulationTask(
-    parameters: SimulationPulseParameters
-  ): Promise<string> {
-    const db = this.mongoDb.db()
-    const collection = db.collection<SimulationPulseTask>(
-      SIMULATION_TASK_COLLECTION(this.tenantId)
-    )
-    const taskId = uuidv4()
+  private generateIterationsObject(
+    simulationRequest: SimulationPulseParametersRequest,
+    taskIds: string[]
+  ): Array<SimulationPulseIteration> {
     const now = Date.now()
     const status: TaskStatusChange = {
       status: 'PENDING',
       timestamp: now,
     }
-    await collection.insertOne({
-      _id: taskId as any,
-      createdAt: now,
-      taskId,
-      type: parameters.type,
-      parameters,
-      progress: 0,
-      statistics: { current: [], simulated: [] },
-      latestStatus: status,
-      statuses: [status],
+
+    return simulationRequest.parameters.map((parameter) => {
+      const taskId = uuidv4()
+      taskIds.push(taskId)
+      return {
+        taskId,
+        parameters: parameter,
+        progress: 0,
+        statistics: { current: [], simulated: [] },
+        latestStatus: status,
+        statuses: [status],
+        name: parameter.name,
+        description: parameter.description,
+        type: parameter.type,
+        createdAt: now,
+      }
     })
-    return taskId
+  }
+
+  public async createSimulationJob(
+    simulationRequest: SimulationPulseParametersRequest
+  ): Promise<{ jobId: string; taskIds: Array<string> }> {
+    const db = this.mongoDb.db()
+    const collection = db.collection<SimulationPulseJob>(
+      SIMULATION_TASK_COLLECTION(this.tenantId)
+    )
+    const taskIds: string[] = []
+    const now = Date.now()
+    const jobId = simulationRequest.jobId ?? uuidv4()
+
+    if (simulationRequest.jobId) {
+      const existsingJob = await collection.findOne({
+        _id: simulationRequest.jobId as any,
+      })
+      existsingJob?.iterations?.concat(
+        this.generateIterationsObject(simulationRequest, taskIds)
+      )
+      await collection.updateOne(
+        { _id: simulationRequest.jobId as any },
+        {
+          $set: {
+            iterations: existsingJob?.iterations,
+          },
+        }
+      )
+    } else {
+      await collection.insertOne({
+        _id: jobId as any,
+        createdAt: now,
+        jobId,
+        type: simulationRequest.type,
+        iterations: this.generateIterationsObject(simulationRequest, taskIds),
+      })
+    }
+
+    return { jobId, taskIds }
   }
 
   public async updateStatistics(
@@ -55,17 +96,24 @@ export class SimulationTaskRepository {
     statistics: SimulationPulseStatisticsResult
   ) {
     const db = this.mongoDb.db()
-    const collection = db.collection<SimulationPulseTask>(
+    const collection = db.collection<SimulationPulseJob>(
       SIMULATION_TASK_COLLECTION(this.tenantId)
     )
-    await collection.updateOne(
-      { _id: taskId as any },
-      {
-        $set: {
-          statistics,
-        },
+
+    const job = await collection.findOne({ 'iterations.taskId': taskId })
+    const updatedIteration = job?.iterations?.map((iteration) => {
+      if (iteration.taskId === taskId) {
+        return { ...iteration, statistics }
       }
-    )
+      return iteration
+    })
+
+    if (job?.jobId) {
+      await collection.updateOne(
+        { _id: job.jobId as any },
+        { $set: { iterations: updatedIteration ?? [] } }
+      )
+    }
   }
 
   public async updateTaskStatus(
@@ -74,7 +122,7 @@ export class SimulationTaskRepository {
     progress?: number
   ) {
     const db = this.mongoDb.db()
-    const collection = db.collection<SimulationPulseTask>(
+    const collection = db.collection<SimulationPulseJob>(
       SIMULATION_TASK_COLLECTION(this.tenantId)
     )
     const newStatus: TaskStatusChange = {
@@ -86,38 +134,44 @@ export class SimulationTaskRepository {
       : status === 'SUCCESS'
       ? 1
       : undefined
-    await collection.updateOne(
-      { _id: taskId as any },
-      {
-        $set: {
+
+    const job = await collection.findOne({ 'iterations.taskId': taskId })
+    const updatedIteration = job?.iterations?.map((iteration) => {
+      if (iteration.taskId === taskId) {
+        return {
+          ...iteration,
           latestStatus: newStatus,
-          ...(progressToSave
-            ? {
-                progress: progressToSave,
-              }
-            : undefined),
-        },
-        $push: { statuses: newStatus },
+          statuses: [...iteration.statuses, newStatus],
+          ...(progressToSave ? { progress: progressToSave } : undefined),
+        }
       }
-    )
+      return iteration
+    })
+
+    if (job?.jobId) {
+      await collection.updateOne(
+        { _id: job.jobId as any },
+        { $set: { iterations: updatedIteration ?? [] } }
+      )
+    }
   }
 
-  public async getSimulationTask(
-    taskId: string
-  ): Promise<SimulationPulseTask | null> {
+  public async getSimulationJob(
+    jobId: string
+  ): Promise<SimulationPulseJob | null> {
     const db = this.mongoDb.db()
-    const collection = db.collection<SimulationPulseTask>(
+    const collection = db.collection<SimulationPulseJob>(
       SIMULATION_TASK_COLLECTION(this.tenantId)
     )
-    const task = await collection.findOne({ _id: taskId as any })
+    const task = await collection.findOne({ _id: jobId as any })
     return task ? _.omit(task, '_id') : null
   }
 
-  public async getSimulationTasks(
+  public async getSimulationJobs(
     params: DefaultApiGetSimulationsRequest
-  ): Promise<{ total: number; data: SimulationPulseTask[] }> {
+  ): Promise<{ total: number; data: SimulationPulseJob[] }> {
     const db = this.mongoDb.db()
-    const collection = db.collection<SimulationPulseTask>(
+    const collection = db.collection<SimulationPulseJob>(
       SIMULATION_TASK_COLLECTION(this.tenantId)
     )
     const query = { type: params.type }

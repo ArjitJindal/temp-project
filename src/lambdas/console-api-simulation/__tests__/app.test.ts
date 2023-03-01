@@ -2,20 +2,26 @@ import 'aws-sdk-client-mock-jest'
 import { SendMessageCommand, SQSClient } from '@aws-sdk/client-sqs'
 import { mockClient } from 'aws-sdk-client-mock'
 import { simulationHandler } from '../app'
-import { SimulationPulseParameters } from '@/@types/openapi-internal/SimulationPulseParameters'
 import {
   getApiGatewayGetEvent,
   getApiGatewayPostEvent,
 } from '@/test-utils/apigateway-test-utils'
 import { getTestTenantId } from '@/test-utils/tenant-test-utils'
+import { SimulationPulseParametersRequest } from '@/@types/openapi-internal/SimulationPulseParametersRequest'
 
-const TEST_PARAMETERS: SimulationPulseParameters = {
+const TEST_PARAMETERS: SimulationPulseParametersRequest = {
+  parameters: [
+    {
+      type: 'PULSE',
+      classificationValues: [],
+      parameterAttributeRiskValues: [],
+      sampling: {
+        usersCount: 100,
+      },
+      name: 'Test Simulation',
+    },
+  ],
   type: 'PULSE',
-  classificationValues: [],
-  parameterAttributeRiskValues: [],
-  sampling: {
-    usersCount: 100,
-  },
 }
 
 describe('Consoel API - Simulation', () => {
@@ -34,7 +40,8 @@ describe('Consoel API - Simulation', () => {
     )
     expect(response?.statusCode).toEqual(200)
     expect(JSON.parse(response?.body as string)).toEqual({
-      taskId: expect.any(String),
+      taskIds: expect.any(Array),
+      jobId: expect.any(String),
     })
     expect(sqsMock).toHaveReceivedCommandTimes(SendMessageCommand, 1)
     expect(
@@ -46,14 +53,15 @@ describe('Consoel API - Simulation', () => {
       tenantId,
       parameters: {
         taskId: expect.any(String),
-        ...TEST_PARAMETERS,
+        jobId: expect.any(String),
+        ...TEST_PARAMETERS.parameters[0],
       },
     })
   })
 
   test('gets a simulation task by ID', async () => {
     const tenantId = getTestTenantId()
-    const taskId: string = JSON.parse(
+    const jobId: string = JSON.parse(
       (
         await simulationHandler(
           getApiGatewayPostEvent(tenantId, '/simulation', TEST_PARAMETERS),
@@ -61,10 +69,10 @@ describe('Consoel API - Simulation', () => {
           null as any
         )
       )?.body as string
-    ).taskId
+    ).jobId
     const response = await simulationHandler(
-      getApiGatewayGetEvent(tenantId, '/simulation/{taskId}', {
-        pathParameters: { taskId },
+      getApiGatewayGetEvent(tenantId, '/simulation/{jobId}', {
+        pathParameters: { jobId },
       }),
       null as any,
       null as any
@@ -72,22 +80,37 @@ describe('Consoel API - Simulation', () => {
 
     expect(response?.statusCode).toEqual(200)
     expect(JSON.parse(response?.body as string)).toEqual({
-      taskId,
       createdAt: expect.any(Number),
+      jobId: expect.any(String),
       type: 'PULSE',
-      parameters: TEST_PARAMETERS,
-      progress: 0,
-      statistics: { current: [], simulated: [] },
-      latestStatus: { status: 'PENDING', timestamp: expect.any(Number) },
-      statuses: [{ status: 'PENDING', timestamp: expect.any(Number) }],
+      iterations: [
+        {
+          taskId: expect.any(String),
+          parameters: {
+            type: 'PULSE',
+            classificationValues: [],
+            parameterAttributeRiskValues: [],
+            sampling: { usersCount: 100 },
+            name: 'Test Simulation',
+          },
+          progress: 0,
+          statistics: { current: [], simulated: [] },
+          latestStatus: { status: 'PENDING', timestamp: expect.any(Number) },
+          statuses: [{ status: 'PENDING', timestamp: expect.any(Number) }],
+          createdAt: expect.any(Number),
+          description: null,
+          name: 'Test Simulation',
+          type: 'PULSE',
+        },
+      ],
     })
   })
 
   test('gets a non-existent simulation task', async () => {
     const tenantId = getTestTenantId()
     const response = await simulationHandler(
-      getApiGatewayGetEvent(tenantId, '/simulation/{taskId}', {
-        pathParameters: { taskId: 'unknown' },
+      getApiGatewayGetEvent(tenantId, '/simulation/{jobId}', {
+        pathParameters: { jobId: 'unknown' },
       }),
       null as any,
       null as any
@@ -98,7 +121,7 @@ describe('Consoel API - Simulation', () => {
 
   test('gets simulation tasks', async () => {
     const tenantId = getTestTenantId()
-    const taskId: string = JSON.parse(
+    const { jobId, taskIds } = JSON.parse(
       (
         await simulationHandler(
           getApiGatewayPostEvent(tenantId, '/simulation', TEST_PARAMETERS),
@@ -106,7 +129,7 @@ describe('Consoel API - Simulation', () => {
           null as any
         )
       )?.body as string
-    ).taskId
+    )
     const response = await simulationHandler(
       getApiGatewayGetEvent(tenantId, '/simulation', {
         queryStringParameters: { page: '0', type: 'PULSE' },
@@ -119,14 +142,32 @@ describe('Consoel API - Simulation', () => {
       total: 1,
       data: [
         {
-          taskId,
           createdAt: expect.any(Number),
+          jobId,
           type: 'PULSE',
-          parameters: TEST_PARAMETERS,
-          progress: 0,
-          statistics: { current: [], simulated: [] },
-          latestStatus: { status: 'PENDING', timestamp: expect.any(Number) },
-          statuses: [{ status: 'PENDING', timestamp: expect.any(Number) }],
+          iterations: [
+            {
+              taskId: taskIds[0],
+              parameters: {
+                type: 'PULSE',
+                classificationValues: [],
+                parameterAttributeRiskValues: [],
+                sampling: { usersCount: 100 },
+                name: 'Test Simulation',
+              },
+              progress: 0,
+              statistics: { current: [], simulated: [] },
+              latestStatus: {
+                status: 'PENDING',
+                timestamp: expect.any(Number),
+              },
+              statuses: [{ status: 'PENDING', timestamp: expect.any(Number) }],
+              createdAt: expect.any(Number),
+              name: 'Test Simulation',
+              description: null,
+              type: 'PULSE',
+            },
+          ],
         },
       ],
     })

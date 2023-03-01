@@ -3001,15 +3001,20 @@ paths:
               schema:
                 type: object
                 properties:
-                  taskId:
+                  taskIds:
+                    type: array
+                    items:
+                      type: string
+                  jobId:
                     type: string
                 required:
-                  - taskId
+                  - taskIds
+                  - jobId
       requestBody:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/SimulationPulseParameters'
+              $ref: '#/components/schemas/SimulationPulseParametersRequest'
     get:
       summary: Get simulation tasks
       operationId: get-simulations
@@ -3029,7 +3034,7 @@ paths:
                   data:
                     type: array
                     items:
-                      $ref: '#/components/schemas/SimulationPulseTask'
+                      $ref: '#/components/schemas/SimulationPulseJob'
                 required:
                   - total
                   - data
@@ -3048,7 +3053,7 @@ paths:
           in: query
           name: type
           required: true
-  '/simulation/{taskId}':
+  '/simulation/{jobId}':
     get:
       summary: Get a simulation task by test ID
       operationId: get-simulation-test-id
@@ -3061,12 +3066,12 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/SimulationPulseTask'
+                $ref: '#/components/schemas/SimulationPulseJob'
       parameters: []
     parameters:
       - schema:
           type: string
-        name: taskId
+        name: jobId
         in: path
         required: true
 components:
@@ -5238,7 +5243,29 @@ components:
             $ref: '#/components/schemas/ParameterAttributeRiskValues'
         sampling:
           $ref: '#/components/schemas/SimulationPulseSampling'
+        name:
+          type: string
+        description:
+          type: string
       required:
+        - type
+        - name
+    SimulationPulseParametersRequest:
+      title: SimulationPulseParametersRequest
+      type: object
+      x-stoplight:
+        id: 9d4bfe04d1868
+      properties:
+        jobId:
+          type: string
+        parameters:
+          type: array
+          items:
+            $ref: '#/components/schemas/SimulationPulseParameters'
+        type:
+          $ref: '#/components/schemas/SimulationType'
+      required:
+        - parameters
         - type
     SimulationPulseSampling:
       title: SimulationPulseSampling
@@ -5250,10 +5277,28 @@ components:
           type: integer
       x-stoplight:
         id: yl7w6xm5dlwif
-    SimulationPulseTask:
-      title: SimulationPulseTask
+    SimulationPulseJob:
+      title: SimulationPulseJob
       x-stoplight:
-        id: 5e85cbedf67fd
+        id: 5e85cbff0f7fd
+      type: object
+      properties:
+        jobId:
+          type: string
+        createdAt:
+          type: number
+        createdBy:
+          type: string
+        type:
+          $ref: '#/components/schemas/SimulationType'
+        iterations:
+          type: array
+          items:
+            $ref: '#/components/schemas/SimulationPulseIteration'
+    SimulationPulseIteration:
+      title: SimulationPulseIteration
+      x-stoplight:
+        id: 5e85cc0b0ddfd
       type: object
       properties:
         taskId:
@@ -5276,6 +5321,10 @@ components:
           type: array
           items:
             $ref: '#/components/schemas/TaskStatusChange'
+        name:
+          type: string
+        description:
+          type: string
       required:
         - type
         - parameters
@@ -5283,6 +5332,7 @@ components:
         - statistics
         - latestStatus
         - statuses
+        - name
     TenantCreationRequest:
       title: TenantCreationRequest
       type: object
