@@ -304,16 +304,15 @@ export function useRoutes(): RouteItem[] {
             ]
           : [],
       },
-      (isAtLeastAdminUser || hasAuditLogPermission) &&
-        isAuditLogEnabled && {
-          path: '/auditlog',
-          icon: 'ContainerOutlined',
-          name: 'auditlog',
-          position: 'bottom',
-          permissions: ['audit-log:export:read'],
-
-          component: AuditLogPage,
-        },
+      (isAtLeastAdminUser || hasAuditLogPermission) && {
+        path: '/auditlog',
+        icon: 'ContainerOutlined',
+        name: 'auditlog',
+        position: 'bottom',
+        permissions: ['audit-log:export:read'],
+        disabled: !isAuditLogEnabled,
+        component: AuditLogPage,
+      },
       {
         path: '/settings',
         icon: 'SettingOutlined',

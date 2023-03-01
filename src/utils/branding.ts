@@ -33,7 +33,7 @@ const DEFAULT_BRANDING: BrandingSettings = {
 };
 
 const BUREAU_BRANDING: Omit<BrandingSettings, 'auth0Domain' | 'auth0ClientId'> = {
-  supportEmail: 'helpdesk@bereau.com',
+  supportEmail: 'helpdesk@bureau.id',
   logoUrl: BureauLogoSvg,
   demoModeLogoUrl: BureauLogoSvg,
   companyName: 'Bureau',
