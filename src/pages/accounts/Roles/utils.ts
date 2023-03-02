@@ -1,27 +1,6 @@
-import React from 'react';
-import { AccountRole, Permission, Permissions } from '@/apis';
-import { useApi } from '@/api';
-import { useQuery } from '@/utils/queries/hooks';
-import { PERMISSIONS_LIST } from '@/utils/queries/keys';
-import AsyncResourceRenderer from '@/components/common/AsyncResourceRenderer';
-import PermissionTable from '@/pages/accounts/Roles/PermissionTable';
-import { PERMISSIONS } from '@/apis/models-custom/Permission';
+import { Permission } from '@/apis';
 import { PermissionRow } from '@/pages/accounts/Roles/types';
-
-export default function Role({ role }: { role: AccountRole }) {
-  const api = useApi();
-  const { id = '', name = '' } = role;
-  const permissionsResp = useQuery<Permissions>(PERMISSIONS_LIST(id), async () => {
-    return await api.getPermissions({ roleId: id });
-  });
-  return (
-    <AsyncResourceRenderer resource={permissionsResp.data}>
-      {(permissionsResp) => (
-        <PermissionTable role={name} items={permissionsToRows(permissionsResp.permissions || [])} />
-      )}
-    </AsyncResourceRenderer>
-  );
-}
+import { PERMISSIONS } from '@/apis/models-custom/Permission';
 
 /** Initialises the following structure:
  *  case-management:case-overview:read
@@ -37,7 +16,7 @@ export default function Role({ role }: { role: AccountRole }) {
  *     case-details
  *        read: true
  **/
-function permissionsToRows(permissions: Permission[]): PermissionRow[] {
+export function permissionsToRows(permissions: Permission[]): PermissionRow[] {
   // For matching "case-management:case-overview:read"
   const regex = /^([a-z-]+):([a-z-]+):([a-z-]+)$/;
   const permsMap: { [key: string]: { [key: string]: { [key: string]: boolean } } } = {};
@@ -89,6 +68,7 @@ function permissionsToRows(permissions: Permission[]): PermissionRow[] {
             .map((action) => ({
               name: action,
               enabled: permsMap[section][subsection][action],
+              key: `${section}:${subsection}:${action}` as Permission,
             })),
         })),
     }));

@@ -1,8 +1,8 @@
 import React from 'react';
 import cn from 'clsx';
+import CollapsableIcon from '../icons/CollapsableIcon/CollapsableIcon';
 import Section from './Section';
 import s from './index.module.less';
-import CollapsableIcon from '@/components/ui/icons/Remix/system/arrow-down-s-line.react.svg';
 
 export interface HeaderSettings {
   title: string;
@@ -29,11 +29,7 @@ export default function Header(props: Props) {
           }
         }}
       >
-        {collapsable && (
-          <div className={cn(s.collapseIcon, isCollapsed && s.isCollapsed)}>
-            <CollapsableIcon />
-          </div>
-        )}
+        {collapsable && <CollapsableIcon expanded={!isCollapsed} />}
         <h3 className={s.title}>{title}</h3>
       </div>
     </Section>

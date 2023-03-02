@@ -11,7 +11,7 @@ import TextInput from '@/components/library/TextInput/story';
 import NumberInput from '@/components/library/NumberInput/story';
 import Radio from '@/components/library/Radio/story';
 import VerticalMenu from '@/components/library/VerticalMenu/story';
-import StepButtons from '@/components/library/ButtonGroup/story';
+import StepButtons from '@/components/library/StepButtons/story';
 import SelectionGroup from '@/components/library/SelectionGroup/story';
 import Stepper from '@/components/library/Stepper/story';
 import Card from '@/components/ui/Card/story';

@@ -14,7 +14,6 @@ import RuleParametersStep, {
 import { Rule } from '@/apis';
 import Stepper from '@/components/library/Stepper';
 import Drawer from '@/components/library/Drawer';
-import ButtonGroup from '@/components/library/ButtonGroup';
 import StandardFiltersStep, {
   FormValues as StandardFiltersStepFormValues,
   INITIAL_VALUES as STANDARD_FILTERS_STEP_INITIAL_VALUES,
@@ -34,6 +33,7 @@ import {
 import User3LineIcon from '@/components/ui/icons/Remix/user/user-3-line.react.svg';
 import EarthLineIcon from '@/components/ui/icons/Remix/map/earth-line.react.svg';
 import { useFeatureEnabled } from '@/components/AppWrapper/Providers/SettingsProvider';
+import StepButtons from '@/components/library/StepButtons';
 
 const BASIC_DETAILS_STEP = 'basic_details';
 const STANDARD_FILTERS_STEP = 'standard_filters';
@@ -224,7 +224,7 @@ export default function RuleConfigurationDrawer(props: Props) {
       description="Add all relevant information to configure this rule"
       footer={
         <div className={s.footer}>
-          <ButtonGroup
+          <StepButtons
             nextDisabled={activeStepIndex >= STEPS.length - 1}
             prevDisabled={activeStepIndex === 0}
             onNext={() => {

@@ -5,9 +5,11 @@ import { sentenceCase } from '@antv/x6/es/util/string/format';
 import { message } from '@/components/library/Message';
 import Button from '@/components/library/Button';
 import { useApi } from '@/api';
-import { Account } from '@/apis';
-import { ACCOUNT_ROLE_NAMES } from '@/apis/models-custom/AccountRoleName';
-import { useFeatureEnabled } from '@/components/AppWrapper/Providers/SettingsProvider';
+import { Account, AccountRole } from '@/apis';
+import { useQuery } from '@/utils/queries/hooks';
+import { ROLES_LIST } from '@/utils/queries/keys';
+import AsyncResourceRenderer from '@/components/common/AsyncResourceRenderer';
+import { getErrorMessage } from '@/utils/lang';
 
 interface Props {
   editAccount: Account | null;
@@ -17,11 +19,9 @@ export default function AccountForm(props: Props) {
   const { editAccount, onSuccess } = props;
   const api = useApi();
   const formRef = useRef<ProFormInstance>();
-  let roles = ['admin', 'user'];
-  if (useFeatureEnabled('RBAC')) {
-    roles = ACCOUNT_ROLE_NAMES.filter((name) => ['root', 'user'].indexOf(name) == -1);
-  }
-
+  const rolesResp = useQuery<AccountRole[]>(ROLES_LIST(), async () => {
+    return await api.getRoles();
+  });
   const isEdit = editAccount !== null;
   // todo: i18n
   const initialValues =
@@ -31,6 +31,40 @@ export default function AccountForm(props: Props) {
           email: '',
           role: 'admin',
         };
+  const onFinish = async (values: Account) => {
+    if (isEdit) {
+      try {
+        await api.accountsChangeRole({
+          accountId: editAccount?.id,
+          ChangeRolePayload: {
+            role: values.role,
+          },
+        });
+        message.success('Account updated!');
+        onSuccess();
+        return true;
+      } catch (e) {
+        message.error(`Failed to update account - ${getErrorMessage(e)}`);
+        return false;
+      }
+    }
+
+    try {
+      await api.accountsInvite({
+        AccountInvitePayload: {
+          email: values.email.trim(),
+          role: values.role,
+        },
+      });
+      message.success('User invited!');
+      onSuccess();
+      return true;
+    } catch (e) {
+      message.error(`Failed to invite user - ${getErrorMessage(e)}`);
+      return false;
+    }
+  };
+
   return (
     <DrawerForm<Account>
       initialValues={initialValues}
@@ -55,41 +89,7 @@ export default function AccountForm(props: Props) {
           formRef.current?.setFieldsValue(initialValues);
         }
       }}
-      onFinish={async (values) => {
-        if (isEdit) {
-          try {
-            await api.accountsChangeRole({
-              accountId: editAccount?.id,
-              ChangeRolePayload: {
-                role: values.role,
-              },
-            });
-            message.success('Account updated!');
-            onSuccess();
-            return true;
-          } catch (e) {
-            const error = e instanceof Response ? (await e.json())?.message : e;
-            message.error(`Failed to update account - ${error}`);
-            return false;
-          }
-        } else {
-          try {
-            await api.accountsInvite({
-              AccountInvitePayload: {
-                email: values.email.trim(),
-                role: values.role,
-              },
-            });
-            message.success('User invited!');
-            onSuccess();
-            return true;
-          } catch (e) {
-            const error = e instanceof Response ? (await e.json())?.message : e;
-            message.error(`Failed to invite user - ${error}`);
-            return false;
-          }
-        }
-      }}
+      onFinish={onFinish}
     >
       <ProFormText
         disabled={isEdit}
@@ -104,21 +104,25 @@ export default function AccountForm(props: Props) {
           },
         ]}
       />
-      <ProFormSelect
-        width="md"
-        name="role"
-        label="Role"
-        options={roles.map((name) => ({
-          value: name,
-          label: sentenceCase(name),
-        }))}
-        rules={[
-          {
-            required: true,
-            message: 'Please select the role for a user',
-          },
-        ]}
-      />
+      <AsyncResourceRenderer resource={rolesResp.data}>
+        {(roles) => (
+          <ProFormSelect
+            width="md"
+            name="role"
+            label="Role"
+            options={roles.map((name) => ({
+              value: name.name,
+              label: sentenceCase(name.name as string),
+            }))}
+            rules={[
+              {
+                required: true,
+                message: 'Please select the role for a user',
+              },
+            ]}
+          />
+        )}
+      </AsyncResourceRenderer>
     </DrawerForm>
   );
 }

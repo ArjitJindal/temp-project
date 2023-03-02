@@ -8,7 +8,6 @@ import PageWrapper from '@/components/PageWrapper';
 import { useI18n } from '@/locales';
 import PageTabs from '@/components/ui/PageTabs';
 import { makeUrl } from '@/utils/routing';
-import { useFeatures } from '@/components/AppWrapper/Providers/SettingsProvider';
 import { usePageViewTracker } from '@/utils/tracker';
 
 export default function () {
@@ -18,15 +17,6 @@ export default function () {
   };
   const navigate = useNavigate();
   const i18n = useI18n();
-  const features = useFeatures();
-
-  if (features.indexOf('RBAC') < 0) {
-    return (
-      <PageWrapper title={i18n('menu.accounts')}>
-        <Team />
-      </PageWrapper>
-    );
-  }
 
   return (
     <PageWrapper title={i18n('menu.accounts')}>

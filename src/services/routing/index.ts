@@ -42,7 +42,6 @@ export function useRoutes(): RouteItem[] {
   const [lastActiveRuleTab] = useLocalStorageState('rule-active-tab', 'rules-library');
   const [lastActiveList] = useLocalStorageState('user-active-list', 'whitelist');
   const [lastActiveSanctionsTab] = useLocalStorageState('sanctions-active-tab', 'search');
-  const rbacEnabled = useFeatureEnabled('RBAC');
   const permissions = usePermissions();
 
   const hasAuditLogPermission = useHasPermissions(['audit-log:export:read']);
@@ -354,7 +353,7 @@ export function useRoutes(): RouteItem[] {
 
     return routes
       .filter((x): x is RouteItem => x !== false)
-      .map((r) => (rbacEnabled ? disableForbiddenRoutes(r, permissions) : r));
+      .map((r) => disableForbiddenRoutes(r, permissions));
   }, [
     lastActiveTab,
     lastActiveRuleTab,
@@ -368,7 +367,6 @@ export function useRoutes(): RouteItem[] {
     isAtLeastAdminUser,
     hasAuditLogPermission,
     permissions,
-    rbacEnabled,
   ]);
 }
 

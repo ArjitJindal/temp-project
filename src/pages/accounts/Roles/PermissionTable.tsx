@@ -1,8 +1,7 @@
-import React, { useState } from 'react';
+import React from 'react';
 import { sentenceCase } from '@antv/x6/es/util/string/format';
 import ProTable from '@ant-design/pro-table';
 import { RenderExpandIcon } from 'rc-table/lib/interface';
-import { DownOutlined, UpOutlined } from '@ant-design/icons';
 import s from './PermissionTable.module.less';
 import Table from '@/components/ui/Table';
 import Label from '@/components/library/Label';
@@ -10,8 +9,8 @@ import Checkbox from '@/components/library/Checkbox';
 import { TableColumn, TableRow } from '@/components/ui/Table/types';
 import { PermissionRow, PermissionSubsection } from '@/pages/accounts/Roles/types';
 import { useFeatures } from '@/components/AppWrapper/Providers/SettingsProvider';
-import { Feature } from '@/apis';
-import Button from '@/components/library/Button';
+import { Feature, Permission } from '@/apis';
+import CollapsableIcon from '@/components/ui/icons/CollapsableIcon/CollapsableIcon';
 
 const roleColumns: TableColumn<PermissionRow>[] = [
   { title: 'Feature', dataIndex: 'name', key: 'name', renderText: (text) => sentenceCase(text) },
@@ -24,56 +23,34 @@ const expandIcon: RenderExpandIcon<TableRow<PermissionRow>> = ({
   onExpand,
 }: {
   record: TableRow<PermissionRow>;
-  onExpand: (record: TableRow<PermissionRow>, event: React.MouseEvent<HTMLElement>) => void;
+  onExpand: (record: TableRow<PermissionRow>, event: React.MouseEvent<any>) => void;
   expanded: boolean;
 }) => {
-  if (expanded) {
-    return (
-      <UpOutlined
-        onClick={(e) => {
-          onExpand(record, e);
-        }}
-      />
-    );
-  }
   return (
-    <DownOutlined
+    <CollapsableIcon
+      expanded={expanded}
       onClick={(e) => {
         onExpand(record, e);
       }}
     />
   );
 };
-export default function PermissionTable({ role, items }: { role: string; items: PermissionRow[] }) {
+export default function PermissionTable({
+  items,
+  onChange,
+  expandedRows,
+  setExpandedRows,
+}: {
+  items: PermissionRow[];
+  onChange?: (key: Permission, enabled: boolean) => void;
+  expandedRows: string[];
+  setExpandedRows: (rows: string[]) => any;
+}) {
   const features = useFeatures();
-  const [expandedRows, setExpandedRows] = useState<string[]>([]);
-
-  const allExpanded = expandedRows.length === items.length;
   return (
     <>
-      <h3>{sentenceCase(role)}</h3>
       <Table<PermissionRow>
         data={{ items }}
-        headerSubtitle={
-          <>
-            <div>{`The following is the default permissions set for the ${sentenceCase(
-              role,
-            )} role.`}</div>
-            <Button
-              type={'SECONDARY'}
-              style={{ marginTop: '10px', marginLeft: '3px' }}
-              onClick={() => {
-                if (allExpanded) {
-                  setExpandedRows([]);
-                } else {
-                  setExpandedRows(items.map((i) => i.name));
-                }
-              }}
-            >
-              {allExpanded ? 'Collapse all' : 'Show all'}
-            </Button>
-          </>
-        }
         rowKey={'name'}
         columns={roleColumns}
         disableExpandedRowPadding
@@ -115,6 +92,7 @@ export default function PermissionTable({ role, items }: { role: string; items: 
                   render: (dom, subsection) => {
                     return (
                       <span
+                        key={subsection.name}
                         className={
                           featureEnabled(features, subsection.section, subsection.name)
                             ? undefined
@@ -135,15 +113,19 @@ export default function PermissionTable({ role, items }: { role: string; items: 
                   width: 200,
                   render: (dom, subsection) => {
                     return (
-                      <div className={s.actions}>
+                      <div className={s.actions} key={subsection.name}>
                         {subsection.actions.map((action) => (
                           <Label
                             level={2}
                             label={sentenceCase(action.name)}
                             position={'RIGHT'}
-                            key={action.name}
+                            key={action.key}
                           >
-                            <Checkbox value={action.enabled} isDisabled />
+                            <Checkbox
+                              value={action.enabled}
+                              isDisabled={!onChange}
+                              onChange={(newValue) => onChange && onChange(action.key, !!newValue)}
+                            />
                           </Label>
                         ))}
                       </div>

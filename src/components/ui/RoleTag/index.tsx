@@ -1,15 +1,13 @@
 import { Tag } from 'antd';
 import React from 'react';
 import { sentenceCase } from '@antv/x6/es/util/string/format';
-import { AccountRoleName } from '@/apis';
 import COLORS, { ColorSet } from '@/components/ui/colors';
-import { neverReturn } from '@/utils/lang';
 
 interface Props {
-  role: AccountRoleName;
+  role: string;
 }
 
-function getColor(role: AccountRoleName): ColorSet {
+function getColor(role: string): ColorSet {
   switch (role) {
     case 'root':
       return COLORS.red;
@@ -21,8 +19,9 @@ function getColor(role: AccountRoleName): ColorSet {
     case 'auditor':
     case 'developer':
       return COLORS.leafGreen;
+    default:
+      return COLORS.brandBlue;
   }
-  return neverReturn(role, COLORS.brandBlue);
 }
 
 export default function RoleTag(props: Props): JSX.Element {

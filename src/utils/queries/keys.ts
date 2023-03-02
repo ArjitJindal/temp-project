@@ -51,7 +51,7 @@ export const TRANSACTIONS_FIND = (search: string): QueryKey => [
 export const ACCOUNT_LIST = (): QueryKey => ['accounts', 'list'];
 export const USER_INFO = (accessToken: string | null): QueryKey => ['userinfo', accessToken];
 export const ROLES_LIST = (): QueryKey => ['roles', 'list'];
-export const PERMISSIONS_LIST = (roleId: string): QueryKey => ['permissions', 'list', roleId];
+export const ROLE = (roleId: string): QueryKey => ['role', roleId];
 export const TRANSACTIONS_LIST = (searchParams: AnyParameters): QueryKey => [
   'transactions',
   'list',
