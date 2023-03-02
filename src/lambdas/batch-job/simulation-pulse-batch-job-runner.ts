@@ -204,6 +204,7 @@ export class SimulationPulseBatchJobRunner extends BatchJobRunner {
 
       userResults.push({
         userId: user.userId,
+        userType: user.type,
         current: {
           krs: user.krsScore && {
             riskScore: user.krsScore?.krsScore,
@@ -301,6 +302,7 @@ export class SimulationPulseBatchJobRunner extends BatchJobRunner {
 
       userResults.push({
         userId: user.userId,
+        userType: user.type,
         current: {
           krs: user.krsScore && {
             riskScore: user.krsScore?.krsScore,

@@ -125,47 +125,54 @@ describe('Simulation (Pulse) batch job runner', () => {
       ],
     })
     expect(
-      await simulationResultRepository.getSimulationResults(taskIds[0])
-    ).toEqual([
-      {
-        current: {
-          drs: {
-            riskLevel: 'LOW',
-            riskScore: 30,
-          },
-          krs: null,
-        },
-        simulated: {
-          drs: {
-            riskLevel: 'MEDIUM',
-            riskScore: 30,
-          },
-          krs: null,
-        },
+      await simulationResultRepository.getSimulationResults({
         taskId: taskIds[0],
-        type: 'PULSE',
-        userId: 'test-user-id-1',
-      },
-      {
-        current: {
-          drs: {
-            riskLevel: 'MEDIUM',
-            riskScore: 80,
+      })
+    ).toEqual({
+      items: [
+        {
+          current: {
+            drs: {
+              riskLevel: 'MEDIUM',
+              riskScore: 80,
+            },
+            krs: null,
           },
-          krs: null,
-        },
-        simulated: {
-          drs: {
-            riskLevel: 'MEDIUM',
-            riskScore: 80,
+          simulated: {
+            drs: {
+              riskLevel: 'MEDIUM',
+              riskScore: 80,
+            },
+            krs: null,
           },
-          krs: null,
+          taskId: taskIds[0],
+          type: 'PULSE',
+          userId: 'test-user-id-2',
+          userType: 'CONSUMER',
         },
-        taskId: taskIds[0],
-        type: 'PULSE',
-        userId: 'test-user-id-2',
-      },
-    ])
+        {
+          current: {
+            drs: {
+              riskLevel: 'LOW',
+              riskScore: 30,
+            },
+            krs: null,
+          },
+          simulated: {
+            drs: {
+              riskLevel: 'MEDIUM',
+              riskScore: 30,
+            },
+            krs: null,
+          },
+          taskId: taskIds[0],
+          type: 'PULSE',
+          userId: 'test-user-id-1',
+          userType: 'CONSUMER',
+        },
+      ],
+      total: 2,
+    })
   })
 
   test('new risk factors', async () => {
@@ -412,58 +419,65 @@ describe('Simulation (Pulse) batch job runner', () => {
       ],
     })
     expect(
-      await simulationResultRepository.getSimulationResults(taskIds[0])
-    ).toEqual([
-      {
-        current: {
-          drs: {
-            riskLevel: 'HIGH',
-            riskScore: 90,
-          },
-          krs: {
-            riskLevel: 'HIGH',
-            riskScore: 90,
-          },
-        },
-        simulated: {
-          drs: {
-            riskLevel: 'LOW',
-            riskScore: 25,
-          },
-          krs: {
-            riskLevel: 'LOW',
-            riskScore: 25,
-          },
-        },
+      await simulationResultRepository.getSimulationResults({
         taskId: taskIds[0],
-        type: 'PULSE',
-        userId: 'test-user-id-1',
-      },
-      {
-        current: {
-          drs: {
-            riskLevel: 'LOW',
-            riskScore: 20,
+      })
+    ).toEqual({
+      items: [
+        {
+          current: {
+            drs: {
+              riskLevel: 'LOW',
+              riskScore: 20,
+            },
+            krs: {
+              riskLevel: 'LOW',
+              riskScore: 20,
+            },
           },
-          krs: {
-            riskLevel: 'LOW',
-            riskScore: 20,
+          simulated: {
+            drs: {
+              riskLevel: 'MEDIUM',
+              riskScore: 65,
+            },
+            krs: {
+              riskLevel: 'MEDIUM',
+              riskScore: 65,
+            },
           },
+          taskId: taskIds[0],
+          type: 'PULSE',
+          userId: 'test-user-id-2',
+          userType: 'CONSUMER',
         },
-        simulated: {
-          drs: {
-            riskLevel: 'MEDIUM',
-            riskScore: 65,
+        {
+          current: {
+            drs: {
+              riskLevel: 'HIGH',
+              riskScore: 90,
+            },
+            krs: {
+              riskLevel: 'HIGH',
+              riskScore: 90,
+            },
           },
-          krs: {
-            riskLevel: 'MEDIUM',
-            riskScore: 65,
+          simulated: {
+            drs: {
+              riskLevel: 'LOW',
+              riskScore: 25,
+            },
+            krs: {
+              riskLevel: 'LOW',
+              riskScore: 25,
+            },
           },
+          taskId: taskIds[0],
+          type: 'PULSE',
+          userId: 'test-user-id-1',
+          userType: 'CONSUMER',
         },
-        taskId: taskIds[0],
-        type: 'PULSE',
-        userId: 'test-user-id-2',
-      },
-    ])
+      ],
+      total: 2,
+    })
   })
 })

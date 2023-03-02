@@ -10,7 +10,10 @@ import { lambdaApi } from '@/core/middlewares/lambda-api-middlewares'
 import { sendBatchJobCommand } from '@/services/batch-job'
 import { SimulationPulseBatchJob } from '@/@types/batch-job'
 import { getMongoDbClient } from '@/utils/mongoDBUtils'
-import { DefaultApiGetSimulationsRequest } from '@/@types/openapi-internal/RequestParameters'
+import {
+  DefaultApiGetSimulationTaskIdResultRequest,
+  DefaultApiGetSimulationsRequest,
+} from '@/@types/openapi-internal/RequestParameters'
 import { getCredentialsFromEvent } from '@/utils/credentials'
 import { SimulationPulseParametersRequest } from '@/@types/openapi-internal/SimulationPulseParametersRequest'
 
@@ -79,11 +82,13 @@ export const simulationHandler = lambdaApi()(
       event.httpMethod === 'GET' &&
       event.pathParameters?.taskId
     ) {
-      const results = await simulationResultRepository.getSimulationResults(
-        event.pathParameters.taskId
-      )
+      const { items, total } =
+        await simulationResultRepository.getSimulationResults({
+          taskId: event.pathParameters.taskId,
+          ...event.queryStringParameters,
+        } as any as DefaultApiGetSimulationTaskIdResultRequest)
 
-      return results
+      return { items, total }
     }
 
     throw new BadRequest('Unhandled request')

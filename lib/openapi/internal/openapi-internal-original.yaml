@@ -3143,9 +3143,7 @@ paths:
           content:
             application/json:
               schema:
-                type: array
-                items:
-                  $ref: '#/components/schemas/SimulationPulseResult'
+                $ref: '#/components/schemas/SimulationPulseResultResponse'
       parameters: []
     parameters:
       - schema:
@@ -3153,6 +3151,22 @@ paths:
         name: taskId
         in: path
         required: true
+      - schema:
+          type: string
+        in: query
+        name: sortField
+      - schema:
+          $ref: '#/components/schemas/SortOrder'
+        in: query
+        name: sortOrder
+      - schema:
+          $ref: '#/components/schemas/PageSize'
+        in: query
+        name: pageSize
+      - schema:
+          $ref: '#/components/schemas/Page'
+        in: query
+        name: page
 components:
   schemas:
     KrsScore:
@@ -5516,6 +5530,8 @@ components:
             - PULSE
         userId:
           type: string
+        userType:
+          type: string
         current:
           $ref: '#/components/schemas/SimulationPulseRiskScoreResult'
         simulated:
@@ -5526,6 +5542,19 @@ components:
         - userId
         - old
         - new
+    SimulationPulseResultResponse:
+      title: SimulationPulseResultResponse
+      type: object
+      properties:
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/SimulationPulseResult'
+        total:
+          type: number
+      required:
+        - items
+        - total
     SortOrder:
       type: string
       enum:
