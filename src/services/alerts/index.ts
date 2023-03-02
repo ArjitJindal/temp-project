@@ -4,8 +4,8 @@ import { CaseTransaction } from '@/@types/openapi-internal/CaseTransaction'
 export const transactionsToAlerts = function (
   caseTransactions: CaseTransaction[],
   caseId?: string
-): Alert[] {
-  const alertMap: { [key: string]: Alert } = {}
+): { [ruleInstanceId: string]: Alert } {
+  const alertMap: { [ruleInstanceId: string]: Alert } = {}
   caseTransactions.map((transaction) => {
     transaction.hitRules.map(async (hitRule) => {
       if (!(hitRule.ruleInstanceId in alertMap)) {
@@ -33,5 +33,5 @@ export const transactionsToAlerts = function (
       }
     })
   })
-  return Object.values(alertMap)
+  return alertMap
 }

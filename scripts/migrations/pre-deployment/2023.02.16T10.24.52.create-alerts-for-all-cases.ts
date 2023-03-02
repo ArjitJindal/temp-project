@@ -34,7 +34,7 @@ export async function migrateTenant(tenant: Tenant) {
   while (caseEntity) {
     if (!caseEntity.alerts) {
       const transactions = caseEntity?.caseTransactions || []
-      caseEntity.alerts = transactionsToAlerts(transactions)
+      caseEntity.alerts = Object.values(transactionsToAlerts(transactions))
       const session = mongodb.startSession()
 
       await session.withTransaction(async () => {

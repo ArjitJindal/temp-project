@@ -58,8 +58,10 @@ export function sampleUserCase(
     },
     caseTransactionsIds: transactions.map((t) => t.transactionId!),
     caseTransactions: transactions,
-    alerts: transactionsToAlerts(transactions, caseId).map((alert) => {
-      return { alertId: `alert-${sampleGuid(seed)}`, ...alert }
-    }),
+    alerts: Object.values(transactionsToAlerts(transactions, caseId)).map(
+      (alert) => {
+        return { alertId: `alert-${sampleGuid(seed)}`, ...alert }
+      }
+    ),
   }
 }

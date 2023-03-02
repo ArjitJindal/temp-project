@@ -89,7 +89,8 @@ export class CaseCreationService {
     alerts: Alert[] | undefined,
     ruleInstances: readonly RuleInstance[],
     createdTimestamp: number,
-    latestTransactionArrivalTimestamp: number
+    latestTransactionArrivalTimestamp: number,
+    existingTransaction: boolean
   ) {
     if (alerts) {
       const newRuleHits = hitRules.filter(
@@ -123,7 +124,8 @@ export class CaseCreationService {
         existingAlerts.length > 0
           ? this.updateExistingAlerts(
               existingAlerts,
-              latestTransactionArrivalTimestamp
+              latestTransactionArrivalTimestamp,
+              existingTransaction
             )
           : []
 
@@ -170,16 +172,18 @@ export class CaseCreationService {
 
   private updateExistingAlerts(
     alerts: Alert[],
-    latestTransactionArrivalTimestamp: number
+    latestTransactionArrivalTimestamp: number,
+    existingTransaction: boolean
   ): Alert[] {
-    const updatedAlerts = alerts.map((alert) => {
+    return alerts.map((alert) => {
       return {
         ...alert,
         latestTransactionArrivalTimestamp: latestTransactionArrivalTimestamp,
-        numberOfTransactionsHit: alert.numberOfTransactionsHit + 1,
+        numberOfTransactionsHit: existingTransaction
+          ? alert.numberOfTransactionsHit
+          : alert.numberOfTransactionsHit + 1,
       }
     })
-    return updatedAlerts
   }
 
   private getNewCase(
@@ -273,18 +277,29 @@ export class CaseCreationService {
         })
         if (existedCase) {
           logger.info('Update existed case with transaction')
+
+          const caseTransactionsIds = [
+            ...(existedCase.caseTransactionsIds?.filter(
+              (t) => t !== filteredTransaction.transactionId
+            ) ?? []),
+            filteredTransaction.transactionId as string,
+          ]
+          const caseTransactions = [
+            ...(existedCase.caseTransactions?.filter(
+              (t) => t.transactionId !== filteredTransaction.transactionId
+            ) ?? []),
+            filteredTransaction,
+          ]
+
+          const existingTransaction =
+            existedCase.caseTransactions?.length == caseTransactions.length
+
           result.push({
             ...existedCase,
             latestTransactionArrivalTimestamp:
               params.latestTransactionArrivalTimestamp,
-            caseTransactionsIds: [
-              ...(existedCase.caseTransactionsIds ?? []),
-              filteredTransaction.transactionId as string,
-            ],
-            caseTransactions: [
-              ...(existedCase.caseTransactions ?? []),
-              filteredTransaction,
-            ],
+            caseTransactionsIds,
+            caseTransactions,
             priority: _.min([
               existedCase.priority ?? _.last(PRIORITYS),
               params.priority,
@@ -294,7 +309,8 @@ export class CaseCreationService {
               existedCase.alerts,
               ruleInstances,
               params.createdTimestamp,
-              params.latestTransactionArrivalTimestamp
+              params.latestTransactionArrivalTimestamp,
+              existingTransaction
             ),
           })
         } else {
