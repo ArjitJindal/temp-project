@@ -3864,6 +3864,28 @@ components:
           $ref: '#/components/schemas/UserState'
       required:
         - state
+    CaseClosedDetails:
+      title: CaseClosedDetails
+      type: object
+      x-stoplight:
+        id: ev3mslr5s7fqf
+      properties:
+        caseId:
+          type: string
+        status:
+          type: string
+        description:
+          type: string
+        reasons:
+          type: array
+          items:
+            type: string
+        comment:
+          type: string
+        documents:
+          type: array
+          items:
+            type: string
     RiskLevel:
       type: string
       title: RiskLevel
@@ -3927,7 +3949,7 @@ components:
       x-stoplight:
         id: 5rtg1zffpod4f
       enum:
-        - CASE_STATUS_UPDATED
+        - CASE_CLOSED
         - USER_STATE_UPDATED
     ListType:
       type: string

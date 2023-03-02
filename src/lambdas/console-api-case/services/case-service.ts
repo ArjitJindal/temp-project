@@ -106,15 +106,20 @@ export class CaseService {
                 (updateRequest.comment ? `. ${updateRequest.comment}` : ''),
               files: updateRequest.files,
             }),
-            sendWebhookTasks(tenantId, [
-              {
-                event: 'CASE_STATUS_UPDATED',
-                payload: {
-                  caseId,
-                  status: updateRequest.caseStatus,
+            updateRequest.caseStatus === 'CLOSED' &&
+              sendWebhookTasks(tenantId, [
+                {
+                  event: 'CASE_CLOSED',
+                  payload: {
+                    caseId,
+                    status: updateRequest.caseStatus,
+                    reasons: updateRequest.reason,
+                    documents: updateRequest.files?.map(
+                      (f) => f.downloadLink as string
+                    ),
+                  },
                 },
-              },
-            ]),
+              ]),
           ]
         })
       )
