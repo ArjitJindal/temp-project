@@ -32,6 +32,10 @@ export async function dedupCaseTransactions(tenant: Tenant) {
     const correctAlerts = transactionsToAlerts(caseTransactions)
 
     const correctedAlerts = caseItem.alerts?.map((a) => {
+      if (!a.ruleInstanceId) {
+        return a
+      }
+
       const correctedAlert = correctAlerts[a.ruleInstanceId]
       if (!correctedAlert) {
         throw new Error(`No corrected transactions for alert ${a.alertId}`)
