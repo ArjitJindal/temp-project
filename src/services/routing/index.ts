@@ -6,8 +6,8 @@ import Page404 from '@/pages/404';
 import CaseManagementPage from '@/pages/case-management';
 import CaseManagementItemPage from '@/pages/case-management-item';
 import RiskLevelsConfigurePage from '@/pages/risk-levels/configure';
-import RiskLevelPage from '@/pages/risk-levels/risk-level';
-import RiskAlgorithmTable from '@/pages/risk-levels/risk-algorithm';
+import RiskLevelPage from '@/pages/risk-levels/risk-factors';
+import RiskAlgorithmTable from '@/pages/risk-levels/risk-algorithms';
 import TransactionsFilesPage from '@/pages/import/import-transactions';
 import TransactionsListPage from '@/pages/transactions';
 import TransactionsItemPage from '@/pages/transactions-item';
@@ -200,17 +200,17 @@ export function useRoutes(): RouteItem[] {
         routes: [
           {
             path: '/risk-levels',
-            redirect: '/risk-levels/risk-level/user',
+            redirect: '/risk-levels/risk-factors/user',
           },
           {
-            name: 'risk-level',
-            path: '/risk-levels/risk-level/',
+            name: 'risk-factors',
+            path: '/risk-levels/risk-factors/',
             component: RiskLevelPage,
             permissions: ['risk-scoring:risk-factors:read'],
           },
           {
-            name: 'risk-level',
-            path: '/risk-levels/risk-level/:type',
+            name: 'risk-factors',
+            path: '/risk-levels/risk-factors/:type',
             component: RiskLevelPage,
             hideInMenu: true,
             permissions: ['risk-scoring:risk-factors:read'],
@@ -222,8 +222,8 @@ export function useRoutes(): RouteItem[] {
             permissions: ['risk-scoring:risk-levels:read'],
           },
           {
-            name: 'risk-algorithm',
-            path: '/risk-levels/risk-algorithm',
+            name: 'risk-algorithms',
+            path: '/risk-levels/risk-algorithms',
             component: RiskAlgorithmTable,
             permissions: ['risk-scoring:risk-algorithms:read'],
           },

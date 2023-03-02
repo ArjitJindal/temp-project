@@ -20,7 +20,7 @@ const RiskAlgorithmTable: React.FC = () => {
             <li>
               <h3>How is the score calculated when there is no data?</h3>
               <p>
-                When there is no data avaliable for a risk factor, {branding.companyName} system
+                When there is no data available for a risk factor, {branding.companyName} system
                 defaults to very high risk. For example, for a user for whom there's no data on
                 country of nationality, {branding.companyName} systems assume the risk level of very
                 high risk for that parameter.

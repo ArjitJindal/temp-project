@@ -37,18 +37,29 @@ export default function DRSDistributionCard() {
   });
 
   const graphData = useMemo(() => {
+    enum RiskLevel {
+      VERY_LOW,
+      LOW,
+      MEDIUM,
+      HIGH,
+      VERY_HIGH,
+    }
     return map(queryResult.data, (data) => {
       return {
         total: data.total,
-        items: data.items.map((item) => {
-          return {
-            type: getType(item.riskLevel, settings),
-            count: item.count,
-            riskLevel: item.riskLevel,
-            riskScoreRange: item.riskScoreRange,
-            percentage: item.percentage,
-          };
-        }),
+        items: data.items
+          .map((item) => {
+            return {
+              type: getType(item.riskLevel, settings),
+              count: item.count,
+              riskLevel: item.riskLevel,
+              riskScoreRange: item.riskScoreRange,
+              percentage: item.percentage,
+            };
+          })
+          .sort((a, b) => {
+            return a.riskLevel && b.riskLevel ? RiskLevel[a.riskLevel] - RiskLevel[b.riskLevel] : 0;
+          }),
       };
     });
   }, [queryResult.data, settings]);

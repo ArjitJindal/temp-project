@@ -44,9 +44,10 @@ export default {
   'menu.auditlog': 'Audit Log',
   'menu.risk-levels': 'Risk Scoring',
   'menu.risk-levels.configure': 'Risk Levels',
-  'menu.risk-levels.risk-level': 'Risk Factors',
-  'menu.risk-levels.risk-level.description': 'Create a risk level parameter to score your customer',
-  'menu.risk-levels.risk-algorithm': 'Risk Algorithms',
-  'menu.risk-levels.risk-algorithm.description': 'Algorithms used to calculate Risk Scores',
+  'menu.risk-levels.risk-factors': 'Risk Factors',
+  'menu.risk-levels.risk-factors.description':
+    'Create a risk level parameter to score your customer',
+  'menu.risk-levels.risk-algorithms': 'Risk Algorithms',
+  'menu.risk-levels.risk-algorithms.description': 'Algorithms used to calculate Risk Scores',
   'menu.sanctions': 'Sanctions',
 };

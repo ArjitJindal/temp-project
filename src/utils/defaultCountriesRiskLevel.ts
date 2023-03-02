@@ -1,4 +1,4 @@
-import { ParameterValues } from '@/pages/risk-levels/risk-level/ParametersTable/types';
+import { ParameterValues } from '@/pages/risk-levels/risk-factors/ParametersTable/types';
 
 export const DEFAULT_COUNTRY_RISK_VALUES: ParameterValues = [
   {

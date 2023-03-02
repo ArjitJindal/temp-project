@@ -18,7 +18,7 @@ import {
   ParameterSettings,
   ParameterValues,
   Entity,
-} from '@/pages/risk-levels/risk-level/ParametersTable/types';
+} from '@/pages/risk-levels/risk-factors/ParametersTable/types';
 import { ParameterAttributeRiskValues } from '@/apis';
 import { AsyncResource, failed, getOr, init, loading, success } from '@/utils/asyncResource';
 import { getErrorMessage } from '@/utils/lang';
@@ -172,13 +172,13 @@ export default function () {
   return (
     <Feature name="PULSE" fallback={'Not enabled'}>
       <PageWrapper
-        title={i18n('menu.risk-levels.risk-level')}
-        description={i18n('menu.risk-levels.risk-level.description')}
+        title={i18n('menu.risk-levels.risk-factors')}
+        description={i18n('menu.risk-levels.risk-factors.description')}
       >
         <PageTabs
           activeKey={type}
           onChange={(key) => {
-            navigate(makeUrl(`/risk-levels/risk-level/:type`, { type: key }), { replace: true });
+            navigate(makeUrl(`/risk-levels/risk-factors/:type`, { type: key }), { replace: true });
           }}
         >
           <Tabs.TabPane tab="Consumer" key="consumer">

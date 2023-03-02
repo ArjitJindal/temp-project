@@ -12,9 +12,9 @@ import style from './style.module.less';
 import ValuesTable from './ValuesTable';
 import { AsyncResource, getOr, init, isLoading, map } from '@/utils/asyncResource';
 import { neverReturn } from '@/utils/lang';
-import ActivityIndicator from '@/pages/risk-levels/risk-level/ParametersTable/ActivityIndicator';
+import ActivityIndicator from '@/pages/risk-levels/risk-factors/ParametersTable/ActivityIndicator';
 import Table from '@/components/ui/Table';
-import { DATA_TYPE_TO_VALUE_TYPE } from '@/pages/risk-levels/risk-level/ParametersTable/consts';
+import { DATA_TYPE_TO_VALUE_TYPE } from '@/pages/risk-levels/risk-factors/ParametersTable/consts';
 import { useHasPermissions } from '@/utils/user-utils';
 
 interface Props {

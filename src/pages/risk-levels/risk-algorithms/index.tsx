@@ -11,8 +11,8 @@ export default function () {
   return (
     <Feature name="PULSE" fallback={'Not enabled'}>
       <PageWrapper
-        title={i18n('menu.risk-levels.risk-algorithm')}
-        description={i18n('menu.risk-levels.risk-algorithm.description')}
+        title={i18n('menu.risk-levels.risk-algorithms')}
+        description={i18n('menu.risk-levels.risk-algorithms.description')}
       >
         <RiskAlgorithmTable />
       </PageWrapper>

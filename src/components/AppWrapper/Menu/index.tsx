@@ -72,7 +72,12 @@ const disabledMessage = (
     Please <a href={`mailto:${branding.supportEmail}`}>contact us</a> to access this feature.
   </div>
 );
-function renderItems(parentTranslationKey: string, items: RouteItem[], i18n: I18n): ItemType[] {
+function renderItems(
+  parentTranslationKey: string,
+  items: RouteItem[],
+  i18n: I18n,
+  isCollapsed: boolean,
+): ItemType[] {
   return items
     .filter((route) => ('redirect' in route ? false : !route.hideInMenu))
     .map((item) => {
@@ -88,11 +93,18 @@ function renderItems(parentTranslationKey: string, items: RouteItem[], i18n: I18
             label: <span className={s.menuItem}>{i18n(fullKey as TranslationId)}</span>,
             title: i18n(fullKey as TranslationId),
             icon: icon,
-            children: renderItems(fullKey, item.routes, i18n),
+            children: renderItems(fullKey, item.routes, i18n, isCollapsed),
           }
         : {
             key: item.name,
-            icon: icon,
+            icon:
+              isCollapsed && item.disabled ? (
+                <Popover content={disabledMessage} placement={'left'}>
+                  {icon}
+                </Popover>
+              ) : (
+                icon
+              ),
             label: item.disabled ? (
               <Popover content={disabledMessage}>
                 <span className={s.menuItem}>{i18n(fullKey as TranslationId)}</span>
@@ -141,6 +153,7 @@ export default function Menu(props: {
             'menu',
             routes.filter((route) => route.position === 'top'),
             i18n,
+            isCollapsed,
           )}
         />
       </div>
@@ -153,6 +166,7 @@ export default function Menu(props: {
           'menu',
           routes.filter((route) => route.position === 'bottom'),
           i18n,
+          isCollapsed,
         ).concat([
           {
             key: 'button',

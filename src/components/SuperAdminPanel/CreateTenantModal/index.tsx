@@ -130,44 +130,36 @@ export const CreateTenantModal = (props: Props) => {
         tenantName: {
           type: 'string',
           title: 'Tenant Name',
-          description: 'Tenant name (lowercase, no space)',
         },
         tenantWebsite: {
           type: 'string',
           title: 'Tenant Website',
-          description: 'The website of the tenant',
         },
         tenantId: {
           type: 'string',
           title: 'Tenant ID',
-          description:
-            'The ID of the tenant (Optional) If not provided, will be generated automatically',
         },
         auth0DisplayName: {
           type: 'string',
           title: 'Auth0 Display Name',
-          description: 'The display name of the tenant in Auth0',
         },
         auth0Domain: {
           type: 'string',
           title: 'Auth0 Domain',
-          description:
-            'Required if the tenant belongs to our white-label customer. e.g bureau-flagright.eu.auth0.com',
         },
         emailsOfAdmins: {
           type: 'array',
           title: 'Emails of Admins',
-          description: 'The emails of the admins of the tenant',
           uniqueItems: true,
           items: {
             type: 'string',
-            description: 'The email of the admin Will assign the role of "admin" in Auth0',
+            description: 'The email of the admin will assign the role of "admin" in Auth0',
           },
         },
         featureFlags: {
           type: 'array',
           title: 'Feature Flags',
-          description: 'The feature flags of the tenant',
+
           uniqueItems: true,
           items: {
             type: 'string',
@@ -178,7 +170,6 @@ export const CreateTenantModal = (props: Props) => {
           demoMode: {
             type: 'boolean',
             title: 'Demo Mode',
-            description: 'Whether to enable demo mode for the tenant',
           },
         }),
       },
@@ -193,6 +184,38 @@ export const CreateTenantModal = (props: Props) => {
     [UPDATED_FEATURES],
   );
 
+  const uiSchema = useMemo(
+    () => ({
+      tenantName: {
+        'ui:help': 'Tenant name (lowercase, no space)',
+      },
+      tenantWebsite: {
+        'ui:help': 'The website of the tenant',
+      },
+      tenantId: {
+        'ui:help':
+          'The ID of the tenant (Optional) If not provided, will be generated automatically',
+      },
+      auth0DisplayName: {
+        'ui:help': 'The display name of the tenant in Auth0',
+      },
+      auth0Domain: {
+        'ui:help':
+          'Required if the tenant belongs to our white-label customer. e.g bureau-flagright.eu.auth0.com',
+      },
+      emailsOfAdmins: {
+        'ui:help': 'The emails of the admins of the tenant',
+      },
+      featureFlags: {
+        'ui:help': 'The feature flags of the tenant',
+      },
+      demoMode: {
+        'ui:help': 'Whether to enable demo mode for the tenant',
+      },
+    }),
+    [],
+  );
+
   return (
     <Modal
       title={`Create Tenant (${envToDisplay}: ${
@@ -205,6 +228,7 @@ export const CreateTenantModal = (props: Props) => {
     >
       <JsonSchemaForm
         schema={getFixedSchemaJsonForm(schema)}
+        uiSchema={uiSchema}
         onChange={handleFormDetailsChange}
         formData={formDetails}
         liveValidate
@@ -212,6 +236,7 @@ export const CreateTenantModal = (props: Props) => {
         {/* Add dummy children to prevent the form from rendering the submit button */}
         <Fragment />
       </JsonSchemaForm>
+
       {response && (
         <>
           <Typography.Title

@@ -16,7 +16,7 @@ import {
   riskValueRange,
   riskValueTimeRange,
   RiskValueType,
-} from '@/pages/risk-levels/risk-level/ParametersTable/types';
+} from '@/pages/risk-levels/risk-factors/ParametersTable/types';
 import COUNTRIES from '@/utils/countries';
 import { getPaymentMethodTitle, isPaymentMethod, PAYMENT_METHODS } from '@/utils/payments';
 import { TRANSACTION_TYPES } from '@/utils/transactionType';
