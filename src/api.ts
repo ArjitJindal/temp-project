@@ -7,6 +7,7 @@ import {
   Configuration,
   IsomorphicFetchHttpLibrary,
   Middleware,
+  Permission,
   RequestContext,
   ResponseContext,
   SecurityAuthentication,
@@ -35,7 +36,13 @@ class AuthorizationMiddleware implements Middleware {
 
 export function useAuth(): SecurityAuthentication {
   const user = useAuth0User();
-  const userIdentityKey = JSON.stringify(user);
+
+  // Transform permissions to Array from Map, since Maps always serialise as "{}"
+  let permissions: Permission[] = [];
+  if (user.permissions) {
+    permissions = [...user.permissions.keys()];
+  }
+  const userIdentityKey = JSON.stringify({ ...user, permissions });
   const [jwt, setJwt] = useLocalStorageState<{ [key: string]: string }>('jwt', {});
   const { getAccessTokenSilently, getAccessTokenWithPopup } = useAuth0();
   return useMemo(() => {
