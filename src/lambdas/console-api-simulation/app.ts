@@ -4,6 +4,7 @@ import {
   APIGatewayProxyWithLambdaAuthorizerEvent,
 } from 'aws-lambda'
 import { SimulationTaskRepository } from './repositories/simulation-task-repository'
+import { SimulationResultRepository } from './repositories/simulation-result-repository'
 import { JWTAuthorizerResult } from '@/@types/jwt'
 import { lambdaApi } from '@/core/middlewares/lambda-api-middlewares'
 import { sendBatchJobCommand } from '@/services/batch-job'
@@ -22,6 +23,10 @@ export const simulationHandler = lambdaApi()(
     const { principalId: tenantId } = event.requestContext.authorizer
     const mongoDb = await getMongoDbClient()
     const simulationTaskRepository = new SimulationTaskRepository(
+      tenantId,
+      mongoDb
+    )
+    const simulationResultRepository = new SimulationResultRepository(
       tenantId,
       mongoDb
     )
@@ -69,6 +74,16 @@ export const simulationHandler = lambdaApi()(
         throw new NotFound(`Simulation job not found`)
       }
       return job
+    } else if (
+      event.resource === '/simulation/{taskId}/results' &&
+      event.httpMethod === 'GET' &&
+      event.pathParameters?.taskId
+    ) {
+      const results = await simulationResultRepository.getSimulationResults(
+        event.pathParameters.taskId
+      )
+
+      return results
     }
 
     throw new BadRequest('Unhandled request')

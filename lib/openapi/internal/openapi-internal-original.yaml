@@ -3130,6 +3130,29 @@ paths:
         name: jobId
         in: path
         required: true
+  '/simulation/{taskId}/results':
+    get:
+      summary: Get a simulation task result by task ID
+      operationId: get-simulation-task-id-result
+      x-flagright:
+        permissions:
+          - simulator:rules:read
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/SimulationPulseResult'
+      parameters: []
+    parameters:
+      - schema:
+          type: string
+        name: taskId
+        in: path
+        required: true
 components:
   schemas:
     KrsScore:
