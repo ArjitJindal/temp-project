@@ -1,6 +1,6 @@
 import React from 'react';
 import cn from 'clsx';
-import s from './CollapsableIcon.less';
+import s from './CollapsableIcon.module.less';
 import ArrowDownSLineIcon from '@/components/ui/icons/Remix/system/arrow-down-s-line.react.svg';
 
 export default function ({
@@ -11,8 +11,9 @@ export default function ({
   onClick?: (event: React.MouseEvent<any>) => void;
 }) {
   return (
-    <div className={cn(s.collapseIcon, !expanded && s.isCollapsed)}>
-      <ArrowDownSLineIcon onClick={onClick} />
-    </div>
+    <ArrowDownSLineIcon
+      className={cn(s.collapseIcon, !expanded && s.isCollapsed)}
+      onClick={onClick}
+    />
   );
 }
