@@ -3,7 +3,7 @@ import cn from 'clsx';
 import s from './index.module.less';
 import Column from './Column';
 import Header, { HeaderSettings } from './Header';
-import { useDeepEqualEffect } from '@/utils/hooks';
+import { useDeepEqualEffect, useFocusKey } from '@/utils/hooks';
 import { ExpandableContext } from '@/components/AppWrapper/Providers/ExpandableProvider';
 import { useSettings } from '@/components/AppWrapper/Providers/SettingsProvider';
 
@@ -30,7 +30,10 @@ const Root = (props: Props) => {
     return !settings?.defaultViews?.expandedCards?.includes(collapsableKey);
   }, [collapsableKey, settings?.defaultViews?.expandedCards]);
 
-  const [isCollapsed, setCollapsed] = useState(isCollapsedByDefault());
+  const focusKey = useFocusKey();
+  const [isCollapsed, setCollapsed] = useState(
+    focusKey === collapsableKey ? false : isCollapsedByDefault(),
+  );
 
   const expandableContext = useContext(ExpandableContext);
 
@@ -58,7 +61,7 @@ const Root = (props: Props) => {
   }, [isCollapsed]);
 
   return (
-    <div className={cn(s.root, className, disabled && s.disabled)}>
+    <div className={cn(s.root, className, disabled && s.disabled)} id={collapsableKey}>
       <Column>
         {header && (
           <Header

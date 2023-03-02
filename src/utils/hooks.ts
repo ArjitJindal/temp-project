@@ -1,5 +1,6 @@
 import { EffectCallback, useEffect, useRef, useState } from 'react';
 import { customAlphabet } from 'nanoid/non-secure';
+import { useSearchParams } from 'react-router-dom';
 import { isEqual } from '@/utils/lang';
 
 const nanoid = customAlphabet('1234567890abcdef', 16);
@@ -25,4 +26,27 @@ export function useDeepEqualEffect(effect: EffectCallback, deps: unknown[]) {
 export function useId(prefix = `id`): string {
   const [id] = useState(nanoid());
   return prefix + id;
+}
+
+export function useFocusKey() {
+  const [searchParams] = useSearchParams();
+  return searchParams.get('focus');
+}
+
+export function useScrollToFocus() {
+  const scrolledRef = useRef(false);
+  const [searchParams] = useSearchParams();
+  const focusId = searchParams.get('focus');
+
+  useEffect(() => {
+    if (!focusId || scrolledRef.current) {
+      return;
+    }
+
+    const element = document.getElementById(focusId);
+    if (element) {
+      element.scrollIntoView({ behavior: 'smooth' });
+      scrolledRef.current = true;
+    }
+  });
 }

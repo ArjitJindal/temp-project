@@ -34,6 +34,7 @@ import Button from '@/components/library/Button';
 import Confirm from '@/components/utils/Confirm';
 import { getErrorMessage } from '@/utils/lang';
 import Tooltip from '@/components/library/Tooltip';
+import { UI_SETTINGS } from '@/pages/case-management-item/UserCaseDetails/ui-settings';
 
 export type AlertTableParams = AllParams<TableSearchParams>;
 
@@ -61,7 +62,22 @@ const mergedColumns = (
         showFilterByDefault: true,
       },
       render: (dom, entity) => {
-        return <Id id={entity.alertId}>{entity.alertId}</Id>;
+        return (
+          <Id
+            id={entity.alertId}
+            to={addBackUrlToRoute(
+              makeUrl(
+                `/case-management/case/:caseId`,
+                {
+                  caseId: entity.caseId,
+                },
+                { focus: UI_SETTINGS.cards.ALERTS.key },
+              ),
+            )}
+          >
+            {entity.alertId}
+          </Id>
+        );
       },
     },
     {

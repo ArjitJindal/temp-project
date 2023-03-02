@@ -6,6 +6,7 @@ import { Case } from '@/apis';
 import UserDetails from '@/pages/users-item/UserDetails';
 import UserIdNameCard from '@/components/ui/UserIdNameCard';
 import { usePageViewTracker } from '@/utils/tracker';
+import { useScrollToFocus } from '@/utils/hooks';
 
 interface Props {
   caseItem: Case;
@@ -18,6 +19,8 @@ function UserCaseDetails(props: Props) {
   const { caseItem, onCaseUpdate } = props;
   const user = caseItem.caseUsers?.origin ?? caseItem.caseUsers?.destination ?? undefined;
   usePageViewTracker('User Case Details');
+  useScrollToFocus();
+
   return (
     <>
       <UserIdNameCard user={user} showRiskLevel={true} />
