@@ -146,9 +146,9 @@ export const createAuth0TenantResources = (
           return permissions.map((p) => ({
             name: p,
             resourceServerIdentifier: `https://${apiPrefix}api.flagright.com/`,
-            description,
           }))
         }),
+        description,
       })
   )
 
