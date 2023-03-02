@@ -14,7 +14,7 @@ export default class MerchantReceiverNameRule extends TransactionRule<MerchantRe
       properties: {
         merchantNames: {
           type: 'array',
-          title: 'Merchant Names',
+          title: 'Merchant names',
           items: { type: 'string' },
         },
       },

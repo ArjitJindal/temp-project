@@ -15,7 +15,7 @@ export class UserCountryOfNationalityRuleFilter extends UserRuleFilter<UserCount
       type: 'object',
       properties: {
         userNationalityCountries: COUNTRIES_OPTIONAL_SCHEMA({
-          title: 'Nationality Countries',
+          title: 'Nationality countries',
           uiSchema: {
             group: 'geography',
           },

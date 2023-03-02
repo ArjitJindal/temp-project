@@ -32,7 +32,7 @@ export class TransactionCountryRuleFilter extends TransactionRuleFilter<Transact
       type: 'object',
       properties: {
         transactionCountries: COUNTRIES_OPTIONAL_SCHEMA({
-          title: 'Transaction Countries',
+          title: 'Transaction countries',
           uiSchema: {
             group: 'transaction',
           },

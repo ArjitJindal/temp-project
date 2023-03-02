@@ -25,9 +25,12 @@ export class UserCreationAgeRuleFilter extends UserRuleFilter<UserCreationAgeRul
       type: 'object',
       properties: {
         userCreationAgeRange: AGE_RANGE_OPTIONAL_SCHEMA({
-          title: 'User Creation Age Range',
+          title: 'User creation age range',
           description:
             'User creation age is calculated by "NOW - createdTimestamp of a user"',
+          uiSchema: {
+            group: 'user',
+          },
         }),
       },
     }

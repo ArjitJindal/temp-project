@@ -23,11 +23,11 @@ export default class SenderLocationChangesFrequencyRule extends TransactionRule<
       properties: {
         uniqueCitiesCountThreshold: {
           type: 'integer',
-          title: 'Cities Count Threshold',
+          title: 'Cities count threshold',
           description:
             'rule is run when the cities count per time window is greater than the threshold',
         },
-        timeWindowInDays: { type: 'integer', title: 'Time Window (Days)' },
+        timeWindowInDays: { type: 'integer', title: 'Time window (days)' },
       },
       required: ['uniqueCitiesCountThreshold', 'timeWindowInDays'],
     }

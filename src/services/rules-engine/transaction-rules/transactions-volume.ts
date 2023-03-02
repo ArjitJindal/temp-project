@@ -44,14 +44,14 @@ export default class TransactionsVolumeRule extends TransactionRule<
       properties: {
         initialTransactions: INITIAL_TRANSACTIONS_OPTIONAL_SCHEMA(),
         transactionVolumeThreshold: TRANSACTION_AMOUNT_THRESHOLDS_SCHEMA({
-          title: 'Transactions Volume Threshold',
+          title: 'Transactions volume threshold',
         }),
         timeWindow: TIME_WINDOW_SCHEMA(),
         checkSender: CHECK_SENDER_SCHEMA(),
         checkReceiver: CHECK_RECEIVER_SCHEMA(),
         matchPaymentMethodDetails: {
           type: 'boolean',
-          title: 'Match Payment Method Details',
+          title: 'Match payment method details',
           description:
             'Transactions will only be flagged if same payment details are used',
           nullable: true,

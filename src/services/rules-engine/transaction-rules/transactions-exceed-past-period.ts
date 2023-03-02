@@ -45,10 +45,10 @@ export default class TransactionsExceedPastPeriodRule extends TransactionAggrega
       type: 'object',
       properties: {
         timeWindow1: TIME_WINDOW_SCHEMA({
-          title: 'Time Period 1',
+          title: 'Time period 1',
         }),
         timeWindow2: TIME_WINDOW_SCHEMA({
-          title: 'Time Period 2',
+          title: 'Time period 2',
           description:
             'Should be larger than time period 1. Time period 1 is excluded',
         }),

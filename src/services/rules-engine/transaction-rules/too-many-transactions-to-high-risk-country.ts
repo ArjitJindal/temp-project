@@ -26,11 +26,11 @@ export default class TooManyTransactionsToHighRiskCountryRule extends Transactio
         type: 'object',
         properties: {
           highRiskCountries: COUNTRIES_OPTIONAL_SCHEMA({
-            title: 'High Risk Countries (ISO 3166-1 alpha-2)',
+            title: 'High risk countries (ISO 3166-1 alpha-2)',
             description: 'Countries in this list are considered high risk',
           }),
           highRiskCountriesExclusive: COUNTRIES_OPTIONAL_SCHEMA({
-            title: 'High Risk Countries (ISO 3166-1 alpha-2) (exclusive)',
+            title: 'High risk countries (ISO 3166-1 alpha-2) (exclusive)',
             description:
               "Countries that aren't in this list are considered high risk",
           }),

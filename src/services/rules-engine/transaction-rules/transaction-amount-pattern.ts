@@ -19,7 +19,7 @@ export default class TransactionMatchesPatternRule extends TransactionRule<Trans
         },
         checkDecimal: {
           type: 'boolean',
-          title: 'Check Decimals',
+          title: 'Check decimals',
           nullable: true,
         },
       },

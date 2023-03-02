@@ -13,7 +13,7 @@ export default class HighRiskCurrencyRule extends TransactionRule<HighRiskCurren
       type: 'object',
       properties: {
         highRiskCurrencies: CURRENCIES_SCHEMA({
-          title: 'High Risk Currencies',
+          title: 'High risk currencies',
         }),
       },
       required: ['highRiskCurrencies'],

@@ -15,7 +15,7 @@ export class UserCountryOfResidenceRuleFilter extends UserRuleFilter<UserCountry
       type: 'object',
       properties: {
         userResidenceCountries: COUNTRIES_OPTIONAL_SCHEMA({
-          title: 'Residence Countries',
+          title: 'Residence countries',
           uiSchema: {
             group: 'geography',
           },

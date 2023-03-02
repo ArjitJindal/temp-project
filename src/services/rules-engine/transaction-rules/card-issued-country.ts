@@ -15,7 +15,7 @@ export default class CardIssuedCountryRule extends TransactionRule<CardIssuedCou
       type: 'object',
       properties: {
         allowedCountries: COUNTRIES_SCHEMA({
-          title: 'Whitelist Countries (ISO 3166-1 alpha-2)',
+          title: 'Whitelist countries (ISO 3166-1 alpha-2)',
         }),
       },
       required: ['allowedCountries'],

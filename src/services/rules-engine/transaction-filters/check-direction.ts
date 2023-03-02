@@ -1,7 +1,7 @@
 import { JSONSchemaType } from 'ajv'
-
 import _ from 'lodash'
 import { TransactionRuleFilter } from './filter'
+import { uiSchema } from '@/services/rules-engine/utils/rule-schema-utils'
 
 export type CheckDirectionRuleFilterParameter = {
   checkDirection?: 'ORIGIN' | 'DESTINATION'
@@ -15,10 +15,11 @@ export class CheckDirectionRuleFilter extends TransactionRuleFilter<CheckDirecti
         checkDirection: {
           type: 'string',
           enum: ['ORIGIN', 'DESTINATION'],
-          title: 'User Direction to Check',
+          title: 'User direction to check',
           description:
             'If set to ORIGIN, only origin user will be checked. If empty, both origin and destination users will be checked.',
           nullable: true,
+          ...uiSchema({ group: 'transaction' }),
         },
       },
     }

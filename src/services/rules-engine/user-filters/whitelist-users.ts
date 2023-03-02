@@ -2,6 +2,7 @@ import { JSONSchemaType } from 'ajv'
 
 import _ from 'lodash'
 import { UserRuleFilter } from './filter'
+import { uiSchema } from '@/services/rules-engine/utils/rule-schema-utils'
 import { ListRepository } from '@/lambdas/console-api-list-importer/repositories/list-repository'
 import { logger } from '@/core/logger'
 
@@ -19,23 +20,28 @@ export class WhitelistUsersRuleFilter extends UserRuleFilter<WhitelistUsersRuleF
       properties: {
         whitelistUsers: {
           type: 'object',
-          title: 'Whitelist Users',
+          title: 'Whitelist users',
+          description:
+            'Add user IDs or Whitelist IDs to exclude users from this rule when run',
           properties: {
             listIds: {
               type: 'array',
-              title: 'Whitelist List IDs',
+              title: 'Whitelist IDs',
               items: { type: 'string' },
+              uniqueItems: true,
               nullable: true,
             },
             userIds: {
               type: 'array',
-              title: 'Whitelist User IDs',
+              title: 'User IDs',
               items: { type: 'string' },
+              uniqueItems: true,
               nullable: true,
             },
           },
           required: [],
           nullable: true,
+          ...uiSchema({ group: 'user' }),
         },
       },
     }

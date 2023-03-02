@@ -46,10 +46,10 @@ export default class TransactionsOutflowInflowVolumeRule extends TransactionRule
       properties: {
         timeWindow: TIME_WINDOW_SCHEMA(),
         outflowTransactionTypes: TRANSACTION_TYPES_SCHEMA({
-          title: 'Outflow Transaction Types',
+          title: 'Outflow transaction types',
         }),
         inflowTransactionTypes: TRANSACTION_TYPES_SCHEMA({
-          title: 'Inflow Transaction Types',
+          title: 'Inflow transaction types',
         }),
         outflowInflowComparator: COMPARATOR_SCHEMA({
           title: 'Outflow/Inflow transaction volume comparator',

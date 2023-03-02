@@ -19,7 +19,7 @@ export default class FirstActivityAfterLongTimeRule extends TransactionRule<
       properties: {
         dormancyPeriodDays: {
           type: 'integer',
-          title: 'Dormancy Period Threshold (Days)',
+          title: 'Dormancy period threshold (days)',
         },
       },
       required: ['dormancyPeriodDays'],

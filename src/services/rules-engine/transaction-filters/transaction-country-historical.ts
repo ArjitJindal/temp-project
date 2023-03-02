@@ -13,7 +13,7 @@ export class TransactionCountryHistoricalRuleFilter extends TransactionRuleFilte
       type: 'object',
       properties: {
         transactionCountriesHistorical: COUNTRIES_OPTIONAL_SCHEMA({
-          title: 'Transaction Countries',
+          title: 'Transaction countries',
           uiSchema: {
             group: 'transaction_historical',
           },

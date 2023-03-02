@@ -29,11 +29,11 @@ export default abstract class LowValueTransactionsRule extends TransactionRule<
       type: 'object',
       properties: {
         lowTransactionValues: TRANSACTION_AMOUNT_RANGE_SCHEMA({
-          title: 'Low Transaction Value',
+          title: 'Low transaction value',
         }),
         lowTransactionCount: {
           type: 'integer',
-          title: 'Low-value Transactions Count Threshold',
+          title: 'Low-value transactions count threshold',
         },
         paymentChannel: PAYMENT_CHANNEL_OPTIONAL_SCHEMA(),
       },

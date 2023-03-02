@@ -19,11 +19,11 @@ export default class TooManyUsersForSameCardRule extends TransactionRule<TooMany
       properties: {
         uniqueUsersCountThreshold: {
           type: 'integer',
-          title: 'Users Count Threshold',
+          title: 'Users count threshold',
           description:
             'rule is run when the users count per time window is greater than the threshold',
         },
-        timeWindowInDays: { type: 'integer', title: 'Time Window (Days)' },
+        timeWindowInDays: { type: 'integer', title: 'Time window (days)' },
       },
       required: ['uniqueUsersCountThreshold', 'timeWindowInDays'],
     }

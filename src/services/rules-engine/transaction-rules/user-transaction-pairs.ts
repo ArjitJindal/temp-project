@@ -24,15 +24,15 @@ export default class UserTransactionPairsRule extends TransactionRule<
       properties: {
         userPairsThreshold: {
           type: 'integer',
-          title: 'User Pairs Count Threshold',
+          title: 'User pairs count threshold',
         },
         timeWindowInSeconds: {
           type: 'integer',
-          title: 'Time Window (Seconds)',
+          title: 'Time window (seconds)',
         },
         excludedUserIds: {
           type: 'array',
-          title: 'Excluded User IDs',
+          title: 'Excluded user IDs',
           items: { type: 'string' },
           nullable: true,
         },

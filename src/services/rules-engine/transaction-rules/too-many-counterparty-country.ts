@@ -20,7 +20,7 @@ export default class TooManyCounterpartyCountryRule extends TransactionsPatternV
         properties: {
           transactionsLimit: {
             type: 'integer',
-            title: 'Unique Countries Limit',
+            title: 'Unique countries limit',
           },
         },
         required: ['transactionsLimit'],

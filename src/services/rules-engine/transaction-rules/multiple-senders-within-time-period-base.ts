@@ -30,7 +30,7 @@ export default abstract class MultipleSendersWithinTimePeriodRuleBase extends Tr
       properties: {
         sendersCount: {
           type: 'integer',
-          title: 'Senders Count Threshold',
+          title: 'Senders count threshold',
           description:
             'rule is run when the senders count per time window is greater than the threshold',
         },

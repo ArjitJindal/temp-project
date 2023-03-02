@@ -21,7 +21,7 @@ export default class BlacklistTransactionMatchedFieldRule extends TransactionRul
       properties: {
         blacklistId: {
           type: 'string',
-          title: 'Blacklist List Id',
+          title: 'Blacklist ID',
         },
       },
       required: ['blackListId'],

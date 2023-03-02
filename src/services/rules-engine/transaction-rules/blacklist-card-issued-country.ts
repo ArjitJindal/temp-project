@@ -15,7 +15,7 @@ export default class BlacklistCardIssuedCountryRule extends TransactionRule<Blac
       type: 'object',
       properties: {
         blacklistedCountries: COUNTRIES_SCHEMA({
-          title: 'Blacklisted Countries (ISO 3166-1 alpha-2)',
+          title: 'Blacklisted countries (ISO 3166-1 alpha-2)',
         }),
       },
       required: ['blacklistedCountries'],

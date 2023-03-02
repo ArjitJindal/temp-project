@@ -29,18 +29,18 @@ export default class BlacklistPaymentdetailsRule extends TransactionRule<Blackli
         },
         blacklistedCardPaymentDetails: {
           type: 'array',
-          title: 'Blacklist Card Payment Details',
+          title: 'Blacklist card payment details',
           items: {
             type: 'object',
             properties: {
               cardFingerprint: {
                 type: 'string',
-                title: 'Card Fingerprint',
+                title: 'Card fingerprint',
                 nullable: true,
               },
               cardLast4Digits: {
                 type: 'string',
-                title: 'Card Last 4 Digits',
+                title: 'Card last 4 digits',
                 nullable: true,
               },
               cardExpiry: {
@@ -57,12 +57,12 @@ export default class BlacklistPaymentdetailsRule extends TransactionRule<Blackli
                     nullable: true,
                   },
                 },
-                title: 'Card Expiry Date',
+                title: 'Card expiry date',
                 nullable: true,
               },
               nameOnCard: {
                 type: 'string',
-                title: 'Card Holder Name',
+                title: 'Card holder name',
                 nullable: true,
               },
             },
@@ -72,7 +72,7 @@ export default class BlacklistPaymentdetailsRule extends TransactionRule<Blackli
 
         blacklistedGenericBankAccountPaymentDetails: {
           type: 'array',
-          title: 'Blacklist Bank Account Numbers',
+          title: 'Blacklist bank account numbers',
           items: { type: 'string' },
           nullable: true,
         },

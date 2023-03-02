@@ -52,7 +52,7 @@ export default class HighTrafficVolumeBetweenSameUsers extends TransactionAggreg
       type: 'object',
       properties: {
         transactionVolumeThreshold: TRANSACTION_AMOUNT_THRESHOLDS_SCHEMA({
-          title: 'Transactions Volume Threshold',
+          title: 'Transactions volume threshold',
         }),
         transactionsLimit: TRANSACTIONS_THRESHOLD_OPTIONAL_SCHEMA(),
         timeWindow: TIME_WINDOW_SCHEMA(),

@@ -300,7 +300,7 @@ export const TRANSACTION_AMOUNT_THRESHOLDS_OPTIONAL_SCHEMA = (
 export const CHECK_SENDER_SCHEMA = (options?: SchemaOptions) =>
   ({
     type: 'string',
-    title: 'Sender Transaction Direction to Check',
+    title: 'Sender transaction direction to check',
     ...uiSchema(options?.uiSchema, {
       subtype: 'CHECK_SENDER',
     }),
@@ -322,7 +322,7 @@ export const CHECK_RECEIVER_SCHEMA = (options?: SchemaOptions) =>
       subtype: 'CHECK_RECEIVER',
     }),
     type: 'string',
-    title: 'Receiver Transaction Direction to Check',
+    title: 'Receiver transaction direction to check',
     description:
       "receiving: only check the receiver's past receiving transactions; all: check the receiver's past sending and receiving transactions; none: do not check the receiver",
     enum: ['receiving', 'all', 'none'],
@@ -374,7 +374,7 @@ export const INITIAL_TRANSACTIONS_SCHEMA = (options?: SchemaOptions) =>
     ...uiSchema(options?.uiSchema, {
       subtype: 'INITIAL_TRANSACTIONS',
     }),
-    title: 'Initial Transactions Count Threshold',
+    title: 'Initial transactions count threshold',
     description:
       "rule is executed after the user's past transactions is greater or equal to the threshold",
   } as const)

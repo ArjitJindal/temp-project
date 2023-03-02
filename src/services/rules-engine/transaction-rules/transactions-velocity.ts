@@ -50,7 +50,7 @@ export default class TransactionsVelocityRule extends TransactionRule<
         checkReceiver: CHECK_RECEIVER_OPTIONAL_SCHEMA(),
         userIdsToCheck: {
           type: 'array',
-          title: 'Target User IDs',
+          title: 'Target user IDs',
           items: { type: 'string' },
           nullable: true,
         },
