@@ -1,14 +1,17 @@
-import { AccountRoleName } from '@/@types/openapi-internal/AccountRoleName'
+import { ManagedRoleName } from '@/@types/openapi-internal/ManagedRoleName'
 import { Permission } from '@/@types/openapi-internal/Permission'
 import { PERMISSIONS } from '@/@types/openapi-internal-custom/Permission'
 
 export const DEFAULT_ROLES: {
-  role: AccountRoleName
+  role: ManagedRoleName
   permissions: Permission[]
+  description: string
 }[] = [
   {
     role: 'admin',
     permissions: PERMISSIONS, // Admin has all permissions
+    description:
+      'The following is the default permissions set for the Admin role.',
   },
   {
     role: 'auditor',
@@ -32,6 +35,8 @@ export const DEFAULT_ROLES: {
       'simulator:rules:read',
       'simulator:risk-scoring:read',
     ],
+    description:
+      'The following is the default permissions set for the Auditor role.',
   },
   {
     role: 'analyst',
@@ -50,6 +55,8 @@ export const DEFAULT_ROLES: {
       'transactions:details:read',
       'transactions:export:read',
     ],
+    description:
+      'The following is the default permissions set for the Analyst role.',
   },
   {
     role: 'approver',
@@ -75,6 +82,8 @@ export const DEFAULT_ROLES: {
       'simulator:rules:read',
       'simulator:risk-scoring:read',
     ],
+    description:
+      'The following is the default permissions set for the Approver role.',
   },
   {
     role: 'developer',
@@ -102,5 +111,7 @@ export const DEFAULT_ROLES: {
       'simulator:rules:read',
       'simulator:risk-scoring:read',
     ],
+    description:
+      'The following is the default permissions set for the Developer role.',
   },
 ]

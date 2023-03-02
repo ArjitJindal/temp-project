@@ -578,7 +578,13 @@ export class CdkTarponStack extends cdk.Stack {
       {
         name: StackConstants.CONSOLE_API_ROLE_FUNCTION_NAME,
       },
-      atlasFunctionProps
+      {
+        ...atlasFunctionProps,
+        environment: {
+          ...atlasFunctionProps.environment,
+          AUTH0_AUDIENCE: config.application.AUTH0_AUDIENCE,
+        },
+      }
     )
     this.grantSecretsManagerAccessByPattern(
       rolesFunctionAlias,

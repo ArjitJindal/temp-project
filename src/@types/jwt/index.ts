@@ -1,24 +1,24 @@
 import * as AWS from 'aws-sdk'
 import { Forbidden } from 'http-errors'
-import { AccountRoleName } from '../openapi-internal/AccountRoleName'
+import { ManagedRoleName } from '../openapi-internal/ManagedRoleName'
 import { Permission } from '@/@types/openapi-internal/Permission'
 import { getContext } from '@/core/utils/context'
 import {
-  ACCOUNT_ROLE_NAMES,
-  isValidAccountRoleName,
-} from '@/@types/openapi-internal-custom/AccountRoleName'
+  MANAGED_ROLE_NAMES,
+  isValidManagedRoleName,
+} from '@/@types/openapi-internal-custom/ManagedRoleName'
 
 export function assertRole(
   userInfo: {
     role: string
     verifiedEmail: string | undefined
   },
-  requiredRole: AccountRoleName
+  requiredRole: ManagedRoleName
 ) {
   const { role, verifiedEmail } = userInfo
   if (
-    isValidAccountRoleName(role) &&
-    ACCOUNT_ROLE_NAMES.indexOf(role) > ACCOUNT_ROLE_NAMES.indexOf(requiredRole)
+    isValidManagedRoleName(role) &&
+    MANAGED_ROLE_NAMES.indexOf(role) > MANAGED_ROLE_NAMES.indexOf(requiredRole)
   ) {
     throw new Forbidden(
       `You need to have at least "${requiredRole}" role to perform this action`
@@ -34,12 +34,6 @@ export function assertRole(
 
 export function assertPermissions(requiredPermissions: Permission[]) {
   const context = getContext()
-
-  // Check feature flag
-  const rbacEnabled = getContext()?.features?.indexOf('RBAC')
-  if (rbacEnabled == undefined || rbacEnabled < 0) {
-    return
-  }
 
   // If user is root, ignore RBAC.
   if (context?.user?.role === 'root') {
@@ -65,7 +59,7 @@ export function assertPermissions(requiredPermissions: Permission[]) {
 export interface JWTAuthorizerResult extends AWS.STS.Credentials {
   principalId: string
   userId: string
-  role: AccountRoleName
+  role: string
   tenantId: string
   tenantName: string
   encodedPermissions: string

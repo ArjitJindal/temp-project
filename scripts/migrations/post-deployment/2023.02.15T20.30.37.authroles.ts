@@ -20,14 +20,6 @@ async function migrateTenant(tenant: Tenant) {
   if (!settings) {
     return
   }
-  let features = settings.features || []
-  if (settings.features?.indexOf('RBAC') == -1) {
-    features = [...settings.features, 'RBAC']
-  }
-  console.log(`Updating features for ${tenant.id}`)
-  await tenantRepository.createOrUpdateTenantSettings({
-    features,
-  })
   const users = await accountsService.getTenantAccounts(tenant)
   await Promise.all(
     users

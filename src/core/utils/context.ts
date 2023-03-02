@@ -14,7 +14,6 @@ import { TenantRepository } from '@/services/tenants/repositories/tenant-reposit
 
 import { Account } from '@/@types/openapi-internal/Account'
 import { JWTAuthorizerResult } from '@/@types/jwt'
-import { AccountRoleName } from '@/@types/openapi-internal/AccountRoleName'
 import { Metric } from '@/core/cloudwatch/metrics'
 import { Permission } from '@/@types/openapi-internal/Permission'
 
@@ -92,7 +91,7 @@ export async function getInitialContext(
         ? {
             id: userId,
             email: verifiedEmail,
-            role: role as AccountRoleName,
+            role,
           }
         : undefined,
     }

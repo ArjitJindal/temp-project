@@ -1685,10 +1685,72 @@ paths:
                 type: array
                 items:
                   $ref: '#/components/schemas/AccountRole'
-  '/roles/{roleId}/permissions':
+    post:
+      summary: Role - Create
+      operationId: create-role
+      tags: []
+      x-flagright:
+        permissions:
+          - settings:organisation:write
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AccountRole'
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AccountRole'
+        '403':
+          description: Not enough privileges
+  '/roles/{roleId}':
+    patch:
+      summary: Role - Patch
+      operationId: update-role
+      tags: []
+      parameters:
+        - schema:
+            type: string
+          name: roleId
+          in: path
+          required: true
+      x-flagright:
+        permissions:
+          - settings:organisation:write
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AccountRole'
+      responses:
+        '200':
+          description: OK
+        '403':
+          description: Not enough privileges
+    delete:
+      summary: Role - Delete
+      operationId: delete-role
+      tags: []
+      parameters:
+        - schema:
+            type: string
+          name: roleId
+          in: path
+          required: true
+      x-flagright:
+        permissions:
+          - settings:organisation:write
+      responses:
+        '200':
+          description: OK
+        '403':
+          description: Not enough privileges
     get:
-      summary: Permissions - List
-      operationId: get-permissions
+      summary: Role - Get
+      operationId: get-role
       tags: []
       x-flagright:
         permissions:
@@ -1705,13 +1767,7 @@ paths:
           content:
             application/json:
               schema:
-                type: object
-                title: Permissions
-                properties:
-                  permissions:
-                    type: array
-                    items:
-                      $ref: '#/components/schemas/Permission'
+                $ref: '#/components/schemas/AccountRole'
   '/accounts/{accountId}/change_role':
     parameters:
       - schema:
@@ -1730,7 +1786,7 @@ paths:
               title: ChangeRolePayload
               properties:
                 role:
-                  $ref: '#/components/schemas/AccountRoleName'
+                  type: string
               required:
                 - role
       responses:
@@ -3903,7 +3959,7 @@ components:
         id:
           type: string
         role:
-          $ref: '#/components/schemas/AccountRoleName'
+          type: string
         email:
           type: string
         emailVerified:
@@ -3931,7 +3987,7 @@ components:
         email:
           type: string
         role:
-          $ref: '#/components/schemas/AccountRoleName'
+          type: string
       required:
         - email
     AccountPatchPayload:
@@ -3939,7 +3995,7 @@ components:
       type: object
       properties:
         role:
-          $ref: '#/components/schemas/AccountRoleName'
+          type: string
     Tenant:
       title: Tenant
       type: object
@@ -4298,12 +4354,11 @@ components:
         - RULES_ENGINE_RULE_BASED_AGGREGATION
         - FALSE_POSITIVE_CHECK
         - DEMO_MODE
-        - RBAC
         - SIMULATOR
       description: ''
-    AccountRoleName:
+    ManagedRoleName:
       type: string
-      title: AccountRoleName
+      title: ManagedRoleName
       x-stoplight:
         id: byu0hqffp9h2
       enum:
@@ -4323,7 +4378,13 @@ components:
         id:
           type: string
         name:
-          $ref: '#/components/schemas/AccountRoleName'
+          type: string
+        description:
+          type: string
+        permissions:
+          type: array
+          items:
+            $ref: '#/components/schemas/Permission'
     Permission:
       type: string
       title: Permission

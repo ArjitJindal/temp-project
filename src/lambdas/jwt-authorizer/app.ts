@@ -16,7 +16,6 @@ import { lambdaAuthorizer } from '@/core/middlewares/lambda-authorizer-middlewar
 import { updateLogMetadata } from '@/core/utils/context'
 import { Permission } from '@/@types/openapi-internal/Permission'
 import { logger } from '@/core/logger'
-import { isValidAccountRoleName } from '@/@types/openapi-internal-custom/AccountRoleName'
 
 const UNAUTHORIZED_RESPONSE = {
   principalId: 'unknown',
@@ -195,7 +194,7 @@ export const jwtAuthorizer = lambdaAuthorizer()(
       context: {
         ...tenantScopeCredentials,
         userId: verifiedDecoded.sub,
-        role: isValidAccountRoleName(role) ? role : 'user',
+        role,
         verifiedEmail,
         tenantId,
         tenantName,

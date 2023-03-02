@@ -138,7 +138,7 @@ export const createAuth0TenantResources = (
    * User Management::Roles
    */
   DEFAULT_ROLES.map(
-    ({ role, permissions }) =>
+    ({ role, permissions, description }) =>
       new auth0.role.Role(context, getTenantResourceId(tenantName, role), {
         provider,
         name: `default:${role}`,
@@ -146,6 +146,7 @@ export const createAuth0TenantResources = (
           return permissions.map((p) => ({
             name: p,
             resourceServerIdentifier: `https://${apiPrefix}api.flagright.com/`,
+            description,
           }))
         }),
       })

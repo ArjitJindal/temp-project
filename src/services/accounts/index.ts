@@ -8,12 +8,10 @@ import {
 } from 'auth0'
 import { UserMetadata } from 'aws-sdk/clients/elastictranscoder'
 import { Account as ApiAccount } from '@/@types/openapi-internal/Account'
-import { AccountRoleName } from '@/@types/openapi-internal/AccountRoleName'
 import { logger } from '@/core/logger'
 import { AccountSettings } from '@/@types/openapi-internal/AccountSettings'
 import { getAuth0Credentials } from '@/utils/auth0-utils'
 import { TenantCreationRequest } from '@/@types/openapi-internal/TenantCreationRequest'
-import { isValidAccountRoleName } from '@/@types/openapi-internal-custom/AccountRoleName'
 import { AccountPatchPayload } from '@/@types/openapi-internal/AccountPatchPayload'
 
 // Current TS typings for auth0  (@types/auth0@2.35.0) are outdated and
@@ -31,7 +29,7 @@ function getUsersManagement(managementClient: ManagementClient): {
 const CONNECTION_NAME = 'Username-Password-Authentication'
 
 export interface AppMetadata {
-  role: AccountRoleName
+  role: string
 }
 
 export type Account = ApiAccount
@@ -73,10 +71,7 @@ export class AccountsService {
     if (email == null) {
       throw new Conflict('User email can not be null')
     }
-    const role: AccountRoleName =
-      app_metadata && isValidAccountRoleName(app_metadata.role)
-        ? app_metadata.role
-        : 'user'
+    const role: string = app_metadata ? app_metadata.role : 'user'
     return {
       id: user_id,
       role: role,
@@ -134,7 +129,7 @@ export class AccountsService {
     tenant: Tenant,
     params: {
       email: string
-      role: AccountRoleName
+      role: string
     }
   ): Promise<Account> {
     let user: User<AppMetadata, UserMetadata> | null = null
@@ -395,7 +390,7 @@ export class AccountsService {
   async createAccountInOrganizationMultiple(
     organization: Organization,
     emails: string[],
-    role: AccountRoleName
+    role: string
   ): Promise<void> {
     const tenantId = organization.metadata?.tenantId
 

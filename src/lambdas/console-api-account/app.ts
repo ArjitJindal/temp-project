@@ -9,9 +9,7 @@ import { assertRole, JWTAuthorizerResult } from '@/@types/jwt'
 import { Account } from '@/@types/openapi-internal/Account'
 import { ChangeTenantPayload } from '@/@types/openapi-internal/ChangeTenantPayload'
 import { AccountInvitePayload } from '@/@types/openapi-internal/AccountInvitePayload'
-import { AccountRoleName } from '@/@types/openapi-internal/AccountRoleName'
 import { AccountSettings } from '@/@types/openapi-internal/AccountSettings'
-import { isValidAccountRoleName } from '@/@types/openapi-internal-custom/AccountRoleName'
 import { ChangeRolePayload } from '@/@types/openapi-internal/ChangeRolePayload'
 import { RoleService } from '@/services/roles'
 import { AccountPatchPayload } from '@/@types/openapi-internal/AccountPatchPayload'
@@ -45,10 +43,7 @@ export const accountsHandler = lambdaApi()(
         throw new BadRequest(`Body should not be empty`)
       }
       const body: AccountInvitePayload = JSON.parse(event.body)
-      const inviteRole: AccountRoleName = body.role ?? 'user'
-      if (!isValidAccountRoleName(inviteRole)) {
-        throw new BadRequest(`User role is not valid`)
-      }
+      const inviteRole = body.role ?? 'analyst'
       if (inviteRole === 'root') {
         throw new Forbidden(`It's not possible to create a root user`)
       }
@@ -116,9 +111,6 @@ export const accountsHandler = lambdaApi()(
           throw new BadRequest(`Body should not be empty`)
         }
         const patchPayload = JSON.parse(event.body) as AccountPatchPayload
-        if (!isValidAccountRoleName(patchPayload.role)) {
-          throw new BadRequest(`User role is not valid`)
-        }
         if (patchPayload.role === 'root') {
           throw new Forbidden(`It's not possible to create a root user`)
         }
