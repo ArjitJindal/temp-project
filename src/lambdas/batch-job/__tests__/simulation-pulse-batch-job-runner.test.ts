@@ -4,7 +4,10 @@ import { getTestTenantId } from '@/test-utils/tenant-test-utils'
 import { SimulationTaskRepository } from '@/lambdas/console-api-simulation/repositories/simulation-task-repository'
 import { getMongoDbClient } from '@/utils/mongoDBUtils'
 import { createConsumerUsers, getTestUser } from '@/test-utils/user-test-utils'
-import { RiskRepository } from '@/services/risk-scoring/repositories/risk-repository'
+import {
+  DEFAULT_CLASSIFICATION_SETTINGS,
+  RiskRepository,
+} from '@/services/risk-scoring/repositories/risk-repository'
 import { getDynamoDbClient } from '@/utils/dynamodb'
 import { dynamoDbSetupHook } from '@/test-utils/dynamodb-test-utils'
 import { SimulationResultRepository } from '@/lambdas/console-api-simulation/repositories/simulation-result-repository'
@@ -76,6 +79,7 @@ describe('Simulation (Pulse) batch job runner', () => {
         },
       ],
       type: 'PULSE',
+      defaultRiskClassifications: DEFAULT_CLASSIFICATION_SETTINGS,
     }
 
     const simulationTaskRepository = new SimulationTaskRepository(
@@ -123,6 +127,7 @@ describe('Simulation (Pulse) batch job runner', () => {
           name: 'test-simulation',
         },
       ],
+      defaultRiskClassifications: DEFAULT_CLASSIFICATION_SETTINGS,
     })
     expect(
       await simulationResultRepository.getSimulationResults({
@@ -359,6 +364,7 @@ describe('Simulation (Pulse) batch job runner', () => {
           name: 'test',
         },
       ],
+      defaultRiskClassifications: DEFAULT_CLASSIFICATION_SETTINGS,
     }
     const simulationTaskRepository = new SimulationTaskRepository(
       tenantId,
@@ -417,6 +423,7 @@ describe('Simulation (Pulse) batch job runner', () => {
           name: 'test',
         },
       ],
+      defaultRiskClassifications: DEFAULT_CLASSIFICATION_SETTINGS,
     })
     expect(
       await simulationResultRepository.getSimulationResults({

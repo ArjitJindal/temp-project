@@ -8,6 +8,7 @@ import {
 } from '@/test-utils/apigateway-test-utils'
 import { getTestTenantId } from '@/test-utils/tenant-test-utils'
 import { SimulationPulseParametersRequest } from '@/@types/openapi-internal/SimulationPulseParametersRequest'
+import { DEFAULT_CLASSIFICATION_SETTINGS } from '@/services/risk-scoring/repositories/risk-repository'
 
 const TEST_PARAMETERS: SimulationPulseParametersRequest = {
   parameters: [
@@ -22,6 +23,7 @@ const TEST_PARAMETERS: SimulationPulseParametersRequest = {
     },
   ],
   type: 'PULSE',
+  defaultRiskClassifications: DEFAULT_CLASSIFICATION_SETTINGS,
 }
 
 describe('Consoel API - Simulation', () => {
@@ -103,6 +105,7 @@ describe('Consoel API - Simulation', () => {
           type: 'PULSE',
         },
       ],
+      defaultRiskClassifications: DEFAULT_CLASSIFICATION_SETTINGS,
     })
   })
 
@@ -145,6 +148,7 @@ describe('Consoel API - Simulation', () => {
           createdAt: expect.any(Number),
           jobId,
           type: 'PULSE',
+          defaultRiskClassifications: DEFAULT_CLASSIFICATION_SETTINGS,
           iterations: [
             {
               taskId: taskIds[0],

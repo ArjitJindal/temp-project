@@ -85,6 +85,8 @@ export class SimulationTaskRepository {
         jobId,
         type: simulationRequest.type,
         iterations: this.generateIterationsObject(simulationRequest, taskIds),
+        defaultRiskClassifications:
+          simulationRequest.defaultRiskClassifications,
       })
     }
 

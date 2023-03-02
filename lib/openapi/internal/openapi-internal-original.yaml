@@ -5373,9 +5373,14 @@ components:
             $ref: '#/components/schemas/SimulationPulseParameters'
         type:
           $ref: '#/components/schemas/SimulationType'
+        defaultRiskClassifications:
+          type: array
+          items:
+            $ref: '#/components/schemas/RiskClassificationScore'
       required:
         - parameters
         - type
+        - defaultRiskClassifications
     SimulationPulseSampling:
       title: SimulationPulseSampling
       type: object
@@ -5404,6 +5409,14 @@ components:
           type: array
           items:
             $ref: '#/components/schemas/SimulationPulseIteration'
+        defaultRiskClassifications:
+          type: array
+          items:
+            $ref: '#/components/schemas/RiskClassificationScore'
+      required:
+        - jobId
+        - iterations
+        - defaultRiskClassifications
     SimulationPulseIteration:
       title: SimulationPulseIteration
       x-stoplight:
