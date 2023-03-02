@@ -1,4 +1,4 @@
-import { message, Popover, Switch, Tooltip } from 'antd';
+import { message, Switch, Tooltip } from 'antd';
 import React, { useCallback, useMemo, useRef, useState } from 'react';
 import _ from 'lodash';
 import { DeleteOutlined, EditOutlined } from '@ant-design/icons';
@@ -92,7 +92,7 @@ const MyRule = () => {
   const columns: TableColumn<RuleInstance>[] = useMemo(() => {
     const caseCreationHeaders: TableColumn<RuleInstance>[] = [
       {
-        title: 'Rule Case Priority',
+        title: 'Rule Priority',
         width: 50,
         dataIndex: 'casePriority',
       },
@@ -100,33 +100,38 @@ const MyRule = () => {
     return [
       {
         title: 'Rule ID',
-        width: 50,
+        width: 200,
         sorter: (a, b) => parseInt(a.ruleId.split('-')[1]) - parseInt(b.ruleId.split('-')[1]),
         exportData: (row) => row.ruleId,
         render: (_, entity) => {
+          const ruleInstance = updatedRuleInstances[entity.id as string] || entity;
           return (
-            <a
-              onClick={() => {
-                setCurrentRow(entity);
-                setShowDetail(true);
-              }}
-            >
-              {getRuleInstanceDisplayId(entity.ruleId, entity.id)}
-            </a>
+            <>
+              <a
+                onClick={() => {
+                  setCurrentRow(entity);
+                  setShowDetail(true);
+                }}
+              >
+                {getRuleInstanceDisplayId(entity.ruleId, entity.id)}
+              </a>
+              <br />
+              <span style={{ fontSize: '12px' }}>
+                {ruleInstance.ruleNameAlias || rules[ruleInstance.ruleId]?.name}
+              </span>
+            </>
           );
         },
       },
       {
-        title: 'Rule Name',
-        width: 150,
+        title: 'Rule Description',
+        width: 300,
         sorter: (a, b) => rules[a.ruleId].name.localeCompare(rules[b.ruleId].name),
         exportData: (row) => rules[row.ruleId].name,
         render: (_, entity) => {
           const ruleInstance = updatedRuleInstances[entity.id as string] || entity;
           return (
-            <Popover content={rules[ruleInstance.ruleId]?.description}>
-              {ruleInstance.ruleNameAlias || rules[ruleInstance.ruleId]?.name}
-            </Popover>
+            <> {ruleInstance.ruleDescriptionAlias || rules[ruleInstance.ruleId]?.description}</>
           );
         },
       },
@@ -156,7 +161,7 @@ const MyRule = () => {
       },
       {
         title: 'Parameter',
-        width: 250,
+        width: 300,
         render: (_, ruleInstance) => {
           return isPulseEnabled ? (
             <a

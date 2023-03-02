@@ -8,38 +8,40 @@ interface Props {
 
 export const RuleParametersTable: React.FC<Props> = ({ parameters, schema }) => {
   return (
-    <Table
-      rowKey="key"
-      className={styles.parametersTable}
-      pagination={false}
-      data={{
-        items: Object.entries(parameters).map((entry) => ({
-          key: entry[0],
-          value: entry[1],
-        })),
-      }}
-      search={false}
-      options={{
-        reload: false,
-        setting: false,
-        density: false,
-      }}
-      columns={[
-        {
-          title: 'Parameter',
-          key: 'key',
-          render: (_, param) => {
-            return schema?.properties?.[param.key]?.title || param.key;
+    <div style={{ maxWidth: '500px', overflow: 'auto' }}>
+      <Table
+        rowKey="key"
+        className={styles.parametersTable}
+        pagination={false}
+        data={{
+          items: Object.entries(parameters).map((entry) => ({
+            key: entry[0],
+            value: entry[1],
+          })),
+        }}
+        search={false}
+        options={{
+          reload: false,
+          setting: false,
+          density: false,
+        }}
+        columns={[
+          {
+            title: 'Parameter',
+            key: 'key',
+            render: (_, param) => {
+              return schema?.properties?.[param.key]?.title || param.key;
+            },
           },
-        },
-        {
-          title: 'Value',
-          key: 'value',
-          render: (_, param) => {
-            return typeof param.value === 'object' ? JSON.stringify(param.value) : param.value;
+          {
+            title: 'Value',
+            key: 'value',
+            render: (_, param) => {
+              return typeof param.value === 'object' ? JSON.stringify(param.value) : param.value;
+            },
           },
-        },
-      ]}
-    />
+        ]}
+      />
+    </div>
   );
 };
