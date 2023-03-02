@@ -37,12 +37,20 @@ const RolesLayout = ({ roles, onChange }: { roles: AccountRole[]; onChange: () =
         .map((r) => ({
           key: r.id as string,
           title: sentenceCase(r.name as string),
-          icon: isValidManagedRoleName(r.name) && <LockFilled className={s.icon} />,
+          icon: isValidManagedRoleName(r.name) && (
+            <span className={s.icon}>
+              <LockFilled />
+            </span>
+          ),
         }))
         .concat({
           key: 'NEW',
           title: 'Create role',
-          icon: <PlusSquareFilled className={s.icon} />,
+          icon: (
+            <span className={s.icon}>
+              <PlusSquareFilled className={s.icon} />
+            </span>
+          ),
         })}
       active={key}
       minWidth={200}
