@@ -17,14 +17,11 @@ export function FinancialDetails(prop: Props) {
   return (
     <Card.Section>
       <div className={s.details}>
-        <Card.Row className={s.items}>
-          <Card.Column className={s.col}>
-            <Form.Layout.Label
-              icon={<FingerprintLineIcon />}
-              title={'Expected Transaction Amount per month'}
-            />
-          </Card.Column>
-          <Card.Column className={s.all}>
+        <Card.Row>
+          <Form.Layout.Label
+            icon={<FingerprintLineIcon />}
+            title={'Expected Transaction Amount per month'}
+          >
             <div>
               {user.legalEntity.companyFinancialDetails?.expectedTransactionAmountPerMonth?.amountValue?.toLocaleString()}{' '}
               {
@@ -32,27 +29,18 @@ export function FinancialDetails(prop: Props) {
                   ?.amountCurrency
               }
             </div>
-          </Card.Column>
+          </Form.Layout.Label>
         </Card.Row>
-        <Card.Row className={s.items}>
-          <Card.Column className={s.col}>
-            <Form.Layout.Label
-              icon={<FingerprintLineIcon />}
-              title={'Expected Turn over per month'}
-            />
-          </Card.Column>
-          <Card.Column className={s.all}>
+        <Card.Row>
+          <Form.Layout.Label icon={<FingerprintLineIcon />} title={'Expected Turn over per month'}>
             <span>
               {user.legalEntity.companyFinancialDetails?.expectedTurnoverPerMonth?.amountValue?.toLocaleString()}{' '}
               {user.legalEntity.companyFinancialDetails?.expectedTurnoverPerMonth?.amountCurrency}
             </span>
-          </Card.Column>
+          </Form.Layout.Label>
         </Card.Row>
-        <Card.Row className={s.items}>
-          <Card.Column className={s.col}>
-            <Form.Layout.Label icon={<DeleteBackLineIcon />} title={'Tags'} />
-          </Card.Column>
-          <Card.Column className={s.all}>
+        <Card.Row>
+          <Form.Layout.Label icon={<DeleteBackLineIcon />} title={'Tags'}>
             <div>
               {user.legalEntity.companyFinancialDetails?.tags?.map(({ key, value }: ApiTag) => (
                 <Tag color={'cyan'}>
@@ -60,7 +48,7 @@ export function FinancialDetails(prop: Props) {
                 </Tag>
               ))}
             </div>
-          </Card.Column>
+          </Form.Layout.Label>
         </Card.Row>
       </div>
     </Card.Section>
