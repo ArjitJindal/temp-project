@@ -226,7 +226,7 @@ export default function AlertTable(props: Props) {
   const api = useApi();
   const user = useAuth0User();
   const isPulseEnabled = useFeatureEnabled('PULSE');
-  const [users, _] = useUsers();
+  const [users, _] = useUsers({ includeBlockedUsers: true });
 
   const queryResults: QueryResult<TableData<TableAlertItem>> = usePaginatedQuery(
     ALERT_LIST(params),
@@ -380,7 +380,7 @@ export const SimpleAlertTable = ({ caseId }: { caseId: string }) => {
     sort: [['caseCreatedTimestamp', 'descend']],
     showCases: 'ALL_ALERTS',
   });
-  const [users, _] = useUsers();
+  const [users, _] = useUsers({ includeBlockedUsers: true });
 
   const [selectedEntities, setSelectedEntities] = useState<string[]>([]);
   const queryClient = useQueryClient();

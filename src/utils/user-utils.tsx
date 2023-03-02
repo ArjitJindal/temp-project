@@ -83,7 +83,12 @@ export function isAtLeastAdmin(user: FlagrightAuth0User | null) {
   return isAtLeast(user, UserRole.ADMIN);
 }
 
-export function useUsers(includeRootUsers = false): [{ [userId: string]: Account }, boolean] {
+export function useUsers(
+  includeUsersObject: { includeRootUsers?: boolean; includeBlockedUsers?: boolean } = {
+    includeRootUsers: false,
+    includeBlockedUsers: false,
+  },
+): [{ [userId: string]: Account }, boolean] {
   const [users, setUsers] = useState<Account[]>([]);
   const [loading, setLoading] = useState(true);
   const api = useApi();
@@ -101,8 +106,11 @@ export function useUsers(includeRootUsers = false): [{ [userId: string]: Account
   }, [api, users]);
 
   let tempUsers = users;
-  if (!includeRootUsers) {
+  if (!includeUsersObject.includeRootUsers) {
     tempUsers = users.filter((user) => parseUserRole(user.role) !== UserRole.ROOT);
+  }
+  if (!includeUsersObject.includeBlockedUsers) {
+    tempUsers = users.filter((user) => !user.blocked);
   }
   return [_.keyBy(tempUsers, 'id'), loading];
 }
@@ -117,7 +125,7 @@ export function useUserName(userId: string | null | undefined): string {
 }
 
 export function useUser(userId: string | null | undefined): Account | null {
-  const [users, isLoading] = useUsers(true);
+  const [users, isLoading] = useUsers({ includeBlockedUsers: true, includeRootUsers: true });
   if (isLoading || !userId) {
     return null;
   }

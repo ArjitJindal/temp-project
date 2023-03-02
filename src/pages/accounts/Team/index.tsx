@@ -30,7 +30,7 @@ export default function Team() {
   const accountsResult = usePaginatedQuery(ACCOUNT_LIST(), async () => {
     const accounts = await measure(() => api.getAccounts(), 'Get accounts');
     const filteredAccounts = accounts.filter(
-      (account) => parseUserRole(account.role) !== UserRole.ROOT,
+      (account) => parseUserRole(account.role) !== UserRole.ROOT && !account.blocked,
     );
     return {
       items: filteredAccounts,

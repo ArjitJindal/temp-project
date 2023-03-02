@@ -61,7 +61,7 @@ export default function CaseTable(props: Props) {
     actionRef.current?.reload();
   }, []);
 
-  const [users, loadingUsers] = useUsers();
+  const [users, loadingUsers] = useUsers({ includeBlockedUsers: true });
 
   const [selectedEntities, setSelectedEntities] = useState<string[]>([]);
 
