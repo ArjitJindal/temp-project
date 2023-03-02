@@ -3105,6 +3105,14 @@ paths:
           name: page
           required: true
         - schema:
+            $ref: '#/components/schemas/SortOrder'
+          in: query
+          name: sortOrder
+        - schema:
+            type: string
+          in: query
+          name: sortField
+        - schema:
             $ref: '#/components/schemas/SimulationType'
           in: query
           name: type

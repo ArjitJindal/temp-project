@@ -177,7 +177,10 @@ export class SimulationTaskRepository {
     const query = { type: params.type }
     const simulationTasks = await collection
       .find(query, {
-        sort: { createdAt: -1 },
+        sort: {
+          [params?.sortField ?? 'createdAt']:
+            params?.sortOrder === 'ascend' ? 1 : -1,
+        },
         ...paginateFindOptions(params),
       })
       .toArray()
