@@ -79,6 +79,7 @@ export class AccountsService {
       emailVerified: user.email_verified ?? false,
       name: user.name ?? '',
       picture: user.picture,
+      blocked: user.blocked ?? false,
     }
   }
 
@@ -140,19 +141,35 @@ export class AccountsService {
     const authenticationClient = await this.getAuthenticationClient()
 
     try {
-      user = await managementClient.createUser({
-        connection: CONNECTION_NAME,
-        email: params.email,
-        // NOTE: We need at least one upper case character
-        password: `P-${uuidv4()}`,
-        app_metadata: {
-          role: params.role,
-        },
-        verify_email: false,
+      const existingUser = await managementClient.getUsers({
+        q: `email:"${params.email}"`,
+        per_page: 1,
+        fields: 'user_id,blocked',
       })
-      logger.info('Created user', {
-        email: params.email,
-      })
+
+      /* Temporary workaround for adding again blocked user to organization need to be removed after unblock user flow will be implemented */
+      if (existingUser.length > 0 && existingUser[0].blocked) {
+        user = await managementClient.updateUser(
+          {
+            id: existingUser[0].user_id as string,
+          },
+          { blocked: false }
+        )
+      } else {
+        user = await managementClient.createUser({
+          connection: CONNECTION_NAME,
+          email: params.email,
+          // NOTE: We need at least one upper case character
+          password: `P-${uuidv4()}`,
+          app_metadata: {
+            role: params.role,
+          },
+          verify_email: false,
+        })
+        logger.info('Created user', {
+          email: params.email,
+        })
+      }
       account = AccountsService.userToAccount(user)
       await managementClient.organizations.addMembers(
         { id: tenant.orgId },
@@ -268,7 +285,7 @@ export class AccountsService {
         `Unable to find user "${idToDelete}" in the tenant |${tenant.id}|`
       )
     }
-    await managementClient.deleteUser({ id: idToDelete })
+    await managementClient.updateUser({ id: idToDelete }, { blocked: true })
   }
 
   async patchUser(

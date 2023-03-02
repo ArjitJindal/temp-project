@@ -3968,12 +3968,15 @@ components:
           type: string
         picture:
           type: string
+        blocked:
+          type: boolean
       required:
         - id
         - role
         - email
         - emailVerified
         - name
+        - blocked
     AccountSettings:
       title: AccountSettings
       type: object
