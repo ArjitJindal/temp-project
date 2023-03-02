@@ -103,9 +103,11 @@ describe('Consoel API - Simulation', () => {
           description: null,
           name: 'Test Simulation',
           type: 'PULSE',
+          createdBy: 'test',
         },
       ],
       defaultRiskClassifications: DEFAULT_CLASSIFICATION_SETTINGS,
+      createdBy: 'test',
     })
   })
 
@@ -170,8 +172,10 @@ describe('Consoel API - Simulation', () => {
               name: 'Test Simulation',
               description: null,
               type: 'PULSE',
+              createdBy: 'test',
             },
           ],
+          createdBy: 'test',
         },
       ],
     })

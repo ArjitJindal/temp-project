@@ -5417,6 +5417,7 @@ components:
         - jobId
         - iterations
         - defaultRiskClassifications
+        - createdBy
     SimulationPulseIteration:
       title: SimulationPulseIteration
       x-stoplight:

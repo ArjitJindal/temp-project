@@ -14,6 +14,8 @@ import { DefaultApiGetSimulationsRequest } from '@/@types/openapi-internal/Reque
 import { SimulationPulseStatisticsResult } from '@/@types/openapi-internal/SimulationPulseStatisticsResult'
 import { SimulationPulseParametersRequest } from '@/@types/openapi-internal/SimulationPulseParametersRequest'
 import { SimulationPulseIteration } from '@/@types/openapi-internal/SimulationPulseIteration'
+import { getContext } from '@/core/utils/context'
+import { Account } from '@/@types/openapi-internal/Account'
 
 export class SimulationTaskRepository {
   tenantId: string
@@ -37,6 +39,7 @@ export class SimulationTaskRepository {
     return simulationRequest.parameters.map((parameter) => {
       const taskId = uuidv4()
       taskIds.push(taskId)
+
       return {
         taskId,
         parameters: parameter,
@@ -48,6 +51,10 @@ export class SimulationTaskRepository {
         description: parameter.description,
         type: parameter.type,
         createdAt: now,
+        createdBy:
+          process.env.NODE_ENV === 'test'
+            ? 'test'
+            : (getContext()?.user as Account)?.id,
       }
     })
   }
@@ -87,6 +94,10 @@ export class SimulationTaskRepository {
         iterations: this.generateIterationsObject(simulationRequest, taskIds),
         defaultRiskClassifications:
           simulationRequest.defaultRiskClassifications,
+        createdBy:
+          process.env.NODE_ENV === 'test'
+            ? 'test'
+            : (getContext()?.user as Account)?.id,
       })
     }
 

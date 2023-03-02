@@ -125,9 +125,11 @@ describe('Simulation (Pulse) batch job runner', () => {
             { status: 'SUCCESS', timestamp: expect.any(Number) },
           ],
           name: 'test-simulation',
+          createdBy: 'test',
         },
       ],
       defaultRiskClassifications: DEFAULT_CLASSIFICATION_SETTINGS,
+      createdBy: 'test',
     })
     expect(
       await simulationResultRepository.getSimulationResults({
@@ -421,9 +423,11 @@ describe('Simulation (Pulse) batch job runner', () => {
             { status: 'SUCCESS', timestamp: expect.any(Number) },
           ],
           name: 'test',
+          createdBy: 'test',
         },
       ],
       defaultRiskClassifications: DEFAULT_CLASSIFICATION_SETTINGS,
+      createdBy: 'test',
     })
     expect(
       await simulationResultRepository.getSimulationResults({
