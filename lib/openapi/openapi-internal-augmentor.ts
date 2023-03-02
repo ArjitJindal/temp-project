@@ -129,7 +129,7 @@ export const ConsoleApiPathToLambda: any = {
   '/sanctions/search/{searchId}': StackConstants.SANCTIONS_FUNCTION_NAME,
   '/simulation': StackConstants.CONSOLE_API_SIMULATION_FUNCTION_NAME,
   '/simulation/{jobId}': StackConstants.CONSOLE_API_SIMULATION_FUNCTION_NAME,
-  '/simulation/{taskId}/results':
+  '/simulation/tasks/{taskId}/results':
     StackConstants.CONSOLE_API_SIMULATION_FUNCTION_NAME,
 }
 

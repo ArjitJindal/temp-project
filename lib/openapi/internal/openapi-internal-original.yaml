@@ -3130,7 +3130,7 @@ paths:
         name: jobId
         in: path
         required: true
-  '/simulation/{taskId}/results':
+  '/simulation/tasks/{taskId}/results':
     get:
       summary: Get a simulation task result by task ID
       operationId: get-simulation-task-id-result

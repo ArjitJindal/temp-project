@@ -75,7 +75,7 @@ export const simulationHandler = lambdaApi()(
       }
       return job
     } else if (
-      event.resource === '/simulation/{taskId}/results' &&
+      event.resource === '/simulation/tasks/{taskId}/results' &&
       event.httpMethod === 'GET' &&
       event.pathParameters?.taskId
     ) {
