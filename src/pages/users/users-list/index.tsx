@@ -27,10 +27,13 @@ import { PaginatedData, usePaginatedQuery } from '@/utils/queries/hooks';
 import { useApiTime, usePageViewTracker } from '@/utils/tracker';
 import { useDeepEqualEffect } from '@/utils/hooks';
 import { DEFAULT_PAGE_SIZE } from '@/components/ui/Table/consts';
+import TagSearchButton from '@/pages/transactions/components/TagSearchButton';
 
 export interface UserSearchParams extends CommonParams {
   riskLevels?: RiskLevel[];
   userId?: string;
+  tagKey?: string;
+  tagValue?: string;
   createdTimestamp?: string[];
 }
 
@@ -231,6 +234,25 @@ const UsersTab = <T extends InternalBusinessUser | InternalConsumerUser | Intern
                   ...state,
                   userId: userId ?? undefined,
                   userFilterMode: mode ?? undefined,
+                }));
+              }}
+            />
+          ),
+        },
+        {
+          key: 'tagKey',
+          title: 'Tags',
+          renderer: ({ params, setParams }) => (
+            <TagSearchButton
+              initialState={{
+                key: params.tagKey ?? null,
+                value: params.tagValue ?? null,
+              }}
+              onConfirm={(value) => {
+                setParams((state) => ({
+                  ...state,
+                  tagKey: value.key ?? undefined,
+                  tagValue: value.value ?? undefined,
                 }));
               }}
             />
