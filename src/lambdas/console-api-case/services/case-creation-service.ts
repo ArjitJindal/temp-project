@@ -89,6 +89,7 @@ export class CaseCreationService {
     alerts: Alert[] | undefined,
     ruleInstances: readonly RuleInstance[],
     createdTimestamp: number,
+    latestTransaction: CaseTransaction,
     latestTransactionArrivalTimestamp: number
   ) {
     if (alerts) {
@@ -123,6 +124,7 @@ export class CaseCreationService {
         existingAlerts.length > 0
           ? this.updateExistingAlerts(
               existingAlerts,
+              latestTransaction,
               latestTransactionArrivalTimestamp
             )
           : []
@@ -170,13 +172,18 @@ export class CaseCreationService {
 
   private updateExistingAlerts(
     alerts: Alert[],
+    transaction: CaseTransaction,
     latestTransactionArrivalTimestamp: number
   ): Alert[] {
     const updatedAlerts = alerts.map((alert) => {
+      const txnSet = new Set(alert.transactionIds).add(
+        transaction.transactionId
+      )
       return {
         ...alert,
         latestTransactionArrivalTimestamp: latestTransactionArrivalTimestamp,
-        numberOfTransactionsHit: alert.numberOfTransactionsHit + 1,
+        transactionIds: Array.from(txnSet),
+        numberOfTransactionsHit: txnSet.size,
       }
     })
     return updatedAlerts
@@ -294,6 +301,7 @@ export class CaseCreationService {
               existedCase.alerts,
               ruleInstances,
               params.createdTimestamp,
+              filteredTransaction,
               params.latestTransactionArrivalTimestamp
             ),
           })

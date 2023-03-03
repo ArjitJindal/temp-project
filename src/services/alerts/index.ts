@@ -20,15 +20,20 @@ export const transactionsToAlerts = function (
           ruleDescription: hitRule.ruleDescription,
           ruleAction: hitRule.ruleAction,
           numberOfTransactionsHit: 1,
+          transactionIds: [transaction.transactionId],
           priority: 'P1',
         }
       } else {
+        const alert = alertMap[hitRule.ruleInstanceId]
+        const txnSet = new Set(alert.transactionIds).add(
+          transaction.transactionId
+        )
         alertMap[hitRule.ruleInstanceId] = {
           caseId: caseId,
-          ...alertMap[hitRule.ruleInstanceId],
-          numberOfTransactionsHit:
-            alertMap[hitRule.ruleInstanceId].numberOfTransactionsHit + 1,
+          ...alert,
+          numberOfTransactionsHit: txnSet.size,
           latestTransactionArrivalTimestamp: transaction.timestamp,
+          transactionIds: Array.from(txnSet),
         }
       }
     })

@@ -4788,6 +4788,10 @@ components:
           type: array
           items:
             $ref: '#/components/schemas/CaseStatusChange'
+        transactionIds:
+          type: array
+          items:
+            type: string
         falsePositiveDetails:
           $ref: ../public/openapi-public-original.yaml#/components/schemas/FalsePositiveDetails
         comments:
