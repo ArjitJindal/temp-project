@@ -66,7 +66,7 @@ export const simulationHandler = lambdaApi()(
         return { taskIds, jobId }
       }
     } else if (
-      event.resource === '/simulation/{jobId}' &&
+      event.resource === '/simulation/jobs/{jobId}' &&
       event.httpMethod === 'GET' &&
       event.pathParameters?.jobId
     ) {
@@ -89,6 +89,11 @@ export const simulationHandler = lambdaApi()(
         } as any as DefaultApiGetSimulationTaskIdResultRequest)
 
       return { items, total }
+    } else if (
+      event.resource === '/simulation/settings' &&
+      event.httpMethod === 'GET'
+    ) {
+      return { count: await simulationTaskRepository.getSimulationJobsCount() }
     }
 
     throw new BadRequest('Unhandled request')

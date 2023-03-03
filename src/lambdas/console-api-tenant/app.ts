@@ -14,7 +14,7 @@ import { TenantService } from '@/services/tenants'
 import { TenantSettings } from '@/@types/openapi-internal/TenantSettings'
 import { TenantRepository } from '@/services/tenants/repositories/tenant-repository'
 
-const ROOT_ONLY_SETTINGS: Array<keyof TenantSettings> = ['features']
+const ROOT_ONLY_SETTINGS: Array<keyof TenantSettings> = ['features', 'limits']
 
 export const tenantsHandler = lambdaApi()(
   async (

@@ -73,7 +73,7 @@ describe('Consoel API - Simulation', () => {
       )?.body as string
     ).jobId
     const response = await simulationHandler(
-      getApiGatewayGetEvent(tenantId, '/simulation/{jobId}', {
+      getApiGatewayGetEvent(tenantId, '/simulation/jobs/{jobId}', {
         pathParameters: { jobId },
       }),
       null as any,
@@ -114,7 +114,7 @@ describe('Consoel API - Simulation', () => {
   test('gets a non-existent simulation task', async () => {
     const tenantId = getTestTenantId()
     const response = await simulationHandler(
-      getApiGatewayGetEvent(tenantId, '/simulation/{jobId}', {
+      getApiGatewayGetEvent(tenantId, '/simulation/jobs/{jobId}', {
         pathParameters: { jobId: 'unknown' },
       }),
       null as any,

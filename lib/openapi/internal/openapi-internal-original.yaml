@@ -3184,7 +3184,7 @@ paths:
           in: query
           name: type
           required: true
-  '/simulation/{jobId}':
+  '/simulation/jobs/{jobId}':
     get:
       summary: Get a simulation task by test ID
       operationId: get-simulation-test-id
@@ -3242,6 +3242,25 @@ paths:
           $ref: '#/components/schemas/Page'
         in: query
         name: page
+  /simulation/settings:
+    get:
+      summary: Get simulation tasks count
+      operationId: get-simulation-jobs-count
+      x-flagright:
+        permissions:
+          - simulator:rules:read
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  count:
+                    type: integer
+                required:
+                  - count
 components:
   schemas:
     KrsScore:
@@ -4154,6 +4173,11 @@ components:
               type: array
               items:
                 type: string
+        limits:
+          type: object
+          properties:
+            simulations:
+              type: number
     TenantCreationResponse:
       title: TenantCreationResponse
       type: object

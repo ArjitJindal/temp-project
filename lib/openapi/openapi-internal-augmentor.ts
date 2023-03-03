@@ -132,9 +132,11 @@ export const ConsoleApiPathToLambda: any = {
   '/sanctions/search': StackConstants.SANCTIONS_FUNCTION_NAME,
   '/sanctions/search/{searchId}': StackConstants.SANCTIONS_FUNCTION_NAME,
   '/simulation': StackConstants.CONSOLE_API_SIMULATION_FUNCTION_NAME,
-  '/simulation/{jobId}': StackConstants.CONSOLE_API_SIMULATION_FUNCTION_NAME,
+  '/simulation/jobs/{jobId}':
+    StackConstants.CONSOLE_API_SIMULATION_FUNCTION_NAME,
   '/simulation/tasks/{taskId}/results':
     StackConstants.CONSOLE_API_SIMULATION_FUNCTION_NAME,
+  '/simulation/settings': StackConstants.CONSOLE_API_SIMULATION_FUNCTION_NAME,
 }
 
 const openapi = getAugmentedOpenapi(

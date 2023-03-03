@@ -204,4 +204,12 @@ export class SimulationTaskRepository {
       data: simulationTasks.map((task) => _.omit(task, '_id')),
     }
   }
+
+  public async getSimulationJobsCount(): Promise<number> {
+    const db = this.mongoDb.db()
+    const collection = db.collection<SimulationPulseJob>(
+      SIMULATION_TASK_COLLECTION(this.tenantId)
+    )
+    return collection.countDocuments()
+  }
 }
