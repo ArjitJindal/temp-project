@@ -3,6 +3,9 @@ import { AccountsService, Tenant } from '@/services/accounts'
 import { RoleService } from '@/services/roles'
 
 async function migrateTenant(tenant: Tenant, auth0Domain: string) {
+  if (process.env.ENV === 'local') {
+    return
+  }
   const accountsService = new AccountsService({
     auth0Domain,
   })

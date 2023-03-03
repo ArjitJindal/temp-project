@@ -5,6 +5,9 @@ import { TenantRepository } from '@/services/tenants/repositories/tenant-reposit
 import { getDynamoDbClient } from '@/utils/dynamodb'
 
 async function migrateTenant(tenant: Tenant) {
+  if (process.env.ENV === 'local') {
+    return
+  }
   const dynamoDb = await getDynamoDbClient()
   const accountsService = new AccountsService({
     auth0Domain: 'flagright.eu.auth.com',

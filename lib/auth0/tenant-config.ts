@@ -29,6 +29,9 @@ export function getAuth0TenantConfigs(
   stage: 'local' | 'dev' | 'sandbox' | 'prod'
 ): Auth0TenantConfig[] {
   switch (stage) {
+    case 'local': {
+      return [Auth0DevTenantConfig]
+    }
     case 'dev': {
       return [Auth0DevTenantConfig]
     }
