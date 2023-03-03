@@ -3,6 +3,7 @@ import { useLocalStorageState } from 'ahooks';
 import { useEffect, useState } from 'react';
 import { useNavigate, useParams } from 'react-router';
 import { useMutation } from '@tanstack/react-query';
+import _ from 'lodash';
 import { ruleHeaderKeyToDescription } from './utils';
 import MyRule from './my-rules';
 import { RulesTable } from './RulesTable';
@@ -58,7 +59,7 @@ const TableList = () => {
         ...(isPulseEnabled
           ? {
               riskLevelActions: riskLevelActions,
-              riskLevelParameters: removeEmpty(riskLevelParameters),
+              riskLevelParameters: _.mapValues(riskLevelParameters, removeEmpty),
             }
           : {
               action: ruleAction,

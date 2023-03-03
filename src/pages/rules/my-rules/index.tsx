@@ -287,7 +287,15 @@ const MyRule = () => {
         nature: basicDetailsStep.ruleNature,
         ...(isPulseEnabled
           ? {
-              riskLevelParameters: removeEmpty(riskLevelParameters),
+              riskLevelParameters: riskLevelParameters
+                ? removeEmpty(riskLevelParameters)
+                : {
+                    VERY_HIGH: removeEmpty(ruleParameters),
+                    HIGH: removeEmpty(ruleParameters),
+                    MEDIUM: removeEmpty(ruleParameters),
+                    LOW: removeEmpty(ruleParameters),
+                    VERY_LOW: removeEmpty(ruleParameters),
+                  },
               riskLevelActions: riskLevelActions,
             }
           : {
@@ -342,8 +350,24 @@ const MyRule = () => {
                 standardFiltersStep: ruleInstance.filters,
                 ruleParametersStep: isPulseEnabled
                   ? {
-                      riskLevelParameters: ruleInstance.riskLevelParameters,
-                      riskLevelActions: ruleInstance.riskLevelActions,
+                      riskLevelParameters:
+                        ruleInstance.riskLevelParameters ??
+                        (ruleInstance.parameters && {
+                          VERY_HIGH: ruleInstance.parameters,
+                          HIGH: ruleInstance.parameters,
+                          MEDIUM: ruleInstance.parameters,
+                          LOW: ruleInstance.parameters,
+                          VERY_LOW: ruleInstance.parameters,
+                        }),
+                      riskLevelActions:
+                        ruleInstance.riskLevelActions ??
+                        (ruleInstance.action && {
+                          VERY_HIGH: ruleInstance.action,
+                          HIGH: ruleInstance.action,
+                          MEDIUM: ruleInstance.action,
+                          LOW: ruleInstance.action,
+                          VERY_LOW: ruleInstance.action,
+                        }),
                     }
                   : {
                       ruleParameters: ruleInstance.parameters,
