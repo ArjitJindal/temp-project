@@ -364,7 +364,9 @@ export default function AlertTable(props: Props) {
         onChange: setSelectedEntities,
       }}
       expandable={{
-        expandedRowRender: (record) => <ExpandedRowRenderer alert={record} />,
+        expandedRowRender: (record) => (
+          <ExpandedRowRenderer alertId={record.alertId ?? null} caseId={record.caseId ?? null} />
+        ),
       }}
       scroll={{ x: 1300 }}
       disableInternalPadding={disableInternalPadding}

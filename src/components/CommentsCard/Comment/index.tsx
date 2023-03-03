@@ -18,48 +18,46 @@ export default function Comment(props: Props) {
   const user = useUser(comment.userId);
 
   return (
-    <Ant.Comment
-      content={
-        <>
-          <div className={styles.commentBody}>
-            <MarkdownViewer value={comment.body} />
-          </div>
-          <div className={styles.filesListContainer}>
-            <FilesList files={comment.files ? comment.files : []} showGreyBackground={true} />
-          </div>
-          <div className={styles.commentDetailsContainer}>
-            {comment.createdAt && (
-              <div className={styles.commentDetailsBodyText} style={{ width: 'fit-content' }}>
-                Added On: {new Date(comment.createdAt).toLocaleString()}
-              </div>
-            )}
-            <div className={styles.commentDetailsBodyText} style={{ width: 'fit-content' }}>
-              Added By: {user?.name}
+    <div className={styles.root}>
+      <div className={styles.left}>
+        <div
+          className={styles.avatar}
+          style={{ backgroundImage: `url(${user?.picture})` }}
+          title={`${user?.name || comment.userId} avatar`}
+        />
+      </div>
+      <div className={styles.right}>
+        <div className={styles.commentBody}>
+          <MarkdownViewer value={comment.body} />
+        </div>
+        <FilesList files={comment.files ? comment.files : []} showGreyBackground={true} />
+        <div className={styles.footer}>
+          {comment.createdAt && (
+            <div className={styles.footerText} style={{ width: 'fit-content' }}>
+              Added On: {new Date(comment.createdAt).toLocaleString()}
             </div>
-            {currentUserId === comment.userId && (
-              <>
-                {comment.id && deletingCommentIds.includes(comment.id) ? (
-                  <span>Deleting...</span>
-                ) : (
-                  <Ant.Tooltip
-                    key="delete"
-                    title="Delete"
-                    className={styles.commentDetailsBodyText}
-                  >
-                    <span
-                      onClick={() => deletingCommentIds.length === 0 && onDelete()}
-                      style={{ cursor: 'pointer' }}
-                    >
-                      Delete
-                    </span>
-                  </Ant.Tooltip>
-                )}
-              </>
-            )}
+          )}
+          <div className={styles.footerText} style={{ width: 'fit-content' }}>
+            Added By: {user?.name}
           </div>
-        </>
-      }
-      avatar={<Ant.Avatar src={user?.picture} alt={user?.name || comment.userId} />}
-    />
+          {currentUserId === comment.userId && (
+            <>
+              {comment.id && deletingCommentIds.includes(comment.id) ? (
+                <span>Deleting...</span>
+              ) : (
+                <Ant.Tooltip key="delete" title="Delete" className={styles.footerText}>
+                  <span
+                    onClick={() => deletingCommentIds.length === 0 && onDelete()}
+                    style={{ cursor: 'pointer' }}
+                  >
+                    Delete
+                  </span>
+                </Ant.Tooltip>
+              )}
+            </>
+          )}
+        </div>
+      </div>
+    </div>
   );
 }

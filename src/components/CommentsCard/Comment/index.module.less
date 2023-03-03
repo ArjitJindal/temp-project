@@ -1,19 +1,30 @@
 @import '../../../components/ui/colors.less';
 
-.filesListContainer {
-  margin-top: 0.5rem;
-  width: fit-content !important;
+.root {
+  display: flex;
+  gap: 12px;
 }
 
-.commentDetailsContainer {
-  display: grid;
-  grid-auto-flow: column;
-  gap: 1rem;
-  width: fit-content;
-  margin-top: 0.5rem;
-  margin-left: 0.0625rem;
+.right {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
 }
 
-.commentDetailsBodyText {
-  color: @fr-colors-purpleGray !important;
+.avatar {
+  width: 52px;
+  height: 52px;
+  border-radius: 50%;
+  background-size: cover;
+}
+
+.footer {
+  display: flex;
+  gap: 16px;
+}
+
+.footerText {
+  color: @fr-colors-v2-gray-6;
+  font-size: 12px;
+  line-height: 20px;
 }

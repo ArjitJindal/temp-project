@@ -22,8 +22,9 @@ interface Props {
   showFileList?: boolean;
   values: FormValues;
   submitRes: AsyncResource;
+  placeholder?: string;
   onChangeValues: (newValues: FormValues) => void;
-  onSubmit: () => void;
+  onSubmit: (values: FormValues) => void;
 }
 
 export interface CommentEditorRef {
@@ -31,7 +32,7 @@ export interface CommentEditorRef {
 }
 
 function CommentEditor(props: Props, ref: React.Ref<CommentEditorRef>) {
-  const { showFileList = true, values, submitRes, onChangeValues, onSubmit } = props;
+  const { showFileList = true, values, submitRes, placeholder, onChangeValues, onSubmit } = props;
   const api = useApi();
   const [isUploadLoading, setUploadLoading] = useState(false);
   const removeFile = useCallback(
@@ -67,6 +68,7 @@ function CommentEditor(props: Props, ref: React.Ref<CommentEditorRef>) {
               uploadRef.current.click();
             }
           }}
+          placeholder={placeholder}
         />
       </div>
       {isCommentTooLong && (
@@ -87,7 +89,7 @@ function CommentEditor(props: Props, ref: React.Ref<CommentEditorRef>) {
           analyticsName="Add Comment"
           htmlType="submit"
           isLoading={isLoading(submitRes) || isUploadLoading}
-          onClick={onSubmit}
+          onClick={() => onSubmit(values)}
           type="PRIMARY"
           isDisabled={(values.files.length === 0 && !values.comment) || isCommentTooLong}
         >

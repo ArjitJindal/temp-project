@@ -1,5 +1,5 @@
 import React, { useCallback, useState } from 'react';
-import { List, message } from 'antd';
+import { message } from 'antd';
 import Comment from './Comment';
 import * as Card from '@/components/ui/Card';
 import { useAuth0User } from '@/utils/user-utils';
@@ -61,24 +61,19 @@ export default function CommentsCard(props: Props) {
         disabled={comments.length === 0}
       >
         <Card.Section>
-          {comments.length > 0 && (
-            <List<TransactionComment>
-              dataSource={comments}
-              itemLayout="horizontal"
-              renderItem={(comment: TransactionComment) => (
-                <Comment
-                  comment={comment}
-                  currentUserId={currentUserId}
-                  deletingCommentIds={deletingCommentIds}
-                  onDelete={() => {
-                    if (comment.id != null && id != null) {
-                      handleDeleteComment(comment.id, id, commentType);
-                    }
-                  }}
-                />
-              )}
+          {comments.map((comment) => (
+            <Comment
+              key={comment.id}
+              comment={comment}
+              currentUserId={currentUserId}
+              deletingCommentIds={deletingCommentIds}
+              onDelete={() => {
+                if (comment.id != null && id != null) {
+                  handleDeleteComment(comment.id, id, commentType);
+                }
+              }}
             />
-          )}
+          ))}
         </Card.Section>
       </Card.Root>
     </>

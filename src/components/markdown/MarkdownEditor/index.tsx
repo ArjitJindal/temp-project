@@ -7,6 +7,7 @@ import s from './styles.module.less';
 
 interface Props {
   initialValue: string;
+  placeholder?: string;
   onAttachFiles?: () => void;
   onChange: (value: string) => void;
 }
@@ -83,6 +84,7 @@ export default class MarkdownEditor extends React.Component<Props> {
           }
         }}
         usageStatistics={false}
+        placeholder={this.props.placeholder}
       />
     );
   }
