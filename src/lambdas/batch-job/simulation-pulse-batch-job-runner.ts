@@ -16,6 +16,7 @@ import { SimulationPulseStatisticsResult } from '@/@types/openapi-internal/Simul
 import { RiskScoringService } from '@/services/risk-scoring'
 import { ParameterAttributeRiskValues } from '@/@types/openapi-internal/ParameterAttributeRiskValues'
 import { TransactionRepository } from '@/services/rules-engine/repositories/transaction-repository'
+import { getUserName } from '@/utils/helpers'
 
 type SimulationResult = {
   userResults: Array<Omit<SimulationPulseResult, 'taskId' | 'type'>>
@@ -205,6 +206,7 @@ export class SimulationPulseBatchJobRunner extends BatchJobRunner {
       userResults.push({
         userId: user.userId,
         userType: user.type,
+        userName: getUserName(user),
         current: {
           krs: user.krsScore && {
             riskScore: user.krsScore?.krsScore,
@@ -303,6 +305,7 @@ export class SimulationPulseBatchJobRunner extends BatchJobRunner {
       userResults.push({
         userId: user.userId,
         userType: user.type,
+        userName: getUserName(user),
         current: {
           krs: user.krsScore && {
             riskScore: user.krsScore?.krsScore,

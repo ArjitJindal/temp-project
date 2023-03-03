@@ -156,6 +156,7 @@ describe('Simulation (Pulse) batch job runner', () => {
           type: 'PULSE',
           userId: 'test-user-id-2',
           userType: 'CONSUMER',
+          userName: 'Baran Realblood Ozkan',
         },
         {
           current: {
@@ -176,6 +177,7 @@ describe('Simulation (Pulse) batch job runner', () => {
           type: 'PULSE',
           userId: 'test-user-id-1',
           userType: 'CONSUMER',
+          userName: 'Baran Realblood Ozkan',
         },
       ],
       total: 2,
@@ -460,6 +462,7 @@ describe('Simulation (Pulse) batch job runner', () => {
           type: 'PULSE',
           userId: 'test-user-id-2',
           userType: 'CONSUMER',
+          userName: 'user 2',
         },
         {
           current: {
@@ -486,6 +489,7 @@ describe('Simulation (Pulse) batch job runner', () => {
           type: 'PULSE',
           userId: 'test-user-id-1',
           userType: 'CONSUMER',
+          userName: 'user 1',
         },
       ],
       total: 2,

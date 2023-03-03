@@ -1,10 +1,10 @@
 import { JSONSchemaType } from 'ajv'
 import * as levenshtein from 'fast-levenshtein'
-import { getConsumerName } from '../utils/user-rule-utils'
 import { RuleHitResult } from '../rule'
 import { TransactionRule } from './rule'
 import { User } from '@/@types/openapi-public/User'
 import { CardDetails } from '@/@types/openapi-public/CardDetails'
+import { formatConsumerName } from '@/utils/helpers'
 
 export type CardHolderNameRuleParameter = {
   allowedDistancePercentage: number
@@ -30,19 +30,19 @@ export default class CardHolderNameRule extends TransactionRule<CardHolderNameRu
 
   public async computeRule() {
     const { allowedDistancePercentage } = this.parameters
-    const originUserName = getConsumerName(
+    const originUserName = formatConsumerName(
       (this.senderUser as User)?.userDetails?.name,
       true
     )
-    const destinatinoUserName = getConsumerName(
+    const destinatinoUserName = formatConsumerName(
       (this.receiverUser as User)?.userDetails?.name,
       true
     )
-    const originCardName = getConsumerName(
+    const originCardName = formatConsumerName(
       (this.transaction.originPaymentDetails as CardDetails)?.nameOnCard,
       true
     )
-    const destinationCardName = getConsumerName(
+    const destinationCardName = formatConsumerName(
       (this.transaction.destinationPaymentDetails as CardDetails)?.nameOnCard,
       true
     )

@@ -5629,12 +5629,15 @@ components:
           $ref: '#/components/schemas/SimulationPulseRiskScoreResult'
         simulated:
           $ref: '#/components/schemas/SimulationPulseRiskScoreResult'
+        userName:
+          type: string
       required:
         - taskId
         - type
         - userId
         - old
         - new
+        - userName
     SimulationPulseResultResponse:
       title: SimulationPulseResultResponse
       type: object

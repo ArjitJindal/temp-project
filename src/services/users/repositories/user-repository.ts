@@ -104,11 +104,11 @@ export class UserRepository {
     }
   ): Promise<{
     total: number
-    data: Array<InternalUser>
+    data: Array<InternalBusinessUser | InternalConsumerUser>
   }> {
     return (await this.getMongoUsers(params)) as {
       total: number
-      data: Array<InternalUser>
+      data: Array<InternalBusinessUser | InternalConsumerUser>
     }
   }
 
