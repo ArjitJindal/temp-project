@@ -15,6 +15,7 @@ import { isValidManagedRoleName } from '@/apis/models-custom/ManagedRoleName';
 import { message } from '@/components/library/Message';
 import { getErrorMessage } from '@/utils/lang';
 import ButtonGroup from '@/components/library/ButtonGroup';
+import { isValidPermission } from '@/apis/models-custom/Permission';
 
 export interface FormValues {
   roleName: string;
@@ -25,7 +26,7 @@ export default function RoleForm({ role, onChange }: { role?: AccountRole; onCha
   const [edit, setEdit] = useState(!role);
   const [isLoading, setLoading] = useState(false);
   const [expandedRows, setExpandedRows] = useState<string[]>([]);
-  const [permissions, setPermissions] = useState<Permission[]>(role?.permissions || []);
+  const [permissions, setPermissions] = useState<Set<Permission>>(new Set(role?.permissions || []));
   const rows = permissionsToRows(permissions);
   const fieldValidators: FieldValidators<FormValues> = {
     roleName: notEmpty,
@@ -44,7 +45,7 @@ export default function RoleForm({ role, onChange }: { role?: AccountRole; onCha
     }
     setLoading(true);
     try {
-      const AccountRole = { name: roleName, description, permissions };
+      const AccountRole = { name: roleName, description, permissions: [...permissions] };
       if (role?.id) {
         await api.updateRole({
           roleId: role?.id,
@@ -78,13 +79,24 @@ export default function RoleForm({ role, onChange }: { role?: AccountRole; onCha
   const onExpand = () =>
     allExpanded ? setExpandedRows([]) : setExpandedRows(rows.map((i) => i.name));
   const onPermissionChange = (permission: Permission, enabled: boolean) => {
-    if (enabled && permissions.indexOf(permission as Permission) === -1) {
-      setPermissions(permissions.concat(permission));
+    if (enabled) {
+      permissions.add(permission);
+      if (permission.endsWith(':write')) {
+        const readPerm = permission.replace(/(.*:)write$/, '$1read');
+        if (isValidPermission(readPerm)) {
+          permissions.add(readPerm);
+        }
+      }
+    } else {
+      permissions.delete(permission);
+      if (permission.endsWith(':read')) {
+        const readPerm = permission.replace(/(.*:)read$/, '$1write');
+        if (isValidPermission(readPerm)) {
+          permissions.delete(readPerm);
+        }
+      }
     }
-    if (!enabled && permissions.indexOf(permission as Permission) > -1) {
-      permissions.splice(permissions.indexOf(permission as Permission), 1);
-      setPermissions([...permissions]);
-    }
+    setPermissions(new Set([...permissions]));
   };
 
   return (
