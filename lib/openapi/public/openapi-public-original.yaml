@@ -3880,12 +3880,12 @@ components:
           type: array
           items:
             type: string
-        comment:
-          type: string
-        documents:
+        reasonDescriptionForOther:
           type: array
           items:
             type: string
+        comment:
+          type: string
     RiskLevel:
       type: string
       title: RiskLevel

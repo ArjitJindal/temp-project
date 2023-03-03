@@ -113,11 +113,9 @@ export class CaseService {
                   event: 'CASE_CLOSED',
                   payload: {
                     caseId,
-                    status: updateRequest.caseStatus,
                     reasons: updateRequest.reason,
-                    documents: updateRequest.files?.map(
-                      (f) => f.downloadLink as string
-                    ),
+                    reasonDescriptionForOther: updateRequest.otherReason,
+                    comment: updateRequest.comment,
                   },
                 },
               ]),
