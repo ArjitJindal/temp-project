@@ -9,6 +9,9 @@ import { FileInfo } from '@/apis';
 import { FilesList } from '@/components/files/FilesList';
 import MarkdownEditor from '@/components/markdown/MarkdownEditor';
 import { AsyncResource, isLoading } from '@/utils/asyncResource';
+import { Hint } from '@/components/library/Form/InputField';
+
+export const MAX_COMMENT_LENGTH = 5000;
 
 export interface FormValues {
   comment: string;
@@ -49,6 +52,7 @@ function CommentEditor(props: Props, ref: React.Ref<CommentEditorRef>) {
     },
   }));
 
+  const isCommentTooLong = values.comment.length > MAX_COMMENT_LENGTH;
   return (
     <div className={s.commentEditor}>
       <div className={s.commentEditorInput}>
@@ -65,6 +69,11 @@ function CommentEditor(props: Props, ref: React.Ref<CommentEditorRef>) {
           }}
         />
       </div>
+      {isCommentTooLong && (
+        <Hint isError={true}>
+          {`This field cannot be longer than ${MAX_COMMENT_LENGTH} characters`}
+        </Hint>
+      )}
       {showFileList && (
         <FilesList
           files={values.files}
@@ -80,7 +89,7 @@ function CommentEditor(props: Props, ref: React.Ref<CommentEditorRef>) {
           isLoading={isLoading(submitRes) || isUploadLoading}
           onClick={onSubmit}
           type="PRIMARY"
-          isDisabled={values.files.length === 0 && !values.comment}
+          isDisabled={(values.files.length === 0 && !values.comment) || isCommentTooLong}
         >
           Add Comment
         </Button>

@@ -32,14 +32,14 @@ export default function InputField<FormValues, Key extends keyof FormValues = ke
               onFocus: onFocus,
               onBlur: onBlur,
             })}
-            {showError && (
-              <div className={cn(s.hint, !isValid && s.isError)}>
-                {errorMessage ?? 'Invalid field'}
-              </div>
-            )}
+            {showError && <Hint isError={!isValid}>{errorMessage ?? 'Invalid field'}</Hint>}
           </Label>
         );
       }}
     </GenericFormField>
   );
+}
+
+export function Hint(props: { isError: boolean; children: string }) {
+  return <div className={cn(s.hint, props.isError && s.isError)}>{props.children}</div>;
 }

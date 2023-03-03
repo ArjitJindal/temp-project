@@ -6,6 +6,7 @@ import { CaseStatus, FileInfo } from '@/apis';
 import { CaseClosingReasons } from '@/apis/models/CaseClosingReasons';
 import { UploadFilesList } from '@/components/files/UploadFilesList';
 import { useDeepEqualEffect, usePrevious } from '@/utils/hooks';
+import { MAX_COMMENT_LENGTH } from '@/components/CommentEditor';
 
 export interface RemoveAllFilesRef {
   removeAllFiles: () => void;
@@ -168,7 +169,7 @@ export default function StatusChangeModal(props: Props) {
               <Input />
             </Form.Item>
           )}
-          <Form.Item name="comment" label="Comment" rules={[{ max: 500 }]}>
+          <Form.Item name="comment" label="Comment" rules={[{ max: MAX_COMMENT_LENGTH }]}>
             <Input.TextArea
               rows={4}
               placeholder={`Write a narrative explaning the ${entityName} closure reason and findings, if any.`}
