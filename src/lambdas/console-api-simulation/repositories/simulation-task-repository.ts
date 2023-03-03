@@ -3,7 +3,7 @@ import { v4 as uuidv4 } from 'uuid'
 import _ from 'lodash'
 import {
   SIMULATION_TASK_COLLECTION,
-  paginateFindOptions,
+  paginatePipeline,
 } from '@/utils/mongoDBUtils'
 import { SimulationPulseJob } from '@/@types/openapi-internal/SimulationPulseJob'
 import {
@@ -189,14 +189,32 @@ export class SimulationTaskRepository {
     )
     const query = { type: params.type }
     const simulationTasks = await collection
-      .find(query, {
-        sort: {
-          [params?.sortField ?? 'createdAt']:
-            params?.sortOrder === 'ascend' ? 1 : -1,
+      .aggregate<SimulationPulseJob>([
+        { $match: query },
+        ...(params.sortField === 'iterations_count'
+          ? [
+              {
+                $addFields: {
+                  iterations_count: { $size: { $ifNull: ['$iterations', []] } },
+                },
+              },
+            ]
+          : []),
+        {
+          $sort: {
+            [params.sortField ?? 'createdAt']:
+              params.sortOrder === 'ascend' ? 1 : -1,
+          },
         },
-        ...paginateFindOptions(params),
-      })
+        ...paginatePipeline(params),
+        {
+          $project: {
+            iterations_count: 0,
+          },
+        },
+      ])
       .toArray()
+
     const total = await collection.countDocuments(query)
 
     return {
