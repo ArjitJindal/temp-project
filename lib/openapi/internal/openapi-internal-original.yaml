@@ -2571,6 +2571,23 @@ paths:
           application/json:
             schema:
               $ref: '#/components/schemas/AlertsUpdateRequest'
+  '/alerts/{alertId}':
+    parameters:
+      - schema:
+          type: string
+        name: alertId
+        in: path
+        required: true
+    get:
+      summary: Alerts - Get Alert
+      operationId: get-alert
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Alert'
   /alerts/new-case:
     post:
       summary: Alerts - New Case
@@ -2590,6 +2607,52 @@ paths:
           application/json:
             schema:
               $ref: '#/components/schemas/AlertsToNewCaseRequest'
+  '/alerts/{alertId}/comments':
+    parameters:
+      - schema:
+          type: string
+        name: alertId
+        in: path
+        required: true
+    post:
+      summary: Alerts - New Case
+      operationId: create-alerts-comment
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Comment'
+      x-flagright:
+        permissions:
+          - case-management:case-overview:write
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Comment'
+  '/alerts/{alertId}/comments/{commentId}':
+    parameters:
+      - schema:
+          type: string
+        name: alertId
+        in: path
+        required: true
+      - schema:
+          type: string
+        name: commentId
+        in: path
+        required: true
+    delete:
+      summary: Alerts - New Case
+      operationId: delete-alerts-comment
+      responses:
+        '200':
+          description: OK
+      x-flagright:
+        permissions:
+          - case-management:case-overview:write
   /cases:
     get:
       summary: Cases - List
@@ -2636,6 +2699,10 @@ paths:
             type: string
           in: query
           name: filterId
+        - schema:
+            type: string
+          in: query
+          name: filterIdExact
         - schema:
             $ref: '#/components/schemas/RuleAction'
           in: query
@@ -4699,6 +4766,10 @@ components:
             $ref: '#/components/schemas/CaseStatusChange'
         falsePositiveDetails:
           $ref: ../public/openapi-public-original.yaml#/components/schemas/FalsePositiveDetails
+        comments:
+          type: array
+          items:
+            $ref: '#/components/schemas/Comment'
       required:
         - createdTimestamp
         - latestTransactionArrivalTimestamp

@@ -387,6 +387,23 @@ export const casesHandler = lambdaApi()(
         alertUpdateSegment?.close()
       }
     } else if (
+      event.httpMethod === 'GET' &&
+      event.resource === '/alerts/{alertId}'
+    ) {
+      const alertId = event.pathParameters?.alertId as string
+      const alert = await caseRepository.getAlertById(alertId)
+      if (alert == null) {
+        throw new NotFound(`Alert "${alertId}" not found`)
+      }
+      await caseAuditLogService.createAlertAuditLog({
+        alertId,
+        logAction: 'VIEW',
+        oldImage: {},
+        newImage: {},
+        alertDetails: alert,
+      })
+      return alert
+    } else if (
       event.httpMethod === 'POST' &&
       event.resource === '/alerts/new-case' &&
       event.body
@@ -421,6 +438,48 @@ export const casesHandler = lambdaApi()(
       } finally {
         segment?.close()
       }
+    } else if (
+      event.httpMethod === 'POST' &&
+      event.resource === '/alerts/{alertId}/comments' &&
+      event.body
+    ) {
+      const alertId = event.pathParameters?.alertId as string
+      const comment = JSON.parse(event.body) as Comment
+      const saveCommentResult = await caseService.saveAlertComment(alertId, {
+        ...comment,
+        userId,
+      })
+      await caseAuditLogService.createAlertAuditLog({
+        alertId,
+        logAction: 'CREATE',
+        oldImage: {},
+        newImage: comment,
+        subtype: 'COMMENT',
+      })
+      return saveCommentResult
+    } else if (
+      event.httpMethod === 'DELETE' &&
+      event.resource === '/alerts/{alertId}/comments/{commentId}' &&
+      event.body
+    ) {
+      const alertId = event.pathParameters?.alertId as string
+      const commentId = event.pathParameters?.commentId as string
+      const alert = await caseRepository.getAlertById(alertId)
+      const comment =
+        alert?.comments?.find(({ id }) => id === commentId) ?? null
+      if (comment == null) {
+        throw new NotFound(`"${commentId}" comment not found`)
+      }
+
+      await caseService.deleteAlertComment(alertId, commentId)
+      await caseAuditLogService.createAlertAuditLog({
+        alertId,
+        logAction: 'DELETE',
+        oldImage: comment,
+        newImage: {},
+        subtype: 'COMMENT',
+      })
+      return 'OK'
     }
     throw new NotFound('Unhandled request')
   }

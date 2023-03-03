@@ -169,6 +169,9 @@ export class CaseRepository {
     if (params.filterId != null) {
       conditions.push({ caseId: prefixRegexMatchFilter(params.filterId) })
     }
+    if (params.filterIdExact != null) {
+      conditions.push({ caseId: params.filterIdExact })
+    }
     if (params.transactionType != null) {
       conditions.push({
         'caseTransactions.type': prefixRegexMatchFilter(params.transactionType),
@@ -960,6 +963,78 @@ export class CaseRepository {
     return commentToSave
   }
 
+  public async saveAlertComment(
+    caseId: string,
+    alertId: string,
+    comment: Comment
+  ): Promise<Comment> {
+    const db = this.mongoDb.db()
+    const collection = db.collection<Case>(CASES_COLLECTION(this.tenantId))
+    const caseItem = await collection.findOne({
+      caseId: caseId,
+    })
+    if (caseItem == null) {
+      throw new Error(`Unable to find case "${caseId}"`)
+    }
+    const commentToSave: Comment = {
+      ...comment,
+      id: comment.id || uuidv4(),
+      createdAt: Date.now(),
+      updatedAt: Date.now(),
+    }
+    await collection.replaceOne(
+      {
+        caseId,
+      },
+      {
+        ...caseItem,
+        alerts: caseItem.alerts?.map((alert) => {
+          if (alert.alertId !== alertId) {
+            return alert
+          }
+          return {
+            ...alert,
+            comments: [...(alert.comments ?? []), commentToSave],
+          }
+        }),
+      }
+    )
+    return commentToSave
+  }
+
+  public async deleteAlertComment(
+    caseId: string,
+    alertId: string,
+    commentId: string
+  ): Promise<void> {
+    const db = this.mongoDb.db()
+    const collection = db.collection<Case>(CASES_COLLECTION(this.tenantId))
+    // todo: check if alert and comment exists
+    const caseItem = await collection.findOne({
+      caseId: caseId,
+    })
+    if (caseItem == null) {
+      throw new Error(`Unable to find case "${caseId}"`)
+    }
+    await collection.replaceOne(
+      {
+        caseId,
+      },
+      {
+        ...caseItem,
+        alerts: caseItem.alerts?.map((alert) => {
+          if (alert.alertId !== alertId) {
+            return alert
+          }
+          return {
+            ...alert,
+            comments: alert.comments?.filter(({ id }) => id !== commentId),
+          }
+        }),
+      }
+    )
+  }
+
   public async deleteCaseComment(caseId: string, commentId: string) {
     const db = this.mongoDb.db()
     const collection = db.collection<Case>(CASES_COLLECTION(this.tenantId))
@@ -981,9 +1056,8 @@ export class CaseRepository {
       includeTransactionUsers?: boolean
     } = {}
   ): Promise<Case | null> {
-    // todo: we need to have an exact caseId search here, since if we have too many matched required cases can be on he other page
     const { data } = await this.getCases({
-      filterId: caseId,
+      filterIdExact: caseId,
       includeTransactions: params.includeTransactions ?? false,
       includeTransactionEvents: params.includeTransactionEvents ?? false,
       includeTransactionUsers: params.includeTransactionUsers ?? false,

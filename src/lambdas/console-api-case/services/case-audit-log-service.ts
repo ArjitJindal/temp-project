@@ -7,7 +7,6 @@ import {
 } from '@/@types/openapi-internal/AuditLog'
 import { CaseUpdateRequest } from '@/@types/openapi-internal/CaseUpdateRequest'
 import { Alert } from '@/@types/openapi-internal/Alert'
-import { AlertUpdateRequest } from '@/@types/openapi-internal/AlertUpdateRequest'
 import { publishAuditLog } from '@/services/audit-log'
 import { Case } from '@/@types/openapi-internal/Case'
 import { Comment } from '@/@types/openapi-internal/Comment'
@@ -27,6 +26,7 @@ type AlertAuditLogCreateRequest = {
   oldImage?: any
   newImage: any
   alertDetails?: Alert | null
+  subtype?: AuditLogSubtypeEnum
 }
 
 export class CaseAuditLogService {
@@ -52,7 +52,21 @@ export class CaseAuditLogService {
     updates: CaseUpdateRequest
   ): Promise<void> {
     for (const alertId of alertIds) {
-      await this.handleAlertUpdateAuditLog(alertId, 'UPDATE', updates)
+      const alertEntity = await this.caseService.getAlert(alertId)
+      const oldImage: { [key: string]: string } = {}
+      for (const field in Object.keys(updates)) {
+        const oldValue = _.get(alertEntity, field)
+        if (oldValue) {
+          oldImage[field] = oldValue
+        }
+      }
+      await this.createAlertAuditLog({
+        alertId: alertId,
+        logAction: 'UPDATE',
+        oldImage: oldImage,
+        newImage: updates,
+        alertDetails: alertEntity,
+      })
     }
   }
 
@@ -115,28 +129,6 @@ export class CaseAuditLogService {
     })
   }
 
-  private async handleAlertUpdateAuditLog(
-    alertId: string,
-    logAction: AuditLogActionEnum,
-    updates: AlertUpdateRequest
-  ) {
-    const alertEntity = await this.caseService.getAlert(alertId)
-    const oldImage: { [key: string]: string } = {}
-    for (const field in Object.keys(updates)) {
-      const oldValue = _.get(alertEntity, field)
-      if (oldValue) {
-        oldImage[field] = oldValue
-      }
-    }
-    await this.createAlertAuditLog({
-      alertId: alertId,
-      logAction: logAction,
-      oldImage: oldImage,
-      newImage: updates,
-      alertDetails: alertEntity,
-    })
-  }
-
   private async createAuditLog(auditLogCreateRequest: AuditLogCreateRequest) {
     const { caseId, logAction, oldImage, newImage, caseDetails, subtype } =
       auditLogCreateRequest
@@ -158,7 +150,7 @@ export class CaseAuditLogService {
     await publishAuditLog(this.tenantId, auditLog)
   }
 
-  private async createAlertAuditLog(
+  public async createAlertAuditLog(
     auditLogCreateRequest: AlertAuditLogCreateRequest
   ) {
     const { alertId, logAction, oldImage, newImage, alertDetails } =
@@ -173,9 +165,9 @@ export class CaseAuditLogService {
       oldImage: oldImage,
       newImage: newImage,
       logMetadata: {
-        caseAssignment: alertEntity?.assignments,
-        caseCreationTimestamp: alertEntity?.createdTimestamp,
-        casePriority: alertEntity?.priority,
+        alertAssignment: alertEntity?.assignments,
+        alertCreationTimestamp: alertEntity?.createdTimestamp,
+        alertPriority: alertEntity?.priority,
       },
     }
     await publishAuditLog(this.tenantId, auditLog)

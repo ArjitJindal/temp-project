@@ -1,4 +1,5 @@
 import * as createError from 'http-errors'
+import { NotFound } from 'http-errors'
 import { Comment } from '@/@types/openapi-internal/Comment'
 import { FileInfo } from '@/@types/openapi-internal/FileInfo'
 import {
@@ -230,6 +231,67 @@ export class CaseService {
       ruleInstanceId,
       params,
       sortFields
+    )
+  }
+
+  public async saveAlertComment(alertId: string, comment: Comment) {
+    const alert = await this.caseRepository.getAlertById(alertId)
+    if (alert == null) {
+      throw new NotFound(`"${alertId}" alert not found`)
+    }
+    if (alert.caseId == null) {
+      throw new Error(`Alert case id is null`)
+    }
+    // Copy the files from tmp bucket to document bucket
+    for (const file of comment.files || []) {
+      await this.s3
+        .copyObject({
+          CopySource: `${this.tmpBucketName}/${file.s3Key}`,
+          Bucket: this.documentBucketName,
+          Key: file.s3Key,
+        })
+        .promise()
+    }
+    const files = (comment.files || []).map((file) => ({
+      ...file,
+      bucket: this.documentBucketName,
+    }))
+    const savedComment = await this.caseRepository.saveAlertComment(
+      alert.caseId,
+      alertId,
+      {
+        ...comment,
+        files,
+      }
+    )
+    return {
+      ...savedComment,
+      files: savedComment.files?.map((file) => ({
+        ...file,
+        downloadLink: this.getDownloadLink(file),
+      })),
+    }
+  }
+
+  public async deleteAlertComment(
+    alertId: string,
+    commentId: string
+  ): Promise<void> {
+    const alert = await this.caseRepository.getAlertById(alertId)
+    if (alert == null) {
+      throw new NotFound(`"${alertId}" alert not found`)
+    }
+    if (alert.caseId == null) {
+      throw new Error(`Alert case id is null`)
+    }
+    const comment = alert.comments?.find(({ id }) => id === commentId) ?? null
+    if (comment == null) {
+      throw new NotFound(`"${commentId}" comment not found`)
+    }
+    await this.caseRepository.deleteAlertComment(
+      alert.caseId,
+      alertId,
+      commentId
     )
   }
 
