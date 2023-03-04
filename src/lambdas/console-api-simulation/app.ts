@@ -16,6 +16,7 @@ import {
 } from '@/@types/openapi-internal/RequestParameters'
 import { getCredentialsFromEvent } from '@/utils/credentials'
 import { SimulationPulseParametersRequest } from '@/@types/openapi-internal/SimulationPulseParametersRequest'
+import { hasFeature } from '@/core/utils/context'
 
 export const simulationHandler = lambdaApi()(
   async (
@@ -33,6 +34,10 @@ export const simulationHandler = lambdaApi()(
       tenantId,
       mongoDb
     )
+
+    if (!hasFeature('SIMULATOR')) {
+      throw new BadRequest('Feature not enabled')
+    }
 
     if (event.resource === '/simulation') {
       if (event.httpMethod === 'GET') {

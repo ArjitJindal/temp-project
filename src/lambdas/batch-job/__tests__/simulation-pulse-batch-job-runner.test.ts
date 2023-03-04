@@ -14,8 +14,11 @@ import { SimulationResultRepository } from '@/lambdas/console-api-simulation/rep
 import { TransactionRepository } from '@/services/rules-engine/repositories/transaction-repository'
 import { getTestTransaction } from '@/test-utils/transaction-test-utils'
 import { SimulationPulseParametersRequest } from '@/@types/openapi-internal/SimulationPulseParametersRequest'
+import { withFeatureHook } from '@/test-utils/feature-test-utils'
 
 dynamoDbSetupHook()
+
+withFeatureHook(['SIMULATOR'])
 
 describe('Simulation (Pulse) batch job runner', () => {
   test('new risk level classifications', async () => {
