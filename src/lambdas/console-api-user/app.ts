@@ -52,6 +52,8 @@ export const businessUsersViewHandler = lambdaApi()(
         filterName,
         filterOperator,
         filterBusinessIndustries,
+        filterTagKey,
+        filterTagValue,
         filterRiskLevel,
       } = event.queryStringParameters as any
       const businessUserSegment = await addNewSubsegment(
@@ -74,6 +76,8 @@ export const businessUsersViewHandler = lambdaApi()(
         filterBusinessIndustries: filterBusinessIndustries
           ? filterBusinessIndustries.split(',')
           : undefined,
+        filterTagKey,
+        filterTagValue,
         filterRiskLevel: filterRiskLevel
           ? filterRiskLevel.split(',')
           : undefined,
@@ -167,6 +171,8 @@ export const consumerUsersViewHandler = lambdaApi()(
         filterId,
         filterName,
         filterOperator,
+        filterTagKey,
+        filterTagValue,
         filterRiskLevel,
       } = event.queryStringParameters as any
       const consumerUserSegment = await addNewSubsegment(
@@ -186,6 +192,8 @@ export const consumerUsersViewHandler = lambdaApi()(
         filterId,
         filterName,
         filterOperator,
+        filterTagKey,
+        filterTagValue,
         filterRiskLevel: filterRiskLevel
           ? filterRiskLevel.split(',')
           : undefined,
@@ -201,6 +209,8 @@ export const consumerUsersViewHandler = lambdaApi()(
         filterId,
         filterName,
         filterOperator,
+        filterTagKey,
+        filterTagValue,
         filterRiskLevel,
       } = event.queryStringParameters as any
       return userService.getUsers({
@@ -211,6 +221,8 @@ export const consumerUsersViewHandler = lambdaApi()(
         filterId,
         filterName,
         filterOperator,
+        filterTagKey,
+        filterTagValue,
         filterRiskLevel: filterRiskLevel
           ? filterRiskLevel.split(',')
           : undefined,

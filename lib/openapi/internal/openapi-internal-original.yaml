@@ -1114,6 +1114,14 @@ paths:
           in: query
           name: filterOperator
         - schema:
+            type: string
+          in: query
+          name: filterTagKey
+        - schema:
+            type: string
+          in: query
+          name: filterTagValue
+        - schema:
             type: array
             items:
               $ref: '#/components/schemas/RiskLevel'
@@ -1167,6 +1175,14 @@ paths:
             $ref: '#/components/schemas/FilterOperator'
           in: query
           name: filterOperator
+        - schema:
+            type: string
+          in: query
+          name: filterTagKey
+        - schema:
+            type: string
+          in: query
+          name: filterTagValue
         - schema:
             type: array
             items:
@@ -1347,6 +1363,14 @@ paths:
             type: string
           in: query
           name: filterName
+        - schema:
+            type: string
+          in: query
+          name: filterTagKey
+        - schema:
+            type: string
+          in: query
+          name: filterTagValue
         - schema:
             $ref: '#/components/schemas/FilterOperator'
           in: query

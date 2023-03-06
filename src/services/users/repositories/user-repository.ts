@@ -43,6 +43,7 @@ import {
   PaginationParams,
   COUNT_QUERY_LIMIT,
 } from '@/utils/pagination'
+import { Tag } from '@/@types/openapi-public/Tag'
 
 export class UserRepository {
   dynamoDb: DynamoDBDocumentClient
@@ -69,6 +70,8 @@ export class UserRepository {
       filterName?: string
       filterOperator?: FilterOperator
       filterBusinessIndustry?: string
+      filterTagKey?: string
+      filterTagValue?: string
       filterRiskLevel?: RiskLevel[]
     }
   ): Promise<{ total: number; data: Array<InternalBusinessUser> }> {
@@ -85,6 +88,8 @@ export class UserRepository {
       filterId?: string
       filterName?: string
       filterOperator?: FilterOperator
+      filterTagKey?: string
+      filterTagValue?: string
       filterRiskLevel?: RiskLevel[]
     }
   ): Promise<{ total: number; data: Array<InternalConsumerUser> }> {
@@ -101,6 +106,8 @@ export class UserRepository {
       filterId?: string
       filterName?: string
       filterOperator?: FilterOperator
+      filterTagKey?: string
+      filterTagValue?: string
       filterRiskLevel?: RiskLevel[]
       includeCasesCount?: boolean
     }
@@ -157,6 +164,8 @@ export class UserRepository {
       filterOperator?: FilterOperator
       filterBusinessIndustries?: string
       filterRiskLevel?: RiskLevel[]
+      filterTagKey?: string
+      filterTagValue?: string
       includeCasesCount?: boolean
     },
     userType?: UserType
@@ -264,6 +273,21 @@ export class UserRepository {
           }),
       },
     ]
+
+    if (params.filterTagKey || params.filterTagValue) {
+      const elemCondition: { [attr: string]: Filter<Tag> } = {}
+      if (params.filterTagKey) {
+        elemCondition['key'] = { $eq: params.filterTagKey }
+      }
+      if (params.filterTagValue) {
+        elemCondition['value'] = prefixRegexMatchFilter(params.filterTagValue)
+      }
+      queryConditions.push({
+        tags: {
+          $elemMatch: elemCondition,
+        },
+      })
+    }
 
     if (filterConditions.length > 0) {
       queryConditions.push(
