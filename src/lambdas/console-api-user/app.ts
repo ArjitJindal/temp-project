@@ -129,9 +129,10 @@ export const businessUsersViewHandler = lambdaApi()(
       return 'OK'
     } else if (
       event.httpMethod === 'GET' &&
-      event.path.endsWith('/business/users/uniques')
+      event.path.endsWith('/users/uniques')
     ) {
-      return await userService.getUniques()
+      const { field, filter } = event.queryStringParameters as any
+      return await userService.getUniques({ field, filter })
     }
   }
 )

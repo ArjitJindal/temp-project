@@ -1,4 +1,4 @@
-import { Filter, MongoClient } from 'mongodb'
+import { Filter, MongoClient, Document } from 'mongodb'
 import { StackConstants } from '@cdk/constants'
 import { AttributeMap, ItemList } from 'aws-sdk/clients/dynamodb'
 import { v4 as uuidv4 } from 'uuid'
@@ -27,7 +27,7 @@ import { FileInfo } from '@/@types/openapi-internal/FileInfo'
 import { UserType } from '@/@types/user/user-type'
 import { FilterOperator } from '@/@types/openapi-internal/FilterOperator'
 import { InternalUser } from '@/@types/openapi-internal/InternalUser'
-import { UsersUniquesResponse } from '@/@types/openapi-internal/UsersUniquesResponse'
+import { UsersUniquesField } from '@/@types/openapi-internal/UsersUniquesField'
 import { RiskRepository } from '@/services/risk-scoring/repositories/risk-repository'
 import { hasFeature } from '@/core/utils/context'
 import { RiskLevel } from '@/@types/openapi-public/RiskLevel'
@@ -37,6 +37,7 @@ import {
 } from '@/services/risk-scoring/utils'
 import { DrsScore } from '@/@types/openapi-internal/DrsScore'
 import { KrsScore } from '@/@types/openapi-internal/KrsScore'
+import { neverThrow } from '@/utils/lang'
 import {
   OptionalPaginationParams,
   PaginationParams,
@@ -585,18 +586,60 @@ export class UserRepository {
     await userCollection.deleteOne({ userId })
   }
 
-  public async getUniques(): Promise<UsersUniquesResponse> {
+  public async getUniques(params: {
+    field: UsersUniquesField
+    filter?: string
+  }): Promise<string[]> {
     const db = this.mongoDb.db()
     const name = USERS_COLLECTION(this.tenantId)
     const collection = db.collection<Business>(name)
-
-    const distinctBusinessIndustryPromise = collection
-      .distinct('legalEntity.companyGeneralDetails.businessIndustry')
-      .then((values: string[]) => values.filter((x): x is string => x != null))
-
-    return {
-      businessIndustry: await distinctBusinessIndustryPromise,
+    let fieldPath: string
+    const filterConditions = []
+    switch (params.field) {
+      case 'BUSINESS_INDUSTRY':
+        fieldPath = 'legalEntity.companyGeneralDetails.businessIndustry'
+        break
+      case 'TAGS_KEY':
+        fieldPath = 'tags.key'
+        break
+        fieldPath = 'deviceData.ipAddress'
+        break
+      default:
+        throw neverThrow(params.field, `Unknown field: ${params.field}`)
     }
+
+    if (params.filter) {
+      filterConditions.push({
+        [fieldPath]: prefixRegexMatchFilter(params.filter),
+      })
+    }
+
+    const pipeline: Document[] = [
+      filterConditions.length > 0
+        ? {
+            $match: {
+              $and: filterConditions,
+            },
+          }
+        : {},
+      // If we have filter conditions, it's for auto-complete. It's acceptable that
+      // we don't filter all the documents for performance concerns.
+      filterConditions.length > 0 ? { $limit: 10000 } : {},
+      {
+        $group: {
+          _id: `$${fieldPath}`,
+        },
+      },
+      {
+        $limit: 100,
+      },
+    ].filter((stage) => !_.isEmpty(stage))
+
+    const result: string[] = await collection
+      .aggregate<{ _id: string }>(pipeline)
+      .map(({ _id }) => _id)
+      .toArray()
+    return result
   }
   public async saveUserComment(
     userId: string,

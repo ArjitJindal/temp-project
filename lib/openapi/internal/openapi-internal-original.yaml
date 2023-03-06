@@ -1438,20 +1438,32 @@ paths:
       responses:
         '200':
           description: OK
-  /business/users/uniques:
+  /users/uniques:
     get:
       summary: User - Unique values for different fields
       tags: []
       x-flagright:
         permissions:
           - users:user-overview:read
+      parameters:
+        - schema:
+            $ref: '#/components/schemas/UsersUniquesField'
+          name: field
+          in: query
+          required: true
+        - schema:
+            type: string
+          name: filter
+          in: query
       responses:
         '200':
           description: OK
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/UsersUniquesResponse'
+                type: array
+                items:
+                  type: string
       operationId: get-users-uniques
   /dashboard_stats/transactions:
     get:
@@ -5314,6 +5326,12 @@ components:
         - BANK_SWIFT_CODE
         - UPI_IDENTIFYING_NUMBER
         - IP_ADDRESS
+    UsersUniquesField:
+      title: UsersUniquesField
+      type: string
+      enum:
+        - BUSINESS_INDUSTRY
+        - TAGS_KEY
     RiskEntityType:
       type: string
       title: Risk entity type

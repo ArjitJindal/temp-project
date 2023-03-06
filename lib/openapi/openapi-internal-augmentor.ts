@@ -74,7 +74,7 @@ export const ConsoleApiPathToLambda: any = {
     StackConstants.CONSOLE_API_BUSINESS_USERS_VIEW_FUNCTION_NAME,
   '/business/users/{userId}/files/{fileId}':
     StackConstants.CONSOLE_API_BUSINESS_USERS_VIEW_FUNCTION_NAME,
-  '/business/users/uniques':
+  '/users/uniques':
     StackConstants.CONSOLE_API_BUSINESS_USERS_VIEW_FUNCTION_NAME,
   '/users': StackConstants.CONSOLE_API_ALL_USERS_VIEW_FUNCTION_NAME,
   '/dashboard_stats/transactions':

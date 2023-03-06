@@ -19,7 +19,7 @@ import { UserUpdateRequest } from '@/@types/openapi-internal/UserUpdateRequest'
 import { UserEventRepository } from '@/services/rules-engine/repositories/user-event-repository'
 import { AllUsersListResponse } from '@/@types/openapi-internal/AllUsersListResponse'
 import { InternalUser } from '@/@types/openapi-internal/InternalUser'
-import { UsersUniquesResponse } from '@/@types/openapi-internal/UsersUniquesResponse'
+import { UsersUniquesField } from '@/@types/openapi-internal/UsersUniquesField'
 import { Comment } from '@/@types/openapi-internal/Comment'
 import { Business } from '@/@types/openapi-public/Business'
 
@@ -214,8 +214,11 @@ export class UserService {
       Expires: 3600,
     })
   }
-  public async getUniques(): Promise<UsersUniquesResponse> {
-    return this.userRepository.getUniques()
+  public async getUniques(params: {
+    field: UsersUniquesField
+    filter?: string
+  }): Promise<string[]> {
+    return this.userRepository.getUniques(params)
   }
   public async saveUserComment(userId: string, comment: Comment) {
     for (const file of comment.files || []) {
