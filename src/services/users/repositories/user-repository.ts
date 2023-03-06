@@ -18,6 +18,7 @@ import {
   CASES_COLLECTION,
   paginatePipeline,
   prefixRegexMatchFilter,
+  regexMatchFilter,
   USERS_COLLECTION,
 } from '@/utils/mongoDBUtils'
 import { InternalBusinessUser } from '@/@types/openapi-internal/InternalBusinessUser'
@@ -198,17 +199,19 @@ export class UserRepository {
         filterNameConditions.push({
           $or: [
             {
-              'userDetails.name.firstName': prefixRegexMatchFilter(part, true),
+              'userDetails.name.firstName': regexMatchFilter(part, true),
             },
             {
-              'userDetails.name.middleName': prefixRegexMatchFilter(part, true),
+              'userDetails.name.middleName': regexMatchFilter(part, true),
             },
             {
-              'userDetails.name.lastName': prefixRegexMatchFilter(part, true),
+              'userDetails.name.lastName': regexMatchFilter(part, true),
             },
             {
-              'legalEntity.companyGeneralDetails.legalName':
-                prefixRegexMatchFilter(part, true),
+              'legalEntity.companyGeneralDetails.legalName': regexMatchFilter(
+                part,
+                true
+              ),
             },
             {
               userId: prefixRegexMatchFilter(part, true),

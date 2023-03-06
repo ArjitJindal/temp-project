@@ -276,3 +276,10 @@ export function prefixRegexMatchFilter(input: string, caseInsensitive = false) {
     $options: caseInsensitive ? 'i' : '',
   }
 }
+
+export function regexMatchFilter(input: string, caseInsensitive = false) {
+  return {
+    $regex: `${escapeStringRegexp(input)}`,
+    $options: caseInsensitive ? 'i' : '',
+  }
+}
