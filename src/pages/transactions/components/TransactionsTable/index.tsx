@@ -109,7 +109,7 @@ export default function TransactionsTable(props: Props) {
             title: 'TRS level',
             width: 130,
             ellipsis: true,
-            dataIndex: 'arsScore.arsScore',
+            dataIndex: 'arsScore.riskLevel',
             exportData: 'arsScore.riskLevel',
             hideInSearch: true,
             sorter: true,
@@ -411,7 +411,7 @@ export default function TransactionsTable(props: Props) {
       ]}
       columnsState={{
         persistenceType: 'localStorage',
-        persistenceKey: 'transaction-list-table',
+        persistenceKey: 'transaction-list',
       }}
       autoAdjustHeight={autoAdjustHeight}
       headerSubtitle={headerSubtitle}
