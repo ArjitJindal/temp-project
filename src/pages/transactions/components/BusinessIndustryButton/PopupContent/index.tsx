@@ -5,7 +5,7 @@ import s from './style.module.less';
 import { useApi } from '@/api';
 import { useQuery } from '@/utils/queries/hooks';
 import { USERS_UNIQUES } from '@/utils/queries/keys';
-import { getOr, isLoading, map } from '@/utils/asyncResource';
+import { getOr, isLoading } from '@/utils/asyncResource';
 
 interface Props {
   value: string[];
@@ -19,13 +19,12 @@ export default function PopupContent(props: Props) {
   const result = useQuery(USERS_UNIQUES('BUSINESS_INDUSTRY'), () =>
     api.getUsersUniques({ field: 'BUSINESS_INDUSTRY' }),
   );
-  const businessIndustryRes = map(result.data, (x) => x);
 
   return (
     <div className={s.root}>
       <List
-        dataSource={getOr(businessIndustryRes, [])}
-        loading={isLoading(businessIndustryRes)}
+        dataSource={getOr(result.data, [])}
+        loading={isLoading(result.data)}
         renderItem={(item) => (
           <List.Item
             className={cn(s.item, value.includes(item) && s.isActive)}

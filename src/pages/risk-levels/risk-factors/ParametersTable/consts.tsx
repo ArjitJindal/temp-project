@@ -42,11 +42,11 @@ import { capitalizeWords } from '@/utils/tags';
 import { useApi } from '@/api';
 import { USERS_UNIQUES } from '@/utils/queries/keys';
 import { useQuery } from '@/utils/queries/hooks';
-import { map } from '@/utils/asyncResource';
 import { timezones } from '@/utils/timezones';
 import { _3DS_DONE_OPTIONS } from '@/utils/3dsOptions';
 import { convertToDays } from '@/utils/dayjs';
 import NumberInput from '@/components/library/NumberInput';
+import { getOr } from '@/utils/asyncResource';
 
 type InputRendererProps<T extends RiskValueType> = {
   disabled?: boolean;
@@ -489,17 +489,14 @@ export const INPUT_RENDERERS: { [key in DataType]: InputRenderer<any> } = {
         field: 'BUSINESS_INDUSTRY',
       }),
     );
-    const businessIndustryRes = map(result.data, (x) => x);
     return (
-      businessIndustryRes['value'] && (
-        <MultipleSelect
-          options={businessIndustryRes['value'].map((entry: string) => ({
-            value: entry,
-            label: entry,
-          }))}
-          {...props}
-        />
-      )
+      <MultipleSelect
+        options={getOr(result.data, []).map((entry) => ({
+          value: entry,
+          label: entry,
+        }))}
+        {...props}
+      />
     );
   }) as InputRenderer<'MULTIPLE'>,
   CURRENCY: ((props) => {
