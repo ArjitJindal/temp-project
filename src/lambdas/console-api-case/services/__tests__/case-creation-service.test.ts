@@ -15,6 +15,10 @@ import { getTestUser, setUpUsersHooks } from '@/test-utils/user-test-utils'
 import { Case } from '@/@types/openapi-internal/Case'
 import { RuleHitDirection } from '@/@types/openapi-public/RuleHitDirection'
 import { getMongoDbClient } from '@/utils/mongoDBUtils'
+import { Priority } from '@/@types/openapi-internal/Priority'
+import { Alert } from '@/@types/openapi-internal/Alert'
+import { RuleInstance } from '@/@types/openapi-internal/RuleInstance'
+import { HitRulesDetails } from '@/@types/openapi-internal/HitRulesDetails'
 
 dynamoDbSetupHook()
 
@@ -105,6 +109,90 @@ describe('User cases', () => {
       expectUserCase(cases, {
         destinationUserId: TEST_USER_1.userId,
       })
+    })
+  })
+
+  describe('Alert separation logic', () => {
+    const TEST_TENANT_ID = getTestTenantId()
+    setup(TEST_TENANT_ID, {
+      hitDirections: ['ORIGIN', 'DESTINATION'],
+    })
+
+    const hitRules: HitRulesDetails[] = [
+      {
+        ruleId: 'REHIT_RULE',
+        ruleInstanceId: 'REHIT_RULE',
+        ruleName: 'REHIT_RULE',
+        ruleDescription: 'REHIT_RULE',
+        ruleAction: 'FLAG',
+      },
+      {
+        ruleId: 'NEW_RULE_HIT',
+        ruleInstanceId: 'NEW_RULE_HIT',
+        ruleName: 'NEW_RULE_HIT',
+        ruleDescription: 'NEW_RULE_HIT',
+        ruleAction: 'FLAG',
+      },
+    ]
+
+    const ruleInstances: RuleInstance[] = [
+      {
+        ruleId: 'REHIT_RULE',
+        casePriority: 'P1',
+        nature: 'AML',
+      },
+      {
+        ruleId: 'NEW_RULE_HIT',
+        casePriority: 'P1',
+        nature: 'AML',
+      },
+    ]
+
+    const alerts: Alert[] = [
+      {
+        alertId: 'A1',
+        createdTimestamp: 0,
+        latestTransactionArrivalTimestamp: 0,
+        ruleInstanceId: 'REHIT_RULE',
+        ruleName: 'REHIT_RULE',
+        ruleDescription: 'REHIT_RULE',
+        ruleId: 'REHIT_RULE',
+        ruleAction: 'FLAG',
+        numberOfTransactionsHit: 1,
+        priority: 'P1' as Priority,
+      },
+      {
+        alertId: 'A1',
+        createdTimestamp: 0,
+        latestTransactionArrivalTimestamp: 0,
+        ruleInstanceId: 'UNHIT_RULE',
+        ruleName: 'UNHIT_RULE',
+        ruleDescription: 'UNHIT_RULE',
+        ruleId: 'UNHIT_RULE',
+        ruleAction: 'FLAG',
+        numberOfTransactionsHit: 1,
+        priority: 'P1' as Priority,
+      },
+    ]
+
+    test('Alerts are correctly separated', async () => {
+      const caseCreationService = await getService(TEST_TENANT_ID)
+
+      const { newAlerts, existingAlerts } =
+        caseCreationService.separateExistingAndNewAlerts(
+          hitRules,
+          ruleInstances,
+          alerts,
+          0,
+          0
+        )
+
+      expect(newAlerts.length).toEqual(1)
+      expect(existingAlerts.length).toEqual(2)
+
+      expect(newAlerts.find((a) => a.ruleId === 'NEW_RULE_HIT')).toBeTruthy()
+      expect(existingAlerts.find((a) => a.ruleId === 'UNHIT_RULE')).toBeTruthy()
+      expect(existingAlerts.find((a) => a.ruleId === 'REHIT_RULE')).toBeTruthy()
     })
   })
 

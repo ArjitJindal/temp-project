@@ -84,6 +84,44 @@ export class CaseCreationService {
     }
   }
 
+  public separateExistingAndNewAlerts(
+    hitRules: HitRulesDetails[],
+    ruleInstances: readonly RuleInstance[],
+    alerts: Alert[],
+    createdTimestamp: number,
+    latestTransactionArrivalTimestamp: number
+  ): { existingAlerts: Alert[]; newAlerts: Alert[] } {
+    // Get the rule hits that are new for this transaction
+    const newRuleHits = hitRules.filter(
+      (hitRule) =>
+        !alerts.some((alert) => alert.ruleInstanceId === hitRule.ruleInstanceId)
+    )
+
+    // Get the alerts that are new for this transaction
+    const newAlerts =
+      newRuleHits.length > 0
+        ? this.getAlertsForNewCase(
+            newRuleHits,
+            ruleInstances,
+            createdTimestamp,
+            latestTransactionArrivalTimestamp
+          )
+        : []
+
+    // Get the alerts that already existed on the case
+    const existingAlerts = alerts.filter((existingAlert) =>
+      newRuleHits.some(
+        (newRuleHits) =>
+          newRuleHits.ruleInstanceId !== existingAlert.ruleInstanceId
+      )
+    )
+
+    return {
+      existingAlerts,
+      newAlerts,
+    }
+  }
+
   private getOrCreateAlertsForExistingCase(
     hitRules: HitRulesDetails[],
     alerts: Alert[] | undefined,
@@ -93,31 +131,12 @@ export class CaseCreationService {
     latestTransactionArrivalTimestamp: number
   ) {
     if (alerts) {
-      const newRuleHits = hitRules.filter(
-        (hitRule) =>
-          !alerts.some(
-            (alert) => alert.ruleInstanceId === hitRule.ruleInstanceId
-          )
-      )
-      const newAlerts =
-        newRuleHits.length > 0
-          ? this.getAlertsForNewCase(
-              hitRules.filter(
-                (hitRule) =>
-                  !alerts.some(
-                    (alert) => alert.ruleInstanceId === hitRule.ruleInstanceId
-                  )
-              ),
-              ruleInstances,
-              createdTimestamp,
-              latestTransactionArrivalTimestamp
-            )
-          : []
-
-      const existingAlerts = alerts.filter((alert) =>
-        hitRules.some(
-          (hitRule) => hitRule.ruleInstanceId === alert.ruleInstanceId
-        )
+      const { existingAlerts, newAlerts } = this.separateExistingAndNewAlerts(
+        hitRules,
+        ruleInstances,
+        alerts,
+        createdTimestamp,
+        latestTransactionArrivalTimestamp
       )
 
       const updatedExistingAlerts =
