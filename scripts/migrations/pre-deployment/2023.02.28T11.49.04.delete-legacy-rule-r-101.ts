@@ -17,7 +17,7 @@ async function migrateTenant(tenant: Tenant) {
 
   for (const ruleInstance of ruleInstances) {
     if (
-      ruleInstance.ruleId in LEGACY_RULE_IDS &&
+      LEGACY_RULE_IDS.includes(ruleInstance.ruleId) &&
       ruleInstance.id != undefined
     ) {
       await ruleInstanceRepository.deleteRuleInstance(ruleInstance.id)
@@ -33,10 +33,10 @@ async function deleteUnusedRules() {
   const ruleRepository = new RuleRepository(FLAGRIGHT_TENANT_ID, {
     dynamoDb,
   })
-  LEGACY_RULE_IDS.forEach(async (ruleId: string) => {
+  for (const ruleId of LEGACY_RULE_IDS) {
     await ruleRepository.deleteRule(ruleId)
     console.info(`Deleted rule ${ruleId}`)
-  })
+  }
 }
 
 export const up: MigrationFn = async () => {
