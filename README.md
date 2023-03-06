@@ -46,6 +46,21 @@ aws_secret_access_key=false
 
 ### For first run
 
+Before initial run to configure databases in your local environment make sure you also had configured your AWS credentials in your machine for your local environment. Add following to your `~/.aws/config`:
+
+```bash
+[default]
+region = us-east-2
+
+[profile AWSAdministratorAccess-911899431626]
+sso_start_url = https://d-9a6713bec9.awsapps.com/start#/
+sso_region = us-east-2
+sso_account_id = 911899431626
+sso_role_name = AWSAdministratorAccess
+```
+
+Note: If you are unable to find `~/.aws/config` file, you can run `aws configure` and it will create the file for you.
+
 Ensure you have the local instance of DynamoDB & MongoDB running. You need Docker installed and runnable for this. Run this command (with sudo if you're on Linux):
 
 ```
