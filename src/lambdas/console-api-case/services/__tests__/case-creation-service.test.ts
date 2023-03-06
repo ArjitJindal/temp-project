@@ -118,6 +118,16 @@ describe('User cases', () => {
       hitDirections: ['ORIGIN', 'DESTINATION'],
     })
 
+    const justRehitRules: HitRulesDetails[] = [
+      {
+        ruleId: 'REHIT_RULE',
+        ruleInstanceId: 'REHIT_RULE',
+        ruleName: 'REHIT_RULE',
+        ruleDescription: 'REHIT_RULE',
+        ruleAction: 'FLAG',
+      },
+    ]
+
     const hitRules: HitRulesDetails[] = [
       {
         ruleId: 'REHIT_RULE',
@@ -192,6 +202,25 @@ describe('User cases', () => {
       expect(existingAlerts.length).toEqual(2)
 
       expect(newAlerts.find((a) => a.ruleId === 'NEW_RULE_HIT')).toBeTruthy()
+      expect(existingAlerts.find((a) => a.ruleId === 'UNHIT_RULE')).toBeTruthy()
+      expect(existingAlerts.find((a) => a.ruleId === 'REHIT_RULE')).toBeTruthy()
+    })
+
+    test('Alerts are correctly separated when just rehit', async () => {
+      const caseCreationService = await getService(TEST_TENANT_ID)
+
+      const { existingAlerts } =
+        caseCreationService.separateExistingAndNewAlerts(
+          justRehitRules,
+          ruleInstances,
+          alerts,
+          0,
+          0,
+          't1'
+        )
+
+      expect(existingAlerts.length).toEqual(2)
+
       expect(existingAlerts.find((a) => a.ruleId === 'UNHIT_RULE')).toBeTruthy()
       expect(existingAlerts.find((a) => a.ruleId === 'REHIT_RULE')).toBeTruthy()
     })

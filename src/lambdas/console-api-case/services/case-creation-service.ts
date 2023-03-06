@@ -112,11 +112,12 @@ export class CaseCreationService {
         : []
 
     // Get the alerts that already existed on the case
-    const existingAlerts = alerts.filter((existingAlert) =>
-      newRuleHits.some(
-        (newRuleHits) =>
-          newRuleHits.ruleInstanceId !== existingAlert.ruleInstanceId
-      )
+    const existingAlerts = alerts.filter(
+      (existingAlert) =>
+        !newRuleHits.some(
+          (newRuleHits) =>
+            newRuleHits.ruleInstanceId === existingAlert.ruleInstanceId
+        )
     )
 
     return {
@@ -201,7 +202,7 @@ export class CaseCreationService {
     transaction: CaseTransaction,
     latestTransactionArrivalTimestamp: number
   ): Alert[] {
-    const updatedAlerts = alerts.map((alert) => {
+    return alerts.map((alert) => {
       const txnSet = new Set(alert.transactionIds).add(
         transaction.transactionId
       )
@@ -212,7 +213,6 @@ export class CaseCreationService {
         numberOfTransactionsHit: txnSet.size,
       }
     })
-    return updatedAlerts
   }
 
   private getNewCase(
