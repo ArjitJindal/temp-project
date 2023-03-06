@@ -11,11 +11,6 @@ import { transactionsToAlerts } from '@/services/alerts'
 import { EntityCounter } from '@/@types/openapi-internal/EntityCounter'
 
 export async function addMissingAlerts(tenant: Tenant) {
-  console.log(tenant.id)
-  console.log('tenant')
-  if (tenant.id !== 'flagright') {
-    return
-  }
   const mongodb = await getMongoDbClient(StackConstants.MONGO_DB_DATABASE_NAME)
 
   const db = mongodb.db()
