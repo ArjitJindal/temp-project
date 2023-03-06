@@ -18,6 +18,7 @@ import { logger } from '@/core/logger'
 import { RuleInstance } from '@/@types/openapi-internal/RuleInstance'
 import { HitRulesDetails } from '@/@types/openapi-internal/HitRulesDetails'
 import { PRIORITYS } from '@/@types/openapi-internal-custom/Priority'
+import { TransactionCaseManagement } from '@/@types/openapi-internal/TransactionCaseManagement'
 
 export class CaseCreationService {
   caseRepository: CaseRepository
@@ -226,18 +227,61 @@ export class CaseCreationService {
     sourceCase: Case,
     alertIds: string[]
   ): Promise<Case> {
+    // Extract all alerts transactions
+    const sourceAlerts = sourceCase.alerts ?? []
+    const allAlertsTransactionIds: string[] = sourceAlerts
+      .flatMap(({ transactionIds }) => transactionIds)
+      .filter((id: string | undefined): id is string => id != null)
+    const { data: allAlertsTransactions } =
+      await this.transactionRepository.getTransactions({
+        filterIdList: allAlertsTransactionIds,
+        afterTimestamp: 0,
+        beforeTimestamp: Number.MAX_SAFE_INTEGER,
+        pageSize: 'DISABLED',
+      })
+
+    // Split alerts which goes to new case and alerts which stay in the old one
     const predicate = (x: Alert) =>
       x.alertId != null && alertIds.includes(x.alertId)
-    const alerts = sourceCase.alerts?.filter(predicate)
+    const newCaseAlerts = sourceAlerts.filter(predicate)
+    const oldCaseAlerts = sourceAlerts.filter((x) => !predicate(x))
+
+    // Split transactions
+    const newCaseAlertsTransactionsIds =
+      newCaseAlerts.flatMap(({ transactionIds }) => transactionIds) ?? []
+    const transactionPredicate = (transaction: TransactionCaseManagement) => {
+      return newCaseAlertsTransactionsIds.includes(transaction.transactionId)
+    }
+    const newCaseAlertsTransactions =
+      allAlertsTransactions.filter(transactionPredicate)
+    const oldCaseAlertsTransactions = allAlertsTransactions.filter(
+      (x) => !transactionPredicate(x)
+    )
+
+    // Create new case
     const newCase = await this.caseRepository.addCaseMongo({
-      alerts,
+      alerts: newCaseAlerts,
       createdTimestamp: Date.now(),
       caseStatus: 'OPEN',
       priority: sourceCase.priority,
+      relatedCases: sourceCase.caseId
+        ? [...(sourceCase.relatedCases ?? []), sourceCase.caseId]
+        : sourceCase.relatedCases,
+      caseUsers: sourceCase.caseUsers,
+      caseTransactions: newCaseAlertsTransactions,
+      caseTransactionsIds: newCaseAlertsTransactions.map(
+        ({ transactionId }) => transactionId
+      ),
     })
+
+    // Save old case
     await this.caseRepository.addCaseMongo({
       ...sourceCase,
-      alerts: sourceCase.alerts?.filter((x) => !predicate(x)),
+      alerts: oldCaseAlerts,
+      caseTransactions: oldCaseAlertsTransactions,
+      caseTransactionsIds: oldCaseAlertsTransactions.map(
+        ({ transactionId }) => transactionId
+      ),
     })
     return newCase
   }

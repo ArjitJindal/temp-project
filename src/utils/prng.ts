@@ -4,7 +4,7 @@
   Source: https://stackoverflow.com/a/47593316/916330
  */
 export function prng(seed?: number | undefined | null) {
-  let state = (seed ?? Math.random()) * 10
+  let state = (seed ?? Math.random()) * Number.MAX_SAFE_INTEGER
   // mulberry32
   return function () {
     let t = (state += 0x6d2b79f5)
@@ -17,4 +17,23 @@ export function prng(seed?: number | undefined | null) {
 export function randomInt(seed?: number | undefined | null, max?: number) {
   const number = prng(seed)()
   return Math.floor(number * (max ?? Number.MAX_SAFE_INTEGER))
+}
+
+export function randomString(seed?: number | undefined | null, max?: number) {
+  const number = prng(seed)()
+  return Math.floor(number * (max ?? Number.MAX_SAFE_INTEGER))
+}
+
+export function randomArray<T>(
+  init: (index: number) => T,
+  seed?: number,
+  max?: number
+): T[] {
+  const arraySize = randomInt(seed, max ?? 100)
+  return [...new Array(arraySize)].map((_, i) => init(i))
+}
+
+export function pickRandom<T>(variants: T[], seed?: number): T {
+  const index = randomInt(seed, variants.length)
+  return variants[index]
 }

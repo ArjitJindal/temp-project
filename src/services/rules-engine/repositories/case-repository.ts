@@ -44,6 +44,7 @@ import { hasFeature, hasFeatures } from '@/core/utils/context'
 import {
   COUNT_QUERY_LIMIT,
   OptionalPagination,
+  OptionalPaginationParams,
   PaginationParams,
 } from '@/utils/pagination'
 import { CaseTransaction } from '@/@types/openapi-internal/CaseTransaction'
@@ -1078,7 +1079,7 @@ export class CaseRepository {
 
   public async getCaseTransactions(
     caseId: string,
-    params: PaginationParams & {
+    params: OptionalPaginationParams & {
       includeUsers?: boolean
     }
   ): Promise<TransactionsListResponse> {
@@ -1108,6 +1109,29 @@ export class CaseRepository {
       includeUsers: params.includeUsers,
     })
   }
+
+  public async getAlertTransactions(
+    alertId: string,
+    params: OptionalPaginationParams
+  ): Promise<TransactionsListResponse> {
+    const alert = await this.getAlertById(alertId)
+    if (alert == null) {
+      throw new NotFound(`Alert "${alertId}" not found `)
+    }
+
+    const transactionsRepo = new TransactionRepository(this.tenantId, {
+      mongoDb: this.mongoDb,
+    })
+
+    return await transactionsRepo.getTransactions({
+      filterIdList: alert.transactionIds,
+      afterTimestamp: 0,
+      beforeTimestamp: Number.MAX_SAFE_INTEGER,
+      page: params.page,
+      pageSize: params.pageSize,
+    })
+  }
+
   private getCaseRulesMongoPipeline(caseFilter: string) {
     return [
       {

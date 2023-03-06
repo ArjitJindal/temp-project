@@ -439,6 +439,16 @@ export const casesHandler = lambdaApi()(
         segment?.close()
       }
     } else if (
+      event.httpMethod === 'GET' &&
+      event.resource === '/alerts/{alertId}/transactions'
+    ) {
+      const alertId = event.pathParameters?.alertId as string
+      const { page, pageSize } = event.queryStringParameters as any
+      return await caseService.getAlertTransactions(alertId, {
+        page,
+        pageSize,
+      })
+    } else if (
       event.httpMethod === 'POST' &&
       event.resource === '/alerts/{alertId}/comments' &&
       event.body

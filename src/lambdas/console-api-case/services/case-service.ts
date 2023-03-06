@@ -214,6 +214,13 @@ export class CaseService {
     return await this.caseRepository.getCaseTransactions(caseId, params)
   }
 
+  public async getAlertTransactions(
+    alertId: string,
+    params: PaginationParams
+  ): Promise<TransactionsListResponse> {
+    return await this.caseRepository.getAlertTransactions(alertId, params)
+  }
+
   public async getCaseRules(caseId: string): Promise<Array<RulesHitPerCase>> {
     return await this.caseRepository.getCaseRules(caseId)
   }

@@ -542,6 +542,12 @@ paths:
           in: query
           name: filterRulesHit
         - schema:
+            type: array
+            items:
+              type: string
+          in: query
+          name: filterRuleInstancesHit
+        - schema:
             type: string
           in: query
           name: transactionType
@@ -2361,6 +2367,23 @@ paths:
             $ref: '#/components/schemas/Page'
           in: query
           name: page
+  '/alerts/{alertId}/transactions':
+    parameters:
+      - schema:
+          type: string
+        name: alertId
+        in: path
+        required: true
+    get:
+      summary: Alerts - Item - Transaction List
+      operationId: get-alert-transaction-list
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TransactionsListResponse'
   /alerts:
     get:
       summary: Alerts - List

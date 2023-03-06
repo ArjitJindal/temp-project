@@ -214,6 +214,15 @@ export class TransactionRepository {
         },
       })
     }
+    if (params.filterRuleInstancesHit?.length ?? 0 > 0) {
+      executedRulesFilters.push({
+        $elemMatch: {
+          ruleHit: true,
+          ruleInstanceId: { $in: params.filterRuleInstancesHit },
+        },
+      })
+    }
+
     if (executedRulesFilters.length > 0) {
       conditions.push({
         executedRules: {
