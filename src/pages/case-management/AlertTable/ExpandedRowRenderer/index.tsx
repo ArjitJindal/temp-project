@@ -23,15 +23,14 @@ export default function ExpandedRowRenderer(props: Props) {
   const [params, setParams] = useState<TransactionsTableParams>(DEFAULT_PARAMS_STATE);
 
   const transactionsResponse = useQuery(CASES_ITEM_TRANSACTIONS(caseId ?? '', params), async () => {
-    if (caseId == null) {
-      throw new Error(`Unable to fetch transactions for alert, it's case id is empty`);
+    if (alertId == null) {
+      throw new Error(`Unable to fetch transactions for alert, it's alert id is empty`);
     }
     const result = await measure(
       () =>
-        api.getCaseTransactions({
+        api.getAlertTransactionList({
           ...params,
-          caseId: caseId,
-          includeUsers: true,
+          alertId: alertId,
         }),
       'Get Case Transactions For Alert',
     );
