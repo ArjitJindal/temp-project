@@ -31,7 +31,7 @@ export const TIME_WINDOW_SCHEMA = (options?: SchemaOptions) =>
   ({
     ...uiSchema(options?.uiSchema, { subtype: 'TIME_WINDOW' }),
     type: 'object',
-    title: options?.title || 'Time Window',
+    title: options?.title || 'Time window',
     description: options?.description,
     properties: {
       units: { type: 'integer', title: 'Number of time unit', minimum: 0 },
@@ -62,7 +62,7 @@ export const DAY_WINDOW_SCHEMA = (options?: SchemaOptions) =>
   ({
     type: 'object',
     ...uiSchema(options?.uiSchema, { subtype: 'DAY_WINDOW' }),
-    title: options?.title || 'Time Window (Day)',
+    title: options?.title || 'Time window (day)',
     description: options?.description,
     properties: {
       units: { type: 'integer', title: 'Number of days', minimum: 0 },
@@ -110,7 +110,7 @@ export const AGE_RANGE_SCHEMA = (options?: SchemaOptions) =>
   ({
     type: 'object',
     ...uiSchema(options?.uiSchema, { subtype: 'AGE_RANGE' }),
-    title: options?.title || 'User Age Range',
+    title: options?.title || 'User age range',
     description: options?.description,
     properties: {
       minAge: AGE_OPTIONAL_SCHEMA({ title: 'Min age' }),
@@ -164,7 +164,7 @@ export const TRANSACTION_STATES_SCHEMA = (options?: SchemaOptions) =>
   ({
     type: 'array',
     ...uiSchema(options?.uiSchema, { subtype: 'TRANSACTION_STATES' }),
-    title: options?.title || 'Target Transaction State',
+    title: options?.title || 'Target transaction state',
     description:
       options?.description ||
       'If not specified, all transactions regardless of the state will be used for running the rule',
@@ -185,7 +185,7 @@ export const TRANSACTIONS_THRESHOLD_SCHEMA = (options?: SchemaOptions) =>
   ({
     type: 'integer',
     ...uiSchema(options?.uiSchema, { subtype: 'TRANSACTIONS_THRESHOLD' }),
-    title: options?.title || 'Transactions Count Threshold',
+    title: options?.title || 'Transactions count threshold',
     description:
       options?.description ||
       'rule is run when the number of transactions per time window is greater than the threshold',
@@ -204,7 +204,7 @@ export const TRANSACTION_TYPE_SCHEMA = (options?: SchemaOptions) =>
     type: 'string',
     enum: TRANSACTION_TYPES,
     ...uiSchema(options?.uiSchema, { subtype: 'TRANSACTION_TYPE' }),
-    title: options?.title || 'Target Transaction Type',
+    title: options?.title || 'Target transaction type',
     description: options?.description,
   } as const)
 
@@ -212,7 +212,7 @@ export const TRANSACTION_TYPES_SCHEMA = (options?: SchemaOptions) =>
   ({
     type: 'array',
     ...uiSchema(options?.uiSchema, { subtype: 'TRANSACTION_TYPES' }),
-    title: options?.title || 'Target Transaction Types',
+    title: options?.title || 'Target transaction types',
     description: options?.description,
     items: {
       type: 'string',
@@ -231,7 +231,7 @@ export const PAYMENT_METHOD_SCHEMA = (options?: SchemaOptions) =>
   ({
     type: 'string',
     ...uiSchema(options?.uiSchema, { subtype: 'PAYMENT_METHOD' }),
-    title: options?.title || 'Payment Method',
+    title: options?.title || 'Payment method',
     description: options?.description,
     enum: PAYMENT_METHODSS,
   } as const)
@@ -248,7 +248,7 @@ export const USER_TYPE_SCHEMA = (options?: SchemaOptions) =>
     ...uiSchema(options?.uiSchema, {
       subtype: 'USER_TYPE',
     }),
-    title: options?.title || 'User Type',
+    title: options?.title || 'User type',
     description: options?.description,
     enum: USER_TYPES,
   } as const)
@@ -265,7 +265,7 @@ export const PAYMENT_CHANNEL_SCHEMA = (options?: SchemaOptions) =>
     ...uiSchema(options?.uiSchema, {
       subtype: 'PAYMENT_CHANNEL',
     }),
-    title: options?.title || 'Payment Channel',
+    title: options?.title || 'Payment channel',
     description: options?.description,
   } as const)
 
@@ -281,7 +281,7 @@ export const TRANSACTION_AMOUNT_THRESHOLDS_SCHEMA = (options?: SchemaOptions) =>
       subtype: 'TRANSACTION_AMOUNT_THRESHOLDS',
     }),
     type: 'object',
-    title: options?.title || 'Transactions Amount Threshold',
+    title: options?.title || 'Transactions amount threshold',
     description: options?.description,
     additionalProperties: {
       type: 'integer',
@@ -348,7 +348,7 @@ export const TRANSACTION_AMOUNT_RANGE_SCHEMA = (options?: SchemaOptions) =>
     ...uiSchema(options?.uiSchema, {
       subtype: 'TRANSACTION_AMOUNT_RANGE',
     }),
-    title: options?.title || 'Transaction Amount Range',
+    title: options?.title || 'Transaction amount range',
     description: options?.description,
     additionalProperties: {
       type: 'object',
@@ -429,7 +429,7 @@ export type ValueComparator = {
 export const VALUE_COMPARATOR_SCHEMA = (options?: SchemaOptions) =>
   ({
     type: 'object',
-    title: options?.title || 'Value Threshold',
+    title: options?.title || 'Value threshold',
     description: options?.description,
     properties: {
       value: {
