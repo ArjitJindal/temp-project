@@ -2398,6 +2398,14 @@ paths:
         name: alertId
         in: path
         required: true
+      - schema:
+          $ref: '#/components/schemas/PageSize'
+        in: query
+        name: pageSize
+      - schema:
+          $ref: '#/components/schemas/Page'
+        in: query
+        name: page
     get:
       summary: Alerts - Item - Transaction List
       operationId: get-alert-transaction-list
