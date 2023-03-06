@@ -4,7 +4,7 @@ import cn from 'clsx';
 import s from './style.module.less';
 import { useApi } from '@/api';
 import { useQuery } from '@/utils/queries/hooks';
-import { BUSINESS_USERS_UNIQUES } from '@/utils/queries/keys';
+import { USERS_UNIQUES } from '@/utils/queries/keys';
 import { getOr, isLoading, map } from '@/utils/asyncResource';
 
 interface Props {
@@ -16,8 +16,10 @@ export default function PopupContent(props: Props) {
   const { value, onConfirm } = props;
 
   const api = useApi();
-  const result = useQuery(BUSINESS_USERS_UNIQUES(), () => api.getUsersUniques());
-  const businessIndustryRes = map(result.data, ({ businessIndustry }) => businessIndustry);
+  const result = useQuery(USERS_UNIQUES('BUSINESS_INDUSTRY'), () =>
+    api.getUsersUniques({ field: 'BUSINESS_INDUSTRY' }),
+  );
+  const businessIndustryRes = map(result.data, (x) => x);
 
   return (
     <div className={s.root}>

@@ -40,7 +40,7 @@ import { isTransactionType } from '@/utils/api/transactions';
 import { RESIDENCE_TYPES } from '@/utils/residence-types';
 import { capitalizeWords } from '@/utils/tags';
 import { useApi } from '@/api';
-import { BUSINESS_USERS_UNIQUES } from '@/utils/queries/keys';
+import { USERS_UNIQUES } from '@/utils/queries/keys';
 import { useQuery } from '@/utils/queries/hooks';
 import { map } from '@/utils/asyncResource';
 import { timezones } from '@/utils/timezones';
@@ -484,8 +484,12 @@ export const INPUT_RENDERERS: { [key in DataType]: InputRenderer<any> } = {
   }) as InputRenderer<'MULTIPLE'>,
   BUSINESS_INDUSTRY: ((props) => {
     const api = useApi();
-    const result = useQuery(BUSINESS_USERS_UNIQUES(), () => api.getUsersUniques());
-    const businessIndustryRes = map(result.data, ({ businessIndustry }) => businessIndustry);
+    const result = useQuery(USERS_UNIQUES('BUSINESS_INDUSTRY'), () =>
+      api.getUsersUniques({
+        field: 'BUSINESS_INDUSTRY',
+      }),
+    );
+    const businessIndustryRes = map(result.data, (x) => x);
     return (
       businessIndustryRes['value'] && (
         <MultipleSelect

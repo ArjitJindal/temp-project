@@ -3,6 +3,7 @@ import { QueryKey } from '@tanstack/react-query';
 import { Dayjs } from '@/utils/dayjs';
 import { ListType } from '@/apis';
 import { TransactionsUniquesField } from '@/apis/models/TransactionsUniquesField';
+import { UsersUniquesField } from '@/apis/models/UsersUniquesField';
 
 type AnyParameters = unknown;
 
@@ -69,7 +70,12 @@ export const TRANSACTIONS_UNIQUES = (
     filter?: string;
   } = {},
 ): QueryKey => ['transactions', 'uniques', field, params];
-export const BUSINESS_USERS_UNIQUES = (): QueryKey => ['users', 'uniques'];
+export const USERS_UNIQUES = (
+  field: UsersUniquesField,
+  params: {
+    filter?: string;
+  } = {},
+): QueryKey => ['users', 'uniques', field, params];
 export const SANCTIONS_SEARCH = (params: AnyParameters): QueryKey => [
   'sanctions',
   'search',

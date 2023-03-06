@@ -27,7 +27,7 @@ import { PaginatedData, usePaginatedQuery } from '@/utils/queries/hooks';
 import { useApiTime, usePageViewTracker } from '@/utils/tracker';
 import { useDeepEqualEffect } from '@/utils/hooks';
 import { DEFAULT_PAGE_SIZE } from '@/components/ui/Table/consts';
-import TagSearchButton from '@/pages/transactions/components/TagSearchButton';
+import UserTagSearchButton from '@/pages/transactions/components/UserTagSearchButton';
 
 export interface UserSearchParams extends CommonParams {
   riskLevels?: RiskLevel[];
@@ -185,7 +185,7 @@ const UsersTab = <T extends InternalBusinessUser | InternalConsumerUser | Intern
   const queryResults = usePaginatedQuery(
     USERS(type, params),
     async (paginationParams): Promise<PaginatedData<T>> => {
-      const { userId, createdTimestamp, page, riskLevels, pageSize } = params;
+      const { userId, createdTimestamp, page, riskLevels, pageSize, tagKey, tagValue } = params;
       const queryObj = {
         page,
         pageSize,
@@ -193,6 +193,8 @@ const UsersTab = <T extends InternalBusinessUser | InternalConsumerUser | Intern
         afterTimestamp: createdTimestamp ? dayjs(createdTimestamp[0]).valueOf() : 0,
         beforeTimestamp: createdTimestamp ? dayjs(createdTimestamp[1]).valueOf() : Date.now(),
         filterId: userId,
+        filterTagKey: tagKey,
+        filterTagValue: tagValue,
         filterRiskLevel: riskLevels,
       };
 
@@ -243,7 +245,7 @@ const UsersTab = <T extends InternalBusinessUser | InternalConsumerUser | Intern
           key: 'tagKey',
           title: 'Tags',
           renderer: ({ params, setParams }) => (
-            <TagSearchButton
+            <UserTagSearchButton
               initialState={{
                 key: params.tagKey ?? null,
                 value: params.tagValue ?? null,
