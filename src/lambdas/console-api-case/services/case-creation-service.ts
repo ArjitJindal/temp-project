@@ -90,7 +90,8 @@ export class CaseCreationService {
     ruleInstances: readonly RuleInstance[],
     alerts: Alert[],
     createdTimestamp: number,
-    latestTransactionArrivalTimestamp: number
+    latestTransactionArrivalTimestamp: number,
+    transactionId: string
   ): { existingAlerts: Alert[]; newAlerts: Alert[] } {
     // Get the rule hits that are new for this transaction
     const newRuleHits = hitRules.filter(
@@ -105,7 +106,8 @@ export class CaseCreationService {
             newRuleHits,
             ruleInstances,
             createdTimestamp,
-            latestTransactionArrivalTimestamp
+            latestTransactionArrivalTimestamp,
+            transactionId
           )
         : []
 
@@ -137,7 +139,8 @@ export class CaseCreationService {
         ruleInstances,
         alerts,
         createdTimestamp,
-        latestTransactionArrivalTimestamp
+        latestTransactionArrivalTimestamp,
+        latestTransaction.transactionId
       )
 
       const updatedExistingAlerts =
@@ -155,7 +158,8 @@ export class CaseCreationService {
         hitRules,
         ruleInstances,
         createdTimestamp,
-        latestTransactionArrivalTimestamp
+        latestTransactionArrivalTimestamp,
+        latestTransaction.transactionId
       )
     }
   }
@@ -164,7 +168,8 @@ export class CaseCreationService {
     hitRules: HitRulesDetails[],
     ruleInstances: readonly RuleInstance[],
     createdTimestamp: number,
-    latestTransactionArrivalTimestamp: number
+    latestTransactionArrivalTimestamp: number,
+    transactionId: string
   ): Alert[] {
     const alerts: Alert[] = hitRules.map((hitRule: HitRulesDetails) => {
       let priority
@@ -183,6 +188,7 @@ export class CaseCreationService {
         ruleDescription: hitRule.ruleDescription,
         ruleAction: hitRule.ruleAction,
         numberOfTransactionsHit: 1,
+        transactionIds: [transactionId],
         priority: (priority ?? _.last(PRIORITYS)) as Priority,
       }
     })
@@ -269,8 +275,8 @@ export class CaseCreationService {
         : sourceCase.relatedCases,
       caseUsers: sourceCase.caseUsers,
       caseTransactions: newCaseAlertsTransactions,
-      caseTransactionsIds: newCaseAlertsTransactions.map(
-        ({ transactionId }) => transactionId
+      caseTransactionsIds: _.uniq(
+        newCaseAlertsTransactions.map(({ transactionId }) => transactionId)
       ),
     })
 
@@ -279,8 +285,8 @@ export class CaseCreationService {
       ...sourceCase,
       alerts: oldCaseAlerts,
       caseTransactions: oldCaseAlertsTransactions,
-      caseTransactionsIds: oldCaseAlertsTransactions.map(
-        ({ transactionId }) => transactionId
+      caseTransactionsIds: _.uniq(
+        oldCaseAlertsTransactions.map(({ transactionId }) => transactionId)
       ),
     })
     return newCase
@@ -382,7 +388,8 @@ export class CaseCreationService {
               params.transaction.hitRules,
               ruleInstances,
               params.createdTimestamp,
-              params.latestTransactionArrivalTimestamp
+              params.latestTransactionArrivalTimestamp,
+              params.transaction.transactionId
             ),
           })
         }

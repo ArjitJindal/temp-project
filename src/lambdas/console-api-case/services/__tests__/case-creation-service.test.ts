@@ -184,7 +184,8 @@ describe('User cases', () => {
           ruleInstances,
           alerts,
           0,
-          0
+          0,
+          't1'
         )
 
       expect(newAlerts.length).toEqual(1)
