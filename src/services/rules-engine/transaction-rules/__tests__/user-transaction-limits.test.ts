@@ -620,12 +620,14 @@ describe('Check Thresholds', () => {
       defaultAction: 'FLAG',
       defaultParameters: {
         onlyCheckTypes: ['ALL_TRANSACTIONS'],
-        timeWindow: {
-          units: 1,
-          granularity: 'day',
-          rollingBasis: true,
+        transactionsCountThreshold: {
+          timeWindow: {
+            units: 1,
+            granularity: 'day',
+            rollingBasis: true,
+          },
+          threshold: 2,
         },
-        threshold: 2,
       } as UserTransactionLimitsRuleParameter,
     },
   ])

@@ -11,11 +11,7 @@ import {
   UserTimeAggregationAttributes,
 } from '../repositories/aggregation-repository'
 import { formatMoney } from '../utils/format-description'
-import {
-  TIME_WINDOW_OPTIONAL_SCHEMA,
-  TRANSACTIONS_THRESHOLD_OPTIONAL_SCHEMA,
-  TimeWindow,
-} from '../utils/rule-parameter-schemas'
+import { TimeWindow, TIME_WINDOW_SCHEMA } from '../utils/rule-parameter-schemas'
 import { TransactionRepository } from '../repositories/transaction-repository'
 import { subtractTime } from '../utils/time-utils'
 import { TransactionRule } from './rule'
@@ -51,8 +47,10 @@ function granularityToAdverb(granularity: 'day' | 'week' | 'month' | 'year') {
 
 export type UserTransactionLimitsRuleParameter = {
   onlyCheckTypes?: CheckType[]
-  timeWindow?: TimeWindow
-  threshold?: number
+  transactionsCountThreshold?: {
+    threshold: number
+    timeWindow: TimeWindow
+  }
 }
 
 export default class UserTransactionLimitsRule extends TransactionRule<UserTransactionLimitsRuleParameter> {
@@ -73,8 +71,21 @@ export default class UserTransactionLimitsRule extends TransactionRule<UserTrans
           },
           nullable: true,
         },
-        threshold: TRANSACTIONS_THRESHOLD_OPTIONAL_SCHEMA(),
-        timeWindow: TIME_WINDOW_OPTIONAL_SCHEMA(),
+        transactionsCountThreshold: {
+          type: 'object',
+          title: 'Transactions count threshold',
+          description:
+            'rule is run when the number of transactions per time window is greater than the threshold',
+          properties: {
+            threshold: {
+              type: 'integer',
+              title: 'Threshold',
+            },
+            timeWindow: TIME_WINDOW_SCHEMA(),
+          },
+          required: ['threshold', 'timeWindow'],
+          nullable: true,
+        },
       },
     }
   }
@@ -87,13 +98,7 @@ export default class UserTransactionLimitsRule extends TransactionRule<UserTrans
       return
     }
 
-    if (
-      this.parameters.threshold &&
-      this.parameters.timeWindow?.granularity &&
-      this.parameters.timeWindow?.units
-    ) {
-      const { threshold, timeWindow } = this.parameters
-
+    if (this.parameters.transactionsCountThreshold) {
       const transactionRepository = new TransactionRepository(this.tenantId, {
         dynamoDb: this.dynamoDb,
       })
@@ -106,7 +111,7 @@ export default class UserTransactionLimitsRule extends TransactionRule<UserTrans
             beforeTimestamp: this.transaction.timestamp,
             afterTimestamp: subtractTime(
               dayjs(this.transaction.timestamp),
-              timeWindow
+              this.parameters.transactionsCountThreshold.timeWindow
             ),
           },
           {
@@ -119,7 +124,10 @@ export default class UserTransactionLimitsRule extends TransactionRule<UserTrans
           }
         )
 
-      if (transactionsCount + 1 <= threshold) {
+      if (
+        transactionsCount + 1 <=
+        this.parameters.transactionsCountThreshold.threshold
+      ) {
         return
       }
     }

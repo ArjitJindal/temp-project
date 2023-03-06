@@ -28,7 +28,7 @@ export async function renameRuleParameter(
   excludedRuleImplementationNames: string[],
   oldParameterPath: string,
   newParameterPath: string,
-  converterCallback: (value: any) => any
+  converterCallback: (value: any, allParameters: any) => any
 ) {
   await renameRuleParameterPrivate(
     ruleImplementationNames,
@@ -54,7 +54,7 @@ async function renameRuleParameterPrivate(
   excludedRuleImplementationNames: string[],
   oldParameterPath: string,
   newParameterPath: string,
-  converterCallback: (value: any) => any,
+  converterCallback: (value: any, allParameters: any) => any,
   tenantId?: string
 ) {
   const rulesById = await getRulesById()
@@ -87,7 +87,11 @@ async function renameRuleParameterPrivate(
       : (rule as RuleInstance).parameters
     const targetParameter = _.get(parameters, oldParameterPath)
     if (targetParameter) {
-      _.set(parameters, newParameterPath, converterCallback(targetParameter))
+      _.set(
+        parameters,
+        newParameterPath,
+        converterCallback(targetParameter, parameters)
+      )
       shouldSave = true
     }
     const riskParameters = isRule(rule)
@@ -102,7 +106,7 @@ async function renameRuleParameterPrivate(
         _.set(
           (riskParameters as any)?.[risk],
           newParameterPath,
-          converterCallback(targetParameter)
+          converterCallback(targetParameter, (riskParameters as any)?.[risk])
         )
         shouldSave = true
       }
