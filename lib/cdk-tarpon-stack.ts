@@ -1202,13 +1202,13 @@ export class CdkTarponStack extends cdk.Stack {
      * API Gateway
      * Open Issue: CDK+OpenAPI proper integration - https://github.com/aws/aws-cdk/issues/1461
      */
-
-    const domainName = new DomainName(this, getApiDomain(config), {
-      certificate: apiCert,
-      domainName: getApiDomain(config),
-    })
-
+    let domainName: DomainName | undefined
     if (this.config.stage === 'dev') {
+      domainName = new DomainName(this, getApiDomain(config), {
+        certificate: apiCert,
+        domainName: getApiDomain(config),
+      })
+
       const hostedZone = HostedZone.fromLookup(this, `zone`, {
         domainName: getBaseDomain(config),
         privateZone: false,
@@ -1232,9 +1232,11 @@ export class CdkTarponStack extends cdk.Stack {
     const { api: publicApi, logGroup: publicApiLogGroup } =
       this.createApiGateway(StackConstants.TARPON_API_NAME)
 
-    domainName.addBasePathMapping(publicApi, {
-      basePath: '',
-    })
+    if (domainName) {
+      domainName.addBasePathMapping(publicApi, {
+        basePath: '',
+      })
+    }
 
     createAPIGatewayThrottlingAlarm(
       this,
@@ -1248,9 +1250,11 @@ export class CdkTarponStack extends cdk.Stack {
     const { api: publicConsoleApi, logGroup: publicConsoleApiLogGroup } =
       this.createApiGateway(StackConstants.TARPON_MANAGEMENT_API_NAME)
 
-    domainName.addBasePathMapping(publicConsoleApi, {
-      basePath: 'management',
-    })
+    if (domainName) {
+      domainName.addBasePathMapping(publicConsoleApi, {
+        basePath: 'management',
+      })
+    }
 
     createAPIGatewayThrottlingAlarm(
       this,
@@ -1264,9 +1268,11 @@ export class CdkTarponStack extends cdk.Stack {
     const { api: publicDeviceDataApi, logGroup: publicDeviceDataApiLogGroup } =
       this.createApiGateway(StackConstants.TARPON_DEVICE_DATA_API_NAME)
 
-    domainName.addBasePathMapping(publicConsoleApi, {
-      basePath: 'device',
-    })
+    if (domainName) {
+      domainName.addBasePathMapping(publicConsoleApi, {
+        basePath: 'device',
+      })
+    }
 
     createAPIGatewayThrottlingAlarm(
       this,
@@ -1280,9 +1286,11 @@ export class CdkTarponStack extends cdk.Stack {
     const { api: consoleApi, logGroup: consoleApiLogGroup } =
       this.createApiGateway(StackConstants.CONSOLE_API_NAME)
 
-    domainName.addBasePathMapping(publicConsoleApi, {
-      basePath: 'console',
-    })
+    if (domainName) {
+      domainName.addBasePathMapping(publicConsoleApi, {
+        basePath: 'console',
+      })
+    }
 
     createAPIGatewayThrottlingAlarm(
       this,
@@ -1674,9 +1682,11 @@ export class CdkTarponStack extends cdk.Stack {
       },
     })
 
-    restApi.addUsagePlan(`domain-${apiName}`, {
-      apiStages: [{ api: restApi, stage: restApi.deploymentStage }],
-    })
+    if (process.env.ENV && process.env.ENV.indexOf('dev') > -1) {
+      restApi.addUsagePlan(`domain-${apiName}`, {
+        apiStages: [{ api: restApi, stage: restApi.deploymentStage }],
+      })
+    }
 
     // NOTE: We add random spaces to the end of the validation response template (which won't affect the response) to make
     // the template get updated for every deployment (0.1% chance of conflict) to get around the template being reset for
