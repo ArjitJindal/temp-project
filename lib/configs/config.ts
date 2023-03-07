@@ -75,6 +75,8 @@ export type Config = {
     LAMBDA_VPC_ENABLED?: boolean
   }
   application: {
+    CERTIFICATE_ARN: string
+    AUTH0_CUSTOM_CNAME?: string
     AUTH0_DOMAIN: string
     AUTH0_AUDIENCE: string
     ATLAS_CREDENTIALS_SECRET_ARN: string

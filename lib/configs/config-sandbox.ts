@@ -55,6 +55,8 @@ export const config: Config = {
     LAMBDA_VPC_ENABLED: true,
   },
   application: {
+    CERTIFICATE_ARN:
+      'arn:aws:acm:eu-central-1:293986822825:certificate/a2e221d7-eaf5-42d5-ac39-1d500cbbd745',
     AUTH0_DOMAIN: 'sandbox-flagright.eu.auth0.com',
     AUTH0_AUDIENCE: 'https://sandbox.api.flagright.com/',
     ATLAS_CREDENTIALS_SECRET_ARN: `arn:aws:secretsmanager:${region}:${account}:secret:mongoAtlasCreds-suQQec`,

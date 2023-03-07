@@ -5,19 +5,19 @@ const allowedOrigins = [
   'https://flagright.local:8001',
   'http://localhost:8001',
   'https://localhost:8001',
-  'https://dev.console.flagright.com',
+  'https://console.flagright.dev',
   ...DEV_GITHUB_USERS.flatMap((user) => [
-    `https://dev.${user}-1.console.flagright.com`,
-    `https://dev.${user}-2.console.flagright.com`,
-    `https://dev.${user}-3.console.flagright.com`,
+    `https://${user}-1.console.flagright.dev`,
+    `https://${user}-2.console.flagright.dev`,
+    `https://${user}-3.console.flagright.dev`,
   ]),
 ]
 export const Auth0DevTenantConfig: Auth0TenantConfig = {
   tenantName: 'dev-flagright',
   region: 'eu',
-  customDomain: 'login.dev.console.flagright.com',
+  customDomain: 'login.console.flagright.dev',
   consoleApplicationName: 'Flagright Console (Dev)',
-  consoleUrl: 'https://dev.console.flagright.com',
+  consoleUrl: 'https://console.flagright.dev',
   allowedOrigins,
   allowedCallbackUrls: allowedOrigins,
   branding: {

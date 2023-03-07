@@ -45,8 +45,10 @@ export const config: Config = {
     },
   },
   application: {
+    CERTIFICATE_ARN:
+      'arn:aws:acm:eu-central-1:911899431626:certificate/18e81dca-c35a-453c-a566-9f2d9bfa0d98',
     AUTH0_DOMAIN: 'dev-flagright.eu.auth0.com',
-    AUTH0_AUDIENCE: 'https://dev.api.flagright.com/',
+    AUTH0_AUDIENCE: 'https://api.flagright.dev/',
     ATLAS_CREDENTIALS_SECRET_ARN: `arn:aws:secretsmanager:${region}:${account}:secret:mongoAtlasCreds-RvzMVI`,
     COMPLYADVANTAGE_CREDENTIALS_SECRET_ARN: `arn:aws:secretsmanager:${region}:${account}:secret:complyAdvantageCreds-j8uTMO`,
     CONSOLE_URI: 'https://dev.console.flagright.com',

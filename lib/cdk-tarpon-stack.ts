@@ -1,3 +1,4 @@
+import { URL } from 'url'
 import * as cdk from 'aws-cdk-lib'
 import { CfnOutput, Duration, Fn, RemovalPolicy, Resource } from 'aws-cdk-lib'
 import { AttributeType, Table } from 'aws-cdk-lib/aws-dynamodb'
@@ -15,6 +16,7 @@ import {
 import {
   ApiDefinition,
   AssetApiDefinition,
+  DomainName,
   LogGroupLogDestination,
   MethodLoggingLevel,
   ResponseType,
@@ -59,6 +61,8 @@ import {
   Succeed,
 } from 'aws-cdk-lib/aws-stepfunctions'
 import { LambdaInvoke } from 'aws-cdk-lib/aws-stepfunctions-tasks'
+import { Certificate } from 'aws-cdk-lib/aws-certificatemanager'
+import { CnameRecord, HostedZone } from 'aws-cdk-lib/aws-route53'
 import {
   getDeadLetterQueueName,
   getNameForGlobalResource,
@@ -1141,6 +1145,12 @@ export class CdkTarponStack extends cdk.Stack {
         hammerheadChangeConsumerProps
       )
 
+    const apiCert = Certificate.fromCertificateArn(
+      this,
+      `api-certificate`,
+      config.application.CERTIFICATE_ARN
+    )
+
     if (!isDevUserStack) {
       this.createKinesisEventSource(
         hammerheadChangeCaptureKinesisConsumerAlias,
@@ -1193,9 +1203,38 @@ export class CdkTarponStack extends cdk.Stack {
      * Open Issue: CDK+OpenAPI proper integration - https://github.com/aws/aws-cdk/issues/1461
      */
 
+    const domainName = new DomainName(this, getApiDomain(config), {
+      certificate: apiCert,
+      domainName: getApiDomain(config),
+    })
+
+    if (this.config.stage === 'dev') {
+      const hostedZone = HostedZone.fromLookup(this, `zone`, {
+        domainName: getBaseDomain(config),
+        privateZone: false,
+      })
+      new CnameRecord(this, `${getApiDomain(config)}-cname`, {
+        zone: hostedZone,
+        recordName: getSubdomain(),
+        domainName: domainName.domainNameAliasDomainName,
+      })
+
+      if (!isDevUserStack) {
+        new CnameRecord(this, `${getApiDomain(config)}-devuser-cname`, {
+          zone: hostedZone,
+          recordName: 'login.console.' + getBaseDomain(config),
+          domainName: config.application.AUTH0_CUSTOM_CNAME || '',
+        })
+      }
+    }
+
     // Public API
     const { api: publicApi, logGroup: publicApiLogGroup } =
       this.createApiGateway(StackConstants.TARPON_API_NAME)
+
+    domainName.addBasePathMapping(publicApi, {
+      basePath: '',
+    })
 
     createAPIGatewayThrottlingAlarm(
       this,
@@ -1209,6 +1248,10 @@ export class CdkTarponStack extends cdk.Stack {
     const { api: publicConsoleApi, logGroup: publicConsoleApiLogGroup } =
       this.createApiGateway(StackConstants.TARPON_MANAGEMENT_API_NAME)
 
+    domainName.addBasePathMapping(publicConsoleApi, {
+      basePath: 'management',
+    })
+
     createAPIGatewayThrottlingAlarm(
       this,
       this.betterUptimeCloudWatchTopic,
@@ -1221,6 +1264,10 @@ export class CdkTarponStack extends cdk.Stack {
     const { api: publicDeviceDataApi, logGroup: publicDeviceDataApiLogGroup } =
       this.createApiGateway(StackConstants.TARPON_DEVICE_DATA_API_NAME)
 
+    domainName.addBasePathMapping(publicConsoleApi, {
+      basePath: 'device',
+    })
+
     createAPIGatewayThrottlingAlarm(
       this,
       this.betterUptimeCloudWatchTopic,
@@ -1232,6 +1279,10 @@ export class CdkTarponStack extends cdk.Stack {
     // Console API
     const { api: consoleApi, logGroup: consoleApiLogGroup } =
       this.createApiGateway(StackConstants.CONSOLE_API_NAME)
+
+    domainName.addBasePathMapping(publicConsoleApi, {
+      basePath: 'console',
+    })
 
     createAPIGatewayThrottlingAlarm(
       this,
@@ -1505,6 +1556,7 @@ export class CdkTarponStack extends cdk.Stack {
     if (isDevUserStack) {
       return Table.fromTableName(this, tableName, tableName)
     }
+
     const table = new Table(this, tableName, {
       tableName: tableName,
       partitionKey: { name: 'PartitionKeyID', type: AttributeType.STRING },
@@ -1614,12 +1666,18 @@ export class CdkTarponStack extends cdk.Stack {
     const restApi = new SpecRestApi(this, apiName, {
       restApiName: apiName,
       apiDefinition,
+      deploy: true,
       deployOptions: {
         loggingLevel: MethodLoggingLevel.INFO,
         tracingEnabled: true,
         accessLogDestination: new LogGroupLogDestination(apiLogGroup),
       },
     })
+
+    restApi.addUsagePlan(`domain-${apiName}`, {
+      apiStages: [{ api: restApi, stage: restApi.deploymentStage }],
+    })
+
     // NOTE: We add random spaces to the end of the validation response template (which won't affect the response) to make
     // the template get updated for every deployment (0.1% chance of conflict) to get around the template being reset for
     // unknown reasons.
@@ -1714,4 +1772,30 @@ export class CdkTarponStack extends cdk.Stack {
     })
     return queue
   }
+}
+
+const getSubdomain = (): string => {
+  if (process.env.ENV === 'dev:user') {
+    return `${process.env.GITHUB_USER}-${process.env.S_NO}.api`
+  }
+  return `api`
+}
+const getApiDomain = (config: Config): string => {
+  return `${getSubdomain()}.${getBaseDomain(config)}`
+}
+
+const getBaseDomain = (config: Config): string => {
+  return getDomainWithoutSubdomain(config.application.CONSOLE_URI).replace(
+    'console.',
+    ''
+  )
+}
+
+const getDomainWithoutSubdomain = (url: string) => {
+  const urlParts = new URL(url).hostname.split('.')
+
+  return urlParts
+    .slice(0)
+    .slice(-(urlParts.length === 4 ? 3 : 2))
+    .join('.')
 }
