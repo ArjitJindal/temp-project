@@ -71,7 +71,7 @@ export default abstract class TransactionsPatternPercentageBaseRule<
     ])
   }
 
-  protected async getUpdatedTargetAggregation(
+  override async getUpdatedTargetAggregation(
     direction: 'origin' | 'destination',
     targetAggregationData: AggregationData | undefined,
     isTransactionFiltered: boolean
@@ -87,7 +87,7 @@ export default abstract class TransactionsPatternPercentageBaseRule<
     }
   }
 
-  protected getMaxTimeWindow(): TimeWindow {
+  override getMaxTimeWindow(): TimeWindow {
     return this.parameters.timeWindow
   }
 
@@ -211,7 +211,7 @@ export default abstract class TransactionsPatternPercentageBaseRule<
 
   protected abstract getNeededTransactionFields(): Array<keyof Transaction>
 
-  protected getRuleAggregationVersion(): number {
+  override getRuleAggregationVersion(): number {
     return 1
   }
 }

@@ -70,7 +70,7 @@ export default class TransactionsExceedPastPeriodRule extends TransactionAggrega
     }
   }
 
-  protected async getUpdatedTargetAggregation(
+  override async getUpdatedTargetAggregation(
     _direction: 'origin' | 'destination',
     aggregation: AggregationData | undefined,
     isTransactionFiltered: boolean
@@ -221,11 +221,11 @@ export default class TransactionsExceedPastPeriodRule extends TransactionAggrega
     )
   }
 
-  protected getMaxTimeWindow(): TimeWindow {
+  override getMaxTimeWindow(): TimeWindow {
     return this.parameters.timeWindow2
   }
 
-  protected getRuleAggregationVersion(): number {
+  override getRuleAggregationVersion(): number {
     return 1
   }
 }

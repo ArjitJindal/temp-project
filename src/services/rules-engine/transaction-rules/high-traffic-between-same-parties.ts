@@ -158,7 +158,7 @@ export default class HighTrafficBetweenSameParties extends TransactionAggregatio
     )
   }
 
-  protected async getUpdatedTargetAggregation(
+  override async getUpdatedTargetAggregation(
     _direction: 'origin',
     targetAggregationData: AggregationData | undefined,
     isTransactionFiltered: boolean
@@ -176,11 +176,11 @@ export default class HighTrafficBetweenSameParties extends TransactionAggregatio
     }
   }
 
-  protected getMaxTimeWindow(): TimeWindow {
+  override getMaxTimeWindow(): TimeWindow {
     return this.parameters.timeWindow
   }
 
-  protected getRuleAggregationVersion(): number {
+  override getRuleAggregationVersion(): number {
     return 1
   }
 }

@@ -5,6 +5,7 @@ import { getTestTenantId } from '@/test-utils/tenant-test-utils'
 import { getTestTransaction } from '@/test-utils/transaction-test-utils'
 import {
   createTransactionRuleTestCase,
+  ruleAggregationTest,
   setUpRulesHooks,
   testRuleDescriptionFormatting,
   TransactionRuleTestCase,
@@ -42,11 +43,13 @@ function getDefaultParams(): SamePaymentDetailsParameters {
 
 const defaultParams = getDefaultParams()
 
-describe('Core login', () => {
-  const now = dayjs('2022-01-01T00:00:00.000Z')
+ruleAggregationTest(() => {
+  describe('Core login', () => {
+    const now = dayjs('2022-01-01T00:00:00.000Z')
 
-  describe.each<TransactionRuleTestCase<Partial<SamePaymentDetailsParameters>>>(
-    [
+    describe.each<
+      TransactionRuleTestCase<Partial<SamePaymentDetailsParameters>>
+    >([
       {
         name: 'Single transaction never trigger the rule',
         transactions: [
@@ -98,35 +101,35 @@ describe('Core login', () => {
         ],
         expectedHits: [false, false, true],
       },
-    ]
-  )('', ({ name, transactions, expectedHits, ruleParams }) => {
-    const TEST_TENANT_ID = getTestTenantId()
+    ])('', ({ name, transactions, expectedHits, ruleParams }) => {
+      const TEST_TENANT_ID = getTestTenantId()
 
-    setUpRulesHooks(TEST_TENANT_ID, [
-      {
-        type: 'TRANSACTION',
-        ruleImplementationName: 'same-payment-details',
-        defaultParameters: {
-          ...defaultParams,
-          ...ruleParams,
+      setUpRulesHooks(TEST_TENANT_ID, [
+        {
+          type: 'TRANSACTION',
+          ruleImplementationName: 'same-payment-details',
+          defaultParameters: {
+            ...defaultParams,
+            ...ruleParams,
+          },
         },
-      },
-    ])
+      ])
 
-    createTransactionRuleTestCase(
-      name,
-      TEST_TENANT_ID,
-      transactions,
-      expectedHits
-    )
+      createTransactionRuleTestCase(
+        name,
+        TEST_TENANT_ID,
+        transactions,
+        expectedHits
+      )
+    })
   })
-})
 
-describe('Different directions', () => {
-  const now = dayjs('2022-01-01T00:00:00.000Z')
+  describe('Different directions', () => {
+    const now = dayjs('2022-01-01T00:00:00.000Z')
 
-  describe.each<TransactionRuleTestCase<Partial<SamePaymentDetailsParameters>>>(
-    [
+    describe.each<
+      TransactionRuleTestCase<Partial<SamePaymentDetailsParameters>>
+    >([
       {
         name: 'Sender -> sending',
         transactions: [
@@ -219,65 +222,65 @@ describe('Different directions', () => {
           checkReceiver: 'all',
         },
       },
-    ]
-  )('', ({ name, transactions, expectedHits, ruleParams }) => {
-    const TEST_TENANT_ID = getTestTenantId()
+    ])('', ({ name, transactions, expectedHits, ruleParams }) => {
+      const TEST_TENANT_ID = getTestTenantId()
 
-    setUpRulesHooks(TEST_TENANT_ID, [
-      {
-        type: 'TRANSACTION',
-        ruleImplementationName: 'same-payment-details',
-        defaultParameters: {
-          ...defaultParams,
-          ...ruleParams,
+      setUpRulesHooks(TEST_TENANT_ID, [
+        {
+          type: 'TRANSACTION',
+          ruleImplementationName: 'same-payment-details',
+          defaultParameters: {
+            ...defaultParams,
+            ...ruleParams,
+          },
         },
-      },
-    ])
+      ])
 
-    createTransactionRuleTestCase(
-      name,
-      TEST_TENANT_ID,
-      transactions,
-      expectedHits
-    )
+      createTransactionRuleTestCase(
+        name,
+        TEST_TENANT_ID,
+        transactions,
+        expectedHits
+      )
+    })
   })
-})
 
-describe('Description formatting', () => {
-  describe('R-127 description formatting', () => {
-    const TEST_TENANT_ID = getTestTenantId()
-    const now = dayjs('2022-01-01T00:00:00.000Z')
+  describe('Description formatting', () => {
+    describe('R-127 description formatting', () => {
+      const TEST_TENANT_ID = getTestTenantId()
+      const now = dayjs('2022-01-01T00:00:00.000Z')
 
-    setUpRulesHooks(TEST_TENANT_ID, [
-      {
-        type: 'TRANSACTION',
-        ruleImplementationName: 'same-payment-details',
-        defaultParameters: {
-          ...defaultParams,
+      setUpRulesHooks(TEST_TENANT_ID, [
+        {
+          type: 'TRANSACTION',
+          ruleImplementationName: 'same-payment-details',
+          defaultParameters: {
+            ...defaultParams,
+          },
         },
-      },
-    ])
+      ])
 
-    testRuleDescriptionFormatting(
-      'first',
-      TEST_TENANT_ID,
-      [
-        getTestTransaction({
-          originPaymentDetails: PAYMENT_DETAILS_1,
-          timestamp: now.subtract(1, 'hour').valueOf(),
-        }),
-        getTestTransaction({
-          originPaymentDetails: PAYMENT_DETAILS_1,
-          timestamp: now.valueOf(),
-        }),
-      ],
-      {
-        descriptionTemplate: `Same payment details is used for {{ numberOfUses }} transactions within {{ format-time-window parameters.timeWindow }}, which is more or equal than threshold of {{ parameters.threshold }}`,
-      },
-      [
-        null,
-        'Same payment details is used for 2 transactions within 1 day, which is more or equal than threshold of 2.',
-      ]
-    )
+      testRuleDescriptionFormatting(
+        'first',
+        TEST_TENANT_ID,
+        [
+          getTestTransaction({
+            originPaymentDetails: PAYMENT_DETAILS_1,
+            timestamp: now.subtract(1, 'hour').valueOf(),
+          }),
+          getTestTransaction({
+            originPaymentDetails: PAYMENT_DETAILS_1,
+            timestamp: now.valueOf(),
+          }),
+        ],
+        {
+          descriptionTemplate: `Same payment details is used for {{ numberOfUses }} transactions within {{ format-time-window parameters.timeWindow }}, which is more or equal than threshold of {{ parameters.threshold }}`,
+        },
+        [
+          null,
+          'Same payment details is used for 2 transactions within 1 day, which is more or equal than threshold of 2.',
+        ]
+      )
+    })
   })
 })

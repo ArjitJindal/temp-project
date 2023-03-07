@@ -30,6 +30,12 @@ export abstract class TransactionAggregationRule<
   // rule aggregation implementation if it'll make the existing aggregated data invalid.
   protected abstract getRuleAggregationVersion(): number
 
+  protected getUserKeyId(direction: 'origin' | 'destination') {
+    return direction === 'origin'
+      ? getSenderKeyId(this.tenantId, this.transaction, true)
+      : getReceiverKeyId(this.tenantId, this.transaction, true)
+  }
+
   public async updateAggregation(
     direction: 'origin' | 'destination',
     isTransactionFiltered: boolean
@@ -62,10 +68,7 @@ export abstract class TransactionAggregationRule<
     if ((targetAggregations?.length || 0) > 1) {
       throw new Error('Should only get one target aggregation')
     }
-    const userKeyId =
-      direction === 'origin'
-        ? getSenderKeyId(this.tenantId, this.transaction, true)
-        : getReceiverKeyId(this.tenantId, this.transaction, true)
+    const userKeyId = this.getUserKeyId(direction)
     if (!userKeyId) {
       return
     }
@@ -114,10 +117,7 @@ export abstract class TransactionAggregationRule<
       this.tenantId,
       this.dynamoDb
     )
-    const userKeyId =
-      direction === 'origin'
-        ? getSenderKeyId(this.tenantId, this.transaction, true)
-        : getReceiverKeyId(this.tenantId, this.transaction, true)
+    const userKeyId = this.getUserKeyId(direction)
     if (!userKeyId) {
       return
     }
@@ -144,10 +144,7 @@ export abstract class TransactionAggregationRule<
       this.tenantId,
       this.dynamoDb
     )
-    const userKeyId =
-      direction === 'origin'
-        ? getSenderKeyId(this.tenantId, this.transaction, true)
-        : getReceiverKeyId(this.tenantId, this.transaction, true)
+    const userKeyId = this.getUserKeyId(direction)
     if (!userKeyId) {
       return
     }

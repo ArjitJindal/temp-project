@@ -1,14 +1,29 @@
 import { JSONSchemaType } from 'ajv'
+import _ from 'lodash'
 import {
   CHECK_RECEIVER_SCHEMA,
   CHECK_SENDER_SCHEMA,
   TIME_WINDOW_SCHEMA,
   TimeWindow,
 } from '../utils/rule-parameter-schemas'
-import { RuleHitResult } from '../rule'
-import { TransactionRule } from './rule'
-import { TransactionRepository } from '@/services/rules-engine/repositories/transaction-repository'
-import { getTransactionUserPastTransactionsCount } from '@/services/rules-engine/utils/transaction-rule-utils'
+import { RuleHitResultItem } from '../rule'
+import { TransactionHistoricalFilters } from '../filters'
+import { getTimestampRange } from '../utils/time-utils'
+import { getNonUserReceiverKeys, getNonUserSenderKeys } from '../utils'
+import { TransactionAggregationRule } from './aggregation-rule'
+import {
+  AuxiliaryIndexTransaction,
+  TransactionRepository,
+} from '@/services/rules-engine/repositories/transaction-repository'
+import {
+  getTransactionUserPastTransactionsByDirection,
+  groupTransactionsByHour,
+} from '@/services/rules-engine/utils/transaction-rule-utils'
+
+type AggregationData = {
+  sendingCount?: number
+  receivingCount?: number
+}
 
 export type SamePaymentDetailsParameters = {
   timeWindow: TimeWindow
@@ -17,7 +32,11 @@ export type SamePaymentDetailsParameters = {
   checkReceiver: 'receiving' | 'all' | 'none'
 }
 
-export default class SamePaymentDetailsRule extends TransactionRule<SamePaymentDetailsParameters> {
+export default class SamePaymentDetailsRule extends TransactionAggregationRule<
+  SamePaymentDetailsParameters,
+  TransactionHistoricalFilters,
+  AggregationData
+> {
   transactionRepository?: TransactionRepository
 
   public static getSchema(): JSONSchemaType<SamePaymentDetailsParameters> {
@@ -38,51 +57,146 @@ export default class SamePaymentDetailsRule extends TransactionRule<SamePaymentD
   }
 
   public async computeRule() {
-    this.transactionRepository = new TransactionRepository(this.tenantId, {
+    return await Promise.all([
+      this.computeRuleUser('origin'),
+      this.computeRuleUser('destination'),
+    ])
+  }
+
+  protected async computeRuleUser(
+    direction: 'origin' | 'destination'
+  ): Promise<RuleHitResultItem | undefined> {
+    if (direction === 'origin' && this.parameters.checkSender === 'none') {
+      return
+    } else if (
+      direction === 'destination' &&
+      this.parameters.checkReceiver === 'none'
+    ) {
+      return
+    }
+
+    const transactionsCount = (await this.getData(direction)) + 1
+    if (transactionsCount >= this.parameters.threshold) {
+      return {
+        direction: direction === 'origin' ? 'ORIGIN' : 'DESTINATION',
+        vars: {
+          ...super.getTransactionVars(direction),
+          numberOfUses: transactionsCount,
+        },
+      }
+    }
+  }
+
+  private async getData(direction: 'origin' | 'destination'): Promise<number> {
+    const { timeWindow, checkReceiver, checkSender } = this.parameters
+    const { afterTimestamp, beforeTimestamp } = getTimestampRange(
+      this.transaction.timestamp!,
+      timeWindow
+    )
+    const checkDirection = direction === 'origin' ? checkSender : checkReceiver
+    const userAggregationData = await this.getRuleAggregations<AggregationData>(
+      direction,
+      afterTimestamp,
+      beforeTimestamp
+    )
+    if (userAggregationData) {
+      const transactionsCount = _.sumBy(
+        userAggregationData,
+        (data) =>
+          (checkDirection === 'sending'
+            ? data.sendingCount
+            : checkDirection === 'receiving'
+            ? data.receivingCount
+            : (data.sendingCount ?? 0) + (data.receivingCount ?? 0)) ?? 0
+      )
+      return transactionsCount
+    }
+
+    // Fallback
+    const transactionRepository = new TransactionRepository(this.tenantId, {
       dynamoDb: this.dynamoDb,
     })
-    const { timeWindow, checkReceiver, checkSender, threshold } =
-      this.parameters
-    const {
-      senderSendingTransactionsCount: senderSending,
-      senderReceivingTransactionsCount: senderReceiving,
-      receiverReceivingTransactionsCount: receiverReceiving,
-      receiverSendingTransactionsCount: receiverSending,
-    } = await getTransactionUserPastTransactionsCount(
-      {
-        ...this.transaction,
-        originUserId: undefined, // to force search by payment details
-        destinationUserId: undefined,
-      },
-      this.transactionRepository,
-      {
-        timeWindow,
-        checkReceiver,
-        checkSender,
-      }
-    )
+    const { sendingTransactions, receivingTransactions } =
+      await getTransactionUserPastTransactionsByDirection(
+        {
+          ...this.transaction,
+          originUserId: undefined, // to force search by payment details
+          destinationUserId: undefined,
+        },
+        direction,
+        transactionRepository,
+        {
+          timeWindow,
+          checkDirection:
+            (direction === 'origin' ? checkSender : checkReceiver) ?? 'all',
+          transactionStates: this.filters.transactionStatesHistorical,
+          transactionTypes: this.filters.transactionTypesHistorical,
+          paymentMethod: this.filters.paymentMethodHistorical,
+          countries: this.filters.transactionCountriesHistorical,
+        },
+        ['timestamp']
+      )
 
-    const hitResult: RuleHitResult = []
-    const senderTotal = (senderSending ?? 0) + (senderReceiving ?? 0) + 1
-    if (senderTotal >= threshold) {
-      hitResult.push({
-        direction: 'ORIGIN',
-        vars: {
-          ...super.getTransactionVars('origin'),
-          numberOfUses: senderTotal,
-        },
-      })
+    // Update aggregations
+    await this.refreshRuleAggregations(
+      direction,
+      await this.getTimeAggregatedResult(
+        sendingTransactions,
+        receivingTransactions
+      )
+    )
+    return sendingTransactions.length + receivingTransactions.length
+  }
+
+  private async getTimeAggregatedResult(
+    sendingTransactions: AuxiliaryIndexTransaction[],
+    receivingTransactions: AuxiliaryIndexTransaction[]
+  ) {
+    return _.merge(
+      groupTransactionsByHour<AggregationData>(
+        sendingTransactions,
+        async (group) => ({
+          sendingCount: group.length,
+        })
+      ),
+      groupTransactionsByHour<AggregationData>(
+        receivingTransactions,
+        async (group) => ({
+          receivingCount: group.length,
+        })
+      )
+    )
+  }
+
+  override async getUpdatedTargetAggregation(
+    direction: 'origin' | 'destination',
+    targetAggregationData: AggregationData | undefined,
+    isTransactionFiltered: boolean
+  ): Promise<AggregationData | null> {
+    if (!isTransactionFiltered) {
+      return null
     }
-    const receiverTotal = (receiverReceiving ?? 0) + (receiverSending ?? 0) + 1
-    if (receiverTotal >= threshold) {
-      hitResult.push({
-        direction: 'DESTINATION',
-        vars: {
-          ...super.getTransactionVars('destination'),
-          numberOfUses: receiverTotal,
-        },
-      })
+    const result = targetAggregationData ?? {}
+    if (direction === 'origin') {
+      result.sendingCount = (result.sendingCount ?? 0) + 1
+    } else {
+      result.receivingCount = (result.receivingCount ?? 0) + 1
     }
-    return hitResult
+    return result
+  }
+
+  override getUserKeyId(direction: 'origin' | 'destination') {
+    return direction === 'origin'
+      ? getNonUserSenderKeys(this.tenantId, this.transaction, undefined, true)
+          ?.PartitionKeyID
+      : getNonUserReceiverKeys(this.tenantId, this.transaction, undefined, true)
+          ?.PartitionKeyID
+  }
+
+  override getMaxTimeWindow(): TimeWindow {
+    return this.parameters.timeWindow
+  }
+  override getRuleAggregationVersion(): number {
+    return 1
   }
 }

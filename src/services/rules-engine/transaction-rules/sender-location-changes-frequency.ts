@@ -1,11 +1,23 @@
 import { JSONSchemaType } from 'ajv'
-import { TransactionRepository } from '../repositories/transaction-repository'
+import _ from 'lodash'
+import {
+  AuxiliaryIndexTransaction,
+  TransactionRepository,
+} from '../repositories/transaction-repository'
 import { TransactionHistoricalFilters } from '../filters'
 import { RuleHitResult } from '../rule'
-import { MissingRuleParameter } from './errors'
-import { TransactionRule } from './rule'
-import { Transaction } from '@/@types/openapi-public/Transaction'
-import dayjs from '@/utils/dayjs'
+import { getTimestampRange } from '../utils/time-utils'
+import {
+  getTransactionUserPastTransactionsByDirection,
+  groupTransactionsByHour,
+} from '../utils/transaction-rule-utils'
+import { TimeWindow } from '../utils/rule-parameter-schemas'
+import { TransactionAggregationRule } from './aggregation-rule'
+
+type AggregationData = {
+  ipAddresses: string[]
+  transactionsCount: number
+}
 
 export type SenderLocationChangesFrequencyRuleParameters = {
   uniqueCitiesCountThreshold: number
@@ -13,9 +25,10 @@ export type SenderLocationChangesFrequencyRuleParameters = {
   timeWindowInDays: number
 }
 
-export default class SenderLocationChangesFrequencyRule extends TransactionRule<
+export default class SenderLocationChangesFrequencyRule extends TransactionAggregationRule<
   SenderLocationChangesFrequencyRuleParameters,
-  TransactionHistoricalFilters
+  TransactionHistoricalFilters,
+  AggregationData
 > {
   public static getSchema(): JSONSchemaType<SenderLocationChangesFrequencyRuleParameters> {
     return {
@@ -34,49 +47,17 @@ export default class SenderLocationChangesFrequencyRule extends TransactionRule<
   }
 
   public async computeRule() {
-    const { uniqueCitiesCountThreshold, timeWindowInDays } = this.parameters
-    if (
-      uniqueCitiesCountThreshold === undefined ||
-      timeWindowInDays === undefined
-    ) {
-      throw new MissingRuleParameter()
-    }
-
-    if (
-      !this.transaction.deviceData?.ipAddress ||
-      !this.transaction.originUserId
-    ) {
+    const ipAddress = this.transaction.deviceData?.ipAddress
+    if (!this.transaction.originUserId || !ipAddress) {
       return
     }
 
-    const transactionRepository = new TransactionRepository(this.tenantId, {
-      dynamoDb: this.dynamoDb,
-    })
-    const transactionsWithIpAddress = (
-      (await transactionRepository.getUserSendingTransactions(
-        this.transaction.originUserId,
-        {
-          afterTimestamp: dayjs(this.transaction.timestamp)
-            .subtract(timeWindowInDays, 'day')
-            .valueOf(),
-          beforeTimestamp: this.transaction.timestamp!,
-        },
-        {
-          transactionStates: this.filters.transactionStatesHistorical,
-          transactionTypes: this.filters.transactionTypesHistorical,
-          originPaymentMethod: this.filters.paymentMethodHistorical,
-          originCountries: this.filters.transactionCountriesHistorical,
-        },
-        ['deviceData']
-      )) as Transaction[]
-    )
-      .concat(this.transaction)
-      .filter((transaction) => transaction.deviceData?.ipAddress)
+    const { uniqueIpAddresses, transactionsCount } = await this.getData()
+    uniqueIpAddresses.add(ipAddress)
+
     const geoIp = await import('fast-geoip')
     const ipInfos = await Promise.all(
-      transactionsWithIpAddress.map((transaction) =>
-        geoIp.lookup(transaction.deviceData?.ipAddress as string)
-      )
+      Array.from(uniqueIpAddresses).map((ipAddress) => geoIp.lookup(ipAddress))
     )
     const uniqueCities = new Set(
       // NOTE: ipInfo.city could be sometimes empty, if it's empty, we use region or country as an approximation
@@ -85,16 +66,141 @@ export default class SenderLocationChangesFrequencyRule extends TransactionRule<
         .filter(Boolean)
     )
     const hitResult: RuleHitResult = []
-    if (uniqueCities.size > uniqueCitiesCountThreshold) {
+    if (uniqueCities.size > this.parameters.uniqueCitiesCountThreshold) {
       hitResult.push({
         direction: 'ORIGIN',
         vars: {
           ...super.getTransactionVars('origin'),
-          transactionsCount: transactionsWithIpAddress.length,
+          transactionsCount: transactionsCount + 1,
           locationsCount: uniqueCities.size,
         },
       })
     }
     return hitResult
+  }
+
+  private async getData(): Promise<{
+    uniqueIpAddresses: Set<string>
+    transactionsCount: number
+  }> {
+    const { afterTimestamp, beforeTimestamp } = getTimestampRange(
+      this.transaction.timestamp!,
+      {
+        units: this.parameters.timeWindowInDays,
+        granularity: 'day',
+        rollingBasis: true,
+      }
+    )
+    const userAggregationData = await this.getRuleAggregations<AggregationData>(
+      'origin',
+      afterTimestamp,
+      beforeTimestamp
+    )
+    if (userAggregationData) {
+      return {
+        uniqueIpAddresses: new Set(
+          userAggregationData.flatMap((v) => v.ipAddresses)
+        ),
+        transactionsCount: _.sumBy(
+          userAggregationData,
+          (data) => data.transactionsCount
+        ),
+      }
+    }
+
+    // Fallback
+    const transactionRepository = new TransactionRepository(this.tenantId, {
+      dynamoDb: this.dynamoDb,
+    })
+    const { sendingTransactions } =
+      await getTransactionUserPastTransactionsByDirection(
+        this.transaction,
+        'origin',
+        transactionRepository,
+        {
+          timeWindow: {
+            units: this.parameters.timeWindowInDays,
+            granularity: 'day',
+            rollingBasis: true,
+          },
+          checkDirection: 'sending',
+          transactionStates: this.filters.transactionStatesHistorical,
+          transactionTypes: this.filters.transactionTypesHistorical,
+          paymentMethod: this.filters.paymentMethodHistorical,
+          countries: this.filters.transactionCountriesHistorical,
+        },
+        ['timestamp', 'deviceData']
+      )
+    const sendingTransactionsWithIpAddress = sendingTransactions.filter(
+      (transaction) => transaction.deviceData?.ipAddress
+    )
+
+    // Update aggregations
+    await this.refreshRuleAggregations(
+      'origin',
+      await this.getTimeAggregatedResult(sendingTransactionsWithIpAddress)
+    )
+
+    return {
+      uniqueIpAddresses: this.getUniqueIpAddressses(
+        sendingTransactionsWithIpAddress
+      ),
+      transactionsCount: sendingTransactionsWithIpAddress.length,
+    }
+  }
+
+  private getUniqueIpAddressses(
+    transactions: AuxiliaryIndexTransaction[]
+  ): Set<string> {
+    return new Set(
+      transactions
+        .map((transaction) => transaction.deviceData?.ipAddress)
+        .filter(Boolean)
+    ) as Set<string>
+  }
+
+  private async getTimeAggregatedResult(
+    sendingTransactionsWithCard: AuxiliaryIndexTransaction[]
+  ) {
+    return groupTransactionsByHour<AggregationData>(
+      sendingTransactionsWithCard,
+      async (group) => ({
+        transactionsCount: group.length,
+        ipAddresses: Array.from(this.getUniqueIpAddressses(group)),
+      })
+    )
+  }
+
+  override async getUpdatedTargetAggregation(
+    direction: 'origin' | 'destination',
+    targetAggregationData: AggregationData | undefined,
+    isTransactionFiltered: boolean
+  ): Promise<AggregationData | null> {
+    const ipAddress = this.transaction.deviceData?.ipAddress
+    if (
+      !isTransactionFiltered ||
+      direction === 'destination' ||
+      !this.transaction.originUserId ||
+      !ipAddress
+    ) {
+      return null
+    }
+
+    return {
+      ipAddresses: Array.from(
+        new Set((targetAggregationData?.ipAddresses ?? []).concat(ipAddress))
+      ),
+      transactionsCount: (targetAggregationData?.transactionsCount ?? 0) + 1,
+    }
+  }
+
+  override getMaxTimeWindow(): TimeWindow {
+    return {
+      units: this.parameters.timeWindowInDays,
+      granularity: 'day',
+    }
+  }
+  protected getRuleAggregationVersion(): number {
+    return 1
   }
 }

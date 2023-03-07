@@ -35,7 +35,8 @@ export default class TooManyCounterpartyCountryRule extends TransactionsPatternV
     sender: new Set<string>(),
     receiver: new Set<string>(),
   }
-  protected matchPattern(
+
+  override matchPattern(
     transaction: Transaction,
     direction: 'origin' | 'destination',
     userType: 'sender' | 'receiver',
@@ -58,7 +59,10 @@ export default class TooManyCounterpartyCountryRule extends TransactionsPatternV
     return true
   }
 
-  protected getNeededTransactionFields(): Array<keyof Transaction> {
+  override getNeededTransactionFields(): Array<keyof Transaction> {
     return ['originAmountDetails', 'destinationAmountDetails']
+  }
+  override isAggregationSupported() {
+    return false
   }
 }

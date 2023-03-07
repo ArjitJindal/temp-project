@@ -1,9 +1,13 @@
 import { JSONSchemaType } from 'ajv'
 import * as _ from 'lodash'
-import { TransactionRepository } from '../repositories/transaction-repository'
+import {
+  AuxiliaryIndexTransaction,
+  TransactionRepository,
+} from '../repositories/transaction-repository'
 import {
   getTransactionsTotalAmount,
-  getTransactionUserPastTransactions,
+  getTransactionUserPastTransactionsByDirection,
+  groupTransactionsByHour,
   isTransactionAmountAboveThreshold,
   sumTransactionAmountDetails,
 } from '../utils/transaction-rule-utils'
@@ -16,10 +20,20 @@ import {
   TRANSACTION_AMOUNT_THRESHOLDS_SCHEMA,
 } from '../utils/rule-parameter-schemas'
 import { TransactionHistoricalFilters } from '../filters'
-import { RuleHitResult } from '../rule'
-import { TransactionRule } from './rule'
+import { RuleHitResultItem } from '../rule'
+import { getTimestampRange } from '../utils/time-utils'
+import { getNonUserReceiverKeys, getNonUserSenderKeys } from '../utils'
+import { TransactionAggregationRule } from './aggregation-rule'
 import { TransactionAmountDetails } from '@/@types/openapi-public/TransactionAmountDetails'
 import { CurrencyCode } from '@/@types/openapi-public/CurrencyCode'
+import { getTargetCurrencyAmount } from '@/utils/currency-utils'
+
+type AggregationData = {
+  sendingCount?: number
+  sendingAmount?: number
+  receivingCount?: number
+  receivingAmount?: number
+}
 
 export type TransactionsVolumeRuleParameters = {
   initialTransactions?: number
@@ -32,9 +46,10 @@ export type TransactionsVolumeRuleParameters = {
   matchPaymentMethodDetails?: boolean
 }
 
-export default class TransactionsVolumeRule extends TransactionRule<
+export default class TransactionsVolumeRule extends TransactionAggregationRule<
   TransactionsVolumeRuleParameters,
-  TransactionHistoricalFilters
+  TransactionHistoricalFilters,
+  AggregationData
 > {
   transactionRepository?: TransactionRepository
 
@@ -61,237 +76,332 @@ export default class TransactionsVolumeRule extends TransactionRule<
     }
   }
 
-  private async computeHits(): Promise<{
-    isSenderHit: boolean
-    isReceiverHit: boolean
-    amount: TransactionAmountDetails | null
-  }> {
+  public async computeRule() {
+    return await Promise.all([
+      this.computeRuleUser('origin'),
+      this.computeRuleUser('destination'),
+    ])
+  }
+
+  protected async computeRuleUser(
+    direction: 'origin' | 'destination'
+  ): Promise<RuleHitResultItem | undefined> {
+    const {
+      checkSender,
+      checkReceiver,
+      initialTransactions,
+      transactionVolumeThreshold,
+    } = this.parameters
+    if (direction === 'origin' && checkSender === 'none') {
+      return
+    } else if (direction === 'destination' && checkReceiver === 'none') {
+      return
+    }
+
+    const { totalAmount, totalCount } = await this.getData(direction)
+
+    if (initialTransactions && totalCount <= initialTransactions) {
+      return
+    }
+
+    const result = await isTransactionAmountAboveThreshold(
+      totalAmount,
+      transactionVolumeThreshold
+    )
+    if (!result.isHit) {
+      return
+    }
+
+    let volumeDelta
+    let volumeThreshold
+    if (
+      totalAmount != null &&
+      transactionVolumeThreshold[totalAmount.transactionCurrency] != null
+    ) {
+      volumeDelta = {
+        transactionAmount:
+          totalAmount.transactionAmount -
+          transactionVolumeThreshold[totalAmount.transactionCurrency],
+        transactionCurrency: totalAmount.transactionCurrency,
+      }
+      volumeThreshold = {
+        transactionAmount:
+          transactionVolumeThreshold[totalAmount.transactionCurrency],
+        transactionCurrency: totalAmount.transactionCurrency,
+      }
+    } else {
+      volumeDelta = null
+      volumeThreshold = null
+    }
+
+    let falsePositiveDetails
+    if (this.ruleInstance.falsePositiveCheckEnabled) {
+      if (
+        volumeDelta != null &&
+        totalAmount != null &&
+        volumeDelta.transactionAmount / totalAmount.transactionAmount < 0.05
+      ) {
+        falsePositiveDetails = {
+          isFalsePositive: true,
+          confidenceScore: _.random(60, 80),
+        }
+      }
+    }
+
+    return {
+      direction: direction === 'origin' ? 'ORIGIN' : 'DESTINATION',
+      vars: {
+        ...super.getTransactionVars(direction),
+        volumeDelta,
+        volumeThreshold,
+      },
+      falsePositiveDetails: falsePositiveDetails,
+    }
+  }
+
+  private async getData(
+    direction: 'origin' | 'destination'
+  ): Promise<{ totalAmount: TransactionAmountDetails; totalCount: number }> {
     const {
       checkSender,
       checkReceiver,
       transactionVolumeThreshold,
       timeWindow,
       matchPaymentMethodDetails,
-      initialTransactions,
     } = this.parameters
 
-    this.transactionRepository = new TransactionRepository(this.tenantId, {
+    const { afterTimestamp, beforeTimestamp } = getTimestampRange(
+      this.transaction.timestamp!,
+      timeWindow
+    )
+    const userAggregationData = await this.getRuleAggregations<AggregationData>(
+      direction,
+      afterTimestamp,
+      beforeTimestamp
+    )
+    if (userAggregationData) {
+      const checkDirection =
+        direction === 'origin' ? checkSender : checkReceiver
+      const totalCount = _.sumBy(
+        userAggregationData,
+        (data) =>
+          (checkDirection === 'sending'
+            ? data.sendingCount
+            : checkDirection === 'receiving'
+            ? data.receivingCount
+            : (data.sendingCount ?? 0) + (data.receivingCount ?? 0)) ?? 0
+      )
+      const totalAmount = _.sumBy(
+        userAggregationData,
+        (data) =>
+          (checkDirection === 'sending'
+            ? data.sendingAmount
+            : checkDirection === 'receiving'
+            ? data.receivingAmount
+            : (data.sendingAmount ?? 0) + (data.receivingAmount ?? 0)) ?? 0
+      )
+      const currentAmountDetails =
+        direction === 'origin'
+          ? this.transaction.originAmountDetails
+          : this.transaction.destinationAmountDetails
+      const currentAmount =
+        currentAmountDetails &&
+        (await getTargetCurrencyAmount(
+          currentAmountDetails,
+          this.getTargetCurrency()
+        ))
+      return {
+        totalCount: totalCount + 1,
+        totalAmount: {
+          transactionAmount:
+            totalAmount + (currentAmount ? currentAmount.transactionAmount : 0),
+          transactionCurrency: this.getTargetCurrency(),
+        },
+      }
+    }
+
+    // Fallback
+    const transactionRepository = new TransactionRepository(this.tenantId, {
       dynamoDb: this.dynamoDb,
     })
 
-    let {
-      senderSendingTransactions,
-      senderReceivingTransactions,
-      receiverSendingTransactions,
-      receiverReceivingTransactions,
-    } = await getTransactionUserPastTransactions(
-      this.transaction,
-      this.transactionRepository,
-      {
-        timeWindow,
-        checkSender,
-        checkReceiver,
-        transactionStates: this.filters.transactionStatesHistorical,
-        transactionTypes: this.filters.transactionTypesHistorical,
-        paymentMethod: this.filters.paymentMethodHistorical,
-        matchPaymentMethodDetails,
-        countries: this.filters.transactionCountriesHistorical,
-      },
-      [
-        'originUserId',
-        'destinationUserId',
-        'originAmountDetails',
-        'destinationAmountDetails',
-      ]
-    )
+    let { sendingTransactions, receivingTransactions } =
+      await getTransactionUserPastTransactionsByDirection(
+        this.transaction,
+        direction,
+        transactionRepository,
+        {
+          timeWindow,
+          checkDirection:
+            (direction === 'origin' ? checkSender : checkReceiver) ?? 'all',
+          transactionStates: this.filters.transactionStatesHistorical,
+          transactionTypes: this.filters.transactionTypesHistorical,
+          paymentMethod: this.filters.paymentMethodHistorical,
+          countries: this.filters.transactionCountriesHistorical,
+          matchPaymentMethodDetails,
+        },
+        [
+          'timestamp',
+          'originUserId',
+          'destinationUserId',
+          'originAmountDetails',
+          'destinationAmountDetails',
+        ]
+      )
 
     if (matchPaymentMethodDetails) {
-      senderSendingTransactions = senderSendingTransactions.filter(
-        (transaction) =>
-          transaction.originUserId === this.transaction.originUserId
+      const targetUserId =
+        direction === 'origin'
+          ? this.transaction.originUserId
+          : this.transaction.destinationUserId
+      sendingTransactions = sendingTransactions.filter(
+        (transaction) => transaction.originUserId === targetUserId
       )
-      senderReceivingTransactions = senderReceivingTransactions.filter(
-        (transaction) =>
-          transaction.destinationUserId === this.transaction.originUserId
-      )
-      receiverSendingTransactions = receiverSendingTransactions.filter(
-        (transaction) =>
-          transaction.originUserId === this.transaction.destinationUserId
-      )
-      receiverReceivingTransactions = receiverReceivingTransactions.filter(
-        (transaction) =>
-          transaction.destinationUserId === this.transaction.destinationUserId
+      receivingTransactions = receivingTransactions.filter(
+        (transaction) => transaction.destinationUserId === targetUserId
       )
     }
+
+    // Update aggregations
+    await this.refreshRuleAggregations(
+      direction,
+      await this.getTimeAggregatedResult(
+        sendingTransactions,
+        receivingTransactions
+      )
+    )
 
     // Sum up the transactions amount
     const targetCurrency = Object.keys(
       transactionVolumeThreshold
     )[0] as CurrencyCode
-    const senderSendingAmount = await getTransactionsTotalAmount(
-      senderSendingTransactions
-        .concat(this.transaction)
-        .map((transaction) => transaction.originAmountDetails),
+
+    if (direction === 'origin') {
+      sendingTransactions.push(this.transaction)
+    } else {
+      receivingTransactions.push(this.transaction)
+    }
+    const sendingAmount = await getTransactionsTotalAmount(
+      sendingTransactions.map((transaction) => transaction.originAmountDetails),
       targetCurrency
     )
-    const senderReceivingAmount = await getTransactionsTotalAmount(
-      senderReceivingTransactions.map(
+    const receivingAmount = await getTransactionsTotalAmount(
+      receivingTransactions.map(
         (transaction) => transaction.destinationAmountDetails
       ),
       targetCurrency
     )
-    const receiverSendingAmount = await getTransactionsTotalAmount(
-      receiverSendingTransactions.map(
-        (transaction) => transaction.originAmountDetails
-      ),
-      targetCurrency
-    )
-    const receiverReceivingAmount = await getTransactionsTotalAmount(
-      receiverReceivingTransactions
-        .concat(this.transaction)
-        .map((transaction) => transaction.destinationAmountDetails),
-      targetCurrency
-    )
 
-    const senderSum = sumTransactionAmountDetails(
-      senderSendingAmount,
-      senderReceivingAmount
+    const totalAmount = sumTransactionAmountDetails(
+      sendingAmount,
+      receivingAmount
     )
-
-    const receiverSum = sumTransactionAmountDetails(
-      receiverSendingAmount,
-      receiverReceivingAmount
-    )
-
-    const skipCheckSender =
-      initialTransactions &&
-      senderSendingTransactions.length + senderReceivingTransactions.length <
-        initialTransactions
-    const skipCheckReceiver =
-      initialTransactions &&
-      receiverSendingTransactions.length +
-        receiverReceivingTransactions.length <
-        initialTransactions
-    let isSenderHit = false
-    let isReceiverHit = false
-    let amount: TransactionAmountDetails | null = null
-    if (
-      !skipCheckSender &&
-      checkSender === 'sending' &&
-      (
-        await isTransactionAmountAboveThreshold(
-          senderSendingAmount,
-          transactionVolumeThreshold
-        )
-      ).isHit
-    ) {
-      isSenderHit = true
-      amount = senderSendingAmount
-    } else if (
-      !skipCheckSender &&
-      checkSender === 'all' &&
-      (
-        await isTransactionAmountAboveThreshold(
-          senderSum,
-          transactionVolumeThreshold
-        )
-      ).isHit
-    ) {
-      isSenderHit = true
-      amount = senderSum
-    } else if (
-      !skipCheckReceiver &&
-      checkReceiver === 'receiving' &&
-      (
-        await isTransactionAmountAboveThreshold(
-          receiverReceivingAmount,
-          transactionVolumeThreshold
-        )
-      ).isHit
-    ) {
-      isReceiverHit = true
-      amount = receiverReceivingAmount
-    } else if (
-      !skipCheckReceiver &&
-      checkReceiver === 'all' &&
-      (
-        await isTransactionAmountAboveThreshold(
-          receiverSum,
-          transactionVolumeThreshold
-        )
-      ).isHit
-    ) {
-      isReceiverHit = true
-      amount = receiverSum
+    return {
+      totalAmount,
+      totalCount: sendingTransactions.length + receivingTransactions.length,
     }
-
-    return { isSenderHit, isReceiverHit, amount }
   }
 
-  public async computeRule() {
-    const { isSenderHit, isReceiverHit, amount } = await this.computeHits()
-    if (isSenderHit || isReceiverHit) {
-      const { transactionVolumeThreshold } = this.parameters
-      let volumeDelta
-      let volumeThreshold
-      if (
-        amount != null &&
-        transactionVolumeThreshold[amount.transactionCurrency] != null
-      ) {
-        volumeDelta = {
-          transactionAmount:
-            amount.transactionAmount -
-            transactionVolumeThreshold[amount.transactionCurrency],
-          transactionCurrency: amount.transactionCurrency,
-        }
-        volumeThreshold = {
-          transactionAmount:
-            transactionVolumeThreshold[amount.transactionCurrency],
-          transactionCurrency: amount.transactionCurrency,
-        }
-      } else {
-        volumeDelta = null
-        volumeThreshold = null
-      }
+  private getTargetCurrency(): CurrencyCode {
+    return Object.keys(
+      this.parameters.transactionVolumeThreshold
+    )[0] as CurrencyCode
+  }
 
-      let falsePositiveDetails
-      if (this.ruleInstance.falsePositiveCheckEnabled) {
-        if (
-          volumeDelta != null &&
-          amount != null &&
-          volumeDelta.transactionAmount / amount.transactionAmount < 0.05
-        ) {
-          falsePositiveDetails = {
-            isFalsePositive: true,
-            confidenceScore: _.random(60, 80),
-          }
-        }
-      }
+  private async getTimeAggregatedResult(
+    sendingTransactions: AuxiliaryIndexTransaction[],
+    receivingTransactions: AuxiliaryIndexTransaction[]
+  ) {
+    return _.merge(
+      groupTransactionsByHour<AggregationData>(
+        sendingTransactions,
+        async (group) => ({
+          sendingCount: group.length,
+          sendingAmount: (
+            await getTransactionsTotalAmount(
+              group.map((t) => t.originAmountDetails),
+              this.getTargetCurrency()
+            )
+          ).transactionAmount,
+        })
+      ),
+      groupTransactionsByHour<AggregationData>(
+        receivingTransactions,
+        async (group) => ({
+          receivingCount: group.length,
+          receivingAmount: (
+            await getTransactionsTotalAmount(
+              group.map((t) => t.destinationAmountDetails),
+              this.getTargetCurrency()
+            )
+          ).transactionAmount,
+        })
+      )
+    )
+  }
 
-      const hitResult: RuleHitResult = []
-      if (isSenderHit) {
-        hitResult.push({
-          direction: 'ORIGIN',
-          vars: {
-            ...super.getTransactionVars('origin'),
-            volumeDelta,
-            volumeThreshold,
-          },
-          falsePositiveDetails: falsePositiveDetails,
-        })
-      }
-      if (isReceiverHit) {
-        hitResult.push({
-          direction: 'DESTINATION',
-          vars: {
-            ...super.getTransactionVars('destination'),
-            volumeDelta,
-            volumeThreshold,
-          },
-          falsePositiveDetails: falsePositiveDetails,
-        })
-      }
-      return hitResult
+  override async getUpdatedTargetAggregation(
+    direction: 'origin' | 'destination',
+    targetAggregationData: AggregationData | undefined,
+    isTransactionFiltered: boolean
+  ): Promise<AggregationData | null> {
+    if (!isTransactionFiltered) {
+      return null
     }
+    const targetAmountDetails =
+      direction === 'origin'
+        ? this.transaction.originAmountDetails
+        : this.transaction.destinationAmountDetails
+    if (!targetAmountDetails) {
+      return null
+    }
+    const targetAmount = await getTargetCurrencyAmount(
+      targetAmountDetails,
+      this.getTargetCurrency()
+    )
+    const result = targetAggregationData ?? {}
+    if (direction === 'origin') {
+      result.sendingCount = (result.sendingCount ?? 0) + 1
+      result.sendingAmount =
+        (result.sendingAmount ?? 0) + targetAmount.transactionAmount
+    } else {
+      result.receivingCount = (result.receivingCount ?? 0) + 1
+      result.receivingAmount =
+        (result.receivingAmount ?? 0) + targetAmount.transactionAmount
+    }
+    return result
+  }
+
+  override getMaxTimeWindow(): TimeWindow {
+    return this.parameters.timeWindow
+  }
+  override getRuleAggregationVersion(): number {
+    return 1
+  }
+
+  override getUserKeyId(direction: 'origin' | 'destination') {
+    if (this.parameters.matchPaymentMethodDetails) {
+      const nonUserKey =
+        direction === 'origin'
+          ? getNonUserSenderKeys(
+              this.tenantId,
+              this.transaction,
+              undefined,
+              true
+            )?.PartitionKeyID
+          : getNonUserReceiverKeys(
+              this.tenantId,
+              this.transaction,
+              undefined,
+              true
+            )?.PartitionKeyID
+      if (nonUserKey) {
+        return direction === 'origin'
+          ? `${nonUserKey}-${this.transaction.originUserId}`
+          : `${nonUserKey}-${this.transaction.destinationUserId}`
+      }
+      return
+    }
+    return super.getUserKeyId(direction)
   }
 }

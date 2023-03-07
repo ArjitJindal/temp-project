@@ -1,9 +1,13 @@
 import { JSONSchemaType } from 'ajv'
+import _ from 'lodash'
 import {
   AuxiliaryIndexTransaction,
   TransactionRepository,
 } from '../repositories/transaction-repository'
-import { getTransactionUserPastTransactions } from '../utils/transaction-rule-utils'
+import {
+  getTransactionUserPastTransactionsByDirection,
+  groupTransactionsByHour,
+} from '../utils/transaction-rule-utils'
 import {
   CHECK_RECEIVER_OPTIONAL_SCHEMA,
   CHECK_SENDER_OPTIONAL_SCHEMA,
@@ -13,9 +17,17 @@ import {
   TRANSACTIONS_THRESHOLD_SCHEMA,
 } from '../utils/rule-parameter-schemas'
 import { TransactionHistoricalFilters } from '../filters'
-import { RuleHitResult } from '../rule'
-import { TransactionRule } from './rule'
+import { RuleHitResultItem } from '../rule'
+import { getTimestampRange } from '../utils/time-utils'
+import { TransactionAggregationRule } from './aggregation-rule'
 import { Transaction } from '@/@types/openapi-public/Transaction'
+
+const DEFAULT_GROUP_KEY = 'all'
+
+type AggregationData = {
+  sendingCount?: number
+  receivingCount?: number
+}
 
 export type TransactionsPatternVelocityRuleParameters = {
   transactionsLimit: number
@@ -29,7 +41,11 @@ export type TransactionsPatternVelocityRuleParameters = {
 
 export default abstract class TransactionsPatternVelocityBaseRule<
   T extends TransactionsPatternVelocityRuleParameters
-> extends TransactionRule<T, TransactionHistoricalFilters> {
+> extends TransactionAggregationRule<
+  T,
+  TransactionHistoricalFilters,
+  AggregationData
+> {
   transactionRepository?: TransactionRepository
 
   public static getBaseSchema(): JSONSchemaType<TransactionsPatternVelocityRuleParameters> {
@@ -47,116 +63,146 @@ export default abstract class TransactionsPatternVelocityBaseRule<
   }
 
   public async computeRule() {
-    const originMatchPattern = this.matchPattern(
+    return await Promise.all([
+      this.computeRuleUser('origin'),
+      this.computeRuleUser('destination'),
+    ])
+  }
+
+  protected async computeRuleUser(
+    direction: 'origin' | 'destination'
+  ): Promise<RuleHitResultItem | undefined> {
+    const matchPattern = this.matchPattern(
       this.transaction,
-      'origin',
-      'sender',
+      direction,
+      direction === 'origin' ? 'sender' : 'receiver',
       true
     )
-    const destinationMatchPattern = this.matchPattern(
-      this.transaction,
-      'destination',
-      'receiver',
-      true
-    )
-    if (!originMatchPattern && !destinationMatchPattern) {
+    if (!matchPattern) {
       return
     }
 
+    const groupCounts = await this.getData(direction)
+    for (const group in groupCounts) {
+      if (
+        (!this.parameters.initialTransactions ||
+          groupCounts[group] > this.parameters.initialTransactions!) &&
+        groupCounts[group] > this.parameters.transactionsLimit
+      ) {
+        return {
+          direction: direction === 'origin' ? 'ORIGIN' : 'DESTINATION',
+          vars: super.getTransactionVars(direction),
+        }
+      }
+    }
+  }
+
+  private async getData(
+    direction: 'origin' | 'destination'
+  ): Promise<{ [groupKey: string]: number }> {
     const {
       timeWindow,
-      transactionsLimit,
-      initialTransactions,
       checkSender = 'all',
       checkReceiver = 'all',
     } = this.parameters
-    this.transactionRepository = new TransactionRepository(this.tenantId, {
+    const { afterTimestamp, beforeTimestamp } = getTimestampRange(
+      this.transaction.timestamp!,
+      timeWindow
+    )
+    const userAggregationData = await this.getRuleAggregations<AggregationData>(
+      direction,
+      afterTimestamp,
+      beforeTimestamp
+    )
+    const checkDirection = direction === 'origin' ? checkSender : checkReceiver
+    if (userAggregationData) {
+      const transactionsCount = _.sumBy(
+        userAggregationData,
+        (data) =>
+          (checkDirection === 'sending'
+            ? data.sendingCount
+            : checkDirection === 'receiving'
+            ? data.receivingCount
+            : (data.sendingCount ?? 0) + (data.receivingCount ?? 0)) ?? 0
+      )
+      return {
+        [DEFAULT_GROUP_KEY]: transactionsCount + 1,
+      }
+    }
+
+    // Fallback
+    const transactionRepository = new TransactionRepository(this.tenantId, {
       dynamoDb: this.dynamoDb,
     })
-    const {
-      senderSendingTransactions,
-      senderReceivingTransactions,
-      receiverSendingTransactions,
-      receiverReceivingTransactions,
-    } = await getTransactionUserPastTransactions(
-      this.transaction,
-      this.transactionRepository,
-      {
-        timeWindow,
-        checkSender: originMatchPattern ? checkSender : 'none',
-        checkReceiver: destinationMatchPattern ? checkReceiver : 'none',
-        transactionStates: this.filters.transactionStatesHistorical,
-        transactionTypes: this.filters.transactionTypesHistorical,
-        paymentMethod: this.filters.paymentMethodHistorical,
-        countries: this.filters.transactionCountriesHistorical,
-      },
-      this.getNeededTransactionFields()
+    const { sendingTransactions, receivingTransactions } =
+      await getTransactionUserPastTransactionsByDirection(
+        this.transaction,
+        direction,
+        transactionRepository,
+        {
+          timeWindow,
+          checkDirection,
+          transactionStates: this.filters.transactionStatesHistorical,
+          transactionTypes: this.filters.transactionTypesHistorical,
+          paymentMethod: this.filters.paymentMethodHistorical,
+          countries: this.filters.transactionCountriesHistorical,
+        },
+        this.getNeededTransactionFields()
+      )
+
+    // Update aggregations
+    if (this.isAggregationSupported()) {
+      await this.refreshRuleAggregations(
+        direction,
+        await this.getTimeAggregatedResult(
+          sendingTransactions,
+          receivingTransactions
+        )
+      )
+    }
+
+    if (direction === 'origin') {
+      sendingTransactions.push(this.transaction)
+    } else {
+      receivingTransactions.push(this.transaction)
+    }
+
+    const sendingMatchedTransactions = sendingTransactions.filter(
+      (transaction) => this.matchPattern(transaction, 'origin', 'sender')
+    )
+    const receivingMatchedTransactions = receivingTransactions.filter(
+      (transaction) => this.matchPattern(transaction, 'destination', 'sender')
     )
 
-    const hitResult: RuleHitResult = []
-    if (originMatchPattern) {
-      const senderMatchedTransactions = [
-        ...senderSendingTransactions
-          .concat(this.transaction)
-          .filter((transaction) =>
-            this.matchPattern(transaction, 'origin', 'sender')
-          ),
-        ...senderReceivingTransactions.filter((transaction) =>
-          this.matchPattern(transaction, 'destination', 'sender')
-        ),
-      ]
-      const senderMatchedTransactionGroups = this.groupTransactions(
-        senderMatchedTransactions
-      )
-
-      for (const group of senderMatchedTransactionGroups) {
-        if (
-          (!initialTransactions || group.length > initialTransactions!) &&
-          group.length > transactionsLimit
-        ) {
-          hitResult.push({
-            direction: 'ORIGIN',
-            vars: super.getTransactionVars('origin'),
-          })
-          break
-        }
-      }
-    }
-
-    if (destinationMatchPattern) {
-      const receiverMatchedTransactions = [
-        ...receiverSendingTransactions.filter((transaction) =>
-          this.matchPattern(transaction, 'origin', 'receiver')
-        ),
-        ...receiverReceivingTransactions
-          .concat(this.transaction)
-          .filter((transaction) =>
-            this.matchPattern(transaction, 'destination', 'receiver')
-          ),
-      ]
-      const receiverMatchedTransactionGroups = this.groupTransactions(
-        receiverMatchedTransactions
-      )
-
-      for (const group of receiverMatchedTransactionGroups) {
-        if (
-          (!initialTransactions || group.length > initialTransactions!) &&
-          group.length > transactionsLimit
-        ) {
-          hitResult.push({
-            direction: 'DESTINATION',
-            vars: super.getTransactionVars('destination'),
-          })
-          break
-        }
-      }
-    }
-    return hitResult
+    return _.mapValues(
+      _.groupBy(
+        sendingMatchedTransactions.concat(receivingMatchedTransactions),
+        (t) => this.getTransactionGroupKey(t) || DEFAULT_GROUP_KEY
+      ),
+      (group) => group.length
+    )
   }
-  protected groupTransactions(
-    transactions: AuxiliaryIndexTransaction[]
-  ): AuxiliaryIndexTransaction[][] {
-    return [transactions]
+
+  private async getTimeAggregatedResult(
+    sendingTransactions: AuxiliaryIndexTransaction[],
+    receivingTransactions: AuxiliaryIndexTransaction[]
+  ) {
+    return _.merge(
+      groupTransactionsByHour<AggregationData>(
+        sendingTransactions,
+        async (group) => ({ sendingCount: group.length })
+      ),
+      groupTransactionsByHour<AggregationData>(
+        receivingTransactions,
+        async (group) => ({ receivingCount: group.length })
+      )
+    )
+  }
+
+  protected getTransactionGroupKey(
+    _transaction: AuxiliaryIndexTransaction
+  ): string | undefined {
+    return
   }
 
   protected abstract matchPattern(
@@ -167,4 +213,45 @@ export default abstract class TransactionsPatternVelocityBaseRule<
   ): boolean
 
   protected abstract getNeededTransactionFields(): Array<keyof Transaction>
+
+  protected abstract isAggregationSupported(): boolean
+
+  override async getUpdatedTargetAggregation(
+    direction: 'origin' | 'destination',
+    targetAggregationData: AggregationData | undefined,
+    isTransactionFiltered: boolean
+  ): Promise<AggregationData | null> {
+    const matchPattern = this.matchPattern(
+      this.transaction,
+      direction,
+      direction === 'origin' ? 'sender' : 'receiver',
+      true
+    )
+    if (
+      !isTransactionFiltered ||
+      !matchPattern ||
+      !this.isAggregationSupported()
+    ) {
+      return null
+    }
+    if (direction === 'origin') {
+      return {
+        ...targetAggregationData,
+        sendingCount: (targetAggregationData?.sendingCount || 0) + 1,
+      }
+    } else {
+      return {
+        ...targetAggregationData,
+        receivingCount: (targetAggregationData?.receivingCount || 0) + 1,
+      }
+    }
+  }
+
+  override getMaxTimeWindow(): TimeWindow {
+    return this.parameters.timeWindow
+  }
+
+  override getRuleAggregationVersion(): number {
+    return 1
+  }
 }

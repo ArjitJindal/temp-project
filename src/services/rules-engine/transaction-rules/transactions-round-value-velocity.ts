@@ -38,7 +38,7 @@ export default class TransactionsRoundValueVelocityRule extends TransactionsPatt
     )
   }
 
-  protected matchPattern(
+  override matchPattern(
     transaction: Transaction,
     direction?: 'origin' | 'destination'
   ): boolean {
@@ -49,20 +49,20 @@ export default class TransactionsRoundValueVelocityRule extends TransactionsPatt
     return amount ? this.isRoundValue(amount) : false
   }
 
-  protected getNeededTransactionFields(): Array<keyof Transaction> {
+  override getNeededTransactionFields(): Array<keyof Transaction> {
     return ['originAmountDetails', 'destinationAmountDetails']
   }
 
-  protected groupTransactions(transactions: Transaction[]): Transaction[][] {
+  override getTransactionGroupKey(
+    transaction: Transaction
+  ): string | undefined {
     if (this.parameters.sameAmount) {
-      const obj = _.groupBy(
-        transactions,
-        (t) =>
-          `${t.originAmountDetails?.transactionAmount}${t.originAmountDetails?.transactionCurrency}`
-      )
-      return Object.values(obj)
+      return `${transaction.originAmountDetails?.transactionAmount}${transaction.originAmountDetails?.transactionCurrency}`
     }
-    return [transactions]
+  }
+
+  override isAggregationSupported() {
+    return false
   }
 
   private isRoundValue(value: number) {

@@ -54,7 +54,8 @@ export function getUserSenderKeys(
 export function getNonUserSenderKeys(
   tenantId: string,
   transaction: Transaction,
-  transactionType?: string
+  transactionType?: string,
+  disableDirection?: boolean
 ): {
   PartitionKeyID: string
   SortKeyID: string
@@ -63,7 +64,7 @@ export function getNonUserSenderKeys(
     ? DynamoDbKeys.NON_USER_TRANSACTION(
         tenantId,
         transaction.originPaymentDetails,
-        'sending',
+        disableDirection ? 'all' : 'sending',
         transactionType,
         transaction.timestamp
       )
@@ -123,7 +124,8 @@ export function getUserReceiverKeys(
 export function getNonUserReceiverKeys(
   tenantId: string,
   transaction: Transaction,
-  transactionType?: string
+  transactionType?: string,
+  disableDirection?: boolean
 ): {
   PartitionKeyID: string
   SortKeyID: string
@@ -132,7 +134,7 @@ export function getNonUserReceiverKeys(
     ? DynamoDbKeys.NON_USER_TRANSACTION(
         tenantId,
         transaction.destinationPaymentDetails,
-        'receiving',
+        disableDirection ? 'all' : 'receiving',
         transactionType,
         transaction.timestamp
       )

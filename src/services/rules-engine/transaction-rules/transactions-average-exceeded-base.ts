@@ -487,7 +487,7 @@ export default abstract class TransactionAverageExceededBaseRule<
     }
   }
 
-  protected async getUpdatedTargetAggregation(
+  override async getUpdatedTargetAggregation(
     direction: 'origin' | 'destination',
     targetAggregationData: AggregationData | undefined,
     isTransactionFiltered: boolean
@@ -527,7 +527,7 @@ export default abstract class TransactionAverageExceededBaseRule<
     }
   }
 
-  protected getMaxTimeWindow(): TimeWindow {
+  override getMaxTimeWindow(): TimeWindow {
     return this.parameters.period2
   }
 
@@ -560,7 +560,7 @@ export default abstract class TransactionAverageExceededBaseRule<
     )
   }
 
-  protected getRuleAggregationVersion(): number {
+  override getRuleAggregationVersion(): number {
     return 1
   }
 }

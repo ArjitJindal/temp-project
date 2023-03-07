@@ -1,18 +1,34 @@
 import { JSONSchemaType } from 'ajv'
-import { TransactionRepository } from '../repositories/transaction-repository'
-import { getSenderKeys } from '../utils'
+import {
+  AuxiliaryIndexTransaction,
+  TransactionRepository,
+} from '../repositories/transaction-repository'
+import { getNonUserReceiverKeys, getNonUserSenderKeys } from '../utils'
 import { RuleHitResult } from '../rule'
-import { MissingRuleParameter } from './errors'
-import { TransactionRule } from './rule'
-import dayjs from '@/utils/dayjs'
+import { TransactionHistoricalFilters } from '../filters'
+import { getTimestampRange } from '../utils/time-utils'
+import {
+  getTransactionUserPastTransactionsByDirection,
+  groupTransactionsByHour,
+} from '../utils/transaction-rule-utils'
+import { TimeWindow } from '../utils/rule-parameter-schemas'
+import { TransactionAggregationRule } from './aggregation-rule'
 import { CardDetails } from '@/@types/openapi-public/CardDetails'
+
+type AggregationData = {
+  userIds: string[]
+}
 
 export type TooManyUsersForSameCardParameters = {
   uniqueUsersCountThreshold: number
   timeWindowInDays: number
 }
 
-export default class TooManyUsersForSameCardRule extends TransactionRule<TooManyUsersForSameCardParameters> {
+export default class TooManyUsersForSameCardRule extends TransactionAggregationRule<
+  TooManyUsersForSameCardParameters,
+  TransactionHistoricalFilters,
+  AggregationData
+> {
   public static getSchema(): JSONSchemaType<TooManyUsersForSameCardParameters> {
     return {
       type: 'object',
@@ -30,51 +46,18 @@ export default class TooManyUsersForSameCardRule extends TransactionRule<TooMany
   }
 
   public async computeRule() {
-    if (this.transaction.originPaymentDetails?.method !== 'CARD') {
-      return
-    }
-
-    const { uniqueUsersCountThreshold, timeWindowInDays } = this.parameters
-    const cardUser = this.transaction.originPaymentDetails?.method
     if (
-      uniqueUsersCountThreshold === undefined ||
-      timeWindowInDays === undefined
+      this.transaction.originPaymentDetails?.method !== 'CARD' ||
+      !this.transaction.originUserId
     ) {
-      throw new MissingRuleParameter()
-    }
-
-    const senderKeyId = getSenderKeys(
-      this.tenantId,
-      this.transaction
-    )?.PartitionKeyID
-
-    if (!senderKeyId || !cardUser) {
       return
     }
 
-    const transactionRepository = new TransactionRepository(this.tenantId, {
-      dynamoDb: this.dynamoDb,
-    })
-    const transactionsFromCard =
-      await transactionRepository.getNonUserSendingTransactions(
-        this.transaction.originPaymentDetails as CardDetails,
-        {
-          afterTimestamp: dayjs(this.transaction.timestamp)
-            .subtract(timeWindowInDays, 'day')
-            .valueOf(),
-          beforeTimestamp: this.transaction.timestamp!,
-        },
-        {},
-        ['originUserId']
-      )
-    const uniqueUserCount = new Set(
-      transactionsFromCard
-        .map((transaction) => transaction.originUserId)
-        .concat(this.transaction.originUserId)
-        .filter(Boolean)
-    ).size
+    const { userIds } = await this.getData()
+    userIds.add(this.transaction.originUserId)
+
     const hitResult: RuleHitResult = []
-    if (uniqueUserCount > uniqueUsersCountThreshold) {
+    if (userIds.size > this.parameters.uniqueUsersCountThreshold) {
       hitResult.push({
         direction: 'ORIGIN',
         vars: {
@@ -82,10 +65,138 @@ export default class TooManyUsersForSameCardRule extends TransactionRule<TooMany
           cardFingerprint: (
             this.transaction.originPaymentDetails as CardDetails
           ).cardFingerprint,
-          uniqueUserCount,
+          uniqueUserCount: userIds.size,
         },
       })
     }
     return hitResult
+  }
+
+  private async getData(): Promise<{
+    userIds: Set<string>
+  }> {
+    const { afterTimestamp, beforeTimestamp } = getTimestampRange(
+      this.transaction.timestamp!,
+      {
+        units: this.parameters.timeWindowInDays,
+        granularity: 'day',
+        rollingBasis: true,
+      }
+    )
+    const userAggregationData = await this.getRuleAggregations<AggregationData>(
+      'origin',
+      afterTimestamp,
+      beforeTimestamp
+    )
+    if (userAggregationData) {
+      return {
+        userIds: new Set(userAggregationData.flatMap((v) => v.userIds)),
+      }
+    }
+
+    // Fallback
+    const transactionRepository = new TransactionRepository(this.tenantId, {
+      dynamoDb: this.dynamoDb,
+    })
+    const { sendingTransactions } =
+      await getTransactionUserPastTransactionsByDirection(
+        {
+          ...this.transaction,
+          originUserId: undefined, // to force search by payment details
+          destinationUserId: undefined,
+        },
+        'origin',
+        transactionRepository,
+        {
+          timeWindow: {
+            units: this.parameters.timeWindowInDays,
+            granularity: 'day',
+            rollingBasis: true,
+          },
+          checkDirection: 'sending',
+          transactionStates: this.filters.transactionStatesHistorical,
+          transactionTypes: this.filters.transactionTypesHistorical,
+          paymentMethod: this.filters.paymentMethodHistorical,
+          countries: this.filters.transactionCountriesHistorical,
+        },
+        ['timestamp', 'originUserId']
+      )
+    const sendingTransactionsWithOriginUserId = sendingTransactions.filter(
+      (transaction) => transaction.originUserId
+    )
+
+    // Update aggregations
+    await this.refreshRuleAggregations(
+      'origin',
+      await this.getTimeAggregatedResult(sendingTransactionsWithOriginUserId)
+    )
+
+    return {
+      userIds: this.getUniqueOriginUserIds(sendingTransactionsWithOriginUserId),
+    }
+  }
+
+  private getUniqueOriginUserIds(
+    transactions: AuxiliaryIndexTransaction[]
+  ): Set<string> {
+    return new Set(
+      transactions
+        .map((transaction) => transaction.originUserId)
+        .filter(Boolean)
+    ) as Set<string>
+  }
+
+  private async getTimeAggregatedResult(
+    sendingTransactionsWithOriginUserId: AuxiliaryIndexTransaction[]
+  ) {
+    return groupTransactionsByHour<AggregationData>(
+      sendingTransactionsWithOriginUserId,
+      async (group) => ({
+        userIds: Array.from(this.getUniqueOriginUserIds(group)),
+      })
+    )
+  }
+
+  override async getUpdatedTargetAggregation(
+    direction: 'origin' | 'destination',
+    targetAggregationData: AggregationData | undefined,
+    isTransactionFiltered: boolean
+  ): Promise<AggregationData | null> {
+    if (
+      !isTransactionFiltered ||
+      direction === 'destination' ||
+      !this.transaction.originUserId ||
+      this.transaction.originPaymentDetails?.method !== 'CARD'
+    ) {
+      return null
+    }
+
+    return {
+      userIds: Array.from(
+        new Set(
+          (targetAggregationData?.userIds ?? []).concat(
+            this.transaction.originUserId
+          )
+        )
+      ),
+    }
+  }
+
+  override getUserKeyId(direction: 'origin' | 'destination') {
+    return direction === 'origin'
+      ? getNonUserSenderKeys(this.tenantId, this.transaction, undefined, true)
+          ?.PartitionKeyID
+      : getNonUserReceiverKeys(this.tenantId, this.transaction, undefined, true)
+          ?.PartitionKeyID
+  }
+
+  override getMaxTimeWindow(): TimeWindow {
+    return {
+      units: this.parameters.timeWindowInDays,
+      granularity: 'day',
+    }
+  }
+  protected getRuleAggregationVersion(): number {
+    return 1
   }
 }

@@ -65,7 +65,7 @@ export default class TooManyTransactionsToHighRiskCountryRule extends Transactio
     )
   }
 
-  protected matchPattern(
+  override matchPattern(
     transaction: Transaction,
     direction?: 'origin' | 'destination'
   ): boolean {
@@ -77,7 +77,11 @@ export default class TooManyTransactionsToHighRiskCountryRule extends Transactio
       : false
   }
 
-  protected getNeededTransactionFields(): Array<keyof Transaction> {
+  override getNeededTransactionFields(): Array<keyof Transaction> {
     return ['originAmountDetails', 'destinationAmountDetails']
+  }
+
+  override isAggregationSupported() {
+    return true
   }
 }

@@ -340,7 +340,7 @@ export default class HighUnsuccessfullStateRateRule extends TransactionAggregati
     )
   }
 
-  protected async getUpdatedTargetAggregation(
+  override async getUpdatedTargetAggregation(
     direction: 'origin' | 'destination',
     targetAggregationData: AggregationData | undefined,
     isTransactionFiltered: boolean
@@ -369,11 +369,11 @@ export default class HighUnsuccessfullStateRateRule extends TransactionAggregati
     return data
   }
 
-  protected getMaxTimeWindow(): TimeWindow {
+  override getMaxTimeWindow(): TimeWindow {
     return this.parameters.timeWindow
   }
 
-  protected getRuleAggregationVersion(): number {
+  override getRuleAggregationVersion(): number {
     return 1
   }
 }
