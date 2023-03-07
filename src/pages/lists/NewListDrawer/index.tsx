@@ -1,4 +1,4 @@
-import React, { useRef, useState } from 'react';
+import { useRef, useState } from 'react';
 import { nanoid } from 'nanoid';
 import { Drawer, Form, FormInstance, Input, message, Select, Switch } from 'antd';
 import { useMutation } from '@tanstack/react-query';
@@ -8,7 +8,7 @@ import { useApi } from '@/api';
 import { getErrorMessage } from '@/utils/lang';
 import { ListSubtype, ListType } from '@/apis';
 import Button from '@/components/library/Button';
-import { getListSubtypeTitle, SUBTYPES } from '@/pages/lists/helpers';
+import { getListSubtypeTitle, BLACKLIST_SUBTYPES, WHITELIST_SUBTYPES } from '@/pages/lists/helpers';
 
 interface FormValues {
   subtype: ListSubtype | null;
@@ -24,11 +24,6 @@ interface Props {
   onCancel: () => void;
   onSuccess: () => void;
 }
-
-const SUBTYPE_OPTIONS: { value: ListSubtype; label: string }[] = SUBTYPES.map((subtype) => ({
-  value: subtype,
-  label: getListSubtypeTitle(subtype),
-}));
 
 const INITIAL_FORM_STATE: FormValues = {
   subtype: null,
@@ -108,18 +103,23 @@ export default function NewListDrawer(props: Props) {
               label={`${listType === 'WHITELIST' ? 'Whitelist' : 'Blacklist'} type`}
               required
             >
-              <Select options={SUBTYPE_OPTIONS} />
+              <Select
+                options={(listType === 'WHITELIST' ? WHITELIST_SUBTYPES : BLACKLIST_SUBTYPES).map(
+                  (subtype) => ({
+                    value: subtype,
+                    label: getListSubtypeTitle(subtype),
+                  }),
+                )}
+              />
             </Form.Item>
             {listSubtype != null && (
               <>
                 <Form.Item name="name" label="List name" required>
                   <Input />
                 </Form.Item>
-                {listSubtype !== 'USER_ID' && (
-                  <Form.Item name="values" label={getListSubtypeTitle(listSubtype)}>
-                    <NewValueInput listSubtype={listSubtype} />
-                  </Form.Item>
-                )}
+                <Form.Item name="values" label={getListSubtypeTitle(listSubtype)}>
+                  <NewValueInput listSubtype={listSubtype} />
+                </Form.Item>
                 <Form.Item name="description" label="Description">
                   <Input.TextArea />
                 </Form.Item>

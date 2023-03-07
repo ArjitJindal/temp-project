@@ -14,7 +14,7 @@ export function stringifyListType(str: ListType): string {
   return str.toLowerCase();
 }
 
-export const SUBTYPES: ListSubtype[] = [
+export const BLACKLIST_SUBTYPES: ListSubtype[] = [
   'USER_ID',
   'CARD_FINGERPRINT_NUMBER',
   'IBAN_NUMBER',
@@ -26,6 +26,7 @@ export const SUBTYPES: ListSubtype[] = [
   'UPI_IDENTIFYING_NUMBER',
   'IP_ADDRESS',
 ];
+export const WHITELIST_SUBTYPES: ListSubtype[] = ['USER_ID'];
 
 export function getListSubtypeTitle(subtype: ListSubtype) {
   switch (subtype) {
