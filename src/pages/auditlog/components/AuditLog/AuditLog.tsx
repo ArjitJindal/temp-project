@@ -6,7 +6,6 @@ import ActionTakenByFilterButton from '../ActionTakeByFilterButton';
 import { TableSearchParams } from './types';
 import { useTableData } from './helpers';
 import DatePicker from '@/components/ui/DatePicker';
-import { dayjs } from '@/utils/dayjs';
 import { useApi } from '@/api';
 import { AllParams, DEFAULT_PARAMS_STATE, TableActionType } from '@/components/ui/Table';
 import { TableColumn } from '@/components/ui/Table/types';
@@ -16,6 +15,7 @@ import QueryResultsTable from '@/components/common/QueryResultsTable';
 import { usePaginatedQuery } from '@/utils/queries/hooks';
 import { AUDIT_LOGS_LIST } from '@/utils/queries/keys';
 import { useApiTime } from '@/utils/tracker';
+import { dayjs, DEFAULT_DATE_TIME_FORMAT } from '@/utils/dayjs';
 
 export default function AuditLogTable() {
   const api = useApi();
@@ -140,7 +140,7 @@ export default function AuditLogTable() {
         return <TimestampDisplay timestamp={entity.timestamp} />;
       },
       hideInSearch: true,
-      exportData: 'timestamp',
+      exportData: (entity) => dayjs(entity.timestamp).format(DEFAULT_DATE_TIME_FORMAT),
     },
   ];
 
