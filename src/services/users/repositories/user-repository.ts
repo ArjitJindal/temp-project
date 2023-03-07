@@ -618,15 +618,16 @@ export class UserRepository {
     const name = USERS_COLLECTION(this.tenantId)
     const collection = db.collection<Business>(name)
     let fieldPath: string
+    let unwindPath: string
     const filterConditions = []
     switch (params.field) {
       case 'BUSINESS_INDUSTRY':
         fieldPath = 'legalEntity.companyGeneralDetails.businessIndustry'
+        unwindPath = 'legalEntity.companyGeneralDetails.businessIndustry'
         break
       case 'TAGS_KEY':
         fieldPath = 'tags.key'
-        break
-        fieldPath = 'deviceData.ipAddress'
+        unwindPath = 'tags'
         break
       default:
         throw neverThrow(params.field, `Unknown field: ${params.field}`)
@@ -650,8 +651,17 @@ export class UserRepository {
       // we don't filter all the documents for performance concerns.
       filterConditions.length > 0 ? { $limit: 10000 } : {},
       {
+        $unwind: {
+          path: `$${unwindPath}`,
+          includeArrayIndex: 'string',
+        },
+      },
+      {
         $group: {
-          _id: `$${fieldPath}`,
+          _id: null,
+          values: {
+            $addToSet: `$${fieldPath}`,
+          },
         },
       },
       {
@@ -659,12 +669,13 @@ export class UserRepository {
       },
     ].filter((stage) => !_.isEmpty(stage))
 
-    const result: string[] = await collection
-      .aggregate<{ _id: string }>(pipeline)
-      .map(({ _id }) => _id)
+    const result: string[][] = await collection
+      .aggregate<any>(pipeline)
+      .map(({ values }) => values)
       .toArray()
-    return result
+    return result[0]
   }
+
   public async saveUserComment(
     userId: string,
     comment: Comment
