@@ -6,7 +6,8 @@ import * as iam from 'aws-cdk-lib/aws-iam';
 import * as cloudfront from 'aws-cdk-lib/aws-cloudfront';
 import * as s3deploy from 'aws-cdk-lib/aws-s3-deployment';
 import { CfnOutput, RemovalPolicy } from 'aws-cdk-lib';
-import { PriceClass } from 'aws-cdk-lib/aws-cloudfront';
+import { CnameRecord, HostedZone } from 'aws-cdk-lib/aws-route53';
+import { userAlias } from './configs/config-dev-user';
 import type { Config } from './configs/config';
 
 export class CdkPhytoplanktonStack extends cdk.Stack {
@@ -92,6 +93,20 @@ export class CdkPhytoplanktonStack extends cdk.Stack {
     new CfnOutput(this, 'Bucket', { value: siteBucket.bucketName });
     new CfnOutput(this, 'DistributionId', { value: distribution.distributionId });
     new CfnOutput(this, 'DistributionDomainName', { value: distribution.distributionDomainName });
+
+    if (config.stage === 'dev') {
+      const prefix = process.env.ENV === 'dev:user' ? `${userAlias()}.` : '';
+
+      const hostedZone = HostedZone.fromLookup(this, `zone`, {
+        domainName: config.SITE_DOMAIN.replace(prefix, '').replace('console.', ''),
+        privateZone: false,
+      });
+      new CnameRecord(this, `cname`, {
+        zone: hostedZone,
+        recordName: `${prefix}console`,
+        domainName: distribution.distributionDomainName,
+      });
+    }
 
     console.log(
       `❗❗For initial deployment, please follow https://www.notion.so/flagright/DNS-configuration-864d7518d87c448d862baa74b99c3d33#de01aa3894a842bb910ab8904a1d21be to configure DNS.
