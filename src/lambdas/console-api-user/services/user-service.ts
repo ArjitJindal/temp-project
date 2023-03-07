@@ -218,7 +218,7 @@ export class UserService {
     field: UsersUniquesField
     filter?: string
   }): Promise<string[]> {
-    return this.userRepository.getUniques(params)
+    return await this.userRepository.getUniques(params)
   }
   public async saveUserComment(userId: string, comment: Comment) {
     for (const file of comment.files || []) {

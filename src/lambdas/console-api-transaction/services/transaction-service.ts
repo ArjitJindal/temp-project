@@ -205,6 +205,6 @@ export class TransactionService {
     field: TransactionsUniquesField
     filter?: string
   }): Promise<string[]> {
-    return this.transactionRepository.getUniques(params)
+    return await this.transactionRepository.getUniques(params)
   }
 }
