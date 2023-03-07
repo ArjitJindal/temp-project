@@ -35,7 +35,6 @@ export type TransactionsVelocityRuleParameters = {
   checkReceiver?: 'receiving' | 'all' | 'none'
 
   // Optional parameters
-  userIdsToCheck?: string[] // If empty, all users will be checked
   onlyCheckKnownUsers?: boolean
   paymentChannel?: string
 }
@@ -55,12 +54,6 @@ export default class TransactionsVelocityRule extends TransactionAggregationRule
         timeWindow: TIME_WINDOW_SCHEMA(),
         checkSender: CHECK_SENDER_OPTIONAL_SCHEMA(),
         checkReceiver: CHECK_RECEIVER_OPTIONAL_SCHEMA(),
-        userIdsToCheck: {
-          type: 'array',
-          title: 'Target user IDs',
-          items: { type: 'string' },
-          nullable: true,
-        },
         onlyCheckKnownUsers: {
           type: 'boolean',
           title: 'Only check transactions from known users (with user ID)',
@@ -85,7 +78,6 @@ export default class TransactionsVelocityRule extends TransactionAggregationRule
     const {
       transactionsLimit,
       onlyCheckKnownUsers,
-      userIdsToCheck,
       paymentChannel,
       checkSender,
       checkReceiver,
@@ -98,13 +90,9 @@ export default class TransactionsVelocityRule extends TransactionAggregationRule
     }
 
     if (
-      (this.senderUser &&
-        userIdsToCheck &&
-        userIdsToCheck.length > 0 &&
-        !userIdsToCheck?.includes(this.senderUser.userId)) ||
-      (paymentChannel &&
-        (this.transaction.originPaymentDetails as CardDetails)
-          .paymentChannel !== paymentChannel)
+      paymentChannel &&
+      (this.transaction.originPaymentDetails as CardDetails).paymentChannel !==
+        paymentChannel
     ) {
       return
     }

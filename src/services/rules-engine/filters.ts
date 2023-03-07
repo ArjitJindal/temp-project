@@ -63,6 +63,10 @@ import {
   UserCreationAgeRuleFilterParameter,
 } from './user-filters/user-creation-age'
 import {
+  UserIdRuleFilter,
+  UserIdRuleFilterParameter,
+} from './user-filters/user-id'
+import {
   UserTypeRuleFilter,
   UserTypeRuleFilterParameter,
 } from './user-filters/user-type'
@@ -88,6 +92,7 @@ export type UserFilters = WhitelistUsersRuleFilterParameter &
   UserCreationAgeRuleFilterParameter &
   UserTypeRuleFilterParameter &
   UserAgeRuleFilterParameter &
+  UserIdRuleFilterParameter &
   UserCountryOfResidenceRuleFilterParameter &
   UserCountryOfNationalityRuleFilterParameter &
   UserCountryOfRegistrationRuleFilterParameter
@@ -117,6 +122,7 @@ const _USER_FILTERS = [
   UserCreationAgeRuleFilter,
   UserAgeRuleFilter,
   UserTypeRuleFilter,
+  UserIdRuleFilter,
   UserCountryOfResidenceRuleFilter,
   UserCountryOfNationalityRuleFilter,
   UserCountryOfRegistrationRuleFilter,

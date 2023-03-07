@@ -362,9 +362,12 @@ export class RulesEngineService {
         const {
           isTransactionFiltered,
           isTransactionHistoricalFiltered,
-          isUserFiltered,
+          isOriginUserFiltered,
+          isDestinationUserFiltered,
         } = await this.computeRuleFilters(ruleFilters, data)
-        const shouldRunRule = isTransactionFiltered && isUserFiltered
+        const shouldRunRule =
+          isTransactionFiltered &&
+          (isOriginUserFiltered || isDestinationUserFiltered)
         if (!_.isEmpty(ruleFilters)) {
           filterSegment?.close()
         }
@@ -380,7 +383,12 @@ export class RulesEngineService {
           ? await ruleClassInstance.computeRule()
           : null
         const filteredRuleResult = ruleResult
-          ? this.getFilteredRuleResult(ruleResult, ruleFilters)
+          ? this.getFilteredRuleResult(
+              ruleResult,
+              ruleFilters,
+              isOriginUserFiltered,
+              isDestinationUserFiltered
+            )
           : []
 
         if (ruleClassInstance instanceof TransactionAggregationRule) {
@@ -462,30 +470,39 @@ export class RulesEngineService {
   ): Promise<{
     isTransactionFiltered: boolean
     isTransactionHistoricalFiltered: boolean
-    isUserFiltered: boolean
+    isOriginUserFiltered: boolean
+    isDestinationUserFiltered: boolean
   }> {
     let isTransactionFiltered = true
     let isTransactionHistoricalFiltered = true
-    let isUserFiltered = true
+    let isOriginUserFiltered = true
+    let isDestinationUserFiltered = true
 
     for (const filterKey in ruleFilters) {
       const UserRuleFilterClass = USER_FILTERS[filterKey]
       if (UserRuleFilterClass && ruleFilters[filterKey]) {
-        const results = await Promise.all(
-          [data.senderUser, data.receiverUser]
-            .filter(Boolean)
-            .map(async (user) => {
-              const ruleFilter = new UserRuleFilterClass(
-                this.tenantId,
-                { user: user! },
-                { [filterKey]: ruleFilters[filterKey] },
-                this.dynamoDb
-              )
-              return ruleFilter.predicate()
-            })
+        const [originUserFiltered, destinationUserFiltered] = await Promise.all(
+          [data.senderUser, data.receiverUser].map(async (user) => {
+            if (!user) {
+              return false
+            }
+            const ruleFilter = new UserRuleFilterClass(
+              this.tenantId,
+              { user: user! },
+              { [filterKey]: ruleFilters[filterKey] },
+              this.dynamoDb
+            )
+            return ruleFilter.predicate()
+          })
         )
-        if (results.includes(false)) {
-          isUserFiltered = false
+
+        if (!originUserFiltered) {
+          isOriginUserFiltered = originUserFiltered
+        }
+        if (!destinationUserFiltered) {
+          isDestinationUserFiltered = destinationUserFiltered
+        }
+        if (!isOriginUserFiltered && !isDestinationUserFiltered) {
           break
         }
       }
@@ -524,18 +541,31 @@ export class RulesEngineService {
     return {
       isTransactionFiltered,
       isTransactionHistoricalFiltered,
-      isUserFiltered,
+      isOriginUserFiltered,
+      isDestinationUserFiltered,
     }
   }
 
   private getFilteredRuleResult(
     ruleResult: RuleHitResult,
-    ruleFilters: TransactionFilters & UserFilters = {}
+    ruleFilters: TransactionFilters & UserFilters = {},
+    isOriginUserFiltered: boolean,
+    isDestinationUserFiltered: boolean
   ): RuleHitResultItem[] {
-    const filteredResult = ruleResult.filter(Boolean) as RuleHitResultItem[]
+    let filteredResult = ruleResult.filter(Boolean) as RuleHitResultItem[]
     if (ruleFilters.checkDirection) {
-      return filteredResult.filter(
+      filteredResult = filteredResult.filter(
         (hitResult) => hitResult.direction === ruleFilters.checkDirection
+      )
+    }
+    if (!isOriginUserFiltered) {
+      filteredResult = filteredResult.filter(
+        (hitResult) => hitResult.direction !== 'ORIGIN'
+      )
+    }
+    if (!isDestinationUserFiltered) {
+      filteredResult = filteredResult.filter(
+        (hitResult) => hitResult.direction !== 'DESTINATION'
       )
     }
     return filteredResult

@@ -27,14 +27,12 @@ export class UserCountryOfResidenceRuleFilter extends UserRuleFilter<UserCountry
     return this.isUserCountry(this.user)
   }
 
-  private isUserCountry(user: User | Business | undefined): boolean {
-    let { userResidenceCountries } = this.parameters
-    if (!userResidenceCountries) {
-      return true
-    }
+  private isUserCountry(user: User | Business): boolean {
     const consumerUser = user as User
     const businessUser = user as Business // For typescript
-    userResidenceCountries = expandCountryGroup(userResidenceCountries)
+    const userResidenceCountries = expandCountryGroup(
+      this.parameters.userResidenceCountries!
+    )
     return (
       (userResidenceCountries.some(
         (x) => x === consumerUser.userDetails?.countryOfResidence

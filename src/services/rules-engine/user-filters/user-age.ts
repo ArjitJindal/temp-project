@@ -41,18 +41,14 @@ export class UserAgeRuleFilter extends UserRuleFilter<UserAgeRuleFilterParameter
     return this.isUserBetweenAge(this.user)
   }
 
-  private isUserBetweenAge(user: User | Business | undefined): boolean {
+  private isUserBetweenAge(user: User | Business): boolean {
     const consumerUser = user as User
     const businessUser = user as Business // For typescript
-    const { userAgeRange } = this.parameters
 
-    if (!user || !userAgeRange) {
-      return true
-    }
     let ageInMs = 0
     if (isConsumerUser(user)) {
       if (!consumerUser.userDetails?.dateOfBirth) {
-        return true
+        return false
       }
       ageInMs = dayjs().diff(dayjs(consumerUser.userDetails.dateOfBirth), 'ms')
     } else {
@@ -60,7 +56,7 @@ export class UserAgeRuleFilter extends UserRuleFilter<UserAgeRuleFilterParameter
         !businessUser.legalEntity?.companyRegistrationDetails
           ?.dateOfRegistration
       ) {
-        return true
+        return false
       }
       ageInMs = dayjs().diff(
         dayjs(

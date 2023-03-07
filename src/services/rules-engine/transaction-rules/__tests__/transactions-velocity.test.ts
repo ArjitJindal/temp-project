@@ -11,7 +11,6 @@ import {
   TransactionRuleTestCase,
 } from '@/test-utils/rule-test-utils'
 import { dynamoDbSetupHook } from '@/test-utils/dynamodb-test-utils'
-import { getTestUser, setUpUsersHooks } from '@/test-utils/user-test-utils'
 
 dynamoDbSetupHook()
 
@@ -325,79 +324,6 @@ ruleAggregationTest(() => {
           }),
         ],
         expectedHits: [false, false, false],
-      },
-    ])('', ({ name, transactions, expectedHits }) => {
-      createTransactionRuleTestCase(
-        name,
-        TEST_TENANT_ID,
-        transactions,
-        expectedHits
-      )
-    })
-  })
-
-  describe('Optional parameters', () => {
-    const TEST_TENANT_ID = getTestTenantId()
-
-    setUpRulesHooks(TEST_TENANT_ID, [
-      {
-        type: 'TRANSACTION',
-        ruleImplementationName: 'transactions-velocity',
-        defaultParameters: {
-          transactionsLimit: 1,
-          timeWindow: {
-            units: 1,
-            granularity: 'hour',
-          },
-          checkTimeWindow: {
-            from: '09:00:00+00:00',
-            to: '18:00:00+00:00',
-          },
-          userIdsToCheck: ['1-1', '3-1'],
-          checkSender: 'all',
-          checkReceiver: 'all',
-        } as TransactionsVelocityRuleParameters,
-      },
-    ])
-
-    setUpUsersHooks(TEST_TENANT_ID, [
-      getTestUser({ userId: '1-1' }),
-      getTestUser({ userId: '2-1' }),
-      getTestUser({ userId: '3-1' }),
-    ])
-
-    describe.each<TransactionRuleTestCase>([
-      {
-        name: 'User in the list and transaction time within the window - hit',
-        transactions: [
-          getTestTransaction({
-            originUserId: '1-1',
-            destinationUserId: '1-2',
-            timestamp: dayjs('2022-01-01T10:00:00.000Z').valueOf(),
-          }),
-          getTestTransaction({
-            originUserId: '1-1',
-            destinationUserId: '1-3',
-            timestamp: dayjs('2022-01-01T10:00:00.100Z').valueOf(),
-          }),
-        ],
-        expectedHits: [false, true],
-      },
-      {
-        name: 'User not in the list - not hit',
-        transactions: [
-          getTestTransaction({
-            originUserId: '2-1',
-            destinationUserId: '2-2',
-            timestamp: dayjs('2022-01-01T10:00:00.000Z').valueOf(),
-          }),
-          getTestTransaction({
-            originUserId: '2-1',
-            destinationUserId: '2-3',
-            timestamp: dayjs('2022-01-01T10:00:00.100Z').valueOf(),
-          }),
-        ],
-        expectedHits: [false, false],
       },
     ])('', ({ name, transactions, expectedHits }) => {
       createTransactionRuleTestCase(

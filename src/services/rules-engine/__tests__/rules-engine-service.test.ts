@@ -85,28 +85,38 @@ describe('Verify Transaction', () => {
         filters: { whitelistUsers: { userIds: ['1'] } },
       },
     ])
-    setUpUsersHooks(TEST_TENANT_ID, [getTestUser({ userId: '1' })])
+    setUpUsersHooks(TEST_TENANT_ID, [
+      getTestUser({ userId: '1' }),
+      getTestUser({ userId: '2' }),
+    ])
 
     test('rule is not run', async () => {
       const rulesEngine = new RulesEngineService(TEST_TENANT_ID, dynamoDb)
       const transaction = getTestTransaction({
         transactionId: 'dummy',
         originUserId: '1',
+        destinationUserId: '2',
       })
       const result = await rulesEngine.verifyTransaction(transaction)
+      const expectedRuleResult = {
+        ruleId: 'R-1',
+        ruleInstanceId: RULE_INSTANCE_ID_MATCHER,
+        ruleName: 'test rule name',
+        ruleDescription: 'test rule description.',
+        ruleAction: 'FLAG',
+        ruleHitMeta: {
+          hitDirections: ['DESTINATION'],
+        },
+      }
       expect(result).toEqual({
         transactionId: 'dummy',
         executedRules: [
           {
-            ruleId: 'R-1',
-            ruleInstanceId: RULE_INSTANCE_ID_MATCHER,
-            ruleName: 'test rule name',
-            ruleDescription: 'test rule description.',
-            ruleAction: 'FLAG',
-            ruleHit: false,
+            ...expectedRuleResult,
+            ruleHit: true,
           },
         ],
-        hitRules: [],
+        hitRules: [expectedRuleResult],
       } as TransactionMonitoringResult)
     })
   })
