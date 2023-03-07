@@ -41,6 +41,13 @@ function getSecrets<T>(
   return secrets as T
 }
 
+function apiUrl(config: Config) {
+  return config.application.AUTH0_AUDIENCE.replace('https://', '').replace(
+    '/',
+    ''
+  )
+}
+
 export const createAuth0TenantResources = (
   context: Construct,
   config: Config,
@@ -104,7 +111,7 @@ export const createAuth0TenantResources = (
    * Applications::APIs
    */
 
-  let apiPrefixs = [config.stage === 'prod' ? '' : `${config.stage}.`]
+  let apiPrefixs = [config.stage === 'sandbox' ? 'sandbox.' : ``]
   if (config.stage === 'prod' && tenantName === 'flagright') {
     apiPrefixs = ['', 'asia-1.', 'asia-2.', 'eu-1.', 'us-1.']
   }
@@ -116,7 +123,7 @@ export const createAuth0TenantResources = (
       {
         provider,
         name: `APIGateway (${apiPrefix}api)`,
-        identifier: `https://${apiPrefix}api.flagright.com/`,
+        identifier: `https://${apiPrefix}${apiUrl(config)}/`,
         signingAlg: 'RS256',
         allowOfflineAccess: false,
         tokenLifetime: 86400,
@@ -145,7 +152,7 @@ export const createAuth0TenantResources = (
         permissions: apiPrefixs.flatMap((apiPrefix) => {
           return permissions.map((p) => ({
             name: p,
-            resourceServerIdentifier: `https://${apiPrefix}api.flagright.com/`,
+            resourceServerIdentifier: `https://${apiPrefix}${apiUrl(config)}/`,
           }))
         }),
         description,
@@ -159,7 +166,7 @@ export const createAuth0TenantResources = (
     permissions: apiPrefixs.flatMap((apiPrefix) => {
       return PERMISSIONS.map((p) => ({
         name: p,
-        resourceServerIdentifier: `https://${apiPrefix}api.flagright.com/`,
+        resourceServerIdentifier: `https://${apiPrefix}${apiUrl(config)}/`,
       }))
     }),
   })
