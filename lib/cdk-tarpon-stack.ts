@@ -1778,6 +1778,9 @@ const getSubdomain = (): string => {
   if (process.env.ENV === 'dev:user') {
     return `${process.env.GITHUB_USER}-${process.env.S_NO}.api`
   }
+  if (process.env.ENV === 'sandbox') {
+    return `sandbox.api`
+  }
   return `api`
 }
 const getApiDomain = (config: Config): string => {
