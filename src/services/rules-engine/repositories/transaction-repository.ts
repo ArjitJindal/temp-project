@@ -1380,6 +1380,8 @@ export class TransactionRepository {
     const collection = db.collection<TransactionCaseManagement>(name)
 
     let fieldPath: string
+    let unwindPath = ''
+
     const filterConditions = []
     switch (params.field) {
       case 'TRANSACTION_STATE':
@@ -1387,6 +1389,7 @@ export class TransactionRepository {
         break
       case 'TAGS_KEY':
         fieldPath = 'tags.key'
+        unwindPath = 'tags'
         break
       case 'IBAN_NUMBER':
         fieldPath = 'originPaymentDetails.IBAN'
@@ -1460,6 +1463,14 @@ export class TransactionRepository {
       // If we have filter conditions, it's for auto-complete. It's acceptable that
       // we don't filter all the documents for performance concerns.
       filterConditions.length > 0 ? { $limit: 10000 } : {},
+      unwindPath.length > 0
+        ? {
+            $unwind: {
+              path: `$${unwindPath}`,
+              includeArrayIndex: 'string',
+            },
+          }
+        : {},
       {
         $group: {
           _id: `$${fieldPath}`,

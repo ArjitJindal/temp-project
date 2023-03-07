@@ -658,10 +658,7 @@ export class UserRepository {
       },
       {
         $group: {
-          _id: null,
-          values: {
-            $addToSet: `$${fieldPath}`,
-          },
+          _id: `$${fieldPath}`,
         },
       },
       {
@@ -669,11 +666,11 @@ export class UserRepository {
       },
     ].filter((stage) => !_.isEmpty(stage))
 
-    const result: string[][] = await collection
+    const result: string[] = await collection
       .aggregate<any>(pipeline)
-      .map(({ values }) => values)
+      .map(({ _id }) => _id)
       .toArray()
-    return result[0]
+    return result
   }
 
   public async saveUserComment(
