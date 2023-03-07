@@ -41,9 +41,9 @@ export default function PopupContent(props: Props) {
             allowClear={true}
             className={s.select}
             loading={isLoading(result.data)}
-            options={(getOr(result.data, []) as unknown as Array<string[]>)
+            options={(getOr(result.data, []) as unknown as Array<string>)
               .filter((key) => key?.length > 0)
-              .map((key) => ({ label: key[0], value: key[0] }))}
+              .map((key) => ({ label: key, value: key }))}
             value={state.key}
             onChange={(value) => {
               setState((state) => ({ ...state, key: value }));
