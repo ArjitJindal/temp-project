@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import Comments from './Comments';
 import { useQuery } from '@/utils/queries/hooks';
-import { ALERT_ITEM, CASES_ITEM_TRANSACTIONS } from '@/utils/queries/keys';
+import { ALERT_ITEM, ALERT_ITEM_TRANSACTION_LIST } from '@/utils/queries/keys';
 import { useApi } from '@/api';
 import { useApiTime } from '@/utils/tracker';
 import { DEFAULT_PARAMS_STATE } from '@/components/ui/Table';
@@ -11,34 +11,36 @@ import TransactionsTable, {
 import Tabs from '@/components/library/Tabs';
 
 interface Props {
-  caseId: string | null;
   alertId: string | null;
 }
 
 export default function ExpandedRowRenderer(props: Props) {
-  const { caseId, alertId } = props;
+  const { alertId } = props;
   const api = useApi();
   const measure = useApiTime();
 
   const [params, setParams] = useState<TransactionsTableParams>(DEFAULT_PARAMS_STATE);
 
-  const transactionsResponse = useQuery(CASES_ITEM_TRANSACTIONS(caseId ?? '', params), async () => {
-    if (alertId == null) {
-      throw new Error(`Unable to fetch transactions for alert, it's alert id is empty`);
-    }
-    const result = await measure(
-      () =>
-        api.getAlertTransactionList({
-          ...params,
-          alertId: alertId,
-        }),
-      'Get Case Transactions For Alert',
-    );
-    return {
-      items: result.data,
-      total: result.total,
-    };
-  });
+  const transactionsResponse = useQuery(
+    ALERT_ITEM_TRANSACTION_LIST(alertId ?? '', params),
+    async () => {
+      if (alertId == null) {
+        throw new Error(`Unable to fetch transactions for alert, it's id is empty`);
+      }
+      const result = await measure(
+        () =>
+          api.getAlertTransactionList({
+            ...params,
+            alertId,
+          }),
+        'Get Alert Transactions',
+      );
+      return {
+        items: result.data,
+        total: result.total,
+      };
+    },
+  );
 
   const alertItemResponse = useQuery(ALERT_ITEM(alertId ?? ''), async () => {
     if (alertId == null) {
@@ -64,7 +66,6 @@ export default function ExpandedRowRenderer(props: Props) {
               queryResult={transactionsResponse}
               params={params}
               onChangeParams={setParams}
-              headerSubtitle={'Transaction details'}
               adjustPagination={true}
             />
           ),
