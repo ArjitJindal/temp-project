@@ -10,7 +10,7 @@ info:
 servers:
   - url: http://localhost:3000
 paths:
-  /device/metric:
+  /metric:
     parameters: []
     post:
       security:

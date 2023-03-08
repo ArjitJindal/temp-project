@@ -16,7 +16,7 @@ import { getAugmentedOpenapi } from './openapi-augmentor-util'
 const env = (process.env.ENV || 'prod').split(':')[0]
 
 export const PublicDeviceDataApiPathToLambda: any = {
-  '/device/metric': StackConstants.PUBLIC_DEVICE_DATA_API_FUNCTION_NAME,
+  '/metric': StackConstants.PUBLIC_DEVICE_DATA_API_FUNCTION_NAME,
 }
 
 const openapi = getAugmentedOpenapi(
