@@ -111,7 +111,7 @@ export const createAuth0TenantResources = (
    * Applications::APIs
    */
 
-  let apiPrefixs = [config.stage === 'sandbox' ? 'sandbox.' : ``]
+  let apiPrefixs = ['']
   if (config.stage === 'prod' && tenantName === 'flagright') {
     apiPrefixs = ['', 'asia-1.', 'asia-2.', 'eu-1.', 'us-1.']
   }
