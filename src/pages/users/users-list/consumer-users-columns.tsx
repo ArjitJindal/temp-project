@@ -111,7 +111,7 @@ export function getConsumerUserColumns(): TableColumn<InternalConsumerUser>[] {
       hideInSearch: true,
       exportData: 'tags',
       hideInForm: true,
-      width: 100,
+      width: 200,
       render: (dom, entity) => {
         if (entity.tags instanceof Array) {
           return (

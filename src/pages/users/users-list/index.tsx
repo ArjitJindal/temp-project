@@ -85,7 +85,7 @@ function getPulseColumns<
       exportData: (entity) => {
         return !entity?.drsScore?.isUpdatable ? 'Yes' : 'No';
       },
-      tip: 'Customer risk assessment score is locked',
+      tip: 'Whether customer risk assessment score is locked',
       search: false,
       render: (dom, entity) => {
         if (!entity?.drsScore?.isUpdatable) {

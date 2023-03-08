@@ -9,6 +9,7 @@ import UserKycStatusTag from '@/components/ui/UserKycStatusTag';
 import UserStateTag from '@/components/ui/UserStateTag';
 import { getUserName } from '@/utils/api/users';
 import UserTypeIcon from '@/components/ui/UserTypeIcon';
+import KeyValueTag from '@/components/ui/KeyValueTag';
 
 export function getAllUserColumns(): TableColumn<InternalUser>[] {
   return [
@@ -89,6 +90,24 @@ export function getAllUserColumns(): TableColumn<InternalUser>[] {
         return userState && <UserStateTag userState={userState} />;
       },
       exportData: (entity) => entity.userStateDetails?.state,
+    },
+    {
+      title: 'Tags',
+      hideInSearch: true,
+      exportData: 'tags',
+      hideInForm: true,
+      width: 200,
+      render: (dom, entity) => {
+        if (entity.tags instanceof Array) {
+          return (
+            <>
+              {entity.tags?.map((tag: any) => (
+                <KeyValueTag key={tag.key} tag={tag} />
+              ))}
+            </>
+          );
+        }
+      },
     },
     {
       title: 'Created on',

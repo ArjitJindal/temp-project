@@ -4,6 +4,7 @@ import { dayjs, DEFAULT_DATE_TIME_FORMAT } from '@/utils/dayjs';
 import { InternalBusinessUser } from '@/apis';
 import { TableColumn } from '@/components/ui/Table/types';
 import Money from '@/components/ui/Money';
+import KeyValueTag from '@/components/ui/KeyValueTag';
 
 export function getBusinessUserColumns(): TableColumn<InternalBusinessUser>[] {
   return [
@@ -110,6 +111,24 @@ export function getBusinessUserColumns(): TableColumn<InternalBusinessUser>[] {
         return entity.legalEntity.companyRegistrationDetails?.registrationCountry;
       },
       valueType: 'textarea',
+    },
+    {
+      title: 'Tags',
+      hideInSearch: true,
+      exportData: 'tags',
+      hideInForm: true,
+      width: 200,
+      render: (dom, entity) => {
+        if (entity.tags instanceof Array) {
+          return (
+            <>
+              {entity.tags?.map((tag: any) => (
+                <KeyValueTag key={tag.key} tag={tag} />
+              ))}
+            </>
+          );
+        }
+      },
     },
     {
       title: 'Created on',
