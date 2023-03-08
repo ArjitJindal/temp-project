@@ -10,7 +10,7 @@ info:
 servers:
   - url: http://localhost:3000
 paths:
-  /metric:
+  /metrics:
     parameters: []
     post:
       security:
