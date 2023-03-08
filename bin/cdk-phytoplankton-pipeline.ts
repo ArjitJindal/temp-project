@@ -8,8 +8,6 @@ import { config as prodConfig } from '../lib/configs/config-prod';
 import { CdkPhytoplanktonStack } from '../lib/cdk-phytoplankton-stack';
 import { CdkPhytoplanktonPipelineStack } from '../lib/cdk-phytoplankton-pipeline-stack';
 
-const GITHUB_USERS = ['amandugar', 'chialunwu', 'koluch', 'nadig', 'timrcoulson'];
-
 const app = new cdk.App();
 
 if (process.env.ENV === 'dev') {
@@ -21,7 +19,7 @@ if (process.env.ENV === 'dev:user') {
   const S_NO = process.env.S_NO || '';
   const userRegex = /^[a-z\d](?:[a-z\d]|-(?=[a-z\d])){0,38}$/i;
   const numberRegex = /^[1-3]$/;
-  if (GITHUB_USERS.includes(githubUser) && userRegex.test(githubUser) && numberRegex.test(S_NO)) {
+  if (userRegex.test(githubUser) && numberRegex.test(S_NO)) {
     new CdkPhytoplanktonStack(
       app,
       `${devUserConfig.stage}-phytoplankton-${githubUser}-${S_NO}`,
