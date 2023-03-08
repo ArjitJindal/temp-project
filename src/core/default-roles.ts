@@ -54,6 +54,8 @@ export const DEFAULT_ROLES: {
       'transactions:overview:read',
       'transactions:details:read',
       'transactions:export:read',
+      'users:user-overview:read',
+      'users:user-details:read',
     ],
     description:
       'The following is the default permissions set for the Analyst role.',
