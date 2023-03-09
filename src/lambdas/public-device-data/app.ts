@@ -16,7 +16,7 @@ export const deviceDataHandler = lambdaApi()(
   ) => {
     if (
       event.httpMethod === 'POST' &&
-      event.resource === '/metric' &&
+      event.resource === '/metrics' &&
       event.body
     ) {
       const { principalId: tenantId } = event.requestContext.authorizer
