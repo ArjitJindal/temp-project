@@ -33,6 +33,9 @@ export default function CommentButton(props: Props) {
         message.success('Comment successfully added!');
         onSuccess(data);
         commentEditorRef.current?.reset();
+        setCommentFormValues((prev) => {
+          return { ...prev, files: [] };
+        });
       },
       onError: (error) => {
         console.log(error);
