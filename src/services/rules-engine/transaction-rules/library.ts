@@ -952,7 +952,7 @@ const _TRANSACTION_RULES_LIBRARY: Array<
   },
   () => {
     const defaultParameters: BlacklistTransactionMatchedFieldRuleParameters = {
-      blackListId: '',
+      blacklistId: '',
     }
 
     return {

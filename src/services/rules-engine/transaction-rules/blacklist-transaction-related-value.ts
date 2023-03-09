@@ -1,3 +1,4 @@
+import { JSONSchemaType } from 'ajv'
 import { TransactionRule } from '@/services/rules-engine/transaction-rules/rule'
 import { ListRepository } from '@/lambdas/console-api-list-importer/repositories/list-repository'
 import { RuleHitResult } from '@/services/rules-engine/rule'
@@ -5,7 +6,7 @@ import { ListSubtype } from '@/@types/openapi-internal/ListSubtype'
 import { Transaction } from '@/@types/openapi-public/Transaction'
 
 export type BlacklistTransactionMatchedFieldRuleParameters = {
-  blackListId: string
+  blacklistId: string
 }
 
 type TransactionField = {
@@ -15,7 +16,7 @@ type TransactionField = {
 }
 
 export default class BlacklistTransactionMatchedFieldRule extends TransactionRule<BlacklistTransactionMatchedFieldRuleParameters> {
-  public static getSchema() {
+  public static getSchema(): JSONSchemaType<BlacklistTransactionMatchedFieldRuleParameters> {
     return {
       type: 'object',
       properties: {
@@ -24,13 +25,13 @@ export default class BlacklistTransactionMatchedFieldRule extends TransactionRul
           title: 'Blacklist ID',
         },
       },
-      required: ['blackListId'],
+      required: ['blacklistId'],
     }
   }
 
   public async computeRule() {
     const listRepo = new ListRepository(this.tenantId, this.dynamoDb)
-    const listHeader = await listRepo.getListHeader(this.parameters.blackListId)
+    const listHeader = await listRepo.getListHeader(this.parameters.blacklistId)
     const hitResult: RuleHitResult = []
 
     if (
@@ -59,7 +60,7 @@ export default class BlacklistTransactionMatchedFieldRule extends TransactionRul
           direction: field.direction,
           vars: {
             value: field.value,
-            blackListId: this.parameters.blackListId,
+            blackListId: this.parameters.blacklistId,
             variableType: field.label,
           },
         })

@@ -1,3 +1,4 @@
+import { BlacklistTransactionMatchedFieldRuleParameters } from '../blacklist-transaction-related-value'
 import { getTestTenantId } from '@/test-utils/tenant-test-utils'
 import { dynamoDbSetupHook } from '@/test-utils/dynamodb-test-utils'
 import { getDynamoDbClient } from '@/utils/dynamodb'
@@ -46,8 +47,8 @@ describe('R-132 User ID', () => {
       type: 'TRANSACTION',
       ruleImplementationName: 'blacklist-transaction-related-value',
       defaultParameters: {
-        blackListId: TEST_LIST_ID,
-      },
+        blacklistId: TEST_LIST_ID,
+      } as BlacklistTransactionMatchedFieldRuleParameters,
       defaultAction: 'BLOCK',
     },
   ])
@@ -95,8 +96,8 @@ describe('R-132 Swift Code', () => {
       type: 'TRANSACTION',
       ruleImplementationName: 'blacklist-transaction-related-value',
       defaultParameters: {
-        blackListId: TEST_LIST_ID,
-      },
+        blacklistId: TEST_LIST_ID,
+      } as BlacklistTransactionMatchedFieldRuleParameters,
       defaultAction: 'BLOCK',
     },
   ])
