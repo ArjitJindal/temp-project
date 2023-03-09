@@ -41,13 +41,6 @@ function getSecrets<T>(
   return secrets as T
 }
 
-function apiUrl(config: Config) {
-  return config.application.AUTH0_AUDIENCE.replace('https://', '').replace(
-    '/',
-    ''
-  )
-}
-
 export const createAuth0TenantResources = (
   context: Construct,
   config: Config,
@@ -110,36 +103,28 @@ export const createAuth0TenantResources = (
   /**
    * Applications::APIs
    */
-
-  let apiPrefixs = ['']
-  if (config.stage === 'prod' && tenantName === 'flagright') {
-    apiPrefixs = ['', 'asia-1.', 'asia-2.', 'eu-1.', 'us-1.']
-  }
-
-  apiPrefixs.map((apiPrefix) => {
-    new auth0.resourceServer.ResourceServer(
-      context,
-      getTenantResourceId(tenantName, `api-gateway-${apiPrefix}`),
-      {
-        provider,
-        name: `APIGateway (${apiPrefix}api)`,
-        identifier: `https://${apiPrefix}${apiUrl(config)}/`,
-        signingAlg: 'RS256',
-        allowOfflineAccess: false,
-        tokenLifetime: 86400,
-        tokenLifetimeForWeb: 7200,
-        skipConsentForVerifiableFirstPartyClients: true,
-        enforcePolicies: true,
-        tokenDialect: 'access_token_authz',
-        scopes: PERMISSIONS.map((p) => {
-          return {
-            description: p,
-            value: p,
-          }
-        }),
-      }
-    )
-  })
+  new auth0.resourceServer.ResourceServer(
+    context,
+    getTenantResourceId(tenantName, `api-gateway-`),
+    {
+      provider,
+      name: `APIGateway (api)`,
+      identifier: config.application.AUTH0_AUDIENCE,
+      signingAlg: 'RS256',
+      allowOfflineAccess: false,
+      tokenLifetime: 86400,
+      tokenLifetimeForWeb: 7200,
+      skipConsentForVerifiableFirstPartyClients: true,
+      enforcePolicies: true,
+      tokenDialect: 'access_token_authz',
+      scopes: PERMISSIONS.map((p) => {
+        return {
+          description: p,
+          value: p,
+        }
+      }),
+    }
+  )
 
   /**
    * User Management::Roles
@@ -149,12 +134,10 @@ export const createAuth0TenantResources = (
       new auth0.role.Role(context, getTenantResourceId(tenantName, role), {
         provider,
         name: `default:${role}`,
-        permissions: apiPrefixs.flatMap((apiPrefix) => {
-          return permissions.map((p) => ({
-            name: p,
-            resourceServerIdentifier: `https://${apiPrefix}${apiUrl(config)}/`,
-          }))
-        }),
+        permissions: permissions.map((p) => ({
+          name: p,
+          resourceServerIdentifier: config.application.AUTH0_AUDIENCE,
+        })),
         description,
       })
   )
@@ -163,12 +146,10 @@ export const createAuth0TenantResources = (
   new auth0.role.Role(context, getTenantResourceId(tenantName, `root`), {
     provider,
     name: `root`,
-    permissions: apiPrefixs.flatMap((apiPrefix) => {
-      return PERMISSIONS.map((p) => ({
-        name: p,
-        resourceServerIdentifier: `https://${apiPrefix}${apiUrl(config)}/`,
-      }))
-    }),
+    permissions: PERMISSIONS.map((p) => ({
+      name: p,
+      resourceServerIdentifier: config.application.AUTH0_AUDIENCE,
+    })),
   })
 
   /**

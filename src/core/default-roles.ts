@@ -83,6 +83,8 @@ export const DEFAULT_ROLES: {
       'lists:export:read',
       'simulator:rules:read',
       'simulator:risk-scoring:read',
+      'users:user-overview:read',
+      'users:user-details:read',
     ],
     description:
       'The following is the default permissions set for the Approver role.',
