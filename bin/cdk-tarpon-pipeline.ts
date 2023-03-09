@@ -13,7 +13,6 @@ import { config as prodConfigAsia1 } from '@cdk/configs/config-prod-asia-1'
 import { config as prodConfigUS1 } from '@cdk/configs/config-prod-us-1'
 import { config as prodConfigEu1 } from '@cdk/configs/config-prod-eu-1'
 import { config as prodConfigEu2 } from '@cdk/configs/config-prod-eu-2'
-import { DEV_GITHUB_USERS } from './dev-github-users'
 
 const app = new cdk.App()
 
@@ -50,11 +49,7 @@ if (process.env.ENV === 'dev:user') {
   const serialNumber = process.env.S_NO || '1'
   const usernameRegex = /^[a-z\d](?:[a-z\d]|-(?=[a-z\d])){0,38}$/i
   const serialNumberRegex = /^[1-3]$/
-  if (
-    DEV_GITHUB_USERS.includes(githubUser) &&
-    usernameRegex.test(githubUser) &&
-    serialNumberRegex.test(serialNumber)
-  ) {
+  if (usernameRegex.test(githubUser) && serialNumberRegex.test(serialNumber)) {
     new CdkTarponStack(
       app,
       `${devConfig.stage}-tarpon-${githubUser}${serialNumber}`,

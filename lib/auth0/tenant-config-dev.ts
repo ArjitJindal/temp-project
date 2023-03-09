@@ -1,4 +1,3 @@
-import { DEV_GITHUB_USERS } from '../../bin/dev-github-users'
 import { Auth0TenantConfig } from './tenant-config'
 
 const allowedOrigins = [
@@ -6,11 +5,7 @@ const allowedOrigins = [
   'http://localhost:8001',
   'https://localhost:8001',
   'https://console.flagright.dev',
-  ...DEV_GITHUB_USERS.flatMap((user) => [
-    `https://${user}-1.console.flagright.dev`,
-    `https://${user}-2.console.flagright.dev`,
-    `https://${user}-3.console.flagright.dev`,
-  ]),
+  `https://*.console.flagright.dev`,
 ]
 export const Auth0DevTenantConfig: Auth0TenantConfig = {
   tenantName: 'dev-flagright',
