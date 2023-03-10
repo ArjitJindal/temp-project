@@ -1,10 +1,7 @@
 import { JSONSchemaType } from 'ajv'
 import _ from 'lodash'
 import { TransactionHistoricalFilters } from '../filters'
-import {
-  AuxiliaryIndexTransaction,
-  TransactionRepository,
-} from '../repositories/transaction-repository'
+import { AuxiliaryIndexTransaction } from '../repositories/transaction-repository'
 import {
   CHECK_RECEIVER_OPTIONAL_SCHEMA,
   CHECK_SENDER_OPTIONAL_SCHEMA,
@@ -44,8 +41,6 @@ export default class TransactionsVelocityRule extends TransactionAggregationRule
   TransactionHistoricalFilters,
   AggregationData
 > {
-  transactionRepository?: TransactionRepository
-
   public static getSchema(): JSONSchemaType<TransactionsVelocityRuleParameters> {
     return {
       type: 'object',
@@ -144,14 +139,11 @@ export default class TransactionsVelocityRule extends TransactionAggregationRule
     }
 
     // Fallback
-    const transactionRepository = new TransactionRepository(this.tenantId, {
-      dynamoDb: this.dynamoDb,
-    })
     const { sendingTransactions, receivingTransactions } =
       await getTransactionUserPastTransactionsByDirection(
         this.transaction,
         direction,
-        transactionRepository,
+        this.transactionRepository,
         {
           timeWindow,
           checkDirection:

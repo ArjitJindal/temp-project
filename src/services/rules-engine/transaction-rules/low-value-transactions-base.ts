@@ -1,5 +1,4 @@
 import { JSONSchemaType } from 'ajv'
-import { TransactionRepository } from '../repositories/transaction-repository'
 import { checkTransactionAmountBetweenThreshold } from '../utils/transaction-rule-utils'
 import {
   TRANSACTION_AMOUNT_RANGE_SCHEMA,
@@ -74,15 +73,12 @@ export default abstract class LowValueTransactionsRule extends TransactionRule<
     ) {
       return
     }
-    const transactionRepository = new TransactionRepository(this.tenantId, {
-      dynamoDb: this.dynamoDb,
-    })
     const userId = this.getTransactionUserId()
     if (userId) {
       const lastNTransactionsToCheck = lowTransactionCount - 1
       const transactions = (
         (await (this.getDirection() === 'receiving'
-          ? transactionRepository.getLastNUserReceivingTransactions(
+          ? this.transactionRepository.getLastNUserReceivingTransactions(
               userId,
               lastNTransactionsToCheck,
               {
@@ -94,7 +90,7 @@ export default abstract class LowValueTransactionsRule extends TransactionRule<
               },
               ['originAmountDetails', 'destinationAmountDetails']
             )
-          : transactionRepository.getLastNUserSendingTransactions(
+          : this.transactionRepository.getLastNUserSendingTransactions(
               userId,
               lastNTransactionsToCheck,
               {

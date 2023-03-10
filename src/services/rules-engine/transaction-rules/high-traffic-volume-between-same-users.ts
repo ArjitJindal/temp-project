@@ -1,9 +1,6 @@
 import { JSONSchemaType } from 'ajv'
 import * as _ from 'lodash'
-import {
-  AuxiliaryIndexTransaction,
-  TransactionRepository,
-} from '../repositories/transaction-repository'
+import { AuxiliaryIndexTransaction } from '../repositories/transaction-repository'
 import {
   getTransactionsTotalAmount,
   groupTransactions,
@@ -45,8 +42,6 @@ export default class HighTrafficVolumeBetweenSameUsers extends TransactionAggreg
   TransactionHistoricalFilters,
   AggregationData
 > {
-  transactionRepository?: TransactionRepository
-
   public static getSchema(): JSONSchemaType<HighTrafficVolumeBetweenSameUsersParameters> {
     return {
       type: 'object',
@@ -178,30 +173,26 @@ export default class HighTrafficVolumeBetweenSameUsers extends TransactionAggreg
       throw new Error(`Origin user ID is missing`)
     }
 
-    // todo: move to constructor
-    const transactionRepository = new TransactionRepository(this.tenantId, {
-      dynamoDb: this.dynamoDb,
-    })
-
-    const transactions = await transactionRepository.getUserSendingTransactions(
-      originUserId,
-      {
-        beforeTimestamp: timestamp,
-        afterTimestamp: subtractTime(dayjs(timestamp), timeWindow),
-      },
-      {
-        transactionStates: this.filters.transactionStatesHistorical,
-        transactionTypes: this.filters.transactionTypesHistorical,
-        originPaymentMethod: this.filters.paymentMethodHistorical,
-        originCountries: this.filters.transactionCountriesHistorical,
-      },
-      [
-        'timestamp',
-        'originAmountDetails',
-        'destinationUserId',
-        'destinationPaymentDetails',
-      ]
-    )
+    const transactions =
+      await this.transactionRepository.getUserSendingTransactions(
+        originUserId,
+        {
+          beforeTimestamp: timestamp,
+          afterTimestamp: subtractTime(dayjs(timestamp), timeWindow),
+        },
+        {
+          transactionStates: this.filters.transactionStatesHistorical,
+          transactionTypes: this.filters.transactionTypesHistorical,
+          originPaymentMethod: this.filters.paymentMethodHistorical,
+          originCountries: this.filters.transactionCountriesHistorical,
+        },
+        [
+          'timestamp',
+          'originAmountDetails',
+          'destinationUserId',
+          'destinationPaymentDetails',
+        ]
+      )
 
     // Update aggregations
     await this.refreshRuleAggregations(
@@ -271,7 +262,8 @@ export default class HighTrafficVolumeBetweenSameUsers extends TransactionAggreg
         filters: this.filters,
       },
       { ruleInstance: { ...this.ruleInstance, id: `_${this.ruleInstance}` } },
-      this.dynamoDb
+      this.dynamoDb,
+      this.transactionRepository
     )
   }
 

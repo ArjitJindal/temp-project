@@ -11,10 +11,7 @@ import { TransactionHistoricalFilters } from '../filters'
 import { getTimestampRange } from '../utils/time-utils'
 import { getNonUserReceiverKeys, getNonUserSenderKeys } from '../utils'
 import { TransactionAggregationRule } from './aggregation-rule'
-import {
-  AuxiliaryIndexTransaction,
-  TransactionRepository,
-} from '@/services/rules-engine/repositories/transaction-repository'
+import { AuxiliaryIndexTransaction } from '@/services/rules-engine/repositories/transaction-repository'
 import {
   getTransactionUserPastTransactionsByDirection,
   groupTransactionsByHour,
@@ -37,8 +34,6 @@ export default class SamePaymentDetailsRule extends TransactionAggregationRule<
   TransactionHistoricalFilters,
   AggregationData
 > {
-  transactionRepository?: TransactionRepository
-
   public static getSchema(): JSONSchemaType<SamePaymentDetailsParameters> {
     return {
       type: 'object',
@@ -113,9 +108,6 @@ export default class SamePaymentDetailsRule extends TransactionAggregationRule<
     }
 
     // Fallback
-    const transactionRepository = new TransactionRepository(this.tenantId, {
-      dynamoDb: this.dynamoDb,
-    })
     const { sendingTransactions, receivingTransactions } =
       await getTransactionUserPastTransactionsByDirection(
         {
@@ -124,7 +116,7 @@ export default class SamePaymentDetailsRule extends TransactionAggregationRule<
           destinationUserId: undefined,
         },
         direction,
-        transactionRepository,
+        this.transactionRepository,
         {
           timeWindow,
           checkDirection:

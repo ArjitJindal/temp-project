@@ -1,5 +1,4 @@
 import { JSONSchemaType } from 'ajv'
-import { TransactionRepository } from '../repositories/transaction-repository'
 import { getReceiverKeys } from '../utils'
 import { TransactionHistoricalFilters } from '../filters'
 import { RuleHitResult } from '../rule'
@@ -16,8 +15,6 @@ export default class UserTransactionPairsRule extends TransactionRule<
   UserTransactionPairsRuleParameters,
   TransactionHistoricalFilters
 > {
-  transactionRepository?: TransactionRepository
-
   public static getSchema(): JSONSchemaType<UserTransactionPairsRuleParameters> {
     return {
       type: 'object',
@@ -81,11 +78,8 @@ export default class UserTransactionPairsRule extends TransactionRule<
             ?.PartitionKeyID
       )
     )
-    const transactionRepository = new TransactionRepository(this.tenantId, {
-      dynamoDb: this.dynamoDb,
-    })
     const sendingTransactions = (
-      await transactionRepository.getUserSendingTransactions(
+      await this.transactionRepository.getUserSendingTransactions(
         this.transaction.originUserId as string,
         {
           afterTimestamp: dayjs(this.transaction.timestamp)

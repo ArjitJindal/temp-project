@@ -353,7 +353,8 @@ export class RulesEngineService {
           },
           { parameters, filters: ruleFilters },
           { ruleInstance },
-          this.dynamoDb
+          this.dynamoDb,
+          new TransactionRepository(this.tenantId, { dynamoDb: this.dynamoDb })
         )
 
         const segmentNamespace = `Rules Engine - ${ruleInstance.ruleId} (${ruleInstance.id})`

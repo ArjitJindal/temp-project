@@ -1,5 +1,4 @@
 import { JSONSchemaType } from 'ajv'
-import { TransactionRepository } from '../repositories/transaction-repository'
 import { TransactionHistoricalFilters } from '../filters'
 import { RuleHitResult } from '../rule'
 import { TransactionRule } from './rule'
@@ -32,14 +31,11 @@ export default class FirstActivityAfterLongTimeRule extends TransactionRule<
     }
 
     const { dormancyPeriodDays } = this.parameters
-    const transactionRepository = new TransactionRepository(this.tenantId, {
-      dynamoDb: this.dynamoDb,
-    })
 
     const lastSendingTransaction =
       this.senderUser?.userId &&
       (
-        await transactionRepository.getLastNUserSendingTransactions(
+        await this.transactionRepository.getLastNUserSendingTransactions(
           this.senderUser?.userId,
           1,
           {

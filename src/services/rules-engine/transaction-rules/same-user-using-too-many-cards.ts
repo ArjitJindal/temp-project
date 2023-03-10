@@ -1,8 +1,5 @@
 import { JSONSchemaType } from 'ajv'
-import {
-  AuxiliaryIndexTransaction,
-  TransactionRepository,
-} from '../repositories/transaction-repository'
+import { AuxiliaryIndexTransaction } from '../repositories/transaction-repository'
 import { RuleHitResult } from '../rule'
 import { TransactionHistoricalFilters } from '../filters'
 import {
@@ -87,14 +84,11 @@ export default class SameUserUsingTooManyCardsRule extends TransactionAggregatio
     }
 
     // Fallback
-    const transactionRepository = new TransactionRepository(this.tenantId, {
-      dynamoDb: this.dynamoDb,
-    })
     const { sendingTransactions } =
       await getTransactionUserPastTransactionsByDirection(
         this.transaction,
         'origin',
-        transactionRepository,
+        this.transactionRepository,
         {
           timeWindow: {
             units: this.parameters.timeWindowInDays,

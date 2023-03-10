@@ -1,5 +1,4 @@
 import { JSONSchemaType } from 'ajv'
-import { TransactionRepository } from '../repositories/transaction-repository'
 import { getSenderKeys } from '../utils'
 import { RuleHitResult } from '../rule'
 import { MissingRuleParameter } from './errors'
@@ -44,11 +43,8 @@ export default class IpAddressMultipleUsersRule extends TransactionRule<IpAddres
       return
     }
 
-    const transactionRepository = new TransactionRepository(this.tenantId, {
-      dynamoDb: this.dynamoDb,
-    })
     const transactionsFromIpAddress =
-      await transactionRepository.getIpAddressTransactions(
+      await this.transactionRepository.getIpAddressTransactions(
         this.transaction.deviceData.ipAddress,
         {
           afterTimestamp: dayjs(this.transaction.timestamp)

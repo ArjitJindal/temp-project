@@ -1,6 +1,5 @@
 import { JSONSchemaType } from 'ajv'
 import * as _ from 'lodash'
-import { TransactionRepository } from '../repositories/transaction-repository'
 import { RuleHitResult } from '../rule'
 import { TransactionHistoricalFilters } from '../filters'
 import { TRANSACTION_AMOUNT_THRESHOLDS_OPTIONAL_SCHEMA } from '../utils/rule-parameter-schemas'
@@ -31,9 +30,6 @@ export default class FirstPaymentRule extends TransactionRule<
 
   public async computeRule() {
     const { transactionAmountThreshold } = this.parameters
-    const transactionRepository = new TransactionRepository(this.tenantId, {
-      dynamoDb: this.dynamoDb,
-    })
     const thresholdHit = transactionAmountThreshold
       ? await checkTransactionAmountBetweenThreshold(
           this.transaction.originAmountDetails,
@@ -44,7 +40,7 @@ export default class FirstPaymentRule extends TransactionRule<
       : true
     const isFirstPayment =
       this.transaction.originUserId &&
-      !(await transactionRepository.hasAnySendingTransaction(
+      !(await this.transactionRepository.hasAnySendingTransaction(
         this.transaction.originUserId,
         {
           originCountries: this.filters.transactionCountriesHistorical,

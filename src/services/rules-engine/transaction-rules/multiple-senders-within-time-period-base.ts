@@ -1,8 +1,5 @@
 import { JSONSchemaType } from 'ajv'
-import {
-  AuxiliaryIndexTransaction,
-  TransactionRepository,
-} from '../repositories/transaction-repository'
+import { AuxiliaryIndexTransaction } from '../repositories/transaction-repository'
 import { TimeWindow, TIME_WINDOW_SCHEMA } from '../utils/rule-parameter-schemas'
 import { TransactionHistoricalFilters } from '../filters'
 import { RuleHitResult } from '../rule'
@@ -45,9 +42,6 @@ export default abstract class MultipleSendersWithinTimePeriodRuleBase extends Tr
   public async computeRule() {
     const { timeWindow, sendersCount } = this.parameters
     const { senderTypes, receiverTypes } = this.getSenderReceiverTypes()
-    const transactionRepository = new TransactionRepository(this.tenantId, {
-      dynamoDb: this.dynamoDb,
-    })
 
     const afterTimestamp = subtractTime(
       dayjs(this.transaction.timestamp),
@@ -56,7 +50,7 @@ export default abstract class MultipleSendersWithinTimePeriodRuleBase extends Tr
     let senderTransactions: AuxiliaryIndexTransaction[] = []
     if (receiverTypes.includes('USER') && this.transaction.destinationUserId) {
       senderTransactions =
-        await transactionRepository.getUserReceivingTransactions(
+        await this.transactionRepository.getUserReceivingTransactions(
           this.transaction.destinationUserId,
           {
             afterTimestamp,
@@ -75,7 +69,7 @@ export default abstract class MultipleSendersWithinTimePeriodRuleBase extends Tr
       this.transaction.destinationPaymentDetails
     ) {
       senderTransactions =
-        await transactionRepository.getNonUserReceivingTransactions(
+        await this.transactionRepository.getNonUserReceivingTransactions(
           this.transaction.destinationPaymentDetails,
           {
             afterTimestamp,

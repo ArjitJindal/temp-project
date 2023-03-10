@@ -1,9 +1,6 @@
 import { JSONSchemaType } from 'ajv'
 import _ from 'lodash'
-import {
-  AuxiliaryIndexTransaction,
-  TransactionRepository,
-} from '../repositories/transaction-repository'
+import { AuxiliaryIndexTransaction } from '../repositories/transaction-repository'
 import { TransactionHistoricalFilters } from '../filters'
 import { RuleHitResult } from '../rule'
 import { getTimestampRange } from '../utils/time-utils'
@@ -109,14 +106,11 @@ export default class SenderLocationChangesFrequencyRule extends TransactionAggre
     }
 
     // Fallback
-    const transactionRepository = new TransactionRepository(this.tenantId, {
-      dynamoDb: this.dynamoDb,
-    })
     const { sendingTransactions } =
       await getTransactionUserPastTransactionsByDirection(
         this.transaction,
         'origin',
-        transactionRepository,
+        this.transactionRepository,
         {
           timeWindow: {
             units: this.parameters.timeWindowInDays,

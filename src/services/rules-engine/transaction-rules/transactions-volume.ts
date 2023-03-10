@@ -1,9 +1,6 @@
 import { JSONSchemaType } from 'ajv'
 import * as _ from 'lodash'
-import {
-  AuxiliaryIndexTransaction,
-  TransactionRepository,
-} from '../repositories/transaction-repository'
+import { AuxiliaryIndexTransaction } from '../repositories/transaction-repository'
 import {
   getTransactionsTotalAmount,
   getTransactionUserPastTransactionsByDirection,
@@ -51,8 +48,6 @@ export default class TransactionsVolumeRule extends TransactionAggregationRule<
   TransactionHistoricalFilters,
   AggregationData
 > {
-  transactionRepository?: TransactionRepository
-
   public static getSchema(): JSONSchemaType<TransactionsVolumeRuleParameters> {
     return {
       type: 'object',
@@ -221,15 +216,11 @@ export default class TransactionsVolumeRule extends TransactionAggregationRule<
     }
 
     // Fallback
-    const transactionRepository = new TransactionRepository(this.tenantId, {
-      dynamoDb: this.dynamoDb,
-    })
-
     let { sendingTransactions, receivingTransactions } =
       await getTransactionUserPastTransactionsByDirection(
         this.transaction,
         direction,
-        transactionRepository,
+        this.transactionRepository,
         {
           timeWindow,
           checkDirection:

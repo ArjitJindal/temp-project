@@ -1,9 +1,6 @@
 import { JSONSchemaType } from 'ajv'
 import _ from 'lodash'
-import {
-  AuxiliaryIndexTransaction,
-  TransactionRepository,
-} from '../repositories/transaction-repository'
+import { AuxiliaryIndexTransaction } from '../repositories/transaction-repository'
 import {
   getTransactionUserPastTransactionsByDirection,
   groupTransactionsByHour,
@@ -38,8 +35,6 @@ export default class TransactionsExceedPastPeriodRule extends TransactionAggrega
   TransactionHistoricalFilters,
   AggregationData
 > {
-  transactionRepository?: TransactionRepository
-
   public static getSchema(): JSONSchemaType<TransactionsExceedPastPeriodRuleParameters> {
     return {
       type: 'object',
@@ -152,16 +147,13 @@ export default class TransactionsExceedPastPeriodRule extends TransactionAggrega
     }
 
     // Fallback
-    const transactionRepository = new TransactionRepository(this.tenantId, {
-      dynamoDb: this.dynamoDb,
-    })
 
     const checkDirection = direction === 'origin' ? checkSender : checkReceiver
     const [transactionsPeriod1, transactionsPeriod2] = await Promise.all([
       getTransactionUserPastTransactionsByDirection(
         this.transaction,
         direction,
-        transactionRepository,
+        this.transactionRepository,
         {
           timeWindow: timeWindow1,
           checkDirection: checkDirection ?? 'all',
@@ -175,7 +167,7 @@ export default class TransactionsExceedPastPeriodRule extends TransactionAggrega
       getTransactionUserPastTransactionsByDirection(
         this.transaction,
         direction,
-        transactionRepository,
+        this.transactionRepository,
         {
           timeWindow: timeWindow2,
           checkDirection: checkDirection ?? 'all',

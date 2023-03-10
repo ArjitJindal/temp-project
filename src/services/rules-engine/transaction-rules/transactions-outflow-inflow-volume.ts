@@ -1,9 +1,6 @@
 import { JSONSchemaType } from 'ajv'
 import * as _ from 'lodash'
-import {
-  AuxiliaryIndexTransaction,
-  TransactionRepository,
-} from '../repositories/transaction-repository'
+import { AuxiliaryIndexTransaction } from '../repositories/transaction-repository'
 import {
   getTransactionsTotalAmount,
   getTransactionUserPastTransactions,
@@ -38,8 +35,6 @@ export default class TransactionsOutflowInflowVolumeRule extends TransactionRule
   TransactionsOutflowInflowVolumeRuleParameters,
   TransactionHistoricalFilters
 > {
-  transactionRepository?: TransactionRepository
-
   public static getSchema(): JSONSchemaType<TransactionsOutflowInflowVolumeRuleParameters> {
     return {
       type: 'object',
@@ -81,13 +76,10 @@ export default class TransactionsOutflowInflowVolumeRule extends TransactionRule
 
     const { timeWindow, outflowTransactionTypes, inflowTransactionTypes } =
       this.parameters
-    const transactionRepository = new TransactionRepository(this.tenantId, {
-      dynamoDb: this.dynamoDb,
-    })
     const { senderSendingTransactions, receiverSendingTransactions } =
       await getTransactionUserPastTransactions(
         this.transaction,
-        transactionRepository,
+        this.transactionRepository,
         {
           timeWindow,
           checkSender: 'sending',
@@ -107,7 +99,7 @@ export default class TransactionsOutflowInflowVolumeRule extends TransactionRule
     const { senderReceivingTransactions, receiverReceivingTransactions } =
       await getTransactionUserPastTransactions(
         this.transaction,
-        transactionRepository,
+        this.transactionRepository,
         {
           timeWindow,
           checkSender: 'receiving',

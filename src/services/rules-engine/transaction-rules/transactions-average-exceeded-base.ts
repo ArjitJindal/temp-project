@@ -14,10 +14,7 @@ import {
 } from '../utils/transaction-rule-utils'
 import { TransactionAggregationRule } from './aggregation-rule'
 import { CurrencyCode } from '@/@types/openapi-public/CurrencyCode'
-import {
-  AuxiliaryIndexTransaction,
-  TransactionRepository,
-} from '@/services/rules-engine/repositories/transaction-repository'
+import { AuxiliaryIndexTransaction } from '@/services/rules-engine/repositories/transaction-repository'
 import { getTimestampRange } from '@/services/rules-engine/utils/time-utils'
 import { TransactionAmountDetails } from '@/@types/openapi-public/TransactionAmountDetails'
 import { RuleHitResultItem } from '@/services/rules-engine/rule'
@@ -58,8 +55,6 @@ export default abstract class TransactionAverageExceededBaseRule<
   TransactionHistoricalFilters,
   AggregationData
 > {
-  transactionRepository?: TransactionRepository
-
   public static getBaseSchema(): ExtendedJSONSchemaType<TransactionsAverageExceededParameters> {
     return {
       type: 'object',
@@ -362,9 +357,6 @@ export default abstract class TransactionAverageExceededBaseRule<
     }
 
     // Fallback
-    const transactionRepository = new TransactionRepository(this.tenantId, {
-      dynamoDb: this.dynamoDb,
-    })
     const { period2, checkSender, checkReceiver } = this.parameters
 
     const checkDirection = direction === 'origin' ? checkSender : checkReceiver
@@ -372,7 +364,7 @@ export default abstract class TransactionAverageExceededBaseRule<
       await getTransactionUserPastTransactionsByDirection(
         this.transaction,
         direction,
-        transactionRepository,
+        this.transactionRepository,
         {
           timeWindow: period2,
           checkDirection,

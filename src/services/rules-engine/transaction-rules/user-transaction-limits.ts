@@ -12,7 +12,6 @@ import {
 } from '../repositories/aggregation-repository'
 import { formatMoney } from '../utils/format-description'
 import { TimeWindow, TIME_WINDOW_SCHEMA } from '../utils/rule-parameter-schemas'
-import { TransactionRepository } from '../repositories/transaction-repository'
 import { subtractTime } from '../utils/time-utils'
 import { PERCENT_SCHEMA } from '../utils/math-utils'
 import { TransactionRule } from './rule'
@@ -111,12 +110,8 @@ export default class UserTransactionLimitsRule extends TransactionRule<UserTrans
     }
 
     if (this.parameters.transactionsCountThreshold) {
-      const transactionRepository = new TransactionRepository(this.tenantId, {
-        dynamoDb: this.dynamoDb,
-      })
-
       const transactionsCount =
-        await transactionRepository.getGenericUserSendingTransactionsCount(
+        await this.transactionRepository.getGenericUserSendingTransactionsCount(
           this.senderUser.userId,
           this.transaction.originPaymentDetails,
           {

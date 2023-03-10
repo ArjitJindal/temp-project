@@ -1,9 +1,6 @@
 import { JSONSchemaType } from 'ajv'
 import _ from 'lodash'
-import {
-  AuxiliaryIndexTransaction,
-  TransactionRepository,
-} from '../repositories/transaction-repository'
+import { AuxiliaryIndexTransaction } from '../repositories/transaction-repository'
 import {
   TRANSACTIONS_THRESHOLD_SCHEMA,
   TimeWindow,
@@ -34,8 +31,6 @@ export default class HighTrafficBetweenSameParties extends TransactionAggregatio
   TransactionHistoricalFilters,
   AggregationData
 > {
-  transactionRepository?: TransactionRepository
-
   public static getSchema(): JSONSchemaType<HighTrafficBetweenSamePartiesParameters> {
     return {
       type: 'object',
@@ -104,13 +99,8 @@ export default class HighTrafficBetweenSameParties extends TransactionAggregatio
       throw new Error(`Transaction timestamp is missing`) // todo: better error
     }
 
-    // todo: move to constructor
-    const transactionRepository = new TransactionRepository(this.tenantId, {
-      dynamoDb: this.dynamoDb,
-    })
-
     const transactions =
-      await transactionRepository.getGenericUserSendingTransactions(
+      await this.transactionRepository.getGenericUserSendingTransactions(
         originUserId,
         this.transaction.originPaymentDetails,
         {

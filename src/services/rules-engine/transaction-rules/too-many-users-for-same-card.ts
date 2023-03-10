@@ -1,8 +1,5 @@
 import { JSONSchemaType } from 'ajv'
-import {
-  AuxiliaryIndexTransaction,
-  TransactionRepository,
-} from '../repositories/transaction-repository'
+import { AuxiliaryIndexTransaction } from '../repositories/transaction-repository'
 import { getNonUserReceiverKeys, getNonUserSenderKeys } from '../utils'
 import { RuleHitResult } from '../rule'
 import { TransactionHistoricalFilters } from '../filters'
@@ -95,9 +92,6 @@ export default class TooManyUsersForSameCardRule extends TransactionAggregationR
     }
 
     // Fallback
-    const transactionRepository = new TransactionRepository(this.tenantId, {
-      dynamoDb: this.dynamoDb,
-    })
     const { sendingTransactions } =
       await getTransactionUserPastTransactionsByDirection(
         {
@@ -106,7 +100,7 @@ export default class TooManyUsersForSameCardRule extends TransactionAggregationR
           destinationUserId: undefined,
         },
         'origin',
-        transactionRepository,
+        this.transactionRepository,
         {
           timeWindow: {
             units: this.parameters.timeWindowInDays,

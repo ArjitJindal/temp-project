@@ -7,6 +7,7 @@ import { User } from '@/@types/openapi-public/User'
 import { formatCountry } from '@/utils/countries'
 import { CardDetails } from '@/@types/openapi-public/CardDetails'
 import { RuleInstance } from '@/@types/openapi-internal/RuleInstance'
+import { TransactionRepository } from '@/services/rules-engine/repositories/transaction-repository'
 
 export interface PartyVars {
   type?: 'origin' | 'destination'
@@ -45,6 +46,7 @@ export abstract class TransactionRule<
   filters: T
   ruleInstance: RuleInstance
   dynamoDb: DynamoDBDocumentClient
+  transactionRepository: TransactionRepository
 
   constructor(
     tenantId: string,
@@ -60,7 +62,8 @@ export abstract class TransactionRule<
     context: {
       ruleInstance: RuleInstance
     },
-    dynamoDb: DynamoDBDocumentClient
+    dynamoDb: DynamoDBDocumentClient,
+    transactionRepository: TransactionRepository
   ) {
     super()
     this.tenantId = tenantId
@@ -71,6 +74,7 @@ export abstract class TransactionRule<
     this.filters = params.filters || {}
     this.ruleInstance = context.ruleInstance
     this.dynamoDb = dynamoDb
+    this.transactionRepository = transactionRepository
   }
 
   // TODO: change this to abstract to make it required to implement

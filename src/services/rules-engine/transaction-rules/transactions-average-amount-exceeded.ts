@@ -3,7 +3,6 @@ import { mergeRuleSchemas } from '../utils/rule-schema-utils'
 import TransactionAverageExceededBaseRule, {
   TransactionsAverageExceededParameters,
 } from './transactions-average-exceeded-base'
-import { TransactionRepository } from '@/services/rules-engine/repositories/transaction-repository'
 import { PERCENT_SCHEMA } from '@/services/rules-engine/utils/math-utils'
 import { CURRENCY_SCHEMA } from '@/services/rules-engine/utils/currencies-utils'
 import { CurrencyCode } from '@/@types/openapi-public/CurrencyCode'
@@ -24,8 +23,6 @@ export type TransactionsAverageAmountExceededParameters =
     TransactionsAverageAmountExceededPartialParameters
 
 export default class TransactionAverageAmountExceededRule extends TransactionAverageExceededBaseRule<TransactionsAverageAmountExceededParameters> {
-  transactionRepository?: TransactionRepository
-
   public static getSchema(): JSONSchemaType<TransactionsAverageAmountExceededParameters> {
     const baseSchema = TransactionAverageExceededBaseRule.getBaseSchema()
     const partialSchema: JSONSchemaType<TransactionsAverageAmountExceededPartialParameters> =

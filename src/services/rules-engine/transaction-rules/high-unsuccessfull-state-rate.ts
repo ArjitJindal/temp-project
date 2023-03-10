@@ -11,10 +11,7 @@ import { TransactionHistoricalFilters } from '../filters'
 import { RuleHitResult } from '../rule'
 import { getTimestampRange } from '../utils/time-utils'
 import { TransactionAggregationRule } from './aggregation-rule'
-import {
-  AuxiliaryIndexTransaction,
-  TransactionRepository,
-} from '@/services/rules-engine/repositories/transaction-repository'
+import { AuxiliaryIndexTransaction } from '@/services/rules-engine/repositories/transaction-repository'
 import {
   getTransactionUserPastTransactions,
   groupTransactionsByHour,
@@ -42,8 +39,6 @@ export default class HighUnsuccessfullStateRateRule extends TransactionAggregati
   TransactionHistoricalFilters,
   AggregationData
 > {
-  transactionRepository?: TransactionRepository
-
   public static getSchema(): JSONSchemaType<HighUnsuccessfullStateRateParameters> {
     return {
       type: 'object',
@@ -225,10 +220,6 @@ export default class HighUnsuccessfullStateRateRule extends TransactionAggregati
         ),
       }
     }
-
-    this.transactionRepository = new TransactionRepository(this.tenantId, {
-      dynamoDb: this.dynamoDb,
-    })
 
     const {
       senderSendingTransactions,
