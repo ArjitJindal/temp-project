@@ -1,6 +1,6 @@
 # tarpon
 
-![tarpons](https://github.com/flagright/tarpon/blob/main/tarpons.png)
+![tarpons](/resources/tarpons.png)
 
 Codenamed after the [majestic tarpons](https://youtu.be/wV2CF2WWGFQ).
 
@@ -30,7 +30,7 @@ npm run build
 npm run build:local (faster for local build without source maps generation)
 ```
 
-## Testing Functions Locally
+## Local development
 
 You can test functions locally, ensure you've your SSO configured (including default region - `region` field in `~/.aws/config`) before running.
 
@@ -89,7 +89,19 @@ npm run dev:api:public-device-data   # only starts public Device Data API
 npm run dev:api:console             # only starts console API
 ```
 
+_NOTE_:
+
+- The local API server supports hot-reloading, so you don't need to restart the server whenver you make a new change.
+- If there're any OpenAPI schema changes, you'll need to run `npm run openapi:build` first to generate Typescript models, otherwise the build could fail.
+
 Local environment config (ex: tenantID) is stored in `local-dev.ts`.
+
+### IDEs
+
+#### VSCode
+
+You can start the local APIs using "Run and Debug" in VSCode, then you can set breakpoints to debug things more easily.
+![vscode-debug](/resources/vscode-debug.png)
 
 ## Deploy
 

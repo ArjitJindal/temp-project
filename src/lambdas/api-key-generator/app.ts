@@ -18,6 +18,7 @@ import {
   KRS_SCORES_COLLECTION,
   DRS_SCORES_COLLECTION,
   WEBHOOK_COLLECTION,
+  ARS_SCORES_COLLECTION,
 } from '@/utils/mongoDBUtils'
 import { TransactionCaseManagement } from '@/@types/openapi-internal/TransactionCaseManagement'
 import { Case } from '@/@types/openapi-internal/Case'
@@ -89,8 +90,11 @@ export const createMongoDBCollections = async (
       timestamp: -1,
     })
     await transactionCollection.createIndex({ transactionId: 1 })
-    await transactionCollection.createIndex({ destinationUserId: 1 })
-    await transactionCollection.createIndex({ originUserId: 1 })
+    await transactionCollection.createIndex({
+      destinationUserId: 1,
+      timestamp: -1,
+    })
+    await transactionCollection.createIndex({ originUserId: 1, timestamp: -1 })
     await transactionCollection.createIndex({
       'destinationAmountDetails.transactionCurrency': 1,
     })
@@ -294,6 +298,15 @@ export const createMongoDBCollections = async (
     const krsScoresCollection = db.collection(KRS_SCORES_COLLECTION(tenantId))
     await krsScoresCollection.createIndex({
       userId: 1,
+    })
+    try {
+      await db.createCollection(ARS_SCORES_COLLECTION(tenantId))
+    } catch (e) {
+      // ignore already exists
+    }
+    const arsScoresCollection = db.collection(ARS_SCORES_COLLECTION(tenantId))
+    await arsScoresCollection.createIndex({
+      transactionId: 1,
     })
     try {
       await db.createCollection(DRS_SCORES_COLLECTION(tenantId))
