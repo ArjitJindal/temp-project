@@ -50,7 +50,10 @@ async function main() {
         { key: 'transactionId', value: transactionId },
         { key: 'apiKey', value: apiKey },
         { key: 'timestamp', value: `${Date.now()}` },
-        { key: 'domain', value: config.application.AUTH0_AUDIENCE },
+        {
+          key: 'domain',
+          value: config.application.AUTH0_AUDIENCE.slice(0, -1),
+        },
         {
           key: 'incorrectDomain',
           value:
