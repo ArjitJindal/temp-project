@@ -1,5 +1,4 @@
 import { migrateAllTenants } from '../utils/tenant'
-import { Alert } from '@/@types/openapi-internal/Alert'
 import { Case } from '@/@types/openapi-internal/Case'
 import { Tenant } from '@/services/accounts'
 import { CASES_COLLECTION, getMongoDbClient } from '@/utils/mongoDBUtils'
@@ -19,29 +18,27 @@ async function migrateTenant(tenant: Tenant) {
     if (!statusChanges?.length) {
       continue
     }
+
+    const newCaseAlerts = caseDoc?.alerts?.map((alert) => {
+      const statusChangesForAlert = alert.statusChanges
+
+      if (!statusChangesForAlert?.length) {
+        return alert
+      }
+
+      const lastStatusChange =
+        statusChangesForAlert[statusChangesForAlert.length - 1]
+
+      return {
+        ...alert,
+        lastStatusChange,
+      }
+    })
+
     const lastStatusChange = statusChanges[statusChanges.length - 1]
     await casesCollection.updateOne(
       { _id: caseDoc._id },
-      { $set: { lastStatusChange } }
-    )
-  }
-
-  const allAlerts = await casesCollection
-    .aggregate<{
-      alerts: Alert
-    }>([{ $unwind: '$alerts' }, { $project: { alerts: 1 } }])
-    .toArray()
-  for await (const alertDoc of allAlerts) {
-    const { alerts } = alertDoc
-
-    const { statusChanges } = alerts
-    if (!statusChanges?.length) {
-      continue
-    }
-    const lastStatusChange = statusChanges[statusChanges.length - 1]
-    await casesCollection.updateOne(
-      { 'alerts._id': alerts._id, caseId: alerts.caseId },
-      { $set: { 'alerts.lastStatusChange': lastStatusChange } }
+      { $set: { lastStatusChange, alerts: newCaseAlerts } }
     )
   }
 }
