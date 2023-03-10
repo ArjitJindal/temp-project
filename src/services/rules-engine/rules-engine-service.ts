@@ -4,6 +4,7 @@ import _ from 'lodash'
 import { RiskRepository } from '../risk-scoring/repositories/risk-repository'
 import { UserRepository } from '../users/repositories/user-repository'
 import { DEFAULT_RISK_LEVEL } from '../risk-scoring/utils'
+import { TenantRepository } from '../tenants/repositories/tenant-repository'
 import { TransactionRepository } from './repositories/transaction-repository'
 import { TransactionEventRepository } from './repositories/transaction-event-repository'
 import { RuleRepository } from './repositories/rule-repository'
@@ -63,6 +64,7 @@ export class RulesEngineService {
   ruleInstanceRepository: RuleInstanceRepository
   riskRepository: RiskRepository
   userRepository: UserRepository
+  tenantRepository: TenantRepository
 
   constructor(tenantId: string, dynamoDb: DynamoDBDocumentClient) {
     this.dynamoDb = dynamoDb
@@ -83,6 +85,9 @@ export class RulesEngineService {
       dynamoDb,
     })
     this.userRepository = new UserRepository(tenantId, {
+      dynamoDb,
+    })
+    this.tenantRepository = new TenantRepository(tenantId, {
       dynamoDb,
     })
   }
@@ -425,18 +430,27 @@ export class RulesEngineService {
             return result.falsePositiveDetails
           }
         })
-        const ruleDescriptions = (
-          ruleHit
-            ? await Promise.all(
-                filteredRuleResult!.map((result) =>
-                  generateRuleDescription(rule, parameters as Vars, result.vars)
+
+        let ruleDescription = ruleInstance.ruleDescriptionAlias
+
+        if (!ruleDescription) {
+          const ruleDescriptions = (
+            ruleHit
+              ? await Promise.all(
+                  filteredRuleResult!.map((result) =>
+                    generateRuleDescription(
+                      rule,
+                      parameters as Vars,
+                      result.vars
+                    )
+                  )
                 )
-              )
-            : [rule.description]
-        ).map((description) =>
-          _.last(description) !== '.' ? `${description}.` : description
-        )
-        const ruleDescription = Array.from(new Set(ruleDescriptions)).join(' ')
+              : [rule.description]
+          ).map((description) =>
+            _.last(description) !== '.' ? `${description}.` : description
+          )
+          ruleDescription = Array.from(new Set(ruleDescriptions)).join(' ')
+        }
 
         return {
           ruleId: ruleInstance.ruleId,
