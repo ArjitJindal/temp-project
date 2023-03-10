@@ -17,6 +17,8 @@ import {
 import { getCredentialsFromEvent } from '@/utils/credentials'
 import { SimulationPulseParametersRequest } from '@/@types/openapi-internal/SimulationPulseParametersRequest'
 import { hasFeature } from '@/core/utils/context'
+import { TenantRepository } from '@/services/tenants/repositories/tenant-repository'
+import { getDynamoDbClientByEvent } from '@/utils/dynamodb'
 
 export const simulationHandler = lambdaApi()(
   async (
@@ -26,6 +28,7 @@ export const simulationHandler = lambdaApi()(
   ) => {
     const { principalId: tenantId } = event.requestContext.authorizer
     const mongoDb = await getMongoDbClient()
+    const dynamoDb = await getDynamoDbClientByEvent(event)
     const simulationTaskRepository = new SimulationTaskRepository(
       tenantId,
       mongoDb
@@ -48,6 +51,22 @@ export const simulationHandler = lambdaApi()(
         const simulationParameters = JSON.parse(
           event.body
         ) as SimulationPulseParametersRequest
+
+        const tenantRepositry = new TenantRepository(tenantId, {
+          dynamoDb,
+        })
+
+        const tenantSettings = await tenantRepositry.getTenantSettings()
+        const simulationsLimit = tenantSettings.limits?.simulations ?? 0
+        const usedSimulations =
+          await simulationTaskRepository.getSimulationJobsCount()
+
+        if (
+          usedSimulations >= simulationsLimit &&
+          process.env.NODE_ENV !== 'test'
+        ) {
+          throw new BadRequest('Simulations Limit Reached')
+        }
 
         const { taskIds, jobId } =
           await simulationTaskRepository.createSimulationJob(
