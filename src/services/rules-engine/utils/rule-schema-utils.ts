@@ -11,27 +11,33 @@ interface UiSchema<Type> {
 
 export type ExtendedJSONSchemaType<Type> = JSONSchemaType<Type> & UiSchema<Type>
 
-export interface UiSchemaParams<Type> {
-  subtype?: string
-  order?: (keyof Type)[]
+export interface UiSchemaParamsShared {
   group?: 'user' | 'geography' | 'transaction' | 'transaction_historical'
 }
+
+export interface UiSchemaParamsAgeRange extends UiSchemaParamsShared {
+  subtype: 'AGE_RANGE'
+  defaultGranularity?: 'day' | 'month' | 'year'
+}
+
+export interface UiSchemaGeneric<Type> extends UiSchemaParamsShared {
+  subtype?: string
+  order?: (keyof Type)[]
+}
+
+export type UiSchemaParams<Type> =
+  | UiSchemaParamsAgeRange
+  | UiSchemaGeneric<Type>
 
 export function uiSchema<T extends object>(
   ...args: (UiSchemaParams<T> | undefined)[]
 ): UiSchema<T> {
-  const result: UiSchema<T>['ui:schema'] = {}
+  const result: Record<string, unknown> = {}
 
   for (const params of args) {
     if (params != null) {
-      if (params.group) {
-        result['ui:group'] = params.group
-      }
-      if (params.order) {
-        result['ui:order'] = params.order
-      }
-      if (params.subtype) {
-        result['ui:subtype'] = params.subtype
+      for (const [key, value] of Object.entries(params)) {
+        result[`ui:${key}`] = value
       }
     }
   }

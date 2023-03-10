@@ -26,7 +26,7 @@ export class UserAgeRuleFilter extends UserRuleFilter<UserAgeRuleFilterParameter
       type: 'object',
       properties: {
         userAgeRange: AGE_RANGE_OPTIONAL_SCHEMA({
-          title: 'Target age range in years',
+          title: 'Target age range',
           description:
             'When users of a transaction are within this age range, the rule is run',
           uiSchema: {

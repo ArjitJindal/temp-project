@@ -4,6 +4,7 @@ import { COUNTRY_CODES } from '@/utils/countries'
 import {
   uiSchema,
   UiSchemaParams,
+  UiSchemaParamsAgeRange,
 } from '@/services/rules-engine/utils/rule-schema-utils'
 import { TRANSACTION_STATES } from '@/@types/openapi-public-custom/TransactionState'
 import { PAYMENT_METHODSS } from '@/@types/openapi-public-custom/PaymentMethods'
@@ -106,10 +107,17 @@ export const AGE_OPTIONAL_SCHEMA = (options?: SchemaOptions) =>
     nullable: true,
   } as const)
 
-export const AGE_RANGE_SCHEMA = (options?: SchemaOptions) =>
+type AgeRangeSchemaOptions = SchemaOptions & {
+  uiSchema?: Partial<UiSchemaParamsAgeRange>
+}
+
+export const AGE_RANGE_SCHEMA = (options?: AgeRangeSchemaOptions) =>
   ({
     type: 'object',
-    ...uiSchema(options?.uiSchema, { subtype: 'AGE_RANGE' }),
+    ...uiSchema(options?.uiSchema, {
+      subtype: 'AGE_RANGE',
+      defaultGranularity: options?.uiSchema?.defaultGranularity,
+    }),
     title: options?.title || 'User age range',
     description: options?.description,
     properties: {
@@ -119,7 +127,7 @@ export const AGE_RANGE_SCHEMA = (options?: SchemaOptions) =>
     required: [],
   } as const)
 
-export const AGE_RANGE_OPTIONAL_SCHEMA = (options?: SchemaOptions) =>
+export const AGE_RANGE_OPTIONAL_SCHEMA = (options?: AgeRangeSchemaOptions) =>
   ({
     ...AGE_RANGE_SCHEMA(options),
     nullable: true,
