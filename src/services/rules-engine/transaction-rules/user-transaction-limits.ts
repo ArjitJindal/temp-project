@@ -14,6 +14,7 @@ import { formatMoney } from '../utils/format-description'
 import { TimeWindow, TIME_WINDOW_SCHEMA } from '../utils/rule-parameter-schemas'
 import { TransactionRepository } from '../repositories/transaction-repository'
 import { subtractTime } from '../utils/time-utils'
+import { PERCENT_SCHEMA } from '../utils/math-utils'
 import { TransactionRule } from './rule'
 import { Amount } from '@/@types/openapi-public/Amount'
 import { FalsePositiveDetails } from '@/@types/openapi-public/FalsePositiveDetails'
@@ -51,6 +52,7 @@ export type UserTransactionLimitsRuleParameter = {
     threshold: number
     timeWindow: TimeWindow
   }
+  multiplierThreshold?: number
 }
 
 export default class UserTransactionLimitsRule extends TransactionRule<UserTransactionLimitsRuleParameter> {
@@ -86,8 +88,18 @@ export default class UserTransactionLimitsRule extends TransactionRule<UserTrans
           required: ['threshold', 'timeWindow'],
           nullable: true,
         },
+        multiplierThreshold: PERCENT_SCHEMA({
+          title: 'Maximum multiplier (as a percentage)',
+          description:
+            'For example, specifying 200 (%) means that the rule will only be run if the threshold is at least twice the expected limit.',
+          maximum: 'NO_MAXIMUM',
+        }),
       },
     }
+  }
+
+  private getLimit(value: number): number {
+    return value * ((this.parameters.multiplierThreshold ?? 100) * 0.01)
   }
 
   public async computeRule() {
@@ -225,8 +237,9 @@ export default class UserTransactionLimitsRule extends TransactionRule<UserTrans
     const transactionAmountHit = await isTransactionAmountAboveThreshold(
       this.transaction.originAmountDetails,
       {
-        [maximumTransactionLimit.amountCurrency]:
-          maximumTransactionLimit.amountValue,
+        [maximumTransactionLimit.amountCurrency]: this.getLimit(
+          maximumTransactionLimit.amountValue
+        ),
       }
     )
     if (transactionAmountHit.isHit) {
@@ -271,7 +284,7 @@ export default class UserTransactionLimitsRule extends TransactionRule<UserTrans
         this.transaction.originAmountDetails!.transactionCurrency
       )
       const hitInfo = await isTransactionAmountAboveThreshold(totalAmount, {
-        [limit.amountCurrency]: limit.amountValue,
+        [limit.amountCurrency]: this.getLimit(limit.amountValue),
       })
       if (hitInfo.isHit) {
         transactionLimitResults.push({
@@ -301,7 +314,7 @@ export default class UserTransactionLimitsRule extends TransactionRule<UserTrans
             this.transaction.originAmountDetails!.transactionCurrency
           )
           const hitInfo = await isTransactionAmountAboveThreshold(totalAmount, {
-            [limit.amountCurrency]: limit.amountValue,
+            [limit.amountCurrency]: this.getLimit(limit.amountValue),
           })
           if (hitInfo.isHit) {
             transactionLimitResults.push({
@@ -342,7 +355,7 @@ export default class UserTransactionLimitsRule extends TransactionRule<UserTrans
           const hitInfo = await isTransactionAmountAboveThreshold(
             averageAmount,
             {
-              [limit.amountCurrency]: limit.amountValue,
+              [limit.amountCurrency]: this.getLimit(limit.amountValue),
             }
           )
           if (hitInfo.isHit) {

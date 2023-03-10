@@ -690,3 +690,165 @@ describe('Check Thresholds', () => {
     [false, false, true, false]
   )
 })
+
+describe('Check Multiplier Thresholds Not Hit', () => {
+  const TEST_TENANT_ID = getTestTenantId()
+  setUpRulesHooks(TEST_TENANT_ID, [
+    {
+      type: 'TRANSACTION',
+      ruleImplementationName: 'user-transaction-limits',
+      defaultAction: 'FLAG',
+      defaultParameters: {
+        onlyCheckTypes: ['ALL_TRANSACTIONS'],
+        transactionsCountThreshold: {
+          timeWindow: {
+            units: 1,
+            granularity: 'week',
+            rollingBasis: true,
+          },
+          threshold: 2,
+        },
+        multiplierThreshold: 300,
+      } as UserTransactionLimitsRuleParameter,
+    },
+  ])
+  setUpUsersHooks(TEST_TENANT_ID, [
+    getTestUser({
+      userId: '10',
+      transactionLimits: {
+        maximumTransactionLimit: { amountCurrency: 'EUR', amountValue: 1000 },
+        paymentMethodLimits: {
+          CARD: {
+            transactionAmountLimit: {
+              day: { amountValue: 100, amountCurrency: 'EUR' },
+            },
+          },
+        },
+      },
+    }),
+  ])
+  createTransactionRuleTestCase(
+    '',
+    TEST_TENANT_ID,
+    [
+      getTestTransaction({
+        originUserId: '10',
+        originAmountDetails: {
+          transactionAmount: 10000,
+          transactionCurrency: 'EUR',
+        },
+        originPaymentDetails: { method: 'ACH' },
+        timestamp: dayjs('2022-01-01T12:00:00.000Z').valueOf(),
+      }),
+      getTestTransaction({
+        originUserId: '10',
+        originAmountDetails: {
+          transactionAmount: 500,
+          transactionCurrency: 'EUR',
+        },
+        originPaymentDetails: { method: 'CARD' },
+        timestamp: dayjs('2022-01-01T13:00:00.000Z').valueOf(),
+      }),
+      getTestTransaction({
+        originUserId: '10',
+        originAmountDetails: {
+          transactionAmount: 2000,
+          transactionCurrency: 'EUR',
+        },
+        originPaymentDetails: { method: 'CARD' },
+        timestamp: dayjs('2022-01-01T14:00:00.000Z').valueOf(),
+      }),
+    ],
+    [false, false, false]
+  )
+})
+
+describe('Check Multiplier Thresholds Hit', () => {
+  const TEST_TENANT_ID = getTestTenantId()
+  setUpRulesHooks(TEST_TENANT_ID, [
+    {
+      type: 'TRANSACTION',
+      ruleImplementationName: 'user-transaction-limits',
+      defaultAction: 'FLAG',
+      defaultParameters: {
+        onlyCheckTypes: ['ALL_TRANSACTIONS'],
+        transactionsCountThreshold: {
+          timeWindow: {
+            units: 1,
+            granularity: 'week',
+            rollingBasis: true,
+          },
+          threshold: 2,
+        },
+        multiplierThreshold: 200,
+      } as UserTransactionLimitsRuleParameter,
+    },
+  ])
+  setUpUsersHooks(TEST_TENANT_ID, [
+    getTestUser({
+      userId: '10',
+      transactionLimits: {
+        maximumTransactionLimit: { amountCurrency: 'EUR', amountValue: 1000 },
+        paymentMethodLimits: {
+          CARD: {
+            transactionAmountLimit: {
+              day: { amountValue: 100, amountCurrency: 'EUR' },
+            },
+          },
+        },
+      },
+    }),
+  ])
+  createTransactionRuleTestCase(
+    '',
+    TEST_TENANT_ID,
+    [
+      getTestTransaction({
+        originUserId: '10',
+        originAmountDetails: {
+          transactionAmount: 10000,
+          transactionCurrency: 'EUR',
+        },
+        originPaymentDetails: { method: 'ACH' },
+        timestamp: dayjs('2022-01-01T12:00:00.000Z').valueOf(),
+      }),
+      getTestTransaction({
+        originUserId: '10',
+        originAmountDetails: {
+          transactionAmount: 500,
+          transactionCurrency: 'EUR',
+        },
+        originPaymentDetails: { method: 'CARD' },
+        timestamp: dayjs('2022-01-01T13:00:00.000Z').valueOf(),
+      }),
+      getTestTransaction({
+        originUserId: '10',
+        originAmountDetails: {
+          transactionAmount: 2000,
+          transactionCurrency: 'EUR',
+        },
+        originPaymentDetails: { method: 'CARD' },
+        timestamp: dayjs('2022-01-01T14:00:00.000Z').valueOf(),
+      }),
+      getTestTransaction({
+        originUserId: '10',
+        originAmountDetails: {
+          transactionAmount: 500,
+          transactionCurrency: 'EUR',
+        },
+        originPaymentDetails: { method: 'CARD' },
+        timestamp: dayjs('2022-01-01T15:00:00.000Z').valueOf(),
+      }),
+      getTestTransaction({
+        originUserId: '10',
+        originAmountDetails: {
+          transactionAmount: 5000,
+          transactionCurrency: 'EUR',
+        },
+        originPaymentDetails: { method: 'CARD' },
+        timestamp: dayjs('2022-01-01T16:00:00.000Z').valueOf(),
+      }),
+    ],
+    [false, false, true, false, true]
+  )
+})
