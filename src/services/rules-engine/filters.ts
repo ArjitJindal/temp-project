@@ -117,11 +117,12 @@ const _TRANSACTION_HISTORICAL_FILTERS = [
   TransactionCountryHistoricalRuleFilter,
 ]
 
+// Order defined here will be reflected in console
 const _USER_FILTERS = [
-  WhitelistUsersRuleFilter,
-  UserCreationAgeRuleFilter,
-  UserAgeRuleFilter,
   UserTypeRuleFilter,
+  UserAgeRuleFilter,
+  UserCreationAgeRuleFilter,
+  WhitelistUsersRuleFilter,
   UserIdRuleFilter,
   UserCountryOfResidenceRuleFilter,
   UserCountryOfNationalityRuleFilter,

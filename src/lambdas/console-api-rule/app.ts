@@ -64,13 +64,14 @@ export const ruleHandler = lambdaApi()(
       })
       const tenantSettings = await tenantRepository.getTenantSettings()
       const defaultCurrency = tenantSettings?.defaultValues?.currency
+      const mergedFilters = _.merge({}, ...filters)
 
       return {
         schema: {
           type: 'object',
-          properties: _.merge({}, ...filters),
+          properties: mergedFilters,
           'ui:schema': {
-            'ui:order': Object.keys(filters),
+            'ui:order': Object.keys(mergedFilters),
           },
         },
         defaultValues: replaceMagicKeyword(
