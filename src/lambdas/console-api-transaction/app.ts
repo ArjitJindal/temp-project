@@ -72,6 +72,7 @@ export const TRANSACTION_EXPORT_HEADERS_SETTINGS: CsvHeaderSettings<TransactionC
     status: 'INCLUDE',
     caseStatus: 'INCLUDE',
     statusChanges: 'JSON',
+    lastStatusChange: 'JSON',
     originUser: 'SKIP',
     destinationUser: 'SKIP',
     events: 'SKIP',

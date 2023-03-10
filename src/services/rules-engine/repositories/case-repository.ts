@@ -167,6 +167,18 @@ export class CaseRepository {
       })
     }
 
+    if (
+      params.beforeCaseLastUpdatedTimestamp != null &&
+      params.afterCaseLastUpdatedTimestamp != null
+    ) {
+      conditions.push({
+        'lastStatusChange.timestamp': {
+          $lte: params.beforeCaseLastUpdatedTimestamp,
+          $gte: params.afterCaseLastUpdatedTimestamp,
+        },
+      })
+    }
+
     if (params.filterId != null) {
       conditions.push({ caseId: prefixRegexMatchFilter(params.filterId) })
     }
@@ -614,6 +626,7 @@ export class CaseRepository {
         _originUserName: false,
         _destinationUserName: false,
         _userName: false,
+        _lastStatusChangeTimestamp: false,
       },
     })
 
@@ -779,6 +792,18 @@ export class CaseRepository {
       })
     }
 
+    if (
+      params.afterAlertLastUpdatedTimestamp != null &&
+      params.beforeAlertLastUpdatedTimestamp != null
+    ) {
+      conditions.push({
+        'alert.lastStatusChange.timestamp': {
+          $lte: params.beforeAlertLastUpdatedTimestamp,
+          $gte: params.afterAlertLastUpdatedTimestamp,
+        },
+      })
+    }
+
     if (params.filterAlertId != null) {
       conditions.push({
         'alert.alertId': prefixRegexMatchFilter(params.filterAlertId),
@@ -881,6 +906,7 @@ export class CaseRepository {
           {
             assignments: updates.assignments,
             caseStatus: updates.caseStatus,
+            lastStatusChange: updates.statusChange,
           },
           _.isNil
         ),
@@ -921,6 +947,7 @@ export class CaseRepository {
           statusChanges: updates.statusChange
             ? [...(alert.statusChanges ?? []), updates.statusChange]
             : alert.statusChanges,
+          lastStatusChange: updates.statusChange,
         }
       })
       if (caseItem.caseId != null && newAlerts) {

@@ -114,12 +114,20 @@ export const casesHandler = lambdaApi()(
         filterUserState,
         filterRiskLevel,
         filterAssignmentsIds,
+        afterCaseLastUpdatedTimestamp,
+        beforeCaseLastUpdatedTimestamp,
       } = event.queryStringParameters as any
       const params: DefaultApiGetCaseListRequest = {
         page,
         pageSize,
         afterTimestamp: parseInt(afterTimestamp) || undefined,
         beforeTimestamp: parseInt(beforeTimestamp),
+        afterCaseLastUpdatedTimestamp: parseInt(afterCaseLastUpdatedTimestamp)
+          ? parseInt(afterCaseLastUpdatedTimestamp)
+          : undefined,
+        beforeCaseLastUpdatedTimestamp: parseInt(beforeCaseLastUpdatedTimestamp)
+          ? parseInt(beforeCaseLastUpdatedTimestamp)
+          : undefined,
         filterId,
         filterOutStatus,
         filterOutCaseStatus,
@@ -338,6 +346,8 @@ export const casesHandler = lambdaApi()(
         filterCaseId,
         sortField,
         sortOrder,
+        beforeAlertLastUpdatedTimestamp,
+        afterAlertLastUpdatedTimestamp,
       } = event.queryStringParameters as Record<string, string>
       const params: DefaultApiGetAlertListRequest = {
         page: parseInt(page),
@@ -356,6 +366,12 @@ export const casesHandler = lambdaApi()(
         filterCaseId,
         sortField,
         sortOrder: isValidSortOrder(sortOrder) ? sortOrder : undefined,
+        beforeAlertLastUpdatedTimestamp: beforeAlertLastUpdatedTimestamp
+          ? parseInt(beforeAlertLastUpdatedTimestamp)
+          : undefined,
+        afterAlertLastUpdatedTimestamp: afterAlertLastUpdatedTimestamp
+          ? parseInt(afterAlertLastUpdatedTimestamp)
+          : undefined,
       }
       return caseService.getAlerts(params)
     } else if (

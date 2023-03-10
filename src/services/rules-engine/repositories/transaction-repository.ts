@@ -410,6 +410,7 @@ export class TransactionRepository {
             assignments: updates.assignments,
             status: updates.status,
             caseStatus: updates.caseStatus,
+            lastStatusChange: updates.statusChange,
           },
           _.isNil
         ),

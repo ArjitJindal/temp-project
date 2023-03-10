@@ -230,6 +230,18 @@ export const createMongoDBCollections = async (
       'assignments.assigneeUserId': 1,
     })
     await casesCollection.createIndex({
+      'statusChanges.timestamp': 1,
+    })
+    await casesCollection.createIndex({
+      'alerts.statusChanges.timestamp': 1,
+    })
+    await casesCollection.createIndex({
+      'lastStatusChange.timestamp': 1,
+    })
+    await casesCollection.createIndex({
+      'alerts.lastStatusChange.timestamp': 1,
+    })
+    await casesCollection.createIndex({
       'alerts.alertId': 1,
     })
     await casesCollection.createIndex({

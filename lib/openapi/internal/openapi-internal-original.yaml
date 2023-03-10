@@ -2624,6 +2624,14 @@ paths:
             type: string
           in: query
           name: filterCaseId
+        - schema:
+            type: number
+          in: query
+          name: beforeAlertLastUpdatedTimestamp
+        - schema:
+            type: number
+          in: query
+          name: afterAlertLastUpdatedTimestamp
     post:
       summary: Alerts - Update
       operationId: post-alerts
@@ -2924,6 +2932,14 @@ paths:
               type: string
           in: query
           name: filterAssignmentsIds
+        - schema:
+            type: number
+          in: query
+          name: afterCaseLastUpdatedTimestamp
+        - schema:
+            type: number
+          in: query
+          name: beforeCaseLastUpdatedTimestamp
     post:
       summary: Cases - Update
       operationId: post-cases
@@ -3739,6 +3755,8 @@ components:
               type: array
               items:
                 $ref: '#/components/schemas/TransactionStatusChange'
+            lastStatusChange:
+              $ref: '#/components/schemas/TransactionStatusChange'
             originUser:
               oneOf:
                 - $ref: '#/components/schemas/InternalConsumerUser'
@@ -4807,6 +4825,8 @@ components:
           type: array
           items:
             $ref: '#/components/schemas/CaseStatusChange'
+        lastStatusChange:
+          $ref: '#/components/schemas/CaseStatusChange'
         priority:
           $ref: '#/components/schemas/Priority'
         relatedCases:
@@ -4855,6 +4875,8 @@ components:
           type: array
           items:
             $ref: '#/components/schemas/CaseStatusChange'
+        lastStatusChange:
+          $ref: '#/components/schemas/CaseStatusChange'
         transactionIds:
           type: array
           items:
