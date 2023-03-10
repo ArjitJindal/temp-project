@@ -50,10 +50,13 @@ async function main() {
         { key: 'transactionId', value: transactionId },
         { key: 'apiKey', value: apiKey },
         { key: 'timestamp', value: `${Date.now()}` },
-        { key: 'env', value: config.stage },
+        { key: 'domain', value: config.application.AUTH0_AUDIENCE },
         {
-          key: 'incorrectEnv',
-          value: config.stage === 'dev' ? 'sandbox' : 'dev',
+          key: 'incorrectDomain',
+          value:
+            config.stage === 'dev'
+              ? 'https://sandbox.api.flagright.com'
+              : 'https://api.flagright.dev',
         },
       ],
     },

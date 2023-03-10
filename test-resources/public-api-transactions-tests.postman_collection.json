@@ -62,9 +62,8 @@
           "raw": "{\n  \"transactionId\": \"{{transactionId}}\",\n  \"type\": \"TRANSFER\",\n  \"originUserId\": \"1\",\n  \"destinationUserId\": \"3\",\n  \"timestamp\": {{timestamp}},\n  \"originAmountDetails\": {\n    \"country\": \"IN\",\n    \"transactionAmount\": 100044440,\n    \"transactionCurrency\": \"USD\"\n  },\n  \"destinationAmountDetails\": {\n    \"country\": \"DE\",\n    \"transactionAmount\": 10033.34,\n    \"transactionCurrency\": \"USD\"\n  },\n  \"promotionCodeUsed\": true,\n  \"originPaymentDetails\": {\n    \"method\": \"GENERIC_BANK_ACCOUNT\",\n    \"accountType\": \"Savings\",\n    \"accountNumber\": \"121445521\",\n    \"bankName\": \"State Bank of India\",\n    \"name\": \"Binod Ramamurthie\",\n    \"bankCode\": \"SBI0033921\",\n    \"specialInstructions\": \"IMPS\",\n    \"paymentChannel\": \"Intra Bank\" \n  },\n  \"destinationPaymentDetails\": {\n    \"method\": \"CARD\",\n    \"cardFingerprint\": \"000000000000\",\n    \"cardIssuedCountry\": \"CN\",\n    \"cardAuthenticated\": false,\n    \"cardLast4Digits\": \"0019\",\n    \"cardBrand\": \"DISCOVER\",\n    \"cardFunding\": \"CREDIT\"\n  },\n  \"reference\": \"dog\",\n  \"tags\": [{\"key\": \"flowType\", \"value\": \"wallet\"}]\n}"
         },
         "url": {
-          "raw": "https://{{env}}.api.flagright.com/transactions",
-          "protocol": "https",
-          "host": ["{{env}}", "api", "flagright", "com"],
+          "raw": "{{domain}}/transactions",
+          "host": ["{{domain}}"],
           "path": ["transactions"]
         }
       },
@@ -123,9 +122,8 @@
           "raw": "{\n  \"transactionId\": \"{{transactionId}}\",\n  \"type\": \"TRANSFER\",\n  \"originUserId\": \"1\",\n  \"destinationUserId\": \"3\",\n  \"timestamp\": {{timestamp}},\n  \"originAmountDetails\": {\n    \"country\": \"IN\",\n    \"transactionAmount\": 100044440,\n    \"transactionCurrency\": \"USD\"\n  },\n  \"destinationAmountDetails\": {\n    \"country\": \"DE\",\n    \"transactionAmount\": 10033.34,\n    \"transactionCurrency\": \"USD\"\n  },\n  \"promotionCodeUsed\": true,\n  \"originPaymentDetails\": {\n    \"method\": \"GENERIC_BANK_ACCOUNT\",\n    \"accountType\": \"Savings\",\n    \"accountNumber\": \"121445521\",\n    \"bankName\": \"State Bank of India\",\n    \"name\": \"Binod Ramamurthie\",\n    \"bankCode\": \"SBI0033921\",\n    \"specialInstructions\": \"IMPS\",\n    \"paymentChannel\": \"Intra Bank\" \n  },\n  \"destinationPaymentDetails\": {\n    \"method\": \"CARD\",\n    \"cardFingerprint\": \"000000000000\",\n    \"cardIssuedCountry\": \"CN\",\n    \"cardAuthenticated\": false,\n    \"cardLast4Digits\": \"0019\",\n    \"cardBrand\": \"DISCOVER\",\n    \"cardFunding\": \"CREDIT\"\n  },\n  \"reference\": \"dog\",\n  \"tags\": [{\"key\": \"flowType\", \"value\": \"wallet\"}]\n}"
         },
         "url": {
-          "raw": "https://{{env}}.api.flagright.com/transactions",
-          "protocol": "https",
-          "host": ["{{env}}", "api", "flagright", "com"],
+          "raw": "{{domain}}/transactions",
+          "host": ["{{domain}}"],
           "path": ["transactions"]
         }
       },
@@ -177,9 +175,8 @@
           "raw": "{\n  \"transactionId\": \"{{transactionId}}\",\n  \"type\": \"TRANSFER\",\n  \"originUserId\": \"1\",\n  \"destinationUserId\": \"3\",\n  \"timestamp\": {{timestamp}},\n  \"originAmountDetails\": {\n    \"country\": \"IN\",\n    \"transactionAmount\": 100044440,\n    \"transactionCurrency\": \"USD\"\n  },\n  \"destinationAmountDetails\": {\n    \"country\": \"DE\",\n    \"transactionAmount\": 10033.34,\n    \"transactionCurrency\": \"USD\"\n  },\n  \"promotionCodeUsed\": true,\n  \"originPaymentDetails\": {\n    \"method\": \"GENERIC_BANK_ACCOUNT\",\n    \"accountType\": \"Savings\",\n    \"accountNumber\": \"121445521\",\n    \"bankName\": \"State Bank of India\",\n    \"name\": \"Binod Ramamurthie\",\n    \"bankCode\": \"SBI0033921\",\n    \"specialInstructions\": \"IMPS\",\n    \"paymentChannel\": \"Intra Bank\" \n  },\n  \"destinationPaymentDetails\": {\n    \"method\": \"CARD\",\n    \"cardFingerprint\": \"000000000000\",\n    \"cardIssuedCountry\": \"CN\",\n    \"cardAuthenticated\": false,\n    \"cardLast4Digits\": \"0019\",\n    \"cardBrand\": \"DISCOVER\",\n    \"cardFunding\": \"CREDIT\"\n  },\n  \"reference\": \"dog\",\n  \"tags\": [{\"key\": \"flowType\", \"value\": \"wallet\"}]\n}"
         },
         "url": {
-          "raw": "https://{{incorrectEnv}}.api.flagright.com/transactions",
-          "protocol": "https",
-          "host": ["{{incorrectEnv}}", "api", "flagright", "com"],
+          "raw": "https://{{incorrectDomain}}/transactions",
+          "host": ["{{incorrectDomain}}"],
           "path": ["transactions"]
         }
       },
@@ -231,9 +228,8 @@
           "raw": "{\n  \"transactionId\": \"{{transactionId}}\",\n  \"type\": \"TRANSFER\",\n  \"originUserId\": \"1\",\n  \"destinationUserId\": \"3\",\n  \"timestamp\": {{timestamp}},\n  \"originAmountDetails\": {\n    \"country\": \"IN\",\n    \"transactionAmount\": 100044440,\n    \"transactionCurrency\": \"USD\"\n  },\n  \"destinationAmountDetails\": {\n    \"country\": \"DE\",\n    \"transactionAmount\": 10033.34,\n    \"transactionCurrency\": \"USD\"\n  },\n  \"promotionCodeUsed\": true,\n  \"originPaymentDetails\": {\n    \"method\": \"GENERIC_BANK_ACCOUNT\",\n    \"accountType\": \"Savings\",\n    \"accountNumber\": \"121445521\",\n    \"bankName\": \"State Bank of India\",\n    \"name\": \"Binod Ramamurthie\",\n    \"bankCode\": \"SBI0033921\",\n    \"specialInstructions\": \"IMPS\",\n    \"paymentChannel\": \"Intra Bank\" \n  },\n  \"destinationPaymentDetails\": {\n    \"method\": \"CARD\",\n    \"cardFingerprint\": \"000000000000\",\n    \"cardIssuedCountry\": \"CN\",\n    \"cardAuthenticated\": false,\n    \"cardLast4Digits\": \"0019\",\n    \"cardBrand\": \"DISCOVER\",\n    \"cardFunding\": \"CREDIT\"\n  },\n  \"reference\": \"dog\",\n  \"tags\": [{\"key\": \"flowType\", \"value\": \"wallet\"}]\n}"
         },
         "url": {
-          "raw": "https://{{env}}.api.flagright.com/transactions",
-          "protocol": "https",
-          "host": ["{{env}}", "api", "flagright", "com"],
+          "raw": "{{domain}}/transactions",
+          "host": ["{{domain}}"],
           "path": ["transactions"]
         }
       },
@@ -290,9 +286,8 @@
           "raw": "{}"
         },
         "url": {
-          "raw": "https://{{env}}.api.flagright.com/transactions",
-          "protocol": "https",
-          "host": ["{{env}}", "api", "flagright", "com"],
+          "raw": "{{domain}}/transactions",
+          "host": ["{{domain}}"],
           "path": ["transactions"]
         }
       },
@@ -349,9 +344,8 @@
           "raw": "{\n  \"type\": \"TRANSFER\",\n  \"originUserId\": \"1\",\n  \"destinationUserId\": \"3\",\n  \"timestamp\": {{timestamp}},\n  \"originAmountDetails\": {\n    \"country\": \"IN\",\n    \"transactionAmount\": 100044440,\n    \"transactionCurrency\": \"USD\"\n  },\n  \"destinationAmountDetails\": {\n    \"country\": \"DE\",\n    \"transactionAmount\": 10033.34,\n    \"transactionCurrency\": \"USD\"\n  },\n  \"promotionCodeUsed\": true,\n  \"originPaymentDetails\": {\n    \"method\": \"GENERIC_BANK_ACCOUNT\",\n    \"accountType\": \"Savings\",\n    \"accountNumber\": \"121445521\",\n    \"bankName\": \"State Bank of India\",\n    \"name\": \"Binod Ramamurthie\",\n    \"bankCode\": \"SBI0033921\",\n    \"specialInstructions\": \"IMPS\",\n    \"paymentChannel\": \"Intra Bank\" \n  },\n  \"destinationPaymentDetails\": {\n    \"method\": \"CARD\",\n    \"cardFingerprint\": \"000000000000\",\n    \"cardIssuedCountry\": \"CN\",\n    \"cardAuthenticated\": false,\n    \"cardLast4Digits\": \"0019\",\n    \"cardBrand\": \"DISCOVER\",\n    \"cardFunding\": \"CREDIT\"\n  },\n  \"reference\": \"dog\",\n  \"tags\": [{\"key\": \"flowType\", \"value\": \"wallet\"}]\n}"
         },
         "url": {
-          "raw": "https://{{env}}.api.flagright.com/transactions",
-          "protocol": "https",
-          "host": ["{{env}}", "api", "flagright", "com"],
+          "raw": "{{domain}}/transactions",
+          "host": ["{{domain}}"],
           "path": ["transactions"]
         }
       },
@@ -408,9 +402,8 @@
           "raw": "{\n  \"transactionId\": true,\n  \"type\": \"TRANSFER\",\n  \"originUserId\": \"1\",\n  \"destinationUserId\": \"3\",\n  \"timestamp\": {{timestamp}},\n  \"originAmountDetails\": {\n    \"country\": \"IN\",\n    \"transactionAmount\": 100044440,\n    \"transactionCurrency\": \"USD\"\n  },\n  \"destinationAmountDetails\": {\n    \"country\": \"DE\",\n    \"transactionAmount\": 10033.34,\n    \"transactionCurrency\": \"USD\"\n  },\n  \"promotionCodeUsed\": true,\n  \"originPaymentDetails\": {\n    \"method\": \"GENERIC_BANK_ACCOUNT\",\n    \"accountType\": \"Savings\",\n    \"accountNumber\": \"121445521\",\n    \"bankName\": \"State Bank of India\",\n    \"name\": \"Binod Ramamurthie\",\n    \"bankCode\": \"SBI0033921\",\n    \"specialInstructions\": \"IMPS\",\n    \"paymentChannel\": \"Intra Bank\" \n  },\n  \"destinationPaymentDetails\": {\n    \"method\": \"CARD\",\n    \"cardFingerprint\": \"000000000000\",\n    \"cardIssuedCountry\": \"CN\",\n    \"cardAuthenticated\": false,\n    \"cardLast4Digits\": \"0019\",\n    \"cardBrand\": \"DISCOVER\",\n    \"cardFunding\": \"CREDIT\"\n  },\n  \"reference\": \"dog\",\n  \"tags\": [{\"key\": \"flowType\", \"value\": \"wallet\"}]\n}"
         },
         "url": {
-          "raw": "https://{{env}}.api.flagright.com/transactions",
-          "protocol": "https",
-          "host": ["{{env}}", "api", "flagright", "com"],
+          "raw": "{{domain}}/transactions",
+          "host": ["{{domain}}"],
           "path": ["transactions"]
         }
       },
@@ -467,9 +460,8 @@
           "raw": "{\n  \"transactionId\": \"{{transactionId}}\",\n  \"type\": \"TRANSFER\",\n  \"originUserId\": \"1\",\n  \"destinationUserId\": \"3\",\n  \"timestamp\": 1,\n  \"originAmountDetails\": {\n    \"country\": \"IN\",\n    \"transactionAmount\": 100044440,\n    \"transactionCurrency\": \"USD\"\n  },\n  \"destinationAmountDetails\": {\n    \"country\": \"DE\",\n    \"transactionAmount\": 10033.34,\n    \"transactionCurrency\": \"USD\"\n  },\n  \"promotionCodeUsed\": true,\n  \"originPaymentDetails\": {\n    \"method\": \"GENERIC_BANK_ACCOUNT\",\n    \"accountType\": \"Savings\",\n    \"accountNumber\": \"121445521\",\n    \"bankName\": \"State Bank of India\",\n    \"name\": \"Binod Ramamurthie\",\n    \"bankCode\": \"SBI0033921\",\n    \"specialInstructions\": \"IMPS\",\n    \"paymentChannel\": \"Intra Bank\" \n  },\n  \"destinationPaymentDetails\": {\n    \"method\": \"CARD\",\n    \"cardFingerprint\": \"000000000000\",\n    \"cardIssuedCountry\": \"CN\",\n    \"cardAuthenticated\": false,\n    \"cardLast4Digits\": \"0019\",\n    \"cardBrand\": \"DISCOVER\",\n    \"cardFunding\": \"CREDIT\"\n  },\n  \"reference\": \"dog\",\n  \"tags\": [{\"key\": \"flowType\", \"value\": \"wallet\"}]\n}"
         },
         "url": {
-          "raw": "https://{{env}}.api.flagright.com/transactions",
-          "protocol": "https",
-          "host": ["{{env}}", "api", "flagright", "com"],
+          "raw": "{{domain}}/transactions",
+          "host": ["{{domain}}"],
           "path": ["transactions"]
         }
       },
@@ -536,9 +528,8 @@
           "raw": "{\n  \"transactionId\": \"{{transactionId}}\",\n  \"type\": \"TRANSFER\",\n  \"originUserId\": \"1\",\n  \"destinationUserId\": \"3\",\n  \"timestamp\": {{timestamp}},\n  \"originAmountDetails\": {\n    \"country\": \"IN\",\n    \"transactionAmount\": 100044440,\n    \"transactionCurrency\": \"USD\"\n  },\n  \"destinationAmountDetails\": {\n    \"country\": \"DE\",\n    \"transactionAmount\": 10033.34,\n    \"transactionCurrency\": \"USD\"\n  },\n  \"promotionCodeUsed\": true,\n  \"originPaymentDetails\": {\n    \"method\": \"GENERIC_BANK_ACCOUNT\",\n    \"accountType\": \"Savings\",\n    \"accountNumber\": \"121445521\",\n    \"bankName\": \"State Bank of India\",\n    \"name\": \"Binod Ramamurthie\",\n    \"bankCode\": \"SBI0033921\",\n    \"specialInstructions\": \"IMPS\",\n    \"paymentChannel\": \"Intra Bank\" \n  },\n  \"destinationPaymentDetails\": {\n    \"method\": \"CARD\",\n    \"cardFingerprint\": \"000000000000\",\n    \"cardIssuedCountry\": \"CN\",\n    \"cardAuthenticated\": false,\n    \"cardLast4Digits\": \"0019\",\n    \"cardBrand\": \"DISCOVER\",\n    \"cardFunding\": \"CREDIT\"\n  },\n  \"reference\": \"dog\",\n  \"tags\": [{\"key\": \"flowType\", \"value\": \"wallet\"}]\n}"
         },
         "url": {
-          "raw": "https://{{env}}.api.flagright.com/transactions",
-          "protocol": "https",
-          "host": ["{{env}}", "api", "flagright", "com"],
+          "raw": "{{domain}}/transactions",
+          "host": ["{{domain}}"],
           "path": ["transactions"]
         }
       },
@@ -595,9 +586,8 @@
           "raw": "{\n  \"transactionId\": \"{{transactionId}}\",\n  \"type\": \"TRANSFER\",\n  \"originUserId\": \"1\",\n  \"destinationUserId\": \"3\",\n  \"timestamp\": {{timestamp}},\n  \"originAmountDetails\": {\n    \"country\": \"IN\",\n    \"transactionAmount\": 100044440,\n    \"transactionCurrency\": \"USD\"\n  },\n  \"destinationAmountDetails\": {\n    \"country\": \"DE\",\n    \"transactionAmount\": 10033.34,\n    \"transactionCurrency\": \"USD\"\n  },\n  \"promotionCodeUsed\": true,\n  \"originPaymentDetails\": {\n    \"method\": \"AMAN\",\n    \"accountType\": \"Savings\",\n    \"accountNumber\": \"121445521\",\n    \"bankName\": \"State Bank of India\",\n    \"name\": \"Binod Ramamurthie\",\n    \"bankCode\": \"SBI0033921\",\n    \"specialInstructions\": \"IMPS\",\n    \"paymentChannel\": \"Intra Bank\" \n  },\n  \"destinationPaymentDetails\": {\n    \"method\": \"CARD\",\n    \"cardFingerprint\": \"000000000000\",\n    \"cardIssuedCountry\": \"CN\",\n    \"cardAuthenticated\": false,\n    \"cardLast4Digits\": \"0019\",\n    \"cardBrand\": \"DISCOVER\",\n    \"cardFunding\": \"CREDIT\"\n  },\n  \"reference\": \"dog\",\n  \"tags\": [{\"key\": \"flowType\", \"value\": \"wallet\"}]\n}"
         },
         "url": {
-          "raw": "https://{{env}}.api.flagright.com/transactions",
-          "protocol": "https",
-          "host": ["{{env}}", "api", "flagright", "com"],
+          "raw": "{{domain}}/transactions",
+          "host": ["{{domain}}"],
           "path": ["transactions"]
         }
       },
@@ -654,9 +644,8 @@
           "raw": "{\n  \"transactionId\": \"{{transactionId}}\",\n  \"type\": \"TRANSFER\",\n  \"originUserId\": \"1\",\n  \"destinationUserId\": \"3\",\n  \"timestamp\": {{timestamp}},\n  \"originAmountDetails\": {\n    \"country\": \"AB\",\n    \"transactionAmount\": 100044440,\n    \"transactionCurrency\": \"USD\"\n  },\n  \"destinationAmountDetails\": {\n    \"country\": \"DE\",\n    \"transactionAmount\": 10033.34,\n    \"transactionCurrency\": \"USD\"\n  },\n  \"promotionCodeUsed\": true,\n  \"originPaymentDetails\": {\n    \"method\": \"GENERIC_BANK_ACCOUNT\",\n    \"accountType\": \"Savings\",\n    \"accountNumber\": \"121445521\",\n    \"bankName\": \"State Bank of India\",\n    \"name\": \"Binod Ramamurthie\",\n    \"bankCode\": \"SBI0033921\",\n    \"specialInstructions\": \"IMPS\",\n    \"paymentChannel\": \"Intra Bank\" \n  },\n  \"destinationPaymentDetails\": {\n    \"method\": \"CARD\",\n    \"cardFingerprint\": \"000000000000\",\n    \"cardIssuedCountry\": \"CN\",\n    \"cardAuthenticated\": false,\n    \"cardLast4Digits\": \"0019\",\n    \"cardBrand\": \"DISCOVER\",\n    \"cardFunding\": \"CREDIT\"\n  },\n  \"reference\": \"dog\",\n  \"tags\": [{\"key\": \"flowType\", \"value\": \"wallet\"}]\n}"
         },
         "url": {
-          "raw": "https://{{env}}.api.flagright.com/transactions",
-          "protocol": "https",
-          "host": ["{{env}}", "api", "flagright", "com"],
+          "raw": "{{domain}}/transactions",
+          "host": ["{{domain}}"],
           "path": ["transactions"]
         }
       },
@@ -713,9 +702,8 @@
           "raw": "{\n  \"transactionId\": \"{{transactionId}}\",\n  \"type\": \"TRANSFER\",\n  \"originUserId\": \"1\",\n  \"destinationUserId\": \"3\",\n  \"timestamp\": {{timestamp}},\n  \"originAmountDetails\": {\n    \"country\": \"IN\",\n    \"transactionAmount\": \"100044440\",\n    \"transactionCurrency\": \"USD\"\n  },\n  \"destinationAmountDetails\": {\n    \"country\": \"DE\",\n    \"transactionAmount\": \"10033.34\",\n    \"transactionCurrency\": \"USD\"\n  },\n  \"promotionCodeUsed\": true,\n  \"originPaymentDetails\": {\n    \"method\": \"GENERIC_BANK_ACCOUNT\",\n    \"accountType\": \"Savings\",\n    \"accountNumber\": \"121445521\",\n    \"bankName\": \"State Bank of India\",\n    \"name\": \"Binod Ramamurthie\",\n    \"bankCode\": \"SBI0033921\",\n    \"specialInstructions\": \"IMPS\",\n    \"paymentChannel\": \"Intra Bank\" \n  },\n  \"destinationPaymentDetails\": {\n    \"method\": \"CARD\",\n    \"cardFingerprint\": \"000000000000\",\n    \"cardIssuedCountry\": \"CN\",\n    \"cardAuthenticated\": false,\n    \"cardLast4Digits\": \"0019\",\n    \"cardBrand\": \"DISCOVER\",\n    \"cardFunding\": \"CREDIT\"\n  },\n  \"reference\": \"dog\",\n  \"tags\": [{\"key\": \"flowType\", \"value\": \"wallet\"}]\n}"
         },
         "url": {
-          "raw": "https://{{env}}.api.flagright.com/transactions",
-          "protocol": "https",
-          "host": ["{{env}}", "api", "flagright", "com"],
+          "raw": "{{domain}}/transactions",
+          "host": ["{{domain}}"],
           "path": ["transactions"]
         }
       },

@@ -52,7 +52,7 @@ export const config: Config = {
     CERTIFICATE_ARN:
       'arn:aws:acm:eu-central-1:911899431626:certificate/18e81dca-c35a-453c-a566-9f2d9bfa0d98',
     AUTH0_CUSTOM_CNAME:
-      'dev-flagright-cd-zgzlkxsqszhuiutz.edge.tenants.eu.auth0.com',
+      'dev-flagright-cd-dc9lyrkmponfpoa2.edge.tenants.eu.auth0.com',
     AUTH0_DOMAIN: 'dev-flagright.eu.auth0.com',
     AUTH0_AUDIENCE: 'https://api.flagright.dev/',
     ATLAS_CREDENTIALS_SECRET_ARN: `arn:aws:secretsmanager:${region}:${account}:secret:mongoAtlasCreds-RvzMVI`,
