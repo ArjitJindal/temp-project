@@ -1388,6 +1388,9 @@ export class TransactionRepository {
       case 'TRANSACTION_STATE':
         fieldPath = 'transactionState'
         break
+      case 'PAYMENT_CHANNEL':
+        fieldPath = 'originPaymentDetails.paymentChannel'
+        break
       case 'TAGS_KEY':
         fieldPath = 'tags.key'
         unwindPath = 'tags'

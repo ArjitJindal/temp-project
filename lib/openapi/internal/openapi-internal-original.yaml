@@ -5403,6 +5403,7 @@ components:
         - BANK_SWIFT_CODE
         - UPI_IDENTIFYING_NUMBER
         - IP_ADDRESS
+        - PAYMENT_CHANNEL
     UsersUniquesField:
       title: UsersUniquesField
       type: string
