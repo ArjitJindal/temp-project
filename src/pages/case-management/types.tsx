@@ -39,6 +39,8 @@ export type CommonCaseParams = {
   userStates: UserState[];
   riskLevels: RiskLevel[];
   alertId: string;
+  assignedTo: string[];
+  'lastStatusChange.timestamp': string[];
 };
 
 export type TableSearchParams = CommonParams & {

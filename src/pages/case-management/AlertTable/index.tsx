@@ -192,6 +192,7 @@ const mergedColumns = (
       title: 'Assigned to',
       dataIndex: 'assignments',
       exportData: 'assignments',
+      hideInSearch: true,
       width: 100,
       render: (_, entity) => {
         return (
@@ -244,8 +245,17 @@ export default function AlertTable(props: Props) {
         tagValue,
         showCases,
         caseId,
+        assignedTo,
       } = params;
       const [sortField, sortOrder] = sort[0] ?? [];
+
+      let filterAssignmentsIds: string[] | undefined = undefined;
+
+      if (showCases === 'MY_ALERTS') {
+        filterAssignmentsIds = [user.userId];
+      } else if (assignedTo?.length) {
+        filterAssignmentsIds = assignedTo;
+      }
 
       const result = await api.getAlertList({
         page,
@@ -261,7 +271,7 @@ export default function AlertTable(props: Props) {
             ? 'CLOSED'
             : undefined
           : undefined,
-        filterAssignmentsIds: showCases === 'MY_ALERTS' ? [user.userId] : undefined,
+        filterAssignmentsIds,
         filterTransactionState: transactionState ?? undefined,
         filterBusinessIndustries: businessIndustryFilter,
         filterTransactionTagKey: tagKey,

@@ -345,8 +345,10 @@ export default function CaseTable(props: Props) {
             title: 'Last update time',
             exportData: 'lastStatusChange.timestamp',
             width: 160,
-            hideInSearch: true,
+            hideInSearch: false,
             valueType: 'dateTimeRange',
+            dataIndex: 'lastStatusChange.timestamp',
+            sorter: true,
             onCell: onCaseCell,
             render: (dom, entity) => {
               return entity.lastStatusChange ? (

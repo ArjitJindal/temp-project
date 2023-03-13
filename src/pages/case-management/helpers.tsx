@@ -1,4 +1,5 @@
 import React from 'react';
+import { AssignmentButton } from './components/AssignmentButton';
 import { dayjs } from '@/utils/dayjs';
 import '../../components/ui/colors';
 import { Adapter } from '@/utils/routing';
@@ -47,6 +48,10 @@ export const queryAdapter: Adapter<TableSearchParams> = {
       kycStatuses: params.kycStatuses?.join(','),
       userStates: params.userStates?.join(','),
       riskLevels: params.riskLevels?.join(','),
+      assignedTo: params.assignedTo?.join(','),
+      'lastStatusChange.timestamp': params['lastStatusChange.timestamp']
+        ?.map((x) => dayjs(x).valueOf())
+        .join(','),
     };
   },
   deserializer: (raw): TableSearchParams => {
@@ -98,6 +103,10 @@ export const queryAdapter: Adapter<TableSearchParams> = {
       userStates: raw.userStates?.split(',') as unknown as TableSearchParams['userStates'],
       riskLevels: raw.riskLevels?.split(',') as unknown as TableSearchParams['riskLevels'],
       showCases: (showCases as 'MY' | 'ALL' | 'MY_ALERTS' | 'ALL_ALERTS' | undefined) ?? 'ALL',
+      assignedTo: raw.assignedTo?.split(',') as unknown as TableSearchParams['assignedTo'],
+      'lastStatusChange.timestamp': raw?.['lastStatusChange.timestamp']
+        ?.split(',')
+        .map((x) => dayjs(parseInt(x)).format()),
     };
   },
 };
@@ -169,6 +178,22 @@ export const extraFilters: (isPulseEnabled: boolean) => ExtraFilter<TableSearchP
           setParams((state) => ({
             ...state,
             businessIndustryFilter: value ?? undefined,
+          }));
+        }}
+      />
+    ),
+  },
+  {
+    key: 'assignedTo',
+    title: 'Assigned to',
+    showFilterByDefault: false,
+    renderer: ({ params, setParams }) => (
+      <AssignmentButton
+        users={params.assignedTo ?? []}
+        onConfirm={(value) => {
+          setParams((state) => ({
+            ...state,
+            assignedTo: value ?? undefined,
           }));
         }}
       />

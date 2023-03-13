@@ -54,6 +54,8 @@ export default function CaseTableWrapper(props: {
       riskLevels,
       userStates,
       showCases,
+      assignedTo,
+      'lastStatusChange.timestamp': lastStatusChangeTimestamp,
     } = params;
 
     const [sortField, sortOrder] = sort[0] ?? [];
@@ -105,7 +107,16 @@ export default function CaseTableWrapper(props: {
           filterUserKYCStatus: kycStatuses,
           filterRiskLevel: riskLevels,
           filterUserState: userStates,
-          filterAssignmentsIds: showCases === 'MY' ? [auth0user.userId] : undefined,
+          filterAssignmentsIds:
+            showCases === 'MY' ? [auth0user.userId] : assignedTo?.length ? assignedTo : undefined,
+          ...(lastStatusChangeTimestamp && {
+            afterCaseLastUpdatedTimestamp: lastStatusChangeTimestamp
+              ? dayjs(lastStatusChangeTimestamp[0]).valueOf()
+              : 0,
+            beforeCaseLastUpdatedTimestamp: lastStatusChangeTimestamp
+              ? dayjs(lastStatusChangeTimestamp[1]).valueOf()
+              : Number.MAX_SAFE_INTEGER,
+          }),
         }),
       'Get Cases List',
     );
