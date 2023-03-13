@@ -306,7 +306,13 @@ const MyRule = () => {
         ...(isPulseEnabled
           ? {
               riskLevelParameters: riskLevelParameters
-                ? removeEmpty(riskLevelParameters)
+                ? {
+                    VERY_HIGH: removeEmpty(riskLevelParameters['VERY_HIGH']),
+                    HIGH: removeEmpty(riskLevelParameters['HIGH']),
+                    MEDIUM: removeEmpty(riskLevelParameters['MEDIUM']),
+                    LOW: removeEmpty(riskLevelParameters['LOW']),
+                    VERY_LOW: removeEmpty(riskLevelParameters['VERY_LOW']),
+                  }
                 : {
                     VERY_HIGH: removeEmpty(ruleParameters),
                     HIGH: removeEmpty(ruleParameters),
@@ -314,7 +320,23 @@ const MyRule = () => {
                     LOW: removeEmpty(ruleParameters),
                     VERY_LOW: removeEmpty(ruleParameters),
                   },
-              riskLevelActions: riskLevelActions,
+              riskLevelActions: riskLevelActions
+                ? {
+                    VERY_HIGH: riskLevelActions['VERY_HIGH'],
+                    HIGH: riskLevelActions['HIGH'],
+                    MEDIUM: riskLevelActions['MEDIUM'],
+                    LOW: riskLevelActions['LOW'],
+                    VERY_LOW: riskLevelActions['VERY_LOW'],
+                  }
+                : ruleAction != null
+                ? {
+                    VERY_HIGH: ruleAction,
+                    HIGH: ruleAction,
+                    MEDIUM: ruleAction,
+                    LOW: ruleAction,
+                    VERY_LOW: ruleAction,
+                  }
+                : undefined,
             }
           : {
               action: ruleAction ?? ruleInstance.action,

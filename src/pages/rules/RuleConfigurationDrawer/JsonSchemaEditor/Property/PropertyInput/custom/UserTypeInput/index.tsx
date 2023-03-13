@@ -1,11 +1,14 @@
 import React from 'react';
+import { UiSchemaUserType } from '../../../../types';
 import { InputProps } from '@/components/library/Form';
 import { InternalBusinessUserTypeEnum, InternalConsumerUserTypeEnum } from '@/apis';
 import SelectionGroup from '@/components/library/SelectionGroup';
 
 type ValueType = InternalBusinessUserTypeEnum | InternalConsumerUserTypeEnum | undefined;
 
-interface Props extends InputProps<ValueType> {}
+interface Props extends InputProps<ValueType> {
+  uiSchema: UiSchemaUserType;
+}
 
 export default function UserTypeInput(props: Props) {
   const { value, onChange, ...rest } = props;

@@ -1,5 +1,5 @@
 import React from 'react';
-import { ExtendedSchema } from '../../../../types';
+import { UiSchemaCountries } from '../../../../types';
 import { InputProps } from '@/components/library/Form';
 import COUNTRIES, { CountryCode } from '@/utils/countries';
 import Select, { Option } from '@/components/library/Select';
@@ -12,7 +12,7 @@ const OPTIONS = Object.entries(COUNTRIES).map(
 );
 
 interface Props extends InputProps<CountryCode[]> {
-  schema: ExtendedSchema;
+  uiSchema: UiSchemaCountries;
 }
 
 export default function CountriesInput(props: Props) {

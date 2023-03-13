@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import Property from '../../../index';
 import PropertyInput from '../../index';
-import { ExtendedSchema } from '../../../../types';
+import { ExtendedSchema, UiSchemaTimeWindow } from '../../../../types';
 import { findRequiredProperty, getOrderedProps } from '../../../../utils';
 import s from './style.module.less';
 import { FieldMeta, FormContext, FormContextValue } from '@/components/library/Form/context';
@@ -16,6 +16,7 @@ interface ValueType {
 }
 
 interface Props extends InputProps<ValueType> {
+  uiSchema: UiSchemaTimeWindow;
   schema: ExtendedSchema;
 }
 

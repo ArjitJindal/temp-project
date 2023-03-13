@@ -25,28 +25,28 @@ export default function PropertyInput(props: Props) {
   const uiSchema = getUiSchema(schema);
 
   if (uiSchema['ui:subtype'] === 'DAY_WINDOW') {
-    return <DayWindowInput {...props} />;
+    return <DayWindowInput {...props} uiSchema={uiSchema} />;
   }
   if (uiSchema['ui:subtype'] === 'TIME_WINDOW') {
-    return <TimeWindowInput {...props} />;
+    return <TimeWindowInput {...props} uiSchema={uiSchema} />;
   }
   if (uiSchema['ui:subtype'] === 'COUNTRIES') {
-    return <CountriesInput {...props} />;
+    return <CountriesInput {...props} uiSchema={uiSchema} />;
   }
   if (uiSchema['ui:subtype'] === 'AGE_RANGE') {
-    return <AgeRangeInput {...props} />;
+    return <AgeRangeInput {...props} uiSchema={uiSchema} />;
   }
   if (uiSchema['ui:subtype'] === 'TRANSACTION_AMOUNT_RANGE') {
-    return <TransactionAmountRangeInput {...props} />;
+    return <TransactionAmountRangeInput {...props} uiSchema={uiSchema} />;
   }
   if (uiSchema['ui:subtype'] === 'TRANSACTION_AMOUNT_THRESHOLDS') {
-    return <TransactionAmountThresholdsInput {...props} />;
+    return <TransactionAmountThresholdsInput {...props} uiSchema={uiSchema} />;
   }
   if (uiSchema['ui:subtype'] === 'USER_TYPE') {
-    return <UserTypeInput {...props} />;
+    return <UserTypeInput {...props} uiSchema={uiSchema} />;
   }
   if (uiSchema['ui:subtype'] === 'CURRENCY') {
-    return <CurrencyInput {...props} />;
+    return <CurrencyInput {...props} uiSchema={uiSchema} />;
   }
 
   switch (schema.type) {
