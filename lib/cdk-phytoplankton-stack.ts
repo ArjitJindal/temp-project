@@ -88,6 +88,7 @@ export class CdkPhytoplanktonStack extends cdk.Stack {
       destinationBucket: siteBucket,
       distribution,
       distributionPaths: ['/*'],
+      memoryLimit: 10000,
     });
 
     new CfnOutput(this, 'Bucket', { value: siteBucket.bucketName });
