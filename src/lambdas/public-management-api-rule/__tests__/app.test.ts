@@ -75,7 +75,7 @@ describe('Public Management API - Rule', () => {
           properties: {
             transactionAmountThreshold: {
               additionalProperties: {
-                type: 'integer',
+                type: 'number',
               },
               type: 'object',
               'ui:schema': { 'ui:subtype': 'TRANSACTION_AMOUNT_THRESHOLDS' },
@@ -102,7 +102,7 @@ describe('Public Management API - Rule', () => {
           properties: {
             transactionAmountThreshold: {
               additionalProperties: {
-                type: 'integer',
+                type: 'number',
               },
               type: 'object',
               'ui:schema': { 'ui:subtype': 'TRANSACTION_AMOUNT_THRESHOLDS' },
@@ -190,7 +190,7 @@ describe('Public Management API - Rule', () => {
         properties: {
           transactionAmountThreshold: {
             additionalProperties: {
-              type: 'integer',
+              type: 'number',
             },
             type: 'object',
             title: 'Transactions amount threshold',

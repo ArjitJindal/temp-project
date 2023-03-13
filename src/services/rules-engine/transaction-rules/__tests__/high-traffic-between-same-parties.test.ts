@@ -15,14 +15,14 @@ import { CardDetails } from '@/@types/openapi-public/CardDetails'
 
 dynamoDbSetupHook()
 
-const cardDetails1: CardDetails = {
+const CARD_DETAILS_1: CardDetails = {
   method: 'CARD',
   cardFingerprint: '11111111111111111111111111111111',
   cardIssuedCountry: 'US',
   transactionReferenceField: 'DEPOSIT',
   '3dsDone': true,
 }
-const cardDetails2: CardDetails = {
+const CARD_DETAILS_2: CardDetails = {
   method: 'CARD',
   cardFingerprint: '22222222222222222222222222222222',
   cardIssuedCountry: 'IN',
@@ -147,16 +147,16 @@ ruleAggregationTest(() => {
             reference: 'Too old transaction, should not be counted',
             originUserId: undefined,
             destinationUserId: undefined,
-            originPaymentDetails: cardDetails1,
-            destinationPaymentDetails: cardDetails2,
+            originPaymentDetails: CARD_DETAILS_1,
+            destinationPaymentDetails: CARD_DETAILS_2,
             timestamp: dayjs('2000-01-01T01:00:00.000Z').valueOf(),
           }),
           getTestTransaction({
             reference: 'First transaction',
             originUserId: undefined,
             destinationUserId: undefined,
-            originPaymentDetails: cardDetails1,
-            destinationPaymentDetails: cardDetails2,
+            originPaymentDetails: CARD_DETAILS_1,
+            destinationPaymentDetails: CARD_DETAILS_2,
             timestamp: dayjs('2022-01-01T02:00:00.000Z').valueOf(),
           }),
           getTestTransaction({
@@ -183,8 +183,8 @@ ruleAggregationTest(() => {
             reference: 'Third transaction, should be hit',
             originUserId: '1',
             destinationUserId: '2',
-            originPaymentDetails: cardDetails1,
-            destinationPaymentDetails: cardDetails2,
+            originPaymentDetails: CARD_DETAILS_1,
+            destinationPaymentDetails: CARD_DETAILS_2,
             timestamp: dayjs('2022-01-01T06:00:00.000Z').valueOf(),
           }),
         ],
@@ -198,7 +198,7 @@ ruleAggregationTest(() => {
             originUserId: '1',
             destinationUserId: undefined,
             originPaymentDetails: undefined,
-            destinationPaymentDetails: cardDetails2,
+            destinationPaymentDetails: CARD_DETAILS_2,
             timestamp: dayjs('2000-01-01T01:00:00.000Z').valueOf(),
           }),
           getTestTransaction({
@@ -206,7 +206,7 @@ ruleAggregationTest(() => {
             originUserId: '1',
             destinationUserId: undefined,
             originPaymentDetails: undefined,
-            destinationPaymentDetails: cardDetails2,
+            destinationPaymentDetails: CARD_DETAILS_2,
             timestamp: dayjs('2022-01-01T02:00:00.000Z').valueOf(),
           }),
           getTestTransaction({
@@ -214,7 +214,7 @@ ruleAggregationTest(() => {
             originUserId: '1',
             destinationUserId: undefined,
             originPaymentDetails: undefined,
-            destinationPaymentDetails: cardDetails2,
+            destinationPaymentDetails: CARD_DETAILS_2,
             timestamp: dayjs('2022-01-01T03:00:00.000Z').valueOf(),
           }),
           getTestTransaction({
@@ -236,7 +236,7 @@ ruleAggregationTest(() => {
             originUserId: '1',
             destinationUserId: undefined,
             originPaymentDetails: undefined,
-            destinationPaymentDetails: cardDetails2,
+            destinationPaymentDetails: CARD_DETAILS_2,
             timestamp: dayjs('2022-01-01T06:00:00.000Z').valueOf(),
           }),
         ],
@@ -249,7 +249,7 @@ ruleAggregationTest(() => {
             reference: 'Too old transaction, should not be counted',
             originUserId: undefined,
             destinationUserId: '2',
-            originPaymentDetails: cardDetails1,
+            originPaymentDetails: CARD_DETAILS_1,
             destinationPaymentDetails: undefined,
             timestamp: dayjs('2000-01-01T01:00:00.000Z').valueOf(),
           }),
@@ -257,7 +257,7 @@ ruleAggregationTest(() => {
             reference: 'First transaction',
             originUserId: undefined,
             destinationUserId: '2',
-            originPaymentDetails: cardDetails1,
+            originPaymentDetails: CARD_DETAILS_1,
             destinationPaymentDetails: undefined,
             timestamp: dayjs('2022-01-01T02:00:00.000Z').valueOf(),
           }),
@@ -265,7 +265,7 @@ ruleAggregationTest(() => {
             reference: 'Second transaction',
             originUserId: undefined,
             destinationUserId: '2',
-            originPaymentDetails: cardDetails1,
+            originPaymentDetails: CARD_DETAILS_1,
             destinationPaymentDetails: undefined,
             timestamp: dayjs('2022-01-01T03:00:00.000Z').valueOf(),
           }),
@@ -287,12 +287,134 @@ ruleAggregationTest(() => {
             reference: 'Third transaction, should be hit',
             originUserId: undefined,
             destinationUserId: '2',
-            originPaymentDetails: cardDetails1,
+            originPaymentDetails: CARD_DETAILS_1,
             destinationPaymentDetails: undefined,
             timestamp: dayjs('2022-01-01T06:00:00.000Z').valueOf(),
           }),
         ],
         expectedHits: [false, false, true, false, false, true],
+      },
+    ])('', ({ name, transactions, expectedHits }) => {
+      createTransactionRuleTestCase(
+        name,
+        TEST_TENANT_ID,
+        transactions,
+        expectedHits
+      )
+    })
+  })
+
+  describe('Match Payment Method Details (origin)', () => {
+    const TEST_TENANT_ID = getTestTenantId()
+
+    setUpRulesHooks(TEST_TENANT_ID, [
+      {
+        type: 'TRANSACTION',
+        ruleImplementationName: 'high-traffic-between-same-parties',
+        defaultParameters: {
+          timeWindow: {
+            units: 1,
+            granularity: 'day',
+            rollingBasis: true,
+          },
+          transactionsLimit: 2,
+          originMatchPaymentMethodDetails: true,
+        } as HighTrafficBetweenSamePartiesParameters,
+        defaultAction: 'FLAG',
+      },
+    ])
+
+    describe.each<TransactionRuleTestCase>([
+      {
+        name: 'Skip transactions with non-target paymentMethod',
+        transactions: [
+          getTestTransaction({
+            originUserId: '1-1',
+            destinationUserId: '2-1',
+            originPaymentDetails: CARD_DETAILS_1,
+            timestamp: dayjs('2022-01-01T00:00:00.000Z').valueOf(),
+          }),
+          getTestTransaction({
+            originUserId: '1-2',
+            destinationUserId: '2-1',
+            originPaymentDetails: CARD_DETAILS_2,
+            timestamp: dayjs('2022-01-01T01:00:00.000Z').valueOf(),
+          }),
+          getTestTransaction({
+            originUserId: '1-3',
+            destinationUserId: '2-1',
+            originPaymentDetails: CARD_DETAILS_1,
+            timestamp: dayjs('2022-01-01T02:00:00.000Z').valueOf(),
+          }),
+          getTestTransaction({
+            originUserId: '1-4',
+            destinationUserId: '2-1',
+            originPaymentDetails: CARD_DETAILS_1,
+            timestamp: dayjs('2022-01-01T03:00:00.000Z').valueOf(),
+          }),
+        ],
+        expectedHits: [false, false, false, true],
+      },
+    ])('', ({ name, transactions, expectedHits }) => {
+      createTransactionRuleTestCase(
+        name,
+        TEST_TENANT_ID,
+        transactions,
+        expectedHits
+      )
+    })
+  })
+
+  describe('Match Payment Method Details (destination)', () => {
+    const TEST_TENANT_ID = getTestTenantId()
+
+    setUpRulesHooks(TEST_TENANT_ID, [
+      {
+        type: 'TRANSACTION',
+        ruleImplementationName: 'high-traffic-between-same-parties',
+        defaultParameters: {
+          timeWindow: {
+            units: 1,
+            granularity: 'day',
+            rollingBasis: true,
+          },
+          transactionsLimit: 2,
+          destinationMatchPaymentMethodDetails: true,
+        } as HighTrafficBetweenSamePartiesParameters,
+        defaultAction: 'FLAG',
+      },
+    ])
+
+    describe.each<TransactionRuleTestCase>([
+      {
+        name: 'Skip transactions with non-target paymentMethod',
+        transactions: [
+          getTestTransaction({
+            originUserId: '1-1',
+            destinationUserId: '2-1',
+            destinationPaymentDetails: CARD_DETAILS_1,
+            timestamp: dayjs('2022-01-01T00:00:00.000Z').valueOf(),
+          }),
+          getTestTransaction({
+            originUserId: '1-1',
+            destinationUserId: '2-2',
+            destinationPaymentDetails: CARD_DETAILS_2,
+            timestamp: dayjs('2022-01-01T01:00:00.000Z').valueOf(),
+          }),
+          getTestTransaction({
+            originUserId: '1-1',
+            destinationUserId: '2-3',
+            destinationPaymentDetails: CARD_DETAILS_1,
+            timestamp: dayjs('2022-01-01T02:00:00.000Z').valueOf(),
+          }),
+          getTestTransaction({
+            originUserId: '1-1',
+            destinationUserId: '2-4',
+            destinationPaymentDetails: CARD_DETAILS_1,
+            timestamp: dayjs('2022-01-01T03:00:00.000Z').valueOf(),
+          }),
+        ],
+        expectedHits: [false, false, false, true],
       },
     ])('', ({ name, transactions, expectedHits }) => {
       createTransactionRuleTestCase(

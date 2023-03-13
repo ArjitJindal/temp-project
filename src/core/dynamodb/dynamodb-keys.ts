@@ -148,12 +148,28 @@ export const DynamoDbKeys = {
       case 'GENERIC_BANK_ACCOUNT': {
         const { accountNumber, accountType } =
           paymentDetails as GenericBankAccountDetails
-        if (!accountNumber || !accountType) {
-          logger.warn('Payment identifier not found: Account number or type')
+        let bankCode = paymentDetails.bankCode
+
+        // NOTE: bankId is currently being sent by Kevin. We'll ask them to send bankCode
+        // instead later
+        if (!bankCode) {
+          bankCode = (paymentDetails as any).bankId
+        }
+        // We keep the legacy identifier to avoid migrating data in DynamoDB
+        const legacyIdentifier =
+          accountNumber && accountType
+            ? `accountNumber:${accountNumber}#accountType:${accountType}`
+            : undefined
+        const identifier =
+          legacyIdentifier ??
+          [accountNumber, bankCode].filter(Boolean).join('.')
+
+        if (!identifier) {
+          logger.warn('Payment identifier not found')
           return null
         }
         return {
-          PartitionKeyID: `${tenantId}#transaction#${tranasctionTypeKey}#paymentDetails#accountNumber:${accountNumber}#accountType:${accountType}#${direction}`,
+          PartitionKeyID: `${tenantId}#transaction#${tranasctionTypeKey}#paymentDetails#${identifier}#${direction}`,
           SortKeyID: `${timestamp}`,
         }
       }

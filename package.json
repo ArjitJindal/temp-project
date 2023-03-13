@@ -87,7 +87,8 @@
     "postman:integration:sandbox": "ENV=sandbox ts-node --transpileOnly scripts/run-integration-tests.ts",
     "postman:integration:dev": "ENV=dev ts-node --transpileOnly scripts/run-integration-tests.ts",
     "postman:sync:collection": "ENV=local ts-node --transpileOnly scripts/sync-postman-collection.ts",
-    "db:export": "ENV=dev ts-node --transpileOnly scripts/export-anon-tenant-data.ts"
+    "db:export": "ENV=dev ts-node --transpileOnly scripts/export-anon-tenant-data.ts",
+    "verify-remote-transactions": "ts-node scripts/debug-rule/verify-remote-transactions.ts"
   },
   "repository": {
     "type": "git",
@@ -113,6 +114,7 @@
     "@types/command-line-args": "^5.2.0",
     "@types/ejs": "^3.1.1",
     "@types/fast-levenshtein": "^0.0.2",
+    "@types/fs-extra": "^11.0.1",
     "@types/http-errors": "^1.8.2",
     "@types/jest": "^28.1.8",
     "@types/js-yaml": "^4.0.5",

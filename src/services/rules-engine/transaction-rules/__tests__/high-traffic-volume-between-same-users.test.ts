@@ -12,7 +12,22 @@ import {
 } from '@/test-utils/rule-test-utils'
 import { dynamoDbSetupHook } from '@/test-utils/dynamodb-test-utils'
 import { TransactionAmountDetails } from '@/@types/openapi-public/TransactionAmountDetails'
+import { CardDetails } from '@/@types/openapi-public/CardDetails'
 
+const CARD_DETAILS_1: CardDetails = {
+  method: 'CARD',
+  cardFingerprint: '11111111111111111111111111111111',
+  cardIssuedCountry: 'US',
+  transactionReferenceField: 'DEPOSIT',
+  '3dsDone': true,
+}
+const CARD_DETAILS_2: CardDetails = {
+  method: 'CARD',
+  cardFingerprint: '22222222222222222222222222222222',
+  cardIssuedCountry: 'IN',
+  transactionReferenceField: 'DEPOSIT',
+  '3dsDone': true,
+}
 const TEST_TRANSACTION_AMOUNT_100: TransactionAmountDetails = {
   transactionCurrency: 'EUR',
   transactionAmount: 100,
@@ -284,6 +299,136 @@ ruleAggregationTest(() => {
           }),
         ],
         expectedHits: [false, false, true],
+      },
+    ])('', ({ name, transactions, expectedHits }) => {
+      createTransactionRuleTestCase(
+        name,
+        TEST_TENANT_ID,
+        transactions,
+        expectedHits
+      )
+    })
+  })
+
+  describe('Match Payment Method Details (origin)', () => {
+    const TEST_TENANT_ID = getTestTenantId()
+
+    setUpRulesHooks(TEST_TENANT_ID, [
+      {
+        type: 'TRANSACTION',
+        ruleImplementationName: 'high-traffic-volume-between-same-users',
+        defaultParameters: {
+          timeWindow: {
+            units: 1,
+            granularity: 'day',
+            rollingBasis: true,
+          },
+          transactionVolumeThreshold: { USD: 250 },
+          originMatchPaymentMethodDetails: true,
+        } as HighTrafficVolumeBetweenSameUsersParameters,
+        defaultAction: 'FLAG',
+      },
+    ])
+
+    describe.each<TransactionRuleTestCase>([
+      {
+        name: 'Skip transactions with non-target paymentMethod',
+        transactions: [
+          getTestTransaction({
+            originUserId: '1-1',
+            destinationUserId: '2-1',
+            originAmountDetails: TEST_TRANSACTION_AMOUNT_100,
+            originPaymentDetails: CARD_DETAILS_1,
+            timestamp: dayjs('2022-01-01T00:00:00.000Z').valueOf(),
+          }),
+          getTestTransaction({
+            originUserId: '1-2',
+            destinationUserId: '2-1',
+            originAmountDetails: TEST_TRANSACTION_AMOUNT_100,
+            originPaymentDetails: CARD_DETAILS_2,
+            timestamp: dayjs('2022-01-01T01:00:00.000Z').valueOf(),
+          }),
+          getTestTransaction({
+            originUserId: '1-3',
+            destinationUserId: '2-1',
+            originAmountDetails: TEST_TRANSACTION_AMOUNT_100,
+            originPaymentDetails: CARD_DETAILS_1,
+            timestamp: dayjs('2022-01-01T02:00:00.000Z').valueOf(),
+          }),
+          getTestTransaction({
+            originUserId: '1-4',
+            destinationUserId: '2-1',
+            originAmountDetails: TEST_TRANSACTION_AMOUNT_100,
+            originPaymentDetails: CARD_DETAILS_1,
+            timestamp: dayjs('2022-01-01T03:00:00.000Z').valueOf(),
+          }),
+        ],
+        expectedHits: [false, false, false, true],
+      },
+    ])('', ({ name, transactions, expectedHits }) => {
+      createTransactionRuleTestCase(
+        name,
+        TEST_TENANT_ID,
+        transactions,
+        expectedHits
+      )
+    })
+  })
+
+  describe('Match Payment Method Details (destination)', () => {
+    const TEST_TENANT_ID = getTestTenantId()
+
+    setUpRulesHooks(TEST_TENANT_ID, [
+      {
+        type: 'TRANSACTION',
+        ruleImplementationName: 'high-traffic-volume-between-same-users',
+        defaultParameters: {
+          timeWindow: {
+            units: 1,
+            granularity: 'day',
+            rollingBasis: true,
+          },
+          transactionVolumeThreshold: { USD: 250 },
+          destinationMatchPaymentMethodDetails: true,
+        } as HighTrafficVolumeBetweenSameUsersParameters,
+        defaultAction: 'FLAG',
+      },
+    ])
+
+    describe.each<TransactionRuleTestCase>([
+      {
+        name: 'Skip transactions with non-target paymentMethod',
+        transactions: [
+          getTestTransaction({
+            originUserId: '1-1',
+            destinationUserId: '2-1',
+            originAmountDetails: TEST_TRANSACTION_AMOUNT_100,
+            destinationPaymentDetails: CARD_DETAILS_1,
+            timestamp: dayjs('2022-01-01T00:00:00.000Z').valueOf(),
+          }),
+          getTestTransaction({
+            originUserId: '1-1',
+            destinationUserId: '2-2',
+            originAmountDetails: TEST_TRANSACTION_AMOUNT_100,
+            destinationPaymentDetails: CARD_DETAILS_2,
+            timestamp: dayjs('2022-01-01T01:00:00.000Z').valueOf(),
+          }),
+          getTestTransaction({
+            originUserId: '1-1',
+            destinationUserId: '2-3',
+            originAmountDetails: TEST_TRANSACTION_AMOUNT_100,
+            destinationPaymentDetails: CARD_DETAILS_1,
+            timestamp: dayjs('2022-01-01T02:00:00.000Z').valueOf(),
+          }),
+          getTestTransaction({
+            originUserId: '1-1',
+            destinationUserId: '2-4',
+            originAmountDetails: TEST_TRANSACTION_AMOUNT_100,
+            destinationPaymentDetails: CARD_DETAILS_1,
+            timestamp: dayjs('2022-01-01T03:00:00.000Z').valueOf(),
+          }),
+        ],
+        expectedHits: [false, false, false, true],
       },
     ])('', ({ name, transactions, expectedHits }) => {
       createTransactionRuleTestCase(

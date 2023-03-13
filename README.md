@@ -253,6 +253,30 @@ bash src/scripts/onboard-tarpon-api.sh --tenantName sh-payment --tenantWebsite h
 - Add it to requisite rule list (currently `transaction` or `user` rule types)
 - Merge PR and deploy to all environments (Dev, Sandbox and prod regions)
 
+### Run local rules using production transactions
+
+You can feed your local rules engine with real production transactions by configuring `scripts/debug-rule/config.json` first and run
+
+```bash
+npm run verify-remote-transactions
+```
+
+Note that whenever the script is run. `Tarpon` dynamodb table will be recreated (then every time you run the script, you'll get the same result).
+
+For example, if you want to use the transactions from tenant A
+
+1. Go to https://console.flagright.com/ and switch the tenant to tenant A using the super admin panel
+2. Open 'Network' tab and inspect any console API request
+3. Copy the API domain to config.api (e.g https://eu-1.api.flagright.com)
+4. Copy the 'Authorization' header (without 'Bearer') value to config.jwt (e.g eyJhbGciOiJSUzI...)
+5. Put the transaction IDs into config.transactionIds
+6. Start your local tarpon public api (`npm run dev:api:public`)
+7. Start your local phytoplankton
+8. Configure the rules you want to run in your local Console
+9. Run `npm run verify-remote-transactions `
+
+- The rules result for the transactions will be saved in `scripts/debug-rule/.output/`
+
 ### Integration Tests
 
 #### Introduction

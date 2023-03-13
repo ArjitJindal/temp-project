@@ -30,7 +30,7 @@ async function users() {
 }
 
 async function main() {
-  console.log('Create Dynamo tables')
+  console.log('Creating Dynamo tables...')
   try {
     execSync('npm run recreate-local-ddb --table=Hammerhead >/dev/null 2>&1')
     execSync('npm run recreate-local-ddb --table=Tarpon >/dev/null 2>&1')
@@ -43,7 +43,7 @@ async function main() {
     console.error(e)
   }
 
-  console.log('Create users')
+  console.log('Creating users...')
   await users()
 
   console.log('Done')

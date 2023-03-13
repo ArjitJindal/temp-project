@@ -15,6 +15,7 @@ import {
   TimeWindow,
   TIME_WINDOW_SCHEMA,
   TRANSACTION_AMOUNT_THRESHOLDS_SCHEMA,
+  MATCH_PAYMENT_METHOD_DETAILS_OPTIONAL_SCHEMA,
 } from '../utils/rule-parameter-schemas'
 import { TransactionHistoricalFilters } from '../filters'
 import { RuleHitResultItem } from '../rule'
@@ -59,13 +60,8 @@ export default class TransactionsVolumeRule extends TransactionAggregationRule<
         timeWindow: TIME_WINDOW_SCHEMA(),
         checkSender: CHECK_SENDER_SCHEMA(),
         checkReceiver: CHECK_RECEIVER_SCHEMA(),
-        matchPaymentMethodDetails: {
-          type: 'boolean',
-          title: 'Match payment method details',
-          description:
-            'Transactions will only be flagged if same payment details are used',
-          nullable: true,
-        },
+        matchPaymentMethodDetails:
+          MATCH_PAYMENT_METHOD_DETAILS_OPTIONAL_SCHEMA(),
       },
       required: ['transactionVolumeThreshold', 'timeWindow'],
     }

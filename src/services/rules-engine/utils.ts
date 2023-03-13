@@ -5,7 +5,10 @@ export function getSenderKeys(
   tenantId: string,
   transaction: Transaction,
   transactionType?: string,
-  disableDirection?: boolean
+  options?: {
+    disableDirection?: boolean
+    matchPaymentDetails?: boolean
+  }
 ):
   | {
       PartitionKeyID: string
@@ -15,9 +18,9 @@ export function getSenderKeys(
   | null {
   return DynamoDbKeys.ALL_TRANSACTION(
     tenantId,
-    transaction.originUserId,
+    options?.matchPaymentDetails ? undefined : transaction.originUserId,
     transaction.originPaymentDetails,
-    disableDirection ? 'all' : 'sending',
+    options?.disableDirection ? 'all' : 'sending',
     transactionType,
     transaction.timestamp
   )
@@ -26,9 +29,12 @@ export function getSenderKeys(
 export function getSenderKeyId(
   tenantId: string,
   transaction: Transaction,
-  disableDirection?: boolean
+  options?: {
+    disableDirection?: boolean
+    matchPaymentDetails?: boolean
+  }
 ): string | undefined {
-  return getSenderKeys(tenantId, transaction, undefined, disableDirection)
+  return getSenderKeys(tenantId, transaction, undefined, options)
     ?.PartitionKeyID
 }
 
@@ -75,7 +81,10 @@ export function getReceiverKeys(
   tenantId: string,
   transaction: Transaction,
   transactionType?: string,
-  disableDirection?: boolean
+  options?: {
+    disableDirection?: boolean
+    matchPaymentDetails?: boolean
+  }
 ):
   | {
       PartitionKeyID: string
@@ -85,9 +94,9 @@ export function getReceiverKeys(
   | null {
   return DynamoDbKeys.ALL_TRANSACTION(
     tenantId,
-    transaction.destinationUserId,
+    options?.matchPaymentDetails ? undefined : transaction.destinationUserId,
     transaction.destinationPaymentDetails,
-    disableDirection ? 'all' : 'receiving',
+    options?.disableDirection ? 'all' : 'receiving',
     transactionType,
     transaction.timestamp
   )
@@ -96,9 +105,12 @@ export function getReceiverKeys(
 export function getReceiverKeyId(
   tenantId: string,
   transaction: Transaction,
-  disableDirection?: boolean
+  options?: {
+    disableDirection?: boolean
+    matchPaymentDetails?: boolean
+  }
 ): string | undefined {
-  return getReceiverKeys(tenantId, transaction, undefined, disableDirection)
+  return getReceiverKeys(tenantId, transaction, undefined, options)
     ?.PartitionKeyID
 }
 

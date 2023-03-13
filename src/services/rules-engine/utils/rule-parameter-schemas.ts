@@ -292,7 +292,7 @@ export const TRANSACTION_AMOUNT_THRESHOLDS_SCHEMA = (options?: SchemaOptions) =>
     title: options?.title || 'Transactions amount threshold',
     description: options?.description,
     additionalProperties: {
-      type: 'integer',
+      type: 'number',
     },
     required: [],
   } as const)
@@ -361,8 +361,8 @@ export const TRANSACTION_AMOUNT_RANGE_SCHEMA = (options?: SchemaOptions) =>
     additionalProperties: {
       type: 'object',
       properties: {
-        max: { type: 'integer', nullable: true },
-        min: { type: 'integer', nullable: true },
+        max: { type: 'number', nullable: true },
+        min: { type: 'number', nullable: true },
       },
     },
     required: [],
@@ -397,7 +397,7 @@ export const LEVENSHTEIN_DISTANCE_THRESHOLD_SCHEMA = (
   options?: SchemaOptions
 ) =>
   ({
-    type: 'integer',
+    type: 'number',
     ...uiSchema(options?.uiSchema, {
       subtype: 'LEVENSHTEIN_DISTANCE_THRESHOLD',
     }),
@@ -452,5 +452,22 @@ export const VALUE_COMPARATOR_SCHEMA = (options?: SchemaOptions) =>
 export const VALUE_COMPARATOR_OPTIONAL_SCHEMA = (options?: SchemaOptions) =>
   ({
     ...VALUE_COMPARATOR_SCHEMA(options),
+    nullable: true,
+  } as const)
+
+export const MATCH_PAYMENT_METHOD_DETAILS_SCHEMA = (options?: SchemaOptions) =>
+  ({
+    type: 'boolean',
+    title: options?.title || 'Match payment method details',
+    description:
+      options?.description ||
+      'Sender/Receiver is identified based on by payment details, not user ID',
+  } as const)
+
+export const MATCH_PAYMENT_METHOD_DETAILS_OPTIONAL_SCHEMA = (
+  options?: SchemaOptions
+) =>
+  ({
+    ...MATCH_PAYMENT_METHOD_DETAILS_SCHEMA(options),
     nullable: true,
   } as const)

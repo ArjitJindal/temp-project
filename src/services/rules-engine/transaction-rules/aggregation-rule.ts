@@ -32,8 +32,12 @@ export abstract class TransactionAggregationRule<
 
   protected getUserKeyId(direction: 'origin' | 'destination') {
     return direction === 'origin'
-      ? getSenderKeyId(this.tenantId, this.transaction, true)
-      : getReceiverKeyId(this.tenantId, this.transaction, true)
+      ? getSenderKeyId(this.tenantId, this.transaction, {
+          disableDirection: true,
+        })
+      : getReceiverKeyId(this.tenantId, this.transaction, {
+          disableDirection: true,
+        })
   }
 
   public async updateAggregation(
