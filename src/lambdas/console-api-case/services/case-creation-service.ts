@@ -269,7 +269,8 @@ export class CaseCreationService {
       alerts: newCaseAlerts,
       createdTimestamp: Date.now(),
       caseStatus: 'OPEN',
-      priority: sourceCase.priority,
+      priority:
+        _.minBy(newCaseAlerts, 'priority')?.priority ?? _.last(PRIORITYS),
       relatedCases: sourceCase.caseId
         ? [...(sourceCase.relatedCases ?? []), sourceCase.caseId]
         : sourceCase.relatedCases,
@@ -288,6 +289,8 @@ export class CaseCreationService {
       caseTransactionsIds: _.uniq(
         oldCaseAlertsTransactions.map(({ transactionId }) => transactionId)
       ),
+      priority:
+        _.minBy(oldCaseAlerts, 'priority')?.priority ?? _.last(PRIORITYS),
     })
     return newCase
   }
@@ -347,7 +350,17 @@ export class CaseCreationService {
             existedCase?.caseTransactionsIds || []
           ).length,
         })
+
         if (existedCase) {
+          const alerts = this.getOrCreateAlertsForExistingCase(
+            params.transaction.hitRules,
+            existedCase.alerts,
+            ruleInstances,
+            params.createdTimestamp,
+            filteredTransaction,
+            params.latestTransactionArrivalTimestamp
+          )
+
           logger.info('Update existed case with transaction')
           result.push({
             ...existedCase,
@@ -361,18 +374,9 @@ export class CaseCreationService {
               ...(existedCase.caseTransactions ?? []),
               filteredTransaction,
             ],
-            priority: _.min([
-              existedCase.priority ?? _.last(PRIORITYS),
-              params.priority,
-            ]) as Priority,
-            alerts: this.getOrCreateAlertsForExistingCase(
-              params.transaction.hitRules,
-              existedCase.alerts,
-              ruleInstances,
-              params.createdTimestamp,
-              filteredTransaction,
-              params.latestTransactionArrivalTimestamp
-            ),
+            priority:
+              _.minBy(alerts, 'priority')?.priority ?? _.last(PRIORITYS),
+            alerts,
           })
         } else {
           logger.info('Create a new user case for a transaction')
