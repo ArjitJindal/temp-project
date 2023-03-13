@@ -3205,17 +3205,7 @@ paths:
           content:
             application/json:
               schema:
-                type: object
-                properties:
-                  taskIds:
-                    type: array
-                    items:
-                      type: string
-                  jobId:
-                    type: string
-                required:
-                  - taskIds
-                  - jobId
+                $ref: '#/components/schemas/SimulationPostResponse'
       requestBody:
         content:
           application/json:
@@ -3233,17 +3223,7 @@ paths:
           content:
             application/json:
               schema:
-                type: object
-                properties:
-                  total:
-                    type: integer
-                  data:
-                    type: array
-                    items:
-                      $ref: '#/components/schemas/SimulationPulseJob'
-                required:
-                  - total
-                  - data
+                $ref: '#/components/schemas/SimulationGetResponse'
       parameters:
         - schema:
             $ref: '#/components/schemas/PageSize'
@@ -3338,12 +3318,7 @@ paths:
           content:
             application/json:
               schema:
-                type: object
-                properties:
-                  count:
-                    type: integer
-                required:
-                  - count
+                $ref: '#/components/schemas/SimulationSettings'
 components:
   schemas:
     KrsScore:
@@ -5787,6 +5762,37 @@ components:
           type: string
       required:
         - region
+    SimulationPostResponse:
+      type: object
+      properties:
+        taskIds:
+          type: array
+          items:
+            type: string
+        jobId:
+          type: string
+      required:
+        - taskIds
+        - jobId
+    SimulationGetResponse:
+      type: object
+      properties:
+        total:
+          type: integer
+        data:
+          type: array
+          items:
+            $ref: '#/components/schemas/SimulationPulseJob'
+      required:
+        - total
+        - data
+    SimulationSettings:
+      type: object
+      properties:
+        count:
+          type: integer
+      required:
+        - count
   securitySchemes:
     Authorization:
       type: http

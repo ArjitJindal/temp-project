@@ -19,6 +19,7 @@ import { SimulationPulseParametersRequest } from '@/@types/openapi-internal/Simu
 import { hasFeature } from '@/core/utils/context'
 import { TenantRepository } from '@/services/tenants/repositories/tenant-repository'
 import { getDynamoDbClientByEvent } from '@/utils/dynamodb'
+import { SimulationSettings } from '@/@types/openapi-internal/SimulationSettings'
 
 export const simulationHandler = lambdaApi()(
   async (
@@ -117,7 +118,9 @@ export const simulationHandler = lambdaApi()(
       event.resource === '/simulation/settings' &&
       event.httpMethod === 'GET'
     ) {
-      return { count: await simulationTaskRepository.getSimulationJobsCount() }
+      return {
+        count: await simulationTaskRepository.getSimulationJobsCount(),
+      } as SimulationSettings
     }
 
     throw new BadRequest('Unhandled request')

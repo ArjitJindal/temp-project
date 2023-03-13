@@ -16,6 +16,8 @@ import { SimulationPulseParametersRequest } from '@/@types/openapi-internal/Simu
 import { SimulationPulseIteration } from '@/@types/openapi-internal/SimulationPulseIteration'
 import { getContext } from '@/core/utils/context'
 import { Account } from '@/@types/openapi-internal/Account'
+import { SimulationGetResponse } from '@/@types/openapi-internal/SimulationGetResponse'
+import { SimulationPostResponse } from '@/@types/openapi-internal/SimulationPostResponse'
 
 export class SimulationTaskRepository {
   tenantId: string
@@ -61,7 +63,7 @@ export class SimulationTaskRepository {
 
   public async createSimulationJob(
     simulationRequest: SimulationPulseParametersRequest
-  ): Promise<{ jobId: string; taskIds: Array<string> }> {
+  ): Promise<SimulationPostResponse> {
     const db = this.mongoDb.db()
     const collection = db.collection<SimulationPulseJob>(
       SIMULATION_TASK_COLLECTION(this.tenantId)
@@ -182,7 +184,7 @@ export class SimulationTaskRepository {
 
   public async getSimulationJobs(
     params: DefaultApiGetSimulationsRequest
-  ): Promise<{ total: number; data: SimulationPulseJob[] }> {
+  ): Promise<SimulationGetResponse> {
     const db = this.mongoDb.db()
     const collection = db.collection<SimulationPulseJob>(
       SIMULATION_TASK_COLLECTION(this.tenantId)
