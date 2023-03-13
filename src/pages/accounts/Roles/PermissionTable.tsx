@@ -1,40 +1,20 @@
 import React from 'react';
 import { sentenceCase } from '@antv/x6/es/util/string/format';
 import ProTable from '@ant-design/pro-table';
-import { RenderExpandIcon } from 'rc-table/lib/interface';
 import s from './PermissionTable.module.less';
 import Table from '@/components/ui/Table';
 import Label from '@/components/library/Label';
 import Checkbox from '@/components/library/Checkbox';
-import { TableColumn, TableRow } from '@/components/ui/Table/types';
+import { TableColumn } from '@/components/ui/Table/types';
 import { PermissionRow, PermissionSubsection } from '@/pages/accounts/Roles/types';
 import { useFeatures } from '@/components/AppWrapper/Providers/SettingsProvider';
 import { Feature, Permission } from '@/apis';
-import CollapsableIcon from '@/components/ui/icons/CollapsableIcon/CollapsableIcon';
 
 const roleColumns: TableColumn<PermissionRow>[] = [
   { title: 'Feature', dataIndex: 'name', key: 'name', renderText: (text) => sentenceCase(text) },
   { title: 'Actions', dataIndex: 'name', key: 'name', width: 200, render: () => <></> }, // Don't show the text but keep the width.
 ];
 
-const expandIcon: RenderExpandIcon<TableRow<PermissionRow>> = ({
-  record,
-  expanded,
-  onExpand,
-}: {
-  record: TableRow<PermissionRow>;
-  onExpand: (record: TableRow<PermissionRow>, event: React.MouseEvent<any>) => void;
-  expanded: boolean;
-}) => {
-  return (
-    <CollapsableIcon
-      expanded={expanded}
-      onClick={(e) => {
-        onExpand(record, e);
-      }}
-    />
-  );
-};
 export default function PermissionTable({
   items,
   onChange,
@@ -79,7 +59,6 @@ export default function PermissionTable({
             }
             setExpandedRows(newRows);
           },
-          expandIcon,
           expandedRowRender: (record) => (
             <ProTable<PermissionSubsection>
               key={record.entityKey}

@@ -25,13 +25,14 @@ import {
   TableRow,
 } from './types';
 import Filters from './Filters';
+import DownloadButton from './DownloadButton';
 import { isEqual } from '@/utils/lang';
 import { usePrevious } from '@/utils/hooks';
 import ResizableTitle from '@/utils/table-utils';
-import DownloadButton from '@/components/ui/Table/DownloadButton';
 import { PaginationParams } from '@/utils/queries/hooks';
 import Pagination from '@/components/library/Pagination';
 import Checkbox from '@/components/library/Checkbox';
+import CollapsableIcon from '@/components/ui/CollapsableIcon';
 
 export type TableActionType = {
   reload: () => void;
@@ -428,7 +429,7 @@ export default function Table<
         tableAlertOptionRender={() => {
           return false;
         }}
-        expandable={expandable}
+        expandable={{ ...expandable, expandIcon }}
         form={form}
         getPopupContainer={getPopupContainer}
         scroll={scroll}
@@ -493,4 +494,19 @@ function renderControlsHeader<Params extends object>(
       ))}
     </div>
   );
+}
+
+function expandIcon<T>(props: {
+  record: TableRow<T>;
+  onExpand: (record: TableRow<T>, event: React.MouseEvent<HTMLElement>) => void;
+  expanded: boolean;
+  expandable: boolean;
+}) {
+  const { record, expanded, onExpand, expandable } = props;
+
+  if (!expandable) {
+    return <></>;
+  }
+
+  return <CollapsableIcon color="BLACK" expanded={expanded} onClick={(e) => onExpand(record, e)} />;
 }

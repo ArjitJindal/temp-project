@@ -1,14 +1,21 @@
 @import 'src/components/ui/colors.less';
 
 .collapseIcon {
-  display: flex;
-  align-items: center;
+  display: inline-block;
   width: 20px;
-  color: @fr-colors-brandBlue;
   transition: transform 300ms;
   transform: rotate(180deg);
+  cursor: pointer;
 
   &.isCollapsed {
     transform: none;
+  }
+
+  &.color-BLUE {
+    color: @fr-colors-v2-primary-flagrightBlue;
+  }
+
+  &.color-BLACK {
+    color: @fr-colors-v2-gray-11;
   }
 }

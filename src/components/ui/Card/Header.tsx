@@ -1,8 +1,8 @@
 import React from 'react';
 import cn from 'clsx';
-import CollapsableIcon from '../icons/CollapsableIcon/CollapsableIcon';
 import Section from './Section';
 import s from './index.module.less';
+import CollapsableIcon from '@/components/ui/CollapsableIcon';
 
 export interface HeaderSettings {
   title: string;
