@@ -13,7 +13,7 @@ import { useApi } from '@/api';
 import { useFeatureEnabled } from '@/components/AppWrapper/Providers/SettingsProvider';
 import { TableColumn } from '@/components/ui/Table/types';
 import { useRules } from '@/utils/rules';
-import { usePaginatedQuery } from '@/utils/queries/hooks';
+import { getMutationAsyncResource, usePaginatedQuery } from '@/utils/queries/hooks';
 import { GET_RULE_INSTANCES } from '@/utils/queries/keys';
 import QueryResultsTable from '@/components/common/QueryResultsTable';
 import { TableActionType } from '@/components/ui/Table';
@@ -22,6 +22,7 @@ import RuleConfigurationDrawer, { FormValues } from '@/pages/rules/RuleConfigura
 import { getErrorMessage } from '@/utils/lang';
 import { removeEmpty } from '@/utils/json';
 import { useHasPermissions } from '@/utils/user-utils';
+import Confirm from '@/components/utils/Confirm';
 
 const MyRule = () => {
   usePageViewTracker('My Rule Page');
@@ -56,15 +57,20 @@ const MyRule = () => {
     },
     [api],
   );
-  const handleDeleteRuleInstance = useCallback(
-    async (ruleInstance: RuleInstance) => {
-      setDeleting(true);
-      await api.deleteRuleInstancesRuleInstanceId({ ruleInstanceId: ruleInstance.id as string });
-      message.success(`Successfully deleted rule ${ruleInstance.id}`);
-      setDeleting(false);
-      reloadTable();
+
+  const handleDeleteRuleInstanceMutation = useMutation<void, Error, string>(
+    async (ruleInstanceId) => await api.deleteRuleInstancesRuleInstanceId({ ruleInstanceId }),
+    {
+      onSuccess: () => {
+        message.success('Rule deleted');
+        reloadTable();
+        setDeleting(false);
+      },
+      onError: (e) => {
+        message.error(`Failed to delete rule: ${getErrorMessage(e)}`);
+        setDeleting(false);
+      },
     },
-    [api, reloadTable],
   );
 
   const handleActivationChange = useCallback(
@@ -230,27 +236,39 @@ const MyRule = () => {
               >
                 <EditOutlined />
               </a>
-              <a
-                className={cn(s.actionIcons, { [s.disabledAction]: !canWriteRules })}
-                onClick={() => {
-                  canWriteRules && handleDeleteRuleInstance(entity);
+              <Confirm
+                title={`Are you sure you want to delete this ${entity.ruleId} ${entity.id} rule?`}
+                text="Please confirm that you want to delete this rule. This action cannot be undone."
+                onConfirm={() => {
+                  if (canWriteRules && entity.id) {
+                    setDeleting(true);
+                    handleDeleteRuleInstanceMutation.mutate(entity.id);
+                  }
                 }}
+                res={getMutationAsyncResource(handleDeleteRuleInstanceMutation)}
               >
-                <DeleteOutlined />
-              </a>
+                {({ onClick }) => (
+                  <a
+                    className={cn(s.actionIcons, { [s.disabledAction]: !canWriteRules })}
+                    onClick={onClick}
+                  >
+                    <DeleteOutlined />
+                  </a>
+                )}
+              </Confirm>
             </>
           );
         },
       },
     ];
   }, [
-    handleActivationChange,
     rules,
     updatedRuleInstances,
-    isPulseEnabled,
-    deleting,
-    handleDeleteRuleInstance,
     canWriteRules,
+    deleting,
+    isPulseEnabled,
+    handleActivationChange,
+    handleDeleteRuleInstanceMutation,
   ]);
   const measure = useApiTime();
   const rulesResult = usePaginatedQuery(GET_RULE_INSTANCES(), async () => {
