@@ -6,13 +6,13 @@ import { Currency } from '@/utils/currencies';
 import Button from '@/components/library/Button';
 import Money from '@/components/ui/Money';
 import DeleteBin7LineIcon from '@/components/ui/icons/Remix/system/delete-bin-7-line.react.svg';
-import { UiSchemaTransactionAmountThresholds } from '@/pages/rules/RuleConfigurationDrawer/JsonSchemaEditor/types';
+import { ExtendedSchema } from '@/pages/rules/RuleConfigurationDrawer/JsonSchemaEditor/types';
 import CurrencyInput from '@/pages/rules/RuleConfigurationDrawer/JsonSchemaEditor/Property/PropertyInput/custom/CurrencyInput';
 
 type ValueType = Record<Currency, number>;
 
 interface Props extends InputProps<ValueType> {
-  schema: UiSchemaTransactionAmountThresholds;
+  schema: ExtendedSchema;
 }
 
 export default function TransactionAmountThresholdsInput(props: Props) {

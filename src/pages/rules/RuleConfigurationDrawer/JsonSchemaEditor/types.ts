@@ -1,57 +1,10 @@
 import { JSONSchema4 } from 'json-schema';
 
-export interface UiSchemaCommon {
+export interface UiSchema {
+  'ui:subtype'?: string;
   'ui:group'?: string;
   'ui:order'?: [string];
 }
-
-export interface UiSchemaDayWindow extends UiSchemaCommon {
-  'ui:subtype': 'DAY_WINDOW';
-}
-
-export interface UiSchemaTimeWindow extends UiSchemaCommon {
-  'ui:subtype': 'TIME_WINDOW';
-}
-
-export interface UiSchemaCountries extends UiSchemaCommon {
-  'ui:subtype': 'COUNTRIES';
-}
-
-export interface UiSchemaAgeRange extends UiSchemaCommon {
-  'ui:subtype': 'AGE_RANGE';
-  'ui:defaultGranularity': 'day' | 'month' | 'year';
-}
-
-export interface UiSchemaTransactionAmountRange extends UiSchemaCommon {
-  'ui:subtype': 'TRANSACTION_AMOUNT_RANGE';
-}
-
-export interface UiSchemaTransactionAmountThresholds extends UiSchemaCommon {
-  'ui:subtype': 'TRANSACTION_AMOUNT_THRESHOLDS';
-}
-
-export interface UiSchemaUserType extends UiSchemaCommon {
-  'ui:subtype': 'USER_TYPE';
-}
-
-export interface UiSchemaCurrency extends UiSchemaCommon {
-  'ui:subtype': 'CURRENCY';
-}
-
-export interface UiSchemaUnknown extends UiSchemaCommon {
-  'ui:subtype'?: undefined;
-}
-
-export type UiSchema =
-  | UiSchemaDayWindow
-  | UiSchemaTimeWindow
-  | UiSchemaCountries
-  | UiSchemaAgeRange
-  | UiSchemaTransactionAmountRange
-  | UiSchemaTransactionAmountThresholds
-  | UiSchemaUserType
-  | UiSchemaCurrency
-  | UiSchemaUnknown;
 
 export interface ExtendedSchema extends JSONSchema4 {
   'ui:schema'?: UiSchema;

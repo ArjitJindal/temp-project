@@ -25,22 +25,22 @@ export default function PropertyInput(props: Props) {
   const uiSchema = getUiSchema(schema);
 
   if (uiSchema['ui:subtype'] === 'DAY_WINDOW') {
-    return <DayWindowInput {...props} schema={uiSchema} />;
+    return <DayWindowInput {...props} />;
   }
   if (uiSchema['ui:subtype'] === 'TIME_WINDOW') {
-    return <TimeWindowInput {...props} schema={uiSchema} />;
+    return <TimeWindowInput {...props} />;
   }
   if (uiSchema['ui:subtype'] === 'COUNTRIES') {
-    return <CountriesInput {...props} schema={uiSchema} />;
+    return <CountriesInput {...props} />;
   }
   if (uiSchema['ui:subtype'] === 'AGE_RANGE') {
-    return <AgeRangeInput {...props} schema={uiSchema} />;
+    return <AgeRangeInput {...props} />;
   }
   if (uiSchema['ui:subtype'] === 'TRANSACTION_AMOUNT_RANGE') {
-    return <TransactionAmountRangeInput {...props} schema={uiSchema} />;
+    return <TransactionAmountRangeInput {...props} />;
   }
   if (uiSchema['ui:subtype'] === 'TRANSACTION_AMOUNT_THRESHOLDS') {
-    return <TransactionAmountThresholdsInput {...props} schema={uiSchema} />;
+    return <TransactionAmountThresholdsInput {...props} />;
   }
   if (uiSchema['ui:subtype'] === 'USER_TYPE') {
     return <UserTypeInput {...props} />;

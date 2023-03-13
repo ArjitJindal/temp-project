@@ -1,6 +1,6 @@
 import React, { useMemo, useState } from 'react';
 import Property from '../../../index';
-import { UiSchemaDayWindow } from '../../../../types';
+import { ExtendedSchema } from '../../../../types';
 import { findRequiredProperty, getOrderedProps } from '../../../../utils';
 import s from './style.module.less';
 import { FieldMeta, FormContext, FormContextValue } from '@/components/library/Form/context';
@@ -14,7 +14,7 @@ interface ValueType {
 }
 
 interface Props extends InputProps<ValueType> {
-  schema: UiSchemaDayWindow;
+  schema: ExtendedSchema;
 }
 
 export default function DayWindowInput(props: Props) {

@@ -10,7 +10,7 @@ export type TableItem = Case & {
   index: number;
   userId: string | null;
   user: InternalConsumerUser | InternalBusinessUser | null;
-  lastStatusChange: CaseStatusChange | null;
+  lastStatusChange?: CaseStatusChange;
   lastStatusChangeReasons: {
     reasons: CaseClosingReasons[];
     otherReason: string | null;

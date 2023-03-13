@@ -7,12 +7,12 @@ import { CURRENCIES_SELECT_OPTIONS, Currency } from '@/utils/currencies';
 import Button from '@/components/library/Button';
 import Money from '@/components/ui/Money';
 import DeleteBin7LineIcon from '@/components/ui/icons/Remix/system/delete-bin-7-line.react.svg';
-import { UiSchemaTransactionAmountRange } from '@/pages/rules/RuleConfigurationDrawer/JsonSchemaEditor/types';
+import { ExtendedSchema } from '@/pages/rules/RuleConfigurationDrawer/JsonSchemaEditor/types';
 
 type ValueType = Record<Currency, { min?: number; max?: number }>;
 
 interface Props extends InputProps<ValueType> {
-  schema: UiSchemaTransactionAmountRange;
+  schema: ExtendedSchema;
 }
 
 export default function TransactionAmountRangeInput(props: Props) {

@@ -12,7 +12,7 @@ export function useTableData(
       (item, index): TableDataItem<TableItem> => {
         const caseUser = item.caseUsers ?? {};
         const user = caseUser.origin ?? caseUser.destination ?? undefined;
-        const lastStatusChange = item.statusChanges?.[item.statusChanges?.length - 1] ?? null;
+        const lastStatusChange = item.lastStatusChange;
         const dataItem: TableItem = {
           index,
           userId: user?.userId ?? null,

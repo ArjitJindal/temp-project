@@ -4,11 +4,6 @@ import Label from '@/components/library/Label';
 import Slider from '@/components/ui/Slider';
 import NumberInput from '@/components/library/NumberInput';
 import { InputProps } from '@/components/library/Form';
-import {
-  UiSchema,
-  UiSchemaAgeRange,
-} from '@/pages/rules/RuleConfigurationDrawer/JsonSchemaEditor/types';
-import Select from '@/components/library/Select';
 
 type ValueType = {
   minAge?: {
@@ -21,25 +16,15 @@ type ValueType = {
   };
 };
 
-interface Props extends InputProps<ValueType> {
-  schema: UiSchemaAgeRange;
-}
+interface Props extends InputProps<ValueType> {}
 
 const MIN_AGE = 0;
 const MAX_AGE = 100;
 
 export default function AgeRangeInput(props: Props) {
-  const { value, onChange, schema, ...rest } = props;
-  const uiSchema: UiSchema = schema['ui:schema'] ?? {};
-  const defaultGranularity = uiSchema?.['ui:defaultGranularity'] ?? 'year';
+  const { value, onChange, ...rest } = props;
   const minValue = value?.minAge?.units;
   const maxValue = value?.maxAge?.units;
-  const minGranularity = value?.minAge?.granularity;
-  const maxGranularity = value?.minAge?.granularity;
-  let granularityValue = defaultGranularity;
-  if (minGranularity && maxGranularity && minGranularity === maxGranularity) {
-    granularityValue = minGranularity;
-  }
   return (
     <div className={s.root}>
       <Label label={'Min age'} level={2}>
@@ -52,7 +37,7 @@ export default function AgeRangeInput(props: Props) {
               ...value,
               minAge: {
                 units: newValue,
-                granularity: granularityValue,
+                granularity: 'year',
               },
             });
           }}
@@ -69,11 +54,11 @@ export default function AgeRangeInput(props: Props) {
           onChange?.({
             minAge: {
               units: min,
-              granularity: granularityValue,
+              granularity: 'year',
             },
             maxAge: {
               units: max,
-              granularity: granularityValue,
+              granularity: 'year',
             },
           });
         }}
@@ -89,30 +74,7 @@ export default function AgeRangeInput(props: Props) {
               ...value,
               maxAge: {
                 units: newValue,
-                granularity: granularityValue,
-              },
-            });
-          }}
-        />
-      </Label>
-      <Label label={''} level={2}>
-        <Select
-          mode="SINGLE"
-          value={granularityValue}
-          options={[
-            { value: 'day', label: 'days' },
-            { value: 'month', label: 'months' },
-            { value: 'year', label: 'years' },
-          ]}
-          onChange={(newGranularity) => {
-            onChange?.({
-              minAge: {
-                units: minValue,
-                granularity: newGranularity,
-              },
-              maxAge: {
-                units: maxValue,
-                granularity: newGranularity,
+                granularity: 'year',
               },
             });
           }}
