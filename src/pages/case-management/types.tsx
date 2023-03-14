@@ -27,6 +27,7 @@ export type CommonCaseParams = {
   tagKey: string;
   tagValue: string;
   caseStatus: 'OPEN' | 'CLOSED';
+  alertStatus: 'OPEN' | 'CLOSED';
   transactionId: string;
   transactionTimestamp: string[];
   amountGreaterThanFilter: number;

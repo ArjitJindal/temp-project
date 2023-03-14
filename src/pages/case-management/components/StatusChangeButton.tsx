@@ -1,16 +1,12 @@
 import React, { useState } from 'react';
-import { CaseStatus, FileInfo } from '@/apis';
+import { AlertStatus, CaseStatus, FileInfo } from '@/apis';
 import Button, { ButtonSize } from '@/components/library/Button';
 import { CaseClosingReasons } from '@/apis/models/CaseClosingReasons';
 import { neverReturn } from '@/utils/lang';
 import { humanizeConstant } from '@/utils/humanize';
 
-export interface RemoveAllFilesRef {
-  removeAllFiles: () => void;
-}
-
-export const caseStatusToOperationName = (caseStatus: CaseStatus) => {
-  switch (caseStatus) {
+export const statusToOperationName = (status: AlertStatus | CaseStatus) => {
+  switch (status) {
     case 'OPEN':
       return 'Open';
     case 'CLOSED':
@@ -18,21 +14,23 @@ export const caseStatusToOperationName = (caseStatus: CaseStatus) => {
     case 'REOPENED':
       return 'Re-Open';
   }
-  return neverReturn(caseStatus, humanizeConstant(caseStatus));
+  return neverReturn(status, humanizeConstant(status));
 };
 
-export const getNextCaseStatus = (caseStatus: CaseStatus | undefined): CaseStatus => {
-  if (caseStatus == null) {
+export const getNextStatus = (
+  status: CaseStatus | AlertStatus | undefined,
+): CaseStatus | AlertStatus => {
+  if (status == null) {
     return 'CLOSED';
   }
-  switch (caseStatus) {
+  switch (status) {
     case 'REOPENED':
     case 'OPEN':
       return 'CLOSED';
     case 'CLOSED':
       return 'REOPENED';
   }
-  return neverReturn(caseStatus, caseStatus);
+  return neverReturn(status, status);
 };
 
 export interface FormValues {
@@ -45,12 +43,12 @@ export interface FormValues {
 interface ChildrenProps {
   isVisible: boolean;
   setVisible: (newVisible: boolean) => void;
-  newCaseStatus: CaseStatus;
+  newStatus: CaseStatus | AlertStatus;
 }
 
 interface Props {
   ids: string[];
-  caseStatus?: CaseStatus;
+  status?: CaseStatus | AlertStatus;
   buttonProps?: {
     size?: ButtonSize | undefined;
     isBlue?: boolean;
@@ -60,9 +58,9 @@ interface Props {
 }
 
 export default function StatusChangeButton(props: Props) {
-  const { ids, caseStatus, buttonProps = {}, children } = props;
+  const { ids, status, buttonProps = {}, children } = props;
   const [isModalVisible, setModalVisible] = useState(false);
-  const newCaseStatus = getNextCaseStatus(caseStatus);
+  const newStatus = getNextStatus(status);
   return (
     <>
       {ids.length > 0 && (
@@ -75,10 +73,10 @@ export default function StatusChangeButton(props: Props) {
           isDisabled={!ids.length}
           size={buttonProps.size}
         >
-          {caseStatusToOperationName(newCaseStatus)}
+          {statusToOperationName(newStatus)}
         </Button>
       )}
-      {children({ isVisible: isModalVisible, setVisible: setModalVisible, newCaseStatus })}
+      {children({ isVisible: isModalVisible, setVisible: setModalVisible, newStatus })}
     </>
   );
 }

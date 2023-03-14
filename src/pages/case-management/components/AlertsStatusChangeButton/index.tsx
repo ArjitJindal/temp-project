@@ -1,14 +1,14 @@
 import React from 'react';
 import { FormValues } from '../StatusChangeModal';
 import AlertsStatusChangeModal from './AlertsStatusChangeModal';
-import { CaseStatus } from '@/apis';
+import { AlertStatus } from '@/apis';
 import { ButtonSize } from '@/components/library/Button';
 import StatusChangeButton from '@/pages/case-management/components/StatusChangeButton';
 
 interface Props {
   entityName?: string;
   ids: string[];
-  caseStatus?: CaseStatus;
+  status?: AlertStatus;
   initialValues?: FormValues;
   buttonProps?: {
     size?: ButtonSize | undefined;
@@ -22,7 +22,7 @@ export default function AlertsStatusChangeButton(props: Props) {
   const {
     ids,
     onSaved,
-    caseStatus,
+    status,
     initialValues = {
       reasons: [],
       reasonOther: null,
@@ -33,12 +33,12 @@ export default function AlertsStatusChangeButton(props: Props) {
   } = props;
   return (
     <>
-      <StatusChangeButton caseStatus={caseStatus} buttonProps={buttonProps} ids={ids}>
-        {({ isVisible, setVisible, newCaseStatus }) => (
+      <StatusChangeButton status={status} buttonProps={buttonProps} ids={ids}>
+        {({ isVisible, setVisible, newStatus }) => (
           <AlertsStatusChangeModal
             isVisible={isVisible}
             ids={ids}
-            newCaseStatus={newCaseStatus}
+            newStatus={newStatus}
             onSaved={onSaved}
             initialValues={initialValues}
             onClose={() => {

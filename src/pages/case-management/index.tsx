@@ -19,21 +19,26 @@ export default function CaseManagementPage() {
   useCloseSidebarByDefault();
 
   const navigate = useNavigate();
+  const parsedParams = queryAdapter.deserializer(parseQueryString(location.search));
+  const [params, setParams] = useState<AllParams<TableSearchParams>>({
+    ...DEFAULT_PARAMS_STATE,
+    ...parsedParams,
+  });
 
   const pushParamsToNavigation = useCallback(
     (params: TableSearchParams) => {
+      if (params.showCases === 'ALL' || params.showCases === 'MY') {
+        params.alertStatus = undefined;
+      } else {
+        params.caseStatus = undefined;
+      }
+
       navigate(makeUrl('/case-management/cases', {}, queryAdapter.serializer(params)), {
         replace: true,
       });
     },
     [navigate],
   );
-
-  const parsedParams = queryAdapter.deserializer(parseQueryString(location.search));
-  const [params, setParams] = useState<AllParams<TableSearchParams>>({
-    ...DEFAULT_PARAMS_STATE,
-    ...parsedParams,
-  });
 
   const handleChangeParams = (newParams: AllParams<TableSearchParams>) => {
     pushParamsToNavigation(newParams);

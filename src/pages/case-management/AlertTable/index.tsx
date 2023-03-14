@@ -270,7 +270,7 @@ export default function AlertTable(props: Props) {
         page,
         pageSize,
         alertId,
-        caseStatus,
+        alertStatus,
         userId,
         transactionState,
         businessIndustryFilter,
@@ -294,13 +294,13 @@ export default function AlertTable(props: Props) {
         page,
         pageSize,
         filterAlertId: alertId,
-        filterOutCaseStatus: showActions
-          ? caseStatus === 'CLOSED'
+        filterOutAlertStatus: showActions
+          ? alertStatus === 'CLOSED'
             ? undefined
             : 'CLOSED'
           : undefined,
-        filterCaseStatus: showActions
-          ? caseStatus === 'CLOSED'
+        filterAlertStatus: showActions
+          ? alertStatus === 'CLOSED'
             ? 'CLOSED'
             : undefined
           : undefined,
@@ -385,21 +385,21 @@ export default function AlertTable(props: Props) {
             <AlertsStatusChangeButton
               ids={selectedEntities}
               onSaved={reloadTable}
-              caseStatus={params.caseStatus}
+              status={params.alertStatus}
             />
             {showActions && (
               <StatusButtons
-                status={params.caseStatus ?? 'OPEN'}
+                status={params.alertStatus ?? 'OPEN'}
                 onChange={(newStatus) => {
                   setParams((state) => ({
                     ...state,
-                    caseStatus: newStatus,
+                    alertStatus: newStatus,
                   }));
                 }}
-                suffix="cases"
+                suffix="alerts"
               />
             )}
-            {selectedEntities?.length && params.caseId && (
+            {selectedEntities?.length > 0 && params.caseId && (
               <CreateCaseConfirmModal
                 selectedEntities={selectedEntities}
                 caseId={params.caseId}

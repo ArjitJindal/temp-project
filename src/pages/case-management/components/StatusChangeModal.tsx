@@ -2,7 +2,7 @@ import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { Form, Input, Modal, Select } from 'antd';
 import pluralize from 'pluralize';
 import { UseMutationResult } from '@tanstack/react-query';
-import { CaseStatus, FileInfo } from '@/apis';
+import { AlertStatus, CaseStatus, FileInfo } from '@/apis';
 import { CaseClosingReasons } from '@/apis/models/CaseClosingReasons';
 import { UploadFilesList } from '@/components/files/UploadFilesList';
 import { useDeepEqualEffect, usePrevious } from '@/utils/hooks';
@@ -47,7 +47,7 @@ export interface Props {
   entityName?: string;
   isVisible: boolean;
   ids: string[];
-  newCaseStatus: CaseStatus;
+  newStatus: CaseStatus;
   defaultReasons?: CaseClosingReasons[];
   initialValues?: FormValues;
   onSaved: () => void;
@@ -55,7 +55,7 @@ export interface Props {
   updateMutation: UseMutationResult<
     unknown,
     unknown,
-    { ids: string[]; newCaseStatus: CaseStatus; formValues?: FormValues }
+    { ids: string[]; newStatus: CaseStatus | AlertStatus; formValues?: FormValues }
   >;
 }
 
@@ -63,7 +63,7 @@ export default function StatusChangeModal(props: Props) {
   const {
     ids,
     entityName = 'case',
-    newCaseStatus,
+    newStatus,
     isVisible,
     defaultReasons,
     initialValues = {
@@ -81,7 +81,7 @@ export default function StatusChangeModal(props: Props) {
   const [formValues, setFormValues] = useState<FormValues>(initialValues);
   const [form] = Form.useForm<FormValues>();
 
-  const showConfirmation = isVisible && (newCaseStatus === 'REOPENED' || isAwaitingConfirmation);
+  const showConfirmation = isVisible && (newStatus === 'REOPENED' || isAwaitingConfirmation);
 
   useDeepEqualEffect(() => {
     form.setFieldsValue(initialValues);
@@ -115,7 +115,7 @@ export default function StatusChangeModal(props: Props) {
   }, [wasUpdateDone, isUpdateDone, removeFiles, onSaved, onClose, form]);
 
   const handleConfirm = () => {
-    updateMutation.mutate({ ids: ids, newCaseStatus, formValues });
+    updateMutation.mutate({ ids: ids, newStatus, formValues });
   };
   return (
     <>
@@ -194,7 +194,7 @@ export default function StatusChangeModal(props: Props) {
           onClose();
         }}
       >
-        Are you sure you want to <b>{caseStatusToOperationName(newCaseStatus)}</b>{' '}
+        Are you sure you want to <b>{caseStatusToOperationName(newStatus)}</b>{' '}
         {pluralize(entityName, ids.length, true)} <b>{caseIdsString}</b> ?
       </Modal>
     </>

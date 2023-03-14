@@ -6,7 +6,7 @@ import StatusChangeModal, {
   Props as StatusChangeModalProps,
 } from '../StatusChangeModal';
 import { useApi } from '@/api';
-import { AlertUpdateRequest, CaseStatus } from '@/apis';
+import { AlertStatus, AlertUpdateRequest } from '@/apis';
 import { message } from '@/components/library/Message';
 import { getErrorMessage } from '@/utils/lang';
 
@@ -19,13 +19,12 @@ export default function AlertsStatusChangeModal(props: Props) {
   const updateMutation = useMutation<
     unknown,
     unknown,
-    { ids: string[]; newCaseStatus: CaseStatus; formValues?: FormValues }
-  >(async ({ ids, newCaseStatus, formValues }) => {
-    console.log('ids, newCaseStatus, formValues', ids, newCaseStatus, formValues);
+    { ids: string[]; newStatus: AlertStatus; formValues?: FormValues }
+  >(async ({ ids, newStatus, formValues }) => {
     const hideMessage = message.loading(`Saving...`);
 
     const updates: AlertUpdateRequest = {
-      alertStatus: newCaseStatus,
+      alertStatus: newStatus,
     };
 
     if (formValues) {
@@ -45,7 +44,7 @@ export default function AlertsStatusChangeModal(props: Props) {
       });
       message.success('Saved');
     } catch (e) {
-      console.error(`Failed to update the case! ${getErrorMessage(e)}`);
+      console.error(`Failed to update the alert! ${getErrorMessage(e)}`);
     } finally {
       hideMessage();
     }

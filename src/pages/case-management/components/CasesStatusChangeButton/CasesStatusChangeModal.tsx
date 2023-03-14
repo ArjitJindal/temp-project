@@ -19,12 +19,12 @@ export default function CasesStatusChangeModal(props: Props) {
   const updateMutation = useMutation<
     unknown,
     unknown,
-    { ids: string[]; newCaseStatus: CaseStatus; formValues?: FormValues }
-  >(async ({ ids, newCaseStatus, formValues }) => {
+    { ids: string[]; newStatus: CaseStatus; formValues?: FormValues }
+  >(async ({ ids, newStatus, formValues }) => {
     const hideMessage = message.loading(`Saving...`);
 
     const updates: CaseUpdateRequest = {
-      caseStatus: newCaseStatus,
+      caseStatus: newStatus,
     };
 
     if (formValues) {

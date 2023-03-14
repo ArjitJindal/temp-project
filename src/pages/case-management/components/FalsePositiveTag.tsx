@@ -42,7 +42,7 @@ export const FalsePositiveTag: React.FC<Props> = (props: Props) => {
       <CasesStatusChangeModal
         ids={caseIds}
         isVisible={isModalVisible}
-        newCaseStatus={newCaseStatus}
+        newStatus={newCaseStatus}
         defaultReasons={newCaseStatus === 'CLOSED' ? ['False positive'] : []}
         onSaved={onSaved}
         onClose={() => {

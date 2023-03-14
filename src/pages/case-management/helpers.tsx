@@ -38,6 +38,7 @@ export const queryAdapter: Adapter<TableSearchParams> = {
       tagKey: params.tagKey ?? undefined,
       tagValue: params.tagValue ?? undefined,
       caseStatus: params.caseStatus,
+      alertStatus: params.alertStatus,
       transactionId: params.transactionId,
       amountGreaterThanFilter: params.amountGreaterThanFilter,
       amountLessThanFilter: params.amountLessThanFilter,
@@ -88,6 +89,8 @@ export const queryAdapter: Adapter<TableSearchParams> = {
       tagValue: raw.tagValue ?? undefined,
       caseStatus:
         raw.caseStatus === 'CLOSED' ? 'CLOSED' : raw.caseStatus === 'OPEN' ? 'OPEN' : undefined,
+      alertStatus:
+        raw.alertStatus === 'CLOSED' ? 'CLOSED' : raw.alertStatus === 'OPEN' ? 'OPEN' : undefined,
       transactionId: raw.transactionId,
       amountGreaterThanFilter: raw.amountGreaterThanFilter
         ? parseInt(raw.amountGreaterThanFilter)

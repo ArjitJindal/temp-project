@@ -39,12 +39,12 @@ export default function CasesStatusChangeButton(props: Props) {
   } = props;
   return (
     <>
-      <StatusChangeButton ids={caseIds} caseStatus={caseStatus} buttonProps={buttonProps}>
-        {({ isVisible, setVisible, newCaseStatus }) => (
+      <StatusChangeButton ids={caseIds} status={caseStatus} buttonProps={buttonProps}>
+        {({ isVisible, setVisible, newStatus }) => (
           <CasesStatusChangeModal
             isVisible={isVisible}
             ids={caseIds}
-            newCaseStatus={newCaseStatus}
+            newStatus={newStatus}
             onSaved={onSaved}
             initialValues={initialValues}
             onClose={() => {
