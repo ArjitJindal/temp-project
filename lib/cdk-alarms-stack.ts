@@ -61,22 +61,19 @@ const KINESIS_STREAM_NAMES = [
   },
 ]
 
-export class CdkTarponAlarmsStack extends cdk.Stack {
+interface AlarmProps extends cdk.NestedStackProps {
+  config: Config
+  betterUptimeCloudWatchTopic: Topic
+}
+
+export class CdkTarponAlarmsStack extends cdk.NestedStack {
   betterUptimeCloudWatchTopic: Topic
   config: Config
 
-  constructor(
-    scope: Construct,
-    id: string,
-    config: Config,
-    betterUptimeCloudWatchTopic: Topic
-  ) {
-    super(scope, id, {
-      env: config.env,
-    })
-    this.config = config
-
-    this.betterUptimeCloudWatchTopic = betterUptimeCloudWatchTopic
+  constructor(scope: Construct, id: string, props: AlarmProps) {
+    super(scope, id, props)
+    this.config = props.config
+    this.betterUptimeCloudWatchTopic = props.betterUptimeCloudWatchTopic
 
     createTarponOverallLambdaAlarm(this, this.betterUptimeCloudWatchTopic)
 

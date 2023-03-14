@@ -63,6 +63,7 @@ import {
 import { LambdaInvoke } from 'aws-cdk-lib/aws-stepfunctions-tasks'
 import { Certificate } from 'aws-cdk-lib/aws-certificatemanager'
 import { CnameRecord, HostedZone } from 'aws-cdk-lib/aws-route53'
+import { CdkTarponAlarmsStack } from '@cdk/cdk-alarms-stack'
 import {
   getDeadLetterQueueName,
   getNameForGlobalResource,
@@ -1364,6 +1365,14 @@ export class CdkTarponStack extends cdk.Stack {
       'AUTHORIZER_BASE_ROLE_ARN',
       jwtAuthorizerBaseRole.roleArn
     )
+
+    // Alarms stack
+    if (!isDevUserStack) {
+      new CdkTarponAlarmsStack(this, `${config.stage}-tarpon-alarms`, {
+        config,
+        betterUptimeCloudWatchTopic: this.betterUptimeCloudWatchTopic,
+      })
+    }
 
     /**
      * Outputs

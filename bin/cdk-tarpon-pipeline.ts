@@ -2,7 +2,6 @@
 import * as cdk from 'aws-cdk-lib'
 import { CdkTarponPipelineStack } from '@cdk/cdk-tarpon-pipeline-stack'
 import { CdkTarponStack } from '@cdk/cdk-tarpon-stack'
-import { CdkTarponAlarmsStack } from '@cdk/cdk-alarms-stack'
 import { config as deployConfig } from '@cdk/configs/config-deployment'
 import { config as deployTestConfig } from '@cdk/configs/config-deployment-test'
 import { config as localConfig } from '@cdk/configs/config-local'
@@ -17,31 +16,11 @@ import { config as prodConfigEu2 } from '@cdk/configs/config-prod-eu-2'
 const app = new cdk.App()
 
 if (process.env.ENV === 'local') {
-  const tarponStack = new CdkTarponStack(
-    app,
-    `${localConfig.stage}-tarpon`,
-    localConfig
-  )
-  new CdkTarponAlarmsStack(
-    app,
-    `${localConfig.stage}-tarpon-alarms`,
-    localConfig,
-    tarponStack.betterUptimeCloudWatchTopic
-  )
+  new CdkTarponStack(app, `${localConfig.stage}-tarpon`, localConfig)
 }
 
 if (process.env.ENV === 'dev') {
-  const tarponStack = new CdkTarponStack(
-    app,
-    `${devConfig.stage}-tarpon`,
-    devConfig
-  )
-  new CdkTarponAlarmsStack(
-    app,
-    `${devConfig.stage}-tarpon-alarms`,
-    devConfig,
-    tarponStack.betterUptimeCloudWatchTopic
-  )
+  new CdkTarponStack(app, `${devConfig.stage}-tarpon`, devConfig)
 }
 
 if (process.env.ENV === 'dev:user') {
@@ -61,87 +40,27 @@ if (process.env.ENV === 'dev:user') {
 }
 
 if (process.env.ENV === 'sandbox') {
-  const tarponStack = new CdkTarponStack(
-    app,
-    `${sandboxConfig.stage}-tarpon`,
-    sandboxConfig
-  )
-  new CdkTarponAlarmsStack(
-    app,
-    `${sandboxConfig.stage}-tarpon-alarms`,
-    sandboxConfig,
-    tarponStack.betterUptimeCloudWatchTopic
-  )
+  new CdkTarponStack(app, `${sandboxConfig.stage}-tarpon`, sandboxConfig)
 }
 
 if (process.env.ENV === 'prod:asia-1') {
-  const tarponStack = new CdkTarponStack(
-    app,
-    `${prodConfigAsia1.stage}-tarpon`,
-    prodConfigAsia1
-  )
-  new CdkTarponAlarmsStack(
-    app,
-    `${prodConfigAsia1.stage}-tarpon-alarms`,
-    prodConfigAsia1,
-    tarponStack.betterUptimeCloudWatchTopic
-  )
+  new CdkTarponStack(app, `${prodConfigAsia1.stage}-tarpon`, prodConfigAsia1)
 }
 
 if (process.env.ENV === 'prod:asia-2') {
-  const tarponStack = new CdkTarponStack(
-    app,
-    `${prodConfigAsia2.stage}-tarpon`,
-    prodConfigAsia2
-  )
-  new CdkTarponAlarmsStack(
-    app,
-    `${prodConfigAsia2.stage}-tarpon-alarms`,
-    prodConfigAsia2,
-    tarponStack.betterUptimeCloudWatchTopic
-  )
+  new CdkTarponStack(app, `${prodConfigAsia2.stage}-tarpon`, prodConfigAsia2)
 }
 
 if (process.env.ENV === 'prod:eu-1') {
-  const tarponStack = new CdkTarponStack(
-    app,
-    `${prodConfigEu1.stage}-tarpon`,
-    prodConfigEu1
-  )
-  new CdkTarponAlarmsStack(
-    app,
-    `${prodConfigEu1.stage}-tarpon-alarms`,
-    prodConfigEu1,
-    tarponStack.betterUptimeCloudWatchTopic
-  )
+  new CdkTarponStack(app, `${prodConfigEu1.stage}-tarpon`, prodConfigEu1)
 }
 
 if (process.env.ENV === 'prod:eu-2') {
-  const tarponStack = new CdkTarponStack(
-    app,
-    `${prodConfigEu2.stage}-tarpon`,
-    prodConfigEu2
-  )
-  new CdkTarponAlarmsStack(
-    app,
-    `${prodConfigEu2.stage}-tarpon-alarms`,
-    prodConfigEu2,
-    tarponStack.betterUptimeCloudWatchTopic
-  )
+  new CdkTarponStack(app, `${prodConfigEu2.stage}-tarpon`, prodConfigEu2)
 }
 
 if (process.env.ENV === 'prod:us-1') {
-  const tarponStack = new CdkTarponStack(
-    app,
-    `${prodConfigUS1.stage}-tarpon`,
-    prodConfigUS1
-  )
-  new CdkTarponAlarmsStack(
-    app,
-    `${prodConfigUS1.stage}-tarpon-alarms`,
-    prodConfigUS1,
-    tarponStack.betterUptimeCloudWatchTopic
-  )
+  new CdkTarponStack(app, `${prodConfigUS1.stage}-tarpon`, prodConfigUS1)
 }
 
 if (process.env.ENV === 'deploy' || process.env.ENV === 'deploy-test') {
