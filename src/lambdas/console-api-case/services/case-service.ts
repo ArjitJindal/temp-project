@@ -87,7 +87,9 @@ export class CaseService {
         otherReason: updateRequest.otherReason,
       }
     const updates = {
-      assignments: updateRequest.assignments,
+      ...(updateRequest?.assignments?.length && {
+        assignments: updateRequest.assignments,
+      }),
       statusChange: statusChange,
       caseStatus: updateRequest.caseStatus,
     }

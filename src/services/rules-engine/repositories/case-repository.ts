@@ -908,6 +908,9 @@ export class CaseRepository {
   ) {
     const db = this.mongoDb.db()
     const collection = db.collection<Case>(CASES_COLLECTION(this.tenantId))
+
+    const isCaseStatusClosed = updates.caseStatus === 'CLOSED'
+
     await collection.updateMany(
       { caseId: { $in: caseIds } },
       {
@@ -916,11 +919,24 @@ export class CaseRepository {
             assignments: updates.assignments,
             caseStatus: updates.caseStatus,
             lastStatusChange: updates.statusChange,
+            ...(isCaseStatusClosed
+              ? {
+                  'alerts.$[].alertStatus': updates.caseStatus,
+                  'alerts.$[].lastStatusChange': updates.statusChange,
+                }
+              : {}),
           },
           _.isNil
         ),
         ...(updates.statusChange
-          ? { $push: { statusChanges: updates.statusChange } }
+          ? {
+              $push: {
+                statusChanges: updates.statusChange,
+                ...(isCaseStatusClosed
+                  ? { 'alerts.$[].statusChanges': updates.statusChange }
+                  : {}),
+              },
+            }
           : {}),
       }
     )
