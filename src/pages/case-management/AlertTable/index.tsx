@@ -1,11 +1,11 @@
 import { useCallback, useMemo, useRef, useState } from 'react';
 import pluralize from 'pluralize';
 import { Avatar } from 'antd';
-import { useMutation, useQueryClient } from '@tanstack/react-query';
+import { useCreateNewCaseMutation } from './helpers';
 import { getMutationAsyncResource, usePaginatedQuery } from '@/utils/queries/hooks';
 import { useApi } from '@/api';
-import { Account, AlertListResponseItem, Case } from '@/apis';
-import { ALERT_LIST, CASES_ITEM_ALERT_LIST, CASES_LIST } from '@/utils/queries/keys';
+import { Account, AlertListResponseItem } from '@/apis';
+import { ALERT_LIST, CASES_ITEM_ALERT_LIST } from '@/utils/queries/keys';
 import QueryResultsTable from '@/components/common/QueryResultsTable';
 import { TableColumn, TableData } from '@/components/ui/Table/types';
 import StackLineIcon from '@/components/ui/icons/Remix/business/stack-line.react.svg';
@@ -32,7 +32,6 @@ import { extraFilters } from '@/pages/case-management/helpers';
 import { useFeatureEnabled } from '@/components/AppWrapper/Providers/SettingsProvider';
 import Button from '@/components/library/Button';
 import Confirm from '@/components/utils/Confirm';
-import { getErrorMessage } from '@/utils/lang';
 import Tooltip from '@/components/library/Tooltip';
 import { UI_SETTINGS } from '@/pages/case-management-item/UserCaseDetails/ui-settings';
 
@@ -214,6 +213,40 @@ const mergedColumns = (
   ];
 };
 
+type ConfirmModalProps = {
+  selectedEntities: string[];
+  caseId: string;
+  setSelectedEntities: (selectedEntities: string[]) => void;
+};
+
+const CreateCaseConfirmModal = ({
+  selectedEntities,
+  caseId,
+  setSelectedEntities,
+}: ConfirmModalProps) => {
+  const createNewCaseMutation = useCreateNewCaseMutation({ setSelectedEntities });
+
+  return (
+    <Confirm
+      title="Are you sure you want to create a new Case?"
+      text="Please note that creating a new case would create a new case for this user with a new Case ID with the selected Alerts."
+      res={getMutationAsyncResource(createNewCaseMutation)}
+      onConfirm={() => {
+        createNewCaseMutation.mutate({
+          sourceCaseId: caseId,
+          alertIds: selectedEntities,
+        });
+      }}
+    >
+      {({ onClick }) => (
+        <Button type="TETRIARY" onClick={onClick}>
+          Create new case
+        </Button>
+      )}
+    </Confirm>
+  );
+};
+
 export default function AlertTable(props: Props) {
   const {
     params,
@@ -366,6 +399,13 @@ export default function AlertTable(props: Props) {
                 suffix="cases"
               />
             )}
+            {selectedEntities?.length && params.caseId && (
+              <CreateCaseConfirmModal
+                selectedEntities={selectedEntities}
+                caseId={params.caseId}
+                setSelectedEntities={setSelectedEntities}
+              />
+            )}
           </>
         ),
       ]}
@@ -393,7 +433,6 @@ export const SimpleAlertTable = ({ caseId }: { caseId: string }) => {
   const [users, _] = useUsers({ includeBlockedUsers: true });
 
   const [selectedEntities, setSelectedEntities] = useState<string[]>([]);
-  const queryClient = useQueryClient();
 
   const queryResults: QueryResult<TableData<TableAlertItem>> = usePaginatedQuery(
     CASES_ITEM_ALERT_LIST(caseId, params),
@@ -414,44 +453,6 @@ export const SimpleAlertTable = ({ caseId }: { caseId: string }) => {
     },
   );
 
-  const createNewCaseMutation = useMutation<
-    Case,
-    unknown,
-    {
-      sourceCaseId: string;
-      alertIds: string[];
-    }
-  >(
-    async ({ alertIds, sourceCaseId }) => {
-      const hideLoading = message.loading('Moving alerts to new case');
-      try {
-        return await api.alertsNoNewCase({
-          AlertsToNewCaseRequest: {
-            sourceCaseId,
-            alertIds,
-          },
-        });
-      } finally {
-        hideLoading();
-      }
-    },
-    {
-      onSuccess: async (response, variables) => {
-        message.success(`New case ${response.caseId} successfully created`);
-        await queryClient.invalidateQueries({
-          queryKey: CASES_ITEM_ALERT_LIST(variables.sourceCaseId),
-        });
-        await queryClient.invalidateQueries({
-          queryKey: CASES_LIST({}),
-        });
-        setSelectedEntities([]);
-      },
-      onError: (e) => {
-        message.error(`Unable to create a new case! ${getErrorMessage(e)}`);
-      },
-    },
-  );
-
   const columns = useMemo(() => mergedColumns(true, users), [users]);
 
   return (
@@ -469,29 +470,14 @@ export const SimpleAlertTable = ({ caseId }: { caseId: string }) => {
         onChange: setSelectedEntities,
       }}
       actionsHeaderRight={[
-        () => (
-          <>
-            {selectedEntities.length > 0 && (
-              <Confirm
-                title="Are you sure you want to create a new Case?"
-                text="Please note that creating a new case would create a new case for this user with a new Case ID with the selected Alerts."
-                res={getMutationAsyncResource(createNewCaseMutation)}
-                onConfirm={() => {
-                  createNewCaseMutation.mutate({
-                    sourceCaseId: caseId,
-                    alertIds: selectedEntities,
-                  });
-                }}
-              >
-                {({ onClick }) => (
-                  <Button type="TETRIARY" onClick={onClick}>
-                    Create new case
-                  </Button>
-                )}
-              </Confirm>
-            )}
-          </>
-        ),
+        () =>
+          selectedEntities?.length && (
+            <CreateCaseConfirmModal
+              selectedEntities={selectedEntities}
+              caseId={caseId}
+              setSelectedEntities={setSelectedEntities}
+            />
+          ),
       ]}
     />
   );
