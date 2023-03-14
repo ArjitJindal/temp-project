@@ -950,6 +950,7 @@ export class CdkTarponStack extends cdk.Stack {
       name: StackConstants.CONSOLE_API_MANUAL_USER_RISK_ASSIGNMENT_FUNCTION_NAME,
     })
     hammerheadDynamoDbTable.grantReadWriteData(manualUserRiskAssignmentAlias)
+    this.grantMongoDbAccess(manualUserRiskAssignmentAlias)
 
     /* Parameter risk level assignment function */
     const { alias: parameterRiskAssignmentAlias } = this.createFunction({
