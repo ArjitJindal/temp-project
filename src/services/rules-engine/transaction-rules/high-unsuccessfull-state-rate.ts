@@ -53,7 +53,7 @@ export default class HighUnsuccessfullStateRateRule extends TransactionAggregati
         },
         minimumTransactions: {
           type: 'number',
-          title: 'Transactions number user need to make before rule is checked',
+          title: 'Number of transactions for the rule start working per user',
         },
         checkSender: CHECK_SENDER_SCHEMA(),
         checkReceiver: CHECK_RECEIVER_SCHEMA(),
