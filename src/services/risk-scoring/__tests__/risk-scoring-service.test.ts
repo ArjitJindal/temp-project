@@ -1,4 +1,3 @@
-import { MongoClient } from 'mongodb'
 import { RiskScoringService } from '..'
 import { RiskRepository } from '../repositories/risk-repository'
 import { dynamoDbSetupHook } from '@/test-utils/dynamodb-test-utils'
@@ -23,28 +22,32 @@ const testTenantId = getTestTenantId()
 
 setUpUsersHooks(testTenantId, [testUser1, testUser2])
 
-describe('Risk Scoring', () => {
-  let mongoDb: MongoClient
+const getRiskRepository = async () => {
+  const mongoDb = await getMongoDbClient()
+  return new RiskRepository(testTenantId, {
+    dynamoDb,
+    mongoDb,
+  })
+}
 
+describe('Risk Scoring', () => {
   beforeAll(async () => {
     process.env.NODE_ENV = 'development'
     process.env.ENV = 'local'
-    mongoDb = await getMongoDbClient()
-  })
-
-  const riskRepository = new RiskRepository(testTenantId, {
-    dynamoDb,
   })
 
   describe('Risk Scoring Tests', () => {
     it('should update inital the risk score of a user', async () => {
+      const mongoDb = await getMongoDbClient()
       const riskScoringService = new RiskScoringService(testTenantId, {
         dynamoDb,
         mongoDb,
       })
       await riskScoringService.updateInitialRiskScores(testUser1)
 
-      const getRiskScore = await riskRepository.getDrsScore(testUser1.userId)
+      const getRiskScore = await (
+        await getRiskRepository()
+      ).getDrsScore(testUser1.userId)
 
       expect(getRiskScore).toEqual(
         expect.objectContaining({
@@ -58,13 +61,13 @@ describe('Risk Scoring', () => {
     })
   })
   it('should update the risk score of a user', async () => {
-    await riskRepository.createOrUpdateDrsScore(
-      testUser1.userId,
-      70,
-      'TEST_DRS'
-    )
+    await (
+      await getRiskRepository()
+    ).createOrUpdateDrsScore(testUser1.userId, 70, 'TEST_DRS')
 
-    const getRiskScore = await riskRepository.getDrsScore(testUser1.userId)
+    const getRiskScore = await (
+      await getRiskRepository()
+    ).getDrsScore(testUser1.userId)
 
     expect(getRiskScore).toEqual(
       expect.objectContaining({
@@ -78,11 +81,9 @@ describe('Risk Scoring', () => {
   })
 
   it('should not update drs score when is updatable is false', async () => {
-    await riskRepository.createOrUpdateManualDRSRiskItem(
-      testUser1.userId,
-      'VERY_LOW',
-      false
-    )
+    await (
+      await getRiskRepository()
+    ).createOrUpdateManualDRSRiskItem(testUser1.userId, 'VERY_LOW', false)
 
     const testTransaction1 = getTestTransaction({
       originUserId: testUser1.userId,
@@ -94,17 +95,20 @@ describe('Risk Scoring', () => {
       },
     })
 
-    await riskRepository.createOrUpdateParameterRiskItem(
-      TEST_VARIABLE_RISK_ITEM
-    )
+    await (
+      await getRiskRepository()
+    ).createOrUpdateParameterRiskItem(TEST_VARIABLE_RISK_ITEM)
 
+    const mongoDb = await getMongoDbClient()
     const riskScoringService = new RiskScoringService(testTenantId, {
       dynamoDb,
       mongoDb,
     })
     await riskScoringService.updateDynamicRiskScores(testTransaction1)
 
-    const getRiskScore = await riskRepository.getDrsScore(testUser1.userId)
+    const getRiskScore = await (
+      await getRiskRepository()
+    ).getDrsScore(testUser1.userId)
 
     expect(getRiskScore).toEqual(
       expect.objectContaining({
@@ -116,6 +120,7 @@ describe('Risk Scoring', () => {
   })
 
   it('VARIABLE risk factor', async () => {
+    const mongoDb = await getMongoDbClient()
     const riskScoringService = new RiskScoringService(testTenantId, {
       dynamoDb,
       mongoDb,
@@ -129,14 +134,14 @@ describe('Risk Scoring', () => {
         transactionCurrency: 'INR',
       },
     })
-    await riskRepository.createOrUpdateParameterRiskItem(
-      TEST_VARIABLE_RISK_ITEM
-    )
+    await (
+      await getRiskRepository()
+    ).createOrUpdateParameterRiskItem(TEST_VARIABLE_RISK_ITEM)
     await riskScoringService.updateDynamicRiskScores(testTransaction)
 
-    const arsScore = await riskRepository.getArsScore(
-      testTransaction.transactionId
-    )
+    const arsScore = await (
+      await getRiskRepository()
+    ).getArsScore(testTransaction.transactionId)
 
     expect(arsScore).toEqual(
       expect.objectContaining({
@@ -148,6 +153,7 @@ describe('Risk Scoring', () => {
   })
 
   it('ITERABLE risk factor', async () => {
+    const mongoDb = await getMongoDbClient()
     const riskScoringService = new RiskScoringService(testTenantId, {
       dynamoDb,
       mongoDb,
@@ -161,14 +167,14 @@ describe('Risk Scoring', () => {
         transactionCurrency: 'INR',
       },
     })
-    await riskRepository.createOrUpdateParameterRiskItem(
-      TEST_ITERABLE_RISK_ITEM
-    )
+    await (
+      await getRiskRepository()
+    ).createOrUpdateParameterRiskItem(TEST_ITERABLE_RISK_ITEM)
     await riskScoringService.updateDynamicRiskScores(testTransaction)
 
-    const arsScore = await riskRepository.getArsScore(
-      testTransaction.transactionId
-    )
+    const arsScore = await (
+      await getRiskRepository()
+    ).getArsScore(testTransaction.transactionId)
 
     expect(arsScore).toEqual(
       expect.objectContaining({

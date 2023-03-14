@@ -167,7 +167,11 @@ export const manualRiskAssignmentHandler = lambdaApi({
     const auditLogService = new PulseAuditLogService(tenantId)
     // todo: need to assert that user has this feature enabled
     const dynamoDb = getDynamoDbClientByEvent(event)
-    const riskRepository = new RiskRepository(tenantId, { dynamoDb })
+    const client = await getMongoDbClient()
+    const riskRepository = new RiskRepository(tenantId, {
+      dynamoDb,
+      mongoDb: client,
+    })
     if (
       event.httpMethod === 'POST' &&
       event.resource === '/pulse/risk-assignment'

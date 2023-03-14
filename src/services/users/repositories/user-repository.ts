@@ -722,4 +722,15 @@ export class UserRepository {
       }
     )
   }
+
+  public async updateDrsScoreOfUserMongo(
+    userId: string,
+    drsScore: DrsScore
+  ): Promise<void> {
+    const db = this.mongoDb.db()
+    const collection = db.collection<InternalUser>(
+      USERS_COLLECTION(this.tenantId)
+    )
+    await collection.updateOne({ userId }, { $set: { drsScore } })
+  }
 }

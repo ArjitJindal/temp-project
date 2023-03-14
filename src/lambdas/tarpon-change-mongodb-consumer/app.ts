@@ -179,6 +179,10 @@ async function userHandler(
       ...(krsScore && { krsScore }),
       ...(drsScore && { drsScore }),
     }
+
+    if (drsScore) {
+      await usersRepo.updateDrsScoreOfUserMongo(user.userId, drsScore)
+    }
   }
 
   await usersRepo.saveUserMongo(user)

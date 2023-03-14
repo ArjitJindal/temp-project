@@ -77,12 +77,13 @@ export function createKrsRiskFactorTestCases(
     const TEST_TENANT_ID = getTestTenantId()
     const dynamoDb = getDynamoDbClient()
     let riskScoringService: RiskScoringService
-    const riskRepository = new RiskRepository(TEST_TENANT_ID, {
-      dynamoDb,
-    })
 
     beforeAll(async () => {
       const mongoDb = await getMongoDbClient()
+      const riskRepository = new RiskRepository(TEST_TENANT_ID, {
+        dynamoDb,
+        mongoDb,
+      })
       riskScoringService = new RiskScoringService(TEST_TENANT_ID, {
         dynamoDb,
         mongoDb,
@@ -97,6 +98,9 @@ export function createKrsRiskFactorTestCases(
       '',
       ({ testName, user, expectedScore }) => {
         test(testName, async () => {
+          const riskRepository = new RiskRepository(TEST_TENANT_ID, {
+            dynamoDb,
+          })
           await riskScoringService.updateInitialRiskScores(user)
           expect(
             (await riskRepository.getKrsScore(user.userId))?.krsScore
@@ -124,18 +128,16 @@ export function createArsRiskFactorTestCases(
     const TEST_TENANT_ID = getTestTenantId()
     const dynamoDb = getDynamoDbClient()
     let riskScoringService: RiskScoringService
-    const riskRepository = new RiskRepository(TEST_TENANT_ID, {
-      dynamoDb,
-    })
 
     beforeAll(async () => {
       const mongoDb = await getMongoDbClient()
-      riskScoringService = new RiskScoringService(TEST_TENANT_ID, {
+      const riskRepository = new RiskRepository(TEST_TENANT_ID, {
         dynamoDb,
         mongoDb,
       })
-      const riskRepository = new RiskRepository(TEST_TENANT_ID, {
+      riskScoringService = new RiskScoringService(TEST_TENANT_ID, {
         dynamoDb,
+        mongoDb,
       })
       await riskRepository.createOrUpdateRiskClassificationConfig(
         riskClassificationValues
@@ -148,6 +150,9 @@ export function createArsRiskFactorTestCases(
       ({ testName, transaction, users, expectedScore }) => {
         setUpUsersHooks(TEST_TENANT_ID, users)
         test(testName, async () => {
+          const riskRepository = new RiskRepository(TEST_TENANT_ID, {
+            dynamoDb,
+          })
           await riskScoringService.updateDynamicRiskScores(transaction)
           expect(
             (await riskRepository.getArsScore(transaction.transactionId))

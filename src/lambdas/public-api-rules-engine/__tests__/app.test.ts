@@ -446,12 +446,17 @@ describe('Risk Scoring Tests', () => {
   })
   const TEST_TENANT_ID = getTestTenantId()
   const dynamoDb = getDynamoDbClient()
-  const riskRepository = new RiskRepository(TEST_TENANT_ID, { dynamoDb })
+
   const testUser1 = getTestUser({ userId: 'userId1' })
   const testUser2 = getTestUser({ userId: 'userId2' })
   setUpUsersHooks(TEST_TENANT_ID, [testUser1, testUser2])
 
   it('check on isUpdatable is true risk score changes', async () => {
+    const mongoDb = await getMongoDbClient()
+    const riskRepository = new RiskRepository(TEST_TENANT_ID, {
+      dynamoDb,
+      mongoDb,
+    })
     await riskRepository.createOrUpdateParameterRiskItem(
       TEST_VARIABLE_RISK_ITEM
     )
@@ -500,6 +505,11 @@ describe('Risk Scoring Tests', () => {
     )
   })
   it("shouldn't update the risk score on isUpdatable is false", async () => {
+    const mongoDb = await getMongoDbClient()
+    const riskRepository = new RiskRepository(TEST_TENANT_ID, {
+      dynamoDb,
+      mongoDb,
+    })
     await riskRepository.createOrUpdateParameterRiskItem(
       TEST_VARIABLE_RISK_ITEM
     )

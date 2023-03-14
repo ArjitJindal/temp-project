@@ -3,6 +3,7 @@ import { tenantHasFeature } from '@/core/middlewares/tenant-has-feature'
 import { Tenant } from '@/services/accounts'
 import { RiskRepository } from '@/services/risk-scoring/repositories/risk-repository'
 import { getDynamoDbClient } from '@/utils/dynamodb'
+import { getMongoDbClient } from '@/utils/mongoDBUtils'
 import { ParameterAttributeRiskValues } from '@/@types/openapi-internal/ParameterAttributeRiskValues'
 
 async function migrateTenant(tenant: Tenant) {
@@ -12,7 +13,8 @@ async function migrateTenant(tenant: Tenant) {
 
   const { id: tenantId } = tenant
   const dynamoDb = getDynamoDbClient()
-  const riskRepository = new RiskRepository(tenantId, { dynamoDb })
+  const mongoDb = await getMongoDbClient()
+  const riskRepository = new RiskRepository(tenantId, { dynamoDb, mongoDb })
   const riskItems = (await riskRepository.getParameterRiskItem(
     'createdTimestamp',
     'TRANSACTION'

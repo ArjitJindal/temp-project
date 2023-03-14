@@ -11,6 +11,7 @@ import { getTestTransactionEvent } from '@/test-utils/transaction-event-test-uti
 import { getContextStorage } from '@/core/utils/context'
 import { getTestUser, setUpUsersHooks } from '@/test-utils/user-test-utils'
 import { getDynamoDbClient } from '@/utils/dynamodb'
+import { getMongoDbClient } from '@/utils/mongoDBUtils'
 
 const RULE_INSTANCE_ID_MATCHER = expect.stringMatching(/^([a-z0-9]){8}$/)
 
@@ -337,8 +338,10 @@ describe('Verify Transaction Event', () => {
 
     test('returns risk-level action with PULSE feature flag', async () => {
       await getContextStorage().run({ features: ['PULSE'] }, async () => {
+        const mongoDb = await getMongoDbClient()
         const riskRepository = new RiskRepository(TEST_TENANT_ID, {
           dynamoDb,
+          mongoDb,
         })
         await riskRepository.createOrUpdateManualDRSRiskItem('1', 'HIGH')
 

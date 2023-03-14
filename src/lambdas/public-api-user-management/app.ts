@@ -5,6 +5,7 @@ import {
 } from 'aws-lambda'
 import { NotFound } from 'http-errors'
 import { DynamoDBDocumentClient } from '@aws-sdk/lib-dynamodb'
+import { MongoClient } from 'mongodb'
 import { logger } from '@/core/logger'
 import { UserRepository } from '@/services/users/repositories/user-repository'
 import { getDynamoDbClientByEvent } from '@/utils/dynamodb'
@@ -20,9 +21,10 @@ import { UserManagementService } from '@/services/users'
 const handleRiskLevelParam = (
   tenantId: string,
   dynamoDb: DynamoDBDocumentClient,
-  userPayload: User | Business
+  userPayload: User | Business,
+  mongoDb: MongoClient
 ) => {
-  const riskRepository = new RiskRepository(tenantId, { dynamoDb })
+  const riskRepository = new RiskRepository(tenantId, { dynamoDb, mongoDb })
   riskRepository.createOrUpdateManualDRSRiskItem(
     userPayload.userId,
     userPayload.riskLevel!
@@ -86,7 +88,8 @@ export const userHandler = lambdaApi()(
           await handleRiskLevelParam(
             tenantId,
             dynamoDb,
-            userPayload as User | Business
+            userPayload as User | Business,
+            mongoDb
           )
         }
       }
