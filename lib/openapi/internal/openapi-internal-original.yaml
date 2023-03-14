@@ -4246,6 +4246,8 @@ components:
           properties:
             simulations:
               type: number
+            seats:
+              type: number
     TenantCreationResponse:
       title: TenantCreationResponse
       type: object

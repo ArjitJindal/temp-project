@@ -13,6 +13,8 @@ import { AccountSettings } from '@/@types/openapi-internal/AccountSettings'
 import { ChangeRolePayload } from '@/@types/openapi-internal/ChangeRolePayload'
 import { RoleService } from '@/services/roles'
 import { AccountPatchPayload } from '@/@types/openapi-internal/AccountPatchPayload'
+import { getDynamoDbClientByEvent } from '@/utils/dynamodb'
+import { TenantRepository } from '@/services/tenants/repositories/tenant-repository'
 
 export const accountsHandler = lambdaApi()(
   async (
@@ -46,6 +48,25 @@ export const accountsHandler = lambdaApi()(
       const inviteRole = body.role ?? 'analyst'
       if (inviteRole === 'root') {
         throw new Forbidden(`It's not possible to create a root user`)
+      }
+      const dynamoDb = await getDynamoDbClientByEvent(event)
+      const allAccounts: Account[] = await accountsService.getTenantAccounts(
+        organization
+      )
+
+      const existingAccount = allAccounts.filter(
+        (account) => account.role !== 'root' && account.blocked === false
+      )
+
+      const tenantRepository = new TenantRepository(tenantId, { dynamoDb })
+
+      const tenantSettings = await tenantRepository.getTenantSettings()
+
+      if (
+        tenantSettings?.limits?.seats &&
+        existingAccount.length >= tenantSettings?.limits?.seats
+      ) {
+        throw new Forbidden(`You have reached the maximum number of users`)
       }
 
       const user = await accountsService.createAccountInOrganization(
