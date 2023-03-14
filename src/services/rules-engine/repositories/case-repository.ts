@@ -811,15 +811,24 @@ export class CaseRepository {
     }
     if (params.filterOutCaseStatus != null) {
       conditions.push({
-        'alert.alertStatus': { $ne: params.filterOutCaseStatus },
+        caseStatus: { $ne: params.filterOutCaseStatus },
       })
     }
     if (params.filterCaseStatus != null) {
       conditions.push({
-        'alert.alertStatus': { $eq: params.filterCaseStatus },
+        caseStatus: { $eq: params.filterCaseStatus },
       })
     }
-
+    if (params.filterOutAlertStatus != null) {
+      conditions.push({
+        'alert.alertStatus': { $ne: params.filterOutAlertStatus },
+      })
+    }
+    if (params.filterAlertStatus != null) {
+      conditions.push({
+        'alert.alertStatus': { $eq: params.filterAlertStatus },
+      })
+    }
     if (
       params.filterAssignmentsIds != null &&
       params.filterAssignmentsIds.length > 0

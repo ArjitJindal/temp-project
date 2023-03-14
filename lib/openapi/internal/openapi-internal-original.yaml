@@ -2481,6 +2481,10 @@ paths:
           in: query
           name: filterOutCaseStatus
         - schema:
+            $ref: '#/components/schemas/AlertStatus'
+          in: query
+          name: filterOutAlertStatus
+        - schema:
             type: array
             items:
               type: string
@@ -2544,6 +2548,10 @@ paths:
             $ref: '#/components/schemas/CaseStatus'
           in: query
           name: filterCaseStatus
+        - schema:
+            $ref: '#/components/schemas/AlertStatus'
+          in: query
+          name: filterAlertStatus
         - schema:
             type: string
           in: query
@@ -4636,6 +4644,15 @@ components:
         - OPEN
         - CLOSED
         - REOPENED
+    AlertStatus:
+      type: string
+      title: AlertStatus
+      x-stoplight:
+        id: kwbmmtv515uc4
+      enum:
+        - OPEN
+        - CLOSED
+        - REOPENED
     FilterOperator:
       type: string
       title: FilterOperator
@@ -4827,7 +4844,7 @@ components:
         caseId:
           type: string
         alertStatus:
-          $ref: '#/components/schemas/CaseStatus'
+          $ref: '#/components/schemas/AlertStatus'
         assignments:
           type: array
           items:
@@ -5008,7 +5025,7 @@ components:
           items:
             $ref: '#/components/schemas/CaseClosingReasons'
         alertStatus:
-          $ref: '#/components/schemas/CaseStatus'
+          $ref: '#/components/schemas/AlertStatus'
         priority:
           $ref: '#/components/schemas/Priority'
         otherReason:

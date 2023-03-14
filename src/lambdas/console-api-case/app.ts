@@ -22,6 +22,7 @@ import { AlertsUpdateRequest } from '@/@types/openapi-internal/AlertsUpdateReque
 import { AlertsToNewCaseRequest } from '@/@types/openapi-internal/AlertsToNewCaseRequest'
 import { Case } from '@/@types/openapi-internal/Case'
 import { CaseStatus } from '@/@types/openapi-internal/CaseStatus'
+import { AlertStatus } from '@/@types/openapi-internal/AlertStatus'
 import { getDynamoDbClientByEvent } from '@/utils/dynamodb'
 import { TransactionState } from '@/@types/openapi-internal/TransactionState'
 import { CaseCreationService } from '@/lambdas/console-api-case/services/case-creation-service'
@@ -337,6 +338,8 @@ export const casesHandler = lambdaApi()(
         filterAlertId,
         filterOutCaseStatus,
         filterCaseStatus,
+        filterOutAlertStatus,
+        filterAlertStatus,
         filterAssignmentsIds,
         filterTransactionState,
         filterBusinessIndustries,
@@ -355,6 +358,8 @@ export const casesHandler = lambdaApi()(
         filterAlertId: filterAlertId,
         filterOutCaseStatus: filterOutCaseStatus as CaseStatus | undefined,
         filterCaseStatus: filterCaseStatus as CaseStatus | undefined,
+        filterAlertStatus: filterAlertStatus as AlertStatus | undefined,
+        filterOutAlertStatus: filterOutAlertStatus as AlertStatus | undefined,
         filterAssignmentsIds: filterAssignmentsIds?.split(','),
         filterBusinessIndustries: filterBusinessIndustries?.split(','),
         filterTransactionState: filterTransactionState?.split(',') as
