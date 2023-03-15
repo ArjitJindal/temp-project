@@ -47,16 +47,22 @@ export class SanctionsService {
   }
 
   public async search(
-    request: SanctionsSearchRequest
+    request: SanctionsSearchRequest,
+    searchProfile?: string
   ): Promise<SanctionsSearchResponse> {
     await this.initPromise
     const searchId = uuidv4()
+    const searchProfileId =
+      searchProfile ||
+      process.env.COMPLYADVANTAGE_DEFAULT_SEARCH_PROFILE_ID ||
+      undefined
     const rawComplyAdvantageResponse = (await (
       await fetch(`${COMPLYADVANTAGE_SEARCH_API_URI}?api_key=${this.apiKey}`, {
         method: 'POST',
         body: JSON.stringify({
           search_term: request.searchTerm,
           fuzziness: request.fuzziness,
+          search_profile: searchProfileId,
           filters: {
             country_codes: request.countryCodes,
             birth_year: request.yearOfBirth,

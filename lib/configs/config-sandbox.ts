@@ -61,6 +61,8 @@ export const config: Config = {
     AUTH0_AUDIENCE: 'https://sandbox.api.flagright.com/',
     ATLAS_CREDENTIALS_SECRET_ARN: `arn:aws:secretsmanager:${region}:${account}:secret:mongoAtlasCreds-suQQec`,
     COMPLYADVANTAGE_CREDENTIALS_SECRET_ARN: `arn:aws:secretsmanager:${region}:${account}:secret:complyAdvantageCreds-w67BQP`,
+    COMPLYADVANTAGE_DEFAULT_SEARCH_PROFILE_ID:
+      '432dd5d0-d9ee-417e-90f3-647c4ce531ad',
     MAXIMUM_ALLOWED_EXPORT_SIZE: 10000,
     BETTERUPTIME_HOOK_URL:
       'https://betteruptime.com/api/v1/aws-cloudwatch/webhook/N4Cd5cADBCU4WfihkQnvoYsq',

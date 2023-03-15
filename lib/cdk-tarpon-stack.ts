@@ -1109,6 +1109,8 @@ export class CdkTarponStack extends cdk.Stack {
           ...atlasFunctionProps.environment,
           COMPLYADVANTAGE_API_KEY: process.env
             .COMPLYADVANTAGE_API_KEY as string,
+          COMPLYADVANTAGE_DEFAULT_SEARCH_PROFILE_ID: config.application
+            .COMPLYADVANTAGE_DEFAULT_SEARCH_PROFILE_ID as string,
         },
       }
     )
