@@ -1,12 +1,14 @@
-import { Divider, Form, message, Modal, Select } from 'antd';
-import { useState } from 'react';
+import { Divider, Form, Input, message, Modal, Select } from 'antd';
+import React, { ChangeEvent, useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
+import { validate } from 'uuid';
 import { CreateTenantModal } from './CreateTenantModal';
 import { useApi } from '@/api';
 import Button from '@/components/library/Button';
-import { Feature } from '@/apis';
+import { Feature, TenantSettings } from '@/apis';
 import { useAuth0User } from '@/utils/user-utils';
-import { useFeatures } from '@/components/AppWrapper/Providers/SettingsProvider';
+import { useFeatures, useSettings } from '@/components/AppWrapper/Providers/SettingsProvider';
+import ButtonGroup from '@/components/library/ButtonGroup';
 
 export const FEATURES: Feature[] = [
   'PULSE',
@@ -26,7 +28,11 @@ export default function SuperAdminPanel() {
   const [isModalVisible, setIsModalVisible] = useState(false);
   const [showCreateTenantModal, setShowCreateTenantModal] = useState(false);
   const initialFeatures = useFeatures();
+  const settings = useSettings();
   const [features, setFeatures] = useState<Feature[] | undefined>(undefined);
+  const [complyAdvantageSearchProfileId, setSearchProfileId] = useState<string>(
+    settings.complyAdvantageSearchProfileId || '',
+  );
   const user = useAuth0User();
   const api = useApi();
   const queryResult = useQuery(['tenants'], () => api.getTenantsList());
@@ -52,11 +58,11 @@ export default function SuperAdminPanel() {
       hideMessage();
     }
   };
-  const handleChangeFeatures = async (newFeatures: Feature[]) => {
-    setFeatures(newFeatures);
+
+  const updateTenantSettings = async (TenantSettings: Partial<TenantSettings>) => {
     const hideMessage = message.loading('Saving...');
     try {
-      await api.postTenantsSettings({ TenantSettings: { features: newFeatures } });
+      await api.postTenantsSettings({ TenantSettings });
       hideMessage();
       message.success('Saved');
     } catch (e) {
@@ -64,6 +70,21 @@ export default function SuperAdminPanel() {
       message.error(e as Error);
     }
   };
+  const handleSave = async () => {
+    if (complyAdvantageSearchProfileId.length > 0 && !validate(complyAdvantageSearchProfileId)) {
+      message.error('Comply Advantage Search profile ID must be a valid UUID');
+      return;
+    }
+    await updateTenantSettings({ features, complyAdvantageSearchProfileId });
+  };
+  const handleChangeFeatures = async (newFeatures: Feature[]) => {
+    setFeatures(newFeatures);
+    await updateTenantSettings({ features: newFeatures });
+  };
+  const handleChangeSearchProfileID = async (event: ChangeEvent<HTMLInputElement>) => {
+    setSearchProfileId(event.target.value.trim());
+  };
+
   const showModal = () => {
     setIsModalVisible(true);
   };
@@ -83,7 +104,7 @@ export default function SuperAdminPanel() {
         visible={isModalVisible}
         onCancel={handleCancel}
       >
-        <Form<{ currentTenantId: string }>
+        <Form<{ currentTenantId: string; searchProfileId: string }>
           name="basic"
           labelCol={{ span: 8 }}
           wrapperCol={{ span: 16 }}
@@ -115,11 +136,19 @@ export default function SuperAdminPanel() {
               value={features || initialFeatures}
             />
           </Form.Item>
+          <Form.Item label="CA Search Profile ID">
+            <Input value={complyAdvantageSearchProfileId} onChange={handleChangeSearchProfileID} />
+          </Form.Item>
         </Form>
         <Divider />
-        <Button type="SECONDARY" size="SMALL" onClick={() => setShowCreateTenantModal(true)}>
-          Create Tenant
-        </Button>
+        <ButtonGroup>
+          <Button type="PRIMARY" size="SMALL" onClick={handleSave}>
+            Save
+          </Button>
+          <Button type="SECONDARY" size="SMALL" onClick={() => setShowCreateTenantModal(true)}>
+            Create Tenant
+          </Button>
+        </ButtonGroup>
       </Modal>
       <CreateTenantModal
         visible={showCreateTenantModal}
