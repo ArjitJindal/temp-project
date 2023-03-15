@@ -7,6 +7,7 @@ import TimeWindowInput from './custom/TimeWindowInput';
 import AgeRangeInput from './custom/AgeRangeInput';
 import CountriesInput from './custom/CountriesInput';
 import ObjectPropertyInput from './ObjectPropertyInput';
+import PaymentChannelInput from './custom/PaymentChannelInput';
 import { getUiSchema } from '@/pages/rules/RuleConfigurationDrawer/JsonSchemaEditor/utils';
 import { InputProps } from '@/components/library/Form';
 import TransactionAmountRangeInput from '@/pages/rules/RuleConfigurationDrawer/JsonSchemaEditor/Property/PropertyInput/custom/TransactionAmountRangeInput';
@@ -47,6 +48,9 @@ export default function PropertyInput(props: Props) {
   }
   if (uiSchema['ui:subtype'] === 'CURRENCY') {
     return <CurrencyInput {...props} uiSchema={uiSchema} />;
+  }
+  if (uiSchema['ui:subtype'] === 'PAYMENT_CHANNEL') {
+    return <PaymentChannelInput {...props} uiSchema={uiSchema} />;
   }
 
   switch (schema.type) {

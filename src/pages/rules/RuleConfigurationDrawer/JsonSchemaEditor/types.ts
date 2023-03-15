@@ -30,6 +30,10 @@ export interface UiSchemaTransactionAmountThresholds extends UiSchemaCommon {
   'ui:subtype': 'TRANSACTION_AMOUNT_THRESHOLDS';
 }
 
+export interface UiSchemaPaymentChannel extends UiSchemaCommon {
+  'ui:subtype': 'PAYMENT_CHANNEL';
+}
+
 export interface UiSchemaUserType extends UiSchemaCommon {
   'ui:subtype': 'USER_TYPE';
 }
@@ -49,6 +53,7 @@ export type UiSchema =
   | UiSchemaAgeRange
   | UiSchemaTransactionAmountRange
   | UiSchemaTransactionAmountThresholds
+  | UiSchemaPaymentChannel
   | UiSchemaUserType
   | UiSchemaCurrency
   | UiSchemaUnknown;

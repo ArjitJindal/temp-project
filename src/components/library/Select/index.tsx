@@ -19,6 +19,7 @@ interface CommonProps<Value extends Comparable> {
   style?: React.CSSProperties;
   showSearch?: boolean;
   dropdownPlacement?: SelectCommonPlacement;
+  notFoundContent?: React.ReactNode;
 }
 
 interface SingleProps<Value extends Comparable> extends CommonProps<Value>, InputProps<Value> {
@@ -56,6 +57,7 @@ export default function Select<Value extends Comparable = string>(props: Props<V
       );
     },
     showSearch: props.showSearch,
+    notFoundContent: props.notFoundContent,
     placement: props.dropdownPlacement,
     mode: props.mode === 'MULTIPLE' ? 'multiple' : props.mode === 'TAGS' ? 'tags' : undefined,
     value: props.value,
