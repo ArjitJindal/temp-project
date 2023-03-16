@@ -620,6 +620,7 @@ export class CaseRepository {
       )
     }
 
+    // Always sort by _id to have consistent sort when the sortfield is the same
     preLimitPipeline.push({ $sort: { [sortField]: sortOrder, _id: 1 } })
     preLimitPipeline.push({
       $project: {

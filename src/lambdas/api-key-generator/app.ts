@@ -19,6 +19,7 @@ import {
   DRS_SCORES_COLLECTION,
   WEBHOOK_COLLECTION,
   ARS_SCORES_COLLECTION,
+  USER_EVENTS_COLLECTION,
 } from '@/utils/mongoDBUtils'
 import { TransactionCaseManagement } from '@/@types/openapi-internal/TransactionCaseManagement'
 import { Case } from '@/@types/openapi-internal/Case'
@@ -124,6 +125,7 @@ export const createMongoDBCollections = async (
     }
     const usersCollection = db.collection(USERS_COLLECTION(tenantId))
     await usersCollection.createIndex({
+      type: 1,
       createdTimestamp: -1,
     })
     await usersCollection.createIndex({
@@ -143,6 +145,16 @@ export const createMongoDBCollections = async (
     })
     await usersCollection.createIndex({
       'legalEntity.companyGeneralDetails.businessIndustry': 1,
+    })
+
+    try {
+      await db.createCollection(USER_EVENTS_COLLECTION(tenantId))
+    } catch (e) {
+      // ignore already exists
+    }
+    const userEventsCollection = db.collection(USER_EVENTS_COLLECTION(tenantId))
+    await userEventsCollection.createIndex({
+      eventId: 1,
     })
 
     try {
@@ -168,6 +180,9 @@ export const createMongoDBCollections = async (
     }
     const casesCollection = db.collection<Case>(CASES_COLLECTION(tenantId))
     await casesCollection.createIndex({ caseId: 1 })
+    await casesCollection.createIndex({
+      createdTimestamp: -1,
+    })
     await casesCollection.createIndex({
       caseStatus: 1,
       createdTimestamp: 1,
