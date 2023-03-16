@@ -105,7 +105,7 @@ export class CaseService {
             this.saveCaseComment(caseId, {
               userId,
               body:
-                `Case Status Changed to ${updateRequest.caseStatus}` +
+                `Case status changed to ${updateRequest.caseStatus}` +
                 (updateRequest.comment ? `. ${updateRequest.comment}` : ''),
               files: updateRequest.files,
             }),
@@ -156,26 +156,19 @@ export class CaseService {
       alertStatus: updateRequest.alertStatus,
     }
     await this.caseRepository.updateAlerts(alertIds, updates)
-    // todo: implement comments update
-    // if (updateRequest.caseStatus) {
-    //   await Promise.all(
-    //     caseIds.map((caseId) =>
-    //       this.saveCaseComment(caseId, {
-    //         userId,
-    //         body:
-    //           `Case Status Changed to ${updateRequest.caseStatus}` +
-    //           (updateRequest.comment ? `. ${updateRequest.comment}` : ''),
-    //         files: updateRequest.files,
-    //       })
-    //     )
-    //   )
-    //   const cases = await this.caseRepository.getCasesByIds(caseIds)
-    //   await Promise.all(
-    //     cases.map((c) =>
-    //       this.dashboardStatsRepository.refreshCaseStats(c.createdTimestamp)
-    //     )
-    //   )
-    // }
+    if (updateRequest.alertStatus) {
+      await Promise.all(
+        alertIds.map((alertId) =>
+          this.saveAlertComment(alertId, {
+            userId,
+            body:
+              `Alert status changed to ${updateRequest.alertStatus}` +
+              (updateRequest.comment ? `. ${updateRequest.comment}` : ''),
+            files: updateRequest.files,
+          })
+        )
+      )
+    }
     return 'OK'
   }
 
