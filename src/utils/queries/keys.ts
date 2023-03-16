@@ -111,6 +111,16 @@ export const WEBHOOKS_LIST = (): QueryKey => ['webhooks', 'list'];
 export const USERS = (type: string, params?: AnyParameters): QueryKey => ['users', type, params];
 export const USERS_ITEM = (userId: string): QueryKey => ['users', 'item', userId];
 export const ALERT_LIST = (params?: AnyParameters): QueryKey => ['alerts', 'list', params];
+export const SIMULATION_PULSE_JOB = (jobId: string): QueryKey => ['simulation', 'pulse', jobId];
+export const SIMULATION_PULSE_JOB_ITERATION_RESULT = (
+  taskId: string,
+  params?: AnyParameters,
+): QueryKey => ['simulation', 'pulse', 'iteration', taskId, params];
+export const SIMULATION_PULSE_JOB_LIST = (params?: AnyParameters): QueryKey => [
+  'simulation',
+  'pulse',
+  params,
+];
 export const ALERT_ITEM_TRANSACTION_LIST = (alertId: string, params?: AnyParameters): QueryKey => [
   'alerts',
   'item',
@@ -120,6 +130,7 @@ export const ALERT_ITEM_TRANSACTION_LIST = (alertId: string, params?: AnyParamet
   params,
 ];
 export const ALERT_ITEM = (alertId: string): QueryKey => ['alerts', 'item', alertId];
+export const SIMULATION_COUNT = (): QueryKey => ['simulation', 'count'];
 export const ALERT_ITEM_COMMENTS = (alertId: string): QueryKey => [
   'alerts',
   'item',

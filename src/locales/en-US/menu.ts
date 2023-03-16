@@ -44,6 +44,7 @@ export default {
   'menu.auditlog': 'Audit Log',
   'menu.risk-levels': 'Risk Scoring',
   'menu.risk-levels.configure': 'Risk Levels',
+  'menu.risk-levels.configure.simulate': 'Simulate risk levels',
   'menu.risk-levels.risk-factors': 'Risk Factors',
   'menu.risk-levels.risk-factors.description':
     'Create a risk level parameter to score your customer',

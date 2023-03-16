@@ -14,6 +14,7 @@ interface Props {
   children: React.ReactNode;
   collapsable?: boolean;
   updateCollapseState?: (key: string, value: boolean) => void;
+  additionalColumnPadding?: boolean;
 }
 
 const Root = (props: Props) => {
@@ -71,7 +72,9 @@ const Root = (props: Props) => {
           />
         )}
         {!isCollapsed && (
-          <div className={s.container}>
+          <div
+            className={cn(s.content, props.additionalColumnPadding && s.additionalColumnPadding)}
+          >
             <Column>{children}</Column>
           </div>
         )}

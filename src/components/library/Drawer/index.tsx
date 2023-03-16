@@ -11,6 +11,7 @@ interface Props {
   title: string;
   description?: string;
   footer?: React.ReactNode;
+  drawerMaxWidth?: string;
 }
 
 export default function Drawer(props: Props) {
@@ -35,6 +36,7 @@ export default function Drawer(props: Props) {
         onClick={(e) => {
           e.stopPropagation();
         }}
+        style={props.drawerMaxWidth ? { maxWidth: props.drawerMaxWidth } : {}}
       >
         <div className={s.header}>
           <div className={s.headerSection}>

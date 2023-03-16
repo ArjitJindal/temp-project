@@ -12,12 +12,17 @@ interface TabItem {
 
 interface Props extends TabsProps {
   items: TabItem[];
+  tabHeight?: string | number;
 }
 
 export default function Tabs(props: Props) {
   const { items } = props;
   return (
-    <AntTabs color={COLORS.brandBlue.base} {...props}>
+    <AntTabs
+      color={COLORS.brandBlue.base}
+      {...props}
+      style={props.tabHeight ? { height: props.tabHeight } : {}}
+    >
       {items.map((item: TabItem) => {
         const { tab, key, children, isClosable, isDisabled } = item;
         return (

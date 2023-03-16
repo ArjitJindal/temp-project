@@ -49,8 +49,11 @@ const MAIN_PALLETE: MainPallete = {
 };
 
 const NEW_COLORS = {
+  gray2: '#e7e7e7',
   gray5: '#a8a8a8',
   gray10: '#262626',
+  white: '#ffffff',
+  gray6: '#8d8d8d',
 };
 
 const SEMANTIC_COLORS = {

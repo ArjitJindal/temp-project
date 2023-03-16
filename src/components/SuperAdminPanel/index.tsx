@@ -2,8 +2,8 @@ import { Divider, Form, Input, message, Modal, Select } from 'antd';
 import React, { ChangeEvent, useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { validate } from 'uuid';
-import Label from '../library/Label';
 import NumberInput from '../library/NumberInput';
+import Label from '../library/Label';
 import { CreateTenantModal } from './CreateTenantModal';
 import { useApi } from '@/api';
 import Button from '@/components/library/Button';
@@ -24,15 +24,17 @@ export const FEATURES: Feature[] = [
   'RULES_ENGINE_RULE_BASED_AGGREGATION',
   'FALSE_POSITIVE_CHECK',
   'DEMO_MODE',
+  'SIMULATOR',
 ];
 
 export default function SuperAdminPanel() {
   const [isModalVisible, setIsModalVisible] = useState(false);
   const [showCreateTenantModal, setShowCreateTenantModal] = useState(false);
   const settings = useSettings();
-  const [maxSeats, setMaxSeats] = useState<number | undefined>(settings.limits?.seats);
   const initialFeatures = useFeatures();
   const [features, setFeatures] = useState<Feature[] | undefined>(undefined);
+  const [limits, setLimits] = useState<TenantSettings['limits']>(settings.limits || {});
+
   const [complyAdvantageSearchProfileId, setSearchProfileId] = useState<string>(
     settings.complyAdvantageSearchProfileId || '',
   );
@@ -73,17 +75,24 @@ export default function SuperAdminPanel() {
       message.error(e as Error);
     }
   };
+
   const handleSave = async () => {
     if (complyAdvantageSearchProfileId.length > 0 && !validate(complyAdvantageSearchProfileId)) {
       message.error('Comply Advantage Search profile ID must be a valid UUID');
       return;
     }
-    await updateTenantSettings({ features, complyAdvantageSearchProfileId });
+    await updateTenantSettings({
+      ...(features && features.length && { features }),
+      ...(limits && { limits }),
+      ...(complyAdvantageSearchProfileId && { complyAdvantageSearchProfileId }),
+    });
   };
+
   const handleChangeFeatures = async (newFeatures: Feature[]) => {
     setFeatures(newFeatures);
     await updateTenantSettings({ features: newFeatures });
   };
+
   const handleChangeSearchProfileID = async (event: ChangeEvent<HTMLInputElement>) => {
     setSearchProfileId(event.target.value.trim());
   };
@@ -94,18 +103,6 @@ export default function SuperAdminPanel() {
 
   const handleCancel = () => {
     setIsModalVisible(false);
-  };
-
-  const handleMaxSeats = async (newMaxSeats: number) => {
-    const hideMessage = message.loading('Saving...');
-    try {
-      await api.postTenantsSettings({ TenantSettings: { limits: { seats: newMaxSeats } } });
-      hideMessage();
-      message.success('Saved');
-    } catch (e) {
-      hideMessage();
-      message.error(e as Error);
-    }
   };
 
   return (
@@ -151,40 +148,39 @@ export default function SuperAdminPanel() {
               value={features || initialFeatures}
             />
           </Form.Item>
-          <Label
-            label="Max Seats"
-            description="The maximum number of seats allowed for this tenant"
-            element="div"
-          >
-            <NumberInput
-              value={maxSeats}
-              onChange={(value) => setMaxSeats(value)}
-              isDisabled={false}
-            />
-          </Label>
-          <Button
-            type="PRIMARY"
-            size="SMALL"
-            onClick={() => {
-              if (maxSeats) {
-                handleMaxSeats(maxSeats);
-              }
-            }}
-            style={{
-              marginTop: 8,
-            }}
-          >
-            Save
-          </Button>
-          <Form.Item label="CA Search Profile ID">
-            <Input value={complyAdvantageSearchProfileId} onChange={handleChangeSearchProfileID} />
-          </Form.Item>
         </Form>
         <Divider />
+        <Label
+          label="Simulation limit"
+          description="The maximum number of simulations that can be run by a tenant."
+          element="div"
+        >
+          <NumberInput
+            value={limits?.simulations ?? 0}
+            onChange={(value) => setLimits({ ...limits, simulations: value })}
+            isDisabled={false}
+          />
+        </Label>
+        <Label
+          label="Max Seats"
+          description="The maximum number of seats allowed for this tenant"
+          element="div"
+        >
+          <NumberInput
+            value={limits?.seats ?? 0}
+            onChange={(value) => setLimits({ ...limits, seats: value })}
+            isDisabled={false}
+          />
+        </Label>
+
+        <Label label="CA Search Profile ID">
+          <Input value={complyAdvantageSearchProfileId} onChange={handleChangeSearchProfileID} />
+        </Label>
+        <Button type="PRIMARY" size="SMALL" onClick={handleSave} style={{ marginTop: 8 }}>
+          Save
+        </Button>
+        <Divider />
         <ButtonGroup>
-          <Button type="PRIMARY" size="SMALL" onClick={handleSave}>
-            Save
-          </Button>
           <Button type="SECONDARY" size="SMALL" onClick={() => setShowCreateTenantModal(true)}>
             Create Tenant
           </Button>

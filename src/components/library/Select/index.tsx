@@ -19,6 +19,7 @@ interface CommonProps<Value extends Comparable> {
   style?: React.CSSProperties;
   showSearch?: boolean;
   dropdownPlacement?: SelectCommonPlacement;
+  allowClear?: boolean;
   notFoundContent?: React.ReactNode;
 }
 
@@ -42,7 +43,7 @@ export default function Select<Value extends Comparable = string>(props: Props<V
   const antSelectProps: SelectProps<Value | Value[], Option<Value>> = {
     disabled: isDisabled,
     placeholder: placeholder,
-    allowClear: true,
+    allowClear: props.allowClear,
     onFocus: onFocus,
     onBlur: onBlur,
     filterOption: (inputValue: string, option?: Option<Value>) => {

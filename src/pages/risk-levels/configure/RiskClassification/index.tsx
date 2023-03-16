@@ -1,216 +1,72 @@
-import React, { useEffect, useState } from 'react';
-import { message, Slider } from 'antd';
-import style from './style.module.less';
-import Table from '@/components/ui/Table';
+import { message } from 'antd';
+import { useMutation } from '@tanstack/react-query';
+import RiskClassificationTable, {
+  ApiState,
+  State,
+  parseApiState,
+  prepareApiState,
+} from '../RiskClassificationTable';
 import Button from '@/components/library/Button';
-import {
-  AsyncResource,
-  failed,
-  getOr,
-  init,
-  isLoading,
-  loading,
-  success,
-  useFinishedSuccessfully,
-} from '@/utils/asyncResource';
-import RiskLevelTag from '@/components/ui/RiskLevelTag';
-import { RISK_LEVEL_LABELS, RISK_LEVELS, RiskLevel } from '@/utils/risk-levels';
 import { useApi } from '@/api';
-import { RiskClassificationScore } from '@/apis';
-import { TableColumn } from '@/components/ui/Table/types';
 import { useHasPermissions } from '@/utils/user-utils';
+import { RiskClassificationScore } from '@/apis';
 
-interface TableItem {
-  key: RiskLevel;
-  title: string;
-}
+type Props = {
+  riskValues: RiskClassificationScore[];
+  state: State | null;
+  setState: React.Dispatch<React.SetStateAction<State | null>>;
+  riskValuesRefetch: () => void;
+};
 
-type State = number[];
-type ApiState = Array<RiskClassificationScore>;
-
-function prepareApiState(state: State): ApiState {
-  return RISK_LEVELS.map((riskLevel, index) => ({
-    riskLevel,
-    lowerBoundRiskScore: state[index - 1] ?? 0,
-    upperBoundRiskScore: state[index] ?? 100,
-  }));
-}
-
-function parseApiState(values: ApiState): State {
-  const result = [];
-  for (let i = 0; i < RISK_LEVELS.length - 1; i += 1) {
-    const level = RISK_LEVELS[i];
-    const riskLevelEntry = values.find(({ riskLevel }) => riskLevel === level);
-    if (riskLevelEntry == null) {
-      throw new Error(`Invalid values: ${JSON.stringify(values)}`);
-    }
-    result[i] = riskLevelEntry.upperBoundRiskScore;
-  }
-  return result;
-}
-
-const LEVEL_ENTRIES = RISK_LEVELS.map((key) => ({
-  key,
-  title: RISK_LEVEL_LABELS[key],
-})) as TableItem[];
-
-export default function RiskQualification() {
+export default function RiskQualification(props: Props) {
   const api = useApi();
-  const [syncRes, setSyncRes] = useState<AsyncResource<State>>(init());
-  const [state, setState] = useState<State | null>(null);
   const hasRiskLevelPermission = useHasPermissions(['risk-scoring:risk-levels:write']);
+  const { riskValues, state, setState, riskValuesRefetch } = props;
 
-  useEffect(() => {
-    let isCanceled = false;
-    async function fetch() {
-      try {
-        setSyncRes(loading());
-        const response: ApiState = await api.getPulseRiskClassification();
-        if (isCanceled) {
-          return;
-        }
-        setSyncRes(success(parseApiState(response)));
-      } catch (e) {
-        if (isCanceled) {
-          return;
-        }
-        console.error(e);
-        message.error('Unable to load risk levels settings!');
-        setSyncRes(failed('Unable to load risk levels settings!'));
-      }
-    }
-    fetch();
-    return () => {
-      isCanceled = true;
-    };
-  }, [api]);
-  const justSynced = useFinishedSuccessfully(syncRes);
-  useEffect(() => {
-    if (justSynced) {
-      setState(getOr(syncRes, null));
-    }
-  }, [syncRes, justSynced]);
+  const saveRiskValuesMutation = useMutation<ApiState, Error, State>(
+    (state) => api.postPulseRiskClassification({ RiskClassificationScore: prepareApiState(state) }),
+    {
+      onSuccess: () => {
+        message.success('Risk values saved');
+        riskValuesRefetch();
+      },
+      onError: (e) => {
+        const error = e instanceof Error ? e.message : 'Unable to save risk values';
+        message.error(error);
+      },
+    },
+  );
 
   async function handleSave() {
     if (state == null) {
       return;
     }
-    try {
-      setSyncRes(loading());
-      const result: ApiState = await api.postPulseRiskClassification({
-        RiskClassificationScore: prepareApiState(state),
-      });
-      setSyncRes(success(parseApiState(result)));
-      message.success('Settings saved!');
-    } catch (e) {
-      const error = e instanceof Error ? e.message : 'Unknown error';
-      setSyncRes(failed(error));
-      message.error(error);
-    }
-  }
-  const columns: TableColumn<TableItem>[] = [
-    {
-      title: 'Title',
-      width: '200px',
-      dataIndex: 'key',
-      render: (_, item) => <RiskLevelTag level={item.key} />,
-    },
-    {
-      title: 'Score',
-      dataIndex: 'score',
-      tip: 'Range of values that defines the upper and lower limits of a risk level',
-      valueType: 'digit',
-      width: '100px',
-      render: (dom, item, index) => {
-        if (state == null) {
-          return <></>;
-        }
 
-        const start = state[index - 1] ?? 0;
-        const end = state[index] ?? 100;
-        return (
-          <span>
-            {start} - {end}
-          </span>
-        );
-      },
-    },
-    {
-      render: (dom, item, index) => {
-        if (state == null) {
-          return <></>;
-        }
-        const start = state[index - 1] ?? 0;
-        const end = state[index] ?? 100;
-        return (
-          <Slider
-            range={true}
-            disabled={isLoading(syncRes) || !hasRiskLevelPermission}
-            min={0}
-            max={100}
-            value={[start, end]}
-            className={style.tip}
-            onChange={([newStart, newEnd]) => {
-              setState((state) => {
-                if (state == null) {
-                  return state;
-                }
-                return state.map((x, i) => {
-                  if (i === index - 1) {
-                    return newStart;
-                  }
-                  if (i < index - 1 && x > newStart) {
-                    return newStart;
-                  }
-                  if (i === index) {
-                    return newEnd;
-                  }
-                  if (i > index && x < newEnd) {
-                    return newEnd;
-                  }
-                  return x;
-                });
-              });
-            }}
-          />
-        );
-      },
-    },
-  ];
+    saveRiskValuesMutation.mutate(state);
+  }
 
   function handleCancel() {
-    setState(getOr(syncRes, null));
+    setState(parseApiState(riskValues));
   }
 
   // todo: i18n
   return (
-    <Table<TableItem>
-      disableStripedColoring={true}
-      rowKey="key"
-      headerTitle="Classification of Risk"
-      search={false}
-      columns={columns}
-      pagination={false}
-      data={{
-        items: LEVEL_ENTRIES,
-      }}
+    <RiskClassificationTable
       toolBarRender={() => [
         <Button
           type="PRIMARY"
           onClick={handleSave}
-          isDisabled={isLoading(syncRes) || !hasRiskLevelPermission}
+          isDisabled={!riskValues.length || !hasRiskLevelPermission}
         >
           Save
         </Button>,
-        <Button onClick={handleCancel} isDisabled={isLoading(syncRes) || !hasRiskLevelPermission}>
+        <Button onClick={handleCancel} isDisabled={!riskValues.length || !hasRiskLevelPermission}>
           Cancel
         </Button>,
       ]}
-      options={{
-        setting: false,
-        density: false,
-        reload: false,
-      }}
+      state={state}
+      setState={setState}
+      isDisabled={!riskValues.length || !hasRiskLevelPermission}
     />
   );
 }

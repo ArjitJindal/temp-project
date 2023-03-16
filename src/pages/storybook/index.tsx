@@ -28,6 +28,7 @@ import { Component } from '@/pages/storybook/components';
 import Tooltip from '@/components/library/Tooltip/story';
 import Toggle from '@/components/library/Toggle/story';
 import Tabs from '@/components/library/Tabs/story';
+import TextArea from '@/components/library/TextArea/story';
 
 interface StoryProps {}
 
@@ -120,6 +121,10 @@ const config: Config = [
       {
         component: 'SelectionGroup',
         story: SelectionGroup,
+      },
+      {
+        component: 'TextArea',
+        story: TextArea,
       },
       {
         component: 'Toggle',

@@ -19,6 +19,19 @@ export default function (): JSX.Element {
           }}
         />
       </UseCase>
+      <UseCase title="Pagination with border">
+        <Component
+          showResultsInfo={true}
+          total={1000}
+          current={page}
+          pageSize={pageSize}
+          onChange={(page, pageSize) => {
+            setPage(page);
+            setPageSize(pageSize);
+          }}
+          paginationBorder={true}
+        />
+      </UseCase>
     </>
   );
 }

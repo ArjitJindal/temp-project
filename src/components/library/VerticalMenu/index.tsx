@@ -13,6 +13,7 @@ interface Props {
   onChange: (key: string) => void;
   children?: React.ReactNode;
   minWidth?: number;
+  additionalMenuTop?: React.ReactNode;
 }
 
 export default function VerticalMenu(props: Props) {
@@ -20,6 +21,7 @@ export default function VerticalMenu(props: Props) {
   return (
     <div className={s.root}>
       <div className={s.items} style={{ minWidth }}>
+        {props.additionalMenuTop}
         {items.map((item) => (
           <div
             key={item.key}

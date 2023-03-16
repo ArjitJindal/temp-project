@@ -103,6 +103,8 @@ export interface Props<T extends object | unknown, Params extends object, ValueT
   autoAdjustHeight?: boolean;
   enableLegacyFilters?: boolean; // We need this for sanctions table only
   adjustPagination?: boolean;
+  hideFilters?: boolean;
+  paginationBorder?: boolean;
 }
 
 export default function Table<
@@ -149,6 +151,8 @@ export default function Table<
     onReload,
     showResultsInfo = true,
     adjustPagination = false,
+    hideFilters = false,
+    paginationBorder = false,
   } = props;
   const tableElement = useRef<HTMLDivElement>(null);
 
@@ -288,7 +292,8 @@ export default function Table<
     }
   };
 
-  const showFilters = params != null && allFilters.length > 0 && !enableLegacyFilters;
+  const showFilters =
+    params != null && allFilters.length > 0 && !enableLegacyFilters && !hideFilters;
   const showActionsHeader = actionsHeader.length > 0 && params != null;
   const showActionsHeaderRight = actionsHeaderRight.length > 0 && params != null;
   const showBottomHeader = showFilters;
@@ -441,30 +446,20 @@ export default function Table<
         }}
       />
       {pagination !== false && (
-        <div
-          style={{
-            display: 'flex',
-            flexDirection: 'row',
-            ...(adjustPagination
-              ? { width: 'calc(100% + 1rem)', marginLeft: '-0.5rem' }
-              : { width: '100%' }),
-            alignItems: 'center',
-            backgroundColor: 'white',
+        <Pagination
+          isDisabled={loading}
+          pageSize={params?.pageSize}
+          total={data.total ?? dataItems.length}
+          current={params?.page}
+          onChange={(page, pageSize) => {
+            if (params != null) {
+              onChangeParams({ ...params, page, pageSize });
+            }
           }}
-        >
-          <Pagination
-            isDisabled={loading}
-            pageSize={params?.pageSize}
-            total={data.total ?? dataItems.length}
-            current={params?.page}
-            onChange={(page, pageSize) => {
-              if (params != null) {
-                onChangeParams({ ...params, page, pageSize });
-              }
-            }}
-            showResultsInfo={showResultsInfo}
-          />
-        </div>
+          showResultsInfo={showResultsInfo}
+          adjustPagination={adjustPagination}
+          paginationBorder={paginationBorder}
+        />
       )}
     </div>
   );
