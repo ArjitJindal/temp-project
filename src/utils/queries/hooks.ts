@@ -1,6 +1,11 @@
 import { QueryFunction, QueryKey } from '@tanstack/query-core';
-import { useQuery as useQueryRQ } from '@tanstack/react-query';
-import { UseMutationResult, UseQueryOptions } from '@tanstack/react-query/src/types';
+import { useQueries as useQueriesRQ, useQuery as useQueryRQ } from '@tanstack/react-query';
+import {
+  UseMutationResult,
+  UseQueryOptions,
+  UseQueryResult,
+} from '@tanstack/react-query/src/types';
+import { QueriesOptions } from '@tanstack/react-query/build/types/packages/react-query/src/useQueries';
 import { getErrorMessage, neverThrow } from '@/utils/lang';
 import { AsyncResource, failed, loading, success } from '@/utils/asyncResource';
 import { QueryResult } from '@/utils/queries/types';
@@ -18,6 +23,23 @@ export function useQuery<
   > & { initialData?: () => undefined },
 ): QueryResult<TData> {
   const results = useQueryRQ<TQueryFnData, string, TData, TQueryKey>(queryKey, queryFn, options);
+  return convertQueryResult(results);
+}
+
+export function useQueries<T>({
+  queries,
+  context,
+}: {
+  queries: readonly [...QueriesOptions<T[]>];
+  context?: UseQueryOptions['context'];
+}): QueryResult<T>[] {
+  const results = useQueriesRQ({ queries, context });
+  return results.map((x: any) => convertQueryResult(x));
+}
+
+function convertQueryResult<TQueryFnData = unknown, TData = TQueryFnData>(
+  results: UseQueryResult<TData, string>,
+): QueryResult<TData> {
   if (results.isLoading) {
     return {
       data: loading<TData>(results.data ?? null),

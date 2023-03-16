@@ -132,6 +132,15 @@ export function map<T, R>(
   return asyncResource;
 }
 
+export function all<T>(asyncResourceList: AsyncResource<T>[]): AsyncResource<T[]> {
+  return asyncResourceList.reduce((acc: AsyncResource<T[]>, x: AsyncResource<T>) => {
+    if (!isSuccess(acc)) {
+      return acc;
+    }
+    return map(x, (value: T) => [...acc.value, value]);
+  }, success([]));
+}
+
 export function getOr<T>(asyncResource: AsyncResource<T>, defaultValue: T): T {
   switch (asyncResource.kind) {
     case 'SUCCESS':

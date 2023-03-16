@@ -1,6 +1,5 @@
 import React, { useEffect, useState } from 'react';
 import { useParams } from 'react-router';
-import ActionRiskDisplay from '../case-management-item/TransactionCaseDetails/TransactionDetailsCard/ActionRiskDisplay';
 import SenderReceiverDetails from './SenderReceiverDetails';
 import { dayjs, DEFAULT_DATE_TIME_FORMAT } from '@/utils/dayjs';
 import { makeUrl } from '@/utils/routing';
@@ -24,6 +23,7 @@ import { TransactionTypeTag } from '@/components/ui/TransactionTypeTag';
 import TransactionEventsCard from '@/pages/transactions-item/TransactionEventsCard';
 import { Feature } from '@/components/AppWrapper/Providers/SettingsProvider';
 import { useApiTime, usePageViewTracker } from '@/utils/tracker';
+import ActionRiskDisplay from '@/components/ui/ActionRiskDisplay';
 
 export default function TransactionsItem() {
   usePageViewTracker('Transactions Item');

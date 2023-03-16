@@ -44,10 +44,6 @@ function CaseManagementItemPage() {
       ),
   );
 
-  const handleCaseUpdate = (caseItem: Case) => {
-    queryClient.setQueryData(CASES_ITEM(caseId), caseItem);
-  };
-
   const handleCommentAdded = (newComment: Comment) => {
     queryClient.setQueryData<Case>(CASES_ITEM(caseId), (caseItem) => {
       if (caseItem == null) {
@@ -117,7 +113,6 @@ function CaseManagementItemPage() {
             <Card.Section>
               <UserCaseDetails
                 caseItem={caseItem}
-                onCaseUpdate={handleCaseUpdate}
                 updateCollapseState={updateCollapseState}
                 onReload={onReload}
               />

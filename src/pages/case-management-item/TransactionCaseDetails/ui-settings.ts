@@ -1,3 +1,4 @@
+// todo: legacy settings, need to move somewhere
 export const UI_SETTINGS = {
   title: 'Transaction Case Details',
   key: 'transaction-case-details',

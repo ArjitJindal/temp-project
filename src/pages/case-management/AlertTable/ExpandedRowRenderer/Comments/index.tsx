@@ -2,7 +2,7 @@ import React, { useRef, useState } from 'react';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import s from './index.module.less';
 import * as Card from '@/components/ui/Card';
-import { Alert, Comment as ApiComment } from '@/apis';
+import { Comment as ApiComment } from '@/apis';
 import Comment from '@/components/CommentsCard/Comment';
 import { useAuth0User } from '@/utils/user-utils';
 import { getMutationAsyncResource } from '@/utils/queries/hooks';
@@ -14,15 +14,16 @@ import { getErrorMessage } from '@/utils/lang';
 import { useApi } from '@/api';
 import { AsyncResource } from '@/utils/asyncResource';
 import AsyncResourceRenderer from '@/components/common/AsyncResourceRenderer';
-import { ALERT_ITEM } from '@/utils/queries/keys';
+import { ALERT_ITEM_COMMENTS } from '@/utils/queries/keys';
 import { message } from '@/components/library/Message';
 
 interface Props {
-  alertRes: AsyncResource<Alert>;
+  alertId: string | null;
+  commentsRes: AsyncResource<ApiComment[]>;
 }
 
 export default function Comments(props: Props) {
-  const { alertRes } = props;
+  const { alertId, commentsRes } = props;
   const user = useAuth0User();
   const api = useApi();
   const currentUserId = user.userId ?? undefined;
@@ -46,12 +47,12 @@ export default function Comments(props: Props) {
       });
     },
     {
-      onSuccess: async (data, { alertId }) => {
+      onSuccess: async (newComment, { alertId }) => {
         message.success('Comment successfully added!');
         commentEditorRef.current?.reset();
-        await queryClient.invalidateQueries({
-          queryKey: ALERT_ITEM(alertId),
-        });
+        await queryClient.setQueryData<ApiComment[]>(ALERT_ITEM_COMMENTS(alertId), (comments) =>
+          comments ? [...comments, newComment] : undefined,
+        );
       },
       onError: async (error) => {
         console.log(error);
@@ -79,11 +80,11 @@ export default function Comments(props: Props) {
       }
     },
     {
-      onSuccess: async (_, { alertId }) => {
+      onSuccess: async (_, { alertId, commentId }) => {
         message.success('Comment deleted!');
-        await queryClient.invalidateQueries({
-          queryKey: ALERT_ITEM(alertId),
-        });
+        await queryClient.setQueryData<ApiComment[]>(ALERT_ITEM_COMMENTS(alertId), (comments) =>
+          comments?.filter((x) => x.id !== commentId),
+        );
       },
       onError: (error) => {
         console.log(error);
@@ -93,8 +94,8 @@ export default function Comments(props: Props) {
   );
 
   return (
-    <AsyncResourceRenderer<Alert> resource={alertRes}>
-      {({ alertId, comments = [] }) => (
+    <AsyncResourceRenderer<ApiComment[]> resource={commentsRes}>
+      {(comments) => (
         <Card.Root collapsable={false}>
           <Card.Section>
             {comments.length > 0 ? (

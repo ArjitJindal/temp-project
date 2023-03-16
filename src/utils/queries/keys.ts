@@ -8,7 +8,7 @@ import { UsersUniquesField } from '@/apis/models/UsersUniquesField';
 type AnyParameters = unknown;
 
 export const CASES_LIST = (params: AnyParameters): QueryKey => ['cases', 'list', { params }];
-export const CASES_ITEM = (transactionId: string): QueryKey => ['cases', transactionId];
+export const CASES_ITEM = (caseId: string): QueryKey => ['cases', caseId];
 export const CASES_ITEM_ALERT_LIST = (caseId: string, params?: AnyParameters): QueryKey => [
   'cases',
   caseId,
@@ -120,3 +120,9 @@ export const ALERT_ITEM_TRANSACTION_LIST = (alertId: string, params?: AnyParamet
   params,
 ];
 export const ALERT_ITEM = (alertId: string): QueryKey => ['alerts', 'item', alertId];
+export const ALERT_ITEM_COMMENTS = (alertId: string): QueryKey => [
+  'alerts',
+  'item',
+  alertId,
+  'comments',
+];

@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import Comments from './Comments';
 import { useQuery } from '@/utils/queries/hooks';
-import { ALERT_ITEM, ALERT_ITEM_TRANSACTION_LIST } from '@/utils/queries/keys';
+import { ALERT_ITEM_COMMENTS, ALERT_ITEM_TRANSACTION_LIST } from '@/utils/queries/keys';
 import { useApi } from '@/api';
 import { useApiTime } from '@/utils/tracker';
 import { DEFAULT_PARAMS_STATE } from '@/components/ui/Table';
@@ -42,17 +42,18 @@ export default function ExpandedRowRenderer(props: Props) {
     },
   );
 
-  const alertItemResponse = useQuery(ALERT_ITEM(alertId ?? ''), async () => {
+  const commentsResponse = useQuery(ALERT_ITEM_COMMENTS(alertId ?? ''), async () => {
     if (alertId == null) {
       throw new Error(`Unable to fetch alert, id is empty`);
     }
-    return await measure(
+    const alert = await measure(
       () =>
         api.getAlert({
           alertId,
         }),
       'Get Alert',
     );
+    return alert.comments ?? [];
   });
 
   return (
@@ -73,7 +74,7 @@ export default function ExpandedRowRenderer(props: Props) {
         {
           tab: 'Comments',
           key: 'comments',
-          children: <Comments alertRes={alertItemResponse.data} />,
+          children: <Comments alertId={alertId} commentsRes={commentsResponse.data} />,
         },
       ]}
     />
