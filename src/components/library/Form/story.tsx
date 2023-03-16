@@ -65,7 +65,7 @@ export default function (): JSX.Element {
             alert(`Result values: ${JSON.stringify(values)}`);
           }}
           fieldValidators={{
-            name: (name) => (name.length < 3 ? 'Name should be longer than 2' : null),
+            name: (name = '') => (name.length < 3 ? 'Name should be longer than 2' : null),
           }}
         >
           <Container>
@@ -93,8 +93,8 @@ export default function (): JSX.Element {
             alert(`Result values: ${JSON.stringify(values)}`);
           }}
           fieldValidators={{
-            name: (name) => (name.length < 3 ? 'Name should be longer than 2' : null),
-            lastName: (name) => (name.length < 3 ? 'Last name should be longer than 2' : null),
+            name: (name = '') => (name.length < 3 ? 'Name should be longer than 2' : null),
+            lastName: (name = '') => (name.length < 3 ? 'Last name should be longer than 2' : null),
           }}
           formValidators={[
             (values) =>
@@ -135,12 +135,14 @@ export default function (): JSX.Element {
             alert(`Result values: ${JSON.stringify(values)}`);
           }}
           fieldValidators={{
-            age: and([notEmpty, (age) => (age < 18 ? 'You must be adult' : null)]),
+            age: and([notEmpty, (age) => (age == null || age < 18 ? 'You must be adult' : null)]),
             personal: {
-              nickname: (name) => (name.length < 3 ? 'Nick name should be longer than 2' : null),
+              nickname: (name = '') =>
+                name.length < 3 ? 'Nick name should be longer than 2' : null,
               name: {
-                firstName: (name) => (name.length < 3 ? 'Name should be longer than 2' : null),
-                lastName: (name) => (name.length < 3 ? 'Last name should be longer than 2' : null),
+                firstName: (name = '') => (name.length < 3 ? 'Name should be longer than 2' : null),
+                lastName: (name = '') =>
+                  name.length < 3 ? 'Last name should be longer than 2' : null,
               },
             },
           }}
@@ -203,12 +205,14 @@ export default function (): JSX.Element {
             alert(`Result values: ${JSON.stringify(values)}`);
           }}
           fieldValidators={{
-            age: and([notEmpty, (age) => (age < 18 ? 'You must be adult' : null)]),
+            age: and([notEmpty, (age) => (age == null || age < 18 ? 'You must be adult' : null)]),
             personal: {
-              nickname: (name) => (name.length < 3 ? 'Nick name should be longer than 2' : null),
+              nickname: (name = '') =>
+                name.length < 3 ? 'Nick name should be longer than 2' : null,
               name: {
-                firstName: (name) => (name.length < 3 ? 'Name should be longer than 2' : null),
-                lastName: (name) => (name.length < 3 ? 'Last name should be longer than 2' : null),
+                firstName: (name = '') => (name.length < 3 ? 'Name should be longer than 2' : null),
+                lastName: (name = '') =>
+                  name.length < 3 ? 'Last name should be longer than 2' : null,
               },
             },
           }}

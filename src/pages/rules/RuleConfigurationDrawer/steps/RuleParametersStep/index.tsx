@@ -1,5 +1,6 @@
 import React from 'react';
 import { Tabs } from 'antd';
+import s from './style.module.less';
 import { RiskLevelRuleActions, RiskLevelRuleParameters, Rule, RuleAction } from '@/apis';
 import JsonSchemaEditor from '@/pages/rules/RuleConfigurationDrawer/JsonSchemaEditor';
 import StepHeader from '@/pages/rules/RuleConfigurationDrawer/StepHeader';
@@ -9,6 +10,8 @@ import RuleActionSelector from '@/pages/rules/RuleConfigurationDrawer/steps/Rule
 import { PropertyListLayout } from '@/pages/rules/RuleConfigurationDrawer/JsonSchemaEditor/PropertyList';
 import NestedForm from '@/components/library/Form/NestedForm';
 import InputField from '@/components/library/Form/InputField';
+import { useFieldState, useFormState } from '@/components/library/Form/utils/hooks';
+import ApplyRiskLevels from '@/pages/rules/RuleConfigurationDrawer/steps/RuleParametersStep/ApplyRiskLevels';
 
 export interface FormValues {
   ruleParameters?: unknown;
@@ -25,6 +28,7 @@ export const INITIAL_VALUES: FormValues = {
 };
 
 interface Props {
+  defaultInitialValues: FormValues;
   activeTab: string;
   rule: Rule;
 }
@@ -66,8 +70,10 @@ function RuleSpecificFilters(props: Props) {
 }
 
 function RiskBasedThresholds(props: Props) {
-  const { rule } = props;
+  const { rule, defaultInitialValues } = props;
   const settings = useSettings();
+  const formState = useFormState<FormValues>();
+  const riskLevelParametersField = useFieldState('riskLevelParameters');
   return (
     <>
       <StepHeader
@@ -75,29 +81,60 @@ function RiskBasedThresholds(props: Props) {
         description={'Configure risk-based thresholds that are specific for this rule'}
       />
       <Tabs type="line">
-        {RISK_LEVELS.map((riskLevel) => (
-          <Tabs.TabPane tab={getRiskLevelLabel(riskLevel, settings)} key={riskLevel}>
-            <PropertyListLayout>
-              <NestedForm<FormValues> name={'riskLevelParameters'}>
-                <NestedForm<FormValues['riskLevelParameters']> name={riskLevel}>
-                  <JsonSchemaEditor parametersSchema={rule.parametersSchema} />
+        {RISK_LEVELS.map((riskLevel) => {
+          // const isInitial = isEqual(
+          //   removeEmpty(formState.values.riskLevelParameters?.[riskLevel]),
+          //   defaultInitialValues.riskLevelParameters?.[riskLevel],
+          // );
+          return (
+            <Tabs.TabPane
+              tab={
+                <div className={s.riskLevelTabLabel}>
+                  {/*{!isInitial && <CheckboxCircleFillIcon />}*/}
+                  {getRiskLevelLabel(riskLevel, settings)}
+                </div>
+              }
+              key={riskLevel}
+            >
+              <PropertyListLayout>
+                <NestedForm<FormValues> name={'riskLevelParameters'}>
+                  <NestedForm<FormValues['riskLevelParameters']> name={riskLevel}>
+                    <JsonSchemaEditor parametersSchema={rule.parametersSchema} />
+                  </NestedForm>
                 </NestedForm>
-              </NestedForm>
-              <NestedForm<FormValues> name={'riskLevelActions'}>
-                <InputField<any>
-                  name={riskLevel}
-                  label={'Rule Actions'}
-                  description={`Select the action to perform if this rule is hit for users of ${getRiskLevelLabel(
-                    riskLevel,
-                    settings,
-                  )} risk level`}
-                >
-                  {(inputProps) => <RuleActionSelector {...inputProps} />}
-                </InputField>
-              </NestedForm>
-            </PropertyListLayout>
-          </Tabs.TabPane>
-        ))}
+                <NestedForm<FormValues> name={'riskLevelActions'}>
+                  <InputField<any>
+                    name={riskLevel}
+                    label={'Rule Actions'}
+                    description={`Select the action to perform if this rule is hit for users of ${getRiskLevelLabel(
+                      riskLevel,
+                      settings,
+                    )} risk level`}
+                  >
+                    {(inputProps) => <RuleActionSelector {...inputProps} />}
+                  </InputField>
+                </NestedForm>
+                <ApplyRiskLevels
+                  defaultInitialValues={defaultInitialValues.riskLevelParameters}
+                  currentRiskLevel={riskLevel}
+                  formValues={formState.values}
+                  onConfirm={(riskLevels) => {
+                    const currentRiskLevelParams = riskLevelParametersField.value[riskLevel];
+                    riskLevelParametersField.onChange(
+                      riskLevels.reduce(
+                        (acc, riskLevel) => ({
+                          ...acc,
+                          [riskLevel]: currentRiskLevelParams,
+                        }),
+                        riskLevelParametersField.value,
+                      ),
+                    );
+                  }}
+                />
+              </PropertyListLayout>
+            </Tabs.TabPane>
+          );
+        })}
       </Tabs>
     </>
   );

@@ -1,7 +1,15 @@
-import { useContext, useMemo } from 'react';
+import { SetStateAction, useCallback, useContext, useMemo } from 'react';
 import { FormState } from '../types';
-import { FormContext, FormContextValue } from '@/components/library/Form/context';
-import { validateForm } from '@/components/library/Form/utils/validation/utils';
+import { FieldMeta, FormContext, FormContextValue } from '@/components/library/Form/context';
+import {
+  validateField,
+  validateForm,
+  validationResultToErrorMessage,
+} from '@/components/library/Form/utils/validation/utils';
+import {
+  FieldValidator,
+  NestedValidationResult,
+} from '@/components/library/Form/utils/validation/types';
 
 export function useFormContext<FormValues>(): FormContextValue<FormValues> {
   const context = useContext(FormContext);
@@ -24,5 +32,63 @@ export function useFormState<FormValues>(): FormState<FormValues> {
     values: values,
     isValid: validationResult == null,
     validationErrors: validationResult?.formValidationErrors ?? [],
+  };
+}
+
+interface FieldState<Value> {
+  value: Value | undefined;
+  onChange: (newValue: Value | undefined) => void;
+  meta: FieldMeta;
+  onChangeMeta: (newMeta: SetStateAction<FieldMeta>) => void;
+  isValid: boolean;
+  showError: boolean;
+  validationResult: NestedValidationResult;
+  errorMessage: string | null;
+}
+
+export function useFieldState<FormValues, Key extends keyof FormValues = keyof FormValues>(
+  name: keyof FormValues,
+): FieldState<FormValues[Key]> {
+  const context = useFormContext<FormValues>();
+  const { values, setValues, meta, setMeta, fieldValidators, alwaysShowErrors } = context;
+
+  const value = values[name] as FormValues[Key] | undefined;
+  const onChange = useCallback(
+    (newValue) => {
+      setValues({
+        ...values,
+        [name]: newValue,
+      });
+    },
+    [values, name, setValues],
+  );
+
+  const fieldValidator = (fieldValidators as any)?.[name] as unknown as FieldValidator<
+    FormValues[Key] | undefined
+  >;
+
+  const validationResult = validateField(fieldValidator, value);
+
+  const fieldMeta: FieldMeta = meta[name as string] ?? {};
+  const onChangeMeta: (newMeta: SetStateAction<FieldMeta>) => void = useCallback(
+    (newMeta) => {
+      const cb = typeof newMeta === 'function' ? newMeta : () => newMeta;
+      setMeta(name as string, cb);
+    },
+    [name, setMeta],
+  );
+
+  const isValid = validationResult == null;
+  const showError = !isValid && (fieldMeta?.isVisited || alwaysShowErrors);
+
+  return {
+    value,
+    onChange,
+    isValid,
+    showError,
+    validationResult: validationResult,
+    meta: fieldMeta,
+    onChangeMeta: onChangeMeta,
+    errorMessage: showError ? validationResultToErrorMessage(validationResult) : null,
   };
 }

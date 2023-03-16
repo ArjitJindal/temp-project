@@ -11,7 +11,7 @@ export type Validator<T> = (value: T) => ValidationResult;
 export type SimpleFieldValidator<T> = Validator<T>;
 
 export type ObjectFieldValidator<T> = {
-  [Key in keyof T]?: FieldValidator<T[Key]>;
+  [Key in keyof T]?: FieldValidator<T[Key] | undefined>;
 } & { nullable?: boolean };
 
 export type FieldValidator<T> = SimpleFieldValidator<T> | ObjectFieldValidator<T>;
@@ -19,8 +19,8 @@ export type FieldValidator<T> = SimpleFieldValidator<T> | ObjectFieldValidator<T
 export type GetFieldValidator<T> = T extends (infer K)[]
   ? FieldValidators<K>
   : T extends string | boolean | number | null | undefined
-  ? SimpleFieldValidator<T>
-  : ObjectFieldValidator<T>;
+  ? SimpleFieldValidator<T | undefined>
+  : ObjectFieldValidator<T | undefined>;
 
 export function isSimpleFieldValidator<T>(
   validator: FieldValidator<T>,

@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import s from './style.module.less';
 import TransactionIcon from './transaction-icon.react.svg';
 import { message } from '@/components/library/Message';
@@ -45,12 +45,6 @@ export interface FormValues {
   ruleParametersStep: RuleParametersStepFormValues;
 }
 
-const DEFAULT_INITIAL_VALUES: FormValues = {
-  basicDetailsStep: BASIC_DETAILS_STEP_INITIAL_VALUES,
-  standardFiltersStep: STANDARD_FILTERS_STEP_INITIAL_VALUES,
-  ruleParametersStep: RULE_PARAMETERS_STEP_INITIAL_VALUES,
-};
-
 interface Props {
   rule: Rule | null;
   isVisible: boolean;
@@ -73,6 +67,8 @@ export default function RuleConfigurationDrawer(props: Props) {
   } = props;
   const isPulseEnabled = useFeatureEnabled('PULSE');
 
+  const defaultInitialValues = useDefaultInitialValues(rule);
+
   const orderedProps = getOrderedProps(rule?.parametersSchema);
 
   let initialValues: FormValues;
@@ -84,43 +80,7 @@ export default function RuleConfigurationDrawer(props: Props) {
       ...formInitialValues,
     };
   } else {
-    const ruleParametersDefaultState = makeDefaultState(orderedProps);
-    const ruleParametersStep = {
-      ...DEFAULT_INITIAL_VALUES.ruleParametersStep,
-    };
-    if (isPulseEnabled) {
-      ruleParametersStep.riskLevelParameters = rule?.defaultRiskLevelParameters ?? {
-        VERY_HIGH: rule?.defaultParameters ?? ruleParametersDefaultState,
-        HIGH: rule?.defaultParameters ?? ruleParametersDefaultState,
-        MEDIUM: rule?.defaultParameters ?? ruleParametersDefaultState,
-        LOW: rule?.defaultParameters ?? ruleParametersDefaultState,
-        VERY_LOW: rule?.defaultParameters ?? ruleParametersDefaultState,
-      };
-      ruleParametersStep.riskLevelActions = rule?.defaultRiskLevelActions ?? {
-        VERY_HIGH: 'FLAG',
-        HIGH: 'FLAG',
-        MEDIUM: 'FLAG',
-        LOW: 'FLAG',
-        VERY_LOW: 'FLAG',
-      };
-    } else {
-      ruleParametersStep.ruleAction =
-        rule?.defaultAction ?? DEFAULT_INITIAL_VALUES.ruleParametersStep.ruleAction;
-      ruleParametersStep.ruleParameters =
-        rule?.defaultParameters ?? DEFAULT_INITIAL_VALUES.ruleParametersStep.ruleParameters;
-    }
-    initialValues = {
-      ...DEFAULT_INITIAL_VALUES,
-      basicDetailsStep: {
-        ruleName: rule?.name,
-        ruleDescription: rule?.description,
-        ruleNature: rule?.defaultNature ?? DEFAULT_INITIAL_VALUES.basicDetailsStep.ruleNature,
-        casePriority:
-          rule?.defaultCasePriority ?? DEFAULT_INITIAL_VALUES.basicDetailsStep.casePriority,
-      },
-      standardFiltersStep: rule?.defaultFilters ?? DEFAULT_INITIAL_VALUES.standardFiltersStep,
-      ruleParametersStep: ruleParametersStep,
-    };
+    initialValues = defaultInitialValues;
   }
 
   const [activeStepKey, setActiveStepKey] = useState(BASIC_DETAILS_STEP);
@@ -163,7 +123,6 @@ export default function RuleConfigurationDrawer(props: Props) {
         : undefined,
     },
   };
-
   const [formState, setFormState] = useState<FormValues>(initialValues);
 
   const STEPS = [
@@ -217,49 +176,42 @@ export default function RuleConfigurationDrawer(props: Props) {
   };
 
   return (
-    <Drawer
-      isVisible={isVisible}
-      onChangeVisibility={onChangeVisibility}
-      title="Configure rule"
-      description="Add all relevant information to configure this rule"
-      footer={
-        <div className={s.footer}>
-          <StepButtons
-            nextDisabled={activeStepIndex >= STEPS.length - 1}
-            prevDisabled={activeStepIndex === 0}
-            onNext={() => {
-              const nextStep = STEPS[activeStepIndex + 1];
-              setActiveStepKey(nextStep?.key);
-              setActiveTabKey(nextStep?.tabs[0]?.key);
-            }}
-            onPrevious={() => {
-              const prevStep = STEPS[activeStepIndex - 1];
-              setActiveStepKey(prevStep?.key);
-              setActiveTabKey(prevStep?.tabs[0]?.key);
-            }}
-          />
-          <Button
-            htmlAttrs={{ form: formId }}
-            htmlType="submit"
-            isLoading={isSubmitting}
-            isDisabled={readOnly}
-          >
-            Done
-          </Button>
-        </div>
-      }
+    <Form<FormValues>
+      key={`${isVisible}`}
+      id={formId}
+      initialValues={initialValues}
+      onSubmit={handleSubmit}
+      className={s.root}
+      fieldValidators={fieldValidators}
+      alwaysShowErrors={alwaysShowErrors}
+      onChange={({ values }) => {
+        setFormState(values);
+      }}
     >
-      <Form<FormValues>
-        key={`${isVisible}`}
-        id={formId}
-        initialValues={initialValues}
-        onSubmit={handleSubmit}
-        className={s.root}
-        fieldValidators={fieldValidators}
-        alwaysShowErrors={alwaysShowErrors}
-        onChange={({ values }) => {
-          setFormState(values);
-        }}
+      <Drawer
+        isVisible={isVisible}
+        onChangeVisibility={onChangeVisibility}
+        title="Configure rule"
+        description="Add all relevant information to configure this rule"
+        footer={
+          <div className={s.footer}>
+            <StepButtons
+              nextDisabled={activeStepIndex >= STEPS.length - 1}
+              prevDisabled={activeStepIndex === 0}
+              onNext={() => {
+                const nextStep = STEPS[activeStepIndex + 1];
+                setActiveStepKey(nextStep?.key);
+                setActiveTabKey(nextStep?.tabs[0]?.key);
+              }}
+              onPrevious={() => {
+                const prevStep = STEPS[activeStepIndex - 1];
+                setActiveStepKey(prevStep?.key);
+                setActiveTabKey(prevStep?.tabs[0]?.key);
+              }}
+            />
+            <SubmitButton formId={formId} isSubmitting={isSubmitting} readOnly={readOnly} />
+          </div>
+        }
       >
         <Stepper steps={STEPS} active={activeStepKey}>
           {(activeStepKey) => {
@@ -289,7 +241,11 @@ export default function RuleConfigurationDrawer(props: Props) {
                     )}
                     {activeStepKey === RULE_PARAMETERS_STEP && (
                       <NestedForm<FormValues> name={'ruleParametersStep'}>
-                        <RuleParametersStep activeTab={activeTabKey} rule={rule} />
+                        <RuleParametersStep
+                          activeTab={activeTabKey}
+                          rule={rule}
+                          defaultInitialValues={defaultInitialValues.ruleParametersStep}
+                        />
                       </NestedForm>
                     )}
                   </div>
@@ -298,7 +254,76 @@ export default function RuleConfigurationDrawer(props: Props) {
             );
           }}
         </Stepper>
-      </Form>
-    </Drawer>
+      </Drawer>
+    </Form>
   );
+}
+
+function SubmitButton(props: { formId: string; readOnly: boolean; isSubmitting: boolean }) {
+  return (
+    <Button
+      htmlAttrs={{ form: props.formId }}
+      htmlType="submit"
+      isLoading={props.isSubmitting}
+      isDisabled={props.readOnly}
+    >
+      Done
+    </Button>
+  );
+}
+
+function useDefaultInitialValues(rule: Rule | null) {
+  const isPulseEnabled = useFeatureEnabled('PULSE');
+
+  return useMemo(() => {
+    const orderedProps = getOrderedProps(rule?.parametersSchema);
+
+    const ruleParametersDefaultState = makeDefaultState(orderedProps);
+    const ruleParametersStep = {
+      ...RULE_PARAMETERS_STEP_INITIAL_VALUES,
+    };
+    if (isPulseEnabled) {
+      ruleParametersStep.riskLevelParameters = rule?.defaultRiskLevelParameters ?? {
+        VERY_HIGH: rule?.defaultParameters ?? ruleParametersDefaultState,
+        HIGH: rule?.defaultParameters ?? ruleParametersDefaultState,
+        MEDIUM: rule?.defaultParameters ?? ruleParametersDefaultState,
+        LOW: rule?.defaultParameters ?? ruleParametersDefaultState,
+        VERY_LOW: rule?.defaultParameters ?? ruleParametersDefaultState,
+      };
+      ruleParametersStep.riskLevelActions = rule?.defaultRiskLevelActions ?? {
+        VERY_HIGH: 'FLAG',
+        HIGH: 'FLAG',
+        MEDIUM: 'FLAG',
+        LOW: 'FLAG',
+        VERY_LOW: 'FLAG',
+      };
+    } else {
+      ruleParametersStep.ruleAction =
+        rule?.defaultAction ?? RULE_PARAMETERS_STEP_INITIAL_VALUES.ruleAction;
+      ruleParametersStep.ruleParameters =
+        rule?.defaultParameters ?? RULE_PARAMETERS_STEP_INITIAL_VALUES.ruleParameters;
+    }
+    return {
+      basicDetailsStep: {
+        ruleName: rule?.name,
+        ruleDescription: rule?.description,
+        ruleNature: rule?.defaultNature ?? BASIC_DETAILS_STEP_INITIAL_VALUES.ruleNature,
+        casePriority: rule?.defaultCasePriority ?? BASIC_DETAILS_STEP_INITIAL_VALUES.casePriority,
+      },
+      standardFiltersStep: rule?.defaultFilters ?? STANDARD_FILTERS_STEP_INITIAL_VALUES,
+      ruleParametersStep: ruleParametersStep,
+    };
+  }, [
+    isPulseEnabled,
+    rule?.defaultAction,
+    rule?.defaultCasePriority,
+    rule?.defaultFilters,
+    rule?.defaultNature,
+    rule?.defaultParameters,
+    rule?.defaultRiskLevelActions,
+    rule?.defaultRiskLevelParameters,
+    rule?.description,
+    rule?.name,
+    rule?.parametersSchema,
+  ]);
 }

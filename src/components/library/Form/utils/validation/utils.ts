@@ -30,7 +30,7 @@ export function validateForm<FormValues>(
   }
   const fieldValidatorsEntries = Object.entries(fieldValidators ?? {}) as [
     string,
-    FieldValidator<FormValues[keyof FormValues]> | undefined,
+    FieldValidator<FormValues[keyof FormValues] | undefined> | undefined,
   ][];
 
   const fieldValidationErrors = fieldValidatorsEntries
@@ -55,8 +55,8 @@ export function validateForm<FormValues>(
 }
 
 export function validateField<T>(
-  fieldValidator: FieldValidator<T> | undefined,
-  value: T,
+  fieldValidator: FieldValidator<T | undefined> | undefined,
+  value: T | undefined,
 ): NestedValidationResult {
   if (fieldValidator == null) {
     return null;
@@ -130,4 +130,19 @@ export function checkFieldValid<T>(
     }
   }
   return true;
+}
+
+export function validationResultToErrorMessage(
+  validationResult: NestedValidationResult,
+): string | null {
+  if (validationResult == null) {
+    return null;
+  }
+  if (typeof validationResult === 'string') {
+    return validationResult;
+  }
+  return Object.entries(validationResult)
+    .map(([_, children]) => validationResultToErrorMessage(children))
+    .filter((x): x is string => x != null)
+    .join('; ');
 }
