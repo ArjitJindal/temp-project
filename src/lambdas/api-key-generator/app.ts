@@ -109,6 +109,10 @@ export const createMongoDBCollections = async (
       'originPaymentDetails.method': 1,
     })
     await transactionCollection.createIndex({
+      'originPaymentDetails.method': 1,
+      'originPaymentDetails.paymentChannel': 1,
+    })
+    await transactionCollection.createIndex({
       transactionState: 1,
     })
     await transactionCollection.createIndex({

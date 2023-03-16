@@ -1390,6 +1390,9 @@ export class TransactionRepository {
         break
       case 'PAYMENT_CHANNEL':
         fieldPath = 'originPaymentDetails.paymentChannel'
+        filterConditions.push({
+          'originPaymentDetails.method': 'CARD',
+        })
         break
       case 'TAGS_KEY':
         fieldPath = 'tags.key'
