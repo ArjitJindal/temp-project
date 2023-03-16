@@ -1,4 +1,4 @@
-import React, { useRef } from 'react';
+import React, { useMemo, useRef } from 'react';
 import { DrawerForm, ProFormInstance, ProFormSelect, ProFormText } from '@ant-design/pro-form';
 import { PlusOutlined } from '@ant-design/icons';
 import { sentenceCase } from '@antv/x6/es/util/string/format';
@@ -6,10 +6,16 @@ import { message } from '@/components/library/Message';
 import Button from '@/components/library/Button';
 import { useApi } from '@/api';
 import { Account, AccountRole } from '@/apis';
-import { useQuery } from '@/utils/queries/hooks';
-import { ROLES_LIST } from '@/utils/queries/keys';
+import { usePaginatedQuery, useQuery } from '@/utils/queries/hooks';
+import { ACCOUNT_LIST, ROLES_LIST } from '@/utils/queries/keys';
 import AsyncResourceRenderer from '@/components/common/AsyncResourceRenderer';
 import { getErrorMessage } from '@/utils/lang';
+import { useSettings } from '@/components/AppWrapper/Providers/SettingsProvider';
+import { isSuccess } from '@/utils/asyncResource';
+import { getBranding } from '@/utils/branding';
+import { useApiTime } from '@/utils/tracker';
+import { UserRole, parseUserRole } from '@/utils/user-utils';
+import { P } from '@/components/ui/Typography';
 
 interface Props {
   editAccount: Account | null;
@@ -18,12 +24,55 @@ interface Props {
 export default function AccountForm(props: Props) {
   const { editAccount, onSuccess } = props;
   const api = useApi();
+  const measure = useApiTime();
+
   const formRef = useRef<ProFormInstance>();
   const rolesResp = useQuery<AccountRole[]>(ROLES_LIST(), async () => {
     return await api.getRoles();
   });
+  const branding = getBranding();
+
+  const settings = useSettings();
+  const maxSeats = settings.limits?.seats;
+
   const isEdit = editAccount !== null;
+
+  const accountsResult = usePaginatedQuery<Account>(ACCOUNT_LIST(), async () => {
+    const accounts = await measure(() => api.getAccounts(), 'Get accounts');
+    const filteredAccounts = accounts.filter(
+      (account) => parseUserRole(account.role) !== UserRole.ROOT && !account.blocked,
+    );
+
+    return {
+      items: filteredAccounts,
+      success: true,
+      total: filteredAccounts.length,
+    };
+  });
   // todo: i18n
+
+  const isInviteDisabled = useMemo(() => {
+    if (isEdit) {
+      return false;
+    }
+
+    if (!isSuccess(accountsResult.data)) {
+      return true;
+    }
+
+    if (!maxSeats) {
+      return true;
+    }
+
+    const existingSeats = accountsResult.data.value?.total;
+
+    if (existingSeats == null) {
+      return true;
+    }
+
+    return existingSeats >= maxSeats;
+  }, [accountsResult, maxSeats, isEdit]);
+
   const initialValues =
     editAccount != null
       ? editAccount
@@ -77,6 +126,7 @@ export default function AccountForm(props: Props) {
           {isEdit ? 'Edit' : 'Invite'}
         </Button>
       }
+      disabled={isInviteDisabled}
       submitter={{
         searchConfig: {
           resetText: 'Cancel',
@@ -123,6 +173,13 @@ export default function AccountForm(props: Props) {
           />
         )}
       </AsyncResourceRenderer>
+      {isInviteDisabled && (
+        <P variant="sml">
+          You have reached maximum no. of Seats ({maxSeats}). Please contact support at{' '}
+          <a href={`mailto:${branding.supportEmail}`}>{branding.supportEmail}</a> if you want
+          additional seats
+        </P>
+      )}
     </DrawerForm>
   );
 }

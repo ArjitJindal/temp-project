@@ -2,6 +2,8 @@ import { Divider, Form, Input, message, Modal, Select } from 'antd';
 import React, { ChangeEvent, useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { validate } from 'uuid';
+import Label from '../library/Label';
+import NumberInput from '../library/NumberInput';
 import { CreateTenantModal } from './CreateTenantModal';
 import { useApi } from '@/api';
 import Button from '@/components/library/Button';
@@ -27,8 +29,9 @@ export const FEATURES: Feature[] = [
 export default function SuperAdminPanel() {
   const [isModalVisible, setIsModalVisible] = useState(false);
   const [showCreateTenantModal, setShowCreateTenantModal] = useState(false);
-  const initialFeatures = useFeatures();
   const settings = useSettings();
+  const [maxSeats, setMaxSeats] = useState<number | undefined>(settings.limits?.seats);
+  const initialFeatures = useFeatures();
   const [features, setFeatures] = useState<Feature[] | undefined>(undefined);
   const [complyAdvantageSearchProfileId, setSearchProfileId] = useState<string>(
     settings.complyAdvantageSearchProfileId || '',
@@ -93,6 +96,18 @@ export default function SuperAdminPanel() {
     setIsModalVisible(false);
   };
 
+  const handleMaxSeats = async (newMaxSeats: number) => {
+    const hideMessage = message.loading('Saving...');
+    try {
+      await api.postTenantsSettings({ TenantSettings: { limits: { seats: newMaxSeats } } });
+      hideMessage();
+      message.success('Saved');
+    } catch (e) {
+      hideMessage();
+      message.error(e as Error);
+    }
+  };
+
   return (
     <>
       <Button size="SMALL" onClick={showModal}>
@@ -136,6 +151,31 @@ export default function SuperAdminPanel() {
               value={features || initialFeatures}
             />
           </Form.Item>
+          <Label
+            label="Max Seats"
+            description="The maximum number of seats allowed for this tenant"
+            element="div"
+          >
+            <NumberInput
+              value={maxSeats}
+              onChange={(value) => setMaxSeats(value)}
+              isDisabled={false}
+            />
+          </Label>
+          <Button
+            type="PRIMARY"
+            size="SMALL"
+            onClick={() => {
+              if (maxSeats) {
+                handleMaxSeats(maxSeats);
+              }
+            }}
+            style={{
+              marginTop: 8,
+            }}
+          >
+            Save
+          </Button>
           <Form.Item label="CA Search Profile ID">
             <Input value={complyAdvantageSearchProfileId} onChange={handleChangeSearchProfileID} />
           </Form.Item>
