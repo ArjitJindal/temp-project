@@ -3922,6 +3922,7 @@ components:
         - EXTERNAL_PAYMENT
         - WITHDRAWAL
         - REFUND
+        - OTHER
     WebhookEvent:
       title: WebhookEvent
       x-stoplight:
