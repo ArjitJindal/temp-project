@@ -3185,9 +3185,7 @@ paths:
           content:
             application/json:
               schema:
-                type: array
-                items:
-                  $ref: '#/components/schemas/SanctionsSearchHistory'
+                $ref: '#/components/schemas/SanctionsSearchHistoryResponse'
       parameters:
         - schema:
             $ref: '#/components/schemas/PageSize'
@@ -5168,6 +5166,18 @@ components:
         - total
         - data
         - searchId
+    SanctionsSearchHistoryResponse:
+      title: SanctionsSearchHistoryResponse
+      x-stoplight:
+        id: ldj2zpwhzk8s6
+      type: object
+      properties:
+        total:
+          type: number
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/SanctionsSearchHistory'
     SanctionsSearchHistory:
       title: SanctionsSearchHistory
       x-stoplight:

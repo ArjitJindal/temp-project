@@ -37,6 +37,7 @@ export const sanctionsHandler = lambdaApi({ requiredFeatures: ['SANCTIONS'] })(
     ) {
       const q = event.queryStringParameters as any
       const params: DefaultApiGetSanctionsSearchRequest = {
+        // TODO: add date after & before properties
         page: q.page,
         pageSize: q.pageSize,
       }

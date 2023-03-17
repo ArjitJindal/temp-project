@@ -10,6 +10,7 @@ import { getMongoDbClient } from '@/utils/mongoDBUtils'
 import { DefaultApiGetSanctionsSearchRequest } from '@/@types/openapi-internal/RequestParameters'
 import { SanctionsSearchHistory } from '@/@types/openapi-internal/SanctionsSearchHistory'
 import { getSecret } from '@/utils/secrets-manager'
+import { SanctionsSearchHistoryResponse } from '@/@types/openapi-internal/SanctionsSearchHistoryResponse'
 
 const COMPLYADVANTAGE_SEARCH_API_URI =
   'https://api.complyadvantage.com/searches'
@@ -86,7 +87,8 @@ export class SanctionsService {
 
   public async getSearchHistory(
     params: DefaultApiGetSanctionsSearchRequest
-  ): Promise<SanctionsSearchHistory[]> {
+  ): Promise<SanctionsSearchHistoryResponse> {
+    // TODO: also based on params, filter return results based on dates
     await this.initPromise
     return this.sanctionsSearchRepository.getSearchHistory(params)
   }

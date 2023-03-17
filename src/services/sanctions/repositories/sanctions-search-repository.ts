@@ -1,4 +1,4 @@
-import { MongoClient } from 'mongodb'
+import { AggregationCursor, MongoClient, Document } from 'mongodb'
 import { SanctionsSearchHistory } from '@/@types/openapi-internal/SanctionsSearchHistory'
 import {
   paginateCursor,
@@ -7,6 +7,7 @@ import {
 import { SanctionsSearchRequest } from '@/@types/openapi-internal/SanctionsSearchRequest'
 import { SanctionsSearchResponse } from '@/@types/openapi-internal/SanctionsSearchResponse'
 import { PaginationParams } from '@/utils/pagination'
+import { SanctionsSearchHistoryResponse } from '@/@types/openapi-internal/SanctionsSearchHistoryResponse'
 
 export class SanctionsSearchRepository {
   tenantId: string
@@ -33,9 +34,26 @@ export class SanctionsSearchRepository {
     })
   }
 
+  private async getSanctionsSearchCount(): Promise<number> {
+    const db = this.mongoDb.db()
+    const collection = db.collection<SanctionsSearchHistory>(
+      SANCTIONS_SEARCHES_COLLECTION(this.tenantId)
+    )
+    const pipeline: Document[] = [
+      {
+        $count: 'count',
+      },
+    ]
+
+    const result: AggregationCursor<{ count: number }> =
+      await collection.aggregate(pipeline)
+    const item = await result.next()
+    return item?.count ?? 0
+  }
+
   public async getSearchHistory(
     params: PaginationParams
-  ): Promise<SanctionsSearchHistory[]> {
+  ): Promise<SanctionsSearchHistoryResponse> {
     const db = this.mongoDb.db()
     const collection = db.collection<SanctionsSearchHistory>(
       SANCTIONS_SEARCHES_COLLECTION(this.tenantId)
@@ -44,7 +62,8 @@ export class SanctionsSearchRepository {
       .find({}, { projection: { response: false } })
       .sort({ createdAt: -1 })
     cursor = paginateCursor(cursor, params)
-    return await cursor.toArray()
+    const total = this.getSanctionsSearchCount()
+    return { total: await total, items: await cursor.toArray() }
   }
 
   public async getSearchResult(
