@@ -341,26 +341,32 @@ export default function CaseTable(props: Props) {
               );
             },
           },
-          {
-            title: 'Last update time',
-            exportData: 'lastStatusChange.timestamp',
-            width: 160,
-            hideInSearch: false,
-            valueType: 'dateTimeRange',
-            dataIndex: 'lastStatusChange.timestamp',
-            sorter: true,
-            onCell: onCaseCell,
-            render: (dom, entity) => {
-              return entity.lastStatusChange ? (
-                <TimestampDisplay timestamp={entity.lastStatusChange.timestamp} />
-              ) : (
-                '-'
-              );
-            },
-          },
         ] as TableColumn<TableItem>[]),
       );
     }
+
+    mergedColumns.push(
+      ...([
+        {
+          title: 'Last update time',
+          exportData: 'lastStatusChange.timestamp',
+          width: 160,
+          hideInSearch: false,
+          valueType: 'dateTimeRange',
+          dataIndex: 'lastStatusChange.timestamp',
+          sorter: true,
+          onCell: onCaseCell,
+          render: (dom, entity) => {
+            return entity.lastStatusChange ? (
+              <TimestampDisplay timestamp={entity.lastStatusChange.timestamp} />
+            ) : (
+              '-'
+            );
+          },
+        },
+      ] as TableColumn<TableItem>[]),
+    );
+
     return mergedColumns;
   }, [
     user.userId,
