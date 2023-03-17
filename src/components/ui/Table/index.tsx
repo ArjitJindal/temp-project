@@ -25,10 +25,10 @@ import {
   TableRow,
 } from './types';
 import Filters from './Filters';
-import DownloadButton from './DownloadButton';
 import { isEqual } from '@/utils/lang';
 import { usePrevious } from '@/utils/hooks';
-import ResizableTitle from '@/utils/table-utils';
+import { ResizableTitle } from '@/utils/table-utils';
+import DownloadButton from '@/components/ui/Table/DownloadButton';
 import { PaginationParams } from '@/utils/queries/hooks';
 import Pagination from '@/components/library/Pagination';
 import Checkbox from '@/components/library/Checkbox';
