@@ -8,13 +8,13 @@ import {
   createTransactionRuleTestCase,
   TransactionRuleTestCase,
   testRuleDescriptionFormatting,
-  ruleAggregationTest,
+  ruleVariantsTest,
 } from '@/test-utils/rule-test-utils'
 import { dynamoDbSetupHook } from '@/test-utils/dynamodb-test-utils'
 
 dynamoDbSetupHook()
 
-ruleAggregationTest(() => {
+ruleVariantsTest(true, () => {
   describe('R-77 description formatting', () => {
     const TEST_TENANT_ID = getTestTenantId()
     setUpRulesHooks(TEST_TENANT_ID, [

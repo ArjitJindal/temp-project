@@ -11,7 +11,7 @@ import {
   TRANSACTIONS_COLLECTION,
 } from '@/utils/mongoDBUtils'
 import { TransactionCaseManagement } from '@/@types/openapi-internal/TransactionCaseManagement'
-import { TransactionRepository } from '@/services/rules-engine/repositories/transaction-repository'
+import { DynamoDbTransactionRepository } from '@/services/rules-engine/repositories/dynamodb-transaction-repository'
 import { Transaction } from '@/@types/openapi-public/Transaction'
 
 export async function migrateTenant(
@@ -62,9 +62,10 @@ export async function migrateTenant(
     )
     for (const transactionsChunk of _.chunk(transactionsBatch, CHUNK_SIZE)) {
       const dynamoDb = getDynamoDbClient()
-      const transactionRepository = new TransactionRepository(tenant.id, {
-        dynamoDb,
-      })
+      const transactionRepository = new DynamoDbTransactionRepository(
+        tenant.id,
+        dynamoDb
+      )
       batch += 1
       await Promise.all(
         transactionsChunk.map(async (transaction) => {

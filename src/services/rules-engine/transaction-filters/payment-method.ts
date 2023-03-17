@@ -1,12 +1,12 @@
 import { JSONSchemaType } from 'ajv'
 import { PAYMENT_METHOD_OPTIONAL_SCHEMA } from '../utils/rule-parameter-schemas'
 import { TransactionRuleFilter } from './filter'
-import { PaymentMethods } from '@/@types/openapi-public/PaymentMethods'
+import { PaymentMethod } from '@/@types/openapi-public/PaymentMethod'
 import { Transaction } from '@/@types/openapi-public/Transaction'
 
 export function paymentMethodRuleFilterPredicate(
   transaction: Transaction,
-  paymentMethod?: PaymentMethods
+  paymentMethod?: PaymentMethod
 ) {
   return (
     transaction.originPaymentDetails?.method === paymentMethod ||
@@ -15,7 +15,7 @@ export function paymentMethodRuleFilterPredicate(
 }
 
 export type PaymentMethodRuleFilterParameter = {
-  paymentMethod?: PaymentMethods
+  paymentMethod?: PaymentMethod
 }
 
 export class PaymentMethodRuleFilter extends TransactionRuleFilter<PaymentMethodRuleFilterParameter> {

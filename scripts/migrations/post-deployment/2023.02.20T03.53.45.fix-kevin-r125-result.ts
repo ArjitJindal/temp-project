@@ -13,7 +13,7 @@ import { Case } from '@/@types/openapi-internal/Case'
 import { getDynamoDbClient } from '@/utils/dynamodb'
 import { DynamoDbKeys } from '@/core/dynamodb/dynamodb-keys'
 import { RuleInstanceRepository } from '@/services/rules-engine/repositories/rule-instance-repository'
-import { TransactionRepository } from '@/services/rules-engine/repositories/transaction-repository'
+import { MongoDbTransactionRepository } from '@/services/rules-engine/repositories/mongodb-transaction-repository'
 import { TransactionWithRulesResult } from '@/@types/openapi-internal/TransactionWithRulesResult'
 
 // R-125
@@ -85,7 +85,7 @@ async function migrateTenant(tenant: Tenant) {
       },
       {
         ...updatedTransaction,
-        status: TransactionRepository.getAggregatedRuleStatus(
+        status: MongoDbTransactionRepository.getAggregatedRuleStatus(
           updatedTransaction.executedRules
             .filter((rule) => rule.ruleHit)
             .map((rule) => rule.ruleAction)

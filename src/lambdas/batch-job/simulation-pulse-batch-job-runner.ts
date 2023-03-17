@@ -15,7 +15,7 @@ import { RiskLevel } from '@/@types/openapi-internal/RiskLevel'
 import { SimulationPulseStatisticsResult } from '@/@types/openapi-internal/SimulationPulseStatisticsResult'
 import { RiskScoringService } from '@/services/risk-scoring'
 import { ParameterAttributeRiskValues } from '@/@types/openapi-internal/ParameterAttributeRiskValues'
-import { TransactionRepository } from '@/services/rules-engine/repositories/transaction-repository'
+import { MongoDbTransactionRepository } from '@/services/rules-engine/repositories/mongodb-transaction-repository'
 import { getUserName } from '@/utils/helpers'
 
 type SimulationResult = {
@@ -29,7 +29,7 @@ type SimulationResult = {
 export class SimulationPulseBatchJobRunner extends BatchJobRunner {
   usersRepository?: UserRepository
   riskRepository?: RiskRepository
-  transactionRepository?: TransactionRepository
+  transactionRepository?: MongoDbTransactionRepository
   riskScoringService?: RiskScoringService
 
   public async run(job: SimulationPulseBatchJob) {
@@ -37,9 +37,10 @@ export class SimulationPulseBatchJobRunner extends BatchJobRunner {
     const dynamoDb = getDynamoDbClient(awsCredentials)
     const mongoDb = await getMongoDbClient()
     this.usersRepository = new UserRepository(tenantId, { mongoDb })
-    this.transactionRepository = new TransactionRepository(tenantId, {
-      mongoDb,
-    })
+    this.transactionRepository = new MongoDbTransactionRepository(
+      tenantId,
+      mongoDb
+    )
     this.riskRepository = new RiskRepository(tenantId, { dynamoDb })
     this.riskScoringService = new RiskScoringService(tenantId, {
       mongoDb,

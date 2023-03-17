@@ -4,7 +4,7 @@ import { FileInfo } from '@/@types/openapi-internal/FileInfo'
 import { DefaultApiGetTransactionsListRequest } from '@/@types/openapi-internal/RequestParameters'
 import { TransactionsListResponse } from '@/@types/openapi-internal/TransactionsListResponse'
 import { TransactionUpdateRequest } from '@/@types/openapi-internal/TransactionUpdateRequest'
-import { TransactionRepository } from '@/services/rules-engine/repositories/transaction-repository'
+import { MongoDbTransactionRepository } from '@/services/rules-engine/repositories/mongodb-transaction-repository'
 import { TransactionStatusChange } from '@/@types/openapi-internal/TransactionStatusChange'
 import { TransactionCaseManagement } from '@/@types/openapi-internal/TransactionCaseManagement'
 import { Currency } from '@/utils/currency-utils'
@@ -15,14 +15,14 @@ import { RiskRepository } from '@/services/risk-scoring/repositories/risk-reposi
 import { getRiskLevelFromScore } from '@/services/risk-scoring/utils'
 
 export class TransactionService {
-  transactionRepository: TransactionRepository
+  transactionRepository: MongoDbTransactionRepository
   s3: AWS.S3
   documentBucketName: string
   tmpBucketName: string
   riskRepository: RiskRepository
 
   constructor(
-    transactionRepository: TransactionRepository,
+    transactionRepository: MongoDbTransactionRepository,
     riskRepository: RiskRepository,
     s3: AWS.S3,
     tmpBucketName: string,

@@ -10,16 +10,14 @@ import { migrateAllTenants } from '../utils/tenant'
 import { Tenant } from '@/services/accounts'
 import { CaseRepository } from '@/services/rules-engine/repositories/case-repository'
 import { getMongoDbClient } from '@/utils/mongoDBUtils'
-import { TransactionRepository } from '@/services/rules-engine/repositories/transaction-repository'
+import { MongoDbTransactionRepository } from '@/services/rules-engine/repositories/mongodb-transaction-repository'
 
 async function migrateTenant(tenant: Tenant, revert: boolean) {
   const mongoDb = await getMongoDbClient()
   const caseRepository = new CaseRepository(tenant.id, {
     mongoDb,
   })
-  const transactionsRepo = new TransactionRepository(tenant.id, {
-    mongoDb,
-  })
+  const transactionsRepo = new MongoDbTransactionRepository(tenant.id, mongoDb)
   const cursor = await caseRepository.getCasesCursor({
     includeTransactions: false,
     pageSize: 'DISABLED',

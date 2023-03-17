@@ -32,6 +32,7 @@ import { DemoModeDataLoadBatchJob } from '@/@types/batch-job'
 import { getFullTenantId } from '@/lambdas/jwt-authorizer/app'
 import { createNewApiKeyForTenant } from '@/services/api-key'
 import { WebhookConfiguration } from '@/@types/openapi-internal/WebhookConfiguration'
+import { PAYMENT_METHOD_IDENTIFIER_FIELDS } from '@/core/dynamodb/dynamodb-keys'
 
 export type ApiKeyGeneratorQueryStringParameters = {
   tenantId: string
@@ -106,6 +107,12 @@ export const createMongoDBCollections = async (
       'destinationPaymentDetails.method': 1,
     })
     await transactionCollection.createIndex({
+      'originAmountDetails.country': 1,
+    })
+    await transactionCollection.createIndex({
+      'destinationPaymentDetails.country': 1,
+    })
+    await transactionCollection.createIndex({
       'originPaymentDetails.method': 1,
     })
     await transactionCollection.createIndex({
@@ -116,11 +123,29 @@ export const createMongoDBCollections = async (
       transactionState: 1,
     })
     await transactionCollection.createIndex({
+      type: 1,
+    })
+    await transactionCollection.createIndex({
       'tags.key': 1,
     })
     await transactionCollection.createIndex({
       'hitRules.ruleAction': 1,
     })
+
+    for (const fields of Object.values(PAYMENT_METHOD_IDENTIFIER_FIELDS)) {
+      await transactionCollection.createIndex({
+        'originPaymentDetails.method': 1,
+        ...Object.fromEntries(
+          fields.map((field) => [`originPaymentDetails.${field}`, 1])
+        ),
+      })
+      await transactionCollection.createIndex({
+        'destinationPaymentDetails.method': 1,
+        ...Object.fromEntries(
+          fields.map((field) => [`destinationPaymentDetails.${field}`, 1])
+        ),
+      })
+    }
 
     try {
       await db.createCollection(USERS_COLLECTION(tenantId))

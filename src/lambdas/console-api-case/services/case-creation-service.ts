@@ -10,7 +10,7 @@ import { RuleInstanceRepository } from '@/services/rules-engine/repositories/rul
 import { TransactionWithRulesResult } from '@/@types/openapi-public/TransactionWithRulesResult'
 import { InternalConsumerUser } from '@/@types/openapi-internal/InternalConsumerUser'
 import { InternalBusinessUser } from '@/@types/openapi-internal/InternalBusinessUser'
-import { TransactionRepository } from '@/services/rules-engine/repositories/transaction-repository'
+import { MongoDbTransactionRepository } from '@/services/rules-engine/repositories/mongodb-transaction-repository'
 import { RuleHitDirection } from '@/@types/openapi-public/RuleHitDirection'
 import { Priority } from '@/@types/openapi-public-management/Priority'
 import { CaseTransaction } from '@/@types/openapi-internal/CaseTransaction'
@@ -24,13 +24,13 @@ export class CaseCreationService {
   caseRepository: CaseRepository
   userRepository: UserRepository
   ruleInstanceRepository: RuleInstanceRepository
-  transactionRepository: TransactionRepository
+  transactionRepository: MongoDbTransactionRepository
 
   constructor(
     caseRepository: CaseRepository,
     userRepository: UserRepository,
     ruleInstanceRepository: RuleInstanceRepository,
-    transactionRepository: TransactionRepository
+    transactionRepository: MongoDbTransactionRepository
   ) {
     this.caseRepository = caseRepository
     this.userRepository = userRepository

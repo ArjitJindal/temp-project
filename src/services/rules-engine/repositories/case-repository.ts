@@ -33,7 +33,7 @@ import { User } from '@/@types/openapi-public/User'
 import { Business } from '@/@types/openapi-public/Business'
 import { Tag } from '@/@types/openapi-public/Tag'
 import { TransactionsListResponse } from '@/@types/openapi-internal/TransactionsListResponse'
-import { TransactionRepository } from '@/services/rules-engine/repositories/transaction-repository'
+import { MongoDbTransactionRepository } from '@/services/rules-engine/repositories/mongodb-transaction-repository'
 import { RulesHitPerCase } from '@/@types/openapi-internal/RulesHitPerCase'
 import { RiskRepository } from '@/services/risk-scoring/repositories/risk-repository'
 import {
@@ -1136,9 +1136,10 @@ export class CaseRepository {
       includeUsers?: boolean
     }
   ): Promise<TransactionsListResponse> {
-    const transactionsRepo = new TransactionRepository(this.tenantId, {
-      mongoDb: this.mongoDb,
-    })
+    const transactionsRepo = new MongoDbTransactionRepository(
+      this.tenantId,
+      this.mongoDb
+    )
 
     const caseItem = await this.getCaseById(caseId)
     if (caseItem == null) {
@@ -1172,9 +1173,10 @@ export class CaseRepository {
       throw new NotFound(`Alert "${alertId}" not found `)
     }
 
-    const transactionsRepo = new TransactionRepository(this.tenantId, {
-      mongoDb: this.mongoDb,
-    })
+    const transactionsRepo = new MongoDbTransactionRepository(
+      this.tenantId,
+      this.mongoDb
+    )
 
     return await transactionsRepo.getTransactions({
       filterIdList: alert.transactionIds,

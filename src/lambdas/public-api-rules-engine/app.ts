@@ -8,8 +8,8 @@ import { getDynamoDbClientByEvent } from '@/utils/dynamodb'
 import { lambdaApi } from '@/core/middlewares/lambda-api-middlewares'
 import {
   getNewTransactionID,
-  TransactionRepository,
-} from '@/services/rules-engine/repositories/transaction-repository'
+  DynamoDbTransactionRepository,
+} from '@/services/rules-engine/repositories/dynamodb-transaction-repository'
 import { RulesEngineService } from '@/services/rules-engine'
 import { ConsumerUserEvent } from '@/@types/openapi-public/ConsumerUserEvent'
 import { TransactionEvent } from '@/@types/openapi-public/TransactionEvent'
@@ -93,9 +93,10 @@ async function getMissingRelatedTransactions(
   tenantId: string,
   dynamoDb: DynamoDBDocumentClient
 ) {
-  const transactionRepository = new TransactionRepository(tenantId, {
-    dynamoDb,
-  })
+  const transactionRepository = new DynamoDbTransactionRepository(
+    tenantId,
+    dynamoDb
+  )
   const relatedTransactions = await transactionRepository.getTransactionsByIds(
     relatedTransactionIds
   )
@@ -169,9 +170,10 @@ export const transactionHandler = lambdaApi()(
       logger.info(`Completed processing transaction`)
       return result
     } else if (event.httpMethod === 'GET' && pathTransactionId) {
-      const transactionRepository = new TransactionRepository(tenantId, {
-        dynamoDb,
-      })
+      const transactionRepository = new DynamoDbTransactionRepository(
+        tenantId,
+        dynamoDb
+      )
       const result = await transactionRepository.getTransactionById(
         pathTransactionId
       )

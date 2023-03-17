@@ -1,6 +1,6 @@
 import { JSONSchemaType } from 'ajv'
 import _ from 'lodash'
-import { AuxiliaryIndexTransaction } from '../repositories/transaction-repository'
+import { AuxiliaryIndexTransaction } from '../repositories/transaction-repository-interface'
 import {
   getTransactionUserPastTransactionsByDirection,
   groupTransactionsByHour,

@@ -12,9 +12,9 @@ import {
   getTransactionUserPastTransactionsByDirection,
   groupTransactionsByHour,
 } from '../utils/transaction-rule-utils'
+import { AuxiliaryIndexTransaction } from '../repositories/transaction-repository-interface'
 import { TransactionAggregationRule } from './aggregation-rule'
 import { CurrencyCode } from '@/@types/openapi-public/CurrencyCode'
-import { AuxiliaryIndexTransaction } from '@/services/rules-engine/repositories/transaction-repository'
 import { getTimestampRange } from '@/services/rules-engine/utils/time-utils'
 import { TransactionAmountDetails } from '@/@types/openapi-public/TransactionAmountDetails'
 import { RuleHitResultItem } from '@/services/rules-engine/rule'

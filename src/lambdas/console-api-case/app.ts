@@ -28,7 +28,7 @@ import { TransactionState } from '@/@types/openapi-internal/TransactionState'
 import { CaseCreationService } from '@/lambdas/console-api-case/services/case-creation-service'
 import { UserRepository } from '@/services/users/repositories/user-repository'
 import { RuleInstanceRepository } from '@/services/rules-engine/repositories/rule-instance-repository'
-import { TransactionRepository } from '@/services/rules-engine/repositories/transaction-repository'
+import { MongoDbTransactionRepository } from '@/services/rules-engine/repositories/mongodb-transaction-repository'
 import { isValidSortOrder } from '@/@types/openapi-internal-custom/SortOrder'
 
 export type CaseConfig = {
@@ -54,7 +54,10 @@ export const casesHandler = lambdaApi()(
     const caseRepository = new CaseRepository(tenantId, dbs)
     const userService = new UserRepository(tenantId, dbs)
     const ruleInstanceRepository = new RuleInstanceRepository(tenantId, dbs)
-    const transactionRepository = new TransactionRepository(tenantId, dbs)
+    const transactionRepository = new MongoDbTransactionRepository(
+      tenantId,
+      client
+    )
 
     const dashboardStatsRepository = new DashboardStatsRepository(tenantId, {
       mongoDb: client,

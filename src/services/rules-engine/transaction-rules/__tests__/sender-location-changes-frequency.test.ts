@@ -8,13 +8,13 @@ import {
   createTransactionRuleTestCase,
   TransactionRuleTestCase,
   testRuleDescriptionFormatting,
-  ruleAggregationTest,
+  ruleVariantsTest,
 } from '@/test-utils/rule-test-utils'
 import { dynamoDbSetupHook } from '@/test-utils/dynamodb-test-utils'
 
 dynamoDbSetupHook()
 
-ruleAggregationTest(() => {
+ruleVariantsTest(true, () => {
   describe('Core logic', () => {
     const TEST_TENANT_ID = getTestTenantId()
 

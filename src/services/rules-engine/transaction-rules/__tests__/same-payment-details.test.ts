@@ -5,7 +5,7 @@ import { getTestTenantId } from '@/test-utils/tenant-test-utils'
 import { getTestTransaction } from '@/test-utils/transaction-test-utils'
 import {
   createTransactionRuleTestCase,
-  ruleAggregationTest,
+  ruleVariantsTest,
   setUpRulesHooks,
   testRuleDescriptionFormatting,
   TransactionRuleTestCase,
@@ -43,7 +43,7 @@ function getDefaultParams(): SamePaymentDetailsParameters {
 
 const defaultParams = getDefaultParams()
 
-ruleAggregationTest(() => {
+ruleVariantsTest(true, () => {
   describe('Core login', () => {
     const now = dayjs('2022-01-01T00:00:00.000Z')
 

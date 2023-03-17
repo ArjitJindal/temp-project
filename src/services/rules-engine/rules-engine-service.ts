@@ -5,7 +5,7 @@ import { RiskRepository } from '../risk-scoring/repositories/risk-repository'
 import { UserRepository } from '../users/repositories/user-repository'
 import { DEFAULT_RISK_LEVEL } from '../risk-scoring/utils'
 import { TenantRepository } from '../tenants/repositories/tenant-repository'
-import { TransactionRepository } from './repositories/transaction-repository'
+import { DynamoDbTransactionRepository } from './repositories/dynamodb-transaction-repository'
 import { TransactionEventRepository } from './repositories/transaction-event-repository'
 import { RuleRepository } from './repositories/rule-repository'
 import { RuleInstanceRepository } from './repositories/rule-instance-repository'
@@ -21,6 +21,7 @@ import {
   UserFilters,
   USER_FILTERS,
 } from './filters'
+import { MongoDbTransactionRepository } from './repositories/mongodb-transaction-repository'
 import { Transaction } from '@/@types/openapi-public/Transaction'
 import { TransactionMonitoringResult } from '@/@types/openapi-public/TransactionMonitoringResult'
 import { logger } from '@/core/logger'
@@ -45,6 +46,7 @@ import { TransactionEventMonitoringResult } from '@/@types/openapi-public/Transa
 import { TransactionWithRulesResult } from '@/@types/openapi-public/TransactionWithRulesResult'
 import { RULE_EXECUTION_TIME_MS_METRIC } from '@/core/cloudwatch/metrics'
 import { addNewSubsegment } from '@/core/xray'
+import { getMongoDbClient } from '@/utils/mongoDBUtils'
 
 const ruleAscendingComparator = (
   rule1: HitRulesDetails,
@@ -58,7 +60,7 @@ export type DuplicateTransactionReturnType = TransactionMonitoringResult & {
 export class RulesEngineService {
   tenantId: string
   dynamoDb: DynamoDBDocumentClient
-  transactionRepository: TransactionRepository
+  transactionRepository: DynamoDbTransactionRepository
   transactionEventRepository: TransactionEventRepository
   ruleRepository: RuleRepository
   ruleInstanceRepository: RuleInstanceRepository
@@ -69,9 +71,10 @@ export class RulesEngineService {
   constructor(tenantId: string, dynamoDb: DynamoDBDocumentClient) {
     this.dynamoDb = dynamoDb
     this.tenantId = tenantId
-    this.transactionRepository = new TransactionRepository(tenantId, {
-      dynamoDb,
-    })
+    this.transactionRepository = new DynamoDbTransactionRepository(
+      tenantId,
+      dynamoDb
+    )
     this.transactionEventRepository = new TransactionEventRepository(tenantId, {
       dynamoDb,
     })
@@ -354,7 +357,12 @@ export class RulesEngineService {
           { parameters, filters: ruleFilters },
           { ruleInstance },
           this.dynamoDb,
-          new TransactionRepository(this.tenantId, { dynamoDb: this.dynamoDb })
+          process.env.RULES_ENGINE_USE_MONGODB
+            ? new MongoDbTransactionRepository(
+                this.tenantId,
+                await getMongoDbClient()
+              )
+            : new DynamoDbTransactionRepository(this.tenantId, this.dynamoDb)
         )
 
         const segmentNamespace = `Rules Engine - ${ruleInstance.ruleId} (${ruleInstance.id})`

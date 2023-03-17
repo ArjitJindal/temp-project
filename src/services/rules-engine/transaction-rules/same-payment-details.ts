@@ -10,8 +10,8 @@ import { RuleHitResultItem } from '../rule'
 import { TransactionHistoricalFilters } from '../filters'
 import { getTimestampRange } from '../utils/time-utils'
 import { getNonUserReceiverKeys, getNonUserSenderKeys } from '../utils'
+import { AuxiliaryIndexTransaction } from '../repositories/transaction-repository-interface'
 import { TransactionAggregationRule } from './aggregation-rule'
-import { AuxiliaryIndexTransaction } from '@/services/rules-engine/repositories/transaction-repository'
 import {
   getTransactionUserPastTransactionsByDirection,
   groupTransactionsByHour,

@@ -13,7 +13,7 @@ import {
 import { createLegalEntity, createShareHolders } from './businessUserHelpers'
 import { countries, currencies, ruleInstances } from './constants'
 import { UserRepository } from '@/services/users/repositories/user-repository'
-import { TransactionRepository } from '@/services/rules-engine/repositories/transaction-repository'
+import { DynamoDbTransactionRepository } from '@/services/rules-engine/repositories/dynamodb-transaction-repository'
 import { CardPaymentMethod } from '@/@types/openapi-public/CardPaymentMethod'
 import { IBANPaymentMethod } from '@/@types/openapi-public/IBANPaymentMethod'
 import { logger } from '@/core/logger'
@@ -109,9 +109,10 @@ export const createAndUploadTestData = async (
     { marshallOptions: { removeUndefinedValues: true } }
   )
 
-  const transactionRepository = new TransactionRepository(`fake-${tenantId}`, {
-    dynamoDb,
-  })
+  const transactionRepository = new DynamoDbTransactionRepository(
+    `fake-${tenantId}`,
+    dynamoDb
+  )
 
   let transactionObject: TransactionWithRulesResult
   const nameOne = createNameEntity()

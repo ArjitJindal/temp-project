@@ -11,7 +11,7 @@ import { lambdaApi } from '@/core/middlewares/lambda-api-middlewares'
 import { addNewSubsegment } from '@/core/xray'
 import { getS3ClientByEvent } from '@/utils/s3'
 import { getMongoDbClient } from '@/utils/mongoDBUtils'
-import { TransactionRepository } from '@/services/rules-engine/repositories/transaction-repository'
+import { MongoDbTransactionRepository } from '@/services/rules-engine/repositories/mongodb-transaction-repository'
 import { DefaultApiGetTransactionsListRequest } from '@/@types/openapi-internal/RequestParameters'
 import { CsvHeaderSettings, ExportService } from '@/services/export'
 import { TransactionCaseManagement } from '@/@types/openapi-internal/TransactionCaseManagement'
@@ -91,9 +91,10 @@ export const transactionsViewHandler = lambdaApi()(
     const s3 = getS3ClientByEvent(event)
     const client = await getMongoDbClient()
     const dynamoDb = await getDynamoDbClient()
-    const transactionRepository = new TransactionRepository(tenantId, {
-      mongoDb: client,
-    })
+    const transactionRepository = new MongoDbTransactionRepository(
+      tenantId,
+      client
+    )
     const riskRepository = new RiskRepository(tenantId, {
       dynamoDb,
       mongoDb: client,

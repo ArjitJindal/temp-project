@@ -2926,7 +2926,7 @@ components:
         allowedPaymentMethods:
           type: array
           items:
-            $ref: '#/components/schemas/PaymentMethods'
+            $ref: '#/components/schemas/PaymentMethod'
         linkedEntities:
           $ref: '#/components/schemas/BusinessEntityLink'
         acquisitionChannel:
@@ -4060,9 +4060,9 @@ components:
         - subtype
         - size
         - createdTimestamp
-    PaymentMethods:
+    PaymentMethod:
       type: string
-      title: PaymentMethods
+      title: PaymentMethod
       x-stoplight:
         id: m0vgh0ergujca
       enum:

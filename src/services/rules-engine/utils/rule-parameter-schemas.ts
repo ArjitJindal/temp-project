@@ -7,7 +7,7 @@ import {
   UiSchemaParamsAgeRange,
 } from '@/services/rules-engine/utils/rule-schema-utils'
 import { TRANSACTION_STATES } from '@/@types/openapi-public-custom/TransactionState'
-import { PAYMENT_METHODSS } from '@/@types/openapi-public-custom/PaymentMethods'
+import { PAYMENT_METHODS } from '@/@types/openapi-public-custom/PaymentMethod'
 import { TRANSACTION_TYPES } from '@/@types/openapi-public-custom/TransactionType'
 
 type SchemaOptions = {
@@ -241,7 +241,7 @@ export const PAYMENT_METHOD_SCHEMA = (options?: SchemaOptions) =>
     ...uiSchema(options?.uiSchema, { subtype: 'PAYMENT_METHOD' }),
     title: options?.title || 'Payment method',
     description: options?.description,
-    enum: PAYMENT_METHODSS,
+    enum: PAYMENT_METHODS,
   } as const)
 
 export const PAYMENT_METHOD_OPTIONAL_SCHEMA = (options?: SchemaOptions) =>

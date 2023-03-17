@@ -1,7 +1,7 @@
 import { JSONSchemaType } from 'ajv'
 import _ from 'lodash'
 import { TransactionHistoricalFilters } from '../filters'
-import { AuxiliaryIndexTransaction } from '../repositories/transaction-repository'
+import { AuxiliaryIndexTransaction } from '../repositories/transaction-repository-interface'
 import {
   CHECK_RECEIVER_OPTIONAL_SCHEMA,
   CHECK_SENDER_OPTIONAL_SCHEMA,

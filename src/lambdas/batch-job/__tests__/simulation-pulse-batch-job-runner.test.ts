@@ -11,7 +11,7 @@ import {
 import { getDynamoDbClient } from '@/utils/dynamodb'
 import { dynamoDbSetupHook } from '@/test-utils/dynamodb-test-utils'
 import { SimulationResultRepository } from '@/lambdas/console-api-simulation/repositories/simulation-result-repository'
-import { TransactionRepository } from '@/services/rules-engine/repositories/transaction-repository'
+import { MongoDbTransactionRepository } from '@/services/rules-engine/repositories/mongodb-transaction-repository'
 import { getTestTransaction } from '@/test-utils/transaction-test-utils'
 import { SimulationPulseParametersRequest } from '@/@types/openapi-internal/SimulationPulseParametersRequest'
 import { withFeatureHook } from '@/test-utils/feature-test-utils'
@@ -229,9 +229,10 @@ describe('Simulation (Pulse) batch job runner', () => {
         },
       }),
     ])
-    const transactionRepository = new TransactionRepository(tenantId, {
-      mongoDb,
-    })
+    const transactionRepository = new MongoDbTransactionRepository(
+      tenantId,
+      mongoDb
+    )
     await transactionRepository.addTransactionToMongo({
       ...getTestTransaction({
         originUserId: 'test-user-id-1',

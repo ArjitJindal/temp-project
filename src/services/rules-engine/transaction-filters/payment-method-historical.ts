@@ -2,10 +2,10 @@ import { JSONSchemaType } from 'ajv'
 import { PAYMENT_METHOD_OPTIONAL_SCHEMA } from '../utils/rule-parameter-schemas'
 import { TransactionRuleFilter } from './filter'
 import { paymentMethodRuleFilterPredicate } from './payment-method'
-import { PaymentMethods } from '@/@types/openapi-public/PaymentMethods'
+import { PaymentMethod } from '@/@types/openapi-public/PaymentMethod'
 
 export type PaymentMethodHistoricalRuleFilterParameter = {
-  paymentMethodHistorical?: PaymentMethods
+  paymentMethodHistorical?: PaymentMethod
 }
 
 export class PaymentMethodHistoricalRuleFilter extends TransactionRuleFilter<PaymentMethodHistoricalRuleFilterParameter> {

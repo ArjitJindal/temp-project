@@ -1,5 +1,5 @@
 import { JSONSchemaType } from 'ajv'
-import { AuxiliaryIndexTransaction } from '../repositories/transaction-repository'
+import { AuxiliaryIndexTransaction } from '../repositories/transaction-repository-interface'
 import { RuleHitResult } from '../rule'
 import { TransactionHistoricalFilters } from '../filters'
 import {

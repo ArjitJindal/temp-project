@@ -12,7 +12,7 @@ import { Business } from '@/@types/openapi-public/Business'
 import { User } from '@/@types/openapi-public/User'
 import { DashboardStatsRepository } from '@/lambdas/console-api-dashboard/repositories/dashboard-stats-repository'
 import { lambdaConsumer } from '@/core/middlewares/lambda-consumer-middlewares'
-import { TransactionRepository } from '@/services/rules-engine/repositories/transaction-repository'
+import { MongoDbTransactionRepository } from '@/services/rules-engine/repositories/mongodb-transaction-repository'
 import { NewCaseAlertPayload } from '@/@types/alert/alert-payload'
 import { TenantRepository } from '@/services/tenants/repositories/tenant-repository'
 
@@ -47,9 +47,7 @@ async function transactionHandler(
 
   const mongoDb = await getMongoDbClient()
   const dynamoDb = await getDynamoDbClient()
-  const transactionsRepo = new TransactionRepository(tenantId, {
-    mongoDb,
-  })
+  const transactionsRepo = new MongoDbTransactionRepository(tenantId, mongoDb)
   const casesRepo = new CaseRepository(tenantId, {
     mongoDb,
     dynamoDb,

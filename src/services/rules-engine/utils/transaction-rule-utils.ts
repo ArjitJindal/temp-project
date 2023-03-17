@@ -1,8 +1,8 @@
 import * as _ from 'lodash'
 import {
   AuxiliaryIndexTransaction,
-  TransactionRepository,
-} from '../repositories/transaction-repository'
+  RulesEngineTransactionRepositoryInterface,
+} from '../repositories/transaction-repository-interface'
 import { getTimestampRange } from './time-utils'
 import { TimeWindow } from './rule-parameter-schemas'
 import dayjs from '@/utils/dayjs'
@@ -128,7 +128,7 @@ export function sumTransactionAmountDetails(
 async function getTransactions(
   userId: string | undefined,
   paymentDetails: PaymentDetails | undefined,
-  transactionRepository: TransactionRepository,
+  transactionRepository: RulesEngineTransactionRepositoryInterface,
   options: {
     afterTimestamp: number
     beforeTimestamp: number
@@ -198,73 +198,10 @@ async function getTransactions(
   }
 }
 
-async function getTransactionsCount(
-  userId: string | undefined,
-  paymentDetails: PaymentDetails | undefined,
-  transactionRepository: TransactionRepository,
-  options: {
-    afterTimestamp: number
-    beforeTimestamp: number
-    checkType: 'sending' | 'receiving' | 'all' | 'none'
-    transactionStates?: TransactionState[]
-    transactionTypes?: TransactionType[]
-    paymentMethod?: PaymentMethod
-  }
-): Promise<{
-  sendingTransactionsCount: number | null
-  receivingTransactionsCount: number | null
-}> {
-  const {
-    checkType,
-    beforeTimestamp,
-    afterTimestamp,
-    transactionStates,
-    transactionTypes,
-    paymentMethod,
-  } = options
-  const [sendingTransactionsCount, receivingTransactionsCount] =
-    await Promise.all([
-      checkType === 'sending' || checkType === 'all'
-        ? transactionRepository.getGenericUserSendingTransactionsCount(
-            userId,
-            paymentDetails,
-            {
-              afterTimestamp,
-              beforeTimestamp,
-            },
-            {
-              transactionStates,
-              transactionTypes,
-              originPaymentMethod: paymentMethod,
-            }
-          )
-        : Promise.resolve(null),
-      checkType === 'receiving' || checkType === 'all'
-        ? transactionRepository.getGenericUserReceivingTransactionsCount(
-            userId,
-            paymentDetails,
-            {
-              afterTimestamp,
-              beforeTimestamp,
-            },
-            {
-              transactionStates,
-              transactionTypes,
-              destinationPaymentMethod: paymentMethod,
-            }
-          )
-        : Promise.resolve(null),
-    ])
-  return {
-    sendingTransactionsCount,
-    receivingTransactionsCount,
-  }
-}
-
 export async function getTransactionUserPastTransactionsByDirection(
   transaction: Transaction,
   direction: 'origin' | 'destination',
-  transactionRepository: TransactionRepository,
+  transactionRepository: RulesEngineTransactionRepositoryInterface,
   options: {
     timeWindow: TimeWindow
     checkDirection: 'sending' | 'receiving' | 'all' | 'none'
@@ -309,7 +246,7 @@ export async function getTransactionUserPastTransactionsByDirection(
 
 export async function getTransactionUserPastTransactions(
   transaction: Transaction,
-  transactionRepository: TransactionRepository,
+  transactionRepository: RulesEngineTransactionRepositoryInterface,
   options: {
     timeWindow: TimeWindow
     checkSender: 'sending' | 'receiving' | 'all' | 'none'
@@ -394,92 +331,6 @@ export async function getTransactionUserPastTransactions(
     senderReceivingTransactions: senderTransactions.receivingTransactions,
     receiverSendingTransactions: receiverTransactions.sendingTransactions,
     receiverReceivingTransactions: receiverTransactions.receivingTransactions,
-  }
-}
-
-export async function getTransactionUserPastTransactionsCount(
-  transaction: Transaction,
-  transactionRepository: TransactionRepository,
-  options: {
-    timeWindow: TimeWindow
-    checkSender: 'sending' | 'all' | 'none'
-    checkReceiver: 'receiving' | 'all' | 'none'
-    transactionStates?: TransactionState[]
-    transactionTypes?: TransactionType[]
-    paymentMethod?: PaymentMethod
-    country?: string[]
-  }
-): Promise<{
-  senderSendingTransactionsCount: number | null
-  senderReceivingTransactionsCount: number | null
-  receiverSendingTransactionsCount: number | null
-  receiverReceivingTransactionsCount: number | null
-}> {
-  const {
-    checkSender,
-    checkReceiver,
-    timeWindow,
-    transactionStates,
-    transactionTypes,
-    paymentMethod,
-  } = options
-  const { afterTimestamp, beforeTimestamp } = getTimestampRange(
-    transaction.timestamp!,
-    timeWindow
-  )
-  const senderTransactionsCountPromise =
-    checkSender !== 'none'
-      ? getTransactionsCount(
-          transaction.originUserId,
-          transaction.originPaymentDetails,
-          transactionRepository,
-          {
-            afterTimestamp,
-            beforeTimestamp,
-            checkType: checkSender,
-            transactionStates,
-            transactionTypes,
-            paymentMethod,
-          }
-        )
-      : Promise.resolve({
-          sendingTransactionsCount: null,
-          receivingTransactionsCount: null,
-        })
-  const receiverTransactionsCountPromise =
-    checkReceiver !== 'none'
-      ? getTransactionsCount(
-          transaction.destinationUserId,
-          transaction.destinationPaymentDetails,
-          transactionRepository,
-          {
-            afterTimestamp,
-            beforeTimestamp,
-            checkType: checkReceiver,
-            transactionStates,
-            transactionTypes,
-            paymentMethod,
-          }
-        )
-      : Promise.resolve({
-          sendingTransactionsCount: null,
-          receivingTransactionsCount: null,
-        })
-  const [senderTransactionsCount, receiverTransactionsCount] =
-    await Promise.all([
-      senderTransactionsCountPromise,
-      receiverTransactionsCountPromise,
-    ])
-
-  return {
-    senderSendingTransactionsCount:
-      senderTransactionsCount.sendingTransactionsCount,
-    senderReceivingTransactionsCount:
-      senderTransactionsCount.receivingTransactionsCount,
-    receiverSendingTransactionsCount:
-      receiverTransactionsCount.sendingTransactionsCount,
-    receiverReceivingTransactionsCount:
-      receiverTransactionsCount.receivingTransactionsCount,
   }
 }
 

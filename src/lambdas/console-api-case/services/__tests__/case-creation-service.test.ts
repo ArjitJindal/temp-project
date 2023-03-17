@@ -5,7 +5,7 @@ import { getTestTenantId } from '@/test-utils/tenant-test-utils'
 import { getDynamoDbClient } from '@/utils/dynamodb'
 import { UserRepository } from '@/services/users/repositories/user-repository'
 import { RuleInstanceRepository } from '@/services/rules-engine/repositories/rule-instance-repository'
-import { TransactionRepository } from '@/services/rules-engine/repositories/transaction-repository'
+import { MongoDbTransactionRepository } from '@/services/rules-engine/repositories/mongodb-transaction-repository'
 import { getTestTransaction } from '@/test-utils/transaction-test-utils'
 import {
   bulkVerifyTransactions,
@@ -35,10 +35,10 @@ async function getService(tenantId: string) {
   const ruleInstanceRepository = new RuleInstanceRepository(tenantId, {
     dynamoDb,
   })
-  const transactionRepository = new TransactionRepository(tenantId, {
-    mongoDb,
-    dynamoDb,
-  })
+  const transactionRepository = new MongoDbTransactionRepository(
+    tenantId,
+    mongoDb
+  )
   const caseCreationService = new CaseCreationService(
     caseRepository,
     userRepository,

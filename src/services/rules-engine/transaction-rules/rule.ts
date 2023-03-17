@@ -1,13 +1,13 @@
 import { DynamoDBDocumentClient } from '@aws-sdk/lib-dynamodb'
 import { Rule, RuleHitResultItem } from '../rule'
 import { Vars } from '../utils/format-description'
+import { RulesEngineTransactionRepositoryInterface } from '../repositories/transaction-repository-interface'
 import { Business } from '@/@types/openapi-public/Business'
 import { Transaction } from '@/@types/openapi-public/Transaction'
 import { User } from '@/@types/openapi-public/User'
 import { formatCountry } from '@/utils/countries'
 import { CardDetails } from '@/@types/openapi-public/CardDetails'
 import { RuleInstance } from '@/@types/openapi-internal/RuleInstance'
-import { TransactionRepository } from '@/services/rules-engine/repositories/transaction-repository'
 
 export interface PartyVars {
   type?: 'origin' | 'destination'
@@ -46,7 +46,7 @@ export abstract class TransactionRule<
   filters: T
   ruleInstance: RuleInstance
   dynamoDb: DynamoDBDocumentClient
-  transactionRepository: TransactionRepository
+  transactionRepository: RulesEngineTransactionRepositoryInterface
 
   constructor(
     tenantId: string,
@@ -63,7 +63,7 @@ export abstract class TransactionRule<
       ruleInstance: RuleInstance
     },
     dynamoDb: DynamoDBDocumentClient,
-    transactionRepository: TransactionRepository
+    transactionRepository: RulesEngineTransactionRepositoryInterface
   ) {
     super()
     this.tenantId = tenantId

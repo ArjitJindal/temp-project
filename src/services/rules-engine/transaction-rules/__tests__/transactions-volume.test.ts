@@ -8,7 +8,7 @@ import {
   createTransactionRuleTestCase,
   TransactionRuleTestCase,
   testRuleDescriptionFormatting,
-  ruleAggregationTest,
+  ruleVariantsTest,
 } from '@/test-utils/rule-test-utils'
 import { dynamoDbSetupHook } from '@/test-utils/dynamodb-test-utils'
 import { IBANDetails } from '@/@types/openapi-public/IBANDetails'
@@ -33,7 +33,7 @@ const TEST_TRANSACTION_METHOD_IBAN_2 = {
 
 dynamoDbSetupHook()
 
-ruleAggregationTest(() => {
+ruleVariantsTest(true, () => {
   describe('Core logic', () => {
     const TEST_HIT_TRANSACTIONS = [
       getTestTransaction({

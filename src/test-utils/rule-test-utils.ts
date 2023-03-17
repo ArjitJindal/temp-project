@@ -239,12 +239,26 @@ export interface UserRuleTestCase {
 }
 
 // For making sure a rule works the same w/ or w/o RULES_ENGINE_RULE_BASED_AGGREGATION feature flag
-export function ruleAggregationTest(jestCallback: () => void) {
-  describe('With Rule Aggregation', () => {
-    withFeatureHook(['RULES_ENGINE_RULE_BASED_AGGREGATION'])
+export function ruleVariantsTest(
+  aggregationImplemented: boolean,
+  jestCallback: () => void
+) {
+  if (aggregationImplemented) {
+    describe('database:dynamodb; rule-aggregation:on', () => {
+      withFeatureHook(['RULES_ENGINE_RULE_BASED_AGGREGATION'])
+      jestCallback()
+    })
+  }
+  describe('database:dynamodb; rule-aggregation:off', () => {
     jestCallback()
   })
-  describe('Without Rule Aggregation', () => {
+  describe('database:mongodb; rule-aggregation:off', () => {
+    beforeAll(() => {
+      process.env.RULES_ENGINE_USE_MONGODB = 'true'
+    })
+    afterAll(() => {
+      process.env.RULES_ENGINE_USE_MONGODB = ''
+    })
     jestCallback()
   })
 }

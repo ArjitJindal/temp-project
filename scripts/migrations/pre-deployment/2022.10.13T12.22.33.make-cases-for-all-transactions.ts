@@ -2,7 +2,7 @@ import { StackConstants } from '@cdk/constants'
 import { migrateAllTenants } from '../utils/tenant'
 import { COUNTER_COLLECTION, getMongoDbClient } from '@/utils/mongoDBUtils'
 import { getDynamoDbClient } from '@/utils/dynamodb'
-import { TransactionRepository } from '@/services/rules-engine/repositories/transaction-repository'
+import { MongoDbTransactionRepository } from '@/services/rules-engine/repositories/mongodb-transaction-repository'
 import { CaseRepository } from '@/services/rules-engine/repositories/case-repository'
 import { Case } from '@/@types/openapi-internal/Case'
 import { Tenant } from '@/@types/openapi-internal/Tenant'
@@ -23,10 +23,10 @@ let counter = 1000000
 export async function migrateTenant(tenant: Tenant) {
   const dynamodb = await getDynamoDbClient()
   const mongodb = await getMongoDbClient(StackConstants.MONGO_DB_DATABASE_NAME)
-  const transactionRepository = new TransactionRepository(tenant.id, {
-    dynamoDb: dynamodb,
-    mongoDb: mongodb,
-  })
+  const transactionRepository = new MongoDbTransactionRepository(
+    tenant.id,
+    mongodb
+  )
   const caseRepository = new CaseRepository(tenant.id, {
     mongoDb: mongodb,
   })
@@ -72,11 +72,12 @@ export async function migrateTenant(tenant: Tenant) {
     ) {
       createCase = true
     } else {
-      const transactionStatus = TransactionRepository.getAggregatedRuleStatus(
-        transaction.executedRules
-          .filter((rule) => rule.ruleHit)
-          .map((rule) => rule.ruleAction)
-      )
+      const transactionStatus =
+        MongoDbTransactionRepository.getAggregatedRuleStatus(
+          transaction.executedRules
+            .filter((rule) => rule.ruleHit)
+            .map((rule) => rule.ruleAction)
+        )
       if (transactionStatus != 'ALLOW') {
         createCase = true
       }

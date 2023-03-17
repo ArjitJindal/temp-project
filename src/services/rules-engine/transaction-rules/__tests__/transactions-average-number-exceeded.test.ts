@@ -5,7 +5,7 @@ import { getTestTenantId } from '@/test-utils/tenant-test-utils'
 import { getTestTransaction } from '@/test-utils/transaction-test-utils'
 import {
   createTransactionRuleTestCase,
-  ruleAggregationTest,
+  ruleVariantsTest,
   setUpRulesHooks,
   testRuleDescriptionFormatting,
   TransactionRuleTestCase,
@@ -39,7 +39,7 @@ function getDefaultParams(): TransactionsAverageNumberExceededParameters {
   }
 }
 
-ruleAggregationTest(() => {
+ruleVariantsTest(true, () => {
   describe('Description formatting', () => {
     describe('R-121 description formatting', () => {
       const TEST_TENANT_ID = getTestTenantId()

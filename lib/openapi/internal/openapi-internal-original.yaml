@@ -564,6 +564,18 @@ paths:
           in: query
           name: filterDestinationCurrencies
         - schema:
+            type: array
+            items:
+              type: string
+          in: query
+          name: filterOriginCountries
+        - schema:
+            type: array
+            items:
+              type: string
+          in: query
+          name: filterDestinationCountries
+        - schema:
             type: string
           in: query
           name: sortField
@@ -623,6 +635,12 @@ paths:
               $ref: ../public/openapi-public-original.yaml#/components/schemas/TransactionState
           in: query
           name: filterTransactionState
+        - schema:
+            type: array
+            items:
+              $ref: ../public/openapi-public-original.yaml#/components/schemas/TransactionType
+          in: query
+          name: filterTransactionTypes
     post:
       summary: Transactions - Update
       operationId: post-transactions

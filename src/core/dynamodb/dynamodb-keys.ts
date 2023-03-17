@@ -18,6 +18,7 @@ import { SWIFTDetails } from '@/@types/openapi-public/SWIFTDetails'
 import { MpesaDetails } from '@/@types/openapi-public/MpesaDetails'
 import { CheckDetails } from '@/@types/openapi-public/CheckDetails'
 import { RiskEntityType } from '@/@types/openapi-internal/RiskEntityType'
+import { PaymentMethod } from '@/@types/openapi-public/PaymentMethod'
 
 const TRANSACTION_ID_PREFIX = 'transaction:'
 const USER_ID_PREFIX = 'user:'
@@ -89,130 +90,41 @@ export const DynamoDbKeys = {
     timestamp?: number
   ) => {
     const tranasctionTypeKey = getTransactionTypeKey(transactionType)
-    switch (paymentDetails.method) {
-      case 'IBAN': {
-        const { BIC, IBAN } = paymentDetails as IBANDetails
-        if (!BIC || !IBAN) {
-          logger.warn('Payment identifier not found: BIC or IBAN')
-          return null
-        }
-        return {
-          PartitionKeyID: `${tenantId}#transaction#${tranasctionTypeKey}#paymentDetails#BIC:${BIC}#IBAN:${IBAN}#${direction}`,
-          SortKeyID: `${timestamp}`,
-        }
-      }
-      case 'CARD': {
-        const { cardFingerprint } = paymentDetails as CardDetails
-        if (!cardFingerprint) {
-          logger.warn('Payment identifier not found: Card fingerprint')
-          return null
-        }
-        return {
-          PartitionKeyID: `${tenantId}#transaction#${tranasctionTypeKey}#paymentDetails#cardFingerprint:${cardFingerprint}#${direction}`,
-          SortKeyID: `${timestamp}`,
-        }
-      }
-      case 'ACH': {
-        const { routingNumber, accountNumber } = paymentDetails as ACHDetails
-        if (!routingNumber || !accountNumber) {
-          logger.warn('Payment identifier not found: Routing or account number')
-          return null
-        }
-        return {
-          PartitionKeyID: `${tenantId}#transaction#${tranasctionTypeKey}#paymentDetails#routingNumber:${routingNumber}#accountNumber:${accountNumber}#${direction}`,
-          SortKeyID: `${timestamp}`,
-        }
-      }
-      case 'UPI': {
-        const { upiID } = paymentDetails as UPIDetails
-        if (!upiID) {
-          logger.warn('Payment identifier not found: UPI ID')
-          return null
-        }
-        return {
-          PartitionKeyID: `${tenantId}#transaction#${tranasctionTypeKey}#paymentDetails#upiID:${upiID}#${direction}`,
-          SortKeyID: `${timestamp}`,
-        }
-      }
-      case 'WALLET': {
-        const { walletId } = paymentDetails as WalletDetails
-        if (!walletId) {
-          logger.warn('Payment identifier not found: WalletID')
-          return null
-        }
-        return {
-          PartitionKeyID: `${tenantId}#transaction#${tranasctionTypeKey}#paymentDetails#walletId:${walletId}#${direction}`,
-          SortKeyID: `${timestamp}`,
-        }
-      }
-      case 'GENERIC_BANK_ACCOUNT': {
-        const { accountNumber, accountType } =
-          paymentDetails as GenericBankAccountDetails
-        let bankCode = paymentDetails.bankCode
+    if (paymentDetails.method === 'GENERIC_BANK_ACCOUNT') {
+      const { accountNumber, accountType } =
+        paymentDetails as GenericBankAccountDetails
+      let bankCode = paymentDetails.bankCode
 
-        // NOTE: bankId is currently being sent by Kevin. We'll ask them to send bankCode
-        // instead later
-        if (!bankCode) {
-          bankCode = (paymentDetails as any).bankId
-        }
-        // We keep the legacy identifier to avoid migrating data in DynamoDB
-        const legacyIdentifier =
-          accountNumber && accountType
-            ? `accountNumber:${accountNumber}#accountType:${accountType}`
-            : undefined
-        const identifier =
-          legacyIdentifier ??
-          [accountNumber, bankCode].filter(Boolean).join('.')
+      // NOTE: bankId is currently being sent by Kevin. We'll ask them to send bankCode
+      // instead later
+      if (!bankCode) {
+        bankCode = (paymentDetails as any).bankId
+      }
+      // We keep the legacy identifier to avoid migrating data in DynamoDB
+      const legacyIdentifier =
+        accountNumber && accountType
+          ? `accountNumber:${accountNumber}#accountType:${accountType}`
+          : undefined
+      const identifier =
+        legacyIdentifier ?? [accountNumber, bankCode].filter(Boolean).join('.')
 
-        if (!identifier) {
-          logger.warn('Payment identifier not found')
-          return null
-        }
-        return {
-          PartitionKeyID: `${tenantId}#transaction#${tranasctionTypeKey}#paymentDetails#${identifier}#${direction}`,
-          SortKeyID: `${timestamp}`,
-        }
+      if (!identifier) {
+        logger.warn('Payment identifier not found')
+        return null
       }
-      case 'SWIFT': {
-        const { accountNumber, swiftCode } = paymentDetails as SWIFTDetails
-        if (!accountNumber || !swiftCode) {
-          logger.warn('Payment identifier not found: Acc number ot SWIFT Code')
-          return null
-        }
-        return {
-          PartitionKeyID: `${tenantId}#transaction#${tranasctionTypeKey}#paymentDetails#accountNumber:${accountNumber}#swiftCode:${swiftCode}#${direction}`,
-          SortKeyID: `${timestamp}`,
-        }
+      return {
+        PartitionKeyID: `${tenantId}#transaction#${tranasctionTypeKey}#paymentDetails#${identifier}#${direction}`,
+        SortKeyID: `${timestamp}`,
       }
-      case 'MPESA': {
-        const { businessShortCode, phoneNumber } =
-          paymentDetails as MpesaDetails
-        if (!businessShortCode || !phoneNumber) {
-          logger.warn(
-            'Payment identifier not found: Phone number or Business Code'
-          )
-          return null
-        }
-        return {
-          PartitionKeyID: `${tenantId}#transaction#${tranasctionTypeKey}#paymentDetails#phoneNumber:${phoneNumber}#businessShortCode:${businessShortCode}#${direction}`,
-          SortKeyID: `${timestamp}`,
-        }
+    } else {
+      const identifiers = getPaymentDetailsIdentifiers(paymentDetails) || {}
+      const identifiersString = Object.entries(identifiers)
+        .map((entry) => `${entry[0]}:${entry[1]}`)
+        .join('#')
+      return {
+        PartitionKeyID: `${tenantId}#transaction#${tranasctionTypeKey}#paymentDetails#${identifiersString}#${direction}`,
+        SortKeyID: `${timestamp}`,
       }
-      case 'CHECK': {
-        const { checkIdentifier, checkNumber } = paymentDetails as CheckDetails
-        if (!checkIdentifier || !checkNumber) {
-          logger.warn(
-            'Payment identifier not found: check identifier or check number'
-          )
-          return null
-        }
-        return {
-          PartitionKeyID: `${tenantId}#transaction#${tranasctionTypeKey}#paymentDetails#checkIdentifier:${checkIdentifier}#checkNumber:${checkNumber}#${direction}`,
-          SortKeyID: `${timestamp}`,
-        }
-      }
-      default:
-        throw new Error('Unsupported payment method!')
     }
   },
   // Attributes: [transactionId]
@@ -361,6 +273,61 @@ export const DynamoDbKeys = {
     PartitionKeyID: `${tenantId}#device-metrics-data#${userId}`,
     SortKeyID: `${type}#${timestamp}`,
   }),
+}
+
+export const PAYMENT_METHOD_IDENTIFIER_FIELDS: Record<
+  PaymentMethod,
+  | Array<keyof IBANDetails>
+  | Array<keyof CardDetails>
+  | Array<keyof ACHDetails>
+  | Array<keyof UPIDetails>
+  | Array<keyof WalletDetails>
+  | Array<keyof GenericBankAccountDetails>
+  | Array<keyof SWIFTDetails>
+  | Array<keyof MpesaDetails>
+  | Array<keyof CheckDetails>
+> = {
+  IBAN: ['BIC', 'IBAN'],
+  CARD: ['cardFingerprint'],
+  ACH: ['routingNumber', 'accountNumber'],
+  UPI: ['upiID'],
+  WALLET: ['walletId'],
+  GENERIC_BANK_ACCOUNT: ['accountNumber', 'accountType', 'bankCode'],
+  SWIFT: ['accountNumber', 'swiftCode'],
+  MPESA: ['businessShortCode', 'phoneNumber'],
+  CHECK: ['checkIdentifier', 'checkNumber'],
+}
+
+export function getPaymentDetailsIdentifiers(
+  paymentDetails: PaymentDetails
+): { [key: string]: string | undefined } | null {
+  const identifierFields =
+    PAYMENT_METHOD_IDENTIFIER_FIELDS[paymentDetails.method]
+
+  if (paymentDetails.method === 'GENERIC_BANK_ACCOUNT') {
+    const { accountNumber, accountType, bankCode } =
+      paymentDetails as GenericBankAccountDetails
+    if (!accountNumber && !accountType && !bankCode) {
+      return null
+    }
+    return {
+      accountNumber,
+      accountType,
+      bankCode,
+    }
+  } else {
+    // All fields need to be non-empty
+    if (
+      (identifierFields as string[]).find(
+        (field) => !(paymentDetails as any)[field]
+      )
+    ) {
+      return null
+    }
+    return Object.fromEntries(
+      identifierFields.map((field) => [field, (paymentDetails as any)[field]])
+    )
+  }
 }
 
 function getTransactionTypeKey(transactionType: string | undefined): string {

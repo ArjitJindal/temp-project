@@ -1,6 +1,6 @@
 import _ from 'lodash'
 import { RulesEngineService } from '..'
-import { TransactionRepository } from '../repositories/transaction-repository'
+import { DynamoDbTransactionRepository } from '../repositories/dynamodb-transaction-repository'
 import { RiskRepository } from '../../risk-scoring/repositories/risk-repository'
 import { dynamoDbSetupHook } from '@/test-utils/dynamodb-test-utils'
 import { getTestTenantId } from '@/test-utils/tenant-test-utils'
@@ -234,9 +234,10 @@ describe('Verify Transaction Event', () => {
     ])
 
     test('returns executed rules', async () => {
-      const transactionRepository = new TransactionRepository(TEST_TENANT_ID, {
-        dynamoDb,
-      })
+      const transactionRepository = new DynamoDbTransactionRepository(
+        TEST_TENANT_ID,
+        dynamoDb
+      )
       const rulesEngine = new RulesEngineService(TEST_TENANT_ID, dynamoDb)
       const transaction = getTestTransaction({
         transactionId: 'dummy',
@@ -283,9 +284,10 @@ describe('Verify Transaction Event', () => {
     })
 
     test("run rules even if the transaction doesn't have updates", async () => {
-      const transactionRepository = new TransactionRepository(TEST_TENANT_ID, {
-        dynamoDb,
-      })
+      const transactionRepository = new DynamoDbTransactionRepository(
+        TEST_TENANT_ID,
+        dynamoDb
+      )
       const rulesEngine = new RulesEngineService(TEST_TENANT_ID, dynamoDb)
       const transaction = getTestTransaction({
         transactionId: 'dummy-2',
