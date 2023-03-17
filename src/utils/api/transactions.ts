@@ -9,6 +9,7 @@ export function isTransactionType(value: unknown): value is TransactionType {
     case 'WITHDRAWAL':
     case 'REFUND':
     case 'TRANSFER':
+    case 'OTHER':
       return true;
   }
 

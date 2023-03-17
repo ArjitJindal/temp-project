@@ -75,6 +75,8 @@ export function getTransactionTypeColor(transactionType: TransactionType | undef
     return COLORS.purpleGray.base;
   } else if (transactionType === 'TRANSFER') {
     return COLORS.purpleGray.shade;
+  } else if (transactionType === 'OTHER') {
+    return COLORS.purpleGray.shade;
   } else if (transactionType == null) {
     return COLORS.turquoise.tint;
   }

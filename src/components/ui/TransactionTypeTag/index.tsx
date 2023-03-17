@@ -21,7 +21,10 @@ export function getTransactionTypeColor(transactionType: TransactionType) {
     return 'red';
   } else if (transactionType === 'TRANSFER') {
     return 'geekblue';
+  } else if (transactionType === 'OTHER') {
+    return 'geekblue';
   }
+
   return neverReturn(transactionType, 'white');
 }
 
@@ -50,6 +53,8 @@ export const TransactionTypeTag: React.FC<Props> = ({ transactionType }) => {
     transactionTypeIcon = <UndoOutlined />;
   } else if (transactionType === 'TRANSFER') {
     transactionTypeDisplay = 'Transfer';
+  } else if (transactionType === 'OTHER') {
+    transactionTypeDisplay = 'Other';
   } else {
     transactionTypeDisplay = neverReturn(transactionType, '');
   }
