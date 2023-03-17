@@ -1,3 +1,4 @@
+import { BillingMode } from 'aws-cdk-lib/aws-dynamodb'
 import { Config } from './config'
 
 const account = '911899431626'
@@ -8,8 +9,7 @@ export const config: Config = {
   env: { account, region },
   resource: {
     DYNAMODB: {
-      READ_CAPACITY: 3,
-      WRITE_CAPACITY: 1,
+      BILLING_MODE: BillingMode.PAY_PER_REQUEST,
     },
     PUBLIC_API_GATEWAY: {},
     CONSOLE_API_GATEWAY: {},

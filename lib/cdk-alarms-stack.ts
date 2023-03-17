@@ -144,9 +144,9 @@ export class CdkTarponAlarmsStack extends cdk.NestedStack {
         })
       })
 
-      if (this.config.stage === 'prod') {
+      if (this.config.stage === 'prod' || this.config.stage === 'dev') {
         // We only monitor consumed read/write capacity for production as we use on-demand
-        // mode only in production
+        // mode only in production & dev right now
 
         createDynamoDBAlarm(
           this,
@@ -155,7 +155,7 @@ export class CdkTarponAlarmsStack extends cdk.NestedStack {
           tableName,
           'ConsumedReadCapacityUnits',
           {
-            threshold: 600,
+            threshold: this.config.stage === 'prod' ? 600 : 20,
             statistic: 'Maximum',
             period: Duration.minutes(1),
           }
@@ -167,7 +167,7 @@ export class CdkTarponAlarmsStack extends cdk.NestedStack {
           tableName,
           'ConsumedWriteCapacityUnits',
           {
-            threshold: 300,
+            threshold: this.config.stage === 'prod' ? 300 : 10,
             statistic: 'Maximum',
             period: Duration.minutes(1),
           }
