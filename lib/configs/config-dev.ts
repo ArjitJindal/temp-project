@@ -8,8 +8,8 @@ export const config: Config = {
   env: { account, region },
   resource: {
     DYNAMODB: {
-      READ_CAPACITY: 1,
-      WRITE_CAPACITY: 2,
+      READ_CAPACITY: 3,
+      WRITE_CAPACITY: 1,
     },
     PUBLIC_API_GATEWAY: {},
     CONSOLE_API_GATEWAY: {},
