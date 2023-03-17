@@ -212,7 +212,7 @@ export default class TransactionsVolumeRule extends TransactionAggregationRule<
     }
 
     // Fallback
-    let { sendingTransactions, receivingTransactions } =
+    const { sendingTransactions, receivingTransactions } =
       await getTransactionUserPastTransactionsByDirection(
         this.transaction,
         direction,
@@ -235,19 +235,6 @@ export default class TransactionsVolumeRule extends TransactionAggregationRule<
           'destinationAmountDetails',
         ]
       )
-
-    if (matchPaymentMethodDetails) {
-      const targetUserId =
-        direction === 'origin'
-          ? this.transaction.originUserId
-          : this.transaction.destinationUserId
-      sendingTransactions = sendingTransactions.filter(
-        (transaction) => transaction.originUserId === targetUserId
-      )
-      receivingTransactions = receivingTransactions.filter(
-        (transaction) => transaction.destinationUserId === targetUserId
-      )
-    }
 
     // Update aggregations
     await this.refreshRuleAggregations(
@@ -368,26 +355,15 @@ export default class TransactionsVolumeRule extends TransactionAggregationRule<
 
   override getUserKeyId(direction: 'origin' | 'destination') {
     if (this.parameters.matchPaymentMethodDetails) {
-      const nonUserKey =
-        direction === 'origin'
-          ? getNonUserSenderKeys(
-              this.tenantId,
-              this.transaction,
-              undefined,
-              true
-            )?.PartitionKeyID
-          : getNonUserReceiverKeys(
-              this.tenantId,
-              this.transaction,
-              undefined,
-              true
-            )?.PartitionKeyID
-      if (nonUserKey) {
-        return direction === 'origin'
-          ? `${nonUserKey}-${this.transaction.originUserId}`
-          : `${nonUserKey}-${this.transaction.destinationUserId}`
-      }
-      return
+      return direction === 'origin'
+        ? getNonUserSenderKeys(this.tenantId, this.transaction, undefined, true)
+            ?.PartitionKeyID
+        : getNonUserReceiverKeys(
+            this.tenantId,
+            this.transaction,
+            undefined,
+            true
+          )?.PartitionKeyID
     }
     return super.getUserKeyId(direction)
   }

@@ -564,7 +564,7 @@ ruleVariantsTest(true, () => {
             timestamp: dayjs('2022-01-01T00:00:02.000Z').valueOf(),
           }),
         ],
-        expectedHits: [false, false, true, false, true, false, true],
+        expectedHits: [false, false, true, true, true, true, true],
       },
     ])('', ({ name, transactions, expectedHits }) => {
       createTransactionRuleTestCase(

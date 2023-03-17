@@ -9,6 +9,7 @@ import {
   TIME_WINDOW_SCHEMA,
   TRANSACTIONS_THRESHOLD_SCHEMA,
   PAYMENT_CHANNEL_OPTIONAL_SCHEMA,
+  MATCH_PAYMENT_METHOD_DETAILS_OPTIONAL_SCHEMA,
 } from '../utils/rule-parameter-schemas'
 import { RuleHitResultItem } from '../rule'
 import {
@@ -16,6 +17,7 @@ import {
   groupTransactionsByHour,
 } from '../utils/transaction-rule-utils'
 import { getTimestampRange } from '../utils/time-utils'
+import { getNonUserReceiverKeys, getNonUserSenderKeys } from '../utils'
 import { TransactionAggregationRule } from './aggregation-rule'
 import { CardDetails } from '@/@types/openapi-public/CardDetails'
 
@@ -34,6 +36,7 @@ export type TransactionsVelocityRuleParameters = {
   // Optional parameters
   onlyCheckKnownUsers?: boolean
   paymentChannel?: string
+  matchPaymentMethodDetails?: boolean
 }
 
 export default class TransactionsVelocityRule extends TransactionAggregationRule<
@@ -49,6 +52,8 @@ export default class TransactionsVelocityRule extends TransactionAggregationRule
         timeWindow: TIME_WINDOW_SCHEMA(),
         checkSender: CHECK_SENDER_OPTIONAL_SCHEMA(),
         checkReceiver: CHECK_RECEIVER_OPTIONAL_SCHEMA(),
+        matchPaymentMethodDetails:
+          MATCH_PAYMENT_METHOD_DETAILS_OPTIONAL_SCHEMA(),
         onlyCheckKnownUsers: {
           type: 'boolean',
           title: 'Only check transactions from known users (with user ID)',
@@ -152,9 +157,11 @@ export default class TransactionsVelocityRule extends TransactionAggregationRule
           transactionTypes: this.filters.transactionTypesHistorical,
           paymentMethod: this.filters.paymentMethodHistorical,
           countries: this.filters.transactionCountriesHistorical,
+          matchPaymentMethodDetails: this.parameters.matchPaymentMethodDetails,
         },
         ['timestamp', 'originUserId', 'destinationUserId']
       )
+
     const filteredSendingTransactions = sendingTransactions.filter(
       (transaction) => !onlyCheckKnownUsers || transaction.originUserId
     )
@@ -224,5 +231,20 @@ export default class TransactionsVelocityRule extends TransactionAggregationRule
   }
   override getRuleAggregationVersion(): number {
     return 1
+  }
+
+  override getUserKeyId(direction: 'origin' | 'destination') {
+    if (this.parameters.matchPaymentMethodDetails) {
+      return direction === 'origin'
+        ? getNonUserSenderKeys(this.tenantId, this.transaction, undefined, true)
+            ?.PartitionKeyID
+        : getNonUserReceiverKeys(
+            this.tenantId,
+            this.transaction,
+            undefined,
+            true
+          )?.PartitionKeyID
+    }
+    return super.getUserKeyId(direction)
   }
 }
