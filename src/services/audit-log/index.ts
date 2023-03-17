@@ -20,6 +20,20 @@ export async function publishAuditLog(
         ...auditlog,
       },
     }
+    if (process.env.NODE_ENV === 'development') {
+      const { auditLogConsumerHandler } = await import(
+        '@/lambdas/audit-log-consumer/app'
+      )
+      const { createSqsEventForSns } = await import(
+        '@/test-utils/sqs-test-utils'
+      )
+      await (auditLogConsumerHandler as any)(
+        createSqsEventForSns([auditLogRecord]),
+        {},
+        {}
+      )
+      return
+    }
     await snsClient.send(
       new PublishCommand({
         TopicArn: process.env.AUDITLOG_TOPIC_ARN as string,

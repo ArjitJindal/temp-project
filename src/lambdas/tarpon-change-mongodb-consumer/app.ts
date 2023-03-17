@@ -159,17 +159,11 @@ async function userHandler(
     const drsScore = await riskRepository.getDrsScore(user.userId)
 
     if (!krsScore && !drsScore) {
-      if (
-        process.env.NODE_ENV !== 'development' &&
-        process.env.NODE_ENV !== 'test' &&
-        process.env.ENV !== 'local'
-      ) {
-        logger.error(
-          new Error(
-            `KRS and DRS scores are not available for user ${user.userId} in tenant ${tenantId}`
-          )
+      logger.error(
+        new Error(
+          `KRS and DRS scores are not available for user ${user.userId} in tenant ${tenantId}`
         )
-      }
+      )
     }
 
     user = {

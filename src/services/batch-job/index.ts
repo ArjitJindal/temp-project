@@ -14,10 +14,7 @@ export async function sendBatchJobCommand(
     tenantId,
   }
 
-  if (
-    (process.env.ENV === 'local' || process.env.NODE_ENV === 'development') &&
-    process.env.NODE_ENV !== 'test'
-  ) {
+  if (process.env.NODE_ENV === 'development') {
     const jobRunner = BatchJobRunnerFactory.getBatchJobRunner(job.type)
     await jobRunner.run(batchJob as BatchJob)
     return
