@@ -365,7 +365,7 @@ export default function RiskClassificationSimulationResults(props: Props) {
           </Button>
         </div>
       }
-      drawerMaxWidth={'900px'}
+      drawerMaxWidth={'1000px'}
     >
       <div className={s.root}>
         <AsyncResourceRenderer
