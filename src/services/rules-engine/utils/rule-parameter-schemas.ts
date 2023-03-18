@@ -471,3 +471,24 @@ export const MATCH_PAYMENT_METHOD_DETAILS_OPTIONAL_SCHEMA = (
     ...MATCH_PAYMENT_METHOD_DETAILS_SCHEMA(options),
     nullable: true,
   } as const)
+
+type PercentSchemaOptions = SchemaOptions & {
+  maximum?: number | 'NO_MAXIMUM'
+}
+
+export const PERCENT_SCHEMA = (options: PercentSchemaOptions) => {
+  const { maximum, title, description } = options
+  return {
+    type: 'number',
+    title: title,
+    description,
+    minimum: 0,
+    maximum: maximum === 'NO_MAXIMUM' ? undefined : maximum ?? 100,
+  } as const
+}
+
+export const PERCENT_OPTIONAL_SCHEMA = (options: PercentSchemaOptions) =>
+  ({
+    ...PERCENT_SCHEMA(options),
+    nullable: true,
+  } as const)

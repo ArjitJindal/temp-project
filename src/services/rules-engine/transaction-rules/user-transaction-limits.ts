@@ -11,8 +11,11 @@ import {
   UserTimeAggregationAttributes,
 } from '../repositories/aggregation-repository'
 import { formatMoney } from '../utils/format-description'
-import { TimeWindow, TIME_WINDOW_SCHEMA } from '../utils/rule-parameter-schemas'
-import { PERCENT_SCHEMA } from '../utils/math-utils'
+import {
+  TimeWindow,
+  TIME_WINDOW_SCHEMA,
+  PERCENT_OPTIONAL_SCHEMA,
+} from '../utils/rule-parameter-schemas'
 import { subtractTime } from '../utils/time-utils'
 import { TransactionRule } from './rule'
 import { Amount } from '@/@types/openapi-public/Amount'
@@ -87,7 +90,7 @@ export default class UserTransactionLimitsRule extends TransactionRule<UserTrans
           required: ['threshold', 'timeWindow'],
           nullable: true,
         },
-        multiplierThreshold: PERCENT_SCHEMA({
+        multiplierThreshold: PERCENT_OPTIONAL_SCHEMA({
           title: 'Maximum multiplier (as a percentage)',
           description:
             'For example, specifying 200 (%) means that the rule will only be run if the threshold is at least twice the expected limit.',
