@@ -155,7 +155,7 @@ export class CdkTarponAlarmsStack extends cdk.NestedStack {
           tableName,
           'ConsumedReadCapacityUnits',
           {
-            threshold: this.config.stage === 'prod' ? 600 : 20,
+            threshold: this.config.stage === 'prod' ? 600 : 24,
             statistic: 'Maximum',
             period: Duration.minutes(1),
           }
@@ -167,7 +167,7 @@ export class CdkTarponAlarmsStack extends cdk.NestedStack {
           tableName,
           'ConsumedWriteCapacityUnits',
           {
-            threshold: this.config.stage === 'prod' ? 300 : 10,
+            threshold: this.config.stage === 'prod' ? 300 : 18,
             statistic: 'Maximum',
             period: Duration.minutes(1),
           }
