@@ -493,8 +493,7 @@ export const casesHandler = lambdaApi()(
       return saveCommentResult
     } else if (
       event.httpMethod === 'DELETE' &&
-      event.resource === '/alerts/{alertId}/comments/{commentId}' &&
-      event.body
+      event.resource === '/alerts/{alertId}/comments/{commentId}'
     ) {
       const alertId = event.pathParameters?.alertId as string
       const commentId = event.pathParameters?.commentId as string
