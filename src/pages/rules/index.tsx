@@ -30,20 +30,12 @@ const TableList = () => {
   const [, setLocalStorageActiveTab] = useLocalStorageState('rule-active-tab', rule);
   const i18n = useI18n();
   const canWriteRules = useHasPermissions(['rules:my-rules:write']);
+
   useEffect(() => {
     setLocalStorageActiveTab(rule);
   }, [setLocalStorageActiveTab, rule]);
 
-  const [configIsReadOnlyCauseOfIdClick, setConfigIsReadOnlyCauseOfIdClick] =
-    useState<boolean>(false);
-
   const [currentRule, setCurrentRule] = useState<Rule | null>(null);
-
-  useEffect(() => {
-    if (!currentRule) {
-      setConfigIsReadOnlyCauseOfIdClick(false);
-    }
-  }, [currentRule]);
 
   const api = useApi();
   const isPulseEnabled = useFeatureEnabled('PULSE');
@@ -109,18 +101,11 @@ const TableList = () => {
         }}
       >
         <Tabs.TabPane tab="My Rules" key="my-rules">
-          <MyRule
-            configIsReadOnlyCauseOfIdClick={configIsReadOnlyCauseOfIdClick}
-            setConfigIsReadOnlyCauseOfIdClick={setConfigIsReadOnlyCauseOfIdClick}
-          />
+          <MyRule />
         </Tabs.TabPane>
         <Tabs.TabPane tab="Library" key="rules-library">
           <RulesTable
-            onViewRule={(rule) => {
-              setCurrentRule(rule);
-              setConfigIsReadOnlyCauseOfIdClick(true);
-            }}
-            onEditRule={(rule) => {
+            onSelectRule={(rule) => {
               setCurrentRule(rule);
             }}
           />
@@ -136,7 +121,7 @@ const TableList = () => {
             onSubmit={(formValues) => {
               newInstanceMutation.mutate(formValues);
             }}
-            readOnly={!canWriteRules || configIsReadOnlyCauseOfIdClick}
+            readOnly={!canWriteRules}
           />
         </Tabs.TabPane>
       </PageTabs>

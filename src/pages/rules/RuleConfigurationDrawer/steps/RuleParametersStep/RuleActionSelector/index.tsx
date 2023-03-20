@@ -22,17 +22,15 @@ export default function RuleActionSelector(props: Props) {
     <div className={s.root}>
       {RULE_ACTION_OPTIONS.map((option) => (
         <label key={option.value} className={s.item}>
-          <div className={s.radio}>
-            <Radio
-              value={value === option.value}
-              onChange={(checked) => {
-                if (checked) {
-                  onChange?.(option.value);
-                }
-              }}
-              {...rest}
-            />
-          </div>
+          <Radio
+            value={value === option.value}
+            onChange={(checked) => {
+              if (checked) {
+                onChange?.(option.value);
+              }
+            }}
+            {...rest}
+          />
           <div className={s.text}>
             <div className={cn(s.label, s[`color-${option.value}`])}>{option.value}</div>
             <div className={s.description}>{DESCRIPTIONS[option.value]}</div>
