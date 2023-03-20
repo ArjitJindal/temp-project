@@ -460,7 +460,7 @@ export const transactionsViewHandler = lambdaApi()(
       transactionsStatsGetSegment?.addAnnotation('tenantId', tenantId)
       const result = await transactionService.getUniques({ field, filter })
       transactionsStatsGetSegment?.close()
-      return result
+      return result.filter((item) => item != null)
     } else if (
       event.httpMethod === 'POST' &&
       event.path.endsWith('/transactions') &&

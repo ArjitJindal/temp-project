@@ -136,7 +136,9 @@ export const businessUsersViewHandler = lambdaApi()(
       event.path.endsWith('/users/uniques')
     ) {
       const { field, filter } = event.queryStringParameters as any
-      return await userService.getUniques({ field, filter })
+      return (await userService.getUniques({ field, filter })).filter(
+        (item) => item != null
+      )
     }
   }
 )
