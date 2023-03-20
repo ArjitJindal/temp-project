@@ -51,6 +51,7 @@ describe('Public Management API - Rule', () => {
       casePriority: 'P1',
       type: 'TRANSACTION',
       nature: 'AML',
+      labels: [],
     })
   })
 
@@ -246,6 +247,7 @@ describe('Public Management API - Rule', () => {
       hitCount: 0,
       casePriority: 'P1',
       nature: 'AML',
+      labels: [],
     })
   })
 
@@ -356,6 +358,7 @@ describe('Public Management API - Rule', () => {
       runCount: 0,
       hitCount: 0,
       nature: 'AML',
+      labels: [],
     })
     const ruleInstance = await ruleInstanceRepository.getRuleInstanceById(
       TEST_RULE_INSTANCE_ID

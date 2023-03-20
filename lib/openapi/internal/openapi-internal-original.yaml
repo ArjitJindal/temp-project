@@ -3550,6 +3550,7 @@ components:
         - ruleId
         - casePriority
         - nature
+        - labels
     RuleAction:
       type: string
       title: RuleAction

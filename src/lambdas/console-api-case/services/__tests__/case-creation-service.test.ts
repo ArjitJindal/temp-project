@@ -150,11 +150,13 @@ describe('User cases', () => {
         ruleId: 'REHIT_RULE',
         casePriority: 'P1',
         nature: 'AML',
+        labels: [],
       },
       {
         ruleId: 'NEW_RULE_HIT',
         casePriority: 'P1',
         nature: 'AML',
+        labels: [],
       },
     ]
 
