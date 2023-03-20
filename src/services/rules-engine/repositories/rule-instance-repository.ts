@@ -40,6 +40,7 @@ function toRuleInstance(item: any): RuleInstance {
     casePriority: item.casePriority,
     falsePositiveCheckEnabled: item.falsePositiveCheckEnabled,
     nature: item.nature,
+    labels: item.labels,
   }
 }
 

@@ -54,6 +54,7 @@ export async function createRule(
       status: 'ACTIVE',
       casePriority: createdRule.defaultCasePriority as Priority,
       nature: createdRule.defaultNature,
+      labels: createdRule.labels,
       ...ruleInstance,
     })
 

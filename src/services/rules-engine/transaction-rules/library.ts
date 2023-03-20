@@ -160,7 +160,7 @@ const _TRANSACTION_RULES_LIBRARY: Array<
       defaultParameters,
       defaultAction: 'FLAG',
       ruleImplementationName: 'high-risk-currency',
-      labels: ['Sanctions', 'List'],
+      labels: [],
       defaultNature: 'AML',
       defaultCasePriority: 'P1',
     }
@@ -282,7 +282,7 @@ const _TRANSACTION_RULES_LIBRARY: Array<
       defaultFilters,
       defaultAction: 'FLAG',
       ruleImplementationName: 'merchant-receiver-name',
-      labels: ['Risk Appetite', 'List'],
+      labels: [],
       defaultNature: 'FRAUD',
       defaultCasePriority: 'P1',
     }
@@ -315,7 +315,7 @@ const _TRANSACTION_RULES_LIBRARY: Array<
       defaultAction: 'FLAG',
       defaultFilters,
       ruleImplementationName: 'blacklist-card-issued-country',
-      labels: ['Risk Appetite', 'List'],
+      labels: [],
       defaultNature: 'AML',
       defaultCasePriority: 'P1',
     }
@@ -349,7 +349,7 @@ const _TRANSACTION_RULES_LIBRARY: Array<
       defaultParameters,
       defaultAction: 'FLAG',
       ruleImplementationName: 'transaction-reference-keyword',
-      labels: ['Risk Appetite', 'List'],
+      labels: [],
       defaultNature: 'AML',
       defaultCasePriority: 'P1',
     }
@@ -374,7 +374,7 @@ const _TRANSACTION_RULES_LIBRARY: Array<
       defaultParameters,
       defaultAction: 'FLAG',
       ruleImplementationName: 'transactions-velocity',
-      labels: ['Internal Fraud'],
+      labels: [],
       defaultNature: 'FRAUD',
       defaultCasePriority: 'P1',
     }
@@ -847,7 +847,7 @@ const _TRANSACTION_RULES_LIBRARY: Array<
       defaultParameters,
       defaultAction: 'FLAG',
       ruleImplementationName: 'too-many-counterparty-country',
-      labels: ['List'],
+      labels: [],
       defaultNature: 'AML',
       defaultCasePriority: 'P1',
     }
@@ -915,7 +915,7 @@ const _TRANSACTION_RULES_LIBRARY: Array<
       defaultParameters,
       defaultAction: 'FLAG',
       ruleImplementationName: 'blacklist-payment-details',
-      labels: ['Risk Appetite', 'List'],
+      labels: [],
       defaultNature: 'FRAUD',
       defaultCasePriority: 'P1',
     }
@@ -945,7 +945,7 @@ const _TRANSACTION_RULES_LIBRARY: Array<
       defaultParameters,
       defaultAction: 'FLAG',
       ruleImplementationName: 'transactions-exceed-past-period',
-      labels: ['Internal Fraud'],
+      labels: [],
       defaultNature: 'FRAUD',
       defaultCasePriority: 'P1',
     }
@@ -966,7 +966,7 @@ const _TRANSACTION_RULES_LIBRARY: Array<
       defaultParameters,
       defaultAction: 'BLOCK',
       ruleImplementationName: 'blacklist-transaction-related-value',
-      labels: ['List'],
+      labels: [],
       defaultNature: 'FRAUD',
       defaultCasePriority: 'P3',
     }
