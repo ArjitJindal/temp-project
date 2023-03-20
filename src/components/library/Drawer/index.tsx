@@ -30,7 +30,7 @@ export default function Drawer(props: Props) {
   }, [isVisible]);
 
   return ReactDOM.createPortal(
-    <div className={cn(s.root, isVisible && s.isVisible)} onClick={handleClose}>
+    <div className={cn(s.root, isVisible && s.isVisible)}>
       <div
         className={s.content}
         onClick={(e) => {
