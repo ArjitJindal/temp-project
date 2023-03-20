@@ -191,8 +191,12 @@ export default function RuleConfigurationDrawer(props: Props) {
       <Drawer
         isVisible={isVisible}
         onChangeVisibility={onChangeVisibility}
-        title="Configure rule"
-        description="Add all relevant information to configure this rule"
+        title={readOnly ? 'Read-only rule view' : 'Configure rule'}
+        description={
+          readOnly
+            ? 'Read all relevant rule information'
+            : 'Add all relevant information to configure this rule'
+        }
         footer={
           <div className={s.footer}>
             <StepButtons
@@ -227,26 +231,32 @@ export default function RuleConfigurationDrawer(props: Props) {
                 onChange={setActiveTabKey}
                 minWidth={200}
               >
-                <div className={s.scrollContainer}>
+                <div className={readOnly ? s.readOnlyScrollContainer : s.scrollContainer}>
                   <div className={s.tabContent}>
                     {activeStepKey === BASIC_DETAILS_STEP && (
-                      <NestedForm<FormValues> name={'basicDetailsStep'}>
-                        <BasicDetailsStep activeTab={activeTabKey} rule={rule} />
-                      </NestedForm>
+                      <div className={readOnly ? s.readOnlyFormContent : ''}>
+                        <NestedForm<FormValues> name={'basicDetailsStep'}>
+                          <BasicDetailsStep activeTab={activeTabKey} rule={rule} />
+                        </NestedForm>
+                      </div>
                     )}
                     {activeStepKey === STANDARD_FILTERS_STEP && (
-                      <NestedForm<FormValues> name={'standardFiltersStep'}>
-                        <StandardFiltersStep activeTab={activeTabKey} rule={rule} />
-                      </NestedForm>
+                      <div className={readOnly ? s.readOnlyFormContent : ''}>
+                        <NestedForm<FormValues> name={'standardFiltersStep'}>
+                          <StandardFiltersStep activeTab={activeTabKey} rule={rule} />
+                        </NestedForm>
+                      </div>
                     )}
                     {activeStepKey === RULE_PARAMETERS_STEP && (
-                      <NestedForm<FormValues> name={'ruleParametersStep'}>
-                        <RuleParametersStep
-                          activeTab={activeTabKey}
-                          rule={rule}
-                          defaultInitialValues={defaultInitialValues.ruleParametersStep}
-                        />
-                      </NestedForm>
+                      <div className={readOnly ? s.readOnlyFormContent : ''}>
+                        <NestedForm<FormValues> name={'ruleParametersStep'}>
+                          <RuleParametersStep
+                            activeTab={activeTabKey}
+                            rule={rule}
+                            defaultInitialValues={defaultInitialValues.ruleParametersStep}
+                          />
+                        </NestedForm>
+                      </div>
                     )}
                   </div>
                 </div>

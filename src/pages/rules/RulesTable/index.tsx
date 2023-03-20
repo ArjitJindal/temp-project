@@ -13,7 +13,8 @@ import { getBranding } from '@/utils/branding';
 import { useHasPermissions } from '@/utils/user-utils';
 
 interface Props {
-  onSelectRule: (rule: Rule) => void;
+  onViewRule: (rule: Rule) => void;
+  onEditRule: (rule: Rule) => void;
 }
 export const recommendedRules = [
   'R-2',
@@ -31,20 +32,21 @@ export const recommendedRules = [
 
 const branding = getBranding();
 
-export const RulesTable: React.FC<Props> = ({ onSelectRule }) => {
+export const RulesTable: React.FC<Props> = ({ onViewRule, onEditRule }) => {
   const api = useApi();
   const canWriteRules = useHasPermissions(['rules:my-rules:write']);
   const columns: TableColumn<Rule>[] = useMemo(() => {
     const caseCreationHeaders: TableColumn<Rule>[] = [
       {
-        title: 'Default Nature',
+        title: 'Default nature',
         width: 100,
         dataIndex: 'defaultNature',
       },
     ];
     return [
       {
-        title: 'Rule ID',
+        title: 'ID',
+        subtitle: 'Name',
         width: 200,
         dataIndex: 'id',
         sorter: (a, b) => parseInt(a.id.split('-')[1]) - parseInt(b.id.split('-')[1]),
@@ -52,7 +54,11 @@ export const RulesTable: React.FC<Props> = ({ onSelectRule }) => {
         render: (_, entity) => {
           return (
             <>
-              <a onClick={() => onSelectRule(entity)}>
+              <a
+                onClick={() => {
+                  onViewRule(entity);
+                }}
+              >
                 <span className={style.root}>
                   {entity.id}{' '}
                   {recommendedRules.includes(entity.id) ? (
@@ -71,14 +77,14 @@ export const RulesTable: React.FC<Props> = ({ onSelectRule }) => {
         exportData: (row) => row.id,
       },
       {
-        title: 'Rule Description',
+        title: 'Description',
         width: 300,
         dataIndex: 'description',
         exportData: (row) => row.description,
       },
       ...caseCreationHeaders,
       {
-        title: 'Default Action',
+        title: 'Default action',
         width: 150,
         sorter: (a, b) => a.defaultAction.localeCompare(b.defaultAction),
         render: (_, rule) => {
@@ -91,6 +97,7 @@ export const RulesTable: React.FC<Props> = ({ onSelectRule }) => {
         exportData: (row) => row.defaultAction,
       },
       {
+        title: 'Action',
         width: 90,
         search: false,
         render: (_, entity) => {
@@ -100,7 +107,7 @@ export const RulesTable: React.FC<Props> = ({ onSelectRule }) => {
                 analyticsName="Select"
                 size="MEDIUM"
                 type="PRIMARY"
-                onClick={() => onSelectRule(entity)}
+                onClick={() => onEditRule(entity)}
                 isDisabled={!canWriteRules}
               >
                 Configure
@@ -110,7 +117,7 @@ export const RulesTable: React.FC<Props> = ({ onSelectRule }) => {
         },
       },
     ];
-  }, [onSelectRule, canWriteRules]);
+  }, [canWriteRules, onViewRule, onEditRule]);
 
   const rulesResult = usePaginatedQuery(GET_RULES(), async () => {
     const rules = await api.getRules();

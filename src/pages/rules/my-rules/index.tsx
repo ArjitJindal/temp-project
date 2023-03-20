@@ -1,10 +1,9 @@
 import { message, Switch, Tooltip } from 'antd';
-import React, { useCallback, useMemo, useRef, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import _ from 'lodash';
 import { DeleteOutlined, EditOutlined } from '@ant-design/icons';
 import { useMutation } from '@tanstack/react-query';
 import cn from 'clsx';
-import { RuleParametersTable } from '../RulesTable/RuleParametersTable';
 import { getRuleInstanceDisplayId } from '../utils';
 import s from './style.module.less';
 import { dayjs, DEFAULT_DATE_TIME_FORMAT } from '@/utils/dayjs';
@@ -24,8 +23,14 @@ import { removeEmpty } from '@/utils/json';
 import { useHasPermissions } from '@/utils/user-utils';
 import Confirm from '@/components/utils/Confirm';
 
-const MyRule = () => {
+interface Props {
+  configIsReadOnlyCauseOfIdClick: boolean;
+  setConfigIsReadOnlyCauseOfIdClick: (val: boolean) => void;
+}
+
+const MyRule = (props: Props) => {
   usePageViewTracker('My Rule Page');
+  const { configIsReadOnlyCauseOfIdClick, setConfigIsReadOnlyCauseOfIdClick } = props;
   const isPulseEnabled = useFeatureEnabled('PULSE');
   const api = useApi();
   const canWriteRules = useHasPermissions(['rules:my-rules:write']);
@@ -38,6 +43,13 @@ const MyRule = () => {
   }, []);
 
   const [showDetail, setShowDetail] = useState<boolean>(false);
+
+  useEffect(() => {
+    if (!showDetail) {
+      setConfigIsReadOnlyCauseOfIdClick(false);
+    }
+  }, [showDetail, setConfigIsReadOnlyCauseOfIdClick]);
+
   const [deleting, setDeleting] = useState(false);
   const [currentRow, setCurrentRow] = useState<RuleInstance>();
   const { rules } = useRules();
@@ -98,52 +110,47 @@ const MyRule = () => {
   const columns: TableColumn<RuleInstance>[] = useMemo(() => {
     const caseCreationHeaders: TableColumn<RuleInstance>[] = [
       {
-        title: 'Rule Priority',
+        title: 'Case priority',
         width: 50,
         dataIndex: 'casePriority',
       },
     ];
     return [
       {
-        title: 'Rule ID',
-        width: 200,
+        title: 'ID',
+        width: 100,
         sorter: (a, b) => parseInt(a.ruleId.split('-')[1]) - parseInt(b.ruleId.split('-')[1]),
         exportData: (row) => row.ruleId,
         render: (_, entity) => {
-          const ruleInstance = updatedRuleInstances[entity.id as string] || entity;
           return (
-            <>
-              <a
-                onClick={() => {
-                  setCurrentRow(entity);
-                  setShowDetail(true);
-                }}
-              >
-                {getRuleInstanceDisplayId(entity.ruleId, entity.id)}
-              </a>
-              <br />
-              <span style={{ fontSize: '12px' }}>
-                {ruleInstance.ruleNameAlias || rules[ruleInstance.ruleId]?.name}
-              </span>
-            </>
+            <a
+              onClick={() => {
+                setCurrentRow(entity);
+                setShowDetail(true);
+                setConfigIsReadOnlyCauseOfIdClick(true);
+              }}
+            >
+              {getRuleInstanceDisplayId(entity.ruleId, entity.id)}
+            </a>
           );
         },
       },
       {
-        title: 'Rule Description',
-        width: 300,
-        sorter: (a, b) => rules[a.ruleId].name.localeCompare(rules[b.ruleId].name),
-        exportData: (row) => rules[row.ruleId].name,
+        title: 'Name',
+        width: 120,
+        exportData: (row) => row.ruleNameAlias,
         render: (_, entity) => {
           const ruleInstance = updatedRuleInstances[entity.id as string] || entity;
           return (
-            <> {ruleInstance.ruleDescriptionAlias || rules[ruleInstance.ruleId]?.description}</>
+            <span style={{ fontSize: '12px' }}>
+              {ruleInstance.ruleNameAlias || rules[ruleInstance.ruleId]?.name}
+            </span>
           );
         },
       },
       {
-        title: 'Rule Hit Rate',
-        width: 100,
+        title: 'Hit rate',
+        width: 60,
         sorter: (a, b) =>
           (a.hitCount && a.runCount ? a.hitCount / a.runCount : 0) -
           (b.hitCount && b.runCount ? b.hitCount / b.runCount : 0),
@@ -165,30 +172,6 @@ const MyRule = () => {
           );
         },
       },
-      {
-        title: 'Parameter',
-        width: 300,
-        render: (_, ruleInstance) => {
-          return isPulseEnabled ? (
-            <a
-              onClick={() => {
-                setCurrentRow(ruleInstance);
-                setShowDetail(true);
-              }}
-            >
-              Show risk level parameters
-            </a>
-          ) : (
-            <RuleParametersTable
-              parameters={ruleInstance.parameters}
-              schema={rules[ruleInstance.ruleId]?.parametersSchema}
-            />
-          );
-        },
-        exportData: (row) => {
-          return JSON.stringify(row.parameters);
-        },
-      },
       ...caseCreationHeaders,
       {
         title: 'Created At',
@@ -201,7 +184,7 @@ const MyRule = () => {
         exportData: (row) => dayjs(row.createdAt).format(DEFAULT_DATE_TIME_FORMAT),
       },
       {
-        title: 'Activated',
+        title: 'Status',
         width: 30,
         align: 'center',
         dataIndex: 'status',
@@ -219,7 +202,7 @@ const MyRule = () => {
         exportData: (row) => row.status === 'ACTIVE',
       },
       {
-        title: 'Actions',
+        title: 'Action',
         width: 30,
         align: 'center',
         render: (_, entity) => {
@@ -266,9 +249,9 @@ const MyRule = () => {
     updatedRuleInstances,
     canWriteRules,
     deleting,
-    isPulseEnabled,
     handleActivationChange,
     handleDeleteRuleInstanceMutation,
+    setConfigIsReadOnlyCauseOfIdClick,
   ]);
   const measure = useApiTime();
   const rulesResult = usePaginatedQuery(GET_RULE_INSTANCES(), async () => {
@@ -377,7 +360,7 @@ const MyRule = () => {
       />
       <RuleConfigurationDrawer
         rule={rule}
-        readOnly={!canWriteRules}
+        readOnly={!canWriteRules || configIsReadOnlyCauseOfIdClick}
         formInitialValues={
           ruleInstance
             ? {
