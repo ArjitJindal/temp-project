@@ -17,11 +17,11 @@ interface CommonProps<Value extends string> {
   options: Option<Value>[];
 }
 
-interface MultipleProps<Value extends string> extends CommonProps<Value>, InputProps<string[]> {
+interface MultipleProps<Value extends string> extends CommonProps<Value>, InputProps<Value[]> {
   mode: 'MULTIPLE';
 }
 
-interface SingleProps<Value extends string> extends CommonProps<Value>, InputProps<string> {
+interface SingleProps<Value extends string> extends CommonProps<Value>, InputProps<Value> {
   mode: 'SINGLE';
 }
 

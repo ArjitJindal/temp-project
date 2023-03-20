@@ -63,6 +63,7 @@ const TableList = () => {
         filters: standardFiltersStep,
         casePriority: basicDetailsStep.casePriority,
         nature: basicDetailsStep.ruleNature,
+        labels: basicDetailsStep.ruleLabels,
         parameters: undefined,
         ...(isPulseEnabled
           ? {

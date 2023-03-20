@@ -1,4 +1,4 @@
-import { Priority, RuleNature } from '@/apis';
+import { Priority, RuleLabels, RuleNature } from '@/apis';
 import { RuleAction } from '@/apis/models/RuleAction';
 import { RuleInstanceMap, RulesMap } from '@/utils/rules';
 
@@ -35,7 +35,40 @@ export function getRuleInstanceDisplay(
 export const RULE_NATURE_OPTIONS: { label: string; value: RuleNature }[] = [
   { label: 'AML', value: 'AML' },
   { label: 'Fraud', value: 'FRAUD' },
+  { label: 'Screening', value: 'SCREENING' },
+  { label: 'CTF', value: 'CTF' },
 ];
+
+export const RULE_LABELS_OPTIONS: {
+  [key in RuleNature]: { label: string; value: RuleLabels }[];
+} = {
+  AML: [
+    { label: 'Unexpected behavior', value: 'UNEXPECTED_BEHAVIOR' },
+    { label: 'Illicit gains check', value: 'ILLICIT_GAINS_CHECK' },
+    { label: 'RFI trigger', value: 'RFI_TRIGGER' },
+    { label: 'EDD trigger', value: 'EDD_TRIGGER' },
+    { label: 'KYC trigger', value: 'KYC_TRIGGER' },
+  ],
+  FRAUD: [
+    { label: 'Scam', value: 'SCAM' },
+    { label: 'Abuse', value: 'ABUSE' },
+    { label: 'Account takeover', value: 'ACCOUNT_TAKEOVER' },
+    { label: 'Unexpected behavior', value: 'UNEXPECTED_BEHAVIOR' },
+    { label: 'Dispute', value: 'DISPUTE' },
+  ],
+  SCREENING: [
+    { label: 'Sanctions', value: 'SANCTIONS' },
+    { label: 'Sanctions & PEP', value: 'SANCTIONS_PEP' },
+    { label: 'Sanctions, PEP & Adverse media', value: 'SANCTIONS_PEP_ADVERSE_MEDIA' },
+  ],
+  CTF: [
+    { label: 'Unexpected behavior', value: 'UNEXPECTED_BEHAVIOR' },
+    { label: 'Illicit gains check', value: 'ILLICIT_GAINS_CHECK' },
+    { label: 'RFI trigger', value: 'RFI_TRIGGER' },
+    { label: 'EDD trigger', value: 'EDD_TRIGGER' },
+    { label: 'KYC trigger', value: 'KYC_TRIGGER' },
+  ],
+};
 
 export const RULE_CASE_PRIORITY: { label: string; value: Priority }[] = [
   { label: 'P1', value: 'P1' },

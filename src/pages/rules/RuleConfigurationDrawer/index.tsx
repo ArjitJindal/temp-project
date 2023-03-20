@@ -319,6 +319,7 @@ function useDefaultInitialValues(rule: Rule | null) {
         ruleDescription: rule?.description,
         ruleNature: rule?.defaultNature ?? BASIC_DETAILS_STEP_INITIAL_VALUES.ruleNature,
         casePriority: rule?.defaultCasePriority ?? BASIC_DETAILS_STEP_INITIAL_VALUES.casePriority,
+        ruleLabels: rule?.labels ?? BASIC_DETAILS_STEP_INITIAL_VALUES.ruleLabels,
       },
       standardFiltersStep: rule?.defaultFilters ?? STANDARD_FILTERS_STEP_INITIAL_VALUES,
       ruleParametersStep: ruleParametersStep,
@@ -335,5 +336,6 @@ function useDefaultInitialValues(rule: Rule | null) {
     rule?.description,
     rule?.name,
     rule?.parametersSchema,
+    rule?.labels,
   ]);
 }

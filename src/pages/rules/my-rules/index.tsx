@@ -286,6 +286,7 @@ const MyRule = (props: Props) => {
         filters: standardFiltersStep,
         casePriority: basicDetailsStep.casePriority,
         nature: basicDetailsStep.ruleNature,
+        labels: basicDetailsStep.ruleLabels,
         ...(isPulseEnabled
           ? {
               riskLevelParameters: riskLevelParameters
@@ -369,6 +370,7 @@ const MyRule = (props: Props) => {
                   ruleDescription: ruleInstance.ruleDescriptionAlias,
                   ruleNature: ruleInstance.nature,
                   casePriority: ruleInstance.casePriority,
+                  ruleLabels: ruleInstance.labels,
                 },
                 standardFiltersStep: ruleInstance.filters,
                 ruleParametersStep: isPulseEnabled
