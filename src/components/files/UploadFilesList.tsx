@@ -12,6 +12,8 @@ interface Props {
   disableUpload?: boolean;
   onFileUploaded: (file: FileInfo) => Promise<void>;
   onFileRemoved: (s3Key: string) => Promise<void>;
+  uploadingCount: number;
+  setUploadingCount: React.Dispatch<React.SetStateAction<number>>;
 }
 
 interface RemoveAllFilesRef {
@@ -20,7 +22,7 @@ interface RemoveAllFilesRef {
 
 export const UploadFilesList = forwardRef((props: Props, ref: React.Ref<RemoveAllFilesRef>) => {
   const api = useApi();
-  const { files, onFileUploaded, onFileRemoved } = props;
+  const { files, onFileUploaded, onFileRemoved, uploadingCount, setUploadingCount } = props;
 
   useImperativeHandle(ref, () => ({
     removeAllFiles: async () => {
@@ -30,6 +32,7 @@ export const UploadFilesList = forwardRef((props: Props, ref: React.Ref<RemoveAl
 
   return (
     <Upload
+      disabled={uploadingCount > 0}
       multiple={true}
       fileList={files.map((file) => ({
         uid: file.s3Key,
@@ -44,6 +47,7 @@ export const UploadFilesList = forwardRef((props: Props, ref: React.Ref<RemoveAl
         }
       }}
       customRequest={async ({ file: f, onError, onSuccess }) => {
+        setUploadingCount((count) => count + 1);
         const file = f as File;
         const hideMessage = message.loading('Uploading...');
         try {
@@ -69,6 +73,7 @@ export const UploadFilesList = forwardRef((props: Props, ref: React.Ref<RemoveAl
           }
         } finally {
           hideMessage && hideMessage();
+          setUploadingCount((count) => count - 1);
         }
       }}
     >

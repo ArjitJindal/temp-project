@@ -1,6 +1,7 @@
-import React, { useCallback, useImperativeHandle, useRef, useState } from 'react';
+import React, { useCallback, useEffect, useImperativeHandle, useRef, useState } from 'react';
 import Upload from 'antd/es/upload/Upload';
 import axios from 'axios';
+import _ from 'lodash';
 import s from './styles.module.less';
 import { message } from '@/components/library/Message';
 import Button from '@/components/library/Button';
@@ -31,10 +32,12 @@ export interface CommentEditorRef {
   reset: () => void;
 }
 
+let uploadedFiles: FileInfo[] = [];
+
 function CommentEditor(props: Props, ref: React.Ref<CommentEditorRef>) {
   const { showFileList = true, values, submitRes, placeholder, onChangeValues, onSubmit } = props;
   const api = useApi();
-  const [isUploadLoading, setUploadLoading] = useState(false);
+  const [uploadingCount, setUploadingCount] = useState(0);
   const removeFile = useCallback(
     (s3Key) =>
       onChangeValues({
@@ -52,6 +55,12 @@ function CommentEditor(props: Props, ref: React.Ref<CommentEditorRef>) {
       editorRef.current?.reset();
     },
   }));
+
+  useEffect(() => {
+    if (uploadingCount === 0) {
+      uploadedFiles = [];
+    }
+  }, [uploadingCount]);
 
   const isCommentTooLong = values.comment.length > MAX_COMMENT_LENGTH;
   return (
@@ -88,7 +97,7 @@ function CommentEditor(props: Props, ref: React.Ref<CommentEditorRef>) {
         <Button
           analyticsName="Add Comment"
           htmlType="submit"
-          isLoading={isLoading(submitRes) || isUploadLoading}
+          isLoading={isLoading(submitRes) || uploadingCount > 0}
           onClick={() => onSubmit(values)}
           type="PRIMARY"
           isDisabled={(values.files.length === 0 && !values.comment) || isCommentTooLong}
@@ -111,22 +120,20 @@ function CommentEditor(props: Props, ref: React.Ref<CommentEditorRef>) {
           customRequest={async ({ file: f, onError, onSuccess }) => {
             const file = f as File;
             if (process.env.ENV_NAME === 'local') {
+              uploadedFiles.push({
+                s3Key: `fake-s3-key-${Date.now()}`,
+                bucket: 'fake-bucket-name',
+                filename: file.name,
+                size: file.size,
+                downloadLink: `https://example.com/fake-download-url/${Date.now()}`,
+              });
               onChangeValues({
                 ...values,
-                files: [
-                  ...values.files,
-                  {
-                    s3Key: `fake-s3-key-${Date.now()}`,
-                    bucket: 'fake-bucket-name',
-                    filename: file.name,
-                    size: file.size,
-                    downloadLink: `https://example.com/fake-download-url/${Date.now()}`,
-                  },
-                ],
+                files: [...values.files, ...uploadedFiles],
               });
               return;
             }
-            setUploadLoading(true);
+            setUploadingCount((prevCount) => prevCount + 1);
             const hideMessage = message.loading('Uploading...');
             let fileS3Key = '';
             try {
@@ -143,9 +150,10 @@ function CommentEditor(props: Props, ref: React.Ref<CommentEditorRef>) {
               if (onSuccess) {
                 onSuccess(s3Key);
               }
+              uploadedFiles.push({ s3Key, filename: file.name, size: file.size });
               onChangeValues({
                 ...values,
-                files: [...values.files, { s3Key, filename: file.name, size: file.size }],
+                files: _.uniqBy([...values.files, ...uploadedFiles], 's3Key'),
               });
               hideMessage();
             } catch (error) {
@@ -157,7 +165,7 @@ function CommentEditor(props: Props, ref: React.Ref<CommentEditorRef>) {
               }
             } finally {
               hideMessage && hideMessage();
-              setUploadLoading(false);
+              setUploadingCount((prevCount) => prevCount - 1);
             }
           }}
         >
@@ -166,7 +174,7 @@ function CommentEditor(props: Props, ref: React.Ref<CommentEditorRef>) {
               ref={uploadRef}
               analyticsName="Attach files"
               size="MEDIUM"
-              isLoading={isUploadLoading}
+              isLoading={uploadingCount > 0}
               isDisabled={isLoading(submitRes)}
             />
           </div>

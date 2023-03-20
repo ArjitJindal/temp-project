@@ -2,6 +2,7 @@ import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { Form, Input, Modal, Select } from 'antd';
 import pluralize from 'pluralize';
 import { UseMutationResult } from '@tanstack/react-query';
+import _ from 'lodash';
 import { AlertStatus, CaseStatus, FileInfo } from '@/apis';
 import { CaseClosingReasons } from '@/apis/models/CaseClosingReasons';
 import { UploadFilesList } from '@/components/files/UploadFilesList';
@@ -59,6 +60,12 @@ export interface Props {
   >;
 }
 
+let uploadedFiles: FileInfo[] = [];
+
+const handleFiles = (files: FileInfo[]) => {
+  return _.uniqBy([...uploadedFiles, ...files], 's3Key');
+};
+
 export default function StatusChangeModal(props: Props) {
   const {
     ids,
@@ -79,7 +86,9 @@ export default function StatusChangeModal(props: Props) {
   const [isOtherReason, setIsOtherReason] = useState(false);
   const [isAwaitingConfirmation, setAwaitingConfirmation] = useState(false);
   const [formValues, setFormValues] = useState<FormValues>(initialValues);
+  const [uploadingCount, setUploadingCount] = useState(0);
   const [form] = Form.useForm<FormValues>();
+  const [fileList, setFileList] = useState<FileInfo[]>(initialValues.files);
 
   const showConfirmation = isVisible && (newStatus === 'REOPENED' || isAwaitingConfirmation);
 
@@ -87,6 +96,12 @@ export default function StatusChangeModal(props: Props) {
     form.setFieldsValue(initialValues);
     setFormValues(initialValues);
   }, [initialValues]);
+
+  useEffect(() => {
+    if (uploadingCount === 0) {
+      uploadedFiles = [];
+    }
+  }, [uploadingCount]);
 
   const possibleReasons = [...COMMON_REASONS, ...CLOSING_REASONS];
   const modalTitle = `Close ${pluralize(entityName, ids.length, true)}`;
@@ -115,8 +130,13 @@ export default function StatusChangeModal(props: Props) {
   }, [wasUpdateDone, isUpdateDone, removeFiles, onSaved, onClose, form]);
 
   const handleConfirm = () => {
-    updateMutation.mutate({ ids: ids, newStatus, formValues });
+    updateMutation.mutate({
+      ids: ids,
+      newStatus,
+      formValues: { ...formValues, files: handleFiles([...fileList, ...formValues.files]) },
+    });
   };
+
   return (
     <>
       <Modal
@@ -176,7 +196,13 @@ export default function StatusChangeModal(props: Props) {
             />
           </Form.Item>
           <Form.Item name="files" label="Attach documents">
-            <FilesInput ref={uploadRef} />
+            <FilesInput
+              ref={uploadRef}
+              onChange={(value) => setFileList(handleFiles([...fileList, ...value]))}
+              value={fileList}
+              uploadingCount={uploadingCount}
+              setUploadingCount={setUploadingCount}
+            />
           </Form.Item>
         </Form>
       </Modal>
@@ -206,19 +232,25 @@ const FilesInput = React.forwardRef(
     props: {
       value?: FileInfo[];
       onChange?: (value: FileInfo[]) => void;
+      uploadingCount: number;
+      setUploadingCount: React.Dispatch<React.SetStateAction<number>>;
     },
     ref: React.Ref<RemoveAllFilesRef>,
   ) => {
     const { value = [], onChange } = props;
+
     return (
       <UploadFilesList
         files={value}
         onFileUploaded={async (file) => {
-          onChange?.([...value, file]);
+          uploadedFiles.push(file);
+          onChange?.(handleFiles([file, ...value]));
         }}
         onFileRemoved={async (fileS3Key) => {
           onChange?.(value.filter((prevFile) => prevFile.s3Key !== fileS3Key));
         }}
+        uploadingCount={props.uploadingCount}
+        setUploadingCount={props.setUploadingCount}
         ref={ref}
       />
     );
