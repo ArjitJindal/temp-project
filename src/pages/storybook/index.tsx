@@ -29,6 +29,7 @@ import Tooltip from '@/components/library/Tooltip/story';
 import Toggle from '@/components/library/Toggle/story';
 import Tabs from '@/components/library/Tabs/story';
 import TextArea from '@/components/library/TextArea/story';
+import Slider from '@/components/library/Slider/story';
 
 interface StoryProps {}
 
@@ -149,32 +150,12 @@ const config: Config = [
     ],
   },
   {
-    key: 'FDT-85730_Implement_Case_Management_Console_Components',
-    category: '#FDT-85730: Implement Case Management Console Components',
+    key: 'to_add',
+    category: 'To add',
     components: [
       {
-        component: 'SegmentedControl',
-        story: SegmentedControl,
-      },
-      {
-        component: 'Button',
-        story: Button,
-      },
-      {
-        component: 'QuickFilter',
-        story: QuickFilter,
-      },
-      {
-        component: 'Dropdown',
-        story: Dropdown,
-      },
-      {
-        component: 'Pagination',
-        story: Pagination,
-      },
-      {
-        component: 'Message',
-        story: Message,
+        component: 'Slider',
+        story: Slider,
       },
     ],
   },

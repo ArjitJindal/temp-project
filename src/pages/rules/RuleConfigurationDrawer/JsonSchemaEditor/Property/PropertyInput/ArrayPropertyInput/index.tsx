@@ -1,5 +1,6 @@
 import React, { useCallback, useState } from 'react';
 import cn from 'clsx';
+import pluralize from 'pluralize';
 import { ExtendedSchema } from '../../../types';
 import PropertyInput from '../index';
 import s from './style.module.less';
@@ -8,6 +9,7 @@ import Select from '@/components/library/Select';
 import { isString } from '@/pages/rules/RuleConfigurationDrawer/JsonSchemaEditor/schema-utils';
 import DeleteBin7LineIcon from '@/components/ui/icons/Remix/system/delete-bin-7-line.react.svg';
 import { InputProps } from '@/components/library/Form';
+import { getUiSchema } from '@/pages/rules/RuleConfigurationDrawer/JsonSchemaEditor/utils';
 
 // todo: fix any
 interface Props extends InputProps<unknown[]> {
@@ -16,6 +18,7 @@ interface Props extends InputProps<unknown[]> {
 
 export default function ArrayPropertyInput(props: Props) {
   const { schema } = props;
+  const uiSchema = getUiSchema(schema);
   if (schema.type !== 'array') {
     throw new Error(
       `This component should only be called for array property (passed property type is '${schema.type}')`,
@@ -32,7 +35,7 @@ export default function ArrayPropertyInput(props: Props) {
       <Select
         mode={enumItems.length === 0 ? 'TAGS' : 'MULTIPLE'}
         options={enumItems.filter(isString).map((item) => ({ label: item, value: item }))}
-        placeholder="Select multiple options"
+        placeholder={`Select multiple ${pluralize(uiSchema['ui:entityName'] ?? 'option')}`}
         {...(props as InputProps<string[]>)}
       />
     );

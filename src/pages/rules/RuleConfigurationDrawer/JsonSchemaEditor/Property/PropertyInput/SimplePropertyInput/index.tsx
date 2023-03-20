@@ -5,6 +5,7 @@ import NumberInput from '@/components/library/NumberInput';
 import Checkbox from '@/components/library/Checkbox';
 import Select from '@/components/library/Select';
 import { InputProps } from '@/components/library/Form';
+import { getUiSchema } from '@/pages/rules/RuleConfigurationDrawer/JsonSchemaEditor/utils';
 
 // todo: fix any
 interface Props extends InputProps<any> {
@@ -13,6 +14,7 @@ interface Props extends InputProps<any> {
 
 export default function SimplePropertyInput(props: Props) {
   const { schema, ...inputProps } = props;
+  const uiSchema = getUiSchema(schema);
   switch (schema.type) {
     case 'string':
       if (schema.enum != null) {
@@ -20,7 +22,7 @@ export default function SimplePropertyInput(props: Props) {
           <Select
             {...inputProps}
             mode="SINGLE"
-            placeholder="Select option"
+            placeholder={`Select ${uiSchema['ui:entityName'] ?? 'option'}`}
             options={(schema.enum ?? [])
               .filter((x): x is string => typeof x === 'string')
               .map((item) => ({ value: item, label: item }))}

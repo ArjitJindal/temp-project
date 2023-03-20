@@ -1,10 +1,9 @@
 import { ToolBarProps } from '@ant-design/pro-table/lib/components/ToolBar';
-import style from './style.module.less';
 import { RiskClassificationScore, RiskLevel } from '@/apis';
 import { TableColumn } from '@/components/ui/Table/types';
-import { RISK_LEVELS, RISK_LEVEL_LABELS } from '@/utils/risk-levels';
+import { RISK_LEVEL_LABELS, RISK_LEVELS } from '@/utils/risk-levels';
 import RiskLevelTag from '@/components/ui/RiskLevelTag';
-import Slider from '@/components/ui/Slider';
+import Slider from '@/components/library/Slider';
 import Table from '@/components/ui/Table';
 
 export type State = number[];
@@ -91,16 +90,17 @@ const RiskClassificationTable = (props: Props) => {
         const end = state[index] ?? 100;
         return (
           <Slider
-            range={true}
-            disabled={isDisabled}
+            mode="RANGE"
+            isDisabled={isDisabled}
             min={0}
             max={100}
             value={[start, end]}
-            className={style.tip}
-            onChange={([newStart, newEnd]) => {
-              if (!setState) {
+            endExclusive={true}
+            onChange={(newValue) => {
+              if (!setState || newValue == null) {
                 return;
               }
+              const [newStart, newEnd] = newValue;
               setState((state) => {
                 if (state == null) {
                   return state;

@@ -59,7 +59,7 @@ function RuleSpecificFilters(props: Props) {
         </NestedForm>
         <InputField<FormValues, 'ruleAction'>
           name={'ruleAction'}
-          label={'Rule Actions'}
+          label={'Rule actions'}
           description={'Select the action to perform if this rule is hit'}
         >
           {(inputProps) => <RuleActionSelector {...inputProps} />}
@@ -105,7 +105,7 @@ function RiskBasedThresholds(props: Props) {
                 <NestedForm<FormValues> name={'riskLevelActions'}>
                   <InputField<any>
                     name={riskLevel}
-                    label={'Rule Actions'}
+                    label={'Rule actions'}
                     description={`Select the action to perform if this rule is hit for users of ${getRiskLevelLabel(
                       riskLevel,
                       settings,

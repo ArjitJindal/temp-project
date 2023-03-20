@@ -23,7 +23,7 @@ import { TRANSACTION_TYPES } from '@/utils/transactionType';
 import { CURRENCIES_SELECT_OPTIONS } from '@/utils/currencies';
 import { businessType, consumerType } from '@/utils/customer-type';
 import { RiskLevel } from '@/utils/risk-levels';
-import Slider from '@/components/ui/Slider';
+import Slider from '@/components/library/Slider';
 import {
   RiskParameterValueDayRange,
   RiskParameterValueDayRangeEndGranularityEnum,
@@ -546,13 +546,15 @@ export const INPUT_RENDERERS: { [key in DataType]: InputRenderer<any> } = {
     return (
       <>
         <Slider
-          range
+          mode="RANGE"
           marks={range.reduce((acc, x) => ({ ...acc, [x]: x }), {})}
           endExclusive={true}
           value={[range[0], range[1]]}
-          disabled={disabled}
+          isDisabled={disabled}
           onChange={(value) => {
-            onChange(riskValueRange(value[0], value[1]));
+            if (value != null) {
+              onChange(riskValueRange(value[0], value[1]));
+            }
           }}
         />
       </>
@@ -741,11 +743,11 @@ const DEFAULT_RANGE_RENDERER: ValueRenderer<'RANGE'> = ({ value }) => {
   }
   return (
     <Slider
-      range
+      mode="RANGE"
       endExclusive={true}
       marks={marks}
       defaultValue={[value.start ?? 0, value.end ?? 0]}
-      disabled={true}
+      isDisabled={true}
     />
   );
 };

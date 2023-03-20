@@ -110,7 +110,7 @@ function TransactionDetailsHistorical(props: { propertyItems: PropertyItems }) {
   return (
     <>
       <StepHeader
-        title="Historical Transactions"
+        title="Historical transactions"
         description="Add filters based on transaction's attributes (for the historical transactions). These filters take no effect if the rule doesn't need to check historical transactions."
       />
       <PropertyList items={props.propertyItems} />

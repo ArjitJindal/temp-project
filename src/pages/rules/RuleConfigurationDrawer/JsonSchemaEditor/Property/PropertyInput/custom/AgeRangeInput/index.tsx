@@ -1,7 +1,7 @@
 import React from 'react';
 import s from './style.module.less';
 import Label from '@/components/library/Label';
-import Slider from '@/components/ui/Slider';
+import Slider from '@/components/library/Slider';
 import NumberInput from '@/components/library/NumberInput';
 import { InputProps } from '@/components/library/Form';
 import { UiSchemaAgeRange } from '@/pages/rules/RuleConfigurationDrawer/JsonSchemaEditor/types';
@@ -47,7 +47,7 @@ export default function AgeRangeInput(props: Props) {
             onChange?.({
               ...value,
               minAge: {
-                units: newValue,
+                units: newValue ?? minValue ?? MIN_AGE,
                 granularity: granularityValue,
               },
             });
@@ -56,12 +56,16 @@ export default function AgeRangeInput(props: Props) {
         />
       </Label>
       <Slider
-        range={true}
+        mode="RANGE"
         min={MIN_AGE}
         max={MAX_AGE}
         step={1}
         value={[value?.minAge?.units ?? MIN_AGE, value?.maxAge?.units ?? MAX_AGE]}
-        onChange={([min, max]) => {
+        onChange={(newValue) => {
+          if (newValue == null) {
+            return;
+          }
+          const [min, max] = newValue;
           onChange?.({
             minAge: {
               units: min,
@@ -84,7 +88,7 @@ export default function AgeRangeInput(props: Props) {
             onChange?.({
               ...value,
               maxAge: {
-                units: newValue,
+                units: newValue ?? maxValue ?? MAX_AGE,
                 granularity: granularityValue,
               },
             });

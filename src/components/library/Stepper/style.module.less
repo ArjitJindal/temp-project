@@ -1,22 +1,40 @@
 @import 'src/components/ui/colors';
+@import 'src/components/ui/animation';
 
 .root {
   display: flex;
   flex-direction: column;
   gap: 24px;
   flex: 1;
+
+  .step {
+    * {
+      transition-duration: @default-animation-speed;
+      transition-timing-function: @default-animation-function;
+    }
+
+    .stepTitle {
+      transition-property: color;
+    }
+    .optional {
+      transition-property: color;
+    }
+    .stepNumber {
+      transition-property: color, background-color;
+    }
+  }
 }
 
 .steps {
-  display: grid;
-  gap: 1rem;
+  display: flex;
+  gap: 24px;
   grid-auto-flow: column;
-  grid-auto-columns: minmax(min-content, 300px);
 }
 
 .step {
   display: flex;
-  gap: 10px;
+  gap: 8px;
+  max-width: 250px;
 
   &.isActive {
     .stepTitle {
@@ -30,7 +48,7 @@
   &.isPassed,
   &.isActive {
     .stepNumber {
-      background: @fr-colors-brandBlue;
+      background-color: @fr-colors-brandBlue;
       color: white;
     }
   }
@@ -52,9 +70,11 @@
   font-size: 16px;
   font-weight: 600;
   line-height: 24px;
+  transition-property: color;
 
   .optional {
     font-weight: normal;
+    transition-property: color;
     color: @fr-colors-gray-4;
   }
 }

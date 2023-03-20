@@ -3,6 +3,7 @@ import { PropertyItem } from '../types';
 import PropertyInput from './PropertyInput';
 import { Props as LabelProps } from '@/components/library/Label';
 import InputField from '@/components/library/Form/InputField';
+import { useJsonSchemaEditorSettings } from '@/pages/rules/RuleConfigurationDrawer/JsonSchemaEditor/settings';
 
 interface Props {
   item: PropertyItem;
@@ -12,6 +13,8 @@ interface Props {
 export default function Property(props: Props) {
   const { item, labelProps } = props;
   const { schema, name } = item;
+
+  const settings = useJsonSchemaEditorSettings();
 
   let labelElement: 'div' | 'label' = 'div';
   switch (schema.type) {
@@ -38,7 +41,7 @@ export default function Property(props: Props) {
       labelProps={{
         element: labelElement,
         position: labelPosition,
-        isOptional: !item.isRequired,
+        isOptional: !item.isRequired && settings.showOptionalMark,
         ...labelProps,
       }}
     >

@@ -2,6 +2,7 @@ import { JSONSchema4 } from 'json-schema';
 
 export interface UiSchemaCommon {
   'ui:group'?: string;
+  'ui:entityName'?: string;
   'ui:order'?: [string];
 }
 

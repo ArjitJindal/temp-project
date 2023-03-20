@@ -22,6 +22,7 @@ import VerticalMenu from '@/components/library/VerticalMenu';
 import Form from '@/components/library/Form';
 import { useId } from '@/utils/hooks';
 import NestedForm from '@/components/library/Form/NestedForm';
+import HistoryLineIcon from '@/components/ui/icons/Remix/system/history-line.react.svg';
 import { notEmpty } from '@/components/library/Form/utils/validation/basicValidators';
 import { validateField } from '@/components/library/Form/utils/validation/utils';
 import { FieldValidators } from '@/components/library/Form/utils/validation/types';
@@ -34,6 +35,7 @@ import User3LineIcon from '@/components/ui/icons/Remix/user/user-3-line.react.sv
 import EarthLineIcon from '@/components/ui/icons/Remix/map/earth-line.react.svg';
 import { useFeatureEnabled } from '@/components/AppWrapper/Providers/SettingsProvider';
 import StepButtons from '@/components/library/StepButtons';
+import { ChangeJsonSchemaEditorSettings } from '@/pages/rules/RuleConfigurationDrawer/JsonSchemaEditor/settings';
 
 const BASIC_DETAILS_STEP = 'basic_details';
 const STANDARD_FILTERS_STEP = 'standard_filters';
@@ -147,8 +149,8 @@ export default function RuleConfigurationDrawer(props: Props) {
         { key: 'transaction_details', icon: <TransactionIcon />, title: 'Transaction details' },
         {
           key: 'transaction_details_historical',
-          icon: <TransactionIcon />,
-          title: 'Historical Transactions',
+          icon: <HistoryLineIcon />,
+          title: 'Historical transactions',
         },
       ],
     },
@@ -233,31 +235,35 @@ export default function RuleConfigurationDrawer(props: Props) {
               >
                 <div className={readOnly ? s.readOnlyScrollContainer : s.scrollContainer}>
                   <div className={s.tabContent}>
-                    {activeStepKey === BASIC_DETAILS_STEP && (
-                      <div className={readOnly ? s.readOnlyFormContent : ''}>
-                        <NestedForm<FormValues> name={'basicDetailsStep'}>
-                          <BasicDetailsStep activeTab={activeTabKey} rule={rule} />
-                        </NestedForm>
-                      </div>
-                    )}
-                    {activeStepKey === STANDARD_FILTERS_STEP && (
-                      <div className={readOnly ? s.readOnlyFormContent : ''}>
-                        <NestedForm<FormValues> name={'standardFiltersStep'}>
-                          <StandardFiltersStep activeTab={activeTabKey} rule={rule} />
-                        </NestedForm>
-                      </div>
-                    )}
-                    {activeStepKey === RULE_PARAMETERS_STEP && (
-                      <div className={readOnly ? s.readOnlyFormContent : ''}>
-                        <NestedForm<FormValues> name={'ruleParametersStep'}>
-                          <RuleParametersStep
-                            activeTab={activeTabKey}
-                            rule={rule}
-                            defaultInitialValues={defaultInitialValues.ruleParametersStep}
-                          />
-                        </NestedForm>
-                      </div>
-                    )}
+                    <ChangeJsonSchemaEditorSettings
+                      settings={{ showOptionalMark: !activeStep?.isOptional }}
+                    >
+                      {activeStepKey === BASIC_DETAILS_STEP && (
+                        <div className={readOnly ? s.readOnlyFormContent : ''}>
+                          <NestedForm<FormValues> name={'basicDetailsStep'}>
+                            <BasicDetailsStep activeTab={activeTabKey} rule={rule} />
+                          </NestedForm>
+                        </div>
+                      )}
+                      {activeStepKey === STANDARD_FILTERS_STEP && (
+                        <div className={readOnly ? s.readOnlyFormContent : ''}>
+                          <NestedForm<FormValues> name={'standardFiltersStep'}>
+                            <StandardFiltersStep activeTab={activeTabKey} rule={rule} />
+                          </NestedForm>
+                        </div>
+                      )}
+                      {activeStepKey === RULE_PARAMETERS_STEP && (
+                        <div className={readOnly ? s.readOnlyFormContent : ''}>
+                          <NestedForm<FormValues> name={'ruleParametersStep'}>
+                            <RuleParametersStep
+                              activeTab={activeTabKey}
+                              rule={rule}
+                              defaultInitialValues={defaultInitialValues.ruleParametersStep}
+                            />
+                          </NestedForm>
+                        </div>
+                      )}
+                    </ChangeJsonSchemaEditorSettings>
                   </div>
                 </div>
               </VerticalMenu>
