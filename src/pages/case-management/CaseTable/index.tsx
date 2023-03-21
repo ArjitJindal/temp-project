@@ -2,6 +2,7 @@ import React, { useCallback, useMemo, useRef, useState } from 'react';
 import { ProFormInstance } from '@ant-design/pro-form';
 import { TableSearchParams } from '../types';
 import CasesStatusChangeButton from '../components/CasesStatusChangeButton';
+import AlertTable from '../AlertTable';
 import GavelIcon from './gavel.react.svg';
 import { Account, Case, CaseUpdateRequest } from '@/apis';
 import { dayjs, DEFAULT_DATE_TIME_FORMAT } from '@/utils/dayjs';
@@ -36,7 +37,6 @@ import ScopeSelector from '@/pages/case-management/components/ScopeSelector';
 import AssignToButton from '@/pages/case-management/components/AssignToButton';
 import { message } from '@/components/library/Message';
 import { useApi } from '@/api';
-import { SimpleAlertTable } from '@/pages/case-management/AlertTable';
 import { extraFilters } from '@/pages/case-management/helpers';
 
 interface Props {
@@ -412,7 +412,14 @@ export default function CaseTable(props: Props) {
   return (
     <QueryResultsTable<TableItem, TableSearchParams>
       expandable={{
-        expandedRowRender: (record) => record.caseId && <SimpleAlertTable caseId={record.caseId} />,
+        expandedRowRender: (record) =>
+          record.caseId && (
+            <AlertTable
+              isEmbedded={true}
+              params={{ ...params, caseId: record.caseId }}
+              onChangeParams={onChangeParams}
+            />
+          ),
       }}
       tableId="user-cases"
       queryResults={tableQueryResult}

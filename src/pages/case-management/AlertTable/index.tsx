@@ -5,12 +5,12 @@ import { useCreateNewCaseMutation } from './helpers';
 import { getMutationAsyncResource, usePaginatedQuery } from '@/utils/queries/hooks';
 import { useApi } from '@/api';
 import { Account, AlertListResponseItem } from '@/apis';
-import { ALERT_LIST, CASES_ITEM_ALERT_LIST } from '@/utils/queries/keys';
+import { ALERT_LIST } from '@/utils/queries/keys';
 import QueryResultsTable from '@/components/common/QueryResultsTable';
 import { TableColumn, TableData } from '@/components/ui/Table/types';
 import StackLineIcon from '@/components/ui/icons/Remix/business/stack-line.react.svg';
 import { QueryResult } from '@/utils/queries/types';
-import { AllParams, DEFAULT_PARAMS_STATE, TableActionType } from '@/components/ui/Table';
+import { AllParams, TableActionType } from '@/components/ui/Table';
 import ScopeSelector from '@/pages/case-management/components/ScopeSelector';
 import StatusButtons from '@/pages/transactions/components/StatusButtons';
 import CaseStatusTag from '@/components/ui/CaseStatusTag';
@@ -42,6 +42,7 @@ interface Props {
   onChangeParams: (newState: AllParams<TableSearchParams>) => void;
   hideCaseIdFilter?: boolean;
   disableInternalPadding?: boolean;
+  isEmbedded?: boolean;
   hideScopeSelector?: boolean;
 }
 
@@ -254,6 +255,7 @@ export default function AlertTable(props: Props) {
     hideCaseIdFilter = false,
     disableInternalPadding = false,
     hideScopeSelector = false,
+    isEmbedded = false,
   } = props;
   const showActions = !hideScopeSelector;
 
@@ -294,6 +296,7 @@ export default function AlertTable(props: Props) {
         page,
         pageSize,
         filterAlertId: alertId,
+        filterCaseId: caseId,
         filterOutAlertStatus: showActions
           ? alertStatus === 'CLOSED'
             ? undefined
@@ -310,7 +313,6 @@ export default function AlertTable(props: Props) {
         filterTransactionTagKey: tagKey,
         filterTransactionTagValue: tagValue,
         filterUserId: userId,
-        filterCaseId: caseId,
         sortField: sortField === 'age' ? 'createdTimestamp' : sortField,
         sortOrder: sortOrder ?? undefined,
       });
@@ -363,6 +365,7 @@ export default function AlertTable(props: Props) {
     <QueryResultsTable<TableAlertItem, AlertTableParams>
       tableId={'my-alerts'}
       rowKey={'alertId'}
+      hideFilters={isEmbedded ? true : false}
       actionRef={actionRef}
       columns={columns}
       queryResults={queryResults}
@@ -370,7 +373,7 @@ export default function AlertTable(props: Props) {
       onChangeParams={onChangeParams}
       extraFilters={extraFilters(isPulseEnabled)}
       actionsHeader={
-        showActions
+        showActions && !isEmbedded
           ? [
               ({ params, setParams }) => (
                 <ScopeSelector<AlertTableParams> params={params} onChangeParams={setParams} />
@@ -387,7 +390,7 @@ export default function AlertTable(props: Props) {
               onSaved={reloadTable}
               status={params.alertStatus}
             />
-            {showActions && (
+            {showActions && !isEmbedded && (
               <StatusButtons
                 status={params.alertStatus ?? 'OPEN'}
                 onChange={(newStatus) => {
@@ -421,67 +424,6 @@ export default function AlertTable(props: Props) {
     />
   );
 }
-
-export const SimpleAlertTable = ({ caseId }: { caseId: string }) => {
-  const actionRef = useRef<TableActionType>(null);
-  const api = useApi();
-  const [params, setParams] = useState<TableSearchParams>({
-    ...DEFAULT_PARAMS_STATE,
-    sort: [['caseCreatedTimestamp', 'descend']],
-    showCases: 'ALL_ALERTS',
-  });
-  const [users, _] = useUsers({ includeBlockedUsers: true });
-
-  const [selectedEntities, setSelectedEntities] = useState<string[]>([]);
-
-  const queryResults: QueryResult<TableData<TableAlertItem>> = usePaginatedQuery(
-    CASES_ITEM_ALERT_LIST(caseId, params),
-    async () => {
-      const [sortField, sortOrder] = params.sort[0] ?? [];
-      const result = await api.getAlertList({
-        page: params.page,
-        pageSize: params.pageSize,
-        filterCaseId: caseId,
-        filterAlertId: params.alertId,
-        sortField,
-        sortOrder: sortOrder ?? undefined,
-      });
-      return {
-        items: presentAlertData(result.data).map((a) => ({ ...a, caseId })),
-        total: result.total,
-      };
-    },
-  );
-
-  const columns = useMemo(() => mergedColumns(true, users), [users]);
-
-  return (
-    <QueryResultsTable<TableAlertItem, AlertTableParams>
-      tableId={'simple-alerts-table'}
-      rowKey={'alertId'}
-      actionRef={actionRef}
-      columns={columns}
-      queryResults={queryResults}
-      params={{ ...params, caseId }}
-      onChangeParams={setParams}
-      scroll={{ x: 1300 }}
-      rowSelection={{
-        selectedKeys: selectedEntities,
-        onChange: setSelectedEntities,
-      }}
-      actionsHeaderRight={[
-        () =>
-          selectedEntities?.length && (
-            <CreateCaseConfirmModal
-              selectedEntities={selectedEntities}
-              caseId={caseId}
-              setSelectedEntities={setSelectedEntities}
-            />
-          ),
-      ]}
-    />
-  );
-};
 
 function presentAlertData(data: AlertListResponseItem[]) {
   return data.map(({ alert, ...rest }) => {

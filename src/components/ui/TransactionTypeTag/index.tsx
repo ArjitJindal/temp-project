@@ -22,7 +22,7 @@ export function getTransactionTypeColor(transactionType: TransactionType) {
   } else if (transactionType === 'TRANSFER') {
     return 'geekblue';
   } else if (transactionType === 'OTHER') {
-    return 'geekblue';
+    return 'volcano';
   }
 
   return neverReturn(transactionType, 'white');
