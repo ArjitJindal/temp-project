@@ -13,6 +13,7 @@ import { AccountSettings } from '@/@types/openapi-internal/AccountSettings'
 import { getAuth0Credentials } from '@/utils/auth0-utils'
 import { TenantCreationRequest } from '@/@types/openapi-internal/TenantCreationRequest'
 import { AccountPatchPayload } from '@/@types/openapi-internal/AccountPatchPayload'
+import { RoleService } from '@/services/roles'
 
 // Current TS typings for auth0  (@types/auth0@2.35.0) are outdated and
 // doesn't have definitions for users management api. Hope they will fix it soon
@@ -138,6 +139,10 @@ export class AccountsService {
     const managementClient: ManagementClient<AppMetadata> =
       await this.getManagementClient()
 
+    const roleService = new RoleService({
+      auth0Domain: this.config.auth0Domain,
+    })
+
     const authenticationClient = await this.getAuthenticationClient()
 
     try {
@@ -169,6 +174,11 @@ export class AccountsService {
         logger.info('Created user', {
           email: params.email,
         })
+        await roleService.setRole(
+          tenant.id,
+          user.user_id as string,
+          params.role
+        )
       }
       account = AccountsService.userToAccount(user)
       await managementClient.organizations.addMembers(
