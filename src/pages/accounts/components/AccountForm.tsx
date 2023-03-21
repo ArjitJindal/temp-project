@@ -1,6 +1,6 @@
-import React, { useMemo, useRef } from 'react';
+import React, { useMemo, useRef, useState } from 'react';
 import { DrawerForm, ProFormInstance, ProFormSelect, ProFormText } from '@ant-design/pro-form';
-import { PlusOutlined } from '@ant-design/icons';
+import { PlusOutlined, EditOutlined } from '@ant-design/icons';
 import { sentenceCase } from '@antv/x6/es/util/string/format';
 import { message } from '@/components/library/Message';
 import Button from '@/components/library/Button';
@@ -16,6 +16,7 @@ import { getBranding } from '@/utils/branding';
 import { useApiTime } from '@/utils/tracker';
 import { UserRole, parseUserRole } from '@/utils/user-utils';
 import { P } from '@/components/ui/Typography';
+import Close from '@/components/ui/icons/close.react.svg';
 
 interface Props {
   editAccount: Account | null;
@@ -27,6 +28,7 @@ export default function AccountForm(props: Props) {
   const measure = useApiTime();
 
   const formRef = useRef<ProFormInstance>();
+  const [emailIsEmpty, setEmailIsEmpty] = useState(true);
   const rolesResp = useQuery<AccountRole[]>(ROLES_LIST(), async () => {
     return await api.getRoles();
   });
@@ -120,17 +122,35 @@ export default function AccountForm(props: Props) {
       title={isEdit ? 'Edit account' : 'Invite user'}
       width={400}
       formRef={formRef}
+      onChange={(e) => {
+        if ((e?.target as HTMLInputElement)?.value) {
+          setEmailIsEmpty(false);
+        } else {
+          setEmailIsEmpty(true);
+        }
+      }}
       trigger={
-        <Button type="TETRIARY">
-          {!isEdit && <PlusOutlined />}
-          {isEdit ? 'Edit' : 'Invite'}
-        </Button>
+        <div>
+          {isEdit ? (
+            <div style={{ marginTop: '-0.2rem' }}>
+              <EditOutlined />
+            </div>
+          ) : (
+            <Button type="TETRIARY">
+              <PlusOutlined />
+              {'Invite'}
+            </Button>
+          )}
+        </div>
       }
       disabled={isInviteDisabled}
       submitter={{
         searchConfig: {
           resetText: 'Cancel',
           submitText: isEdit ? 'Save' : 'Invite',
+        },
+        submitButtonProps: {
+          disabled: !isEdit && emailIsEmpty,
         },
       }}
       autoFocusFirstInput
@@ -140,12 +160,24 @@ export default function AccountForm(props: Props) {
         }
       }}
       onFinish={onFinish}
+      requiredMark={false}
+      drawerProps={{
+        closeIcon: (
+          <div style={{ position: 'absolute', right: '1rem', top: '1rem', scale: '1.2' }}>
+            <Close />
+          </div>
+        ),
+        headerStyle: {
+          marginLeft: '-1.5rem',
+        },
+      }}
     >
       <ProFormText
         disabled={isEdit}
         width="md"
         name="email"
         label="E-mail"
+        allowClear={false}
         rules={[
           {
             required: true,
@@ -160,6 +192,7 @@ export default function AccountForm(props: Props) {
             width="md"
             name="role"
             label="Role"
+            allowClear={false}
             options={roles.map((name) => ({
               value: name.name,
               label: sentenceCase(name.name as string),

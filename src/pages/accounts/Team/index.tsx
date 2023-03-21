@@ -1,8 +1,8 @@
 import React, { useRef } from 'react';
-import { CheckCircleTwoTone, MinusCircleTwoTone } from '@ant-design/icons';
+import { CheckCircleTwoTone, MinusCircleTwoTone, DeleteOutlined } from '@ant-design/icons';
 import { message, Popconfirm } from 'antd';
 import s from './index.module.less';
-import { useApiTime } from '@/utils/tracker';
+import { useApiTime, useButtonTracker } from '@/utils/tracker';
 import { TableActionType } from '@/components/ui/Table';
 import { isAtLeastAdmin, parseUserRole, useAuth0User, UserRole } from '@/utils/user-utils';
 import { useApi } from '@/api';
@@ -10,9 +10,7 @@ import { usePaginatedQuery } from '@/utils/queries/hooks';
 import { ACCOUNT_LIST } from '@/utils/queries/keys';
 import { TableColumn } from '@/components/ui/Table/types';
 import { Account } from '@/apis';
-import RoleTag from '@/components/ui/RoleTag';
 import COLORS from '@/components/ui/colors';
-import Button from '@/components/library/Button';
 import AccountForm from '@/pages/accounts/components/AccountForm';
 import QueryResultsTable from '@/components/common/QueryResultsTable';
 
@@ -39,29 +37,30 @@ export default function Team() {
     };
   });
 
+  const buttonTracker = useButtonTracker();
+
+  const handleClick = (analyticsName: string) => {
+    if (analyticsName) {
+      buttonTracker(analyticsName);
+    }
+  };
+
   const columns: TableColumn<Account>[] = [
     {
-      title: 'ID',
-      width: 10,
-      dataIndex: 'id',
-      exportData: 'id',
-      sorter: true,
-    },
-    {
       title: 'Email',
-      width: 300,
+      width: 200,
       dataIndex: 'email',
       exportData: 'email',
       sorter: true,
     },
     {
       title: 'Role',
+      dataIndex: 'role',
       exportData: 'role',
       width: 100,
-      render: (_, item) => <RoleTag role={item.role} />,
     },
     {
-      title: 'Verified',
+      title: 'Email verification',
       width: 10,
       dataIndex: 'emailVerified',
       exportData: 'emailVerified',
@@ -109,9 +108,7 @@ export default function Team() {
                 }
               }}
             >
-              <Button analyticsName="Delete account" type="TETRIARY">
-                Delete
-              </Button>
+              <DeleteOutlined onClick={() => handleClick('Delete account')} />
             </Popconfirm>
             <AccountForm editAccount={item} onSuccess={refreshTable} />
           </div>

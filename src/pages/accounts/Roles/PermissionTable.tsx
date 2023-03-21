@@ -95,7 +95,7 @@ export default function PermissionTable({
                       <div className={s.actions} key={subsection.name}>
                         {subsection.actions.map((action) => (
                           <Label
-                            level={2}
+                            level={action.name === 'read' ? 3 : !onChange ? 3 : 2}
                             label={sentenceCase(action.name)}
                             position={'RIGHT'}
                             key={action.key}

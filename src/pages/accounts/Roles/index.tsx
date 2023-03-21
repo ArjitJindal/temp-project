@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { sentenceCase } from '@antv/x6/es/util/string/format';
 import { Card } from 'antd';
-import { LockFilled, PlusSquareFilled } from '@ant-design/icons';
+import { LockFilled } from '@ant-design/icons';
 import s from './index.module.less';
 import { useApi } from '@/api';
 import { useQuery } from '@/utils/queries/hooks';
@@ -11,6 +11,7 @@ import AsyncResourceRenderer from '@/components/common/AsyncResourceRenderer';
 import VerticalMenu from '@/components/library/VerticalMenu';
 import RoleForm from '@/pages/accounts/Roles/RoleForm';
 import { isValidManagedRoleName } from '@/apis/models-custom/ManagedRoleName';
+import Button from '@/components/library/Button';
 
 export default function Roles() {
   const api = useApi();
@@ -31,10 +32,21 @@ export default function Roles() {
 
 const RolesLayout = ({ roles, onChange }: { roles: AccountRole[]; onChange: () => any }) => {
   const [key, setKey] = useState<string>(roles[0]?.id || '');
+  const [isCreateRoleForm, setIsCreateRoleForm] = useState<boolean>(false);
   return (
-    <VerticalMenu
-      items={roles
-        .map((r) => ({
+    <div>
+      <VerticalMenu
+        additionalMenuTop={
+          <Button
+            type="TETRIARY"
+            size="MEDIUM"
+            style={{ width: '100%', position: 'relative', marginBottom: '1rem' }}
+            onClick={() => setIsCreateRoleForm(true)}
+          >
+            + Create role
+          </Button>
+        }
+        items={roles.map((r) => ({
           key: r.id as string,
           title: sentenceCase(r.name as string),
           icon: isValidManagedRoleName(r.name) && (
@@ -42,23 +54,21 @@ const RolesLayout = ({ roles, onChange }: { roles: AccountRole[]; onChange: () =
               <LockFilled />
             </span>
           ),
-        }))
-        .concat({
-          key: 'NEW',
-          title: 'Create role',
-          icon: (
-            <span className={s.icon}>
-              <PlusSquareFilled className={s.icon} />
-            </span>
-          ),
-        })}
-      active={key}
-      minWidth={200}
-      onChange={setKey}
-    >
-      {key !== 'NEW' && <RoleFormAsync roleId={key} onChange={onChange} />}
-      {key === 'NEW' && <RoleForm onChange={onChange} />}
-    </VerticalMenu>
+        }))}
+        active={key}
+        minWidth={200}
+        onChange={(newKey) => {
+          setKey(newKey);
+          setIsCreateRoleForm(false);
+        }}
+      >
+        {isCreateRoleForm ? (
+          <RoleForm onChange={onChange} />
+        ) : (
+          <RoleFormAsync roleId={key} onChange={onChange} />
+        )}
+      </VerticalMenu>
+    </div>
   );
 };
 

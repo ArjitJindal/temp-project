@@ -109,7 +109,7 @@ export default function RoleForm({ role, onChange }: { role?: AccountRole; onCha
     >
       {!isEditing && (
         <>
-          <h3>{sentenceCase(role?.name as string)}</h3>
+          <h3 className={s.title}>{sentenceCase(role?.name as string)}</h3>
           <h4>{sentenceCase(role?.description as string)}</h4>
         </>
       )}
