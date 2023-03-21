@@ -17,7 +17,7 @@ import {
   groupTransactionsByHour,
 } from '../utils/transaction-rule-utils'
 import { getTimestampRange } from '../utils/time-utils'
-import { getNonUserReceiverKeys, getNonUserSenderKeys } from '../utils'
+import { getReceiverKeyId, getSenderKeyId } from '../utils'
 import { TransactionAggregationRule } from './aggregation-rule'
 import { CardDetails } from '@/@types/openapi-public/CardDetails'
 
@@ -36,7 +36,8 @@ export type TransactionsVelocityRuleParameters = {
   // Optional parameters
   onlyCheckKnownUsers?: boolean
   paymentChannel?: string
-  matchPaymentMethodDetails?: boolean
+  originMatchPaymentMethodDetails?: boolean
+  destinationMatchPaymentMethodDetails?: boolean
 }
 
 export default class TransactionsVelocityRule extends TransactionAggregationRule<
@@ -52,8 +53,18 @@ export default class TransactionsVelocityRule extends TransactionAggregationRule
         timeWindow: TIME_WINDOW_SCHEMA(),
         checkSender: CHECK_SENDER_OPTIONAL_SCHEMA(),
         checkReceiver: CHECK_RECEIVER_OPTIONAL_SCHEMA(),
-        matchPaymentMethodDetails:
-          MATCH_PAYMENT_METHOD_DETAILS_OPTIONAL_SCHEMA(),
+        originMatchPaymentMethodDetails:
+          MATCH_PAYMENT_METHOD_DETAILS_OPTIONAL_SCHEMA({
+            title: 'Match payment method details (origin)',
+            description:
+              'Sender is identified based on by payment details, not user ID',
+          }),
+        destinationMatchPaymentMethodDetails:
+          MATCH_PAYMENT_METHOD_DETAILS_OPTIONAL_SCHEMA({
+            title: 'Match payment method details (destination)',
+            description:
+              'Receiver is identified based on by payment details, not user ID',
+          }),
         onlyCheckKnownUsers: {
           type: 'boolean',
           title: 'Only check transactions from known users (with user ID)',
@@ -118,8 +129,14 @@ export default class TransactionsVelocityRule extends TransactionAggregationRule
   }
 
   private async getData(direction: 'origin' | 'destination'): Promise<number> {
-    const { timeWindow, checkSender, checkReceiver, onlyCheckKnownUsers } =
-      this.parameters
+    const {
+      timeWindow,
+      checkSender,
+      checkReceiver,
+      onlyCheckKnownUsers,
+      originMatchPaymentMethodDetails,
+      destinationMatchPaymentMethodDetails,
+    } = this.parameters
     const { afterTimestamp, beforeTimestamp } = getTimestampRange(
       this.transaction.timestamp!,
       timeWindow
@@ -157,7 +174,10 @@ export default class TransactionsVelocityRule extends TransactionAggregationRule
           transactionTypes: this.filters.transactionTypesHistorical,
           paymentMethod: this.filters.paymentMethodHistorical,
           countries: this.filters.transactionCountriesHistorical,
-          matchPaymentMethodDetails: this.parameters.matchPaymentMethodDetails,
+          matchPaymentMethodDetails:
+            direction === 'origin'
+              ? originMatchPaymentMethodDetails
+              : destinationMatchPaymentMethodDetails,
         },
         ['timestamp', 'originUserId', 'destinationUserId']
       )
@@ -234,17 +254,15 @@ export default class TransactionsVelocityRule extends TransactionAggregationRule
   }
 
   override getUserKeyId(direction: 'origin' | 'destination') {
-    if (this.parameters.matchPaymentMethodDetails) {
-      return direction === 'origin'
-        ? getNonUserSenderKeys(this.tenantId, this.transaction, undefined, true)
-            ?.PartitionKeyID
-        : getNonUserReceiverKeys(
-            this.tenantId,
-            this.transaction,
-            undefined,
-            true
-          )?.PartitionKeyID
-    }
-    return super.getUserKeyId(direction)
+    return direction === 'origin'
+      ? getSenderKeyId(this.tenantId, this.transaction, {
+          disableDirection: true,
+          matchPaymentDetails: this.parameters.originMatchPaymentMethodDetails,
+        })
+      : getReceiverKeyId(this.tenantId, this.transaction, {
+          disableDirection: true,
+          matchPaymentDetails:
+            this.parameters.destinationMatchPaymentMethodDetails,
+        })
   }
 }

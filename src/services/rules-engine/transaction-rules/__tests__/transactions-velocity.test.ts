@@ -756,7 +756,8 @@ describe('Match payment details method', () => {
         paymentMethod: 'CARD',
         checkSender: 'all',
         checkReceiver: 'all',
-        matchPaymentMethodDetails: true,
+        originMatchPaymentMethodDetails: true,
+        destinationMatchPaymentMethodDetails: true,
       } as TransactionsVelocityRuleParameters,
     },
   ])

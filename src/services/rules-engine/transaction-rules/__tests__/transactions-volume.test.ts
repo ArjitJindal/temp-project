@@ -495,7 +495,8 @@ ruleVariantsTest(true, () => {
           transactionVolumeThreshold: {
             EUR: 150,
           },
-          matchPaymentMethodDetails: true,
+          originMatchPaymentMethodDetails: true,
+          destinationMatchPaymentMethodDetails: true,
         } as TransactionsVolumeRuleParameters,
       },
     ])

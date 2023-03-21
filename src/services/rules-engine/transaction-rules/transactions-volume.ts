@@ -20,7 +20,7 @@ import {
 import { TransactionHistoricalFilters } from '../filters'
 import { RuleHitResultItem } from '../rule'
 import { getTimestampRange } from '../utils/time-utils'
-import { getNonUserReceiverKeys, getNonUserSenderKeys } from '../utils'
+import { getReceiverKeyId, getSenderKeyId } from '../utils'
 import { TransactionAggregationRule } from './aggregation-rule'
 import { TransactionAmountDetails } from '@/@types/openapi-public/TransactionAmountDetails'
 import { CurrencyCode } from '@/@types/openapi-public/CurrencyCode'
@@ -41,7 +41,8 @@ export type TransactionsVolumeRuleParameters = {
   timeWindow: TimeWindow
   checkSender: 'sending' | 'all' | 'none'
   checkReceiver: 'receiving' | 'all' | 'none'
-  matchPaymentMethodDetails?: boolean
+  originMatchPaymentMethodDetails?: boolean
+  destinationMatchPaymentMethodDetails?: boolean
 }
 
 export default class TransactionsVolumeRule extends TransactionAggregationRule<
@@ -60,8 +61,18 @@ export default class TransactionsVolumeRule extends TransactionAggregationRule<
         timeWindow: TIME_WINDOW_SCHEMA(),
         checkSender: CHECK_SENDER_SCHEMA(),
         checkReceiver: CHECK_RECEIVER_SCHEMA(),
-        matchPaymentMethodDetails:
-          MATCH_PAYMENT_METHOD_DETAILS_OPTIONAL_SCHEMA(),
+        originMatchPaymentMethodDetails:
+          MATCH_PAYMENT_METHOD_DETAILS_OPTIONAL_SCHEMA({
+            title: 'Match payment method details (origin)',
+            description:
+              'Sender is identified based on by payment details, not user ID',
+          }),
+        destinationMatchPaymentMethodDetails:
+          MATCH_PAYMENT_METHOD_DETAILS_OPTIONAL_SCHEMA({
+            title: 'Match payment method details (destination)',
+            description:
+              'Receiver is identified based on by payment details, not user ID',
+          }),
       },
       required: ['transactionVolumeThreshold', 'timeWindow'],
     }
@@ -158,7 +169,8 @@ export default class TransactionsVolumeRule extends TransactionAggregationRule<
       checkReceiver,
       transactionVolumeThreshold,
       timeWindow,
-      matchPaymentMethodDetails,
+      originMatchPaymentMethodDetails,
+      destinationMatchPaymentMethodDetails,
     } = this.parameters
 
     const { afterTimestamp, beforeTimestamp } = getTimestampRange(
@@ -225,7 +237,10 @@ export default class TransactionsVolumeRule extends TransactionAggregationRule<
           transactionTypes: this.filters.transactionTypesHistorical,
           paymentMethod: this.filters.paymentMethodHistorical,
           countries: this.filters.transactionCountriesHistorical,
-          matchPaymentMethodDetails,
+          matchPaymentMethodDetails:
+            direction === 'origin'
+              ? originMatchPaymentMethodDetails
+              : destinationMatchPaymentMethodDetails,
         },
         [
           'timestamp',
@@ -354,17 +369,15 @@ export default class TransactionsVolumeRule extends TransactionAggregationRule<
   }
 
   override getUserKeyId(direction: 'origin' | 'destination') {
-    if (this.parameters.matchPaymentMethodDetails) {
-      return direction === 'origin'
-        ? getNonUserSenderKeys(this.tenantId, this.transaction, undefined, true)
-            ?.PartitionKeyID
-        : getNonUserReceiverKeys(
-            this.tenantId,
-            this.transaction,
-            undefined,
-            true
-          )?.PartitionKeyID
-    }
-    return super.getUserKeyId(direction)
+    return direction === 'origin'
+      ? getSenderKeyId(this.tenantId, this.transaction, {
+          disableDirection: true,
+          matchPaymentDetails: this.parameters.originMatchPaymentMethodDetails,
+        })
+      : getReceiverKeyId(this.tenantId, this.transaction, {
+          disableDirection: true,
+          matchPaymentDetails:
+            this.parameters.destinationMatchPaymentMethodDetails,
+        })
   }
 }
