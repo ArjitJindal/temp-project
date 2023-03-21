@@ -23,14 +23,9 @@ import { removeEmpty } from '@/utils/json';
 import { useHasPermissions } from '@/utils/user-utils';
 import Confirm from '@/components/utils/Confirm';
 
-interface Props {
-  configIsReadOnlyCauseOfIdClick: boolean;
-  setConfigIsReadOnlyCauseOfIdClick: (val: boolean) => void;
-}
-
-const MyRule = (props: Props) => {
+const MyRule = () => {
   usePageViewTracker('My Rule Page');
-  const { configIsReadOnlyCauseOfIdClick, setConfigIsReadOnlyCauseOfIdClick } = props;
+  const [ruleReadOnly, setRuleReadOnly] = useState<boolean>(false);
   const isPulseEnabled = useFeatureEnabled('PULSE');
   const api = useApi();
   const canWriteRules = useHasPermissions(['rules:my-rules:write']);
@@ -44,11 +39,23 @@ const MyRule = (props: Props) => {
 
   const [showDetail, setShowDetail] = useState<boolean>(false);
 
+  const onViewRule = useCallback((entity) => {
+    setCurrentRow(entity);
+    setShowDetail(true);
+    setRuleReadOnly(true);
+  }, []);
+
+  const onEditRule = useCallback((entity) => {
+    setCurrentRow(entity);
+    setShowDetail(true);
+    setRuleReadOnly(false);
+  }, []);
+
   useEffect(() => {
     if (!showDetail) {
-      setConfigIsReadOnlyCauseOfIdClick(false);
+      setRuleReadOnly(false);
     }
-  }, [showDetail, setConfigIsReadOnlyCauseOfIdClick]);
+  }, [showDetail]);
 
   const [deleting, setDeleting] = useState(false);
   const [currentRow, setCurrentRow] = useState<RuleInstance>();
@@ -125,9 +132,7 @@ const MyRule = (props: Props) => {
           return (
             <a
               onClick={() => {
-                setCurrentRow(entity);
-                setShowDetail(true);
-                setConfigIsReadOnlyCauseOfIdClick(true);
+                onViewRule(entity);
               }}
             >
               {getRuleInstanceDisplayId(entity.ruleId, entity.id)}
@@ -212,8 +217,7 @@ const MyRule = (props: Props) => {
                 className={cn(s.actionIcons, { [s.disabledAction]: !canWriteRules })}
                 onClick={() => {
                   if (canWriteRules && !deleting) {
-                    setCurrentRow(entity);
-                    setShowDetail(true);
+                    onEditRule(entity);
                   }
                 }}
               >
@@ -251,7 +255,8 @@ const MyRule = (props: Props) => {
     deleting,
     handleActivationChange,
     handleDeleteRuleInstanceMutation,
-    setConfigIsReadOnlyCauseOfIdClick,
+    onViewRule,
+    onEditRule,
   ]);
   const measure = useApiTime();
   const rulesResult = usePaginatedQuery(GET_RULE_INSTANCES(), async () => {
@@ -361,7 +366,7 @@ const MyRule = (props: Props) => {
       />
       <RuleConfigurationDrawer
         rule={rule}
-        readOnly={!canWriteRules || configIsReadOnlyCauseOfIdClick}
+        readOnly={!canWriteRules || ruleReadOnly}
         formInitialValues={
           ruleInstance
             ? {

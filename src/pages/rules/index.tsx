@@ -34,14 +34,13 @@ const TableList = () => {
     setLocalStorageActiveTab(rule);
   }, [setLocalStorageActiveTab, rule]);
 
-  const [configIsReadOnlyCauseOfIdClick, setConfigIsReadOnlyCauseOfIdClick] =
-    useState<boolean>(false);
+  const [ruleReadOnly, setRuleReadOnly] = useState<boolean>(false);
 
   const [currentRule, setCurrentRule] = useState<Rule | null>(null);
 
   useEffect(() => {
     if (!currentRule) {
-      setConfigIsReadOnlyCauseOfIdClick(false);
+      setRuleReadOnly(false);
     }
   }, [currentRule]);
 
@@ -110,19 +109,17 @@ const TableList = () => {
         }}
       >
         <Tabs.TabPane tab="My Rules" key="my-rules">
-          <MyRule
-            configIsReadOnlyCauseOfIdClick={configIsReadOnlyCauseOfIdClick}
-            setConfigIsReadOnlyCauseOfIdClick={setConfigIsReadOnlyCauseOfIdClick}
-          />
+          <MyRule />
         </Tabs.TabPane>
         <Tabs.TabPane tab="Library" key="rules-library">
           <RulesTable
             onViewRule={(rule) => {
               setCurrentRule(rule);
-              setConfigIsReadOnlyCauseOfIdClick(true);
+              setRuleReadOnly(true);
             }}
             onEditRule={(rule) => {
               setCurrentRule(rule);
+              setRuleReadOnly(false);
             }}
           />
           <RuleConfigurationDrawer
@@ -137,7 +134,7 @@ const TableList = () => {
             onSubmit={(formValues) => {
               newInstanceMutation.mutate(formValues);
             }}
-            readOnly={!canWriteRules || configIsReadOnlyCauseOfIdClick}
+            readOnly={!canWriteRules || ruleReadOnly}
           />
         </Tabs.TabPane>
       </PageTabs>
