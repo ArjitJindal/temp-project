@@ -1,6 +1,7 @@
-import React, { useState } from 'react';
+import React, { useMemo, useState } from 'react';
 import { message } from 'antd';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
+import _ from 'lodash';
 import s from './index.module.less';
 import * as Card from '@/components/ui/Card';
 import Comment from '@/components/CommentsCard/Comment';
@@ -33,6 +34,21 @@ export default function CommentsCard(props: Props) {
   const [deletingCommentIds, setDeletingCommentIds] = useState<string[]>([]);
   const api = useApi();
   const queryClient = useQueryClient();
+
+  const updatedComments = useMemo(() => {
+    return _.orderBy(
+      comments,
+      [
+        (x) => {
+          const comments = x.comments;
+          const latestComment = _.maxBy(comments, (x) => x.updatedAt);
+          return latestComment ? latestComment.updatedAt : 0;
+        },
+        (x) => x.title,
+      ],
+      ['desc', 'asc'],
+    );
+  }, [comments]);
 
   const deleteCommentMutation = useMutation<
     unknown,
@@ -92,7 +108,7 @@ export default function CommentsCard(props: Props) {
       >
         <Card.Section>
           <div className={s.root}>
-            {comments
+            {updatedComments
               .filter((group) => group.comments.length > 0)
               .map((group) => (
                 <div className={s.group} key={group.title}>
