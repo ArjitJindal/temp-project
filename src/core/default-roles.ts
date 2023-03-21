@@ -11,7 +11,7 @@ export const DEFAULT_ROLES: {
     role: 'admin',
     permissions: PERMISSIONS, // Admin has all permissions
     description:
-      'The following is the default permissions set for the Admin role.',
+      'Admin has unrestricted access to all features, can invite new accounts to console. A tenant can have multiple admins.',
   },
   {
     role: 'auditor',
@@ -36,7 +36,7 @@ export const DEFAULT_ROLES: {
       'simulator:risk-scoring:read',
     ],
     description:
-      'The following is the default permissions set for the Auditor role.',
+      'Auditor has read-only access to Dashboard, Case Management, Rules, Risk Scoring, Audit Log and has access to download information.',
   },
   {
     role: 'analyst',
@@ -58,7 +58,7 @@ export const DEFAULT_ROLES: {
       'users:user-details:read',
     ],
     description:
-      'The following is the default permissions set for the Analyst role.',
+      'Analyst has unrestricted access to Case management but read-only rights to Audit Log, Rules & Risk Scoring.',
   },
   {
     role: 'approver',
@@ -87,7 +87,7 @@ export const DEFAULT_ROLES: {
       'users:user-details:read',
     ],
     description:
-      'The following is the default permissions set for the Approver role.',
+      'Approver has unrestricted access to Case management but read-only rights to Audit Log, Rules & Risk Scoring. Alerts are received when an analyst requires approval to close a case.',
   },
   {
     role: 'developer',
@@ -116,6 +116,6 @@ export const DEFAULT_ROLES: {
       'simulator:risk-scoring:read',
     ],
     description:
-      'The following is the default permissions set for the Developer role.',
+      'Developer has unrestricted access to the ‘Developer’ section found under settings, and read-only access to all other features.',
   },
 ]
