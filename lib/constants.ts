@@ -204,6 +204,9 @@ export const StackConstants = {
   CONSOLE_API_SIMULATION_FUNCTION_NAME: getResourceNameForTarpon(
     'ConsoleApiSimulationFunction'
   ),
+  CONSOLE_API_DEVICE_DATA_FUNCTION_NAME: getResourceNameForTarpon(
+    'ConsoleApiDeviceDataFunction'
+  ),
   AUDIT_LOG_FUNCTION_NAME: getResourceNameForHammerhead('AuditLogFunction'),
   NUMBER_OF_RISK_LEVELS: 5,
   TARPON_STREAM_ID: 'tarponStream',

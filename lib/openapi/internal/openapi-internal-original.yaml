@@ -3343,6 +3343,51 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/SimulationSettings'
+  /device-data/transactions:
+    get:
+      summary: Get Device Data Transactions
+      operationId: get-device-data-transactions
+      x-flagright:
+        permissions:
+          - case-management:case-details:read
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: ../public-device-data/openapi-public-device-data-original.yaml#/components/schemas/DeviceMetric
+      parameters:
+        - schema:
+            type: string
+          in: query
+          name: transactionId
+          required: true
+        - schema:
+            type: string
+          in: query
+          name: userId
+          required: true
+  /device-data/users:
+    get:
+      summary: Get Device Data Users
+      operationId: get-device-data-users
+      x-flagright:
+        permissions:
+          - users:user-details:read
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: ../public-device-data/openapi-public-device-data-original.yaml#/components/schemas/DeviceMetric
+      parameters:
+        - schema:
+            type: string
+          in: query
+          name: userId
+          required: true
 components:
   schemas:
     KrsScore:

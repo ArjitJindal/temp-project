@@ -933,6 +933,16 @@ export class CdkTarponStack extends cdk.Stack {
     )
     this.grantMongoDbAccess(simulationHandlerAlias)
 
+    /* Console API Device Data */
+    const { alias: deviceDataHandlerAlias } = this.createFunction(
+      {
+        name: StackConstants.CONSOLE_API_DEVICE_DATA_FUNCTION_NAME,
+      },
+      atlasFunctionProps
+    )
+
+    this.grantMongoDbAccess(deviceDataHandlerAlias)
+
     /*
      * Hammerhead console functions
      */

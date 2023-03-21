@@ -48,8 +48,14 @@ async function prepareSchemas(OUTPUT_DIR) {
       publicDir,
       'openapi-public-original.yaml'
     )
+    const deviceSchemaFile = path.resolve(
+      publicDeviceDataDir,
+      'openapi-public-device-data-original.yaml'
+    )
     const publicSchemaText = (await fs.readFile(publicSchemaFile)).toString()
     const publicSchemaYaml = parse(publicSchemaText)
+    const deviceSchemaText = (await fs.readFile(deviceSchemaFile)).toString()
+    const deviceSchemaYaml = parse(deviceSchemaText)
 
     const internalSchemaFile = path.resolve(
       internalDir,
@@ -73,6 +79,7 @@ async function prepareSchemas(OUTPUT_DIR) {
       internalSchemaYaml.components.schemas = {
         ...internalSchemaYaml.components.schemas,
         ...publicSchemaYaml.components.schemas,
+        ...deviceSchemaYaml.components.schemas,
       }
       await fs.copy(internalDir, internalDirOutput)
       await fs.writeFile(
