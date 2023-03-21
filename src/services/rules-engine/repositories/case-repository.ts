@@ -976,6 +976,11 @@ export class CaseRepository {
           lastStatusChange: updates.statusChange,
         }
       })
+
+      const isAllAlertsClosed = newAlerts?.every(
+        (alert) => alert.alertStatus === 'CLOSED'
+      )
+
       if (caseItem.caseId != null && newAlerts) {
         result.push(
           collection.updateOne(
@@ -985,7 +990,20 @@ export class CaseRepository {
             {
               $set: {
                 alerts: newAlerts,
+                ...(isAllAlertsClosed
+                  ? {
+                      caseStatus: 'CLOSED',
+                      lastStatusChange: updates.statusChange,
+                    }
+                  : {}),
               },
+              ...(isAllAlertsClosed
+                ? {
+                    $push: {
+                      statusChanges: updates.statusChange,
+                    },
+                  }
+                : {}),
             }
           )
         )
