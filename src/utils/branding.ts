@@ -16,6 +16,7 @@ interface BrandingSettings {
     webhooks: string;
   };
   redirectPath?: string;
+  faviconUrl: string;
 }
 
 const DEFAULT_BRANDING: BrandingSettings = {
@@ -30,6 +31,7 @@ const DEFAULT_BRANDING: BrandingSettings = {
   apiDocsLinks: {
     webhooks: 'https://docs.flagright.com/docs/flagright-api/0b0bb2cf007e5-webhooks-overview',
   },
+  faviconUrl: '/favicon.ico',
 };
 
 const BUREAU_BRANDING: Omit<BrandingSettings, 'auth0Domain' | 'auth0ClientId'> = {
@@ -43,6 +45,7 @@ const BUREAU_BRANDING: Omit<BrandingSettings, 'auth0Domain' | 'auth0ClientId'> =
   },
   // TODO: We can remove `redirectPath` here after https://tm.sandbox.bureau.id is correctly redirectly to Console.
   redirectPath: '/dashboard/analysis',
+  faviconUrl: BureauLogoSvg,
 };
 
 export function getBranding(): BrandingSettings {

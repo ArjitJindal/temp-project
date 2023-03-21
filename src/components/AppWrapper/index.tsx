@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import cn from 'clsx';
 import { useLocation } from 'react-router';
+import { Helmet } from 'react-helmet';
 import Providers, { StorybookMockProviders } from './Providers';
 import Menu from './Menu';
 import Header from './Header';
@@ -11,10 +12,13 @@ import { useDemoMode } from '@/components/AppWrapper/Providers/DemoModeProvider'
 import { getOr } from '@/utils/asyncResource';
 import AuthProvider from '@/components/AppWrapper/Providers/AuthProvider';
 import RouterProvider from '@/components/AppWrapper/Providers/RouterProvider';
+import { getBranding } from '@/utils/branding';
 
 interface Props {
   children?: React.ReactNode;
 }
+
+const branding = getBranding();
 
 function MainContent(props: Props) {
   const [isCollapsed, setCollapsed] = useState(false);
@@ -22,6 +26,9 @@ function MainContent(props: Props) {
 
   return (
     <div className={`${s.root} ${isCollapsed && s.isCollapsed}`}>
+      <Helmet>
+        <link rel="icon" href={branding.faviconUrl} />
+      </Helmet>
       <Header className={cn(s.header, getOr(isDemoModeRes, true) && s.isDemoMode)} />
       <aside className={s.aside}>
         <Menu isCollapsed={isCollapsed} onChangeCollapsed={setCollapsed} />
