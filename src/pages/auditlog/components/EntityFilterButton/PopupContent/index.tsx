@@ -14,7 +14,7 @@ interface Props {
 export default function PopupContent(props: Props) {
   const { initialState, onCancel, onConfirm } = props;
 
-  const keys: AuditLogType[] = ['RULE', 'ACCOUNT', 'USER', 'CASE'];
+  const keys: AuditLogType[] = ['RULE', 'ACCOUNT', 'USER', 'CASE', 'ALERT'];
 
   const [state, setState] = useState<AuditLogType[]>(initialState);
 
