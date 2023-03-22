@@ -1,6 +1,5 @@
 import { Fragment, useCallback, useMemo, useState } from 'react';
 import { Typography, message } from 'antd';
-import { FEATURES } from '..';
 import Modal from '@/components/ui/Modal';
 import { JsonSchemaForm } from '@/components/JsonSchemaForm';
 import { getFixedSchemaJsonForm } from '@/utils/json';
@@ -10,6 +9,7 @@ import { getErrorMessage } from '@/utils/lang';
 import COLORS from '@/components/ui/colors';
 import { Feature } from '@/apis/models/Feature';
 import { useAuth0User } from '@/utils/user-utils';
+import { FEATURES } from '@/apis/models-custom/Feature';
 
 interface Props {
   visible: boolean;

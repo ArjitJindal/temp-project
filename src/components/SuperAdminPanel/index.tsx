@@ -11,21 +11,7 @@ import { Feature, TenantSettings } from '@/apis';
 import { useAuth0User } from '@/utils/user-utils';
 import { useFeatures, useSettings } from '@/components/AppWrapper/Providers/SettingsProvider';
 import ButtonGroup from '@/components/library/ButtonGroup';
-
-export const FEATURES: Feature[] = [
-  'PULSE',
-  'SLACK_ALERTS',
-  'AUDIT_LOGS',
-  'IMPORT_FILES',
-  'LISTS',
-  'HELP_CENTER',
-  'SANCTIONS',
-  'DASHBOARD_BLOCK_USER',
-  'RULES_ENGINE_RULE_BASED_AGGREGATION',
-  'FALSE_POSITIVE_CHECK',
-  'DEMO_MODE',
-  'SIMULATOR',
-];
+import { FEATURES } from '@/apis/models-custom/Feature';
 
 export default function SuperAdminPanel() {
   const [isModalVisible, setIsModalVisible] = useState(false);
