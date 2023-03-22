@@ -1,6 +1,7 @@
 import FlagrightLogoSvg from '@/branding/flagright-logo.svg';
 import FlagrightDemoLogoSvg from '@/branding/flagright-logo-demo.svg';
 import BureauLogoSvg from '@/branding/bureau-logo.svg';
+import BureauFaviconSvg from '@/branding/bureau-favicon.svg';
 
 interface BrandingSettings {
   apiBasePath?: string;
@@ -45,7 +46,7 @@ const BUREAU_BRANDING: Omit<BrandingSettings, 'auth0Domain' | 'auth0ClientId'> =
   },
   // TODO: We can remove `redirectPath` here after https://tm.sandbox.bureau.id is correctly redirectly to Console.
   redirectPath: '/dashboard/analysis',
-  faviconUrl: BureauLogoSvg,
+  faviconUrl: BureauFaviconSvg,
 };
 
 export function getBranding(): BrandingSettings {
