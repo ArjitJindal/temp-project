@@ -4512,6 +4512,7 @@ components:
         - DASHBOARD_BLOCK_USER
         - LISTS
         - HELP_CENTER
+        - MACHINE_LEARNING_DEMO
         - GOOGLE_SSO
         - SANCTIONS
         - RULES_ENGINE_RULE_BASED_AGGREGATION
