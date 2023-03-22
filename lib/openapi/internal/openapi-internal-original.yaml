@@ -641,21 +641,6 @@ paths:
               $ref: ../public/openapi-public-original.yaml#/components/schemas/TransactionType
           in: query
           name: filterTransactionTypes
-    post:
-      summary: Transactions - Update
-      operationId: post-transactions
-      x-flagright:
-        permissions:
-          - transactions:overview:write
-          - transactions:details:write
-      responses:
-        '200':
-          description: OK
-      requestBody:
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/TransactionsUpdateRequest'
   /transactions/export:
     get:
       summary: Transaction - Export
@@ -804,7 +789,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/TransactionCaseManagement'
+                $ref: '#/components/schemas/InternalTransaction'
         '404':
           description: Not Found
       description: ''
@@ -1627,52 +1612,6 @@ paths:
               - DESTINATION
           in: query
           name: direction
-  '/transactions/{transactionId}/comments':
-    post:
-      summary: Create a Transaction Comment
-      operationId: post-transactions-comments
-      x-flagright:
-        permissions:
-          - transactions:overview:write
-      responses:
-        '200':
-          description: OK
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Comment'
-      requestBody:
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/Comment'
-    parameters:
-      - schema:
-          type: string
-        name: transactionId
-        in: path
-        required: true
-  '/transactions/{transactionId}/comments/{commentId}':
-    parameters:
-      - schema:
-          type: string
-        name: transactionId
-        in: path
-        required: true
-      - schema:
-          type: string
-        name: commentId
-        in: path
-        required: true
-    delete:
-      summary: Delete a Transaction Comment
-      operationId: delete-transactions-transactionId-comments-commentId
-      x-flagright:
-        permissions:
-          - transactions:overview:write
-      responses:
-        '200':
-          description: OK
   /tenants:
     get:
       summary: Tenant - List
@@ -3713,7 +3652,7 @@ components:
         data:
           type: array
           items:
-            $ref: '#/components/schemas/TransactionCaseManagement'
+            $ref: '#/components/schemas/InternalTransaction'
       required:
         - total
         - data
@@ -3784,28 +3723,14 @@ components:
               - values
       required:
         - data
-    TransactionCaseManagement:
+    InternalTransaction:
       allOf:
         - $ref: ../public/openapi-public-original.yaml#/components/schemas/TransactionWithRulesResult
         - type: object
           additionalProperties: false
           properties:
-            comments:
-              type: array
-              items:
-                $ref: '#/components/schemas/Comment'
-            assignments:
-              type: array
-              items:
-                $ref: '#/components/schemas/Assignment'
             status:
               $ref: '#/components/schemas/RuleAction'
-            statusChanges:
-              type: array
-              items:
-                $ref: '#/components/schemas/TransactionStatusChange'
-            lastStatusChange:
-              $ref: '#/components/schemas/TransactionStatusChange'
             originUser:
               oneOf:
                 - $ref: '#/components/schemas/InternalConsumerUser'
@@ -3818,13 +3743,9 @@ components:
               type: array
               items:
                 $ref: ../public/openapi-public-original.yaml#/components/schemas/TransactionEvent
-            caseStatus:
-              $ref: '#/components/schemas/CaseStatus'
             arsScore:
               $ref: '#/components/schemas/ArsScore'
-          required:
-            - status
-      title: TransactionCaseManagement
+      title: InternalTransaction
     ConsumerUsersListResponse:
       title: ConsumerUsersListResponse
       type: object
@@ -3948,28 +3869,6 @@ components:
           type: number
       required:
         - data
-    CaseTransaction:
-      allOf:
-        - $ref: ../public/openapi-public-original.yaml#/components/schemas/TransactionWithRulesResult
-        - type: object
-          additionalProperties: false
-          properties:
-            originUser:
-              oneOf:
-                - $ref: '#/components/schemas/InternalConsumerUser'
-                - $ref: '#/components/schemas/InternalBusinessUser'
-            destinationUser:
-              oneOf:
-                - $ref: '#/components/schemas/InternalConsumerUser'
-                - $ref: '#/components/schemas/InternalBusinessUser'
-            events:
-              type: array
-              items:
-                $ref: ../public/openapi-public-original.yaml#/components/schemas/TransactionEvent
-            arsScore:
-              $ref: '#/components/schemas/ArsScore'
-          required:
-            - status
     InternalConsumerUser:
       allOf:
         - $ref: ../public/openapi-public-original.yaml#/components/schemas/User
@@ -4143,19 +4042,6 @@ components:
           $ref: '#/components/schemas/CaseStatus'
         otherReason:
           type: string
-    TransactionsUpdateRequest:
-      title: TransactionsUpdateRequest
-      type: object
-      properties:
-        transactionIds:
-          type: array
-          items:
-            type: string
-        transactionUpdates:
-          $ref: '#/components/schemas/TransactionUpdateRequest'
-      required:
-        - transactionIds
-        - transactionUpdates
     UserUpdateRequest:
       title: UserUpdateRequest
       type: object
@@ -4845,7 +4731,7 @@ components:
         caseTransactions:
           type: array
           items:
-            $ref: '#/components/schemas/CaseTransaction'
+            $ref: '#/components/schemas/InternalTransaction'
         caseTransactionsIds:
           type: array
           items:
@@ -5052,7 +4938,7 @@ components:
             caseTransactions:
               type: array
               items:
-                $ref: '#/components/schemas/CaseTransaction'
+                $ref: '#/components/schemas/InternalTransaction'
       required:
         - total
         - data
@@ -5606,7 +5492,7 @@ components:
           _id:
             type: string
           caseTransactions:
-            $ref: '#/components/schemas/CaseTransaction'
+            $ref: '#/components/schemas/InternalTransaction'
     NewListPayload:
       title: NewListPayload
       type: object

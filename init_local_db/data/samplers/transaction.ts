@@ -1,8 +1,8 @@
 import { sampleTimestamp } from './timestamp'
-import { TransactionCaseManagement } from '@/@types/openapi-internal/TransactionCaseManagement'
+import { InternalTransaction } from '@/@types/openapi-internal/InternalTransaction'
 import { randomInt } from '@/utils/prng'
 
-export function sampleTransaction(seed?: number): TransactionCaseManagement {
+export function sampleTransaction(seed?: number): InternalTransaction {
   return {
     transactionId: `sample_transaction_${randomInt(seed)}`,
     type: 'TRANSFER',

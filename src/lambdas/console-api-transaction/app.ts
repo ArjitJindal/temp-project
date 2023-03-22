@@ -3,8 +3,6 @@ import {
   APIGatewayProxyWithLambdaAuthorizerEvent,
 } from 'aws-lambda'
 import { InternalServerError, BadRequest, NotFound } from 'http-errors'
-import { CaseService } from '../console-api-case/services/case-service'
-import { DashboardStatsRepository } from '../console-api-dashboard/repositories/dashboard-stats-repository'
 import { TransactionService } from './services/transaction-service'
 import { JWTAuthorizerResult } from '@/@types/jwt'
 import { lambdaApi } from '@/core/middlewares/lambda-api-middlewares'
@@ -14,10 +12,7 @@ import { getMongoDbClient } from '@/utils/mongoDBUtils'
 import { MongoDbTransactionRepository } from '@/services/rules-engine/repositories/mongodb-transaction-repository'
 import { DefaultApiGetTransactionsListRequest } from '@/@types/openapi-internal/RequestParameters'
 import { CsvHeaderSettings, ExportService } from '@/services/export'
-import { TransactionCaseManagement } from '@/@types/openapi-internal/TransactionCaseManagement'
-import { TransactionsUpdateRequest } from '@/@types/openapi-internal/TransactionsUpdateRequest'
-import { Comment } from '@/@types/openapi-internal/Comment'
-import { CaseRepository } from '@/services/rules-engine/repositories/case-repository'
+import { InternalTransaction } from '@/@types/openapi-internal/InternalTransaction'
 import { getDynamoDbClient } from '@/utils/dynamodb'
 import { RiskRepository } from '@/services/risk-scoring/repositories/risk-repository'
 
@@ -27,7 +22,7 @@ export type TransactionViewConfig = {
   MAXIMUM_ALLOWED_EXPORT_SIZE: string
 }
 
-export const TRANSACTION_EXPORT_HEADERS_SETTINGS: CsvHeaderSettings<TransactionCaseManagement> =
+export const TRANSACTION_EXPORT_HEADERS_SETTINGS: CsvHeaderSettings<InternalTransaction> =
   {
     type: 'INCLUDE',
     transactionId: 'INCLUDE',
@@ -67,12 +62,7 @@ export const TRANSACTION_EXPORT_HEADERS_SETTINGS: CsvHeaderSettings<TransactionC
     tags: 'JSON',
     executedRules: 'JSON',
     hitRules: 'JSON',
-    comments: 'JSON',
-    assignments: 'JSON',
     status: 'INCLUDE',
-    caseStatus: 'INCLUDE',
-    statusChanges: 'JSON',
-    lastStatusChange: 'JSON',
     originUser: 'SKIP',
     destinationUser: 'SKIP',
     events: 'SKIP',
@@ -85,7 +75,7 @@ export const transactionsViewHandler = lambdaApi()(
       APIGatewayEventLambdaAuthorizerContext<JWTAuthorizerResult>
     >
   ) => {
-    const { principalId: tenantId, userId } = event.requestContext.authorizer
+    const { principalId: tenantId } = event.requestContext.authorizer
     const { DOCUMENT_BUCKET, TMP_BUCKET, MAXIMUM_ALLOWED_EXPORT_SIZE } =
       process.env as TransactionViewConfig
     const s3 = getS3ClientByEvent(event)
@@ -107,19 +97,7 @@ export const transactionsViewHandler = lambdaApi()(
       TMP_BUCKET,
       DOCUMENT_BUCKET
     )
-    const caseRepository = new CaseRepository(tenantId, {
-      mongoDb: client,
-    })
-    const dashboardStatsRepository = new DashboardStatsRepository(tenantId, {
-      mongoDb: client,
-    })
-    const caseService = new CaseService(
-      caseRepository,
-      dashboardStatsRepository,
-      s3,
-      TMP_BUCKET,
-      DOCUMENT_BUCKET
-    )
+
     if (event.httpMethod === 'GET' && event.path.endsWith('/transactions')) {
       const {
         page,
@@ -374,7 +352,7 @@ export const transactionsViewHandler = lambdaApi()(
       event.httpMethod === 'GET' &&
       event.path.endsWith('/transactions/export')
     ) {
-      const exportService = new ExportService<TransactionCaseManagement>(
+      const exportService = new ExportService<InternalTransaction>(
         'case',
         s3,
         TMP_BUCKET
@@ -462,23 +440,6 @@ export const transactionsViewHandler = lambdaApi()(
       transactionsStatsGetSegment?.close()
       return result.filter((item) => item != null)
     } else if (
-      event.httpMethod === 'POST' &&
-      event.path.endsWith('/transactions') &&
-      event.body
-    ) {
-      const updateRequest = JSON.parse(event.body) as TransactionsUpdateRequest
-      const transactionIds = updateRequest?.transactionIds || []
-      await transactionService.updateTransactions(
-        userId,
-        transactionIds,
-        updateRequest.transactionUpdates
-      )
-      return caseService.updateCasesByTransactionIds(
-        userId,
-        transactionIds,
-        updateRequest.transactionUpdates
-      )
-    } else if (
       event.httpMethod === 'GET' &&
       event.resource === '/transactions/{transactionId}' &&
       event.pathParameters?.transactionId
@@ -490,35 +451,6 @@ export const transactionsViewHandler = lambdaApi()(
         throw new NotFound(`Unable to find transaction`)
       }
       return transaction
-    } else if (
-      event.httpMethod === 'POST' &&
-      event.resource === '/transactions/{transactionId}/comments' &&
-      event.pathParameters?.transactionId &&
-      event.body
-    ) {
-      const comment = JSON.parse(event.body) as Comment
-      const savedComment: Comment =
-        await transactionService.saveTransactionComment(
-          event.pathParameters.transactionId,
-          { ...comment, userId }
-        )
-      return caseService.saveCaseCommentByTransaction(
-        event.pathParameters.transactionId,
-        { ...savedComment, userId }
-      )
-    } else if (
-      event.httpMethod === 'DELETE' &&
-      event.pathParameters?.transactionId &&
-      event.pathParameters?.commentId
-    ) {
-      await transactionService.deleteTransactionComment(
-        event.pathParameters.transactionId,
-        event.pathParameters.commentId
-      )
-      return caseService.deleteCaseCommentByTransaction(
-        event.pathParameters.transactionId,
-        event.pathParameters.commentId
-      )
     }
 
     throw new Error('Unhandled request')

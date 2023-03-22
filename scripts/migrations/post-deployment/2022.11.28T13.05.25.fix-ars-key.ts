@@ -6,7 +6,7 @@ import { migrateTransactions } from '../utils/transaction'
 import { Tenant } from '@/services/accounts'
 import { tenantHasFeature } from '@/core/middlewares/tenant-has-feature'
 import { getMongoDbClient, TRANSACTIONS_COLLECTION } from '@/utils/mongoDBUtils'
-import { TransactionCaseManagement } from '@/@types/openapi-internal/TransactionCaseManagement'
+import { InternalTransaction } from '@/@types/openapi-internal/InternalTransaction'
 import { getDynamoDbClient } from '@/utils/dynamodb'
 import { DynamoDbKeys } from '@/core/dynamodb/dynamodb-keys'
 
@@ -18,7 +18,7 @@ async function migrateTenant(tenant: Tenant) {
   const mongodb = await getMongoDbClient()
   const transactionCollection = mongodb
     .db()
-    .collection<TransactionCaseManagement>(TRANSACTIONS_COLLECTION(tenant.id))
+    .collection<InternalTransaction>(TRANSACTIONS_COLLECTION(tenant.id))
   const transactionsCursor = transactionCollection.find(
     {},
     {

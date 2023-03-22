@@ -7,7 +7,7 @@ import { CaseRepository } from '@/services/rules-engine/repositories/case-reposi
 import { Case } from '@/@types/openapi-internal/Case'
 import { Tenant } from '@/@types/openapi-internal/Tenant'
 import { DefaultApiGetTransactionsListRequest } from '@/@types/openapi-internal/RequestParameters'
-import { TransactionCaseManagement } from '@/@types/openapi-internal/TransactionCaseManagement'
+import { InternalTransaction } from '@/@types/openapi-internal/InternalTransaction'
 import { RuleInstanceRepository } from '@/services/rules-engine/repositories/rule-instance-repository'
 import { UserRepository } from '@/services/users/repositories/user-repository'
 import { CaseCreationService } from '@/lambdas/console-api-case/services/case-creation-service'
@@ -58,8 +58,8 @@ export async function migrateTenant(tenant: Tenant) {
   while (transaction) {
     let createCase = false
     if (
-      transaction?.caseStatus == 'OPEN' ||
-      transaction?.caseStatus == 'REOPENED'
+      (transaction as any)?.caseStatus == 'OPEN' ||
+      (transaction as any)?.caseStatus == 'REOPENED'
     ) {
       createCase = true
     } else {
@@ -103,7 +103,7 @@ export async function migrateTenant(tenant: Tenant) {
 }
 
 function getCase(
-  transaction: TransactionCaseManagement,
+  transaction: InternalTransaction,
   transactionUsers: (InternalBusinessUser | InternalConsumerUser)[],
   id: number
 ): Case {
@@ -130,16 +130,16 @@ function getCase(
   const caseEntity: Case = {
     _id: id,
     caseId: `C-${id}`,
-    comments: transaction.comments || [],
-    assignments: transaction.assignments || [],
+    comments: (transaction as any).comments || [],
+    assignments: (transaction as any).assignments || [],
     createdTimestamp: transaction.timestamp,
     latestTransactionArrivalTimestamp: transaction.timestamp,
     priority: 'P1',
     relatedCases: [],
-    statusChanges: transaction.statusChanges || [],
+    statusChanges: (transaction as any).statusChanges || [],
     caseUsers: caseUsers,
     caseTransactions: [transaction as TransactionWithRulesResult],
-    caseStatus: transaction.caseStatus || 'OPEN',
+    caseStatus: (transaction as any).caseStatus || 'OPEN',
   }
   return caseEntity
 }

@@ -3,6 +3,7 @@ import { migrateAllTenants } from '../utils/tenant'
 import { CASES_COLLECTION, getMongoDbClient } from '@/utils/mongoDBUtils'
 import { Tenant } from '@/services/accounts'
 import { Case } from '@/@types/openapi-internal/Case'
+import { InternalTransaction } from '@/@types/openapi-internal/InternalTransaction'
 
 export async function migrateTenant(tenant: Tenant) {
   const mongodb = await getMongoDbClient(StackConstants.MONGO_DB_DATABASE_NAME)
@@ -20,7 +21,8 @@ export async function migrateTenant(tenant: Tenant) {
       console.log(`Migrating case ${caseItem.caseId}`)
       // eslint-disable-next-line @typescript-eslint/ban-ts-comment
       // @ts-ignore
-      const caseTransactions = caseItem.caseTransactions as CaseTransaction[]
+      const caseTransactions =
+        caseItem.caseTransactions as InternalTransaction[]
       const ids: string[] = caseTransactions.map(
         ({ transactionId }) => transactionId as string
       )

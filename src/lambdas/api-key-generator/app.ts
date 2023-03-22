@@ -21,7 +21,7 @@ import {
   ARS_SCORES_COLLECTION,
   USER_EVENTS_COLLECTION,
 } from '@/utils/mongoDBUtils'
-import { TransactionCaseManagement } from '@/@types/openapi-internal/TransactionCaseManagement'
+import { InternalTransaction } from '@/@types/openapi-internal/InternalTransaction'
 import { Case } from '@/@types/openapi-internal/Case'
 import { TenantRepository } from '@/services/tenants/repositories/tenant-repository'
 
@@ -80,7 +80,7 @@ export const createMongoDBCollections = async (
     } catch (e) {
       // ignore already exists
     }
-    const transactionCollection = db.collection<TransactionCaseManagement>(
+    const transactionCollection = db.collection<InternalTransaction>(
       TRANSACTIONS_COLLECTION(tenantId)
     )
     await transactionCollection.createIndex({

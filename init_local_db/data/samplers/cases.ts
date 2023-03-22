@@ -3,11 +3,11 @@ import { sampleGuid } from './id'
 import { Case } from '@/@types/openapi-internal/Case'
 import { User } from '@/@types/openapi-public/User'
 import { Business } from '@/@types/openapi-public/Business'
-import { CaseTransaction } from '@/@types/openapi-internal/CaseTransaction'
 import { transactionsToAlerts } from '@/services/alerts'
+import { InternalTransaction } from '@/@types/openapi-internal/InternalTransaction'
 
 export function sampleTransactionCase(
-  transaction: CaseTransaction,
+  transaction: InternalTransaction,
   seed?: number
 ): Case {
   return {
@@ -27,7 +27,7 @@ export function sampleTransactionCase(
 
 export function sampleUserCase(
   params: {
-    transactions: CaseTransaction[]
+    transactions: InternalTransaction[]
     user:
       | {
           origin: Business | User

@@ -83,10 +83,6 @@ export const ConsoleApiPathToLambda: any = {
     StackConstants.CONSOLE_API_DASHBOARD_STATS_FUNCTION_NAME,
   '/dashboard_stats/hits_per_user':
     StackConstants.CONSOLE_API_DASHBOARD_STATS_FUNCTION_NAME,
-  '/transactions/{transactionId}/comments':
-    StackConstants.CONSOLE_API_TRANSACTIONS_VIEW_FUNCTION_NAME,
-  '/transactions/{transactionId}/comments/{commentId}':
-    StackConstants.CONSOLE_API_TRANSACTIONS_VIEW_FUNCTION_NAME,
   '/dashboard_stats/rule_hit':
     StackConstants.CONSOLE_API_DASHBOARD_STATS_FUNCTION_NAME,
   '/slack/oauth_redirect': StackConstants.SLACK_APP_FUNCTION_NAME,

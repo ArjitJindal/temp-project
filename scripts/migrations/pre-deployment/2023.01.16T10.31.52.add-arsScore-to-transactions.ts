@@ -1,6 +1,6 @@
 import _ from 'lodash'
 import { migrateAllTenants } from '../utils/tenant'
-import { TransactionCaseManagement } from '@/@types/openapi-internal/TransactionCaseManagement'
+import { InternalTransaction } from '@/@types/openapi-internal/InternalTransaction'
 import { ArsScore } from '@/@types/openapi-internal/ArsScore'
 import { tenantHasFeature } from '@/core/middlewares/tenant-has-feature'
 import { Tenant } from '@/services/accounts'
@@ -27,7 +27,7 @@ async function migrateTenant(tenant: Tenant) {
   for await (const arsScore of arsScores) {
     const { transactionId } = arsScore
     await db
-      .collection<TransactionCaseManagement>(transactionsCollection)
+      .collection<InternalTransaction>(transactionsCollection)
       .updateOne({ transactionId }, { $set: { arsScore } })
 
     const casesDb = db.collection<Case>(casesCollection)

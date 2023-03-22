@@ -74,7 +74,7 @@ async function transactionHandler(
   let currentStatus: RuleAction | null = null
   if (transactionId != null) {
     currentStatus =
-      (await transactionsRepo.getTransactionCaseManagementById(transactionId))
+      (await transactionsRepo.getInternalTransactionById(transactionId))
         ?.status ?? null
   }
   const transactionInMongo = await transactionsRepo.addTransactionToMongo(
@@ -82,7 +82,7 @@ async function transactionHandler(
   )
   const newStatus = transactionInMongo.status
   logger.info(`Starting Case Creation`)
-  const cases = await caseCreationService.handleTransaction(transaction)
+  const cases = await caseCreationService.handleTransaction(transactionInMongo)
   logger.info(`Case Creation Completed`)
   if (await tenantHasFeature(tenantId, 'PULSE')) {
     logger.info(`Calculating ARS & DRS`)

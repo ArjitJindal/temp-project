@@ -7,11 +7,11 @@ import users from './users'
 import { sampleTransaction } from './samplers/transaction'
 import { sampleTag } from './samplers/tag'
 import { sampleCountry } from './samplers/countries'
-import { TransactionCaseManagement } from '@/@types/openapi-internal/TransactionCaseManagement'
+import { InternalTransaction } from '@/@types/openapi-internal/InternalTransaction'
 import { ExecutedRulesResult } from '@/@types/openapi-internal/ExecutedRulesResult'
 import { prng } from '@/utils/prng'
 
-const data: TransactionCaseManagement[] = []
+const data: InternalTransaction[] = []
 
 const hitRules: Array<ExecutedRulesResult> = [
   sampleBlockRuleResult(),

@@ -47,7 +47,7 @@ import {
   OptionalPaginationParams,
   PaginationParams,
 } from '@/utils/pagination'
-import { CaseTransaction } from '@/@types/openapi-internal/CaseTransaction'
+import { InternalTransaction } from '@/@types/openapi-internal/InternalTransaction'
 import { PRIORITYS } from '@/@types/openapi-internal-custom/Priority'
 import { AlertListResponse } from '@/@types/openapi-internal/AlertListResponse'
 import { AlertListResponseItem } from '@/@types/openapi-internal/AlertListResponseItem'
@@ -1351,10 +1351,10 @@ export class CaseRepository {
     const sortOrder = sortFields.sortOrder === 'ascend' ? 1 : -1
 
     const db = this.mongoDb.db()
-    const collection = db.collection<CaseTransaction>(
+    const collection = db.collection<InternalTransaction>(
       CASES_COLLECTION(this.tenantId)
     )
-    return collection.aggregate<CaseTransaction>(
+    return collection.aggregate<InternalTransaction>(
       [
         ...pipeline,
         {
@@ -1395,7 +1395,7 @@ export class CaseRepository {
     ruleInstanceId: string,
     params: PaginationParams,
     sortFields: { sortField: string; sortOrder: string }
-  ): Promise<{ total: number; cases: CaseTransaction[] }> {
+  ): Promise<{ total: number; cases: InternalTransaction[] }> {
     const cursor = this.getCaseRuleTransactionsCursor(
       caseId,
       ruleInstanceId,

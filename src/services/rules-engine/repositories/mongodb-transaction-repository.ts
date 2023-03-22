@@ -1,4 +1,3 @@
-import { v4 as uuidv4 } from 'uuid'
 import { AggregationCursor, Document, Filter, MongoClient } from 'mongodb'
 import _ from 'lodash'
 import { getReceiverKeyId, getSenderKeyId } from '../utils'
@@ -18,14 +17,10 @@ import {
   USERS_COLLECTION,
   prefixRegexMatchFilter,
 } from '@/utils/mongoDBUtils'
-import { Comment } from '@/@types/openapi-internal/Comment'
-import { TransactionCaseManagement } from '@/@types/openapi-internal/TransactionCaseManagement'
+import { InternalTransaction } from '@/@types/openapi-internal/InternalTransaction'
 import { RuleAction } from '@/@types/openapi-internal/RuleAction'
-import { Assignment } from '@/@types/openapi-internal/Assignment'
-import { TransactionStatusChange } from '@/@types/openapi-internal/TransactionStatusChange'
 import { DefaultApiGetTransactionsListRequest } from '@/@types/openapi-internal/RequestParameters'
 import { RULE_ACTIONS } from '@/@types/rule/rule-actions'
-import { CaseStatus } from '@/@types/openapi-internal/CaseStatus'
 import { TransactionType } from '@/@types/openapi-public/TransactionType'
 import { Currency, getCurrencyExchangeRate } from '@/utils/currency-utils'
 import { TransactionsStatsByTypesResponse } from '@/@types/openapi-internal/TransactionsStatsByTypesResponse'
@@ -63,12 +58,12 @@ export class MongoDbTransactionRepository
 
   async addTransactionToMongo(
     transaction: TransactionWithRulesResult
-  ): Promise<TransactionCaseManagement> {
+  ): Promise<InternalTransaction> {
     const db = this.mongoDb.db()
-    const transactionsCollection = db.collection<TransactionCaseManagement>(
+    const transactionsCollection = db.collection<InternalTransaction>(
       TRANSACTIONS_COLLECTION(this.tenantId)
     )
-    const transactionCaseManagement: TransactionCaseManagement = {
+    const internalTransaction: InternalTransaction = {
       ...transaction,
       status: MongoDbTransactionRepository.getAggregatedRuleStatus(
         transaction.executedRules
@@ -78,17 +73,17 @@ export class MongoDbTransactionRepository
     }
     await transactionsCollection.replaceOne(
       { transactionId: transaction.transactionId },
-      transactionCaseManagement,
+      internalTransaction,
       { upsert: true }
     )
-    return transactionCaseManagement
+    return internalTransaction
   }
 
   public getTransactionsMongoQuery(
     params: OptionalPagination<DefaultApiGetTransactionsListRequest>,
-    additionalFilters: Filter<TransactionCaseManagement>[] = []
-  ): Filter<TransactionCaseManagement> {
-    const conditions: Filter<TransactionCaseManagement>[] = additionalFilters
+    additionalFilters: Filter<InternalTransaction>[] = []
+  ): Filter<InternalTransaction> {
+    const conditions: Filter<InternalTransaction>[] = additionalFilters
     conditions.push({
       timestamp: {
         $gte: params.afterTimestamp || 0,
@@ -245,18 +240,18 @@ export class MongoDbTransactionRepository
 
   public getTransactionsCursor(
     params: OptionalPagination<DefaultApiGetTransactionsListRequest>
-  ): AggregationCursor<TransactionCaseManagement> {
+  ): AggregationCursor<InternalTransaction> {
     const query = this.getTransactionsMongoQuery(params)
     return this.getDenormalizedTransactions(query, params)
   }
 
   private getDenormalizedTransactions(
-    query: Filter<TransactionCaseManagement>,
+    query: Filter<InternalTransaction>,
     params: OptionalPagination<DefaultApiGetTransactionsListRequest>
   ) {
     const db = this.mongoDb.db()
     const name = TRANSACTIONS_COLLECTION(this.tenantId)
-    const collection = db.collection<TransactionCaseManagement>(name)
+    const collection = db.collection<InternalTransaction>(name)
     const sortField =
       params?.sortField !== undefined ? params?.sortField : 'timestamp'
     const sortOrder = params?.sortOrder === 'ascend' ? 1 : -1
@@ -331,14 +326,14 @@ export class MongoDbTransactionRepository
         ]
       )
     }
-    return collection.aggregate<TransactionCaseManagement>(pipeline)
+    return collection.aggregate<InternalTransaction>(pipeline)
   }
 
   public async getTransactionsCount(
     params: OptionalPagination<DefaultApiGetTransactionsListRequest>
   ): Promise<number> {
     const db = this.mongoDb.db()
-    const collection = db.collection<TransactionCaseManagement>(
+    const collection = db.collection<InternalTransaction>(
       TRANSACTIONS_COLLECTION(this.tenantId)
     )
     const query = this.getTransactionsMongoQuery(params)
@@ -347,47 +342,15 @@ export class MongoDbTransactionRepository
 
   public async getTransactions(
     params: OptionalPagination<DefaultApiGetTransactionsListRequest>
-  ): Promise<{ total: number; data: TransactionCaseManagement[] }> {
+  ): Promise<{ total: number; data: InternalTransaction[] }> {
     const cursor = await this.getTransactionsCursor(params)
     const total = await this.getTransactionsCount(params)
     return { total, data: await cursor.toArray() }
   }
 
-  public async updateTransactionsCaseManagement(
-    transactionIds: string[],
-    updates: {
-      assignments?: Assignment[]
-      status?: RuleAction
-      statusChange?: TransactionStatusChange
-      caseStatus?: CaseStatus
-    }
-  ) {
-    const db = this.mongoDb.db()
-    const collection = db.collection<TransactionCaseManagement>(
-      TRANSACTIONS_COLLECTION(this.tenantId)
-    )
-    await collection.updateMany(
-      { transactionId: { $in: transactionIds } },
-      {
-        $set: _.omitBy<Partial<TransactionCaseManagement>>(
-          {
-            assignments: updates.assignments,
-            status: updates.status,
-            caseStatus: updates.caseStatus,
-            lastStatusChange: updates.statusChange,
-          },
-          _.isNil
-        ),
-        ...(updates.statusChange
-          ? { $push: { statusChanges: updates.statusChange } }
-          : {}),
-      }
-    )
-  }
-
-  public async getTransactionCaseManagement(
+  public async getInternalTransaction(
     transactionId: string
-  ): Promise<TransactionCaseManagement | null> {
+  ): Promise<InternalTransaction | null> {
     return (
       await this.getDenormalizedTransactions(
         {
@@ -402,57 +365,14 @@ export class MongoDbTransactionRepository
     ).next()
   }
 
-  public async saveTransactionComment(
-    transactionId: string,
-    comment: Comment
-  ): Promise<Comment> {
-    const db = this.mongoDb.db()
-    const collection = db.collection<TransactionCaseManagement>(
-      TRANSACTIONS_COLLECTION(this.tenantId)
-    )
-    const commentToSave: Comment = {
-      ...comment,
-      id: uuidv4(),
-      createdAt: Date.now(),
-      updatedAt: Date.now(),
-    }
-    await collection.updateOne(
-      {
-        transactionId,
-      },
-      {
-        $push: { comments: commentToSave },
-      }
-    )
-    return commentToSave
-  }
-
-  public async deleteTransactionComment(
-    transactionId: string,
-    commentId: string
-  ) {
-    const db = this.mongoDb.db()
-    const collection = db.collection<TransactionCaseManagement>(
-      TRANSACTIONS_COLLECTION(this.tenantId)
-    )
-    await collection.updateOne(
-      {
-        transactionId,
-      },
-      {
-        $pull: { comments: { id: commentId } },
-      }
-    )
-  }
-
-  public async getTransactionCaseManagementById(
+  public async getInternalTransactionById(
     transactionId: string
-  ): Promise<TransactionCaseManagement | null> {
+  ): Promise<InternalTransaction | null> {
     const db = this.mongoDb.db()
-    const collection = db.collection<TransactionCaseManagement>(
+    const collection = db.collection<InternalTransaction>(
       TRANSACTIONS_COLLECTION(this.tenantId)
     )
-    return collection.findOne<TransactionCaseManagement>({ transactionId })
+    return collection.findOne<InternalTransaction>({ transactionId })
   }
 
   public async getUniques(params: {
@@ -461,7 +381,7 @@ export class MongoDbTransactionRepository
   }): Promise<string[]> {
     const db = this.mongoDb.db()
     const name = TRANSACTIONS_COLLECTION(this.tenantId)
-    const collection = db.collection<TransactionCaseManagement>(name)
+    const collection = db.collection<InternalTransaction>(name)
 
     let fieldPath: string
     let unwindPath = ''
@@ -583,7 +503,7 @@ export class MongoDbTransactionRepository
   ): Promise<TransactionsStatsByTypesResponse['data']> {
     const db = this.mongoDb.db()
     const name = TRANSACTIONS_COLLECTION(this.tenantId)
-    const collection = db.collection<TransactionCaseManagement>(name)
+    const collection = db.collection<InternalTransaction>(name)
     const query = this.getTransactionsMongoQuery(params)
 
     const sortField =
@@ -645,7 +565,7 @@ export class MongoDbTransactionRepository
   ): Promise<TransactionsStatsByTimeResponse['data']> {
     const db = this.mongoDb.db()
     const name = TRANSACTIONS_COLLECTION(this.tenantId)
-    const collection = db.collection<TransactionCaseManagement>(name)
+    const collection = db.collection<InternalTransaction>(name)
     const query = this.getTransactionsMongoQuery({
       ...params,
     })
@@ -713,7 +633,7 @@ export class MongoDbTransactionRepository
       ...paginateFindOptions(params),
     })
     for await (const transaction of transactionsCursor) {
-      if (transaction.timestamp) {
+      if (transaction.timestamp && transaction.status) {
         const series = dayjs(transaction.timestamp).format(seriesFormat)
         const label = dayjs(transaction.timestamp).format(labelFormat)
         const amount = await this.getAmount(transaction, referenceCurrency)
@@ -743,7 +663,7 @@ export class MongoDbTransactionRepository
   }
 
   private async getAmount(
-    transaction: TransactionCaseManagement,
+    transaction: InternalTransaction,
     referenceCurrency: Currency
   ): Promise<number> {
     let amount = 0
@@ -1058,10 +978,10 @@ export class MongoDbTransactionRepository
   }
 
   private getRulesEngineTransactionsQuery(
-    filters: Filter<TransactionCaseManagement>[],
+    filters: Filter<InternalTransaction>[],
     timeRange: TimeRange | undefined,
     filterOptions: TransactionsFilterOptions
-  ): Filter<TransactionCaseManagement> {
+  ): Filter<InternalTransaction> {
     return this.getTransactionsMongoQuery(
       {
         ...timeRange,
@@ -1077,7 +997,7 @@ export class MongoDbTransactionRepository
   }
 
   private async getRulesEngineTransactionsCount(
-    filters: Filter<TransactionCaseManagement>[],
+    filters: Filter<InternalTransaction>[],
     timeRange: TimeRange,
     filterOptions: TransactionsFilterOptions
   ) {
@@ -1087,14 +1007,14 @@ export class MongoDbTransactionRepository
       filterOptions
     )
     const db = this.mongoDb.db()
-    const collection = db.collection<TransactionCaseManagement>(
+    const collection = db.collection<InternalTransaction>(
       TRANSACTIONS_COLLECTION(this.tenantId)
     )
     return collection.count(query)
   }
 
   private async getRulesEngineTransactions(
-    filters: Filter<TransactionCaseManagement>[],
+    filters: Filter<InternalTransaction>[],
     timeRange: TimeRange | undefined,
     filterOptions: TransactionsFilterOptions,
     _attributesToFetch: Array<keyof AuxiliaryIndexTransaction>,
@@ -1106,7 +1026,7 @@ export class MongoDbTransactionRepository
       filterOptions
     )
     const db = this.mongoDb.db()
-    const collection = db.collection<TransactionCaseManagement>(
+    const collection = db.collection<InternalTransaction>(
       TRANSACTIONS_COLLECTION(this.tenantId)
     )
     const transactions = (await collection
@@ -1114,7 +1034,7 @@ export class MongoDbTransactionRepository
         sort: { timestamp: -1 },
         limit,
       })
-      .toArray()) as TransactionCaseManagement[]
+      .toArray()) as InternalTransaction[]
     return transactions.map((transaction) => ({
       ...transaction,
       senderKeyId: getSenderKeyId(this.tenantId, transaction),

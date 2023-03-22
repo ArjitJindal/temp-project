@@ -1,6 +1,6 @@
 import { faker } from '@faker-js/faker'
 import { WithId } from 'mongodb'
-import { CaseTransaction } from '@/@types/openapi-internal/CaseTransaction'
+import { InternalTransaction } from '@/@types/openapi-internal/InternalTransaction'
 import { PaymentDetails } from '@/@types/tranasction/payment-type'
 import { CaseCaseUsers } from '@/@types/openapi-internal/CaseCaseUsers'
 import { InternalUser } from '@/@types/openapi-internal/InternalUser'
@@ -214,7 +214,7 @@ const transactionEvents: RecursivePartial<TransactionEvent> = {
   },
 }
 
-const transactions: RecursivePartial<CaseTransaction> = {
+const transactions: RecursivePartial<InternalTransaction> = {
   reference: 'faker.random.word',
   destinationPaymentDetails: paymentDetails,
   originPaymentDetails: paymentDetails,

@@ -2,7 +2,7 @@ import { MigrationFn } from 'umzug'
 import { StackConstants } from '@cdk/constants'
 import { UpdateCommand } from '@aws-sdk/lib-dynamodb'
 import { migrateAllTenants } from '../utils/tenant'
-import { TransactionCaseManagement } from '@/@types/openapi-internal/TransactionCaseManagement'
+import { InternalTransaction } from '@/@types/openapi-internal/InternalTransaction'
 import { Tenant } from '@/services/accounts'
 import { getMongoDbClient, TRANSACTIONS_COLLECTION } from '@/utils/mongoDBUtils'
 import { DynamoDbKeys } from '@/core/dynamodb/dynamodb-keys'
@@ -14,7 +14,7 @@ async function migrateTenant(tenant: Tenant) {
   const mongodb = await getMongoDbClient(StackConstants.MONGO_DB_DATABASE_NAME)
   const transactionCollection = mongodb
     .db()
-    .collection<TransactionCaseManagement>(TRANSACTIONS_COLLECTION(tenant.id))
+    .collection<InternalTransaction>(TRANSACTIONS_COLLECTION(tenant.id))
   let migratedCount = 0
   for await (const transaction of transactionCollection.find({
     hitRules: null,

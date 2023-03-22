@@ -19,7 +19,7 @@ import {
   USERS_COLLECTION,
   CASES_COLLECTION,
 } from '@/utils/mongoDBUtils'
-import { TransactionCaseManagement } from '@/@types/openapi-internal/TransactionCaseManagement'
+import { InternalTransaction } from '@/@types/openapi-internal/InternalTransaction'
 import { InternalConsumerUser } from '@/@types/openapi-internal/InternalConsumerUser'
 import { InternalBusinessUser } from '@/@types/openapi-internal/InternalBusinessUser'
 import { RULE_ACTIONS } from '@/@types/rule/rule-actions'
@@ -276,7 +276,7 @@ export class DashboardStatsRepository {
   }
 
   private async recalculateDRSDistributionStats(db: Db) {
-    const drsScoresCollection = db.collection<TransactionCaseManagement>(
+    const drsScoresCollection = db.collection<InternalTransaction>(
       DRS_SCORES_COLLECTION(this.tenantId)
     )
     const aggregationCollection = DRS_SCORES_DISTRIBUTION_STATS_COLLECTION(
@@ -327,7 +327,7 @@ export class DashboardStatsRepository {
   }
 
   public async recalculateTransactionsVolumeStats(db: Db, timestamp?: number) {
-    const transactionsCollection = db.collection<TransactionCaseManagement>(
+    const transactionsCollection = db.collection<InternalTransaction>(
       TRANSACTIONS_COLLECTION(this.tenantId)
     )
     const aggregatedHourlyCollectionName =

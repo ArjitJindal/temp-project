@@ -13,12 +13,11 @@ import { InternalBusinessUser } from '@/@types/openapi-internal/InternalBusiness
 import { MongoDbTransactionRepository } from '@/services/rules-engine/repositories/mongodb-transaction-repository'
 import { RuleHitDirection } from '@/@types/openapi-public/RuleHitDirection'
 import { Priority } from '@/@types/openapi-public-management/Priority'
-import { CaseTransaction } from '@/@types/openapi-internal/CaseTransaction'
+import { InternalTransaction } from '@/@types/openapi-internal/InternalTransaction'
 import { logger } from '@/core/logger'
 import { RuleInstance } from '@/@types/openapi-internal/RuleInstance'
 import { HitRulesDetails } from '@/@types/openapi-internal/HitRulesDetails'
 import { PRIORITYS } from '@/@types/openapi-internal-custom/Priority'
-import { TransactionCaseManagement } from '@/@types/openapi-internal/TransactionCaseManagement'
 
 export class CaseCreationService {
   caseRepository: CaseRepository
@@ -131,7 +130,7 @@ export class CaseCreationService {
     alerts: Alert[] | undefined,
     ruleInstances: readonly RuleInstance[],
     createdTimestamp: number,
-    latestTransaction: CaseTransaction,
+    latestTransaction: InternalTransaction,
     latestTransactionArrivalTimestamp: number
   ) {
     if (alerts) {
@@ -199,7 +198,7 @@ export class CaseCreationService {
 
   private updateExistingAlerts(
     alerts: Alert[],
-    transaction: CaseTransaction,
+    transaction: InternalTransaction,
     latestTransactionArrivalTimestamp: number
   ): Alert[] {
     return alerts.map((alert) => {
@@ -255,7 +254,7 @@ export class CaseCreationService {
     // Split transactions
     const newCaseAlertsTransactionsIds =
       newCaseAlerts.flatMap(({ transactionIds }) => transactionIds) ?? []
-    const transactionPredicate = (transaction: TransactionCaseManagement) => {
+    const transactionPredicate = (transaction: InternalTransaction) => {
       return newCaseAlertsTransactionsIds.includes(transaction.transactionId)
     }
     const newCaseAlertsTransactions =
@@ -304,7 +303,7 @@ export class CaseCreationService {
       createdTimestamp: number
       latestTransactionArrivalTimestamp: number
       priority: Priority
-      transaction: CaseTransaction
+      transaction: InternalTransaction
     },
     ruleInstances: ReadonlyArray<RuleInstance>
   ): Promise<Case[]> {
@@ -402,9 +401,7 @@ export class CaseCreationService {
     return result
   }
 
-  async handleTransaction(
-    transaction: TransactionWithRulesResult
-  ): Promise<Case[]> {
+  async handleTransaction(transaction: InternalTransaction): Promise<Case[]> {
     logger.info(`Handling transaction for case creation`, {
       transactionId: transaction.transactionId,
     })

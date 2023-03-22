@@ -1,8 +1,8 @@
 import { Alert } from '@/@types/openapi-internal/Alert'
-import { CaseTransaction } from '@/@types/openapi-internal/CaseTransaction'
+import { InternalTransaction } from '@/@types/openapi-internal/InternalTransaction'
 
 export const transactionsToAlerts = function (
-  caseTransactions: CaseTransaction[],
+  caseTransactions: InternalTransaction[],
   caseId?: string
 ): Alert[] {
   const alertMap: { [key: string]: Alert } = {}

@@ -7,7 +7,7 @@ import {
   getMongoDbClient,
   TRANSACTIONS_COLLECTION,
 } from '@/utils/mongoDBUtils'
-import { TransactionCaseManagement } from '@/@types/openapi-internal/TransactionCaseManagement'
+import { InternalTransaction } from '@/@types/openapi-internal/InternalTransaction'
 import { DashboardStatsRepository } from '@/lambdas/console-api-dashboard/repositories/dashboard-stats-repository'
 import { Case } from '@/@types/openapi-internal/Case'
 import { getDynamoDbClient } from '@/utils/dynamodb'
@@ -68,7 +68,7 @@ async function migrateTenant(tenant: Tenant) {
   // https://www.notion.so/flagright/Rerun-rules-for-existing-transactions-for-backfixing-facf9dad03794b9aa675ddda07cecc1d?pvs=4
 
   // Handle transactions
-  const transactionCollection = db.collection<TransactionCaseManagement>(
+  const transactionCollection = db.collection<InternalTransaction>(
     TRANSACTIONS_COLLECTION(tenant.id)
   )
   const transactionCursor = transactionCollection.find({

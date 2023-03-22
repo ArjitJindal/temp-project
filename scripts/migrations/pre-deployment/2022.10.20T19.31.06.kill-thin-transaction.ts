@@ -10,7 +10,7 @@ import {
   MIGRATION_TMP_COLLECTION,
   TRANSACTIONS_COLLECTION,
 } from '@/utils/mongoDBUtils'
-import { TransactionCaseManagement } from '@/@types/openapi-internal/TransactionCaseManagement'
+import { InternalTransaction } from '@/@types/openapi-internal/InternalTransaction'
 import { DynamoDbTransactionRepository } from '@/services/rules-engine/repositories/dynamodb-transaction-repository'
 import { Transaction } from '@/@types/openapi-public/Transaction'
 
@@ -35,7 +35,7 @@ export async function migrateTenant(
 
   const transactionCollection = mongodb
     .db()
-    .collection<TransactionCaseManagement>(TRANSACTIONS_COLLECTION(tenant.id))
+    .collection<InternalTransaction>(TRANSACTIONS_COLLECTION(tenant.id))
   const filter = {
     timestamp: {
       $lte: beforeTimestamp,

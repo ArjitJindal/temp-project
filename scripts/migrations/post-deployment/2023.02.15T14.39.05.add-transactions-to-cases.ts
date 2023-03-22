@@ -8,7 +8,7 @@ import {
 import { Tenant } from '@/services/accounts'
 import { Case } from '@/@types/openapi-internal/Case'
 import { Transaction } from '@/@types/openapi-internal/Transaction'
-import { CaseTransaction } from '@/@types/openapi-internal/CaseTransaction'
+import { InternalTransaction } from '@/@types/openapi-internal/InternalTransaction'
 
 export async function addTransactionsToCases(tenant: Tenant) {
   const mongodb = await getMongoDbClient(StackConstants.MONGO_DB_DATABASE_NAME)
@@ -35,7 +35,7 @@ export async function addTransactionsToCases(tenant: Tenant) {
       $set: {
         // eslint-disable-next-line @typescript-eslint/ban-ts-comment
         // @ts-ignore
-        caseTransactions: caseTransactions as Array<CaseTransaction>,
+        caseTransactions: caseTransactions as Array<InternalTransaction>,
       },
     })
   }
