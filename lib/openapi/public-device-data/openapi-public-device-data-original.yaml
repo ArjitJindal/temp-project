@@ -56,6 +56,10 @@ paths:
                   isAccessibilityEnabled: true
                   isBluetoothActive: true
                   networkOperator: Airtel
+                  imeiNumber: 352698276144152
+                  androidId: 00000000-54b3-e7c7-0000-000046bffd97
+                  advertiserId: 38400000-8cf0-11bd-b23e-10b96e40000d
+                  isRooted: true
         description: ''
 components:
   schemas:
@@ -130,6 +134,14 @@ components:
           type: string
         referralDetails:
           $ref: '#/components/schemas/ReferralDetails'
+        imeiNumber:
+          type: string
+        androidId:
+          type: string
+        advertiserId:
+          type: string
+        isRooted:
+          type: boolean
       required:
         - userId
         - timestamp
