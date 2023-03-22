@@ -5,7 +5,6 @@ import { TimeWindow } from '../utils/rule-parameter-schemas'
 import { TransactionRule } from './rule'
 import dayjs, { duration } from '@/utils/dayjs'
 import { logger } from '@/core/logger'
-import { hasFeature } from '@/core/utils/context'
 
 // NOTE: Increment this version to invalidate the existing aggregation data of all the rules
 const AGGREGATION_VERSION = '1'
@@ -177,10 +176,13 @@ export abstract class TransactionAggregationRule<
   }
 
   private shouldUseAggregation(): boolean {
+    if (process.env.__INTERNAL_DISABLE_RULE_AGGREGATION__) {
+      return false
+    }
     const { units, granularity } = this.getMaxTimeWindow()
     // When testing, we want to make sure aggregation is used if the feature flag is on.
     const isMoreThanOneDay =
       duration(units, granularity).asHours() > 24 || process.env.ENV === 'local'
-    return hasFeature('RULES_ENGINE_RULE_BASED_AGGREGATION') && isMoreThanOneDay
+    return isMoreThanOneDay
   }
 }

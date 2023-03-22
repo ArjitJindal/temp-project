@@ -357,7 +357,7 @@ export class RulesEngineService {
           { parameters, filters: ruleFilters },
           { ruleInstance },
           this.dynamoDb,
-          process.env.RULES_ENGINE_USE_MONGODB
+          process.env.__INTERNAL_RULES_ENGINE_USE_MONGODB__
             ? new MongoDbTransactionRepository(
                 this.tenantId,
                 await getMongoDbClient()

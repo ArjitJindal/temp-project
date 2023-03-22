@@ -1,5 +1,4 @@
 import _ from 'lodash'
-import { withFeatureHook } from './feature-test-utils'
 import { RuleRepository } from '@/services/rules-engine/repositories/rule-repository'
 import { RuleInstanceRepository } from '@/services/rules-engine/repositories/rule-instance-repository'
 import { Rule } from '@/@types/openapi-internal/Rule'
@@ -246,19 +245,26 @@ export function ruleVariantsTest(
 ) {
   if (aggregationImplemented) {
     describe('database:dynamodb; rule-aggregation:on', () => {
-      withFeatureHook(['RULES_ENGINE_RULE_BASED_AGGREGATION'])
       jestCallback()
     })
   }
   describe('database:dynamodb; rule-aggregation:off', () => {
+    beforeAll(() => {
+      process.env.__INTERNAL_DISABLE_RULE_AGGREGATION__ = 'true'
+    })
+    afterAll(() => {
+      process.env.__INTERNAL_DISABLE_RULE_AGGREGATION__ = ''
+    })
     jestCallback()
   })
   describe('database:mongodb; rule-aggregation:off', () => {
     beforeAll(() => {
-      process.env.RULES_ENGINE_USE_MONGODB = 'true'
+      process.env.__INTERNAL_DISABLE_RULE_AGGREGATION__ = 'true'
+      process.env.__INTERNAL_RULES_ENGINE_USE_MONGODB__ = 'true'
     })
     afterAll(() => {
-      process.env.RULES_ENGINE_USE_MONGODB = ''
+      process.env.__INTERNAL_DISABLE_RULE_AGGREGATION__ = ''
+      process.env.__INTERNAL_RULES_ENGINE_USE_MONGODB__ = ''
     })
     jestCallback()
   })

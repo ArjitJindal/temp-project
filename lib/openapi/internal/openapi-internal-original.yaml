@@ -4515,7 +4515,6 @@ components:
         - MACHINE_LEARNING_DEMO
         - GOOGLE_SSO
         - SANCTIONS
-        - RULES_ENGINE_RULE_BASED_AGGREGATION
         - FALSE_POSITIVE_CHECK
         - DEMO_MODE
         - SIMULATOR
