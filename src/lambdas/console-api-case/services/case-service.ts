@@ -157,13 +157,25 @@ export class CaseService {
     }
     await this.caseRepository.updateAlerts(alertIds, updates)
     if (updateRequest.alertStatus) {
+      let body = `Alert status changed to ${updateRequest.alertStatus}`
+      const allReasons = [
+        ...(updateRequest?.reason?.filter((x) => x !== 'Other') ?? []),
+        ...(updateRequest?.reason?.includes('Other') &&
+        updateRequest.otherReason
+          ? [updateRequest.otherReason]
+          : []),
+      ]
+      if (allReasons.length > 0) {
+        body += `. Reasons: ${allReasons.join(', ')}`
+      }
+      if (updateRequest.comment) {
+        body += `. ${updateRequest.comment}`
+      }
       await Promise.all(
         alertIds.map((alertId) =>
           this.saveAlertComment(alertId, {
             userId,
-            body:
-              `Alert status changed to ${updateRequest.alertStatus}` +
-              (updateRequest.comment ? `. ${updateRequest.comment}` : ''),
+            body: body,
             files: updateRequest.files,
           })
         )

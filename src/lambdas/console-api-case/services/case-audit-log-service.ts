@@ -153,7 +153,7 @@ export class CaseAuditLogService {
   public async createAlertAuditLog(
     auditLogCreateRequest: AlertAuditLogCreateRequest
   ) {
-    const { alertId, logAction, oldImage, newImage, alertDetails } =
+    const { alertId, logAction, oldImage, newImage, alertDetails, subtype } =
       auditLogCreateRequest
     const alertEntity =
       alertDetails ?? (await this.caseService.getAlert(alertId))
@@ -161,6 +161,7 @@ export class CaseAuditLogService {
       type: 'ALERT',
       action: logAction,
       timestamp: Date.now(),
+      subtype: subtype,
       entityId: alertId,
       oldImage: oldImage,
       newImage: newImage,

@@ -22,3 +22,25 @@ export function getPageSizeNumber(pageSize: PageSize | 'DISABLED'): number {
   }
   return pageSize
 }
+
+export async function* iterateItems<T>(
+  fn: (pagination: {
+    page: number
+    pageSize: number
+  }) => Promise<{ total: number; data: T[] }>
+): AsyncGenerator<T> {
+  let totalPages = 1
+  let page = 1
+  while (page <= totalPages) {
+    const { total, data } = await fn({
+      page: page,
+      pageSize: DEFAULT_PAGE_SIZE,
+    })
+    totalPages = Math.ceil(total / DEFAULT_PAGE_SIZE)
+    page++
+
+    for (const item of data) {
+      yield item
+    }
+  }
+}

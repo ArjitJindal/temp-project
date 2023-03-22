@@ -1042,33 +1042,24 @@ export class CaseRepository {
   ): Promise<Comment> {
     const db = this.mongoDb.db()
     const collection = db.collection<Case>(CASES_COLLECTION(this.tenantId))
-    const caseItem = await collection.findOne({
-      caseId: caseId,
-    })
-    if (caseItem == null) {
-      throw new Error(`Unable to find case "${caseId}"`)
-    }
+    const now = Date.now()
     const commentToSave: Comment = {
       ...comment,
       id: comment.id || uuidv4(),
-      createdAt: Date.now(),
-      updatedAt: Date.now(),
+      createdAt: comment.createdAt ?? now,
+      updatedAt: now,
     }
-    await collection.replaceOne(
+    await collection.findOneAndUpdate(
+      { caseId },
       {
-        caseId,
+        $push: { 'alerts.$[alert].comments': commentToSave },
       },
       {
-        ...caseItem,
-        alerts: caseItem.alerts?.map((alert) => {
-          if (alert.alertId !== alertId) {
-            return alert
-          }
-          return {
-            ...alert,
-            comments: [...(alert.comments ?? []), commentToSave],
-          }
-        }),
+        arrayFilters: [
+          {
+            'alert.alertId': alertId,
+          },
+        ],
       }
     )
     return commentToSave
