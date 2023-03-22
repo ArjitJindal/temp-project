@@ -541,6 +541,7 @@ export class CdkTarponStack extends cdk.Stack {
       atlasFunctionProps
     )
     tarponDynamoDbTable.grantReadWriteData(publicDeviceDataAlias)
+    this.grantMongoDbAccess(publicDeviceDataAlias)
 
     /* Transactions view */
     const { alias: transactionsViewAlias } = this.createFunction(
