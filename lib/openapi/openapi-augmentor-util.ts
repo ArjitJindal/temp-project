@@ -45,10 +45,9 @@ function flattenAndDeRefAllOf(schema: any, schemas: any) {
     return schema
   }
   if (schema.allOf) {
-    const newSchema = {
+    const newSchema: any = {
       type: 'object',
       properties: {},
-      required: [],
     }
     for (const subSchema of schema.allOf || []) {
       let s = subSchema
@@ -67,7 +66,9 @@ function flattenAndDeRefAllOf(schema: any, schemas: any) {
         ...newSchema.properties,
         ..._.cloneDeep(s.properties),
       }
-      newSchema.required = newSchema.required.concat(s.required || [])
+      if (s.required?.length > 0) {
+        newSchema.required = (newSchema.required ?? []).concat(s.required)
+      }
     }
     return newSchema
   }

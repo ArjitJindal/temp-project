@@ -20,7 +20,7 @@ export const PublicDeviceDataApiPathToLambda: any = {
 }
 
 const openapi = getAugmentedOpenapi(
-  './lib/openapi/public-device-data/openapi-public-device-data-original.yaml',
+  './dist/openapi/public-device-data/openapi-public-device-data-original.yaml',
   PublicDeviceDataApiPathToLambda,
   'API_KEY'
 )

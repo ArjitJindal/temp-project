@@ -27,7 +27,7 @@ export const PublicManagementApiPathToLambda: any = {
 }
 
 const openapi = getAugmentedOpenapi(
-  './lib/openapi/public-management/openapi-public-management-original.yaml',
+  './dist/openapi/public-management/openapi-public-management-original.yaml',
   PublicManagementApiPathToLambda,
   'API_KEY'
 )

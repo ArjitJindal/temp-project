@@ -31,7 +31,7 @@ export const PublicApiPathToLambda: any = {
 }
 
 const openapi = getAugmentedOpenapi(
-  './lib/openapi/public/openapi-public-original.yaml',
+  './dist/openapi/public/openapi-public-original.yaml',
   PublicApiPathToLambda,
   'API_KEY'
 )
