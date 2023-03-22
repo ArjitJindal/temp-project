@@ -12,6 +12,31 @@ servers:
 paths:
   /metrics:
     parameters: []
+    get:
+      security:
+        - x-api-key: []
+      summary: Get Device Metric
+      operationId: get-device-metric
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                properties:
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/DeviceMetric'
+      parameters:
+        - schema:
+            type: string
+          name: userId
+          in: query
+        - schema:
+            type: string
+          name: deviceFingerprint
+          in: query
     post:
       security:
         - x-api-key: []
@@ -26,40 +51,6 @@ paths:
           application/json:
             schema:
               $ref: '#/components/schemas/DeviceMetric'
-            examples:
-              Example 1:
-                value:
-                  userId: asda43fhghtysdfts
-                  timestamp: 1672942548000
-                  transactionId: string
-                  deviceFingerprint: string
-                  isVirtualDevice: true
-                  ipAddress: string
-                  location:
-                    latitude: 13.0033
-                    longitude: 76.1004
-                  totalNumberOfContacts: 31
-                  batteryLevel: 44
-                  externalTotalStorageInGb: 64
-                  externalFreeStorageInGb: 3
-                  manufacturer: Samsung
-                  mainTotalStorageInGb: 32
-                  model: Galaxy S7
-                  operatingSystem:
-                    name: Android
-                    version: 12.3.1˜
-                  deviceCountryCode: IN
-                  deviceLaungageCode: KA
-                  ramInGb: 4
-                  isDataRoamingEnabled: true
-                  isLocationEnabled: true
-                  isAccessibilityEnabled: true
-                  isBluetoothActive: true
-                  networkOperator: Airtel
-                  imeiNumber: 352698276144152
-                  androidId: 00000000-54b3-e7c7-0000-000046bffd97
-                  advertiserId: 38400000-8cf0-11bd-b23e-10b96e40000d
-                  isRooted: true
         description: ''
 components:
   schemas:
@@ -68,6 +59,39 @@ components:
       x-stoplight:
         id: v5ebumcige2yz
       type: object
+      x-examples:
+        Example 1:
+          userId: asda43fhghtysdfts
+          timestamp: 1672942548000
+          transactionId: string
+          deviceFingerprint: string
+          isVirtualDevice: true
+          ipAddress: string
+          location:
+            latitude: 13.0033
+            longitude: 76.1004
+          totalNumberOfContacts: 31
+          batteryLevel: 44
+          externalTotalStorageInGb: 64
+          externalFreeStorageInGb: 3
+          manufacturer: Samsung
+          mainTotalStorageInGb: 32
+          model: Galaxy S7
+          operatingSystem:
+            name: Android
+            version: 12.3.1˜
+          deviceCountryCode: IN
+          deviceLaungageCode: KA
+          ramInGb: 4
+          isDataRoamingEnabled: true
+          isLocationEnabled: true
+          isAccessibilityEnabled: true
+          isBluetoothActive: true
+          networkOperator: Airtel
+          imeiNumber: 352698276144152
+          androidId: 00000000-54b3-e7c7-0000-000046bffd97
+          advertiserId: 38400000-8cf0-11bd-b23e-10b96e40000d
+          isRooted: true
       properties:
         userId:
           type: string

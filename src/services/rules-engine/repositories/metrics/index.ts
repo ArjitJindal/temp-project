@@ -1,8 +1,7 @@
-import { MongoClient } from 'mongodb'
+import { Filter, MongoClient } from 'mongodb'
 import { StackConstants } from '@cdk/constants'
 import { DynamoDBDocumentClient, PutCommand } from '@aws-sdk/lib-dynamodb'
 import { v4 as uuidv4 } from 'uuid'
-import _ from 'lodash'
 import { DynamoDbKeys } from '@/core/dynamodb/dynamodb-keys'
 import { DEVICE_DATA_COLLECTION } from '@/utils/mongoDBUtils'
 import { DeviceMetric } from '@/@types/openapi-public-device-data/DeviceMetric'
@@ -24,14 +23,28 @@ export class MetricsRepository {
     this.tenantId = tenantId
   }
 
-  public async getMongoUserMetricsByUserId(
-    userId: string
-  ): Promise<DeviceMetric | null> {
+  public async getMongoUserMetrics({
+    userId,
+    deviceFingerprint,
+  }: {
+    userId?: string
+    deviceFingerprint?: string
+  }): Promise<DeviceMetric[] | null> {
+    if (!userId && !deviceFingerprint) {
+      throw new Error('One of userId or deviceFingerprint must be provided')
+    }
     const db = this.mongoDb.db()
     const collection = db.collection<DeviceMetric>(
       DEVICE_DATA_COLLECTION(this.tenantId)
     )
-    return await collection.findOne({ userId })
+    const filter: Filter<DeviceMetric> = {}
+    if (userId) {
+      filter.userId = userId
+    }
+    if (deviceFingerprint) {
+      filter.deviceFingerprint = deviceFingerprint
+    }
+    return await collection.find(filter).toArray()
   }
 
   public async saveUserMetric(
