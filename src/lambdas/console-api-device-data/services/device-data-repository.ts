@@ -1,5 +1,8 @@
 import { MongoClient } from 'mongodb'
-import { DeviceMetric } from '@/@types/openapi-internal/DeviceMetric'
+import {
+  DeviceMetric,
+  DeviceMetricTypeEnum,
+} from '@/@types/openapi-internal/DeviceMetric'
 import { DEVICE_DATA_COLLECTION } from '@/utils/mongoDBUtils'
 
 export class DeviceDataRepository {
@@ -19,6 +22,7 @@ export class DeviceDataRepository {
   }
 
   public async getDeviceDataMongo(
+    type: DeviceMetricTypeEnum,
     userId: string,
     transactionId?: string
   ): Promise<DeviceMetric | null> {
@@ -27,8 +31,9 @@ export class DeviceDataRepository {
       DEVICE_DATA_COLLECTION(this.tenantId)
     )
     return await collection.findOne({
+      type,
       userId,
-      transactionId: transactionId ? transactionId : { $exists: false },
+      ...(transactionId && { transactionId }),
     })
   }
 }

@@ -1,5 +1,6 @@
 import { MongoClient } from 'mongodb'
 import { DeviceDataRepository } from './device-data-repository'
+import { DeviceMetricTypeEnum } from '@/@types/openapi-internal/DeviceMetric'
 
 export class DeviceDataService {
   tenantId: string
@@ -19,21 +20,26 @@ export class DeviceDataService {
     this.deviceDataRepository = new DeviceDataRepository(tenantId, connections)
   }
 
-  private async getDeviceData(userId: string, transactionId?: string) {
+  private async getDeviceData(
+    type: DeviceMetricTypeEnum,
+    userId: string,
+    transactionId?: string
+  ) {
     return await this.deviceDataRepository.getDeviceDataMongo(
+      type,
       userId,
       transactionId
     )
   }
 
   public async getDeviceDataForUser(userId: string) {
-    return await this.getDeviceData(userId)
+    return await this.getDeviceData('USER_SIGNUP', userId)
   }
 
   public async getDeviceDataForTransaction(
     userId: string,
     transactionId: string
   ) {
-    return await this.getDeviceData(userId, transactionId)
+    return await this.getDeviceData('TRANSACTION', userId, transactionId)
   }
 }
