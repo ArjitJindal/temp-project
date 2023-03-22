@@ -6,7 +6,7 @@ import { makeUrl } from '@/utils/routing';
 import PageWrapper from '@/components/PageWrapper';
 import { useI18n } from '@/locales';
 import { AsyncResource, failed, init, isSuccess, loading, success } from '@/utils/asyncResource';
-import { ApiException, TransactionCaseManagement } from '@/apis';
+import { ApiException, InternalTransaction } from '@/apis';
 import { useApi } from '@/api';
 import AsyncResourceRenderer from '@/components/common/AsyncResourceRenderer';
 import * as Card from '@/components/ui/Card';
@@ -28,7 +28,7 @@ import ActionRiskDisplay from '@/components/ui/ActionRiskDisplay';
 export default function TransactionsItem() {
   usePageViewTracker('Transactions Item');
   const i18n = useI18n();
-  const [currentItem, setCurrentItem] = useState<AsyncResource<TransactionCaseManagement>>(init());
+  const [currentItem, setCurrentItem] = useState<AsyncResource<InternalTransaction>>(init());
   const currentTransactionId = isSuccess(currentItem) ? currentItem.value.transactionId : null;
   // const { id: transactionId } = useParams<'id'>();
   const { id: transactionId } = useParams<'id'>();
@@ -94,7 +94,7 @@ export default function TransactionsItem() {
                   <TransactionState transactionState={transaction.transactionState} />
                 </Form.Layout.Label>
                 <Form.Layout.Label icon={<RestartLineIcon />} title="Rule action">
-                  <RuleActionStatus ruleAction={transaction.status} />
+                  {transaction.status && <RuleActionStatus ruleAction={transaction.status} />}
                 </Form.Layout.Label>
                 <Form.Layout.Label icon={<TransactionIcon />} title="Transaction Type">
                   <TransactionTypeTag transactionType={transaction.type} />

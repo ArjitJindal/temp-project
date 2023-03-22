@@ -1,10 +1,10 @@
-import { TransactionCaseManagement } from '@/apis';
+import { InternalTransaction } from '@/apis';
 import { DataItem } from '@/pages/users-item/UserDetails/UserTransactionHistoryTable';
 import { TableDataItem } from '@/components/ui/Table/types';
 
 export function prepareTableData(
   userId: string | undefined,
-  transactions: Array<TransactionCaseManagement>,
+  transactions: Array<InternalTransaction>,
 ): TableDataItem<DataItem>[] {
   return transactions.map((item, index): TableDataItem<DataItem> => {
     const lastRowKey = `${item.transactionId}_last_row`;

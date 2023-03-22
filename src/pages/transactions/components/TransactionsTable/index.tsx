@@ -1,7 +1,7 @@
 import React, { useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
 import DetailsViewButton from '../DetailsViewButton';
-import { TransactionCaseManagement, TransactionState, TransactionType } from '@/apis';
+import { InternalTransaction, TransactionState, TransactionType } from '@/apis';
 import { ActionRenderer, TableColumn, TableData } from '@/components/ui/Table/types';
 import { makeUrl } from '@/utils/routing';
 import { paymethodOptions, transactionType } from '@/utils/tags';
@@ -44,7 +44,7 @@ type Props = {
     title: string;
     renderer: ActionRenderer<TransactionsTableParams>;
   }[];
-  queryResult: QueryResult<TableData<TransactionCaseManagement>>;
+  queryResult: QueryResult<TableData<InternalTransaction>>;
   params?: TransactionsTableParams;
   onChangeParams?: (newState: AllParams<TransactionsTableParams>) => void;
   hideSearchForm?: boolean;
@@ -70,7 +70,7 @@ export default function TransactionsTable(props: Props) {
     headerSubtitle,
   } = props;
 
-  const columns: TableColumn<TransactionCaseManagement>[] = useMemo(
+  const columns: TableColumn<InternalTransaction>[] = useMemo(
     () => [
       {
         title: 'Transaction ID',
@@ -375,7 +375,7 @@ export default function TransactionsTable(props: Props) {
   );
 
   return (
-    <QueryResultsTable<TransactionCaseManagement, TransactionsTableParams>
+    <QueryResultsTable<InternalTransaction, TransactionsTableParams>
       tableId={'transactions-list'}
       params={params}
       onChangeParams={onChangeParams}

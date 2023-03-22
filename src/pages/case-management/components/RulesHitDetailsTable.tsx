@@ -1,9 +1,9 @@
 import { RuleActionStatus } from '@/components/ui/RuleActionStatus';
-import { TransactionCaseManagement } from '@/apis';
+import { InternalTransaction } from '@/apis';
 import Table from '@/components/ui/Table';
 
 interface Props {
-  transaction: TransactionCaseManagement;
+  transaction: InternalTransaction;
 }
 
 export const RulesHitDetailsTable: React.FC<Props> = ({ transaction }) => {

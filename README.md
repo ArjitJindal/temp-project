@@ -38,8 +38,6 @@ yarn clear
 2. `ENV=local yarn openapi:build` - using the schema from your local tarpon (run `npm run openapi:prepare` in tarpon first)
 3. `BRANCH=<tarpon-branch-name> yarn openapi:build` - using the schema from the branch of your tarpon PR (automatically published after a PR is created)
 
-_NOTE: DO NOT manually modify the files under `src/apis/` as they are auto-generated (exceptions for now: `models/Transaciont.ts`, `models/TransactionWithRulesResult.ts`, `models/TransactionCaseManagement.ts`)_
-
 ### API Usage
 
 In a react component, use the API hook to call the APIs.

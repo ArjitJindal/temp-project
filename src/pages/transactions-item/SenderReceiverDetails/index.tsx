@@ -1,11 +1,11 @@
 /* eslint-disable @typescript-eslint/no-var-requires */
 
-import { TransactionCaseManagement } from '@/apis';
+import { InternalTransaction } from '@/apis';
 import UserDetails from '@/pages/transactions-item/UserDetails';
 import * as Card from '@/components/ui/Card';
 
 interface Props {
-  transaction: TransactionCaseManagement;
+  transaction: InternalTransaction;
 }
 
 export default function SenderReceiverDetails(props: Props) {

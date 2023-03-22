@@ -24,7 +24,7 @@ import RiskLevelTag from '@/components/ui/RiskLevelTag';
 
 export type DataItem = {
   index: number;
-  status: RuleAction;
+  status?: RuleAction;
   rowKey: string;
   lastRowKey: string;
   transactionId?: string;
@@ -253,7 +253,7 @@ export function Content(props: { userId: string }) {
                 rowSpan: _.isFirstRow ? _.rowsCount : 0,
               }),
               render: (dom, entity) => {
-                return <RuleActionStatus ruleAction={entity.status} />;
+                return entity.status && <RuleActionStatus ruleAction={entity.status} />;
               },
             },
             {
