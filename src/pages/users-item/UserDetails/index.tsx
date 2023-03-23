@@ -1,12 +1,17 @@
 import { UI_SETTINGS } from '../ui-settings';
 import BusinessUserDetails from './BusinessUserDetails';
 import ConsumerUserDetails from './ConsumerUserDetails';
+import DeviceDataCard from './DeviceDataCard';
 import { InternalBusinessUser, InternalConsumerUser, MissingUser } from '@/apis';
 import { Small } from '@/components/ui/Typography';
 import UserTransactionHistoryTable from '@/pages/users-item/UserDetails/UserTransactionHistoryTable';
 import InsightsCard from '@/pages/case-management-item/UserCaseDetails/InsightsCard';
 import CommentsCard from '@/components/CommentsCard';
 import Authorized from '@/components/Authorized';
+import { useApi } from '@/api';
+import AsyncResourceRenderer from '@/components/common/AsyncResourceRenderer';
+import { useQuery } from '@/utils/queries/hooks';
+import { DEVICE_DATA_USER } from '@/utils/queries/keys';
 
 interface Props {
   user?: InternalConsumerUser | InternalBusinessUser | MissingUser;
@@ -29,26 +34,52 @@ function UserDetails(props: Props) {
     onUserUpdate,
     uiSettings,
   } = props;
+
+  const api = useApi();
+
+  const deviceDataRes = useQuery(DEVICE_DATA_USER(user?.userId), async () => {
+    if (user?.userId) {
+      return await api.getDeviceDataUsers({
+        userId: user.userId,
+      });
+    }
+    return null;
+  });
+
   if (user == null || !('type' in user)) {
     return <Small>No user details found</Small>;
   }
   return (
     <>
       <Authorized required={['users:user-details:read']}>
-        {user?.type === 'BUSINESS' && (
-          <BusinessUserDetails
-            user={user}
-            updateCollapseState={props.updateCollapseState}
-            uiSettings={uiSettings}
-          />
-        )}
-        {user?.type === 'CONSUMER' && (
-          <ConsumerUserDetails
-            user={user}
-            updateCollapseState={props.updateCollapseState}
-            uiSettings={uiSettings}
-          />
-        )}
+        <>
+          {user?.type === 'BUSINESS' && (
+            <BusinessUserDetails
+              user={user}
+              updateCollapseState={props.updateCollapseState}
+              uiSettings={uiSettings}
+            />
+          )}
+          {user?.type === 'CONSUMER' && (
+            <ConsumerUserDetails
+              user={user}
+              updateCollapseState={props.updateCollapseState}
+              uiSettings={uiSettings}
+            />
+          )}
+          <AsyncResourceRenderer resource={deviceDataRes.data}>
+            {(deviceData) =>
+              deviceData ? (
+                <DeviceDataCard
+                  updateCollapseState={props.updateCollapseState}
+                  title={uiSettings.cards.DEVICE_DATA.title}
+                  collapsableKey={uiSettings.cards.DEVICE_DATA.key}
+                  deviceData={deviceData}
+                />
+              ) : null
+            }
+          </AsyncResourceRenderer>
+        </>
       </Authorized>
       {!hideHistory && (
         <UserTransactionHistoryTable

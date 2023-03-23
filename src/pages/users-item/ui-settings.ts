@@ -34,5 +34,9 @@ export const UI_SETTINGS = {
       title: 'Comments',
       key: 'user-details-comments',
     },
+    DEVICE_DATA: {
+      title: 'Device data',
+      key: 'user-details-device-data',
+    },
   },
 };

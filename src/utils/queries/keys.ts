@@ -137,3 +137,4 @@ export const ALERT_ITEM_COMMENTS = (alertId: string): QueryKey => [
   alertId,
   'comments',
 ];
+export const DEVICE_DATA_USER = (userId?: string): QueryKey => ['device-data', 'user', userId];
