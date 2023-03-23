@@ -298,7 +298,10 @@ export class DashboardStatsRepository {
     )
     // We need to sanitize the boundry - it must be strictly increasing. Limited info from mongo on the error code 40194
     // You can view the error log here: https://github.com/bwaldvogel/mongo-java-server/blob/main/test-common/src/main/java/de/bwaldvogel/mongo/backend/AbstractAggregationTest.java
-    const sanitizedBounries = this.sanitizeBucketBoundry(riskIntervalBoundries)
+    const sanitizedBounries = [
+      ...new Set(this.sanitizeBucketBoundry(riskIntervalBoundries)), // duplicate values are not allowed in bucket boundaries
+    ]
+
     await drsScoresCollection
       .aggregate([
         { $sort: { createdAt: -1, userId: 1 } },
