@@ -55,10 +55,8 @@ describe('Verify case stats', () => {
         ruleId: 'R-1',
         ruleInstanceId: '1',
         hitCount: 2,
-        transactionCasesCount: 0,
-        userCasesCount: 1,
-        openTransactionCasesCount: 0,
-        openUserCasesCount: 1,
+        casesCount: 1,
+        openCasesCount: 1,
       },
     ])
   })
@@ -111,10 +109,8 @@ test(`Multiple cases`, async () => {
       ruleId: 'R-1',
       ruleInstanceId: '1',
       hitCount: 3,
-      transactionCasesCount: 0,
-      userCasesCount: 3,
-      openTransactionCasesCount: 0,
-      openUserCasesCount: 3,
+      casesCount: 3,
+      openCasesCount: 3,
     },
   ])
 })
@@ -176,10 +172,8 @@ test(`Multiple cases - opened and closed`, async () => {
       ruleId: 'R-1',
       ruleInstanceId: '1',
       hitCount: 4,
-      transactionCasesCount: 0,
-      openTransactionCasesCount: 0,
-      userCasesCount: 4,
-      openUserCasesCount: 3,
+      casesCount: 4,
+      openCasesCount: 3,
     },
   ])
 })

@@ -45,7 +45,7 @@ const TRANSACTION_STATE_KEY_TO_RULE_ACTION: Map<
 ])
 
 const CASE_GROUP_KEYS = {
-  openUserCaseIds: {
+  openCaseIds: {
     $addToSet: {
       $cond: {
         if: {
@@ -56,23 +56,17 @@ const CASE_GROUP_KEYS = {
       },
     },
   },
-  userCaseIds: {
+  caseIds: {
     $addToSet: '$caseId',
   },
 }
 
 const CASE_PROJECT_KEYS = {
-  openTransactionCasesCount: {
-    $size: { $ifNull: ['$openTransactionCaseIds', []] },
+  openCasesCount: {
+    $size: { $ifNull: ['$openCaseIds', []] },
   },
-  openUserCasesCount: {
-    $size: { $ifNull: ['$openUserCaseIds', []] },
-  },
-  transactionCasesCount: {
-    $size: { $ifNull: ['$transactionCaseIds', []] },
-  },
-  userCasesCount: {
-    $size: { $ifNull: ['$userCaseIds', []] },
+  casesCount: {
+    $size: { $ifNull: ['$caseIds', []] },
   },
 }
 
@@ -628,10 +622,8 @@ export class DashboardStatsRepository {
       user: InternalConsumerUser | InternalBusinessUser | null
       transactionsHit: number
       rulesHit: number
-      transactionCasesCount: number
-      userCasesCount: number
-      openTransactionCasesCount: number
-      openUserCasesCount: number
+      casesCount: number
+      openCasesCount: number
     }[]
   > {
     const db = this.mongoDb.db()
@@ -674,10 +666,8 @@ export class DashboardStatsRepository {
         transactionsHit: number
         rulesHit: number
         user: InternalConsumerUser | InternalBusinessUser | null
-        transactionCasesCount: number
-        userCasesCount: number
-        openTransactionCasesCount: number
-        openUserCasesCount: number
+        casesCount: number
+        openCasesCount: number
       }>([
         condition,
         {
@@ -685,10 +675,8 @@ export class DashboardStatsRepository {
             _id: `$userId`,
             transactionsHit: { $sum: '$transactionsHit' },
             rulesHit: { $sum: '$rulesHit' },
-            transactionCasesCount: { $sum: '$transactionCasesCount' },
-            userCasesCount: { $sum: '$userCasesCount' },
-            openTransactionCasesCount: { $sum: '$openTransactionCasesCount' },
-            openUserCasesCount: { $sum: '$openUserCasesCount' },
+            casesCount: { $sum: '$casesCount' },
+            openCasesCount: { $sum: '$openCasesCount' },
           },
         },
         {
@@ -725,10 +713,8 @@ export class DashboardStatsRepository {
       user: x.user ?? null,
       transactionsHit: x.transactionsHit,
       rulesHit: x.rulesHit,
-      transactionCasesCount: x.transactionCasesCount,
-      userCasesCount: x.userCasesCount,
-      openTransactionCasesCount: x.openTransactionCasesCount,
-      openUserCasesCount: x.openUserCasesCount,
+      casesCount: x.casesCount,
+      openCasesCount: x.openCasesCount,
       percentageTransactionsHit: _.round(
         (x.transactionsHit / totalTransactions) * 100,
         2
@@ -802,10 +788,8 @@ export class DashboardStatsRepository {
       .aggregate<{
         _id: { ruleId: string; ruleInstanceId: string }
         hitCount: number
-        transactionCasesCount: number
-        userCasesCount: number
-        openTransactionCasesCount: number
-        openUserCasesCount: number
+        casesCount: number
+        openCasesCount: number
       }>([
         {
           $match: {
@@ -823,14 +807,8 @@ export class DashboardStatsRepository {
               ruleInstanceId: '$rulesStats.ruleInstanceId',
             },
             hitCount: { $sum: '$rulesStats.hitCount' },
-            transactionCasesCount: {
-              $sum: '$rulesStats.transactionCasesCount',
-            },
-            userCasesCount: { $sum: '$rulesStats.userCasesCount' },
-            openTransactionCasesCount: {
-              $sum: '$rulesStats.openTransactionCasesCount',
-            },
-            openUserCasesCount: { $sum: '$rulesStats.openUserCasesCount' },
+            casesCount: { $sum: '$rulesStats.casesCount' },
+            openCasesCount: { $sum: '$rulesStats.openCasesCount' },
           },
         },
         { $sort: { hitCount: -1 } },
@@ -841,10 +819,8 @@ export class DashboardStatsRepository {
       ruleId: x._id.ruleId,
       ruleInstanceId: x._id.ruleInstanceId,
       hitCount: x.hitCount,
-      transactionCasesCount: x.transactionCasesCount,
-      userCasesCount: x.userCasesCount,
-      openTransactionCasesCount: x.openTransactionCasesCount,
-      openUserCasesCount: x.openUserCasesCount,
+      casesCount: x.casesCount,
+      openCasesCount: x.openCasesCount,
     }))
   }
 }

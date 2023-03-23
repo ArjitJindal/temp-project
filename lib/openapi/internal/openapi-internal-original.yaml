@@ -3831,13 +3831,9 @@ components:
                 type: string
               hitCount:
                 type: number
-              transactionCasesCount:
+              casesCount:
                 type: number
-              userCasesCount:
-                type: number
-              openTransactionCasesCount:
-                type: number
-              openUserCasesCount:
+              openCasesCount:
                 type: number
             required:
               - ruleId
@@ -3935,13 +3931,9 @@ components:
                   - $ref: '#/components/schemas/InternalBusinessUser'
               rulesHit:
                 type: number
-              transactionCasesCount:
+              casesCount:
                 type: number
-              userCasesCount:
-                type: number
-              openTransactionCasesCount:
-                type: number
-              openUserCasesCount:
+              openCasesCount:
                 type: number
               percentageTransactionsHit:
                 type: number

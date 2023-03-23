@@ -55,8 +55,8 @@ describe('Verify hits-per-user statistics', () => {
           userId: originUserId,
           transactionsHit: 1,
           rulesHit: hitRules.length,
-          userCasesCount: 1,
-          openUserCasesCount: 1,
+          casesCount: 1,
+          openCasesCount: 1,
         }),
       ])
     }
@@ -71,8 +71,8 @@ describe('Verify hits-per-user statistics', () => {
           userId: destinationUserId,
           transactionsHit: 1,
           rulesHit: hitRules.length,
-          userCasesCount: 1,
-          openUserCasesCount: 1,
+          casesCount: 1,
+          openCasesCount: 1,
         }),
       ])
     }
@@ -125,8 +125,8 @@ describe('Verify hits-per-user statistics', () => {
           userId: originUserId,
           transactionsHit: 1,
           rulesHit: hitRules.length,
-          userCasesCount: 1,
-          openUserCasesCount: 1,
+          casesCount: 1,
+          openCasesCount: 1,
         }),
       ])
     }
@@ -141,8 +141,8 @@ describe('Verify hits-per-user statistics', () => {
           userId: destinationUserId,
           transactionsHit: 1,
           rulesHit: hitRules.length,
-          userCasesCount: 1,
-          openUserCasesCount: 1,
+          casesCount: 1,
+          openCasesCount: 1,
         }),
       ])
     }
@@ -199,8 +199,8 @@ describe('Verify hits-per-user statistics', () => {
           userId: originUserId,
           transactionsHit: transactionsCount,
           rulesHit: hitRulesCount * transactionsCount,
-          userCasesCount: transactionsCount,
-          openUserCasesCount: transactionsCount,
+          casesCount: transactionsCount,
+          openCasesCount: transactionsCount,
         }),
       ])
     }
@@ -215,8 +215,8 @@ describe('Verify hits-per-user statistics', () => {
           userId: destinationUserId,
           transactionsHit: transactionsCount,
           rulesHit: hitRulesCount * transactionsCount,
-          userCasesCount: transactionsCount,
-          openUserCasesCount: transactionsCount,
+          casesCount: transactionsCount,
+          openCasesCount: transactionsCount,
         }),
       ])
     }
@@ -273,8 +273,8 @@ describe('Verify hits-per-user statistics', () => {
           userId: originUserId,
           transactionsHit: casesCount,
           rulesHit: casesCount,
-          userCasesCount: casesCount,
-          openUserCasesCount: casesCount,
+          casesCount: casesCount,
+          openCasesCount: casesCount,
         }),
       ])
     }
@@ -289,8 +289,8 @@ describe('Verify hits-per-user statistics', () => {
           userId: destinationUserId,
           transactionsHit: casesCount,
           rulesHit: casesCount,
-          userCasesCount: casesCount,
-          openUserCasesCount: casesCount,
+          casesCount: casesCount,
+          openCasesCount: casesCount,
         }),
       ])
     }
@@ -397,10 +397,8 @@ describe('Verify hits-per-user statistics', () => {
           userId: originUserId,
           transactionsHit: 2,
           rulesHit: hitRules.length * 2,
-          transactionCasesCount: 0,
-          userCasesCount: 1,
-          openTransactionCasesCount: 0,
-          openUserCasesCount: 1,
+          casesCount: 1,
+          openCasesCount: 1,
         }),
       ])
     }
@@ -415,10 +413,8 @@ describe('Verify hits-per-user statistics', () => {
           userId: destinationUserId,
           transactionsHit: 2,
           rulesHit: hitRules.length * 2,
-          transactionCasesCount: 0,
-          userCasesCount: 1,
-          openTransactionCasesCount: 0,
-          openUserCasesCount: 1,
+          casesCount: 1,
+          openCasesCount: 1,
         }),
       ])
     }
