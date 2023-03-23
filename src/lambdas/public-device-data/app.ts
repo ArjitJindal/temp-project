@@ -35,11 +35,7 @@ export const deviceDataHandler = lambdaApi()(
       return true
     }
 
-    if (
-      event.httpMethod === 'GET' &&
-      event.resource === '/metrics' &&
-      event.queryStringParameters
-    ) {
+    if (event.httpMethod === 'GET' && event.resource === '/metrics') {
       const { deviceFingerprint, userId } = event.queryStringParameters as {
         deviceFingerprint?: string
         userId?: string
