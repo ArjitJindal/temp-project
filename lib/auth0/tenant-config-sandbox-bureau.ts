@@ -22,9 +22,7 @@ export const Auth0SandboxBureauTenantConfig: Auth0TenantConfig = {
   },
   emailProvider: {
     type: 'sendgrid',
-    // TODO: To be provided by Bureau
     credentialsAwsSecretName: 'bureau/auth0EmailProviderCreds',
-    // TODO: Replace the from address after we get the email provider credentials from Bureau
-    fromAddress: 'support@flagright.com',
+    fromAddress: 'tm@bureau.id',
   },
 }
