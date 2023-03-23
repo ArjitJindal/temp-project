@@ -17,6 +17,18 @@ jobs:
         node-version: [16.x]
     runs-on: ubuntu-20.04
     steps:
+      - name: Get PR branch
+        uses: xt0rted/pull-request-comment-branch@v1
+        id: comment-branch
+
+      - name: Set latest commit status as pending
+        uses: myrotvorets/set-commit-status-action@master
+        with:
+          sha: ${{ steps.comment-branch.outputs.head_sha }}
+          token: ${{ secrets.DEPLOY_PAT }}
+          status: pending
+          context: Deploy to QA
+
       - uses: khan/pull-request-comment-trigger@v1.1.0
         id: check
         with:
@@ -60,6 +72,11 @@ jobs:
           cat ~/.aws/credentials
 
           export GITHUB_USER=${{ github.head_ref }}
+
+          if [ -z "$GITHUB_USER" ]
+          then
+            export GITHUB_USER=${{ steps.comment-branch.outputs.head_ref }}
+          fi
           export S_NO=1
 
           commentArgs=($comment)
@@ -84,3 +101,11 @@ jobs:
         with:
           message: |
             Branch deployed to https://${{ github.head_ref }}-1.console.flagright.dev
+      - name: Set latest commit status as ${{ job.status }}
+        uses: myrotvorets/set-commit-status-action@master
+        if: always()
+        with:
+          sha: ${{ steps.comment-branch.outputs.head_sha }}
+          token: ${{ secrets.DEPLOY_PAT }}
+          status: ${{ job.status }}
+          context: Deploy to QA

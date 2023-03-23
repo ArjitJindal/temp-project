@@ -98,7 +98,7 @@ export class CdkPhytoplanktonStack extends cdk.Stack {
       destinationBucket: siteBucket,
       distribution,
       distributionPaths: ['/*'],
-      memoryLimit: 10000,
+      memoryLimit: 1500,
     });
 
     new CfnOutput(this, 'Bucket', { value: siteBucket.bucketName });
@@ -118,15 +118,5 @@ export class CdkPhytoplanktonStack extends cdk.Stack {
         domainName: distribution.distributionDomainName,
       });
     }
-
-    console.log(
-      `❗❗For initial deployment, please follow https://www.notion.so/flagright/DNS-configuration-864d7518d87c448d862baa74b99c3d33#de01aa3894a842bb910ab8904a1d21be to configure DNS.
-It involves the following steps
-1. Create a new certificate for ${config.SITE_DOMAIN} in us-east-1 region
-2. Set up CNAME in Route53 for the certificate
-3. Set ${config.SITE_DOMAIN} as the alternate domain name of the CloudFront distribution
-4. Set up CNAME in Route53 for the subdomain (with DistributionDomainName as the value)
-`,
-    );
   }
 }
