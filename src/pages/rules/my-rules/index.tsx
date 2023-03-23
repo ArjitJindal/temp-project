@@ -3,7 +3,6 @@ import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import _ from 'lodash';
 import { DeleteOutlined, EditOutlined } from '@ant-design/icons';
 import { useMutation } from '@tanstack/react-query';
-import cn from 'clsx';
 import { getRuleInstanceDisplayId } from '../utils';
 import s from './style.module.less';
 import { dayjs, DEFAULT_DATE_TIME_FORMAT } from '@/utils/dayjs';
@@ -22,6 +21,7 @@ import { getErrorMessage } from '@/utils/lang';
 import { removeEmpty } from '@/utils/json';
 import { useHasPermissions } from '@/utils/user-utils';
 import Confirm from '@/components/utils/Confirm';
+import Button from '@/components/library/Button';
 
 const MyRule = () => {
   usePageViewTracker('My Rule Page');
@@ -147,7 +147,7 @@ const MyRule = () => {
         render: (_, entity) => {
           const ruleInstance = updatedRuleInstances[entity.id as string] || entity;
           return (
-            <span style={{ fontSize: '12px' }}>
+            <span style={{ fontSize: '14px' }}>
               {ruleInstance.ruleNameAlias || rules[ruleInstance.ruleId]?.name}
             </span>
           );
@@ -155,7 +155,7 @@ const MyRule = () => {
       },
       {
         title: 'Hit rate',
-        width: 60,
+        width: 80,
         sorter: (a, b) =>
           (a.hitCount && a.runCount ? a.hitCount / a.runCount : 0) -
           (b.hitCount && b.runCount ? b.hitCount / b.runCount : 0),
@@ -212,17 +212,21 @@ const MyRule = () => {
         align: 'center',
         render: (_, entity) => {
           return (
-            <>
-              <a
-                className={cn(s.actionIcons, { [s.disabledAction]: !canWriteRules })}
+            <div className={s.actionIconsContainer}>
+              <Button
                 onClick={() => {
                   if (canWriteRules && !deleting) {
                     onEditRule(entity);
                   }
                 }}
+                icon={<EditOutlined />}
+                size="MEDIUM"
+                type="SECONDARY"
+                isDisabled={!canWriteRules}
+                isLoading={deleting}
               >
-                <EditOutlined />
-              </a>
+                Edit
+              </Button>
               <Confirm
                 title={`Are you sure you want to delete this ${entity.ruleId} ${entity.id} rule?`}
                 text="Please confirm that you want to delete this rule. This action cannot be undone."
@@ -235,15 +239,19 @@ const MyRule = () => {
                 res={getMutationAsyncResource(handleDeleteRuleInstanceMutation)}
               >
                 {({ onClick }) => (
-                  <a
-                    className={cn(s.actionIcons, { [s.disabledAction]: !canWriteRules })}
+                  <Button
                     onClick={onClick}
+                    icon={<DeleteOutlined />}
+                    size="SMALL"
+                    type="TETRIARY"
+                    isDisabled={!canWriteRules}
+                    isLoading={deleting}
                   >
-                    <DeleteOutlined />
-                  </a>
+                    Delete
+                  </Button>
                 )}
               </Confirm>
-            </>
+            </div>
           );
         },
       },
@@ -376,6 +384,7 @@ const MyRule = () => {
                   ruleNature: ruleInstance.nature,
                   casePriority: ruleInstance.casePriority,
                   ruleLabels: ruleInstance.labels,
+                  ruleInstanceId: ruleInstance.id,
                 },
                 standardFiltersStep: ruleInstance.filters,
                 ruleParametersStep: isPulseEnabled
@@ -412,6 +421,11 @@ const MyRule = () => {
         onSubmit={(formValues) => {
           saveInstanceMutation.mutate(formValues);
         }}
+        isClickAwayEnabled={ruleReadOnly}
+        changeToEditMode={() => {
+          setRuleReadOnly(false);
+        }}
+        type={'EDIT'}
       />
     </>
   );

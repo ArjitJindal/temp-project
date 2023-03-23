@@ -12,10 +12,20 @@ interface Props {
   description?: string;
   footer?: React.ReactNode;
   drawerMaxWidth?: string;
+  isClickAwayEnabled?: boolean;
 }
 
 export default function Drawer(props: Props) {
-  const { isVisible, title, description, onChangeVisibility, children, footer } = props;
+  const {
+    isVisible,
+    title,
+    description,
+    onChangeVisibility,
+    children,
+    footer,
+    isClickAwayEnabled = false,
+  } = props;
+
   const handleClose = () => {
     onChangeVisibility(false);
   };
@@ -29,13 +39,23 @@ export default function Drawer(props: Props) {
     }
   }, [isVisible]);
 
+  const ref = React.useRef<HTMLDivElement>(null);
+
   return ReactDOM.createPortal(
-    <div className={cn(s.root, isVisible && s.isVisible)}>
+    <div
+      className={cn(s.root, isVisible && s.isVisible)}
+      onClick={() => {
+        if (isClickAwayEnabled) {
+          handleClose();
+        }
+      }}
+    >
       <div
         className={s.content}
         onClick={(e) => {
           e.stopPropagation();
         }}
+        ref={ref}
         style={props.drawerMaxWidth ? { maxWidth: props.drawerMaxWidth } : {}}
       >
         <div className={s.header}>

@@ -16,6 +16,7 @@ export interface FormValues {
   ruleNature: RuleNature;
   casePriority: Priority;
   ruleLabels: RuleLabels[];
+  ruleInstanceId?: string;
 }
 
 export const INITIAL_VALUES: FormValues = {

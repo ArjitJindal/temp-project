@@ -1,4 +1,5 @@
 import React, { useEffect, useMemo, useState } from 'react';
+import { EditOutlined } from '@ant-design/icons';
 import s from './style.module.less';
 import TransactionIcon from './transaction-icon.react.svg';
 import { message } from '@/components/library/Message';
@@ -47,7 +48,7 @@ export interface FormValues {
   ruleParametersStep: RuleParametersStepFormValues;
 }
 
-interface Props {
+interface RuleConfigurationDrawerProps {
   rule: Rule | null;
   isVisible: boolean;
   isSubmitting: boolean;
@@ -55,9 +56,12 @@ interface Props {
   onChangeVisibility: (isVisible: boolean) => void;
   onSubmit: (formValues: FormValues) => void;
   readOnly?: boolean;
+  isClickAwayEnabled?: boolean;
+  changeToEditMode?: () => void;
+  type: 'EDIT' | 'CREATE';
 }
 
-export default function RuleConfigurationDrawer(props: Props) {
+export default function RuleConfigurationDrawer(props: RuleConfigurationDrawerProps) {
   const {
     isVisible,
     isSubmitting,
@@ -193,12 +197,21 @@ export default function RuleConfigurationDrawer(props: Props) {
       <Drawer
         isVisible={isVisible}
         onChangeVisibility={onChangeVisibility}
-        title={readOnly ? 'Read-only rule view' : 'Configure rule'}
+        title={
+          props.type === 'EDIT'
+            ? `${rule?.id} (${formInitialValues?.basicDetailsStep?.ruleInstanceId})`
+            : 'Configure rule'
+        }
         description={
           readOnly
-            ? 'Read all relevant rule information'
+            ? props.type === 'EDIT'
+              ? `View the configured parameters of the rule. Click on ‘Edit’ to update the paramerters.`
+              : 'Read all relevant rule information'
+            : props.type === 'EDIT'
+            ? `Edit the parameters of the rule. Click on ‘Save’ to update the rule`
             : 'Add all relevant information to configure this rule'
         }
+        isClickAwayEnabled={props.isClickAwayEnabled}
         footer={
           <div className={s.footer}>
             <StepButtons
@@ -215,7 +228,28 @@ export default function RuleConfigurationDrawer(props: Props) {
                 setActiveTabKey(prevStep?.tabs[0]?.key);
               }}
             />
-            <SubmitButton formId={formId} isSubmitting={isSubmitting} readOnly={readOnly} />
+            <div className={s.footerButtons}>
+              <Button type="TETRIARY" onClick={() => onChangeVisibility(false)}>
+                Cancel
+              </Button>
+              {!readOnly || props.type === 'CREATE' ? (
+                <SubmitButton formId={formId} isSubmitting={isSubmitting} isDisabled={readOnly}>
+                  {props.type === 'CREATE' ? 'Done' : 'Save'}
+                </SubmitButton>
+              ) : (
+                <Button
+                  type="SECONDARY"
+                  onClick={() => {
+                    if (props.changeToEditMode) {
+                      props.changeToEditMode();
+                    }
+                  }}
+                  icon={<EditOutlined />}
+                >
+                  Edit
+                </Button>
+              )}
+            </div>
           </div>
         }
       >
@@ -275,15 +309,20 @@ export default function RuleConfigurationDrawer(props: Props) {
   );
 }
 
-function SubmitButton(props: { formId: string; readOnly: boolean; isSubmitting: boolean }) {
+function SubmitButton(props: {
+  formId: string;
+  isSubmitting: boolean;
+  isDisabled: boolean;
+  children: React.ReactNode;
+}) {
   return (
     <Button
       htmlAttrs={{ form: props.formId }}
       htmlType="submit"
       isLoading={props.isSubmitting}
-      isDisabled={props.readOnly}
+      isDisabled={props.isDisabled}
     >
-      Done
+      {props.children}
     </Button>
   );
 }

@@ -135,6 +135,11 @@ const TableList = () => {
               newInstanceMutation.mutate(formValues);
             }}
             readOnly={!canWriteRules || ruleReadOnly}
+            type="CREATE"
+            isClickAwayEnabled={ruleReadOnly}
+            changeToEditMode={() => {
+              setRuleReadOnly(false);
+            }}
           />
         </Tabs.TabPane>
       </PageTabs>
