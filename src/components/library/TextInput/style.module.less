@@ -2,14 +2,22 @@
 @import 'src/components/ui/animation';
 
 .root {
+  border: 1px solid @fr-colors-v2-gray-2;
+  display: flex;
+  border-radius: 4px;
+  background: white;
+}
+
+.input {
   height: 32px;
   padding: 8px;
-  border: 1px solid @fr-colors-v2-gray-2;
-  border-radius: 4px;
+  border: none;
   outline: none;
+  background: transparent;
   transition-property: border-color;
   transition-duration: @default-animation-speed;
   transition-timing-function: @default-animation-function;
+  flex: 1;
 
   &::placeholder {
     color: @fr-colors-v2-gray-6;
@@ -41,5 +49,22 @@
     &::placeholder {
       color: fade(@fr-colors-v2-state-disabled, 85%);
     }
+  }
+}
+
+.clearIcon {
+  height: 32px;
+  width: 12px;
+  color: @fr-colors-v2-gray-3;
+  margin-right: 8px;
+  transition-property: opacity;
+  transition-timing-function: @default-animation-function;
+  transition-duration: @default-animation-speed;
+  cursor: pointer;
+  flex-shrink: 0;
+
+  &:not(.isVisible) {
+    opacity: 0;
+    pointer-events: none;
   }
 }

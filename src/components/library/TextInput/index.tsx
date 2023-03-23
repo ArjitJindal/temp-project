@@ -1,6 +1,7 @@
 import React, { InputHTMLAttributes, useEffect, useRef } from 'react';
 import cn from 'clsx';
 import s from './style.module.less';
+import CrossIcon from './cross.react.svg';
 import { InputProps } from '@/components/library/Form';
 
 export const styles = s;
@@ -8,6 +9,7 @@ export const styles = s;
 export interface Props extends InputProps<string> {
   placeholder?: string;
   size?: 'DEFAULT' | 'LARGE';
+  allowClear?: boolean;
   htmlAttrs?: InputHTMLAttributes<HTMLInputElement>;
 }
 
@@ -18,6 +20,7 @@ export default function TextInput(props: Props) {
     htmlAttrs,
     size = 'DEFAULT',
     isError,
+    allowClear,
     value,
     onChange,
     onFocus,
@@ -28,19 +31,29 @@ export default function TextInput(props: Props) {
   usePreventWheelEvent(ref, props);
 
   return (
-    <input
-      {...htmlAttrs}
-      ref={ref}
-      placeholder={placeholder}
-      className={cn(s.root, s[`size-${size}`], isError && s.isError)}
-      disabled={isDisabled}
-      value={value ?? ''}
-      onChange={(e) => {
-        onChange?.(e.target.value);
-      }}
-      onFocus={onFocus}
-      onBlur={onBlur}
-    />
+    <div className={s.root}>
+      <input
+        {...htmlAttrs}
+        ref={ref}
+        placeholder={placeholder}
+        className={cn(s.input, s[`size-${size}`], isError && s.isError)}
+        disabled={isDisabled}
+        value={value ?? ''}
+        onChange={(e) => {
+          onChange?.(e.target.value);
+        }}
+        onFocus={onFocus}
+        onBlur={onBlur}
+      />
+      {allowClear && (
+        <CrossIcon
+          className={cn(s.clearIcon, value != null && s.isVisible)}
+          onClick={() => {
+            onChange?.(undefined);
+          }}
+        />
+      )}
+    </div>
   );
 }
 

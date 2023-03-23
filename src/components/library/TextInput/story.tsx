@@ -45,6 +45,16 @@ export default function (): JSX.Element {
           }}
         />
       </UseCase>
+      <UseCase title={'Clearable'}>
+        <Component
+          allowClear={true}
+          placeholder={'Placeholder example'}
+          value={value}
+          onChange={(newValue) => {
+            setValue(newValue);
+          }}
+        />
+      </UseCase>
     </>
   );
 }

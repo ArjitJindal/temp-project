@@ -10,14 +10,14 @@ interface Props extends Omit<TextInputProps, keyof InputProps<string>>, InputPro
 
 export default function NumberInput(props: Props) {
   const { value, onChange, min, max, step = 1, ...rest } = props;
-  const valueText = `${value ?? ''}`;
+  const valueText = value != null ? `${value}` : undefined;
   const [localValue, setLocalValue] = useState<string | undefined>(valueText);
 
   useEffect(() => {
     setLocalValue(valueText);
   }, [valueText]);
 
-  const handleChange = useCallback(
+  const handleConfirmChange = useCallback(
     (newValue: number | undefined) => {
       setLocalValue(`${newValue ?? ''}`);
       onChange?.(newValue);
@@ -31,7 +31,7 @@ export default function NumberInput(props: Props) {
 
   const handleBlur = useCallback(() => {
     if (localValue == null || localValue === '') {
-      handleChange(value);
+      handleConfirmChange(undefined);
       return;
     }
     let number = Number(localValue) ?? null;
@@ -43,14 +43,22 @@ export default function NumberInput(props: Props) {
     number = min != null ? Math.max(min, number) : number;
     number = max != null ? Math.min(max, number) : number;
 
-    handleChange(number);
-  }, [value, localValue, min, max, handleChange, handleCancelChange]);
+    handleConfirmChange(number);
+  }, [localValue, min, max, handleConfirmChange, handleCancelChange]);
+
+  const handleChange = (newValue: string | undefined) => {
+    if (newValue == null) {
+      handleConfirmChange(newValue);
+    } else {
+      setLocalValue(newValue);
+    }
+  };
 
   return (
     <TextInput
       {...rest}
       value={localValue}
-      onChange={setLocalValue}
+      onChange={handleChange}
       onBlur={handleBlur}
       htmlAttrs={{
         type: 'number',

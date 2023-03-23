@@ -64,6 +64,16 @@ export default function (): JSX.Element {
           max={5}
         />
       </UseCase>
+      <UseCase title={'Clearable'}>
+        <Component
+          placeholder={'Clearable input'}
+          value={value2}
+          onChange={(newValue) => {
+            setValue2(newValue);
+          }}
+          allowClear={true}
+        />
+      </UseCase>
     </>
   );
 }
