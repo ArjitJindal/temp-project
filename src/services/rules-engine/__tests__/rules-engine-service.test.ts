@@ -1,7 +1,11 @@
 import _ from 'lodash'
+import { ScanCommand } from '@aws-sdk/lib-dynamodb'
+import { StackConstants } from '@cdk/constants'
 import { RulesEngineService } from '..'
 import { DynamoDbTransactionRepository } from '../repositories/dynamodb-transaction-repository'
 import { RiskRepository } from '../../risk-scoring/repositories/risk-repository'
+import { RuleInstanceRepository } from '../repositories/rule-instance-repository'
+import { MongoDbTransactionRepository } from '../repositories/mongodb-transaction-repository'
 import { dynamoDbSetupHook } from '@/test-utils/dynamodb-test-utils'
 import { getTestTenantId } from '@/test-utils/tenant-test-utils'
 import { setUpRulesHooks } from '@/test-utils/rule-test-utils'
@@ -417,5 +421,70 @@ describe('Verify Transaction Event', () => {
         ],
       } as TransactionMonitoringResult)
     })
+  })
+})
+
+describe('Verify Transaction for Simulation', () => {
+  dynamoDbSetupHook()
+
+  const TEST_TENANT_ID = getTestTenantId()
+  setUpRulesHooks(TEST_TENANT_ID, [
+    {
+      id: 'R-1',
+      ruleImplementationName: 'tests/test-success-rule',
+      type: 'TRANSACTION',
+    },
+  ])
+
+  test('Returns rule result and no side effects are done', async () => {
+    const rulesEngine = new RulesEngineService(getTestTenantId(), dynamoDb)
+    const testTransactionId = 'dummy'
+    const testRuleInstanceId = 'abc'
+    const transaction = getTestTransaction({ transactionId: testTransactionId })
+    const result = await rulesEngine.verifyTransactionForSimulation(
+      transaction,
+      {
+        id: 'abc',
+        ruleId: 'R-1',
+        casePriority: 'P1',
+        parameters: {},
+        action: 'BLOCK',
+        type: 'TRANSACTION',
+        nature: 'AML',
+        labels: [],
+      }
+    )
+    expect(result).toEqual({
+      ruleId: 'R-1',
+      ruleInstanceId: testRuleInstanceId,
+      ruleName: 'test rule name',
+      ruleDescription: 'test rule description.',
+      ruleAction: 'BLOCK',
+      ruleHit: true,
+      ruleHitMeta: {
+        hitDirections: ['ORIGIN', 'DESTINATION'],
+      },
+    })
+
+    // Check transaction not saved and aggregation not run
+    const dynamoDbData = await dynamoDb.send(
+      new ScanCommand({ TableName: StackConstants.TARPON_DYNAMODB_TABLE_NAME })
+    )
+    expect(dynamoDbData.Count).toBe(0)
+    const transactionRepository = new MongoDbTransactionRepository(
+      TEST_TENANT_ID,
+      await getMongoDbClient()
+    )
+    expect(
+      await transactionRepository.getInternalTransactionById(testTransactionId)
+    ).toBeNull()
+
+    // Check rule instance is not saved
+    const ruleInstanceRepository = new RuleInstanceRepository(TEST_TENANT_ID, {
+      dynamoDb,
+    })
+    expect(
+      await ruleInstanceRepository.getRuleInstanceById(testRuleInstanceId)
+    ).toBeNull()
   })
 })
