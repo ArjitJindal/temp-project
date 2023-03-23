@@ -5,7 +5,7 @@ import * as s3 from 'aws-cdk-lib/aws-s3';
 import * as iam from 'aws-cdk-lib/aws-iam';
 import * as cloudfront from 'aws-cdk-lib/aws-cloudfront';
 import * as s3deploy from 'aws-cdk-lib/aws-s3-deployment';
-import { CfnOutput, RemovalPolicy } from 'aws-cdk-lib';
+import { CfnOutput, Duration, RemovalPolicy } from 'aws-cdk-lib';
 import { CnameRecord, HostedZone } from 'aws-cdk-lib/aws-route53';
 import { userAlias } from './configs/config-dev-user';
 import type { Config } from './configs/config';
@@ -47,6 +47,15 @@ export class CdkPhytoplanktonStack extends cdk.Stack {
       { aliases: [config.SITE_DOMAIN] },
     );
 
+    const extraBehaviours =
+      process.env.ENV === 'dev:user'
+        ? {
+            defaultTtl: Duration.minutes(0),
+            minTtl: Duration.minutes(0),
+            maxTtl: Duration.minutes(0),
+          }
+        : {};
+
     // CloudFront distribution
     const distribution = new cloudfront.CloudFrontWebDistribution(this, 'SiteDistribution', {
       priceClass: config.CLOUDFRONT_PRICE_CLASS,
@@ -76,6 +85,7 @@ export class CdkPhytoplanktonStack extends cdk.Stack {
               isDefaultBehavior: true,
               compress: true,
               allowedMethods: cloudfront.CloudFrontAllowedMethods.GET_HEAD_OPTIONS,
+              ...extraBehaviours,
             },
           ],
         },

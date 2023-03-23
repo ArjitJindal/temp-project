@@ -1,0 +1,86 @@
+name: Deploy to QA
+
+defaults:
+  run:
+    shell: bash
+
+on:
+  issue_comment:
+    types: [ created ]
+  pull_request:
+    types: [ opened ]
+
+jobs:
+  deploy:
+    strategy:
+      matrix:
+        node-version: [16.x]
+    runs-on: ubuntu-20.04
+    steps:
+      - uses: khan/pull-request-comment-trigger@v1.1.0
+        id: check
+        with:
+          trigger: '@deploy'
+          reaction: rocket
+        env:
+          GITHUB_TOKEN: ${{ secrets.DEPLOY_PAT }}
+      - name: Checkout tarpon
+        uses: actions/checkout@master
+        with:
+          repository: flagright/tarpon
+          token: ${{ secrets.DEPLOY_PAT }}
+          path: "tarpon"
+      - name: Use Node.js ${{ matrix.node-version }}
+        uses: actions/setup-node@v3
+        with:
+          node-version: ${{ matrix.node-version }}
+          cache: 'npm'
+          cache-dependency-path: "tarpon/package-lock.json"
+      - run: npm ci
+        working-directory: "tarpon"
+      - run: npm run openapi:prepare
+        working-directory: "tarpon"
+      - name: Checkout PR branch
+        uses: actions/checkout@v3
+        with:
+          ref: ${{ steps.comment-branch.outputs.head_ref }}
+          path: "phytoplankton-console"
+          clean: false
+      - name: Use Node.js ${{ matrix.node-version }}
+        uses: actions/setup-node@v3
+        with:
+          node-version: ${{ matrix.node-version }}
+          cache: 'yarn'
+          cache-dependency-path: "phytoplankton-console/yarn.lock"
+      - name: Deploy
+        run: |
+          echo "Create default AWS profile"
+          mkdir ~/.aws
+          printf "[default]\nregion = eu-central-1\naws_access_key_id=${{ secrets.DEV_AWS_ACCESS_KEY_ID }}\naws_secret_access_key=${{ secrets.DEV_AWS_SECRET_ACCESS_KEY }}" > ~/.aws/credentials
+          cat ~/.aws/credentials
+
+          export GITHUB_USER=${{ github.head_ref }}
+          export S_NO=1
+
+          commentArgs=($comment)
+          export TARPON_BRANCH=${commentArgs[1]}
+          cd tarpon
+          if [ -n "$TARPON_BRANCH" ]
+          then
+            echo "Deploying tarpon with branch: $TARPON_BRANCH"
+            git fetch origin $TARPON_BRANCH
+            git checkout origin/$TARPON_BRANCH
+            npm run deploy:qa
+          else
+            echo "Not deploying tarpon, using api.flagright.dev instead."
+          fi
+
+          echo "Deploying Phytoplankton"
+          npm run openapi:prepare
+          cd ../phytoplankton-console
+          yarn run deploy:qa
+      - name: Comment PR
+        uses: thollander/actions-comment-pull-request@v2
+        with:
+          message: |
+            Branch deployed to https://${{ github.head_ref }}-1.console.flagright.dev

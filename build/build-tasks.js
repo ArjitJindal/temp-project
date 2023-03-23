@@ -83,6 +83,12 @@ async function buildCode(env, options) {
       ? 'latest-version'
       : getGitHeadHash();
   const release = `phytoplankton#${releaseSuffix}`;
+  const define = config.define;
+
+  if (!process.env.TARPON_BRANCH) {
+    define['API_BASE_PATH'] = null;
+  }
+
   return await esbuild.build({
     entryPoints: [path.join(SRC_FOLDER, entry)],
     bundle: true,
@@ -96,7 +102,7 @@ async function buildCode(env, options) {
       'process.env.ENV_NAME': JSON.stringify(envName),
       'process.env.__IS_SERVER': false,
       'process.env.NODE_DEBUG': false,
-      ...Object.entries(config.define).reduce(
+      ...Object.entries(define).reduce(
         (acc, [key, value]) => ({ ...acc, [key]: JSON.stringify(value) }),
         {},
       ),
