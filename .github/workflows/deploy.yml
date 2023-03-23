@@ -86,6 +86,7 @@ jobs:
           fi
           export S_NO=1
 
+          comment="${{ github.event.comment.body }}"
           commentArgs=($comment)
           export TARPON_BRANCH=${commentArgs[1]}
           cd tarpon
