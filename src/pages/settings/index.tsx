@@ -4,10 +4,12 @@ import { WebhookSettings } from './components/WebhookSettings';
 import { TransactionStateSettings } from './components/TransactionStateSettings';
 import { RiskLevelSettings } from './components/RiskLevelSettings';
 import { DefaultValuesSettings } from './components/DefaultValuesSettings';
+import { RiskAlgorithmsSettings } from './components/RiskAlgorithmsSettings';
 import PageWrapper from '@/components/PageWrapper';
 import { useI18n } from '@/locales';
 import SidebarPanel, { MenuSection } from '@/components/ui/SidebarPanel';
 import Button from '@/components/library/Button';
+import { useFeatureEnabled } from '@/components/AppWrapper/Providers/SettingsProvider';
 import { usePageViewTracker } from '@/utils/tracker';
 import { DefaultViewsSettings } from '@/pages/settings/components/DefaultViewsSettings';
 import { getBranding } from '@/utils/branding';
@@ -15,6 +17,7 @@ import { getBranding } from '@/utils/branding';
 const branding = getBranding();
 
 export default function SettingsPage() {
+  const isMLDemoEnabled = useFeatureEnabled('MACHINE_LEARNING_DEMO');
   usePageViewTracker('Settings');
   const menuSections: (MenuSection | boolean)[] = [
     {
@@ -35,6 +38,17 @@ export default function SettingsPage() {
         },
       ],
     },
+    isMLDemoEnabled
+      ? {
+          name: 'MACHINE LEARNING',
+          menuItems: [
+            {
+              name: 'Risk Algorithms',
+              content: <RiskAlgorithmsSettings />,
+            },
+          ],
+        }
+      : false,
     {
       name: 'NOMENCLATURE',
       menuItems: [
@@ -142,6 +156,7 @@ export default function SettingsPage() {
       menuItems: [{ name: 'Webhooks', content: <WebhookSettings /> }],
     },
   ].filter(Boolean);
+
   const i18n = useI18n();
   return (
     <PageWrapper title={i18n('menu.settings')} description="Manage product settings.">
