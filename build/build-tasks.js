@@ -85,7 +85,7 @@ async function buildCode(env, options) {
   const release = `phytoplankton#${releaseSuffix}`;
   const define = config.define;
 
-  if (!process.env.TARPON_BRANCH) {
+  if (process.env.QA === 'true' && !process.env.TARPON_BRANCH) {
     define['API_BASE_PATH'] = null;
   }
 
