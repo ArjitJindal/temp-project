@@ -125,7 +125,7 @@ export default function HitsPerUserCard(props: Props) {
                 },
               )}
             >
-              {entity.openUserCasesCount} Cases
+              {entity.casesCount} Cases
             </Link>
           </>
         );

@@ -88,7 +88,7 @@ export default function RuleHitCard() {
                 },
               )}
             >
-              {entity.openUserCasesCount} Cases
+              {entity.openCasesCount} Cases
             </Link>
           </>
         );
