@@ -104,7 +104,7 @@ jobs:
         uses: thollander/actions-comment-pull-request@v2
         with:
           message: |
-            Branch deployed to https://${{ github.head_ref }}-1.console.flagright.dev
+            Branch deployed to https://${{ steps.comment-branch.outputs.head_ref }}-1.console.flagright.dev
       - name: Set latest commit status as ${{ job.status }}
         if: steps.check.outputs.triggered == 'true'
         uses: myrotvorets/set-commit-status-action@master
