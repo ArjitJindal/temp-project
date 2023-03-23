@@ -32,6 +32,8 @@
     "deploy:dev:clean": "npm run clear && npm install && ENV=dev npm run build && npm run synth:dev && npm run deploy:dev",
     "deploy:dev:user": "ENV=dev:user cdk deploy dev-tarpon-$GITHUB_USER$S_NO --require-approval never --profile=AWSAdministratorAccess-911899431626",
     "deploy:dev:user:clean": "npm run clear && npm install && npm run aws-sso-login:dev && ENV=dev npm run build && npm run synth:dev:user && npm run deploy:dev:user",
+    "deploy:qa": "npm run clear && npm install && ENV=dev npm run build && npm run synth:dev:user && ENV=dev:user cdk deploy dev-tarpon-$GITHUB_USER$S_NO --require-approval never",
+    "destroy:qa": "npm run clear && npm install && ENV=dev npm run build && ENV=dev npm run openapi:augment && ENV=dev:user cdk destroy dev-tarpon-$GITHUB_USER$S_NO --require-approval never -f",
     "deploy:sandbox": "ENV=sandbox cdk deploy sandbox-tarpon --require-approval=never && npm run cdktf:init && cdktf deploy --quiet sandbox-tarpon --auto-approve",
     "deploy:sandbox:clean": "npm run clear && npm install && npm run build && npm run synth:sandbox && npm run deploy:sandbox",
     "deploy:prod:asia-1": "ENV=prod:asia-1 cdk deploy prod-tarpon  --require-approval=never",
