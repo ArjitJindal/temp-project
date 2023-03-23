@@ -192,6 +192,7 @@ function UserListTable(props: Props) {
             render: (_, entity) =>
               entity.type === 'NEW' ? (
                 <NewValueInput
+                  key={String(isAddUserLoading)}
                   value={newUserData.value}
                   onChange={(value) => {
                     setNewUserData((prevState) => ({
