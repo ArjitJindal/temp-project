@@ -20,7 +20,7 @@ export default function UserDetails(props: Props) {
     <Card.Root header={{ title, collapsableKey }} updateCollapseState={updateCollapseState}>
       <Card.Row className={s.container}>
         <Card.Column className={s.all}>
-          <Card.Section className={s.section}>
+          <Card.Section>
             <UsersInfoCard user={user} />
           </Card.Section>
         </Card.Column>

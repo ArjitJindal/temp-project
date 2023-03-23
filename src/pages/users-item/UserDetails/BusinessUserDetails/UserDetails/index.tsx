@@ -20,7 +20,7 @@ export default function UserDetails(props: Props) {
       <Card.Column>
         <Card.Row>
           <Card.Column>
-            <Card.Section className={s.section}>
+            <Card.Section>
               <UsersInfoCard user={user} />
             </Card.Section>
           </Card.Column>
