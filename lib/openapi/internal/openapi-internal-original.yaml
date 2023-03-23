@@ -3134,6 +3134,14 @@ paths:
             $ref: '#/components/schemas/Page'
           in: query
           name: page
+        - schema:
+            type: number
+          in: query
+          name: afterTimestamp
+        - schema:
+            type: number
+          in: query
+          name: beforeTimestamp
   '/sanctions/search/{searchId}':
     get:
       summary: Get single search history

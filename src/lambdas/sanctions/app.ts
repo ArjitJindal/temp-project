@@ -40,6 +40,8 @@ export const sanctionsHandler = lambdaApi({ requiredFeatures: ['SANCTIONS'] })(
         // TODO: add date after & before properties
         page: q.page,
         pageSize: q.pageSize,
+        beforeTimestamp: parseInt(q.beforeTimestamp),
+        afterTimestamp: parseInt(q.afterTimestamp),
       }
       return sanctionsService.getSearchHistory(params)
     } else if (
