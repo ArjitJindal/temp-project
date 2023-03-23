@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import _ from 'lodash';
+import { RangeValue } from 'rc-picker/es/interface';
 import { useTableData } from '@/utils/table-utils';
 import { usePaginatedQuery } from '@/utils/queries/hooks';
 import { useApi } from '@/api';
@@ -11,29 +12,38 @@ import { SanctionsSearchHistory } from '@/apis/models/SanctionsSearchHistory';
 import TimestampDisplay from '@/components/ui/TimestampDisplay';
 import Id from '@/components/ui/Id';
 import { useApiTime, usePageViewTracker } from '@/utils/tracker';
-import { dayjs, DEFAULT_DATE_TIME_FORMAT } from '@/utils/dayjs';
+import { Dayjs, dayjs, DEFAULT_DATE_TIME_FORMAT } from '@/utils/dayjs';
+import DatePicker from '@/components/ui/DatePicker';
 
 type TableSearchParams = CommonParams & {
   searchTerm?: string;
   fuzziness?: number;
   countryCodes?: Array<string>;
   yearOfBirth?: number;
+  createdTimestamp: RangeValue<Dayjs>;
 };
 
 export const SanctionsSearchHistoryTable: React.FC = () => {
   usePageViewTracker('Sanctions Search History Page');
   const api = useApi();
-  const [params, setParams] = useState<AllParams<TableSearchParams>>(DEFAULT_PARAMS_STATE);
+  const [params, setParams] = useState<AllParams<TableSearchParams>>({
+    ...DEFAULT_PARAMS_STATE,
+    createdTimestamp: [dayjs().subtract(7, 'day'), dayjs()],
+  });
 
   const measure = useApiTime();
 
   const queryResults = usePaginatedQuery<SanctionsSearchHistory>(
     SANCTIONS_SEARCH(params),
     async (paginationParams) => {
+      const { createdTimestamp, ...rest } = params;
+      const [start, end] = createdTimestamp ?? [];
       const response = await measure(
         () =>
           api.getSanctionsSearch({
-            ...params,
+            ...rest,
+            afterTimestamp: start ? start.startOf('day').valueOf() : 0,
+            beforeTimestamp: end ? end.endOf('day').valueOf() : Number.MAX_SAFE_INTEGER,
             ...paginationParams,
           }),
         'Get Sanctions Search',
@@ -84,6 +94,14 @@ export const SanctionsSearchHistoryTable: React.FC = () => {
         columns={columns}
         search={false}
         autoAdjustHeight
+        toolBarRender={() => [
+          <DatePicker.RangePicker
+            value={params.createdTimestamp}
+            onChange={(createdTimestamp) =>
+              setParams((prevState) => ({ ...prevState, createdTimestamp }))
+            }
+          />,
+        ]}
       />
     </>
   );
