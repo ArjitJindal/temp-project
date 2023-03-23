@@ -967,14 +967,20 @@ export class CaseRepository {
         if (!alertIds.includes(alert.alertId as string)) {
           return alert
         }
-        return {
+        const newAlert: Alert = {
           ...alert,
-          ...updates,
-          statusChanges: updates.statusChange
-            ? [...(alert.statusChanges ?? []), updates.statusChange]
-            : alert.statusChanges,
-          lastStatusChange: updates.statusChange,
         }
+        if (updates.assignments) {
+          newAlert.assignments = updates.assignments
+        }
+        if (updates.statusChange) {
+          newAlert.lastStatusChange = updates.statusChange
+          newAlert.statusChanges = (newAlert.statusChanges ?? []).concat(
+            updates.statusChange
+          )
+        }
+
+        return newAlert
       })
 
       const isAllAlertsClosed = newAlerts?.every(
