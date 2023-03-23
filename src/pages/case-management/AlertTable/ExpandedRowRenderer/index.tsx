@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import Comments from './Comments';
-import { useQuery } from '@/utils/queries/hooks';
+import { usePaginatedQuery, useQuery } from '@/utils/queries/hooks';
 import { ALERT_ITEM_COMMENTS, ALERT_ITEM_TRANSACTION_LIST } from '@/utils/queries/keys';
 import { useApi } from '@/api';
 import { useApiTime } from '@/utils/tracker';
@@ -21,23 +21,24 @@ export default function ExpandedRowRenderer(props: Props) {
 
   const [params, setParams] = useState<TransactionsTableParams>(DEFAULT_PARAMS_STATE);
 
-  const transactionsResponse = useQuery(
+  const transactionsResponse = usePaginatedQuery(
     ALERT_ITEM_TRANSACTION_LIST(alertId ?? '', params),
-    async () => {
+    async (paginationParams) => {
       if (alertId == null) {
         throw new Error(`Unable to fetch transactions for alert, it's id is empty`);
       }
-      const result = await measure(
+      const response = await measure(
         () =>
           api.getAlertTransactionList({
             ...params,
             alertId,
+            ...paginationParams,
           }),
         'Get Alert Transactions',
       );
       return {
-        items: result.data,
-        total: result.total,
+        items: response?.data || [],
+        total: response?.total || 0,
       };
     },
   );
