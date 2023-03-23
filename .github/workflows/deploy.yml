@@ -17,20 +17,6 @@ jobs:
         node-version: [16.x]
     runs-on: ubuntu-20.04
     steps:
-      - name: Get PR branch
-        if: github.event.issue.pull_request && contains(github.event.comment.body, '@deploy')
-        uses: xt0rted/pull-request-comment-branch@v1
-        id: comment-branch
-
-      - name: Set latest commit status as pending
-        if: github.event.issue.pull_request && contains(github.event.comment.body, '@deploy')
-        uses: myrotvorets/set-commit-status-action@master
-        with:
-          sha: ${{ steps.comment-branch.outputs.head_sha }}
-          token: ${{ secrets.DEPLOY_PAT }}
-          status: pending
-          context: Deploy to QA
-
       - uses: khan/pull-request-comment-trigger@v1.1.0
         id: check
         with:
@@ -38,35 +24,54 @@ jobs:
           reaction: rocket
         env:
           GITHUB_TOKEN: ${{ secrets.DEPLOY_PAT }}
+      - name: Get PR branch
+        if: steps.check.outputs.triggered == 'true'
+        uses: xt0rted/pull-request-comment-branch@v1
+        id: comment-branch
+      - name: Set latest commit status as pending
+        if: steps.check.outputs.triggered == 'true'
+        uses: myrotvorets/set-commit-status-action@master
+        with:
+          sha: ${{ steps.comment-branch.outputs.head_sha }}
+          token: ${{ secrets.DEPLOY_PAT }}
+          status: pending
+          context: Deploy to QA
       - name: Checkout tarpon
+        if: steps.check.outputs.triggered == 'true'
         uses: actions/checkout@master
         with:
           repository: flagright/tarpon
           token: ${{ secrets.DEPLOY_PAT }}
           path: "tarpon"
       - name: Use Node.js ${{ matrix.node-version }}
+        if: steps.check.outputs.triggered == 'true'
         uses: actions/setup-node@v3
         with:
           node-version: ${{ matrix.node-version }}
           cache: 'npm'
           cache-dependency-path: "tarpon/package-lock.json"
       - run: npm ci
+        if: steps.check.outputs.triggered == 'true'
         working-directory: "tarpon"
       - run: npm run openapi:prepare
+        if: steps.check.outputs.triggered == 'true'
         working-directory: "tarpon"
       - name: Checkout PR branch
+        if: steps.check.outputs.triggered == 'true'
         uses: actions/checkout@v3
         with:
           ref: ${{ steps.comment-branch.outputs.head_ref }}
           path: "phytoplankton-console"
           clean: false
       - name: Use Node.js ${{ matrix.node-version }}
+        if: steps.check.outputs.triggered == 'true'
         uses: actions/setup-node@v3
         with:
           node-version: ${{ matrix.node-version }}
           cache: 'yarn'
           cache-dependency-path: "phytoplankton-console/yarn.lock"
       - name: Deploy
+        if: steps.check.outputs.triggered == 'true'
         run: |
           echo "Create default AWS profile"
           mkdir ~/.aws
@@ -99,12 +104,13 @@ jobs:
           cd ../phytoplankton-console
           yarn run deploy:qa
       - name: Comment PR
+        if: steps.check.outputs.triggered == 'true'
         uses: thollander/actions-comment-pull-request@v2
         with:
           message: |
             Branch deployed to https://${{ github.head_ref }}-1.console.flagright.dev
       - name: Set latest commit status as ${{ job.status }}
-        if: github.event.issue.pull_request && contains(github.event.comment.body, '@deploy')
+        if: steps.check.outputs.triggered == 'true'
         uses: myrotvorets/set-commit-status-action@master
         with:
           sha: ${{ steps.comment-branch.outputs.head_sha }}
