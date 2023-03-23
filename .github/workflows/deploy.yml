@@ -18,12 +18,12 @@ jobs:
     runs-on: ubuntu-20.04
     steps:
       - name: Get PR branch
-        if: github.event.issue.pull_request && contains(github.event.comment.body, '/deploy')
+        if: github.event.issue.pull_request && contains(github.event.comment.body, '@deploy')
         uses: xt0rted/pull-request-comment-branch@v1
         id: comment-branch
 
       - name: Set latest commit status as pending
-        if: github.event.issue.pull_request && contains(github.event.comment.body, '/deploy')
+        if: github.event.issue.pull_request && contains(github.event.comment.body, '@deploy')
         uses: myrotvorets/set-commit-status-action@master
         with:
           sha: ${{ steps.comment-branch.outputs.head_sha }}
@@ -104,7 +104,7 @@ jobs:
           message: |
             Branch deployed to https://${{ github.head_ref }}-1.console.flagright.dev
       - name: Set latest commit status as ${{ job.status }}
-        if: github.event.issue.pull_request && contains(github.event.comment.body, '/deploy')
+        if: github.event.issue.pull_request && contains(github.event.comment.body, '@deploy')
         uses: myrotvorets/set-commit-status-action@master
         with:
           sha: ${{ steps.comment-branch.outputs.head_sha }}
