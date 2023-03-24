@@ -8,11 +8,18 @@ import {
 } from '@aws-sdk/client-api-gateway'
 import { BadRequest } from 'http-errors'
 import { StackConstants } from '@cdk/constants'
+import { getAuth0TenantConfigs } from '@cdk/auth0/tenant-config'
 import { TenantCreationResponse } from '@/@types/openapi-internal/TenantCreationResponse'
 import { TenantCreationRequest } from '@/@types/openapi-internal/TenantCreationRequest'
-import { AccountsService } from '@/services/accounts'
+import { AccountsService, Tenant } from '@/services/accounts'
 import { createNewApiKeyForTenant } from '@/services/api-key'
 import { checkMultipleEmails } from '@/utils/helpers'
+import { getAuth0Domain } from '@/utils/auth0-utils'
+
+export type TenantInfo = {
+  tenant: Tenant
+  auth0Domain: string
+}
 
 export class TenantService {
   tenantId: string
@@ -29,6 +36,29 @@ export class TenantService {
     this.dynamoDb = connections.dynamoDb as DynamoDBDocumentClient
     this.mongoDb = connections.mongoDb as MongoClient
     this.tenantId = tenantId
+  }
+
+  public static getAllTenants = async (): Promise<Array<TenantInfo>> => {
+    const tenantInfos: Array<TenantInfo> = []
+    const auth0TenantConfigs = getAuth0TenantConfigs(
+      process.env.ENV as 'local' | 'dev' | 'sandbox' | 'prod'
+    )
+    for (const auth0TenantConfig of auth0TenantConfigs) {
+      const auth0Domain = getAuth0Domain(
+        auth0TenantConfig.tenantName,
+        auth0TenantConfig.region
+      )
+      const accountsService = new AccountsService({
+        auth0Domain,
+      })
+      tenantInfos.push(
+        ...(await accountsService.getTenants()).map((tenant) => ({
+          tenant,
+          auth0Domain,
+        }))
+      )
+    }
+    return tenantInfos
   }
 
   async createTenant(

@@ -1,5 +1,5 @@
 import { v4 as uuidv4 } from 'uuid'
-import { MongoClient } from 'mongodb'
+import { Filter, MongoClient } from 'mongodb'
 import { StackConstants } from '@cdk/constants'
 import { WriteRequest } from 'aws-sdk/clients/dynamodb'
 import {
@@ -11,6 +11,7 @@ import { DynamoDbKeys } from '@/core/dynamodb/dynamodb-keys'
 import { ExecutedRulesResult } from '@/@types/openapi-public/ExecutedRulesResult'
 import { TransactionEvent } from '@/@types/openapi-public/TransactionEvent'
 import { HitRulesDetails } from '@/@types/openapi-public/HitRulesDetails'
+import { TRANSACTION_EVENTS_COLLECTION } from '@/utils/mongoDBUtils'
 
 export class TransactionEventRepository {
   dynamoDb: DynamoDBDocumentClient
@@ -90,5 +91,16 @@ export class TransactionEventRepository {
     const { Items } = await this.dynamoDb.send(new QueryCommand(queryInput))
 
     return Items as TransactionEvent[]
+  }
+
+  public async getTransactionEventCount(
+    query: Filter<TransactionEvent>
+  ): Promise<number> {
+    const db = this.mongoDb.db()
+    const transactionEventCollection = db.collection<TransactionEvent>(
+      TRANSACTION_EVENTS_COLLECTION(this.tenantId)
+    )
+
+    return await transactionEventCollection.countDocuments(query)
   }
 }

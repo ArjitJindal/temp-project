@@ -1,33 +1,15 @@
-import { getAuth0TenantConfigs } from '@cdk/auth0/tenant-config'
 import { getConfig } from './config'
-import { AccountsService, Tenant } from '@/services/accounts'
-import { getAuth0Domain } from '@/utils/auth0-utils'
+import { Tenant } from '@/services/accounts'
 import { getDynamoDbClient } from '@/utils/dynamodb'
 import { TenantRepository } from '@/services/tenants/repositories/tenant-repository'
+import { TenantService } from '@/services/tenants'
 
 const config = getConfig()
 
 export async function migrateAllTenants(
   migrationCallback: (tenant: Tenant, auth0Domain: string) => Promise<void>
 ) {
-  const tenantInfos: Array<{ tenant: Tenant; auth0Domain: string }> = []
-  const auth0TenantConfigs = getAuth0TenantConfigs(config.stage)
-  for (const auth0TenantConfig of auth0TenantConfigs) {
-    const auth0Domain = getAuth0Domain(
-      auth0TenantConfig.tenantName,
-      auth0TenantConfig.region
-    )
-    const accountsService = new AccountsService({
-      auth0Domain,
-    })
-    tenantInfos.push(
-      ...(await accountsService.getTenants()).map((tenant) => ({
-        tenant,
-        auth0Domain,
-      }))
-    )
-  }
-
+  const tenantInfos = await TenantService.getAllTenants()
   const targetTenantInfos = tenantInfos.filter(
     (tenantInfo) =>
       config.stage !== 'prod' || tenantInfo.tenant.region === config.region

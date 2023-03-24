@@ -3,6 +3,7 @@ import * as cdk from 'aws-cdk-lib'
 import { CfnOutput, Duration, Fn, RemovalPolicy, Resource } from 'aws-cdk-lib'
 import { AttributeType, Table } from 'aws-cdk-lib/aws-dynamodb'
 import { Metric } from 'aws-cdk-lib/aws-cloudwatch'
+import { LambdaFunction as LambdaFunctionTarget } from 'aws-cdk-lib/aws-events-targets'
 import {
   ArnPrincipal,
   Effect,
@@ -64,6 +65,7 @@ import { LambdaInvoke } from 'aws-cdk-lib/aws-stepfunctions-tasks'
 import { Certificate } from 'aws-cdk-lib/aws-certificatemanager'
 import { CnameRecord, HostedZone } from 'aws-cdk-lib/aws-route53'
 import { CdkTarponAlarmsStack } from '@cdk/cdk-alarms-stack'
+import { Rule, Schedule } from 'aws-cdk-lib/aws-events'
 import {
   getDeadLetterQueueName,
   getNameForGlobalResource,
@@ -944,6 +946,34 @@ export class CdkTarponStack extends cdk.Stack {
 
     this.grantMongoDbAccess(deviceDataHandlerAlias)
 
+    /* API Metrics Lambda */
+
+    const { alias: apiMetricsHandlerAlias, func: apiMetricsHandler } =
+      this.createFunction(
+        {
+          name: StackConstants.API_USAGE_METRICS_FUNCTION_NAME,
+        },
+        atlasFunctionProps
+      )
+
+    this.grantMongoDbAccess(apiMetricsHandlerAlias)
+    tarponRuleDynamoDbTable.grantReadData(apiMetricsHandlerAlias)
+
+    const apiMetricsRule = new Rule(
+      this,
+      getResourceNameForTarpon('ApiMetricsRule'),
+      {
+        schedule: Schedule.cron({ minute: '0', hour: '0' }),
+      }
+    )
+
+    this.grantSecretsManagerAccessByPattern(
+      apiMetricsHandlerAlias,
+      'auth0.com',
+      'READ'
+    )
+
+    apiMetricsRule.addTarget(new LambdaFunctionTarget(apiMetricsHandler))
     /*
      * Hammerhead console functions
      */

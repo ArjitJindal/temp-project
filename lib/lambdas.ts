@@ -255,4 +255,9 @@ export const LAMBDAS: {
     handlerName: 'jobRunnerHandler',
     expectedMaxDurationSeconds: ASYNC_JOB_LAMBDA_EXPECTED_MAX_DURATION_SECONDS,
   },
+  [StackConstants.API_USAGE_METRICS_FUNCTION_NAME]: {
+    codePath: 'api-usage-metrics',
+    handlerName: 'apiUsageMetricsHandler',
+    expectedMaxDurationSeconds: DEFAULT_LAMBDA_EXPECTED_MAX_DURATION_SECONDS,
+  },
 }

@@ -732,4 +732,13 @@ export class UserRepository {
     )
     await collection.updateOne({ userId }, { $set: { drsScore } })
   }
+
+  public async getUsersCount(query: Filter<User>): Promise<number> {
+    const db = this.mongoDb.db()
+    const collection = db.collection<InternalUser>(
+      USERS_COLLECTION(this.tenantId)
+    )
+    const count = await collection.countDocuments(query)
+    return count
+  }
 }

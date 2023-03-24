@@ -226,6 +226,9 @@ export const StackConstants = {
   BATCH_JOB_RUNNER_FUNCTION_NAME: getResourceNameForTarpon(
     'BatchJobRunnerFunction'
   ),
+  API_USAGE_METRICS_FUNCTION_NAME: getResourceNameForTarpon(
+    'APIUsageMetricsFunction'
+  ),
 }
 
 export const SQSQueues = {

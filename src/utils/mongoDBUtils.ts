@@ -76,6 +76,10 @@ export const CASES_COLLECTION = (tenandId: string) => {
   return `${tenandId}-cases`
 }
 
+export const METRICS_COLLECTION = (tenandId: string) => {
+  return `${tenandId}-metrics`
+}
+
 export const COUNTER_COLLECTION = (tenandId: string) => {
   return `${tenandId}-counter`
 }
