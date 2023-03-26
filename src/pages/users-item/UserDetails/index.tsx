@@ -12,6 +12,8 @@ import { useApi } from '@/api';
 import AsyncResourceRenderer from '@/components/common/AsyncResourceRenderer';
 import { useQuery } from '@/utils/queries/hooks';
 import { DEVICE_DATA_USER } from '@/utils/queries/keys';
+import { useFeatureEnabled } from '@/components/AppWrapper/Providers/SettingsProvider';
+import AIInsightsCard from '@/pages/case-management-item/UserCaseDetails/AIInsightsCard';
 
 interface Props {
   user?: InternalConsumerUser | InternalBusinessUser | MissingUser;
@@ -36,6 +38,7 @@ function UserDetails(props: Props) {
   } = props;
 
   const api = useApi();
+  const isMLDemoEnabled = useFeatureEnabled('MACHINE_LEARNING_DEMO');
 
   const deviceDataRes = useQuery(DEVICE_DATA_USER(user?.userId), async () => {
     if (user?.userId) {
@@ -95,6 +98,13 @@ function UserDetails(props: Props) {
           updateCollapseState={props.updateCollapseState}
           title={UI_SETTINGS.cards.TRANSACTION_INSIGHTS.title}
           collapsableKey={UI_SETTINGS.cards.TRANSACTION_INSIGHTS.key}
+        />
+      )}
+      {isMLDemoEnabled && (
+        <AIInsightsCard
+          updateCollapseState={props.updateCollapseState}
+          title={UI_SETTINGS.cards.AI_INSIGHTS.title}
+          collapsableKey={UI_SETTINGS.cards.AI_INSIGHTS.key}
         />
       )}
       {showCommentEditor && (

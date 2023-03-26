@@ -34,6 +34,10 @@ export const UI_SETTINGS = {
       title: 'Transaction Insights',
       key: 'user-case-details-transaction-insights',
     },
+    AI_INSIGHTS: {
+      title: 'AI Insights',
+      key: 'user-details-ai-insights',
+    },
     COMMENTS: {
       title: 'Comments',
       key: 'user-case-details-comments',
