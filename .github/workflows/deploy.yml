@@ -71,6 +71,7 @@ jobs:
           cache: 'yarn'
           cache-dependency-path: "phytoplankton-console/yarn.lock"
       - name: Deploy
+        id: deploy
         if: steps.check.outputs.triggered == 'true'
         run: |
           export QA=true
@@ -78,7 +79,7 @@ jobs:
           mkdir ~/.aws
           printf "[default]\nregion = eu-central-1\naws_access_key_id=${{ secrets.DEV_AWS_ACCESS_KEY_ID }}\naws_secret_access_key=${{ secrets.DEV_AWS_SECRET_ACCESS_KEY }}" > ~/.aws/credentials
           cat ~/.aws/credentials
-          export GITHUB_USER=${{ steps.comment-branch.outputs.head_ref }}
+          export GITHUB_USER=`echo "${{ steps.comment-branch.outputs.head_ref }}" | md5 | head -c8`
           export S_NO=1
           
           echo "Deploying Tarpon"
@@ -99,14 +100,16 @@ jobs:
             echo "Deploying phytoplankton from main"
           fi
           yarn run deploy:qa
+          echo "phyto=${GITHUB_USER}-${S_NO}" >> $GITHUB_OUTPUT
+          echo "tarpon=${GITHUB_USER}-${S_NO}.api" >> $GITHUB_OUTPUT
       - name: Comment PR
         if: steps.check.outputs.triggered == 'true'
         uses: thollander/actions-comment-pull-request@v2
         with:
           message: |
             Branch deployed!
-            Frontend: https://${{ steps.comment-branch.outputs.head_ref }}-1.console.flagright.dev
-            Backend:  https://${{ steps.comment-branch.outputs.head_ref }}-1.api.flagright.dev
+            Frontend: https://${{ steps.deploy.outputs.phyto }}.console.flagright.dev
+            Backend: https://${{ steps.deploy.outputs.tarpon }}.flagright.dev
       - name: Set latest commit status as ${{ job.status }}
         if: steps.check.outputs.triggered == 'true'
         uses: myrotvorets/set-commit-status-action@master
