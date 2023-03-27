@@ -117,9 +117,11 @@ export default function NewListDrawer(props: Props) {
                 <Form.Item name="name" label="List name" required>
                   <Input />
                 </Form.Item>
-                <Form.Item name="values" label={getListSubtypeTitle(listSubtype)}>
-                  <NewValueInput listSubtype={listSubtype} />
-                </Form.Item>
+                {listSubtype !== 'USER_ID' && (
+                  <Form.Item name="values" label={getListSubtypeTitle(listSubtype)}>
+                    <NewValueInput listSubtype={listSubtype} />
+                  </Form.Item>
+                )}
                 <Form.Item name="description" label="Description">
                   <Input.TextArea />
                 </Form.Item>
