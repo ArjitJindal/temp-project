@@ -82,10 +82,14 @@ You can deploy to dev using something like:
 npm run deploy:dev:clean
 ```
 
-To deploy to your stack for dev:
+To deploy your PR to a QA environment, add a comment on your PR like:
 
 ```bash
-GITHUB_USER=<username> S_NO=<1/2/3> npm run deploy:dev:user:clean
+# To deploy against main Tarpon
+/deploy
+
+# To deploy against Tarpon from a branch
+/deploy optional-name-of-branch-in-tarpon
 ```
 
 ## Integration Tests
