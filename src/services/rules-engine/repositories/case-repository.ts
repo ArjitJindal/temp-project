@@ -904,13 +904,12 @@ export class CaseRepository {
     updates: {
       assignments?: Assignment[]
       statusChange?: CaseStatusChange
-      caseStatus?: CaseStatus
     }
   ) {
     const db = this.mongoDb.db()
     const collection = db.collection<Case>(CASES_COLLECTION(this.tenantId))
 
-    const isCaseStatusClosed = updates.caseStatus === 'CLOSED'
+    const isCaseStatusClosed = updates.statusChange?.caseStatus === 'CLOSED'
 
     await collection.updateMany(
       { caseId: { $in: caseIds } },
@@ -918,11 +917,11 @@ export class CaseRepository {
         $set: _.omitBy<Partial<Case>>(
           {
             assignments: updates.assignments,
-            caseStatus: updates.caseStatus,
+            caseStatus: updates.statusChange?.caseStatus,
             lastStatusChange: updates.statusChange,
             ...(isCaseStatusClosed
               ? {
-                  'alerts.$[].alertStatus': updates.caseStatus,
+                  'alerts.$[].alertStatus': updates.statusChange?.caseStatus,
                   'alerts.$[].lastStatusChange': updates.statusChange,
                 }
               : {}),
@@ -948,7 +947,6 @@ export class CaseRepository {
     updates: {
       assignments?: Assignment[]
       statusChange?: CaseStatusChange
-      alertStatus?: CaseStatus
     }
   ) {
     const db = this.mongoDb.db()
@@ -974,6 +972,7 @@ export class CaseRepository {
           newAlert.assignments = updates.assignments
         }
         if (updates.statusChange) {
+          newAlert.alertStatus = updates.statusChange.caseStatus
           newAlert.lastStatusChange = updates.statusChange
           newAlert.statusChanges = (newAlert.statusChanges ?? []).concat(
             updates.statusChange

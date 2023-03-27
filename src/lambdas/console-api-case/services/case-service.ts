@@ -87,11 +87,8 @@ export class CaseService {
         otherReason: updateRequest.otherReason,
       }
     const updates = {
-      ...(updateRequest?.assignments && {
-        assignments: updateRequest.assignments,
-      }),
-      statusChange: statusChange,
-      caseStatus: updateRequest.caseStatus,
+      assignments: updateRequest.assignments,
+      statusChange,
     }
     await this.caseRepository.updateCases(caseIds, updates)
     const tenantId = getContext()?.tenantId
@@ -148,14 +145,10 @@ export class CaseService {
         caseStatus: updateRequest.alertStatus,
         otherReason: updateRequest.otherReason,
       }
-    const updates = {
-      ...(updateRequest?.assignments && {
-        assignments: updateRequest.assignments,
-      }),
+    await this.caseRepository.updateAlerts(alertIds, {
+      assignments: updateRequest.assignments,
       statusChange: statusChange,
-      alertStatus: updateRequest.alertStatus,
-    }
-    await this.caseRepository.updateAlerts(alertIds, updates)
+    })
     if (updateRequest.alertStatus) {
       let body = `Alert status changed to ${updateRequest.alertStatus}`
       const allReasons = [
