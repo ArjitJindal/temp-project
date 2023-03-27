@@ -117,10 +117,14 @@ Then you can deploy to dev like so:
 npm run deploy:dev
 ```
 
-To deploy to your personal stack for dev:
+To deploy your PR to a QA environment, add a comment on your PR like:
 
 ```bash
-GITHUB_USER=<username> S_NO=<1/2/3> npm run deploy:dev:user:clean
+# To deploy with main Phytoplankton
+/deploy
+
+# To deploy against Phytoplankton from a branch
+/deploy optional-name-of-branch-in-phytoplankton
 ```
 
 _NOTE_: If it's your first time deploying to your own dev stack. Please follow the instructions below
