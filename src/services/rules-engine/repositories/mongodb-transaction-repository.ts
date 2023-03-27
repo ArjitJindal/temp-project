@@ -127,25 +127,6 @@ export class MongoDbTransactionRepository
     if (params.filterCaseStatus != null) {
       conditions.push({ caseStatus: { $eq: params.filterCaseStatus } })
     }
-    if (params.filterUserId != null) {
-      conditions.push({
-        $or: [
-          { originUserId: { $eq: params.filterUserId } },
-          { destinationUserId: { $eq: params.filterUserId } },
-        ],
-      })
-    } else {
-      if (params.filterOriginUserId != null) {
-        conditions.push({ originUserId: { $eq: params.filterOriginUserId } })
-      }
-      if (params.filterDestinationUserId != null) {
-        conditions.push({
-          destinationUserId: {
-            $eq: params.filterDestinationUserId,
-          },
-        })
-      }
-    }
 
     const executedRulesFilters = []
     if (params.filterRulesExecuted != null) {
@@ -233,6 +214,26 @@ export class MongoDbTransactionRepository
           $elemMatch: elemCondition,
         },
       })
+    }
+
+    if (params.filterUserId != null) {
+      return {
+        $or: [
+          { originUserId: { $eq: params.filterUserId }, $and: conditions },
+          { destinationUserId: { $eq: params.filterUserId }, $and: conditions },
+        ],
+      }
+    } else {
+      if (params.filterOriginUserId != null) {
+        conditions.push({ originUserId: { $eq: params.filterOriginUserId } })
+      }
+      if (params.filterDestinationUserId != null) {
+        conditions.push({
+          destinationUserId: {
+            $eq: params.filterDestinationUserId,
+          },
+        })
+      }
     }
 
     return { $and: conditions }
@@ -326,6 +327,9 @@ export class MongoDbTransactionRepository
         ]
       )
     }
+
+    console.log('txnsssssEEEEE')
+    console.log(JSON.stringify(pipeline))
     return collection.aggregate<InternalTransaction>(pipeline)
   }
 
