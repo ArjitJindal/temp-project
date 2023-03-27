@@ -88,6 +88,7 @@ jobs:
           comment="${{ github.event.comment.body }}"
           commentArgs=($comment)
           export PHYTOPLANKTON_BRANCH=${commentArgs[1]}
+          export TARPON_BRANCH=${{ steps.comment-branch.outputs.head_ref }}
           cd ../phytoplankton-console
           if [ -n "$PHYTOPLANKTON_BRANCH" ]
           then
