@@ -343,6 +343,7 @@ export default function Table<
                 rowKey={rowKey}
                 onExportData={props.onPaginateExportData}
                 columns={columns}
+                pageSize={params?.pageSize ?? DEFAULT_PAGE_SIZE}
               />,
             );
           }

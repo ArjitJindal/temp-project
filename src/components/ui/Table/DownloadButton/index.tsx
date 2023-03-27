@@ -7,7 +7,6 @@ import Button from '@/components/library/Button';
 import { flatItems } from '@/components/ui/Table/utils';
 import { download } from '@/utils/browser';
 import { isGroupColumn, TableColumn, TableData } from '@/components/ui/Table/types';
-import { DEFAULT_PAGE_SIZE } from '@/components/ui/Table/consts';
 import * as Form from '@/components/ui/Form';
 import { getErrorMessage } from '@/utils/lang';
 import { CsvRow, CsvValue, csvValue, serialize } from '@/utils/csv';
@@ -20,6 +19,7 @@ type Props<T extends object> = {
   rowKey: string;
   onExportData: (params: PaginationParams) => Promise<TableData<T>>;
   columns: TableColumn<T>[];
+  pageSize: number;
 };
 
 function prepareColumns<T extends object>(
@@ -42,7 +42,7 @@ function prepareColumns<T extends object>(
 }
 
 export default function DownloadButton<T extends object>(props: Props<T>) {
-  const { currentPage, columns, onExportData, rowKey } = props;
+  const { currentPage, columns, onExportData, rowKey, pageSize } = props;
 
   const [pagesMode, setPagesMode] = useState<'ALL' | 'CURRENT'>('ALL');
   const [progress, setProgress] = useState<null | { page: number; totalPages: number }>(null);
@@ -66,7 +66,7 @@ export default function DownloadButton<T extends object>(props: Props<T>) {
           page: pagesMode === 'CURRENT' ? 1 : page,
           totalPages,
         });
-        const pageSize = DEFAULT_PAGE_SIZE;
+
         const { total, items } = await onExportData({ page, pageSize });
         const totalItemsCount = total ?? items.length;
         if (pagesMode === 'ALL' && totalItemsCount > MAXIMUM_EXPORT_ITEMS) {
