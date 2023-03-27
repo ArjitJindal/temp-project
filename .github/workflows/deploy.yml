@@ -89,7 +89,7 @@ jobs:
           commentArgs=($comment)
           export PHYTOPLANKTON_BRANCH=${commentArgs[1]}
           cd ../phytoplankton-console
-          if [ -n "PHYTOPLANKTON_BRANCH" ]
+          if [ -n "$PHYTOPLANKTON_BRANCH" ]
           then
             echo "Deploying phytoplankton with branch: $PHYTOPLANKTON_BRANCH"
             git fetch origin $PHYTOPLANKTON_BRANCH
