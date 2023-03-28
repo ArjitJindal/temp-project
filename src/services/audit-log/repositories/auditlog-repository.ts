@@ -115,17 +115,11 @@ export class AuditLogRepository {
     const collection = db.collection<AuditLog>(
       AUDITLOG_COLLECTION(this.tenantId)
     )
-    const pipeline = this.getAuditLogMongoPipeline(params)
-    pipeline.push({
-      $limit: COUNT_QUERY_LIMIT,
+    const conditions = this.getAuditLogMongoQuery(params).filter
+    const count = await collection.countDocuments(conditions, {
+      limit: COUNT_QUERY_LIMIT,
     })
-    pipeline.push({
-      $count: 'count',
-    })
-    const result: AggregationCursor<{ count: number }> =
-      await collection.aggregate(pipeline)
-    const item = await result.next()
-    return item?.count ?? 0
+    return count
   }
 
   public async getAllAuditLogs(

@@ -729,19 +729,12 @@ export class CaseRepository {
   ): Promise<number> {
     const db = this.mongoDb.db()
     const collection = db.collection<Case>(CASES_COLLECTION(this.tenantId))
-    const { preLimitPipeline, postLimitPipeline } =
-      await this.getCasesMongoPipeline(params)
-    const pipeline = preLimitPipeline.concat(postLimitPipeline)
-    pipeline.push({
-      $limit: COUNT_QUERY_LIMIT,
-    })
-    pipeline.push({
-      $count: 'count',
-    })
-    const result: AggregationCursor<{ count: number }> =
-      await collection.aggregate(pipeline, { allowDiskUse: true })
-    const item = await result.next()
-    return item?.count ?? 0
+    const conditions = await this.getCasesConditions(params)
+    const count = await collection.countDocuments(
+      { $and: conditions },
+      { limit: COUNT_QUERY_LIMIT }
+    )
+    return count
   }
 
   public async getAlerts(

@@ -419,7 +419,9 @@ export class UserRepository {
         return newUser
       })
     }
-    const total = await collection.count(query, { limit: COUNT_QUERY_LIMIT })
+    const total = await collection.countDocuments(query, {
+      limit: COUNT_QUERY_LIMIT,
+    })
     return { total, data: users }
   }
 

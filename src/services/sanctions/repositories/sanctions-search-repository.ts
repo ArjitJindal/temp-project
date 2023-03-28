@@ -35,9 +35,9 @@ export class SanctionsSearchRepository {
     })
   }
 
-  private getSanctionsSearchHistoryMongoPipeline(
+  private getSanctionsSearchHistoryCondition(
     params: DefaultApiGetSanctionsSearchRequest
-  ): Document[] {
+  ): Filter<SanctionsSearchHistory> {
     const conditions: Filter<SanctionsSearchHistory>[] = []
     conditions.push({
       createdAt: {
@@ -46,10 +46,13 @@ export class SanctionsSearchRepository {
       },
     })
 
-    const filter = {
-      $and: conditions,
-    }
+    return { $and: conditions }
+  }
 
+  private getSanctionsSearchHistoryMongoPipeline(
+    params: DefaultApiGetSanctionsSearchRequest
+  ): Document[] {
+    const filter = this.getSanctionsSearchHistoryCondition(params)
     const pipeline: Document[] = []
 
     pipeline.push({ $match: filter })
@@ -81,15 +84,11 @@ export class SanctionsSearchRepository {
       SANCTIONS_SEARCHES_COLLECTION(this.tenantId)
     )
 
-    const pipeline = this.getSanctionsSearchHistoryMongoPipeline(params)
-
-    pipeline.push({ $limit: COUNT_QUERY_LIMIT })
-    pipeline.push({ $count: 'count' })
-
-    const result: AggregationCursor<{ count: number }> =
-      await collection.aggregate(pipeline)
-    const item = await result.next()
-    return item?.count ?? 0
+    const conditions = this.getSanctionsSearchHistoryCondition(params)
+    const count = await collection.countDocuments(conditions, {
+      limit: COUNT_QUERY_LIMIT,
+    })
+    return count
   }
 
   public async getSearchHistory(
