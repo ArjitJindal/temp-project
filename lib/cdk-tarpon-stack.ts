@@ -612,6 +612,7 @@ export class CdkTarponStack extends cdk.Stack {
       'auth0.com',
       'READ'
     )
+    this.grantMongoDbAccess(tenantsFunctionAlias)
 
     tenantsFunctionAlias.role?.attachInlinePolicy(
       new Policy(this, getResourceNameForTarpon('TenantApiPolicy'), {
