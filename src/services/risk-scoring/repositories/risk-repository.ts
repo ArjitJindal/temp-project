@@ -26,6 +26,7 @@ import { RiskClassificationConfig } from '@/@types/openapi-internal/RiskClassifi
 import { RiskEntityType } from '@/@types/openapi-internal/RiskEntityType'
 import { KrsScore } from '@/@types/openapi-internal/KrsScore'
 import { ArsScore } from '@/@types/openapi-internal/ArsScore'
+import { RiskScoreComponent } from '@/@types/openapi-internal/RiskScoreComponent'
 
 export const DEFAULT_CLASSIFICATION_SETTINGS: RiskClassificationScore[] = [
   {
@@ -54,6 +55,8 @@ export const DEFAULT_CLASSIFICATION_SETTINGS: RiskClassificationScore[] = [
     upperBoundRiskScore: 100,
   },
 ]
+
+const RISK_SCORE_HISTORY_ITEMS_TO_SHOW = 5
 
 export class RiskRepository {
   tenantId: string
@@ -91,10 +94,16 @@ export class RiskRepository {
     return krsScoreItem as KrsScore
   }
 
-  async createOrUpdateKrsScore(userId: string, score: number): Promise<any> {
-    const newKrsScoreItem: any = {
+  async createOrUpdateKrsScore(
+    userId: string,
+    score: number,
+    components?: RiskScoreComponent[]
+  ): Promise<KrsScore> {
+    const newKrsScoreItem: KrsScore = {
       krsScore: score,
       createdAt: Date.now(),
+      userId: userId,
+      components,
     }
     const primaryKey = DynamoDbKeys.KRS_VALUE_ITEM(this.tenantId, userId, '1')
 
@@ -103,7 +112,6 @@ export class RiskRepository {
       Item: {
         ...primaryKey,
         ...newKrsScoreItem,
-        userId: userId,
       },
     }
 
@@ -111,21 +119,23 @@ export class RiskRepository {
     if (process.env.NODE_ENV === 'development') {
       await handleLocalChangeCapture(primaryKey)
     }
-    return score
+    return newKrsScoreItem
   }
 
   async createOrUpdateArsScore(
     transactionId: string,
     score: number,
     originUserId?: string,
-    destinationUserId?: string
-  ): Promise<number> {
+    destinationUserId?: string,
+    components?: RiskScoreComponent[]
+  ): Promise<ArsScore> {
     const newArsScoreItem: ArsScore = {
       arsScore: score,
       createdAt: Date.now(),
       originUserId,
       destinationUserId,
       transactionId,
+      components,
     }
     const primaryKey = DynamoDbKeys.ARS_VALUE_ITEM(
       this.tenantId,
@@ -145,7 +155,7 @@ export class RiskRepository {
     if (process.env.NODE_ENV === 'development') {
       await handleLocalChangeCapture(primaryKey)
     }
-    return score
+    return newArsScoreItem
   }
 
   async getArsScore(transactionId: string): Promise<ArsScore | null> {
@@ -189,13 +199,16 @@ export class RiskRepository {
   async createOrUpdateDrsScore(
     userId: string,
     drsScore: number,
-    transactionId: string
-  ): Promise<number> {
+    transactionId: string,
+    components: RiskScoreComponent[]
+  ): Promise<DrsScore> {
     const newDrsScoreItem: DrsScore = {
       drsScore,
       transactionId,
       createdAt: Date.now(),
       isUpdatable: true,
+      userId: userId,
+      components,
     }
     const primaryKey = DynamoDbKeys.DRS_VALUE_ITEM(this.tenantId, userId, '1')
 
@@ -204,7 +217,6 @@ export class RiskRepository {
       Item: {
         ...primaryKey,
         ...newDrsScoreItem,
-        userId: userId,
       },
     }
 
@@ -214,7 +226,7 @@ export class RiskRepository {
       await handleLocalChangeCapture(primaryKey)
     }
 
-    return drsScore
+    return newDrsScoreItem
   }
 
   async getRiskClassificationValues(): Promise<Array<RiskClassificationScore>> {
@@ -441,27 +453,19 @@ export class RiskRepository {
     const drsValuesCollection = db.collection<DrsScore>(
       DRS_SCORES_COLLECTION(this.tenantId)
     )
-
-    await drsValuesCollection.replaceOne(
-      { userId: drsScore.userId, transactionId: drsScore.transactionId },
-      drsScore,
-      { upsert: true }
-    )
+    await drsValuesCollection.insertOne(drsScore)
     return drsScore
   }
-
-  async getDrsValueFromMongo(userId: string): Promise<DrsScore | null> {
+  async getDrsValueFromMongo(userId: string): Promise<DrsScore[]> {
     const db = this.mongoDb.db()
     const drsValuesCollection = db.collection<DrsScore>(
       DRS_SCORES_COLLECTION(this.tenantId)
     )
-    const result = await drsValuesCollection
+    return await drsValuesCollection
       .find({ userId })
       .sort({ createdAt: -1 })
-      .limit(1)
+      .limit(RISK_SCORE_HISTORY_ITEMS_TO_SHOW)
       .toArray()
-
-    return result && result.length > 0 ? result[0] : null
   }
 }
 

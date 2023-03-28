@@ -269,11 +269,12 @@ export class SimulationPulseBatchJobRunner extends BatchJobRunner {
       simulated: [] as RiskLevel[],
     }
     for (const user of users.data) {
-      const userKrsScore = await this.riskScoringService!.calculateKrsScore(
-        user,
-        newClassificationValues,
-        parameterAttributeRiskValues
-      )
+      const { score: userKrsScore } =
+        await this.riskScoringService!.calculateKrsScore(
+          user,
+          newClassificationValues,
+          parameterAttributeRiskValues
+        )
       const userTransactions = await this.getUserTransactions(
         user.userId,
         sampling
@@ -281,11 +282,12 @@ export class SimulationPulseBatchJobRunner extends BatchJobRunner {
       let userCurrentDrsScore = userKrsScore
 
       for (const transaction of userTransactions) {
-        const arsScore = await this.riskScoringService!.calculateArsScore(
-          transaction,
-          newClassificationValues,
-          parameterAttributeRiskValues
-        )
+        const { score: arsScore } =
+          await this.riskScoringService!.calculateArsScore(
+            transaction,
+            newClassificationValues,
+            parameterAttributeRiskValues
+          )
         userCurrentDrsScore = this.riskScoringService!.calculateDrsScore(
           userCurrentDrsScore,
           arsScore

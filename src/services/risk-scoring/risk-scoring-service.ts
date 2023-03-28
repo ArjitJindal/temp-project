@@ -28,6 +28,7 @@ import { Transaction } from '@/@types/openapi-public/Transaction'
 import { PulseAuditLogService } from '@/lambdas/console-api-pulse/services/pulse-audit-log'
 import { RiskClassificationScore } from '@/@types/openapi-internal/RiskClassificationScore'
 import { RiskEntityType } from '@/@types/openapi-internal/RiskEntityType'
+import { RiskScoreComponent } from '@/@types/openapi-internal/RiskScoreComponent'
 
 function getDefaultRiskValue(riskClassificationValues: Array<any>) {
   let riskScore = 75 // Make this configurable
@@ -106,12 +107,21 @@ function matchParameterValue(
 function getIterableAttributeRiskLevel(
   parameterAttributeDetails: ParameterAttributeRiskValues,
   entity: User | Business | Transaction
-): RiskLevel {
+): {
+  value: unknown
+  riskLevel: RiskLevel
+} {
   const { parameter, targetIterableParameter, riskLevelAssignmentValues } =
     parameterAttributeDetails
   const iterableValue = _.get(entity, parameter)
   let individualRiskLevel
-  let iterableMaxRiskLevel = 'VERY_LOW' as RiskLevel
+  let iterableMaxRiskLevel: {
+    value: unknown
+    riskLevel: RiskLevel
+  } = {
+    value: null,
+    riskLevel: 'VERY_LOW' as RiskLevel,
+  }
   if (iterableValue && targetIterableParameter) {
     iterableValue.forEach((value: any) => {
       individualRiskLevel = getSchemaAttributeRiskLevel(
@@ -120,8 +130,8 @@ function getIterableAttributeRiskLevel(
         riskLevelAssignmentValues
       )
       if (
-        riskLevelPrecendence[individualRiskLevel] >=
-        riskLevelPrecendence[iterableMaxRiskLevel]
+        riskLevelPrecendence[individualRiskLevel.riskLevel] >=
+        riskLevelPrecendence[iterableMaxRiskLevel.riskLevel]
       ) {
         iterableMaxRiskLevel = individualRiskLevel
       }
@@ -129,7 +139,7 @@ function getIterableAttributeRiskLevel(
     return iterableMaxRiskLevel
   } else if (iterableValue && !targetIterableParameter) {
     let hasRiskValueMatch = false
-    iterableValue.forEach((value: any) => {
+    iterableValue.forEach((value: unknown) => {
       const { riskLevelAssignmentValues } = parameterAttributeDetails
       for (const riskLevelAssignmentValue of riskLevelAssignmentValues) {
         if (
@@ -137,17 +147,28 @@ function getIterableAttributeRiskLevel(
         ) {
           if (
             riskLevelPrecendence[riskLevelAssignmentValue.riskLevel] >=
-            riskLevelPrecendence[iterableMaxRiskLevel]
+            riskLevelPrecendence[iterableMaxRiskLevel.riskLevel]
           ) {
-            iterableMaxRiskLevel = riskLevelAssignmentValue.riskLevel
+            iterableMaxRiskLevel = {
+              value,
+              riskLevel: riskLevelAssignmentValue.riskLevel,
+            }
             hasRiskValueMatch = true
           }
         }
       }
     })
-    return hasRiskValueMatch ? iterableMaxRiskLevel : DEFAULT_RISK_LEVEL
+    return hasRiskValueMatch
+      ? iterableMaxRiskLevel
+      : {
+          value: null,
+          riskLevel: DEFAULT_RISK_LEVEL,
+        }
   }
-  return DEFAULT_RISK_LEVEL
+  return {
+    value: null,
+    riskLevel: DEFAULT_RISK_LEVEL,
+  }
 }
 
 function getDerivedAttributeRiskLevel(
@@ -171,17 +192,23 @@ function getSchemaAttributeRiskLevel(
     | ParameterAttributeRiskValuesTargetIterableParameterEnum,
   entity: User | Business | Transaction,
   riskLevelAssignmentValues: Array<RiskParameterLevelKeyValue>
-): RiskLevel {
+): {
+  value: unknown
+  riskLevel: RiskLevel
+} {
+  let resultValue = null
+  let resultRiskLevel: RiskLevel = DEFAULT_RISK_LEVEL
   const endValue = _.get(entity, paramName)
-
   if (endValue) {
+    resultValue = endValue
     for (const { parameterValue, riskLevel } of riskLevelAssignmentValues) {
       if (matchParameterValue(endValue, parameterValue)) {
-        return riskLevel
+        resultRiskLevel = riskLevel
+        break
       }
     }
   }
-  return DEFAULT_RISK_LEVEL
+  return { value: resultValue, riskLevel: resultRiskLevel }
 }
 
 export class RiskScoringService {
@@ -209,33 +236,46 @@ export class RiskScoringService {
     user: User | Business,
     riskClassificationValues: RiskClassificationScore[],
     riskFactors: ParameterAttributeRiskValues[]
-  ): Promise<number> {
-    const riskScoresList = await this.getRiskFactorScores(
+  ): Promise<{
+    score: number
+    components: RiskScoreComponent[]
+  }> {
+    const components = await this.getRiskFactorScores(
       ['BUSINESS', 'CONSUMER_USER'],
       user,
       riskFactors || [],
       riskClassificationValues
     )
-    logger.info(`Risk scores: ${riskScoresList}`)
-    return riskScoresList.length
-      ? _.mean(riskScoresList)
-      : getDefaultRiskValue(riskClassificationValues)
+    logger.info(`Risk scores: ${components}`)
+
+    return {
+      score: components.length
+        ? _.mean(components.map(({ score }) => score))
+        : getDefaultRiskValue(riskClassificationValues),
+      components,
+    }
   }
 
   public async calculateArsScore(
     transaction: Transaction,
     riskClassificationValues: RiskClassificationScore[],
     riskFactors: ParameterAttributeRiskValues[]
-  ): Promise<number> {
-    const riskScoresList = await this.getRiskFactorScores(
+  ): Promise<{
+    score: number
+    components: RiskScoreComponent[]
+  }> {
+    const components = await this.getRiskFactorScores(
       ['TRANSACTION'],
       transaction,
       riskFactors || [],
       riskClassificationValues
     )
-    return riskScoresList.length
-      ? _.mean(riskScoresList)
-      : getDefaultRiskValue(riskClassificationValues)
+    return {
+      score: components.length
+        ? _.mean(components.map(({ score }) => score))
+        : getDefaultRiskValue(riskClassificationValues),
+      components,
+    }
   }
 
   public calculateDrsScore(
@@ -245,20 +285,25 @@ export class RiskScoringService {
     return _.mean([currentDrsScore, newArsScore])
   }
 
-  public async updateInitialRiskScores(user: User | Business): Promise<any> {
+  public async updateInitialRiskScores(user: User | Business): Promise<void> {
     const riskFactors = await this.riskRepository.getParameterRiskItems()
     const riskClassificationValues =
       await this.riskRepository.getRiskClassificationValues()
-    const krsScore = await this.calculateKrsScore(
+    const { score, components } = await this.calculateKrsScore(
       user,
       riskClassificationValues,
       riskFactors || []
     )
-    await this.riskRepository.createOrUpdateKrsScore(user.userId, krsScore)
+    await this.riskRepository.createOrUpdateKrsScore(
+      user.userId,
+      score,
+      components
+    )
     await this.riskRepository.createOrUpdateDrsScore(
       user.userId,
-      krsScore,
-      'FIRST_DRS'
+      score,
+      'FIRST_DRS',
+      components
     )
   }
 
@@ -269,17 +314,18 @@ export class RiskScoringService {
     const riskFactors = await this.riskRepository.getParameterRiskItems()
     const riskClassificationValues =
       await this.riskRepository.getRiskClassificationValues()
-    const arsScore = await this.calculateArsScore(
+    const { score: arsScore, components } = await this.calculateArsScore(
       transaction,
       riskClassificationValues,
       riskFactors || []
     )
 
     await this.riskRepository.createOrUpdateArsScore(
-      transaction.transactionId!,
+      transaction.transactionId,
       arsScore,
       transaction.originUserId,
-      transaction.destinationUserId
+      transaction.destinationUserId,
+      components
     )
 
     let originDrsScore = null
@@ -289,35 +335,40 @@ export class RiskScoringService {
       originDrsScore = await this.calculateAndUpdateDRS(
         transaction.originUserId,
         arsScore,
-        transaction.transactionId!
+        transaction.transactionId,
+        components
       )
     }
     if (transaction.destinationUserId) {
       destinationDrsScore = await this.calculateAndUpdateDRS(
         transaction.destinationUserId,
         arsScore,
-        transaction.transactionId!
+        transaction.transactionId!,
+        components
       )
     }
 
     return { originDrsScore, destinationDrsScore }
   }
 
-  private async getRiskFactorScores(
+  public async getRiskFactorScores(
     entityTypes: RiskEntityType[],
     entity: User | Business | Transaction,
     riskFactors: ParameterAttributeRiskValues[],
     riskClassificationValues: Array<RiskClassificationScore>
-  ): Promise<number[]> {
-    const relevantRiskFactors =
+  ): Promise<RiskScoreComponent[]> {
+    const relevantRiskFactors: ParameterAttributeRiskValues[] =
       riskFactors?.filter(
         (parameterAttributeDetails) =>
           parameterAttributeDetails.isActive &&
           entityTypes.includes(parameterAttributeDetails.riskEntityType)
       ) ?? []
-    const riskScoresList: number[] = []
+    const result: RiskScoreComponent[] = []
     for (const parameterAttributeDetails of relevantRiskFactors) {
-      let matchedRiskLevels: RiskLevel[] = []
+      let matchedRiskLevels: {
+        value: unknown
+        riskLevel: RiskLevel
+      }[] = []
       if (parameterAttributeDetails.isDerived) {
         let derivedValues: any[] = []
         if (
@@ -343,13 +394,14 @@ export class RiskScoringService {
             parameterAttributeDetails.parameter
           )
         }
-        matchedRiskLevels = derivedValues.map((derivedValue) =>
-          getDerivedAttributeRiskLevel(
+        matchedRiskLevels = derivedValues.map((derivedValue) => ({
+          value: derivedValue,
+          riskLevel: getDerivedAttributeRiskLevel(
             derivedValue,
             parameterAttributeDetails.riskLevelAssignmentValues,
             parameterAttributeDetails.isNullableAllowed
-          )
-        )
+          ),
+        }))
       } else if (parameterAttributeDetails.parameterType == 'VARIABLE') {
         matchedRiskLevels = [
           getSchemaAttributeRiskLevel(
@@ -364,19 +416,24 @@ export class RiskScoringService {
         ]
       }
 
-      matchedRiskLevels.forEach((riskLevel) =>
-        riskScoresList.push(
-          getRiskScoreFromLevel(riskClassificationValues, riskLevel)
-        )
+      matchedRiskLevels.forEach(({ riskLevel, value }) =>
+        result.push({
+          entityType: parameterAttributeDetails.riskEntityType,
+          parameter: parameterAttributeDetails.parameter,
+          riskLevel,
+          value: value,
+          score: getRiskScoreFromLevel(riskClassificationValues, riskLevel),
+        })
       )
     }
-    return riskScoresList
+    return result
   }
 
   private async calculateAndUpdateDRS(
     userId: string,
     arsScore: number,
-    transactionId: string
+    transactionId: string,
+    components: RiskScoreComponent[]
   ): Promise<number | null | undefined> {
     const krsScore = (await this.riskRepository.getKrsScore(userId))?.krsScore
     if (krsScore == null) {
@@ -394,7 +451,8 @@ export class RiskScoringService {
     await this.riskRepository.createOrUpdateDrsScore(
       userId,
       drsScore,
-      transactionId!
+      transactionId,
+      components
     )
     const newDrsObject = await this.riskRepository.getDrsScore(userId)
     await auditLogService.handleDrsUpdate(drsObject, newDrsObject, 'AUTOMATIC')

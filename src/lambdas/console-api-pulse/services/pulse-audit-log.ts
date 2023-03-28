@@ -50,7 +50,7 @@ export class PulseAuditLogService {
       type === 'MANUAL' ||
       oldDrsScore.isUpdatable !== newDrsScore?.isUpdatable
     ) {
-      this.createAuditLog({
+      await this.createAuditLog({
         logAction: oldDrsScore ? 'UPDATE' : 'CREATE',
         oldImage: oldDrsScore ?? {},
         newImage: newDrsScore ?? {},

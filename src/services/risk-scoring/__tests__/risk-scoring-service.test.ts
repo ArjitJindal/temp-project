@@ -63,7 +63,7 @@ describe('Risk Scoring', () => {
   it('should update the risk score of a user', async () => {
     await (
       await getRiskRepository()
-    ).createOrUpdateDrsScore(testUser1.userId, 70, 'TEST_DRS')
+    ).createOrUpdateDrsScore(testUser1.userId, 70, 'TEST_DRS', [])
 
     const getRiskScore = await (
       await getRiskRepository()
