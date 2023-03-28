@@ -1,7 +1,10 @@
-import { Spin, Tag } from 'antd';
-import { useEffect, useState } from 'react';
+import React from 'react';
 import { useApi } from '@/api';
-import { DrsScore } from '@/apis';
+import RiskScoreDisplay from '@/components/ui/RiskScoreDisplay';
+import User3LineIcon from '@/components/ui/icons/Remix/user/user-3-line.react.svg';
+import { USERS_ITEM_RISKS_DRS } from '@/utils/queries/keys';
+import { useQuery } from '@/utils/queries/hooks';
+import AsyncResourceRenderer from '@/components/common/AsyncResourceRenderer';
 
 interface Props {
   userId: string;
@@ -10,41 +13,22 @@ interface Props {
 export default function DynamicRiskDisplay({ userId }: Props) {
   const api = useApi();
 
-  const [syncState, setSyncState] = useState<DrsScore>();
-  const [loading, setLoading] = useState<boolean>(true);
-
-  useEffect(() => {
-    let isCanceled = false;
-    api
-      .getDrsValue({ userId })
-      .then((result: any) => {
-        if (isCanceled) {
-          return;
-        }
-        setSyncState(result);
-        setLoading(false);
-      })
-      .catch((e) => {
-        if (isCanceled) {
-          return;
-        }
-        setLoading(false);
-        console.error(e);
-      });
-    return () => {
-      isCanceled = true;
-    };
-  }, [userId, api]);
+  const queryResult = useQuery(USERS_ITEM_RISKS_DRS(userId), () => api.getDrsValue({ userId }));
 
   return (
-    <Tag>
-      {loading ? (
-        <Spin />
-      ) : syncState && syncState.drsScore ? (
-        syncState.drsScore.toFixed(4)
-      ) : (
-        'N / A'
+    <AsyncResourceRenderer resource={queryResult.data}>
+      {(result) => (
+        <RiskScoreDisplay
+          values={result.map((x) => ({
+            value: x.drsScore,
+            riskLevel: x?.manualRiskLevel ?? x?.derivedRiskLevel,
+            createdAt: x.createdAt,
+            components: x.components,
+          }))}
+          icon={<User3LineIcon />}
+          title="CRA risk score"
+        />
       )}
-    </Tag>
+    </AsyncResourceRenderer>
   );
 }

@@ -11,6 +11,8 @@ import EntityHeader from '@/components/ui/entityPage/EntityHeader';
 import CasesStatusChangeButton from '@/pages/case-management/components/CasesStatusChangeButton';
 import { FalsePositiveTag } from '@/pages/case-management/components/FalsePositiveTag';
 import CommentButton from '@/components/CommentButton';
+import { getUserLink, getUserName } from '@/utils/api/users';
+import Id from '@/components/ui/Id';
 
 interface Props {
   caseItem: Case;
@@ -21,6 +23,7 @@ interface Props {
 export default function Header(props: Props) {
   const { caseItem, onReload, onCommentAdded } = props;
   const { caseId } = caseItem;
+  const user = caseItem.caseUsers?.origin ?? caseItem.caseUsers?.destination ?? undefined;
 
   const api = useApi();
 
@@ -71,6 +74,12 @@ export default function Header(props: Props) {
       }
       subHeader={<SubHeader caseItem={caseItem} />}
     >
+      <Form.Layout.Label title={'User Name'}>{getUserName(user)}</Form.Layout.Label>
+      <Form.Layout.Label title={'User ID'}>
+        <Id to={getUserLink(user)} alwaysShowCopy>
+          {user?.userId}
+        </Id>
+      </Form.Layout.Label>
       <Form.Layout.Label icon={<BriefcaseLineIcon />} title={'Case Status'}>
         <Tag
           className={s.caseStatusTag}

@@ -1,10 +1,10 @@
+import React from 'react';
 import CommentsCard, { CommentGroup } from './CommentsCard';
 import AlertsCard from './AlertsCard';
 import InsightsCard from './InsightsCard';
 import { UI_SETTINGS } from './ui-settings';
 import { Case, Comment as ApiComment } from '@/apis';
 import UserDetails from '@/pages/users-item/UserDetails';
-import UserIdNameCard from '@/components/ui/UserIdNameCard';
 import { usePageViewTracker } from '@/utils/tracker';
 import { useScrollToFocus } from '@/utils/hooks';
 import { useQueries } from '@/utils/queries/hooks';
@@ -33,7 +33,6 @@ function UserCaseDetails(props: Props) {
 
   return (
     <>
-      <UserIdNameCard user={user} showRiskLevel={true} />
       <UserDetails
         user={user}
         isEmbedded={true}

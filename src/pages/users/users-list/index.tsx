@@ -9,7 +9,7 @@ import { getAllUserColumns } from './all-user-columns';
 import { RiskLevelButton } from './RiskLevelFilterButton';
 import { queryAdapter } from './helpers/queryAdapter';
 import { dayjs } from '@/utils/dayjs';
-import RiskLevelTag from '@/components/ui/RiskLevelTag';
+import RiskLevelTag from '@/components/library/RiskLevelTag';
 import { useApi } from '@/api';
 import { useFeatureEnabled } from '@/components/AppWrapper/Providers/SettingsProvider';
 import { InternalBusinessUser, InternalConsumerUser, InternalUser, RiskLevel } from '@/apis';

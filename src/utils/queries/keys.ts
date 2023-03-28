@@ -58,6 +58,13 @@ export const TRANSACTIONS_LIST = (searchParams: AnyParameters): QueryKey => [
   'list',
   searchParams,
 ];
+export const TRANSACTIONS_ITEM_RISKS_ARS = (transactionId: string): QueryKey => [
+  'transactions',
+  'list',
+  transactionId,
+  'risks',
+  'ars-score',
+];
 export const AUDIT_LOGS_LIST = (searchParams: AnyParameters): QueryKey => [searchParams];
 export const TRANSACTIONS_STATS = (
   type: 'by-type' | 'by-date',
@@ -110,6 +117,20 @@ export const WEBHOOKS = (id?: string): QueryKey => ['webhooks', id];
 export const WEBHOOKS_LIST = (): QueryKey => ['webhooks', 'list'];
 export const USERS = (type: string, params?: AnyParameters): QueryKey => ['users', type, params];
 export const USERS_ITEM = (userId: string): QueryKey => ['users', 'item', userId];
+export const USERS_ITEM_RISKS_DRS = (userId: string): QueryKey => [
+  'users',
+  'item',
+  userId,
+  'risks',
+  'drs-score',
+];
+export const USERS_ITEM_RISKS_KRS = (userId: string): QueryKey => [
+  'users',
+  'item',
+  userId,
+  'risks',
+  'krs-score',
+];
 export const ALERT_LIST = (params?: AnyParameters): QueryKey => ['alerts', 'list', params];
 export const SIMULATION_PULSE_JOB = (jobId: string): QueryKey => ['simulation', 'pulse', jobId];
 export const SIMULATION_PULSE_JOB_ITERATION_RESULT = (

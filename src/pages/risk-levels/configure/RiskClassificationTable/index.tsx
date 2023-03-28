@@ -2,7 +2,7 @@ import { ToolBarProps } from '@ant-design/pro-table/lib/components/ToolBar';
 import { RiskClassificationScore, RiskLevel } from '@/apis';
 import { TableColumn } from '@/components/ui/Table/types';
 import { RISK_LEVEL_LABELS, RISK_LEVELS } from '@/utils/risk-levels';
-import RiskLevelTag from '@/components/ui/RiskLevelTag';
+import RiskLevelTag from '@/components/library/RiskLevelTag';
 import Slider from '@/components/library/Slider';
 import Table from '@/components/ui/Table';
 

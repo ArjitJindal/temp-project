@@ -30,6 +30,8 @@ import Toggle from '@/components/library/Toggle/story';
 import Tabs from '@/components/library/Tabs/story';
 import TextArea from '@/components/library/TextArea/story';
 import Slider from '@/components/library/Slider/story';
+import RiskScoreDisplay from '@/components/ui/RiskScoreDisplay/story';
+import RiskLevelTag from '@/components/library/RiskLevelTag/story';
 
 interface StoryProps {}
 
@@ -147,6 +149,10 @@ const config: Config = [
         component: 'Dropdown',
         story: Dropdown,
       },
+      {
+        component: 'RiskLevelTag',
+        story: RiskLevelTag,
+      },
     ],
   },
   {
@@ -163,6 +169,10 @@ const config: Config = [
     key: 'misc',
     category: 'Misc',
     components: [
+      {
+        component: '@/components/ui/RiskScoreDisplay',
+        story: RiskScoreDisplay,
+      },
       {
         component: '@/pages/rules/RuleConfigurationDrawer/RuleParametersStep/JsonSchemaEditor',
         story: JsonSchemaEditor,

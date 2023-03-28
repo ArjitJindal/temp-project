@@ -20,7 +20,7 @@ import { dayjs, DEFAULT_DATE_TIME_FORMAT } from '@/utils/dayjs';
 import { PaymentDetailsCard } from '@/components/ui/PaymentDetailsCard';
 import { PaymentMethodTag } from '@/components/ui/PaymentTypeTag';
 import { useFeatureEnabled } from '@/components/AppWrapper/Providers/SettingsProvider';
-import RiskLevelTag from '@/components/ui/RiskLevelTag';
+import RiskLevelTag from '@/components/library/RiskLevelTag';
 
 export interface TransactionsTableParams extends CommonParams {
   current?: string;

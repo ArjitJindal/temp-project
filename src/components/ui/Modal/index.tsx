@@ -8,6 +8,7 @@ import CloseCircleLineIcon from '@/components/ui/icons/Remix/system/close-fill.r
 interface Props {
   title: string;
   icon?: React.ReactNode;
+  hideFooter?: boolean;
   isOpen: boolean;
   onOk?: () => void;
   onCancel: () => void;
@@ -18,10 +19,21 @@ interface Props {
 }
 
 export default function Modal(props: Props) {
-  const { icon, title, isOpen, onOk, okText, okProps, cancelText, onCancel, children } = props;
+  const {
+    icon,
+    title,
+    isOpen,
+    onOk,
+    okText,
+    okProps,
+    cancelText,
+    onCancel,
+    children,
+    hideFooter = false,
+  } = props;
+
   return (
     <AntModal
-      width={550}
       className={cn(s.root)}
       title={
         <div className={s.header}>
@@ -43,6 +55,7 @@ export default function Modal(props: Props) {
       closable={false}
       onOk={onOk}
       okButtonProps={okProps}
+      footer={hideFooter ? false : undefined}
     >
       {children}
     </AntModal>

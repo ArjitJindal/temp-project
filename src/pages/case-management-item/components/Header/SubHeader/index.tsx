@@ -1,4 +1,5 @@
 import React, { useCallback, useState } from 'react';
+import s from './index.module.less';
 import { message } from '@/components/library/Message';
 import { Case } from '@/apis';
 import { useApi } from '@/api';
@@ -8,6 +9,9 @@ import { useAuth0User } from '@/utils/user-utils';
 import { ClosingReasonTag } from '@/pages/case-management/components/ClosingReasonTag';
 import UserShared2LineIcon from '@/components/ui/icons/Remix/user/user-shared-2-line.react.svg';
 import { AssigneesDropdown } from '@/pages/case-management/components/AssigneesDropdown';
+import { Feature } from '@/components/AppWrapper/Providers/SettingsProvider';
+import KycRiskDisplay from '@/pages/users-item/UserDetails/KycRiskDisplay';
+import DynamicRiskDisplay from '@/pages/users-item/UserDetails/DynamicRiskDisplay';
 
 interface Props {
   caseItem: Case;
@@ -61,6 +65,14 @@ export default function SubHeader(props: Props) {
 
   return (
     <>
+      <Feature name="PULSE">
+        {user?.userId && (
+          <div className={s.risks}>
+            <KycRiskDisplay userId={user.userId} />
+            <DynamicRiskDisplay userId={user.userId} />
+          </div>
+        )}
+      </Feature>
       <Form.Layout.Label icon={<UserShared2LineIcon />} title={'Assigned to'}>
         <AssigneesDropdown
           assignments={assignments}

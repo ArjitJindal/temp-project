@@ -1,0 +1,79 @@
+@import 'src/components/ui/colors.less';
+@import 'src/components/ui/animation.less';
+
+.root {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  min-width: 200px;
+  height: 96px;
+  border-radius: 4px;
+  background: @fr-colors-v2-unknown-1;
+  padding: 8px;
+  position: relative;
+}
+
+.header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 32px;
+  width: 100%;
+}
+
+.title {
+  display: flex;
+  gap: 4px;
+  align-items: center;
+  font-weight: 600;
+  font-size: 14px;
+  white-space: nowrap;
+  color: @fr-colors-v2-gray-10;
+}
+
+.icon {
+  color: @fr-colors-v2-gray-10;
+  width: 16px;
+  height: 16px;
+  cursor: pointer;
+  flex-shrink: 0;
+}
+
+.infoIcon {
+  height: 16px;
+  width: 16px;
+  color: @fr-colors-v2-gray-10;
+  cursor: pointer;
+  flex-shrink: 0;
+}
+
+.currentValue {
+  display: flex;
+  font-weight: 400;
+  font-size: 32px;
+  height: 40px;
+  line-height: 1em;
+  z-index: 2;
+  flex: 1;
+  margin-top: 6px;
+
+  > span {
+    background: fade(@fr-colors-v2-gray-1, 50%);
+  }
+}
+
+.chart {
+  position: absolute;
+  bottom: 8px;
+  right: 8px;
+  z-index: 1;
+
+  .circleArea {
+    transition: opacity @default-animation-speed @default-animation-function;
+    opacity: 0;
+
+    &:hover {
+      opacity: 1;
+    }
+  }
+}

@@ -20,7 +20,7 @@ import TransactionStateTag from '@/components/ui/TransactionStateTag';
 import Money from '@/components/ui/Money';
 import { Currency } from '@/utils/currencies';
 import { useFeatureEnabled } from '@/components/AppWrapper/Providers/SettingsProvider';
-import RiskLevelTag from '@/components/ui/RiskLevelTag';
+import RiskLevelTag from '@/components/library/RiskLevelTag';
 
 export type DataItem = {
   index: number;

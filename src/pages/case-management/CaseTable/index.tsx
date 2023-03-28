@@ -19,7 +19,7 @@ import { useTableData } from '@/pages/case-management/CaseTable/helpers';
 import { TableItem } from '@/pages/case-management/CaseTable/types';
 import { getUserLink, getUserName, KYC_STATUSES, USER_STATES } from '@/utils/api/users';
 import UserKycStatusTag from '@/components/ui/UserKycStatusTag';
-import RiskLevelTag from '@/components/ui/RiskLevelTag';
+import RiskLevelTag from '@/components/library/RiskLevelTag';
 import TimestampDisplay from '@/components/ui/TimestampDisplay';
 import { AssigneesDropdown } from '@/pages/case-management/components/AssigneesDropdown';
 import UserStateTag from '@/components/ui/UserStateTag';

@@ -8,7 +8,6 @@ import s from './index.module.less';
 import { InternalBusinessUser, InternalConsumerUser } from '@/apis';
 import Spam2LineIcon from '@/components/ui/icons/Remix/system/spam-2-line.react.svg';
 import Calendar2LineIcon from '@/components/ui/icons/Remix/business/calendar-2-line.react.svg';
-import HospitalIcon from '@/components/ui/icons/Remix/buildings/hospital-line.react.svg';
 import * as Form from '@/components/ui/Form';
 import { Feature } from '@/components/AppWrapper/Providers/SettingsProvider';
 
@@ -36,17 +35,13 @@ export default function SubHeader(props: Props) {
             <UserStateEditor user={user} />
           </Form.Layout.Label>
         </div>
-        <div>
-          <Feature name="PULSE">
-            <Form.Layout.Label icon={<HospitalIcon />} title={'KYC Risk Score'}>
-              <KycRiskDisplay userId={user.userId} />
-            </Form.Layout.Label>
-            <Form.Layout.Label icon={<HospitalIcon />} title={'Customer risk assessment'}>
-              <DynamicRiskDisplay userId={user.userId} />
-            </Form.Layout.Label>
-          </Feature>
-        </div>
       </div>
+      <Feature name="PULSE">
+        <div className={s.risks}>
+          <KycRiskDisplay userId={user.userId} />
+          <DynamicRiskDisplay userId={user.userId} />
+        </div>
+      </Feature>
     </div>
   );
 }

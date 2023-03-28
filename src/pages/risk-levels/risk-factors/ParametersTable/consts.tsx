@@ -1,6 +1,6 @@
 import { Tag } from 'antd';
 import _ from 'lodash';
-import { useEffect } from 'react';
+import React, { useEffect } from 'react';
 import style from './style.module.less';
 import Select from '@/components/library/Select';
 import TextInput from '@/components/library/TextInput';
@@ -173,7 +173,7 @@ const currentTimeZone = Intl.DateTimeFormat().resolvedOptions().timeZone;
 
 const timeZonesDataMap = _.keyBy(timeZonesData, 'value');
 
-const USER_SEGMENT_OPTIONS = [
+export const USER_SEGMENT_OPTIONS = [
   { value: 'SOLE_PROPRIETORSHIP', label: 'Sole Proprietorship' },
   { value: 'SMB', label: 'SMB' },
   { value: 'SMALL', label: 'Small' },
