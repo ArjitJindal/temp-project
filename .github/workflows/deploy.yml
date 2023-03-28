@@ -72,6 +72,7 @@ jobs:
           cache-dependency-path: "phytoplankton-console/yarn.lock"
       - name: Deploy
         if: steps.check.outputs.triggered == 'true'
+        id: deploy
         run: |
           export QA=true
           echo "Create default AWS profile"
