@@ -25,6 +25,22 @@ export function RegistrationDetails(prop: Props) {
       <div className={s.details}>
         <Card.Row className={s.items}>
           <Card.Column>
+            <Form.Layout.Label icon={<FingerprintLineIcon />} title={'Registration Status'} />
+          </Card.Column>
+          <Card.Column className={s.all}>
+            {user.legalEntity.companyGeneralDetails?.userRegistrationStatus}
+          </Card.Column>
+        </Card.Row>
+        <Card.Row className={s.items}>
+          <Card.Column>
+            <Form.Layout.Label icon={<FingerprintLineIcon />} title={'Customer Segement'} />
+          </Card.Column>
+          <Card.Column className={s.all}>
+            {user.legalEntity.companyGeneralDetails?.userSegment}
+          </Card.Column>
+        </Card.Row>
+        <Card.Row className={s.items}>
+          <Card.Column>
             <Form.Layout.Label icon={<FingerprintLineIcon />} title={'Registration ID'} />
           </Card.Column>
           <Card.Column className={s.all}>
