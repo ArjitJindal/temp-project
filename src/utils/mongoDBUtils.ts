@@ -88,6 +88,10 @@ export const USERS_COLLECTION = (tenantId: string) => {
   return `${tenantId}-users`
 }
 
+export const ACCOUNTS_COLLECTION = (tenantId: string) => {
+  return `${tenantId}-accounts`
+}
+
 export const TRANSACTION_EVENTS_COLLECTION = (tenantId: string) => {
   return `${tenantId}-transaction-events`
 }

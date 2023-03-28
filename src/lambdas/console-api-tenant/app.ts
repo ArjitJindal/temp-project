@@ -13,6 +13,7 @@ import { getDynamoDbClientByEvent } from '@/utils/dynamodb'
 import { TenantService } from '@/services/tenants'
 import { TenantSettings } from '@/@types/openapi-internal/TenantSettings'
 import { TenantRepository } from '@/services/tenants/repositories/tenant-repository'
+import { getMongoDbClient } from '@/utils/mongoDBUtils'
 
 const ROOT_ONLY_SETTINGS: Array<keyof TenantSettings> = ['features', 'limits']
 
@@ -28,7 +29,8 @@ export const tenantsHandler = lambdaApi()(
       verifiedEmail,
       auth0Domain,
     } = event.requestContext.authorizer
-    const accountsService = new AccountsService({ auth0Domain })
+    const mongoDb = await getMongoDbClient()
+    const accountsService = new AccountsService({ auth0Domain }, { mongoDb })
 
     if (event.httpMethod === 'GET' && event.resource === '/tenants') {
       assertRole({ role, verifiedEmail }, 'root')

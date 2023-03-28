@@ -15,6 +15,7 @@ import { RoleService } from '@/services/roles'
 import { AccountPatchPayload } from '@/@types/openapi-internal/AccountPatchPayload'
 import { getDynamoDbClientByEvent } from '@/utils/dynamodb'
 import { TenantRepository } from '@/services/tenants/repositories/tenant-repository'
+import { getMongoDbClient } from '@/utils/mongoDBUtils'
 
 export const accountsHandler = lambdaApi()(
   async (
@@ -24,8 +25,8 @@ export const accountsHandler = lambdaApi()(
   ) => {
     const { userId, verifiedEmail, role, tenantId, auth0Domain } =
       event.requestContext.authorizer
-
-    const accountsService = new AccountsService({ auth0Domain })
+    const mongoDb = await getMongoDbClient()
+    const accountsService = new AccountsService({ auth0Domain }, { mongoDb })
     const rolesService = new RoleService({ auth0Domain })
     const organization = await accountsService.getAccountTenant(userId)
 

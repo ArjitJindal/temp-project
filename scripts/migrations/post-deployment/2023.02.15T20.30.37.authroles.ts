@@ -3,17 +3,20 @@ import { AccountsService, Tenant } from '@/services/accounts'
 import { RoleService } from '@/services/roles'
 import { TenantRepository } from '@/services/tenants/repositories/tenant-repository'
 import { getDynamoDbClient } from '@/utils/dynamodb'
+import { getMongoDbClient } from '@/utils/mongoDBUtils'
 
 async function migrateTenant(tenant: Tenant) {
-  if (process.env.ENV === 'local') {
+  if (!process.env.ENV?.startsWith('prod')) {
     return
   }
   const dynamoDb = await getDynamoDbClient()
-  const accountsService = new AccountsService({
-    auth0Domain: 'flagright.eu.auth.com',
-  })
+  const mongoDb = await getMongoDbClient()
+  const accountsService = new AccountsService(
+    { auth0Domain: 'flagright.eu.auth0.com' },
+    { mongoDb }
+  )
   const rolesService = new RoleService({
-    auth0Domain: 'flagright.eu.auth.com',
+    auth0Domain: 'flagright.eu.auth0.com',
   })
   const tenantRepository = new TenantRepository(tenant.id, {
     dynamoDb,

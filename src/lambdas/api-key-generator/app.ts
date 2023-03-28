@@ -20,6 +20,7 @@ import {
   WEBHOOK_COLLECTION,
   ARS_SCORES_COLLECTION,
   USER_EVENTS_COLLECTION,
+  ACCOUNTS_COLLECTION,
 } from '@/utils/mongoDBUtils'
 import { InternalTransaction } from '@/@types/openapi-internal/InternalTransaction'
 import { Case } from '@/@types/openapi-internal/Case'
@@ -345,6 +346,16 @@ export const createMongoDBCollections = async (
     await simulationResultCollection.createIndex({
       taskId: 1,
     })
+
+    try {
+      await db.createCollection(ACCOUNTS_COLLECTION(tenantId))
+    } catch (e) {
+      // ignore already exists
+    }
+
+    await db
+      .collection(ACCOUNTS_COLLECTION(tenantId))
+      .createIndex({ id: 1 }, { unique: true })
 
     try {
       await db.createCollection(KRS_SCORES_COLLECTION(tenantId))

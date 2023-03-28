@@ -7,6 +7,7 @@ import {
   AuthenticationClient,
 } from 'auth0'
 import { UserMetadata } from 'aws-sdk/clients/elastictranscoder'
+import { MongoClient } from 'mongodb'
 import { Account as ApiAccount } from '@/@types/openapi-internal/Account'
 import { logger } from '@/core/logger'
 import { AccountSettings } from '@/@types/openapi-internal/AccountSettings'
@@ -14,6 +15,7 @@ import { getAuth0Credentials } from '@/utils/auth0-utils'
 import { TenantCreationRequest } from '@/@types/openapi-internal/TenantCreationRequest'
 import { AccountPatchPayload } from '@/@types/openapi-internal/AccountPatchPayload'
 import { RoleService } from '@/services/roles'
+import { ACCOUNTS_COLLECTION } from '@/utils/mongoDBUtils'
 
 // Current TS typings for auth0  (@types/auth0@2.35.0) are outdated and
 // doesn't have definitions for users management api. Hope they will fix it soon
@@ -45,9 +47,14 @@ export type Tenant = {
 
 export class AccountsService {
   private config: { auth0Domain: string }
+  private mongoDb: MongoClient
 
-  constructor(config: { auth0Domain: string }) {
+  constructor(
+    config: { auth0Domain: string },
+    connections: { mongoDb?: MongoClient }
+  ) {
     this.config = config
+    this.mongoDb = connections.mongoDb as MongoClient
   }
 
   private static organizationToTenant(organization: Organization): Tenant {
@@ -191,6 +198,7 @@ export class AccountsService {
         email: params.email,
         account: account.id,
       })
+      await this.insertAuth0UserToMongo(tenant.id, [account])
     } catch (e) {
       if (user) {
         await managementClient.deleteUser({ id: user.user_id as string })
@@ -226,6 +234,35 @@ export class AccountsService {
     return account
   }
 
+  public async insertAuth0UserToMongo(tenantId: string, users: Account[]) {
+    const db = this.mongoDb.db()
+    await Promise.all(
+      users.map((user) =>
+        db
+          .collection<Account>(ACCOUNTS_COLLECTION(tenantId))
+          .updateOne({ id: user.id }, { $set: user }, { upsert: true })
+      )
+    )
+  }
+
+  private async deleteAuth0UserFromMongo(tenantId: string, userId: string) {
+    const db = this.mongoDb.db()
+    await db
+      .collection<Account>(ACCOUNTS_COLLECTION(tenantId))
+      .deleteOne({ id: userId })
+  }
+
+  private async updateAuth0UserInMongo(
+    tenantId: string,
+    userId: string,
+    data: Partial<Account>
+  ) {
+    const db = this.mongoDb.db()
+    await db
+      .collection<Account>(ACCOUNTS_COLLECTION(tenantId))
+      .updateOne({ id: userId }, { $set: data })
+  }
+
   async getTenantAccounts(tenant: Tenant): Promise<Account[]> {
     const managementClient: ManagementClient<AppMetadata> =
       await this.getManagementClient()
@@ -248,6 +285,7 @@ export class AccountsService {
 
     return users.map(AccountsService.userToAccount)
   }
+
   async getAccount(id: string): Promise<Account> {
     const managementClient: ManagementClient<AppMetadata> =
       await this.getManagementClient()
@@ -266,6 +304,7 @@ export class AccountsService {
     userId: string
   ): Promise<void> {
     const managementClient = new ManagementClient(await this.getAuth0Client())
+    const user = await this.getAccount(userId)
     await managementClient.organizations.removeMembers(
       { id: oldTenant.orgId },
       {
@@ -284,6 +323,12 @@ export class AccountsService {
         members: [userId],
       }
     )
+
+    await this.deleteAuth0UserFromMongo(oldTenant.id, userId)
+
+    if (user) {
+      await this.insertAuth0UserToMongo(newTenant.id, [user])
+    }
   }
 
   async deleteUser(tenant: Tenant, idToDelete: string): Promise<void> {
@@ -296,6 +341,10 @@ export class AccountsService {
       )
     }
     await managementClient.updateUser({ id: idToDelete }, { blocked: true })
+
+    await this.updateAuth0UserInMongo(tenant.id, idToDelete, {
+      blocked: true,
+    })
   }
 
   async patchUser(
@@ -328,6 +377,11 @@ export class AccountsService {
         },
       }
     )
+
+    await this.updateAuth0UserInMongo(tenant.id, accountId, {
+      role: patch.role,
+    })
+
     return AccountsService.userToAccount(patchedUser)
   }
 
@@ -437,6 +491,19 @@ export class AccountsService {
         { email, role }
       )
     }
+
+    const allAccounts = await this.getTenantAccounts({
+      id: tenantId as unknown as string,
+      name: organization.name,
+      orgId: organization.id,
+      apiAudience: organization.metadata?.apiAudience as unknown as string,
+      region: organization.metadata?.region as unknown as string,
+    })
+
+    await this.insertAuth0UserToMongo(
+      tenantId as unknown as string,
+      allAccounts
+    )
   }
 
   async checkAuth0UserExistsMultiple(emails: string[]): Promise<boolean> {

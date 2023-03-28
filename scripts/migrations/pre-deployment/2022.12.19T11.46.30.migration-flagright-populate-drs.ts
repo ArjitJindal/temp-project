@@ -40,9 +40,14 @@ async function migrateTenant(tenant: Tenant | null, timestamp: number) {
 }
 
 export const up: MigrationFn = async () => {
-  const accountsService = new AccountsService({
-    auth0Domain: 'flagright.eu.auth.com',
-  })
+  if (!process.env.ENV?.startsWith('prod')) {
+    return
+  }
+  const mongoDb = await getMongoDbClient()
+  const accountsService = new AccountsService(
+    { auth0Domain: 'flagright.eu.auth0.com' },
+    { mongoDb }
+  )
   const flagrightTenant = await accountsService.getTenantById('flagright')
   await migrateTenant(flagrightTenant, 1671446984000)
 }

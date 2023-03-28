@@ -15,6 +15,7 @@ import { AccountsService, Tenant } from '@/services/accounts'
 import { createNewApiKeyForTenant } from '@/services/api-key'
 import { checkMultipleEmails } from '@/utils/helpers'
 import { getAuth0Domain } from '@/utils/auth0-utils'
+import { getMongoDbClient } from '@/utils/mongoDBUtils'
 
 export type TenantInfo = {
   tenant: Tenant
@@ -40,6 +41,7 @@ export class TenantService {
 
   public static getAllTenants = async (): Promise<Array<TenantInfo>> => {
     const tenantInfos: Array<TenantInfo> = []
+    const mongoDb = await getMongoDbClient()
     const auth0TenantConfigs = getAuth0TenantConfigs(
       process.env.ENV as 'local' | 'dev' | 'sandbox' | 'prod'
     )
@@ -48,9 +50,7 @@ export class TenantService {
         auth0TenantConfig.tenantName,
         auth0TenantConfig.region
       )
-      const accountsService = new AccountsService({
-        auth0Domain,
-      })
+      const accountsService = new AccountsService({ auth0Domain }, { mongoDb })
       tenantInfos.push(
         ...(await accountsService.getTenants()).map((tenant) => ({
           tenant,
@@ -68,9 +68,10 @@ export class TenantService {
       throw new BadRequest('Tenant name, website and website are required')
     }
 
-    const accountsService = new AccountsService({
-      auth0Domain: tenantData.auth0Domain,
-    })
+    const accountsService = new AccountsService(
+      { auth0Domain: tenantData.auth0Domain },
+      { mongoDb: this.mongoDb }
+    )
 
     const existingOrganization = await accountsService.getOrganization(
       tenantData.tenantName

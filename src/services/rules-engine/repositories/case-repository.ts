@@ -10,6 +10,7 @@ import _ from 'lodash'
 import { NotFound } from 'http-errors'
 import { DynamoDBDocumentClient } from '@aws-sdk/lib-dynamodb'
 import {
+  ACCOUNTS_COLLECTION,
   CASES_COLLECTION,
   COUNTER_COLLECTION,
   paginatePipeline,
@@ -493,6 +494,8 @@ export class CaseRepository {
     const sortUserCaseUserName = params.sortField === '_userName'
 
     const sortCaseTransactionsHit = params.sortField === '_transactionsHit'
+    const sortAssignments = params.sortField === '_assignmentName'
+
     if (params?.includeTransactionUsers) {
       // NOTE: we don't store originUser/destinationUser in caseTransactions. Sorting by
       // user name will not be performant
@@ -618,9 +621,27 @@ export class CaseRepository {
           },
         ]
       )
+    } else if (sortAssignments) {
+      preLimitPipeline.push(
+        ...[
+          {
+            $lookup: {
+              from: ACCOUNTS_COLLECTION(this.tenantId),
+              localField: 'assignments.assigneeUserId',
+              foreignField: 'id',
+              as: '_assignments',
+            },
+          },
+          {
+            $set: {
+              _assignmentName: { $toLower: { $first: '$_assignments.name' } },
+              _assignments: false,
+            },
+          },
+        ]
+      )
     }
 
-    // Always sort by _id to have consistent sort when the sortfield is the same
     preLimitPipeline.push({ $sort: { [sortField]: sortOrder, _id: 1 } })
     preLimitPipeline.push({
       $project: {
@@ -628,6 +649,7 @@ export class CaseRepository {
         _destinationUserName: false,
         _userName: false,
         _lastStatusChangeTimestamp: false,
+        _assignmentName: false,
       },
     })
 
@@ -832,7 +854,7 @@ export class CaseRepository {
     }
     if (
       params.filterAssignmentsIds != null &&
-      params.filterAssignmentsIds.length > 0
+      params.filterAssignmentsIds?.length
     ) {
       conditions.push({
         'alert.assignments': {
@@ -896,6 +918,7 @@ export class CaseRepository {
         return caseItem
       })
     }
+
     return { total: await total, data: await cursor.toArray() }
   }
 
