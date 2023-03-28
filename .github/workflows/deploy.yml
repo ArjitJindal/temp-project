@@ -84,7 +84,8 @@ jobs:
 
           comment="${{ github.event.comment.body }}"
           commentArgs=($comment)
-          export TARPON_BRANCH=${commentArgs[1]}
+          TARPON_BRANCH_UNTRIMMED=${commentArgs[1]}
+          export TARPON_BRANCH=${TARPON_BRANCH_UNTRIMMED##*( )}
           cd tarpon
           if [ -n "$TARPON_BRANCH" ]
           then
