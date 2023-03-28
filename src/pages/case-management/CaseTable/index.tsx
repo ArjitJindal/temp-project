@@ -253,6 +253,8 @@ export default function CaseTable(props: Props) {
         ellipsis: true,
         fixed: 'right',
         onCell: onCaseCell,
+        dataIndex: '_assignmentName',
+        sorter: true,
         render: (dom, entity) => {
           return (
             <AssigneesDropdown
