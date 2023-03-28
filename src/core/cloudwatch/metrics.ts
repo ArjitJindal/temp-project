@@ -5,6 +5,7 @@ import {
   PutMetricDataCommand,
 } from '@aws-sdk/client-cloudwatch'
 import _ from 'lodash'
+import { logger } from '../logger'
 
 export type Metric = {
   namespace: string
@@ -70,9 +71,17 @@ export const publishMetrics = async (metrics: Array<MetricsData>) => {
     }
   )
 
+  logger.info(`Metric data: ${JSON.stringify(metricData)}`)
+
   const metricsByNamespace = _.groupBy(metricData, 'Namespace')
 
   for (const [namespace, metrics] of Object.entries(metricsByNamespace)) {
+    logger.info(
+      `Publishing metrics to CloudWatch: ${JSON.stringify(
+        metrics
+      )} for namespace: ${namespace}`
+    )
+
     await cloudWatchClient.send(
       new PutMetricDataCommand({
         MetricData: metrics,

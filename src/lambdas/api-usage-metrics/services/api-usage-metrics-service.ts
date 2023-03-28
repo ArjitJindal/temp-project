@@ -2,6 +2,7 @@ import { DynamoDBDocumentClient } from '@aws-sdk/lib-dynamodb'
 import { MongoClient } from 'mongodb'
 import { Dimension } from '@aws-sdk/client-cloudwatch'
 import _ from 'lodash'
+import { logger } from '@/core/logger'
 import { METRICS_COLLECTION } from '@/utils/mongoDBUtils'
 import { RuleInstanceRepository } from '@/services/rules-engine/repositories/rule-instance-repository'
 import dayjs from '@/utils/dayjs'
@@ -102,6 +103,9 @@ export class ApiUsageMetricsService {
   }
 
   private getDimensions(tenantInfo: TenantInfo): Dimension[] {
+    logger.info(
+      `Tenant Id: ${tenantInfo.tenant.id}, Tenant Name: ${tenantInfo.tenant.name}, Region: ${process.env.AWS_REGION}`
+    )
     return [
       {
         Name: 'Tenant Id',
@@ -124,6 +128,10 @@ export class ApiUsageMetricsService {
     const usersCount = await this.getUsersCount()
     const activeRuleInstancesCount = await this.getAllActiveRuleInstancesCount()
 
+    logger.info(
+      `Transactions count: ${transactionsCount}, Transaction events count: ${transactionEventsCount}, Users count: ${usersCount}, Active rule instances count: ${activeRuleInstancesCount}`
+    )
+
     return [
       [TRANSACTIONS_COUNT_METRIC, transactionsCount],
       [TRANSACTION_EVENTS_COUNT_METRIC, transactionEventsCount],
@@ -144,6 +152,8 @@ export class ApiUsageMetricsService {
       }
     })
 
+    logger.info(`Metrics data: ${JSON.stringify(metricsData)}`)
+
     await publishMetrics(metricsData)
     await this.pushMetricsToMongoDb(
       _.fromPairs(values.map(([metric, value]) => [metric.name, value]))
@@ -157,6 +167,10 @@ export class ApiUsageMetricsService {
     const metricsCollectionName = METRICS_COLLECTION(this.tenantId)
     const metricsCollection = mongoDb.collection(metricsCollectionName)
 
+    logger.info(
+      `Pushing metrics to MongoDB collection: ${metricsCollectionName}`
+    )
+
     const metric = Object.keys(data).map((key) => {
       return {
         name: key,
@@ -166,6 +180,8 @@ export class ApiUsageMetricsService {
         collectedTimestamp: Date.now(),
       }
     })
+
+    logger.info(`Metrics MongoDB document: ${JSON.stringify(metric)}`)
 
     await metricsCollection.insertMany(metric)
   }
