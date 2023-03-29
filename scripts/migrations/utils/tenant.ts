@@ -9,17 +9,14 @@ const config = getConfig()
 export async function migrateAllTenants(
   migrationCallback: (tenant: Tenant, auth0Domain: string) => Promise<void>
 ) {
-  const tenantInfos = await TenantService.getAllTenants()
-  const targetTenantInfos = tenantInfos.filter(
-    (tenantInfo) =>
-      config.stage !== 'prod' || tenantInfo.tenant.region === config.region
-  )
-  if (targetTenantInfos.length === 0) {
+  const tenantInfos = await TenantService.getAllTenants(config.region)
+
+  if (tenantInfos.length === 0) {
     console.warn('No tenants found for running the migration!')
     return
   }
 
-  for (const tenantInfo of targetTenantInfos) {
+  for (const tenantInfo of tenantInfos) {
     console.info(
       `Migrating tenant ${tenantInfo.tenant.name} (ID: ${tenantInfo.tenant.id})`
     )

@@ -5,7 +5,10 @@ import { getMongoDbClient } from '@/utils/mongoDBUtils'
 import { TenantService } from '@/services/tenants'
 
 export const apiUsageMetricsHandler = lambdaConsumer()(async () => {
-  const tenantInfos = await TenantService.getAllTenants()
+  const tenantInfos = await TenantService.getAllTenants(
+    process.env.REGION as string
+  )
+
   const mongoDb = await getMongoDbClient()
   const dynamoDb = await getDynamoDbClient()
 

@@ -5,6 +5,7 @@ import {
   PutMetricDataCommand,
 } from '@aws-sdk/client-cloudwatch'
 import _ from 'lodash'
+import unidecode from 'unidecode'
 import { logger } from '../logger'
 
 export type Metric = {
@@ -62,7 +63,10 @@ export const publishMetrics = async (metrics: Array<MetricsData>) => {
     ({ metric, value, dimensions }) => {
       return {
         MetricName: metric.name,
-        Dimensions: dimensions,
+        Dimensions: dimensions?.map((dimension) => ({
+          Name: unidecode(dimension.Name ?? ''),
+          Value: unidecode(dimension.Value ?? ''),
+        })),
         Timestamp: new Date(),
         Unit: 'Count',
         Value: value,

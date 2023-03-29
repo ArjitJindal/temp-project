@@ -39,7 +39,9 @@ export class TenantService {
     this.tenantId = tenantId
   }
 
-  public static getAllTenants = async (): Promise<Array<TenantInfo>> => {
+  public static getAllTenants = async (
+    region?: string
+  ): Promise<TenantInfo[]> => {
     const tenantInfos: Array<TenantInfo> = []
     const mongoDb = await getMongoDbClient()
     const auth0TenantConfigs = getAuth0TenantConfigs(
@@ -58,7 +60,11 @@ export class TenantService {
         }))
       )
     }
-    return tenantInfos
+
+    return tenantInfos.filter(
+      (tenantInfo) =>
+        process.env.ENV !== 'prod' || tenantInfo.tenant.region === region
+    )
   }
 
   async createTenant(
