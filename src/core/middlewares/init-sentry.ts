@@ -1,4 +1,5 @@
 import * as Sentry from '@sentry/serverless'
+import * as createError from 'http-errors'
 
 import {
   APIGatewayEventLambdaAuthorizerContext,
@@ -40,8 +41,14 @@ export const initSentry =
         }) as any,
       ],
 
-      beforeSend(event) {
+      beforeSend(event, hint) {
         // If this is a normal error and is the same as the last.
+        const error = hint?.originalException
+
+        if (error instanceof createError.HttpError && error.statusCode < 500) {
+          return null
+        }
+
         if (
           lastEvent &&
           event.extra?.stack &&
