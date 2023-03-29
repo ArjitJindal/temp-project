@@ -39,8 +39,7 @@ export default function AIRiskDisplay() {
   return (
     <RiskScoreDisplay
       values={data.map((x) => ({
-        value: x.drsScore,
-        riskLevel: x?.derivedRiskLevel,
+        score: x.drsScore,
         createdAt: x.createdAt,
         components: x.components,
       }))}

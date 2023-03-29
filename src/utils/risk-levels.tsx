@@ -1,4 +1,7 @@
-import { RiskLevel as ApiRiskLevel } from '@/apis';
+import {
+  RiskClassificationScore as ApiRiskClassificationScore,
+  RiskLevel as ApiRiskLevel,
+} from '@/apis';
 import {
   COLORS_V2_GRAY_10,
   COLORS_V2_RISK_LEVEL_BASE_HIGH,
@@ -12,6 +15,10 @@ import {
   COLORS_V2_RISK_LEVEL_BG_VERY_HIGH,
   COLORS_V2_RISK_LEVEL_BG_VERY_LOW,
 } from '@/components/ui/colors';
+import { useQuery } from '@/utils/queries/hooks';
+import { useApi } from '@/api';
+import { AsyncResource, getOr } from '@/utils/asyncResource';
+import { RISK_CLASSIFICATION_VALUES } from '@/utils/queries/keys';
 
 export const RISK_LEVELS: ApiRiskLevel[] = ['VERY_LOW', 'LOW', 'MEDIUM', 'HIGH', 'VERY_HIGH'];
 
@@ -58,3 +65,24 @@ export const RISK_LEVEL_COLORS: { [key in RiskLevel]: RiskLevelColors } = {
     text: COLORS_V2_GRAY_10,
   },
 } as const;
+
+export function useRiskClassificationScores(): AsyncResource<ApiRiskClassificationScore[]> {
+  const api = useApi();
+  const riskValuesQueryResults = useQuery(RISK_CLASSIFICATION_VALUES(), () =>
+    api.getPulseRiskClassification(),
+  );
+  return riskValuesQueryResults.data;
+}
+
+export function useRiskLevel(score: number): RiskLevel | null {
+  const classificationScores = useRiskClassificationScores();
+  for (const { lowerBoundRiskScore, upperBoundRiskScore, riskLevel } of getOr(
+    classificationScores,
+    [],
+  )) {
+    if (score >= lowerBoundRiskScore && score <= upperBoundRiskScore) {
+      return riskLevel;
+    }
+  }
+  return null;
+}

@@ -3,7 +3,7 @@ import cn from 'clsx';
 import { ValueItem } from '../types';
 import s from './index.module.less';
 import InformationLineIcon from '@/components/ui/icons/Remix/system/information-line.react.svg';
-import { RISK_LEVEL_COLORS, RiskLevel } from '@/utils/risk-levels';
+import { RISK_LEVEL_COLORS, RiskLevel, useRiskLevel } from '@/utils/risk-levels';
 import RiskLevelTag from '@/components/library/RiskLevelTag';
 import { useId } from '@/utils/hooks';
 
@@ -17,10 +17,12 @@ interface Props {
 export default function MainPanel(props: Props) {
   const { title, values, icon, onClickInfo } = props;
   const sortedItems = useMemo(() => sortByDate(values), [values]);
-  const sortedValues = useMemo(() => sortedItems.map(({ value }) => value), [sortedItems]);
+  const sortedScores = useMemo(() => sortedItems.map(({ score }) => score), [sortedItems]);
   const lastItem = sortedItems[values.length - 1];
-  const currentValue: number | null = lastItem?.value;
-  const riskLevel = lastItem?.riskLevel;
+  const currentScore: number | null = lastItem?.score;
+  const manualRiskLevel = lastItem?.manualRiskLevel;
+  const derivedRiskLevel = useRiskLevel(currentScore);
+  const currentRiskLevel = manualRiskLevel ?? derivedRiskLevel ?? undefined;
   return (
     <div className={cn(s.root)}>
       <div className={s.header}>
@@ -38,10 +40,10 @@ export default function MainPanel(props: Props) {
         )}
       </div>
       <div className={s.currentValue}>
-        <span>{currentValue?.toFixed(2) ?? 'N/A'}</span>
+        <span>{currentScore?.toFixed(2) ?? 'N/A'}</span>
       </div>
-      <div>{riskLevel && <RiskLevelTag level={riskLevel} />}</div>
-      {sortedValues.length > 1 && <Chart values={sortedValues} riskLevel={riskLevel} />}
+      <div>{currentRiskLevel && <RiskLevelTag level={currentRiskLevel} />}</div>
+      {sortedScores.length > 1 && <Chart riskLevel={currentRiskLevel} values={sortedScores} />}
     </div>
   );
 }

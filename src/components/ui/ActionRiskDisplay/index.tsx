@@ -27,8 +27,7 @@ export default function ActionRiskDisplay({ transactionId }: Props) {
             result?.arsScore
               ? [
                   {
-                    value: result.arsScore,
-                    riskLevel: result.riskLevel,
+                    score: result.arsScore,
                     createdAt: result.createdAt,
                     components: result.components,
                   },

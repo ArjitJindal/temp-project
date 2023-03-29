@@ -1,9 +1,9 @@
-import { RiskLevel } from '@/utils/risk-levels';
 import { RiskScoreComponent } from '@/apis';
+import { RiskLevel } from '@/utils/risk-levels';
 
 export interface ValueItem {
+  score: number;
   createdAt: number;
-  value: number;
-  riskLevel?: RiskLevel;
+  manualRiskLevel?: RiskLevel;
   components?: Array<RiskScoreComponent>;
 }

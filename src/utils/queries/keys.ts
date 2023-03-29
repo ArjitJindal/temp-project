@@ -159,3 +159,4 @@ export const ALERT_ITEM_COMMENTS = (alertId: string): QueryKey => [
   'comments',
 ];
 export const DEVICE_DATA_USER = (userId?: string): QueryKey => ['device-data', 'user', userId];
+export const RISK_CLASSIFICATION_VALUES = (): QueryKey => ['risk-classification-values'];

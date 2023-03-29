@@ -15,7 +15,7 @@ export default function (): JSX.Element {
               title="CRA risk score"
               icon={<User3LineIcon />}
               values={[32.99, 51.19, 10.28, 15.96, 40.95].map((value, x) => ({
-                value,
+                score: value,
                 riskLevel: riskLevel,
                 createdAt: x,
                 components: [
@@ -94,8 +94,7 @@ export default function (): JSX.Element {
           icon={<User3LineIcon />}
           values={[
             {
-              value: 32.99,
-              riskLevel: 'MEDIUM',
+              score: 32.99,
               createdAt: 0,
             },
           ]}

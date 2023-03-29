@@ -20,8 +20,8 @@ export default function DynamicRiskDisplay({ userId }: Props) {
       {(result) => (
         <RiskScoreDisplay
           values={result?.map((x) => ({
-            value: x.drsScore,
-            riskLevel: x?.manualRiskLevel ?? x?.derivedRiskLevel,
+            score: x.drsScore,
+            manualRiskLevel: x?.manualRiskLevel,
             createdAt: x.createdAt,
             components: x.components,
           }))}

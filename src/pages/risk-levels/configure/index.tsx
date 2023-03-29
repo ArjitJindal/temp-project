@@ -2,7 +2,7 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import { useLocalStorageState } from 'ahooks';
 import RiskClassification from './RiskClassification';
 import { SimulateRiskClassification } from './SimulateRiskClassification';
-import { State, parseApiState } from './RiskClassificationTable';
+import { parseApiState, State } from './RiskClassificationTable';
 import { useI18n } from '@/locales';
 import { Feature } from '@/components/AppWrapper/Providers/SettingsProvider';
 import { usePageViewTracker } from '@/utils/tracker';
@@ -10,9 +10,10 @@ import SimulationPageWrapper, {
   SimulationPageWrapperRef,
 } from '@/components/SimulationPageWrapper';
 import { useApi } from '@/api';
-import { useQuery } from '@/utils/queries/hooks';
 import { getOr, isFailed, isSuccess } from '@/utils/asyncResource';
 import { message } from '@/components/library/Message';
+import { RISK_CLASSIFICATION_VALUES } from '@/utils/queries/keys';
+import { useQuery } from '@/utils/queries/hooks';
 
 export default function () {
   const i18n = useI18n();
@@ -32,7 +33,7 @@ export default function () {
   const api = useApi();
   const [state, setState] = useState<State | null>(null);
   const [newState, setNewState] = useState<State | null>(null);
-  const riskValuesQueryResults = useQuery(['RiskClassificationValues'], () =>
+  const riskValuesQueryResults = useQuery(RISK_CLASSIFICATION_VALUES(), () =>
     api.getPulseRiskClassification(),
   );
 
