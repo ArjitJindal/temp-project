@@ -51,7 +51,7 @@ async function getService(tenantId: string) {
 const TEST_USER_1 = getTestUser({ userId: 'test_user_id_1' })
 const TEST_USER_2 = getTestUser({ userId: 'test_user_id_2' })
 
-describe('User cases', () => {
+describe('Cases', () => {
   describe('Run #1', () => {
     const TEST_TENANT_ID = getTestTenantId()
     setup(TEST_TENANT_ID)
@@ -532,6 +532,71 @@ describe('User cases', () => {
       expect(userCase.relatedCases).toBeUndefined()
     })
   })
+
+  describe('Run #11', () => {
+    const TEST_TENANT_ID = getTestTenantId()
+    setup(TEST_TENANT_ID, {
+      hitDirections: ['ORIGIN', 'DESTINATION'],
+      rulesCount: 2,
+    })
+    test('New transaction should be put into the correct alert', async () => {
+      const caseCreationService = await getService(TEST_TENANT_ID)
+
+      const transactions = [
+        getTestTransaction({
+          transactionId: 'transaction-1',
+          originUserId: TEST_USER_1.userId,
+          destinationUserId: undefined,
+        }),
+        getTestTransaction({
+          transactionId: 'transaction-2',
+          originUserId: TEST_USER_1.userId,
+          destinationUserId: undefined,
+        }),
+      ]
+
+      const results = await bulkVerifyTransactions(TEST_TENANT_ID, transactions)
+      expect(results.length).toEqual(2)
+      results[0].hitRules = [results[0].hitRules[0]]
+      results[1].hitRules = [results[1].hitRules[1]]
+      await caseCreationService.handleTransaction({
+        ...transactions[0],
+        ...results[0],
+      })
+      const cases = await caseCreationService.handleTransaction({
+        ...transactions[1],
+        ...results[1],
+      })
+      expect(cases.length).toEqual(1)
+      expect(cases[0].alerts).toHaveLength(2)
+      expect(cases[0].alerts).toEqual([
+        expect.objectContaining({
+          alertStatus: 'OPEN',
+          ruleId: 'R-0',
+          ruleName: 'test rule name',
+          ruleDescription: 'test rule description.',
+          ruleAction: 'FLAG',
+          numberOfTransactionsHit: 1,
+          transactionIds: ['transaction-1'],
+          priority: 'P1',
+          alertId: 'A-1',
+          caseId: 'C-1',
+        }),
+        expect.objectContaining({
+          alertStatus: 'OPEN',
+          ruleId: 'R-1',
+          ruleName: 'test rule name',
+          ruleDescription: 'test rule description.',
+          ruleAction: 'FLAG',
+          numberOfTransactionsHit: 1,
+          transactionIds: ['transaction-2'],
+          priority: 'P1',
+          alertId: 'A-2',
+          caseId: 'C-1',
+        }),
+      ])
+    })
+  })
 })
 
 describe('Run #1', () => {
@@ -658,6 +723,7 @@ function setup(
   for (let i = 0; i < (parameters.rulesCount ?? 1); i += 1) {
     setUpRulesHooks(tenantId, [
       {
+        id: `R-${i}`,
         type: 'TRANSACTION',
         ruleImplementationName: 'tests/test-always-hit-rule',
         parameters: {

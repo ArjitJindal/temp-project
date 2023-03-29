@@ -2,14 +2,25 @@ import { getConfig } from './config'
 import { Tenant } from '@/services/accounts'
 import { getDynamoDbClient } from '@/utils/dynamodb'
 import { TenantRepository } from '@/services/tenants/repositories/tenant-repository'
-import { TenantService } from '@/services/tenants'
+import { TenantInfo, TenantService } from '@/services/tenants'
 
 const config = getConfig()
 
 export async function migrateAllTenants(
   migrationCallback: (tenant: Tenant, auth0Domain: string) => Promise<void>
 ) {
-  const tenantInfos = await TenantService.getAllTenants(config.region)
+  const tenantInfos =
+    config.stage === 'local'
+      ? [
+          {
+            tenant: {
+              id: 'flagright',
+              name: 'Flagright',
+            },
+            auth0Domain: 'dev-flagright.eu.auth0.com',
+          } as TenantInfo,
+        ]
+      : await TenantService.getAllTenants(config.region)
 
   if (tenantInfos.length === 0) {
     console.warn('No tenants found for running the migration!')

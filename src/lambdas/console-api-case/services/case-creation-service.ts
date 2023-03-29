@@ -202,6 +202,14 @@ export class CaseCreationService {
     latestTransactionArrivalTimestamp: number
   ): Alert[] {
     return alerts.map((alert) => {
+      const transactionBelongsToAlert = Boolean(
+        transaction.hitRules.find(
+          (rule) => rule.ruleInstanceId === alert.ruleInstanceId
+        )
+      )
+      if (!transactionBelongsToAlert) {
+        return alert
+      }
       const txnSet = new Set(alert.transactionIds).add(
         transaction.transactionId
       )
@@ -307,7 +315,7 @@ export class CaseCreationService {
     },
     ruleInstances: ReadonlyArray<RuleInstance>
   ): Promise<Case[]> {
-    logger.info(`Hit directions to create or update user cases`, {
+    logger.info(`Hit directions to create or update cases`, {
       hitDirections: hitUsers.map((hitUser) => hitUser.direction),
       hitUserIds: hitUsers.map((hitUser) => hitUser.user.userId),
     })
@@ -378,7 +386,7 @@ export class CaseCreationService {
             alerts,
           })
         } else {
-          logger.info('Create a new user case for a transaction')
+          logger.info('Create a new case for a transaction')
           result.push({
             ...this.getNewCase(hitUser.direction, hitUser.user),
             createdTimestamp: params.createdTimestamp,
@@ -418,7 +426,7 @@ export class CaseCreationService {
 
     const now = Date.now()
 
-    logger.info(`Updating user cases`, {
+    logger.info(`Updating cases`, {
       transactionId: transaction.transactionId,
     })
     const hitUsers: Array<{
