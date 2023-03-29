@@ -792,6 +792,19 @@ export class CaseRepository {
         },
       },
       {
+        $lookup: {
+          from: ACCOUNTS_COLLECTION(this.tenantId),
+          localField: 'alert.assignments.assigneeUserId',
+          foreignField: 'id',
+          as: '_assignee',
+        },
+      },
+      {
+        $set: {
+          'alert._assigneeName': { $toLower: { $first: '$_assignee.name' } },
+        },
+      },
+      {
         $sort: {
           [`alert.${params.sortField ?? '_id'}`]:
             params?.sortOrder === 'ascend' ? 1 : -1,
@@ -865,6 +878,13 @@ export class CaseRepository {
         },
       })
     }
+
+    pipeline.push({
+      $project: {
+        _assignee: 0,
+        'alert._assigneeName': 0,
+      },
+    })
 
     return pipeline
   }
