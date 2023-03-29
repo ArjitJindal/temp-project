@@ -3400,6 +3400,10 @@ components:
           ruleImplementationName: code-filename
           createdAt: 0
           updatedAt: 0
+          typology: Typology
+          typologyGroup: Typology group
+          typologyDescription: Typology description
+          source: Source
       properties:
         id:
           type: string
@@ -3446,6 +3450,14 @@ components:
             type: string
         defaultFalsePositiveCheckEnabled:
           type: boolean
+        typology:
+          type: string
+        typologyGroup:
+          type: string
+        typologyDescription:
+          type: string
+        source:
+          type: string
       required:
         - id
         - type
@@ -3528,6 +3540,14 @@ components:
           type: number
         falsePositiveCheckEnabled:
           type: boolean
+        typology:
+          type: string
+        typologyGroup:
+          type: string
+        typologyDescription:
+          type: string
+        source:
+          type: string
       required:
         - ruleId
         - casePriority

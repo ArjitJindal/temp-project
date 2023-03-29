@@ -62,6 +62,12 @@ const _TRANSACTION_RULES_LIBRARY: Array<
     labels: [],
     defaultNature: 'AML',
     defaultCasePriority: 'P1',
+    typology: 'Account activity, inconsistent with customer profile',
+    typologyGroup: 'Unusual Behaviour',
+    typologyDescription:
+      'Typologies that identify transactional activity characteristics that are unexpected or uncommon for a customer.',
+    source:
+      'Guidelines to MAS Notice PS-N01 On Prevention of Money Laundering and Countering the Financing of Terrorism',
   }),
   () => {
     const defaultParameters: TransactionAmountRuleParameters = {
@@ -83,6 +89,12 @@ const _TRANSACTION_RULES_LIBRARY: Array<
       defaultNature: 'AML',
       defaultCasePriority: 'P1',
       defaultFalsePositiveCheckEnabled: true,
+      typology: 'Account activity, inconsistent with customer profile',
+      typologyGroup: 'Unusual Behavior',
+      typologyDescription:
+        'Typologies that identify transactional activity characteristics that are unexpected or uncommon for a customer.',
+      source:
+        'Guidelines to MAS Notice PS-N01 On Prevention of Money Laundering and Countering the Financing of Terrorism',
     }
   },
   () => {
@@ -103,6 +115,12 @@ const _TRANSACTION_RULES_LIBRARY: Array<
       labels: [],
       defaultNature: 'AML',
       defaultCasePriority: 'P1',
+      typology: 'Account activity, inconsistent with customer profile ',
+      typologyGroup: 'Unusual Behaviour',
+      typologyDescription:
+        'Typologies that identify transactional activity characteristics that are unexpected or uncommon for a customer.',
+      source:
+        'Guidelines to MAS Notice PS-N01 On Prevention of Money Laundering and Countering the Financing of Terrorism',
     }
   },
   () => {
@@ -123,6 +141,12 @@ const _TRANSACTION_RULES_LIBRARY: Array<
       labels: [],
       defaultNature: 'AML',
       defaultCasePriority: 'P1',
+      typology: 'Account activity, inconsistent with customer profile',
+      typologyGroup: 'Unusual Behavior',
+      typologyDescription:
+        'Typologies that identify transactional activity characteristics that are unexpected or uncommon for a customer.',
+      source:
+        'Guidelines to MAS Notice PS-N01 On Prevention of Money Laundering and Countering the Financing of Terrorism',
     }
   },
   () => {
@@ -143,6 +167,13 @@ const _TRANSACTION_RULES_LIBRARY: Array<
       labels: [],
       defaultNature: 'AML',
       defaultCasePriority: 'P1',
+      typology:
+        'Account activity, inconsistent with customer profile or Initial account was opened by a money mule ',
+      typologyGroup: 'Money Mules Unusual Behavior',
+      typologyDescription:
+        'UK National risk assessment of money laundering and terrorist financing 2021',
+      source:
+        '1) UK National risk assessment of money laundering and terrorist financing 2020 Guidelines to 2) MAS Notice PS-N01 On Prevention of Money Laundering and Countering the Financing of Terrorism',
     }
   },
   () => {
@@ -163,6 +194,12 @@ const _TRANSACTION_RULES_LIBRARY: Array<
       labels: [],
       defaultNature: 'AML',
       defaultCasePriority: 'P1',
+      typology: 'Account activity, inconsistent with customer profile',
+      typologyGroup: 'Unusual Behavior',
+      typologyDescription:
+        "The customer uses a currency that does not fit with their profile or what is known about the customer's business.",
+      source:
+        'Guidelines to MAS Notice PS-N01 On Prevention of Money Laundering and Countering the Financing of Terrorism',
     }
   },
   () => {
@@ -189,6 +226,12 @@ const _TRANSACTION_RULES_LIBRARY: Array<
       labels: [],
       defaultNature: 'AML',
       defaultCasePriority: 'P1',
+      typology: 'Avoiding reporting limits',
+      typologyGroup: 'Structuring',
+      typologyDescription:
+        'Conceal or disguise significant transactions to avoid disclosure for record purposes by executing frequent or several transactions such that each transaction by itself is below reporting thresholds',
+      source:
+        '1) Guidelines to MAS Notice PS-N01 On Prevention of Money Laundering and Countering the Financing of Terrorism 2) AUSTRAC:Stored value cards: money laundering and terrorism financing risk assessment 2017',
     }
   },
   () => {
@@ -214,6 +257,10 @@ const _TRANSACTION_RULES_LIBRARY: Array<
       labels: [],
       defaultNature: 'AML',
       defaultCasePriority: 'P1',
+      typology: '',
+      typologyGroup: '',
+      typologyDescription: '',
+      source: '',
     }
   },
   () => {
@@ -238,6 +285,14 @@ const _TRANSACTION_RULES_LIBRARY: Array<
       labels: [],
       defaultNature: 'AML',
       defaultCasePriority: 'P1',
+      typology:
+        'Hidden / Unusual Relationships, Money Mules, Scams, Terrorist Financing',
+      typologyGroup:
+        'Hidden / Unusual Relationships, Money Mules, Scams (Romance, Nigerian Price, Inheritance and etc.), Terrorist Financing',
+      typologyDescription:
+        'Typologies identifying entities with shared connections or which may signify attempts to disguise or hide relationships. Money Muling activity of wittingly or unwittingly performing a transaction for the benefit of 3rd parties to disguise the true source of funds.',
+      source:
+        '1) UK National risk assessment of money laundering and terrorist financing 2021 2) Singapore. Stored value cards: money laundering and terrorism financing risk assessment 2017',
     }
   },
   () => {
@@ -263,6 +318,14 @@ const _TRANSACTION_RULES_LIBRARY: Array<
       labels: [],
       defaultNature: 'AML',
       defaultCasePriority: 'P1',
+      typology:
+        'Hidden / Unusual Relationships, Money Mules, Scams, Terrorist Financing',
+      typologyGroup:
+        'Hidden / Unusual Relationships, Money Mules, Scams (Romance, Nigerian Price, Inheritance and etc.), Terrorist Financing',
+      typologyDescription:
+        'Typologies identifying entities with shared connections or which may signify attempts to disguise or hide relationships. Money Muling activity of wittingly or unwittingly performing a transaction for the benefit of 3rd parties to disguise the true source of funds.',
+      source:
+        '1) UK National risk assessment of money laundering and terrorist financing 2021 2) Singapore. Stored value cards: money laundering and terrorism financing risk assessment 2017',
     }
   },
   () => {
@@ -285,6 +348,11 @@ const _TRANSACTION_RULES_LIBRARY: Array<
       labels: [],
       defaultNature: 'FRAUD',
       defaultCasePriority: 'P1',
+      typology: 'Prohibited merchants due to financial crime risks',
+      typologyGroup: 'Internal Blacklists',
+      typologyDescription:
+        'Blocking transactions with certain merchants which are outside of risk appetite of the organization',
+      source: 'Prohibited countries policy, Sanctions Policy',
     }
   },
   () => {
@@ -318,6 +386,12 @@ const _TRANSACTION_RULES_LIBRARY: Array<
       labels: [],
       defaultNature: 'AML',
       defaultCasePriority: 'P1',
+      typology:
+        'Prohibited countries of cards issued due to financial crime risks',
+      typologyGroup: 'Internal Blacklists',
+      typologyDescription:
+        'Blocking transactions with certain card issued in countries which are outside of risk appetite of the organization',
+      source: 'Prohibited countries policy, Sanctions Policy',
     }
   },
   () => {
@@ -352,6 +426,13 @@ const _TRANSACTION_RULES_LIBRARY: Array<
       labels: [],
       defaultNature: 'AML',
       defaultCasePriority: 'P1',
+      typology:
+        'Transactions with high-risk industries, potentially sanctioned entities, for potentially illicit purposes',
+      typologyGroup: 'Internal Blacklists',
+      typologyDescription:
+        "Identifying risky transactions by screening the reference field which might be outside of firm's risk appetite",
+      source:
+        'Prohibited countries policy, Prohibited industries Policy, Sanctions Policy',
     }
   },
   () => {
@@ -377,6 +458,12 @@ const _TRANSACTION_RULES_LIBRARY: Array<
       labels: [],
       defaultNature: 'FRAUD',
       defaultCasePriority: 'P1',
+      typology: 'Money Mules, Acquiring Fraud, Layering of funds',
+      typologyGroup: 'Money Mules, Acquiring Fraud, Layering',
+      typologyDescription:
+        'Money Muling activity of wittingly or unwittingly performing a transaction for the benefit of 3rd parties to disguise the true source of funds. Acquiring fraud - receiving money that are proceeds of fraud ( typically top-up from stolen card and/or APP fraud). Layering - disguising the true nature of transactions via numerous transfers between financial institutions.',
+      source:
+        'UK National risk assessment of money laundering and terrorist financing 2020',
     }
   },
   () => {
@@ -397,6 +484,12 @@ const _TRANSACTION_RULES_LIBRARY: Array<
       labels: [],
       defaultNature: 'FRAUD',
       defaultCasePriority: 'P1',
+      typology: 'Money Mules, Account take over',
+      typologyGroup:
+        'Hidden / Unusual Relationships, Money Mules, Account Takeover Fraud',
+      typologyDescription:
+        'Use of different accounts opened in one institution by a perpetrator in order to perform the illicit activity. The same IP can be indicative of an account takeover attack, connected money mules, or money launderers.',
+      source: 'NA',
     }
   },
   () => {
@@ -421,6 +514,11 @@ const _TRANSACTION_RULES_LIBRARY: Array<
       labels: [],
       defaultNature: 'FRAUD',
       defaultCasePriority: 'P1',
+      typology: 'Acquiring Fraud',
+      typologyGroup: 'Card Fraud',
+      typologyDescription:
+        'Attempts to use a stolen card to perform a purchase/top-up wallet',
+      source: 'Card Scheme Rules',
     }
   },
   () => {
@@ -446,6 +544,11 @@ const _TRANSACTION_RULES_LIBRARY: Array<
       labels: [],
       defaultNature: 'FRAUD',
       defaultCasePriority: 'P1',
+      typology: 'Acquiring Fraud',
+      typologyGroup: 'Card Fraud',
+      typologyDescription:
+        'Attempts to use a multiple stolen cards to perform a purchase/top-up wallet',
+      source: 'Card Scheme Rules',
     }
   },
   () => {
@@ -475,6 +578,12 @@ const _TRANSACTION_RULES_LIBRARY: Array<
       defaultNature: 'AML',
       defaultCasePriority: 'P1',
       defaultFalsePositiveCheckEnabled: true,
+      typology:
+        'Customer activity is not in line with profile based on available information',
+      typologyGroup: 'Unusual Behaviour',
+      typologyDescription:
+        'Typologies that identify transactional activity characteristics that are unexpected or uncommon for a customer.',
+      source: 'NA',
     }
   },
   () => {
@@ -497,6 +606,11 @@ const _TRANSACTION_RULES_LIBRARY: Array<
       labels: [],
       defaultNature: 'AML',
       defaultCasePriority: 'P1',
+      typology: 'Objective transaction reporting',
+      typologyGroup: 'Objective transaction reporting',
+      typologyDescription:
+        'Objective reporting required by AML Laws and regulations for transactions meeting certain criteria',
+      source: 'Local laws and regulations',
     }
   },
   () => {
@@ -518,6 +632,11 @@ const _TRANSACTION_RULES_LIBRARY: Array<
       labels: [],
       defaultNature: 'AML',
       defaultCasePriority: 'P1',
+      typology: 'Account Takeover Fraud',
+      typologyGroup: 'Account Takeover Fraud',
+      typologyDescription:
+        'Access to account is compromised by a perpetrator and accessed from different IP in order to steal the funds',
+      source: 'Japan Reference Cases on Suspicious Transactions 2020',
     }
   },
   () => {
@@ -535,6 +654,10 @@ const _TRANSACTION_RULES_LIBRARY: Array<
       defaultNature: 'AML',
       defaultCasePriority: 'P1',
       defaultFalsePositiveCheckEnabled: true,
+      typology: '',
+      typologyGroup: '',
+      typologyDescription: '',
+      source: '',
     }
   },
   () => {
@@ -555,6 +678,11 @@ const _TRANSACTION_RULES_LIBRARY: Array<
       labels: [],
       defaultNature: 'AML',
       defaultCasePriority: 'P1',
+      typology: 'Account Takeover Fraud',
+      typologyGroup: 'Account takeover',
+      typologyDescription:
+        'Access to account is compromised by a perpetrator and accessed from different IP in order to steal the funds',
+      source: 'Card Scheme Rules',
     }
   },
   () => {
@@ -579,6 +707,13 @@ const _TRANSACTION_RULES_LIBRARY: Array<
       labels: [],
       defaultNature: 'FRAUD',
       defaultCasePriority: 'P1',
+      typology:
+        'Transactions with high-risk industries, potentially sanctioned entities, for potentially illicit purposes',
+      typologyGroup: 'Internal Blacklists',
+      typologyDescription:
+        "Identifying risky transactions by screening the reference field which might be outside of firm's risk appetite",
+      source:
+        'Prohibited countries policy, Prohibited industries Policy, Sanctions Policy',
     }
   },
   () => {
@@ -599,6 +734,12 @@ const _TRANSACTION_RULES_LIBRARY: Array<
       labels: [],
       defaultNature: 'FRAUD',
       defaultCasePriority: 'P1',
+      typology: 'Avoiding reporting limits',
+      typologyGroup: 'Structuring',
+      typologyDescription:
+        'Conceal or disguise significant transactions to avoid disclosure for record purposes by executing frequent or several transactions such that each transaction by itself is below reporting thresholds',
+      source:
+        '1) Guidelines to MAS Notice PS-N01 On Prevention of Money Laundering and Countering the Financing of Terrorism 2) AUSTRAC:Stored value cards: money laundering and terrorism financing risk assessment 2017',
     }
   },
   () => {
@@ -624,6 +765,11 @@ const _TRANSACTION_RULES_LIBRARY: Array<
       labels: [],
       defaultNature: 'FRAUD',
       defaultCasePriority: 'P1',
+      typology: 'Acquiring Fraud',
+      typologyGroup: 'Card Fraud',
+      typologyDescription:
+        'Attempts to use multiple stolen cards to perform a purchase/top-up wallet',
+      source: 'Card Scheme Rules',
     }
   },
   () => {
@@ -648,6 +794,13 @@ const _TRANSACTION_RULES_LIBRARY: Array<
       labels: [],
       defaultNature: 'AML',
       defaultCasePriority: 'P1',
+      typology:
+        'A high value of transactions between the same parties can be indicative of ML',
+      typologyGroup: 'Hidden / Unusual Relationships',
+      typologyDescription:
+        'Typologies identifying entities with shared connections or which may signify attempts to disguise or hide relationships.',
+      source:
+        'UK National risk assessment of money laundering and terrorist financing 2020',
     }
   },
   () => {
@@ -680,6 +833,13 @@ const _TRANSACTION_RULES_LIBRARY: Array<
       labels: [],
       defaultNature: 'FRAUD',
       defaultCasePriority: 'P1',
+      typology:
+        'Change in behavior driven by an increase in a number of transactions',
+      typologyGroup: 'Unusual Behaviour',
+      typologyDescription:
+        'Typologies that identify transactional activity characteristics that are unexpected or uncommon for a customer.',
+      source:
+        'Guidelines to MAS Notice PS-N01 On Prevention of Money Laundering and Countering the Financing of Terrorism',
     }
   },
   () => {
@@ -716,6 +876,13 @@ const _TRANSACTION_RULES_LIBRARY: Array<
       defaultNature: 'FRAUD',
       defaultCasePriority: 'P1',
       defaultFalsePositiveCheckEnabled: true,
+      typology:
+        'Change in behavior driven by an increase in a value of transactions',
+      typologyGroup: 'Unusual Behaviour',
+      typologyDescription:
+        'Typologies that identify transactional activity characteristics that are unexpected or uncommon for a customer.',
+      source:
+        'Guidelines to MAS Notice PS-N01 On Prevention of Money Laundering and Countering the Financing of Terrorism',
     }
   },
   () => {
@@ -743,6 +910,13 @@ const _TRANSACTION_RULES_LIBRARY: Array<
       defaultNature: 'FRAUD',
       defaultCasePriority: 'P1',
       defaultFalsePositiveCheckEnabled: true,
+      typology:
+        'A high value of transactions between the same parties which can be indicative of ML ',
+      typologyGroup: 'Hidden / Unusual Relationships',
+      typologyDescription:
+        'Typologies identifying entities with shared connections or which may signify attempts to disguise or hide relationships.',
+      source:
+        'UK National risk assessment of money laundering and terrorist financing 2020',
     }
   },
   () => {
@@ -768,6 +942,13 @@ const _TRANSACTION_RULES_LIBRARY: Array<
       labels: [],
       defaultNature: 'FRAUD',
       defaultCasePriority: 'P1',
+      typology:
+        'Transactions in round amounts  which disguise the true nature of transaction and might be indicative of ML/TF',
+      typologyGroup: 'Structuring Unusual Behaviour',
+      typologyDescription:
+        'Typologies that identify transactional activity characteristics that are unexpected or uncommon for a customer. Conceal or disguise the true nature of transactions  by executing frequent or several transactions such that each transaction is a rounded number which is not common for regular payment activity',
+      source:
+        'Guidelines to MAS Notice PS-N01 On Prevention of Money Laundering and Countering the Financing of Terrorism',
     }
   },
   () => {
@@ -796,6 +977,10 @@ const _TRANSACTION_RULES_LIBRARY: Array<
       labels: [],
       defaultNature: 'AML',
       defaultCasePriority: 'P1',
+      typology: 'Acquiring Fraud, Issuing Fraud, Account takeover fraud',
+      typologyGroup: 'Card Fraud',
+      typologyDescription: 'Unsuccessful attempts to use cards by fraudsters',
+      source: 'Card Scheme Rules',
     }
   },
   () => {
@@ -824,6 +1009,13 @@ const _TRANSACTION_RULES_LIBRARY: Array<
       labels: [],
       defaultNature: 'AML',
       defaultCasePriority: 'P1',
+      typology:
+        'Elevated ML/TF risks associated with transactions with high risk geography',
+      typologyGroup: 'High Risk Transactions',
+      typologyDescription:
+        'Typologies that scrutinise a high-risk element of the transaction, such as geographic location or an attribute of the beneficiary or originator.',
+      source:
+        '1) FATF Emerging Terrorist Financing Risks 2) US Advisory on Human Rights Abuses Enabled by Corrupt Senior Foreign Political Figures and their Financial Facilitators',
     }
   },
   () => {
@@ -850,6 +1042,13 @@ const _TRANSACTION_RULES_LIBRARY: Array<
       labels: [],
       defaultNature: 'AML',
       defaultCasePriority: 'P1',
+      typology:
+        'Unusually high number of countries involved into transactional activity of the customer',
+      typologyGroup: 'Unusual Behaviour',
+      typologyDescription:
+        'Typologies that identify transactional activity characteristics that are unexpected or uncommon for a customer.',
+      source:
+        'Guidelines to MAS Notice PS-N01 On Prevention of Money Laundering and Countering the Financing of Terrorism',
     }
   },
   () => {
@@ -874,6 +1073,13 @@ const _TRANSACTION_RULES_LIBRARY: Array<
       labels: [],
       defaultNature: 'AML',
       defaultCasePriority: 'P1',
+      typology:
+        'Transactions in round amounts which disguise the true nature of transaction and might be indicative of ML/TF',
+      typologyGroup: 'Structuring Unusual Behaviour',
+      typologyDescription:
+        'Typologies that identify transactional activity characteristics that are unexpected or uncommon for a customer. Conceal or disguise the true nature of transactions  by executing frequent or several transactions such that each transaction is a rounded number which is not common for regular payment activity',
+      source:
+        'Guidelines to MAS Notice PS-N01 On Prevention of Money Laundering and Countering the Financing of Terrorism',
     }
   },
   () => {
@@ -899,6 +1105,13 @@ const _TRANSACTION_RULES_LIBRARY: Array<
       labels: [],
       defaultNature: 'FRAUD',
       defaultCasePriority: 'P1',
+      typology:
+        'A high value of transactions using the same payment details can be indicative of ML',
+      typologyGroup: 'Hidden / Unusual Relationships',
+      typologyDescription:
+        'Typologies identifying entities with shared connections or which may signify attempts to disguise or hide relationships.',
+      source:
+        'UK National risk assessment of money laundering and terrorist financing 2020',
     }
   },
   () => {
@@ -918,6 +1131,11 @@ const _TRANSACTION_RULES_LIBRARY: Array<
       labels: [],
       defaultNature: 'FRAUD',
       defaultCasePriority: 'P1',
+      typology: 'Prohibited payment details due to financial crime risks',
+      typologyGroup: 'Internal Blacklists',
+      typologyDescription:
+        'Blocking transactions with certain cards issued in countries which are outside of risk appetite of the organization',
+      source: 'Prohibited countries policy, Sanctions Policy',
     }
   },
   () => {
@@ -948,6 +1166,12 @@ const _TRANSACTION_RULES_LIBRARY: Array<
       labels: [],
       defaultNature: 'FRAUD',
       defaultCasePriority: 'P1',
+      typology: 'Account activity, inconsistent with customer profile ',
+      typologyGroup: 'Unusual Behaviour',
+      typologyDescription:
+        'Typologies that identify transactional activity characteristics that are unexpected or uncommon for a customer.',
+      source:
+        'Guidelines to MAS Notice PS-N01 On Prevention of Money Laundering and Countering the Financing of Terrorism',
     }
   },
   () => {
@@ -969,6 +1193,10 @@ const _TRANSACTION_RULES_LIBRARY: Array<
       labels: [],
       defaultNature: 'FRAUD',
       defaultCasePriority: 'P3',
+      typology: 'Internal Blacklists',
+      typologyGroup: 'Internal Blacklists',
+      typologyDescription: 'Internal Blacklists',
+      source: 'Internal Blacklists',
     }
   },
   () => {
@@ -996,6 +1224,12 @@ const _TRANSACTION_RULES_LIBRARY: Array<
       labels: [],
       defaultNature: 'FRAUD',
       defaultCasePriority: 'P1',
+      typology: 'Money transit, Money Mules',
+      typologyGroup: 'Layering, Money Mules',
+      typologyDescription:
+        'Money Muling activity of wittingly or unwittingly performing a transaction for the benefit of 3rd parties to disguise the true source of funds. Layering - disguising the true nature of transactions via numerous transfers between financial institutions.',
+      source:
+        'UK National risk assessment of money laundering and terrorist financing 2020',
     }
   },
 ]
