@@ -580,6 +580,7 @@ export class CdkTarponStack extends cdk.Stack {
       'auth0.com',
       'READ'
     )
+    this.grantMongoDbAccess(accountsFunctionAlias)
 
     /* Roles */
     const { alias: rolesFunctionAlias } = this.createFunction(
