@@ -190,10 +190,11 @@ const mergedColumns = (
     },
     {
       title: 'Assigned to',
-      dataIndex: 'assignments',
+      dataIndex: '_assigneeName',
       exportData: 'assignments',
       hideInSearch: true,
       width: 100,
+      sorter: true,
       render: (_, entity) => {
         return (
           users &&
