@@ -20,7 +20,6 @@ import { CaseRepository } from '@/services/rules-engine/repositories/case-reposi
 import { CasesUpdateRequest } from '@/@types/openapi-internal/CasesUpdateRequest'
 import { AlertsUpdateRequest } from '@/@types/openapi-internal/AlertsUpdateRequest'
 import { AlertsToNewCaseRequest } from '@/@types/openapi-internal/AlertsToNewCaseRequest'
-import { Case } from '@/@types/openapi-internal/Case'
 import { CaseStatus } from '@/@types/openapi-internal/CaseStatus'
 import { AlertStatus } from '@/@types/openapi-internal/AlertStatus'
 import { getDynamoDbClientByEvent } from '@/utils/dynamodb'
@@ -30,6 +29,7 @@ import { UserRepository } from '@/services/users/repositories/user-repository'
 import { RuleInstanceRepository } from '@/services/rules-engine/repositories/rule-instance-repository'
 import { MongoDbTransactionRepository } from '@/services/rules-engine/repositories/mongodb-transaction-repository'
 import { isValidSortOrder } from '@/@types/openapi-internal-custom/SortOrder'
+import { CaseResponse } from '@/@types/openapi-internal/CaseResponse'
 
 export type CaseConfig = {
   TMP_BUCKET: string
@@ -104,9 +104,6 @@ export const casesHandler = lambdaApi()(
         filterTransactionId,
         filterTransactionTagKey,
         filterTransactionTagValue,
-        includeTransactions,
-        includeTransactionUsers,
-        includeTransactionEvents,
         beforeTransactionTimestamp,
         afterTransactionTimestamp,
         filterTransactionAmoutBelow,
@@ -162,9 +159,6 @@ export const casesHandler = lambdaApi()(
         filterPriority,
         filterTransactionTagKey,
         filterTransactionTagValue,
-        includeTransactions: includeTransactions === 'true',
-        includeTransactionUsers: includeTransactionUsers === 'true',
-        includeTransactionEvents: includeTransactionEvents === 'true',
         beforeTransactionTimestamp: beforeTransactionTimestamp
           ? parseInt(beforeTransactionTimestamp)
           : undefined,
@@ -238,10 +232,7 @@ export const casesHandler = lambdaApi()(
       )
       caseGetSegment?.addAnnotation('tenantId', tenantId)
       caseGetSegment?.addAnnotation('caseId', caseId)
-      const caseItem: Case | null = await caseService.getCase(caseId, {
-        includeTransactionEvents: true,
-        includeTransactionUsers: true,
-      })
+      const caseItem: CaseResponse | null = await caseService.getCase(caseId)
       caseGetSegment?.close()
       if (caseItem == null) {
         throw new NotFound(`Case not found: ${caseId}`)

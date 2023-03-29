@@ -20,8 +20,6 @@ export async function migrateTenant(tenant: Tenant) {
 
   const queryParams: OptionalPagination<DefaultApiGetCaseListRequest> = {
     pageSize: 'DISABLED',
-    includeTransactions: true,
-    includeTransactionUsers: true,
   }
   queryParams.afterTimestamp = 0
   queryParams.beforeTimestamp = Date.now()

@@ -6,8 +6,10 @@ import {
   DefaultApiGetAlertListRequest,
   DefaultApiGetCaseListRequest,
 } from '@/@types/openapi-internal/RequestParameters'
-import { CaseRepository } from '@/services/rules-engine/repositories/case-repository'
-import { Case } from '@/@types/openapi-internal/Case'
+import {
+  CaseListOptions,
+  CaseRepository,
+} from '@/services/rules-engine/repositories/case-repository'
 import { AlertListResponse } from '@/@types/openapi-internal/AlertListResponse'
 import { CasesListResponse } from '@/@types/openapi-internal/CasesListResponse'
 import { CaseUpdateRequest } from '@/@types/openapi-internal/CaseUpdateRequest'
@@ -22,6 +24,7 @@ import { DashboardStatsRepository } from '@/lambdas/console-api-dashboard/reposi
 import { addNewSubsegment } from '@/core/xray'
 import { sendWebhookTasks } from '@/services/webhook/utils'
 import { getContext } from '@/core/utils/context'
+import { CaseResponse } from '@/@types/openapi-internal/CaseResponse'
 
 export class CaseService {
   caseRepository: CaseRepository
@@ -179,17 +182,13 @@ export class CaseService {
 
   public async getCase(
     caseId: string,
-    params: {
-      includeTransactions?: boolean
-      includeTransactionEvents?: boolean
-      includeTransactionUsers?: boolean
-    } = {}
-  ): Promise<Case | null> {
+    options: CaseListOptions = {}
+  ): Promise<CaseResponse | null> {
     const caseGetSegment = await addNewSubsegment(
       'Case Service',
       'Mongo Get Case Query'
     )
-    const caseEntity = await this.caseRepository.getCaseById(caseId, params)
+    const caseEntity = await this.caseRepository.getCaseById(caseId, options)
     caseGetSegment?.close()
 
     return caseEntity && this.getAugmentedCase(caseEntity)
@@ -352,7 +351,7 @@ export class CaseService {
     await this.caseRepository.deleteCaseComment(caseId, commentId)
   }
 
-  private getAugmentedCase(caseEntity: Case) {
+  private getAugmentedCase(caseEntity: CaseResponse) {
     const commentsWithUrl = caseEntity.comments?.map((comment) => ({
       ...comment,
       files: comment.files?.map((file) => ({

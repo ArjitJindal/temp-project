@@ -2538,18 +2538,6 @@ paths:
           in: query
           name: filterTransactionTagValue
         - schema:
-            type: boolean
-          in: query
-          name: includeTransactions
-        - schema:
-            type: boolean
-          in: query
-          name: includeTransactionUsers
-        - schema:
-            type: boolean
-          in: query
-          name: includeTransactionEvents
-        - schema:
             type: string
           in: query
           name: filterTransactionId
@@ -2640,7 +2628,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Case'
+                $ref: '#/components/schemas/CaseResponse'
       x-flagright:
         permissions:
           - case-management:case-overview:write
@@ -2844,18 +2832,6 @@ paths:
           in: query
           name: filterTransactionTagValue
         - schema:
-            type: boolean
-          in: query
-          name: includeTransactions
-        - schema:
-            type: boolean
-          in: query
-          name: includeTransactionUsers
-        - schema:
-            type: boolean
-          in: query
-          name: includeTransactionEvents
-        - schema:
             type: string
           in: query
           name: filterTransactionId
@@ -2940,7 +2916,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Case'
+                $ref: '#/components/schemas/CaseResponse'
         '404':
           description: Not found
   '/cases/{caseId}/transactions':
@@ -4817,6 +4793,63 @@ components:
             type: string
         falsePositiveDetails:
           $ref: ../public/openapi-public-original.yaml#/components/schemas/FalsePositiveDetails
+    CaseResponse:
+      title: CaseResponse
+      type: object
+      properties:
+        _id:
+          type: number
+        assignments:
+          type: array
+          items:
+            $ref: '#/components/schemas/Assignment'
+        caseId:
+          type: string
+        caseStatus:
+          $ref: '#/components/schemas/CaseStatus'
+        createdTimestamp:
+          type: number
+        priority:
+          $ref: '#/components/schemas/Priority'
+        caseUsers:
+          type: object
+          properties:
+            origin:
+              oneOf:
+                - $ref: '#/components/schemas/InternalConsumerUser'
+                - $ref: '#/components/schemas/InternalBusinessUser'
+                - $ref: '#/components/schemas/MissingUser'
+            destination:
+              oneOf:
+                - $ref: '#/components/schemas/InternalConsumerUser'
+                - $ref: '#/components/schemas/InternalBusinessUser'
+                - $ref: '#/components/schemas/MissingUser'
+            originUserDrsScore:
+              type: number
+            destinationUserDrsScore:
+              type: number
+            originUserRiskLevel:
+              $ref: '#/components/schemas/RiskLevel'
+            destinationUserRiskLevel:
+              $ref: '#/components/schemas/RiskLevel'
+        caseTransactionsCount:
+          type: integer
+        alerts:
+          type: array
+          items:
+            $ref: '#/components/schemas/Alert'
+        lastStatusChange:
+          $ref: '#/components/schemas/CaseStatusChange'
+        comments:
+          type: array
+          items:
+            $ref: '#/components/schemas/Comment'
+        falsePositiveDetails:
+          $ref: ../public/openapi-public-original.yaml#/components/schemas/FalsePositiveDetails
+        caseTransactionsIds:
+          type: array
+          items:
+            type: string
     Alert:
       title: Alert
       type: object
@@ -4890,7 +4923,7 @@ components:
         data:
           type: array
           items:
-            $ref: '#/components/schemas/Case'
+            $ref: '#/components/schemas/CaseResponse'
       required:
         - total
         - data
