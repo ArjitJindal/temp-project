@@ -3,6 +3,7 @@ import { migrateAllTenants } from '../utils/tenant'
 import { Tenant } from '@/services/accounts'
 import { CASES_COLLECTION, getMongoDbClient } from '@/utils/mongoDBUtils'
 import { Case } from '@/@types/openapi-internal/Case'
+import { Alert } from '@/@types/openapi-internal/Alert'
 
 async function migrateTenant(tenant: Tenant) {
   const db = (await getMongoDbClient()).db()
@@ -10,34 +11,46 @@ async function migrateTenant(tenant: Tenant) {
   for await (const c of collection.find({})) {
     const transactions = _.keyBy(c.caseTransactions, 'transactionId')
     let shouldUpdateCase = false
-    c.alerts = c.alerts?.map((alert) => {
-      const alertTransactions =
-        alert.transactionIds?.map(
-          (transactionId) => transactions[transactionId]
-        ) || []
-      const correctAlertTransactions = alertTransactions.filter((transaction) =>
-        transaction.hitRules.find(
-          (rule) => rule.ruleInstanceId === alert.ruleInstanceId
+    c.alerts = (c.alerts ?? [])
+      .map((alert) => {
+        const alertTransactions =
+          alert.transactionIds?.map(
+            (transactionId) => transactions[transactionId]
+          ) || []
+        const correctAlertTransactions = alertTransactions.filter(
+          (transaction) =>
+            transaction.hitRules.find(
+              (rule) => rule.ruleInstanceId === alert.ruleInstanceId
+            )
         )
-      )
-      const shouldFixAlert =
-        correctAlertTransactions.length !== alertTransactions.length
-      if (shouldFixAlert) {
-        shouldUpdateCase = true
-        return {
-          ...alert,
-          latestTransactionArrivalTimestamp: _.maxBy(
-            correctAlertTransactions,
-            'timestamp'
-          )!.timestamp,
-          transactionIds: correctAlertTransactions.map(
-            (transaction) => transaction.transactionId
-          ),
-          numberOfTransactionsHit: correctAlertTransactions.length,
+        if (
+          correctAlertTransactions.length !== alertTransactions.length &&
+          correctAlertTransactions.length === 0
+        ) {
+          shouldUpdateCase = true
+          return null
         }
-      }
-      return alert
-    })
+
+        const shouldFixAlert =
+          correctAlertTransactions.length !== alertTransactions.length
+        if (shouldFixAlert) {
+          shouldUpdateCase = true
+          return {
+            ...alert,
+            latestTransactionArrivalTimestamp: _.maxBy(
+              correctAlertTransactions,
+              'timestamp'
+            )!.timestamp,
+            transactionIds: correctAlertTransactions.map(
+              (transaction) => transaction.transactionId
+            ),
+            numberOfTransactionsHit: correctAlertTransactions.length,
+          }
+        }
+        return alert
+      })
+      .filter(Boolean) as Alert[]
+
     if (shouldUpdateCase) {
       await collection.replaceOne(
         {
