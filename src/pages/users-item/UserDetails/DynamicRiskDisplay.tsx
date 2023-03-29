@@ -19,7 +19,7 @@ export default function DynamicRiskDisplay({ userId }: Props) {
     <AsyncResourceRenderer resource={queryResult.data}>
       {(result) => (
         <RiskScoreDisplay
-          values={result.map((x) => ({
+          values={result?.map((x) => ({
             value: x.drsScore,
             riskLevel: x?.manualRiskLevel ?? x?.derivedRiskLevel,
             createdAt: x.createdAt,

@@ -4,6 +4,8 @@ import KycStatusEditor from '../../UserDetails/KycStatusEditor';
 import UserStateEditor from '../../UserDetails/UserStateEditor';
 import KycRiskDisplay from '../../UserDetails/KycRiskDisplay';
 import DynamicRiskDisplay from '../../UserDetails/DynamicRiskDisplay';
+import AIRiskDisplay from '../../UserDetails/AIRiskDisplay';
+
 import s from './index.module.less';
 import { InternalBusinessUser, InternalConsumerUser } from '@/apis';
 import Spam2LineIcon from '@/components/ui/icons/Remix/system/spam-2-line.react.svg';
@@ -40,6 +42,9 @@ export default function SubHeader(props: Props) {
         <div className={s.risks}>
           <KycRiskDisplay userId={user.userId} />
           <DynamicRiskDisplay userId={user.userId} />
+          <Feature name="MACHINE_LEARNING_DEMO">
+            <AIRiskDisplay />
+          </Feature>
         </div>
       </Feature>
     </div>
