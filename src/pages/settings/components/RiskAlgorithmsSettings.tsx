@@ -61,9 +61,9 @@ export const RiskAlgorithmsSettings = () => {
                 description: "Use Flagright's new Graph learning model - this is experimental",
               },
               {
-                label: 'Guassian Mixture',
+                label: 'Gaussian Mixture',
                 value: 'GM',
-                description: "Use Flagright's new Guassian mixture model - this is experimental",
+                description: "Use Flagright's new Gaussian mixture model - this is experimental",
               },
             ]}
             onChange={(newValue) => {

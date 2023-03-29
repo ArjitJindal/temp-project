@@ -33,7 +33,7 @@ export function RegistrationDetails(prop: Props) {
         </Card.Row>
         <Card.Row className={s.items}>
           <Card.Column>
-            <Form.Layout.Label icon={<FingerprintLineIcon />} title={'Customer Segement'} />
+            <Form.Layout.Label icon={<FingerprintLineIcon />} title={'Customer Segment'} />
           </Card.Column>
           <Card.Column className={s.all}>
             {user.legalEntity.companyGeneralDetails?.userSegment}
