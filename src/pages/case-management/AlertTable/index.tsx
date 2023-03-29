@@ -7,7 +7,7 @@ import { useApi } from '@/api';
 import { Account, AlertListResponseItem } from '@/apis';
 import { ALERT_LIST } from '@/utils/queries/keys';
 import QueryResultsTable from '@/components/common/QueryResultsTable';
-import { TableColumn, TableData } from '@/components/ui/Table/types';
+import { TableColumn, TableData, TableRow } from '@/components/ui/Table/types';
 import StackLineIcon from '@/components/ui/icons/Remix/business/stack-line.react.svg';
 import { QueryResult } from '@/utils/queries/types';
 import { AllParams, TableActionType } from '@/components/ui/Table';
@@ -324,6 +324,21 @@ export default function AlertTable(props: Props) {
   );
 
   const [selectedEntities, setSelectedEntities] = useState<string[]>([]);
+  const [items, setItems] = useState<TableRow<TableAlertItem>[]>([]);
+
+  const statusChangeButtonValue = useMemo(() => {
+    const selectedStatuses = [
+      ...new Set(
+        items.map((item) => {
+          return item.alertStatus === 'CLOSED' ? 'CLOSED' : 'OPEN';
+        }),
+      ),
+    ];
+    if (selectedStatuses.length === 1) {
+      return selectedStatuses[0];
+    }
+    return undefined;
+  }, [items]);
 
   const actionRef = useRef<TableActionType>(null);
   const reloadTable = useCallback(() => {
@@ -385,11 +400,13 @@ export default function AlertTable(props: Props) {
         ({ params, setParams }) => (
           <>
             <AssignToButton ids={selectedEntities} onSelect={handleAssignTo} />
-            <AlertsStatusChangeButton
-              ids={selectedEntities}
-              onSaved={reloadTable}
-              status={params.alertStatus}
-            />
+            {statusChangeButtonValue && (
+              <AlertsStatusChangeButton
+                ids={selectedEntities}
+                onSaved={reloadTable}
+                status={params.alertStatus ?? statusChangeButtonValue}
+              />
+            )}
             {showActions && !isEmbedded && (
               <StatusButtons
                 status={params.alertStatus ?? 'OPEN'}
@@ -415,6 +432,8 @@ export default function AlertTable(props: Props) {
       rowSelection={{
         selectedKeys: selectedEntities,
         onChange: setSelectedEntities,
+        onChangeItems: setItems,
+        items,
       }}
       expandable={{
         expandedRowRender: (record) => <ExpandedRowRenderer alertId={record.alertId ?? null} />,

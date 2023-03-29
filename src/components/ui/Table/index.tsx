@@ -44,9 +44,11 @@ export interface CommonParams extends PaginationParams {
 
 export type AllParams<Params> = Params & CommonParams;
 
-export interface RowSelection {
+export interface RowSelection<T> {
   selectedKeys: string[];
   onChange: (selectedIds: string[]) => void;
+  items?: TableRow<T>[];
+  onChangeItems?: (selectedItems: TableRow<T>[]) => void;
 }
 
 export const DEFAULT_PARAMS_STATE: CommonParams = {
@@ -86,7 +88,7 @@ export interface Props<T extends object | unknown, Params extends object, ValueT
   loading?: boolean;
   data: TableData<T>;
   pagination?: boolean;
-  rowSelection?: RowSelection;
+  rowSelection?: RowSelection<T>;
   params?: AllParams<Params>;
   isEvenRow?: (item: T) => boolean;
   extraFilters?: ExtraFilter<Params>[];
@@ -158,6 +160,7 @@ export default function Table<
 
   const handleResetSelection = useCallback(() => {
     rowSelection?.onChange([]);
+    rowSelection?.onChangeItems?.([]);
   }, [rowSelection]);
 
   const handleReload = useCallback(() => {
@@ -255,7 +258,7 @@ export default function Table<
       hideInSearch: true,
       search: false,
       hideInSetting: true,
-      title: (
+      title: (_) => (
         <Checkbox
           value={allSelected ? true : someSelected ? undefined : false}
           onChange={(checked) => {
@@ -275,7 +278,11 @@ export default function Table<
             value={isSelected}
             onChange={(checked) => {
               const currentSelection = (rowSelection?.selectedKeys ?? []).filter((x) => x !== key);
+              const dataSelected = (rowSelection?.items ?? []).filter((x) => x[rowKey] !== key);
               rowSelection?.onChange(checked ? [...currentSelection, key] : currentSelection);
+              if (rowSelection?.items) {
+                rowSelection?.onChangeItems?.(checked ? [...dataSelected, row] : dataSelected);
+              }
             }}
           />
         );
