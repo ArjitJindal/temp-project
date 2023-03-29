@@ -1,11 +1,11 @@
 import { useState } from 'react';
 import * as Card from '@/components/ui/Card';
-import { Case } from '@/apis';
+import { CaseResponse } from '@/apis';
 import AlertTable, { AlertTableParams } from '@/pages/case-management/AlertTable';
 import { DEFAULT_PARAMS_STATE } from '@/components/ui/Table';
 
 interface Props {
-  caseItem: Case;
+  caseItem: CaseResponse;
   updateCollapseState: (key: string, value: boolean) => void;
   title: string;
   collapsableKey: string;

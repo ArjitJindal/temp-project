@@ -1,12 +1,12 @@
 import {
-  Case,
   CaseClosingReasons,
+  CaseResponse,
   CaseStatusChange,
   InternalBusinessUser,
   InternalConsumerUser,
 } from '@/apis';
 
-export type TableItem = Case & {
+export type TableItem = CaseResponse & {
   index: number;
   userId: string | null;
   user: InternalConsumerUser | InternalBusinessUser | null;

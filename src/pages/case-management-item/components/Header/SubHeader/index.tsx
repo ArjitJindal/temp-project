@@ -1,7 +1,7 @@
 import React, { useCallback, useState } from 'react';
 import s from './index.module.less';
 import { message } from '@/components/library/Message';
-import { Case } from '@/apis';
+import { CaseResponse } from '@/apis';
 import { useApi } from '@/api';
 import FileListLineIcon from '@/components/ui/icons/Remix/document/file-list-line.react.svg';
 import * as Form from '@/components/ui/Form';
@@ -14,7 +14,7 @@ import KycRiskDisplay from '@/pages/users-item/UserDetails/KycRiskDisplay';
 import DynamicRiskDisplay from '@/pages/users-item/UserDetails/DynamicRiskDisplay';
 
 interface Props {
-  caseItem: Case;
+  caseItem: CaseResponse;
 }
 
 export default function SubHeader(props: Props) {
@@ -23,7 +23,7 @@ export default function SubHeader(props: Props) {
 
   const api = useApi();
   const user = useAuth0User();
-  const statusChanges = caseItem.statusChanges ?? [];
+
   const currentUserId = user.userId ?? undefined;
 
   const [assignments, setAssignments] = useState(caseItem.assignments || []);
@@ -80,12 +80,12 @@ export default function SubHeader(props: Props) {
           onChange={handleUpdateAssignments}
         />
       </Form.Layout.Label>
-      {caseItem.caseStatus === 'CLOSED' && statusChanges.length > 0 && (
+      {caseItem.caseStatus === 'CLOSED' && caseItem.lastStatusChange && (
         <Form.Layout.Label icon={<FileListLineIcon />} title={'Reason for closing'}>
           <div>
             <ClosingReasonTag
-              closingReasons={statusChanges[statusChanges.length - 1].reason}
-              otherReason={statusChanges[statusChanges.length - 1].otherReason}
+              closingReasons={caseItem.lastStatusChange.reason}
+              otherReason={caseItem.lastStatusChange.otherReason}
             />
           </div>
         </Form.Layout.Label>

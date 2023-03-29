@@ -4,7 +4,7 @@ import { TableSearchParams } from './types';
 import CaseTable from './CaseTable';
 import { message } from '@/components/library/Message';
 import { dayjs } from '@/utils/dayjs';
-import { Case, CaseUpdateRequest, RuleInstance } from '@/apis';
+import { CaseResponse, CaseUpdateRequest, RuleInstance } from '@/apis';
 import { useApi } from '@/api';
 import { usePrevious } from '@/utils/hooks';
 import { PaginatedData, usePaginatedQuery } from '@/utils/queries/hooks';
@@ -22,110 +22,113 @@ export default function CaseTableWrapper(props: {
   const measure = useApiTime();
   const api = useApi();
   const auth0user = useAuth0User();
-  const queryResults = usePaginatedQuery<Case>(CASES_LIST(params), async (paginationParams) => {
-    const {
-      sort,
-      page,
-      pageSize,
-      createdTimestamp,
-      caseId,
-      rulesHitFilter,
-      rulesExecutedFilter,
-      originCurrenciesFilter,
-      destinationCurrenciesFilter,
-      userId,
-      userFilterMode,
-      type,
-      status,
-      transactionState,
-      originMethodFilter,
-      destinationMethodFilter,
-      tagKey,
-      tagValue,
-      caseStatus,
-      transactionId,
-      transactionTimestamp,
-      amountGreaterThanFilter,
-      amountLessThanFilter,
-      originCountryFilter,
-      destinationCountryFilter,
-      businessIndustryFilter,
-      kycStatuses,
-      riskLevels,
-      userStates,
-      showCases,
-      assignedTo,
-      'lastStatusChange.timestamp': lastStatusChangeTimestamp,
-    } = params;
+  const queryResults = usePaginatedQuery<CaseResponse>(
+    CASES_LIST(params),
+    async (paginationParams) => {
+      const {
+        sort,
+        page,
+        pageSize,
+        createdTimestamp,
+        caseId,
+        rulesHitFilter,
+        rulesExecutedFilter,
+        originCurrenciesFilter,
+        destinationCurrenciesFilter,
+        userId,
+        userFilterMode,
+        type,
+        status,
+        transactionState,
+        originMethodFilter,
+        destinationMethodFilter,
+        tagKey,
+        tagValue,
+        caseStatus,
+        transactionId,
+        transactionTimestamp,
+        amountGreaterThanFilter,
+        amountLessThanFilter,
+        originCountryFilter,
+        destinationCountryFilter,
+        businessIndustryFilter,
+        kycStatuses,
+        riskLevels,
+        userStates,
+        showCases,
+        assignedTo,
+        'lastStatusChange.timestamp': lastStatusChangeTimestamp,
+      } = params;
 
-    const [sortField, sortOrder] = sort[0] ?? [];
+      const [sortField, sortOrder] = sort[0] ?? [];
 
-    const response = await measure(
-      () =>
-        api.getCaseList({
-          page,
-          pageSize,
-          ...paginationParams,
-          afterTimestamp: createdTimestamp ? dayjs(createdTimestamp[0]).valueOf() : 0,
-          beforeTimestamp: createdTimestamp
-            ? dayjs(createdTimestamp[1]).valueOf()
-            : Number.MAX_SAFE_INTEGER,
-          ...(transactionTimestamp &&
-            transactionTimestamp.length && {
-              afterTransactionTimestamp: transactionTimestamp
-                ? dayjs(transactionTimestamp[0]).valueOf()
+      const response = await measure(
+        () =>
+          api.getCaseList({
+            page,
+            pageSize,
+            ...paginationParams,
+            afterTimestamp: createdTimestamp ? dayjs(createdTimestamp[0]).valueOf() : 0,
+            beforeTimestamp: createdTimestamp
+              ? dayjs(createdTimestamp[1]).valueOf()
+              : Number.MAX_SAFE_INTEGER,
+            ...(transactionTimestamp &&
+              transactionTimestamp.length && {
+                afterTransactionTimestamp: transactionTimestamp
+                  ? dayjs(transactionTimestamp[0]).valueOf()
+                  : 0,
+                beforeTransactionTimestamp: transactionTimestamp
+                  ? dayjs(transactionTimestamp[1]).valueOf()
+                  : Number.MAX_SAFE_INTEGER,
+              }),
+            filterId: caseId,
+            filterRulesHit: rulesHitFilter,
+            filterRulesExecuted: rulesExecutedFilter,
+            filterOutCaseStatus: caseStatus === 'CLOSED' ? undefined : 'CLOSED',
+            filterCaseStatus: caseStatus === 'CLOSED' ? 'CLOSED' : undefined,
+            filterTransactionState: transactionState,
+            filterStatus: status,
+            filterOriginCurrencies: originCurrenciesFilter,
+            filterDestinationCurrencies: destinationCurrenciesFilter,
+            filterUserId: userFilterMode === 'ALL' ? userId : undefined,
+            filterOriginUserId: userFilterMode === 'ORIGIN' ? userId : undefined,
+            filterDestinationUserId: userFilterMode === 'DESTINATION' ? userId : undefined,
+            transactionType: type,
+            sortField: sortField ?? undefined,
+            sortOrder: sortOrder ?? undefined,
+            filterOriginPaymentMethod: originMethodFilter,
+            filterDestinationPaymentMethod: destinationMethodFilter,
+            filterTransactionTagKey: tagKey,
+            filterTransactionTagValue: tagValue,
+            filterTransactionId: transactionId,
+            filterOriginCountry: originCountryFilter,
+            filterDestinationCountry: destinationCountryFilter,
+            filterTransactionAmoutAbove: amountGreaterThanFilter,
+            filterTransactionAmoutBelow: amountLessThanFilter,
+            filterBusinessIndustries: businessIndustryFilter,
+            filterUserKYCStatus: kycStatuses,
+            filterRiskLevel: riskLevels,
+            filterUserState: userStates,
+            filterAssignmentsIds:
+              showCases === 'MY' ? [auth0user.userId] : assignedTo?.length ? assignedTo : undefined,
+            ...(lastStatusChangeTimestamp && {
+              afterCaseLastUpdatedTimestamp: lastStatusChangeTimestamp
+                ? dayjs(lastStatusChangeTimestamp[0]).valueOf()
                 : 0,
-              beforeTransactionTimestamp: transactionTimestamp
-                ? dayjs(transactionTimestamp[1]).valueOf()
+              beforeCaseLastUpdatedTimestamp: lastStatusChangeTimestamp
+                ? dayjs(lastStatusChangeTimestamp[1]).valueOf()
                 : Number.MAX_SAFE_INTEGER,
             }),
-          filterId: caseId,
-          filterRulesHit: rulesHitFilter,
-          filterRulesExecuted: rulesExecutedFilter,
-          filterOutCaseStatus: caseStatus === 'CLOSED' ? undefined : 'CLOSED',
-          filterCaseStatus: caseStatus === 'CLOSED' ? 'CLOSED' : undefined,
-          filterTransactionState: transactionState,
-          filterStatus: status,
-          filterOriginCurrencies: originCurrenciesFilter,
-          filterDestinationCurrencies: destinationCurrenciesFilter,
-          filterUserId: userFilterMode === 'ALL' ? userId : undefined,
-          filterOriginUserId: userFilterMode === 'ORIGIN' ? userId : undefined,
-          filterDestinationUserId: userFilterMode === 'DESTINATION' ? userId : undefined,
-          transactionType: type,
-          sortField: sortField ?? undefined,
-          sortOrder: sortOrder ?? undefined,
-          filterOriginPaymentMethod: originMethodFilter,
-          filterDestinationPaymentMethod: destinationMethodFilter,
-          filterTransactionTagKey: tagKey,
-          filterTransactionTagValue: tagValue,
-          filterTransactionId: transactionId,
-          filterOriginCountry: originCountryFilter,
-          filterDestinationCountry: destinationCountryFilter,
-          filterTransactionAmoutAbove: amountGreaterThanFilter,
-          filterTransactionAmoutBelow: amountLessThanFilter,
-          filterBusinessIndustries: businessIndustryFilter,
-          filterUserKYCStatus: kycStatuses,
-          filterRiskLevel: riskLevels,
-          filterUserState: userStates,
-          filterAssignmentsIds:
-            showCases === 'MY' ? [auth0user.userId] : assignedTo?.length ? assignedTo : undefined,
-          ...(lastStatusChangeTimestamp && {
-            afterCaseLastUpdatedTimestamp: lastStatusChangeTimestamp
-              ? dayjs(lastStatusChangeTimestamp[0]).valueOf()
-              : 0,
-            beforeCaseLastUpdatedTimestamp: lastStatusChangeTimestamp
-              ? dayjs(lastStatusChangeTimestamp[1]).valueOf()
-              : Number.MAX_SAFE_INTEGER,
           }),
-        }),
-      'Get Cases List',
-    );
+        'Get Cases List',
+      );
 
-    return {
-      total: response.total,
-      items: response.data,
-    };
-  });
+      return {
+        total: response.total,
+        items: response.data,
+      };
+    },
+  );
 
   const queryClient = useQueryClient();
 
@@ -149,16 +152,16 @@ export default function CaseTableWrapper(props: {
         const { caseIds, updates } = event;
         const cases = CASES_LIST({ ...params });
         const previousState = queryClient.getQueryData<CaseUpdateRequest>(cases);
-        queryClient.setQueryData<PaginatedData<Case>>(
+        queryClient.setQueryData<PaginatedData<CaseResponse>>(
           cases,
-          (prevState): PaginatedData<Case> | undefined => {
+          (prevState): PaginatedData<CaseResponse> | undefined => {
             if (prevState == null) {
               return prevState;
             }
             return {
               ...prevState,
               items:
-                prevState?.items.map((caseItem): Case => {
+                prevState?.items.map((caseItem): CaseResponse => {
                   if (caseItem.caseId == null || caseIds.indexOf(caseItem.caseId) === -1) {
                     return caseItem;
                   }

@@ -3,7 +3,7 @@ import { Tag } from 'antd';
 import _ from 'lodash';
 import s from './index.module.less';
 import SubHeader from './SubHeader';
-import { Case, Comment } from '@/apis';
+import { CaseResponse, Comment } from '@/apis';
 import { useApi } from '@/api';
 import BriefcaseLineIcon from '@/components/ui/icons/Remix/business/briefcase-line.react.svg';
 import * as Form from '@/components/ui/Form';
@@ -15,7 +15,7 @@ import { getUserLink, getUserName } from '@/utils/api/users';
 import Id from '@/components/ui/Id';
 
 interface Props {
-  caseItem: Case;
+  caseItem: CaseResponse;
   onReload: () => void;
   onCommentAdded: (newComment: Comment) => void;
 }
