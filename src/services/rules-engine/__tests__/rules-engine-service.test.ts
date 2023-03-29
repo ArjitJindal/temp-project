@@ -59,6 +59,7 @@ describe('Verify Transaction', () => {
             ruleDescription: 'test rule description.',
             ruleAction: 'FLAG',
             ruleHit: true,
+            labels: [],
             ruleHitMeta: {
               hitDirections: ['ORIGIN', 'DESTINATION'],
             },
@@ -71,6 +72,7 @@ describe('Verify Transaction', () => {
             ruleName: 'test rule name',
             ruleDescription: 'test rule description.',
             ruleAction: 'FLAG',
+            labels: [],
             ruleHitMeta: {
               hitDirections: ['ORIGIN', 'DESTINATION'],
             },
@@ -109,6 +111,7 @@ describe('Verify Transaction', () => {
         ruleName: 'test rule name',
         ruleDescription: 'test rule description.',
         ruleAction: 'FLAG',
+        labels: [],
         ruleHitMeta: {
           hitDirections: ['DESTINATION'],
         },
@@ -150,6 +153,7 @@ describe('Verify Transaction', () => {
             ruleDescription: 'test rule description.',
             ruleAction: 'FLAG',
             ruleHit: false,
+            labels: [],
           },
         ],
         hitRules: [],
@@ -204,6 +208,7 @@ describe('Verify Transaction', () => {
             ruleDescription: 'test rule description.',
             ruleAction: 'FLAG',
             ruleHit: true,
+            labels: [],
             ruleHitMeta: {
               hitDirections: ['DESTINATION'],
             },
@@ -216,6 +221,7 @@ describe('Verify Transaction', () => {
             ruleName: 'test rule name',
             ruleDescription: 'test rule description.',
             ruleAction: 'FLAG',
+            labels: [],
             ruleHitMeta: {
               hitDirections: ['DESTINATION'],
             },
@@ -367,6 +373,7 @@ describe('Verify Transaction Event', () => {
               ruleDescription: 'test rule description.',
               ruleAction: 'BLOCK',
               ruleHit: true,
+              labels: [],
               ruleHitMeta: {
                 hitDirections: ['ORIGIN', 'DESTINATION'],
               },
@@ -379,6 +386,7 @@ describe('Verify Transaction Event', () => {
               ruleName: 'test rule name',
               ruleDescription: 'test rule description.',
               ruleAction: 'BLOCK',
+              labels: [],
               ruleHitMeta: {
                 hitDirections: ['ORIGIN', 'DESTINATION'],
               },
@@ -402,6 +410,7 @@ describe('Verify Transaction Event', () => {
             ruleDescription: 'test rule description.',
             ruleAction: 'FLAG',
             ruleHit: true,
+            labels: [],
             ruleHitMeta: {
               hitDirections: ['ORIGIN', 'DESTINATION'],
             },
@@ -414,6 +423,7 @@ describe('Verify Transaction Event', () => {
             ruleName: 'test rule name',
             ruleDescription: 'test rule description.',
             ruleAction: 'FLAG',
+            labels: [],
             ruleHitMeta: {
               hitDirections: ['ORIGIN', 'DESTINATION'],
             },
@@ -461,6 +471,7 @@ describe('Verify Transaction for Simulation', () => {
       ruleDescription: 'test rule description.',
       ruleAction: 'BLOCK',
       ruleHit: true,
+      labels: [],
       ruleHitMeta: {
         hitDirections: ['ORIGIN', 'DESTINATION'],
       },

@@ -3423,7 +3423,7 @@ components:
         labels:
           type: array
           items:
-            $ref: '#/components/schemas/RuleLabels'
+            $ref: ../public/openapi-public-original.yaml#/components/schemas/RuleLabels
         defaultNature:
           $ref: '#/components/schemas/RuleNature'
         defaultCasePriority:
@@ -3512,7 +3512,7 @@ components:
         labels:
           type: array
           items:
-            $ref: '#/components/schemas/RuleLabels'
+            $ref: ../public/openapi-public-original.yaml#/components/schemas/RuleLabels
         status:
           type: string
           enum:
@@ -5452,22 +5452,6 @@ components:
         - FRAUD
         - CTF
         - SCREENING
-    RuleLabels:
-      type: string
-      title: Rule labels type
-      enum:
-        - UNEXPECTED_BEHAVIOR
-        - ILLICIT_GAINS_CHECK
-        - RFI_TRIGGER
-        - EDD_TRIGGER
-        - KYC_TRIGGER
-        - SCAM
-        - ABUSE
-        - ACCOUNT_TAKEOVER
-        - DISPUTE
-        - SANCTIONS
-        - SANCTIONS_PEP
-        - SANCTIONS_PEP_ADVERSE_MEDIA
     UsersUniquesResponse:
       type: object
       properties:

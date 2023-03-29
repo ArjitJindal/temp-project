@@ -321,6 +321,7 @@ export class RulesEngineService {
         ruleDescription: result.ruleDescription,
         ruleAction: result.ruleAction,
         ruleHitMeta: result.ruleHitMeta,
+        labels: result?.labels,
       }))
       .sort(ruleAscendingComparator) as HitRulesDetails[]
 
@@ -459,6 +460,7 @@ export class RulesEngineService {
         ruleDescription,
         ruleAction: action,
         ruleHit,
+        labels: ruleInstance.labels,
         ruleHitMeta: ruleHit
           ? {
               hitDirections: ruleHitDirections,

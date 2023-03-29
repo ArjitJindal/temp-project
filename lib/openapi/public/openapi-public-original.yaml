@@ -2056,6 +2056,10 @@ components:
           type: boolean
         ruleHitMeta:
           $ref: '#/components/schemas/RuleHitMeta'
+        labels:
+          type: array
+          items:
+            $ref: '#/components/schemas/RuleLabels'
       required:
         - ruleId
         - ruleInstanceId
@@ -2094,6 +2098,10 @@ components:
           $ref: '#/components/schemas/RuleAction'
         ruleHitMeta:
           $ref: '#/components/schemas/RuleHitMeta'
+        labels:
+          type: array
+          items:
+            $ref: '#/components/schemas/RuleLabels'
       required:
         - ruleId
         - ruleInstanceId
@@ -3442,6 +3450,22 @@ components:
       enum:
         - ORIGIN
         - DESTINATION
+    RuleLabels:
+      type: string
+      title: RuleLabels
+      enum:
+        - UNEXPECTED_BEHAVIOR
+        - ILLICIT_GAINS_CHECK
+        - RFI_TRIGGER
+        - EDD_TRIGGER
+        - KYC_TRIGGER
+        - SCAM
+        - ABUSE
+        - ACCOUNT_TAKEOVER
+        - DISPUTE
+        - SANCTIONS
+        - SANCTIONS_PEP
+        - SANCTIONS_PEP_ADVERSE_MEDIA
     TransactionEvent:
       description: Model for transaction-related events
       type: object
