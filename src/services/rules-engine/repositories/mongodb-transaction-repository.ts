@@ -109,7 +109,9 @@ export class MongoDbTransactionRepository
       conditions.push({ status: { $ne: params.filterOutStatus } })
     }
     if (params.filterOutCaseStatus != null) {
-      conditions.push({ caseStatus: { $ne: params.filterOutCaseStatus } })
+      conditions.push({
+        caseStatus: { $nin: [params.filterOutCaseStatus] },
+      })
     }
     if (params.filterTransactionState != null) {
       conditions.push({
@@ -125,7 +127,7 @@ export class MongoDbTransactionRepository
       conditions.push({ status: { $in: params.filterStatus } })
     }
     if (params.filterCaseStatus != null) {
-      conditions.push({ caseStatus: { $eq: params.filterCaseStatus } })
+      conditions.push({ caseStatus: { $in: [params.filterCaseStatus] } })
     }
 
     const executedRulesFilters = []
@@ -190,21 +192,21 @@ export class MongoDbTransactionRepository
     if (params.filterOriginPaymentMethod != null) {
       conditions.push({
         'originPaymentDetails.method': {
-          $eq: params.filterOriginPaymentMethod,
+          $in: [params.filterOriginPaymentMethod],
         },
       })
     }
     if (params.filterDestinationPaymentMethod != null) {
       conditions.push({
         'destinationPaymentDetails.method': {
-          $eq: params.filterDestinationPaymentMethod,
+          $in: [params.filterDestinationPaymentMethod],
         },
       })
     }
     if (params.filterTagKey || params.filterTagValue) {
       const elemCondition: { [attr: string]: Filter<Tag> } = {}
       if (params.filterTagKey) {
-        elemCondition['key'] = { $eq: params.filterTagKey }
+        elemCondition['key'] = { $in: [params.filterTagKey] }
       }
       if (params.filterTagValue) {
         elemCondition['value'] = prefixRegexMatchFilter(params.filterTagValue)
@@ -219,18 +221,21 @@ export class MongoDbTransactionRepository
     if (params.filterUserId != null) {
       return {
         $or: [
-          { originUserId: { $eq: params.filterUserId }, $and: conditions },
-          { destinationUserId: { $eq: params.filterUserId }, $and: conditions },
+          { originUserId: { $in: [params.filterUserId] }, $and: conditions },
+          {
+            destinationUserId: { $in: [params.filterUserId] },
+            $and: conditions,
+          },
         ],
       }
     } else {
       if (params.filterOriginUserId != null) {
-        conditions.push({ originUserId: { $eq: params.filterOriginUserId } })
+        conditions.push({ originUserId: { $in: [params.filterOriginUserId] } })
       }
       if (params.filterDestinationUserId != null) {
         conditions.push({
           destinationUserId: {
-            $eq: params.filterDestinationUserId,
+            $in: [params.filterDestinationUserId],
           },
         })
       }
