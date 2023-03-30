@@ -7,8 +7,6 @@ defaults:
 on:
   issue_comment:
     types: [ created ]
-  pull_request:
-    types: [ opened ]
 
 jobs:
   deploy:

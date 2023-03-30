@@ -16,12 +16,15 @@ import {
 } from 'aws-cdk-lib/aws-iam'
 import {
   ApiDefinition,
+  ApiKey,
   AssetApiDefinition,
   DomainName,
   LogGroupLogDestination,
   MethodLoggingLevel,
+  Period,
   ResponseType,
   SpecRestApi,
+  UsagePlan,
 } from 'aws-cdk-lib/aws-apigateway'
 import { Queue } from 'aws-cdk-lib/aws-sqs'
 import { Topic, Subscription, SubscriptionProtocol } from 'aws-cdk-lib/aws-sns'
@@ -100,6 +103,7 @@ const CONSUMER_SQS_VISIBILITY_TIMEOUT = Duration.seconds(
 
 // SQS max receive count cannot go above 1000
 const MAX_SQS_RECEIVE_COUNT = 1000
+const isDevUserStack = process.env.ENV === 'dev:user'
 
 type InternalFunctionProps = {
   name: string
@@ -119,7 +123,6 @@ export class CdkTarponStack extends cdk.Stack {
       env: config.env,
     })
     this.config = config
-    const isDevUserStack = process.env.ENV === 'dev:user'
 
     /* Cloudwatch Insights Layer (https://docs.aws.amazon.com/AmazonCloudWatch/latest/monitoring/Lambda-Insights-extension-versionsx86-64.html) */
     const cwInsightsLayerArn = `arn:aws:lambda:${this.config.env.region}:580247275435:layer:LambdaInsightsExtension:18`
@@ -1350,6 +1353,39 @@ export class CdkTarponStack extends cdk.Stack {
       consoleApi.restApiName
     )
 
+    if (isDevUserStack) {
+      const apiKey = ApiKey.fromApiKeyId(
+        this,
+        `api-key`,
+        this.config.application.DEFAULT_API_KEY_ID as string
+      )
+      const usagePlan = new UsagePlan(this, `usage-plan`, {
+        quota: {
+          period: Period.MONTH,
+          limit: 10_000,
+        },
+        apiStages: [
+          {
+            api: consoleApi,
+            stage: consoleApi.deploymentStage,
+          },
+          {
+            api: publicDeviceDataApi,
+            stage: publicDeviceDataApi.deploymentStage,
+          },
+          {
+            api: publicConsoleApi,
+            stage: publicConsoleApi.deploymentStage,
+          },
+          {
+            api: publicApi,
+            stage: publicApi.deploymentStage,
+          },
+        ],
+      })
+      usagePlan.addApiKey(apiKey)
+    }
+
     /**
      * IAM roles
      */
@@ -1729,6 +1765,7 @@ export class CdkTarponStack extends cdk.Stack {
           ? RemovalPolicy.DESTROY
           : RemovalPolicy.RETAIN,
     })
+
     const restApi = new SpecRestApi(this, apiName, {
       restApiName: apiName,
       apiDefinition,
