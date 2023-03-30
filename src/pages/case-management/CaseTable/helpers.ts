@@ -1,11 +1,11 @@
 import { TableItem } from './types';
 import { map, QueryResult } from '@/utils/queries/types';
 import { TableData, TableDataItem } from '@/components/ui/Table/types';
-import { CaseResponse } from '@/apis';
+import { Case } from '@/apis';
 import { PaginatedData } from '@/utils/queries/hooks';
 
 export function useTableData(
-  queryResult: QueryResult<PaginatedData<CaseResponse>>,
+  queryResult: QueryResult<PaginatedData<Case>>,
 ): QueryResult<TableData<TableItem>> {
   return map(queryResult, (response) => {
     const items: TableDataItem<TableItem>[] = response.items.map(

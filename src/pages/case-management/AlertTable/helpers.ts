@@ -1,6 +1,6 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { message } from '@/components/library/Message';
-import { CaseResponse } from '@/apis';
+import { Case } from '@/apis';
 import { useApi } from '@/api';
 import { CASES_ITEM_ALERT_LIST, CASES_LIST } from '@/utils/queries/keys';
 import { getErrorMessage } from '@/utils/lang';
@@ -14,7 +14,7 @@ const useCreateNewCaseMutation = ({
   const queryClient = useQueryClient();
 
   const createNewCaseMutation = useMutation<
-    CaseResponse,
+    Case,
     unknown,
     {
       sourceCaseId: string;

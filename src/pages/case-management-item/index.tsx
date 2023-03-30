@@ -3,7 +3,7 @@ import { useParams } from 'react-router';
 import { useQueryClient } from '@tanstack/react-query';
 import _ from 'lodash';
 import Header from './components/Header';
-import { CaseResponse, Comment } from '@/apis';
+import { Case, Comment } from '@/apis';
 import { useApi } from '@/api';
 import PageWrapper from '@/components/PageWrapper';
 import { useI18n } from '@/locales';
@@ -34,7 +34,7 @@ function CaseManagementItemPage() {
 
   const queryResults = useQuery(
     CASES_ITEM(caseId),
-    (): Promise<CaseResponse> =>
+    (): Promise<Case> =>
       measure(
         () =>
           api.getCase({
@@ -45,7 +45,7 @@ function CaseManagementItemPage() {
   );
 
   const handleCommentAdded = (newComment: Comment) => {
-    queryClient.setQueryData<CaseResponse>(CASES_ITEM(caseId), (caseItem) => {
+    queryClient.setQueryData<Case>(CASES_ITEM(caseId), (caseItem) => {
       if (caseItem == null) {
         return caseItem;
       }

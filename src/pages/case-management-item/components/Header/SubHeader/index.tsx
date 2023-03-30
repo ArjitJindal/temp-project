@@ -1,7 +1,7 @@
 import React, { useCallback, useState } from 'react';
 import s from './index.module.less';
 import { message } from '@/components/library/Message';
-import { CaseResponse } from '@/apis';
+import { Case } from '@/apis';
 import { useApi } from '@/api';
 import FileListLineIcon from '@/components/ui/icons/Remix/document/file-list-line.react.svg';
 import * as Form from '@/components/ui/Form';
@@ -14,7 +14,7 @@ import KycRiskDisplay from '@/pages/users-item/UserDetails/KycRiskDisplay';
 import DynamicRiskDisplay from '@/pages/users-item/UserDetails/DynamicRiskDisplay';
 
 interface Props {
-  caseItem: CaseResponse;
+  caseItem: Case;
 }
 
 export default function SubHeader(props: Props) {

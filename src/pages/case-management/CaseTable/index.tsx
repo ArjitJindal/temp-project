@@ -4,7 +4,7 @@ import { TableSearchParams } from '../types';
 import CasesStatusChangeButton from '../components/CasesStatusChangeButton';
 import AlertTable from '../AlertTable';
 import GavelIcon from './gavel.react.svg';
-import { Account, CaseResponse, CaseUpdateRequest } from '@/apis';
+import { Account, Case, CaseUpdateRequest } from '@/apis';
 import { dayjs, DEFAULT_DATE_TIME_FORMAT } from '@/utils/dayjs';
 import { QueryResult } from '@/utils/queries/types';
 import { useAuth0User, useUsers } from '@/utils/user-utils';
@@ -41,7 +41,7 @@ import { extraFilters } from '@/pages/case-management/helpers';
 
 interface Props {
   params: AllParams<TableSearchParams>;
-  queryResult: QueryResult<PaginatedData<CaseResponse>>;
+  queryResult: QueryResult<PaginatedData<Case>>;
   onChangeParams: (newState: AllParams<TableSearchParams>) => void;
   onUpdateCases: (caseIds: string[], updates: CaseUpdateRequest) => void;
   rules: { value: string | undefined; label: string | undefined }[];
@@ -160,7 +160,7 @@ export default function CaseTable(props: Props) {
         width: 150,
         sorter: true,
         hideInSearch: true,
-        dataIndex: '_transactionsHit',
+        dataIndex: 'caseTransactionsCount',
         render: (_, entity) => {
           return <>{entity.caseTransactionsCount ?? 0}</>;
         },

@@ -3,7 +3,7 @@ import CommentsCard, { CommentGroup } from './CommentsCard';
 import AlertsCard from './AlertsCard';
 import InsightsCard from './InsightsCard';
 import { UI_SETTINGS } from './ui-settings';
-import { Comment as ApiComment, CaseResponse } from '@/apis';
+import { Comment as ApiComment, Case } from '@/apis';
 import UserDetails from '@/pages/users-item/UserDetails';
 import { usePageViewTracker } from '@/utils/tracker';
 import { useScrollToFocus } from '@/utils/hooks';
@@ -15,7 +15,7 @@ import AsyncResourceRenderer from '@/components/common/AsyncResourceRenderer';
 import { useApi } from '@/api';
 
 interface Props {
-  caseItem: CaseResponse;
+  caseItem: Case;
   updateCollapseState: (key: string, value: boolean) => void;
   onReload: () => void;
 }
