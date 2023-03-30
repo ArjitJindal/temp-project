@@ -277,7 +277,7 @@ export class UserRepository {
     if (params.filterTagKey || params.filterTagValue) {
       const elemCondition: { [attr: string]: Filter<Tag> } = {}
       if (params.filterTagKey) {
-        elemCondition['key'] = { $eq: params.filterTagKey }
+        elemCondition['key'] = { $in: [params.filterTagKey] }
       }
       if (params.filterTagValue) {
         elemCondition['value'] = prefixRegexMatchFilter(params.filterTagValue)
@@ -316,7 +316,7 @@ export class UserRepository {
             {
               $match: {
                 caseStatus: {
-                  $ne: 'CLOSED',
+                  $nin: ['CLOSED'],
                 },
               },
             },
