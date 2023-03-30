@@ -57,6 +57,7 @@ export const tenantsHandler = lambdaApi()(
 
       const tenantService = new TenantService(bodyTenantId ?? randomizedId, {
         dynamoDb: getDynamoDbClientByEvent(event),
+        mongoDb,
       })
 
       return tenantService.createTenant(JSON.parse(event.body))
