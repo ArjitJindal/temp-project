@@ -4539,7 +4539,6 @@ components:
         - AUDIT_LOGS
         - SLACK_ALERTS
         - IMPORT_FILES
-        - DASHBOARD_BLOCK_USER
         - LISTS
         - HELP_CENTER
         - MACHINE_LEARNING_DEMO
