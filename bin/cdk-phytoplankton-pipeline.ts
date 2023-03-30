@@ -15,18 +15,15 @@ if (process.env.ENV === 'dev') {
 }
 
 if (process.env.ENV === 'dev:user') {
-  const githubUser = process.env.GITHUB_USER || '';
-  const S_NO = process.env.S_NO || '';
-  const userRegex = /^[a-z\d](?:[a-z\d]|-(?=[a-z\d])){0,38}$/i;
-  const numberRegex = /^[1-3]$/;
-  if (userRegex.test(githubUser) && numberRegex.test(S_NO)) {
+  const qaSubdomain = process.env.QA_SUBDOMAIN || '';
+  if (!qaSubdomain) {
     new CdkPhytoplanktonStack(
       app,
-      `${devUserConfig.stage}-phytoplankton-${githubUser}-${S_NO}`,
+      `${devUserConfig.stage}-phytoplankton-${qaSubdomain}`,
       devUserConfig,
     );
   } else {
-    throw new Error('GITHUB_USER or S_NO not set correctly');
+    throw new Error('QA_SUBDOMAIN not set correctly');
   }
 }
 

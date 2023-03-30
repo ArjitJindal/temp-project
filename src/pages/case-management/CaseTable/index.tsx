@@ -411,6 +411,7 @@ export default function CaseTable(props: Props) {
         hideLoading();
       });
   };
+
   return (
     <QueryResultsTable<TableItem, TableSearchParams>
       expandable={{

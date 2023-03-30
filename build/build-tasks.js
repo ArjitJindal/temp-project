@@ -19,15 +19,14 @@ async function prepare(env) {
 }
 
 async function readConfig(env) {
-  if (env.ENV === 'dev' && process.env.GITHUB_USER) {
+  if (env.ENV === 'dev' && process.env.QA_SUBDOMAIN) {
     const stringConfig = await fs.readFile(
       path.resolve(env.PROJECT_DIR, `config/config.${env.ENV}-user.json`),
       { encoding: 'utf-8' },
     );
     const template = parse(stringConfig);
-    const githubUser = process.env.GITHUB_USER.toLowerCase();
-    const serialNumber = process.env.S_NO || '1';
-    return JSON.parse(template({ githubUser, serialNumber }));
+    const qaSubdomain = process.env.QA_SUBDOMAIN.toLowerCase();
+    return JSON.parse(template({ qaSubdomain }));
   }
   return await fs.readJson(path.resolve(env.PROJECT_DIR, `config/config.${env.ENV}.json`));
 }
