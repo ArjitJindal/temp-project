@@ -20,11 +20,10 @@ export async function migrateAllTenants(
             auth0Domain: 'dev-flagright.eu.auth0.com',
           } as TenantInfo,
         ]
-      : await TenantService.getAllTenants(config.region)
+      : await TenantService.getAllTenants(config.stage, config.region)
 
   if (tenantInfos.length === 0) {
-    console.warn('No tenants found for running the migration!')
-    return
+    throw new Error('No tenants found for running the migration! Fix it ASAP!')
   }
 
   for (const tenantInfo of tenantInfos) {

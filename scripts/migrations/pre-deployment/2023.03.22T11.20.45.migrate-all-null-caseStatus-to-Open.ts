@@ -13,7 +13,7 @@ async function migrateTenant(tenant: Tenant) {
 
   const casesCollection = await db.collection<Case>(casesCollectionName)
   const cases = await casesCollection
-    .find({ 'alerts.$.alertStatus': null })
+    .find({ 'alerts.alertStatus': null })
     .toArray()
 
   for await (const case_ of cases) {

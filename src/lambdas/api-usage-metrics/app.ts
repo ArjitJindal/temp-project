@@ -6,7 +6,8 @@ import { TenantService } from '@/services/tenants'
 
 export const apiUsageMetricsHandler = lambdaConsumer()(async () => {
   const tenantInfos = await TenantService.getAllTenants(
-    process.env.REGION as string
+    process.env.ENV as 'dev' | 'sandbox' | 'prod',
+    process.env.REGION as 'eu-1' | 'asia-1' | 'asia-2' | 'us-1' | 'eu-2'
   )
 
   const mongoDb = await getMongoDbClient()

@@ -40,13 +40,12 @@ export class TenantService {
   }
 
   public static getAllTenants = async (
-    region?: string
+    stage: 'local' | 'dev' | 'sandbox' | 'prod',
+    region?: 'eu-1' | 'asia-1' | 'asia-2' | 'us-1' | 'eu-2'
   ): Promise<TenantInfo[]> => {
     const tenantInfos: Array<TenantInfo> = []
     const mongoDb = await getMongoDbClient()
-    const auth0TenantConfigs = getAuth0TenantConfigs(
-      process.env.ENV as 'local' | 'dev' | 'sandbox' | 'prod'
-    )
+    const auth0TenantConfigs = getAuth0TenantConfigs(stage)
     for (const auth0TenantConfig of auth0TenantConfigs) {
       const auth0Domain = getAuth0Domain(
         auth0TenantConfig.tenantName,
@@ -61,10 +60,9 @@ export class TenantService {
       )
     }
 
-    return tenantInfos.filter(
-      (tenantInfo) =>
-        process.env.ENV !== 'prod' || tenantInfo.tenant.region === region
-    )
+    return region
+      ? tenantInfos.filter((tenantInfo) => tenantInfo.tenant.region === region)
+      : tenantInfos
   }
 
   async createTenant(

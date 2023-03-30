@@ -13,10 +13,11 @@ async function migrateTenant(tenant: Tenant) {
     let shouldUpdateCase = false
     c.alerts = (c.alerts ?? [])
       .map((alert) => {
-        const alertTransactions =
+        const alertTransactions = (
           alert.transactionIds?.map(
             (transactionId) => transactions[transactionId]
           ) || []
+        ).filter(Boolean)
         const correctAlertTransactions = alertTransactions.filter(
           (transaction) =>
             transaction.hitRules.find(
