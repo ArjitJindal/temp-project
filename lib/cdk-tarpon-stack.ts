@@ -583,6 +583,7 @@ export class CdkTarponStack extends cdk.Stack {
       'auth0.com',
       'READ'
     )
+    tarponDynamoDbTable.grantReadWriteData(accountsFunctionAlias)
     this.grantMongoDbAccess(accountsFunctionAlias)
 
     /* Roles */
