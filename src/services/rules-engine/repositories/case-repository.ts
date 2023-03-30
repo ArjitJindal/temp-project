@@ -699,13 +699,6 @@ export class CaseRepository {
           [`alert._id`]: 1,
         },
       },
-      {
-        $project: {
-          alert: '$alerts',
-          caseCreatedTimestamp: '$createdTimestamp',
-          caseUsers: '$caseUsers',
-        },
-      },
     ]
 
     const conditions: Filter<AlertListResponseItem>[] = []
