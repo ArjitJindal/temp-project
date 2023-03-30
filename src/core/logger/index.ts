@@ -16,8 +16,11 @@ class SentryTransport extends TransportStream {
     if (info['level'] == 'error' && !isLocal) {
       Sentry.captureException(
         Object.values(info).find((value) => value instanceof Error) ||
-          JSON.stringify(info),
-        { tags }
+          new Error(info['message']),
+        {
+          tags,
+          ...(typeof info === 'object' ? { extra: info } : {}),
+        }
       )
     }
   }
