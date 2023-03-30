@@ -271,6 +271,10 @@ export class CaseCreationService {
       (x) => !transactionPredicate(x)
     )
 
+    const caseTransactionsIds = _.uniq(
+      newCaseAlertsTransactions.map(({ transactionId }) => transactionId)
+    )
+
     // Create new case
     const newCase = await this.caseRepository.addCaseMongo({
       alerts: newCaseAlerts,
@@ -283,19 +287,21 @@ export class CaseCreationService {
         : sourceCase.relatedCases,
       caseUsers: sourceCase.caseUsers,
       caseTransactions: newCaseAlertsTransactions,
-      caseTransactionsIds: _.uniq(
-        newCaseAlertsTransactions.map(({ transactionId }) => transactionId)
-      ),
+      caseTransactionsIds,
+      caseTransactionsCount: caseTransactionsIds.length,
     })
+
+    const oldCaseTransactionsIds = _.uniq(
+      oldCaseAlertsTransactions.map(({ transactionId }) => transactionId)
+    )
 
     // Save old case
     await this.caseRepository.addCaseMongo({
       ...sourceCase,
       alerts: oldCaseAlerts,
       caseTransactions: oldCaseAlertsTransactions,
-      caseTransactionsIds: _.uniq(
-        oldCaseAlertsTransactions.map(({ transactionId }) => transactionId)
-      ),
+      caseTransactionsIds: oldCaseTransactionsIds,
+      caseTransactionsCount: oldCaseTransactionsIds.length,
       priority:
         _.minBy(oldCaseAlerts, 'priority')?.priority ?? _.last(PRIORITYS),
     })
@@ -368,19 +374,22 @@ export class CaseCreationService {
             params.latestTransactionArrivalTimestamp
           )
 
+          const caseTransactionsIds = _.uniq([
+            ...(existedCase.caseTransactionsIds ?? []),
+            filteredTransaction.transactionId as string,
+          ])
+
           logger.info('Update existed case with transaction')
           result.push({
             ...existedCase,
             latestTransactionArrivalTimestamp:
               params.latestTransactionArrivalTimestamp,
-            caseTransactionsIds: [
-              ...(existedCase.caseTransactionsIds ?? []),
-              filteredTransaction.transactionId as string,
-            ],
+            caseTransactionsIds,
             caseTransactions: [
               ...(existedCase.caseTransactions ?? []),
               filteredTransaction,
             ],
+            caseTransactionsCount: caseTransactionsIds.length,
             priority:
               _.minBy(alerts, 'priority')?.priority ?? _.last(PRIORITYS),
             alerts,
@@ -393,6 +402,7 @@ export class CaseCreationService {
             latestTransactionArrivalTimestamp:
               params.latestTransactionArrivalTimestamp,
             caseTransactionsIds: [filteredTransaction.transactionId as string],
+            caseTransactionsCount: 1,
             caseTransactions: [filteredTransaction],
             priority: params.priority,
             alerts: this.getAlertsForNewCase(

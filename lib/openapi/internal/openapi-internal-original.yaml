@@ -2628,7 +2628,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/CaseResponse'
+                $ref: '#/components/schemas/Case'
       x-flagright:
         permissions:
           - case-management:case-overview:write
@@ -2916,7 +2916,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/CaseResponse'
+                $ref: '#/components/schemas/Case'
         '404':
           description: Not found
   '/cases/{caseId}/transactions':
@@ -4812,63 +4812,8 @@ components:
             type: string
         falsePositiveDetails:
           $ref: ../public/openapi-public-original.yaml#/components/schemas/FalsePositiveDetails
-    CaseResponse:
-      title: CaseResponse
-      type: object
-      properties:
-        _id:
-          type: number
-        assignments:
-          type: array
-          items:
-            $ref: '#/components/schemas/Assignment'
-        caseId:
-          type: string
-        caseStatus:
-          $ref: '#/components/schemas/CaseStatus'
-        createdTimestamp:
-          type: number
-        priority:
-          $ref: '#/components/schemas/Priority'
-        caseUsers:
-          type: object
-          properties:
-            origin:
-              oneOf:
-                - $ref: '#/components/schemas/InternalConsumerUser'
-                - $ref: '#/components/schemas/InternalBusinessUser'
-                - $ref: '#/components/schemas/MissingUser'
-            destination:
-              oneOf:
-                - $ref: '#/components/schemas/InternalConsumerUser'
-                - $ref: '#/components/schemas/InternalBusinessUser'
-                - $ref: '#/components/schemas/MissingUser'
-            originUserDrsScore:
-              type: number
-            destinationUserDrsScore:
-              type: number
-            originUserRiskLevel:
-              $ref: '#/components/schemas/RiskLevel'
-            destinationUserRiskLevel:
-              $ref: '#/components/schemas/RiskLevel'
         caseTransactionsCount:
-          type: integer
-        alerts:
-          type: array
-          items:
-            $ref: '#/components/schemas/Alert'
-        lastStatusChange:
-          $ref: '#/components/schemas/CaseStatusChange'
-        comments:
-          type: array
-          items:
-            $ref: '#/components/schemas/Comment'
-        falsePositiveDetails:
-          $ref: ../public/openapi-public-original.yaml#/components/schemas/FalsePositiveDetails
-        caseTransactionsIds:
-          type: array
-          items:
-            type: string
+          type: number
     Alert:
       title: Alert
       type: object
@@ -4942,7 +4887,7 @@ components:
         data:
           type: array
           items:
-            $ref: '#/components/schemas/CaseResponse'
+            $ref: '#/components/schemas/Case'
       required:
         - total
         - data

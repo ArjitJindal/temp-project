@@ -24,7 +24,7 @@ import { DashboardStatsRepository } from '@/lambdas/console-api-dashboard/reposi
 import { addNewSubsegment } from '@/core/xray'
 import { sendWebhookTasks } from '@/services/webhook/utils'
 import { getContext } from '@/core/utils/context'
-import { CaseResponse } from '@/@types/openapi-internal/CaseResponse'
+import { Case } from '@/@types/openapi-internal/Case'
 
 export class CaseService {
   caseRepository: CaseRepository
@@ -183,7 +183,7 @@ export class CaseService {
   public async getCase(
     caseId: string,
     options: CaseListOptions = {}
-  ): Promise<CaseResponse | null> {
+  ): Promise<Case | null> {
     const caseGetSegment = await addNewSubsegment(
       'Case Service',
       'Mongo Get Case Query'
@@ -351,7 +351,7 @@ export class CaseService {
     await this.caseRepository.deleteCaseComment(caseId, commentId)
   }
 
-  private getAugmentedCase(caseEntity: CaseResponse) {
+  private getAugmentedCase(caseEntity: Case) {
     const commentsWithUrl = caseEntity.comments?.map((comment) => ({
       ...comment,
       files: comment.files?.map((file) => ({

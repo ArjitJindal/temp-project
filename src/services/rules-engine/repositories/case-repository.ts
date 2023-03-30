@@ -52,7 +52,6 @@ import { InternalTransaction } from '@/@types/openapi-internal/InternalTransacti
 import { PRIORITYS } from '@/@types/openapi-internal-custom/Priority'
 import { AlertListResponse } from '@/@types/openapi-internal/AlertListResponse'
 import { AlertListResponseItem } from '@/@types/openapi-internal/AlertListResponseItem'
-import { CaseResponse } from '@/@types/openapi-internal/CaseResponse'
 
 export const MAX_TRANSACTION_IN_A_CASE = 1000
 
@@ -560,18 +559,6 @@ export class CaseRepository {
       )
     }
 
-    preLimitPipeline.push(
-      ...[
-        {
-          $set: {
-            _transactionsHit: {
-              $size: '$caseTransactionsIds',
-            },
-          },
-        },
-      ]
-    )
-
     preLimitPipeline.push({ $sort: { [sortField]: sortOrder, _id: 1 } })
     // project should always be the last stage
     postLimitPipeline.push({
@@ -583,7 +570,7 @@ export class CaseRepository {
         createdTimestamp: 1,
         priority: 1,
         caseUsers: 1,
-        caseTransactionsCount: '$_transactionsHit',
+        caseTransactionsCount: 1,
         lastStatusChange: 1,
         comments: 1,
         falsePositiveDetails: 1,
@@ -780,7 +767,7 @@ export class CaseRepository {
   public async getCases(
     params: DefaultApiGetCaseListRequest,
     options: CaseListOptions = {}
-  ): Promise<{ total: number; data: CaseResponse[] }> {
+  ): Promise<{ total: number; data: Case[] }> {
     let cursor = await this.getCasesCursor(params, options)
     const total = this.getCasesCount(params)
 
@@ -1040,7 +1027,7 @@ export class CaseRepository {
   public async getCaseById(
     caseId: string,
     options: CaseListOptions = {}
-  ): Promise<CaseResponse | null> {
+  ): Promise<Case | null> {
     const { data } = await this.getCases(
       {
         filterIdExact: caseId,
@@ -1333,9 +1320,7 @@ export class CaseRepository {
     }
   }
 
-  public async getCasesByTransactionId(
-    transactionId: string
-  ): Promise<CaseResponse[]> {
+  public async getCasesByTransactionId(transactionId: string): Promise<Case[]> {
     const db = this.mongoDb.db()
     const casesCollection = db.collection<Case>(CASES_COLLECTION(this.tenantId))
     return await casesCollection
@@ -1418,7 +1403,7 @@ export class CaseRepository {
 
   public async getCasesByTransactionIds(
     transactionIds: string[]
-  ): Promise<CaseResponse[]> {
+  ): Promise<Case[]> {
     const db = this.mongoDb.db()
     const casesCollection = db.collection<Case>(CASES_COLLECTION(this.tenantId))
     return await casesCollection
@@ -1428,7 +1413,7 @@ export class CaseRepository {
       .toArray()
   }
 
-  public async getCasesByIds(caseIds: string[]): Promise<CaseResponse[]> {
+  public async getCasesByIds(caseIds: string[]): Promise<Case[]> {
     const db = this.mongoDb.db()
     const casesCollection = db.collection<Case>(CASES_COLLECTION(this.tenantId))
     return await casesCollection
