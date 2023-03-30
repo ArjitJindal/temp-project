@@ -1,4 +1,5 @@
 import { useMemo } from 'react';
+import { useLocalStorageState } from 'ahooks';
 import style from './style.module.less';
 import { Rule } from '@/apis';
 import { useApi } from '@/api';
@@ -86,6 +87,7 @@ export const RulesTable: React.FC<Props> = ({ onViewRule, onEditRule }) => {
       {
         title: 'Default action',
         width: 150,
+        dataIndex: 'defaultAction',
         sorter: (a, b) => a.defaultAction.localeCompare(b.defaultAction),
         render: (_, rule) => {
           return (
@@ -97,8 +99,32 @@ export const RulesTable: React.FC<Props> = ({ onViewRule, onEditRule }) => {
         exportData: (row) => row.defaultAction,
       },
       {
+        title: 'Typology',
+        width: 300,
+        dataIndex: 'typology',
+        exportData: (row) => row.typology,
+      },
+      {
+        title: 'Typology group',
+        width: 170,
+        dataIndex: 'typologyGroup',
+        exportData: (row) => row.typologyGroup,
+      },
+      {
+        title: 'Typology description',
+        width: 320,
+        dataIndex: 'typologyDescription',
+        exportData: (row) => row.typologyDescription,
+      },
+      {
+        title: 'Source',
+        width: 320,
+        dataIndex: 'source',
+        exportData: (row) => row.source,
+      },
+      {
         title: 'Action',
-        width: 90,
+        width: 140,
         search: false,
         render: (_, entity) => {
           return (
@@ -126,6 +152,26 @@ export const RulesTable: React.FC<Props> = ({ onViewRule, onEditRule }) => {
       total: rules.length,
     };
   });
+
+  const isExistingUser = useLocalStorageState('rule-active-tab');
+
+  const defaultColumnsState = {
+    // default check these 3 columns for new users, uncheck for existing users before added columns
+    typologyGroup: {
+      show: !isExistingUser,
+    },
+    typologyDescription: {
+      show: !isExistingUser,
+    },
+    source: {
+      show: !isExistingUser,
+    },
+    // default uncheck defaultAction for all users
+    defaultAction: {
+      show: false,
+    },
+  };
+
   return (
     <QueryResultsTable<Rule>
       form={{
@@ -138,6 +184,11 @@ export const RulesTable: React.FC<Props> = ({ onViewRule, onEditRule }) => {
       search={false}
       queryResults={rulesResult}
       columns={columns}
+      columnsState={{
+        persistenceType: 'localStorage',
+        persistenceKey: 'rules-library-table',
+        defaultValue: defaultColumnsState,
+      }}
     />
   );
 };
