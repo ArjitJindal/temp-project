@@ -24,18 +24,15 @@ if (process.env.ENV === 'dev') {
 }
 
 if (process.env.ENV === 'dev:user') {
-  const githubUser = process.env.GITHUB_USER || ''
-  const serialNumber = process.env.S_NO || '1'
-  const usernameRegex = /^[a-z\d](?:[a-z\d]|-(?=[a-z\d])){0,38}$/i
-  const serialNumberRegex = /^[1-3]$/
-  if (usernameRegex.test(githubUser) && serialNumberRegex.test(serialNumber)) {
+  const qaSubdomain = process.env.QA_SUBDOMAIN || ''
+  if (!qaSubdomain) {
     new CdkTarponStack(
       app,
-      `${devConfig.stage}-tarpon-${githubUser}${serialNumber}`,
+      `${devConfig.stage}-tarpon-${qaSubdomain}`,
       devConfig
     )
   } else {
-    throw new Error('GITHUB_USER or S_NO not set correctly')
+    throw new Error('QA_SUBDOMAIN not set correctly')
   }
 }
 

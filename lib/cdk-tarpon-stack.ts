@@ -1876,7 +1876,7 @@ export class CdkTarponStack extends cdk.Stack {
 
 const getSubdomain = (): string => {
   if (process.env.ENV === 'dev:user') {
-    return `${process.env.GITHUB_USER}-${process.env.S_NO}.api`
+    return `${process.env.QA_DOMAIN}.api`
   }
   if (process.env.ENV === 'sandbox') {
     return `sandbox.api`
