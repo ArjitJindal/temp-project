@@ -3,6 +3,7 @@ import { StackConstants } from './constants'
 const DEFAULT_LAMBDA_EXPECTED_MAX_DURATION_SECONDS = 10
 const ASYNC_JOB_LAMBDA_EXPECTED_MAX_DURATION_SECONDS = 14 * 60 // 15 minutes is the hard timeout
 const KINESIS_CONSUMER_LAMBDA_EXPECTED_MAX_DURATION_SECONDS = 100
+const CRON_LAMBDA_EXPECTED_MAX_DURATION_SECONDS = 100
 
 export const LAMBDAS: {
   [key: string]: {
@@ -258,6 +259,6 @@ export const LAMBDAS: {
   [StackConstants.API_USAGE_METRICS_FUNCTION_NAME]: {
     codePath: 'api-usage-metrics',
     handlerName: 'apiUsageMetricsHandler',
-    expectedMaxDurationSeconds: DEFAULT_LAMBDA_EXPECTED_MAX_DURATION_SECONDS,
+    expectedMaxDurationSeconds: CRON_LAMBDA_EXPECTED_MAX_DURATION_SECONDS,
   },
 }
