@@ -4,6 +4,7 @@ import s from './index.module.less';
 import { DEFAULT_PAGE_SIZE } from '@/components/ui/Table/consts';
 import Select from '@/components/library/Select';
 import COLORS from '@/components/ui/colors';
+import { formatNumber } from '@/utils/number';
 
 const PAGE_SIZE_OPTIONS = [10, 20, 50, 100];
 
@@ -54,8 +55,8 @@ export default function Pagination(props: Props) {
                   <span>
                     {showResultsInfo && pageSize && current && (
                       <>
-                        Showing {pageSize * (current - 1) + 1} -{' '}
-                        {Math.min(pageSize * current, total)} of {total} results
+                        Showing {formatNumber(pageSize * (current - 1) + 1)} -{' '}
+                        {formatNumber(Math.min(pageSize * current, total))} of {formatNumber(total)}
                       </>
                     )}
                   </span>

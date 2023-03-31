@@ -320,7 +320,7 @@ export function Content(props: { userId: string }) {
               tooltip: 'Destination is the Receiver in a transaction',
               children: [
                 {
-                  title: 'Destination Amount',
+                  title: 'Destination amount',
                   exportData: 'destinationAmountDetails',
                   hideInSearch: true,
                   render: (dom, entity) => {
