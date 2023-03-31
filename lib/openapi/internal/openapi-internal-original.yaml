@@ -1281,48 +1281,6 @@ paths:
           application/json:
             schema:
               $ref: '#/components/schemas/UserUpdateRequest'
-  '/consumer/users/{userId}/files':
-    parameters:
-      - schema:
-          type: string
-        name: userId
-        in: path
-        required: true
-    post:
-      summary: Consumer User Files - Create
-      operationId: post-consumer-users-userId-files
-      x-flagright:
-        permissions:
-          - users:user-overview:write
-      responses:
-        '200':
-          description: OK
-      requestBody:
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/FileInfo'
-  '/consumer/users/{userId}/files/{fileId}':
-    parameters:
-      - schema:
-          type: string
-        name: userId
-        in: path
-        required: true
-      - schema:
-          type: string
-        name: fileId
-        in: path
-        required: true
-    delete:
-      summary: Consumer User Files - Delete
-      operationId: delete-consumer-users-userId-files-fileId
-      x-flagright:
-        permissions:
-          - users:user-overview:write
-      responses:
-        '200':
-          description: OK
   /business/users:
     get:
       summary: Business Users - List
@@ -1429,48 +1387,6 @@ paths:
           application/json:
             schema:
               $ref: '#/components/schemas/UserUpdateRequest'
-  '/business/users/{userId}/files':
-    parameters:
-      - schema:
-          type: string
-        name: userId
-        in: path
-        required: true
-    post:
-      summary: Business User Files - Create
-      operationId: post-business-users-userId-files
-      x-flagright:
-        permissions:
-          - users:user-overview:write
-      responses:
-        '200':
-          description: OK
-      requestBody:
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/FileInfo'
-  '/business/users/{userId}/files/{fileId}':
-    parameters:
-      - schema:
-          type: string
-        name: userId
-        in: path
-        required: true
-      - schema:
-          type: string
-        name: fileId
-        in: path
-        required: true
-    delete:
-      summary: Business User Files - Delete
-      operationId: delete-business-users-userId-files-fileId
-      x-flagright:
-        permissions:
-          - users:user-overview:write
-      responses:
-        '200':
-          description: OK
   /users/uniques:
     get:
       summary: User - Unique values for different fields

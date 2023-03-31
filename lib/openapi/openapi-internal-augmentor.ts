@@ -62,17 +62,9 @@ export const ConsoleApiPathToLambda: any = {
     StackConstants.CONSOLE_API_CONSUMER_USERS_VIEW_FUNCTION_NAME,
   '/consumer/users/{userId}':
     StackConstants.CONSOLE_API_CONSUMER_USERS_VIEW_FUNCTION_NAME,
-  '/consumer/users/{userId}/files':
-    StackConstants.CONSOLE_API_CONSUMER_USERS_VIEW_FUNCTION_NAME,
-  '/consumer/users/{userId}/files/{fileId}':
-    StackConstants.CONSOLE_API_CONSUMER_USERS_VIEW_FUNCTION_NAME,
   '/business/users':
     StackConstants.CONSOLE_API_BUSINESS_USERS_VIEW_FUNCTION_NAME,
   '/business/users/{userId}':
-    StackConstants.CONSOLE_API_BUSINESS_USERS_VIEW_FUNCTION_NAME,
-  '/business/users/{userId}/files':
-    StackConstants.CONSOLE_API_BUSINESS_USERS_VIEW_FUNCTION_NAME,
-  '/business/users/{userId}/files/{fileId}':
     StackConstants.CONSOLE_API_BUSINESS_USERS_VIEW_FUNCTION_NAME,
   '/users/uniques':
     StackConstants.CONSOLE_API_BUSINESS_USERS_VIEW_FUNCTION_NAME,

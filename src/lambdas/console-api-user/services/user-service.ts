@@ -179,34 +179,6 @@ export class UserService {
     return 'OK'
   }
 
-  public async saveUserFile(userId: string, file: FileInfo): Promise<FileInfo> {
-    // Copy the files from tmp bucket to document bucket
-    await this.s3
-      .copyObject({
-        CopySource: `${this.tmpBucketName}/${file.s3Key}`,
-        Bucket: this.documentBucketName,
-        Key: file.s3Key,
-      })
-      .promise()
-    return this.userRepository.saveMongoUserFile(userId, {
-      ...file,
-      bucket: this.documentBucketName,
-    })
-  }
-
-  public async deleteUserFile(userId: string, fileId: string) {
-    const user = await this.userRepository.getMongoUser(userId)
-    if (!user) {
-      throw new createError.NotFound(`User ${userId} not found`)
-    }
-
-    await this.s3.deleteObjects({
-      Bucket: this.documentBucketName,
-      Delete: { Objects: [{ Key: fileId }] },
-    })
-    await this.userRepository.deleteMongoUserFile(userId, fileId)
-  }
-
   private getDownloadLink(file: FileInfo): string {
     return this.s3.getSignedUrl('getObject', {
       Bucket: this.documentBucketName,

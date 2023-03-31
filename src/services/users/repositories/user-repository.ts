@@ -23,7 +23,6 @@ import {
 } from '@/utils/mongoDBUtils'
 import { InternalBusinessUser } from '@/@types/openapi-internal/InternalBusinessUser'
 import { InternalConsumerUser } from '@/@types/openapi-internal/InternalConsumerUser'
-import { FileInfo } from '@/@types/openapi-internal/FileInfo'
 import { UserType } from '@/@types/user/user-type'
 import { FilterOperator } from '@/@types/openapi-internal/FilterOperator'
 import { InternalUser } from '@/@types/openapi-internal/InternalUser'
@@ -119,40 +118,6 @@ export class UserRepository {
       total: number
       data: Array<InternalBusinessUser | InternalConsumerUser>
     }
-  }
-
-  public async saveMongoUserFile(
-    userId: string,
-    file: FileInfo
-  ): Promise<FileInfo> {
-    const db = this.mongoDb.db()
-    const collection = db.collection<
-      InternalBusinessUser | InternalConsumerUser
-    >(USERS_COLLECTION(this.tenantId))
-    await collection.updateOne(
-      {
-        userId,
-      },
-      {
-        $push: { files: file },
-      }
-    )
-    return file
-  }
-
-  public async deleteMongoUserFile(userId: string, fileId: string) {
-    const db = this.mongoDb.db()
-    const collection = db.collection<
-      InternalBusinessUser | InternalConsumerUser
-    >(USERS_COLLECTION(this.tenantId))
-    await collection.updateOne(
-      {
-        userId,
-      },
-      {
-        $pull: { files: { s3Key: fileId } },
-      }
-    )
   }
 
   private async getMongoUsers(

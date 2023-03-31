@@ -12,7 +12,6 @@ import { getS3ClientByEvent } from '@/utils/s3'
 import { getMongoDbClient } from '@/utils/mongoDBUtils'
 import { getDynamoDbClientByEvent } from '@/utils/dynamodb'
 import { UserUpdateRequest } from '@/@types/openapi-internal/UserUpdateRequest'
-import { FileInfo } from '@/@types/openapi-internal/FileInfo'
 import { Comment } from '@/@types/openapi-internal/Comment'
 
 export type UserViewConfig = {
@@ -111,26 +110,6 @@ export const businessUsersViewHandler = lambdaApi()(
         event.pathParameters.userId,
         updateRequest
       )
-    } else if (
-      event.httpMethod === 'POST' &&
-      event.resource === '/business/users/{userId}/files' &&
-      event.pathParameters?.userId &&
-      event.body
-    ) {
-      const fileInfo = JSON.parse(event.body) as FileInfo
-      await userService.saveUserFile(event.pathParameters.userId, fileInfo)
-      return 'OK'
-    } else if (
-      event.httpMethod === 'DELETE' &&
-      event.resource === '/business/users/{userId}/files/{fileId}' &&
-      event.pathParameters?.userId &&
-      event.pathParameters?.fileId
-    ) {
-      await userService.deleteUserFile(
-        event.pathParameters.userId,
-        event.pathParameters.fileId
-      )
-      return 'OK'
     } else if (
       event.httpMethod === 'GET' &&
       event.path.endsWith('/users/uniques')
@@ -277,26 +256,6 @@ export const consumerUsersViewHandler = lambdaApi()(
         event.pathParameters.userId,
         updateRequest
       )
-    } else if (
-      event.httpMethod === 'POST' &&
-      event.resource === '/consumer/users/{userId}/files' &&
-      event.pathParameters?.userId &&
-      event.body
-    ) {
-      const fileInfo = JSON.parse(event.body) as FileInfo
-      await userService.saveUserFile(event.pathParameters.userId, fileInfo)
-      return 'OK'
-    } else if (
-      event.httpMethod === 'DELETE' &&
-      event.resource === '/consumer/users/{userId}/files/{fileId}' &&
-      event.pathParameters?.userId &&
-      event.pathParameters?.fileId
-    ) {
-      await userService.deleteUserFile(
-        event.pathParameters.userId,
-        event.pathParameters.fileId
-      )
-      return 'OK'
     }
   }
 )
