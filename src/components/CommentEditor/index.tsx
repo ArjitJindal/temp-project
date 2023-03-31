@@ -1,6 +1,5 @@
 import React, { useCallback, useEffect, useImperativeHandle, useRef, useState } from 'react';
 import Upload from 'antd/es/upload/Upload';
-import axios from 'axios';
 import _ from 'lodash';
 import s from './styles.module.less';
 import { message } from '@/components/library/Message';
@@ -11,6 +10,7 @@ import { FilesList } from '@/components/files/FilesList';
 import MarkdownEditor from '@/components/markdown/MarkdownEditor';
 import { AsyncResource, isLoading } from '@/utils/asyncResource';
 import { Hint } from '@/components/library/Form/InputField';
+import { uploadFile } from '@/utils/file-uploader';
 
 export const MAX_COMMENT_LENGTH = 5000;
 
@@ -137,16 +137,8 @@ function CommentEditor(props: Props, ref: React.Ref<CommentEditorRef>) {
             const hideMessage = message.loading('Uploading...');
             let fileS3Key = '';
             try {
-              // 1. Get S3 presigned URL
-              const { presignedUrl, s3Key } = await api.postGetPresignedUrl({});
+              const { s3Key } = await uploadFile(api, file);
               fileS3Key = s3Key;
-
-              // 2. Upload file to S3 directly
-              await axios.put(presignedUrl, file, {
-                headers: {
-                  'Content-Disposition': `attachment; filename="${encodeURIComponent(file.name)}"`,
-                },
-              });
               if (onSuccess) {
                 onSuccess(s3Key);
               }

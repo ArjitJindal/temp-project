@@ -1,11 +1,11 @@
 import { message, Upload } from 'antd';
 import filesize from 'filesize';
 import React, { forwardRef, useImperativeHandle } from 'react';
-import axios from 'axios';
 import { UploadOutlined } from '@ant-design/icons';
 import Button from '../library/Button';
 import { FileInfo } from '@/apis';
 import { useApi } from '@/api';
+import { uploadFile } from '@/utils/file-uploader';
 
 interface Props {
   files: FileInfo[];
@@ -51,15 +51,7 @@ export const UploadFilesList = forwardRef((props: Props, ref: React.Ref<RemoveAl
         const file = f as File;
         const hideMessage = message.loading('Uploading...');
         try {
-          // 1. Get S3 presigned URL
-          const { presignedUrl, s3Key } = await api.postGetPresignedUrl({});
-
-          // 2. Upload file to S3 directly
-          await axios.put(presignedUrl, file, {
-            headers: {
-              'Content-Disposition': `attachment; filename="${file.name}"`,
-            },
-          });
+          const { s3Key } = await uploadFile(api, file);
           if (onSuccess) {
             onSuccess(s3Key);
           }

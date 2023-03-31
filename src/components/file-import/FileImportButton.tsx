@@ -1,6 +1,5 @@
 import { InboxOutlined, LoadingOutlined, UploadOutlined } from '@ant-design/icons';
 import { Alert, Divider, message, Modal, Select } from 'antd';
-import axios from 'axios';
 import { useCallback, useState } from 'react';
 import Dragger from 'antd/es/upload/Dragger';
 import filesize from 'filesize';
@@ -10,6 +9,7 @@ import { FileInfo, ImportRequestFormatEnum, ImportRequestTypeEnum } from '@/apis
 import { useApi } from '@/api';
 import { sleep } from '@/utils/time-utils';
 import { useAuth0User } from '@/utils/user-utils';
+import { uploadFile } from '@/utils/file-uploader';
 
 const EXAMPLE_FILE_URL: Record<ImportRequestTypeEnum, string> = {
   TRANSACTION:
@@ -158,15 +158,7 @@ export const FileImportButton: React.FC<FileImportButtonProps> = ({ type, button
               setLoading(true);
               const hideMessage = message.loading('Uploading...');
               try {
-                // 1. Get S3 presigned URL
-                const { presignedUrl, s3Key } = await api.postGetPresignedUrl({});
-
-                // 2. Upload file to S3 directly
-                await axios.put(presignedUrl, file, {
-                  headers: {
-                    'Content-Disposition': `attachment; filename="${file?.name}"`,
-                  },
-                });
+                const { s3Key } = await uploadFile(api, file);
                 setFile({ s3Key, filename: file.name, size: file.size });
                 hideMessage();
               } catch (error) {
