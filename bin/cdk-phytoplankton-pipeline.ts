@@ -16,7 +16,7 @@ if (process.env.ENV === 'dev') {
 
 if (process.env.ENV === 'dev:user') {
   const qaSubdomain = process.env.QA_SUBDOMAIN || '';
-  if (!qaSubdomain) {
+  if (qaSubdomain) {
     new CdkPhytoplanktonStack(
       app,
       `${devUserConfig.stage}-phytoplankton-${qaSubdomain}`,
