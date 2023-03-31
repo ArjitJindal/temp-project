@@ -13,6 +13,7 @@ import { Account } from '@/apis';
 import COLORS from '@/components/ui/colors';
 import AccountForm from '@/pages/accounts/components/AccountForm';
 import QueryResultsTable from '@/components/common/QueryResultsTable';
+import { capitalizeWords } from '@/utils/tags';
 
 export default function Team() {
   const actionRef = useRef<TableActionType>(null);
@@ -58,6 +59,9 @@ export default function Team() {
       dataIndex: 'role',
       exportData: 'role',
       width: 100,
+      render: (_, { role }) => {
+        return capitalizeWords(role);
+      },
     },
     {
       title: 'Email verification',
