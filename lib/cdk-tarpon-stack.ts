@@ -699,6 +699,11 @@ export class CdkTarponStack extends cdk.Stack {
       }
     )
     this.grantMongoDbAccess(allUsersViewAlias)
+    this.grantSecretsManagerAccess(
+      allUsersViewAlias,
+      [this.config.application.OPENAI_CREDENTIALS_SECRET_ARN],
+      'READ'
+    )
 
     /* dashboard stats */
     const { alias: dashboardStatsAlias } = this.createFunction(

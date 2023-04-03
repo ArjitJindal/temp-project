@@ -2,7 +2,7 @@ import {
   APIGatewayEventLambdaAuthorizerContext,
   APIGatewayProxyWithLambdaAuthorizerEvent,
 } from 'aws-lambda'
-import { NotFound } from 'http-errors'
+import { Forbidden, NotFound } from 'http-errors'
 import { UserService } from './services/user-service'
 import { UserAuditLogService } from './services/user-audit-log-service'
 import { JWTAuthorizerResult } from '@/@types/jwt'
@@ -13,6 +13,9 @@ import { getMongoDbClient } from '@/utils/mongoDBUtils'
 import { getDynamoDbClientByEvent } from '@/utils/dynamodb'
 import { UserUpdateRequest } from '@/@types/openapi-internal/UserUpdateRequest'
 import { Comment } from '@/@types/openapi-internal/Comment'
+import { SalesforceService } from '@/services/salesforce'
+import { TenantRepository } from '@/services/tenants/repositories/tenant-repository'
+import { hasFeature } from '@/core/utils/context'
 
 export type UserViewConfig = {
   TMP_BUCKET: string
@@ -324,6 +327,21 @@ export const allUsersViewHandler = lambdaApi()(
         event.pathParameters.userId,
         event.pathParameters.commentId
       )
+    } else if (
+      event.httpMethod === 'GET' &&
+      event.resource === '/users/{userId}/salesforce'
+    ) {
+      if (!hasFeature('SALESFORCE')) {
+        throw new Forbidden('SALESFORCE feature not enabled')
+      }
+      const { userId } = event.pathParameters as any
+      const user = await userService.getUser(userId)
+      const dynamoDb = getDynamoDbClientByEvent(event)
+      const tenantRepository = new TenantRepository(tenantId, { dynamoDb })
+      const settings = await tenantRepository.getTenantSettings()
+      return await new SalesforceService(
+        settings.salesforceAuthToken as string
+      ).getAccount(user)
     }
     throw new Error('Unhandled request')
   }

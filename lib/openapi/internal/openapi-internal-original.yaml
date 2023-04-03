@@ -1069,6 +1069,25 @@ paths:
             type: string
           in: query
           name: referenceCurrency
+  '/users/{userId}/salesforce':
+    get:
+      summary: Salesforce Account - List
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SalesforceAccountResponse'
+              examples: {}
+      operationId: get-salesforce-account
+      description: ''
+      parameters:
+        - schema:
+            type: string
+          name: userId
+          in: path
+          required: true
   /consumer/users:
     get:
       summary: Consumer Users - List
@@ -3615,6 +3634,82 @@ components:
       required:
         - total
         - data
+    SalesforceAccountResponse:
+      title: SalesforceAccountResponse
+      type: object
+      properties:
+        account:
+          type: object
+          properties:
+            id:
+              type: string
+            type:
+              type: string
+            industry:
+              type: string
+            annualRevenue:
+              type: string
+            link:
+              type: string
+            summary:
+              type: object
+              properties:
+                good:
+                  type: string
+                bad:
+                  type: string
+                neutral:
+                  type: string
+        comments:
+          type: array
+          items:
+            type: object
+            properties:
+              body:
+                type: string
+              user:
+                type: string
+              createdAt:
+                type: string
+              link:
+                type: string
+        notes:
+          type: array
+          items:
+            type: object
+            properties:
+              user:
+                type: string
+              title:
+                type: string
+              body:
+                type: string
+              createdAt:
+                type: string
+              link:
+                type: string
+        emails:
+          type: array
+          items:
+            type: object
+            properties:
+              from:
+                type: string
+              to:
+                type: array
+                items:
+                  type: string
+              subject:
+                type: string
+              body:
+                type: string
+              createdAt:
+                type: string
+              link:
+                type: string
+            required:
+              - subject
+              - body
     TransactionsStatsByTypesResponse:
       title: TransactionsStatsByTypesResponse
       type: object
@@ -4145,6 +4240,8 @@ components:
                 type: string
         complyAdvantageSearchProfileId:
           type: string
+        salesforceAuthToken:
+          type: string
         limits:
           type: object
           properties:
@@ -4487,6 +4584,7 @@ components:
         - FALSE_POSITIVE_CHECK
         - DEMO_MODE
         - SIMULATOR
+        - SALESFORCE
         - ESCALATION
       description: ''
     ManagedRoleName:

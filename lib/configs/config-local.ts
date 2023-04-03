@@ -53,6 +53,7 @@ export const config: Config = {
     COMPLYADVANTAGE_CREDENTIALS_SECRET_ARN: `arn:aws:secretsmanager:${region}:${account}:secret:complyAdvantageCreds-j8uTMO`,
     COMPLYADVANTAGE_DEFAULT_SEARCH_PROFILE_ID:
       '432dd5d0-d9ee-417e-90f3-647c4ce531ad',
+    OPENAI_CREDENTIALS_SECRET_ARN: `arn:aws:secretsmanager:${region}:${account}:secret:openAI-oTKO8l`,
     CONSOLE_URI: 'https://console.flagright.dev',
     MAXIMUM_ALLOWED_EXPORT_SIZE: 10000,
     NODE_ENV: 'development',

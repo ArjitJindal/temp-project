@@ -88,6 +88,17 @@ export class UserService {
       ),
     }
   }
+  public async getUser(userId: string): Promise<InternalUser> {
+    const usersListResponse = await this.getUsers({
+      filterId: userId,
+      beforeTimestamp: Number.MAX_SAFE_INTEGER,
+    })
+
+    if (usersListResponse.data && usersListResponse.data.length > 0) {
+      return usersListResponse.data[0]
+    }
+    throw new NotFound('User not found')
+  }
 
   public async getBusinessUser(
     userId: string
