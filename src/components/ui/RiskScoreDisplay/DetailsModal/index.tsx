@@ -74,7 +74,7 @@ export default function DetailsModal(props: Props) {
           <div className={s.table}>
             <Table<TableRow>
               rowKey={'parameter'}
-              pagination={false}
+              pagination={'HIDE'}
               disableInternalPadding={true}
               options={{
                 reload: false,

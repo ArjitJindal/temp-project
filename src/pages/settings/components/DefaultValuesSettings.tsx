@@ -109,7 +109,7 @@ export const DefaultValuesSettings = () => {
             },
           ],
         }}
-        pagination={false}
+        pagination={'HIDE'}
         disableStripedColoring={true}
         rowKey="action"
         headerTitle="Default Values"

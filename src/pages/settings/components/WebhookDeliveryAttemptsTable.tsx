@@ -76,7 +76,7 @@ export const WebhookDeliveryAttemptsTable: React.FC<Props> = ({ webhookId }) => 
         columns={columns}
         queryResults={webhookResults}
         search={false}
-        pagination={false}
+        pagination={'HIDE'}
         rowKey="deliveryTaskId"
       />
       <Modal

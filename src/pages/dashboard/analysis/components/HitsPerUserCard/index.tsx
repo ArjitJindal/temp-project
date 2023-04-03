@@ -172,7 +172,7 @@ export default function HitsPerUserCard(props: Props) {
         columns={columns}
         toolBarRender={() => [<DatePicker.RangePicker value={dateRange} onChange={setDateRange} />]}
         queryResults={hitsPerUserResult}
-        pagination={false}
+        pagination={'HIDE'}
         options={{
           density: false,
           setting: false,

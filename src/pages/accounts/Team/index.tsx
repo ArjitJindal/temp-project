@@ -140,7 +140,7 @@ export default function Team() {
         persistenceType: 'localStorage',
         persistenceKey: 'accounts-list',
       }}
-      pagination={false}
+      pagination={'HIDE'}
     />
   );
 }

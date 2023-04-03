@@ -85,7 +85,7 @@ export function LegalDocumentsTable(prop: Props) {
             density: false,
             setting: false,
           }}
-          pagination={false}
+          pagination={'HIDE'}
         />
       </div>
     </Card.Root>

@@ -13,6 +13,8 @@ export const statusToOperationName = (status: AlertStatus | CaseStatus) => {
       return 'Close';
     case 'REOPENED':
       return 'Re-Open';
+    case 'ESCALATED':
+      return 'Escalated';
   }
   return neverReturn(status, humanizeConstant(status));
 };
@@ -29,6 +31,8 @@ export const getNextStatus = (
       return 'CLOSED';
     case 'CLOSED':
       return 'REOPENED';
+    case 'ESCALATED':
+      return 'ESCALATED';
   }
   return neverReturn(status, status);
 };

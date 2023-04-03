@@ -12,7 +12,7 @@ export const RuleParametersTable: React.FC<Props> = ({ parameters, schema }) => 
       <Table
         rowKey="key"
         className={styles.parametersTable}
-        pagination={false}
+        pagination={'HIDE'}
         data={{
           items: Object.entries(parameters).map((entry) => ({
             key: entry[0],

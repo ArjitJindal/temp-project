@@ -141,7 +141,7 @@ export const RiskLevelSettings: React.FC = () => {
       headerTitle="Default State"
       search={false}
       columns={columns}
-      pagination={false}
+      pagination={'HIDE'}
       data={{
         items: tableData,
       }}

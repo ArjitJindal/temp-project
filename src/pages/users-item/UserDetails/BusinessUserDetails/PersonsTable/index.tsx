@@ -65,7 +65,7 @@ export function expandedRowRender(person: Person) {
           density: false,
           setting: false,
         }}
-        pagination={false}
+        pagination={'HIDE'}
       />
     </div>
   );
@@ -208,7 +208,7 @@ export default function PersonsTable(props: Props) {
           ],
         },
       ]}
-      pagination={false}
+      pagination={'HIDE'}
       options={{
         reload: false,
         density: false,

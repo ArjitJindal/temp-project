@@ -134,7 +134,7 @@ const RiskClassificationTable = (props: Props) => {
       rowKey="key"
       search={false}
       columns={columns}
-      pagination={false}
+      pagination={'HIDE'}
       loading={state == null || loading}
       data={{
         items: LEVEL_ENTRIES,

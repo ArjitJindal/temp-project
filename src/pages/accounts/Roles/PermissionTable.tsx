@@ -34,7 +34,7 @@ export default function PermissionTable({
         rowKey={'name'}
         columns={roleColumns}
         disableExpandedRowPadding
-        pagination={false}
+        pagination={'HIDE'}
         search={false}
         controlsHeader={[() => <h1>hello</h1>]}
         className={s.rolesTable}

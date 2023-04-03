@@ -322,7 +322,7 @@ const PaymentMethodLimitsTable: React.FC<PaymentMethodLimitsTableProps> = ({
     <>
       <Table<TableItem>
         rowKey="paymentMethod"
-        pagination={false}
+        pagination={'HIDE'}
         data={{
           items: tableItems,
         }}

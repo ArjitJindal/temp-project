@@ -34,7 +34,7 @@ export const RulesHitDetailsTable: React.FC<Props> = ({ transaction }) => {
       data={{
         items: transaction.executedRules.filter((executedRule) => executedRule.ruleHit),
       }}
-      pagination={false}
+      pagination={'HIDE'}
       search={false}
       toolBarRender={false}
     />

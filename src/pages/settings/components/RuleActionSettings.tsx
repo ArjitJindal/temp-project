@@ -141,7 +141,7 @@ export const RuleActionSettings: React.FC = () => {
       headerTitle="Default Actions"
       search={false}
       columns={columns}
-      pagination={false}
+      pagination={'HIDE'}
       data={{
         items: tableData,
       }}

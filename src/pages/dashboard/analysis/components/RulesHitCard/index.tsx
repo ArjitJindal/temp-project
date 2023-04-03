@@ -134,7 +134,7 @@ export default function RuleHitCard() {
             ]}
             queryResults={rulesHitResult}
             defaultSize={'small'}
-            pagination={false}
+            pagination={'HIDE'}
             options={{
               density: false,
               setting: false,

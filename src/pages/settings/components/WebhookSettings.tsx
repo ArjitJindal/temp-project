@@ -138,7 +138,7 @@ export const WebhookSettings: React.FC = () => {
         headerTitle="Webhooks"
         search={false}
         columns={columns}
-        pagination={false}
+        pagination={'HIDE'}
         queryResults={webhooksListResult}
         toolBarRender={() => [
           <Button type="PRIMARY" onClick={handleCreateWebhook}>

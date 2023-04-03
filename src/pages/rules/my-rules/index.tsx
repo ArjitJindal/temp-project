@@ -363,7 +363,7 @@ const MyRule = () => {
         actionRef={actionRef}
         columns={columns}
         queryResults={rulesResult}
-        pagination={false}
+        pagination={'HIDE'}
         search={false}
         scroll={{ x: 1000 }}
         rowKey="id"

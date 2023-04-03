@@ -296,8 +296,8 @@ export default function AlertTable(props: Props) {
       }
 
       const result = await api.getAlertList({
-        page: showPagination ? page : 1,
-        pageSize: showPagination ? pageSize : 1000,
+        page,
+        pageSize,
         filterAlertId: alertId,
         filterCaseId: caseId,
         filterOutAlertStatus: showActions
@@ -390,7 +390,7 @@ export default function AlertTable(props: Props) {
       params={params}
       onChangeParams={onChangeParams}
       extraFilters={extraFilters(isPulseEnabled)}
-      pagination={showPagination}
+      pagination={showPagination ? 'SHOW' : 'HIDE_FOR_ONE_PAGE'}
       actionsHeader={
         showActions && !isEmbedded
           ? [

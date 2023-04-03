@@ -185,7 +185,7 @@ function ListTable(props: Props, ref: ListTableRef) {
         rowKey="listId"
         search={false}
         columns={columns}
-        pagination={false}
+        pagination={'HIDE'}
       />
       <DeleteListModal
         listType={listType}

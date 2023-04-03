@@ -54,7 +54,7 @@ export default function TransactionEventsTable({ events }: Props) {
       data={{
         items: events,
       }}
-      pagination={false}
+      pagination={'HIDE'}
       options={{
         density: false,
         setting: false,

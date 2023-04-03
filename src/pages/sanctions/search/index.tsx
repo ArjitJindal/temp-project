@@ -186,7 +186,7 @@ export const SanctionsSearchTable: React.FC<Props> = ({ searchId }) => {
         onChangeParams={setParams}
         rowKey="key"
         columns={columns}
-        pagination={false}
+        pagination={'HIDE'}
         search={{
           labelWidth: 120,
         }}

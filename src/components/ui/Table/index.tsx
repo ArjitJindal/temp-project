@@ -4,6 +4,7 @@ import React, {
   useEffect,
   useImperativeHandle,
   useLayoutEffect,
+  useMemo,
   useRef,
   useState,
 } from 'react';
@@ -87,7 +88,7 @@ export interface Props<T extends object | unknown, Params extends object, ValueT
   actionRef?: React.Ref<TableActionType>;
   loading?: boolean;
   data: TableData<T>;
-  pagination?: boolean;
+  pagination?: 'SHOW' | 'HIDE_FOR_ONE_PAGE' | 'HIDE';
   rowSelection?: RowSelection<T>;
   params?: AllParams<Params>;
   isEvenRow?: (item: T) => boolean;
@@ -132,7 +133,7 @@ export default function Table<
     controlsHeader = [],
     rowSelection,
     loading,
-    pagination,
+    pagination = 'SHOW',
     data,
     params,
     columns,
@@ -316,6 +317,18 @@ export default function Table<
     }
   }, []);
 
+  const showPagination = useMemo(() => {
+    if (pagination === 'SHOW') {
+      return true;
+    }
+
+    if (pagination === 'HIDE_FOR_ONE_PAGE' && data?.total && params?.pageSize) {
+      return data.total > params.pageSize;
+    }
+
+    return false;
+  }, [data?.total, params?.pageSize, pagination]);
+
   return (
     <div
       className={cn(style.root, {
@@ -453,7 +466,7 @@ export default function Table<
           },
         }}
       />
-      {pagination !== false && (
+      {showPagination && (
         <Pagination
           isDisabled={loading}
           pageSize={params?.pageSize}

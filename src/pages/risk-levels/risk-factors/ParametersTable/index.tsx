@@ -128,7 +128,7 @@ export default function ParametersTable(props: Props) {
           ),
         }}
         defaultSize={'small'}
-        pagination={false}
+        pagination={'HIDE'}
         options={{
           density: false,
           setting: false,

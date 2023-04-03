@@ -179,7 +179,7 @@ export const RulesTable: React.FC<Props> = ({ onViewRule, onEditRule }) => {
       }}
       className={style.table}
       scroll={{ x: 1300 }}
-      pagination={false}
+      pagination={'HIDE'}
       rowKey="id"
       search={false}
       queryResults={rulesResult}
