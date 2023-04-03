@@ -8,17 +8,24 @@ import { getConsumerUserColumns } from './consumer-users-columns';
 import { getAllUserColumns } from './all-user-columns';
 import { RiskLevelButton } from './RiskLevelFilterButton';
 import { queryAdapter } from './helpers/queryAdapter';
+import { UserRegistrationStatusFilterButton } from './UserRegistrationStatusFilterButton';
 import { dayjs } from '@/utils/dayjs';
 import RiskLevelTag from '@/components/library/RiskLevelTag';
 import { useApi } from '@/api';
 import { useFeatureEnabled } from '@/components/AppWrapper/Providers/SettingsProvider';
-import { InternalBusinessUser, InternalConsumerUser, InternalUser, RiskLevel } from '@/apis';
+import {
+  InternalBusinessUser,
+  InternalConsumerUser,
+  InternalUser,
+  RiskLevel,
+  UserRegistrationStatus,
+} from '@/apis';
 import PageWrapper from '@/components/PageWrapper';
 import '../../../components/ui/colors';
 import { useI18n } from '@/locales';
 import PageTabs from '@/components/ui/PageTabs';
 import { makeUrl, parseQueryString } from '@/utils/routing';
-import { TableColumn } from '@/components/ui/Table/types';
+import { ExtraFilter, TableColumn } from '@/components/ui/Table/types';
 import UserSearchButton from '@/pages/transactions/components/UserSearchButton';
 import QueryResultsTable from '@/components/common/QueryResultsTable';
 import { CommonParams, DEFAULT_PARAMS_STATE } from '@/components/ui/Table';
@@ -35,6 +42,7 @@ export interface UserSearchParams extends CommonParams {
   tagKey?: string;
   tagValue?: string;
   createdTimestamp?: string[];
+  userRegistrationStatus?: UserRegistrationStatus[];
 }
 
 function getPulseColumns<
@@ -134,6 +142,83 @@ function getPulseColumns<
   ];
 }
 
+const extraFilters = (list: 'business' | 'consumer' | 'all'): ExtraFilter<UserSearchParams>[] => {
+  const extraFilters: ExtraFilter<UserSearchParams>[] = [
+    {
+      key: 'userId',
+      title: 'User ID/Name',
+      renderer: ({ params, setParams }) => (
+        <UserSearchButton
+          initialMode={'ALL'}
+          userId={params.userId ?? null}
+          showOriginAndDestination={false}
+          onConfirm={(userId, mode) => {
+            setParams((state) => ({
+              ...state,
+              userId: userId ?? undefined,
+              userFilterMode: mode ?? undefined,
+            }));
+          }}
+        />
+      ),
+    },
+    {
+      key: 'tagKey',
+      title: 'Tags',
+      renderer: ({ params, setParams }) => (
+        <UserTagSearchButton
+          initialState={{
+            key: params.tagKey ?? null,
+            value: params.tagValue ?? null,
+          }}
+          onConfirm={(value) => {
+            setParams((state) => ({
+              ...state,
+              tagKey: value.key ?? undefined,
+              tagValue: value.value ?? undefined,
+            }));
+          }}
+        />
+      ),
+    },
+    {
+      key: 'riskLevels',
+      title: 'CRA',
+      renderer: ({ params, setParams }) => (
+        <RiskLevelButton
+          riskLevels={params.riskLevels ?? []}
+          onConfirm={(riskLevels) => {
+            setParams((state) => ({
+              ...state,
+              riskLevels: riskLevels ?? undefined,
+            }));
+          }}
+        />
+      ),
+    },
+  ];
+
+  if (list === 'business') {
+    extraFilters.push({
+      key: 'userRegistrationStatus',
+      title: 'Registration Status',
+      renderer: ({ params, setParams }) => (
+        <UserRegistrationStatusFilterButton
+          userRegistrationStatus={params.userRegistrationStatus ?? []}
+          onConfirm={(registrationStatus) => {
+            setParams((state) => ({
+              ...state,
+              userRegistrationStatus: registrationStatus ?? undefined,
+            }));
+          }}
+        />
+      ),
+    });
+  }
+
+  return extraFilters;
+};
+
 const UsersTab = <T extends InternalBusinessUser | InternalConsumerUser | InternalUser>(props: {
   type: 'business' | 'consumer' | 'all';
 }) => {
@@ -196,6 +281,9 @@ const UsersTab = <T extends InternalBusinessUser | InternalConsumerUser | Intern
         filterTagKey: tagKey,
         filterTagValue: tagValue,
         filterRiskLevel: riskLevels,
+        ...(type === 'business' && {
+          filterUserRegistrationStatus: params.userRegistrationStatus,
+        }),
       };
 
       const response =
@@ -222,60 +310,7 @@ const UsersTab = <T extends InternalBusinessUser | InternalConsumerUser | Intern
       search={{
         labelWidth: 120,
       }}
-      extraFilters={[
-        {
-          key: 'userId',
-          title: 'User ID/Name',
-          renderer: ({ params, setParams }) => (
-            <UserSearchButton
-              initialMode={'ALL'}
-              userId={params.userId ?? null}
-              showOriginAndDestination={false}
-              onConfirm={(userId, mode) => {
-                setParams((state) => ({
-                  ...state,
-                  userId: userId ?? undefined,
-                  userFilterMode: mode ?? undefined,
-                }));
-              }}
-            />
-          ),
-        },
-        {
-          key: 'tagKey',
-          title: 'Tags',
-          renderer: ({ params, setParams }) => (
-            <UserTagSearchButton
-              initialState={{
-                key: params.tagKey ?? null,
-                value: params.tagValue ?? null,
-              }}
-              onConfirm={(value) => {
-                setParams((state) => ({
-                  ...state,
-                  tagKey: value.key ?? undefined,
-                  tagValue: value.value ?? undefined,
-                }));
-              }}
-            />
-          ),
-        },
-        {
-          key: 'riskLevels',
-          title: 'CRA',
-          renderer: ({ params, setParams }) => (
-            <RiskLevelButton
-              riskLevels={params.riskLevels ?? []}
-              onConfirm={(riskLevels) => {
-                setParams((state) => ({
-                  ...state,
-                  riskLevels: riskLevels ?? undefined,
-                }));
-              }}
-            />
-          ),
-        },
-      ]}
+      extraFilters={extraFilters(type)}
       className={styles.table}
       scroll={{ x: 500 }}
       columns={columns}

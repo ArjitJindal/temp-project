@@ -5,6 +5,7 @@ import { InternalBusinessUser } from '@/apis';
 import { TableColumn } from '@/components/ui/Table/types';
 import Money from '@/components/ui/Money';
 import KeyValueTag from '@/components/ui/KeyValueTag';
+import { capitalizeWords } from '@/utils/tags';
 
 export function getBusinessUserColumns(): TableColumn<InternalBusinessUser>[] {
   return [
@@ -51,6 +52,25 @@ export function getBusinessUserColumns(): TableColumn<InternalBusinessUser>[] {
                   return <Tag>{industry}</Tag>;
                 })
               : '-'}
+          </div>
+        );
+      },
+      valueType: 'textarea',
+    },
+    {
+      title: 'User registration status',
+      exportData: 'legalEntity.companyGeneralDetails.userRegistrationStatus',
+      width: 180,
+      hideInSearch: true,
+      render: (dom, entity) => {
+        const status = entity?.legalEntity?.companyGeneralDetails?.userRegistrationStatus;
+        return (
+          <div>
+            {status ? (
+              <Tag color={status === 'REGISTERED' ? 'green' : 'red'}>{capitalizeWords(status)}</Tag>
+            ) : (
+              '-'
+            )}
           </div>
         );
       },

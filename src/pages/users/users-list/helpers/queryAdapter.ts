@@ -2,7 +2,7 @@ import { UserSearchParams } from '..';
 import { Adapter } from '@/utils/routing';
 import { defaultQueryAdapter } from '@/components/ui/Table/helpers/queryAdapter';
 import { dayjs } from '@/utils/dayjs';
-import { RiskLevel } from '@/apis';
+import { RiskLevel, UserRegistrationStatus } from '@/apis';
 
 export const queryAdapter: Adapter<UserSearchParams> = {
   serializer: (params: UserSearchParams) => {
@@ -13,6 +13,7 @@ export const queryAdapter: Adapter<UserSearchParams> = {
       userId: params.userId,
       tagKey: params.tagKey,
       tagValue: params.tagValue,
+      userRegistrationStatus: params.userRegistrationStatus?.join(',') ?? '',
     };
   },
   deserializer: (raw): UserSearchParams => {
@@ -25,6 +26,9 @@ export const queryAdapter: Adapter<UserSearchParams> = {
       userId: raw.userId,
       tagKey: raw.tagKey,
       tagValue: raw.tagValue,
+      userRegistrationStatus: raw.userRegistrationStatus
+        ? (raw.userRegistrationStatus.split(',') as UserRegistrationStatus[])
+        : undefined,
     };
   },
 };
