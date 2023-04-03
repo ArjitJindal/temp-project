@@ -1,5 +1,6 @@
 import * as createError from 'http-errors'
 import { NotFound } from 'http-errors'
+import _ from 'lodash'
 import { Comment } from '@/@types/openapi-internal/Comment'
 import { FileInfo } from '@/@types/openapi-internal/FileInfo'
 import {
@@ -25,6 +26,9 @@ import { addNewSubsegment } from '@/core/xray'
 import { sendWebhookTasks } from '@/services/webhook/utils'
 import { getContext } from '@/core/utils/context'
 import { Case } from '@/@types/openapi-internal/Case'
+import { AlertEscalation } from '@/@types/openapi-internal/AlertEscalation'
+import { Account } from '@/@types/openapi-internal/Account'
+import { Assignment } from '@/@types/openapi-internal/Assignment'
 
 export class CaseService {
   caseRepository: CaseRepository
@@ -91,10 +95,11 @@ export class CaseService {
       }
     const updates = {
       assignments: updateRequest.assignments,
+      reviewAssignments: updateRequest.reviewAssignments,
       statusChange,
     }
     await this.caseRepository.updateCases(caseIds, updates)
-    const tenantId = getContext()?.tenantId
+    const tenantId = this.caseRepository.tenantId
     if (!tenantId) {
       throw new Error("Couldn't determine tenant")
     }
@@ -403,6 +408,50 @@ export class CaseService {
     )
     if (cases.length) {
       return this.deleteCaseComment(cases[0].caseId as string, commentId)
+    }
+  }
+
+  public async escalateCase(
+    caseId: string,
+    caseUpdateRequest: CaseUpdateRequest,
+    accounts: Account[]
+  ): Promise<void> {
+    const c = await this.getCase(caseId)
+    if (!c) {
+      throw new NotFound(`Cannot find case ${caseId}`)
+    }
+
+    const existingReviewAssignments = c.reviewAssignments || []
+    await this.updateCases((getContext()?.user as Account).id, [caseId], {
+      ...caseUpdateRequest,
+      reviewAssignments:
+        existingReviewAssignments.length > 0
+          ? existingReviewAssignments
+          : [this.getEscalationAssignment(accounts)],
+      caseStatus: 'ESCALATED',
+    })
+  }
+
+  public async escalateAlerts(
+    _caseId: string,
+    _alertEscalations: AlertEscalation[],
+    _accounts: Account[]
+  ): Promise<string> {
+    // TODO: Implement me
+    return 'child_id'
+  }
+
+  private getEscalationAssignment(accounts: Account[]): Assignment {
+    const escalationAssineeCandidates = accounts.filter(
+      (account) => account.role === 'admin'
+    )
+    if (escalationAssineeCandidates.length === 0) {
+      throw new NotFound(`Cannot find admin users to assign the case to.`)
+    }
+    const assignee = _.sample(escalationAssineeCandidates)!
+    return {
+      assigneeUserId: assignee.id,
+      timestamp: Date.now(),
     }
   }
 }

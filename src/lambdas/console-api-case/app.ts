@@ -2,10 +2,11 @@ import {
   APIGatewayEventLambdaAuthorizerContext,
   APIGatewayProxyWithLambdaAuthorizerEvent,
 } from 'aws-lambda'
-import { NotFound } from 'http-errors'
+import { NotFound, BadRequest } from 'http-errors'
 import { DashboardStatsRepository } from '../console-api-dashboard/repositories/dashboard-stats-repository'
 import { CaseService } from './services/case-service'
 import { CaseAuditLogService } from './services/case-audit-log-service'
+import { AccountsService } from '@/services/accounts'
 import { lambdaApi } from '@/core/middlewares/lambda-api-middlewares'
 import { addNewSubsegment } from '@/core/xray'
 import {
@@ -30,6 +31,8 @@ import { RuleInstanceRepository } from '@/services/rules-engine/repositories/rul
 import { MongoDbTransactionRepository } from '@/services/rules-engine/repositories/mongodb-transaction-repository'
 import { isValidSortOrder } from '@/@types/openapi-internal-custom/SortOrder'
 import { Case } from '@/@types/openapi-internal/Case'
+import { CaseEscalationRequest } from '@/@types/openapi-internal/CaseEscalationRequest'
+import { hasFeature } from '@/core/utils/context'
 
 export type CaseConfig = {
   TMP_BUCKET: string
@@ -42,7 +45,11 @@ export const casesHandler = lambdaApi()(
       APIGatewayEventLambdaAuthorizerContext<JWTAuthorizerResult>
     >
   ) => {
-    const { principalId: tenantId, userId } = event.requestContext.authorizer
+    const {
+      principalId: tenantId,
+      userId,
+      auth0Domain,
+    } = event.requestContext.authorizer
     const { DOCUMENT_BUCKET, TMP_BUCKET } = process.env as CaseConfig
     const s3 = getS3ClientByEvent(event)
     const client = await getMongoDbClient()
@@ -504,6 +511,53 @@ export const casesHandler = lambdaApi()(
         subtype: 'COMMENT',
       })
       return 'OK'
+    } else if (
+      event.httpMethod === 'POST' &&
+      event.resource === '/cases/{caseId}/escalate' &&
+      event.pathParameters?.caseId &&
+      event.body
+    ) {
+      if (!hasFeature('ESCALATION')) {
+        throw new BadRequest('Feature not enabled')
+      }
+      const caseId = event.pathParameters.caseId as string
+      const escalationRequest = JSON.parse(event.body) as CaseEscalationRequest
+      const accountsService = new AccountsService(
+        { auth0Domain },
+        { mongoDb: client }
+      )
+      if (
+        !escalationRequest.alertEscalations ||
+        escalationRequest.alertEscalations.length === 0
+      ) {
+        const allAccounts = (
+          await accountsService.getTenantAccounts(
+            await accountsService.getAccountTenant(userId)
+          )
+        ).filter((account) => !account.blocked)
+        await caseService.escalateCase(
+          caseId,
+          escalationRequest.caseUpdateRequest,
+          allAccounts
+        )
+        return {
+          childCaseId: undefined,
+        }
+      } else if (escalationRequest.alertEscalations) {
+        const allAccounts = (
+          await accountsService.getTenantAccounts(
+            await accountsService.getAccountTenant(userId)
+          )
+        ).filter((account) => !account.blocked)
+        const childCaseId = await caseService.escalateAlerts(
+          caseId,
+          escalationRequest.alertEscalations,
+          allAccounts
+        )
+        return {
+          childCaseId,
+        }
+      }
     }
     throw new NotFound('Unhandled request')
   }

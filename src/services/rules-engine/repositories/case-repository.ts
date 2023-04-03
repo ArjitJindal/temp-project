@@ -565,6 +565,7 @@ export class CaseRepository {
       $project: {
         _id: 1,
         assignments: 1,
+        reviewAssignments: 1,
         caseId: 1,
         caseStatus: 1,
         createdTimestamp: 1,
@@ -815,13 +816,28 @@ export class CaseRepository {
     caseIds: string[],
     updates: {
       assignments?: Assignment[]
+      reviewAssignments?: Assignment[]
       statusChange?: CaseStatusChange
     }
   ) {
     const db = this.mongoDb.db()
     const collection = db.collection<Case>(CASES_COLLECTION(this.tenantId))
-
-    const isCaseStatusClosed = updates.statusChange?.caseStatus === 'CLOSED'
+    const newCaseStatus = updates.statusChange?.caseStatus
+    const alertsSetUpdate = _.omitBy(
+      {
+        'alerts.$[alert].alertStatus': updates.statusChange?.caseStatus,
+        'alerts.$[alert].lastStatusChange': updates.statusChange,
+        'alerts.$[alert].reviewAssignments':
+          newCaseStatus === 'ESCALATED' ? updates.reviewAssignments : undefined,
+      },
+      _.isNil
+    )
+    const alertsPushUpdate = _.omitBy(
+      {
+        'alerts.$[alert].statusChanges': updates.statusChange,
+      },
+      _.isNil
+    )
 
     await collection.updateMany(
       { caseId: { $in: caseIds } },
@@ -829,14 +845,10 @@ export class CaseRepository {
         $set: _.omitBy<Partial<Case>>(
           {
             assignments: updates.assignments,
+            reviewAssignments: updates.reviewAssignments,
             caseStatus: updates.statusChange?.caseStatus,
             lastStatusChange: updates.statusChange,
-            ...(isCaseStatusClosed
-              ? {
-                  'alerts.$[].alertStatus': updates.statusChange?.caseStatus,
-                  'alerts.$[].lastStatusChange': updates.statusChange,
-                }
-              : {}),
+            ...alertsSetUpdate,
           },
           _.isNil
         ),
@@ -844,12 +856,15 @@ export class CaseRepository {
           ? {
               $push: {
                 statusChanges: updates.statusChange,
-                ...(isCaseStatusClosed
-                  ? { 'alerts.$[].statusChanges': updates.statusChange }
-                  : {}),
+                ...alertsPushUpdate,
               },
             }
           : {}),
+      },
+      {
+        arrayFilters: updates.statusChange
+          ? [{ 'alert.alertStatus': { $ne: 'CLOSED' } }]
+          : undefined,
       }
     )
   }

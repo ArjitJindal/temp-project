@@ -2870,6 +2870,31 @@ paths:
                 $ref: '#/components/schemas/TransactionsListResponse'
         '404':
           description: Not found
+  '/cases/{caseId}/escalate':
+    parameters:
+      - schema:
+          type: string
+        name: caseId
+        in: path
+        required: true
+    post:
+      summary: Escalate a case or alerts
+      operationId: post-cases-caseId-escalate
+      x-flagright:
+        permissions:
+          - case-management:case-overview:write
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CaseEscalationResponse'
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CaseEscalationRequest'
   '/cases/{caseId}/rule/{rulesInstanceId}/transactions':
     parameters:
       - schema:
@@ -3927,7 +3952,6 @@ components:
           type: number
       required:
         - assigneeUserId
-        - assignedByUserId
         - timestamp
     TransactionStatusChange:
       title: TransactionStatusChange
@@ -4463,6 +4487,7 @@ components:
         - FALSE_POSITIVE_CHECK
         - DEMO_MODE
         - SIMULATOR
+        - ESCALATION
       description: ''
     ManagedRoleName:
       type: string
@@ -4546,6 +4571,7 @@ components:
         - OPEN
         - CLOSED
         - REOPENED
+        - ESCALATED
     AlertStatus:
       type: string
       title: AlertStatus
@@ -4555,6 +4581,7 @@ components:
         - OPEN
         - CLOSED
         - REOPENED
+        - ESCALATED
     FilterOperator:
       type: string
       title: FilterOperator
@@ -4715,6 +4742,10 @@ components:
           type: array
           items:
             $ref: '#/components/schemas/Assignment'
+        reviewAssignments:
+          type: array
+          items:
+            $ref: '#/components/schemas/Assignment'
         statusChanges:
           type: array
           items:
@@ -4750,6 +4781,10 @@ components:
         alertStatus:
           $ref: '#/components/schemas/AlertStatus'
         assignments:
+          type: array
+          items:
+            $ref: '#/components/schemas/Assignment'
+        reviewAssignments:
           type: array
           items:
             $ref: '#/components/schemas/Assignment'
@@ -4898,6 +4933,10 @@ components:
           type: array
           items:
             $ref: '#/components/schemas/Assignment'
+        reviewAssignments:
+          type: array
+          items:
+            $ref: '#/components/schemas/Assignment'
         reason:
           type: array
           items:
@@ -4981,6 +5020,44 @@ components:
       required:
         - alertIds
         - sourceCaseId
+    AlertEscalation:
+      title: AlertEscalation
+      type: object
+      x-stoplight:
+        id: 71a07fea65043
+      properties:
+        alertId:
+          type: string
+        transactionIds:
+          type: array
+          items:
+            type: string
+      required:
+        - alertId
+    CaseEscalationRequest:
+      title: CaseEscalationRequest
+      type: object
+      x-stoplight:
+        id: b20285c502568
+      properties:
+        caseUpdateRequest:
+          $ref: '#/components/schemas/CaseUpdateRequest'
+        alertEscalations:
+          type: array
+          items:
+            $ref: '#/components/schemas/AlertEscalation'
+        closeSourceCase:
+          type: boolean
+      required:
+        - caseUpdateRequest
+    CaseEscalationResponse:
+      title: CaseEscalationResponse
+      type: object
+      x-stoplight:
+        id: 7fe28ee5d8da5
+      properties:
+        childCaseId:
+          type: string
     CaseStatusChange:
       title: CaseStatusChange
       type: object

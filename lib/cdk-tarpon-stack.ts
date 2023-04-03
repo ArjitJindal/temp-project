@@ -757,6 +757,7 @@ export class CdkTarponStack extends cdk.Stack {
     s3TmpBucket.grantRead(caseAlias)
     s3DocumentBucket.grantWrite(caseAlias)
     this.grantMongoDbAccess(caseAlias)
+    this.grantSecretsManagerAccessByPattern(caseAlias, 'auth0.com', 'READ')
 
     /* AuditLog */
     const { alias: auditLogAlias } = this.createFunction(
