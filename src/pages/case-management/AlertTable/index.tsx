@@ -44,6 +44,7 @@ interface Props {
   disableInternalPadding?: boolean;
   isEmbedded?: boolean;
   hideScopeSelector?: boolean;
+  showPagination?: boolean;
 }
 
 const mergedColumns = (
@@ -257,6 +258,7 @@ export default function AlertTable(props: Props) {
     disableInternalPadding = false,
     hideScopeSelector = false,
     isEmbedded = false,
+    showPagination = false,
   } = props;
   const showActions = !hideScopeSelector;
 
@@ -294,8 +296,8 @@ export default function AlertTable(props: Props) {
       }
 
       const result = await api.getAlertList({
-        page,
-        pageSize,
+        page: showPagination ? page : 1,
+        pageSize: showPagination ? pageSize : 1000,
         filterAlertId: alertId,
         filterCaseId: caseId,
         filterOutAlertStatus: showActions
@@ -388,6 +390,7 @@ export default function AlertTable(props: Props) {
       params={params}
       onChangeParams={onChangeParams}
       extraFilters={extraFilters(isPulseEnabled)}
+      pagination={showPagination}
       actionsHeader={
         showActions && !isEmbedded
           ? [
