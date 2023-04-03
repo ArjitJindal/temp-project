@@ -20,15 +20,6 @@ jobs:
         uses: actions/checkout@v3
         with:
           ref: ${{ steps.comment-branch.outputs.head_ref }}
-          path: "phytoplankton-console"
-          clean: false
-      - name: Checkout tarpon
-        if: steps.check.outputs.triggered == 'true'
-        uses: actions/checkout@master
-        with:
-          repository: flagright/tarpon
-          token: ${{ secrets.DEPLOY_PAT }}
-          path: "tarpon"
       - name: Use Node.js ${{ matrix.node-version }}
         uses: actions/setup-node@v3
         with:
@@ -42,11 +33,6 @@ jobs:
           cat ~/.aws/credentials
 
           export QA_SUBDOMAIN="qa$(echo "${{ github.head_ref }}" | shasum | head -c5)"
-
           echo "Destroying QA deploy for $QA_SUBDOMAIN.console.flagright.dev"
-          cd tarpon
-          npm run destroy:qa
-
-          cd ../phytoplankton-console
           yarn run destroy:qa
 
