@@ -16,14 +16,35 @@ jobs:
         node-version: [16.x]
     runs-on: ubuntu-20.04
     steps:
-      - name: Checkout PR branch
+      - name: Checkout Tarpon
         uses: actions/checkout@v3
+        with:
+          ref: "main"
+          path: "tarpon"
+          clean: false
+      - name: Checkout Phytoplankton
+        if: steps.check.outputs.triggered == 'true'
+        uses: actions/checkout@v3
+        with:
+          repository: flagright/phytoplankton-console
+          path: "phytoplankton-console"
+          token: ${{ secrets.DEPLOY_PAT }}
       - name: Use Node.js ${{ matrix.node-version }}
         uses: actions/setup-node@v3
         with:
           node-version: ${{ matrix.node-version }}
           cache: 'npm'
+          cache-dependency-path: "tarpon/package-lock.json"
+      - name: Use Node.js ${{ matrix.node-version }}
+        uses: actions/setup-node@v3
+        with:
+          node-version: ${{ matrix.node-version }}
+          cache: 'yarn'
+          cache-dependency-path: "phytoplankton-console/yarn.lock"
       - run: npm ci
+        working-directory: "tarpon"
+      - run: npm ci
+        working-directory: "phytoplankton-console"
       - name: Destroy
         run: |
           echo "Creating default AWS profile"
@@ -34,4 +55,9 @@ jobs:
           export QA_SUBDOMAIN="qa$(echo "${{ github.head_ref }}" | shasum | head -c5)"
           
           echo "Destroying QA deploy for $QA_SUBDOMAIN.api.flagright.dev"
+          cd tarpon
           npm run destroy:qa
+          
+          echo "Destroying QA deploy for $QA_SUBDOMAIN.console.flagright.dev if it exists"
+          cd ../phytoplankton-console
+          yarn run destroy:qa || exit 0
