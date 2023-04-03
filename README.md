@@ -92,6 +92,16 @@ To deploy your PR to a QA environment, add a comment on your PR like:
 /deploy optional-name-of-branch-in-tarpon
 ```
 
+You can also deploy from local code with the following:
+
+```
+# To deploy against main Tarpon
+yarn run deploy:qa
+
+# To deploy against Tarpon from a branch
+TARPON_BRANCH=optional-name-of-branch-in-tarpon yarn run deploy:qa
+```
+
 ## Integration Tests
 
 In order for integration tests to work, you need to have a cypress env file: `cypress.env.json` with the username and password of the integration test account. You can find this in 1Password shared workspace under `Cypress Test User`.
