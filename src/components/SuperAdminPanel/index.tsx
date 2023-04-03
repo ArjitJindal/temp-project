@@ -34,6 +34,12 @@ export default function SuperAdminPanel() {
     })) || [];
 
   const handleChangeTenant = async (newTenantId: string) => {
+    const unsetDemoMode = api.accountChangeSettings({
+      accountId: user.userId,
+      AccountSettings: {
+        demoMode: false,
+      },
+    });
     const hideMessage = message.loading('Changing Tenant...', 10000);
     try {
       await api.accountsChangeTenant({
@@ -42,6 +48,7 @@ export default function SuperAdminPanel() {
           newTenantId,
         },
       });
+      await unsetDemoMode;
       window.location.reload();
     } catch (e) {
       message.error('Failed to switch tenant');
