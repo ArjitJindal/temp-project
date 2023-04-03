@@ -1209,7 +1209,7 @@ paths:
       operationId: post-user-comments
       x-flagright:
         permissions:
-          - users:user-overview:write
+          - users:user-comments:write
       responses:
         '200':
           description: OK
@@ -1239,7 +1239,7 @@ paths:
       operationId: delete-users-userId-comments-commentId
       x-flagright:
         permissions:
-          - users:user-overview:write
+          - users:user-comments:write
       responses:
         '200':
           description: OK
@@ -4514,6 +4514,7 @@ components:
         - risk-scoring:risk-algorithms:read
         - users:user-overview:read
         - users:user-overview:write
+        - users:user-comments:write
         - users:user-details:read
         - users:import:write
         - dashboard:download-data:read

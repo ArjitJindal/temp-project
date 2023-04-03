@@ -56,6 +56,7 @@ export const DEFAULT_ROLES: {
       'transactions:export:read',
       'users:user-overview:read',
       'users:user-details:read',
+      'users:user-comments:write',
     ],
     description:
       'Analyst has unrestricted access to Case management but read-only rights to Audit Log, Rules & Risk Scoring.',
@@ -85,6 +86,7 @@ export const DEFAULT_ROLES: {
       'simulator:risk-scoring:read',
       'users:user-overview:read',
       'users:user-details:read',
+      'users:user-comments:write',
     ],
     description:
       'Approver has unrestricted access to Case management but read-only rights to Audit Log, Rules & Risk Scoring. Alerts are received when an analyst requires approval to close a case.',
