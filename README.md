@@ -127,6 +127,12 @@ To deploy your PR to a QA environment, add a comment on your PR like:
 /deploy optional-name-of-branch-in-phytoplankton
 ```
 
+You can also deploy from local code with the following:
+
+```
+yarn run deploy:qa
+```
+
 _NOTE_: If it's your first time deploying to your own dev stack. Please follow the instructions below
 
 1. Run `aws configure sso`
