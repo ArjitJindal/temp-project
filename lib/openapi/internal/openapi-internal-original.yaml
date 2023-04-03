@@ -1364,6 +1364,12 @@ paths:
         - schema:
             type: array
             items:
+              $ref: ../public/openapi-public-original.yaml#/components/schemas/UserRegistrationStatus
+          in: query
+          name: filterUserRegistrationStatus
+        - schema:
+            type: array
+            items:
               $ref: '#/components/schemas/RiskLevel'
           in: query
           name: filterRiskLevel

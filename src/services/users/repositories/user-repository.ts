@@ -43,6 +43,7 @@ import {
   COUNT_QUERY_LIMIT,
 } from '@/utils/pagination'
 import { Tag } from '@/@types/openapi-public/Tag'
+import { UserRegistrationStatus } from '@/@types/openapi-internal/UserRegistrationStatus'
 
 export class UserRepository {
   dynamoDb: DynamoDBDocumentClient
@@ -72,6 +73,7 @@ export class UserRepository {
       filterTagKey?: string
       filterTagValue?: string
       filterRiskLevel?: RiskLevel[]
+      filterUserRegistrationStatus?: UserRegistrationStatus[]
     }
   ): Promise<{ total: number; data: Array<InternalBusinessUser> }> {
     return (await this.getMongoUsers(params, 'BUSINESS')) as {
@@ -132,6 +134,7 @@ export class UserRepository {
       filterTagKey?: string
       filterTagValue?: string
       includeCasesCount?: boolean
+      filterUserRegistrationStatus?: UserRegistrationStatus[]
     },
     userType?: UserType
   ): Promise<{
@@ -161,6 +164,14 @@ export class UserRepository {
       filterConditions.push({
         'legalEntity.companyGeneralDetails.businessIndustry': {
           $in: params.filterBusinessIndustries,
+        },
+      })
+    }
+
+    if (params.filterUserRegistrationStatus != null) {
+      filterConditions.push({
+        'legalEntity.companyGeneralDetails.userRegistrationStatus': {
+          $in: params.filterUserRegistrationStatus,
         },
       })
     }

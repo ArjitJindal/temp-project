@@ -57,6 +57,7 @@ export const businessUsersViewHandler = lambdaApi()(
         filterTagKey,
         filterTagValue,
         filterRiskLevel,
+        filterUserRegistrationStatus,
       } = event.queryStringParameters as any
       const businessUserSegment = await addNewSubsegment(
         'User Service',
@@ -82,6 +83,9 @@ export const businessUsersViewHandler = lambdaApi()(
         filterTagValue,
         filterRiskLevel: filterRiskLevel
           ? filterRiskLevel.split(',')
+          : undefined,
+        filterUserRegistrationStatus: filterUserRegistrationStatus
+          ? filterUserRegistrationStatus.split(',')
           : undefined,
       })
       businessUserSegment?.close()

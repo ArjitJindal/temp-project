@@ -2341,6 +2341,12 @@ components:
           description: Gender of the individual - Male, Female or Non-Binary
       required:
         - name
+    UserRegistrationStatus:
+      title: UserRegistrationStatus
+      type: string
+      enum:
+        - REGISTERED
+        - UNREGISTERED
     CompanyGeneralDetails:
       title: CompanyGeneralDetails
       type: object
@@ -2377,11 +2383,7 @@ components:
             - LARGE
             - UNKNOWN
         userRegistrationStatus:
-          type: string
-          description: Registration status of a business user
-          enum:
-            - REGISTERED
-            - UNREGISTERED
+          $ref: '#/components/schemas/UserRegistrationStatus'
         tags:
           type: array
           description: Additional information that can be added via tags
