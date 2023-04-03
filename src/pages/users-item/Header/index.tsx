@@ -5,6 +5,7 @@ import UserIdNameCard from '@/components/ui/UserIdNameCard';
 import CommentButton from '@/components/CommentButton';
 import { useApi } from '@/api';
 import EntityHeader from '@/components/ui/entityPage/EntityHeader';
+import { useHasPermissions } from '@/utils/user-utils';
 
 interface Props {
   user: InternalConsumerUser | InternalBusinessUser;
@@ -16,6 +17,7 @@ export default function Header(props: Props) {
   const userId = user.userId;
 
   const api = useApi();
+  const hasPostCommentPermission = useHasPermissions(['users:user-comments:write']);
 
   return (
     <EntityHeader
@@ -34,6 +36,7 @@ export default function Header(props: Props) {
               ...commentData,
             });
           }}
+          disabled={!hasPostCommentPermission}
         />
       }
       subHeader={<SubHeader user={user} />}

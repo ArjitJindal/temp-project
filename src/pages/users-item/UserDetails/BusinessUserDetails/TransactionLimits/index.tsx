@@ -25,6 +25,7 @@ import { TransactionCountLimit } from '@/apis/models/TransactionCountLimit';
 import { TransactionAmountLimit } from '@/apis/models/TransactionAmountLimit';
 import { useApi } from '@/api';
 import COLORS from '@/components/ui/colors';
+import { useHasPermissions } from '@/utils/user-utils';
 
 const timeFrames = ['day', 'week', 'month', 'year'];
 
@@ -273,6 +274,7 @@ const PaymentMethodLimitsTable: React.FC<PaymentMethodLimitsTableProps> = ({
     useState<TransactionLimitsPaymentMethodLimits>(
       user.transactionLimits?.paymentMethodLimits ?? {},
     );
+  const hasUserOveviewWritePermissions = useHasPermissions(['users:user-overview:write']);
   const handleSavePaymentMethodLimits = useCallback(
     async (
       paymentMethod: PaymentMethod,
@@ -391,11 +393,13 @@ const PaymentMethodLimitsTable: React.FC<PaymentMethodLimitsTableProps> = ({
                       onEditModeChange('EDIT');
                       setSelectedPaymentMethod(row.paymentMethod);
                     }}
+                    disabled={!hasUserOveviewWritePermissions}
                   />
                   <DeleteOutlined
                     onClick={async () => {
                       await handleSavePaymentMethodLimits(row.paymentMethod, null);
                     }}
+                    disabled={!hasUserOveviewWritePermissions}
                   />
                 </Space>
               );

@@ -15,6 +15,7 @@ import { Comment } from '@/apis';
 interface Props {
   submitRequest: (values: CommentEditorFormValues) => Promise<Comment>;
   onSuccess: (createdComment: Comment) => void;
+  disabled?: boolean;
 }
 
 export default function CommentButton(props: Props) {
@@ -68,12 +69,15 @@ export default function CommentButton(props: Props) {
             onSubmit={() => {
               commentSubmitMutation.mutate(commentFormValues);
             }}
+            disabled={props.disabled}
           />
         </div>
       }
     >
       <div ref={popoverTargetRef}>
-        <Button icon={<WechatLineIcon />}>Comment</Button>
+        <Button isDisabled={props.disabled} icon={<WechatLineIcon />}>
+          Comment
+        </Button>
       </div>
     </Popover>
   );

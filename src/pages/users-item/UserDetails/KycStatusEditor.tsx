@@ -5,6 +5,7 @@ import { KYC_STATUSES } from '@/utils/api/users';
 import { useApi } from '@/api';
 import { KYCStatus } from '@/apis/models/KYCStatus';
 import { KYCStatusDetails } from '@/apis/models/KYCStatusDetails';
+import { useHasPermissions } from '@/utils/user-utils';
 
 const updatedKYCStatusDetails: { [key: string]: KYCStatusDetails } = {};
 
@@ -17,6 +18,7 @@ export default function KycStatusEditor({ user }: Props) {
   const [kycStatusDetails, setKYCStatusDetails] = useState(
     updatedKYCStatusDetails[user.userId] || user.kycStatusDetails,
   );
+  const hasUserOveviewWritePermissions = useHasPermissions(['users:user-overview:write']);
   const handleChangeKYCStatus = useCallback(
     async (newState: KYCStatus) => {
       const newStateDetails = {
@@ -53,6 +55,7 @@ export default function KycStatusEditor({ user }: Props) {
       onChange={handleChangeKYCStatus}
       allowClear
       placeholder="Please select"
+      disabled={!hasUserOveviewWritePermissions}
     />
   );
 }

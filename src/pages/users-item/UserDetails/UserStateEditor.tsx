@@ -5,6 +5,7 @@ import { USER_STATES } from '@/utils/api/users';
 import { useApi } from '@/api';
 import { UserState } from '@/apis/models/UserState';
 import { UserStateDetails } from '@/apis/models/UserStateDetails';
+import { useHasPermissions } from '@/utils/user-utils';
 
 // TODO: Use react-query to properly do optimistic updates
 const updatedUserStateDetails: { [key: string]: UserStateDetails } = {};
@@ -18,6 +19,7 @@ export default function UserStateEditor({ user }: Props) {
   const [userStateDetails, setUserStateDetails] = useState(
     updatedUserStateDetails[user.userId] || user.userStateDetails,
   );
+  const hasUserOveviewWritePermissions = useHasPermissions(['users:user-overview:write']);
   const handleChangeUserState = useCallback(
     async (newState: UserState) => {
       const newStateDetails = {
@@ -55,6 +57,7 @@ export default function UserStateEditor({ user }: Props) {
       value={userStateDetails?.state}
       onChange={handleChangeUserState}
       placeholder="Please select"
+      disabled={!hasUserOveviewWritePermissions}
     />
   );
 }

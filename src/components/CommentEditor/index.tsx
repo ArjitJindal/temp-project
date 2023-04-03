@@ -26,6 +26,7 @@ interface Props {
   placeholder?: string;
   onChangeValues: (newValues: FormValues) => void;
   onSubmit: (values: FormValues) => void;
+  disabled?: boolean;
 }
 
 export interface CommentEditorRef {
@@ -100,7 +101,9 @@ function CommentEditor(props: Props, ref: React.Ref<CommentEditorRef>) {
           isLoading={isLoading(submitRes) || uploadingCount > 0}
           onClick={() => onSubmit(values)}
           type="PRIMARY"
-          isDisabled={(values.files.length === 0 && !values.comment) || isCommentTooLong}
+          isDisabled={
+            (values.files.length === 0 && !values.comment) || isCommentTooLong || props.disabled
+          }
         >
           Add Comment
         </Button>
@@ -167,7 +170,7 @@ function CommentEditor(props: Props, ref: React.Ref<CommentEditorRef>) {
               analyticsName="Attach files"
               size="MEDIUM"
               isLoading={uploadingCount > 0}
-              isDisabled={isLoading(submitRes)}
+              isDisabled={isLoading(submitRes) || props.disabled}
             />
           </div>
         </Upload>
