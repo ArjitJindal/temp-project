@@ -2680,6 +2680,12 @@ components:
       example:
         createdTimestamp: 1641654664000
         userId: 96647cfd9e8fe66ee0f3362e011e34e8
+        bankDetails:
+          - IBAN: FI211234569876543210
+            bankName: Merryl Lynch
+            BIC: DE761234561
+            SWIFT: AAAA-BB-CC-123
+            countryCode: DE
         legalEntity:
           companyGeneralDetails:
             legalName: Ozkan Hazelnut Export JSC
@@ -2935,6 +2941,10 @@ components:
           type: array
           items:
             $ref: '#/components/schemas/PaymentMethod'
+        bankDetails:
+          type: array
+          items:
+            $ref: '#/components/schemas/BankDetails'
         linkedEntities:
           $ref: '#/components/schemas/BusinessEntityLink'
         acquisitionChannel:
@@ -4756,6 +4766,22 @@ components:
           type: array
           items:
             type: string
+    BankDetails:
+      title: BankDetails
+      x-stoplight:
+        id: qqn80q55vrs3w
+      type: object
+      properties:
+        IBAN:
+          type: string
+        bankName:
+          type: string
+        BIC:
+          type: string
+        SWIFT:
+          type: string
+        countryCode:
+          $ref: '#/components/schemas/CountryCode'
   securitySchemes:
     x-api-key:
       name: x-api-key
