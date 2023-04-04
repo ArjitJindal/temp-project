@@ -8,7 +8,13 @@ export function determineApi(context: {
   if (!context?.functionName) {
     return
   }
-  const codePath = LAMBDAS[context?.functionName]?.codePath
+
+  let functionName = context?.functionName
+  if (process.env.QA_SUBDOMAIN) {
+    functionName = functionName.replace(process.env.QA_SUBDOMAIN, '')
+  }
+
+  const codePath = LAMBDAS[functionName]?.codePath
   if (!codePath) {
     logger.error('Could not determine lambda from ', context?.functionName)
     return
