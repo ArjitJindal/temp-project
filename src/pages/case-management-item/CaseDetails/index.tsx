@@ -20,7 +20,7 @@ interface Props {
   onReload: () => void;
 }
 
-function UserCaseDetails(props: Props) {
+function CaseDetails(props: Props) {
   const { caseItem } = props;
   const user = caseItem.caseUsers?.origin ?? caseItem.caseUsers?.destination ?? undefined;
   usePageViewTracker('User Case Details');
@@ -110,4 +110,4 @@ function useAlertsComments(alertIds: string[]): AsyncResource<CommentGroup[]> {
   return all(commentsResources);
 }
 
-export default UserCaseDetails;
+export default CaseDetails;

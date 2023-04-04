@@ -14,27 +14,26 @@ export const statusToOperationName = (status: AlertStatus | CaseStatus) => {
     case 'REOPENED':
       return 'Re-Open';
     case 'ESCALATED':
-      return 'Escalated';
+      return 'Escalate';
+    default:
+      return neverReturn(status, humanizeConstant(status));
   }
-  return neverReturn(status, humanizeConstant(status));
 };
 
-export const getNextStatus = (
-  status: CaseStatus | AlertStatus | undefined,
-): CaseStatus | AlertStatus => {
+const getNextStatus = (status: CaseStatus | AlertStatus | undefined): CaseStatus | AlertStatus => {
   if (status == null) {
     return 'CLOSED';
   }
   switch (status) {
     case 'REOPENED':
     case 'OPEN':
+    case 'ESCALATED':
       return 'CLOSED';
     case 'CLOSED':
       return 'REOPENED';
-    case 'ESCALATED':
-      return 'ESCALATED';
+    default:
+      return neverReturn(status, status);
   }
-  return neverReturn(status, status);
 };
 
 export interface FormValues {
@@ -58,13 +57,15 @@ interface Props {
     isBlue?: boolean;
     rounded?: boolean;
   };
+  statusTransitions?: Record<CaseStatus, { status: CaseStatus; actionLabel: string }>;
   children: (childrenProps: ChildrenProps) => React.ReactNode;
 }
 
 export default function StatusChangeButton(props: Props) {
-  const { ids, status, buttonProps = {}, children } = props;
+  const { ids, status, buttonProps = {}, children, statusTransitions } = props;
   const [isModalVisible, setModalVisible] = useState(false);
-  const newStatus = getNextStatus(status);
+  const overridenStatus = status ? statusTransitions?.[status] : null;
+  const newStatus = overridenStatus?.status ?? getNextStatus(status);
   return (
     <>
       {ids.length > 0 && (
@@ -77,7 +78,7 @@ export default function StatusChangeButton(props: Props) {
           isDisabled={!ids.length}
           size={buttonProps.size}
         >
-          {statusToOperationName(newStatus)}
+          {overridenStatus?.actionLabel ?? statusToOperationName(newStatus)}
         </Button>
       )}
       {children({ isVisible: isModalVisible, setVisible: setModalVisible, newStatus })}

@@ -25,8 +25,10 @@ export default function SubHeader(props: Props) {
   const user = useAuth0User();
 
   const currentUserId = user.userId ?? undefined;
-
-  const [assignments, setAssignments] = useState(caseItem.assignments || []);
+  const isCaseInReview = caseItem.caseStatus === 'ESCALATED';
+  const [assignments, setAssignments] = useState(
+    (isCaseInReview ? caseItem.reviewAssignments : caseItem.assignments) ?? [],
+  );
 
   const handleUpdateCase = useCallback(
     async (assignments) => {
@@ -36,7 +38,8 @@ export default function SubHeader(props: Props) {
           CasesUpdateRequest: {
             caseIds: caseId ? [caseId] : [],
             updates: {
-              assignments,
+              assignments: isCaseInReview ? undefined : assignments,
+              reviewAssignments: isCaseInReview ? assignments : undefined,
             },
           },
         });
@@ -47,7 +50,7 @@ export default function SubHeader(props: Props) {
         hideMessage();
       }
     },
-    [api, caseId],
+    [api, caseId, isCaseInReview],
   );
 
   const handleUpdateAssignments = useCallback(

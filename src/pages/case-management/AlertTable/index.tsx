@@ -33,7 +33,7 @@ import { useFeatureEnabled } from '@/components/AppWrapper/Providers/SettingsPro
 import Button from '@/components/library/Button';
 import Confirm from '@/components/utils/Confirm';
 import Tooltip from '@/components/library/Tooltip';
-import { UI_SETTINGS } from '@/pages/case-management-item/UserCaseDetails/ui-settings';
+import { UI_SETTINGS } from '@/pages/case-management-item/CaseDetails/ui-settings';
 
 export type AlertTableParams = AllParams<TableSearchParams>;
 

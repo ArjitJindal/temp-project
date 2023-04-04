@@ -3,6 +3,7 @@ import { Form, Input, Modal, Select } from 'antd';
 import pluralize from 'pluralize';
 import { UseMutationResult } from '@tanstack/react-query';
 import _ from 'lodash';
+import { statusToOperationName } from './StatusChangeButton';
 import { AlertStatus, CaseStatus, FileInfo } from '@/apis';
 import { CaseClosingReasons } from '@/apis/models/CaseClosingReasons';
 import { UploadFilesList } from '@/components/files/UploadFilesList';
@@ -12,14 +13,6 @@ import { MAX_COMMENT_LENGTH } from '@/components/CommentEditor';
 export interface RemoveAllFilesRef {
   removeAllFiles: () => void;
 }
-
-export const caseStatusToOperationName = (caseStatus: CaseStatus) => {
-  if (caseStatus === 'REOPENED') {
-    return 'Re-Open';
-  } else if (caseStatus === 'CLOSED') {
-    return 'Close';
-  }
-};
 
 export const OTHER_REASON = 'Other';
 export const COMMON_REASONS = [OTHER_REASON];
@@ -49,6 +42,7 @@ export interface Props {
   isVisible: boolean;
   ids: string[];
   newStatus: CaseStatus;
+  newStatusActionLabel?: string;
   defaultReasons?: CaseClosingReasons[];
   initialValues?: FormValues;
   onSaved: () => void;
@@ -82,6 +76,7 @@ export default function StatusChangeModal(props: Props) {
     onSaved,
     onClose,
     updateMutation,
+    newStatusActionLabel,
   } = props;
   const [isOtherReason, setIsOtherReason] = useState(false);
   const [isAwaitingConfirmation, setAwaitingConfirmation] = useState(false);
@@ -104,7 +99,11 @@ export default function StatusChangeModal(props: Props) {
   }, [uploadingCount]);
 
   const possibleReasons = [...COMMON_REASONS, ...CLOSING_REASONS];
-  const modalTitle = `Close ${pluralize(entityName, ids.length, true)}`;
+  const modalTitle = `${newStatusActionLabel ?? statusToOperationName(newStatus)} ${pluralize(
+    entityName,
+    ids.length,
+    true,
+  )}`;
   const caseIdsString = ids.join(', ');
   const uploadRef = useRef<RemoveAllFilesRef>(null);
 
@@ -220,7 +219,7 @@ export default function StatusChangeModal(props: Props) {
           onClose();
         }}
       >
-        Are you sure you want to <b>{caseStatusToOperationName(newStatus)}</b>{' '}
+        Are you sure you want to <b>{newStatusActionLabel ?? statusToOperationName(newStatus)}</b>{' '}
         {pluralize(entityName, ids.length, true)} <b>{caseIdsString}</b> ?
       </Modal>
     </>

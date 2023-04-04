@@ -21,6 +21,7 @@ interface Props {
     isBlue?: boolean;
     rounded?: boolean;
   };
+  statusTransitions?: Record<CaseStatus, { status: CaseStatus; actionLabel: string }>;
   onSaved: () => void;
 }
 
@@ -36,15 +37,22 @@ export default function CasesStatusChangeButton(props: Props) {
       files: [],
     },
     buttonProps = {},
+    statusTransitions,
   } = props;
   return (
     <>
-      <StatusChangeButton ids={caseIds} status={caseStatus} buttonProps={buttonProps}>
+      <StatusChangeButton
+        ids={caseIds}
+        status={caseStatus}
+        buttonProps={buttonProps}
+        statusTransitions={statusTransitions}
+      >
         {({ isVisible, setVisible, newStatus }) => (
           <CasesStatusChangeModal
             isVisible={isVisible}
             ids={caseIds}
             newStatus={newStatus}
+            newStatusActionLabel={caseStatus && statusTransitions?.[caseStatus].actionLabel}
             onSaved={onSaved}
             initialValues={initialValues}
             onClose={() => {

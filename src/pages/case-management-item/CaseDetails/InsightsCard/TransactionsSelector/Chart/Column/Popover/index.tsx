@@ -4,7 +4,7 @@ import { DataItem, Series } from '../../types';
 import s from './styles.module.less';
 import { P } from '@/components/ui/Typography';
 import { Currency } from '@/utils/currencies';
-import { ColorIndicator } from '@/pages/case-management-item/UserCaseDetails/InsightsCard/components/Legend';
+import { ColorIndicator } from '@/pages/case-management-item/CaseDetails/InsightsCard/components/Legend';
 import { getRuleActionColor } from '@/utils/rules';
 import { RuleAction } from '@/apis';
 import Money from '@/components/ui/Money';

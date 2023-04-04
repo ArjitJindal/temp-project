@@ -10,7 +10,7 @@ import { TransactionsStatsByTypesResponseData, TransactionType } from '@/apis';
 import { neverReturn } from '@/utils/lang';
 import AsyncResourceRenderer from '@/components/common/AsyncResourceRenderer';
 import { capitalizeWords } from '@/utils/tags';
-import NoData from '@/pages/case-management-item/UserCaseDetails/InsightsCard/components/NoData';
+import NoData from '@/pages/case-management-item/CaseDetails/InsightsCard/components/NoData';
 import { Currency } from '@/utils/currencies';
 
 interface Props {

@@ -10,7 +10,7 @@ import { TransactionsStatsByTypesResponseData, TransactionType } from '@/apis';
 import AsyncResourceRenderer from '@/components/common/AsyncResourceRenderer';
 import { capitalizeWords } from '@/utils/tags';
 import { Currency } from '@/utils/currencies';
-import NoData from '@/pages/case-management-item/UserCaseDetails/InsightsCard/components/NoData';
+import NoData from '@/pages/case-management-item/CaseDetails/InsightsCard/components/NoData';
 import Money from '@/components/ui/Money';
 
 const CHART_COLORS = {

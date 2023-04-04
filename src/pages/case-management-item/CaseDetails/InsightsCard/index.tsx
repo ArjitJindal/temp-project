@@ -7,7 +7,7 @@ import AmountsChart from './AmountsChart';
 import InsightCard from './components/InsightCard';
 import * as Card from '@/components/ui/Card';
 import PulseLineIcon from '@/components/ui/icons/Remix/health/pulse-line.react.svg';
-import TransactionsList from '@/pages/case-management-item/UserCaseDetails/InsightsCard/TransactionsList';
+import TransactionsList from '@/pages/case-management-item/CaseDetails/InsightsCard/TransactionsList';
 import { useQuery } from '@/utils/queries/hooks';
 import { useApi } from '@/api';
 import { TRANSACTIONS_STATS } from '@/utils/queries/keys';

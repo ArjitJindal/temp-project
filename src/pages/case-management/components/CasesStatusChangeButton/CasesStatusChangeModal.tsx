@@ -36,15 +36,28 @@ export default function CasesStatusChangeModal(props: Props) {
     }
 
     try {
-      await api.postCases({
-        CasesUpdateRequest: {
-          caseIds: ids,
-          updates: updates,
-        },
-      });
+      if (updates.caseStatus === 'ESCALATED') {
+        if (ids.length !== 1) {
+          message.error('Can only escalate a single case at a time');
+          return;
+        }
+        await api.postCasesCaseIdEscalate({
+          caseId: ids[0],
+          CaseEscalationRequest: {
+            caseUpdateRequest: updates,
+          },
+        });
+      } else {
+        await api.postCases({
+          CasesUpdateRequest: {
+            caseIds: ids,
+            updates: updates,
+          },
+        });
+      }
       message.success('Saved');
     } catch (e) {
-      console.error(`Failed to update the case! ${getErrorMessage(e)}`);
+      message.error(`Failed to update the case! ${getErrorMessage(e)}`);
     } finally {
       hideMessage();
     }

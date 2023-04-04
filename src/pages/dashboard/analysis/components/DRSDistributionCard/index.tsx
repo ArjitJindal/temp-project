@@ -10,7 +10,7 @@ import { RISK_LEVELS, RISK_LEVEL_COLORS } from '@/utils/risk-levels';
 import { useQuery } from '@/utils/queries/hooks';
 import { USERS_STATS } from '@/utils/queries/keys';
 import AsyncResourceRenderer from '@/components/common/AsyncResourceRenderer';
-import NoData from '@/pages/case-management-item/UserCaseDetails/InsightsCard/components/NoData';
+import NoData from '@/pages/case-management-item/CaseDetails/InsightsCard/components/NoData';
 import {
   getRiskLevelFromAlias,
   getRiskLevelLabel,

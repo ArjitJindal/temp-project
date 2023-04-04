@@ -7,8 +7,8 @@ import { Currency } from '@/utils/currencies';
 import {
   Colors,
   Data,
-} from '@/pages/case-management-item/UserCaseDetails/InsightsCard/AmountsChart/Chart/types';
-import { useCalculatedParams } from '@/pages/case-management-item/UserCaseDetails/InsightsCard/AmountsChart/Chart/helpers';
+} from '@/pages/case-management-item/CaseDetails/InsightsCard/AmountsChart/Chart/types';
+import { useCalculatedParams } from '@/pages/case-management-item/CaseDetails/InsightsCard/AmountsChart/Chart/helpers';
 import Money from '@/components/ui/Money';
 
 interface Props {

@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { Params } from '../TransactionsSelector';
-import { FIXED_API_PARAMS } from '../../InsightsCard';
+import { FIXED_API_PARAMS } from '..';
 import TransactionsTable from '@/pages/transactions/components/TransactionsTable';
 import { useApi } from '@/api';
 import { usePaginatedQuery } from '@/utils/queries/hooks';

@@ -3,7 +3,7 @@ import {
   CalculatedParams,
   DataItem,
   Series,
-} from '@/pages/case-management-item/UserCaseDetails/InsightsCard/TransactionsSelector/Chart/types';
+} from '@/pages/case-management-item/CaseDetails/InsightsCard/TransactionsSelector/Chart/types';
 import { calculateScaleMax } from '@/utils/charts';
 
 export const TOP_PADDING = 10;

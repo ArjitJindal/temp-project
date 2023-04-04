@@ -13,6 +13,7 @@ import { FalsePositiveTag } from '@/pages/case-management/components/FalsePositi
 import CommentButton from '@/components/CommentButton';
 import { getUserLink, getUserName } from '@/utils/api/users';
 import Id from '@/components/ui/Id';
+import { useFeatureEnabled } from '@/components/AppWrapper/Providers/SettingsProvider';
 
 interface Props {
   caseItem: Case;
@@ -24,7 +25,10 @@ export default function Header(props: Props) {
   const { caseItem, onReload, onCommentAdded } = props;
   const { caseId } = caseItem;
   const user = caseItem.caseUsers?.origin ?? caseItem.caseUsers?.destination ?? undefined;
-
+  const escalationEnabled = useFeatureEnabled('ESCALATION');
+  const caseClosedBefore = Boolean(
+    caseItem.statusChanges?.find((statusChange) => statusChange.caseStatus === 'CLOSED'),
+  );
   const api = useApi();
 
   return (
@@ -66,10 +70,24 @@ export default function Header(props: Props) {
           <CasesStatusChangeButton
             caseIds={[caseId as string]}
             caseStatus={caseItem.caseStatus}
-            onSaved={() => {
-              onReload();
-            }}
+            onSaved={onReload}
           />
+          {escalationEnabled && (
+            <CasesStatusChangeButton
+              caseIds={[caseId as string]}
+              caseStatus={caseItem.caseStatus}
+              onSaved={onReload}
+              statusTransitions={{
+                OPEN: { status: 'ESCALATED', actionLabel: 'Escalate' },
+                REOPENED: { status: 'ESCALATED', actionLabel: 'Escalate' },
+                ESCALATED: {
+                  status: caseClosedBefore ? 'REOPENED' : 'OPEN',
+                  actionLabel: 'Send back',
+                },
+                CLOSED: { status: 'ESCALATED', actionLabel: 'Escalate' },
+              }}
+            />
+          )}
         </>
       }
       subHeader={<SubHeader caseItem={caseItem} />}

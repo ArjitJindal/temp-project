@@ -12,8 +12,8 @@ import * as Card from '@/components/ui/Card';
 import { useBackUrl } from '@/utils/backUrl';
 import { useQuery } from '@/utils/queries/hooks';
 import AsyncResourceRenderer from '@/components/common/AsyncResourceRenderer';
-import { CASES_ITEM } from '@/utils/queries/keys';
-import UserCaseDetails from '@/pages/case-management-item/UserCaseDetails';
+import { ALERT_LIST, CASES_ITEM } from '@/utils/queries/keys';
+import CaseDetails from '@/pages/case-management-item/CaseDetails';
 import Button from '@/components/library/Button';
 import COLORS from '@/components/ui/colors';
 import PrintButton from '@/components/ui/PrintButton';
@@ -58,6 +58,7 @@ function CaseManagementItemPage() {
 
   const onReload = () => {
     queryResults.refetch();
+    queryClient.invalidateQueries({ queryKey: ALERT_LIST() });
   };
 
   const [collapseState, setCollapseState] = useState<Record<string, boolean>>({});
@@ -111,7 +112,7 @@ function CaseManagementItemPage() {
               <PrintButton onClickAction={() => expandableContext.setExpandMode('EXPAND_ALL')} />
             </div>
             <Card.Section>
-              <UserCaseDetails
+              <CaseDetails
                 caseItem={caseItem}
                 updateCollapseState={updateCollapseState}
                 onReload={onReload}

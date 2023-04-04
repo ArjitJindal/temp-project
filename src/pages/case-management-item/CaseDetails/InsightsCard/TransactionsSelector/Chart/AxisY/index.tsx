@@ -4,7 +4,7 @@ import Label from '../Label';
 import s from './styles.module.less';
 import { Currency } from '@/utils/currencies';
 import Money from '@/components/ui/Money';
-import { LEFT_PADDING } from '@/pages/case-management-item/UserCaseDetails/InsightsCard/TransactionsSelector/Chart/helpers';
+import { LEFT_PADDING } from '@/pages/case-management-item/CaseDetails/InsightsCard/TransactionsSelector/Chart/helpers';
 
 interface Props {
   max: number;

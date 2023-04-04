@@ -9,13 +9,8 @@ type AnyParameters = unknown;
 
 export const CASES_LIST = (params: AnyParameters): QueryKey => ['cases', 'list', { params }];
 export const CASES_ITEM = (caseId: string): QueryKey => ['cases', caseId];
-export const CASES_ITEM_ALERT_LIST = (caseId: string, params?: AnyParameters): QueryKey => [
-  'cases',
-  caseId,
-  'alerts',
-  'list',
-  params,
-];
+export const CASES_ITEM_ALERT_LIST = (caseId: string, params?: AnyParameters): QueryKey =>
+  ['cases', caseId, 'alerts', 'list', params].filter(Boolean);
 export const CASES_ITEM_RULES = (caseId: string): QueryKey => ['cases', caseId, 'rules'];
 export const CASES_RULE_TRANSACTIONS = (
   caseId: string,
@@ -88,34 +83,28 @@ export const SANCTIONS_SEARCH = (params: AnyParameters): QueryKey => [
   'search',
   { params },
 ];
-export const SANCTIONS_SEARCH_HISTORY = (searchId?: string): QueryKey => [
-  'sanctions',
-  'search',
-  searchId,
-];
+export const SANCTIONS_SEARCH_HISTORY = (searchId?: string): QueryKey =>
+  ['sanctions', 'search', searchId].filter(Boolean);
 export const RULES = (): QueryKey => ['rules'];
 export const RULE_INSTANCES = (): QueryKey => ['rule-instances'];
 export const RULE_FILTERS = (): QueryKey => ['rule-filters'];
-export const HITS_PER_USER = (dateRange: RangeValue<Dayjs>, direction?: string): QueryKey => [
-  'hits-per-user',
-  dateRange,
-  direction,
-];
+export const HITS_PER_USER = (dateRange: RangeValue<Dayjs>, direction?: string): QueryKey =>
+  ['hits-per-user', dateRange, direction].filter(Boolean);
 export const HITS_PER_USER_STATS = (dateRange: RangeValue<Dayjs>): QueryKey => [
   'hits-per-user-stats',
   dateRange,
 ];
-export const TRANSACTION_FILES = (params?: AnyParameters): QueryKey => [
-  'transaction-files',
-  params,
-];
-export const USER_FILES = (params?: AnyParameters): QueryKey => ['user-files', params];
+export const TRANSACTION_FILES = (params?: AnyParameters): QueryKey =>
+  ['transaction-files', params].filter(Boolean);
+export const USER_FILES = (params?: AnyParameters): QueryKey =>
+  ['user-files', params].filter(Boolean);
 export const RULES_AND_RULE_INSTANCES = (): QueryKey => ['rules-and-rule-instances'];
 export const GET_RULES = (): QueryKey => ['get-rules'];
 export const GET_RULE_INSTANCES = (): QueryKey => ['get-rule-instances'];
-export const WEBHOOKS = (id?: string): QueryKey => ['webhooks', id];
+export const WEBHOOKS = (id?: string): QueryKey => ['webhooks', id].filter(Boolean);
 export const WEBHOOKS_LIST = (): QueryKey => ['webhooks', 'list'];
-export const USERS = (type: string, params?: AnyParameters): QueryKey => ['users', type, params];
+export const USERS = (type: string, params?: AnyParameters): QueryKey =>
+  ['users', type, params].filter(Boolean);
 export const USERS_ITEM = (userId: string): QueryKey => ['users', 'item', userId];
 export const USERS_ITEM_RISKS_DRS = (userId: string): QueryKey => [
   'users',
@@ -131,25 +120,17 @@ export const USERS_ITEM_RISKS_KRS = (userId: string): QueryKey => [
   'risks',
   'krs-score',
 ];
-export const ALERT_LIST = (params?: AnyParameters): QueryKey => ['alerts', 'list', params];
+export const ALERT_LIST = (params?: AnyParameters): QueryKey =>
+  ['alerts', 'list', params].filter(Boolean);
 export const SIMULATION_PULSE_JOB = (jobId: string): QueryKey => ['simulation', 'pulse', jobId];
 export const SIMULATION_PULSE_JOB_ITERATION_RESULT = (
   taskId: string,
   params?: AnyParameters,
-): QueryKey => ['simulation', 'pulse', 'iteration', taskId, params];
-export const SIMULATION_PULSE_JOB_LIST = (params?: AnyParameters): QueryKey => [
-  'simulation',
-  'pulse',
-  params,
-];
-export const ALERT_ITEM_TRANSACTION_LIST = (alertId: string, params?: AnyParameters): QueryKey => [
-  'alerts',
-  'item',
-  alertId,
-  'transactions',
-  'list',
-  params,
-];
+): QueryKey => ['simulation', 'pulse', 'iteration', taskId, params].filter(Boolean);
+export const SIMULATION_PULSE_JOB_LIST = (params?: AnyParameters): QueryKey =>
+  ['simulation', 'pulse', params].filter(Boolean);
+export const ALERT_ITEM_TRANSACTION_LIST = (alertId: string, params?: AnyParameters): QueryKey =>
+  ['alerts', 'item', alertId, 'transactions', 'list', params].filter(Boolean);
 export const ALERT_ITEM = (alertId: string): QueryKey => ['alerts', 'item', alertId];
 export const SIMULATION_COUNT = (): QueryKey => ['simulation', 'count'];
 export const ALERT_ITEM_COMMENTS = (alertId: string): QueryKey => [
@@ -158,5 +139,6 @@ export const ALERT_ITEM_COMMENTS = (alertId: string): QueryKey => [
   alertId,
   'comments',
 ];
-export const DEVICE_DATA_USER = (userId?: string): QueryKey => ['device-data', 'user', userId];
+export const DEVICE_DATA_USER = (userId?: string): QueryKey =>
+  ['device-data', 'user', userId].filter(Boolean);
 export const RISK_CLASSIFICATION_VALUES = (): QueryKey => ['risk-classification-values'];

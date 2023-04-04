@@ -5,7 +5,7 @@ import DeviceDataCard from './DeviceDataCard';
 import { InternalBusinessUser, InternalConsumerUser, MissingUser } from '@/apis';
 import { Small } from '@/components/ui/Typography';
 import UserTransactionHistoryTable from '@/pages/users-item/UserDetails/UserTransactionHistoryTable';
-import InsightsCard from '@/pages/case-management-item/UserCaseDetails/InsightsCard';
+import InsightsCard from '@/pages/case-management-item/CaseDetails/InsightsCard';
 import CommentsCard from '@/components/CommentsCard';
 import Authorized from '@/components/Authorized';
 import { useApi } from '@/api';
@@ -13,7 +13,7 @@ import AsyncResourceRenderer from '@/components/common/AsyncResourceRenderer';
 import { useQuery } from '@/utils/queries/hooks';
 import { DEVICE_DATA_USER } from '@/utils/queries/keys';
 import { useFeatureEnabled } from '@/components/AppWrapper/Providers/SettingsProvider';
-import AIInsightsCard from '@/pages/case-management-item/UserCaseDetails/AIInsightsCard';
+import AIInsightsCard from '@/pages/case-management-item/CaseDetails/AIInsightsCard';
 
 interface Props {
   user?: InternalConsumerUser | InternalBusinessUser | MissingUser;
