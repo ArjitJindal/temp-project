@@ -2060,6 +2060,8 @@ components:
           type: array
           items:
             $ref: '#/components/schemas/RuleLabels'
+        nature:
+          $ref: '#/components/schemas/RuleNature'
       required:
         - ruleId
         - ruleInstanceId
@@ -2102,6 +2104,8 @@ components:
           type: array
           items:
             $ref: '#/components/schemas/RuleLabels'
+        nature:
+          $ref: '#/components/schemas/RuleNature'
       required:
         - ruleId
         - ruleInstanceId
@@ -3467,6 +3471,14 @@ components:
       enum:
         - ORIGIN
         - DESTINATION
+    RuleNature:
+      type: string
+      title: Rule nature type
+      enum:
+        - AML
+        - FRAUD
+        - CTF
+        - SCREENING
     RuleLabels:
       type: string
       title: RuleLabels

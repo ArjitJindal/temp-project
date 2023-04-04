@@ -3395,7 +3395,7 @@ components:
           items:
             $ref: ../public/openapi-public-original.yaml#/components/schemas/RuleLabels
         defaultNature:
-          $ref: '#/components/schemas/RuleNature'
+          $ref: ../public/openapi-public-original.yaml#/components/schemas/RuleNature
         defaultCasePriority:
           $ref: '#/components/schemas/Priority'
         descriptionTemplate:
@@ -3486,7 +3486,7 @@ components:
         riskLevelActions:
           $ref: '#/components/schemas/RiskLevelRuleActions'
         nature:
-          $ref: '#/components/schemas/RuleNature'
+          $ref: ../public/openapi-public-original.yaml#/components/schemas/RuleNature
         labels:
           type: array
           items:
@@ -5538,14 +5538,6 @@ components:
         - CONSUMER_USER
         - TRANSACTION
         - BUSINESS
-    RuleNature:
-      type: string
-      title: Rule nature type
-      enum:
-        - AML
-        - FRAUD
-        - CTF
-        - SCREENING
     UsersUniquesResponse:
       type: object
       properties:

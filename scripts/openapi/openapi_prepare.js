@@ -60,11 +60,18 @@ async function prepareSchemas(OUTPUT_DIR) {
       publicDir,
       'openapi-public-original.yaml'
     )
+    const publicManagementSchemaFile = path.resolve(
+      publicManagementDir,
+      'openapi-public-management-original.yaml'
+    )
     const publicDeviceSchemaFile = path.resolve(
       publicDeviceDataDir,
       'openapi-public-device-data-original.yaml'
     )
     const publicSchemaText = (await fs.readFile(publicSchemaFile)).toString()
+    const publicManagementSchemaText = (
+      await fs.readFile(publicManagementSchemaFile)
+    ).toString()
     const publicSchemaYaml = parse(publicSchemaText)
     const publicDeviceSchemaText = (
       await fs.readFile(publicDeviceSchemaFile)
@@ -117,6 +124,23 @@ async function prepareSchemas(OUTPUT_DIR) {
     }
     {
       await fs.copy(publicManagementDir, publicManagementDirOutput)
+      const publicManagementSchemaYaml = await localizeRefs(
+        parse(publicManagementSchemaText)
+      )
+      publicManagementSchemaYaml.components.schemas = {
+        ...publicManagementSchemaYaml.components.schemas,
+        ..._.pick(publicSchemaYaml.components.schemas, [
+          'RuleNature',
+          'RuleLabels',
+        ]),
+      }
+      await fs.writeFile(
+        path.resolve(
+          publicManagementDirOutput,
+          'openapi-public-management-original.yaml'
+        ),
+        stringify(publicManagementSchemaYaml)
+      )
     }
     {
       await fs.copy(publicDeviceDataDir, publicDeviceDataDirOutput)

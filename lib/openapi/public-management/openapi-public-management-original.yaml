@@ -400,14 +400,6 @@ components:
         - P2
         - P3
         - P4
-    RuleNature:
-      type: string
-      title: RuleNature
-      enum:
-        - AML
-        - FRAUD
-        - CTF
-        - SCREENING
     RuleLabels:
       type: string
       title: RuleLabels
@@ -511,7 +503,7 @@ components:
         defaultCasePriority:
           $ref: '#/components/schemas/Priority'
         defaultNature:
-          $ref: '#/components/schemas/RuleNature'
+          $ref: ../public/openapi-public-original.yaml#/components/schemas/RuleNature
       required:
         - id
         - type
