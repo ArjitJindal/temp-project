@@ -43,13 +43,13 @@ export const sanctionsHandler = lambdaApi({ requiredFeatures: ['SANCTIONS'] })(
         beforeTimestamp: parseInt(q.beforeTimestamp),
         afterTimestamp: parseInt(q.afterTimestamp),
       }
-      return sanctionsService.getSearchHistory(params)
+      return sanctionsService.getSearchHistories(params)
     } else if (
       event.httpMethod === 'GET' &&
       event.resource === '/sanctions/search/{searchId}' &&
       event.pathParameters?.searchId
     ) {
-      return sanctionsService.getSearchResult(event.pathParameters.searchId)
+      return sanctionsService.getSearchHistory(event.pathParameters.searchId)
     }
     throw new Error('Unhandled request')
   }

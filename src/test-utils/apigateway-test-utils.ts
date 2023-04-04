@@ -78,6 +78,37 @@ export function getApiGatewayPostEvent(
   }
 }
 
+export function getApiGatewayPatchEvent(
+  tenantId: string,
+  resource: string,
+  body: object,
+  params?: {
+    pathParameters?: { [key: string]: string }
+    queryStringParameters?: { [key: string]: string }
+  }
+): APIGatewayProxyWithLambdaAuthorizerEvent<
+  APIGatewayEventLambdaAuthorizerContext<AWS.STS.Credentials>
+> {
+  return {
+    resource,
+    path: getPathFromPathParams(resource, params?.pathParameters),
+    httpMethod: 'PATCH',
+    queryStringParameters: params?.queryStringParameters || {},
+    pathParameters: params?.pathParameters || {},
+    requestContext: {
+      authorizer: {
+        principalId: tenantId,
+      },
+    } as any,
+    body: JSON.stringify(body),
+    headers: {},
+    multiValueHeaders: {},
+    isBase64Encoded: false,
+    multiValueQueryStringParameters: {},
+    stageVariables: null,
+  }
+}
+
 export function getApiGatewayDeleteEvent(
   tenantId: string,
   resource: string,

@@ -1151,10 +1151,10 @@ export class CdkTarponStack extends cdk.Stack {
     this.grantMongoDbAccess(webhookTarponChangeCaptureHandlerAlias)
     this.grantMongoDbAccess(webhookTarponChangeCaptureHandlerRetryAlias)
 
-    // Sanctions handler
-    const { alias: sanctionsHandlerAlias } = this.createFunction(
+    // Console Sanctions handler
+    const { alias: consoleApiSanctionsHandlerAlias } = this.createFunction(
       {
-        name: StackConstants.SANCTIONS_FUNCTION_NAME,
+        name: StackConstants.CONSOLE_API_SANCTIONS_FUNCTION_NAME,
       },
       {
         ...atlasFunctionProps,
@@ -1167,9 +1167,32 @@ export class CdkTarponStack extends cdk.Stack {
         },
       }
     )
-    this.grantMongoDbAccess(sanctionsHandlerAlias)
+    this.grantMongoDbAccess(consoleApiSanctionsHandlerAlias)
     this.grantSecretsManagerAccess(
-      sanctionsHandlerAlias,
+      consoleApiSanctionsHandlerAlias,
+      [this.config.application.COMPLYADVANTAGE_CREDENTIALS_SECRET_ARN],
+      'READ'
+    )
+
+    // Public Sanctions handler
+    const { alias: publicApiSanctionsHandlerAlias } = this.createFunction(
+      {
+        name: StackConstants.PUBLIC_SANCTIONS_API_FUNCTION_NAME,
+      },
+      {
+        ...atlasFunctionProps,
+        environment: {
+          ...atlasFunctionProps.environment,
+          COMPLYADVANTAGE_API_KEY: process.env
+            .COMPLYADVANTAGE_API_KEY as string,
+          COMPLYADVANTAGE_DEFAULT_SEARCH_PROFILE_ID: config.application
+            .COMPLYADVANTAGE_DEFAULT_SEARCH_PROFILE_ID as string,
+        },
+      }
+    )
+    this.grantMongoDbAccess(publicApiSanctionsHandlerAlias)
+    this.grantSecretsManagerAccess(
+      publicApiSanctionsHandlerAlias,
       [this.config.application.COMPLYADVANTAGE_CREDENTIALS_SECRET_ARN],
       'READ'
     )
@@ -1342,6 +1365,22 @@ export class CdkTarponStack extends cdk.Stack {
       publicDeviceDataApi.restApiName
     )
 
+    // Public Sanctions API
+    const { api: publicSanctionsApi, logGroup: publicSanctionsApiLogGroup } =
+      this.createApiGateway(StackConstants.TARPON_SANCTIONS_API_NAME)
+    if (domainName) {
+      domainName.addBasePathMapping(publicSanctionsApi, {
+        basePath: 'sanctions',
+      })
+    }
+    createAPIGatewayThrottlingAlarm(
+      this,
+      this.betterUptimeCloudWatchTopic,
+      publicSanctionsApiLogGroup,
+      StackConstants.TARPON_SANCTIONS_API_GATEWAY_THROTTLING_ALARM_NAME,
+      publicSanctionsApi.restApiName
+    )
+
     // Console API
     const { api: consoleApi, logGroup: consoleApiLogGroup } =
       this.createApiGateway(StackConstants.CONSOLE_API_NAME)
@@ -1387,6 +1426,10 @@ export class CdkTarponStack extends cdk.Stack {
           {
             api: publicApi,
             stage: publicApi.deploymentStage,
+          },
+          {
+            api: publicSanctionsApi,
+            stage: publicSanctionsApi.deploymentStage,
           },
         ],
       })
@@ -1732,6 +1775,7 @@ export class CdkTarponStack extends cdk.Stack {
       | 'public'
       | 'public-management'
       | 'public-device-data'
+      | 'public-sanctions'
       | 'internal'
     if (apiName === StackConstants.TARPON_API_NAME) {
       openapiName = 'public'
@@ -1742,6 +1786,9 @@ export class CdkTarponStack extends cdk.Stack {
     } else if (apiName === StackConstants.TARPON_DEVICE_DATA_API_NAME) {
       openapiName = 'public-device-data'
       logGroupId = 'LogGroupPublicDeviceDataApi'
+    } else if (apiName === StackConstants.TARPON_SANCTIONS_API_NAME) {
+      openapiName = 'public-sanctions'
+      logGroupId = 'LogGroupPublicSanctionsApi'
     } else if (apiName === StackConstants.CONSOLE_API_NAME) {
       openapiName = 'internal'
       logGroupId = 'LogGroupConsoleApi'

@@ -231,8 +231,13 @@ export const LAMBDAS: {
       expectedMaxDurationSeconds:
         KINESIS_CONSUMER_LAMBDA_EXPECTED_MAX_DURATION_SECONDS,
     },
-  [StackConstants.SANCTIONS_FUNCTION_NAME]: {
-    codePath: 'sanctions',
+  [StackConstants.CONSOLE_API_SANCTIONS_FUNCTION_NAME]: {
+    codePath: 'console-api-sanctions',
+    handlerName: 'sanctionsHandler',
+    expectedMaxDurationSeconds: DEFAULT_LAMBDA_EXPECTED_MAX_DURATION_SECONDS,
+  },
+  [StackConstants.PUBLIC_SANCTIONS_API_FUNCTION_NAME]: {
+    codePath: 'public-sanctions-api-sanctions',
     handlerName: 'sanctionsHandler',
     expectedMaxDurationSeconds: DEFAULT_LAMBDA_EXPECTED_MAX_DURATION_SECONDS,
   },

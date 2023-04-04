@@ -122,8 +122,9 @@ export const ConsoleApiPathToLambda: any = {
     StackConstants.CONSOLE_API_ALL_USERS_VIEW_FUNCTION_NAME,
   '/users/{userId}/comments/{commentId}':
     StackConstants.CONSOLE_API_ALL_USERS_VIEW_FUNCTION_NAME,
-  '/sanctions/search': StackConstants.SANCTIONS_FUNCTION_NAME,
-  '/sanctions/search/{searchId}': StackConstants.SANCTIONS_FUNCTION_NAME,
+  '/sanctions/search': StackConstants.CONSOLE_API_SANCTIONS_FUNCTION_NAME,
+  '/sanctions/search/{searchId}':
+    StackConstants.CONSOLE_API_SANCTIONS_FUNCTION_NAME,
   '/simulation': StackConstants.CONSOLE_API_SIMULATION_FUNCTION_NAME,
   '/simulation/jobs/{jobId}':
     StackConstants.CONSOLE_API_SIMULATION_FUNCTION_NAME,

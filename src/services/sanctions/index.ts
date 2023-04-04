@@ -2,6 +2,7 @@ import { v4 as uuidv4 } from 'uuid'
 import fetch from 'node-fetch'
 import { NotFound } from 'http-errors'
 import { StackConstants } from '@cdk/constants'
+import _ from 'lodash'
 import { SanctionsSearchRepository } from './repositories/sanctions-search-repository'
 import { SanctionsSearchRequest } from '@/@types/openapi-internal/SanctionsSearchRequest'
 import { SanctionsSearchResponse } from '@/@types/openapi-internal/SanctionsSearchResponse'
@@ -11,6 +12,7 @@ import { DefaultApiGetSanctionsSearchRequest } from '@/@types/openapi-internal/R
 import { SanctionsSearchHistory } from '@/@types/openapi-internal/SanctionsSearchHistory'
 import { getSecret } from '@/utils/secrets-manager'
 import { SanctionsSearchHistoryResponse } from '@/@types/openapi-internal/SanctionsSearchHistoryResponse'
+import { SanctionsSearchMonitoring } from '@/@types/openapi-internal/SanctionsSearchMonitoring'
 
 const COMPLYADVANTAGE_SEARCH_API_URI =
   'https://api.complyadvantage.com/searches'
@@ -54,9 +56,7 @@ export class SanctionsService {
     await this.initPromise
     const searchId = uuidv4()
     const searchProfileId =
-      searchProfile ||
-      process.env.COMPLYADVANTAGE_DEFAULT_SEARCH_PROFILE_ID ||
-      undefined
+      searchProfile || process.env.COMPLYADVANTAGE_DEFAULT_SEARCH_PROFILE_ID
     const rawComplyAdvantageResponse = (await (
       await fetch(`${COMPLYADVANTAGE_SEARCH_API_URI}?api_key=${this.apiKey}`, {
         method: 'POST',
@@ -71,6 +71,9 @@ export class SanctionsService {
         }),
       })
     ).json()) as ComplyAdvantageSearchResponse
+    if (rawComplyAdvantageResponse.status === 'failure') {
+      throw new Error((rawComplyAdvantageResponse as any).message)
+    }
     const hits = rawComplyAdvantageResponse.content?.data?.hits || []
     const response = {
       total: hits.length,
@@ -79,13 +82,17 @@ export class SanctionsService {
       rawComplyAdvantageResponse,
     }
     await this.sanctionsSearchRepository.saveSearchResult(
-      { ...request, _id: searchId },
+      searchId,
+      request,
       response
     )
+    if (request.monitoring) {
+      await this.updateSearch(searchId, request.monitoring)
+    }
     return response
   }
 
-  public async getSearchHistory(
+  public async getSearchHistories(
     params: DefaultApiGetSanctionsSearchRequest
   ): Promise<SanctionsSearchHistoryResponse> {
     // TODO: also based on params, filter return results based on dates
@@ -93,7 +100,7 @@ export class SanctionsService {
     return this.sanctionsSearchRepository.getSearchHistory(params)
   }
 
-  public async getSearchResult(
+  public async getSearchHistory(
     searchId: string
   ): Promise<SanctionsSearchHistory> {
     await this.initPromise
@@ -101,8 +108,46 @@ export class SanctionsService {
       searchId
     )
     if (!result) {
-      throw new NotFound(`Unable to find search result by searchId=${searchId}`)
+      throw new NotFound(
+        `Unable to find search history by searchId=${searchId}`
+      )
     }
     return result
+  }
+
+  public async updateSearch(
+    searchId: string,
+    update: SanctionsSearchMonitoring
+  ): Promise<void> {
+    await this.initPromise
+    const search = await this.getSearchHistory(searchId)
+    const caSearchId =
+      search.response?.rawComplyAdvantageResponse?.content?.data?.id
+    const monitorResponse = await (
+      await fetch(
+        `${COMPLYADVANTAGE_SEARCH_API_URI}/${caSearchId}/monitors?api_key=${this.apiKey}`,
+        {
+          method: 'PATCH',
+          body: JSON.stringify({
+            is_monitored: update.enabled,
+          }),
+        }
+      )
+    ).json()
+    if (monitorResponse.status === 'failure') {
+      throw new Error(monitorResponse.message)
+    }
+
+    // TODO: Handle webhook
+    // https://www.notion.so/flagright/Public-Sanctions-API-webhook-0a696f9644cc4185a132451058b1984b?pvs=4
+    if (update.webhookUrl) {
+      // register webhook
+    } else {
+      // deregister webhook
+    }
+    await this.sanctionsSearchRepository.updateSearchMonitoring(
+      searchId,
+      update
+    )
   }
 }

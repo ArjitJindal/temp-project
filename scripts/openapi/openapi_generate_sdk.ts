@@ -22,7 +22,12 @@ function replaceRequestParameters(path: string) {
 }
 
 function buildApi(
-  type: 'public' | 'public-management' | 'public-device-data' | 'internal'
+  type:
+    | 'public'
+    | 'public-management'
+    | 'public-device-data'
+    | 'public-sanctions'
+    | 'internal'
 ) {
   exec(
     `mkdir -p src/@types/openapi-${type}/ src/@types/openapi-${type}-custom/ 1>/dev/null 2>&1`
@@ -75,6 +80,7 @@ function buildApi(
 buildApi('public')
 buildApi('public-management')
 buildApi('public-device-data')
+buildApi('public-sanctions')
 buildApi('internal')
 
 console.info('Done!')

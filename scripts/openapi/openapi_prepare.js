@@ -27,6 +27,12 @@ async function prepareSchemas(OUTPUT_DIR) {
       'openapi',
       'public-device-data'
     )
+    const publicSanctionsDir = path.resolve(
+      PROJECT_DIR,
+      'lib',
+      'openapi',
+      'public-sanctions'
+    )
 
     const internalDirOutput = path.resolve(OUTPUT_DIR, 'internal')
     const publicDirOutput = path.resolve(OUTPUT_DIR, 'public')
@@ -38,11 +44,16 @@ async function prepareSchemas(OUTPUT_DIR) {
       OUTPUT_DIR,
       'public-device-data'
     )
+    const publicSanctionsDirOutput = path.resolve(
+      OUTPUT_DIR,
+      'public-sanctions'
+    )
 
     await fs.ensureDir(internalDirOutput)
     await fs.ensureDir(publicDirOutput)
     await fs.ensureDir(publicManagementDirOutput)
     await fs.ensureDir(publicDeviceDataDirOutput)
+    await fs.ensureDir(publicSanctionsDirOutput)
 
     const publicSchemaFile = path.resolve(
       publicDir,
@@ -99,6 +110,9 @@ async function prepareSchemas(OUTPUT_DIR) {
     }
     {
       await fs.copy(publicDeviceDataDir, publicDeviceDataDirOutput)
+    }
+    {
+      await fs.copy(publicSanctionsDir, publicSanctionsDirOutput)
     }
   } catch (err) {
     console.error(err)

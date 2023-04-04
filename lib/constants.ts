@@ -95,6 +95,9 @@ export const StackConstants = {
   PUBLIC_MANAGEMENT_API_RULE_INSTANCE_FUNCTION_NAME: getResourceNameForTarpon(
     'PublicManagementApiRuleInstanceFunction'
   ),
+  PUBLIC_SANCTIONS_API_FUNCTION_NAME: getResourceNameForTarpon(
+    'PublicSanctionsApiMetricFunction'
+  ),
   CONSOLE_API_RULE_FUNCTION_NAME: getResourceNameForTarpon(
     'ConsoleApiRuleTemplateFunction'
   ),
@@ -144,7 +147,8 @@ export const StackConstants = {
     getResourceNameForTarpon('WebhookTarponChangeCaptureFunction'),
   WEBHOOK_TARPON_CHANGE_CAPTURE_KINESIS_CONSUMER_RETRY_FUNCTION_NAME:
     getResourceNameForTarpon('WebhookTarponChangeCaptureRetryFunction'),
-  SANCTIONS_FUNCTION_NAME: getResourceNameForTarpon('SanctionsFunction'),
+  CONSOLE_API_SANCTIONS_FUNCTION_NAME:
+    getResourceNameForTarpon('SanctionsFunction'),
   LAMBDA_LATEST_ALIAS_NAME: 'LATEST',
   JWT_AUTHORIZER_CACHE_TTL_SECONDS: 3600,
   API_KEY_AUTHORIZER_CACHE_TTL_SECONDS: 3600,
@@ -164,6 +168,7 @@ export const StackConstants = {
   ),
   TARPON_MANAGEMENT_API_NAME: getResourceName('TarponManagementAPI'),
   TARPON_DEVICE_DATA_API_NAME: getResourceName('TarponDeviceDataAPI'),
+  TARPON_SANCTIONS_API_NAME: getResourceName('TarponSanctionsAPI'),
   TARPON_MANAGEMENT_API_GATEWAY_ALARM_NAME: getResourceName(
     'TarponManagementApiErrorPercentage'
   ),
@@ -175,6 +180,9 @@ export const StackConstants = {
   ),
   TARPON_DEVICE_DATA_API_GATEWAY_THROTTLING_ALARM_NAME: getResourceName(
     'TarponDeviceDataApiThrottlingCount'
+  ),
+  TARPON_SANCTIONS_API_GATEWAY_THROTTLING_ALARM_NAME: getResourceName(
+    'TarponSanctionsApiThrottlingCount'
   ),
   CONSOLE_API_NAME: getResourceName('TarponAPI-console'),
   CONSOLE_API_GATEWAY_ALARM_NAME: getResourceName(

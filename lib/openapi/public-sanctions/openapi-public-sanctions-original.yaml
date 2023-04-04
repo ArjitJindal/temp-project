@@ -1,0 +1,173 @@
+openapi: 3.0.0
+info:
+  title: Flagright Sanctions API
+  version: '1.0'
+  description: Flagright's Sanctions API
+  contact:
+    name: Madhu Nadig
+    email: support@flagright.com
+    url: https://flagright.com
+servers:
+  - url: http://localhost:3000
+paths:
+  /searches/bank:
+    post:
+      security:
+        - x-api-key: []
+      summary: Search sanctions by bank
+      operationId: post-sanctions-searches-bank
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SanctionsSearch'
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SanctionsBankSearchRequest'
+      description: ''
+  '/searches/{searchId}':
+    parameters:
+      - schema:
+          type: string
+        name: searchId
+        in: path
+        required: true
+    get:
+      security:
+        - x-api-key: []
+      summary: Get a previous sanctions search
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SanctionsSearch'
+      operationId: get-sanctions-searches-searchId
+    patch:
+      security:
+        - x-api-key: []
+      summary: Update a previous sanctions search
+      operationId: patch-sanctions-searches-searchId
+      responses:
+        '200':
+          description: OK
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SanctionsSearchUpdateRequest'
+components:
+  schemas:
+    SanctionsSearchType:
+      title: SanctionsSearchType
+      x-stoplight:
+        id: c0f5e52271d98
+      type: string
+      enum:
+        - SANCTIONS
+        - PEP
+        - ADVERSE_MEDIA
+    SanctionsBankSearchRequest:
+      title: SanctionsBankSearchRequest
+      type: object
+      x-stoplight:
+        id: 6bc9fe6940453
+      properties:
+        bankName:
+          type: string
+        countryCodes:
+          type: array
+          items:
+            $ref: ../public/openapi-public-original.yaml#/components/schemas/CountryCode
+        iban:
+          type: string
+        monitoring:
+          $ref: '#/components/schemas/SanctionsMonitoring'
+        types:
+          type: array
+          items:
+            $ref: '#/components/schemas/SanctionsSearchType'
+        fuzziness:
+          type: number
+          minimum: 0
+          maximum: 1
+    SanctionsSearchUpdateRequest:
+      title: SanctionsBankSearchUpdateRequest
+      x-stoplight:
+        id: '0534882753208'
+      type: object
+      properties:
+        monitoring:
+          $ref: '#/components/schemas/SanctionsMonitoring'
+      required:
+        - monitoring
+    SanctionsMonitoring:
+      title: SanctionsMonitoring
+      x-stoplight:
+        id: v2lyi0kdvhneu
+      type: object
+      properties:
+        enabled:
+          type: boolean
+        ibanResolutionFrequency:
+          $ref: '#/components/schemas/TimeWindow'
+        webhookUrl:
+          type: string
+      required:
+        - enabled
+    SanctionsSearch:
+      title: SanctionsSearch
+      x-stoplight:
+        id: zosh4gdbirsrg
+      type: object
+      properties:
+        searchId:
+          type: string
+        createdAt:
+          type: number
+          minimum: 1262300400000
+        updatedAt:
+          type: number
+          minimum: 1262300400000
+        request:
+          $ref: '#/components/schemas/SanctionsBankSearchRequest'
+        response:
+          type: object
+      required:
+        - searchId
+        - createdAt
+        - updatedAt
+        - request
+        - response
+    TimeWindowGranularity:
+      title: TimeWindowGranularity
+      x-stoplight:
+        id: 25l0mrn9tpmo3
+      type: string
+      enum:
+        - day
+        - week
+        - month
+    TimeWindow:
+      title: TimeWindow
+      x-stoplight:
+        id: piarwcfv3g2cm
+      type: object
+      properties:
+        units:
+          type: number
+        granularity:
+          $ref: '#/components/schemas/TimeWindowGranularity'
+      required:
+        - units
+        - granularity
+  securitySchemes:
+    x-api-key:
+      name: x-api-key
+      type: apiKey
+      in: header

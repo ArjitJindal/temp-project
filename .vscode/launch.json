@@ -24,6 +24,13 @@
     },
     {
       "type": "node-terminal",
+      "name": "Run Public Sanctions API",
+      "request": "launch",
+      "command": "npm run dev:api:public-sanctions",
+      "cwd": "${workspaceFolder}"
+    },
+    {
+      "type": "node-terminal",
       "name": "Run all APIs",
       "request": "launch",
       "command": "npm run dev:api",

@@ -5209,8 +5209,25 @@ components:
             type: string
         yearOfBirth:
           type: number
+        types:
+          type: array
+          items:
+            $ref: '#/components/schemas/SanctionsSearchType'
+        monitoring:
+          $ref: '#/components/schemas/SanctionsSearchMonitoring'
+        apiSearchRequest:
+          type: object
       required:
         - searchTerm
+    SanctionsSearchType:
+      title: SanctionsSearchType
+      type: string
+      x-stoplight:
+        id: bf77ede355863
+      enum:
+        - SANCTIONS
+        - PEP
+        - ADVERSE_MEDIA
     SanctionsSearchResponse:
       title: SanctionsSearchResponse
       x-stoplight:
@@ -5249,6 +5266,8 @@ components:
         id: ldj2zpwhzk8s5
       type: object
       properties:
+        _id:
+          type: string
         request:
           $ref: '#/components/schemas/SanctionsSearchRequest'
         response:
@@ -5256,8 +5275,21 @@ components:
         createdAt:
           type: number
       required:
+        - _id
         - request
         - createdAt
+    SanctionsSearchMonitoring:
+      title: SanctionsSearchMonitoring
+      type: object
+      x-stoplight:
+        id: d2c131bfd47c9
+      properties:
+        enabled:
+          type: boolean
+        webhookUrl:
+          type: string
+      required:
+        - enabled
     ComplyAdvantageSearchResponse:
       title: ComplyAdvantageSearchResponse
       type: object
