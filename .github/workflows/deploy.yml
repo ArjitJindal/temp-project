@@ -108,7 +108,7 @@ jobs:
             Frontend: https://${{ steps.deploy.outputs.phyto }}.console.flagright.dev
             Backend: https://${{ steps.deploy.outputs.tarpon }}.flagright.dev
       - name: Set latest commit status as ${{ job.status }}
-        if: steps.check.outputs.triggered == 'true'
+        if: always() && steps.check.outputs.triggered == 'true' 
         uses: myrotvorets/set-commit-status-action@master
         with:
           sha: ${{ steps.comment-branch.outputs.head_sha }}
