@@ -102,18 +102,10 @@ jobs:
           yarn run deploy:qa
           echo "phyto=${QA_SUBDOMAIN}" >> $GITHUB_OUTPUT
       - name: Comment PR
-        if: steps.check.outputs.triggered == 'true'
+        if: steps.check.outputs.triggered == 'true' && always()
         uses: thollander/actions-comment-pull-request@v2
         with:
           message: |
             Branch deployed!
             Frontend: https://${{ steps.deploy.outputs.phyto }}.console.flagright.dev
             Backend: https://${{ steps.deploy.outputs.tarpon }}.flagright.dev
-      - name: Set latest commit status as ${{ job.status }}
-        if: steps.check.outputs.triggered == 'true'
-        uses: myrotvorets/set-commit-status-action@master
-        with:
-          sha: ${{ steps.comment-branch.outputs.head_sha }}
-          token: ${{ secrets.DEPLOY_PAT }}
-          status: ${{ job.status }}
-          context: Deploy to QA
