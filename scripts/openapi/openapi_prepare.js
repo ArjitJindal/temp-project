@@ -2,6 +2,7 @@
 const fs = require('fs-extra')
 const path = require('path')
 const mkdirp = require('mkdirp')
+const _ = require('lodash')
 require('dotenv').config()
 
 const {
@@ -59,14 +60,23 @@ async function prepareSchemas(OUTPUT_DIR) {
       publicDir,
       'openapi-public-original.yaml'
     )
-    const deviceSchemaFile = path.resolve(
+    const publicDeviceSchemaFile = path.resolve(
       publicDeviceDataDir,
       'openapi-public-device-data-original.yaml'
     )
     const publicSchemaText = (await fs.readFile(publicSchemaFile)).toString()
     const publicSchemaYaml = parse(publicSchemaText)
-    const deviceSchemaText = (await fs.readFile(deviceSchemaFile)).toString()
-    const deviceSchemaYaml = parse(deviceSchemaText)
+    const publicDeviceSchemaText = (
+      await fs.readFile(publicDeviceSchemaFile)
+    ).toString()
+    const publicDeviceSchemaYaml = parse(publicDeviceSchemaText)
+    const publicSantionsSchemaFile = path.resolve(
+      publicSanctionsDir,
+      'openapi-public-sanctions-original.yaml'
+    )
+    const publicSanctionsSchemaText = (
+      await fs.readFile(publicSantionsSchemaFile)
+    ).toString()
 
     const internalSchemaFile = path.resolve(
       internalDir,
@@ -90,7 +100,7 @@ async function prepareSchemas(OUTPUT_DIR) {
       internalSchemaYaml.components.schemas = {
         ...internalSchemaYaml.components.schemas,
         ...publicSchemaYaml.components.schemas,
-        ...deviceSchemaYaml.components.schemas,
+        ...publicDeviceSchemaYaml.components.schemas,
       }
       await fs.copy(internalDir, internalDirOutput)
       await fs.writeFile(
@@ -113,6 +123,21 @@ async function prepareSchemas(OUTPUT_DIR) {
     }
     {
       await fs.copy(publicSanctionsDir, publicSanctionsDirOutput)
+      const publicSanctionsSchemaYaml = await localizeRefs(
+        parse(publicSanctionsSchemaText)
+      )
+      publicSanctionsSchemaYaml.components.schemas = {
+        ...publicSanctionsSchemaYaml.components.schemas,
+        ..._.pick(publicSchemaYaml.components.schemas, ['CountryCode']),
+      }
+      await fs.copy(publicSanctionsDir, publicSanctionsDirOutput)
+      await fs.writeFile(
+        path.resolve(
+          publicSanctionsDirOutput,
+          'openapi-public-sanctions-original.yaml'
+        ),
+        stringify(publicSanctionsSchemaYaml)
+      )
     }
   } catch (err) {
     console.error(err)
