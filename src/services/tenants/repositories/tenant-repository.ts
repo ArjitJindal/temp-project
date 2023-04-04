@@ -27,6 +27,7 @@ export class TenantRepository {
   ) {
     this.dynamoDb = connections.dynamoDb as DynamoDBDocumentClient
     this.mongoDb = connections.mongoDb as MongoClient
+
     this.tenantId = tenantId
   }
 
@@ -39,7 +40,18 @@ export class TenantRepository {
       ProjectionExpression: settingNames?.join(','),
     }
     const result = await this.dynamoDb.send(new GetCommand(getItemInput))
-    return result.Item ? (result.Item as Partial<TenantSettings>) : {}
+    const settings = result.Item ? (result.Item as Partial<TenantSettings>) : {}
+
+    // Push demo mode as a feature so its always easy to switch back.
+    if (this.tenantId.endsWith('-test')) {
+      if (!settings.features) {
+        settings.features = ['DEMO_MODE']
+      }
+      if (settings.features?.indexOf('DEMO_MODE') === -1) {
+        settings.features.push('DEMO_MODE')
+      }
+    }
+    return settings
   }
 
   public async createOrUpdateTenantSettings(

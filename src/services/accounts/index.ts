@@ -51,10 +51,10 @@ export class AccountsService {
 
   constructor(
     config: { auth0Domain: string },
-    connections: { mongoDb?: MongoClient }
+    connections: { mongoDb: MongoClient }
   ) {
     this.config = config
-    this.mongoDb = connections.mongoDb as MongoClient
+    this.mongoDb = connections.mongoDb
   }
 
   private static organizationToTenant(organization: Organization): Tenant {

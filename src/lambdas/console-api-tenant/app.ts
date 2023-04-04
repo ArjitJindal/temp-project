@@ -14,6 +14,11 @@ import { TenantService } from '@/services/tenants'
 import { TenantSettings } from '@/@types/openapi-internal/TenantSettings'
 import { TenantRepository } from '@/services/tenants/repositories/tenant-repository'
 import { getMongoDbClient } from '@/utils/mongoDBUtils'
+import { getFullTenantId } from '@/lambdas/jwt-authorizer/app'
+import { DemoModeDataLoadBatchJob } from '@/@types/batch-job'
+import { getCredentialsFromEvent } from '@/utils/credentials'
+import { sendBatchJobCommand } from '@/services/batch-job'
+import { envIsNot } from '@/utils/env'
 
 const ROOT_ONLY_SETTINGS: Array<keyof TenantSettings> = ['features', 'limits']
 
@@ -52,15 +57,30 @@ export const tenantsHandler = lambdaApi()(
         10
       )()
 
-      const bodyTenantId = (JSON.parse(event.body) as TenantCreationRequest)
-        .tenantId
+      const request = JSON.parse(event.body) as TenantCreationRequest
+      const bodyTenantId = request.tenantId
 
       const tenantService = new TenantService(bodyTenantId ?? randomizedId, {
-        dynamoDb: getDynamoDbClientByEvent(event),
         mongoDb,
+        dynamoDb: getDynamoDbClientByEvent(event),
       })
 
-      return tenantService.createTenant(JSON.parse(event.body))
+      const response = tenantService.createTenant(JSON.parse(event.body))
+
+      // Create demo mode environment in non-prod environments.
+      if (envIsNot('prod')) {
+        const fullTenantId = getFullTenantId(
+          bodyTenantId as string,
+          request.features.indexOf('DEMO_MODE') > -1
+        )
+        const batchJob: DemoModeDataLoadBatchJob = {
+          type: 'DEMO_MODE_DATA_LOAD',
+          tenantId: fullTenantId,
+          awsCredentials: getCredentialsFromEvent(event),
+        }
+        await sendBatchJobCommand(fullTenantId, batchJob)
+      }
+      return response
     } else if (event.resource === '/tenants/settings') {
       const dynamoDb = getDynamoDbClientByEvent(event)
       const tenantRepository = new TenantRepository(tenantId, { dynamoDb })

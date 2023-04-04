@@ -31,11 +31,11 @@ export class TenantService {
     tenantId: string,
     connections: {
       dynamoDb?: DynamoDBDocumentClient
-      mongoDb?: MongoClient
+      mongoDb: MongoClient
     }
   ) {
     this.dynamoDb = connections.dynamoDb as DynamoDBDocumentClient
-    this.mongoDb = connections.mongoDb as MongoClient
+    this.mongoDb = connections.mongoDb
     this.tenantId = tenantId
   }
 

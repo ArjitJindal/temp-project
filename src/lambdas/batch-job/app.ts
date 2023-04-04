@@ -13,7 +13,9 @@ export const BATCH_JOB_RUN_TYPE_RESULT_KEY = 'BatchJobRunType'
 export const BATCH_JOB_PAYLOAD_RESULT_KEY = 'BatchJobPayload'
 
 function getBatchJobName(batchJobPayload: BatchJob) {
-  return `${batchJobPayload.tenantId}-${batchJobPayload.type}-${uuidv4()}`
+  return `${uuidv4()}-${batchJobPayload.tenantId}-${
+    batchJobPayload.type
+  }`.slice(0, 80)
 }
 
 export const jobTriggerHandler = lambdaConsumer()(async (event: SQSEvent) => {
