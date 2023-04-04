@@ -609,6 +609,9 @@ export class CdkTarponStack extends cdk.Stack {
     const { alias: tenantsFunctionAlias } = this.createFunction(
       {
         name: StackConstants.CONSOLE_API_TENANT_FUNCTION_NAME,
+        provisionedConcurrency:
+          config.resource.TENANT_LAMBDA.PROVISIONED_CONCURRENCY,
+        memorySize: config.resource.TENANT_LAMBDA.MEMORY_SIZE,
       },
       atlasFunctionProps
     )
