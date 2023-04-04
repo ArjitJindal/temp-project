@@ -74,7 +74,7 @@ export default function CommentButton(props: Props) {
         </div>
       }
     >
-      <div ref={popoverTargetRef}>
+      <div ref={popoverTargetRef} className={s.commentButtonDiv}>
         <Button isDisabled={props.disabled} icon={<WechatLineIcon />}>
           Comment
         </Button>

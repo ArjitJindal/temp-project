@@ -92,6 +92,7 @@ function CommentEditor(props: Props, ref: React.Ref<CommentEditorRef>) {
           showGreyBackground={true}
           removeFile={removeFile}
           showDeleteButton={true}
+          fixedHeight={true}
         />
       )}
       <div className={s.commentEditorActions}>

@@ -1,6 +1,7 @@
 import { Space } from 'antd';
 import { CloseCircleFilled, PaperClipOutlined } from '@ant-design/icons';
 import filesize from 'filesize';
+import cn from 'clsx';
 import COLORS from '../ui/colors';
 import s from './styles.module.less';
 import { FileInfo } from '@/apis';
@@ -10,6 +11,7 @@ interface Props {
   showGreyBackground?: boolean;
   removeFile?: (s3Key: string) => void;
   showDeleteButton?: boolean;
+  fixedHeight?: boolean;
 }
 
 export const FilesList: React.FC<Props> = ({
@@ -17,12 +19,13 @@ export const FilesList: React.FC<Props> = ({
   showGreyBackground,
   removeFile,
   showDeleteButton = false,
+  fixedHeight = false,
 }) => {
   if (files.length === 0) {
     return <></>;
   }
   return (
-    <div className={showGreyBackground ? s.fileListContainer : ''}>
+    <div className={cn(s.fileList, fixedHeight && s.fileListContainerFixedHeight)}>
       {files.map((file) => (
         <div key={file.s3Key} className={s.fileAttachmentButton}>
           <Space>
