@@ -2682,12 +2682,6 @@ components:
       example:
         createdTimestamp: 1641654664000
         userId: 96647cfd9e8fe66ee0f3362e011e34e8
-        bankDetails:
-          - IBAN: FI211234569876543210
-            bankName: Merryl Lynch
-            BIC: DE761234561
-            SWIFT: AAAA-BB-CC-123
-            countryCode: DE
         legalEntity:
           companyGeneralDetails:
             legalName: Ozkan Hazelnut Export JSC
@@ -2943,10 +2937,6 @@ components:
           type: array
           items:
             $ref: '#/components/schemas/PaymentMethod'
-        bankDetails:
-          type: array
-          items:
-            $ref: '#/components/schemas/BankDetails'
         linkedEntities:
           $ref: '#/components/schemas/BusinessEntityLink'
         acquisitionChannel:
@@ -2958,6 +2948,19 @@ components:
           description: Additional information that can be added via tags
           items:
             $ref: '#/components/schemas/Tag'
+        savedPaymentDetails:
+          type: array
+          items:
+            oneOf:
+              - $ref: '#/components/schemas/CardDetails'
+              - $ref: '#/components/schemas/GenericBankAccountDetails'
+              - $ref: '#/components/schemas/IBANDetails'
+              - $ref: '#/components/schemas/ACHDetails'
+              - $ref: '#/components/schemas/SWIFTDetails'
+              - $ref: '#/components/schemas/MpesaDetails'
+              - $ref: '#/components/schemas/UPIDetails'
+              - $ref: '#/components/schemas/WalletDetails'
+              - $ref: '#/components/schemas/CheckDetails'
     BusinessUsersResponse:
       title: BusinessUsersResponse
       type: object
@@ -3112,6 +3115,8 @@ components:
           description: Name of the bank
         bankAddress:
           $ref: '#/components/schemas/Address'
+        country:
+          $ref: '#/components/schemas/CountryCode'
         IBAN:
           type: string
           description: Account number of the user. Can be account number, IBAN number etc.
@@ -4768,22 +4773,6 @@ components:
           type: array
           items:
             type: string
-    BankDetails:
-      title: BankDetails
-      x-stoplight:
-        id: qqn80q55vrs3w
-      type: object
-      properties:
-        IBAN:
-          type: string
-        bankName:
-          type: string
-        BIC:
-          type: string
-        SWIFT:
-          type: string
-        countryCode:
-          $ref: '#/components/schemas/CountryCode'
   securitySchemes:
     x-api-key:
       name: x-api-key

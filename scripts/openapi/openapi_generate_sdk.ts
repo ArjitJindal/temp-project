@@ -21,6 +21,20 @@ function replaceRequestParameters(path: string) {
   fs.writeFileSync(path, newText)
 }
 
+function replaceUserSavedPaymentDetails(path: string) {
+  if (!fs.existsSync(path)) {
+    return
+  }
+  const newText = fs
+    .readFileSync(path)
+    .toString()
+    .replace(
+      "import { CardDetails | GenericBankAccountDetails | IBANDetails | ACHDetails | SWIFTDetails | MpesaDetails | UPIDetails | WalletDetails | CheckDetails } from './CardDetails | GenericBankAccountDetails | IBANDetails | ACHDetails | SWIFTDetails | MpesaDetails | UPIDetails | WalletDetails | CheckDetails';",
+      ''
+    )
+  fs.writeFileSync(path, newText)
+}
+
 function buildApi(
   type:
     | 'public'
@@ -72,6 +86,14 @@ function buildApi(
     fi`
   )
   replaceRequestParameters(`src/@types/openapi-${type}/RequestParameters.ts`)
+  replaceUserSavedPaymentDetails(`src/@types/openapi-${type}/Business.ts`)
+  replaceUserSavedPaymentDetails(
+    `src/@types/openapi-${type}/BusinessOptional.ts`
+  )
+  replaceUserSavedPaymentDetails(`src/@types/openapi-${type}/InternalUser.ts`)
+  replaceUserSavedPaymentDetails(
+    `src/@types/openapi-${type}/InternalBusinessUser.ts`
+  )
   exec(
     `rm -f src/@types/openapi-${type}/ObjectSerializer.ts src/@types/openapi-${type}/all.ts`
   )
