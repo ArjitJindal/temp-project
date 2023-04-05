@@ -35,7 +35,7 @@ export default function SalesForceCard(props: Props) {
     },
   );
   return (
-    <AsyncResourceRenderer resource={salesforceResource}>
+    <AsyncResourceRenderer resource={salesforceResource} renderFailed={() => <></>}>
       {(salesforceResponse) => (
         <>
           {salesforceResponse?.account?.summary && (
