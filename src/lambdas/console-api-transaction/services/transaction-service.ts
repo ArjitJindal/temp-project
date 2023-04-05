@@ -91,6 +91,7 @@ export class TransactionService {
 
   public async getUniques(params: {
     field: TransactionsUniquesField
+    direction: 'origin' | 'destination'
     filter?: string
   }): Promise<string[]> {
     return await this.transactionRepository.getUniques(params)

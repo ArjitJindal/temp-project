@@ -21,7 +21,6 @@ import {
   UserFilters,
   USER_FILTERS,
 } from './filters'
-import { MongoDbTransactionRepository } from './repositories/mongodb-transaction-repository'
 import { Transaction } from '@/@types/openapi-public/Transaction'
 import { TransactionMonitoringResult } from '@/@types/openapi-public/TransactionMonitoringResult'
 import { logger } from '@/core/logger'
@@ -364,6 +363,11 @@ export class RulesEngineService {
       )
     }
     const ruleFilters = ruleInstance.filters as TransactionFilters & UserFilters
+    const mode =
+      database === 'MONGODB' ||
+      process.env.__INTERNAL_RULES_ENGINE_USE_MONGODB__
+        ? 'MONGODB'
+        : 'DYNAMODB'
     const ruleClassInstance = new RuleClass(
       this.tenantId,
       {
@@ -373,14 +377,9 @@ export class RulesEngineService {
       },
       { parameters, filters: ruleFilters },
       { ruleInstance },
+      mode,
       this.dynamoDb,
-      database === 'MONGODB' ||
-      process.env.__INTERNAL_RULES_ENGINE_USE_MONGODB__
-        ? new MongoDbTransactionRepository(
-            this.tenantId,
-            await getMongoDbClient()
-          )
-        : new DynamoDbTransactionRepository(this.tenantId, this.dynamoDb)
+      await getMongoDbClient()
     )
 
     const segmentNamespace = `Rules Engine - ${ruleInstance.ruleId} (${ruleInstance.id})`

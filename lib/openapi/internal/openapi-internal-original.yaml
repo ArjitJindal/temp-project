@@ -5525,6 +5525,8 @@ components:
         - UPI_IDENTIFYING_NUMBER
         - IP_ADDRESS
         - PAYMENT_CHANNEL
+        - CURRENCY
+        - COUNTRY
     UsersUniquesField:
       title: UsersUniquesField
       type: string
