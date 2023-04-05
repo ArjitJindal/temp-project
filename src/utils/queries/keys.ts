@@ -46,6 +46,7 @@ export const TRANSACTIONS_FIND = (search: string): QueryKey => [
 ];
 export const ACCOUNT_LIST = (): QueryKey => ['accounts', 'list'];
 export const USER_INFO = (accessToken: string | null): QueryKey => ['userinfo', accessToken];
+export const SALESFORCE_ACCOUNT = (userId: string): QueryKey => ['salesforceaccount', userId];
 export const ROLES_LIST = (): QueryKey => ['roles', 'list'];
 export const ROLE = (roleId: string): QueryKey => ['role', roleId];
 export const TRANSACTIONS_LIST = (searchParams: AnyParameters): QueryKey => [

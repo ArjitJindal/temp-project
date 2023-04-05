@@ -12,6 +12,7 @@ import { useApi } from '@/api';
 import AsyncResourceRenderer from '@/components/common/AsyncResourceRenderer';
 import { useQuery } from '@/utils/queries/hooks';
 import { DEVICE_DATA_USER } from '@/utils/queries/keys';
+import SalesForceCard from '@/components/SalesforceCard';
 import { useFeatureEnabled } from '@/components/AppWrapper/Providers/SettingsProvider';
 import AIInsightsCard from '@/pages/case-management-item/CaseDetails/AIInsightsCard';
 
@@ -38,6 +39,7 @@ function UserDetails(props: Props) {
   } = props;
 
   const api = useApi();
+  const salesForceEnabled = useFeatureEnabled('SALESFORCE');
   const isMLDemoEnabled = useFeatureEnabled('MACHINE_LEARNING_DEMO');
 
   const deviceDataRes = useQuery(DEVICE_DATA_USER(user?.userId), async () => {
@@ -119,6 +121,12 @@ function UserDetails(props: Props) {
           commentType={'USER'}
           title={UI_SETTINGS.cards.COMMENTS.title}
           collapsableKey={UI_SETTINGS.cards.COMMENTS.key}
+        />
+      )}
+      {salesForceEnabled && (
+        <SalesForceCard
+          collapsableKey={UI_SETTINGS.cards.SALESFORCE.key}
+          userId={user?.userId as string}
         />
       )}
     </>

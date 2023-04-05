@@ -67,6 +67,7 @@ const Root = (props: Props) => {
         {header && (
           <Header
             header={header}
+            link={header.link}
             isCollapsed={disabled || (collapsable && headerCollapsable && isCollapsed)}
             setCollapsed={setCollapsed}
           />

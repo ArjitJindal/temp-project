@@ -42,6 +42,10 @@ export const UI_SETTINGS = {
       title: 'Comments',
       key: 'user-case-details-comments',
     },
+    SALESFORCE: {
+      title: 'Salesforce',
+      key: 'user-case-details-salesforce',
+    },
     DEVICE_DATA: {
       title: 'Device data',
       key: 'user-case-details-device-data',

@@ -13,6 +13,8 @@ import { all, AsyncResource, map } from '@/utils/asyncResource';
 import { QueryResult } from '@/utils/queries/types';
 import AsyncResourceRenderer from '@/components/common/AsyncResourceRenderer';
 import { useApi } from '@/api';
+import SalesForceCard from '@/components/SalesforceCard';
+import { useFeatureEnabled } from '@/components/AppWrapper/Providers/SettingsProvider';
 
 interface Props {
   caseItem: Case;
@@ -25,6 +27,7 @@ function CaseDetails(props: Props) {
   const user = caseItem.caseUsers?.origin ?? caseItem.caseUsers?.destination ?? undefined;
   usePageViewTracker('User Case Details');
   useScrollToFocus();
+  const salesForceEnabled = useFeatureEnabled('SALESFORCE');
 
   const alertIds = (caseItem.alerts ?? [])
     .map(({ alertId }) => alertId)
@@ -76,6 +79,12 @@ function CaseDetails(props: Props) {
           />
         )}
       </AsyncResourceRenderer>
+      {salesForceEnabled && (
+        <SalesForceCard
+          collapsableKey={UI_SETTINGS.cards.SALESFORCE.key}
+          userId={user?.userId as string}
+        />
+      )}
     </>
   );
 }

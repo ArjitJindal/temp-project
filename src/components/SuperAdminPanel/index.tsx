@@ -5,6 +5,7 @@ import { validate } from 'uuid';
 import NumberInput from '../library/NumberInput';
 import Label from '../library/Label';
 import { CreateTenantModal } from './CreateTenantModal';
+import s from './styles.module.less';
 import { useApi } from '@/api';
 import Button from '@/components/library/Button';
 import { Feature, TenantSettings } from '@/apis';
@@ -23,6 +24,9 @@ export default function SuperAdminPanel() {
 
   const [complyAdvantageSearchProfileId, setSearchProfileId] = useState<string>(
     settings.complyAdvantageSearchProfileId || '',
+  );
+  const [salesforceAuthToken, setSalesforceAuthToken] = useState<string>(
+    settings.salesforceAuthToken || '',
   );
   const user = useAuth0User();
   const api = useApi();
@@ -78,6 +82,7 @@ export default function SuperAdminPanel() {
       ...(features && features.length && { features }),
       ...(limits && { limits }),
       ...(complyAdvantageSearchProfileId && { complyAdvantageSearchProfileId }),
+      ...(salesforceAuthToken && { salesforceAuthToken }),
     });
   };
 
@@ -88,6 +93,10 @@ export default function SuperAdminPanel() {
 
   const handleChangeSearchProfileID = async (event: ChangeEvent<HTMLInputElement>) => {
     setSearchProfileId(event.target.value.trim());
+  };
+
+  const handleChangeSalesforceAuthToken = async (event: ChangeEvent<HTMLInputElement>) => {
+    setSalesforceAuthToken(event.target.value.trim());
   };
 
   const showModal = () => {
@@ -143,39 +152,51 @@ export default function SuperAdminPanel() {
           </Form.Item>
         </Form>
         <Divider />
-        <Label
-          label="Simulation limit"
-          description="The maximum number of simulations that can be run by a tenant."
-          element="div"
-        >
-          <NumberInput
-            value={limits?.simulations ?? 0}
-            onChange={(value) => setLimits({ ...limits, simulations: value })}
-            isDisabled={false}
-          />
-        </Label>
-        <Label
-          label="Max Seats"
-          description="The maximum number of seats allowed for this tenant"
-          element="div"
-        >
-          <NumberInput
-            value={limits?.seats ?? 0}
-            onChange={(value) => setLimits({ ...limits, seats: value })}
-            isDisabled={false}
-          />
-        </Label>
+        <div className={s.field}>
+          <Label
+            label="Simulation limit"
+            description="The maximum number of simulations that can be run by a tenant."
+            element="div"
+          >
+            <NumberInput
+              value={limits?.simulations ?? 0}
+              onChange={(value) => setLimits({ ...limits, simulations: value })}
+              isDisabled={false}
+            />
+          </Label>
+        </div>
+        <div className={s.field}>
+          <Label
+            label="Max Seats"
+            description="The maximum number of seats allowed for this tenant"
+            element="div"
+          >
+            <NumberInput
+              value={limits?.seats ?? 0}
+              onChange={(value) => setLimits({ ...limits, seats: value })}
+              isDisabled={false}
+            />
+          </Label>
+        </div>
 
-        <Label label="CA Search Profile ID">
-          <Input value={complyAdvantageSearchProfileId} onChange={handleChangeSearchProfileID} />
-        </Label>
-        <Button type="PRIMARY" size="SMALL" onClick={handleSave} style={{ marginTop: 8 }}>
-          Save
-        </Button>
+        <div className={s.field}>
+          <Label label="CA Search Profile ID">
+            <Input value={complyAdvantageSearchProfileId} onChange={handleChangeSearchProfileID} />
+          </Label>
+        </div>
+        <div className={s.field}>
+          <Label label="Salesforce Auth Token">
+            <Input value={salesforceAuthToken} onChange={handleChangeSalesforceAuthToken} />
+          </Label>
+        </div>
+
         <Divider />
-        <ButtonGroup>
+        <ButtonGroup gap={8}>
           <Button type="SECONDARY" size="SMALL" onClick={() => setShowCreateTenantModal(true)}>
             Create Tenant
+          </Button>
+          <Button type="PRIMARY" size="SMALL" onClick={handleSave}>
+            Save
           </Button>
         </ButtonGroup>
       </Modal>
