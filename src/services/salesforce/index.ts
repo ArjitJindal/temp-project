@@ -79,17 +79,22 @@ export class SalesforceService {
     }
     const account = accountResponse.records[0]
     const id = account.Id
-    const commentsResponse: Response<FeedComment> = await this.execute(
+    const commentsPromise = this.execute(
       `SELECT Id, CommentBody, CreatedDate, CreatedById from FeedComment WHERE ParentId = '${id}'`
     )
-    const comments = commentsResponse.records
-    const notesResponse: Response<Note> = await this.execute(
+    const notesPromise = this.execute(
       `SELECT Id, Title, Body, CreatedById, CreatedDate from Note WHERE ParentId = '${id}'`
     )
-    const notes = notesResponse.records
-    const emailsResponse: Response<EmailMessage> = await this.execute(
+    const emailsPromise = this.execute(
       `SELECT Id, Subject, FromAddress, ToAddress, TextBody, CreatedDate, CreatedById From EmailMessage WHERE RelatedToId = '${id}'`
     )
+
+    const notesResponse: Response<Note> = await notesPromise
+    const commentsResponse: Response<FeedComment> = await commentsPromise
+    const emailsResponse: Response<EmailMessage> = await emailsPromise
+
+    const notes = notesResponse.records
+    const comments = commentsResponse.records
     const emails = emailsResponse.records
 
     const createdByIds = [
@@ -104,7 +109,6 @@ export class SalesforceService {
     userResponse.records.forEach((u) => {
       userMap.set(u.Id, u.Name)
     })
-
     const response: SalesforceAccountResponse = {
       account: {
         id: account.Id,
