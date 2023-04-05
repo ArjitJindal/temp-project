@@ -123,7 +123,12 @@ export default function SalesForceCard(props: Props) {
                 {_.sortBy(salesforceResponse?.notes, 'createdAt')
                   .reverse()
                   .map((note, i) => (
-                    <CommunicationCard key={`notes-${i}`} body={note.body} name={note.user} />
+                    <CommunicationCard
+                      key={`notes-${i}`}
+                      title={note.title}
+                      body={note.body}
+                      name={note.user}
+                    />
                   ))}
               </Card.Section>
             </Card.Root>
