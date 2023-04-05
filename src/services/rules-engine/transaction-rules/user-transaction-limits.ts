@@ -6,7 +6,10 @@ import {
   isTransactionAmountAboveThreshold,
 } from '../utils/transaction-rule-utils'
 import { RuleHitResult } from '../rule'
-import { UserTimeAggregationAttributes } from '../repositories/aggregation-repository'
+import {
+  AggregationRepository,
+  UserTimeAggregationAttributes,
+} from '../repositories/aggregation-repository'
 import { formatMoney } from '../utils/format-description'
 import {
   TimeWindow,
@@ -211,62 +214,18 @@ export default class UserTransactionLimitsRule extends TransactionRule<UserTrans
   }
 
   getStatsByGranularity = _.memoize(
-    async (
+    (
       granularity: 'day' | 'week' | 'month' | 'year'
     ): Promise<UserTimeAggregationAttributes> => {
-      if (this.aggregationRepository) {
-        return this.aggregationRepository.getUserTransactionStatsTimeGroup(
-          this.senderUser!.userId,
-          this.transaction.timestamp,
-          granularity
-        )
-      }
-      const afterTimestamp = dayjs(this.transaction.timestamp)
-        .startOf(granularity)
-        .valueOf()
-      const transactions =
-        await this.transactionRepository.getUserSendingTransactions(
-          this.senderUser!.userId,
-          { afterTimestamp, beforeTimestamp: this.transaction.timestamp },
-          { transactionStates: ['SUCCESSFUL'] },
-          []
-        )
-      const result: UserTimeAggregationAttributes = {
-        transactionsAmount: new Map(),
-        transactionsCount: new Map(),
-      }
-      const targetCurrency =
-        transactions.find((t) => t.originAmountDetails)?.originAmountDetails
-          ?.transactionCurrency || 'USD'
-      const allCount = transactions.length
-      const allAmount = await getTransactionsTotalAmount(
-        transactions.map((t) => t.originAmountDetails),
-        targetCurrency
+      const aggregationRepository = new AggregationRepository(
+        this.tenantId,
+        this.dynamoDb
       )
-      result.transactionsAmount.set('ALL', allAmount)
-      result.transactionsCount.set('ALL', allCount)
-      const groups = _.groupBy(
-        transactions,
-        (transaction) => transaction.originPaymentDetails?.method
+      return aggregationRepository.getUserTransactionStatsTimeGroup(
+        this.senderUser!.userId,
+        this.transaction.timestamp,
+        granularity
       )
-      for (const paymentMethod in groups) {
-        if (paymentMethod) {
-          const totalCount = groups[paymentMethod].length
-          const totalAmount = await getTransactionsTotalAmount(
-            transactions.map((t) => t.originAmountDetails),
-            targetCurrency
-          )
-          result.transactionsAmount.set(
-            paymentMethod as PaymentMethod,
-            totalAmount
-          )
-          result.transactionsCount.set(
-            paymentMethod as PaymentMethod,
-            totalCount
-          )
-        }
-      }
-      return result
     }
   )
 

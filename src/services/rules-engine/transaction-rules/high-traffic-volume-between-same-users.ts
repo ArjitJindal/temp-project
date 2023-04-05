@@ -275,9 +275,8 @@ export default class HighTrafficVolumeBetweenSameUsers extends TransactionAggreg
         filters: this.filters,
       },
       { ruleInstance: { ...this.ruleInstance, id: `_${this.ruleInstance}` } },
-      this.mode,
       this.dynamoDb,
-      this.mongoDb
+      this.transactionRepository
     )
   }
 

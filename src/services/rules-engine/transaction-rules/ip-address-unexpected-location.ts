@@ -1,10 +1,10 @@
 import { JSONSchemaType } from 'ajv'
 import _ from 'lodash'
 import { isConsumerUser } from '../utils/user-rule-utils'
+import { AggregationRepository } from '../repositories/aggregation-repository'
 import { checkTransactionAmountBetweenThreshold } from '../utils/transaction-rule-utils'
 import { TRANSACTION_AMOUNT_THRESHOLDS_OPTIONAL_SCHEMA } from '../utils/rule-parameter-schemas'
 import { RuleHitResult } from '../rule'
-import { MongoDbTransactionRepository } from '../repositories/mongodb-transaction-repository'
 import { TransactionRule } from './rule'
 import { User } from '@/@types/openapi-public/User'
 
@@ -44,13 +44,18 @@ export default class IpAddressUnexpectedLocationRule extends TransactionRule<IpA
     const { transactionAmountThreshold } = this.parameters
     const ipCountry = ipInfo.country
     const consumerUser = this.senderUser as User
-
-    const pastTransactionCountries =
-      await this.getUserPastTransactionCountries()
+    const aggregationRepository = new AggregationRepository(
+      this.tenantId,
+      this.dynamoDb
+    )
     const expectedCountries = [
       consumerUser.userDetails!.countryOfResidence,
       consumerUser.userDetails!.countryOfNationality,
-      ...pastTransactionCountries,
+      ...(
+        await aggregationRepository.getUserTransactionCountries(
+          consumerUser.userId
+        )
+      ).sendingFromCountries,
     ].filter(Boolean)
 
     const thresholdHit = await checkTransactionAmountBetweenThreshold(
@@ -76,29 +81,5 @@ export default class IpAddressUnexpectedLocationRule extends TransactionRule<IpA
       })
     }
     return hitResult
-  }
-
-  private async getUserPastTransactionCountries(): Promise<Set<string>> {
-    const consumerUser = this.senderUser as User
-    if (this.aggregationRepository) {
-      return (
-        await this.aggregationRepository.getUserTransactionCountries(
-          consumerUser.userId
-        )
-      ).sendingFromCountries
-    }
-    const transactionRepository = this
-      .transactionRepository as MongoDbTransactionRepository
-    const countries = await transactionRepository.getUniques(
-      {
-        field: 'COUNTRY',
-        direction: 'origin',
-      },
-      [
-        { originUserId: consumerUser.userId },
-        { transactionState: 'SUCCESSFUL' },
-      ]
-    )
-    return new Set(countries)
   }
 }

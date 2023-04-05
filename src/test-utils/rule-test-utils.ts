@@ -240,10 +240,10 @@ export interface UserRuleTestCase {
 
 // For making sure a rule works the same w/ or w/o RULES_ENGINE_RULE_BASED_AGGREGATION feature flag
 export function ruleVariantsTest(
-  ruleAggregationImplemented: boolean,
+  aggregationImplemented: boolean,
   jestCallback: () => void
 ) {
-  if (ruleAggregationImplemented) {
+  if (aggregationImplemented) {
     describe('database:dynamodb; rule-aggregation:on', () => {
       jestCallback()
     })

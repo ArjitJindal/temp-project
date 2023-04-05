@@ -386,14 +386,10 @@ export class MongoDbTransactionRepository
     return collection.findOne<InternalTransaction>({ transactionId })
   }
 
-  public async getUniques(
-    params: {
-      field: TransactionsUniquesField
-      direction: 'origin' | 'destination'
-      filter?: string
-    },
-    additionalFilters: Filter<InternalTransaction>[] = []
-  ): Promise<string[]> {
+  public async getUniques(params: {
+    field: TransactionsUniquesField
+    filter?: string
+  }): Promise<string[]> {
     const db = this.mongoDb.db()
     const name = TRANSACTIONS_COLLECTION(this.tenantId)
     const collection = db.collection<InternalTransaction>(name)
@@ -401,23 +397,15 @@ export class MongoDbTransactionRepository
     let fieldPath: string
     let unwindPath = ''
 
-    const filterConditions = additionalFilters
-    const paymentDetailsPath =
-      params.direction === 'origin'
-        ? 'originPaymentDetails'
-        : 'destinationPaymentDetails'
-    const amountDetailsPath =
-      params.direction === 'origin'
-        ? 'originAmountDetails'
-        : 'destinationAmountDetails'
+    const filterConditions = []
     switch (params.field) {
       case 'TRANSACTION_STATE':
         fieldPath = 'transactionState'
         break
       case 'PAYMENT_CHANNEL':
-        fieldPath = `${paymentDetailsPath}.paymentChannel`
+        fieldPath = 'originPaymentDetails.paymentChannel'
         filterConditions.push({
-          [`${paymentDetailsPath}.method`]: 'CARD',
+          'originPaymentDetails.method': 'CARD',
         })
         break
       case 'TAGS_KEY':
@@ -425,62 +413,55 @@ export class MongoDbTransactionRepository
         unwindPath = 'tags'
         break
       case 'IBAN_NUMBER':
-        fieldPath = `${paymentDetailsPath}.IBAN`
+        fieldPath = 'originPaymentDetails.IBAN'
         filterConditions.push({
-          [`${paymentDetailsPath}.method`]: 'IBAN',
+          'originPaymentDetails.method': 'IBAN',
         })
         break
       case 'CARD_FINGERPRINT_NUMBER':
-        fieldPath = `${paymentDetailsPath}.cardFingerprint`
+        fieldPath = 'originPaymentDetails.cardFingerprint'
         filterConditions.push({
-          [`${paymentDetailsPath}.method`]: 'CARD',
+          'originPaymentDetails.method': 'CARD',
         })
         break
       case 'BANK_ACCOUNT_NUMBER':
-        fieldPath = `${paymentDetailsPath}.accountNumber`
+        fieldPath = 'originPaymentDetails.accountNumber'
         filterConditions.push({
-          [`${paymentDetailsPath}.method`]: 'GENERIC_BANK_ACCOUNT',
+          'originPaymentDetails.method': 'GENERIC_BANK_ACCOUNT',
         })
         break
       case 'ACH_ACCOUNT_NUMBER':
-        fieldPath = `${paymentDetailsPath}.accountNumber`
+        fieldPath = 'originPaymentDetails.accountNumber'
         filterConditions.push({
-          [`${paymentDetailsPath}.method`]: 'ACH',
+          'originPaymentDetails.method': 'ACH',
         })
         break
       case 'SWIFT_ACCOUNT_NUMBER':
-        fieldPath = `${paymentDetailsPath}.accountNumber`
+        fieldPath = 'originPaymentDetails.accountNumber'
         filterConditions.push({
-          [`${paymentDetailsPath}.method`]: 'SWIFT',
+          'originPaymentDetails.method': 'SWIFT',
         })
         break
       case 'BIC':
-        fieldPath = `${paymentDetailsPath}.BIC`
+        fieldPath = 'originPaymentDetails.BIC'
         filterConditions.push({
-          [`${paymentDetailsPath}.method`]: 'IBAN',
+          'originPaymentDetails.method': 'IBAN',
         })
         break
       case 'BANK_SWIFT_CODE':
-        fieldPath = `${paymentDetailsPath}.swiftCode`
+        fieldPath = 'originPaymentDetails.swiftCode'
         filterConditions.push({
-          [`${paymentDetailsPath}.method`]: 'SWIFT',
+          'originPaymentDetails.method': 'SWIFT',
         })
         break
       case 'UPI_IDENTIFYING_NUMBER':
-        fieldPath = `${paymentDetailsPath}.upiID`
+        fieldPath = 'originPaymentDetails.upiID'
         filterConditions.push({
-          [`${paymentDetailsPath}.method`]: 'UPI',
+          'originPaymentDetails.method': 'UPI',
         })
         break
       case 'IP_ADDRESS':
         fieldPath = 'deviceData.ipAddress'
-        break
-      case 'CURRENCY':
-        fieldPath = `${paymentDetailsPath}.upiID`
-        fieldPath = `${amountDetailsPath}.transactionCurrency`
-        break
-      case 'COUNTRY':
-        fieldPath = `${amountDetailsPath}.country`
         break
       default:
         throw neverThrow(params.field, `Unknown field: ${params.field}`)

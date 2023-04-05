@@ -1,4 +1,5 @@
 import _ from 'lodash'
+import { AggregationRepository } from '../repositories/aggregation-repository'
 import { getReceiverKeyId, getSenderKeyId } from '../utils'
 import { TimeWindow } from '../utils/rule-parameter-schemas'
 import { TransactionRule } from './rule'
@@ -42,11 +43,16 @@ export abstract class TransactionAggregationRule<
     direction: 'origin' | 'destination',
     isTransactionFiltered: boolean
   ) {
-    if (!this.shouldUseAggregation() || !this.aggregationRepository) {
+    if (!this.shouldUseAggregation()) {
       return
     }
+
+    const aggregationRepository = new AggregationRepository(
+      this.tenantId,
+      this.dynamoDb
+    )
     const shouldSkipUpdateAggregation =
-      await this.aggregationRepository.isTransactionApplied(
+      await aggregationRepository.isTransactionApplied(
         this.ruleInstance.id!,
         direction,
         this.getAggregationVersion(),
@@ -83,13 +89,13 @@ export abstract class TransactionAggregationRule<
     }
 
     const ttl = this.getUpdatedTTLAttribute()
-    await this.aggregationRepository.refreshUserRuleTimeAggregations(
+    await aggregationRepository.refreshUserRuleTimeAggregations(
       userKeyId,
       this.ruleInstance.id as string,
       { [targetHour]: { ...updatedAggregation, ttl } },
       this.getAggregationVersion()
     )
-    await this.aggregationRepository.markTransactionApplied(
+    await aggregationRepository.markTransactionApplied(
       this.ruleInstance.id!,
       direction,
       this.getAggregationVersion(),
@@ -105,17 +111,21 @@ export abstract class TransactionAggregationRule<
       [key1: string]: A
     }
   ) {
-    if (!this.shouldUseAggregation() || !this.aggregationRepository) {
+    if (!this.shouldUseAggregation()) {
       return
     }
 
     logger.info('Rebuilding aggregations...')
+    const aggregationRepository = new AggregationRepository(
+      this.tenantId,
+      this.dynamoDb
+    )
     const userKeyId = this.getUserKeyId(direction)
     if (!userKeyId) {
       return
     }
     const ttl = this.getUpdatedTTLAttribute()
-    await this.aggregationRepository.refreshUserRuleTimeAggregations(
+    await aggregationRepository.refreshUserRuleTimeAggregations(
       userKeyId,
       this.ruleInstance.id as string,
       _.mapValues(data, (v) => ({ ...v, ttl })),
@@ -129,15 +139,19 @@ export abstract class TransactionAggregationRule<
     afterTimestamp: number,
     beforeTimestamp: number
   ) {
-    if (!this.shouldUseAggregation() || !this.aggregationRepository) {
+    if (!this.shouldUseAggregation()) {
       return
     }
 
+    const aggregationRepository = new AggregationRepository(
+      this.tenantId,
+      this.dynamoDb
+    )
     const userKeyId = this.getUserKeyId(direction)
     if (!userKeyId) {
       return
     }
-    return this.aggregationRepository.getUserRuleTimeAggregations<A>(
+    return aggregationRepository.getUserRuleTimeAggregations<A>(
       userKeyId,
       this.ruleInstance.id as string,
       afterTimestamp,
@@ -162,10 +176,7 @@ export abstract class TransactionAggregationRule<
   }
 
   private shouldUseAggregation(): boolean {
-    if (
-      process.env.__INTERNAL_DISABLE_RULE_AGGREGATION__ ||
-      !this.aggregationRepository
-    ) {
+    if (process.env.__INTERNAL_DISABLE_RULE_AGGREGATION__) {
       return false
     }
     const { units, granularity } = this.getMaxTimeWindow()
