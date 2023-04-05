@@ -85,6 +85,7 @@ export interface Props<T extends object | unknown, Params extends object, ValueT
   disableExpandedRowPadding?: boolean;
   disableInternalPadding?: boolean;
   disableScrolling?: boolean;
+  disableHorizontalScrolling?: boolean;
   actionRef?: React.Ref<TableActionType>;
   loading?: boolean;
   data: TableData<T>;
@@ -120,6 +121,7 @@ export default function Table<
     disableExpandedRowPadding = false,
     disableInternalPadding = false,
     disableScrolling = false,
+    disableHorizontalScrolling = false,
     enableLegacyFilters = false,
     className,
     isEvenRow,
@@ -414,6 +416,7 @@ export default function Table<
         }
         className={cn(style.table, className, {
           [style.disableInternalPadding]: disableInternalPadding,
+          [style.disableHorizontalScrolling]: disableHorizontalScrolling,
         })}
         locale={TABLE_LOCALE}
         rowClassName={(_, index) => {

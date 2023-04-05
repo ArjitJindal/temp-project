@@ -416,6 +416,7 @@ export default function TransactionsTable(props: Props) {
       autoAdjustHeight={autoAdjustHeight}
       headerSubtitle={headerSubtitle}
       adjustPagination={adjustPagination}
+      disableHorizontalScrolling
     />
   );
 }

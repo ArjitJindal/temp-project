@@ -18,6 +18,7 @@
       }
     }
   }
+
   :global {
     // declare detached ruleset
     @row-rules: {
@@ -171,6 +172,14 @@
     :global {
       > .ant-pro-card > .ant-pro-card-body {
         padding: 0 !important;
+      }
+    }
+  }
+
+  .disableHorizontalScrolling {
+    :global {
+      .ant-table-content {
+        overflow-x: hidden !important;
       }
     }
   }
