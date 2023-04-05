@@ -29,7 +29,7 @@ import { getTimeLabels } from '@/lambdas/console-api-dashboard/utils'
 import { TransactionsStatsByTimeResponse } from '@/@types/openapi-internal/TransactionsStatsByTimeResponse'
 import { TransactionsUniquesField } from '@/@types/openapi-internal/TransactionsUniquesField'
 import { neverThrow } from '@/utils/lang'
-import { OptionalPagination } from '@/utils/pagination'
+import { OptionalPagination, COUNT_QUERY_LIMIT } from '@/utils/pagination'
 import { PaymentDetails } from '@/@types/tranasction/payment-type'
 import { getPaymentDetailsIdentifiers } from '@/core/dynamodb/dynamodb-keys'
 
@@ -346,7 +346,9 @@ export class MongoDbTransactionRepository
       TRANSACTIONS_COLLECTION(this.tenantId)
     )
     const query = this.getTransactionsMongoQuery(params)
-    return collection.countDocuments(query)
+    return collection.countDocuments(query, {
+      limit: COUNT_QUERY_LIMIT,
+    })
   }
 
   public async getTransactions(
