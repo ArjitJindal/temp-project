@@ -175,10 +175,18 @@ export class UserManagementService {
         `User ${userEvent.userId} not found. Please create the user ${userEvent.userId}`
       )
     }
-    const updatedBusinessUser: Business = _.merge(
+
+    const updatedBusinessUser: Business = _.mergeWith(
       user,
-      userEvent.updatedBusinessUserAttributes || {}
+      userEvent.updatedBusinessUserAttributes || {},
+      function (obj, src) {
+        if (!_.isNil(src)) {
+          return src
+        }
+        return obj
+      }
     )
+
     await this.userEventRepository.saveUserEvent(userEvent, 'BUSINESS')
     await this.userRepository.saveBusinessUser(updatedBusinessUser)
     return updatedBusinessUser
