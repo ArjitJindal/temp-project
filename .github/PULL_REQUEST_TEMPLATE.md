@@ -6,9 +6,15 @@
 
 - Describe your changes in a few succinct bullet points
 
+### What's the scope of this change
+- [ ] Are Public APIs Affected
+- [ ] Is Rules Engine Affected
+- [ ] Are Adequate Permissions Verified
 ### Testing
 
-- How were the changes tested
+- [ ] Locally Tested
+- [ ] QA Deployed (mention reason if not)
+- Other ways on how the changes were tested
 
 ### Screenshots
 
