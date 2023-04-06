@@ -9,34 +9,41 @@ const config = getConfig()
 export async function migrateAllTenants(
   migrationCallback: (tenant: Tenant, auth0Domain: string) => Promise<void>
 ) {
-  const tenantInfos =
-    config.stage === 'local'
-      ? [
-          {
-            tenant: {
-              id: 'flagright',
-              name: 'Flagright',
-            },
-            auth0Domain: 'dev-flagright.eu.auth0.com',
-          } as TenantInfo,
-        ]
-      : await TenantService.getAllTenants(config.stage, config.region)
+  try {
+    const tenantInfos =
+      config.stage === 'local'
+        ? [
+            {
+              tenant: {
+                id: 'flagright',
+                name: 'Flagright',
+              },
+              auth0Domain: 'dev-flagright.eu.auth0.com',
+            } as TenantInfo,
+          ]
+        : await TenantService.getAllTenants(config.stage, config.region)
 
-  if (tenantInfos.length === 0) {
-    throw new Error('No tenants found for running the migration! Fix it ASAP!')
+    if (tenantInfos.length === 0) {
+      throw new Error(
+        'No tenants found for running the migration! Fix it ASAP!'
+      )
+    }
+
+    for (const tenantInfo of tenantInfos) {
+      console.info(
+        `Migrating tenant ${tenantInfo.tenant.name} (ID: ${tenantInfo.tenant.id})`
+      )
+      await migrationCallback(tenantInfo.tenant, tenantInfo.auth0Domain)
+      console.info(
+        `Migrated tenant ${tenantInfo.tenant.name} (ID: ${tenantInfo.tenant.id})`
+      )
+    }
+
+    console.info('Migration completed.')
+  } catch (e) {
+    console.error(e)
+    throw e
   }
-
-  for (const tenantInfo of tenantInfos) {
-    console.info(
-      `Migrating tenant ${tenantInfo.tenant.name} (ID: ${tenantInfo.tenant.id})`
-    )
-    await migrationCallback(tenantInfo.tenant, tenantInfo.auth0Domain)
-    console.info(
-      `Migrated tenant ${tenantInfo.tenant.name} (ID: ${tenantInfo.tenant.id})`
-    )
-  }
-
-  console.info('Migration completed.')
 }
 
 export async function removeFeatureFlags(featuresToRemove: string[]) {
