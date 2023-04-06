@@ -6,7 +6,7 @@ import dayjs, { duration } from '@/utils/dayjs'
 import { logger } from '@/core/logger'
 
 // NOTE: Increment this version to invalidate the existing aggregation data of all the rules
-const AGGREGATION_VERSION = '1'
+const AGGREGATION_VERSION = '2'
 
 const AGGREGATION_TIME_FORMAT = 'YYYYMMDDHH'
 
