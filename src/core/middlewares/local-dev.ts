@@ -27,9 +27,9 @@ export const localDev =
     const authorizer = event.requestContext.authorizer || {}
     if (process.env.EXEC_SOURCE === 'cli') {
       event.requestContext.authorizer = {
-        principalId: 'unset',
-        tenantName: 'unset',
-        userId: 'unset',
+        principalId: 'flagright',
+        tenantName: 'flagright',
+        userId: 'unknown',
         role: 'user',
         auth0Domain: 'dev-flagright.eu.auth0.com',
         ...authorizer,
@@ -74,9 +74,9 @@ export const localDev =
       } else {
         // For requests of the public REST APIs
         const jwtAuthorizerResult: JWTAuthorizerResult = {
-          principalId: event.headers?.['tenant-id'] || 'unset',
-          tenantName: event.headers?.['tenant-name'] || 'unset',
-          userId: event.headers?.['user-id'] || 'unset',
+          principalId: event.headers?.['tenant-id'] || 'flagright',
+          tenantName: event.headers?.['tenant-name'] || 'flagright',
+          userId: event.headers?.['user-id'] || 'unknown',
           ...authorizer,
         }
         event.requestContext.authorizer = jwtAuthorizerResult
