@@ -42,8 +42,6 @@ jobs:
           cache-dependency-path: "phytoplankton-console/yarn.lock"
       - run: npm ci
         working-directory: "tarpon"
-      - run: npm ci
-        working-directory: "phytoplankton-console"
       - name: Destroy
         run: |
           echo "Creating default AWS profile"
