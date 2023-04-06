@@ -18,7 +18,7 @@
     "deploy:dev": "ENV=dev cdk deploy dev-phytoplankton",
     "deploy:dev:clean": "npm run clear && yarn && npm run build:dev && npm run synth:dev && npm run deploy:dev -- --profile=AWSAdministratorAccess-911899431626",
     "deploy:dev:user": "ENV=dev:user cdk deploy dev-phytoplankton-$QA_SUBDOMAIN --require-approval never",
-    "deploy:qa": "export QA_SUBDOMAIN=${QA_SUBDOMAIN:-qa$(git rev-parse --abbrev-ref HEAD | shasum | head -c5)} && npm run clear && yarn && ENV=local npm run build:dev && npm run synth:dev:user && npm run deploy:dev:user",
+    "deploy:qa": "export QA=true; export QA_SUBDOMAIN=${QA_SUBDOMAIN:-qa$(git rev-parse --abbrev-ref HEAD | shasum | head -c5)} && npm run clear && yarn && ENV=local npm run build:dev && npm run synth:dev:user && npm run deploy:dev:user",
     "destroy:qa": "npm run clear && yarn && ENV=dev npm run build:dev && ENV=dev:user cdk destroy dev-phytoplankton-$QA_SUBDOMAIN --require-approval never -f",
     "deploy:sandbox": "ENV=sandbox cdk deploy sandbox-phytoplankton",
     "deploy:sandbox:clean": "npm run clear && yarn && npm run aws-sso-login --profile=AWSAdministratorAccess-293986822825 && npm run build:sandbox && npm run synth:sandbox && npm run deploy:sandbox -- --profile=AWSAdministratorAccess-293986822825",
