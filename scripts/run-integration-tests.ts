@@ -44,7 +44,7 @@ async function main() {
   const domain: string =
     process.env.DOMAIN ?? config.application.AUTH0_AUDIENCE.slice(0, -1)
   const userId = uuidv4()
-
+  const businessUserId = uuidv4()
   newman.run(
     {
       collection: new Collection(PostmanCollection),
@@ -58,6 +58,7 @@ async function main() {
           value: domain,
         },
         { key: 'userId', value: userId },
+        { key: 'businessUserId', value: businessUserId },
         {
           key: 'incorrectDomain',
           value:

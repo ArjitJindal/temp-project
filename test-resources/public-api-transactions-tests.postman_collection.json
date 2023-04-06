@@ -3,7 +3,7 @@
     "_postman_id": "503b80a7-dd73-4ed0-8aa6-5eaaa06f9ea5",
     "name": "Public API Tests Collection",
     "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
-    "updatedAt": "2023-04-06T16:23:32.000Z",
+    "updatedAt": "2023-04-06T16:42:38.000Z",
     "uid": "24163049-503b80a7-dd73-4ed0-8aa6-5eaaa06f9ea5"
   },
   "item": [
@@ -1494,6 +1494,841 @@
       ],
       "id": "bbd47037-d9fb-4727-be02-43a93facffcf",
       "uid": "24163049-bbd47037-d9fb-4727-be02-43a93facffcf"
+    },
+    {
+      "name": "Business Users",
+      "item": [
+        {
+          "name": "Create Business User 200",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "id": "abe7e581-24b3-4170-ac7c-fa8312693637",
+                "exec": [
+                  "pm.test(\"Status code is 200\", function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.test(\"Match Business Name\", function () {",
+                  "    var jsonData = pm.response.json();",
+                  "    const data = JSON.parse(pm.request.body.raw)",
+                  "    const businessUserId = data.userId",
+                  "    pm.expect(jsonData.userId).to.eql(businessUserId)",
+                  "});",
+                  "",
+                  "",
+                  "pm.test(\"Body matches string\", function () {",
+                  "    pm.expect(pm.response.text()).to.include(\"userId\");",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "id": "ceeaafd1-98c3-4112-928d-9d7b949b3815",
+          "protocolProfileBehavior": {
+            "disableBodyPruning": true
+          },
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "tenant-id",
+                "value": "flagright"
+              },
+              {
+                "key": "x-api-key",
+                "value": "{{apiKey}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"userId\": \"{{businessUserId}}\",\n  \"createdTimestamp\": {{timestamp}},\n  \"legalEntity\": {\n    \"companyGeneralDetails\": {\n      \"legalName\": \"Jameson Breweries\",\n      \"businessIndustry\": [\n        \"Alcohol\", \"Scotch\"\n      ]\n    },\n    \"companyFinancialDetails\": {\n      \"expectedTransactionAmountPerMonth\": {\n        \"amountValue\": 5160000,\n        \"amountCurrency\": \"GBP\"\n      },\n      \"expectedTurnoverPerMonth\": {\n        \"amountValue\": 30000090,\n        \"amountCurrency\": \"GBP\"\n      },\n      \"tags\": [\n        {\n          \"key\": \"averageNumberOfPaymentsPerMonth\",\n          \"value\": \"90\"\n        }\n      ]\n    },\n    \"companyRegistrationDetails\": {\n      \"registrationIdentifier\": \"IN22313\",\n      \"registrationCountry\": \"DK\",\n      \"dateOfRegistration\": \"2022-01-01\",\n      \"taxIdentifier\": \"BDH3N221E\",\n      \"legalEntityType\": \"Pvt Ltd\"\n    },\n    \"contactDetails\": {\n      \"websites\": [\n        \"jamieson.com\"\n      ]\n    }\n  },\n  \"allowedPaymentMethods\": [\n    \"GENERIC_BANK_ACCOUNT\", \"WALLET\", \"CARD\", \"ACH\"\n  ]\n}"
+            },
+            "url": {
+              "raw": "{{domain}}/business/users",
+              "host": ["{{domain}}"],
+              "path": ["business", "users"]
+            }
+          },
+          "response": [],
+          "uid": "24163049-ceeaafd1-98c3-4112-928d-9d7b949b3815"
+        },
+        {
+          "name": "Duplicate Business",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "id": "abe7e581-24b3-4170-ac7c-fa8312693637",
+                "exec": [
+                  "pm.test(\"Status code is 200\", function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.test(\"Check UserId\", function () {",
+                  "    var jsonData = pm.response.json();",
+                  "    var inputJson = JSON.parse(pm.request.body.raw)",
+                  "    const userId = inputJson.userId",
+                  "    ",
+                  "    pm.expect(jsonData.userId).to.eql(userId);",
+                  "});",
+                  "",
+                  "pm.test(\"Check Message in Duplicate UserId\", function () {",
+                  "    var jsonData = pm.response.json();",
+                  "    pm.expect(jsonData.message).to.eql(\"The provided userId already exists. The user attribute updates are not saved. If you want to update the attributes of this user, please use user events instead.\");",
+                  "});",
+                  "",
+                  "",
+                  "",
+                  "pm.test(\"Body matches string\", function () {",
+                  "    pm.expect(pm.response.text()).to.include(\"userId\");",
+                  "});",
+                  "",
+                  "pm.test(\"Body matches string\", function () {",
+                  "    pm.expect(pm.response.text()).to.include(\"message\");",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "id": "56339335-3260-49fb-8ce3-888af4520f66",
+          "protocolProfileBehavior": {
+            "disableBodyPruning": true
+          },
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "tenant-id",
+                "value": "flagright"
+              },
+              {
+                "key": "x-api-key",
+                "value": "{{apiKey}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"userId\": \"{{businessUserId}}\",\n  \"createdTimestamp\": {{timestamp}},\n  \"legalEntity\": {\n    \"companyGeneralDetails\": {\n      \"legalName\": \"Jameson Breweries\",\n      \"businessIndustry\": [\n        \"Alcohol\", \"Scotch\"\n      ]\n    },\n    \"companyFinancialDetails\": {\n      \"expectedTransactionAmountPerMonth\": {\n        \"amountValue\": 5160000,\n        \"amountCurrency\": \"GBP\"\n      },\n      \"expectedTurnoverPerMonth\": {\n        \"amountValue\": 30000090,\n        \"amountCurrency\": \"GBP\"\n      },\n      \"tags\": [\n        {\n          \"key\": \"averageNumberOfPaymentsPerMonth\",\n          \"value\": \"90\"\n        }\n      ]\n    },\n    \"companyRegistrationDetails\": {\n      \"registrationIdentifier\": \"IN22313\",\n      \"registrationCountry\": \"DK\",\n      \"dateOfRegistration\": \"2022-01-01\",\n      \"taxIdentifier\": \"BDH3N221E\",\n      \"legalEntityType\": \"Pvt Ltd\"\n    },\n    \"contactDetails\": {\n      \"websites\": [\n        \"jamieson.com\"\n      ]\n    }\n  },\n  \"allowedPaymentMethods\": [\n    \"GENERIC_BANK_ACCOUNT\", \"WALLET\", \"CARD\", \"ACH\"\n  ]\n}"
+            },
+            "url": {
+              "raw": "{{domain}}/business/users",
+              "host": ["{{domain}}"],
+              "path": ["business", "users"]
+            }
+          },
+          "response": [],
+          "uid": "24163049-56339335-3260-49fb-8ce3-888af4520f66"
+        },
+        {
+          "name": "Linked Entity Does not Exists",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "id": "abe7e581-24b3-4170-ac7c-fa8312693637",
+                "exec": [
+                  "pm.test(\"Status code is 400\", function () {",
+                  "    pm.response.to.have.status(400);",
+                  "});",
+                  "",
+                  "pm.test(\"Check Error\", function () {",
+                  "    var jsonData = pm.response.json();",
+                  "    ",
+                  "    pm.expect(jsonData.error).to.eql(\"BadRequestError\");",
+                  "});",
+                  "",
+                  "pm.test(\"Check Message in Duplicate UserId\", function () {",
+                  "    var jsonData = pm.response.json();",
+                  "    pm.expect(jsonData.message).to.eql(\"Parent user ID : B-21 passed in linkedEntities does not exist. Please create the entitiy before linking it\");",
+                  "});",
+                  "",
+                  "",
+                  "",
+                  "pm.test(\"Body matches string\", function () {",
+                  "    pm.expect(pm.response.text()).to.include(\"error\");",
+                  "});",
+                  "",
+                  "pm.test(\"Body matches string\", function () {",
+                  "    pm.expect(pm.response.text()).to.include(\"message\");",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "id": "8227015d-b703-462f-a46c-76f16da0b8e1",
+          "protocolProfileBehavior": {
+            "disableBodyPruning": true
+          },
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "tenant-id",
+                "value": "flagright"
+              },
+              {
+                "key": "x-api-key",
+                "value": "{{apiKey}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"userId\": \"{{businessUserId}}-12qq\",\n  \"createdTimestamp\": {{timestamp}},\n  \"legalEntity\": {\n    \"companyGeneralDetails\": {\n      \"legalName\": \"Jameson Breweries\",\n      \"businessIndustry\": [\n        \"Alcohol\", \"Scotch\"\n      ]\n    },\n    \"companyFinancialDetails\": {\n      \"expectedTransactionAmountPerMonth\": {\n        \"amountValue\": 5160000,\n        \"amountCurrency\": \"GBP\"\n      },\n      \"expectedTurnoverPerMonth\": {\n        \"amountValue\": 30000090,\n        \"amountCurrency\": \"GBP\"\n      },\n      \"tags\": [\n        {\n          \"key\": \"averageNumberOfPaymentsPerMonth\",\n          \"value\": \"90\"\n        }\n      ]\n    },\n    \"companyRegistrationDetails\": {\n      \"registrationIdentifier\": \"IN22313\",\n      \"registrationCountry\": \"DK\",\n      \"dateOfRegistration\": \"2022-01-01\",\n      \"taxIdentifier\": \"BDH3N221E\",\n      \"legalEntityType\": \"Pvt Ltd\"\n    },\n    \"contactDetails\": {\n      \"websites\": [\n        \"jamieson.com\"\n      ]\n    }\n  },\n  \"linkedEntities\": {\n      \"parentUserId\": \"B-21\",\n      \"childUserIds\": [\"B-1\", \"B-22\", \"B-20\"]\n  },\n  \"allowedPaymentMethods\": [\n    \"GENERIC_BANK_ACCOUNT\", \"WALLET\", \"CARD\", \"ACH\"\n  ]\n}"
+            },
+            "url": {
+              "raw": "{{domain}}/business/users",
+              "host": ["{{domain}}"],
+              "path": ["business", "users"]
+            }
+          },
+          "response": [],
+          "uid": "24163049-8227015d-b703-462f-a46c-76f16da0b8e1"
+        },
+        {
+          "name": "Legal Name Not Provided",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "id": "abe7e581-24b3-4170-ac7c-fa8312693637",
+                "exec": [
+                  "pm.test(\"Status code is 400\", function () {",
+                  "    pm.response.to.have.status(400);",
+                  "});",
+                  "",
+                  "pm.test(\"Body matches string message\", function () {",
+                  "    pm.expect(pm.response.text()).to.include(\"message\");",
+                  "});",
+                  "",
+                  "pm.test(\"Body matches string validationerrors\", function () {",
+                  "    pm.expect(pm.response.text()).to.include(\"validationErrors\");",
+                  "});",
+                  "",
+                  "",
+                  "pm.test(\"Message Checker\", function () {",
+                  "    var jsonData = pm.response.json();",
+                  "    pm.expect(jsonData.message).to.eql(\"Invalid request body\");",
+                  "});",
+                  "",
+                  "pm.test(\"ValidationError Message Checker\", function () {",
+                  "    var jsonData = pm.response.json();",
+                  "    pm.expect(jsonData.validationErrors).to.eql(\"[object has missing required properties ([\\\"legalName\\\"])]\");",
+                  "});",
+                  "",
+                  "",
+                  "",
+                  ""
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "id": "b2e81c21-4094-4c39-8ed6-a1419b68cb4e",
+          "protocolProfileBehavior": {
+            "disableBodyPruning": true
+          },
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "tenant-id",
+                "value": "flagright"
+              },
+              {
+                "key": "x-api-key",
+                "value": "{{apiKey}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"userId\": \"{{businessUserId}}\",\n  \"createdTimestamp\": {{timestamp}},\n  \"legalEntity\": {\n    \"companyGeneralDetails\": {\n      \"businessIndustry\": [\n        \"Alcohol\", \"Scotch\"\n      ]\n    },\n    \"companyFinancialDetails\": {\n      \"expectedTransactionAmountPerMonth\": {\n        \"amountValue\": 5160000,\n        \"amountCurrency\": \"GBP\"\n      },\n      \"expectedTurnoverPerMonth\": {\n        \"amountValue\": 30000090,\n        \"amountCurrency\": \"GBP\"\n      },\n      \"tags\": [\n        {\n          \"key\": \"averageNumberOfPaymentsPerMonth\",\n          \"value\": \"90\"\n        }\n      ]\n    },\n    \"companyRegistrationDetails\": {\n      \"registrationIdentifier\": \"IN22313\",\n      \"registrationCountry\": \"DK\",\n      \"dateOfRegistration\": \"2022-01-01\",\n      \"taxIdentifier\": \"BDH3N221E\",\n      \"legalEntityType\": \"Pvt Ltd\"\n    },\n    \"contactDetails\": {\n      \"websites\": [\n        \"jamieson.com\"\n      ]\n    }\n  },\n  \"allowedPaymentMethods\": [\n    \"GENERIC_BANK_ACCOUNT\", \"WALLET\", \"CARD\", \"ACH\"\n  ]\n}"
+            },
+            "url": {
+              "raw": "{{domain}}/business/users",
+              "host": ["{{domain}}"],
+              "path": ["business", "users"]
+            }
+          },
+          "response": [],
+          "uid": "24163049-b2e81c21-4094-4c39-8ed6-a1419b68cb4e"
+        },
+        {
+          "name": "Incorrect Type of Legal Name",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "id": "abe7e581-24b3-4170-ac7c-fa8312693637",
+                "exec": [
+                  "pm.test(\"Status code is 400\", function () {",
+                  "    pm.response.to.have.status(400);",
+                  "});",
+                  "",
+                  "pm.test(\"Body matches string message\", function () {",
+                  "    pm.expect(pm.response.text()).to.include(\"message\");",
+                  "});",
+                  "",
+                  "pm.test(\"Body matches string validationerrors\", function () {",
+                  "    pm.expect(pm.response.text()).to.include(\"validationErrors\");",
+                  "});",
+                  "",
+                  "",
+                  "pm.test(\"Message Checker\", function () {",
+                  "    var jsonData = pm.response.json();",
+                  "    pm.expect(jsonData.message).to.eql(\"Invalid request body\");",
+                  "});",
+                  "",
+                  "pm.test(\"ValidationError Message Checker\", function () {",
+                  "    var jsonData = pm.response.json();",
+                  "    pm.expect(jsonData.validationErrors).to.eql(\"[instance type (integer) does not match any allowed primitive type (allowed: [\\\"string\\\"])]\");",
+                  "});",
+                  "",
+                  "",
+                  "",
+                  ""
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "id": "38162d6e-27df-4628-9514-3cb8793697fd",
+          "protocolProfileBehavior": {
+            "disableBodyPruning": true
+          },
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "tenant-id",
+                "value": "flagright"
+              },
+              {
+                "key": "x-api-key",
+                "value": "{{apiKey}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"userId\": \"{{businessUserId}}\",\n  \"createdTimestamp\": {{timestamp}},\n  \"legalEntity\": {\n    \"companyGeneralDetails\": {\n      \"legalName\": 123,\n      \"businessIndustry\": [\n        \"Alcohol\", \"Scotch\"\n      ]\n    },\n    \"companyFinancialDetails\": {\n      \"expectedTransactionAmountPerMonth\": {\n        \"amountValue\": 5160000,\n        \"amountCurrency\": \"GBP\"\n      },\n      \"expectedTurnoverPerMonth\": {\n        \"amountValue\": 30000090,\n        \"amountCurrency\": \"GBP\"\n      },\n      \"tags\": [\n        {\n          \"key\": \"averageNumberOfPaymentsPerMonth\",\n          \"value\": \"90\"\n        }\n      ]\n    },\n    \"companyRegistrationDetails\": {\n      \"registrationIdentifier\": \"IN22313\",\n      \"registrationCountry\": \"DK\",\n      \"dateOfRegistration\": \"2022-01-01\",\n      \"taxIdentifier\": \"BDH3N221E\",\n      \"legalEntityType\": \"Pvt Ltd\"\n    },\n    \"contactDetails\": {\n      \"websites\": [\n        \"jamieson.com\"\n      ]\n    }\n  },\n  \"allowedPaymentMethods\": [\n    \"GENERIC_BANK_ACCOUNT\", \"WALLET\", \"CARD\", \"ACH\"\n  ]\n}"
+            },
+            "url": {
+              "raw": "{{domain}}/business/users",
+              "host": ["{{domain}}"],
+              "path": ["business", "users"]
+            }
+          },
+          "response": [],
+          "uid": "24163049-38162d6e-27df-4628-9514-3cb8793697fd"
+        },
+        {
+          "name": "Company General Details Not Provided",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "id": "abe7e581-24b3-4170-ac7c-fa8312693637",
+                "exec": [
+                  "pm.test(\"Status code is 400\", function () {",
+                  "    pm.response.to.have.status(400);",
+                  "});",
+                  "",
+                  "pm.test(\"Body matches string message\", function () {",
+                  "    pm.expect(pm.response.text()).to.include(\"message\");",
+                  "});",
+                  "",
+                  "pm.test(\"Body matches string validationerrors\", function () {",
+                  "    pm.expect(pm.response.text()).to.include(\"validationErrors\");",
+                  "});",
+                  "",
+                  "",
+                  "pm.test(\"Message Checker\", function () {",
+                  "    var jsonData = pm.response.json();",
+                  "    pm.expect(jsonData.message).to.eql(\"Invalid request body\");",
+                  "});",
+                  "",
+                  "pm.test(\"ValidationError Message Checker\", function () {",
+                  "    var jsonData = pm.response.json();",
+                  "    pm.expect(jsonData.validationErrors).to.eql(\"[object has missing required properties ([\\\"companyGeneralDetails\\\"])]\");",
+                  "});",
+                  "",
+                  "",
+                  "",
+                  ""
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "id": "9fc5d81c-101e-491f-bfbd-539f124671a4",
+          "protocolProfileBehavior": {
+            "disableBodyPruning": true
+          },
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "tenant-id",
+                "value": "flagright"
+              },
+              {
+                "key": "x-api-key",
+                "value": "{{apiKey}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"type\": \"BUSINESS\",\n    \"userId\": \"{{businessUserId}}\",\n    \"createdTimestamp\": {{timestamp}},\n    \"legalEntity\": {\n        \"companyFinancialDetails\": {\n            \"expectedTransactionAmountPerMonth\": {\n                \"amountValue\": 5160000,\n                \"amountCurrency\": \"GBP\"\n            },\n            \"expectedTurnoverPerMonth\": {\n                \"amountValue\": 30000090,\n                \"amountCurrency\": \"GBP\"\n            },\n            \"tags\": [\n                {\n                    \"key\": \"averageNumberOfPaymentsPerMonth\",\n                    \"value\": \"90\"\n                }\n            ]\n        },\n        \"companyRegistrationDetails\": {\n            \"registrationIdentifier\": \"IN22313\",\n            \"registrationCountry\": \"DK\",\n            \"dateOfRegistration\": \"2022-01-01\",\n            \"taxIdentifier\": \"BDH3N221E\",\n            \"legalEntityType\": \"Pvt Ltd\"\n        },\n        \"contactDetails\": {\n            \"websites\": [\n                \"jamieson.com\"\n            ]\n        }\n    },\n    \"linkedEntities\": {\n        \"parentUserId\": \"B-21\",\n        \"childUserIds\": [\n            \"B-1\",\n            \"B-22\",\n            \"B-20\"\n        ]\n    },\n    \"allowedPaymentMethods\": [\n        \"GENERIC_BANK_ACCOUNT\",\n        \"WALLET\",\n        \"CARD\",\n        \"ACH\"\n    ]\n}"
+            },
+            "url": {
+              "raw": "{{domain}}/business/users",
+              "host": ["{{domain}}"],
+              "path": ["business", "users"]
+            }
+          },
+          "response": [],
+          "uid": "24163049-9fc5d81c-101e-491f-bfbd-539f124671a4"
+        },
+        {
+          "name": "Value not Provided in Tags",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "id": "abe7e581-24b3-4170-ac7c-fa8312693637",
+                "exec": [
+                  "pm.test(\"Status code is 400\", function () {",
+                  "    pm.response.to.have.status(400);",
+                  "});",
+                  "",
+                  "pm.test(\"Body matches string message\", function () {",
+                  "    pm.expect(pm.response.text()).to.include(\"message\");",
+                  "});",
+                  "",
+                  "pm.test(\"Body matches string validationerrors\", function () {",
+                  "    pm.expect(pm.response.text()).to.include(\"validationErrors\");",
+                  "});",
+                  "",
+                  "",
+                  "pm.test(\"Message Checker\", function () {",
+                  "    var jsonData = pm.response.json();",
+                  "    pm.expect(jsonData.message).to.eql(\"Invalid request body\");",
+                  "});",
+                  "",
+                  "pm.test(\"ValidationError Message Checker\", function () {",
+                  "    var jsonData = pm.response.json();",
+                  "    pm.expect(jsonData.validationErrors).to.eql(\"[object has missing required properties ([\\\"value\\\"])]\");",
+                  "});",
+                  "",
+                  "",
+                  "",
+                  ""
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "id": "68b94f30-4f0e-4a89-8586-43075acf89dd",
+          "protocolProfileBehavior": {
+            "disableBodyPruning": true
+          },
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "tenant-id",
+                "value": "flagright"
+              },
+              {
+                "key": "x-api-key",
+                "value": "{{apiKey}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"userId\": \"{{businessUserId}}\",\n    \"createdTimestamp\": {{timestamp}},\n    \"legalEntity\": {\n        \"companyGeneralDetails\": {\n            \"legalName\": \"Jameson Breweries\",\n            \"businessIndustry\": [\n                \"Alcohol\",\n                \"Scotch\"\n            ]\n        },\n        \"companyFinancialDetails\": {\n            \"expectedTransactionAmountPerMonth\": {\n                \"amountValue\": 5160000,\n                \"amountCurrency\": \"GBP\"\n            },\n            \"expectedTurnoverPerMonth\": {\n                \"amountValue\": 30000090,\n                \"amountCurrency\": \"GBP\"\n            },\n            \"tags\": [\n                {\n                    \"key\": \"averageNumberOfPaymentsPerMonth\"\n                }\n            ]\n        },\n        \"companyRegistrationDetails\": {\n            \"registrationIdentifier\": \"IN22313\",\n            \"registrationCountry\": \"DK\",\n            \"dateOfRegistration\": \"2022-01-01\",\n            \"taxIdentifier\": \"BDH3N221E\",\n            \"legalEntityType\": \"Pvt Ltd\"\n        },\n        \"contactDetails\": {\n            \"websites\": [\n                \"jamieson.com\"\n            ]\n        }\n    },\n    \"linkedEntities\": {\n        \"parentUserId\": \"B-21\",\n        \"childUserIds\": [\n            \"B-1\",\n            \"B-22\",\n            \"B-20\"\n        ]\n    },\n    \"allowedPaymentMethods\": [\n        \"GENERIC_BANK_ACCOUNT\",\n        \"WALLET\",\n        \"CARD\",\n        \"ACH\"\n    ]\n}"
+            },
+            "url": {
+              "raw": "{{domain}}/business/users",
+              "host": ["{{domain}}"],
+              "path": ["business", "users"]
+            }
+          },
+          "response": [],
+          "uid": "24163049-68b94f30-4f0e-4a89-8586-43075acf89dd"
+        },
+        {
+          "name": "User Id not givern",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "id": "abe7e581-24b3-4170-ac7c-fa8312693637",
+                "exec": [
+                  "pm.test(\"Status code is 400\", function () {",
+                  "    pm.response.to.have.status(400);",
+                  "});",
+                  "",
+                  "pm.test(\"Body matches string message\", function () {",
+                  "    pm.expect(pm.response.text()).to.include(\"message\");",
+                  "});",
+                  "",
+                  "pm.test(\"Body matches string validationerrors\", function () {",
+                  "    pm.expect(pm.response.text()).to.include(\"validationErrors\");",
+                  "});",
+                  "",
+                  "",
+                  "pm.test(\"Message Checker\", function () {",
+                  "    var jsonData = pm.response.json();",
+                  "    pm.expect(jsonData.message).to.eql(\"Invalid request body\");",
+                  "});",
+                  "",
+                  "pm.test(\"ValidationError Message Checker\", function () {",
+                  "    var jsonData = pm.response.json();",
+                  "    pm.expect(jsonData.validationErrors).to.eql(\"[object has missing required properties ([\\\"userId\\\"])]\");",
+                  "});",
+                  "",
+                  "",
+                  "",
+                  ""
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "id": "614b531b-77fd-4891-9557-76b69c1bae77",
+          "protocolProfileBehavior": {
+            "disableBodyPruning": true
+          },
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "tenant-id",
+                "value": "flagright"
+              },
+              {
+                "key": "x-api-key",
+                "value": "{{apiKey}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"type\": \"BUSINESS\",\n    \"createdTimestamp\": {{timestamp}},\n    \"legalEntity\": {\n        \"companyGeneralDetails\": {\n            \"businessIndustry\": [\n                \"Alcohol\",\n                \"Scotch\"\n            ]\n        },\n        \"companyFinancialDetails\": {\n            \"expectedTransactionAmountPerMonth\": {\n                \"amountValue\": 5160000,\n                \"amountCurrency\": \"GBP\"\n            },\n            \"expectedTurnoverPerMonth\": {\n                \"amountValue\": 30000090,\n                \"amountCurrency\": \"GBP\"\n            },\n            \"tags\": [\n                {\n                    \"key\": \"averageNumberOfPaymentsPerMonth\",\n                    \"value\": \"90\"\n                }\n            ]\n        },\n        \"companyRegistrationDetails\": {\n            \"registrationIdentifier\": \"IN22313\",\n            \"registrationCountry\": \"DK\",\n            \"dateOfRegistration\": \"2022-01-01\",\n            \"taxIdentifier\": \"BDH3N221E\",\n            \"legalEntityType\": \"Pvt Ltd\"\n        },\n        \"contactDetails\": {\n            \"websites\": [\n                \"jamieson.com\"\n            ]\n        }\n    },\n    \"linkedEntities\": {\n        \"parentUserId\": \"B-21\",\n        \"childUserIds\": [\n            \"B-1\",\n            \"B-22\",\n            \"B-20\"\n        ]\n    },\n    \"allowedPaymentMethods\": [\n        \"GENERIC_BANK_ACCOUNT\",\n        \"WALLET\",\n        \"CARD\",\n        \"ACH\"\n    ]\n}"
+            },
+            "url": {
+              "raw": "{{domain}}/business/users",
+              "host": ["{{domain}}"],
+              "path": ["business", "users"]
+            }
+          },
+          "response": [],
+          "uid": "24163049-614b531b-77fd-4891-9557-76b69c1bae77"
+        },
+        {
+          "name": "No Api Key",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "id": "abe7e581-24b3-4170-ac7c-fa8312693637",
+                "exec": [
+                  "pm.test(\"Status code is 401\", function () {",
+                  "    pm.response.to.have.status(401);",
+                  "});",
+                  "",
+                  "pm.test(\"Body matches string\", function () {",
+                  "    pm.expect(pm.response.text()).to.include(\"message\");",
+                  "});",
+                  "",
+                  "pm.test(\"Message Check\", function () {",
+                  "    var jsonData = pm.response.json();",
+                  "    pm.expect(jsonData.message).to.eql(\"Unauthorized\");",
+                  "});",
+                  "",
+                  "",
+                  ""
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "id": "e7b1d3c9-652b-4487-9e0a-be1ecbe31125",
+          "protocolProfileBehavior": {
+            "disableBodyPruning": true
+          },
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "tenant-id",
+                "value": "flagright"
+              },
+              {
+                "key": "x-api-key",
+                "value": ""
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"type\": \"BUSINESS\",\n    \"userId\": \"{{businessUserId}}\",\n    \"createdTimestamp\": {{timestamp}},\n    \"legalEntity\": {\n        \"companyGeneralDetails\": {\n            \"businessIndustry\": [\n                \"Alcohol\",\n                \"Scotch\"\n            ]\n        },\n        \"companyFinancialDetails\": {\n            \"expectedTransactionAmountPerMonth\": {\n                \"amountValue\": 5160000,\n                \"amountCurrency\": \"GBP\"\n            },\n            \"expectedTurnoverPerMonth\": {\n                \"amountValue\": 30000090,\n                \"amountCurrency\": \"GBP\"\n            },\n            \"tags\": [\n                {\n                    \"key\": \"averageNumberOfPaymentsPerMonth\",\n                    \"value\": \"90\"\n                }\n            ]\n        },\n        \"companyRegistrationDetails\": {\n            \"registrationIdentifier\": \"IN22313\",\n            \"registrationCountry\": \"DK\",\n            \"dateOfRegistration\": \"2022-01-01\",\n            \"taxIdentifier\": \"BDH3N221E\",\n            \"legalEntityType\": \"Pvt Ltd\"\n        },\n        \"contactDetails\": {\n            \"websites\": [\n                \"jamieson.com\"\n            ]\n        }\n    },\n    \"linkedEntities\": {\n        \"parentUserId\": \"B-21\",\n        \"childUserIds\": [\n            \"B-1\",\n            \"B-22\",\n            \"B-20\"\n        ]\n    },\n    \"allowedPaymentMethods\": [\n        \"GENERIC_BANK_ACCOUNT\",\n        \"WALLET\",\n        \"CARD\",\n        \"ACH\"\n    ]\n}"
+            },
+            "url": {
+              "raw": "{{domain}}/business/users",
+              "host": ["{{domain}}"],
+              "path": ["business", "users"]
+            }
+          },
+          "response": [],
+          "uid": "24163049-e7b1d3c9-652b-4487-9e0a-be1ecbe31125"
+        },
+        {
+          "name": "Incorrect-Domain",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "id": "abe7e581-24b3-4170-ac7c-fa8312693637",
+                "exec": [
+                  "pm.test(\"Status code is 403\", function () {",
+                  "    pm.response.to.have.status(403);",
+                  "});",
+                  "",
+                  "",
+                  "pm.test(\"Matches Key\", function () {",
+                  "    pm.expect(pm.response.text()).to.include(\"message\");",
+                  "});",
+                  "",
+                  "pm.test(\"Matches Text\", function () {",
+                  "    var jsonData = pm.response.json();",
+                  "    pm.expect(jsonData.message).to.eql(\"Forbidden\");",
+                  "});",
+                  ""
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "id": "015c311a-d0ab-4a02-8fea-a30c89bf6e05",
+          "protocolProfileBehavior": {
+            "disableBodyPruning": true
+          },
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "tenant-id",
+                "value": "flagright"
+              },
+              {
+                "key": "x-api-key",
+                "value": "{{apiKey}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"type\": \"BUSINESS\",\n    \"createdTimestamp\": {{timestamp}},\n    \"legalEntity\": {\n        \"companyGeneralDetails\": {\n            \"businessIndustry\": [\n                \"Alcohol\",\n                \"Scotch\"\n            ]\n        },\n        \"companyFinancialDetails\": {\n            \"expectedTransactionAmountPerMonth\": {\n                \"amountValue\": 5160000,\n                \"amountCurrency\": \"GBP\"\n            },\n            \"expectedTurnoverPerMonth\": {\n                \"amountValue\": 30000090,\n                \"amountCurrency\": \"GBP\"\n            },\n            \"tags\": [\n                {\n                    \"key\": \"averageNumberOfPaymentsPerMonth\",\n                    \"value\": \"90\"\n                }\n            ]\n        },\n        \"companyRegistrationDetails\": {\n            \"registrationIdentifier\": \"IN22313\",\n            \"registrationCountry\": \"DK\",\n            \"dateOfRegistration\": \"2022-01-01\",\n            \"taxIdentifier\": \"BDH3N221E\",\n            \"legalEntityType\": \"Pvt Ltd\"\n        },\n        \"contactDetails\": {\n            \"websites\": [\n                \"jamieson.com\"\n            ]\n        }\n    },\n    \"linkedEntities\": {\n        \"parentUserId\": \"B-21\",\n        \"childUserIds\": [\n            \"B-1\",\n            \"B-22\",\n            \"B-20\"\n        ]\n    },\n    \"allowedPaymentMethods\": [\n        \"GENERIC_BANK_ACCOUNT\",\n        \"WALLET\",\n        \"CARD\",\n        \"ACH\"\n    ]\n}"
+            },
+            "url": {
+              "raw": "{{incorrectDomain}}/business/users",
+              "host": ["{{incorrectDomain}}"],
+              "path": ["business", "users"]
+            }
+          },
+          "response": [],
+          "uid": "24163049-015c311a-d0ab-4a02-8fea-a30c89bf6e05"
+        },
+        {
+          "name": "No Body",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "id": "abe7e581-24b3-4170-ac7c-fa8312693637",
+                "exec": [
+                  "pm.test(\"Status code is 400\", function () {",
+                  "    pm.response.to.have.status(400);",
+                  "});",
+                  "",
+                  "pm.test(\"Body matches string message\", function () {",
+                  "    pm.expect(pm.response.text()).to.include(\"message\");",
+                  "});",
+                  "",
+                  "pm.test(\"Body matches string validationerrors\", function () {",
+                  "    pm.expect(pm.response.text()).to.include(\"validationErrors\");",
+                  "});",
+                  "",
+                  "",
+                  "pm.test(\"Message Checker\", function () {",
+                  "    var jsonData = pm.response.json();",
+                  "    pm.expect(jsonData.message).to.eql(\"Invalid request body\");",
+                  "});",
+                  "",
+                  "pm.test(\"ValidationError Message Checker\", function () {",
+                  "    var jsonData = pm.response.json();",
+                  "    pm.expect(jsonData.validationErrors).to.eql(\"[Unknown error parsing request body]\");",
+                  "});",
+                  "",
+                  "",
+                  "",
+                  ""
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "id": "def827de-bc8b-42b6-86bb-f160ee66bae1",
+          "protocolProfileBehavior": {
+            "disableBodyPruning": true
+          },
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "tenant-id",
+                "value": "flagright"
+              },
+              {
+                "key": "x-api-key",
+                "value": "{{apiKey}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": ""
+            },
+            "url": {
+              "raw": "{{domain}}/business/users",
+              "host": ["{{domain}}"],
+              "path": ["business", "users"]
+            }
+          },
+          "response": [],
+          "uid": "24163049-def827de-bc8b-42b6-86bb-f160ee66bae1"
+        },
+        {
+          "name": "Empty Body",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "id": "abe7e581-24b3-4170-ac7c-fa8312693637",
+                "exec": [
+                  "pm.test(\"Status code is 400\", function () {",
+                  "    pm.response.to.have.status(400);",
+                  "});",
+                  "",
+                  "pm.test(\"Body matches string message\", function () {",
+                  "    pm.expect(pm.response.text()).to.include(\"message\");",
+                  "});",
+                  "",
+                  "pm.test(\"Body matches string validationerrors\", function () {",
+                  "    pm.expect(pm.response.text()).to.include(\"validationErrors\");",
+                  "});",
+                  "",
+                  "",
+                  "pm.test(\"Message Checker\", function () {",
+                  "    var jsonData = pm.response.json();",
+                  "    pm.expect(jsonData.message).to.eql(\"Invalid request body\");",
+                  "});",
+                  "",
+                  "pm.test(\"ValidationError Message Checker\", function () {",
+                  "    var jsonData = pm.response.json();",
+                  "    pm.expect(jsonData.validationErrors).to.eql(\"[object has missing required properties ([\\\"createdTimestamp\\\",\\\"legalEntity\\\",\\\"userId\\\"])]\");",
+                  "});",
+                  "",
+                  "",
+                  "",
+                  ""
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "id": "22e21f82-7398-4cc1-9483-b77bb999e729",
+          "protocolProfileBehavior": {
+            "disableBodyPruning": true
+          },
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "tenant-id",
+                "value": "flagright"
+              },
+              {
+                "key": "x-api-key",
+                "value": "{{apiKey}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{}"
+            },
+            "url": {
+              "raw": "{{domain}}/business/users",
+              "host": ["{{domain}}"],
+              "path": ["business", "users"]
+            }
+          },
+          "response": [],
+          "uid": "24163049-22e21f82-7398-4cc1-9483-b77bb999e729"
+        }
+      ],
+      "id": "d23e8ddf-1588-4c91-b363-cd4851e63a19",
+      "uid": "24163049-d23e8ddf-1588-4c91-b363-cd4851e63a19"
     }
   ]
 }
