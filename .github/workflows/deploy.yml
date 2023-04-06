@@ -107,8 +107,13 @@ jobs:
             Branch deployed!
             Frontend: https://${{ steps.deploy.outputs.phyto }}.console.flagright.dev
             Backend: https://${{ steps.deploy.outputs.tarpon }}.flagright.dev
+      - name: Run integration tests
+        if: steps.check.outputs.triggered == 'true'
+        run: |
+          cd tarpon
+          DOMAIN=https://${{ steps.deploy.outputs.tarpon }}.flagright.dev npm run postman:integration:dev
       - name: Set latest commit status as ${{ job.status }}
-        if: always() && steps.check.outputs.triggered == 'true' 
+        if: always() && steps.check.outputs.triggered == 'true'
         uses: myrotvorets/set-commit-status-action@master
         with:
           sha: ${{ steps.comment-branch.outputs.head_sha }}
