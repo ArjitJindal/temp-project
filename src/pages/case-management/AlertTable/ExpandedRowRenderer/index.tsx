@@ -69,6 +69,7 @@ export default function ExpandedRowRenderer(props: Props) {
               params={params}
               onChangeParams={setParams}
               adjustPagination={true}
+              disableHorizontalScrolling
             />
           ),
         },

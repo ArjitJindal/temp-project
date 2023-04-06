@@ -51,6 +51,7 @@ type Props = {
   disableSorting?: boolean;
   autoAdjustHeight?: boolean;
   adjustPagination?: boolean;
+  disableHorizontalScrolling?: boolean;
   headerSubtitle?: string;
 };
 
@@ -68,6 +69,7 @@ export default function TransactionsTable(props: Props) {
     autoAdjustHeight,
     adjustPagination,
     headerSubtitle,
+    disableHorizontalScrolling,
   } = props;
 
   const columns: TableColumn<InternalTransaction>[] = useMemo(
@@ -416,7 +418,7 @@ export default function TransactionsTable(props: Props) {
       autoAdjustHeight={autoAdjustHeight}
       headerSubtitle={headerSubtitle}
       adjustPagination={adjustPagination}
-      disableHorizontalScrolling
+      disableHorizontalScrolling={disableHorizontalScrolling}
     />
   );
 }
