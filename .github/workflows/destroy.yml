@@ -23,7 +23,6 @@ jobs:
           path: "tarpon"
           clean: false
       - name: Checkout Phytoplankton
-        if: steps.check.outputs.triggered == 'true'
         uses: actions/checkout@v3
         with:
           repository: flagright/phytoplankton-console
