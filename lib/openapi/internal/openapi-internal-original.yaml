@@ -5434,6 +5434,15 @@ components:
           type: list
           items:
             type: string
+    MerchantMonitoringHistory:
+      type: list
+      items:
+        type: object
+        properties:
+          summary:
+            $ref: '#/components/schemas/MerchantMonitoringSummary'
+          timestamp:
+            type: number
     ComplyAdvantageSearchHit:
       type: object
       properties:
