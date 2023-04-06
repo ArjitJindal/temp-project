@@ -2,8 +2,9 @@
   "info": {
     "_postman_id": "503b80a7-dd73-4ed0-8aa6-5eaaa06f9ea5",
     "name": "Public API Tests Collection",
+    "description": "**The subesquent folders are added in a specific order please dont change it else it may create some issues with the tests**",
     "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
-    "updatedAt": "2023-04-06T16:42:38.000Z",
+    "updatedAt": "2023-04-06T18:57:23.000Z",
     "uid": "24163049-503b80a7-dd73-4ed0-8aa6-5eaaa06f9ea5"
   },
   "item": [
@@ -2329,6 +2330,850 @@
       ],
       "id": "d23e8ddf-1588-4c91-b363-cd4851e63a19",
       "uid": "24163049-d23e8ddf-1588-4c91-b363-cd4851e63a19"
+    },
+    {
+      "name": "Transaction Events",
+      "item": [
+        {
+          "name": "200 Response",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "id": "7ec9793d-b27b-49d6-abf3-a21c2ee43b10",
+                "exec": [
+                  "pm.test(\"Status code is 200\", function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.test(\"Check Transaction State\", function () {",
+                  "    var jsonData = pm.response.json();",
+                  "    pm.expect(jsonData.transaction.transactionState).to.eql(\"REFUNDED\");",
+                  "});",
+                  "",
+                  "pm.test(\"Check Transaction State\", function () {",
+                  "    var jsonData = pm.response.json();",
+                  "",
+                  "    const data = {",
+                  "        \"bankCode\": \"SBI0033921\",",
+                  "        \"cardFunding\": \"DEBIT\",",
+                  "        \"method\": \"CARD\",",
+                  "        \"cardAuthenticated\": true,",
+                  "        \"accountType\": \"Savings\",",
+                  "        \"bankName\": \"State Bank of India\",",
+                  "        \"accountNumber\": \"121445521\",",
+                  "        \"paymentChannel\": \"Intra Bank\",",
+                  "        \"cardIssuedCountry\": \"AE\",",
+                  "        \"cardLast4Digits\": \"2018\",",
+                  "        \"cardFingerprint\": \"cRBAUn3Vqtzpf2uq\",",
+                  "        \"cardExpiry\": {",
+                  "            \"month\": 12,",
+                  "            \"year\": 2023",
+                  "        },",
+                  "        \"specialInstructions\": \"IMPS\",",
+                  "        \"name\": \"Binod Ramamurthie\",",
+                  "        \"cardBrand\": \"VISA\"",
+                  "    }",
+                  "",
+                  "    pm.expect(jsonData.transaction.originPaymentDetails).to.eql(data);",
+                  "});",
+                  "",
+                  "pm.test(\"Body matches string\", function () {",
+                  "    pm.expect(pm.response.text()).to.include(\"eventId\");",
+                  "});",
+                  "",
+                  "pm.test(\"Body matches string\", function () {",
+                  "    pm.expect(pm.response.text()).to.include(\"transaction\");",
+                  "});",
+                  "",
+                  "pm.test(\"Body matches string\", function () {",
+                  "    pm.expect(pm.response.text()).to.include(\"hitRules\");",
+                  "});",
+                  "",
+                  "pm.test(\"Body matches string\", function () {",
+                  "    pm.expect(pm.response.text()).to.include(\"executedRules\");",
+                  "});",
+                  "",
+                  "pm.test(\"Excuted Rules Should be more then 1\", function () {",
+                  "    var jsonData = pm.response.json();",
+                  "    let executedRules = jsonData.executedRules.length > 0",
+                  "    pm.expect(executedRules).to.eql(true);",
+                  "});",
+                  "",
+                  "pm.test(`Match UUID`, () => {",
+                  "    var jsonData = pm.response.json();",
+                  "    pm.expect(jsonData.eventId).to.match(/^[0-9a-f]{8}-[0-9a-f]{4}-[0-5][0-9a-f]{3}-[089ab][0-9a-f]{3}-[0-9a-f]{12}$/i);",
+                  "});",
+                  ""
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "id": "02da4b52-57f6-4524-906d-fdeffe6881ea",
+          "protocolProfileBehavior": {
+            "disableBodyPruning": true
+          },
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "tenant-id",
+                "value": "flagright"
+              },
+              {
+                "key": "x-api-key",
+                "value": "{{apiKey}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"transactionId\": \"{{transactionId}}\",\n    \"transactionState\": \"REFUNDED\",\n    \"updatedTransactionAttributes\": {\n        \"originPaymentDetails\": {\n            \"method\": \"CARD\",\n            \"cardAuthenticated\": true,\n            \"cardIssuedCountry\": \"AE\",\n            \"cardBrand\": \"VISA\",\n            \"cardFunding\": \"DEBIT\",\n            \"cardExpiry\": {\n                \"month\": 12,\n                \"year\": 2023\n            },\n            \"cardFingerprint\": \"cRBAUn3Vqtzpf2uq\",\n            \"cardLast4Digits\": \"2018\"\n        }\n    },\n    \"timestamp\": 1664985327329\n}"
+            },
+            "url": {
+              "raw": "{{domain}}/events/transaction",
+              "host": ["{{domain}}"],
+              "path": ["events", "transaction"]
+            }
+          },
+          "response": [],
+          "uid": "24163049-02da4b52-57f6-4524-906d-fdeffe6881ea"
+        },
+        {
+          "name": "Transaction Id not Provided",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "id": "7ec9793d-b27b-49d6-abf3-a21c2ee43b10",
+                "exec": [
+                  "pm.test(\"Status code is 400\", function () {",
+                  "    pm.response.to.have.status(400);",
+                  "});",
+                  "",
+                  "pm.test(\"Validation Error Check\", function () {",
+                  "    var jsonData = pm.response.json();",
+                  "    pm.expect(jsonData.validationErrors).to.eql(\"[object has missing required properties ([\\\"transactionId\\\"])]\");",
+                  "});",
+                  "",
+                  "pm.test(\"Message Check\", function () {",
+                  "    var jsonData = pm.response.json();",
+                  "    pm.expect(jsonData.message).to.eql(\"Invalid request body\");",
+                  "});",
+                  "",
+                  "pm.test(\"Body matches string\", function () {",
+                  "    pm.expect(pm.response.text()).to.include(\"message\");",
+                  "});",
+                  "",
+                  "pm.test(\"Body matches string\", function () {",
+                  "    pm.expect(pm.response.text()).to.include(\"validationErrors\");",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "id": "47d6bfe1-406e-4fbc-bd35-160e3a0d32a6",
+          "protocolProfileBehavior": {
+            "disableBodyPruning": true
+          },
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "tenant-id",
+                "value": "flagright"
+              },
+              {
+                "key": "x-api-key",
+                "value": "{{apiKey}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"transactionState\": \"REFUNDED\",\n    \"updatedTransactionAttributes\": {\n        \"originPaymentDetails\": {\n            \"method\": \"CARD\",\n            \"cardAuthenticated\": true,\n            \"cardIssuedCountry\": \"AE\",\n            \"cardBrand\": \"VISA\",\n            \"cardFunding\": \"DEBIT\",\n            \"cardExpiry\": {\n                \"month\": 12,\n                \"year\": 2023\n            },\n            \"cardFingerprint\": \"cRBAUn3Vqtzpf2uq\",\n            \"cardLast4Digits\": \"2018\"\n        }\n    },\n    \"timestamp\": 1664985327329\n}"
+            },
+            "url": {
+              "raw": "{{domain}}/events/transaction",
+              "host": ["{{domain}}"],
+              "path": ["events", "transaction"]
+            }
+          },
+          "response": [],
+          "uid": "24163049-47d6bfe1-406e-4fbc-bd35-160e3a0d32a6"
+        },
+        {
+          "name": "Invalid Transaction State",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "id": "7ec9793d-b27b-49d6-abf3-a21c2ee43b10",
+                "exec": [
+                  "pm.test(\"Status code is 400\", function () {",
+                  "    pm.response.to.have.status(400);",
+                  "});",
+                  "",
+                  "pm.test(\"Validation Error Check\", function () {",
+                  "    var jsonData = pm.response.json();",
+                  "    pm.expect(jsonData.validationErrors).to.eql(\"[instance value (\\\"REFUND-1\\\") not found in enum (possible values: [\\\"CREATED\\\",\\\"PROCESSING\\\",\\\"SENT\\\",\\\"EXPIRED\\\",\\\"DECLINED\\\",\\\"SUSPENDED\\\",\\\"REFUNDED\\\",\\\"SUCCESSFUL\\\"])]\");",
+                  "});",
+                  "",
+                  "pm.test(\"Message Check\", function () {",
+                  "    var jsonData = pm.response.json();",
+                  "    pm.expect(jsonData.message).to.eql(\"Invalid request body\");",
+                  "});",
+                  "",
+                  "pm.test(\"Body matches string\", function () {",
+                  "    pm.expect(pm.response.text()).to.include(\"message\");",
+                  "});",
+                  "",
+                  "pm.test(\"Body matches string\", function () {",
+                  "    pm.expect(pm.response.text()).to.include(\"validationErrors\");",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "id": "ff741916-54ca-460e-a9db-0c612d69ac43",
+          "protocolProfileBehavior": {
+            "disableBodyPruning": true
+          },
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "tenant-id",
+                "value": "flagright"
+              },
+              {
+                "key": "x-api-key",
+                "value": "{{apiKey}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"transactionId\": \"{{transactionId}}\",\n    \"transactionState\": \"REFUND-1\",\n    \"updatedTransactionAttributes\": {\n        \"originPaymentDetails\": {\n            \"method\": \"CARD\",\n            \"cardAuthenticated\": true,\n            \"cardIssuedCountry\": \"AE\",\n            \"cardBrand\": \"VISA\",\n            \"cardFunding\": \"DEBIT\",\n            \"cardExpiry\": {\n                \"month\": 12,\n                \"year\": 2023\n            },\n            \"cardFingerprint\": \"cRBAUn3Vqtzpf2uq\",\n            \"cardLast4Digits\": \"2018\"\n        }\n    },\n    \"timestamp\": 1664985327329\n}"
+            },
+            "url": {
+              "raw": "{{domain}}/events/transaction",
+              "host": ["{{domain}}"],
+              "path": ["events", "transaction"]
+            }
+          },
+          "response": [],
+          "uid": "24163049-ff741916-54ca-460e-a9db-0c612d69ac43"
+        },
+        {
+          "name": "Invalid Country",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "id": "7ec9793d-b27b-49d6-abf3-a21c2ee43b10",
+                "exec": [
+                  "pm.test(\"Status code is 400\", function () {",
+                  "    pm.response.to.have.status(400);",
+                  "});",
+                  "",
+                  "pm.test(\"Validation Error Check\", function () {",
+                  "    var jsonData = pm.response.json();",
+                  "    pm.expect(jsonData.validationErrors).to.eql(\"[instance failed to match exactly one schema (matched 0 out of 9)]\");",
+                  "});",
+                  "",
+                  "pm.test(\"Message Check\", function () {",
+                  "    var jsonData = pm.response.json();",
+                  "    pm.expect(jsonData.message).to.eql(\"Invalid request body\");",
+                  "});",
+                  "",
+                  "pm.test(\"Body matches string\", function () {",
+                  "    pm.expect(pm.response.text()).to.include(\"message\");",
+                  "});",
+                  "",
+                  "pm.test(\"Body matches string\", function () {",
+                  "    pm.expect(pm.response.text()).to.include(\"validationErrors\");",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "id": "f747b5b9-02fe-44b4-9917-b73430fce82b",
+          "protocolProfileBehavior": {
+            "disableBodyPruning": true
+          },
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "tenant-id",
+                "value": "flagright"
+              },
+              {
+                "key": "x-api-key",
+                "value": "{{apiKey}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"transactionId\": \"{{transactionId}}\",\n    \"transactionState\": \"REFUNDED\",\n    \"updatedTransactionAttributes\": {\n        \"originPaymentDetails\": {\n            \"method\": \"CARD\",\n            \"cardAuthenticated\": true,\n            \"cardIssuedCountry\": \"AB\",\n            \"cardBrand\": \"VISA\",\n            \"cardFunding\": \"DEBIT\",\n            \"cardExpiry\": {\n                \"month\": 12,\n                \"year\": 2023\n            },\n            \"cardFingerprint\": \"cRBAUn3Vqtzpf2uq\",\n            \"cardLast4Digits\": \"2018\"\n        }\n    },\n    \"timestamp\": 1664985327329\n}"
+            },
+            "url": {
+              "raw": "{{domain}}/events/transaction",
+              "host": ["{{domain}}"],
+              "path": ["events", "transaction"]
+            }
+          },
+          "response": [],
+          "uid": "24163049-f747b5b9-02fe-44b4-9917-b73430fce82b"
+        },
+        {
+          "name": "Timestamp Provided as String",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "id": "7ec9793d-b27b-49d6-abf3-a21c2ee43b10",
+                "exec": [
+                  "pm.test(\"Status code is 400\", function () {",
+                  "    pm.response.to.have.status(400);",
+                  "});",
+                  "",
+                  "pm.test(\"Validation Error Check\", function () {",
+                  "    var jsonData = pm.response.json();",
+                  "    pm.expect(jsonData.validationErrors).to.eql(\"[instance type (string) does not match any allowed primitive type (allowed: [\\\"integer\\\",\\\"number\\\"])]\");",
+                  "});",
+                  "",
+                  "pm.test(\"Message Check\", function () {",
+                  "    var jsonData = pm.response.json();",
+                  "    pm.expect(jsonData.message).to.eql(\"Invalid request body\");",
+                  "});",
+                  "",
+                  "pm.test(\"Body matches string\", function () {",
+                  "    pm.expect(pm.response.text()).to.include(\"message\");",
+                  "});",
+                  "",
+                  "pm.test(\"Body matches string\", function () {",
+                  "    pm.expect(pm.response.text()).to.include(\"validationErrors\");",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "id": "03731fdd-da9b-4ee0-aa62-5c2b52bf113b",
+          "protocolProfileBehavior": {
+            "disableBodyPruning": true
+          },
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "tenant-id",
+                "value": "flagright"
+              },
+              {
+                "key": "x-api-key",
+                "value": "{{apiKey}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"transactionId\": \"{{transactionId}}\",\n    \"transactionState\": \"REFUNDED\",\n    \"updatedTransactionAttributes\": {\n        \"originPaymentDetails\": {\n            \"method\": \"CARD\",\n            \"cardAuthenticated\": true,\n            \"cardIssuedCountry\": \"IN\",\n            \"cardBrand\": \"VISA\",\n            \"cardFunding\": \"DEBIT\",\n            \"cardExpiry\": {\n                \"month\": 12,\n                \"year\": 2023\n            },\n            \"cardFingerprint\": \"cRBAUn3Vqtzpf2uq\",\n            \"cardLast4Digits\": \"2018\"\n        }\n    },\n    \"timestamp\": \"1664985327329\"\n}"
+            },
+            "url": {
+              "raw": "{{domain}}/events/transaction",
+              "host": ["{{domain}}"],
+              "path": ["events", "transaction"]
+            }
+          },
+          "response": [],
+          "uid": "24163049-03731fdd-da9b-4ee0-aa62-5c2b52bf113b"
+        },
+        {
+          "name": "Invalid Transaction Id",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "id": "7ec9793d-b27b-49d6-abf3-a21c2ee43b10",
+                "exec": [
+                  "pm.test(\"Status code is 404\", function () {",
+                  "    pm.response.to.have.status(404);",
+                  "});",
+                  "",
+                  "pm.test(\"Validation Error Check\", function () {",
+                  "    var jsonData = pm.response.json();",
+                  "    const request = JSON.parse(pm.request.body.raw)",
+                  "    const transactionId = request.transactionId",
+                  "    pm.expect(jsonData.message).to.eql(`Transaction ${transactionId} not found`);",
+                  "});",
+                  "",
+                  "pm.test(\"Message Check\", function () {",
+                  "    var jsonData = pm.response.json();",
+                  "    pm.expect(jsonData.error).to.eql(\"NotFoundError\");",
+                  "});",
+                  "",
+                  "pm.test(\"Body matches string\", function () {",
+                  "    pm.expect(pm.response.text()).to.include(\"message\");",
+                  "});",
+                  "",
+                  "pm.test(\"Body matches string\", function () {",
+                  "    pm.expect(pm.response.text()).to.include(\"error\");",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "id": "a98cbb27-a360-460f-a4d2-a69f0696a383",
+          "protocolProfileBehavior": {
+            "disableBodyPruning": true
+          },
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "tenant-id",
+                "value": "flagright"
+              },
+              {
+                "key": "x-api-key",
+                "value": "{{apiKey}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"transactionId\": \"{{transactionId}}-1-invalid\",\n    \"transactionState\": \"REFUNDED\",\n    \"updatedTransactionAttributes\": {\n        \"originPaymentDetails\": {\n            \"method\": \"CARD\",\n            \"cardAuthenticated\": true,\n            \"cardIssuedCountry\": \"AE\",\n            \"cardBrand\": \"VISA\",\n            \"cardFunding\": \"DEBIT\",\n            \"cardExpiry\": {\n                \"month\": 12,\n                \"year\": 2023\n            },\n            \"cardFingerprint\": \"cRBAUn3Vqtzpf2uq\",\n            \"cardLast4Digits\": \"2018\"\n        }\n    },\n    \"timestamp\": 1664985327329\n}"
+            },
+            "url": {
+              "raw": "{{domain}}/events/transaction",
+              "host": ["{{domain}}"],
+              "path": ["events", "transaction"]
+            }
+          },
+          "response": [],
+          "uid": "24163049-a98cbb27-a360-460f-a4d2-a69f0696a383"
+        },
+        {
+          "name": "No Update Atrributes",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "id": "7ec9793d-b27b-49d6-abf3-a21c2ee43b10",
+                "exec": [
+                  "pm.test(\"Status code is 200\", function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.test(\"Check Transaction State\", function () {",
+                  "    var jsonData = pm.response.json();",
+                  "    pm.expect(jsonData.transaction.transactionState).to.eql(\"REFUNDED\");",
+                  "});",
+                  "",
+                  "pm.test(\"Body matches string\", function () {",
+                  "    pm.expect(pm.response.text()).to.include(\"eventId\");",
+                  "});",
+                  "",
+                  "pm.test(\"Body matches string\", function () {",
+                  "    pm.expect(pm.response.text()).to.include(\"hitRules\");",
+                  "});",
+                  "",
+                  "pm.test(\"Body matches string\", function () {",
+                  "    pm.expect(pm.response.text()).to.include(\"executedRules\");",
+                  "});",
+                  "",
+                  "pm.test(\"Excuted Rules Should be more then 1\", function () {",
+                  "    var jsonData = pm.response.json();",
+                  "    let executedRules = jsonData.executedRules.length > 0",
+                  "    pm.expect(executedRules).to.eql(true);",
+                  "});",
+                  "",
+                  "pm.test(`Match UUID`, () => {",
+                  "    var jsonData = pm.response.json();",
+                  "    pm.expect(jsonData.eventId).to.match(/^[0-9a-f]{8}-[0-9a-f]{4}-[0-5][0-9a-f]{3}-[089ab][0-9a-f]{3}-[0-9a-f]{12}$/i);",
+                  "});",
+                  ""
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "id": "dd7a4759-db4b-4d5d-a97b-07705f73e396",
+          "protocolProfileBehavior": {
+            "disableBodyPruning": true
+          },
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "tenant-id",
+                "value": "flagright"
+              },
+              {
+                "key": "x-api-key",
+                "value": "{{apiKey}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"transactionId\": \"{{transactionId}}\",\n    \"transactionState\": \"REFUNDED\",\n    \"timestamp\": 1664985327329\n}"
+            },
+            "url": {
+              "raw": "{{domain}}/events/transaction",
+              "host": ["{{domain}}"],
+              "path": ["events", "transaction"]
+            }
+          },
+          "response": [],
+          "uid": "24163049-dd7a4759-db4b-4d5d-a97b-07705f73e396"
+        },
+        {
+          "name": "Transaction State not Provided",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "id": "7ec9793d-b27b-49d6-abf3-a21c2ee43b10",
+                "exec": [
+                  "pm.test(\"Status code is 400\", function () {",
+                  "    pm.response.to.have.status(400);",
+                  "});",
+                  "",
+                  "pm.test(\"Validation Error Check\", function () {",
+                  "    var jsonData = pm.response.json();",
+                  "    pm.expect(jsonData.validationErrors).to.eql(\"[object has missing required properties ([\\\"transactionState\\\"])]\");",
+                  "});",
+                  "",
+                  "pm.test(\"Message Check\", function () {",
+                  "    var jsonData = pm.response.json();",
+                  "    pm.expect(jsonData.message).to.eql(\"Invalid request body\");",
+                  "});",
+                  "",
+                  "pm.test(\"Body matches string\", function () {",
+                  "    pm.expect(pm.response.text()).to.include(\"message\");",
+                  "});",
+                  "",
+                  "pm.test(\"Body matches string\", function () {",
+                  "    pm.expect(pm.response.text()).to.include(\"validationErrors\");",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "id": "21d8d4f7-c865-4a13-9333-ff83c41d7591",
+          "protocolProfileBehavior": {
+            "disableBodyPruning": true
+          },
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "tenant-id",
+                "value": "flagright"
+              },
+              {
+                "key": "x-api-key",
+                "value": "{{apiKey}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"transactionId\": \"{{transactionId}}\",\n    \"updatedTransactionAttributes\": {\n        \"originPaymentDetails\": {\n            \"method\": \"CARD\",\n            \"cardAuthenticated\": true,\n            \"cardIssuedCountry\": \"AE\",\n            \"cardBrand\": \"VISA\",\n            \"cardFunding\": \"DEBIT\",\n            \"cardExpiry\": {\n                \"month\": 12,\n                \"year\": 2023\n            },\n            \"cardFingerprint\": \"cRBAUn3Vqtzpf2uq\",\n            \"cardLast4Digits\": \"2018\"\n        }\n    },\n    \"timestamp\": 1664985327329\n}"
+            },
+            "url": {
+              "raw": "{{domain}}/events/transaction",
+              "host": ["{{domain}}"],
+              "path": ["events", "transaction"]
+            }
+          },
+          "response": [],
+          "uid": "24163049-21d8d4f7-c865-4a13-9333-ff83c41d7591"
+        },
+        {
+          "name": "No Api Key",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "id": "7ec9793d-b27b-49d6-abf3-a21c2ee43b10",
+                "exec": [
+                  "pm.test(\"Status code is 401\", function () {",
+                  "    pm.response.to.have.status(401);",
+                  "});",
+                  "",
+                  "pm.test(\"Should Give Unauthorized\", function () {",
+                  "    var jsonData = pm.response.json();",
+                  "    pm.expect(jsonData.message).to.eql(\"Unauthorized\");",
+                  "});",
+                  "",
+                  "pm.test(\"Content-Type is present\", function () {",
+                  "    pm.response.to.have.header(\"Content-Type\");",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "id": "4c7b0093-29a3-4e94-90ca-a03af36e0e83",
+          "protocolProfileBehavior": {
+            "disableBodyPruning": true
+          },
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "tenant-id",
+                "value": "flagright"
+              },
+              {
+                "key": "x-api-key",
+                "value": ""
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"transactionId\": \"{{transactionId}}\",\n    \"transactionState\": \"REFUNDED\",\n    \"updatedTransactionAttributes\": {\n        \"originPaymentDetails\": {\n            \"method\": \"CARD\",\n            \"cardAuthenticated\": true,\n            \"cardIssuedCountry\": \"AE\",\n            \"cardBrand\": \"VISA\",\n            \"cardFunding\": \"DEBIT\",\n            \"cardExpiry\": {\n                \"month\": 12,\n                \"year\": 2023\n            },\n            \"cardFingerprint\": \"cRBAUn3Vqtzpf2uq\",\n            \"cardLast4Digits\": \"2018\"\n        }\n    },\n    \"timestamp\": 1664985327329\n}"
+            },
+            "url": {
+              "raw": "{{domain}}/events/transaction",
+              "host": ["{{domain}}"],
+              "path": ["events", "transaction"]
+            }
+          },
+          "response": [],
+          "uid": "24163049-4c7b0093-29a3-4e94-90ca-a03af36e0e83"
+        },
+        {
+          "name": "Incorrect Domain",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "id": "7ec9793d-b27b-49d6-abf3-a21c2ee43b10",
+                "exec": [
+                  "pm.test(\"Status code is 403\", function () {",
+                  "    pm.response.to.have.status(403);",
+                  "});",
+                  "",
+                  "pm.test(\"Your test name\", function () {",
+                  "    var jsonData = pm.response.json();",
+                  "    pm.expect(jsonData.message).to.eql(\"Forbidden\");",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "id": "1dd83bcf-7d8e-4997-b056-2d0a23e3b381",
+          "protocolProfileBehavior": {
+            "disableBodyPruning": true
+          },
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "tenant-id",
+                "value": "flagright"
+              },
+              {
+                "key": "x-api-key",
+                "value": "{{apiKey}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"transactionId\": \"{{transactionId}}\",\n    \"transactionState\": \"REFUNDED\",\n    \"updatedTransactionAttributes\": {\n        \"originPaymentDetails\": {\n            \"method\": \"CARD\",\n            \"cardAuthenticated\": true,\n            \"cardIssuedCountry\": \"AE\",\n            \"cardBrand\": \"VISA\",\n            \"cardFunding\": \"DEBIT\",\n            \"cardExpiry\": {\n                \"month\": 12,\n                \"year\": 2023\n            },\n            \"cardFingerprint\": \"cRBAUn3Vqtzpf2uq\",\n            \"cardLast4Digits\": \"2018\"\n        }\n    },\n    \"timestamp\": 1664985327329\n}"
+            },
+            "url": {
+              "raw": "{{incorrectDomain}}/events/transaction",
+              "host": ["{{incorrectDomain}}"],
+              "path": ["events", "transaction"]
+            }
+          },
+          "response": [],
+          "uid": "24163049-1dd83bcf-7d8e-4997-b056-2d0a23e3b381"
+        },
+        {
+          "name": "No Body",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "id": "7ec9793d-b27b-49d6-abf3-a21c2ee43b10",
+                "exec": [
+                  "pm.test(\"Status code is 400\", function () {",
+                  "    pm.response.to.have.status(400);",
+                  "});",
+                  "",
+                  "pm.test(\"Validation Error Check\", function () {",
+                  "    var jsonData = pm.response.json();",
+                  "    pm.expect(jsonData.validationErrors).to.eql(\"[Unknown error parsing request body]\");",
+                  "});",
+                  "",
+                  "pm.test(\"Message Check\", function () {",
+                  "    var jsonData = pm.response.json();",
+                  "    pm.expect(jsonData.message).to.eql(\"Invalid request body\");",
+                  "});",
+                  "",
+                  "pm.test(\"Body matches string\", function () {",
+                  "    pm.expect(pm.response.text()).to.include(\"message\");",
+                  "});",
+                  "",
+                  "pm.test(\"Body matches string\", function () {",
+                  "    pm.expect(pm.response.text()).to.include(\"validationErrors\");",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "id": "c2b7326f-8117-46d9-b2d2-9c56cfc54ead",
+          "protocolProfileBehavior": {
+            "disableBodyPruning": true
+          },
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "tenant-id",
+                "value": "flagright"
+              },
+              {
+                "key": "x-api-key",
+                "value": "{{apiKey}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": ""
+            },
+            "url": {
+              "raw": "{{domain}}/events/transaction",
+              "host": ["{{domain}}"],
+              "path": ["events", "transaction"]
+            }
+          },
+          "response": [],
+          "uid": "24163049-c2b7326f-8117-46d9-b2d2-9c56cfc54ead"
+        },
+        {
+          "name": "Empty Body",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "id": "7ec9793d-b27b-49d6-abf3-a21c2ee43b10",
+                "exec": [
+                  "pm.test(\"Status code is 400\", function () {",
+                  "    pm.response.to.have.status(400);",
+                  "});",
+                  "",
+                  "pm.test(\"Validation Error Check\", function () {",
+                  "    var jsonData = pm.response.json();",
+                  "    pm.expect(jsonData.validationErrors).to.eql(\"[object has missing required properties ([\\\"timestamp\\\",\\\"transactionId\\\",\\\"transactionState\\\"])]\");",
+                  "});",
+                  "",
+                  "pm.test(\"Message Check\", function () {",
+                  "    var jsonData = pm.response.json();",
+                  "    pm.expect(jsonData.message).to.eql(\"Invalid request body\");",
+                  "});",
+                  "",
+                  "pm.test(\"Body matches string\", function () {",
+                  "    pm.expect(pm.response.text()).to.include(\"message\");",
+                  "});",
+                  "",
+                  "pm.test(\"Body matches string\", function () {",
+                  "    pm.expect(pm.response.text()).to.include(\"validationErrors\");",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "id": "e373133f-445d-4176-bba6-609119fe0fd8",
+          "protocolProfileBehavior": {
+            "disableBodyPruning": true
+          },
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "tenant-id",
+                "value": "flagright"
+              },
+              {
+                "key": "x-api-key",
+                "value": "{{apiKey}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{}"
+            },
+            "url": {
+              "raw": "{{domain}}/events/transaction",
+              "host": ["{{domain}}"],
+              "path": ["events", "transaction"]
+            }
+          },
+          "response": [],
+          "uid": "24163049-e373133f-445d-4176-bba6-609119fe0fd8"
+        }
+      ],
+      "id": "57e65ad9-2597-4391-8e1d-c1a3e2c97152",
+      "uid": "24163049-57e65ad9-2597-4391-8e1d-c1a3e2c97152"
     }
   ]
 }
