@@ -436,7 +436,11 @@ export const transactionsViewHandler = lambdaApi()(
         'Transaction Uniques'
       )
       transactionsStatsGetSegment?.addAnnotation('tenantId', tenantId)
-      const result = await transactionService.getUniques({ field, filter })
+      const result = await transactionService.getUniques({
+        field,
+        direction: 'origin',
+        filter,
+      })
       transactionsStatsGetSegment?.close()
       return result.filter((item) => item != null)
     } else if (

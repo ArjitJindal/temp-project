@@ -1,7 +1,7 @@
 import { JSONSchemaType } from 'ajv'
-import { AggregationRepository } from '../repositories/aggregation-repository'
 import { RuleHitResult } from '../rule'
 import { INITIAL_TRANSACTIONS_SCHEMA } from '../utils/rule-parameter-schemas'
+import { MongoDbTransactionRepository } from '../repositories/mongodb-transaction-repository'
 import { TransactionRule } from './rule'
 
 export type TransactionNewCurrencyRuleParameters = {
@@ -20,46 +20,29 @@ export default class TransactionNewCurrencyRule extends TransactionRule<Transact
   }
 
   public async computeRule() {
-    const aggregationRepository = new AggregationRepository(
-      this.tenantId,
-      this.dynamoDb
-    )
-    const { originUserId, destinationUserId } = this.transaction
     const senderCurrency =
       this.transaction.originAmountDetails?.transactionCurrency
     const receiverCurrency =
       this.transaction.destinationAmountDetails?.transactionCurrency
-    const [
+    const {
       senderTransactionCurrencies,
       senderTransactionsCount,
       receiverTransactionCurrencies,
       receiverTransactionsCount,
-    ] = await Promise.all([
-      originUserId &&
-        aggregationRepository.getUserTransactionCurrencies(originUserId),
-      originUserId &&
-        aggregationRepository.getUserTransactionsCount(originUserId),
-      destinationUserId &&
-        aggregationRepository.getUserTransactionCurrencies(destinationUserId),
-      destinationUserId &&
-        aggregationRepository.getUserTransactionsCount(destinationUserId),
-    ])
+    } = await this.getData()
 
     const isSenderHit =
       senderTransactionsCount &&
-      senderTransactionsCount.sendingTransactionsCount >=
-        this.parameters.initialTransactions &&
+      senderTransactionsCount >= this.parameters.initialTransactions &&
       senderTransactionCurrencies &&
       receiverCurrency &&
-      !senderTransactionCurrencies.sendingCurrencies.has(receiverCurrency)
+      !senderTransactionCurrencies.has(receiverCurrency)
     const isDestinationHit =
-      destinationUserId &&
       receiverTransactionsCount &&
-      receiverTransactionsCount.receivingTransactionsCount >=
-        this.parameters.initialTransactions &&
+      receiverTransactionsCount >= this.parameters.initialTransactions &&
       receiverTransactionCurrencies &&
       senderCurrency &&
-      !receiverTransactionCurrencies.receivingCurrencies.has(senderCurrency)
+      !receiverTransactionCurrencies.has(senderCurrency)
 
     const hitResult: RuleHitResult = []
     if (isSenderHit) {
@@ -75,5 +58,95 @@ export default class TransactionNewCurrencyRule extends TransactionRule<Transact
       })
     }
     return hitResult
+  }
+
+  private async getData(): Promise<{
+    senderTransactionCurrencies: Set<string>
+    senderTransactionsCount: number
+    receiverTransactionCurrencies: Set<string>
+    receiverTransactionsCount: number
+  }> {
+    const { originUserId, destinationUserId } = this.transaction
+    if (this.aggregationRepository) {
+      const [
+        senderTransactionCurrencies,
+        senderTransactionsCount,
+        receiverTransactionCurrencies,
+        receiverTransactionsCount,
+      ] = await Promise.all([
+        originUserId
+          ? this.aggregationRepository.getUserTransactionCurrencies(
+              originUserId
+            )
+          : undefined,
+        originUserId
+          ? this.aggregationRepository.getUserTransactionsCount(originUserId)
+          : undefined,
+        destinationUserId
+          ? this.aggregationRepository.getUserTransactionCurrencies(
+              destinationUserId
+            )
+          : undefined,
+        destinationUserId
+          ? this.aggregationRepository.getUserTransactionsCount(
+              destinationUserId
+            )
+          : undefined,
+      ])
+      return {
+        senderTransactionCurrencies:
+          senderTransactionCurrencies?.sendingCurrencies || new Set(),
+        senderTransactionsCount:
+          senderTransactionsCount?.sendingTransactionsCount || 0,
+        receiverTransactionCurrencies:
+          receiverTransactionCurrencies?.receivingCurrencies || new Set(),
+        receiverTransactionsCount:
+          receiverTransactionsCount?.receivingTransactionsCount || 0,
+      }
+    }
+
+    const transactionRepository = this
+      .transactionRepository as MongoDbTransactionRepository
+    const [
+      senderTransactionsCount,
+      receiverTransactionsCount,
+      senderTransactionCurrencies,
+      receiverTransactionCurrencies,
+    ] = await Promise.all([
+      originUserId
+        ? await transactionRepository.getTransactionsCount({
+            filterOriginUserId: originUserId,
+          })
+        : 0,
+      destinationUserId
+        ? await transactionRepository.getTransactionsCount({
+            filterDestinationUserId: destinationUserId,
+          })
+        : 0,
+      originUserId
+        ? await transactionRepository.getUniques(
+            {
+              field: 'CURRENCY',
+              direction: 'destination',
+            },
+            [{ originUserId }, { transactionState: 'SUCCESSFUL' }]
+          )
+        : [],
+      destinationUserId
+        ? await transactionRepository.getUniques(
+            {
+              field: 'CURRENCY',
+              direction: 'origin',
+            },
+            [{ destinationUserId }, { transactionState: 'SUCCESSFUL' }]
+          )
+        : [],
+    ])
+    return {
+      senderTransactionCurrencies: new Set(senderTransactionCurrencies),
+      senderTransactionsCount: senderTransactionsCount,
+      receiverTransactionCurrencies: new Set(receiverTransactionCurrencies),
+      receiverTransactionsCount: receiverTransactionsCount,
+    }
   }
 }
