@@ -349,7 +349,29 @@ export class CaseCreationService {
           return true
         }),
       }
+      const hitRuleInstanceIds = filteredTransaction.hitRules.map(
+        (rule) => rule.ruleInstanceId
+      )
       if (userId != null) {
+        const casesHavingSameTransaction =
+          await this.caseRepository.getCasesByUserId(userId, {
+            filterTransactionId: filteredTransaction.transactionId,
+          })
+        const casesHavingSameTransactionWithSameHitRules =
+          casesHavingSameTransaction.filter((c) => {
+            return hitRuleInstanceIds.every((ruleInstanceId) =>
+              c.alerts?.find(
+                (alert) =>
+                  alert.ruleInstanceId === ruleInstanceId &&
+                  alert.transactionIds?.includes(
+                    filteredTransaction.transactionId
+                  )
+              )
+            )
+          })
+        if (casesHavingSameTransactionWithSameHitRules.length > 0) {
+          break
+        }
         const cases = await this.caseRepository.getCasesByUserId(userId, {
           filterOutCaseStatus: 'CLOSED',
           filterMaxTransactions: MAX_TRANSACTION_IN_A_CASE,

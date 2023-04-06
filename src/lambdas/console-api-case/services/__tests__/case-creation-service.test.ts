@@ -400,7 +400,7 @@ describe('Cases', () => {
 
     test('Make sure to select next open and not over fulled case', async () => {
       const caseCreationService = await getService(TEST_TENANT_ID)
-      async function addTransaction(counter: number) {
+      async function addTransaction(counter: number, expectCase: boolean) {
         const transaction = getTestTransaction({
           transactionId: `transaction_${counter}`,
           originUserId: TEST_USER_1.userId,
@@ -415,27 +415,34 @@ describe('Cases', () => {
           ...transaction,
           ...result,
         })
-        return expectUserCase(cases)
+        if (!expectCase) {
+          expect(cases).toHaveLength(0)
+        } else {
+          return expectUserCase(cases)
+        }
       }
 
-      const case1 = await addTransaction(0)
+      const case1 = (await addTransaction(0, true)) as Case
       case1.caseTransactionsIds = [...new Array(999)].map(
         (_, counter) => `fake_transaction_${counter}`
       )
       await caseCreationService.caseRepository.addCaseMongo(case1)
 
       // Goes to the same case, making transaction number 1000
-      const _case1 = await addTransaction(1)
-      expect(_case1.caseId).toEqual(case1.caseId)
+      const case2 = (await addTransaction(1, true)) as Case
+      expect(case2.caseId).toEqual(case1.caseId)
+
+      // Same transaction with same hit rules will not return the case
+      await addTransaction(1, false)
 
       // New case should be created
-      const case2 = await addTransaction(1)
-      expect(case2.caseId).not.toEqual(case1.caseId)
+      const case3 = (await addTransaction(2, true)) as Case
+      expect(case3.caseId).not.toEqual(case1.caseId)
 
       // Next transaction goes to the second case
-      const _case2 = await addTransaction(2)
-      expect(_case2.caseId).toEqual(case2.caseId)
-      expect(_case2.caseTransactionsIds).toHaveLength(2)
+      const case4 = (await addTransaction(3, true)) as Case
+      expect(case4.caseId).toEqual(case3.caseId)
+      expect(case4.caseTransactionsIds).toHaveLength(2)
     })
   })
 

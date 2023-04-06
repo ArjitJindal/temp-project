@@ -52,6 +52,35 @@ const ruleAscendingComparator = (
   rule2: HitRulesDetails
 ) => (rule1.ruleId > rule2.ruleId ? 1 : -1)
 
+export function getExecutedAndHitRulesResult(
+  ruleResults: ExecutedRulesResult[]
+): {
+  executedRules: ExecutedRulesResult[]
+  hitRules: HitRulesDetails[]
+} {
+  const executedRules = ruleResults
+    .filter((result) => result.ruleAction)
+    .sort(ruleAscendingComparator) as ExecutedRulesResult[]
+  const hitRules = ruleResults
+    .filter((result) => result.ruleAction && result.ruleHit)
+    .map((result) => ({
+      ruleId: result.ruleId,
+      ruleInstanceId: result.ruleInstanceId,
+      ruleName: result.ruleName,
+      ruleDescription: result.ruleDescription,
+      ruleAction: result.ruleAction,
+      ruleHitMeta: result.ruleHitMeta,
+      labels: result?.labels,
+      nature: result?.nature,
+    }))
+    .sort(ruleAscendingComparator) as HitRulesDetails[]
+
+  return {
+    executedRules,
+    hitRules,
+  }
+}
+
 export type DuplicateTransactionReturnType = TransactionMonitoringResult & {
   message: string
 }
@@ -307,28 +336,7 @@ export class RulesEngineService {
       hitRuleInstanceIds
     )
     updateStatsSegment?.close()
-
-    const executedRules = ruleResults
-      .filter((result) => result.ruleAction)
-      .sort(ruleAscendingComparator) as ExecutedRulesResult[]
-    const hitRules = ruleResults
-      .filter((result) => result.ruleAction && result.ruleHit)
-      .map((result) => ({
-        ruleId: result.ruleId,
-        ruleInstanceId: result.ruleInstanceId,
-        ruleName: result.ruleName,
-        ruleDescription: result.ruleDescription,
-        ruleAction: result.ruleAction,
-        ruleHitMeta: result.ruleHitMeta,
-        labels: result?.labels,
-        nature: result?.nature,
-      }))
-      .sort(ruleAscendingComparator) as HitRulesDetails[]
-
-    return {
-      executedRules,
-      hitRules,
-    }
+    return getExecutedAndHitRulesResult(ruleResults)
   }
 
   private async verifyTransactionRuleIdempotent(options: {

@@ -332,9 +332,6 @@ export class MongoDbTransactionRepository
         ]
       )
     }
-
-    console.log('txnsssssEEEEE')
-    console.log(JSON.stringify(pipeline))
     return collection.aggregate<InternalTransaction>(pipeline)
   }
 

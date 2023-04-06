@@ -1351,6 +1351,7 @@ export class CaseRepository {
       directions?: ('ORIGIN' | 'DESTINATION')[]
       filterMaxTransactions?: number
       filterOutCaseStatus?: CaseStatus
+      filterTransactionId?: string
     }
   ): Promise<Case[]> {
     const db = this.mongoDb.db()
@@ -1387,6 +1388,12 @@ export class CaseRepository {
     if (directionFilters.length > 0) {
       filters.push({
         $or: directionFilters,
+      })
+    }
+
+    if (params.filterTransactionId) {
+      filters.push({
+        'caseTransactions.transactionId': params.filterTransactionId,
       })
     }
 
