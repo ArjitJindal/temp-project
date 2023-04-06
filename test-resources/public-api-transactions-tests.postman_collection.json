@@ -3,7 +3,7 @@
     "_postman_id": "503b80a7-dd73-4ed0-8aa6-5eaaa06f9ea5",
     "name": "Public API Tests Collection",
     "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
-    "updatedAt": "2023-04-06T14:35:47.000Z",
+    "updatedAt": "2023-04-06T16:23:32.000Z",
     "uid": "24163049-503b80a7-dd73-4ed0-8aa6-5eaaa06f9ea5"
   },
   "item": [
@@ -122,8 +122,7 @@
               },
               {
                 "key": "x-api-key",
-                "value": "2jIV7FVYX25tqURvgAxEo8jyfSBP7ZolOjtHsXCLFqIACXJ4Cyy1bUBER5sn2vNC2bDuG5xUTQLWxUUmn2tHNGcRfVr4yc9SoqD9",
-                "disabled": true
+                "value": ""
               },
               {
                 "key": "Content-Type",
@@ -1328,7 +1327,7 @@
               },
               {
                 "key": "x-api-key",
-                "value": "2jIV7FVYX25tqURYowhFv7xjMF3jKHjW1YNWPOYZM2lGe3CzdhDRQaMBQtg6eS5xK2Y0rO1IrTeQpRASQFkICJ9B7wwzkzlPXmvf"
+                "value": "{{apiKey}}"
               },
               {
                 "key": "Content-Type",
