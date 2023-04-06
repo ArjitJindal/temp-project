@@ -6,9 +6,17 @@
 
 - Describe your changes in a few succinct bullet points
 
+### What's the scope of this change
+
+- [ ] Did you touch the core component like the Table
+- [ ] Does this impact case managment flow (cases, alerts, escalations, reviews, assignment)
+- [ ] Does this update RBAC?
+
 ### Testing
 
-- How were the changes tested
+- [ ] Locally Tested
+- [ ] QA Deployed (mention reason if not)
+- Other ways on how the changes were tested
 
 ### Screenshots
 
