@@ -5408,41 +5408,6 @@ components:
                   type: array
                   items:
                     $ref: '#/components/schemas/ComplyAdvantageSearchHit'
-    MerchantMonitoringSummary:
-      type: object
-      properties:
-        source:
-          type: string
-          enum:
-            - LINKEDIN
-            - COMPANIES_HOUSE
-            - EXPLORIUM
-            - SCRAPE
-        raw:
-          type: string
-        industry:
-          type: string
-        summary:
-          type: string
-        employees:
-          type: string
-        location:
-          type: string
-        revenue:
-          type: string
-        products:
-          type: list
-          items:
-            type: string
-    MerchantMonitoringHistory:
-      type: list
-      items:
-        type: object
-        properties:
-          summary:
-            $ref: '#/components/schemas/MerchantMonitoringSummary'
-          timestamp:
-            type: number
     ComplyAdvantageSearchHit:
       type: object
       properties:
