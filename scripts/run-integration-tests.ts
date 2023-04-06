@@ -43,6 +43,7 @@ async function main() {
   const transactionId = uuidv4()
   const domain: string =
     process.env.DOMAIN ?? config.application.AUTH0_AUDIENCE.slice(0, -1)
+  const userId = uuidv4()
 
   newman.run(
     {
@@ -56,6 +57,7 @@ async function main() {
           key: 'domain',
           value: domain,
         },
+        { key: 'userId', value: userId },
         {
           key: 'incorrectDomain',
           value:

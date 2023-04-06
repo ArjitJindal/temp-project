@@ -3,7 +3,7 @@
     "_postman_id": "503b80a7-dd73-4ed0-8aa6-5eaaa06f9ea5",
     "name": "Public API Tests Collection",
     "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
-    "updatedAt": "2023-04-06T09:44:05.000Z",
+    "updatedAt": "2023-04-06T14:35:47.000Z",
     "uid": "24163049-503b80a7-dd73-4ed0-8aa6-5eaaa06f9ea5"
   },
   "item": [
@@ -801,6 +801,700 @@
       ],
       "id": "4d1b842a-c27f-427d-b7af-e09ebc923e55",
       "uid": "24163049-4d1b842a-c27f-427d-b7af-e09ebc923e55"
+    },
+    {
+      "name": "Consumer Users",
+      "item": [
+        {
+          "name": "Create Consumer User 200",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "id": "abe7e581-24b3-4170-ac7c-fa8312693637",
+                "exec": [
+                  "pm.test(\"Status code is 200\", function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.test(\"Your test name\", function () {",
+                  "    var jsonData = pm.response.json();",
+                  "    var inputJson = JSON.parse(pm.request.body.raw)",
+                  "    const userId = inputJson.userId",
+                  "    ",
+                  "    pm.expect(jsonData.userId).to.eql(userId);",
+                  "});",
+                  "",
+                  "",
+                  "pm.test(\"Body matches string\", function () {",
+                  "    pm.expect(pm.response.text()).to.include(\"userId\");",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "id": "5019659e-695d-4ff0-ad85-ef999a07a01f",
+          "protocolProfileBehavior": {
+            "disableBodyPruning": true
+          },
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "tenant-id",
+                "value": "flagright"
+              },
+              {
+                "key": "x-api-key",
+                "value": "{{apiKey}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"type\": \"CONSUMER\",\n    \"createdTimestamp\": {{timestamp}},\n    \"userId\": \"{{userId}}\",\n    \"reasonForAccountOpening\": [\n        \"Payment\",\n        \"Deposits\"\n    ],\n    \"userDetails\": {\n        \"name\": {\n            \"firstName\": \"Post Man\",\n            \"lastName\": \"Dugar\"\n        },\n        \"dateOfBirth\": \"2007-01-15\",\n        \"countryOfResidence\": \"US\",\n        \"countryOfNationality\": \"RU\"\n    },\n    \"legalDocuments\": [\n        {\n            \"documentType\": \"passport\",\n            \"documentNumber\": \"CB33GME6\",\n            \"documentIssuedDate\": 1639939034,\n            \"documentExpirationDate\": 1839939034,\n            \"documentIssuedCountry\": \"US\"\n        }\n    ],\n    \"tags\": [\n        {\n            \"key\": \"hello\",\n            \"value\": \"wallet\"\n        }\n    ]\n}"
+            },
+            "url": {
+              "raw": "{{domain}}/consumer/users",
+              "host": ["{{domain}}"],
+              "path": ["consumer", "users"]
+            }
+          },
+          "response": [],
+          "uid": "24163049-5019659e-695d-4ff0-ad85-ef999a07a01f"
+        },
+        {
+          "name": "Duplicate User Id",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "id": "abe7e581-24b3-4170-ac7c-fa8312693637",
+                "exec": [
+                  "pm.test(\"Status code is 200\", function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.test(\"Check UserId\", function () {",
+                  "    var jsonData = pm.response.json();",
+                  "    var inputJson = JSON.parse(pm.request.body.raw)",
+                  "    const userId = inputJson.userId",
+                  "    ",
+                  "    pm.expect(jsonData.userId).to.eql(userId);",
+                  "});",
+                  "",
+                  "pm.test(\"Check Message in Duplicate UserId\", function () {",
+                  "    var jsonData = pm.response.json();",
+                  "    pm.expect(jsonData.message).to.eql(\"The provided userId already exists. The user attribute updates are not saved. If you want to update the attributes of this user, please use user events instead.\");",
+                  "});",
+                  "",
+                  "",
+                  "",
+                  "pm.test(\"Body matches string\", function () {",
+                  "    pm.expect(pm.response.text()).to.include(\"userId\");",
+                  "});",
+                  "",
+                  "pm.test(\"Body matches string\", function () {",
+                  "    pm.expect(pm.response.text()).to.include(\"message\");",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "id": "29d3f46a-99ee-42b7-aea3-ec19739d29d7",
+          "protocolProfileBehavior": {
+            "disableBodyPruning": true
+          },
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "tenant-id",
+                "value": "flagright"
+              },
+              {
+                "key": "x-api-key",
+                "value": "{{apiKey}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"type\": \"CONSUMER\",\n    \"createdTimestamp\": {{timestamp}},\n    \"userId\": \"{{userId}}\",\n    \"reasonForAccountOpening\": [\n        \"Payment\",\n        \"Deposits\"\n    ],\n    \"userDetails\": {\n        \"name\": {\n            \"firstName\": \"Post Man\",\n            \"lastName\": \"Dugar\"\n        },\n        \"dateOfBirth\": \"2007-01-15\",\n        \"countryOfResidence\": \"US\",\n        \"countryOfNationality\": \"RU\"\n    },\n    \"legalDocuments\": [\n        {\n            \"documentType\": \"passport\",\n            \"documentNumber\": \"CB33GME6\",\n            \"documentIssuedDate\": 1639939034,\n            \"documentExpirationDate\": 1839939034,\n            \"documentIssuedCountry\": \"US\"\n        }\n    ],\n    \"tags\": [\n        {\n            \"key\": \"hello\",\n            \"value\": \"wallet\"\n        }\n    ]\n}"
+            },
+            "url": {
+              "raw": "{{domain}}/consumer/users",
+              "host": ["{{domain}}"],
+              "path": ["consumer", "users"]
+            }
+          },
+          "response": [],
+          "uid": "24163049-29d3f46a-99ee-42b7-aea3-ec19739d29d7"
+        },
+        {
+          "name": "Incorrect Type in First Name",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "id": "abe7e581-24b3-4170-ac7c-fa8312693637",
+                "exec": [
+                  "pm.test(\"Status code is 400\", function () {",
+                  "    pm.response.to.have.status(400);",
+                  "});",
+                  "",
+                  "pm.test(\"Body matches string message\", function () {",
+                  "    pm.expect(pm.response.text()).to.include(\"message\");",
+                  "});",
+                  "",
+                  "pm.test(\"Body matches string validationerrors\", function () {",
+                  "    pm.expect(pm.response.text()).to.include(\"validationErrors\");",
+                  "});",
+                  "",
+                  "",
+                  "pm.test(\"Message Checker\", function () {",
+                  "    var jsonData = pm.response.json();",
+                  "    pm.expect(jsonData.message).to.eql(\"Invalid request body\");",
+                  "});",
+                  "",
+                  "pm.test(\"ValidationError Message Checker\", function () {",
+                  "    var jsonData = pm.response.json();",
+                  "    pm.expect(jsonData.validationErrors).to.eql(\"[instance type (boolean) does not match any allowed primitive type (allowed: [\\\"string\\\"])]\");",
+                  "});",
+                  "",
+                  "",
+                  "",
+                  ""
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "id": "70eef699-56d0-4f1a-bfe4-00a52f0bb1d3",
+          "protocolProfileBehavior": {
+            "disableBodyPruning": true
+          },
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "tenant-id",
+                "value": "flagright"
+              },
+              {
+                "key": "x-api-key",
+                "value": "{{apiKey}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"type\": \"CONSUMER\",\n    \"createdTimestamp\": {{timestamp}},\n    \"userId\": \"{{userId}}-2\",\n    \"reasonForAccountOpening\": [\n        \"Payment\",\n        \"Deposits\"\n    ],\n    \"userDetails\": {\n        \"name\": {\n            \"firstName\": true,\n            \"lastName\": \"Dugar\"\n        },\n        \"dateOfBirth\": \"2007-01-15\",\n        \"countryOfResidence\": \"US\",\n        \"countryOfNationality\": \"RU\"\n    },\n    \"legalDocuments\": [\n        {\n            \"documentType\": \"passport\",\n            \"documentNumber\": \"CB33GME6\",\n            \"documentIssuedDate\": 1639939034,\n            \"documentExpirationDate\": 1839939034,\n            \"documentIssuedCountry\": \"US\"\n        }\n    ],\n    \"tags\": [\n        {\n            \"key\": \"hello\",\n            \"value\": \"wallet\"\n        }\n    ]\n}"
+            },
+            "url": {
+              "raw": "{{domain}}/consumer/users",
+              "host": ["{{domain}}"],
+              "path": ["consumer", "users"]
+            }
+          },
+          "response": [],
+          "uid": "24163049-70eef699-56d0-4f1a-bfe4-00a52f0bb1d3"
+        },
+        {
+          "name": "First Name Not Provided",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "id": "abe7e581-24b3-4170-ac7c-fa8312693637",
+                "exec": [
+                  "pm.test(\"Status code is 400\", function () {",
+                  "    pm.response.to.have.status(400);",
+                  "});",
+                  "",
+                  "pm.test(\"Body matches string message\", function () {",
+                  "    pm.expect(pm.response.text()).to.include(\"message\");",
+                  "});",
+                  "",
+                  "pm.test(\"Body matches string validationerrors\", function () {",
+                  "    pm.expect(pm.response.text()).to.include(\"validationErrors\");",
+                  "});",
+                  "",
+                  "",
+                  "pm.test(\"Message Checker\", function () {",
+                  "    var jsonData = pm.response.json();",
+                  "    pm.expect(jsonData.message).to.eql(\"Invalid request body\");",
+                  "});",
+                  "",
+                  "pm.test(\"ValidationError Message Checker\", function () {",
+                  "    var jsonData = pm.response.json();",
+                  "    pm.expect(jsonData.validationErrors).to.eql(\"[object has missing required properties ([\\\"firstName\\\"])]\");",
+                  "});",
+                  "",
+                  "",
+                  "",
+                  ""
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "id": "1bdf4796-1ebe-4202-863b-c8e064b5d7a7",
+          "protocolProfileBehavior": {
+            "disableBodyPruning": true
+          },
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "tenant-id",
+                "value": "flagright"
+              },
+              {
+                "key": "x-api-key",
+                "value": "{{apiKey}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"type\": \"CONSUMER\",\n    \"createdTimestamp\": {{timestamp}},\n    \"userId\": \"{{userId}}\",\n    \"reasonForAccountOpening\": [\n        \"Payment\",\n        \"Deposits\"\n    ],\n    \"userDetails\": {\n        \"name\": {\n            \"lastName\": \"Test\"\n        },\n        \"dateOfBirth\": \"2007-01-15\",\n        \"countryOfResidence\": \"US\",\n        \"countryOfNationality\": \"RU\"\n    },\n    \"legalDocuments\": [\n        {\n            \"documentType\": \"passport\",\n            \"documentNumber\": \"CB33GME6\",\n            \"documentIssuedDate\": 1639939034,\n            \"documentExpirationDate\": 1839939034,\n            \"documentIssuedCountry\": \"US\"\n        }\n    ],\n    \"tags\": [\n        {\n            \"key\": \"hello\",\n            \"value\": \"test\"\n        }\n    ]\n}"
+            },
+            "url": {
+              "raw": "{{domain}}/consumer/users",
+              "host": ["{{domain}}"],
+              "path": ["consumer", "users"]
+            }
+          },
+          "response": [],
+          "uid": "24163049-1bdf4796-1ebe-4202-863b-c8e064b5d7a7"
+        },
+        {
+          "name": "Value not Provided in Tags",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "id": "abe7e581-24b3-4170-ac7c-fa8312693637",
+                "exec": [
+                  "pm.test(\"Status code is 400\", function () {",
+                  "    pm.response.to.have.status(400);",
+                  "});",
+                  "",
+                  "pm.test(\"Body matches string message\", function () {",
+                  "    pm.expect(pm.response.text()).to.include(\"message\");",
+                  "});",
+                  "",
+                  "pm.test(\"Body matches string validationerrors\", function () {",
+                  "    pm.expect(pm.response.text()).to.include(\"validationErrors\");",
+                  "});",
+                  "",
+                  "",
+                  "pm.test(\"Message Checker\", function () {",
+                  "    var jsonData = pm.response.json();",
+                  "    pm.expect(jsonData.message).to.eql(\"Invalid request body\");",
+                  "});",
+                  "",
+                  "pm.test(\"ValidationError Message Checker\", function () {",
+                  "    var jsonData = pm.response.json();",
+                  "    pm.expect(jsonData.validationErrors).to.eql(\"[object has missing required properties ([\\\"value\\\"])]\");",
+                  "});",
+                  "",
+                  "",
+                  "",
+                  ""
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "id": "a9b7e9ee-07f2-47d0-8765-78a239f20a63",
+          "protocolProfileBehavior": {
+            "disableBodyPruning": true
+          },
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "tenant-id",
+                "value": "flagright"
+              },
+              {
+                "key": "x-api-key",
+                "value": "{{apiKey}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"type\": \"CONSUMER\",\n    \"createdTimestamp\": {{timestamp}},\n    \"userId\": \"{{userId}}\",\n    \"reasonForAccountOpening\": [\n        \"Payment\",\n        \"Deposits\"\n    ],\n    \"userDetails\": {\n        \"name\": {\n            \"firstName\": \"Post man\",\n            \"lastName\": \"Test\"\n        },\n        \"dateOfBirth\": \"2007-01-15\",\n        \"countryOfResidence\": \"US\",\n        \"countryOfNationality\": \"RU\"\n    },\n    \"legalDocuments\": [\n        {\n            \"documentType\": \"passport\",\n            \"documentNumber\": \"CB33GME6\",\n            \"documentIssuedDate\": 1639939034,\n            \"documentExpirationDate\": 1839939034,\n            \"documentIssuedCountry\": \"US\"\n        }\n    ],\n    \"tags\": [\n        {\n            \"key\": \"hello\"\n        }\n    ]\n}"
+            },
+            "url": {
+              "raw": "{{domain}}/consumer/users",
+              "host": ["{{domain}}"],
+              "path": ["consumer", "users"]
+            }
+          },
+          "response": [],
+          "uid": "24163049-a9b7e9ee-07f2-47d0-8765-78a239f20a63"
+        },
+        {
+          "name": "User Id not givern",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "id": "abe7e581-24b3-4170-ac7c-fa8312693637",
+                "exec": [
+                  "pm.test(\"Status code is 400\", function () {",
+                  "    pm.response.to.have.status(400);",
+                  "});",
+                  "",
+                  "pm.test(\"Body matches string message\", function () {",
+                  "    pm.expect(pm.response.text()).to.include(\"message\");",
+                  "});",
+                  "",
+                  "pm.test(\"Body matches string validationerrors\", function () {",
+                  "    pm.expect(pm.response.text()).to.include(\"validationErrors\");",
+                  "});",
+                  "",
+                  "",
+                  "pm.test(\"Message Checker\", function () {",
+                  "    var jsonData = pm.response.json();",
+                  "    pm.expect(jsonData.message).to.eql(\"Invalid request body\");",
+                  "});",
+                  "",
+                  "pm.test(\"ValidationError Message Checker\", function () {",
+                  "    var jsonData = pm.response.json();",
+                  "    pm.expect(jsonData.validationErrors).to.eql(\"[object has missing required properties ([\\\"userId\\\"])]\");",
+                  "});",
+                  "",
+                  "",
+                  "",
+                  ""
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "id": "f8d88c23-64c8-4390-92ca-e046766a43dc",
+          "protocolProfileBehavior": {
+            "disableBodyPruning": true
+          },
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "tenant-id",
+                "value": "flagright"
+              },
+              {
+                "key": "x-api-key",
+                "value": "{{apiKey}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"type\": \"CONSUMER\",\n    \"createdTimestamp\": {{timestamp}},\n    \"reasonForAccountOpening\": [\n        \"Payment\",\n        \"Deposits\"\n    ],\n    \"userDetails\": {\n        \"name\": {\n            \"firstName\": \"Post Man\",\n            \"lastName\": \"Test\"\n        },\n        \"dateOfBirth\": \"2007-01-15\",\n        \"countryOfResidence\": \"US\",\n        \"countryOfNationality\": \"RU\"\n    },\n    \"legalDocuments\": [\n        {\n            \"documentType\": \"passport\",\n            \"documentNumber\": \"CB33GME6\",\n            \"documentIssuedDate\": 1639939034,\n            \"documentExpirationDate\": 1839939034,\n            \"documentIssuedCountry\": \"US\"\n        }\n    ],\n    \"tags\": [\n        {\n            \"key\": \"hello\",\n            \"value\": \"wallet\"\n        }\n    ]\n}"
+            },
+            "url": {
+              "raw": "{{domain}}/consumer/users",
+              "host": ["{{domain}}"],
+              "path": ["consumer", "users"]
+            }
+          },
+          "response": [],
+          "uid": "24163049-f8d88c23-64c8-4390-92ca-e046766a43dc"
+        },
+        {
+          "name": "No Api Key",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "id": "abe7e581-24b3-4170-ac7c-fa8312693637",
+                "exec": [
+                  "pm.test(\"Status code is 401\", function () {",
+                  "    pm.response.to.have.status(401);",
+                  "});",
+                  "",
+                  "pm.test(\"Body matches string\", function () {",
+                  "    pm.expect(pm.response.text()).to.include(\"message\");",
+                  "});",
+                  "",
+                  "pm.test(\"Message Check\", function () {",
+                  "    var jsonData = pm.response.json();",
+                  "    pm.expect(jsonData.message).to.eql(\"Unauthorized\");",
+                  "});",
+                  "",
+                  "",
+                  ""
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "id": "c587528e-708e-4e28-b82e-603870a3666b",
+          "protocolProfileBehavior": {
+            "disableBodyPruning": true
+          },
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "tenant-id",
+                "value": "flagright"
+              },
+              {
+                "key": "x-api-key",
+                "value": ""
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"type\": \"CONSUMER\",\n    \"createdTimestamp\": {{timestamp}},\n    \"userId\": \"{{userId}}\",\n    \"reasonForAccountOpening\": [\n        \"Payment\",\n        \"Deposits\"\n    ],\n    \"userDetails\": {\n        \"name\": {\n            \"firstName\": \"Post Man\",\n            \"lastName\": \"Test\"\n        },\n        \"dateOfBirth\": \"2007-01-15\",\n        \"countryOfResidence\": \"US\",\n        \"countryOfNationality\": \"RU\"\n    },\n    \"legalDocuments\": [\n        {\n            \"documentType\": \"passport\",\n            \"documentNumber\": \"CB33GME6\",\n            \"documentIssuedDate\": 1639939034,\n            \"documentExpirationDate\": 1839939034,\n            \"documentIssuedCountry\": \"US\"\n        }\n    ],\n    \"tags\": [\n        {\n            \"key\": \"hello\",\n            \"value\": \"wallet\"\n        }\n    ]\n}"
+            },
+            "url": {
+              "raw": "{{domain}}/consumer/users",
+              "host": ["{{domain}}"],
+              "path": ["consumer", "users"]
+            }
+          },
+          "response": [],
+          "uid": "24163049-c587528e-708e-4e28-b82e-603870a3666b"
+        },
+        {
+          "name": "Incorrect-Domain",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "id": "abe7e581-24b3-4170-ac7c-fa8312693637",
+                "exec": [
+                  "pm.test(\"Status code is 403\", function () {",
+                  "    pm.response.to.have.status(403);",
+                  "});",
+                  "",
+                  "",
+                  "pm.test(\"Matches Key\", function () {",
+                  "    pm.expect(pm.response.text()).to.include(\"message\");",
+                  "});",
+                  "",
+                  "pm.test(\"Matches Text\", function () {",
+                  "    var jsonData = pm.response.json();",
+                  "    pm.expect(jsonData.message).to.eql(\"Forbidden\");",
+                  "});",
+                  ""
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "id": "c09bba7c-068f-431e-b7fb-d2e53bdff618",
+          "protocolProfileBehavior": {
+            "disableBodyPruning": true
+          },
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "tenant-id",
+                "value": "flagright"
+              },
+              {
+                "key": "x-api-key",
+                "value": "2jIV7FVYX25tqURYowhFv7xjMF3jKHjW1YNWPOYZM2lGe3CzdhDRQaMBQtg6eS5xK2Y0rO1IrTeQpRASQFkICJ9B7wwzkzlPXmvf"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"type\": \"CONSUMER\",\n    \"createdTimestamp\": {{timestamp}},\n    \"userId\": \"{{userId}}\",\n    \"reasonForAccountOpening\": [\n        \"Payment\",\n        \"Deposits\"\n    ],\n    \"userDetails\": {\n        \"name\": {\n            \"firstName\": \"Post Man\",\n            \"lastName\": \"Test\"\n        },\n        \"dateOfBirth\": \"2007-01-15\",\n        \"countryOfResidence\": \"US\",\n        \"countryOfNationality\": \"RU\"\n    },\n    \"legalDocuments\": [\n        {\n            \"documentType\": \"passport\",\n            \"documentNumber\": \"CB33GME6\",\n            \"documentIssuedDate\": 1639939034,\n            \"documentExpirationDate\": 1839939034,\n            \"documentIssuedCountry\": \"US\"\n        }\n    ],\n    \"tags\": [\n        {\n            \"key\": \"hello\",\n            \"value\": \"wallet\"\n        }\n    ]\n}"
+            },
+            "url": {
+              "raw": "{{incorrectDomain}}/consumer/users",
+              "host": ["{{incorrectDomain}}"],
+              "path": ["consumer", "users"]
+            }
+          },
+          "response": [],
+          "uid": "24163049-c09bba7c-068f-431e-b7fb-d2e53bdff618"
+        },
+        {
+          "name": "No Body",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "id": "abe7e581-24b3-4170-ac7c-fa8312693637",
+                "exec": [
+                  "pm.test(\"Status code is 400\", function () {",
+                  "    pm.response.to.have.status(400);",
+                  "});",
+                  "",
+                  "pm.test(\"Body matches string message\", function () {",
+                  "    pm.expect(pm.response.text()).to.include(\"message\");",
+                  "});",
+                  "",
+                  "pm.test(\"Body matches string validationerrors\", function () {",
+                  "    pm.expect(pm.response.text()).to.include(\"validationErrors\");",
+                  "});",
+                  "",
+                  "",
+                  "pm.test(\"Message Checker\", function () {",
+                  "    var jsonData = pm.response.json();",
+                  "    pm.expect(jsonData.message).to.eql(\"Invalid request body\");",
+                  "});",
+                  "",
+                  "pm.test(\"ValidationError Message Checker\", function () {",
+                  "    var jsonData = pm.response.json();",
+                  "    pm.expect(jsonData.validationErrors).to.eql(\"[Unknown error parsing request body]\");",
+                  "});",
+                  "",
+                  "",
+                  "",
+                  ""
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "id": "86c52ad2-7288-4d8f-9314-dada2a6dc286",
+          "protocolProfileBehavior": {
+            "disableBodyPruning": true
+          },
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "tenant-id",
+                "value": "flagright"
+              },
+              {
+                "key": "x-api-key",
+                "value": "{{apiKey}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": ""
+            },
+            "url": {
+              "raw": "{{domain}}/consumer/users",
+              "host": ["{{domain}}"],
+              "path": ["consumer", "users"]
+            }
+          },
+          "response": [],
+          "uid": "24163049-86c52ad2-7288-4d8f-9314-dada2a6dc286"
+        },
+        {
+          "name": "Empty Body",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "id": "abe7e581-24b3-4170-ac7c-fa8312693637",
+                "exec": [
+                  "pm.test(\"Status code is 400\", function () {",
+                  "    pm.response.to.have.status(400);",
+                  "});",
+                  "",
+                  "pm.test(\"Body matches string message\", function () {",
+                  "    pm.expect(pm.response.text()).to.include(\"message\");",
+                  "});",
+                  "",
+                  "pm.test(\"Body matches string validationerrors\", function () {",
+                  "    pm.expect(pm.response.text()).to.include(\"validationErrors\");",
+                  "});",
+                  "",
+                  "",
+                  "pm.test(\"Message Checker\", function () {",
+                  "    var jsonData = pm.response.json();",
+                  "    pm.expect(jsonData.message).to.eql(\"Invalid request body\");",
+                  "});",
+                  "",
+                  "pm.test(\"ValidationError Message Checker\", function () {",
+                  "    var jsonData = pm.response.json();",
+                  "    pm.expect(jsonData.validationErrors).to.eql(\"[object has missing required properties ([\\\"createdTimestamp\\\",\\\"userId\\\"])]\");",
+                  "});",
+                  "",
+                  "",
+                  "",
+                  ""
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "id": "482986ad-46b3-4345-9542-dfcaf03dd65c",
+          "protocolProfileBehavior": {
+            "disableBodyPruning": true
+          },
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "tenant-id",
+                "value": "flagright"
+              },
+              {
+                "key": "x-api-key",
+                "value": "{{apiKey}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{}"
+            },
+            "url": {
+              "raw": "{{domain}}/consumer/users",
+              "host": ["{{domain}}"],
+              "path": ["consumer", "users"]
+            }
+          },
+          "response": [],
+          "uid": "24163049-482986ad-46b3-4345-9542-dfcaf03dd65c"
+        }
+      ],
+      "id": "bbd47037-d9fb-4727-be02-43a93facffcf",
+      "uid": "24163049-bbd47037-d9fb-4727-be02-43a93facffcf"
     }
   ]
 }
