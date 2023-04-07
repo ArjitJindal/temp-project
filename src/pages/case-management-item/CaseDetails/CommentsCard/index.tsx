@@ -1,8 +1,8 @@
 import React, { useMemo, useState } from 'react';
-import { message } from 'antd';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import _ from 'lodash';
 import s from './index.module.less';
+import { message } from '@/components/library/Message';
 import * as Card from '@/components/ui/Card';
 import Comment from '@/components/CommentsCard/Comment';
 import { useAuth0User } from '@/utils/user-utils';
@@ -69,7 +69,7 @@ export default function CommentsCard(props: Props) {
         setDeletingCommentIds((prevIds) => prevIds.filter((prevId) => prevId !== commentId));
         message.success('Comment deleted');
       } catch (e) {
-        message.error(`Unable to delete comment! ${getErrorMessage(e)}`);
+        message.fatal(`Unable to delete comment! ${getErrorMessage(e)}`, e);
       }
     },
     {

@@ -1,7 +1,8 @@
 import React, { useState } from 'react';
 import _ from 'lodash';
-import { message, Popover, Radio, Select } from 'antd';
+import { Popover, Radio, Select } from 'antd';
 import s from './styles.module.less';
+import { message } from '@/components/library/Message';
 import DownloadFillIcon from '@/components/ui/icons/Remix/system/download-fill.react.svg';
 import Button from '@/components/library/Button';
 import { flatItems } from '@/components/ui/Table/utils';
@@ -102,7 +103,7 @@ export default function DownloadButton<T extends object>(props: Props<T>) {
       message.success(`Data export finished, downloading should start in a moment!`);
       download(fileName, serialize(result));
     } catch (e) {
-      message.error(`Unable to export data. ${getErrorMessage(e)}`);
+      message.fatal(`Unable to export data. ${getErrorMessage(e)}`, e);
       console.error(e);
     } finally {
       setProgress(null);

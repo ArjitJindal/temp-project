@@ -57,7 +57,7 @@ export default function RoleForm({ role, onChange }: { role?: AccountRole; onCha
       message.success(`${roleName} role saved`);
       onChange();
     } catch (e) {
-      message.error(`Failed to save role - ${getErrorMessage(e)}`);
+      message.fatal(`Failed to save role - ${getErrorMessage(e)}`, e);
     } finally {
       setLoading(false);
     }
@@ -70,7 +70,7 @@ export default function RoleForm({ role, onChange }: { role?: AccountRole; onCha
       message.success(`${role?.name} was deleted.`);
       onChange();
     } catch (e) {
-      message.error(`Failed to delete role - ${getErrorMessage(e)}`);
+      message.fatal(`Failed to delete role - ${getErrorMessage(e)}`, e);
     } finally {
       setLoading(false);
     }

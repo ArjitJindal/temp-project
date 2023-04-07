@@ -1,5 +1,5 @@
 import { Fragment, useCallback, useMemo, useState } from 'react';
-import { Typography, message } from 'antd';
+import { Typography } from 'antd';
 import Modal from '@/components/ui/Modal';
 import { JsonSchemaForm } from '@/components/JsonSchemaForm';
 import { getFixedSchemaJsonForm } from '@/utils/json';
@@ -10,6 +10,7 @@ import COLORS from '@/components/ui/colors';
 import { Feature } from '@/apis/models/Feature';
 import { useAuth0User } from '@/utils/user-utils';
 import { FEATURES } from '@/apis/models-custom/Feature';
+import { message } from '@/components/library/Message';
 
 interface Props {
   visible: boolean;
@@ -119,7 +120,7 @@ export const CreateTenantModal = (props: Props) => {
       setResponse(response);
       message.success('Tenant created successfully');
     } catch (error) {
-      message.error(`Error creating tenant ${getErrorMessage(error)}`);
+      message.fatal(`Error creating tenant ${getErrorMessage(error)}`, error);
     }
   }, [formDetails, api]);
 

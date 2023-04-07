@@ -1,4 +1,4 @@
-import { message, Tabs } from 'antd';
+import { Tabs } from 'antd';
 import { useLocalStorageState } from 'ahooks';
 import { useEffect, useState } from 'react';
 import { useNavigate, useParams } from 'react-router';
@@ -18,6 +18,7 @@ import { useApi } from '@/api';
 import { useFeatureEnabled } from '@/components/AppWrapper/Providers/SettingsProvider';
 import { removeEmpty } from '@/utils/json';
 import { useHasPermissions } from '@/utils/user-utils';
+import { message } from '@/components/library/Message';
 
 const TableList = () => {
   usePageViewTracker('Rules Page');
@@ -85,8 +86,7 @@ const TableList = () => {
         message.success(`Rule instance created!`);
       },
       onError: (err) => {
-        console.error(err);
-        message.error(`Unable to create rule instance! ${getErrorMessage(err)}`);
+        message.fatal(`Unable to create rule instance! ${getErrorMessage(err)}`, err);
       },
     },
   );

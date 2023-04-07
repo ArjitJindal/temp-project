@@ -57,7 +57,7 @@ export default function CasesStatusChangeModal(props: Props) {
       }
       message.success('Saved');
     } catch (e) {
-      message.error(`Failed to update the case! ${getErrorMessage(e)}`);
+      message.fatal(`Failed to update the case! ${getErrorMessage(e)}`, e);
     } finally {
       hideMessage();
     }

@@ -2,17 +2,28 @@ import React from 'react';
 import { message as AntMessage } from 'antd';
 import cn from 'clsx';
 import { NoticeType } from 'antd/lib/message';
+import * as Sentry from '@sentry/react';
 import s from './index.module.less';
 import CheckboxCircleFillIcon from '@/components/ui/icons/Remix/system/checkbox-circle-fill.react.svg';
 import CloseCircleFillIcon from '@/components/ui/icons/Remix/system/close-circle-fill.react.svg';
 import CloseFillIcon from '@/components/ui/icons/Remix/system/close-fill.react.svg';
 
+const errorsCaptured: string[] = [];
+
 export type CloseMessage = () => void;
 
 export type ShowMessage = (message: string) => CloseMessage;
-
+export type ShowMessageWithOptionalError = (message: string, error?: any | unknown) => CloseMessage;
 export const success: ShowMessage = (message: string) => {
   return open(message, 'SUCCESS');
+};
+
+export const fatal: ShowMessageWithOptionalError = (message: string, error: any | unknown) => {
+  if (!errorsCaptured.includes(message) && process.env.ENV !== 'local') {
+    errorsCaptured.push(message); // prevent duplicate errors
+    Sentry.captureException(error);
+  }
+  return open(message, 'ERROR');
 };
 
 export const error: ShowMessage = (message: string) => {
@@ -32,6 +43,7 @@ export const message = {
   error,
   loading,
   warn,
+  fatal,
 };
 
 /*

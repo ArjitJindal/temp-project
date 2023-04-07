@@ -1,5 +1,5 @@
 import React, { useCallback, useRef, useState } from 'react';
-import { Input, message } from 'antd';
+import { Input } from 'antd';
 import s from './index.module.less';
 import { CommonParams, DEFAULT_PARAMS_STATE, TableActionType } from '@/components/ui/Table';
 import { ListHeader } from '@/apis';
@@ -13,6 +13,7 @@ import { getListSubtypeTitle, Metadata } from '@/pages/lists/helpers';
 import { TableColumn } from '@/components/ui/Table/types';
 import NewValueInput from '@/pages/lists/NewListDrawer/NewValueInput';
 import { useApiTime } from '@/utils/tracker';
+import { message } from '@/components/library/Message';
 
 interface ExistedTableItemData {
   value: string;
@@ -62,7 +63,7 @@ function UserListTable(props: Props) {
   const [isAddUserLoading, setAddUserLoading] = useState(false);
 
   const handleAddItem = useCallback(() => {
-    const hideMessage = message.loading('Adding item to a list...', 0);
+    const hideMessage = message.loading('Adding item to a list...');
     if (isNewUserValid) {
       setAddUserLoading(true);
       Promise.all(
@@ -91,7 +92,7 @@ function UserListTable(props: Props) {
         })
         .catch((e) => {
           hideMessage();
-          message.error(`Unable to add an item to a list! ${getErrorMessage(e)}`);
+          message.fatal(`Unable to add an item to a list! ${getErrorMessage(e)}`, e);
         })
         .finally(() => {
           setAddUserLoading(false);
@@ -120,7 +121,7 @@ function UserListTable(props: Props) {
           tableRef.current?.reload();
         })
         .catch((e) => {
-          message.error(`Unable to save user! ${getErrorMessage(e)}`);
+          message.fatal(`Unable to save user! ${getErrorMessage(e)}`, e);
         })
         .finally(() => {
           setEditUserLoading(false);
@@ -140,7 +141,7 @@ function UserListTable(props: Props) {
         tableRef.current?.reload();
       })
       .catch((e) => {
-        message.error(`Unable to delete user from list! ${getErrorMessage(e)}`);
+        message.fatal(`Unable to delete user from list! ${getErrorMessage(e)}`, e);
       })
       .finally(() => {
         setEditDeleteLoading(false);

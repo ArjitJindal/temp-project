@@ -1,4 +1,3 @@
-import { message } from 'antd';
 import { useMutation } from '@tanstack/react-query';
 import RiskClassificationTable, {
   ApiState,
@@ -10,6 +9,7 @@ import Button from '@/components/library/Button';
 import { useApi } from '@/api';
 import { useHasPermissions } from '@/utils/user-utils';
 import { RiskClassificationScore } from '@/apis';
+import { message } from '@/components/library/Message';
 
 type Props = {
   riskValues: RiskClassificationScore[];
@@ -32,7 +32,7 @@ export default function RiskQualification(props: Props) {
       },
       onError: (e) => {
         const error = e instanceof Error ? e.message : 'Unable to save risk values';
-        message.error(error);
+        message.fatal(error, e);
       },
     },
   );

@@ -55,8 +55,7 @@ export default function Comments(props: Props) {
         );
       },
       onError: async (error) => {
-        console.log(error);
-        message.error(`Unable to add comment! ${getErrorMessage(error)}`);
+        message.fatal(`Unable to add comment! ${getErrorMessage(error)}`, error);
       },
     },
   );
@@ -87,8 +86,7 @@ export default function Comments(props: Props) {
         );
       },
       onError: (error) => {
-        console.log(error);
-        message.error(`Unable to delete comment! ${getErrorMessage(error)}`);
+        message.fatal(`Unable to delete comment! ${getErrorMessage(error)}`, error);
       },
     },
   );

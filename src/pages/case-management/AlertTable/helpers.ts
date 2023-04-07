@@ -46,7 +46,7 @@ const useCreateNewCaseMutation = ({
         setSelectedEntities([]);
       },
       onError: (e) => {
-        message.error(`Unable to create a new case! ${getErrorMessage(e)}`);
+        message.fatal(`Unable to create a new case! ${getErrorMessage(e)}`, e);
       },
     },
   );

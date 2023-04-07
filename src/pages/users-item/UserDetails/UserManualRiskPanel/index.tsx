@@ -1,10 +1,11 @@
-import { Form, message, Tooltip } from 'antd';
+import { Form, Tooltip } from 'antd';
 import { useEffect, useState } from 'react';
 import cn from 'clsx';
 import s from './index.module.less';
 import RiskLevelSwitch from '@/components/ui/RiskLevelSwitch';
 import { useApi } from '@/api';
 import { RiskLevel } from '@/utils/risk-levels';
+import { message } from '@/components/library/Message';
 import {
   AsyncResource,
   failed,
@@ -47,7 +48,7 @@ export default function UserManualRiskPanel(props: Props) {
         console.error(e);
         // todo: i18n
         setSyncState(failed(e instanceof Error ? e.message : 'Unknown error'));
-        message.error('Unable to get user risk level!');
+        message.fatal('Unable to get user risk level!', e);
       });
     return () => {
       isCanceled = true;
@@ -83,7 +84,7 @@ export default function UserManualRiskPanel(props: Props) {
       .catch((e) => {
         console.error(e);
         setSyncState(failed(e instanceof Error ? e.message : 'Unknown error'));
-        message.error('Unable to lock risk level!');
+        message.fatal('Unable to lock risk level!', e);
       });
   };
 
@@ -105,7 +106,7 @@ export default function UserManualRiskPanel(props: Props) {
         console.error(e);
         // todo: i18n
         setSyncState(failed(e instanceof Error ? e.message : 'Unknown error'));
-        message.error('Unable to update user risk level!');
+        message.fatal('Unable to update user risk level!', e);
       });
   };
 

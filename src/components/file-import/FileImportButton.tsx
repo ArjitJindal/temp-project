@@ -1,9 +1,10 @@
 import { InboxOutlined, LoadingOutlined, UploadOutlined } from '@ant-design/icons';
-import { Alert, Divider, message, Modal, Select } from 'antd';
+import { Alert, Divider, Modal, Select } from 'antd';
 import { useCallback, useState } from 'react';
 import Dragger from 'antd/es/upload/Dragger';
 import filesize from 'filesize';
 import _ from 'lodash';
+import { message } from '@/components/library/Message';
 import Button from '@/components/library/Button';
 import { FileInfo, ImportRequestFormatEnum, ImportRequestTypeEnum } from '@/apis';
 import { useApi } from '@/api';
@@ -72,7 +73,7 @@ export const FileImportButton: React.FC<FileImportButtonProps> = ({ type, button
             const latestStatus = _.last(importInfo.statuses);
             if (latestStatus?.status === 'FAILED') {
               setErrorText(importInfo.error);
-              message.error('Failed to import the file');
+              message.fatal('Failed to import the file', new Error(importInfo.error));
               return;
             } else if (latestStatus?.status === 'SUCCESS') {
               message.success(
@@ -84,7 +85,7 @@ export const FileImportButton: React.FC<FileImportButtonProps> = ({ type, button
           }
           await sleep(10 * 1000);
         }
-        message.error('Failed to import the file - timeout');
+        message.fatal('Failed to import the file - timeout', new Error('Timeout error'));
       } finally {
         hideMessage && hideMessage();
         setLoading(false);
@@ -162,7 +163,7 @@ export const FileImportButton: React.FC<FileImportButtonProps> = ({ type, button
                 setFile({ s3Key, filename: file.name, size: file.size });
                 hideMessage();
               } catch (error) {
-                message.error('Failed to upload the file');
+                message.fatal('Failed to upload the file', error);
               } finally {
                 hideMessage && hideMessage();
                 setLoading(false);

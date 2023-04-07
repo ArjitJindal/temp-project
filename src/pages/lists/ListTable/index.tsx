@@ -1,5 +1,5 @@
 import React, { useImperativeHandle, useState } from 'react';
-import { message, Switch } from 'antd';
+import { Switch } from 'antd';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { ListHeader, ListMetadata, ListType } from '@/apis';
 import { useApi } from '@/api';
@@ -17,6 +17,7 @@ import { map } from '@/utils/asyncResource';
 import { getListSubtypeTitle, stringifyListType } from '@/pages/lists/helpers';
 import { useApiTime } from '@/utils/tracker';
 import { useHasPermissions } from '@/utils/user-utils';
+import { message } from '@/components/library/Message';
 
 export type ListTableRef = React.Ref<{
   reload: () => void;
@@ -49,7 +50,7 @@ function ListTable(props: Props, ref: ListTableRef) {
   >(
     async (event) => {
       const { listId, metadata } = event;
-      const hideMessage = message.loading('Updating list...', 0);
+      const hideMessage = message.loading('Updating list...');
       try {
         await api.patchList({
           listId,
@@ -59,7 +60,7 @@ function ListTable(props: Props, ref: ListTableRef) {
         });
         message.success('List state saved!');
       } catch (e) {
-        message.error(`Unable to save list! ${getErrorMessage(e)}`);
+        message.fatal(`Unable to save list! ${getErrorMessage(e)}`, e);
         throw e;
       } finally {
         hideMessage();

@@ -1,6 +1,6 @@
 import React, { useRef } from 'react';
 import { CheckCircleTwoTone, MinusCircleTwoTone, DeleteOutlined } from '@ant-design/icons';
-import { message, Popconfirm } from 'antd';
+import { Popconfirm } from 'antd';
 import s from './index.module.less';
 import { useApiTime, useButtonTracker } from '@/utils/tracker';
 import { TableActionType } from '@/components/ui/Table';
@@ -14,6 +14,7 @@ import COLORS from '@/components/ui/colors';
 import AccountForm from '@/pages/accounts/components/AccountForm';
 import QueryResultsTable from '@/components/common/QueryResultsTable';
 import { capitalizeWords } from '@/utils/tags';
+import { message } from '@/components/library/Message';
 
 export default function Team() {
   const actionRef = useRef<TableActionType>(null);
@@ -108,7 +109,7 @@ export default function Team() {
                   refreshTable();
                 } catch (e) {
                   const error = e instanceof Response ? (await e.json())?.message : e;
-                  message.error(`Failed to delete user - ${error}`, 10);
+                  message.fatal(`Failed to delete user - ${error}`, e);
                 }
               }}
             >

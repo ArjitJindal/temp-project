@@ -1,4 +1,4 @@
-import { Drawer, message, Switch, Tag } from 'antd';
+import { Drawer, Switch, Tag } from 'antd';
 import { useRef, useCallback, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { PlusOutlined } from '@ant-design/icons';
@@ -12,6 +12,7 @@ import { TableColumn } from '@/components/ui/Table/types';
 import { WEBHOOKS_LIST } from '@/utils/queries/keys';
 import { usePaginatedQuery } from '@/utils/queries/hooks';
 import QueryResultsTable from '@/components/common/QueryResultsTable';
+import { message } from '@/components/library/Message';
 
 export const WebhookSettings: React.FC = () => {
   const api = useApi();
@@ -22,7 +23,7 @@ export const WebhookSettings: React.FC = () => {
   const actionRef = useRef<TableActionType>(null);
   const handleSaveWebhook = useCallback(
     async (newWebhook: WebhookConfiguration) => {
-      const hideMessage = message.loading('Saving...', 0);
+      const hideMessage = message.loading('Saving...');
       try {
         if (newWebhook._id) {
           setUpdatedWebhooks((prev) => ({
@@ -42,7 +43,7 @@ export const WebhookSettings: React.FC = () => {
         }
         message.success('Saved');
       } catch (e) {
-        message.error(`Failed to save`);
+        message.fatal(`Failed to save`, e);
       } finally {
         hideMessage();
       }
@@ -51,14 +52,14 @@ export const WebhookSettings: React.FC = () => {
   );
   const handleDeleteWebhook = useCallback(
     async (webhook: WebhookConfiguration) => {
-      const hideMessage = message.loading('Deleting...', 0);
+      const hideMessage = message.loading('Deleting...');
       try {
         await api.deleteWebhooksWebhookId({ webhookId: webhook._id as string });
         setSelectedWebhook(undefined);
         actionRef.current?.reload();
         message.success('Deleted');
       } catch (e) {
-        message.error(`Failed to delete`);
+        message.fatal(`Failed to delete`, e);
       } finally {
         hideMessage();
       }

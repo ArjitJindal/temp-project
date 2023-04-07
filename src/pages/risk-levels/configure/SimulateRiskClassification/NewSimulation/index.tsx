@@ -134,7 +134,7 @@ const NewSimulation = forwardRef((props: Props, ref: React.Ref<SimulationRef>) =
         refetchSimulationCount();
       },
       onError: (e: any) => {
-        message.error(e.message);
+        message.fatal(e.message, e);
       },
     },
   );
@@ -156,7 +156,10 @@ const NewSimulation = forwardRef((props: Props, ref: React.Ref<SimulationRef>) =
     }
 
     if (defaultRiskClassification == null) {
-      message.error('Default risk classification is not loaded');
+      message.fatal(
+        'Default risk classification is not loaded',
+        new Error('Default risk classification is not loaded'),
+      );
       return;
     }
     onRun();

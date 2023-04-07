@@ -1,4 +1,4 @@
-import { message, Switch, Tooltip } from 'antd';
+import { Switch, Tooltip } from 'antd';
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import _ from 'lodash';
 import { DeleteOutlined, EditOutlined } from '@ant-design/icons';
@@ -22,6 +22,7 @@ import { removeEmpty } from '@/utils/json';
 import { useHasPermissions } from '@/utils/user-utils';
 import Confirm from '@/components/utils/Confirm';
 import Button from '@/components/library/Button';
+import { message } from '@/components/library/Message';
 
 const MyRule = () => {
   usePageViewTracker('My Rule Page');
@@ -86,7 +87,7 @@ const MyRule = () => {
         setDeleting(false);
       },
       onError: (e) => {
-        message.error(`Failed to delete rule: ${getErrorMessage(e)}`);
+        message.fatal(`Failed to delete rule: ${getErrorMessage(e)}`, e);
         setDeleting(false);
       },
     },
@@ -96,7 +97,6 @@ const MyRule = () => {
     async (ruleInstance: RuleInstance, activated: boolean) => {
       const hideMessage = message.loading(
         `${activated ? 'Activating' : 'Deactivating'} rule ${ruleInstance.ruleId}...`,
-        0,
       );
       try {
         await handleRuleInstanceUpdate({
@@ -105,8 +105,9 @@ const MyRule = () => {
         });
         message.success(`${activated ? 'Activated' : 'Deactivated'} rule ${ruleInstance.ruleId}`);
       } catch (e) {
-        message.error(
+        message.fatal(
           `Failed to ${activated ? 'activate' : 'deactivate'} rule ${ruleInstance.ruleId}`,
+          e,
         );
       } finally {
         hideMessage();
@@ -348,8 +349,7 @@ const MyRule = () => {
         message.success(`Rule saved!`);
       },
       onError: (err) => {
-        console.error(err);
-        message.error(`Unable to save rule! ${getErrorMessage(err)}`);
+        message.fatal(`Unable to save rule! ${getErrorMessage(err)}`, err);
       },
     },
   );

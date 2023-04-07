@@ -1,7 +1,9 @@
-import { message, Popover } from 'antd';
+import { Popover } from 'antd';
 import React, { useRef, useState } from 'react';
 import { useMutation } from '@tanstack/react-query';
 import s from './styles.module.less';
+import { message } from '@/components/library/Message';
+
 import Button from '@/components/library/Button';
 import CommentEditor, {
   CommentEditorRef,
@@ -39,8 +41,7 @@ export default function CommentButton(props: Props) {
         });
       },
       onError: (error) => {
-        console.log(error);
-        message.error(`Unable to add comment! ${getErrorMessage(error)}`);
+        message.fatal(`Unable to add comment! ${getErrorMessage(error)}`, error);
       },
     },
   );

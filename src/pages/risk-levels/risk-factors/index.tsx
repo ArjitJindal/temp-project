@@ -1,5 +1,5 @@
 import React, { useCallback, useState } from 'react';
-import { message, Tabs } from 'antd';
+import { Tabs } from 'antd';
 import { useNavigate, useParams } from 'react-router';
 import ParametersTable from './ParametersTable';
 import {
@@ -25,6 +25,7 @@ import { getErrorMessage } from '@/utils/lang';
 import PageTabs from '@/components/ui/PageTabs';
 import { makeUrl } from '@/utils/routing';
 import { usePageViewTracker } from '@/utils/tracker';
+import { message } from '@/components/library/Message';
 
 export default function () {
   usePageViewTracker('Risk Levels');
@@ -65,7 +66,7 @@ export default function () {
       );
 
       updateValuesResources(entityType, parameter, loading(settings));
-      const hideSavingMessage = message.loading('Saving...', 0);
+      const hideSavingMessage = message.loading('Saving...');
 
       try {
         const riskLevelTableItem = ALL_RISK_PARAMETERS.find(
@@ -99,7 +100,7 @@ export default function () {
           parameter,
           failed<ParameterSettings>(getErrorMessage(e), lastValue),
         );
-        message.error(`Unable to save parameter! ${getErrorMessage(e)}`);
+        message.fatal(`Unable to save parameter! ${getErrorMessage(e)}`, e);
       } finally {
         hideSavingMessage();
       }

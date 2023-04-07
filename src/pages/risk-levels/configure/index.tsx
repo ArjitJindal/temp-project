@@ -48,7 +48,7 @@ export default function () {
     }
 
     if (isFailed(riskValuesQueryResults.data)) {
-      message.error('Failed to fetch risk values');
+      message.fatal('Failed to fetch risk values', new Error('Failed to fetch risk values'));
     }
   }, [state, riskValuesQueryResults.data]);
 

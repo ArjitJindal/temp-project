@@ -1,8 +1,9 @@
-import { Drawer, Input, message, Row, Select, Space, Typography } from 'antd';
+import { Drawer, Input, Row, Select, Space, Typography } from 'antd';
 import { DeleteOutlined, EditOutlined, PlusOutlined } from '@ant-design/icons';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import ProDescriptions from '@ant-design/pro-descriptions';
 import _ from 'lodash';
+import { message } from '@/components/library/Message';
 import { removeNil } from '@/utils/json';
 import * as Card from '@/components/ui/Card';
 import {
@@ -280,7 +281,7 @@ const PaymentMethodLimitsTable: React.FC<PaymentMethodLimitsTableProps> = ({
       paymentMethod: PaymentMethod,
       newPaymentMethodTransactionLimit: TransactionLimit | null,
     ) => {
-      const hideMessage = message.loading(`Saving...`, 0);
+      const hideMessage = message.loading(`Saving...`);
       try {
         const params: { userId: string; UserUpdateRequest: UserUpdateRequest } = {
           userId: user.userId,
@@ -304,7 +305,7 @@ const PaymentMethodLimitsTable: React.FC<PaymentMethodLimitsTableProps> = ({
         });
         onEditModeChange('NONE');
       } catch (e) {
-        message.error('Failed to save');
+        message.fatal('Failed to save', e);
       } finally {
         hideMessage();
       }

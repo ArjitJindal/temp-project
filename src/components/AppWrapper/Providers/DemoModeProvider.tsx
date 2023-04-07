@@ -50,7 +50,7 @@ export default function DemoModeProvider(props: { children: React.ReactNode }) {
       },
       onError: (err, variables) => {
         console.error(err);
-        message.error(`Unable to switch demo mode!`);
+        message.fatal(`Unable to switch demo mode!`, err);
         setDemoMode(failed(`Unable to switch demo mode!`, variables.demoMode));
       },
     },

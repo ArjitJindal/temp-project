@@ -1,6 +1,6 @@
 import { useRef, useState } from 'react';
 import { nanoid } from 'nanoid';
-import { Drawer, Form, FormInstance, Input, message, Select, Switch } from 'antd';
+import { Drawer, Form, FormInstance, Input, Select, Switch } from 'antd';
 import { useMutation } from '@tanstack/react-query';
 import s from './index.module.less';
 import NewValueInput from './NewValueInput';
@@ -9,6 +9,7 @@ import { getErrorMessage } from '@/utils/lang';
 import { ListSubtype, ListType } from '@/apis';
 import Button from '@/components/library/Button';
 import { getListSubtypeTitle, BLACKLIST_SUBTYPES, WHITELIST_SUBTYPES } from '@/pages/lists/helpers';
+import { message } from '@/components/library/Message';
 
 interface FormValues {
   subtype: ListSubtype | null;
@@ -72,7 +73,7 @@ export default function NewListDrawer(props: Props) {
         message.success('List created');
       },
       onError: (error) => {
-        message.error(`Unable to create list! ${getErrorMessage(error)}`);
+        message.fatal(`Unable to create list! ${getErrorMessage(error)}`, error);
       },
     },
   );

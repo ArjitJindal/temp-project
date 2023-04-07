@@ -1,4 +1,4 @@
-import { message, Tree } from 'antd';
+import { Tree } from 'antd';
 import { useCallback, useState } from 'react';
 import { useSettings } from '@/components/AppWrapper/Providers/SettingsProvider';
 import Button from '@/components/library/Button';
@@ -7,6 +7,7 @@ import { UI_SETTINGS as TRANSACTION_CASE_DETAILS_UI_SETTINGS } from '@/pages/cas
 import { UI_SETTINGS as USER_DETAILS_UI_SETTINGS } from '@/pages/users-item/ui-settings';
 import { UI_SETTINGS as USER_CASE_DETAILS_UI_SETTINGS } from '@/pages/case-management-item/CaseDetails/ui-settings';
 import { UiSettingsType } from '@/@types/ui-settings';
+import { message } from '@/components/library/Message';
 
 const ALL_UI_SETTINGS: UiSettingsType[] = [
   TRANSACTION_CASE_DETAILS_UI_SETTINGS,
@@ -45,7 +46,7 @@ export const DefaultViewsSettings = () => {
       message.success('Saved');
       setSaving(false);
     } catch (e) {
-      message.error('Failed to update default views');
+      message.fatal('Failed to update default views', e);
     }
   }, [expandedCardKeys, settings.defaultViews, api]);
 

@@ -1,8 +1,9 @@
-import { message, Upload } from 'antd';
+import { Upload } from 'antd';
 import filesize from 'filesize';
 import React, { forwardRef, useImperativeHandle } from 'react';
 import { UploadOutlined } from '@ant-design/icons';
 import Button from '../library/Button';
+import { message } from '@/components/library/Message';
 import { FileInfo } from '@/apis';
 import { useApi } from '@/api';
 import { uploadFile } from '@/utils/file-uploader';
@@ -43,7 +44,7 @@ export const UploadFilesList = forwardRef((props: Props, ref: React.Ref<RemoveAl
         try {
           await props.onFileRemoved(file.uid);
         } catch (error) {
-          message.error('Failed to remove the file');
+          message.fatal('Failed to remove the file', error);
         }
       }}
       customRequest={async ({ file: f, onError, onSuccess }) => {
@@ -59,7 +60,7 @@ export const UploadFilesList = forwardRef((props: Props, ref: React.Ref<RemoveAl
           await onFileUploaded(fileInfo);
           hideMessage();
         } catch (error) {
-          message.error('Failed to upload the file');
+          message.fatal('Failed to upload the file', error);
           if (onError) {
             onError(new Error());
           }

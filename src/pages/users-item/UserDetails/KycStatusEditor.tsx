@@ -1,4 +1,4 @@
-import { message, Select } from 'antd';
+import { Select } from 'antd';
 import { useCallback, useState } from 'react';
 import { InternalBusinessUser, InternalConsumerUser } from '@/apis';
 import { KYC_STATUSES } from '@/utils/api/users';
@@ -6,6 +6,7 @@ import { useApi } from '@/api';
 import { KYCStatus } from '@/apis/models/KYCStatus';
 import { KYCStatusDetails } from '@/apis/models/KYCStatusDetails';
 import { useHasPermissions } from '@/utils/user-utils';
+import { message } from '@/components/library/Message';
 
 const updatedKYCStatusDetails: { [key: string]: KYCStatusDetails } = {};
 
@@ -33,14 +34,14 @@ export default function KycStatusEditor({ user }: Props) {
       };
       setKYCStatusDetails(newStateDetails);
       updatedKYCStatusDetails[user.userId] = newStateDetails;
-      const hideMessage = message.loading(`Saving...`, 0);
+      const hideMessage = message.loading(`Saving...`);
       try {
         await (user.type === 'CONSUMER'
           ? api.postConsumerUsersUserId(params)
           : api.postBusinessUsersUserId(params));
         message.success('Saved');
       } catch (e) {
-        message.error('Failed to save');
+        message.fatal('Failed to save', e);
       } finally {
         hideMessage();
       }

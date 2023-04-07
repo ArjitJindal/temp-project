@@ -129,6 +129,7 @@ async function buildCode(env, options) {
               project: 'phytoplankton-console',
               release,
               include: './dist',
+              authToken: process.env.SENTRY_AUTH_TOKEN,
             }),
           ]),
     ],

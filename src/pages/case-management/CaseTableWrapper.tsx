@@ -190,7 +190,7 @@ export default function CaseTableWrapper(props: {
         close();
         if (updateCasesMutation.isError) {
           console.error(updateCasesMutation.error);
-          message.error('Unable to save!');
+          message.fatal('Unable to save!', updateCasesMutation.error);
         } else {
           message.success('Saved');
         }

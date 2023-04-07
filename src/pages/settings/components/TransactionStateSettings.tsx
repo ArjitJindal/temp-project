@@ -1,11 +1,12 @@
 import React, { useCallback, useMemo, useState } from 'react';
-import { Button, Input, message, Space, Tooltip, Typography } from 'antd';
+import { Button, Input, Space, Tooltip, Typography } from 'antd';
 import { QuestionCircleOutlined } from '@ant-design/icons';
 import Table from '@/components/ui/Table';
 import { useSettings } from '@/components/AppWrapper/Providers/SettingsProvider';
 import { TransactionState, TransactionStateAlias } from '@/apis';
 import { useApi } from '@/api';
 import { TableColumn } from '@/components/ui/Table/types';
+import { message } from '@/components/library/Message';
 
 interface TableItem {
   state: TransactionState;
@@ -54,7 +55,7 @@ export const TransactionStateSettings: React.FC = () => {
         setCommitedStateToAlias(updatedStateToAlias);
         message.success('Saved');
       } catch (e) {
-        message.error('Failed to save the alias');
+        message.fatal('Failed to save the alias', e);
       } finally {
         setSavingState(null);
       }

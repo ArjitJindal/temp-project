@@ -95,7 +95,7 @@ export default function AccountForm(props: Props) {
         onSuccess();
         return true;
       } catch (e) {
-        message.error(`Failed to update account - ${getErrorMessage(e)}`);
+        message.fatal(`Failed to update account - ${getErrorMessage(e)}`, e);
         return false;
       }
     }
@@ -111,7 +111,7 @@ export default function AccountForm(props: Props) {
       onSuccess();
       return true;
     } catch (e) {
-      message.error(`Failed to invite user - ${getErrorMessage(e)}`);
+      message.fatal(`Failed to invite user - ${getErrorMessage(e)}`, e);
       return false;
     }
   };

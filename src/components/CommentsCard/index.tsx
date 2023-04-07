@@ -1,6 +1,6 @@
 import React, { useCallback, useState } from 'react';
-import { message } from 'antd';
 import Comment from './Comment';
+import { message } from '@/components/library/Message';
 import * as Card from '@/components/ui/Card';
 import { useAuth0User } from '@/utils/user-utils';
 import { useApi } from '@/api';
@@ -47,7 +47,7 @@ export default function CommentsCard(props: Props) {
         onCommentsUpdate(comments.filter((comment) => comment.id !== commentId));
         message.success('Comment deleted');
       } catch (e) {
-        message.error(`Unable to delete comment! ${getErrorMessage(e)}`);
+        message.fatal(`Unable to delete comment! ${getErrorMessage(e)}`, e);
       }
     },
     [api, comments, onCommentsUpdate],

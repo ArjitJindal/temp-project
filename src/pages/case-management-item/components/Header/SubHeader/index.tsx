@@ -45,7 +45,7 @@ export default function SubHeader(props: Props) {
         });
         message.success('Saved');
       } catch (e) {
-        message.error('Failed to save');
+        message.fatal('Failed to save', e);
       } finally {
         hideMessage();
       }

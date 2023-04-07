@@ -1,10 +1,11 @@
-import { Select, SelectProps, message } from 'antd';
+import { Select, SelectProps } from 'antd';
 import { useState, useEffect } from 'react';
 import { useApi } from '@/api';
 import { useSettings } from '@/components/AppWrapper/Providers/SettingsProvider';
 import Button from '@/components/library/Button';
 import Table from '@/components/ui/Table';
 import { CURRENCIES_SELECT_OPTIONS } from '@/utils/currencies';
+import { message } from '@/components/library/Message';
 
 type TableItem = {
   valueType: string;
@@ -47,7 +48,7 @@ export const DefaultValuesSettings = () => {
       message.success('Saved');
       setSaving(false);
     } catch (e) {
-      message.error('Failed to update default values');
+      message.fatal('Failed to update default values', e);
     }
   };
 

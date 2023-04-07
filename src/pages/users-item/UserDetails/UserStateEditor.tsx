@@ -1,4 +1,4 @@
-import { message, Select } from 'antd';
+import { Select } from 'antd';
 import { useCallback, useState } from 'react';
 import { InternalBusinessUser, InternalConsumerUser } from '@/apis';
 import { USER_STATES } from '@/utils/api/users';
@@ -6,6 +6,7 @@ import { useApi } from '@/api';
 import { UserState } from '@/apis/models/UserState';
 import { UserStateDetails } from '@/apis/models/UserStateDetails';
 import { useHasPermissions } from '@/utils/user-utils';
+import { message } from '@/components/library/Message';
 
 // TODO: Use react-query to properly do optimistic updates
 const updatedUserStateDetails: { [key: string]: UserStateDetails } = {};
@@ -42,7 +43,7 @@ export default function UserStateEditor({ user }: Props) {
           : api.postBusinessUsersUserId(params));
         message.success('Saved');
       } catch (e) {
-        message.error('Failed to save');
+        message.fatal('Failed to save', e);
       } finally {
         hideMessage();
       }

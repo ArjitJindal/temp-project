@@ -1,4 +1,4 @@
-import { Divider, Form, Input, message, Modal, Select } from 'antd';
+import { Divider, Form, Input, Modal, Select } from 'antd';
 import React, { ChangeEvent, useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { validate } from 'uuid';
@@ -6,6 +6,7 @@ import NumberInput from '../library/NumberInput';
 import Label from '../library/Label';
 import { CreateTenantModal } from './CreateTenantModal';
 import s from './styles.module.less';
+import { message } from '@/components/library/Message';
 import { useApi } from '@/api';
 import Button from '@/components/library/Button';
 import { Feature, TenantSettings } from '@/apis';
@@ -44,7 +45,7 @@ export default function SuperAdminPanel() {
         demoMode: false,
       },
     });
-    const hideMessage = message.loading('Changing Tenant...', 10000);
+    const hideMessage = message.loading('Changing Tenant...');
     try {
       await api.accountsChangeTenant({
         accountId: user.userId,
@@ -55,7 +56,7 @@ export default function SuperAdminPanel() {
       await unsetDemoMode;
       window.location.reload();
     } catch (e) {
-      message.error('Failed to switch tenant');
+      message.fatal('Failed to switch tenant', e);
     } finally {
       hideMessage();
     }
@@ -69,13 +70,13 @@ export default function SuperAdminPanel() {
       message.success('Saved');
     } catch (e) {
       hideMessage();
-      message.error(e as Error);
+      message.fatal('Failed to save tenant settings', e);
     }
   };
 
   const handleSave = async () => {
     if (complyAdvantageSearchProfileId.length > 0 && !validate(complyAdvantageSearchProfileId)) {
-      message.error('Comply Advantage Search profile ID must be a valid UUID');
+      message.fatal('Comply Advantage Search profile ID must be a valid UUID');
       return;
     }
     await updateTenantSettings({

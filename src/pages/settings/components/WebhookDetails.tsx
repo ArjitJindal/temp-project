@@ -1,5 +1,5 @@
 import ProDescriptions from '@ant-design/pro-descriptions';
-import { Divider, Input, message, Row, Select, Space } from 'antd';
+import { Divider, Input, Row, Select, Space } from 'antd';
 import { useCallback, useMemo, useState } from 'react';
 import equal from 'fast-deep-equal';
 import { DeleteOutlined, LoadingOutlined } from '@ant-design/icons';
@@ -8,6 +8,7 @@ import { WebhookConfiguration, WebhookEventType, WebhookSecrets } from '@/apis';
 import Button from '@/components/library/Button';
 import { useApi } from '@/api';
 import { getBranding } from '@/utils/branding';
+import { message } from '@/components/library/Message';
 
 const WEBHOOK_EVENTS: WebhookEventType[] = ['USER_STATE_UPDATED'];
 
@@ -51,7 +52,7 @@ export const WebhookDetails: React.FC<Props> = ({
       const secrets = await api.getWebhooksWebhookIdSecret({ webhookId: webhook._id as string });
       serSecrets(secrets);
     } catch (e) {
-      message.error(`Failed to fetch secret`);
+      message.fatal(`Failed to fetch secret`, e);
     } finally {
       setLoadingSecret(false);
     }

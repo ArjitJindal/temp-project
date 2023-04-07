@@ -1,5 +1,5 @@
 import React, { useCallback, useState } from 'react';
-import { message, Typography } from 'antd';
+import { Typography } from 'antd';
 import Icon from './icon-judge.react.svg';
 import s from './index.module.less';
 import Spam2FillIcon from '@/components/ui/icons/Remix/system/spam-2-fill.react.svg';
@@ -8,6 +8,7 @@ import COLORS from '@/components/ui/colors';
 import { ListHeader, ListType } from '@/apis';
 import { useApi } from '@/api';
 import { getErrorMessage } from '@/utils/lang';
+import { message } from '@/components/library/Message';
 
 interface Props {
   listType: ListType;
@@ -37,7 +38,7 @@ export default function DeleteListModal(props: Props) {
             onSuccess();
           },
           (e) => {
-            message.error(`Unable to delete list! ${getErrorMessage(e)}`);
+            message.fatal(`Unable to delete list! ${getErrorMessage(e)}`, e);
           },
         )
         .finally(() => {
