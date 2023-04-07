@@ -161,8 +161,12 @@ export const casesHandler = lambdaApi()(
         filterDestinationCurrencies: filterDestinationCurrencies
           ? filterDestinationCurrencies.split(',')
           : undefined,
-        filterOriginPaymentMethod: filterOriginPaymentMethod,
-        filterDestinationPaymentMethod: filterDestinationPaymentMethod,
+        filterOriginPaymentMethod: filterOriginPaymentMethod
+          ? filterOriginPaymentMethod.split(',')
+          : undefined,
+        filterDestinationPaymentMethod: filterDestinationPaymentMethod
+          ? filterDestinationPaymentMethod.split(',')
+          : undefined,
         filterPriority,
         filterTransactionTagKey,
         filterTransactionTagValue,
@@ -346,6 +350,8 @@ export const casesHandler = lambdaApi()(
         filterBusinessIndustries,
         filterTransactionTagKey,
         filterTransactionTagValue,
+        filterOriginPaymentMethod,
+        filterDestinationPaymentMethod,
         filterUserId,
         filterCaseId,
         sortField,
@@ -370,6 +376,12 @@ export const casesHandler = lambdaApi()(
         filterTransactionTagValue,
         filterUserId,
         filterCaseId,
+        filterOriginPaymentMethod: filterOriginPaymentMethod
+          ? filterOriginPaymentMethod.split(',')
+          : undefined,
+        filterDestinationPaymentMethod: filterDestinationPaymentMethod
+          ? filterDestinationPaymentMethod.split(',')
+          : undefined,
         sortField,
         sortOrder: isValidSortOrder(sortOrder) ? sortOrder : undefined,
         beforeAlertLastUpdatedTimestamp: beforeAlertLastUpdatedTimestamp

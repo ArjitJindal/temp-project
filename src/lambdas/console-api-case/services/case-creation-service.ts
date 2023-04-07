@@ -90,7 +90,7 @@ export class CaseCreationService {
     alerts: Alert[],
     createdTimestamp: number,
     latestTransactionArrivalTimestamp: number,
-    transactionId: string
+    transaction: InternalTransaction
   ): { existingAlerts: Alert[]; newAlerts: Alert[] } {
     // Get the rule hits that are new for this transaction
     const newRuleHits = hitRules.filter(
@@ -106,7 +106,7 @@ export class CaseCreationService {
             ruleInstances,
             createdTimestamp,
             latestTransactionArrivalTimestamp,
-            transactionId
+            transaction
           )
         : []
 
@@ -140,7 +140,7 @@ export class CaseCreationService {
         alerts,
         createdTimestamp,
         latestTransactionArrivalTimestamp,
-        latestTransaction.transactionId
+        latestTransaction
       )
 
       const updatedExistingAlerts =
@@ -159,7 +159,7 @@ export class CaseCreationService {
         ruleInstances,
         createdTimestamp,
         latestTransactionArrivalTimestamp,
-        latestTransaction.transactionId
+        latestTransaction
       )
     }
   }
@@ -169,7 +169,7 @@ export class CaseCreationService {
     ruleInstances: readonly RuleInstance[],
     createdTimestamp: number,
     latestTransactionArrivalTimestamp: number,
-    transactionId: string
+    transaction: InternalTransaction
   ): Alert[] {
     const alerts: Alert[] = hitRules.map((hitRule: HitRulesDetails) => {
       let priority
@@ -188,8 +188,14 @@ export class CaseCreationService {
         ruleDescription: hitRule.ruleDescription,
         ruleAction: hitRule.ruleAction,
         numberOfTransactionsHit: 1,
-        transactionIds: [transactionId],
+        transactionIds: [transaction.transactionId],
         priority: (priority ?? _.last(PRIORITYS)) as Priority,
+        originPaymentMethods: transaction.originPaymentDetails?.method
+          ? [transaction.originPaymentDetails?.method]
+          : [],
+        destinationPaymentMethods: transaction.destinationPaymentDetails?.method
+          ? [transaction.destinationPaymentDetails?.method]
+          : [],
       }
     })
 
@@ -213,10 +219,22 @@ export class CaseCreationService {
       const txnSet = new Set(alert.transactionIds).add(
         transaction.transactionId
       )
+      const originPaymentDetails = new Set(alert.originPaymentMethods)
+      const destinationPaymentDetails = new Set(alert.destinationPaymentMethods)
+      if (transaction.originPaymentDetails?.method) {
+        originPaymentDetails.add(transaction.originPaymentDetails.method)
+      }
+      if (transaction.destinationPaymentDetails?.method) {
+        destinationPaymentDetails.add(
+          transaction.destinationPaymentDetails.method
+        )
+      }
       return {
         ...alert,
         latestTransactionArrivalTimestamp: latestTransactionArrivalTimestamp,
         transactionIds: Array.from(txnSet),
+        originPaymentMethods: Array.from(originPaymentDetails),
+        destinationPaymentMethods: Array.from(destinationPaymentDetails),
         numberOfTransactionsHit: txnSet.size,
       }
     })
@@ -432,7 +450,7 @@ export class CaseCreationService {
               ruleInstances,
               params.createdTimestamp,
               params.latestTransactionArrivalTimestamp,
-              params.transaction.transactionId
+              params.transaction
             ),
           })
         }

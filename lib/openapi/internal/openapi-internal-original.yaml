@@ -2453,11 +2453,15 @@ paths:
           in: query
           name: filterAlertStatus
         - schema:
-            type: string
+            type: array
+            items:
+              type: string
           in: query
           name: filterOriginPaymentMethod
         - schema:
-            type: string
+            type: array
+            items:
+              type: string
           in: query
           name: filterDestinationPaymentMethod
         - schema:
@@ -2747,11 +2751,15 @@ paths:
           in: query
           name: filterCaseStatus
         - schema:
-            type: string
+            type: array
+            items:
+              type: string
           in: query
           name: filterOriginPaymentMethod
         - schema:
-            type: string
+            type: array
+            items:
+              type: string
           in: query
           name: filterDestinationPaymentMethod
         - schema:
@@ -4928,6 +4936,14 @@ components:
           type: array
           items:
             type: string
+        originPaymentMethods:
+          type: array
+          items:
+            $ref: ../public/openapi-public-original.yaml#/components/schemas/PaymentMethod
+        destinationPaymentMethods:
+          type: array
+          items:
+            $ref: ../public/openapi-public-original.yaml#/components/schemas/PaymentMethod
         falsePositiveDetails:
           $ref: ../public/openapi-public-original.yaml#/components/schemas/FalsePositiveDetails
         comments:

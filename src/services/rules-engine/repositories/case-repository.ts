@@ -52,6 +52,7 @@ import { InternalTransaction } from '@/@types/openapi-internal/InternalTransacti
 import { PRIORITYS } from '@/@types/openapi-internal-custom/Priority'
 import { AlertListResponse } from '@/@types/openapi-internal/AlertListResponse'
 import { AlertListResponseItem } from '@/@types/openapi-internal/AlertListResponseItem'
+import { PaymentMethod } from '@/@types/openapi-internal/PaymentMethod'
 
 export const MAX_TRANSACTION_IN_A_CASE = 1000
 
@@ -354,14 +355,14 @@ export class CaseRepository {
     if (params.filterOriginPaymentMethod != null) {
       conditions.push({
         'caseTransactions.originPaymentDetails.method': {
-          $in: [params.filterOriginPaymentMethod],
+          $in: params.filterOriginPaymentMethod,
         },
       })
     }
     if (params.filterDestinationPaymentMethod != null) {
       conditions.push({
         'caseTransactions.destinationPaymentDetails.method': {
-          $in: [params.filterDestinationPaymentMethod],
+          $in: params.filterDestinationPaymentMethod,
         },
       })
     }
@@ -709,6 +710,21 @@ export class CaseRepository {
       })
     }
 
+    if (params.filterOriginPaymentMethod) {
+      conditions.push({
+        'alert.originPaymentMethods': {
+          $in: params.filterOriginPaymentMethod as PaymentMethod[],
+        },
+      })
+    }
+    if (params.filterDestinationPaymentMethod) {
+      conditions.push({
+        'alert.destinationPaymentMethods': {
+          $in: params.filterDestinationPaymentMethod as PaymentMethod[],
+        },
+      })
+    }
+
     if (params.filterAlertId != null) {
       conditions.push({
         'alert.alertId': prefixRegexMatchFilter(params.filterAlertId),
@@ -746,7 +762,6 @@ export class CaseRepository {
         },
       })
     }
-
     if (conditions.length > 0) {
       pipeline.push({
         $match: {

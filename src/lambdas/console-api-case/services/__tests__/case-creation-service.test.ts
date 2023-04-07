@@ -197,7 +197,12 @@ describe('Cases', () => {
           alerts,
           0,
           0,
-          't1'
+          {
+            executedRules: [],
+            hitRules: [],
+            timestamp: 0,
+            transactionId: 't1',
+          }
         )
 
       expect(newAlerts.length).toEqual(1)
@@ -218,7 +223,12 @@ describe('Cases', () => {
           alerts,
           0,
           0,
-          't1'
+          {
+            executedRules: [],
+            hitRules: [],
+            timestamp: 0,
+            transactionId: 't1',
+          }
         )
 
       expect(existingAlerts.length).toEqual(2)
