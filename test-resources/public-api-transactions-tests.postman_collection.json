@@ -4,7 +4,7 @@
     "name": "Public API Tests Collection",
     "description": "**The subesquent folders are added in a specific order please dont change it else it may create some issues with the tests**",
     "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
-    "updatedAt": "2023-04-07T08:10:19.000Z",
+    "updatedAt": "2023-04-07T09:14:31.000Z",
     "uid": "24163049-503b80a7-dd73-4ed0-8aa6-5eaaa06f9ea5"
   },
   "item": [
@@ -3953,6 +3953,913 @@
       ],
       "id": "75858a98-3f1e-4baf-b641-14285c50adbc",
       "uid": "24163049-75858a98-3f1e-4baf-b641-14285c50adbc"
+    },
+    {
+      "name": "Business User Events",
+      "item": [
+        {
+          "name": "200 Response",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "id": "f3909390-2937-435f-9403-02a067a3d0ea",
+                "exec": [
+                  "pm.test(\"Status code is 200\", function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.test(\"Check User State Is Changed\", function () {",
+                  "    var jsonData = pm.response.json();",
+                  "    pm.expect(jsonData.userStateDetails.state).to.eql(\"ACTIVE\");",
+                  "});",
+                  "",
+                  "pm.test(\"Check Payload Full\", function () {",
+                  "    var jsonData = pm.response.json();",
+                  "    const request = JSON.parse(pm.request.body.raw)",
+                  "",
+                  "    const data = {",
+                  "    \"userId\": request.userId,",
+                  "    \"createdTimestamp\": request.timestamp,",
+                  "    \"allowedPaymentMethods\": [",
+                  "        \"GENERIC_BANK_ACCOUNT\",",
+                  "        \"WALLET\",",
+                  "        \"CARD\",",
+                  "        \"ACH\"",
+                  "    ],",
+                  "    \"legalEntity\": {",
+                  "        \"companyGeneralDetails\": {",
+                  "            \"legalName\": \"Mr Wu Semiconductors\"",
+                  "        },",
+                  "        \"contactDetails\": {",
+                  "            \"addresses\": [",
+                  "                {",
+                  "                    \"addressLines\": [",
+                  "                        \"Klara-Franke Str 20\"",
+                  "                    ],",
+                  "                    \"postcode\": \"10557\",",
+                  "                    \"city\": \"Berlin\",",
+                  "                    \"state\": \"Berlin\",",
+                  "                    \"country\": \"Germany\",",
+                  "                    \"tags\": [",
+                  "                        {",
+                  "                            \"key\": \"customKey\",",
+                  "                            \"value\": \"customValue\"",
+                  "                        }",
+                  "                    ]",
+                  "                }",
+                  "            ]",
+                  "        }",
+                  "    },",
+                  "    \"kycStatusDetails\": {",
+                  "        \"status\": \"SUCCESSFUL\"",
+                  "    },",
+                  "    \"userStateDetails\": {",
+                  "        \"state\": \"ACTIVE\"",
+                  "    }",
+                  "}",
+                  "",
+                  "    pm.expect(jsonData).to.eql(data);",
+                  "});",
+                  "",
+                  "pm.test(\"Body matches string\", function () {",
+                  "    pm.expect(pm.response.text()).to.include(\"legalName\");",
+                  "});",
+                  "",
+                  "pm.test(\"Body matches string\", function () {",
+                  "    pm.expect(pm.response.text()).to.include(\"contactDetails\");",
+                  "});",
+                  "",
+                  "pm.test(\"Body matches string\", function () {",
+                  "    pm.expect(pm.response.text()).to.include(\"allowedPaymentMethods\");",
+                  "});",
+                  "",
+                  "pm.test(\"Body matches string\", function () {",
+                  "    pm.expect(pm.response.text()).to.include(\"createdTimestamp\");",
+                  "});",
+                  "",
+                  "pm.test(\"allowedPaymentMethods Should be more then 1\", function () {",
+                  "    var jsonData = pm.response.json();",
+                  "    let executedRules = jsonData.allowedPaymentMethods.length > 0",
+                  "    pm.expect(executedRules).to.eql(true);",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "id": "370397ea-1a3d-44f7-bf15-ec437d3e6825",
+          "protocolProfileBehavior": {
+            "disableBodyPruning": true
+          },
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "x-api-key",
+                "value": "{{apiKey}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"timestamp\": {{timestamp}},\n    \"userId\": \"{{businessUserId}}\",\n    \"updatedBusinessUserAttributes\": {\n        \"kycStatusDetails\": {\n            \"status\": \"SUCCESSFUL\"\n        },\n        \"userStateDetails\": {\n            \"state\": \"ACTIVE\"\n        },\n        \"legalEntity\": {\n            \"companyGeneralDetails\": {\n                \"legalName\": \"Mr Wu Semiconductors\"\n            },\n            \"contactDetails\": {\n                \"addresses\": [\n                    {\n                        \"addressLines\": [\n                            \"Klara-Franke Str 20\"\n                        ],\n                        \"postcode\": \"10557\",\n                        \"city\": \"Berlin\",\n                        \"state\": \"Berlin\",\n                        \"country\": \"Germany\",\n                        \"tags\": [\n                            {\n                                \"key\": \"customKey\",\n                                \"value\": \"customValue\"\n                            }\n                        ]\n                    }\n                ]\n            }\n        }\n    }\n}"
+            },
+            "url": {
+              "raw": "{{domain}}/events/business/user",
+              "host": ["{{domain}}"],
+              "path": ["events", "business", "user"]
+            }
+          },
+          "response": [],
+          "uid": "24163049-370397ea-1a3d-44f7-bf15-ec437d3e6825"
+        },
+        {
+          "name": "Invalid User Id",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "id": "f3909390-2937-435f-9403-02a067a3d0ea",
+                "exec": [
+                  "pm.test(\"Status code is 404\", function () {",
+                  "    pm.response.to.have.status(404);",
+                  "});",
+                  "",
+                  "pm.test(\"Validation Error Check\", function () {",
+                  "    var jsonData = pm.response.json();",
+                  "    const request = JSON.parse(pm.request.body.raw)",
+                  "    const userId = request.userId",
+                  "    pm.expect(jsonData.message).to.eql(`User ${userId} not found. Please create the user ${userId}`)",
+                  "});",
+                  "",
+                  "pm.test(\"Message Check\", function () {",
+                  "    var jsonData = pm.response.json();",
+                  "    pm.expect(jsonData.error).to.eql(\"NotFoundError\");",
+                  "});",
+                  "",
+                  "pm.test(\"Body matches string\", function () {",
+                  "    pm.expect(pm.response.text()).to.include(\"message\");",
+                  "});",
+                  "",
+                  "pm.test(\"Body matches string\", function () {",
+                  "    pm.expect(pm.response.text()).to.include(\"error\");",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "id": "a8858ae0-6d0a-4feb-afbe-d01eb11039b1",
+          "protocolProfileBehavior": {
+            "disableBodyPruning": true
+          },
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "x-api-key",
+                "value": "{{apiKey}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"timestamp\": {{timestamp}},\n    \"userId\": \"{{businessUserId}}-some-random\",\n    \"updatedBusinessUserAttributes\": {\n        \"kycStatusDetails\": {\n            \"status\": \"SUCCESSFUL\"\n        },\n        \"userStateDetails\": {\n            \"state\": \"ACTIVE\"\n        },\n        \"legalEntity\": {\n            \"companyGeneralDetails\": {\n                \"legalName\": \"Mr Wu Semiconductors\"\n            },\n            \"contactDetails\": {\n                \"addresses\": [\n                    {\n                        \"addressLines\": [\n                            \"Klara-Franke Str 20\"\n                        ],\n                        \"postcode\": \"10557\",\n                        \"city\": \"Berlin\",\n                        \"state\": \"Berlin\",\n                        \"country\": \"Germany\",\n                        \"tags\": [\n                            {\n                                \"key\": \"customKey\",\n                                \"value\": \"customValue\"\n                            }\n                        ]\n                    }\n                ]\n            }\n        }\n    }\n}"
+            },
+            "url": {
+              "raw": "{{domain}}/events/business/user",
+              "host": ["{{domain}}"],
+              "path": ["events", "business", "user"]
+            }
+          },
+          "response": [],
+          "uid": "24163049-a8858ae0-6d0a-4feb-afbe-d01eb11039b1"
+        },
+        {
+          "name": "No API Key",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "id": "f3909390-2937-435f-9403-02a067a3d0ea",
+                "exec": [
+                  "pm.test(\"Status code is 401\", function () {",
+                  "    pm.response.to.have.status(401);",
+                  "});",
+                  "",
+                  "pm.test(\"Should Give Unauthorized\", function () {",
+                  "    var jsonData = pm.response.json();",
+                  "    pm.expect(jsonData.message).to.eql(\"Unauthorized\");",
+                  "});",
+                  "",
+                  "pm.test(\"Content-Type is present\", function () {",
+                  "    pm.response.to.have.header(\"Content-Type\");",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "id": "fc5d2a61-064f-406a-a8c8-1475280a788c",
+          "protocolProfileBehavior": {
+            "disableBodyPruning": true
+          },
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "x-api-key",
+                "value": ""
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"timestamp\": {{timestamp}},\n    \"userId\": \"{{businessUserId}}\",\n    \"updatedBusinessUserAttributes\": {\n        \"kycStatusDetails\": {\n            \"status\": \"SUCCESSFUL\"\n        },\n        \"userStateDetails\": {\n            \"state\": \"ACTIVE\"\n        },\n        \"legalEntity\": {\n            \"companyGeneralDetails\": {\n                \"legalName\": \"Mr Wu Semiconductors\"\n            },\n            \"contactDetails\": {\n                \"addresses\": [\n                    {\n                        \"addressLines\": [\n                            \"Klara-Franke Str 20\"\n                        ],\n                        \"postcode\": \"10557\",\n                        \"city\": \"Berlin\",\n                        \"state\": \"Berlin\",\n                        \"country\": \"Germany\",\n                        \"tags\": [\n                            {\n                                \"key\": \"customKey\",\n                                \"value\": \"customValue\"\n                            }\n                        ]\n                    }\n                ]\n            }\n        }\n    }\n}"
+            },
+            "url": {
+              "raw": "{{domain}}/events/business/user",
+              "host": ["{{domain}}"],
+              "path": ["events", "business", "user"]
+            }
+          },
+          "response": [],
+          "uid": "24163049-fc5d2a61-064f-406a-a8c8-1475280a788c"
+        },
+        {
+          "name": "Invalid API key",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "id": "f3909390-2937-435f-9403-02a067a3d0ea",
+                "exec": [
+                  "pm.test(\"Status code is 403\", function () {",
+                  "    pm.response.to.have.status(403);",
+                  "});",
+                  "",
+                  "pm.test(\"Body matches string\", function () {",
+                  "    pm.expect(pm.response.text()).to.include(\"Message\");",
+                  "});",
+                  "",
+                  "pm.test(\"Should Give Unauthorized\", function () {",
+                  "    var jsonData = pm.response.json();",
+                  "    pm.expect(jsonData.Message).to.eql(\"User is not authorized to access this resource with an explicit deny\");",
+                  "});",
+                  "",
+                  "pm.test(\"Content-Type is present\", function () {",
+                  "    pm.response.to.have.header(\"Content-Type\");",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "id": "f6a0f7cf-fbd6-4c29-9793-443cd995a323",
+          "protocolProfileBehavior": {
+            "disableBodyPruning": true
+          },
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "x-api-key",
+                "value": "1{{apiKey}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"timestamp\": {{timestamp}},\n    \"userId\": \"{{businessUserId}}\",\n    \"updatedBusinessUserAttributes\": {\n        \"kycStatusDetails\": {\n            \"status\": \"SUCCESSFUL\"\n        },\n        \"userStateDetails\": {\n            \"state\": \"ACTIVE\"\n        },\n        \"legalEntity\": {\n            \"companyGeneralDetails\": {\n                \"legalName\": \"Mr Wu Semiconductors\"\n            },\n            \"contactDetails\": {\n                \"addresses\": [\n                    {\n                        \"addressLines\": [\n                            \"Klara-Franke Str 20\"\n                        ],\n                        \"postcode\": \"10557\",\n                        \"city\": \"Berlin\",\n                        \"state\": \"Berlin\",\n                        \"country\": \"Germany\",\n                        \"tags\": [\n                            {\n                                \"key\": \"customKey\",\n                                \"value\": \"customValue\"\n                            }\n                        ]\n                    }\n                ]\n            }\n        }\n    }\n}"
+            },
+            "url": {
+              "raw": "{{domain}}/events/business/user",
+              "host": ["{{domain}}"],
+              "path": ["events", "business", "user"]
+            }
+          },
+          "response": [],
+          "uid": "24163049-f6a0f7cf-fbd6-4c29-9793-443cd995a323"
+        },
+        {
+          "name": "Empty Body",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "id": "f3909390-2937-435f-9403-02a067a3d0ea",
+                "exec": [
+                  "pm.test(\"Status code is 400\", function () {",
+                  "    pm.response.to.have.status(400);",
+                  "});",
+                  "",
+                  "pm.test(\"Validation Error Check\", function () {",
+                  "    var jsonData = pm.response.json();",
+                  "    pm.expect(jsonData.validationErrors).to.eql(\"[object has missing required properties ([\\\"timestamp\\\",\\\"userId\\\"])]\");",
+                  "});",
+                  "",
+                  "pm.test(\"Message Check\", function () {",
+                  "    var jsonData = pm.response.json();",
+                  "    pm.expect(jsonData.message).to.eql(\"Invalid request body\");",
+                  "});",
+                  "",
+                  "pm.test(\"Body matches string\", function () {",
+                  "    pm.expect(pm.response.text()).to.include(\"message\");",
+                  "});",
+                  "",
+                  "pm.test(\"Body matches string\", function () {",
+                  "    pm.expect(pm.response.text()).to.include(\"validationErrors\");",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "id": "1c9f21e9-a2bc-4eb2-baf4-cab6cb772fd5",
+          "protocolProfileBehavior": {
+            "disableBodyPruning": true
+          },
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "x-api-key",
+                "value": "{{apiKey}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{}"
+            },
+            "url": {
+              "raw": "{{domain}}/events/business/user",
+              "host": ["{{domain}}"],
+              "path": ["events", "business", "user"]
+            }
+          },
+          "response": [],
+          "uid": "24163049-1c9f21e9-a2bc-4eb2-baf4-cab6cb772fd5"
+        },
+        {
+          "name": "No Body",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "id": "f3909390-2937-435f-9403-02a067a3d0ea",
+                "exec": [
+                  "pm.test(\"Status code is 400\", function () {",
+                  "    pm.response.to.have.status(400);",
+                  "});",
+                  "",
+                  "pm.test(\"Validation Error Check\", function () {",
+                  "    var jsonData = pm.response.json();",
+                  "    pm.expect(jsonData.validationErrors).to.eql(\"[Unknown error parsing request body]\");",
+                  "});",
+                  "",
+                  "pm.test(\"Message Check\", function () {",
+                  "    var jsonData = pm.response.json();",
+                  "    pm.expect(jsonData.message).to.eql(\"Invalid request body\");",
+                  "});",
+                  "",
+                  "pm.test(\"Body matches string\", function () {",
+                  "    pm.expect(pm.response.text()).to.include(\"message\");",
+                  "});",
+                  "",
+                  "pm.test(\"Body matches string\", function () {",
+                  "    pm.expect(pm.response.text()).to.include(\"validationErrors\");",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "id": "00602cfb-b068-41d5-b715-50b01a14cb00",
+          "protocolProfileBehavior": {
+            "disableBodyPruning": true
+          },
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "x-api-key",
+                "value": "{{apiKey}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": ""
+            },
+            "url": {
+              "raw": "{{domain}}/events/business/user",
+              "host": ["{{domain}}"],
+              "path": ["events", "business", "user"]
+            }
+          },
+          "response": [],
+          "uid": "24163049-00602cfb-b068-41d5-b715-50b01a14cb00"
+        },
+        {
+          "name": "Incorrect Domain",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "id": "f3909390-2937-435f-9403-02a067a3d0ea",
+                "exec": [
+                  "pm.test(\"Status code is 403\", function () {",
+                  "    pm.response.to.have.status(403);",
+                  "});",
+                  "",
+                  "pm.test(\"Your test name\", function () {",
+                  "    var jsonData = pm.response.json();",
+                  "    pm.expect(jsonData.message).to.eql(\"Forbidden\");",
+                  "});",
+                  "",
+                  "pm.test(\"Body matches string\", function () {",
+                  "    pm.expect(pm.response.text()).to.include(\"message\");",
+                  "});",
+                  ""
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "id": "ed99c9f3-4533-4833-85e3-691fa82e0ab2",
+          "protocolProfileBehavior": {
+            "disableBodyPruning": true
+          },
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "x-api-key",
+                "value": "{{apiKey}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"timestamp\": {{timestamp}},\n    \"userId\": \"{{businessUserId}}\",\n    \"updatedBusinessUserAttributes\": {\n        \"kycStatusDetails\": {\n            \"status\": \"SUCCESSFUL\"\n        },\n        \"userStateDetails\": {\n            \"state\": \"ACTIVE\"\n        },\n        \"legalEntity\": {\n            \"companyGeneralDetails\": {\n                \"legalName\": \"Mr Wu Semiconductors\"\n            },\n            \"contactDetails\": {\n                \"addresses\": [\n                    {\n                        \"addressLines\": [\n                            \"Klara-Franke Str 20\"\n                        ],\n                        \"postcode\": \"10557\",\n                        \"city\": \"Berlin\",\n                        \"state\": \"Berlin\",\n                        \"country\": \"Germany\",\n                        \"tags\": [\n                            {\n                                \"key\": \"customKey\",\n                                \"value\": \"customValue\"\n                            }\n                        ]\n                    }\n                ]\n            }\n        }\n    }\n}"
+            },
+            "url": {
+              "raw": "{{incorrectDomain}}/events/business/user",
+              "host": ["{{incorrectDomain}}"],
+              "path": ["events", "business", "user"]
+            }
+          },
+          "response": [],
+          "uid": "24163049-ed99c9f3-4533-4833-85e3-691fa82e0ab2"
+        },
+        {
+          "name": "No Update Attributes",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "id": "f3909390-2937-435f-9403-02a067a3d0ea",
+                "exec": [
+                  "pm.test(\"Status code is 200\", function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.test(\"Body matches string\", function () {",
+                  "    pm.expect(pm.response.text()).to.include(\"userId\");",
+                  "});",
+                  "",
+                  "pm.test(\"Body matches string\", function () {",
+                  "    pm.expect(pm.response.text()).to.include(\"legalEntity\");",
+                  "});",
+                  "",
+                  "pm.test(\"Body matches string\", function () {",
+                  "    pm.expect(pm.response.text()).to.include(\"companyGeneralDetails\");",
+                  "});",
+                  "",
+                  "pm.test(\"Payload Match\", function () {",
+                  "    const request = JSON.parse(pm.request.body.raw)",
+                  "    const userId = request.userId",
+                  "    const timestamp = request.timestamp",
+                  "  ",
+                  "    const body = {",
+                  "    \"userId\": userId,",
+                  "    \"kycStatusDetails\": {",
+                  "        \"status\": \"SUCCESSFUL\"",
+                  "    },",
+                  "    \"userStateDetails\": {",
+                  "        \"state\": \"ACTIVE\"",
+                  "    },",
+                  "    \"createdTimestamp\": timestamp,",
+                  "    \"allowedPaymentMethods\": [",
+                  "        \"GENERIC_BANK_ACCOUNT\",",
+                  "        \"WALLET\",",
+                  "        \"CARD\",",
+                  "        \"ACH\"",
+                  "    ],",
+                  "    \"legalEntity\": {",
+                  "        \"contactDetails\": {",
+                  "            \"addresses\": [",
+                  "                {",
+                  "                    \"postcode\": \"10557\",",
+                  "                    \"country\": \"Germany\",",
+                  "                    \"addressLines\": [",
+                  "                        \"Klara-Franke Str 20\"",
+                  "                    ],",
+                  "                    \"state\": \"Berlin\",",
+                  "                    \"city\": \"Berlin\",",
+                  "                    \"tags\": [",
+                  "                        {",
+                  "                            \"value\": \"customValue\",",
+                  "                            \"key\": \"customKey\"",
+                  "                        }",
+                  "                    ]",
+                  "                }",
+                  "            ]",
+                  "        },",
+                  "        \"companyGeneralDetails\": {",
+                  "            \"legalName\": \"Mr Wu Semiconductors\"",
+                  "        }",
+                  "    }",
+                  "}",
+                  "",
+                  "    pm.expect(pm.response.json()).to.eql(body)",
+                  "})",
+                  "    "
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "id": "5c3147de-b120-4603-9314-9939921f82b9",
+          "protocolProfileBehavior": {
+            "disableBodyPruning": true
+          },
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "x-api-key",
+                "value": "{{apiKey}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"timestamp\": {{timestamp}},\n    \"userId\": \"{{businessUserId}}\"\n}"
+            },
+            "url": {
+              "raw": "{{domain}}/events/business/user",
+              "host": ["{{domain}}"],
+              "path": ["events", "business", "user"]
+            }
+          },
+          "response": [],
+          "uid": "24163049-5c3147de-b120-4603-9314-9939921f82b9"
+        },
+        {
+          "name": "User Id Not Provided",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "id": "f3909390-2937-435f-9403-02a067a3d0ea",
+                "exec": [
+                  "pm.test(\"Status code is 400\", function () {",
+                  "    pm.response.to.have.status(400);",
+                  "});",
+                  "",
+                  "pm.test(\"Validation Error Check\", function () {",
+                  "    var jsonData = pm.response.json();",
+                  "    pm.expect(jsonData.validationErrors).to.eql(\"[object has missing required properties ([\\\"userId\\\"])]\");",
+                  "});",
+                  "",
+                  "pm.test(\"Message Check\", function () {",
+                  "    var jsonData = pm.response.json();",
+                  "    pm.expect(jsonData.message).to.eql(\"Invalid request body\");",
+                  "});",
+                  "",
+                  "pm.test(\"Body matches string\", function () {",
+                  "    pm.expect(pm.response.text()).to.include(\"message\");",
+                  "});",
+                  "",
+                  "pm.test(\"Body matches string\", function () {",
+                  "    pm.expect(pm.response.text()).to.include(\"validationErrors\");",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "id": "e1501a20-c122-4df6-950f-eed696048a68",
+          "protocolProfileBehavior": {
+            "disableBodyPruning": true
+          },
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "x-api-key",
+                "value": "{{apiKey}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"timestamp\": {{timestamp}},\n    \"updatedBusinessUserAttributes\": {\n        \"kycStatusDetails\": {\n            \"status\": \"SUCCESSFUL\"\n        },\n        \"userStateDetails\": {\n            \"state\": \"ACTIVE\"\n        },\n        \"legalEntity\": {\n            \"companyGeneralDetails\": {\n                \"legalName\": \"Mr Wu Semiconductors\"\n            },\n            \"contactDetails\": {\n                \"addresses\": [\n                    {\n                        \"addressLines\": [\n                            \"Klara-Franke Str 20\"\n                        ],\n                        \"postcode\": \"10557\",\n                        \"city\": \"Berlin\",\n                        \"state\": \"Berlin\",\n                        \"country\": \"Germany\",\n                        \"tags\": [\n                            {\n                                \"key\": \"customKey\",\n                                \"value\": \"customValue\"\n                            }\n                        ]\n                    }\n                ]\n            }\n        }\n    }\n}"
+            },
+            "url": {
+              "raw": "{{domain}}/events/business/user",
+              "host": ["{{domain}}"],
+              "path": ["events", "business", "user"]
+            }
+          },
+          "response": [],
+          "uid": "24163049-e1501a20-c122-4df6-950f-eed696048a68"
+        },
+        {
+          "name": "Invalid User State",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "id": "f3909390-2937-435f-9403-02a067a3d0ea",
+                "exec": [
+                  "pm.test(\"Status code is 400\", function () {",
+                  "    pm.response.to.have.status(400);",
+                  "});",
+                  "",
+                  "pm.test(\"Validation Error Check\", function () {",
+                  "    var jsonData = pm.response.json();",
+                  "    pm.expect(jsonData.validationErrors).to.eql(\"[instance value (\\\"ACTIVE-1\\\") not found in enum (possible values: [\\\"UNACCEPTABLE\\\",\\\"UNDECIDED\\\",\\\"TERMINATED\\\",\\\"ACTIVE\\\",\\\"INACTIVE\\\",\\\"DORMANT\\\",\\\"CREATED\\\",\\\"DELETED\\\",\\\"SUSPENDED\\\",\\\"BLOCKED\\\"])]\");",
+                  "});",
+                  "",
+                  "pm.test(\"Message Check\", function () {",
+                  "    var jsonData = pm.response.json();",
+                  "    pm.expect(jsonData.message).to.eql(\"Invalid request body\");",
+                  "});",
+                  "",
+                  "pm.test(\"Body matches string\", function () {",
+                  "    pm.expect(pm.response.text()).to.include(\"message\");",
+                  "});",
+                  "",
+                  "pm.test(\"Body matches string\", function () {",
+                  "    pm.expect(pm.response.text()).to.include(\"validationErrors\");",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "id": "4c2f459d-53ec-419b-a9ca-609cdcbb0661",
+          "protocolProfileBehavior": {
+            "disableBodyPruning": true
+          },
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "x-api-key",
+                "value": "{{apiKey}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"timestamp\": {{timestamp}},\n    \"userId\": \"{{businessUserId}}\",\n    \"updatedBusinessUserAttributes\": {\n        \"kycStatusDetails\": {\n            \"status\": \"SUCCESSFUL\"\n        },\n        \"userStateDetails\": {\n            \"state\": \"ACTIVE-1\"\n        },\n        \"legalEntity\": {\n            \"companyGeneralDetails\": {\n                \"legalName\": \"Mr Wu Semiconductors\"\n            },\n            \"contactDetails\": {\n                \"addresses\": [\n                    {\n                        \"addressLines\": [\n                            \"Klara-Franke Str 20\"\n                        ],\n                        \"postcode\": \"10557\",\n                        \"city\": \"Berlin\",\n                        \"state\": \"Berlin\",\n                        \"country\": \"Germany\",\n                        \"tags\": [\n                            {\n                                \"key\": \"customKey\",\n                                \"value\": \"customValue\"\n                            }\n                        ]\n                    }\n                ]\n            }\n        }\n    }\n}"
+            },
+            "url": {
+              "raw": "{{domain}}/events/business/user",
+              "host": ["{{domain}}"],
+              "path": ["events", "business", "user"]
+            }
+          },
+          "response": [],
+          "uid": "24163049-4c2f459d-53ec-419b-a9ca-609cdcbb0661"
+        },
+        {
+          "name": "Invalid Legal Name Type",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "id": "f3909390-2937-435f-9403-02a067a3d0ea",
+                "exec": [
+                  "pm.test(\"Status code is 400\", function () {",
+                  "    pm.response.to.have.status(400);",
+                  "});",
+                  "",
+                  "pm.test(\"Validation Error Check\", function () {",
+                  "    var jsonData = pm.response.json();",
+                  "    pm.expect(jsonData.validationErrors).to.eql(\"[instance type (boolean) does not match any allowed primitive type (allowed: [\\\"string\\\"])]\");",
+                  "});",
+                  "",
+                  "pm.test(\"Message Check\", function () {",
+                  "    var jsonData = pm.response.json();",
+                  "    pm.expect(jsonData.message).to.eql(\"Invalid request body\");",
+                  "});",
+                  "",
+                  "pm.test(\"Body matches string\", function () {",
+                  "    pm.expect(pm.response.text()).to.include(\"message\");",
+                  "});",
+                  "",
+                  "pm.test(\"Body matches string\", function () {",
+                  "    pm.expect(pm.response.text()).to.include(\"validationErrors\");",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "id": "d4057c7b-864f-4934-8ee0-a06001579727",
+          "protocolProfileBehavior": {
+            "disableBodyPruning": true
+          },
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "x-api-key",
+                "value": "{{apiKey}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"timestamp\": {{timestamp}},\n    \"userId\": \"{{businessUserId}}\",\n    \"updatedBusinessUserAttributes\": {\n        \"kycStatusDetails\": {\n            \"status\": \"SUCCESSFUL\"\n        },\n        \"userStateDetails\": {\n            \"state\": \"ACTIVE\"\n        },\n        \"legalEntity\": {\n            \"companyGeneralDetails\": {\n                \"legalName\": true\n            },\n            \"contactDetails\": {\n                \"addresses\": [\n                    {\n                        \"addressLines\": [\n                            \"Klara-Franke Str 20\"\n                        ],\n                        \"postcode\": \"10557\",\n                        \"city\": \"Berlin\",\n                        \"state\": \"Berlin\",\n                        \"country\": \"Germany\",\n                        \"tags\": [\n                            {\n                                \"key\": \"customKey\",\n                                \"value\": \"customValue\"\n                            }\n                        ]\n                    }\n                ]\n            }\n        }\n    }\n}"
+            },
+            "url": {
+              "raw": "{{domain}}/events/business/user",
+              "host": ["{{domain}}"],
+              "path": ["events", "business", "user"]
+            }
+          },
+          "response": [],
+          "uid": "24163049-d4057c7b-864f-4934-8ee0-a06001579727"
+        },
+        {
+          "name": "Invalid Country Code",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "id": "f3909390-2937-435f-9403-02a067a3d0ea",
+                "exec": [
+                  "pm.test(\"Status code is 400\", function () {",
+                  "    pm.response.to.have.status(400);",
+                  "});",
+                  "",
+                  "pm.test(\"Validation Error Check\", function () {",
+                  "    var jsonData = pm.response.json();",
+                  "    pm.expect(jsonData.validationErrors).to.eql(\"[instance value (\\\"AA\\\") not found in enum (possible values: [\\\"AF\\\",\\\"AL\\\",\\\"DZ\\\",\\\"AS\\\",\\\"AD\\\",\\\"AO\\\",\\\"AI\\\",\\\"AQ\\\",\\\"AG\\\",\\\"AR\\\",\\\"AM\\\",\\\"AW\\\",\\\"AU\\\",\\\"AT\\\",\\\"AZ\\\",\\\"BS\\\",\\\"BH\\\",\\\"BD\\\",\\\"BB\\\",\\\"BY\\\",\\\"BE\\\",\\\"BZ\\\",\\\"BJ\\\",\\\"BM\\\",\\\"BT\\\",\\\"BO\\\",\\\"BQ\\\",\\\"BA\\\",\\\"BW\\\",\\\"BV\\\",\\\"BR\\\",\\\"IO\\\",\\\"BN\\\",\\\"BG\\\",\\\"BF\\\",\\\"BI\\\",\\\"CV\\\",\\\"KH\\\",\\\"CM\\\",\\\"CA\\\",\\\"KY\\\",\\\"CF\\\",\\\"TD\\\",\\\"CL\\\",\\\"CN\\\",\\\"CX\\\",\\\"CC\\\",\\\"CO\\\",\\\"KM\\\",\\\"CD\\\",\\\"CG\\\",\\\"CK\\\",\\\"CR\\\",\\\"HR\\\",\\\"CU\\\",\\\"CW\\\",\\\"CY\\\",\\\"CZ\\\",\\\"CI\\\",\\\"DK\\\",\\\"DJ\\\",\\\"DM\\\",\\\"DO\\\",\\\"EC\\\",\\\"EG\\\",\\\"SV\\\",\\\"GQ\\\",\\\"ER\\\",\\\"EE\\\",\\\"SZ\\\",\\\"ET\\\",\\\"FK\\\",\\\"FO\\\",\\\"FJ\\\",\\\"FI\\\",\\\"FR\\\",\\\"GF\\\",\\\"PF\\\",\\\"TF\\\",\\\"GA\\\",\\\"GM\\\",\\\"GE\\\",\\\"DE\\\",\\\"GH\\\",\\\"GI\\\",\\\"GR\\\",\\\"GL\\\",\\\"GD\\\",\\\"GP\\\",\\\"GU\\\",\\\"GT\\\",\\\"GG\\\",\\\"GN\\\",\\\"GW\\\",\\\"GY\\\",\\\"HT\\\",\\\"HM\\\",\\\"VA\\\",\\\"HN\\\",\\\"HK\\\",\\\"HU\\\",\\\"IS\\\",\\\"IN\\\",\\\"ID\\\",\\\"IR\\\",\\\"IQ\\\",\\\"IE\\\",\\\"IM\\\",\\\"IL\\\",\\\"IT\\\",\\\"JM\\\",\\\"JP\\\",\\\"JE\\\",\\\"JO\\\",\\\"KZ\\\",\\\"KE\\\",\\\"KI\\\",\\\"KP\\\",\\\"KR\\\",\\\"KW\\\",\\\"KG\\\",\\\"LA\\\",\\\"LV\\\",\\\"LB\\\",\\\"LS\\\",\\\"LR\\\",\\\"LY\\\",\\\"LI\\\",\\\"LT\\\",\\\"LU\\\",\\\"MO\\\",\\\"MG\\\",\\\"MW\\\",\\\"MY\\\",\\\"MV\\\",\\\"ML\\\",\\\"MT\\\",\\\"MH\\\",\\\"MQ\\\",\\\"MR\\\",\\\"MU\\\",\\\"YT\\\",\\\"MX\\\",\\\"FM\\\",\\\"MD\\\",\\\"MC\\\",\\\"MN\\\",\\\"ME\\\",\\\"MS\\\",\\\"MA\\\",\\\"MZ\\\",\\\"MM\\\",\\\"NA\\\",\\\"NR\\\",\\\"NP\\\",\\\"NL\\\",\\\"NC\\\",\\\"NZ\\\",\\\"NI\\\",\\\"NE\\\",\\\"NG\\\",\\\"NU\\\",\\\"NF\\\",\\\"MK\\\",\\\"MP\\\",\\\"NO\\\",\\\"OM\\\",\\\"PK\\\",\\\"PW\\\",\\\"PS\\\",\\\"PA\\\",\\\"PG\\\",\\\"PY\\\",\\\"PE\\\",\\\"PH\\\",\\\"PN\\\",\\\"PL\\\",\\\"PT\\\",\\\"PR\\\",\\\"QA\\\",\\\"RO\\\",\\\"RU\\\",\\\"RW\\\",\\\"RE\\\",\\\"BL\\\",\\\"SH\\\",\\\"KN\\\",\\\"LC\\\",\\\"MF\\\",\\\"PM\\\",\\\"VC\\\",\\\"WS\\\",\\\"SM\\\",\\\"ST\\\",\\\"SA\\\",\\\"SN\\\",\\\"RS\\\",\\\"SC\\\",\\\"SL\\\",\\\"SG\\\",\\\"SX\\\",\\\"SK\\\",\\\"SI\\\",\\\"SB\\\",\\\"SO\\\",\\\"ZA\\\",\\\"GS\\\",\\\"SS\\\",\\\"ES\\\",\\\"LK\\\",\\\"SD\\\",\\\"SR\\\",\\\"SJ\\\",\\\"SE\\\",\\\"CH\\\",\\\"SY\\\",\\\"TW\\\",\\\"TJ\\\",\\\"TZ\\\",\\\"TH\\\",\\\"TL\\\",\\\"TG\\\",\\\"TK\\\",\\\"TO\\\",\\\"TT\\\",\\\"TN\\\",\\\"TM\\\",\\\"TC\\\",\\\"TV\\\",\\\"TR\\\",\\\"UG\\\",\\\"UA\\\",\\\"AE\\\",\\\"GB\\\",\\\"UM\\\",\\\"US\\\",\\\"UY\\\",\\\"UZ\\\",\\\"VU\\\",\\\"VE\\\",\\\"VN\\\",\\\"VG\\\",\\\"VI\\\",\\\"WF\\\",\\\"EH\\\",\\\"YE\\\",\\\"ZM\\\",\\\"ZW\\\",\\\"AX\\\",\\\"N/A\\\"])]\");",
+                  "});",
+                  "",
+                  "pm.test(\"Message Check\", function () {",
+                  "    var jsonData = pm.response.json();",
+                  "    pm.expect(jsonData.message).to.eql(\"Invalid request body\");",
+                  "});",
+                  "",
+                  "pm.test(\"Body matches string\", function () {",
+                  "    pm.expect(pm.response.text()).to.include(\"message\");",
+                  "});",
+                  "",
+                  "pm.test(\"Body matches string\", function () {",
+                  "    pm.expect(pm.response.text()).to.include(\"validationErrors\");",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "id": "0c3eb471-bef5-43bd-8c44-199f3c532f8a",
+          "protocolProfileBehavior": {
+            "disableBodyPruning": true
+          },
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "x-api-key",
+                "value": "{{apiKey}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"timestamp\": {{timestamp}},\n    \"userId\": \"{{businessUserId}}\",\n    \"updatedBusinessUserAttributes\": {\n        \"kycStatusDetails\": {\n            \"status\": \"SUCCESSFUL\"\n        },\n        \"userStateDetails\": {\n            \"state\": \"ACTIVE\"\n        },\n        \"legalEntity\": {\n            \"companyGeneralDetails\": {\n                \"legalName\": \"Mr Postman\"\n            },\n            \"companyRegistrationDetails\": {\n                \"registrationCountry\": \"AA\",\n                \"registrationIdentifier\": \"AB\"\n            },\n            \"contactDetails\": {\n                \"addresses\": [\n                    {\n                        \"addressLines\": [\n                            \"Klara-Franke Str 20\"\n                        ],\n                        \"postcode\": \"10557\",\n                        \"city\": \"Berlin\",\n                        \"state\": \"Berlin\",\n                        \"country\": \"Germany\",\n                        \"tags\": [\n                            {\n                                \"key\": \"customKey\",\n                                \"value\": \"customValue\"\n                            }\n                        ]\n                    }\n                ]\n            }\n        }\n    }\n}"
+            },
+            "url": {
+              "raw": "{{domain}}/events/business/user",
+              "host": ["{{domain}}"],
+              "path": ["events", "business", "user"]
+            }
+          },
+          "response": [],
+          "uid": "24163049-0c3eb471-bef5-43bd-8c44-199f3c532f8a"
+        },
+        {
+          "name": "Timestamp Provided as String",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "id": "f3909390-2937-435f-9403-02a067a3d0ea",
+                "exec": [
+                  "pm.test(\"Status code is 400\", function () {",
+                  "    pm.response.to.have.status(400);",
+                  "});",
+                  "",
+                  "pm.test(\"Validation Error Check\", function () {",
+                  "    var jsonData = pm.response.json();",
+                  "    pm.expect(jsonData.validationErrors).to.eql(\"[instance type (string) does not match any allowed primitive type (allowed: [\\\"integer\\\",\\\"number\\\"])]\");",
+                  "});",
+                  "",
+                  "pm.test(\"Message Check\", function () {",
+                  "    var jsonData = pm.response.json();",
+                  "    pm.expect(jsonData.message).to.eql(\"Invalid request body\");",
+                  "});",
+                  "",
+                  "pm.test(\"Body matches string\", function () {",
+                  "    pm.expect(pm.response.text()).to.include(\"message\");",
+                  "});",
+                  "",
+                  "pm.test(\"Body matches string\", function () {",
+                  "    pm.expect(pm.response.text()).to.include(\"validationErrors\");",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "id": "a279c32a-347d-4823-8121-e797bdb5fc26",
+          "protocolProfileBehavior": {
+            "disableBodyPruning": true
+          },
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "x-api-key",
+                "value": "{{apiKey}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"timestamp\": \"{{timestamp}}\",\n    \"userId\": \"{{businessUserId}}\",\n    \"updatedBusinessUserAttributes\": {\n        \"kycStatusDetails\": {\n            \"status\": \"SUCCESSFUL\"\n        },\n        \"userStateDetails\": {\n            \"state\": \"ACTIVE\"\n        },\n        \"legalEntity\": {\n            \"companyGeneralDetails\": {\n                \"legalName\": \"Mr Postman\"\n            },\n            \"companyRegistrationDetails\": {\n                \"registrationCountry\": \"US\",\n                \"registrationIdentifier\": \"AB\"\n            },\n            \"contactDetails\": {\n                \"addresses\": [\n                    {\n                        \"addressLines\": [\n                            \"Klara-Franke Str 20\"\n                        ],\n                        \"postcode\": \"10557\",\n                        \"city\": \"Berlin\",\n                        \"state\": \"Berlin\",\n                        \"country\": \"Germany\",\n                        \"tags\": [\n                            {\n                                \"key\": \"customKey\",\n                                \"value\": \"customValue\"\n                            }\n                        ]\n                    }\n                ]\n            }\n        }\n    }\n}"
+            },
+            "url": {
+              "raw": "{{domain}}/events/business/user",
+              "host": ["{{domain}}"],
+              "path": ["events", "business", "user"]
+            }
+          },
+          "response": [],
+          "uid": "24163049-a279c32a-347d-4823-8121-e797bdb5fc26"
+        }
+      ],
+      "id": "32c1fd48-07d0-4ea7-aeaf-f56d2b0b459a",
+      "uid": "24163049-32c1fd48-07d0-4ea7-aeaf-f56d2b0b459a"
     }
   ]
 }
