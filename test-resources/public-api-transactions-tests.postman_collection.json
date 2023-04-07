@@ -4,7 +4,7 @@
     "name": "Public API Tests Collection",
     "description": "**The subesquent folders are added in a specific order please dont change it else it may create some issues with the tests**",
     "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
-    "updatedAt": "2023-04-06T18:57:23.000Z",
+    "updatedAt": "2023-04-07T08:10:19.000Z",
     "uid": "24163049-503b80a7-dd73-4ed0-8aa6-5eaaa06f9ea5"
   },
   "item": [
@@ -3174,6 +3174,785 @@
       ],
       "id": "57e65ad9-2597-4391-8e1d-c1a3e2c97152",
       "uid": "24163049-57e65ad9-2597-4391-8e1d-c1a3e2c97152"
+    },
+    {
+      "name": "Consumer User Events",
+      "item": [
+        {
+          "name": "200 Response",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "id": "2ebcc671-ec03-47c3-81a7-0981c0a94997",
+                "exec": [
+                  "pm.test(\"Status code is 200\", function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.test(\"Check Risk Level Is Changed\", function () {",
+                  "    var jsonData = pm.response.json();",
+                  "    pm.expect(jsonData.riskLevel).to.eql(\"HIGH\");",
+                  "});",
+                  "",
+                  "pm.test(\"Check Transaction State\", function () {",
+                  "    var jsonData = pm.response.json();",
+                  "    const request = JSON.parse(pm.request.body.raw)",
+                  "",
+                  "    const data = {",
+                  "    \"userId\": request.userId,",
+                  "    \"legalDocuments\": [",
+                  "        {",
+                  "            \"documentIssuedDate\": 1639939034,",
+                  "            \"documentExpirationDate\": 1839939034,",
+                  "            \"documentType\": \"passport\",",
+                  "            \"documentNumber\": \"CB33GME6\",",
+                  "            \"documentIssuedCountry\": \"US\"",
+                  "        }",
+                  "    ],",
+                  "    \"userDetails\": {",
+                  "        \"name\": {",
+                  "            \"firstName\": \"Post Man\",",
+                  "            \"lastName\": \"Dugar\"",
+                  "        },",
+                  "        \"dateOfBirth\": \"2007-01-15\",",
+                  "        \"countryOfResidence\": \"US\",",
+                  "        \"countryOfNationality\": \"RU\"",
+                  "    },",
+                  "    \"createdTimestamp\": request.timestamp,",
+                  "    \"tags\": [",
+                  "        {",
+                  "            \"value\": \"wallet\",",
+                  "            \"key\": \"hello\"",
+                  "        }",
+                  "    ],",
+                  "    \"reasonForAccountOpening\": [",
+                  "        \"Payment\",",
+                  "        \"Deposits\"",
+                  "    ],",
+                  "    \"riskLevel\": \"HIGH\",",
+                  "    \"kycStatusDetails\": {",
+                  "        \"status\": \"SUCCESSFUL\"",
+                  "    },",
+                  "    \"userStateDetails\": {",
+                  "        \"state\": \"ACTIVE\"",
+                  "    }",
+                  "}",
+                  "",
+                  "    pm.expect(jsonData).to.eql(data);",
+                  "});",
+                  "",
+                  "pm.test(\"Body matches string\", function () {",
+                  "    pm.expect(pm.response.text()).to.include(\"legalDocuments\");",
+                  "});",
+                  "",
+                  "pm.test(\"Body matches string\", function () {",
+                  "    pm.expect(pm.response.text()).to.include(\"userDetails\");",
+                  "});",
+                  "",
+                  "pm.test(\"Body matches string\", function () {",
+                  "    pm.expect(pm.response.text()).to.include(\"kycStatusDetails\");",
+                  "});",
+                  "",
+                  "pm.test(\"Body matches string\", function () {",
+                  "    pm.expect(pm.response.text()).to.include(\"createdTimestamp\");",
+                  "});",
+                  "",
+                  "pm.test(\"Tags Should be more then 1\", function () {",
+                  "    var jsonData = pm.response.json();",
+                  "    let executedRules = jsonData.tags.length > 0",
+                  "    pm.expect(executedRules).to.eql(true);",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "id": "e8c11667-d0dd-4d06-9230-f1a83ec3315b",
+          "protocolProfileBehavior": {
+            "disableBodyPruning": true
+          },
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "x-api-key",
+                "value": "{{apiKey}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"timestamp\": {{timestamp}},\n    \"userId\": \"{{userId}}\",\n    \"updatedConsumerUserAttributes\": {\n        \"riskLevel\": \"HIGH\",\n        \"kycStatusDetails\": {\n            \"status\": \"SUCCESSFUL\"\n        },\n        \"userStateDetails\": {\n            \"state\": \"ACTIVE\"\n        }\n    }\n}"
+            },
+            "url": {
+              "raw": "{{domain}}/events/consumer/user",
+              "host": ["{{domain}}"],
+              "path": ["events", "consumer", "user"]
+            }
+          },
+          "response": [],
+          "uid": "24163049-e8c11667-d0dd-4d06-9230-f1a83ec3315b"
+        },
+        {
+          "name": "User Id not Provided",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "id": "2ebcc671-ec03-47c3-81a7-0981c0a94997",
+                "exec": [
+                  "pm.test(\"Status code is 400\", function () {",
+                  "    pm.response.to.have.status(400);",
+                  "});",
+                  "",
+                  "pm.test(\"Validation Error Check\", function () {",
+                  "    var jsonData = pm.response.json();",
+                  "    pm.expect(jsonData.validationErrors).to.eql(\"[object has missing required properties ([\\\"userId\\\"])]\");",
+                  "});",
+                  "",
+                  "pm.test(\"Message Check\", function () {",
+                  "    var jsonData = pm.response.json();",
+                  "    pm.expect(jsonData.message).to.eql(\"Invalid request body\");",
+                  "});",
+                  "",
+                  "pm.test(\"Body matches string\", function () {",
+                  "    pm.expect(pm.response.text()).to.include(\"message\");",
+                  "});",
+                  "",
+                  "pm.test(\"Body matches string\", function () {",
+                  "    pm.expect(pm.response.text()).to.include(\"validationErrors\");",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "id": "27db15ca-da2f-4e70-90ce-1f1cf5a08281",
+          "protocolProfileBehavior": {
+            "disableBodyPruning": true
+          },
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "x-api-key",
+                "value": "{{apiKey}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"timestamp\": {{timestamp}},\n    \"updatedConsumerUserAttributes\": {\n        \"riskLevel\": \"HIGH\",\n        \"kycStatusDetails\": {\n            \"status\": \"SUCCESSFUL\"\n        },\n        \"userStateDetails\": {\n            \"state\": \"ACTIVE\"\n        }\n    }\n}"
+            },
+            "url": {
+              "raw": "{{domain}}/events/consumer/user",
+              "host": ["{{domain}}"],
+              "path": ["events", "consumer", "user"]
+            }
+          },
+          "response": [],
+          "uid": "24163049-27db15ca-da2f-4e70-90ce-1f1cf5a08281"
+        },
+        {
+          "name": "Invalid User State",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "id": "2ebcc671-ec03-47c3-81a7-0981c0a94997",
+                "exec": [
+                  "pm.test(\"Status code is 400\", function () {",
+                  "    pm.response.to.have.status(400);",
+                  "});",
+                  "",
+                  "pm.test(\"Validation Error Check\", function () {",
+                  "    var jsonData = pm.response.json();",
+                  "    pm.expect(jsonData.validationErrors).to.eql(\"[instance value (\\\"ACTIVE-1\\\") not found in enum (possible values: [\\\"UNACCEPTABLE\\\",\\\"UNDECIDED\\\",\\\"TERMINATED\\\",\\\"ACTIVE\\\",\\\"INACTIVE\\\",\\\"DORMANT\\\",\\\"CREATED\\\",\\\"DELETED\\\",\\\"SUSPENDED\\\",\\\"BLOCKED\\\"])]\");",
+                  "});",
+                  "",
+                  "pm.test(\"Message Check\", function () {",
+                  "    var jsonData = pm.response.json();",
+                  "    pm.expect(jsonData.message).to.eql(\"Invalid request body\");",
+                  "});",
+                  "",
+                  "pm.test(\"Body matches string\", function () {",
+                  "    pm.expect(pm.response.text()).to.include(\"message\");",
+                  "});",
+                  "",
+                  "pm.test(\"Body matches string\", function () {",
+                  "    pm.expect(pm.response.text()).to.include(\"validationErrors\");",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "id": "bf3384d6-034d-4c7c-88a4-04077bfbff61",
+          "protocolProfileBehavior": {
+            "disableBodyPruning": true
+          },
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "x-api-key",
+                "value": "{{apiKey}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"timestamp\": {{timestamp}},\n    \"userId\": \"{{userId}}\",\n    \"updatedConsumerUserAttributes\": {\n        \"riskLevel\": \"HIGH\",\n        \"kycStatusDetails\": {\n            \"status\": \"SUCCESSFUL\"\n        },\n        \"userStateDetails\": {\n            \"state\": \"ACTIVE-1\"\n        }\n    }\n}"
+            },
+            "url": {
+              "raw": "{{domain}}/events/consumer/user",
+              "host": ["{{domain}}"],
+              "path": ["events", "consumer", "user"]
+            }
+          },
+          "response": [],
+          "uid": "24163049-bf3384d6-034d-4c7c-88a4-04077bfbff61"
+        },
+        {
+          "name": "Invalid Country",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "id": "2ebcc671-ec03-47c3-81a7-0981c0a94997",
+                "exec": [
+                  "pm.test(\"Status code is 400\", function () {",
+                  "    pm.response.to.have.status(400);",
+                  "});",
+                  "",
+                  "pm.test(\"Validation Error Check\", function () {",
+                  "    var jsonData = pm.response.json();",
+                  "    pm.expect(jsonData.validationErrors).to.eql(\"[instance value (\\\"AA\\\") not found in enum (possible values: [\\\"AF\\\",\\\"AL\\\",\\\"DZ\\\",\\\"AS\\\",\\\"AD\\\",\\\"AO\\\",\\\"AI\\\",\\\"AQ\\\",\\\"AG\\\",\\\"AR\\\",\\\"AM\\\",\\\"AW\\\",\\\"AU\\\",\\\"AT\\\",\\\"AZ\\\",\\\"BS\\\",\\\"BH\\\",\\\"BD\\\",\\\"BB\\\",\\\"BY\\\",\\\"BE\\\",\\\"BZ\\\",\\\"BJ\\\",\\\"BM\\\",\\\"BT\\\",\\\"BO\\\",\\\"BQ\\\",\\\"BA\\\",\\\"BW\\\",\\\"BV\\\",\\\"BR\\\",\\\"IO\\\",\\\"BN\\\",\\\"BG\\\",\\\"BF\\\",\\\"BI\\\",\\\"CV\\\",\\\"KH\\\",\\\"CM\\\",\\\"CA\\\",\\\"KY\\\",\\\"CF\\\",\\\"TD\\\",\\\"CL\\\",\\\"CN\\\",\\\"CX\\\",\\\"CC\\\",\\\"CO\\\",\\\"KM\\\",\\\"CD\\\",\\\"CG\\\",\\\"CK\\\",\\\"CR\\\",\\\"HR\\\",\\\"CU\\\",\\\"CW\\\",\\\"CY\\\",\\\"CZ\\\",\\\"CI\\\",\\\"DK\\\",\\\"DJ\\\",\\\"DM\\\",\\\"DO\\\",\\\"EC\\\",\\\"EG\\\",\\\"SV\\\",\\\"GQ\\\",\\\"ER\\\",\\\"EE\\\",\\\"SZ\\\",\\\"ET\\\",\\\"FK\\\",\\\"FO\\\",\\\"FJ\\\",\\\"FI\\\",\\\"FR\\\",\\\"GF\\\",\\\"PF\\\",\\\"TF\\\",\\\"GA\\\",\\\"GM\\\",\\\"GE\\\",\\\"DE\\\",\\\"GH\\\",\\\"GI\\\",\\\"GR\\\",\\\"GL\\\",\\\"GD\\\",\\\"GP\\\",\\\"GU\\\",\\\"GT\\\",\\\"GG\\\",\\\"GN\\\",\\\"GW\\\",\\\"GY\\\",\\\"HT\\\",\\\"HM\\\",\\\"VA\\\",\\\"HN\\\",\\\"HK\\\",\\\"HU\\\",\\\"IS\\\",\\\"IN\\\",\\\"ID\\\",\\\"IR\\\",\\\"IQ\\\",\\\"IE\\\",\\\"IM\\\",\\\"IL\\\",\\\"IT\\\",\\\"JM\\\",\\\"JP\\\",\\\"JE\\\",\\\"JO\\\",\\\"KZ\\\",\\\"KE\\\",\\\"KI\\\",\\\"KP\\\",\\\"KR\\\",\\\"KW\\\",\\\"KG\\\",\\\"LA\\\",\\\"LV\\\",\\\"LB\\\",\\\"LS\\\",\\\"LR\\\",\\\"LY\\\",\\\"LI\\\",\\\"LT\\\",\\\"LU\\\",\\\"MO\\\",\\\"MG\\\",\\\"MW\\\",\\\"MY\\\",\\\"MV\\\",\\\"ML\\\",\\\"MT\\\",\\\"MH\\\",\\\"MQ\\\",\\\"MR\\\",\\\"MU\\\",\\\"YT\\\",\\\"MX\\\",\\\"FM\\\",\\\"MD\\\",\\\"MC\\\",\\\"MN\\\",\\\"ME\\\",\\\"MS\\\",\\\"MA\\\",\\\"MZ\\\",\\\"MM\\\",\\\"NA\\\",\\\"NR\\\",\\\"NP\\\",\\\"NL\\\",\\\"NC\\\",\\\"NZ\\\",\\\"NI\\\",\\\"NE\\\",\\\"NG\\\",\\\"NU\\\",\\\"NF\\\",\\\"MK\\\",\\\"MP\\\",\\\"NO\\\",\\\"OM\\\",\\\"PK\\\",\\\"PW\\\",\\\"PS\\\",\\\"PA\\\",\\\"PG\\\",\\\"PY\\\",\\\"PE\\\",\\\"PH\\\",\\\"PN\\\",\\\"PL\\\",\\\"PT\\\",\\\"PR\\\",\\\"QA\\\",\\\"RO\\\",\\\"RU\\\",\\\"RW\\\",\\\"RE\\\",\\\"BL\\\",\\\"SH\\\",\\\"KN\\\",\\\"LC\\\",\\\"MF\\\",\\\"PM\\\",\\\"VC\\\",\\\"WS\\\",\\\"SM\\\",\\\"ST\\\",\\\"SA\\\",\\\"SN\\\",\\\"RS\\\",\\\"SC\\\",\\\"SL\\\",\\\"SG\\\",\\\"SX\\\",\\\"SK\\\",\\\"SI\\\",\\\"SB\\\",\\\"SO\\\",\\\"ZA\\\",\\\"GS\\\",\\\"SS\\\",\\\"ES\\\",\\\"LK\\\",\\\"SD\\\",\\\"SR\\\",\\\"SJ\\\",\\\"SE\\\",\\\"CH\\\",\\\"SY\\\",\\\"TW\\\",\\\"TJ\\\",\\\"TZ\\\",\\\"TH\\\",\\\"TL\\\",\\\"TG\\\",\\\"TK\\\",\\\"TO\\\",\\\"TT\\\",\\\"TN\\\",\\\"TM\\\",\\\"TC\\\",\\\"TV\\\",\\\"TR\\\",\\\"UG\\\",\\\"UA\\\",\\\"AE\\\",\\\"GB\\\",\\\"UM\\\",\\\"US\\\",\\\"UY\\\",\\\"UZ\\\",\\\"VU\\\",\\\"VE\\\",\\\"VN\\\",\\\"VG\\\",\\\"VI\\\",\\\"WF\\\",\\\"EH\\\",\\\"YE\\\",\\\"ZM\\\",\\\"ZW\\\",\\\"AX\\\",\\\"N/A\\\"])]\");",
+                  "});",
+                  "",
+                  "pm.test(\"Message Check\", function () {",
+                  "    var jsonData = pm.response.json();",
+                  "    pm.expect(jsonData.message).to.eql(\"Invalid request body\");",
+                  "});",
+                  "",
+                  "pm.test(\"Body matches string\", function () {",
+                  "    pm.expect(pm.response.text()).to.include(\"message\");",
+                  "});",
+                  "",
+                  "pm.test(\"Body matches string\", function () {",
+                  "    pm.expect(pm.response.text()).to.include(\"validationErrors\");",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "id": "e4a7d1fe-f07c-4167-bd49-fc46ce9779fa",
+          "protocolProfileBehavior": {
+            "disableBodyPruning": true
+          },
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "x-api-key",
+                "value": "{{apiKey}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"timestamp\": {{timestamp}},\n    \"userId\": \"{{userId}}\",\n    \"updatedConsumerUserAttributes\": {\n        \"riskLevel\": \"HIGH\",\n        \"kycStatusDetails\": {\n            \"status\": \"SUCCESSFUL\"\n        },\n        \"userStateDetails\": {\n            \"state\": \"ACTIVE\"\n        },\n        \"legalDocuments\": [\n            {\n                \"documentNumber\": \"123\",\n                \"documentType\": \"Temo\",\n                \"documentIssuedCountry\": \"AA\"\n            }\n        ]\n    }\n}"
+            },
+            "url": {
+              "raw": "{{domain}}/events/consumer/user",
+              "host": ["{{domain}}"],
+              "path": ["events", "consumer", "user"]
+            }
+          },
+          "response": [],
+          "uid": "24163049-e4a7d1fe-f07c-4167-bd49-fc46ce9779fa"
+        },
+        {
+          "name": "Timestamp Provided as String",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "id": "2ebcc671-ec03-47c3-81a7-0981c0a94997",
+                "exec": [
+                  "pm.test(\"Status code is 400\", function () {",
+                  "    pm.response.to.have.status(400);",
+                  "});",
+                  "",
+                  "pm.test(\"Validation Error Check\", function () {",
+                  "    var jsonData = pm.response.json();",
+                  "    pm.expect(jsonData.validationErrors).to.eql(\"[instance type (string) does not match any allowed primitive type (allowed: [\\\"integer\\\",\\\"number\\\"])]\");",
+                  "});",
+                  "",
+                  "pm.test(\"Message Check\", function () {",
+                  "    var jsonData = pm.response.json();",
+                  "    pm.expect(jsonData.message).to.eql(\"Invalid request body\");",
+                  "});",
+                  "",
+                  "pm.test(\"Body matches string\", function () {",
+                  "    pm.expect(pm.response.text()).to.include(\"message\");",
+                  "});",
+                  "",
+                  "pm.test(\"Body matches string\", function () {",
+                  "    pm.expect(pm.response.text()).to.include(\"validationErrors\");",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "id": "7226d157-0465-4ad2-b053-2820afa1e9cc",
+          "protocolProfileBehavior": {
+            "disableBodyPruning": true
+          },
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "x-api-key",
+                "value": "{{apiKey}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"timestamp\": \"{{timestamp}}\",\n    \"userId\": \"{{userId}}\",\n    \"updatedConsumerUserAttributes\": {\n        \"riskLevel\": \"HIGH\",\n        \"kycStatusDetails\": {\n            \"status\": \"SUCCESSFUL\"\n        },\n        \"userStateDetails\": {\n            \"state\": \"ACTIVE\"\n        },\n        \"legalDocuments\": [\n            {\n                \"documentNumber\": \"123\",\n                \"documentType\": \"Temo\",\n                \"documentIssuedCountry\": \"AA\"\n            }\n        ]\n    }\n}"
+            },
+            "url": {
+              "raw": "{{domain}}/events/consumer/user",
+              "host": ["{{domain}}"],
+              "path": ["events", "consumer", "user"]
+            }
+          },
+          "response": [],
+          "uid": "24163049-7226d157-0465-4ad2-b053-2820afa1e9cc"
+        },
+        {
+          "name": "Invalid User Id",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "id": "17468f64-2e17-4508-b0ed-e1d89f2b58f6",
+                "exec": [
+                  "pm.test(\"Status code is 404\", function () {",
+                  "    pm.response.to.have.status(404);",
+                  "});",
+                  "",
+                  "pm.test(\"Validation Error Check\", function () {",
+                  "    var jsonData = pm.response.json();",
+                  "    const request = JSON.parse(pm.request.body.raw)",
+                  "    const userId = request.userId",
+                  "    pm.expect(jsonData.message).to.eql(`User ${userId} not found. Please create the user ${userId}`)",
+                  "});",
+                  "",
+                  "pm.test(\"Message Check\", function () {",
+                  "    var jsonData = pm.response.json();",
+                  "    pm.expect(jsonData.error).to.eql(\"NotFoundError\");",
+                  "});",
+                  "",
+                  "pm.test(\"Body matches string\", function () {",
+                  "    pm.expect(pm.response.text()).to.include(\"message\");",
+                  "});",
+                  "",
+                  "pm.test(\"Body matches string\", function () {",
+                  "    pm.expect(pm.response.text()).to.include(\"error\");",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "id": "6ee1f67a-1a73-419a-b4b4-3dbd5db0bc61",
+          "protocolProfileBehavior": {
+            "disableBodyPruning": true
+          },
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "x-api-key",
+                "value": "{{apiKey}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"timestamp\": {{timestamp}},\n    \"userId\": \"{{userId}}-1\",\n    \"updatedConsumerUserAttributes\": {\n        \"riskLevel\": \"HIGH\",\n        \"kycStatusDetails\": {\n            \"status\": \"SUCCESSFUL\"\n        },\n        \"userStateDetails\": {\n            \"state\": \"ACTIVE\"\n        },\n        \"legalDocuments\": [\n            {\n                \"documentNumber\": \"123\",\n                \"documentType\": \"Temo\",\n                \"documentIssuedCountry\": \"IN\"\n            }\n        ]\n    }\n}"
+            },
+            "url": {
+              "raw": "{{domain}}/events/consumer/user",
+              "host": ["{{domain}}"],
+              "path": ["events", "consumer", "user"]
+            }
+          },
+          "response": [],
+          "uid": "24163049-6ee1f67a-1a73-419a-b4b4-3dbd5db0bc61"
+        },
+        {
+          "name": "No Update Attributes",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "id": "2ebcc671-ec03-47c3-81a7-0981c0a94997",
+                "exec": [
+                  "pm.test(\"Status code is 200\", function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.test(\"Body matches string\", function () {",
+                  "    pm.expect(pm.response.text()).to.include(\"userId\");",
+                  "});",
+                  "",
+                  "pm.test(\"Body matches string\", function () {",
+                  "    pm.expect(pm.response.text()).to.include(\"riskLevel\");",
+                  "});",
+                  "",
+                  "pm.test(\"Body matches string\", function () {",
+                  "    pm.expect(pm.response.text()).to.include(\"userDetails\");",
+                  "});",
+                  "",
+                  "pm.test(\"Payload Match\", function () {",
+                  "    const request = JSON.parse(pm.request.body.raw)",
+                  "    const userId = request.userId",
+                  "    const timestamp = request.timestamp",
+                  "  ",
+                  "    const body = {",
+                  "    \"legalDocuments\": [",
+                  "        {",
+                  "            \"documentIssuedDate\": 1639939034,",
+                  "            \"documentExpirationDate\": 1839939034,",
+                  "            \"documentType\": \"passport\",",
+                  "            \"documentNumber\": \"CB33GME6\",",
+                  "            \"documentIssuedCountry\": \"US\"",
+                  "        }",
+                  "    ],",
+                  "    \"userStateDetails\": {",
+                  "        \"state\": \"ACTIVE\"",
+                  "    },",
+                  "    \"reasonForAccountOpening\": [",
+                  "        \"Payment\",",
+                  "        \"Deposits\"",
+                  "    ],",
+                  "    \"riskLevel\": \"HIGH\",",
+                  "    \"userId\": userId,",
+                  "    \"kycStatusDetails\": {",
+                  "        \"status\": \"SUCCESSFUL\"",
+                  "    },",
+                  "    \"userDetails\": {",
+                  "        \"name\": {",
+                  "            \"firstName\": \"Post Man\",",
+                  "            \"lastName\": \"Dugar\"",
+                  "        },",
+                  "        \"dateOfBirth\": \"2007-01-15\",",
+                  "        \"countryOfResidence\": \"US\",",
+                  "        \"countryOfNationality\": \"RU\"",
+                  "    },",
+                  "    \"createdTimestamp\": timestamp,",
+                  "    \"tags\": [",
+                  "        {",
+                  "            \"value\": \"wallet\",",
+                  "            \"key\": \"hello\"",
+                  "        }",
+                  "    ]",
+                  "    }",
+                  "",
+                  "    pm.expect(pm.response.json()).to.eql(body)",
+                  "})",
+                  "    "
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "id": "cded0914-9612-484d-8afc-24c688931f88",
+          "protocolProfileBehavior": {
+            "disableBodyPruning": true
+          },
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "x-api-key",
+                "value": "{{apiKey}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"timestamp\": {{timestamp}},\n    \"userId\": \"{{userId}}\"\n}"
+            },
+            "url": {
+              "raw": "{{domain}}/events/consumer/user",
+              "host": ["{{domain}}"],
+              "path": ["events", "consumer", "user"]
+            }
+          },
+          "response": [],
+          "uid": "24163049-cded0914-9612-484d-8afc-24c688931f88"
+        },
+        {
+          "name": "Incorrect Domain",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "id": "2ebcc671-ec03-47c3-81a7-0981c0a94997",
+                "exec": [
+                  "pm.test(\"Status code is 403\", function () {",
+                  "    pm.response.to.have.status(403);",
+                  "});",
+                  "",
+                  "pm.test(\"Your test name\", function () {",
+                  "    var jsonData = pm.response.json();",
+                  "    pm.expect(jsonData.message).to.eql(\"Forbidden\");",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "id": "2f88cd8c-1004-4b01-98d5-73be24903007",
+          "protocolProfileBehavior": {
+            "disableBodyPruning": true
+          },
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "x-api-key",
+                "value": "{{apiKey}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"timestamp\": {{timestamp}},\n    \"userId\": \"{{userId}}\",\n    \"updatedConsumerUserAttributes\": {\n        \"riskLevel\": \"HIGH\",\n        \"kycStatusDetails\": {\n            \"status\": \"SUCCESSFUL\"\n        },\n        \"userStateDetails\": {\n            \"state\": \"ACTIVE\"\n        }\n    }\n}"
+            },
+            "url": {
+              "raw": "{{incorrectDomain}}/events/consumer/user",
+              "host": ["{{incorrectDomain}}"],
+              "path": ["events", "consumer", "user"]
+            }
+          },
+          "response": [],
+          "uid": "24163049-2f88cd8c-1004-4b01-98d5-73be24903007"
+        },
+        {
+          "name": "No API Key",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "id": "2ebcc671-ec03-47c3-81a7-0981c0a94997",
+                "exec": [
+                  "pm.test(\"Status code is 401\", function () {",
+                  "    pm.response.to.have.status(401);",
+                  "});",
+                  "",
+                  "pm.test(\"Should Give Unauthorized\", function () {",
+                  "    var jsonData = pm.response.json();",
+                  "    pm.expect(jsonData.message).to.eql(\"Unauthorized\");",
+                  "});",
+                  "",
+                  "pm.test(\"Content-Type is present\", function () {",
+                  "    pm.response.to.have.header(\"Content-Type\");",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "id": "0a4b50c2-c9f4-47d3-9fd3-f8414ef41aaa",
+          "protocolProfileBehavior": {
+            "disableBodyPruning": true
+          },
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "x-api-key",
+                "value": ""
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"timestamp\": {{timestamp}},\n    \"userId\": \"{{userId}}\"\n}"
+            },
+            "url": {
+              "raw": "{{domain}}/events/consumer/user",
+              "host": ["{{domain}}"],
+              "path": ["events", "consumer", "user"]
+            }
+          },
+          "response": [],
+          "uid": "24163049-0a4b50c2-c9f4-47d3-9fd3-f8414ef41aaa"
+        },
+        {
+          "name": "No Body",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "id": "2ebcc671-ec03-47c3-81a7-0981c0a94997",
+                "exec": [
+                  "pm.test(\"Status code is 400\", function () {",
+                  "    pm.response.to.have.status(400);",
+                  "});",
+                  "",
+                  "pm.test(\"Validation Error Check\", function () {",
+                  "    var jsonData = pm.response.json();",
+                  "    pm.expect(jsonData.validationErrors).to.eql(\"[Unknown error parsing request body]\");",
+                  "});",
+                  "",
+                  "pm.test(\"Message Check\", function () {",
+                  "    var jsonData = pm.response.json();",
+                  "    pm.expect(jsonData.message).to.eql(\"Invalid request body\");",
+                  "});",
+                  "",
+                  "pm.test(\"Body matches string\", function () {",
+                  "    pm.expect(pm.response.text()).to.include(\"message\");",
+                  "});",
+                  "",
+                  "pm.test(\"Body matches string\", function () {",
+                  "    pm.expect(pm.response.text()).to.include(\"validationErrors\");",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "id": "b6b3719c-cc3f-4cab-beff-677c4029f2f3",
+          "protocolProfileBehavior": {
+            "disableBodyPruning": true
+          },
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "x-api-key",
+                "value": "{{apiKey}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": ""
+            },
+            "url": {
+              "raw": "{{domain}}/events/consumer/user",
+              "host": ["{{domain}}"],
+              "path": ["events", "consumer", "user"]
+            }
+          },
+          "response": [],
+          "uid": "24163049-b6b3719c-cc3f-4cab-beff-677c4029f2f3"
+        },
+        {
+          "name": "Empty Body",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "id": "2ebcc671-ec03-47c3-81a7-0981c0a94997",
+                "exec": [
+                  "pm.test(\"Status code is 400\", function () {",
+                  "    pm.response.to.have.status(400);",
+                  "});",
+                  "",
+                  "pm.test(\"Validation Error Check\", function () {",
+                  "    var jsonData = pm.response.json();",
+                  "    pm.expect(jsonData.validationErrors).to.eql(\"[object has missing required properties ([\\\"timestamp\\\",\\\"userId\\\"])]\");",
+                  "});",
+                  "",
+                  "pm.test(\"Message Check\", function () {",
+                  "    var jsonData = pm.response.json();",
+                  "    pm.expect(jsonData.message).to.eql(\"Invalid request body\");",
+                  "});",
+                  "",
+                  "pm.test(\"Body matches string\", function () {",
+                  "    pm.expect(pm.response.text()).to.include(\"message\");",
+                  "});",
+                  "",
+                  "pm.test(\"Body matches string\", function () {",
+                  "    pm.expect(pm.response.text()).to.include(\"validationErrors\");",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "id": "cda7b5f1-e301-4ba8-b5da-1b7cc059ab22",
+          "protocolProfileBehavior": {
+            "disableBodyPruning": true
+          },
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "x-api-key",
+                "value": "{{apiKey}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{}"
+            },
+            "url": {
+              "raw": "{{domain}}/events/consumer/user",
+              "host": ["{{domain}}"],
+              "path": ["events", "consumer", "user"]
+            }
+          },
+          "response": [],
+          "uid": "24163049-cda7b5f1-e301-4ba8-b5da-1b7cc059ab22"
+        }
+      ],
+      "id": "75858a98-3f1e-4baf-b641-14285c50adbc",
+      "uid": "24163049-75858a98-3f1e-4baf-b641-14285c50adbc"
     }
   ]
 }
