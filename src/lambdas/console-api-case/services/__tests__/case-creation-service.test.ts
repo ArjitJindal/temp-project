@@ -614,6 +614,49 @@ describe('Cases', () => {
       ])
     })
   })
+
+  describe('Run #12', () => {
+    const TEST_TENANT_ID = getTestTenantId()
+    setup(TEST_TENANT_ID, {
+      hitDirections: ['ORIGIN'],
+      rulesCount: 2,
+    })
+    test('New transaction update should replace the transaction in an existing case', async () => {
+      const caseCreationService = await getService(TEST_TENANT_ID)
+
+      const transaction = getTestTransaction({
+        originUserId: TEST_USER_1.userId,
+        destinationUserId: TEST_USER_2.userId,
+      })
+
+      const results = await bulkVerifyTransactions(TEST_TENANT_ID, [
+        transaction,
+      ])
+      const [result] = results
+
+      const cases = await caseCreationService.handleTransaction({
+        ...transaction,
+        ...{
+          ...result,
+          hitRules: [result.hitRules[0]],
+        },
+      })
+      expect(cases.length).toEqual(1)
+      expect(cases[0]?.caseTransactions).toHaveLength(1)
+      expect(cases[0].caseTransactions?.[0]?.hitRules).toEqual([
+        result.hitRules[0],
+      ])
+
+      const cases2 = await caseCreationService.handleTransaction({
+        ...transaction,
+        ...result,
+      })
+      expect(cases2.length).toEqual(1)
+      expect(cases2[0].caseId).toBe(cases[0].caseId)
+      expect(cases2[0]?.caseTransactions).toHaveLength(1)
+      expect(cases2[0].caseTransactions?.[0]?.hitRules).toEqual(result.hitRules)
+    })
+  })
 })
 
 describe('Run #1', () => {

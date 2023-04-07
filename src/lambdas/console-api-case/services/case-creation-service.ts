@@ -425,10 +425,11 @@ export class CaseCreationService {
             latestTransactionArrivalTimestamp:
               params.latestTransactionArrivalTimestamp,
             caseTransactionsIds,
-            caseTransactions: [
-              ...(existedCase.caseTransactions ?? []),
-              filteredTransaction,
-            ],
+            caseTransactions: _.uniqBy(
+              // NOTE: filteredTransaction comes first to replace the existing transaction
+              [filteredTransaction, ...(existedCase.caseTransactions ?? [])],
+              (t) => t.transactionId
+            ),
             caseTransactionsCount: caseTransactionsIds.length,
             priority:
               _.minBy(alerts, 'priority')?.priority ?? _.last(PRIORITYS),

@@ -81,6 +81,13 @@ export function getExecutedAndHitRulesResult(
   }
 }
 
+function mergeRules<T extends { ruleInstanceId: string }>(
+  rulesA: Array<T>,
+  rulesB: Array<T>
+): Array<T> {
+  return _.uniqBy((rulesA ?? []).concat(rulesB ?? []), (r) => r.ruleInstanceId)
+}
+
 export type DuplicateTransactionReturnType = TransactionMonitoringResult & {
   message: string
 }
@@ -230,10 +237,13 @@ export class RulesEngineService {
         hitRules,
       }
     )
-    // Update transaction with the latest payload
+    // Update transaction with the latest payload.
     await this.transactionRepository.saveTransaction(updatedTransaction, {
-      executedRules,
-      hitRules,
+      executedRules: mergeRules(
+        updatedTransaction.executedRules,
+        executedRules
+      ),
+      hitRules: mergeRules(updatedTransaction.hitRules, hitRules),
     })
     saveTransactionSegment?.close()
 
