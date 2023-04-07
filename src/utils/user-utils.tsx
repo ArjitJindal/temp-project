@@ -106,11 +106,13 @@ export function useUsers(
   }, [api, users]);
 
   let tempUsers = users;
+
   if (!includeUsersObject.includeRootUsers) {
-    tempUsers = users.filter((user) => parseUserRole(user.role) !== UserRole.ROOT);
+    tempUsers = tempUsers.filter((user) => parseUserRole(user.role) !== UserRole.ROOT);
   }
+
   if (!includeUsersObject.includeBlockedUsers) {
-    tempUsers = users.filter((user) => !user.blocked);
+    tempUsers = tempUsers.filter((user) => !user.blocked);
   }
   return [_.keyBy(tempUsers, 'id'), loading];
 }
