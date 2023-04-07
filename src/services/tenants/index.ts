@@ -22,6 +22,7 @@ export type TenantInfo = {
   auth0Domain: string
 }
 
+type Stage = 'local' | 'dev' | 'sandbox' | 'prod'
 export class TenantService {
   tenantId: string
   dynamoDb: DynamoDBDocumentClient
@@ -40,12 +41,14 @@ export class TenantService {
   }
 
   public static getAllTenants = async (
-    stage: 'local' | 'dev' | 'sandbox' | 'prod',
+    stage?: Stage,
     region?: 'eu-1' | 'asia-1' | 'asia-2' | 'us-1' | 'eu-2'
   ): Promise<TenantInfo[]> => {
+    const stageOrDefault = stage ?? (process.env.ENV as Stage)
+    const regionOrDefault = region ?? process.env.REGION
     const tenantInfos: Array<TenantInfo> = []
     const mongoDb = await getMongoDbClient()
-    const auth0TenantConfigs = getAuth0TenantConfigs(stage)
+    const auth0TenantConfigs = getAuth0TenantConfigs(stageOrDefault)
     for (const auth0TenantConfig of auth0TenantConfigs) {
       const auth0Domain = getAuth0Domain(
         auth0TenantConfig.tenantName,
@@ -61,7 +64,11 @@ export class TenantService {
     }
 
     return region
-      ? tenantInfos.filter((tenantInfo) => tenantInfo.tenant.region === region)
+      ? tenantInfos.filter(
+          (tenantInfo) =>
+            !tenantInfo.tenant.region ||
+            tenantInfo.tenant.region === regionOrDefault
+        )
       : tenantInfos
   }
 

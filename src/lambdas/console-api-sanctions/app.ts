@@ -9,7 +9,6 @@ import { SanctionsService } from '@/services/sanctions'
 import { DefaultApiGetSanctionsSearchRequest } from '@/@types/openapi-internal/RequestParameters'
 import { getDynamoDbClientByEvent } from '@/utils/dynamodb'
 import { TenantRepository } from '@/services/tenants/repositories/tenant-repository'
-
 export const sanctionsHandler = lambdaApi({ requiredFeatures: ['SANCTIONS'] })(
   async (
     event: APIGatewayProxyWithLambdaAuthorizerEvent<
@@ -31,10 +30,9 @@ export const sanctionsHandler = lambdaApi({ requiredFeatures: ['SANCTIONS'] })(
         searchRequest,
         settings.complyAdvantageSearchProfileId
       )
-    } else if (
-      event.httpMethod === 'GET' &&
-      event.resource === '/sanctions/search'
-    ) {
+    }
+
+    if (event.httpMethod === 'GET' && event.resource === '/sanctions/search') {
       const q = event.queryStringParameters as any
       const params: DefaultApiGetSanctionsSearchRequest = {
         // TODO: add date after & before properties
@@ -44,7 +42,9 @@ export const sanctionsHandler = lambdaApi({ requiredFeatures: ['SANCTIONS'] })(
         afterTimestamp: parseInt(q.afterTimestamp),
       }
       return sanctionsService.getSearchHistories(params)
-    } else if (
+    }
+
+    if (
       event.httpMethod === 'GET' &&
       event.resource === '/sanctions/search/{searchId}' &&
       event.pathParameters?.searchId

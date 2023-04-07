@@ -1,4 +1,5 @@
 import { URL } from 'url'
+import crypto from 'crypto'
 import * as cdk from 'aws-cdk-lib'
 import { CfnOutput, Duration, Fn, RemovalPolicy, Resource } from 'aws-cdk-lib'
 import { AttributeType, Table } from 'aws-cdk-lib/aws-dynamodb'
@@ -1177,6 +1178,34 @@ export class CdkTarponStack extends cdk.Stack {
       'READ'
     )
 
+    // Webhooks handler
+    const { alias: consoleApiWebhooksHandlerAlias } = this.createFunction(
+      {
+        name: StackConstants.CONSOLE_API_WEBHOOKS_FUNCTION_NAME,
+      },
+      {
+        ...atlasFunctionProps,
+        environment: {
+          ...atlasFunctionProps.environment,
+          COMPLYADVANTAGE_API_KEY: process.env
+            .COMPLYADVANTAGE_API_KEY as string,
+          COMPLYADVANTAGE_DEFAULT_SEARCH_PROFILE_ID: config.application
+            .COMPLYADVANTAGE_DEFAULT_SEARCH_PROFILE_ID as string,
+        },
+      }
+    )
+    this.grantSecretsManagerAccessByPattern(
+      consoleApiWebhooksHandlerAlias,
+      'auth0.com',
+      'READ'
+    )
+    this.grantMongoDbAccess(consoleApiWebhooksHandlerAlias)
+    this.grantSecretsManagerAccess(
+      consoleApiWebhooksHandlerAlias,
+      [this.config.application.COMPLYADVANTAGE_CREDENTIALS_SECRET_ARN],
+      'READ'
+    )
+
     // Public Sanctions handler
     const { alias: publicApiSanctionsHandlerAlias } = this.createFunction(
       {
@@ -1687,9 +1716,17 @@ export class CdkTarponStack extends cdk.Stack {
       actions.push('secretsmanager:CreateSecret')
       actions.push('secretsmanager:DeleteSecret')
     }
+
+    const hash = crypto
+      .createHash('md5')
+      .update([aliasIdentifier, ...resources].join())
+      .digest()
+      .toString()
+      .replace(/\W/g, '')
+      .slice(0, 10)
     resource.role?.attachInlinePolicy(
-      new Policy(this, `${aliasIdentifier}-SecretsManagerPolicy`, {
-        policyName: `${aliasIdentifier}-SecretsManagerPolicy`,
+      new Policy(this, `SecretsManagerPolicy-${hash}`, {
+        policyName: `${aliasIdentifier}${hash}-SecretsManagerPolicy`,
         statements: [
           new PolicyStatement({
             effect: Effect.ALLOW,

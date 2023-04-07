@@ -1,0 +1,65 @@
+import {
+  APIGatewayEventLambdaAuthorizerContext,
+  APIGatewayProxyWithLambdaAuthorizerEvent,
+} from 'aws-lambda'
+import { BadRequest, Forbidden } from 'http-errors'
+import { JWTAuthorizerResult } from '@/@types/jwt'
+import { lambdaApi } from '@/core/middlewares/lambda-api-middlewares'
+import { SanctionsService } from '@/services/sanctions'
+import { TenantService } from '@/services/tenants'
+import { logger } from '@/core/logger'
+import { ComplyAdvantageMonitoredSearchUpdated } from '@/@types/openapi-internal/ComplyAdvantageMonitoredSearchUpdated'
+import { ComplyAdvantageWebhookEvent } from '@/@types/openapi-internal/ComplyAdvantageWebhookEvent'
+
+export const webhooksHandler = lambdaApi()(
+  async (
+    event: APIGatewayProxyWithLambdaAuthorizerEvent<
+      APIGatewayEventLambdaAuthorizerContext<JWTAuthorizerResult>
+    >
+  ) => {
+    if (
+      event.httpMethod === 'POST' &&
+      event.resource === '/webhooks/complyadvantage' &&
+      event.body
+    ) {
+      // Check source IPs in production
+      if (process.env.ENV === 'prod') {
+        if (!event.headers['x-forwarded-for']) {
+          throw new BadRequest('Could not determine source IP')
+        }
+
+        const sourceIP = event.headers['x-forwarded-for'][0]
+        const complyAdvantageIPs = [
+          '54.76.153.128',
+          '52.19.50.164',
+          '18.200.42.250',
+          '3.216.162.15',
+          '3.214.3.128',
+          '52.73.76.4',
+          '3.105.135.152',
+          '54.79.153.96',
+          '52.63.190.126',
+        ]
+        if (!complyAdvantageIPs.includes(sourceIP)) {
+          logger.error(`${sourceIP} is not authorized to make this request`)
+          throw new Forbidden(
+            `${sourceIP} is not authorized to make this request`
+          )
+        }
+      }
+      const webhookEvent = JSON.parse(event.body) as ComplyAdvantageWebhookEvent
+      if (webhookEvent.event === 'monitored_search_updated') {
+        const searchUpdated =
+          webhookEvent.data as ComplyAdvantageMonitoredSearchUpdated
+        const allTenants = await TenantService.getAllTenants()
+        for (const t of allTenants) {
+          const searchId = searchUpdated.search_id as number
+          const sanctionsService = new SanctionsService(t.tenant.id)
+          await sanctionsService.updateMonitoredSearch(searchId)
+        }
+      }
+      return 'OK'
+    }
+    throw new Error('Unhandled request')
+  }
+)

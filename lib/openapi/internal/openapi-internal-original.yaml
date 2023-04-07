@@ -3107,6 +3107,18 @@ paths:
           in: path
           required: true
       operationId: get-sanctions-search-$-searchId
+  /webhooks/complyadvantage:
+    post:
+      summary: Receive webhook events from Comply Advantage
+      tags: []
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ComplyAdvantageWebhookEvent'
+      operationId: post-webhook-comply-advantage
   /simulation:
     post:
       summary: Create new simulation task
@@ -5199,7 +5211,11 @@ components:
       properties:
         _id:
           type: string
+        monitored:
+          type: boolean
         searchTerm:
+          type: string
+        searchProfileId:
           type: string
         fuzziness:
           type: number
@@ -5509,6 +5525,41 @@ components:
                   type: string
         score:
           type: number
+    ComplyAdvantageWebhookEvent:
+      title: ComplyAdvantageWebhookEvent
+      x-stoplight:
+        id: ldj2zpghak8s5
+      type: object
+      properties:
+        event:
+          type: string
+          enum:
+            - monitored_search_updated
+        data:
+          oneOf:
+            - $ref: '#/components/schemas/ComplyAdvantageMonitoredSearchUpdated'
+    ComplyAdvantageMonitoredSearchUpdated:
+      title: ComplyAdvantageMonitoredSearchUpdated
+      x-stoplight:
+        id: ldj2zpwhak8s5
+      type: object
+      properties:
+        search_id:
+          type: number
+        updated:
+          type: array
+          items:
+            type: string
+        new:
+          type: array
+          items:
+            type: string
+        removed:
+          type: array
+          items:
+            type: string
+        is_suspended:
+          type: boolean
     TransactionsUniquesField:
       title: TransactionsUniquesField
       type: string

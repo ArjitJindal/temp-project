@@ -49,14 +49,61 @@ export class SanctionsService {
     ))!.apiKey
   }
 
+  public async updateMonitoredSearch(caSearchId: number) {
+    await this.initPromise
+    const result =
+      await this.sanctionsSearchRepository.getSearchResultByCASearchId(
+        caSearchId
+      )
+    if (!result?.request) {
+      return
+    }
+    const response = await this.complyAdvantageMonitoredSearch(caSearchId)
+    if (response) {
+      await this.sanctionsSearchRepository.updateMonitoredSearch(
+        caSearchId,
+        response
+      )
+    }
+  }
+
   public async search(
     request: SanctionsSearchRequest,
     searchProfile?: string
   ): Promise<SanctionsSearchResponse> {
     await this.initPromise
+
+    const result =
+      await this.sanctionsSearchRepository.getMonitoredSearchResultByParams(
+        request
+      )
+    if (result?.response) {
+      return result?.response
+    }
+
     const searchId = uuidv4()
     const searchProfileId =
-      searchProfile || process.env.COMPLYADVANTAGE_DEFAULT_SEARCH_PROFILE_ID
+      searchProfile ||
+      (process.env.COMPLYADVANTAGE_DEFAULT_SEARCH_PROFILE_ID as string)
+    const response = await this.complyAdvantageSearch(searchProfileId, {
+      ...request,
+    })
+
+    const responseWithId = { ...response, searchId }
+    await this.sanctionsSearchRepository.saveSearchResult(
+      request,
+      responseWithId
+    )
+    if (request.monitoring) {
+      await this.updateSearch(searchId, request.monitoring)
+    }
+    return responseWithId
+  }
+
+  private async complyAdvantageSearch(
+    searchProfileId: string,
+    request: SanctionsSearchRequest
+  ): Promise<Omit<SanctionsSearchResponse, 'searchId'>> {
     const rawComplyAdvantageResponse = (await (
       await fetch(`${COMPLYADVANTAGE_SEARCH_API_URI}?api_key=${this.apiKey}`, {
         method: 'POST',
@@ -75,21 +122,27 @@ export class SanctionsService {
       throw new Error((rawComplyAdvantageResponse as any).message)
     }
     const hits = rawComplyAdvantageResponse.content?.data?.hits || []
-    const response = {
+    return {
       total: hits.length,
       data: hits,
-      searchId,
       rawComplyAdvantageResponse,
     }
-    await this.sanctionsSearchRepository.saveSearchResult(
-      searchId,
-      request,
-      response
-    )
-    if (request.monitoring) {
-      await this.updateSearch(searchId, request.monitoring)
+  }
+  private async complyAdvantageMonitoredSearch(
+    searchId: number
+  ): Promise<ComplyAdvantageSearchResponse> {
+    const rawComplyAdvantageResponse = (await (
+      await fetch(
+        `${COMPLYADVANTAGE_SEARCH_API_URI}/${searchId}?api_key=${this.apiKey}`,
+        {
+          method: 'GET',
+        }
+      )
+    ).json()) as ComplyAdvantageSearchResponse
+    if (rawComplyAdvantageResponse.status === 'failure') {
+      throw new Error((rawComplyAdvantageResponse as any).message)
     }
-    return response
+    return rawComplyAdvantageResponse
   }
 
   public async getSearchHistories(
@@ -136,14 +189,6 @@ export class SanctionsService {
     ).json()
     if (monitorResponse.status === 'failure') {
       throw new Error(monitorResponse.message)
-    }
-
-    // TODO: Handle webhook
-    // https://www.notion.so/flagright/Public-Sanctions-API-webhook-0a696f9644cc4185a132451058b1984b?pvs=4
-    if (update.webhookUrl) {
-      // register webhook
-    } else {
-      // deregister webhook
     }
     await this.sanctionsSearchRepository.updateSearchMonitoring(
       searchId,

@@ -236,6 +236,11 @@ export const LAMBDAS: {
     handlerName: 'sanctionsHandler',
     expectedMaxDurationSeconds: DEFAULT_LAMBDA_EXPECTED_MAX_DURATION_SECONDS,
   },
+  [StackConstants.CONSOLE_API_WEBHOOKS_FUNCTION_NAME]: {
+    codePath: 'console-webhooks',
+    handlerName: 'webhooksHandler',
+    expectedMaxDurationSeconds: DEFAULT_LAMBDA_EXPECTED_MAX_DURATION_SECONDS,
+  },
   [StackConstants.PUBLIC_SANCTIONS_API_FUNCTION_NAME]: {
     codePath: 'public-sanctions-api-sanctions',
     handlerName: 'sanctionsHandler',

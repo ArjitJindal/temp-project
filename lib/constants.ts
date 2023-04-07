@@ -149,6 +149,8 @@ export const StackConstants = {
     getResourceNameForTarpon('WebhookTarponChangeCaptureRetryFunction'),
   CONSOLE_API_SANCTIONS_FUNCTION_NAME:
     getResourceNameForTarpon('SanctionsFunction'),
+  CONSOLE_API_WEBHOOKS_FUNCTION_NAME:
+    getResourceNameForTarpon('WebhooksFunction'),
   LAMBDA_LATEST_ALIAS_NAME: 'LATEST',
   JWT_AUTHORIZER_CACHE_TTL_SECONDS: 3600,
   API_KEY_AUTHORIZER_CACHE_TTL_SECONDS: 3600,

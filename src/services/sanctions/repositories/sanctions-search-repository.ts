@@ -10,6 +10,7 @@ import { SanctionsSearchHistoryResponse } from '@/@types/openapi-internal/Sancti
 import { DefaultApiGetSanctionsSearchRequest } from '@/@types/openapi-internal/RequestParameters'
 import { COUNT_QUERY_LIMIT } from '@/utils/pagination'
 import { SanctionsSearchMonitoring } from '@/@types/openapi-internal/SanctionsSearchMonitoring'
+import { ComplyAdvantageSearchResponse } from '@/@types/openapi-internal/ComplyAdvantageSearchResponse'
 
 export class SanctionsSearchRepository {
   tenantId: string
@@ -21,7 +22,6 @@ export class SanctionsSearchRepository {
   }
 
   public async saveSearchResult(
-    searchId: string,
     request: SanctionsSearchRequest,
     response: SanctionsSearchResponse
   ): Promise<void> {
@@ -30,10 +30,55 @@ export class SanctionsSearchRepository {
       SANCTIONS_SEARCHES_COLLECTION(this.tenantId)
     )
     await collection.insertOne({
-      _id: searchId,
+      _id: response.searchId,
       request,
       response,
       createdAt: Date.now(),
+    })
+  }
+
+  public async updateMonitoredSearch(
+    searchId: number,
+    response: ComplyAdvantageSearchResponse
+  ): Promise<void> {
+    const db = this.mongoDb.db()
+    const collection = db.collection<SanctionsSearchHistory>(
+      SANCTIONS_SEARCHES_COLLECTION(this.tenantId)
+    )
+
+    await collection.updateMany(
+      { 'response.rawComplyAdvantageResponse.content.data.id': searchId },
+      {
+        $set: {
+          'response.rawComplyAdvantageResponse': response,
+          updatedAt: Date.now(),
+        },
+      }
+    )
+  }
+
+  public async getMonitoredSearchResultByParams(
+    request: SanctionsSearchRequest
+  ): Promise<SanctionsSearchHistory | null> {
+    const db = this.mongoDb.db()
+    const collection = db.collection<SanctionsSearchHistory>(
+      SANCTIONS_SEARCHES_COLLECTION(this.tenantId)
+    )
+    const {
+      _id,
+      monitoring: _monitoring,
+      monitored: _monitored,
+      ...params
+    } = request
+    const paramFilters = Object.entries(params).map(([k, v]) => {
+      return { [`request.${k}`]: v }
+    })
+    const filters: Filter<SanctionsSearchHistory>[] = [
+      ...paramFilters,
+      { 'request.monitoring.enabled': true },
+    ]
+    return await collection.findOne({
+      $and: filters,
     })
   }
 
@@ -109,6 +154,17 @@ export class SanctionsSearchRepository {
       SANCTIONS_SEARCHES_COLLECTION(this.tenantId)
     )
     return await collection.findOne({ _id: searchId as any })
+  }
+  public async getSearchResultByCASearchId(
+    caSearchId: number
+  ): Promise<SanctionsSearchHistory | null> {
+    const db = this.mongoDb.db()
+    const collection = db.collection<SanctionsSearchHistory>(
+      SANCTIONS_SEARCHES_COLLECTION(this.tenantId)
+    )
+    return await collection.findOne({
+      'response.rawComplyAdvantageResponse.content.data.id': caSearchId,
+    })
   }
 
   public async updateSearchMonitoring(
