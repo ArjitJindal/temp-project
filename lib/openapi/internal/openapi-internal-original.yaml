@@ -1412,6 +1412,54 @@ paths:
           application/json:
             schema:
               $ref: '#/components/schemas/UserUpdateRequest'
+  /merchant-monitoring/summary:
+    post:
+      summary: Merchant Monitoring
+      operationId: post-merchant-summary
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MerchantMonitoringSummaryResponse'
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/MerchantMonitoringSummaryRequest'
+  /merchant-monitoring/scrape:
+    post:
+      summary: Merchant Monitoring Scrape
+      operationId: post-merchant-scrape
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MerchantMonitoringSummary'
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/MerchantMonitoringSummaryRequest'
+  /merchant-monitoring/history:
+    post:
+      summary: Merchant Monitoring
+      operationId: post-merchant-history
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MerchantMonitoringSummaryResponse'
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/MerchantMonitoringSummaryRequest'
   /users/uniques:
     get:
       summary: User - Unique values for different fields
@@ -5440,16 +5488,29 @@ components:
                   type: array
                   items:
                     $ref: '#/components/schemas/ComplyAdvantageSearchHit'
+    MerchantMonitoringSummaryRequest:
+      type: object
+      properties:
+        source:
+          $ref: '#/components/schemas/MerchantMonitoringSource'
+        name:
+          type: string
+        domain:
+          type: string
+        refresh:
+          type: boolean
+    MerchantMonitoringSource:
+      type: string
+      enum:
+        - LINKEDIN
+        - COMPANIES_HOUSE
+        - EXPLORIUM
+        - SCRAPE
     MerchantMonitoringSummary:
       type: object
       properties:
         source:
-          type: string
-          enum:
-            - LINKEDIN
-            - COMPANIES_HOUSE
-            - EXPLORIUM
-            - SCRAPE
+          $ref: '#/components/schemas/MerchantMonitoringSource'
         raw:
           type: string
         industry:
@@ -5462,10 +5523,19 @@ components:
           type: string
         revenue:
           type: string
+        updatedAt:
+          type: number
         products:
           type: array
           items:
             type: string
+    MerchantMonitoringSummaryResponse:
+      type: object
+      properties:
+        data:
+          type: array
+          items:
+            $ref: '#/components/schemas/MerchantMonitoringSummary'
     ComplyAdvantageSearchHit:
       type: object
       properties:

@@ -251,6 +251,11 @@ export const LAMBDAS: {
     handlerName: 'auditLogConsumerHandler',
     expectedMaxDurationSeconds: DEFAULT_LAMBDA_EXPECTED_MAX_DURATION_SECONDS,
   },
+  [StackConstants.CONSOLE_API_MERCHANT_MONITORING_FUNCTION_NAME]: {
+    codePath: 'console-api-merchant',
+    handlerName: 'merchantMonitoringHandler',
+    expectedMaxDurationSeconds: DEFAULT_LAMBDA_EXPECTED_MAX_DURATION_SECONDS,
+  },
   [StackConstants.BATCH_JOB_TRIGGER_CONSUMER_FUNCTION_NAME]: {
     codePath: 'batch-job',
     handlerName: 'jobTriggerHandler',

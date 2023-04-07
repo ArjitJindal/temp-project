@@ -2,11 +2,9 @@ import fetch, { Headers } from 'node-fetch'
 import axios, { AxiosRequestConfig } from 'axios'
 import { convert } from 'html-to-text'
 import { Configuration, OpenAIApi } from 'openai'
-import {
-  MerchantMonitoringSummary,
-  MerchantMonitoringSummarySourceEnum,
-} from '@/@types/openapi-internal/MerchantMonitoringSummary'
+import { MerchantMonitoringSummary } from '@/@types/openapi-internal/MerchantMonitoringSummary'
 import { getSecret } from '@/utils/secrets-manager'
+import { MerchantMonitoringSource } from '@/@types/openapi-internal/MerchantMonitoringSource'
 
 const SUMMARY_PROMPT = `Please summarize a company from the following content outputting the industry the company operates in, the products they sell, their location, number of employees, revenue, summary. Please output as a comma separate list For example:
 
@@ -31,10 +29,16 @@ const COMPANIES_HOUSE_API_KEY = 'd42c2fb8-a93a-4545-bf7f-58dc77e826b3'
 const SCRAPFLY_KEY = '7f58b1ed27ca4587bb666e595ddf2a6c'
 export class MerchantMonitoringService {
   async getMerchantMonitoringSummaries(
+    companyName: string,
     domain: string,
-    companyName: string
+    refresh?: boolean
   ): Promise<MerchantMonitoringSummary[]> {
-    return (
+    if (!refresh) {
+      // Check in mongo collection, searching by company name or domain for latest summaries
+      // return them
+    }
+
+    const results = (
       await Promise.allSettled([
         this.scrape(`https://${domain}`),
         this.companiesHouse(companyName),
@@ -48,6 +52,75 @@ export class MerchantMonitoringService {
         }
       })
       .filter(Boolean) as MerchantMonitoringSummary[]
+
+    // Store summaries in mongo
+
+    // Hack in fake updated times
+    return results.map((r) => {
+      if (refresh) {
+        r.updatedAt = new Date().getTime()
+      } else {
+        const d = new Date()
+        d.setDate(d.getDate() - 3)
+        r.updatedAt = d.getTime()
+      }
+      return r
+    })
+  }
+
+  async scrapeMerchantMonitoringSummary(
+    companyName: string,
+    domain: string
+  ): Promise<MerchantMonitoringSummary> {
+    const result = this.scrape(`https://${domain}`)
+
+    // Store scrape result with company name in mongo
+
+    return result
+  }
+  async getMerchantMonitoringHistory(
+    source: MerchantMonitoringSource,
+    companyName: string,
+    domain: string
+  ): Promise<MerchantMonitoringSummary[]> {
+    // Search for summaries by company name and domain in mongo and return them
+
+    // Fake it for now.
+    let promise: Promise<MerchantMonitoringSummary>
+    switch (source) {
+      case 'SCRAPE':
+        promise = this.scrape(`https://${domain}`)
+        break
+      case 'COMPANIES_HOUSE':
+        promise = this.companiesHouse(companyName)
+        break
+      case 'EXPLORIUM':
+        promise = this.explorium(companyName)
+        break
+      case 'LINKEDIN':
+        promise = this.linkedin(domain)
+    }
+
+    const summary = await promise
+
+    // Hack to make it look like history
+    const summaries = [
+      { ...summary },
+      { ...summary },
+      { ...summary },
+      { ...summary },
+      { ...summary },
+      { ...summary },
+      { ...summary },
+    ]
+    let days = 0
+    return summaries.map((s) => {
+      const d = new Date()
+      d.setDate(d.getDate() - days)
+      s.updatedAt = d.getTime()
+      days += 21
+      return s
+    })
   }
 
   private async scrape(website: string): Promise<MerchantMonitoringSummary> {
@@ -113,7 +186,7 @@ export class MerchantMonitoringService {
   }
 
   private async summarise(
-    source: MerchantMonitoringSummarySourceEnum,
+    source: MerchantMonitoringSource,
     content: string
   ): Promise<MerchantMonitoringSummary> {
     const configuration = new Configuration({
