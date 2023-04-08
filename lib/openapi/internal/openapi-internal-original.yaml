@@ -3167,13 +3167,14 @@ paths:
     post:
       summary: Receive webhook events from Comply Advantage
       tags: []
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ComplyAdvantageWebhookEvent'
       responses:
         '200':
           description: OK
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ComplyAdvantageWebhookEvent'
       operationId: post-webhook-comply-advantage
   /simulation:
     post:
