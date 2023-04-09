@@ -22,8 +22,8 @@ export type CommonCaseParams = {
   type: string;
   status: RuleAction[];
   transactionState: TransactionState[];
-  originMethodFilter: string;
-  destinationMethodFilter: string;
+  originMethodFilter: string[];
+  destinationMethodFilter: string[];
   tagKey: string;
   tagValue: string;
   caseStatus: 'OPEN' | 'CLOSED';

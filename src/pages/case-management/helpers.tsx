@@ -1,4 +1,5 @@
 import React from 'react';
+import PaymentMethodButton from '../transactions/components/PaymentMethodButton';
 import { AssignmentButton } from './components/AssignmentButton';
 import { dayjs } from '@/utils/dayjs';
 import '../../components/ui/colors';
@@ -32,8 +33,8 @@ export const queryAdapter: Adapter<TableSearchParams> = {
       userFilterMode: params.userFilterMode,
       type: params.type,
       status: params.status?.join(','),
-      originMethodFilter: params.originMethodFilter,
-      destinationMethodFilter: params.destinationMethodFilter,
+      originMethodFilter: params.originMethodFilter?.join(','),
+      destinationMethodFilter: params.destinationMethodFilter?.join(','),
       transactionState: params.transactionState?.join(','),
       tagKey: params.tagKey ?? undefined,
       tagValue: params.tagValue ?? undefined,
@@ -79,8 +80,8 @@ export const queryAdapter: Adapter<TableSearchParams> = {
       userFilterMode: isMode(raw.userFilterMode) ? raw.userFilterMode : undefined,
       type: raw.type,
       status: raw.status ? raw.status.split(',').filter(isRuleAction) : undefined,
-      originMethodFilter: raw.originMethodFilter,
-      destinationMethodFilter: raw.destinationMethodFilter,
+      originMethodFilter: raw.originMethodFilter?.split(','),
+      destinationMethodFilter: raw.destinationMethodFilter?.split(','),
       transactionState:
         raw.transactionState != null
           ? raw.transactionState.split(',').filter(isTransactionState)
@@ -197,6 +198,40 @@ export const extraFilters: (isPulseEnabled: boolean) => ExtraFilter<TableSearchP
           setParams((state) => ({
             ...state,
             assignedTo: value ?? undefined,
+          }));
+        }}
+      />
+    ),
+  },
+  {
+    key: 'originMethodFilterId',
+    title: 'Origin Method',
+    showFilterByDefault: false,
+    renderer: ({ params, setParams }) => (
+      <PaymentMethodButton
+        direction={'ORIGIN'}
+        methods={params.originMethodFilter ?? []}
+        onConfirm={(value) => {
+          setParams((state) => ({
+            ...state,
+            originMethodFilter: value ?? undefined,
+          }));
+        }}
+      />
+    ),
+  },
+  {
+    key: 'destinationMethodFilterId',
+    title: 'Destination Method',
+    showFilterByDefault: false,
+    renderer: ({ params, setParams }) => (
+      <PaymentMethodButton
+        direction={'DESTINATION'}
+        methods={params.destinationMethodFilter ?? []}
+        onConfirm={(value) => {
+          setParams((state) => ({
+            ...state,
+            destinationMethodFilter: value ?? undefined,
           }));
         }}
       />

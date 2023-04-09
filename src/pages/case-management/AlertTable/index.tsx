@@ -284,6 +284,8 @@ export default function AlertTable(props: Props) {
         showCases,
         caseId,
         assignedTo,
+        destinationMethodFilter,
+        originMethodFilter,
       } = params;
       const [sortField, sortOrder] = sort[0] ?? [];
 
@@ -316,6 +318,8 @@ export default function AlertTable(props: Props) {
         filterTransactionTagKey: tagKey,
         filterTransactionTagValue: tagValue,
         filterUserId: userId,
+        filterOriginPaymentMethod: originMethodFilter,
+        filterDestinationPaymentMethod: destinationMethodFilter,
         sortField: sortField === 'age' ? 'createdTimestamp' : sortField,
         sortOrder: sortOrder ?? undefined,
       });
