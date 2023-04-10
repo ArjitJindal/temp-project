@@ -663,9 +663,14 @@ export class CdkTarponStack extends cdk.Stack {
     this.grantMongoDbAccess(businessUsersViewAlias)
 
     /* Merchant Monitoring */
-    this.createFunction({
+    const { alias: merchantMonitoringAlias } = this.createFunction({
       name: StackConstants.CONSOLE_API_MERCHANT_MONITORING_FUNCTION_NAME,
     })
+    this.grantSecretsManagerAccess(
+      merchantMonitoringAlias,
+      [this.config.application.OPENAI_CREDENTIALS_SECRET_ARN],
+      'READ'
+    )
 
     /* Consumer users view */
     const { alias: consumerUsersViewAlias } = this.createFunction(
