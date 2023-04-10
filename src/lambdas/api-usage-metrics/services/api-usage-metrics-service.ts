@@ -15,10 +15,14 @@ import {
   USERS_COUNT_METRIC,
   ACTIVE_RULE_INSTANCES_COUNT_METRIC,
   MetricsData,
+  SANCTIONS_SEARCHES_COUNT_METRIC,
+  TENANT_SEATS_COUNT_METRIC,
 } from '@/core/cloudwatch/metrics'
 import { MongoDbTransactionRepository } from '@/services/rules-engine/repositories/mongodb-transaction-repository'
 import { UserRepository } from '@/services/users/repositories/user-repository'
 import { TransactionEventRepository } from '@/services/rules-engine/repositories/transaction-event-repository'
+import { AccountsService } from '@/services/accounts'
+import { SanctionsSearchRepository } from '@/services/sanctions/repositories/sanctions-search-repository'
 
 export class ApiUsageMetricsService {
   tenantId: string
@@ -122,11 +126,42 @@ export class ApiUsageMetricsService {
     ]
   }
 
-  private async getValuesOfMetrics(): Promise<Array<[Metric, number]>> {
+  private async getNumberOfSeats(tenantInfo: TenantInfo): Promise<number> {
+    const accountsService = new AccountsService(
+      { auth0Domain: tenantInfo.auth0Domain },
+      { mongoDb: this.connections.mongoDb }
+    )
+
+    const account = await accountsService.getTenantAccounts(tenantInfo.tenant)
+
+    const filteredAccount = account.filter(
+      (account) => account.role !== 'root' && !account.blocked
+    )
+
+    return filteredAccount.length
+  }
+
+  private async getNumberOfSanctionsChecks(): Promise<number> {
+    const sanctionsSearchRepository = new SanctionsSearchRepository(
+      this.tenantId,
+      this.connections.mongoDb
+    )
+
+    return await sanctionsSearchRepository.getNumberOfSearchesBetweenTimestamps(
+      this.startTimestamp,
+      this.endTimestamp
+    )
+  }
+
+  private async getValuesOfMetrics(
+    tenantInfo: TenantInfo
+  ): Promise<Array<[Metric, number]>> {
     const transactionsCount = await this.getTransactionsCount()
     const transactionEventsCount = await this.getTransactionsEventsCount()
     const usersCount = await this.getUsersCount()
     const activeRuleInstancesCount = await this.getAllActiveRuleInstancesCount()
+    const sanctionsChecksCount = await this.getNumberOfSanctionsChecks()
+    const numberOfSeats = await this.getNumberOfSeats(tenantInfo)
 
     logger.info(
       `Transactions count: ${transactionsCount}, Transaction events count: ${transactionEventsCount}, Users count: ${usersCount}, Active rule instances count: ${activeRuleInstancesCount}`
@@ -137,12 +172,14 @@ export class ApiUsageMetricsService {
       [TRANSACTION_EVENTS_COUNT_METRIC, transactionEventsCount],
       [USERS_COUNT_METRIC, usersCount],
       [ACTIVE_RULE_INSTANCES_COUNT_METRIC, activeRuleInstancesCount],
+      [SANCTIONS_SEARCHES_COUNT_METRIC, sanctionsChecksCount],
+      [TENANT_SEATS_COUNT_METRIC, numberOfSeats],
     ]
   }
 
   public async publishApiUsageMetrics(tenantInfo: TenantInfo): Promise<void> {
     const dimensions = this.getDimensions(tenantInfo)
-    const values = await this.getValuesOfMetrics()
+    const values = await this.getValuesOfMetrics(tenantInfo)
 
     const metricsData: Array<MetricsData> = values.map(([metric, value]) => {
       return {

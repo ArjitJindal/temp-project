@@ -627,4 +627,17 @@ export const createMongoDBCollections = async (
   } catch (e) {
     logger.error(`Error in creating MongoDB collections: ${e}`)
   }
+
+  try {
+    await db.createCollection(SANCTIONS_SEARCHES_COLLECTION(tenantId))
+  } catch (e) {
+    // ignore already exists
+  }
+  const sanctionsSearchesCollection = db.collection(
+    SANCTIONS_SEARCHES_COLLECTION(tenantId)
+  )
+
+  await sanctionsSearchesCollection.createIndex({
+    createdAt: 1,
+  })
 }

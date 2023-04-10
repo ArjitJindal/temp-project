@@ -39,6 +39,16 @@ export const TRANSACTIONS_COUNT_METRIC: Metric = {
   name: 'TransactionsCount',
 }
 
+export const SANCTIONS_SEARCHES_COUNT_METRIC: Metric = {
+  namespace: 'flagright/ApiUsageMetrics',
+  name: 'SanctionsSearchesCount',
+}
+
+export const TENANT_SEATS_COUNT_METRIC: Metric = {
+  namespace: 'flagright/ApiUsageMetrics',
+  name: 'TenantSeatsCount',
+}
+
 export const TRANSACTION_EVENTS_COUNT_METRIC: Metric = {
   namespace: 'flagright/ApiUsageMetrics',
   name: 'TransactionEventsCount',
