@@ -21,9 +21,11 @@ export const merchantMonitoringHandler = lambdaApi()(
     ) {
       const { domain, name, refresh }: MerchantMonitoringSummaryRequest =
         JSON.parse(event.body)
+      const { principalId: tenantId } = event.requestContext.authorizer
       const mms = new MerchantMonitoringService()
       return {
         data: await mms.getMerchantMonitoringSummaries(
+          tenantId,
           name as string,
           domain as string,
           refresh

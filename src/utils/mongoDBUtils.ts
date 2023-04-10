@@ -183,6 +183,10 @@ export const SIMULATION_RESULT_COLLECTION = (tenantId: string) => {
   return `${tenantId}-simulation-result`
 }
 
+export const MERCHANT_MONITORING_DATA_COLLECTION = (tenantId: string) => {
+  return `${tenantId}-merchant-monitoring`
+}
+
 export const MIGRATION_TMP_COLLECTION = 'migration-tmp'
 
 export const MONTH_DATE_FORMAT = '%Y-%m'

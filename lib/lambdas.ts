@@ -2,6 +2,7 @@ import { StackConstants } from './constants'
 
 const DEFAULT_LAMBDA_EXPECTED_MAX_DURATION_SECONDS = 10
 const ASYNC_JOB_LAMBDA_EXPECTED_MAX_DURATION_SECONDS = 14 * 60 // 15 minutes is the hard timeout
+const ASYNC_SHORT_JOB_LAMBDA_EXPECTED_MAX_DURATION_SECONDS = 5 * 60
 const KINESIS_CONSUMER_LAMBDA_EXPECTED_MAX_DURATION_SECONDS = 100
 const CRON_LAMBDA_EXPECTED_MAX_DURATION_SECONDS = 100
 
@@ -254,7 +255,8 @@ export const LAMBDAS: {
   [StackConstants.CONSOLE_API_MERCHANT_MONITORING_FUNCTION_NAME]: {
     codePath: 'console-api-merchant',
     handlerName: 'merchantMonitoringHandler',
-    expectedMaxDurationSeconds: DEFAULT_LAMBDA_EXPECTED_MAX_DURATION_SECONDS,
+    expectedMaxDurationSeconds:
+      ASYNC_SHORT_JOB_LAMBDA_EXPECTED_MAX_DURATION_SECONDS,
   },
   [StackConstants.BATCH_JOB_TRIGGER_CONSUMER_FUNCTION_NAME]: {
     codePath: 'batch-job',

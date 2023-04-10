@@ -26,8 +26,8 @@ export const rbacMiddleware =
       resource: string,
       method: string
     ) => Permission[]
-
     const api = determineApi(ctx)
+
     switch (api) {
       case 'CONSOLE':
         getApiRequiredPermissions = getInternalApiRequiredPermissions
