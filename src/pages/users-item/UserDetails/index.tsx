@@ -102,8 +102,9 @@ function UserDetails(props: Props) {
           collapsableKey={UI_SETTINGS.cards.TRANSACTION_INSIGHTS.key}
         />
       )}
-      {isMLDemoEnabled && (
+      {isMLDemoEnabled && user?.type === 'BUSINESS' && (
         <AIInsightsCard
+          user={user}
           updateCollapseState={props.updateCollapseState}
           title={UI_SETTINGS.cards.AI_INSIGHTS.title}
           collapsableKey={UI_SETTINGS.cards.AI_INSIGHTS.key}
