@@ -82,6 +82,20 @@ const mergedColumns = (
       },
     },
     {
+      title: 'Created at',
+      dataIndex: 'createdTimestamp',
+      exportData: (entity) => dayjs.dayjs(entity.createdTimestamp).format(DEFAULT_DATE_TIME_FORMAT),
+      valueType: 'dateRange',
+      width: 80,
+      fieldProps: {
+        showFilterByDefault: true,
+      },
+      render: (dom, entity) => {
+        return <TimestampDisplay timestamp={entity.createdTimestamp} />;
+      },
+      sorter: true,
+    },
+    {
       title: 'Priority',
       dataIndex: 'priority',
       exportData: 'priority',
@@ -156,7 +170,7 @@ const mergedColumns = (
       title: 'Case ID',
       dataIndex: 'caseId',
       exportData: 'caseId',
-      width: 100,
+      width: 80,
       valueType: 'text',
       hideInSearch: hideCaseIdFilter,
       render: (dom, entity) => {
@@ -181,20 +195,20 @@ const mergedColumns = (
       title: 'Case created at',
       dataIndex: 'caseCreatedTimestamp',
       valueType: 'dateRange',
-      hideInSearch: true,
       exportData: (entity) =>
         dayjs.dayjs(entity.caseCreatedTimestamp).format(DEFAULT_DATE_TIME_FORMAT),
-      width: 100,
+      width: 120,
       render: (_, entity) => {
         return <TimestampDisplay timestamp={entity.caseCreatedTimestamp} />;
       },
+      sorter: true,
     },
     {
       title: 'Assigned to',
       dataIndex: '_assigneeName',
       exportData: 'assignments',
       hideInSearch: true,
-      width: 100,
+      width: 80,
       sorter: true,
       render: (_, entity) => {
         return (
@@ -286,6 +300,8 @@ export default function AlertTable(props: Props) {
         assignedTo,
         destinationMethodFilter,
         originMethodFilter,
+        createdTimestamp,
+        caseCreatedTimestamp,
       } = params;
       const [sortField, sortOrder] = sort[0] ?? [];
 
@@ -322,6 +338,26 @@ export default function AlertTable(props: Props) {
         filterDestinationPaymentMethod: destinationMethodFilter,
         sortField: sortField === 'age' ? 'createdTimestamp' : sortField,
         sortOrder: sortOrder ?? undefined,
+        ...(createdTimestamp
+          ? {
+              filterAlertBeforeCreatedTimestamp: createdTimestamp
+                ? dayjs.dayjs(createdTimestamp[1]).valueOf()
+                : Number.MAX_SAFE_INTEGER,
+              filterAlertAfterCreatedTimestamp: createdTimestamp
+                ? dayjs.dayjs(createdTimestamp[0]).valueOf()
+                : 0,
+            }
+          : {}),
+        ...(caseCreatedTimestamp
+          ? {
+              filterCaseBeforeCreatedTimestamp: caseCreatedTimestamp
+                ? dayjs.dayjs(caseCreatedTimestamp[1]).valueOf()
+                : Number.MAX_SAFE_INTEGER,
+              filterCaseAfterCreatedTimestamp: caseCreatedTimestamp
+                ? dayjs.dayjs(caseCreatedTimestamp[0]).valueOf()
+                : 0,
+            }
+          : {}),
       });
       return {
         items: presentAlertData(result.data),
@@ -446,7 +482,7 @@ export default function AlertTable(props: Props) {
       expandable={{
         expandedRowRender: (record) => <ExpandedRowRenderer alertId={record.alertId ?? null} />,
       }}
-      scroll={{ x: 1300 }}
+      scroll={{ x: 1800 }}
       disableInternalPadding={disableInternalPadding}
     />
   );

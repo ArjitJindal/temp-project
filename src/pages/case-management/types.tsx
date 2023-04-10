@@ -13,6 +13,7 @@ export type CommonCaseParams = {
   caseId: string;
   timestamp: string[];
   createdTimestamp: string[];
+  caseCreatedTimestamp: string[];
   rulesHitFilter: Array<string>;
   rulesExecutedFilter: Array<string>;
   originCurrenciesFilter: Array<string>;
