@@ -512,6 +512,9 @@ export const createMongoDBCollections = async (
       'lastStatusChange.timestamp': 1,
     })
     await casesCollection.createIndex({
+      'alerts._id': 1,
+    })
+    await casesCollection.createIndex({
       'alerts.lastStatusChange.timestamp': 1,
     })
     await casesCollection.createIndex({

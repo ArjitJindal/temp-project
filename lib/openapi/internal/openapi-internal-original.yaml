@@ -2580,6 +2580,22 @@ paths:
             type: number
           in: query
           name: afterAlertLastUpdatedTimestamp
+        - schema:
+            type: number
+          in: query
+          name: filterAlertBeforeCreatedTimestamp
+        - schema:
+            type: number
+          in: query
+          name: filterAlertAfterCreatedTimestamp
+        - schema:
+            type: number
+          in: query
+          name: filterCaseBeforeCreatedTimestamp
+        - schema:
+            type: number
+          in: query
+          name: filterCaseAfterCreatedTimestamp
     post:
       summary: Alerts - Update
       operationId: post-alerts

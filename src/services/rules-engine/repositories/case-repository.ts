@@ -151,15 +151,19 @@ export class CaseRepository {
   }
 
   private async getCasesConditions(
-    params: OptionalPagination<DefaultApiGetCaseListRequest>
+    params: OptionalPagination<DefaultApiGetCaseListRequest>,
+    riskLevelsRequired = true
   ): Promise<Filter<Case>[]> {
     const conditions: Filter<Case>[] = []
-    conditions.push({
-      createdTimestamp: {
-        $gte: params.afterTimestamp || 0,
-        $lte: params.beforeTimestamp || Number.MAX_SAFE_INTEGER,
-      },
-    })
+
+    if (params.afterTimestamp != null || params.beforeTimestamp != null) {
+      conditions.push({
+        createdTimestamp: {
+          $gte: params.afterTimestamp || 0,
+          $lte: params.beforeTimestamp || Number.MAX_SAFE_INTEGER,
+        },
+      })
+    }
 
     if (
       params.beforeTransactionTimestamp != null &&
@@ -253,7 +257,11 @@ export class CaseRepository {
       })
     }
 
-    if (params.filterRiskLevel != null && (await hasFeature('PULSE'))) {
+    if (
+      riskLevelsRequired &&
+      params.filterRiskLevel != null &&
+      hasFeature('PULSE')
+    ) {
       const riskRepository = new RiskRepository(this.tenantId, {
         dynamoDb: this.dynamoDb,
       })
@@ -478,7 +486,7 @@ export class CaseRepository {
         : 'createdTimestamp'
     const sortOrder = params?.sortOrder === 'ascend' ? 1 : -1
 
-    const conditions = await this.getCasesConditions(params)
+    const conditions = await this.getCasesConditions(params, true)
 
     if (
       params.filterAssignmentsIds != null &&
@@ -492,7 +500,7 @@ export class CaseRepository {
         },
       })
     }
-    const filter = { $and: conditions }
+    const filter = conditions.length > 0 ? { $and: conditions } : {}
 
     const preLimitPipeline: Document[] = []
     const postLimitPipeline: Document[] = []
@@ -606,9 +614,9 @@ export class CaseRepository {
   ): Promise<number> {
     const db = this.mongoDb.db()
     const collection = db.collection<Case>(CASES_COLLECTION(this.tenantId))
-    const conditions = await this.getCasesConditions(params)
+    const conditions = await this.getCasesConditions(params, false)
     const count = await collection.countDocuments(
-      { $and: conditions },
+      conditions.length > 0 ? { $and: conditions } : {},
       { limit: COUNT_QUERY_LIMIT }
     )
     return count
@@ -620,16 +628,14 @@ export class CaseRepository {
     const db = this.mongoDb.db()
     const collection = db.collection<Case>(CASES_COLLECTION(this.tenantId))
 
-    const pipeline = await this.getAlertsPipeline(params)
+    const pipeline = await this.getAlertsPipeline(params, false)
 
     const itemsPipeline = [...pipeline]
     itemsPipeline.push(...paginatePipeline(params))
-    const cursor = collection.aggregate<AlertListResponseItem>(itemsPipeline, {
-      allowDiskUse: true,
-    })
+    const cursor = collection.aggregate<AlertListResponseItem>(itemsPipeline)
     const itemsPromise = cursor.toArray()
-
-    const countPipeline = [...pipeline]
+    const countPipelineResp = await this.getAlertsPipeline(params, true)
+    const countPipeline = [...countPipelineResp]
     countPipeline.push({
       $limit: COUNT_QUERY_LIMIT,
     })
@@ -637,7 +643,7 @@ export class CaseRepository {
       $count: 'count',
     })
     const countPromise = collection
-      .aggregate<{ count: number }>(countPipeline, { allowDiskUse: true })
+      .aggregate<{ count: number }>(countPipeline)
       .next()
       .then((item) => item?.count ?? 0)
 
@@ -648,53 +654,57 @@ export class CaseRepository {
   }
 
   private async getAlertsPipeline(
-    params: OptionalPagination<DefaultApiGetAlertListRequest>
+    params: OptionalPagination<DefaultApiGetAlertListRequest>,
+    countOnly = true
   ): Promise<Document[]> {
-    const caseConditions: Filter<Case>[] = await this.getCasesConditions(params)
+    const caseConditions: Filter<Case>[] = await this.getCasesConditions(
+      params,
+      false
+    )
 
     const pipeline: Document[] = [
       ...(caseConditions.length > 0
         ? [{ $match: { $and: caseConditions } }]
         : []),
-      {
-        $unwind: {
-          path: '$alerts',
-        },
-      },
-      {
-        $project: {
-          alert: '$alerts',
-          caseCreatedTimestamp: '$createdTimestamp',
-          caseUsers: '$caseUsers',
-        },
-      },
-      {
-        $lookup: {
-          from: ACCOUNTS_COLLECTION(this.tenantId),
-          localField: 'alert.assignments.assigneeUserId',
-          foreignField: 'id',
-          as: '_assignee',
-        },
-      },
-      {
-        $set: {
-          'alert._assigneeName': { $toLower: { $first: '$_assignee.name' } },
-        },
-      },
-      {
-        $sort: {
-          [`alert.${params.sortField ?? '_id'}`]:
-            params?.sortOrder === 'ascend' ? 1 : -1,
-          [`alert._id`]: 1,
-        },
-      },
     ]
+
+    if (
+      params.filterCaseAfterCreatedTimestamp != null &&
+      params.filterCaseBeforeCreatedTimestamp != null
+    ) {
+      pipeline.push({
+        $match: {
+          createdTimestamp: {
+            $lte: params.filterCaseBeforeCreatedTimestamp,
+            $gte: params.filterCaseAfterCreatedTimestamp,
+          },
+        },
+      })
+    }
+
+    pipeline.push({
+      $unwind: {
+        path: '$alerts',
+      },
+    })
 
     const conditions: Filter<AlertListResponseItem>[] = []
 
     if (params.filterCaseId != null) {
       conditions.push({
-        'alert.caseId': params.filterCaseId,
+        'alerts.caseId': params.filterCaseId,
+      })
+    }
+
+    if (
+      params.filterAlertBeforeCreatedTimestamp != null &&
+      params.filterAlertAfterCreatedTimestamp != null
+    ) {
+      conditions.push({
+        'alerts.createdTimestamp': {
+          $lte: params.filterAlertBeforeCreatedTimestamp,
+          $gte: params.filterAlertAfterCreatedTimestamp,
+        },
       })
     }
 
@@ -703,7 +713,7 @@ export class CaseRepository {
       params.beforeAlertLastUpdatedTimestamp != null
     ) {
       conditions.push({
-        'alert.lastStatusChange.timestamp': {
+        'alerts.lastStatusChange.timestamp': {
           $lte: params.beforeAlertLastUpdatedTimestamp,
           $gte: params.afterAlertLastUpdatedTimestamp,
         },
@@ -712,14 +722,14 @@ export class CaseRepository {
 
     if (params.filterOriginPaymentMethod) {
       conditions.push({
-        'alert.originPaymentMethods': {
+        'alerts.originPaymentMethods': {
           $in: params.filterOriginPaymentMethod as PaymentMethod[],
         },
       })
     }
     if (params.filterDestinationPaymentMethod) {
       conditions.push({
-        'alert.destinationPaymentMethods': {
+        'alerts.destinationPaymentMethods': {
           $in: params.filterDestinationPaymentMethod as PaymentMethod[],
         },
       })
@@ -727,7 +737,7 @@ export class CaseRepository {
 
     if (params.filterAlertId != null) {
       conditions.push({
-        'alert.alertId': prefixRegexMatchFilter(params.filterAlertId),
+        'alerts.alertId': prefixRegexMatchFilter(params.filterAlertId),
       })
     }
     if (params.filterOutCaseStatus != null) {
@@ -742,12 +752,12 @@ export class CaseRepository {
     }
     if (params.filterOutAlertStatus != null) {
       conditions.push({
-        'alert.alertStatus': { $nin: [params.filterOutAlertStatus] },
+        'alerts.alertStatus': { $nin: [params.filterOutAlertStatus] },
       })
     }
     if (params.filterAlertStatus != null) {
       conditions.push({
-        'alert.alertStatus': { $in: [params.filterAlertStatus] },
+        'alerts.alertStatus': { $in: [params.filterAlertStatus] },
       })
     }
     if (
@@ -755,13 +765,14 @@ export class CaseRepository {
       params.filterAssignmentsIds?.length
     ) {
       conditions.push({
-        'alert.assignments': {
+        'alerts.assignments': {
           $elemMatch: {
             assigneeUserId: { $in: params.filterAssignmentsIds },
           },
         },
       })
     }
+
     if (conditions.length > 0) {
       pipeline.push({
         $match: {
@@ -770,12 +781,66 @@ export class CaseRepository {
       })
     }
 
-    pipeline.push({
-      $project: {
-        _assignee: 0,
-        'alert._assigneeName': 0,
-      },
-    })
+    if (!countOnly) {
+      pipeline.push(
+        ...[
+          {
+            $lookup: {
+              from: ACCOUNTS_COLLECTION(this.tenantId),
+              localField: 'alerts.assignments.assigneeUserId',
+              foreignField: 'id',
+              as: '_assignee',
+            },
+          },
+          {
+            $set: {
+              'alerts._assigneeName': {
+                $toLower: { $first: '$_assignee.name' },
+              },
+            },
+          },
+          {
+            $sort: {
+              [params?.sortField === 'caseCreatedTimestamp'
+                ? 'createdTimestamp'
+                : `alerts.${params?.sortField ?? '_id'}`]:
+                params?.sortOrder === 'ascend' ? 1 : -1,
+              [`alerts._id`]: 1,
+            },
+          },
+          {
+            $set: {
+              alert: '$alerts',
+              caseCreatedTimestamp: '$createdTimestamp',
+            },
+          },
+        ]
+      )
+
+      pipeline.push({
+        $project: {
+          'alert.alertId': 1,
+          'alert.caseId': 1,
+          'alert.alertStatus': 1,
+          'alert.priority': 1,
+          'alert.ruleAction': 1,
+          'alert.ruleName': 1,
+          'alert.ruleDescription': 1,
+          'alert.createdTimestamp': 1,
+          'alert.assignments': 1,
+          caseCreatedTimestamp: 1,
+          'alert.numberOfTransactionsHit': 1,
+          'caseUsers.origin.userId': 1,
+          'caseUsers.destination.userId': 1,
+          'caseUsers.origin.userDetails.name': 1,
+          'caseUsers.destination.userDetails.name': 1,
+          'caseUsers.origin.legalEntity.companyGeneralDetails.legalName': 1,
+          'caseUsers.destination.legalEntity.companyGeneralDetails.legalName': 1,
+          'caseUsers.origin.type': 1,
+          'caseUsers.destination.type': 1,
+        },
+      })
+    }
 
     return pipeline
   }
@@ -1414,7 +1479,7 @@ export class CaseRepository {
 
     return await casesCollection
       .find({
-        $and: filters,
+        ...(filters.length > 0 ? { $and: filters } : {}),
       })
       .toArray()
   }
