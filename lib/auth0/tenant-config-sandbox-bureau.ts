@@ -4,8 +4,7 @@ import { Auth0TenantConfig } from './tenant-config'
 export const Auth0SandboxBureauTenantConfig: Auth0TenantConfig = {
   tenantName: 'sandbox-bureau-flagright',
   region: 'eu',
-  // TODO: set up custom domain
-  customDomain: 'sandbox-bureau-flagright.eu.auth0.com',
+  customDomain: 'login.tm.sandbox.bureau.id',
   consoleApplicationName: 'Bureau Console (Sandbox)',
   consoleUrl: 'https://tm.sandbox.bureau.id',
   allowedOrigins: [WHITE_LABEL_ORIGINS.bureau.sandbox],
