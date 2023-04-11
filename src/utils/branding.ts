@@ -53,14 +53,14 @@ export function getBranding(): BrandingSettings {
   if (window.location.hostname.endsWith('tm.bureau.id')) {
     return {
       ...BUREAU_BRANDING,
-      auth0Domain: 'bureau-flagright.eu.auth0.com',
+      auth0Domain: 'login.tm.bureau.id',
       auth0ClientId: 'XFllobU2SratClHKFrSfVSROlpRH8rUm',
     };
   }
   if (window.location.hostname.endsWith('tm.sandbox.bureau.id')) {
     return {
       ...BUREAU_BRANDING,
-      auth0Domain: 'sandbox-bureau-flagright.eu.auth0.com',
+      auth0Domain: 'login.tm.sandbox.bureau.id',
       auth0ClientId: 'JJHmTg7oupG4tUZRDpvAlghJvvVnbyoc',
     };
   }
