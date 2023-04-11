@@ -819,17 +819,8 @@ export class CaseRepository {
 
       pipeline.push({
         $project: {
-          'alert.alertId': 1,
-          'alert.caseId': 1,
-          'alert.alertStatus': 1,
-          'alert.priority': 1,
-          'alert.ruleAction': 1,
-          'alert.ruleName': 1,
-          'alert.ruleDescription': 1,
-          'alert.createdTimestamp': 1,
-          'alert.assignments': 1,
+          alert: 1,
           caseCreatedTimestamp: 1,
-          'alert.numberOfTransactionsHit': 1,
           'caseUsers.origin.userId': 1,
           'caseUsers.destination.userId': 1,
           'caseUsers.origin.userDetails.name': 1,
