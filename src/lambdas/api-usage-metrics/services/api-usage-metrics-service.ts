@@ -17,12 +17,14 @@ import {
   MetricsData,
   SANCTIONS_SEARCHES_COUNT_METRIC,
   TENANT_SEATS_COUNT_METRIC,
+  IBAN_RESOLUTION_COUNT_METRIC,
 } from '@/core/cloudwatch/metrics'
 import { MongoDbTransactionRepository } from '@/services/rules-engine/repositories/mongodb-transaction-repository'
 import { UserRepository } from '@/services/users/repositories/user-repository'
 import { TransactionEventRepository } from '@/services/rules-engine/repositories/transaction-event-repository'
 import { AccountsService } from '@/services/accounts'
 import { SanctionsSearchRepository } from '@/services/sanctions/repositories/sanctions-search-repository'
+import { IBANApiRepository } from '@/services/iban.com/repositories/iban-api-repository'
 
 export class ApiUsageMetricsService {
   tenantId: string
@@ -153,6 +155,18 @@ export class ApiUsageMetricsService {
     )
   }
 
+  private async getNumberOfIbanResolutions(): Promise<number> {
+    const ibanApiRepository = new IBANApiRepository(
+      this.tenantId,
+      this.connections.mongoDb
+    )
+
+    return ibanApiRepository.getNumberOfResolutionsBetweenTimestamps(
+      this.startTimestamp,
+      this.endTimestamp
+    )
+  }
+
   private async getValuesOfMetrics(
     tenantInfo: TenantInfo
   ): Promise<Array<[Metric, number]>> {
@@ -161,6 +175,7 @@ export class ApiUsageMetricsService {
     const usersCount = await this.getUsersCount()
     const activeRuleInstancesCount = await this.getAllActiveRuleInstancesCount()
     const sanctionsChecksCount = await this.getNumberOfSanctionsChecks()
+    const ibanResolutinosCount = await this.getNumberOfIbanResolutions()
     const numberOfSeats = await this.getNumberOfSeats(tenantInfo)
 
     logger.info(
@@ -173,6 +188,7 @@ export class ApiUsageMetricsService {
       [USERS_COUNT_METRIC, usersCount],
       [ACTIVE_RULE_INSTANCES_COUNT_METRIC, activeRuleInstancesCount],
       [SANCTIONS_SEARCHES_COUNT_METRIC, sanctionsChecksCount],
+      [IBAN_RESOLUTION_COUNT_METRIC, ibanResolutinosCount],
       [TENANT_SEATS_COUNT_METRIC, numberOfSeats],
     ]
   }

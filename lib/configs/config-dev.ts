@@ -60,6 +60,7 @@ export const config: Config = {
     COMPLYADVANTAGE_DEFAULT_SEARCH_PROFILE_ID:
       '432dd5d0-d9ee-417e-90f3-647c4ce531ad',
     OPENAI_CREDENTIALS_SECRET_ARN: `arn:aws:secretsmanager:${region}:${account}:secret:openAI-oTKO8l`,
+    IBANCOM_CREDENTIALS_SECRET_ARN: `arn:aws:secretsmanager:${region}:${account}:secret:ibanComCreds-VEzOeY`,
     MAXIMUM_ALLOWED_EXPORT_SIZE: 10000,
     BETTERUPTIME_HOOK_URL:
       'https://betteruptime.com/api/v1/aws-cloudwatch/webhook/b9EMVzubTbU3YRnn8tktYYnu',

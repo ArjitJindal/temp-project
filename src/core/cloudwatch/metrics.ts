@@ -44,6 +44,11 @@ export const SANCTIONS_SEARCHES_COUNT_METRIC: Metric = {
   name: 'SanctionsSearchesCount',
 }
 
+export const IBAN_RESOLUTION_COUNT_METRIC: Metric = {
+  namespace: 'flagright/ApiUsageMetrics',
+  name: 'IbanResolutionsCount',
+}
+
 export const TENANT_SEATS_COUNT_METRIC: Metric = {
   namespace: 'flagright/ApiUsageMetrics',
   name: 'TenantSeatsCount',
@@ -65,6 +70,9 @@ export const ACTIVE_RULE_INSTANCES_COUNT_METRIC: Metric = {
 }
 
 export const publishMetrics = async (metrics: Array<MetricsData>) => {
+  if (process.env.ENV === 'local') {
+    return
+  }
   const cloudWatchClient = new CloudWatchClient({
     region: process.env.AWS_REGION,
   })

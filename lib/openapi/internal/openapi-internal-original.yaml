@@ -4677,6 +4677,7 @@ components:
         - SIMULATOR
         - SALESFORCE
         - ESCALATION
+        - IBAN_RESOLUTION
       description: ''
     ManagedRoleName:
       type: string

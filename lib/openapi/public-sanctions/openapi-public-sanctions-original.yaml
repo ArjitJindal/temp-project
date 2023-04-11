@@ -114,8 +114,6 @@ components:
       properties:
         enabled:
           type: boolean
-        ibanResolutionFrequency:
-          $ref: '#/components/schemas/TimeWindow'
         webhookUrl:
           type: string
       required:
@@ -144,28 +142,6 @@ components:
         - updatedAt
         - request
         - response
-    TimeWindowGranularity:
-      title: TimeWindowGranularity
-      x-stoplight:
-        id: 25l0mrn9tpmo3
-      type: string
-      enum:
-        - day
-        - week
-        - month
-    TimeWindow:
-      title: TimeWindow
-      x-stoplight:
-        id: piarwcfv3g2cm
-      type: object
-      properties:
-        units:
-          type: number
-        granularity:
-          $ref: '#/components/schemas/TimeWindowGranularity'
-      required:
-        - units
-        - granularity
   securitySchemes:
     x-api-key:
       name: x-api-key

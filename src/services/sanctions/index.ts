@@ -24,9 +24,11 @@ export class SanctionsService {
   initPromise: Promise<void>
   apiKey!: string
   sanctionsSearchRepository!: SanctionsSearchRepository
+  tenantId: string
 
   constructor(tenantId: string) {
     this.initPromise = this.initialize(tenantId)
+    this.tenantId = tenantId
   }
 
   private async initialize(tenantId: string) {
@@ -121,6 +123,7 @@ export class SanctionsService {
     if (rawComplyAdvantageResponse.status === 'failure') {
       throw new Error((rawComplyAdvantageResponse as any).message)
     }
+
     const hits = rawComplyAdvantageResponse.content?.data?.hits || []
     return {
       total: hits.length,
