@@ -79,7 +79,6 @@ import {
   StackConstants,
 } from './constants'
 import { Config } from './configs/config'
-import { createAPIGatewayThrottlingAlarm } from './cdk-cw-alarms'
 import { LAMBDAS } from './lambdas'
 import {
   FileImportConfig,
@@ -1369,8 +1368,9 @@ export class CdkTarponStack extends cdk.Stack {
     }
 
     // Public API
-    const { api: publicApi, logGroup: publicApiLogGroup } =
-      this.createApiGateway(StackConstants.TARPON_API_NAME)
+    const { api: publicApi } = this.createApiGateway(
+      StackConstants.TARPON_API_NAME
+    )
 
     if (domainName) {
       domainName.addBasePathMapping(publicApi, {
@@ -1378,17 +1378,18 @@ export class CdkTarponStack extends cdk.Stack {
       })
     }
 
-    createAPIGatewayThrottlingAlarm(
-      this,
-      this.betterUptimeCloudWatchTopic,
-      publicApiLogGroup,
-      StackConstants.TARPON_API_GATEWAY_THROTTLING_ALARM_NAME,
-      publicApi.restApiName
-    )
+    // createAPIGatewayThrottlingAlarm(
+    //   this,
+    //   this.betterUptimeCloudWatchTopic,
+    //   publicApiLogGroup,
+    //   StackConstants.TARPON_API_GATEWAY_THROTTLING_ALARM_NAME,
+    //   publicApi.restApiName
+    // )
 
     // Public Console API
-    const { api: publicConsoleApi, logGroup: publicConsoleApiLogGroup } =
-      this.createApiGateway(StackConstants.TARPON_MANAGEMENT_API_NAME)
+    const { api: publicConsoleApi } = this.createApiGateway(
+      StackConstants.TARPON_MANAGEMENT_API_NAME
+    )
 
     if (domainName) {
       domainName.addBasePathMapping(publicConsoleApi, {
@@ -1396,17 +1397,18 @@ export class CdkTarponStack extends cdk.Stack {
       })
     }
 
-    createAPIGatewayThrottlingAlarm(
-      this,
-      this.betterUptimeCloudWatchTopic,
-      publicConsoleApiLogGroup,
-      StackConstants.TARPON_MANAGEMENT_API_GATEWAY_THROTTLING_ALARM_NAME,
-      publicConsoleApi.restApiName
-    )
+    // createAPIGatewayThrottlingAlarm(
+    //   this,
+    //   this.betterUptimeCloudWatchTopic,
+    //   publicConsoleApiLogGroup,
+    //   StackConstants.TARPON_MANAGEMENT_API_GATEWAY_THROTTLING_ALARM_NAME,
+    //   publicConsoleApi.restApiName
+    // )
 
     // Public Device Data API
-    const { api: publicDeviceDataApi, logGroup: publicDeviceDataApiLogGroup } =
-      this.createApiGateway(StackConstants.TARPON_DEVICE_DATA_API_NAME)
+    const { api: publicDeviceDataApi } = this.createApiGateway(
+      StackConstants.TARPON_DEVICE_DATA_API_NAME
+    )
 
     if (domainName) {
       domainName.addBasePathMapping(publicDeviceDataApi, {
@@ -1414,33 +1416,35 @@ export class CdkTarponStack extends cdk.Stack {
       })
     }
 
-    createAPIGatewayThrottlingAlarm(
-      this,
-      this.betterUptimeCloudWatchTopic,
-      publicDeviceDataApiLogGroup,
-      StackConstants.TARPON_DEVICE_DATA_API_GATEWAY_THROTTLING_ALARM_NAME,
-      publicDeviceDataApi.restApiName
-    )
+    // createAPIGatewayThrottlingAlarm(
+    //   this,
+    //   this.betterUptimeCloudWatchTopic,
+    //   publicDeviceDataApiLogGroup,
+    //   StackConstants.TARPON_DEVICE_DATA_API_GATEWAY_THROTTLING_ALARM_NAME,
+    //   publicDeviceDataApi.restApiName
+    // )
 
     // Public Sanctions API
-    const { api: publicSanctionsApi, logGroup: publicSanctionsApiLogGroup } =
-      this.createApiGateway(StackConstants.TARPON_SANCTIONS_API_NAME)
+    const { api: publicSanctionsApi } = this.createApiGateway(
+      StackConstants.TARPON_SANCTIONS_API_NAME
+    )
     if (domainName) {
       domainName.addBasePathMapping(publicSanctionsApi, {
         basePath: 'sanctions',
       })
     }
-    createAPIGatewayThrottlingAlarm(
-      this,
-      this.betterUptimeCloudWatchTopic,
-      publicSanctionsApiLogGroup,
-      StackConstants.TARPON_SANCTIONS_API_GATEWAY_THROTTLING_ALARM_NAME,
-      publicSanctionsApi.restApiName
-    )
+    // createAPIGatewayThrottlingAlarm(
+    //   this,
+    //   this.betterUptimeCloudWatchTopic,
+    //   publicSanctionsApiLogGroup,
+    //   StackConstants.TARPON_SANCTIONS_API_GATEWAY_THROTTLING_ALARM_NAME,
+    //   publicSanctionsApi.restApiName
+    // )
 
     // Console API
-    const { api: consoleApi, logGroup: consoleApiLogGroup } =
-      this.createApiGateway(StackConstants.CONSOLE_API_NAME)
+    const { api: consoleApi } = this.createApiGateway(
+      StackConstants.CONSOLE_API_NAME
+    )
 
     if (domainName) {
       domainName.addBasePathMapping(consoleApi, {
@@ -1448,13 +1452,13 @@ export class CdkTarponStack extends cdk.Stack {
       })
     }
 
-    createAPIGatewayThrottlingAlarm(
-      this,
-      this.betterUptimeCloudWatchTopic,
-      consoleApiLogGroup,
-      StackConstants.CONSOLE_API_GATEWAY_THROTTLING_ALARM_NAME,
-      consoleApi.restApiName
-    )
+    // createAPIGatewayThrottlingAlarm(
+    //   this,
+    //   this.betterUptimeCloudWatchTopic,
+    //   consoleApiLogGroup,
+    //   StackConstants.CONSOLE_API_GATEWAY_THROTTLING_ALARM_NAME,
+    //   consoleApi.restApiName
+    // )
 
     if (isDevUserStack) {
       const apiKey = ApiKey.fromApiKeyId(
