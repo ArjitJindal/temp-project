@@ -152,6 +152,8 @@ export const StackConstants = {
     getResourceNameForTarpon('WebhookTarponChangeCaptureRetryFunction'),
   CONSOLE_API_SANCTIONS_FUNCTION_NAME:
     getResourceNameForTarpon('SanctionsFunction'),
+  CONSOLE_API_NARRATIVE_TEMPLATE_FUNCTION_NAME:
+    getResourceNameForTarpon('NarrativeFunction'),
   CONSOLE_API_WEBHOOKS_FUNCTION_NAME:
     getResourceNameForTarpon('WebhooksFunction'),
   LAMBDA_LATEST_ALIAS_NAME: 'LATEST',

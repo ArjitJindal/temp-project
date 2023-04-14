@@ -78,6 +78,10 @@ export const TRANSACTIONS_COLLECTION = (tenantId: string) => {
   return `${tenantId}-transactions`
 }
 
+export const NARRATIVE_TEMPLATE_COLLECTION = (tenantId: string) => {
+  return `${tenantId}-narratives`
+}
+
 export const CASES_COLLECTION = (tenandId: string) => {
   return `${tenandId}-cases`
 }
@@ -649,6 +653,29 @@ export const createMongoDBCollections = async (
   )
 
   await sanctionsSearchesCollection.createIndex({
+    createdAt: 1,
+  })
+
+  try {
+    await db.createCollection(NARRATIVE_TEMPLATE_COLLECTION(tenantId))
+  } catch (e) {
+    // ignore already exists
+  }
+
+  const narrativeTemplateCollection = db.collection(
+    NARRATIVE_TEMPLATE_COLLECTION(tenantId)
+  )
+
+  await narrativeTemplateCollection.createIndex({
+    id: 1,
+  })
+  await narrativeTemplateCollection.createIndex({
+    name: 1,
+  })
+  await narrativeTemplateCollection.createIndex({
+    description: 1,
+  })
+  await narrativeTemplateCollection.createIndex({
     createdAt: 1,
   })
 }

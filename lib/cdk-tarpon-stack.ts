@@ -1033,6 +1033,16 @@ export class CdkTarponStack extends cdk.Stack {
     })
     hammerheadDynamoDbTable.grantReadWriteData(parameterRiskAssignmentAlias)
 
+    /* NarrativeTemplate function */
+    const { alias: narrativeAlias } = this.createFunction(
+      {
+        name: StackConstants.CONSOLE_API_NARRATIVE_TEMPLATE_FUNCTION_NAME,
+      },
+      atlasFunctionProps
+    )
+
+    this.grantMongoDbAccess(narrativeAlias)
+
     /* Get Risk Scores */
     const { alias: riskLevelAndScoreAlias } = this.createFunction(
       {

@@ -183,6 +183,11 @@ export const LAMBDAS: {
     handlerName: 'riskLevelAndScoreHandler',
     expectedMaxDurationSeconds: DEFAULT_LAMBDA_EXPECTED_MAX_DURATION_SECONDS,
   },
+  [StackConstants.CONSOLE_API_NARRATIVE_TEMPLATE_FUNCTION_NAME]: {
+    codePath: 'console-api-narrative-template',
+    handlerName: 'narrativeTemplateHandler',
+    expectedMaxDurationSeconds: DEFAULT_LAMBDA_EXPECTED_MAX_DURATION_SECONDS,
+  },
   [StackConstants.CONSOLE_API_SIMULATION_FUNCTION_NAME]: {
     codePath: 'console-api-simulation',
     handlerName: 'simulationHandler',

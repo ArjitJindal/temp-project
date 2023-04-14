@@ -142,6 +142,12 @@ export const ConsoleApiPathToLambda: any = {
   '/device-data/transactions':
     StackConstants.CONSOLE_API_DEVICE_DATA_FUNCTION_NAME,
   '/device-data/users': StackConstants.CONSOLE_API_DEVICE_DATA_FUNCTION_NAME,
+  '/narrative-template':
+    StackConstants.CONSOLE_API_NARRATIVE_TEMPLATE_FUNCTION_NAME,
+  '/narrative-template/{narrativeTemplateId}':
+    StackConstants.CONSOLE_API_NARRATIVE_TEMPLATE_FUNCTION_NAME,
+  '/narrative-templates':
+    StackConstants.CONSOLE_API_NARRATIVE_TEMPLATE_FUNCTION_NAME,
 }
 
 const openapi = getAugmentedOpenapi(

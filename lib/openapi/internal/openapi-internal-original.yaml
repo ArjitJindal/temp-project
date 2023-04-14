@@ -3364,6 +3364,108 @@ paths:
           in: query
           name: userId
           required: true
+  /narrative-templates:
+    get:
+      summary: Get narratives
+      operationId: get-narratives
+      x-flagright:
+        permissions:
+          - case-management:case-overview:read
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/NarrativeTemplateResponse'
+      parameters:
+        - schema:
+            $ref: '#/components/schemas/PageSize'
+          in: query
+          name: pageSize
+        - schema:
+            $ref: '#/components/schemas/Page'
+          in: query
+          name: page
+          required: true
+  /narrative-template:
+    post:
+      summary: Create narrative
+      operationId: post-narrative-template
+      x-flagright:
+        permissions:
+          - case-management:case-overview:write
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/NarrativeTemplate'
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/NarrativeTemplateRequest'
+  '/narrative-template/{narrativeTemplateId}':
+    get:
+      summary: Get narrative
+      operationId: get-narrative-template
+      x-flagright:
+        permissions:
+          - case-management:case-overview:read
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/NarrativeTemplate'
+      parameters:
+        - schema:
+            type: string
+          in: path
+          name: narrativeTemplateId
+          required: true
+    put:
+      summary: Update narrative
+      operationId: put-narrative-template
+      x-flagright:
+        permissions:
+          - case-management:case-overview:write
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/NarrativeTemplate'
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/NarrativeTemplateRequest'
+      parameters:
+        - schema:
+            type: string
+          in: path
+          name: narrativeTemplateId
+          required: true
+    delete:
+      summary: Delete narrative
+      operationId: delete-narrative-template
+      x-flagright:
+        permissions:
+          - case-management:case-overview:write
+      responses:
+        '200':
+          description: OK
+      parameters:
+        - schema:
+            type: string
+          in: path
+          name: narrativeTemplateId
+          required: true
 components:
   schemas:
     KrsScore:
@@ -6120,6 +6222,52 @@ components:
           type: integer
       required:
         - count
+    NarrativeTemplateRequest:
+      title: NarrativeTemplateRequest
+      type: object
+      properties:
+        name:
+          type: string
+        description:
+          type: string
+      required:
+        - name
+        - description
+    NarrativeTemplate:
+      title: NarrativeTemplate
+      type: object
+      properties:
+        name:
+          type: string
+        description:
+          type: string
+        id:
+          type: string
+        createdAt:
+          type: number
+        updatedAt:
+          type: number
+        _id:
+          type: string
+      required:
+        - name
+        - description
+        - id
+        - createdAt
+        - updatedAt
+    NarrativeTemplateResponse:
+      title: NarrativeTemplateResponse
+      type: object
+      properties:
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/NarrativeTemplate'
+        total:
+          type: number
+      required:
+        - items
+        - total
   securitySchemes:
     Authorization:
       type: http
