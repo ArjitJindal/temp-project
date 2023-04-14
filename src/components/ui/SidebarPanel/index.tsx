@@ -3,7 +3,8 @@ import Layout from 'antd/es/layout';
 import { Content } from 'antd/es/layout/layout';
 import Sider from 'antd/es/layout/Sider';
 import Menu from 'antd/es/menu';
-import { useCallback, useMemo, useState } from 'react';
+import { useCallback, useMemo } from 'react';
+import { useLocalStorageState } from 'ahooks';
 import styles from './SidebarPanel.module.less';
 
 type MenuItem = {
@@ -30,10 +31,19 @@ export default function SidebarPanel({ menuSections }: Props): JSX.Element {
     menuSections[0]?.name,
     menuSections[0]?.menuItems?.[0]?.name,
   );
-  const [activeMenuItem, setActiveMenuItem] = useState(defaultSelectedKey);
-  const handleMenuItemClick = useCallback(({ key }) => {
-    setActiveMenuItem(key);
-  }, []);
+
+  const [activeMenuItem, setActiveMenuItem] = useLocalStorageState(
+    'activeMenuItem-sidebar-settings',
+    defaultSelectedKey,
+  );
+
+  const handleMenuItemClick = useCallback(
+    ({ key }) => {
+      setActiveMenuItem(key);
+    },
+    [setActiveMenuItem],
+  );
+
   const menuItems = useMemo(() => {
     return menuSections.flatMap((section) =>
       [

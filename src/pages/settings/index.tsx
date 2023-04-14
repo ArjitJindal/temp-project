@@ -5,6 +5,7 @@ import { TransactionStateSettings } from './components/TransactionStateSettings'
 import { RiskLevelSettings } from './components/RiskLevelSettings';
 import { DefaultValuesSettings } from './components/DefaultValuesSettings';
 import { RiskAlgorithmsSettings } from './components/RiskAlgorithmsSettings';
+import NarrativeTemplates from './components/NarrativeTemplates';
 import PageWrapper from '@/components/PageWrapper';
 import { useI18n } from '@/locales';
 import SidebarPanel, { MenuSection } from '@/components/ui/SidebarPanel';
@@ -30,6 +31,10 @@ export default function SettingsPage() {
         {
           name: 'Default Views',
           content: <DefaultViewsSettings />,
+        },
+        {
+          name: 'Narrative templates',
+          content: <NarrativeTemplates />,
         },
         {
           name: 'Billing',

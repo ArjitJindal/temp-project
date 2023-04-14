@@ -2,6 +2,8 @@ import React, { useCallback, useEffect, useImperativeHandle, useRef, useState } 
 import Upload from 'antd/es/upload/Upload';
 import _ from 'lodash';
 import s from './styles.module.less';
+import Select from '@/components/library/Select';
+import AsyncResourceRenderer from '@/components/common/AsyncResourceRenderer';
 import { message } from '@/components/library/Message';
 import Button from '@/components/library/Button';
 import { useApi } from '@/api';
@@ -11,6 +13,8 @@ import MarkdownEditor from '@/components/markdown/MarkdownEditor';
 import { AsyncResource, isLoading } from '@/utils/asyncResource';
 import { Hint } from '@/components/library/Form/InputField';
 import { uploadFile } from '@/utils/file-uploader';
+import { useQuery } from '@/utils/queries/hooks';
+import { NARRATIVE_TEMPLATE_LIST } from '@/utils/queries/keys';
 
 export const MAX_COMMENT_LENGTH = 5000;
 
@@ -35,10 +39,22 @@ export interface CommentEditorRef {
 
 let uploadedFiles: FileInfo[] = [];
 
+const NARRATIVE_PAGE = 1;
+const NARRATIVE_PAGE_SIZE = 1000;
+
 function CommentEditor(props: Props, ref: React.Ref<CommentEditorRef>) {
   const { showFileList = true, values, submitRes, placeholder, onChangeValues, onSubmit } = props;
   const api = useApi();
   const [uploadingCount, setUploadingCount] = useState(0);
+  const [templateValue, setTemplateValue] = useState<string | undefined>(undefined);
+
+  const narrativeQueryResponse = useQuery(
+    NARRATIVE_TEMPLATE_LIST({ page: NARRATIVE_PAGE, pageSize: NARRATIVE_PAGE_SIZE }),
+    async () => {
+      return await api.getNarratives({ page: NARRATIVE_PAGE, pageSize: NARRATIVE_PAGE_SIZE });
+    },
+  );
+
   const removeFile = useCallback(
     (s3Key) =>
       onChangeValues({
@@ -62,6 +78,13 @@ function CommentEditor(props: Props, ref: React.Ref<CommentEditorRef>) {
       uploadedFiles = [];
     }
   }, [uploadingCount]);
+
+  useEffect(() => {
+    if (templateValue) {
+      editorRef.current?.editorRef.current?.getInstance().setMarkdown(templateValue);
+      setTemplateValue(undefined);
+    }
+  }, [templateValue]);
 
   const isCommentTooLong = values.comment.length > MAX_COMMENT_LENGTH;
   return (
@@ -100,7 +123,10 @@ function CommentEditor(props: Props, ref: React.Ref<CommentEditorRef>) {
           analyticsName="Add Comment"
           htmlType="submit"
           isLoading={isLoading(submitRes) || uploadingCount > 0}
-          onClick={() => onSubmit(values)}
+          onClick={() => {
+            onSubmit(values);
+            setTemplateValue(undefined);
+          }}
           type="PRIMARY"
           isDisabled={
             (values.files.length === 0 && !values.comment) || isCommentTooLong || props.disabled
@@ -108,6 +134,7 @@ function CommentEditor(props: Props, ref: React.Ref<CommentEditorRef>) {
         >
           Add Comment
         </Button>
+
         <Upload
           multiple={true}
           fileList={
@@ -174,6 +201,32 @@ function CommentEditor(props: Props, ref: React.Ref<CommentEditorRef>) {
             />
           </div>
         </Upload>
+        <AsyncResourceRenderer resource={narrativeQueryResponse.data} renderLoading={() => null}>
+          {(narrativeTemplates) => {
+            const narrativeTemplatesOptions = narrativeTemplates.items.map((narrativeTemplate) => ({
+              label: narrativeTemplate.name,
+              value: narrativeTemplate.id,
+            }));
+
+            return (
+              <Select
+                placeholder="Narrative Templates"
+                options={narrativeTemplatesOptions}
+                style={{ width: 180 }}
+                value={templateValue}
+                onChange={(value) => {
+                  const narrativeTemplate = narrativeTemplates.items.find(
+                    (narrativeTemplate) => narrativeTemplate.id === value,
+                  );
+
+                  if (narrativeTemplate) {
+                    setTemplateValue(narrativeTemplate.description);
+                  }
+                }}
+              />
+            );
+          }}
+        </AsyncResourceRenderer>
       </div>
     </div>
   );
