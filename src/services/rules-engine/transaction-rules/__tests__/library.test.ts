@@ -59,13 +59,11 @@ describe('', () => {
         if (!originLibrary?.[rule.id]) {
           return
         }
-        // TODO: blackListId -> blacklistId breaking change but it's actually not a breaking change. Remove it later.
-        if (rule.id == 'R-132') {
-          return
-        }
 
         const ruleImplementation =
-          TRANSACTION_RULES[rule.ruleImplementationName]
+          rule.type === 'TRANSACTION'
+            ? TRANSACTION_RULES[rule.ruleImplementationName]
+            : USER_RULES[rule.ruleImplementationName]
         const schema = ruleImplementation.getSchema()
         expect(() =>
           RuleService.validateRuleParametersSchema(
