@@ -8,6 +8,7 @@ import { PaymentMethodRuleFilterParameter } from '../transaction-filters/payment
 import { TransactionFilters, UserFilters } from '../filters'
 import { USER_RULES, UserRuleImplementationName } from '../user-rules'
 import { SanctionsBusinessUserRuleParameters } from '../user-rules/sanctions-business-user'
+import { SanctionsBankUserRuleParameters } from '../user-rules/sanctions-bank-name'
 import { TransactionAmountRuleParameters } from './transaction-amount'
 import { TransactionNewCountryRuleParameters } from './transaction-new-country'
 import { TransactionNewCurrencyRuleParameters } from './transaction-new-currency'
@@ -1252,6 +1253,28 @@ const _RULES_LIBRARY: Array<
       defaultParameters,
       defaultAction: 'SUSPEND',
       ruleImplementationName: 'sanctions-business-user',
+      labels: [],
+      defaultNature: 'SCREENING',
+      defaultCasePriority: 'P1',
+      requiredFeatures: ['SANCTIONS'],
+    }
+  },
+  () => {
+    const defaultParameters: SanctionsBankUserRuleParameters = {
+      fuzziness: 20,
+    }
+
+    return {
+      id: 'R-32',
+      name: 'Sanctions on Bank name',
+      type: 'USER',
+      description:
+        'Sanctions/PEP/Adverse media screening on Bank names. IBAN number resolution option available in rule configuration.',
+      descriptionTemplate:
+        'Sanctions/PEP/Adverse media screening on Bank names. IBAN number resolution option available in rule configuration.',
+      defaultParameters,
+      defaultAction: 'SUSPEND',
+      ruleImplementationName: 'sanctions-bank-name',
       labels: [],
       defaultNature: 'SCREENING',
       defaultCasePriority: 'P1',

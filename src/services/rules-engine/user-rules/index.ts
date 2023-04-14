@@ -1,5 +1,6 @@
 import { RuleHitResult } from '../rule'
 import { UserRule } from './rule'
+import SanctionsBankUserRule from './sanctions-bank-name'
 import SanctionsBusinessUserRule from './sanctions-business-user'
 
 export class UserRuleBase extends UserRule<unknown> {
@@ -11,6 +12,7 @@ export class UserRuleBase extends UserRule<unknown> {
 
 export const _USER_RULES = {
   'sanctions-business-user': SanctionsBusinessUserRule,
+  'sanctions-bank-name': SanctionsBankUserRule,
 } as const
 
 export type UserRuleImplementationName = keyof typeof _USER_RULES
