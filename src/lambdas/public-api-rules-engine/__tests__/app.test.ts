@@ -48,7 +48,7 @@ describe('Public API - Verify a transaction', () => {
   ])
   setUpRulesHooks(TEST_TENANT_ID, [
     {
-      id: 'R-1',
+      id: 'TEST-R-1',
       ruleImplementationName: 'tests/test-success-rule',
       type: 'TRANSACTION',
     },
@@ -152,7 +152,7 @@ describe('Public API - Verify a transaction', () => {
       transactionId: 'dummy',
       executedRules: [
         {
-          ruleId: 'R-1',
+          ruleId: 'TEST-R-1',
           ruleInstanceId: expect.any(String),
           ruleName: 'test rule name',
           ruleDescription: 'test rule description.',
@@ -165,7 +165,7 @@ describe('Public API - Verify a transaction', () => {
       ],
       hitRules: [
         {
-          ruleId: 'R-1',
+          ruleId: 'TEST-R-1',
           ruleInstanceId: expect.any(String),
           ruleName: 'test rule name',
           ruleDescription: 'test rule description.',

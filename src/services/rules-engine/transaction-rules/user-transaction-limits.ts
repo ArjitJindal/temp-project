@@ -1,6 +1,5 @@
 import * as _ from 'lodash'
 import { JSONSchemaType } from 'ajv'
-import dayjs from 'dayjs'
 import {
   getTransactionsTotalAmount,
   isTransactionAmountAboveThreshold,
@@ -22,6 +21,7 @@ import { PaymentMethod } from '@/@types/tranasction/payment-type'
 import { TransactionAmountLimit } from '@/@types/openapi-public/TransactionAmountLimit'
 import { TransactionCountLimit } from '@/@types/openapi-public/TransactionCountLimit'
 import { TransactionAmountDetails } from '@/@types/openapi-public/TransactionAmountDetails'
+import dayjs from '@/utils/dayjs'
 
 type CheckType = 'PAYMENT_METHOD' | 'ALL_TRANSACTIONS'
 const CHECK_TYPES: Array<{ value: CheckType; label: string }> = [

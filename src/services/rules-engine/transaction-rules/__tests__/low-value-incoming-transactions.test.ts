@@ -1,4 +1,4 @@
-import { getTransactionRuleByRuleId } from '../library'
+import { getRuleByRuleId } from '../library'
 import { getTestTenantId } from '@/test-utils/tenant-test-utils'
 import { getTestTransaction } from '@/test-utils/transaction-test-utils'
 import {
@@ -66,8 +66,7 @@ ruleVariantsTest(false, () => {
         }),
       ],
       {
-        descriptionTemplate:
-          getTransactionRuleByRuleId('R-7').descriptionTemplate,
+        descriptionTemplate: getRuleByRuleId('R-7').descriptionTemplate,
       },
       [null, 'Receiver sent 1 transactions just under the flagging limit.']
     )

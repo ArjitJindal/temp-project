@@ -1,4 +1,4 @@
-import { getTransactionRuleByRuleId } from '../library'
+import { getRuleByRuleId } from '../library'
 import { TransactionsRoundValueVelocityRuleParameters } from '../transactions-round-value-velocity'
 import dayjs from '@/utils/dayjs'
 import { getTestTenantId } from '@/test-utils/tenant-test-utils'
@@ -80,8 +80,7 @@ ruleVariantsTest(false, () => {
         }),
       ],
       {
-        descriptionTemplate:
-          getTransactionRuleByRuleId('R-130').descriptionTemplate,
+        descriptionTemplate: getRuleByRuleId('R-130').descriptionTemplate,
       },
       [
         null,

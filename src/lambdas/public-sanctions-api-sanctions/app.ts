@@ -4,14 +4,13 @@ import {
   APIGatewayProxyWithLambdaAuthorizerEvent,
 } from 'aws-lambda'
 import _ from 'lodash'
-import dayjs from 'dayjs'
 import { lambdaApi } from '@/core/middlewares/lambda-api-middlewares'
 import { SanctionsService } from '@/services/sanctions'
 import { SanctionsBankSearchRequest } from '@/@types/openapi-public-sanctions/SanctionsBankSearchRequest'
 import { SanctionsSearch } from '@/@types/openapi-public-sanctions/SanctionsSearch'
 import { SanctionsSearchHistory } from '@/@types/openapi-internal/SanctionsSearchHistory'
 import { SanctionsSearchUpdateRequest } from '@/@types/openapi-public-sanctions/SanctionsSearchUpdateRequest'
-import { SanctionsSearchType } from '@/@types/openapi-public-sanctions/SanctionsSearchType'
+import dayjs from '@/utils/dayjs'
 
 function internalToPublicSearchResult(
   searchResult: SanctionsSearchHistory
@@ -29,30 +28,6 @@ function internalToPublicSearchResult(
     request: searchResult.request.apiSearchRequest ?? searchResult.request,
     response: searchResult.response?.rawComplyAdvantageResponse?.content?.data,
   }
-}
-
-function pickSearchProfileId(types?: SanctionsSearchType[]): string {
-  if (process.env.ENV !== 'prod') {
-    return ''
-  }
-  if (_.isEqual(types, ['SANCTIONS'] as SanctionsSearchType[])) {
-    return '01c3b373-c01a-48b2-96f7-3fcf17dd0c91'
-  } else if (_.isEqual(types, ['SANCTIONS', 'PEP'] as SanctionsSearchType[])) {
-    return '8b51ca9d-4b45-4de7-bac8-3bebcf6041ab'
-  } else if (
-    _.isEqual(types, ['SANCTIONS', 'ADVERSE_MEDIA'] as SanctionsSearchType[])
-  ) {
-    return '919d1abb-2add-46c1-b73a-0fbae79aee6d'
-  } else if (_.isEqual(types, ['PEP'] as SanctionsSearchType[])) {
-    return 'a9b22101-e5d5-477c-b2c7-2f875ebbd5d8'
-  } else if (
-    _.isEqual(types, ['PEP', 'ADVERSE_MEDIA'] as SanctionsSearchType[])
-  ) {
-    return 'e04c41ad-d3f0-4562-9b51-9d00a8965f16'
-  } else if (_.isEqual(types, ['ADVERSE_MEDIA'] as SanctionsSearchType[])) {
-    return '5a67aa5f-4ec8-4a61-af3a-78e3c132a24d'
-  }
-  return '15cb1d65-7f06-4eb3-84f5-f0cb9f1d4c8f'
 }
 
 export const sanctionsHandler = lambdaApi({ requiredFeatures: ['SANCTIONS'] })(
@@ -84,17 +59,14 @@ export const sanctionsHandler = lambdaApi({ requiredFeatures: ['SANCTIONS'] })(
         throw new Error('Bank name cannot be empty')
       }
 
-      const searchResult = await sanctionsService.search(
-        {
-          searchTerm: bankName,
-          countryCodes: countryCodes,
-          fuzziness: searchRequest.fuzziness,
-          types: searchRequest.types,
-          apiSearchRequest: searchRequest,
-          monitoring: searchRequest.monitoring,
-        },
-        pickSearchProfileId(searchRequest.types)
-      )
+      const searchResult = await sanctionsService.search({
+        searchTerm: bankName,
+        countryCodes: countryCodes,
+        fuzziness: searchRequest.fuzziness,
+        types: searchRequest.types,
+        apiSearchRequest: searchRequest,
+        monitoring: searchRequest.monitoring,
+      })
       return internalToPublicSearchResult(
         await sanctionsService.getSearchHistory(searchResult.searchId)
       )

@@ -1,6 +1,6 @@
 import { v4 as uuidv4 } from 'uuid'
 import { BlacklistPaymentdetailsRuleParameters } from '../blacklist-payment-details'
-import { getTransactionRuleByRuleId } from '../library'
+import { getRuleByRuleId } from '../library'
 import { getTestTenantId } from '@/test-utils/tenant-test-utils'
 import { getTestTransaction } from '@/test-utils/transaction-test-utils'
 import {
@@ -73,8 +73,7 @@ describe('R-129 description formatting', () => {
       }),
     ],
     {
-      descriptionTemplate:
-        getTransactionRuleByRuleId('R-129').descriptionTemplate,
+      descriptionTemplate: getRuleByRuleId('R-129').descriptionTemplate,
     },
     [null, 'Sender’s payment details are in blacklisted payment details.']
   )

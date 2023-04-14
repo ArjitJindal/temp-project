@@ -91,6 +91,7 @@ export class RuleRepository {
         tenantIds:
           this.tenantId === FLAGRIGHT_TENANT_ID ? item.tenantIds : undefined,
         defaultCasePriority: item.defaultCasePriority,
+        requiredFeature: item.requiredFeature,
         typology: item.typology,
         typologyGroup: item.typologyGroup,
         typologyDescription: item.typologyDescription,

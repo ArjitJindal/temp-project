@@ -44,7 +44,7 @@ import TransactionsOutflowInflowVolumeRule from './transactions-outflow-inflow-v
 import TestAlwaysHitRule from '@/services/rules-engine/transaction-rules/tests/test-always-hit-rule'
 import BlacklistTransactionMatchedValue from '@/services/rules-engine/transaction-rules/blacklist-transaction-related-value'
 
-class TransactionRuleBase extends TransactionRule<unknown> {
+export class TransactionRuleBase extends TransactionRule<unknown> {
   public async computeRule(): Promise<RuleHitResult | undefined> {
     // skip
     return

@@ -1,5 +1,5 @@
 import { CardIssuedCountryRuleParameters } from '../card-issued-country'
-import { getTransactionRuleByRuleId } from '../library'
+import { getRuleByRuleId } from '../library'
 import { getTestTenantId } from '@/test-utils/tenant-test-utils'
 import { getTestTransaction } from '@/test-utils/transaction-test-utils'
 import {
@@ -50,8 +50,7 @@ describe('R-114 description formatting', () => {
       }),
     ],
     {
-      descriptionTemplate:
-        getTransactionRuleByRuleId('R-114').descriptionTemplate,
+      descriptionTemplate: getRuleByRuleId('R-114').descriptionTemplate,
     },
     [
       null,

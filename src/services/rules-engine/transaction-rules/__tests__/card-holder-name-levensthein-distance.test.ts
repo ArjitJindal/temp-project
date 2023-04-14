@@ -1,5 +1,5 @@
 import { CardHolderNameRuleParameter } from '../card-holder-name-levensthein-distance'
-import { getTransactionRuleByRuleId } from '../library'
+import { getRuleByRuleId } from '../library'
 import { getTestTenantId } from '@/test-utils/tenant-test-utils'
 import { getTestTransaction } from '@/test-utils/transaction-test-utils'
 import {
@@ -77,8 +77,7 @@ describe('R-118 description formatting', () => {
       }),
     ],
     {
-      descriptionTemplate:
-        getTransactionRuleByRuleId('R-118').descriptionTemplate,
+      descriptionTemplate: getRuleByRuleId('R-118').descriptionTemplate,
     },
     [
       'Sender’s name does not match name on sender’s card (**1111).',

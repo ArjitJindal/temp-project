@@ -1,4 +1,4 @@
-import { getTransactionRuleByRuleId } from '../library'
+import { getRuleByRuleId } from '../library'
 import { FirstPaymentRuleParameter } from '../first-payment'
 import { getTestTenantId } from '@/test-utils/tenant-test-utils'
 import { getTestTransaction } from '@/test-utils/transaction-test-utils'
@@ -32,8 +32,7 @@ ruleVariantsTest(false, () => {
         }),
       ],
       {
-        descriptionTemplate:
-          getTransactionRuleByRuleId('R-1').descriptionTemplate,
+        descriptionTemplate: getRuleByRuleId('R-1').descriptionTemplate,
       },
       ['Sender’s first transaction.']
     )

@@ -1,5 +1,5 @@
 import { TooManyTransactionsToHighRiskCountryRuleParameters } from '../too-many-transactions-to-high-risk-country'
-import { getTransactionRuleByRuleId } from '../library'
+import { getRuleByRuleId } from '../library'
 import dayjs from '@/utils/dayjs'
 import { getTestTenantId } from '@/test-utils/tenant-test-utils'
 import { getTestTransaction } from '@/test-utils/transaction-test-utils'
@@ -63,8 +63,7 @@ ruleVariantsTest(true, () => {
         }),
       ],
       {
-        descriptionTemplate:
-          getTransactionRuleByRuleId('R-77').descriptionTemplate,
+        descriptionTemplate: getRuleByRuleId('R-77').descriptionTemplate,
       },
       [
         null,

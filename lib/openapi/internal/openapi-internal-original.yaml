@@ -3509,6 +3509,10 @@ components:
           type: string
         source:
           type: string
+        requiredFeatures:
+          type: array
+          items:
+            $ref: '#/components/schemas/Feature'
       required:
         - id
         - type

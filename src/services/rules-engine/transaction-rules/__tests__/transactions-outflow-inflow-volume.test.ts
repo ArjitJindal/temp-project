@@ -1,5 +1,5 @@
 import { TransactionsOutflowInflowVolumeRuleParameters } from '../transactions-outflow-inflow-volume'
-import { getTransactionRuleByRuleId } from '../library'
+import { getRuleByRuleId } from '../library'
 import { TransactionAmountDetails } from '@/@types/openapi-public/TransactionAmountDetails'
 import {
   createTransactionRuleTestCase,
@@ -64,8 +64,7 @@ ruleVariantsTest(false, () => {
           }),
         ],
         {
-          descriptionTemplate:
-            getTransactionRuleByRuleId('R-41').descriptionTemplate,
+          descriptionTemplate: getRuleByRuleId('R-41').descriptionTemplate,
         },
         [
           null,
@@ -112,8 +111,7 @@ ruleVariantsTest(false, () => {
           }),
         ],
         {
-          descriptionTemplate:
-            getTransactionRuleByRuleId('R-41').descriptionTemplate,
+          descriptionTemplate: getRuleByRuleId('R-41').descriptionTemplate,
         },
         [
           null,

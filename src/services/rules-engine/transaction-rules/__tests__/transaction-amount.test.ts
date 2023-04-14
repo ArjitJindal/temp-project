@@ -1,5 +1,5 @@
 import { TransactionAmountRuleParameters } from '../transaction-amount'
-import { getTransactionRuleByRuleId } from '../library'
+import { getRuleByRuleId } from '../library'
 import dayjs from '@/utils/dayjs'
 import { getTestTenantId } from '@/test-utils/tenant-test-utils'
 import { getTestTransaction } from '@/test-utils/transaction-test-utils'
@@ -52,8 +52,7 @@ describe('R-2 description formatting', () => {
       }),
     ],
     {
-      descriptionTemplate:
-        getTransactionRuleByRuleId('R-2').descriptionTemplate,
+      descriptionTemplate: getRuleByRuleId('R-2').descriptionTemplate,
     },
     ['Transaction amount is 1000.00 EUR or more.']
   )
@@ -105,8 +104,7 @@ describe('R-75 description formatting', () => {
       }),
     ],
     {
-      descriptionTemplate:
-        getTransactionRuleByRuleId('R-75').descriptionTemplate,
+      descriptionTemplate: getRuleByRuleId('R-75').descriptionTemplate,
     },
     ['CTR required since sending 10000.00 EUR is above 1000.00 EUR.']
   )

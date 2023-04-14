@@ -7,7 +7,7 @@ import {
 } from '@/test-utils/apigateway-test-utils'
 import { RuleRepository } from '@/services/rules-engine/repositories/rule-repository'
 import { getTestTenantId } from '@/test-utils/tenant-test-utils'
-import { TRANSACTION_RULES_LIBRARY } from '@/services/rules-engine/transaction-rules/library'
+import { RULES_LIBRARY } from '@/services/rules-engine/transaction-rules/library'
 import { RuleInstanceRepository } from '@/services/rules-engine/repositories/rule-instance-repository'
 import { getDynamoDbClient } from '@/utils/dynamodb'
 
@@ -25,8 +25,8 @@ describe('Public Management API - Rule', () => {
     ruleInstanceRepository = new RuleInstanceRepository(TEST_TENANT_ID, {
       dynamoDb,
     })
-    await ruleRepository.createOrUpdateRule(TRANSACTION_RULES_LIBRARY[0])
-    await ruleRepository.createOrUpdateRule(TRANSACTION_RULES_LIBRARY[1])
+    await ruleRepository.createOrUpdateRule(RULES_LIBRARY[0])
+    await ruleRepository.createOrUpdateRule(RULES_LIBRARY[1])
     await ruleInstanceRepository.createOrUpdateRuleInstance({
       id: TEST_RULE_INSTANCE_ID,
       ruleId: 'R-1',

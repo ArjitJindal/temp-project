@@ -1,5 +1,5 @@
 import { HighTrafficVolumeBetweenSameUsersParameters } from '../high-traffic-volume-between-same-users'
-import { getTransactionRuleByRuleId } from '../library'
+import { getRuleByRuleId } from '../library'
 import dayjs from '@/utils/dayjs'
 import { getTestTenantId } from '@/test-utils/tenant-test-utils'
 import { getTestTransaction } from '@/test-utils/transaction-test-utils'
@@ -129,8 +129,7 @@ ruleVariantsTest(true, () => {
         }),
       ],
       {
-        descriptionTemplate:
-          getTransactionRuleByRuleId('R-126').descriptionTemplate,
+        descriptionTemplate: getRuleByRuleId('R-126').descriptionTemplate,
       },
       [
         null,

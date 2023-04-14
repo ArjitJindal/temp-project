@@ -2,7 +2,7 @@ import { migrateAllTenants } from '../utils/tenant'
 import { Tenant } from '@/services/accounts'
 import { getDynamoDbClient } from '@/utils/dynamodb'
 import { RuleInstanceRepository } from '@/services/rules-engine/repositories/rule-instance-repository'
-import { getTransactionRuleByRuleId } from '@/services/rules-engine/transaction-rules/library'
+import { getRuleByRuleId } from '@/services/rules-engine/transaction-rules/library'
 
 async function migrateTenant(tenant: Tenant) {
   const dynamoDb = await getDynamoDbClient()
@@ -18,7 +18,7 @@ async function migrateTenant(tenant: Tenant) {
     if (nature) {
       continue
     }
-    const rule = getTransactionRuleByRuleId(ruleInstance.ruleId)
+    const rule = getRuleByRuleId(ruleInstance.ruleId)
 
     if (!rule) {
       console.warn(`Rule not found - ${ruleInstance.ruleId}. Skip.`)

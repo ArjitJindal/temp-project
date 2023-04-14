@@ -1,5 +1,5 @@
 import { FirstActivityAfterLongTimeRuleParameters } from '../first-activity-after-time-period'
-import { getTransactionRuleByRuleId } from '../library'
+import { getRuleByRuleId } from '../library'
 import dayjs from '@/utils/dayjs'
 import { getTestTenantId } from '@/test-utils/tenant-test-utils'
 import { getTestTransaction } from '@/test-utils/transaction-test-utils'
@@ -57,8 +57,7 @@ ruleVariantsTest(false, () => {
         }),
       ],
       {
-        descriptionTemplate:
-          getTransactionRuleByRuleId('R-5').descriptionTemplate,
+        descriptionTemplate: getRuleByRuleId('R-5').descriptionTemplate,
       },
       [
         null,

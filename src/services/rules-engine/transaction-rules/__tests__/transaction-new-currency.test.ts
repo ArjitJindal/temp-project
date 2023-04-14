@@ -1,5 +1,5 @@
 import { TransactionNewCurrencyRuleParameters } from '../transaction-new-currency'
-import { getTransactionRuleByRuleId } from '../library'
+import { getRuleByRuleId } from '../library'
 import { getTestTenantId } from '@/test-utils/tenant-test-utils'
 import { getTestTransaction } from '@/test-utils/transaction-test-utils'
 import {
@@ -69,8 +69,7 @@ ruleVariantsTest(false, () => {
         }),
       ],
       {
-        descriptionTemplate:
-          getTransactionRuleByRuleId('R-4').descriptionTemplate,
+        descriptionTemplate: getRuleByRuleId('R-4').descriptionTemplate,
       },
       [
         null,
@@ -121,8 +120,7 @@ ruleVariantsTest(false, () => {
         }),
       ],
       {
-        descriptionTemplate:
-          getTransactionRuleByRuleId('R-4').descriptionTemplate,
+        descriptionTemplate: getRuleByRuleId('R-4').descriptionTemplate,
       },
       [
         null,

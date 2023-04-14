@@ -8,7 +8,7 @@ import {
   testRuleDescriptionFormatting,
 } from '@/test-utils/rule-test-utils'
 import { getTestTransaction } from '@/test-utils/transaction-test-utils'
-import { getTransactionRuleByRuleId } from '@/services/rules-engine/transaction-rules/library'
+import { getRuleByRuleId } from '@/services/rules-engine/transaction-rules/library'
 
 dynamoDbSetupHook()
 
@@ -58,8 +58,7 @@ describe('R-132 User ID', () => {
     TEST_TENANT_ID,
     [test1],
     {
-      descriptionTemplate:
-        getTransactionRuleByRuleId('R-132').descriptionTemplate,
+      descriptionTemplate: getRuleByRuleId('R-132').descriptionTemplate,
     },
     ['A is blacklisted in Blacklist ID test-1 for User ID field.']
   )
@@ -107,8 +106,7 @@ describe('R-132 Swift Code', () => {
     TEST_TENANT_ID,
     [test1],
     {
-      descriptionTemplate:
-        getTransactionRuleByRuleId('R-132').descriptionTemplate,
+      descriptionTemplate: getRuleByRuleId('R-132').descriptionTemplate,
     }, //`A is blacklisted in Blacklist ID (uuid regex) for User ID field.
 
     ['BCD is blacklisted in Blacklist ID test-1 for Bank Swift Code field.']

@@ -9,12 +9,15 @@ import {
 import { Transaction } from '@/@types/openapi-public/Transaction'
 import { TransactionMonitoringResult } from '@/@types/openapi-public/TransactionMonitoringResult'
 import { UserMonitoringResult } from '@/@types/openapi-public/UserMonitoringResult'
-import { ConsumerUserEvent } from '@/@types/openapi-public/ConsumerUserEvent'
 import { User } from '@/@types/openapi-public/User'
 import { Priority } from '@/@types/openapi-internal/Priority'
 import { getDynamoDbClient } from '@/utils/dynamodb'
 import { RuleInstance } from '@/@types/openapi-internal/RuleInstance'
-import { UserManagementService } from '@/services/users'
+import { Business } from '@/@types/openapi-public/Business'
+import { RuleHitMeta } from '@/@types/openapi-public/RuleHitMeta'
+import { getRuleByRuleId } from '@/services/rules-engine/transaction-rules/library'
+
+const DEFAULT_DESCRIPTION = 'test rule description.'
 
 export async function createRule(
   testTenantId: string,
@@ -109,15 +112,15 @@ export async function bulkVerifyTransactions(
   return results
 }
 
-export async function bulkVerifyUserEvents(
+export async function bulkVerifyUsers(
   tenantId: string,
-  userEvents: ConsumerUserEvent[]
-): Promise<User[]> {
+  users: Array<Business | User>
+): Promise<UserMonitoringResult[]> {
   const dynamoDb = getDynamoDbClient()
   const results = []
-  const userManagementService = new UserManagementService(tenantId, dynamoDb)
-  for (const userEvent of userEvents) {
-    results.push(await userManagementService.verifyConsumerUserEvent(userEvent))
+  const rulesEngine = new RulesEngineService(tenantId, dynamoDb)
+  for (const user of users) {
+    results.push(await rulesEngine.verifyUser(user))
   }
   return results
 }
@@ -130,6 +133,28 @@ export function getRuleHits(
       throw new Error('The number of the executed rules should be <= 1')
     }
     return result.executedRules[0]?.ruleHit
+  })
+}
+
+export function getRuleHitMetadata(
+  results: (TransactionMonitoringResult | UserMonitoringResult)[]
+): RuleHitMeta[] {
+  return results.map((result) => {
+    if (result.executedRules?.length > 1) {
+      throw new Error('The number of the executed rules should be <= 1')
+    }
+    return result.executedRules[0].ruleHitMeta!
+  })
+}
+
+export function getRuleDescriptions(
+  results: (TransactionMonitoringResult | UserMonitoringResult)[]
+): string[] {
+  return results.map((result) => {
+    if (result.executedRules?.length > 1) {
+      throw new Error('The number of the executed rules should be <= 1')
+    }
+    return result.executedRules[0].ruleDescription!
   })
 }
 
@@ -147,6 +172,7 @@ export function setUpRulesHooks(
 
   beforeAll(async () => {
     for (const rule of rules) {
+      const libraryRule = rule.id ? getRuleByRuleId(rule.id) : undefined
       cleanups.push(
         await createRule(
           tenantId,
@@ -157,6 +183,7 @@ export function setUpRulesHooks(
             defaultParameters: {},
             defaultAction: 'FLAG',
             ruleImplementationName: 'tests/test-success-rule',
+            ...libraryRule,
             ...rule,
           },
           _.omit(rule, 'id')
@@ -180,16 +207,34 @@ export function createTransactionRuleTestCase(
   testCaseName: string,
   tenantId: string,
   transactions: Transaction[],
-  expectedHits: boolean[]
+  expectedHits: boolean[],
+  expectetRuleDescriptions?: Array<string | undefined>
 ) {
   test(testCaseName, async () => {
     const results = await bulkVerifyTransactions(tenantId, transactions)
     const ruleHits = getRuleHits(results)
     expect(ruleHits).toEqual(expectedHits)
+    if (expectetRuleDescriptions) {
+      expect(getRuleDescriptions(results)).toEqual(expectetRuleDescriptions)
+    }
   })
 }
 
-const DEFAULT_DESCRIPTION = 'test rule description.'
+export function createUserRuleTestCase(
+  testCaseName: string,
+  tenantId: string,
+  users: Array<Business | User>,
+  expectetRuleHitMetadata: Array<RuleHitMeta | undefined>,
+  expectetRuleDescriptions?: Array<string | undefined>
+) {
+  test(testCaseName, async () => {
+    const results = await bulkVerifyUsers(tenantId, users)
+    expect(getRuleHitMetadata(results)).toEqual(expectetRuleHitMetadata)
+    if (expectetRuleDescriptions) {
+      expect(getRuleDescriptions(results)).toEqual(expectetRuleDescriptions)
+    }
+  })
+}
 
 export function testRuleDescriptionFormatting(
   testName: string,
@@ -234,8 +279,9 @@ export function testRuleDescriptionFormatting(
 
 export interface UserRuleTestCase {
   name: string
-  userEvents: ConsumerUserEvent[]
-  expectedHits: boolean[]
+  users: Array<Business | User>
+  expectetRuleHitMetadata: Array<RuleHitMeta | undefined>
+  expectetRuleDescriptions?: Array<string | undefined>
 }
 
 // For making sure a rule works the same w/ or w/o RULES_ENGINE_RULE_BASED_AGGREGATION feature flag

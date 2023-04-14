@@ -1,5 +1,5 @@
 import { TransactionsRoundValuePercentageRuleParameters } from '../transactions-round-value-percentage'
-import { getTransactionRuleByRuleId } from '../library'
+import { getRuleByRuleId } from '../library'
 import dayjs from '@/utils/dayjs'
 import { getTestTenantId } from '@/test-utils/tenant-test-utils'
 import { getTestTransaction } from '@/test-utils/transaction-test-utils'
@@ -71,8 +71,7 @@ ruleVariantsTest(true, () => {
         }),
       ],
       {
-        descriptionTemplate:
-          getTransactionRuleByRuleId('R-124').descriptionTemplate,
+        descriptionTemplate: getRuleByRuleId('R-124').descriptionTemplate,
       },
       [
         null,

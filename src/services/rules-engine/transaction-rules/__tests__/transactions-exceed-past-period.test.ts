@@ -1,5 +1,5 @@
 import { TransactionsExceedPastPeriodRuleParameters } from '../transactions-exceed-past-period'
-import { getTransactionRuleByRuleId } from '../library'
+import { getRuleByRuleId } from '../library'
 import dayjs from '@/utils/dayjs'
 import { getTestTenantId } from '@/test-utils/tenant-test-utils'
 import { getTestTransaction } from '@/test-utils/transaction-test-utils'
@@ -71,8 +71,7 @@ ruleVariantsTest(true, () => {
       TEST_TENANT_ID,
       TEST_TRANSACTIONS,
       {
-        descriptionTemplate:
-          getTransactionRuleByRuleId('R-131').descriptionTemplate,
+        descriptionTemplate: getRuleByRuleId('R-131').descriptionTemplate,
       },
       [
         null,

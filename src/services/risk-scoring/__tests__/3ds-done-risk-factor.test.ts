@@ -1,5 +1,4 @@
 import { v4 as uuidv4 } from 'uuid'
-import dayjs from 'dayjs'
 import { dynamoDbSetupHook } from '@/test-utils/dynamodb-test-utils'
 import { withFeatureHook } from '@/test-utils/feature-test-utils'
 import { getTestUser } from '@/test-utils/user-test-utils'
@@ -10,6 +9,7 @@ import {
   ParameterAttributeRiskValues,
   ParameterAttributeRiskValuesParameterEnum,
 } from '@/@types/openapi-internal/ParameterAttributeRiskValues'
+import dayjs from '@/utils/dayjs'
 
 withFeatureHook(['PULSE'])
 dynamoDbSetupHook()

@@ -1,5 +1,5 @@
 import { BlacklistCardIssuedCountryRuleParameters } from '../blacklist-card-issued-country'
-import { getTransactionRuleByRuleId } from '../library'
+import { getRuleByRuleId } from '../library'
 import { getTestTenantId } from '@/test-utils/tenant-test-utils'
 import { getTestTransaction } from '@/test-utils/transaction-test-utils'
 import {
@@ -39,8 +39,7 @@ describe('R-22 description formatting', () => {
       }),
     ],
     {
-      descriptionTemplate:
-        getTransactionRuleByRuleId('R-22').descriptionTemplate,
+      descriptionTemplate: getRuleByRuleId('R-22').descriptionTemplate,
     },
     ['Sender’s card is issued from Germany, a blacklisted country.']
   )

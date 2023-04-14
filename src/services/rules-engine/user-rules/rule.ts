@@ -1,42 +1,43 @@
-import { DynamoDBDocumentClient } from '@aws-sdk/lib-dynamodb'
+import { MongoClient } from 'mongodb'
 import { Rule } from '../rule'
+import { Vars } from '../utils/format-description'
 import { Business } from '@/@types/openapi-public/Business'
-import { RuleAction } from '@/@types/openapi-public/RuleAction'
 import { User } from '@/@types/openapi-public/User'
-import { ConsumerUserEvent } from '@/@types/openapi-public/ConsumerUserEvent'
 
-export type RuleResult = {
-  action: RuleAction
+export interface UserVars<P> extends Vars {
+  user: User | Business
+  parameters: P
 }
-
-export type RuleFilter = () => Promise<boolean> | boolean
-
-export abstract class UserRule<P> extends Rule {
+export abstract class UserRule<P, T extends object = object> extends Rule {
   tenantId: string
   user: User | Business
-  userEvent: ConsumerUserEvent | undefined
   parameters: P
-  action: RuleAction
-  dynamoDb: DynamoDBDocumentClient
+  filters: T
+  mongoDb: MongoClient
 
   constructor(
     tenantId: string,
     data: {
       user: User | Business
-      userEvent?: ConsumerUserEvent
     },
     params: {
       parameters: P
-      action: RuleAction
+      filters: T
     },
-    dynamoDb: DynamoDBDocumentClient
+    mongoDb: MongoClient
   ) {
     super()
     this.tenantId = tenantId
     this.user = data.user
-    this.userEvent = data.userEvent
     this.parameters = params.parameters
-    this.action = params.action
-    this.dynamoDb = dynamoDb
+    this.filters = params.filters || {}
+    this.mongoDb = mongoDb
+  }
+
+  public getUserVars(): UserVars<P> {
+    return {
+      user: this.user,
+      parameters: this.parameters,
+    }
   }
 }

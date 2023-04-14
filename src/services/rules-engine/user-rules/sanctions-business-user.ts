@@ -1,0 +1,122 @@
+import { JSONSchemaType } from 'ajv'
+import _ from 'lodash'
+import {
+  FUZZINESS_SCHEMA,
+  SANCTIONS_SCREENING_TYPES_OPTIONAL_SCHEMA,
+} from '../utils/rule-parameter-schemas'
+import { isBusinessUser } from '../utils/user-rule-utils'
+import { RuleHitResult } from '../rule'
+import { UserRule } from './rule'
+import { formatConsumerName } from '@/utils/helpers'
+import { SanctionsSearchType } from '@/@types/openapi-internal/SanctionsSearchType'
+import { SanctionsService } from '@/services/sanctions'
+import { Business } from '@/@types/openapi-public/Business'
+import dayjs from '@/utils/dayjs'
+import { SanctionsDetails } from '@/@types/openapi-internal/SanctionsDetails'
+
+type BusinessUserEntityType = 'LEGAL_NAME' | 'SHAREHOLER' | 'DIRECTOR'
+
+const BUSINESS_USER_ENTITY_TYPES: Array<{
+  value: BusinessUserEntityType
+  label: string
+}> = [
+  { value: 'LEGAL_NAME', label: 'Legal Name' },
+  { value: 'SHAREHOLER', label: 'Shareholder' },
+  { value: 'DIRECTOR', label: 'Director' },
+]
+
+export type SanctionsBusinessUserRuleParameters = {
+  entityTypes?: BusinessUserEntityType[]
+  screeningTypes?: SanctionsSearchType[]
+  fuzziness: number
+}
+
+export default class SanctionsBusinessUserRule extends UserRule<SanctionsBusinessUserRuleParameters> {
+  public static getSchema(): JSONSchemaType<SanctionsBusinessUserRuleParameters> {
+    return {
+      type: 'object',
+      properties: {
+        entityTypes: {
+          type: 'array',
+          title: 'Entity',
+          description:
+            'Select the entities of the business that you want to run the screening',
+          items: {
+            type: 'string',
+            enum: BUSINESS_USER_ENTITY_TYPES.map((v) => v.value),
+            enumNames: BUSINESS_USER_ENTITY_TYPES.map((v) => v.label),
+          },
+          uniqueItems: true,
+          nullable: true,
+        },
+        screeningTypes: SANCTIONS_SCREENING_TYPES_OPTIONAL_SCHEMA({}),
+        fuzziness: FUZZINESS_SCHEMA,
+      },
+      required: ['fuzziness'],
+      additionalProperties: false,
+    }
+  }
+
+  public async computeRule() {
+    const { fuzziness, entityTypes, screeningTypes } = this.parameters
+
+    if (
+      _.isEmpty(entityTypes) ||
+      _.isEmpty(screeningTypes) ||
+      !isBusinessUser(this.user)
+    ) {
+      return
+    }
+    const business = this.user as Business
+    const entities: Array<{
+      entityType: BusinessUserEntityType
+      name: string
+      dateOfBirth?: string
+    }> = [
+      {
+        entityType: 'LEGAL_NAME' as BusinessUserEntityType,
+        name: business.legalEntity.companyGeneralDetails.legalName,
+      },
+      ...(business.directors?.map((person) => ({
+        entityType: 'DIRECTOR' as BusinessUserEntityType,
+        name: formatConsumerName(person.generalDetails.name) || '',
+        dateOfBirth: person.generalDetails.dateOfBirth,
+      })) ?? []),
+      ...(business.shareHolders?.map((person) => ({
+        entityType: 'SHAREHOLDER' as BusinessUserEntityType,
+        name: formatConsumerName(person.generalDetails.name) || '',
+        dateOfBirth: person.generalDetails.dateOfBirth,
+      })) ?? []),
+    ].filter((entity) => entity.name)
+
+    const sanctionsService = new SanctionsService(this.tenantId)
+    const hitResult: RuleHitResult = []
+    const sanctionsDetails: SanctionsDetails[] = []
+    for (const entity of entities) {
+      const yearOfBirth = entity.dateOfBirth
+        ? dayjs(entity.dateOfBirth).year()
+        : undefined
+      const result = await sanctionsService.search({
+        searchTerm: entity.name,
+        yearOfBirth,
+        types: screeningTypes,
+        fuzziness: fuzziness / 100,
+        monitoring: { enabled: true },
+      })
+      if (result.data && result.data.length > 0) {
+        sanctionsDetails.push({
+          name: entity.name,
+          searchId: result.searchId,
+        })
+      }
+    }
+    if (sanctionsDetails.length > 0) {
+      hitResult.push({
+        direction: 'ORIGIN',
+        vars: this.getUserVars(),
+        sanctionsDetails,
+      })
+    }
+    return hitResult
+  }
+}

@@ -1,3 +1,4 @@
+import _ from 'lodash'
 import { TimeWindowGranularity } from './time-utils'
 import { USER_TYPES } from '@/@types/user/user-type'
 import { COUNTRY_CODES } from '@/utils/countries'
@@ -9,6 +10,7 @@ import {
 import { TRANSACTION_STATES } from '@/@types/openapi-public-custom/TransactionState'
 import { PAYMENT_METHODS } from '@/@types/openapi-public-custom/PaymentMethod'
 import { TRANSACTION_TYPES } from '@/@types/openapi-public-custom/TransactionType'
+import { SANCTIONS_SEARCH_TYPES } from '@/@types/openapi-internal-custom/SanctionsSearchType'
 
 type SchemaOptions = {
   title?: string
@@ -490,5 +492,37 @@ export const PERCENT_SCHEMA = (options: PercentSchemaOptions) => {
 export const PERCENT_OPTIONAL_SCHEMA = (options: PercentSchemaOptions) =>
   ({
     ...PERCENT_SCHEMA(options),
+    nullable: true,
+  } as const)
+
+export const FUZZINESS_SCHEMA = PERCENT_SCHEMA({
+  title: 'Fuzziness',
+  description:
+    'Enter fuzziness % to set the flexibility of search. 0% will look for exact matches only & 100% will look for even the slightest match in spellings/ phonetics',
+})
+
+export const SANCTIONS_SCREENING_TYPES_SCHEMA = (options?: SchemaOptions) =>
+  ({
+    ...uiSchema(options?.uiSchema),
+    type: 'array',
+    title: options?.title || 'Screening',
+    description:
+      options?.description ||
+      'Select type of screening that you want to run (Please refer to your contract to understand the cost implications for each screening type before you confirm.)',
+    items: {
+      type: 'string',
+      enum: SANCTIONS_SEARCH_TYPES,
+      enumNames: SANCTIONS_SEARCH_TYPES.map((type) =>
+        _.startCase(_.lowerCase(type))
+      ),
+    },
+    uniqueItems: true,
+  } as const)
+
+export const SANCTIONS_SCREENING_TYPES_OPTIONAL_SCHEMA = (
+  options: PercentSchemaOptions
+) =>
+  ({
+    ...SANCTIONS_SCREENING_TYPES_SCHEMA(options),
     nullable: true,
   } as const)

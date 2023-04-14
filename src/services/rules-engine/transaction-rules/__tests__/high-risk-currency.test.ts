@@ -1,6 +1,6 @@
 /* eslint-disable prettier/prettier */
 import { HighRiskCurrencyRuleParameters } from '../high-risk-currency'
-import { getTransactionRuleByRuleId } from '../library'
+import { getRuleByRuleId } from '../library'
 import { getTestTenantId } from '@/test-utils/tenant-test-utils'
 import { getTestTransaction } from '@/test-utils/transaction-test-utils'
 import {
@@ -55,8 +55,7 @@ describe('Core logic', () => {
         }),
       ],
       {
-        descriptionTemplate:
-          getTransactionRuleByRuleId('R-6').descriptionTemplate,
+        descriptionTemplate: getRuleByRuleId('R-6').descriptionTemplate,
       },
       ['Sender’s currency (EUR) is a High Risk.']
     )
@@ -79,8 +78,7 @@ describe('Core logic', () => {
         }),
       ],
       {
-        descriptionTemplate:
-          getTransactionRuleByRuleId('R-6').descriptionTemplate,
+        descriptionTemplate: getRuleByRuleId('R-6').descriptionTemplate,
       },
       ['Receiver’s currency (INR) is a High Risk.']
     )

@@ -1,5 +1,5 @@
 import { SameUserUsingTooManyCardsParameters } from '../same-user-using-too-many-cards'
-import { getTransactionRuleByRuleId } from '../library'
+import { getRuleByRuleId } from '../library'
 import dayjs from '@/utils/dayjs'
 import { getTestTenantId } from '@/test-utils/tenant-test-utils'
 import { getTestTransaction } from '@/test-utils/transaction-test-utils'
@@ -52,8 +52,7 @@ ruleVariantsTest(true, () => {
         }),
       ],
       {
-        descriptionTemplate:
-          getTransactionRuleByRuleId('R-54').descriptionTemplate,
+        descriptionTemplate: getRuleByRuleId('R-54').descriptionTemplate,
       },
       [null, 'Sender used 2 unique cards above the limit of 1.']
     )

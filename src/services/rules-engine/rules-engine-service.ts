@@ -9,7 +9,7 @@ import { DynamoDbTransactionRepository } from './repositories/dynamodb-transacti
 import { TransactionEventRepository } from './repositories/transaction-event-repository'
 import { RuleRepository } from './repositories/rule-repository'
 import { RuleInstanceRepository } from './repositories/rule-instance-repository'
-import { TRANSACTION_RULES } from './transaction-rules'
+import { TRANSACTION_RULES, TransactionRuleBase } from './transaction-rules'
 import { generateRuleDescription, Vars } from './utils/format-description'
 import { Aggregators } from './aggregator'
 import { TransactionAggregationRule } from './transaction-rules/aggregation-rule'
@@ -21,6 +21,7 @@ import {
   UserFilters,
   USER_FILTERS,
 } from './filters'
+import { USER_RULES, UserRuleBase } from './user-rules'
 import { Transaction } from '@/@types/openapi-public/Transaction'
 import { TransactionMonitoringResult } from '@/@types/openapi-public/TransactionMonitoringResult'
 import { logger } from '@/core/logger'
@@ -46,6 +47,7 @@ import { TransactionWithRulesResult } from '@/@types/openapi-public/TransactionW
 import { RULE_EXECUTION_TIME_MS_METRIC } from '@/core/cloudwatch/metrics'
 import { addNewSubsegment } from '@/core/xray'
 import { getMongoDbClient } from '@/utils/mongoDBUtils'
+import { UserMonitoringResult } from '@/@types/openapi-public/UserMonitoringResult'
 
 const ruleAscendingComparator = (
   rule1: HitRulesDetails,
@@ -281,7 +283,7 @@ export class RulesEngineService {
       throw new Error(`Cannot find rule ${ruleInstance.ruleId}`)
     }
     const senderUserRiskLevel = await this.getUserRiskLevel(senderUser)
-    const { result } = await this.verifyTransactionRuleIdempotent({
+    const { result } = await this.verifyRuleIdempotent({
       rule,
       ruleInstance,
       senderUserRiskLevel,
@@ -291,6 +293,46 @@ export class RulesEngineService {
       database: 'MONGODB',
     })
     return result
+  }
+
+  public async verifyUser(
+    user: Business | User
+  ): Promise<UserMonitoringResult> {
+    const ruleInstances =
+      await this.ruleInstanceRepository.getActiveRuleInstances('USER')
+    const rulesById = _.keyBy(
+      await this.ruleRepository.getRulesByIds(
+        ruleInstances.map((ruleInstance) => ruleInstance.ruleId)
+      ),
+      'id'
+    )
+    logger.info(`Running rules`)
+    const userRiskLevel = await this.getUserRiskLevel(user)
+    const ruleResults = (
+      await Promise.all(
+        ruleInstances.map(async (ruleInstance) =>
+          this.verifyUserRule({
+            rule: rulesById[ruleInstance.ruleId],
+            ruleInstance,
+            user,
+            userRiskLevel,
+          })
+        )
+      )
+    ).filter(Boolean) as ExecutedRulesResult[]
+
+    // Update rule execution stats
+    const hitRuleInstanceIds = ruleResults
+      .filter((ruleResult) => ruleResult.ruleHit)
+      .map((ruleResults) => ruleResults.ruleInstanceId)
+    await this.ruleInstanceRepository.incrementRuleInstanceStatsCount(
+      ruleInstances.map((ruleInstance) => ruleInstance.id as string),
+      hitRuleInstanceIds
+    )
+    return {
+      userId: user.userId,
+      ...getExecutedAndHitRulesResult(ruleResults),
+    }
   }
 
   private async verifyTransactionInternal(transaction: Transaction): Promise<{
@@ -349,11 +391,11 @@ export class RulesEngineService {
     return getExecutedAndHitRulesResult(ruleResults)
   }
 
-  private async verifyTransactionRuleIdempotent(options: {
+  private async verifyRuleIdempotent(options: {
     rule: Rule
     ruleInstance: RuleInstance
     senderUserRiskLevel: RiskLevel | undefined
-    transaction: Transaction
+    transaction?: Transaction
     database: 'MONGODB' | 'DYNAMODB'
     senderUser?: User | Business
     receiverUser?: User | Business
@@ -374,7 +416,9 @@ export class RulesEngineService {
       ruleInstance
     )
     const ruleImplementationName = rule.ruleImplementationName
-    const RuleClass = TRANSACTION_RULES[ruleImplementationName]
+    const RuleClass = transaction
+      ? TRANSACTION_RULES[ruleImplementationName]
+      : USER_RULES[ruleImplementationName]
     if (!RuleClass) {
       throw new Error(
         `${ruleImplementationName} rule implementation not found!`
@@ -386,19 +430,28 @@ export class RulesEngineService {
       process.env.__INTERNAL_RULES_ENGINE_USE_MONGODB__
         ? 'MONGODB'
         : 'DYNAMODB'
-    const ruleClassInstance = new RuleClass(
-      this.tenantId,
-      {
-        transaction,
-        senderUser,
-        receiverUser,
-      },
-      { parameters, filters: ruleFilters },
-      { ruleInstance },
-      mode,
-      this.dynamoDb,
-      mode === 'MONGODB' ? await getMongoDbClient() : undefined
-    )
+    const ruleClassInstance = transaction
+      ? new (RuleClass as typeof TransactionRuleBase)(
+          this.tenantId,
+          {
+            transaction,
+            senderUser,
+            receiverUser,
+          },
+          { parameters, filters: ruleFilters },
+          { ruleInstance },
+          mode,
+          this.dynamoDb,
+          mode === 'MONGODB' ? await getMongoDbClient() : undefined
+        )
+      : new (RuleClass as typeof UserRuleBase)(
+          this.tenantId,
+          {
+            user: senderUser!,
+          },
+          { parameters, filters: ruleFilters },
+          await getMongoDbClient()
+        )
 
     const segmentNamespace = `Rules Engine - ${ruleInstance.ruleId} (${ruleInstance.id})`
     let filterSegment = undefined
@@ -467,6 +520,9 @@ export class RulesEngineService {
       )
       ruleDescription = Array.from(new Set(ruleDescriptions)).join(' ')
     }
+    const sanctionsDetails = filteredRuleResult.flatMap(
+      (r) => r.sanctionsDetails || []
+    )
 
     return {
       ruleClassInstance,
@@ -485,6 +541,9 @@ export class RulesEngineService {
               hitDirections: ruleHitDirections,
               falsePositiveDetails: falsePositiveDetails?.length
                 ? falsePositiveDetails[0]
+                : undefined,
+              sanctionsDetails: sanctionsDetails.length
+                ? sanctionsDetails
                 : undefined,
             }
           : undefined,
@@ -517,7 +576,7 @@ export class RulesEngineService {
         logger.info(`Running rule`)
         const startTime = Date.now()
         const { ruleClassInstance, isTransactionHistoricalFiltered, result } =
-          await this.verifyTransactionRuleIdempotent({
+          await this.verifyRuleIdempotent({
             ...options,
             tracing: true,
             database: 'DYNAMODB',
@@ -546,10 +605,43 @@ export class RulesEngineService {
     })
   }
 
+  private async verifyUserRule(options: {
+    rule: Rule
+    ruleInstance: RuleInstance
+    userRiskLevel: RiskLevel | undefined
+    user: User | Business
+  }) {
+    const context = _.cloneDeep(getContext() || {})
+    return getContextStorage().run(context, async () => {
+      try {
+        updateLogMetadata({
+          ruleId: options.ruleInstance.ruleId,
+          ruleInstanceId: options.ruleInstance.id,
+        })
+        logger.info(`Running rule`)
+        const startTime = Date.now()
+        const { result } = await this.verifyRuleIdempotent({
+          rule: options.rule,
+          ruleInstance: options.ruleInstance,
+          senderUser: options.user,
+          senderUserRiskLevel: options.userRiskLevel,
+          database: 'MONGODB',
+        })
+        const ruleExecutionTimeMs = Date.now().valueOf() - startTime.valueOf()
+        // Don't await publishing metric
+        publishMetric(RULE_EXECUTION_TIME_MS_METRIC, ruleExecutionTimeMs)
+        logger.info(`Completed rule`)
+        return result
+      } catch (e) {
+        logger.error(e)
+      }
+    })
+  }
+
   private async computeRuleFilters(
     ruleFilters: { [key: string]: any },
     data: {
-      transaction: Transaction
+      transaction?: Transaction
       senderUser?: User | Business
       receiverUser?: User | Business
     }
@@ -593,34 +685,36 @@ export class RulesEngineService {
         }
       }
     }
-    for (const filterKey in ruleFilters) {
-      const TransactionRuleFilterClass = TRANSACTION_FILTERS[filterKey]
-      if (TransactionRuleFilterClass && ruleFilters[filterKey]) {
-        const ruleFilter = new TransactionRuleFilterClass(
-          this.tenantId,
-          { transaction: data.transaction },
-          { [filterKey]: ruleFilters[filterKey] },
-          this.dynamoDb
-        )
-        isTransactionFiltered = await ruleFilter.predicate()
-        if (!isTransactionFiltered) {
-          break
+    if (data.transaction) {
+      for (const filterKey in ruleFilters) {
+        const TransactionRuleFilterClass = TRANSACTION_FILTERS[filterKey]
+        if (TransactionRuleFilterClass && ruleFilters[filterKey]) {
+          const ruleFilter = new TransactionRuleFilterClass(
+            this.tenantId,
+            { transaction: data.transaction },
+            { [filterKey]: ruleFilters[filterKey] },
+            this.dynamoDb
+          )
+          isTransactionFiltered = await ruleFilter.predicate()
+          if (!isTransactionFiltered) {
+            break
+          }
         }
       }
-    }
-    for (const filterKey in ruleFilters) {
-      const TransactionRuleFilterClass =
-        TRANSACTION_HISTORICAL_FILTERS[filterKey]
-      if (TransactionRuleFilterClass && ruleFilters[filterKey]) {
-        const ruleFilter = new TransactionRuleFilterClass(
-          this.tenantId,
-          { transaction: data.transaction },
-          { [filterKey]: ruleFilters[filterKey] },
-          this.dynamoDb
-        )
-        isTransactionHistoricalFiltered = await ruleFilter.predicate()
-        if (!isTransactionHistoricalFiltered) {
-          break
+      for (const filterKey in ruleFilters) {
+        const TransactionRuleFilterClass =
+          TRANSACTION_HISTORICAL_FILTERS[filterKey]
+        if (TransactionRuleFilterClass && ruleFilters[filterKey]) {
+          const ruleFilter = new TransactionRuleFilterClass(
+            this.tenantId,
+            { transaction: data.transaction },
+            { [filterKey]: ruleFilters[filterKey] },
+            this.dynamoDb
+          )
+          isTransactionHistoricalFiltered = await ruleFilter.predicate()
+          if (!isTransactionHistoricalFiltered) {
+            break
+          }
         }
       }
     }

@@ -1,5 +1,5 @@
 import { HighTrafficBetweenSamePartiesParameters } from '../high-traffic-between-same-parties'
-import { getTransactionRuleByRuleId } from '../library'
+import { getRuleByRuleId } from '../library'
 import dayjs from '@/utils/dayjs'
 import { getTestTenantId } from '@/test-utils/tenant-test-utils'
 import { getTestTransaction } from '@/test-utils/transaction-test-utils'
@@ -67,8 +67,7 @@ ruleVariantsTest(true, () => {
         }),
       ],
       {
-        descriptionTemplate:
-          getTransactionRuleByRuleId('R-119').descriptionTemplate,
+        descriptionTemplate: getRuleByRuleId('R-119').descriptionTemplate,
       },
       [
         null,

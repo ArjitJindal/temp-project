@@ -1,5 +1,4 @@
 import { NotFound } from 'http-errors'
-import dayjs from 'dayjs'
 import { CaseService } from '../case-service'
 import { dynamoDbSetupHook } from '@/test-utils/dynamodb-test-utils'
 import { CaseRepository } from '@/services/rules-engine/repositories/case-repository'
@@ -10,6 +9,7 @@ import { getS3ClientByEvent } from '@/utils/s3'
 import { Account } from '@/services/accounts'
 import { Priority } from '@/@types/openapi-internal/Priority'
 import { Alert } from '@/@types/openapi-internal/Alert'
+import dayjs from '@/utils/dayjs'
 
 const TEST_ACCOUNT_1: Account = {
   id: 'ACCOUNT-1',

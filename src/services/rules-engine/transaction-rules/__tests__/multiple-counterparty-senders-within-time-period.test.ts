@@ -1,5 +1,5 @@
 import { MultipleSendersWithinTimePeriodRuleParameters } from '../multiple-senders-within-time-period-base'
-import { getTransactionRuleByRuleId } from '../library'
+import { getRuleByRuleId } from '../library'
 import dayjs from '@/utils/dayjs'
 import { getTestTenantId } from '@/test-utils/tenant-test-utils'
 import { getTestTransaction } from '@/test-utils/transaction-test-utils'
@@ -75,8 +75,7 @@ ruleVariantsTest(false, () => {
         }),
       ],
       {
-        descriptionTemplate:
-          getTransactionRuleByRuleId('R-10').descriptionTemplate,
+        descriptionTemplate: getRuleByRuleId('R-10').descriptionTemplate,
       },
       [
         null,

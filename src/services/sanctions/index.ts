@@ -13,6 +13,7 @@ import { SanctionsSearchHistory } from '@/@types/openapi-internal/SanctionsSearc
 import { getSecret } from '@/utils/secrets-manager'
 import { SanctionsSearchHistoryResponse } from '@/@types/openapi-internal/SanctionsSearchHistoryResponse'
 import { SanctionsSearchMonitoring } from '@/@types/openapi-internal/SanctionsSearchMonitoring'
+import { SanctionsSearchType } from '@/@types/openapi-internal/SanctionsSearchType'
 
 const COMPLYADVANTAGE_SEARCH_API_URI =
   'https://api.complyadvantage.com/searches'
@@ -71,7 +72,7 @@ export class SanctionsService {
 
   public async search(
     request: SanctionsSearchRequest,
-    searchProfile?: string
+    defaultSearchProfile?: string
   ): Promise<SanctionsSearchResponse> {
     await this.initPromise
 
@@ -85,7 +86,8 @@ export class SanctionsService {
 
     const searchId = uuidv4()
     const searchProfileId =
-      searchProfile ||
+      this.pickSearchProfileId(request.types) ||
+      defaultSearchProfile ||
       (process.env.COMPLYADVANTAGE_DEFAULT_SEARCH_PROFILE_ID as string)
     const response = await this.complyAdvantageSearch(searchProfileId, {
       ...request,
@@ -197,5 +199,32 @@ export class SanctionsService {
       searchId,
       update
     )
+  }
+
+  private pickSearchProfileId(
+    types?: SanctionsSearchType[]
+  ): string | undefined {
+    if (process.env.ENV !== 'prod') {
+      return
+    }
+    if (_.isEqual(types, ['SANCTIONS'] as SanctionsSearchType[])) {
+      return '01c3b373-c01a-48b2-96f7-3fcf17dd0c91'
+    } else if (
+      _.isEqual(types, ['SANCTIONS', 'PEP'] as SanctionsSearchType[])
+    ) {
+      return '8b51ca9d-4b45-4de7-bac8-3bebcf6041ab'
+    } else if (
+      _.isEqual(types, ['SANCTIONS', 'ADVERSE_MEDIA'] as SanctionsSearchType[])
+    ) {
+      return '919d1abb-2add-46c1-b73a-0fbae79aee6d'
+    } else if (_.isEqual(types, ['PEP'] as SanctionsSearchType[])) {
+      return 'a9b22101-e5d5-477c-b2c7-2f875ebbd5d8'
+    } else if (
+      _.isEqual(types, ['PEP', 'ADVERSE_MEDIA'] as SanctionsSearchType[])
+    ) {
+      return 'e04c41ad-d3f0-4562-9b51-9d00a8965f16'
+    } else if (_.isEqual(types, ['ADVERSE_MEDIA'] as SanctionsSearchType[])) {
+      return '5a67aa5f-4ec8-4a61-af3a-78e3c132a24d'
+    }
   }
 }

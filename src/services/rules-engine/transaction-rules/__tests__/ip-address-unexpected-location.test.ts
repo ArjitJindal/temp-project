@@ -1,5 +1,5 @@
 import { IpAddressUnexpectedLocationRuleParameters } from '../ip-address-unexpected-location'
-import { getTransactionRuleByRuleId } from '../library'
+import { getRuleByRuleId } from '../library'
 import dayjs from '@/utils/dayjs'
 import { getTestTenantId } from '@/test-utils/tenant-test-utils'
 import { getTestTransaction } from '@/test-utils/transaction-test-utils'
@@ -73,8 +73,7 @@ ruleVariantsTest(false, () => {
         }),
       ],
       {
-        descriptionTemplate:
-          getTransactionRuleByRuleId('R-88').descriptionTemplate,
+        descriptionTemplate: getRuleByRuleId('R-88').descriptionTemplate,
       },
       [
         'Sender’s ip-bases country (Germany) is not country of origin (India) or country of nationality (Türkiye).',

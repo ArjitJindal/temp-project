@@ -1,5 +1,5 @@
 import { IpAddressMultipleUsersRuleParameters } from '../ip-address-multiple-users'
-import { getTransactionRuleByRuleId } from '../library'
+import { getRuleByRuleId } from '../library'
 import dayjs from '@/utils/dayjs'
 import { getTestTenantId } from '@/test-utils/tenant-test-utils'
 import { getTestTransaction } from '@/test-utils/transaction-test-utils'
@@ -56,8 +56,7 @@ ruleVariantsTest(false, () => {
         }),
       ],
       {
-        descriptionTemplate:
-          getTransactionRuleByRuleId('R-52').descriptionTemplate,
+        descriptionTemplate: getRuleByRuleId('R-52').descriptionTemplate,
       },
       [null, null, 'Same ip address (1.1.1.1) used by 2 unique users.']
     )

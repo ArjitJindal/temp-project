@@ -589,7 +589,7 @@ describe('Cases', () => {
       expect(cases[0].alerts).toEqual([
         expect.objectContaining({
           alertStatus: 'OPEN',
-          ruleId: 'R-0',
+          ruleId: 'TEST-R-0',
           ruleName: 'test rule name',
           ruleDescription: 'test rule description.',
           ruleAction: 'FLAG',
@@ -601,7 +601,7 @@ describe('Cases', () => {
         }),
         expect.objectContaining({
           alertStatus: 'OPEN',
-          ruleId: 'R-1',
+          ruleId: 'TEST-R-1',
           ruleName: 'test rule name',
           ruleDescription: 'test rule description.',
           ruleAction: 'FLAG',
@@ -783,7 +783,7 @@ function setup(
   for (let i = 0; i < (parameters.rulesCount ?? 1); i += 1) {
     setUpRulesHooks(tenantId, [
       {
-        id: `R-${i}`,
+        id: `TEST-R-${i}`,
         type: 'TRANSACTION',
         ruleImplementationName: 'tests/test-always-hit-rule',
         parameters: {

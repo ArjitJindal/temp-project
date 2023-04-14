@@ -39,7 +39,7 @@ describe('Verify Transaction', () => {
     const TEST_TENANT_ID = getTestTenantId()
     setUpRulesHooks(TEST_TENANT_ID, [
       {
-        id: 'R-1',
+        id: 'TEST-R-1',
         ruleImplementationName: 'tests/test-success-rule',
         type: 'TRANSACTION',
       },
@@ -53,7 +53,7 @@ describe('Verify Transaction', () => {
         transactionId: 'dummy',
         executedRules: [
           {
-            ruleId: 'R-1',
+            ruleId: 'TEST-R-1',
             ruleInstanceId: RULE_INSTANCE_ID_MATCHER,
             ruleName: 'test rule name',
             ruleDescription: 'test rule description.',
@@ -68,7 +68,7 @@ describe('Verify Transaction', () => {
         ],
         hitRules: [
           {
-            ruleId: 'R-1',
+            ruleId: 'TEST-R-1',
             ruleInstanceId: RULE_INSTANCE_ID_MATCHER,
             ruleName: 'test rule name',
             ruleDescription: 'test rule description.',
@@ -88,7 +88,7 @@ describe('Verify Transaction', () => {
     const TEST_TENANT_ID = getTestTenantId()
     setUpRulesHooks(TEST_TENANT_ID, [
       {
-        id: 'R-1',
+        id: 'TEST-R-1',
         ruleImplementationName: 'tests/test-success-rule',
         type: 'TRANSACTION',
         filters: { whitelistUsers: { userIds: ['1'] } },
@@ -108,7 +108,7 @@ describe('Verify Transaction', () => {
       })
       const result = await rulesEngine.verifyTransaction(transaction)
       const expectedRuleResult = {
-        ruleId: 'R-1',
+        ruleId: 'TEST-R-1',
         ruleInstanceId: RULE_INSTANCE_ID_MATCHER,
         ruleName: 'test rule name',
         ruleDescription: 'test rule description.',
@@ -136,7 +136,7 @@ describe('Verify Transaction', () => {
     const TEST_TENANT_ID = getTestTenantId()
     setUpRulesHooks(TEST_TENANT_ID, [
       {
-        id: 'R-1',
+        id: 'TEST-R-1',
         ruleImplementationName: 'tests/test-non-hit-rule',
         type: 'TRANSACTION',
       },
@@ -150,7 +150,7 @@ describe('Verify Transaction', () => {
         transactionId: 'dummy',
         executedRules: [
           {
-            ruleId: 'R-1',
+            ruleId: 'TEST-R-1',
             ruleInstanceId: RULE_INSTANCE_ID_MATCHER,
             ruleName: 'test rule name',
             ruleDescription: 'test rule description.',
@@ -169,7 +169,7 @@ describe('Verify Transaction', () => {
     const TEST_TENANT_ID = getTestTenantId()
     setUpRulesHooks(TEST_TENANT_ID, [
       {
-        id: 'R-1',
+        id: 'TEST-R-1',
         ruleImplementationName: 'tests/test-success-rule',
         type: 'TRANSACTION',
       },
@@ -188,7 +188,7 @@ describe('Verify Transaction', () => {
     const TEST_TENANT_ID = getTestTenantId()
     setUpRulesHooks(TEST_TENANT_ID, [
       {
-        id: 'R-1',
+        id: 'TEST-R-1',
         ruleImplementationName: 'tests/test-success-rule',
         type: 'TRANSACTION',
         filters: { checkDirection: 'DESTINATION' },
@@ -206,7 +206,7 @@ describe('Verify Transaction', () => {
         transactionId: 'dummy',
         executedRules: [
           {
-            ruleId: 'R-1',
+            ruleId: 'TEST-R-1',
             ruleInstanceId: RULE_INSTANCE_ID_MATCHER,
             ruleName: 'test rule name',
             ruleDescription: 'test rule description.',
@@ -221,7 +221,7 @@ describe('Verify Transaction', () => {
         ],
         hitRules: [
           {
-            ruleId: 'R-1',
+            ruleId: 'TEST-R-1',
             ruleInstanceId: RULE_INSTANCE_ID_MATCHER,
             ruleName: 'test rule name',
             ruleDescription: 'test rule description.',
@@ -243,7 +243,7 @@ describe('Verify Transaction Event', () => {
     const TEST_TENANT_ID = getTestTenantId()
     setUpRulesHooks(TEST_TENANT_ID, [
       {
-        id: 'R-1',
+        id: 'TEST-R-1',
         ruleImplementationName: 'tests/test-success-rule',
         type: 'TRANSACTION',
       },
@@ -333,7 +333,7 @@ describe('Verify Transaction Event', () => {
     const TEST_TENANT_ID = getTestTenantId()
     setUpRulesHooks(TEST_TENANT_ID, [
       {
-        id: 'R-1',
+        id: 'TEST-R-1',
         ruleImplementationName: 'tests/test-success-rule',
         type: 'TRANSACTION',
         defaultRiskLevelParameters: {
@@ -373,7 +373,7 @@ describe('Verify Transaction Event', () => {
           transactionId: '1',
           executedRules: [
             {
-              ruleId: 'R-1',
+              ruleId: 'TEST-R-1',
               ruleInstanceId: RULE_INSTANCE_ID_MATCHER,
               ruleName: 'test rule name',
               ruleDescription: 'test rule description.',
@@ -388,7 +388,7 @@ describe('Verify Transaction Event', () => {
           ],
           hitRules: [
             {
-              ruleId: 'R-1',
+              ruleId: 'TEST-R-1',
               ruleInstanceId: RULE_INSTANCE_ID_MATCHER,
               ruleName: 'test rule name',
               ruleDescription: 'test rule description.',
@@ -412,7 +412,7 @@ describe('Verify Transaction Event', () => {
         transactionId: '2',
         executedRules: [
           {
-            ruleId: 'R-1',
+            ruleId: 'TEST-R-1',
             ruleInstanceId: RULE_INSTANCE_ID_MATCHER,
             ruleName: 'test rule name',
             ruleDescription: 'test rule description.',
@@ -427,7 +427,7 @@ describe('Verify Transaction Event', () => {
         ],
         hitRules: [
           {
-            ruleId: 'R-1',
+            ruleId: 'TEST-R-1',
             ruleInstanceId: RULE_INSTANCE_ID_MATCHER,
             ruleName: 'test rule name',
             ruleDescription: 'test rule description.',
@@ -450,7 +450,7 @@ describe('Verify Transaction for Simulation', () => {
   const TEST_TENANT_ID = getTestTenantId()
   setUpRulesHooks(TEST_TENANT_ID, [
     {
-      id: 'R-1',
+      id: 'TEST-R-1',
       ruleImplementationName: 'tests/test-success-rule',
       type: 'TRANSACTION',
     },
@@ -465,7 +465,7 @@ describe('Verify Transaction for Simulation', () => {
       transaction,
       {
         id: 'abc',
-        ruleId: 'R-1',
+        ruleId: 'TEST-R-1',
         casePriority: 'P1',
         parameters: {},
         action: 'BLOCK',
@@ -475,7 +475,7 @@ describe('Verify Transaction for Simulation', () => {
       }
     )
     expect(result).toEqual({
-      ruleId: 'R-1',
+      ruleId: 'TEST-R-1',
       ruleInstanceId: testRuleInstanceId,
       ruleName: 'test rule name',
       ruleDescription: 'test rule description.',

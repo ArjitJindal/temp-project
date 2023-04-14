@@ -1,5 +1,5 @@
 import { SenderLocationChangesFrequencyRuleParameters } from '../sender-location-changes-frequency'
-import { getTransactionRuleByRuleId } from '../library'
+import { getRuleByRuleId } from '../library'
 import dayjs from '@/utils/dayjs'
 import { getTestTenantId } from '@/test-utils/tenant-test-utils'
 import { getTestTransaction } from '@/test-utils/transaction-test-utils'
@@ -61,8 +61,7 @@ ruleVariantsTest(true, () => {
           }),
         ],
         {
-          descriptionTemplate:
-            getTransactionRuleByRuleId('R-113').descriptionTemplate,
+          descriptionTemplate: getRuleByRuleId('R-113').descriptionTemplate,
         },
         [
           null,

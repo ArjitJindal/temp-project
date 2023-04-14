@@ -6,6 +6,8 @@
 
 import { PaymentMethodRuleFilterParameter } from '../transaction-filters/payment-method'
 import { TransactionFilters, UserFilters } from '../filters'
+import { USER_RULES, UserRuleImplementationName } from '../user-rules'
+import { SanctionsBusinessUserRuleParameters } from '../user-rules/sanctions-business-user'
 import { TransactionAmountRuleParameters } from './transaction-amount'
 import { TransactionNewCountryRuleParameters } from './transaction-new-country'
 import { TransactionNewCurrencyRuleParameters } from './transaction-new-currency'
@@ -44,9 +46,11 @@ import { BlacklistTransactionMatchedFieldRuleParameters } from '@/services/rules
 
 export const DEFAULT_CURRENCY_KEYWORD = '__DEFAULT_CURRENCY__'
 
-const _TRANSACTION_RULES_LIBRARY: Array<
+const _RULES_LIBRARY: Array<
   () => Omit<Rule, 'parametersSchema' | 'ruleImplementationName'> & {
-    ruleImplementationName: TransactionRuleImplementationName
+    ruleImplementationName:
+      | TransactionRuleImplementationName
+      | UserRuleImplementationName
   }
 > = [
   () => ({
@@ -1232,18 +1236,41 @@ const _TRANSACTION_RULES_LIBRARY: Array<
         'UK National risk assessment of money laundering and terrorist financing 2020',
     }
   },
+  () => {
+    const defaultParameters: SanctionsBusinessUserRuleParameters = {
+      fuzziness: 20,
+    }
+
+    return {
+      id: 'R-128',
+      name: 'Sanctions on Business legal entity & shareholders & directors',
+      type: 'USER',
+      description:
+        'Sanctions/PEP/Adverse media screening on Business legal entity & shareholders & directors',
+      descriptionTemplate:
+        'Sanctions/PEP/Adverse media screening on Business legal entity & shareholders & directors',
+      defaultParameters,
+      defaultAction: 'SUSPEND',
+      ruleImplementationName: 'sanctions-business-user',
+      labels: [],
+      defaultNature: 'SCREENING',
+      defaultCasePriority: 'P1',
+      requiredFeatures: ['SANCTIONS'],
+    }
+  },
 ]
 
-export const TRANSACTION_RULES_LIBRARY: Array<Rule> =
-  _TRANSACTION_RULES_LIBRARY.map((getRule) => {
-    const rule = getRule()
-    return {
-      ...rule,
-      parametersSchema:
-        TRANSACTION_RULES[rule.ruleImplementationName]?.getSchema(),
-    }
-  })
+export const RULES_LIBRARY: Array<Rule> = _RULES_LIBRARY.map((getRule) => {
+  const rule = getRule()
+  return {
+    ...rule,
+    parametersSchema:
+      rule.type === 'TRANSACTION'
+        ? TRANSACTION_RULES[rule.ruleImplementationName]?.getSchema()
+        : USER_RULES[rule.ruleImplementationName]?.getSchema(),
+  }
+})
 
-export function getTransactionRuleByRuleId(ruleId: string): Rule {
-  return TRANSACTION_RULES_LIBRARY.find((rule) => rule.id === ruleId) as Rule
+export function getRuleByRuleId(ruleId: string): Rule {
+  return RULES_LIBRARY.find((rule) => rule.id === ruleId) as Rule
 }

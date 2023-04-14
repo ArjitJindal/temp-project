@@ -1,5 +1,5 @@
 import { TransactionsVolumeRuleParameters } from '../transactions-volume'
-import { getTransactionRuleByRuleId } from '../library'
+import { getRuleByRuleId } from '../library'
 import dayjs from '@/utils/dayjs'
 import { getTestTenantId } from '@/test-utils/tenant-test-utils'
 import { getTestTransaction } from '@/test-utils/transaction-test-utils'
@@ -108,8 +108,7 @@ ruleVariantsTest(true, () => {
         TEST_TENANT_ID,
         TEST_HIT_TRANSACTIONS,
         {
-          descriptionTemplate:
-            getTransactionRuleByRuleId('R-69').descriptionTemplate,
+          descriptionTemplate: getRuleByRuleId('R-69').descriptionTemplate,
         },
         [
           null,

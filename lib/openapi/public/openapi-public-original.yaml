@@ -3457,7 +3457,6 @@ components:
     RuleHitMeta:
       type: object
       description: Details of rule execution, for internal purposes only
-      title: ''
       properties:
         hitDirections:
           type: array
@@ -3465,6 +3464,10 @@ components:
             $ref: '#/components/schemas/RuleHitDirection'
         falsePositiveDetails:
           $ref: '#/components/schemas/FalsePositiveDetails'
+        sanctionsDetails:
+          type: array
+          items:
+            $ref: '#/components/schemas/SanctionsDetails'
     RuleHitDirection:
       type: string
       title: RuleHitDirection
@@ -4773,6 +4776,19 @@ components:
       required:
         - isFalsePositive
         - confidenceScore
+    SanctionsDetails:
+      title: SanctionsDetails
+      type: object
+      x-stoplight:
+        id: b3f3f522e84a3
+      properties:
+        name:
+          type: string
+        searchId:
+          type: string
+      required:
+        - name
+        - searchId
     BusinessEntityLink:
       title: BusinessEntityLink
       x-stoplight:

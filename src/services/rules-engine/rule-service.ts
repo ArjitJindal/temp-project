@@ -1,5 +1,6 @@
 import Ajv, { ValidateFunction } from 'ajv'
 import createHttpError from 'http-errors'
+import _ from 'lodash'
 import { DEFAULT_CURRENCY_KEYWORD } from './transaction-rules/library'
 import { TenantRepository } from '@/services/tenants/repositories/tenant-repository'
 
@@ -13,6 +14,7 @@ import { RiskLevelRuleParameters } from '@/@types/openapi-internal/RiskLevelRule
 import { RiskLevel } from '@/@types/openapi-internal/RiskLevel'
 import { RiskLevelRuleActions } from '@/@types/openapi-internal/RiskLevelRuleActions'
 import { replaceMagicKeyword } from '@/utils/objectUtils'
+import { hasFeatures } from '@/core/utils/context'
 
 const RISK_LEVELS = RiskLevelRuleParameters.attributeTypeMap.map(
   (attribute) => attribute.name
@@ -55,7 +57,11 @@ export class RuleService {
       tenantSettings?.defaultValues?.currency ?? 'USD'
     ) as Array<Rule>
 
-    return rules
+    return rules.filter(
+      (rule) =>
+        _.isEmpty(rule.requiredFeatures) ||
+        hasFeatures(rule.requiredFeatures || [])
+    )
   }
 
   async createOrUpdateRule(rule: Rule): Promise<Rule> {

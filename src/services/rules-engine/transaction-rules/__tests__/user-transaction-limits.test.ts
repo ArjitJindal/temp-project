@@ -1,6 +1,5 @@
-import dayjs from 'dayjs'
 import _ from 'lodash'
-import { getTransactionRuleByRuleId } from '../library'
+import { getRuleByRuleId } from '../library'
 import { UserTransactionLimitsRuleParameter } from '../user-transaction-limits'
 import { getTestTenantId } from '@/test-utils/tenant-test-utils'
 import { getTestTransaction } from '@/test-utils/transaction-test-utils'
@@ -13,6 +12,7 @@ import {
 } from '@/test-utils/rule-test-utils'
 import { dynamoDbSetupHook } from '@/test-utils/dynamodb-test-utils'
 import { getTestUser, setUpUsersHooks } from '@/test-utils/user-test-utils'
+import dayjs from '@/utils/dayjs'
 
 dynamoDbSetupHook()
 
@@ -74,8 +74,7 @@ ruleVariantsTest(false, () => {
         }),
       ],
       {
-        descriptionTemplate:
-          getTransactionRuleByRuleId('R-99').descriptionTemplate,
+        descriptionTemplate: getRuleByRuleId('R-99').descriptionTemplate,
       },
       [
         'Sender sent a transaction amount of 10000.00 EUR more than the limit (200.00 EUR). Sender reached the daily transaction amount limit (100.00 EUR). Sender reached the daily transaction amount limit (300.00 EUR) of CARD payment method. Sender reached the monthly average transaction amount limit (400.00 EUR) of CARD payment method. Sender reached the weekly transaction count limit (0) of CARD payment method.',

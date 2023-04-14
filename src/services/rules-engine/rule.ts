@@ -1,10 +1,12 @@
 import { FalsePositiveDetails } from '@/@types/openapi-internal/FalsePositiveDetails'
+import { SanctionsDetails } from '@/@types/openapi-internal/SanctionsDetails'
 import { Vars } from '@/services/rules-engine/utils/format-description'
 
 export type RuleHitResultItem = {
   direction: 'ORIGIN' | 'DESTINATION'
   vars: Vars
   falsePositiveDetails?: FalsePositiveDetails
+  sanctionsDetails?: SanctionsDetails[]
 }
 export type RuleHitResult = Array<RuleHitResultItem | undefined>
 

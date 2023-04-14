@@ -1,5 +1,5 @@
 import { MerchantReceiverNameRuleParameters } from '../merchant-receiver-name'
-import { getTransactionRuleByRuleId } from '../library'
+import { getRuleByRuleId } from '../library'
 import { getTestTenantId } from '@/test-utils/tenant-test-utils'
 import { getTestTransaction } from '@/test-utils/transaction-test-utils'
 import {
@@ -39,8 +39,7 @@ describe('R-13 description formatting', () => {
       }),
     ],
     {
-      descriptionTemplate:
-        getTransactionRuleByRuleId('R-13').descriptionTemplate,
+      descriptionTemplate: getRuleByRuleId('R-13').descriptionTemplate,
     },
     ['Mobikwik is blacklisted.']
   )
