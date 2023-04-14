@@ -47,8 +47,7 @@ export class MerchantMonitoringService {
           domain,
           companyName
         )
-        logger.error(`${JSON.stringify(existingSummary)}`)
-        if (existingSummary) {
+        if (existingSummary && existingSummary.length) {
           return existingSummary
         }
       } catch (e) {
@@ -61,7 +60,7 @@ export class MerchantMonitoringService {
         this.scrape(`https://${domain}`),
         this.companiesHouse(companyName),
         this.explorium(companyName),
-        this.linkedin(domain),
+        //this.linkedin(domain),
       ])
     )
       .map((p) => {
@@ -69,31 +68,36 @@ export class MerchantMonitoringService {
           return p.value
         }
       })
-      .filter(Boolean) as MerchantMonitoringSummary[]
-
-    // Store summaries in mongo
+      .filter((p) => p && p.source) as MerchantMonitoringSummary[]
 
     // Hack in fake updated times
-    const merchantSummary = Promise.all(
+    const merchantSummary = await Promise.all(
       results.map(async (r) => {
-        if (refresh) {
-          r.updatedAt = new Date().getTime()
-        } else {
-          const d = new Date()
-          d.setDate(d.getDate() - 3)
-          r.updatedAt = d.getTime()
-        }
-        try {
-          await merchantRepository.createMerchant(r)
-        } catch (e) {
-          logger.error(`${JSON.stringify(e)}`)
-        }
+        if (r.source) {
+          if (refresh) {
+            r.updatedAt = new Date().getTime()
+          } else {
+            const d = new Date()
+            d.setDate(d.getDate() - 3)
+            r.updatedAt = d.getTime()
+          }
+          try {
+            const res = await merchantRepository.createMerchant(
+              domain,
+              companyName,
+              r
+            )
+            console.log(res)
+          } catch (e) {
+            logger.error(`${JSON.stringify(e)}`)
+          }
 
-        return r
+          return r
+        }
       })
     )
 
-    return merchantSummary
+    return merchantSummary as MerchantMonitoringSummary[]
   }
 
   async scrapeMerchantMonitoringSummary(
@@ -160,6 +164,7 @@ export class MerchantMonitoringService {
     const text = convert(data.data.result.content, {
       wordwrap: 130,
     })
+
     return await this.summarise('SCRAPE', text)
   }
 
@@ -223,28 +228,34 @@ export class MerchantMonitoringService {
       ).apiKey,
     })
     const openai = new OpenAIApi(configuration)
-    const completion = await openai.createChatCompletion({
-      model: 'gpt-3.5-turbo',
-      messages: [
-        {
-          content: `${SUMMARY_PROMPT} ${content}`.slice(0, MAX_TOKEN_OUTPUT),
-          role: 'system',
-        },
-      ],
-      max_tokens: MAX_TOKEN_INPUT,
-    })
-    const output = completion.data.choices[0].message?.content
-    const re = new RegExp(OUTPUT_REGEX, 'm')
-    const result: string[] = re.exec(output as string) as string[]
-    return {
-      source,
-      industry: result[1],
-      products: result[2].split(','),
-      location: result[3],
-      employees: result[4],
-      revenue: result[5],
-      summary: result[6],
-      raw: content,
+    try {
+      const completion = await openai.createChatCompletion({
+        model: 'gpt-3.5-turbo',
+        messages: [
+          {
+            content: `${SUMMARY_PROMPT} ${content}`.slice(0, MAX_TOKEN_OUTPUT),
+            role: 'system',
+          },
+        ],
+        max_tokens: MAX_TOKEN_INPUT,
+      })
+
+      const output = completion.data.choices[0].message?.content
+      const re = new RegExp(OUTPUT_REGEX, 'm')
+      const result: string[] = re.exec(output as string) as string[]
+      return {
+        source,
+        industry: result[1],
+        products: result[2].split(','),
+        location: result[3],
+        employees: result[4],
+        revenue: result[5],
+        summary: result[6],
+        raw: content,
+      }
+    } catch (e) {
+      logger.error(JSON.stringify(e))
+      return {}
     }
   }
 }

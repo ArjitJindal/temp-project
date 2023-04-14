@@ -16,12 +16,20 @@ export class MerchantRepository {
     this.tenantId = tenantId
   }
 
-  public async createMerchant(merchantSummary: MerchantMonitoringSummary) {
+  public async createMerchant(
+    domain: string,
+    companyName: string,
+    merchantSummary: MerchantMonitoringSummary
+  ) {
     const db = this.mongoDb.db()
     const collection = db.collection(
       MERCHANT_MONITORING_DATA_COLLECTION(this.tenantId)
     )
-    await collection.replaceOne(merchantSummary, { upsert: true })
+    return await collection.replaceOne(
+      { domain, companyName },
+      { ...merchantSummary, companyName, domain },
+      { upsert: true }
+    )
   }
 
   public async getMerchant(
@@ -32,6 +40,8 @@ export class MerchantRepository {
     const collection = db.collection<MerchantMonitoringSummary>(
       MERCHANT_MONITORING_DATA_COLLECTION(this.tenantId)
     )
-    return await collection.find({ domain: domain, name: name }).toArray()
+    return await collection
+      .find({ domain: domain, companyName: name })
+      .toArray()
   }
 }
