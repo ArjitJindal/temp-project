@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from 'react';
+import cn from 'clsx';
 import s from './index.module.less';
 import * as Card from '@/components/ui/Card';
 import { InternalBusinessUser, MerchantMonitoringSource, MerchantMonitoringSummary } from '@/apis';
@@ -8,12 +9,15 @@ import EarthLineIcon from '@/components/ui/icons/Remix/map/earth-line.react.svg'
 import MoneyIcon from '@/components/ui/icons/Remix/finance/money-dollar-box-fill.react.svg';
 import TeamIcon from '@/components/ui/icons/Remix/user/team-line.react.svg';
 import BriefcaseIcon from '@/components/ui/icons/Remix/business/briefcase-2-line.react.svg';
+import HistoryLine from '@/components/ui/icons/Remix/system/history-line.react.svg';
+import RefreshLine from '@/components/ui/icons/Remix/system/refresh-line.react.svg';
 import AsyncResourceRenderer from '@/components/common/AsyncResourceRenderer';
 import { useQuery } from '@/utils/queries/hooks';
 import { MERCHANT_SUMMARY, MERCHANT_SUMMARY_HISTORY } from '@/utils/queries/keys';
 import dayjs from '@/utils/dayjs';
 import Button from '@/components/library/Button';
 import Drawer from '@/components/library/Drawer';
+import TextInput from '@/components/library/TextInput';
 interface Props {
   user: InternalBusinessUser;
   updateCollapseState?: (key: string, value: boolean) => void;
@@ -44,7 +48,14 @@ export default function AIInsightsCard(props: Props) {
     <AsyncResourceRenderer resource={queryResult.data}>
       {(summariesResponse) => (
         <Card.Root header={{ title, collapsableKey }} updateCollapseState={updateCollapseState}>
-          <Button onClick={() => setRefresh(true)}>Refresh</Button>
+          <Button
+            type="TEXT"
+            icon={<RefreshLine />}
+            style={{ width: '150px', margin: '20px', marginBottom: '0px' }}
+            onClick={() => setRefresh(true)}
+          >
+            Refresh All
+          </Button>
           {summariesResponse.data && (
             <Summaries
               name={name}
@@ -77,23 +88,37 @@ const Summaries = ({
   const [scrapedSummary, setScrapedSummary] = useState<MerchantMonitoringSummary>();
   return (
     <Card.Section>
-      <input
-        placeholder={'flagright.com'}
-        value={scrapedDomain}
-        onChange={(e) => {
-          e.preventDefault();
-          setScrapeDomain(e.target.value);
-        }}
-      />
-      <Button
-        onClick={() => {
-          api
-            .postMerchantScrape({ MerchantMonitoringSummaryRequest: { domain: scrapedDomain } })
-            .then(setScrapedSummary);
-        }}
-      >
-        Search
-      </Button>
+      <Card.Row justify="evenly" className={s.titleHeader}>
+        <Card.Column>
+          <h2 className={s.title}>Aggregated user information</h2>
+        </Card.Column>
+
+        <Card.Column>
+          <Card.Row className={s.titleSearch}>
+            <Card.Column>
+              <TextInput
+                placeholder={'Enter new source URL'}
+                value={scrapedDomain}
+                onChange={setScrapeDomain}
+              />
+            </Card.Column>
+            <Card.Column>
+              <Button
+                onClick={() => {
+                  api
+                    .postMerchantScrape({
+                      MerchantMonitoringSummaryRequest: { domain: scrapedDomain },
+                    })
+                    .then(setScrapedSummary);
+                }}
+              >
+                Request Data
+              </Button>
+            </Card.Column>
+          </Card.Row>
+        </Card.Column>
+      </Card.Row>
+
       {showHistory && sourceHistory && (
         <SummaryHistory
           name={name}
@@ -107,51 +132,73 @@ const Summaries = ({
       {/* For now we are just concatting the scraped summary with the others on the frontend but should be done on the backend */}
       {(scrapedSummary ? [scrapedSummary, ...summaries] : summaries).map((summary) => (
         <Card.Section className={s.section}>
-          <h1>{summary.source}</h1>
-          <h3>{dayjs.dayjs(summary.updatedAt).fromNow()}</h3>
-          {showHistory && <Button onClick={() => setSourceHistory(summary.source)}>History</Button>}
-          <Card.Row>
-            <Card.Column className={s.column}>
-              <Card.Row>
-                <div className={s.field}>
-                  <Form.Layout.Label icon={<BriefcaseIcon />} title={'Business Industry'}>
-                    {summary.industry ?? '-'}
-                  </Form.Layout.Label>
-                </div>
-              </Card.Row>
-              <Card.Row>
-                <div className={s.field}>
-                  <Form.Layout.Label icon={<BriefcaseIcon />} title={'Products Solds'}>
-                    {summary.products?.join(',') ?? '-'}
-                  </Form.Layout.Label>
-                </div>
-              </Card.Row>
-              <Card.Row>
-                <div className={s.field}>
-                  <Form.Layout.Label icon={<EarthLineIcon />} title={'Location'}>
-                    {summary.location ?? '-'}
-                  </Form.Layout.Label>
-                </div>
-              </Card.Row>
-              <Card.Row>
-                <div className={s.field}>
-                  <Form.Layout.Label icon={<TeamIcon />} title={'Company Size'}>
-                    {summary.employees ?? '-'}
-                  </Form.Layout.Label>
-                </div>
-              </Card.Row>
-              <Card.Row>
-                <div className={s.field}>
-                  <Form.Layout.Label icon={<MoneyIcon />} title={'Annual Revenue'}>
-                    {summary.revenue ?? '-'}
-                  </Form.Layout.Label>
-                </div>
-              </Card.Row>
-            </Card.Column>
-            <Card.Column>
+          <div className={s.titleSearch}>
+            <div style={{ gap: '0rem' }}>
+              <h3>{summary.source}</h3>
+              <p className={s.lastUpdated}>
+                Last updated {dayjs.dayjs(summary.updatedAt).fromNow()}
+              </p>
+            </div>
+            <div
+              style={{ textAlign: 'left', display: 'flex', height: '40px' }}
+              className={s.fileds}
+            >
+              <Button
+                type="TEXT"
+                icon={<RefreshLine />}
+                onClick={() => setSourceHistory(summary.source)}
+                size="MEDIUM"
+              >
+                Refresh
+              </Button>
+              {showHistory && (
+                <Button
+                  type="TETRIARY"
+                  icon={<HistoryLine />}
+                  onClick={() => setSourceHistory(summary.source)}
+                  size="MEDIUM"
+                >
+                  View history
+                </Button>
+              )}
+            </div>
+          </div>
+          <div className={s.merchantDetails}>
+            <div>
+              <div className={cn(s.fields, s.form)}>
+                <Form.Layout.Label icon={<BriefcaseIcon />} title={'Business Industry'} />
+                {summary.industry ?? '-'}
+              </div>
+
+              <div className={cn(s.fields, s.form)}>
+                <>
+                  <Form.Layout.Label icon={<BriefcaseIcon />} title={'Products Solds'} />
+                </>
+                <>{summary.products?.join(',') ?? '-'}</>
+              </div>
+
+              <div className={cn(s.fields, s.form)}>
+                <Form.Layout.Label icon={<EarthLineIcon />} title={'Location'} />
+
+                {summary.location ?? '-'}
+              </div>
+
+              <div className={cn(s.fields, s.form)}>
+                <Form.Layout.Label icon={<TeamIcon />} title={'Company Size'} />
+
+                {summary.employees ?? '-'}
+              </div>
+
+              <div className={cn(s.fields, s.form)}>
+                <Form.Layout.Label icon={<MoneyIcon />} title={'Annual Revenue'} />
+                {summary.revenue ?? '-'}
+              </div>
+            </div>
+            <div className={s.summary}>
+              <h3>Summary</h3>
               <Card.Row>{summary.summary}</Card.Row>
-            </Card.Column>
-          </Card.Row>
+            </div>
+          </div>
         </Card.Section>
       ))}
     </Card.Section>
