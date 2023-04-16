@@ -1110,19 +1110,10 @@ export class CaseRepository {
     )
   }
 
-  public async getCaseById(
-    caseId: string,
-    options: CaseListOptions = {}
-  ): Promise<Case | null> {
-    const { data } = await this.getCases(
-      {
-        filterIdExact: caseId,
-        page: 1,
-        pageSize: 1,
-      },
-      options
-    )
-    return data?.find((c) => c.caseId === caseId) ?? null
+  public async getCaseById(caseId: string): Promise<Case | null> {
+    const db = this.mongoDb.db()
+    const collection = db.collection<Case>(CASES_COLLECTION(this.tenantId))
+    return await collection.findOne<Case>({ caseId })
   }
 
   public async getAlertById(alertId: string): Promise<Alert | null> {
@@ -1145,9 +1136,7 @@ export class CaseRepository {
       this.mongoDb
     )
 
-    const caseItem = await this.getCaseById(caseId, {
-      includeCaseTransactionIds: true,
-    })
+    const caseItem = await this.getCaseById(caseId)
     if (caseItem == null) {
       throw new NotFound(`Case not found: ${caseId}`)
     }

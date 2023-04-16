@@ -5054,6 +5054,8 @@ components:
           type: array
           items:
             type: string
+        caseHierarchyDetails:
+          $ref: '#/components/schemas/CaseHierarchyDetails'
         falsePositiveDetails:
           $ref: ../public/openapi-public-original.yaml#/components/schemas/FalsePositiveDetails
         caseTransactionsCount:
@@ -5352,8 +5354,6 @@ components:
             $ref: '#/components/schemas/AlertEscalation'
         closeSourceCase:
           type: boolean
-      required:
-        - caseUpdateRequest
     CaseEscalationResponse:
       title: CaseEscalationResponse
       type: object
@@ -6222,6 +6222,18 @@ components:
           type: integer
       required:
         - count
+    CaseHierarchyDetails:
+      title: CaseHierarchyDetails
+      x-stoplight:
+        id: p9vaxm70fwiaf
+      type: object
+      properties:
+        parentCaseId:
+          type: string
+        childCaseIds:
+          type: array
+          items:
+            type: string
     NarrativeTemplateRequest:
       title: NarrativeTemplateRequest
       type: object

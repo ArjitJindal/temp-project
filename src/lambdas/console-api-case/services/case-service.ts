@@ -1,5 +1,5 @@
 import * as createError from 'http-errors'
-import { NotFound } from 'http-errors'
+import { NotFound, BadRequest } from 'http-errors'
 import _ from 'lodash'
 import { Comment } from '@/@types/openapi-internal/Comment'
 import { FileInfo } from '@/@types/openapi-internal/FileInfo'
@@ -7,10 +7,7 @@ import {
   DefaultApiGetAlertListRequest,
   DefaultApiGetCaseListRequest,
 } from '@/@types/openapi-internal/RequestParameters'
-import {
-  CaseListOptions,
-  CaseRepository,
-} from '@/services/rules-engine/repositories/case-repository'
+import { CaseRepository } from '@/services/rules-engine/repositories/case-repository'
 import { AlertListResponse } from '@/@types/openapi-internal/AlertListResponse'
 import { CasesListResponse } from '@/@types/openapi-internal/CasesListResponse'
 import { CaseUpdateRequest } from '@/@types/openapi-internal/CaseUpdateRequest'
@@ -26,9 +23,11 @@ import { addNewSubsegment } from '@/core/xray'
 import { sendWebhookTasks } from '@/services/webhook/utils'
 import { getContext } from '@/core/utils/context'
 import { Case } from '@/@types/openapi-internal/Case'
-import { AlertEscalation } from '@/@types/openapi-internal/AlertEscalation'
 import { Account } from '@/@types/openapi-internal/Account'
 import { Assignment } from '@/@types/openapi-internal/Assignment'
+import { CaseStatus } from '@/@types/openapi-internal/CaseStatus'
+import { CaseEscalationRequest } from '@/@types/openapi-internal/CaseEscalationRequest'
+import { CaseHierarchyDetails } from '@/@types/openapi-internal/CaseHierarchyDetails'
 
 export class CaseService {
   caseRepository: CaseRepository
@@ -185,15 +184,12 @@ export class CaseService {
     return 'OK'
   }
 
-  public async getCase(
-    caseId: string,
-    options: CaseListOptions = {}
-  ): Promise<Case | null> {
+  public async getCase(caseId: string): Promise<Case | null> {
     const caseGetSegment = await addNewSubsegment(
       'Case Service',
       'Mongo Get Case Query'
     )
-    const caseEntity = await this.caseRepository.getCaseById(caseId, options)
+    const caseEntity = await this.caseRepository.getCaseById(caseId)
     caseGetSegment?.close()
 
     return caseEntity && this.getAugmentedCase(caseEntity)
@@ -420,6 +416,11 @@ export class CaseService {
     if (!c) {
       throw new NotFound(`Cannot find case ${caseId}`)
     }
+    if (c.caseHierarchyDetails?.parentCaseId) {
+      throw new NotFound(
+        `Cannot escalated an already escalated case. Parent case ${c.caseHierarchyDetails?.parentCaseId}`
+      )
+    }
 
     const existingReviewAssignments = c.reviewAssignments || []
     await this.updateCases((getContext()?.user as Account).id, [caseId], {
@@ -433,12 +434,132 @@ export class CaseService {
   }
 
   public async escalateAlerts(
-    _caseId: string,
-    _alertEscalations: AlertEscalation[],
-    _accounts: Account[]
+    caseId: string,
+    caseEscalationRequest: CaseEscalationRequest,
+    accounts: Account[]
   ): Promise<string> {
-    // TODO: Implement me
-    return 'child_id'
+    const c = await this.getCase(caseId)
+    if (!c) {
+      throw new NotFound(`Cannot find case ${caseId}`)
+    }
+    if (c.caseHierarchyDetails?.parentCaseId) {
+      throw new BadRequest(
+        `Cannot escalated an already escalated case. Parent case ${c.caseHierarchyDetails?.parentCaseId}`
+      )
+    }
+    const { alertEscalations, caseUpdateRequest } = caseEscalationRequest
+    const updatingUserId = (getContext()?.user as Account).id
+    const currentTimestamp = Date.now()
+    const escalatedAlerts = c.alerts
+      ?.filter((alert) =>
+        alertEscalations!.some(
+          (alertEscalation) => alertEscalation.alertId === alert.alertId
+        )
+      )
+      .map((escalatedAlert: Alert): Alert => {
+        const lastStatusChange = {
+          userId: updatingUserId,
+          caseStatus: 'ESCALATED' as CaseStatus,
+          timestamp: currentTimestamp,
+        }
+        return {
+          ...escalatedAlert,
+          alertStatus: 'ESCALATED',
+          reviewAssignments: [this.getEscalationAssignment(accounts)],
+          statusChanges: escalatedAlert.statusChanges
+            ? [...escalatedAlert.statusChanges, lastStatusChange]
+            : [lastStatusChange],
+          lastStatusChange: lastStatusChange,
+        }
+      })
+    const remainingAlerts = c.alerts?.filter(
+      (alert) =>
+        !alertEscalations!.some(
+          (alertEscalation) => alertEscalation.alertId === alert.alertId
+        )
+    )
+    if (
+      (!remainingAlerts || remainingAlerts.length === 0) &&
+      caseUpdateRequest
+    ) {
+      await this.escalateCase(caseId, caseUpdateRequest, accounts)
+      return caseId
+    }
+    const childNumber = c.caseHierarchyDetails?.childCaseIds
+      ? c.caseHierarchyDetails.childCaseIds.length + 1
+      : 1
+    const childCaseId = `${c.caseId}.${childNumber}`
+    const filteredTransactionsForNewCase = c.caseTransactions?.filter(
+      (transaction) =>
+        transaction.hitRules.some((ruleInstance) =>
+          escalatedAlerts
+            ?.map((eA) => eA.ruleInstanceId)
+            .includes(ruleInstance.ruleInstanceId)
+        )
+    )
+    const filteredTransactionIdsForNewCase =
+      filteredTransactionsForNewCase?.map(
+        (transaction) => transaction.transactionId
+      )
+    const filteredTransactionsForExistingCase = c.caseTransactions?.filter(
+      (transaction) =>
+        transaction.hitRules.some((ruleInstance) =>
+          remainingAlerts
+            ?.map((rA) => rA.ruleInstanceId)
+            .includes(ruleInstance.ruleInstanceId)
+        )
+    )
+    const filteredTransactionIdsForExistingCase =
+      filteredTransactionsForExistingCase?.map(
+        (transaction) => transaction.transactionId
+      )
+
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    const { statusChanges, lastStatusChange, ...mainCaseAttributes } = c
+
+    let caseHierarchyDetailsForOriginalCase: CaseHierarchyDetails = {
+      childCaseIds: [childCaseId],
+    }
+    if (c.caseHierarchyDetails?.childCaseIds) {
+      caseHierarchyDetailsForOriginalCase = {
+        childCaseIds: [...c.caseHierarchyDetails.childCaseIds, childCaseId],
+      }
+    }
+
+    const newCase: Case = {
+      ...mainCaseAttributes,
+      _id: c._id! + parseFloat(`0.${childNumber}`),
+      caseId: childCaseId,
+      alerts: escalatedAlerts,
+      createdTimestamp: currentTimestamp,
+      caseStatus: 'ESCALATED',
+      reviewAssignments: [this.getEscalationAssignment(accounts)],
+      caseTransactions: filteredTransactionsForNewCase,
+      caseTransactionsIds: filteredTransactionIdsForNewCase,
+      caseHierarchyDetails: { parentCaseId: caseId },
+    }
+    const updatedExistingCase: Case = {
+      ...c,
+      alerts: remainingAlerts,
+      caseTransactions: filteredTransactionsForExistingCase,
+      caseTransactionsIds: filteredTransactionIdsForExistingCase,
+      caseHierarchyDetails: caseHierarchyDetailsForOriginalCase,
+    }
+
+    await this.caseRepository.addCaseMongo(newCase)
+    await this.caseRepository.addCaseMongo(updatedExistingCase)
+    if (caseUpdateRequest) {
+      await this.updateCases((getContext()?.user as Account).id, [caseId], {
+        ...caseUpdateRequest,
+        comment: `Alert(s) ${escalatedAlerts!
+          .map((alert) => alert.alertId)
+          .join(', ')} ESCALATED by: ${(getContext()?.user as Account).name}. ${
+          caseUpdateRequest.comment
+        }`,
+      })
+    }
+
+    return childCaseId
   }
 
   private getEscalationAssignment(accounts: Account[]): Assignment {

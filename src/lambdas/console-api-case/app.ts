@@ -563,6 +563,9 @@ export const casesHandler = lambdaApi()(
             await accountsService.getAccountTenant(userId)
           )
         ).filter((account) => !account.blocked)
+        if (!escalationRequest.caseUpdateRequest) {
+          throw new BadRequest('Case update request not provided')
+        }
         await caseService.escalateCase(
           caseId,
           escalationRequest.caseUpdateRequest,
@@ -579,7 +582,7 @@ export const casesHandler = lambdaApi()(
         ).filter((account) => !account.blocked)
         const childCaseId = await caseService.escalateAlerts(
           caseId,
-          escalationRequest.alertEscalations,
+          escalationRequest,
           allAccounts
         )
         return {
