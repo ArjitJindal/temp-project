@@ -1,5 +1,7 @@
 import {
+  AlertStatus,
   AuditLogType,
+  CaseStatus,
   KYCStatus,
   RiskLevel,
   RuleAction,
@@ -27,8 +29,8 @@ export type CommonCaseParams = {
   destinationMethodFilter: string[];
   tagKey: string;
   tagValue: string;
-  caseStatus: 'OPEN' | 'CLOSED';
-  alertStatus: 'OPEN' | 'CLOSED';
+  caseStatus: CaseStatus;
+  alertStatus: AlertStatus;
   transactionId: string;
   transactionTimestamp: string[];
   amountGreaterThanFilter: number;

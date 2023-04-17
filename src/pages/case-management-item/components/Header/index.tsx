@@ -14,6 +14,7 @@ import CommentButton from '@/components/CommentButton';
 import { getUserLink, getUserName } from '@/utils/api/users';
 import Id from '@/components/ui/Id';
 import { useFeatureEnabled } from '@/components/AppWrapper/Providers/SettingsProvider';
+import { makeUrl } from '@/utils/routing';
 
 interface Props {
   caseItem: Case;
@@ -106,6 +107,35 @@ export default function Header(props: Props) {
           {_.capitalize(caseItem.caseStatus ? caseItem.caseStatus : 'OPEN')}
         </Tag>
       </Form.Layout.Label>
+      {caseItem.caseHierarchyDetails?.parentCaseId && (
+        <Form.Layout.Label title={'Parent Case ID'}>
+          <Id
+            id={caseItem.caseHierarchyDetails?.parentCaseId}
+            to={makeUrl(`/case-management/case/:caseId`, {
+              caseId: caseItem.caseHierarchyDetails?.parentCaseId,
+            })}
+            alwaysShowCopy
+          >
+            {caseItem.caseHierarchyDetails?.parentCaseId}
+          </Id>
+        </Form.Layout.Label>
+      )}
+      {caseItem.caseHierarchyDetails?.childCaseIds && (
+        <Form.Layout.Label title={'Child Case IDs'}>
+          {caseItem.caseHierarchyDetails?.childCaseIds.map((caseId) => {
+            return (
+              <Id
+                id={caseId}
+                to={makeUrl(`/case-management/case/:caseId`, {
+                  caseId,
+                })}
+              >
+                {caseId}
+              </Id>
+            );
+          })}
+        </Form.Layout.Label>
+      )}
     </EntityHeader>
   );
 }

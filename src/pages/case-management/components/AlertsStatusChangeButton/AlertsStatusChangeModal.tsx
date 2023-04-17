@@ -10,7 +10,9 @@ import { AlertStatus, AlertUpdateRequest } from '@/apis';
 import { message } from '@/components/library/Message';
 import { getErrorMessage } from '@/utils/lang';
 
-interface Props extends Omit<StatusChangeModalProps, 'entityName' | 'updateMutation'> {}
+interface Props extends Omit<StatusChangeModalProps, 'entityName' | 'updateMutation'> {
+  caseId: string;
+}
 
 export default function AlertsStatusChangeModal(props: Props) {
   const { ...rest } = props;
@@ -36,12 +38,26 @@ export default function AlertsStatusChangeModal(props: Props) {
     }
 
     try {
-      await api.postAlerts({
-        AlertsUpdateRequest: {
-          alertIds: ids,
-          updates: updates,
-        },
-      });
+      if (updates.alertStatus === 'ESCALATED') {
+        await api.postCasesCaseIdEscalate({
+          caseId: props.caseId,
+          CaseEscalationRequest: {
+            caseUpdateRequest: updates,
+            alertEscalations: ids.map((alertId) => {
+              return {
+                alertId,
+              };
+            }),
+          },
+        });
+      } else {
+        await api.postAlerts({
+          AlertsUpdateRequest: {
+            alertIds: ids,
+            updates: updates,
+          },
+        });
+      }
       message.success('Saved');
     } catch (e) {
       console.error(`Failed to update the alert! ${getErrorMessage(e)}`);

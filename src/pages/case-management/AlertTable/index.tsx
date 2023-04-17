@@ -275,6 +275,7 @@ export default function AlertTable(props: Props) {
     showPagination = false,
   } = props;
   const showActions = !hideScopeSelector;
+  const escalationEnabled = useFeatureEnabled('ESCALATION');
 
   const api = useApi();
   const user = useAuth0User();
@@ -444,9 +445,10 @@ export default function AlertTable(props: Props) {
         ({ params, setParams }) => (
           <>
             <AssignToButton ids={selectedEntities} onSelect={handleAssignTo} />
-            {statusChangeButtonValue && (
+            {statusChangeButtonValue && params.caseId && (
               <AlertsStatusChangeButton
                 ids={selectedEntities}
+                caseId={params.caseId}
                 onSaved={reloadTable}
                 status={params.alertStatus ?? statusChangeButtonValue}
               />
@@ -463,6 +465,26 @@ export default function AlertTable(props: Props) {
                 suffix="alerts"
               />
             )}
+            {escalationEnabled &&
+              params.caseId &&
+              statusChangeButtonValue &&
+              params.alertStatus != 'ESCALATED' && (
+                <AlertsStatusChangeButton
+                  ids={selectedEntities}
+                  caseId={params.caseId}
+                  status={params.alertStatus ?? statusChangeButtonValue}
+                  onSaved={reloadTable}
+                  statusTransitions={{
+                    OPEN: { status: 'ESCALATED', actionLabel: 'Escalate' },
+                    REOPENED: { status: 'ESCALATED', actionLabel: 'Escalate' },
+                    ESCALATED: {
+                      status: 'OPEN',
+                      actionLabel: 'Send back',
+                    },
+                    CLOSED: { status: 'ESCALATED', actionLabel: 'Escalate' },
+                  }}
+                />
+              )}
             {selectedEntities?.length > 0 && params.caseId && (
               <CreateCaseConfirmModal
                 selectedEntities={selectedEntities}

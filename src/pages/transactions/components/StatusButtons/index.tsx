@@ -4,10 +4,11 @@ import Dropdown from '@/components/library/Dropdown';
 import Button from '@/components/library/Button';
 import ArrowDownSLineIcon from '@/components/ui/icons/Remix/system/arrow-down-s-line.react.svg';
 import { humanizeConstant } from '@/utils/humanize';
+import { AlertStatus, CaseStatus } from '@/apis';
 
 interface Props {
-  status: 'OPEN' | 'CLOSED';
-  onChange: (newStatus: 'OPEN' | 'CLOSED') => void;
+  status: CaseStatus | AlertStatus;
+  onChange: (newStatus: CaseStatus | AlertStatus) => void;
   suffix: 'cases' | 'alerts';
 }
 
@@ -26,7 +27,7 @@ export default function StatusButtons(props: Props) {
       <Dropdown
         options={options}
         onSelect={(option) => {
-          onChange(option.value as 'OPEN' | 'CLOSED');
+          onChange(option.value as CaseStatus | AlertStatus);
         }}
       >
         <Button type="SECONDARY">

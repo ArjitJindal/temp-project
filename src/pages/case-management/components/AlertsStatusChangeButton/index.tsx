@@ -8,6 +8,7 @@ import StatusChangeButton from '@/pages/case-management/components/StatusChangeB
 interface Props {
   entityName?: string;
   ids: string[];
+  caseId: string;
   status?: AlertStatus;
   initialValues?: FormValues;
   buttonProps?: {
@@ -15,6 +16,7 @@ interface Props {
     isBlue?: boolean;
     rounded?: boolean;
   };
+  statusTransitions?: Record<AlertStatus, { status: AlertStatus; actionLabel: string }>;
   onSaved: () => void;
 }
 
@@ -23,23 +25,32 @@ export default function AlertsStatusChangeButton(props: Props) {
     ids,
     onSaved,
     status,
+    caseId,
     initialValues = {
       reasons: [],
       reasonOther: null,
       comment: '',
       files: [],
     },
+    statusTransitions,
     buttonProps = {},
   } = props;
   return (
     <>
-      <StatusChangeButton status={status} buttonProps={buttonProps} ids={ids}>
+      <StatusChangeButton
+        status={status}
+        buttonProps={buttonProps}
+        ids={ids}
+        statusTransitions={statusTransitions}
+      >
         {({ isVisible, setVisible, newStatus }) => (
           <AlertsStatusChangeModal
             isVisible={isVisible}
             ids={ids}
+            caseId={caseId}
             newStatus={newStatus}
             onSaved={onSaved}
+            newStatusActionLabel={status && statusTransitions?.[status].actionLabel}
             initialValues={initialValues}
             onClose={() => {
               setVisible(false);
