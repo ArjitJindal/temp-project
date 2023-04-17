@@ -60,7 +60,7 @@ export class MerchantMonitoringService {
         this.scrape(`https://${domain}`),
         this.companiesHouse(companyName),
         this.explorium(companyName),
-        //this.linkedin(domain),
+        this.linkedin(domain),
       ])
     )
       .map((p) => {
