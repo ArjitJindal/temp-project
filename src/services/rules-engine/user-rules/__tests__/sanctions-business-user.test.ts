@@ -7,18 +7,39 @@ import {
   UserRuleTestCase,
 } from '@/test-utils/rule-test-utils'
 import { dynamoDbSetupHook } from '@/test-utils/dynamodb-test-utils'
-import { mockComplyAdvantageSearch } from '@/test-utils/complyadvantage-test-utils'
+import {
+  MOCK_CA_SEARCH_NO_HIT_RESPONSE,
+  MOCK_CA_SEARCH_RESPONSE,
+} from '@/test-utils/resources/mock-ca-search-response'
+import { SanctionsSearchRequest } from '@/@types/openapi-internal/SanctionsSearchRequest'
 
-jest.mock('node-fetch')
+const TEST_SANCTIONS_HITS = ['Company Name', 'Director 1', 'Shareholder 1']
+jest.mock('@/services/sanctions', () => {
+  return {
+    SanctionsService: jest.fn().mockImplementation(() => {
+      return {
+        search: jest
+          .fn()
+          .mockImplementation((request: SanctionsSearchRequest) => {
+            const rawComplyAdvantageResponse = TEST_SANCTIONS_HITS.includes(
+              request.searchTerm
+            )
+              ? MOCK_CA_SEARCH_RESPONSE
+              : MOCK_CA_SEARCH_NO_HIT_RESPONSE
+            return {
+              data: rawComplyAdvantageResponse.content.data.hits,
+              searchId: 'test-search-id',
+            }
+          }),
+      }
+    }),
+  }
+})
 
 dynamoDbSetupHook()
 
 describe('Sanctions hit', () => {
   const TEST_TENANT_ID = getTestTenantId()
-
-  beforeAll(() => {
-    mockComplyAdvantageSearch(true)
-  })
 
   setUpRulesHooks(TEST_TENANT_ID, [
     {
@@ -133,10 +154,6 @@ describe('Sanctions hit', () => {
 describe('Sanctions no hit', () => {
   const TEST_TENANT_ID = getTestTenantId()
 
-  beforeAll(() => {
-    mockComplyAdvantageSearch(false)
-  })
-
   setUpRulesHooks(TEST_TENANT_ID, [
     {
       id: 'R-128',
@@ -156,7 +173,7 @@ describe('Sanctions no hit', () => {
           userId: '1-1',
           legalEntity: {
             companyGeneralDetails: {
-              legalName: 'Company Name',
+              legalName: 'Company Name 2',
             },
           },
           directors: [
@@ -164,7 +181,7 @@ describe('Sanctions no hit', () => {
               generalDetails: {
                 name: {
                   firstName: 'Director',
-                  lastName: '1',
+                  lastName: '2',
                 },
               },
             },
@@ -174,7 +191,7 @@ describe('Sanctions no hit', () => {
               generalDetails: {
                 name: {
                   firstName: 'Shareholder',
-                  lastName: '1',
+                  lastName: '2',
                 },
               },
             },

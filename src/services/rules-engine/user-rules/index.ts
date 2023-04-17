@@ -2,6 +2,7 @@ import { RuleHitResult } from '../rule'
 import { UserRule } from './rule'
 import SanctionsBankUserRule from './sanctions-bank-name'
 import SanctionsBusinessUserRule from './sanctions-business-user'
+import SanctionsConsumerUserRule from './sanctions-consumer-user'
 
 export class UserRuleBase extends UserRule<unknown> {
   public async computeRule(): Promise<RuleHitResult | undefined> {
@@ -13,6 +14,7 @@ export class UserRuleBase extends UserRule<unknown> {
 export const _USER_RULES = {
   'sanctions-business-user': SanctionsBusinessUserRule,
   'sanctions-bank-name': SanctionsBankUserRule,
+  'sanctions-consumer-user': SanctionsConsumerUserRule,
 } as const
 
 export type UserRuleImplementationName = keyof typeof _USER_RULES

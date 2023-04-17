@@ -9,6 +9,7 @@ import { TransactionFilters, UserFilters } from '../filters'
 import { USER_RULES, UserRuleImplementationName } from '../user-rules'
 import { SanctionsBusinessUserRuleParameters } from '../user-rules/sanctions-business-user'
 import { SanctionsBankUserRuleParameters } from '../user-rules/sanctions-bank-name'
+import { SanctionsConsumerUserRuleParameters } from '../user-rules/sanctions-consumer-user'
 import { TransactionAmountRuleParameters } from './transaction-amount'
 import { TransactionNewCountryRuleParameters } from './transaction-new-country'
 import { TransactionNewCurrencyRuleParameters } from './transaction-new-currency'
@@ -1244,7 +1245,7 @@ const _RULES_LIBRARY: Array<
 
     return {
       id: 'R-128',
-      name: 'Sanctions on Business legal entity & shareholders & directors',
+      name: 'Screening on Business legal entity & shareholders & directors',
       type: 'USER',
       description:
         'Sanctions/PEP/Adverse media screening on Business legal entity & shareholders & directors',
@@ -1257,6 +1258,7 @@ const _RULES_LIBRARY: Array<
       defaultNature: 'SCREENING',
       defaultCasePriority: 'P1',
       requiredFeatures: ['SANCTIONS'],
+      isOngoingScreening: true,
     }
   },
   () => {
@@ -1266,7 +1268,7 @@ const _RULES_LIBRARY: Array<
 
     return {
       id: 'R-32',
-      name: 'Sanctions on Bank name',
+      name: 'Screening on Bank name',
       type: 'USER',
       description:
         'Sanctions/PEP/Adverse media screening on Bank names. IBAN number resolution option available in rule configuration.',
@@ -1279,6 +1281,29 @@ const _RULES_LIBRARY: Array<
       defaultNature: 'SCREENING',
       defaultCasePriority: 'P1',
       requiredFeatures: ['SANCTIONS'],
+      isOngoingScreening: true,
+    }
+  },
+  () => {
+    const defaultParameters: SanctionsConsumerUserRuleParameters = {
+      fuzziness: 20,
+    }
+
+    return {
+      id: 'R-16',
+      name: 'Screening on Consumer users',
+      type: 'USER',
+      description: 'Sanctions/PEP/Adverse media screening on Consumer users.',
+      descriptionTemplate:
+        'Sanctions/PEP/Adverse media screening on Consumer users.',
+      defaultParameters,
+      defaultAction: 'SUSPEND',
+      ruleImplementationName: 'sanctions-consumer-user',
+      labels: [],
+      defaultNature: 'SCREENING',
+      defaultCasePriority: 'P1',
+      requiredFeatures: ['SANCTIONS'],
+      isOngoingScreening: true,
     }
   },
 ]

@@ -3615,6 +3615,8 @@ components:
           type: array
           items:
             $ref: '#/components/schemas/Feature'
+        isOngoingScreening:
+          type: boolean
       required:
         - id
         - type

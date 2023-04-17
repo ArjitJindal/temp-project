@@ -21,7 +21,7 @@ describe('Sanctions Service', () => {
     test('Search CA and persist the result', async () => {
       const service = new SanctionsService(TEST_TENANT_ID)
       const request: SanctionsSearchRequest = {
-        searchTerm: 'test',
+        searchTerm: '  fOO   Bar  ',
         fuzziness: 0.5,
         countryCodes: ['DE', 'FR'],
         yearOfBirth: 1992,
@@ -41,7 +41,7 @@ describe('Sanctions Service', () => {
         `https://api.complyadvantage.com/searches?api_key=fake`,
         {
           body: JSON.stringify({
-            search_term: 'test',
+            search_term: 'Foo Bar',
             fuzziness: 0.5,
             filters: { country_codes: ['DE', 'FR'], birth_year: 1992 },
           }),
