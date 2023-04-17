@@ -1,7 +1,14 @@
-import React, { useMemo, useState } from 'react';
+import React, { useCallback, useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
 import DetailsViewButton from '../DetailsViewButton';
-import { InternalTransaction, TransactionState, TransactionType } from '@/apis';
+import {
+  Alert,
+  ExecutedRulesResult,
+  InternalTransaction,
+  RuleAction,
+  TransactionState,
+  TransactionType,
+} from '@/apis';
 import { ActionRenderer, TableColumn, TableData } from '@/components/ui/Table/types';
 import { makeUrl } from '@/utils/routing';
 import { paymethodOptions, transactionType } from '@/utils/tags';
@@ -21,6 +28,8 @@ import { PaymentDetailsCard } from '@/components/ui/PaymentDetailsCard';
 import { PaymentMethodTag } from '@/components/ui/PaymentTypeTag';
 import { useFeatureEnabled } from '@/components/AppWrapper/Providers/SettingsProvider';
 import RiskLevelTag from '@/components/library/RiskLevelTag';
+import Button from '@/components/library/Button';
+import { RuleActionTag } from '@/components/rules/RuleActionTag';
 
 export interface TransactionsTableParams extends CommonParams {
   current?: string;
@@ -53,6 +62,10 @@ type Props = {
   adjustPagination?: boolean;
   disableHorizontalScrolling?: boolean;
   headerSubtitle?: string;
+  showCheckedTransactionsButton?: boolean;
+  isCheckedTransactionsEnabled?: boolean;
+  setIsCheckedTransactionsEnabled?: React.Dispatch<React.SetStateAction<boolean>>;
+  alert?: Alert;
 };
 
 export default function TransactionsTable(props: Props) {
@@ -70,7 +83,25 @@ export default function TransactionsTable(props: Props) {
     adjustPagination,
     headerSubtitle,
     disableHorizontalScrolling,
+    showCheckedTransactionsButton = false,
+    isCheckedTransactionsEnabled,
+    setIsCheckedTransactionsEnabled,
+    alert,
   } = props;
+
+  const getStatus = useCallback(
+    (executedRules: ExecutedRulesResult[]): RuleAction | undefined => {
+      if (alert) {
+        const ruleInstanceId = alert?.ruleInstanceId;
+        const executedRule = executedRules.find(
+          (rule) => rule.ruleInstanceId === ruleInstanceId,
+        ) as ExecutedRulesResult;
+        return executedRule.ruleHit ? executedRule.ruleAction : 'ALLOW';
+      }
+      return undefined;
+    },
+    [alert],
+  );
 
   const columns: TableColumn<InternalTransaction>[] = useMemo(
     () => [
@@ -121,6 +152,25 @@ export default function TransactionsTable(props: Props) {
             tooltip: 'Transaction Risk Score level',
           }
         : {},
+      alert
+        ? {
+            title: 'Status',
+            width: 80,
+            ellipsis: true,
+            dataIndex: 'executedRules.ruleAction',
+            render: (_, entity) => {
+              const executedRules = entity.executedRules;
+              const status = getStatus(executedRules);
+
+              return status ? (
+                <span>
+                  <RuleActionTag ruleAction={status} />
+                </span>
+              ) : null;
+            },
+          }
+        : {},
+
       {
         title: 'Transaction type',
         dataIndex: 'type',
@@ -373,7 +423,7 @@ export default function TransactionsTable(props: Props) {
         },
       },
     ],
-    [disableSorting, showDetailsView, isPulseEnabled],
+    [disableSorting, showDetailsView, isPulseEnabled, alert, getStatus],
   );
 
   return (
@@ -402,6 +452,20 @@ export default function TransactionsTable(props: Props) {
         () => {
           return (
             <>
+              {showCheckedTransactionsButton && (
+                <Button
+                  onClick={() => {
+                    if (setIsCheckedTransactionsEnabled) {
+                      setIsCheckedTransactionsEnabled((prevState) => !prevState);
+                    }
+                  }}
+                  type="TETRIARY"
+                  size="MEDIUM"
+                  style={{ marginRight: 8 }}
+                >
+                  {isCheckedTransactionsEnabled ? 'Hide' : 'Show'} checked #TX's
+                </Button>
+              )}
               <DetailsViewButton
                 onConfirm={(value) => {
                   setShowDetailsView(value);

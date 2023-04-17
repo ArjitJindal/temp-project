@@ -9,6 +9,7 @@ import TransactionsTable, {
   TransactionsTableParams,
 } from '@/pages/transactions/components/TransactionsTable';
 import Tabs from '@/components/library/Tabs';
+import AsyncResourceRenderer from '@/components/common/AsyncResourceRenderer';
 
 interface Props {
   alertId: string | null;
@@ -20,9 +21,10 @@ export default function ExpandedRowRenderer(props: Props) {
   const measure = useApiTime();
 
   const [params, setParams] = useState<TransactionsTableParams>(DEFAULT_PARAMS_STATE);
+  const [isCheckedTransactionsEnabled, setIsCheckedTransactionsEnabled] = useState(false);
 
   const transactionsResponse = usePaginatedQuery(
-    ALERT_ITEM_TRANSACTION_LIST(alertId ?? '', params),
+    ALERT_ITEM_TRANSACTION_LIST(alertId ?? '', { ...params, isCheckedTransactionsEnabled }),
     async (paginationParams) => {
       if (alertId == null) {
         throw new Error(`Unable to fetch transactions for alert, it's id is empty`);
@@ -32,6 +34,7 @@ export default function ExpandedRowRenderer(props: Props) {
           api.getAlertTransactionList({
             ...params,
             alertId,
+            showExecutedTransactions: isCheckedTransactionsEnabled,
             ...paginationParams,
           }),
         'Get Alert Transactions',
@@ -43,7 +46,7 @@ export default function ExpandedRowRenderer(props: Props) {
     },
   );
 
-  const commentsResponse = useQuery(ALERT_ITEM_COMMENTS(alertId ?? ''), async () => {
+  const alertResponse = useQuery(ALERT_ITEM_COMMENTS(alertId ?? ''), async () => {
     if (alertId == null) {
       throw new Error(`Unable to fetch alert, id is empty`);
     }
@@ -54,7 +57,7 @@ export default function ExpandedRowRenderer(props: Props) {
         }),
       'Get Alert',
     );
-    return alert.comments ?? [];
+    return alert;
   });
 
   return (
@@ -64,19 +67,27 @@ export default function ExpandedRowRenderer(props: Props) {
           tab: 'Transactions details',
           key: 'transactions',
           children: (
-            <TransactionsTable
-              queryResult={transactionsResponse}
-              params={params}
-              onChangeParams={setParams}
-              adjustPagination={true}
-              disableHorizontalScrolling
-            />
+            <AsyncResourceRenderer resource={alertResponse.data}>
+              {(alert) => (
+                <TransactionsTable
+                  queryResult={transactionsResponse}
+                  params={params}
+                  onChangeParams={setParams}
+                  adjustPagination={true}
+                  disableHorizontalScrolling
+                  showCheckedTransactionsButton={true}
+                  isCheckedTransactionsEnabled={isCheckedTransactionsEnabled}
+                  setIsCheckedTransactionsEnabled={setIsCheckedTransactionsEnabled}
+                  alert={alert}
+                />
+              )}
+            </AsyncResourceRenderer>
           ),
         },
         {
           tab: 'Comments',
           key: 'comments',
-          children: <Comments alertId={alertId} commentsRes={commentsResponse.data} />,
+          children: <Comments alertId={alertId} alertsRes={alertResponse.data} />,
         },
       ]}
     />

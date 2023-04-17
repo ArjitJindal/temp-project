@@ -2,7 +2,7 @@ import React, { useRef, useState } from 'react';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import s from './index.module.less';
 import * as Card from '@/components/ui/Card';
-import { Comment as ApiComment } from '@/apis';
+import { Alert, Comment as ApiComment } from '@/apis';
 import Comment from '@/components/CommentsCard/Comment';
 import { useAuth0User } from '@/utils/user-utils';
 import { getMutationAsyncResource } from '@/utils/queries/hooks';
@@ -19,11 +19,11 @@ import { message } from '@/components/library/Message';
 
 interface Props {
   alertId: string | null;
-  commentsRes: AsyncResource<ApiComment[]>;
+  alertsRes: AsyncResource<Alert>;
 }
 
 export default function Comments(props: Props) {
-  const { alertId, commentsRes } = props;
+  const { alertId, alertsRes } = props;
   const user = useAuth0User();
   const api = useApi();
   const currentUserId = user.userId ?? undefined;
@@ -92,13 +92,13 @@ export default function Comments(props: Props) {
   );
 
   return (
-    <AsyncResourceRenderer<ApiComment[]> resource={commentsRes}>
-      {(comments) => (
+    <AsyncResourceRenderer<Alert> resource={alertsRes}>
+      {(alert) => (
         <Card.Root collapsable={false}>
           <Card.Section>
-            {comments.length > 0 ? (
+            {alert && alert?.comments?.length ? (
               <div className={s.list}>
-                {comments.map((comment) => (
+                {alert.comments.map((comment) => (
                   <Comment
                     key={comment.id}
                     comment={comment}
