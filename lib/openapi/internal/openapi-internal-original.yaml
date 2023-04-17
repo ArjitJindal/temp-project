@@ -2354,6 +2354,10 @@ paths:
           $ref: '#/components/schemas/Page'
         in: query
         name: page
+      - schema:
+          type: boolean
+        in: query
+        name: showExecutedTransactions
     get:
       summary: Alerts - Item - Transaction List
       operationId: get-alert-transaction-list

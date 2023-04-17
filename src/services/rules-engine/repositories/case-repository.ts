@@ -23,6 +23,7 @@ import { Alert } from '@/@types/openapi-internal/Alert'
 import { Assignment } from '@/@types/openapi-internal/Assignment'
 import {
   DefaultApiGetAlertListRequest,
+  DefaultApiGetAlertTransactionListRequest,
   DefaultApiGetCaseListRequest,
 } from '@/@types/openapi-internal/RequestParameters'
 import { EntityCounter } from '@/@types/openapi-internal/EntityCounter'
@@ -1110,6 +1111,15 @@ export class CaseRepository {
     )
   }
 
+  public async getCaseByAlertId(alertId: string): Promise<Case | null> {
+    const db = this.mongoDb.db()
+    const collection = db.collection<Case>(CASES_COLLECTION(this.tenantId))
+    const caseItem = await collection.findOne({
+      'alerts.alertId': alertId,
+    })
+    return caseItem ?? null
+  }
+
   public async getCaseById(caseId: string): Promise<Case | null> {
     const db = this.mongoDb.db()
     const collection = db.collection<Case>(CASES_COLLECTION(this.tenantId))
@@ -1159,7 +1169,7 @@ export class CaseRepository {
     })
   }
 
-  public async getAlertTransactions(
+  public async getAlertTransactionsHit(
     alertId: string,
     params: OptionalPaginationParams
   ): Promise<TransactionsListResponse> {
@@ -1180,6 +1190,51 @@ export class CaseRepository {
       page: params.page,
       pageSize: params.pageSize,
     })
+  }
+
+  public async getAlertTransactionsExecuted(
+    alertId: string,
+    params: OptionalPagination<DefaultApiGetAlertTransactionListRequest>
+  ): Promise<TransactionsListResponse> {
+    const case_ = await this.getCaseByAlertId(alertId)
+
+    if (case_ == null) {
+      throw new NotFound(`Case not found for alert "${alertId}"`)
+    }
+
+    const alert = case_.alerts?.find((a) => a.alertId === alertId)
+    if (alert == null) {
+      throw new NotFound(`Alert "${alertId}" not found `)
+    }
+
+    const userId =
+      case_?.caseUsers?.origin?.userId ?? case_?.caseUsers?.destination?.userId
+
+    if (!userId) {
+      throw new NotFound(`User not found for case "${case_.caseId}"`)
+    }
+
+    const transactionsRepo = new MongoDbTransactionRepository(
+      this.tenantId,
+      this.mongoDb
+    )
+
+    const transactions = await transactionsRepo.getExecutedTransactionsOfAlert(
+      userId,
+      alert.ruleInstanceId,
+      { page: params.page, pageSize: params.pageSize }
+    )
+
+    const transactionsCount =
+      await transactionsRepo.getExecutedTransactionsOfAlertCount(
+        userId,
+        alert.ruleInstanceId
+      )
+
+    return {
+      total: transactionsCount,
+      data: transactions,
+    }
   }
 
   private getCaseRulesMongoPipeline(caseFilter: string) {

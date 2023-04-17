@@ -5,6 +5,7 @@ import { Comment } from '@/@types/openapi-internal/Comment'
 import { FileInfo } from '@/@types/openapi-internal/FileInfo'
 import {
   DefaultApiGetAlertListRequest,
+  DefaultApiGetAlertTransactionListRequest,
   DefaultApiGetCaseListRequest,
 } from '@/@types/openapi-internal/RequestParameters'
 import { CaseRepository } from '@/services/rules-engine/repositories/case-repository'
@@ -17,7 +18,7 @@ import { CaseStatusChange } from '@/@types/openapi-internal/CaseStatusChange'
 import { TransactionUpdateRequest } from '@/@types/openapi-internal/TransactionUpdateRequest'
 import { TransactionsListResponse } from '@/@types/openapi-internal/TransactionsListResponse'
 import { RulesHitPerCase } from '@/@types/openapi-internal/RulesHitPerCase'
-import { PaginationParams } from '@/utils/pagination'
+import { OptionalPagination, PaginationParams } from '@/utils/pagination'
 import { DashboardStatsRepository } from '@/lambdas/console-api-dashboard/repositories/dashboard-stats-repository'
 import { addNewSubsegment } from '@/core/xray'
 import { sendWebhookTasks } from '@/services/webhook/utils'
@@ -218,9 +219,19 @@ export class CaseService {
 
   public async getAlertTransactions(
     alertId: string,
-    params: PaginationParams
+    params: OptionalPagination<DefaultApiGetAlertTransactionListRequest>
   ): Promise<TransactionsListResponse> {
-    return await this.caseRepository.getAlertTransactions(alertId, params)
+    if (!params?.showExecutedTransactions) {
+      return await this.caseRepository.getAlertTransactionsHit(alertId, {
+        page: params?.page,
+        pageSize: params?.pageSize,
+      })
+    } else {
+      return await this.caseRepository.getAlertTransactionsExecuted(
+        alertId,
+        params
+      )
+    }
   }
 
   public async getCaseRules(caseId: string): Promise<Array<RulesHitPerCase>> {

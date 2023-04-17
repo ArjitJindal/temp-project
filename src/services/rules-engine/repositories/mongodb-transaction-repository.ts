@@ -16,6 +16,7 @@ import {
   TRANSACTIONS_COLLECTION,
   USERS_COLLECTION,
   prefixRegexMatchFilter,
+  paginateCursor,
 } from '@/utils/mongoDBUtils'
 import { InternalTransaction } from '@/@types/openapi-internal/InternalTransaction'
 import { RuleAction } from '@/@types/openapi-internal/RuleAction'
@@ -29,7 +30,11 @@ import { getTimeLabels } from '@/lambdas/console-api-dashboard/utils'
 import { TransactionsStatsByTimeResponse } from '@/@types/openapi-internal/TransactionsStatsByTimeResponse'
 import { TransactionsUniquesField } from '@/@types/openapi-internal/TransactionsUniquesField'
 import { neverThrow } from '@/utils/lang'
-import { OptionalPagination, COUNT_QUERY_LIMIT } from '@/utils/pagination'
+import {
+  OptionalPagination,
+  COUNT_QUERY_LIMIT,
+  OptionalPaginationParams,
+} from '@/utils/pagination'
 import { PaymentDetails } from '@/@types/tranasction/payment-type'
 import { getPaymentDetailsIdentifiers } from '@/core/dynamodb/dynamodb-keys'
 
@@ -381,6 +386,53 @@ export class MongoDbTransactionRepository
       TRANSACTIONS_COLLECTION(this.tenantId)
     )
     return collection.findOne<InternalTransaction>({ transactionId })
+  }
+
+  private getExecutedTransactionsMongoQuery(
+    userId: string,
+    ruleInstanceId: string
+  ): Filter<InternalTransaction> {
+    const query: Filter<InternalTransaction> = {
+      $or: [
+        { originUserId: { $in: [userId] } },
+        { destinationUserId: { $in: [userId] } },
+      ],
+      'executedRules.ruleInstanceId': ruleInstanceId,
+    }
+
+    return query
+  }
+
+  public async getExecutedTransactionsOfAlert(
+    userId: string,
+    ruleInstanceId: string,
+    pagination: OptionalPaginationParams
+  ): Promise<InternalTransaction[]> {
+    const db = this.mongoDb.db()
+    const collection = db.collection<InternalTransaction>(
+      TRANSACTIONS_COLLECTION(this.tenantId)
+    )
+
+    const query = this.getExecutedTransactionsMongoQuery(userId, ruleInstanceId)
+
+    const cursor = collection.find(query).sort({ timestamp: -1 })
+    const paginatedCursor = paginateCursor(cursor, pagination)
+
+    return await paginatedCursor.toArray()
+  }
+
+  public async getExecutedTransactionsOfAlertCount(
+    userId: string,
+    ruleInstanceId: string
+  ): Promise<number> {
+    const db = this.mongoDb.db()
+    const collection = db.collection<InternalTransaction>(
+      TRANSACTIONS_COLLECTION(this.tenantId)
+    )
+
+    const query = this.getExecutedTransactionsMongoQuery(userId, ruleInstanceId)
+
+    return await collection.countDocuments(query, { limit: COUNT_QUERY_LIMIT })
   }
 
   public async getUniques(
