@@ -44,6 +44,8 @@ import {
 } from '@/utils/pagination'
 import { Tag } from '@/@types/openapi-public/Tag'
 import { UserRegistrationStatus } from '@/@types/openapi-internal/UserRegistrationStatus'
+import { BusinessWithRulesResult } from '@/@types/openapi-internal/BusinessWithRulesResult'
+import { UserWithRulesResult } from '@/@types/openapi-internal/UserWithRulesResult'
 
 export class UserRepository {
   dynamoDb: DynamoDBDocumentClient
@@ -401,8 +403,10 @@ export class UserRepository {
     return { total, data: users }
   }
 
-  public async getBusinessUser(userId: string): Promise<Business | undefined> {
-    return await this.getUser<Business>(userId)
+  public async getBusinessUser(
+    userId: string
+  ): Promise<BusinessWithRulesResult | undefined> {
+    return await this.getUser<BusinessWithRulesResult>(userId)
   }
 
   public async getConsumerUser(userId: string): Promise<User | undefined> {
@@ -496,12 +500,14 @@ export class UserRepository {
     return user as T
   }
 
-  public async saveBusinessUser(user: Business): Promise<Business> {
-    return (await this.saveUser(user, 'BUSINESS')) as Business
+  public async saveBusinessUser(
+    user: BusinessWithRulesResult
+  ): Promise<Business> {
+    return (await this.saveUser(user, 'BUSINESS')) as BusinessWithRulesResult
   }
 
-  public async saveConsumerUser(user: User): Promise<User> {
-    return (await this.saveUser(user, 'CONSUMER')) as User
+  public async saveConsumerUser(user: User): Promise<UserWithRulesResult> {
+    return (await this.saveUser(user, 'CONSUMER')) as UserWithRulesResult
   }
 
   private sanitizeUserInPlace(user: User | Business) {
@@ -525,9 +531,9 @@ export class UserRepository {
   }
 
   public async saveUser(
-    user: User | Business,
+    user: UserWithRulesResult | BusinessWithRulesResult,
     type: UserType
-  ): Promise<User | Business> {
+  ): Promise<UserWithRulesResult | BusinessWithRulesResult> {
     this.sanitizeUserInPlace(user)
     const userId = user.userId
     const newUser = {
@@ -558,17 +564,24 @@ export class UserRepository {
   }
 
   public async saveUserMongo(
-    user: (User | Business) & { krsScore?: KrsScore; drsScore?: DrsScore }
-  ): Promise<(User | Business) & { krsScore?: KrsScore; drsScore?: DrsScore }> {
+    user: UserWithRulesResult | BusinessWithRulesResult
+  ): Promise<InternalConsumerUser | InternalBusinessUser> {
     const db = this.mongoDb.db()
-    const userCollection = db.collection<
-      (User | Business) & { krsScore?: KrsScore; drsScore?: DrsScore }
-    >(USERS_COLLECTION(this.tenantId))
 
-    await userCollection.replaceOne({ userId: user.userId }, user, {
+    const users = await this.getMongoUsersByIds([user.userId])
+    const existingUser = users[0] as InternalUser
+    const updatedUser = {
+      ...existingUser,
+      ...user,
+    }
+    const userCollection = db.collection<InternalUser>(
+      USERS_COLLECTION(this.tenantId)
+    )
+
+    await userCollection.replaceOne({ userId: user.userId }, updatedUser, {
       upsert: true,
     })
-    return user
+    return updatedUser
   }
 
   public async deleteUser(userId: string): Promise<void> {

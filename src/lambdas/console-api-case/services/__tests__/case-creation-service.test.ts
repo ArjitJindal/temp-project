@@ -9,16 +9,26 @@ import { MongoDbTransactionRepository } from '@/services/rules-engine/repositori
 import { getTestTransaction } from '@/test-utils/transaction-test-utils'
 import {
   bulkVerifyTransactions,
+  bulkVerifyUsers,
   setUpRulesHooks,
 } from '@/test-utils/rule-test-utils'
-import { getTestUser, setUpUsersHooks } from '@/test-utils/user-test-utils'
+import {
+  getTestBusiness,
+  getTestUser,
+  setUpUsersHooks,
+} from '@/test-utils/user-test-utils'
 import { Case } from '@/@types/openapi-internal/Case'
 import { RuleHitDirection } from '@/@types/openapi-public/RuleHitDirection'
 import { getMongoDbClient } from '@/utils/mongoDBUtils'
 import { Priority } from '@/@types/openapi-internal/Priority'
 import { Alert } from '@/@types/openapi-internal/Alert'
-import { RuleInstance } from '@/@types/openapi-internal/RuleInstance'
+import {
+  RuleInstance,
+  RuleInstanceTypeEnum,
+} from '@/@types/openapi-internal/RuleInstance'
 import { HitRulesDetails } from '@/@types/openapi-internal/HitRulesDetails'
+import { InternalBusinessUser } from '@/@types/openapi-internal/InternalBusinessUser'
+import { InternalConsumerUser } from '@/@types/openapi-internal/InternalConsumerUser'
 
 dynamoDbSetupHook()
 
@@ -51,7 +61,7 @@ async function getService(tenantId: string) {
 const TEST_USER_1 = getTestUser({ userId: 'test_user_id_1' })
 const TEST_USER_2 = getTestUser({ userId: 'test_user_id_2' })
 
-describe('Cases', () => {
+describe('Cases (Transaction hit)', () => {
   describe('Run #1', () => {
     const TEST_TENANT_ID = getTestTenantId()
     setup(TEST_TENANT_ID)
@@ -589,7 +599,7 @@ describe('Cases', () => {
       expect(cases[0].alerts).toEqual([
         expect.objectContaining({
           alertStatus: 'OPEN',
-          ruleId: 'TEST-R-0',
+          ruleId: 'TRANSACTION-R-0',
           ruleName: 'test rule name',
           ruleDescription: 'test rule description.',
           ruleAction: 'FLAG',
@@ -601,7 +611,7 @@ describe('Cases', () => {
         }),
         expect.objectContaining({
           alertStatus: 'OPEN',
-          ruleId: 'TEST-R-1',
+          ruleId: 'TRANSACTION-R-1',
           ruleName: 'test rule name',
           ruleDescription: 'test rule description.',
           ruleAction: 'FLAG',
@@ -656,6 +666,62 @@ describe('Cases', () => {
       expect(cases2[0]?.caseTransactions).toHaveLength(1)
       expect(cases2[0].caseTransactions?.[0]?.hitRules).toEqual(result.hitRules)
     })
+  })
+})
+
+describe('Cases (User hit)', () => {
+  const TEST_TENANT_ID = getTestTenantId()
+  setup(TEST_TENANT_ID, { ruleType: 'USER' })
+  setup(TEST_TENANT_ID, { ruleType: 'TRANSACTION' })
+
+  test('Create a new case for a user rule hit', async () => {
+    const caseCreationService = await getService(TEST_TENANT_ID)
+    const user = getTestBusiness()
+    const results = await bulkVerifyUsers(TEST_TENANT_ID, [user])
+    expect(results).toHaveLength(1)
+    const [result] = results
+
+    const internalUser: InternalBusinessUser = {
+      type: 'BUSINESS',
+      ...user,
+      ...result,
+    }
+    const cases = await caseCreationService.handleUser(internalUser)
+    expect(cases).toHaveLength(1)
+    expect(cases[0].alerts).toHaveLength(1)
+    expectUserCase(cases, {
+      originUserId: user.userId,
+    })
+  })
+
+  test('Merge a user rule alert into an existing case', async () => {
+    const caseCreationService = await getService(TEST_TENANT_ID)
+    const transaction = getTestTransaction({
+      transactionId: '111',
+      originUserId: TEST_USER_1.userId,
+      destinationUserId: undefined,
+    })
+    const results = await bulkVerifyTransactions(TEST_TENANT_ID, [transaction])
+    const [result] = results
+    await caseCreationService.handleTransaction({
+      ...transaction,
+      ...result,
+    })
+
+    const userResults = await bulkVerifyUsers(TEST_TENANT_ID, [TEST_USER_1])
+    const internalUser = {
+      type: 'CONSUMER',
+      ...TEST_USER_1,
+      ...userResults[0],
+    } as InternalConsumerUser
+
+    await caseCreationService.handleUser(internalUser)
+    const cases = await caseCreationService.handleUser(internalUser)
+
+    expect(cases).toHaveLength(1)
+    expect(cases[0].alerts).toHaveLength(2)
+    expect(cases[0].alerts?.[0].ruleId).toBe('TRANSACTION-R-0')
+    expect(cases[0].alerts?.[1].ruleId).toBe('USER-R-0')
   })
 })
 
@@ -778,13 +844,15 @@ function setup(
   parameters: {
     hitDirections?: RuleHitDirection[]
     rulesCount?: number
+    ruleType?: RuleInstanceTypeEnum
   } = {}
 ) {
+  const ruleType = parameters.ruleType ?? 'TRANSACTION'
   for (let i = 0; i < (parameters.rulesCount ?? 1); i += 1) {
     setUpRulesHooks(tenantId, [
       {
-        id: `TEST-R-${i}`,
-        type: 'TRANSACTION',
+        id: `${ruleType}-R-${i}`,
+        type: ruleType,
         ruleImplementationName: 'tests/test-always-hit-rule',
         parameters: {
           hitDirections: parameters.hitDirections,

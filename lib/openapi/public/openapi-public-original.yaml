@@ -4801,6 +4801,36 @@ components:
           type: array
           items:
             type: string
+    UserWithRulesResult:
+      title: UserWithRulesResult
+      description: Model for consumer user payload with rules result
+      allOf:
+        - $ref: '#/components/schemas/User'
+        - type: object
+          properties:
+            executedRules:
+              type: array
+              items:
+                $ref: '#/components/schemas/ExecutedRulesResult'
+            hitRules:
+              type: array
+              items:
+                $ref: '#/components/schemas/HitRulesDetails'
+    BusinessWithRulesResult:
+      title: BusinessWithRulesResult
+      description: Model for business payload with rules result
+      allOf:
+        - $ref: '#/components/schemas/Business'
+        - type: object
+          properties:
+            executedRules:
+              type: array
+              items:
+                $ref: '#/components/schemas/ExecutedRulesResult'
+            hitRules:
+              type: array
+              items:
+                $ref: '#/components/schemas/HitRulesDetails'
   securitySchemes:
     x-api-key:
       name: x-api-key

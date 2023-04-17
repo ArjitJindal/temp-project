@@ -8,15 +8,12 @@ import {
   TRANSACTION_EVENTS_COLLECTION,
 } from '@/utils/mongoDBUtils'
 import { TransactionWithRulesResult } from '@/@types/openapi-public/TransactionWithRulesResult'
-import { Business } from '@/@types/openapi-public/Business'
-import { User } from '@/@types/openapi-public/User'
 import { DashboardStatsRepository } from '@/lambdas/console-api-dashboard/repositories/dashboard-stats-repository'
 import { lambdaConsumer } from '@/core/middlewares/lambda-consumer-middlewares'
 import { MongoDbTransactionRepository } from '@/services/rules-engine/repositories/mongodb-transaction-repository'
 import { NewCaseAlertPayload } from '@/@types/alert/alert-payload'
 import { TenantRepository } from '@/services/tenants/repositories/tenant-repository'
 
-import { RuleAction } from '@/@types/openapi-internal/RuleAction'
 import { TransactionEvent } from '@/@types/openapi-public/TransactionEvent'
 import { logger } from '@/core/logger'
 import { ConsumerUserEvent } from '@/@types/openapi-public/ConsumerUserEvent'
@@ -32,8 +29,53 @@ import { tenantHasFeature } from '@/core/middlewares/tenant-has-feature'
 import { DeviceMetric } from '@/@types/openapi-public-device-data/DeviceMetric'
 import { MetricsRepository } from '@/services/rules-engine/repositories/metrics'
 import { RiskRepository } from '@/services/risk-scoring/repositories/risk-repository'
+import { Case } from '@/@types/openapi-internal/Case'
+import { BusinessWithRulesResult } from '@/@types/openapi-internal/BusinessWithRulesResult'
+import { UserWithRulesResult } from '@/@types/openapi-internal/UserWithRulesResult'
 
 const sqs = new AWS.SQS()
+
+async function handleNewCases(
+  tenantId: string,
+  timestampBeforeCasesCreation: number,
+  cases: Case[]
+) {
+  const mongoDb = await getMongoDbClient()
+  const dashboardStatsRepository = new DashboardStatsRepository(tenantId, {
+    mongoDb,
+  })
+
+  // Update dashboard stats
+  await Promise.all(
+    cases.map((c) =>
+      dashboardStatsRepository.refreshCaseStats(c.createdTimestamp)
+    )
+  )
+
+  const tenantRepository = new TenantRepository(tenantId, {
+    mongoDb: await getMongoDbClient(),
+  })
+  const newCases = cases.filter(
+    (c) =>
+      c.createdTimestamp && c.createdTimestamp >= timestampBeforeCasesCreation
+  )
+  if (await tenantRepository.getTenantMetadata('SLACK_WEBHOOK')) {
+    for (const caseItem of newCases) {
+      logger.info(`Sending slack alert SQS message for case ${caseItem.caseId}`)
+      const payload: NewCaseAlertPayload = {
+        kind: 'NEW_CASE',
+        tenantId,
+        caseId: caseItem.caseId as string,
+      }
+      await sqs
+        .sendMessage({
+          MessageBody: JSON.stringify(payload),
+          QueueUrl: process.env.SLACK_ALERT_QUEUE_URL as string,
+        })
+        .promise()
+    }
+  }
+}
 
 async function transactionHandler(
   tenantId: string,
@@ -70,18 +112,11 @@ async function transactionHandler(
     mongoDb,
   })
 
-  const transactionId = transaction.transactionId
-  let currentStatus: RuleAction | null = null
-  if (transactionId != null) {
-    currentStatus =
-      (await transactionsRepo.getInternalTransactionById(transactionId))
-        ?.status ?? null
-  }
   const transactionInMongo = await transactionsRepo.addTransactionToMongo(
     transaction
   )
-  const newStatus = transactionInMongo.status
   logger.info(`Starting Case Creation`)
+  const timestampBeforeCasesCreation = Date.now()
   const cases = await caseCreationService.handleTransaction(transactionInMongo)
   logger.info(`Case Creation Completed`)
   if (await tenantHasFeature(tenantId, 'PULSE')) {
@@ -101,55 +136,40 @@ async function transactionHandler(
     logger.info(`DRS Updated in Cases`)
   }
 
-  // Update dashboard stats
-  await Promise.all([
-    dashboardStatsRepository.refreshTransactionStats(transaction.timestamp),
-    ...cases.map((c) =>
-      dashboardStatsRepository.refreshCaseStats(c.createdTimestamp)
-    ),
-  ])
-
-  // New case slack alert: We only create alert for new transactions. Skip for existing transactions.
-  if (!currentStatus && newStatus !== 'ALLOW' && cases.length > 0) {
-    const tenantRepository = new TenantRepository(tenantId, {
-      mongoDb: await getMongoDbClient(),
-    })
-    if (await tenantRepository.getTenantMetadata('SLACK_WEBHOOK')) {
-      for (const caseItem of cases) {
-        logger.info(
-          `Sending slack alert SQS message for transaction ${transactionId}`
-        )
-        const payload: NewCaseAlertPayload = {
-          kind: 'NEW_CASE',
-          tenantId,
-          caseId: caseItem.caseId as string,
-        }
-        await sqs
-          .sendMessage({
-            MessageBody: JSON.stringify(payload),
-            QueueUrl: process.env.SLACK_ALERT_QUEUE_URL as string,
-          })
-          .promise()
-      }
-    }
-  }
+  await dashboardStatsRepository.refreshTransactionStats(transaction.timestamp)
+  await handleNewCases(tenantId, timestampBeforeCasesCreation, cases)
 }
 
 async function userHandler(
   tenantId: string,
-  user: Business | User | undefined
+  user: BusinessWithRulesResult | UserWithRulesResult | undefined
 ) {
   if (!user) {
     return
   }
-
-  const mongoDb = await getMongoDbClient()
   updateLogMetadata({ userId: user.userId })
   logger.info(`Processing User`)
+
+  const mongoDb = await getMongoDbClient()
+  const dynamoDb = await getDynamoDbClient()
+  const transactionsRepo = new MongoDbTransactionRepository(tenantId, mongoDb)
+  const casesRepo = new CaseRepository(tenantId, {
+    mongoDb,
+    dynamoDb,
+  })
   const dashboardStatsRepository = new DashboardStatsRepository(tenantId, {
     mongoDb,
   })
-  const usersRepo = new UserRepository(tenantId, { mongoDb })
+  const ruleInstancesRepo = new RuleInstanceRepository(tenantId, {
+    dynamoDb,
+  })
+  const usersRepo = new UserRepository(tenantId, { mongoDb, dynamoDb })
+  const caseCreationService = new CaseCreationService(
+    casesRepo,
+    usersRepo,
+    ruleInstancesRepo,
+    transactionsRepo
+  )
 
   if (await tenantHasFeature(tenantId, 'PULSE')) {
     const dynamoDb = await getDynamoDbClient()
@@ -177,16 +197,17 @@ async function userHandler(
     }
   }
 
-  await usersRepo.saveUserMongo(user)
+  const savedUser = await usersRepo.saveUserMongo(user)
 
   if (await tenantHasFeature(tenantId, 'PULSE')) {
     logger.info(`Refreshing DRS User distribution stats`)
     await dashboardStatsRepository.refreshUserStats()
     logger.info(`Refreshing DRS User distribution stats - completed`)
   }
-  const casesRepo = new CaseRepository(tenantId, {
-    mongoDb,
-  })
+
+  const timestampBeforeCasesCreation = Date.now()
+  const cases = await caseCreationService.handleUser(savedUser)
+  await handleNewCases(tenantId, timestampBeforeCasesCreation, cases)
   await casesRepo.updateUsersInCases(user)
 }
 

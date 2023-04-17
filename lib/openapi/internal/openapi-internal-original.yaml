@@ -4124,7 +4124,7 @@ components:
         - data
     InternalConsumerUser:
       allOf:
-        - $ref: ../public/openapi-public-original.yaml#/components/schemas/User
+        - $ref: ../public/openapi-public-original.yaml#/components/schemas/UserWithRulesResult
         - type: object
           properties:
             type:
@@ -4145,7 +4145,7 @@ components:
             - type
     InternalBusinessUser:
       allOf:
-        - $ref: ../public/openapi-public-original.yaml#/components/schemas/Business
+        - $ref: ../public/openapi-public-original.yaml#/components/schemas/BusinessWithRulesResult
         - type: object
           properties:
             type:
@@ -5102,6 +5102,8 @@ components:
           type: string
         ruleAction:
           $ref: '#/components/schemas/RuleAction'
+        ruleHitMeta:
+          $ref: ../public/openapi-public-original.yaml#/components/schemas/RuleHitMeta
         numberOfTransactionsHit:
           type: integer
         priority:
@@ -5132,7 +5134,6 @@ components:
             $ref: '#/components/schemas/Comment'
       required:
         - createdTimestamp
-        - latestTransactionArrivalTimestamp
         - ruleInstanceId
         - ruleName
         - ruleDescription
