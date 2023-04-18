@@ -1,4 +1,5 @@
 /// <reference types="cypress" />
+const TABLE_SELECTOR = '[data-test="table"]';
 
 describe('navigate sidebar', () => {
   beforeEach(() => {
@@ -11,21 +12,20 @@ describe('navigate sidebar', () => {
 
     cy.visit('/case-management/cases');
     cy.get('h2', { timeout: 8000 }).contains('Case Management');
-    cy.get('.ant-table', { timeout: 3000 });
-    cy.get('.ant-table', { timeout: 3000 });
+    cy.get(TABLE_SELECTOR, { timeout: 3000 });
     cy.visit('/transactions/list');
     cy.get('h2', { timeout: 3000 }).contains('Transactions');
-    cy.get('.ant-table', { timeout: 3000 });
+    cy.get(TABLE_SELECTOR, { timeout: 3000 });
     cy.visit('/users/list/business/all');
-    cy.get('.ant-table', { timeout: 3000 });
+    cy.get(TABLE_SELECTOR, { timeout: 3000 });
     cy.visit('/users/list/consumer/all');
-    cy.get('.ant-table', { timeout: 3000 });
+    cy.get(TABLE_SELECTOR, { timeout: 3000 });
     cy.get('h2', { timeout: 3000 }).contains('Users');
     cy.visit('/rules/rules-library');
-    cy.get('.ant-table', { timeout: 3000 });
+    cy.get(TABLE_SELECTOR, { timeout: 3000 });
     cy.get('h2', { timeout: 3000 }).contains('Rules Library');
     cy.visit('/rules/my-rules');
-    cy.get('.ant-table', { timeout: 3000 });
+    cy.get(TABLE_SELECTOR, { timeout: 3000 });
     cy.get('h2', { timeout: 3000 }).contains('My Rules');
   });
 });

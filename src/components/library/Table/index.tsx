@@ -152,7 +152,7 @@ function Table<Item extends object, Params extends object = CommonParams>(
 
   const rows = table.getRowModel().rows;
   return (
-    <div className={cn(s.root, s[`sizingMode-${sizingMode}`])}>
+    <div className={cn(s.root, s[`sizingMode-${sizingMode}`])} data-test="table">
       <Header<Item, Params>
         table={table}
         columns={columns}
