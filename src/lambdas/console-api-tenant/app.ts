@@ -52,15 +52,16 @@ export const tenantsHandler = lambdaApi()(
       event.body
     ) {
       assertRole({ role, verifiedEmail }, 'root')
-      const randomizedId = customAlphabet(
+      const newTenantId = customAlphabet(
         '1234567890ABCDEFGHIJKLMNOPQRSTUVWXYZ',
         10
       )()
 
       const request = JSON.parse(event.body) as TenantCreationRequest
-      const bodyTenantId = request.tenantId
+      const requestTenantId = request.tenantId
+      const tenantId = requestTenantId || newTenantId
 
-      const tenantService = new TenantService(bodyTenantId ?? randomizedId, {
+      const tenantService = new TenantService(tenantId, {
         mongoDb,
         dynamoDb: getDynamoDbClientByEvent(event),
       })
@@ -70,7 +71,7 @@ export const tenantsHandler = lambdaApi()(
       // Create demo mode environment in non-prod environments.
       if (envIsNot('prod')) {
         const fullTenantId = getFullTenantId(
-          bodyTenantId as string,
+          tenantId,
           request.features.indexOf('DEMO_MODE') > -1
         )
         const batchJob: DemoModeDataLoadBatchJob = {
