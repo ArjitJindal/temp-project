@@ -10,7 +10,7 @@ mkdir -p /tmp/flagright/phytoplankton || true
 yarn exec openapi-generator-cli generate -- -i config/openapi.yaml -g typescript -o /tmp/flagright/phytoplankton --additional-properties=modelPropertyNaming=original --template-dir build/openapi_generate_templates/custom
 mv /tmp/flagright/phytoplankton/models src/apis/models-custom
 
-FILES=("src/apis/models/Business.ts" "src/apis/models/InternalBusinessUser.ts" "src/apis/models/InternalUser.ts" "src/apis/models/InternalBusinessUser.ts" "src/apis/models/BusinessOptional.ts")
+FILES=("src/apis/models/Business.ts" "src/apis/models/InternalBusinessUser.ts" "src/apis/models/InternalUser.ts" "src/apis/models/InternalBusinessUser.ts" "src/apis/models/BusinessOptional.ts" "src/apis/models/BusinessWithRulesResult.ts")
 SED_REPLACE="/import { CardDetails | GenericBankAccountDetails | IBANDetails | ACHDetails | SWIFTDetails | MpesaDetails | UPIDetails | WalletDetails | CheckDetails } from '.\/CardDetails | GenericBankAccountDetails | IBANDetails | ACHDetails | SWIFTDetails | MpesaDetails | UPIDetails | WalletDetails | CheckDetails';/d"
 # Fix wrong TS types
 if [ "$(uname)" = "Darwin" ]; then
