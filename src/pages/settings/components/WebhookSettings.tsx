@@ -1,5 +1,5 @@
 import { Drawer, Switch, Tag } from 'antd';
-import { useRef, useCallback, useState } from 'react';
+import { useCallback, useRef, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { PlusOutlined } from '@ant-design/icons';
 import { WebhookDetails } from './WebhookDetails';
@@ -7,11 +7,11 @@ import { WebhookConfiguration, WebhookEventType } from '@/apis';
 import { useApi } from '@/api';
 import Colors from '@/components/ui/colors';
 import Button from '@/components/library/Button';
-import { TableActionType } from '@/components/ui/Table';
-import { TableColumn } from '@/components/ui/Table/types';
+import { TableColumn, TableRefType } from '@/components/library/Table/types';
 import { WEBHOOKS_LIST } from '@/utils/queries/keys';
 import { usePaginatedQuery } from '@/utils/queries/hooks';
 import QueryResultsTable from '@/components/common/QueryResultsTable';
+import { ColumnHelper } from '@/components/library/Table/columnHelper';
 import { message } from '@/components/library/Message';
 
 export const WebhookSettings: React.FC = () => {
@@ -20,7 +20,7 @@ export const WebhookSettings: React.FC = () => {
   const [updatedWebhooks, setUpdatedWebhooks] = useState<{ [key: string]: WebhookConfiguration }>(
     {},
   );
-  const actionRef = useRef<TableActionType>(null);
+  const actionRef = useRef<TableRefType>(null);
   const handleSaveWebhook = useCallback(
     async (newWebhook: WebhookConfiguration) => {
       const hideMessage = message.loading('Saving...');
@@ -67,57 +67,69 @@ export const WebhookSettings: React.FC = () => {
     [api],
   );
 
-  const columns: TableColumn<WebhookConfiguration>[] = [
-    {
+  const helper = new ColumnHelper<WebhookConfiguration>();
+  const columns: TableColumn<WebhookConfiguration>[] = helper.list([
+    helper.derived<WebhookConfiguration>({
       title: 'Endpoint URL',
-      width: 200,
-      render: (_, entity) => {
-        const webhook = updatedWebhooks[entity._id as string] ?? entity;
-        return (
-          <Link
-            to=""
-            onClick={() => setSelectedWebhook(webhook)}
-            style={{ color: Colors.brandBlue.base }}
-          >
-            {webhook.webhookUrl}
-          </Link>
-        );
+      value: (entity): WebhookConfiguration | undefined => {
+        return updatedWebhooks[entity._id as string] ?? entity;
       },
-      exportData: (row) => row.webhookUrl,
-    },
-    {
+      type: {
+        render: (webhook: WebhookConfiguration | undefined) => {
+          return (
+            <Link
+              to=""
+              onClick={() => setSelectedWebhook(webhook)}
+              style={{ color: Colors.brandBlue.base }}
+            >
+              {webhook?.webhookUrl}
+            </Link>
+          );
+        },
+      },
+    }),
+    helper.derived<WebhookConfiguration>({
       title: 'Events',
-      width: 200,
-      render: (_, entity) => {
-        const webhook = updatedWebhooks[entity._id as string] ?? entity;
-        return (
-          <>
-            {webhook.events.map((event: WebhookEventType, index) => (
-              <Tag color={'cyan'} key={index}>
-                {event}
-              </Tag>
-            ))}
-          </>
-        );
+      value: (entity): WebhookConfiguration | undefined => {
+        return updatedWebhooks[entity._id as string] ?? entity;
       },
-      exportData: (row) => row.events.join(', '),
-    },
-    {
+      type: {
+        render: (webhook) => {
+          return (
+            <>
+              {webhook?.events.map((event: WebhookEventType, index) => (
+                <Tag color={'cyan'} key={index}>
+                  {event}
+                </Tag>
+              ))}
+            </>
+          );
+        },
+        stringify: (row) => row?.events.join(', ') ?? '',
+      },
+    }),
+    helper.derived<WebhookConfiguration>({
       title: 'Activated',
-      hideInDescriptions: true,
-      width: 30,
-      render: (_, entity) => {
-        const webhook = updatedWebhooks[entity._id as string] ?? entity;
-        return (
-          <Switch
-            checked={webhook.enabled}
-            onChange={(checked) => handleSaveWebhook({ ...webhook, enabled: checked })}
-          />
-        );
+      value: (entity): WebhookConfiguration | undefined => {
+        return updatedWebhooks[entity._id as string] ?? entity;
       },
-      exportData: (row) => row.enabled,
-    },
-  ];
+      type: {
+        render: (webhook) => {
+          return (
+            <Switch
+              checked={webhook?.enabled ?? false}
+              onChange={(checked) => {
+                if (webhook) {
+                  handleSaveWebhook({ ...webhook, enabled: checked });
+                }
+              }}
+            />
+          );
+        },
+        stringify: (row) => (row?.enabled ? 'Yes' : 'No'),
+      },
+    }),
+  ]);
   const handleCreateWebhook = useCallback(() => {
     setSelectedWebhook({ webhookUrl: '', events: [], enabled: true });
   }, []);
@@ -133,19 +145,18 @@ export const WebhookSettings: React.FC = () => {
   return (
     <>
       <QueryResultsTable<WebhookConfiguration>
-        actionRef={actionRef}
-        disableStripedColoring={true}
-        rowKey="action"
-        headerTitle="Webhooks"
-        search={false}
+        rowKey="_id"
+        innerRef={actionRef}
         columns={columns}
-        pagination={'HIDE'}
+        pagination={false}
         queryResults={webhooksListResult}
-        toolBarRender={() => [
-          <Button type="PRIMARY" onClick={handleCreateWebhook}>
-            <PlusOutlined />
-            Add endpoint
-          </Button>,
+        extraTools={[
+          () => (
+            <Button type="PRIMARY" onClick={handleCreateWebhook}>
+              <PlusOutlined />
+              Add endpoint
+            </Button>
+          ),
         ]}
       />
       <Drawer

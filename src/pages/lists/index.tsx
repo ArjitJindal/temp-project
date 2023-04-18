@@ -2,7 +2,7 @@ import React, { useRef, useState } from 'react';
 import { Tabs } from 'antd';
 import { useNavigate, useParams } from 'react-router';
 import s from './index.module.less';
-import PageWrapper from '@/components/PageWrapper';
+import PageWrapper, { PageWrapperTableContainer } from '@/components/PageWrapper';
 import { useI18n } from '@/locales';
 import PageTabs from '@/components/ui/PageTabs';
 import ListTable, { ListTableRef } from '@/pages/lists/ListTable';
@@ -72,10 +72,14 @@ export default function CreatedLists() {
           }
         >
           <Tabs.TabPane tab="Whitelists" key="whitelist">
-            <ListTable ref={whitelistsTableRef} listType="WHITELIST" />
+            <PageWrapperTableContainer>
+              <ListTable ref={whitelistsTableRef} listType="WHITELIST" />
+            </PageWrapperTableContainer>
           </Tabs.TabPane>
           <Tabs.TabPane tab="Blacklists" key="blacklist">
-            <ListTable ref={blacklistsTableRef} listType="BLACKLIST" />
+            <PageWrapperTableContainer>
+              <ListTable ref={blacklistsTableRef} listType="BLACKLIST" />
+            </PageWrapperTableContainer>
           </Tabs.TabPane>
         </PageTabs>
       </PageWrapper>

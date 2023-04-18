@@ -1,46 +1,28 @@
 import React from 'react';
 import { ParamsType } from '@ant-design/pro-provider';
-import { Alert } from 'antd';
-import Table, { CommonParams, Props as TableProps } from '@/components/ui/Table';
-import { TableData } from '@/components/ui/Table/types';
-import { getOr, isFailed, isLoading } from '@/utils/asyncResource';
+import Table, { Props as TableProps } from '@/components/library/Table';
 import { QueryResult } from '@/utils/queries/types';
+import { CommonParams, TableData } from '@/components/library/Table/types';
 
-type Props<Item extends object, Params extends object = ParamsType, ValueType = 'text'> = Omit<
-  TableProps<Item, Params, ValueType>,
+type Props<Item extends object, Params extends object = ParamsType> = Omit<
+  TableProps<Item, Params>,
   'data' | 'loading'
 > & {
   queryResults: QueryResult<TableData<Item>>;
   showResultsInfo?: boolean;
 };
 
-export default function QueryResultsTable<
-  T extends object,
-  Params extends object = CommonParams,
-  ValueType = 'text',
->(props: Props<T, Params, ValueType>): JSX.Element {
-  const { queryResults, actionsHeader, controlsHeader, showResultsInfo = true, ...rest } = props;
-
-  if (isFailed(queryResults.data)) {
-    return (
-      <Alert
-        type="error"
-        message={`Unable to load data for the table! ${queryResults.data.message}`}
-      />
-    );
-  }
+export default function QueryResultsTable<T extends object, Params extends object = CommonParams>(
+  props: Props<T, Params>,
+): JSX.Element {
+  const { queryResults, showResultsInfo = true, ...rest } = props;
 
   return (
     <Table
       {...rest}
-      actionsHeader={actionsHeader}
-      controlsHeader={controlsHeader}
       onReload={queryResults.refetch}
-      loading={isLoading(queryResults.data)}
-      data={getOr(queryResults.data, {
-        items: [],
-      })}
-      onPaginateExportData={queryResults.paginate}
+      data={queryResults.data}
+      onPaginateData={queryResults.paginate}
       showResultsInfo={showResultsInfo}
     />
   );

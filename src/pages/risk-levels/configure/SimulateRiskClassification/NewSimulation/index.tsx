@@ -197,7 +197,7 @@ const NewSimulation = forwardRef((props: Props, ref: React.Ref<SimulationRef>) =
   }, [active, values]);
 
   return (
-    <Card.Root className={s.cardRoot} additionalColumnPadding>
+    <Card.Root className={s.cardRoot}>
       <VerticalMenu
         items={values.map((item) => ({
           key: item.key,

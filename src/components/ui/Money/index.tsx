@@ -1,7 +1,8 @@
 import React from 'react';
-import { CURRENCIES, Currency, CurrencyInfo } from '@/utils/currencies';
+import { CURRENCIES, Currency } from '@/utils/currencies';
 import { Amount } from '@/apis';
 import { formatNumber } from '@/utils/number';
+import CurrencySymbol from '@/components/ui/Currency';
 
 interface CommonProps {
   compact?: boolean;
@@ -48,16 +49,9 @@ export default function Money(props: Props) {
   }
   return (
     <span {...rest}>
-      <CurrencySymbol currencyInfo={currencyInfo} currency={currency} />
+      <CurrencySymbol currency={currency} />
       &#8203;
       <span title={value.toFixed(2)}>{formatNumber(value, compact)}</span>
     </span>
-  );
-}
-
-function CurrencySymbol(props: { currency: Currency; currencyInfo: CurrencyInfo }) {
-  const { currencyInfo } = props;
-  return (
-    <span title={`${currencyInfo.label}`}>{currencyInfo?.symbol ?? `${currencyInfo?.value} `}</span>
   );
 }

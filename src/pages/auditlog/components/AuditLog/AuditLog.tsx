@@ -1,21 +1,23 @@
-import { useRef, useState } from 'react';
+import React, { useRef, useState } from 'react';
 import { Typography } from 'antd';
-import EntityFilterButton from '../EntityFilterButton';
 import AuditLogModal from '../AuditLogModal';
-import ActionTakenByFilterButton from '../ActionTakeByFilterButton';
-import { TableSearchParams } from './types';
+import { TableItem, TableSearchParams } from './types';
 import { useTableData } from './helpers';
 import DatePicker from '@/components/ui/DatePicker';
 import { useApi } from '@/api';
-import { AllParams, DEFAULT_PARAMS_STATE, TableActionType } from '@/components/ui/Table';
-import { TableColumn } from '@/components/ui/Table/types';
-import TimestampDisplay from '@/components/ui/TimestampDisplay';
+import { AllParams, TableColumn, TableRefType } from '@/components/library/Table/types';
+import { DEFAULT_PARAMS_STATE } from '@/components/library/Table/consts';
 import { AuditLog } from '@/apis';
 import QueryResultsTable from '@/components/common/QueryResultsTable';
 import { usePaginatedQuery } from '@/utils/queries/hooks';
 import { AUDIT_LOGS_LIST } from '@/utils/queries/keys';
 import { useApiTime } from '@/utils/tracker';
-import { dayjs, DEFAULT_DATE_TIME_FORMAT } from '@/utils/dayjs';
+import { dayjs } from '@/utils/dayjs';
+import { ColumnHelper } from '@/components/library/Table/columnHelper';
+import { DATE } from '@/components/library/Table/standardDataTypes';
+import EntityFilterButton from '@/pages/auditlog/components/EntityFilterButton';
+import ActionTakenByFilterButton from '@/pages/auditlog/components/ActionTakeByFilterButton';
+import { PageWrapperTableContainer } from '@/components/PageWrapper';
 
 export default function AuditLogTable() {
   const api = useApi();
@@ -57,102 +59,82 @@ export default function AuditLogTable() {
 
   const tableQueryResult = useTableData(queryResults);
 
-  const actionRef = useRef<TableActionType>(null);
+  const actionRef = useRef<TableRefType>(null);
 
-  const [selectedEntities, setSelectedEntities] = useState<string[]>([]);
+  const helper = new ColumnHelper<AuditLog>();
 
-  // todo: i18n
-  const columns: TableColumn<AuditLog>[] = [
-    {
+  const columns: TableColumn<TableItem>[] = helper.list([
+    helper.simple<'auditlogId'>({
       title: 'Audit Log ID',
-      dataIndex: 'auditlogId',
-      width: 130,
-      copyable: true,
-      ellipsis: true,
-      hideInSearch: true,
-      exportData: 'auditlogId',
-    },
-    {
+      key: 'auditlogId',
+    }),
+    helper.simple<'type'>({
       title: 'Entity',
-      dataIndex: 'type',
-      valueType: 'text',
-      width: 130,
-      render: (_, entity) => {
-        return (
-          <>
-            <Typography.Text>{entity.type}</Typography.Text>
-            <br />
-            <Typography.Text type={'secondary'}>{entity.entityId}</Typography.Text>
-          </>
-        );
-      },
-      hideInSearch: true,
-      exportData: 'type',
-    },
-    {
-      title: 'Event',
-      dataIndex: 'action',
-      width: 150,
-      hideInSearch: true,
-      exportData: 'action',
-    },
-    {
-      title: 'Before',
-      width: 150,
-      dataIndex: 'oldImage',
-      hideInSearch: true,
-      render: (_, entity) => {
-        if (!entity?.oldImage || !Object.keys(entity?.oldImage).length) {
-          return <Typography.Text type={'secondary'}>-</Typography.Text>;
-        }
-        return <AuditLogModal data={entity} />;
-      },
-      exportData: 'oldImage',
-    },
-    {
-      title: 'After',
-      width: 150,
-      dataIndex: 'newImage',
-      hideInSearch: true,
-      render: (_, entity) => {
-        if (!entity?.newImage || !Object.keys(entity?.newImage).length) {
-          return <Typography.Text type={'secondary'}>-</Typography.Text>;
-        }
-        return <AuditLogModal data={entity} />;
-      },
-      exportData: 'newImage',
-    },
-    {
-      title: 'Action Taken By',
-      width: 150,
-      dataIndex: 'user.email',
-      render: (_, entity) => {
-        return entity.user?.email;
-      },
-      hideInSearch: true,
-      exportData: 'user.email',
-    },
-    {
-      title: 'Time of Action',
-      dataIndex: 'timestamp',
-      width: 150,
-      render: (_, entity) => {
-        return <TimestampDisplay timestamp={entity.timestamp} />;
-      },
-      hideInSearch: true,
-      exportData: (entity) => dayjs(entity.timestamp).format(DEFAULT_DATE_TIME_FORMAT),
-    },
-  ];
-
-  return (
-    <QueryResultsTable<AuditLog, TableSearchParams>
-      queryResults={tableQueryResult}
-      params={params}
-      onChangeParams={setParams}
-      actionsHeader={[
-        ({ params, setParams }) => {
+      key: 'type',
+      type: {
+        render: (type, _edit, entity) => {
           return (
             <>
+              <Typography.Text>{type}</Typography.Text>
+              <br />
+              <Typography.Text type={'secondary'}>{entity.entityId}</Typography.Text>
+            </>
+          );
+        },
+      },
+    }),
+    helper.simple<'action'>({
+      title: 'Event',
+      key: 'action',
+    }),
+    helper.simple<'oldImage'>({
+      key: 'oldImage',
+      title: 'Before',
+      type: {
+        render: (oldImage, _, entity) => {
+          if (!oldImage || !Object.keys(oldImage).length) {
+            return <Typography.Text type={'secondary'}>-</Typography.Text>;
+          }
+          return <AuditLogModal data={entity} />;
+        },
+      },
+    }),
+    helper.simple<'newImage'>({
+      key: 'newImage',
+      title: 'After',
+      type: {
+        render: (newImage, _, entity) => {
+          if (!newImage || !Object.keys(newImage).length) {
+            return <Typography.Text type={'secondary'}>-</Typography.Text>;
+          }
+          return <AuditLogModal data={entity} />;
+        },
+      },
+    }),
+    helper.simple<'user.email'>({
+      key: 'user.email',
+      title: 'Action Taken By',
+    }),
+    helper.simple<'timestamp'>({
+      title: 'Time of Action',
+      key: 'timestamp',
+      type: DATE,
+    }),
+  ]);
+
+  return (
+    <PageWrapperTableContainer>
+      <QueryResultsTable<TableItem, TableSearchParams>
+        tableId="audit-log"
+        rowKey="auditlogId"
+        queryResults={tableQueryResult}
+        params={params}
+        onChangeParams={setParams}
+        extraFilters={[
+          {
+            key: 'filterTypes',
+            title: 'Entity',
+            renderer: ({ params, setParams }) => (
               <EntityFilterButton
                 initialState={params.filterTypes ?? []}
                 onConfirm={(value) => {
@@ -162,12 +144,12 @@ export default function AuditLogTable() {
                   }));
                 }}
               />
-            </>
-          );
-        },
-        ({ params, setParams }) => {
-          return (
-            <>
+            ),
+          },
+          {
+            key: 'filterActionTakenBy',
+            title: 'Action Taken By',
+            renderer: ({ params, setParams }) => (
               <ActionTakenByFilterButton
                 initialState={params.filterActionTakenBy ?? []}
                 onConfirm={(value) => {
@@ -177,32 +159,23 @@ export default function AuditLogTable() {
                   }));
                 }}
               />
-            </>
-          );
-        },
-      ]}
-      form={{
-        labelWrap: true,
-      }}
-      toolBarRender={() => [
-        <DatePicker.RangePicker
-          value={params.createdTimestamp}
-          onChange={(createdTimestamp) =>
-            setParams((prevState) => ({ ...prevState, createdTimestamp }))
-          }
-        />,
-      ]}
-      search={false}
-      bordered
-      actionRef={actionRef}
-      rowKey="caseId"
-      scroll={{ x: 1300 }}
-      columns={columns}
-      rowSelection={{
-        selectedKeys: selectedEntities,
-        onChange: setSelectedEntities,
-      }}
-      autoAdjustHeight
-    />
+            ),
+          },
+        ]}
+        extraTools={[
+          () => (
+            <DatePicker.RangePicker
+              value={params.createdTimestamp}
+              onChange={(createdTimestamp) =>
+                setParams((prevState) => ({ ...prevState, createdTimestamp }))
+              }
+            />
+          ),
+        ]}
+        innerRef={actionRef}
+        columns={columns}
+        fitHeight
+      />
+    </PageWrapperTableContainer>
   );
 }

@@ -1,9 +1,8 @@
-import React, { useState } from 'react';
-import { Popover } from 'antd';
+import React from 'react';
 import { HighlightOutlined } from '@ant-design/icons';
 import PopupContent from './PopupContent';
-import ActionButton from '@/components/ui/Table/ActionButton';
 import { useUsers } from '@/utils/user-utils';
+import DefaultQuickFilter from '@/components/library/QuickFilter';
 
 interface Props {
   initialState: string[];
@@ -12,41 +11,38 @@ interface Props {
 
 export default function ActionTakenByFilterButton(props: Props) {
   const { initialState, onConfirm } = props;
-  const [visible, setVisible] = useState(false);
   const [users, loadingUsers] = useUsers();
 
   return (
-    <Popover
-      content={
+    <DefaultQuickFilter
+      title={'Action Taken By'}
+      analyticsName="action-taken-by"
+      icon={<HighlightOutlined />}
+      buttonText={
+        (!loadingUsers && !initialState) || initialState.length === 0
+          ? undefined
+          : initialState.map((userId) => users[userId]?.name ?? userId)?.join(', ')
+      }
+      onClear={
+        initialState.length > 0
+          ? () => {
+              onConfirm([]);
+            }
+          : undefined
+      }
+    >
+      {({ setOpen }) => (
         <PopupContent
           initialState={initialState}
           onConfirm={(value) => {
             onConfirm(value);
-            setVisible(false);
+            setOpen(false);
           }}
           onCancel={() => {
-            setVisible(false);
+            setOpen(false);
           }}
         />
-      }
-      trigger="click"
-      placement="bottomRight"
-      visible={visible}
-      onVisibleChange={setVisible}
-    >
-      <ActionButton
-        color="ORANGE"
-        icon={<HighlightOutlined />}
-        analyticsName="user-filter"
-        isActive={initialState.length > 0}
-        onClear={() => {
-          onConfirm([]);
-        }}
-      >
-        {(!loadingUsers && !initialState) || initialState.length === 0
-          ? 'Action Taken By'
-          : initialState.map((userId) => users[userId]?.name ?? userId)?.join(', ')}
-      </ActionButton>
-    </Popover>
+      )}
+    </DefaultQuickFilter>
   );
 }

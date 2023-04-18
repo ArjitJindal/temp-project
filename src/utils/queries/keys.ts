@@ -100,8 +100,11 @@ export const TRANSACTION_FILES = (params?: AnyParameters): QueryKey =>
 export const USER_FILES = (params?: AnyParameters): QueryKey =>
   ['user-files', params].filter(Boolean);
 export const RULES_AND_RULE_INSTANCES = (): QueryKey => ['rules-and-rule-instances'];
-export const GET_RULES = (): QueryKey => ['get-rules'];
-export const GET_RULE_INSTANCES = (): QueryKey => ['get-rule-instances'];
+export const GET_RULES = (params: AnyParameters): QueryKey => ['get-rules', params];
+export const GET_RULE_INSTANCES = (params: AnyParameters): QueryKey => [
+  'get-rule-instances',
+  params,
+];
 export const WEBHOOKS = (id?: string): QueryKey => ['webhooks', id].filter(Boolean);
 export const WEBHOOKS_LIST = (): QueryKey => ['webhooks', 'list'];
 export const USERS = (type: string, params?: AnyParameters): QueryKey =>

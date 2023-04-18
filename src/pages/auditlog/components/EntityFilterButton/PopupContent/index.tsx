@@ -1,58 +1,59 @@
-import { Form as AntForm, Checkbox } from 'antd';
-import React, { useState } from 'react';
+import { Checkbox } from 'antd';
+import React, { useEffect, useState } from 'react';
 import s from './style.module.less';
 import { AuditLogType } from '@/apis';
-import * as Form from '@/components/ui/Form';
 import Button from '@/components/library/Button';
 
 interface Props {
   initialState: AuditLogType[] | [];
-  onCancel: () => void;
+  onReset: () => void;
   onConfirm: (value: AuditLogType[]) => void;
 }
 
 export default function PopupContent(props: Props) {
-  const { initialState, onCancel, onConfirm } = props;
+  const { initialState, onReset, onConfirm } = props;
 
   const keys: AuditLogType[] = ['RULE', 'ACCOUNT', 'USER', 'CASE', 'ALERT'];
 
   const [state, setState] = useState<AuditLogType[]>(initialState);
 
+  useEffect(() => {
+    setState(initialState);
+  }, [initialState]);
+
   return (
-    <AntForm
-      onFinish={() => {
+    <form
+      onSubmit={(e) => {
+        e.preventDefault();
         onConfirm(state);
       }}
     >
       <div className={s.root}>
-        <Form.Layout.Label title="Entity">
-          <Checkbox.Group style={{ display: 'contents' }}>
-            {keys.map((key) => (
-              <Checkbox
-                onChange={(e) => {
-                  setState((prev) => {
-                    if (e.target.checked) {
-                      return [...prev, key];
-                    }
-                    return prev.filter((item) => item !== key);
-                  });
-                }}
-                value={key}
-                checked={state.includes(key)}
-                style={{ margin: '0' }}
-              >
-                {key}
-              </Checkbox>
-            ))}
-          </Checkbox.Group>
-        </Form.Layout.Label>
+        {keys.map((key) => (
+          <Checkbox
+            key={key}
+            onChange={(e) => {
+              setState((prev) => {
+                if (e.target.checked) {
+                  return [...prev, key];
+                }
+                return prev.filter((item) => item !== key);
+              });
+            }}
+            value={key}
+            checked={state.includes(key)}
+            style={{ margin: '0' }}
+          >
+            {key}
+          </Checkbox>
+        ))}
         <div className={s.buttons}>
           <Button htmlType="submit" type="PRIMARY">
             Confirm
           </Button>
-          <Button onClick={onCancel}>Reset</Button>
+          <Button onClick={onReset}>Reset</Button>
         </div>
       </div>
-    </AntForm>
+    </form>
   );
 }

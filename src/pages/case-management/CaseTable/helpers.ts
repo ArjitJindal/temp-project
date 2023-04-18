@@ -1,6 +1,6 @@
 import { TableItem } from './types';
 import { map, QueryResult } from '@/utils/queries/types';
-import { TableData, TableDataItem } from '@/components/ui/Table/types';
+import { TableData, TableDataItem } from '@/components/library/Table/types';
 import { Case } from '@/apis';
 import { PaginatedData } from '@/utils/queries/hooks';
 

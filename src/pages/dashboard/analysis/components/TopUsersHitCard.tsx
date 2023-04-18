@@ -9,6 +9,7 @@ const TopUsersHitCard = () => {
       title={header('Top users by Transaction Hits')}
       bordered={false}
       bodyStyle={{ padding: 0 }}
+      headStyle={{ borderBottom: 'none' }}
     >
       <div className={styles.salesCard}>
         <Tabs defaultActiveKey="all" type="card">

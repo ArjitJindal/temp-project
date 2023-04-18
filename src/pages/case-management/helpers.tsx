@@ -1,6 +1,7 @@
 import React from 'react';
 import PaymentMethodButton from '../transactions/components/PaymentMethodButton';
 import { AssignmentButton } from './components/AssignmentButton';
+import GavelIcon from './gavel.react.svg';
 import { dayjs } from '@/utils/dayjs';
 import '../../components/ui/colors';
 import { Adapter } from '@/utils/routing';
@@ -8,12 +9,13 @@ import { isRuleAction, isTransactionState } from '@/utils/rules';
 import { TableSearchParams } from '@/pages/case-management/types';
 import { isMode } from '@/pages/transactions/components/UserSearchPopup/types';
 import { defaultQueryAdapter } from '@/components/ui/Table/helpers/queryAdapter';
-import { ExtraFilter } from '@/components/ui/Table/types';
+import { ExtraFilter } from '@/components/library/Table/types';
 import UserSearchButton from '@/pages/transactions/components/UserSearchButton';
 import { TransactionStateButton } from '@/pages/transactions/components/TransactionStateButton';
 import TagSearchButton from '@/pages/transactions/components/TagSearchButton';
 import BusinessIndustryButton from '@/pages/transactions/components/BusinessIndustryButton';
 import { RiskLevelButton } from '@/pages/users/users-list/RiskLevelFilterButton';
+import StackLineIcon from '@/components/ui/icons/Remix/business/stack-line.react.svg';
 
 export const queryAdapter: Adapter<TableSearchParams> = {
   serializer: (params) => {
@@ -115,9 +117,29 @@ export const queryAdapter: Adapter<TableSearchParams> = {
   },
 };
 
-export const extraFilters: (isPulseEnabled: boolean) => ExtraFilter<TableSearchParams>[] = (
-  isPulseEnabled,
-) => [
+export const extraFilters = (
+  isPulseEnabled: boolean,
+  ruleOptions: { value: string; label: string }[],
+): ExtraFilter<TableSearchParams>[] => [
+  {
+    title: 'Case ID',
+    key: 'caseId',
+    renderer: { kind: 'string' },
+    showFilterByDefault: true,
+    icon: <StackLineIcon />,
+  },
+  {
+    title: 'Rules',
+    key: 'rulesHitFilter',
+    renderer: {
+      kind: 'select',
+      mode: 'MULTIPLE',
+      displayMode: 'select',
+      options: ruleOptions,
+    },
+    icon: <GavelIcon />,
+    showFilterByDefault: true,
+  },
   {
     key: 'userId',
     title: 'User ID/Name',

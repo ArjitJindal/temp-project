@@ -2,7 +2,6 @@ import { Tabs } from 'antd';
 import { useCallback, useEffect, useState } from 'react';
 import { useNavigate, useParams } from 'react-router';
 import { useLocalStorageState } from 'ahooks';
-import styles from './UsersList.module.less';
 import { getBusinessUserColumns } from './business-user-columns';
 import { getConsumerUserColumns } from './consumer-users-columns';
 import { getAllUserColumns } from './all-user-columns';
@@ -10,31 +9,25 @@ import { RiskLevelButton } from './RiskLevelFilterButton';
 import { queryAdapter } from './helpers/queryAdapter';
 import { UserRegistrationStatusFilterButton } from './UserRegistrationStatusFilterButton';
 import { dayjs } from '@/utils/dayjs';
-import RiskLevelTag from '@/components/library/RiskLevelTag';
 import { useApi } from '@/api';
 import { useFeatureEnabled } from '@/components/AppWrapper/Providers/SettingsProvider';
-import {
-  InternalBusinessUser,
-  InternalConsumerUser,
-  InternalUser,
-  RiskLevel,
-  UserRegistrationStatus,
-} from '@/apis';
-import PageWrapper from '@/components/PageWrapper';
+import { InternalUser, RiskLevel, UserRegistrationStatus } from '@/apis';
+import PageWrapper, { PageWrapperTableContainer } from '@/components/PageWrapper';
 import '../../../components/ui/colors';
 import { useI18n } from '@/locales';
 import PageTabs from '@/components/ui/PageTabs';
 import { makeUrl, parseQueryString } from '@/utils/routing';
-import { ExtraFilter, TableColumn } from '@/components/ui/Table/types';
+import { CommonParams, ExtraFilter, TableColumn } from '@/components/library/Table/types';
 import UserSearchButton from '@/pages/transactions/components/UserSearchButton';
 import QueryResultsTable from '@/components/common/QueryResultsTable';
-import { CommonParams, DEFAULT_PARAMS_STATE } from '@/components/ui/Table';
 import { USERS } from '@/utils/queries/keys';
 import { PaginatedData, usePaginatedQuery } from '@/utils/queries/hooks';
 import { useApiTime, usePageViewTracker } from '@/utils/tracker';
 import { useDeepEqualEffect } from '@/utils/hooks';
-import { DEFAULT_PAGE_SIZE } from '@/components/ui/Table/consts';
 import UserTagSearchButton from '@/pages/transactions/components/UserTagSearchButton';
+import { DEFAULT_PAGE_SIZE, DEFAULT_PARAMS_STATE } from '@/components/library/Table/consts';
+import { BOOLEAN, FLOAT, RISK_LEVEL } from '@/components/library/Table/standardDataTypes';
+import { ColumnHelper } from '@/components/library/Table/columnHelper';
 
 export interface UserSearchParams extends CommonParams {
   riskLevels?: RiskLevel[];
@@ -45,101 +38,44 @@ export interface UserSearchParams extends CommonParams {
   userRegistrationStatus?: UserRegistrationStatus[];
 }
 
-function getPulseColumns<
-  T extends InternalBusinessUser | InternalConsumerUser | InternalUser,
->(): TableColumn<T>[] {
-  return [
-    {
-      title: 'CRA Risk Level',
-      dataIndex: 'drsRiskLevel',
-      exportData: (entity) => {
-        return entity?.drsScore?.manualRiskLevel || entity?.drsScore?.derivedRiskLevel || '-';
-      },
-      tip: 'Customer risk assessment - accounts for both Base risk and action risk scores.',
-      search: false,
-      render: (dom, entity) => {
-        if (entity?.drsScore?.manualRiskLevel || entity?.drsScore?.derivedRiskLevel) {
-          return (
-            <RiskLevelTag
-              level={entity?.drsScore?.manualRiskLevel || entity?.drsScore?.derivedRiskLevel}
-            />
-          );
-        }
-        return '-';
-      },
-      width: 150,
-      hideInSearch: true,
-    },
-    {
-      title: 'CRA Risk Score',
-      dataIndex: 'drsScore',
-      exportData: (entity) => {
-        return entity?.drsScore?.drsScore ?? '-';
-      },
-      tip: 'Customer risk assessment - accounts for both Base risk and action risk scores.',
-      search: false,
-      render: (dom, entity) => {
-        if (entity?.drsScore?.drsScore == null) {
-          return <span>{entity?.drsScore?.drsScore}</span>;
-        }
-        return <span>{entity?.drsScore?.drsScore.toFixed(2)}</span>;
-      },
-      width: 150,
-      hideInSearch: true,
-    },
-    {
-      title: 'Is Locked',
-      dataIndex: 'drsScore.isUpdatable',
-      exportData: (entity) => {
-        return !entity?.drsScore?.isUpdatable ? 'Yes' : 'No';
-      },
-      tip: 'Whether customer risk assessment score is locked',
-      search: false,
-      render: (dom, entity) => {
-        if (!entity?.drsScore?.isUpdatable) {
-          return <span>Yes</span>;
-        }
-        return <span>No</span>;
-      },
-      width: 150,
-      hideInSearch: true,
-    },
-    {
-      title: 'KRS Risk Level',
-      dataIndex: 'krsRiskLevel',
-      exportData: (entity) => {
-        return entity?.krsScore?.riskLevel || '-';
-      },
-      tip: 'Know your customer - accounts for KYC Risk Level',
-      search: false,
-      render: (dom, entity) => {
-        if (entity?.krsScore?.riskLevel) {
-          return <RiskLevelTag level={entity?.krsScore?.riskLevel} />;
-        }
+function getPulseColumns(): TableColumn<InternalUser>[] {
+  const helper = new ColumnHelper<InternalUser>();
 
-        return '-';
+  return helper.list([
+    helper.derived<RiskLevel>({
+      title: 'CRA Risk Level',
+      // key: 'drsRiskLevel',
+      type: RISK_LEVEL,
+      tooltip: 'Customer risk assessment - accounts for both Base risk and action risk scores.',
+      value: (entity): RiskLevel | undefined => {
+        return entity?.drsScore?.manualRiskLevel ?? entity?.drsScore?.derivedRiskLevel;
       },
-      width: 150,
-      hideInSearch: true,
-    },
-    {
+    }),
+    helper.simple<'drsScore.drsScore'>({
+      key: 'drsScore.drsScore',
+      title: 'CRA Risk Score',
+      type: FLOAT,
+      tooltip: 'Customer risk assessment - accounts for both Base risk and action risk scores.',
+    }),
+    helper.simple<'drsScore.isUpdatable'>({
+      key: 'drsScore.isUpdatable',
+      title: 'Is Locked',
+      type: BOOLEAN,
+      tooltip: 'Whether customer risk assessment score is locked',
+    }),
+    helper.simple<'krsScore.riskLevel'>({
+      key: 'krsScore.riskLevel',
+      title: 'KRS Risk Level',
+      type: RISK_LEVEL,
+      tooltip: 'Know your customer - accounts for KYC Risk Level',
+    }),
+    helper.simple<'krsScore.krsScore'>({
+      key: 'krsScore.krsScore',
       title: 'KRS Risk Score',
-      dataIndex: 'krsScore',
-      exportData: (entity) => {
-        return entity?.krsScore?.krsScore ?? '-';
-      },
-      tip: 'Know your customer - accounts for KYC Risk Score',
-      search: false,
-      render: (dom, entity) => {
-        if (entity?.krsScore?.krsScore == null) {
-          return <span>{entity?.krsScore?.krsScore}</span>;
-        }
-        return <span>{entity?.krsScore?.krsScore.toFixed(2)}</span>;
-      },
-      width: 150,
-      hideInSearch: true,
-    },
-  ];
+      type: FLOAT,
+      tooltip: 'Know your customer - accounts for KYC Risk Score',
+    }),
+  ]);
 }
 
 const extraFilters = (list: 'business' | 'consumer' | 'all'): ExtraFilter<UserSearchParams>[] => {
@@ -219,9 +155,7 @@ const extraFilters = (list: 'business' | 'consumer' | 'all'): ExtraFilter<UserSe
   return extraFilters;
 };
 
-const UsersTab = <T extends InternalBusinessUser | InternalConsumerUser | InternalUser>(props: {
-  type: 'business' | 'consumer' | 'all';
-}) => {
+const UsersTab = (props: { type: 'business' | 'consumer' | 'all' }) => {
   const type = props.type;
   usePageViewTracker(`Users List - ${type}`);
 
@@ -230,15 +164,15 @@ const UsersTab = <T extends InternalBusinessUser | InternalConsumerUser | Intern
   const measure = useApiTime();
   const navigate = useNavigate();
 
-  const columns: TableColumn<T>[] =
+  const columns: TableColumn<InternalUser>[] =
     type === 'business'
-      ? (getBusinessUserColumns() as TableColumn<T>[])
+      ? (getBusinessUserColumns() as TableColumn<InternalUser>[])
       : type === 'consumer'
-      ? (getConsumerUserColumns() as TableColumn<T>[])
-      : (getAllUserColumns() as TableColumn<T>[]);
+      ? (getConsumerUserColumns() as TableColumn<InternalUser>[])
+      : (getAllUserColumns() as TableColumn<InternalUser>[]);
 
   if (isPulseEnabled) {
-    columns.push(...getPulseColumns<T>());
+    columns.push(...getPulseColumns());
   }
 
   const [params, setParams] = useState<UserSearchParams>(DEFAULT_PARAMS_STATE);
@@ -269,7 +203,7 @@ const UsersTab = <T extends InternalBusinessUser | InternalConsumerUser | Intern
 
   const queryResults = usePaginatedQuery(
     USERS(type, params),
-    async (paginationParams): Promise<PaginatedData<T>> => {
+    async (paginationParams): Promise<PaginatedData<InternalUser>> => {
       const { userId, createdTimestamp, page, riskLevels, pageSize, tagKey, tagValue } = params;
       const queryObj = {
         page,
@@ -294,35 +228,26 @@ const UsersTab = <T extends InternalBusinessUser | InternalConsumerUser | Intern
           : await measure(() => api.getAllUsersList(queryObj), `Get Users List`);
 
       return {
-        items: response.data as T[],
+        items: response.data as InternalUser[],
         total: response.total,
       };
     },
   );
 
   return (
-    <QueryResultsTable<T, UserSearchParams>
-      tableId={'users-list'}
-      form={{
-        labelWrap: true,
-      }}
-      rowKey="userId"
-      search={{
-        labelWidth: 120,
-      }}
-      extraFilters={extraFilters(type)}
-      className={styles.table}
-      scroll={{ x: 500 }}
-      columns={columns}
-      queryResults={queryResults}
-      params={params}
-      onChangeParams={handleChangeParams}
-      columnsState={{
-        persistenceType: 'localStorage',
-        persistenceKey: 'users-list',
-      }}
-      autoAdjustHeight
-    />
+    <PageWrapperTableContainer>
+      <QueryResultsTable<InternalUser, UserSearchParams>
+        tableId={`users-list/${type}`}
+        rowKey={'userId'}
+        extraFilters={extraFilters(type)}
+        columns={columns}
+        queryResults={queryResults}
+        params={params}
+        onChangeParams={handleChangeParams}
+        fitHeight={true}
+        pagination={true}
+      />
+    </PageWrapperTableContainer>
   );
 };
 
@@ -345,13 +270,13 @@ export default function UsersList() {
         }}
       >
         <Tabs.TabPane tab={'All Users'} key="all">
-          <UsersTab<InternalUser> type={list} />
+          <UsersTab type={list} />
         </Tabs.TabPane>
         <Tabs.TabPane tab="Consumer Users" key="consumer">
-          <UsersTab<InternalConsumerUser> type={list} />
+          <UsersTab type={list} />
         </Tabs.TabPane>
         <Tabs.TabPane tab="Business Users" key="business">
-          <UsersTab<InternalBusinessUser> type={list} />
+          <UsersTab type={list} />
         </Tabs.TabPane>
       </PageTabs>
     </PageWrapper>

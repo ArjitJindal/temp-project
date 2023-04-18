@@ -7,29 +7,58 @@ import {
   InternalTransaction,
   RuleAction,
   TransactionState,
-  TransactionType,
 } from '@/apis';
-import { ActionRenderer, TableColumn, TableData } from '@/components/ui/Table/types';
+import {
+  AllParams,
+  ColumnDataType,
+  CommonParams,
+  DerivedColumn,
+  ExtraFilter,
+  SimpleColumn,
+  TableColumn,
+  TableData,
+} from '@/components/library/Table/types';
 import { makeUrl } from '@/utils/routing';
-import { paymethodOptions, transactionType } from '@/utils/tags';
-import { TransactionTypeTag } from '@/components/ui/TransactionTypeTag';
-import TransactionStateTag from '@/components/ui/TransactionStateTag';
-import { getUserLink, getUserName } from '@/utils/api/users';
-import CountryDisplay from '@/components/ui/CountryDisplay';
-import { CURRENCIES_SELECT_OPTIONS } from '@/utils/currencies';
-import KeyValueTag from '@/components/ui/KeyValueTag';
+import { getUserLink } from '@/utils/api/users';
 import QueryResultsTable from '@/components/common/QueryResultsTable';
 import { QueryResult } from '@/utils/queries/types';
-import { AllParams, CommonParams } from '@/components/ui/Table';
 import { Mode } from '@/pages/transactions/components/UserSearchPopup/types';
 import Id from '@/components/ui/Id';
-import { dayjs, DEFAULT_DATE_TIME_FORMAT } from '@/utils/dayjs';
 import { PaymentDetailsCard } from '@/components/ui/PaymentDetailsCard';
 import { PaymentMethodTag } from '@/components/ui/PaymentTypeTag';
 import { useFeatureEnabled } from '@/components/AppWrapper/Providers/SettingsProvider';
-import RiskLevelTag from '@/components/library/RiskLevelTag';
+import {
+  COUNTRY,
+  DATE_TIME,
+  FLOAT,
+  MONEY_AMOUNT,
+  MONEY_CURRENCIES,
+  MONEY_CURRENCY,
+  PAYMENT_METHOD,
+  RISK_LEVEL,
+  STRING,
+  TAGS,
+  TRANSACTION_STATE,
+  TRANSACTION_TYPE,
+  USER_NAME,
+} from '@/components/library/Table/standardDataTypes';
+import { PaymentDetails } from '@/pages/transactions-item/UserDetails/PaymentDetails';
 import Button from '@/components/library/Button';
 import { RuleActionTag } from '@/components/rules/RuleActionTag';
+import { ColumnHelper } from '@/components/library/Table/columnHelper';
+
+const PAYMENT_DETAILS_OR_METHOD = (showDetailsView: boolean): ColumnDataType<PaymentDetails> => ({
+  stringify: (value) => {
+    return `${value?.method}`;
+  },
+  defaultWrapMode: 'WRAP',
+  render: (value) => {
+    if (showDetailsView) {
+      return <PaymentDetailsCard paymentDetails={value} />;
+    }
+    return <PaymentMethodTag paymentMethod={value?.method} />;
+  },
+});
 
 export interface TransactionsTableParams extends CommonParams {
   current?: string;
@@ -48,20 +77,15 @@ export interface TransactionsTableParams extends CommonParams {
 }
 
 type Props = {
-  extraFilters?: {
-    key: string;
-    title: string;
-    renderer: ActionRenderer<TransactionsTableParams>;
-  }[];
+  extraFilters?: ExtraFilter<TransactionsTableParams>[];
   queryResult: QueryResult<TableData<InternalTransaction>>;
   params?: TransactionsTableParams;
   onChangeParams?: (newState: AllParams<TransactionsTableParams>) => void;
   hideSearchForm?: boolean;
   disableSorting?: boolean;
-  autoAdjustHeight?: boolean;
   adjustPagination?: boolean;
-  disableHorizontalScrolling?: boolean;
   headerSubtitle?: string;
+  fitHeight?: boolean | number;
   showCheckedTransactionsButton?: boolean;
   isCheckedTransactionsEnabled?: boolean;
   setIsCheckedTransactionsEnabled?: React.Dispatch<React.SetStateAction<boolean>>;
@@ -79,10 +103,7 @@ export default function TransactionsTable(props: Props) {
     disableSorting,
     extraFilters,
     onChangeParams,
-    autoAdjustHeight,
-    adjustPagination,
-    headerSubtitle,
-    disableHorizontalScrolling,
+    fitHeight,
     showCheckedTransactionsButton = false,
     isCheckedTransactionsEnabled,
     setIsCheckedTransactionsEnabled,
@@ -93,396 +114,244 @@ export default function TransactionsTable(props: Props) {
     (executedRules: ExecutedRulesResult[]): RuleAction | undefined => {
       if (alert) {
         const ruleInstanceId = alert?.ruleInstanceId;
-        const executedRule = executedRules.find(
-          (rule) => rule.ruleInstanceId === ruleInstanceId,
-        ) as ExecutedRulesResult;
-        return executedRule.ruleHit ? executedRule.ruleAction : 'ALLOW';
+        const executedRule = executedRules.find((rule) => rule.ruleInstanceId === ruleInstanceId);
+        return executedRule?.ruleHit ? executedRule?.ruleAction : 'ALLOW';
       }
       return undefined;
     },
     [alert],
   );
 
-  const columns: TableColumn<InternalTransaction>[] = useMemo(
-    () => [
-      {
+  const columns: TableColumn<InternalTransaction>[] = useMemo(() => {
+    const helper = new ColumnHelper<InternalTransaction>();
+
+    return helper.list([
+      helper.simple<'transactionId'>({
         title: 'Transaction ID',
-        dataIndex: 'transactionId',
-        exportData: 'transactionId',
-        width: 130,
-        copyable: true,
-        ellipsis: true,
-        render: (dom, entity) => {
-          // todo: fix style
-          return (
-            <Link
-              to={makeUrl(`/transactions/item/:id`, { id: entity.transactionId })}
-              style={{ color: '@fr-colors-brandBlue' }}
-            >
-              {entity.transactionId}
-            </Link>
-          );
+        key: 'transactionId',
+        filtering: true,
+        type: {
+          ...STRING,
+          render: (value: string | undefined) => {
+            return <Link to={makeUrl(`/transactions/item/:id`, { id: value })}>{value}</Link>;
+          },
         },
-      },
-      isPulseEnabled
-        ? {
-            title: 'TRS score',
-            width: 130,
-            ellipsis: true,
-            dataIndex: 'arsScore.arsScore',
-            exportData: 'arsScore.arsScore',
-            hideInSearch: true,
-            sorter: true,
-            render: (_, entity) => entity?.arsScore?.arsScore?.toFixed(2),
-            tooltip: 'Transaction Risk Score',
-          }
-        : {},
-      isPulseEnabled
-        ? {
-            title: 'TRS level',
-            width: 130,
-            ellipsis: true,
-            dataIndex: 'arsScore.riskLevel',
-            exportData: 'arsScore.riskLevel',
-            hideInSearch: true,
-            sorter: true,
-            render: (_, entity) => {
-              return <RiskLevelTag level={entity?.arsScore?.riskLevel} />;
-            },
-            tooltip: 'Transaction Risk Score level',
-          }
-        : {},
-      alert
-        ? {
-            title: 'Status',
-            width: 80,
-            ellipsis: true,
-            dataIndex: 'executedRules.ruleAction',
-            render: (_, entity) => {
-              const executedRules = entity.executedRules;
-              const status = getStatus(executedRules);
-
-              return status ? (
-                <span>
-                  <RuleActionTag ruleAction={status} />
-                </span>
-              ) : null;
-            },
-          }
-        : {},
-
-      {
+      }),
+      ...(isPulseEnabled
+        ? [
+            helper.simple<'arsScore.arsScore'>({
+              title: 'TRS score',
+              key: 'arsScore.arsScore',
+              type: FLOAT,
+              sorting: true,
+              tooltip: 'Transaction Risk Score',
+            }),
+            helper.simple<'arsScore.riskLevel'>({
+              title: 'TRS level',
+              type: RISK_LEVEL,
+              key: 'arsScore.riskLevel',
+              sorting: true,
+              tooltip: 'Transaction Risk Score level',
+            }),
+          ]
+        : []),
+      ...(alert
+        ? [
+            {
+              title: 'Status',
+              defaultWidth: 80,
+              key: 'executedRules.ruleAction',
+              value: (entity) => getStatus(entity.executedRules),
+              type: {
+                render: (status) => {
+                  return status ? (
+                    <span>
+                      <RuleActionTag ruleAction={status} />
+                    </span>
+                  ) : (
+                    <></>
+                  );
+                },
+              },
+            } as DerivedColumn<InternalTransaction, RuleAction>,
+          ]
+        : []),
+      helper.simple<'type'>({
         title: 'Transaction type',
-        dataIndex: 'type',
-        exportData: 'type',
-        width: 175,
-        ellipsis: true,
-        valueType: 'select',
-        fieldProps: {
-          options: transactionType,
-          allowClear: true,
-          displayMode: 'list',
-        },
-        render: (dom, entity) => {
-          return <TransactionTypeTag transactionType={entity.type as TransactionType} />;
-        },
-      },
-      {
+        key: 'type',
+        type: TRANSACTION_TYPE,
+        filtering: true,
+      }),
+      helper.simple<'timestamp'>({
         title: 'Timestamp',
-        width: 180,
-        ellipsis: true,
-        dataIndex: 'timestamp',
-        exportData: (entity) => dayjs(entity.timestamp).format(DEFAULT_DATE_TIME_FORMAT),
-        valueType: 'dateTimeRange',
-        sorter: !disableSorting,
-        render: (_, transaction) => {
-          return dayjs(transaction.timestamp).format(DEFAULT_DATE_TIME_FORMAT);
-        },
-      },
-      {
+        key: 'timestamp',
+        type: DATE_TIME,
+        sorting: true,
+        filtering: true,
+      }),
+      helper.simple<'transactionState'>({
+        key: 'transactionState',
         title: 'Last transaction state',
-        width: 130,
-        ellipsis: true,
-        dataIndex: 'transactionState',
-        exportData: 'transactionState',
-        hideInSearch: true,
-        sorter: !disableSorting,
-        render: (_, entity) => {
-          return <TransactionStateTag transactionState={entity.transactionState} />;
-        },
-      },
-
-      {
+        type: TRANSACTION_STATE,
+        sorting: true,
+      }),
+      helper.simple<'originUserId'>({
+        key: 'originUserId',
         title: 'Origin user ID',
         tooltip: 'Origin is the Sender in a transaction',
-        width: 200,
-        dataIndex: 'originUserId',
-        exportData: 'originUserId',
-        sorter: !disableSorting,
-        hideInSearch: true,
-        render: (dom, entity) => {
-          return <Id to={getUserLink(entity.originUser)}>{entity.originUserId}</Id>;
+        type: {
+          ...STRING,
+          render: (value, _, entity) => {
+            return <Id to={getUserLink(entity.originUser)}>{value}</Id>;
+          },
         },
-      },
-      {
+        sorting: true,
+      }),
+      helper.simple<'originUser'>({
+        key: 'originUser',
         title: 'Origin user name',
+        type: USER_NAME,
         tooltip: 'Origin is the Sender in a transaction',
-        exportData: (entity) => getUserName(entity.originUser),
-        width: 220,
-        hideInSearch: true,
-        sorter: !disableSorting,
-        dataIndex: 'originUser',
-        render: (dom, entity) => {
-          return getUserName(entity.originUser);
-        },
-      },
+        sorting: true,
+      }),
       {
         title: showDetailsView ? 'Origin payment details' : 'Origin method',
-        exportData: 'originPaymentDetails.method',
-        width: showDetailsView ? 600 : 160,
-        hideInSearch: true,
-        render: (dom, entity) => {
-          if (showDetailsView) {
-            return <PaymentDetailsCard paymentDetails={entity.originPaymentDetails} />;
-          }
-          return <PaymentMethodTag paymentMethod={entity.originPaymentDetails?.method} />;
-        },
-      },
-      {
+        key: 'originPaymentDetails',
+        type: PAYMENT_DETAILS_OR_METHOD(showDetailsView),
+      } as SimpleColumn<InternalTransaction, 'originPaymentDetails'>,
+      helper.simple<'originAmountDetails.transactionAmount'>({
         title: 'Origin amount',
-        width: 150,
-        exportData: 'originAmountDetails.transactionAmount',
-        dataIndex: 'originAmountDetails.transactionAmount',
-        hideInSearch: true,
-        sorter: !disableSorting,
-        render: (dom, entity) => {
-          if (entity.originAmountDetails?.transactionAmount !== undefined) {
-            return new Intl.NumberFormat().format(entity.originAmountDetails?.transactionAmount);
-          } else {
-            return entity.originAmountDetails?.transactionAmount;
-          }
-        },
-      },
-      {
+        type: MONEY_AMOUNT,
+        key: 'originAmountDetails.transactionAmount',
+        sorting: true,
+      }),
+      helper.simple<'originAmountDetails.transactionCurrency'>({
         title: 'Origin currency',
-        exportData: 'originAmountDetails.transactionCurrency',
-        dataIndex: 'originAmountDetails.transactionCurrency',
-        width: 140,
-        hideInSearch: true,
-        render: (dom, entity) => {
-          return entity.originAmountDetails?.transactionCurrency;
-        },
-      },
-      {
+        key: 'originAmountDetails.transactionCurrency',
+        type: MONEY_CURRENCY,
+      }),
+      helper.simple<'originAmountDetails.country'>({
         title: 'Origin country',
-        exportData: 'originAmountDetails.country',
-        dataIndex: 'originAmountDetails.country',
-        width: 140,
-        hideInSearch: true,
-        render: (dom, entity) => {
-          return <CountryDisplay isoCode={entity.originAmountDetails?.country} />;
-        },
-      },
-      {
+        key: 'originAmountDetails.country',
+        type: COUNTRY,
+      }),
+      helper.simple<'destinationUserId'>({
+        key: 'destinationUserId',
         title: 'Destination user ID',
         tooltip: 'Destination is the Receiver in a transaction',
-        width: 170,
-        dataIndex: 'destinationUserId',
-        exportData: 'destinationUserId',
-        sorter: !disableSorting,
-        hideInSearch: true,
-        render: (dom, entity) => {
-          return <Id to={getUserLink(entity.destinationUser)}>{entity.destinationUserId}</Id>;
+        type: {
+          ...STRING,
+          render: (value, _, entity) => {
+            return <Id to={getUserLink(entity.destinationUser)}>{value}</Id>;
+          },
         },
-      },
-      {
+        sorting: true,
+      }),
+      helper.simple<'destinationUser'>({
         title: 'Destination user name',
-        exportData: (entity) => getUserName(entity.destinationUser),
-        dataIndex: 'destinationUser',
-        sorter: !disableSorting,
+        key: 'destinationUser',
+        type: USER_NAME,
+        sorting: true,
         tooltip: 'Destination is the Receiver in a transaction',
-        width: 180,
-        hideInSearch: true,
-        render: (dom, entity) => {
-          return getUserName(entity.destinationUser);
-        },
-      },
-      {
+      }),
+      helper.simple<'destinationPaymentDetails'>({
         title: showDetailsView ? 'Destination payment details' : 'Destination method',
-        exportData: 'destinationPaymentDetails.method',
-        width: showDetailsView ? 600 : 160,
-        hideInSearch: true,
-        render: (dom, entity) => {
-          if (showDetailsView) {
-            return <PaymentDetailsCard paymentDetails={entity.destinationPaymentDetails} />;
-          }
-          return <PaymentMethodTag paymentMethod={entity.destinationPaymentDetails?.method} />;
-        },
-      },
-      {
+        key: 'destinationPaymentDetails',
+        type: PAYMENT_DETAILS_OR_METHOD(showDetailsView),
+      }),
+      helper.simple<'destinationAmountDetails.transactionAmount'>({
         title: 'Destination amount',
-        exportData: 'destinationAmountDetails.transactionAmount',
-        dataIndex: 'destinationAmountDetails.transactionAmount',
-        width: 200,
-        hideInSearch: true,
-        sorter: !disableSorting,
-        render: (dom, entity) => {
-          if (entity.destinationAmountDetails?.transactionAmount !== undefined) {
-            return new Intl.NumberFormat().format(
-              entity.destinationAmountDetails?.transactionAmount,
-            );
-          } else {
-            return entity.destinationAmountDetails?.transactionAmount;
-          }
-        },
-      },
-      {
+        type: MONEY_AMOUNT,
+        key: 'destinationAmountDetails.transactionAmount',
+        sorting: true,
+      }),
+      helper.simple<'destinationAmountDetails.transactionCurrency'>({
         title: 'Destination currency',
-        exportData: 'destinationAmountDetails.transactionCurrency',
-        dataIndex: 'destinationAmountDetails.transactionCurrency',
-        width: 200,
-        hideInSearch: true,
-        render: (dom, entity) => {
-          return entity.destinationAmountDetails?.transactionCurrency;
-        },
-      },
-      {
+        type: MONEY_CURRENCY,
+        key: 'destinationAmountDetails.transactionCurrency',
+      }),
+      helper.simple<'destinationAmountDetails.country'>({
         title: 'Destination country',
-        exportData: 'destinationAmountDetails.country',
-        dataIndex: 'destinationAmountDetails.country',
-        width: 200,
-        hideInSearch: true,
-        render: (dom, entity) => {
-          return <CountryDisplay isoCode={entity.destinationAmountDetails?.country} />;
-        },
-      },
-      {
-        title: 'Origin currencies',
-        dataIndex: 'originCurrenciesFilter',
-        hideInTable: true,
-        width: 170,
-        valueType: 'select',
-        fieldProps: {
-          options: CURRENCIES_SELECT_OPTIONS,
-          allowClear: true,
-          mode: 'multiple',
-        },
-      },
-      {
-        title: 'Destination currencies',
-        dataIndex: 'destinationCurrenciesFilter',
-        hideInTable: true,
-        width: 200,
-        valueType: 'select',
-        fieldProps: {
-          options: CURRENCIES_SELECT_OPTIONS,
-          allowClear: true,
-          mode: 'multiple',
-        },
-      },
-      {
-        title: 'Origin method',
-        hideInTable: true,
-        width: 120,
-        dataIndex: 'originMethodFilter',
-        valueType: 'select',
-        fieldProps: {
-          options: paymethodOptions,
-          allowClear: true,
-          displayMode: 'list',
-        },
-      },
-      {
-        title: 'Destination method',
-        hideInTable: true,
-        width: 120,
-        dataIndex: 'destinationMethodFilter',
-        valueType: 'select',
-        fieldProps: {
-          options: paymethodOptions,
-          allowClear: true,
-          displayMode: 'list',
-        },
-      },
-      {
+        key: 'destinationAmountDetails.country',
+        type: COUNTRY,
+      }),
+      helper.simple<'tags'>({
         title: 'Tags',
-        exportData: 'tags',
-        hideInSearch: true,
-        width: 150,
-        onCell: (row) => ({
-          rowSpan: row.isFirstRow ? row.rowsCount : 0,
-        }),
-        render: (_, entity) => {
-          return (
-            <>
-              {entity.tags?.map((tag) => (
-                <KeyValueTag key={tag.key} tag={tag} />
-              ))}
-            </>
-          );
-        },
+        type: TAGS,
+        key: 'tags',
+      }),
+    ]);
+  }, [alert, getStatus, showDetailsView, isPulseEnabled]);
+
+  const fullExtraFilters: ExtraFilter<TransactionsTableParams>[] = [
+    ...(extraFilters ?? []),
+    {
+      title: 'Origin currencies',
+      key: 'originCurrenciesFilter',
+      renderer: {
+        ...MONEY_CURRENCIES.autoFilterDataType,
+        mode: 'MULTIPLE',
       },
-    ],
-    [disableSorting, showDetailsView, isPulseEnabled, alert, getStatus],
-  );
+    } as ExtraFilter<TransactionsTableParams>,
+    {
+      title: 'Destination currencies',
+      key: 'destinationCurrenciesFilter',
+      renderer: {
+        ...MONEY_CURRENCIES.autoFilterDataType,
+        mode: 'MULTIPLE',
+      },
+    } as ExtraFilter<TransactionsTableParams>,
+    {
+      title: 'Origin method',
+      key: 'originMethodFilter',
+      renderer: PAYMENT_METHOD.autoFilterDataType,
+    } as ExtraFilter<TransactionsTableParams>,
+    {
+      title: 'Destination method',
+      key: 'destinationMethodFilter',
+      renderer: PAYMENT_METHOD.autoFilterDataType,
+    },
+  ];
 
   return (
     <QueryResultsTable<InternalTransaction, TransactionsTableParams>
       tableId={'transactions-list'}
       params={params}
       onChangeParams={onChangeParams}
-      extraFilters={extraFilters}
-      disableInternalPadding={hideSearchForm}
+      extraFilters={fullExtraFilters}
       showResultsInfo
-      form={{
-        labelWrap: true,
-      }}
       rowKey="transactionId"
-      search={
-        hideSearchForm
-          ? false
-          : {
-              labelWidth: 120,
-            }
-      }
-      scroll={{ x: 1500 }}
       queryResults={queryResult}
       columns={columns}
-      controlsHeader={[
-        () => {
-          return (
-            <>
-              {showCheckedTransactionsButton && (
-                <Button
-                  onClick={() => {
-                    if (setIsCheckedTransactionsEnabled) {
-                      setIsCheckedTransactionsEnabled((prevState) => !prevState);
-                    }
-                  }}
-                  type="TETRIARY"
-                  size="MEDIUM"
-                  style={{ marginRight: 8 }}
-                >
-                  {isCheckedTransactionsEnabled ? 'Hide' : 'Show'} checked #TX's
-                </Button>
-              )}
-              <DetailsViewButton
-                onConfirm={(value) => {
-                  setShowDetailsView(value);
+      pagination={true}
+      hideFilters={hideSearchForm}
+      disableSorting={disableSorting}
+      fitHeight={fitHeight}
+      extraTools={[
+        () => (
+          <>
+            {showCheckedTransactionsButton && (
+              <Button
+                onClick={() => {
+                  if (setIsCheckedTransactionsEnabled) {
+                    setIsCheckedTransactionsEnabled((prevState) => !prevState);
+                  }
                 }}
-              />
-            </>
-          );
-        },
+                type="TETRIARY"
+                size="MEDIUM"
+                style={{ marginRight: 8 }}
+              >
+                {isCheckedTransactionsEnabled ? 'Hide' : 'Show'} checked #TX's
+              </Button>
+            )}
+            <DetailsViewButton
+              onConfirm={(value) => {
+                setShowDetailsView(value);
+              }}
+            />
+          </>
+        ),
       ]}
-      columnsState={{
-        persistenceType: 'localStorage',
-        persistenceKey: 'transaction-list',
-      }}
-      autoAdjustHeight={autoAdjustHeight}
-      headerSubtitle={headerSubtitle}
-      adjustPagination={adjustPagination}
-      disableHorizontalScrolling={disableHorizontalScrolling}
     />
   );
 }

@@ -2,7 +2,7 @@ import React, { useCallback, useState } from 'react';
 import { useNavigate } from 'react-router';
 import { queryAdapter } from './components/TransactionsTable/helpers/queryAdapter';
 import { useApi } from '@/api';
-import PageWrapper from '@/components/PageWrapper';
+import PageWrapper, { PageWrapperTableContainer } from '@/components/PageWrapper';
 import { useI18n } from '@/locales';
 import '../../components/ui/colors';
 import TransactionsTable, {
@@ -107,50 +107,52 @@ const TableList = () => {
 
   return (
     <PageWrapper title={i18n('menu.transactions.transactions-list')}>
-      <TransactionsTable
-        extraFilters={[
-          {
-            key: 'userId',
-            title: 'User ID/name',
-            renderer: ({ params, setParams }) => (
-              <UserSearchButton
-                initialMode={params.userFilterMode ?? 'ALL'}
-                userId={params.userId ?? null}
-                onConfirm={(userId, mode) => {
-                  setParams((state) => ({
-                    ...state,
-                    userId: userId ?? undefined,
-                    userFilterMode: mode ?? undefined,
-                  }));
-                }}
-              />
-            ),
-          },
-          {
-            key: 'tagKey',
-            title: 'Tags',
-            renderer: ({ params, setParams }) => (
-              <TagSearchButton
-                initialState={{
-                  key: params.tagKey ?? null,
-                  value: params.tagValue ?? null,
-                }}
-                onConfirm={(value) => {
-                  setParams((state) => ({
-                    ...state,
-                    tagKey: value.key ?? undefined,
-                    tagValue: value.value ?? undefined,
-                  }));
-                }}
-              />
-            ),
-          },
-        ]}
-        queryResult={queryResult}
-        params={params}
-        onChangeParams={handleChangeParams}
-        autoAdjustHeight
-      />
+      <PageWrapperTableContainer>
+        <TransactionsTable
+          extraFilters={[
+            {
+              key: 'userId',
+              title: 'User ID/name',
+              renderer: ({ params, setParams }) => (
+                <UserSearchButton
+                  initialMode={params.userFilterMode ?? 'ALL'}
+                  userId={params.userId ?? null}
+                  onConfirm={(userId, mode) => {
+                    setParams((state) => ({
+                      ...state,
+                      userId: userId ?? undefined,
+                      userFilterMode: mode ?? undefined,
+                    }));
+                  }}
+                />
+              ),
+            },
+            {
+              key: 'tagKey',
+              title: 'Tags',
+              renderer: ({ params, setParams }) => (
+                <TagSearchButton
+                  initialState={{
+                    key: params.tagKey ?? null,
+                    value: params.tagValue ?? null,
+                  }}
+                  onConfirm={(value) => {
+                    setParams((state) => ({
+                      ...state,
+                      tagKey: value.key ?? undefined,
+                      tagValue: value.value ?? undefined,
+                    }));
+                  }}
+                />
+              ),
+            },
+          ]}
+          queryResult={queryResult}
+          params={params}
+          onChangeParams={handleChangeParams}
+          fitHeight
+        />
+      </PageWrapperTableContainer>
     </PageWrapper>
   );
 };

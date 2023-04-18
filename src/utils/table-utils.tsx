@@ -2,7 +2,7 @@ import React from 'react';
 import { Resizable } from 'react-resizable';
 import type { ResizeCallbackData } from 'react-resizable';
 import { map, QueryResult } from '@/utils/queries/types';
-import { TableDataItem } from '@/components/ui/Table/types';
+import { TableDataItem } from '@/components/library/Table/types';
 import { PaginatedData } from '@/utils/queries/hooks';
 
 export const ResizableTitle = (

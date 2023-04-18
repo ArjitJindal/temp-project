@@ -30,6 +30,7 @@ import Toggle from '@/components/library/Toggle/story';
 import Tabs from '@/components/library/Tabs/story';
 import TextArea from '@/components/library/TextArea/story';
 import Slider from '@/components/library/Slider/story';
+import Table from '@/components/library/Table/story';
 import RiskScoreDisplay from '@/components/ui/RiskScoreDisplay/story';
 import RiskLevelTag from '@/components/library/RiskLevelTag/story';
 
@@ -53,6 +54,10 @@ const config: Config = [
     key: 'library',
     category: 'Library',
     components: [
+      {
+        component: 'Table',
+        story: Table,
+      },
       {
         component: 'VerticalMenu',
         story: VerticalMenu,

@@ -5,7 +5,6 @@ import { RangeValue } from 'rc-picker/es/interface';
 import { Card } from 'antd';
 import _ from 'lodash';
 import { Link } from 'react-router-dom';
-import style from '../../style.module.less';
 import s from './styles.module.less';
 import { TableItem } from './types';
 import DatePicker from '@/components/ui/DatePicker';
@@ -14,12 +13,13 @@ import { useApi } from '@/api';
 import UserTypeIcon from '@/components/ui/UserTypeIcon';
 import UserLink from '@/components/UserLink';
 import { getUserName } from '@/utils/api/users';
-import { TableColumn } from '@/components/ui/Table/types';
+import { TableColumn } from '@/components/library/Table/types';
 import { usePaginatedQuery } from '@/utils/queries/hooks';
 import { HITS_PER_USER } from '@/utils/queries/keys';
 import QueryResultsTable from '@/components/common/QueryResultsTable';
 import { makeUrl } from '@/utils/routing';
 import { useApiTime } from '@/utils/tracker';
+import { ColumnHelper } from '@/components/library/Table/columnHelper';
 
 interface Props {
   direction?: 'ORIGIN' | 'DESTINATION';
@@ -43,68 +43,53 @@ export default function HitsPerUserCard(props: Props) {
     }
   }, [dateRange]);
 
-  const columns: TableColumn<TableItem>[] = [
-    {
+  const helper = new ColumnHelper<TableItem>();
+  const columns: TableColumn<TableItem>[] = helper.list([
+    helper.simple<'userId'>({
+      key: 'userId',
       title: 'User ID',
-      width: 175,
-      render: (dom, entity) => {
-        const { user, userId } = entity;
-        if (!user) {
-          return userId;
-        }
-        return <UserLink user={user}>{userId}</UserLink>;
+      type: {
+        render: (userId, _, entity) => {
+          const { user } = entity;
+          if (!user) {
+            return <>{userId}</>;
+          }
+          return <UserLink user={user}>{userId}</UserLink>;
+        },
       },
-      exportData: (entity) => {
-        return entity?.userId;
-      },
-    },
-    {
+    }),
+    helper.derived<string>({
       title: 'User Name',
-      dataIndex: 'user',
-      width: 150,
-      render: (_, { user }) => getUserName(user),
-      exportData: (entity) => {
-        const { user } = entity;
-        return getUserName(user);
-      },
-    },
-    {
+      value: (entity: TableItem): string => getUserName(entity.user) ?? '',
+    }),
+    helper.simple<'transactionsHit'>({
       title: 'Transactions hit',
-      dataIndex: 'transactionsHit',
-      width: 100,
-      render: (dom, entity) => {
-        return `${entity.transactionsHit} transactions (${entity.percentageTransactionsHit}%)`;
+      key: 'transactionsHit',
+      type: {
+        render: (transactionsHit, _, entity) => {
+          return <>{`${transactionsHit} transactions (${entity.percentageTransactionsHit}%)`}</>;
+        },
       },
-      exportData: (entity) => {
-        return entity?.transactionsHit;
-      },
-    },
-    {
+    }),
+    helper.simple<'user.type'>({
+      key: 'user.type',
       title: 'User Type',
-      width: 80,
-      render: (dom, entity) => {
-        const { user } = entity;
-        if (!user) {
-          return '-';
-        }
-        return (
-          <div className={s.userType}>
-            <UserTypeIcon type={user.type} /> <span>{_.capitalize(user.type)}</span>
-          </div>
-        );
+      type: {
+        render: (type) => {
+          if (!type) {
+            return <>-</>;
+          }
+          return (
+            <div className={s.userType}>
+              <UserTypeIcon type={type} /> <span>{_.capitalize(type)}</span>
+            </div>
+          );
+        },
       },
-      exportData: (entity) => {
-        const { user } = entity;
-        if (!user) {
-          return '-';
-        }
-        return user.type;
-      },
-    },
-    {
+    }),
+    helper.display({
       title: 'Open Cases',
-      width: 100,
-      render: (dom, entity) => {
+      render: (entity) => {
         let startTimestamp;
         let endTimestamp;
         const [start, end] = dateRange ?? [];
@@ -130,8 +115,8 @@ export default function HitsPerUserCard(props: Props) {
           </>
         );
       },
-    },
-  ];
+    }),
+  ]);
 
   const hitsPerUserResult = usePaginatedQuery(HITS_PER_USER(dateRange, direction), async () => {
     let startTimestamp = dayjs().subtract(1, 'day').valueOf();
@@ -160,21 +145,15 @@ export default function HitsPerUserCard(props: Props) {
   });
 
   return (
-    <Card bordered={false} bodyStyle={{ padding: 0 }}>
+    <Card bordered={false}>
       <QueryResultsTable<TableItem>
-        form={{
-          labelWrap: true,
-        }}
-        className={style.table}
-        scroll={{ x: 1300 }}
         rowKey="userId"
-        search={false}
         columns={columns}
-        toolBarRender={() => [<DatePicker.RangePicker value={dateRange} onChange={setDateRange} />]}
+        extraTools={[() => <DatePicker.RangePicker value={dateRange} onChange={setDateRange} />]}
         queryResults={hitsPerUserResult}
-        pagination={'HIDE'}
-        options={{
-          density: false,
+        pagination={false}
+        sizingMode="FULL_WIDTH"
+        toolsOptions={{
           setting: false,
           reload: true,
         }}

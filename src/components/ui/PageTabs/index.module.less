@@ -1,5 +1,18 @@
 .root {
+  flex: 1;
+
   :global {
+    > .ant-tabs-content-holder {
+      display: flex;
+
+      > .ant-tabs-content {
+        > .ant-tabs-tabpane {
+          display: flex;
+          flex-direction: column;
+        }
+      }
+    }
+
     .ant-tabs-nav {
       color: #fff !important;
     }

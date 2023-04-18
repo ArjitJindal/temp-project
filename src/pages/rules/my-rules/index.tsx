@@ -5,16 +5,19 @@ import { DeleteOutlined, EditOutlined } from '@ant-design/icons';
 import { useMutation } from '@tanstack/react-query';
 import { getRuleInstanceDisplayId } from '../utils';
 import s from './style.module.less';
-import { dayjs, DEFAULT_DATE_TIME_FORMAT } from '@/utils/dayjs';
 import { RuleInstance } from '@/apis';
 import { useApi } from '@/api';
 import { useFeatureEnabled } from '@/components/AppWrapper/Providers/SettingsProvider';
-import { TableColumn } from '@/components/ui/Table/types';
+import {
+  CommonParams,
+  SortingParamsItem,
+  TableColumn,
+  TableRefType,
+} from '@/components/library/Table/types';
 import { useRules } from '@/utils/rules';
 import { getMutationAsyncResource, usePaginatedQuery } from '@/utils/queries/hooks';
 import { GET_RULE_INSTANCES } from '@/utils/queries/keys';
 import QueryResultsTable from '@/components/common/QueryResultsTable';
-import { TableActionType } from '@/components/ui/Table';
 import { useApiTime, usePageViewTracker } from '@/utils/tracker';
 import RuleConfigurationDrawer, { FormValues } from '@/pages/rules/RuleConfigurationDrawer';
 import { getErrorMessage } from '@/utils/lang';
@@ -22,7 +25,13 @@ import { removeEmpty } from '@/utils/json';
 import { useHasPermissions } from '@/utils/user-utils';
 import Confirm from '@/components/utils/Confirm';
 import Button from '@/components/library/Button';
+import { ColumnHelper } from '@/components/library/Table/columnHelper';
+import { BOOLEAN, DATE } from '@/components/library/Table/standardDataTypes';
 import { message } from '@/components/library/Message';
+import { PageWrapperTableContainer } from '@/components/PageWrapper';
+import { DEFAULT_PARAMS_STATE } from '@/components/library/Table/consts';
+
+const DEFAULT_SORTING: SortingParamsItem = ['ruleId', 'ascend'];
 
 const MyRule = () => {
   usePageViewTracker('My Rule Page');
@@ -33,7 +42,7 @@ const MyRule = () => {
   const [updatedRuleInstances, setUpdatedRuleInstances] = useState<{ [key: string]: RuleInstance }>(
     {},
   );
-  const actionRef = useRef<TableActionType>(null);
+  const actionRef = useRef<TableRefType>(null);
   const reloadTable = useCallback(() => {
     actionRef.current?.reload();
   }, []);
@@ -57,6 +66,11 @@ const MyRule = () => {
       setRuleReadOnly(false);
     }
   }, [showDetail]);
+
+  const [params, setParams] = useState<CommonParams>({
+    ...DEFAULT_PARAMS_STATE,
+    sort: [DEFAULT_SORTING],
+  });
 
   const [deleting, setDeleting] = useState(false);
   const [currentRow, setCurrentRow] = useState<RuleInstance>();
@@ -115,103 +129,100 @@ const MyRule = () => {
     },
     [handleRuleInstanceUpdate],
   );
-  const columns: TableColumn<RuleInstance>[] = useMemo(() => {
-    const caseCreationHeaders: TableColumn<RuleInstance>[] = [
-      {
-        title: 'Case priority',
-        width: 50,
-        dataIndex: 'casePriority',
-      },
-    ];
-    return [
-      {
+
+  const columns: TableColumn<RuleInstance>[] = useMemo((): TableColumn<RuleInstance>[] => {
+    const helper = new ColumnHelper<RuleInstance>();
+
+    return helper.list([
+      helper.simple<'ruleId'>({
         title: 'ID',
-        width: 100,
-        sorter: (a, b) => parseInt(a.ruleId.split('-')[1]) - parseInt(b.ruleId.split('-')[1]),
-        exportData: (row) => row.ruleId,
-        render: (_, entity) => {
-          return (
-            <a
-              onClick={() => {
-                onViewRule(entity);
-              }}
-            >
-              {getRuleInstanceDisplayId(entity.ruleId, entity.id)}
-            </a>
-          );
+        key: 'ruleId',
+        sorting: true,
+        type: {
+          render: (ruleId, _editing, entity) => {
+            return (
+              <a
+                onClick={() => {
+                  onViewRule(entity);
+                }}
+              >
+                {ruleId ? getRuleInstanceDisplayId(ruleId, entity.id) : entity.id}
+              </a>
+            );
+          },
         },
-      },
-      {
+      }),
+      helper.simple<'ruleNameAlias'>({
         title: 'Name',
-        width: 120,
-        exportData: (row) => row.ruleNameAlias,
-        render: (_, entity) => {
-          const ruleInstance = updatedRuleInstances[entity.id as string] || entity;
-          return (
-            <span style={{ fontSize: '14px' }}>
-              {ruleInstance.ruleNameAlias || rules[ruleInstance.ruleId]?.name}
-            </span>
-          );
+        key: 'ruleNameAlias',
+        type: {
+          render: (_, _editing, entity) => {
+            const ruleInstance = updatedRuleInstances[entity.id as string] || entity;
+            return (
+              <span style={{ fontSize: '14px' }}>
+                {ruleInstance.ruleNameAlias || rules[ruleInstance.ruleId]?.name}
+              </span>
+            );
+          },
         },
-      },
-      {
+      }),
+      helper.derived<string>({
+        id: 'hitCount',
         title: 'Hit rate',
-        width: 80,
-        sorter: (a, b) =>
-          (a.hitCount && a.runCount ? a.hitCount / a.runCount : 0) -
-          (b.hitCount && b.runCount ? b.hitCount / b.runCount : 0),
-        exportData: (row) => {
+        value: (row) => {
           if (row.hitCount && row.runCount) {
             return `${(row.hitCount / row.runCount) * 100}%`;
           }
           return '0%';
         },
-        render: (_, ruleInstance) => {
-          const percent =
-            ruleInstance.hitCount && ruleInstance.runCount
-              ? (ruleInstance.hitCount / ruleInstance.runCount) * 100
-              : 0;
-          return (
-            <Tooltip title={<>{`Hit: ${ruleInstance.hitCount} / Run: ${ruleInstance.runCount}`}</>}>
-              {percent?.toFixed(2)}%
-            </Tooltip>
-          );
+        sorting: true,
+        type: {
+          render: (_value, _edit, ruleInstance) => {
+            const percent =
+              ruleInstance.hitCount && ruleInstance.runCount
+                ? (ruleInstance.hitCount / ruleInstance.runCount) * 100
+                : 0;
+            return (
+              <Tooltip
+                title={<>{`Hit: ${ruleInstance.hitCount} / Run: ${ruleInstance.runCount}`}</>}
+              >
+                {percent?.toFixed(2)}%
+              </Tooltip>
+            );
+          },
         },
-      },
-      ...caseCreationHeaders,
-      {
+      }),
+      helper.simple<'casePriority'>({
+        key: 'casePriority',
+        title: 'Case priority',
+      }),
+      helper.simple<'createdAt'>({
+        key: 'createdAt',
         title: 'Created At',
-        width: 120,
-        sorter: (a, b) =>
-          a.createdAt !== undefined && b.createdAt !== undefined ? a.createdAt - b.createdAt : -1,
-        defaultSortOrder: 'descend',
-        dataIndex: 'createdAt',
-        valueType: 'dateTime',
-        exportData: (row) => dayjs(row.createdAt).format(DEFAULT_DATE_TIME_FORMAT),
-      },
-      {
+        type: DATE,
+        sorting: 'desc',
+      }),
+      helper.derived<boolean>({
+        id: 'status',
         title: 'Status',
-        width: 30,
-        align: 'center',
-        dataIndex: 'status',
-        key: 'status',
-        render: (_, entity) => {
-          const ruleInstance = updatedRuleInstances[entity.id as string] || entity;
-          return (
-            <Switch
-              disabled={!canWriteRules}
-              checked={ruleInstance.status === 'ACTIVE'}
-              onChange={(checked) => handleActivationChange(ruleInstance, checked)}
-            />
-          );
+        value: (row) => row.status === 'ACTIVE',
+        type: {
+          ...BOOLEAN,
+          render: (_, _editing, entity) => {
+            const ruleInstance = updatedRuleInstances[entity.id as string] || entity;
+            return (
+              <Switch
+                disabled={!canWriteRules}
+                checked={ruleInstance.status === 'ACTIVE'}
+                onChange={(checked) => handleActivationChange(ruleInstance, checked)}
+              />
+            );
+          },
         },
-        exportData: (row) => row.status === 'ACTIVE',
-      },
-      {
+      }),
+      helper.display({
         title: 'Action',
-        width: 30,
-        align: 'center',
-        render: (_, entity) => {
+        render: (entity) => {
           return (
             <div className={s.actionIconsContainer}>
               <Button
@@ -255,8 +266,8 @@ const MyRule = () => {
             </div>
           );
         },
-      },
-    ];
+      }),
+    ]);
   }, [
     rules,
     updatedRuleInstances,
@@ -268,11 +279,32 @@ const MyRule = () => {
     onEditRule,
   ]);
   const measure = useApiTime();
-  const rulesResult = usePaginatedQuery(GET_RULE_INSTANCES(), async () => {
+  const rulesResult = usePaginatedQuery(GET_RULE_INSTANCES(params), async () => {
     const ruleInstances = await measure(() => api.getRuleInstances(), 'Get Rule Instances');
+
+    const result = [...ruleInstances];
+    if (params.sort.length > 0) {
+      const [key, order] = params.sort[0];
+      result.sort((a, b) => {
+        let result = 0;
+        if (key === 'ruleId') {
+          result = parseInt(a.ruleId.split('-')[1]) - parseInt(b.ruleId.split('-')[1]);
+        } else if (key === 'hitCount') {
+          result =
+            (a.hitCount && a.runCount ? a.hitCount / a.runCount : 0) -
+            (b.hitCount && b.runCount ? b.hitCount / b.runCount : 0);
+        } else if (key === 'createdAt') {
+          result =
+            a.createdAt !== undefined && b.createdAt !== undefined ? a.createdAt - b.createdAt : -1;
+        }
+        result *= order === 'descend' ? -1 : 1;
+        return result;
+      });
+    }
+
     return {
-      items: ruleInstances,
-      total: ruleInstances.length,
+      items: result,
+      total: result.length,
     };
   });
 
@@ -355,22 +387,18 @@ const MyRule = () => {
   );
 
   return (
-    <>
+    <PageWrapperTableContainer>
       <QueryResultsTable<RuleInstance>
-        form={{
-          labelWrap: true,
-        }}
-        actionRef={actionRef}
+        tableId="my-rules-table"
+        innerRef={actionRef}
         columns={columns}
         queryResults={rulesResult}
-        pagination={'HIDE'}
-        search={false}
-        scroll={{ x: 1000 }}
+        pagination={false}
+        fitHeight={true}
         rowKey="id"
-        columnsState={{
-          persistenceType: 'localStorage',
-          persistenceKey: 'my-rules-table',
-        }}
+        defaultSorting={DEFAULT_SORTING}
+        params={params}
+        onChangeParams={setParams}
       />
       <RuleConfigurationDrawer
         rule={rule}
@@ -427,7 +455,7 @@ const MyRule = () => {
         }}
         type={'EDIT'}
       />
-    </>
+    </PageWrapperTableContainer>
   );
 };
 

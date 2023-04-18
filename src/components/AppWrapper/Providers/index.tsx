@@ -6,6 +6,7 @@ import MixPanelProvider from './MixPanelProvider';
 import SideBarProvider from './SidebarProvider';
 import DemoModeProvider from './DemoModeProvider';
 import FlagrightUserProvider from './FlagrightUserProvider';
+import AuthProvider from './AuthProvider';
 import { Feature } from '@/apis';
 import SettingsProviderMock from '@/components/AppWrapper/Providers/mocks/SettingsProvider';
 import FlagrightUserProviderMock from '@/components/AppWrapper/Providers/mocks/FlagrightUserProvider';
@@ -30,18 +31,20 @@ export function StorybookMockProviders(props: Props) {
 
 export default function Providers(props: Props) {
   return (
-    <AntConfigProvider>
-      <QueryClientProvider>
-        <FlagrightUserProvider>
-          <SettingsProvider globalFeatures={FEATURES_ENABLED as Feature[]}>
-            <SideBarProvider>
-              <MixPanelProvider>
-                <DemoModeProvider>{props.children}</DemoModeProvider>
-              </MixPanelProvider>
-            </SideBarProvider>
-          </SettingsProvider>
-        </FlagrightUserProvider>
-      </QueryClientProvider>
-    </AntConfigProvider>
+    <AuthProvider>
+      <AntConfigProvider>
+        <QueryClientProvider>
+          <FlagrightUserProvider>
+            <SettingsProvider globalFeatures={FEATURES_ENABLED as Feature[]}>
+              <SideBarProvider>
+                <MixPanelProvider>
+                  <DemoModeProvider>{props.children}</DemoModeProvider>
+                </MixPanelProvider>
+              </SideBarProvider>
+            </SettingsProvider>
+          </FlagrightUserProvider>
+        </QueryClientProvider>
+      </AntConfigProvider>
+    </AuthProvider>
   );
 }

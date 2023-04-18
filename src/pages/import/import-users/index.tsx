@@ -5,12 +5,15 @@ import type { TableListItem } from './data';
 import { FileImportButton } from '@/components/file-import/FileImportButton';
 import PageWrapper from '@/components/PageWrapper';
 import { useI18n } from '@/locales';
-import { TableColumn } from '@/components/ui/Table/types';
-import { CommonParams, DEFAULT_PARAMS_STATE } from '@/components/ui/Table';
+import { CommonParams, TableColumn } from '@/components/library/Table/types';
+import { DEFAULT_PARAMS_STATE } from '@/components/library/Table/consts';
 import { USER_FILES } from '@/utils/queries/keys';
 import { useQuery } from '@/utils/queries/hooks';
 import QueryResultsTable from '@/components/common/QueryResultsTable';
 import { usePageViewTracker } from '@/utils/tracker';
+import { ColumnHelper } from '@/components/library/Table/columnHelper';
+import TimestampDisplay from '@/components/ui/TimestampDisplay';
+import { dayjs, DEFAULT_DATE_TIME_FORMAT } from '@/utils/dayjs';
 
 function getStatusColor(status: string): string {
   switch (status) {
@@ -26,48 +29,50 @@ function getStatusColor(status: string): string {
 
 const TableList: React.FC = () => {
   usePageViewTracker('Import Users Page');
-  const columns: TableColumn<TableListItem>[] = [
-    {
+  const helper = new ColumnHelper<TableListItem>();
+  const columns: TableColumn<TableListItem>[] = helper.list([
+    helper.simple<'id'>({
+      key: 'id',
       title: 'ID',
-      dataIndex: 'id',
-      tip: 'File identifier',
-      render: (dom) => {
-        return <a>{dom}</a>;
-      },
-    },
-    {
+      tooltip: 'File identifier',
+    }),
+    helper.simple<'filename'>({
+      key: 'filename',
       title: 'Filename',
-      dataIndex: 'filename',
-      valueType: 'text',
-    },
-    {
+    }),
+    helper.simple<'createdAt'>({
+      key: 'createdAt',
       title: 'Created At',
-      dataIndex: 'createdAt',
-      valueType: 'dateTime',
-    },
-    {
-      title: 'Total Users',
-      dataIndex: 'totalUsers',
-      valueType: 'digit',
-    },
-    {
-      title: 'Imported Users',
-      dataIndex: 'importedUsers',
-      valueType: 'digit',
-    },
-    {
-      title: 'Status',
-      dataIndex: 'status',
-      valueType: 'text',
-      render: (status: any) => {
-        return (
-          <span>
-            <Tag color={getStatusColor(status)}>{status}</Tag>
-          </span>
-        );
+      type: {
+        render: (date) => <TimestampDisplay timestamp={date?.getTime()} />,
+        stringify: (date) => dayjs(date?.getDate()).format(DEFAULT_DATE_TIME_FORMAT),
+        autoFilterDataType: { kind: 'dateTimeRange' },
       },
-    },
-  ];
+    }),
+    // helper.simple<'totalUsers'>({
+    //   key: 'totalUsers',
+    //   title: 'Total Users',
+    // }),
+    // helper.simple<'importedUsers'>({
+    //   key: 'importedUsers',
+    //   title: 'Imported Users',
+    // }),
+    helper.simple<'status'>({
+      key: 'status',
+      title: 'Status',
+      type: {
+        render: (status: string | undefined) => {
+          return status ? (
+            <span>
+              <Tag color={getStatusColor(status)}>{status}</Tag>
+            </span>
+          ) : (
+            <></>
+          );
+        },
+      },
+    }),
+  ]);
 
   const i18n = useI18n();
 
@@ -84,25 +89,18 @@ const TableList: React.FC = () => {
   return (
     <PageWrapper title={i18n('menu.import.import-users')}>
       <QueryResultsTable<TableListItem, CommonParams>
-        form={{
-          labelWrap: true,
-        }}
-        headerTitle="Files"
+        // headerTitle="Files"
         rowKey="id"
-        search={false}
+        tableId="users-files-list"
         columns={columns}
         params={params}
         onChangeParams={setParams}
-        columnsState={{
-          persistenceType: 'localStorage',
-          persistenceKey: 'users-files-list',
-        }}
         queryResults={filesResult}
-        toolBarRender={() => [
-          <FileImportButton type={'USER'} buttonText="Import (Consumer User)" />,
-          <FileImportButton type={'BUSINESS'} buttonText="Import (Business User)" />,
+        extraTools={[
+          () => <FileImportButton type={'USER'} buttonText="Import (Consumer User)" />,
+          () => <FileImportButton type={'BUSINESS'} buttonText="Import (Business User)" />,
         ]}
-        autoAdjustHeight
+        fitHeight
       />
     </PageWrapper>
   );

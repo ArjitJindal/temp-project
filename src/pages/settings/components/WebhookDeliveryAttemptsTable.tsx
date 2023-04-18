@@ -3,14 +3,14 @@ import { CheckCircleOutlined, CloseCircleOutlined } from '@ant-design/icons';
 import { Modal, Tag } from 'antd';
 import ProDescriptions from '@ant-design/pro-descriptions';
 import { WebhookDeliveryAttempt } from '@/apis';
-import TimestampDisplay from '@/components/ui/TimestampDisplay';
 import { useApi } from '@/api';
 import Colors from '@/components/ui/colors';
-import { TableColumn } from '@/components/ui/Table/types';
+import { TableColumn } from '@/components/library/Table/types';
 import { usePaginatedQuery } from '@/utils/queries/hooks';
 import { WEBHOOKS } from '@/utils/queries/keys';
 import QueryResultsTable from '@/components/common/QueryResultsTable';
-import { dayjs, DEFAULT_DATE_TIME_FORMAT } from '@/utils/dayjs';
+import { ColumnHelper } from '@/components/library/Table/columnHelper';
+import { DATE_TIME } from '@/components/library/Table/standardDataTypes';
 
 interface Props {
   webhookId: string;
@@ -29,55 +29,56 @@ export const WebhookDeliveryAttemptsTable: React.FC<Props> = ({ webhookId }) => 
       items: attempts,
     };
   });
-  const columns: TableColumn<WebhookDeliveryAttempt>[] = [
-    {
+  const helper = new ColumnHelper<WebhookDeliveryAttempt>();
+  const columns: TableColumn<WebhookDeliveryAttempt>[] = helper.list([
+    helper.simple<'success'>({
+      key: 'success',
       title: 'Status',
-      width: 30,
-      align: 'center',
-      render: (_, entity) =>
-        entity.success ? (
-          <CheckCircleOutlined style={{ color: Colors.successColor.base }} />
-        ) : (
-          <CloseCircleOutlined style={{ color: Colors.errorColor.base }} />
-        ),
-      exportData: (entity) => (entity.success ? 'Success' : 'Failed'),
-    },
-    {
+      type: {
+        render: (success) =>
+          success ? (
+            <CheckCircleOutlined style={{ color: Colors.successColor.base }} />
+          ) : (
+            <CloseCircleOutlined style={{ color: Colors.errorColor.base }} />
+          ),
+        stringify: (success) => (success ? 'Success' : 'Failed'),
+      },
+    }),
+    helper.simple<'event'>({
+      key: 'event',
       title: 'Event',
-      width: 100,
-      render: (_, entity) => <Tag color={'cyan'}>{entity.event}</Tag>,
-      exportData: (entity) => entity.event,
-    },
-    {
+      type: {
+        render: (event) => (event ? <Tag color={'cyan'}>{event}</Tag> : <></>),
+      },
+    }),
+    helper.simple<'deliveryTaskId'>({
+      key: 'deliveryTaskId',
       title: 'Event ID',
-      width: 200,
-      render: (_, entity) => (
-        <a onClick={() => setSelectedWebhookDelivery(entity)}>{entity.deliveryTaskId}</a>
-      ),
-      exportData: (entity) => entity.deliveryTaskId,
-    },
-    {
+      type: {
+        render: (deliveryTaskId, _, entity) => (
+          <a onClick={() => setSelectedWebhookDelivery(entity)}>{deliveryTaskId}</a>
+        ),
+      },
+    }),
+    helper.simple<'eventCreatedAt'>({
+      key: 'eventCreatedAt',
       title: 'Event Created',
-      width: 100,
-      render: (_, entity) => <TimestampDisplay timestamp={entity.eventCreatedAt} />,
-      exportData: (entity) => dayjs(entity.eventCreatedAt).format(DEFAULT_DATE_TIME_FORMAT),
-    },
-    {
+      type: DATE_TIME,
+    }),
+    helper.simple<'requestStartedAt'>({
+      key: 'requestStartedAt',
       title: 'Delivered At',
-      width: 100,
-      render: (_, entity) => <TimestampDisplay timestamp={entity.requestStartedAt} />,
-      exportData: (entity) => dayjs(entity.requestStartedAt).format(DEFAULT_DATE_TIME_FORMAT),
-    },
-  ];
+      type: DATE_TIME,
+    }),
+  ]);
   return (
     <>
       <QueryResultsTable<WebhookDeliveryAttempt>
-        headerTitle={`last ${QUERY_LIMIT} attempts`}
+        // headerTitle={`last ${QUERY_LIMIT} attempts`}
+        rowKey="deliveryTaskId"
         columns={columns}
         queryResults={webhookResults}
-        search={false}
-        pagination={'HIDE'}
-        rowKey="deliveryTaskId"
+        pagination={false}
       />
       <Modal
         visible={Boolean(selectedWebhookDelivery)}

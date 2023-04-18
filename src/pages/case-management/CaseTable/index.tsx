@@ -1,30 +1,26 @@
-import React, { useCallback, useMemo, useRef, useState } from 'react';
-import { ProFormInstance } from '@ant-design/pro-form';
+import React, { useCallback, useMemo, useRef } from 'react';
 import { TableSearchParams } from '../types';
 import CasesStatusChangeButton from '../components/CasesStatusChangeButton';
 import AlertTable from '../AlertTable';
-import GavelIcon from './gavel.react.svg';
 import { Account, Case, CaseUpdateRequest } from '@/apis';
-import { dayjs, DEFAULT_DATE_TIME_FORMAT } from '@/utils/dayjs';
 import { QueryResult } from '@/utils/queries/types';
 import { useAuth0User, useUsers } from '@/utils/user-utils';
 import { makeUrl } from '@/utils/routing';
-import { TableColumn, TableRow } from '@/components/ui/Table/types';
+import {
+  AllParams,
+  DerivedColumn,
+  TableColumn,
+  TableRefType,
+} from '@/components/library/Table/types';
 import QueryResultsTable from '@/components/common/QueryResultsTable';
-import { AllParams, TableActionType } from '@/components/ui/Table';
 import Id from '@/components/ui/Id';
 import { addBackUrlToRoute } from '@/utils/backUrl';
-import StatusButtons from '@/pages/transactions/components/StatusButtons';
 import { useTableData } from '@/pages/case-management/CaseTable/helpers';
 import { TableItem } from '@/pages/case-management/CaseTable/types';
-import { getUserLink, getUserName, KYC_STATUSES, USER_STATES } from '@/utils/api/users';
+import { getUserLink, USER_STATES } from '@/utils/api/users';
 import UserKycStatusTag from '@/components/ui/UserKycStatusTag';
-import RiskLevelTag from '@/components/library/RiskLevelTag';
-import TimestampDisplay from '@/components/ui/TimestampDisplay';
 import { AssigneesDropdown } from '@/pages/case-management/components/AssigneesDropdown';
 import UserStateTag from '@/components/ui/UserStateTag';
-import CaseStatusTag from '@/components/ui/CaseStatusTag';
-import UserLink from '@/components/UserLink';
 import { PaginatedData } from '@/utils/queries/hooks';
 import { ClosingReasonTag } from '@/pages/case-management/components/ClosingReasonTag';
 import { ConsoleUserAvatar } from '@/pages/case-management/components/ConsoleUserAvatar';
@@ -32,19 +28,28 @@ import { useFeatureEnabled } from '@/components/AppWrapper/Providers/SettingsPro
 import { humanizeConstant } from '@/utils/humanize';
 import AccountCircleLineIcon from '@/components/ui/icons/Remix/user/account-circle-line.react.svg';
 import CalendarLineIcon from '@/components/ui/icons/Remix/business/calendar-line.react.svg';
-import StackLineIcon from '@/components/ui/icons/Remix/business/stack-line.react.svg';
-import ScopeSelector from '@/pages/case-management/components/ScopeSelector';
 import AssignToButton from '@/pages/case-management/components/AssignToButton';
 import { message } from '@/components/library/Message';
 import { useApi } from '@/api';
 import { extraFilters } from '@/pages/case-management/helpers';
+import {
+  ASSIGNMENTS,
+  CASE_STATUS,
+  DATE,
+  DATE_TIME,
+  NUMBER,
+  RISK_LEVEL,
+  USER_NAME,
+} from '@/components/library/Table/standardDataTypes';
+import { RiskLevel } from '@/utils/risk-levels';
+import { ColumnHelper } from '@/components/library/Table/columnHelper';
 
 interface Props {
   params: AllParams<TableSearchParams>;
   queryResult: QueryResult<PaginatedData<Case>>;
   onChangeParams: (newState: AllParams<TableSearchParams>) => void;
   onUpdateCases: (caseIds: string[], updates: CaseUpdateRequest) => void;
-  rules: { value: string | undefined; label: string | undefined }[];
+  rules: { value: string; label: string }[];
 }
 
 export default function CaseTable(props: Props) {
@@ -52,245 +57,161 @@ export default function CaseTable(props: Props) {
 
   const tableQueryResult = useTableData(queryResult);
 
-  const actionRef = useRef<TableActionType>(null);
-  const formRef = useRef<ProFormInstance<TableSearchParams>>();
+  const tableRef = useRef<TableRefType>(null);
   const user = useAuth0User();
   const isPulseEnabled = useFeatureEnabled('PULSE');
 
   const reloadTable = useCallback(() => {
-    actionRef.current?.reload();
+    tableRef.current?.reload();
   }, []);
 
   const [users, loadingUsers] = useUsers({ includeBlockedUsers: true });
 
-  const [selectedEntities, setSelectedEntities] = useState<string[]>([]);
-
-  // todo: i18n
   const columns: TableColumn<TableItem>[] = useMemo(() => {
-    const onCaseCell = (row: TableRow<TableItem>) => ({
-      rowSpan: row.isFirstRow ? row.rowsCount : 0,
-    });
-
+    const helper = new ColumnHelper<TableItem>();
     const mergedColumns: TableColumn<TableItem>[] = [
-      {
-        title: (
-          <p>
-            Case ID <br /> Priority
-          </p>
-        ),
-        dataIndex: 'priority',
-        exportData: 'caseId',
-        width: 130,
-        copyable: true,
-        ellipsis: true,
-        hideInSearch: true,
-        sorter: true,
-        onCell: onCaseCell,
-        render: (dom, entity) => {
-          return (
-            <>
-              <Id
-                id={entity.caseId}
-                to={addBackUrlToRoute(
-                  makeUrl(`/case-management/case/:caseId`, {
-                    caseId: entity.caseId,
-                  }),
-                )}
-              >
-                {entity.caseId}
-              </Id>
-              <br />
-              {entity.priority && <p>Priority: {entity.priority}</p>}
-            </>
-          );
-        },
-      },
-      {
+      helper.simple<'caseId'>({
         title: 'Case ID',
-        dataIndex: 'caseId',
-        exportData: 'caseId',
-        hideInTable: true,
-        valueType: 'text',
-        width: 130,
-        fieldProps: {
-          icon: <StackLineIcon />,
-          showFilterByDefault: true,
+        subtitle: 'Priority',
+        key: 'caseId',
+        type: {
+          render: (_value, _edit, entity) => {
+            return (
+              <>
+                <Id
+                  id={entity.caseId}
+                  to={addBackUrlToRoute(
+                    makeUrl(`/case-management/case/:caseId`, {
+                      caseId: entity.caseId,
+                    }),
+                  )}
+                >
+                  {entity.caseId}
+                </Id>
+                {entity.priority && <p>Priority: {entity.priority}</p>}
+              </>
+            );
+          },
         },
-      },
-      {
+        sorting: true,
+      }),
+      helper.simple<'createdTimestamp'>({
         title: 'Created on',
-        dataIndex: 'createdTimestamp',
-        valueType: 'dateRange',
-        exportData: (entity) => dayjs(entity.createdTimestamp).format(DEFAULT_DATE_TIME_FORMAT),
-        sorter: true,
-        width: 150,
-        fieldProps: {
-          icon: <CalendarLineIcon />,
-          showFilterByDefault: true,
-        },
-        render: (_, entity) => {
-          return <TimestampDisplay timestamp={entity.createdTimestamp} />;
-        },
-      },
-      {
+        key: 'createdTimestamp',
+        type: DATE,
+        sorting: true,
+        filtering: true,
+        showFilterByDefault: true,
+        icon: <CalendarLineIcon />,
+      }),
+      helper.simple<'userId'>({
         title: 'User ID',
-        exportData: 'userId',
-        width: 150,
-        hideInSearch: true,
-        render: (_, entity) => {
-          const { userId, user } = entity;
-          return userId ? <Id to={getUserLink(user)}>{userId}</Id> : '-';
+        key: 'userId',
+        type: {
+          render: (userId, _, caseItem) => {
+            return userId ? <Id to={getUserLink(caseItem.user)}>{userId}</Id> : <>{'-'}</>;
+          },
         },
-      },
-      {
+      }),
+      helper.simple<'user'>({
         title: 'User Name',
-        exportData: (entity): string => getUserName(entity.user),
-        width: 150,
-        sorter: true,
-        hideInSearch: true,
-        dataIndex: '_userName',
-        render: (_, entity) => {
-          const userName = getUserName(entity.user);
-          return entity.user ? <UserLink user={entity.user}>{userName}</UserLink> : <>{userName}</>;
-        },
-      },
-      {
+        id: '_userName',
+        key: 'user',
+        type: USER_NAME,
+        sorting: true,
+      }),
+      helper.simple<'caseTransactionsCount'>({
         title: 'Transactions Hit',
-        exportData: (entity): number => entity.caseTransactionsCount ?? 0,
-        width: 150,
-        sorter: true,
-        hideInSearch: true,
-        dataIndex: 'caseTransactionsCount',
-        render: (_, entity) => {
-          return <>{entity.caseTransactionsCount ?? 0}</>;
-        },
-      },
-      {
+        type: NUMBER,
+        key: 'caseTransactionsCount',
+        sorting: true,
+      }),
+      helper.simple<'user.userStateDetails.state'>({
         title: 'User status',
-        exportData: 'user.userStateDetails.state',
-        width: 150,
-        render: (_, entity) => {
-          const userState = entity.user?.userStateDetails?.state;
-          return userState && <UserStateTag userState={userState} />;
+        key: 'user.userStateDetails.state',
+        id: 'userStates',
+        filtering: true,
+        icon: <AccountCircleLineIcon />,
+        type: {
+          render: (value) => (value ? <UserStateTag userState={value} /> : <></>),
+          autoFilterDataType: {
+            kind: 'select',
+            options: USER_STATES.map((state) => ({
+              label: humanizeConstant(state),
+              value: state,
+            })),
+            mode: 'MULTIPLE',
+            displayMode: 'list',
+          },
         },
-        fieldProps: {
-          options: USER_STATES.map((state) => ({
-            label: humanizeConstant(state),
-            value: state,
-          })),
-          allowClear: true,
-          mode: 'multiple',
-          displayMode: 'list',
-          icon: <AccountCircleLineIcon />,
-        },
-        valueType: 'select',
-        dataIndex: 'userStates',
-      },
-      {
+      }),
+      helper.simple<'user.kycStatusDetails'>({
         title: 'KYC status',
-        exportData: 'user.kycStatusDetails',
-        width: 150,
-        render: (_, entity) => {
-          const kycStatusDetails = entity.user?.kycStatusDetails;
-          return kycStatusDetails && <UserKycStatusTag kycStatusDetails={kycStatusDetails} />;
+        key: 'user.kycStatusDetails',
+        id: 'kycStatuses',
+        filtering: true,
+        icon: <AccountCircleLineIcon />,
+        type: {
+          render: (value) => (value ? <UserKycStatusTag kycStatusDetails={value} /> : <></>),
+          autoFilterDataType: {
+            kind: 'select',
+            options: USER_STATES.map((state) => ({
+              label: humanizeConstant(state),
+              value: state,
+            })),
+            mode: 'MULTIPLE',
+            displayMode: 'list',
+          },
         },
-        fieldProps: {
-          options: KYC_STATUSES.map((status) => ({
-            label: humanizeConstant(status),
-            value: status,
-          })),
-          allowClear: true,
-          mode: 'multiple',
-          displayMode: 'list',
-          icon: <AccountCircleLineIcon />,
-        },
-        valueType: 'select',
-        dataIndex: 'kycStatuses',
-      },
-      ...(isPulseEnabled
+      }),
+      ...((isPulseEnabled
         ? [
-            {
+            helper.derived<RiskLevel>({
+              param: 'riskLevels',
+              value: (entity): RiskLevel | undefined =>
+                entity?.caseUsers?.originUserRiskLevel ??
+                entity?.caseUsers?.destinationUserRiskLevel,
+              type: RISK_LEVEL,
               title: 'User risk level',
-              exportData: (entity) => {
-                const riskLevel =
-                  entity?.caseUsers?.originUserRiskLevel ??
-                  entity?.caseUsers?.destinationUserRiskLevel;
-                return riskLevel ?? '-';
-              },
-              width: 150,
-              render: (_, entity) => {
-                const riskLevel =
-                  entity?.caseUsers?.originUserRiskLevel ??
-                  entity?.caseUsers?.destinationUserRiskLevel;
-
-                return riskLevel ? <RiskLevelTag level={riskLevel} /> : '-';
-              },
-              valueType: 'select',
-              dataIndex: 'riskLevels',
-              hideInSearch: true,
-            } as TableColumn<TableItem>,
+            } as DerivedColumn<TableItem, RiskLevel>),
           ]
-        : []),
-      {
-        title: 'Rules',
-        hideInTable: true,
-        width: 120,
-        valueType: 'select',
-        dataIndex: 'rulesHitFilter',
-        fieldProps: {
-          options: props.rules,
-          allowClear: true,
-          mode: 'multiple',
-          icon: <GavelIcon />,
-          showFilterByDefault: true,
-        },
-      },
-      {
+        : []) as TableColumn<TableItem>[]),
+      helper.simple<'assignments'>({
         title: 'Assignees',
-        exportData: 'assignments',
-        hideInSearch: true,
-        width: 250,
-        ellipsis: true,
-        fixed: 'right',
-        onCell: onCaseCell,
-        dataIndex: '_assignmentName',
-        sorter: true,
-        render: (dom, entity) => {
-          return (
-            <AssigneesDropdown
-              assignments={entity.assignments || []}
-              editing={true}
-              onChange={(assignees) => {
-                const assignments = assignees.map((assigneeUserId) => ({
-                  assignedByUserId: user.userId,
-                  assigneeUserId,
-                  timestamp: Date.now(),
-                }));
-                onUpdateCases([entity.caseId as string], {
-                  assignments,
-                });
-              }}
-            />
-          );
+        key: 'assignments',
+        id: '_assignmentName',
+        type: {
+          ...ASSIGNMENTS,
+          render: (assignments, _, entity) => {
+            return (
+              <AssigneesDropdown
+                assignments={assignments || []}
+                editing={true}
+                onChange={(assignees) => {
+                  const assignments = assignees.map((assigneeUserId) => ({
+                    assignedByUserId: user.userId,
+                    assigneeUserId,
+                    timestamp: Date.now(),
+                  }));
+                  onUpdateCases([entity.caseId as string], {
+                    assignments,
+                  });
+                }}
+              />
+            );
+          },
         },
-      },
-      {
+        sorting: true,
+      }),
+      helper.simple<'caseStatus'>({
         title: 'Case status',
-        exportData: 'caseStatus',
-        hideInSearch: true,
-        width: 150,
-        render: (_, entity) => {
-          return entity.caseStatus && <CaseStatusTag caseStatus={entity.caseStatus} />;
-        },
-      },
-      {
+        key: 'caseStatus',
+        type: CASE_STATUS,
+      }),
+      helper.display({
         title: 'Operations',
-        hideInSearch: true,
-        exportData: false,
-        fixed: 'right',
-        width: 120,
-        onCell: onCaseCell,
-        render: (dom, entity) => {
+        defaultWidth: 100,
+        render: (entity) => {
           return (
             entity?.caseId && (
               <CasesStatusChangeButton
@@ -301,72 +222,62 @@ export default function CaseTable(props: Props) {
             )
           );
         },
-      },
+      }),
     ];
     if (params.caseStatus === 'CLOSED') {
       mergedColumns.push(
-        ...([
-          {
+        ...[
+          helper.simple<'lastStatusChangeReasons'>({
             title: 'Closing reason',
             tooltip: 'Reason provided for closing a case',
-            exportData: 'lastStatusChangeReasons', // todo: is this enough
-            width: 300,
-            hideInSearch: true,
-            onCell: onCaseCell,
-            render: (dom, entity) => {
-              const lastStatusChangeReasons = entity.lastStatusChangeReasons;
-              return lastStatusChangeReasons ? (
-                <ClosingReasonTag
-                  closingReasons={lastStatusChangeReasons.reasons}
-                  otherReason={lastStatusChangeReasons.otherReason}
-                />
-              ) : (
-                '-'
-              );
+            key: 'lastStatusChangeReasons',
+            type: {
+              render: (lastStatusChangeReasons) => {
+                return lastStatusChangeReasons ? (
+                  <ClosingReasonTag
+                    closingReasons={lastStatusChangeReasons.reasons}
+                    otherReason={lastStatusChangeReasons.otherReason}
+                  />
+                ) : (
+                  <>-</>
+                );
+              },
+              stringify: (lastStatusChangeReasons) => {
+                return [
+                  ...(lastStatusChangeReasons?.reasons ?? []),
+                  lastStatusChangeReasons?.otherReason,
+                ]
+                  .filter((x) => !!x)
+                  .join('; ');
+              },
             },
-          },
-          {
+          }),
+          helper.simple<'lastStatusChange.userId'>({
             title: 'Closed by',
-            exportData: 'lastStatusChange.userId',
-            width: 250,
-            hideInSearch: true,
-            onCell: onCaseCell,
-            render: (dom, entity) => {
-              return entity.lastStatusChange ? (
-                <ConsoleUserAvatar
-                  userId={entity.lastStatusChange.userId}
-                  users={users}
-                  loadingUsers={loadingUsers}
-                />
-              ) : (
-                '-'
-              );
+            key: 'lastStatusChange.userId',
+            type: {
+              render: (userId, _) => {
+                return userId ? (
+                  <ConsoleUserAvatar userId={userId} users={users} loadingUsers={loadingUsers} />
+                ) : (
+                  <>-</>
+                );
+              },
             },
-          },
-        ] as TableColumn<TableItem>[]),
+          }),
+        ],
       );
     }
-
     mergedColumns.push(
-      ...([
-        {
+      ...[
+        helper.simple<'lastStatusChange.timestamp'>({
           title: 'Last update time',
-          exportData: 'lastStatusChange.timestamp',
-          width: 160,
-          hideInSearch: false,
-          valueType: 'dateTimeRange',
-          dataIndex: 'lastStatusChange.timestamp',
-          sorter: true,
-          onCell: onCaseCell,
-          render: (dom, entity) => {
-            return entity.lastStatusChange ? (
-              <TimestampDisplay timestamp={entity.lastStatusChange.timestamp} />
-            ) : (
-              '-'
-            );
-          },
-        },
-      ] as TableColumn<TableItem>[]),
+          key: 'lastStatusChange.timestamp',
+          type: DATE_TIME,
+          filtering: true,
+          sorting: true,
+        }),
+      ],
     );
 
     return mergedColumns;
@@ -377,18 +288,17 @@ export default function CaseTable(props: Props) {
     users,
     loadingUsers,
     onUpdateCases,
-    props.rules,
     isPulseEnabled,
   ]);
 
   const api = useApi();
 
-  const handleAssignTo = (account: Account) => {
+  const handleAssignTo = (account: Account, ids: string[]) => {
     const hideLoading = message.loading('Assigning cases');
     api
       .postCases({
         CasesUpdateRequest: {
-          caseIds: selectedEntities,
+          caseIds: ids,
           updates: {
             assignments: [
               {
@@ -414,68 +324,38 @@ export default function CaseTable(props: Props) {
 
   return (
     <QueryResultsTable<TableItem, TableSearchParams>
-      expandable={{
-        expandedRowRender: (record) =>
-          record.caseId && (
+      innerRef={tableRef}
+      tableId="case-table"
+      renderExpanded={(record) => (
+        <>
+          {record.caseId && (
             <AlertTable
               isEmbedded={true}
               params={{ ...params, caseId: record.caseId }}
               onChangeParams={onChangeParams}
             />
-          ),
-      }}
-      tableId="user-cases"
+          )}
+        </>
+      )}
       queryResults={tableQueryResult}
       params={params}
       onChangeParams={onChangeParams}
-      extraFilters={extraFilters(isPulseEnabled)}
-      actionsHeader={[
-        ({ params, setParams }) => <ScopeSelector params={params} onChangeParams={setParams} />,
-      ]}
-      actionsHeaderRight={[
-        ({ params, setParams }) => (
-          <>
-            <AssignToButton ids={selectedEntities} onSelect={handleAssignTo} />
-            <CasesStatusChangeButton
-              caseIds={selectedEntities}
-              onSaved={reloadTable}
-              caseStatus={params.caseStatus}
-            />
-            <StatusButtons
-              status={params.caseStatus ?? 'OPEN'}
-              onChange={(newStatus) => {
-                setParams((state) => ({
-                  ...state,
-                  caseStatus: newStatus,
-                }));
-              }}
-              suffix="cases"
-            />
-          </>
+      extraFilters={extraFilters(isPulseEnabled, props.rules)}
+      selectionActions={[
+        ({ selectedIds }) => <AssignToButton ids={selectedIds} onSelect={handleAssignTo} />,
+        ({ selectedIds, params }) => (
+          <CasesStatusChangeButton
+            caseIds={selectedIds}
+            onSaved={reloadTable}
+            caseStatus={params.caseStatus}
+          />
         ),
       ]}
-      form={{
-        labelWrap: true,
-      }}
-      bordered
-      isEvenRow={(item) => item.index % 2 === 0}
-      actionRef={actionRef}
-      formRef={formRef}
       rowKey="caseId"
-      search={{
-        labelWidth: 120,
-      }}
-      scroll={{ x: 1300 }}
       columns={columns}
-      columnsState={{
-        persistenceType: 'localStorage',
-        persistenceKey: 'case-management-list',
-      }}
-      rowSelection={{
-        selectedKeys: selectedEntities,
-        onChange: setSelectedEntities,
-      }}
-      autoAdjustHeight
+      pagination={true}
+      fitHeight={true}
+      fixedExpandedContainer={true}
     />
   );
 }

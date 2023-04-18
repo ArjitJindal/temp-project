@@ -8,7 +8,7 @@ import { useUsers } from '@/utils/user-utils';
 
 interface Props {
   ids: string[];
-  onSelect: (account: Account) => void;
+  onSelect: (account: Account, ids: string[]) => void;
 }
 
 export default function AssignToButton(props: Props) {
@@ -23,7 +23,7 @@ export default function AssignToButton(props: Props) {
         <AntMenu.Item
           key={account.id}
           onClick={() => {
-            onSelect(account);
+            onSelect(account, props.ids);
           }}
         >
           <div className={cn(s.item)}>

@@ -10,7 +10,6 @@ import ErrorBoundary from '@/components/ErrorBoundary';
 import StorybookPage from '@/pages/storybook';
 import { useDemoMode } from '@/components/AppWrapper/Providers/DemoModeProvider';
 import { getOr } from '@/utils/asyncResource';
-import AuthProvider from '@/components/AppWrapper/Providers/AuthProvider';
 import RouterProvider from '@/components/AppWrapper/Providers/RouterProvider';
 import { getBranding } from '@/utils/branding';
 
@@ -63,9 +62,7 @@ function SpecialRoutes(props: Props) {
 export default function AppWrapper(props: Props) {
   return (
     <RouterProvider>
-      <AuthProvider>
-        <SpecialRoutes {...props} />
-      </AuthProvider>
+      <SpecialRoutes {...props} />
     </RouterProvider>
   );
 }

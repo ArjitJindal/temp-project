@@ -1,33 +1,29 @@
 import { useRef, useState } from 'react';
 import { useApi } from '@/api';
 import {
-  SimulationPostResponse,
   RiskClassificationScore,
+  SimulationPostResponse,
   SimulationPulseJob,
   SimulationType,
 } from '@/apis';
 import QueryResultsTable from '@/components/common/QueryResultsTable';
-import { AllParams, DEFAULT_PARAMS_STATE, TableActionType } from '@/components/ui/Table';
+import { AllParams, TableRefType } from '@/components/library/Table/types';
+import { DEFAULT_PARAMS_STATE } from '@/components/library/Table/consts';
 import COLORS from '@/components/ui/colors';
 import { usePaginatedQuery } from '@/utils/queries/hooks';
 import { SIMULATION_PULSE_JOB_LIST } from '@/utils/queries/keys';
-import { RiskLevel } from '@/utils/risk-levels';
+import { RISK_LEVEL_LABELS, RISK_LEVELS } from '@/utils/risk-levels';
 import { useUsers } from '@/utils/user-utils';
-import { dayjs, DEFAULT_DATE_TIME_FORMAT } from '@/utils/dayjs';
+import { ColumnHelper } from '@/components/library/Table/columnHelper';
+import { DATE_TIME, NUMBER } from '@/components/library/Table/standardDataTypes';
+import { PageWrapperTableContainer } from '@/components/PageWrapper';
 
 type SimulationHistoryProps = {
   setResult: (results: SimulationPostResponse) => void;
   setOpen: (open: boolean) => void;
 };
 
-const renderRiskLevelData = (
-  riskClassifications: Array<RiskClassificationScore>,
-  riskLevel: RiskLevel,
-) => {
-  const requiredRiskScores = riskClassifications?.find(
-    (classification) => classification.riskLevel === riskLevel,
-  );
-
+const renderRiskLevelData = (requiredRiskScores: RiskClassificationScore) => {
   return requiredRiskScores?.lowerBoundRiskScore != null &&
     requiredRiskScores?.upperBoundRiskScore != null ? (
     <span>
@@ -65,133 +61,98 @@ export default function SimulationHistory(props: SimulationHistoryProps) {
       };
     },
   );
-  const actionRef = useRef<TableActionType>(null);
+  const actionRef = useRef<TableRefType>(null);
 
+  const helper = new ColumnHelper<SimulationPulseJob>();
   return (
-    <QueryResultsTable<SimulationPulseJob, typeof params>
-      actionRef={actionRef}
-      queryResults={allSimulationsQueryResult}
-      params={params}
-      onChangeParams={setParams}
-      rowKey="jobId"
-      columns={[
-        {
-          title: 'Simulation ID',
-          dataIndex: 'jobId',
-          exportData: 'jobId',
-          width: 180,
-          sorter: true,
-          render: (_, item) => (
-            <a
-              href="#"
-              style={{ color: COLORS.brandBlue.base }}
-              onClick={() => {
-                setResult({
-                  jobId: item.jobId,
-                  taskIds: item.iterations.map((iteration) => iteration.taskId ?? ''),
-                });
-                setOpen(true);
-              }}
-            >
-              {item.jobId}
-            </a>
-          ),
-        },
-        {
-          title: 'Default risk level',
-          children: [
-            {
-              title: 'Very Low',
-              dataIndex: 'defaultRiskLevel.veryLow',
-              render: (_, item) =>
-                renderRiskLevelData(item?.defaultRiskClassifications, 'VERY_LOW'),
-              exportData: (item) =>
-                renderRiskLevelData(item?.defaultRiskClassifications, 'VERY_LOW'),
+    <PageWrapperTableContainer>
+      <QueryResultsTable<SimulationPulseJob, typeof params>
+        rowKey="jobId"
+        innerRef={actionRef}
+        queryResults={allSimulationsQueryResult}
+        params={params}
+        onChangeParams={setParams}
+        columns={helper.list([
+          helper.simple<'jobId'>({
+            title: 'Simulation ID',
+            key: 'jobId',
+            sorting: true,
+            type: {
+              render: (jobId, _editing, item) =>
+                jobId ? (
+                  <a
+                    href="#"
+                    style={{ color: COLORS.brandBlue.base }}
+                    onClick={() => {
+                      setResult({
+                        jobId: jobId,
+                        taskIds: item.iterations.map((iteration) => iteration.taskId ?? ''),
+                      });
+                      setOpen(true);
+                    }}
+                  >
+                    {jobId}
+                  </a>
+                ) : (
+                  <></>
+                ),
             },
-            {
-              title: 'Low',
-              dataIndex: 'defaultRiskLevel.low',
-              render: (_, item) => renderRiskLevelData(item?.defaultRiskClassifications, 'LOW'),
-              exportData: (item) => renderRiskLevelData(item?.defaultRiskClassifications, 'LOW'),
-            },
-            {
-              title: 'Medium',
-              dataIndex: 'defaultRiskLevel.medium',
-              render: (_, item) => renderRiskLevelData(item?.defaultRiskClassifications, 'MEDIUM'),
-              exportData: (item) => renderRiskLevelData(item?.defaultRiskClassifications, 'MEDIUM'),
-            },
-            {
-              title: 'High',
-              dataIndex: 'defaultRiskLevel.high',
-              render: (_, item) => renderRiskLevelData(item?.defaultRiskClassifications, 'HIGH'),
-              exportData: (item) => renderRiskLevelData(item?.defaultRiskClassifications, 'HIGH'),
-            },
-            {
-              title: 'Very High',
-              dataIndex: 'defaultRiskLevel.veryHigh',
-              render: (_, item) =>
-                renderRiskLevelData(item?.defaultRiskClassifications, 'VERY_HIGH'),
-              exportData: (item) =>
-                renderRiskLevelData(item?.defaultRiskClassifications, 'VERY_HIGH'),
-            },
-          ],
-        },
-        {
-          title: 'Created on',
-          dataIndex: 'createdAt',
-          width: 150,
-          sorter: true,
-          exportData: (item) => {
-            if (!item.createdAt) {
-              return '-';
-            }
-            return dayjs(item.createdAt).format(DEFAULT_DATE_TIME_FORMAT);
-          },
-          render: (_, item) => {
-            if (!item.createdAt) {
-              return '-';
-            }
-            return <span>{dayjs(item.createdAt).format(DEFAULT_DATE_TIME_FORMAT)}</span>;
-          },
-        },
-        {
-          title: 'Created by',
-          dataIndex: 'createdBy',
-          exportData: (item) => {
-            const createdBy = item.createdBy;
-            if (loading || !createdBy) {
-              return '';
-            }
+          }),
+          helper.group({
+            title: 'Default risk level',
+            children: helper.list(
+              RISK_LEVELS.map((riskLevel) =>
+                helper.derived<RiskClassificationScore>({
+                  title: RISK_LEVEL_LABELS[riskLevel],
+                  // dataIndex: 'defaultRiskLevel.veryLow',
+                  value: (item): RiskClassificationScore | undefined => {
+                    return item?.defaultRiskClassifications?.find((x) => x.riskLevel === riskLevel);
+                  },
+                  type: {
+                    render: (riskScores) => (riskScores ? renderRiskLevelData(riskScores) : <></>),
+                  },
+                }),
+              ),
+            ),
+          }),
+          helper.simple<'createdAt'>({
+            title: 'Created on',
+            key: 'createdAt',
+            // dataIndex: 'createdAt',
+            sorting: true,
+            type: DATE_TIME,
+          }),
+          helper.simple<'createdBy'>({
+            title: 'Created by',
+            key: 'createdBy',
+            type: {
+              render: (createdBy) => {
+                if (loading || !createdBy) {
+                  return <></>;
+                }
 
-            const user = users[createdBy]?.name;
+                const user = users[createdBy]?.name;
 
-            return <span>{user}</span>;
-          },
-          render: (_, item) => {
-            const createdBy = item.createdBy;
-            if (loading || !createdBy) {
-              return '';
-            }
+                return <span>{user}</span>;
+              },
+              stringify: (createdBy) => {
+                if (loading || !createdBy) {
+                  return '';
+                }
 
-            const user = users[createdBy]?.name;
-
-            return <span>{user}</span>;
-          },
-        },
-        {
-          title: '# Iterations',
-          dataIndex: 'iterations_count',
-          exportData: (item) => {
-            return item.iterations.length;
-          },
-          render: (_, item) => {
-            return <span>{item.iterations.length}</span>;
-          },
-          sorter: true,
-        },
-      ]}
-      search={false}
-      hideFilters={true}
-    />
+                return users[createdBy]?.name;
+              },
+            },
+          }),
+          helper.derived<number>({
+            title: '# Iterations',
+            value: (item) => item.iterations.length,
+            type: NUMBER,
+            sorting: true,
+          }),
+        ])}
+        hideFilters={true}
+      />
+    </PageWrapperTableContainer>
   );
 }

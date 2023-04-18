@@ -7,9 +7,8 @@ import Button from '@/components/library/Button';
 import DeleteListModal from '@/pages/lists/ListTable/DeleteListModal';
 import Id from '@/components/ui/Id';
 import { makeUrl } from '@/utils/routing';
-import TimestampDisplay from '@/components/ui/TimestampDisplay';
 import { getErrorMessage } from '@/utils/lang';
-import { TableColumn } from '@/components/ui/Table/types';
+import { TableColumn } from '@/components/library/Table/types';
 import { useQuery } from '@/utils/queries/hooks';
 import QueryResultsTable from '@/components/common/QueryResultsTable';
 import { LISTS_OF_TYPE } from '@/utils/queries/keys';
@@ -17,6 +16,8 @@ import { map } from '@/utils/asyncResource';
 import { getListSubtypeTitle, stringifyListType } from '@/pages/lists/helpers';
 import { useApiTime } from '@/utils/tracker';
 import { useHasPermissions } from '@/utils/user-utils';
+import { ColumnHelper } from '@/components/library/Table/columnHelper';
+import { DATE_TIME } from '@/components/library/Table/standardDataTypes';
 import { message } from '@/components/library/Message';
 
 export type ListTableRef = React.Ref<{
@@ -90,77 +91,74 @@ function ListTable(props: Props, ref: ListTableRef) {
     },
   );
 
-  const columns: TableColumn<ListHeader>[] = [
-    {
+  const helper = new ColumnHelper<ListHeader>();
+  const columns: TableColumn<ListHeader>[] = helper.list([
+    helper.simple<'listId'>({
+      key: 'listId',
       title: 'List ID',
-      width: 50,
-      search: false,
-      render: (_, entity) => (
-        <Id
-          to={makeUrl('/lists/:type/:listId', {
-            type: stringifyListType(listType),
-            listId: entity.listId,
-          })}
-        >
-          {entity.listId}
-        </Id>
-      ),
-    },
-    {
+      type: {
+        render: (listId) => (
+          <Id
+            to={makeUrl('/lists/:type/:listId', {
+              type: stringifyListType(listType),
+              listId: listId,
+            })}
+          >
+            {listId}
+          </Id>
+        ),
+      },
+    }),
+    helper.simple<'subtype'>({
+      key: 'subtype',
       title: 'List Subtype',
-      width: 150,
-      search: false,
-      render: (_, entity) => getListSubtypeTitle(entity.subtype),
-    },
-    {
+      type: {
+        render: (subtype) => (subtype ? <>{getListSubtypeTitle(subtype)}</> : <></>),
+      },
+    }),
+    helper.simple<'metadata.name'>({
+      key: 'metadata.name',
       title: 'List Name',
-      width: 150,
-      search: false,
-      render: (_, entity) => entity.metadata?.name,
-    },
-    {
+    }),
+    helper.simple<'metadata.description'>({
+      key: 'metadata.description',
       title: 'List Description',
-      width: 200,
-      search: false,
-      render: (_, entity) => entity.metadata?.description,
-    },
-    {
+    }),
+    helper.simple<'size'>({
+      key: 'size',
       title: 'Total Records',
-      width: 80,
-      search: false,
-      render: (_, entity) => entity.size,
-    },
-    {
+    }),
+    helper.simple<'createdTimestamp'>({
+      key: 'createdTimestamp',
       title: 'Created On',
-      width: 120,
-      search: false,
-      render: (_, entity) => <TimestampDisplay timestamp={entity.createdTimestamp} />,
-    },
-    {
+      type: DATE_TIME,
+    }),
+    helper.simple<'metadata.status'>({
+      key: 'metadata.status',
       title: 'Status',
-      search: false,
-      width: 1,
-      render: (_, entity) => (
-        <Switch
-          checked={entity.metadata?.status ?? false}
-          disabled={!hasListWritePermissions}
-          onChange={(value) => {
-            changeListMutation.mutate({
-              listId: entity.listId,
-              metadata: {
-                ...entity.metadata,
-                status: value,
-              },
-            });
-          }}
-        />
-      ),
-    },
-    {
+      defaultWidth: 80,
+      type: {
+        render: (status, _, entity) => (
+          <Switch
+            checked={status ?? false}
+            disabled={!hasListWritePermissions}
+            onChange={(value) => {
+              changeListMutation.mutate({
+                listId: entity.listId,
+                metadata: {
+                  ...entity.metadata,
+                  status: value,
+                },
+              });
+            }}
+          />
+        ),
+      },
+    }),
+    helper.display({
       title: 'Actions',
-      search: false,
-      width: 1,
-      render: (_, entity) => {
+      defaultWidth: 100,
+      render: (entity) => {
         return (
           <Button
             type="SECONDARY"
@@ -173,8 +171,8 @@ function ListTable(props: Props, ref: ListTableRef) {
           </Button>
         );
       },
-    },
-  ];
+    }),
+  ]);
 
   return (
     <>
@@ -184,9 +182,9 @@ function ListTable(props: Props, ref: ListTableRef) {
           refetch: queryResults.refetch,
         }}
         rowKey="listId"
-        search={false}
         columns={columns}
-        pagination={'HIDE'}
+        pagination={false}
+        fitHeight
       />
       <DeleteListModal
         listType={listType}

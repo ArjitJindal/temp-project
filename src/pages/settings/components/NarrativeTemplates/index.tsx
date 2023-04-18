@@ -19,6 +19,8 @@ import { NARRATIVE_TEMPLATE_LIST } from '@/utils/queries/keys';
 import AsyncResourceRenderer from '@/components/common/AsyncResourceRenderer';
 import { DEFAULT_PAGE_SIZE } from '@/components/ui/Table/consts';
 import { CommonParams } from '@/components/ui/Table';
+import { ColumnHelper } from '@/components/library/Table/columnHelper';
+import { LONG_TEXT, STRING } from '@/components/library/Table/standardDataTypes';
 
 const NarrativeTemplates = () => {
   const [paginationParams, setPaginationParams] = useState<CommonParams>({
@@ -53,6 +55,7 @@ const NarrativeTemplates = () => {
     },
   );
 
+  const tableHelper = new ColumnHelper<NarrativeTemplate>();
   return (
     <div className="root-settings">
       <Card.Column>
@@ -113,79 +116,73 @@ const NarrativeTemplates = () => {
               </Card.Column>
             </div>
           ) : (
-            <Card.Root collapsable={false} className={s.cardRoot}>
-              <QueryResultsTable<NarrativeTemplate, CommonParams>
-                rowKey="id"
-                params={paginationParams}
-                onChangeParams={(params) => {
-                  setPaginationParams((prev) => ({
-                    page: params.page,
-                    pageSize: params.pageSize,
-                    sort: prev.sort,
-                  }));
-                }}
-                queryResults={narrativesQueryResponse}
-                columns={[
-                  {
-                    title: 'Name',
-                    dataIndex: 'name',
-                    key: 'name',
-                    render: (_, entity) => <span>{entity.name}</span>,
-                    hideInSearch: true,
-                    width: 200,
-                  },
-                  {
-                    title: 'Description',
-                    dataIndex: 'description',
-                    key: 'description',
-                    render: (_, entity) => <span>{entity.description}</span>,
-                    hideInSearch: true,
-                  },
-                  {
-                    title: 'Status',
-                    dataIndex: 'id',
-                    render: (_, entity) => (
-                      <div className={s.actions}>
-                        <Button
-                          size="MEDIUM"
-                          type="SECONDARY"
-                          icon={<EditLineIcon />}
-                          onClick={() => {
-                            setEditableNarrative(entity.id);
-                            setIsDrawerVisible(true);
-                          }}
-                        >
-                          Edit
-                        </Button>
-                        <Confirm
-                          title="Are you sure you want to delete this narrative template?"
-                          onConfirm={() => {
-                            deleteNarrativeMutation.mutate(entity.id);
-                          }}
-                          text="Please confirm that you want to delete this narrative template. This action cannot be undone."
-                          res={getMutationAsyncResource(deleteNarrativeMutation)}
-                        >
-                          {({ onClick }) => (
-                            <Button
-                              size="MEDIUM"
-                              type="TETRIARY"
-                              icon={<DeleteLineIcon />}
-                              onClick={onClick}
-                            >
-                              Delete
-                            </Button>
-                          )}
-                        </Confirm>
-                      </div>
-                    ),
-                    width: 100,
-                    hideInSearch: true,
-                  },
-                ]}
-                search={false}
-                tableId="narrative-templates"
-              />
-            </Card.Root>
+            <QueryResultsTable<NarrativeTemplate, CommonParams>
+              rowKey="id"
+              tableId="narrative-templates"
+              hideFilters={true}
+              params={paginationParams}
+              onChangeParams={(params) => {
+                setPaginationParams((prev) => ({
+                  page: params.page,
+                  pageSize: params.pageSize,
+                  sort: prev.sort,
+                }));
+              }}
+              queryResults={narrativesQueryResponse}
+              columns={tableHelper.list([
+                tableHelper.simple({
+                  title: 'Name',
+                  key: 'name',
+                  defaultWidth: 200,
+                  type: STRING,
+                }),
+                tableHelper.simple({
+                  title: 'Description',
+                  key: 'description',
+                  defaultWidth: 400,
+                  type: LONG_TEXT,
+                }),
+                tableHelper.display({
+                  id: 'id',
+                  title: 'Status',
+                  render: (entity) => (
+                    <div className={s.actions}>
+                      <Button
+                        size="MEDIUM"
+                        type="SECONDARY"
+                        icon={<EditLineIcon />}
+                        onClick={() => {
+                          setEditableNarrative(entity.id);
+                          setIsDrawerVisible(true);
+                        }}
+                      >
+                        Edit
+                      </Button>
+                      <Confirm
+                        title="Are you sure you want to delete this narrative template?"
+                        onConfirm={() => {
+                          deleteNarrativeMutation.mutate(entity.id);
+                        }}
+                        text="Please confirm that you want to delete this narrative template. This action cannot be undone."
+                        res={getMutationAsyncResource(deleteNarrativeMutation)}
+                      >
+                        {({ onClick }) => (
+                          <Button
+                            size="MEDIUM"
+                            type="TETRIARY"
+                            icon={<DeleteLineIcon />}
+                            onClick={onClick}
+                          >
+                            Delete
+                          </Button>
+                        )}
+                      </Confirm>
+                    </div>
+                  ),
+                  defaultWidth: 100,
+                }),
+              ])}
+            />
           );
         }}
       </AsyncResourceRenderer>

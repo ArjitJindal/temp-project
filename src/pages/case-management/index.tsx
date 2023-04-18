@@ -2,7 +2,8 @@ import React, { useCallback, useState } from 'react';
 import { useNavigate } from 'react-router';
 import CaseTableWrapper from './CaseTableWrapper';
 import AlertTable from './AlertTable';
-import PageWrapper from '@/components/PageWrapper';
+import s from './index.module.less';
+import PageWrapper, { PageWrapperTableContainer } from '@/components/PageWrapper';
 import { useI18n } from '@/locales';
 import { usePageViewTracker } from '@/utils/tracker';
 import { useCloseSidebarByDefault } from '@/components/AppWrapper/Providers/SidebarProvider';
@@ -12,6 +13,8 @@ import { queryAdapter } from '@/pages/case-management/helpers';
 import { AllParams, DEFAULT_PARAMS_STATE } from '@/components/ui/Table';
 import { useDeepEqualEffect } from '@/utils/hooks';
 import { DEFAULT_PAGE_SIZE } from '@/components/ui/Table/consts';
+import ScopeSelector from '@/pages/case-management/components/ScopeSelector';
+import StatusButtons from '@/pages/transactions/components/StatusButtons';
 
 export default function CaseManagementPage() {
   const i18n = useI18n();
@@ -54,13 +57,41 @@ export default function CaseManagementPage() {
     }));
   }, [parsedParams]);
 
+  const isAlerts = params.showCases === 'MY_ALERTS' || params.showCases === 'ALL_ALERTS';
   return (
     <PageWrapper title={i18n('menu.case-management')}>
-      {params.showCases === 'MY_ALERTS' || params.showCases === 'ALL_ALERTS' ? (
-        <AlertTable params={params} onChangeParams={handleChangeParams} showPagination={true} />
-      ) : (
-        <CaseTableWrapper params={params} onChangeParams={handleChangeParams} />
-      )}
+      <PageWrapperTableContainer>
+        <div className={s.header}>
+          <ScopeSelector<TableSearchParams>
+            params={params}
+            onChangeParams={(cb) => {
+              handleChangeParams(cb(params));
+            }}
+          />
+          <StatusButtons
+            status={(isAlerts ? params.alertStatus : params.caseStatus) ?? 'OPEN'}
+            onChange={(newStatus) => {
+              handleChangeParams(
+                isAlerts
+                  ? {
+                      ...params,
+                      alertStatus: newStatus,
+                    }
+                  : {
+                      ...params,
+                      caseStatus: newStatus,
+                    },
+              );
+            }}
+            suffix={isAlerts ? 'alerts' : 'cases'}
+          />
+        </div>
+        {isAlerts ? (
+          <AlertTable params={params} onChangeParams={handleChangeParams} />
+        ) : (
+          <CaseTableWrapper params={params} onChangeParams={handleChangeParams} />
+        )}
+      </PageWrapperTableContainer>
     </PageWrapper>
   );
 }

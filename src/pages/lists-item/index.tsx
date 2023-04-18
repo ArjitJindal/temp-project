@@ -55,29 +55,27 @@ export default function CreatedLists() {
           url: makeUrl('/lists/:type', { type: stringifyListType(listType) }),
         }}
       >
-        <Card.Root>
+        <Card.Root className={s.root}>
           <AsyncResourceRenderer resource={listHeaderRes}>
             {(listHeader) => {
               return (
                 <>
-                  <Card.Section>
-                    <div className={s.header}>
-                      <Form.Layout.Label title="List ID">
-                        <div className={s.listId}>{listHeader.listId}</div>
-                      </Form.Layout.Label>
-                      <Form.Layout.Label icon={<UnorderedListOutlined />} title="List type">
-                        {listType === 'BLACKLIST' ? 'Blacklist' : 'Whitelist'}
-                      </Form.Layout.Label>
-                      <Form.Layout.Label icon={<FontSizeIcon />} title="List name">
-                        {listHeader.metadata?.name}
-                      </Form.Layout.Label>
-                      <Form.Layout.Label icon={<PulseLineIcon />} title="List description">
-                        {listHeader.metadata?.description}
-                      </Form.Layout.Label>
-                      <Form.Layout.Label icon={<TimeLineIcon />} title="Created on">
-                        {dayjs(listHeader.createdTimestamp).format(DEFAULT_DATE_TIME_FORMAT)}
-                      </Form.Layout.Label>
-                    </div>
+                  <Card.Section className={s.header} direction="horizontal" spacing="double">
+                    <Form.Layout.Label title="List ID">
+                      <div className={s.listId}>{listHeader.listId}</div>
+                    </Form.Layout.Label>
+                    <Form.Layout.Label icon={<UnorderedListOutlined />} title="List type">
+                      {listType === 'BLACKLIST' ? 'Blacklist' : 'Whitelist'}
+                    </Form.Layout.Label>
+                    <Form.Layout.Label icon={<FontSizeIcon />} title="List name">
+                      {listHeader.metadata?.name}
+                    </Form.Layout.Label>
+                    <Form.Layout.Label icon={<PulseLineIcon />} title="List description">
+                      {listHeader.metadata?.description}
+                    </Form.Layout.Label>
+                    <Form.Layout.Label icon={<TimeLineIcon />} title="Created on">
+                      {dayjs(listHeader.createdTimestamp).format(DEFAULT_DATE_TIME_FORMAT)}
+                    </Form.Layout.Label>
                   </Card.Section>
                   <Card.Section>
                     <ItemsTable listHeader={listHeader} />

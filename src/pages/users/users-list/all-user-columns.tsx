@@ -1,125 +1,93 @@
 import { Link } from 'react-router-dom';
 import _ from 'lodash';
+import React from 'react';
 import s from './styles.module.less';
-import { dayjs, DEFAULT_DATE_TIME_FORMAT } from '@/utils/dayjs';
-import { InternalUser } from '@/apis';
-import { TableColumn } from '@/components/ui/Table/types';
-import TimestampDisplay from '@/components/ui/TimestampDisplay';
-import UserKycStatusTag from '@/components/ui/UserKycStatusTag';
-import UserStateTag from '@/components/ui/UserStateTag';
+import { InternalBusinessUser, InternalConsumerUser } from '@/apis';
+import { TableColumn } from '@/components/library/Table/types';
 import { getUserName } from '@/utils/api/users';
 import UserTypeIcon from '@/components/ui/UserTypeIcon';
-import KeyValueTag from '@/components/ui/KeyValueTag';
+import { ColumnHelper } from '@/components/library/Table/columnHelper';
+import {
+  DATE,
+  TAGS,
+  USER_KYC_STATUS_TAG,
+  USER_STATE_TAG,
+} from '@/components/library/Table/standardDataTypes';
 
-export function getAllUserColumns(): TableColumn<InternalUser>[] {
+export function getAllUserColumns(): TableColumn<InternalConsumerUser | InternalBusinessUser>[] {
+  const helper = new ColumnHelper<InternalConsumerUser | InternalBusinessUser>();
+
   return [
-    {
+    helper.simple<'userId'>({
       title: 'User ID',
-      dataIndex: 'userId',
-      tip: 'Unique identification of user.',
-      width: 180,
-      exportData: 'userId',
-      hideInSearch: true,
-      render: (dom, entity) => {
-        return (
-          <Link
-            to={`/users/list/${entity.type.toLowerCase()}/${entity.userId}`}
-            style={{ color: '@fr-colors-brandBlue' }}
-            replace
-          >
-            {entity.userId}
-          </Link>
-        );
+      key: 'userId',
+      tooltip: 'Unique identification of user.',
+      type: {
+        render: (userId, _, entity) => {
+          return (
+            <Link to={`/users/list/${entity.type.toLowerCase()}/${entity.userId}`} replace>
+              {userId}
+            </Link>
+          );
+        },
       },
-    },
-    {
+    }),
+    helper.simple<'userDetails'>({
       title: 'Name',
-      dataIndex: 'userName',
-      width: 180,
-      hideInSearch: true,
-      exportData: (entity) => getUserName(entity),
-      render: (dom, entity) => {
-        return (
-          <Link
-            to={`/users/list/${entity.type.toLowerCase()}/${entity.userId}`}
-            style={{ color: '@fr-colors-brandBlue' }}
-            replace
-          >
+      key: 'userDetails',
+      id: 'userName',
+      type: {
+        render: (userDetails, _, entity) => (
+          <Link to={`/users/list/${entity.type.toLowerCase()}/${entity.userId}`} replace>
             {getUserName(entity)}
           </Link>
-        );
+        ),
+        stringify: (_value, entity) => getUserName(entity),
       },
-    },
-    {
+    }),
+    helper.simple<'type'>({
       title: 'User type',
-      dataIndex: 'type',
-      tip: 'Type of user.',
-      hideInSearch: true,
-      exportData: 'type',
-      render: (dom, user) => {
-        if (!user) {
-          return '-';
-        }
-        return (
-          <div className={s.userType}>
-            <UserTypeIcon type={user.type} /> <span>{_.capitalize(user.type)}</span>
-          </div>
-        );
-      },
-    },
-    {
-      title: 'KYC status',
-      dataIndex: 'kycStatus',
-      exportData: (entity) => entity.kycStatusDetails?.status,
-      hideInSearch: true,
-      tip: 'KYC status of user.',
-      width: 180,
-      render: (dom, entity) => {
-        const kycStatusDetails = entity.kycStatusDetails;
-        return kycStatusDetails && <UserKycStatusTag kycStatusDetails={kycStatusDetails} />;
-      },
-    },
-    {
-      title: 'User status',
-      dataIndex: 'userStatus',
-      tip: 'Status of user.',
-      hideInSearch: true,
-      width: 180,
-      render: (_, entity) => {
-        const userState = entity.userStateDetails?.state;
-        return userState && <UserStateTag userState={userState} />;
-      },
-      exportData: (entity) => entity.userStateDetails?.state,
-    },
-    {
-      title: 'Tags',
-      hideInSearch: true,
-      exportData: 'tags',
-      hideInForm: true,
-      width: 200,
-      render: (dom, entity) => {
-        if (entity.tags instanceof Array) {
+      key: 'type',
+      tooltip: 'Type of user.',
+      type: {
+        render: (type: 'BUSINESS' | 'CONSUMER' | undefined) => {
+          if (type == null) {
+            return <></>;
+          }
           return (
-            <>
-              {entity.tags?.map((tag: any) => (
-                <KeyValueTag key={tag.key} tag={tag} />
-              ))}
-            </>
+            <div className={s.userType}>
+              <UserTypeIcon type={type} /> <span>{_.capitalize(type)}</span>
+            </div>
           );
-        }
+        },
       },
-    },
-    {
+    }),
+    helper.simple<'kycStatusDetails'>({
+      title: 'KYC status',
+      id: 'kycStatus',
+      type: USER_KYC_STATUS_TAG,
+      key: 'kycStatusDetails',
+      tooltip: 'KYC status of user.',
+    }),
+    helper.simple<'userStateDetails.state'>({
+      title: 'User status',
+      type: USER_STATE_TAG,
+      key: 'userStateDetails.state',
+      id: 'userStatus',
+      tooltip: 'Status of user.',
+    }),
+    helper.simple<'tags'>({
+      title: 'Tags',
+      key: 'tags',
+      type: TAGS,
+    }),
+    helper.simple<'createdTimestamp'>({
       title: 'Created on',
-      dataIndex: 'createdTimestamp',
-      valueType: 'dateRange',
-      tip: 'Date and time when user was created.',
-      sorter: true,
-      width: 180,
-      exportData: (entity) => dayjs(entity.createdTimestamp).format(DEFAULT_DATE_TIME_FORMAT),
-      render: (dom, entity) => {
-        return <TimestampDisplay timestamp={entity.createdTimestamp} />;
-      },
-    },
+      type: DATE,
+      key: 'createdTimestamp',
+      id: 'createdTimestamp',
+      tooltip: 'Date and time when user was created.',
+      sorting: true,
+    }),
   ];
 }

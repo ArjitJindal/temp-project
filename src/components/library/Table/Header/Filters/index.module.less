@@ -1,0 +1,24 @@
+.root {
+  display: flex;
+  position: relative;
+  height: 28px;
+  flex: 1;
+  -webkit-mask-image: linear-gradient(to right, rgba(0, 0, 0, 1) 90%, transparent, transparent);
+}
+
+.items {
+  position: absolute;
+  width: 100%;
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  z-index: 1;
+  overflow-x: auto;
+
+  &::after {
+    content: ' ';
+    display: block;
+    min-width: 100px;
+    height: 1px;
+  }
+}

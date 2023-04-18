@@ -1,0 +1,19 @@
+@import 'src/components/ui/colors.less';
+@import 'src/components/ui/animation.less';
+
+.root {
+  display: flex;
+  flex-direction: column;
+}
+
+.icon {
+  color: rgba(0, 0, 0, 0.25);
+
+  &.isActive {
+    color: @fr-colors-v2-primary-flagrightBlue;
+  }
+}
+
+.down {
+  transform: rotate(180deg);
+}

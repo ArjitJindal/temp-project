@@ -1,6 +1,6 @@
 import { InternalTransaction } from '@/apis';
 import { DataItem } from '@/pages/users-item/UserDetails/UserTransactionHistoryTable';
-import { TableDataItem } from '@/components/ui/Table/types';
+import { TableDataItem } from '@/components/library/Table/types';
 
 export function prepareTableData(
   userId: string | undefined,
@@ -28,7 +28,7 @@ export function prepareTableData(
       return dataItem;
     }
     return {
-      item: dataItem,
+      spanBy: [],
       rows: item.hitRules.map((rule, i): DataItem => {
         const isLastRow = i === item.hitRules.length - 1;
         return {

@@ -1,19 +1,18 @@
 import { useState } from 'react';
-import _ from 'lodash';
 import { RangeValue } from 'rc-picker/es/interface';
-import { useTableData } from '@/utils/table-utils';
 import { usePaginatedQuery } from '@/utils/queries/hooks';
 import { useApi } from '@/api';
 import QueryResultsTable from '@/components/common/QueryResultsTable';
-import { TableColumn } from '@/components/ui/Table/types';
-import { AllParams, CommonParams, DEFAULT_PARAMS_STATE } from '@/components/ui/Table';
+import { AllParams, CommonParams, TableColumn } from '@/components/library/Table/types';
+import { DEFAULT_PARAMS_STATE } from '@/components/library/Table/consts';
 import { SANCTIONS_SEARCH } from '@/utils/queries/keys';
 import { SanctionsSearchHistory } from '@/apis/models/SanctionsSearchHistory';
-import TimestampDisplay from '@/components/ui/TimestampDisplay';
 import Id from '@/components/ui/Id';
 import { useApiTime, usePageViewTracker } from '@/utils/tracker';
-import { Dayjs, dayjs, DEFAULT_DATE_TIME_FORMAT } from '@/utils/dayjs';
+import { Dayjs, dayjs } from '@/utils/dayjs';
 import DatePicker from '@/components/ui/DatePicker';
+import { ColumnHelper } from '@/components/library/Table/columnHelper';
+import { DATE_TIME } from '@/components/library/Table/standardDataTypes';
 
 type TableSearchParams = CommonParams & {
   searchTerm?: string;
@@ -56,51 +55,45 @@ export const SanctionsSearchHistoryTable: React.FC = () => {
     },
   );
 
-  const tableQueryResult = useTableData<SanctionsSearchHistory>(queryResults);
-
+  const helper = new ColumnHelper<SanctionsSearchHistory>();
   const columns: TableColumn<SanctionsSearchHistory>[] = [
     // Data fields
-    {
+    helper.simple<'createdAt'>({
       title: 'Created',
-      dataIndex: 'createdAt',
-      width: 25,
-      search: false,
-      hideInSearch: true,
-      render: (_dom, entity) => <TimestampDisplay timestamp={entity.createdAt} />,
-      exportData: (entity) => dayjs(entity.createdAt).format(DEFAULT_DATE_TIME_FORMAT),
-    },
-    {
+      key: 'createdAt',
+      type: DATE_TIME,
+    }),
+    helper.simple<'request.searchTerm'>({
       title: 'Search Term',
-      dataIndex: 'request.searchTerm',
-      width: 100,
-      search: false,
-      hideInSearch: true,
-      render: (_, entity) => (
-        <Id id={entity.request._id} to={`/sanctions/search/${entity.request._id}`}>
-          {entity.request.searchTerm}
-        </Id>
-      ),
-      exportData: 'request.searchTerm',
-    },
+      key: 'request.searchTerm',
+      type: {
+        render: (searchTerm, _edit, entity) => (
+          <Id id={entity.request._id} to={`/sanctions/search/${entity._id}`}>
+            {searchTerm}
+          </Id>
+        ),
+      },
+    }),
   ];
 
   return (
     <>
       <QueryResultsTable
-        queryResults={tableQueryResult}
+        rowKey="createdAt"
+        queryResults={queryResults}
         params={params}
         onChangeParams={setParams}
-        rowKey="createdAt"
         columns={columns}
-        search={false}
-        autoAdjustHeight
-        toolBarRender={() => [
-          <DatePicker.RangePicker
-            value={params.createdTimestamp}
-            onChange={(createdTimestamp) =>
-              setParams((prevState) => ({ ...prevState, createdTimestamp }))
-            }
-          />,
+        fitHeight
+        extraTools={[
+          () => (
+            <DatePicker.RangePicker
+              value={params.createdTimestamp}
+              onChange={(createdTimestamp) =>
+                setParams((prevState) => ({ ...prevState, createdTimestamp }))
+              }
+            />
+          ),
         ]}
       />
     </>

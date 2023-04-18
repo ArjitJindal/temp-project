@@ -210,7 +210,7 @@ export default function CaseTableWrapper(props: {
     return Object.values(rules.ruleInstances).map((rulesInstance: RuleInstance) => {
       const ruleName = rulesInstance.ruleNameAlias || rules.rules[rulesInstance.ruleId]?.name;
       return {
-        value: rulesInstance.id,
+        value: rulesInstance.id ?? '',
         label: `${ruleName} ${rulesInstance.ruleId} (${rulesInstance.id})`,
       };
     });

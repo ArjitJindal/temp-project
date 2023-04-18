@@ -7,7 +7,7 @@ import _ from 'lodash';
 import { ruleHeaderKeyToDescription } from './utils';
 import MyRule from './my-rules';
 import { RulesTable } from './RulesTable';
-import PageWrapper from '@/components/PageWrapper';
+import PageWrapper, { PageWrapperTableContainer } from '@/components/PageWrapper';
 import PageTabs from '@/components/ui/PageTabs';
 import { useI18n } from '@/locales';
 import { usePageViewTracker } from '@/utils/tracker';
@@ -109,19 +109,23 @@ const TableList = () => {
         }}
       >
         <Tabs.TabPane tab="My Rules" key="my-rules">
-          <MyRule />
+          <PageWrapperTableContainer>
+            <MyRule />
+          </PageWrapperTableContainer>
         </Tabs.TabPane>
         <Tabs.TabPane tab="Library" key="rules-library">
-          <RulesTable
-            onViewRule={(rule) => {
-              setCurrentRule(rule);
-              setRuleReadOnly(true);
-            }}
-            onEditRule={(rule) => {
-              setCurrentRule(rule);
-              setRuleReadOnly(false);
-            }}
-          />
+          <PageWrapperTableContainer>
+            <RulesTable
+              onViewRule={(rule) => {
+                setCurrentRule(rule);
+                setRuleReadOnly(true);
+              }}
+              onEditRule={(rule) => {
+                setCurrentRule(rule);
+                setRuleReadOnly(false);
+              }}
+            />
+          </PageWrapperTableContainer>
           <RuleConfigurationDrawer
             rule={currentRule}
             isVisible={currentRule != null}

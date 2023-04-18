@@ -74,7 +74,6 @@ export default function ExpandedRowRenderer(props: Props) {
                   params={params}
                   onChangeParams={setParams}
                   adjustPagination={true}
-                  disableHorizontalScrolling
                   showCheckedTransactionsButton={true}
                   isCheckedTransactionsEnabled={isCheckedTransactionsEnabled}
                   setIsCheckedTransactionsEnabled={setIsCheckedTransactionsEnabled}

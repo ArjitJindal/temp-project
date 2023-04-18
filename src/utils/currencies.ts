@@ -1026,7 +1026,7 @@ export const CURRENCIES = [
   },
   {
     value: 'ZWL',
-    label: 'ZWL (Zimbabwean Dollar',
+    label: 'ZWL (Zimbabwean Dollar)',
     symbol: null,
   },
 ] as const;

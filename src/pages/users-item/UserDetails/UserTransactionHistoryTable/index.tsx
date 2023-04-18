@@ -1,26 +1,36 @@
-import { Link } from 'react-router-dom';
 import { useRef, useState } from 'react';
+import { Link } from 'react-router-dom';
 import style from './style.module.less';
 import { prepareTableData } from './helpers';
-import { dayjs, DEFAULT_DATE_TIME_FORMAT } from '@/utils/dayjs';
 import * as Card from '@/components/ui/Card';
 import TransactionEventsTable from '@/pages/transactions-item/TransactionEventsTable';
-import { RuleActionStatus } from '@/components/ui/RuleActionStatus';
-import { RiskLevel, RuleAction, TransactionAmountDetails, TransactionEvent } from '@/apis';
+import {
+  Amount,
+  RiskLevel,
+  RuleAction,
+  TransactionAmountDetails,
+  TransactionEvent,
+  TransactionState,
+} from '@/apis';
 import { useApi } from '@/api';
 import { DefaultApiGetTransactionsListRequest } from '@/apis/types/ObjectParamAPI';
-import { makeUrl } from '@/utils/routing';
-import ExpandIcon from '@/components/ui/Table/ExpandIcon';
-import TimestampDisplay from '@/components/ui/TimestampDisplay';
 import { useQuery } from '@/utils/queries/hooks';
 import QueryResultsTable from '@/components/common/QueryResultsTable';
-import { AllParams, DEFAULT_PARAMS_STATE } from '@/components/ui/Table';
+import { AllParams } from '@/components/library/Table/types';
+import { DEFAULT_PARAMS_STATE } from '@/components/library/Table/consts';
 import { USERS_ITEM_TRANSACTIONS_HISTORY } from '@/utils/queries/keys';
-import TransactionStateTag from '@/components/ui/TransactionStateTag';
-import Money from '@/components/ui/Money';
-import { Currency } from '@/utils/currencies';
 import { useFeatureEnabled } from '@/components/AppWrapper/Providers/SettingsProvider';
-import RiskLevelTag from '@/components/library/RiskLevelTag';
+import { ColumnHelper } from '@/components/library/Table/columnHelper';
+import {
+  COUNTRY,
+  DATE,
+  FLOAT,
+  MONEY,
+  RISK_LEVEL,
+  RULE_ACTION_STATUS,
+  TRANSACTION_STATE,
+} from '@/components/library/Table/standardDataTypes';
+import { makeUrl } from '@/utils/routing';
 
 export type DataItem = {
   index: number;
@@ -42,7 +52,6 @@ export type DataItem = {
 export function Content(props: { userId: string }) {
   const { userId } = props;
   const api = useApi();
-  const [expandedRows, setExpandedRows] = useState<string[]>([]);
   const isPulseEnabled = useFeatureEnabled('PULSE');
 
   // Using this hack to fix sticking dropdown on scroll
@@ -95,270 +104,161 @@ export function Content(props: { userId: string }) {
     }));
   });
 
+  const helper = new ColumnHelper<DataItem>();
+
   return (
     <>
       <div ref={rootRef} style={{ position: 'relative' }} className={style.expandedRow}>
-        <QueryResultsTable
-          search={false}
+        <QueryResultsTable<DataItem>
           rowKey="rowKey"
-          form={{
-            labelWrap: true,
-          }}
-          className={style.tablePadding}
           params={params}
           onChangeParams={setParams}
           queryResults={responseRes}
-          getPopupContainer={() => {
-            if (rootRef.current) {
-              return rootRef.current;
-            }
-            return document.body;
-          }}
-          columns={[
-            {
+          columns={helper.list([
+            helper.simple<'transactionId'>({
               title: 'Transaction ID',
-              dataIndex: 'transactionId',
-              exportData: 'transactionId',
-              hideInSearch: true,
               key: 'transactionId',
-              onCell: (_) => ({
-                rowSpan: _.isFirstRow ? _.rowsCount : 0,
-              }),
-              render: (dom, entity) => {
-                const { lastRowKey } = entity;
-                const isExpanded = expandedRows.indexOf(lastRowKey) !== -1;
-                return (
-                  <div className={style.idColumn}>
-                    <ExpandIcon
-                      onClick={() => {
-                        setExpandedRows((keys) =>
-                          isExpanded ? keys.filter((x) => x !== lastRowKey) : [lastRowKey],
-                        );
-                      }}
-                      isExpanded={isExpanded}
-                    />
-                    <Link to={makeUrl(`/transactions/item/:id`, { id: entity.transactionId })}>
-                      {dom}
-                    </Link>
-                  </div>
-                );
+              type: {
+                render: (transactionId) => {
+                  return (
+                    <div className={style.idColumn}>
+                      <Link to={makeUrl(`/transactions/item/:id`, { id: transactionId ?? '' })}>
+                        {transactionId}
+                      </Link>
+                    </div>
+                  );
+                },
               },
-            },
-            isPulseEnabled
-              ? {
-                  title: 'TRS score',
-                  width: 130,
-                  ellipsis: true,
-                  dataIndex: 'arsScore.arsScore',
-                  exportData: 'arsScore',
-                  key: 'arsScore',
-                  hideInSearch: true,
-                  sorter: true,
-                  render: (_, entity) => entity?.arsScore?.toFixed(2),
-                  onCell: (_) => ({
-                    rowSpan: _.isFirstRow ? _.rowsCount : 0,
+            }),
+            ...(isPulseEnabled
+              ? [
+                  helper.simple({
+                    title: 'TRS score',
+                    key: 'arsScore',
+                    id: 'arsScore.arsScore',
+                    type: FLOAT,
+                    sorting: true,
+                    tooltip: 'Transaction Risk Score',
+                    // dataIndex: 'arsScore.arsScore',
+                    // exportData: 'arsScore',
+                    // render: (_, entity) => entity?.arsScore?.toFixed(2),
+                    // onCell: (_) => ({
+                    //   rowSpan: _.isFirstRow ? _.rowsCount : 0,
+                    // }),
                   }),
-                  tooltip: 'Transaction Risk Score',
-                }
-              : {},
-            isPulseEnabled
-              ? {
-                  title: 'TRS level',
-                  width: 130,
-                  ellipsis: true,
-                  dataIndex: 'arsScore.arsScore',
-                  exportData: 'arsRiskLevel',
-                  key: 'arsRiskLevel',
-                  hideInSearch: true,
-                  sorter: true,
-                  render: (_, entity) => {
-                    return <RiskLevelTag level={entity?.arsRiskLevel} />;
-                  },
-                  onCell: (_) => ({
-                    rowSpan: _.isFirstRow ? _.rowsCount : 0,
+                  helper.simple<'arsRiskLevel'>({
+                    title: 'TRS level',
+                    type: RISK_LEVEL,
+                    key: 'arsRiskLevel',
+                    sorting: true,
+                    // dataIndex: 'arsScore.arsScore',
+                    // exportData: 'arsRiskLevel',
+                    // render: (_, entity) => {
+                    //   return <RiskLevelTag level={entity?.arsRiskLevel} />;
+                    // },
+                    // onCell: (_) => ({
+                    //   rowSpan: _.isFirstRow ? _.rowsCount : 0,
+                    // }),
+                    tooltip: 'Transaction Risk Score level',
                   }),
-                  tooltip: 'Transaction Risk Score level',
-                }
-              : {},
-            {
+                ]
+              : []),
+            helper.simple<'ruleName'>({
               title: 'Rules Hit',
-              dataIndex: 'ruleName',
-              exportData: 'ruleName',
-            },
-            {
+              key: 'ruleName',
+            }),
+            helper.simple<'ruleDescription'>({
               title: 'Rules Description',
               tooltip: 'Describes the conditions required for this rule to be hit.',
-              dataIndex: 'ruleDescription',
-              exportData: 'ruleDescription',
-            },
-            {
+              key: 'ruleDescription',
+            }),
+            helper.derived<TransactionState>({
               title: 'Last transaction state',
-              exportData: (entity) => entity.events?.[entity.events.length - 1]?.transactionState,
-              render: (_, entity) => {
-                if (entity.events.length === 0) {
-                  return <></>;
-                }
-                return (
-                  <TransactionStateTag
-                    transactionState={entity.events[entity.events.length - 1].transactionState}
-                  />
-                );
-              },
-            },
-            {
+              value: (entity) => entity.events?.[entity.events.length - 1]?.transactionState,
+              type: TRANSACTION_STATE,
+            }),
+            helper.simple<'timestamp'>({
               title: 'Transaction Time',
-              dataIndex: 'timestamp',
-              exportData: (entity) => dayjs(entity.timestamp).format(DEFAULT_DATE_TIME_FORMAT),
-              hideInSearch: true,
-              valueType: 'dateTime',
-              key: 'transactionTime',
-              width: 180,
-              onCell: (_) => ({
-                rowSpan: _.isFirstRow ? _.rowsCount : 0,
-              }),
-              render: (_, transaction) => {
-                return <TimestampDisplay timestamp={transaction.timestamp} />;
-              },
-            },
-            {
+              key: 'timestamp',
+              type: DATE,
+            }),
+            helper.simple<'status'>({
+              key: 'status',
               title: 'Status',
-              dataIndex: 'status',
-              exportData: 'status',
-              sorter: true,
-              filters: true,
-              onFilter: false,
-              filterMultiple: false,
-              hideInSearch: true,
-              valueType: 'select',
-              valueEnum: {
-                all: {
-                  text: 'All',
-                },
-                ALLOW: {
-                  text: 'ALLOW',
-                },
-                FLAG: {
-                  text: 'FLAG',
-                },
-                BLOCK: {
-                  text: 'BLOCK',
-                },
-                SUSPEND: {
-                  text: 'SUSPEND',
-                },
-              },
-              key: 'ruleAction',
-              width: 120,
-              onCell: (_) => ({
-                rowSpan: _.isFirstRow ? _.rowsCount : 0,
-              }),
-              render: (dom, entity) => {
-                return entity.status && <RuleActionStatus ruleAction={entity.status} />;
-              },
-            },
-            {
+              type: RULE_ACTION_STATUS,
+              sorting: true,
+              filtering: true,
+            }),
+            helper.simple<'direction'>({
               title: 'Transaction Direction',
-              dataIndex: 'direction',
-              exportData: 'direction',
-              filters: true,
-              onFilter: false,
-              filterMultiple: false,
-              hideInSearch: true,
-              valueType: 'select',
-              valueEnum: {
-                all: {
-                  text: 'All',
-                },
-                incoming: {
-                  text: 'Incoming',
-                },
-                outgoing: {
-                  text: 'Outgoing',
+              key: 'direction',
+              type: {
+                autoFilterDataType: {
+                  kind: 'select',
+                  options: [
+                    { value: 'all', label: 'All' },
+                    { value: 'incoming', label: 'Incoming' },
+                    { value: 'outgoing', label: 'Outgoing' },
+                  ],
+                  mode: 'SINGLE',
+                  displayMode: 'select',
                 },
               },
-              onCell: (_) => ({
-                rowSpan: _.isFirstRow ? _.rowsCount : 0,
-              }),
-            },
-            {
+              filtering: true,
+            }),
+            helper.group({
               title: 'Origin',
-              hideInSearch: true,
               tooltip: 'Origin is the Sender in a transaction',
-              children: [
-                {
+              children: helper.list([
+                helper.derived<Amount>({
                   title: 'Origin Amount',
-                  hideInSearch: true,
-                  exportData: 'originAmountDetails',
-                  render: (dom, entity) => {
-                    return (
-                      <Money
-                        value={entity.originAmountDetails?.transactionAmount}
-                        currency={entity.originAmountDetails?.transactionCurrency as Currency}
-                      />
-                    );
+                  // key: 'originAmountDetails',
+                  value: (entity): Amount | undefined => {
+                    if (entity.originAmountDetails == null) {
+                      return undefined;
+                    }
+                    return {
+                      amountValue: entity.originAmountDetails?.transactionAmount,
+                      amountCurrency: entity.originAmountDetails?.transactionCurrency,
+                    };
                   },
-                  onCell: (_) => ({
-                    rowSpan: _.isFirstRow ? _.rowsCount : 0,
-                  }),
-                },
-                {
+                  type: MONEY,
+                }),
+                helper.simple<'originAmountDetails.country'>({
                   title: 'Origin Country',
-                  hideInSearch: true,
-                  exportData: 'originAmountDetails.country',
-                  render: (dom, entity) => {
-                    return entity.originAmountDetails?.country;
-                  },
-                  onCell: (_) => ({
-                    rowSpan: _.isFirstRow ? _.rowsCount : 0,
-                  }),
-                },
-              ],
-            },
-            {
+                  key: 'originAmountDetails.country',
+                  type: COUNTRY,
+                }),
+              ]),
+            }),
+            helper.group({
               title: 'Destination',
-              hideInSearch: true,
               tooltip: 'Destination is the Receiver in a transaction',
-              children: [
-                {
+              children: helper.list([
+                helper.derived({
                   title: 'Destination amount',
-                  exportData: 'destinationAmountDetails',
-                  hideInSearch: true,
-                  render: (dom, entity) => {
-                    return (
-                      <Money
-                        value={entity.destinationAmountDetails?.transactionAmount}
-                        currency={entity.destinationAmountDetails?.transactionCurrency as Currency}
-                      />
-                    );
+                  // key: 'destinationAmountDetails',
+                  value: (entity): Amount | undefined => {
+                    if (entity.originAmountDetails == null) {
+                      return undefined;
+                    }
+                    return {
+                      amountValue: entity.originAmountDetails?.transactionAmount,
+                      amountCurrency: entity.originAmountDetails?.transactionCurrency,
+                    };
                   },
-                  onCell: (_) => ({
-                    rowSpan: _.isFirstRow ? _.rowsCount : 0,
-                  }),
-                },
-                {
-                  title: 'Destination Country',
-                  hideInSearch: true,
-                  exportData: 'destinationAmountDetails.country',
-                  render: (dom, entity) => {
-                    return entity.destinationAmountDetails?.country;
-                  },
-                  onCell: (_) => ({
-                    rowSpan: _.isFirstRow ? _.rowsCount : 0,
-                  }),
-                },
-              ],
-            },
-          ]}
-          expandable={{
-            showExpandColumn: false,
-            expandedRowKeys: expandedRows,
-            expandedRowRender: (item) => <TransactionEventsTable events={item.events} />,
-          }}
-          isEvenRow={(item) => item.index % 2 === 0}
-          scroll={{ x: 1300 }}
-          options={{
-            reload: false,
-          }}
+                  type: MONEY,
+                }),
+                helper.simple<'destinationAmountDetails.country'>({
+                  title: 'Origin Country',
+                  key: 'destinationAmountDetails.country',
+                  type: COUNTRY,
+                }),
+              ]),
+            }),
+          ])}
+          renderExpanded={(item) => <TransactionEventsTable events={item.events} />}
+          fixedExpandedContainer={true}
         />
       </div>
     </>

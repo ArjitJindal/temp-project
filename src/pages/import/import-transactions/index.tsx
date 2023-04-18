@@ -5,12 +5,15 @@ import { TableListItem } from './data';
 import { FileImportButton } from '@/components/file-import/FileImportButton';
 import PageWrapper from '@/components/PageWrapper';
 import { useI18n } from '@/locales';
-import { CommonParams, DEFAULT_PARAMS_STATE } from '@/components/ui/Table';
+import { CommonParams, TableColumn } from '@/components/library/Table/types';
+import { DEFAULT_PARAMS_STATE } from '@/components/library/Table/consts';
 import QueryResultsTable from '@/components/common/QueryResultsTable';
 import { useQuery } from '@/utils/queries/hooks';
 import { TRANSACTION_FILES } from '@/utils/queries/keys';
-import { TableColumn } from '@/components/ui/Table/types';
 import { usePageViewTracker } from '@/utils/tracker';
+import { ColumnHelper } from '@/components/library/Table/columnHelper';
+import TimestampDisplay from '@/components/ui/TimestampDisplay';
+import { dayjs, DEFAULT_DATE_TIME_FORMAT } from '@/utils/dayjs';
 
 function getStatusColor(status: string): string {
   switch (status) {
@@ -26,47 +29,49 @@ function getStatusColor(status: string): string {
 
 const TableList: React.FC = () => {
   usePageViewTracker('Import Transactions Page');
+  const helper = new ColumnHelper<TableListItem>();
   const columns: TableColumn<TableListItem>[] = [
-    {
+    helper.simple<'id'>({
+      key: 'id',
       title: 'ID',
-      dataIndex: 'id',
-      tip: 'File identifier',
-      render: (dom) => {
-        return <a>{dom}</a>;
-      },
-    },
-    {
+      tooltip: 'File identifier',
+    }),
+    helper.simple<'filename'>({
+      key: 'filename',
       title: 'Filename',
-      dataIndex: 'filename',
-      valueType: 'text',
-    },
-    {
+    }),
+    helper.simple<'createdAt'>({
+      key: 'createdAt',
       title: 'Created At',
-      dataIndex: 'createdAt',
-      valueType: 'dateTime',
-    },
-    {
-      title: 'Total Transactions',
-      dataIndex: 'totalTransactions',
-      valueType: 'digit',
-    },
-    {
-      title: 'Imported Transactions',
-      dataIndex: 'importedTransactions',
-      valueType: 'digit',
-    },
-    {
-      title: 'Status',
-      dataIndex: 'status',
-      valueType: 'text',
-      render: (status: any) => {
-        return (
-          <span>
-            <Tag color={getStatusColor(status)}>{status}</Tag>
-          </span>
-        );
+      type: {
+        render: (date) => <TimestampDisplay timestamp={date?.getTime()} />,
+        stringify: (date) => dayjs(date?.getTime()).format(DEFAULT_DATE_TIME_FORMAT),
+        autoFilterDataType: { kind: 'dateTimeRange' },
       },
-    },
+    }),
+    helper.simple<'totalTransactions'>({
+      key: 'totalTransactions',
+      title: 'Total Transactions',
+    }),
+    helper.simple<'importedTransactions'>({
+      key: 'importedTransactions',
+      title: 'Imported Transactions',
+    }),
+    helper.simple<'status'>({
+      key: 'status',
+      title: 'Status',
+      type: {
+        render: (status: string | undefined) => {
+          return status ? (
+            <span>
+              <Tag color={getStatusColor(status)}>{status}</Tag>
+            </span>
+          ) : (
+            <></>
+          );
+        },
+      },
+    }),
   ];
 
   const [params, setParams] = useState<CommonParams>(DEFAULT_PARAMS_STATE);
@@ -83,22 +88,14 @@ const TableList: React.FC = () => {
   return (
     <PageWrapper title={i18n('menu.import.import-transactions')}>
       <QueryResultsTable<TableListItem, CommonParams>
-        form={{
-          labelWrap: true,
-        }}
-        headerTitle="Files"
+        tableId={'transactions-files-list'}
         rowKey="id"
-        search={false}
         queryResults={filesResult}
         columns={columns}
         params={params}
         onChangeParams={setParams}
-        columnsState={{
-          persistenceType: 'localStorage',
-          persistenceKey: 'transactions-files-list',
-        }}
-        toolBarRender={() => [<FileImportButton type={'TRANSACTION'} />]}
-        autoAdjustHeight
+        extraTools={[() => <FileImportButton type={'TRANSACTION'} />]}
+        fitHeight
       />
     </PageWrapper>
   );

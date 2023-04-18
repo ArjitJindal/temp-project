@@ -1,5 +1,4 @@
 import { LoadingOutlined } from '@ant-design/icons';
-import { ActionType } from '@ant-design/pro-table';
 import { useEffect, useRef, useState } from 'react';
 import { Link } from 'react-router-dom';
 import GroupedColumn from '../components/Charts';
@@ -10,18 +9,18 @@ import Drawer from '@/components/library/Drawer';
 import Tabs from '@/components/library/Tabs';
 import {
   RiskLevel,
+  SimulationPostResponse,
   SimulationPulseIteration,
   SimulationPulseResult,
-  SimulationPostResponse,
   SimulationPulseStatisticsRiskTypeEnum,
 } from '@/apis';
 import { useApi } from '@/api';
 import { useQuery } from '@/utils/queries/hooks';
 import { SIMULATION_PULSE_JOB, SIMULATION_PULSE_JOB_ITERATION_RESULT } from '@/utils/queries/keys';
 import AsyncResourceRenderer from '@/components/common/AsyncResourceRenderer';
-import { TableColumn } from '@/components/ui/Table/types';
+import { CommonParams, TableColumn } from '@/components/library/Table/types';
 import QueryResultsTable from '@/components/common/QueryResultsTable';
-import { CommonParams, DEFAULT_PARAMS_STATE } from '@/components/ui/Table';
+import { DEFAULT_PARAMS_STATE } from '@/components/library/Table/consts';
 import Button from '@/components/library/Button';
 import { message } from '@/components/library/Message';
 import { RISK_LEVELS } from '@/utils/risk-levels';
@@ -29,6 +28,7 @@ import { makeUrl } from '@/utils/routing';
 import COLORS from '@/components/ui/colors';
 import { capitalizeWords } from '@/utils/tags';
 import { isSuccess } from '@/utils/asyncResource';
+import { ColumnHelper } from '@/components/library/Table/columnHelper';
 
 type Props = {
   onClose: (toClose: boolean) => void;
@@ -40,103 +40,109 @@ type IterationProps = {
   iteration: SimulationPulseIteration;
 };
 
-const columns: TableColumn<SimulationPulseResult>[] = [
-  {
+const helper = new ColumnHelper<SimulationPulseResult>();
+const columns: TableColumn<SimulationPulseResult>[] = helper.list([
+  helper.simple<'userName'>({
     title: 'User name',
-    dataIndex: 'userName',
-    exportData: 'userName',
-    render: (dom, entity) => {
-      return (
-        <Link
-          to={makeUrl(`/users/list/${entity?.userType?.toLowerCase()}/${entity?.userId}`)}
-          target="_blank"
-          rel="noreferrer"
-          style={{ color: COLORS.brandBlue.base }}
-        >
-          {entity?.userName}
-        </Link>
-      );
+    key: 'userName',
+    type: {
+      render: (userName, _edit, entity) => {
+        return (
+          <Link
+            to={makeUrl(`/users/list/${entity?.userType?.toLowerCase()}/${entity?.userId}`)}
+            target="_blank"
+            rel="noreferrer"
+            style={{ color: COLORS.brandBlue.base }}
+          >
+            {userName}
+          </Link>
+        );
+      },
     },
-  },
-  {
+  }),
+  helper.simple<'userType'>({
     title: 'User type',
-    dataIndex: 'userType',
-    exportData: 'userType',
-    render: (dom, entity) => {
-      if (entity?.userType) {
-        return <>{capitalizeWords(entity?.userType)}</>;
-      } else {
-        return <>{'-'}</>;
-      }
+    key: 'userType',
+    type: {
+      render: (userType) => {
+        if (userType) {
+          return <>{capitalizeWords(userType)}</>;
+        } else {
+          return <>{'-'}</>;
+        }
+      },
     },
-  },
-  {
+  }),
+  helper.group({
     title: 'KRS risk level',
-    children: [
-      {
+    children: helper.list([
+      helper.simple<'current.krs.riskLevel'>({
         title: 'Before',
-        dataIndex: 'current.krs.riskLevel',
-        exportData: 'current.krs.riskLevel',
-        render: (dom, entity) => {
-          if (entity?.current?.krs?.riskLevel) {
-            return <>{capitalizeWords(entity?.current?.krs?.riskLevel?.replace(/_/g, ' '))}</>;
-          } else {
-            return <>{'-'}</>;
-          }
+        key: 'current.krs.riskLevel',
+        type: {
+          render: (riskLevel) => {
+            if (riskLevel) {
+              return <>{capitalizeWords(riskLevel?.replace(/_/g, ' '))}</>;
+            } else {
+              return <>{'-'}</>;
+            }
+          },
         },
-        sorter: true,
-      },
-      {
+        sorting: true,
+      }),
+      helper.simple<'simulated.krs.riskLevel'>({
         title: 'After',
-        dataIndex: 'simulated.krs.riskLevel',
-        exportData: 'simulated.krs.riskLevel',
-        render: (dom, entity) => {
-          if (entity?.simulated?.krs?.riskLevel) {
-            return <>{capitalizeWords(entity?.simulated?.krs?.riskLevel?.replace(/_/g, ' '))}</>;
-          } else {
-            return <>{'-'}</>;
-          }
+        key: 'simulated.krs.riskLevel',
+        type: {
+          render: (riskLevel) => {
+            if (riskLevel) {
+              return <>{capitalizeWords(riskLevel.replace(/_/g, ' '))}</>;
+            } else {
+              return <>{'-'}</>;
+            }
+          },
         },
-        sorter: true,
-      },
-    ],
-  },
-  {
+        sorting: true,
+      }),
+    ]),
+  }),
+  helper.group({
     title: 'CRA risk level',
     children: [
-      {
+      helper.simple<'current.drs.riskLevel'>({
         title: 'Before',
-        dataIndex: 'current.drs.riskLevel',
-        exportData: 'current.drs.riskLevel',
-        render: (dom, entity) => {
-          if (entity?.current?.drs?.riskLevel) {
-            return <>{capitalizeWords(entity?.current?.drs?.riskLevel?.replace(/_/g, ' '))}</>;
-          } else {
-            return <>{'-'}</>;
-          }
+        key: 'current.drs.riskLevel',
+        type: {
+          render: (riskLevel) => {
+            if (riskLevel) {
+              return <>{capitalizeWords(riskLevel?.replace(/_/g, ' '))}</>;
+            } else {
+              return <>{'-'}</>;
+            }
+          },
         },
-        sorter: true,
-      },
-      {
+        sorting: true,
+      }),
+      helper.simple<'simulated.drs.riskLevel'>({
         title: 'After',
-        dataIndex: 'simulated.drs.riskLevel',
-        exportData: 'simulated.drs.riskLevel',
-        render: (dom, entity) => {
-          if (entity?.simulated?.drs?.riskLevel) {
-            return <>{capitalizeWords(entity?.simulated?.drs?.riskLevel?.replace(/_/g, ' '))}</>;
-          } else {
-            return <>{'-'}</>;
-          }
+        key: 'simulated.drs.riskLevel',
+        type: {
+          render: (riskLevel) => {
+            if (riskLevel) {
+              return <>{capitalizeWords(riskLevel?.replace(/_/g, ' '))}</>;
+            } else {
+              return <>{'-'}</>;
+            }
+          },
         },
-        sorter: true,
-      },
+        sorting: true,
+      }),
     ],
-  },
-];
+  }),
+]);
 
 const IterationComponent = (props: IterationProps) => {
   const { iteration } = props;
-  const actionRef = useRef<ActionType>(null);
   const [params, setParams] = useState<CommonParams>({
     ...DEFAULT_PARAMS_STATE,
     sort: [['userId', 'ascend']],
@@ -216,19 +222,10 @@ const IterationComponent = (props: IterationProps) => {
         <QueryResultsTable<SimulationPulseResult>
           columns={columns}
           queryResults={iterationQueryResults}
-          actionRef={actionRef}
-          search={false}
-          form={{
-            labelWrap: true,
-          }}
-          scroll={{ x: 300 }}
           rowKey="userId"
           params={params}
           onChangeParams={setParams}
           hideFilters={true}
-          headerSubtitle={'User risk score level'}
-          disableInternalPadding
-          paginationBorder
         />
       </div>
       {iteration?.parameters?.classificationValues && (

@@ -10,7 +10,7 @@ interface Props extends CommonContainerProps {
 }
 
 export default function Section(props: Props) {
-  const { direction = 'vertical', className, children } = props;
+  const { direction = 'vertical', spacing, className, children } = props;
   return (
     <div
       className={cn(
@@ -18,7 +18,7 @@ export default function Section(props: Props) {
         className,
         s[`direction-${direction}`],
         ...getCommonContainerClasses(s, props, {
-          spacing: 'default',
+          spacing: spacing ?? 'default',
         }),
       )}
     >

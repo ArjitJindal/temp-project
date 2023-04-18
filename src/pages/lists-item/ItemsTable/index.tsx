@@ -1,7 +1,6 @@
 import React, { useCallback, useRef, useState } from 'react';
 import { Input } from 'antd';
 import s from './index.module.less';
-import { CommonParams, DEFAULT_PARAMS_STATE, TableActionType } from '@/components/ui/Table';
 import { ListHeader } from '@/apis';
 import { useApi } from '@/api';
 import Button from '@/components/library/Button';
@@ -10,9 +9,11 @@ import QueryResultsTable from '@/components/common/QueryResultsTable';
 import { usePaginatedQuery } from '@/utils/queries/hooks';
 import { LISTS_ITEM_TYPE } from '@/utils/queries/keys';
 import { getListSubtypeTitle, Metadata } from '@/pages/lists/helpers';
-import { TableColumn } from '@/components/ui/Table/types';
 import NewValueInput from '@/pages/lists/NewListDrawer/NewValueInput';
 import { useApiTime } from '@/utils/tracker';
+import { CommonParams, TableRefType } from '@/components/library/Table/types';
+import { DEFAULT_PARAMS_STATE } from '@/components/library/Table/consts';
+import { ColumnHelper } from '@/components/library/Table/columnHelper';
 import { message } from '@/components/library/Message';
 
 interface ExistedTableItemData {
@@ -29,10 +30,12 @@ interface NewTableItemData {
 
 interface ExistedTableItem extends ExistedTableItemData {
   type: 'EXISTED';
+  rowKey: string;
 }
 
 interface NewTableItem extends NewTableItemData {
   type: 'NEW';
+  rowKey: string;
 }
 
 type TableItem = ExistedTableItem | NewTableItem;
@@ -45,7 +48,9 @@ interface Props {
   listHeader: ListHeader;
 }
 
-function UserListTable(props: Props) {
+const helper = new ColumnHelper<TableItem>();
+
+export default function ItemsTable(props: Props) {
   const { listHeader } = props;
   const { listId, listType, size } = listHeader;
 
@@ -57,7 +62,7 @@ function UserListTable(props: Props) {
     meta: {},
   });
 
-  const tableRef = useRef<TableActionType>(null);
+  const tableRef = useRef<TableRefType>(null);
 
   const isNewUserValid = newUserData.value.length > 0;
   const [isAddUserLoading, setAddUserLoading] = useState(false);
@@ -130,23 +135,26 @@ function UserListTable(props: Props) {
   };
 
   const [isUserDeleteLoading, setEditDeleteLoading] = useState(false);
-  const handleDeleteUser = (userId: string) => {
-    setEditDeleteLoading(true);
-    api
-      .deleteListItem({
-        listId,
-        key: userId,
-      })
-      .then(() => {
-        tableRef.current?.reload();
-      })
-      .catch((e) => {
-        message.fatal(`Unable to delete user from list! ${getErrorMessage(e)}`, e);
-      })
-      .finally(() => {
-        setEditDeleteLoading(false);
-      });
-  };
+  const handleDeleteUser = useCallback(
+    (userId: string) => {
+      setEditDeleteLoading(true);
+      api
+        .deleteListItem({
+          listId,
+          key: userId,
+        })
+        .then(() => {
+          tableRef.current?.reload();
+        })
+        .catch((e) => {
+          message.fatal(`Unable to delete user from list! ${getErrorMessage(e)}`, e);
+        })
+        .finally(() => {
+          setEditDeleteLoading(false);
+        });
+    },
+    [api, listId],
+  );
   const [params, setParams] = useState<CommonParams>(DEFAULT_PARAMS_STATE);
   const measure = useApiTime();
 
@@ -155,6 +163,7 @@ function UserListTable(props: Props) {
     const data: TableItem[] = [
       ...response.map(
         ({ key, metadata }): TableItem => ({
+          rowKey: key,
           type: 'EXISTED',
           value: key,
           reason: metadata?.reason ?? '',
@@ -162,6 +171,7 @@ function UserListTable(props: Props) {
         }),
       ),
       {
+        rowKey: 'NEW',
         type: 'NEW',
         value: [],
         reason: '',
@@ -175,22 +185,16 @@ function UserListTable(props: Props) {
   });
 
   return (
-    <div className={s.root}>
-      <QueryResultsTable<TableItem, CommonParams>
-        rowKey="value"
-        actionRef={tableRef}
-        options={{
-          reload: false,
-          setting: false,
-          density: false,
-        }}
-        search={false}
-        columns={[
-          {
-            title: getListSubtypeTitle(listHeader.subtype),
-            width: 220,
-            search: false,
-            render: (_, entity) =>
+    <QueryResultsTable<TableItem, CommonParams>
+      tableId="list-items-table"
+      rowKey="rowKey"
+      innerRef={tableRef}
+      columns={helper.list([
+        helper.derived<string | string[]>({
+          title: getListSubtypeTitle(listHeader.subtype),
+          value: (item) => item.value,
+          type: {
+            render: (value, _edit, entity) =>
               entity.type === 'NEW' ? (
                 <NewValueInput
                   key={String(isAddUserLoading)}
@@ -210,37 +214,23 @@ function UserListTable(props: Props) {
                   listSubtype={listHeader.subtype}
                 />
               ) : (
-                entity.value
+                <>{value}</>
               ),
-            onCell: (_) => {
-              if (_.type === 'NEW' && listHeader.subtype === 'USER_ID') {
-                return { colSpan: 2 };
-              }
-              return {};
-            },
-            exportData: (entity) => entity.value,
           },
-          ...(listHeader.subtype === 'USER_ID'
-            ? ([
-                {
-                  title: 'User name',
-                  width: 120,
-                  search: false,
-                  render: (_, entity: TableItem) => entity.meta.userFullName ?? '-',
-                  onCell: (_) => {
-                    if (_.type === 'NEW') {
-                      return { colSpan: 0 };
-                    }
-                    return {};
-                  },
-                  exportData: (entity: TableItem) => entity.meta.userFullName ?? '-',
-                },
-              ] as TableColumn<TableItem>[])
-            : []),
-          {
-            title: 'Reason for adding to list',
-            search: false,
-            render: (_, entity) => {
+        }),
+        ...(listHeader.subtype === 'USER_ID'
+          ? helper.list([
+              helper.simple<'meta.userFullName'>({
+                title: 'User name',
+                key: 'meta.userFullName',
+              }),
+            ])
+          : []),
+        helper.simple({
+          title: 'Reason for adding to list',
+          key: 'reason',
+          type: {
+            render: (reason, _, entity) => {
               if (entity.type === 'NEW') {
                 return (
                   <Input
@@ -268,88 +258,86 @@ function UserListTable(props: Props) {
                   />
                 );
               }
-              return entity.reason;
+              return <>{reason}</>;
             },
-            exportData: (entity) => entity.reason,
+            defaultWrapMode: 'WRAP',
           },
-          {
-            title: 'Actions',
-            search: false,
-            width: 1,
-            render: (_, entity) => {
-              if (entity.type === 'NEW') {
+        }),
+        helper.display({
+          title: 'Actions',
+          defaultWidth: 80,
+          render: (entity) => {
+            if (entity.type === 'NEW') {
+              return (
+                <div className={s.actions}>
+                  <Button
+                    type="PRIMARY"
+                    isLoading={isAddUserLoading}
+                    isDisabled={!isNewUserValid}
+                    onClick={handleAddItem}
+                  >
+                    Add
+                  </Button>
+                </div>
+              );
+            } else if (entity.type === 'EXISTED') {
+              if (editUserData?.value === entity.value) {
                 return (
                   <div className={s.actions}>
                     <Button
+                      size="SMALL"
                       type="PRIMARY"
-                      isLoading={isAddUserLoading}
-                      isDisabled={!isNewUserValid}
-                      onClick={handleAddItem}
+                      onClick={handleSaveItem}
+                      isDisabled={isEditUserLoading || !isEditUserValid}
                     >
-                      Add
-                    </Button>
-                  </div>
-                );
-              } else if (entity.type === 'EXISTED') {
-                if (editUserData?.value === entity.value) {
-                  return (
-                    <div className={s.actions}>
-                      <Button
-                        size="SMALL"
-                        type="PRIMARY"
-                        onClick={handleSaveItem}
-                        isDisabled={isEditUserLoading || !isEditUserValid}
-                      >
-                        Save
-                      </Button>
-                      <Button
-                        size="SMALL"
-                        type="SECONDARY"
-                        isDisabled={isEditUserLoading}
-                        onClick={() => {
-                          setEditUserData(null);
-                        }}
-                      >
-                        Cancel
-                      </Button>
-                    </div>
-                  );
-                }
-                return (
-                  <div className={s.actions}>
-                    <Button
-                      size="SMALL"
-                      type="SECONDARY"
-                      isDisabled={isUserDeleteLoading}
-                      onClick={() => {
-                        setEditUserData(entity);
-                      }}
-                    >
-                      Edit
+                      Save
                     </Button>
                     <Button
                       size="SMALL"
                       type="SECONDARY"
-                      isLoading={isUserDeleteLoading}
+                      isDisabled={isEditUserLoading}
                       onClick={() => {
-                        handleDeleteUser(entity.value ?? '');
+                        setEditUserData(null);
                       }}
                     >
-                      Remove
+                      Cancel
                     </Button>
                   </div>
                 );
               }
-            },
+              return (
+                <div className={s.actions}>
+                  <Button
+                    size="SMALL"
+                    type="SECONDARY"
+                    isDisabled={isUserDeleteLoading}
+                    onClick={() => {
+                      setEditUserData(entity);
+                    }}
+                  >
+                    Edit
+                  </Button>
+                  <Button
+                    size="SMALL"
+                    type="SECONDARY"
+                    isLoading={isUserDeleteLoading}
+                    onClick={() => {
+                      handleDeleteUser(entity.value ?? '');
+                    }}
+                  >
+                    Remove
+                  </Button>
+                </div>
+              );
+            }
           },
-        ]}
-        params={params}
-        onChangeParams={setParams}
-        queryResults={listResult}
-        autoAdjustHeight
-      />
-    </div>
+        }),
+      ])}
+      params={params}
+      onChangeParams={setParams}
+      queryResults={listResult}
+      fitHeight
+      sizingMode="FULL_WIDTH"
+    />
   );
 }
-
-export default UserListTable;

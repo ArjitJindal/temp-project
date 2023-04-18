@@ -5,11 +5,7 @@ import { useApi } from '@/api';
 import { CASES_ITEM_ALERT_LIST, CASES_LIST } from '@/utils/queries/keys';
 import { getErrorMessage } from '@/utils/lang';
 
-const useCreateNewCaseMutation = ({
-  setSelectedEntities,
-}: {
-  setSelectedEntities: (value: string[]) => void;
-}) => {
+const useCreateNewCaseMutation = ({ onResetSelection }: { onResetSelection: () => void }) => {
   const api = useApi();
   const queryClient = useQueryClient();
 
@@ -43,7 +39,7 @@ const useCreateNewCaseMutation = ({
         await queryClient.invalidateQueries({
           queryKey: CASES_LIST({}),
         });
-        setSelectedEntities([]);
+        onResetSelection();
       },
       onError: (e) => {
         message.fatal(`Unable to create a new case! ${getErrorMessage(e)}`, e);

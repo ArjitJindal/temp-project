@@ -28,9 +28,9 @@ export default function AlertsCard(props: Props) {
         <AlertTable
           params={params}
           onChangeParams={setParams}
-          hideCaseIdFilter={true}
           hideScopeSelector={true}
           disableInternalPadding={true}
+          isEmbedded={true}
         />
       </Card.Section>
     </Card.Root>

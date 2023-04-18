@@ -115,3 +115,12 @@ export function usePaginatedQuery<TData = unknown, TQueryKey extends QueryKey = 
     paginate: queryFn,
   };
 }
+
+export function getTotal(data: PaginatedData<unknown>): number {
+  return data.total ?? data.items.length;
+}
+
+export function getPageCount(params: PaginationParams, data: PaginatedData<unknown>): number {
+  const total = getTotal(data);
+  return Math.ceil(total / params.pageSize);
+}

@@ -2,7 +2,7 @@ import { useNavigate, useParams } from 'react-router';
 import { Tabs } from 'antd';
 import { SanctionsSearchTable } from './search';
 import { SanctionsSearchHistoryTable } from './search-history';
-import PageWrapper from '@/components/PageWrapper';
+import PageWrapper, { PageWrapperTableContainer } from '@/components/PageWrapper';
 import PageTabs from '@/components/ui/PageTabs';
 import { usePageViewTracker } from '@/utils/tracker';
 
@@ -20,10 +20,14 @@ const SanctionsPage: React.FC = () => {
         }}
       >
         <Tabs.TabPane tab="Search" key="search">
-          <SanctionsSearchTable searchId={searchId} />
+          <PageWrapperTableContainer>
+            <SanctionsSearchTable searchId={searchId} />
+          </PageWrapperTableContainer>
         </Tabs.TabPane>
         <Tabs.TabPane tab="Search History" key="search-history">
-          <SanctionsSearchHistoryTable />
+          <PageWrapperTableContainer>
+            <SanctionsSearchHistoryTable />
+          </PageWrapperTableContainer>
         </Tabs.TabPane>
       </PageTabs>
     </PageWrapper>

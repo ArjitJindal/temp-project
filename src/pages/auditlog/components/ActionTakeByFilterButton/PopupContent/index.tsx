@@ -1,8 +1,7 @@
-import { Form as AntForm, Checkbox } from 'antd';
-import React, { useState } from 'react';
+import { Checkbox, Form as AntForm } from 'antd';
+import React, { useEffect, useState } from 'react';
 import { LoadingOutlined } from '@ant-design/icons';
 import s from './style.module.less';
-import * as Form from '@/components/ui/Form';
 import Button from '@/components/library/Button';
 import { useUsers } from '@/utils/user-utils';
 
@@ -18,6 +17,10 @@ export default function PopupContent(props: Props) {
 
   const [state, setState] = useState<string[]>(initialState);
 
+  useEffect(() => {
+    setState(initialState);
+  }, [initialState]);
+
   return (
     <AntForm
       onFinish={() => {
@@ -25,31 +28,29 @@ export default function PopupContent(props: Props) {
       }}
     >
       <div className={s.root}>
-        <Form.Layout.Label title="Action Taken By">
-          {loadingUsers ? (
-            <LoadingOutlined />
-          ) : (
-            Object.values(users).map((key) => {
-              return (
-                <Checkbox
-                  onChange={(e) => {
-                    setState((prev) => {
-                      if (e.target.checked) {
-                        return [...prev, key.id];
-                      }
-                      return prev.filter((item) => item !== key.id);
-                    });
-                  }}
-                  key={key.id}
-                  checked={state.includes(key.id)}
-                  style={{ margin: '0' }}
-                >
-                  {key.name ?? key.id}
-                </Checkbox>
-              );
-            })
-          )}
-        </Form.Layout.Label>
+        {loadingUsers ? (
+          <LoadingOutlined />
+        ) : (
+          Object.values(users).map((key) => {
+            return (
+              <Checkbox
+                onChange={(e) => {
+                  setState((prev) => {
+                    if (e.target.checked) {
+                      return [...prev, key.id];
+                    }
+                    return prev.filter((item) => item !== key.id);
+                  });
+                }}
+                key={key.id}
+                checked={state.includes(key.id)}
+                style={{ margin: '0' }}
+              >
+                {key.name ?? key.id}
+              </Checkbox>
+            );
+          })
+        )}
         <div className={s.buttons}>
           <Button htmlType="submit" type="PRIMARY">
             Confirm

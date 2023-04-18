@@ -72,3 +72,7 @@ export default function PageWrapper(props: Props) {
     </div>
   );
 }
+
+export function PageWrapperTableContainer(props: { children: React.ReactNode }) {
+  return <div className={s.tableContainer}>{props.children}</div>;
+}

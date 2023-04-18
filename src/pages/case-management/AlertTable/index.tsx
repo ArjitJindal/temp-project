@@ -1,25 +1,19 @@
-import { useCallback, useMemo, useRef, useState } from 'react';
+import React, { useCallback, useMemo, useRef } from 'react';
 import pluralize from 'pluralize';
 import { Avatar } from 'antd';
 import { useCreateNewCaseMutation } from './helpers';
 import { getMutationAsyncResource, usePaginatedQuery } from '@/utils/queries/hooks';
 import { useApi } from '@/api';
-import { Account, AlertListResponseItem } from '@/apis';
+import { Account, AlertListResponseItem, RuleInstance } from '@/apis';
 import { ALERT_LIST } from '@/utils/queries/keys';
 import QueryResultsTable from '@/components/common/QueryResultsTable';
-import { TableColumn, TableData, TableRow } from '@/components/ui/Table/types';
+import { AllParams, TableColumn, TableData, TableRefType } from '@/components/library/Table/types';
 import StackLineIcon from '@/components/ui/icons/Remix/business/stack-line.react.svg';
 import { QueryResult } from '@/utils/queries/types';
-import { AllParams, TableActionType } from '@/components/ui/Table';
-import ScopeSelector from '@/pages/case-management/components/ScopeSelector';
-import StatusButtons from '@/pages/transactions/components/StatusButtons';
-import CaseStatusTag from '@/components/ui/CaseStatusTag';
-import { RuleActionTag } from '@/components/rules/RuleActionTag';
 import Id from '@/components/ui/Id';
 import { addBackUrlToRoute } from '@/utils/backUrl';
 import { makeUrl } from '@/utils/routing';
-import dayjs, { DEFAULT_DATE_TIME_FORMAT } from '@/utils/dayjs';
-import TimestampDisplay from '@/components/ui/TimestampDisplay';
+import dayjs from '@/utils/dayjs';
 import { getUserName } from '@/utils/api/users';
 import ExpandedRowRenderer from '@/pages/case-management/AlertTable/ExpandedRowRenderer';
 import { TableAlertItem } from '@/pages/case-management/AlertTable/types';
@@ -34,214 +28,146 @@ import Button from '@/components/library/Button';
 import Confirm from '@/components/utils/Confirm';
 import Tooltip from '@/components/library/Tooltip';
 import { UI_SETTINGS } from '@/pages/case-management-item/CaseDetails/ui-settings';
+import {
+  ASSIGNMENTS,
+  CASE_STATUS,
+  DATE,
+  RULE_ACTION,
+} from '@/components/library/Table/standardDataTypes';
+import { useRules } from '@/utils/rules';
+import { ColumnHelper } from '@/components/library/Table/columnHelper';
 
 export type AlertTableParams = AllParams<TableSearchParams>;
 
 interface Props {
   params: TableSearchParams;
   onChangeParams: (newState: AllParams<TableSearchParams>) => void;
-  hideCaseIdFilter?: boolean;
   disableInternalPadding?: boolean;
   isEmbedded?: boolean;
   hideScopeSelector?: boolean;
-  showPagination?: boolean;
 }
 
-const mergedColumns = (
-  hideCaseIdFilter: boolean,
-  users: Record<string, Account>,
-): TableColumn<TableAlertItem>[] => {
+const mergedColumns = (users: Record<string, Account>): TableColumn<TableAlertItem>[] => {
+  const helper = new ColumnHelper<TableAlertItem>();
   return [
-    {
+    helper.simple<'alertId'>({
       title: 'Alert ID',
-      dataIndex: 'alertId',
-      exportData: 'alertId',
-      valueType: 'text',
-      width: 130,
-      fieldProps: {
-        icon: <StackLineIcon />,
-        showFilterByDefault: true,
+      key: 'alertId',
+      icon: <StackLineIcon />,
+      showFilterByDefault: true,
+      type: {
+        render: (alertId, editing, entity) => {
+          return (
+            <Id
+              id={alertId}
+              to={addBackUrlToRoute(
+                makeUrl(
+                  `/case-management/case/:caseId`,
+                  {
+                    caseId: entity.caseId,
+                  },
+                  { focus: UI_SETTINGS.cards.ALERTS.key },
+                ),
+              )}
+            >
+              {alertId}
+            </Id>
+          );
+        },
       },
-      render: (dom, entity) => {
-        return (
-          <Id
-            id={entity.alertId}
-            to={addBackUrlToRoute(
-              makeUrl(
-                `/case-management/case/:caseId`,
-                {
-                  caseId: entity.caseId,
-                },
-                { focus: UI_SETTINGS.cards.ALERTS.key },
-              ),
-            )}
-          >
-            {entity.alertId}
-          </Id>
-        );
-      },
-    },
-    {
+    }),
+    helper.simple<'createdTimestamp'>({
       title: 'Created at',
-      dataIndex: 'createdTimestamp',
-      exportData: (entity) => dayjs.dayjs(entity.createdTimestamp).format(DEFAULT_DATE_TIME_FORMAT),
-      valueType: 'dateRange',
-      width: 80,
-      fieldProps: {
-        showFilterByDefault: true,
-      },
-      render: (dom, entity) => {
-        return <TimestampDisplay timestamp={entity.createdTimestamp} />;
-      },
-      sorter: true,
-    },
-    {
+      key: 'createdTimestamp',
+      showFilterByDefault: true,
+      sorting: true,
+      type: DATE,
+    }),
+    helper.simple<'priority'>({
       title: 'Priority',
-      dataIndex: 'priority',
-      exportData: 'priority',
-      width: 100,
-      valueType: 'text',
-      hideInSearch: true,
-      sorter: true,
-    },
-    {
+      key: 'priority',
+      sorting: true,
+    }),
+    helper.simple<'age'>({
       title: 'Alert age',
-      dataIndex: 'age',
-      exportData: 'age',
-      hideInSearch: true,
-      width: 100,
-      sorter: true,
-    },
-    {
+      key: 'age',
+      sorting: true,
+    }),
+    helper.simple<'numberOfTransactionsHit'>({
       title: '#TX',
-      dataIndex: 'numberOfTransactionsHit',
-      exportData: 'numberOfTransactionsHit',
-      width: 100,
-      valueType: 'text',
-      hideInSearch: true,
-      sorter: true,
-    },
-    {
+      key: 'numberOfTransactionsHit',
+      sorting: true,
+    }),
+    helper.simple<'caseUserName'>({
       title: 'User name',
-      dataIndex: 'caseUserName',
-      exportData: 'caseUserName',
-      width: 100,
-      hideInSearch: true,
-    },
-    {
+      key: 'caseUserName',
+    }),
+    helper.simple<'ruleName'>({
       title: 'Rule name',
-      dataIndex: 'ruleName',
-      exportData: 'ruleName',
-      width: 100,
-      valueType: 'text',
-      hideInSearch: true,
-    },
-    {
+      key: 'ruleName',
+    }),
+    helper.simple<'ruleDescription'>({
       title: 'Rule description',
-      dataIndex: 'ruleDescription',
-      exportData: 'ruleDescription',
-      width: 100,
-      valueType: 'text',
-      hideInSearch: true,
-    },
-    {
+      key: 'ruleDescription',
+    }),
+    helper.simple<'ruleAction'>({
       title: 'Rule action',
-      dataIndex: 'ruleAction',
-      exportData: 'ruleAction',
-      width: 100,
-      valueType: 'text',
-      hideInSearch: true,
-      render: (_, entity) => {
-        return entity.ruleAction ? <RuleActionTag ruleAction={entity.ruleAction} /> : '-';
-      },
-    },
-    {
+      key: 'ruleAction',
+      type: RULE_ACTION,
+    }),
+    helper.simple<'alertStatus'>({
       title: 'Alert status',
-      dataIndex: 'alertStatus',
-      exportData: 'alertStatus',
-      width: 100,
-      valueType: 'text',
-      hideInSearch: true,
-      render: (_, entity) => {
-        return entity.alertStatus ? <CaseStatusTag caseStatus={entity.alertStatus} /> : '-';
-      },
-    },
-    {
-      title: 'Case ID',
-      dataIndex: 'caseId',
-      exportData: 'caseId',
-      width: 80,
-      valueType: 'text',
-      hideInSearch: hideCaseIdFilter,
-      render: (dom, entity) => {
-        if (!entity.caseId) {
-          return <>No ID</>;
-        }
-        return (
-          <Id
-            id={entity.caseId}
-            to={addBackUrlToRoute(
-              makeUrl(`/case-management/case/:caseId`, {
-                caseId: entity.caseId,
-              }),
-            )}
-          >
-            {entity.caseId}
-          </Id>
-        );
-      },
-    },
-    {
+      key: 'alertStatus',
+      type: CASE_STATUS,
+    }),
+    helper.simple<'caseCreatedTimestamp'>({
       title: 'Case created at',
-      dataIndex: 'caseCreatedTimestamp',
-      valueType: 'dateRange',
-      exportData: (entity) =>
-        dayjs.dayjs(entity.caseCreatedTimestamp).format(DEFAULT_DATE_TIME_FORMAT),
-      width: 120,
-      render: (_, entity) => {
-        return <TimestampDisplay timestamp={entity.caseCreatedTimestamp} />;
-      },
-      sorter: true,
-    },
-    {
+      key: 'caseCreatedTimestamp',
+      type: DATE,
+      sorting: true,
+    }),
+    helper.simple<'assignments'>({
       title: 'Assigned to',
-      dataIndex: '_assigneeName',
-      exportData: 'assignments',
-      hideInSearch: true,
-      width: 80,
-      sorter: true,
-      render: (_, entity) => {
-        return (
-          users &&
-          entity.assignments?.map((assignment) => {
-            const user = users[assignment.assigneeUserId]?.name ?? assignment.assigneeUserId;
+      key: 'assignments',
+      id: '_assigneeName',
+      sorting: true,
+      type: {
+        ...ASSIGNMENTS,
+        render: (assignments) => {
+          return (
+            <>
+              {users &&
+                assignments?.map((assignment) => {
+                  const user = users[assignment.assigneeUserId]?.name ?? assignment.assigneeUserId;
 
-            return (
-              <Tooltip key={user} title={user}>
-                <Avatar key={user} size="small">
-                  {user.substring(0, 2).toUpperCase()}
-                </Avatar>
-              </Tooltip>
-            );
-          })
-        );
+                  return (
+                    <Tooltip key={user} title={user}>
+                      <Avatar key={user} size="small">
+                        {user.substring(0, 2).toUpperCase()}
+                      </Avatar>
+                    </Tooltip>
+                  );
+                })}
+            </>
+          );
+        },
       },
-    },
+    }),
   ];
 };
 
 type ConfirmModalProps = {
   selectedEntities: string[];
   caseId: string;
-  setSelectedEntities: (selectedEntities: string[]) => void;
+  onResetSelection: () => void;
 };
 
 const CreateCaseConfirmModal = ({
   selectedEntities,
   caseId,
-  setSelectedEntities,
+  onResetSelection,
 }: ConfirmModalProps) => {
-  const createNewCaseMutation = useCreateNewCaseMutation({ setSelectedEntities });
+  const createNewCaseMutation = useCreateNewCaseMutation({ onResetSelection });
 
   return (
     <Confirm
@@ -265,15 +191,7 @@ const CreateCaseConfirmModal = ({
 };
 
 export default function AlertTable(props: Props) {
-  const {
-    params,
-    onChangeParams,
-    hideCaseIdFilter = false,
-    disableInternalPadding = false,
-    hideScopeSelector = false,
-    isEmbedded = false,
-    showPagination = false,
-  } = props;
+  const { params, onChangeParams, hideScopeSelector = false, isEmbedded = false } = props;
   const showActions = !hideScopeSelector;
   const escalationEnabled = useFeatureEnabled('ESCALATION');
 
@@ -367,29 +285,12 @@ export default function AlertTable(props: Props) {
     },
   );
 
-  const [selectedEntities, setSelectedEntities] = useState<string[]>([]);
-  const [items, setItems] = useState<TableRow<TableAlertItem>[]>([]);
-
-  const statusChangeButtonValue = useMemo(() => {
-    const selectedStatuses = [
-      ...new Set(
-        items.map((item) => {
-          return item.alertStatus === 'CLOSED' ? 'CLOSED' : 'OPEN';
-        }),
-      ),
-    ];
-    if (selectedStatuses.length === 1) {
-      return selectedStatuses[0];
-    }
-    return undefined;
-  }, [items]);
-
-  const actionRef = useRef<TableActionType>(null);
+  const actionRef = useRef<TableRefType>(null);
   const reloadTable = useCallback(() => {
     actionRef.current?.reload();
   }, []);
 
-  const handleAssignTo = (account: Account) => {
+  const handleAssignTo = (account: Account, selectedEntities: string[]) => {
     const hideLoading = message.loading('Assigning alerts');
     api
       .postAlerts({
@@ -418,95 +319,75 @@ export default function AlertTable(props: Props) {
       });
   };
 
-  const columns = useMemo(() => mergedColumns(hideCaseIdFilter, users), [hideCaseIdFilter, users]);
+  const columns = useMemo(() => mergedColumns(users), [users]);
+
+  const rules = useRules();
+
+  const ruleOptions = useMemo(() => {
+    return Object.values(rules.ruleInstances).map((rulesInstance: RuleInstance) => {
+      const ruleName = rulesInstance.ruleNameAlias || rules.rules[rulesInstance.ruleId]?.name;
+      return {
+        value: rulesInstance.id ?? '',
+        label: `${ruleName} ${rulesInstance.ruleId} (${rulesInstance.id})`,
+      };
+    });
+  }, [rules.ruleInstances, rules.rules]);
 
   return (
-    <QueryResultsTable<TableAlertItem, AlertTableParams>
-      tableId={'my-alerts'}
-      rowKey={'alertId'}
-      hideFilters={isEmbedded ? true : false}
-      actionRef={actionRef}
-      columns={columns}
-      queryResults={queryResults}
-      params={params}
-      onChangeParams={onChangeParams}
-      extraFilters={extraFilters(isPulseEnabled)}
-      pagination={showPagination ? 'SHOW' : 'HIDE_FOR_ONE_PAGE'}
-      actionsHeader={
-        showActions && !isEmbedded
-          ? [
-              ({ params, setParams }) => (
-                <ScopeSelector<AlertTableParams> params={params} onChangeParams={setParams} />
+    <>
+      <QueryResultsTable<TableAlertItem, AlertTableParams>
+        tableId={isEmbedded ? 'alerts-list-embedded' : 'alerts-list'}
+        rowKey={'alertId'}
+        fitHeight={isEmbedded ? 500 : true}
+        hideFilters={isEmbedded}
+        innerRef={actionRef}
+        columns={columns}
+        queryResults={queryResults}
+        params={params}
+        onChangeParams={onChangeParams}
+        extraFilters={extraFilters(isPulseEnabled, ruleOptions)}
+        pagination={isEmbedded ? 'HIDE_FOR_ONE_PAGE' : true}
+        selectionActions={[
+          ({ selectedIds }) => <AssignToButton ids={selectedIds} onSelect={handleAssignTo} />,
+          ({ selectedIds, selectedItems, params }) => {
+            const selectedStatuses = [
+              ...new Set(
+                Object.values(selectedItems).map((item) => {
+                  return item.alertStatus === 'CLOSED' ? 'CLOSED' : 'OPEN';
+                }),
               ),
-            ]
-          : undefined
-      }
-      actionsHeaderRight={[
-        ({ params, setParams }) => (
-          <>
-            <AssignToButton ids={selectedEntities} onSelect={handleAssignTo} />
-            {statusChangeButtonValue && params.caseId && (
-              <AlertsStatusChangeButton
-                ids={selectedEntities}
-                caseId={params.caseId}
-                onSaved={reloadTable}
-                status={params.alertStatus ?? statusChangeButtonValue}
-              />
-            )}
-            {showActions && !isEmbedded && (
-              <StatusButtons
-                status={params.alertStatus ?? 'OPEN'}
-                onChange={(newStatus) => {
-                  setParams((state) => ({
-                    ...state,
-                    alertStatus: newStatus,
-                  }));
-                }}
-                suffix="alerts"
-              />
-            )}
-            {escalationEnabled &&
+            ];
+
+            const statusChangeButtonValue =
+              selectedStatuses.length === 1 ? selectedStatuses[0] : undefined;
+
+            return (
+              escalationEnabled &&
               params.caseId &&
               statusChangeButtonValue &&
               params.alertStatus != 'ESCALATED' && (
                 <AlertsStatusChangeButton
-                  ids={selectedEntities}
-                  caseId={params.caseId}
-                  status={params.alertStatus ?? statusChangeButtonValue}
+                  ids={selectedIds}
                   onSaved={reloadTable}
-                  statusTransitions={{
-                    OPEN: { status: 'ESCALATED', actionLabel: 'Escalate' },
-                    REOPENED: { status: 'ESCALATED', actionLabel: 'Escalate' },
-                    ESCALATED: {
-                      status: 'OPEN',
-                      actionLabel: 'Send back',
-                    },
-                    CLOSED: { status: 'ESCALATED', actionLabel: 'Escalate' },
-                  }}
+                  status={params.alertStatus ?? statusChangeButtonValue}
+                  caseId={params.caseId}
                 />
-              )}
-            {selectedEntities?.length > 0 && params.caseId && (
+              )
+            );
+          },
+          ({ selectedIds, params, onResetSelection }) =>
+            params.caseId && (
               <CreateCaseConfirmModal
-                selectedEntities={selectedEntities}
+                selectedEntities={selectedIds}
                 caseId={params.caseId}
-                setSelectedEntities={setSelectedEntities}
+                onResetSelection={onResetSelection}
               />
-            )}
-          </>
-        ),
-      ]}
-      rowSelection={{
-        selectedKeys: selectedEntities,
-        onChange: setSelectedEntities,
-        onChangeItems: setItems,
-        items,
-      }}
-      expandable={{
-        expandedRowRender: (record) => <ExpandedRowRenderer alertId={record.alertId ?? null} />,
-      }}
-      scroll={{ x: 1800 }}
-      disableInternalPadding={disableInternalPadding}
-    />
+            ),
+        ]}
+        renderExpanded={(record) => <ExpandedRowRenderer alertId={record.alertId ?? null} />}
+        fixedExpandedContainer={true}
+      />
+    </>
   );
 }
 
