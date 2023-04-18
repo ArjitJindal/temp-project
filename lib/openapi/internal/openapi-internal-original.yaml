@@ -5102,6 +5102,8 @@ components:
           type: string
         ruleAction:
           $ref: '#/components/schemas/RuleAction'
+        ruleNature:
+          $ref: ../public/openapi-public-original.yaml#/components/schemas/RuleNature
         ruleHitMeta:
           $ref: ../public/openapi-public-original.yaml#/components/schemas/RuleHitMeta
         numberOfTransactionsHit:

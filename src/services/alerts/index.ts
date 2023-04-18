@@ -19,6 +19,7 @@ export const transactionsToAlerts = function (
           ruleName: hitRule.ruleName,
           ruleDescription: hitRule.ruleDescription,
           ruleAction: hitRule.ruleAction,
+          ruleNature: hitRule.nature,
           numberOfTransactionsHit: 1,
           transactionIds: [transaction.transactionId],
           priority: 'P1',

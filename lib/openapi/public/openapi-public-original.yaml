@@ -2080,6 +2080,7 @@ components:
           for proof of funds
         ruleAction: BLOCK
         ruleHit: true
+        nature: FRAUD
       description: Model for list of hit rules
       properties:
         ruleId:
