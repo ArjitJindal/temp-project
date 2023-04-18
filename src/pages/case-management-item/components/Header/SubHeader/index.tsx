@@ -23,8 +23,8 @@ export default function SubHeader(props: Props) {
 
   const api = useApi();
   const user = useAuth0User();
-
   const currentUserId = user.userId ?? undefined;
+  const caseUser = caseItem.caseUsers?.origin ?? caseItem.caseUsers?.destination ?? undefined;
   const isCaseInReview = caseItem.caseStatus === 'ESCALATED';
   const [assignments, setAssignments] = useState(
     (isCaseInReview ? caseItem.reviewAssignments : caseItem.assignments) ?? [],
@@ -69,10 +69,10 @@ export default function SubHeader(props: Props) {
   return (
     <>
       <Feature name="PULSE">
-        {user?.userId && (
+        {caseUser?.userId && (
           <div className={s.risks}>
-            <KycRiskDisplay userId={user.userId} />
-            <DynamicRiskDisplay userId={user.userId} />
+            <KycRiskDisplay userId={caseUser.userId} />
+            <DynamicRiskDisplay userId={caseUser.userId} />
           </div>
         )}
       </Feature>
