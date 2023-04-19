@@ -231,8 +231,8 @@ export class MerchantMonitoringService {
     const re = new RegExp(OUTPUT_REGEX, 'm')
     const result: string[] = re.exec(output as string) as string[]
 
-    if (result.length < 2) {
-      logger.info(content)
+    if (result && result.length < 2) {
+      logger.info(output)
     }
     return {
       source: { sourceType: source },
