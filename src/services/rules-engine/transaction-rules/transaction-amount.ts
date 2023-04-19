@@ -63,6 +63,7 @@ export default class TransactionAmountRule extends TransactionRule<TransactionAm
           }
         }
       }
+
       hitResult.push({
         direction: 'ORIGIN',
         vars: {

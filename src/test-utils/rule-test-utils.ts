@@ -46,6 +46,7 @@ export async function createRule(
     defaultNature: 'AML',
     ...rule,
   })
+
   const createdRuleInstance =
     await ruleInstanceRepository.createOrUpdateRuleInstance({
       type: rule.type,
@@ -309,11 +310,11 @@ export function ruleVariantsTest(
   describe('database:mongodb; rule-aggregation:off', () => {
     beforeAll(() => {
       process.env.__INTERNAL_DISABLE_RULE_AGGREGATION__ = 'true'
-      process.env.__INTERNAL_RULES_ENGINE_USE_MONGODB__ = 'true'
+      process.env.__INTERNAL_MONGODB_MIRROR__ = 'true'
     })
     afterAll(() => {
       process.env.__INTERNAL_DISABLE_RULE_AGGREGATION__ = ''
-      process.env.__INTERNAL_RULES_ENGINE_USE_MONGODB__ = ''
+      process.env.__INTERNAL_MONGODB_MIRROR__ = ''
     })
     jestCallback()
   })

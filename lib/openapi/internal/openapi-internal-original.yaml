@@ -3214,7 +3214,9 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/SimulationPulseParametersRequest'
+              oneOf:
+                - $ref: '#/components/schemas/SimulationPulseParametersRequest'
+                - $ref: '#/components/schemas/SimulationBeaconParametersRequest'
     get:
       summary: Get simulation tasks
       operationId: get-simulations
@@ -3247,7 +3249,9 @@ paths:
           in: query
           name: sortField
         - schema:
-            $ref: '#/components/schemas/SimulationType'
+            oneOf:
+              - $ref: '#/components/schemas/SimulationPulseType'
+              - $ref: '#/components/schemas/SimulationBeaconType'
           in: query
           name: type
           required: true
@@ -3264,7 +3268,9 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/SimulationPulseJob'
+                oneOf:
+                  - $ref: '#/components/schemas/SimulationPulseJob'
+                  - $ref: '#/components/schemas/SimulationBeaconJob'
       parameters: []
     parameters:
       - schema:
@@ -5971,7 +5977,7 @@ components:
         id: 9d4bfe04d1868
       properties:
         type:
-          $ref: '#/components/schemas/SimulationType'
+          $ref: '#/components/schemas/SimulationPulseType'
         classificationValues:
           type: array
           items:
@@ -5989,6 +5995,126 @@ components:
       required:
         - type
         - name
+    SimulationBeaconSampling:
+      title: SimulationBeaconSampling
+      type: object
+      x-stoplight:
+        id: 9d4bf14d1868
+      properties:
+        transactionsCount:
+          type: number
+      required:
+        - transactionsCount
+    SimulationBeaconParameters:
+      title: SimulationBeaconParameters
+      type: object
+      x-stoplight:
+        id: 9d4bf14d1868
+      properties:
+        type:
+          $ref: '#/components/schemas/SimulationBeaconType'
+        ruleInstance:
+          $ref: '#/components/schemas/RuleInstance'
+        sampling:
+          $ref: '#/components/schemas/SimulationBeaconSampling'
+        name:
+          type: string
+        description:
+          type: string
+      required:
+        - type
+        - ruleInstance
+        - name
+    SimulationBeaconParametersRequest:
+      title: SimulationBeaconParametersRequest
+      type: object
+      x-stoplight:
+        id: 9d4bf14d1868
+      properties:
+        jobId:
+          type: string
+        parameters:
+          type: array
+          items:
+            $ref: '#/components/schemas/SimulationBeaconParameters'
+        type:
+          $ref: '#/components/schemas/SimulationBeaconType'
+        defaultRuleInstance:
+          $ref: '#/components/schemas/RuleInstance'
+      required:
+        - parameters
+        - type
+        - defaultRuleInstance
+    SimulationBeaconStatistics:
+      title: SimulationBeaconStatistics
+      type: object
+      x-stoplight:
+        id: 9d4bf14d1868
+      properties:
+        totalCases:
+          type: number
+        transactionsHit:
+          type: number
+        usersHit:
+          type: number
+        falsePositivesCases:
+          type: number
+    SimulationBeaconStatisticsResult:
+      title: SimulationBeaconStatisticsResult
+      type: object
+      x-stoplight:
+        id: 9d4bf14d1868
+      properties:
+        current:
+          $ref: '#/components/schemas/SimulationBeaconStatistics'
+        simulated:
+          $ref: '#/components/schemas/SimulationBeaconStatistics'
+    SimulationIteration:
+      title: SimulationBeaconIteration
+      type: object
+      x-stoplight:
+        id: 9d4bf14d1868
+      properties:
+        taskId:
+          type: string
+        name:
+          type: string
+        description:
+          type: string
+        createdAt:
+          type: number
+        progress:
+          type: number
+          minimum: 0
+          maximum: 1
+        latestStatus:
+          $ref: '#/components/schemas/TaskStatusChange'
+        statuses:
+          type: array
+          items:
+            $ref: '#/components/schemas/TaskStatusChange'
+      required:
+        - taskId
+        - progress
+        - latestStatus
+        - statuses
+        - name
+    SimulationBeaconIteration:
+      title: SimulationBeaconIteration
+      allOf:
+        - $ref: '#/components/schemas/SimulationIteration'
+        - type: object
+          properties:
+            type:
+              $ref: '#/components/schemas/SimulationBeaconType'
+            parameters:
+              $ref: '#/components/schemas/SimulationBeaconParameters'
+            statistics:
+              $ref: '#/components/schemas/SimulationBeaconStatisticsResult'
+          required:
+            - type
+            - parameters
+            - statistics
     SimulationPulseParametersRequest:
       title: SimulationPulseParametersRequest
       type: object
@@ -6002,7 +6128,7 @@ components:
           items:
             $ref: '#/components/schemas/SimulationPulseParameters'
         type:
-          $ref: '#/components/schemas/SimulationType'
+          $ref: '#/components/schemas/SimulationPulseType'
         defaultRiskClassifications:
           type: array
           items:
@@ -6021,7 +6147,7 @@ components:
           type: integer
       x-stoplight:
         id: yl7w6xm5dlwif
-    SimulationPulseJob:
+    SimulationJob:
       title: SimulationPulseJob
       x-stoplight:
         id: 5e85cbff0f7fd
@@ -6033,59 +6159,65 @@ components:
           type: number
         createdBy:
           type: string
-        type:
-          $ref: '#/components/schemas/SimulationType'
-        iterations:
-          type: array
-          items:
-            $ref: '#/components/schemas/SimulationPulseIteration'
-        defaultRiskClassifications:
-          type: array
-          items:
-            $ref: '#/components/schemas/RiskClassificationScore'
       required:
         - jobId
-        - iterations
-        - defaultRiskClassifications
         - createdBy
+    SimulationPulseJob:
+      title: SimulationPulseJob
+      allOf:
+        - $ref: '#/components/schemas/SimulationJob'
+        - type: object
+          properties:
+            type:
+              $ref: '#/components/schemas/SimulationPulseType'
+            iterations:
+              type: array
+              items:
+                $ref: '#/components/schemas/SimulationPulseIteration'
+            defaultRiskClassifications:
+              type: array
+              items:
+                $ref: '#/components/schemas/RiskClassificationScore'
+          required:
+            - type
+            - iterations
+            - defaultRiskClassifications
+    SimulationBeaconJob:
+      title: SimulationBeaconJob
+      allOf:
+        - $ref: '#/components/schemas/SimulationJob'
+        - type: object
+          properties:
+            type:
+              $ref: '#/components/schemas/SimulationBeaconType'
+            iterations:
+              type: array
+              items:
+                $ref: '#/components/schemas/SimulationBeaconIteration'
+            defaultRuleInstance:
+              $ref: '#/components/schemas/RuleInstance'
+          required:
+            - type
+            - iterations
+            - defaultRuleInstance
     SimulationPulseIteration:
       title: SimulationPulseIteration
       x-stoplight:
         id: 5e85cc0b0ddfd
-      type: object
-      properties:
-        taskId:
-          type: string
-        createdAt:
-          type: number
-        type:
-          $ref: '#/components/schemas/SimulationType'
-        parameters:
-          $ref: '#/components/schemas/SimulationPulseParameters'
-        progress:
-          type: number
-          minimum: 0
-          maximum: 1
-        statistics:
-          $ref: '#/components/schemas/SimulationPulseStatisticsResult'
-        latestStatus:
-          $ref: '#/components/schemas/TaskStatusChange'
-        statuses:
-          type: array
-          items:
-            $ref: '#/components/schemas/TaskStatusChange'
-        name:
-          type: string
-        description:
-          type: string
-      required:
-        - type
-        - parameters
-        - progress
-        - statistics
-        - latestStatus
-        - statuses
-        - name
+      allOf:
+        - $ref: '#/components/schemas/SimulationIteration'
+        - type: object
+          properties:
+            type:
+              $ref: '#/components/schemas/SimulationPulseType'
+            parameters:
+              $ref: '#/components/schemas/SimulationPulseParameters'
+            statistics:
+              $ref: '#/components/schemas/SimulationPulseStatisticsResult'
+          required:
+            - type
+            - parameters
+            - statistics
     TenantCreationRequest:
       title: TenantCreationRequest
       type: object
@@ -6145,13 +6277,20 @@ components:
           type: array
           items:
             $ref: '#/components/schemas/SimulationPulseStatistics'
-    SimulationType:
-      title: SimulationType
+    SimulationPulseType:
+      title: SimulationPulseType
       x-stoplight:
         id: n6wn9hbaar1cs
       type: string
       enum:
         - PULSE
+    SimulationBeaconType:
+      title: SimulationBeaconType
+      x-stoplight:
+        id: n6wn9hbaar1cs
+      type: string
+      enum:
+        - BEACON
     SimulationPulseRiskScoreResult:
       title: SimulationPulseResult
       type: object
@@ -6235,6 +6374,7 @@ components:
         - taskIds
         - jobId
     SimulationGetResponse:
+      title: SimulationGetResponse
       type: object
       properties:
         total:
@@ -6242,7 +6382,9 @@ components:
         data:
           type: array
           items:
-            $ref: '#/components/schemas/SimulationPulseJob'
+            oneOf:
+              - $ref: '#/components/schemas/SimulationPulseJob'
+              - $ref: '#/components/schemas/SimulationBeaconJob'
       required:
         - total
         - data

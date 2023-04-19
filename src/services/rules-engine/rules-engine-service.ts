@@ -385,6 +385,7 @@ export class RulesEngineService {
     )
     const ruleInstances =
       await this.ruleInstanceRepository.getActiveRuleInstances('TRANSACTION')
+
     const rulesById = _.keyBy(
       await this.ruleRepository.getRulesByIds(
         ruleInstances.map((ruleInstance) => ruleInstance.ruleId)
@@ -463,10 +464,10 @@ export class RulesEngineService {
     }
     const ruleFilters = ruleInstance.filters as TransactionFilters & UserFilters
     const mode =
-      database === 'MONGODB' ||
-      process.env.__INTERNAL_RULES_ENGINE_USE_MONGODB__
+      database === 'MONGODB' || process.env.__INTERNAL_MONGODB_MIRROR__
         ? 'MONGODB'
         : 'DYNAMODB'
+
     const ruleClassInstance = transaction
       ? new (RuleClass as typeof TransactionRuleBase)(
           this.tenantId,

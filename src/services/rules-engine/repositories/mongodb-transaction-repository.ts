@@ -249,6 +249,18 @@ export class MongoDbTransactionRepository
     return { $and: conditions }
   }
 
+  public async getLastNTransactions(value: number) {
+    const db = this.mongoDb.db()
+    const name = TRANSACTIONS_COLLECTION(this.tenantId)
+    const collection = db.collection<InternalTransaction>(name)
+    const result = await collection
+      .find({})
+      .sort({ createdTimestamp: -1 })
+      .limit(value)
+      .toArray()
+    return result
+  }
+
   public getTransactionsCursor(
     params: OptionalPagination<DefaultApiGetTransactionsListRequest>
   ): AggregationCursor<InternalTransaction> {
@@ -351,6 +363,14 @@ export class MongoDbTransactionRepository
     return collection.countDocuments(query, {
       limit: COUNT_QUERY_LIMIT,
     })
+  }
+
+  public async getAllTransactionsCount(): Promise<number> {
+    const db = this.mongoDb.db()
+    const collection = db.collection<InternalTransaction>(
+      TRANSACTIONS_COLLECTION(this.tenantId)
+    )
+    return await collection.estimatedDocumentCount()
   }
 
   public async getTransactions(

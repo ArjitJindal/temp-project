@@ -20,6 +20,7 @@ import { hasFeature } from '@/core/utils/context'
 import { TenantRepository } from '@/services/tenants/repositories/tenant-repository'
 import { getDynamoDbClientByEvent } from '@/utils/dynamodb'
 import { SimulationSettings } from '@/@types/openapi-internal/SimulationSettings'
+import { SimulationBeaconParametersRequest } from '@/@types/openapi-internal/SimulationBeaconParametersRequest'
 
 export const simulationHandler = lambdaApi()(
   async (
@@ -49,9 +50,9 @@ export const simulationHandler = lambdaApi()(
           event.queryStringParameters as any as DefaultApiGetSimulationsRequest
         )
       } else if (event.httpMethod === 'POST' && event.body) {
-        const simulationParameters = JSON.parse(
-          event.body
-        ) as SimulationPulseParametersRequest
+        const simulationParameters = JSON.parse(event.body) as
+          | SimulationPulseParametersRequest
+          | SimulationBeaconParametersRequest
 
         const tenantRepositry = new TenantRepository(tenantId, {
           dynamoDb,
@@ -77,7 +78,10 @@ export const simulationHandler = lambdaApi()(
         for (let i = 0; i < taskIds.length; i++) {
           if (taskIds[i] && simulationParameters.parameters[i])
             await sendBatchJobCommand(tenantId, {
-              type: 'SIMULATION_PULSE',
+              type:
+                simulationParameters.type === 'PULSE'
+                  ? 'SIMULATION_PULSE'
+                  : 'SIMULATION_BEACON',
               tenantId,
               parameters: {
                 taskId: taskIds[i],

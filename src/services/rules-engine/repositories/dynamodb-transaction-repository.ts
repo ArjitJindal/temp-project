@@ -104,7 +104,7 @@ export class DynamoDbTransactionRepository
 
     if (
       process.env.NODE_ENV === 'development' ||
-      process.env.__INTERNAL_RULES_ENGINE_USE_MONGODB__
+      process.env.__INTERNAL_MONGODB_MIRROR__
     ) {
       const { localTarponChangeCaptureHandler } = await import(
         '@/utils/local-dynamodb-change-handler'

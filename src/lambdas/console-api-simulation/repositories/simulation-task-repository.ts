@@ -12,12 +12,16 @@ import {
 } from '@/@types/openapi-internal/TaskStatusChange'
 import { DefaultApiGetSimulationsRequest } from '@/@types/openapi-internal/RequestParameters'
 import { SimulationPulseStatisticsResult } from '@/@types/openapi-internal/SimulationPulseStatisticsResult'
+import { SimulationBeaconStatisticsResult } from '@/@types/openapi-internal/SimulationBeaconStatisticsResult'
 import { SimulationPulseParametersRequest } from '@/@types/openapi-internal/SimulationPulseParametersRequest'
 import { SimulationPulseIteration } from '@/@types/openapi-internal/SimulationPulseIteration'
 import { getContext } from '@/core/utils/context'
 import { Account } from '@/@types/openapi-internal/Account'
 import { SimulationGetResponse } from '@/@types/openapi-internal/SimulationGetResponse'
 import { SimulationPostResponse } from '@/@types/openapi-internal/SimulationPostResponse'
+import { SimulationBeaconJob } from '@/@types/openapi-internal/SimulationBeaconJob'
+import { SimulationBeaconParametersRequest } from '@/@types/openapi-internal/SimulationBeaconParametersRequest'
+import { SimulationBeaconIteration } from '@/@types/openapi-internal/SimulationBeaconIteration'
 
 export class SimulationTaskRepository {
   tenantId: string
@@ -29,24 +33,43 @@ export class SimulationTaskRepository {
   }
 
   private generateIterationsObject(
-    simulationRequest: SimulationPulseParametersRequest,
+    simulationRequest:
+      | SimulationPulseParametersRequest
+      | SimulationBeaconParametersRequest,
     taskIds: string[]
-  ): Array<SimulationPulseIteration> {
+  ): Array<SimulationPulseIteration> | Array<SimulationBeaconIteration> {
     const now = Date.now()
     const status: TaskStatusChange = {
       status: 'PENDING',
       timestamp: now,
     }
 
-    return simulationRequest.parameters.map((parameter) => {
+    const result = simulationRequest.parameters.map((parameter) => {
       const taskId = uuidv4()
       taskIds.push(taskId)
+
+      let statistics:
+        | SimulationPulseStatisticsResult
+        | SimulationBeaconStatisticsResult
+        | undefined = undefined
+
+      if (simulationRequest.type === 'PULSE') {
+        statistics = {
+          current: [],
+          simulated: [],
+        }
+      } else if (simulationRequest.type === 'BEACON') {
+        statistics = {
+          current: {},
+          simulated: {},
+        }
+      }
 
       return {
         taskId,
         parameters: parameter,
         progress: 0,
-        statistics: { current: [], simulated: [] },
+        statistics,
         latestStatus: status,
         statuses: [status],
         name: parameter.name,
@@ -59,13 +82,19 @@ export class SimulationTaskRepository {
             : (getContext()?.user as Account)?.id,
       }
     })
+
+    return simulationRequest.type === 'PULSE'
+      ? (result as SimulationPulseIteration[])
+      : (result as SimulationBeaconIteration[])
   }
 
   public async createSimulationJob(
-    simulationRequest: SimulationPulseParametersRequest
+    simulationRequest:
+      | SimulationPulseParametersRequest
+      | SimulationBeaconParametersRequest
   ): Promise<SimulationPostResponse> {
     const db = this.mongoDb.db()
-    const collection = db.collection<SimulationPulseJob>(
+    const collection = db.collection<SimulationPulseJob | SimulationBeaconJob>(
       SIMULATION_TASK_COLLECTION(this.tenantId)
     )
     const taskIds: string[] = []
@@ -76,30 +105,63 @@ export class SimulationTaskRepository {
       const existsingJob = await collection.findOne({
         _id: simulationRequest.jobId as any,
       })
-      existsingJob?.iterations?.concat(
-        this.generateIterationsObject(simulationRequest, taskIds)
-      )
+      const newIterations =
+        simulationRequest.type === 'PULSE'
+          ? (existsingJob?.iterations as SimulationPulseIteration[]).concat(
+              this.generateIterationsObject(
+                simulationRequest,
+                taskIds
+              ) as SimulationPulseIteration[]
+            )
+          : (existsingJob?.iterations as SimulationBeaconIteration[]).concat(
+              this.generateIterationsObject(
+                simulationRequest,
+                taskIds
+              ) as SimulationBeaconIteration[]
+            )
+
       await collection.updateOne(
         { _id: simulationRequest.jobId as any },
         {
           $set: {
-            iterations: existsingJob?.iterations,
+            iterations: newIterations as SimulationPulseIteration[],
           },
         }
       )
     } else {
-      await collection.insertOne({
-        _id: jobId as any,
+      const baseJob = {
         createdAt: now,
         jobId,
         type: simulationRequest.type,
-        iterations: this.generateIterationsObject(simulationRequest, taskIds),
-        defaultRiskClassifications:
-          simulationRequest.defaultRiskClassifications,
         createdBy:
           process.env.NODE_ENV === 'test'
             ? 'test'
             : (getContext()?.user as Account)?.id,
+      }
+      let job: SimulationPulseJob | SimulationBeaconJob | null = null
+      if (simulationRequest.type === 'PULSE') {
+        job = {
+          ...baseJob,
+          defaultRiskClassifications:
+            simulationRequest.defaultRiskClassifications,
+          iterations: this.generateIterationsObject(
+            simulationRequest,
+            taskIds
+          ) as SimulationPulseIteration[],
+        } as SimulationPulseJob
+      } else {
+        job = {
+          ...baseJob,
+          defaultRuleInstance: simulationRequest.defaultRuleInstance,
+          iterations: this.generateIterationsObject(
+            simulationRequest,
+            taskIds
+          ) as SimulationBeaconIteration[],
+        } as SimulationBeaconJob
+      }
+      await collection.insertOne({
+        _id: job.jobId as any,
+        ...job,
       })
     }
 
@@ -108,10 +170,12 @@ export class SimulationTaskRepository {
 
   public async updateStatistics(
     taskId: string,
-    statistics: SimulationPulseStatisticsResult
+    statistics:
+      | SimulationPulseStatisticsResult
+      | SimulationBeaconStatisticsResult
   ) {
     const db = this.mongoDb.db()
-    const collection = db.collection<SimulationPulseJob>(
+    const collection = db.collection<SimulationPulseJob | SimulationBeaconJob>(
       SIMULATION_TASK_COLLECTION(this.tenantId)
     )
 
@@ -126,7 +190,11 @@ export class SimulationTaskRepository {
     if (job?.jobId) {
       await collection.updateOne(
         { _id: job.jobId as any },
-        { $set: { iterations: updatedIteration ?? [] } }
+        {
+          $set: {
+            iterations: (updatedIteration as SimulationPulseIteration[]) ?? [],
+          },
+        }
       )
     }
   }
@@ -186,12 +254,12 @@ export class SimulationTaskRepository {
     params: DefaultApiGetSimulationsRequest
   ): Promise<SimulationGetResponse> {
     const db = this.mongoDb.db()
-    const collection = db.collection<SimulationPulseJob>(
+    const collection = db.collection<SimulationPulseJob | SimulationBeaconJob>(
       SIMULATION_TASK_COLLECTION(this.tenantId)
     )
     const query = { type: params.type }
     const simulationTasks = await collection
-      .aggregate<SimulationPulseJob>([
+      .aggregate<SimulationPulseJob | SimulationBeaconJob>([
         { $match: query },
         ...(params.sortField === 'iterations_count'
           ? [
@@ -221,13 +289,20 @@ export class SimulationTaskRepository {
 
     return {
       total,
-      data: simulationTasks.map((task) => _.omit(task, '_id')),
+      data:
+        params.type === 'PULSE'
+          ? (simulationTasks.map((task) =>
+              _.omit(task, '_id')
+            ) as SimulationPulseJob[])
+          : (simulationTasks.map((task) =>
+              _.omit(task, '_id')
+            ) as SimulationBeaconJob[]),
     }
   }
 
   public async getSimulationJobsCount(): Promise<number> {
     const db = this.mongoDb.db()
-    const collection = db.collection<SimulationPulseJob>(
+    const collection = db.collection<SimulationPulseJob | SimulationBeaconJob>(
       SIMULATION_TASK_COLLECTION(this.tenantId)
     )
     return collection.countDocuments()

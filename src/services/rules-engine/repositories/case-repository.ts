@@ -1547,13 +1547,15 @@ export class CaseRepository {
   }
 
   public async getCasesByTransactionIds(
-    transactionIds: string[]
+    transactionIds: string[],
+    additionalFilters?: Filter<Case>
   ): Promise<Case[]> {
     const db = this.mongoDb.db()
     const casesCollection = db.collection<Case>(CASES_COLLECTION(this.tenantId))
     return await casesCollection
       .find({
         caseTransactionsIds: { $in: transactionIds },
+        ...additionalFilters,
       })
       .toArray()
   }

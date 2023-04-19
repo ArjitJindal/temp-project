@@ -1,0 +1,216 @@
+import { range } from 'lodash'
+import { jobRunnerHandler } from '../app'
+import { dynamoDbSetupHook } from '@/test-utils/dynamodb-test-utils'
+import { withFeatureHook } from '@/test-utils/feature-test-utils'
+import { getTestTenantId } from '@/test-utils/tenant-test-utils'
+import { createConsumerUsers, getTestUser } from '@/test-utils/user-test-utils'
+import { getDynamoDbClient } from '@/utils/dynamodb'
+import { getMongoDbClient } from '@/utils/mongoDBUtils'
+import { getTestTransaction } from '@/test-utils/transaction-test-utils'
+import { RuleInstanceRepository } from '@/services/rules-engine/repositories/rule-instance-repository'
+import {
+  bulkVerifyTransactions,
+  setUpRulesHooks,
+} from '@/test-utils/rule-test-utils'
+import { CaseRepository } from '@/services/rules-engine/repositories/case-repository'
+import { SimulationTaskRepository } from '@/lambdas/console-api-simulation/repositories/simulation-task-repository'
+import { SimulationBeaconBatchJob } from '@/@types/batch-job'
+import { RuleInstance } from '@/@types/openapi-internal/RuleInstance'
+import { SimulationBeaconParameters } from '@/@types/openapi-internal/SimulationBeaconParameters'
+import { TransactionAmountRuleParameters } from '@/services/rules-engine/transaction-rules/transaction-amount'
+
+dynamoDbSetupHook()
+
+withFeatureHook(['SIMULATOR'])
+
+const getRuleInstance = (threshold: number, id?: string): RuleInstance => {
+  return {
+    id,
+    type: 'TRANSACTION',
+    ruleId: 'R-2',
+    ruleNameAlias: 'Transaction amount too high',
+    ruleDescriptionAlias: 'Transaction amount is >= x in USD or equivalent',
+    filters: {},
+    parameters: { transactionAmountThreshold: { USD: threshold } },
+    riskLevelParameters: {
+      VERY_LOW: { transactionAmountThreshold: { USD: threshold } },
+      VERY_HIGH: { transactionAmountThreshold: { USD: threshold } },
+      HIGH: { transactionAmountThreshold: { USD: threshold } },
+      MEDIUM: { transactionAmountThreshold: { USD: threshold } },
+      LOW: { transactionAmountThreshold: { USD: threshold } },
+    },
+    action: 'FLAG',
+    riskLevelActions: {
+      VERY_LOW: 'FLAG',
+      VERY_HIGH: 'FLAG',
+      HIGH: 'FLAG',
+      MEDIUM: 'FLAG',
+      LOW: 'FLAG',
+    },
+    status: 'ACTIVE',
+    createdAt: 1681206071155,
+    updatedAt: 1681206071155,
+    runCount: 0,
+    hitCount: 0,
+    casePriority: 'P1',
+    nature: 'AML',
+    labels: [],
+  }
+}
+
+const getTransaction = (
+  transactionId: string,
+  amount: number,
+  originator: string,
+  beneficiary: string
+) => {
+  return getTestTransaction({
+    transactionId,
+    originAmountDetails: {
+      country: 'IN',
+      transactionAmount: amount,
+      transactionCurrency: 'USD',
+    },
+    destinationAmountDetails: {
+      country: 'IN',
+      transactionAmount: amount,
+      transactionCurrency: 'USD',
+    },
+    originUserId: originator,
+    destinationUserId: beneficiary,
+  })
+}
+
+const tenantId = getTestTenantId()
+
+process.env.__INTERNAL_MONGODB_MIRROR__ = 'true'
+
+describe('Simulation Beacon Batch Job Runner', () => {
+  setUpRulesHooks(tenantId, [
+    {
+      defaultParameters: {
+        transactionAmountThreshold: {
+          USD: 4000,
+        },
+      } as TransactionAmountRuleParameters,
+      ruleImplementationName: 'transaction-amount',
+      type: 'TRANSACTION',
+      defaultAction: 'FLAG',
+      id: 'R-2',
+    },
+  ])
+
+  test('Should run the simulation beacon batch job', async () => {
+    const mongoDb = await getMongoDbClient()
+    const dynamoDb = await getDynamoDbClient()
+    const RULE_INSTANCE_SIMULATION = 'TEST_RULE_INSTANCE_SIMULATION'
+    const caseRepository = new CaseRepository(tenantId, {
+      mongoDb,
+      dynamoDb,
+    })
+    const simulationTaskRepository = new SimulationTaskRepository(
+      tenantId,
+      mongoDb
+    )
+    const ruleInstanceRepository = new RuleInstanceRepository(tenantId, {
+      dynamoDb,
+    })
+
+    const testUsers = range(0, 100).map((i) =>
+      getTestUser({
+        userId: `test-user-${i}`,
+      })
+    )
+
+    await createConsumerUsers(tenantId, testUsers)
+
+    const transactions = range(0, 10).map((i) =>
+      getTransaction(
+        `test-transaction-${i}`,
+        (i + 1) * 1000,
+        `test-user-${i}`,
+        `test-user-${i + 1}`
+      )
+    )
+
+    const results = await bulkVerifyTransactions(tenantId, transactions)
+    expect(results).toHaveLength(10)
+    expect(results[0].hitRules).toHaveLength(0)
+    expect(results[5].hitRules).toHaveLength(1)
+
+    const cases = await caseRepository.getCases({})
+    expect(cases.data).toHaveLength(8)
+
+    await caseRepository.updateCases(['C-1', 'C-3', 'C-5'], {
+      statusChange: {
+        userId: 'auth0|635f9aed8eca9c6258ce7f6e',
+        timestamp: 1681209082803,
+        reason: ['False positive'],
+        caseStatus: 'CLOSED',
+      },
+    })
+
+    const casesAfterUpdate = await caseRepository.getCases({})
+    expect(
+      casesAfterUpdate.data.filter((c) => c.caseStatus === 'CLOSED')
+    ).toHaveLength(3)
+
+    const simulationRuleInstance = getRuleInstance(
+      6000,
+      RULE_INSTANCE_SIMULATION
+    )
+
+    const parameters: SimulationBeaconParameters[] = [
+      {
+        type: 'BEACON',
+        ruleInstance: simulationRuleInstance,
+        name: 'Test Simulation',
+        description: 'Test Simulation',
+      },
+    ]
+
+    const ruleInstance = await ruleInstanceRepository.getAllRuleInstances()
+    expect(ruleInstance).toHaveLength(1)
+
+    const ruleInstanceId = ruleInstance[0].id
+
+    const defaultRuleInstance = getRuleInstance(4000, ruleInstanceId)
+
+    const { jobId, taskIds } =
+      await simulationTaskRepository.createSimulationJob({
+        type: 'BEACON',
+        defaultRuleInstance,
+        parameters,
+      })
+
+    const testJob: SimulationBeaconBatchJob = {
+      type: 'SIMULATION_BEACON',
+      tenantId,
+      parameters: {
+        jobId,
+        taskId: taskIds[0],
+        ...parameters[0],
+        defaultRuleInstance,
+      },
+    }
+
+    await jobRunnerHandler(testJob)
+
+    const simulatedData = await simulationTaskRepository.getSimulationJob(jobId)
+    expect(simulatedData).toBeDefined()
+    expect(simulatedData?.iterations[0].statistics).toMatchObject({
+      current: {
+        totalCases: 8,
+        falsePositivesCases: 3,
+        usersHit: 8,
+        transactionsHit: 7,
+      },
+      simulated: {
+        totalCases: 6,
+        falsePositivesCases: 2,
+        usersHit: 6,
+        transactionsHit: 5,
+      },
+    })
+  })
+})

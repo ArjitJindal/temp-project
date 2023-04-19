@@ -37,6 +37,20 @@ function replaceUserSavedPaymentDetails(paths: string[]) {
   }
 }
 
+function replaceSimulationGetResponse(path: string) {
+  if (!fs.existsSync(path)) {
+    return
+  }
+  const newText = fs
+    .readFileSync(path)
+    .toString()
+    .replace(
+      "import { SimulationPulseJob | SimulationBeaconJob } from './SimulationPulseJob | SimulationBeaconJob';",
+      ''
+    )
+  fs.writeFileSync(path, newText)
+}
+
 function buildApi(
   type:
     | 'public'
@@ -95,6 +109,9 @@ function buildApi(
     `src/@types/openapi-${type}/InternalUser.ts`,
     `src/@types/openapi-${type}/InternalBusinessUser.ts`,
   ])
+  replaceSimulationGetResponse(
+    `src/@types/openapi-${type}/SimulationGetResponse.ts`
+  )
   exec(
     `rm -f src/@types/openapi-${type}/ObjectSerializer.ts src/@types/openapi-${type}/all.ts`
   )

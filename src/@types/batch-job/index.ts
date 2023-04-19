@@ -1,5 +1,7 @@
 import { CredentialsOptions } from 'aws-sdk/lib/credentials'
 import { SimulationPulseParameters } from '../openapi-internal/SimulationPulseParameters'
+import { SimulationBeaconParameters } from '../openapi-internal/SimulationBeaconParameters'
+import { RuleInstance } from '../openapi-internal/RuleInstance'
 import { ImportRequest } from '@/@types/openapi-internal/ImportRequest'
 
 /* File Import */
@@ -21,6 +23,19 @@ export type SimulationPulseBatchJob = {
   type: SimulationPulseBatchJobType
   tenantId: string
   parameters: SimulationPulseParameters & { taskId: string; jobId: string }
+  awsCredentials?: CredentialsOptions
+}
+
+/* Simulation (Beacon) */
+type SimulationBeaconBatchJobType = 'SIMULATION_BEACON'
+export type SimulationBeaconBatchJob = {
+  type: SimulationBeaconBatchJobType
+  tenantId: string
+  parameters: SimulationBeaconParameters & {
+    taskId: string
+    jobId: string
+    defaultRuleInstance: RuleInstance
+  }
   awsCredentials?: CredentialsOptions
 }
 
@@ -51,6 +66,7 @@ export type BatchJobType =
   | SimulationPulseBatchJobType
   | PlaceholderBatchJobType
   | DemoModeDataLoadBatchJobType
+  | SimulationBeaconBatchJobType
   | OngoingScreeningUserRuleBatchJobType
 
 export type BatchJob =
@@ -58,4 +74,5 @@ export type BatchJob =
   | SimulationPulseBatchJob
   | PlaceholderBatchJob
   | DemoModeDataLoadBatchJob
+  | SimulationBeaconBatchJob
   | OngoingScreeningUserRuleBatchJob
