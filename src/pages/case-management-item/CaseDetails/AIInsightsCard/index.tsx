@@ -32,11 +32,15 @@ export default function AIInsightsCard(props: Props) {
 
   const [refresh, setRefresh] = useState<boolean>(false);
   const queryResult = useQuery(MERCHANT_SUMMARY(props.user.userId), () =>
-    api.postMerchantSummary({ MerchantMonitoringSummaryRequest: { userId: user.userId, refresh } }),
+    api
+      .postMerchantSummary({ MerchantMonitoringSummaryRequest: { userId: user.userId, refresh } })
+      .finally(() => setRefresh(false)),
   );
 
   useEffect(() => {
-    queryResult.refetch();
+    if (refresh) {
+      queryResult.refetch();
+    }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [refresh]);
 
