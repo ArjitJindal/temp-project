@@ -99,7 +99,7 @@ const TableList = () => {
     );
 
     return {
-      items: response.data,
+      items: response.data ?? [],
       success: true,
       total: response.total,
     };

@@ -173,7 +173,7 @@ export function useTanstackTable<Item extends object, Params extends object = Co
             );
           },
           meta: {
-            wrapMode: DEFAULT_COLUMN_WRAP_MODE,
+            wrapMode: columnDataType.defaultWrapMode ?? DEFAULT_COLUMN_WRAP_MODE,
             tooltip: column.tooltip,
           },
         });

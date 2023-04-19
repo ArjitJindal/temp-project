@@ -26,6 +26,7 @@ interface Props<Item extends object, Params extends object> {
   toolsOptions?: ToolsOptions;
   hideFilters?: boolean;
   params: AllParams<Params>;
+  externalHeader: boolean;
   onChangeParams: (newParams: AllParams<Params>) => void;
   onReload?: () => void;
   onPaginateData?: (params: PaginationParams) => Promise<TableData<Item>>;
@@ -44,12 +45,13 @@ export default function Header<Item extends object, Params extends object>(
     extraTools = [],
     hideFilters = false,
     toolsOptions,
+    externalHeader,
     onReload,
     onPaginateData,
   } = props;
 
   const autoFilters = useAutoFilters(props.columns);
-  const allFilters = useMemo(() => [...extraFilters, ...autoFilters], [extraFilters, autoFilters]);
+  const allFilters = useMemo(() => [...autoFilters, ...extraFilters], [autoFilters, extraFilters]);
 
   const showFilters = allFilters.length > 0 && !hideFilters;
   const showTools = true;
@@ -61,7 +63,9 @@ export default function Header<Item extends object, Params extends object>(
   }
 
   return (
-    <div className={cn(s.root, showFilters && s.filtersVisible)}>
+    <div
+      className={cn(s.root, showFilters && s.filtersVisible, externalHeader && s.externalHeader)}
+    >
       {showFilters ? (
         <Filters<Params> filters={allFilters} params={params} onChangeParams={onChangeParams} />
       ) : (

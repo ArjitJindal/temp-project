@@ -1,4 +1,5 @@
 import React from 'react';
+import { Tag as AntTag } from 'antd';
 import { ColumnDataType } from './types';
 import RiskLevelTag from '@/components/library/RiskLevelTag';
 import { RiskLevel } from '@/utils/risk-levels';
@@ -13,6 +14,7 @@ import {
   KYCStatusDetails,
   RuleAction,
   Tag,
+  RuleNature,
   TransactionState as ApiTransactionState,
   TransactionType,
   UserState,
@@ -36,6 +38,7 @@ import Money from '@/components/ui/Money';
 import UserKycStatusTag from '@/components/ui/UserKycStatusTag';
 import UserStateTag from '@/components/ui/UserStateTag';
 import { RuleActionStatus } from '@/components/ui/RuleActionStatus';
+import { RULE_NATURE_LABELS, RULE_NATURE_OPTIONS } from '@/pages/rules/utils';
 
 export const UNKNOWN: ColumnDataType<unknown> = {
   render: (value) => {
@@ -62,6 +65,22 @@ export const UNKNOWN: ColumnDataType<unknown> = {
   },
   defaultWrapMode: 'OVERFLOW',
   autoFilterDataType: { kind: 'string' },
+};
+
+export const RULE_NATURE: ColumnDataType<RuleNature> = {
+  render: (value) => {
+    if (value == null) {
+      return <></>;
+    }
+    return <AntTag>{RULE_NATURE_LABELS[value]}</AntTag>;
+  },
+  defaultWrapMode: 'OVERFLOW',
+  autoFilterDataType: {
+    kind: 'select',
+    options: RULE_NATURE_OPTIONS,
+    mode: 'SINGLE',
+    displayMode: 'select',
+  },
 };
 
 export const NUMBER: ColumnDataType<number> = {

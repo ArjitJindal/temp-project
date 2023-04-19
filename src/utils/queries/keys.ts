@@ -141,6 +141,10 @@ export const SIMULATION_PULSE_JOB_LIST = (params?: AnyParameters): QueryKey =>
   ['simulation', 'pulse', params].filter(Boolean);
 export const ALERT_ITEM_TRANSACTION_LIST = (alertId: string, params?: AnyParameters): QueryKey =>
   ['alerts', 'item', alertId, 'transactions', 'list', params].filter(Boolean);
+export const ALERT_ITEM_SANCTIONS_MATCH_LIST = (
+  alertId: string,
+  params?: AnyParameters,
+): QueryKey => ['alerts', 'item', alertId, 'sanctions-match', 'list', params];
 export const ALERT_ITEM = (alertId: string): QueryKey => ['alerts', 'item', alertId];
 export const SIMULATION_COUNT = (): QueryKey => ['simulation', 'count'];
 export const ALERT_ITEM_COMMENTS = (alertId: string): QueryKey => [

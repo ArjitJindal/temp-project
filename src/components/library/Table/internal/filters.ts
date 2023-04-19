@@ -4,6 +4,7 @@ import {
   AutoFilter,
   AutoFilterDataType,
   flatColumns,
+  getColumnId,
   isSimpleColumn,
   TableColumn,
 } from '@/components/library/Table/types';
@@ -21,7 +22,7 @@ export function useAutoFilters<T extends object>(columns: TableColumn<T>[]): Aut
 
         return {
           kind: 'AUTO',
-          key: column.id ?? (column.key as string),
+          key: getColumnId(column),
           title: column.title,
           icon: column?.icon,
           dataType,

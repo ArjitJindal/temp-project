@@ -53,6 +53,7 @@ export interface Props<Item extends object, Params extends object = CommonParams
   fixedExpandedContainer?: boolean;
   toolsOptions?: ToolsOptions;
   defaultSorting?: SortingParamsItem;
+  externalHeader?: boolean;
   onPaginateData?: (params: PaginationParams) => Promise<TableData<Item>>;
   onReload?: () => void;
 }
@@ -76,6 +77,7 @@ function Table<Item extends object, Params extends object = CommonParams>(
     hideFilters = false,
     disableSorting = false,
     fixedExpandedContainer = false,
+    externalHeader = false,
     sizingMode = 'SCROLL',
     toolsOptions,
     renderExpanded,
@@ -162,6 +164,7 @@ function Table<Item extends object, Params extends object = CommonParams>(
         extraFilters={extraFilters}
         extraTools={extraTools}
         toolsOptions={toolsOptions}
+        externalHeader={externalHeader}
         onChangeParams={handleChangeParams}
         onPaginateData={onPaginateData}
         onReload={onReload}

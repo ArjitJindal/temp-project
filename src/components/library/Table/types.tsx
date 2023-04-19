@@ -186,7 +186,7 @@ export function applyFieldAccessor<
   Filters
  */
 export interface BaseFilter {
-  key: string; // todo: rename to param?
+  key: string;
   title: React.ReactNode;
   icon?: React.ReactNode;
   showFilterByDefault?: boolean;

@@ -6,12 +6,13 @@ import * as Card from '@/components/ui/Card';
 import EntityHeader from '@/components/ui/entityPage/EntityHeader';
 import * as Form from '@/components/ui/Form';
 
-type Props = {
+interface Props {
   hit: ComplyAdvantageSearchHit;
   onClose: () => void;
-};
+}
 
-export const SanctionsSearchResultDetailsModal: React.FC<Props> = ({ hit, onClose }) => {
+export default function SearchResultDetailsModal(props: Props) {
+  const { hit, onClose } = props;
   const allFields = hit.doc?.fields?.sort((a, b) => a.name?.localeCompare(b.name!) || 0) || [];
   const keyInfoFields = allFields.filter((field) => !field.source);
   const sourceFields = (hit.doc?.sources || []).map((source) => ({
@@ -108,4 +109,4 @@ export const SanctionsSearchResultDetailsModal: React.FC<Props> = ({ hit, onClos
       </Card.Root>
     </Modal>
   );
-};
+}

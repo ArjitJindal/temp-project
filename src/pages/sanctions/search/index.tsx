@@ -1,39 +1,32 @@
 import { useEffect, useState } from 'react';
-import { Tag } from 'antd';
-import _ from 'lodash';
-import { SanctionsSearchResultDetailsModal } from './SearchResultDetailsModal';
 import { useQuery } from '@/utils/queries/hooks';
 import { useApi } from '@/api';
-import QueryResultsTable from '@/components/common/QueryResultsTable';
 import { getOr, isLoading, map, success } from '@/utils/asyncResource';
-import { AllParams, ExtraFilter, TableColumn } from '@/components/library/Table/types';
+import { AllParams } from '@/components/library/Table/types';
 import { DEFAULT_PARAMS_STATE } from '@/components/library/Table/consts';
 import { SANCTIONS_SEARCH, SANCTIONS_SEARCH_HISTORY } from '@/utils/queries/keys';
-import COUNTRIES from '@/utils/countries';
-import { ComplyAdvantageSearchHit } from '@/apis/models/ComplyAdvantageSearchHit';
 import { LoadingCard } from '@/components/ui/Card';
-import CountryDisplay from '@/components/ui/CountryDisplay';
 import { useApiTime, usePageViewTracker } from '@/utils/tracker';
-import { ColumnHelper } from '@/components/library/Table/columnHelper';
-import { FLOAT } from '@/components/library/Table/standardDataTypes';
 import Button from '@/components/library/Button';
+import SanctionsTable from '@/components/SanctionsTable';
 
 function withKey<T>(array?: T[]): T[] {
   return array?.map((item, i) => ({ ...item, key: i })) || [];
 }
 
-type TableSearchParams = {
+interface TableSearchParams {
   searchTerm?: string;
   fuzziness?: number;
   countryCodes?: Array<string>;
   yearOfBirth?: number;
-};
+}
 
-type Props = {
+interface Props {
   searchId?: string;
-};
+}
 
-export const SanctionsSearchTable: React.FC<Props> = ({ searchId }) => {
+export function SanctionsSearchTable(props: Props) {
+  const { searchId } = props;
   const api = useApi();
   usePageViewTracker('Sanctions Search Page');
 
@@ -41,8 +34,11 @@ export const SanctionsSearchTable: React.FC<Props> = ({ searchId }) => {
   const searchHistoryQueryResults = useQuery(
     SANCTIONS_SEARCH_HISTORY(searchId),
     () => {
+      if (searchId == null) {
+        throw new Error(`Unable to get search, searchId is empty!`);
+      }
       return measure(
-        () => api.getSanctionsSearchSearchId({ searchId: searchId! }),
+        () => api.getSanctionsSearchSearchId({ searchId: searchId }),
         'Get Sanctions Search History by ID',
       );
     },
@@ -64,7 +60,6 @@ export const SanctionsSearchTable: React.FC<Props> = ({ searchId }) => {
     }
   }, [searchHistory]);
 
-  const [selectedSearchHit, setSelectedSearchHit] = useState<ComplyAdvantageSearchHit>();
   const [searchParams, setSearchParams] = useState<AllParams<TableSearchParams>>(params);
   const searchEnabled = !!searchParams.searchTerm;
   const queryResults = useQuery(
@@ -83,127 +78,13 @@ export const SanctionsSearchTable: React.FC<Props> = ({ searchId }) => {
   );
   const measure = useApiTime();
 
-  const helper = new ColumnHelper<ComplyAdvantageSearchHit>();
-  const columns: TableColumn<ComplyAdvantageSearchHit>[] = helper.list([
-    // Data fields
-    helper.simple<'doc.entity_type'>({
-      title: 'Type',
-      key: 'doc.entity_type',
-      type: {
-        render: (value) => <Tag>{_.startCase(value)}</Tag>,
-      },
-    }),
-    helper.simple<'doc.name'>({
-      title: 'Name',
-      key: 'doc.name',
-      type: {
-        render: (name, _edit, entity) => (
-          <div>{<a onClick={() => setSelectedSearchHit(entity)}>{name}</a>}</div>
-        ),
-      },
-    }),
-    helper.derived<string>({
-      title: 'Countries',
-      value: (item: ComplyAdvantageSearchHit): string | undefined => {
-        return item?.doc?.fields?.find((field) => field.name === 'Countries')?.value;
-      },
-      type: {
-        render: (countryNames, _edit) => (
-          <>
-            {countryNames?.split(/,\s*/)?.map((countryName) => (
-              <CountryDisplay key={countryName} countryName={countryName} />
-            ))}
-          </>
-        ),
-      },
-    }),
-    helper.derived<string[]>({
-      title: 'Matched Types',
-      value: (entity: ComplyAdvantageSearchHit) => {
-        return entity.doc?.types;
-      },
-      type: {
-        render: (types) => {
-          return (
-            <>
-              {types?.map((matchType) => (
-                <Tag key={matchType} color="volcano">
-                  {_.startCase(matchType)}
-                </Tag>
-              ))}
-            </>
-          );
-        },
-      },
-    }),
-    helper.derived<string[]>({
-      title: 'Relevance',
-      value: (entity: ComplyAdvantageSearchHit) => {
-        return entity.doc?.types;
-      },
-      type: {
-        render: (match_types) => {
-          return (
-            <>
-              {match_types?.map((matchType) => (
-                <Tag key={matchType}>{_.startCase(matchType)}</Tag>
-              ))}
-            </>
-          );
-        },
-      },
-    }),
-    helper.simple<'score'>({
-      key: 'score',
-      title: 'Score',
-      type: FLOAT,
-    }),
-  ]);
-
-  const extraFilters: ExtraFilter<TableSearchParams>[] = [
-    {
-      title: 'Search Term',
-      key: 'searchTerm',
-      renderer: {
-        kind: 'string',
-      },
-    },
-    {
-      title: 'Year of Birth',
-      key: 'yearOfBirth',
-      renderer: {
-        kind: 'number',
-        min: 1900,
-      },
-    },
-    {
-      title: 'Country Codes',
-      key: 'countryCodes',
-      renderer: {
-        kind: 'select',
-        options: Object.entries(COUNTRIES).map((entry) => ({ value: entry[0], label: entry[1] })),
-        mode: 'MULTIPLE',
-        displayMode: 'select',
-      },
-    },
-    {
-      title: 'Fuzziness',
-      key: 'fuzziness',
-      renderer: {
-        kind: 'number',
-        min: 0,
-        max: 1,
-        step: 0.1,
-      },
-    },
-  ];
-
   return showSearchHistory && isLoading(searchHistoryQueryResponse) ? (
     <LoadingCard />
   ) : (
     <>
-      <QueryResultsTable<ComplyAdvantageSearchHit, TableSearchParams>
-        tableId="sanctions-search-results"
+      <SanctionsTable
+        params={params}
+        onChangeParams={setParams}
         extraTools={[
           () => (
             <Button
@@ -216,8 +97,7 @@ export const SanctionsSearchTable: React.FC<Props> = ({ searchId }) => {
             </Button>
           ),
         ]}
-        extraFilters={extraFilters}
-        queryResults={{
+        queryResult={{
           data: searchEnabled
             ? map(queryResults.data, (response) => ({ items: withKey(response.data) }))
             : searchId
@@ -227,21 +107,7 @@ export const SanctionsSearchTable: React.FC<Props> = ({ searchId }) => {
             : success({ items: [] }),
           refetch: queryResults.refetch,
         }}
-        params={params}
-        onChangeParams={setParams}
-        rowKey="key"
-        columns={columns}
-        pagination={false}
-        toolsOptions={{
-          reload: false,
-        }}
       />
-      {selectedSearchHit && (
-        <SanctionsSearchResultDetailsModal
-          hit={selectedSearchHit}
-          onClose={() => setSelectedSearchHit(undefined)}
-        />
-      )}
     </>
   );
-};
+}

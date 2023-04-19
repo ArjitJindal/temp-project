@@ -100,7 +100,7 @@ export function Content(props: { userId: string }) {
 
     return api.getTransactionsList(newParams).then((result) => ({
       total: result.total,
-      items: prepareTableData(userId, result.data),
+      items: prepareTableData(userId, result.data ?? []),
     }));
   });
 

@@ -1,94 +1,17 @@
-import { useState } from 'react';
-import Comments from './Comments';
-import { usePaginatedQuery, useQuery } from '@/utils/queries/hooks';
-import { ALERT_ITEM_COMMENTS, ALERT_ITEM_TRANSACTION_LIST } from '@/utils/queries/keys';
-import { useApi } from '@/api';
-import { useApiTime } from '@/utils/tracker';
-import { DEFAULT_PARAMS_STATE } from '@/components/ui/Table';
-import TransactionsTable, {
-  TransactionsTableParams,
-} from '@/pages/transactions/components/TransactionsTable';
-import Tabs from '@/components/library/Tabs';
-import AsyncResourceRenderer from '@/components/common/AsyncResourceRenderer';
+import TransactionsAndComments from './TransactionsAndComments';
+import ScreeningMatchList from './ScreeningMatchList';
+import { Alert } from '@/apis';
 
 interface Props {
-  alertId: string | null;
+  alert: Alert;
 }
 
 export default function ExpandedRowRenderer(props: Props) {
-  const { alertId } = props;
-  const api = useApi();
-  const measure = useApiTime();
+  const { alert } = props;
 
-  const [params, setParams] = useState<TransactionsTableParams>(DEFAULT_PARAMS_STATE);
-  const [isCheckedTransactionsEnabled, setIsCheckedTransactionsEnabled] = useState(false);
+  if (alert.ruleNature === 'SCREENING') {
+    return <ScreeningMatchList alert={alert} />;
+  }
 
-  const transactionsResponse = usePaginatedQuery(
-    ALERT_ITEM_TRANSACTION_LIST(alertId ?? '', { ...params, isCheckedTransactionsEnabled }),
-    async (paginationParams) => {
-      if (alertId == null) {
-        throw new Error(`Unable to fetch transactions for alert, it's id is empty`);
-      }
-      const response = await measure(
-        () =>
-          api.getAlertTransactionList({
-            ...params,
-            alertId,
-            showExecutedTransactions: isCheckedTransactionsEnabled,
-            ...paginationParams,
-          }),
-        'Get Alert Transactions',
-      );
-      return {
-        items: response?.data || [],
-        total: response?.total || 0,
-      };
-    },
-  );
-
-  const alertResponse = useQuery(ALERT_ITEM_COMMENTS(alertId ?? ''), async () => {
-    if (alertId == null) {
-      throw new Error(`Unable to fetch alert, id is empty`);
-    }
-    const alert = await measure(
-      () =>
-        api.getAlert({
-          alertId,
-        }),
-      'Get Alert',
-    );
-    return alert;
-  });
-
-  return (
-    <Tabs
-      items={[
-        {
-          tab: 'Transactions details',
-          key: 'transactions',
-          children: (
-            <AsyncResourceRenderer resource={alertResponse.data}>
-              {(alert) => (
-                <TransactionsTable
-                  queryResult={transactionsResponse}
-                  params={params}
-                  onChangeParams={setParams}
-                  adjustPagination={true}
-                  showCheckedTransactionsButton={true}
-                  isCheckedTransactionsEnabled={isCheckedTransactionsEnabled}
-                  setIsCheckedTransactionsEnabled={setIsCheckedTransactionsEnabled}
-                  alert={alert}
-                />
-              )}
-            </AsyncResourceRenderer>
-          ),
-        },
-        {
-          tab: 'Comments',
-          key: 'comments',
-          children: <Comments alertId={alertId} alertsRes={alertResponse.data} />,
-        },
-      ]}
-    />
-  );
+  return <TransactionsAndComments alert={alert} />;
 }

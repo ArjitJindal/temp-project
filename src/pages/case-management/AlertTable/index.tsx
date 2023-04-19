@@ -33,6 +33,7 @@ import {
   CASE_STATUS,
   DATE,
   RULE_ACTION,
+  RULE_NATURE,
 } from '@/components/library/Table/standardDataTypes';
 import { useRules } from '@/utils/rules';
 import { ColumnHelper } from '@/components/library/Table/columnHelper';
@@ -55,6 +56,7 @@ const mergedColumns = (users: Record<string, Account>): TableColumn<TableAlertIt
       key: 'alertId',
       icon: <StackLineIcon />,
       showFilterByDefault: true,
+      filtering: true,
       type: {
         render: (alertId, editing, entity) => {
           return (
@@ -114,6 +116,11 @@ const mergedColumns = (users: Record<string, Account>): TableColumn<TableAlertIt
       title: 'Rule action',
       key: 'ruleAction',
       type: RULE_ACTION,
+    }),
+    helper.simple<'ruleNature'>({
+      title: 'Rule nature',
+      key: 'ruleNature',
+      type: RULE_NATURE,
     }),
     helper.simple<'alertStatus'>({
       title: 'Alert status',
@@ -384,7 +391,7 @@ export default function AlertTable(props: Props) {
               />
             ),
         ]}
-        renderExpanded={(record) => <ExpandedRowRenderer alertId={record.alertId ?? null} />}
+        renderExpanded={(record) => <ExpandedRowRenderer alert={record ?? null} />}
         fixedExpandedContainer={true}
       />
     </>
