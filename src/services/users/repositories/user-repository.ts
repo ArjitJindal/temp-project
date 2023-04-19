@@ -8,6 +8,7 @@ import {
   DynamoDBDocumentClient,
   GetCommand,
   PutCommand,
+  UpdateCommand,
 } from '@aws-sdk/lib-dynamodb'
 import _ from 'lodash'
 import { Comment } from '@/@types/openapi-internal/Comment'
@@ -44,7 +45,9 @@ import {
 } from '@/utils/pagination'
 import { Tag } from '@/@types/openapi-public/Tag'
 import { UserRegistrationStatus } from '@/@types/openapi-internal/UserRegistrationStatus'
-import { BusinessWithRulesResult } from '@/@types/openapi-internal/BusinessWithRulesResult'
+import { ExecutedRulesResult } from '@/@types/openapi-internal/ExecutedRulesResult'
+import { HitRulesDetails } from '@/@types/openapi-internal/HitRulesDetails'
+import { BusinessWithRulesResult } from '@/@types/openapi-public/BusinessWithRulesResult'
 import { UserWithRulesResult } from '@/@types/openapi-internal/UserWithRulesResult'
 
 export class UserRepository {
@@ -413,6 +416,21 @@ export class UserRepository {
     return await this.getUser<User>(userId)
   }
 
+  public async getAllUsersIds(): Promise<string[]> {
+    const db = await this.mongoDb.db()
+    const collection = db.collection<InternalUser>(
+      USERS_COLLECTION(this.tenantId)
+    )
+    const users = (await collection
+      .find({})
+      .project({ userId: 1 })
+      .toArray()) as {
+      userId: string
+    }[]
+
+    return users.map((user) => user.userId)
+  }
+
   public async getUsers(userIds: string[]): Promise<(User | Business)[]> {
     if (userIds.length === 0) {
       return []
@@ -498,6 +516,52 @@ export class UserRepository {
     delete user.PartitionKeyID
     delete user.SortKeyID
     return user as T
+  }
+
+  public async updateUserWithExecutedRules(
+    userId: string,
+    executedRules: ExecutedRulesResult[],
+    hitRulesResults: HitRulesDetails[]
+  ): Promise<UserWithRulesResult | BusinessWithRulesResult> {
+    const primaryKey = DynamoDbKeys.USER(this.tenantId, userId)
+    const updateItemInput: AWS.DynamoDB.DocumentClient.UpdateItemInput = {
+      TableName: StackConstants.TARPON_DYNAMODB_TABLE_NAME,
+      Key: primaryKey,
+      UpdateExpression: `set #executedRules = :executedRules, #hitRules = :hitRules`,
+      ExpressionAttributeNames: {
+        '#executedRules': 'executedRules',
+        '#hitRules': 'hitRules',
+      },
+      ExpressionAttributeValues: {
+        ':executedRules': executedRules,
+        ':hitRules': hitRulesResults,
+      },
+      ReturnValues: 'ALL_NEW',
+    }
+
+    const result = await this.dynamoDb.send(new UpdateCommand(updateItemInput))
+
+    const user = {
+      ...result.Attributes,
+    } as (UserWithRulesResult | BusinessWithRulesResult) & {
+      PartitionKeyID?: string
+      SortKeyID?: string
+    }
+
+    delete user.PartitionKeyID
+    delete user.SortKeyID
+
+    if (
+      process.env.NODE_ENV === 'development' ||
+      process.env.NODE_ENV === 'test'
+    ) {
+      const { localTarponChangeCaptureHandler } = await import(
+        '@/utils/local-dynamodb-change-handler'
+      )
+      await localTarponChangeCaptureHandler(primaryKey)
+    }
+
+    return user as UserWithRulesResult | BusinessWithRulesResult
   }
 
   public async saveBusinessUser(

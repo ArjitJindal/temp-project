@@ -39,13 +39,23 @@ export type PlaceholderBatchJob = {
   tenantId: string
 }
 
+/* Sanctions Screening Rule */
+type OngoingScreeningUserRuleBatchJobType = 'ONGOING_SCREENING_USER_RULE'
+export type OngoingScreeningUserRuleBatchJob = {
+  type: OngoingScreeningUserRuleBatchJobType
+  tenantId: string
+}
+
 export type BatchJobType =
   | FileImportBatchJobType
   | SimulationPulseBatchJobType
   | PlaceholderBatchJobType
   | DemoModeDataLoadBatchJobType
+  | OngoingScreeningUserRuleBatchJobType
+
 export type BatchJob =
   | FileImportBatchJob
   | SimulationPulseBatchJob
   | PlaceholderBatchJob
   | DemoModeDataLoadBatchJob
+  | OngoingScreeningUserRuleBatchJob

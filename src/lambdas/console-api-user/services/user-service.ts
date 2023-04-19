@@ -88,6 +88,7 @@ export class UserService {
       ),
     }
   }
+
   public async getUser(userId: string): Promise<InternalUser> {
     const usersListResponse = await this.getUsers({
       filterId: userId,

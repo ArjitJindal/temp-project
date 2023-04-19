@@ -278,9 +278,9 @@ export const LAMBDAS: {
     handlerName: 'jobRunnerHandler',
     expectedMaxDurationSeconds: ASYNC_JOB_LAMBDA_EXPECTED_MAX_DURATION_SECONDS,
   },
-  [StackConstants.API_USAGE_METRICS_FUNCTION_NAME]: {
-    codePath: 'api-usage-metrics',
-    handlerName: 'apiUsageMetricsHandler',
+  [StackConstants.CRON_JOB_MIDNIGHT_FUNCTION_NAME]: {
+    codePath: 'cron-job-midnight',
+    handlerName: 'cronJobMidnightHandler',
     expectedMaxDurationSeconds: CRON_LAMBDA_EXPECTED_MAX_DURATION_SECONDS,
   },
 }

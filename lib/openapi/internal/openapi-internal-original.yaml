@@ -3711,6 +3711,8 @@ components:
           type: string
         source:
           type: string
+        isOngoingScreening:
+          type: boolean
       required:
         - ruleId
         - casePriority

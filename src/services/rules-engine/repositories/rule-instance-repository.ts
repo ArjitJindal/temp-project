@@ -41,6 +41,7 @@ function toRuleInstance(item: any): RuleInstance {
     falsePositiveCheckEnabled: item.falsePositiveCheckEnabled,
     nature: item.nature,
     labels: item.labels,
+    isOngoingScreening: item.isOngoingScreening,
   }
 }
 

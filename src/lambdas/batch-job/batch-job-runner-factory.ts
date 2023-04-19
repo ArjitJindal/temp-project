@@ -2,6 +2,7 @@ import { FileImportBatchJobRunner } from './file-import-batch-job-runner'
 import { PlaceholderBatchJobRunner } from './placeholder-batch-job-runner'
 import { BatchJobRunner } from './batch-job-runner-base'
 import { SimulationPulseBatchJobRunner } from './simulation-pulse-batch-job-runner'
+import { OngoingScreeningUserRuleBatchJobRunner } from './ongoing-screening-user-rule-batch-job-runner'
 import { DemoModeDataLoadJobRunner } from './demo-mode-data-load-job-runner'
 import { BatchJobType } from '@/@types/batch-job'
 import { logger } from '@/core/logger'
@@ -18,6 +19,8 @@ export class BatchJobRunnerFactory {
         return new DemoModeDataLoadJobRunner()
       case 'PLACEHOLDER':
         return new PlaceholderBatchJobRunner()
+      case 'ONGOING_SCREENING_USER_RULE':
+        return new OngoingScreeningUserRuleBatchJobRunner()
       default: {
         logger.warn(`Unknown batch job type ${type}. Do nothing.`)
         return neverReturn(type, new PlaceholderBatchJobRunner())

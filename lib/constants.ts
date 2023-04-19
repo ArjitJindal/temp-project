@@ -238,8 +238,8 @@ export const StackConstants = {
   BATCH_JOB_RUNNER_FUNCTION_NAME: getResourceNameForTarpon(
     'BatchJobRunnerFunction'
   ),
-  API_USAGE_METRICS_FUNCTION_NAME: getResourceNameForTarpon(
-    'APIUsageMetricsFunction'
+  CRON_JOB_MIDNIGHT_FUNCTION_NAME: getResourceNameForTarpon(
+    'CronJobMidnightFunction'
   ),
 }
 

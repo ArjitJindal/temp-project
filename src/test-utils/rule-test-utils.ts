@@ -16,6 +16,7 @@ import { RuleInstance } from '@/@types/openapi-internal/RuleInstance'
 import { Business } from '@/@types/openapi-public/Business'
 import { RuleHitMeta } from '@/@types/openapi-public/RuleHitMeta'
 import { getRuleByRuleId } from '@/services/rules-engine/transaction-rules/library'
+import { getMongoDbClient } from '@/utils/mongoDBUtils'
 
 const DEFAULT_DESCRIPTION = 'test rule description.'
 
@@ -57,6 +58,7 @@ export async function createRule(
       casePriority: createdRule.defaultCasePriority as Priority,
       nature: createdRule.defaultNature,
       labels: createdRule.labels,
+      isOngoingScreening: createdRule.isOngoingScreening,
       ...ruleInstance,
     })
 
@@ -117,8 +119,9 @@ export async function bulkVerifyUsers(
   users: Array<Business | User>
 ): Promise<UserMonitoringResult[]> {
   const dynamoDb = getDynamoDbClient()
+  const mongoDb = await getMongoDbClient()
   const results = []
-  const rulesEngine = new RulesEngineService(tenantId, dynamoDb)
+  const rulesEngine = new RulesEngineService(tenantId, dynamoDb, mongoDb)
   for (const user of users) {
     results.push(await rulesEngine.verifyUser(user))
   }

@@ -899,7 +899,9 @@ export class CdkTarponStack extends cdk.Stack {
         timeout: CONSUMER_LAMBDA_TIMEOUT,
       }
     )
-    tarponDynamoDbTable.grantReadData(jobRunnerAlias)
+    tarponDynamoDbTable.grantReadWriteData(jobRunnerAlias)
+    tarponRuleDynamoDbTable.grantReadData(jobRunnerAlias)
+
     this.grantMongoDbAccess(jobRunnerAlias)
     s3TmpBucket.grantRead(jobRunnerAlias)
     s3ImportBucket.grantWrite(jobRunnerAlias)
@@ -978,16 +980,16 @@ export class CdkTarponStack extends cdk.Stack {
 
     /* API Metrics Lambda */
 
-    const { alias: apiMetricsHandlerAlias, func: apiMetricsHandler } =
+    const { alias: cronJobMidnightHandlerAlias, func: cronJobMidnightHandler } =
       this.createFunction(
         {
-          name: StackConstants.API_USAGE_METRICS_FUNCTION_NAME,
+          name: StackConstants.CRON_JOB_MIDNIGHT_FUNCTION_NAME,
         },
         atlasFunctionProps
       )
 
-    this.grantMongoDbAccess(apiMetricsHandlerAlias)
-    tarponRuleDynamoDbTable.grantReadData(apiMetricsHandlerAlias)
+    this.grantMongoDbAccess(cronJobMidnightHandlerAlias)
+    tarponRuleDynamoDbTable.grantReadData(cronJobMidnightHandlerAlias)
 
     const apiMetricsRule = new Rule(
       this,
@@ -998,12 +1000,12 @@ export class CdkTarponStack extends cdk.Stack {
     )
 
     this.grantSecretsManagerAccessByPattern(
-      apiMetricsHandlerAlias,
+      cronJobMidnightHandlerAlias,
       'auth0.com',
       'READ'
     )
 
-    apiMetricsRule.addTarget(new LambdaFunctionTarget(apiMetricsHandler))
+    apiMetricsRule.addTarget(new LambdaFunctionTarget(cronJobMidnightHandler))
     /*
      * Hammerhead console functions
      */

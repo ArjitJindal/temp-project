@@ -1,6 +1,7 @@
 import { DynamoDBDocumentClient } from '@aws-sdk/lib-dynamodb'
 import { NotFound } from 'http-errors'
 import _ from 'lodash'
+import { MongoClient } from 'mongodb'
 import { RiskRepository } from '../risk-scoring/repositories/risk-repository'
 import { UserRepository } from '../users/repositories/user-repository'
 import { DEFAULT_RISK_LEVEL } from '../risk-scoring/utils'
@@ -48,6 +49,8 @@ import { RULE_EXECUTION_TIME_MS_METRIC } from '@/core/cloudwatch/metrics'
 import { addNewSubsegment } from '@/core/xray'
 import { getMongoDbClient } from '@/utils/mongoDBUtils'
 import { UserMonitoringResult } from '@/@types/openapi-public/UserMonitoringResult'
+import { UserWithRulesResult } from '@/@types/openapi-internal/UserWithRulesResult'
+import { BusinessWithRulesResult } from '@/@types/openapi-internal/BusinessWithRulesResult'
 
 const ruleAscendingComparator = (
   rule1: HitRulesDetails,
@@ -105,7 +108,11 @@ export class RulesEngineService {
   userRepository: UserRepository
   tenantRepository: TenantRepository
 
-  constructor(tenantId: string, dynamoDb: DynamoDBDocumentClient) {
+  constructor(
+    tenantId: string,
+    dynamoDb: DynamoDBDocumentClient,
+    mongoDb?: MongoClient
+  ) {
     this.dynamoDb = dynamoDb
     this.tenantId = tenantId
     this.transactionRepository = new DynamoDbTransactionRepository(
@@ -126,6 +133,7 @@ export class RulesEngineService {
     })
     this.userRepository = new UserRepository(tenantId, {
       dynamoDb,
+      mongoDb,
     })
     this.tenantRepository = new TenantRepository(tenantId, {
       dynamoDb,
@@ -282,6 +290,7 @@ export class RulesEngineService {
     if (!rule) {
       throw new Error(`Cannot find rule ${ruleInstance.ruleId}`)
     }
+
     const senderUserRiskLevel = await this.getUserRiskLevel(senderUser)
     const { result } = await this.verifyRuleIdempotent({
       rule,
@@ -296,10 +305,18 @@ export class RulesEngineService {
   }
 
   public async verifyUser(
-    user: Business | User
+    user: UserWithRulesResult | BusinessWithRulesResult,
+    ongoingScreening?: boolean
   ): Promise<UserMonitoringResult> {
-    const ruleInstances =
+    let ruleInstances =
       await this.ruleInstanceRepository.getActiveRuleInstances('USER')
+
+    if (ongoingScreening) {
+      ruleInstances = ruleInstances.filter(
+        (ruleInstance) => ruleInstance.isOngoingScreening
+      )
+    }
+
     const rulesById = _.keyBy(
       await this.ruleRepository.getRulesByIds(
         ruleInstances.map((ruleInstance) => ruleInstance.ruleId)
@@ -325,13 +342,33 @@ export class RulesEngineService {
     const hitRuleInstanceIds = ruleResults
       .filter((ruleResult) => ruleResult.ruleHit)
       .map((ruleResults) => ruleResults.ruleInstanceId)
+
     await this.ruleInstanceRepository.incrementRuleInstanceStatsCount(
       ruleInstances.map((ruleInstance) => ruleInstance.id as string),
       hitRuleInstanceIds
     )
+
+    const executionResult = getExecutedAndHitRulesResult(ruleResults)
+
+    const mongoUser = await this.userRepository.getUserById(user.userId)
+
+    const existingExecutedRules = mongoUser?.executedRules
+    const existingHitRules = mongoUser?.hitRules
+
+    if (
+      !_.isEqual(existingExecutedRules, executionResult.executedRules) ||
+      !_.isEqual(existingHitRules, executionResult.hitRules)
+    ) {
+      await this.userRepository.updateUserWithExecutedRules(
+        user.userId,
+        executionResult.executedRules,
+        executionResult.hitRules
+      )
+    }
+
     return {
       userId: user.userId,
-      ...getExecutedAndHitRulesResult(ruleResults),
+      ...executionResult,
     }
   }
 
@@ -752,7 +789,7 @@ export class RulesEngineService {
   }
 
   private async getUserRiskLevel(
-    user: User | Business | undefined
+    user: UserWithRulesResult | BusinessWithRulesResult | undefined
   ): Promise<RiskLevel | undefined> {
     if (!user?.userId || !hasFeature('PULSE')) {
       return undefined
