@@ -129,7 +129,9 @@ export class MerchantMonitoringService {
     try {
       const options: AxiosRequestConfig = {
         method: 'GET',
-        url: `https://api.scrapfly.io/scrape?key=scp-live-${SCRAPFLY_KEY}&url=${website}`,
+        url: `https://api.scrapfly.io/scrape?key=scp-live-${SCRAPFLY_KEY}&url=${encodeURIComponent(
+          website
+        )}`,
       }
       const data = await axios.request(options)
       const text = convert(data.data.result.content, {
