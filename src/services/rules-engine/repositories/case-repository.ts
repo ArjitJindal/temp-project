@@ -494,11 +494,22 @@ export class CaseRepository {
       params.filterAssignmentsIds.length > 0
     ) {
       conditions.push({
-        assignments: {
-          $elemMatch: {
-            assigneeUserId: { $in: params.filterAssignmentsIds },
+        $or: [
+          {
+            assignments: {
+              $elemMatch: {
+                assigneeUserId: { $in: params.filterAssignmentsIds },
+              },
+            },
           },
-        },
+          {
+            reviewAssignments: {
+              $elemMatch: {
+                assigneeUserId: { $in: params.filterAssignmentsIds },
+              },
+            },
+          },
+        ],
       })
     }
     const filter = conditions.length > 0 ? { $and: conditions } : {}
