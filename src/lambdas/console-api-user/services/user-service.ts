@@ -3,6 +3,11 @@ import { MongoClient } from 'mongodb'
 import { NotFound } from 'http-errors'
 import { DynamoDBDocumentClient } from '@aws-sdk/lib-dynamodb'
 import _ from 'lodash'
+import {
+  APIGatewayEventLambdaAuthorizerContext,
+  APIGatewayProxyWithLambdaAuthorizerEvent,
+} from 'aws-lambda'
+import * as AWS from 'aws-sdk'
 import { User } from '@/@types/openapi-public/User'
 import { FileInfo } from '@/@types/openapi-internal/FileInfo'
 import { UserRepository } from '@/services/users/repositories/user-repository'
@@ -22,6 +27,10 @@ import { InternalUser } from '@/@types/openapi-internal/InternalUser'
 import { UsersUniquesField } from '@/@types/openapi-internal/UsersUniquesField'
 import { Comment } from '@/@types/openapi-internal/Comment'
 import { Business } from '@/@types/openapi-public/Business'
+import { getS3ClientByEvent } from '@/utils/s3'
+import { getMongoDbClient } from '@/utils/mongoDBUtils'
+import { getDynamoDbClientByEvent } from '@/utils/dynamodb'
+import { UserViewConfig } from '@/lambdas/console-api-user/app'
 
 export class UserService {
   userRepository: UserRepository
@@ -51,6 +60,28 @@ export class UserService {
     this.s3 = s3
     this.tmpBucketName = tmpBucketName
     this.documentBucketName = documentBucketName
+  }
+
+  public static async fromEvent(
+    event: APIGatewayProxyWithLambdaAuthorizerEvent<
+      APIGatewayEventLambdaAuthorizerContext<AWS.STS.Credentials>
+    >
+  ): Promise<UserService> {
+    const { principalId: tenantId } = event.requestContext.authorizer
+    const { DOCUMENT_BUCKET, TMP_BUCKET } = process.env as UserViewConfig
+    const s3 = getS3ClientByEvent(event)
+    const client = await getMongoDbClient()
+    const dynamoDb = getDynamoDbClientByEvent(event)
+    return new UserService(
+      tenantId,
+      {
+        mongoDb: client,
+        dynamoDb,
+      },
+      s3,
+      TMP_BUCKET,
+      DOCUMENT_BUCKET
+    )
   }
 
   public async getBusinessUsers(

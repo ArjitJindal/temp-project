@@ -45,6 +45,8 @@ import { TransactionsAverageAmountExceededParameters } from '@/services/rules-en
 import { TransactionsAverageNumberExceededParameters } from '@/services/rules-engine/transaction-rules/transactions-average-number-exceeded'
 import { SamePaymentDetailsParameters } from '@/services/rules-engine/transaction-rules/same-payment-details'
 import { BlacklistTransactionMatchedFieldRuleParameters } from '@/services/rules-engine/transaction-rules/blacklist-transaction-related-value'
+import { MerchantMonitoringIndustryUserRuleParameters } from '@/services/rules-engine/user-rules/merchant-monitoring-industry'
+import { MERCHANT_MONITORING_SOURCE_TYPES } from '@/@types/openapi-internal-custom/MerchantMonitoringSourceType'
 
 export const DEFAULT_CURRENCY_KEYWORD = '__DEFAULT_CURRENCY__'
 
@@ -1303,6 +1305,27 @@ const _RULES_LIBRARY: Array<
       defaultNature: 'SCREENING',
       defaultCasePriority: 'P1',
       requiredFeatures: ['SANCTIONS'],
+      isOngoingScreening: true,
+    }
+  },
+  () => {
+    const defaultParameters: MerchantMonitoringIndustryUserRuleParameters = {
+      sourceType: MERCHANT_MONITORING_SOURCE_TYPES,
+    }
+
+    return {
+      id: 'R-17',
+      name: 'Inconsistent business industry',
+      type: 'USER',
+      description: 'Business industry for user has changed.',
+      descriptionTemplate: 'Business industry for user has changed.',
+      defaultParameters,
+      defaultAction: 'SUSPEND',
+      ruleImplementationName: 'merchant-monitoring-industry',
+      labels: [],
+      defaultNature: 'SCREENING',
+      defaultCasePriority: 'P1',
+      requiredFeatures: ['MACHINE_LEARNING_DEMO'],
       isOngoingScreening: true,
     }
   },

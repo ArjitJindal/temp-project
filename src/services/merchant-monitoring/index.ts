@@ -2,12 +2,14 @@ import fetch, { Headers } from 'node-fetch'
 import axios, { AxiosRequestConfig } from 'axios'
 import { convert } from 'html-to-text'
 import { Configuration, OpenAIApi } from 'openai'
+import { NotFound } from 'http-errors'
 import { MerchantMonitoringSummary } from '@/@types/openapi-internal/MerchantMonitoringSummary'
 import { getSecret } from '@/utils/secrets-manager'
 import { MerchantMonitoringSource } from '@/@types/openapi-internal/MerchantMonitoringSource'
 import { getMongoDbClient } from '@/utils/mongoDBUtils'
 import { MerchantRepository } from '@/lambdas/console-api-merchant/merchant-repository'
 import { logger } from '@/core/logger'
+import { MerchantMonitoringSourceType } from '@/@types/openapi-internal/MerchantMonitoringSourceType'
 
 const SUMMARY_PROMPT = `Please summarize a company from the following content outputting the industry the company operates in, the products they sell, their location, number of employees, revenue, summary. Please output as a comma separate list For example:
 
@@ -33,6 +35,7 @@ const SCRAPFLY_KEY = '7f58b1ed27ca4587bb666e595ddf2a6c'
 export class MerchantMonitoringService {
   async getMerchantMonitoringSummaries(
     tenantId: string,
+    userId: string,
     companyName: string,
     domain: string,
     refresh?: boolean
@@ -41,131 +44,107 @@ export class MerchantMonitoringService {
     const merchantRepository = new MerchantRepository(tenantId, {
       mongoDb,
     })
-    if (!refresh) {
-      try {
-        const existingSummary = await merchantRepository.getMerchant(
-          domain,
-          companyName
-        )
-        if (existingSummary && existingSummary.length) {
-          return existingSummary
-        }
-      } catch (e) {
-        logger.error(JSON.stringify(e))
-      }
+
+    const existingSummaries = await merchantRepository.getSummaries(userId)
+
+    if (refresh || (existingSummaries && existingSummaries.length === 0)) {
+      const results = (
+        await Promise.allSettled([
+          this.scrape(`https://${domain}`),
+          this.companiesHouse(companyName),
+          this.explorium(companyName),
+          this.linkedin(domain),
+          ...(existingSummaries
+            ?.filter(
+              (s) =>
+                s.source?.sourceType === 'SCRAPE' &&
+                s.source?.sourceValue?.replace('https://', '') !== domain
+            )
+            .map((s) =>
+              this.scrape(s.source?.sourceValue as string)
+            ) as Promise<MerchantMonitoringSummary>[]),
+        ])
+      )
+        .map((p) => {
+          if (p.status === 'fulfilled' && p.value) {
+            return p.value
+          }
+        })
+        .filter((p) => p && p.source) as MerchantMonitoringSummary[]
+      await Promise.all(
+        results
+          .map(async (r) => {
+            try {
+              await merchantRepository.createMerchant(
+                userId,
+                companyName,
+                domain,
+                r
+              )
+            } catch (e) {
+              logger.error(`${JSON.stringify(e)}`)
+              return null
+            }
+            return r
+          })
+          .filter(Boolean)
+      )
     }
 
-    const results = (
-      await Promise.allSettled([
-        this.scrape(`https://${domain}`),
-        this.companiesHouse(companyName),
-        this.explorium(companyName),
-        this.linkedin(domain),
-      ])
-    )
-      .map((p) => {
-        if (p.status === 'fulfilled' && p.value) {
-          return p.value
-        }
-      })
-      .filter((p) => p && p.source) as MerchantMonitoringSummary[]
-
-    // Hack in fake updated times
-    const merchantSummary = await Promise.all(
-      results.map(async (r) => {
-        if (r.source) {
-          if (refresh) {
-            r.updatedAt = new Date().getTime()
-          } else {
-            const d = new Date()
-            d.setDate(d.getDate() - 3)
-            r.updatedAt = d.getTime()
-          }
-          try {
-            const res = await merchantRepository.createMerchant(
-              domain,
-              companyName,
-              r
-            )
-            console.log(res)
-          } catch (e) {
-            logger.error(`${JSON.stringify(e)}`)
-          }
-
-          return r
-        }
-      })
-    )
-
-    return merchantSummary as MerchantMonitoringSummary[]
+    const updatedSummaries = await merchantRepository.getSummaries(userId)
+    if (updatedSummaries && updatedSummaries.length) {
+      return updatedSummaries
+    }
+    throw new NotFound('No summaries found')
   }
 
   async scrapeMerchantMonitoringSummary(
+    tenantId: string,
+    userId: string,
     companyName: string,
     domain: string
   ): Promise<MerchantMonitoringSummary> {
-    const result = this.scrape(`https://${domain}`)
-
-    // Store scrape result with company name in mongo
-
+    const parsedUrl = `https://${domain.replace('https://', '')}`
+    const result = await this.scrape(parsedUrl)
+    const mongoDb = await getMongoDbClient()
+    const merchantRepository = new MerchantRepository(tenantId, {
+      mongoDb,
+    })
+    await merchantRepository.createMerchant(userId, domain, companyName, result)
     return result
   }
   async getMerchantMonitoringHistory(
+    tenantId: string,
     source: MerchantMonitoringSource,
-    companyName: string,
-    domain: string
+    userId: string
   ): Promise<MerchantMonitoringSummary[]> {
-    // Search for summaries by company name and domain in mongo and return them
-
-    // Fake it for now.
-    let promise: Promise<MerchantMonitoringSummary>
-    switch (source) {
-      case 'SCRAPE':
-        promise = this.scrape(`https://${domain}`)
-        break
-      case 'COMPANIES_HOUSE':
-        promise = this.companiesHouse(companyName)
-        break
-      case 'EXPLORIUM':
-        promise = this.explorium(companyName)
-        break
-      case 'LINKEDIN':
-        promise = this.linkedin(domain)
-    }
-
-    const summary = await promise
-
-    // Hack to make it look like history
-    const summaries = [
-      { ...summary },
-      { ...summary },
-      { ...summary },
-      { ...summary },
-      { ...summary },
-      { ...summary },
-      { ...summary },
-    ]
-    let days = 0
-    return summaries.map((s) => {
-      const d = new Date()
-      d.setDate(d.getDate() - days)
-      s.updatedAt = d.getTime()
-      days += 21
-      return s
+    const mongoDb = await getMongoDbClient()
+    const merchantRepository = new MerchantRepository(tenantId, {
+      mongoDb,
     })
+    return await merchantRepository.getSummaryHistory(userId, source)
   }
 
   private async scrape(website: string): Promise<MerchantMonitoringSummary> {
-    const options: AxiosRequestConfig = {
-      method: 'GET',
-      url: `https://api.scrapfly.io/scrape?key=scp-live-${SCRAPFLY_KEY}&url=${website}`,
-    }
-    const data = await axios.request(options)
-    const text = convert(data.data.result.content, {
-      wordwrap: 130,
-    })
+    try {
+      const options: AxiosRequestConfig = {
+        method: 'GET',
+        url: `https://api.scrapfly.io/scrape?key=scp-live-${SCRAPFLY_KEY}&url=${website}`,
+      }
+      const data = await axios.request(options)
+      const text = convert(data.data.result.content, {
+        wordwrap: 130,
+      })
 
-    return await this.summarise('SCRAPE', text)
+      const summary = await this.summarise('SCRAPE', text)
+      return {
+        ...summary,
+        source: { sourceType: 'SCRAPE', sourceValue: website },
+      }
+    } catch (e) {
+      logger.error(e)
+      throw e
+    }
   }
 
   private async companiesHouse(
@@ -219,7 +198,7 @@ export class MerchantMonitoringService {
   }
 
   private async summarise(
-    source: MerchantMonitoringSource,
+    source: MerchantMonitoringSourceType,
     content: string
   ): Promise<MerchantMonitoringSummary> {
     const configuration = new Configuration({
@@ -228,34 +207,33 @@ export class MerchantMonitoringService {
       ).apiKey,
     })
     const openai = new OpenAIApi(configuration)
-    try {
-      const completion = await openai.createChatCompletion({
-        model: 'gpt-3.5-turbo',
-        messages: [
-          {
-            content: `${SUMMARY_PROMPT} ${content}`.slice(0, MAX_TOKEN_OUTPUT),
-            role: 'system',
-          },
-        ],
-        max_tokens: MAX_TOKEN_INPUT,
-      })
+    const completion = await openai.createChatCompletion({
+      model: 'gpt-3.5-turbo',
+      messages: [
+        {
+          content: `${SUMMARY_PROMPT} ${content}`.slice(0, MAX_TOKEN_OUTPUT),
+          role: 'system',
+        },
+      ],
+      max_tokens: MAX_TOKEN_INPUT,
+    })
 
-      const output = completion.data.choices[0].message?.content
-      const re = new RegExp(OUTPUT_REGEX, 'm')
-      const result: string[] = re.exec(output as string) as string[]
-      return {
-        source,
-        industry: result[1],
-        products: result[2].split(','),
-        location: result[3],
-        employees: result[4],
-        revenue: result[5],
-        summary: result[6],
-        raw: content,
-      }
-    } catch (e) {
-      logger.error(JSON.stringify(e))
-      return {}
+    const output = completion.data.choices[0].message?.content
+    const re = new RegExp(OUTPUT_REGEX, 'm')
+    const result: string[] = re.exec(output as string) as string[]
+
+    if (result.length < 2) {
+      logger.info(content)
+    }
+    return {
+      source: { sourceType: source },
+      industry: result[1],
+      products: result[2].split(','),
+      location: result[3],
+      employees: result[4],
+      revenue: result[5],
+      summary: result[6],
+      raw: content,
     }
   }
 }

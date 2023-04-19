@@ -1443,7 +1443,7 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/MerchantMonitoringSummaryRequest'
+              $ref: '#/components/schemas/MerchantMonitoringScrapeRequest'
   /merchant-monitoring/history:
     post:
       summary: Merchant Monitoring
@@ -5628,13 +5628,25 @@ components:
       properties:
         source:
           $ref: '#/components/schemas/MerchantMonitoringSource'
-        name:
-          type: string
-        domain:
+        userId:
           type: string
         refresh:
           type: boolean
+    MerchantMonitoringScrapeRequest:
+      type: object
+      properties:
+        userId:
+          type: string
+        url:
+          type: string
     MerchantMonitoringSource:
+      type: object
+      properties:
+        sourceType:
+          $ref: '#/components/schemas/MerchantMonitoringSourceType'
+        sourceValue:
+          type: string
+    MerchantMonitoringSourceType:
       type: string
       enum:
         - LINKEDIN
@@ -5646,6 +5658,14 @@ components:
       properties:
         source:
           $ref: '#/components/schemas/MerchantMonitoringSource'
+        userId:
+          type: string
+        companyName:
+          type: string
+        domain:
+          type: string
+        url:
+          type: string
         raw:
           type: string
         industry:

@@ -4,6 +4,7 @@ import SanctionsBankUserRule from './sanctions-bank-name'
 import SanctionsBusinessUserRule from './sanctions-business-user'
 import SanctionsConsumerUserRule from './sanctions-consumer-user'
 import TestAlwaysHitRule from './tests/test-always-hit-rule'
+import MerchantMonitoringIndustryUserRule from '@/services/rules-engine/user-rules/merchant-monitoring-industry'
 
 export class UserRuleBase extends UserRule<unknown> {
   public async computeRule(): Promise<RuleHitResult | undefined> {
@@ -13,6 +14,7 @@ export class UserRuleBase extends UserRule<unknown> {
 }
 
 export const _USER_RULES = {
+  'merchant-monitoring-industry': MerchantMonitoringIndustryUserRule,
   'sanctions-business-user': SanctionsBusinessUserRule,
   'sanctions-bank-name': SanctionsBankUserRule,
   'sanctions-consumer-user': SanctionsConsumerUserRule,

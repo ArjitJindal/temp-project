@@ -1,6 +1,7 @@
 import { MongoClient } from 'mongodb'
 import { MERCHANT_MONITORING_DATA_COLLECTION } from '@/utils/mongoDBUtils'
 import { MerchantMonitoringSummary } from '@/@types/openapi-internal/MerchantMonitoringSummary'
+import { MerchantMonitoringSource } from '@/@types/openapi-internal/MerchantMonitoringSource'
 
 export class MerchantRepository {
   mongoDb: MongoClient
@@ -17,31 +18,85 @@ export class MerchantRepository {
   }
 
   public async createMerchant(
+    userId: string,
     domain: string,
     companyName: string,
     merchantSummary: MerchantMonitoringSummary
   ) {
     const db = this.mongoDb.db()
-    const collection = db.collection(
+    const collection = db.collection<MerchantMonitoringSummary>(
       MERCHANT_MONITORING_DATA_COLLECTION(this.tenantId)
     )
-    return await collection.replaceOne(
-      { domain, companyName },
-      { ...merchantSummary, companyName, domain },
-      { upsert: true }
-    )
+    return await collection.insertOne({
+      ...merchantSummary,
+      updatedAt: new Date().getTime(),
+      userId,
+      domain,
+      companyName,
+    })
   }
 
-  public async getMerchant(
-    domain: string,
-    name: string
+  public async getSummaries(
+    userId: string
   ): Promise<MerchantMonitoringSummary[] | null> {
     const db = this.mongoDb.db()
     const collection = db.collection<MerchantMonitoringSummary>(
       MERCHANT_MONITORING_DATA_COLLECTION(this.tenantId)
     )
     return await collection
-      .find({ domain: domain, companyName: name })
+      .aggregate([
+        {
+          $match: {
+            userId,
+          },
+        },
+        {
+          $sort: {
+            userId: 1,
+            'source.sourceType': 1,
+            'source.sourceValue': 1,
+            updatedAt: 1,
+          },
+        },
+        {
+          $group: {
+            _id: {
+              userId: '$userId',
+              sourceType: '$source.sourceType',
+              sourceValue: '$source.sourceValue',
+            },
+            newest_document: {
+              $last: '$$ROOT',
+            },
+          },
+        },
+        {
+          $replaceWith: '$newest_document',
+        },
+        {
+          $sort: {
+            'source.sourceType': 1,
+            'source.sourceValue': 1,
+          },
+        },
+      ])
+      .toArray()
+  }
+
+  public async getSummaryHistory(
+    userId: string,
+    source: MerchantMonitoringSource
+  ): Promise<MerchantMonitoringSummary[]> {
+    const db = this.mongoDb.db()
+    const collection = db.collection<MerchantMonitoringSummary>(
+      MERCHANT_MONITORING_DATA_COLLECTION(this.tenantId)
+    )
+    return await collection
+      .find({
+        userId,
+        source,
+      })
+      .sort({ updatedAt: -1 })
       .toArray()
   }
 }

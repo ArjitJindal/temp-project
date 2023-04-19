@@ -7,6 +7,8 @@ import { lambdaApi } from '@/core/middlewares/lambda-api-middlewares'
 import { MerchantMonitoringService } from '@/services/merchant-monitoring'
 import { MerchantMonitoringSummaryRequest } from '@/@types/openapi-internal/MerchantMonitoringSummaryRequest'
 import { MerchantMonitoringSource } from '@/@types/openapi-internal/MerchantMonitoringSource'
+import { UserService } from '@/lambdas/console-api-user/services/user-service'
+import { MerchantMonitoringScrapeRequest } from '@/@types/openapi-internal/MerchantMonitoringScrapeRequest'
 
 export const merchantMonitoringHandler = lambdaApi()(
   async (
@@ -14,56 +16,54 @@ export const merchantMonitoringHandler = lambdaApi()(
       APIGatewayEventLambdaAuthorizerContext<JWTAuthorizerResult>
     >
   ) => {
-    if (
-      event.httpMethod === 'POST' &&
-      event.path.endsWith('/summary') &&
-      event.body
-    ) {
-      const { domain, name, refresh }: MerchantMonitoringSummaryRequest =
-        JSON.parse(event.body)
-      const { principalId: tenantId } = event.requestContext.authorizer
-      const mms = new MerchantMonitoringService()
-      const summaries = await mms.getMerchantMonitoringSummaries(
-        tenantId,
-        name as string,
-        domain as string,
-        refresh
-      )
-      return {
-        data: summaries,
-      }
-    }
+    const { principalId: tenantId } = event.requestContext.authorizer
+    const mms = new MerchantMonitoringService()
+    const userService = await UserService.fromEvent(event)
 
-    if (
-      event.httpMethod === 'POST' &&
-      event.path.endsWith('/history') &&
-      event.body
-    ) {
-      const { domain, name, source }: MerchantMonitoringSummaryRequest =
-        JSON.parse(event.body)
-      const mms = new MerchantMonitoringService()
-      return {
-        data: await mms.getMerchantMonitoringHistory(
-          source as MerchantMonitoringSource,
-          name as string,
-          domain as string
-        ),
-      }
-    }
-
-    if (
-      event.httpMethod === 'POST' &&
-      event.path.endsWith('/scrape') &&
-      event.body
-    ) {
-      const { domain, name }: MerchantMonitoringSummaryRequest = JSON.parse(
+    if (event.httpMethod === 'POST' && event.body) {
+      const { userId, refresh }: MerchantMonitoringSummaryRequest = JSON.parse(
         event.body
       )
-      const mms = new MerchantMonitoringService()
-      return await mms.scrapeMerchantMonitoringSummary(
-        name as string,
-        domain as string
-      )
+      const user = await userService.getBusinessUser(userId as string)
+      const domain = user?.legalEntity.contactDetails?.websites
+        ? (user.legalEntity?.contactDetails?.websites[0] as string)
+        : undefined
+      const name = user?.legalEntity.companyGeneralDetails.legalName
+
+      if (event.path.endsWith('/summary')) {
+        const summaries = await mms.getMerchantMonitoringSummaries(
+          tenantId,
+          userId as string,
+          name as string,
+          domain as string,
+          refresh
+        )
+        return {
+          data: summaries,
+        }
+      }
+
+      if (event.path.endsWith('/history')) {
+        const { source }: MerchantMonitoringSummaryRequest = JSON.parse(
+          event.body
+        )
+        return {
+          data: await mms.getMerchantMonitoringHistory(
+            tenantId,
+            source as MerchantMonitoringSource,
+            userId as string
+          ),
+        }
+      }
+      if (event.path.endsWith('/scrape')) {
+        const { url }: MerchantMonitoringScrapeRequest = JSON.parse(event.body)
+        return await mms.scrapeMerchantMonitoringSummary(
+          tenantId,
+          userId as string,
+          name as string,
+          url as string
+        )
+      }
     }
   }
 )
