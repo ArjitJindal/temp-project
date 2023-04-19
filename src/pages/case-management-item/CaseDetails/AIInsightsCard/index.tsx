@@ -6,11 +6,12 @@ import { InternalBusinessUser, MerchantMonitoringSource, MerchantMonitoringSumma
 import { useApi } from '@/api';
 import * as Form from '@/components/ui/Form';
 import EarthLineIcon from '@/components/ui/icons/Remix/map/earth-line.react.svg';
-import MoneyIcon from '@/components/ui/icons/Remix/finance/money-dollar-box-fill.react.svg';
-import TeamIcon from '@/components/ui/icons/Remix/user/team-line.react.svg';
+import MoneyIcon from '@/components/ui/icons/Remix/finance/money-dollar-box-line.react.svg';
 import BriefcaseIcon from '@/components/ui/icons/Remix/business/briefcase-2-line.react.svg';
+import UserGroupIcon from '@/components/ui/icons/Remix/user/group-line.react.svg';
 import HistoryLine from '@/components/ui/icons/Remix/system/history-line.react.svg';
 import RefreshLine from '@/components/ui/icons/Remix/system/refresh-line.react.svg';
+import ExternalLinkFill from '@/components/ui/icons/Remix/system/external-link-fill.react.svg';
 import AsyncResourceRenderer from '@/components/common/AsyncResourceRenderer';
 import { useQuery } from '@/utils/queries/hooks';
 import { MERCHANT_SUMMARY, MERCHANT_SUMMARY_HISTORY } from '@/utils/queries/keys';
@@ -18,6 +19,7 @@ import dayjs from '@/utils/dayjs';
 import Button from '@/components/library/Button';
 import Drawer from '@/components/library/Drawer';
 import TextInput from '@/components/library/TextInput';
+import { MERCHANT_MONITORING_SOURCES } from '@/apis/models-custom/MerchantMonitoringSource';
 interface Props {
   user: InternalBusinessUser;
   updateCollapseState?: (key: string, value: boolean) => void;
@@ -134,7 +136,17 @@ const Summaries = ({
         <Card.Section className={s.section}>
           <div className={s.titleSearch}>
             <div style={{ gap: '0rem' }}>
-              <h3>{summary.source}</h3>
+              <h3>
+                {summary.source && MERCHANT_MONITORING_SOURCES.includes(summary.source) ? (
+                  <img src={`/${summary.source}.png`} width={150} alt={summary.source} />
+                ) : (
+                  <>{summary.source}</>
+                )}
+                <a href={summary.source} style={{ marginTop: '15px' }}>
+                  <ExternalLinkFill width={15} height={15} />
+                </a>
+              </h3>
+
               <p className={s.lastUpdated}>
                 Last updated {dayjs.dayjs(summary.updatedAt).fromNow()}
               </p>
@@ -184,7 +196,7 @@ const Summaries = ({
               </div>
 
               <div className={cn(s.fields, s.form)}>
-                <Form.Layout.Label icon={<TeamIcon />} title={'Company Size'} />
+                <Form.Layout.Label icon={<UserGroupIcon />} title={'Company Size'} />
 
                 {summary.employees ?? '-'}
               </div>
