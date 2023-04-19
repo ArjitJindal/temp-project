@@ -11,6 +11,7 @@ import {
   RiskLevel,
   SimulationPostResponse,
   SimulationPulseIteration,
+  SimulationPulseJob,
   SimulationPulseResult,
   SimulationPulseStatisticsRiskTypeEnum,
 } from '@/apis';
@@ -256,10 +257,12 @@ const LoadingWidget = () => {
 export default function RiskClassificationSimulationResults(props: Props) {
   const { onClose, isVisible, result } = props;
   const api = useApi();
-  const jobIdQueryResults = useQuery(SIMULATION_PULSE_JOB(result.jobId), () =>
-    api.getSimulationTestId({
-      jobId: result.jobId,
-    }),
+  const jobIdQueryResults = useQuery(
+    SIMULATION_PULSE_JOB(result.jobId),
+    () =>
+      api.getSimulationTestId({
+        jobId: result.jobId,
+      }) as Promise<SimulationPulseJob>,
   );
 
   const [activeTab, setActiveTab] = useState<string>(result.taskIds[0]);
@@ -385,8 +388,9 @@ export default function RiskClassificationSimulationResults(props: Props) {
               tab: iteration.name,
             }));
 
-            return iterations.find((item) => item.taskId === activeTab)?.latestStatus?.status ===
-              'SUCCESS' ? (
+            return (iterations as SimulationPulseIteration[]).find(
+              (item) => item.taskId === activeTab,
+            )?.latestStatus?.status === 'SUCCESS' ? (
               <Tabs
                 activeKey={activeTab}
                 items={items}

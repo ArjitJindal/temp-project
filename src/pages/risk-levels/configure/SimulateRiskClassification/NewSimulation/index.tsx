@@ -15,6 +15,7 @@ import {
   SimulationSettings,
   RiskClassificationScore,
   SimulationPulseParameters,
+  SimulationPulseParametersRequest,
 } from '@/apis';
 import Tooltip from '@/components/library/Tooltip';
 import * as Card from '@/components/ui/Card';
@@ -109,7 +110,7 @@ const NewSimulation = forwardRef((props: Props, ref: React.Ref<SimulationRef>) =
   >(
     async ({ values, defaultRiskClassification }) =>
       api.postSimulation({
-        SimulationPulseParametersRequest: {
+        SimulationPulseParametersRequest___SimulationBeaconParametersRequest: {
           type: 'PULSE',
           defaultRiskClassifications: defaultRiskClassification,
           parameters: values.map(
@@ -126,7 +127,7 @@ const NewSimulation = forwardRef((props: Props, ref: React.Ref<SimulationRef>) =
                 parameterAttributeRiskValues: [],
               } as SimulationPulseParameters),
           ),
-        },
+        } as SimulationPulseParametersRequest,
       }),
     {
       onSuccess: (data) => {

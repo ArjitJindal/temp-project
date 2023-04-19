@@ -4,7 +4,7 @@ import {
   RiskClassificationScore,
   SimulationPostResponse,
   SimulationPulseJob,
-  SimulationType,
+  SimulationPulseType,
 } from '@/apis';
 import QueryResultsTable from '@/components/common/QueryResultsTable';
 import { AllParams, TableRefType } from '@/components/library/Table/types';
@@ -38,7 +38,7 @@ export default function SimulationHistory(props: SimulationHistoryProps) {
   const api = useApi();
   const [users, loading] = useUsers({ includeRootUsers: true, includeBlockedUsers: true });
   const { setResult, setOpen } = props;
-  const [params, setParams] = useState<AllParams<{ type: SimulationType }>>({
+  const [params, setParams] = useState<AllParams<{ type: SimulationPulseType }>>({
     ...DEFAULT_PARAMS_STATE,
     type: 'PULSE',
     sort: [['createdAt', 'descend']],
@@ -56,7 +56,7 @@ export default function SimulationHistory(props: SimulationHistoryProps) {
       });
 
       return {
-        items: simulations.data,
+        items: simulations.data as SimulationPulseJob[],
         total: simulations.total,
       };
     },
