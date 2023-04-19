@@ -48,28 +48,35 @@ export class MerchantMonitoringService {
     const existingSummaries = await merchantRepository.getSummaries(userId)
 
     if (refresh || (existingSummaries && existingSummaries.length === 0)) {
+      const timeout = new Promise((resolve) => {
+        setTimeout(() => resolve(null), 20000)
+      })
       const results = (
-        await Promise.allSettled([
-          this.scrape(`https://${domain}`),
-          this.companiesHouse(companyName),
-          this.explorium(companyName),
-          this.linkedin(domain),
-          ...(existingSummaries
-            ?.filter(
-              (s) =>
-                s.source?.sourceType === 'SCRAPE' &&
-                s.source?.sourceValue?.replace('https://', '') !== domain
-            )
-            .map((s) =>
-              this.scrape(s.source?.sourceValue as string)
-            ) as Promise<MerchantMonitoringSummary>[]),
-        ])
+        await Promise.allSettled(
+          [
+            this.scrape(`https://${domain}`),
+            this.companiesHouse(companyName),
+            this.explorium(companyName),
+            this.linkedin(domain),
+            ...(existingSummaries
+              ?.filter(
+                (s) =>
+                  s.source?.sourceType === 'SCRAPE' &&
+                  s.source?.sourceValue?.replace('https://', '') !== domain
+              )
+              .map((s) =>
+                this.scrape(s.source?.sourceValue as string)
+              ) as Promise<MerchantMonitoringSummary>[]),
+          ].map((p) => Promise.race([p, timeout]))
+        )
       )
         .map((p) => {
           if (p.status === 'fulfilled' && p.value) {
             return p.value
           }
         })
+        // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+        // @ts-ignore
         .filter((p) => p && p.source) as MerchantMonitoringSummary[]
       await Promise.all(
         results
