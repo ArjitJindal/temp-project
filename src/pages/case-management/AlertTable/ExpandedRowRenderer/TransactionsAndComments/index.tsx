@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import Comments from './Comments';
 import { usePaginatedQuery, useQuery } from '@/utils/queries/hooks';
-import { ALERT_ITEM_COMMENTS, ALERT_ITEM_TRANSACTION_LIST } from '@/utils/queries/keys';
+import { ALERT_ITEM, ALERT_ITEM_TRANSACTION_LIST } from '@/utils/queries/keys';
 import { useApi } from '@/api';
 import { useApiTime } from '@/utils/tracker';
 import { DEFAULT_PARAMS_STATE } from '@/components/ui/Table';
@@ -49,7 +49,7 @@ export default function TransactionsAndComments(props: Props) {
     },
   );
 
-  const alertResponse = useQuery(ALERT_ITEM_COMMENTS(alertId ?? ''), async () => {
+  const alertResponse = useQuery(ALERT_ITEM(alertId ?? ''), async () => {
     if (alertId == null) {
       throw new Error(`Unable to fetch alert, id is empty`);
     }

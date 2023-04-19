@@ -14,7 +14,7 @@ import { getErrorMessage } from '@/utils/lang';
 import { useApi } from '@/api';
 import { AsyncResource } from '@/utils/asyncResource';
 import AsyncResourceRenderer from '@/components/common/AsyncResourceRenderer';
-import { ALERT_ITEM_COMMENTS } from '@/utils/queries/keys';
+import { ALERT_ITEM } from '@/utils/queries/keys';
 import { message } from '@/components/library/Message';
 
 interface Props {
@@ -50,9 +50,15 @@ export default function Comments(props: Props) {
       onSuccess: async (newComment, { alertId }) => {
         message.success('Comment successfully added!');
         commentEditorRef.current?.reset();
-        await queryClient.setQueryData<ApiComment[]>(ALERT_ITEM_COMMENTS(alertId), (comments) =>
-          comments ? [...comments, newComment] : undefined,
-        );
+        await queryClient.setQueryData<Alert>(ALERT_ITEM(alertId), (alert) => {
+          if (!alert) {
+            return undefined;
+          }
+          return {
+            ...alert,
+            comments: [...(alert?.comments ?? []), newComment],
+          };
+        });
       },
       onError: async (error) => {
         message.fatal(`Unable to add comment! ${getErrorMessage(error)}`, error);
@@ -81,9 +87,15 @@ export default function Comments(props: Props) {
     {
       onSuccess: async (_, { alertId, commentId }) => {
         message.success('Comment deleted!');
-        await queryClient.setQueryData<ApiComment[]>(ALERT_ITEM_COMMENTS(alertId), (comments) =>
-          comments?.filter((x) => x.id !== commentId),
-        );
+        await queryClient.setQueryData<Alert>(ALERT_ITEM(alertId), (alert) => {
+          if (!alert) {
+            return undefined;
+          }
+          return {
+            ...alert,
+            comments: (alert?.comments ?? []).filter((comment) => comment.id !== commentId),
+          };
+        });
       },
       onError: (error) => {
         message.fatal(`Unable to delete comment! ${getErrorMessage(error)}`, error);
