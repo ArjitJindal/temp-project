@@ -54,6 +54,7 @@ import { PRIORITYS } from '@/@types/openapi-internal-custom/Priority'
 import { AlertListResponse } from '@/@types/openapi-internal/AlertListResponse'
 import { AlertListResponseItem } from '@/@types/openapi-internal/AlertListResponseItem'
 import { PaymentMethod } from '@/@types/openapi-internal/PaymentMethod'
+import { ArsScore } from '@/@types/openapi-internal/ArsScore'
 
 export const MAX_TRANSACTION_IN_A_CASE = 1000
 
@@ -1194,13 +1195,19 @@ export class CaseRepository {
       this.mongoDb
     )
 
-    return await transactionsRepo.getTransactions({
+    const result = await transactionsRepo.getTransactions({
       filterIdList: alert.transactionIds,
       afterTimestamp: 0,
       beforeTimestamp: Number.MAX_SAFE_INTEGER,
       page: params.page,
       pageSize: params.pageSize,
     })
+
+    if (hasFeature('PULSE')) {
+      result.data = await this.augmentRiskLevel(result.data)
+    }
+
+    return result
   }
 
   public async getAlertTransactionsExecuted(
@@ -1230,7 +1237,7 @@ export class CaseRepository {
       this.mongoDb
     )
 
-    const transactions = await transactionsRepo.getExecutedTransactionsOfAlert(
+    let transactions = await transactionsRepo.getExecutedTransactionsOfAlert(
       userId,
       alert.ruleInstanceId,
       { page: params.page, pageSize: params.pageSize }
@@ -1241,6 +1248,10 @@ export class CaseRepository {
         userId,
         alert.ruleInstanceId
       )
+
+    if (hasFeature('PULSE')) {
+      transactions = await this.augmentRiskLevel(transactions)
+    }
 
     return {
       total: transactionsCount,
@@ -1435,24 +1446,10 @@ export class CaseRepository {
       sortFields
     )
 
-    const res = await cursor.toArray()
+    let res = await cursor.toArray()
 
     if (hasFeatures(['PULSE'])) {
-      const riskRepository = new RiskRepository(this.tenantId, {
-        dynamoDb: this.dynamoDb,
-      })
-
-      const riskClassificationValues =
-        await riskRepository.getRiskClassificationValues()
-
-      for (const caseItem of res) {
-        if (caseItem?.arsScore?.arsScore) {
-          caseItem.arsScore.riskLevel = getRiskLevelFromScore(
-            riskClassificationValues,
-            caseItem.arsScore.arsScore
-          )
-        }
-      }
+      res = await this.augmentRiskLevel(res)
     }
 
     return {
@@ -1587,5 +1584,27 @@ export class CaseRepository {
         },
       }
     )
+  }
+
+  private async augmentRiskLevel<T extends { arsScore?: ArsScore }>(
+    items: Array<T>
+  ): Promise<T[]> {
+    const riskRepository = new RiskRepository(this.tenantId, {
+      dynamoDb: this.dynamoDb,
+    })
+
+    const riskClassificationValues =
+      await riskRepository.getRiskClassificationValues()
+
+    return items.map((item) => ({
+      ...item,
+      arsScore: item.arsScore && {
+        ...item.arsScore,
+        riskLevel: getRiskLevelFromScore(
+          riskClassificationValues,
+          item.arsScore.arsScore
+        ),
+      },
+    }))
   }
 }
