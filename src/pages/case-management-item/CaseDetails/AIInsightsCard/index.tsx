@@ -19,7 +19,7 @@ import dayjs from '@/utils/dayjs';
 import Button from '@/components/library/Button';
 import Drawer from '@/components/library/Drawer';
 import TextInput from '@/components/library/TextInput';
-import { MERCHANT_MONITORING_SOURCES } from '@/apis/models-custom/MerchantMonitoringSource';
+import { message } from '@/components/library/Message';
 interface Props {
   user: InternalBusinessUser;
   updateCollapseState?: (key: string, value: boolean) => void;
@@ -30,15 +30,9 @@ export default function AIInsightsCard(props: Props) {
   const { updateCollapseState, title, collapsableKey, user } = props;
   const api = useApi();
 
-  // Get company name and their website
-  const domain = user.legalEntity.contactDetails?.websites
-    ? (user.legalEntity?.contactDetails?.websites[0] as string)
-    : undefined;
-  const name = user.legalEntity.companyGeneralDetails.legalName;
-
   const [refresh, setRefresh] = useState<boolean>(false);
-  const queryResult = useQuery(MERCHANT_SUMMARY(name), () =>
-    api.postMerchantSummary({ MerchantMonitoringSummaryRequest: { name, domain, refresh } }),
+  const queryResult = useQuery(MERCHANT_SUMMARY(props.user.userId), () =>
+    api.postMerchantSummary({ MerchantMonitoringSummaryRequest: { userId: user.userId, refresh } }),
   );
 
   useEffect(() => {
@@ -50,20 +44,12 @@ export default function AIInsightsCard(props: Props) {
     <AsyncResourceRenderer resource={queryResult.data}>
       {(summariesResponse) => (
         <Card.Root header={{ title, collapsableKey }} updateCollapseState={updateCollapseState}>
-          <Button
-            type="TEXT"
-            icon={<RefreshLine />}
-            style={{ width: '150px', margin: '20px', marginBottom: '0px' }}
-            onClick={() => setRefresh(true)}
-          >
-            Refresh All
-          </Button>
           {summariesResponse.data && (
             <Summaries
-              name={name}
-              domain={domain as string}
+              userId={user.userId}
               summaries={summariesResponse.data}
               showHistory={true}
+              onRefresh={() => setRefresh(true)}
             />
           )}
         </Card.Root>
@@ -73,58 +59,58 @@ export default function AIInsightsCard(props: Props) {
 }
 
 const Summaries = ({
-  name,
-  domain,
+  userId,
   summaries,
   showHistory,
+  onRefresh,
 }: {
-  name: string;
-  domain: string;
+  userId: string;
   summaries: MerchantMonitoringSummary[];
   showHistory: boolean;
+  onRefresh?: () => void;
 }) => {
   const api = useApi();
-
   const [sourceHistory, setSourceHistory] = useState<MerchantMonitoringSource | undefined>();
   const [scrapedDomain, setScrapeDomain] = useState<string>();
   const [scrapedSummary, setScrapedSummary] = useState<MerchantMonitoringSummary>();
+  const [scraping, setScraping] = useState<boolean>(false);
+  const requestData = () => {
+    setScraping(true);
+    api
+      .postMerchantScrape({
+        MerchantMonitoringScrapeRequest: { userId, url: scrapedDomain },
+      })
+      .then(setScrapedSummary)
+      .catch(() => message.error(`Unable to crawl ${scrapedDomain}`))
+      .finally(() => setScraping(false));
+  };
   return (
     <Card.Section>
-      <Card.Row justify="evenly" className={s.titleHeader}>
-        <Card.Column>
-          <h2 className={s.title}>Aggregated user information</h2>
-        </Card.Column>
-
-        <Card.Column>
-          <Card.Row className={s.titleSearch}>
-            <Card.Column>
-              <TextInput
-                placeholder={'Enter new source URL'}
-                value={scrapedDomain}
-                onChange={setScrapeDomain}
-              />
-            </Card.Column>
-            <Card.Column>
-              <Button
-                onClick={() => {
-                  api
-                    .postMerchantScrape({
-                      MerchantMonitoringSummaryRequest: { domain: scrapedDomain },
-                    })
-                    .then(setScrapedSummary);
-                }}
-              >
-                Request Data
-              </Button>
-            </Card.Column>
-          </Card.Row>
-        </Card.Column>
-      </Card.Row>
-
+      {showHistory && (
+        <Card.Row>
+          <div className={s.titleHeader}>
+            <TextInput
+              placeholder={'Enter new source URL'}
+              value={scrapedDomain}
+              onChange={setScrapeDomain}
+            />
+            <Button type="PRIMARY" isLoading={scraping} onClick={requestData}>
+              Request Data
+            </Button>
+            <Button
+              style={{ marginLeft: 'auto', width: '122px' }}
+              type="SECONDARY"
+              icon={<RefreshLine />}
+              onClick={onRefresh}
+            >
+              Refresh All
+            </Button>
+          </div>
+        </Card.Row>
+      )}
       {showHistory && sourceHistory && (
         <SummaryHistory
-          name={name}
-          domain={domain}
+          userId={userId}
           source={sourceHistory}
           summaries={summaries}
           isVisible={!!sourceHistory}
@@ -134,46 +120,46 @@ const Summaries = ({
       {/* For now we are just concatting the scraped summary with the others on the frontend but should be done on the backend */}
       {(scrapedSummary ? [scrapedSummary, ...summaries] : summaries).map((summary) => (
         <Card.Section className={s.section}>
-          <div className={s.titleSearch}>
-            <div style={{ gap: '0rem' }}>
-              <h3>
-                {summary.source && MERCHANT_MONITORING_SOURCES.includes(summary.source) ? (
-                  <img src={`/${summary.source}.png`} width={150} alt={summary.source} />
-                ) : (
-                  <>{summary.source}</>
+          <div className={s.sectionHeader}>
+            <div>
+              <div className={s.logo}>
+                <img
+                  src={`/${summary.source?.sourceType}.png`}
+                  height={40}
+                  alt={summary.source?.sourceType}
+                />
+                {summary.source?.sourceType === 'SCRAPE' && (
+                  <a href={summary.source?.sourceValue} className={s.scrapeLink} target="_blank">
+                    <span>{summary.source.sourceValue}</span>{' '}
+                    <ExternalLinkFill width={15} height={15} />
+                  </a>
                 )}
-                <a href={summary.source} style={{ marginTop: '15px' }}>
-                  <ExternalLinkFill width={15} height={15} />
-                </a>
-              </h3>
-
+              </div>
               <p className={s.lastUpdated}>
                 Last updated {dayjs.dayjs(summary.updatedAt).fromNow()}
               </p>
             </div>
-            <div
-              style={{ textAlign: 'left', display: 'flex', height: '40px' }}
-              className={s.fileds}
-            >
-              <Button
-                type="TEXT"
-                icon={<RefreshLine />}
-                onClick={() => setSourceHistory(summary.source)}
-                size="MEDIUM"
-              >
-                Refresh
-              </Button>
-              {showHistory && (
-                <Button
-                  type="TETRIARY"
-                  icon={<HistoryLine />}
-                  onClick={() => setSourceHistory(summary.source)}
-                  size="MEDIUM"
-                >
-                  View history
-                </Button>
-              )}
-            </div>
+            {showHistory && (
+              <div className={s.sectionActions}>
+                <div className={s.buttonGroup}>
+                  <Button
+                    type="TETRIARY"
+                    icon={<HistoryLine />}
+                    onClick={() => setSourceHistory(summary.source)}
+                  >
+                    View history
+                  </Button>
+                  <Button
+                    type="SECONDARY"
+                    icon={<RefreshLine />}
+                    onClick={() => setSourceHistory(summary.source)}
+                    style={{ width: '122px' }}
+                  >
+                    Refresh
+                  </Button>
+                </div>
+              </div>
+            )}
           </div>
           <div className={s.merchantDetails}>
             <div>
@@ -219,21 +205,19 @@ const Summaries = ({
 
 const SummaryHistory = ({
   source,
-  name,
-  domain,
+  userId,
   isVisible,
   setVisible,
 }: {
-  name: string;
-  domain: string;
   source: MerchantMonitoringSource;
+  userId: string;
   isVisible: boolean;
   setVisible: (source: MerchantMonitoringSource | undefined) => void;
   summaries: MerchantMonitoringSummary[];
 }) => {
   const api = useApi();
-  const queryResult = useQuery(MERCHANT_SUMMARY_HISTORY(name, source), () =>
-    api.postMerchantHistory({ MerchantMonitoringSummaryRequest: { name, domain, source } }),
+  const queryResult = useQuery(MERCHANT_SUMMARY_HISTORY(userId, source), () =>
+    api.postMerchantHistory({ MerchantMonitoringSummaryRequest: { userId, source } }),
   );
   return (
     <Drawer
@@ -244,12 +228,7 @@ const SummaryHistory = ({
       <AsyncResourceRenderer resource={queryResult.data}>
         {(summariesResp) =>
           summariesResp.data && (
-            <Summaries
-              name={name}
-              domain={domain}
-              summaries={summariesResp.data}
-              showHistory={false}
-            />
+            <Summaries userId={userId} summaries={summariesResp.data} showHistory={false} />
           )
         }
       </AsyncResourceRenderer>

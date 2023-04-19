@@ -118,11 +118,11 @@ export const USERS_ITEM_RISKS_DRS = (userId: string): QueryKey => [
   'drs-score',
 ];
 
-export const MERCHANT_SUMMARY = (name: string): QueryKey => ['merchant', 'summary', name];
+export const MERCHANT_SUMMARY = (userId: string): QueryKey => ['merchant', 'summary', userId];
 export const MERCHANT_SUMMARY_HISTORY = (
-  name: string,
+  userId: string,
   source: MerchantMonitoringSource,
-): QueryKey => ['merchant', 'summary', name, source];
+): QueryKey => ['merchant', 'summary', userId, source.sourceType, source.sourceValue];
 export const USERS_ITEM_RISKS_KRS = (userId: string): QueryKey => [
   'users',
   'item',
