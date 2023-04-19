@@ -42,7 +42,7 @@ export const RULE_NATURE_LABELS: { [key in RuleNature]: string } = {
 export const RULE_NATURE_VALUES: RuleNature[] = Object.keys(RULE_NATURE_LABELS) as RuleNature[];
 
 export const RULE_NATURE_OPTIONS: { label: string; value: RuleNature }[] = RULE_NATURE_VALUES.map(
-  (value) => ({ label: RULE_NATURE_LABELS[value], value: 'AML' }),
+  (value) => ({ label: RULE_NATURE_LABELS[value], value }),
 );
 
 export const RULE_LABELS_OPTIONS: {
