@@ -170,7 +170,7 @@ const Summaries = ({
 
               <div className={cn(s.fields, s.form)}>
                 <>
-                  <Form.Layout.Label icon={<BriefcaseIcon />} title={'Products Solds'} />
+                  <Form.Layout.Label icon={<BriefcaseIcon />} title={'Products Sold'} />
                 </>
                 <>{summary.products?.join(',') ?? '-'}</>
               </div>
