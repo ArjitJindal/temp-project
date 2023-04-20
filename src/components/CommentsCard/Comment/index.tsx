@@ -49,6 +49,7 @@ export default function Comment(props: Props) {
                   <span
                     onClick={() => deletingCommentIds.length === 0 && onDelete()}
                     style={{ cursor: 'pointer' }}
+                    className="comment-delete"
                   >
                     Delete
                   </span>
