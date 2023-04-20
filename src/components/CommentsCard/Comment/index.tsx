@@ -38,7 +38,7 @@ export default function Comment(props: Props) {
             </div>
           )}
           <div className={styles.footerText} style={{ width: 'fit-content' }}>
-            Added By: {user?.name}
+            Added by: {user?.name}
           </div>
           {currentUserId === comment.userId && (
             <>
@@ -49,7 +49,7 @@ export default function Comment(props: Props) {
                   <span
                     onClick={() => deletingCommentIds.length === 0 && onDelete()}
                     style={{ cursor: 'pointer' }}
-                    className="comment-delete"
+                    data-cy="comment-delete-button"
                   >
                     Delete
                   </span>

@@ -38,6 +38,7 @@ export const SELECT_COLUMN: TanTable.ColumnDef<unknown> = {
       onChange={(newValue) => {
         table.toggleAllPageRowsSelected(newValue);
       }}
+      testName="header-table"
     />
   ),
   cell: ({ row }) => (
@@ -47,6 +48,7 @@ export const SELECT_COLUMN: TanTable.ColumnDef<unknown> = {
       onChange={(newValue) => {
         row.toggleSelected(newValue);
       }}
+      testName="row-table"
     />
   ),
 };

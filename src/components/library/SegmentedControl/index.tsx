@@ -1,5 +1,6 @@
 import React from 'react';
 import cn from 'clsx';
+import _ from 'lodash';
 import s from './style.module.less';
 import SameWidthDiv from '@/components/library/SameWidthDiv';
 import { Comparable, compare, key } from '@/utils/comparable';
@@ -30,6 +31,7 @@ export default function SegmentedControl<Value extends Comparable = string>(prop
           onClick={() => {
             onChange(item.value);
           }}
+          data-cy={`segmented-control-${_.kebabCase(item.value?.toString())}`}
         >
           {item.icon && <div className={s.itemIcon}>{item.icon}</div>}
           <SameWidthDiv>{item.label}</SameWidthDiv>

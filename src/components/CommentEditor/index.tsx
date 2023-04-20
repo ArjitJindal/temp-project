@@ -128,6 +128,7 @@ function CommentEditor(props: Props, ref: React.Ref<CommentEditorRef>) {
             setTemplateValue(undefined);
           }}
           type="PRIMARY"
+          testName="add-comment-button"
           isDisabled={
             (values.files.length === 0 && !values.comment) || isCommentTooLong || props.disabled
           }

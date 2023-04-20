@@ -356,32 +356,44 @@ export default function AlertTable(props: Props) {
         pagination={isEmbedded ? 'HIDE_FOR_ONE_PAGE' : true}
         selectionActions={[
           ({ selectedIds }) => <AssignToButton ids={selectedIds} onSelect={handleAssignTo} />,
-          ({ selectedIds, selectedItems, params }) => {
-            const selectedStatuses = [
-              ...new Set(
-                Object.values(selectedItems).map((item) => {
-                  return item.alertStatus === 'CLOSED' ? 'CLOSED' : 'OPEN';
-                }),
-              ),
-            ];
+          escalationEnabled
+            ? ({ selectedIds, selectedItems, params }) => {
+                const selectedStatuses = [
+                  ...new Set(
+                    Object.values(selectedItems).map((item) => {
+                      return item.alertStatus === 'CLOSED' ? 'CLOSED' : 'OPEN';
+                    }),
+                  ),
+                ];
 
-            const statusChangeButtonValue =
-              selectedStatuses.length === 1 ? selectedStatuses[0] : undefined;
+                const statusChangeButtonValue =
+                  selectedStatuses.length === 1 ? selectedStatuses[0] : undefined;
 
-            return (
-              escalationEnabled &&
-              params.caseId &&
-              statusChangeButtonValue &&
-              params.alertStatus != 'ESCALATED' && (
-                <AlertsStatusChangeButton
-                  ids={selectedIds}
-                  onSaved={reloadTable}
-                  status={params.alertStatus ?? statusChangeButtonValue}
-                  caseId={params.caseId}
-                />
-              )
-            );
-          },
+                return (
+                  params.caseId &&
+                  statusChangeButtonValue &&
+                  params.alertStatus != 'ESCALATED' && (
+                    <AlertsStatusChangeButton
+                      ids={selectedIds}
+                      onSaved={reloadTable}
+                      status={params.alertStatus ?? statusChangeButtonValue}
+                      caseId={params.caseId}
+                    />
+                  )
+                );
+              }
+            : ({ selectedIds, params }) => {
+                return (
+                  params.caseId && (
+                    <AlertsStatusChangeButton
+                      ids={selectedIds}
+                      onSaved={reloadTable}
+                      status={params.alertStatus}
+                      caseId={params.caseId}
+                    />
+                  )
+                );
+              },
           ({ selectedIds, params, onResetSelection }) =>
             params.caseId && (
               <CreateCaseConfirmModal

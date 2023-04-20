@@ -288,6 +288,7 @@ function Table<Item extends object, Params extends object = CommonParams>(
                                   style={{
                                     maxWidth: fixedExpandedContainer ? containerWidth : undefined,
                                   }}
+                                  data-cy="expanded-content"
                                 >
                                   {renderExpanded?.(row.original.content)}
                                 </div>
@@ -402,7 +403,10 @@ function Th<Item>(props: {
             )}
           </div>
           {isSortable && (
-            <Sorter sorting={isSorted ? (isSorted === 'desc' ? 'descend' : 'ascend') : false} />
+            <Sorter
+              sorting={isSorted ? (isSorted === 'desc' ? 'descend' : 'ascend') : false}
+              testName={column.columnDef.id ?? ''}
+            />
           )}
         </div>
       )}
