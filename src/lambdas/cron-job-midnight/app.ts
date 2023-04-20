@@ -3,7 +3,6 @@ import { lambdaConsumer } from '@/core/middlewares/lambda-consumer-middlewares'
 import { getDynamoDbClient } from '@/utils/dynamodb'
 import { getMongoDbClient } from '@/utils/mongoDBUtils'
 import { TenantService } from '@/services/tenants'
-import { tenantHasFeature } from '@/core/middlewares/tenant-has-feature'
 import { sendBatchJobCommand } from '@/services/batch-job'
 import { OngoingScreeningUserRuleBatchJob } from '@/@types/batch-job'
 
@@ -24,11 +23,9 @@ export const cronJobMidnightHandler = lambdaConsumer()(async () => {
 
     await apiMetricsService.publishApiUsageMetrics(tenant)
     const tenantId = tenant.tenant.id
-    if (await tenantHasFeature(tenantId, 'SANCTIONS')) {
-      await sendBatchJobCommand(tenantId, {
-        type: 'ONGOING_SCREENING_USER_RULE',
-        tenantId,
-      } as OngoingScreeningUserRuleBatchJob)
-    }
+    await sendBatchJobCommand(tenantId, {
+      type: 'ONGOING_SCREENING_USER_RULE',
+      tenantId,
+    } as OngoingScreeningUserRuleBatchJob)
   }
 })
