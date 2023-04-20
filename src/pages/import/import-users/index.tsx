@@ -3,7 +3,7 @@ import { Tag } from 'antd';
 import { files } from './service';
 import type { TableListItem } from './data';
 import { FileImportButton } from '@/components/file-import/FileImportButton';
-import PageWrapper from '@/components/PageWrapper';
+import PageWrapper, { PageWrapperTableContainer } from '@/components/PageWrapper';
 import { useI18n } from '@/locales';
 import { CommonParams, TableColumn } from '@/components/library/Table/types';
 import { DEFAULT_PARAMS_STATE } from '@/components/library/Table/consts';
@@ -88,20 +88,22 @@ const TableList: React.FC = () => {
 
   return (
     <PageWrapper title={i18n('menu.import.import-users')}>
-      <QueryResultsTable<TableListItem, CommonParams>
-        // headerTitle="Files"
-        rowKey="id"
-        tableId="users-files-list"
-        columns={columns}
-        params={params}
-        onChangeParams={setParams}
-        queryResults={filesResult}
-        extraTools={[
-          () => <FileImportButton type={'USER'} buttonText="Import (Consumer User)" />,
-          () => <FileImportButton type={'BUSINESS'} buttonText="Import (Business User)" />,
-        ]}
-        fitHeight
-      />
+      <PageWrapperTableContainer>
+        <QueryResultsTable<TableListItem, CommonParams>
+          // headerTitle="Files"
+          rowKey="id"
+          tableId="users-files-list"
+          columns={columns}
+          params={params}
+          onChangeParams={setParams}
+          queryResults={filesResult}
+          extraTools={[
+            () => <FileImportButton type={'USER'} buttonText="Import (Consumer User)" />,
+            () => <FileImportButton type={'BUSINESS'} buttonText="Import (Business User)" />,
+          ]}
+          fitHeight
+        />
+      </PageWrapperTableContainer>
     </PageWrapper>
   );
 };

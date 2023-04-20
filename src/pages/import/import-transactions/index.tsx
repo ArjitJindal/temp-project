@@ -3,7 +3,7 @@ import { Tag } from 'antd';
 import { files } from './service';
 import { TableListItem } from './data';
 import { FileImportButton } from '@/components/file-import/FileImportButton';
-import PageWrapper from '@/components/PageWrapper';
+import PageWrapper, { PageWrapperTableContainer } from '@/components/PageWrapper';
 import { useI18n } from '@/locales';
 import { CommonParams, TableColumn } from '@/components/library/Table/types';
 import { DEFAULT_PARAMS_STATE } from '@/components/library/Table/consts';
@@ -87,16 +87,18 @@ const TableList: React.FC = () => {
   const i18n = useI18n();
   return (
     <PageWrapper title={i18n('menu.import.import-transactions')}>
-      <QueryResultsTable<TableListItem, CommonParams>
-        tableId={'transactions-files-list'}
-        rowKey="id"
-        queryResults={filesResult}
-        columns={columns}
-        params={params}
-        onChangeParams={setParams}
-        extraTools={[() => <FileImportButton type={'TRANSACTION'} />]}
-        fitHeight
-      />
+      <PageWrapperTableContainer>
+        <QueryResultsTable<TableListItem, CommonParams>
+          tableId={'transactions-files-list'}
+          rowKey="id"
+          queryResults={filesResult}
+          columns={columns}
+          params={params}
+          onChangeParams={setParams}
+          extraTools={[() => <FileImportButton type={'TRANSACTION'} />]}
+          fitHeight
+        />
+      </PageWrapperTableContainer>
     </PageWrapper>
   );
 };

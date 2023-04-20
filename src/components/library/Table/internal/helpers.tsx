@@ -244,7 +244,7 @@ export function useTanstackTable<Item extends object, Params extends object = Co
 
   const preparedData: TableRow<Item>[] = useMemo(() => {
     let rowIndex = 0;
-    return data.items.flatMap((item, itemIndex): TableRow<Item>[] => {
+    return (data.items ?? []).flatMap((item, itemIndex): TableRow<Item>[] => {
       if (isMultiRows(item)) {
         const rows = item.rows ?? [];
         return rows.map((row, i) => ({

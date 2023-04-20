@@ -117,7 +117,7 @@ export function usePaginatedQuery<TData = unknown, TQueryKey extends QueryKey = 
 }
 
 export function getTotal(data: PaginatedData<unknown>): number {
-  return data.total ?? data.items.length;
+  return data.total ?? data.items?.length ?? 0;
 }
 
 export function getPageCount(params: PaginationParams, data: PaginatedData<unknown>): number {
