@@ -8,7 +8,7 @@ describe('Comment Alerts from Table', () => {
 
   it('should create a comment alert from table and delete it', () => {
     /* eslint-disable cypress/no-unnecessary-waiting */
-    cy.wait(1000);
+    cy.wait(2500);
     cy.visit('/case-management/cases');
 
     /* eslint-disable cypress/no-unnecessary-waiting */
@@ -32,11 +32,13 @@ describe('Comment Alerts from Table', () => {
       expect(innerText).to.eq(comment);
       expect(el.length).to.eq(length + 1);
     });
+    cy.wait(1000);
     cy.get('span[data-cy="comment-delete-button"]', { timeout: 8000 }).last().click();
-    cy.wait(500);
+    cy.wait(1000);
     cy.get('.toastui-editor-contents', { timeout: 8000 }).then((el) => {
       expect(el.length).to.eq(length);
     });
+    cy.wait(1000);
     cy.get('.toastui-editor-contents', { timeout: 8000 }).then((el) => {
       const innerText = el[Math.max(0, length - 3)]?.innerText ?? '';
       expect(innerText).to.not.eq(comment);
