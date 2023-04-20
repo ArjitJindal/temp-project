@@ -1,7 +1,9 @@
 import * as cdk from 'aws-cdk-lib'
+import * as guardduty from 'aws-cdk-lib/aws-guardduty'
 import { Duration } from 'aws-cdk-lib'
 import { Topic } from 'aws-cdk-lib/aws-sns'
 import { Construct } from 'constructs'
+import { Alarm, ComparisonOperator, Metric } from 'aws-cdk-lib/aws-cloudwatch'
 import { Config } from './configs/config'
 
 import {
@@ -189,5 +191,25 @@ export class CdkTarponAlarmsStack extends cdk.NestedStack {
         Duration.minutes(5)
       )
     }
+    // Create a GuardDuty Detector
+    const detector = new guardduty.CfnDetector(this, 'GuardDutyDetector', {
+      enable: true, // Enable GuardDuty
+    })
+    new Alarm(this, 'CloudWatchAlarm', {
+      alarmDescription: 'GuardDuty Finding Count Alarm',
+      alarmName: 'GuardDutyFindingCountAlarm',
+      comparisonOperator: ComparisonOperator.GREATER_THAN_THRESHOLD,
+      evaluationPeriods: 1,
+      threshold: 1,
+      metric: new Metric({
+        metricName: 'FindingsCount',
+        namespace: 'AWS/GuardDuty',
+        statistic: 'COUNT',
+        period: Duration.minutes(45),
+        dimensionsMap: {
+          DetectorId: detector.ref,
+        },
+      }),
+    })
   }
 }
