@@ -7,6 +7,7 @@ import { abortableFetch } from 'abortcontroller-polyfill/dist/cjs-ponyfill'
 import fetch, { Response } from 'cross-fetch'
 import timeoutSignal from 'timeout-signal'
 import { v4 as uuidv4 } from 'uuid'
+import _ from 'lodash'
 import { getWebhookSecrets } from '../../services/webhook/utils'
 import { WebhookDeliveryRepository } from '../../services/webhook/repositories/webhook-delivery-repository'
 import { WebhookRepository } from '../../services/webhook/repositories/webhook-repository'
@@ -19,6 +20,11 @@ import { logger } from '@/core/logger'
 import { getMongoDbClient } from '@/utils/mongoDBUtils'
 import { WebhookConfiguration } from '@/@types/openapi-internal/WebhookConfiguration'
 import { WebhookEvent } from '@/@types/openapi-public/WebhookEvent'
+import {
+  getContext,
+  getContextStorage,
+  updateLogMetadata,
+} from '@/core/utils/context'
 
 function getNotExpiredSecrets(keys: SecretsManagerWebhookSecrets): string[] {
   return Object.keys(keys).filter(
@@ -116,6 +122,12 @@ async function deliverWebhookEvent(
 
 async function handleWebhookDeliveryTask(record: SQSRecord) {
   const webhookDeliveryTask = JSON.parse(record.body) as WebhookDeliveryTask
+  updateLogMetadata({
+    tenantId: webhookDeliveryTask.tenantId,
+    event: webhookDeliveryTask.event,
+    webhookId: webhookDeliveryTask.webhookId,
+  })
+
   const mongoClient = await getMongoDbClient()
   const webhookRepository = new WebhookRepository(
     webhookDeliveryTask.tenantId,
@@ -158,7 +170,9 @@ export const webhookDeliveryHandler = lambdaConsumer()(
     const results = await Promise.allSettled(
       event.Records.map(async (record) => {
         try {
-          await handleWebhookDeliveryTask(record)
+          await getContextStorage().run(getContext() || {}, async () => {
+            await handleWebhookDeliveryTask(record)
+          })
         } catch (e) {
           logger.error(e)
           throw e

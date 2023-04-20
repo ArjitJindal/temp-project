@@ -5,6 +5,11 @@ import { BatchJobRunnerFactory } from './batch-job-runner-factory'
 import { lambdaConsumer } from '@/core/middlewares/lambda-consumer-middlewares'
 import { BatchJob } from '@/@types/batch-job'
 import { logger } from '@/core/logger'
+import {
+  getContext,
+  getContextStorage,
+  updateLogMetadata,
+} from '@/core/utils/context'
 
 type BatchRunType = 'LAMBDA' | 'FARGATE'
 export const LAMBDA_BATCH_JOB_RUN_TYPE: BatchRunType = 'LAMBDA'
@@ -53,5 +58,11 @@ export const jobDecisionHandler = async (
 export const jobRunnerHandler = async (job: BatchJob) => {
   logger.info(`Starting job - ${job.type}`, job)
   const jobRunner = BatchJobRunnerFactory.getBatchJobRunner(job.type)
-  return jobRunner.run(job)
+  return getContextStorage().run(getContext() || {}, async () => {
+    updateLogMetadata({
+      tenantId: job.tenantId,
+      type: job.type,
+    })
+    return jobRunner.run(job)
+  })
 }
