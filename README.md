@@ -283,7 +283,7 @@ For example, if you want to use the transactions from tenant A
 6. Start your local tarpon public api (`npm run dev:api:public`)
 7. Start your local phytoplankton
 8. Configure the rules you want to run in your local Console
-9. Run `npm run verify-remote-transactions `
+9. Run `npm run verify-remote-transactions`
 
 - The rules result for the transactions will be saved in `scripts/debug-rule/.output/`
 

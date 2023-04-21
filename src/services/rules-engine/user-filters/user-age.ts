@@ -46,18 +46,11 @@ export class UserAgeRuleFilter extends UserRuleFilter<UserAgeRuleFilterParameter
     const businessUser = user as Business // For typescript
 
     let ageInMs = 0
-    if (isConsumerUser(user)) {
-      if (!consumerUser.userDetails?.dateOfBirth) {
-        return false
-      }
+    if (isConsumerUser(user) && consumerUser.userDetails?.dateOfBirth) {
       ageInMs = dayjs().diff(dayjs(consumerUser.userDetails.dateOfBirth), 'ms')
-    } else {
-      if (
-        !businessUser.legalEntity?.companyRegistrationDetails
-          ?.dateOfRegistration
-      ) {
-        return false
-      }
+    } else if (
+      businessUser.legalEntity?.companyRegistrationDetails?.dateOfRegistration
+    ) {
       ageInMs = dayjs().diff(
         dayjs(
           businessUser.legalEntity?.companyRegistrationDetails
