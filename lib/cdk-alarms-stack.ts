@@ -204,7 +204,7 @@ export class CdkTarponAlarmsStack extends cdk.NestedStack {
       metric: new Metric({
         metricName: 'FindingsCount',
         namespace: 'AWS/GuardDuty',
-        statistic: 'COUNT',
+        statistic: 'Sum',
         period: Duration.minutes(45),
         dimensionsMap: {
           DetectorId: detector.ref,
