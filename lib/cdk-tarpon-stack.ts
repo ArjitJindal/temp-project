@@ -1644,6 +1644,7 @@ export class CdkTarponStack extends cdk.Stack {
             ),
           },
           AWS_XRAY_CONTEXT_MISSING: 'LOG_ERROR',
+          AWS_NODEJS_CONNECTION_REUSE_ENABLED: '1',
           AUDITLOG_TOPIC_ARN: this.auditLogTopic?.topicArn,
           BATCH_JOB_QUEUE_URL: this.batchJobQueue?.queueUrl,
           // NOTE: RELEASE_VERSION and LAMBDA_CODE_PATH used for Sentry
