@@ -75,6 +75,15 @@ export const simulationHandler = lambdaApi()(
             simulationParameters
           )
 
+        if (simulationParameters.type === 'BEACON') {
+          const defaultRuleInstance = simulationParameters.defaultRuleInstance
+          if (defaultRuleInstance.type === 'USER') {
+            throw new BadRequest(
+              'User rule is not supported for beacon simulation'
+            )
+          }
+        }
+
         for (let i = 0; i < taskIds.length; i++) {
           if (taskIds[i] && simulationParameters.parameters[i])
             await sendBatchJobCommand(tenantId, {
