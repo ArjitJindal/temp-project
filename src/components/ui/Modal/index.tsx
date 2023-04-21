@@ -16,6 +16,8 @@ interface Props {
   okText?: string;
   okProps?: ButtonProps;
   cancelText?: string;
+  width?: number | string;
+  className?: string;
 }
 
 export default function Modal(props: Props) {
@@ -30,11 +32,13 @@ export default function Modal(props: Props) {
     onCancel,
     children,
     hideFooter = false,
+    width,
+    className,
   } = props;
 
   return (
     <AntModal
-      className={cn(s.root)}
+      className={cn(s.root, className)}
       title={
         <div className={s.header}>
           <div className={s.headerLeft}>
@@ -56,6 +60,7 @@ export default function Modal(props: Props) {
       onOk={onOk}
       okButtonProps={okProps}
       footer={hideFooter ? false : undefined}
+      width={width}
     >
       {children}
     </AntModal>

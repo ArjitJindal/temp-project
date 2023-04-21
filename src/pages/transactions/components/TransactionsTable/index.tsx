@@ -1,4 +1,4 @@
-import React, { useCallback, useMemo, useState } from 'react';
+import React, { useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
 import DetailsViewButton from '../DetailsViewButton';
 import {
@@ -87,9 +87,23 @@ type Props = {
   headerSubtitle?: string;
   fitHeight?: boolean | number;
   showCheckedTransactionsButton?: boolean;
-  isCheckedTransactionsEnabled?: boolean;
-  setIsCheckedTransactionsEnabled?: React.Dispatch<React.SetStateAction<boolean>>;
   alert?: Alert;
+  caseUserId?: string;
+  isModalVisible?: boolean;
+  setIsModalVisible?: React.Dispatch<React.SetStateAction<boolean>>;
+  paginationBorder?: boolean;
+};
+
+export const getStatus = (
+  executedRules: ExecutedRulesResult[],
+  alert: Alert | undefined,
+): RuleAction | undefined => {
+  if (alert) {
+    const ruleInstanceId = alert?.ruleInstanceId;
+    const executedRule = executedRules.find((rule) => rule.ruleInstanceId === ruleInstanceId);
+    return executedRule?.ruleHit ? executedRule?.ruleAction : 'ALLOW';
+  }
+  return undefined;
 };
 
 export default function TransactionsTable(props: Props) {
@@ -105,22 +119,10 @@ export default function TransactionsTable(props: Props) {
     onChangeParams,
     fitHeight,
     showCheckedTransactionsButton = false,
-    isCheckedTransactionsEnabled,
-    setIsCheckedTransactionsEnabled,
     alert,
+    isModalVisible,
+    setIsModalVisible,
   } = props;
-
-  const getStatus = useCallback(
-    (executedRules: ExecutedRulesResult[]): RuleAction | undefined => {
-      if (alert) {
-        const ruleInstanceId = alert?.ruleInstanceId;
-        const executedRule = executedRules.find((rule) => rule.ruleInstanceId === ruleInstanceId);
-        return executedRule?.ruleHit ? executedRule?.ruleAction : 'ALLOW';
-      }
-      return undefined;
-    },
-    [alert],
-  );
 
   const columns: TableColumn<InternalTransaction>[] = useMemo(() => {
     const helper = new ColumnHelper<InternalTransaction>();
@@ -161,7 +163,7 @@ export default function TransactionsTable(props: Props) {
               title: 'Status',
               defaultWidth: 80,
               key: 'executedRules.ruleAction',
-              value: (entity) => getStatus(entity.executedRules),
+              value: (entity) => getStatus(entity.executedRules, alert),
               type: {
                 render: (status) => {
                   return status ? (
@@ -281,7 +283,7 @@ export default function TransactionsTable(props: Props) {
         key: 'tags',
       }),
     ]);
-  }, [alert, getStatus, showDetailsView, isPulseEnabled]);
+  }, [alert, showDetailsView, isPulseEnabled]);
 
   const fullExtraFilters: ExtraFilter<TransactionsTableParams>[] = [
     ...(extraFilters ?? []),
@@ -327,21 +329,22 @@ export default function TransactionsTable(props: Props) {
       hideFilters={hideSearchForm}
       disableSorting={disableSorting}
       fitHeight={fitHeight}
+      paginationBorder
       extraTools={[
         () => (
           <>
             {showCheckedTransactionsButton && (
               <Button
                 onClick={() => {
-                  if (setIsCheckedTransactionsEnabled) {
-                    setIsCheckedTransactionsEnabled((prevState) => !prevState);
+                  if (setIsModalVisible) {
+                    setIsModalVisible((prevState) => !prevState);
                   }
                 }}
                 type="TETRIARY"
                 size="MEDIUM"
                 style={{ marginRight: 8 }}
               >
-                {isCheckedTransactionsEnabled ? 'Hide' : 'Show'} checked #TX's
+                {isModalVisible ? 'Hide' : 'View'} checked #TX's
               </Button>
             )}
             <DetailsViewButton

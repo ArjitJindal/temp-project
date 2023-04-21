@@ -56,6 +56,7 @@ export interface Props<Item extends object, Params extends object = CommonParams
   externalHeader?: boolean;
   onPaginateData?: (params: PaginationParams) => Promise<TableData<Item>>;
   onReload?: () => void;
+  paginationBorder?: boolean;
 }
 
 function Table<Item extends object, Params extends object = CommonParams>(
@@ -83,6 +84,7 @@ function Table<Item extends object, Params extends object = CommonParams>(
     renderExpanded,
     defaultSorting,
     onReload,
+    paginationBorder = false,
   } = props;
 
   const dataRes: AsyncResource<TableData<Item>> = useMemo(() => {
@@ -312,6 +314,7 @@ function Table<Item extends object, Params extends object = CommonParams>(
           pageSize={params?.pageSize ?? DEFAULT_PAGE_SIZE}
           onChange={(page, pageSize) => handleChangeParamsPaginated({ ...params, page, pageSize })}
           total={data.total ?? data.items.length}
+          paginationBorder={paginationBorder}
         />
       )}
     </div>

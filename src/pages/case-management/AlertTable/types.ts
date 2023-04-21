@@ -6,4 +6,5 @@ export interface TableAlertItem extends Alert {
   caseCreatedTimestamp?: number;
   caseUserName?: string;
   age?: string;
+  caseUserId: string;
 }

@@ -30,11 +30,14 @@ import { BOOLEAN, DATE } from '@/components/library/Table/standardDataTypes';
 import { message } from '@/components/library/Message';
 import { PageWrapperTableContainer } from '@/components/PageWrapper';
 import { DEFAULT_PARAMS_STATE } from '@/components/library/Table/consts';
+import { useScrollToFocus } from '@/utils/hooks';
+import { parseQueryString } from '@/utils/routing';
 
 const DEFAULT_SORTING: SortingParamsItem = ['ruleId', 'ascend'];
 
 const MyRule = () => {
   usePageViewTracker('My Rule Page');
+  useScrollToFocus();
   const [ruleReadOnly, setRuleReadOnly] = useState<boolean>(false);
   const isPulseEnabled = useFeatureEnabled('PULSE');
   const api = useApi();
@@ -71,6 +74,8 @@ const MyRule = () => {
     ...DEFAULT_PARAMS_STATE,
     sort: [DEFAULT_SORTING],
   });
+
+  const focusId = useMemo(() => parseQueryString(location.search).focus, []);
 
   const [deleting, setDeleting] = useState(false);
   const [currentRow, setCurrentRow] = useState<RuleInstance>();
@@ -145,6 +150,7 @@ const MyRule = () => {
                 onClick={() => {
                   onViewRule(entity);
                 }}
+                id={entity.id ?? ''}
               >
                 {ruleId ? getRuleInstanceDisplayId(ruleId, entity.id) : entity.id}
               </a>
@@ -281,6 +287,12 @@ const MyRule = () => {
   const measure = useApiTime();
   const rulesResult = usePaginatedQuery(GET_RULE_INSTANCES(params), async () => {
     const ruleInstances = await measure(() => api.getRuleInstances(), 'Get Rule Instances');
+    if (focusId) {
+      const ruleInstance = ruleInstances.find((r) => r.id === focusId);
+      if (ruleInstance) {
+        onViewRule(ruleInstance);
+      }
+    }
 
     const result = [...ruleInstances];
     if (params.sort.length > 0) {

@@ -425,8 +425,8 @@ export default function AlertTable(props: Props) {
 }
 
 function presentAlertData(data: AlertListResponseItem[]) {
-  return data.map(({ alert, ...rest }) => {
-    const caseUser = rest.caseUsers ?? {};
+  return data.map(({ alert, caseUsers, ...rest }) => {
+    const caseUser = caseUsers ?? {};
     const user = caseUser.origin ?? caseUser.destination ?? undefined;
     const duration = dayjs.duration(Date.now() - alert.createdTimestamp);
     return {
@@ -434,6 +434,7 @@ function presentAlertData(data: AlertListResponseItem[]) {
       caseCreatedTimestamp: rest.caseCreatedTimestamp,
       caseUserName: getUserName(user),
       age: pluralize('day', Math.floor(duration.asDays()), true),
+      caseUserId: caseUsers?.origin?.userId ?? caseUsers?.destination?.userId ?? '',
     };
   });
 }

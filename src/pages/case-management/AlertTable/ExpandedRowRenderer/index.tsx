@@ -1,9 +1,9 @@
+import { TableAlertItem } from '../types';
 import TransactionsAndComments from './TransactionsAndComments';
 import ScreeningMatchList from './ScreeningMatchList';
-import { Alert } from '@/apis';
 
 interface Props {
-  alert: Alert;
+  alert: TableAlertItem;
 }
 
 export default function ExpandedRowRenderer(props: Props) {

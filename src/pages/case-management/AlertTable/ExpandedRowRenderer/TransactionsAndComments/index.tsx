@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { TableAlertItem } from '../../types';
 import Comments from './Comments';
 import { usePaginatedQuery, useQuery } from '@/utils/queries/hooks';
 import { ALERT_ITEM, ALERT_ITEM_TRANSACTION_LIST } from '@/utils/queries/keys';
@@ -9,25 +10,24 @@ import TransactionsTable, {
   TransactionsTableParams,
 } from '@/pages/transactions/components/TransactionsTable';
 import Tabs from '@/components/library/Tabs';
-import { Alert } from '@/apis';
-import AsyncResourceRenderer from '@/components/common/AsyncResourceRenderer';
+import DisplayCheckedTransactions from '@/pages/transactions/components/TransactionsTable/DisplayCheckedTransactions';
 
 interface Props {
-  alert: Alert;
+  alert: TableAlertItem;
 }
 
 export default function TransactionsAndComments(props: Props) {
   const { alert } = props;
+  const [isModalVisible, setIsModalVisible] = useState(false);
   const alertId = alert.alertId;
 
   const api = useApi();
   const measure = useApiTime();
 
   const [params, setParams] = useState<TransactionsTableParams>(DEFAULT_PARAMS_STATE);
-  const [isCheckedTransactionsEnabled, setIsCheckedTransactionsEnabled] = useState(false);
 
   const transactionsResponse = usePaginatedQuery(
-    ALERT_ITEM_TRANSACTION_LIST(alertId ?? '', { ...params, isCheckedTransactionsEnabled }),
+    ALERT_ITEM_TRANSACTION_LIST(alertId ?? '', { ...params }),
     async (paginationParams) => {
       if (alertId == null) {
         throw new Error(`Unable to fetch transactions for alert, it's id is empty`);
@@ -37,7 +37,6 @@ export default function TransactionsAndComments(props: Props) {
           api.getAlertTransactionList({
             ...params,
             alertId: alertId,
-            showExecutedTransactions: isCheckedTransactionsEnabled,
             ...paginationParams,
           }),
         'Get Alert Transactions',
@@ -70,20 +69,26 @@ export default function TransactionsAndComments(props: Props) {
           tab: 'Transactions details',
           key: 'transactions',
           children: (
-            <AsyncResourceRenderer resource={alertResponse.data}>
-              {(alert) => (
-                <TransactionsTable
-                  queryResult={transactionsResponse}
-                  params={params}
-                  onChangeParams={setParams}
-                  adjustPagination={true}
-                  showCheckedTransactionsButton={true}
-                  isCheckedTransactionsEnabled={isCheckedTransactionsEnabled}
-                  setIsCheckedTransactionsEnabled={setIsCheckedTransactionsEnabled}
+            <>
+              <TransactionsTable
+                queryResult={transactionsResponse}
+                params={params}
+                onChangeParams={setParams}
+                adjustPagination={true}
+                showCheckedTransactionsButton={true}
+                isModalVisible={isModalVisible}
+                setIsModalVisible={setIsModalVisible}
+                alert={alert}
+              />
+              {isModalVisible && alert && (
+                <DisplayCheckedTransactions
+                  visible={isModalVisible}
+                  setVisible={setIsModalVisible}
                   alert={alert}
+                  caseUserId={alert.caseUserId}
                 />
               )}
-            </AsyncResourceRenderer>
+            </>
           ),
         },
         {
