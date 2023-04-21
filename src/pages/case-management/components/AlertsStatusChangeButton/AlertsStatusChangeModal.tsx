@@ -11,7 +11,7 @@ import { message } from '@/components/library/Message';
 import { getErrorMessage } from '@/utils/lang';
 
 interface Props extends Omit<StatusChangeModalProps, 'entityName' | 'updateMutation'> {
-  caseId: string;
+  caseId?: string;
 }
 
 export default function AlertsStatusChangeModal(props: Props) {
@@ -38,7 +38,7 @@ export default function AlertsStatusChangeModal(props: Props) {
     }
 
     try {
-      if (updates.alertStatus === 'ESCALATED') {
+      if (updates.alertStatus === 'ESCALATED' && props.caseId) {
         await api.postCasesCaseIdEscalate({
           caseId: props.caseId,
           CaseEscalationRequest: {

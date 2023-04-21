@@ -1,4 +1,5 @@
 import { Input } from 'antd';
+import { TextAreaRef } from 'antd/lib/input/TextArea';
 import s from './styles.module.less';
 
 export interface Props {
@@ -8,6 +9,7 @@ export interface Props {
   maxLength?: number;
   rows?: number;
   placeholder?: string;
+  ref?: React.Ref<TextAreaRef>;
 }
 
 export default function TextArea(props: Props) {
@@ -21,6 +23,7 @@ export default function TextArea(props: Props) {
       rows={rows}
       placeholder={placeholder}
       className={s.textArea}
+      ref={props.ref}
     />
   );
 }

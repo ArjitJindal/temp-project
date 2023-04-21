@@ -40,3 +40,25 @@
     }
   }
 }
+
+.narrativeTemplateSelectContainer {
+  display: flex;
+  flex-direction: row;
+  width: fit-content;
+  justify-content: end;
+  float: right;
+  margin-top: -32px;
+
+  :global {
+    .ant-select-arrow,
+    .ant-select-selection-placeholder,
+    .ant-select-item-option-content,
+    .ant-select-selection-item {
+      color: @fr-colors-brandBlue !important;
+    }
+
+    .ant-select-selector {
+      border: none !important;
+    }
+  }
+}

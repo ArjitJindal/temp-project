@@ -19,7 +19,7 @@ export const success: ShowMessage = (message: string) => {
 };
 
 export const fatal: ShowMessageWithOptionalError = (message: string, error: any | unknown) => {
-  if (!errorsCaptured.includes(message) && process.env.ENV !== 'local') {
+  if (!errorsCaptured.includes(message) && process.env.ENV_NAME !== 'local') {
     errorsCaptured.push(message); // prevent duplicate errors
     Sentry.captureException(error);
   }

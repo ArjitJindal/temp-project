@@ -356,44 +356,58 @@ export default function AlertTable(props: Props) {
         pagination={isEmbedded ? 'HIDE_FOR_ONE_PAGE' : true}
         selectionActions={[
           ({ selectedIds }) => <AssignToButton ids={selectedIds} onSelect={handleAssignTo} />,
-          escalationEnabled
-            ? ({ selectedIds, selectedItems, params }) => {
-                const selectedStatuses = [
-                  ...new Set(
-                    Object.values(selectedItems).map((item) => {
-                      return item.alertStatus === 'CLOSED' ? 'CLOSED' : 'OPEN';
-                    }),
-                  ),
-                ];
 
-                const statusChangeButtonValue =
-                  selectedStatuses.length === 1 ? selectedStatuses[0] : undefined;
+          ({ selectedIds, selectedItems, params }) => {
+            const selectedStatuses = [
+              ...new Set(
+                Object.values(selectedItems).map((item) => {
+                  return item.alertStatus === 'CLOSED' ? 'CLOSED' : 'OPEN';
+                }),
+              ),
+            ];
 
-                return (
-                  params.caseId &&
-                  statusChangeButtonValue &&
-                  params.alertStatus != 'ESCALATED' && (
-                    <AlertsStatusChangeButton
-                      ids={selectedIds}
-                      onSaved={reloadTable}
-                      status={params.alertStatus ?? statusChangeButtonValue}
-                      caseId={params.caseId}
-                    />
-                  )
-                );
-              }
-            : ({ selectedIds, params }) => {
-                return (
-                  params.caseId && (
-                    <AlertsStatusChangeButton
-                      ids={selectedIds}
-                      onSaved={reloadTable}
-                      status={params.alertStatus}
-                      caseId={params.caseId}
-                    />
-                  )
-                );
-              },
+            const statusChangeButtonValue =
+              selectedStatuses.length === 1 ? selectedStatuses[0] : undefined;
+
+            const alertClosedBefore = Object.values(selectedItems).some((item) => {
+              return item.statusChanges?.some((statusChange) => {
+                return statusChange?.caseStatus === 'CLOSED';
+              });
+            });
+
+            return (
+              escalationEnabled &&
+              params.caseId &&
+              params.alertStatus != 'ESCALATED' &&
+              statusChangeButtonValue && (
+                <AlertsStatusChangeButton
+                  ids={selectedIds}
+                  onSaved={reloadTable}
+                  status={params.alertStatus ?? statusChangeButtonValue}
+                  caseId={params.caseId}
+                  statusTransitions={{
+                    OPEN: { status: 'ESCALATED', actionLabel: 'Escalate' },
+                    REOPENED: { status: 'ESCALATED', actionLabel: 'Escalate' },
+                    ESCALATED: {
+                      status: alertClosedBefore ? 'REOPENED' : 'OPEN',
+                      actionLabel: 'Send back',
+                    },
+                    CLOSED: { status: 'ESCALATED', actionLabel: 'Escalate' },
+                  }}
+                />
+              )
+            );
+          },
+          ({ selectedIds, params }) => {
+            return (
+              <AlertsStatusChangeButton
+                ids={selectedIds}
+                onSaved={reloadTable}
+                status={params.alertStatus}
+                caseId={params.caseId}
+              />
+            );
+          },
           ({ selectedIds, params, onResetSelection }) =>
             params.caseId && (
               <CreateCaseConfirmModal

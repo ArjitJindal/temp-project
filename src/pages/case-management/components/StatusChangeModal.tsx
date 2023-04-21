@@ -4,11 +4,13 @@ import pluralize from 'pluralize';
 import { UseMutationResult } from '@tanstack/react-query';
 import _ from 'lodash';
 import { statusToOperationName } from './StatusChangeButton';
+import NarrativesSelectStatusChange from './NarrativesSelectStatusChange';
 import { AlertStatus, CaseStatus, FileInfo } from '@/apis';
 import { CaseClosingReasons } from '@/apis/models/CaseClosingReasons';
 import { UploadFilesList } from '@/components/files/UploadFilesList';
 import { useDeepEqualEffect, usePrevious } from '@/utils/hooks';
 import { MAX_COMMENT_LENGTH } from '@/components/CommentEditor';
+import TextArea from '@/components/library/TextArea';
 
 export interface RemoveAllFilesRef {
   removeAllFiles: () => void;
@@ -104,6 +106,10 @@ export default function StatusChangeModal(props: Props) {
     ids.length,
     true,
   )}`;
+
+  const [narrative, setNarrative] = useState<string | undefined>(undefined);
+  const [commentValue, setCommentValue] = useState<string | undefined>(undefined);
+
   const caseIdsString = ids.join(', ');
   const uploadRef = useRef<RemoveAllFilesRef>(null);
 
@@ -132,9 +138,20 @@ export default function StatusChangeModal(props: Props) {
     updateMutation.mutate({
       ids: ids,
       newStatus,
-      formValues: { ...formValues, files: handleFiles([...fileList, ...formValues.files]) },
+      formValues: {
+        ...formValues,
+        files: handleFiles([...fileList, ...formValues.files]),
+        comment: commentValue?.trim() || null,
+      },
     });
   };
+
+  useEffect(() => {
+    if (narrative) {
+      setCommentValue(narrative);
+      setNarrative(undefined);
+    }
+  }, [narrative]);
 
   return (
     <>
@@ -189,10 +206,20 @@ export default function StatusChangeModal(props: Props) {
             </Form.Item>
           )}
           <Form.Item name="comment" label="Comment" rules={[{ max: MAX_COMMENT_LENGTH }]}>
-            <Input.TextArea
-              rows={4}
-              placeholder={`Write a narrative explaning the ${entityName} closure reason and findings, if any.`}
-            />
+            <>
+              <NarrativesSelectStatusChange
+                templateValue={narrative}
+                setTemplateValue={setNarrative}
+              />
+              <TextArea
+                rows={4}
+                placeholder={`Write a narrative explaning the ${entityName} closure reason and findings, if any.`}
+                value={commentValue || ''}
+                onChange={(comment) => {
+                  setCommentValue(comment);
+                }}
+              />
+            </>
           </Form.Item>
           <Form.Item name="files" label="Attach documents">
             <FilesInput

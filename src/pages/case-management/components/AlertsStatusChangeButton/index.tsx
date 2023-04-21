@@ -8,7 +8,7 @@ import StatusChangeButton from '@/pages/case-management/components/StatusChangeB
 interface Props {
   entityName?: string;
   ids: string[];
-  caseId: string;
+  caseId?: string;
   status?: AlertStatus;
   initialValues?: FormValues;
   buttonProps?: {
