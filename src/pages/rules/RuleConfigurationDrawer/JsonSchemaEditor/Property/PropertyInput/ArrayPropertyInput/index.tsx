@@ -31,10 +31,17 @@ export default function ArrayPropertyInput(props: Props) {
     schema.items.type === 'string'
   ) {
     const enumItems = schema.items.enum ?? [];
+    const enumNames: string[] = schema.items.enumNames ?? [];
+
+    const displayNames =
+      enumNames?.length && enumNames.length === enumItems.length ? enumNames : enumItems;
+
     return (
       <Select
         mode={enumItems.length === 0 ? 'TAGS' : 'MULTIPLE'}
-        options={enumItems.filter(isString).map((item) => ({ label: item, value: item }))}
+        options={enumItems
+          .filter(isString)
+          .map((item, i) => ({ label: displayNames[i] ?? item, value: item }))}
         placeholder={`Select multiple ${pluralize(uiSchema['ui:entityName'] ?? 'option')}`}
         {...(props as InputProps<string[]>)}
       />
