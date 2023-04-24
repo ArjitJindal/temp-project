@@ -47,10 +47,18 @@ describe('Comment Alerts from Table', () => {
             cy.get('button[data-cy="status-button"]').eq(0).click();
             cy.get('.ant-dropdown-menu-title-content').eq(0).click();
             /* eslint-disable-next-line cypress/no-unnecessary-waiting */
-            cy.wait(2000);
+            cy.wait(500);
             cy.get('table tbody tr').then((el) => {
               expect(el.length).to.gte(1);
             });
+            cy.get('button[data-cy="segmented-control-all"]').click();
+            cy.get('button[data-cy="status-button"]').eq(0).click();
+            cy.get('.ant-dropdown-menu-title-content').eq(1).click();
+            /* eslint-disable-next-line cypress/no-unnecessary-waiting */
+            cy.wait(3000);
+            cy.get('input[data-cy="header-table-checkbox"]').eq(0).click();
+            cy.get('button[data-cy="update-status-button"]').eq(1).click();
+            cy.get('.ant-modal-footer button').eq(1).click();
           });
       });
   });
