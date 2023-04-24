@@ -7,8 +7,6 @@ describe('Comment Alerts from Table', () => {
   });
 
   it('should create a comment alert from table and delete it', () => {
-    /* eslint-disable cypress/no-unnecessary-waiting */
-    cy.wait(3000);
     cy.visit('/case-management/cases', { timeout: 8000 });
 
     /* eslint-disable cypress/no-unnecessary-waiting */

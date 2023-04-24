@@ -69,7 +69,9 @@ function open(message: string, type: 'SUCCESS' | 'ERROR' | 'LOADING' | 'WARNING'
     type: antType,
     content: (
       <div className={s.message}>
-        <div className={s.messageText}>{message}</div>
+        <div className={s.messageText} data-cy="ant-message-popup">
+          {message}
+        </div>
         {isClosable && (
           <div
             className={s.closeIcon}

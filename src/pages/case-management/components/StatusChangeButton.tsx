@@ -77,6 +77,7 @@ export default function StatusChangeButton(props: Props) {
           }}
           isDisabled={!ids.length}
           size={buttonProps.size}
+          testName="update-status-button"
         >
           {overridenStatus?.actionLabel ?? statusToOperationName(newStatus)}
         </Button>

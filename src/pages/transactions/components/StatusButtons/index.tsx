@@ -30,7 +30,7 @@ export default function StatusButtons(props: Props) {
           onChange(option.value as CaseStatus | AlertStatus);
         }}
       >
-        <Button type="SECONDARY">
+        <Button type="SECONDARY" testName="status-button">
           {options.find(({ value }) => value === status)?.label}
           <ArrowDownSLineIcon className={s.arrowIcon} />
         </Button>

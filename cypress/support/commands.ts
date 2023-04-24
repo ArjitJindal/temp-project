@@ -13,6 +13,8 @@ Cypress.Commands.add('loginByForm', (username: string, password: string) => {
     'eq',
     new URL(Cypress.config('baseUrl') as string).host,
   );
+  /* eslint-disable-next-line cypress/no-unnecessary-waiting */
+  cy.wait(3000);
 });
 
 Cypress.on('uncaught:exception', (err) => {
@@ -62,4 +64,16 @@ Cypress.Commands.add('loginByRequest', (username: string, password: string) => {
       cy.reload();
     });
   });
+});
+
+Cypress.Commands.add('multiSelect', (preSelector, text) => {
+  cy.get(
+    `${preSelector} .ant-select > .ant-select-selector > .ant-select-selection-overflow`,
+  ).click();
+  cy.get(`.ant-select .ant-select-selection-search input`)
+    .invoke('attr', 'id')
+    .then((_) => {
+      cy.get(`${preSelector} .ant-select .ant-select-selection-search input`).eq(0).type(`${text}`);
+      cy.get(`div[title="${text}"]`).click();
+    });
 });
