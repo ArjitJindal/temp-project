@@ -16,13 +16,12 @@ import {
 } from '@/@types/openapi-internal/RequestParameters'
 import { getCredentialsFromEvent } from '@/utils/credentials'
 import { SimulationPulseParametersRequest } from '@/@types/openapi-internal/SimulationPulseParametersRequest'
-import { hasFeature } from '@/core/utils/context'
 import { TenantRepository } from '@/services/tenants/repositories/tenant-repository'
 import { getDynamoDbClientByEvent } from '@/utils/dynamodb'
 import { SimulationSettings } from '@/@types/openapi-internal/SimulationSettings'
 import { SimulationBeaconParametersRequest } from '@/@types/openapi-internal/SimulationBeaconParametersRequest'
 
-export const simulationHandler = lambdaApi()(
+export const simulationHandler = lambdaApi({ requiredFeatures: ['SIMULATOR'] })(
   async (
     event: APIGatewayProxyWithLambdaAuthorizerEvent<
       APIGatewayEventLambdaAuthorizerContext<JWTAuthorizerResult>
@@ -39,10 +38,6 @@ export const simulationHandler = lambdaApi()(
       tenantId,
       mongoDb
     )
-
-    if (!hasFeature('SIMULATOR')) {
-      throw new BadRequest('Feature not enabled')
-    }
 
     if (event.resource === '/simulation') {
       if (event.httpMethod === 'GET') {
