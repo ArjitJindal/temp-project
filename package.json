@@ -178,6 +178,7 @@
     "@aws-sdk/client-sns": "^3.202.0",
     "@aws-sdk/client-sqs": "^3.145.0",
     "@aws-sdk/lib-dynamodb": "^3.183.0",
+    "@aws-sdk/shared-ini-file-loader": "^3.310.0",
     "@aws-sdk/util-arn-parser": "^3.47.1",
     "@fast-csv/format": "^4.3.5",
     "@fast-csv/parse": "^4.3.6",
