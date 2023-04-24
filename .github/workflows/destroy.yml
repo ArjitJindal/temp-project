@@ -35,4 +35,3 @@ jobs:
           export QA_SUBDOMAIN="qa$(echo "${{ github.head_ref }}" | shasum | head -c5)"
           echo "Destroying QA deploy for $QA_SUBDOMAIN.console.flagright.dev"
           yarn run destroy:qa
-

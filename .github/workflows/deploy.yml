@@ -6,7 +6,7 @@ defaults:
 
 on:
   issue_comment:
-    types: [ created ]
+    types: [created]
 
 jobs:
   deploy:
@@ -40,26 +40,26 @@ jobs:
         with:
           repository: flagright/tarpon
           token: ${{ secrets.DEPLOY_PAT }}
-          path: "tarpon"
+          path: 'tarpon'
       - name: Use Node.js ${{ matrix.node-version }}
         if: steps.check.outputs.triggered == 'true'
         uses: actions/setup-node@v3
         with:
           node-version: ${{ matrix.node-version }}
           cache: 'npm'
-          cache-dependency-path: "tarpon/package-lock.json"
+          cache-dependency-path: 'tarpon/package-lock.json'
       - run: npm ci
         if: steps.check.outputs.triggered == 'true'
-        working-directory: "tarpon"
+        working-directory: 'tarpon'
       - run: npm run openapi:prepare
         if: steps.check.outputs.triggered == 'true'
-        working-directory: "tarpon"
+        working-directory: 'tarpon'
       - name: Checkout PR branch
         if: steps.check.outputs.triggered == 'true'
         uses: actions/checkout@v3
         with:
           ref: ${{ steps.comment-branch.outputs.head_ref }}
-          path: "phytoplankton-console"
+          path: 'phytoplankton-console'
           clean: false
       - name: Use Node.js ${{ matrix.node-version }}
         if: steps.check.outputs.triggered == 'true'
@@ -67,7 +67,7 @@ jobs:
         with:
           node-version: ${{ matrix.node-version }}
           cache: 'yarn'
-          cache-dependency-path: "phytoplankton-console/yarn.lock"
+          cache-dependency-path: 'phytoplankton-console/yarn.lock'
       - name: Deploy
         if: steps.check.outputs.triggered == 'true'
         id: deploy

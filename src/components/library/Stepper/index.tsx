@@ -3,7 +3,6 @@ import cn from 'clsx';
 import s from './style.module.less';
 import CheckLineIcon from '@/components/ui/icons/Remix/system/check-line.react.svg';
 import MoreLineIcon from '@/components/ui/icons/Remix/system/more-line.react.svg';
-
 type Step = {
   key: string;
   title: string;
@@ -11,16 +10,21 @@ type Step = {
   isOptional?: boolean;
   isUnfilled?: boolean;
 };
-
 interface Props {
   steps: Step[];
   active: string;
+  onChange: (key: string) => void;
   children?: (active: string) => React.ReactNode;
 }
 
 export default function Stepper(props: Props) {
-  const { active, steps, children } = props;
+  const { active, steps, onChange, children } = props;
   const number = steps.findIndex(({ key }) => key === active);
+
+  const handleStepClick = (stepKey: string) => {
+    onChange(stepKey);
+  };
+
   return (
     <div className={s.root}>
       <div className={s.steps}>
@@ -36,6 +40,7 @@ export default function Stepper(props: Props) {
                 [s.isActive]: isActive,
                 [s.inUnfilled]: isUnfilled,
               })}
+              onClick={() => handleStepClick(step.key)}
             >
               <div className={s.stepNumber}>
                 {isPassed && (isUnfilled ? <MoreLineIcon /> : <CheckLineIcon />)}

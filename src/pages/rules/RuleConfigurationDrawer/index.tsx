@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { EditOutlined } from '@ant-design/icons';
 import s from './style.module.less';
 import TransactionIcon from './transaction-icon.react.svg';
@@ -26,7 +26,6 @@ import NestedForm from '@/components/library/Form/NestedForm';
 import HistoryLineIcon from '@/components/ui/icons/Remix/system/history-line.react.svg';
 import { notEmpty } from '@/components/library/Form/utils/validation/basicValidators';
 import { validateField } from '@/components/library/Form/utils/validation/utils';
-import { FieldValidators } from '@/components/library/Form/utils/validation/types';
 import {
   getOrderedProps,
   makeDefaultState,
@@ -104,71 +103,78 @@ export default function RuleConfigurationDrawer(props: RuleConfigurationDrawerPr
   const formId = useId(`form-`);
 
   const ruleParametersValidators = makeValidators(orderedProps);
-  const fieldValidators: FieldValidators<FormValues> = {
-    basicDetailsStep: {},
-    ruleParametersStep: {
-      riskLevelActions: isPulseEnabled
-        ? {
-            VERY_HIGH: notEmpty,
-            HIGH: notEmpty,
-            MEDIUM: notEmpty,
-            LOW: notEmpty,
-            VERY_LOW: notEmpty,
-          }
-        : undefined,
-      ruleAction: isPulseEnabled ? undefined : notEmpty,
-      ruleParameters: isPulseEnabled ? undefined : ruleParametersValidators,
-      riskLevelParameters: isPulseEnabled
-        ? {
-            VERY_HIGH: ruleParametersValidators,
-            HIGH: ruleParametersValidators,
-            MEDIUM: ruleParametersValidators,
-            LOW: ruleParametersValidators,
-            VERY_LOW: ruleParametersValidators,
-          }
-        : undefined,
-    },
-  };
+  const fieldValidators = useMemo(() => {
+    return {
+      basicDetailsStep: {},
+      standardFiltersStep: {},
+      ruleParametersStep: {
+        riskLevelActions: isPulseEnabled
+          ? {
+              VERY_HIGH: notEmpty,
+              HIGH: notEmpty,
+              MEDIUM: notEmpty,
+              LOW: notEmpty,
+              VERY_LOW: notEmpty,
+            }
+          : undefined,
+        ruleAction: isPulseEnabled ? undefined : notEmpty,
+        ruleParameters: isPulseEnabled ? undefined : ruleParametersValidators,
+        riskLevelParameters: isPulseEnabled
+          ? {
+              VERY_HIGH: ruleParametersValidators,
+              HIGH: ruleParametersValidators,
+              MEDIUM: ruleParametersValidators,
+              LOW: ruleParametersValidators,
+              VERY_LOW: ruleParametersValidators,
+            }
+          : undefined,
+      },
+    };
+  }, [isPulseEnabled, ruleParametersValidators]);
   const [formState, setFormState] = useState<FormValues>(initialValues);
 
-  const STEPS = [
-    {
-      key: BASIC_DETAILS_STEP,
-      title: 'Basic details',
-      isUnfilled:
-        validateField(fieldValidators.basicDetailsStep, formState?.basicDetailsStep) != null,
-      description: 'Configure the basic details for this rule',
-      tabs: [{ key: 'rule_details', title: 'Rule details' }],
-    },
-    {
-      key: STANDARD_FILTERS_STEP,
-      title: 'Standard filters',
-      isOptional: true,
-      isUnfilled:
-        validateField(fieldValidators.standardFiltersStep, formState?.standardFiltersStep) != null,
-      description: 'Configure filters that are common for all the rules',
-      tabs: [
-        { key: 'user_details', icon: <User3LineIcon />, title: 'User details' },
-        { key: 'geography_details', icon: <EarthLineIcon />, title: 'Geography details' },
-        { key: 'transaction_details', icon: <TransactionIcon />, title: 'Transaction details' },
-        {
-          key: 'transaction_details_historical',
-          icon: <HistoryLineIcon />,
-          title: 'Historical transactions',
-        },
-      ],
-    },
-    {
-      key: RULE_PARAMETERS_STEP,
-      title: 'Rule parameters',
-      isUnfilled:
-        validateField(fieldValidators.ruleParametersStep, formState?.ruleParametersStep) != null,
-      description: 'Configure filters & risk thresholds that are specific for this rule',
-      tabs: isPulseEnabled
-        ? [{ key: 'risk_based_thresholds', title: 'Risk-based thresholds' }]
-        : [{ key: 'rule_specific_filters', title: 'Rule-specific filters' }],
-    },
-  ];
+  const STEPS = useMemo(
+    () => [
+      {
+        key: BASIC_DETAILS_STEP,
+        title: 'Basic details',
+        isUnfilled:
+          validateField(fieldValidators.basicDetailsStep, formState?.basicDetailsStep) != null,
+        description: 'Configure the basic details for this rule',
+        tabs: [{ key: 'rule_details', title: 'Rule details' }],
+      },
+      {
+        key: STANDARD_FILTERS_STEP,
+        title: 'Standard filters',
+        isOptional: true,
+        isUnfilled:
+          validateField(fieldValidators.standardFiltersStep, formState?.standardFiltersStep) !=
+          null,
+        description: 'Configure filters that are common for all the rules',
+        tabs: [
+          { key: 'user_details', icon: <User3LineIcon />, title: 'User details' },
+          { key: 'geography_details', icon: <EarthLineIcon />, title: 'Geography details' },
+          { key: 'transaction_details', icon: <TransactionIcon />, title: 'Transaction details' },
+          {
+            key: 'transaction_details_historical',
+            icon: <HistoryLineIcon />,
+            title: 'Historical transactions',
+          },
+        ],
+      },
+      {
+        key: RULE_PARAMETERS_STEP,
+        title: 'Rule parameters',
+        isUnfilled:
+          validateField(fieldValidators.ruleParametersStep, formState?.ruleParametersStep) != null,
+        description: 'Configure filters & risk thresholds that are specific for this rule',
+        tabs: isPulseEnabled
+          ? [{ key: 'risk_based_thresholds', title: 'Risk-based thresholds' }]
+          : [{ key: 'rule_specific_filters', title: 'Rule-specific filters' }],
+      },
+    ],
+    [formState, fieldValidators, isPulseEnabled],
+  );
 
   const activeStepIndex = STEPS.findIndex(({ key }) => key === activeStepKey);
 
@@ -180,6 +186,14 @@ export default function RuleConfigurationDrawer(props: RuleConfigurationDrawerPr
       setAlwaysShowErrors(true);
     }
   };
+
+  const handleStepChange = useCallback(
+    (stepKey: string) => {
+      setActiveStepKey(stepKey);
+      setActiveTabKey(STEPS.find(({ key }) => key === stepKey)?.tabs[0]?.key || '');
+    },
+    [STEPS, setActiveStepKey, setActiveTabKey],
+  );
 
   return (
     <Form<FormValues>
@@ -253,12 +267,12 @@ export default function RuleConfigurationDrawer(props: RuleConfigurationDrawerPr
           </div>
         }
       >
-        <Stepper steps={STEPS} active={activeStepKey}>
+        <Stepper steps={STEPS} active={activeStepKey} onChange={handleStepChange}>
           {(activeStepKey) => {
             const activeStep = STEPS.find(({ key }) => key === activeStepKey);
             const items = activeStep?.tabs ?? [];
             if (rule == null) {
-              return <></>;
+              return;
             }
             return (
               <VerticalMenu

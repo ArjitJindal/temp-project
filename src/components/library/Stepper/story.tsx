@@ -28,7 +28,11 @@ export default function (): JSX.Element {
   ];
   return (
     <UseCase title={'Basic case'}>
-      <Component steps={steps} active={steps[active].key} />
+      <Component
+        steps={steps}
+        active={steps[active].key}
+        onChange={(newActive) => setActive(steps.findIndex((step) => step.key === newActive))}
+      />
       <br />
       <Button onClick={() => setActive((active) => (active + 1) % steps.length)}>
         Change step
