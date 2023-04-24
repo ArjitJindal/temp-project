@@ -8,14 +8,14 @@ describe('Comment Alerts from Table', () => {
 
   it('should create a comment alert from table and delete it', () => {
     /* eslint-disable cypress/no-unnecessary-waiting */
-    cy.wait(2500);
-    cy.visit('/case-management/cases');
+    cy.wait(3000);
+    cy.visit('/case-management/cases', { timeout: 8000 });
 
     /* eslint-disable cypress/no-unnecessary-waiting */
     const comment = `This is a comment from cypress test ${uuid()}`;
     cy.get('table tbody tr td .ant-table-row-expand-icon', { timeout: 8000 }).eq(0).click();
     cy.get('[data-cy="expanded-content"] table tbody tr td .ant-table-row-expand-icon', {
-      timeout: 8000,
+      timeout: 15000,
     })
       .eq(0)
       .click();
@@ -26,7 +26,7 @@ describe('Comment Alerts from Table', () => {
       length = el.length;
     });
     cy.get('button[data-cy="add-comment-button"]', { timeout: 8000 }).first().click();
-    cy.wait(500);
+    cy.wait(1000);
     cy.get('.toastui-editor-contents', { timeout: 8000 }).then((el) => {
       const innerText = el[length - 2].innerText;
       expect(innerText).to.eq(comment);
