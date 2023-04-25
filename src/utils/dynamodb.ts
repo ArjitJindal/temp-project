@@ -32,6 +32,8 @@ import { logger } from '@/core/logger'
 import { addNewSubsegment } from '@/core/xray'
 import { getContext, publishMetric } from '@/core/utils/context'
 
+let cacheClient: DynamoDBClient
+
 function getAugmentedDynamoDBCommand(command: any): {
   type: 'READ' | 'WRITE' | null
   command: any
@@ -134,6 +136,9 @@ export function getDynamoDbClientByEvent(
 export function getDynamoDbRawClient(
   credentials?: Credentials | CredentialsOptions
 ): DynamoDBClient {
+  if (cacheClient) {
+    return cacheClient
+  }
   const isLocal = process.env.ENV === 'local'
   const rawClient = new DynamoDBClient({
     requestHandler: new NodeHttpHandler({
@@ -150,6 +155,7 @@ export function getDynamoDbRawClient(
       ? process.env.DYNAMODB_URI || 'http://localhost:8000'
       : undefined,
   })
+  cacheClient = rawClient
   return rawClient
 }
 
