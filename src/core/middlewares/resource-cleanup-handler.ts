@@ -1,4 +1,4 @@
-import { getDynamoDbRawClient } from '@/utils/dynamodb'
+import { destroyCacheDynamoDbClients } from '@/utils/dynamodb'
 
 export const resourceCleanupHandler =
   () =>
@@ -7,7 +7,6 @@ export const resourceCleanupHandler =
     try {
       return handler(event, context)
     } finally {
-      const dynamodb = getDynamoDbRawClient()
-      dynamodb.destroy()
+      destroyCacheDynamoDbClients()
     }
   }
