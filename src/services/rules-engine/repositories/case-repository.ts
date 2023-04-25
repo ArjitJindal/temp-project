@@ -709,6 +709,14 @@ export class CaseRepository {
       })
     }
 
+    if (params.filterRulesHit?.length) {
+      conditions.push({
+        'alerts.ruleInstanceId': {
+          $in: params.filterRulesHit,
+        },
+      })
+    }
+
     if (
       params.filterAlertBeforeCreatedTimestamp != null &&
       params.filterAlertAfterCreatedTimestamp != null

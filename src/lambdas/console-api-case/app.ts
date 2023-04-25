@@ -362,6 +362,7 @@ export const casesHandler = lambdaApi()(
         filterAlertAfterCreatedTimestamp,
         filterCaseBeforeCreatedTimestamp,
         filterCaseAfterCreatedTimestamp,
+        filterRulesHit,
       } = event.queryStringParameters as Record<string, string>
       const params: DefaultApiGetAlertListRequest = {
         page: parseInt(page),
@@ -406,6 +407,7 @@ export const casesHandler = lambdaApi()(
         filterCaseAfterCreatedTimestamp: filterCaseAfterCreatedTimestamp
           ? parseInt(filterCaseAfterCreatedTimestamp)
           : undefined,
+        filterRulesHit: filterRulesHit?.split(',') as string[],
       }
       return caseService.getAlerts(params)
     } else if (
