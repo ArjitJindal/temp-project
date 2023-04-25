@@ -12,7 +12,11 @@ export const emfilesHandler =
       return handler(event, context)
     } finally {
       if (process.env.ENV !== 'local') {
-        await lambda_emfiles.final_check()
+        setTimeout(() => {
+          // Terminate the process and prevent the lambda to be reused by subsequent calls if emfiles
+          // count is too high
+          lambda_emfiles.final_check()
+        }, 1000)
       }
     }
   }
