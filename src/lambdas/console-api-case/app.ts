@@ -248,7 +248,7 @@ export const casesHandler = lambdaApi()(
       if (caseItem == null) {
         throw new NotFound(`Case not found: ${caseId}`)
       }
-      return caseItem
+      return caseResponse(caseItem)
     } else if (
       event.httpMethod === 'POST' &&
       event.resource === '/cases/{caseId}/comments' &&
@@ -484,7 +484,7 @@ export const casesHandler = lambdaApi()(
             await caseService.getCase(sourceCaseId)
           )?.alerts
         )
-        return newCase
+        return caseResponse(newCase)
       } finally {
         segment?.close()
       }
@@ -597,3 +597,13 @@ export const casesHandler = lambdaApi()(
     throw new NotFound('Unhandled request')
   }
 )
+
+function caseResponse(c: Case): Case {
+  c.caseTransactions = undefined
+  c.caseTransactionsIds = undefined
+  c.alerts?.map((a) => {
+    a.transactionIds = []
+    return a
+  })
+  return c
+}
