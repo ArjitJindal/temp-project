@@ -1,4 +1,5 @@
 import * as AWS from 'aws-sdk'
+import { NodeHttpHandler } from '@aws-sdk/node-http-handler'
 import {
   APIGatewayEventLambdaAuthorizerContext,
   APIGatewayProxyWithLambdaAuthorizerEvent,
@@ -135,6 +136,9 @@ export function getDynamoDbRawClient(
 ): DynamoDBClient {
   const isLocal = process.env.ENV === 'local'
   const rawClient = new DynamoDBClient({
+    requestHandler: new NodeHttpHandler({
+      socketTimeout: 10000, // this decreases the emfiles count, the Node.js default is 120000
+    }),
     credentials: isLocal
       ? {
           accessKeyId: 'fake',
