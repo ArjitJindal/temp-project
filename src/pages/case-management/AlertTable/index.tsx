@@ -228,6 +228,7 @@ export default function AlertTable(props: Props) {
         originMethodFilter,
         createdTimestamp,
         caseCreatedTimestamp,
+        rulesHitFilter,
       } = params;
       const [sortField, sortOrder] = sort[0] ?? [];
 
@@ -262,6 +263,7 @@ export default function AlertTable(props: Props) {
         filterUserId: userId,
         filterOriginPaymentMethod: originMethodFilter,
         filterDestinationPaymentMethod: destinationMethodFilter,
+        filterRulesHit: rulesHitFilter,
         sortField: sortField === 'age' ? 'createdTimestamp' : sortField,
         sortOrder: sortOrder ?? undefined,
         ...(createdTimestamp
