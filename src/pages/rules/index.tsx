@@ -118,7 +118,7 @@ const TableList = () => {
             <RulesTable
               onViewRule={(rule) => {
                 setCurrentRule(rule);
-                setRuleReadOnly(true);
+                setRuleReadOnly(false);
               }}
               onEditRule={(rule) => {
                 setCurrentRule(rule);
