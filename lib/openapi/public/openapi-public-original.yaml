@@ -2977,8 +2977,6 @@ components:
           minLength: 1
           type: string
           description: user ID the risk score pertains to
-        userRiskScoreDetails:
-          $ref: '#/components/schemas/RiskScoringResult'
       required:
         - userId
     ConsumerUsersResponse:
@@ -2997,8 +2995,6 @@ components:
           minLength: 1
           type: string
           description: user ID the risk score pertains to
-        userRiskScoreDetails:
-          $ref: '#/components/schemas/RiskScoringResult'
       required:
         - userId
     CardDetails:
