@@ -1,6 +1,7 @@
 import { LoadingOutlined } from '@ant-design/icons';
-import { useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { Link } from 'react-router-dom';
+import { useQueryClient } from '@tanstack/react-query';
 import GroupedColumn from '../components/Charts';
 import RiskClassificationTable, { parseApiState } from '../RiskClassificationTable';
 import s from './styles.module.less';
@@ -17,7 +18,11 @@ import {
 } from '@/apis';
 import { useApi } from '@/api';
 import { useQuery } from '@/utils/queries/hooks';
-import { SIMULATION_PULSE_JOB, SIMULATION_PULSE_JOB_ITERATION_RESULT } from '@/utils/queries/keys';
+import {
+  RISK_CLASSIFICATION_VALUES,
+  SIMULATION_PULSE_JOB,
+  SIMULATION_PULSE_JOB_ITERATION_RESULT,
+} from '@/utils/queries/keys';
 import AsyncResourceRenderer from '@/components/common/AsyncResourceRenderer';
 import { CommonParams, TableColumn } from '@/components/library/Table/types';
 import QueryResultsTable from '@/components/common/QueryResultsTable';
@@ -149,14 +154,20 @@ const IterationComponent = (props: IterationProps) => {
     sort: [['userId', 'ascend']],
   });
 
-  const getCount = (
-    label: 'Before' | 'After',
-    scoreType: SimulationPulseStatisticsRiskTypeEnum,
-    riskLevel: RiskLevel,
-  ) =>
-    iteration?.statistics?.[label === 'Before' ? 'current' : 'simulated']?.find(
-      (item) => item?.riskLevel === riskLevel && item.riskType === scoreType,
-    )?.count;
+  const getCount = useCallback(
+    (
+      label: 'Before' | 'After',
+      scoreType: SimulationPulseStatisticsRiskTypeEnum,
+      riskLevel: RiskLevel,
+    ) => {
+      return (
+        iteration?.statistics?.[label === 'Before' ? 'current' : 'simulated']?.find(
+          (item) => item?.riskLevel === riskLevel && item.riskType === scoreType,
+        )?.count ?? 0
+      );
+    },
+    [iteration],
+  );
 
   const api = useApi();
   const iterationQueryResults = useQuery(
@@ -179,27 +190,30 @@ const IterationComponent = (props: IterationProps) => {
     },
   );
 
-  const getGraphData = (graphType: 'DRS' | 'ARS') => {
-    let max = 0;
-    const graphData: { name: string; label: string; value: number }[] = [];
-    RISK_LEVELS.forEach((label) => {
-      const beforeCount = getCount('Before', graphType, label) ?? 0;
-      const afterCount = getCount('After', graphType, label) ?? 0;
+  const getGraphData = useCallback(
+    (graphType: 'DRS' | 'ARS') => {
+      let max = 0;
+      const graphData: { name: string; label: string; value: number }[] = [];
+      RISK_LEVELS.forEach((label) => {
+        const beforeCount = getCount('Before', graphType, label) ?? 0;
+        const afterCount = getCount('After', graphType, label) ?? 0;
 
-      max = Math.max(max, beforeCount, afterCount);
-      graphData.push({
-        name: label,
-        label: 'Before',
-        value: beforeCount,
+        max = Math.max(max, beforeCount, afterCount);
+        graphData.push({
+          name: label,
+          label: 'Before',
+          value: beforeCount,
+        });
+        graphData.push({
+          name: label,
+          label: 'After',
+          value: afterCount,
+        });
       });
-      graphData.push({
-        name: label,
-        label: 'After',
-        value: afterCount,
-      });
-    });
-    return { graphData, max };
-  };
+      return { graphData, max };
+    },
+    [getCount],
+  );
 
   const { graphData: craGraphData, max: maxCRA } = getGraphData('DRS');
   const { graphData: trsGraphData, max: maxTRS } = getGraphData('ARS');
@@ -301,7 +315,9 @@ export default function RiskClassificationSimulationResults(props: Props) {
     };
   }, [activeTab, jobIdQueryResults]);
 
-  const updateRiskLevels = async () => {
+  const queryClient = useQueryClient();
+
+  const updateRiskLevels = useCallback(async () => {
     setButtonLoading(true);
     if (jobIdQueryResults.data.kind === 'SUCCESS') {
       const data = jobIdQueryResults.data.value;
@@ -315,6 +331,7 @@ export default function RiskClassificationSimulationResults(props: Props) {
             await api.postPulseRiskClassification({
               RiskClassificationScore: classificationValues,
             });
+            queryClient.invalidateQueries(RISK_CLASSIFICATION_VALUES());
             message.success('Risk levels updated successfully');
           }
         } catch (_) {
@@ -323,7 +340,7 @@ export default function RiskClassificationSimulationResults(props: Props) {
       }
     }
     setButtonLoading(false);
-  };
+  }, [activeTab, jobIdQueryResults, queryClient, api]);
 
   useEffect(() => {
     if (isSuccess(jobIdQueryResults.data)) {
