@@ -154,12 +154,20 @@ export default function RuleConfigurationDrawer(props: RuleConfigurationDrawerPr
         tabs: [
           { key: 'user_details', icon: <User3LineIcon />, title: 'User details' },
           { key: 'geography_details', icon: <EarthLineIcon />, title: 'Geography details' },
-          { key: 'transaction_details', icon: <TransactionIcon />, title: 'Transaction details' },
-          {
-            key: 'transaction_details_historical',
-            icon: <HistoryLineIcon />,
-            title: 'Historical transactions',
-          },
+          ...(rule?.type === 'TRANSACTION'
+            ? [
+                {
+                  key: 'transaction_details',
+                  icon: <TransactionIcon />,
+                  title: 'Transaction details',
+                },
+                {
+                  key: 'transaction_details_historical',
+                  icon: <HistoryLineIcon />,
+                  title: 'Historical transactions',
+                },
+              ]
+            : []),
         ],
       },
       {
@@ -173,7 +181,16 @@ export default function RuleConfigurationDrawer(props: RuleConfigurationDrawerPr
           : [{ key: 'rule_specific_filters', title: 'Rule-specific filters' }],
       },
     ],
-    [formState, fieldValidators, isPulseEnabled],
+    [
+      fieldValidators.basicDetailsStep,
+      fieldValidators.standardFiltersStep,
+      fieldValidators.ruleParametersStep,
+      formState?.basicDetailsStep,
+      formState?.standardFiltersStep,
+      formState?.ruleParametersStep,
+      rule?.type,
+      isPulseEnabled,
+    ],
   );
 
   const activeStepIndex = STEPS.findIndex(({ key }) => key === activeStepKey);
