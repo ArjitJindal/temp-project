@@ -1,4 +1,5 @@
 import * as cdk from 'aws-cdk-lib'
+import * as inspector from 'aws-cdk-lib/aws-inspector'
 import * as guardduty from 'aws-cdk-lib/aws-guardduty'
 import { Duration } from 'aws-cdk-lib'
 import { Topic } from 'aws-cdk-lib/aws-sns'
@@ -210,6 +211,10 @@ export class CdkTarponAlarmsStack extends cdk.NestedStack {
           DetectorId: detector.ref,
         },
       }),
+    })
+    // Create an Amazon Inspector Assessment Target
+    new inspector.CfnAssessmentTarget(this, 'InspectorAssessmentTarget', {
+      assessmentTargetName: 'InspectorAssessmentTarget',
     })
   }
 }
