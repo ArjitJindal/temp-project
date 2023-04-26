@@ -19,8 +19,8 @@ fi
 
 if [ "$env" == "dev" ]; then
     apiPrefix="dev."
-    apiId=lujzovzbk3
-    managementApiId=9lbziivbh1
+    apiId=qlqb0wdz5m
+    managementApiId=ngxl4k8zue
     profile="AWSAdministratorAccess-911899431626"
     region="eu-central-1"
     tsScriptRegion="dev"
@@ -116,11 +116,19 @@ echo "Tenant ID: $tenantId";
 echo "Usage plan name: $usagePlanName";
 echo "Usage plan ID: $usagePlanId";
 
-apiKey=$(awscurl --service execute-api \
-    -X POST \
-    --region "$region" \
-    --profile $profile \
-    "https://"$apiPrefix"api.flagright.com/console/apikey?tenantId=$tenantId&usagePlanId=$usagePlanId");
+if [ "$env" == "dev" ]; then
+    apiKey=$(awscurl --service execute-api \
+        -X POST \
+        --region "$region" \
+        --profile $profile \
+        "https://api.flagright.dev/console/apikey?tenantId=$tenantId&usagePlanId=$usagePlanId");
+else
+    apiKey=$(awscurl --service execute-api \
+        -X POST \
+        --region "$region" \
+        --profile $profile \
+        "https://"$apiPrefix"api.flagright.com/console/apikey?tenantId=$tenantId&usagePlanId=$usagePlanId");
+fi
 
 echo "Tarpon API Key: $apiKey";
 

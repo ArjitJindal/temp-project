@@ -1,11 +1,10 @@
 import * as cdk from 'aws-cdk-lib'
 import * as guardduty from 'aws-cdk-lib/aws-guardduty'
-import * as inspector from 'aws-cdk-lib/aws-inspector'
 import { Duration } from 'aws-cdk-lib'
 import { Topic } from 'aws-cdk-lib/aws-sns'
 import { Construct } from 'constructs'
 import { Alarm, ComparisonOperator, Metric } from 'aws-cdk-lib/aws-cloudwatch'
-import { Config } from './configs/config'
+import { Config } from '../configs/config'
 
 import {
   createAPIGatewayAlarm,
@@ -20,9 +19,9 @@ import {
   createTarponOverallLambdaAlarm,
   dynamoTableOperationMetrics,
   dynamoTableOperations,
-} from './cdk-cw-alarms'
-import { getDeadLetterQueueName, SQSQueues, StackConstants } from './constants'
-import { LAMBDAS } from './lambdas'
+} from '../cdk-utils/cdk-cw-alarms-utils'
+import { getDeadLetterQueueName, SQSQueues, StackConstants } from '../constants'
+import { LAMBDAS } from '../lambdas'
 
 const allLambdas = Object.keys(LAMBDAS)
 
@@ -211,22 +210,6 @@ export class CdkTarponAlarmsStack extends cdk.NestedStack {
           DetectorId: detector.ref,
         },
       }),
-    })
-    // Create an Amazon Inspector Assessment Target
-    const target = new inspector.CfnAssessmentTarget(
-      this,
-      'InspectorAssessmentTarget',
-      {
-        assessmentTargetName: 'InspectorAssessmentTarget',
-      }
-    )
-
-    new inspector.CfnAssessmentTemplate(this, 'InspectorAssessmentTemplate', {
-      assessmentTargetArn: target.attrArn,
-      durationInSeconds: 3600,
-      rulesPackageArns: [
-        'arn:aws:inspector:us-west-2:316112463485:rulespackage/0-9hgA516',
-      ], // Use the default rules package
     })
   }
 }

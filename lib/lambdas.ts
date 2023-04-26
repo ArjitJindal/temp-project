@@ -13,7 +13,7 @@ export const LAMBDAS: {
     expectedMaxDurationSeconds: number
   }
 } = {
-  [StackConstants.API_KEY_GENERATOR_FUNCTION_NAME]: {
+  [StackConstants.CONSOLE_API_API_KEY_GENERATOR_FUNCTION_NAME]: {
     codePath: 'api-key-generator',
     handlerName: 'apiKeyGeneratorHandler',
     expectedMaxDurationSeconds: DEFAULT_LAMBDA_EXPECTED_MAX_DURATION_SECONDS,
@@ -138,12 +138,12 @@ export const LAMBDAS: {
     handlerName: 'casesHandler',
     expectedMaxDurationSeconds: DEFAULT_LAMBDA_EXPECTED_MAX_DURATION_SECONDS,
   },
-  [StackConstants.AUDIT_LOG_FUNCTION_NAME]: {
+  [StackConstants.CONSOLE_API_AUDIT_LOG_FUNCTION_NAME]: {
     codePath: 'console-api-audit-log',
     handlerName: 'auditLogHandler',
     expectedMaxDurationSeconds: DEFAULT_LAMBDA_EXPECTED_MAX_DURATION_SECONDS,
   },
-  [StackConstants.SLACK_APP_FUNCTION_NAME]: {
+  [StackConstants.CONSOLE_API_SLACK_APP_FUNCTION_NAME]: {
     codePath: 'slack-app',
     handlerName: 'slackAppHandler',
     expectedMaxDurationSeconds: DEFAULT_LAMBDA_EXPECTED_MAX_DURATION_SECONDS,

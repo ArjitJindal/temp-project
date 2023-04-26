@@ -18,7 +18,13 @@ export function getResourceNameForTarpon(
   dash = false,
   ignoreSuffix = false
 ) {
-  const suffix = ignoreSuffix ? '' : getSuffix()
+  let suffix = ignoreSuffix ? '' : getSuffix()
+
+  // TODO: Remove this in the next PR
+  if (resourceName.toLowerCase().includes('console')) {
+    suffix += 'New'
+  }
+
   return `tarpon${dash ? '-' : ''}${resourceName}${suffix}`
 }
 
@@ -38,6 +44,8 @@ export function getNameForGlobalResource(name: string, config: Config) {
 }
 
 export const StackConstants = {
+  VPC_NAME: 'vpc',
+  VPC_SECURITY_GROUP_ID: 'atlas-lambda-sg',
   TARPON_DYNAMODB_TABLE_NAME: 'Tarpon',
   TARPON_RULE_DYNAMODB_TABLE_NAME: 'TarponRule',
   TRANSIENT_DYNAMODB_TABLE_NAME: 'Transient',
@@ -49,7 +57,7 @@ export const StackConstants = {
     'ApiKeyAuthorizerBaseRole'
   ),
   JWT_AUTHORIZER_BASE_ROLE_NAME: getResourceNameForTarpon(
-    'JwtAuthorizerBaseRole'
+    'ConsoleApiJwtAuthorizerBaseRole'
   ),
   S3_IMPORT_BUCKET_PREFIX: getResourceNameForTarpon('import', true, true),
   S3_DOCUMENT_BUCKET_PREFIX: getResourceNameForTarpon('document', true, true),
@@ -69,7 +77,7 @@ export const StackConstants = {
     'ApiKeyAuthorizerFunction'
   ),
   JWT_AUTHORIZER_FUNCTION_NAME: getResourceNameForTarpon(
-    'JWTAuthorizerFunction'
+    'ConsoleApiJWTAuthorizerFunction'
   ),
   PUBLIC_API_TRANSACTION_FUNCTION_NAME: getResourceNameForTarpon(
     'PublicApiTransactionFunction'
@@ -83,8 +91,8 @@ export const StackConstants = {
   PUBLIC_API_USER_EVENT_FUNCTION_NAME: getResourceNameForTarpon(
     'PublicApiUserEventFunction'
   ),
-  API_KEY_GENERATOR_FUNCTION_NAME: getResourceNameForTarpon(
-    'ApiKeyGeneratorFunction'
+  CONSOLE_API_API_KEY_GENERATOR_FUNCTION_NAME: getResourceNameForTarpon(
+    'ConsoleApiApiKeyGeneratorFunction'
   ),
   PUBLIC_MANAGEMENT_API_RULE_FUNCTION_NAME: getResourceNameForTarpon(
     'PublicManagementApiRuleFunction'
@@ -109,9 +117,6 @@ export const StackConstants = {
   ),
   CONSOLE_API_DASHBOARD_STATS_FUNCTION_NAME: getResourceNameForTarpon(
     'ConsoleApiDashboardStatsFunction'
-  ),
-  TRANSACTION_COMMENTS_FUNCTION_NAME: getResourceNameForTarpon(
-    'TransactionsCommentsFunction'
   ),
   CONSOLE_API_BUSINESS_USERS_VIEW_FUNCTION_NAME: getResourceNameForTarpon(
     'ConsoleApiBusinessUsersViewFunction'
@@ -138,7 +143,9 @@ export const StackConstants = {
     getResourceNameForTarpon('TarponChangeCaptureKinesisConsumerFunction'),
   TARPON_CHANGE_CAPTURE_KINESIS_CONSUMER_RETRY_FUNCTION_NAME:
     getResourceNameForTarpon('TarponChangeCaptureKinesisConsumerRetryFunction'),
-  SLACK_APP_FUNCTION_NAME: getResourceNameForTarpon('SlackAppFunction'),
+  CONSOLE_API_SLACK_APP_FUNCTION_NAME: getResourceNameForTarpon(
+    'ConsoleApiSlackAppFunction'
+  ),
   SLACK_ALERT_FUNCTION_NAME: getResourceNameForTarpon('SlackAlertFunction'),
   CONSOLE_API_WEBHOOK_CONFIGURATION_FUNCTION_NAME: getResourceNameForTarpon(
     'ConsoleApiWebhookConfigurationFunction'
@@ -150,12 +157,15 @@ export const StackConstants = {
     getResourceNameForTarpon('WebhookTarponChangeCaptureFunction'),
   WEBHOOK_TARPON_CHANGE_CAPTURE_KINESIS_CONSUMER_RETRY_FUNCTION_NAME:
     getResourceNameForTarpon('WebhookTarponChangeCaptureRetryFunction'),
-  CONSOLE_API_SANCTIONS_FUNCTION_NAME:
-    getResourceNameForTarpon('SanctionsFunction'),
-  CONSOLE_API_NARRATIVE_TEMPLATE_FUNCTION_NAME:
-    getResourceNameForTarpon('NarrativeFunction'),
-  CONSOLE_API_WEBHOOKS_FUNCTION_NAME:
-    getResourceNameForTarpon('WebhooksFunction'),
+  CONSOLE_API_SANCTIONS_FUNCTION_NAME: getResourceNameForTarpon(
+    'ConsoleApiSanctionsFunction'
+  ),
+  CONSOLE_API_NARRATIVE_TEMPLATE_FUNCTION_NAME: getResourceNameForTarpon(
+    'ConsoleApiNarrativeFunction'
+  ),
+  CONSOLE_API_WEBHOOKS_FUNCTION_NAME: getResourceNameForTarpon(
+    'ConsoleApiWebhooksFunction'
+  ),
   LAMBDA_LATEST_ALIAS_NAME: 'LATEST',
   JWT_AUTHORIZER_CACHE_TTL_SECONDS: 3600,
   API_KEY_AUTHORIZER_CACHE_TTL_SECONDS: 3600,
@@ -203,14 +213,15 @@ export const StackConstants = {
     getResourceNameForHammerhead('ChangeCaptureKinesisConsumer'),
   HAMMERHEAD_CHANGE_CAPTURE_KINESIS_CONSUMER_RETRY_FUNCTION_NAME:
     getResourceNameForHammerhead('ChangeCaptureKinesisConsumerRetry'),
-  CONSOLE_API_RISK_CLASSIFICATION_FUNCTION_NAME: getResourceNameForHammerhead(
+  CONSOLE_API_RISK_CLASSIFICATION_FUNCTION_NAME: getResourceNameForTarpon(
     'ConsoleApiRiskClassificationFunction'
   ),
   CONSOLE_API_MANUAL_USER_RISK_ASSIGNMENT_FUNCTION_NAME:
-    getResourceNameForHammerhead('ConsoleApiManualUserRiskAssignmentFunction'),
-  CONSOLE_API_PARAMETER_RISK_ASSIGNMENT_FUNCTION_NAME:
-    getResourceNameForHammerhead('ConsoleApiParameterRiskAssignmentFunction'),
-  CONSOLE_API_RISK_LEVEL_AND_SCORE_FUNCTION_NAME: getResourceNameForHammerhead(
+    getResourceNameForTarpon('ConsoleApiManualUserRiskAssignmentFunction'),
+  CONSOLE_API_PARAMETER_RISK_ASSIGNMENT_FUNCTION_NAME: getResourceNameForTarpon(
+    'ConsoleApiParameterRiskAssignmentFunction'
+  ),
+  CONSOLE_API_RISK_LEVEL_AND_SCORE_FUNCTION_NAME: getResourceNameForTarpon(
     'ConsoleApiRiskLevelAndScoreFunction'
   ),
   CONSOLE_API_SIMULATION_FUNCTION_NAME: getResourceNameForTarpon(
@@ -219,7 +230,9 @@ export const StackConstants = {
   CONSOLE_API_DEVICE_DATA_FUNCTION_NAME: getResourceNameForTarpon(
     'ConsoleApiDeviceDataFunction'
   ),
-  AUDIT_LOG_FUNCTION_NAME: getResourceNameForHammerhead('AuditLogFunction'),
+  CONSOLE_API_AUDIT_LOG_FUNCTION_NAME: getResourceNameForTarpon(
+    'ConsoleApiAuditLogFunction'
+  ),
   NUMBER_OF_RISK_LEVELS: 5,
   TARPON_STREAM_ID: 'tarponStream',
   TARPON_STREAM_NAME: 'tarponDynamoChangeCaptureStream',

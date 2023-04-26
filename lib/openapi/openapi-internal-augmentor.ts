@@ -30,12 +30,10 @@ export const ConsoleApiPathToLambda: any = {
   '/me': StackConstants.CONSOLE_API_ACCOUNT_FUNCTION_NAME,
   '/roles': StackConstants.CONSOLE_API_ROLE_FUNCTION_NAME,
   '/roles/{roleId}': StackConstants.CONSOLE_API_ROLE_FUNCTION_NAME,
-  '/apikey': StackConstants.API_KEY_GENERATOR_FUNCTION_NAME,
-  '/iam/rules': StackConstants.CONSOLE_API_RULE_FUNCTION_NAME,
+  '/apikey': StackConstants.CONSOLE_API_API_KEY_GENERATOR_FUNCTION_NAME,
   '/rules': StackConstants.CONSOLE_API_RULE_FUNCTION_NAME,
   '/rule-filters': StackConstants.CONSOLE_API_RULE_FUNCTION_NAME,
   '/rules/{ruleId}': StackConstants.CONSOLE_API_RULE_FUNCTION_NAME,
-  '/iam/rule_instances': StackConstants.CONSOLE_API_RULE_INSTANCE_FUNCTION_NAME,
   '/rule_instances': StackConstants.CONSOLE_API_RULE_INSTANCE_FUNCTION_NAME,
   '/rule_instances/{ruleInstanceId}':
     StackConstants.CONSOLE_API_RULE_INSTANCE_FUNCTION_NAME,
@@ -85,7 +83,7 @@ export const ConsoleApiPathToLambda: any = {
     StackConstants.CONSOLE_API_DASHBOARD_STATS_FUNCTION_NAME,
   '/dashboard_stats/rule_hit':
     StackConstants.CONSOLE_API_DASHBOARD_STATS_FUNCTION_NAME,
-  '/slack/oauth_redirect': StackConstants.SLACK_APP_FUNCTION_NAME,
+  '/slack/oauth_redirect': StackConstants.CONSOLE_API_SLACK_APP_FUNCTION_NAME,
   '/webhooks': StackConstants.CONSOLE_API_WEBHOOK_CONFIGURATION_FUNCTION_NAME,
   '/webhooks/{webhookId}':
     StackConstants.CONSOLE_API_WEBHOOK_CONFIGURATION_FUNCTION_NAME,
@@ -105,7 +103,7 @@ export const ConsoleApiPathToLambda: any = {
     StackConstants.CONSOLE_API_RISK_LEVEL_AND_SCORE_FUNCTION_NAME,
   '/pulse/drs-value':
     StackConstants.CONSOLE_API_RISK_LEVEL_AND_SCORE_FUNCTION_NAME,
-  '/auditlog': StackConstants.AUDIT_LOG_FUNCTION_NAME,
+  '/auditlog': StackConstants.CONSOLE_API_AUDIT_LOG_FUNCTION_NAME,
   '/cases': StackConstants.CONSOLE_API_CASE_FUNCTION_NAME,
   '/alerts': StackConstants.CONSOLE_API_CASE_FUNCTION_NAME,
   '/alerts/{alertId}/transactions':
@@ -155,7 +153,7 @@ const openapi = getAugmentedOpenapi(
   ConsoleApiPathToLambda,
   'JWT',
   {
-    iamAuthorizedPaths: ['/apikey', '/iam/rules', '/iam/rule_instances'],
+    iamAuthorizedPaths: ['/apikey'],
     publicPaths: ['/slack/oauth_redirect', '/webhooks/complyadvantage'],
     allowedOrigins: ['dev', 'local'].includes(env as string)
       ? ALLOWED_ORIGINS.dev
