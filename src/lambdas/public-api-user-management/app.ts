@@ -43,6 +43,7 @@ export const userHandler = lambdaApi()(
     const mongoDb = await getMongoDbClient()
     const userRepository = new UserRepository(tenantId, {
       dynamoDb: dynamoDb,
+      mongoDb,
     })
     const userId = event.pathParameters?.userId
     const isConsumerUser = event.path.includes('consumer')
@@ -96,10 +97,11 @@ export const userHandler = lambdaApi()(
 
       const userManagementService = new UserManagementService(
         tenantId,
-        dynamoDb
+        dynamoDb,
+        mongoDb
       )
 
-      const user = await userManagementService.saveUser(
+      const user = await userManagementService.verifyUser(
         userPayload,
         isConsumerUser ? 'CONSUMER' : 'BUSINESS'
       )

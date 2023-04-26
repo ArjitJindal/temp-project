@@ -17,7 +17,7 @@ describe('Public API - Create a Consumer User', () => {
       null as any
     )
     expect(response?.statusCode).toBe(200)
-    expect(JSON.parse(response?.body as string)).toEqual({
+    expect(JSON.parse(response?.body as string)).toMatchObject({
       userId: '1',
     })
   })
@@ -35,7 +35,7 @@ describe('Public API - Create a Consumer User', () => {
       null as any
     )
     expect(response?.statusCode).toBe(200)
-    expect(JSON.parse(response?.body as string)).toEqual({
+    expect(JSON.parse(response?.body as string)).toMatchObject({
       userId: '2',
       message:
         'The provided userId already exists. The user attribute updates are not saved. If you want to update the attributes of this user, please use user events instead.',
@@ -76,7 +76,7 @@ describe('Public API - Retrieve a Consumer User', () => {
       null as any
     )
     expect(response?.statusCode).toBe(200)
-    expect(JSON.parse(response?.body as string)).toEqual(consumerUser)
+    expect(JSON.parse(response?.body as string)).toMatchObject(consumerUser)
   })
 })
 
@@ -91,7 +91,7 @@ describe('Public API - Create a Business User', () => {
       null as any
     )
     expect(response?.statusCode).toBe(200)
-    expect(JSON.parse(response?.body as string)).toEqual({
+    expect(JSON.parse(response?.body as string)).toMatchObject({
       userId: '1',
     })
   })
@@ -109,7 +109,7 @@ describe('Public API - Create a Business User', () => {
       null as any
     )
     expect(response?.statusCode).toBe(200)
-    expect(JSON.parse(response?.body as string)).toEqual({
+    expect(JSON.parse(response?.body as string)).toMatchObject({
       userId: '2',
       message:
         'The provided userId already exists. The user attribute updates are not saved. If you want to update the attributes of this user, please use user events instead.',
@@ -150,6 +150,6 @@ describe('Public API - Retrieve a Business User', () => {
       null as any
     )
     expect(response?.statusCode).toBe(200)
-    expect(JSON.parse(response?.body as string)).toEqual(business)
+    expect(JSON.parse(response?.body as string)).toMatchObject(business)
   })
 })

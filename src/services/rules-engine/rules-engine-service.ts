@@ -305,24 +305,22 @@ export class RulesEngineService {
   }
 
   public async verifyUser(
-    user: UserWithRulesResult | BusinessWithRulesResult,
-    ongoingScreening?: boolean
+    user: UserWithRulesResult | BusinessWithRulesResult
   ): Promise<UserMonitoringResult> {
-    let ruleInstances =
+    const ruleInstances =
       await this.ruleInstanceRepository.getActiveRuleInstances('USER')
-
-    if (ongoingScreening) {
-      ruleInstances = ruleInstances.filter(
-        (ruleInstance) => ruleInstance.isOngoingScreening
-      )
-    }
-
-    const rulesById = _.keyBy(
-      await this.ruleRepository.getRulesByIds(
-        ruleInstances.map((ruleInstance) => ruleInstance.ruleId)
-      ),
-      'id'
+    const rules = await this.ruleRepository.getRulesByIds(
+      ruleInstances.map((ruleInstance) => ruleInstance.ruleId)
     )
+    return this.verifyUserByRules(user, ruleInstances, rules)
+  }
+
+  public async verifyUserByRules(
+    user: UserWithRulesResult | BusinessWithRulesResult,
+    ruleInstances: readonly RuleInstance[],
+    rules: readonly Rule[]
+  ): Promise<UserMonitoringResult> {
+    const rulesById = _.keyBy(rules, 'id')
     logger.info(`Running rules`)
     const userRiskLevel = await this.getUserRiskLevel(user)
     const ruleResults = (
@@ -655,6 +653,7 @@ export class RulesEngineService {
         updateLogMetadata({
           ruleId: options.ruleInstance.ruleId,
           ruleInstanceId: options.ruleInstance.id,
+          userId: options.user.userId,
         })
         logger.info(`Running rule`)
         const startTime = Date.now()

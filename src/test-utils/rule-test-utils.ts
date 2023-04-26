@@ -59,7 +59,6 @@ export async function createRule(
       casePriority: createdRule.defaultCasePriority as Priority,
       nature: createdRule.defaultNature,
       labels: createdRule.labels,
-      isOngoingScreening: createdRule.isOngoingScreening,
       ...ruleInstance,
     })
 

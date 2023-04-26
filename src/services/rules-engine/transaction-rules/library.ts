@@ -1243,6 +1243,7 @@ const _RULES_LIBRARY: Array<
   () => {
     const defaultParameters: SanctionsBusinessUserRuleParameters = {
       fuzziness: 20,
+      ongoingScreening: false,
     }
 
     return {
@@ -1260,12 +1261,12 @@ const _RULES_LIBRARY: Array<
       defaultNature: 'SCREENING',
       defaultCasePriority: 'P1',
       requiredFeatures: ['SANCTIONS'],
-      isOngoingScreening: true,
     }
   },
   () => {
     const defaultParameters: SanctionsBankUserRuleParameters = {
       fuzziness: 20,
+      ongoingScreening: false,
     }
 
     return {
@@ -1283,12 +1284,12 @@ const _RULES_LIBRARY: Array<
       defaultNature: 'SCREENING',
       defaultCasePriority: 'P1',
       requiredFeatures: ['SANCTIONS'],
-      isOngoingScreening: true,
     }
   },
   () => {
     const defaultParameters: SanctionsConsumerUserRuleParameters = {
       fuzziness: 20,
+      ongoingScreening: false,
     }
 
     return {
@@ -1305,7 +1306,6 @@ const _RULES_LIBRARY: Array<
       defaultNature: 'SCREENING',
       defaultCasePriority: 'P1',
       requiredFeatures: ['SANCTIONS'],
-      isOngoingScreening: true,
     }
   },
   () => {
@@ -1326,7 +1326,6 @@ const _RULES_LIBRARY: Array<
       defaultNature: 'SCREENING',
       defaultCasePriority: 'P1',
       requiredFeatures: ['MACHINE_LEARNING_DEMO'],
-      isOngoingScreening: true,
     }
   },
 ]

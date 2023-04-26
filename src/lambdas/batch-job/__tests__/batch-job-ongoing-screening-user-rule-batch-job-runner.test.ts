@@ -53,8 +53,8 @@ describe('Batch Job Sanctions Screening Rule', () => {
       defaultParameters: {
         screeningTypes: ['SANCTIONS'],
         fuzziness: 0.5,
+        ongoingScreening: true,
       } as SanctionsConsumerUserRuleParameters,
-      isOngoingScreening: true,
     },
   ])
 
@@ -92,6 +92,7 @@ describe('Batch Job Sanctions Screening Rule', () => {
     const testJob: OngoingScreeningUserRuleBatchJob = {
       tenantId: TEST_TENANT_ID,
       type: 'ONGOING_SCREENING_USER_RULE',
+      userIds: [user1.userId, user2.userId],
     }
 
     await jobRunnerHandler(testJob)
@@ -269,8 +270,8 @@ describe('Batch Job Sanctions Screening Rule Ongoing Screening is Off', () => {
       defaultParameters: {
         screeningTypes: ['SANCTIONS'],
         fuzziness: 0.5,
+        ongoingScreening: false,
       } as SanctionsConsumerUserRuleParameters,
-      isOngoingScreening: false,
     },
   ])
 
@@ -298,6 +299,7 @@ describe('Batch Job Sanctions Screening Rule Ongoing Screening is Off', () => {
     const testJob: OngoingScreeningUserRuleBatchJob = {
       tenantId: TEST_TENANT_ID,
       type: 'ONGOING_SCREENING_USER_RULE',
+      userIds: [user1.userId],
     }
 
     await jobRunnerHandler(testJob)

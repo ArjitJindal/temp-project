@@ -3,6 +3,7 @@ import _ from 'lodash'
 import {
   FUZZINESS_SCHEMA,
   SANCTIONS_SCREENING_TYPES_OPTIONAL_SCHEMA,
+  ENABLE_ONGOING_SCREENING_SCHEMA,
 } from '../utils/rule-parameter-schemas'
 import { isBusinessUser } from '../utils/user-rule-utils'
 import { RuleHitResult } from '../rule'
@@ -29,6 +30,7 @@ export type SanctionsBusinessUserRuleParameters = {
   entityTypes?: BusinessUserEntityType[]
   screeningTypes?: SanctionsSearchType[]
   fuzziness: number
+  ongoingScreening: boolean
 }
 
 export default class SanctionsBusinessUserRule extends UserRule<SanctionsBusinessUserRuleParameters> {
@@ -51,6 +53,10 @@ export default class SanctionsBusinessUserRule extends UserRule<SanctionsBusines
         },
         screeningTypes: SANCTIONS_SCREENING_TYPES_OPTIONAL_SCHEMA({}),
         fuzziness: FUZZINESS_SCHEMA,
+        ongoingScreening: ENABLE_ONGOING_SCREENING_SCHEMA({
+          description:
+            'Enabling ongoing screening will do a historic screening of all the existing business users including shareholders and directors.',
+        }),
       },
       required: ['fuzziness'],
       additionalProperties: false,
@@ -58,7 +64,8 @@ export default class SanctionsBusinessUserRule extends UserRule<SanctionsBusines
   }
 
   public async computeRule() {
-    const { fuzziness, entityTypes, screeningTypes } = this.parameters
+    const { fuzziness, entityTypes, screeningTypes, ongoingScreening } =
+      this.parameters
 
     if (
       _.isEmpty(entityTypes) ||
@@ -101,7 +108,7 @@ export default class SanctionsBusinessUserRule extends UserRule<SanctionsBusines
         yearOfBirth,
         types: screeningTypes,
         fuzziness: fuzziness / 100,
-        monitoring: { enabled: true },
+        monitoring: { enabled: ongoingScreening },
       })
       if (result.data && result.data.length > 0) {
         sanctionsDetails.push({

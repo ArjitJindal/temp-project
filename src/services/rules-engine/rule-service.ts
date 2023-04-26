@@ -99,7 +99,6 @@ export class RuleService {
     return this.ruleInstanceRepository.createOrUpdateRuleInstance({
       ...ruleInstance,
       type: rule.type,
-      isOngoingScreening: rule.isOngoingScreening,
     })
   }
 

@@ -441,6 +441,7 @@ export class CdkTarponStack extends cdk.Stack {
     tarponDynamoDbTable.grantReadWriteData(transactionAlias)
     tarponRuleDynamoDbTable.grantReadWriteData(transactionAlias)
     hammerheadDynamoDbTable.grantReadData(transactionAlias)
+    this.grantMongoDbAccess(transactionAlias)
 
     // Configure AutoScaling for Tx Function
     const as = transactionAlias.addAutoScaling({
@@ -900,12 +901,19 @@ export class CdkTarponStack extends cdk.Stack {
       }
     )
     tarponDynamoDbTable.grantReadWriteData(jobRunnerAlias)
-    tarponRuleDynamoDbTable.grantReadData(jobRunnerAlias)
-
+    tarponRuleDynamoDbTable.grantReadWriteData(jobRunnerAlias)
     this.grantMongoDbAccess(jobRunnerAlias)
     s3TmpBucket.grantRead(jobRunnerAlias)
     s3ImportBucket.grantWrite(jobRunnerAlias)
     s3demoModeBucket.grantRead(jobRunnerAlias)
+    this.grantSecretsManagerAccess(
+      jobRunnerAlias,
+      [
+        this.config.application.COMPLYADVANTAGE_CREDENTIALS_SECRET_ARN,
+        this.config.application.IBANCOM_CREDENTIALS_SECRET_ARN,
+      ],
+      'READ'
+    )
 
     const batchJobStateMachine = new StateMachine(
       this,

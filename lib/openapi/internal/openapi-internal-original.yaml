@@ -3625,8 +3625,6 @@ components:
           type: array
           items:
             $ref: '#/components/schemas/Feature'
-        isOngoingScreening:
-          type: boolean
       required:
         - id
         - type
@@ -3717,8 +3715,6 @@ components:
           type: string
         source:
           type: string
-        isOngoingScreening:
-          type: boolean
       required:
         - ruleId
         - casePriority

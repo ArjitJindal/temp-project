@@ -566,11 +566,13 @@ export class UserRepository {
 
   public async saveBusinessUser(
     user: BusinessWithRulesResult
-  ): Promise<Business> {
+  ): Promise<BusinessWithRulesResult> {
     return (await this.saveUser(user, 'BUSINESS')) as BusinessWithRulesResult
   }
 
-  public async saveConsumerUser(user: User): Promise<UserWithRulesResult> {
+  public async saveConsumerUser(
+    user: UserWithRulesResult
+  ): Promise<UserWithRulesResult> {
     return (await this.saveUser(user, 'CONSUMER')) as UserWithRulesResult
   }
 

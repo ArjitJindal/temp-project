@@ -3,6 +3,7 @@ import _ from 'lodash'
 import {
   FUZZINESS_SCHEMA,
   SANCTIONS_SCREENING_TYPES_OPTIONAL_SCHEMA,
+  ENABLE_ONGOING_SCREENING_SCHEMA,
 } from '../utils/rule-parameter-schemas'
 import { isBusinessUser } from '../utils/user-rule-utils'
 import { RuleHitResult } from '../rule'
@@ -12,12 +13,15 @@ import { SanctionsService } from '@/services/sanctions'
 import { Business } from '@/@types/openapi-public/Business'
 import { SanctionsDetails } from '@/@types/openapi-internal/SanctionsDetails'
 import { IBANService } from '@/services/iban.com'
+import { logger } from '@/core/logger'
+import { tenantHasFeature } from '@/core/middlewares/tenant-has-feature'
 
 type BankInfo = { bankName?: string; iban?: string }
 
 export type SanctionsBankUserRuleParameters = {
   resolveIban?: boolean
   screeningTypes?: SanctionsSearchType[]
+  ongoingScreening: boolean
   fuzziness: number
 }
 
@@ -35,6 +39,10 @@ export default class SanctionsBankUserRule extends UserRule<SanctionsBankUserRul
         },
         screeningTypes: SANCTIONS_SCREENING_TYPES_OPTIONAL_SCHEMA({}),
         fuzziness: FUZZINESS_SCHEMA,
+        ongoingScreening: ENABLE_ONGOING_SCREENING_SCHEMA({
+          description:
+            'Enabling ongoing screening will do a historic screening of all the existing bank names.',
+        }),
       },
       required: ['fuzziness'],
       additionalProperties: false,
@@ -42,7 +50,8 @@ export default class SanctionsBankUserRule extends UserRule<SanctionsBankUserRul
   }
 
   public async computeRule() {
-    const { fuzziness, resolveIban, screeningTypes } = this.parameters
+    const { fuzziness, resolveIban, screeningTypes, ongoingScreening } =
+      this.parameters
 
     if (_.isEmpty(screeningTypes) || !isBusinessUser(this.user)) {
       return
@@ -66,7 +75,13 @@ export default class SanctionsBankUserRule extends UserRule<SanctionsBankUserRul
       .filter(Boolean) as BankInfo[]
 
     if (resolveIban) {
-      bankInfos = await this.resolveBankName(bankInfos)
+      try {
+        bankInfos = await this.resolveBankName(bankInfos)
+      } catch (e) {
+        logger.error(
+          'Failed to resolve bank names. Feature IBAN_RESOLUTION might be missing.'
+        )
+      }
     }
     const bankNames = _.uniq(
       bankInfos.map((bankInfo) => bankInfo.bankName).filter(Boolean) as string[]
@@ -80,7 +95,7 @@ export default class SanctionsBankUserRule extends UserRule<SanctionsBankUserRul
         searchTerm: bankName,
         types: screeningTypes,
         fuzziness: fuzziness / 100,
-        monitoring: { enabled: true },
+        monitoring: { enabled: ongoingScreening },
       })
       if (result.data && result.data.length > 0) {
         sanctionsDetails.push({
@@ -100,6 +115,11 @@ export default class SanctionsBankUserRule extends UserRule<SanctionsBankUserRul
   }
 
   private async resolveBankName(bankInfos: BankInfo[]): Promise<BankInfo[]> {
+    if (!(await tenantHasFeature(this.tenantId, 'IBAN_RESOLUTION'))) {
+      logger.error(`IBAN_RESOLUTION feature flag required to resolve bank name`)
+      return bankInfos
+    }
+
     const result: BankInfo[] = []
     const ibanService = new IBANService(this.tenantId)
 

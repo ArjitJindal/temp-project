@@ -6,50 +6,50 @@ import { OngoingScreeningUserRuleBatchJob } from '@/@types/batch-job'
 import { getDynamoDbClient } from '@/utils/dynamodb'
 import { RulesEngineService } from '@/services/rules-engine'
 import { RuleInstanceRepository } from '@/services/rules-engine/repositories/rule-instance-repository'
+import { RuleRepository } from '@/services/rules-engine/repositories/rule-repository'
+import { logger } from '@/core/logger'
 import { UserRepository } from '@/services/users/repositories/user-repository'
 
-const BATCH_SIZE = 1000
+const CONCURRENT_BATCH_SIZE = 10
 
 export class OngoingScreeningUserRuleBatchJobRunner extends BatchJobRunner {
   public async run(job: OngoingScreeningUserRuleBatchJob) {
-    const { tenantId } = job
+    const { tenantId, userIds } = job
     const dynamoDb = getDynamoDbClient()
-
+    const mongoDb = await getMongoDbClient()
     const ruleInstanceRepository = new RuleInstanceRepository(tenantId, {
       dynamoDb,
     })
-
-    const ruleInstances = await ruleInstanceRepository.getAllRuleInstances()
-    const isAnyRulesForOngoingScreening = ruleInstances.some((ruleInstance) => {
-      return ruleInstance.type === 'USER' && ruleInstance.isOngoingScreening
+    const ruleRepository = new RuleRepository(tenantId, {
+      dynamoDb,
+    })
+    const userRepository = new UserRepository(tenantId, {
+      mongoDb,
     })
 
-    if (!isAnyRulesForOngoingScreening) {
+    const ruleInstances = (
+      await ruleInstanceRepository.getActiveRuleInstances('USER')
+    ).filter((ruleInstance) => ruleInstance.parameters?.ongoingScreening)
+    if (ruleInstances.length === 0) {
+      logger.info('No active ongoing screening user rule found. Abort.')
       return
     }
-
-    const mongoDb = await getMongoDbClient()
-    const userRepository = new UserRepository(tenantId, { mongoDb, dynamoDb })
+    const rules = await ruleRepository.getRulesByIds(
+      ruleInstances.map((ruleInstance) => ruleInstance.ruleId)
+    )
     const rulesEngine = new RulesEngineService(tenantId, dynamoDb, mongoDb)
-    const allUserIds = await userRepository.getAllUsersIds()
-    const chunkedUserIds = _.chunk(allUserIds, BATCH_SIZE)
-
-    while (chunkedUserIds.length > 0) {
-      const userIds = chunkedUserIds.pop()
-
-      if (!userIds) {
-        break
-      }
-
-      const users = await userRepository.getUsers(userIds)
-
+    const users = await userRepository.getMongoUsersByIds(userIds)
+    let processedUsers = 0
+    for (const usersChunk of _.chunk(users, CONCURRENT_BATCH_SIZE)) {
       await pMap(
-        users,
+        usersChunk,
         async (user) => {
-          await rulesEngine.verifyUser(user, true)
+          await rulesEngine.verifyUserByRules(user, ruleInstances, rules)
         },
-        { concurrency: 10 }
+        { concurrency: CONCURRENT_BATCH_SIZE }
       )
+      processedUsers += usersChunk.length
+      logger.info(`Processed users ${processedUsers} / ${userIds.length}`)
     }
   }
 }

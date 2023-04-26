@@ -3,6 +3,7 @@ import _ from 'lodash'
 import {
   FUZZINESS_SCHEMA,
   SANCTIONS_SCREENING_TYPES_OPTIONAL_SCHEMA,
+  ENABLE_ONGOING_SCREENING_SCHEMA,
 } from '../utils/rule-parameter-schemas'
 import { isConsumerUser } from '../utils/user-rule-utils'
 import { RuleHitResult } from '../rule'
@@ -16,6 +17,7 @@ import { User } from '@/@types/openapi-public/User'
 export type SanctionsConsumerUserRuleParameters = {
   screeningTypes?: SanctionsSearchType[]
   fuzziness: number
+  ongoingScreening: boolean
 }
 
 export default class SanctionsConsumerUserRule extends UserRule<SanctionsConsumerUserRuleParameters> {
@@ -25,6 +27,10 @@ export default class SanctionsConsumerUserRule extends UserRule<SanctionsConsume
       properties: {
         screeningTypes: SANCTIONS_SCREENING_TYPES_OPTIONAL_SCHEMA({}),
         fuzziness: FUZZINESS_SCHEMA,
+        ongoingScreening: ENABLE_ONGOING_SCREENING_SCHEMA({
+          description:
+            'Enabling ongoing screening will do a historic screening of all the existing consumer users.',
+        }),
       },
       required: ['fuzziness'],
       additionalProperties: false,
@@ -32,7 +38,7 @@ export default class SanctionsConsumerUserRule extends UserRule<SanctionsConsume
   }
 
   public async computeRule() {
-    const { fuzziness, screeningTypes } = this.parameters
+    const { fuzziness, screeningTypes, ongoingScreening } = this.parameters
     const user = this.user as User
 
     if (
@@ -55,7 +61,7 @@ export default class SanctionsConsumerUserRule extends UserRule<SanctionsConsume
       yearOfBirth,
       types: screeningTypes,
       fuzziness: fuzziness / 100,
-      monitoring: { enabled: true },
+      monitoring: { enabled: ongoingScreening },
     })
     if (result.data && result.data.length > 0) {
       hitResult.push({

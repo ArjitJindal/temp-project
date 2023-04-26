@@ -542,6 +542,7 @@ paths:
               schema:
                 allOf:
                   - $ref: '#/components/schemas/ConsumerUsersResponse'
+                  - $ref: '#/components/schemas/UserMonitoringResult'
                   - type: object
                     properties:
                       message:
@@ -693,6 +694,7 @@ paths:
               schema:
                 allOf:
                   - $ref: '#/components/schemas/BusinessUsersResponse'
+                  - $ref: '#/components/schemas/UserMonitoringResult'
                   - type: object
                     properties:
                       message:
@@ -922,7 +924,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Business'
+                $ref: '#/components/schemas/UserWithRulesResult'
         '400':
           description: Bad Request
         '401':
@@ -987,7 +989,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Business'
+                $ref: '#/components/schemas/BusinessWithRulesResult'
         '400':
           description: Bad Request
         '401':

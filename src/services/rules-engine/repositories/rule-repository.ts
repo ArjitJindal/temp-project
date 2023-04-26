@@ -4,6 +4,7 @@ import {
   DynamoDBDocumentClient,
   PutCommand,
 } from '@aws-sdk/lib-dynamodb'
+import _ from 'lodash'
 import { Rule } from '@/@types/openapi-internal/Rule'
 import { DynamoDbKeys } from '@/core/dynamodb/dynamodb-keys'
 import { paginateQuery } from '@/utils/dynamodb'
@@ -76,27 +77,16 @@ export class RuleRepository {
 
     const result = await paginateQuery(this.dynamoDb, queryInput)
     return (
-      result.Items?.map((item) => ({
-        id: item.id,
-        type: item.type,
-        name: item.name,
-        description: item.description,
-        descriptionTemplate: item.descriptionTemplate,
-        parametersSchema: item.parametersSchema,
-        defaultParameters: item.defaultParameters,
-        defaultAction: item.defaultAction,
-        ruleImplementationName: item.ruleImplementationName,
-        labels: item.labels,
-        defaultNature: item.defaultNature,
-        tenantIds:
-          this.tenantId === FLAGRIGHT_TENANT_ID ? item.tenantIds : undefined,
-        defaultCasePriority: item.defaultCasePriority,
-        requiredFeature: item.requiredFeature,
-        typology: item.typology,
-        typologyGroup: item.typologyGroup,
-        typologyDescription: item.typologyDescription,
-        source: item.source,
-      })) || []
+      result.Items?.map(
+        (item) =>
+          ({
+            ..._.omit(item, ['PartitionKeyID', 'SortKeyID']),
+            tenantIds:
+              this.tenantId === FLAGRIGHT_TENANT_ID
+                ? item.tenantIds
+                : undefined,
+          } as Rule)
+      ) || []
     )
   }
 

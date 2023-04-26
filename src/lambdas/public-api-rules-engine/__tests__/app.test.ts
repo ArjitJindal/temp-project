@@ -355,6 +355,8 @@ describe('Public API - Create a Consumer User Event', () => {
     expect(JSON.parse(response?.body as string)).toEqual({
       ...consumerUser,
       tags: [{ key: 'key', value: 'value' }],
+      executedRules: [],
+      hitRules: [],
     })
   })
 })
@@ -418,6 +420,8 @@ describe('Public API - Create a Business User Event', () => {
           legalName: 'legalName',
         },
       },
+      executedRules: [],
+      hitRules: [],
     }
     expect(JSON.parse(response?.body as string)).toEqual(toMatchObject)
     const userService = new UserService(

@@ -40,11 +40,11 @@ export function isUserBetweenAge(
 }
 
 export function isConsumerUser(user: User | Business) {
-  return (user as User).userDetails !== undefined
+  return !isBusinessUser(user)
 }
 
 export function isBusinessUser(user: User | Business) {
-  return !isConsumerUser(user)
+  return (user as Business).legalEntity !== undefined
 }
 
 export function isIpAddressInList(

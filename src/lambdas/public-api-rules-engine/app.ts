@@ -21,6 +21,7 @@ import { updateLogMetadata } from '@/core/utils/context'
 import { logger } from '@/core/logger'
 import { addNewSubsegment } from '@/core/xray'
 import { UserManagementService } from '@/services/users'
+import { getMongoDbClient } from '@/utils/mongoDBUtils'
 
 type MissingUserIdMap = { field: string; userId: string }
 
@@ -233,7 +234,8 @@ export const userEventsHandler = lambdaApi()(
 
       const userManagementService = new UserManagementService(
         tenantId,
-        dynamoDb
+        dynamoDb,
+        await getMongoDbClient()
       )
       return await userManagementService.verifyConsumerUserEvent(userEvent)
     }
@@ -251,7 +253,8 @@ export const userEventsHandler = lambdaApi()(
 
       const userManagementService = new UserManagementService(
         tenantId,
-        dynamoDb
+        dynamoDb,
+        await getMongoDbClient()
       )
       const { updatedBusinessUserAttributes } = userEvent
       if (updatedBusinessUserAttributes?.linkedEntities) {

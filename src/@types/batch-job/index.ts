@@ -59,6 +59,7 @@ type OngoingScreeningUserRuleBatchJobType = 'ONGOING_SCREENING_USER_RULE'
 export type OngoingScreeningUserRuleBatchJob = {
   type: OngoingScreeningUserRuleBatchJobType
   tenantId: string
+  userIds: string[]
 }
 
 export type BatchJobType =

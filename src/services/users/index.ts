@@ -1,8 +1,10 @@
 import { DynamoDBDocumentClient } from '@aws-sdk/lib-dynamodb'
 import { NotFound, BadRequest } from 'http-errors'
 import _ from 'lodash'
+import { MongoClient } from 'mongodb'
 import { UserRepository } from '../users/repositories/user-repository'
 import { UserEventRepository } from '../rules-engine/repositories/user-event-repository'
+import { RulesEngineService } from '../rules-engine'
 import { logger } from '@/core/logger'
 import { Business } from '@/@types/openapi-public/Business'
 import { User } from '@/@types/openapi-public/User'
@@ -10,37 +12,45 @@ import { ConsumerUserEvent } from '@/@types/openapi-public/ConsumerUserEvent'
 import { BusinessUserEvent } from '@/@types/openapi-public/BusinessUserEvent'
 import { BusinessEntityLink } from '@/@types/openapi-internal/BusinessEntityLink'
 import { UserType } from '@/@types/user/user-type'
+import { BusinessWithRulesResult } from '@/@types/openapi-internal/BusinessWithRulesResult'
+import { UserWithRulesResult } from '@/@types/openapi-internal/UserWithRulesResult'
 
 export class UserManagementService {
   tenantId: string
   dynamoDb: DynamoDBDocumentClient
-
+  rulesEngineService: RulesEngineService
   userRepository: UserRepository
   userEventRepository: UserEventRepository
 
-  constructor(tenantId: string, dynamoDb: DynamoDBDocumentClient) {
+  constructor(
+    tenantId: string,
+    dynamoDb: DynamoDBDocumentClient,
+    mongoDb: MongoClient
+  ) {
     this.dynamoDb = dynamoDb
     this.tenantId = tenantId
 
     this.userRepository = new UserRepository(tenantId, {
       dynamoDb,
+      mongoDb,
     })
     this.userEventRepository = new UserEventRepository(tenantId, { dynamoDb })
+    this.rulesEngineService = new RulesEngineService(
+      tenantId,
+      dynamoDb,
+      mongoDb
+    )
   }
 
-  public async saveUser(
+  public async verifyUser(
     userPayload: User | Business,
     type: UserType
   ): Promise<User | Business> {
     const isConsumerUser = type === 'CONSUMER'
 
     if (!isConsumerUser && (userPayload as Business)?.linkedEntities) {
-      const userManagementService = new UserManagementService(
-        this.tenantId,
-        this.dynamoDb
-      )
       try {
-        await userManagementService.validateLinkedEntitiesAndEmitEvent(
+        await this.validateLinkedEntitiesAndEmitEvent(
           (userPayload as Business).linkedEntities!,
           userPayload.userId
         )
@@ -50,9 +60,16 @@ export class UserManagementService {
       }
     }
 
+    const userResult = {
+      ...userPayload,
+      ...(await this.rulesEngineService.verifyUser(userPayload)),
+    }
+
     const user = isConsumerUser
-      ? await this.userRepository.saveConsumerUser(userPayload)
-      : await this.userRepository.saveBusinessUser(userPayload as Business)
+      ? await this.userRepository.saveConsumerUser(userResult)
+      : await this.userRepository.saveBusinessUser(
+          userResult as BusinessWithRulesResult
+        )
     return user
   }
 
@@ -150,7 +167,7 @@ export class UserManagementService {
 
   public async verifyConsumerUserEvent(
     userEvent: ConsumerUserEvent
-  ): Promise<User> {
+  ): Promise<UserWithRulesResult> {
     const user = await this.userRepository.getConsumerUser(userEvent.userId)
     if (!user) {
       throw new NotFound(
@@ -161,14 +178,18 @@ export class UserManagementService {
       user,
       userEvent.updatedConsumerUserAttributes || {}
     )
+    const updatedConsumerUserResult = {
+      ...updatedConsumerUser,
+      ...(await this.rulesEngineService.verifyUser(updatedConsumerUser)),
+    }
     await this.userEventRepository.saveUserEvent(userEvent, 'CONSUMER')
-    await this.userRepository.saveConsumerUser(updatedConsumerUser)
-    return updatedConsumerUser
+    await this.userRepository.saveConsumerUser(updatedConsumerUserResult)
+    return updatedConsumerUserResult
   }
 
   public async verifyBusinessUserEvent(
     userEvent: BusinessUserEvent
-  ): Promise<Business> {
+  ): Promise<BusinessWithRulesResult> {
     const user = await this.userRepository.getBusinessUser(userEvent.userId)
     if (!user) {
       throw new NotFound(
@@ -186,9 +207,13 @@ export class UserManagementService {
         return obj
       }
     )
+    const updatedBusinessUserResult = {
+      ...updatedBusinessUser,
+      ...(await this.rulesEngineService.verifyUser(updatedBusinessUser)),
+    }
 
     await this.userEventRepository.saveUserEvent(userEvent, 'BUSINESS')
-    await this.userRepository.saveBusinessUser(updatedBusinessUser)
-    return updatedBusinessUser
+    await this.userRepository.saveBusinessUser(updatedBusinessUserResult)
+    return updatedBusinessUserResult
   }
 }

@@ -526,3 +526,10 @@ export const SANCTIONS_SCREENING_TYPES_OPTIONAL_SCHEMA = (
     ...SANCTIONS_SCREENING_TYPES_SCHEMA(options),
     nullable: true,
   } as const)
+
+export const ENABLE_ONGOING_SCREENING_SCHEMA = (options?: SchemaOptions) =>
+  ({
+    type: 'boolean',
+    title: options?.title || 'Enable ongoing screening',
+    description: options?.description,
+  } as const)
