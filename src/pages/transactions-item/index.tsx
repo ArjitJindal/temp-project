@@ -104,6 +104,9 @@ export default function TransactionsItem() {
                 <Form.Layout.Label title="Type">
                   <TransactionTypeTag transactionType={transaction.type} />
                 </Form.Layout.Label>
+                <Form.Layout.Label title="Product Type">
+                  {transaction.productType ?? '-'}
+                </Form.Layout.Label>
                 <Form.Layout.Label title="Reference">
                   {transaction.reference ?? '-'}
                 </Form.Layout.Label>
