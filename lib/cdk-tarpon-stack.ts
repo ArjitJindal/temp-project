@@ -20,6 +20,7 @@ import {
   ApiKey,
   AssetApiDefinition,
   DomainName,
+  EndpointType,
   LogGroupLogDestination,
   MethodLoggingLevel,
   Period,
@@ -104,6 +105,18 @@ const CONSUMER_SQS_VISIBILITY_TIMEOUT = Duration.seconds(
 // SQS max receive count cannot go above 1000
 const MAX_SQS_RECEIVE_COUNT = 1000
 const isDevUserStack = process.env.ENV === 'dev:user'
+const QA_API_KEY_IDS = [
+  'c4fr2s8zmi',
+  'nzwxj76073',
+  'nnuqku01gg',
+  'd1mh4vfs79',
+  '0vdidutr8c',
+  'ryxami7tcd',
+  'jvdub2angl',
+  'sx8jv69vmc',
+  'lriigh9bri',
+  '4wp619m7p3',
+]
 
 type InternalFunctionProps = {
   name: string
@@ -1471,12 +1484,19 @@ export class CdkTarponStack extends cdk.Stack {
     // )
 
     if (isDevUserStack) {
+      // NOTE: Each api key can only be used for at most 10 usage plans.
+      // We use a pool of API keys to spread out the usage.
+      const qaSubdomain = process.env.QA_SUBDOMAIN as string
+      const apiKeyIdIndex =
+        _.sum(qaSubdomain.split('').map((c) => c.charCodeAt(0))) %
+        QA_API_KEY_IDS.length
       const apiKey = ApiKey.fromApiKeyId(
         this,
         `api-key`,
-        this.config.application.DEFAULT_API_KEY_ID as string
+        QA_API_KEY_IDS[apiKeyIdIndex]
       )
       const usagePlan = new UsagePlan(this, `usage-plan`, {
+        name: `dev-${qaSubdomain}`,
         quota: {
           period: Period.MONTH,
           limit: 10_000,
@@ -1901,6 +1921,9 @@ export class CdkTarponStack extends cdk.Stack {
     })
 
     const restApi = new SpecRestApi(this, apiName, {
+      endpointTypes: isDevUserStack
+        ? [EndpointType.REGIONAL]
+        : [EndpointType.EDGE],
       restApiName: apiName,
       apiDefinition,
       deploy: true,

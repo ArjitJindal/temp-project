@@ -95,6 +95,5 @@ export type Config = {
     WEBHOOK_REQUEST_TIMEOUT_SEC: number
     INTEGRATION_TEST_API_KEY_ID?: string
     POSTMAN_COLLECTION_ID?: string
-    DEFAULT_API_KEY_ID?: string
   }
 }

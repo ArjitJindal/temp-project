@@ -71,6 +71,5 @@ export const config: Config = {
       'https://api.flagright.dev/console/slack/oauth_redirect',
     WEBHOOK_REQUEST_TIMEOUT_SEC: 10,
     INTEGRATION_TEST_API_KEY_ID: 'sawiwhmtql',
-    DEFAULT_API_KEY_ID: 'sawiwhmtql',
   },
 }

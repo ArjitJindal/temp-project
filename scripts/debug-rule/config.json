@@ -1,5 +1,6 @@
 {
   "api": "e.g https://eu-1.api.flagright.com",
   "jwt": "Get your jwt from Console",
-  "transactionIds": []
+  "transactionIds": [],
+  "ruleInstanceIds": []
 }
