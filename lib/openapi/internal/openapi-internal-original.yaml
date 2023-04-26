@@ -5819,7 +5819,7 @@ components:
         - ACCOUNT
         - CASE
         - USER
-        - PULSE
+        - RISK_SCORING
         - ALERT
     Page:
       title: Page

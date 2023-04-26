@@ -96,7 +96,7 @@ export class PulseAuditLogService {
       action: logAction,
       oldImage,
       newImage,
-      type: 'PULSE',
+      type: 'RISK_SCORING',
       logMetadata,
       subtype,
     }
