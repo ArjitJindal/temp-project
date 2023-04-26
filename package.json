@@ -171,7 +171,7 @@
   },
   "dependencies": {
     "@aws-sdk/client-api-gateway": "^3.262.0",
-    "@aws-sdk/client-cloudwatch": "^3.183.0",
+    "@aws-sdk/client-cloudwatch": "^3.301.0",
     "@aws-sdk/client-dynamodb": "^3.183.0",
     "@aws-sdk/client-secrets-manager": "^3.145.0",
     "@aws-sdk/client-sfn": "^3.229.0",
