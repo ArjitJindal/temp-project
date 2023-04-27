@@ -551,10 +551,6 @@ paths:
                 example-1:
                   value:
                     userId: 96647cfd9e8fe66ee0f3362e011e34e8
-                    userRiskScoreDetails:
-                      kycRiskScore: 63.36
-                      transactionRiskScore: 72.32
-                      customerRiskAssessment: 73.92
         '400':
           description: Bad Request
         '401':
@@ -703,10 +699,6 @@ paths:
                 example-1:
                   value:
                     userId: 96647cfd9e8fe66ee0f3362e011e34e8
-                    userRiskScoreDetails:
-                      kycRiskScore: 63.36
-                      transactionRiskScore: 72.32
-                      customerRiskAssessment: 73.92
         '400':
           description: Bad Request
         '401':
