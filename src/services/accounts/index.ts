@@ -433,7 +433,7 @@ export class AccountsService {
 
     const auth0Audience = process.env.AUTH0_AUDIENCE?.split('https://')[1]
     const regionPrefix =
-      process.env.ENV === 'prod' ? `${process.env.REGION}-` : ''
+      process.env.ENV === 'prod' ? `${process.env.REGION}.` : ''
     const organization = await managementClient.organizations.create({
       name: tenantData.tenantName.toLowerCase(),
       display_name: tenantData?.auth0DisplayName?.replace(/[^a-zA-Z0-9]/g, '_'),
