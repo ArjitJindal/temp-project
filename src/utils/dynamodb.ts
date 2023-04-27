@@ -32,15 +32,6 @@ import { logger } from '@/core/logger'
 import { addNewSubsegment } from '@/core/xray'
 import { getContext, publishMetric } from '@/core/utils/context'
 
-let cacheDynamoDbClients: { [key: string]: DynamoDBClient } = {}
-
-export function destroyCacheDynamoDbClients() {
-  Object.values(cacheDynamoDbClients).forEach((dynamodbClient) => {
-    dynamodbClient.destroy()
-  })
-  cacheDynamoDbClients = {}
-}
-
 function getAugmentedDynamoDBCommand(command: any): {
   type: 'READ' | 'WRITE' | null
   command: any
@@ -144,8 +135,9 @@ export function getDynamoDbRawClient(
   credentials?: Credentials | CredentialsOptions
 ): DynamoDBClient {
   const cacheKey = JSON.stringify(credentials ?? {})
-  if (credentials && cacheDynamoDbClients[cacheKey]) {
-    return cacheDynamoDbClients[cacheKey]
+  const context = getContext()
+  if (context?.dynamoDbClients?.[cacheKey]) {
+    return context?.dynamoDbClients?.[cacheKey]
   }
   const isLocal = process.env.ENV === 'local'
   const rawClient = new DynamoDBClient({
@@ -164,9 +156,13 @@ export function getDynamoDbRawClient(
       : undefined,
   })
 
-  if (credentials) {
-    cacheDynamoDbClients[cacheKey] = rawClient
+  if (context) {
+    if (!context.dynamoDbClients) {
+      context.dynamoDbClients = {}
+    }
+    context.dynamoDbClients[cacheKey] = rawClient
   }
+
   return rawClient
 }
 

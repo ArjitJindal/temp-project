@@ -7,6 +7,7 @@ import {
 } from 'aws-lambda'
 import _ from 'lodash'
 import { MetricDatum } from '@aws-sdk/client-cloudwatch'
+import { DynamoDBClient } from '@aws-sdk/client-dynamodb'
 import { winstonLogger } from '../logger'
 import { Feature } from '@/@types/openapi-internal/Feature'
 import { getDynamoDbClientByEvent } from '@/utils/dynamodb'
@@ -26,6 +27,7 @@ type Context = LogMetaData & {
   logMetadata?: { [key: string]: string | undefined }
   metricDimensions?: { [key: string]: string | undefined }
   metrics?: { [namespace: string]: MetricDatum[] }
+  dynamoDbClients?: { [key: string]: DynamoDBClient }
   user?: Partial<Account>
   authz?: {
     tenantId: string

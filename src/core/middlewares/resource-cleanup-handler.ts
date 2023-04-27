@@ -1,12 +1,21 @@
-import { destroyCacheDynamoDbClients } from '@/utils/dynamodb'
+import { getContext } from '../utils/context'
+
+function cleanUpDynamoDbResources() {
+  const dynamoDbClients = getContext()?.dynamoDbClients
+  if (dynamoDbClients) {
+    Object.values(dynamoDbClients).forEach((client) => {
+      client.destroy()
+    })
+  }
+}
 
 export const resourceCleanupHandler =
   () =>
   (handler: CallableFunction): CallableFunction =>
   async (event: unknown, context: unknown): Promise<unknown> => {
     try {
-      return handler(event, context)
+      return await handler(event, context)
     } finally {
-      destroyCacheDynamoDbClients()
+      cleanUpDynamoDbResources()
     }
   }

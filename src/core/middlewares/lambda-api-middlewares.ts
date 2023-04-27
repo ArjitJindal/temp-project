@@ -21,8 +21,8 @@ export const lambdaApi = (options?: { requiredFeatures?: Feature[] }) => {
     initSentry(),
     featureProtected(options?.requiredFeatures),
     metricsMiddleware(),
-    emfilesHandler(),
     resourceCleanupHandler(),
+    emfilesHandler(),
   ] as const
   return compose(...middlewares)
 }

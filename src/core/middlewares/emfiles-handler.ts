@@ -9,7 +9,7 @@ export const emfilesHandler =
       if (process.env.ENV !== 'local') {
         await lambda_emfiles.start_verify()
       }
-      return handler(event, context)
+      return await handler(event, context)
     } finally {
       if (process.env.ENV !== 'local') {
         setTimeout(() => {
