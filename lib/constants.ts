@@ -18,13 +18,7 @@ export function getResourceNameForTarpon(
   dash = false,
   ignoreSuffix = false
 ) {
-  let suffix = ignoreSuffix ? '' : getSuffix()
-
-  // TODO: Remove this in the next PR
-  if (resourceName.toLowerCase().includes('console')) {
-    suffix += 'New'
-  }
-
+  const suffix = ignoreSuffix ? '' : getSuffix()
   return `tarpon${dash ? '-' : ''}${resourceName}${suffix}`
 }
 

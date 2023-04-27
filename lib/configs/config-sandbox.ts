@@ -39,6 +39,7 @@ export const config: Config = {
     },
     USER_LAMBDA: {
       PROVISIONED_CONCURRENCY: 2,
+      MEMORY_SIZE: 512,
     },
     TENANT_LAMBDA: {
       PROVISIONED_CONCURRENCY: 1,

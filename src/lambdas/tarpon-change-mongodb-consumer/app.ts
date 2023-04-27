@@ -81,7 +81,7 @@ async function transactionHandler(
   tenantId: string,
   transaction: TransactionWithRulesResult | undefined
 ) {
-  if (!transaction) {
+  if (!transaction || !transaction.transactionId) {
     return
   }
   updateLogMetadata({ transactionId: transaction.transactionId })
@@ -144,7 +144,7 @@ async function userHandler(
   tenantId: string,
   user: BusinessWithRulesResult | UserWithRulesResult | undefined
 ) {
-  if (!user) {
+  if (!user || !user.userId) {
     return
   }
   updateLogMetadata({ userId: user.userId })
@@ -215,7 +215,7 @@ async function userEventHandler(
   tenantId: string,
   userEvent: ConsumerUserEvent | BusinessUserEvent | undefined
 ) {
-  if (!userEvent) {
+  if (!userEvent || !userEvent.eventId) {
     return
   }
   updateLogMetadata({
@@ -245,7 +245,7 @@ async function deviceDataMetricsHandler(
   tenantId: string,
   deviceMetrics: DeviceMetric | undefined
 ) {
-  if (!deviceMetrics) {
+  if (!deviceMetrics || !deviceMetrics.userId) {
     return
   }
   updateLogMetadata({
@@ -264,7 +264,7 @@ async function transactionEventHandler(
   tenantId: string,
   transactionEvent: TransactionEvent | undefined
 ) {
-  if (!transactionEvent) {
+  if (!transactionEvent || !transactionEvent.eventId) {
     return
   }
   updateLogMetadata({

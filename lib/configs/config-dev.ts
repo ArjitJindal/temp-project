@@ -28,6 +28,7 @@ export const config: Config = {
     },
     USER_LAMBDA: {
       PROVISIONED_CONCURRENCY: 0,
+      MEMORY_SIZE: 512,
     },
     TRANSACTIONS_VIEW_LAMBDA: {
       PROVISIONED_CONCURRENCY: 0,
@@ -43,6 +44,7 @@ export const config: Config = {
     },
     CASE_LAMBDA: {
       PROVISIONED_CONCURRENCY: 0,
+      MEMORY_SIZE: 512,
     },
     BATCH_JOB_LAMBDA: {
       MEMORY_SIZE: 512,
