@@ -4929,6 +4929,9 @@ components:
         - Documents not collected
         - Investigation completed
         - Escalated
+        - Fraud
+        - Anti-money laundering
+        - Terrorist financing
     MissingUser:
       title: MissingUser
       type: object
