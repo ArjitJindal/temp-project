@@ -213,8 +213,9 @@ export class CdkTarponAlarmsStack extends cdk.NestedStack {
       }),
     })
     // Create an Amazon Inspector Assessment Target
-    new inspector.CfnAssessmentTarget(this, 'InspectorAssessmentTarget', {
-      assessmentTargetName: 'InspectorAssessmentTarget',
-    })
+    if (this.config.stage === 'prod' && this.config.region != 'asia-1')
+      new inspector.CfnAssessmentTarget(this, 'InspectorAssessmentTarget', {
+        assessmentTargetName: 'InspectorAssessmentTarget',
+      })
   }
 }
