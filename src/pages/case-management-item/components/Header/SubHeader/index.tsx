@@ -93,6 +93,16 @@ export default function SubHeader(props: Props) {
           </div>
         </Form.Layout.Label>
       )}
+      {caseItem.caseStatus === 'ESCALATED' && caseItem.lastStatusChange && (
+        <Form.Layout.Label icon={<FileListLineIcon />} title={'Reason for escalating'}>
+          <div>
+            <ClosingReasonTag
+              closingReasons={caseItem.lastStatusChange.reason}
+              otherReason={caseItem.lastStatusChange.otherReason}
+            />
+          </div>
+        </Form.Layout.Label>
+      )}
     </>
   );
 }

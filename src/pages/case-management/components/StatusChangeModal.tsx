@@ -32,6 +32,12 @@ export const CLOSING_REASONS = [
   'Escalated',
 ];
 
+export const ESCALATION_REASONS: CaseClosingReasons[] = [
+  'Fraud',
+  'Anti-money laundering',
+  'Terrorist financing',
+];
+
 export interface FormValues {
   reasons: CaseClosingReasons[];
   reasonOther: string | null;
@@ -100,7 +106,10 @@ export default function StatusChangeModal(props: Props) {
     }
   }, [uploadingCount]);
 
-  const possibleReasons = [...COMMON_REASONS, ...CLOSING_REASONS];
+  const possibleReasons = [
+    ...(newStatus === 'ESCALATED' ? ESCALATION_REASONS : CLOSING_REASONS),
+    ...COMMON_REASONS,
+  ];
   const modalTitle = `${newStatusActionLabel ?? statusToOperationName(newStatus)} ${pluralize(
     entityName,
     ids.length,
