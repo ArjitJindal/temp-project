@@ -2,10 +2,9 @@ import { UI_SETTINGS } from '../ui-settings';
 import BusinessUserDetails from './BusinessUserDetails';
 import ConsumerUserDetails from './ConsumerUserDetails';
 import DeviceDataCard from './DeviceDataCard';
+import s from './index.module.less';
 import { InternalBusinessUser, InternalConsumerUser, MissingUser } from '@/apis';
 import { Small } from '@/components/ui/Typography';
-import UserTransactionHistoryTable from '@/pages/users-item/UserDetails/UserTransactionHistoryTable';
-import InsightsCard from '@/pages/case-management-item/CaseDetails/InsightsCard';
 import CommentsCard from '@/components/CommentsCard';
 import Authorized from '@/components/Authorized';
 import { useApi } from '@/api';
@@ -19,23 +18,23 @@ import AIInsightsCard from '@/pages/case-management-item/CaseDetails/AIInsightsC
 interface Props {
   user?: InternalConsumerUser | InternalBusinessUser | MissingUser;
   isEmbedded?: boolean;
-  hideHistory?: boolean;
-  hideInsights?: boolean;
   updateCollapseState?: (key: string, value: boolean) => void;
   onUserUpdate?: (userItem: InternalBusinessUser | InternalConsumerUser) => void;
   onReload: () => void;
   showCommentEditor?: boolean;
+  hideExpectedTransactionLimits?: boolean;
+  hideAIInsights?: boolean;
   uiSettings: typeof UI_SETTINGS;
 }
 
 function UserDetails(props: Props) {
   const {
     user,
-    hideHistory = false,
-    hideInsights = false,
     showCommentEditor = true,
     onUserUpdate,
     uiSettings,
+    hideExpectedTransactionLimits,
+    hideAIInsights,
   } = props;
 
   const api = useApi();
@@ -55,7 +54,7 @@ function UserDetails(props: Props) {
     return <Small>No user details found</Small>;
   }
   return (
-    <>
+    <div className={s.root}>
       <Authorized required={['users:user-details:read']}>
         <>
           {user?.type === 'BUSINESS' && (
@@ -63,6 +62,7 @@ function UserDetails(props: Props) {
               user={user}
               updateCollapseState={props.updateCollapseState}
               uiSettings={uiSettings}
+              hideExpectedTransactionLimits={hideExpectedTransactionLimits}
             />
           )}
           {user?.type === 'CONSUMER' && (
@@ -86,23 +86,7 @@ function UserDetails(props: Props) {
           </AsyncResourceRenderer>
         </>
       </Authorized>
-      {!hideHistory && (
-        <UserTransactionHistoryTable
-          userId={user.userId}
-          updateCollapseState={props.updateCollapseState}
-          title={UI_SETTINGS.cards.TRANSACTION_HISTORY.title}
-          collapsableKey={UI_SETTINGS.cards.TRANSACTION_HISTORY.key}
-        />
-      )}
-      {!hideInsights && (
-        <InsightsCard
-          userId={user.userId}
-          updateCollapseState={props.updateCollapseState}
-          title={UI_SETTINGS.cards.TRANSACTION_INSIGHTS.title}
-          collapsableKey={UI_SETTINGS.cards.TRANSACTION_INSIGHTS.key}
-        />
-      )}
-      {isMLDemoEnabled && user?.type === 'BUSINESS' && (
+      {isMLDemoEnabled && user?.type === 'BUSINESS' && !hideAIInsights && (
         <AIInsightsCard
           user={user}
           updateCollapseState={props.updateCollapseState}
@@ -118,7 +102,6 @@ function UserDetails(props: Props) {
             onUserUpdate && onUserUpdate({ ...user, comments: newComments });
           }}
           updateCollapseState={props.updateCollapseState}
-          onReload={props.onReload}
           commentType={'USER'}
           title={UI_SETTINGS.cards.COMMENTS.title}
           collapsableKey={UI_SETTINGS.cards.COMMENTS.key}
@@ -130,7 +113,7 @@ function UserDetails(props: Props) {
           userId={user?.userId as string}
         />
       )}
-    </>
+    </div>
   );
 }
 

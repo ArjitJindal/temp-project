@@ -14,7 +14,7 @@ import {
 } from '@/apis';
 import Label from '@/components/ui/Form/Layout/Label';
 import Money from '@/components/ui/Money';
-import Table from '@/components/ui/Table';
+import Table from '@/components/library/Table';
 import { TransactionLimit } from '@/apis/models/TransactionLimit';
 import { PaymentMethod } from '@/utils/payments';
 import { PaymentMethodTag } from '@/components/ui/PaymentTypeTag';
@@ -27,6 +27,8 @@ import { TransactionAmountLimit } from '@/apis/models/TransactionAmountLimit';
 import { useApi } from '@/api';
 import COLORS from '@/components/ui/colors';
 import { useHasPermissions } from '@/utils/user-utils';
+import { ColumnHelper } from '@/components/library/Table/columnHelper';
+import { PAYMENT_METHOD } from '@/components/library/Table/standardDataTypes';
 
 const timeFrames = ['day', 'week', 'month', 'year'];
 
@@ -319,74 +321,84 @@ const PaymentMethodLimitsTable: React.FC<PaymentMethodLimitsTableProps> = ({
       paymentMethod: entry[0] as PaymentMethod,
       transactionLimit: entry[1],
     }));
+
+  const helper = new ColumnHelper<TableItem>();
   return (
     <>
       <Table<TableItem>
+        sizingMode="FULL_WIDTH"
         rowKey="paymentMethod"
-        pagination={'HIDE'}
+        pagination={false}
+        externalHeader={true}
         data={{
           items: tableItems,
         }}
-        search={false}
-        options={{
-          reload: false,
-          setting: false,
-          density: false,
-        }}
+        hideFilters={true}
         columns={[
-          {
+          helper.simple({
             title: 'Payment method',
-            render: (_, row) => {
-              return <PaymentMethodTag paymentMethod={row.paymentMethod} />;
-            },
-          },
-          {
+            key: 'paymentMethod',
+            type: PAYMENT_METHOD,
+          }),
+          helper.simple({
             title: 'Max transaction count',
-            render: (_, row) => {
-              return (
-                <Space direction="vertical">
-                  {Object.entries(row.transactionLimit.transactionCountLimit || {})
-                    .filter((entry) => entry[1])
-                    .map((entry) => `${entry[1]} / ${entry[0]}`)}
-                </Space>
-              );
+            id: 'maxTransactionCount',
+            key: 'transactionLimit',
+            type: {
+              render: (transactionLimit) => {
+                return (
+                  <Space direction="vertical">
+                    {Object.entries(transactionLimit?.transactionCountLimit || {})
+                      .filter((entry) => entry[1])
+                      .map((entry) => `${entry[1]} / ${entry[0]}`)}
+                  </Space>
+                );
+              },
             },
-          },
-          {
+          }),
+          helper.simple({
             title: 'Max transaction amount',
-            render: (_, row) => {
-              return (
-                <Space direction="vertical">
-                  {Object.entries(row.transactionLimit.transactionAmountLimit || {})
-                    .filter((entry) => entry[1])
-                    .map((entry) => (
-                      <Space>
-                        <Money amount={entry[1]} /> / {entry[0]}
-                      </Space>
-                    ))}
-                </Space>
-              );
+            id: 'maxTransactionAmount',
+            key: 'transactionLimit',
+            type: {
+              render: (transactionLimit) => {
+                return (
+                  <Space direction="vertical">
+                    {Object.entries(transactionLimit?.transactionAmountLimit || {})
+                      .filter((entry) => entry[1])
+                      .map((entry) => (
+                        <Space>
+                          <Money amount={entry[1]} /> / {entry[0]}
+                        </Space>
+                      ))}
+                  </Space>
+                );
+              },
             },
-          },
-          {
+          }),
+          helper.simple({
             title: 'Avg transaction amount',
-            render: (_, row) => {
-              return (
-                <Space direction="vertical">
-                  {Object.entries(row.transactionLimit.averageTransactionAmountLimit || {})
-                    .filter((entry) => entry[1])
-                    .map((entry) => (
-                      <Space>
-                        <Money amount={entry[1]} /> / {entry[0]}
-                      </Space>
-                    ))}
-                </Space>
-              );
+            key: 'transactionLimit',
+            id: 'avgTransactionAmount',
+            type: {
+              render: (transactionLimit) => {
+                return (
+                  <Space direction="vertical">
+                    {Object.entries(transactionLimit?.averageTransactionAmountLimit || {})
+                      .filter((entry) => entry[1])
+                      .map((entry) => (
+                        <Space>
+                          <Money amount={entry[1]} /> / {entry[0]}
+                        </Space>
+                      ))}
+                  </Space>
+                );
+              },
             },
-          },
-          {
+          }),
+          helper.display({
             title: 'Actions',
-            render: (_, row) => {
+            render: (row) => {
               return (
                 <Space>
                   <EditOutlined
@@ -405,7 +417,7 @@ const PaymentMethodLimitsTable: React.FC<PaymentMethodLimitsTableProps> = ({
                 </Space>
               );
             },
-          },
+          }),
         ]}
       />
 

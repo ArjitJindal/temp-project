@@ -7,6 +7,7 @@ import Sticky from '@/components/ui/Sticky';
 import * as Card from '@/components/ui/Card';
 
 interface Props {
+  stickyElRef?: React.RefCallback<HTMLDivElement>;
   idTitle?: string;
   id?: string | undefined;
   tag?: React.ReactNode;
@@ -16,13 +17,16 @@ interface Props {
 }
 
 export default function EntityHeader(props: Props) {
-  const { id, idTitle, tag, children, buttons, subHeader } = props;
+  const { id, idTitle, tag, children, buttons, subHeader, stickyElRef } = props;
 
   return (
     <Card.Section className={cn(s.root)}>
       <Sticky>
         {(isSticky) => (
-          <div className={cn(s.main, isSticky && s.isSticky)}>
+          <div
+            className={cn(s.main, isSticky && s.isSticky)}
+            ref={isSticky ? stickyElRef : undefined}
+          >
             {idTitle && (
               <Form.Layout.Label title={idTitle}>
                 <EntityId>{id}</EntityId>

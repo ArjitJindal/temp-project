@@ -13,11 +13,20 @@ interface Props {
   header?: HeaderSettings;
   children: React.ReactNode;
   collapsable?: boolean;
+  noBorder?: boolean;
   updateCollapseState?: (key: string, value: boolean) => void;
 }
 
 const Root = (props: Props) => {
-  const { disabled, className, header, children, collapsable = true, updateCollapseState } = props;
+  const {
+    disabled,
+    className,
+    header,
+    children,
+    collapsable = true,
+    noBorder = false,
+    updateCollapseState,
+  } = props;
   const { collapsable: headerCollapsable = true, collapsableKey } = header ?? {};
   const settings = useSettings();
 
@@ -31,7 +40,7 @@ const Root = (props: Props) => {
   }, [collapsableKey, settings?.defaultViews?.expandedCards]);
 
   const focusKey = useFocusKey();
-  const [isCollapsed, setCollapsed] = useState(
+  const [isCollapsedState, setCollapsedState] = useState(
     focusKey === collapsableKey ? false : isCollapsedByDefault(),
   );
 
@@ -48,27 +57,35 @@ const Root = (props: Props) => {
       return;
     }
     if (expandableContext.expandMode === 'COLLAPSE_ALL') {
-      setCollapsed(true);
+      setCollapsedState(true);
     } else if (expandableContext.expandMode === 'EXPAND_ALL') {
-      setCollapsed(false);
+      setCollapsedState(false);
     }
-  }, [collapsable, disabled, expandableContext.expandMode, headerCollapsable, setCollapsed]);
+  }, [collapsable, disabled, expandableContext.expandMode, headerCollapsable, setCollapsedState]);
 
   useDeepEqualEffect(() => {
     if (updateCollapseState && collapsableKey) {
-      updateCollapseState(collapsableKey, isCollapsed);
+      updateCollapseState(collapsableKey, isCollapsedState);
     }
-  }, [isCollapsed]);
+  }, [isCollapsedState]);
+
+  const isCollapsed = disabled || (collapsable && headerCollapsable && isCollapsedState);
 
   return (
-    <div className={cn(s.root, className, disabled && s.disabled)} id={collapsableKey}>
+    <div
+      className={cn(s.root, className, disabled && s.disabled, noBorder && s.noBorder)}
+      id={collapsableKey}
+    >
       <Column>
         {header && (
           <Header
-            header={header}
+            header={{
+              ...header,
+              collapsable: headerCollapsable && collapsable,
+            }}
             link={header.link}
-            isCollapsed={disabled || (collapsable && headerCollapsable && isCollapsed)}
-            setCollapsed={setCollapsed}
+            isCollapsed={isCollapsed}
+            setCollapsed={setCollapsedState}
           />
         )}
         {!isCollapsed && <Column>{children}</Column>}

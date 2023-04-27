@@ -48,7 +48,7 @@ export default function MainPanel(props: Props) {
   );
 }
 
-const CHART_WIDTH = 100;
+const CHART_WIDTH = 65;
 const CHART_HEIGHT = 40;
 const CIRCLE_AREA_SIZE = 10;
 const CIRCLE_SIZE = 3;

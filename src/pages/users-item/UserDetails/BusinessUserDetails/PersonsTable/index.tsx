@@ -1,145 +1,80 @@
 import { Typography } from 'antd';
 import React from 'react';
 import s from './styles.module.less';
-import { Address, LegalDocument, Person } from '@/apis';
+import { LegalDocument, Person } from '@/apis';
 import { formatConsumerName } from '@/utils/api/users';
-import CountryDisplay from '@/components/ui/CountryDisplay';
-import Table from '@/components/ui/Table';
-import FileCopyLineIcon from '@/components/ui/icons/Remix/document/file-copy-line.react.svg';
-import KeyValueTag from '@/components/ui/KeyValueTag';
+import Table from '@/components/library/Table';
+import { ColumnHelper } from '@/components/library/Table/columnHelper';
+import {
+  ADDRESS,
+  COUNTRY,
+  EMAIL,
+  EXTERNAL_LINK,
+  STRING,
+  TAGS,
+} from '@/components/library/Table/standardDataTypes';
+import { array } from '@/components/library/Table/dataTypeHelpers';
 
 export function expandedRowRender(person: Person) {
+  const helper = new ColumnHelper<LegalDocument & { i: number }>();
   return (
     <div className={s.expandedRow}>
       <Typography.Title level={5}>Legal documents</Typography.Title>
       <Table<LegalDocument & { i: number }>
-        className={s.table}
-        search={false}
-        form={{
-          labelWrap: true,
-        }}
         rowKey="i"
         data={{
           items: (person.legalDocuments ?? []).map((x, i) => ({ i, ...x })),
         }}
         columns={[
-          {
+          helper.simple<'documentType'>({
             title: 'Type',
-            render: (_, document) => document.documentType ?? '-',
-          },
-          {
+            key: 'documentType',
+          }),
+          helper.simple<'documentNumber'>({
             title: 'Number',
-            render: (_, document) => document.documentNumber ?? '-',
-          },
-          {
+            key: 'documentNumber',
+          }),
+          helper.simple<'documentIssuedCountry'>({
             title: 'Issued by',
-            render: (_, document) => document.documentIssuedCountry ?? '-',
-          },
-          {
+            key: 'documentIssuedCountry',
+            type: COUNTRY,
+          }),
+          helper.simple({
             title: 'Date of issue',
-            render: (_, document) =>
-              document.documentIssuedDate
-                ? new Date(document.documentIssuedDate * 1000)?.toLocaleDateString()
-                : '-',
-          },
-          {
+            key: 'documentIssuedDate',
+            type: {
+              render: (documentIssuedDate) => (
+                <>
+                  {documentIssuedDate
+                    ? new Date(documentIssuedDate * 1000).toLocaleDateString()
+                    : '-'}
+                </>
+              ),
+            },
+          }),
+          helper.simple({
             title: 'Date of expiry',
-            render: (_, document) =>
-              document.documentExpirationDate
-                ? new Date(document.documentExpirationDate * 1000)?.toLocaleDateString()
-                : '-',
-          },
-          {
+            key: 'documentExpirationDate',
+            type: {
+              render: (documentExpirationDate) => (
+                <>
+                  {documentExpirationDate
+                    ? new Date(documentExpirationDate * 1000).toLocaleDateString()
+                    : '-'}
+                </>
+              ),
+            },
+          }),
+          helper.simple({
             title: 'Tags',
-            render: (_, document) => (
-              <>
-                {(document.tags ?? []).map((tag) => (
-                  <KeyValueTag key={tag.key} tag={tag} />
-                ))}
-              </>
-            ),
-          },
+            key: 'tags',
+            type: TAGS,
+          }),
         ]}
-        options={{
-          reload: false,
-          density: false,
-          setting: false,
-        }}
-        pagination={'HIDE'}
+        pagination={false}
+        hideFilters={true}
       />
     </div>
-  );
-}
-
-export function renderWebsite(website: string, i: number) {
-  return (
-    <div>
-      <a key={i} href={website} target="_blank">
-        {website}
-      </a>
-    </div>
-  );
-}
-
-export function renderEmail(email: string, i: number) {
-  return (
-    <div className={s.mail}>
-      <a key={i} href={`mailto:${email}`}>
-        {email}
-      </a>
-      <div className={s.icon}>
-        <FileCopyLineIcon />
-      </div>
-    </div>
-  );
-}
-
-export function renderWeb(website: string, i: number) {
-  return (
-    <div className={s.below}>
-      <a key={i} href={`webto:${website}`}>
-        {website}
-      </a>
-    </div>
-  );
-}
-export function renderTel(tel: string, i: number) {
-  return (
-    <div className={s.below}>
-      <a key={i}>
-        <b className={s.all}>{tel}</b>
-      </a>
-    </div>
-  );
-}
-
-export function renderFax(fax: string, i: number) {
-  return (
-    <div className={s.below}>
-      <a key={i}>
-        <b className={s.all}>{fax}</b>
-      </a>
-    </div>
-  );
-}
-
-function renderAddress(address: Address, i: number) {
-  return (
-    <p key={i}>
-      {[
-        ...address.addressLines,
-        [address.city, address.state].filter((x) => !!x).join(', '),
-        address.postcode,
-        address.country,
-      ]
-        .filter((x) => !!x)
-        .map((str, j) => (
-          <React.Fragment key={j}>
-            {j !== 0 && <br />}
-            {str}
-          </React.Fragment>
-        ))}
-    </p>
   );
 }
 
@@ -148,73 +83,66 @@ interface Props {
 }
 
 export default function PersonsTable(props: Props) {
+  const helper = new ColumnHelper<Person & { i: number }>();
   return (
     <Table<Person & { i: number }>
-      className={s.table}
-      search={false}
-      form={{
-        labelWrap: true,
-      }}
+      hideFilters={true}
       rowKey="i"
       data={{
         items: props.persons.map((person, i) => ({ i, ...person })),
       }}
-      expandable={{ expandedRowRender }}
-      columns={[
-        {
+      renderExpanded={expandedRowRender}
+      columns={helper.list([
+        helper.group({
           title: 'General details',
           children: [
-            {
+            helper.simple({
               title: 'Name',
-              render: (_, person) => formatConsumerName(person.generalDetails.name),
-            },
-            {
+              key: 'generalDetails.name',
+              type: {
+                render: (name) => <>{formatConsumerName(name)}</>,
+              },
+            }),
+            helper.simple({
               title: 'Residence',
-              render: (_, person) => (
-                <CountryDisplay isoCode={person.generalDetails.countryOfResidence} />
-              ),
-            },
-            {
+              key: 'generalDetails.countryOfResidence',
+              type: COUNTRY,
+            }),
+            helper.simple({
               title: 'Nationality',
-              render: (_, person) => (
-                <CountryDisplay isoCode={person.generalDetails.countryOfNationality} />
-              ),
-            },
+              key: 'generalDetails.countryOfNationality',
+              type: COUNTRY,
+            }),
           ],
-        },
-        {
+        }),
+        helper.group({
           title: 'Contact Details',
           children: [
-            {
+            helper.simple({
+              key: 'contactDetails.emailIds',
               title: 'Email',
-              render: (_, person) => <>{person.contactDetails?.emailIds?.map(renderEmail) ?? ''}</>,
-            },
-            {
+              type: array(EMAIL),
+            }),
+            helper.simple({
+              key: 'contactDetails.contactNumbers',
               title: 'Phone',
-              render: (_, person) => person.contactDetails?.contactNumbers?.join(', ') ?? '',
-            },
-            {
+              type: array(STRING),
+            }),
+            helper.simple({
               title: 'Website',
-              render: (_, person) => (
-                <>{person.contactDetails?.websites?.map(renderWebsite) ?? ''}</>
-              ),
-            },
-            {
+              key: 'contactDetails.websites',
+              type: array(EXTERNAL_LINK),
+            }),
+            helper.simple({
               title: 'Address',
-              render: (_, person) => (
-                <>{person.contactDetails?.addresses?.map(renderAddress) ?? ''}</>
-              ),
-            },
+              key: 'contactDetails.addresses',
+              type: array(ADDRESS),
+            }),
           ],
-        },
-      ]}
-      pagination={'HIDE'}
-      options={{
-        reload: false,
-        density: false,
-        setting: false,
-      }}
-      scroll={{ x: 1300 }}
+        }),
+      ])}
+      pagination={false}
+      fixedExpandedContainer={true}
     />
   );
 }

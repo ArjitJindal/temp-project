@@ -2,7 +2,6 @@ import { useIsFetching } from '@tanstack/react-query';
 import _ from 'lodash';
 import { useEffect, useState } from 'react';
 import { Spin } from 'antd';
-import COLORS from '../colors';
 import Button from '@/components/library/Button';
 
 interface Props {
@@ -26,7 +25,7 @@ const PrintButton = ({ onClickAction }: Props) => {
 
   return (
     <Button
-      type={'TEXT'}
+      type={'TETRIARY'}
       onClick={() => {
         setLoading(true);
         onClickAction();
@@ -34,13 +33,6 @@ const PrintButton = ({ onClickAction }: Props) => {
           setPrint(true);
           setLoading(false);
         }, 500);
-      }}
-      style={{
-        width: 'max-content',
-        margin: '1rem 1.5rem',
-        color: COLORS.purpleGray.base,
-        borderColor: COLORS.purpleGray.base,
-        display: 'relative',
       }}
       isLoading={loading}
     >

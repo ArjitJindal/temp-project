@@ -12,10 +12,9 @@ interface Props {
   comments: Array<TransactionComment>;
   onCommentsUpdate: (newComments: TransactionComment[]) => void;
   updateCollapseState?: (key: string, value: boolean) => void;
-  onReload: () => void;
   commentType: 'CASE' | 'USER';
-  collapsableKey: string;
-  title: string;
+  collapsableKey?: string;
+  title?: string;
 }
 
 export default function CommentsCard(props: Props) {
@@ -56,11 +55,13 @@ export default function CommentsCard(props: Props) {
   return (
     <>
       <Card.Root
-        header={{ title: `${title} (${comments.length})`, collapsableKey }}
+        header={
+          title != null ? { title: `${title} (${comments.length})`, collapsableKey } : undefined
+        }
         updateCollapseState={updateCollapseState}
-        disabled={comments.length === 0}
       >
         <Card.Section>
+          {comments.length === 0 && <div>No comments yet</div>}
           {comments.map((comment) => (
             <Comment
               key={comment.id}

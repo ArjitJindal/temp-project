@@ -1,11 +1,24 @@
 import { Tabs, TabsProps } from 'antd';
-import styles from './index.module.less';
+import cn from 'clsx';
+import s from './index.module.less';
 
-interface Props extends TabsProps {}
+export const TABS_LINE_HEIGHT = 81;
+
+interface Props extends TabsProps {
+  sticky?: number;
+  compact?: boolean;
+}
 
 export default function PageTabs(props: Props) {
+  const { sticky, compact } = props;
   return (
-    <Tabs className={styles.root} type="line" destroyInactiveTabPane={true} {...props}>
+    <Tabs
+      className={cn(s.root, { [s.compact]: compact, [s.isSticky]: sticky != null })}
+      type="line"
+      destroyInactiveTabPane={true}
+      tabBarStyle={sticky != null ? { top: sticky } : undefined}
+      {...props}
+    >
       {props.children}
     </Tabs>
   );

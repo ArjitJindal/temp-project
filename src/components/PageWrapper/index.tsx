@@ -7,6 +7,8 @@ import s from './styles.module.less';
 import ArrowLeftSLine from '@/components/ui/icons/Remix/system/arrow-left-s-line.react.svg';
 import { usePageTimeLoadTracker, usePageViewTimeTracker } from '@/utils/tracker';
 
+export const PAGE_WRAPPER_PADDING = 16;
+
 interface Props {
   title?: string;
   description?: string;
@@ -28,11 +30,10 @@ export default function PageWrapper(props: Props) {
   usePageViewTimeTracker();
   usePageTimeLoadTracker();
 
-  // todo: migration: check if something is broken
   return (
     <div className={s.root} id="page-wrapper-root">
       {(title || description || backButton || actionButton) && (
-        <header className={s.head}>
+        <header className={s.head} style={{ padding: PAGE_WRAPPER_PADDING, paddingBottom: 0 }}>
           <Row>
             <Col xs={18}>
               {title && (
@@ -66,7 +67,7 @@ export default function PageWrapper(props: Props) {
           </Row>
         </header>
       )}
-      <div className={cn(s.body, 'print-container')}>
+      <div className={cn(s.body, 'print-container')} style={{ padding: PAGE_WRAPPER_PADDING }}>
         <ErrorBoundary>{props.children}</ErrorBoundary>
       </div>
     </div>

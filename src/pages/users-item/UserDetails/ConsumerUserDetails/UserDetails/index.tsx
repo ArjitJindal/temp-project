@@ -17,7 +17,11 @@ interface Props {
 export default function UserDetails(props: Props) {
   const { user, updateCollapseState, title, collapsableKey } = props;
   return (
-    <Card.Root header={{ title, collapsableKey }} updateCollapseState={updateCollapseState}>
+    <Card.Root
+      header={{ title, collapsableKey }}
+      updateCollapseState={updateCollapseState}
+      collapsable={updateCollapseState != null}
+    >
       <Card.Row className={s.container}>
         <Card.Column className={s.all}>
           <Card.Section>

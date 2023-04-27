@@ -39,8 +39,6 @@ function CaseDetails(props: Props) {
       <UserDetails
         user={user}
         isEmbedded={true}
-        hideHistory={true}
-        hideInsights={true}
         updateCollapseState={props.updateCollapseState}
         onReload={props.onReload}
         showCommentEditor={false}

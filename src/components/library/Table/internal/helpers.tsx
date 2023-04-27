@@ -114,7 +114,7 @@ export function useTanstackTable<Item extends object, Params extends object = Co
             const value = props.getValue();
             return (
               <>
-                {columnDataType.render?.(
+                {columnDataType?.render?.(
                   value as any,
                   {
                     isSupported: false,
@@ -158,8 +158,8 @@ export function useTanstackTable<Item extends object, Params extends object = Co
             const columnValue = column.value(props.row.original.content);
             return (
               <>
-                {columnDataType.render?.(
-                  columnValue as any,
+                {columnDataType?.render?.(
+                  columnValue,
                   {
                     isSupported: false,
                     onChange: () => {

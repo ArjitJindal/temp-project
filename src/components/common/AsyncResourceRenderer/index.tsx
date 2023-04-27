@@ -1,5 +1,6 @@
 import React from 'react';
-import { Alert, Empty, Spin } from 'antd';
+import { Alert, Spin } from 'antd';
+import s from './index.module.less';
 import * as ar from '@/utils/asyncResource';
 
 interface Props<T> {
@@ -19,11 +20,10 @@ export function AsyncResourceRenderer<T>(props: Props<T>): JSX.Element {
       if (lastState != null) {
         return <Spin>{children(lastState)}</Spin>;
       }
-      // todo: i18n
       return (
-        <Spin>
-          <Empty description="Please, wait..." style={{ margin: '1rem 0' }} />
-        </Spin>
+        <div className={s.spinContainer}>
+          <Spin />
+        </div>
       );
     },
     renderFailed = (reason) => {

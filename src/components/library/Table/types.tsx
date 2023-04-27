@@ -73,22 +73,25 @@ export type TableRow<T> = {
  */
 export type SizingMode = 'FULL_WIDTH' | 'SCROLL';
 
-interface ColumnDataTypeEditing<Value> {
+export interface ColumnDataTypeEditing<Value> {
   isSupported: boolean;
   onChange: (newValue: Value | undefined) => void;
   statusRes: AsyncResource<Value | undefined>;
 }
 
-export interface ColumnDataType<Value, Item = unknown> {
+export interface FullColumnDataType<Value, Item = unknown> {
   render?: (
     value: Value | undefined,
     editing: ColumnDataTypeEditing<Value>,
     item: Item,
   ) => JSX.Element;
-  stringify?: (value: Value | undefined, item: Item) => string; // can be used for export // todo: make it optional
+  stringify?: (value: Value | undefined, item: Item) => string;
   defaultWrapMode?: 'WRAP' | 'OVERFLOW';
   autoFilterDataType?: AutoFilterDataType;
 }
+
+// Simplified variant of a data type which doesn't use parent item
+export type ColumnDataType<Value, Item = unknown> = FullColumnDataType<Value, Item | null>;
 
 export type FieldAccessor<Item> = DeepKeys<Item>;
 
@@ -120,13 +123,13 @@ export interface DataColumn extends BaseColumn {
 export interface SimpleColumn<Item extends object, Accessor extends FieldAccessor<Item>>
   extends DataColumn {
   key: Accessor;
-  type?: ColumnDataType<NonNullable<DeepValue<Item, Accessor>>, Item>;
+  type?: FullColumnDataType<NonNullable<DeepValue<Item, Accessor>>, Item>;
   showFilterByDefault?: boolean;
 }
 
 export interface DerivedColumn<Item extends object, Value = unknown> extends DataColumn {
   value: (item: Item) => Value | undefined;
-  type?: ColumnDataType<Value, Item>;
+  type?: FullColumnDataType<Value, Item>;
 }
 
 export type LeafColumn<T extends object> =

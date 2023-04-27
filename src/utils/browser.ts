@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import { useEffect, useState } from 'react';
 
 export async function copyTextToClipboard(text: string) {
   if (!navigator.clipboard) {
@@ -18,17 +18,22 @@ export function download(filename: string, text: string) {
   document.body.removeChild(element);
 }
 
-export function useElementRect(ref: React.RefObject<HTMLElement> | null): DOMRect | null {
-  const [rect, setRect] = useState<DOMRect | null>(null);
+export function useElementSize(el: HTMLElement | null): { width: number; height: number } | null {
+  const [rect, setRect] = useState<{ width: number; height: number } | null>(null);
   useEffect(() => {
-    const el = ref?.current;
     if (el != null) {
-      const boundingClientRect = el.getBoundingClientRect();
-      setRect(boundingClientRect);
-
+      setRect(el.getBoundingClientRect());
       const resizeObserver = new ResizeObserver((entries) => {
         for (const entry of entries) {
-          setRect(entry.contentRect);
+          if (entry.borderBoxSize.length > 0) {
+            const boxSize = entry.borderBoxSize[0];
+            setRect({
+              width: boxSize.inlineSize,
+              height: boxSize.blockSize,
+            });
+          } else {
+            setRect(el.getBoundingClientRect());
+          }
         }
       });
       resizeObserver.observe(el);
@@ -36,6 +41,6 @@ export function useElementRect(ref: React.RefObject<HTMLElement> | null): DOMRec
         resizeObserver.unobserve(el);
       };
     }
-  }, [ref]);
+  }, [el]);
   return rect;
 }

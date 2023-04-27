@@ -1,6 +1,6 @@
-import React, { useRef } from 'react';
+import React, { useState } from 'react';
 import s from './index.module.less';
-import { useElementRect } from '@/utils/browser';
+import { useElementSize } from '@/utils/browser';
 
 interface Props {
   maxHeight?: number;
@@ -10,11 +10,11 @@ interface Props {
 
 export default function ScrollContainer(props: Props) {
   const { enableHorizontalScroll = true, maxHeight } = props;
-  const ref = useRef<HTMLDivElement>(null);
+  const [ref, setRef] = useState<HTMLDivElement | null>(null);
 
-  const rect = useElementRect(ref);
+  const rect = useElementSize(ref);
   return (
-    <div ref={ref} className={s.root}>
+    <div ref={setRef} className={s.root}>
       <div
         style={{
           maxWidth: rect && enableHorizontalScroll ? rect.width : undefined,

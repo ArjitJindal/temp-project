@@ -9,10 +9,11 @@ interface Props {
   user: InternalBusinessUser;
   updateCollapseState?: (key: string, value: boolean) => void;
   uiSettings: typeof UI_SETTINGS;
+  hideExpectedTransactionLimits?: boolean;
 }
 
 export default function BusinessUserDetails(props: Props) {
-  const { user, updateCollapseState, uiSettings } = props;
+  const { user, updateCollapseState, uiSettings, hideExpectedTransactionLimits = false } = props;
 
   return (
     <>
@@ -21,37 +22,42 @@ export default function BusinessUserDetails(props: Props) {
           title: uiSettings.cards.USER_DETAILS.title,
           collapsableKey: uiSettings.cards.USER_DETAILS.key,
         }}
+        collapsable={updateCollapseState != null}
         updateCollapseState={updateCollapseState}
       >
         <UserDetails user={user} />
       </Card.Root>
-      <Card.Root
-        header={{
-          title: uiSettings.cards.EXPECTED_TRANSACTION_LIMITS.title,
-          collapsableKey: uiSettings.cards.EXPECTED_TRANSACTION_LIMITS.key,
-        }}
-      >
-        <ExpectedTransactionLimits user={user} />
-      </Card.Root>
+      {!hideExpectedTransactionLimits && (
+        <Card.Root
+          header={{
+            title: uiSettings.cards.EXPECTED_TRANSACTION_LIMITS.title,
+            collapsableKey: uiSettings.cards.EXPECTED_TRANSACTION_LIMITS.key,
+          }}
+        >
+          <ExpectedTransactionLimits user={user} />
+        </Card.Root>
+      )}
       <Card.Root
         header={{
           title: uiSettings.cards.SHAREHOLDERS.title,
           collapsableKey: uiSettings.cards.SHAREHOLDERS.key,
         }}
+        collapsable={updateCollapseState != null}
         updateCollapseState={updateCollapseState}
       >
-        {user.shareHolders && user.shareHolders.length > 0 && (
-          <PersonsTable persons={user.shareHolders} />
-        )}
+        <Card.Section>
+          {user.shareHolders && <PersonsTable persons={user.shareHolders} />}
+        </Card.Section>
       </Card.Root>
       <Card.Root
         header={{
           title: uiSettings.cards.DIRECTORS.title,
           collapsableKey: uiSettings.cards.DIRECTORS.key,
         }}
+        collapsable={updateCollapseState != null}
         updateCollapseState={updateCollapseState}
       >
-        {user.directors && user.directors.length > 0 && <PersonsTable persons={user.directors} />}
+        <Card.Section>{user.directors && <PersonsTable persons={user.directors} />}</Card.Section>
       </Card.Root>
     </>
   );

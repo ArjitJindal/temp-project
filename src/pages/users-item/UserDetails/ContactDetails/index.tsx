@@ -1,10 +1,4 @@
 import React from 'react';
-import {
-  renderEmail,
-  renderFax,
-  renderTel,
-  renderWebsite,
-} from '../BusinessUserDetails/PersonsTable';
 import s from './index.module.less';
 import * as Card from '@/components/ui/Card';
 import { InternalBusinessUser, InternalConsumerUser } from '@/apis';
@@ -13,6 +7,8 @@ import User3LineIcon from '@/components/ui/icons/Remix/user/user-3-line.react.sv
 import EarthLineIcon from '@/components/ui/icons/Remix/map/earth-line.react.svg';
 import Home4LineIcon from '@/components/ui/icons/Remix/buildings/home-4-line.react.svg';
 import * as Form from '@/components/ui/Form';
+import { callRender } from '@/components/library/Table/dataTypeHelpers';
+import { EMAIL, EXTERNAL_LINK, FAX, PHONE } from '@/components/library/Table/standardDataTypes';
 
 interface Props {
   user: InternalConsumerUser | InternalBusinessUser;
@@ -29,8 +25,8 @@ export default function ContactDetails(props: Props) {
           </Card.Column>
           <Card.Column className={s.all}>
             {user.type === 'CONSUMER'
-              ? user.contactDetails?.emailIds?.map(renderEmail)
-              : user.legalEntity.contactDetails?.emailIds?.map(renderEmail)}
+              ? user.contactDetails?.emailIds?.map((x) => callRender(EMAIL, x))
+              : user.legalEntity.contactDetails?.emailIds?.map((x) => callRender(EMAIL, x))}
           </Card.Column>
         </Card.Row>
         <Card.Row className={s.items}>
@@ -39,8 +35,8 @@ export default function ContactDetails(props: Props) {
           </Card.Column>
           <Card.Column className={s.all}>
             {user.type === 'CONSUMER'
-              ? user.contactDetails?.contactNumbers?.map(renderTel)
-              : user.legalEntity.contactDetails?.contactNumbers?.map(renderTel)}
+              ? user.contactDetails?.contactNumbers?.map((x) => callRender(PHONE, x))
+              : user.legalEntity.contactDetails?.contactNumbers?.map((x) => callRender(PHONE, x))}
           </Card.Column>
         </Card.Row>
         <Card.Row className={s.items}>
@@ -49,8 +45,8 @@ export default function ContactDetails(props: Props) {
           </Card.Column>
           <Card.Column className={s.all}>
             {user.type === 'CONSUMER'
-              ? user.contactDetails?.faxNumbers?.map(renderFax)
-              : user.legalEntity.contactDetails?.faxNumbers?.map(renderFax)}
+              ? user.contactDetails?.faxNumbers?.map((x) => callRender(FAX, x))
+              : user.legalEntity.contactDetails?.faxNumbers?.map((x) => callRender(FAX, x))}
           </Card.Column>
         </Card.Row>
         <Card.Row className={s.items}>
@@ -59,8 +55,8 @@ export default function ContactDetails(props: Props) {
           </Card.Column>
           <Card.Column className={s.all}>
             {user.type === 'CONSUMER'
-              ? user.contactDetails?.websites?.map(renderWebsite)
-              : user.legalEntity.contactDetails?.websites?.map(renderWebsite)}
+              ? user.contactDetails?.websites?.map((x) => callRender(EXTERNAL_LINK, x))
+              : user.legalEntity.contactDetails?.websites?.map((x) => callRender(EXTERNAL_LINK, x))}
           </Card.Column>
         </Card.Row>
       </div>

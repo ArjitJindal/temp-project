@@ -1,9 +1,11 @@
 import React from 'react';
 import { Tag as AntTag } from 'antd';
-import { ColumnDataType } from './types';
+import { ColumnDataType, FullColumnDataType } from '../types';
+import s from './index.module.less';
 import RiskLevelTag from '@/components/library/RiskLevelTag';
 import { RiskLevel } from '@/utils/risk-levels';
 import {
+  Address,
   Amount,
   Assignment,
   CaseStatus,
@@ -13,8 +15,8 @@ import {
   InternalConsumerUser,
   KYCStatusDetails,
   RuleAction,
-  Tag,
   RuleNature,
+  Tag,
   TransactionState as ApiTransactionState,
   TransactionType,
   UserState,
@@ -40,7 +42,7 @@ import UserStateTag from '@/components/ui/UserStateTag';
 import { RuleActionStatus } from '@/components/ui/RuleActionStatus';
 import { RULE_NATURE_LABELS, RULE_NATURE_OPTIONS } from '@/pages/rules/utils';
 
-export const UNKNOWN: ColumnDataType<unknown> = {
+export const UNKNOWN: Required<FullColumnDataType<unknown>> = {
   render: (value) => {
     if (
       value == null ||
@@ -84,37 +86,37 @@ export const RULE_NATURE: ColumnDataType<RuleNature> = {
 };
 
 export const NUMBER: ColumnDataType<number> = {
-  render: (value) => <>{value ?? 0}</>,
+  render: (value) => <span>{value ?? 0}</span>,
 };
 
 export const FLOAT: ColumnDataType<number> = {
-  render: (value) => <>{value?.toFixed(2)}</>,
+  render: (value) => <span>{value?.toFixed(2)}</span>,
   stringify: (value) => `${value?.toFixed(2)}`,
 };
 
 export const STRING: ColumnDataType<string> = {
-  render: (value) => <>{value}</>,
+  render: (value) => <span>{value}</span>,
 };
 
 export const BOOLEAN: ColumnDataType<boolean> = {
-  render: (value) => <>{value ? 'Yes' : 'No'}</>,
+  render: (value) => <span>{value ? 'Yes' : 'No'}</span>,
   stringify: (value) => (value ? 'Yes' : 'No'),
 };
 
 export const LONG_TEXT: ColumnDataType<string> = {
-  render: (value) => <>{value}</>,
+  render: (value) => <span>{value}</span>,
   defaultWrapMode: 'WRAP',
 };
 
 export const ID = (): ColumnDataType<string> => ({
-  render: (value) => <>{value}</>,
+  render: (value) => <span>{value}</span>,
 });
 
 export const RISK_LEVEL: ColumnDataType<RiskLevel> = {
   render: (value) => <RiskLevelTag level={value} />,
 };
 
-export const USER_NAME: ColumnDataType<InternalConsumerUser | InternalBusinessUser> = {
+export const USER_NAME: FullColumnDataType<InternalConsumerUser | InternalBusinessUser> = {
   render: (user, _) => {
     const userName = getUserName(user);
     return user ? <UserLink user={user}>{userName}</UserLink> : <>{userName}</>;
@@ -285,4 +287,75 @@ export const USER_STATE_TAG: ColumnDataType<UserState> = {
     return value ? <UserStateTag userState={value} /> : <></>;
   },
   stringify: (userState) => userState ?? '',
+};
+
+export const EXTERNAL_LINK: ColumnDataType<string> = {
+  render: (link) => {
+    return (
+      <div>
+        <a href={link} target="_blank">
+          {link}
+        </a>
+      </div>
+    );
+  },
+};
+
+export const EMAIL: ColumnDataType<string> = {
+  render: (email) => {
+    return (
+      <div className={s.email}>
+        <a href={`mailto:${email}`}>{email}</a>
+      </div>
+    );
+  },
+};
+
+export const FAX: ColumnDataType<string> = {
+  render: (fax) => {
+    return (
+      <div className={s.fax}>
+        <a>
+          <b className={s.text}>{fax}</b>
+        </a>
+      </div>
+    );
+  },
+};
+
+export const PHONE: ColumnDataType<string> = {
+  render: (tel) => {
+    return (
+      <div className={s.phone}>
+        <a>
+          <b className={s.text}>{tel}</b>
+        </a>
+      </div>
+    );
+  },
+};
+
+export const ADDRESS: ColumnDataType<Address> = {
+  render: (address) => {
+    if (address == null) {
+      return <></>;
+    }
+    return (
+      <p>
+        {[
+          ...address.addressLines,
+          [address.city, address.state].filter((x) => !!x).join(', '),
+          address.postcode,
+          address.country,
+        ]
+          .filter((x) => !!x)
+          .map((str, j) => (
+            <React.Fragment key={j}>
+              {j !== 0 && <br />}
+              {str}
+            </React.Fragment>
+          ))}
+      </p>
+    );
+  },
 };

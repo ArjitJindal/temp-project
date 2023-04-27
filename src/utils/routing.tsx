@@ -8,7 +8,12 @@ export type Adapter<T> = {
   deserializer: Deserializer<T>;
 };
 
-export function makeUrl(route: string, params: RawQueryParams = {}, query: RawQueryParams = {}) {
+export function makeUrl(
+  route: string,
+  params: RawQueryParams = {},
+  query: RawQueryParams = {},
+  hash?: string,
+) {
   const match = route.match(/^\/?(.*?)\/?$/);
   if (match == null) {
     throw new Error(`Wrong route format: "${route}"`);
@@ -36,6 +41,7 @@ export function makeUrl(route: string, params: RawQueryParams = {}, query: RawQu
     .map(([key, value]) => `${encodeURIComponent(key)}=${encodeURIComponent(value || '')}`)
     .join('&');
   queryString = queryString !== '' ? `?${queryString}` : queryString;
+  queryString += hash ? `#${hash}` : '';
 
   return '/' + result + queryString;
 }

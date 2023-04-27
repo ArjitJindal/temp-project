@@ -1,5 +1,26 @@
+@import 'src/components/ui/colors';
+@import 'src/components/ui/z-indexes';
+
 .root {
   flex: 1;
+
+  &:first-child {
+    :global {
+      > .ant-tabs-nav {
+        padding-top: 0;
+      }
+    }
+  }
+
+  &.isSticky {
+    :global {
+      > .ant-tabs-nav {
+        position: sticky !important;
+        background: @fr-global-bg-color;
+        z-index: @sticky-z-index-2;
+      }
+    }
+  }
 
   :global {
     > .ant-tabs-content-holder {
@@ -13,12 +34,21 @@
       }
     }
 
-    .ant-tabs-nav {
-      color: #fff !important;
-    }
+    > .ant-tabs-nav {
+      margin-bottom: 0 !important;
+      padding-top: 16px;
+      padding-bottom: 16px;
 
-    .ant-tabs-tab-btn {
-      color: #fff !important;
+      > .ant-tabs-nav-wrap {
+        > .ant-tabs-nav-list {
+          > .ant-tabs-tab {
+            > .ant-tabs-tab-btn {
+              color: #fff !important;
+              font-size: 16px !important;
+            }
+          }
+        }
+      }
     }
 
     > .ant-tabs-nav::before {

@@ -8,12 +8,13 @@ import EntityHeader from '@/components/ui/entityPage/EntityHeader';
 import { useHasPermissions } from '@/utils/user-utils';
 
 interface Props {
+  headerStickyElRef?: React.RefCallback<HTMLDivElement>;
   user: InternalConsumerUser | InternalBusinessUser;
   onNewComment: (newComment: Comment) => void;
 }
 
 export default function Header(props: Props) {
-  const { user, onNewComment } = props;
+  const { user, headerStickyElRef, onNewComment } = props;
   const userId = user.userId;
 
   const api = useApi();
@@ -21,6 +22,7 @@ export default function Header(props: Props) {
 
   return (
     <EntityHeader
+      stickyElRef={headerStickyElRef}
       buttons={
         <CommentButton
           onSuccess={onNewComment}

@@ -31,7 +31,7 @@ export default function SettingsButton<Item extends object>(props: Props<Item>) 
   return (
     <div className={s.root}>
       <Popover
-        zIndex={100000}
+        zIndex={1}
         overlayClassName={'overlayClassName'}
         trigger="click"
         placement="bottomLeft"

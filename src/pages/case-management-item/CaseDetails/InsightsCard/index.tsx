@@ -27,8 +27,8 @@ export const FIXED_API_PARAMS = {
 interface Props {
   userId: string;
   updateCollapseState?: (key: string, value: boolean) => void;
-  title: string;
-  collapsableKey: string;
+  title?: string;
+  collapsableKey?: string;
 }
 
 export default function InsightsCard(props: Props) {
@@ -44,7 +44,10 @@ export default function InsightsCard(props: Props) {
   const statsQueryResult = useStatsQuery(selectorParams, userId, selectorParams.currency);
 
   return (
-    <Card.Root header={{ title, collapsableKey }} updateCollapseState={updateCollapseState}>
+    <Card.Root
+      header={title != null ? { title, collapsableKey } : undefined}
+      updateCollapseState={updateCollapseState}
+    >
       <Card.Section className={s.root}>
         <TransactionsSelector
           currency={selectorParams.currency}

@@ -18,7 +18,11 @@ interface Props {
 export function LegalDocumentsTable(prop: Props) {
   const { person, updateCollapseState, title, collapsableKey } = prop;
   return (
-    <Card.Root header={{ title, collapsableKey }} updateCollapseState={updateCollapseState}>
+    <Card.Root
+      header={{ title, collapsableKey }}
+      updateCollapseState={updateCollapseState}
+      collapsable={updateCollapseState != null}
+    >
       <div className={s.expandedRow}>
         <Table<LegalDocument & { i: number }>
           className={s.table}

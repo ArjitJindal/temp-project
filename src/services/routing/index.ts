@@ -160,6 +160,11 @@ export function useRoutes(): RouteItem[] {
                 name: 'user-lists-item',
                 component: UsersItemPage,
               },
+              {
+                path: '/users/list/:list/:id/:tab',
+                name: 'user-lists-item-tab',
+                component: UsersItemPage,
+              },
             ],
           },
           {
