@@ -117,7 +117,10 @@ export const DynamoDbKeys = {
         SortKeyID: `${timestamp}`,
       }
     } else {
-      const identifiers = getPaymentDetailsIdentifiers(paymentDetails) || {}
+      const identifiers = getPaymentDetailsIdentifiers(paymentDetails)
+      if (!identifiers) {
+        return null
+      }
       const identifiersString = Object.entries(identifiers)
         .map((entry) => `${entry[0]}:${entry[1]}`)
         .join('#')

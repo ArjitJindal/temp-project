@@ -628,6 +628,42 @@ ruleVariantsTest(true, () => {
         ],
         expectedHits: [false, true],
       },
+      {
+        name: 'Anonymous sender (proper identifier) - hit',
+        transactions: [
+          getTestTransaction({
+            originUserId: undefined,
+            originPaymentDetails: { method: 'CARD', cardFingerprint: '123' },
+            destinationUserId: '5-1',
+            timestamp: dayjs('2022-01-01T00:00:00.000Z').valueOf(),
+          }),
+          getTestTransaction({
+            originUserId: undefined,
+            originPaymentDetails: { method: 'CARD', cardFingerprint: '123' },
+            destinationUserId: '5-2',
+            timestamp: dayjs('2022-01-01T01:00:00.000Z').valueOf(),
+          }),
+        ],
+        expectedHits: [false, true],
+      },
+      {
+        name: 'Anonymous sender (missing identifier) - hit',
+        transactions: [
+          getTestTransaction({
+            originUserId: undefined,
+            originPaymentDetails: { method: 'CARD' },
+            destinationUserId: '6-1',
+            timestamp: dayjs('2022-01-01T00:00:00.000Z').valueOf(),
+          }),
+          getTestTransaction({
+            originUserId: undefined,
+            originPaymentDetails: { method: 'CARD' },
+            destinationUserId: '6-2',
+            timestamp: dayjs('2022-01-01T01:00:00.000Z').valueOf(),
+          }),
+        ],
+        expectedHits: [false, false],
+      },
     ])('', ({ name, transactions, expectedHits }) => {
       createTransactionRuleTestCase(
         name,
