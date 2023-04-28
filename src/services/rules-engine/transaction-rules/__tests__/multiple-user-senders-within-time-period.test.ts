@@ -11,10 +11,11 @@ import {
   ruleVariantsTest,
 } from '@/test-utils/rule-test-utils'
 import { dynamoDbSetupHook } from '@/test-utils/dynamodb-test-utils'
+import { setUpUsersHooks, getTestUser } from '@/test-utils/user-test-utils'
 
 dynamoDbSetupHook()
 
-ruleVariantsTest(false, () => {
+ruleVariantsTest(true, () => {
   describe('Core logic', () => {
     const TEST_TENANT_ID = getTestTenantId()
     setUpRulesHooks(TEST_TENANT_ID, [
@@ -30,6 +31,21 @@ ruleVariantsTest(false, () => {
         } as MultipleSendersWithinTimePeriodRuleParameters,
         defaultAction: 'FLAG',
       },
+    ])
+
+    setUpUsersHooks(TEST_TENANT_ID, [
+      getTestUser({ userId: '2-1' }),
+      getTestUser({ userId: '2-2' }),
+      getTestUser({ userId: '2-3' }),
+      getTestUser({ userId: '2-4' }),
+      getTestUser({ userId: '1-1' }),
+      getTestUser({ userId: '1-2' }),
+      getTestUser({ userId: '1-3' }),
+      getTestUser({ userId: '1-4' }),
+      getTestUser({ userId: '3-1' }),
+      getTestUser({ userId: '3-2' }),
+      getTestUser({ userId: '3-3' }),
+      getTestUser({ userId: '3-4' }),
     ])
 
     describe('R-9 description formatting', () => {
