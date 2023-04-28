@@ -27,6 +27,60 @@ const IGNORED = [
   'fast-geoip',
 ]
 
+// Dependencies provided in run time by AWS and should not be bundled
+const MANAGED_DEPS = ['aws-sdk'].map((x) => new RegExp(`^${x}(/.+)?$`))
+
+// I use custom resolver because esbuild doesn't resolve modules from nested `node_modules` directories, and it looks like
+// it's an expected behaviour. This plugin provides default node resolution strategy
+const customResolvePlugin = {
+  name: 'custom resolver',
+  setup(build) {
+    const resolver = enhancedResolve.create({
+      extensions: ['.ts', '.js', '.json'],
+      exportsFields: [],
+    })
+    const skipResolve = {}
+    build.onResolve({ filter: /^.*$/ }, async (args) => {
+      // This is needed to prevent infinite loop
+      if (args.pluginData === skipResolve) {
+        return
+      }
+      // Mark as external node's builtin modules and ignored modules
+      if (
+        builtinModules.indexOf(args.path) !== -1 ||
+        IGNORED.indexOf(args.path) !== -1 ||
+        MANAGED_DEPS.some((r) => r.test(args.path))
+      ) {
+        return {
+          external: true,
+        }
+      }
+      try {
+        const customResolveResult = await new Promise((resolve, reject) => {
+          resolver(args.resolveDir, args.path, (err, result) => {
+            if (err) {
+              reject(err)
+            } else {
+              resolve(result)
+            }
+          })
+        })
+        return {
+          path: customResolveResult,
+        }
+      } catch (e) {
+        // ignore
+      }
+
+      // If custom resolver failed, try to resolve using esbuild's resolver
+      return await build.resolve(args.path, {
+        resolveDir: args.resolveDir,
+        pluginData: skipResolve,
+      })
+    })
+  },
+}
+
 const ROOT_DIR = path.resolve(`${__dirname}/..`)
 const OUT_DIR = 'dist'
 
@@ -49,7 +103,7 @@ async function main() {
     metafile: true,
     logLevel: 'warning',
     sourcemap: 'external',
-    external: ['aws-sdk', ...builtinModules, ...IGNORED],
+    plugins: [customResolvePlugin],
   })
 
   console.log('Generated bundles:')

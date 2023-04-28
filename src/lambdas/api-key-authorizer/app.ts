@@ -7,12 +7,12 @@ import {
   APIGatewayRequestAuthorizerEvent,
 } from 'aws-lambda'
 import { StackConstants } from '@cdk/constants'
-import baseX from 'base-x'
 import PolicyBuilder from '@/core/policies/policy-generator'
 import { lambdaAuthorizer } from '@/core/middlewares/lambda-authorizer-middlewares'
 import { updateLogMetadata } from '@/core/utils/context'
 
-const base62 = baseX(
+// eslint-disable-next-line @typescript-eslint/no-var-requires
+const base62 = require('base-x')(
   '0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ'
 )
 

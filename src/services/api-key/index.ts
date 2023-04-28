@@ -1,7 +1,8 @@
 import { v4 as uuidv4 } from 'uuid'
 import { APIGateway } from 'aws-sdk'
-import baseX from 'base-x'
-const base62 = baseX(
+
+// eslint-disable-next-line @typescript-eslint/no-var-requires
+const base62 = require('base-x')(
   '0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ'
 )
 
