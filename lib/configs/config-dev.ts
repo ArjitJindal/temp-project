@@ -49,6 +49,7 @@ export const config: Config = {
     BATCH_JOB_LAMBDA: {
       MEMORY_SIZE: 512,
     },
+    TARPON_CHANGE_CONSUMER_LAMBDA: {},
   },
   application: {
     CERTIFICATE_ARN:

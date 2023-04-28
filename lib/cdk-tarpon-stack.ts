@@ -720,6 +720,8 @@ export class CdkTarponStack extends cdk.Stack {
       this,
       {
         name: StackConstants.TARPON_CHANGE_CAPTURE_KINESIS_CONSUMER_FUNCTION_NAME,
+        memorySize:
+          this.config.resource.TARPON_CHANGE_CONSUMER_LAMBDA.MEMORY_SIZE,
         auditLogTopic: this.auditLogTopic,
         batchJobQueue,
       },

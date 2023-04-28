@@ -72,6 +72,9 @@ export type Config = {
       PROVISIONED_CONCURRENCY: number
       MEMORY_SIZE?: number
     }
+    TARPON_CHANGE_CONSUMER_LAMBDA: {
+      MEMORY_SIZE?: number
+    }
     LAMBDA_VPC_ENABLED?: boolean
   }
   application: {
