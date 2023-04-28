@@ -16,15 +16,15 @@ import { dynamoDbSetupHook } from '@/test-utils/dynamodb-test-utils'
 dynamoDbSetupHook()
 
 const TEST_TRANSACTION_AMOUNT_100: TransactionAmountDetails = {
-  transactionCurrency: 'EUR',
+  transactionCurrency: 'USD',
   transactionAmount: 100,
 }
 const TEST_TRANSACTION_AMOUNT_200: TransactionAmountDetails = {
-  transactionCurrency: 'EUR',
+  transactionCurrency: 'USD',
   transactionAmount: 200,
 }
 
-ruleVariantsTest(false, () => {
+ruleVariantsTest(true, () => {
   describe('Core logic', () => {
     describe('R-41 description formatting - gte', () => {
       const TEST_TENANT_ID = getTestTenantId()
@@ -68,7 +68,7 @@ ruleVariantsTest(false, () => {
         },
         [
           null,
-          'Transaction outflow volume (100.00 EUR) is greater than or equal to transaction inflow volume (100.00 EUR).',
+          'Transaction outflow volume (100.00 USD) is greater than or equal to transaction inflow volume (100.00 USD).',
         ]
       )
     })
@@ -115,7 +115,7 @@ ruleVariantsTest(false, () => {
         },
         [
           null,
-          'Transaction outflow volume (100.00 EUR) is less than or equal to transaction inflow volume (200.00 EUR).',
+          'Transaction outflow volume (100.00 USD) is less than or equal to transaction inflow volume (200.00 USD).',
         ]
       )
     })
