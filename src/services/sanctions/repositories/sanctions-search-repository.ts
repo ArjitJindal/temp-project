@@ -11,6 +11,9 @@ import { DefaultApiGetSanctionsSearchRequest } from '@/@types/openapi-internal/R
 import { COUNT_QUERY_LIMIT } from '@/utils/pagination'
 import { SanctionsSearchMonitoring } from '@/@types/openapi-internal/SanctionsSearchMonitoring'
 import { ComplyAdvantageSearchResponse } from '@/@types/openapi-internal/ComplyAdvantageSearchResponse'
+import dayjs from '@/utils/dayjs'
+
+const DEFAULT_EXPIRY_TIME = 168 // hours
 
 export class SanctionsSearchRepository {
   tenantId: string
@@ -29,11 +32,15 @@ export class SanctionsSearchRepository {
     const collection = db.collection<SanctionsSearchHistory>(
       SANCTIONS_SEARCHES_COLLECTION(this.tenantId)
     )
+
     await collection.insertOne({
       _id: response.searchId,
       request,
       response,
       createdAt: Date.now(),
+      ...(!request.monitoring?.enabled && {
+        expiresAt: dayjs().add(DEFAULT_EXPIRY_TIME, 'hours').valueOf(),
+      }),
     })
   }
 
@@ -57,7 +64,7 @@ export class SanctionsSearchRepository {
     )
   }
 
-  public async getMonitoredSearchResultByParams(
+  public async getSearchResultByParams(
     request: SanctionsSearchRequest
   ): Promise<SanctionsSearchHistory | null> {
     const db = this.mongoDb.db()
@@ -70,13 +77,19 @@ export class SanctionsSearchRepository {
       monitored: _monitored,
       ...params
     } = request
+
     const paramFilters = Object.entries(params).map(([k, v]) => {
       return { [`request.${k}`]: v }
     })
+
     const filters: Filter<SanctionsSearchHistory>[] = [
       ...paramFilters,
-      { 'request.monitoring.enabled': true },
+      { 'request.monitoring.enabled': request.monitoring?.enabled },
+      ...(!request.monitoring?.enabled
+        ? [{ expiresAt: { $exists: true, $gt: Date.now() } }]
+        : []),
     ]
+
     return await collection.findOne({
       $and: filters,
     })

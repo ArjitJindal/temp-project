@@ -79,10 +79,9 @@ export class SanctionsService {
     // Normalize search term
     request.searchTerm = _.startCase(request.searchTerm.toLowerCase())
 
-    const result =
-      await this.sanctionsSearchRepository.getMonitoredSearchResultByParams(
-        request
-      )
+    const result = await this.sanctionsSearchRepository.getSearchResultByParams(
+      request
+    )
     if (result?.response) {
       return result?.response
     }

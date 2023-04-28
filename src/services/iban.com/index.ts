@@ -18,6 +18,8 @@ const IBAN_API_URI = 'https://api.iban.com/clients/api/v4/iban/'
 const IBANCOM_CREDENTIALS_SECRET_ARN = process.env
   .IBANCOM_CREDENTIALS_SECRET_ARN as string
 
+export type BankInfo = { bankName?: string; iban?: string }
+
 function ibanValidationResponseToIBANDetails(
   iban: string,
   response: IBANValidationResponse
@@ -150,5 +152,23 @@ export class IBANService {
       params.append(key, request[key])
     }
     return params
+  }
+
+  public async resolveBankName(bankInfos: BankInfo[]): Promise<BankInfo[]> {
+    if (!(await tenantHasFeature(this.tenantId, 'IBAN_RESOLUTION'))) {
+      logger.error(`IBAN_RESOLUTION feature flag required to resolve bank name`)
+      return bankInfos
+    }
+
+    const result: BankInfo[] = []
+    for (const bankInfo of bankInfos) {
+      if (!bankInfo.bankName && bankInfo.iban) {
+        const ibanDetails = await this.validateIBAN(bankInfo.iban)
+        result.push({ bankName: ibanDetails?.bankName, iban: bankInfo.iban })
+      } else {
+        result.push(bankInfo)
+      }
+    }
+    return result
   }
 }

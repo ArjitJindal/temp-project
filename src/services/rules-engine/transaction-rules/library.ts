@@ -38,6 +38,7 @@ import { TransactionsRoundValueVelocityRuleParameters } from './transactions-rou
 import { BlacklistPaymentdetailsRuleParameters } from './blacklist-payment-details'
 import { TransactionsExceedPastPeriodRuleParameters } from './transactions-exceed-past-period'
 import { TransactionsOutflowInflowVolumeRuleParameters } from './transactions-outflow-inflow-volume'
+import { SanctionsCounterPartyRuleParameters } from './sanctions-counterparty'
 import { TRANSACTION_RULES, TransactionRuleImplementationName } from './index'
 import { Rule } from '@/@types/openapi-internal/Rule'
 import { HighUnsuccessfullStateRateParameters } from '@/services/rules-engine/transaction-rules/high-unsuccessfull-state-rate'
@@ -1284,6 +1285,29 @@ const _RULES_LIBRARY: Array<
       defaultNature: 'SCREENING',
       defaultCasePriority: 'P1',
       requiredFeatures: ['SANCTIONS'],
+    }
+  },
+  () => {
+    const defaultParameters: SanctionsCounterPartyRuleParameters = {
+      fuzziness: 20,
+    }
+
+    return {
+      id: 'R-169',
+      name: 'Sanctions transactions counterparty',
+      type: 'TRANSACTION',
+      description:
+        'Sanctions/PEP/Adverse media screening on transaction counterparty.',
+      descriptionTemplate:
+        'Sanctions/PEP/Adverse media screening on transaction counterparty.',
+      defaultParameters,
+      defaultAction: 'SUSPEND',
+      ruleImplementationName: 'sanctions-counterparty',
+      labels: [],
+      defaultNature: 'SCREENING',
+      defaultCasePriority: 'P1',
+      requiredFeatures: ['SANCTIONS'],
+      isOngoingScreening: true,
     }
   },
   () => {

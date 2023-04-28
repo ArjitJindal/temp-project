@@ -41,6 +41,7 @@ import SamePaymentDetailsRule from './same-payment-details'
 import BlacklistPaymentdetailsRule from './blacklist-payment-details'
 import TransactionsExceedPastPeriodRule from './transactions-exceed-past-period'
 import TransactionsOutflowInflowVolumeRule from './transactions-outflow-inflow-volume'
+import { SanctionsCounterPartyRule } from './sanctions-counterparty'
 import TestAlwaysHitRule from '@/services/rules-engine/transaction-rules/tests/test-always-hit-rule'
 import BlacklistTransactionMatchedValue from '@/services/rules-engine/transaction-rules/blacklist-transaction-related-value'
 
@@ -95,6 +96,7 @@ export const _TRANSACTION_RULES = {
   'transactions-exceed-past-period': TransactionsExceedPastPeriodRule,
   'blacklist-transaction-related-value': BlacklistTransactionMatchedValue,
   'transactions-outflow-inflow-volume': TransactionsOutflowInflowVolumeRule,
+  'sanctions-counterparty': SanctionsCounterPartyRule,
 
   // TESTING-ONLY RULES
   'tests/test-success-rule': TestSuccessRule,

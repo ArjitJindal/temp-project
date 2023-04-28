@@ -37,10 +37,21 @@ const TEST_IBAN_BANK_NAME_MAPPING: { [key: string]: IBANDetails } = {
     bankName: 'Bank 3',
   },
 }
+
+const TEST_TENANT_ID = getTestTenantId()
+
 jest.mock('@/services/iban.com', () => {
+  const originalModule = jest.requireActual<
+    typeof import('@/services/iban.com')
+  >('@/services/iban.com')
+
   return {
+    __esModule: true,
+    ...originalModule,
     IBANService: jest.fn().mockImplementation(() => {
       return {
+        resolveBankName: originalModule.IBANService.prototype.resolveBankName,
+        tenantId: TEST_TENANT_ID,
         validateIBAN: jest.fn().mockImplementation((iban: string) => {
           return TEST_IBAN_BANK_NAME_MAPPING[iban]
         }),
@@ -48,7 +59,9 @@ jest.mock('@/services/iban.com', () => {
     }),
   }
 })
+
 const TEST_SANCTIONS_HITS = ['Bank 1', 'Bank 3']
+
 jest.mock('@/services/sanctions', () => {
   return {
     SanctionsService: jest.fn().mockImplementation(() => {
@@ -75,8 +88,6 @@ dynamoDbSetupHook()
 withFeatureHook(['IBAN_RESOLUTION'])
 
 describe('IBAN resolution enabled', () => {
-  const TEST_TENANT_ID = getTestTenantId()
-
   setUpRulesHooks(TEST_TENANT_ID, [
     {
       id: 'R-32',

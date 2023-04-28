@@ -14,7 +14,6 @@ import { Business } from '@/@types/openapi-public/Business'
 import { SanctionsDetails } from '@/@types/openapi-internal/SanctionsDetails'
 import { IBANService } from '@/services/iban.com'
 import { logger } from '@/core/logger'
-import { tenantHasFeature } from '@/core/middlewares/tenant-has-feature'
 
 type BankInfo = { bankName?: string; iban?: string }
 
@@ -74,9 +73,11 @@ export default class SanctionsBankUserRule extends UserRule<SanctionsBankUserRul
       })
       .filter(Boolean) as BankInfo[]
 
+    const ibanService = new IBANService(this.tenantId)
+
     if (resolveIban) {
       try {
-        bankInfos = await this.resolveBankName(bankInfos)
+        bankInfos = await ibanService.resolveBankName(bankInfos)
       } catch (e) {
         logger.error(
           'Failed to resolve bank names. Feature IBAN_RESOLUTION might be missing.'
@@ -112,25 +113,5 @@ export default class SanctionsBankUserRule extends UserRule<SanctionsBankUserRul
       })
     }
     return hitResult
-  }
-
-  private async resolveBankName(bankInfos: BankInfo[]): Promise<BankInfo[]> {
-    if (!(await tenantHasFeature(this.tenantId, 'IBAN_RESOLUTION'))) {
-      logger.error(`IBAN_RESOLUTION feature flag required to resolve bank name`)
-      return bankInfos
-    }
-
-    const result: BankInfo[] = []
-    const ibanService = new IBANService(this.tenantId)
-
-    for (const bankInfo of bankInfos) {
-      if (!bankInfo.bankName && bankInfo.iban) {
-        const ibanDetails = await ibanService.validateIBAN(bankInfo.iban)
-        result.push({ bankName: ibanDetails?.bankName, iban: bankInfo.iban })
-      } else {
-        result.push(bankInfo)
-      }
-    }
-    return result
   }
 }
