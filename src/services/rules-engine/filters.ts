@@ -74,13 +74,18 @@ import {
   WhitelistUsersRuleFilter,
   WhitelistUsersRuleFilterParameter,
 } from './user-filters/whitelist-users'
+import {
+  TransactionWalletTypeRuleFilter,
+  TransactionWalletTypeRuleFilterParameter,
+} from './transaction-filters/transaction-wallet-type'
 
 export type TransactionFilters = PaymentMethodRuleFilterParameter &
   TransactionTypeRuleFilterParameter &
   TransactionStateRuleFilterParameter &
   TransactionCountryRuleFilterParameter &
   CheckDirectionRuleFilterParameter &
-  TransactionAmountRuleFilterParameter
+  TransactionAmountRuleFilterParameter &
+  TransactionWalletTypeRuleFilterParameter
 
 export type TransactionHistoricalFilters =
   TransactionStateHistoricalRuleFilterParameter &
@@ -107,6 +112,7 @@ const _TRANSACTION_FILTERS = [
   TransactionStateRuleFilter,
   TransactionCountryRuleFilter,
   TransactionAmountRuleFilter,
+  TransactionWalletTypeRuleFilter,
   CheckDirectionRuleFilter,
 ]
 
