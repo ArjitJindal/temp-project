@@ -22,7 +22,7 @@ export default function UsersInfoCard(props: Props) {
   const { user } = props;
   return (
     <div className={s.fields}>
-      <Form.Layout.Label icon={<User3Line />} title={'User Type'}>
+      <Form.Layout.Label icon={<User3Line />} title={'User type'}>
         <div>
           <Tag
             style={{
@@ -34,7 +34,7 @@ export default function UsersInfoCard(props: Props) {
           </Tag>
         </div>
       </Form.Layout.Label>
-      <Form.Layout.Label icon={<GovernmentLineIcon />} title={'Business Industry'}>
+      <Form.Layout.Label icon={<GovernmentLineIcon />} title={'Business industry'}>
         <div>
           {user.legalEntity.companyGeneralDetails?.businessIndustry
             ? user.legalEntity.companyGeneralDetails?.businessIndustry.map((industry) => {
@@ -43,13 +43,13 @@ export default function UsersInfoCard(props: Props) {
             : '-'}
         </div>
       </Form.Layout.Label>
-      <Form.Layout.Label icon={<CopperCoinIcon />} title={'Main Products and Services'}>
+      <Form.Layout.Label icon={<CopperCoinIcon />} title={'Main products and services'}>
         {user.legalEntity.companyGeneralDetails?.mainProductsServicesSold ?? '-'}
       </Form.Layout.Label>
       <Form.Layout.Label icon={<EarthLineIcon />} title={'Reason for opening account'}>
         {user.legalEntity.reasonForAccountOpening ?? '-'}
       </Form.Layout.Label>
-      <Form.Layout.Label icon={<SecurePaymentIcon />} title={'Allowed Payment Methods'}>
+      <Form.Layout.Label icon={<SecurePaymentIcon />} title={'Allowed payment methods'}>
         <div>
           {user.allowedPaymentMethods
             ? user.allowedPaymentMethods.map((paymentMethod) => {

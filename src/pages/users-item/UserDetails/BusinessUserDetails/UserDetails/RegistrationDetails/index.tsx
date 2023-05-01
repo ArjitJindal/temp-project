@@ -25,7 +25,7 @@ export function RegistrationDetails(prop: Props) {
       <div className={s.details}>
         <Card.Row className={s.items}>
           <Card.Column>
-            <Form.Layout.Label icon={<FingerprintLineIcon />} title={'Registration Status'} />
+            <Form.Layout.Label icon={<FingerprintLineIcon />} title={'Registration status'} />
           </Card.Column>
           <Card.Column className={s.all}>
             {user.legalEntity.companyGeneralDetails?.userRegistrationStatus}
@@ -33,7 +33,7 @@ export function RegistrationDetails(prop: Props) {
         </Card.Row>
         <Card.Row className={s.items}>
           <Card.Column>
-            <Form.Layout.Label icon={<FingerprintLineIcon />} title={'Customer Segment'} />
+            <Form.Layout.Label icon={<FingerprintLineIcon />} title={'Customer segment'} />
           </Card.Column>
           <Card.Column className={s.all}>
             {user.legalEntity.companyGeneralDetails?.userSegment}
@@ -62,7 +62,7 @@ export function RegistrationDetails(prop: Props) {
         </Card.Row>
         <Card.Row className={s.items}>
           <Card.Column>
-            <Form.Layout.Label icon={<RegisteredIcon />} title={'Legal Entity Type'} />
+            <Form.Layout.Label icon={<RegisteredIcon />} title={'Legal entity type'} />
           </Card.Column>
           <Card.Column className={s.all}>
             {user.legalEntity.companyRegistrationDetails?.legalEntityType}
@@ -70,7 +70,7 @@ export function RegistrationDetails(prop: Props) {
         </Card.Row>
         <Card.Row className={s.items}>
           <Card.Column>
-            <Form.Layout.Label icon={<CalendarIcon />} title={'Registration Date'} />
+            <Form.Layout.Label icon={<CalendarIcon />} title={'Registration date'} />
           </Card.Column>
           <Card.Column className={s.all}>
             {user.legalEntity.companyRegistrationDetails?.dateOfRegistration
@@ -82,7 +82,7 @@ export function RegistrationDetails(prop: Props) {
         </Card.Row>
         <Card.Row className={s.items}>
           <Card.Column>
-            <Form.Layout.Label icon={<EarthLineIcon />} title={'Country of Registration'} />
+            <Form.Layout.Label icon={<EarthLineIcon />} title={'Country of registration'} />
           </Card.Column>
           <Card.Column className={s.all}>
             {user.legalEntity.companyRegistrationDetails?.registrationCountry ? (

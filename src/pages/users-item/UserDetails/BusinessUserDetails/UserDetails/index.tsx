@@ -29,7 +29,7 @@ export default function UserDetails(props: Props) {
           <Card.Column className={s.details}>
             <Card.Subtitle
               className={s.border}
-              title="Registration Details"
+              title="Registration details"
               icon={<SurveyLineIcon />}
             />
             <RegistrationDetails user={user} />
@@ -37,7 +37,7 @@ export default function UserDetails(props: Props) {
           <Card.Column className={s.details}>
             <Card.Subtitle
               className={s.border}
-              title="Financial Details"
+              title="Financial details"
               icon={<SurveyLineIcon />}
             />
             <FinancialDetails user={user} />
@@ -45,7 +45,7 @@ export default function UserDetails(props: Props) {
         </Card.Row>
       </Card.Column>
       <Card.Column className={s.details}>
-        <Card.Subtitle className={s.border} title="Contact Details" icon={<SurveyLineIcon />} />
+        <Card.Subtitle className={s.border} title="Contact details" icon={<SurveyLineIcon />} />
         <ContactDetails user={user as InternalBusinessUser} />
       </Card.Column>
       <Card.Column className={s.address}>

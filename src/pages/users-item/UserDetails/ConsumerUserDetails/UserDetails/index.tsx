@@ -29,7 +29,7 @@ export default function UserDetails(props: Props) {
           </Card.Section>
         </Card.Column>
         <Card.Column className={s.contact}>
-          <Card.Subtitle className={s.border} title="Contact Details" icon={<SurveyLineIcon />} />
+          <Card.Subtitle className={s.border} title="Contact details" icon={<SurveyLineIcon />} />
           <ContactDetails user={user as InternalConsumerUser} />
         </Card.Column>
         <Card.Column className={s.address}>
