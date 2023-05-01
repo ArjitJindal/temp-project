@@ -9,8 +9,7 @@ import Button from '@/components/library/Button';
 import { useApi } from '@/api';
 import { getBranding } from '@/utils/branding';
 import { message } from '@/components/library/Message';
-
-const WEBHOOK_EVENTS: WebhookEventType[] = ['USER_STATE_UPDATED'];
+import { WEBHOOK_EVENT_TYPES } from '@/apis/models-custom/WebhookEventType';
 
 interface Props {
   webhook: WebhookConfiguration;
@@ -97,7 +96,7 @@ export const WebhookDetails: React.FC<Props> = ({
           <Select<WebhookEventType[]>
             mode="multiple"
             style={{ width: '100%' }}
-            options={WEBHOOK_EVENTS.map((event) => ({ label: event, value: event }))}
+            options={WEBHOOK_EVENT_TYPES.map((event) => ({ label: event, value: event }))}
             onChange={(events) => setEvents(events)}
             allowClear
             value={events}
