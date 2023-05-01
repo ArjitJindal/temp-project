@@ -32,6 +32,9 @@ export class TransactionWalletTypeRuleFilter extends TransactionRuleFilter<Trans
           description:
             'Add wallet type to only run this rule for certain wallet types',
           nullable: true,
+          'ui:schema': {
+            'ui:group': 'transaction',
+          },
         },
       },
     }

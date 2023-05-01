@@ -70,6 +70,8 @@ jobs:
           cache-dependency-path: "phytoplankton-console/yarn.lock"
       - name: Deploy
         id: deploy
+        env:
+          NODE_OPTIONS: --max-old-space-size=8192
         if: steps.check.outputs.triggered == 'true'
         run: |
           export QA=true
