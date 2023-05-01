@@ -463,6 +463,7 @@ export class RiskRepository {
     )
     return await drsValuesCollection
       .find({ userId })
+      .allowDiskUse()
       .sort({ createdAt: -1 })
       .limit(RISK_SCORE_HISTORY_ITEMS_TO_SHOW)
       .toArray()
