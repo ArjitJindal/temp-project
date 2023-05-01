@@ -75,6 +75,8 @@ export const ConsoleApiPathToLambda: any = {
   '/users': StackConstants.CONSOLE_API_ALL_USERS_VIEW_FUNCTION_NAME,
   '/users/{userId}/salesforce':
     StackConstants.CONSOLE_API_ALL_USERS_VIEW_FUNCTION_NAME,
+  '/users/{userId}/screening-status':
+    StackConstants.CONSOLE_API_ALL_USERS_VIEW_FUNCTION_NAME,
   '/dashboard_stats/transactions':
     StackConstants.CONSOLE_API_DASHBOARD_STATS_FUNCTION_NAME,
   '/dashboard_stats/drs-distribution':

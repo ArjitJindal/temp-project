@@ -1030,6 +1030,29 @@ paths:
           name: userId
           in: path
           required: true
+  '/users/{userId}/screening-status':
+    get:
+      summary: Screening Status
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  isOngoingScreening:
+                    type: boolean
+                required:
+                  - isOngoingScreening
+      operationId: get-user-screening-status
+      description: ''
+      parameters:
+        - schema:
+            type: string
+          name: userId
+          in: path
+          required: true
   /consumer/users:
     get:
       summary: Consumer Users - List
@@ -2542,6 +2565,12 @@ paths:
             type: number
           in: query
           name: filterCaseAfterCreatedTimestamp
+        - schema:
+            type: array
+            items:
+              type: string
+          in: query
+          name: filterRuleInstanceId
     post:
       summary: Alerts - Update
       operationId: post-alerts

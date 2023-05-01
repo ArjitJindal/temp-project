@@ -16,6 +16,8 @@ import { Comment } from '@/@types/openapi-internal/Comment'
 import { SalesforceService } from '@/services/salesforce'
 import { TenantRepository } from '@/services/tenants/repositories/tenant-repository'
 import { hasFeature } from '@/core/utils/context'
+import { CaseRepository } from '@/services/rules-engine/repositories/case-repository'
+import { RuleInstanceRepository } from '@/services/rules-engine/repositories/rule-instance-repository'
 
 export type UserViewConfig = {
   TMP_BUCKET: string
@@ -288,6 +290,13 @@ export const allUsersViewHandler = lambdaApi()(
       TMP_BUCKET,
       DOCUMENT_BUCKET
     )
+    const caseRepository = new CaseRepository(tenantId, {
+      mongoDb: client,
+      dynamoDb,
+    })
+    const ruleInstanceRepository = new RuleInstanceRepository(tenantId, {
+      dynamoDb,
+    })
     if (event.httpMethod === 'GET' && event.path.endsWith('/users')) {
       const {
         page,
@@ -346,6 +355,38 @@ export const allUsersViewHandler = lambdaApi()(
       return await new SalesforceService(
         settings.salesforceAuthToken as string
       ).getAccount(user)
+    } else if (
+      event.httpMethod === 'GET' &&
+      event.resource === '/users/{userId}/screening-status'
+    ) {
+      const { userId } = event.pathParameters as any
+      const user = await userService.getUser(userId)
+
+      const ruleInstances = await ruleInstanceRepository.getAllRuleInstances()
+      const ongoingRuleInstanceIds: string[] = ruleInstances
+        .filter(
+          (ruleInstance) =>
+            ruleInstance.type === 'USER' &&
+            ruleInstance.parameters?.ongoingScreening
+        )
+        .map((x) => x.id)
+        .filter((x): x is string => typeof x === 'string')
+
+      if (ongoingRuleInstanceIds.length === 0) {
+        return {
+          isOngoingScreening: false,
+        }
+      }
+
+      const alerts = await caseRepository.getAlerts({
+        filterUserId: user.userId,
+        filterRuleInstanceId: ongoingRuleInstanceIds,
+        pageSize: 1,
+      })
+
+      return {
+        isOngoingScreening: alerts.data.length > 0,
+      }
     }
     throw new Error('Unhandled request')
   }

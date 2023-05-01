@@ -793,6 +793,11 @@ export class CaseRepository {
         },
       })
     }
+    if (params.filterRuleInstanceId != null) {
+      conditions.push({
+        'alerts.ruleInstanceId': { $in: params.filterRuleInstanceId },
+      })
+    }
 
     if (conditions.length > 0) {
       pipeline.push({
