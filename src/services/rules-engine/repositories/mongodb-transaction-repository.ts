@@ -256,6 +256,7 @@ export class MongoDbTransactionRepository
     const result = await collection
       .find({})
       .sort({ createdTimestamp: -1 })
+      .allowDiskUse()
       .limit(value)
       .toArray()
     return result
@@ -435,7 +436,7 @@ export class MongoDbTransactionRepository
 
     const query = this.getExecutedTransactionsMongoQuery(userId, ruleInstanceId)
 
-    const cursor = collection.find(query).sort({ timestamp: -1 })
+    const cursor = collection.find(query).allowDiskUse().sort({ timestamp: -1 })
     const paginatedCursor = paginateCursor(cursor, pagination)
 
     return await paginatedCursor.toArray()
