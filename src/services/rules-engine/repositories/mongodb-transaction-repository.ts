@@ -621,7 +621,6 @@ export class MongoDbTransactionRepository
     const cursor = await collection.find(query, {
       sort: { [sortField]: sortOrder },
       ...paginateFindOptions(params),
-      allowDiskUse: true,
     })
     for await (const next of cursor) {
       const transactionType = next.type ?? 'null'
@@ -729,12 +728,10 @@ export class MongoDbTransactionRepository
       values: {},
     }))
 
-    const transactionsCursor = collection
-      .find(query, {
-        sort: { [sortField]: sortOrder },
-        ...paginateFindOptions(params),
-      })
-      .allowDiskUse()
+    const transactionsCursor = collection.find(query, {
+      sort: { [sortField]: sortOrder },
+      ...paginateFindOptions(params),
+    })
     for await (const transaction of transactionsCursor) {
       if (transaction.timestamp && transaction.status) {
         const series = dayjs(transaction.timestamp).format(seriesFormat)
