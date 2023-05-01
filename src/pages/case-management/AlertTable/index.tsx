@@ -400,15 +400,26 @@ export default function AlertTable(props: Props) {
               )
             );
           },
-          ({ selectedIds, params }) => {
-            return (
+          ({ selectedIds, selectedItems, params }) => {
+            const selectedStatuses = [
+              ...new Set(
+                Object.values(selectedItems).map((item) => {
+                  return item.alertStatus === 'CLOSED' ? 'CLOSED' : 'OPEN';
+                }),
+              ),
+            ];
+
+            const statusChangeButtonValue =
+              selectedStatuses.length === 1 ? selectedStatuses[0] : undefined;
+
+            return statusChangeButtonValue ? (
               <AlertsStatusChangeButton
                 ids={selectedIds}
                 onSaved={reloadTable}
-                status={params.alertStatus}
+                status={params.alertStatus ?? statusChangeButtonValue}
                 caseId={params.caseId}
               />
-            );
+            ) : null;
           },
           ({ selectedIds, params, onResetSelection }) =>
             params.caseId && (
