@@ -55,6 +55,7 @@ import { AlertListResponse } from '@/@types/openapi-internal/AlertListResponse'
 import { AlertListResponseItem } from '@/@types/openapi-internal/AlertListResponseItem'
 import { PaymentMethod } from '@/@types/openapi-internal/PaymentMethod'
 import { ArsScore } from '@/@types/openapi-internal/ArsScore'
+import { CaseCaseUsers } from '@/@types/openapi-internal/CaseCaseUsers'
 
 export const MAX_TRANSACTION_IN_A_CASE = 1000
 
@@ -1158,6 +1159,29 @@ export class CaseRepository {
       pageSize: 1,
     })
     return data?.find((c) => c.alert.alertId === alertId)?.alert ?? null
+  }
+
+  public async getCasesByAlertIds(alertIds: string[]): Promise<
+    Array<{
+      caseId: string
+      alerts: Alert[]
+      caseUsers: CaseCaseUsers
+    }>
+  > {
+    const db = this.mongoDb.db()
+    const collection = db.collection<Case>(CASES_COLLECTION(this.tenantId))
+    const cases = await collection
+      .find<{
+        caseId: string
+        alerts: Alert[]
+        caseUsers: CaseCaseUsers
+      }>(
+        { 'alerts.alertId': { $in: alertIds } },
+        { projection: { caseId: 1, alerts: 1, caseUsers: 1 } }
+      )
+      .toArray()
+
+    return cases
   }
 
   public async getCaseTransactions(

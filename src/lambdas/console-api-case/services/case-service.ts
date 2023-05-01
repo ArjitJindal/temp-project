@@ -29,6 +29,8 @@ import { Assignment } from '@/@types/openapi-internal/Assignment'
 import { CaseStatus } from '@/@types/openapi-internal/CaseStatus'
 import { CaseEscalationRequest } from '@/@types/openapi-internal/CaseEscalationRequest'
 import { CaseHierarchyDetails } from '@/@types/openapi-internal/CaseHierarchyDetails'
+import { CaseClosedDetails } from '@/@types/openapi-public/CaseClosedDetails'
+import { AlertClosedDetails } from '@/@types/openapi-public/AlertClosedDetails'
 
 export class CaseService {
   caseRepository: CaseRepository
@@ -103,9 +105,13 @@ export class CaseService {
     if (!tenantId) {
       throw new Error("Couldn't determine tenant")
     }
+
+    const cases = await this.caseRepository.getCasesByIds(caseIds)
+
     if (updateRequest.caseStatus) {
       await Promise.all(
         caseIds.flatMap((caseId) => {
+          const case_ = cases.find((c) => c.caseId === caseId)
           return [
             this.saveCaseComment(caseId, {
               userId,
@@ -122,15 +128,19 @@ export class CaseService {
                     caseId,
                     reasons: updateRequest.reason,
                     reasonDescriptionForOther: updateRequest.otherReason,
+                    status: updateRequest.caseStatus,
                     comment: updateRequest.comment,
-                  },
+                    userId:
+                      case_?.caseUsers?.origin?.userId ??
+                      case_?.caseUsers?.destination?.userId,
+                    transactionIds: case_?.caseTransactionsIds,
+                  } as CaseClosedDetails,
                 },
               ]),
           ]
         })
       )
 
-      const cases = await this.caseRepository.getCasesByIds(caseIds)
       await Promise.all(
         cases.map((c) =>
           this.dashboardStatsRepository.refreshCaseStats(c.createdTimestamp)
@@ -172,14 +182,36 @@ export class CaseService {
       if (updateRequest.comment) {
         body += `. ${updateRequest.comment}`
       }
+      const cases = await this.caseRepository.getCasesByAlertIds(alertIds)
       await Promise.all(
-        alertIds.map((alertId) =>
+        alertIds.map((alertId) => {
           this.saveAlertComment(alertId, {
             userId,
             body: body,
             files: updateRequest.files,
           })
-        )
+          const case_ = cases.find((c) =>
+            c.alerts.find((a) => a.alertId === alertId)
+          )
+          updateRequest.alertStatus === 'CLOSED' &&
+            sendWebhookTasks(this.caseRepository.tenantId, [
+              {
+                event: 'ALERT_CLOSED',
+                payload: {
+                  alertId,
+                  reasons: updateRequest.reason,
+                  reasonDescriptionForOther: updateRequest.otherReason,
+                  comment: updateRequest.comment,
+                  userId:
+                    case_?.caseUsers?.origin?.userId ??
+                    case_?.caseUsers?.destination?.userId,
+                  transactionIds: case_?.alerts.find(
+                    (a) => a.alertId === alertId
+                  )?.transactionIds,
+                } as AlertClosedDetails,
+              },
+            ])
+        })
       )
     }
     return 'OK'

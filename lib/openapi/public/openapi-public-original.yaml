@@ -3921,7 +3921,31 @@ components:
           type: string
         status:
           type: string
-        description:
+        reasons:
+          type: array
+          items:
+            type: string
+        reasonDescriptionForOther:
+          type: array
+          items:
+            type: string
+        comment:
+          type: string
+        userId:
+          type: string
+        transactionIds:
+          type: array
+          items:
+            type: string
+    AlertClosedDetails:
+      title: AlertClosedDetails
+      type: object
+      x-stoplight:
+        id: ev3mslr5skdfhg
+      properties:
+        alertId:
+          type: string
+        status:
           type: string
         reasons:
           type: array
@@ -3933,6 +3957,12 @@ components:
             type: string
         comment:
           type: string
+        userId:
+          type: string
+        transactionIds:
+          type: array
+          items:
+            type: string
     RiskLevel:
       type: string
       title: RiskLevel
@@ -3999,6 +4029,7 @@ components:
       enum:
         - CASE_CLOSED
         - USER_STATE_UPDATED
+        - ALERT_CLOSED
     ListType:
       type: string
       enum:
