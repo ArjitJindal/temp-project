@@ -5,8 +5,10 @@ import { InternalBusinessUser } from '@/apis';
 import * as Card from '@/components/ui/Card';
 import FingerprintLineIcon from '@/components/ui/icons/Remix/device/fingerprint-line.react.svg';
 import RegisteredIcon from '@/components/ui/icons/Remix/business/registered-line.react.svg';
+import BookmarkLineIcon from '@/components/ui/icons/Remix/business/bookmark-3-line.react.svg';
 import CalendarIcon from '@/components/ui/icons/Remix/business/calendar-event-line.react.svg';
 import GovernmentIcon from '@/components/ui/icons/Remix/buildings/government-line.react.svg';
+import CommunityIcon from '@/components/ui/icons/Remix/buildings/community-line.react.svg';
 import * as Form from '@/components/ui/Form';
 import EarthLineIcon from '@/components/ui/icons/Remix/map/earth-line.react.svg';
 import DeleteBackLineIcon from '@/components/ui/icons/Remix/system/delete-back-line.react.svg';
@@ -24,11 +26,11 @@ export function RegistrationDetails(prop: Props) {
     <Card.Section>
       <PropertyColumns>
         <>
-          <Form.Layout.Label icon={<FingerprintLineIcon />} title={'Registration status'} />
+          <Form.Layout.Label icon={<CommunityIcon />} title={'Registration status'} />
           <div>{user.legalEntity.companyGeneralDetails?.userRegistrationStatus}</div>
         </>
         <>
-          <Form.Layout.Label icon={<FingerprintLineIcon />} title={'Customer segment'} />
+          <Form.Layout.Label icon={<BookmarkLineIcon />} title={'Customer segment'} />
           <div>{user.legalEntity.companyGeneralDetails?.userSegment}</div>
         </>
         <>

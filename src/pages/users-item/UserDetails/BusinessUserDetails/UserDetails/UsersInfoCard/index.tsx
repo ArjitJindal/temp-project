@@ -10,6 +10,7 @@ import SecurePaymentIcon from '@/components/ui/icons/Remix/finance/secure-paymen
 import EarthLineIcon from '@/components/ui/icons/Remix/map/earth-line.react.svg';
 import DeleteBackLineIcon from '@/components/ui/icons/Remix/system/delete-back-line.react.svg';
 import GovernmentLineIcon from '@/components/ui/icons/Remix/buildings/government-line.react.svg';
+import StoreLineIcon from '@/components/ui/icons/Remix/buildings/store-3-line.react.svg';
 import GlobalLineIcon from '@/components/ui/icons/Remix/business/global-line.react.svg';
 import CheckMark from '@/components/ui/icons/Remix/system/checkbox-circle-fill.react.svg';
 import { Tag as ApiTag } from '@/apis/models/Tag';
@@ -98,6 +99,9 @@ export default function UsersInfoCard(props: Props) {
             }
           </AsyncResourceRenderer>
         </div>
+      </Form.Layout.Label>
+      <Form.Layout.Label icon={<StoreLineIcon />} title={'Acquisition Channel'}>
+        {user.acquisitionChannel ?? '-'}
       </Form.Layout.Label>
     </PropertyColumns>
   );

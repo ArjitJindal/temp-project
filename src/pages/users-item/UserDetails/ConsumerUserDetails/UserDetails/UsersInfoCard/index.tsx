@@ -9,6 +9,7 @@ import User3LineIcon from '@/components/ui/icons/Remix/user/user-3-line.react.sv
 import EarthLineIcon from '@/components/ui/icons/Remix/map/earth-line.react.svg';
 import Home4LineIcon from '@/components/ui/icons/Remix/buildings/home-4-line.react.svg';
 import DeleteBackLineIcon from '@/components/ui/icons/Remix/system/delete-back-line.react.svg';
+import StoreLineIcon from '@/components/ui/icons/Remix/buildings/store-3-line.react.svg';
 import * as Form from '@/components/ui/Form';
 import CountryDisplay from '@/components/ui/CountryDisplay';
 import { Tag as ApiTag } from '@/apis/models/Tag';
@@ -51,6 +52,11 @@ export default function UsersInfoCard(props: Props) {
           {dayjs(user.createdTimestamp).format(DEFAULT_DATE_TIME_FORMAT)}
         </Form.Layout.Label>
       </div>
+      <div>
+        <Form.Layout.Label icon={<StoreLineIcon />} title={'Acquisition Channel'}>
+          {user.acquisitionChannel ?? '-'}
+        </Form.Layout.Label>
+      </div>
       <div className={s.inner}>
         <Form.Layout.Label icon={<EarthLineIcon />} title={'Reason for opening account'}>
           {user.reasonForAccountOpening ? (
@@ -63,6 +69,13 @@ export default function UsersInfoCard(props: Props) {
             '-'
           )}
         </Form.Layout.Label>
+      </div>
+      <div>
+        <div>
+          <Form.Layout.Label icon={<StoreLineIcon />} title={'Acquisition Channel'}>
+            {user.acquisitionChannel ?? '-'}
+          </Form.Layout.Label>
+        </div>
       </div>
       <div className={s.tag}>
         <Form.Layout.Label icon={<DeleteBackLineIcon />} title={'Tags'}>
