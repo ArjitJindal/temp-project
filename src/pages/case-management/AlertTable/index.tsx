@@ -440,7 +440,11 @@ export default function AlertTable(props: Props) {
 function presentAlertData(data: AlertListResponseItem[]) {
   return data.map(({ alert, caseUsers, ...rest }) => {
     const caseUser = caseUsers ?? {};
-    const user = caseUser.origin ?? caseUser.destination ?? undefined;
+    const user = caseUser?.origin?.userId
+      ? caseUser?.origin
+      : caseUser?.destination?.userId
+      ? caseUser?.destination
+      : undefined;
     const duration = dayjs.duration(Date.now() - alert.createdTimestamp);
     return {
       ...alert,
