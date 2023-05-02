@@ -26,6 +26,7 @@ import InsightsCard from '@/pages/case-management-item/CaseDetails/InsightsCard'
 import { HEADER_HEIGHT } from '@/components/AppWrapper/Header';
 import { useElementSize } from '@/utils/browser';
 import AlertsCard from '@/pages/users-item/UserDetails/AlertsCard';
+import { useFeatureEnabled } from '@/components/AppWrapper/Providers/SettingsProvider';
 
 function UserItem() {
   const { list, id, tab = 'user-details' } = useParams<'list' | 'id' | 'tab'>(); // todo: handle nulls properly
@@ -33,6 +34,7 @@ function UserItem() {
   const api = useApi();
   const measure = useApiTime();
   const queryClient = useQueryClient();
+  const isMLDemoEnabled = useFeatureEnabled('MACHINE_LEARNING_DEMO');
 
   const queryResult = useQuery<InternalConsumerUser | InternalBusinessUser>(
     USERS_ITEM(id as string),
@@ -123,26 +125,28 @@ function UserItem() {
                 isDisabled: false,
               },
               ...(user.type === 'BUSINESS'
-                ? [
-                    {
-                      tab: 'AI Insights',
-                      key: 'ai-insights',
-                      children: <AIInsightsCard user={user} />,
-                      isClosable: false,
-                      isDisabled: false,
-                    },
-                    {
-                      tab: 'Expected Transaction Limits',
-                      key: 'expected-transaction-limits',
-                      children: (
-                        <Card.Root>
-                          <ExpectedTransactionLimits user={user} />
-                        </Card.Root>
-                      ),
-                      isClosable: false,
-                      isDisabled: false,
-                    },
-                  ]
+                ? isMLDemoEnabled
+                  ? [
+                      {
+                        tab: 'AI Insights',
+                        key: 'ai-insights',
+                        children: <AIInsightsCard user={user} />,
+                        isClosable: false,
+                        isDisabled: false,
+                      },
+                      {
+                        tab: 'Expected Transaction Limits',
+                        key: 'expected-transaction-limits',
+                        children: (
+                          <Card.Root>
+                            <ExpectedTransactionLimits user={user} />
+                          </Card.Root>
+                        ),
+                        isClosable: false,
+                        isDisabled: false,
+                      },
+                    ]
+                  : []
                 : []),
               {
                 tab: 'Transaction history',
