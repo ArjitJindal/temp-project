@@ -108,11 +108,11 @@ export type UserFilterKeys = keyof UserFilters
 
 const _TRANSACTION_FILTERS = [
   PaymentMethodRuleFilter,
+  TransactionWalletTypeRuleFilter,
   TransactionTypeRuleFilter,
   TransactionStateRuleFilter,
   TransactionCountryRuleFilter,
   TransactionAmountRuleFilter,
-  TransactionWalletTypeRuleFilter,
   CheckDirectionRuleFilter,
 ]
 
