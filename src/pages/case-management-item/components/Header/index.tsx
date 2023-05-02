@@ -25,7 +25,11 @@ interface Props {
 export default function Header(props: Props) {
   const { caseItem, onReload, onCommentAdded } = props;
   const { caseId } = caseItem;
-  const user = caseItem.caseUsers?.origin ?? caseItem.caseUsers?.destination ?? undefined;
+  const user = caseItem.caseUsers?.origin?.userId
+    ? caseItem.caseUsers?.origin
+    : caseItem.caseUsers?.destination?.userId
+    ? caseItem.caseUsers?.destination
+    : undefined;
   const escalationEnabled = useFeatureEnabled('ESCALATION');
   const caseClosedBefore = Boolean(
     caseItem.statusChanges?.find((statusChange) => statusChange.caseStatus === 'CLOSED'),
