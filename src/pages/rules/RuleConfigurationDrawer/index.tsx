@@ -313,7 +313,12 @@ export default function RuleConfigurationDrawer(props: RuleConfigurationDrawerPr
                       {activeStepKey === STANDARD_FILTERS_STEP && (
                         <div className={readOnly ? s.readOnlyFormContent : ''}>
                           <NestedForm<FormValues> name={'standardFiltersStep'}>
-                            <StandardFiltersStep activeTab={activeTabKey} rule={rule} />
+                            <StandardFiltersStep
+                              activeTab={activeTabKey}
+                              rule={rule}
+                              standardFilters={formState?.standardFiltersStep}
+                              setFormValues={setFormState}
+                            />
                           </NestedForm>
                         </div>
                       )}

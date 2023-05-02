@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import StepHeader from '../../StepHeader';
 import { Rule } from '@/apis';
 import PropertyList from '@/pages/rules/RuleConfigurationDrawer/JsonSchemaEditor/PropertyList';
@@ -14,21 +14,35 @@ import {
   getOrderedProps,
   getUiSchema,
 } from '@/pages/rules/RuleConfigurationDrawer/JsonSchemaEditor/utils';
+import { FormValues as AllFormValues } from '@/pages/rules/RuleConfigurationDrawer';
 
-export interface FormValues {}
+export interface FormValues extends Record<string, any> {}
 
 export const INITIAL_VALUES: FormValues = {};
 
 interface Props {
   activeTab: string;
   rule: Rule;
+  standardFilters: FormValues;
+  setFormValues: React.Dispatch<React.SetStateAction<AllFormValues>>;
 }
 
 export default function StandardFiltersStep(props: Props) {
-  const { activeTab } = props;
+  const { activeTab, standardFilters, setFormValues } = props;
 
   const api = useApi();
   const queryResults = useQuery(RULE_FILTERS(), () => api.getRuleFilters());
+
+  useEffect(() => {
+    if (standardFilters?.paymentMethod !== 'WALLET') {
+      setFormValues((prev) => {
+        if (prev?.standardFiltersStep?.walletType) {
+          delete prev?.standardFiltersStep?.walletType;
+        }
+        return prev;
+      });
+    }
+  }, [standardFilters?.paymentMethod, setFormValues]);
 
   return (
     <AsyncResourceRenderer resource={queryResults.data}>
@@ -49,11 +63,18 @@ export default function StandardFiltersStep(props: Props) {
                 )}
               />
             )}
+            {/* TODO: Implement Optional filters in proper way */}
             {activeTab === 'transaction_details' && (
               <TransactionDetails
-                propertyItems={props.filter(
-                  (x) => getUiSchema(x.schema)['ui:group'] === 'transaction',
-                )}
+                propertyItems={props
+                  .filter((x) => getUiSchema(x.schema)['ui:group'] === 'transaction')
+                  .filter((x) => {
+                    const nameToFilter = 'walletType';
+                    if (x.name === nameToFilter) {
+                      return standardFilters?.paymentMethod === 'WALLET';
+                    }
+                    return true;
+                  })}
               />
             )}
             {activeTab === 'transaction_details_historical' && (
