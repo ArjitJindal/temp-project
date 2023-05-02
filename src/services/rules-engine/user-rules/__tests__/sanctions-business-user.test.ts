@@ -45,7 +45,7 @@ describe('Sanctions hit', () => {
     {
       id: 'R-128',
       defaultParameters: {
-        entityTypes: ['LEGAL_NAME', 'DIRECTOR', 'SHAREHOLER'],
+        entityTypes: ['LEGAL_NAME', 'DIRECTOR', 'SHAREHOLDER'],
         screeningTypes: ['SANCTIONS'],
         fuzziness: 0.5,
       } as SanctionsBusinessUserRuleParameters,
@@ -158,7 +158,7 @@ describe('Sanctions no hit', () => {
     {
       id: 'R-128',
       defaultParameters: {
-        entityTypes: ['LEGAL_NAME', 'DIRECTOR', 'SHAREHOLER'],
+        entityTypes: ['LEGAL_NAME', 'DIRECTOR', 'SHAREHOLDER'],
         screeningTypes: ['SANCTIONS'],
         fuzziness: 0.5,
       } as SanctionsBusinessUserRuleParameters,

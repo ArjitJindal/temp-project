@@ -15,14 +15,14 @@ import { Business } from '@/@types/openapi-public/Business'
 import dayjs from '@/utils/dayjs'
 import { SanctionsDetails } from '@/@types/openapi-internal/SanctionsDetails'
 
-type BusinessUserEntityType = 'LEGAL_NAME' | 'SHAREHOLER' | 'DIRECTOR'
+type BusinessUserEntityType = 'LEGAL_NAME' | 'SHAREHOLDER' | 'DIRECTOR'
 
 const BUSINESS_USER_ENTITY_TYPES: Array<{
   value: BusinessUserEntityType
   label: string
 }> = [
   { value: 'LEGAL_NAME', label: 'Legal Name' },
-  { value: 'SHAREHOLER', label: 'Shareholder' },
+  { value: 'SHAREHOLDER', label: 'Shareholder' },
   { value: 'DIRECTOR', label: 'Director' },
 ]
 
