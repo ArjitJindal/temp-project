@@ -297,27 +297,30 @@ export class DashboardStatsRepository {
     ]
 
     await drsScoresCollection
-      .aggregate([
-        { $sort: { createdAt: -1, userId: 1 } },
-        { $group: { _id: '$userId', drsScore: { $first: '$$ROOT' } } },
-        { $replaceRoot: { newRoot: '$drsScore' } },
-        {
-          $bucket: {
-            groupBy: '$drsScore',
-            boundaries: sanitizedBounries,
-            default: sanitizedBounries[sanitizedBounries.length - 1],
-            output: {
-              count: { $sum: 1 },
+      .aggregate(
+        [
+          { $sort: { createdAt: -1, userId: 1 } },
+          { $group: { _id: '$userId', drsScore: { $first: '$$ROOT' } } },
+          { $replaceRoot: { newRoot: '$drsScore' } },
+          {
+            $bucket: {
+              groupBy: '$drsScore',
+              boundaries: sanitizedBounries,
+              default: sanitizedBounries[sanitizedBounries.length - 1],
+              output: {
+                count: { $sum: 1 },
+              },
             },
           },
-        },
-        {
-          $merge: {
-            into: aggregationCollection,
-            whenMatched: 'merge',
+          {
+            $merge: {
+              into: aggregationCollection,
+              whenMatched: 'merge',
+            },
           },
-        },
-      ])
+        ],
+        { allowDiskUse: true }
+      )
       .next()
 
     logger.info(`Aggregation done`)
@@ -597,6 +600,7 @@ export class DashboardStatsRepository {
         },
       })
       .sort({ _id: 1 })
+      .allowDiskUse()
       .toArray()
 
     const dashboardStatsById = _.keyBy(dashboardStats, '_id')
@@ -668,44 +672,47 @@ export class DashboardStatsRepository {
         user: InternalConsumerUser | InternalBusinessUser | null
         casesCount: number
         openCasesCount: number
-      }>([
-        condition,
-        {
-          $group: {
-            _id: `$userId`,
-            transactionsHit: { $sum: '$transactionsHit' },
-            rulesHit: { $sum: '$rulesHit' },
-            casesCount: { $sum: '$casesCount' },
-            openCasesCount: { $sum: '$openCasesCount' },
-          },
-        },
-        {
-          $sort: { transactionsHit: -1 },
-        },
-        {
-          $limit: 10,
-        },
-        {
-          $match: {
-            transactionsHit: {
-              $gte: 1,
+      }>(
+        [
+          condition,
+          {
+            $group: {
+              _id: `$userId`,
+              transactionsHit: { $sum: '$transactionsHit' },
+              rulesHit: { $sum: '$rulesHit' },
+              casesCount: { $sum: '$casesCount' },
+              openCasesCount: { $sum: '$openCasesCount' },
             },
           },
-        },
-        {
-          $lookup: {
-            from: USERS_COLLECTION(this.tenantId),
-            localField: '_id',
-            foreignField: 'userId',
-            as: 'user',
+          {
+            $sort: { transactionsHit: -1 },
           },
-        },
-        {
-          $set: {
-            user: { $first: '$user' },
+          {
+            $limit: 10,
           },
-        },
-      ])
+          {
+            $match: {
+              transactionsHit: {
+                $gte: 1,
+              },
+            },
+          },
+          {
+            $lookup: {
+              from: USERS_COLLECTION(this.tenantId),
+              localField: '_id',
+              foreignField: 'userId',
+              as: 'user',
+            },
+          },
+          {
+            $set: {
+              user: { $first: '$user' },
+            },
+          },
+        ],
+        { allowDiskUse: true }
+      )
       .toArray()
 
     return result.map((x) => ({
@@ -790,29 +797,32 @@ export class DashboardStatsRepository {
         hitCount: number
         casesCount: number
         openCasesCount: number
-      }>([
-        {
-          $match: {
-            _id: {
-              $gt: startDateText,
-              $lte: endDateText,
+      }>(
+        [
+          {
+            $match: {
+              _id: {
+                $gt: startDateText,
+                $lte: endDateText,
+              },
             },
           },
-        },
-        { $unwind: { path: '$rulesStats' } },
-        {
-          $group: {
-            _id: {
-              ruleId: '$rulesStats.ruleId',
-              ruleInstanceId: '$rulesStats.ruleInstanceId',
+          { $unwind: { path: '$rulesStats' } },
+          {
+            $group: {
+              _id: {
+                ruleId: '$rulesStats.ruleId',
+                ruleInstanceId: '$rulesStats.ruleInstanceId',
+              },
+              hitCount: { $sum: '$rulesStats.hitCount' },
+              casesCount: { $sum: '$rulesStats.casesCount' },
+              openCasesCount: { $sum: '$rulesStats.openCasesCount' },
             },
-            hitCount: { $sum: '$rulesStats.hitCount' },
-            casesCount: { $sum: '$rulesStats.casesCount' },
-            openCasesCount: { $sum: '$rulesStats.openCasesCount' },
           },
-        },
-        { $sort: { hitCount: -1 } },
-      ])
+          { $sort: { hitCount: -1 } },
+        ],
+        { allowDiskUse: true }
+      )
       .toArray()
 
     return result.map((x) => ({
