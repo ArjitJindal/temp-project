@@ -78,6 +78,10 @@ import {
   TransactionWalletTypeRuleFilter,
   TransactionWalletTypeRuleFilterParameter,
 } from './transaction-filters/transaction-wallet-type'
+import {
+  UserAcquisitionChannelRuleFilter,
+  UserAcquisitionChannelRuleFilterParameter,
+} from './user-filters/user-acquisition-channel'
 
 export type TransactionFilters = PaymentMethodRuleFilterParameter &
   TransactionTypeRuleFilterParameter &
@@ -100,7 +104,8 @@ export type UserFilters = WhitelistUsersRuleFilterParameter &
   UserIdRuleFilterParameter &
   UserCountryOfResidenceRuleFilterParameter &
   UserCountryOfNationalityRuleFilterParameter &
-  UserCountryOfRegistrationRuleFilterParameter
+  UserCountryOfRegistrationRuleFilterParameter &
+  UserAcquisitionChannelRuleFilterParameter
 
 export type TransactionFilterKeys = keyof TransactionFilters
 export type TransactionHistoricalFilterKeys = keyof TransactionHistoricalFilters
@@ -133,6 +138,7 @@ const _USER_FILTERS = [
   UserCountryOfResidenceRuleFilter,
   UserCountryOfNationalityRuleFilter,
   UserCountryOfRegistrationRuleFilter,
+  UserAcquisitionChannelRuleFilter,
 ]
 
 function createFiltersMap<T>(filters: Array<any>): { [key: string]: T } {

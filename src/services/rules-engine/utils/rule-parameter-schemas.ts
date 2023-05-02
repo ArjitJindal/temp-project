@@ -11,6 +11,7 @@ import { TRANSACTION_STATES } from '@/@types/openapi-public-custom/TransactionSt
 import { PAYMENT_METHODS } from '@/@types/openapi-public-custom/PaymentMethod'
 import { TRANSACTION_TYPES } from '@/@types/openapi-public-custom/TransactionType'
 import { SANCTIONS_SEARCH_TYPES } from '@/@types/openapi-internal-custom/SanctionsSearchType'
+import { ACQUISITION_CHANNELS } from '@/@types/openapi-internal-custom/AcquisitionChannel'
 
 type SchemaOptions = {
   title?: string
@@ -337,6 +338,30 @@ export const CHECK_RECEIVER_SCHEMA = (options?: SchemaOptions) =>
       "receiving: only check the receiver's past receiving transactions; all: check the receiver's past sending and receiving transactions; none: do not check the receiver",
     enum: ['receiving', 'all', 'none'],
     default: 'all',
+  } as const)
+
+export const ACQUISITION_CHANNEL_SCHEMA = (options?: SchemaOptions) =>
+  ({
+    ...uiSchema(options?.uiSchema, {
+      subtype: 'ACQUISITION_CHANNEL',
+    }),
+    type: 'array',
+    title: options?.title || 'Acquisition Channel',
+    description: options?.description,
+    items: {
+      type: 'string',
+      enum: ACQUISITION_CHANNELS,
+      enumNames: ACQUISITION_CHANNELS.map((channel) =>
+        _.startCase(channel.replace('_', ' ').toLowerCase())
+      ),
+    },
+    uniqueItems: true,
+  } as const)
+
+export const ACQUISITION_CHANNEL_OPTIONAL_SCHEMA = (options?: SchemaOptions) =>
+  ({
+    ...ACQUISITION_CHANNEL_SCHEMA(options),
+    nullable: true,
   } as const)
 
 export const CHECK_RECEIVER_OPTIONAL_SCHEMA = () =>
