@@ -4,6 +4,7 @@ import { useQueryClient } from '@tanstack/react-query';
 import { useState } from 'react';
 import UserDetails from './UserDetails';
 import Header from './Header';
+import s from './index.module.less';
 import { useI18n } from '@/locales';
 import PageWrapper, { PAGE_WRAPPER_PADDING } from '@/components/PageWrapper';
 import { makeUrl } from '@/utils/routing';
@@ -24,6 +25,7 @@ import ExpectedTransactionLimits from '@/pages/users-item/UserDetails/BusinessUs
 import InsightsCard from '@/pages/case-management-item/CaseDetails/InsightsCard';
 import { HEADER_HEIGHT } from '@/components/AppWrapper/Header';
 import { useElementSize } from '@/utils/browser';
+import AlertsCard from '@/pages/users-item/UserDetails/AlertsCard';
 
 function UserItem() {
   const { list, id, tab = 'user-details' } = useParams<'list' | 'id' | 'tab'>(); // todo: handle nulls properly
@@ -113,6 +115,13 @@ function UserItem() {
                 isClosable: false,
                 isDisabled: false,
               },
+              {
+                tab: 'Alerts',
+                key: 'alerts',
+                children: <AlertsCard userId={user.userId} />,
+                isClosable: false,
+                isDisabled: false,
+              },
               ...(user.type === 'BUSINESS'
                 ? [
                     {
@@ -173,6 +182,7 @@ function UserItem() {
                 disabled={isDisabled ?? false}
               >
                 <div
+                  className={s.sizeWrapper}
                   style={{
                     minHeight: `calc(100vh - ${
                       HEADER_HEIGHT + entityHeaderHeight + TABS_LINE_HEIGHT + PAGE_WRAPPER_PADDING

@@ -53,3 +53,9 @@ export function isEqual<T>(a: T, b: T): boolean {
   }
   return a === b;
 }
+
+export type SparseArray<T> = (T | undefined | null | false)[];
+
+export function denseArray<T>(array: SparseArray<T>): T[] {
+  return array.filter((x): x is T => x != null && x !== false);
+}

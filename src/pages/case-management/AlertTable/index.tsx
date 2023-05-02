@@ -1,8 +1,8 @@
 import React, { useCallback, useMemo, useRef } from 'react';
 import pluralize from 'pluralize';
 import { Avatar } from 'antd';
-import { useCreateNewCaseMutation } from './helpers';
-import { getMutationAsyncResource, usePaginatedQuery } from '@/utils/queries/hooks';
+import CreateCaseConfirmModal from './CreateCaseConfirmModal';
+import { usePaginatedQuery } from '@/utils/queries/hooks';
 import { useApi } from '@/api';
 import { Account, AlertListResponseItem, RuleInstance } from '@/apis';
 import { ALERT_LIST } from '@/utils/queries/keys';
@@ -22,10 +22,8 @@ import AssignToButton from '@/pages/case-management/components/AssignToButton';
 import { useAuth0User, useUsers } from '@/utils/user-utils';
 import { message } from '@/components/library/Message';
 import { TableSearchParams } from '@/pages/case-management/types';
-import { extraFilters } from '@/pages/case-management/helpers';
+import { makeExtraFilters } from '@/pages/case-management/helpers';
 import { useFeatureEnabled } from '@/components/AppWrapper/Providers/SettingsProvider';
-import Button from '@/components/library/Button';
-import Confirm from '@/components/utils/Confirm';
 import Tooltip from '@/components/library/Tooltip';
 import { UI_SETTINGS } from '@/pages/case-management-item/CaseDetails/ui-settings';
 import {
@@ -37,20 +35,16 @@ import {
 } from '@/components/library/Table/standardDataTypes';
 import { useRules } from '@/utils/rules';
 import { ColumnHelper } from '@/components/library/Table/columnHelper';
+import { DefaultApiGetAlertListRequest } from '@/apis/types/ObjectParamAPI';
 
 export type AlertTableParams = AllParams<TableSearchParams>;
 
-interface Props {
-  params: TableSearchParams;
-  onChangeParams: (newState: AllParams<TableSearchParams>) => void;
-  disableInternalPadding?: boolean;
-  isEmbedded?: boolean;
-  hideScopeSelector?: boolean;
-}
-
-const mergedColumns = (users: Record<string, Account>): TableColumn<TableAlertItem>[] => {
+const mergedColumns = (
+  users: Record<string, Account>,
+  hideUserColumns: boolean,
+): TableColumn<TableAlertItem>[] => {
   const helper = new ColumnHelper<TableAlertItem>();
-  return [
+  return helper.list([
     helper.simple<'alertId'>({
       title: 'Alert ID',
       key: 'alertId',
@@ -100,10 +94,11 @@ const mergedColumns = (users: Record<string, Account>): TableColumn<TableAlertIt
       key: 'numberOfTransactionsHit',
       sorting: true,
     }),
-    helper.simple<'caseUserName'>({
-      title: 'User name',
-      key: 'caseUserName',
-    }),
+    !hideUserColumns &&
+      helper.simple<'caseUserName'>({
+        title: 'User name',
+        key: 'caseUserName',
+      }),
     helper.simple<'ruleName'>({
       title: 'Rule name',
       key: 'ruleName',
@@ -160,45 +155,26 @@ const mergedColumns = (users: Record<string, Account>): TableColumn<TableAlertIt
         },
       },
     }),
-  ];
+  ]);
 };
 
-type ConfirmModalProps = {
-  selectedEntities: string[];
-  caseId: string;
-  onResetSelection: () => void;
-};
-
-const CreateCaseConfirmModal = ({
-  selectedEntities,
-  caseId,
-  onResetSelection,
-}: ConfirmModalProps) => {
-  const createNewCaseMutation = useCreateNewCaseMutation({ onResetSelection });
-
-  return (
-    <Confirm
-      title="Are you sure you want to create a new Case?"
-      text="Please note that creating a new case would create a new case for this user with a new Case ID with the selected Alerts."
-      res={getMutationAsyncResource(createNewCaseMutation)}
-      onConfirm={() => {
-        createNewCaseMutation.mutate({
-          sourceCaseId: caseId,
-          alertIds: selectedEntities,
-        });
-      }}
-    >
-      {({ onClick }) => (
-        <Button type="TETRIARY" onClick={onClick}>
-          Create new case
-        </Button>
-      )}
-    </Confirm>
-  );
-};
+interface Props {
+  params: AlertTableParams;
+  onChangeParams: (newState: AlertTableParams) => void;
+  disableInternalPadding?: boolean;
+  isEmbedded?: boolean;
+  hideScopeSelector?: boolean;
+  hideUserFilters?: boolean;
+}
 
 export default function AlertTable(props: Props) {
-  const { params, onChangeParams, hideScopeSelector = false, isEmbedded = false } = props;
+  const {
+    params,
+    onChangeParams,
+    hideScopeSelector = false,
+    isEmbedded = false,
+    hideUserFilters = false,
+  } = props;
   const showActions = !hideScopeSelector;
   const escalationEnabled = useFeatureEnabled('ESCALATION');
 
@@ -240,7 +216,7 @@ export default function AlertTable(props: Props) {
         filterAssignmentsIds = assignedTo;
       }
 
-      const result = await api.getAlertList({
+      const preparedParams: DefaultApiGetAlertListRequest = {
         page,
         pageSize,
         filterAlertId: alertId,
@@ -256,8 +232,12 @@ export default function AlertTable(props: Props) {
             : undefined
           : undefined,
         filterAssignmentsIds,
-        filterTransactionState: transactionState ?? undefined,
-        filterBusinessIndustries: businessIndustryFilter,
+        filterTransactionState:
+          transactionState && transactionState.length > 0 ? transactionState : undefined,
+        filterBusinessIndustries:
+          businessIndustryFilter && businessIndustryFilter.length > 0
+            ? businessIndustryFilter
+            : undefined,
         filterTransactionTagKey: tagKey,
         filterTransactionTagValue: tagValue,
         filterUserId: userId,
@@ -286,7 +266,13 @@ export default function AlertTable(props: Props) {
                 : 0,
             }
           : {}),
-      });
+      };
+      const result = await api.getAlertList(
+        Object.entries(preparedParams).reduce(
+          (acc, [key, value]) => ({ ...acc, [key]: value }),
+          {},
+        ),
+      );
       return {
         items: presentAlertData(result.data),
         total: result.total,
@@ -328,7 +314,7 @@ export default function AlertTable(props: Props) {
       });
   };
 
-  const columns = useMemo(() => mergedColumns(users), [users]);
+  const columns = useMemo(() => mergedColumns(users, hideUserFilters), [users, hideUserFilters]);
 
   const rules = useRules();
 
@@ -342,6 +328,10 @@ export default function AlertTable(props: Props) {
     });
   }, [rules.ruleInstances, rules.rules]);
 
+  const extraFilters = useMemo(
+    () => makeExtraFilters(isPulseEnabled, ruleOptions, hideUserFilters),
+    [isPulseEnabled, ruleOptions, hideUserFilters],
+  );
   return (
     <>
       <QueryResultsTable<TableAlertItem, AlertTableParams>
@@ -354,7 +344,7 @@ export default function AlertTable(props: Props) {
         queryResults={queryResults}
         params={params}
         onChangeParams={onChangeParams}
-        extraFilters={extraFilters(isPulseEnabled, ruleOptions)}
+        extraFilters={extraFilters}
         pagination={isEmbedded ? 'HIDE_FOR_ONE_PAGE' : true}
         selectionActions={[
           ({ selectedIds }) => <AssignToButton ids={selectedIds} onSelect={handleAssignTo} />,

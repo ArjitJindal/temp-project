@@ -31,7 +31,7 @@ import CalendarLineIcon from '@/components/ui/icons/Remix/business/calendar-line
 import AssignToButton from '@/pages/case-management/components/AssignToButton';
 import { message } from '@/components/library/Message';
 import { useApi } from '@/api';
-import { extraFilters } from '@/pages/case-management/helpers';
+import { makeExtraFilters } from '@/pages/case-management/helpers';
 import {
   ASSIGNMENTS,
   CASE_STATUS,
@@ -340,7 +340,7 @@ export default function CaseTable(props: Props) {
       queryResults={tableQueryResult}
       params={params}
       onChangeParams={onChangeParams}
-      extraFilters={extraFilters(isPulseEnabled, props.rules)}
+      extraFilters={makeExtraFilters(isPulseEnabled, props.rules, false)}
       selectionActions={[
         ({ selectedIds }) => <AssignToButton ids={selectedIds} onSelect={handleAssignTo} />,
         ({ selectedIds, params }) => (

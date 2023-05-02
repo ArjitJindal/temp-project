@@ -10,9 +10,15 @@ import SecurePaymentIcon from '@/components/ui/icons/Remix/finance/secure-paymen
 import EarthLineIcon from '@/components/ui/icons/Remix/map/earth-line.react.svg';
 import DeleteBackLineIcon from '@/components/ui/icons/Remix/system/delete-back-line.react.svg';
 import GovernmentLineIcon from '@/components/ui/icons/Remix/buildings/government-line.react.svg';
+import GlobalLineIcon from '@/components/ui/icons/Remix/business/global-line.react.svg';
+import CheckMark from '@/components/ui/icons/Remix/system/checkbox-circle-fill.react.svg';
 import { Tag as ApiTag } from '@/apis/models/Tag';
 import * as Form from '@/components/ui/Form';
 import { PaymentMethodTag } from '@/components/ui/PaymentTypeTag';
+import { useApi } from '@/api';
+import { useQuery } from '@/utils/queries/hooks';
+import AsyncResourceRenderer from '@/components/common/AsyncResourceRenderer';
+import { PropertyColumns } from '@/pages/users-item/UserDetails/PropertyColumns';
 
 interface Props {
   user: InternalBusinessUser;
@@ -20,8 +26,16 @@ interface Props {
 
 export default function UsersInfoCard(props: Props) {
   const { user } = props;
+
+  const api = useApi();
+  const ongoingSanctionsScreeningQueryResult = useQuery(['user-status', user.userId], async () => {
+    return await api.getUserScreeningStatus({
+      userId: user.userId,
+    });
+  });
+
   return (
-    <div className={s.fields}>
+    <PropertyColumns>
       <Form.Layout.Label icon={<User3Line />} title={'User type'}>
         <div>
           <Tag
@@ -70,6 +84,21 @@ export default function UsersInfoCard(props: Props) {
           ))}
         </div>
       </Form.Layout.Label>
-    </div>
+      <Form.Layout.Label icon={<GlobalLineIcon />} title={'Ongoing sanctions screening'}>
+        <div className={s.ongoingSanctions}>
+          <AsyncResourceRenderer resource={ongoingSanctionsScreeningQueryResult.data}>
+            {({ isOngoingScreening }) =>
+              isOngoingScreening ? (
+                <>
+                  <CheckMark className={s.successIcon} /> Yes
+                </>
+              ) : (
+                <>No</>
+              )
+            }
+          </AsyncResourceRenderer>
+        </div>
+      </Form.Layout.Label>
+    </PropertyColumns>
   );
 }

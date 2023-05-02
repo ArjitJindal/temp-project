@@ -6,17 +6,18 @@ import {
   SimpleColumn,
   TableColumn,
 } from '@/components/library/Table/types';
+import { denseArray, SparseArray } from '@/utils/lang';
 
 export class ColumnHelper<Item extends object> {
   list(
-    columns: (
+    columns: SparseArray<
       | SimpleColumn<Item, FieldAccessor<Item>>
       | DisplayColumn<Item>
       | DerivedColumn<Item, any>
       | GroupColumn<Item>
-    )[],
+    >,
   ): TableColumn<Item>[] {
-    return columns;
+    return denseArray(columns);
   }
   derived<Value = unknown>(def: DerivedColumn<Item, Value>): DerivedColumn<Item, Value> {
     return def;

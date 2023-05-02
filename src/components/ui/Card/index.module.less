@@ -142,10 +142,12 @@
 }
 
 .subtitle {
+  padding-left: @h-padding;
+  padding-right: @h-padding;
+
   .item {
     display: flex;
     gap: 8px;
-    border-bottom: 1px solid #dfe6f2;
     align-items: center;
     height: 60px;
   }
@@ -160,12 +162,12 @@
   }
 
   .icon {
-    height: 17px !important;
-    width: 17px !important;
-    margin-right: 5px !important;
+    height: 16px !important;
+    width: 16px !important;
+    margin-right: 4px !important;
     color: @fr-colors-purpleGray;
-    margin-left: 25px !important;
     align-items: center;
+    flex-shrink: 0;
   }
 }
 

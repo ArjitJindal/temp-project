@@ -16,6 +16,7 @@ import TagSearchButton from '@/pages/transactions/components/TagSearchButton';
 import BusinessIndustryButton from '@/pages/transactions/components/BusinessIndustryButton';
 import { RiskLevelButton } from '@/pages/users/users-list/RiskLevelFilterButton';
 import StackLineIcon from '@/components/ui/icons/Remix/business/stack-line.react.svg';
+import { denseArray } from '@/utils/lang';
 
 export const queryAdapter: Adapter<TableSearchParams> = {
   serializer: (params) => {
@@ -117,165 +118,163 @@ export const queryAdapter: Adapter<TableSearchParams> = {
   },
 };
 
-export const extraFilters = (
+export const makeExtraFilters = (
   isPulseEnabled: boolean,
   ruleOptions: { value: string; label: string }[],
-): ExtraFilter<TableSearchParams>[] => [
-  {
-    title: 'Case ID',
-    key: 'caseId',
-    renderer: { kind: 'string' },
-    showFilterByDefault: true,
-    icon: <StackLineIcon />,
-  },
-  {
-    title: 'Rules',
-    key: 'rulesHitFilter',
-    renderer: {
-      kind: 'select',
-      mode: 'MULTIPLE',
-      displayMode: 'select',
-      options: ruleOptions,
+  hideUserFilters: boolean,
+): ExtraFilter<TableSearchParams>[] =>
+  denseArray([
+    {
+      title: 'Case ID',
+      key: 'caseId',
+      renderer: { kind: 'string' },
+      showFilterByDefault: true,
+      icon: <StackLineIcon />,
     },
-    icon: <GavelIcon />,
-    showFilterByDefault: true,
-  },
-  {
-    key: 'userId',
-    title: 'User ID/Name',
-    showFilterByDefault: true,
-    renderer: ({ params, setParams }) => (
-      <UserSearchButton
-        initialMode={params.userFilterMode ?? 'ALL'}
-        userId={params.userId ?? null}
-        onConfirm={(userId, mode) => {
-          setParams((state) => ({
-            ...state,
-            userId: userId ?? undefined,
-            userFilterMode: mode ?? 'ALL',
-          }));
-        }}
-      />
-    ),
-  },
-  {
-    key: 'transactionState',
-    title: 'Transaction state',
-    showFilterByDefault: true,
-    renderer: ({ params, setParams }) => (
-      <TransactionStateButton
-        transactionStates={params.transactionState ?? []}
-        onConfirm={(value) => {
-          setParams((state) => ({
-            ...state,
-            transactionState: value ?? undefined,
-          }));
-        }}
-      />
-    ),
-  },
-  {
-    key: 'tagKey',
-    title: 'Tags',
-    renderer: ({ params, setParams }) => (
-      <TagSearchButton
-        initialState={{
-          key: params.tagKey ?? null,
-          value: params.tagValue ?? null,
-        }}
-        onConfirm={(value) => {
-          setParams((state) => ({
-            ...state,
-            tagKey: value.key ?? undefined,
-            tagValue: value.value ?? undefined,
-          }));
-        }}
-      />
-    ),
-  },
-  {
-    key: 'businessIndustryFilter',
-    title: 'Business industry',
-    showFilterByDefault: true,
-    renderer: ({ params, setParams }) => (
-      <BusinessIndustryButton
-        businessIndustry={params.businessIndustryFilter ?? []}
-        onConfirm={(value) => {
-          setParams((state) => ({
-            ...state,
-            businessIndustryFilter: value ?? undefined,
-          }));
-        }}
-      />
-    ),
-  },
-  {
-    key: 'assignedTo',
-    title: 'Assigned to',
-    showFilterByDefault: false,
-    renderer: ({ params, setParams }) => (
-      <AssignmentButton
-        users={params.assignedTo ?? []}
-        onConfirm={(value) => {
-          setParams((state) => ({
-            ...state,
-            assignedTo: value ?? undefined,
-          }));
-        }}
-      />
-    ),
-  },
-  {
-    key: 'originMethodFilterId',
-    title: 'Origin Method',
-    showFilterByDefault: false,
-    renderer: ({ params, setParams }) => (
-      <PaymentMethodButton
-        direction={'ORIGIN'}
-        methods={params.originMethodFilter ?? []}
-        onConfirm={(value) => {
-          setParams((state) => ({
-            ...state,
-            originMethodFilter: value ?? undefined,
-          }));
-        }}
-      />
-    ),
-  },
-  {
-    key: 'destinationMethodFilterId',
-    title: 'Destination Method',
-    showFilterByDefault: false,
-    renderer: ({ params, setParams }) => (
-      <PaymentMethodButton
-        direction={'DESTINATION'}
-        methods={params.destinationMethodFilter ?? []}
-        onConfirm={(value) => {
-          setParams((state) => ({
-            ...state,
-            destinationMethodFilter: value ?? undefined,
-          }));
-        }}
-      />
-    ),
-  },
-  ...((isPulseEnabled
-    ? [
-        {
-          key: 'riskLevels',
-          title: 'CRA',
-          renderer: ({ params, setParams }) => (
-            <RiskLevelButton
-              riskLevels={params.riskLevels ?? []}
-              onConfirm={(value) => {
-                setParams((state) => ({
-                  ...state,
-                  riskLevels: value ?? undefined,
-                }));
-              }}
-            />
-          ),
-        },
-      ]
-    : []) as ExtraFilter<TableSearchParams>[]),
-];
+    {
+      title: 'Rules',
+      key: 'rulesHitFilter',
+      renderer: {
+        kind: 'select',
+        mode: 'MULTIPLE',
+        displayMode: 'select',
+        options: ruleOptions,
+      },
+      icon: <GavelIcon />,
+      showFilterByDefault: true,
+    },
+    !hideUserFilters && {
+      key: 'userId',
+      title: 'User ID/Name',
+      showFilterByDefault: true,
+      renderer: ({ params, setParams }) => (
+        <UserSearchButton
+          initialMode={params.userFilterMode ?? 'ALL'}
+          userId={params.userId ?? null}
+          onConfirm={(userId, mode) => {
+            setParams((state) => ({
+              ...state,
+              userId: userId ?? undefined,
+              userFilterMode: mode ?? 'ALL',
+            }));
+          }}
+        />
+      ),
+    },
+    {
+      key: 'transactionState',
+      title: 'Transaction state',
+      showFilterByDefault: true,
+      renderer: ({ params, setParams }) => (
+        <TransactionStateButton
+          transactionStates={params.transactionState ?? []}
+          onConfirm={(value) => {
+            setParams((state) => ({
+              ...state,
+              transactionState: value ?? undefined,
+            }));
+          }}
+        />
+      ),
+    },
+    {
+      key: 'tagKey',
+      title: 'Tags',
+      renderer: ({ params, setParams }) => (
+        <TagSearchButton
+          initialState={{
+            key: params.tagKey ?? null,
+            value: params.tagValue ?? null,
+          }}
+          onConfirm={(value) => {
+            setParams((state) => ({
+              ...state,
+              tagKey: value.key ?? undefined,
+              tagValue: value.value ?? undefined,
+            }));
+          }}
+        />
+      ),
+    },
+    {
+      key: 'businessIndustryFilter',
+      title: 'Business industry',
+      showFilterByDefault: true,
+      renderer: ({ params, setParams }) => (
+        <BusinessIndustryButton
+          businessIndustry={params.businessIndustryFilter ?? []}
+          onConfirm={(value) => {
+            setParams((state) => ({
+              ...state,
+              businessIndustryFilter: value ?? undefined,
+            }));
+          }}
+        />
+      ),
+    },
+    {
+      key: 'assignedTo',
+      title: 'Assigned to',
+      showFilterByDefault: false,
+      renderer: ({ params, setParams }) => (
+        <AssignmentButton
+          users={params.assignedTo ?? []}
+          onConfirm={(value) => {
+            setParams((state) => ({
+              ...state,
+              assignedTo: value ?? undefined,
+            }));
+          }}
+        />
+      ),
+    },
+    {
+      key: 'originMethodFilterId',
+      title: 'Origin Method',
+      showFilterByDefault: false,
+      renderer: ({ params, setParams }) => (
+        <PaymentMethodButton
+          direction={'ORIGIN'}
+          methods={params.originMethodFilter ?? []}
+          onConfirm={(value) => {
+            setParams((state) => ({
+              ...state,
+              originMethodFilter: value ?? undefined,
+            }));
+          }}
+        />
+      ),
+    },
+    {
+      key: 'destinationMethodFilterId',
+      title: 'Destination Method',
+      showFilterByDefault: false,
+      renderer: ({ params, setParams }) => (
+        <PaymentMethodButton
+          direction={'DESTINATION'}
+          methods={params.destinationMethodFilter ?? []}
+          onConfirm={(value) => {
+            setParams((state) => ({
+              ...state,
+              destinationMethodFilter: value ?? undefined,
+            }));
+          }}
+        />
+      ),
+    },
+    isPulseEnabled && {
+      key: 'riskLevels',
+      title: 'CRA',
+      renderer: ({ params, setParams }) => (
+        <RiskLevelButton
+          riskLevels={params.riskLevels ?? []}
+          onConfirm={(value) => {
+            setParams((state) => ({
+              ...state,
+              riskLevels: value ?? undefined,
+            }));
+          }}
+        />
+      ),
+    },
+  ]);

@@ -154,7 +154,6 @@ function Table<Item extends object, Params extends object = CommonParams>(
       ? pagination
       : pagination === 'HIDE_FOR_ONE_PAGE' && getPageCount(params, data) > 1;
 
-  const rows = table.getRowModel().rows;
   return (
     <div className={cn(s.root, s[`sizingMode-${sizingMode}`])} data-test="table">
       <Header<Item, Params>
@@ -177,6 +176,7 @@ function Table<Item extends object, Params extends object = CommonParams>(
       >
         {(containerWidth) => {
           const showSizer = sizingMode === 'SCROLL' && containerWidth > table.getTotalSize();
+          const rows = table.getRowModel().rows;
           return (
             <table
               className={cn(s.table, fitHeight === true && s.fitHeight)}
