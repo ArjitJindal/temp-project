@@ -14,8 +14,12 @@ export default function CountryDisplay(props: Props): JSX.Element {
   if (!isoCode && !countryName) {
     return <>-</>;
   }
-  const code = isoCode || COUNTRY_NAME_TO_CODE[countryName!];
-  const name = countryName || COUNTRIES[isoCode!];
+  const code = isoCode || (countryName && COUNTRY_NAME_TO_CODE[countryName]);
+  const name = countryName || COUNTRIES[code];
+
+  if (code == null) {
+    console.warn(`Unable to define country code. Country name: "${countryName}"`);
+  }
 
   return (
     <Space align="start">

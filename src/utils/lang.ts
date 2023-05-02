@@ -59,3 +59,7 @@ export type SparseArray<T> = (T | undefined | null | false)[];
 export function denseArray<T>(array: SparseArray<T>): T[] {
   return array.filter((x): x is T => x != null && x !== false);
 }
+
+export function objectKeys<T extends object>(obj: T): (keyof T)[] {
+  return Object.keys(obj) as (keyof T)[];
+}

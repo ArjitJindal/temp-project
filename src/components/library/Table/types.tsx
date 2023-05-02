@@ -1,9 +1,34 @@
 import React from 'react';
 import { DeepKeys, DeepValue } from '@tanstack/react-table';
 import _ from 'lodash';
-import { AsyncResource } from '@/utils/asyncResource';
 import { PaginatedData, PaginationParams } from '@/utils/queries/hooks';
 import { Option } from '@/components/library/Select';
+import { StatePair } from '@/utils/state';
+
+/*
+  Contexts
+ */
+
+export interface EditContext<T> {
+  isEditing: boolean;
+  toggleEditing: (isEditing?: boolean) => void;
+  state: StatePair<T>;
+  onConfirm: (value?: T) => void;
+}
+
+export interface ItemContext<Item> {
+  item: Item;
+  edit: EditContext<Item>;
+}
+
+export interface CellContext<Value, Item> {
+  value: Value;
+  item: Item;
+}
+
+export interface CellEditContext<Value, Item> extends CellContext<Value, Item> {
+  edit: EditContext<Value | undefined>;
+}
 
 /*
   Actions
@@ -42,7 +67,7 @@ export type AllParams<Params> = Params & CommonParams;
 export type TableDataSimpleItem<T> = T;
 
 export type TableDataMultiRowsItem<T> = {
-  spanBy: FieldAccessor<T>[];
+  spanBy: string[]; // id list
   rows: T[];
 };
 
@@ -59,7 +84,7 @@ export function isMultiRows<T>(value: TableDataItem<T>): value is TableDataMulti
   Table item passed to columns with metadata about row
  */
 export type TableRow<T> = {
-  spanBy: FieldAccessor<T>[];
+  spanBy: string[]; // id list
   rowIndex: number;
   itemIndex: number;
   content: T;
@@ -71,21 +96,10 @@ export type TableRow<T> = {
 /*
   Column definitions
  */
-export type SizingMode = 'FULL_WIDTH' | 'SCROLL';
-
-export interface ColumnDataTypeEditing<Value> {
-  isSupported: boolean;
-  onChange: (newValue: Value | undefined) => void;
-  statusRes: AsyncResource<Value | undefined>;
-}
-
 export interface FullColumnDataType<Value, Item = unknown> {
-  render?: (
-    value: Value | undefined,
-    editing: ColumnDataTypeEditing<Value>,
-    item: Item,
-  ) => JSX.Element;
-  stringify?: (value: Value | undefined, item: Item) => string;
+  render?: (value: Value | undefined, context: CellContext<Value, Item>) => JSX.Element;
+  renderEdit?: (context: CellEditContext<Value, Item>) => JSX.Element;
+  stringify?: (value: Value | undefined, item: Item) => string; // can be used for export // todo: make it optional
   defaultWrapMode?: 'WRAP' | 'OVERFLOW';
   autoFilterDataType?: AutoFilterDataType;
 }
@@ -94,13 +108,19 @@ export interface FullColumnDataType<Value, Item = unknown> {
 export type ColumnDataType<Value, Item = unknown> = FullColumnDataType<Value, Item | null>;
 
 export type FieldAccessor<Item> = DeepKeys<Item>;
+export type ValueOf<Accessor> = Accessor extends FieldAccessor<infer Item>
+  ? DeepValue<Item, Accessor>
+  : never;
 
 export interface BaseColumn {
   id?: string;
   title: string;
   tooltip?: string;
+  subtitle?: string;
   icon?: React.ReactNode;
   defaultWidth?: number;
+  defaultSticky?: false | 'RIGHT' | 'LEFT';
+  defaultEditState?: boolean;
 }
 
 export interface GroupColumn<Item extends object> extends BaseColumn {
@@ -108,11 +128,10 @@ export interface GroupColumn<Item extends object> extends BaseColumn {
 }
 
 export interface DisplayColumn<Item extends object> extends BaseColumn {
-  render: (item: Item) => React.ReactNode;
+  render: (item: Item, context: ItemContext<Item>) => React.ReactNode;
 }
 
 export interface DataColumn extends BaseColumn {
-  subtitle?: string;
   children?: never;
   sorting?: boolean | 'desc'; // false by default
   filtering?: boolean; // true by default
@@ -183,6 +202,14 @@ export function applyFieldAccessor<
   Accessor extends FieldAccessor<Item> = FieldAccessor<unknown>,
 >(item: Item, accessor: Accessor): DeepValue<Item, Accessor> {
   return _.get(item, accessor);
+}
+export function setByFieldAccessor<
+  Item extends object,
+  Accessor extends FieldAccessor<Item> = FieldAccessor<unknown>,
+>(item: Item, accessor: Accessor, value: DeepValue<Item, Accessor> | undefined): Item {
+  const result: Item = _.cloneDeep(item);
+  _.set(result, accessor, value);
+  return result;
 }
 
 /*

@@ -1,8 +1,6 @@
-import React, { useEffect, useMemo } from 'react';
-import { getEmptyImage, HTML5Backend } from 'react-dnd-html5-backend';
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { Popover } from 'antd';
 import * as TanTable from '@tanstack/react-table';
-import { DndProvider, useDrag, useDrop } from 'react-dnd';
 import cn from 'clsx';
 import { SPECIAL_COLUMN_IDS } from '../../../consts';
 import s from './index.module.less';
@@ -13,11 +11,12 @@ import Checkbox from '@/components/library/Checkbox';
 import PinIcon from '@/components/library/Table/Header/Tools/SettingsButton/PinIcon';
 import { usePersistedSettingsContext } from '@/components/library/Table/internal/settings';
 import Button from '@/components/library/Button';
+import { StatePair } from '@/utils/state';
 
-const DND_TYPE = 'COLUMN';
-
-interface DndInfo {
-  columnId: string;
+interface DndState {
+  isDragging: boolean;
+  columnId: string | null;
+  newIndex: number | null;
 }
 
 interface Props<Item extends object> {
@@ -27,6 +26,39 @@ interface Props<Item extends object> {
 export default function SettingsButton<Item extends object>(props: Props<Item>) {
   const { table } = props;
   const extraTableContext = usePersistedSettingsContext();
+  const [_, setColumnOrder] = extraTableContext.columnOrder;
+
+  const dndStatePair = useState<DndState>({
+    isDragging: false,
+    columnId: null,
+    newIndex: null,
+  });
+
+  useEffect(() => {
+    const listener = () => {
+      const [dndState, setDndState] = dndStatePair;
+      const { newIndex, columnId } = dndState;
+      if (newIndex != null && columnId != null) {
+        console.log('newIndex, columnId', newIndex, columnId);
+        setColumnOrder((order) => {
+          const oldIndex = order.indexOf(columnId);
+          const result = order.filter((x) => x !== columnId);
+          result.splice(oldIndex < newIndex ? newIndex - 1 : newIndex, 0, columnId);
+          return result;
+        });
+      }
+      setDndState((prevState) => ({
+        ...prevState,
+        isDragging: false,
+        columnId: null,
+        newIndex: null,
+      }));
+    };
+    window.addEventListener('mouseup', listener);
+    return () => {
+      window.removeEventListener('mouseup', listener);
+    };
+  }, [dndStatePair, setColumnOrder]);
 
   return (
     <div className={s.root}>
@@ -36,21 +68,19 @@ export default function SettingsButton<Item extends object>(props: Props<Item>) 
         trigger="click"
         placement="bottomLeft"
         content={
-          <DndProvider backend={HTML5Backend}>
-            <div className={s.content}>
-              <div className={s.headerGroupList}>
-                <ColumnList table={table} columns={table.getAllColumns()} />
-              </div>
-              <Button
-                size="SMALL"
-                onClick={() => {
-                  extraTableContext.reset();
-                }}
-              >
-                Reset
-              </Button>
+          <div className={s.content}>
+            <div className={s.headerGroupList}>
+              <ColumnList table={table} columns={table.getAllColumns()} dndState={dndStatePair} />
             </div>
-          </DndProvider>
+            <Button
+              size="SMALL"
+              onClick={() => {
+                extraTableContext.reset();
+              }}
+            >
+              Reset
+            </Button>
+          </div>
         }
       >
         <Settings3LineIcon className={s.icon} />
@@ -63,8 +93,9 @@ function ColumnList<Item>(props: {
   table: TanTable.Table<TableRow<Item>>;
   columns: TanTable.Column<TableRow<Item>, unknown>[];
   deepLevel?: number;
+  dndState: StatePair<DndState>;
 }) {
-  const { table, columns, deepLevel = 0 } = props;
+  const { table, columns, deepLevel = 0, dndState } = props;
   const extraTableContext = usePersistedSettingsContext();
   const [columnOrder] = extraTableContext.columnOrder;
 
@@ -75,99 +106,78 @@ function ColumnList<Item>(props: {
   }, [columns, columnOrder]);
 
   return (
-    <div className={s.columnList} style={{ paddingLeft: deepLevel * 20 }}>
+    <div className={s.columnList} style={{ paddingLeft: deepLevel * 24 }}>
       {orderedColumns.map((column, i) => (
         <React.Fragment key={column.id}>
-          {i === 0 && deepLevel === 0 && <ColumnDropTarget newIndex={i} />}
-          <Column deepLevel={deepLevel} column={column} />
+          {i === 0 && deepLevel === 0 && <ColumnDropTarget newIndex={i} dndState={dndState} />}
+          <Column deepLevel={deepLevel} column={column} dndState={dndState} />
           {column.columns.length > 0 && (
-            <ColumnList table={table} columns={column.columns} deepLevel={deepLevel + 1} />
+            <ColumnList
+              table={table}
+              columns={column.columns}
+              deepLevel={deepLevel + 1}
+              dndState={dndState}
+            />
           )}
-          {deepLevel === 0 && <ColumnDropTarget newIndex={i + 1} />}
+          {deepLevel === 0 && <ColumnDropTarget newIndex={i + 1} dndState={dndState} />}
         </React.Fragment>
       ))}
     </div>
   );
 }
 
-function ColumnDropTarget(props: { newIndex: number }) {
+function ColumnDropTarget(props: { newIndex: number; dndState: StatePair<DndState> }) {
   const { newIndex } = props;
-  const extraTableContext = usePersistedSettingsContext();
-  const [_, setColumnOrder] = extraTableContext.columnOrder;
 
-  const [collectedProps, dropRef] = useDrop<
-    DndInfo,
-    unknown,
-    {
-      canDrop: boolean;
-      isOver: boolean;
-    }
-  >(
-    () => ({
-      accept: DND_TYPE,
-      drop: (item) => {
-        setColumnOrder((order) => {
-          const result = order.filter((x) => x !== item.columnId);
-          result.splice(newIndex, 0, item.columnId);
-          return result;
-        });
-      },
-      collect: (monitor) => ({
-        canDrop: monitor.canDrop(),
-        isOver: monitor.isOver(),
-      }),
-    }),
-    [newIndex],
-  );
+  const [dndState, setDndState] = props.dndState;
+
+  const [isOver, setIsOver] = useState(false);
+
+  const handleMouseEnter = useCallback(() => {
+    setIsOver(true);
+    setDndState((prevState) => ({ ...prevState, newIndex }));
+  }, [setDndState, newIndex]);
+
+  const handleMouseLeave = useCallback(() => {
+    setIsOver(false);
+  }, []);
 
   return (
     <div
-      ref={dropRef}
       className={cn(
         s.columnDropPosition,
-        collectedProps.isOver && s.isOver,
-        collectedProps.canDrop && s.canDrop,
+        dndState.isDragging && s.canDrop,
+        dndState.isDragging && isOver && s.isOver,
       )}
+      onMouseEnter={handleMouseEnter}
+      onMouseLeave={handleMouseLeave}
     />
   );
 }
 
-function Column<Item>(props: { column: TanTable.Column<TableRow<Item>>; deepLevel?: number }) {
+function Column<Item>(props: {
+  column: TanTable.Column<TableRow<Item>>;
+  deepLevel?: number;
+  dndState: StatePair<DndState>;
+}) {
   const { deepLevel, column } = props;
-
-  const [{ isDragging }, dragRef, previewRef] = useDrag<
-    DndInfo,
-    unknown,
-    {
-      isDragging: boolean;
-    }
-  >(
-    () => ({
-      type: DND_TYPE,
-      options: {
-        dropEffect: 'move',
-      },
-      previewOptions: {
-        captureDraggingState: true,
-      },
-      item: { columnId: column.id },
-      collect: (monitor) => ({
-        isDragging: monitor.isDragging(),
-      }),
-    }),
-    [],
-  );
-
-  // this useEffect hides the default preview
-  useEffect(() => {
-    previewRef(getEmptyImage(), { captureDraggingState: true });
-  }, [previewRef]);
+  const [dndState, setDndState] = props.dndState;
 
   return (
-    <div className={cn(s.column, isDragging && s.isDragging)}>
+    <div
+      className={cn(
+        s.column,
+        dndState.isDragging && dndState.columnId === column.id && s.isDragging,
+      )}
+    >
       <div className={s.columnLeft}>
         {deepLevel === 0 && (
-          <div className={cn(s.dndIcon, column.getIsPinned() && s.isDisabled)} ref={dragRef}>
+          <div
+            className={cn(s.dndIcon, column.getIsPinned() && s.isDisabled)}
+            onMouseDown={() => {
+              setDndState((prevState) => ({ ...prevState, isDragging: true, columnId: column.id }));
+            }}
+          >
             <More2Icon />
             <More2Icon />
           </div>

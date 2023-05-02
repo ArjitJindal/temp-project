@@ -55,7 +55,7 @@ export const WebhookDeliveryAttemptsTable: React.FC<Props> = ({ webhookId }) => 
       key: 'deliveryTaskId',
       title: 'Event ID',
       type: {
-        render: (deliveryTaskId, _, entity) => (
+        render: (deliveryTaskId, { item: entity }) => (
           <a onClick={() => setSelectedWebhookDelivery(entity)}>{deliveryTaskId}</a>
         ),
       },

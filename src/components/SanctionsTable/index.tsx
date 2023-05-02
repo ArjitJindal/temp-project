@@ -52,7 +52,7 @@ export default function SanctionsTable(props: Props) {
       title: 'Name',
       key: 'doc.name',
       type: {
-        render: (name, _edit, entity) => (
+        render: (name, { item: entity }) => (
           <div>{<a onClick={() => setSelectedSearchHit(entity)}>{name}</a>}</div>
         ),
       },

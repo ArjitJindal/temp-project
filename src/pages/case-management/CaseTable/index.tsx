@@ -75,7 +75,7 @@ export default function CaseTable(props: Props) {
         subtitle: 'Priority',
         key: 'caseId',
         type: {
-          render: (_value, _edit, entity) => {
+          render: (_value, { item: entity }) => {
             return (
               <>
                 <Id
@@ -108,7 +108,7 @@ export default function CaseTable(props: Props) {
         title: 'User ID',
         key: 'userId',
         type: {
-          render: (userId, _, caseItem) => {
+          render: (userId, { item: caseItem }) => {
             return userId ? <Id to={getUserLink(caseItem.user)}>{userId}</Id> : <>{'-'}</>;
           },
         },
@@ -182,7 +182,7 @@ export default function CaseTable(props: Props) {
         id: '_assignmentName',
         type: {
           ...ASSIGNMENTS,
-          render: (assignments, _, entity) => {
+          render: (assignments, { item: entity }) => {
             return (
               <AssigneesDropdown
                 assignments={assignments || []}

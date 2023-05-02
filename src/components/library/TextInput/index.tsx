@@ -42,8 +42,8 @@ export default function TextInput(props: Props) {
         onChange={(e) => {
           onChange?.(e.target.value);
         }}
-        onFocus={onFocus}
-        onBlur={onBlur}
+        onFocus={onFocus ? () => onFocus() : undefined}
+        onBlur={onBlur ? () => onBlur() : undefined}
       />
       {allowClear && (
         <CrossIcon

@@ -52,7 +52,7 @@ export const RulesTable: React.FC<Props> = ({ onViewRule, onEditRule }) => {
         key: 'id',
         sorting: true,
         type: {
-          render: (id: string | undefined, _, entity) => {
+          render: (id: string | undefined, { item: entity }) => {
             return (
               <>
                 <a
@@ -112,7 +112,9 @@ export const RulesTable: React.FC<Props> = ({ onViewRule, onEditRule }) => {
         key: 'source',
       }),
       helper.display({
+        id: 'actions',
         title: 'Action',
+        defaultSticky: 'RIGHT',
         render: (entity) => {
           return (
             <span>

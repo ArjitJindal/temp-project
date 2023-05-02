@@ -28,7 +28,20 @@ export function prepareTableData(
       return dataItem;
     }
     return {
-      spanBy: [],
+      spanBy: [
+        'transactionId',
+        'arsScore',
+        'arsScore.arsScore',
+        'arsRiskLevel',
+        'lastTransactionState',
+        'timestamp',
+        'status',
+        'direction',
+        'originAmount',
+        'originCountry',
+        'destinationAmount',
+        'destinationCountry',
+      ],
       rows: item.hitRules.map((rule, i): DataItem => {
         const isLastRow = i === item.hitRules.length - 1;
         return {

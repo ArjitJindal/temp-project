@@ -79,7 +79,7 @@ export default function SimulationHistory(props: SimulationHistoryProps) {
             key: 'jobId',
             sorting: true,
             type: {
-              render: (jobId, _editing, item) =>
+              render: (jobId, { item }) =>
                 jobId ? (
                   <a
                     href="#"

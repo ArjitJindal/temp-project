@@ -21,7 +21,6 @@ export const RulesHitDetailsTable: React.FC<Props> = ({ transaction }) => {
           title: 'Action',
           key: 'ruleAction',
           width: 100,
-
           render: (v, entity) => <RuleActionStatus ruleAction={entity.ruleAction} />,
         },
         {

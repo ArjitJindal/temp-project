@@ -138,7 +138,7 @@ function ListTable(props: Props, ref: ListTableRef) {
       title: 'Status',
       defaultWidth: 80,
       type: {
-        render: (status, _, entity) => (
+        render: (status, { item: entity }) => (
           <Switch
             checked={status ?? false}
             disabled={!hasListWritePermissions}

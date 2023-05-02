@@ -1,5 +1,5 @@
 import React from 'react';
-import { Tag as AntTag } from 'antd';
+import { Switch, Tag as AntTag } from 'antd';
 import { ColumnDataType, FullColumnDataType } from '../types';
 import s from './index.module.less';
 import RiskLevelTag from '@/components/library/RiskLevelTag';
@@ -41,9 +41,24 @@ import UserKycStatusTag from '@/components/ui/UserKycStatusTag';
 import UserStateTag from '@/components/ui/UserStateTag';
 import { RuleActionStatus } from '@/components/ui/RuleActionStatus';
 import { RULE_NATURE_LABELS, RULE_NATURE_OPTIONS } from '@/pages/rules/utils';
+import TextInput from '@/components/library/TextInput';
+import NumberInput from '@/components/library/NumberInput';
+import TextArea from '@/components/library/TextArea';
 
 export const UNKNOWN: Required<FullColumnDataType<unknown>> = {
   render: (value) => {
+    if (
+      value == null ||
+      typeof value === 'string' ||
+      typeof value === 'number' ||
+      typeof value === 'boolean'
+    ) {
+      return <>{value}</>;
+    }
+    return <>{JSON.stringify(value)}</>;
+  },
+  renderEdit: (context) => {
+    const [value] = context.edit.state;
     if (
       value == null ||
       typeof value === 'string' ||
@@ -69,6 +84,96 @@ export const UNKNOWN: Required<FullColumnDataType<unknown>> = {
   autoFilterDataType: { kind: 'string' },
 };
 
+export const NUMBER: ColumnDataType<number> = {
+  render: (value) => <span>{value ?? 0}</span>,
+  renderEdit: (context) => {
+    const [state] = context.edit.state;
+    return (
+      <div className={s.maxWidth}>
+        <NumberInput
+          step={1}
+          value={state}
+          onChange={(newValue) => {
+            context.edit.onConfirm(newValue);
+          }}
+        />
+      </div>
+    );
+  },
+};
+
+export const FLOAT: ColumnDataType<number> = {
+  render: (value) => <span>{value?.toFixed(2)}</span>,
+  renderEdit: (context) => {
+    const [state] = context.edit.state;
+    return (
+      <div className={s.maxWidth}>
+        <NumberInput
+          value={state}
+          onChange={(newValue) => {
+            context.edit.onConfirm(newValue);
+          }}
+        />
+      </div>
+    );
+  },
+  stringify: (value) => `${value?.toFixed(2)}`,
+};
+
+export const STRING: ColumnDataType<string> = {
+  render: (value) => <span>{value}</span>,
+  renderEdit: (context) => {
+    const [state, setState] = context.edit.state;
+    return (
+      <div className={s.maxWidth}>
+        <TextInput
+          value={state}
+          onChange={(newValue) => {
+            setState(newValue);
+          }}
+          onBlur={context.edit.onConfirm}
+        />
+      </div>
+    );
+  },
+};
+
+export const LONG_TEXT: ColumnDataType<string> = {
+  render: (value) => <span>{value}</span>,
+  renderEdit: (context) => {
+    const [state, setState] = context.edit.state;
+    return (
+      <div className={s.maxWidth}>
+        <TextArea
+          className={s.textArea}
+          value={state}
+          onChange={(newValue) => {
+            setState(newValue);
+          }}
+          onBlur={context.edit.onConfirm}
+        />
+      </div>
+    );
+  },
+  defaultWrapMode: 'WRAP',
+};
+
+export const BOOLEAN: ColumnDataType<boolean> = {
+  render: (value) => <>{value ? 'Yes' : 'No'}</>,
+  renderEdit: (context) => {
+    const [state] = context.edit.state;
+    return (
+      <Switch
+        checked={state}
+        onChange={(checked) => {
+          context.edit.onConfirm(checked);
+        }}
+      />
+    );
+  },
+  stringify: (value) => (value ? 'Yes' : 'No'),
+};
+
 export const RULE_NATURE: ColumnDataType<RuleNature> = {
   render: (value) => {
     if (value == null) {
@@ -83,29 +188,6 @@ export const RULE_NATURE: ColumnDataType<RuleNature> = {
     mode: 'SINGLE',
     displayMode: 'select',
   },
-};
-
-export const NUMBER: ColumnDataType<number> = {
-  render: (value) => <span>{value ?? 0}</span>,
-};
-
-export const FLOAT: ColumnDataType<number> = {
-  render: (value) => <span>{value?.toFixed(2)}</span>,
-  stringify: (value) => `${value?.toFixed(2)}`,
-};
-
-export const STRING: ColumnDataType<string> = {
-  render: (value) => <span>{value}</span>,
-};
-
-export const BOOLEAN: ColumnDataType<boolean> = {
-  render: (value) => <span>{value ? 'Yes' : 'No'}</span>,
-  stringify: (value) => (value ? 'Yes' : 'No'),
-};
-
-export const LONG_TEXT: ColumnDataType<string> = {
-  render: (value) => <span>{value}</span>,
-  defaultWrapMode: 'WRAP',
 };
 
 export const ID = (): ColumnDataType<string> => ({

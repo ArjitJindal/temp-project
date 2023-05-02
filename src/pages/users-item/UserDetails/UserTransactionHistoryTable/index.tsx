@@ -168,6 +168,7 @@ export function Content(props: { userId: string }) {
           key: 'ruleDescription',
         }),
         helper.derived<TransactionState>({
+          id: 'lastTransactionState',
           title: 'Last transaction state',
           value: (entity) => entity.events?.[entity.events.length - 1]?.transactionState,
           type: TRANSACTION_STATE,
@@ -206,8 +207,8 @@ export function Content(props: { userId: string }) {
           tooltip: 'Origin is the Sender in a transaction',
           children: helper.list([
             helper.derived<Amount>({
+              id: 'originAmount',
               title: 'Origin Amount',
-              // key: 'originAmountDetails',
               value: (entity): Amount | undefined => {
                 if (entity.originAmountDetails == null) {
                   return undefined;
@@ -220,6 +221,7 @@ export function Content(props: { userId: string }) {
               type: MONEY,
             }),
             helper.simple<'originAmountDetails.country'>({
+              id: 'originCountry',
               title: 'Origin Country',
               key: 'originAmountDetails.country',
               type: COUNTRY,
@@ -231,8 +233,8 @@ export function Content(props: { userId: string }) {
           tooltip: 'Destination is the Receiver in a transaction',
           children: helper.list([
             helper.derived({
+              id: 'destinationAmount',
               title: 'Destination amount',
-              // key: 'destinationAmountDetails',
               value: (entity): Amount | undefined => {
                 if (entity.originAmountDetails == null) {
                   return undefined;
@@ -245,7 +247,8 @@ export function Content(props: { userId: string }) {
               type: MONEY,
             }),
             helper.simple<'destinationAmountDetails.country'>({
-              title: 'Origin Country',
+              id: 'destinationCountry',
+              title: 'Destination country',
               key: 'destinationAmountDetails.country',
               type: COUNTRY,
             }),

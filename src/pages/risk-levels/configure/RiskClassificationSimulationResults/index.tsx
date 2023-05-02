@@ -52,7 +52,7 @@ const columns: TableColumn<SimulationPulseResult>[] = helper.list([
     title: 'User name',
     key: 'userName',
     type: {
-      render: (userName, _edit, entity) => {
+      render: (userName, { item: entity }) => {
         return (
           <Link
             to={makeUrl(`/users/list/${entity?.userType?.toLowerCase()}/${entity?.userId}`)}

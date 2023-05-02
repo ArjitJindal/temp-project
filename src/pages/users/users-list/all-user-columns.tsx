@@ -23,7 +23,7 @@ export function getAllUserColumns(): TableColumn<InternalConsumerUser | Internal
       key: 'userId',
       tooltip: 'Unique identification of user.',
       type: {
-        render: (userId, _, entity) => {
+        render: (userId, { item: entity }) => {
           return (
             <Link to={`/users/list/${entity.type.toLowerCase()}/${entity.userId}`} replace>
               {userId}
@@ -37,7 +37,7 @@ export function getAllUserColumns(): TableColumn<InternalConsumerUser | Internal
       key: 'userDetails',
       id: 'userName',
       type: {
-        render: (userDetails, _, entity) => (
+        render: (userDetails, { item: entity }) => (
           <Link to={`/users/list/${entity.type.toLowerCase()}/${entity.userId}`} replace>
             {getUserName(entity)}
           </Link>

@@ -49,7 +49,7 @@ export default function HitsPerUserCard(props: Props) {
       key: 'userId',
       title: 'User ID',
       type: {
-        render: (userId, _, entity) => {
+        render: (userId, { item: entity }) => {
           const { user } = entity;
           if (!user) {
             return <>{userId}</>;
@@ -66,7 +66,7 @@ export default function HitsPerUserCard(props: Props) {
       title: 'Transactions hit',
       key: 'transactionsHit',
       type: {
-        render: (transactionsHit, _, entity) => {
+        render: (transactionsHit, { item: entity }) => {
           return <>{`${transactionsHit} transactions (${entity.percentageTransactionsHit}%)`}</>;
         },
       },

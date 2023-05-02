@@ -144,7 +144,7 @@ const MyRule = () => {
         key: 'ruleId',
         sorting: true,
         type: {
-          render: (ruleId, _editing, entity) => {
+          render: (ruleId, { item: entity }) => {
             return (
               <a
                 onClick={() => {
@@ -162,7 +162,7 @@ const MyRule = () => {
         title: 'Name',
         key: 'ruleNameAlias',
         type: {
-          render: (_, _editing, entity) => {
+          render: (_, { item: entity }) => {
             const ruleInstance = updatedRuleInstances[entity.id as string] || entity;
             return (
               <span style={{ fontSize: '14px' }}>
@@ -183,7 +183,7 @@ const MyRule = () => {
         },
         sorting: true,
         type: {
-          render: (_value, _edit, ruleInstance) => {
+          render: (_value, { item: ruleInstance }) => {
             const percent =
               ruleInstance.hitCount && ruleInstance.runCount
                 ? (ruleInstance.hitCount / ruleInstance.runCount) * 100
@@ -212,9 +212,10 @@ const MyRule = () => {
         id: 'status',
         title: 'Status',
         value: (row) => row.status === 'ACTIVE',
+        defaultWidth: 70,
         type: {
           ...BOOLEAN,
-          render: (_, _editing, entity) => {
+          render: (_, { item: entity }) => {
             const ruleInstance = updatedRuleInstances[entity.id as string] || entity;
             return (
               <Switch
@@ -227,7 +228,10 @@ const MyRule = () => {
         },
       }),
       helper.display({
+        id: 'actions',
         title: 'Action',
+        defaultSticky: 'RIGHT',
+        defaultWidth: 220,
         render: (entity) => {
           return (
             <div className={s.actionIconsContainer}>

@@ -1,22 +1,29 @@
-import { SetStateAction, useCallback, useMemo, useState } from 'react';
+import React, { SetStateAction, useCallback, useMemo, useState } from 'react';
 import * as TanTable from '@tanstack/react-table';
 import { getFilteredRowModel, getPaginationRowModel } from '@tanstack/react-table';
 import {
   AllParams,
   applyFieldAccessor,
+  ColumnDataType,
   CommonParams,
+  DerivedColumn,
+  DisplayColumn,
+  EditContext,
   FieldAccessor,
   getColumnId,
   isDerivedColumn,
   isDisplayColumn,
   isMultiRows,
   isSimpleColumn,
+  setByFieldAccessor,
+  SimpleColumn,
   SortingParamsItem,
   TableColumn,
   TableData,
   TableDataItem,
   TableDataSimpleItem,
   TableRow,
+  ValueOf,
 } from '../types';
 import {
   DEFAULT_COLUMN_WRAP_MODE,
@@ -29,7 +36,7 @@ import {
 import { ColumnOrder, usePersistedSettingsContext } from './settings';
 import { getErrorMessage } from '@/utils/lang';
 import { UNKNOWN } from '@/components/library/Table/standardDataTypes';
-import { AsyncResource, getOr, init } from '@/utils/asyncResource';
+import { AsyncResource, getOr } from '@/utils/asyncResource';
 import { applyUpdater, StatePair, Updater } from '@/utils/state';
 import { getPageCount } from '@/utils/queries/hooks';
 
@@ -72,17 +79,33 @@ export function useLocalStorageOptionally<Value>(
   return [state, setValue];
 }
 
-export function useTanstackTable<Item extends object, Params extends object = CommonParams>(
-  dataRes: AsyncResource<TableData<Item>>,
-  rowKey: FieldAccessor<Item>,
-  columns: TableColumn<Item>[],
-  params: AllParams<Params>,
-  onChangeParams: (newParams: AllParams<Params>) => void,
-  isRowSelectionEnabled: boolean,
-  isExpandable: boolean,
-  isSortable: boolean,
-  defaultSorting?: SortingParamsItem,
-): TanTable.Table<TableRow<Item>> {
+export function useTanstackTable<
+  Item extends object,
+  Params extends object = CommonParams,
+>(options: {
+  dataRes: AsyncResource<TableData<Item>>;
+  rowKey: FieldAccessor<Item>;
+  columns: TableColumn<Item>[];
+  params: AllParams<Params>;
+  onChangeParams: (newParams: AllParams<Params>) => void;
+  onEdit: ((rowKey: string, newValue: Item) => void) | undefined;
+  isRowSelectionEnabled: boolean;
+  isExpandable: boolean;
+  isSortable: boolean;
+  defaultSorting?: SortingParamsItem;
+}): TanTable.Table<TableRow<Item>> {
+  const {
+    dataRes,
+    rowKey,
+    columns,
+    params,
+    onChangeParams,
+    onEdit,
+    isRowSelectionEnabled,
+    isExpandable,
+    isSortable,
+    defaultSorting,
+  } = options;
   const extraTableContext = usePersistedSettingsContext();
   const [columnOrder] = extraTableContext.columnOrder;
   const [expanded, setExpanded] = useState<TanTable.ExpandedState>({});
@@ -99,6 +122,7 @@ export function useTanstackTable<Item extends object, Params extends object = Co
     }
 
     function convertColumn(column: TableColumn<Item>): TanTable.ColumnDef<TableRow<Item>> {
+      const columnId = getColumnId(column);
       if (isSimpleColumn(column)) {
         const columnDataType = {
           ...UNKNOWN,
@@ -106,44 +130,26 @@ export function useTanstackTable<Item extends object, Params extends object = Co
         };
         const accessor = `content.${column.key}` as FieldAccessor<TableRow<Item>>;
         return columnHelper.accessor(accessor, {
-          id: getColumnId(column),
+          id: columnId,
           header: column.title,
           enableSorting: column.sorting === true || column.sorting === 'desc',
           sortDescFirst: column.sorting === 'desc',
-          cell: (props: TanTable.CellContext<TableRow<Item>, unknown>) => {
-            const value = props.getValue();
-            return (
-              <>
-                {columnDataType?.render?.(
-                  value as any,
-                  {
-                    isSupported: false,
-                    onChange: () => {
-                      // todo: implement
-                    },
-                    statusRes: init(),
-                  },
-                  props.row.original.content,
-                )}
-              </>
-            );
-          },
+          cell: makeSimpleColumnCellComponent({ column, rowKey }),
           meta: {
-            key: column.key as string,
             wrapMode: columnDataType.defaultWrapMode ?? DEFAULT_COLUMN_WRAP_MODE,
             tooltip: column.tooltip,
+            subtitle: column.subtitle,
           },
         }) as TanTable.ColumnDef<TableRow<Item>>;
       } else if (isDisplayColumn(column)) {
         return columnHelper.display({
-          id: getColumnId(column),
+          id: columnId,
           header: column.title,
-          cell: (props) => {
-            return <>{column.render(props.row.original.content)}</>;
-          },
+          cell: makeDisplayColumnCellComponent({ column, rowKey }),
           meta: {
             wrapMode: DEFAULT_COLUMN_WRAP_MODE,
             tooltip: column.tooltip,
+            subtitle: column.subtitle,
           },
         });
       } else if (isDerivedColumn(column)) {
@@ -152,46 +158,31 @@ export function useTanstackTable<Item extends object, Params extends object = Co
           ...column.type,
         };
         return columnHelper.display({
-          id: getColumnId(column),
+          id: columnId,
           header: column.title,
-          cell: (props) => {
-            const columnValue = column.value(props.row.original.content);
-            return (
-              <>
-                {columnDataType?.render?.(
-                  columnValue,
-                  {
-                    isSupported: false,
-                    onChange: () => {
-                      // todo: implement
-                    },
-                    statusRes: init(),
-                  },
-                  props.row.original.content,
-                )}
-              </>
-            );
-          },
+          cell: makeDerivedColumnCellComponent({ column }),
           meta: {
             wrapMode: columnDataType.defaultWrapMode ?? DEFAULT_COLUMN_WRAP_MODE,
             tooltip: column.tooltip,
+            subtitle: column.subtitle,
           },
         });
       } else {
         return columnHelper.group({
-          id: getColumnId(column),
+          id: columnId,
           header: column.title,
           columns: convertColumns(column.children),
           meta: {
             wrapMode: DEFAULT_COLUMN_WRAP_MODE,
             tooltip: column.tooltip,
+            subtitle: column.subtitle,
           },
         });
       }
     }
 
     return convertColumns(columns);
-  }, [columns]);
+  }, [rowKey, columns]);
 
   const sorting = useMemo(
     () =>
@@ -278,9 +269,12 @@ export function useTanstackTable<Item extends object, Params extends object = Co
   };
 
   const table = TanTable.useReactTable<TableRow<Item>>({
+    meta: {
+      onEdit,
+    },
     data: preparedData,
     columns: allColumns,
-    getRowId: (originalRow): string => {
+    getRowId: (originalRow: TableRow<Item>): string => {
       return `${applyFieldAccessor(originalRow.content, rowKey as FieldAccessor<Item>)}`;
     },
     getCoreRowModel: TanTable.getCoreRowModel(),
@@ -329,6 +323,138 @@ export function useTanstackTable<Item extends object, Params extends object = Co
     onRowSelectionChange: setRowSelection,
   });
   return table;
+}
+
+type CellComponentProps<Item, Value = unknown> = TanTable.CellContext<TableRow<Item>, Value>;
+type CellComponent<Item> = React.FunctionComponent<CellComponentProps<Item>>;
+
+function makeSimpleColumnCellComponent<
+  Item extends object,
+  Accessor extends FieldAccessor<Item>,
+>(options: { column: SimpleColumn<Item, Accessor>; rowKey: FieldAccessor<Item> }) {
+  const { column, rowKey } = options;
+  const columnDataType = {
+    ...UNKNOWN,
+    ...column.type,
+  } as ColumnDataType<ValueOf<Accessor>, Item>;
+
+  type Value = ValueOf<Accessor>;
+  return (props: CellComponentProps<Item, Value>) => {
+    const onEdit = props.table.options.meta.onEdit;
+    const value: Value = props.getValue();
+    const id = applyFieldAccessor(props.row.original.content, rowKey as FieldAccessor<Item>);
+
+    const editContext = useEditContext<Value | undefined>(
+      (onEdit != null && column.defaultEditState) ?? false,
+      value,
+      (newValue) => {
+        const newItem = setByFieldAccessor(props.row.original.content, column.key, newValue);
+        onEdit?.(id, newItem);
+      },
+    );
+
+    const itemContext = {
+      value: value,
+      item: props.row.original.content,
+      edit: editContext,
+    };
+
+    return (
+      <>
+        {editContext.isEditing && columnDataType.renderEdit
+          ? columnDataType.renderEdit(itemContext)
+          : columnDataType.render?.(value, itemContext)}
+      </>
+    );
+  };
+}
+
+function makeDerivedColumnCellComponent<Item extends object>(options: {
+  column: DerivedColumn<Item>;
+}): CellComponent<Item> {
+  const { column } = options;
+  const columnDataType = {
+    ...UNKNOWN,
+    ...column.type,
+  };
+
+  return (props: CellComponentProps<Item>) => {
+    const columnValue = column.value(props.row.original.content);
+    const editContext = useEditContext<unknown>(
+      false, // derived columns doesn't support editing
+      props.row.original.content,
+      () => {},
+    );
+    const cellContext = {
+      value: columnValue,
+      item: props.row.original.content,
+      edit: editContext,
+    };
+    return (
+      <>
+        {editContext.isEditing && columnDataType.renderEdit
+          ? columnDataType.renderEdit(cellContext)
+          : columnDataType.render?.(columnValue, cellContext)}
+      </>
+    );
+  };
+}
+
+function makeDisplayColumnCellComponent<Item extends object>(options: {
+  column: DisplayColumn<Item>;
+  rowKey: FieldAccessor<Item>;
+}): CellComponent<Item> {
+  const { column, rowKey } = options;
+  return (props: CellComponentProps<Item>) => {
+    const id = applyFieldAccessor(props.row.original.content, rowKey as FieldAccessor<Item>);
+    const onEdit = props.table.options.meta.onEdit;
+    const editContext = useEditContext<Item>(
+      (onEdit != null && column.defaultEditState) ?? false,
+      props.row.original.content,
+      (state) => {
+        onEdit?.(id, state);
+      },
+    );
+
+    return (
+      <>
+        {column.render(props.row.original.content, {
+          item: props.row.original.content,
+          edit: editContext,
+        })}
+      </>
+    );
+  };
+}
+
+function useEditContext<T>(
+  isEditByDefault: boolean,
+  defaultState: T,
+  onConfirm: (state: T) => void,
+): EditContext<T> {
+  const [isEditing, setEditing] = useState(isEditByDefault ?? false);
+  const [editState, setEditState] = useState(defaultState);
+  return {
+    isEditing: isEditing,
+    toggleEditing: (newValue) => {
+      setEditing((oldValue) => (newValue == null ? !oldValue : newValue));
+      if ((newValue == null && isEditing) || newValue === false) {
+        setEditState(defaultState);
+      }
+    },
+    state: [
+      editState,
+      (updater: Updater<T>) => {
+        setEditState((state) => applyUpdater(state, updater));
+      },
+    ],
+    onConfirm: (value) => {
+      onConfirm(value != null ? value : editState);
+      if (value != null) {
+        setEditState(value);
+      }
+    },
+  };
 }
 
 export function flatDataItems<T extends object>(

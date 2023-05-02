@@ -39,12 +39,13 @@ export function PersistedSettingsProvider<Item extends object, Params>(props: {
       columnVisibility: {},
       columnSizing: columns.reduce(
         (acc, column) =>
-          column.defaultWidth !== null
-            ? { ...acc, [getColumnId(column)]: column.defaultWidth }
-            : {},
+          column.defaultWidth != null ? { ...acc, [getColumnId(column)]: column.defaultWidth } : {},
         {},
       ),
-      columnPinning: {},
+      columnPinning: {
+        left: columns.filter((x) => x.defaultSticky === 'LEFT').map(getColumnId),
+        right: columns.filter((x) => x.defaultSticky === 'RIGHT').map(getColumnId),
+      },
       filtersVisibility: allFilters
         .filter((filter) => filter.showFilterByDefault !== false)
         .map((filter: Filter<Params>) => filter.key),

@@ -1,6 +1,6 @@
 import * as TanTable from '@tanstack/react-table';
 import React from 'react';
-import { CommonParams, SortingParams } from './types';
+import { CommonParams, SortingParams, TableRow } from './types';
 import Checkbox from '@/components/library/Checkbox';
 import ExpandIcon from '@/components/library/Table/ExpandIcon';
 import { PaginationParams } from '@/utils/queries/hooks';
@@ -53,16 +53,21 @@ export const SELECT_COLUMN: TanTable.ColumnDef<unknown> = {
   ),
 };
 
-export const EXPAND_COLUMN: TanTable.ColumnDef<unknown> = {
+export const EXPAND_COLUMN: TanTable.ColumnDef<TableRow<unknown>> = {
   id: EXPAND_COLUMN_ID,
   size: 30,
   enableResizing: false,
   cell: ({ cell }) => {
+    const item: TableRow<unknown> = cell.row.original;
+    if (!item.isLastRow) {
+      return <></>;
+    }
     const showExpandIcon = cell.row.getCanExpand();
-    return showExpandIcon ? (
+    if (!showExpandIcon) {
+      return <></>;
+    }
+    return (
       <ExpandIcon isExpanded={cell.row.getIsExpanded()} onClick={() => cell.row.toggleExpanded()} />
-    ) : (
-      <></>
     );
   },
 };

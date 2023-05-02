@@ -61,7 +61,7 @@ export default function AuditLogTable() {
 
   const actionRef = useRef<TableRefType>(null);
 
-  const helper = new ColumnHelper<AuditLog>();
+  const helper = new ColumnHelper<TableItem>();
 
   const columns: TableColumn<TableItem>[] = helper.list([
     helper.simple<'auditlogId'>({
@@ -72,7 +72,7 @@ export default function AuditLogTable() {
       title: 'Entity',
       key: 'type',
       type: {
-        render: (type, _edit, entity) => {
+        render: (type, { item: entity }) => {
           return (
             <>
               <Typography.Text>{type}</Typography.Text>
@@ -91,7 +91,7 @@ export default function AuditLogTable() {
       key: 'oldImage',
       title: 'Before',
       type: {
-        render: (oldImage, _, entity) => {
+        render: (oldImage, { item: entity }) => {
           if (!oldImage || !Object.keys(oldImage).length) {
             return <Typography.Text type={'secondary'}>-</Typography.Text>;
           }
@@ -103,7 +103,7 @@ export default function AuditLogTable() {
       key: 'newImage',
       title: 'After',
       type: {
-        render: (newImage, _, entity) => {
+        render: (newImage, { item: entity }) => {
           if (!newImage || !Object.keys(newImage).length) {
             return <Typography.Text type={'secondary'}>-</Typography.Text>;
           }

@@ -41,6 +41,7 @@ export interface Props<Item extends object, Params extends object = CommonParams
   selectionActions?: SelectionAction<Item, Params>[];
   sizingMode?: 'FULL_WIDTH' | 'SCROLL';
   params?: AllParams<Params>;
+  onEdit?: (rowKey: string, newValue: Item) => void;
   onChangeParams?: (newParams: AllParams<Params>) => void;
   columns: TableColumn<Item>[];
   showResultsInfo?: boolean; // todo:implement
@@ -72,6 +73,7 @@ function Table<Item extends object, Params extends object = CommonParams>(
     extraTools,
     onChangeParams = () => {},
     onPaginateData,
+    onEdit,
     pagination = false,
     selection = false,
     fitHeight = false,
@@ -110,17 +112,18 @@ function Table<Item extends object, Params extends object = CommonParams>(
   );
 
   const isExpandable = renderExpanded != null;
-  const table = useTanstackTable(
-    dataRes,
-    rowKey,
-    columns,
-    params,
-    handleChangeParams,
-    selection || selectionActions.length > 0,
-    isExpandable,
-    !disableSorting,
-    defaultSorting,
-  );
+  const table = useTanstackTable<Item, Params>({
+    dataRes: dataRes,
+    rowKey: rowKey,
+    columns: columns,
+    params: params,
+    onChangeParams: handleChangeParams,
+    onEdit: onEdit,
+    isRowSelectionEnabled: selection || selectionActions.length > 0,
+    isExpandable: isExpandable,
+    isSortable: !disableSorting,
+    defaultSorting: defaultSorting,
+  });
 
   const handleResetSelection = useCallback(() => {
     table.resetRowSelection();
@@ -329,12 +332,12 @@ function Td<Item>(props: {
   const { cell, index, offset } = props;
   const { column } = cell;
   const isPinned = column.getIsPinned();
-  const columnKey = column.columnDef.meta?.key;
+  const columnId = column.id;
   const wrapMode = column.columnDef.meta?.wrapMode;
 
   const item: TableRow<Item> = cell.row.original;
   let rowSpan = 1;
-  if (columnKey != null && (item.spanBy as string[]).includes(columnKey) && item.rowsCount > 1) {
+  if (columnId != null && (item.spanBy as string[]).includes(columnId) && item.rowsCount > 1) {
     rowSpan = item.isFirstRow ? item.rowsCount : 0;
   }
 
@@ -397,12 +400,17 @@ function Th<Item>(props: {
     >
       {!header.isPlaceholder && (
         <div className={s.thContent}>
-          <div className={s.title}>
-            {TanTable.flexRender(column.columnDef.header, header.getContext())}
-            {column.columnDef.meta?.tooltip && (
-              <Tooltip title={column.columnDef.meta?.tooltip}>
-                <InformationLineIcon className={s.tooltipIcon} />
-              </Tooltip>
+          <div className={s.titles}>
+            <div className={s.title}>
+              {TanTable.flexRender(column.columnDef.header, header.getContext())}
+              {column.columnDef.meta?.tooltip && (
+                <Tooltip title={column.columnDef.meta?.tooltip}>
+                  <InformationLineIcon className={s.tooltipIcon} />
+                </Tooltip>
+              )}
+            </div>
+            {column.columnDef.meta?.subtitle && (
+              <div className={s.subtitle}>{column.columnDef.meta?.subtitle}</div>
             )}
           </div>
           {isSortable && (

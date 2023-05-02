@@ -203,7 +203,7 @@ export default function TransactionsTable(props: Props) {
         tooltip: 'Origin is the Sender in a transaction',
         type: {
           ...STRING,
-          render: (value, _, entity) => {
+          render: (value, { item: entity }) => {
             return <Id to={getUserLink(entity.originUser)}>{value}</Id>;
           },
         },
@@ -243,7 +243,7 @@ export default function TransactionsTable(props: Props) {
         tooltip: 'Destination is the Receiver in a transaction',
         type: {
           ...STRING,
-          render: (value, _, entity) => {
+          render: (value, { item: entity }) => {
             return <Id to={getUserLink(entity.destinationUser)}>{value}</Id>;
           },
         },

@@ -1,6 +1,6 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import _ from 'lodash';
-import { LONG_TEXT, NUMBER, RISK_LEVEL, STRING } from './standardDataTypes';
+import { BOOLEAN, LONG_TEXT, NUMBER, RISK_LEVEL, STRING } from './standardDataTypes';
 import { AllParams, CommonParams, SimpleColumn } from './types';
 import { DEFAULT_PARAMS_STATE } from './consts';
 import Table from './index';
@@ -14,6 +14,7 @@ import { InternalBusinessUser, InternalConsumerUser } from '@/apis';
 
 interface TableItem {
   id: string; // guid
+  isBlocked: boolean;
   firstName: string;
   lastName: string;
   age: number;
@@ -43,6 +44,62 @@ type User = InternalBusinessUser | InternalConsumerUser;
 export default function (): JSX.Element {
   return (
     <>
+      <UseCase title="Header subtitle">
+        <WithParams>
+          {(params, onChangeParams) => {
+            const helper = new ColumnHelper<TableItem>();
+            return (
+              <Table<TableItem>
+                tableId="header_subtitle"
+                rowKey="id"
+                params={params}
+                onChangeParams={onChangeParams}
+                columns={helper.list([
+                  helper.simple<'firstName'>({
+                    key: 'firstName',
+                    title: 'First name',
+                    subtitle: 'Simple column subtitle',
+                    tooltip: 'Tooltip text',
+                    sorting: true,
+                  }),
+                  helper.derived<string>({
+                    title: 'Full name',
+                    subtitle: 'Derived column subtitle',
+                    tooltip: 'Tooltip text',
+                    sorting: true,
+                    value: (entity): string => `${entity.firstName} ${entity.lastName}`,
+                  }),
+                  helper.display({
+                    title: 'Actions',
+                    subtitle: 'Display column subtitle',
+                    tooltip: 'Tooltip text',
+                    render: () => <></>,
+                  }),
+                  helper.group({
+                    title: 'Address',
+                    subtitle: 'Group column subtitle',
+                    tooltip: 'Tooltip text',
+                    children: [
+                      helper.simple<'address.street'>({
+                        key: 'address.street',
+                        title: 'Street',
+                        sorting: true,
+                      }),
+                      helper.simple<'address.city'>({
+                        key: 'address.city',
+                        title: 'City',
+                        sorting: true,
+                      }),
+                    ],
+                  }),
+                ])}
+                data={dataSource(params)}
+              />
+            );
+          }}
+        </WithParams>
+      </UseCase>
+      <InternalStateCase />
       <UseCase title="Fixed height">
         <WithParams>
           {(params, onChangeParams) => {
@@ -462,6 +519,14 @@ export default function (): JSX.Element {
                   sorting: 'desc',
                 } as SimpleColumn<SimpleTableItem, 'lastName'>,
               ]}
+              renderExpanded={(item) => {
+                return (
+                  <div>
+                    This is an example of expanded row working in row-span mode, it should be only
+                    available in last row of group. Item: {JSON.stringify(item)}
+                  </div>
+                );
+              }}
               data={{
                 items: Object.entries(_.groupBy(data, 'address.city')).map(([city, entries]) => ({
                   spanBy: ['city'],
@@ -699,6 +764,70 @@ function WithParams<Params>(props: {
   return <>{props.children(params, setParams)}</>;
 }
 
+function InternalStateCase() {
+  const [dataState, setDataState] = useState<TableItem[]>(data.slice(0, 5));
+
+  // When working with editing need to make sure that columns definition are not changing between renders, it could lead
+  // to redrawing input and loosing focus. Use `useMemo` or define columns statically
+  const columns = useMemo(() => {
+    const helper = new ColumnHelper<TableItem>();
+    return helper.list([
+      helper.simple<'firstName'>({
+        title: 'First name',
+        key: 'firstName',
+        type: STRING,
+        defaultEditState: true,
+      }),
+      helper.simple<'lastName'>({
+        title: 'Last name',
+        key: 'lastName',
+        type: STRING,
+        defaultEditState: true,
+      }),
+      helper.simple<'age'>({
+        title: 'Age',
+        key: 'age',
+        type: NUMBER,
+        defaultEditState: true,
+      }),
+      helper.simple<'isBlocked'>({
+        title: 'Is blocked',
+        key: 'isBlocked',
+        type: BOOLEAN,
+        defaultEditState: true,
+      }),
+      helper.simple<'bio'>({
+        title: 'Biography',
+        key: 'bio',
+        type: LONG_TEXT,
+        defaultEditState: true,
+      }),
+    ]);
+  }, []);
+
+  return (
+    <UseCase title="Internal state">
+      <Table<TableItem>
+        tableId="internal_state"
+        rowKey="id"
+        onEdit={(rowKey, newItem) => {
+          setDataState((data) => data.map((x) => (x.id === rowKey ? newItem : x)));
+        }}
+        columns={columns}
+        data={success({ items: dataState })}
+      />
+      <h3>The same data in read-only mode:</h3>
+      <Table<TableItem>
+        tableId="internal_state_display"
+        rowKey="id"
+        columns={columns}
+        externalHeader={true}
+        data={success({ items: dataState })}
+      />
+    </UseCase>
+  );
+}
+
 function AsyncFetchCase() {
   const [params, setParams] = useState<AllParams<CommonParams>>(
     DEFAULT_PARAMS_STATE as AllParams<CommonParams>,
@@ -816,6 +945,7 @@ function AsyncFetchCase() {
 const data: TableItem[] = [
   {
     id: '11111111-5b01-4b38-9b9e-d64f1ab0c67a',
+    isBlocked: false,
     firstName:
       'Pablo Diego José Francisco de Paula Juan Nepomuceno María de los Remedios Cipriano de la Santísima Trinidad Ruiz y',
     lastName: 'Picasso',
@@ -835,6 +965,7 @@ const data: TableItem[] = [
   },
   {
     id: '0832d96e-5b01-4b38-9b9e-d64f1ab0c67a',
+    isBlocked: false,
     firstName: 'Sophia',
     lastName: 'Miller',
     age: 32,
@@ -853,6 +984,7 @@ const data: TableItem[] = [
   },
   {
     id: 'e542af18-53e8-4c2b-98ed-f0ee9a74a888',
+    isBlocked: false,
     firstName: 'Jackson',
     lastName: 'Garcia',
     age: 41,
@@ -871,6 +1003,7 @@ const data: TableItem[] = [
   },
   {
     id: 'e98e18c1-7d3a-46e2-b28f-ee08d43ebd9d',
+    isBlocked: false,
     firstName: 'Olivia',
     lastName: 'Taylor',
     age: 29,
@@ -889,6 +1022,7 @@ const data: TableItem[] = [
   },
   {
     id: 'e6e46f6b-ee6b-48c9-9f94-3c25f5631d39',
+    isBlocked: false,
     firstName: 'Emma',
     lastName: 'Smith',
     age: 41,
@@ -907,6 +1041,7 @@ const data: TableItem[] = [
   },
   {
     id: '9f7a6a8e-48e7-48aa-95a7-6d5538d25ecf',
+    isBlocked: false,
     firstName: 'Ethan',
     lastName: 'Johnson',
     age: 49,
@@ -925,6 +1060,7 @@ const data: TableItem[] = [
   },
   {
     id: 'd99801c9-7ca6-439e-bbea-53bfb37dc1f2',
+    isBlocked: false,
     firstName: 'Ava',
     lastName: 'Brown',
     age: 46,
@@ -943,6 +1079,7 @@ const data: TableItem[] = [
   },
   {
     id: 'ab18f0b5-74a5-4c4f-b4d4-d4e9d3a71db8',
+    isBlocked: false,
     firstName: 'Noah',
     lastName: 'Davis',
     age: 53,
@@ -961,6 +1098,7 @@ const data: TableItem[] = [
   },
   {
     id: 'f1e2d3c4-b5a6-4c3b-a2f1-7e6d5c4b3a2f',
+    isBlocked: false,
     firstName: 'Sophia',
     lastName: 'Garcia',
     age: 76,
@@ -979,6 +1117,7 @@ const data: TableItem[] = [
   },
   {
     id: 'e5f4d3c2-b1a0-9z8y-7x6w-4v3u2t1s0r9q',
+    isBlocked: false,
     firstName: 'Liam',
     lastName: 'Martinez',
     age: 41,
@@ -997,6 +1136,7 @@ const data: TableItem[] = [
   },
   {
     id: 'd2c3b4a5-e6f7-8g9h-1i2j-3k4l5m6n7o8p',
+    isBlocked: false,
     firstName: 'Isabella',
     lastName: 'Lee',
     age: 24,
@@ -1015,6 +1155,7 @@ const data: TableItem[] = [
   },
   {
     id: 'a0b1c2d3-e4f5-6g7h-8i9j-k1l2m3n4o5p6',
+    isBlocked: false,
     firstName: 'Emma',
     lastName: 'Johnson',
     age: 64,
@@ -1033,6 +1174,7 @@ const data: TableItem[] = [
   },
   {
     id: 'b0c1d2e3-f4g5-6h7i-8j9k-l1m2n3o4p5q',
+    isBlocked: false,
     firstName: 'William',
     lastName: 'Smith',
     age: 34,
@@ -1051,6 +1193,7 @@ const data: TableItem[] = [
   },
   {
     id: 'c0d1e2f3-g4h5-6i7j-8k9l-m1n2o3p4q5r',
+    isBlocked: false,
     firstName: 'Olivia',
     lastName: 'Davis',
     age: 41,
@@ -1069,6 +1212,7 @@ const data: TableItem[] = [
   },
   {
     id: 'a0b1c2d3-1111-6g7h-8i9j-k1l2m3n4o5p6',
+    isBlocked: false,
     firstName: 'John',
     lastName: 'Doe',
     age: 81,
@@ -1087,6 +1231,7 @@ const data: TableItem[] = [
   },
   {
     id: 'b0c1d2e3-1234-6h7i-8j9k-l1m2n3o4p5q',
+    isBlocked: false,
     firstName: 'Emma',
     lastName: 'Garcia',
     age: 87,
@@ -1105,6 +1250,7 @@ const data: TableItem[] = [
   },
   {
     id: 'c0d1e2f3-g4h5-6i7j-1111-m1n2o3p4q5r',
+    isBlocked: false,
     firstName: 'Emily',
     lastName: 'Lee',
     age: 29,

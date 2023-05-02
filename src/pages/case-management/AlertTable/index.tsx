@@ -52,7 +52,7 @@ const mergedColumns = (
       showFilterByDefault: true,
       filtering: true,
       type: {
-        render: (alertId, editing, entity) => {
+        render: (alertId, { item: entity }) => {
           return (
             <Id
               id={alertId}

@@ -194,7 +194,7 @@ export default function ItemsTable(props: Props) {
           title: getListSubtypeTitle(listHeader.subtype),
           value: (item) => item.value,
           type: {
-            render: (value, _edit, entity) =>
+            render: (value, { item: entity }) =>
               entity.type === 'NEW' ? (
                 <NewValueInput
                   key={String(isAddUserLoading)}
@@ -230,7 +230,7 @@ export default function ItemsTable(props: Props) {
           title: 'Reason for adding to list',
           key: 'reason',
           type: {
-            render: (reason, _, entity) => {
+            render: (reason, { item: entity }) => {
               if (entity.type === 'NEW') {
                 return (
                   <Input
