@@ -287,6 +287,9 @@ export class StreamConsumerBuilder {
             } catch (e) {
               await this.sendToRetryQueue(update)
               logger.error(e)
+              if (e instanceof Error) {
+                logger.error(e.stack)
+              }
               logger.warn(`Failed to process. Sent to retry queue`)
             }
           }
