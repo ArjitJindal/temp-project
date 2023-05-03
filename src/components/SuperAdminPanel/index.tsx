@@ -1,9 +1,10 @@
-import { Divider, Form, Input, Modal, Select } from 'antd';
+import { Divider, Form, Input, Select } from 'antd';
 import React, { ChangeEvent, useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { validate } from 'uuid';
 import NumberInput from '../library/NumberInput';
 import Label from '../library/Label';
+import Modal from '../ui/Modal';
 import { CreateTenantModal } from './CreateTenantModal';
 import s from './styles.module.less';
 import { message } from '@/components/library/Message';
@@ -12,7 +13,6 @@ import Button from '@/components/library/Button';
 import { Feature, TenantSettings } from '@/apis';
 import { useAuth0User } from '@/utils/user-utils';
 import { useFeatures, useSettings } from '@/components/AppWrapper/Providers/SettingsProvider';
-import ButtonGroup from '@/components/library/ButtonGroup';
 import { FEATURES } from '@/apis/models-custom/Feature';
 
 export default function SuperAdminPanel() {
@@ -87,11 +87,6 @@ export default function SuperAdminPanel() {
     });
   };
 
-  const handleChangeFeatures = async (newFeatures: Feature[]) => {
-    setFeatures(newFeatures);
-    await updateTenantSettings({ features: newFeatures });
-  };
-
   const handleChangeSearchProfileID = async (event: ChangeEvent<HTMLInputElement>) => {
     setSearchProfileId(event.target.value.trim());
   };
@@ -115,17 +110,17 @@ export default function SuperAdminPanel() {
       </Button>
       <Modal
         title="Super Admin Panel"
-        footer={null}
-        visible={isModalVisible}
+        width="80%"
+        isOpen={isModalVisible}
+        okText="Save"
+        okProps={{ danger: true }}
         onCancel={handleCancel}
+        onOk={handleSave}
+        style={{ top: 20 }}
       >
         <Form<{ currentTenantId: string; searchProfileId: string }>
           name="basic"
-          labelCol={{ span: 8 }}
-          wrapperCol={{ span: 16 }}
-          onValuesChange={() => {}}
           initialValues={{ currentTenantId: user.tenantId }}
-          autoComplete="off"
         >
           <Form.Item label="Tenant">
             <Select
@@ -139,20 +134,32 @@ export default function SuperAdminPanel() {
               }
               showSearch={true}
             />
-            <b>{`${user.tenantId}`}</b>
+            Tenant ID: <b>{`${user.tenantId}`}</b>
           </Form.Item>
-          <Form.Item label="Features">
+        </Form>
+        <Button
+          type="SECONDARY"
+          size="SMALL"
+          onClick={() => {
+            setShowCreateTenantModal(true);
+            handleCancel();
+          }}
+        >
+          Create New Tenant
+        </Button>
+        <Divider />
+        <div className={s.field}>
+          <Label label="Features" description="Enabled features of the tenant" element="div">
             <Select<Feature[]>
               mode="multiple"
               options={FEATURES.map((feature) => ({ label: feature, value: feature }))}
-              onChange={handleChangeFeatures}
+              onChange={setFeatures}
               allowClear
               disabled={!initialFeatures}
               value={features || initialFeatures}
             />
-          </Form.Item>
-        </Form>
-        <Divider />
+          </Label>
+        </div>
         <div className={s.field}>
           <Label
             label="Simulation limit"
@@ -179,7 +186,6 @@ export default function SuperAdminPanel() {
             />
           </Label>
         </div>
-
         <div className={s.field}>
           <Label label="CA Search Profile ID">
             <Input value={complyAdvantageSearchProfileId} onChange={handleChangeSearchProfileID} />
@@ -190,16 +196,6 @@ export default function SuperAdminPanel() {
             <Input value={salesforceAuthToken} onChange={handleChangeSalesforceAuthToken} />
           </Label>
         </div>
-
-        <Divider />
-        <ButtonGroup gap={8}>
-          <Button type="SECONDARY" size="SMALL" onClick={() => setShowCreateTenantModal(true)}>
-            Create Tenant
-          </Button>
-          <Button type="PRIMARY" size="SMALL" onClick={handleSave}>
-            Save
-          </Button>
-        </ButtonGroup>
       </Modal>
       <CreateTenantModal
         visible={showCreateTenantModal}

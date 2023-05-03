@@ -222,10 +222,13 @@ export const CreateTenantModal = (props: Props) => {
       title={`Create Tenant (${envToDisplay}: ${
         auth0User?.tenantConsoleApiUrl.split('://')[1]?.split('.')[0] ?? 'Unknown'
       })`}
+      style={{ top: 20 }}
+      width="80%"
       isOpen={visible}
       onCancel={onClose}
       okText="Create"
       onOk={handleCreateTenant}
+      okProps={{ danger: true }}
     >
       <JsonSchemaForm
         schema={getFixedSchemaJsonForm(schema)}

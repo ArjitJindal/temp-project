@@ -18,6 +18,7 @@ interface Props {
   cancelText?: string;
   width?: number | string;
   className?: string;
+  style?: React.CSSProperties;
 }
 
 export default function Modal(props: Props) {
@@ -34,6 +35,7 @@ export default function Modal(props: Props) {
     hideFooter = false,
     width,
     className,
+    style,
   } = props;
 
   return (
@@ -61,6 +63,7 @@ export default function Modal(props: Props) {
       okButtonProps={okProps}
       footer={hideFooter ? false : undefined}
       width={width}
+      style={style}
     >
       {children}
     </AntModal>
