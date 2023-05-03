@@ -10,6 +10,7 @@ import { isString } from '@/pages/rules/RuleConfigurationDrawer/JsonSchemaEditor
 import DeleteBin7LineIcon from '@/components/ui/icons/Remix/system/delete-bin-7-line.react.svg';
 import { InputProps } from '@/components/library/Form';
 import { getUiSchema } from '@/pages/rules/RuleConfigurationDrawer/JsonSchemaEditor/utils';
+import SelectionGroup from '@/components/library/SelectionGroup';
 
 // todo: fix any
 interface Props extends InputProps<unknown[]> {
@@ -34,8 +35,21 @@ export default function ArrayPropertyInput(props: Props) {
     const enumNames: string[] = schema.items.enumNames ?? [];
 
     const displayNames =
-      enumNames?.length && enumNames.length === enumItems.length ? enumNames : enumItems;
+      enumNames?.length && enumNames.length === enumItems.length
+        ? enumNames
+        : (enumItems as string[]);
 
+    if (enumItems.length > 0 && enumItems.length <= 3) {
+      return (
+        <SelectionGroup
+          mode="MULTIPLE"
+          options={enumItems
+            .filter(isString)
+            .map((item, i) => ({ label: displayNames[i] ?? item, value: item }))}
+          {...(props as InputProps<string[]>)}
+        />
+      );
+    }
     return (
       <Select
         mode={enumItems.length === 0 ? 'TAGS' : 'MULTIPLE'}
