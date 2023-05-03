@@ -1,3 +1,5 @@
+/* NOTE: This test is working under a condition that there is only one alert in the case so case will also close when alert is closed */
+
 describe('Comment Alerts from Table', () => {
   beforeEach(() => {
     cy.loginByForm(Cypress.env('username'), Cypress.env('password'));

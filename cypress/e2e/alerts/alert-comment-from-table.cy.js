@@ -12,7 +12,7 @@ describe('Comment Alerts from Table', () => {
     /* eslint-disable cypress/no-unnecessary-waiting */
     const comment = `This is a comment from cypress test ${uuid()}`;
     cy.get('button[data-cy="expand-icon"]', { timeout: 15000 }).eq(0).click();
-    cy.get('[data-cy="expanded-content"] table tbody tr td .ant-table-row-expand-icon', {
+    cy.get('[data-cy="expanded-content"] button[data-cy="expand-icon"]', {
       timeout: 15000,
     })
       .eq(0)
