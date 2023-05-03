@@ -6,7 +6,7 @@ describe('Comment Alerts from Table', () => {
   it('should close a alert', () => {
     cy.visit('/case-management/cases');
 
-    cy.get('table tbody tr td .ant-table-row-expand-icon', { timeout: 15000 }).eq(0).click();
+    cy.get('button[data-cy="expand-icon"]', { timeout: 15000 }).eq(0).click();
 
     cy.get('div[data-cy="expanded-content"] input[data-cy="row-table-checkbox"]', {
       timeout: 15000,

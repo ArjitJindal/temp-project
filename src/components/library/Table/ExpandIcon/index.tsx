@@ -12,7 +12,11 @@ export default function ExpandIcon(props: Props) {
   const { isExpanded, onClick } = props;
 
   return (
-    <button className={cn(s.root, isExpanded && s.isExpanded)} onClick={onClick}>
+    <button
+      className={cn(s.root, isExpanded && s.isExpanded)}
+      onClick={onClick}
+      data-cy="expand-icon"
+    >
       <ArrowDownSLine />
     </button>
   );
