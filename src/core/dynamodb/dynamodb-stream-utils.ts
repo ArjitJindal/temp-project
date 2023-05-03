@@ -55,52 +55,90 @@ function getDynamoDbEntityMetadata(
   partitionKeyId: string,
   entity: any
 ): { type: DynamoDbEntityType; entityId: string } | null {
+  if (!entity) {
+    return null
+  }
+
   if (partitionKeyId.includes(TRANSACTION_PRIMARY_KEY_IDENTIFIER)) {
+    const entityId = (entity as TransactionWithRulesResult).transactionId
+    if (!entityId) {
+      return null
+    }
     return {
       type: 'TRANSACTION',
-      entityId: `TRANSACTION:${
-        (entity as TransactionWithRulesResult).transactionId
-      }`,
+      entityId: `TRANSACTION:${entityId}`,
     }
   } else if (partitionKeyId.includes(USER_PRIMARY_KEY_IDENTIFIER)) {
+    const entityId = (entity as User).userId
+    if (!entityId) {
+      return null
+    }
     return {
       type: 'USER',
-      entityId: `USER:${(entity as User).userId}`,
+      entityId: `USER:${entityId}`,
     }
   } else if (partitionKeyId.includes(CONSUMER_USER_EVENT_KEY_IDENTIFIER)) {
+    const entityId = (entity as ConsumerUserEvent).userId
+    if (!entityId) {
+      return null
+    }
     return {
       type: 'CONSUMER_USER_EVENT',
-      entityId: `USER:${(entity as ConsumerUserEvent).userId}`,
+      entityId: `USER:${entityId}`,
     }
   } else if (partitionKeyId.includes(DEVICE_DATA_METRICS_KEY_IDENTIFIER)) {
+    const entityId = (entity as DeviceMetric).userId
+    if (!entityId) {
+      return null
+    }
     return {
       type: 'DEVICE_DATA_METRICS',
-      entityId: `DEVICE_DATA_METRICS:${(entity as DeviceMetric).userId}`,
+      entityId: `DEVICE_DATA_METRICS:${entityId}`,
     }
   } else if (partitionKeyId.includes(BUSINESS_USER_EVENT_KEY_IDENTIFIER)) {
+    const entityId = (entity as BusinessUserEvent).userId
+    if (!entityId) {
+      return null
+    }
     return {
       type: 'BUSINESS_USER_EVENT',
-      entityId: `USER:${(entity as BusinessUserEvent).userId}`,
+      entityId: `USER:${entityId}`,
     }
   } else if (partitionKeyId.includes(TRANSACTION_EVENT_KEY_IDENTIFIER)) {
+    const entityId = (entity as TransactionEvent).transactionId
+    if (!entityId) {
+      return null
+    }
     return {
       type: 'TRANSACTION_EVENT',
-      entityId: `TRANSACTION:${(entity as TransactionEvent).transactionId}`,
+      entityId: `TRANSACTION:${entityId}`,
     }
   } else if (partitionKeyId.includes(KRS_KEY_IDENTIFIER)) {
+    const entityId = entity.userId
+    if (!entityId) {
+      return null
+    }
     return {
       type: 'KRS_VALUE',
-      entityId: `KRS_VALUE:${entity.userId}`,
+      entityId: `KRS_VALUE:${entityId}`,
     }
   } else if (partitionKeyId.includes(ARS_KEY_IDENTIFIER)) {
+    const entityId = entity.userId
+    if (!entityId) {
+      return null
+    }
     return {
       type: 'ARS_VALUE',
-      entityId: `ARS_VALUE:${entity.userId}`,
+      entityId: `ARS_VALUE:${entityId}`,
     }
   } else if (partitionKeyId.includes(DRS_KEY_IDENTIFIER)) {
+    const entityId = entity.userId
+    if (!entityId) {
+      return null
+    }
     return {
       type: 'DRS_VALUE',
-      entityId: `DRS_VALUE:${entity.userId}`,
+      entityId: `DRS_VALUE:${entityId}`,
     }
   }
   return null
@@ -123,10 +161,9 @@ function getDynamoDbEntity(
     )
     return null
   }
-  const metadata = getDynamoDbEntityMetadata(
-    partitionKeyId,
-    OldImage || NewImage
-  )
+  const metadata =
+    getDynamoDbEntityMetadata(partitionKeyId, NewImage) ??
+    getDynamoDbEntityMetadata(partitionKeyId, OldImage)
   if (!metadata) {
     return null
   }

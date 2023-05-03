@@ -24,6 +24,7 @@ export class OngoingScreeningUserRuleBatchJobRunner extends BatchJobRunner {
       dynamoDb,
     })
     const userRepository = new UserRepository(tenantId, {
+      dynamoDb,
       mongoDb,
     })
 
@@ -44,7 +45,21 @@ export class OngoingScreeningUserRuleBatchJobRunner extends BatchJobRunner {
       await pMap(
         usersChunk,
         async (user) => {
-          await rulesEngine.verifyUserByRules(user, ruleInstances, rules)
+          const result = await rulesEngine.verifyUserByRules(
+            user,
+            ruleInstances,
+            rules
+          )
+          if (
+            !_.isEqual(user.executedRules || [], result.executedRules || []) ||
+            !_.isEqual(user.hitRules || [], result.hitRules || [])
+          ) {
+            await userRepository.updateUserWithExecutedRules(
+              user.userId,
+              result.executedRules,
+              result.hitRules
+            )
+          }
         },
         { concurrency: CONCURRENT_BATCH_SIZE }
       )

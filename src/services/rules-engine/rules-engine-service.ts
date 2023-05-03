@@ -345,24 +345,7 @@ export class RulesEngineService {
       ruleInstances.map((ruleInstance) => ruleInstance.id as string),
       hitRuleInstanceIds
     )
-
     const executionResult = getExecutedAndHitRulesResult(ruleResults)
-
-    const mongoUser = await this.userRepository.getUserById(user.userId)
-
-    const existingExecutedRules = mongoUser?.executedRules
-    const existingHitRules = mongoUser?.hitRules
-
-    if (
-      !_.isEqual(existingExecutedRules, executionResult.executedRules) ||
-      !_.isEqual(existingHitRules, executionResult.hitRules)
-    ) {
-      await this.userRepository.updateUserWithExecutedRules(
-        user.userId,
-        executionResult.executedRules,
-        executionResult.hitRules
-      )
-    }
 
     return {
       userId: user.userId,

@@ -205,7 +205,7 @@ export class StreamConsumerBuilder {
       new SendMessageCommand({
         MessageBody: JSON.stringify(update.rawRecord!),
         QueueUrl: this.retrySqsQueue,
-        MessageGroupId: update.entityId,
+        MessageGroupId: `${update.tenantId}#${update.entityId}`,
         MessageDeduplicationId: `${update.entityId}-${update.sequenceNumber}`,
       })
     )
@@ -233,7 +233,7 @@ export class StreamConsumerBuilder {
   }
 
   private getRetryItemKey(update: DynamoDbEntityUpdate): string {
-    return `${this.name}#${update.entityId}`
+    return `${this.name}#${update.tenantId}#${update.entityId}`
   }
 
   public buildSqsRetryHandler() {
