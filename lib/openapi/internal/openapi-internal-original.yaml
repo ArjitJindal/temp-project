@@ -4418,6 +4418,8 @@ components:
                 type: string
         complyAdvantageSearchProfileId:
           type: string
+        isAiEnabled:
+          type: string
         salesforceAuthToken:
           type: string
         limits:

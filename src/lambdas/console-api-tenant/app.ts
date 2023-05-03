@@ -18,7 +18,9 @@ import { getFullTenantId } from '@/lambdas/jwt-authorizer/app'
 import { DemoModeDataLoadBatchJob } from '@/@types/batch-job'
 import { getCredentialsFromEvent } from '@/utils/credentials'
 import { sendBatchJobCommand } from '@/services/batch-job'
+import { publishAuditLog } from '@/services/audit-log'
 import { envIsNot } from '@/utils/env'
+import { AuditLog } from '@/@types/openapi-internal/AuditLog'
 
 const ROOT_ONLY_SETTINGS: Array<keyof TenantSettings> = ['features', 'limits']
 
@@ -97,8 +99,20 @@ export const tenantsHandler = lambdaApi()(
           assertRole({ role, verifiedEmail }, 'root')
         }
         assertRole({ role, verifiedEmail }, 'admin')
+        const updatedResult =
+          await tenantRepository.createOrUpdateTenantSettings(newTenantSettings)
+        const tenantSettingsCurrent = await tenantRepository.getTenantSettings()
 
-        return tenantRepository.createOrUpdateTenantSettings(newTenantSettings)
+        const auditLog: AuditLog = {
+          type: 'ACCOUNT',
+          action: 'UPDATE',
+          timestamp: Date.now(),
+          oldImage: tenantSettingsCurrent,
+          newImage: newTenantSettings,
+        }
+        await publishAuditLog(tenantId, auditLog)
+
+        return updatedResult
       }
     }
     throw new BadRequest('Unhandled request')
