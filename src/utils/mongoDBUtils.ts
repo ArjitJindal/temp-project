@@ -266,6 +266,45 @@ export function paginateFindOptions<Params extends OptionalPaginationParams>(
   }
 }
 
+type lookupPipelineStageStage = {
+  from: string
+  localField: string
+  foreignField: string
+  as: string
+  pipeline?: Document[]
+  _let?: Document
+}
+
+export function lookupPipelineStage(
+  params: lookupPipelineStageStage,
+  disablePipeline = false
+): Document {
+  return {
+    $lookup: {
+      from: params.from,
+      localField: params.localField,
+      foreignField: params.foreignField,
+      as: params.as,
+      ...(params._let ? { let: params._let } : {}),
+      ...(!disablePipeline
+        ? {
+            pipeline: [
+              {
+                $match: {
+                  [params.foreignField]: {
+                    $exists: true,
+                    $nin: [null, undefined],
+                  },
+                },
+              },
+              ...(params.pipeline || []),
+            ],
+          }
+        : {}),
+    },
+  }
+}
+
 export function paginateCursor<
   Params extends OptionalPaginationParams,
   TSchema

@@ -17,6 +17,7 @@ import {
   USERS_COLLECTION,
   prefixRegexMatchFilter,
   paginateCursor,
+  lookupPipelineStage,
 } from '@/utils/mongoDBUtils'
 import { InternalTransaction } from '@/@types/openapi-internal/InternalTransaction'
 import { RuleAction } from '@/@types/openapi-internal/RuleAction'
@@ -298,22 +299,18 @@ export class MongoDbTransactionRepository
     if (params?.includeUsers) {
       pipeline.push(
         ...[
-          {
-            $lookup: {
-              from: USERS_COLLECTION(this.tenantId),
-              localField: 'originUserId',
-              foreignField: 'userId',
-              as: 'originUser',
-            },
-          },
-          {
-            $lookup: {
-              from: USERS_COLLECTION(this.tenantId),
-              localField: 'destinationUserId',
-              foreignField: 'userId',
-              as: 'destinationUser',
-            },
-          },
+          lookupPipelineStage({
+            from: USERS_COLLECTION(this.tenantId),
+            localField: 'originUserId',
+            foreignField: 'userId',
+            as: 'originUser',
+          }),
+          lookupPipelineStage({
+            from: USERS_COLLECTION(this.tenantId),
+            localField: 'destinationUserId',
+            foreignField: 'userId',
+            as: 'destinationUser',
+          }),
           {
             $set: {
               originUser: { $first: '$originUser' },
@@ -326,30 +323,27 @@ export class MongoDbTransactionRepository
     if (params?.includeEvents) {
       pipeline.push(
         ...[
-          {
-            $lookup: {
-              from: TRANSACTION_EVENTS_COLLECTION(this.tenantId),
-              localField: 'transactionId',
-              foreignField: 'transactionId',
-              let: {
-                eventTransactionId: '$transactionId',
+          lookupPipelineStage({
+            from: TRANSACTION_EVENTS_COLLECTION(this.tenantId),
+            localField: 'transactionId',
+            foreignField: 'transactionId',
+            as: 'events',
+            pipeline: [
+              {
+                $match: {
+                  $expr: { $eq: ['$transactionId', '$$eventTransactionId'] },
+                },
               },
-              pipeline: [
-                {
-                  $match: {
-                    $expr: { $eq: ['$transactionId', '$$eventTransactionId'] },
-                  },
-                },
-                {
-                  $sort: { timestamp: 1 },
-                },
-              ],
-              as: 'events',
-            },
-          },
+              {
+                $sort: { timestamp: 1 },
+              },
+            ],
+            _let: { eventTransactionId: '$transactionId' },
+          }),
         ]
       )
     }
+
     return collection.aggregate<InternalTransaction>(pipeline)
   }
 

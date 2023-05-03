@@ -18,6 +18,7 @@ import {
   TRANSACTIONS_COLLECTION,
   USERS_COLLECTION,
   CASES_COLLECTION,
+  lookupPipelineStage,
 } from '@/utils/mongoDBUtils'
 import { InternalTransaction } from '@/@types/openapi-internal/InternalTransaction'
 import { InternalConsumerUser } from '@/@types/openapi-internal/InternalConsumerUser'
@@ -697,14 +698,15 @@ export class DashboardStatsRepository {
               },
             },
           },
-          {
-            $lookup: {
+          lookupPipelineStage(
+            {
               from: USERS_COLLECTION(this.tenantId),
               localField: '_id',
               foreignField: 'userId',
               as: 'user',
             },
-          },
+            true
+          ),
           {
             $set: {
               user: { $first: '$user' },

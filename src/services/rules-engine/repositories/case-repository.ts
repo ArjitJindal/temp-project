@@ -13,6 +13,7 @@ import {
   ACCOUNTS_COLLECTION,
   CASES_COLLECTION,
   COUNTER_COLLECTION,
+  lookupPipelineStage,
   paginatePipeline,
   prefixRegexMatchFilter,
   TRANSACTION_EVENTS_COLLECTION,
@@ -564,14 +565,12 @@ export class CaseRepository {
     } else if (sortAssignments) {
       preLimitPipeline.push(
         ...[
-          {
-            $lookup: {
-              from: ACCOUNTS_COLLECTION(this.tenantId),
-              localField: 'assignments.assigneeUserId',
-              foreignField: 'id',
-              as: '_assignments',
-            },
-          },
+          lookupPipelineStage({
+            from: ACCOUNTS_COLLECTION(this.tenantId),
+            localField: 'assignments.assigneeUserId',
+            foreignField: 'id',
+            as: '_assignments',
+          }),
           {
             $set: {
               _assignmentName: { $toLower: { $first: '$_assignments.name' } },
@@ -811,14 +810,12 @@ export class CaseRepository {
     if (!countOnly) {
       pipeline.push(
         ...[
-          {
-            $lookup: {
-              from: ACCOUNTS_COLLECTION(this.tenantId),
-              localField: 'alerts.assignments.assigneeUserId',
-              foreignField: 'id',
-              as: '_assignee',
-            },
-          },
+          lookupPipelineStage({
+            from: ACCOUNTS_COLLECTION(this.tenantId),
+            localField: 'alerts.assignments.assigneeUserId',
+            foreignField: 'id',
+            as: '_assignee',
+          }),
           {
             $set: {
               'alerts._assigneeName': {
@@ -1383,30 +1380,24 @@ export class CaseRepository {
           'caseTransactions.hitRules.ruleInstanceId': ruleInstanceId,
         },
       },
-      {
-        $lookup: {
-          from: USERS_COLLECTION(this.tenantId),
-          localField: 'caseTransactions.originUserId',
-          foreignField: 'userId',
-          as: 'originUser',
-        },
-      },
-      {
-        $lookup: {
-          from: USERS_COLLECTION(this.tenantId),
-          localField: 'caseTransactions.destinationUserId',
-          foreignField: 'userId',
-          as: 'destinationUser',
-        },
-      },
-      {
-        $lookup: {
-          from: TRANSACTION_EVENTS_COLLECTION(this.tenantId),
-          localField: 'caseTransactions.transactionId',
-          foreignField: 'transactionId',
-          as: 'events',
-        },
-      },
+      lookupPipelineStage({
+        from: USERS_COLLECTION(this.tenantId),
+        localField: 'caseTransactions.originUserId',
+        foreignField: 'userId',
+        as: 'originUser',
+      }),
+      lookupPipelineStage({
+        from: USERS_COLLECTION(this.tenantId),
+        localField: 'caseTransactions.destinationUserId',
+        foreignField: 'userId',
+        as: 'destinationUser',
+      }),
+      lookupPipelineStage({
+        from: TRANSACTION_EVENTS_COLLECTION(this.tenantId),
+        localField: 'caseTransactions.transactionId',
+        foreignField: 'transactionId',
+        as: 'events',
+      }),
       {
         $set: {
           'caseTransactions.originUser': { $first: '$originUser' },
