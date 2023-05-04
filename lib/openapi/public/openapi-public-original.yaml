@@ -3963,6 +3963,14 @@ components:
           type: array
           items:
             type: string
+        ruleName:
+          type: string
+        ruleDescription:
+          type: string
+        ruleId:
+          type: string
+        ruleInstanceId:
+          type: string
     RiskLevel:
       type: string
       title: RiskLevel

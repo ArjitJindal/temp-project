@@ -193,6 +193,7 @@ export class CaseService {
           const case_ = cases.find((c) =>
             c.alerts.find((a) => a.alertId === alertId)
           )
+          const alert = case_?.alerts.find((a) => a.alertId === alertId)
           updateRequest.alertStatus === 'CLOSED' &&
             sendWebhookTasks(this.caseRepository.tenantId, [
               {
@@ -202,12 +203,14 @@ export class CaseService {
                   reasons: updateRequest.reason,
                   reasonDescriptionForOther: updateRequest.otherReason,
                   comment: updateRequest.comment,
+                  ruleId: alert?.ruleId,
+                  ruleInstanceId: alert?.ruleInstanceId,
+                  ruleName: alert?.ruleName,
+                  ruleDescription: alert?.ruleDescription,
                   userId:
                     case_?.caseUsers?.origin?.userId ??
                     case_?.caseUsers?.destination?.userId,
-                  transactionIds: case_?.alerts.find(
-                    (a) => a.alertId === alertId
-                  )?.transactionIds,
+                  transactionIds: alert?.transactionIds,
                 } as AlertClosedDetails,
               },
             ])
