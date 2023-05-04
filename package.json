@@ -52,6 +52,7 @@
     "test:unit": "jest src",
     "test:all": "npm run test:unit && npm run test:cypress",
     "tsc": "tsc --noEmit",
+    "tsc:watch": "tsc --noEmit --watch",
     "cypress:open": "cypress open",
     "cypress:test:dev": "cypress run",
     "postinstall": "husky install"
