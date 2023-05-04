@@ -33,6 +33,7 @@ type Context = LogMetaData & {
     tenantId: string
     permissions: Map<Permission, boolean>
   }
+  lastError?: Error
 }
 
 const asyncLocalStorage = new AsyncLocalStorage<Context>()

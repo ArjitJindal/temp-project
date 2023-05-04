@@ -103,6 +103,7 @@ export function createFunction(
         // NOTE: RELEASE_VERSION and LAMBDA_CODE_PATH used for Sentry
         RELEASE_VERSION: process.env.RELEASE_VERSION as string,
         LAMBDA_CODE_PATH: LAMBDAS[name].codePath,
+        QA_SUBDOMAIN: process.env.QA_SUBDOMAIN as string,
       },
     },
   })

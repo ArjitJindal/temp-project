@@ -7,7 +7,7 @@ import {
   APIGatewayProxyWithLambdaAuthorizerHandler,
 } from 'aws-lambda'
 import { RewriteFrames } from '@sentry/integrations'
-import { Event } from '@sentry/serverless'
+import _ from 'lodash'
 import { getContext } from '../utils/context'
 import { JWTAuthorizerResult } from '@/@types/jwt'
 import { SENTRY_DSN } from '@/core/constants'
@@ -29,7 +29,6 @@ export const initSentry =
       }
     }
 
-    let lastEvent: Event
     Sentry.AWSLambda.init({
       dsn: SENTRY_DSN, // I think we can hardcode this for now since it is same for all lambdas
       tracesSampleRate: 0,
@@ -42,22 +41,19 @@ export const initSentry =
       ],
 
       beforeSend(event, hint) {
-        // If this is a normal error and is the same as the last.
         const error = hint?.originalException
-
         if (error instanceof createError.HttpError && error.statusCode < 500) {
           return null
         }
-
-        if (
-          lastEvent &&
-          event.extra?.stack &&
-          event.extra?.stack == lastEvent.extra?.stack
-        ) {
-          // Duplicate, do nothing.
+        const context = getContext()
+        const lastError = context?.lastError
+        if (lastError && _.isEqual(error, lastError)) {
+          console.warn('Found duplicated error. Skip sending to Sentry.')
           return null
         }
-        lastEvent = event
+        if (error instanceof Error && context) {
+          context.lastError = error
+        }
         return event
       },
     })
