@@ -17,7 +17,6 @@ import UsersItemPage from '@/pages/users-item';
 import CreatedListsPage from '@/pages/lists';
 import ListsItemPage from '@/pages/lists-item';
 import RulesPage from '@/pages/rules';
-import RequestNewPage from '@/pages/rules/request-new';
 import { useFeatureEnabled } from '@/components/AppWrapper/Providers/SettingsProvider';
 import { isLeaf, isTree, RouteItem } from '@/services/routing/types';
 import SettingsPage from '@/pages/settings';
@@ -189,11 +188,6 @@ export function useRoutes(): RouteItem[] {
             path: '/rules/:rule',
             name: 'rule',
             component: RulesPage,
-          },
-          {
-            path: '/rules/request-new',
-            name: 'request-rule',
-            component: RequestNewPage,
           },
         ],
       },

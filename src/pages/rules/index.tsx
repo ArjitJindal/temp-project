@@ -95,10 +95,6 @@ const TableList = () => {
     <PageWrapper
       title={i18n(currentHeaderId as unknown as any)}
       description={currentHeaderDescription}
-      actionButton={{
-        url: '/rules/request-new',
-        title: 'Request New Rule',
-      }}
     >
       <PageTabs
         activeKey={rule}

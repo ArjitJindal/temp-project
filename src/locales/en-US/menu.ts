@@ -31,7 +31,6 @@ export default {
   'menu.rules': 'Rules',
   'menu.rules.rules-library': 'Rules Library',
   'menu.rules.my-rules': 'My Rules',
-  'menu.rules.request-new': 'Request New Rule',
   'menu.account': 'Account',
   'menu.account.center': 'Account Center',
   'menu.account.settings': 'Account Settings',
