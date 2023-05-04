@@ -1311,6 +1311,7 @@ export class CdkTarponStack extends cdk.Stack {
   ): Queue {
     const maxReceiveCount = options?.maxReceiveCount || 30
     const queue = new Queue(this, queueName, {
+      queueName,
       fifo: options?.fifo,
       visibilityTimeout:
         options?.visibilityTimeout || DEFAULT_SQS_VISIBILITY_TIMEOUT,

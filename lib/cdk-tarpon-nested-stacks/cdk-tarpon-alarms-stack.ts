@@ -178,7 +178,7 @@ export class CdkTarponAlarmsStack extends cdk.NestedStack {
       }
     }
 
-    for (const sqsQueue of Object.keys(SQSQueues)) {
+    for (const sqsQueue of Object.values(SQSQueues)) {
       createSQSOldestMessageAgeAlarm(
         this,
         this.betterUptimeCloudWatchTopic,

@@ -255,15 +255,12 @@ export const SQSQueues = {
   SLACK_ALERT_QUEUE_NAME: getResourceName('SlackAlertQueue'),
   WEBHOOK_DELIVERY_QUEUE_NAME: getResourceName('WebhookDeliveryQueue'),
   BATCH_JOB_QUEUE_NAME: getResourceName('BatchJobQueue'),
-  TARPON_CHANGE_CAPTURE_RETRY_QUEUE_NAME: getResourceName(
-    'TarponChangeCaptureRetryQueue'
-  ),
-  WEBHOOK_TARPON_CHANGE_CAPTURE_RETRY_QUEUE_NAME: getResourceName(
-    'WebhookTarponChangeCaptureRetryQueue'
-  ),
-  HAMMERHEAD_CHANGE_CAPTURE_RETRY_QUEUE_NAME: getResourceName(
-    'HammerheadChangeCaptureRetryQueue'
-  ),
+  TARPON_CHANGE_CAPTURE_RETRY_QUEUE_NAME:
+    getResourceName('TarponChangeCaptureRetryQueue') + '.fifo',
+  WEBHOOK_TARPON_CHANGE_CAPTURE_RETRY_QUEUE_NAME:
+    getResourceName('WebhookTarponChangeCaptureRetryQueue') + '.fifo',
+  HAMMERHEAD_CHANGE_CAPTURE_RETRY_QUEUE_NAME:
+    getResourceName('HammerheadChangeCaptureRetryQueue') + '.fifo',
 }
 
 export function getDeadLetterQueueName(queueName: string) {
