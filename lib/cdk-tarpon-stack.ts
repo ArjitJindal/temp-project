@@ -591,6 +591,8 @@ export class CdkTarponStack extends cdk.Stack {
           ...atlasFunctionProps.environment,
           IMPORT_BUCKET: importBucketName,
           TMP_BUCKET: tmpBucketName,
+          AUTH0_DOMAIN: this.config.application.AUTH0_DOMAIN,
+          AUTH0_AUDIENCE: this.config.application.AUTH0_AUDIENCE,
         } as FileImportConfig,
         timeout: CONSUMER_LAMBDA_TIMEOUT,
       }
@@ -609,6 +611,12 @@ export class CdkTarponStack extends cdk.Stack {
         this.config.application.COMPLYADVANTAGE_CREDENTIALS_SECRET_ARN,
         this.config.application.IBANCOM_CREDENTIALS_SECRET_ARN,
       ],
+      'READ'
+    )
+    grantSecretsManagerAccessByPattern(
+      this,
+      jobRunnerAlias,
+      'auth0.com',
       'READ'
     )
 

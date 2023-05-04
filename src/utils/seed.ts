@@ -51,7 +51,7 @@ export async function copyCollections(
           `${inputTenantId}-`,
           ''
         )
-        output.push(mappingFn(collectionName, document))
+        output.push(await mappingFn(collectionName, document))
       } else {
         output.push(document)
       }
