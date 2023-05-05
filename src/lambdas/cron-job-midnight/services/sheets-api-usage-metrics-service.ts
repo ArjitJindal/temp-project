@@ -286,7 +286,11 @@ export class SheetsApiUsageMetricsService {
     )
 
     const transformedMonthlyUsageMetrics =
-      await this.transformMonthlyUsageMetrics(monthlyUsageMetrics)
+      await this.transformMonthlyUsageMetrics(
+        monthlyUsageMetrics,
+        startTimestamp
+      )
+
     await this.publishMonthlyUsageMetrics(
       _.merge(
         this.getMonthlyUsageMetadata(startTimestamp, endTimestamp),
@@ -373,7 +377,8 @@ export class SheetsApiUsageMetricsService {
   }
 
   private async transformMonthlyUsageMetrics(
-    monthlyUsageMetrics: Array<ApiUsageMetrics>
+    monthlyUsageMetrics: Array<ApiUsageMetrics>,
+    startTimestamp: number
   ): Promise<{ [key: string]: number }> {
     const [activeRuleInstancesCount, tenantSeatsCount] = [
       CUSTOM_API_USAGE_METRIC_NAMES.ACTIVE_RULE_INSTANCES_COUNT_METRIC_NAME,
@@ -385,8 +390,8 @@ export class SheetsApiUsageMetricsService {
       this.tenant,
       { mongoDb: this.mongoDb, dynamoDb },
       {
-        startTimestamp: dayjs().startOf('month').valueOf(),
-        endTimestamp: dayjs().endOf('month').valueOf(),
+        startTimestamp: dayjs(startTimestamp).startOf('month').valueOf(),
+        endTimestamp: dayjs(startTimestamp).endOf('month').valueOf(),
       }
     )
 
