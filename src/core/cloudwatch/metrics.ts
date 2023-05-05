@@ -34,39 +34,49 @@ export const RULE_EXECUTION_TIME_MS_METRIC: Metric = {
   name: 'RuleExecutionTimeMs',
 }
 
+export const CUSTOM_API_USAGE_METRIC_NAMES = {
+  TRANSACTION_COUNT_METRIC_NAME: 'TransactionsCount',
+  TRANSACTION_EVENTS_COUNT_METRIC_NAME: 'TransactionEventsCount',
+  USERS_COUNT_METRIC_NAME: 'UsersCount',
+  ACTIVE_RULE_INSTANCES_COUNT_METRIC_NAME: 'ActiveRuleInstancesCount',
+  SANCTIONS_SEARCHES_COUNT_METRIC_NAME: 'SanctionsSearchesCount',
+  TENANT_SEATS_COUNT_METRIC_NAME: 'TenantSeatsCount',
+  IBAN_RESOLUTION_COUNT_METRIC_NAME: 'IbanResolutionsCount',
+}
+
 export const TRANSACTIONS_COUNT_METRIC: Metric = {
   namespace: 'flagright/ApiUsageMetrics',
-  name: 'TransactionsCount',
+  name: CUSTOM_API_USAGE_METRIC_NAMES.TRANSACTION_COUNT_METRIC_NAME,
 }
 
 export const SANCTIONS_SEARCHES_COUNT_METRIC: Metric = {
   namespace: 'flagright/ApiUsageMetrics',
-  name: 'SanctionsSearchesCount',
+  name: CUSTOM_API_USAGE_METRIC_NAMES.SANCTIONS_SEARCHES_COUNT_METRIC_NAME,
 }
 
 export const IBAN_RESOLUTION_COUNT_METRIC: Metric = {
   namespace: 'flagright/ApiUsageMetrics',
-  name: 'IbanResolutionsCount',
+  name: CUSTOM_API_USAGE_METRIC_NAMES.IBAN_RESOLUTION_COUNT_METRIC_NAME,
 }
 
 export const TENANT_SEATS_COUNT_METRIC: Metric = {
   namespace: 'flagright/ApiUsageMetrics',
-  name: 'TenantSeatsCount',
+  name: CUSTOM_API_USAGE_METRIC_NAMES.TENANT_SEATS_COUNT_METRIC_NAME,
 }
 
 export const TRANSACTION_EVENTS_COUNT_METRIC: Metric = {
   namespace: 'flagright/ApiUsageMetrics',
-  name: 'TransactionEventsCount',
+  name: CUSTOM_API_USAGE_METRIC_NAMES.TRANSACTION_EVENTS_COUNT_METRIC_NAME,
 }
 
 export const USERS_COUNT_METRIC: Metric = {
   namespace: 'flagright/ApiUsageMetrics',
-  name: 'UsersCount',
+  name: CUSTOM_API_USAGE_METRIC_NAMES.USERS_COUNT_METRIC_NAME,
 }
 
 export const ACTIVE_RULE_INSTANCES_COUNT_METRIC: Metric = {
   namespace: 'flagright/ApiUsageMetrics',
-  name: 'ActiveRuleInstancesCount',
+  name: CUSTOM_API_USAGE_METRIC_NAMES.ACTIVE_RULE_INSTANCES_COUNT_METRIC_NAME,
 }
 
 export const publishMetrics = async (metrics: Array<MetricsData>) => {

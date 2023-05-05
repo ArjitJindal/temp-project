@@ -98,5 +98,8 @@ export type Config = {
     WEBHOOK_REQUEST_TIMEOUT_SEC: number
     INTEGRATION_TEST_API_KEY_ID?: string
     POSTMAN_COLLECTION_ID?: string
+    GOOGLE_SHEETS_CLIENT_EMAIL: string
+    GOOGLE_SHEETS_PRIVATE_KEY: string
+    SHEET_ID: string
   }
 }

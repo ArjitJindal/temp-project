@@ -676,9 +676,11 @@ export class CdkTarponStack extends cdk.Stack {
     jobTriggerConsumerAlias.addEventSource(new SqsEventSource(batchJobQueue))
 
     /* API Metrics Lambda */
-
-    const { alias: cronJobMidnightHandlerAlias, func: cronJobMidnightHandler } =
-      createFunction(
+    if (!isDevUserStack) {
+      const {
+        alias: cronJobMidnightHandlerAlias,
+        func: cronJobMidnightHandler,
+      } = createFunction(
         this,
         {
           name: StackConstants.CRON_JOB_MIDNIGHT_FUNCTION_NAME,
@@ -688,25 +690,33 @@ export class CdkTarponStack extends cdk.Stack {
         atlasFunctionProps
       )
 
-    grantMongoDbAccess(this, cronJobMidnightHandlerAlias)
-    tarponRuleDynamoDbTable.grantReadData(cronJobMidnightHandlerAlias)
+      grantMongoDbAccess(this, cronJobMidnightHandlerAlias)
+      tarponRuleDynamoDbTable.grantReadData(cronJobMidnightHandlerAlias)
 
-    const apiMetricsRule = new Rule(
-      this,
-      getResourceNameForTarpon('ApiMetricsRule'),
-      {
-        schedule: Schedule.cron({ minute: '0', hour: '0' }),
-      }
-    )
+      const apiMetricsRule = new Rule(
+        this,
+        getResourceNameForTarpon('ApiMetricsRule'),
+        {
+          schedule: Schedule.cron({ minute: '0', hour: '0' }),
+        }
+      )
 
-    grantSecretsManagerAccessByPattern(
-      this,
-      cronJobMidnightHandlerAlias,
-      'auth0.com',
-      'READ'
-    )
+      grantSecretsManagerAccessByPattern(
+        this,
+        cronJobMidnightHandlerAlias,
+        'auth0.com',
+        'READ'
+      )
 
-    apiMetricsRule.addTarget(new LambdaFunctionTarget(cronJobMidnightHandler))
+      grantSecretsManagerAccessByPrefix(
+        this,
+        cronJobMidnightHandlerAlias,
+        'GoogleSheets',
+        'READ'
+      )
+
+      apiMetricsRule.addTarget(new LambdaFunctionTarget(cronJobMidnightHandler))
+    }
 
     /* Tarpon Kinesis Change capture consumer */
 

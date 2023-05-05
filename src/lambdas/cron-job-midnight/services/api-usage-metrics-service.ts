@@ -2,10 +2,10 @@ import { DynamoDBDocumentClient } from '@aws-sdk/lib-dynamodb'
 import { MongoClient } from 'mongodb'
 import { Dimension } from '@aws-sdk/client-cloudwatch'
 import _ from 'lodash'
+import { SheetsApiUsageMetricsService } from './sheets-api-usage-metrics-service'
 import { logger } from '@/core/logger'
 import { METRICS_COLLECTION } from '@/utils/mongoDBUtils'
 import { RuleInstanceRepository } from '@/services/rules-engine/repositories/rule-instance-repository'
-import dayjs from '@/utils/dayjs'
 import { TenantInfo } from '@/services/tenants'
 import {
   publishMetrics,
@@ -22,12 +22,21 @@ import {
 import { MongoDbTransactionRepository } from '@/services/rules-engine/repositories/mongodb-transaction-repository'
 import { UserRepository } from '@/services/users/repositories/user-repository'
 import { TransactionEventRepository } from '@/services/rules-engine/repositories/transaction-event-repository'
-import { AccountsService } from '@/services/accounts'
+import { AccountsService, Tenant } from '@/services/accounts'
 import { SanctionsSearchRepository } from '@/services/sanctions/repositories/sanctions-search-repository'
 import { IBANApiRepository } from '@/services/iban.com/repositories/iban-api-repository'
 
+export type ApiUsageMetrics = {
+  name: string
+  value: string | number | undefined
+  startTimestamp: number
+  endTimestamp: number
+  collectedTimestamp: number
+}
+
 export class ApiUsageMetricsService {
   tenantId: string
+  tenant: Tenant
   connections: {
     mongoDb: MongoClient
     dynamoDb: DynamoDBDocumentClient
@@ -36,24 +45,24 @@ export class ApiUsageMetricsService {
   endTimestamp: number
 
   constructor(
-    tenantId: string,
+    tenant: Tenant,
     connections: {
       mongoDb: MongoClient
       dynamoDb: DynamoDBDocumentClient
+    },
+    timestamp: {
+      startTimestamp: number
+      endTimestamp: number
     }
   ) {
-    this.tenantId = tenantId
+    this.tenantId = tenant.id
+    this.tenant = tenant
     this.connections = connections
-
-    const startTimestamp = dayjs().subtract(1, 'day').startOf('day').valueOf()
-
-    const endTimestamp = dayjs().startOf('day').valueOf()
-
-    this.startTimestamp = startTimestamp
-    this.endTimestamp = endTimestamp
+    this.startTimestamp = timestamp.startTimestamp
+    this.endTimestamp = timestamp.endTimestamp
   }
 
-  private async getTransactionsCount(): Promise<number> {
+  public async getTransactionsCount(): Promise<number> {
     const mongoDbTransactionRepository = new MongoDbTransactionRepository(
       this.tenantId,
       this.connections.mongoDb
@@ -68,7 +77,7 @@ export class ApiUsageMetricsService {
     return transactionsCount
   }
 
-  private async getTransactionsEventsCount(): Promise<number> {
+  public async getTransactionsEventsCount(): Promise<number> {
     const transactionEventsRepository = new TransactionEventRepository(
       this.tenantId,
       { mongoDb: this.connections.mongoDb }
@@ -83,7 +92,7 @@ export class ApiUsageMetricsService {
     return transactionEventsCount - transactionsCount
   }
 
-  private async getUsersCount(): Promise<number> {
+  public async getUsersCount(): Promise<number> {
     const usersRepository = new UserRepository(this.tenantId, {
       mongoDb: this.connections.mongoDb,
     })
@@ -143,7 +152,7 @@ export class ApiUsageMetricsService {
     return filteredAccount.length
   }
 
-  private async getNumberOfSanctionsChecks(): Promise<number> {
+  public async getNumberOfSanctionsChecks(): Promise<number> {
     const sanctionsSearchRepository = new SanctionsSearchRepository(
       this.tenantId,
       this.connections.mongoDb
@@ -155,7 +164,7 @@ export class ApiUsageMetricsService {
     )
   }
 
-  private async getNumberOfIbanResolutions(): Promise<number> {
+  public async getNumberOfIbanResolutions(): Promise<number> {
     const ibanApiRepository = new IBANApiRepository(
       this.tenantId,
       this.connections.mongoDb
@@ -193,6 +202,19 @@ export class ApiUsageMetricsService {
     ]
   }
 
+  private async publishToGoogleSheets() {
+    const sheetsService = new SheetsApiUsageMetricsService(this.tenant, {
+      mongoDb: this.connections.mongoDb,
+    })
+
+    await sheetsService.initialize()
+
+    await sheetsService.updateUsageMetrics(
+      this.startTimestamp,
+      this.endTimestamp
+    )
+  }
+
   public async publishApiUsageMetrics(tenantInfo: TenantInfo): Promise<void> {
     const dimensions = this.getDimensions(tenantInfo)
     const values = await this.getValuesOfMetrics(tenantInfo)
@@ -211,6 +233,7 @@ export class ApiUsageMetricsService {
     await this.pushMetricsToMongoDb(
       _.fromPairs(values.map(([metric, value]) => [metric.name, value]))
     )
+    await this.publishToGoogleSheets()
   }
 
   private async pushMetricsToMongoDb(
@@ -224,7 +247,7 @@ export class ApiUsageMetricsService {
       `Pushing metrics to MongoDB collection: ${metricsCollectionName}`
     )
 
-    const metric = Object.keys(data).map((key) => {
+    const metric: ApiUsageMetrics[] = Object.keys(data).map((key) => {
       return {
         name: key,
         value: data[key],
@@ -236,6 +259,19 @@ export class ApiUsageMetricsService {
 
     logger.info(`Metrics MongoDB document: ${JSON.stringify(metric)}`)
 
-    await metricsCollection.insertMany(metric)
+    await Promise.all(
+      metric.map(
+        async (metric) =>
+          await metricsCollection.updateOne(
+            {
+              name: metric.name,
+              startTimestamp: metric.startTimestamp,
+              endTimestamp: metric.endTimestamp,
+            },
+            { $set: metric },
+            { upsert: true }
+          )
+      )
+    )
   }
 }
