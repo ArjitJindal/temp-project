@@ -33,11 +33,8 @@ async function migrateTenant(tenant: Tenant) {
 
   await sheetsService.initialize()
 
-  for (const timestamp of timestamps) {
-    await sheetsService.updateUsageMetrics(
-      timestamp.startTimestamp,
-      timestamp.endTimestamp
-    )
+  for (const { startTimestamp, endTimestamp } of timestamps) {
+    await sheetsService.updateUsageMetrics(startTimestamp, endTimestamp)
   }
 }
 

@@ -158,7 +158,7 @@ export class SheetsApiUsageMetricsService {
         dayjs(startTimestamp).format('YYYY-MM-DD'),
       [META_DATA_HEADERS_DAILY.TENANT_ID]: this.tenantId,
       [META_DATA_HEADERS_DAILY.TENANT_NAME]: this.tenant.name,
-      [META_DATA_HEADERS_DAILY.REGION]: this.tenant.region ?? 'local',
+      [META_DATA_HEADERS_DAILY.REGION]: this.getRegion(),
     }
   }
 
@@ -177,8 +177,14 @@ export class SheetsApiUsageMetricsService {
       [META_DATA_HEADERS_MONTHLY.YEAR]: dayjs(startTimestamp).format('YYYY'),
       [META_DATA_HEADERS_MONTHLY.TENANT_ID]: this.tenantId,
       [META_DATA_HEADERS_MONTHLY.TENANT_NAME]: this.tenant.name,
-      [META_DATA_HEADERS_MONTHLY.REGION]: this.tenant.region ?? 'local',
+      [META_DATA_HEADERS_MONTHLY.REGION]: this.getRegion(),
     }
+  }
+
+  private getRegion(): string {
+    return process.env.ENV === 'prod'
+      ? (process.env.REGION as string)
+      : process.env.ENV ?? 'local'
   }
 
   private async publishDailyUsageMetrics(data: {
@@ -199,14 +205,12 @@ export class SheetsApiUsageMetricsService {
           data[META_DATA_HEADERS_DAILY.TENANT_ID].toString()
     )
 
-    if (row !== -1) {
+    if (row > -1) {
       rows[row] = _.merge(rows[row], data)
       await rows[row].save()
     } else {
       await this.dailyUsageMetricsSheet.addRow(data)
     }
-
-    await this.dailyUsageMetricsSheet.addRow(data)
   }
 
   private async getAllMonthlyUsageMetricsRows(): Promise<
@@ -260,25 +264,22 @@ export class SheetsApiUsageMetricsService {
     }
   }
 
-  public async updateUsageMetrics(
+  private async updateUsageMetricsPrivate(
     startTimestamp: number,
     endTimestamp: number
-  ) {
+  ): Promise<void> {
     const dailyUsageMetrics = await this.getDailyUsageMetricsData(
       startTimestamp,
       endTimestamp
     )
-
     const transformedDailyUsageMetrics =
       this.transformDailyUsageMetrics(dailyUsageMetrics)
-
     await this.publishDailyUsageMetrics(
       _.merge(
         this.getDailyUsageMetadata(startTimestamp, endTimestamp),
         transformedDailyUsageMetrics
       )
     )
-
     const monthlyUsageMetrics = await this.getMonthlyUsageMetricsData(
       startTimestamp,
       endTimestamp
@@ -286,13 +287,38 @@ export class SheetsApiUsageMetricsService {
 
     const transformedMonthlyUsageMetrics =
       await this.transformMonthlyUsageMetrics(monthlyUsageMetrics)
-
     await this.publishMonthlyUsageMetrics(
       _.merge(
         this.getMonthlyUsageMetadata(startTimestamp, endTimestamp),
         transformedMonthlyUsageMetrics
       )
     )
+  }
+
+  public async updateUsageMetrics(
+    startTimestamp: number,
+    endTimestamp: number,
+    maxRetries = 5,
+    delayBetweenRetries = 30 // second
+  ) {
+    for (let i = 0; i <= maxRetries; i++) {
+      try {
+        await this.updateUsageMetricsPrivate(startTimestamp, endTimestamp)
+        break // break the loop if no error
+      } catch (error) {
+        if (i === maxRetries) {
+          throw error
+        }
+        console.log(
+          `Error while updating usage metrics for tenant '${this.tenantId}' with startTimestamp '${startTimestamp}' and endTimestamp '${endTimestamp}'. Retrying in ${delayBetweenRetries} seconds.`
+        )
+        await new Promise((resolve) =>
+          setTimeout(resolve, delayBetweenRetries * 1000)
+        )
+      }
+    }
+
+    return
   }
 
   private async getDailyUsageMetricsData(
