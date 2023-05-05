@@ -194,9 +194,9 @@ export class SheetsApiUsageMetricsService {
     const row = rows.findIndex(
       (row) =>
         row[META_DATA_HEADERS_DAILY.START_TIMESTAMP].toString() ===
-          data.start.toString() &&
+          data[META_DATA_HEADERS_DAILY.START_TIMESTAMP].toString() &&
         row[META_DATA_HEADERS_DAILY.TENANT_ID].toString() ===
-          data.tenantId.toString()
+          data[META_DATA_HEADERS_DAILY.TENANT_ID].toString()
     )
 
     if (row !== -1) {
