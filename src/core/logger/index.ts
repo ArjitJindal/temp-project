@@ -9,10 +9,18 @@ const logFormat = format.combine(
   format.errors({ stack: true }),
   format.json()
 )
+const localLogFormat = format.combine(
+  format.colorize(),
+  format.simple(),
+  format.printf(({ level, message, ...rest }) => {
+    const context = JSON.stringify(rest)
+    return `${new Date().toISOString()} ${level}: ${message} ${context}`
+  })
+)
 
 export const winstonLogger = createLogger({
   level: process.env.NODE_ENV === 'test' ? 'error' : isLocal ? 'debug' : 'info',
-  format: isLocal ? format.combine(logFormat, format.prettyPrint()) : logFormat,
+  format: isLocal ? localLogFormat : logFormat,
   transports: [new transports.Console({})],
 })
 

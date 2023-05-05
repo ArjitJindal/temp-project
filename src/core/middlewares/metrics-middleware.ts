@@ -10,12 +10,14 @@ export const metricsMiddleware =
   (handler: CallableFunction): CallableFunction =>
   async (event: unknown, context: unknown): Promise<unknown> => {
     const response = await handler(event, context)
+    if (process.env.ENV === 'local') {
+      return response
+    }
 
     // Publish metrics for each namespace to cloudwatch
     try {
-      const isLocal = process.env.ENV === 'local'
       const client = new CloudWatchClient({
-        region: isLocal ? 'local' : process.env.AWS_REGION,
+        region: process.env.AWS_REGION,
       })
       const metrics = getContext()?.metrics
       if (metrics) {
