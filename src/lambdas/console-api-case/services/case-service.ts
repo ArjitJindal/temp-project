@@ -493,7 +493,41 @@ export class CaseService {
         `Cannot escalated an already escalated case. Parent case ${c.caseHierarchyDetails?.parentCaseId}`
       )
     }
-    const { alertEscalations, caseUpdateRequest } = caseEscalationRequest
+    let { alertEscalations } = caseEscalationRequest
+    const { caseUpdateRequest } = caseEscalationRequest
+
+    // Hydrate escalation requests with the txn IDS if none were specified
+    alertEscalations = alertEscalations?.map((ae) => {
+      if (!ae.transactionIds || ae.transactionIds.length === 0) {
+        const alert = c.alerts?.find((a) => a.alertId)
+        ae.transactionIds = c.caseTransactions
+          ?.filter(
+            (transaction) =>
+              transaction.hitRules.some(
+                (ruleInstance) =>
+                  alert?.ruleInstanceId === ruleInstance.ruleInstanceId
+              ) &&
+              (!c.caseHierarchyDetails ||
+                c.caseHierarchyDetails?.childTransactionIds?.indexOf(
+                  transaction.transactionId
+                ) === -1)
+          )
+          .map((t) => t.transactionId)
+      } else {
+        ae.transactionIds.filter(
+          (t) => c.caseHierarchyDetails?.childTransactionIds?.indexOf(t) === -1
+        )
+      }
+
+      if (ae.transactionIds?.length === 0) {
+        throw new BadRequest(
+          `Cannot escalate ${ae.alertId} as all of its transactions have already been escalated.`
+        )
+      }
+
+      return ae
+    })
+
     const updatingUserId = (getContext()?.user as Account).id
     const currentTimestamp = Date.now()
     const escalatedAlerts = c.alerts
@@ -508,22 +542,51 @@ export class CaseService {
           caseStatus: 'ESCALATED' as CaseStatus,
           timestamp: currentTimestamp,
         }
+        const escalationAlertReq = alertEscalations!.find(
+          (alertEscalation) =>
+            alertEscalation.alertId === escalatedAlert.alertId
+        )
+
+        let transactionIds = escalatedAlert.transactionIds
+        let alertId = escalatedAlert.alertId
+        let parentAlertId
+        if (escalationAlertReq?.transactionIds?.length) {
+          const childNumber = c.caseHierarchyDetails?.childCaseIds
+            ? c.caseHierarchyDetails.childCaseIds.length + 1
+            : 1
+
+          // Create a new alert if some transactions were selected.
+          transactionIds = escalationAlertReq.transactionIds
+          alertId = `${escalatedAlert.alertId}.${childNumber}`
+          parentAlertId = escalatedAlert.alertId
+        }
+
         return {
           ...escalatedAlert,
+          alertId,
+          parentAlertId,
           alertStatus: 'ESCALATED',
           reviewAssignments: [this.getEscalationAssignment(accounts)],
           statusChanges: escalatedAlert.statusChanges
             ? [...escalatedAlert.statusChanges, lastStatusChange]
             : [lastStatusChange],
           lastStatusChange: lastStatusChange,
+          transactionIds,
         }
       })
+
     const remainingAlerts = c.alerts?.filter(
       (alert) =>
         !alertEscalations!.some(
-          (alertEscalation) => alertEscalation.alertId === alert.alertId
+          (alertEscalation) =>
+            alertEscalation.alertId === alert.alertId &&
+            // Keep the original alert if only some transactions were escalated
+            (!alertEscalation.transactionIds ||
+              alertEscalation.transactionIds?.length ===
+                alert.transactionIds?.length)
         )
     )
+
     if (
       (!remainingAlerts || remainingAlerts.length === 0) &&
       caseUpdateRequest
@@ -535,6 +598,7 @@ export class CaseService {
       ? c.caseHierarchyDetails.childCaseIds.length + 1
       : 1
     const childCaseId = `${c.caseId}.${childNumber}`
+
     const filteredTransactionsForNewCase = c.caseTransactions?.filter(
       (transaction) =>
         transaction.hitRules.some((ruleInstance) =>
@@ -565,10 +629,15 @@ export class CaseService {
 
     let caseHierarchyDetailsForOriginalCase: CaseHierarchyDetails = {
       childCaseIds: [childCaseId],
+      childTransactionIds:
+        alertEscalations?.flatMap((a) => a.transactionIds || []) || [],
     }
     if (c.caseHierarchyDetails?.childCaseIds) {
       caseHierarchyDetailsForOriginalCase = {
         childCaseIds: [...c.caseHierarchyDetails.childCaseIds, childCaseId],
+        childTransactionIds: c.caseHierarchyDetails.childTransactionIds?.concat(
+          alertEscalations?.flatMap((a) => a.transactionIds || []) || []
+        ),
       }
     }
 

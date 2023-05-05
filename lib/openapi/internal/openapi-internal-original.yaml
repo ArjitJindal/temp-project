@@ -5056,6 +5056,8 @@ components:
           type: integer
         alertId:
           type: string
+        parentAlertId:
+          type: string
         createdTimestamp:
           type: number
         latestTransactionArrivalTimestamp:
@@ -6376,6 +6378,10 @@ components:
         parentCaseId:
           type: string
         childCaseIds:
+          type: array
+          items:
+            type: string
+        childTransactionIds:
           type: array
           items:
             type: string

@@ -205,6 +205,7 @@ describe('Case service', () => {
         alerts: [
           {
             ...TEST_ALERT_1,
+            alertId: `${TEST_ALERT_1.alertId}.1`,
             reviewAssignments: [
               { assigneeUserId: 'ACCOUNT-1', timestamp: expect.any(Number) },
             ],
