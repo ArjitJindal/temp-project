@@ -5,17 +5,14 @@ import {
 } from 'google-spreadsheet'
 import { MongoClient } from 'mongodb'
 import _ from 'lodash'
-import {
-  ApiUsageMetrics,
-  ApiUsageMetricsService,
-} from './api-usage-metrics-service'
+import { ApiUsageMetrics } from './api-usage-metrics-service'
 import dayjs from '@/utils/dayjs'
 import { METRICS_COLLECTION } from '@/utils/mongoDBUtils'
 import { CUSTOM_API_USAGE_METRIC_NAMES } from '@/core/cloudwatch/metrics'
 import { logger } from '@/core/logger'
 import { Tenant } from '@/services/accounts'
 import { getSecret } from '@/utils/secrets-manager'
-import { getDynamoDbClient } from '@/utils/dynamodb'
+import { exponentialRetry } from '@/utils/retry'
 
 const DAILY_USAGE_METRICS_SHEET_TITLE = 'DailyUsageMetrics'
 const MONTHLY_USAGE_METRICS_SHEET_TITLE = 'MonthlyUsageMetrics'
@@ -47,17 +44,31 @@ const META_DATA_HEADERS_MONTHLY = {
   END_TIMESTAMP: 'EndTimestamp',
 }
 
+type DataCounts = {
+  transactionEventsCount: number
+  transactionsCount: number
+  usersCount: number
+  sanctionsChecksCount: number
+  ibanResolutinosCount: number
+}
+
 export class SheetsApiUsageMetricsService {
   private dailyUsageMetricsSheet?: GoogleSpreadsheetWorksheet
   private monthlyUsageMetricsSheet?: GoogleSpreadsheetWorksheet
   private tenant: Tenant
   private mongoDb: MongoClient
   private tenantId: string
+  private monthlyCounts: DataCounts
 
-  constructor(tenant: Tenant, connections: { mongoDb: MongoClient }) {
+  constructor(
+    tenant: Tenant,
+    connections: { mongoDb: MongoClient },
+    monthlyCounts: DataCounts
+  ) {
     this.tenant = tenant
     this.tenantId = tenant.id
     this.mongoDb = connections.mongoDb
+    this.monthlyCounts = monthlyCounts
   }
 
   private async createHeadersIfNotExists(
@@ -106,7 +117,7 @@ export class SheetsApiUsageMetricsService {
     }
   }
 
-  public async initialize() {
+  private async initializePrivate() {
     const spreadsheetId = process.env.SHEET_ID as string
     const googleSpreadsheetService = new GoogleSpreadsheet(spreadsheetId)
 
@@ -143,6 +154,12 @@ export class SheetsApiUsageMetricsService {
     this.monthlyUsageMetricsSheet = monthlyUsageMetricsSheet
     await this.createHeadersIfNotExists('daily')
     await this.createHeadersIfNotExists('monthly')
+  }
+
+  public async initialize(): Promise<void> {
+    await exponentialRetry(async () => {
+      await this.initializePrivate()
+    }, `Error while initializing SheetsApiUsageMetricsService for tenant ${this.tenantId}`)
   }
 
   private getDailyUsageMetadata(
@@ -286,10 +303,7 @@ export class SheetsApiUsageMetricsService {
     )
 
     const transformedMonthlyUsageMetrics =
-      await this.transformMonthlyUsageMetrics(
-        monthlyUsageMetrics,
-        startTimestamp
-      )
+      this.transformMonthlyUsageMetrics(monthlyUsageMetrics)
 
     await this.publishMonthlyUsageMetrics(
       _.merge(
@@ -301,28 +315,13 @@ export class SheetsApiUsageMetricsService {
 
   public async updateUsageMetrics(
     startTimestamp: number,
-    endTimestamp: number,
-    maxRetries = 5,
-    delayBetweenRetries = 30 // second
+    endTimestamp: number
   ) {
-    for (let i = 0; i <= maxRetries; i++) {
-      try {
-        await this.updateUsageMetricsPrivate(startTimestamp, endTimestamp)
-        break // break the loop if no error
-      } catch (error) {
-        if (i === maxRetries) {
-          throw error
-        }
-        console.log(
-          `Error while updating usage metrics for tenant '${this.tenantId}' with startTimestamp '${startTimestamp}' and endTimestamp '${endTimestamp}'. Retrying in ${delayBetweenRetries} seconds.`
-        )
-        await new Promise((resolve) =>
-          setTimeout(resolve, delayBetweenRetries * 1000)
-        )
-      }
-    }
-
-    return
+    await exponentialRetry(
+      async () =>
+        await this.updateUsageMetricsPrivate(startTimestamp, endTimestamp),
+      `Error while updating usage metrics for tenant '${this.tenantId}' with startTimestamp '${startTimestamp}' and endTimestamp '${endTimestamp}'`
+    )
   }
 
   private async getDailyUsageMetricsData(
@@ -376,38 +375,27 @@ export class SheetsApiUsageMetricsService {
     return monthlyUsageMetrics
   }
 
-  private async transformMonthlyUsageMetrics(
-    monthlyUsageMetrics: Array<ApiUsageMetrics>,
-    startTimestamp: number
-  ): Promise<{ [key: string]: number }> {
+  private transformMonthlyUsageMetrics(
+    monthlyUsageMetrics: Array<ApiUsageMetrics>
+  ): { [key: string]: number } {
     const [activeRuleInstancesCount, tenantSeatsCount] = [
       CUSTOM_API_USAGE_METRIC_NAMES.ACTIVE_RULE_INSTANCES_COUNT_METRIC_NAME,
       CUSTOM_API_USAGE_METRIC_NAMES.TENANT_SEATS_COUNT_METRIC_NAME,
     ].map((metricName) => this.getMaxUsage(monthlyUsageMetrics, metricName))
 
-    const dynamoDb = getDynamoDbClient()
-    const apiUsageMetricsService = new ApiUsageMetricsService(
-      this.tenant,
-      { mongoDb: this.mongoDb, dynamoDb },
-      {
-        startTimestamp: dayjs(startTimestamp).startOf('month').valueOf(),
-        endTimestamp: dayjs(startTimestamp).endOf('month').valueOf(),
-      }
-    )
-
     return {
       [CUSTOM_API_USAGE_METRIC_NAMES.TRANSACTION_COUNT_METRIC_NAME]:
-        await apiUsageMetricsService.getTransactionsCount(),
+        this.monthlyCounts.transactionsCount,
       [CUSTOM_API_USAGE_METRIC_NAMES.TRANSACTION_EVENTS_COUNT_METRIC_NAME]:
-        await apiUsageMetricsService.getTransactionsEventsCount(),
+        this.monthlyCounts.transactionEventsCount,
       [CUSTOM_API_USAGE_METRIC_NAMES.USERS_COUNT_METRIC_NAME]:
-        await apiUsageMetricsService.getUsersCount(),
+        this.monthlyCounts.usersCount,
       [CUSTOM_API_USAGE_METRIC_NAMES.ACTIVE_RULE_INSTANCES_COUNT_METRIC_NAME]:
         activeRuleInstancesCount,
       [CUSTOM_API_USAGE_METRIC_NAMES.IBAN_RESOLUTION_COUNT_METRIC_NAME]:
-        await apiUsageMetricsService.getNumberOfIbanResolutions(),
+        this.monthlyCounts.ibanResolutinosCount,
       [CUSTOM_API_USAGE_METRIC_NAMES.SANCTIONS_SEARCHES_COUNT_METRIC_NAME]:
-        await apiUsageMetricsService.getNumberOfSanctionsChecks(),
+        this.monthlyCounts.sanctionsChecksCount,
       [CUSTOM_API_USAGE_METRIC_NAMES.TENANT_SEATS_COUNT_METRIC_NAME]:
         tenantSeatsCount,
     }

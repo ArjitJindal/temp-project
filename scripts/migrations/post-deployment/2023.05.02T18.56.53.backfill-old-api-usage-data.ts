@@ -1,11 +1,16 @@
 import { migrateAllTenants } from '../utils/tenant'
 import { METRICS_COLLECTION, getMongoDbClient } from '@/utils/mongoDBUtils'
 import { Tenant } from '@/services/accounts'
-import { ApiUsageMetrics } from '@/lambdas/cron-job-midnight/services/api-usage-metrics-service'
+import {
+  ApiUsageMetrics,
+  ApiUsageMetricsService,
+} from '@/lambdas/cron-job-midnight/services/api-usage-metrics-service'
 import { SheetsApiUsageMetricsService } from '@/lambdas/cron-job-midnight/services/sheets-api-usage-metrics-service'
+import { getDynamoDbClient } from '@/utils/dynamodb'
 
 async function migrateTenant(tenant: Tenant) {
   const mongoDb = await getMongoDbClient()
+  const dynamoDb = getDynamoDbClient()
   const db = await mongoDb.db()
   const metricsCollectionName = METRICS_COLLECTION(tenant.id)
   const metricsCollection = db.collection<ApiUsageMetrics>(
@@ -27,14 +32,43 @@ async function migrateTenant(tenant: Tenant) {
     }
   }
 
-  const sheetsService = new SheetsApiUsageMetricsService(tenant, {
-    mongoDb,
-  })
-
-  await sheetsService.initialize()
+  const timestampsByMonth: {
+    [month: string]: { startTimestamp: number; endTimestamp: number }[]
+  } = {}
 
   for (const { startTimestamp, endTimestamp } of timestamps) {
-    await sheetsService.updateUsageMetrics(startTimestamp, endTimestamp)
+    const month = new Date(startTimestamp).getMonth()
+    if (!timestampsByMonth[month]) {
+      timestampsByMonth[month] = []
+    }
+    timestampsByMonth[month].push({ startTimestamp, endTimestamp })
+  }
+
+  for (const month in timestampsByMonth) {
+    const timestamps = timestampsByMonth[month]
+    const startTimestamp = timestamps[0].startTimestamp
+    const endTimestamp = timestamps[0].endTimestamp
+
+    const apiUsageMetricsService = new ApiUsageMetricsService(
+      tenant,
+      { mongoDb, dynamoDb },
+      { startTimestamp, endTimestamp }
+    )
+
+    const sheetsApiUsageMetricsService = new SheetsApiUsageMetricsService(
+      tenant,
+      { mongoDb },
+      await apiUsageMetricsService.getMonthlyData()
+    )
+
+    await sheetsApiUsageMetricsService.initialize()
+
+    for (const { startTimestamp, endTimestamp } of timestamps) {
+      await sheetsApiUsageMetricsService.updateUsageMetrics(
+        startTimestamp,
+        endTimestamp
+      )
+    }
   }
 }
 

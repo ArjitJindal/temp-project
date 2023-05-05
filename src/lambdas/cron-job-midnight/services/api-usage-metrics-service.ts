@@ -25,6 +25,7 @@ import { TransactionEventRepository } from '@/services/rules-engine/repositories
 import { AccountsService, Tenant } from '@/services/accounts'
 import { SanctionsSearchRepository } from '@/services/sanctions/repositories/sanctions-search-repository'
 import { IBANApiRepository } from '@/services/iban.com/repositories/iban-api-repository'
+import dayjs from '@/utils/dayjs'
 
 export type ApiUsageMetrics = {
   name: string
@@ -62,7 +63,15 @@ export class ApiUsageMetricsService {
     this.endTimestamp = timestamp.endTimestamp
   }
 
-  public async getTransactionsCount(): Promise<number> {
+  private getMonthStartTimestamp(timestamp: number): number {
+    return dayjs(timestamp).startOf('month').valueOf()
+  }
+
+  private getMonthEndTimestamp(timestamp: number): number {
+    return dayjs(timestamp).endOf('month').valueOf()
+  }
+
+  private async getTransactionsCount(monthly = false): Promise<number> {
     const mongoDbTransactionRepository = new MongoDbTransactionRepository(
       this.tenantId,
       this.connections.mongoDb
@@ -70,14 +79,18 @@ export class ApiUsageMetricsService {
 
     const transactionsCount =
       await mongoDbTransactionRepository.getTransactionsCount({
-        beforeTimestamp: this.endTimestamp,
-        afterTimestamp: this.startTimestamp,
+        beforeTimestamp: !monthly
+          ? this.endTimestamp
+          : this.getMonthEndTimestamp(this.startTimestamp),
+        afterTimestamp: monthly
+          ? this.startTimestamp
+          : this.getMonthStartTimestamp(this.startTimestamp),
       })
 
     return transactionsCount
   }
 
-  public async getTransactionsEventsCount(): Promise<number> {
+  private async getTransactionsEventsCount(monthly = false): Promise<number> {
     const transactionEventsRepository = new TransactionEventRepository(
       this.tenantId,
       { mongoDb: this.connections.mongoDb }
@@ -85,22 +98,33 @@ export class ApiUsageMetricsService {
 
     const transactionEventsCount =
       await transactionEventsRepository.getTransactionEventCount({
-        timestamp: { $gte: this.startTimestamp, $lt: this.endTimestamp },
+        timestamp: {
+          $gte: !monthly
+            ? this.startTimestamp
+            : this.getMonthStartTimestamp(this.startTimestamp),
+          $lte: !monthly
+            ? this.endTimestamp
+            : this.getMonthEndTimestamp(this.startTimestamp),
+        },
       })
 
-    const transactionsCount = await this.getTransactionsCount()
+    const transactionsCount = await this.getTransactionsCount(monthly)
     return transactionEventsCount - transactionsCount
   }
 
-  public async getUsersCount(): Promise<number> {
+  private async getUsersCount(monthly = false): Promise<number> {
     const usersRepository = new UserRepository(this.tenantId, {
       mongoDb: this.connections.mongoDb,
     })
 
     return await usersRepository.getUsersCount({
       createdTimestamp: {
-        $gte: this.startTimestamp,
-        $lt: this.endTimestamp,
+        $gte: !monthly
+          ? this.startTimestamp
+          : this.getMonthStartTimestamp(this.startTimestamp),
+        $lt: !monthly
+          ? this.endTimestamp
+          : this.getMonthEndTimestamp(this.startTimestamp),
       },
     })
   }
@@ -122,18 +146,9 @@ export class ApiUsageMetricsService {
       `Tenant Id: ${tenantInfo.tenant.id}, Tenant Name: ${tenantInfo.tenant.name}, Region: ${process.env.AWS_REGION}`
     )
     return [
-      {
-        Name: 'Tenant Id',
-        Value: tenantInfo.tenant.id,
-      },
-      {
-        Name: 'Tenant Name',
-        Value: tenantInfo.tenant.name,
-      },
-      {
-        Name: 'Region',
-        Value: process.env.AWS_REGION as string,
-      },
+      { Name: 'Tenant Id', Value: tenantInfo.tenant.id },
+      { Name: 'Tenant Name', Value: tenantInfo.tenant.name },
+      { Name: 'Region', Value: process.env.AWS_REGION as string },
     ]
   }
 
@@ -152,27 +167,35 @@ export class ApiUsageMetricsService {
     return filteredAccount.length
   }
 
-  public async getNumberOfSanctionsChecks(): Promise<number> {
+  private async getNumberOfSanctionsChecks(monthly = false): Promise<number> {
     const sanctionsSearchRepository = new SanctionsSearchRepository(
       this.tenantId,
       this.connections.mongoDb
     )
 
     return await sanctionsSearchRepository.getNumberOfSearchesBetweenTimestamps(
-      this.startTimestamp,
-      this.endTimestamp
+      monthly
+        ? this.getMonthStartTimestamp(this.startTimestamp)
+        : this.startTimestamp,
+      monthly
+        ? this.getMonthEndTimestamp(this.startTimestamp)
+        : this.endTimestamp
     )
   }
 
-  public async getNumberOfIbanResolutions(): Promise<number> {
+  private async getNumberOfIbanResolutions(monthly = false): Promise<number> {
     const ibanApiRepository = new IBANApiRepository(
       this.tenantId,
       this.connections.mongoDb
     )
 
     return ibanApiRepository.getNumberOfResolutionsBetweenTimestamps(
-      this.startTimestamp,
-      this.endTimestamp
+      monthly
+        ? this.getMonthStartTimestamp(this.startTimestamp)
+        : this.startTimestamp,
+      monthly
+        ? this.getMonthEndTimestamp(this.startTimestamp)
+        : this.endTimestamp
     )
   }
 
@@ -202,10 +225,29 @@ export class ApiUsageMetricsService {
     ]
   }
 
+  public async getMonthlyData() {
+    const transactionsCount = await this.getTransactionsCount(true)
+    const transactionEventsCount = await this.getTransactionsEventsCount(true)
+    const usersCount = await this.getUsersCount(true)
+    const sanctionsChecksCount = await this.getNumberOfSanctionsChecks(true)
+    const ibanResolutinosCount = await this.getNumberOfIbanResolutions(true)
+
+    return {
+      transactionsCount,
+      transactionEventsCount,
+      usersCount,
+      sanctionsChecksCount,
+      ibanResolutinosCount,
+    }
+  }
+
   private async publishToGoogleSheets() {
-    const sheetsService = new SheetsApiUsageMetricsService(this.tenant, {
-      mongoDb: this.connections.mongoDb,
-    })
+    const monthlyData = await this.getMonthlyData()
+    const sheetsService = new SheetsApiUsageMetricsService(
+      this.tenant,
+      { mongoDb: this.connections.mongoDb },
+      monthlyData
+    )
 
     await sheetsService.initialize()
 
