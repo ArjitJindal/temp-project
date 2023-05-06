@@ -708,10 +708,10 @@ export class CdkTarponStack extends cdk.Stack {
         'READ'
       )
 
-      grantSecretsManagerAccessByPrefix(
+      grantSecretsManagerAccess(
         this,
         cronJobMidnightHandlerAlias,
-        'GoogleSheets',
+        [this.config.application.GOOGLE_SHEETS_PRIVATE_KEY],
         'READ'
       )
 
