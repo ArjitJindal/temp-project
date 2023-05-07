@@ -82,7 +82,7 @@ export class ApiUsageMetricsService {
         beforeTimestamp: !monthly
           ? this.endTimestamp
           : this.getMonthEndTimestamp(this.startTimestamp),
-        afterTimestamp: monthly
+        afterTimestamp: !monthly
           ? this.startTimestamp
           : this.getMonthStartTimestamp(this.startTimestamp),
       })
