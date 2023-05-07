@@ -78,14 +78,17 @@ export class ApiUsageMetricsService {
     )
 
     const transactionsCount =
-      await mongoDbTransactionRepository.getTransactionsCount({
-        beforeTimestamp: !monthly
-          ? this.endTimestamp
-          : this.getMonthEndTimestamp(this.startTimestamp),
-        afterTimestamp: !monthly
-          ? this.startTimestamp
-          : this.getMonthStartTimestamp(this.startTimestamp),
-      })
+      await mongoDbTransactionRepository.getTransactionsCount(
+        {
+          beforeTimestamp: !monthly
+            ? this.endTimestamp
+            : this.getMonthEndTimestamp(this.startTimestamp),
+          afterTimestamp: !monthly
+            ? this.startTimestamp
+            : this.getMonthStartTimestamp(this.startTimestamp),
+        },
+        false
+      )
 
     return transactionsCount
   }

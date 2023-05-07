@@ -348,7 +348,8 @@ export class MongoDbTransactionRepository
   }
 
   public async getTransactionsCount(
-    params: OptionalPagination<DefaultApiGetTransactionsListRequest>
+    params: OptionalPagination<DefaultApiGetTransactionsListRequest>,
+    countQueryLimit = true // for cron jobs we need to disable the limit so pass false
   ): Promise<number> {
     const db = this.mongoDb.db()
     const collection = db.collection<InternalTransaction>(
@@ -356,7 +357,9 @@ export class MongoDbTransactionRepository
     )
     const query = this.getTransactionsMongoQuery(params)
     return collection.countDocuments(query, {
-      limit: COUNT_QUERY_LIMIT,
+      ...(countQueryLimit
+        ? { limit: COUNT_QUERY_LIMIT }
+        : { allowDiskUse: true }),
     })
   }
 
