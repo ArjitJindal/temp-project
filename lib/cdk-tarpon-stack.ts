@@ -86,6 +86,7 @@ const CONSUMER_LAMBDA_TIMEOUT = Duration.minutes(15)
 const CONSUMER_SQS_VISIBILITY_TIMEOUT = Duration.seconds(
   CONSUMER_LAMBDA_TIMEOUT.toSeconds() * 2
 )
+const CRON_JOB_TIMEOUT = Duration.minutes(15)
 
 // SQS max receive count cannot go above 1000
 const MAX_SQS_RECEIVE_COUNT = 1000
@@ -687,7 +688,10 @@ export class CdkTarponStack extends cdk.Stack {
           auditLogTopic: this.auditLogTopic,
           batchJobQueue,
         },
-        atlasFunctionProps
+        {
+          ...atlasFunctionProps,
+          timeout: CRON_JOB_TIMEOUT,
+        }
       )
 
       grantMongoDbAccess(this, cronJobMidnightHandlerAlias)
