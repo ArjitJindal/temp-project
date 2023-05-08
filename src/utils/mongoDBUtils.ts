@@ -366,6 +366,24 @@ export const createMongoDBCollections = async (
     await transactionCollection.createIndex({
       timestamp: -1,
     })
+
+    await Promise.all(
+      [
+        'timestamp',
+        'arsScore.arsScore',
+        'arsScore.riskLevel',
+        'transactionState',
+        'originUserId',
+        'destinationUserId',
+        'originAmountDetails.transactionAmount',
+        'destinationAmountDetails.transactionAmount',
+      ].map(async (i) => {
+        await transactionCollection.createIndex({ [i]: 1, _id: 1 })
+        await transactionCollection.createIndex({ [i]: -1, _id: -1 })
+        return
+      })
+    )
+
     await transactionCollection.createIndex({
       type: 1,
       status: 1,

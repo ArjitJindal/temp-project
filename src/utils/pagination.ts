@@ -78,46 +78,58 @@ export async function cursorPaginate<T>(
   // Decode cursor from base64
   const buff = new Buffer(fromRaw, 'base64')
   const from = buff.toString('ascii')
-  const [first, id] = from.split(PAGINATION_CURSOR_KEY_SEPERATOR)
-  let sortValue: any = first
 
+  const [sortValue, id] = from.split(PAGINATION_CURSOR_KEY_SEPERATOR)
+
+  let parsedSortValue: any = sortValue
   // Parse fields that are not string values
   if (mapping && mapping[field]) {
     if (mapping[field] === 'number') {
-      sortValue = parseInt(sortValue)
+      parsedSortValue = sortValue !== 'EMPTY' ? parseInt(sortValue) : undefined
     }
   }
 
+  if (parsedSortValue === 'EMPTY') {
+    parsedSortValue = undefined
+  }
   // Filter query
   if (from) {
-    if (sortValue) {
-      find = find.filter({
-        $or: [
-          { [field]: { [fromOperator]: sortValue } },
-          {
-            [field]: { $eq: sortValue },
-            _id: { [fromOperator]: new ObjectId(id) },
-          },
-        ],
-      })
-      prevFind = prevFind.filter({
-        $or: [
-          { [field]: { [toOperator]: sortValue } },
-          {
-            [field]: { $eq: sortValue },
-            _id: { [toOperator]: new ObjectId(id) },
-          },
-        ],
-      })
-    } else {
-      find = find.filter({ _id: { [fromOperator]: new ObjectId(id) } })
-      prevFind = prevFind.filter({ _id: { [toOperator]: new ObjectId(id) } })
+    let fromOr: any = { [field]: { [fromOperator]: parsedSortValue } }
+    if (parsedSortValue === undefined && query.sortOrder === 'ascend') {
+      fromOr = { [field]: { $exists: true } }
     }
+
+    find = find.filter({
+      $or: [
+        fromOr,
+        {
+          [field]: { $eq: parsedSortValue },
+          _id: { [fromOperator]: new ObjectId(id) },
+        },
+      ],
+    })
+
+    let prevOr: any = { [field]: { [toOperator]: parsedSortValue } }
+    if (parsedSortValue === undefined && query.sortOrder === 'descend') {
+      prevOr = { [field]: { $exists: true } }
+    }
+    prevFind = prevFind.filter({
+      $or: [
+        prevOr,
+        {
+          [field]: { $eq: parsedSortValue },
+          _id: { [toOperator]: new ObjectId(id) },
+        },
+      ],
+    })
   }
 
   // Sort query
-  find = await find.sort({ [field]: direction, _id: direction })
-  prevFind = await prevFind.sort({ [field]: prevDirection, _id: prevDirection })
+  find = find.sort({ [field]: direction, _id: direction })
+  prevFind = prevFind.sort({ [field]: prevDirection, _id: prevDirection })
+
+  // Find prev
+  const prevCursorPromise = getPrevCursor(prevFind, query)
 
   // Determine next cursor
   const items = await find
@@ -125,19 +137,22 @@ export async function cursorPaginate<T>(
     .limit(query.first + 1)
     .toArray()
   let next = ''
-  const count = items.length
+
+  const { hasPrev, prev } = await prevCursorPromise
 
   // Remove extra item
-  items.pop()
+  let hasNext = false
+  if (items.length > query.first) {
+    hasNext = items.length > query.first
+    items.pop()
+  }
 
-  // Find prev
-  const { hasPrev, prev } = await getPrevCursor(prevFind, query)
-
-  if (count > query.first) {
+  if (hasNext) {
     const lastItem = items.at(-1)
-    const nextRaw = [_.get(lastItem, field), lastItem?._id].join(
+    const nextRaw = [_.get(lastItem, field) ?? 'EMPTY', lastItem?._id].join(
       PAGINATION_CURSOR_KEY_SEPERATOR
     )
+
     next = nextRaw
 
     // Encode cursor
@@ -148,7 +163,7 @@ export async function cursorPaginate<T>(
     items,
     next,
     prev: from ? prev : '',
-    hasNext: next !== '',
+    hasNext,
     hasPrev,
   }
 }
@@ -167,7 +182,7 @@ async function getPrevCursor<T>(
     return { hasPrev: true, prev: '' }
   }
   const prevRaw = [
-    _.get(prevItem, query.sortField as string),
+    _.get(prevItem, query.sortField as string) ?? 'EMPTY',
     prevItem?._id,
   ].join(PAGINATION_CURSOR_KEY_SEPERATOR)
   // Encode cursor
