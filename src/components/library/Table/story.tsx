@@ -711,6 +711,8 @@ function PaginationCase() {
   const [params, setParams] = useState<CommonParams>({
     ...DEFAULT_PARAMS_STATE,
   });
+
+  const { page = 1 } = params;
   return (
     <UseCase title="Pagination">
       <Table<TableItem>
@@ -735,7 +737,7 @@ function PaginationCase() {
         ]}
         data={{
           total: data.length,
-          items: data.slice((params.page - 1) * params.pageSize, params.page * params.pageSize),
+          items: data.slice((page - 1) * params.pageSize, page * params.pageSize),
         }}
         pagination={true}
       />
@@ -743,8 +745,8 @@ function PaginationCase() {
   );
 }
 
-function dataSource(params: { page: number; pageSize: number }): PaginatedData<TableItem> {
-  const { page, pageSize } = params;
+function dataSource(params: { page?: number; pageSize: number }): PaginatedData<TableItem> {
+  const { page = 1, pageSize } = params;
   return {
     total: data.length,
     items: data.slice((page - 1) * pageSize, page * pageSize),
@@ -833,7 +835,7 @@ function AsyncFetchCase() {
     DEFAULT_PARAMS_STATE as AllParams<CommonParams>,
   );
 
-  const { page, pageSize } = params;
+  const { page = 1, pageSize } = params;
 
   const [result, setResult] = useState<AsyncResource<PaginatedData<TableItem>>>(init());
 

@@ -9,7 +9,7 @@ import { DEFAULT_PARAMS_STATE } from '@/components/ui/Table';
 import TransactionsTable, {
   TransactionsTableParams,
 } from '@/pages/transactions/components/TransactionsTable';
-import { usePaginatedQuery } from '@/utils/queries/hooks';
+import { useCursorQuery } from '@/utils/queries/hooks';
 import { TRANSACTIONS_LIST } from '@/utils/queries/keys';
 import { useApiTime } from '@/utils/tracker';
 import InformationIcon from '@/components/ui/icons/Remix/system/information-line.react.svg';
@@ -25,7 +25,7 @@ type Props = {
 
 const DisplayCheckedTransactions = (props: Props) => {
   const { alert, caseUserId, visible: isModalVisible, setVisible: setIsModalVisible } = props;
-  const [count, setCount] = useState(0);
+  const [count] = useState(0);
   const [params, setParams] = useState<TransactionsTableParams>({
     ...DEFAULT_PARAMS_STATE,
     sort: [['timestamp', 'descend']],
@@ -33,63 +33,53 @@ const DisplayCheckedTransactions = (props: Props) => {
 
   const api = useApi();
   const measure = useApiTime();
-  const queryResult = usePaginatedQuery(
-    TRANSACTIONS_LIST({ ...params, caseUserId }),
-    async (paginationParams) => {
-      const {
-        pageSize,
-        page,
-        timestamp,
-        transactionId,
-        type,
-        transactionState,
-        originCurrenciesFilter,
-        destinationCurrenciesFilter,
-        tagKey,
-        tagValue,
-        originMethodFilter,
-        destinationMethodFilter,
-      } = params;
-      const [sortField, sortOrder] = params.sort[0] ?? [];
+  const queryResult = useCursorQuery(TRANSACTIONS_LIST({ ...params, caseUserId }), async () => {
+    const {
+      pageSize,
+      page,
+      timestamp,
+      transactionId,
+      type,
+      transactionState,
+      originCurrenciesFilter,
+      destinationCurrenciesFilter,
+      tagKey,
+      tagValue,
+      originMethodFilter,
+      destinationMethodFilter,
+    } = params;
+    const [sortField, sortOrder] = params.sort[0] ?? [];
 
-      const response = await measure(
-        () =>
-          api.getTransactionsList({
-            page,
-            pageSize,
-            ...paginationParams,
-            afterTimestamp: timestamp ? dayjs(timestamp[0]).valueOf() : 0,
-            beforeTimestamp: timestamp ? dayjs(timestamp[1]).valueOf() : Date.now(),
-            filterId: transactionId,
-            filterOriginCurrencies: originCurrenciesFilter,
-            filterDestinationCurrencies: destinationCurrenciesFilter,
-            transactionType: type,
-            filterTransactionState: transactionState,
-            sortField: sortField ?? undefined,
-            sortOrder: sortOrder ?? undefined,
-            includeUsers: true,
-            filterOriginPaymentMethod: originMethodFilter,
-            filterDestinationPaymentMethod: destinationMethodFilter,
-            filterTagKey: tagKey,
-            filterTagValue: tagValue,
-            filterOriginUserId: params.userFilterMode === 'ORIGIN' ? params.userId : undefined,
-            filterDestinationUserId:
-              params.userFilterMode === 'DESTINATION' ? params.userId : undefined,
-            filterUserId: caseUserId,
-            filterRuleInstancesHit: [alert.ruleInstanceId],
-          }),
-        'Transactions List',
-      );
-
-      setCount(response.total);
-
-      return {
-        items: response.data ?? [],
-        success: true,
-        total: response.total,
-      };
-    },
-  );
+    return await measure(
+      () =>
+        api.getTransactionsList({
+          page,
+          pageSize,
+          _from: params.from,
+          first: params.pageSize,
+          afterTimestamp: timestamp ? dayjs(timestamp[0]).valueOf() : 0,
+          beforeTimestamp: timestamp ? dayjs(timestamp[1]).valueOf() : Date.now(),
+          filterId: transactionId,
+          filterOriginCurrencies: originCurrenciesFilter,
+          filterDestinationCurrencies: destinationCurrenciesFilter,
+          transactionType: type,
+          filterTransactionState: transactionState,
+          sortField: sortField ?? undefined,
+          sortOrder: sortOrder ?? undefined,
+          includeUsers: true,
+          filterOriginPaymentMethod: originMethodFilter,
+          filterDestinationPaymentMethod: destinationMethodFilter,
+          filterTagKey: tagKey,
+          filterTagValue: tagValue,
+          filterOriginUserId: params.userFilterMode === 'ORIGIN' ? params.userId : undefined,
+          filterDestinationUserId:
+            params.userFilterMode === 'DESTINATION' ? params.userId : undefined,
+          filterUserId: caseUserId,
+          filterRuleInstancesHit: [alert.ruleInstanceId],
+        }),
+      'Transactions List',
+    );
+  });
 
   return (
     <Modal

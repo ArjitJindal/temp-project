@@ -59,7 +59,6 @@ export function isInit<T>(resource: AsyncResource<T>): resource is Init {
 export function isLoading<T>(resource: AsyncResource<T>): resource is Loading<T> {
   return resource.kind === 'LOADING';
 }
-
 export function isSuccess<T>(resource: AsyncResource<T>): resource is Success<T> {
   return resource.kind === 'SUCCESS';
 }

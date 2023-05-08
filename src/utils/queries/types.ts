@@ -5,6 +5,14 @@ export interface QueryResult<Data> {
   data: ar.AsyncResource<Data>;
   refetch: () => void;
   paginate?: (params: PaginationParams) => Promise<Data>;
+  fetchNextPage?: () => string;
+  fetchPreviousPage?: () => string;
+  prev?: string;
+  next?: string;
+  from?: string;
+  loadingNext?: boolean;
+  hasNextPage?: boolean;
+  hasPreviousPage?: boolean;
 }
 
 export function map<T, R>(

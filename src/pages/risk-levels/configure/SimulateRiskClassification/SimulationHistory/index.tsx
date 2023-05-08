@@ -49,7 +49,7 @@ export default function SimulationHistory(props: SimulationHistoryProps) {
     async () => {
       const simulations = await api.getSimulations({
         type: params.type,
-        page: params.page,
+        page: params.page ?? 1,
         pageSize: params.pageSize,
         sortField: params.sort[0]?.[0],
         sortOrder: params.sort[0]?.[1] ?? 'ascend',

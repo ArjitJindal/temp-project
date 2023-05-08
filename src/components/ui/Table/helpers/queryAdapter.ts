@@ -5,8 +5,9 @@ import { Adapter } from '@/utils/routing';
 export const defaultQueryAdapter: Adapter<CommonParams> = {
   serializer: (params: CommonParams) => {
     return {
-      page: params.page ?? 1,
+      page: params.from ? undefined : params.page ?? 1,
       pageSize: params.pageSize ?? DEFAULT_PAGE_SIZE,
+      from: params.from,
       sort: (params.sort ?? [])
         .map(([key, order]) => {
           if (order === 'descend') {
@@ -24,6 +25,7 @@ export const defaultQueryAdapter: Adapter<CommonParams> = {
     return {
       page: parseInt(raw.page ?? '') || 1,
       pageSize: parseInt(raw.pageSize ?? '') || DEFAULT_PAGE_SIZE,
+      from: raw.from,
       sort:
         raw.sort?.split(',').map((key) => {
           if (key.startsWith('-')) {

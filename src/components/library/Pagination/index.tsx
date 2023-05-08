@@ -30,6 +30,7 @@ export default function Pagination(props: Props) {
     adjustPagination = false,
     paginationBorder = false,
   } = props;
+
   return (
     <div
       style={{

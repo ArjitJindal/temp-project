@@ -35,7 +35,7 @@ const NarrativeTemplates = () => {
 
   const narrativesQueryResponse = useQuery(NARRATIVE_TEMPLATE_LIST(paginationParams), async () => {
     const { page, pageSize } = paginationParams;
-    return await api.getNarratives({ page, pageSize });
+    return await api.getNarratives({ page: page ?? 1, pageSize });
   });
 
   const deleteNarrativeMutation = useMutation<void, Error, string>(

@@ -1,3 +1,4 @@
+import { useEffect, useState } from 'react';
 import { QueryFunction, QueryKey } from '@tanstack/query-core';
 import { useQueries as useQueriesRQ, useQuery as useQueryRQ } from '@tanstack/react-query';
 import {
@@ -86,11 +87,29 @@ export type PaginatedData<T> = {
   success?: boolean;
   total?: number;
   items: Array<T>;
+  next?: string;
+};
+
+export type CursorPaginatedData<T> = {
+  success?: boolean;
+  total?: number;
+  items: Array<T>;
+  next: string;
+  prev: string;
+  hasNext: boolean;
+  hasPrev: boolean;
 };
 
 export type PaginationParams = {
   pageSize: number;
-  page: number;
+  page?: number;
+  prev?: string;
+  from?: string;
+  next?: string;
+};
+
+export type CursorPaginationParams = {
+  from?: string;
 };
 
 export type PaginatedQueryFunction<T = unknown> = (
@@ -116,11 +135,63 @@ export function usePaginatedQuery<TData = unknown, TQueryKey extends QueryKey = 
   };
 }
 
+export type CursorPaginatedQueryFunction<T = unknown> = (
+  paginationParams: Partial<CursorPaginationParams>,
+) => Promise<CursorPaginatedData<T>>;
+
+export function useCursorQuery<TData = unknown, TQueryKey extends QueryKey = QueryKey>(
+  queryKey: TQueryKey,
+  queryFn: CursorPaginatedQueryFunction<TData>,
+): QueryResult<CursorPaginatedData<TData>> {
+  const [pageParams, setPageParams] = useState({
+    next: '',
+    prev: '',
+    hasNext: false,
+    hasPrev: false,
+  });
+  const [pageParam, setPageParam] = useState('');
+  const results = useQuery<CursorPaginatedData<TData>, CursorPaginatedData<TData>, TQueryKey>(
+    queryKey,
+    () => {
+      const result = queryFn({ from: pageParam });
+      result.then((r) => {
+        setPageParams(r);
+      });
+      return result;
+    },
+  );
+  const fetchPreviousPage = () => {
+    setPageParam(pageParams.prev);
+    return pageParams.prev;
+  };
+  const fetchNextPage = () => {
+    setPageParam(pageParams.next);
+    return pageParams.next;
+  };
+
+  useEffect(() => {
+    results.refetch();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [pageParam]);
+
+  return {
+    ...results,
+    from: pageParam,
+    hasNextPage: pageParams.hasNext,
+    hasPreviousPage: pageParams.hasPrev,
+    fetchPreviousPage,
+    fetchNextPage,
+  };
+}
+
 export function getTotal(data: PaginatedData<unknown>): number {
   return data.total ?? data.items?.length ?? 0;
 }
 
 export function getPageCount(params: PaginationParams, data: PaginatedData<unknown>): number {
   const total = getTotal(data);
-  return Math.ceil(total / params.pageSize);
+  if (params.pageSize) {
+    return Math.ceil(total / params.pageSize);
+  }
+  return 0;
 }

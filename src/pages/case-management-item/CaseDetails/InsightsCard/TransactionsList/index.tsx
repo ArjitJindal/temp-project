@@ -5,7 +5,7 @@ import TransactionsTable, {
   TransactionsTableParams,
 } from '@/pages/transactions/components/TransactionsTable';
 import { useApi } from '@/api';
-import { usePaginatedQuery } from '@/utils/queries/hooks';
+import { useCursorQuery } from '@/utils/queries/hooks';
 import { TRANSACTIONS_LIST } from '@/utils/queries/keys';
 import { DEFAULT_PARAMS_STATE } from '@/components/ui/Table';
 import { useDeepEqualEffect } from '@/utils/hooks';
@@ -33,19 +33,21 @@ export default function TransactionsList(props: Props) {
   }, [selectorParams]);
 
   const api = useApi();
-  const queryResult = usePaginatedQuery(
+  const queryResult = useCursorQuery(
     TRANSACTIONS_LIST({
       ...tableParams,
       ...selectorParams,
       userId,
     }),
-    async (paginationParams) => {
-      const { data, total } = await measure(
+
+    async () => {
+      return await measure(
         () =>
           api.getTransactionsList({
             ...FIXED_API_PARAMS,
             ...tableParams,
-            ...paginationParams,
+            first: tableParams.pageSize,
+            _from: tableParams.from,
             filterUserId: userId,
             filterStatus: selectorParams.selectedRuleActions,
             includeEvents: true,
@@ -53,7 +55,6 @@ export default function TransactionsList(props: Props) {
           }),
         'Get transactions list',
       );
-      return { items: data, total };
     },
   );
 

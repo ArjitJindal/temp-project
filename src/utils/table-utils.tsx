@@ -48,6 +48,7 @@ export function useTableData<D>(
     queryResult,
     (response): PaginatedData<TableDataItem<TableItem<D>>> => ({
       total: response.total,
+
       items: response.items.map(
         (item, index): TableDataItem<TableItem<D>> => ({
           index,

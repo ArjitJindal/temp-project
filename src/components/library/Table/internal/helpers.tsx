@@ -265,7 +265,7 @@ export function useTanstackTable<
 
   const paginationState = {
     pageSize: params.pageSize,
-    pageIndex: params.page - 1,
+    pageIndex: params.page ? params.page - 1 : 0,
   };
 
   const table = TanTable.useReactTable<TableRow<Item>>({

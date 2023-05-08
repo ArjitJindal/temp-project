@@ -14,7 +14,7 @@ import {
 } from '@/apis';
 import { useApi } from '@/api';
 import { DefaultApiGetTransactionsListRequest } from '@/apis/types/ObjectParamAPI';
-import { useQuery } from '@/utils/queries/hooks';
+import { useCursorQuery } from '@/utils/queries/hooks';
 import QueryResultsTable from '@/components/common/QueryResultsTable';
 import { AllParams } from '@/components/library/Table/types';
 import { DEFAULT_PARAMS_STATE } from '@/components/library/Table/consts';
@@ -60,7 +60,7 @@ export function Content(props: { userId: string }) {
     beforeTimestamp: Date.now(),
   });
 
-  const responseRes = useQuery(USERS_ITEM_TRANSACTIONS_HISTORY(userId, params), async () => {
+  const responseRes = useCursorQuery(USERS_ITEM_TRANSACTIONS_HISTORY(userId, params), async () => {
     const [sortField, sortOrder] = params.sort[0] ?? [];
 
     const directionFilter = (params ?? {})['direction'] ?? [];
@@ -71,6 +71,7 @@ export function Content(props: { userId: string }) {
 
     const newParams: DefaultApiGetTransactionsListRequest = {
       ...params,
+      _from: params.from,
       beforeTimestamp: Date.now(),
       sortField: sortField ?? undefined,
       sortOrder: sortOrder ?? undefined,
@@ -96,8 +97,11 @@ export function Content(props: { userId: string }) {
     }
 
     return api.getTransactionsList(newParams).then((result) => ({
-      total: result.total,
-      items: prepareTableData(userId, result.data ?? []),
+      next: result.next,
+      prev: result.prev,
+      hasNext: result.hasNext,
+      hasPrev: result.hasPrev,
+      items: prepareTableData(userId, result.items ?? []),
     }));
   });
 

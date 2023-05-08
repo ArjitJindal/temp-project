@@ -30,9 +30,14 @@ import { AsyncResource, getOr, isFailed, isLoading, success } from '@/utils/asyn
 import Tooltip from '@/components/library/Tooltip';
 import InformationLineIcon from '@/components/ui/icons/Remix/system/information-line.react.svg';
 import Alert from '@/components/library/Alert';
+import CursorPagination from '@/components/library/CursorPagination';
 
 export interface Props<Item extends object, Params extends object = CommonParams> {
   innerRef?: React.Ref<TableRefType>;
+  fetchPreviousPage?: () => string;
+  fetchNextPage?: () => string;
+  hasPreviousPage?: boolean;
+  hasNextPage?: boolean;
   tableId?: string;
   rowKey: FieldAccessor<Item>;
   data: TableData<Item> | AsyncResource<TableData<Item>>;
@@ -87,6 +92,10 @@ function Table<Item extends object, Params extends object = CommonParams>(
     defaultSorting,
     onReload,
     paginationBorder = false,
+    fetchPreviousPage,
+    fetchNextPage,
+    hasPreviousPage,
+    hasNextPage,
   } = props;
 
   const dataRes: AsyncResource<TableData<Item>> = useMemo(() => {
@@ -99,7 +108,6 @@ function Table<Item extends object, Params extends object = CommonParams>(
     (newParams: AllParams<Params>) => {
       onChangeParams?.({
         ...newParams,
-        page: 1,
       });
     },
     [onChangeParams],
@@ -157,6 +165,7 @@ function Table<Item extends object, Params extends object = CommonParams>(
       ? pagination
       : pagination === 'HIDE_FOR_ONE_PAGE' && getPageCount(params, data) > 1;
 
+  const cursorPaginated = fetchNextPage && fetchPreviousPage;
   return (
     <div className={cn(s.root, s[`sizingMode-${sizingMode}`])} data-test="table">
       <Header<Item, Params>
@@ -310,7 +319,19 @@ function Table<Item extends object, Params extends object = CommonParams>(
           );
         }}
       </ScrollContainer>
-      {showPagination && (
+      {cursorPaginated && (
+        <CursorPagination
+          pageSize={params?.pageSize ?? DEFAULT_PAGE_SIZE}
+          hasPreviousPage={hasPreviousPage}
+          hasNextPage={hasNextPage}
+          fetchNextPage={fetchNextPage}
+          fetchPreviousPage={fetchPreviousPage}
+          isDisabled={isLoading(dataRes)}
+          onPageChange={(pageSize) => handleChangeParamsPaginated({ ...params, pageSize })}
+          onFromChange={(from) => handleChangeParamsPaginated({ ...params, from })}
+        />
+      )}
+      {!cursorPaginated && showPagination && (
         <Pagination
           isDisabled={isLoading(dataRes)}
           current={params?.page ?? 1}

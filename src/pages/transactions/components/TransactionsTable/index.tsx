@@ -214,7 +214,6 @@ export default function TransactionsTable(props: Props) {
         title: 'Origin user name',
         type: USER_NAME,
         tooltip: 'Origin is the Sender in a transaction',
-        sorting: true,
       }),
       {
         title: showDetailsView ? 'Origin payment details' : 'Origin method',
@@ -253,7 +252,6 @@ export default function TransactionsTable(props: Props) {
         title: 'Destination user name',
         key: 'destinationUser',
         type: USER_NAME,
-        sorting: true,
         tooltip: 'Destination is the Receiver in a transaction',
       }),
       helper.simple<'destinationPaymentDetails'>({
