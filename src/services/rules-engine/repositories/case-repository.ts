@@ -620,7 +620,7 @@ export class CaseRepository {
   private getDenormalizedCases(pipeline: Document[]) {
     const db = this.mongoDb.db()
     const collection = db.collection<Case>(CASES_COLLECTION(this.tenantId))
-    return collection.aggregate<Case>(pipeline)
+    return collection.aggregate<Case>(pipeline, { allowDiskUse: true })
   }
 
   public async getCasesCount(
