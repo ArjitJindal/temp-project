@@ -432,11 +432,30 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/TransactionsListResponse'
+                $ref: '#/components/schemas/TransactionsResponse'
               examples: {}
       operationId: get-transactions-list
       description: ''
       parameters:
+        - schema:
+            type: number
+          in: query
+          name: first
+        - schema:
+            type: string
+          in: query
+          name: field
+        - schema:
+            type: string
+          in: query
+          name: from
+        - schema:
+            type: string
+            enum:
+              - asc
+              - desc
+          in: query
+          name: order
         - schema:
             $ref: '#/components/schemas/PageSize'
           in: query
@@ -2907,41 +2926,6 @@ paths:
                 $ref: '#/components/schemas/Case'
         '404':
           description: Not found
-  '/cases/{caseId}/transactions':
-    parameters:
-      - schema:
-          type: string
-        name: caseId
-        in: path
-        required: true
-      - schema:
-          $ref: '#/components/schemas/PageSize'
-        in: query
-        name: pageSize
-      - schema:
-          $ref: '#/components/schemas/Page'
-        in: query
-        name: page
-      - schema:
-          type: boolean
-        in: query
-        name: includeUsers
-    get:
-      summary: Get transactions related to case
-      operationId: get-case-transactions
-      x-flagright:
-        permissions:
-          - case-management:case-details:read
-          - transactions:overview:read
-      responses:
-        '200':
-          description: OK
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/TransactionsListResponse'
-        '404':
-          description: Not found
   '/cases/{caseId}/escalate':
     parameters:
       - schema:
@@ -3812,6 +3796,30 @@ components:
       required:
         - total
         - data
+    TransactionsResponse:
+      title: TransactionsResponse
+      type: object
+      description: ''
+      x-examples: {}
+      properties:
+        hasPrev:
+          type: boolean
+        prev:
+          type: string
+        next:
+          type: string
+        hasNext:
+          type: boolean
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/InternalTransaction'
+      required:
+        - prev
+        - next
+        - items
+        - hasNext
+        - hasPrev
     SalesforceAccountResponse:
       title: SalesforceAccountResponse
       type: object

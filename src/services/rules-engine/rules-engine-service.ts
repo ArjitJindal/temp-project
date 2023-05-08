@@ -309,6 +309,7 @@ export class RulesEngineService {
   ): Promise<UserMonitoringResult> {
     const ruleInstances =
       await this.ruleInstanceRepository.getActiveRuleInstances('USER')
+
     const rules = await this.ruleRepository.getRulesByIds(
       ruleInstances.map((ruleInstance) => ruleInstance.ruleId)
     )

@@ -1,6 +1,5 @@
 import { FileInfo } from '@/@types/openapi-internal/FileInfo'
 import { DefaultApiGetTransactionsListRequest } from '@/@types/openapi-internal/RequestParameters'
-import { TransactionsListResponse } from '@/@types/openapi-internal/TransactionsListResponse'
 import { MongoDbTransactionRepository } from '@/services/rules-engine/repositories/mongodb-transaction-repository'
 import { InternalTransaction } from '@/@types/openapi-internal/InternalTransaction'
 import { Currency } from '@/utils/currency-utils'
@@ -31,14 +30,13 @@ export class TransactionService {
     this.riskRepository = riskRepository
   }
 
-  public async getTransactions(
-    params: DefaultApiGetTransactionsListRequest
-  ): Promise<TransactionsListResponse> {
-    const result = await this.transactionRepository.getTransactions(params)
+  public async getTransactions(params: DefaultApiGetTransactionsListRequest) {
+    const result =
+      await this.transactionRepository.getTransactionsCursorPaginate(params)
     const riskClassificationValues =
       await this.riskRepository.getRiskClassificationValues()
 
-    result.data = result.data.map((transaction) => {
+    result.items = result.items.map((transaction) => {
       if (transaction?.arsScore?.arsScore != null) {
         transaction.arsScore.riskLevel = getRiskLevelFromScore(
           riskClassificationValues,

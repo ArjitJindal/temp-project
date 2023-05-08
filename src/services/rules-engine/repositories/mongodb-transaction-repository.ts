@@ -35,6 +35,7 @@ import {
   OptionalPagination,
   COUNT_QUERY_LIMIT,
   OptionalPaginationParams,
+  cursorPaginate,
 } from '@/utils/pagination'
 import { PaymentDetails } from '@/@types/tranasction/payment-type'
 import { getPaymentDetailsIdentifiers } from '@/core/dynamodb/dynamodb-keys'
@@ -343,7 +344,6 @@ export class MongoDbTransactionRepository
         ]
       )
     }
-
     return collection.aggregate<InternalTransaction>(pipeline)
   }
 
@@ -377,6 +377,38 @@ export class MongoDbTransactionRepository
     const cursor = await this.getTransactionsCursor(params)
     const total = await this.getTransactionsCount(params)
     return { total, data: await cursor.toArray() }
+  }
+
+  public async getTransactionsCursorPaginate(
+    params: OptionalPagination<DefaultApiGetTransactionsListRequest>
+  ): Promise<{
+    items: InternalTransaction[]
+    next: string
+    prev: string
+    hasNext: boolean
+    hasPrev: boolean
+  }> {
+    const db = this.mongoDb.db()
+    const name = TRANSACTIONS_COLLECTION(this.tenantId)
+    const collection = db.collection<InternalTransaction>(name)
+    const query = this.getTransactionsMongoQuery(params)
+
+    return await cursorPaginate<InternalTransaction>(
+      collection.find(query),
+      {
+        first: params.first || 20,
+        sortField: params.sortField,
+        fromCursorKey: params._from,
+        sortOrder: params.sortOrder,
+      },
+      {
+        'destinationAmountDetails.transactionAmount': 'number',
+        'originAmountDetails.transactionAmount': 'number',
+        'arsScore.arsScore': 'number',
+        'arsScore.riskLevel': 'number',
+        timestamp: 'number',
+      }
+    )
   }
 
   public async getInternalTransaction(

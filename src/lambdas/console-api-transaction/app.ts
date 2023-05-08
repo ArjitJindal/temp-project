@@ -15,6 +15,8 @@ import { CsvHeaderSettings, ExportService } from '@/services/export'
 import { InternalTransaction } from '@/@types/openapi-internal/InternalTransaction'
 import { getDynamoDbClient } from '@/utils/dynamodb'
 import { RiskRepository } from '@/services/risk-scoring/repositories/risk-repository'
+import { UserRepository } from '@/services/users/repositories/user-repository'
+import { TransactionEventRepository } from '@/services/rules-engine/repositories/transaction-event-repository'
 
 export type TransactionViewConfig = {
   TMP_BUCKET: string
@@ -85,6 +87,11 @@ export const transactionsViewHandler = lambdaApi()(
       tenantId,
       client
     )
+    const userRepository = new UserRepository(tenantId, { mongoDb: client })
+    const transactionEventsRepository = new TransactionEventRepository(
+      tenantId,
+      { mongoDb: client }
+    )
     const riskRepository = new RiskRepository(tenantId, {
       dynamoDb,
       mongoDb: client,
@@ -126,6 +133,10 @@ export const transactionsViewHandler = lambdaApi()(
         filterDestinationPaymentMethod,
         filterTagKey,
         filterTagValue,
+        first,
+        field,
+        from,
+        order,
       } = event.queryStringParameters as any
       const transactionsGetSegment = await addNewSubsegment(
         'Transaction Service',
@@ -137,6 +148,10 @@ export const transactionsViewHandler = lambdaApi()(
         JSON.stringify(event.queryStringParameters)
       )
       const params: DefaultApiGetTransactionsListRequest = {
+        first: parseInt(first) || 50,
+        field,
+        _from: from,
+        order,
         page,
         pageSize,
         afterTimestamp: parseInt(afterTimestamp) || undefined,
@@ -173,7 +188,38 @@ export const transactionsViewHandler = lambdaApi()(
         filterTagValue,
       }
       transactionsGetSegment?.close()
-      return transactionService.getTransactions(params)
+      const response = await transactionService.getTransactions(params)
+      if (includeUsers) {
+        const userIds = Array.from(
+          new Set<string>(
+            response.items.flatMap(
+              (t) =>
+                [t.originUserId, t.destinationUserId].filter(
+                  Boolean
+                ) as string[]
+            )
+          )
+        )
+        const users = await userRepository.getMongoUsersByIds(userIds)
+        const userMap = new Map()
+        users.forEach((u) => userMap.set(u.userId, u))
+        response.items.map((t) => {
+          t.originUser = userMap.get(t.originUserId)
+          t.destinationUser = userMap.get(t.destinationUserId)
+          return t
+        })
+      }
+      if (includeEvents) {
+        const events =
+          await transactionEventsRepository.getMongoTransactionEvents(
+            response.items.map((t) => t.transactionId)
+          )
+        response.items.map((t) => {
+          t.events = events.get(t.transactionId)
+          return t
+        })
+      }
+      return response
     } else if (
       event.httpMethod === 'GET' &&
       event.path.endsWith('/transactions/stats/by-types')

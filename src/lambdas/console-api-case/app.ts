@@ -270,32 +270,6 @@ export const casesHandler = lambdaApi()(
       return saveCommentResult
     } else if (
       event.httpMethod === 'GET' &&
-      event.resource === '/cases/{caseId}/transactions' &&
-      event.pathParameters?.caseId
-    ) {
-      const { page, pageSize, includeUsers } =
-        event.queryStringParameters as any
-      const caseGetTransactionsSegment = await addNewSubsegment(
-        'Case Service',
-        'Get Case Transactions'
-      )
-      caseGetTransactionsSegment?.addAnnotation('tenantId', tenantId)
-      caseGetTransactionsSegment?.addAnnotation(
-        'caseId',
-        event.pathParameters.caseId
-      )
-      const caseTransactions = await caseService.getCaseTransactions(
-        event.pathParameters.caseId,
-        {
-          page,
-          pageSize,
-          includeUsers: includeUsers === 'true',
-        }
-      )
-      caseGetTransactionsSegment?.close()
-      return caseTransactions
-    } else if (
-      event.httpMethod === 'GET' &&
       event.resource === '/cases/{caseId}/rules' &&
       event.pathParameters?.caseId
     ) {

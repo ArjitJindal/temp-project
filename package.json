@@ -31,7 +31,7 @@
     "deploy:dev": "export ENV=dev && cdk deploy dev-tarpon --require-approval=never && npm run cdktf:init && cdktf deploy --quiet dev-tarpon --auto-approve",
     "deploy:dev:clean": "npm run clear && npm install && ENV=dev npm run build && npm run synth:dev && npm run deploy:dev",
     "deploy:qa": "export QA_SUBDOMAIN=${QA_SUBDOMAIN:-qa$(git rev-parse --abbrev-ref HEAD | shasum | head -c5)} && npm run clear && npm install && ENV=dev npm run build && npm run synth:dev:user && ENV=dev:user cdk deploy dev-tarpon-$QA_SUBDOMAIN --require-approval never",
-    "destroy:qa": "ENV=dev:user cdk destroy dev-tarpon-$QA_SUBDOMAIN --require-approval never -f",
+    "destroy:qa": "npm run clear && npm install && ENV=dev npm run build && ENV=dev npm run openapi:augment && ENV=dev:user cdk destroy dev-tarpon-$QA_SUBDOMAIN --require-approval never -f",
     "deploy:sandbox": "ENV=sandbox cdk deploy sandbox-tarpon --require-approval=never && npm run cdktf:init && cdktf deploy --quiet sandbox-tarpon --auto-approve",
     "deploy:sandbox:clean": "npm run clear && npm install && npm run build && npm run synth:sandbox && npm run deploy:sandbox",
     "deploy:prod:asia-1": "ENV=prod:asia-1 cdk deploy prod-tarpon  --require-approval=never",

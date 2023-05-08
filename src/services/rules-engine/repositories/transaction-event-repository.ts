@@ -103,4 +103,23 @@ export class TransactionEventRepository {
 
     return await transactionEventCollection.countDocuments(query)
   }
+  public async getMongoTransactionEvents(
+    transactionIds: string[]
+  ): Promise<Map<string, TransactionEvent[]>> {
+    const db = this.mongoDb.db()
+    const transactionEventCollection = await db
+      .collection<TransactionEvent>(
+        TRANSACTION_EVENTS_COLLECTION(this.tenantId)
+      )
+      .find({ transactionId: { $in: transactionIds } })
+
+    const events = new Map<string, TransactionEvent[]>()
+    await transactionEventCollection.forEach((event) => {
+      events.set(
+        event.transactionId,
+        (events.get(event.transactionId) ?? []).concat(event)
+      )
+    })
+    return events
+  }
 }
