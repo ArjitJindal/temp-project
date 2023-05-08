@@ -627,17 +627,23 @@ export class CaseService {
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
     const { statusChanges, lastStatusChange, ...mainCaseAttributes } = c
 
+    let childTransactionIds =
+      alertEscalations?.flatMap((a) => a.transactionIds || []) || []
+    if (c.caseHierarchyDetails?.childTransactionIds) {
+      childTransactionIds = childTransactionIds.concat(
+        c.caseHierarchyDetails?.childTransactionIds
+      )
+    }
+    childTransactionIds = _.uniq(childTransactionIds)
+
     let caseHierarchyDetailsForOriginalCase: CaseHierarchyDetails = {
       childCaseIds: [childCaseId],
-      childTransactionIds:
-        alertEscalations?.flatMap((a) => a.transactionIds || []) || [],
+      childTransactionIds,
     }
     if (c.caseHierarchyDetails?.childCaseIds) {
       caseHierarchyDetailsForOriginalCase = {
         childCaseIds: [...c.caseHierarchyDetails.childCaseIds, childCaseId],
-        childTransactionIds: c.caseHierarchyDetails.childTransactionIds?.concat(
-          alertEscalations?.flatMap((a) => a.transactionIds || []) || []
-        ),
+        childTransactionIds,
       }
     }
 

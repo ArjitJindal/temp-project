@@ -184,6 +184,9 @@ describe('Case service', () => {
         alerts: [TEST_ALERT_1, TEST_ALERT_2],
         caseTransactionsIds: CASE_TRANSACTION_IDS,
         caseTransactions: CASE_TRANSACTIONS,
+        caseHierarchyDetails: {
+          childTransactionIds: ['T-101'],
+        },
       })
 
       await caseService.escalateAlerts(
@@ -202,6 +205,9 @@ describe('Case service', () => {
         reviewAssignments: [
           { assigneeUserId: 'ACCOUNT-1', timestamp: expect.any(Number) },
         ],
+        caseHierarchyDetails: {
+          parentCaseId: 'C-2',
+        },
         alerts: [
           {
             ...TEST_ALERT_1,
@@ -227,6 +233,9 @@ describe('Case service', () => {
       expect(oldCase).toMatchObject({
         caseId: 'C-2',
         caseStatus: 'OPEN',
+        caseHierarchyDetails: {
+          childTransactionIds: ['T-1', 'T-2', 'T-101'],
+        },
       })
     })
     test('escalateAlerts throws error if caseId is null', async () => {
