@@ -89,32 +89,34 @@ export default function UserManualRiskPanel(props: Props) {
   };
 
   const handleChangeRiskLevel = (newRiskLevel: RiskLevel) => {
-    setSyncState(loading(getOr(syncState, null)));
-    api
-      .pulseManualRiskAssignment({
-        userId: userId,
-        ManualRiskAssignmentPayload: {
-          riskLevel: newRiskLevel,
-        },
-      })
-      .then((response) => {
-        // todo: i18n
-        message.success('User risk updates successfully!');
-        setSyncState(success(response));
-      })
-      .catch((e) => {
-        console.error(e);
-        // todo: i18n
-        setSyncState(failed(e instanceof Error ? e.message : 'Unknown error'));
-        message.fatal('Unable to update user risk level!', e);
-      });
+    if (!isLocked) {
+      setSyncState(loading(getOr(syncState, null)));
+      api
+        .pulseManualRiskAssignment({
+          userId: userId,
+          ManualRiskAssignmentPayload: {
+            riskLevel: newRiskLevel,
+          },
+        })
+        .then((response) => {
+          // todo: i18n
+          message.success('User risk updates successfully!');
+          setSyncState(success(response));
+        })
+        .catch((e) => {
+          console.error(e);
+          // todo: i18n
+          setSyncState(failed(e instanceof Error ? e.message : 'Unknown error'));
+          message.fatal('Unable to update user risk level!', e);
+        });
+    }
   };
 
   return (
     <Form.Item name="field" style={{ margin: 0 }}>
       <div className={s.root}>
         <RiskLevelSwitch
-          disabled={isLoading(syncState) || isFailed(syncState)}
+          disabled={isLoading(syncState) || isFailed(syncState) || isLocked}
           current={getOr(
             map(
               syncState,
