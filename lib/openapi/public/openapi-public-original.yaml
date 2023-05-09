@@ -1253,6 +1253,11 @@ components:
           type: array
           items:
             type: string
+        userSegment:
+          type: string
+          enum:
+            - RETAIL
+            - PROFESSIONAL
         pepStatus:
           type: array
           items:
@@ -2940,13 +2945,6 @@ components:
           $ref: '#/components/schemas/BusinessEntityLink'
         acquisitionChannel:
           $ref: '#/components/schemas/AcquisitionChannel'
-        mccDetails:
-          $ref: '#/components/schemas/MCCDetails'
-        tags:
-          type: array
-          description: Additional information that can be added via tags
-          items:
-            $ref: '#/components/schemas/Tag'
         savedPaymentDetails:
           type: array
           items:
@@ -2960,6 +2958,13 @@ components:
               - $ref: '#/components/schemas/UPIDetails'
               - $ref: '#/components/schemas/WalletDetails'
               - $ref: '#/components/schemas/CheckDetails'
+        mccDetails:
+          $ref: '#/components/schemas/MCCDetails'
+        tags:
+          type: array
+          description: Additional information that can be added via tags
+          items:
+            $ref: '#/components/schemas/Tag'
     BusinessUsersResponse:
       title: BusinessUsersResponse
       type: object
