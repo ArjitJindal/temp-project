@@ -5,8 +5,10 @@ import { getDynamoDbClient } from '@/utils/dynamodb'
 import { ApiUsageMetricsService } from '@/lambdas/cron-job-midnight/services/api-usage-metrics-service'
 
 async function migrateTenant(tenant: Tenant, auth0Domain: string) {
+  if (!process.env.ENV?.startsWith('prod')) {
+    return
+  }
   if (
-    process.env.ENV === 'prod' &&
     ['kevin', 'bukuwarung', 'ziina', 'nextpay'].includes(
       tenant.name.toLowerCase()
     )
