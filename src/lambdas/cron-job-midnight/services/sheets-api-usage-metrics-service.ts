@@ -59,16 +59,31 @@ export class SheetsApiUsageMetricsService {
   private mongoDb: MongoClient
   private tenantId: string
   private monthlyCounts: DataCounts
+  private startTimestamp: number
+  private endTimestamp: number
 
   constructor(
     tenant: Tenant,
     connections: { mongoDb: MongoClient },
-    monthlyCounts: DataCounts
+    monthlyCounts: DataCounts,
+    timestamps: { startTimestamp: number; endTimestamp: number }
   ) {
     this.tenant = tenant
     this.tenantId = tenant.id
     this.mongoDb = connections.mongoDb
     this.monthlyCounts = monthlyCounts
+    this.startTimestamp = dayjs(timestamps.startTimestamp)
+      .startOf('day')
+      .valueOf()
+    this.endTimestamp = dayjs(timestamps.endTimestamp).endOf('day').valueOf()
+  }
+
+  private getMonthStartTimestamp(): number {
+    return dayjs(this.startTimestamp).startOf('month').valueOf()
+  }
+
+  private getMonthEndTimestamp(): number {
+    return dayjs(this.startTimestamp).endOf('month').valueOf()
   }
 
   private async createHeadersIfNotExists(
@@ -162,36 +177,35 @@ export class SheetsApiUsageMetricsService {
     }, `Error while initializing SheetsApiUsageMetricsService for tenant ${this.tenantId}`)
   }
 
-  private getDailyUsageMetadata(
-    startTimestamp: number,
-    endTimestamp: number
-  ): {
+  private getDailyUsageMetadata(): {
     [key: string]: string | number
   } {
     return {
-      [META_DATA_HEADERS_DAILY.START_TIMESTAMP]: startTimestamp,
-      [META_DATA_HEADERS_DAILY.END_TIMESTAMP]: endTimestamp,
-      [META_DATA_HEADERS_DAILY.DATE]:
-        dayjs(startTimestamp).format('YYYY-MM-DD'),
+      [META_DATA_HEADERS_DAILY.START_TIMESTAMP]: this.startTimestamp,
+      [META_DATA_HEADERS_DAILY.END_TIMESTAMP]: this.endTimestamp,
+      [META_DATA_HEADERS_DAILY.DATE]: dayjs(this.startTimestamp).format(
+        'YYYY-MM-DD'
+      ),
       [META_DATA_HEADERS_DAILY.TENANT_ID]: this.tenantId,
       [META_DATA_HEADERS_DAILY.TENANT_NAME]: this.tenant.name,
       [META_DATA_HEADERS_DAILY.REGION]: this.getRegion(),
     }
   }
 
-  private getMonthlyUsageMetadata(
-    startTimestamp: number,
-    endTimestamp: number
-  ): {
+  private getMonthlyUsageMetadata(): {
     [key: string]: string | number
   } {
     return {
-      [META_DATA_HEADERS_MONTHLY.START_TIMESTAMP]: dayjs(startTimestamp)
+      [META_DATA_HEADERS_MONTHLY.START_TIMESTAMP]: dayjs(this.startTimestamp)
         .startOf('month')
         .valueOf(),
-      [META_DATA_HEADERS_MONTHLY.END_TIMESTAMP]: endTimestamp,
-      [META_DATA_HEADERS_MONTHLY.MONTH]: dayjs(startTimestamp).format('MMMM'),
-      [META_DATA_HEADERS_MONTHLY.YEAR]: dayjs(startTimestamp).format('YYYY'),
+      [META_DATA_HEADERS_MONTHLY.END_TIMESTAMP]: this.endTimestamp,
+      [META_DATA_HEADERS_MONTHLY.MONTH]: dayjs(this.startTimestamp).format(
+        'MMMM'
+      ),
+      [META_DATA_HEADERS_MONTHLY.YEAR]: dayjs(this.startTimestamp).format(
+        'YYYY'
+      ),
       [META_DATA_HEADERS_MONTHLY.TENANT_ID]: this.tenantId,
       [META_DATA_HEADERS_MONTHLY.TENANT_NAME]: this.tenant.name,
       [META_DATA_HEADERS_MONTHLY.REGION]: this.getRegion(),
@@ -281,74 +295,52 @@ export class SheetsApiUsageMetricsService {
     }
   }
 
-  private async updateUsageMetricsPrivate(
-    startTimestamp: number,
-    endTimestamp: number
-  ): Promise<void> {
-    const dailyUsageMetrics = await this.getDailyUsageMetricsData(
-      startTimestamp,
-      endTimestamp
-    )
+  private async updateUsageMetricsPrivate(): Promise<void> {
+    const dailyUsageMetrics = await this.getDailyUsageMetricsData()
     const transformedDailyUsageMetrics =
       this.transformDailyUsageMetrics(dailyUsageMetrics)
     await this.publishDailyUsageMetrics(
-      _.merge(
-        this.getDailyUsageMetadata(startTimestamp, endTimestamp),
-        transformedDailyUsageMetrics
-      )
+      _.merge(this.getDailyUsageMetadata(), transformedDailyUsageMetrics)
     )
-    const monthlyUsageMetrics = await this.getMonthlyUsageMetricsData(
-      startTimestamp,
-      endTimestamp
-    )
+    const monthlyUsageMetrics = await this.getMonthlyUsageMetricsData()
 
     const transformedMonthlyUsageMetrics =
       this.transformMonthlyUsageMetrics(monthlyUsageMetrics)
 
     await this.publishMonthlyUsageMetrics(
-      _.merge(
-        this.getMonthlyUsageMetadata(startTimestamp, endTimestamp),
-        transformedMonthlyUsageMetrics
-      )
+      _.merge(this.getMonthlyUsageMetadata(), transformedMonthlyUsageMetrics)
     )
   }
 
-  public async updateUsageMetrics(
-    startTimestamp: number,
-    endTimestamp: number
-  ) {
+  public async updateUsageMetrics() {
     await exponentialRetry(
-      async () =>
-        await this.updateUsageMetricsPrivate(startTimestamp, endTimestamp),
-      `Error while updating usage metrics for tenant '${this.tenantId}' with startTimestamp '${startTimestamp}' and endTimestamp '${endTimestamp}'`
+      async () => await this.updateUsageMetricsPrivate(),
+      `Error while updating usage metrics for tenant '${this.tenantId}' with startTimestamp '${this.startTimestamp}' and endTimestamp '${this.endTimestamp}'`
     )
   }
 
-  private async getDailyUsageMetricsData(
-    startTimestamp: number,
-    endTimestamp: number
-  ): Promise<Array<ApiUsageMetrics>> {
+  private async getDailyUsageMetricsData(): Promise<Array<ApiUsageMetrics>> {
     const metricsCollection = this.mongoDb
       .db()
       .collection<ApiUsageMetrics>(METRICS_COLLECTION(this.tenantId))
 
     const dailyUsageMetrics = await metricsCollection
-      .find({ startTimestamp, endTimestamp })
+      .find({
+        startTimestamp: this.startTimestamp,
+        endTimestamp: this.endTimestamp,
+      })
       .toArray()
 
     if (!dailyUsageMetrics?.length) {
       throw new Error(
-        `No daily usage metrics found for tenant '${this.tenantId}' with startTimestamp '${startTimestamp}' and endTimestamp '${endTimestamp}'`
+        `No daily usage metrics found for tenant '${this.tenantId}' with startTimestamp '${this.startTimestamp}' and endTimestamp '${this.endTimestamp}'`
       )
     }
 
     return dailyUsageMetrics
   }
 
-  private async getMonthlyUsageMetricsData(
-    startTimestamp: number,
-    endTimestamp: number
-  ): Promise<Array<ApiUsageMetrics>> {
+  private async getMonthlyUsageMetricsData(): Promise<Array<ApiUsageMetrics>> {
     const metricsCollectionName = METRICS_COLLECTION(this.tenantId)
 
     const metricsCollection = this.mongoDb
@@ -358,17 +350,19 @@ export class SheetsApiUsageMetricsService {
     const monthlyUsageMetrics = await metricsCollection
       .find({
         startTimestamp: {
-          $gte: dayjs(startTimestamp).startOf('month').valueOf(),
+          $gte: this.getMonthStartTimestamp(),
         },
         endTimestamp: {
-          $lte: endTimestamp,
+          $lte: this.getMonthEndTimestamp(),
         },
       })
       .toArray()
 
     if (!monthlyUsageMetrics?.length) {
       throw new Error(
-        `No monthly usage metrics found for tenant '${this.tenantId}' with startTimestamp '${startTimestamp}' and endTimestamp '${endTimestamp}'`
+        `No monthly usage metrics found for tenant '${
+          this.tenantId
+        }' with startTimestamp '${this.getMonthStartTimestamp()}' and endTimestamp '${this.getMonthEndTimestamp()}'`
       )
     }
 

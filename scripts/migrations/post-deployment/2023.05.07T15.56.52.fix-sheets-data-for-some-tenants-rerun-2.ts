@@ -1,4 +1,5 @@
 import { migrateAllTenants } from '../utils/tenant'
+import dayjs from '@/utils/dayjs'
 import { getMongoDbClient } from '@/utils/mongoDBUtils'
 import { Tenant } from '@/services/accounts'
 import { getDynamoDbClient } from '@/utils/dynamodb'
@@ -8,12 +9,8 @@ async function migrateTenant(tenant: Tenant, auth0Domain: string) {
   if (!process.env.ENV?.startsWith('prod')) {
     return
   }
-  if (
-    ['kevin', 'bukuwarung', 'ziina', 'nextpay'].includes(
-      tenant.name.toLowerCase()
-    )
-  ) {
-    let startTimestamp = 1658908800000
+  if (['kevin', 'bukuwarung'].includes(tenant.name.toLowerCase())) {
+    let startTimestamp = 1680652800000
     const endTimestamp = 1683417600000
 
     const mongoDb = await getMongoDbClient()
@@ -23,14 +20,17 @@ async function migrateTenant(tenant: Tenant, auth0Domain: string) {
       const apiMetricsService = new ApiUsageMetricsService(
         tenant,
         { mongoDb, dynamoDb },
-        { startTimestamp, endTimestamp: startTimestamp + 86400000 }
+        {
+          startTimestamp,
+          endTimestamp: dayjs(startTimestamp).add(1, 'day').valueOf(),
+        }
       )
       await apiMetricsService.publishApiUsageMetrics({
         tenant,
         auth0Domain,
       })
 
-      startTimestamp += 86400000
+      startTimestamp = dayjs(startTimestamp).add(1, 'day').valueOf()
     }
   }
 }

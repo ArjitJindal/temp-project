@@ -55,19 +55,15 @@ async function migrateTenant(tenant: Tenant) {
       { startTimestamp, endTimestamp }
     )
 
-    const sheetsApiUsageMetricsService = new SheetsApiUsageMetricsService(
-      tenant,
-      { mongoDb },
-      await apiUsageMetricsService.getMonthlyData()
-    )
-
-    await sheetsApiUsageMetricsService.initialize()
-
     for (const { startTimestamp, endTimestamp } of timestamps) {
-      await sheetsApiUsageMetricsService.updateUsageMetrics(
-        startTimestamp,
-        endTimestamp
+      const sheetsApiUsageMetricsService = new SheetsApiUsageMetricsService(
+        tenant,
+        { mongoDb },
+        await apiUsageMetricsService.getMonthlyData(),
+        { startTimestamp, endTimestamp }
       )
+      await sheetsApiUsageMetricsService.initialize()
+      await sheetsApiUsageMetricsService.updateUsageMetrics()
     }
   }
 }

@@ -59,16 +59,18 @@ export class ApiUsageMetricsService {
     this.tenantId = tenant.id
     this.tenant = tenant
     this.connections = connections
-    this.startTimestamp = timestamp.startTimestamp
-    this.endTimestamp = timestamp.endTimestamp
+    this.startTimestamp = dayjs(timestamp.startTimestamp)
+      .startOf('day')
+      .valueOf()
+    this.endTimestamp = dayjs(timestamp.endTimestamp).startOf('day').valueOf()
   }
 
-  private getMonthStartTimestamp(timestamp: number): number {
-    return dayjs(timestamp).startOf('month').valueOf()
+  private getMonthStartTimestamp(): number {
+    return dayjs(this.startTimestamp).startOf('month').valueOf()
   }
 
-  private getMonthEndTimestamp(timestamp: number): number {
-    return dayjs(timestamp).endOf('month').valueOf()
+  private getMonthEndTimestamp(): number {
+    return dayjs(this.startTimestamp).endOf('month').valueOf()
   }
 
   private async getTransactionsCount(monthly = false): Promise<number> {
@@ -82,10 +84,10 @@ export class ApiUsageMetricsService {
         {
           beforeTimestamp: !monthly
             ? this.endTimestamp
-            : this.getMonthEndTimestamp(this.startTimestamp),
+            : this.getMonthEndTimestamp(),
           afterTimestamp: !monthly
             ? this.startTimestamp
-            : this.getMonthStartTimestamp(this.startTimestamp),
+            : this.getMonthStartTimestamp(),
         },
         false
       )
@@ -102,12 +104,8 @@ export class ApiUsageMetricsService {
     const transactionEventsCount =
       await transactionEventsRepository.getTransactionEventCount({
         timestamp: {
-          $gte: !monthly
-            ? this.startTimestamp
-            : this.getMonthStartTimestamp(this.startTimestamp),
-          $lte: !monthly
-            ? this.endTimestamp
-            : this.getMonthEndTimestamp(this.startTimestamp),
+          $gte: !monthly ? this.startTimestamp : this.getMonthStartTimestamp(),
+          $lte: !monthly ? this.endTimestamp : this.getMonthEndTimestamp(),
         },
       })
 
@@ -122,12 +120,8 @@ export class ApiUsageMetricsService {
 
     return await usersRepository.getUsersCount({
       createdTimestamp: {
-        $gte: !monthly
-          ? this.startTimestamp
-          : this.getMonthStartTimestamp(this.startTimestamp),
-        $lt: !monthly
-          ? this.endTimestamp
-          : this.getMonthEndTimestamp(this.startTimestamp),
+        $gte: !monthly ? this.startTimestamp : this.getMonthStartTimestamp(),
+        $lt: !monthly ? this.endTimestamp : this.getMonthEndTimestamp(),
       },
     })
   }
@@ -177,12 +171,8 @@ export class ApiUsageMetricsService {
     )
 
     return await sanctionsSearchRepository.getNumberOfSearchesBetweenTimestamps(
-      monthly
-        ? this.getMonthStartTimestamp(this.startTimestamp)
-        : this.startTimestamp,
-      monthly
-        ? this.getMonthEndTimestamp(this.startTimestamp)
-        : this.endTimestamp
+      monthly ? this.getMonthStartTimestamp() : this.startTimestamp,
+      monthly ? this.getMonthEndTimestamp() : this.endTimestamp
     )
   }
 
@@ -193,12 +183,8 @@ export class ApiUsageMetricsService {
     )
 
     return ibanApiRepository.getNumberOfResolutionsBetweenTimestamps(
-      monthly
-        ? this.getMonthStartTimestamp(this.startTimestamp)
-        : this.startTimestamp,
-      monthly
-        ? this.getMonthEndTimestamp(this.startTimestamp)
-        : this.endTimestamp
+      monthly ? this.getMonthStartTimestamp() : this.startTimestamp,
+      monthly ? this.getMonthEndTimestamp() : this.endTimestamp
     )
   }
 
@@ -249,15 +235,12 @@ export class ApiUsageMetricsService {
     const sheetsService = new SheetsApiUsageMetricsService(
       this.tenant,
       { mongoDb: this.connections.mongoDb },
-      monthlyData
+      monthlyData,
+      { startTimestamp: this.startTimestamp, endTimestamp: this.endTimestamp }
     )
 
     await sheetsService.initialize()
-
-    await sheetsService.updateUsageMetrics(
-      this.startTimestamp,
-      this.endTimestamp
-    )
+    await sheetsService.updateUsageMetrics()
   }
 
   public async publishApiUsageMetrics(tenantInfo: TenantInfo): Promise<void> {
