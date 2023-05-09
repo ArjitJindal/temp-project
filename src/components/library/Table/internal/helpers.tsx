@@ -198,6 +198,7 @@ export function useTanstackTable<
       const newState: TanTable.SortingState = applyUpdater(sorting, changes);
       onChangeParams({
         ...params,
+        from: '',
         sort:
           newState.length === 0 && defaultSorting != null
             ? [defaultSorting]
