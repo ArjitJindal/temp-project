@@ -15,6 +15,8 @@ import {
 } from '@/test-utils/resources/mock-ca-search-response'
 import { IBANDetails } from '@/@types/openapi-public/IBANDetails'
 
+process.env.IBAN_API_KEY = 'fake'
+
 const TEST_IBAN_BANK_NAME_MAPPING: { [key: string]: IBANDetails } = {
   AL35202111090000000001234567: {
     method: 'IBAN',
@@ -51,6 +53,7 @@ jest.mock('@/services/iban.com', () => {
     IBANService: jest.fn().mockImplementation(() => {
       return {
         resolveBankName: originalModule.IBANService.prototype.resolveBankName,
+        initialize: originalModule.IBANService.prototype.initialize,
         tenantId: TEST_TENANT_ID,
         validateIBAN: jest.fn().mockImplementation((iban: string) => {
           return TEST_IBAN_BANK_NAME_MAPPING[iban]

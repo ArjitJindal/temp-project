@@ -80,7 +80,9 @@ export default class SanctionsBankUserRule extends UserRule<SanctionsBankUserRul
         bankInfos = await ibanService.resolveBankName(bankInfos)
       } catch (e) {
         logger.error(
-          'Failed to resolve bank names. Feature IBAN_RESOLUTION might be missing.'
+          `Failed to resolve bank names. Feature IBAN_RESOLUTION might be missing. ${
+            (e as Error)?.message
+          }`
         )
       }
     }

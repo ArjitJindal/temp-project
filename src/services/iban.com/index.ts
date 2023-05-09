@@ -1,7 +1,6 @@
 // API Reference: https://www.iban.com/validation-api
 
 import { URLSearchParams } from 'url'
-import { Forbidden } from 'http-errors'
 import fetch from 'node-fetch'
 import _ from 'lodash'
 import { electronicFormatIBAN, isValidIBAN } from 'ibantools'
@@ -66,31 +65,55 @@ function sanitizeAndValidateIban(iban: string): string | null {
   }
   return sanitizedIban
 }
+
+async function getApiKey(): Promise<string> {
+  if (process.env.IBAN_API_KEY) {
+    return process.env.IBAN_API_KEY
+  }
+  return (await getSecret<{ apiKey: string }>(IBANCOM_CREDENTIALS_SECRET_ARN))!
+    .apiKey
+}
+
 export class IBANService {
-  initPromise: Promise<void>
+  initPromise!: Promise<void>
   apiKey!: string
   ibanApiRepository!: IBANApiRepository
   tenantId: string
+  hasIbanResolutionFeature!: boolean
 
   constructor(tenantId: string) {
-    this.initPromise = this.initialize(tenantId)
     this.tenantId = tenantId
   }
 
-  private async initialize(tenantId: string) {
-    if (!(await tenantHasFeature(tenantId, 'IBAN_RESOLUTION'))) {
-      throw new Forbidden('IBAN_RESOLUTION feature is required')
+  public async resolveBankName(bankInfos: BankInfo[]): Promise<BankInfo[]> {
+    await this.initialize()
+    if (!this.hasIbanResolutionFeature) {
+      logger.error(`IBAN_RESOLUTION feature flag required to resolve bank name`)
+      return []
     }
-    const mongoDb = await getMongoDbClient()
-    this.ibanApiRepository = new IBANApiRepository(tenantId, mongoDb)
-    this.apiKey = await this.getApiKey()
+
+    const result: BankInfo[] = []
+    for (const bankInfo of bankInfos) {
+      if (!bankInfo.bankName && bankInfo.iban) {
+        const ibanDetails = await this.validateIBAN(bankInfo.iban)
+        result.push({ bankName: ibanDetails?.bankName, iban: bankInfo.iban })
+      } else {
+        result.push(bankInfo)
+      }
+    }
+    return result
   }
 
   public async validateIBAN(
     rawIban: string,
     force = false
   ): Promise<IBANDetails | null> {
-    await this.initPromise
+    await this.initialize()
+    if (!this.hasIbanResolutionFeature) {
+      logger.error(`IBAN_RESOLUTION feature flag required to resolve bank name`)
+      return null
+    }
+
     const iban = sanitizeAndValidateIban(rawIban)
     if (!iban) {
       logger.error(`'${rawIban}' is not a valid IBAN (ibantools)`)
@@ -135,13 +158,17 @@ export class IBANService {
     return result
   }
 
-  private async getApiKey(): Promise<string> {
-    if (process.env.IBAN_API_KEY) {
-      return process.env.IBAN_API_KEY
+  public async initialize() {
+    if (this.initPromise) {
+      return await this.initPromise
     }
-    return (await getSecret<{ apiKey: string }>(
-      IBANCOM_CREDENTIALS_SECRET_ARN
-    ))!.apiKey
+    const mongoDb = await getMongoDbClient()
+    this.hasIbanResolutionFeature = await tenantHasFeature(
+      this.tenantId,
+      'IBAN_RESOLUTION'
+    )
+    this.ibanApiRepository = new IBANApiRepository(this.tenantId, mongoDb)
+    this.apiKey = await getApiKey()
   }
 
   private getRequestBody(request: { [key: string]: string }): URLSearchParams {
@@ -152,23 +179,5 @@ export class IBANService {
       params.append(key, request[key])
     }
     return params
-  }
-
-  public async resolveBankName(bankInfos: BankInfo[]): Promise<BankInfo[]> {
-    if (!(await tenantHasFeature(this.tenantId, 'IBAN_RESOLUTION'))) {
-      logger.error(`IBAN_RESOLUTION feature flag required to resolve bank name`)
-      return bankInfos
-    }
-
-    const result: BankInfo[] = []
-    for (const bankInfo of bankInfos) {
-      if (!bankInfo.bankName && bankInfo.iban) {
-        const ibanDetails = await this.validateIBAN(bankInfo.iban)
-        result.push({ bankName: ibanDetails?.bankName, iban: bankInfo.iban })
-      } else {
-        result.push(bankInfo)
-      }
-    }
-    return result
   }
 }

@@ -17,12 +17,13 @@ import { getTestTenantId } from '@/test-utils/tenant-test-utils'
 import { getTestTransaction } from '@/test-utils/transaction-test-utils'
 import { getTestUser, setUpUsersHooks } from '@/test-utils/user-test-utils'
 
+process.env.IBAN_API_KEY = 'fake'
+
 dynamoDbSetupHook()
 
 withFeatureHook(['SANCTIONS', 'IBAN_RESOLUTION'])
 
 const TEST_SANCTIONS_HITS = ['Vladimir Putin', 'Bank 1', 'Baran Ozkan']
-
 const TEST_TENANT_ID = getTestTenantId()
 
 const TEST_IBAN_BANK_NAME_MAPPING: { [key: string]: IBANDetails } = {
@@ -82,6 +83,7 @@ jest.mock('@/services/iban.com', () => {
     IBANService: jest.fn().mockImplementation(() => {
       return {
         resolveBankName: originalModule.IBANService.prototype.resolveBankName,
+        initialize: originalModule.IBANService.prototype.initialize,
         tenantId: TEST_TENANT_ID,
         validateIBAN: jest.fn().mockImplementation((iban: string) => {
           return TEST_IBAN_BANK_NAME_MAPPING[iban]
