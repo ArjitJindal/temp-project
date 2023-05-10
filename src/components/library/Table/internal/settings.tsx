@@ -36,7 +36,13 @@ export function PersistedSettingsProvider<Item extends object, Params>(props: {
 
   const getDefaultValue = useCallback((): PersistedState => {
     return {
-      columnVisibility: {},
+      columnVisibility: columns.reduce(
+        (acc, column) => ({
+          ...acc,
+          [getColumnId(column)]: column.defaultVisibility !== false,
+        }),
+        {},
+      ),
       columnSizing: columns.reduce(
         (acc, column) =>
           column.defaultWidth != null ? { ...acc, [getColumnId(column)]: column.defaultWidth } : {},
@@ -65,7 +71,10 @@ export function PersistedSettingsProvider<Item extends object, Params>(props: {
       },
       defaultState: getDefaultValue(),
       columnVisibility: [
-        persistedState.columnVisibility,
+        {
+          ...getDefaultValue().columnVisibility, // if a column is added and it has a default visibility but local storage doesn't have it, it will be added
+          ...persistedState.columnVisibility,
+        },
         (updater: Updater<TanTable.VisibilityState>) => {
           setPersistedState((prevState) => {
             return {
@@ -122,6 +131,8 @@ export function PersistedSettingsProvider<Item extends object, Params>(props: {
     }),
     [getDefaultValue, persistedState, setPersistedState],
   );
+
+  console.log('providerValue', providerValue);
 
   return (
     <PersistedSettingsContext.Provider value={providerValue}>

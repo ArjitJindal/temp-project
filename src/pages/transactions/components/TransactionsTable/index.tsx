@@ -280,6 +280,12 @@ export default function TransactionsTable(props: Props) {
         type: TAGS,
         key: 'tags',
       }),
+      helper.simple<'reference'>({
+        title: 'Reference',
+        type: STRING,
+        key: 'reference',
+        defaultVisibility: false,
+      }),
     ]);
   }, [alert, showDetailsView, isPulseEnabled]);
 

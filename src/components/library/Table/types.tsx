@@ -121,6 +121,7 @@ export interface BaseColumn {
   defaultWidth?: number;
   defaultSticky?: false | 'RIGHT' | 'LEFT';
   defaultEditState?: boolean;
+  defaultVisibility?: boolean;
 }
 
 export interface GroupColumn<Item extends object> extends BaseColumn {
