@@ -49,8 +49,13 @@ export const cronJobMidnightHandler = lambdaConsumer()(async () => {
 
   const mongoDb = await getMongoDbClient()
   const dynamoDb = await getDynamoDbClient()
-  const startTimestamp = dayjs().subtract(1, 'day').startOf('day').valueOf()
-  const endTimestamp = dayjs().subtract(1, 'day').endOf('day').valueOf()
+
+  // Wait for 1 second to make sure that it is already a new day
+  await new Promise((resolve) => setTimeout(resolve, 1000))
+
+  const timestamp = dayjs().subtract(1, 'day').valueOf()
+  const startTimestamp = dayjs(timestamp).startOf('day').valueOf()
+  const endTimestamp = dayjs(timestamp).endOf('day').valueOf()
 
   for await (const tenant of tenantInfos) {
     try {

@@ -11,7 +11,7 @@ async function migrateTenant(tenant: Tenant, auth0Domain: string) {
   }
   if (['kevin', 'bukuwarung'].includes(tenant.name.toLowerCase())) {
     let startTimestamp = 1680652800000
-    const endTimestamp = 1683417600000
+    const endTimestamp = 1683676800000
 
     const mongoDb = await getMongoDbClient()
     const dynamoDb = getDynamoDbClient()

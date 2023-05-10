@@ -62,7 +62,10 @@ export class ApiUsageMetricsService {
     this.startTimestamp = dayjs(timestamp.startTimestamp)
       .startOf('day')
       .valueOf()
-    this.endTimestamp = dayjs(timestamp.endTimestamp).startOf('day').valueOf()
+    this.endTimestamp = dayjs(timestamp.endTimestamp).endOf('day').valueOf()
+    logger.info(
+      `ApiUsageMetricsService: ${this.tenantId} ${this.startTimestamp} ${this.endTimestamp}`
+    )
   }
 
   private getMonthStartTimestamp(): number {
