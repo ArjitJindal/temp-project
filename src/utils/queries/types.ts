@@ -1,12 +1,17 @@
 import * as ar from '@/utils/asyncResource';
 import { PaginationParams } from '@/utils/queries/hooks';
 
+export interface CursorActions {
+  fetchNextPage: () => string;
+  fetchPreviousPage: () => string;
+  fetchFirstPage: () => string;
+  fetchLastPage: () => string;
+}
 export interface QueryResult<Data> {
   data: ar.AsyncResource<Data>;
   refetch: () => void;
   paginate?: (params: PaginationParams) => Promise<Data>;
-  fetchNextPage?: () => string;
-  fetchPreviousPage?: () => string;
+  cursorActions?: CursorActions;
   prev?: string;
   next?: string;
   from?: string;

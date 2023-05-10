@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 import { QueryFunction, QueryKey } from '@tanstack/query-core';
 import { useQueries as useQueriesRQ, useQuery as useQueryRQ } from '@tanstack/react-query';
 import {
@@ -96,6 +96,7 @@ export type CursorPaginatedData<T> = {
   items: Array<T>;
   next: string;
   prev: string;
+  last: string;
   hasNext: boolean;
   hasPrev: boolean;
 };
@@ -103,9 +104,7 @@ export type CursorPaginatedData<T> = {
 export type PaginationParams = {
   pageSize: number;
   page?: number;
-  prev?: string;
   from?: string;
-  next?: string;
 };
 
 export type CursorPaginationParams = {
@@ -146,6 +145,7 @@ export function useCursorQuery<TData = unknown, TQueryKey extends QueryKey = Que
   const [pageParams, setPageParams] = useState({
     next: '',
     prev: '',
+    last: '',
     hasNext: false,
     hasPrev: false,
   });
@@ -159,6 +159,9 @@ export function useCursorQuery<TData = unknown, TQueryKey extends QueryKey = Que
       });
       return result;
     },
+    {
+      cacheTime: 0,
+    },
   );
   const fetchPreviousPage = () => {
     setPageParam(pageParams.prev);
@@ -168,19 +171,26 @@ export function useCursorQuery<TData = unknown, TQueryKey extends QueryKey = Que
     setPageParam(pageParams.next);
     return pageParams.next;
   };
-
-  useEffect(() => {
-    results.refetch();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [pageParam]);
+  const fetchFirstPage = () => {
+    setPageParam('');
+    return '';
+  };
+  const fetchLastPage = () => {
+    setPageParam(pageParams.last);
+    return pageParams.last;
+  };
 
   return {
     ...results,
     from: pageParam,
     hasNextPage: pageParams.hasNext,
     hasPreviousPage: pageParams.hasPrev,
-    fetchPreviousPage,
-    fetchNextPage,
+    cursorActions: {
+      fetchPreviousPage,
+      fetchNextPage,
+      fetchFirstPage,
+      fetchLastPage,
+    },
   };
 }
 

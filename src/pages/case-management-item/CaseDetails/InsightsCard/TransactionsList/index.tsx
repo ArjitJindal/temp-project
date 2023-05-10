@@ -40,14 +40,14 @@ export default function TransactionsList(props: Props) {
       userId,
     }),
 
-    async () => {
+    async ({ from }) => {
       return await measure(
         () =>
           api.getTransactionsList({
             ...FIXED_API_PARAMS,
             ...tableParams,
-            first: tableParams.pageSize,
-            _from: tableParams.from,
+            pageSize: tableParams.pageSize,
+            _from: from,
             filterUserId: userId,
             filterStatus: selectorParams.selectedRuleActions,
             includeEvents: true,

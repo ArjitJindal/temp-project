@@ -60,50 +60,54 @@ export function Content(props: { userId: string }) {
     beforeTimestamp: Date.now(),
   });
 
-  const responseRes = useCursorQuery(USERS_ITEM_TRANSACTIONS_HISTORY(userId, params), async () => {
-    const [sortField, sortOrder] = params.sort[0] ?? [];
+  const responseRes = useCursorQuery(
+    USERS_ITEM_TRANSACTIONS_HISTORY(userId, params),
+    async ({ from }) => {
+      const [sortField, sortOrder] = params.sort[0] ?? [];
 
-    const directionFilter = (params ?? {})['direction'] ?? [];
-    const showIncoming = directionFilter.indexOf('incoming') !== -1;
-    const showOutgoing = directionFilter.indexOf('outgoing') !== -1;
+      const directionFilter = (params ?? {})['direction'] ?? [];
+      const showIncoming = directionFilter.indexOf('incoming') !== -1;
+      const showOutgoing = directionFilter.indexOf('outgoing') !== -1;
 
-    const statusFilter = (params ?? {})['status'] ?? [];
+      const statusFilter = (params ?? {})['status'] ?? [];
 
-    const newParams: DefaultApiGetTransactionsListRequest = {
-      ...params,
-      _from: params.from,
-      beforeTimestamp: Date.now(),
-      sortField: sortField ?? undefined,
-      sortOrder: sortOrder ?? undefined,
-      includeEvents: true,
-    };
+      const newParams: DefaultApiGetTransactionsListRequest = {
+        ...params,
+        _from: from,
+        beforeTimestamp: Date.now(),
+        sortField: sortField ?? undefined,
+        sortOrder: sortOrder ?? undefined,
+        includeEvents: true,
+      };
 
-    if (showOutgoing) {
-      newParams.filterOriginUserId = userId;
-    } else if (showIncoming) {
-      newParams.filterDestinationUserId = userId;
-    } else {
-      newParams.filterUserId = userId;
-    }
+      if (showOutgoing) {
+        newParams.filterOriginUserId = userId;
+      } else if (showIncoming) {
+        newParams.filterDestinationUserId = userId;
+      } else {
+        newParams.filterUserId = userId;
+      }
 
-    if (statusFilter.indexOf('ALLOW') !== -1) {
-      newParams.filterStatus = ['ALLOW'];
-    } else if (statusFilter.indexOf('FLAG') !== -1) {
-      newParams.filterStatus = ['FLAG'];
-    } else if (statusFilter.indexOf('BLOCK') !== -1) {
-      newParams.filterStatus = ['BLOCK'];
-    } else if (statusFilter.indexOf('SUSPEND') !== -1) {
-      newParams.filterStatus = ['SUSPEND'];
-    }
+      if (statusFilter.indexOf('ALLOW') !== -1) {
+        newParams.filterStatus = ['ALLOW'];
+      } else if (statusFilter.indexOf('FLAG') !== -1) {
+        newParams.filterStatus = ['FLAG'];
+      } else if (statusFilter.indexOf('BLOCK') !== -1) {
+        newParams.filterStatus = ['BLOCK'];
+      } else if (statusFilter.indexOf('SUSPEND') !== -1) {
+        newParams.filterStatus = ['SUSPEND'];
+      }
 
-    return api.getTransactionsList(newParams).then((result) => ({
-      next: result.next,
-      prev: result.prev,
-      hasNext: result.hasNext,
-      hasPrev: result.hasPrev,
-      items: prepareTableData(userId, result.items ?? []),
-    }));
-  });
+      return api.getTransactionsList(newParams).then((result) => ({
+        next: result.next,
+        prev: result.prev,
+        hasNext: result.hasNext,
+        hasPrev: result.hasPrev,
+        last: result.last,
+        items: prepareTableData(userId, result.items ?? []),
+      }));
+    },
+  );
 
   const helper = new ColumnHelper<DataItem>();
 

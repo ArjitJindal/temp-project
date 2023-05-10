@@ -52,49 +52,52 @@ const TableList = () => {
     }));
   }, [parsedParams]);
 
-  const queryResult = useCursorQuery<InternalTransaction>(TRANSACTIONS_LIST(params), async () => {
-    const {
-      timestamp,
-      transactionId,
-      type,
-      transactionState,
-      originCurrenciesFilter,
-      destinationCurrenciesFilter,
-      userId,
-      userFilterMode,
-      tagKey,
-      tagValue,
-      originMethodFilter,
-      destinationMethodFilter,
-    } = params;
-    const [sortField, sortOrder] = params.sort[0] ?? [];
-    return await measure(
-      () =>
-        api.getTransactionsList({
-          _from: parsedParams.from,
-          first: parsedParams.pageSize,
-          afterTimestamp: timestamp ? dayjs(timestamp[0]).valueOf() : 0,
-          beforeTimestamp: timestamp ? dayjs(timestamp[1]).valueOf() : Date.now(),
-          filterId: transactionId,
-          filterUserId: userFilterMode === 'ALL' ? userId : undefined,
-          filterOriginUserId: userFilterMode === 'ORIGIN' ? userId : undefined,
-          filterDestinationUserId: userFilterMode === 'DESTINATION' ? userId : undefined,
-          filterOriginCurrencies: originCurrenciesFilter,
-          filterDestinationCurrencies: destinationCurrenciesFilter,
-          transactionType: type,
-          filterTransactionState: transactionState,
-          field: 'transactionId',
-          sortField: sortField ?? undefined,
-          sortOrder: sortOrder ?? undefined,
-          includeUsers: true,
-          filterOriginPaymentMethod: originMethodFilter,
-          filterDestinationPaymentMethod: destinationMethodFilter,
-          filterTagKey: tagKey,
-          filterTagValue: tagValue,
-        }),
-      'Transactions List',
-    );
-  });
+  const queryResult = useCursorQuery<InternalTransaction>(
+    TRANSACTIONS_LIST(parsedParams),
+    async ({ from }) => {
+      const {
+        timestamp,
+        transactionId,
+        type,
+        transactionState,
+        originCurrenciesFilter,
+        destinationCurrenciesFilter,
+        userId,
+        userFilterMode,
+        tagKey,
+        tagValue,
+        originMethodFilter,
+        destinationMethodFilter,
+      } = parsedParams;
+      const [sortField, sortOrder] = parsedParams.sort[0] ?? [];
+      return await measure(
+        () =>
+          api.getTransactionsList({
+            _from: from,
+            pageSize: parsedParams.pageSize,
+            afterTimestamp: timestamp ? dayjs(timestamp[0]).valueOf() : 0,
+            beforeTimestamp: timestamp ? dayjs(timestamp[1]).valueOf() : Date.now(),
+            filterId: transactionId,
+            filterUserId: userFilterMode === 'ALL' ? userId : undefined,
+            filterOriginUserId: userFilterMode === 'ORIGIN' ? userId : undefined,
+            filterDestinationUserId: userFilterMode === 'DESTINATION' ? userId : undefined,
+            filterOriginCurrencies: originCurrenciesFilter,
+            filterDestinationCurrencies: destinationCurrenciesFilter,
+            transactionType: type,
+            filterTransactionState: transactionState,
+            field: 'transactionId',
+            sortField: sortField ?? undefined,
+            sortOrder: sortOrder ?? undefined,
+            includeUsers: true,
+            filterOriginPaymentMethod: originMethodFilter,
+            filterDestinationPaymentMethod: destinationMethodFilter,
+            filterTagKey: tagKey,
+            filterTagValue: tagValue,
+          }),
+        'Transactions List',
+      );
+    },
+  );
 
   return (
     <PageWrapper title={i18n('menu.transactions.transactions-list')}>

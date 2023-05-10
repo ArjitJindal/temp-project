@@ -31,11 +31,11 @@ import Tooltip from '@/components/library/Tooltip';
 import InformationLineIcon from '@/components/ui/icons/Remix/system/information-line.react.svg';
 import Alert from '@/components/library/Alert';
 import CursorPagination from '@/components/library/CursorPagination';
+import { CursorActions } from '@/utils/queries/types';
 
 export interface Props<Item extends object, Params extends object = CommonParams> {
   innerRef?: React.Ref<TableRefType>;
-  fetchPreviousPage?: () => string;
-  fetchNextPage?: () => string;
+  cursorActions?: CursorActions;
   hasPreviousPage?: boolean;
   hasNextPage?: boolean;
   tableId?: string;
@@ -92,8 +92,7 @@ function Table<Item extends object, Params extends object = CommonParams>(
     defaultSorting,
     onReload,
     paginationBorder = false,
-    fetchPreviousPage,
-    fetchNextPage,
+    cursorActions,
     hasPreviousPage,
     hasNextPage,
   } = props;
@@ -165,7 +164,6 @@ function Table<Item extends object, Params extends object = CommonParams>(
       ? pagination
       : pagination === 'HIDE_FOR_ONE_PAGE' && getPageCount(params, data) > 1;
 
-  const cursorPaginated = fetchNextPage && fetchPreviousPage;
   return (
     <div className={cn(s.root, s[`sizingMode-${sizingMode}`])} data-test="table">
       <Header<Item, Params>
@@ -319,19 +317,18 @@ function Table<Item extends object, Params extends object = CommonParams>(
           );
         }}
       </ScrollContainer>
-      {cursorPaginated && (
+      {cursorActions && (
         <CursorPagination
           pageSize={params?.pageSize ?? DEFAULT_PAGE_SIZE}
           hasPreviousPage={hasPreviousPage}
           hasNextPage={hasNextPage}
-          fetchNextPage={fetchNextPage}
-          fetchPreviousPage={fetchPreviousPage}
+          cursorActions={cursorActions}
           isDisabled={isLoading(dataRes)}
           onPageChange={(pageSize) => handleChangeParamsPaginated({ ...params, pageSize })}
           onFromChange={(from) => handleChangeParamsPaginated({ ...params, from })}
         />
       )}
-      {!cursorPaginated && showPagination && (
+      {!cursorActions && showPagination && (
         <Pagination
           isDisabled={isLoading(dataRes)}
           current={params?.page ?? 1}
