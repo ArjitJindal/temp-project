@@ -9,7 +9,7 @@ interface Props {
 export default function ExpandedRowRenderer(props: Props) {
   const { alert } = props;
 
-  if (alert.ruleNature === 'SCREENING') {
+  if (alert.ruleHitMeta?.sanctionsDetails) {
     return <ScreeningMatchList alert={alert} />;
   }
 
