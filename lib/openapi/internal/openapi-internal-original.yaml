@@ -438,10 +438,6 @@ paths:
       description: ''
       parameters:
         - schema:
-            type: number
-          in: query
-          name: first
-        - schema:
             type: string
           in: query
           name: field
@@ -3808,6 +3804,8 @@ components:
           type: string
         next:
           type: string
+        last:
+          type: string
         hasNext:
           type: boolean
         items:
@@ -3817,6 +3815,7 @@ components:
       required:
         - prev
         - next
+        - last
         - items
         - hasNext
         - hasPrev

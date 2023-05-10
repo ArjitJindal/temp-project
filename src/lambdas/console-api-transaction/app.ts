@@ -133,8 +133,6 @@ export const transactionsViewHandler = lambdaApi()(
         filterDestinationPaymentMethod,
         filterTagKey,
         filterTagValue,
-        first,
-        field,
         from,
         order,
       } = event.queryStringParameters as any
@@ -148,12 +146,10 @@ export const transactionsViewHandler = lambdaApi()(
         JSON.stringify(event.queryStringParameters)
       )
       const params: DefaultApiGetTransactionsListRequest = {
-        first: parseInt(first) || 50,
-        field,
+        pageSize: parseInt(pageSize) || 50,
         _from: from,
         order,
         page,
-        pageSize,
         afterTimestamp: parseInt(afterTimestamp) || undefined,
         beforeTimestamp: parseInt(beforeTimestamp),
         filterId,

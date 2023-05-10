@@ -1,4 +1,11 @@
-import { FindCursor, ObjectId, SortDirection, WithId } from 'mongodb'
+import {
+  Collection,
+  Filter,
+  FindCursor,
+  ObjectId,
+  SortDirection,
+  WithId,
+} from 'mongodb'
 import _ from 'lodash'
 export type PageSize = number
 export const DEFAULT_PAGE_SIZE = 20
@@ -48,7 +55,7 @@ export async function* iterateItems<T>(
 }
 
 export interface CursorPaginationParams {
-  first: number
+  pageSize: number
   sortField?: string
   fromCursorKey?: string
   sortOrder?: 'ascend' | 'descend'
@@ -57,7 +64,8 @@ export interface CursorPaginationParams {
 const PAGINATION_CURSOR_KEY_SEPERATOR = '___'
 
 export async function cursorPaginate<T>(
-  find: FindCursor<WithId<T>>,
+  collection: Collection<T>,
+  filter: Filter<WithId<T>>,
   query: CursorPaginationParams,
   mapping?: { [field: string]: 'number' | 'string' }
 ): Promise<{
@@ -66,6 +74,7 @@ export async function cursorPaginate<T>(
   prev: string
   hasNext: boolean
   hasPrev: boolean
+  last: string
 }> {
   const field = query.sortField || '_id'
   const fromRaw: any = query.fromCursorKey || ''
@@ -73,7 +82,9 @@ export async function cursorPaginate<T>(
   const toOperator = query.sortOrder === 'ascend' ? '$lt' : '$gt'
   const direction: SortDirection = query.sortOrder === 'ascend' ? 1 : -1
   const prevDirection: SortDirection = query.sortOrder === 'ascend' ? -1 : 1
-  let prevFind = find.clone()
+  let findFilters = [filter]
+  let prevFindFilters = [filter]
+  const lastFindFilters = [filter]
 
   // Decode cursor from base64
   const buff = new Buffer(fromRaw, 'base64')
@@ -99,7 +110,7 @@ export async function cursorPaginate<T>(
       fromOr = { [field]: { $exists: true } }
     }
 
-    find = find.filter({
+    findFilters = findFilters.concat({
       $or: [
         fromOr,
         {
@@ -113,7 +124,7 @@ export async function cursorPaginate<T>(
     if (parsedSortValue === undefined && query.sortOrder === 'descend') {
       prevOr = { [field]: { $exists: true } }
     }
-    prevFind = prevFind.filter({
+    prevFindFilters = prevFindFilters.concat({
       $or: [
         prevOr,
         {
@@ -125,44 +136,50 @@ export async function cursorPaginate<T>(
   }
 
   // Sort query
-  find = find.sort({ [field]: direction, _id: direction })
-  prevFind = prevFind.sort({ [field]: prevDirection, _id: prevDirection })
+  const find = collection
+    .find({ $and: findFilters })
+    .sort({ [field]: direction, _id: direction })
+  const prevFind = collection
+    .find({ $and: prevFindFilters })
+    .sort({ [field]: prevDirection, _id: prevDirection })
+  const lastFind = collection
+    .find({ $and: lastFindFilters })
+    .sort({ [field]: prevDirection, _id: prevDirection })
+
+  const lastFindPromise = lastFind.skip(query.pageSize).limit(1).toArray()
 
   // Find prev
   const prevCursorPromise = getPrevCursor(prevFind, query)
 
   // Determine next cursor
-  const items = await find
-    .clone()
-    .limit(query.first + 1)
-    .toArray()
+  const items = await find.limit(query.pageSize + 1).toArray()
+
   let next = ''
 
   const { hasPrev, prev } = await prevCursorPromise
+  const lastItems = await lastFindPromise
+  const lastItem = lastItems.at(-1)
+
+  const last = cursor(lastItem, field)
 
   // Remove extra item
   let hasNext = false
-  if (items.length > query.first) {
-    hasNext = items.length > query.first
+  if (items.length > query.pageSize) {
+    hasNext = items.length > query.pageSize
     items.pop()
   }
 
   if (hasNext) {
     const lastItem = items.at(-1)
-    const nextRaw = [_.get(lastItem, field) ?? 'EMPTY', lastItem?._id].join(
-      PAGINATION_CURSOR_KEY_SEPERATOR
-    )
-
-    next = nextRaw
-
     // Encode cursor
-    next = encodeCursor(nextRaw)
+    next = cursor(lastItem, field)
   }
 
   return {
     items,
     next,
-    prev: from ? prev : '',
+    prev,
+    last,
     hasNext,
     hasPrev,
   }
@@ -175,19 +192,25 @@ async function getPrevCursor<T>(
   if (!query.fromCursorKey || query.fromCursorKey === '') {
     return { hasPrev: false, prev: '' }
   }
-  const prevItems = await prevFind.limit(query.first + 1).toArray()
+  const prevItems = await prevFind.limit(query.pageSize + 1).toArray()
   const prevItem = prevItems.at(-2)
 
-  if (!prevItem || prevItems.length === query.first - 1) {
+  if (!prevItem || prevItems.length === query.pageSize - 1) {
     return { hasPrev: true, prev: '' }
   }
-  const prevRaw = [
-    _.get(prevItem, query.sortField as string) ?? 'EMPTY',
-    prevItem?._id,
-  ].join(PAGINATION_CURSOR_KEY_SEPERATOR)
+
+  return { hasPrev: true, prev: cursor(prevItem, query.sortField ?? '_id') }
+}
+
+function cursor<T>(item?: WithId<T>, sortField?: string): string {
+  if (!item || !sortField) {
+    return ''
+  }
+  const raw = [_.get(item, sortField) ?? 'EMPTY', item._id].join(
+    PAGINATION_CURSOR_KEY_SEPERATOR
+  )
   // Encode cursor
-  const prev = encodeCursor(prevRaw)
-  return { hasPrev: true, prev }
+  return encodeCursor(raw)
 }
 
 function encodeCursor(raw: string): string {

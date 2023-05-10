@@ -391,12 +391,14 @@ export class MongoDbTransactionRepository
     const db = this.mongoDb.db()
     const name = TRANSACTIONS_COLLECTION(this.tenantId)
     const collection = db.collection<InternalTransaction>(name)
-    const query = this.getTransactionsMongoQuery(params)
+
+    const filter = this.getTransactionsMongoQuery(params)
 
     return await cursorPaginate<InternalTransaction>(
-      collection.find(query),
+      collection,
+      filter,
       {
-        first: params.first || 20,
+        pageSize: params.pageSize ? (params.pageSize as number) : 20,
         sortField: params.sortField,
         fromCursorKey: params._from,
         sortOrder: params.sortOrder,
