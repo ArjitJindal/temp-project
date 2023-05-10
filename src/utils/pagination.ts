@@ -1,11 +1,11 @@
 import {
-  Collection,
+  Collection, Document,
   Filter,
   FindCursor,
   ObjectId,
   SortDirection,
-  WithId,
-} from 'mongodb'
+  WithId
+} from "mongodb";
 import _ from 'lodash'
 export type PageSize = number
 export const DEFAULT_PAGE_SIZE = 20
@@ -63,7 +63,7 @@ export interface CursorPaginationParams {
 
 const PAGINATION_CURSOR_KEY_SEPERATOR = '___'
 
-export async function cursorPaginate<T>(
+export async function cursorPaginate<T extends Document>(
   collection: Collection<T>,
   filter: Filter<WithId<T>>,
   query: CursorPaginationParams,
