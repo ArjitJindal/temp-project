@@ -40,12 +40,12 @@ export class CaseCreationService {
   async getUsers(
     transaction: TransactionWithRulesResult
   ): Promise<(InternalConsumerUser | InternalBusinessUser)[]> {
-    const userIds = []
-    if (transaction.originUserId) userIds.push(transaction.originUserId)
+    const userIds = new Set<string>()
+    if (transaction.originUserId) userIds.add(transaction.originUserId)
     if (transaction.destinationUserId)
-      userIds.push(transaction.destinationUserId)
-    if (userIds.length) {
-      return await this.userRepository.getMongoUsersByIds(userIds)
+      userIds.add(transaction.destinationUserId)
+    if (userIds.size) {
+      return await this.userRepository.getMongoUsersByIds([...userIds])
     } else {
       return []
     }
@@ -73,14 +73,26 @@ export class CaseCreationService {
       InternalConsumerUser | InternalBusinessUser | undefined
     >
   > {
-    const { destinationUserId, originUserId } = transaction
+    const { originUserId, destinationUserId } = transaction
+
+    // If the origin user and the destination user are the same, we can pass undefined for the destination user
+    const isAnyRuleHasOriginHit = transaction.hitRules.some(
+      (hitRule) =>
+        hitRule.ruleHitMeta?.hitDirections?.includes('ORIGIN') ?? false
+    )
+
     logger.info(`Fetching case users by ids`, {
       destinationUserId,
       originUserId,
     })
     return {
-      ORIGIN: (await this.getUser(originUserId)) ?? undefined,
-      DESTINATION: (await this.getUser(destinationUserId)) ?? undefined,
+      ORIGIN: !isAnyRuleHasOriginHit
+        ? undefined
+        : (await this.getUser(originUserId)) ?? undefined,
+      DESTINATION:
+        isAnyRuleHasOriginHit && originUserId === destinationUserId
+          ? undefined
+          : (await this.getUser(destinationUserId)) ?? undefined,
     }
   }
 

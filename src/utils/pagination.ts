@@ -1,11 +1,12 @@
 import {
-  Collection, Document,
+  Collection,
+  Document,
   Filter,
   FindCursor,
   ObjectId,
   SortDirection,
-  WithId
-} from "mongodb";
+  WithId,
+} from 'mongodb'
 import _ from 'lodash'
 export type PageSize = number
 export const DEFAULT_PAGE_SIZE = 20
