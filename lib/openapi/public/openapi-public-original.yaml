@@ -4821,9 +4821,19 @@ components:
           type: string
         searchId:
           type: string
+        entityType:
+          $ref: '#/components/schemas/SanctionsDetailsEntityType'
       required:
         - name
         - searchId
+    SanctionsDetailsEntityType:
+      title: SanctionsDetailsEntityType
+      type: string
+      enum:
+        - CONSUMER_NAME
+        - LEGAL_NAME
+        - SHAREHOLDER
+        - DIRECTOR
     BusinessEntityLink:
       title: BusinessEntityLink
       x-stoplight:

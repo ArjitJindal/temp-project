@@ -70,6 +70,7 @@ export default class SanctionsConsumerUserRule extends UserRule<SanctionsConsume
         sanctionsDetails: [
           {
             name,
+            entityType: 'CONSUMER_NAME',
             searchId: result.searchId,
           },
         ],

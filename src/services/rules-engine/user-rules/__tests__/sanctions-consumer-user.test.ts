@@ -79,7 +79,11 @@ describe('Core logic', () => {
         {
           hitDirections: ['ORIGIN'],
           sanctionsDetails: [
-            { name: 'Vladimir Putin', searchId: expect.any(String) },
+            {
+              name: 'Vladimir Putin',
+              entityType: 'CONSUMER_NAME',
+              searchId: expect.any(String),
+            },
           ],
         },
       ],

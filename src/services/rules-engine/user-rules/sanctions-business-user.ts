@@ -10,15 +10,14 @@ import { RuleHitResult } from '../rule'
 import { UserRule } from './rule'
 import { formatConsumerName } from '@/utils/helpers'
 import { SanctionsSearchType } from '@/@types/openapi-internal/SanctionsSearchType'
+import { SanctionsDetailsEntityType } from '@/@types/openapi-internal/SanctionsDetailsEntityType'
 import { SanctionsService } from '@/services/sanctions'
 import { Business } from '@/@types/openapi-public/Business'
 import dayjs from '@/utils/dayjs'
 import { SanctionsDetails } from '@/@types/openapi-internal/SanctionsDetails'
 
-type BusinessUserEntityType = 'LEGAL_NAME' | 'SHAREHOLDER' | 'DIRECTOR'
-
 const BUSINESS_USER_ENTITY_TYPES: Array<{
-  value: BusinessUserEntityType
+  value: SanctionsDetailsEntityType
   label: string
 }> = [
   { value: 'LEGAL_NAME', label: 'Legal Name' },
@@ -27,7 +26,7 @@ const BUSINESS_USER_ENTITY_TYPES: Array<{
 ]
 
 export type SanctionsBusinessUserRuleParameters = {
-  entityTypes?: BusinessUserEntityType[]
+  entityTypes?: SanctionsDetailsEntityType[]
   screeningTypes?: SanctionsSearchType[]
   fuzziness: number
   ongoingScreening: boolean
@@ -76,21 +75,21 @@ export default class SanctionsBusinessUserRule extends UserRule<SanctionsBusines
     }
     const business = this.user as Business
     const entities: Array<{
-      entityType: BusinessUserEntityType
+      entityType: SanctionsDetailsEntityType
       name: string
       dateOfBirth?: string
     }> = [
       {
-        entityType: 'LEGAL_NAME' as BusinessUserEntityType,
+        entityType: 'LEGAL_NAME' as const,
         name: business.legalEntity.companyGeneralDetails.legalName,
       },
       ...(business.directors?.map((person) => ({
-        entityType: 'DIRECTOR' as BusinessUserEntityType,
+        entityType: 'DIRECTOR' as const,
         name: formatConsumerName(person.generalDetails.name) || '',
         dateOfBirth: person.generalDetails.dateOfBirth,
       })) ?? []),
       ...(business.shareHolders?.map((person) => ({
-        entityType: 'SHAREHOLDER' as BusinessUserEntityType,
+        entityType: 'SHAREHOLDER' as const,
         name: formatConsumerName(person.generalDetails.name) || '',
         dateOfBirth: person.generalDetails.dateOfBirth,
       })) ?? []),
@@ -113,6 +112,7 @@ export default class SanctionsBusinessUserRule extends UserRule<SanctionsBusines
       if (result.data && result.data.length > 0) {
         sanctionsDetails.push({
           name: entity.name,
+          entityType: entity.entityType,
           searchId: result.searchId,
         })
       }

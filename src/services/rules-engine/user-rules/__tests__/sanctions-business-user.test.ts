@@ -126,22 +126,46 @@ describe('Sanctions hit', () => {
         {
           hitDirections: ['ORIGIN'],
           sanctionsDetails: [
-            { name: 'Company Name', searchId: expect.any(String) },
+            {
+              name: 'Company Name',
+              entityType: 'LEGAL_NAME',
+              searchId: expect.any(String),
+            },
           ],
         },
         {
           hitDirections: ['ORIGIN'],
           sanctionsDetails: [
-            { name: 'Company Name', searchId: expect.any(String) },
-            { name: 'Director 1', searchId: expect.any(String) },
+            {
+              name: 'Company Name',
+              entityType: 'LEGAL_NAME',
+              searchId: expect.any(String),
+            },
+            {
+              name: 'Director 1',
+              entityType: 'DIRECTOR',
+              searchId: expect.any(String),
+            },
           ],
         },
         {
           hitDirections: ['ORIGIN'],
           sanctionsDetails: [
-            { name: 'Company Name', searchId: expect.any(String) },
-            { name: 'Director 1', searchId: expect.any(String) },
-            { name: 'Shareholder 1', searchId: expect.any(String) },
+            {
+              name: 'Company Name',
+              entityType: 'LEGAL_NAME',
+              searchId: expect.any(String),
+            },
+            {
+              name: 'Director 1',
+              entityType: 'DIRECTOR',
+              searchId: expect.any(String),
+            },
+            {
+              name: 'Shareholder 1',
+              entityType: 'SHAREHOLDER',
+              searchId: expect.any(String),
+            },
           ],
         },
       ],
