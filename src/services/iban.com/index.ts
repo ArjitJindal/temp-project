@@ -116,7 +116,7 @@ export class IBANService {
 
     const iban = sanitizeAndValidateIban(rawIban)
     if (!iban) {
-      logger.error(`'${rawIban}' is not a valid IBAN (ibantools)`)
+      logger.warn(`'${rawIban}' is not a valid IBAN (ibantools)`)
       return null
     }
 
