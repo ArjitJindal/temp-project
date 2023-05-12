@@ -88,7 +88,11 @@ export default function CaseManagementPage() {
           />
         </div>
         {isAlerts ? (
-          <AlertTable params={params} onChangeParams={handleChangeParams} />
+          <AlertTable
+            hideAlertStatusFilters={true}
+            params={params}
+            onChangeParams={handleChangeParams}
+          />
         ) : (
           <CaseTableWrapper params={params} onChangeParams={handleChangeParams} />
         )}

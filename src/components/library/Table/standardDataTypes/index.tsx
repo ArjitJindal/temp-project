@@ -44,6 +44,7 @@ import { RULE_NATURE_LABELS, RULE_NATURE_OPTIONS } from '@/pages/rules/utils';
 import TextInput from '@/components/library/TextInput';
 import NumberInput from '@/components/library/NumberInput';
 import TextArea from '@/components/library/TextArea';
+import { humanizeConstant } from '@/utils/humanize';
 import Id from '@/components/ui/Id';
 
 export const UNKNOWN: Required<FullColumnDataType<unknown>> = {
@@ -319,11 +320,24 @@ export const PAYMENT_METHOD: ColumnDataType<PaymentMethod> = {
   },
 };
 
-export const CASE_STATUS: ColumnDataType<CaseStatus> = {
+export const CASE_STATUS = (options?: {
+  statusesToShow?: CaseStatus[];
+}): ColumnDataType<CaseStatus> => ({
   render: (caseStatus) => {
     return caseStatus ? <CaseStatusTag caseStatus={caseStatus} /> : <></>;
   },
-};
+  autoFilterDataType: {
+    kind: 'select',
+    options: (
+      options?.statusesToShow ?? (['OPEN', 'CLOSED', 'REOPENED', 'ESCALATED'] as const)
+    ).map((status) => ({
+      value: status,
+      label: humanizeConstant(status),
+    })),
+    displayMode: 'list',
+    mode: 'SINGLE',
+  },
+});
 
 export const RULE_ACTION: ColumnDataType<RuleAction> = {
   render: (ruleAction) => {

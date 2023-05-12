@@ -206,7 +206,7 @@ export default function CaseTable(props: Props) {
       helper.simple<'caseStatus'>({
         title: 'Case status',
         key: 'caseStatus',
-        type: CASE_STATUS,
+        type: CASE_STATUS(),
       }),
       helper.display({
         title: 'Operations',

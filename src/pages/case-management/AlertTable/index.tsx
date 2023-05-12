@@ -42,6 +42,7 @@ export type AlertTableParams = AllParams<TableSearchParams>;
 const mergedColumns = (
   users: Record<string, Account>,
   hideUserColumns: boolean,
+  hideAlertStatusFilters: boolean,
 ): TableColumn<TableAlertItem>[] => {
   const helper = new ColumnHelper<TableAlertItem>();
   return helper.list([
@@ -120,7 +121,8 @@ const mergedColumns = (
     helper.simple<'alertStatus'>({
       title: 'Alert status',
       key: 'alertStatus',
-      type: CASE_STATUS,
+      filtering: !hideAlertStatusFilters,
+      type: CASE_STATUS({ statusesToShow: ['OPEN', 'CLOSED'] }),
     }),
     helper.simple<'caseCreatedTimestamp'>({
       title: 'Case created at',
@@ -161,9 +163,8 @@ const mergedColumns = (
 interface Props {
   params: AlertTableParams;
   onChangeParams: (newState: AlertTableParams) => void;
-  disableInternalPadding?: boolean;
   isEmbedded?: boolean;
-  hideScopeSelector?: boolean;
+  hideAlertStatusFilters?: boolean;
   hideUserFilters?: boolean;
 }
 
@@ -171,11 +172,10 @@ export default function AlertTable(props: Props) {
   const {
     params,
     onChangeParams,
-    hideScopeSelector = false,
     isEmbedded = false,
+    hideAlertStatusFilters = false,
     hideUserFilters = false,
   } = props;
-  const showActions = !hideScopeSelector;
   const escalationEnabled = useFeatureEnabled('ESCALATION');
 
   const api = useApi();
@@ -221,16 +221,8 @@ export default function AlertTable(props: Props) {
         pageSize,
         filterAlertId: alertId,
         filterCaseId: caseId,
-        filterOutAlertStatus: showActions
-          ? alertStatus === 'CLOSED'
-            ? undefined
-            : 'CLOSED'
-          : undefined,
-        filterAlertStatus: showActions
-          ? alertStatus === 'CLOSED'
-            ? 'CLOSED'
-            : undefined
-          : undefined,
+        filterOutAlertStatus: alertStatus === 'OPEN' ? 'CLOSED' : undefined,
+        filterAlertStatus: alertStatus === 'CLOSED' ? 'CLOSED' : undefined,
         filterAssignmentsIds,
         filterTransactionState:
           transactionState && transactionState.length > 0 ? transactionState : undefined,
@@ -314,7 +306,10 @@ export default function AlertTable(props: Props) {
       });
   };
 
-  const columns = useMemo(() => mergedColumns(users, hideUserFilters), [users, hideUserFilters]);
+  const columns = useMemo(
+    () => mergedColumns(users, hideUserFilters, hideAlertStatusFilters),
+    [users, hideUserFilters, hideAlertStatusFilters],
+  );
 
   const rules = useRules();
 
