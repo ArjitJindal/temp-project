@@ -39,7 +39,7 @@ export default function AlertsStatusChangeModal(props: Props) {
 
     try {
       if (updates.alertStatus === 'ESCALATED' && props.caseId) {
-        await api.postCasesCaseIdEscalate({
+        const response = await api.postCasesCaseIdEscalate({
           caseId: props.caseId,
           CaseEscalationRequest: {
             caseUpdateRequest: updates,
@@ -50,6 +50,10 @@ export default function AlertsStatusChangeModal(props: Props) {
             }),
           },
         });
+
+        message.success(
+          `Alerts '${ids.join(', ')}' are escalated to a new child case '${response.childCaseId}'`,
+        );
       } else {
         await api.postAlerts({
           AlertsUpdateRequest: {
@@ -57,8 +61,8 @@ export default function AlertsStatusChangeModal(props: Props) {
             updates: updates,
           },
         });
+        message.success('Saved');
       }
-      message.success('Saved');
     } catch (e) {
       console.error(`Failed to update the alert! ${getErrorMessage(e)}`);
     } finally {

@@ -47,6 +47,9 @@ export default function CasesStatusChangeModal(props: Props) {
             caseUpdateRequest: updates,
           },
         });
+        message.success(
+          `Case '${ids[0]}' is escalated successfully. Please note that all 'Open' alert statuses are changed to 'Escalated'.`,
+        );
       } else {
         await api.postCases({
           CasesUpdateRequest: {
@@ -54,8 +57,8 @@ export default function CasesStatusChangeModal(props: Props) {
             updates: updates,
           },
         });
+        message.success('Saved');
       }
-      message.success('Saved');
     } catch (e) {
       message.fatal(`Failed to update the case! ${getErrorMessage(e)}`, e);
     } finally {
