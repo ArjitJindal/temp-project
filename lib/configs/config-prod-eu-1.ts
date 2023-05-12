@@ -62,7 +62,7 @@ export const config: Config = {
       MEMORY_SIZE: 512,
     },
     BATCH_JOB_LAMBDA: {
-      MEMORY_SIZE: 512,
+      MEMORY_SIZE: 1024,
     },
     TARPON_CHANGE_CONSUMER_LAMBDA: {
       MEMORY_SIZE: 512,
