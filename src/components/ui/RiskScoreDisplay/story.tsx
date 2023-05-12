@@ -16,7 +16,7 @@ export default function (): JSX.Element {
               icon={<User3LineIcon />}
               values={[32.99, 51.19, 10.28, 15.96, 40.95].map((value, x) => ({
                 score: value,
-                riskLevel: riskLevel,
+                manualRiskLevel: riskLevel,
                 createdAt: x,
                 components: [
                   {

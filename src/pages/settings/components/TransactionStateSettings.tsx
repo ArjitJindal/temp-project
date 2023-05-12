@@ -1,12 +1,13 @@
 import React, { useCallback, useMemo, useState } from 'react';
-import { Button, Input, Space, Tooltip, Typography } from 'antd';
-import { QuestionCircleOutlined } from '@ant-design/icons';
-import Table from '@/components/ui/Table';
+import { Button, Input } from 'antd';
+import Table from '@/components/library/Table';
 import { useSettings } from '@/components/AppWrapper/Providers/SettingsProvider';
 import { TransactionState, TransactionStateAlias } from '@/apis';
 import { useApi } from '@/api';
-import { TableColumn } from '@/components/ui/Table/types';
+import { TableColumn } from '@/components/library/Table/types';
 import { message } from '@/components/library/Message';
+import { H4 } from '@/components/ui/Typography';
+import { ColumnHelper } from '@/components/library/Table/columnHelper';
 
 interface TableItem {
   state: TransactionState;
@@ -14,10 +15,70 @@ interface TableItem {
   stateAlias: string | undefined;
 }
 
+interface ExternalState {
+  newStateToAlias: Map<TransactionState, string>;
+  savedStateToAlias: Map<TransactionState | undefined, string>;
+  savingState: TransactionState | null;
+  onUpdateAlias: (state: TransactionState, newAlias: string) => void;
+  onSaveAlias: (state: TransactionState) => void;
+}
+
+const columnHelper = new ColumnHelper<TableItem>();
+const columns: TableColumn<TableItem>[] = columnHelper.list([
+  columnHelper.simple({
+    title: 'State',
+    key: 'state',
+    defaultWidth: 100,
+  }),
+  columnHelper.simple({
+    title: 'Description',
+    key: 'description',
+    defaultWidth: 250,
+  }),
+  columnHelper.display({
+    title: 'Alias',
+    tooltip:
+      'Allows you to add a name that will overwrite the default Transaction state displayed in the Console. The Alias name is only used in the Console and will have no impact on the API.',
+    defaultWidth: 200,
+    render: (item, context) => {
+      const externalState: ExternalState = context.external as ExternalState;
+      const { newStateToAlias, onUpdateAlias } = externalState;
+      return (
+        <Input
+          value={newStateToAlias.get(item.state) ?? item.stateAlias}
+          onChange={(event) => onUpdateAlias(item.state, event.target.value)}
+        />
+      );
+    },
+  }),
+  columnHelper.display({
+    title: 'Action',
+    defaultWidth: 50,
+    render: (item, context) => {
+      const externalState: ExternalState = context.external as ExternalState;
+      const { newStateToAlias, savingState, savedStateToAlias, onSaveAlias } = externalState;
+      return (
+        <Button
+          type="primary"
+          onClick={() => onSaveAlias(item.state)}
+          disabled={
+            !!savingState ||
+            newStateToAlias.get(item.state) === undefined ||
+            (savedStateToAlias.get(item.state) || '') === (newStateToAlias.get(item.state) || '')
+          }
+          loading={item.state === savingState}
+        >
+          Update
+        </Button>
+      );
+    },
+  }),
+]);
+
 export const TransactionStateSettings: React.FC = () => {
   const api = useApi();
   const settings = useSettings();
-  const [savingState, setSavingState] = useState<TransactionState | null>();
+  const [savingState, setSavingState] = useState<TransactionState | null>(null);
   const stateToAlias = useMemo<Map<TransactionState | undefined, string>>(
     () =>
       new Map((settings.transactionStateAlias || []).map((entry) => [entry.state, entry.alias])),
@@ -108,74 +169,26 @@ export const TransactionStateSettings: React.FC = () => {
     [stateToAlias],
   );
 
-  const columns: TableColumn<TableItem>[] = [
-    {
-      title: <Typography.Text strong>State</Typography.Text>,
-      width: '100px',
-      dataIndex: 'state',
-    },
-    {
-      title: <Typography.Text strong>Description</Typography.Text>,
-      width: '250px',
-      dataIndex: 'description',
-    },
-    {
-      title: (
-        <Space>
-          <Typography.Text strong>Alias</Typography.Text>
-          <Tooltip title="Allows you to add a name that will overwrite the default Transaction state displayed in the Console. The Alias name is only used in the Console and will have no impact on the API.">
-            <QuestionCircleOutlined />
-          </Tooltip>
-        </Space>
-      ),
-      width: '200px',
-      render: (_, item) => {
-        return (
-          <Input
-            value={newStateToAlias.get(item.state) ?? item.stateAlias}
-            onChange={(event) => handleUpdateAlias(item.state, event.target.value)}
-          />
-        );
-      },
-    },
-    {
-      title: <Typography.Text strong>Action</Typography.Text>,
-      width: '50px',
-      render: (_, item) => {
-        return (
-          <Button
-            type="primary"
-            onClick={() => handleSaveAlias(item.state)}
-            disabled={
-              !!savingState ||
-              newStateToAlias.get(item.state) === undefined ||
-              (savedStateToAlias.get(item.state) || '') === (newStateToAlias.get(item.state) || '')
-            }
-            loading={item.state === savingState}
-          >
-            Update
-          </Button>
-        );
-      },
-    },
-  ];
-
+  const externalState: ExternalState = {
+    newStateToAlias,
+    savingState,
+    savedStateToAlias,
+    onUpdateAlias: handleUpdateAlias,
+    onSaveAlias: handleSaveAlias,
+  };
   return (
-    <Table<TableItem>
-      disableStripedColoring={true}
-      rowKey="state"
-      headerTitle="Default State"
-      search={false}
-      columns={columns}
-      pagination={'HIDE'}
-      data={{
-        items: tableData,
-      }}
-      options={{
-        setting: false,
-        density: false,
-        reload: false,
-      }}
-    />
+    <>
+      <H4>Default State</H4>
+      <Table<TableItem>
+        rowKey="state"
+        columns={columns}
+        pagination={false}
+        data={{
+          items: tableData,
+        }}
+        toolsOptions={false}
+        externalState={externalState}
+      />
+    </>
   );
 };

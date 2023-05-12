@@ -24,6 +24,7 @@ import { PersistedSettingsProvider } from './internal/settings';
 import { useTanstackTable } from './internal/helpers';
 import ScrollContainer from './ScrollContainer';
 import { ToolsOptions } from './Header/Tools';
+import { ExternalStateContext } from './internal/externalState';
 import Pagination from '@/components/library/Pagination';
 import { getPageCount, PaginationParams } from '@/utils/queries/hooks';
 import { AsyncResource, getOr, isFailed, isLoading, success } from '@/utils/asyncResource';
@@ -48,6 +49,7 @@ export interface Props<Item extends object, Params extends object = CommonParams
   params?: AllParams<Params>;
   onEdit?: (rowKey: string, newValue: Item) => void;
   onChangeParams?: (newParams: AllParams<Params>) => void;
+  onExpandedMetaChange?: (meta: { isAllExpanded: boolean }) => void;
   columns: TableColumn<Item>[];
   showResultsInfo?: boolean; // todo:implement
   hideFilters?: boolean;
@@ -57,12 +59,13 @@ export interface Props<Item extends object, Params extends object = CommonParams
   renderExpanded?: (item: Item) => JSX.Element;
   fitHeight?: boolean | number;
   fixedExpandedContainer?: boolean;
-  toolsOptions?: ToolsOptions;
+  toolsOptions?: ToolsOptions | false;
   defaultSorting?: SortingParamsItem;
   externalHeader?: boolean;
   onPaginateData?: (params: PaginationParams) => Promise<TableData<Item>>;
   onReload?: () => void;
   paginationBorder?: boolean;
+  externalState?: unknown;
 }
 
 function Table<Item extends object, Params extends object = CommonParams>(
@@ -92,6 +95,7 @@ function Table<Item extends object, Params extends object = CommonParams>(
     defaultSorting,
     onReload,
     paginationBorder = false,
+    onExpandedMetaChange,
     cursorActions,
     hasPreviousPage,
     hasNextPage,
@@ -130,6 +134,7 @@ function Table<Item extends object, Params extends object = CommonParams>(
     isExpandable: isExpandable,
     isSortable: !disableSorting,
     defaultSorting: defaultSorting,
+    onExpandedMetaChange: onExpandedMetaChange,
   });
 
   const handleResetSelection = useCallback(() => {
@@ -150,8 +155,14 @@ function Table<Item extends object, Params extends object = CommonParams>(
     innerRef,
     () => ({
       reload: handleReload,
+      toggleExpanded: (value?: boolean) => {
+        table.toggleAllRowsExpanded(value);
+      },
+      isAllExpanded: () => {
+        return table.getIsAllRowsExpanded();
+      },
     }),
-    [handleReload],
+    [handleReload, table],
   );
 
   const isResizing = table.getState().columnSizingInfo.isResizingColumn;
@@ -480,15 +491,17 @@ function getSizingProps<Item>(column: TanTable.Column<Item>) {
 export default function <Item extends object, Params extends object = CommonParams>(
   props: Props<Item, Params>,
 ) {
-  const { tableId, extraFilters, columns } = props;
+  const { tableId, extraFilters, columns, externalState = null } = props;
 
   return (
-    <PersistedSettingsProvider
-      tableId={tableId ?? null}
-      columns={columns}
-      extraFilters={extraFilters}
-    >
-      <Table {...props} />
-    </PersistedSettingsProvider>
+    <ExternalStateContext.Provider value={{ value: externalState }}>
+      <PersistedSettingsProvider
+        tableId={tableId ?? null}
+        columns={columns}
+        extraFilters={extraFilters}
+      >
+        <Table {...props} />
+      </PersistedSettingsProvider>
+    </ExternalStateContext.Provider>
   );
 }

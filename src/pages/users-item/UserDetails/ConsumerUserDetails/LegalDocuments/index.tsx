@@ -1,12 +1,11 @@
 import React from 'react';
-import s from './index.module.less';
 import DocumentDetails from './DocumentDetails';
-import { dayjs, DEFAULT_DATE_TIME_FORMAT } from '@/utils/dayjs';
 import { InternalConsumerUser, LegalDocument } from '@/apis';
-import CountryDisplay from '@/components/ui/CountryDisplay';
-import Table from '@/components/ui/Table';
+import Table from '@/components/library/Table';
 import * as Card from '@/components/ui/Card';
-import KeyValueTag from '@/components/ui/KeyValueTag';
+import { ColumnHelper } from '@/components/library/Table/columnHelper';
+import { formatConsumerName } from '@/utils/api/users';
+import { COUNTRY, DATE_TIME, TAGS } from '@/components/library/Table/standardDataTypes';
 
 interface Props {
   person: InternalConsumerUser;
@@ -15,83 +14,76 @@ interface Props {
   collapsableKey: string;
 }
 
+type TableItem = LegalDocument & { i: number };
+
 export function LegalDocumentsTable(prop: Props) {
   const { person, updateCollapseState, title, collapsableKey } = prop;
+
+  const helper = new ColumnHelper<TableItem>();
+
   return (
     <Card.Root
       header={{ title, collapsableKey }}
       updateCollapseState={updateCollapseState}
       collapsable={updateCollapseState != null}
     >
-      <div className={s.expandedRow}>
-        <Table<LegalDocument & { i: number }>
-          className={s.table}
-          search={false}
-          form={{
-            labelWrap: true,
-          }}
+      <Card.Section>
+        <Table<TableItem>
           rowKey="i"
           data={{
             items: (person.legalDocuments ?? []).map((x, i) => ({ i, ...x })),
           }}
-          columns={[
-            {
+          columns={helper.list([
+            helper.derived({
               title: 'Document Details',
-              render: (_, document) => {
-                return (
-                  <DocumentDetails name={document.documentType} number={document.documentNumber} />
-                );
+              value: (document) => {
+                return {
+                  documentType: document.documentType,
+                  documentNumber: document.documentNumber,
+                };
               },
-            },
-            {
+              type: {
+                render: ({ documentType, documentNumber }) => {
+                  return <DocumentDetails name={documentType} number={documentNumber} />;
+                },
+              },
+            }),
+            helper.simple({
+              key: 'nameOnDocument',
               title: 'Name on Document',
-              render: (_, document) => document.nameOnDocument ?? '-',
-            },
-            {
+              type: {
+                render: (nameOnDocument) => (
+                  <>{nameOnDocument ? formatConsumerName(nameOnDocument) : '-'}</>
+                ),
+                stringify: (nameOnDocument) =>
+                  nameOnDocument ? formatConsumerName(nameOnDocument) : '-',
+              },
+            }),
+            helper.simple({
+              key: 'documentIssuedDate',
               title: 'Date of Issue',
-              render: (_, document) => {
-                {
-                  return document.documentIssuedDate
-                    ? dayjs(document.documentIssuedDate).format(DEFAULT_DATE_TIME_FORMAT)
-                    : -'-';
-                }
-              },
-            },
-            {
+              type: DATE_TIME,
+            }),
+            helper.simple({
+              key: 'documentExpirationDate',
               title: 'Date of Expiry',
-              render: (_, document) => {
-                {
-                  return document.documentExpirationDate
-                    ? dayjs(document.documentExpirationDate).format(DEFAULT_DATE_TIME_FORMAT)
-                    : '-';
-                }
-              },
-            },
-            {
+              type: DATE_TIME,
+            }),
+            helper.simple({
+              key: 'documentIssuedCountry',
               title: 'Country of Issue',
-              render: (_, document) => {
-                return <CountryDisplay isoCode={document.documentIssuedCountry ?? '-'} />;
-              },
-            },
-            {
+              type: COUNTRY,
+            }),
+            helper.simple({
+              key: 'tags',
               title: 'Tags',
-              render: (_, document) => (
-                <>
-                  {(document.tags ?? []).map((tag) => (
-                    <KeyValueTag key={tag.key} tag={tag} />
-                  ))}
-                </>
-              ),
-            },
-          ]}
-          options={{
-            reload: false,
-            density: false,
-            setting: false,
-          }}
-          pagination={'HIDE'}
+              type: TAGS,
+            }),
+          ])}
+          toolsOptions={false}
+          pagination={false}
         />
-      </div>
+      </Card.Section>
     </Card.Root>
   );
 }

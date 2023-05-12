@@ -8,7 +8,7 @@ import {
   TransactionState,
   UserState,
 } from '@/apis';
-import { CommonParams } from '@/components/ui/Table';
+import { CommonParams } from '@/components/library/Table/types';
 import { Mode as UserSearchMode } from '@/pages/transactions/components/UserSearchPopup/types';
 
 export type CommonCaseParams = {

@@ -3,9 +3,11 @@ import { useState, useEffect } from 'react';
 import { useApi } from '@/api';
 import { useSettings } from '@/components/AppWrapper/Providers/SettingsProvider';
 import Button from '@/components/library/Button';
-import Table from '@/components/ui/Table';
+import Table from '@/components/library/Table';
 import { CURRENCIES_SELECT_OPTIONS } from '@/utils/currencies';
 import { message } from '@/components/library/Message';
+import { ColumnHelper } from '@/components/library/Table/columnHelper';
+import { StatePair } from '@/utils/state';
 
 type TableItem = {
   valueType: string;
@@ -13,9 +15,69 @@ type TableItem = {
   label: string;
 };
 
+type ExternalState = {
+  value: StatePair<{ [key: string]: string }>;
+  saving: StatePair<boolean>;
+  onSave: (key: string, value: string) => void;
+};
+
 const DEFAULT_VALUES = {
   currency: 'USD',
 };
+
+const columnHelper = new ColumnHelper<TableItem>();
+
+const columns = columnHelper.list([
+  columnHelper.simple({
+    title: 'Value Type',
+    key: 'label',
+  }),
+  columnHelper.display({
+    title: 'Options',
+    id: 'options',
+    render: (record, context) => {
+      const externalState: ExternalState = context.external as ExternalState;
+      const [value, setValue] = externalState.value;
+      return (
+        <Select
+          value={value[record.valueType]}
+          onChange={(value) => {
+            setValue({
+              ...value,
+              [record.valueType]: value,
+            });
+          }}
+          options={record.options}
+          defaultValue={DEFAULT_VALUES[record.valueType]}
+          showSearch
+          style={{ width: '100%' }}
+        />
+      );
+    },
+    defaultWidth: 600,
+  }),
+  columnHelper.display({
+    id: 'action',
+    title: 'Action',
+    render: (record, context) => {
+      const externalState: ExternalState = context.external as ExternalState;
+      const { onSave } = externalState;
+      const [value] = externalState.value;
+      const [saving] = externalState.saving;
+      return (
+        <Button
+          type="PRIMARY"
+          onClick={() => {
+            onSave(record.valueType, value[record.valueType]);
+          }}
+          isLoading={saving}
+        >
+          Save
+        </Button>
+      );
+    },
+  }),
+]);
 
 export const DefaultValuesSettings = () => {
   const [value, setValue] = useState<{ [key: string]: string }>(DEFAULT_VALUES);
@@ -52,55 +114,18 @@ export const DefaultValuesSettings = () => {
     }
   };
 
+  const externalState: ExternalState = {
+    value: [value, setValue],
+    saving: [saving, setSaving],
+    onSave: handleSave,
+  };
   return (
     <div>
       <Table<TableItem>
-        columns={[
-          {
-            title: 'Value Type',
-            dataIndex: 'valueType',
-            key: 'valueType',
-            render: (_, record) => record.label,
-            width: 200,
-          },
-          {
-            title: 'Options',
-            dataIndex: 'options',
-            key: 'options',
-            render: (options, record) => (
-              <Select
-                value={value[record.valueType]}
-                onChange={(value) => {
-                  setValue({
-                    ...value,
-                    [record.valueType]: value,
-                  });
-                }}
-                options={record.options}
-                defaultValue={DEFAULT_VALUES[record.valueType]}
-                showSearch
-                style={{ width: '100%' }}
-              />
-            ),
-            width: 600,
-          },
-          {
-            title: 'Action',
-            dataIndex: 'action',
-            key: 'action',
-            render: (action, record) => (
-              <Button
-                type="PRIMARY"
-                onClick={() => {
-                  handleSave(record.valueType, value[record.valueType]);
-                }}
-                isLoading={saving}
-              >
-                Save
-              </Button>
-            ),
-          },
-        ]}
+        rowKey="label"
+        sizingMode="FULL_WIDTH"
+        toolsOptions={false}
+        columns={columns}
         data={{
           items: [
             {
@@ -110,11 +135,8 @@ export const DefaultValuesSettings = () => {
             },
           ],
         }}
-        pagination={'HIDE'}
-        disableStripedColoring={true}
-        rowKey="action"
-        headerTitle="Default Values"
-        search={false}
+        pagination={false}
+        externalState={externalState}
       />
     </div>
   );

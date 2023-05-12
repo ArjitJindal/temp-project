@@ -1,65 +1,48 @@
 import React from 'react';
 import { TransactionEvent } from '@/apis';
-import Table from '@/components/ui/Table';
-import Id from '@/components/ui/Id';
-import TimestampDisplay from '@/components/ui/TimestampDisplay';
-import TransactionStateTag from '@/components/ui/TransactionStateTag';
+import Table from '@/components/library/Table';
+import { ColumnHelper } from '@/components/library/Table/columnHelper';
+import { DATE_TIME, ID, TRANSACTION_STATE } from '@/components/library/Table/standardDataTypes';
 
 interface Props {
   events: Array<TransactionEvent>;
 }
 
 export default function TransactionEventsTable({ events }: Props) {
+  const columnHelper = new ColumnHelper<TransactionEvent>();
   return (
     <Table<TransactionEvent>
-      rowKey="_id"
-      search={false}
-      cardBordered={false}
-      disableInternalPadding={true}
-      columns={[
-        {
+      rowKey="transactionId"
+      columns={columnHelper.list([
+        columnHelper.simple({
           title: 'Event ID',
-          dataIndex: 'eventId',
-          width: 100,
-          render: (dom, event) => (event.eventId ? <Id>{event.eventId}</Id> : '-'),
-        },
-        {
+          key: 'eventId',
+          type: ID,
+        }),
+        columnHelper.simple({
           title: 'Transaction state',
-          width: 100,
-          render: (_, entity) => {
-            return <TransactionStateTag transactionState={entity.transactionState} />;
-          },
-        },
-        {
+          key: 'transactionState',
+          type: TRANSACTION_STATE,
+        }),
+        columnHelper.simple({
           title: 'Event Time',
-          dataIndex: 'timestamp',
-          valueType: 'dateTime',
-          key: 'transactionTime',
-          width: 100,
-          render: (_, item) => {
-            return <TimestampDisplay timestamp={item.timestamp} />;
-          },
-        },
-        {
+          key: 'timestamp',
+          type: DATE_TIME,
+        }),
+        columnHelper.simple({
           title: 'Description',
-          dataIndex: 'eventDescription',
-          width: 100,
-        },
-        {
+          key: 'eventDescription',
+        }),
+        columnHelper.simple({
           title: 'Reason',
-          dataIndex: 'reason',
-          width: 100,
-        },
-      ]}
+          key: 'reason',
+        }),
+      ])}
       data={{
         items: events,
       }}
-      pagination={'HIDE'}
-      options={{
-        density: false,
-        setting: false,
-        reload: false,
-      }}
+      pagination={false}
+      toolsOptions={false}
     />
   );
 }

@@ -16,6 +16,7 @@ export default function ExpandIcon(props: Props) {
       className={cn(s.root, isExpanded && s.isExpanded)}
       onClick={onClick}
       data-cy="expand-icon"
+      type="button"
     >
       <ArrowDownSLine />
     </button>

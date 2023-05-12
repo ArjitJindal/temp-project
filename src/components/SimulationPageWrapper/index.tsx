@@ -119,7 +119,7 @@ const SimulationPageWrapper = forwardRef<SimulationPageWrapperRef, Props>((props
                             {!settings?.limits?.simulations
                               ? 0
                               : Math.max(settings.limits.simulations - data.count, 0)}
-                            left{' '}
+                            {' left'}
                             <a
                               className={s.buyMore}
                               href={`mailto:${branding.supportEmail}`}

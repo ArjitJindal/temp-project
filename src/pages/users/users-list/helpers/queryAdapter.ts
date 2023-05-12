@@ -1,6 +1,6 @@
 import { UserSearchParams } from '..';
 import { Adapter } from '@/utils/routing';
-import { defaultQueryAdapter } from '@/components/ui/Table/helpers/queryAdapter';
+import { defaultQueryAdapter } from '@/components/library/Table/queryAdapter';
 import { dayjs } from '@/utils/dayjs';
 import { RiskLevel, UserRegistrationStatus } from '@/apis';
 

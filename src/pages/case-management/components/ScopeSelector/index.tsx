@@ -1,6 +1,6 @@
 import React from 'react';
 import SegmentedControl from '@/components/library/SegmentedControl';
-import { AllParams } from '@/components/ui/Table';
+import { AllParams } from '@/components/library/Table/types';
 
 type ScopeSelectorValue = 'MY' | 'ALL' | 'ALL_ALERTS' | 'MY_ALERTS';
 

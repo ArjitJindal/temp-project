@@ -1,7 +1,7 @@
 import { Link } from 'react-router-dom';
 import { Tag } from 'antd';
 import { InternalBusinessUser } from '@/apis';
-import { TableColumn } from '@/components/ui/Table/types';
+import { TableColumn } from '@/components/library/Table/types';
 import { capitalizeWords } from '@/utils/tags';
 import { ColumnHelper } from '@/components/library/Table/columnHelper';
 import { DATE, MONEY, TAGS } from '@/components/library/Table/standardDataTypes';

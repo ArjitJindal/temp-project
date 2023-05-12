@@ -13,9 +13,11 @@ import ValuesTable from './ValuesTable';
 import { AsyncResource, getOr, init, isLoading, map } from '@/utils/asyncResource';
 import { neverReturn } from '@/utils/lang';
 import ActivityIndicator from '@/pages/risk-levels/risk-factors/ParametersTable/ActivityIndicator';
-import Table from '@/components/ui/Table';
+import Table from '@/components/library/Table';
 import { DATA_TYPE_TO_VALUE_TYPE } from '@/pages/risk-levels/risk-factors/ParametersTable/consts';
 import { useHasPermissions } from '@/utils/user-utils';
+import { ColumnHelper } from '@/components/library/Table/columnHelper';
+import { LONG_TEXT } from '@/components/library/Table/standardDataTypes';
 
 interface Props {
   parameters: RiskLevelTable;
@@ -37,44 +39,48 @@ export default function ParametersTable(props: Props) {
     }
   }, [onRefresh, parameters]);
 
+  const columnHelper = new ColumnHelper<RiskLevelTableItem>();
   // todo: i18n
   return (
     <div className={style.root}>
       <Table<RiskLevelTableItem>
-        disableExpandedRowPadding={true}
-        disableInternalPadding={true}
-        form={{
-          labelWrap: true,
-        }}
         rowKey="parameter"
-        search={false}
-        scroll={{ x: 1000 }}
-        columns={[
-          { title: 'Parameter Name', dataIndex: 'title' },
-          {
+        columns={columnHelper.list([
+          columnHelper.simple({ title: 'Parameter Name', key: 'title' }),
+          columnHelper.simple({
             title: 'Type',
-            dataIndex: 'type',
-            render: (_, item) => {
-              const type = DATA_TYPE_TO_VALUE_TYPE[item.dataType];
-              switch (type) {
-                case 'LITERAL':
-                  return <Tag color="green">{type}</Tag>;
-                case 'RANGE':
-                  return <Tag color="blue">{type}</Tag>;
-                case 'MULTIPLE':
-                  return <Tag color="cyan">{type}</Tag>;
-                case 'TIME_RANGE':
-                  return <Tag color="purple">{type.replace('_', ' ')}</Tag>;
-                case 'DAY_RANGE':
-                  return <Tag color="purple">{type.replace('_', ' ')}</Tag>;
-              }
-              return neverReturn(type, <Tag>{type}</Tag>);
+            key: 'dataType',
+            type: {
+              render: (dataType) => {
+                if (dataType == null) {
+                  return <Tag>{dataType}</Tag>;
+                }
+                const type = DATA_TYPE_TO_VALUE_TYPE[dataType];
+                switch (type) {
+                  case 'LITERAL':
+                    return <Tag color="green">{type}</Tag>;
+                  case 'RANGE':
+                    return <Tag color="blue">{type}</Tag>;
+                  case 'MULTIPLE':
+                    return <Tag color="cyan">{type}</Tag>;
+                  case 'TIME_RANGE':
+                    return <Tag color="purple">{type.replace('_', ' ')}</Tag>;
+                  case 'DAY_RANGE':
+                    return <Tag color="purple">{type.replace('_', ' ')}</Tag>;
+                }
+                return neverReturn(type, <Tag>{type}</Tag>);
+              },
             },
-          },
-          { title: 'Parameter Description', dataIndex: 'description' },
-          {
+          }),
+          columnHelper.simple({
+            title: 'Parameter Description',
+            key: 'description',
+            defaultWidth: 300,
+            type: LONG_TEXT,
+          }),
+          columnHelper.display({
             title: 'Status',
-            render: (_, item) => {
+            render: (item) => {
               const parameterRes =
                 (parameterSettings && parameterSettings[item.parameter]) ??
                 init<ParameterSettings>();
@@ -87,10 +93,10 @@ export default function ParametersTable(props: Props) {
                 </span>
               );
             },
-          },
-          {
+          }),
+          columnHelper.display({
             title: 'Actions',
-            render: (_, item) => {
+            render: (item) => {
               const parameterRes =
                 (parameterSettings && parameterSettings[item.parameter]) ??
                 init<ParameterSettings>();
@@ -109,31 +115,23 @@ export default function ParametersTable(props: Props) {
                 </Button>
               );
             },
-          },
-        ]}
+          }),
+        ])}
         data={{
           items: parameters,
         }}
-        expandable={{
-          expandedRowRender: (item: RiskLevelTableItem) => (
-            <ValuesTable
-              item={item}
-              currentValuesRes={map(
-                (parameterSettings && parameterSettings[item.parameter]) ??
-                  init<ParameterSettings>(),
-                (x) => x.values,
-              )}
-              onSave={onSaveValues}
-            />
-          ),
-        }}
-        defaultSize={'small'}
-        pagination={'HIDE'}
-        options={{
-          density: false,
-          setting: false,
-          reload: false,
-        }}
+        renderExpanded={(item) => (
+          <ValuesTable
+            item={item}
+            currentValuesRes={map(
+              (parameterSettings && parameterSettings[item.parameter]) ?? init<ParameterSettings>(),
+              (x) => x.values,
+            )}
+            onSave={onSaveValues}
+          />
+        )}
+        pagination={false}
+        toolsOptions={false}
       />
     </div>
   );

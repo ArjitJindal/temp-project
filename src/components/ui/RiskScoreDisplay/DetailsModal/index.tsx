@@ -2,30 +2,13 @@ import React from 'react';
 import cn from 'clsx';
 import MainPanel from '../MainPanel';
 import s from './index.module.less';
+import { columns, TableRow } from './consts';
+import { findParameter } from './helpers';
 import Modal from '@/components/ui/Modal';
 import { ValueItem } from '@/components/ui/RiskScoreDisplay/types';
-import Table from '@/components/ui/Table';
-import { RiskLevel } from '@/utils/risk-levels';
-import RiskLevelTag from '@/components/library/RiskLevelTag';
-import { RiskEntityType, RiskScoreComponent } from '@/apis';
-import { ALL_RISK_PARAMETERS } from '@/pages/risk-levels/risk-factors/ParametersTable/consts';
-import {
-  Entity,
-  ParameterName,
-  RiskLevelTableItem,
-} from '@/pages/risk-levels/risk-factors/ParametersTable/types';
-import {
-  PARAMETER_RENDERERS,
-  DEFAULT_RENDERER,
-} from '@/components/ui/RiskScoreDisplay/DetailsModal/helpers';
-
-interface TableRow {
-  entityType: Entity;
-  parameter: ParameterName;
-  value: unknown;
-  riskScore: number;
-  riskLevel: RiskLevel;
-}
+import Table from '@/components/library/Table';
+import { RiskScoreComponent } from '@/apis';
+import { ParameterName } from '@/pages/risk-levels/risk-factors/ParametersTable/types';
 
 interface Props {
   icon: React.ReactNode;
@@ -43,7 +26,7 @@ const VARIABLES = [
 export default function DetailsModal(props: Props) {
   const { icon, title, isOpen, values, onCancel, components } = props;
   return (
-    <Modal title={title} hideFooter={true} isOpen={isOpen} onCancel={onCancel}>
+    <Modal title={title} hideFooter={true} isOpen={isOpen} onCancel={onCancel} width={640}>
       <div className={cn(s.root)}>
         <div className={s.header}>
           <MainPanel icon={icon} title={title} values={values} />
@@ -74,13 +57,9 @@ export default function DetailsModal(props: Props) {
           <div className={s.table}>
             <Table<TableRow>
               rowKey={'parameter'}
-              pagination={'HIDE'}
-              disableInternalPadding={true}
-              options={{
-                reload: false,
-                density: false,
-                setting: false,
-              }}
+              sizingMode="FULL_WIDTH"
+              pagination={false}
+              toolsOptions={false}
               data={{
                 total: components.length,
                 items: components.map((component) => ({
@@ -91,57 +70,11 @@ export default function DetailsModal(props: Props) {
                   riskLevel: component.riskLevel,
                 })),
               }}
-              columns={[
-                {
-                  title: 'Risk factor',
-                  key: 'riskFactor',
-                  render: (_, { parameter, entityType }) => {
-                    const parameterDescription = findParameter(entityType, parameter);
-                    return <>{parameterDescription?.title ?? parameter}</>;
-                  },
-                },
-                {
-                  title: 'Value',
-                  key: 'value',
-                  render: (_, entity) => {
-                    const { entityType, parameter, value } = entity;
-                    if (value == null) {
-                      return <>-</>;
-                    }
-                    const parameterDescription = findParameter(entityType, parameter);
-                    if (parameterDescription == null) {
-                      return <>{JSON.stringify(value)}</>;
-                    }
-                    const valueRenderer =
-                      PARAMETER_RENDERERS[parameterDescription.dataType] ?? DEFAULT_RENDERER;
-                    return <>{valueRenderer(value)}</>;
-                  },
-                },
-                {
-                  title: 'Risk score',
-                  key: 'riskScore',
-                  render: (_, entity) => <>{entity.riskScore}</>,
-                },
-                {
-                  title: 'Risk level',
-                  key: 'riskLevel',
-                  render: (_, entity) => <RiskLevelTag level={entity.riskLevel} />,
-                },
-              ]}
+              columns={columns}
             />
           </div>
         )}
       </div>
     </Modal>
   );
-}
-
-function findParameter(
-  entity: RiskEntityType,
-  parameter: ParameterName,
-): RiskLevelTableItem | null {
-  const parameterDescription = ALL_RISK_PARAMETERS.find(
-    (x) => x.entity === entity && x.parameter === parameter,
-  );
-  return parameterDescription ?? null;
 }

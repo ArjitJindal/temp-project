@@ -5,7 +5,7 @@ import { usePaginatedQuery, useQuery } from '@/utils/queries/hooks';
 import { ALERT_ITEM, ALERT_ITEM_TRANSACTION_LIST } from '@/utils/queries/keys';
 import { useApi } from '@/api';
 import { useApiTime } from '@/utils/tracker';
-import { DEFAULT_PARAMS_STATE } from '@/components/ui/Table';
+import { DEFAULT_PARAMS_STATE } from '@/components/library/Table/consts';
 import TransactionsTable, {
   TransactionsTableParams,
 } from '@/pages/transactions/components/TransactionsTable';

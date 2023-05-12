@@ -5,7 +5,7 @@ import s from './styles.module.less';
 import { useApi } from '@/api';
 import { Alert } from '@/apis';
 import Modal from '@/components/ui/Modal';
-import { DEFAULT_PARAMS_STATE } from '@/components/ui/Table';
+import { DEFAULT_PARAMS_STATE } from '@/components/library/Table/consts';
 import TransactionsTable, {
   TransactionsTableParams,
 } from '@/pages/transactions/components/TransactionsTable';

@@ -2,7 +2,7 @@ import { Link } from 'react-router-dom';
 import React from 'react';
 import { dayjs, DEFAULT_DATE_FORMAT } from '@/utils/dayjs';
 import { InternalConsumerUser } from '@/apis';
-import { TableColumn } from '@/components/ui/Table/types';
+import { TableColumn } from '@/components/library/Table/types';
 import { ColumnHelper } from '@/components/library/Table/columnHelper';
 import { COUNTRY, DATE, TAGS } from '@/components/library/Table/standardDataTypes';
 import { getFullName } from '@/utils/api/users';

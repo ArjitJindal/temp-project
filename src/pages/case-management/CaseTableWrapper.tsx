@@ -8,7 +8,7 @@ import { Case, CaseUpdateRequest, RuleInstance } from '@/apis';
 import { useApi } from '@/api';
 import { usePrevious } from '@/utils/hooks';
 import { PaginatedData, usePaginatedQuery } from '@/utils/queries/hooks';
-import { AllParams } from '@/components/ui/Table';
+import { AllParams } from '@/components/library/Table/types';
 import { CASES_LIST } from '@/utils/queries/keys';
 import { useRules } from '@/utils/rules';
 import { useApiTime } from '@/utils/tracker';

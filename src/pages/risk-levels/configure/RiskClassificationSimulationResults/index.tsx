@@ -245,11 +245,10 @@ const IterationComponent = (props: IterationProps) => {
       </div>
       {iteration?.parameters?.classificationValues && (
         <div style={{ marginTop: 16 }}>
+          <H4>Risk levels</H4>
           <RiskClassificationTable
             isDisabled={true}
             state={parseApiState(iteration.parameters.classificationValues)}
-            headerSubtitle={'Risk levels'}
-            disableInternalPadding
           />
         </div>
       )}

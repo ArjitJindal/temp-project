@@ -45,7 +45,9 @@ export function PersistedSettingsProvider<Item extends object, Params>(props: {
       ),
       columnSizing: columns.reduce(
         (acc, column) =>
-          column.defaultWidth != null ? { ...acc, [getColumnId(column)]: column.defaultWidth } : {},
+          column.defaultWidth != null
+            ? { ...acc, [getColumnId(column)]: column.defaultWidth }
+            : acc,
         {},
       ),
       columnPinning: {
@@ -63,6 +65,7 @@ export function PersistedSettingsProvider<Item extends object, Params>(props: {
   }, [columns, allFilters]);
 
   const [persistedState, setPersistedState] = usePersistedState(tableId ?? null, getDefaultValue);
+  console.log('persistedState', persistedState);
 
   const providerValue: PersistedSettingsContextValue = useMemo<PersistedSettingsContextValue>(
     () => ({

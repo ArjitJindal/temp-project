@@ -5,11 +5,13 @@ import RiskClassificationTable, {
   parseApiState,
   prepareApiState,
 } from '../RiskClassificationTable';
+import s from './index.module.less';
 import Button from '@/components/library/Button';
 import { useApi } from '@/api';
 import { useHasPermissions } from '@/utils/user-utils';
 import { RiskClassificationScore } from '@/apis';
 import { message } from '@/components/library/Message';
+import { PageWrapperTableContainer } from '@/components/PageWrapper';
 
 type Props = {
   riskValues: RiskClassificationScore[];
@@ -51,22 +53,24 @@ export default function RiskQualification(props: Props) {
 
   // todo: i18n
   return (
-    <RiskClassificationTable
-      toolBarRender={() => [
+    <PageWrapperTableContainer>
+      <div className={s.header}>
         <Button
           type="PRIMARY"
           onClick={handleSave}
           isDisabled={!riskValues.length || !hasRiskLevelPermission}
         >
           Save
-        </Button>,
+        </Button>
         <Button onClick={handleCancel} isDisabled={!riskValues.length || !hasRiskLevelPermission}>
           Cancel
-        </Button>,
-      ]}
-      state={state}
-      setState={setState}
-      isDisabled={!riskValues.length || !hasRiskLevelPermission}
-    />
+        </Button>
+      </div>
+      <RiskClassificationTable
+        state={state}
+        setState={setState}
+        isDisabled={!riskValues.length || !hasRiskLevelPermission}
+      />
+    </PageWrapperTableContainer>
   );
 }

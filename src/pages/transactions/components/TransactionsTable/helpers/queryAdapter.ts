@@ -1,7 +1,7 @@
 import { TransactionsTableParams } from '..';
 import { Mode } from '../../UserSearchPopup/types';
 import { TransactionState } from '@/apis';
-import { defaultQueryAdapter } from '@/components/ui/Table/helpers/queryAdapter';
+import { defaultQueryAdapter } from '@/components/library/Table/queryAdapter';
 import { dayjs } from '@/utils/dayjs';
 import { Adapter } from '@/utils/routing';
 

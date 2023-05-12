@@ -46,7 +46,7 @@
     opacity: 0.5;
   }
 
-  > tr:first-child {
+  > tr:last-child {
     > td {
       &:first-child {
         border-bottom-left-radius: @border-radius;
@@ -219,6 +219,7 @@
     flex-direction: column;
     flex: 1;
     min-height: 48px;
+    max-height: 48px;
   }
 
   &.isOdd {

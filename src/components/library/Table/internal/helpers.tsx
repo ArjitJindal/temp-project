@@ -1,4 +1,11 @@
-import React, { SetStateAction, useCallback, useMemo, useState } from 'react';
+import React, {
+  SetStateAction,
+  useCallback,
+  useContext,
+  useEffect,
+  useMemo,
+  useState,
+} from 'react';
 import * as TanTable from '@tanstack/react-table';
 import { getFilteredRowModel, getPaginationRowModel } from '@tanstack/react-table';
 import {
@@ -34,7 +41,8 @@ import {
   SPACER_COLUMN,
 } from '../consts';
 import { ColumnOrder, usePersistedSettingsContext } from './settings';
-import { getErrorMessage } from '@/utils/lang';
+import { ExternalStateContext } from './externalState';
+import { getErrorMessage, isEqual } from '@/utils/lang';
 import { UNKNOWN } from '@/components/library/Table/standardDataTypes';
 import { AsyncResource, getOr } from '@/utils/asyncResource';
 import { applyUpdater, StatePair, Updater } from '@/utils/state';
@@ -93,6 +101,7 @@ export function useTanstackTable<
   isExpandable: boolean;
   isSortable: boolean;
   defaultSorting?: SortingParamsItem;
+  onExpandedMetaChange?: (meta: { isAllExpanded: boolean }) => void;
 }): TanTable.Table<TableRow<Item>> {
   const {
     dataRes,
@@ -105,6 +114,7 @@ export function useTanstackTable<
     isExpandable,
     isSortable,
     defaultSorting,
+    onExpandedMetaChange,
   } = options;
   const extraTableContext = usePersistedSettingsContext();
   const [columnOrder] = extraTableContext.columnOrder;
@@ -323,6 +333,15 @@ export function useTanstackTable<
     },
     onRowSelectionChange: setRowSelection,
   });
+
+  const isAllExpanded = table.getIsAllRowsExpanded();
+  const isAllExpandedPrev = table.getIsAllRowsExpanded();
+  useEffect(() => {
+    if (!isEqual(isAllExpanded, isAllExpandedPrev)) {
+      onExpandedMetaChange?.({ isAllExpanded });
+    }
+  }, [isAllExpanded, isAllExpandedPrev, onExpandedMetaChange]);
+
   return table;
 }
 
@@ -409,6 +428,7 @@ function makeDisplayColumnCellComponent<Item extends object>(options: {
   return (props: CellComponentProps<Item>) => {
     const id = applyFieldAccessor(props.row.original.content, rowKey as FieldAccessor<Item>);
     const onEdit = props.table.options.meta.onEdit;
+    const externalState = useContext(ExternalStateContext);
     const editContext = useEditContext<Item>(
       (onEdit != null && column.defaultEditState) ?? false,
       props.row.original.content,
@@ -422,6 +442,7 @@ function makeDisplayColumnCellComponent<Item extends object>(options: {
         {column.render(props.row.original.content, {
           item: props.row.original.content,
           edit: editContext,
+          external: externalState?.value ?? null,
         })}
       </>
     );

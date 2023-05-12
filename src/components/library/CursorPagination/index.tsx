@@ -7,7 +7,7 @@ import {
   VerticalRightOutlined,
 } from '@ant-design/icons';
 import s from './index.module.less';
-import { DEFAULT_PAGE_SIZE } from '@/components/ui/Table/consts';
+import { DEFAULT_PAGE_SIZE } from '@/components/library/Table/consts';
 import Select from '@/components/library/Select';
 import { CursorActions } from '@/utils/queries/types';
 

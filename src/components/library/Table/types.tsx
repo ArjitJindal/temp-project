@@ -19,6 +19,7 @@ export interface EditContext<T> {
 export interface ItemContext<Item> {
   item: Item;
   edit: EditContext<Item>;
+  external: unknown;
 }
 
 export interface CellContext<Value, Item> {
@@ -148,6 +149,7 @@ export interface SimpleColumn<Item extends object, Accessor extends FieldAccesso
 }
 
 export interface DerivedColumn<Item extends object, Value = unknown> extends DataColumn {
+  // value: (item: Item, context: ItemContext<Item>) => Value | undefined;
   value: (item: Item) => Value | undefined;
   type?: FullColumnDataType<Value, Item>;
 }
@@ -279,4 +281,6 @@ export type ToolRenderer = () => React.ReactNode;
 
 export type TableRefType = {
   reload: () => void;
+  isAllExpanded: () => boolean;
+  toggleExpanded: (value?: boolean) => void;
 };

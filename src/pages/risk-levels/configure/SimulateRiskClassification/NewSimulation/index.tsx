@@ -197,6 +197,7 @@ const NewSimulation = forwardRef((props: Props, ref: React.Ref<SimulationRef>) =
     return values.find((item) => item.key === active);
   }, [active, values]);
 
+  console.log('state', state);
   return (
     <Card.Root className={s.cardRoot}>
       <VerticalMenu
@@ -272,7 +273,7 @@ const NewSimulation = forwardRef((props: Props, ref: React.Ref<SimulationRef>) =
             <RiskClassificationTable
               state={values.find((item) => item.key === active)?.state ?? DEFAULT_STATE}
               setState={setState}
-              loading={state == null}
+              isDisabled={state == null}
             />
             <div className={s.simulateButtonContainer}>
               <Button

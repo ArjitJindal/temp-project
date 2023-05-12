@@ -8,7 +8,7 @@ import { Adapter } from '@/utils/routing';
 import { isRuleAction, isTransactionState } from '@/utils/rules';
 import { TableSearchParams } from '@/pages/case-management/types';
 import { isMode } from '@/pages/transactions/components/UserSearchPopup/types';
-import { defaultQueryAdapter } from '@/components/ui/Table/helpers/queryAdapter';
+import { defaultQueryAdapter } from '@/components/library/Table/queryAdapter';
 import { ExtraFilter } from '@/components/library/Table/types';
 import UserSearchButton from '@/pages/transactions/components/UserSearchButton';
 import { TransactionStateButton } from '@/pages/transactions/components/TransactionStateButton';

@@ -1,12 +1,13 @@
 import React, { useCallback, useMemo, useState } from 'react';
-import { Button, Input, Space, Tooltip, Typography } from 'antd';
-import { QuestionCircleOutlined } from '@ant-design/icons';
-import Table from '@/components/ui/Table';
+import { Button, Input } from 'antd';
+import Table from '@/components/library/Table';
 import { useSettings } from '@/components/AppWrapper/Providers/SettingsProvider';
 import { RuleAction, RuleActionAlias } from '@/apis';
 import { useApi } from '@/api';
-import { TableColumn } from '@/components/ui/Table/types';
+import { TableColumn } from '@/components/library/Table/types';
 import { message } from '@/components/library/Message';
+import { H4 } from '@/components/ui/Typography';
+import { ColumnHelper } from '@/components/library/Table/columnHelper';
 
 interface TableItem {
   action: RuleAction;
@@ -14,10 +15,71 @@ interface TableItem {
   actionAlias: string | undefined;
 }
 
+interface ExternalState {
+  savingAction: RuleAction | null;
+  newActionToAlias: Map<RuleAction, string>;
+  savedActionToAlias: Map<RuleAction, string>;
+  onUpdateAlias: (action: RuleAction, newAlias: string) => void;
+  onSaveAlias: (action: RuleAction) => void;
+}
+
+const columnHelper = new ColumnHelper<TableItem>();
+const columns: TableColumn<TableItem>[] = columnHelper.list([
+  columnHelper.simple({
+    key: 'action',
+    title: 'Action',
+    defaultWidth: 100,
+  }),
+  columnHelper.simple({
+    key: 'description',
+    title: 'Description',
+    defaultWidth: 250,
+  }),
+  columnHelper.display({
+    title: 'Alias',
+    tooltip:
+      'Allows you to add a name that will overwrite the default Action name displayed in the Console. The Alias name is only used in the Console and will have no impact on the API.',
+    defaultWidth: 200,
+    render: (item, context) => {
+      const externalState = context.external as ExternalState;
+      const { newActionToAlias, onUpdateAlias } = externalState;
+      return (
+        <Input
+          value={newActionToAlias.get(item.action) ?? item.actionAlias}
+          onChange={(event) => onUpdateAlias(item.action, event.target.value)}
+        />
+      );
+    },
+  }),
+  columnHelper.display({
+    title: 'Action',
+    defaultWidth: 150,
+    render: (item, context) => {
+      const externalState = context.external as ExternalState;
+      const { newActionToAlias, savingAction, savedActionToAlias, onSaveAlias } = externalState;
+      return (
+        <Button
+          type="primary"
+          onClick={() => onSaveAlias(item.action)}
+          disabled={
+            !!savingAction ||
+            newActionToAlias.get(item.action) === undefined ||
+            (savedActionToAlias.get(item.action) || '') ===
+              (newActionToAlias.get(item.action) || '')
+          }
+          loading={item.action === savingAction}
+        >
+          Update
+        </Button>
+      );
+    },
+  }),
+]);
+
 export const RuleActionSettings: React.FC = () => {
   const api = useApi();
   const settings = useSettings();
-  const [savingAction, setSavingAction] = useState<RuleAction | null>();
+  const [savingAction, setSavingAction] = useState<RuleAction | null>(null);
   const actionToAlias = useMemo<Map<RuleAction, string>>(
     () => new Map((settings.ruleActionAliases || []).map((entry) => [entry.action, entry.alias])),
     [settings.ruleActionAliases],
@@ -82,75 +144,26 @@ export const RuleActionSettings: React.FC = () => {
     [actionToAlias],
   );
 
-  const columns: TableColumn<TableItem>[] = [
-    {
-      title: <Typography.Text strong>Action</Typography.Text>,
-      width: '100px',
-      dataIndex: 'action',
-    },
-    {
-      title: <Typography.Text strong>Description</Typography.Text>,
-      width: '250px',
-      dataIndex: 'description',
-    },
-    {
-      title: (
-        <Space>
-          <Typography.Text strong>Alias</Typography.Text>
-          <Tooltip title="Allows you to add a name that will overwrite the default Action name displayed in the Console. The Alias name is only used in the Console and will have no impact on the API.">
-            <QuestionCircleOutlined />
-          </Tooltip>
-        </Space>
-      ),
-      width: '200px',
-      render: (_, item) => {
-        return (
-          <Input
-            value={newActionToAlias.get(item.action) ?? item.actionAlias}
-            onChange={(event) => handleUpdateAlias(item.action, event.target.value)}
-          />
-        );
-      },
-    },
-    {
-      title: <Typography.Text strong>Action</Typography.Text>,
-      width: '50px',
-      render: (_, item) => {
-        return (
-          <Button
-            type="primary"
-            onClick={() => handleSaveAlias(item.action)}
-            disabled={
-              !!savingAction ||
-              newActionToAlias.get(item.action) === undefined ||
-              (savedActionToAlias.get(item.action) || '') ===
-                (newActionToAlias.get(item.action) || '')
-            }
-            loading={item.action === savingAction}
-          >
-            Update
-          </Button>
-        );
-      },
-    },
-  ];
-
+  const externalState: ExternalState = {
+    newActionToAlias,
+    savingAction,
+    savedActionToAlias,
+    onUpdateAlias: handleUpdateAlias,
+    onSaveAlias: handleSaveAlias,
+  };
   return (
-    <Table<TableItem>
-      disableStripedColoring={true}
-      rowKey="action"
-      headerTitle="Default Actions"
-      search={false}
-      columns={columns}
-      pagination={'HIDE'}
-      data={{
-        items: tableData,
-      }}
-      options={{
-        setting: false,
-        density: false,
-        reload: false,
-      }}
-    />
+    <>
+      <H4>Default Actions</H4>
+      <Table<TableItem>
+        rowKey="action"
+        columns={columns}
+        pagination={false}
+        data={{
+          items: tableData,
+        }}
+        toolsOptions={false}
+        externalState={externalState}
+      />
+    </>
   );
 };

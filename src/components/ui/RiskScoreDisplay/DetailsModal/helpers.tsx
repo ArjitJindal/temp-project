@@ -1,13 +1,20 @@
 import React from 'react';
-import { DataType } from '@/pages/risk-levels/risk-factors/ParametersTable/types';
+import {
+  DataType,
+  ParameterName,
+  RiskLevelTableItem,
+} from '@/pages/risk-levels/risk-factors/ParametersTable/types';
+import { RiskEntityType, TransactionType } from '@/apis';
 import CountryDisplay from '@/components/ui/CountryDisplay';
 import { PaymentMethodTag } from '@/components/ui/PaymentTypeTag';
 import { PaymentMethod } from '@/utils/payments';
 import { TransactionTypeTag } from '@/components/ui/TransactionTypeTag';
 import { humanizeConstant } from '@/utils/humanize';
-import { TransactionType } from '@/apis';
 import { CURRENCIES } from '@/utils/currencies';
-import { USER_SEGMENT_OPTIONS } from '@/pages/risk-levels/risk-factors/ParametersTable/consts';
+import {
+  ALL_RISK_PARAMETERS,
+  USER_SEGMENT_OPTIONS,
+} from '@/pages/risk-levels/risk-factors/ParametersTable/consts';
 
 export type ParameterRenderer<V> = (value: V) => React.ReactNode;
 
@@ -52,3 +59,13 @@ export const PARAMETER_RENDERERS: { [key in DataType]: ParameterRenderer<any> } 
   TIME_RANGE: DEFAULT_RENDERER,
   BOOLEAN: DEFAULT_RENDERER,
 };
+
+export function findParameter(
+  entity: RiskEntityType,
+  parameter: ParameterName,
+): RiskLevelTableItem | null {
+  const parameterDescription = ALL_RISK_PARAMETERS.find(
+    (x) => x.entity === entity && x.parameter === parameter,
+  );
+  return parameterDescription ?? null;
+}

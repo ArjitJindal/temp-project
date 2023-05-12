@@ -7,9 +7,8 @@ import TransactionsTable, {
 import { useApi } from '@/api';
 import { useCursorQuery } from '@/utils/queries/hooks';
 import { TRANSACTIONS_LIST } from '@/utils/queries/keys';
-import { DEFAULT_PARAMS_STATE } from '@/components/ui/Table';
+import { DEFAULT_PAGE_SIZE, DEFAULT_PARAMS_STATE } from '@/components/library/Table/consts';
 import { useDeepEqualEffect } from '@/utils/hooks';
-import { DEFAULT_PAGE_SIZE } from '@/components/ui/Table/consts';
 import { useApiTime } from '@/utils/tracker';
 
 interface Props {

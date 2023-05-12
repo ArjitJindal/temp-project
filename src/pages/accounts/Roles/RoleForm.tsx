@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useRef, useState } from 'react';
 import { sentenceCase } from '@antv/x6/es/util/string/format';
 import { permissionsToRows } from './utils';
 import s from './RoleForm.module.less';
@@ -16,6 +16,7 @@ import { message } from '@/components/library/Message';
 import { getErrorMessage } from '@/utils/lang';
 import ButtonGroup from '@/components/library/ButtonGroup';
 import { isValidPermission } from '@/apis/models-custom/Permission';
+import { TableRefType } from '@/components/library/Table/types';
 
 export interface FormValues {
   roleName: string;
@@ -25,7 +26,6 @@ export default function RoleForm({ role, onChange }: { role?: AccountRole; onCha
   const api = useApi();
   const [edit, setEdit] = useState(!role);
   const [isLoading, setLoading] = useState(false);
-  const [expandedRows, setExpandedRows] = useState<string[]>([]);
   const [permissions, setPermissions] = useState<Set<Permission>>(new Set(role?.permissions || []));
   const rows = permissionsToRows(permissions);
   const fieldValidators: FieldValidators<FormValues> = {
@@ -34,7 +34,7 @@ export default function RoleForm({ role, onChange }: { role?: AccountRole; onCha
   };
   const canEdit = !isValidManagedRoleName(role?.name);
   const isEditing = edit && canEdit;
-  const allExpanded = expandedRows.length === rows.length;
+  const [allExpanded, setAllExpanded] = useState(false);
 
   const onSubmit = async (
     { roleName, description }: { roleName: string; description: string },
@@ -76,8 +76,12 @@ export default function RoleForm({ role, onChange }: { role?: AccountRole; onCha
     }
   };
 
-  const onExpand = () =>
-    allExpanded ? setExpandedRows([]) : setExpandedRows(rows.map((i) => i.name));
+  const tableRef = useRef<TableRefType | null>(null);
+
+  const onExpand = () => {
+    tableRef.current?.toggleExpanded();
+  };
+
   const onPermissionChange = (permission: Permission, enabled: boolean) => {
     if (enabled) {
       permissions.add(permission);
@@ -143,10 +147,10 @@ export default function RoleForm({ role, onChange }: { role?: AccountRole; onCha
       </ButtonGroup>
       <PermissionTable
         key={role?.id}
-        expandedRows={expandedRows}
-        setExpandedRows={setExpandedRows}
+        tableRef={tableRef}
         items={rows}
         onChange={isEditing ? onPermissionChange : undefined}
+        onExpandedChange={setAllExpanded}
       />
     </Form>
   );

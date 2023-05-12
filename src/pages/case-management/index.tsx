@@ -10,9 +10,10 @@ import { useCloseSidebarByDefault } from '@/components/AppWrapper/Providers/Side
 import { TableSearchParams } from '@/pages/case-management/types';
 import { makeUrl, parseQueryString } from '@/utils/routing';
 import { queryAdapter } from '@/pages/case-management/helpers';
-import { AllParams, DEFAULT_PARAMS_STATE } from '@/components/ui/Table';
+import { AllParams } from '@/components/library/Table/types';
+import { DEFAULT_PARAMS_STATE } from '@/components/library/Table/consts';
 import { useDeepEqualEffect } from '@/utils/hooks';
-import { DEFAULT_PAGE_SIZE } from '@/components/ui/Table/consts';
+import { DEFAULT_PAGE_SIZE } from '@/components/library/Table/consts';
 import ScopeSelector from '@/pages/case-management/components/ScopeSelector';
 import StatusButtons from '@/pages/transactions/components/StatusButtons';
 

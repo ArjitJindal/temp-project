@@ -1,7 +1,7 @@
 import React from 'react';
 import { Pagination as AntPagination } from 'antd';
 import s from './index.module.less';
-import { DEFAULT_PAGE_SIZE } from '@/components/ui/Table/consts';
+import { DEFAULT_PAGE_SIZE } from '@/components/library/Table/consts';
 import Select from '@/components/library/Select';
 import COLORS from '@/components/ui/colors';
 import { formatNumber } from '@/utils/number';

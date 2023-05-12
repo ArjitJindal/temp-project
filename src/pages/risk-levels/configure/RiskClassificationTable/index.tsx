@@ -1,30 +1,28 @@
-import { ToolBarProps } from '@ant-design/pro-table/lib/components/ToolBar';
 import { RiskClassificationScore, RiskLevel } from '@/apis';
-import { TableColumn } from '@/components/ui/Table/types';
 import { RISK_LEVEL_LABELS, RISK_LEVELS } from '@/utils/risk-levels';
-import RiskLevelTag from '@/components/library/RiskLevelTag';
-import Slider from '@/components/library/Slider';
-import Table from '@/components/ui/Table';
+import Table from '@/components/library/Table';
+import {
+  columns,
+  ExternalState,
+} from '@/pages/risk-levels/configure/RiskClassificationTable/consts';
 
 export type State = number[];
 
 export interface TableItem {
   key: RiskLevel;
+  index: number;
   title: string;
 }
 
 interface Props {
-  toolBarRender?: ToolBarProps<TableItem>['toolBarRender'];
   state: State | null;
   setState?: React.Dispatch<React.SetStateAction<State | null>>;
   isDisabled?: boolean;
-  loading?: boolean;
-  headerSubtitle?: string;
-  disableInternalPadding?: boolean;
 }
 
-const LEVEL_ENTRIES = RISK_LEVELS.map((key) => ({
+const LEVEL_ENTRIES = RISK_LEVELS.map((key, i) => ({
   key,
+  index: i,
   title: RISK_LEVEL_LABELS[key],
 })) as TableItem[];
 
@@ -52,102 +50,25 @@ export function parseApiState(values: ApiState): State {
 }
 
 const RiskClassificationTable = (props: Props) => {
-  const { toolBarRender, state, setState, isDisabled, loading, headerSubtitle } = props;
+  const { state, setState, isDisabled = false } = props;
 
-  const columns: TableColumn<TableItem>[] = [
-    {
-      title: 'Title',
-      width: '200px',
-      dataIndex: 'key',
-      render: (_, item) => <RiskLevelTag level={item.key} />,
-    },
-    {
-      title: 'Score',
-      dataIndex: 'score',
-      tip: 'Range of values that defines the upper and lower limits of a risk level',
-      valueType: 'digit',
-      width: '100px',
-      render: (dom, item, index) => {
-        if (state == null) {
-          return <></>;
-        }
-
-        const start = state[index - 1] ?? 0;
-        const end = state[index] ?? 100;
-        return (
-          <span>
-            {start} - {end}
-          </span>
-        );
-      },
-    },
-    {
-      render: (dom, item, index) => {
-        if (state == null) {
-          return <></>;
-        }
-        const start = state[index - 1] ?? 0;
-        const end = state[index] ?? 100;
-        return (
-          <Slider
-            mode="RANGE"
-            isDisabled={isDisabled}
-            min={0}
-            max={100}
-            value={[start, end]}
-            endExclusive={true}
-            onChange={(newValue) => {
-              if (!setState || newValue == null) {
-                return;
-              }
-              const [newStart, newEnd] = newValue;
-              setState((state) => {
-                if (state == null) {
-                  return state;
-                }
-                return state.map((x, i) => {
-                  if (i === index - 1) {
-                    return newStart;
-                  }
-                  if (i < index - 1 && x > newStart) {
-                    return newStart;
-                  }
-                  if (i === index) {
-                    return newEnd;
-                  }
-                  if (i > index && x < newEnd) {
-                    return newEnd;
-                  }
-                  return x;
-                }) as State;
-              });
-            }}
-          />
-        );
-      },
-    },
-  ];
-
+  const externalState: ExternalState = {
+    state,
+    isDisabled,
+    setState,
+  };
   return (
     <Table<TableItem>
-      disableStripedColoring={true}
       rowKey="key"
-      search={false}
+      sizingMode="FULL_WIDTH"
       columns={columns}
-      pagination={'HIDE'}
-      loading={state == null || loading}
+      pagination={false}
       data={{
         items: LEVEL_ENTRIES,
       }}
-      toolBarRender={toolBarRender}
-      options={{
-        setting: false,
-        density: false,
-        reload: false,
-      }}
-      headerSubtitle={headerSubtitle}
-      disableInternalPadding={props.disableInternalPadding}
+      toolsOptions={false}
       showResultsInfo={false}
+      externalState={externalState}
     />
   );
 };

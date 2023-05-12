@@ -44,6 +44,7 @@ import { RULE_NATURE_LABELS, RULE_NATURE_OPTIONS } from '@/pages/rules/utils';
 import TextInput from '@/components/library/TextInput';
 import NumberInput from '@/components/library/NumberInput';
 import TextArea from '@/components/library/TextArea';
+import Id from '@/components/ui/Id';
 
 export const UNKNOWN: Required<FullColumnDataType<unknown>> = {
   render: (value) => {
@@ -123,15 +124,14 @@ export const FLOAT: ColumnDataType<number> = {
 export const STRING: ColumnDataType<string> = {
   render: (value) => <span>{value}</span>,
   renderEdit: (context) => {
-    const [state, setState] = context.edit.state;
+    const [state] = context.edit.state;
     return (
       <div className={s.maxWidth}>
         <TextInput
           value={state}
           onChange={(newValue) => {
-            setState(newValue);
+            context.edit.onConfirm(newValue);
           }}
-          onBlur={context.edit.onConfirm}
         />
       </div>
     );
@@ -141,16 +141,15 @@ export const STRING: ColumnDataType<string> = {
 export const LONG_TEXT: ColumnDataType<string> = {
   render: (value) => <span>{value}</span>,
   renderEdit: (context) => {
-    const [state, setState] = context.edit.state;
+    const [state] = context.edit.state;
     return (
       <div className={s.maxWidth}>
         <TextArea
           className={s.textArea}
           value={state}
           onChange={(newValue) => {
-            setState(newValue);
+            context.edit.onConfirm(newValue);
           }}
-          onBlur={context.edit.onConfirm}
         />
       </div>
     );
@@ -190,9 +189,9 @@ export const RULE_NATURE: ColumnDataType<RuleNature> = {
   },
 };
 
-export const ID = (): ColumnDataType<string> => ({
-  render: (value) => <span>{value}</span>,
-});
+export const ID: ColumnDataType<string> = {
+  render: (value) => <Id>{value}</Id>,
+};
 
 export const RISK_LEVEL: ColumnDataType<RiskLevel> = {
   render: (value) => <RiskLevelTag level={value} />,

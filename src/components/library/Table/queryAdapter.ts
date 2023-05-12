@@ -1,5 +1,5 @@
-import { CommonParams } from '..';
-import { DEFAULT_PAGE_SIZE } from '../consts';
+import { CommonParams } from './types';
+import { DEFAULT_PAGE_SIZE } from './consts';
 import { Adapter } from '@/utils/routing';
 
 export const defaultQueryAdapter: Adapter<CommonParams> = {

@@ -17,8 +17,8 @@ import { NarrativeTemplate } from '@/apis';
 import { getMutationAsyncResource, useQuery } from '@/utils/queries/hooks';
 import { NARRATIVE_TEMPLATE_LIST } from '@/utils/queries/keys';
 import AsyncResourceRenderer from '@/components/common/AsyncResourceRenderer';
-import { DEFAULT_PAGE_SIZE } from '@/components/ui/Table/consts';
-import { CommonParams } from '@/components/ui/Table';
+import { DEFAULT_PAGE_SIZE } from '@/components/library/Table/consts';
+import { CommonParams } from '@/components/library/Table/types';
 import { ColumnHelper } from '@/components/library/Table/columnHelper';
 import { LONG_TEXT, STRING } from '@/components/library/Table/standardDataTypes';
 

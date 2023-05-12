@@ -12,11 +12,11 @@ import { useCursorQuery } from '@/utils/queries/hooks';
 import UserSearchButton from '@/pages/transactions/components/UserSearchButton';
 import TagSearchButton from '@/pages/transactions/components/TagSearchButton';
 import { TRANSACTIONS_LIST } from '@/utils/queries/keys';
+import { DEFAULT_PAGE_SIZE } from '@/components/library/Table/consts';
 import { dayjs } from '@/utils/dayjs';
 import { useApiTime, usePageViewTracker } from '@/utils/tracker';
 import { makeUrl, parseQueryString } from '@/utils/routing';
 import { useDeepEqualEffect } from '@/utils/hooks';
-import { DEFAULT_PAGE_SIZE } from '@/components/ui/Table/consts';
 import { InternalTransaction } from '@/apis';
 
 const TableList = () => {

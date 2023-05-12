@@ -1,22 +1,73 @@
 import React, { useCallback, useMemo, useState } from 'react';
-import { Button, Input, Space, Tooltip, Typography } from 'antd';
-import { QuestionCircleOutlined } from '@ant-design/icons';
-import Table from '@/components/ui/Table';
+import Table from '@/components/library/Table';
 import { useSettings } from '@/components/AppWrapper/Providers/SettingsProvider';
 import { RiskLevel, RiskLevelAlias } from '@/apis';
 import { useApi } from '@/api';
-import { TableColumn } from '@/components/ui/Table/types';
+import { TableColumn } from '@/components/library/Table/types';
 import { message } from '@/components/library/Message';
+import { ColumnHelper } from '@/components/library/Table/columnHelper';
+import { STRING } from '@/components/library/Table/standardDataTypes';
+import Button from '@/components/library/Button';
 
 interface TableItem {
   level: RiskLevel;
   levelAlias: string | undefined;
 }
 
+interface ExternalState {
+  handleSaveAlias: (level: RiskLevel) => void;
+  savingLevel: RiskLevel | null;
+  newLevelToAlias: Map<RiskLevel | undefined, string>;
+  savedLevelToAlias: Map<RiskLevel | undefined, string>;
+}
+
+const helper = new ColumnHelper<TableItem>();
+
+const columns: TableColumn<TableItem>[] = helper.list([
+  helper.simple({
+    key: 'level',
+    title: 'Level',
+    defaultWidth: 100,
+  }),
+  helper.simple({
+    key: 'levelAlias',
+    title: 'Alias',
+    tooltip:
+      'Allows you to add a name that will overwrite the default Risk level displayed in the Console. The Alias name is only used in the Console and will have no impact on the API.',
+    type: STRING,
+    defaultWidth: 200,
+    defaultEditState: true,
+  }),
+  helper.display({
+    title: 'Action',
+    defaultWidth: 120,
+    render: (item, context) => {
+      const { handleSaveAlias, savingLevel, newLevelToAlias, savedLevelToAlias } =
+        context.external as ExternalState;
+      return (
+        <Button
+          type="PRIMARY"
+          onClick={() => {
+            handleSaveAlias(item.level);
+          }}
+          isDisabled={
+            !!savingLevel ||
+            newLevelToAlias.get(item.level) === undefined ||
+            (savedLevelToAlias.get(item.level) || '') === (newLevelToAlias.get(item.level) || '')
+          }
+          isLoading={item.level === savingLevel}
+        >
+          Update
+        </Button>
+      );
+    },
+  }),
+]);
+
 export const RiskLevelSettings: React.FC = () => {
   const api = useApi();
   const settings = useSettings();
-  const [savingLevel, setSavingLevel] = useState<RiskLevel | null>();
+  const [savingLevel, setSavingLevel] = useState<RiskLevel | null>(null);
   const levelToAlias = useMemo<Map<RiskLevel | undefined, string>>(
     () => new Map((settings.riskLevelAlias || []).map((entry) => [entry.level, entry.alias])),
     [settings.riskLevelAlias],
@@ -37,6 +88,7 @@ export const RiskLevelSettings: React.FC = () => {
     },
     [newLevelToAlias],
   );
+
   const handleSaveAlias = useCallback(
     async (level: RiskLevel) => {
       setSavingLevel(level);
@@ -66,91 +118,52 @@ export const RiskLevelSettings: React.FC = () => {
     () => [
       {
         level: 'VERY_HIGH',
-        levelAlias: levelToAlias.get('VERY_LOW'),
+        levelAlias: newLevelToAlias['VERY_HIGH'] ?? levelToAlias.get('VERY_LOW') ?? '',
       },
       {
         level: 'HIGH',
-        levelAlias: levelToAlias.get('HIGH'),
+        levelAlias: newLevelToAlias['HIGH'] ?? levelToAlias.get('HIGH') ?? '',
       },
       {
         level: 'MEDIUM',
-        levelAlias: levelToAlias.get('MEDIUM'),
+        levelAlias: newLevelToAlias['MEDIUM'] ?? levelToAlias.get('MEDIUM') ?? '',
       },
       {
         level: 'LOW',
-        levelAlias: levelToAlias.get('LOW'),
+        levelAlias: newLevelToAlias['LOW'] ?? levelToAlias.get('LOW') ?? '',
       },
       {
         level: 'VERY_LOW',
-        levelAlias: levelToAlias.get('VERY_LOW'),
+        levelAlias: newLevelToAlias['VERY_LOW'] ?? levelToAlias.get('VERY_LOW') ?? '',
       },
     ],
-    [levelToAlias],
+    [newLevelToAlias, levelToAlias],
   );
 
-  const columns: TableColumn<TableItem>[] = [
-    {
-      title: <Typography.Text strong>Level</Typography.Text>,
-      width: '100px',
-      dataIndex: 'level',
-    },
-    {
-      title: (
-        <Space>
-          <Typography.Text strong>Alias</Typography.Text>
-          <Tooltip title="Allows you to add a name that will overwrite the default Risk level displayed in the Console. The Alias name is only used in the Console and will have no impact on the API.">
-            <QuestionCircleOutlined />
-          </Tooltip>
-        </Space>
-      ),
-      width: '200px',
-      render: (_, item) => {
-        return (
-          <Input
-            value={newLevelToAlias.get(item.level) ?? item.levelAlias}
-            onChange={(event) => handleUpdateAlias(item.level, event.target.value)}
-          />
-        );
-      },
-    },
-    {
-      title: <Typography.Text strong>Action</Typography.Text>,
-      width: '50px',
-      render: (_, item) => {
-        return (
-          <Button
-            type="primary"
-            onClick={() => handleSaveAlias(item.level)}
-            disabled={
-              !!savingLevel ||
-              newLevelToAlias.get(item.level) === undefined ||
-              (savedLevelToAlias.get(item.level) || '') === (newLevelToAlias.get(item.level) || '')
-            }
-            loading={item.level === savingLevel}
-          >
-            Update
-          </Button>
-        );
-      },
-    },
-  ];
-
+  const externalState: ExternalState = {
+    savingLevel,
+    newLevelToAlias,
+    handleSaveAlias,
+    savedLevelToAlias,
+  };
   return (
     <Table<TableItem>
-      disableStripedColoring={true}
+      sizingMode="FULL_WIDTH"
       rowKey="level"
-      headerTitle="Default State"
-      search={false}
       columns={columns}
-      pagination={'HIDE'}
+      onEdit={(rowKey, newValue) => {
+        handleUpdateAlias(rowKey as RiskLevel, newValue.levelAlias ?? '');
+      }}
       data={{
         items: tableData,
       }}
-      options={{
-        setting: false,
-        density: false,
+      pagination={false}
+      toolsOptions={{
         reload: false,
+        setting: false,
+        download: false,
       }}
+      externalState={externalState}
     />
   );
 };

@@ -23,7 +23,7 @@ interface Props<Item extends object, Params extends object> {
   selectionActions?: SelectionAction<Item, Params>[];
   extraFilters?: ExtraFilter<Params>[];
   extraTools?: ToolRenderer[];
-  toolsOptions?: ToolsOptions;
+  toolsOptions?: ToolsOptions | false;
   hideFilters?: boolean;
   params: AllParams<Params>;
   externalHeader: boolean;
@@ -44,7 +44,7 @@ export default function Header<Item extends object, Params extends object>(
     extraFilters = [],
     extraTools = [],
     hideFilters = false,
-    toolsOptions,
+    toolsOptions = {},
     externalHeader,
     onReload,
     onPaginateData,
@@ -54,7 +54,17 @@ export default function Header<Item extends object, Params extends object>(
   const allFilters = useMemo(() => [...autoFilters, ...extraFilters], [autoFilters, extraFilters]);
 
   const showFilters = allFilters.length > 0 && !hideFilters;
-  const showTools = true;
+  let showTools = true;
+  if (toolsOptions === false) {
+    showTools = false;
+  } else if (
+    toolsOptions.reload === false &&
+    toolsOptions.setting === false &&
+    toolsOptions.download === false &&
+    extraTools.length === 0
+  ) {
+    showTools = false;
+  }
 
   const showHeader = showFilters || showTools;
 
@@ -80,15 +90,17 @@ export default function Header<Item extends object, Params extends object>(
           }}
           actions={selectionActions ?? []}
         />
-        <Tools
-          options={toolsOptions}
-          extraTools={extraTools}
-          columns={columns}
-          table={table}
-          params={params}
-          onReload={onReload}
-          onPaginateData={onPaginateData}
-        />
+        {toolsOptions != false && (
+          <Tools
+            options={toolsOptions}
+            extraTools={extraTools}
+            columns={columns}
+            table={table}
+            params={params}
+            onReload={onReload}
+            onPaginateData={onPaginateData}
+          />
+        )}
       </div>
     </div>
   );

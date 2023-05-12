@@ -5,9 +5,9 @@ import { P } from '@/components/ui/Typography';
 import SanctionsTable from '@/components/SanctionsTable';
 import { useApi } from '@/api';
 import { useQuery } from '@/utils/queries/hooks';
-import { TableData } from '@/components/library/Table/types';
+import { CommonParams, TableData } from '@/components/library/Table/types';
 import { ALERT_ITEM_SANCTIONS_MATCH_LIST } from '@/utils/queries/keys';
-import { CommonParams, DEFAULT_PARAMS_STATE } from '@/components/ui/Table';
+import { DEFAULT_PARAMS_STATE } from '@/components/library/Table/consts';
 
 interface Props {
   alert: Alert;
