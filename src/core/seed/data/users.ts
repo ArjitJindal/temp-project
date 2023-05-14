@@ -70,122 +70,124 @@ const legalDocument2: LegalDocument = {
   },
 }
 
-const businessUsers: InternalBusinessUser[] = [
-  ...companies.map(
-    (c, i): InternalBusinessUser => ({
-      type: 'BUSINESS',
-      userId: uuid4(),
-      drsScore: {
-        drsScore: randomFloat(i, 1),
-        createdAt: Date.now(),
-        isUpdatable: true,
-      },
-      userStateDetails: sampleUserStateDetails(i),
-      krsScore: {
-        krsScore: randomFloat(),
-        createdAt: sampleTimestamp(i),
-      },
-      kycStatusDetails: sampleKycStatusDetails(i),
-      createdTimestamp: sampleTimestamp(i),
-      legalEntity: {
-        contactDetails: {
-          emailIds: ['tim@acme.com'],
+let data: (Business | User)[] = []
+
+const init = () => {
+  if (data.length > 0) {
+    return
+  }
+  data = [
+    ...companies.map(
+      (c, i): InternalBusinessUser => ({
+        type: 'BUSINESS',
+        userId: uuid4(),
+        drsScore: {
+          drsScore: randomFloat(i, 1),
+          createdAt: Date.now(),
+          isUpdatable: true,
         },
-        companyGeneralDetails: {
-          legalName: c,
-          businessIndustry: [randomIndustry()],
+        userStateDetails: sampleUserStateDetails(i),
+        krsScore: {
+          krsScore: randomFloat(),
+          createdAt: sampleTimestamp(i),
         },
-        companyRegistrationDetails: sampleCompanyRegistrationDetails(i),
-      },
-      shareHolders: [
-        {
-          generalDetails: {
-            name: {
-              firstName: randomName(),
-              middleName: randomName(),
-              lastName: randomName(),
-            },
-            countryOfResidence: pickRandom(COUNTRY_CODES, i),
-            countryOfNationality: pickRandom(COUNTRY_CODES, i),
-          },
-          legalDocuments: [legalDocument1, legalDocument2],
+        kycStatusDetails: sampleKycStatusDetails(i),
+        createdTimestamp: sampleTimestamp(i),
+        legalEntity: {
           contactDetails: {
-            emailIds: ['first@email.com', 'second@email.com'],
-            contactNumbers: ['+4287878787', '+7777777'],
-            faxNumbers: ['+999999'],
-            websites: ['www.example.com'],
-            addresses: [
-              {
-                addressLines: ['Times Square 12B', 'App. 11'],
-                postcode: '88173',
-                city: 'New York',
-                state: 'New York',
-                country: 'USA',
-                tags: [tag1],
-              },
-              {
-                addressLines: ['Baker St. 55'],
-                postcode: '777',
-                city: 'London',
-                country: 'UK',
-              },
-            ],
+            emailIds: ['tim@acme.com'],
           },
-          tags: [tag1],
+          companyGeneralDetails: {
+            legalName: c,
+            businessIndustry: [randomIndustry()],
+          },
+          companyRegistrationDetails: sampleCompanyRegistrationDetails(i),
         },
-        {
-          generalDetails: {
-            name: {
-              firstName: randomName(),
-              middleName: randomName(),
-              lastName: randomName(),
+        shareHolders: [
+          {
+            generalDetails: {
+              name: {
+                firstName: randomName(),
+                middleName: randomName(),
+                lastName: randomName(),
+              },
+              countryOfResidence: pickRandom(COUNTRY_CODES, i),
+              countryOfNationality: pickRandom(COUNTRY_CODES, i),
+            },
+            legalDocuments: [legalDocument1, legalDocument2],
+            contactDetails: {
+              emailIds: ['first@email.com', 'second@email.com'],
+              contactNumbers: ['+4287878787', '+7777777'],
+              faxNumbers: ['+999999'],
+              websites: ['www.example.com'],
+              addresses: [
+                {
+                  addressLines: ['Times Square 12B', 'App. 11'],
+                  postcode: '88173',
+                  city: 'New York',
+                  state: 'New York',
+                  country: 'USA',
+                  tags: [tag1],
+                },
+                {
+                  addressLines: ['Baker St. 55'],
+                  postcode: '777',
+                  city: 'London',
+                  country: 'UK',
+                },
+              ],
+            },
+            tags: [tag1],
+          },
+          {
+            generalDetails: {
+              name: {
+                firstName: randomName(),
+                middleName: randomName(),
+                lastName: randomName(),
+              },
             },
           },
-        },
-      ],
-      directors: [
-        {
-          generalDetails: {
-            name: {
-              firstName: randomName(),
-              middleName: randomName(),
-              lastName: randomName(),
+        ],
+        directors: [
+          {
+            generalDetails: {
+              name: {
+                firstName: randomName(),
+                middleName: randomName(),
+                lastName: randomName(),
+              },
             },
           },
+        ],
+      })
+    ),
+    ...[...new Array(30)].map(
+      (_, i): InternalConsumerUser => ({
+        type: 'CONSUMER' as const,
+        userId: uuid4(),
+        drsScore: {
+          drsScore: randomFloat(i, 1),
+          createdAt: Date.now(),
+          isUpdatable: true,
         },
-      ],
-    })
-  ),
-]
-
-const consumerUsers: InternalConsumerUser[] = [
-  ...[...new Array(30)].map(
-    (_, i): InternalConsumerUser => ({
-      type: 'CONSUMER' as const,
-      userId: uuid4(),
-      drsScore: {
-        drsScore: randomFloat(i, 1),
-        createdAt: Date.now(),
-        isUpdatable: true,
-      },
-      riskLevel: pickRandom(RISK_LEVEL1S, i),
-      userStateDetails: sampleUserStateDetails(0.9 * i),
-      kycStatusDetails: sampleKycStatusDetails(0.9 * i),
-      userDetails: {
-        dateOfBirth: new Date(sampleTimestamp(i * 0.1)).toISOString(),
-        countryOfResidence: pickRandom(COUNTRY_CODES, i * 0.1),
-        countryOfNationality: pickRandom(COUNTRY_CODES, i * 0.1),
-        name: {
-          firstName: randomName(),
-          middleName: randomName(),
-          lastName: randomName(),
+        riskLevel: pickRandom(RISK_LEVEL1S, i),
+        userStateDetails: sampleUserStateDetails(0.9 * i),
+        kycStatusDetails: sampleKycStatusDetails(0.9 * i),
+        userDetails: {
+          dateOfBirth: new Date(sampleTimestamp(i * 0.1)).toISOString(),
+          countryOfResidence: pickRandom(COUNTRY_CODES, i * 0.1),
+          countryOfNationality: pickRandom(COUNTRY_CODES, i * 0.1),
+          name: {
+            firstName: randomName(),
+            middleName: randomName(),
+            lastName: randomName(),
+          },
         },
-      },
-      createdTimestamp: sampleTimestamp(0.9 * i),
-    })
-  ),
-]
+        createdTimestamp: sampleTimestamp(0.9 * i),
+      })
+    ),
+  ]
+}
 
-const data: (Business | User)[] = [...businessUsers, ...consumerUsers]
-
-export = data
+export { init, data }

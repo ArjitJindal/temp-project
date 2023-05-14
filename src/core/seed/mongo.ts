@@ -10,12 +10,15 @@ import {
   USERS_COLLECTION,
 } from '@/utils/mongoDBUtils'
 import { transactions } from '@/core/seed/data/transactions'
-import cases from '@/core/seed/data/cases'
-import users from '@/core/seed/data/users'
-import krs from '@/core/seed/data/krs_scores'
-import ars from '@/core/seed/data/ars_scores'
-import drs from '@/core/seed/data/drs_scores'
-import transactionEvents from '@/core/seed/data/transaction_events'
+import { init as caseInit, data as cases } from '@/core/seed/data/cases'
+import { init as userInit, data as users } from '@/core/seed/data/users'
+import { init as krsInit, data as krs } from '@/core/seed/data/krs_scores'
+import { init as arsInit, data as ars } from '@/core/seed/data/ars_scores'
+import { init as drsInit, data as drs } from '@/core/seed/data/drs_scores'
+import {
+  init as transactionEventsInit,
+  data as transactionEvents,
+} from '@/core/seed/data/transaction_events'
 import { DashboardStatsRepository } from '@/lambdas/console-api-dashboard/repositories/dashboard-stats-repository'
 import { Account, AccountsService } from '@/services/accounts'
 import { Case } from '@/@types/openapi-internal/Case'
@@ -36,6 +39,14 @@ export async function seedMongo(client: MongoClient, tenantId: string) {
   const db = await client.db()
   const col = await allCollections(tenantId, db)
   await Promise.all(col.map((c) => db.collection(c).drop()))
+
+  // TODO there will be a neater way of achieving this.
+  caseInit()
+  userInit()
+  krsInit()
+  arsInit()
+  drsInit()
+  transactionEventsInit()
 
   for (const [collectionNameFn, data] of collections) {
     console.log(`Re-create collection: ${collectionNameFn(tenantId)}`)

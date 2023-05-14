@@ -1,4 +1,4 @@
-import users from './users'
+import { data as users } from './users'
 import { sampleTransaction } from '@/core/seed/samplers/transaction'
 import { sampleTag } from '@/core/seed/samplers/tag'
 import { sampleCountry } from '@/core/seed/samplers/countries'
@@ -55,11 +55,16 @@ const generator = function* (seed: number): Generator<InternalTransaction> {
 
 const generate: () => Iterable<InternalTransaction> = () => generator(42)
 
-const data = generate()
-
 const transactions: InternalTransaction[] = []
-for (const transaction of data) {
-  transactions.push(transaction)
+
+const init = () => {
+  if (transactions.length > 0) {
+    return
+  }
+  const data = generate()
+  for (const transaction of data) {
+    transactions.push(transaction)
+  }
 }
 
-export { generate, transactions }
+export { init, generate, transactions }
