@@ -17,6 +17,7 @@ import BusinessIndustryButton from '@/pages/transactions/components/BusinessIndu
 import { RiskLevelButton } from '@/pages/users/users-list/RiskLevelFilterButton';
 import StackLineIcon from '@/components/ui/icons/Remix/business/stack-line.react.svg';
 import { denseArray } from '@/utils/lang';
+import { AlertStatus, CaseStatus } from '@/apis';
 
 export const queryAdapter: Adapter<TableSearchParams> = {
   serializer: (params) => {
@@ -91,10 +92,8 @@ export const queryAdapter: Adapter<TableSearchParams> = {
           : undefined,
       tagKey: raw.tagKey ?? undefined,
       tagValue: raw.tagValue ?? undefined,
-      caseStatus:
-        raw.caseStatus === 'CLOSED' ? 'CLOSED' : raw.caseStatus === 'OPEN' ? 'OPEN' : undefined,
-      alertStatus:
-        raw.alertStatus === 'CLOSED' ? 'CLOSED' : raw.alertStatus === 'OPEN' ? 'OPEN' : undefined,
+      caseStatus: raw.caseStatus as CaseStatus,
+      alertStatus: raw.alertStatus as AlertStatus,
       transactionId: raw.transactionId,
       amountGreaterThanFilter: raw.amountGreaterThanFilter
         ? parseInt(raw.amountGreaterThanFilter)

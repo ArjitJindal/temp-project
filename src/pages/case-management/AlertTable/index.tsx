@@ -4,7 +4,7 @@ import { Avatar } from 'antd';
 import CreateCaseConfirmModal from './CreateCaseConfirmModal';
 import { usePaginatedQuery } from '@/utils/queries/hooks';
 import { useApi } from '@/api';
-import { Account, AlertListResponseItem, RuleInstance } from '@/apis';
+import { Account, AlertListResponseItem, AlertStatus, RuleInstance } from '@/apis';
 import { ALERT_LIST } from '@/utils/queries/keys';
 import QueryResultsTable from '@/components/common/QueryResultsTable';
 import { AllParams, TableColumn, TableData, TableRefType } from '@/components/library/Table/types';
@@ -36,6 +36,7 @@ import {
 import { useRules } from '@/utils/rules';
 import { ColumnHelper } from '@/components/library/Table/columnHelper';
 import { DefaultApiGetAlertListRequest } from '@/apis/types/ObjectParamAPI';
+import { neverReturn } from '@/utils/lang';
 
 export type AlertTableParams = AllParams<TableSearchParams>;
 
@@ -213,6 +214,19 @@ export default function AlertTable(props: Props) {
 
       let filterAssignmentsIds: string[] | undefined = undefined;
 
+      let filterAlertStatus: AlertStatus[];
+      if (alertStatus == null) {
+        filterAlertStatus = [];
+      } else if (alertStatus === 'OPEN' || alertStatus === 'REOPENED') {
+        filterAlertStatus = ['OPEN', 'REOPENED'];
+      } else if (alertStatus === 'CLOSED') {
+        filterAlertStatus = ['CLOSED'];
+      } else if (alertStatus === 'ESCALATED') {
+        filterAlertStatus = ['ESCALATED'];
+      } else {
+        filterAlertStatus = neverReturn(alertStatus, []);
+      }
+
       if (showCases === 'MY_ALERTS') {
         filterAssignmentsIds = [user.userId];
       } else if (assignedTo?.length) {
@@ -224,8 +238,7 @@ export default function AlertTable(props: Props) {
         pageSize,
         filterAlertId: alertId,
         filterCaseId: caseId,
-        filterOutAlertStatus: alertStatus === 'OPEN' ? 'CLOSED' : undefined,
-        filterAlertStatus: alertStatus === 'CLOSED' ? 'CLOSED' : undefined,
+        filterAlertStatus: filterAlertStatus,
         filterAssignmentsIds,
         filterTransactionState:
           transactionState && transactionState.length > 0 ? transactionState : undefined,

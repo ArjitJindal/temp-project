@@ -5,6 +5,7 @@ import Button from '@/components/library/Button';
 import ArrowDownSLineIcon from '@/components/ui/icons/Remix/system/arrow-down-s-line.react.svg';
 import { humanizeConstant } from '@/utils/humanize';
 import { AlertStatus, CaseStatus } from '@/apis';
+import { useFeatureEnabled } from '@/components/AppWrapper/Providers/SettingsProvider';
 
 interface Props {
   status: CaseStatus | AlertStatus;
@@ -12,12 +13,17 @@ interface Props {
   suffix: 'cases' | 'alerts';
 }
 
-const STATUSES = ['OPEN', 'CLOSED'] as const;
-
 export default function StatusButtons(props: Props) {
   const { status, onChange, suffix } = props;
 
-  const options = STATUSES.map((status) => ({
+  const escalationEnabled = useFeatureEnabled('ESCALATION');
+
+  const caseStatuses: CaseStatus[] = [
+    'OPEN',
+    'CLOSED',
+    ...(escalationEnabled ? (['ESCALATED'] as const) : []),
+  ];
+  const options = caseStatuses.map((status) => ({
     value: status,
     label: `${humanizeConstant(status)} ${suffix}`,
   }));

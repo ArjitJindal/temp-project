@@ -65,7 +65,6 @@ export function PersistedSettingsProvider<Item extends object, Params>(props: {
   }, [columns, allFilters]);
 
   const [persistedState, setPersistedState] = usePersistedState(tableId ?? null, getDefaultValue);
-  console.log('persistedState', persistedState);
 
   const providerValue: PersistedSettingsContextValue = useMemo<PersistedSettingsContextValue>(
     () => ({

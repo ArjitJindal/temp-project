@@ -4,7 +4,7 @@ import { TableSearchParams } from './types';
 import CaseTable from './CaseTable';
 import { message } from '@/components/library/Message';
 import { dayjs } from '@/utils/dayjs';
-import { Case, CaseUpdateRequest, RuleInstance } from '@/apis';
+import { Case, CaseStatus, CaseUpdateRequest, RuleInstance } from '@/apis';
 import { useApi } from '@/api';
 import { usePrevious } from '@/utils/hooks';
 import { PaginatedData, usePaginatedQuery } from '@/utils/queries/hooks';
@@ -13,6 +13,7 @@ import { CASES_LIST } from '@/utils/queries/keys';
 import { useRules } from '@/utils/rules';
 import { useApiTime } from '@/utils/tracker';
 import { useAuth0User } from '@/utils/user-utils';
+import { neverReturn } from '@/utils/lang';
 
 export default function CaseTableWrapper(props: {
   params: TableSearchParams;
@@ -60,6 +61,19 @@ export default function CaseTableWrapper(props: {
 
     const [sortField, sortOrder] = sort[0] ?? [];
 
+    let filterCaseStatus: CaseStatus[];
+    if (caseStatus == null) {
+      filterCaseStatus = [];
+    } else if (caseStatus === 'OPEN' || caseStatus === 'REOPENED') {
+      filterCaseStatus = ['OPEN', 'REOPENED'];
+    } else if (caseStatus === 'CLOSED') {
+      filterCaseStatus = ['CLOSED'];
+    } else if (caseStatus === 'ESCALATED') {
+      filterCaseStatus = ['ESCALATED'];
+    } else {
+      filterCaseStatus = neverReturn(caseStatus, []);
+    }
+
     const response = await measure(
       () =>
         api.getCaseList({
@@ -82,8 +96,7 @@ export default function CaseTableWrapper(props: {
           filterId: caseId,
           filterRulesHit: rulesHitFilter,
           filterRulesExecuted: rulesExecutedFilter,
-          filterOutCaseStatus: caseStatus === 'CLOSED' ? undefined : 'CLOSED',
-          filterCaseStatus: caseStatus === 'CLOSED' ? 'CLOSED' : undefined,
+          filterCaseStatus: filterCaseStatus,
           filterTransactionState: transactionState,
           filterStatus: status,
           filterOriginCurrencies: originCurrenciesFilter,
