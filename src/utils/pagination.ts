@@ -76,6 +76,8 @@ export async function cursorPaginate<T extends Document>(
   hasNext: boolean
   hasPrev: boolean
   last: string
+  count: number
+  limit: number
 }> {
   const field = query.sortField || '_id'
   const fromRaw: any = query.fromCursorKey || ''
@@ -153,10 +155,8 @@ export async function cursorPaginate<T extends Document>(
   const prevCursorPromise = getPrevCursor(prevFind, query)
 
   // Determine next cursor
+  const count = countDocuments(collection, filter)
   const items = await find.limit(query.pageSize + 1).toArray()
-
-  let next = ''
-
   const { hasPrev, prev } = await prevCursorPromise
   const lastItems = await lastFindPromise
   const lastItem = lastItems.at(-1)
@@ -170,6 +170,7 @@ export async function cursorPaginate<T extends Document>(
     items.pop()
   }
 
+  let next = ''
   if (hasNext) {
     const lastItem = items.at(-1)
     // Encode cursor
@@ -183,6 +184,8 @@ export async function cursorPaginate<T extends Document>(
     last,
     hasNext,
     hasPrev,
+    count: await count,
+    limit: COUNT_QUERY_LIMIT,
   }
 }
 
@@ -212,6 +215,20 @@ function cursor<T>(item?: WithId<T>, sortField?: string): string {
   )
   // Encode cursor
   return encodeCursor(raw)
+}
+
+async function countDocuments<T extends Document>(
+  collection: Collection<T>,
+  filter: Filter<WithId<T>>
+): Promise<number> {
+  if (_.isEmpty(filter)) {
+    return await collection.countDocuments()
+  }
+
+  return await collection.countDocuments(
+    { $and: [filter] },
+    { limit: COUNT_QUERY_LIMIT }
+  )
 }
 
 function encodeCursor(raw: string): string {

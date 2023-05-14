@@ -91,12 +91,16 @@ export class MongoDbTransactionRepository
     additionalFilters: Filter<InternalTransaction>[] = []
   ): Filter<InternalTransaction> {
     const conditions: Filter<InternalTransaction>[] = additionalFilters
-    conditions.push({
-      timestamp: {
-        $gte: params.afterTimestamp || 0,
-        $lt: params.beforeTimestamp || Number.MAX_SAFE_INTEGER,
-      },
-    })
+
+    if (params.afterTimestamp) {
+      conditions.push({ timestamp: { $gte: params.afterTimestamp || 0 } })
+    }
+    if (params.beforeTimestamp) {
+      conditions.push({
+        timestamp: { $lt: params.beforeTimestamp || Number.MAX_SAFE_INTEGER },
+      })
+    }
+
     if (params.filterIdList != null) {
       conditions.push({
         transactionId: { $in: params.filterIdList },
@@ -226,12 +230,17 @@ export class MongoDbTransactionRepository
     }
 
     if (params.filterUserId != null) {
+      let otherConditions = {}
+      if (conditions.length > 0) {
+        otherConditions = { $and: conditions }
+      }
+
       return {
         $or: [
-          { originUserId: { $in: [params.filterUserId] }, $and: conditions },
+          { originUserId: { $in: [params.filterUserId] }, ...otherConditions },
           {
             destinationUserId: { $in: [params.filterUserId] },
-            $and: conditions,
+            ...otherConditions,
           },
         ],
       }
@@ -246,6 +255,10 @@ export class MongoDbTransactionRepository
           },
         })
       }
+    }
+
+    if (conditions.length === 0) {
+      return {}
     }
 
     return { $and: conditions }

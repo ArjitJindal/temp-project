@@ -3812,6 +3812,10 @@ components:
           type: string
         next:
           type: string
+        count:
+          type: number
+        limit:
+          type: number
         last:
           type: string
         hasNext:
@@ -3824,6 +3828,8 @@ components:
         - prev
         - next
         - last
+        - count
+        - limit
         - items
         - hasNext
         - hasPrev
