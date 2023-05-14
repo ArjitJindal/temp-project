@@ -29,6 +29,8 @@ export default function SuperAdminPanel() {
   const [salesforceAuthToken, setSalesforceAuthToken] = useState<string>(
     settings.salesforceAuthToken || '',
   );
+
+  const [seeding, setSeeding] = useState(false);
   const user = useAuth0User();
   const api = useApi();
   const queryResult = useQuery(['tenants'], () => api.getTenantsList());
@@ -37,6 +39,19 @@ export default function SuperAdminPanel() {
       value: tenant.id,
       label: tenant.name,
     })) || [];
+
+  const handleSeed = () => {
+    setSeeding(true);
+    api
+      .getSeedDemoData()
+      .then(() => {
+        location.reload();
+      })
+      .catch((e) => {
+        message.error(`Failed to seed demo data: ${e}`);
+      })
+      .finally(() => setSeeding(false));
+  };
 
   const handleChangeTenant = async (newTenantId: string) => {
     const unsetDemoMode = api.accountChangeSettings({
@@ -195,6 +210,11 @@ export default function SuperAdminPanel() {
           <Label label="Salesforce Auth Token">
             <Input value={salesforceAuthToken} onChange={handleChangeSalesforceAuthToken} />
           </Label>
+        </div>
+        <div className={s.field}>
+          <Button isDisabled={seeding} onClick={handleSeed}>
+            Seed Demo Data
+          </Button>
         </div>
       </Modal>
       <CreateTenantModal
