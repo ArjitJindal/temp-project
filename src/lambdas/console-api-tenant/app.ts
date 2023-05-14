@@ -114,6 +114,20 @@ export const tenantsHandler = lambdaApi()(
 
         return updatedResult
       }
+    } else if (
+      event.resource === '/tenants/seed' &&
+      event.httpMethod === 'POST'
+    ) {
+      if (envIsNot('prod')) {
+        const fullTenantId = getFullTenantId(tenantId, true)
+        const batchJob: DemoModeDataLoadBatchJob = {
+          type: 'DEMO_MODE_DATA_LOAD',
+          tenantId: fullTenantId,
+          awsCredentials: getCredentialsFromEvent(event),
+        }
+        await sendBatchJobCommand(fullTenantId, batchJob)
+      }
+      return 'OK'
     }
     throw new BadRequest('Unhandled request')
   }

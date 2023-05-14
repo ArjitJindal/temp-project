@@ -1,4 +1,11 @@
-import { Document, FindCursor, FindOptions, MongoClient, WithId } from 'mongodb'
+import {
+  Db,
+  Document,
+  FindCursor,
+  FindOptions,
+  MongoClient,
+  WithId,
+} from 'mongodb'
 import { StackConstants } from '@cdk/constants'
 import { escapeStringRegexp } from './regex'
 import { getSecret } from './secrets-manager'
@@ -735,4 +742,15 @@ export const createMongoDBCollections = async (
   await narrativeTemplateCollection.createIndex({
     createdAt: 1,
   })
+}
+
+export async function allCollections(tenantId: string, db: Db) {
+  const re = new RegExp(tenantId + `-((?!test).+)`)
+  const collections = await db
+    .listCollections({
+      name: re,
+    })
+    .toArray()
+
+  return collections.map((c) => c.name)
 }

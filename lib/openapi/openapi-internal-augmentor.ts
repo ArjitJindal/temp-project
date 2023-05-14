@@ -19,6 +19,7 @@ const env = (process.env.ENV || 'prod').split(':')[0]
 export const ConsoleApiPathToLambda: any = {
   '/tenants': StackConstants.CONSOLE_API_TENANT_FUNCTION_NAME,
   '/tenants/settings': StackConstants.CONSOLE_API_TENANT_FUNCTION_NAME,
+  '/tenants/seed': StackConstants.CONSOLE_API_TENANT_FUNCTION_NAME,
   '/accounts': StackConstants.CONSOLE_API_ACCOUNT_FUNCTION_NAME,
   '/accounts/{accountId}/change_role':
     StackConstants.CONSOLE_API_ACCOUNT_FUNCTION_NAME,

@@ -1,5 +1,5 @@
 import { Db, MongoClient } from 'mongodb'
-import { createMongoDBCollections } from '@/utils/mongoDBUtils'
+import { allCollections, createMongoDBCollections } from '@/utils/mongoDBUtils'
 import { logger } from '@/core/logger'
 
 const BATCH_SIZE = 1000
@@ -12,16 +12,11 @@ export async function copyCollections(
   mappingFn?: (collection: string, document: any) => any
 ) {
   logger.info(`Copy collection from ${inputTenantId} to ${outputTenantId}`)
-  const re = new RegExp(inputTenantId + `-((?!test).+)`)
-  const allMongoDbCollections = await inputDB
-    .listCollections({
-      name: re,
-    })
-    .toArray()
+  const allMongoDbCollections = allCollections(inputTenantId, inputDB)
   await createMongoDBCollections(client, outputTenantId)
-  for (const collection of allMongoDbCollections) {
-    const inputCollectionName = collection.name
-    const outputCollectionName = collection.name.replace(
+  for (const collection in allMongoDbCollections) {
+    const inputCollectionName = collection
+    const outputCollectionName = collection.replace(
       inputTenantId,
       outputTenantId
     )
