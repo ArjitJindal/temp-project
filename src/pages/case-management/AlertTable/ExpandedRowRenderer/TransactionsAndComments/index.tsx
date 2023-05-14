@@ -14,10 +14,12 @@ import DisplayCheckedTransactions from '@/pages/transactions/components/Transact
 
 interface Props {
   alert: TableAlertItem;
+  onTransactionSelect: (alertId: string, transactionIds: string[]) => void;
+  escalatedTransactionIds?: string[];
 }
 
 export default function TransactionsAndComments(props: Props) {
-  const { alert } = props;
+  const { alert, onTransactionSelect, escalatedTransactionIds } = props;
   const [isModalVisible, setIsModalVisible] = useState(false);
   const alertId = alert.alertId;
 
@@ -71,6 +73,10 @@ export default function TransactionsAndComments(props: Props) {
           children: (
             <>
               <TransactionsTable
+                escalatedTransactions={escalatedTransactionIds}
+                onSelect={(transactionIds) => {
+                  onTransactionSelect(alertId as string, transactionIds);
+                }}
                 queryResult={transactionsResponse}
                 params={params}
                 onChangeParams={setParams}

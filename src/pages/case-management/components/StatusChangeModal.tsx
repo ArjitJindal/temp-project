@@ -49,6 +49,7 @@ export interface Props {
   entityName?: string;
   isVisible: boolean;
   ids: string[];
+  txnIds?: { [alertId: string]: string[] };
   newStatus: CaseStatus;
   newStatusActionLabel?: string;
   defaultReasons?: CaseClosingReasons[];

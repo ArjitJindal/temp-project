@@ -3,6 +3,7 @@ import cn from 'clsx';
 import * as TanTable from '@tanstack/react-table';
 import _ from 'lodash';
 import { Spin } from 'antd';
+import { Row } from '@tanstack/table-core/src/types';
 import s from './index.module.less';
 import {
   AllParams,
@@ -43,8 +44,9 @@ export interface Props<Item extends object, Params extends object = CommonParams
   rowKey: FieldAccessor<Item>;
   data: TableData<Item> | AsyncResource<TableData<Item>>;
   pagination?: boolean | 'HIDE_FOR_ONE_PAGE';
-  selection?: boolean;
+  selection?: boolean | ((row: Row<TableRow<Item>>) => boolean);
   selectionActions?: SelectionAction<Item, Params>[];
+  onSelect?: (ids: string[]) => void;
   sizingMode?: 'FULL_WIDTH' | 'SCROLL';
   params?: AllParams<Params>;
   onEdit?: (rowKey: string, newValue: Item) => void;
@@ -65,6 +67,7 @@ export interface Props<Item extends object, Params extends object = CommonParams
   onPaginateData?: (params: PaginationParams) => Promise<TableData<Item>>;
   onReload?: () => void;
   paginationBorder?: boolean;
+  selectedIds?: string[];
   externalState?: unknown;
 }
 
@@ -76,6 +79,7 @@ function Table<Item extends object, Params extends object = CommonParams>(
     rowKey,
     columns,
     selectionActions = [],
+    onSelect,
     params = DEFAULT_PARAMS_STATE as AllParams<Params>,
     extraFilters,
     extraTools,
@@ -84,6 +88,7 @@ function Table<Item extends object, Params extends object = CommonParams>(
     onEdit,
     pagination = false,
     selection = false,
+    selectedIds,
     fitHeight = false,
     hideFilters = false,
     disableSorting = false,
@@ -100,7 +105,6 @@ function Table<Item extends object, Params extends object = CommonParams>(
     hasPreviousPage,
     hasNextPage,
   } = props;
-
   const dataRes: AsyncResource<TableData<Item>> = useMemo(() => {
     return 'items' in props.data ? success(props.data) : props.data;
   }, [props.data]);
@@ -129,7 +133,9 @@ function Table<Item extends object, Params extends object = CommonParams>(
     columns: columns,
     params: params,
     onChangeParams: handleChangeParams,
-    onEdit: onEdit,
+    selectedIds,
+    onSelect,
+    onEdit,
     isRowSelectionEnabled: selection || selectionActions.length > 0,
     isExpandable: isExpandable,
     isSortable: !disableSorting,

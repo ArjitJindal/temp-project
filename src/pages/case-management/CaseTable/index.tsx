@@ -332,6 +332,7 @@ export default function CaseTable(props: Props) {
             <AlertTable
               isEmbedded={true}
               params={{ ...params, caseId: record.caseId }}
+              escalatedTransactionIds={record.caseHierarchyDetails?.childTransactionIds || []}
               onChangeParams={onChangeParams}
             />
           )}

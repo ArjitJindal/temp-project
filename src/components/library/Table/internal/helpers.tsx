@@ -7,7 +7,12 @@ import React, {
   useState,
 } from 'react';
 import * as TanTable from '@tanstack/react-table';
-import { getFilteredRowModel, getPaginationRowModel } from '@tanstack/react-table';
+import {
+  getFilteredRowModel,
+  getPaginationRowModel,
+  RowSelectionState,
+} from '@tanstack/react-table';
+import { Row } from '@tanstack/table-core/src/types';
 import {
   AllParams,
   applyFieldAccessor,
@@ -97,7 +102,9 @@ export function useTanstackTable<
   params: AllParams<Params>;
   onChangeParams: (newParams: AllParams<Params>) => void;
   onEdit: ((rowKey: string, newValue: Item) => void) | undefined;
-  isRowSelectionEnabled: boolean;
+  selectedIds?: string[];
+  onSelect?: (ids: string[]) => void;
+  isRowSelectionEnabled: boolean | ((row: Row<TableRow<Item>>) => boolean);
   isExpandable: boolean;
   isSortable: boolean;
   defaultSorting?: SortingParamsItem;
@@ -109,6 +116,8 @@ export function useTanstackTable<
     columns,
     params,
     onChangeParams,
+    onSelect,
+    selectedIds,
     onEdit,
     isRowSelectionEnabled,
     isExpandable,
@@ -279,6 +288,12 @@ export function useTanstackTable<
     pageIndex: params.page ? params.page - 1 : 0,
   };
 
+  useEffect(() => {
+    setRowSelection((prev) => {
+      return selectedIds?.reduce((r, id) => ({ ...r, [id]: true }), prev) || prev;
+    });
+  }, [setRowSelection, selectedIds]);
+
   const table = TanTable.useReactTable<TableRow<Item>>({
     meta: {
       onEdit,
@@ -288,6 +303,7 @@ export function useTanstackTable<
     getRowId: (originalRow: TableRow<Item>): string => {
       return `${applyFieldAccessor(originalRow.content, rowKey as FieldAccessor<Item>)}`;
     },
+
     getCoreRowModel: TanTable.getCoreRowModel(),
     getRowCanExpand: () => isExpandable,
     manualSorting: isSortable,
@@ -297,6 +313,8 @@ export function useTanstackTable<
     enablePinning: true,
     enableHiding: true,
     pageCount: getPageCount(params, data),
+    // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+    // @ts-ignore
     enableRowSelection: isRowSelectionEnabled,
     enableExpanding: isExpandable,
     state: {
@@ -331,7 +349,26 @@ export function useTanstackTable<
         page: updatedState.pageIndex + 1,
       });
     },
-    onRowSelectionChange: setRowSelection,
+    onRowSelectionChange: (updater) => {
+      const selectFn = (newState: RowSelectionState) => {
+        onSelect &&
+          onSelect(
+            Object.entries(newState)
+              .filter(([_, selected]) => selected)
+              .map(([id]) => id),
+          );
+      };
+      if (typeof updater === 'function') {
+        setRowSelection((prevState) => {
+          const newState = updater(prevState);
+          selectFn(newState);
+          return newState;
+        });
+      } else {
+        selectFn(updater);
+        setRowSelection(updater);
+      }
+    },
   });
 
   const isAllExpanded = table.getIsAllRowsExpanded();

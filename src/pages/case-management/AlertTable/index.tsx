@@ -1,4 +1,4 @@
-import React, { useCallback, useMemo, useRef } from 'react';
+import React, { useCallback, useMemo, useRef, useState } from 'react';
 import pluralize from 'pluralize';
 import { Avatar } from 'antd';
 import CreateCaseConfirmModal from './CreateCaseConfirmModal';
@@ -166,6 +166,7 @@ interface Props {
   isEmbedded?: boolean;
   hideAlertStatusFilters?: boolean;
   hideUserFilters?: boolean;
+  escalatedTransactionIds?: string[];
 }
 
 export default function AlertTable(props: Props) {
@@ -182,6 +183,8 @@ export default function AlertTable(props: Props) {
   const user = useAuth0User();
   const isPulseEnabled = useFeatureEnabled('PULSE');
   const [users, _] = useUsers({ includeBlockedUsers: true });
+  const [selectedTxns, setSelectedTxns] = useState<{ [alertId: string]: string[] }>({});
+  const [selectedAlerts, setSelectedAlerts] = useState<string[]>([]);
 
   const queryResults: QueryResult<TableData<TableAlertItem>> = usePaginatedQuery(
     ALERT_LIST(params),
@@ -339,6 +342,7 @@ export default function AlertTable(props: Props) {
         queryResults={queryResults}
         params={params}
         onChangeParams={onChangeParams}
+        selectedIds={selectedAlerts}
         extraFilters={extraFilters}
         pagination={isEmbedded ? 'HIDE_FOR_ONE_PAGE' : true}
         selectionActions={[
@@ -369,6 +373,7 @@ export default function AlertTable(props: Props) {
               statusChangeButtonValue && (
                 <AlertsStatusChangeButton
                   ids={selectedIds}
+                  txnIds={selectedTxns}
                   onSaved={reloadTable}
                   status={params.alertStatus ?? statusChangeButtonValue}
                   caseId={params.caseId}
@@ -400,6 +405,7 @@ export default function AlertTable(props: Props) {
             return statusChangeButtonValue ? (
               <AlertsStatusChangeButton
                 ids={selectedIds}
+                txnIds={selectedTxns}
                 onSaved={reloadTable}
                 status={params.alertStatus ?? statusChangeButtonValue}
                 caseId={params.caseId}
@@ -415,7 +421,21 @@ export default function AlertTable(props: Props) {
               />
             ),
         ]}
-        renderExpanded={(record) => <ExpandedRowRenderer alert={record ?? null} />}
+        renderExpanded={(record) => (
+          <ExpandedRowRenderer
+            alert={record ?? null}
+            escalatedTransactionIds={props.escalatedTransactionIds}
+            onTransactionSelect={(alertId, txnIds) => {
+              setSelectedTxns((prevSelectedTxns) => {
+                prevSelectedTxns[alertId] = [...txnIds];
+                return prevSelectedTxns;
+              });
+              if (txnIds.length > 0) {
+                setSelectedAlerts((prev) => Array.from(new Set([...prev, alertId])));
+              }
+            }}
+          />
+        )}
         fixedExpandedContainer={true}
       />
     </>

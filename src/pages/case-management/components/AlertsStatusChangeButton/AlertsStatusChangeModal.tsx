@@ -46,6 +46,7 @@ export default function AlertsStatusChangeModal(props: Props) {
             alertEscalations: ids.map((alertId) => {
               return {
                 alertId,
+                transactionIds: props.txnIds ? props.txnIds[alertId] : [],
               };
             }),
           },
@@ -64,7 +65,7 @@ export default function AlertsStatusChangeModal(props: Props) {
         message.success('Saved');
       }
     } catch (e) {
-      console.error(`Failed to update the alert! ${getErrorMessage(e)}`);
+      message.error(`Failed to update the alert! ${getErrorMessage(e)}`);
     } finally {
       hideMessage();
     }

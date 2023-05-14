@@ -1,5 +1,6 @@
 import React, { useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
+import { Tag } from 'antd';
 import DetailsViewButton from '../DetailsViewButton';
 import {
   Alert,
@@ -81,6 +82,7 @@ type Props = {
   queryResult: QueryResult<TableData<InternalTransaction>>;
   params?: TransactionsTableParams;
   onChangeParams?: (newState: AllParams<TransactionsTableParams>) => void;
+  onSelect?: (ids: string[]) => void;
   hideSearchForm?: boolean;
   disableSorting?: boolean;
   adjustPagination?: boolean;
@@ -92,6 +94,7 @@ type Props = {
   isModalVisible?: boolean;
   setIsModalVisible?: React.Dispatch<React.SetStateAction<boolean>>;
   paginationBorder?: boolean;
+  escalatedTransactions?: string[];
 };
 
 export const getStatus = (
@@ -116,12 +119,14 @@ export default function TransactionsTable(props: Props) {
     hideSearchForm,
     disableSorting,
     extraFilters,
+    onSelect,
     onChangeParams,
     fitHeight,
     showCheckedTransactionsButton = false,
     alert,
     isModalVisible,
     setIsModalVisible,
+    escalatedTransactions,
   } = props;
 
   const columns: TableColumn<InternalTransaction>[] = useMemo(() => {
@@ -135,7 +140,17 @@ export default function TransactionsTable(props: Props) {
         type: {
           ...STRING,
           render: (value: string | undefined) => {
-            return <Link to={makeUrl(`/transactions/item/:id`, { id: value })}>{value}</Link>;
+            return (
+              <Link to={makeUrl(`/transactions/item/:id`, { id: value })}>
+                {value}
+                {escalatedTransactions && escalatedTransactions?.indexOf(value as string) > -1 && (
+                  <>
+                    <br />
+                    <Tag color="blue">Escalated</Tag>
+                  </>
+                )}
+              </Link>
+            );
           },
         },
       }),
@@ -287,7 +302,7 @@ export default function TransactionsTable(props: Props) {
         defaultVisibility: false,
       }),
     ]);
-  }, [alert, showDetailsView, isPulseEnabled]);
+  }, [alert, showDetailsView, isPulseEnabled, escalatedTransactions]);
 
   const fullExtraFilters: ExtraFilter<TransactionsTableParams>[] = [
     ...(extraFilters ?? []),
@@ -318,10 +333,19 @@ export default function TransactionsTable(props: Props) {
       renderer: PAYMENT_METHOD.autoFilterDataType,
     },
   ];
-
   return (
     <QueryResultsTable<InternalTransaction, TransactionsTableParams>
       tableId={'transactions-list'}
+      selection={
+        escalatedTransactions === undefined
+          ? false
+          : (row) =>
+              (alert?.alertStatus === 'OPEN' ||
+                alert?.alertStatus === 'REOPENED' ||
+                alert?.alertStatus === 'ESCALATED') &&
+              escalatedTransactions?.indexOf(row.id) === -1
+      }
+      onSelect={onSelect}
       params={params}
       onChangeParams={onChangeParams}
       extraFilters={fullExtraFilters}

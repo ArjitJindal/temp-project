@@ -8,6 +8,7 @@ import StatusChangeButton from '@/pages/case-management/components/StatusChangeB
 interface Props {
   entityName?: string;
   ids: string[];
+  txnIds: { [alertId: string]: string[] };
   caseId?: string;
   status?: AlertStatus;
   initialValues?: FormValues;
@@ -23,6 +24,7 @@ interface Props {
 export default function AlertsStatusChangeButton(props: Props) {
   const {
     ids,
+    txnIds,
     onSaved,
     status,
     caseId,
@@ -47,6 +49,7 @@ export default function AlertsStatusChangeButton(props: Props) {
           <AlertsStatusChangeModal
             isVisible={isVisible}
             ids={ids}
+            txnIds={txnIds}
             caseId={caseId}
             newStatus={newStatus}
             onSaved={onSaved}
