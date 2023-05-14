@@ -258,6 +258,8 @@ export const COUNTRY_NAME_ALIASES: { [key: string]: CountryCode } = {
   'United Kingdom': 'GB',
   'Republic of Moldova': 'MD',
   'Czech Republic': 'CZ',
+  Turkey: 'TR',
+  Russia: 'RU',
 };
 
 export const COUNTRY_NAME_TO_CODE = Object.fromEntries([

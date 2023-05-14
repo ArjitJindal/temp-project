@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import React, { useState } from 'react';
 import { Tag } from 'antd';
 import _ from 'lodash';
 import SearchResultDetailsModal from './SearchResultDetailsModal';
@@ -165,7 +165,7 @@ export default function SanctionsTable(props: Props) {
         queryResults={queryResult}
         params={params}
         onChangeParams={onChangeParams}
-        rowKey="key"
+        rowKey="doc.id"
         columns={columns}
         hideFilters={isEmbedded}
         pagination={false}
