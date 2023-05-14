@@ -209,9 +209,12 @@ export class CaseRepository {
         'caseTransactions.status': { $nin: [params.filterOutStatus] },
       })
     }
-    if (params.filterOutCaseStatus != null) {
+    if (
+      params.filterOutCaseStatus != null &&
+      params.filterOutCaseStatus.length > 0
+    ) {
       conditions.push({
-        caseStatus: { $nin: [params.filterOutCaseStatus] },
+        caseStatus: { $nin: params.filterOutCaseStatus },
       })
     }
     if (params.filterTransactionState != null) {
@@ -297,8 +300,8 @@ export class CaseRepository {
       })
     }
 
-    if (params.filterCaseStatus != null) {
-      conditions.push({ caseStatus: { $in: [params.filterCaseStatus] } })
+    if (params.filterCaseStatus != null && params.filterCaseStatus.length > 0) {
+      conditions.push({ caseStatus: { $in: params.filterCaseStatus } })
     }
     if (params.filterUserId != null) {
       conditions.push({
@@ -772,14 +775,14 @@ export class CaseRepository {
         caseStatus: { $in: [params.filterCaseStatus] },
       })
     }
-    if (params.filterOutAlertStatus != null) {
+    if (params.filterOutAlertStatus && params.filterOutAlertStatus.length > 0) {
       conditions.push({
-        'alerts.alertStatus': { $nin: [params.filterOutAlertStatus] },
+        'alerts.alertStatus': { $nin: params.filterOutAlertStatus },
       })
     }
-    if (params.filterAlertStatus != null) {
+    if (params.filterAlertStatus && params.filterAlertStatus.length > 0) {
       conditions.push({
-        'alerts.alertStatus': { $in: [params.filterAlertStatus] },
+        'alerts.alertStatus': { $in: params.filterAlertStatus },
       })
     }
     if (

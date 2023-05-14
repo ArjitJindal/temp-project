@@ -2417,11 +2417,15 @@ paths:
           in: query
           name: filterOutStatus
         - schema:
-            $ref: '#/components/schemas/CaseStatus'
+            type: array
+            items:
+              $ref: '#/components/schemas/CaseStatus'
           in: query
           name: filterOutCaseStatus
         - schema:
-            $ref: '#/components/schemas/AlertStatus'
+            type: array
+            items:
+              $ref: '#/components/schemas/AlertStatus'
           in: query
           name: filterOutAlertStatus
         - schema:
@@ -2485,11 +2489,15 @@ paths:
           in: query
           name: filterStatus
         - schema:
-            $ref: '#/components/schemas/CaseStatus'
+            type: array
+            items:
+              $ref: '#/components/schemas/CaseStatus'
           in: query
           name: filterCaseStatus
         - schema:
-            $ref: '#/components/schemas/AlertStatus'
+            type: array
+            items:
+              $ref: '#/components/schemas/AlertStatus'
           in: query
           name: filterAlertStatus
         - schema:
@@ -2745,7 +2753,9 @@ paths:
           in: query
           name: filterOutStatus
         - schema:
-            $ref: '#/components/schemas/CaseStatus'
+            type: array
+            items:
+              $ref: '#/components/schemas/CaseStatus'
           in: query
           name: filterOutCaseStatus
         - schema:
@@ -2809,7 +2819,9 @@ paths:
           in: query
           name: filterStatus
         - schema:
-            $ref: '#/components/schemas/CaseStatus'
+            type: array
+            items:
+              $ref: '#/components/schemas/CaseStatus'
           in: query
           name: filterCaseStatus
         - schema:

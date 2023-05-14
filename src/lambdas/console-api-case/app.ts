@@ -21,8 +21,6 @@ import { CaseRepository } from '@/services/rules-engine/repositories/case-reposi
 import { CasesUpdateRequest } from '@/@types/openapi-internal/CasesUpdateRequest'
 import { AlertsUpdateRequest } from '@/@types/openapi-internal/AlertsUpdateRequest'
 import { AlertsToNewCaseRequest } from '@/@types/openapi-internal/AlertsToNewCaseRequest'
-import { CaseStatus } from '@/@types/openapi-internal/CaseStatus'
-import { AlertStatus } from '@/@types/openapi-internal/AlertStatus'
 import { getDynamoDbClientByEvent } from '@/utils/dynamodb'
 import { TransactionState } from '@/@types/openapi-internal/TransactionState'
 import { CaseCreationService } from '@/lambdas/console-api-case/services/case-creation-service'
@@ -33,6 +31,7 @@ import { isValidSortOrder } from '@/@types/openapi-internal-custom/SortOrder'
 import { Case } from '@/@types/openapi-internal/Case'
 import { CaseEscalationRequest } from '@/@types/openapi-internal/CaseEscalationRequest'
 import { hasFeature } from '@/core/utils/context'
+import { parseStrings } from '@/utils/lambda'
 
 export type CaseConfig = {
   TMP_BUCKET: string
@@ -138,12 +137,12 @@ export const casesHandler = lambdaApi()(
           : undefined,
         filterId,
         filterOutStatus,
-        filterOutCaseStatus,
+        filterOutCaseStatus: parseStrings(filterOutCaseStatus),
         filterTransactionState: filterTransactionState
           ? filterTransactionState.split(',')
           : undefined,
         filterStatus: filterStatus ? filterStatus.split(',') : undefined,
-        filterCaseStatus,
+        filterCaseStatus: parseStrings(filterCaseStatus),
         filterRulesExecuted: filterRulesExecuted
           ? filterRulesExecuted.split(',')
           : undefined, // todo: need a proper parser for url
@@ -342,10 +341,10 @@ export const casesHandler = lambdaApi()(
         page: parseInt(page),
         pageSize: parseInt(pageSize),
         filterAlertId: filterAlertId,
-        filterOutCaseStatus: filterOutCaseStatus as CaseStatus | undefined,
-        filterCaseStatus: filterCaseStatus as CaseStatus | undefined,
-        filterAlertStatus: filterAlertStatus as AlertStatus | undefined,
-        filterOutAlertStatus: filterOutAlertStatus as AlertStatus | undefined,
+        filterOutCaseStatus: parseStrings(filterOutCaseStatus),
+        filterCaseStatus: parseStrings(filterCaseStatus),
+        filterAlertStatus: parseStrings(filterAlertStatus),
+        filterOutAlertStatus: parseStrings(filterOutAlertStatus),
         filterAssignmentsIds: filterAssignmentsIds?.split(','),
         filterBusinessIndustries: filterBusinessIndustries?.split(','),
         filterTransactionState: filterTransactionState?.split(',') as
