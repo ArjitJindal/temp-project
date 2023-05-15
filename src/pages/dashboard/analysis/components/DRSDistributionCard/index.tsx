@@ -49,12 +49,13 @@ export default function DRSDistributionCard() {
         total: data.total,
         items: data.items
           .map((item) => {
+            const percentage = item.percentage === undefined ? '0' : item.percentage;
             return {
               type: getType(item.riskLevel, settings),
               count: item.count,
               riskLevel: item.riskLevel,
               riskScoreRange: item.riskScoreRange,
-              percentage: item.percentage,
+              percentage: parseFloat(percentage),
             };
           })
           .sort((a, b) => {
@@ -74,7 +75,7 @@ export default function DRSDistributionCard() {
           const config = {
             data: response.items,
             xField: 'type',
-            yField: 'count',
+            yField: 'percentage',
             columnWidthRatio: 1,
             xAxis: {
               label: {
