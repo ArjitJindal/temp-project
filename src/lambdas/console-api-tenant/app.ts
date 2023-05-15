@@ -120,7 +120,7 @@ export const tenantsHandler = lambdaApi()(
     ) {
       if (envIsNot('prod')) {
         let fullTenantId = tenantId
-        if (envIs('sandbox')) {
+        if (envIs('sandbox') && !tenantId.endsWith('-test')) {
           fullTenantId = getFullTenantId(tenantId, true)
         }
         const batchJob: DemoModeDataLoadBatchJob = {
