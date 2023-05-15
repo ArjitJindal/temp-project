@@ -19,7 +19,7 @@ import { DemoModeDataLoadBatchJob } from '@/@types/batch-job'
 import { getCredentialsFromEvent } from '@/utils/credentials'
 import { sendBatchJobCommand } from '@/services/batch-job'
 import { publishAuditLog } from '@/services/audit-log'
-import { envIsNot } from '@/utils/env'
+import { envIs, envIsNot } from '@/utils/env'
 import { AuditLog } from '@/@types/openapi-internal/AuditLog'
 
 const ROOT_ONLY_SETTINGS: Array<keyof TenantSettings> = ['features', 'limits']
@@ -119,7 +119,10 @@ export const tenantsHandler = lambdaApi()(
       event.httpMethod === 'POST'
     ) {
       if (envIsNot('prod')) {
-        const fullTenantId = getFullTenantId(tenantId, true)
+        let fullTenantId = tenantId
+        if (envIs('sandbox')) {
+          fullTenantId = getFullTenantId(tenantId, true)
+        }
         const batchJob: DemoModeDataLoadBatchJob = {
           type: 'DEMO_MODE_DATA_LOAD',
           tenantId: fullTenantId,
