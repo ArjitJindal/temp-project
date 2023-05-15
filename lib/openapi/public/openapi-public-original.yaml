@@ -479,8 +479,6 @@ paths:
 
         * `userId` - Unique identifier for the user
 
-        * `userDetails` - Details of the user (name, DOB, country of residence and nationality etc) - only `name` is mandatory
-
         * `createdTimestamp` - UNIX timestamp in *milliseconds* for when the User is created in your system
       operationId: post-consumer-user
       parameters: []
