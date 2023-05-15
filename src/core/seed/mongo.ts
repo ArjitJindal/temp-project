@@ -9,7 +9,7 @@ import {
   TRANSACTIONS_COLLECTION,
   USERS_COLLECTION,
 } from '@/utils/mongoDBUtils'
-import { transactions } from '@/core/seed/data/transactions'
+import { init as txnInit, transactions } from '@/core/seed/data/transactions'
 import { init as caseInit, data as cases } from '@/core/seed/data/cases'
 import { init as userInit, data as users } from '@/core/seed/data/users'
 import { init as krsInit, data as krs } from '@/core/seed/data/krs_scores'
@@ -37,23 +37,28 @@ const collections: [(tenantId: string) => string, Iterable<unknown>][] = [
 
 export async function seedMongo(client: MongoClient, tenantId: string) {
   const db = await client.db()
+  console.log('Get all collections')
   const col = await allCollections(tenantId, db)
   await Promise.all(col.map((c) => db.collection(c).drop()))
 
+  console.log('Init seed data')
   // TODO there will be a neater way of achieving this.
-  caseInit()
   userInit()
+  txnInit()
+  caseInit()
   krsInit()
   arsInit()
   drsInit()
   transactionEventsInit()
 
+  console.log('Creating collections')
   for (const [collectionNameFn, data] of collections) {
     console.log(`Re-create collection: ${collectionNameFn(tenantId)}`)
     const collection = db.collection(collectionNameFn(tenantId) as string)
     try {
       await collection.drop()
     } catch (e) {
+      console.log('Error dropping collection', e)
       // ignore
     }
     const iterator = data[Symbol.iterator]()
