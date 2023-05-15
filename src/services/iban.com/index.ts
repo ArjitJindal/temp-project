@@ -86,7 +86,9 @@ export class IBANService {
   }
 
   public async resolveBankName(bankInfos: BankInfo[]): Promise<BankInfo[]> {
-    await this.initialize()
+    this.initPromise = this.initialize()
+    await this.initPromise
+
     if (!this.hasIbanResolutionFeature) {
       logger.error(`IBAN_RESOLUTION feature flag required to resolve bank name`)
       return []
@@ -108,7 +110,9 @@ export class IBANService {
     rawIban: string,
     force = false
   ): Promise<IBANDetails | null> {
-    await this.initialize()
+    this.initPromise = this.initialize()
+    await this.initPromise
+
     if (!this.hasIbanResolutionFeature) {
       logger.error(`IBAN_RESOLUTION feature flag required to resolve bank name`)
       return null
@@ -160,7 +164,7 @@ export class IBANService {
 
   public async initialize() {
     if (this.initPromise) {
-      return await this.initPromise
+      return this.initPromise
     }
     const mongoDb = await getMongoDbClient()
     this.hasIbanResolutionFeature = await tenantHasFeature(

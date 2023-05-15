@@ -8,7 +8,10 @@ import { SimulationResultRepository } from './repositories/simulation-result-rep
 import { JWTAuthorizerResult } from '@/@types/jwt'
 import { lambdaApi } from '@/core/middlewares/lambda-api-middlewares'
 import { sendBatchJobCommand } from '@/services/batch-job'
-import { SimulationPulseBatchJob } from '@/@types/batch-job'
+import {
+  SimulationBeaconBatchJob,
+  SimulationPulseBatchJob,
+} from '@/@types/batch-job'
 import { getMongoDbClient } from '@/utils/mongoDBUtils'
 import {
   DefaultApiGetSimulationTaskIdResultRequest,
@@ -81,19 +84,32 @@ export const simulationHandler = lambdaApi({ requiredFeatures: ['SIMULATOR'] })(
 
         for (let i = 0; i < taskIds.length; i++) {
           if (taskIds[i] && simulationParameters.parameters[i])
-            await sendBatchJobCommand(tenantId, {
-              type:
-                simulationParameters.type === 'PULSE'
-                  ? 'SIMULATION_PULSE'
-                  : 'SIMULATION_BEACON',
+            await sendBatchJobCommand(
               tenantId,
-              parameters: {
-                taskId: taskIds[i],
-                jobId,
-                ...simulationParameters.parameters[i],
-              },
-              awsCredentials: getCredentialsFromEvent(event),
-            } as SimulationPulseBatchJob)
+              simulationParameters.type === 'PULSE'
+                ? ({
+                    type: 'SIMULATION_PULSE',
+                    tenantId,
+                    parameters: {
+                      taskId: taskIds[i],
+                      jobId,
+                      ...simulationParameters.parameters[i],
+                    },
+                    awsCredentials: getCredentialsFromEvent(event),
+                  } as SimulationPulseBatchJob)
+                : ({
+                    type: 'SIMULATION_BEACON',
+                    tenantId,
+                    parameters: {
+                      taskId: taskIds[i],
+                      jobId,
+                      defaultRuleInstance:
+                        simulationParameters.defaultRuleInstance,
+                      ...simulationParameters.parameters[i],
+                    },
+                    awsCredentials: getCredentialsFromEvent(event),
+                  } as SimulationBeaconBatchJob)
+            )
         }
 
         return { taskIds, jobId }

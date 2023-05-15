@@ -137,7 +137,7 @@ export const ruleInstanceHandler = lambdaApi()(
         oldRuleInstance,
         newRuleInstance
       )
-      return 'OK'
+      return newRuleInstance
     } else if (event.httpMethod === 'DELETE' && ruleInstanceId) {
       const oldRuleInstance = await ruleInstanceRepository.getRuleInstanceById(
         ruleInstanceId
