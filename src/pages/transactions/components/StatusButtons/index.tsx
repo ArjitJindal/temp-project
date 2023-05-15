@@ -8,7 +8,7 @@ import { AlertStatus, CaseStatus } from '@/apis';
 import { useFeatureEnabled } from '@/components/AppWrapper/Providers/SettingsProvider';
 
 interface Props {
-  status: CaseStatus | AlertStatus;
+  status?: CaseStatus | AlertStatus;
   onChange: (newStatus: CaseStatus | AlertStatus) => void;
   suffix: 'cases' | 'alerts';
 }

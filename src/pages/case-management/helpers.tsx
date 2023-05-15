@@ -92,8 +92,8 @@ export const queryAdapter: Adapter<TableSearchParams> = {
           : undefined,
       tagKey: raw.tagKey ?? undefined,
       tagValue: raw.tagValue ?? undefined,
-      caseStatus: raw.caseStatus as CaseStatus,
-      alertStatus: raw.alertStatus as AlertStatus,
+      caseStatus: (raw.caseStatus ?? 'OPEN') as CaseStatus,
+      alertStatus: (raw.alertStatus ?? 'OPEN') as AlertStatus,
       transactionId: raw.transactionId,
       amountGreaterThanFilter: raw.amountGreaterThanFilter
         ? parseInt(raw.amountGreaterThanFilter)

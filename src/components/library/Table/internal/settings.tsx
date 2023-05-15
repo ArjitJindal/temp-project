@@ -134,8 +134,6 @@ export function PersistedSettingsProvider<Item extends object, Params>(props: {
     [getDefaultValue, persistedState, setPersistedState],
   );
 
-  console.log('providerValue', providerValue);
-
   return (
     <PersistedSettingsContext.Provider value={providerValue}>
       {props.children}

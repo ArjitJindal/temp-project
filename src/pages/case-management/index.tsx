@@ -11,9 +11,8 @@ import { TableSearchParams } from '@/pages/case-management/types';
 import { makeUrl, parseQueryString } from '@/utils/routing';
 import { queryAdapter } from '@/pages/case-management/helpers';
 import { AllParams } from '@/components/library/Table/types';
-import { DEFAULT_PARAMS_STATE } from '@/components/library/Table/consts';
+import { DEFAULT_PAGE_SIZE, DEFAULT_PARAMS_STATE } from '@/components/library/Table/consts';
 import { useDeepEqualEffect } from '@/utils/hooks';
-import { DEFAULT_PAGE_SIZE } from '@/components/library/Table/consts';
 import ScopeSelector from '@/pages/case-management/components/ScopeSelector';
 import StatusButtons from '@/pages/transactions/components/StatusButtons';
 
@@ -70,7 +69,7 @@ export default function CaseManagementPage() {
             }}
           />
           <StatusButtons
-            status={(isAlerts ? params.alertStatus : params.caseStatus) ?? 'OPEN'}
+            status={isAlerts ? params.alertStatus : params.caseStatus}
             onChange={(newStatus) => {
               handleChangeParams(
                 isAlerts
