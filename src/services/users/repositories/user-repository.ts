@@ -747,9 +747,18 @@ export class UserRepository {
       {
         userId,
       },
-      {
-        $push: { comments: commentToSave },
-      }
+      [
+        {
+          $set: {
+            comments: {
+              $ifNull: [
+                { $concatArrays: ['$comments', [commentToSave]] },
+                [commentToSave],
+              ],
+            },
+          },
+        },
+      ]
     )
     return commentToSave
   }

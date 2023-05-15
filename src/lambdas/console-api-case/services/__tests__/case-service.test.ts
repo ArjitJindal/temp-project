@@ -211,7 +211,7 @@ describe('Case service', () => {
         alerts: [
           {
             ...TEST_ALERT_1,
-            alertId: `${TEST_ALERT_1.alertId}.1`,
+            alertId: `${TEST_ALERT_1.alertId}`,
             reviewAssignments: [
               { assigneeUserId: 'ACCOUNT-1', timestamp: expect.any(Number) },
             ],
@@ -234,7 +234,7 @@ describe('Case service', () => {
         caseId: 'C-2',
         caseStatus: 'OPEN',
         caseHierarchyDetails: {
-          childTransactionIds: ['T-1', 'T-2', 'T-101'],
+          childTransactionIds: ['T-101'],
         },
       })
     })

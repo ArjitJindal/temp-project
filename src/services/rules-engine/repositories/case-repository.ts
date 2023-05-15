@@ -1059,9 +1059,18 @@ export class CaseRepository {
       {
         caseId,
       },
-      {
-        $push: { comments: commentToSave },
-      }
+      [
+        {
+          $set: {
+            comments: {
+              $ifNull: [
+                { $concatArrays: ['$comments', [commentToSave]] },
+                [commentToSave],
+              ],
+            },
+          },
+        },
+      ]
     )
     return commentToSave
   }

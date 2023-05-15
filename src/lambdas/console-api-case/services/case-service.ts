@@ -462,11 +462,6 @@ export class CaseService {
     if (!c) {
       throw new NotFound(`Cannot find case ${caseId}`)
     }
-    if (c.caseHierarchyDetails?.parentCaseId) {
-      throw new NotFound(
-        `Cannot escalated an already escalated case. Parent case ${c.caseHierarchyDetails?.parentCaseId}`
-      )
-    }
 
     const existingReviewAssignments = c.reviewAssignments || []
     await this.updateCases((getContext()?.user as Account).id, [caseId], {
@@ -496,28 +491,13 @@ export class CaseService {
     let { alertEscalations } = caseEscalationRequest
     const { caseUpdateRequest } = caseEscalationRequest
 
-    // Hydrate escalation requests with the txn IDS if none were specified
     alertEscalations = alertEscalations?.map((ae) => {
-      if (!ae.transactionIds || ae.transactionIds.length === 0) {
-        const alert = c.alerts?.find((a) => a.alertId)
-        ae.transactionIds = c.caseTransactions
-          ?.filter(
-            (transaction) =>
-              transaction.hitRules.some(
-                (ruleInstance) =>
-                  alert?.ruleInstanceId === ruleInstance.ruleInstanceId
-              ) &&
-              (!c.caseHierarchyDetails ||
-                c.caseHierarchyDetails?.childTransactionIds?.indexOf(
-                  transaction.transactionId
-                ) === -1)
-          )
-          .map((t) => t.transactionId)
-      } else {
-        ae.transactionIds.filter(
-          (t) => c.caseHierarchyDetails?.childTransactionIds?.indexOf(t) === -1
-        )
+      if (_.isEmpty(ae.transactionIds)) {
+        return ae
       }
+      ae.transactionIds = ae.transactionIds?.filter(
+        (t) => !c.caseHierarchyDetails?.childTransactionIds?.includes(t)
+      )
 
       if (ae.transactionIds?.length === 0) {
         throw new BadRequest(
