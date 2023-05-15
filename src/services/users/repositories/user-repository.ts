@@ -1,5 +1,5 @@
 import { Filter, MongoClient, Document } from 'mongodb'
-import { StackConstants } from '@cdk/constants'
+import { StackConstants } from '@lib/constants'
 import { AttributeMap, ItemList } from 'aws-sdk/clients/dynamodb'
 import { v4 as uuidv4 } from 'uuid'
 import {

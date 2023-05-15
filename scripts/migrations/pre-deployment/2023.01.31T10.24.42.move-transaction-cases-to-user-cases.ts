@@ -1,4 +1,4 @@
-import { StackConstants } from '@cdk/constants'
+import { StackConstants } from '@lib/constants'
 import { migrateAllTenants } from '../utils/tenant'
 import { getMongoDbClient } from '@/utils/mongoDBUtils'
 import { CaseRepository } from '@/services/rules-engine/repositories/case-repository'

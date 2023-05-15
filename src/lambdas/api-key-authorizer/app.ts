@@ -6,7 +6,7 @@ import {
   APIGatewayAuthorizerResultContext,
   APIGatewayRequestAuthorizerEvent,
 } from 'aws-lambda'
-import { StackConstants } from '@cdk/constants'
+import { StackConstants } from '@lib/constants'
 import PolicyBuilder from '@/core/policies/policy-generator'
 import { lambdaAuthorizer } from '@/core/middlewares/lambda-authorizer-middlewares'
 import { updateLogMetadata } from '@/core/utils/context'

@@ -1,5 +1,5 @@
 import { MigrationFn } from 'umzug'
-import { StackConstants } from '@cdk/constants'
+import { StackConstants } from '@lib/constants'
 import { UpdateCommand } from '@aws-sdk/lib-dynamodb'
 import { migrateAllTenants } from '../utils/tenant'
 import { InternalTransaction } from '@/@types/openapi-internal/InternalTransaction'

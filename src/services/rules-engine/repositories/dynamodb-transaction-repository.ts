@@ -1,6 +1,6 @@
 import { v4 as uuidv4 } from 'uuid'
 import _, { chunk } from 'lodash'
-import { StackConstants } from '@cdk/constants'
+import { StackConstants } from '@lib/constants'
 import { WriteRequest } from 'aws-sdk/clients/dynamodb'
 import {
   BatchGetCommand,

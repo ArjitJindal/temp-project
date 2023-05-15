@@ -16,27 +16,21 @@ import {
   Role,
 } from 'aws-cdk-lib/aws-iam'
 import { Duration } from 'aws-cdk-lib'
-import { createApiGateway } from '@cdk/cdk-utils/cdk-apigateway-utils'
-import { createFunction } from '@cdk/cdk-utils/cdk-lambda-utils'
-import { Config } from '../configs/config'
+import {
+  StackConstants,
+  getNameForGlobalResource,
+  getResourceNameForTarpon,
+} from '@lib/constants'
+import { Config } from '@lib/configs/config'
+import { createApiGateway } from '../cdk-utils/cdk-apigateway-utils'
+import { createFunction } from '../cdk-utils/cdk-lambda-utils'
 import {
   grantMongoDbAccess,
   grantSecretsManagerAccess,
   grantSecretsManagerAccessByPattern,
   grantSecretsManagerAccessByPrefix,
 } from '../cdk-utils/cdk-iam-utils'
-import {
-  StackConstants,
-  getNameForGlobalResource,
-  getResourceNameForTarpon,
-} from '../constants'
 import { createAPIGatewayThrottlingAlarm } from '../cdk-utils/cdk-cw-alarms-utils'
-import {
-  FileImportConfig,
-  GetPresignedUrlConfig,
-} from '@/lambdas/console-api-file-import/app'
-import { TransactionViewConfig } from '@/lambdas/console-api-transaction/app'
-import { UserViewConfig } from '@/lambdas/console-api-user/app'
 
 interface ConsoleLambdasProps extends cdk.NestedStackProps {
   config: Config
@@ -179,7 +173,7 @@ export class CdkTarponConsoleLambdaStack extends cdk.NestedStack {
           ...atlasFunctionProps.environment,
           IMPORT_BUCKET: importBucketName,
           TMP_BUCKET: tmpBucketName,
-        } as FileImportConfig,
+        },
       }
     )
     tarponDynamoDbTable.grantReadWriteData(fileImportAlias)
@@ -197,7 +191,7 @@ export class CdkTarponConsoleLambdaStack extends cdk.NestedStack {
       {
         environment: {
           TMP_BUCKET: tmpBucketName,
-        } as GetPresignedUrlConfig,
+        },
       }
     )
     s3TmpBucket.grantPut(getPresignedUrlAlias)
@@ -243,10 +237,10 @@ export class CdkTarponConsoleLambdaStack extends cdk.NestedStack {
         ...atlasFunctionProps,
         environment: {
           ...atlasFunctionProps.environment,
-          ...({
+          ...{
             TMP_BUCKET: tmpBucketName,
             DOCUMENT_BUCKET: documentBucketName,
-          } as TransactionViewConfig),
+          },
         },
       }
     )
@@ -352,10 +346,10 @@ export class CdkTarponConsoleLambdaStack extends cdk.NestedStack {
         ...atlasFunctionProps,
         environment: {
           ...atlasFunctionProps.environment,
-          ...({
+          ...{
             TMP_BUCKET: tmpBucketName,
             DOCUMENT_BUCKET: documentBucketName,
-          } as UserViewConfig),
+          },
         },
       }
     )
@@ -395,10 +389,10 @@ export class CdkTarponConsoleLambdaStack extends cdk.NestedStack {
         ...atlasFunctionProps,
         environment: {
           ...atlasFunctionProps.environment,
-          ...({
+          ...{
             TMP_BUCKET: tmpBucketName,
             DOCUMENT_BUCKET: documentBucketName,
-          } as UserViewConfig),
+          },
         },
       }
     )
@@ -419,10 +413,10 @@ export class CdkTarponConsoleLambdaStack extends cdk.NestedStack {
         ...atlasFunctionProps,
         environment: {
           ...atlasFunctionProps.environment,
-          ...({
+          ...{
             TMP_BUCKET: tmpBucketName,
             DOCUMENT_BUCKET: documentBucketName,
-          } as UserViewConfig),
+          },
         },
       }
     )
@@ -472,10 +466,10 @@ export class CdkTarponConsoleLambdaStack extends cdk.NestedStack {
         environment: {
           ...atlasFunctionProps.environment,
           WEBHOOK_DELIVERY_QUEUE_URL: webhookDeliveryQueue.queueUrl,
-          ...({
+          ...{
             TMP_BUCKET: tmpBucketName,
             DOCUMENT_BUCKET: documentBucketName,
-          } as TransactionViewConfig),
+          },
         },
       }
     )

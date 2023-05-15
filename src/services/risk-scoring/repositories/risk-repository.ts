@@ -1,5 +1,5 @@
 import { MongoClient } from 'mongodb'
-import { StackConstants } from '@cdk/constants'
+import { StackConstants } from '@lib/constants'
 import _ from 'lodash'
 import {
   DynamoDBDocumentClient,

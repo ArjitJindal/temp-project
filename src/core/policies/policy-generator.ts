@@ -1,5 +1,5 @@
 import { PolicyDocument, Statement } from 'aws-lambda'
-import { StackConstants } from '@cdk/constants'
+import { StackConstants } from '@lib/constants'
 import { FLAGRIGHT_TENANT_ID } from '../constants'
 
 export default class PolicyBuilder {

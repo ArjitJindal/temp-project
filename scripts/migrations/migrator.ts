@@ -1,6 +1,6 @@
 import path from 'path'
 import { exit } from 'process'
-import { StackConstants } from '@cdk/constants'
+import { StackConstants } from '@lib/constants'
 import { Umzug, MongoDBStorage } from 'umzug'
 import AWS from 'aws-sdk'
 import { syncMongoDbIndices } from './always-run/sync-mongodb-indices'

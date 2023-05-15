@@ -1,5 +1,5 @@
 import { MigrationFn } from 'umzug'
-import { StackConstants } from '@cdk/constants'
+import { StackConstants } from '@lib/constants'
 import { Tenant, AccountsService } from '@/services/accounts'
 import { getMongoDbClient, USERS_COLLECTION } from '@/utils/mongoDBUtils'
 import { getDynamoDbClient } from '@/utils/dynamodb'

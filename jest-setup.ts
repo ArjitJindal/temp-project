@@ -4,7 +4,7 @@ import { TEST_DYNAMODB_TABLE_NAMES } from './src/test-utils/dynamodb-test-utils'
 process.env.ENV = 'local'
 process.env.DYNAMODB_URI = 'http://localhost:7999'
 
-jest.mock('@cdk/constants', () => ({
+jest.mock('@lib/constants', () => ({
   StackConstants: {
     TARPON_DYNAMODB_TABLE_NAME: TEST_DYNAMODB_TABLE_NAMES[0],
     TARPON_RULE_DYNAMODB_TABLE_NAME: TEST_DYNAMODB_TABLE_NAMES[1],

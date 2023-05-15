@@ -5,7 +5,13 @@ import { Duration } from 'aws-cdk-lib'
 import { Topic } from 'aws-cdk-lib/aws-sns'
 import { Construct } from 'constructs'
 import { Alarm, ComparisonOperator, Metric } from 'aws-cdk-lib/aws-cloudwatch'
-import { Config } from '../configs/config'
+import {
+  getDeadLetterQueueName,
+  SQSQueues,
+  StackConstants,
+} from '@lib/constants'
+import { LAMBDAS } from '@lib/lambdas'
+import { Config } from '@lib/configs/config'
 
 import {
   createAPIGatewayAlarm,
@@ -21,8 +27,6 @@ import {
   dynamoTableOperationMetrics,
   dynamoTableOperations,
 } from '../cdk-utils/cdk-cw-alarms-utils'
-import { getDeadLetterQueueName, SQSQueues, StackConstants } from '../constants'
-import { LAMBDAS } from '../lambdas'
 
 const allLambdas = Object.keys(LAMBDAS)
 

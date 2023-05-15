@@ -1,5 +1,5 @@
-import { ALLOWED_ORIGINS } from '@cdk/openapi/openapi-internal-constants'
-import { Auth0TenantConfig } from './tenant-config'
+import { ALLOWED_ORIGINS } from '@lib/openapi/openapi-internal-constants'
+import { Auth0TenantConfig } from './type'
 
 export const Auth0SandboxTenantConfig: Auth0TenantConfig = {
   tenantName: 'sandbox-flagright',

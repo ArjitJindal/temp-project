@@ -3,7 +3,7 @@ module.exports = {
   preset: 'ts-jest',
   moduleNameMapper: {
     '@/(.*)': '<rootDir>/src/$1',
-    '@cdk/(.*)': '<rootDir>/lib/$1',
+    '@lib/(.*)': '<rootDir>/lib/$1',
   },
   testMatch: ['**/__tests__/**/*.test.ts?(x)'],
   setupFiles: ['<rootDir>/jest-setup.ts'],
@@ -12,5 +12,14 @@ module.exports = {
     'ts-jest': {
       isolatedModules: true,
     },
+  },
+  transform: {
+    '^.+\\.(ts|tsx|js|jsx)$': [
+      'ts-jest',
+      {
+        tsconfig: 'tsconfig.json',
+        isolatedModules: false,
+      },
+    ],
   },
 }

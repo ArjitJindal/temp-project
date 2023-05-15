@@ -1,4 +1,4 @@
-import { StackConstants } from '@cdk/constants'
+import { StackConstants } from '@lib/constants'
 import { migrateAllTenants } from '../utils/tenant'
 import { Tenant } from '@/@types/openapi-internal/Tenant'
 import { CASES_COLLECTION, getMongoDbClient } from '@/utils/mongoDBUtils'

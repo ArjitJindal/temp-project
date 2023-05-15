@@ -1,6 +1,6 @@
 {
   "language": "typescript",
-  "app": "npx ts-node bin/cdktf-tarpon-pipeline.ts",
+  "app": "npx ts-node infra/bin/cdktf-tarpon-pipeline.ts",
   "projectId": "6b90b9c1-6a15-4e3b-87b3-b15624cf1096",
   "sendCrashReports": "false",
   "terraformProviders": ["auth0/auth0@0.43.0", "hashicorp/aws@4.53.0"],

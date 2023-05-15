@@ -1,4 +1,4 @@
-import { StackConstants } from '@cdk/constants'
+import { StackConstants } from '@lib/constants'
 import { DocumentClient } from 'aws-sdk/lib/dynamodb/document_client'
 import { v4 as uuidv4 } from 'uuid'
 import {

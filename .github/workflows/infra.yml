@@ -1,0 +1,34 @@
+name: Test Infrastructure
+
+defaults:
+  run:
+    shell: bash
+
+concurrency:
+  group: ${{ github.ref }}-${{ github.workflow }}
+  cancel-in-progress: true
+
+on:
+  pull_request:
+    branches: [main]
+    types: [opened, synchronize, reopened, ready_for_review]
+
+jobs:
+  test-infra:
+    strategy:
+      matrix:
+        node-version: [16.x]
+    runs-on: ubuntu-20.04
+    steps:
+      - uses: actions/checkout@v3
+        with:
+          fetch-depth: 0
+      - name: Use Node.js ${{ matrix.node-version }}
+        uses: actions/setup-node@v3
+        with:
+          node-version: ${{ matrix.node-version }}
+          cache: 'npm'
+      - run: npm ci
+      - run: npm run synth:ci
+        env:
+          NODE_OPTIONS: "--max-old-space-size=4096"

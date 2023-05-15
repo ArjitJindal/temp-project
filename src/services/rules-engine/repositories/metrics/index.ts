@@ -1,5 +1,5 @@
 import { Filter, MongoClient } from 'mongodb'
-import { StackConstants } from '@cdk/constants'
+import { StackConstants } from '@lib/constants'
 import { DynamoDBDocumentClient, PutCommand } from '@aws-sdk/lib-dynamodb'
 import { v4 as uuidv4 } from 'uuid'
 import { DynamoDbKeys } from '@/core/dynamodb/dynamodb-keys'

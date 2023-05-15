@@ -1,6 +1,6 @@
 import { exit } from 'process'
 import { program } from 'commander'
-import { StackConstants } from '@cdk/constants'
+import { StackConstants } from '@lib/constants'
 import { MongoClient } from 'mongodb'
 
 import { getMongoDbClient } from '@/utils/mongoDBUtils'

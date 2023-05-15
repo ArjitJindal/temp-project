@@ -1,5 +1,5 @@
-import { WHITE_LABEL_ORIGINS } from '@cdk/openapi/openapi-internal-constants'
-import { Auth0TenantConfig } from './tenant-config'
+import { WHITE_LABEL_ORIGINS } from '@lib/openapi/openapi-internal-constants'
+import { Auth0TenantConfig } from './type'
 
 export const Auth0SandboxBureauTenantConfig: Auth0TenantConfig = {
   tenantName: 'sandbox-bureau-flagright',

@@ -1,4 +1,4 @@
-import { LAMBDAS } from '@cdk/lambdas'
+import { LAMBDAS } from '@lib/lambdas'
 import { logger } from '@/core/logger'
 
 type Api = 'CONSOLE' | 'PUBLIC' | 'PUBLIC_DEVICE_DATA' | 'PUBLIC_MANAGEMENT'

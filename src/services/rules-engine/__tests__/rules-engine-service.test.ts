@@ -1,6 +1,6 @@
 import _ from 'lodash'
 import { ScanCommand } from '@aws-sdk/lib-dynamodb'
-import { StackConstants } from '@cdk/constants'
+import { StackConstants } from '@lib/constants'
 import { RulesEngineService } from '..'
 import { DynamoDbTransactionRepository } from '../repositories/dynamodb-transaction-repository'
 import { RiskRepository } from '../../risk-scoring/repositories/risk-repository'

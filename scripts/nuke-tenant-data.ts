@@ -1,7 +1,7 @@
 import { exit } from 'process'
 import AWS from 'aws-sdk'
 import { program } from 'commander'
-import { StackConstants } from '@cdk/constants'
+import { StackConstants } from '@lib/constants'
 import { Db } from 'mongodb'
 import { DeleteCommand, DynamoDBDocumentClient } from '@aws-sdk/lib-dynamodb'
 import { DynamoDbKeys } from '@/core/dynamodb/dynamodb-keys'

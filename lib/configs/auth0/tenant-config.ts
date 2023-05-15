@@ -1,29 +1,9 @@
+import { Auth0TenantConfig } from '@lib/configs/auth0/type'
 import { Auth0DevTenantConfig } from './tenant-config-dev'
 import { Auth0ProdTenantConfig } from './tenant-config-prod'
 import { Auth0ProdBureauTenantConfig } from './tenant-config-prod-bureau'
 import { Auth0SandboxTenantConfig } from './tenant-config-sandbox'
 import { Auth0SandboxBureauTenantConfig } from './tenant-config-sandbox-bureau'
-
-export type Auth0TenantConfig = {
-  tenantName: string
-  region: 'eu'
-  customDomain: string
-  consoleApplicationName: string
-  consoleUrl: string
-  allowedOrigins: string[]
-  allowedCallbackUrls: string[]
-  branding: {
-    logoUrl: string
-    primaryColor: string
-    pageBackgroundColor: string
-    companyDisplayName: string
-  }
-  emailProvider: {
-    type: 'sendgrid'
-    credentialsAwsSecretName: string
-    fromAddress: string
-  }
-}
 
 export function getAuth0TenantConfigs(
   stage: 'local' | 'dev' | 'sandbox' | 'prod'

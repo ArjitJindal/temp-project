@@ -1,4 +1,4 @@
-import { StackConstants } from '@cdk/constants'
+import { StackConstants } from '@lib/constants'
 import { migrateAllTenants } from '../utils/tenant'
 import { deleteUnusedRuleParameter } from '../utils/rule'
 import { RuleInstanceRepository } from '@/services/rules-engine/repositories/rule-instance-repository'

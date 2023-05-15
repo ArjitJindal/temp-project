@@ -10,7 +10,7 @@ import {
 } from 'aws-sdk/clients/dynamodb'
 import { DocumentClient } from 'aws-sdk/lib/dynamodb/document_client'
 import _, { chunk } from 'lodash'
-import { StackConstants } from '@cdk/constants'
+import { StackConstants } from '@lib/constants'
 import { Credentials, CredentialsOptions } from 'aws-sdk/lib/credentials'
 import {
   BatchGetCommand,

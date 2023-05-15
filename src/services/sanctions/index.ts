@@ -1,7 +1,7 @@
 import { v4 as uuidv4 } from 'uuid'
 import fetch from 'node-fetch'
 import { NotFound } from 'http-errors'
-import { StackConstants } from '@cdk/constants'
+import { StackConstants } from '@lib/constants'
 import _ from 'lodash'
 import { SanctionsSearchRepository } from './repositories/sanctions-search-repository'
 import { SanctionsSearchRequest } from '@/@types/openapi-internal/SanctionsSearchRequest'

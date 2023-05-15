@@ -3,7 +3,7 @@ import {
   APIGatewayProxyWithLambdaAuthorizerEvent,
 } from 'aws-lambda'
 import { BadRequest } from 'http-errors'
-import { StackConstants } from '@cdk/constants'
+import { StackConstants } from '@lib/constants'
 import { PulseAuditLogService } from './services/pulse-audit-log'
 import { logger } from '@/core/logger'
 import { lambdaApi } from '@/core/middlewares/lambda-api-middlewares'

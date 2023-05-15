@@ -1,4 +1,4 @@
-import { StackConstants } from '@cdk/constants'
+import { StackConstants } from '@lib/constants'
 import _, { chunk } from 'lodash'
 import { BatchWriteCommand } from '@aws-sdk/lib-dynamodb'
 import { getDynamoDbClient, paginateQuery } from '../dynamodb'

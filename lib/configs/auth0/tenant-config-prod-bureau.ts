@@ -1,5 +1,5 @@
-import { WHITE_LABEL_ORIGINS } from '@cdk/openapi/openapi-internal-constants'
-import { Auth0TenantConfig } from './tenant-config'
+import { WHITE_LABEL_ORIGINS } from '@lib/openapi/openapi-internal-constants'
+import { Auth0TenantConfig } from './type'
 
 export const Auth0ProdBureauTenantConfig: Auth0TenantConfig = {
   tenantName: 'bureau-flagright',

@@ -1,4 +1,4 @@
-import { StackConstants } from '@cdk/constants'
+import { StackConstants } from '@lib/constants'
 import _ from 'lodash'
 import { migrateAllTenants } from '../utils/tenant'
 import { CASES_COLLECTION, getMongoDbClient } from '@/utils/mongoDBUtils'

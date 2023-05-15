@@ -1,4 +1,4 @@
-import { StackConstants } from '@cdk/constants'
+import { StackConstants } from '@lib/constants'
 import { customAlphabet } from 'nanoid'
 import {
   DeleteCommand,

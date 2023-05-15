@@ -1,11 +1,11 @@
-import { config as localConfig } from '@cdk/configs/config-local'
-import { config as devConfig } from '@cdk/configs/config-dev'
-import { config as sandboxConfig } from '@cdk/configs/config-sandbox'
-import { config as prodConfigAsia2 } from '@cdk/configs/config-prod-asia-2'
-import { config as prodConfigAsia1 } from '@cdk/configs/config-prod-asia-1'
-import { config as prodConfigEu1 } from '@cdk/configs/config-prod-eu-1'
-import { config as prodConfigEu2 } from '@cdk/configs/config-prod-eu-2'
-import { config as prodConfigUS1 } from '@cdk/configs/config-prod-us-1'
+import { config as localConfig } from '@lib/configs/config-local'
+import { config as devConfig } from '@lib/configs/config-dev'
+import { config as sandboxConfig } from '@lib/configs/config-sandbox'
+import { config as prodConfigAsia2 } from '@lib/configs/config-prod-asia-2'
+import { config as prodConfigAsia1 } from '@lib/configs/config-prod-asia-1'
+import { config as prodConfigEu1 } from '@lib/configs/config-prod-eu-1'
+import { config as prodConfigEu2 } from '@lib/configs/config-prod-eu-2'
+import { config as prodConfigUS1 } from '@lib/configs/config-prod-us-1'
 
 export function getConfig() {
   if (!process.env.ENV) {

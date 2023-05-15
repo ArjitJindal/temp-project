@@ -51,7 +51,6 @@ import {
 import { LambdaInvoke } from 'aws-cdk-lib/aws-stepfunctions-tasks'
 import { Certificate } from 'aws-cdk-lib/aws-certificatemanager'
 import { CnameRecord, HostedZone } from 'aws-cdk-lib/aws-route53'
-import { CdkTarponAlarmsStack } from '@cdk/cdk-tarpon-nested-stacks/cdk-tarpon-alarms-stack'
 import { Rule, Schedule } from 'aws-cdk-lib/aws-events'
 import {
   getDeadLetterQueueName,
@@ -59,8 +58,14 @@ import {
   getResourceNameForTarpon,
   SQSQueues,
   StackConstants,
-} from './constants'
-import { Config } from './configs/config'
+} from '@lib/constants'
+import { Config } from '@lib/configs/config'
+import {
+  BATCH_JOB_PAYLOAD_RESULT_KEY,
+  BATCH_JOB_RUN_TYPE_RESULT_KEY,
+  LAMBDA_BATCH_JOB_RUN_TYPE,
+} from '@lib/cdk/constants'
+import { CdkTarponAlarmsStack } from './cdk-tarpon-nested-stacks/cdk-tarpon-alarms-stack'
 import { CdkTarponConsoleLambdaStack } from './cdk-tarpon-nested-stacks/cdk-tarpon-console-api-stack'
 import {
   grantMongoDbAccess,
@@ -71,12 +76,6 @@ import {
 import { createApiGateway } from './cdk-utils/cdk-apigateway-utils'
 import { createAPIGatewayThrottlingAlarm } from './cdk-utils/cdk-cw-alarms-utils'
 import { createFunction } from './cdk-utils/cdk-lambda-utils'
-import { FileImportConfig } from '@/lambdas/console-api-file-import/app'
-import {
-  BATCH_JOB_PAYLOAD_RESULT_KEY,
-  BATCH_JOB_RUN_TYPE_RESULT_KEY,
-  LAMBDA_BATCH_JOB_RUN_TYPE,
-} from '@/lambdas/batch-job/app'
 
 const DEFAULT_LAMBDA_TIMEOUT = Duration.seconds(100)
 const DEFAULT_SQS_VISIBILITY_TIMEOUT = Duration.seconds(
@@ -335,7 +334,10 @@ export class CdkTarponStack extends cdk.Stack {
       StackConstants.FAST_GEOIP_LAYER_NAME,
       {
         compatibleRuntimes: [Runtime.NODEJS_16_X],
-        code: Code.fromAsset('dist/layers/fast-geoip'),
+        code:
+          process.env.CI === 'true'
+            ? Code.fromAsset('infra')
+            : Code.fromAsset('dist/layers/fast-geoip'),
         description: 'fast-geoip npm module',
       }
     )
@@ -594,7 +596,7 @@ export class CdkTarponStack extends cdk.Stack {
           TMP_BUCKET: tmpBucketName,
           AUTH0_DOMAIN: this.config.application.AUTH0_DOMAIN,
           AUTH0_AUDIENCE: this.config.application.AUTH0_AUDIENCE,
-        } as FileImportConfig,
+        },
         timeout: CONSUMER_LAMBDA_TIMEOUT,
       }
     )

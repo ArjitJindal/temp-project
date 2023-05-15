@@ -1,5 +1,5 @@
 import { MigrationFn } from 'umzug'
-import { StackConstants } from '@cdk/constants'
+import { StackConstants } from '@lib/constants'
 import { migrateAllTenants } from '../utils/tenant'
 import { Tenant } from '@/services/accounts'
 import {

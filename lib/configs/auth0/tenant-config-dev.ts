@@ -1,4 +1,4 @@
-import { Auth0TenantConfig } from './tenant-config'
+import { Auth0TenantConfig } from './type'
 
 const allowedOrigins = [
   'https://flagright.local:8001',

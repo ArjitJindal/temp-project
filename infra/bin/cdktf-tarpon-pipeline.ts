@@ -1,9 +1,9 @@
 #!/usr/bin/env node
-import { config as devConfig } from '@cdk/configs/config-dev'
-import { config as sandboxConfig } from '@cdk/configs/config-sandbox'
-import { config as prodConfigEu1 } from '@cdk/configs/config-prod-eu-1'
-import { CdktfTarponStack } from '@cdk/cdktf-tarpon-stack'
 import { App } from 'cdktf'
+import { config as devConfig } from '@lib/configs/config-dev'
+import { config as sandboxConfig } from '@lib/configs/config-sandbox'
+import { config as prodConfigEu1 } from '@lib/configs/config-prod-eu-1'
+import { CdktfTarponStack } from '../cdktf-tarpon-stack'
 
 const app = new App()
 

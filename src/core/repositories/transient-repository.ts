@@ -5,7 +5,7 @@ import {
   DeleteCommand,
   GetCommand,
 } from '@aws-sdk/lib-dynamodb'
-import { StackConstants } from '@cdk/constants'
+import { StackConstants } from '@lib/constants'
 
 const DEFAULT_TTL_SECONDS = 2592000 // 30 days
 

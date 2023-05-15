@@ -1,5 +1,5 @@
 import { DeleteCommand } from '@aws-sdk/lib-dynamodb'
-import { StackConstants } from '@cdk/constants'
+import { StackConstants } from '@lib/constants'
 import { migrateAllTenants } from '../utils/tenant'
 import { getDynamoDbClient } from '@/utils/dynamodb'
 import { RiskRepository } from '@/services/risk-scoring/repositories/risk-repository'

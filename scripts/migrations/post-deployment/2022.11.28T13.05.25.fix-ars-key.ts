@@ -1,5 +1,5 @@
 import _ from 'lodash'
-import { StackConstants } from '@cdk/constants'
+import { StackConstants } from '@lib/constants'
 import { DeleteCommand, GetCommand, PutCommand } from '@aws-sdk/lib-dynamodb'
 import { migrateAllTenants } from '../utils/tenant'
 import { migrateTransactions } from '../utils/transaction'

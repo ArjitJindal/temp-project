@@ -6,8 +6,8 @@ import {
   GetRestApisCommand,
   GetUsagePlansCommand,
 } from '@aws-sdk/client-api-gateway'
-import { StackConstants } from '@cdk/constants'
-import { getAuth0TenantConfigs } from '@cdk/auth0/tenant-config'
+import { StackConstants } from '@lib/constants'
+import { getAuth0TenantConfigs } from '@lib/configs/auth0/tenant-config'
 import { BadRequest } from 'http-errors'
 import { TenantCreationResponse } from '@/@types/openapi-internal/TenantCreationResponse'
 import { TenantCreationRequest } from '@/@types/openapi-internal/TenantCreationRequest'

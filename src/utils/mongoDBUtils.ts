@@ -1,3 +1,4 @@
+import { StackConstants } from '@lib/constants'
 import {
   Db,
   Document,
@@ -6,7 +7,6 @@ import {
   MongoClient,
   WithId,
 } from 'mongodb'
-import { StackConstants } from '@cdk/constants'
 import { escapeStringRegexp } from './regex'
 import { getSecret } from './secrets-manager'
 import { MONGO_TEST_DB_NAME } from '@/test-utils/mongo-test-utils'

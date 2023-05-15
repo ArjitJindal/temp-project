@@ -13,13 +13,12 @@ import {
 import { Construct } from 'constructs'
 import { ManagedPolicy, ServicePrincipal } from 'aws-cdk-lib/aws-iam'
 import { Metric } from 'aws-cdk-lib/aws-cloudwatch'
-import _ from 'lodash'
 import { Duration } from 'aws-cdk-lib'
 import { Topic } from 'aws-cdk-lib/aws-sns'
 import { Queue } from 'aws-cdk-lib/aws-sqs'
-import { LAMBDAS } from '../lambdas'
-import { Config } from '../configs/config'
-import { StackConstants } from '../constants'
+import { LAMBDAS } from '@lib/lambdas'
+import { StackConstants } from '@lib/constants'
+import { Config } from '@lib/configs/config'
 
 type InternalFunctionProps = {
   name: string
@@ -74,7 +73,9 @@ export function createFunction(
     functionName: name,
     runtime: Runtime.NODEJS_16_X,
     handler: `app.${handlerName}`,
-    code: Code.fromAsset(`dist/${LAMBDAS[name].codePath}`),
+    code: process.env.CI
+      ? Code.fromInline("console.log('hello')")
+      : Code.fromAsset(`dist/${LAMBDAS[name].codePath}`),
     tracing: Tracing.ACTIVE,
     timeout: DEFAULT_LAMBDA_TIMEOUT,
     memorySize: memorySize

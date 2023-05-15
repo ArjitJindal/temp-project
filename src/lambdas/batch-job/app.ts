@@ -1,6 +1,12 @@
 import { SQSEvent } from 'aws-lambda'
 import { v4 as uuidv4 } from 'uuid'
 import { SFNClient, StartExecutionCommand } from '@aws-sdk/client-sfn'
+import {
+  BATCH_JOB_PAYLOAD_RESULT_KEY,
+  BATCH_JOB_RUN_TYPE_RESULT_KEY,
+  BatchRunType,
+  LAMBDA_BATCH_JOB_RUN_TYPE,
+} from '@lib/cdk/constants'
 import { BatchJobRunnerFactory } from './batch-job-runner-factory'
 import { lambdaConsumer } from '@/core/middlewares/lambda-consumer-middlewares'
 import { BatchJob } from '@/@types/batch-job'
@@ -10,12 +16,6 @@ import {
   getContextStorage,
   updateLogMetadata,
 } from '@/core/utils/context'
-
-type BatchRunType = 'LAMBDA' | 'FARGATE'
-export const LAMBDA_BATCH_JOB_RUN_TYPE: BatchRunType = 'LAMBDA'
-export const FARGATE_BATCH_JOB_RUN_TYPE: BatchRunType = 'FARGATE'
-export const BATCH_JOB_RUN_TYPE_RESULT_KEY = 'BatchJobRunType'
-export const BATCH_JOB_PAYLOAD_RESULT_KEY = 'BatchJobPayload'
 
 function getBatchJobName(batchJobPayload: BatchJob) {
   return `${uuidv4()}-${batchJobPayload.tenantId}-${

@@ -3,8 +3,7 @@ import { Alias } from 'aws-cdk-lib/aws-lambda'
 import { Construct } from 'constructs'
 import { Resource } from 'aws-cdk-lib'
 import { Effect, IRole, Policy, PolicyStatement } from 'aws-cdk-lib/aws-iam'
-import _ from 'lodash'
-import { Config } from '../configs/config'
+import { Config } from '@lib/configs/config'
 
 export function grantMongoDbAccess(
   context: Construct & { config: Config },

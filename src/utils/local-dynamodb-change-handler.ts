@@ -3,7 +3,7 @@ import {
   KinesisStreamRecordPayload,
   KinesisStreamRecord,
 } from 'aws-lambda'
-import { StackConstants } from '@cdk/constants'
+import { StackConstants } from '@lib/constants'
 import { DynamoDB } from 'aws-sdk'
 import { GetCommand } from '@aws-sdk/lib-dynamodb'
 import { getDynamoDbClientByEvent } from './dynamodb'

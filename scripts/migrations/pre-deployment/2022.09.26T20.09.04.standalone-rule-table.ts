@@ -1,4 +1,4 @@
-import { StackConstants } from '@cdk/constants'
+import { StackConstants } from '@lib/constants'
 import { DeleteCommand, PutCommand } from '@aws-sdk/lib-dynamodb'
 import { migrateAllTenants } from '../utils/tenant'
 import { DynamoDbKeys } from '@/core/dynamodb/dynamodb-keys'

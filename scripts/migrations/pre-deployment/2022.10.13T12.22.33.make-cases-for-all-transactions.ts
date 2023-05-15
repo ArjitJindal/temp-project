@@ -1,4 +1,4 @@
-import { StackConstants } from '@cdk/constants'
+import { StackConstants } from '@lib/constants'
 import { migrateAllTenants } from '../utils/tenant'
 import { COUNTER_COLLECTION, getMongoDbClient } from '@/utils/mongoDBUtils'
 import { getDynamoDbClient } from '@/utils/dynamodb'
