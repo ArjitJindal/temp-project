@@ -171,7 +171,7 @@ export const createAuth0TenantResources = (
    * Actions::Library::Custom
    */
   const postLoginCode = fs.readFileSync(
-    'lib/auth0/actions/post-login.js',
+    'infra/auth0/actions/post-login.js',
     'utf8'
   )
   const postLoginAction = new auth0.action.Action(
@@ -301,7 +301,7 @@ export const createAuth0TenantResources = (
    * Branding::Email Templates
    */
   const verifyEmailTemplate = fs.readFileSync(
-    'lib/auth0/email-templates/verify-email-template.html',
+    'infra/auth0/email-templates/verify-email-template.html',
     'utf8'
   )
   new auth0.emailTemplate.EmailTemplate(
@@ -323,7 +323,7 @@ export const createAuth0TenantResources = (
     }
   )
   const changePasswordTemplate = fs.readFileSync(
-    'lib/auth0/email-templates/change-password-template.html',
+    'infra/auth0/email-templates/change-password-template.html',
     'utf8'
   )
   new auth0.emailTemplate.EmailTemplate(
