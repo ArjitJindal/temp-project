@@ -203,7 +203,7 @@ export const CreateTenantModal = (props: Props) => {
       },
       auth0Domain: {
         'ui:help':
-          'Add http://sandbox-flagright.eu.auth0.com/ as Auth0 Domain if the tenant does not belongs to our white-label customer.',
+          'If the tenant does not belong to our white-label customer, please add "http://sandbox-flagright.eu.auth0.com/" as the Auth0 Domain. However, if the tenant belongs to our white-label customer, please add the Auth0 domain for their specific bureau, for example, "bureau-flagright.eu.auth0.com".',
       },
       emailsOfAdmins: {
         'ui:help': 'The emails of the admins of the tenant',
