@@ -371,6 +371,24 @@ export class RiskRepository {
       return null
     }
   }
+
+  public async augmentRiskLevel<T extends { arsScore?: ArsScore }>(
+    items: Array<T>
+  ): Promise<T[]> {
+    const riskClassificationValues = await this.getRiskClassificationValues()
+
+    return items.map((item) => ({
+      ...item,
+      arsScore: item.arsScore && {
+        ...item.arsScore,
+        riskLevel: getRiskLevelFromScore(
+          riskClassificationValues,
+          item.arsScore.arsScore
+        ),
+      },
+    }))
+  }
+
   async getParameterRiskItems(): Promise<
     ParameterAttributeRiskValues[] | null
   > {

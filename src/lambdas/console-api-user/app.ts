@@ -16,8 +16,8 @@ import { Comment } from '@/@types/openapi-internal/Comment'
 import { SalesforceService } from '@/services/salesforce'
 import { TenantRepository } from '@/services/tenants/repositories/tenant-repository'
 import { hasFeature } from '@/core/utils/context'
-import { CaseRepository } from '@/services/rules-engine/repositories/case-repository'
 import { RuleInstanceRepository } from '@/services/rules-engine/repositories/rule-instance-repository'
+import { AlertsRepository } from '@/services/rules-engine/repositories/alerts-repository'
 
 export type UserViewConfig = {
   TMP_BUCKET: string
@@ -103,8 +103,8 @@ export const businessUsersViewHandler = lambdaApi()(
       if (user == null) {
         throw new NotFound(`Unable to find user by id`)
       }
-      const caseAuditLogService = new UserAuditLogService(tenantId)
-      await caseAuditLogService.handleAuditLogForuserViewed(
+      const CasesAlertsAuditLogService = new UserAuditLogService(tenantId)
+      await CasesAlertsAuditLogService.handleAuditLogForuserViewed(
         event.pathParameters?.userId
       )
       return user
@@ -249,8 +249,8 @@ export const consumerUsersViewHandler = lambdaApi()(
       if (user == null) {
         throw new NotFound(`Unable to find user by id`)
       }
-      const caseAuditLogService = new UserAuditLogService(tenantId)
-      await caseAuditLogService.handleAuditLogForuserViewed(
+      const CasesAlertsAuditLogService = new UserAuditLogService(tenantId)
+      await CasesAlertsAuditLogService.handleAuditLogForuserViewed(
         event.pathParameters?.userId
       )
       return user
@@ -290,10 +290,12 @@ export const allUsersViewHandler = lambdaApi()(
       TMP_BUCKET,
       DOCUMENT_BUCKET
     )
-    const caseRepository = new CaseRepository(tenantId, {
+
+    const alertsRepository = new AlertsRepository(tenantId, {
       mongoDb: client,
       dynamoDb,
     })
+
     const ruleInstanceRepository = new RuleInstanceRepository(tenantId, {
       dynamoDb,
     })
@@ -378,7 +380,7 @@ export const allUsersViewHandler = lambdaApi()(
         }
       }
 
-      const alerts = await caseRepository.getAlerts({
+      const alerts = await alertsRepository.getAlerts({
         filterUserId: user.userId,
         filterRuleInstanceId: ongoingRuleInstanceIds,
         pageSize: 1,

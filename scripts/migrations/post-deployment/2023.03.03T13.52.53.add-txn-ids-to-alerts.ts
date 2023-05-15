@@ -3,7 +3,7 @@ import { migrateAllTenants } from '../utils/tenant'
 import { CASES_COLLECTION, getMongoDbClient } from '@/utils/mongoDBUtils'
 import { Case } from '@/@types/openapi-internal/Case'
 import { Tenant } from '@/services/accounts'
-import { transactionsToAlerts } from '@/services/alerts'
+import { AlertsService } from '@/services/alerts'
 
 export async function addTxnIdsToAlerts(tenant: Tenant) {
   const mongodb = await getMongoDbClient(StackConstants.MONGO_DB_DATABASE_NAME)
@@ -16,7 +16,7 @@ export async function addTxnIdsToAlerts(tenant: Tenant) {
   })
 
   for await (const caseItem of cases) {
-    const correctAlerts = transactionsToAlerts(
+    const correctAlerts = AlertsService.transactionsToAlerts(
       caseItem.caseTransactions || [],
       caseItem.caseId
     )

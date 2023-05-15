@@ -7,7 +7,7 @@ import {
 } from '@/utils/mongoDBUtils'
 import { Case } from '@/@types/openapi-internal/Case'
 import { Tenant } from '@/services/accounts'
-import { transactionsToAlerts } from '@/services/alerts'
+import { AlertsService } from '@/services/alerts'
 import { EntityCounter } from '@/@types/openapi-internal/EntityCounter'
 
 export async function addMissingAlerts(tenant: Tenant) {
@@ -18,7 +18,7 @@ export async function addMissingAlerts(tenant: Tenant) {
   const cases = await casesCollections.find()
 
   for await (const caseItem of cases) {
-    const correctAlerts = transactionsToAlerts(
+    const correctAlerts = AlertsService.transactionsToAlerts(
       caseItem.caseTransactions || [],
       caseItem.caseId
     )

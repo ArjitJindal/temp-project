@@ -7,7 +7,6 @@ import {
   UpdateResult,
 } from 'mongodb'
 import _ from 'lodash'
-import { NotFound } from 'http-errors'
 import { DynamoDBDocumentClient } from '@aws-sdk/lib-dynamodb'
 import {
   ACCOUNTS_COLLECTION,
@@ -22,11 +21,7 @@ import {
 import { Comment } from '@/@types/openapi-internal/Comment'
 import { Alert } from '@/@types/openapi-internal/Alert'
 import { Assignment } from '@/@types/openapi-internal/Assignment'
-import {
-  DefaultApiGetAlertListRequest,
-  DefaultApiGetAlertTransactionListRequest,
-  DefaultApiGetCaseListRequest,
-} from '@/@types/openapi-internal/RequestParameters'
+import { DefaultApiGetCaseListRequest } from '@/@types/openapi-internal/RequestParameters'
 import { EntityCounter } from '@/@types/openapi-internal/EntityCounter'
 import { CaseStatus } from '@/@types/openapi-internal/CaseStatus'
 import { Case } from '@/@types/openapi-internal/Case'
@@ -35,8 +30,6 @@ import { Priority } from '@/@types/openapi-internal/Priority'
 import { User } from '@/@types/openapi-public/User'
 import { Business } from '@/@types/openapi-public/Business'
 import { Tag } from '@/@types/openapi-public/Tag'
-import { TransactionsListResponse } from '@/@types/openapi-internal/TransactionsListResponse'
-import { MongoDbTransactionRepository } from '@/services/rules-engine/repositories/mongodb-transaction-repository'
 import { RulesHitPerCase } from '@/@types/openapi-internal/RulesHitPerCase'
 import { RiskRepository } from '@/services/risk-scoring/repositories/risk-repository'
 import {
@@ -47,15 +40,10 @@ import { hasFeature, hasFeatures } from '@/core/utils/context'
 import {
   COUNT_QUERY_LIMIT,
   OptionalPagination,
-  OptionalPaginationParams,
   PaginationParams,
 } from '@/utils/pagination'
 import { InternalTransaction } from '@/@types/openapi-internal/InternalTransaction'
 import { PRIORITYS } from '@/@types/openapi-internal-custom/Priority'
-import { AlertListResponse } from '@/@types/openapi-internal/AlertListResponse'
-import { AlertListResponseItem } from '@/@types/openapi-internal/AlertListResponseItem'
-import { PaymentMethod } from '@/@types/openapi-internal/PaymentMethod'
-import { ArsScore } from '@/@types/openapi-internal/ArsScore'
 import { CaseCaseUsers } from '@/@types/openapi-internal/CaseCaseUsers'
 
 export const MAX_TRANSACTION_IN_A_CASE = 1000
@@ -154,7 +142,7 @@ export class CaseRepository {
     }
   }
 
-  private async getCasesConditions(
+  public async getCasesConditions(
     params: OptionalPagination<DefaultApiGetCaseListRequest>,
     riskLevelsRequired = true
   ): Promise<Filter<Case>[]> {
@@ -639,231 +627,6 @@ export class CaseRepository {
     return count
   }
 
-  public async getAlerts(
-    params: OptionalPagination<DefaultApiGetAlertListRequest>
-  ): Promise<AlertListResponse> {
-    const db = this.mongoDb.db()
-    const collection = db.collection<Case>(CASES_COLLECTION(this.tenantId))
-
-    const pipeline = await this.getAlertsPipeline(params, false)
-
-    const itemsPipeline = [...pipeline]
-    itemsPipeline.push(...paginatePipeline(params))
-    const cursor = collection.aggregate<AlertListResponseItem>(itemsPipeline)
-    const itemsPromise = cursor.toArray()
-    const countPipelineResp = await this.getAlertsPipeline(params, true)
-    const countPipeline = [...countPipelineResp]
-    countPipeline.push({
-      $limit: COUNT_QUERY_LIMIT,
-    })
-    countPipeline.push({
-      $count: 'count',
-    })
-    const countPromise = collection
-      .aggregate<{ count: number }>(countPipeline)
-      .next()
-      .then((item) => item?.count ?? 0)
-
-    return {
-      total: await countPromise,
-      data: await itemsPromise,
-    }
-  }
-
-  private async getAlertsPipeline(
-    params: OptionalPagination<DefaultApiGetAlertListRequest>,
-    countOnly = true
-  ): Promise<Document[]> {
-    const caseConditions: Filter<Case>[] = await this.getCasesConditions(
-      params,
-      false
-    )
-
-    const pipeline: Document[] = [
-      ...(caseConditions.length > 0
-        ? [{ $match: { $and: caseConditions } }]
-        : []),
-    ]
-
-    if (
-      params.filterCaseAfterCreatedTimestamp != null &&
-      params.filterCaseBeforeCreatedTimestamp != null
-    ) {
-      pipeline.push({
-        $match: {
-          createdTimestamp: {
-            $lte: params.filterCaseBeforeCreatedTimestamp,
-            $gte: params.filterCaseAfterCreatedTimestamp,
-          },
-        },
-      })
-    }
-
-    pipeline.push({
-      $unwind: {
-        path: '$alerts',
-      },
-    })
-
-    const conditions: Filter<AlertListResponseItem>[] = []
-
-    if (params.filterCaseId != null) {
-      conditions.push({
-        'alerts.caseId': params.filterCaseId,
-      })
-    }
-
-    if (params.filterRulesHit?.length) {
-      conditions.push({
-        'alerts.ruleInstanceId': {
-          $in: params.filterRulesHit,
-        },
-      })
-    }
-
-    if (
-      params.filterAlertBeforeCreatedTimestamp != null &&
-      params.filterAlertAfterCreatedTimestamp != null
-    ) {
-      conditions.push({
-        'alerts.createdTimestamp': {
-          $lte: params.filterAlertBeforeCreatedTimestamp,
-          $gte: params.filterAlertAfterCreatedTimestamp,
-        },
-      })
-    }
-
-    if (
-      params.afterAlertLastUpdatedTimestamp != null &&
-      params.beforeAlertLastUpdatedTimestamp != null
-    ) {
-      conditions.push({
-        'alerts.lastStatusChange.timestamp': {
-          $lte: params.beforeAlertLastUpdatedTimestamp,
-          $gte: params.afterAlertLastUpdatedTimestamp,
-        },
-      })
-    }
-
-    if (params.filterOriginPaymentMethod) {
-      conditions.push({
-        'alerts.originPaymentMethods': {
-          $in: params.filterOriginPaymentMethod as PaymentMethod[],
-        },
-      })
-    }
-    if (params.filterDestinationPaymentMethod) {
-      conditions.push({
-        'alerts.destinationPaymentMethods': {
-          $in: params.filterDestinationPaymentMethod as PaymentMethod[],
-        },
-      })
-    }
-
-    if (params.filterAlertId != null) {
-      conditions.push({
-        'alerts.alertId': prefixRegexMatchFilter(params.filterAlertId),
-      })
-    }
-    if (params.filterOutCaseStatus != null) {
-      conditions.push({
-        caseStatus: { $not: { $in: [params.filterOutCaseStatus] } },
-      })
-    }
-    if (params.filterCaseStatus != null) {
-      conditions.push({
-        caseStatus: { $in: [params.filterCaseStatus] },
-      })
-    }
-    if (params.filterOutAlertStatus && params.filterOutAlertStatus.length > 0) {
-      conditions.push({
-        'alerts.alertStatus': { $nin: params.filterOutAlertStatus },
-      })
-    }
-    if (params.filterAlertStatus && params.filterAlertStatus.length > 0) {
-      conditions.push({
-        'alerts.alertStatus': { $in: params.filterAlertStatus },
-      })
-    }
-    if (
-      params.filterAssignmentsIds != null &&
-      params.filterAssignmentsIds?.length
-    ) {
-      conditions.push({
-        'alerts.assignments': {
-          $elemMatch: {
-            assigneeUserId: { $in: params.filterAssignmentsIds },
-          },
-        },
-      })
-    }
-    if (params.filterRuleInstanceId != null) {
-      conditions.push({
-        'alerts.ruleInstanceId': { $in: params.filterRuleInstanceId },
-      })
-    }
-
-    if (conditions.length > 0) {
-      pipeline.push({
-        $match: {
-          $and: conditions,
-        },
-      })
-    }
-
-    if (!countOnly) {
-      pipeline.push(
-        ...[
-          lookupPipelineStage({
-            from: ACCOUNTS_COLLECTION(this.tenantId),
-            localField: 'alerts.assignments.assigneeUserId',
-            foreignField: 'id',
-            as: '_assignee',
-          }),
-          {
-            $set: {
-              'alerts._assigneeName': {
-                $toLower: { $first: '$_assignee.name' },
-              },
-            },
-          },
-          {
-            $sort: {
-              [params?.sortField === 'caseCreatedTimestamp'
-                ? 'createdTimestamp'
-                : `alerts.${params?.sortField ?? '_id'}`]:
-                params?.sortOrder === 'ascend' ? 1 : -1,
-              [`alerts._id`]: 1,
-            },
-          },
-          {
-            $set: {
-              alert: '$alerts',
-              caseCreatedTimestamp: '$createdTimestamp',
-            },
-          },
-        ]
-      )
-
-      pipeline.push({
-        $project: {
-          alert: 1,
-          caseCreatedTimestamp: 1,
-          'caseUsers.origin.userId': 1,
-          'caseUsers.destination.userId': 1,
-          'caseUsers.origin.userDetails.name': 1,
-          'caseUsers.destination.userDetails.name': 1,
-          'caseUsers.origin.legalEntity.companyGeneralDetails.legalName': 1,
-          'caseUsers.destination.legalEntity.companyGeneralDetails.legalName': 1,
-          'caseUsers.origin.type': 1,
-          'caseUsers.destination.type': 1,
-        },
-      })
-    }
-
-    return pipeline
-  }
-
   public async getCases(
     params: DefaultApiGetCaseListRequest,
     options: CaseListOptions = {}
@@ -968,81 +731,6 @@ export class CaseRepository {
     )
   }
 
-  public async updateAlerts(
-    alertIds: string[],
-    updates: {
-      assignments?: Assignment[]
-      statusChange?: CaseStatusChange
-    }
-  ) {
-    const db = this.mongoDb.db()
-    const collection = db.collection<Case>(CASES_COLLECTION(this.tenantId))
-
-    const result: Promise<unknown>[] = []
-    const casesCursor = collection.find({
-      'alerts.alertId': { $in: alertIds },
-    })
-    while (await casesCursor.hasNext()) {
-      const caseItem = await casesCursor.next()
-      if (caseItem == null) {
-        break
-      }
-      const newAlerts = caseItem.alerts?.map((alert) => {
-        if (!alertIds.includes(alert.alertId as string)) {
-          return alert
-        }
-        const newAlert: Alert = {
-          ...alert,
-        }
-        if (updates.assignments) {
-          newAlert.assignments = updates.assignments
-        }
-        if (updates.statusChange) {
-          newAlert.alertStatus = updates.statusChange.caseStatus
-          newAlert.lastStatusChange = updates.statusChange
-          newAlert.statusChanges = (newAlert.statusChanges ?? []).concat(
-            updates.statusChange
-          )
-        }
-
-        return newAlert
-      })
-
-      const isAllAlertsClosed = newAlerts?.every(
-        (alert) => alert.alertStatus === 'CLOSED'
-      )
-
-      if (caseItem.caseId != null && newAlerts) {
-        result.push(
-          collection.updateOne(
-            {
-              caseId: caseItem.caseId,
-            },
-            {
-              $set: {
-                alerts: newAlerts,
-                ...(isAllAlertsClosed
-                  ? {
-                      caseStatus: 'CLOSED',
-                      lastStatusChange: updates.statusChange,
-                    }
-                  : {}),
-              },
-              ...(isAllAlertsClosed
-                ? {
-                    $push: {
-                      statusChanges: updates.statusChange,
-                    },
-                  }
-                : {}),
-            }
-          )
-        )
-      }
-    }
-    await Promise.all(result)
-  }
-
   public async saveCaseComment(
     caseId: string,
     comment: Comment
@@ -1075,69 +763,6 @@ export class CaseRepository {
     return commentToSave
   }
 
-  public async saveAlertComment(
-    caseId: string,
-    alertId: string,
-    comment: Comment
-  ): Promise<Comment> {
-    const db = this.mongoDb.db()
-    const collection = db.collection<Case>(CASES_COLLECTION(this.tenantId))
-    const now = Date.now()
-    const commentToSave: Comment = {
-      ...comment,
-      id: comment.id || uuidv4(),
-      createdAt: comment.createdAt ?? now,
-      updatedAt: now,
-    }
-    await collection.findOneAndUpdate(
-      { caseId },
-      {
-        $push: { 'alerts.$[alert].comments': commentToSave },
-      },
-      {
-        arrayFilters: [
-          {
-            'alert.alertId': alertId,
-          },
-        ],
-      }
-    )
-    return commentToSave
-  }
-
-  public async deleteAlertComment(
-    caseId: string,
-    alertId: string,
-    commentId: string
-  ): Promise<void> {
-    const db = this.mongoDb.db()
-    const collection = db.collection<Case>(CASES_COLLECTION(this.tenantId))
-    // todo: check if alert and comment exists
-    const caseItem = await collection.findOne({
-      caseId: caseId,
-    })
-    if (caseItem == null) {
-      throw new Error(`Unable to find case "${caseId}"`)
-    }
-    await collection.replaceOne(
-      {
-        caseId,
-      },
-      {
-        ...caseItem,
-        alerts: caseItem.alerts?.map((alert) => {
-          if (alert.alertId !== alertId) {
-            return alert
-          }
-          return {
-            ...alert,
-            comments: alert.comments?.filter(({ id }) => id !== commentId),
-          }
-        }),
-      }
-    )
-  }
-
   public async deleteCaseComment(caseId: string, commentId: string) {
     const db = this.mongoDb.db()
     const collection = db.collection<Case>(CASES_COLLECTION(this.tenantId))
@@ -1162,15 +787,6 @@ export class CaseRepository {
     return await collection.findOne<Case>({ caseId })
   }
 
-  public async getAlertById(alertId: string): Promise<Alert | null> {
-    const { data } = await this.getAlerts({
-      filterAlertId: alertId,
-      page: 1,
-      pageSize: 1,
-    })
-    return data?.find((c) => c.alert.alertId === alertId)?.alert ?? null
-  }
-
   public async getCasesByAlertIds(alertIds: string[]): Promise<
     Array<{
       caseId: string
@@ -1192,118 +808,6 @@ export class CaseRepository {
       .toArray()
 
     return cases
-  }
-
-  public async getCaseTransactions(
-    caseId: string,
-    params: OptionalPaginationParams & {
-      includeUsers?: boolean
-    }
-  ): Promise<TransactionsListResponse> {
-    const transactionsRepo = new MongoDbTransactionRepository(
-      this.tenantId,
-      this.mongoDb
-    )
-
-    const caseItem = await this.getCaseById(caseId)
-    if (caseItem == null) {
-      throw new NotFound(`Case not found: ${caseId}`)
-    }
-    const caseTransactionsIds = caseItem.caseTransactionsIds
-    if (caseTransactionsIds == null) {
-      return {
-        total: 0,
-        data: [],
-      }
-    }
-
-    // TODO: Don't use transactionsRepo.getTransactions and handle params.includeUsers here
-    return await transactionsRepo.getTransactions({
-      filterIdList: caseTransactionsIds,
-      afterTimestamp: 0,
-      beforeTimestamp: Number.MAX_SAFE_INTEGER,
-      page: params.page,
-      pageSize: params.pageSize,
-      includeUsers: params.includeUsers,
-    })
-  }
-
-  public async getAlertTransactionsHit(
-    alertId: string,
-    params: OptionalPaginationParams
-  ): Promise<TransactionsListResponse> {
-    const alert = await this.getAlertById(alertId)
-    if (alert == null) {
-      throw new NotFound(`Alert "${alertId}" not found `)
-    }
-
-    const transactionsRepo = new MongoDbTransactionRepository(
-      this.tenantId,
-      this.mongoDb
-    )
-
-    const result = await transactionsRepo.getTransactions({
-      filterIdList: alert.transactionIds,
-      afterTimestamp: 0,
-      beforeTimestamp: Number.MAX_SAFE_INTEGER,
-      page: params.page,
-      pageSize: params.pageSize,
-    })
-
-    if (hasFeature('PULSE')) {
-      result.data = await this.augmentRiskLevel(result.data)
-    }
-
-    return result
-  }
-
-  public async getAlertTransactionsExecuted(
-    alertId: string,
-    params: OptionalPagination<DefaultApiGetAlertTransactionListRequest>
-  ): Promise<TransactionsListResponse> {
-    const case_ = await this.getCaseByAlertId(alertId)
-
-    if (case_ == null) {
-      throw new NotFound(`Case not found for alert "${alertId}"`)
-    }
-
-    const alert = case_.alerts?.find((a) => a.alertId === alertId)
-    if (alert == null) {
-      throw new NotFound(`Alert "${alertId}" not found `)
-    }
-
-    const userId =
-      case_?.caseUsers?.origin?.userId ?? case_?.caseUsers?.destination?.userId
-
-    if (!userId) {
-      throw new NotFound(`User not found for case "${case_.caseId}"`)
-    }
-
-    const transactionsRepo = new MongoDbTransactionRepository(
-      this.tenantId,
-      this.mongoDb
-    )
-
-    let transactions = await transactionsRepo.getExecutedTransactionsOfAlert(
-      userId,
-      alert.ruleInstanceId,
-      { page: params.page, pageSize: params.pageSize }
-    )
-
-    const transactionsCount =
-      await transactionsRepo.getExecutedTransactionsOfAlertCount(
-        userId,
-        alert.ruleInstanceId
-      )
-
-    if (hasFeature('PULSE')) {
-      transactions = await this.augmentRiskLevel(transactions)
-    }
-
-    return {
-      total: transactionsCount,
-      data: transactions,
-    }
   }
 
   private getCaseRulesMongoPipeline(caseFilter: string) {
@@ -1490,7 +994,11 @@ export class CaseRepository {
     let res = await cursor.toArray()
 
     if (hasFeatures(['PULSE'])) {
-      res = await this.augmentRiskLevel(res)
+      const riskRepository = new RiskRepository(this.tenantId, {
+        dynamoDb: this.dynamoDb,
+      })
+
+      res = await riskRepository.augmentRiskLevel(res)
     }
 
     return {
@@ -1627,27 +1135,5 @@ export class CaseRepository {
         },
       }
     )
-  }
-
-  private async augmentRiskLevel<T extends { arsScore?: ArsScore }>(
-    items: Array<T>
-  ): Promise<T[]> {
-    const riskRepository = new RiskRepository(this.tenantId, {
-      dynamoDb: this.dynamoDb,
-    })
-
-    const riskClassificationValues =
-      await riskRepository.getRiskClassificationValues()
-
-    return items.map((item) => ({
-      ...item,
-      arsScore: item.arsScore && {
-        ...item.arsScore,
-        riskLevel: getRiskLevelFromScore(
-          riskClassificationValues,
-          item.arsScore.arsScore
-        ),
-      },
-    }))
   }
 }

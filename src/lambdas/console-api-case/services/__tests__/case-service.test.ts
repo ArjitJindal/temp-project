@@ -6,13 +6,14 @@ import { dynamoDbSetupHook } from '@/test-utils/dynamodb-test-utils'
 import { CaseRepository } from '@/services/rules-engine/repositories/case-repository'
 import { getTestTenantId } from '@/test-utils/tenant-test-utils'
 import { getMongoDbClient } from '@/utils/mongoDBUtils'
-import { DashboardStatsRepository } from '@/lambdas/console-api-dashboard/repositories/dashboard-stats-repository'
-import { getS3ClientByEvent } from '@/utils/s3'
 import { Account } from '@/services/accounts'
 import { Priority } from '@/@types/openapi-internal/Priority'
 import { Alert } from '@/@types/openapi-internal/Alert'
 import { Case } from '@/@types/openapi-internal/Case'
 import { CaseEscalationRequest } from '@/@types/openapi-internal/CaseEscalationRequest'
+import { AlertsService } from '@/services/alerts'
+import { AlertsRepository } from '@/services/rules-engine/repositories/alerts-repository'
+import { getS3ClientByEvent } from '@/utils/s3'
 
 const TEST_ACCOUNT_1: Account = {
   id: 'ACCOUNT-1',
@@ -60,17 +61,27 @@ async function getCaseService(tenantId: string) {
   const caseRepository = new CaseRepository(tenantId, {
     mongoDb,
   })
-  const dashboardStatsRepository = new DashboardStatsRepository(tenantId, {
+  const caseService = new CaseService(caseRepository, s3, {
+    documentBucketName: 'test-bucket',
+    tmpBucketName: 'test-bucket',
+  })
+
+  return caseService
+}
+
+async function getAlertsService(tenantId: string) {
+  const mongoDb = await getMongoDbClient()
+  const s3 = getS3ClientByEvent(null as any)
+  const alertsRepository = new AlertsRepository(tenantId, {
     mongoDb,
   })
-  const caseService = new CaseService(
-    caseRepository,
-    dashboardStatsRepository,
-    s3,
-    'tmp',
-    'document'
-  )
-  return caseService
+
+  const alertsService = new AlertsService(alertsRepository, s3, {
+    documentBucketName: 'test-bucket',
+    tmpBucketName: 'test-bucket',
+  })
+
+  return alertsService
 }
 
 describe('Case service', () => {
@@ -174,6 +185,7 @@ describe('Case service', () => {
 
     test('escalate alert - new case status, updated alert statuses, and keep old case status the same', async () => {
       const caseService = await getCaseService(TEST_TENANT_ID)
+
       const t = dayjs('2023-01-01T00:00:00.000Z').valueOf()
       await caseService.caseRepository.addCaseMongo({
         caseId: 'C-2',
@@ -189,7 +201,8 @@ describe('Case service', () => {
         },
       })
 
-      await caseService.escalateAlerts(
+      const alertsService = await getAlertsService(TEST_TENANT_ID)
+      await alertsService.escalateAlerts(
         'C-2',
         {
           alertEscalations: [{ alertId: TEST_ALERT_1.alertId! }],
@@ -239,18 +252,16 @@ describe('Case service', () => {
       })
     })
     test('escalateAlerts throws error if caseId is null', async () => {
-      const caseService = await getCaseService(TEST_TENANT_ID)
-
+      const alertsService = await getAlertsService(TEST_TENANT_ID)
       await expect(
-        caseService.escalateAlerts(null as unknown as string, {}, [])
+        alertsService.escalateAlerts(null as unknown as string, {}, [])
       ).rejects.toThrow(NotFound)
     })
 
     test('escalateAlerts throws error if caseId is undefined', async () => {
-      const caseService = await getCaseService(TEST_TENANT_ID)
-
+      const alertsService = await getAlertsService(TEST_TENANT_ID)
       await expect(
-        caseService.escalateAlerts(undefined as unknown as string, {}, [])
+        alertsService.escalateAlerts(undefined as unknown as string, {}, [])
       ).rejects.toThrow(NotFound)
     })
 
@@ -262,6 +273,7 @@ describe('Case service', () => {
       const caseEscalationRequest: CaseEscalationRequest = {
         alertEscalations: [{ alertId: TEST_ALERT_1.alertId! }],
       }
+      const alertsService = await getAlertsService(TEST_TENANT_ID)
 
       const parentCase: Case = {
         caseId: parentCaseId,
@@ -281,7 +293,7 @@ describe('Case service', () => {
       await caseService.caseRepository.addCaseMongo(childCase)
 
       await expect(
-        caseService.escalateAlerts(childCaseId, caseEscalationRequest, [
+        alertsService.escalateAlerts(childCaseId, caseEscalationRequest, [
           TEST_ACCOUNT_1,
         ])
       ).rejects.toThrowError(BadRequest)
@@ -290,6 +302,7 @@ describe('Case service', () => {
     test('escalate alert - update old case status to CLOSED', async () => {
       const caseService = await getCaseService(TEST_TENANT_ID)
       const t = dayjs('2023-01-01T00:00:00.000Z').valueOf()
+      const alertsService = await getAlertsService(TEST_TENANT_ID)
       await caseService.caseRepository.addCaseMongo({
         caseId: 'C-2',
         createdTimestamp: t,
@@ -300,7 +313,7 @@ describe('Case service', () => {
         alerts: [TEST_ALERT_1, TEST_ALERT_2],
       })
 
-      await caseService.escalateAlerts(
+      await alertsService.escalateAlerts(
         'C-2',
         {
           alertEscalations: [{ alertId: TEST_ALERT_1.alertId! }],

@@ -10,6 +10,7 @@ import { Alert } from '@/@types/openapi-internal/Alert'
 import { publishAuditLog } from '@/services/audit-log'
 import { Case } from '@/@types/openapi-internal/Case'
 import { Comment } from '@/@types/openapi-internal/Comment'
+import { AlertsService } from '@/services/alerts'
 
 type AuditLogCreateRequest = {
   caseId: string
@@ -29,13 +30,19 @@ type AlertAuditLogCreateRequest = {
   subtype?: AuditLogSubtypeEnum
 }
 
-export class CaseAuditLogService {
+export class CasesAlertsAuditLogService {
   caseService: CaseService
+  alertsService: AlertsService
   tenantId: string
 
-  constructor(caseService: CaseService, tenantId: string) {
+  constructor(
+    caseService: CaseService,
+    alertsService: AlertsService,
+    tenantId: string
+  ) {
     this.caseService = caseService
     this.tenantId = tenantId
+    this.alertsService = alertsService
   }
 
   public async handleAuditLogForCaseUpdate(
@@ -52,7 +59,7 @@ export class CaseAuditLogService {
     updates: CaseUpdateRequest
   ): Promise<void> {
     for (const alertId of alertIds) {
-      const alertEntity = await this.caseService.getAlert(alertId)
+      const alertEntity = await this.alertsService.getAlert(alertId)
       const oldImage: { [key: string]: string } = {}
       for (const field in Object.keys(updates)) {
         const oldValue = _.get(alertEntity, field)
@@ -129,7 +136,7 @@ export class CaseAuditLogService {
     })
   }
 
-  private async createAuditLog(auditLogCreateRequest: AuditLogCreateRequest) {
+  public async createAuditLog(auditLogCreateRequest: AuditLogCreateRequest) {
     const { caseId, logAction, oldImage, newImage, caseDetails, subtype } =
       auditLogCreateRequest
     const caseEntity = caseDetails ?? (await this.caseService.getCase(caseId))
@@ -156,7 +163,7 @@ export class CaseAuditLogService {
     const { alertId, logAction, oldImage, newImage, alertDetails, subtype } =
       auditLogCreateRequest
     const alertEntity =
-      alertDetails ?? (await this.caseService.getAlert(alertId))
+      alertDetails ?? (await this.alertsService.getAlert(alertId))
     const auditLog: AuditLog = {
       type: 'ALERT',
       action: logAction,

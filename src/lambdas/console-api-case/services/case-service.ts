@@ -1,56 +1,33 @@
 import * as createError from 'http-errors'
-import { NotFound, BadRequest } from 'http-errors'
+import { NotFound } from 'http-errors'
 import _ from 'lodash'
 import { Comment } from '@/@types/openapi-internal/Comment'
-import { FileInfo } from '@/@types/openapi-internal/FileInfo'
-import {
-  DefaultApiGetAlertListRequest,
-  DefaultApiGetAlertTransactionListRequest,
-  DefaultApiGetCaseListRequest,
-} from '@/@types/openapi-internal/RequestParameters'
+import { DefaultApiGetCaseListRequest } from '@/@types/openapi-internal/RequestParameters'
 import { CaseRepository } from '@/services/rules-engine/repositories/case-repository'
-import { AlertListResponse } from '@/@types/openapi-internal/AlertListResponse'
 import { CasesListResponse } from '@/@types/openapi-internal/CasesListResponse'
 import { CaseUpdateRequest } from '@/@types/openapi-internal/CaseUpdateRequest'
-import { Alert } from '@/@types/openapi-internal/Alert'
-import { AlertUpdateRequest } from '@/@types/openapi-internal/AlertUpdateRequest'
 import { CaseStatusChange } from '@/@types/openapi-internal/CaseStatusChange'
 import { TransactionUpdateRequest } from '@/@types/openapi-internal/TransactionUpdateRequest'
-import { TransactionsListResponse } from '@/@types/openapi-internal/TransactionsListResponse'
 import { RulesHitPerCase } from '@/@types/openapi-internal/RulesHitPerCase'
-import { OptionalPagination, PaginationParams } from '@/utils/pagination'
+import { PaginationParams } from '@/utils/pagination'
 import { DashboardStatsRepository } from '@/lambdas/console-api-dashboard/repositories/dashboard-stats-repository'
 import { addNewSubsegment } from '@/core/xray'
 import { sendWebhookTasks } from '@/services/webhook/utils'
 import { getContext } from '@/core/utils/context'
 import { Case } from '@/@types/openapi-internal/Case'
 import { Account } from '@/@types/openapi-internal/Account'
-import { Assignment } from '@/@types/openapi-internal/Assignment'
-import { CaseStatus } from '@/@types/openapi-internal/CaseStatus'
-import { CaseEscalationRequest } from '@/@types/openapi-internal/CaseEscalationRequest'
-import { CaseHierarchyDetails } from '@/@types/openapi-internal/CaseHierarchyDetails'
 import { CaseClosedDetails } from '@/@types/openapi-public/CaseClosedDetails'
-import { AlertClosedDetails } from '@/@types/openapi-public/AlertClosedDetails'
+import {
+  CaseAlertsCommonService,
+  S3Config,
+} from '@/services/case-alerts-common'
 
-export class CaseService {
+export class CaseService extends CaseAlertsCommonService {
   caseRepository: CaseRepository
-  dashboardStatsRepository: DashboardStatsRepository
-  s3: AWS.S3
-  documentBucketName: string
-  tmpBucketName: string
 
-  constructor(
-    caseRepository: CaseRepository,
-    dashboardStatsRepository: DashboardStatsRepository,
-    s3: AWS.S3,
-    tmpBucketName: string,
-    documentBucketName: string
-  ) {
+  constructor(caseRepository: CaseRepository, s3: AWS.S3, s3Config: S3Config) {
+    super(s3, s3Config)
     this.caseRepository = caseRepository
-    this.dashboardStatsRepository = dashboardStatsRepository
-    this.s3 = s3
-    this.tmpBucketName = tmpBucketName
-    this.documentBucketName = documentBucketName
   }
 
   public async getCases(
@@ -68,25 +45,16 @@ export class CaseService {
     return result
   }
 
-  public async getAlerts(
-    params: DefaultApiGetAlertListRequest
-  ): Promise<AlertListResponse> {
-    const caseGetSegment = await addNewSubsegment(
-      'Case Service',
-      'Mongo Get Alerts Query'
-    )
-    try {
-      return await this.caseRepository.getAlerts(params)
-    } finally {
-      caseGetSegment?.close()
-    }
-  }
-
   public async updateCases(
     userId: string,
     caseIds: string[],
     updateRequest: CaseUpdateRequest
   ) {
+    const dashboardStatsRepository = new DashboardStatsRepository(
+      this.caseRepository.tenantId,
+      { mongoDb: this.caseRepository.mongoDb }
+    )
+
     const statusChange: CaseStatusChange | undefined =
       updateRequest.caseStatus && {
         userId,
@@ -143,78 +111,8 @@ export class CaseService {
 
       await Promise.all(
         cases.map((c) =>
-          this.dashboardStatsRepository.refreshCaseStats(c.createdTimestamp)
+          dashboardStatsRepository.refreshCaseStats(c.createdTimestamp)
         )
-      )
-    }
-    return 'OK'
-  }
-
-  public async updateAlerts(
-    userId: string,
-    alertIds: string[],
-    updateRequest: AlertUpdateRequest
-  ) {
-    const statusChange: CaseStatusChange | undefined =
-      updateRequest.alertStatus && {
-        userId,
-        timestamp: Date.now(),
-        reason: updateRequest.reason,
-        caseStatus: updateRequest.alertStatus,
-        otherReason: updateRequest.otherReason,
-      }
-    await this.caseRepository.updateAlerts(alertIds, {
-      assignments: updateRequest.assignments,
-      statusChange: statusChange,
-    })
-    if (updateRequest.alertStatus) {
-      let body = `Alert status changed to ${updateRequest.alertStatus}`
-      const allReasons = [
-        ...(updateRequest?.reason?.filter((x) => x !== 'Other') ?? []),
-        ...(updateRequest?.reason?.includes('Other') &&
-        updateRequest.otherReason
-          ? [updateRequest.otherReason]
-          : []),
-      ]
-      if (allReasons.length > 0) {
-        body += `. Reasons: ${allReasons.join(', ')}`
-      }
-      if (updateRequest.comment) {
-        body += `. ${updateRequest.comment}`
-      }
-      const cases = await this.caseRepository.getCasesByAlertIds(alertIds)
-      await Promise.all(
-        alertIds.map((alertId) => {
-          this.saveAlertComment(alertId, {
-            userId,
-            body: body,
-            files: updateRequest.files,
-          })
-          const case_ = cases.find((c) =>
-            c.alerts.find((a) => a.alertId === alertId)
-          )
-          const alert = case_?.alerts.find((a) => a.alertId === alertId)
-          updateRequest.alertStatus === 'CLOSED' &&
-            sendWebhookTasks(this.caseRepository.tenantId, [
-              {
-                event: 'ALERT_CLOSED',
-                payload: {
-                  alertId,
-                  reasons: updateRequest.reason,
-                  reasonDescriptionForOther: updateRequest.otherReason,
-                  comment: updateRequest.comment,
-                  ruleId: alert?.ruleId,
-                  ruleInstanceId: alert?.ruleInstanceId,
-                  ruleName: alert?.ruleName,
-                  ruleDescription: alert?.ruleDescription,
-                  userId:
-                    case_?.caseUsers?.origin?.userId ??
-                    case_?.caseUsers?.destination?.userId,
-                  transactionIds: alert?.transactionIds,
-                } as AlertClosedDetails,
-              },
-            ])
-        })
       )
     }
     return 'OK'
@@ -229,44 +127,6 @@ export class CaseService {
     caseGetSegment?.close()
 
     return caseEntity && this.getAugmentedCase(caseEntity)
-  }
-
-  public async getAlert(alertId: string): Promise<Alert | null> {
-    const caseGetSegment = await addNewSubsegment(
-      'Case Service',
-      'Mongo Get Alert Query'
-    )
-    try {
-      return await this.caseRepository.getAlertById(alertId)
-    } finally {
-      caseGetSegment?.close()
-    }
-  }
-
-  public async getCaseTransactions(
-    caseId: string,
-    params: PaginationParams & {
-      includeUsers?: boolean
-    }
-  ): Promise<TransactionsListResponse> {
-    return await this.caseRepository.getCaseTransactions(caseId, params)
-  }
-
-  public async getAlertTransactions(
-    alertId: string,
-    params: OptionalPagination<DefaultApiGetAlertTransactionListRequest>
-  ): Promise<TransactionsListResponse> {
-    if (!params?.showExecutedTransactions) {
-      return await this.caseRepository.getAlertTransactionsHit(alertId, {
-        page: params?.page,
-        pageSize: params?.pageSize,
-      })
-    } else {
-      return await this.caseRepository.getAlertTransactionsExecuted(
-        alertId,
-        params
-      )
-    }
   }
 
   public async getCaseRules(caseId: string): Promise<Array<RulesHitPerCase>> {
@@ -287,86 +147,15 @@ export class CaseService {
     )
   }
 
-  public async saveAlertComment(alertId: string, comment: Comment) {
-    const alert = await this.caseRepository.getAlertById(alertId)
-    if (alert == null) {
-      throw new NotFound(`"${alertId}" alert not found`)
-    }
-    if (alert.caseId == null) {
-      throw new Error(`Alert case id is null`)
-    }
-    // Copy the files from tmp bucket to document bucket
-    for (const file of comment.files || []) {
-      await this.s3
-        .copyObject({
-          CopySource: `${this.tmpBucketName}/${file.s3Key}`,
-          Bucket: this.documentBucketName,
-          Key: file.s3Key,
-        })
-        .promise()
-    }
-    const files = (comment.files || []).map((file) => ({
-      ...file,
-      bucket: this.documentBucketName,
-    }))
-    const savedComment = await this.caseRepository.saveAlertComment(
-      alert.caseId,
-      alertId,
-      {
-        ...comment,
-        files,
-      }
-    )
-    return {
-      ...savedComment,
-      files: savedComment.files?.map((file) => ({
-        ...file,
-        downloadLink: this.getDownloadLink(file),
-      })),
-    }
-  }
-
-  public async deleteAlertComment(
-    alertId: string,
-    commentId: string
-  ): Promise<void> {
-    const alert = await this.caseRepository.getAlertById(alertId)
-    if (alert == null) {
-      throw new NotFound(`"${alertId}" alert not found`)
-    }
-    if (alert.caseId == null) {
-      throw new Error(`Alert case id is null`)
-    }
-    const comment = alert.comments?.find(({ id }) => id === commentId) ?? null
-    if (comment == null) {
-      throw new NotFound(`"${commentId}" comment not found`)
-    }
-    await this.caseRepository.deleteAlertComment(
-      alert.caseId,
-      alertId,
-      commentId
-    )
-  }
-
   public async saveCaseComment(caseId: string, comment: Comment) {
     // Copy the files from tmp bucket to document bucket
-    for (const file of comment.files || []) {
-      await this.s3
-        .copyObject({
-          CopySource: `${this.tmpBucketName}/${file.s3Key}`,
-          Bucket: this.documentBucketName,
-          Key: file.s3Key,
-        })
-        .promise()
-    }
-    const files = (comment.files || []).map((file) => ({
-      ...file,
-      bucket: this.documentBucketName,
-    }))
+    const files = await this.copyFiles(comment.files ?? [])
+
     const savedComment = await this.caseRepository.saveCaseComment(caseId, {
       ...comment,
       files,
     })
+
     return {
       ...savedComment,
       files: savedComment.files?.map((file) => ({
@@ -391,7 +180,7 @@ export class CaseService {
 
     if (comment.files && comment.files.length > 0) {
       await this.s3.deleteObjects({
-        Bucket: this.documentBucketName,
+        Bucket: this.s3Config.documentBucketName,
         Delete: { Objects: comment.files.map((file) => ({ Key: file.s3Key })) },
       })
     }
@@ -409,14 +198,6 @@ export class CaseService {
     return { ...caseEntity, comments: commentsWithUrl }
   }
 
-  private getDownloadLink(file: FileInfo): string {
-    return this.s3.getSignedUrl('getObject', {
-      Bucket: this.documentBucketName,
-      Key: file.s3Key,
-      Expires: 3600,
-    })
-  }
-
   //Temporary code for transition
   public async updateCasesByTransactionIds(
     userId: string,
@@ -427,30 +208,6 @@ export class CaseService {
       await this.caseRepository.getCasesByTransactionIds(transactionIds)
     ).map((caseEntity) => caseEntity.caseId as string)
     return this.updateCases(userId, caseIds, transactionUpdates)
-  }
-
-  public async saveCaseCommentByTransaction(
-    transactionId: string,
-    comment: Comment
-  ) {
-    const cases = await this.caseRepository.getCasesByTransactionId(
-      transactionId
-    )
-    if (cases.length) {
-      return this.saveCaseComment(cases[0].caseId as string, comment)
-    }
-  }
-
-  public async deleteCaseCommentByTransaction(
-    transactionId: string,
-    commentId: string
-  ) {
-    const cases = await this.caseRepository.getCasesByTransactionId(
-      transactionId
-    )
-    if (cases.length) {
-      return this.deleteCaseComment(cases[0].caseId as string, commentId)
-    }
   }
 
   public async escalateCase(
@@ -472,208 +229,5 @@ export class CaseService {
           : [this.getEscalationAssignment(accounts)],
       caseStatus: 'ESCALATED',
     })
-  }
-
-  public async escalateAlerts(
-    caseId: string,
-    caseEscalationRequest: CaseEscalationRequest,
-    accounts: Account[]
-  ): Promise<string> {
-    const c = await this.getCase(caseId)
-    if (!c) {
-      throw new NotFound(`Cannot find case ${caseId}`)
-    }
-    if (c.caseHierarchyDetails?.parentCaseId) {
-      throw new BadRequest(
-        `Cannot escalated an already escalated case. Parent case ${c.caseHierarchyDetails?.parentCaseId}`
-      )
-    }
-    let { alertEscalations } = caseEscalationRequest
-    const { caseUpdateRequest } = caseEscalationRequest
-
-    alertEscalations = alertEscalations?.map((ae) => {
-      if (_.isEmpty(ae.transactionIds)) {
-        return ae
-      }
-      ae.transactionIds = ae.transactionIds?.filter(
-        (t) => !c.caseHierarchyDetails?.childTransactionIds?.includes(t)
-      )
-
-      if (ae.transactionIds?.length === 0) {
-        throw new BadRequest(
-          `Cannot escalate ${ae.alertId} as all of its transactions have already been escalated.`
-        )
-      }
-
-      return ae
-    })
-
-    const updatingUserId = (getContext()?.user as Account).id
-    const currentTimestamp = Date.now()
-    const escalatedAlerts = c.alerts
-      ?.filter((alert) =>
-        alertEscalations!.some(
-          (alertEscalation) => alertEscalation.alertId === alert.alertId
-        )
-      )
-      .map((escalatedAlert: Alert): Alert => {
-        const lastStatusChange = {
-          userId: updatingUserId,
-          caseStatus: 'ESCALATED' as CaseStatus,
-          timestamp: currentTimestamp,
-        }
-        const escalationAlertReq = alertEscalations!.find(
-          (alertEscalation) =>
-            alertEscalation.alertId === escalatedAlert.alertId
-        )
-
-        let transactionIds = escalatedAlert.transactionIds
-        let alertId = escalatedAlert.alertId
-        let parentAlertId
-        if (escalationAlertReq?.transactionIds?.length) {
-          const childNumber = c.caseHierarchyDetails?.childCaseIds
-            ? c.caseHierarchyDetails.childCaseIds.length + 1
-            : 1
-
-          // Create a new alert if some transactions were selected.
-          transactionIds = escalationAlertReq.transactionIds
-          alertId = `${escalatedAlert.alertId}.${childNumber}`
-          parentAlertId = escalatedAlert.alertId
-        }
-
-        return {
-          ...escalatedAlert,
-          alertId,
-          parentAlertId,
-          alertStatus: 'ESCALATED',
-          reviewAssignments: [this.getEscalationAssignment(accounts)],
-          statusChanges: escalatedAlert.statusChanges
-            ? [...escalatedAlert.statusChanges, lastStatusChange]
-            : [lastStatusChange],
-          lastStatusChange: lastStatusChange,
-          transactionIds,
-        }
-      })
-
-    const remainingAlerts = c.alerts?.filter(
-      (alert) =>
-        !alertEscalations!.some(
-          (alertEscalation) =>
-            alertEscalation.alertId === alert.alertId &&
-            // Keep the original alert if only some transactions were escalated
-            (!alertEscalation.transactionIds ||
-              alertEscalation.transactionIds?.length ===
-                alert.transactionIds?.length)
-        )
-    )
-
-    if (
-      (!remainingAlerts || remainingAlerts.length === 0) &&
-      caseUpdateRequest
-    ) {
-      await this.escalateCase(caseId, caseUpdateRequest, accounts)
-      return caseId
-    }
-    const childNumber = c.caseHierarchyDetails?.childCaseIds
-      ? c.caseHierarchyDetails.childCaseIds.length + 1
-      : 1
-    const childCaseId = `${c.caseId}.${childNumber}`
-
-    const filteredTransactionsForNewCase = c.caseTransactions?.filter(
-      (transaction) =>
-        transaction.hitRules.some((ruleInstance) =>
-          escalatedAlerts
-            ?.map((eA) => eA.ruleInstanceId)
-            .includes(ruleInstance.ruleInstanceId)
-        )
-    )
-    const filteredTransactionIdsForNewCase =
-      filteredTransactionsForNewCase?.map(
-        (transaction) => transaction.transactionId
-      )
-    const filteredTransactionsForExistingCase = c.caseTransactions?.filter(
-      (transaction) =>
-        transaction.hitRules.some((ruleInstance) =>
-          remainingAlerts
-            ?.map((rA) => rA.ruleInstanceId)
-            .includes(ruleInstance.ruleInstanceId)
-        )
-    )
-    const filteredTransactionIdsForExistingCase =
-      filteredTransactionsForExistingCase?.map(
-        (transaction) => transaction.transactionId
-      )
-
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
-    const { statusChanges, lastStatusChange, ...mainCaseAttributes } = c
-
-    let childTransactionIds =
-      alertEscalations?.flatMap((a) => a.transactionIds || []) || []
-    if (c.caseHierarchyDetails?.childTransactionIds) {
-      childTransactionIds = childTransactionIds.concat(
-        c.caseHierarchyDetails?.childTransactionIds
-      )
-    }
-    childTransactionIds = _.uniq(childTransactionIds)
-
-    let caseHierarchyDetailsForOriginalCase: CaseHierarchyDetails = {
-      childCaseIds: [childCaseId],
-      childTransactionIds,
-    }
-    if (c.caseHierarchyDetails?.childCaseIds) {
-      caseHierarchyDetailsForOriginalCase = {
-        childCaseIds: [...c.caseHierarchyDetails.childCaseIds, childCaseId],
-        childTransactionIds,
-      }
-    }
-
-    const newCase: Case = {
-      ...mainCaseAttributes,
-      _id: c._id! + parseFloat(`0.${childNumber}`),
-      caseId: childCaseId,
-      alerts: escalatedAlerts,
-      createdTimestamp: currentTimestamp,
-      caseStatus: 'ESCALATED',
-      reviewAssignments: [this.getEscalationAssignment(accounts)],
-      caseTransactions: filteredTransactionsForNewCase,
-      caseTransactionsIds: filteredTransactionIdsForNewCase,
-      caseHierarchyDetails: { parentCaseId: caseId },
-    }
-    const updatedExistingCase: Case = {
-      ...c,
-      alerts: remainingAlerts,
-      caseTransactions: filteredTransactionsForExistingCase,
-      caseTransactionsIds: filteredTransactionIdsForExistingCase,
-      caseHierarchyDetails: caseHierarchyDetailsForOriginalCase,
-    }
-
-    await this.caseRepository.addCaseMongo(newCase)
-    await this.caseRepository.addCaseMongo(updatedExistingCase)
-    if (caseUpdateRequest) {
-      await this.updateCases((getContext()?.user as Account).id, [caseId], {
-        ...caseUpdateRequest,
-        comment: `Alert(s) ${escalatedAlerts!
-          .map((alert) => alert.alertId)
-          .join(', ')} ESCALATED by: ${(getContext()?.user as Account).name}. ${
-          caseUpdateRequest.comment
-        }`,
-      })
-    }
-
-    return childCaseId
-  }
-
-  private getEscalationAssignment(accounts: Account[]): Assignment {
-    const escalationAssineeCandidates = accounts.filter(
-      (account) => account.role === 'admin'
-    )
-    if (escalationAssineeCandidates.length === 0) {
-      throw new NotFound(`Cannot find admin users to assign the case to.`)
-    }
-    const assignee = _.sample(escalationAssineeCandidates)!
-    return {
-      assigneeUserId: assignee.id,
-      timestamp: Date.now(),
-    }
   }
 }

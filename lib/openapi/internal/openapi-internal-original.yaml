@@ -5916,6 +5916,8 @@ components:
           type: string
           enum:
             - COMMENT
+            - COMMENT_ALERT
+            - COMMENT_CASE
             - DOCUMENT
             - RISK_CLASSIFICATION
             - DRS_RISK_LEVEL

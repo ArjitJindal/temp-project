@@ -11,7 +11,7 @@ import { DefaultApiGetCaseListRequest } from '@/@types/openapi-internal/RequestP
 import { OptionalPagination } from '@/utils/pagination'
 import { EntityCounter } from '@/@types/openapi-internal/EntityCounter'
 import { Case } from '@/@types/openapi-internal/Case'
-import { transactionsToAlerts } from '@/services/alerts'
+import { AlertsService } from '@/services/alerts'
 
 export async function migrateTenant(tenant: Tenant) {
   const mongodb = await getMongoDbClient(StackConstants.MONGO_DB_DATABASE_NAME)
@@ -32,7 +32,7 @@ export async function migrateTenant(tenant: Tenant) {
   while (caseEntity) {
     if (!caseEntity.alerts) {
       const transactions = caseEntity?.caseTransactions || []
-      caseEntity.alerts = transactionsToAlerts(transactions)
+      caseEntity.alerts = AlertsService.transactionsToAlerts(transactions)
       const session = mongodb.startSession()
 
       await session.withTransaction(async () => {

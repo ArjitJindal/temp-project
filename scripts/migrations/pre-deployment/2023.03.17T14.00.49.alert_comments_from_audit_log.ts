@@ -2,17 +2,17 @@ import { migrateAllTenants } from '../utils/tenant'
 import { Tenant } from '@/services/accounts'
 import { AuditLogRepository } from '@/services/audit-log/repositories/auditlog-repository'
 import { getMongoDbClient } from '@/utils/mongoDBUtils'
-import { CaseRepository } from '@/services/rules-engine/repositories/case-repository'
 import { getErrorMessage } from '@/utils/lang'
 import { Comment } from '@/@types/openapi-internal/Comment'
 import { iterateItems } from '@/utils/pagination'
 import { CaseClosingReasons } from '@/@types/openapi-internal/CaseClosingReasons'
+import { AlertsRepository } from '@/services/rules-engine/repositories/alerts-repository'
 
 async function migrateTenant(tenant: Tenant) {
   const mongoDb = await getMongoDbClient()
 
   const auditLogRepository = new AuditLogRepository(tenant.id, mongoDb)
-  const caseRepository = new CaseRepository(tenant.id, {
+  const alertsRepository = new AlertsRepository(tenant.id, {
     mongoDb,
   })
 
@@ -35,7 +35,7 @@ async function migrateTenant(tenant: Tenant) {
           if (alertId == null) {
             throw new Error('Alert id is null, unable to migrate')
           }
-          const alert = await caseRepository.getAlertById(alertId)
+          const alert = await alertsRepository.getAlertById(alertId)
           if (alert == null) {
             throw new Error(`"${alertId}" alert not found`)
           }
@@ -84,7 +84,11 @@ async function migrateTenant(tenant: Tenant) {
             userId: logEntry.user?.id,
             createdAt: logEntry.timestamp,
           }
-          await caseRepository.saveAlertComment(alert.caseId, alertId, comment)
+          await alertsRepository.saveAlertComment(
+            alert.caseId,
+            alertId,
+            comment
+          )
         }
       }
     } catch (e) {

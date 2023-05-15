@@ -3,9 +3,8 @@ import {
   APIGatewayProxyWithLambdaAuthorizerEvent,
 } from 'aws-lambda'
 import { NotFound, BadRequest } from 'http-errors'
-import { DashboardStatsRepository } from '../console-api-dashboard/repositories/dashboard-stats-repository'
 import { CaseService } from './services/case-service'
-import { CaseAuditLogService } from './services/case-audit-log-service'
+import { CasesAlertsAuditLogService } from './services/case-alerts-audit-log-service'
 import { AccountsService } from '@/services/accounts'
 import { lambdaApi } from '@/core/middlewares/lambda-api-middlewares'
 import { addNewSubsegment } from '@/core/xray'
@@ -31,6 +30,8 @@ import { isValidSortOrder } from '@/@types/openapi-internal-custom/SortOrder'
 import { Case } from '@/@types/openapi-internal/Case'
 import { CaseEscalationRequest } from '@/@types/openapi-internal/CaseEscalationRequest'
 import { hasFeature } from '@/core/utils/context'
+import { AlertsService } from '@/services/alerts'
+import { AlertsRepository } from '@/services/rules-engine/repositories/alerts-repository'
 import { parseStrings } from '@/utils/lambda'
 
 export type CaseConfig = {
@@ -58,6 +59,16 @@ export const casesHandler = lambdaApi()(
       dynamoDb,
     }
     const caseRepository = new CaseRepository(tenantId, dbs)
+    const alertsRepository = new AlertsRepository(tenantId, {
+      mongoDb: client,
+      dynamoDb,
+    })
+
+    const alertsService = new AlertsService(alertsRepository, s3, {
+      documentBucketName: DOCUMENT_BUCKET,
+      tmpBucketName: TMP_BUCKET,
+    })
+
     const userService = new UserRepository(tenantId, dbs)
     const ruleInstanceRepository = new RuleInstanceRepository(tenantId, dbs)
     const transactionRepository = new MongoDbTransactionRepository(
@@ -65,23 +76,22 @@ export const casesHandler = lambdaApi()(
       client
     )
 
-    const dashboardStatsRepository = new DashboardStatsRepository(tenantId, {
-      mongoDb: client,
+    const caseService = new CaseService(caseRepository, s3, {
+      documentBucketName: DOCUMENT_BUCKET,
+      tmpBucketName: TMP_BUCKET,
     })
-    const caseService = new CaseService(
-      caseRepository,
-      dashboardStatsRepository,
-      s3,
-      TMP_BUCKET,
-      DOCUMENT_BUCKET
-    )
+
     const caseCreationService = new CaseCreationService(
       caseRepository,
       userService,
       ruleInstanceRepository,
       transactionRepository
     )
-    const caseAuditLogService = new CaseAuditLogService(caseService, tenantId)
+    const casesAlertsAuditLogService = new CasesAlertsAuditLogService(
+      caseService,
+      alertsService,
+      tenantId
+    )
     if (event.httpMethod === 'GET' && event.resource === '/cases') {
       const {
         page,
@@ -228,7 +238,10 @@ export const casesHandler = lambdaApi()(
       )
       caseUpdateSegment?.close()
 
-      await caseAuditLogService.handleAuditLogForCaseUpdate(caseIds, updates)
+      await casesAlertsAuditLogService.handleAuditLogForCaseUpdate(
+        caseIds,
+        updates
+      )
       return updateResult
     } else if (
       event.httpMethod === 'GET' &&
@@ -255,14 +268,13 @@ export const casesHandler = lambdaApi()(
       event.body
     ) {
       const comment = JSON.parse(event.body) as Comment
+
       const saveCommentResult = await caseService.saveCaseComment(
         event.pathParameters.caseId,
-        {
-          ...comment,
-          userId,
-        }
+        { ...comment, userId }
       )
-      await caseAuditLogService.handleAuditLogForComments(
+
+      await casesAlertsAuditLogService.handleAuditLogForComments(
         event.pathParameters.caseId,
         comment
       )
@@ -382,7 +394,7 @@ export const casesHandler = lambdaApi()(
           : undefined,
         filterRulesHit: filterRulesHit?.split(',') as string[],
       }
-      return caseService.getAlerts(params)
+      return alertsService.getAlerts(params)
     } else if (
       event.httpMethod === 'POST' &&
       event.resource === '/alerts' &&
@@ -398,12 +410,12 @@ export const casesHandler = lambdaApi()(
       try {
         alertUpdateSegment?.addAnnotation('tenantId', tenantId)
         alertUpdateSegment?.addAnnotation('alertIds', alertIds.toString())
-        const updateResult = await caseService.updateAlerts(
+        const updateResult = await alertsService.updateAlerts(
           userId,
           alertIds,
           updates
         )
-        await caseAuditLogService.handleAuditLogForAlertsUpdate(
+        await casesAlertsAuditLogService.handleAuditLogForAlertsUpdate(
           alertIds,
           updates
         )
@@ -416,11 +428,11 @@ export const casesHandler = lambdaApi()(
       event.resource === '/alerts/{alertId}'
     ) {
       const alertId = event.pathParameters?.alertId as string
-      const alert = await caseRepository.getAlertById(alertId)
+      const alert = await alertsRepository.getAlertById(alertId)
       if (alert == null) {
         throw new NotFound(`Alert "${alertId}" not found`)
       }
-      await caseAuditLogService.createAlertAuditLog({
+      await casesAlertsAuditLogService.createAlertAuditLog({
         alertId,
         logAction: 'VIEW',
         oldImage: {},
@@ -451,8 +463,8 @@ export const casesHandler = lambdaApi()(
           sourceCase,
           alertIds
         )
-        await caseAuditLogService.handleAuditLogForNewCase(newCase)
-        await caseAuditLogService.handleAuditLogForAlerts(
+        await casesAlertsAuditLogService.handleAuditLogForNewCase(newCase)
+        await casesAlertsAuditLogService.handleAuditLogForAlerts(
           sourceCaseId,
           sourceCase.alerts,
           (
@@ -471,7 +483,7 @@ export const casesHandler = lambdaApi()(
       const { page, pageSize, showExecutedTransactions } =
         event.queryStringParameters as any
 
-      return await caseService.getAlertTransactions(alertId, {
+      return await alertsService.getAlertTransactions(alertId, {
         alertId,
         page,
         pageSize,
@@ -484,11 +496,11 @@ export const casesHandler = lambdaApi()(
     ) {
       const alertId = event.pathParameters?.alertId as string
       const comment = JSON.parse(event.body) as Comment
-      const saveCommentResult = await caseService.saveAlertComment(alertId, {
+      const saveCommentResult = await alertsService.saveAlertComment(alertId, {
         ...comment,
         userId,
       })
-      await caseAuditLogService.createAlertAuditLog({
+      await casesAlertsAuditLogService.createAlertAuditLog({
         alertId,
         logAction: 'CREATE',
         oldImage: {},
@@ -502,15 +514,15 @@ export const casesHandler = lambdaApi()(
     ) {
       const alertId = event.pathParameters?.alertId as string
       const commentId = event.pathParameters?.commentId as string
-      const alert = await caseRepository.getAlertById(alertId)
+      const alert = await alertsRepository.getAlertById(alertId)
       const comment =
         alert?.comments?.find(({ id }) => id === commentId) ?? null
       if (comment == null) {
         throw new NotFound(`"${commentId}" comment not found`)
       }
 
-      await caseService.deleteAlertComment(alertId, commentId)
-      await caseAuditLogService.createAlertAuditLog({
+      await alertsService.deleteAlertComment(alertId, commentId)
+      await casesAlertsAuditLogService.createAlertAuditLog({
         alertId,
         logAction: 'DELETE',
         oldImage: comment,
@@ -559,7 +571,7 @@ export const casesHandler = lambdaApi()(
             await accountsService.getAccountTenant(userId)
           )
         ).filter((account) => !account.blocked)
-        const childCaseId = await caseService.escalateAlerts(
+        const childCaseId = await alertsService.escalateAlerts(
           caseId,
           escalationRequest,
           allAccounts
