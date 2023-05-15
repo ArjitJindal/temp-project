@@ -5,7 +5,7 @@ import * as aws from '@cdktf/providers/aws'
 import * as auth0 from '@cdktf/providers/auth0'
 
 import { Config } from '@lib/configs/config'
-import { Auth0TenantConfig } from '@lib/configs/auth0/tenant-config'
+import { Auth0TenantConfig } from '@lib/configs/auth0/type'
 import { PERMISSIONS } from '@/@types/openapi-internal-custom/Permission'
 import { DEFAULT_ROLES } from '@/core/default-roles'
 import { getAuth0Domain } from '@/utils/auth0-utils'
