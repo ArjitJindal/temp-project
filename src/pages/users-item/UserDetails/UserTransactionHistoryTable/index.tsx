@@ -57,7 +57,6 @@ export function Content(props: { userId: string }) {
   const [params, setParams] = useState<AllParams<DefaultApiGetTransactionsListRequest>>({
     ...DEFAULT_PARAMS_STATE,
     includeEvents: true,
-    beforeTimestamp: Date.now(),
   });
 
   const responseRes = useCursorQuery(
@@ -74,7 +73,6 @@ export function Content(props: { userId: string }) {
       const newParams: DefaultApiGetTransactionsListRequest = {
         ...params,
         _from: from,
-        beforeTimestamp: Date.now(),
         sortField: sortField ?? undefined,
         sortOrder: sortOrder ?? undefined,
         includeEvents: true,
@@ -101,9 +99,11 @@ export function Content(props: { userId: string }) {
       return api.getTransactionsList(newParams).then((result) => ({
         next: result.next,
         prev: result.prev,
+        last: result.last,
         hasNext: result.hasNext,
         hasPrev: result.hasPrev,
-        last: result.last,
+        count: result.count,
+        limit: result.limit,
         items: prepareTableData(userId, result.items ?? []),
       }));
     },

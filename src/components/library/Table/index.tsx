@@ -33,13 +33,11 @@ import Tooltip from '@/components/library/Tooltip';
 import InformationLineIcon from '@/components/ui/icons/Remix/system/information-line.react.svg';
 import Alert from '@/components/library/Alert';
 import CursorPagination from '@/components/library/CursorPagination';
-import { CursorActions } from '@/utils/queries/types';
+import { Cursor } from '@/utils/queries/types';
 
 export interface Props<Item extends object, Params extends object = CommonParams> {
   innerRef?: React.Ref<TableRefType>;
-  cursorActions?: CursorActions;
-  hasPreviousPage?: boolean;
-  hasNextPage?: boolean;
+  cursor?: Cursor;
   tableId?: string;
   rowKey: FieldAccessor<Item>;
   data: TableData<Item> | AsyncResource<TableData<Item>>;
@@ -100,10 +98,8 @@ function Table<Item extends object, Params extends object = CommonParams>(
     defaultSorting,
     onReload,
     paginationBorder = false,
+    cursor,
     onExpandedMetaChange,
-    cursorActions,
-    hasPreviousPage,
-    hasNextPage,
   } = props;
   const dataRes: AsyncResource<TableData<Item>> = useMemo(() => {
     return 'items' in props.data ? success(props.data) : props.data;
@@ -334,18 +330,16 @@ function Table<Item extends object, Params extends object = CommonParams>(
           );
         }}
       </ScrollContainer>
-      {cursorActions && (
+      {cursor && (
         <CursorPagination
           pageSize={params?.pageSize ?? DEFAULT_PAGE_SIZE}
-          hasPreviousPage={hasPreviousPage}
-          hasNextPage={hasNextPage}
-          cursorActions={cursorActions}
+          cursor={cursor}
           isDisabled={isLoading(dataRes)}
           onPageChange={(pageSize) => handleChangeParamsPaginated({ ...params, pageSize })}
           onFromChange={(from) => handleChangeParamsPaginated({ ...params, from })}
         />
       )}
-      {!cursorActions && showPagination && (
+      {!cursor && showPagination && (
         <Pagination
           isDisabled={isLoading(dataRes)}
           current={params?.page ?? 1}

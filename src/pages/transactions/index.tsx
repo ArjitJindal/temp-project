@@ -54,7 +54,7 @@ const TableList = () => {
 
   const queryResult = useCursorQuery<InternalTransaction>(
     TRANSACTIONS_LIST(parsedParams),
-    async ({ from }) => {
+    async () => {
       const {
         timestamp,
         transactionId,
@@ -73,10 +73,10 @@ const TableList = () => {
       return await measure(
         () =>
           api.getTransactionsList({
-            _from: from,
+            _from: parsedParams.from,
             pageSize: parsedParams.pageSize,
-            afterTimestamp: timestamp ? dayjs(timestamp[0]).valueOf() : 0,
-            beforeTimestamp: timestamp ? dayjs(timestamp[1]).valueOf() : Date.now(),
+            afterTimestamp: timestamp ? dayjs(timestamp[0]).valueOf() : undefined,
+            beforeTimestamp: timestamp ? dayjs(timestamp[1]).valueOf() : undefined,
             filterId: transactionId,
             filterUserId: userFilterMode === 'ALL' ? userId : undefined,
             filterOriginUserId: userFilterMode === 'ORIGIN' ? userId : undefined,

@@ -9,7 +9,7 @@ import {
 import s from './index.module.less';
 import { DEFAULT_PAGE_SIZE } from '@/components/library/Table/consts';
 import Select from '@/components/library/Select';
-import { CursorActions } from '@/utils/queries/types';
+import { Cursor } from '@/utils/queries/types';
 
 const PAGE_SIZE_OPTIONS = [10, 20, 50, 100];
 
@@ -18,21 +18,11 @@ interface Props {
   pageSize?: number;
   onPageChange: (pageSize: number) => void;
   onFromChange: (from: string) => void;
-  cursorActions: CursorActions;
-  hasNextPage?: boolean;
-  hasPreviousPage?: boolean;
+  cursor: Cursor;
 }
 
 export default function CursorPagination(props: Props) {
-  const {
-    isDisabled,
-    hasPreviousPage,
-    hasNextPage,
-    cursorActions,
-    onPageChange,
-    onFromChange,
-    pageSize = DEFAULT_PAGE_SIZE,
-  } = props;
+  const { isDisabled, cursor, onPageChange, onFromChange, pageSize = DEFAULT_PAGE_SIZE } = props;
 
   return (
     <div
@@ -45,14 +35,15 @@ export default function CursorPagination(props: Props) {
       }}
     >
       <div className={s.root}>
+        Found {cursor.count >= cursor.limit ? `${cursor.limit}+` : cursor.count} results
         <Button
-          onClick={() => onFromChange(cursorActions.fetchFirstPage())}
-          disabled={!hasPreviousPage || isDisabled}
+          onClick={() => onFromChange(cursor.fetchFirstPage())}
+          disabled={!cursor.hasPrev || isDisabled}
           icon={<VerticalRightOutlined />}
         />
         <Button
-          onClick={() => onFromChange(cursorActions.fetchPreviousPage())}
-          disabled={!hasPreviousPage || isDisabled}
+          onClick={() => onFromChange(cursor.fetchPreviousPage())}
+          disabled={!cursor.hasPrev || isDisabled}
           icon={<LeftOutlined />}
         />
         <Select<number>
@@ -68,13 +59,13 @@ export default function CursorPagination(props: Props) {
           dropdownPlacement="topRight"
         />
         <Button
-          onClick={() => onFromChange(cursorActions.fetchNextPage())}
-          disabled={!hasNextPage || isDisabled}
+          onClick={() => onFromChange(cursor.fetchNextPage())}
+          disabled={!cursor.hasNext || isDisabled}
           icon={<RightOutlined />}
         ></Button>
         <Button
-          onClick={() => onFromChange(cursorActions.fetchLastPage())}
-          disabled={!hasNextPage || isDisabled}
+          onClick={() => onFromChange(cursor.fetchLastPage())}
+          disabled={!cursor.hasNext || isDisabled}
           icon={<VerticalLeftOutlined />}
         />
       </div>

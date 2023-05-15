@@ -59,7 +59,7 @@ const DisplayCheckedTransactions = (props: Props) => {
             pageSize,
             _from: from,
             afterTimestamp: timestamp ? dayjs(timestamp[0]).valueOf() : 0,
-            beforeTimestamp: timestamp ? dayjs(timestamp[1]).valueOf() : Date.now(),
+            beforeTimestamp: timestamp ? dayjs(timestamp[1]).valueOf() : undefined,
             filterId: transactionId,
             filterOriginCurrencies: originCurrenciesFilter,
             filterDestinationCurrencies: destinationCurrenciesFilter,

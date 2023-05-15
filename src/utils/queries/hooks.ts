@@ -99,6 +99,8 @@ export type CursorPaginatedData<T> = {
   last: string;
   hasNext: boolean;
   hasPrev: boolean;
+  count: number;
+  limit: number;
 };
 
 export type PaginationParams = {
@@ -148,6 +150,8 @@ export function useCursorQuery<TData = unknown, TQueryKey extends QueryKey = Que
     last: '',
     hasNext: false,
     hasPrev: false,
+    count: 0,
+    limit: 0,
   });
   const [pageParam, setPageParam] = useState('');
   const results = useQuery<CursorPaginatedData<TData>, CursorPaginatedData<TData>, TQueryKey>(
@@ -182,10 +186,9 @@ export function useCursorQuery<TData = unknown, TQueryKey extends QueryKey = Que
 
   return {
     ...results,
-    from: pageParam,
-    hasNextPage: pageParams.hasNext,
-    hasPreviousPage: pageParams.hasPrev,
-    cursorActions: {
+    cursor: {
+      ...pageParams,
+      from: pageParam,
       fetchPreviousPage,
       fetchNextPage,
       fetchFirstPage,

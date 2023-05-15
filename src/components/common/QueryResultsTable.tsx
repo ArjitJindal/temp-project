@@ -22,9 +22,7 @@ export default function QueryResultsTable<T extends object, Params extends objec
       {...rest}
       onReload={queryResults.refetch}
       data={queryResults.data}
-      cursorActions={queryResults?.cursorActions}
-      hasPreviousPage={queryResults?.hasPreviousPage}
-      hasNextPage={queryResults?.hasNextPage}
+      cursor={queryResults?.cursor}
       onPaginateData={queryResults.paginate}
       showResultsInfo={showResultsInfo}
     />
