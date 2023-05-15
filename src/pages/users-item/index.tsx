@@ -147,6 +147,20 @@ function UserItem() {
                       },
                     ]
                   : []
+                : isMLDemoEnabled
+                ? [
+                    {
+                      tab: 'Expected Transaction Limits',
+                      key: 'expected-transaction-limits',
+                      children: (
+                        <Card.Root>
+                          <ExpectedTransactionLimits user={user} />
+                        </Card.Root>
+                      ),
+                      isClosable: false,
+                      isDisabled: false,
+                    },
+                  ]
                 : []),
               {
                 tab: 'Transaction history',
