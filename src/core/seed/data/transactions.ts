@@ -8,7 +8,7 @@ import { randomRules, rules } from '@/core/seed/data/rules'
 import { sampleCurrency } from '@/core/seed/samplers/currencies'
 import { sampleTimestamp } from '@/core/seed/samplers/timestamp'
 
-const TXN_COUNT = 100000
+const TXN_COUNT = 10000
 const generator = function* (seed: number): Generator<InternalTransaction> {
   for (let i = 0; i < TXN_COUNT; i += 1) {
     const random = prng(seed * i)
