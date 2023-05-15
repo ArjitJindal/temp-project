@@ -4924,10 +4924,13 @@ components:
           type: string
         expiringSecret:
           type: string
+        retryCount:
+          type: number
       required:
         - webhookUrl
         - events
         - enabled
+        - retryCount
     WebhookSecrets:
       title: WebhookSecrets
       x-stoplight:

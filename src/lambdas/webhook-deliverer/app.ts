@@ -32,15 +32,23 @@ function getNotExpiredSecrets(keys: SecretsManagerWebhookSecrets): string[] {
   )
 }
 
+const MAX_RETRY_ATTEMPTS = 10
+
 async function deliverWebhookEvent(
   webhook: WebhookConfiguration,
   secrets: string[],
   webhookDeliveryTask: WebhookDeliveryTask
 ) {
+  const mongoDb = await getMongoDbClient()
   const webhookDeliveryRepository = new WebhookDeliveryRepository(
     webhookDeliveryTask.tenantId,
-    await getMongoDbClient()
+    mongoDb
   )
+  const webhookRepository = new WebhookRepository(
+    webhookDeliveryTask.tenantId,
+    mongoDb
+  )
+
   const hmacs = secrets.map((secret) => createHmac('sha256', secret))
   const postPayload: WebhookEvent = {
     id: webhookDeliveryTask._id,
@@ -79,6 +87,21 @@ async function deliverWebhookEvent(
       throw new Error(
         `Client server returned status ${response.status}. Will retry`
       )
+      if (webhook._id) {
+        await webhookRepository.incrementRetryCount(webhook._id as string)
+      }
+    } else if (!response) {
+      throw new Error('Client server did not respond. Will retry')
+      if (webhook._id) {
+        await webhookRepository.incrementRetryCount(webhook._id as string)
+      }
+    } else {
+      logger.info(
+        `Successfully delivered event ${webhookDeliveryTask.event} to ${webhook.webhookUrl}`
+      )
+      if (webhook._id) {
+        await webhookRepository.resetRetryCount(webhook._id as string)
+      }
     }
   } catch (e) {
     if ((e as any)?.type === 'aborted') {
@@ -96,7 +119,20 @@ async function deliverWebhookEvent(
       logger.info(
         `Successfully delivered event ${webhookDeliveryTask.event} to ${webhook.webhookUrl}`
       )
+    } else {
+      if (webhook._id) {
+        const retryCount = await webhookRepository.getRetryCount(
+          webhook._id as string
+        )
+        if (retryCount >= MAX_RETRY_ATTEMPTS) {
+          logger.error(
+            `Failed to deliver event ${webhookDeliveryTask.event} to ${webhook.webhookUrl} after ${MAX_RETRY_ATTEMPTS} attempts. Will not retry`
+          )
+          await webhookRepository.disableWebhook(webhook._id as string)
+        }
+      }
     }
+
     await webhookDeliveryRepository.addWebhookDeliveryAttempt({
       _id: uuidv4(),
       deliveryTaskId: webhookDeliveryTask._id,

@@ -109,6 +109,7 @@ describe('Webhook delivery', () => {
         webhookUrl: webhookUrl,
         events: ['USER_STATE_UPDATED'],
         enabled: true,
+        retryCount: 0,
       })
 
       const deliveryTask: WebhookDeliveryTask = {
@@ -169,6 +170,7 @@ describe('Webhook delivery', () => {
         webhookUrl: 'http://foo',
         events: ['USER_STATE_UPDATED'],
         enabled: true,
+        retryCount: 0,
       })
 
       const deliveryTask: WebhookDeliveryTask = {
@@ -222,6 +224,7 @@ describe('Webhook delivery', () => {
         webhookUrl,
         events: ['USER_STATE_UPDATED'],
         enabled: true,
+        retryCount: 0,
       })
       const deliveryTask = {
         event: 'USER_STATE_UPDATED',
@@ -255,6 +258,7 @@ describe('Webhook delivery', () => {
         webhookUrl,
         events: ['USER_STATE_UPDATED'],
         enabled: true,
+        retryCount: 0,
       })
       const deliveryTask = {
         event: 'USER_STATE_UPDATED',
@@ -296,6 +300,7 @@ describe('Webhook delivery', () => {
         webhookUrl,
         events: ['USER_STATE_UPDATED'],
         enabled: true,
+        retryCount: 0,
       })
       const deliveryTask = {
         event: 'USER_STATE_UPDATED',
@@ -347,6 +352,7 @@ describe('Webhook delivery', () => {
         webhookUrl: 'http://foo',
         events: ['USER_STATE_UPDATED'],
         enabled: false,
+        retryCount: 0,
       })
       const deliveryTask = {
         event: 'USER_STATE_UPDATED',
@@ -379,6 +385,7 @@ describe('Webhook delivery', () => {
         webhookUrl: 'http://foo',
         events: [],
         enabled: true,
+        retryCount: 0,
       })
       const deliveryTask = {
         event: 'USER_STATE_UPDATED',
