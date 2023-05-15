@@ -32,7 +32,7 @@ function getNotExpiredSecrets(keys: SecretsManagerWebhookSecrets): string[] {
   )
 }
 
-const MAX_RETRY_ATTEMPTS = 10
+const MAX_RETRY_ATTEMPTS = Number.MAX_SAFE_INTEGER
 
 async function deliverWebhookEvent(
   webhook: WebhookConfiguration,
