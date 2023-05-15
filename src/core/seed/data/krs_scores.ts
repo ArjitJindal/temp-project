@@ -4,18 +4,18 @@ import { sampleTimestamp } from '@/core/seed/samplers/timestamp'
 import { pickRandom, randomFloat } from '@/utils/prng'
 import { RISK_LEVEL1S } from '@/@types/openapi-internal-custom/RiskLevel1'
 
-let data: KrsScore[] = []
+const data: KrsScore[] = []
 const init = () => {
   if (data.length > 0) {
     return
   }
-  data = users.map((u, i): KrsScore => {
-    return {
+  users.forEach((u, i) => {
+    data.push({
       createdAt: sampleTimestamp(i),
       krsScore: randomFloat(i),
       userId: u.userId,
       riskLevel: pickRandom(RISK_LEVEL1S),
-    }
+    })
   })
 }
 

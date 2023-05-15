@@ -58,7 +58,6 @@ export async function seedMongo(client: MongoClient, tenantId: string) {
     try {
       await collection.drop()
     } catch (e) {
-      console.log('Error dropping collection', e)
       // ignore
     }
     const iterator = data[Symbol.iterator]()

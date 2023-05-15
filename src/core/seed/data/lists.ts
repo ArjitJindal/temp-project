@@ -2,17 +2,18 @@ import { ListType } from '@/@types/openapi-public/ListType'
 import { ListSubtype } from '@/@types/openapi-public/ListSubtype'
 import { ListData } from '@/@types/openapi-public/ListData'
 
-let data: {
+type ListTypeObject = {
   listType: ListType
   subtype: ListSubtype
   data: ListData
-}[] = []
+}
+const data: ListTypeObject[] = []
 
 const init = () => {
   if (data.length > 0) {
     return
   }
-  data = (
+  ;(
     [
       'USER_ID',
       'CARD_FINGERPRINT_NUMBER',
@@ -25,15 +26,17 @@ const init = () => {
       'UPI_IDENTIFYING_NUMBER',
       'IP_ADDRESS',
     ] as const
-  ).map((subtype) => ({
-    listType: 'BLACKLIST',
-    subtype,
-    data: {
-      metadata: {
-        name: `"${subtype}" list`,
+  ).forEach((subtype) => {
+    data.push({
+      listType: 'BLACKLIST',
+      subtype,
+      data: {
+        metadata: {
+          name: `"${subtype}" list`,
+        },
       },
-    },
-  }))
+    })
+  })
 }
 
 export { init, data }

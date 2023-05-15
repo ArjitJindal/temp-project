@@ -6,13 +6,13 @@ import { prng } from '@/utils/prng'
 const random = prng()
 const eventId = sampleGuid(random())
 
-let data: TransactionEvent[] = []
+const data: TransactionEvent[] = []
 
 const init = () => {
   if (data.length > 0) {
     return
   }
-  data = transactions.flatMap((t) => {
+  const events = transactions.flatMap((t): TransactionEvent[] => {
     return [
       {
         transactionState: 'CREATED',
@@ -48,6 +48,7 @@ const init = () => {
       },
     ]
   })
+  data.push(...events)
 }
 
 export { init, data }
