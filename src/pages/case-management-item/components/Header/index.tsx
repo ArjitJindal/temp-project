@@ -35,7 +35,6 @@ export default function Header(props: Props) {
     caseItem.statusChanges?.find((statusChange) => statusChange.caseStatus === 'CLOSED'),
   );
   const api = useApi();
-
   return (
     <EntityHeader
       idTitle={'Case ID'}

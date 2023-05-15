@@ -1,4 +1,5 @@
 import React, { useCallback, useMemo, useRef } from 'react';
+import _ from 'lodash';
 import { TableSearchParams } from '../types';
 import CasesStatusChangeButton from '../components/CasesStatusChangeButton';
 import AlertTable from '../AlertTable';
@@ -56,7 +57,6 @@ export default function CaseTable(props: Props) {
   const { queryResult, params, onUpdateCases, onChangeParams } = props;
 
   const tableQueryResult = useTableData(queryResult);
-
   const tableRef = useRef<TableRefType>(null);
   const user = useAuth0User();
   const isPulseEnabled = useFeatureEnabled('PULSE');
@@ -321,7 +321,7 @@ export default function CaseTable(props: Props) {
         hideLoading();
       });
   };
-
+  const escalationEnabled = useFeatureEnabled('ESCALATION');
   return (
     <QueryResultsTable<TableItem, TableSearchParams>
       innerRef={tableRef}
@@ -351,6 +351,35 @@ export default function CaseTable(props: Props) {
             caseStatus={params.caseStatus}
           />
         ),
+        ({ selectedIds, selectedItems }) => {
+          if (_.isEmpty(selectedItems)) return;
+
+          const selectedIdsCount = selectedIds.length;
+          const caseItem = selectedItems[selectedIds[0]];
+          const caseClosedBefore = Boolean(
+            caseItem.statusChanges?.find((statusChange) => statusChange.caseStatus === 'CLOSED'),
+          );
+
+          return (
+            selectedIdsCount === 1 &&
+            escalationEnabled && (
+              <CasesStatusChangeButton
+                caseIds={selectedIds}
+                caseStatus={caseItem.caseStatus}
+                onSaved={reloadTable}
+                statusTransitions={{
+                  OPEN: { status: 'ESCALATED', actionLabel: 'Escalate' },
+                  REOPENED: { status: 'ESCALATED', actionLabel: 'Escalate' },
+                  ESCALATED: {
+                    status: caseClosedBefore ? 'REOPENED' : 'OPEN',
+                    actionLabel: 'Send back',
+                  },
+                  CLOSED: { status: 'ESCALATED', actionLabel: 'Escalate' },
+                }}
+              />
+            )
+          );
+        },
       ]}
       rowKey="caseId"
       columns={columns}
