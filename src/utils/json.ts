@@ -4,7 +4,7 @@ import _ from 'lodash';
 export function removeNil<T>(object: T): T {
   return JSON.parse(
     JSON.stringify(object, (k, v) => {
-      if (v === null) {
+      if (v === null || v === false) {
         return undefined;
       }
       return v;
@@ -28,7 +28,7 @@ function removeEmptyInplace(object: any) {
         delete object[key];
         return;
       }
-    } else if (_.isNil(localObj)) {
+    } else if (_.isNil(localObj) || localObj === false) {
       delete object[key];
       return;
     }

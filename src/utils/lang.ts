@@ -1,9 +1,9 @@
 // https://basarat.gitbooks.io/typescript/docs/types/never.html
-export function neverThrow(obj: never, message?: string): never {
+export function neverThrow(obj: any, message?: string): never {
   throw new Error(message ?? 'Should never happen');
 }
 
-export function neverReturn<T>(obj: never, defaultValue: T): T {
+export function neverReturn<T>(obj: any, defaultValue: T): T {
   return defaultValue;
 }
 
