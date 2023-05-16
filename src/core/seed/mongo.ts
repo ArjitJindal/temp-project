@@ -3,6 +3,7 @@ import {
   allCollections,
   ARS_SCORES_COLLECTION,
   CASES_COLLECTION,
+  createMongoDBCollections,
   DRS_SCORES_COLLECTION,
   KRS_SCORES_COLLECTION,
   TRANSACTION_EVENTS_COLLECTION,
@@ -24,6 +25,7 @@ import { Account, AccountsService } from '@/services/accounts'
 import { Case } from '@/@types/openapi-internal/Case'
 import { Assignment } from '@/@types/openapi-internal/Assignment'
 import { getRandomIntInclusive } from '@/scripts/utils'
+import { logger } from '@/core/logger'
 
 const collections: [(tenantId: string) => string, Iterable<unknown>][] = [
   [TRANSACTIONS_COLLECTION, transactions],
@@ -37,11 +39,14 @@ const collections: [(tenantId: string) => string, Iterable<unknown>][] = [
 
 export async function seedMongo(client: MongoClient, tenantId: string) {
   const db = await client.db()
-  console.log('Get all collections')
+  logger.info('Get all collections')
   const col = await allCollections(tenantId, db)
-  await Promise.all(col.map((c) => db.collection(c).drop()))
+  logger.info('Truncating collections')
+  await Promise.all(col.map((c) => db.collection(c).deleteMany({})))
 
-  console.log('Init seed data')
+  await createMongoDBCollections(client, tenantId)
+
+  logger.info('Init seed data')
   // TODO there will be a neater way of achieving this.
   userInit()
   txnInit()
@@ -51,9 +56,9 @@ export async function seedMongo(client: MongoClient, tenantId: string) {
   drsInit()
   transactionEventsInit()
 
-  console.log('Creating collections')
+  logger.info('Creating collections')
   for (const [collectionNameFn, data] of collections) {
-    console.log(`Re-create collection: ${collectionNameFn(tenantId)}`)
+    logger.info(`Re-create collection: ${collectionNameFn(tenantId)}`)
     const collection = db.collection(collectionNameFn(tenantId) as string)
     try {
       await collection.drop()

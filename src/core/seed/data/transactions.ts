@@ -3,10 +3,11 @@ import { sampleTransaction } from '@/core/seed/samplers/transaction'
 import { sampleTag } from '@/core/seed/samplers/tag'
 import { sampleCountry } from '@/core/seed/samplers/countries'
 import { InternalTransaction } from '@/@types/openapi-internal/InternalTransaction'
-import { prng, randomInt } from '@/utils/prng'
+import { pickRandom, prng, randomFloat, randomInt } from '@/utils/prng'
 import { randomRules, rules } from '@/core/seed/data/rules'
 import { sampleCurrency } from '@/core/seed/samplers/currencies'
 import { sampleTimestamp } from '@/core/seed/samplers/timestamp'
+import { RISK_LEVEL1S } from '@/@types/openapi-internal-custom/RiskLevel1'
 
 const TXN_COUNT = 10000
 const generator = function* (seed: number): Generator<InternalTransaction> {
@@ -24,15 +25,25 @@ const generator = function* (seed: number): Generator<InternalTransaction> {
     const destinationUserId =
       withoutOrigin[randomInt(random(), withoutOrigin.length)].userId
 
+    const transactionId = `T-${i + 1}`
+    const timestamp = sampleTimestamp(i)
     const fullTransaction: InternalTransaction = {
       ...transaction,
       type: type,
-      timestamp: sampleTimestamp(i),
-      transactionId: `T-${i + 1}`,
+      timestamp,
+      transactionId,
       originUserId,
       destinationUserId,
       status: status,
       hitRules,
+      arsScore: {
+        transactionId,
+        createdAt: timestamp,
+        originUserId,
+        destinationUserId,
+        riskLevel: pickRandom(RISK_LEVEL1S),
+        arsScore: randomFloat(100),
+      },
       executedRules: rules,
       originAmountDetails: {
         country: sampleCountry(i),
