@@ -31,7 +31,7 @@ export class ListRepository {
     this.tenantId = tenantId
   }
 
-  async createList(
+  public async createList(
     listType: ListType,
     subtype: ListSubtype,
     newList: ListData = {},
@@ -56,7 +56,7 @@ export class ListRepository {
     }
   }
 
-  async deleteList(listId: string) {
+  public async deleteList(listId: string) {
     const header = await this.getListHeader(listId)
     if (header == null) {
       throw new Error(`List not find by id "${listId}"`)
@@ -78,7 +78,7 @@ export class ListRepository {
     )
   }
 
-  async getListHeaders(
+  public async getListHeaders(
     listType: ListType | null = null
   ): Promise<ListHeader[]> {
     const primaryKey = DynamoDbKeys.LIST_HEADER(this.tenantId, '')
@@ -101,7 +101,7 @@ export class ListRepository {
     return Items.map(({ header }) => header)
   }
 
-  async getListHeader(listId: string): Promise<ListHeader | null> {
+  public async getListHeader(listId: string): Promise<ListHeader | null> {
     const { Item } = await this.dynamoDb.send(
       new GetCommand({
         TableName: StackConstants.TARPON_DYNAMODB_TABLE_NAME,
@@ -115,7 +115,7 @@ export class ListRepository {
     return header
   }
 
-  async updateListHeader(listHeader: ListHeader): Promise<void> {
+  public async updateListHeader(listHeader: ListHeader): Promise<void> {
     await this.dynamoDb.send(
       new PutCommand({
         TableName: StackConstants.TARPON_DYNAMODB_TABLE_NAME,
@@ -127,14 +127,17 @@ export class ListRepository {
     )
   }
 
-  async refreshListHeader(listHeader: ListHeader): Promise<void> {
+  private async refreshListHeader(listHeader: ListHeader): Promise<void> {
     await this.updateListHeader({
       ...listHeader,
       size: await this.countListValues(listHeader.listId),
     })
   }
 
-  async getListItem(listId: string, key: string): Promise<ListItem | null> {
+  public async getListItem(
+    listId: string,
+    key: string
+  ): Promise<ListItem | null> {
     const header = await this.getListHeader(listId)
     if (header == null) {
       throw new Error(`List doesn't exist`)
@@ -151,7 +154,7 @@ export class ListRepository {
     return { key: Item.key, metadata: Item.metadata }
   }
 
-  async setListItem(listId: string, listItem: ListItem) {
+  public async setListItem(listId: string, listItem: ListItem) {
     const header = await this.getListHeader(listId)
     if (header == null) {
       throw new Error(`List doesn't exist`)
@@ -168,7 +171,7 @@ export class ListRepository {
     await this.refreshListHeader(header)
   }
 
-  async deleteListItem(listId: string, key: string) {
+  public async deleteListItem(listId: string, key: string) {
     const header = await this.getListHeader(listId)
     if (header == null) {
       throw new Error(`List doesn't exist`)
@@ -182,7 +185,7 @@ export class ListRepository {
     await this.refreshListHeader(header)
   }
 
-  async updateListItems(listId: string, listItems: ListItem[]) {
+  public async updateListItems(listId: string, listItems: ListItem[]) {
     const header = await this.getListHeader(listId)
     if (header == null) {
       throw new Error(`List doesn't exist`)
@@ -207,7 +210,7 @@ export class ListRepository {
     await this.refreshListHeader(header)
   }
 
-  async getListItems(
+  public async getListItems(
     listId: string,
     params?: {
       cursor?: string
@@ -240,7 +243,7 @@ export class ListRepository {
     }
   }
 
-  async countListValues(listId: string): Promise<number> {
+  public async countListValues(listId: string): Promise<number> {
     const { Count } = await paginateQuery(this.dynamoDb, {
       Select: 'COUNT',
       TableName: StackConstants.TARPON_DYNAMODB_TABLE_NAME,
@@ -252,7 +255,7 @@ export class ListRepository {
     return Count ?? 0
   }
 
-  async match(
+  public async match(
     listId: string,
     value: string,
     method: 'EXACT' | 'PREFIX'
@@ -281,25 +284,5 @@ export class ListRepository {
       })
     )
     return Items.length > 0
-  }
-
-  async importList(
-    listId: string,
-    indexName: string,
-    rows: Array<{ [key: string]: string }>
-  ): Promise<void> {
-    await this.updateListItems(
-      listId,
-      rows.map((row) => {
-        const key = row[indexName]
-        if (!key) {
-          throw new Error(`row: ${row} has missing '${indexName}' field!`)
-        }
-        return {
-          key,
-          metadata: row,
-        }
-      })
-    )
   }
 }

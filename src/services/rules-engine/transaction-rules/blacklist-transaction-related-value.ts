@@ -1,6 +1,6 @@
 import { JSONSchemaType } from 'ajv'
 import { TransactionRule } from '@/services/rules-engine/transaction-rules/rule'
-import { ListRepository } from '@/lambdas/console-api-list-importer/repositories/list-repository'
+import { ListRepository } from '@/services/list/repositories/list-repository'
 import { RuleHitResult } from '@/services/rules-engine/rule'
 import { ListSubtype } from '@/@types/openapi-internal/ListSubtype'
 import { Transaction } from '@/@types/openapi-public/Transaction'

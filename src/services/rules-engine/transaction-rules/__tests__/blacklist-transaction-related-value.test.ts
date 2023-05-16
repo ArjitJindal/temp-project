@@ -2,7 +2,7 @@ import { BlacklistTransactionMatchedFieldRuleParameters } from '../blacklist-tra
 import { getTestTenantId } from '@/test-utils/tenant-test-utils'
 import { dynamoDbSetupHook } from '@/test-utils/dynamodb-test-utils'
 import { getDynamoDbClient } from '@/utils/dynamodb'
-import { ListRepository } from '@/lambdas/console-api-list-importer/repositories/list-repository'
+import { ListRepository } from '@/services/list/repositories/list-repository'
 import {
   setUpRulesHooks,
   testRuleDescriptionFormatting,

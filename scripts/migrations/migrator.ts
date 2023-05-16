@@ -6,6 +6,7 @@ import AWS from 'aws-sdk'
 import { syncMongoDbIndices } from './always-run/sync-mongodb-indices'
 import { syncRulesLibrary } from './always-run/sync-rules-library'
 import { loadConfigEnv } from './utils/config'
+import { syncListLibrary } from './always-run/sync-list-library'
 import { getMongoDbClient } from '@/utils/mongoDBUtils'
 
 const MIGRATION_TEMPLATE = `import { migrateAllTenants } from '../utils/tenant'
@@ -95,6 +96,7 @@ async function main() {
   if (migrationType === 'POST_DEPLOYMENT' && !process.argv.includes('create')) {
     await syncMongoDbIndices()
     await syncRulesLibrary()
+    await syncListLibrary()
   }
 }
 

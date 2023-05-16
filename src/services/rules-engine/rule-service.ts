@@ -13,7 +13,7 @@ import { USER_RULES } from '@/services/rules-engine/user-rules'
 import { RiskLevelRuleParameters } from '@/@types/openapi-internal/RiskLevelRuleParameters'
 import { RiskLevel } from '@/@types/openapi-internal/RiskLevel'
 import { RiskLevelRuleActions } from '@/@types/openapi-internal/RiskLevelRuleActions'
-import { replaceMagicKeyword } from '@/utils/objectUtils'
+import { replaceMagicKeyword } from '@/utils/object'
 import { hasFeatures } from '@/core/utils/context'
 
 const RISK_LEVELS = RiskLevelRuleParameters.attributeTypeMap.map(

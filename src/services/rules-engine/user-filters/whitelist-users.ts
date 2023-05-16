@@ -3,7 +3,7 @@ import { JSONSchemaType } from 'ajv'
 import _ from 'lodash'
 import { UserRuleFilter } from './filter'
 import { uiSchema } from '@/services/rules-engine/utils/rule-schema-utils'
-import { ListRepository } from '@/lambdas/console-api-list-importer/repositories/list-repository'
+import { ListRepository } from '@/services/list/repositories/list-repository'
 import { logger } from '@/core/logger'
 
 export type WhitelistUsersRuleFilterParameter = {

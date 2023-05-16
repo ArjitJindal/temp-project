@@ -1,12 +1,12 @@
 import _ from 'lodash'
 import { DynamoDBDocumentClient } from '@aws-sdk/lib-dynamodb'
 import { UserRepository } from '@/services/users/repositories/user-repository'
-import { ListRepository } from '@/lambdas/console-api-list-importer/repositories/list-repository'
 import { TenantRepository } from '@/services/tenants/repositories/tenant-repository'
 import { init as userInit, data as usersData } from '@/core/seed/data/users'
 import { UserType } from '@/@types/user/user-type'
 import { init as listsInit, data as listsData } from '@/core/seed/data/lists'
 import { FEATURES } from '@/@types/openapi-internal-custom/Feature'
+import { ListRepository } from '@/services/list/repositories/list-repository'
 
 export async function seedDynamo(
   dynamoDb: DynamoDBDocumentClient,

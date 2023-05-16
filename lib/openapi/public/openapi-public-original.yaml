@@ -4046,6 +4046,7 @@ components:
       enum:
         - WHITELIST
         - BLACKLIST
+        - FLAGRIGHT_LIBRARY
     ListSubtype:
       type: string
       enum:
@@ -4059,6 +4060,7 @@ components:
         - BANK_SWIFT_CODE
         - UPI_IDENTIFYING_NUMBER
         - IP_ADDRESS
+        - STRING
     ListKeyMetadata:
       type: object
       title: ListKeyMetadata
@@ -4097,6 +4099,8 @@ components:
           description: List description
         status:
           type: boolean
+        checksum:
+          type: string
       additionalProperties: {}
     ListExisted:
       type: object
