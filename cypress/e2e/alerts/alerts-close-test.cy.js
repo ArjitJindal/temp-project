@@ -1,6 +1,6 @@
 /* NOTE: This test is working under a condition that there is only one alert in the case so case will also close when alert is closed */
 
-describe.skip('Comment Alerts from Table', () => {
+describe('Comment Alerts from Table', () => {
   beforeEach(() => {
     cy.loginByForm(Cypress.env('username'), Cypress.env('password'));
   });
@@ -53,14 +53,6 @@ describe.skip('Comment Alerts from Table', () => {
             cy.get('table tbody tr').then((el) => {
               expect(el.length).to.gte(1);
             });
-            cy.get('button[data-cy="segmented-control-all"]').click();
-            cy.get('button[data-cy="status-button"]').eq(0).click();
-            cy.get('.ant-dropdown-menu-title-content').eq(1).click();
-            /* eslint-disable-next-line cypress/no-unnecessary-waiting */
-            cy.wait(3000);
-            cy.get('input[data-cy="header-table-checkbox"]').eq(0).click();
-            cy.get('button[data-cy="update-status-button"]').eq(1).click();
-            cy.get('.ant-modal-footer button').eq(1).click();
           });
       });
   });
