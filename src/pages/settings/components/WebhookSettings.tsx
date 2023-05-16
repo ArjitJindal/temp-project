@@ -131,7 +131,8 @@ export const WebhookSettings: React.FC = () => {
     }),
   ]);
   const handleCreateWebhook = useCallback(() => {
-    setSelectedWebhook({ webhookUrl: '', events: [], enabled: true });
+    // NOTE: retryCount will be removed by FDT-82158
+    setSelectedWebhook({ webhookUrl: '', events: [], enabled: true, retryCount: 0 });
   }, []);
 
   const webhooksListResult = usePaginatedQuery(WEBHOOKS_LIST(), async () => {
