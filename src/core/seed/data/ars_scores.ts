@@ -1,5 +1,4 @@
 import { transactions } from './transactions'
-import { sampleTimestamp } from '@/core/seed/samplers/timestamp'
 import { pickRandom, randomFloat } from '@/utils/prng'
 import { RISK_LEVEL1S } from '@/@types/openapi-internal-custom/RiskLevel1'
 import { ArsScore } from '@/@types/openapi-internal/ArsScore'
@@ -11,13 +10,15 @@ const init = () => {
     return
   }
   transactions.map((t) => {
-    data.push({
-      createdAt: sampleTimestamp(0.1),
+    const score: ArsScore = {
+      transactionId: t.transactionId,
+      createdAt: t.timestamp,
       destinationUserId: t.destinationUserId,
       originUserId: t.originUserId,
       riskLevel: pickRandom(RISK_LEVEL1S),
       arsScore: randomFloat(100),
-    })
+    }
+    data.push(score)
   })
 }
 
