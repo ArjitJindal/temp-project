@@ -293,9 +293,8 @@ export class RiskRepository {
   ) {
     const now = Date.now()
     const riskClassificationValues = await this.getRiskClassificationValues()
-
     const newDrsRiskValue: DrsScore = {
-      manualRiskLevel: isUpdatable ? undefined : riskLevel,
+      manualRiskLevel: riskLevel,
       createdAt: now,
       isUpdatable: isUpdatable ?? true,
       drsScore: getRiskScoreFromLevel(riskClassificationValues, riskLevel),
