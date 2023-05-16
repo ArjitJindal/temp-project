@@ -39,10 +39,15 @@ const collections: [(tenantId: string) => string, Iterable<unknown>][] = [
 
 export async function seedMongo(client: MongoClient, tenantId: string) {
   const db = await client.db()
-  logger.info('Get all collections')
-  const col = await allCollections(tenantId, db)
-  logger.info('Truncating collections')
-  await Promise.all(col.map((c) => db.collection(c).deleteMany({})))
+
+  try {
+    logger.info('Get all collections')
+    const col = await allCollections(tenantId, db)
+    logger.info('Truncating collections')
+    await Promise.allSettled(col.map((c) => db.collection(c).deleteMany({})))
+  } catch (e) {
+    logger.info("Couldn't empty collections")
+  }
 
   await createMongoDBCollections(client, tenantId)
 
