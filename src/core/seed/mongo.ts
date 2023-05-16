@@ -136,7 +136,6 @@ export async function seedMongo(client: MongoClient, tenantId: string) {
   })
 
   await dashboardStatsRepository.refreshAllStats()
-  await client.close()
 }
 
 const getRandomAssigneeObject = (accounts: Account[]): Assignment => {

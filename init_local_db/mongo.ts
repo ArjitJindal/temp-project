@@ -8,6 +8,7 @@ async function main() {
     `mongodb://localhost:27018/${DB_NAME}`
   )
   await seedMongo(client, TENANT)
+  await client.close()
 }
 
 main().catch((e) => {
