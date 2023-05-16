@@ -72,10 +72,7 @@ export const tenantsHandler = lambdaApi()(
 
       // Create demo mode environment in non-prod environments.
       if (envIsNot('prod')) {
-        const fullTenantId = getFullTenantId(
-          tenantId,
-          request.features.indexOf('DEMO_MODE') > -1
-        )
+        const fullTenantId = getFullTenantId(tenantId, true)
         const batchJob: DemoModeDataLoadBatchJob = {
           type: 'DEMO_MODE_DATA_LOAD',
           tenantId: fullTenantId,
@@ -120,7 +117,7 @@ export const tenantsHandler = lambdaApi()(
     ) {
       if (envIsNot('prod')) {
         let fullTenantId = tenantId
-        if (envIs('sandbox') && !tenantId.endsWith('-test')) {
+        if (envIs('sandbox')) {
           fullTenantId = getFullTenantId(tenantId, true)
         }
         const batchJob: DemoModeDataLoadBatchJob = {
