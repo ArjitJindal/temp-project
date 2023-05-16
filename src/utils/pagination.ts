@@ -222,7 +222,7 @@ async function countDocuments<T extends Document>(
   filter: Filter<WithId<T>>
 ): Promise<number> {
   if (_.isEmpty(filter)) {
-    return await collection.countDocuments()
+    return await collection.estimatedDocumentCount()
   }
 
   return await collection.countDocuments(
