@@ -76,7 +76,7 @@ export default class UserTransactionLimitsRule extends TransactionRule<UserTrans
           type: 'object',
           title: 'Transactions count threshold',
           description:
-            'rule is run when the number of transactions per time window is greater than the threshold',
+            'rule is hit when the number of transactions per time window is greater than the threshold',
           properties: {
             threshold: {
               type: 'integer',
@@ -90,7 +90,7 @@ export default class UserTransactionLimitsRule extends TransactionRule<UserTrans
         multiplierThreshold: PERCENT_OPTIONAL_SCHEMA({
           title: 'Maximum multiplier (as a percentage)',
           description:
-            'For example, specifying 200 (%) means that the rule will only be run if the threshold is at least twice the expected limit.',
+            'For example, specifying 200 (%) means that the rule will only be hit if the threshold is at least twice the expected limit.',
           maximum: 'NO_MAXIMUM',
         }),
       },
