@@ -70,18 +70,6 @@ export function createFunction(
   }
 
   const func = new LambdaFunction(context, name, {
-    functionName: name,
-    runtime: Runtime.NODEJS_16_X,
-    handler: `app.${handlerName}`,
-    code: process.env.CI
-      ? Code.fromInline("console.log('hello')")
-      : Code.fromAsset(`dist/${LAMBDAS[name].codePath}`),
-    tracing: Tracing.ACTIVE,
-    timeout: DEFAULT_LAMBDA_TIMEOUT,
-    memorySize: memorySize
-      ? memorySize
-      : context.config.resource.LAMBDA_DEFAULT.MEMORY_SIZE,
-    layers: layersArray,
     ...{
       ...props,
       environment: {
@@ -107,6 +95,18 @@ export function createFunction(
         QA_SUBDOMAIN: process.env.QA_SUBDOMAIN as string,
       },
     },
+    functionName: name,
+    runtime: Runtime.NODEJS_16_X,
+    handler: `app.${handlerName}`,
+    code: process.env.CI
+      ? Code.fromInline("console.log('hello')")
+      : Code.fromAsset(`dist/${LAMBDAS[name].codePath}`),
+    tracing: Tracing.ACTIVE,
+    timeout: DEFAULT_LAMBDA_TIMEOUT,
+    memorySize: memorySize
+      ? memorySize
+      : context.config.resource.LAMBDA_DEFAULT.MEMORY_SIZE,
+    layers: layersArray,
   })
   // This is needed to allow using ${Function.Arn} in openapi.yaml
   ;(func.node.defaultChild as CfnFunction).overrideLogicalId(name)

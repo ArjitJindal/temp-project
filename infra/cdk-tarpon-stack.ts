@@ -729,9 +729,6 @@ export class CdkTarponStack extends cdk.Stack {
     // MongoDB mirror handler
     const tarponChangeConsumerProps = {
       ...atlasFunctionProps,
-      memorySize: config.resource.TARPON_CHANGE_CAPTURE_LAMBDA
-        ? config.resource.TARPON_CHANGE_CAPTURE_LAMBDA.MEMORY_SIZE
-        : 256,
       environment: {
         ...atlasFunctionProps.environment,
         SLACK_ALERT_QUEUE_URL: slackAlertQueue.queueUrl,
@@ -892,9 +889,6 @@ export class CdkTarponStack extends cdk.Stack {
     /* Hammerhead Kinesis Change capture consumer */
     const hammerheadChangeConsumerProps = {
       ...atlasFunctionProps,
-      memorySize: config.resource.HAMMERHEAD_CHANGE_CAPTURE_LAMBDA
-        ? config.resource.HAMMERHEAD_CHANGE_CAPTURE_LAMBDA.MEMORY_SIZE
-        : 256,
       environment: {
         ...atlasFunctionProps.environment,
         SLACK_ALERT_QUEUE_URL: slackAlertQueue.queueUrl,
