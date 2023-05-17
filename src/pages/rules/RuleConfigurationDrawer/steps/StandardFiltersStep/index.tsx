@@ -34,7 +34,7 @@ export default function StandardFiltersStep(props: Props) {
   const queryResults = useQuery(RULE_FILTERS(), () => api.getRuleFilters());
 
   useEffect(() => {
-    if (standardFilters?.paymentMethod !== 'WALLET') {
+    if (standardFilters?.paymentMethods?.includes('WALLET')) {
       setFormValues((prev) => {
         if (prev?.standardFiltersStep?.walletType) {
           delete prev?.standardFiltersStep?.walletType;
@@ -42,7 +42,7 @@ export default function StandardFiltersStep(props: Props) {
         return prev;
       });
     }
-  }, [standardFilters?.paymentMethod, setFormValues]);
+  }, [standardFilters?.paymentMethods, setFormValues]);
 
   return (
     <AsyncResourceRenderer resource={queryResults.data}>
@@ -71,7 +71,7 @@ export default function StandardFiltersStep(props: Props) {
                   .filter((x) => {
                     const nameToFilter = 'walletType';
                     if (x.name === nameToFilter) {
-                      return standardFilters?.paymentMethod === 'WALLET';
+                      return standardFilters?.paymentMethods?.includes('WALLET');
                     }
                     return true;
                   })}
