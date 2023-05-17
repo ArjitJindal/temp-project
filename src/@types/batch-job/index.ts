@@ -62,6 +62,14 @@ export type OngoingScreeningUserRuleBatchJob = {
   userIds: string[]
 }
 
+/* Pulse Backfill */
+type PulseDataLoadBatchJobType = 'PULSE_USERS_BACKFILL_RISK_SCORE'
+export type PulseDataLoadBatchJob = {
+  type: PulseDataLoadBatchJobType
+  tenantId: string
+  awsCredentials?: CredentialsOptions
+}
+
 export type BatchJobType =
   | FileImportBatchJobType
   | SimulationPulseBatchJobType
@@ -69,6 +77,7 @@ export type BatchJobType =
   | DemoModeDataLoadBatchJobType
   | SimulationBeaconBatchJobType
   | OngoingScreeningUserRuleBatchJobType
+  | PulseDataLoadBatchJobType
 
 export type BatchJob =
   | FileImportBatchJob
@@ -77,3 +86,4 @@ export type BatchJob =
   | DemoModeDataLoadBatchJob
   | SimulationBeaconBatchJob
   | OngoingScreeningUserRuleBatchJob
+  | PulseDataLoadBatchJob

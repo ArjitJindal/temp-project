@@ -15,7 +15,10 @@ import { TenantSettings } from '@/@types/openapi-internal/TenantSettings'
 import { TenantRepository } from '@/services/tenants/repositories/tenant-repository'
 import { getMongoDbClient } from '@/utils/mongoDBUtils'
 import { getFullTenantId } from '@/lambdas/jwt-authorizer/app'
-import { DemoModeDataLoadBatchJob } from '@/@types/batch-job'
+import {
+  DemoModeDataLoadBatchJob,
+  PulseDataLoadBatchJob,
+} from '@/@types/batch-job'
 import { getCredentialsFromEvent } from '@/utils/credentials'
 import { sendBatchJobCommand } from '@/services/batch-job'
 import { publishAuditLog } from '@/services/audit-log'
@@ -96,9 +99,24 @@ export const tenantsHandler = lambdaApi()(
           assertRole({ role, verifiedEmail }, 'root')
         }
         assertRole({ role, verifiedEmail }, 'admin')
+
+        const tenantSettingsCurrent = await tenantRepository.getTenantSettings()
+
         const updatedResult =
           await tenantRepository.createOrUpdateTenantSettings(newTenantSettings)
-        const tenantSettingsCurrent = await tenantRepository.getTenantSettings()
+
+        if (
+          !tenantSettingsCurrent.features?.includes('PULSE') &&
+          newTenantSettings.features?.includes('PULSE')
+        ) {
+          const batchJob: PulseDataLoadBatchJob = {
+            type: 'PULSE_USERS_BACKFILL_RISK_SCORE',
+            tenantId: tenantId,
+            awsCredentials: getCredentialsFromEvent(event),
+          }
+
+          await sendBatchJobCommand(tenantId, batchJob)
+        }
 
         const auditLog: AuditLog = {
           type: 'ACCOUNT',
@@ -107,6 +125,7 @@ export const tenantsHandler = lambdaApi()(
           oldImage: tenantSettingsCurrent,
           newImage: newTenantSettings,
         }
+
         await publishAuditLog(tenantId, auditLog)
 
         return updatedResult

@@ -1,4 +1,4 @@
-import { Filter, MongoClient, Document } from 'mongodb'
+import { Filter, MongoClient, Document, FindCursor } from 'mongodb'
 import { StackConstants } from '@lib/constants'
 import { AttributeMap, ItemList } from 'aws-sdk/clients/dynamodb'
 import { v4 as uuidv4 } from 'uuid'
@@ -806,5 +806,22 @@ export class UserRepository {
     )
     const count = await collection.countDocuments(query)
     return count
+  }
+
+  public async getUsersWithoutKrsScoreCursor(): Promise<
+    FindCursor<InternalUser>
+  > {
+    const db = this.mongoDb.db()
+    const collection = db.collection<InternalUser>(
+      USERS_COLLECTION(this.tenantId)
+    )
+
+    const users = await collection
+      .find({
+        krsScore: { $exists: false },
+      })
+      .batchSize(100)
+
+    return users
   }
 }

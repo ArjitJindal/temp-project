@@ -1,6 +1,6 @@
 import { DynamoDBDocumentClient } from '@aws-sdk/lib-dynamodb'
 import _ from 'lodash'
-import { MongoClient } from 'mongodb'
+import { FindCursor, MongoClient } from 'mongodb'
 import { UserRepository } from '../users/repositories/user-repository'
 import { RiskRepository } from './repositories/risk-repository'
 import {
@@ -458,6 +458,18 @@ export class RiskScoringService {
     await auditLogService.handleDrsUpdate(drsObject, newDrsObject, 'AUTOMATIC')
 
     return newDrsObject?.drsScore
+  }
+
+  public async backfillUserRiskScores(): Promise<void> {
+    const users: FindCursor<User> =
+      await this.userRepository.getUsersWithoutKrsScoreCursor()
+
+    for await (const user of users) {
+      if (!user) {
+        continue
+      }
+      await this.updateInitialRiskScores(user)
+    }
   }
 
   getUsersFromTransaction = _.memoize(

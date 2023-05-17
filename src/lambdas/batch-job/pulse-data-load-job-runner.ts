@@ -1,0 +1,19 @@
+import { BatchJobRunner } from './batch-job-runner-base'
+import { getMongoDbClient } from '@/utils/mongoDBUtils'
+import { PulseDataLoadBatchJob } from '@/@types/batch-job'
+import { getDynamoDbClient } from '@/utils/dynamodb'
+import { RiskScoringService } from '@/services/risk-scoring'
+
+export class PulseDataLoadJobRunner extends BatchJobRunner {
+  public async run(job: PulseDataLoadBatchJob): Promise<void> {
+    const { tenantId, awsCredentials } = job
+    const dynamoDb = getDynamoDbClient(awsCredentials)
+    const mongoDb = await getMongoDbClient()
+    const riskScoringService = new RiskScoringService(tenantId, {
+      dynamoDb,
+      mongoDb,
+    })
+
+    await riskScoringService.backfillUserRiskScores()
+  }
+}
