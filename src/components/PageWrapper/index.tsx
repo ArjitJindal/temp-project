@@ -1,7 +1,7 @@
 import React from 'react';
 import cn from 'clsx';
-import { Button, Col, Row, Typography } from 'antd';
-import { Link, useNavigate } from 'react-router-dom';
+import { Col, Row, Typography } from 'antd';
+import { Link } from 'react-router-dom';
 import ErrorBoundary from '../ErrorBoundary';
 import s from './styles.module.less';
 import ArrowLeftSLine from '@/components/ui/icons/Remix/system/arrow-left-s-line.react.svg';
@@ -9,24 +9,20 @@ import { usePageTimeLoadTracker, usePageViewTimeTracker } from '@/utils/tracker'
 
 export const PAGE_WRAPPER_PADDING = 16;
 
-interface Props {
+export interface PageWrapperProps {
   title?: string;
   description?: string;
   backButton?: {
     title: string;
     url: string;
   };
-  actionButton?: {
-    title: string;
-    url: string;
-  };
+  actionButton?: React.ReactNode;
   loading?: boolean;
   children?: React.ReactNode;
 }
 
-export default function PageWrapper(props: Props) {
+export default function PageWrapper(props: PageWrapperProps) {
   const { title, description, backButton, actionButton } = props;
-  const navigate = useNavigate();
   usePageViewTimeTracker();
   usePageTimeLoadTracker();
 
@@ -53,16 +49,7 @@ export default function PageWrapper(props: Props) {
               )}
             </Col>
             <Col xs={6}>
-              {actionButton && (
-                <div style={{ textAlign: 'end' }}>
-                  <Button
-                    className={s.actionButton}
-                    onClick={() => navigate(`/rules/request-new`, { replace: true })}
-                  >
-                    {actionButton.title}
-                  </Button>
-                </div>
-              )}
+              {actionButton && <div style={{ textAlign: 'end' }}>{actionButton}</div>}
             </Col>
           </Row>
         </header>
@@ -74,6 +61,6 @@ export default function PageWrapper(props: Props) {
   );
 }
 
-export function PageWrapperTableContainer(props: { children: React.ReactNode }) {
-  return <div className={s.tableContainer}>{props.children}</div>;
+export function PageWrapperContentContainer(props: { children: React.ReactNode }) {
+  return <div className={s.contentContainer}>{props.children}</div>;
 }

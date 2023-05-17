@@ -14,11 +14,11 @@ import { ColumnHelper } from '@/components/library/Table/columnHelper';
 import { LONG_TEXT, RULE_ACTION } from '@/components/library/Table/standardDataTypes';
 import { DEFAULT_PARAMS_STATE } from '@/components/library/Table/consts';
 import { RULE_ACTION_VALUES } from '@/utils/rules';
-import { PageWrapperTableContainer } from '@/components/PageWrapper';
 
 interface RulesTableParams extends CommonParams {}
 
 interface Props {
+  simulationMode?: boolean;
   onViewRule: (rule: Rule) => void;
   onEditRule: (rule: Rule) => void;
 }
@@ -40,7 +40,7 @@ const DEFAULT_SORTING: SortingParamsItem = ['id', 'ascend'];
 
 const branding = getBranding();
 
-export const RulesTable: React.FC<Props> = ({ onViewRule, onEditRule }) => {
+export const RulesTable: React.FC<Props> = ({ onViewRule, onEditRule, simulationMode }) => {
   const api = useApi();
   const canWriteRules = useHasPermissions(['rules:my-rules:write']);
   const columns: TableColumn<Rule>[] = useMemo(() => {
@@ -125,14 +125,14 @@ export const RulesTable: React.FC<Props> = ({ onViewRule, onEditRule }) => {
                 onClick={() => onEditRule(entity)}
                 isDisabled={!canWriteRules}
               >
-                Configure
+                {simulationMode ? 'New simulation' : 'Configure'}
               </Button>
             </span>
           );
         },
       }),
     ];
-  }, [canWriteRules, onViewRule, onEditRule]);
+  }, [onViewRule, canWriteRules, simulationMode, onEditRule]);
 
   const [params, setParams] = useState<RulesTableParams>({
     ...DEFAULT_PARAMS_STATE,
@@ -184,18 +184,16 @@ export const RulesTable: React.FC<Props> = ({ onViewRule, onEditRule }) => {
   // };
 
   return (
-    <PageWrapperTableContainer>
-      <QueryResultsTable<Rule, RulesTableParams>
-        tableId={'rules-library-table'}
-        pagination={false}
-        rowKey="id"
-        queryResults={rulesResult}
-        columns={columns}
-        defaultSorting={DEFAULT_SORTING}
-        fitHeight={true}
-        params={params}
-        onChangeParams={setParams}
-      />
-    </PageWrapperTableContainer>
+    <QueryResultsTable<Rule, RulesTableParams>
+      tableId={'rules-library-table'}
+      pagination={false}
+      rowKey="id"
+      queryResults={rulesResult}
+      columns={columns}
+      defaultSorting={DEFAULT_SORTING}
+      fitHeight={true}
+      params={params}
+      onChangeParams={setParams}
+    />
   );
 };

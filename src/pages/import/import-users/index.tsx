@@ -3,7 +3,7 @@ import { Tag } from 'antd';
 import { files } from './service';
 import type { TableListItem } from './data';
 import { FileImportButton } from '@/components/file-import/FileImportButton';
-import PageWrapper, { PageWrapperTableContainer } from '@/components/PageWrapper';
+import PageWrapper, { PageWrapperContentContainer } from '@/components/PageWrapper';
 import { useI18n } from '@/locales';
 import { CommonParams, TableColumn } from '@/components/library/Table/types';
 import { DEFAULT_PARAMS_STATE } from '@/components/library/Table/consts';
@@ -88,7 +88,7 @@ const TableList: React.FC = () => {
 
   return (
     <PageWrapper title={i18n('menu.import.import-users')}>
-      <PageWrapperTableContainer>
+      <PageWrapperContentContainer>
         <QueryResultsTable<TableListItem, CommonParams>
           // headerTitle="Files"
           rowKey="id"
@@ -103,7 +103,7 @@ const TableList: React.FC = () => {
           ]}
           fitHeight
         />
-      </PageWrapperTableContainer>
+      </PageWrapperContentContainer>
     </PageWrapper>
   );
 };

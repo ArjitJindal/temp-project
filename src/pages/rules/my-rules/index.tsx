@@ -1,13 +1,12 @@
 import { Switch, Tooltip } from 'antd';
-import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import _ from 'lodash';
 import { DeleteOutlined, EditOutlined } from '@ant-design/icons';
 import { useMutation } from '@tanstack/react-query';
-import { getRuleInstanceDisplayId } from '../utils';
+import { getRuleInstanceDisplayId, useUpdateRuleInstance } from '../utils';
 import s from './style.module.less';
 import { RuleInstance } from '@/apis';
 import { useApi } from '@/api';
-import { useFeatureEnabled } from '@/components/AppWrapper/Providers/SettingsProvider';
 import {
   CommonParams,
   SortingParamsItem,
@@ -19,27 +18,26 @@ import { getMutationAsyncResource, usePaginatedQuery } from '@/utils/queries/hoo
 import { GET_RULE_INSTANCES } from '@/utils/queries/keys';
 import QueryResultsTable from '@/components/common/QueryResultsTable';
 import { useApiTime, usePageViewTracker } from '@/utils/tracker';
-import RuleConfigurationDrawer, { FormValues } from '@/pages/rules/RuleConfigurationDrawer';
+import RuleConfigurationDrawer, {
+  RuleConfigurationSimulationDrawer,
+} from '@/pages/rules/RuleConfigurationDrawer';
 import { getErrorMessage } from '@/utils/lang';
-import { removeEmpty } from '@/utils/json';
 import { useHasPermissions } from '@/utils/user-utils';
 import Confirm from '@/components/utils/Confirm';
 import Button from '@/components/library/Button';
 import { ColumnHelper } from '@/components/library/Table/columnHelper';
 import { BOOLEAN, DATE } from '@/components/library/Table/standardDataTypes';
 import { message } from '@/components/library/Message';
-import { PageWrapperTableContainer } from '@/components/PageWrapper';
 import { DEFAULT_PARAMS_STATE } from '@/components/library/Table/consts';
 import { useScrollToFocus } from '@/utils/hooks';
 import { parseQueryString } from '@/utils/routing';
 
 const DEFAULT_SORTING: SortingParamsItem = ['ruleId', 'ascend'];
 
-const MyRule = () => {
+const MyRule = (props: { simulationMode?: boolean }) => {
   usePageViewTracker('My Rule Page');
   useScrollToFocus();
   const [ruleReadOnly, setRuleReadOnly] = useState<boolean>(false);
-  const isPulseEnabled = useFeatureEnabled('PULSE');
   const api = useApi();
   const canWriteRules = useHasPermissions(['rules:my-rules:write']);
   const [updatedRuleInstances, setUpdatedRuleInstances] = useState<{ [key: string]: RuleInstance }>(
@@ -80,22 +78,13 @@ const MyRule = () => {
   const [deleting, setDeleting] = useState(false);
   const [currentRow, setCurrentRow] = useState<RuleInstance>();
   const { rules } = useRules();
-  const handleRuleInstanceUpdate = useCallback(
-    async (newRuleInstance: RuleInstance) => {
-      const ruleInstanceId = newRuleInstance.id as string;
-      setUpdatedRuleInstances((prev) => ({
-        ...prev,
-        [newRuleInstance.id as string]: newRuleInstance,
-      }));
-      try {
-        await api.putRuleInstancesRuleInstanceId({ ruleInstanceId, RuleInstance: newRuleInstance });
-      } catch (e) {
-        setUpdatedRuleInstances((prev) => _.omit(prev, [ruleInstanceId]));
-        throw e;
-      }
-    },
-    [api],
-  );
+  const handleRuleInstanceUpdate = useCallback(async (newRuleInstance: RuleInstance) => {
+    setUpdatedRuleInstances((prev) => ({
+      ...prev,
+      [newRuleInstance.id as string]: newRuleInstance,
+    }));
+  }, []);
+  const updateRuleInstanceMutation = useUpdateRuleInstance(handleRuleInstanceUpdate);
 
   const handleDeleteRuleInstanceMutation = useMutation<void, Error, string>(
     async (ruleInstanceId) => await api.deleteRuleInstancesRuleInstanceId({ ruleInstanceId }),
@@ -114,25 +103,12 @@ const MyRule = () => {
 
   const handleActivationChange = useCallback(
     async (ruleInstance: RuleInstance, activated: boolean) => {
-      const hideMessage = message.loading(
-        `${activated ? 'Activating' : 'Deactivating'} rule ${ruleInstance.ruleId}...`,
-      );
-      try {
-        await handleRuleInstanceUpdate({
-          ...ruleInstance,
-          status: activated ? 'ACTIVE' : 'INACTIVE',
-        });
-        message.success(`${activated ? 'Activated' : 'Deactivated'} rule ${ruleInstance.ruleId}`);
-      } catch (e) {
-        message.fatal(
-          `Failed to ${activated ? 'activate' : 'deactivate'} rule ${ruleInstance.ruleId}`,
-          e,
-        );
-      } finally {
-        hideMessage();
-      }
+      updateRuleInstanceMutation.mutate({
+        ...ruleInstance,
+        status: activated ? 'ACTIVE' : 'INACTIVE',
+      });
     },
-    [handleRuleInstanceUpdate],
+    [updateRuleInstanceMutation],
   );
 
   const columns: TableColumn<RuleInstance>[] = useMemo((): TableColumn<RuleInstance>[] => {
@@ -148,7 +124,11 @@ const MyRule = () => {
             return (
               <a
                 onClick={() => {
-                  onViewRule(entity);
+                  if (props.simulationMode) {
+                    onEditRule(entity);
+                  } else {
+                    onViewRule(entity);
+                  }
                 }}
                 id={entity.id ?? ''}
               >
@@ -233,7 +213,16 @@ const MyRule = () => {
         defaultSticky: 'RIGHT',
         defaultWidth: 220,
         render: (entity) => {
-          return (
+          return props.simulationMode ? (
+            <Button
+              analyticsName="Select"
+              size="MEDIUM"
+              type="PRIMARY"
+              onClick={() => onEditRule(entity)}
+            >
+              New simulation
+            </Button>
+          ) : (
             <div className={s.actionIconsContainer}>
               <Button
                 onClick={() => {
@@ -279,13 +268,14 @@ const MyRule = () => {
       }),
     ]);
   }, [
-    rules,
-    updatedRuleInstances,
-    canWriteRules,
-    deleting,
-    handleActivationChange,
-    handleDeleteRuleInstanceMutation,
     onViewRule,
+    updatedRuleInstances,
+    rules,
+    canWriteRules,
+    handleActivationChange,
+    props.simulationMode,
+    deleting,
+    handleDeleteRuleInstanceMutation,
     onEditRule,
   ]);
   const measure = useApiTime();
@@ -324,86 +314,12 @@ const MyRule = () => {
     };
   });
 
-  const rule = (currentRow && rules[currentRow?.ruleId]) ?? null;
-  const ruleInstance: RuleInstance | null =
-    currentRow && currentRow.id ? updatedRuleInstances[currentRow.id] || currentRow : null;
-
-  const saveInstanceMutation = useMutation<unknown, unknown, FormValues>(
-    async (formValues) => {
-      if (rule == null) {
-        throw new Error(`Rule is not defined`);
-      }
-      if (ruleInstance == null || ruleInstance?.id == null) {
-        throw new Error(`Rule instance is not defined`);
-      }
-      const { basicDetailsStep, standardFiltersStep, ruleParametersStep } = formValues;
-      const { ruleAction, ruleParameters, riskLevelParameters, riskLevelActions } =
-        ruleParametersStep;
-
-      const newRuleInstance: RuleInstance = {
-        ...ruleInstance,
-        ruleId: rule.id as string,
-        ruleNameAlias: basicDetailsStep.ruleName,
-        ruleDescriptionAlias: basicDetailsStep.ruleDescription,
-        filters: standardFiltersStep,
-        casePriority: basicDetailsStep.casePriority,
-        nature: basicDetailsStep.ruleNature,
-        labels: basicDetailsStep.ruleLabels,
-        ...(isPulseEnabled
-          ? {
-              riskLevelParameters: riskLevelParameters
-                ? {
-                    VERY_HIGH: removeEmpty(riskLevelParameters['VERY_HIGH']),
-                    HIGH: removeEmpty(riskLevelParameters['HIGH']),
-                    MEDIUM: removeEmpty(riskLevelParameters['MEDIUM']),
-                    LOW: removeEmpty(riskLevelParameters['LOW']),
-                    VERY_LOW: removeEmpty(riskLevelParameters['VERY_LOW']),
-                  }
-                : {
-                    VERY_HIGH: removeEmpty(ruleParameters),
-                    HIGH: removeEmpty(ruleParameters),
-                    MEDIUM: removeEmpty(ruleParameters),
-                    LOW: removeEmpty(ruleParameters),
-                    VERY_LOW: removeEmpty(ruleParameters),
-                  },
-              riskLevelActions: riskLevelActions
-                ? {
-                    VERY_HIGH: riskLevelActions['VERY_HIGH'],
-                    HIGH: riskLevelActions['HIGH'],
-                    MEDIUM: riskLevelActions['MEDIUM'],
-                    LOW: riskLevelActions['LOW'],
-                    VERY_LOW: riskLevelActions['VERY_LOW'],
-                  }
-                : ruleAction != null
-                ? {
-                    VERY_HIGH: ruleAction,
-                    HIGH: ruleAction,
-                    MEDIUM: ruleAction,
-                    LOW: ruleAction,
-                    VERY_LOW: ruleAction,
-                  }
-                : undefined,
-            }
-          : {
-              action: ruleAction ?? ruleInstance.action,
-              parameters: removeEmpty(ruleParameters),
-            }),
-      };
-      await handleRuleInstanceUpdate(newRuleInstance);
-    },
-    {
-      onSuccess: () => {
-        setShowDetail(false);
-        message.success(`Rule saved!`);
-      },
-      onError: (err) => {
-        message.fatal(`Unable to save rule! ${getErrorMessage(err)}`, err);
-      },
-    },
-  );
+  const rule = currentRow && rules[currentRow?.ruleId];
+  const ruleInstance: RuleInstance | undefined =
+    currentRow && currentRow.id ? updatedRuleInstances[currentRow.id] || currentRow : undefined;
 
   return (
-    <PageWrapperTableContainer>
+    <>
       <QueryResultsTable<RuleInstance>
         tableId="my-rules-table"
         innerRef={actionRef}
@@ -416,62 +332,36 @@ const MyRule = () => {
         params={params}
         onChangeParams={setParams}
       />
-      <RuleConfigurationDrawer
-        rule={rule}
-        readOnly={!canWriteRules || ruleReadOnly}
-        formInitialValues={
-          ruleInstance
-            ? {
-                basicDetailsStep: {
-                  ruleName: ruleInstance.ruleNameAlias,
-                  ruleDescription: ruleInstance.ruleDescriptionAlias,
-                  ruleNature: ruleInstance.nature,
-                  casePriority: ruleInstance.casePriority,
-                  ruleLabels: ruleInstance.labels,
-                  ruleInstanceId: ruleInstance.id,
-                },
-                standardFiltersStep: ruleInstance.filters,
-                ruleParametersStep: isPulseEnabled
-                  ? {
-                      riskLevelParameters:
-                        ruleInstance.riskLevelParameters ??
-                        (ruleInstance.parameters && {
-                          VERY_HIGH: ruleInstance.parameters,
-                          HIGH: ruleInstance.parameters,
-                          MEDIUM: ruleInstance.parameters,
-                          LOW: ruleInstance.parameters,
-                          VERY_LOW: ruleInstance.parameters,
-                        }),
-                      riskLevelActions:
-                        ruleInstance.riskLevelActions ??
-                        (ruleInstance.action && {
-                          VERY_HIGH: ruleInstance.action,
-                          HIGH: ruleInstance.action,
-                          MEDIUM: ruleInstance.action,
-                          LOW: ruleInstance.action,
-                          VERY_LOW: ruleInstance.action,
-                        }),
-                    }
-                  : {
-                      ruleParameters: ruleInstance.parameters,
-                      ruleAction: ruleInstance.action,
-                    },
-              }
-            : undefined
-        }
-        isSubmitting={saveInstanceMutation.isLoading}
-        isVisible={showDetail}
-        onChangeVisibility={setShowDetail}
-        onSubmit={(formValues) => {
-          saveInstanceMutation.mutate(formValues);
-        }}
-        isClickAwayEnabled={ruleReadOnly}
-        changeToEditMode={() => {
-          setRuleReadOnly(false);
-        }}
-        type={'EDIT'}
-      />
-    </PageWrapperTableContainer>
+      {props.simulationMode ? (
+        <RuleConfigurationSimulationDrawer
+          rule={rule}
+          ruleInstance={ruleInstance!}
+          isVisible={showDetail}
+          onChangeVisibility={setShowDetail}
+          onRuleInstanceUpdated={(ruleInstance) => {
+            handleRuleInstanceUpdate(ruleInstance);
+            setShowDetail(false);
+          }}
+        />
+      ) : (
+        <RuleConfigurationDrawer
+          rule={rule}
+          readOnly={!canWriteRules || ruleReadOnly}
+          ruleInstance={ruleInstance}
+          isVisible={showDetail}
+          onChangeVisibility={setShowDetail}
+          onRuleInstanceUpdated={(ruleInstance) => {
+            handleRuleInstanceUpdate(ruleInstance);
+            setShowDetail(false);
+          }}
+          isClickAwayEnabled={ruleReadOnly}
+          onChangeToEditMode={() => {
+            setRuleReadOnly(false);
+          }}
+          type={'EDIT'}
+        />
+      )}
+    </>
   );
 };
 

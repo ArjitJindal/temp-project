@@ -2,7 +2,7 @@ import React, { useCallback, useState } from 'react';
 import { useNavigate } from 'react-router';
 import { queryAdapter } from './components/TransactionsTable/helpers/queryAdapter';
 import { useApi } from '@/api';
-import PageWrapper, { PageWrapperTableContainer } from '@/components/PageWrapper';
+import PageWrapper, { PageWrapperContentContainer } from '@/components/PageWrapper';
 import { useI18n } from '@/locales';
 import '../../components/ui/colors';
 import TransactionsTable, {
@@ -101,7 +101,7 @@ const TableList = () => {
 
   return (
     <PageWrapper title={i18n('menu.transactions.transactions-list')}>
-      <PageWrapperTableContainer>
+      <PageWrapperContentContainer>
         <TransactionsTable
           extraFilters={[
             {
@@ -146,7 +146,7 @@ const TableList = () => {
           onChangeParams={handleChangeParams}
           fitHeight
         />
-      </PageWrapperTableContainer>
+      </PageWrapperContentContainer>
     </PageWrapper>
   );
 };

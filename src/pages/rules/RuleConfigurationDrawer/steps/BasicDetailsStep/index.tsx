@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import { useState } from 'react';
 import StepHeader from '../../StepHeader';
 import s from './style.module.less';
 import Label from '@/components/library/Label';
@@ -17,6 +17,8 @@ export interface FormValues {
   casePriority: Priority;
   ruleLabels: RuleLabels[];
   ruleInstanceId?: string;
+  simulationIterationName?: string;
+  simulationIterationDescription?: string;
 }
 
 export const INITIAL_VALUES: FormValues = {
@@ -25,6 +27,7 @@ export const INITIAL_VALUES: FormValues = {
   ruleNature: 'FRAUD',
   casePriority: 'P1',
   ruleLabels: [],
+  simulationIterationName: 'Iteration 1',
 };
 
 interface Props {
@@ -35,7 +38,11 @@ interface Props {
 export default function BasicDetailsStep(props: Props) {
   const { activeTab } = props;
 
-  return <div className={s.root}>{activeTab === 'rule_details' && <RuleDetails {...props} />}</div>;
+  return (
+    <div className={s.root}>
+      {activeTab === 'rule_details' ? <RuleDetails {...props} /> : <SimulationIterationDetails />}
+    </div>
+  );
 }
 
 function RuleDetails(props: Props) {
@@ -102,6 +109,33 @@ function RuleDetails(props: Props) {
           {(inputProps) => (
             <SelectionGroup<Priority> mode="SINGLE" options={RULE_CASE_PRIORITY} {...inputProps} />
           )}
+        </InputField>
+      </PropertyListLayout>
+    </>
+  );
+}
+
+function SimulationIterationDetails() {
+  return (
+    <>
+      <StepHeader
+        title={'Simulation details'}
+        description={'Define the basic details for this simulation iteration.'}
+      />
+      <PropertyListLayout>
+        <InputField<FormValues, 'simulationIterationName'>
+          name={'simulationIterationName'}
+          label={'Iteration name'}
+          labelProps={{ isOptional: true }}
+        >
+          {(inputProps) => <TextInput {...inputProps} placeholder={'Enter iteration name'} />}
+        </InputField>
+        <InputField<FormValues, 'simulationIterationDescription'>
+          name={'simulationIterationDescription'}
+          label={'Description'}
+          labelProps={{ isOptional: true }}
+        >
+          {(inputProps) => <TextInput {...inputProps} placeholder={'Enter rule name'} />}
         </InputField>
       </PropertyListLayout>
     </>

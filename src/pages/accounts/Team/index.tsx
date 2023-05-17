@@ -15,7 +15,7 @@ import QueryResultsTable from '@/components/common/QueryResultsTable';
 import { capitalizeWords } from '@/utils/tags';
 import { message } from '@/components/library/Message';
 import { ColumnHelper } from '@/components/library/Table/columnHelper';
-import { PageWrapperTableContainer } from '@/components/PageWrapper';
+import { PageWrapperContentContainer } from '@/components/PageWrapper';
 
 export default function Team() {
   const actionRef = useRef<TableRefType>(null);
@@ -121,7 +121,7 @@ export default function Team() {
   }
 
   return (
-    <PageWrapperTableContainer>
+    <PageWrapperContentContainer>
       <QueryResultsTable<Account>
         rowKey="id"
         tableId="accounts-list"
@@ -136,6 +136,6 @@ export default function Team() {
         pagination={false}
         fitHeight
       />
-    </PageWrapperTableContainer>
+    </PageWrapperContentContainer>
   );
 }

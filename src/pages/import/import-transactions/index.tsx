@@ -3,7 +3,7 @@ import { Tag } from 'antd';
 import { files } from './service';
 import { TableListItem } from './data';
 import { FileImportButton } from '@/components/file-import/FileImportButton';
-import PageWrapper, { PageWrapperTableContainer } from '@/components/PageWrapper';
+import PageWrapper, { PageWrapperContentContainer } from '@/components/PageWrapper';
 import { useI18n } from '@/locales';
 import { CommonParams, TableColumn } from '@/components/library/Table/types';
 import { DEFAULT_PARAMS_STATE } from '@/components/library/Table/consts';
@@ -87,7 +87,7 @@ const TableList: React.FC = () => {
   const i18n = useI18n();
   return (
     <PageWrapper title={i18n('menu.import.import-transactions')}>
-      <PageWrapperTableContainer>
+      <PageWrapperContentContainer>
         <QueryResultsTable<TableListItem, CommonParams>
           tableId={'transactions-files-list'}
           rowKey="id"
@@ -98,7 +98,7 @@ const TableList: React.FC = () => {
           extraTools={[() => <FileImportButton type={'TRANSACTION'} />]}
           fitHeight
         />
-      </PageWrapperTableContainer>
+      </PageWrapperContentContainer>
     </PageWrapper>
   );
 };

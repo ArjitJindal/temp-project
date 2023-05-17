@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router';
 import CaseTableWrapper from './CaseTableWrapper';
 import AlertTable from './AlertTable';
 import s from './index.module.less';
-import PageWrapper, { PageWrapperTableContainer } from '@/components/PageWrapper';
+import PageWrapper, { PageWrapperContentContainer } from '@/components/PageWrapper';
 import { useI18n } from '@/locales';
 import { usePageViewTracker } from '@/utils/tracker';
 import { useCloseSidebarByDefault } from '@/components/AppWrapper/Providers/SidebarProvider';
@@ -60,7 +60,7 @@ export default function CaseManagementPage() {
   const isAlerts = params.showCases === 'MY_ALERTS' || params.showCases === 'ALL_ALERTS';
   return (
     <PageWrapper title={i18n('menu.case-management')}>
-      <PageWrapperTableContainer>
+      <PageWrapperContentContainer>
         <div className={s.header}>
           <ScopeSelector<TableSearchParams>
             params={params}
@@ -95,7 +95,7 @@ export default function CaseManagementPage() {
         ) : (
           <CaseTableWrapper params={params} onChangeParams={handleChangeParams} />
         )}
-      </PageWrapperTableContainer>
+      </PageWrapperContentContainer>
     </PageWrapper>
   );
 }

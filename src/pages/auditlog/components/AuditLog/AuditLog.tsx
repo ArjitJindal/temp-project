@@ -17,7 +17,7 @@ import { ColumnHelper } from '@/components/library/Table/columnHelper';
 import { DATE } from '@/components/library/Table/standardDataTypes';
 import EntityFilterButton from '@/pages/auditlog/components/EntityFilterButton';
 import ActionTakenByFilterButton from '@/pages/auditlog/components/ActionTakeByFilterButton';
-import { PageWrapperTableContainer } from '@/components/PageWrapper';
+import { PageWrapperContentContainer } from '@/components/PageWrapper';
 
 export default function AuditLogTable() {
   const api = useApi();
@@ -123,7 +123,7 @@ export default function AuditLogTable() {
   ]);
 
   return (
-    <PageWrapperTableContainer>
+    <PageWrapperContentContainer>
       <QueryResultsTable<TableItem, TableSearchParams>
         tableId="audit-log"
         rowKey="auditlogId"
@@ -176,6 +176,6 @@ export default function AuditLogTable() {
         columns={columns}
         fitHeight
       />
-    </PageWrapperTableContainer>
+    </PageWrapperContentContainer>
   );
 }

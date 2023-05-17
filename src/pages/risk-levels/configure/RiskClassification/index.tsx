@@ -11,7 +11,7 @@ import { useApi } from '@/api';
 import { useHasPermissions } from '@/utils/user-utils';
 import { RiskClassificationScore } from '@/apis';
 import { message } from '@/components/library/Message';
-import { PageWrapperTableContainer } from '@/components/PageWrapper';
+import { PageWrapperContentContainer } from '@/components/PageWrapper';
 
 type Props = {
   riskValues: RiskClassificationScore[];
@@ -53,7 +53,7 @@ export default function RiskQualification(props: Props) {
 
   // todo: i18n
   return (
-    <PageWrapperTableContainer>
+    <PageWrapperContentContainer>
       <div className={s.header}>
         <Button
           type="PRIMARY"
@@ -71,6 +71,6 @@ export default function RiskQualification(props: Props) {
         setState={setState}
         isDisabled={!riskValues.length || !hasRiskLevelPermission}
       />
-    </PageWrapperTableContainer>
+    </PageWrapperContentContainer>
   );
 }

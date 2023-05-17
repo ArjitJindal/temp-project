@@ -1,5 +1,6 @@
 import React, { useEffect } from 'react';
 import StepHeader from '../../StepHeader';
+import { RuleConfigurationFormValues } from '../../RuleConfigurationForm';
 import { Rule } from '@/apis';
 import PropertyList from '@/pages/rules/RuleConfigurationDrawer/JsonSchemaEditor/PropertyList';
 import { useQuery } from '@/utils/queries/hooks';
@@ -14,7 +15,6 @@ import {
   getOrderedProps,
   getUiSchema,
 } from '@/pages/rules/RuleConfigurationDrawer/JsonSchemaEditor/utils';
-import { FormValues as AllFormValues } from '@/pages/rules/RuleConfigurationDrawer';
 
 export interface FormValues extends Record<string, any> {}
 
@@ -24,7 +24,7 @@ interface Props {
   activeTab: string;
   rule: Rule;
   standardFilters: FormValues;
-  setFormValues: React.Dispatch<React.SetStateAction<AllFormValues>>;
+  setFormValues: React.Dispatch<React.SetStateAction<RuleConfigurationFormValues>>;
 }
 
 export default function StandardFiltersStep(props: Props) {

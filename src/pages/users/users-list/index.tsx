@@ -12,7 +12,7 @@ import { dayjs } from '@/utils/dayjs';
 import { useApi } from '@/api';
 import { useFeatureEnabled } from '@/components/AppWrapper/Providers/SettingsProvider';
 import { InternalUser, RiskLevel, UserRegistrationStatus } from '@/apis';
-import PageWrapper, { PageWrapperTableContainer } from '@/components/PageWrapper';
+import PageWrapper, { PageWrapperContentContainer } from '@/components/PageWrapper';
 import '../../../components/ui/colors';
 import { useI18n } from '@/locales';
 import PageTabs from '@/components/ui/PageTabs';
@@ -235,7 +235,7 @@ const UsersTab = (props: { type: 'business' | 'consumer' | 'all' }) => {
   );
 
   return (
-    <PageWrapperTableContainer>
+    <PageWrapperContentContainer>
       <QueryResultsTable<InternalUser, UserSearchParams>
         tableId={`users-list/${type}`}
         rowKey={'userId'}
@@ -247,7 +247,7 @@ const UsersTab = (props: { type: 'business' | 'consumer' | 'all' }) => {
         fitHeight={true}
         pagination={true}
       />
-    </PageWrapperTableContainer>
+    </PageWrapperContentContainer>
   );
 };
 

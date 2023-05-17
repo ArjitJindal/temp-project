@@ -1,5 +1,6 @@
 import { forwardRef, useCallback, useEffect, useImperativeHandle, useMemo, useState } from 'react';
 import { useMutation } from '@tanstack/react-query';
+import { PlusOutlined } from '@ant-design/icons';
 import RiskClassificationTable, { State, prepareApiState } from '../../RiskClassificationTable';
 import s from './styles.module.less';
 import VerticalMenu from '@/components/library/VerticalMenu';
@@ -246,7 +247,7 @@ const NewSimulation = forwardRef((props: Props, ref: React.Ref<SimulationRef>) =
                 title="You can simulate a maximum of 3 iterations for this rule at once."
                 placement="top"
               >
-                + Duplicate
+                <PlusOutlined /> Duplicate
               </Tooltip>
             </Button>
           </Dropdown>

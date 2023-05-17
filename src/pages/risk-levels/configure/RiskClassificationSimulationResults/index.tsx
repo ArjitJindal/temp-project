@@ -20,8 +20,8 @@ import { useApi } from '@/api';
 import { useQuery } from '@/utils/queries/hooks';
 import {
   RISK_CLASSIFICATION_VALUES,
-  SIMULATION_PULSE_JOB,
-  SIMULATION_PULSE_JOB_ITERATION_RESULT,
+  SIMULATION_JOB,
+  SIMULATION_JOB_ITERATION_RESULT,
 } from '@/utils/queries/keys';
 import AsyncResourceRenderer from '@/components/common/AsyncResourceRenderer';
 import { CommonParams, TableColumn } from '@/components/library/Table/types';
@@ -171,7 +171,7 @@ const IterationComponent = (props: IterationProps) => {
 
   const api = useApi();
   const iterationQueryResults = useQuery(
-    SIMULATION_PULSE_JOB_ITERATION_RESULT(iteration?.taskId ?? '', params),
+    SIMULATION_JOB_ITERATION_RESULT(iteration?.taskId ?? '', params),
     async () => {
       if (iteration?.taskId) {
         return await api.getSimulationTaskIdResult({
@@ -271,7 +271,7 @@ export default function RiskClassificationSimulationResults(props: Props) {
   const { onClose, isVisible, result } = props;
   const api = useApi();
   const jobIdQueryResults = useQuery(
-    SIMULATION_PULSE_JOB(result.jobId),
+    SIMULATION_JOB(result.jobId),
     () =>
       api.getSimulationTestId({
         jobId: result.jobId,
@@ -288,6 +288,7 @@ export default function RiskClassificationSimulationResults(props: Props) {
 
   const interval = useRef<NodeJS.Timeout | null>(null);
 
+  // TODO: Refactor this
   useEffect(() => {
     if (jobIdQueryResults.data.kind === 'SUCCESS') {
       const status = jobIdQueryResults.data.value.iterations.find(

@@ -5,8 +5,8 @@ import { SimulateRiskClassification } from './SimulateRiskClassification';
 import { parseApiState, State } from './RiskClassificationTable';
 import { useI18n } from '@/locales';
 import { Feature } from '@/components/AppWrapper/Providers/SettingsProvider';
-import { usePageViewTracker } from '@/utils/tracker';
-import SimulationPageWrapper, {
+import {
+  SimulationPageWrapper,
   SimulationPageWrapperRef,
 } from '@/components/SimulationPageWrapper';
 import { useApi } from '@/api';
@@ -17,7 +17,6 @@ import { useQuery } from '@/utils/queries/hooks';
 
 export default function () {
   const i18n = useI18n();
-  usePageViewTracker('Risk Algorithm');
 
   const [isSimulationEnabled, setIsSimulationEnabled] = useLocalStorageState<boolean>(
     'SIMULATION_RISK_LEVELS',
@@ -61,9 +60,8 @@ export default function () {
             ? 'Test your risk level outputs by changing the risk score to make better decisions for the risk level configuration.'
             : 'Configure risk levels with score using the slider below.'
         }
-        simulatorButton={true}
-        isSimulationEnabled={isSimulationEnabled}
-        setIsSimulationEnabled={setIsSimulationEnabled}
+        isSimulationModeEnabled={isSimulationEnabled}
+        onSimulationModeChange={setIsSimulationEnabled}
         ref={pageWrapperRef}
       >
         <div style={{ maxWidth: isSimulationEnabled ? '100%' : 800 }}>

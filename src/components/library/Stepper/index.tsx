@@ -1,4 +1,5 @@
 import React from 'react';
+import classNames from 'clsx';
 import cn from 'clsx';
 import s from './style.module.less';
 import CheckLineIcon from '@/components/ui/icons/Remix/system/check-line.react.svg';
@@ -13,12 +14,13 @@ type Step = {
 interface Props {
   steps: Step[];
   active: string;
+  className?: string;
   onChange: (key: string) => void;
   children?: (active: string) => React.ReactNode;
 }
 
 export default function Stepper(props: Props) {
-  const { active, steps, onChange, children } = props;
+  const { active, steps, className, onChange, children } = props;
   const number = steps.findIndex(({ key }) => key === active);
 
   const handleStepClick = (stepKey: string) => {
@@ -26,7 +28,7 @@ export default function Stepper(props: Props) {
   };
 
   return (
-    <div className={s.root}>
+    <div className={classNames(s.root, className)}>
       <div className={s.steps}>
         {steps.map((step, i) => {
           const isPassed = i < number;

@@ -11,12 +11,12 @@ import { AllParams, TableRefType } from '@/components/library/Table/types';
 import { DEFAULT_PARAMS_STATE } from '@/components/library/Table/consts';
 import COLORS from '@/components/ui/colors';
 import { usePaginatedQuery } from '@/utils/queries/hooks';
-import { SIMULATION_PULSE_JOB_LIST } from '@/utils/queries/keys';
+import { SIMULATION_JOBS } from '@/utils/queries/keys';
 import { RISK_LEVEL_LABELS, RISK_LEVELS } from '@/utils/risk-levels';
 import { useUsers } from '@/utils/user-utils';
 import { ColumnHelper } from '@/components/library/Table/columnHelper';
 import { DATE_TIME, NUMBER } from '@/components/library/Table/standardDataTypes';
-import { PageWrapperTableContainer } from '@/components/PageWrapper';
+import { PageWrapperContentContainer } from '@/components/PageWrapper';
 
 type SimulationHistoryProps = {
   setResult: (results: SimulationPostResponse) => void;
@@ -44,28 +44,25 @@ export default function SimulationHistory(props: SimulationHistoryProps) {
     sort: [['createdAt', 'descend']],
   });
 
-  const allSimulationsQueryResult = usePaginatedQuery(
-    SIMULATION_PULSE_JOB_LIST(params),
-    async () => {
-      const simulations = await api.getSimulations({
-        type: params.type,
-        page: params.page ?? 1,
-        pageSize: params.pageSize,
-        sortField: params.sort[0]?.[0],
-        sortOrder: params.sort[0]?.[1] ?? 'ascend',
-      });
+  const allSimulationsQueryResult = usePaginatedQuery(SIMULATION_JOBS(params), async () => {
+    const simulations = await api.getSimulations({
+      type: params.type,
+      page: params.page ?? 1,
+      pageSize: params.pageSize,
+      sortField: params.sort[0]?.[0],
+      sortOrder: params.sort[0]?.[1] ?? 'ascend',
+    });
 
-      return {
-        items: simulations.data as SimulationPulseJob[],
-        total: simulations.total,
-      };
-    },
-  );
+    return {
+      items: simulations.data as SimulationPulseJob[],
+      total: simulations.total,
+    };
+  });
   const actionRef = useRef<TableRefType>(null);
 
   const helper = new ColumnHelper<SimulationPulseJob>();
   return (
-    <PageWrapperTableContainer>
+    <PageWrapperContentContainer>
       <QueryResultsTable<SimulationPulseJob, typeof params>
         rowKey="jobId"
         innerRef={actionRef}
@@ -154,6 +151,6 @@ export default function SimulationHistory(props: SimulationHistoryProps) {
         ])}
         hideFilters={true}
       />
-    </PageWrapperTableContainer>
+    </PageWrapperContentContainer>
   );
 }

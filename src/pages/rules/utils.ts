@@ -1,6 +1,12 @@
-import { Priority, RuleLabels, RuleNature } from '@/apis';
+import { useMutation } from '@tanstack/react-query';
+import { RuleConfigurationFormValues } from './RuleConfigurationDrawer/RuleConfigurationForm';
+import { useApi } from '@/api';
+import { Priority, RuleInstance, RuleLabels, RuleNature } from '@/apis';
 import { RuleAction } from '@/apis/models/RuleAction';
+import { removeEmpty } from '@/utils/json';
 import { RuleInstanceMap, RulesMap } from '@/utils/rules';
+import { message } from '@/components/library/Message';
+import { getErrorMessage } from '@/utils/lang';
 
 export const RULE_ACTION_OPTIONS: { label: string; value: RuleAction }[] = [
   { label: 'Flag', value: 'FLAG' },
@@ -82,3 +88,154 @@ export const RULE_CASE_PRIORITY: { label: string; value: Priority }[] = [
   { label: 'P3', value: 'P3' },
   { label: 'P4', value: 'P4' },
 ];
+
+export function ruleInstanceToFormValues(isPulseEnabled: boolean, ruleInstance?: RuleInstance) {
+  return ruleInstance
+    ? {
+        basicDetailsStep: {
+          ruleName: ruleInstance.ruleNameAlias,
+          ruleDescription: ruleInstance.ruleDescriptionAlias,
+          ruleNature: ruleInstance.nature,
+          casePriority: ruleInstance.casePriority,
+          ruleLabels: ruleInstance.labels,
+          ruleInstanceId: ruleInstance.id,
+        },
+        standardFiltersStep: ruleInstance.filters,
+        ruleParametersStep: isPulseEnabled
+          ? {
+              riskLevelParameters:
+                ruleInstance.riskLevelParameters ??
+                (ruleInstance.parameters && {
+                  VERY_HIGH: ruleInstance.parameters,
+                  HIGH: ruleInstance.parameters,
+                  MEDIUM: ruleInstance.parameters,
+                  LOW: ruleInstance.parameters,
+                  VERY_LOW: ruleInstance.parameters,
+                }),
+              riskLevelActions:
+                ruleInstance.riskLevelActions ??
+                (ruleInstance.action && {
+                  VERY_HIGH: ruleInstance.action,
+                  HIGH: ruleInstance.action,
+                  MEDIUM: ruleInstance.action,
+                  LOW: ruleInstance.action,
+                  VERY_LOW: ruleInstance.action,
+                }),
+            }
+          : {
+              ruleParameters: ruleInstance.parameters,
+              ruleAction: ruleInstance.action,
+            },
+      }
+    : undefined;
+}
+
+export function formValuesToRuleInstance(
+  initialRuleInstance: RuleInstance,
+  formValues: RuleConfigurationFormValues,
+  isPulseEnabled: boolean,
+): RuleInstance {
+  const { basicDetailsStep, standardFiltersStep, ruleParametersStep } = formValues;
+  const { ruleAction, ruleParameters, riskLevelParameters, riskLevelActions } = ruleParametersStep;
+
+  return {
+    ...initialRuleInstance,
+    ruleId: initialRuleInstance.ruleId,
+    ruleNameAlias: basicDetailsStep.ruleName,
+    ruleDescriptionAlias: basicDetailsStep.ruleDescription,
+    filters: standardFiltersStep,
+    casePriority: basicDetailsStep.casePriority,
+    nature: basicDetailsStep.ruleNature,
+    labels: basicDetailsStep.ruleLabels,
+    ...(isPulseEnabled
+      ? {
+          riskLevelParameters: riskLevelParameters
+            ? {
+                VERY_HIGH: removeEmpty(riskLevelParameters['VERY_HIGH']),
+                HIGH: removeEmpty(riskLevelParameters['HIGH']),
+                MEDIUM: removeEmpty(riskLevelParameters['MEDIUM']),
+                LOW: removeEmpty(riskLevelParameters['LOW']),
+                VERY_LOW: removeEmpty(riskLevelParameters['VERY_LOW']),
+              }
+            : {
+                VERY_HIGH: removeEmpty(ruleParameters),
+                HIGH: removeEmpty(ruleParameters),
+                MEDIUM: removeEmpty(ruleParameters),
+                LOW: removeEmpty(ruleParameters),
+                VERY_LOW: removeEmpty(ruleParameters),
+              },
+          riskLevelActions: riskLevelActions
+            ? {
+                VERY_HIGH: riskLevelActions['VERY_HIGH'],
+                HIGH: riskLevelActions['HIGH'],
+                MEDIUM: riskLevelActions['MEDIUM'],
+                LOW: riskLevelActions['LOW'],
+                VERY_LOW: riskLevelActions['VERY_LOW'],
+              }
+            : ruleAction != null
+            ? {
+                VERY_HIGH: ruleAction,
+                HIGH: ruleAction,
+                MEDIUM: ruleAction,
+                LOW: ruleAction,
+                VERY_LOW: ruleAction,
+              }
+            : undefined,
+        }
+      : {
+          action: ruleAction ?? initialRuleInstance.action,
+          parameters: removeEmpty(ruleParameters),
+        }),
+  };
+}
+
+export function useUpdateRuleInstance(
+  onRuleInstanceUpdated?: (ruleInstance: RuleInstance) => void,
+) {
+  const api = useApi();
+  return useMutation<RuleInstance, unknown, RuleInstance>(
+    async (ruleInstance: RuleInstance) => {
+      const gg = await api.putRuleInstancesRuleInstanceId({
+        ruleInstanceId: ruleInstance.id!,
+        RuleInstance: ruleInstance,
+      });
+      console.log(gg);
+      return gg;
+    },
+    {
+      onSuccess: async (updatedRuleInstance) => {
+        if (onRuleInstanceUpdated) {
+          onRuleInstanceUpdated(updatedRuleInstance);
+        }
+        message.success(`Rule updated - ${updatedRuleInstance.ruleId} (${updatedRuleInstance.id})`);
+      },
+      onError: async (err) => {
+        message.fatal(`Unable to update the rule - ${getErrorMessage(err)}`, err);
+      },
+    },
+  );
+}
+
+export function useCreateRuleInstance(
+  onRuleInstanceCreated?: (ruleInstance: RuleInstance) => void,
+) {
+  const api = useApi();
+  return useMutation<RuleInstance, unknown, RuleInstance>(
+    async (ruleInstance: RuleInstance) => {
+      return await api.postRuleInstances({
+        RuleInstance: ruleInstance,
+      });
+    },
+    {
+      onSuccess: async (newRuleInstance) => {
+        if (onRuleInstanceCreated) {
+          onRuleInstanceCreated(newRuleInstance);
+        }
+        message.success(`Rule created - ${newRuleInstance.ruleId} (${newRuleInstance.id})`);
+      },
+      onError: async (err) => {
+        message.fatal(`Unable to create the rule - ${getErrorMessage(err)}`, err);
+      },
+    },
+  );
+}

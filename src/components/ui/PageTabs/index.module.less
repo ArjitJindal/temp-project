@@ -12,6 +12,33 @@
     }
   }
 
+  &.isPrimary {
+    :global {
+      .ant-tabs-tab-btn {
+        color: #fff !important;
+      }
+      .ant-tabs-ink-bar {
+        background-color: #fff;
+      }
+    }
+  }
+
+  &:not(.isPrimary) {
+    :global {
+      .ant-tabs-tab-active {
+        .ant-tabs-tab-btn {
+          color: @fr-colors-brandBlue !important;
+        }
+        .ant-tabs-ink-bar {
+          background-color: @fr-colors-brandBlue;
+        }
+      }
+      .ant-tabs-tab-btn {
+        color: @fr-color-black-1 !important;
+      }
+    }
+  }
+
   &.isSticky {
     :global {
       > .ant-tabs-nav {
@@ -43,7 +70,6 @@
         > .ant-tabs-nav-list {
           > .ant-tabs-tab {
             > .ant-tabs-tab-btn {
-              color: #fff !important;
               font-size: 16px !important;
             }
           }
@@ -53,11 +79,6 @@
 
     > .ant-tabs-nav::before {
       border-bottom: 0 !important;
-    }
-
-    > .ant-tabs-nav .ant-tabs-ink-bar {
-      background: white;
-      border: 1px solid rgba(255, 255, 255, 0.85);
     }
   }
 }

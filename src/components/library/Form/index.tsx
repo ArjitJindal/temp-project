@@ -1,4 +1,4 @@
-import React, { useImperativeHandle, useState } from 'react';
+import React, { useImperativeHandle, useRef, useState } from 'react';
 import { FieldValidators, Validator } from './utils/validation/types';
 import { FieldMeta, FormContext, FormContextValue } from '@/components/library/Form/context';
 import { useDeepEqualEffect, usePrevious } from '@/utils/hooks';
@@ -6,7 +6,10 @@ import { isEqual } from '@/utils/lang';
 import { checkFormValid, validateForm } from '@/components/library/Form/utils/validation/utils';
 
 export interface FormRef<FormValues> {
+  getValues: () => FormValues;
   setValues: (formValues: FormValues) => void;
+  validate: (externalFormValues?: FormValues) => boolean;
+  submit: () => void;
 }
 
 interface Props<FormValues> {
@@ -35,12 +38,24 @@ function Form<FormValues>(props: Props<FormValues>, ref: React.Ref<FormRef<FormV
   } = props;
   const [formValues, setFormValues] = useState<FormValues>(initialValues);
   const [fieldMeta, setFieldsMeta] = useState<{ [key: string]: FieldMeta }>({});
+  const formRef = useRef<HTMLFormElement>(null);
 
   useImperativeHandle(
     ref,
     (): FormRef<FormValues> => ({
+      getValues: (): FormValues => formValues,
       setValues: (formValues: FormValues) => {
         setFormValues(formValues);
+      },
+      validate: (externalFormValues?: FormValues) => {
+        return (
+          validateForm(externalFormValues ?? formValues, formValidators, fieldValidators) == null
+        );
+      },
+      submit: () => {
+        onSubmit?.(formValues, {
+          isValid: checkFormValid(formValues, formValidators, fieldValidators),
+        });
       },
     }),
   );
@@ -76,12 +91,11 @@ function Form<FormValues>(props: Props<FormValues>, ref: React.Ref<FormRef<FormV
   return (
     <form
       id={id}
+      ref={formRef}
       className={className}
       onSubmit={(e) => {
         e.preventDefault();
-        onSubmit?.(formValues, {
-          isValid: checkFormValid(formValues, formValidators, fieldValidators),
-        });
+        formRef.current?.submit();
       }}
     >
       <FormContext.Provider value={formContext as FormContextValue<unknown>}>

@@ -1,422 +1,497 @@
-import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { EditOutlined } from '@ant-design/icons';
-import s from './style.module.less';
-import TransactionIcon from './transaction-icon.react.svg';
-import { message } from '@/components/library/Message';
-import Button from '@/components/library/Button';
-import BasicDetailsStep, {
-  FormValues as BasicDetailsStepFormValues,
-  INITIAL_VALUES as BASIC_DETAILS_STEP_INITIAL_VALUES,
-} from '@/pages/rules/RuleConfigurationDrawer/steps/BasicDetailsStep';
-import RuleParametersStep, {
-  FormValues as RuleParametersStepFormValues,
-  INITIAL_VALUES as RULE_PARAMETERS_STEP_INITIAL_VALUES,
-} from '@/pages/rules/RuleConfigurationDrawer/steps/RuleParametersStep';
-import { Rule } from '@/apis';
-import Stepper from '@/components/library/Stepper';
-import Drawer from '@/components/library/Drawer';
-import StandardFiltersStep, {
-  FormValues as StandardFiltersStepFormValues,
-  INITIAL_VALUES as STANDARD_FILTERS_STEP_INITIAL_VALUES,
-} from '@/pages/rules/RuleConfigurationDrawer/steps/StandardFiltersStep';
-import VerticalMenu from '@/components/library/VerticalMenu';
-import Form from '@/components/library/Form';
-import { useId } from '@/utils/hooks';
-import NestedForm from '@/components/library/Form/NestedForm';
-import HistoryLineIcon from '@/components/ui/icons/Remix/system/history-line.react.svg';
-import { notEmpty } from '@/components/library/Form/utils/validation/basicValidators';
-import { validateField } from '@/components/library/Form/utils/validation/utils';
+import { usePrevious } from 'ahooks';
+import { Tabs, Tooltip } from 'antd';
+import _ from 'lodash';
+import { useMutation } from '@tanstack/react-query';
 import {
-  getOrderedProps,
-  makeDefaultState,
-  makeValidators,
-} from '@/pages/rules/RuleConfigurationDrawer/JsonSchemaEditor/utils';
-import User3LineIcon from '@/components/ui/icons/Remix/user/user-3-line.react.svg';
-import EarthLineIcon from '@/components/ui/icons/Remix/map/earth-line.react.svg';
-import { useFeatureEnabled } from '@/components/AppWrapper/Providers/SettingsProvider';
+  formValuesToRuleInstance,
+  ruleInstanceToFormValues,
+  useCreateRuleInstance,
+  useUpdateRuleInstance,
+} from '../utils';
+import s from './style.module.less';
+import RuleConfigurationForm, {
+  RULE_CONFIGURATION_STEPS,
+  RuleConfigurationFormValues,
+} from './RuleConfigurationForm';
+import { SimulationStatistics } from './SimulationStatistics';
+import AddLineIcon from '@/components/ui/icons/Remix/system/add-line.react.svg';
+import { isSuccess } from '@/utils/asyncResource';
+import Button from '@/components/library/Button';
+import {
+  Rule,
+  RuleInstance,
+  SimulationBeaconJob,
+  SimulationBeaconParameters,
+  SimulationBeaconParametersRequest,
+  SimulationIteration,
+  SimulationPostResponse,
+} from '@/apis';
+import Drawer from '@/components/library/Drawer';
 import StepButtons from '@/components/library/StepButtons';
-import { ChangeJsonSchemaEditorSettings } from '@/pages/rules/RuleConfigurationDrawer/JsonSchemaEditor/settings';
-
-const BASIC_DETAILS_STEP = 'basic_details';
-const STANDARD_FILTERS_STEP = 'standard_filters';
-const RULE_PARAMETERS_STEP = 'rule_parameters';
-
-export interface FormValues {
-  basicDetailsStep: BasicDetailsStepFormValues;
-  standardFiltersStep: StandardFiltersStepFormValues;
-  ruleParametersStep: RuleParametersStepFormValues;
-}
+import { FormRef } from '@/components/library/Form';
+import PageTabs from '@/components/ui/PageTabs';
+import { useFeatureEnabled } from '@/components/AppWrapper/Providers/SettingsProvider';
+import { useApi } from '@/api';
+import { message } from '@/components/library/Message';
+import { LoadingCard } from '@/components/ui/Card';
+import { SIMULATION_JOB } from '@/utils/queries/keys';
+import { H4 } from '@/components/ui/Typography';
+import Label from '@/components/library/Label';
+import { getErrorMessage } from '@/utils/lang';
+import { useQuery } from '@/utils/queries/hooks';
 
 interface RuleConfigurationDrawerProps {
-  rule: Rule | null;
+  rule?: Rule | null;
+  ruleInstance?: RuleInstance;
   isVisible: boolean;
-  isSubmitting: boolean;
-  formInitialValues?: Partial<FormValues>;
   onChangeVisibility: (isVisible: boolean) => void;
-  onSubmit: (formValues: FormValues) => void;
   readOnly?: boolean;
   isClickAwayEnabled?: boolean;
-  changeToEditMode?: () => void;
+  onChangeToEditMode?: () => void;
+  onRuleInstanceUpdated?: (ruleInstance: RuleInstance) => void;
   type: 'EDIT' | 'CREATE';
 }
 
 export default function RuleConfigurationDrawer(props: RuleConfigurationDrawerProps) {
   const {
     isVisible,
-    isSubmitting,
-    formInitialValues,
     onChangeVisibility,
     rule,
-    onSubmit,
     readOnly = false,
+    ruleInstance,
+    type,
+    onRuleInstanceUpdated,
   } = props;
+  const [activeStepKey, setActiveStepKey] = useState(RULE_CONFIGURATION_STEPS[0]);
+  const activeStepIndex = RULE_CONFIGURATION_STEPS.findIndex((key) => key === activeStepKey);
+  const formRef = useRef<FormRef<RuleConfigurationFormValues>>(null);
   const isPulseEnabled = useFeatureEnabled('PULSE');
-
-  const defaultInitialValues = useDefaultInitialValues(rule);
-
-  const orderedProps = getOrderedProps(rule?.parametersSchema);
-
-  let initialValues: FormValues;
-  if (formInitialValues != null) {
-    initialValues = {
-      basicDetailsStep: BASIC_DETAILS_STEP_INITIAL_VALUES,
-      standardFiltersStep: STANDARD_FILTERS_STEP_INITIAL_VALUES,
-      ruleParametersStep: RULE_PARAMETERS_STEP_INITIAL_VALUES,
-      ...formInitialValues,
-    };
-  } else {
-    initialValues = defaultInitialValues;
-  }
-
-  const [activeStepKey, setActiveStepKey] = useState(BASIC_DETAILS_STEP);
-  const [activeTabKey, setActiveTabKey] = useState('rule_details');
-  const [alwaysShowErrors, setAlwaysShowErrors] = useState(false);
-
-  useEffect(() => {
-    if (!isVisible) {
-      setActiveStepKey(BASIC_DETAILS_STEP);
-      setActiveTabKey('rule_details');
-      setAlwaysShowErrors(false);
-    }
-  }, [isVisible]);
-
-  const formId = useId(`form-`);
-
-  const ruleParametersValidators = makeValidators(orderedProps);
-  const fieldValidators = useMemo(() => {
-    return {
-      basicDetailsStep: {},
-      standardFiltersStep: {},
-      ruleParametersStep: {
-        riskLevelActions: isPulseEnabled
-          ? {
-              VERY_HIGH: notEmpty,
-              HIGH: notEmpty,
-              MEDIUM: notEmpty,
-              LOW: notEmpty,
-              VERY_LOW: notEmpty,
-            }
-          : undefined,
-        ruleAction: isPulseEnabled ? undefined : notEmpty,
-        ruleParameters: isPulseEnabled ? undefined : ruleParametersValidators,
-        riskLevelParameters: isPulseEnabled
-          ? {
-              VERY_HIGH: ruleParametersValidators,
-              HIGH: ruleParametersValidators,
-              MEDIUM: ruleParametersValidators,
-              LOW: ruleParametersValidators,
-              VERY_LOW: ruleParametersValidators,
-            }
-          : undefined,
-      },
-    };
-  }, [isPulseEnabled, ruleParametersValidators]);
-  const [formState, setFormState] = useState<FormValues>(initialValues);
-
-  const STEPS = useMemo(
-    () => [
-      {
-        key: BASIC_DETAILS_STEP,
-        title: 'Basic details',
-        isUnfilled:
-          validateField(fieldValidators.basicDetailsStep, formState?.basicDetailsStep) != null,
-        description: 'Configure the basic details for this rule',
-        tabs: [{ key: 'rule_details', title: 'Rule details' }],
-      },
-      {
-        key: STANDARD_FILTERS_STEP,
-        title: 'Standard filters',
-        isOptional: true,
-        isUnfilled:
-          validateField(fieldValidators.standardFiltersStep, formState?.standardFiltersStep) !=
-          null,
-        description: 'Configure filters that are common for all the rules',
-        tabs: [
-          { key: 'user_details', icon: <User3LineIcon />, title: 'User details' },
-          { key: 'geography_details', icon: <EarthLineIcon />, title: 'Geography details' },
-          ...(rule?.type === 'TRANSACTION'
-            ? [
-                {
-                  key: 'transaction_details',
-                  icon: <TransactionIcon />,
-                  title: 'Transaction details',
-                },
-                {
-                  key: 'transaction_details_historical',
-                  icon: <HistoryLineIcon />,
-                  title: 'Historical transactions',
-                },
-              ]
-            : []),
-        ],
-      },
-      {
-        key: RULE_PARAMETERS_STEP,
-        title: 'Rule parameters',
-        isUnfilled:
-          validateField(fieldValidators.ruleParametersStep, formState?.ruleParametersStep) != null,
-        description: 'Configure filters & risk thresholds that are specific for this rule',
-        tabs: isPulseEnabled
-          ? [{ key: 'risk_based_thresholds', title: 'Risk-based thresholds' }]
-          : [{ key: 'rule_specific_filters', title: 'Rule-specific filters' }],
-      },
-    ],
-    [
-      fieldValidators.basicDetailsStep,
-      fieldValidators.standardFiltersStep,
-      fieldValidators.ruleParametersStep,
-      formState?.basicDetailsStep,
-      formState?.standardFiltersStep,
-      formState?.ruleParametersStep,
-      rule?.type,
-      isPulseEnabled,
-    ],
-  );
-
-  const activeStepIndex = STEPS.findIndex(({ key }) => key === activeStepKey);
-
-  const handleSubmit = (formValues: FormValues, { isValid }: { isValid: boolean }) => {
-    if (isValid) {
-      onSubmit(formValues);
-    } else {
-      message.warn('Please, make sure that all required fields are filled and values are valid!');
-      setAlwaysShowErrors(true);
-    }
-  };
-
-  const handleStepChange = useCallback(
-    (stepKey: string) => {
-      setActiveStepKey(stepKey);
-      setActiveTabKey(STEPS.find(({ key }) => key === stepKey)?.tabs[0]?.key || '');
+  const formInitialValues = ruleInstanceToFormValues(isPulseEnabled, ruleInstance);
+  const prevIsVisible = usePrevious(isVisible);
+  const updateRuleInstanceMutation = useUpdateRuleInstance(onRuleInstanceUpdated);
+  const createRuleInstanceMutation = useCreateRuleInstance(onRuleInstanceUpdated);
+  const handleSubmit = useCallback(
+    (formValues: RuleConfigurationFormValues) => {
+      if (type === 'EDIT' && ruleInstance) {
+        updateRuleInstanceMutation.mutate(
+          formValuesToRuleInstance(ruleInstance, formValues, isPulseEnabled),
+        );
+      } else if (type === 'CREATE' && rule) {
+        createRuleInstanceMutation.mutate(
+          formValuesToRuleInstance({ ruleId: rule.id } as RuleInstance, formValues, isPulseEnabled),
+        );
+      }
     },
-    [STEPS, setActiveStepKey, setActiveTabKey],
+    [
+      createRuleInstanceMutation,
+      isPulseEnabled,
+      rule,
+      ruleInstance,
+      type,
+      updateRuleInstanceMutation,
+    ],
   );
+  useEffect(() => {
+    if (prevIsVisible !== isVisible) {
+      setActiveStepKey(RULE_CONFIGURATION_STEPS[0]);
+    }
+  }, [activeStepKey, isVisible, prevIsVisible]);
 
   return (
-    <Form<FormValues>
-      key={`${isVisible}`}
-      id={formId}
-      initialValues={initialValues}
-      onSubmit={handleSubmit}
-      className={s.root}
-      fieldValidators={fieldValidators}
-      alwaysShowErrors={alwaysShowErrors}
-      onChange={({ values }) => {
-        setFormState(values);
-      }}
+    <Drawer
+      isVisible={isVisible}
+      onChangeVisibility={onChangeVisibility}
+      title={
+        props.type === 'EDIT'
+          ? `${rule?.id} (${formInitialValues?.basicDetailsStep?.ruleInstanceId})`
+          : 'Configure rule'
+      }
+      description={
+        readOnly
+          ? props.type === 'EDIT'
+            ? `View the configured parameters of the rule. Click on ‘Edit’ to update the paramerters.`
+            : 'Read all relevant rule information'
+          : props.type === 'EDIT'
+          ? `Edit the parameters of the rule. Click on ‘Save’ to update the rule`
+          : 'Add all relevant information to configure this rule'
+      }
+      isClickAwayEnabled={props.isClickAwayEnabled}
+      footer={
+        <div className={s.footer}>
+          <StepButtons
+            nextDisabled={activeStepIndex === RULE_CONFIGURATION_STEPS.length - 1}
+            prevDisabled={activeStepIndex === 0}
+            onNext={() => {
+              const nextStep = RULE_CONFIGURATION_STEPS[activeStepIndex + 1];
+              setActiveStepKey(nextStep);
+            }}
+            onPrevious={() => {
+              const prevStep = RULE_CONFIGURATION_STEPS[activeStepIndex - 1];
+              setActiveStepKey(prevStep);
+            }}
+          />
+          <div className={s.footerButtons}>
+            <Button type="TETRIARY" onClick={() => onChangeVisibility(false)}>
+              Cancel
+            </Button>
+            {!readOnly || type === 'CREATE' ? (
+              <Button
+                htmlType="submit"
+                isLoading={
+                  updateRuleInstanceMutation.isLoading || createRuleInstanceMutation.isLoading
+                }
+                isDisabled={readOnly}
+                onClick={() => {
+                  formRef?.current?.submit();
+                }}
+              >
+                {props.type === 'CREATE' ? 'Done' : 'Save'}
+              </Button>
+            ) : (
+              <Button
+                type="SECONDARY"
+                onClick={() => {
+                  if (props.onChangeToEditMode) {
+                    props.onChangeToEditMode();
+                  }
+                }}
+                icon={<EditOutlined />}
+              >
+                Edit
+              </Button>
+            )}
+          </div>
+        </div>
+      }
     >
-      <Drawer
-        isVisible={isVisible}
-        onChangeVisibility={onChangeVisibility}
-        title={
-          props.type === 'EDIT'
-            ? `${rule?.id} (${formInitialValues?.basicDetailsStep?.ruleInstanceId})`
-            : 'Configure rule'
-        }
-        description={
-          readOnly
-            ? props.type === 'EDIT'
-              ? `View the configured parameters of the rule. Click on ‘Edit’ to update the paramerters.`
-              : 'Read all relevant rule information'
-            : props.type === 'EDIT'
-            ? `Edit the parameters of the rule. Click on ‘Save’ to update the rule`
-            : 'Add all relevant information to configure this rule'
-        }
-        isClickAwayEnabled={props.isClickAwayEnabled}
-        footer={
-          <div className={s.footer}>
+      <RuleConfigurationForm
+        key={`${isVisible}`}
+        ref={formRef}
+        rule={rule}
+        formInitialValues={formInitialValues}
+        readOnly={readOnly}
+        activeStepKey={activeStepKey}
+        onSubmit={handleSubmit}
+        onActiveStepKeyChange={setActiveStepKey}
+      />
+    </Drawer>
+  );
+}
+
+const DUPLICATE_TAB_KEY = 'duplicate';
+const MAX_SIMULATION_ITERATIONS = 3;
+const POLL_STATUS_INTERVAL_SECONDS = 15;
+const DEFAULT_ITERATION: Omit<SimulationBeaconParameters, 'ruleInstance'> = {
+  type: 'BEACON',
+  name: 'Iteration 1',
+  description: '',
+  sampling: {
+    transactionsCount: 10000,
+  },
+};
+
+function allIterationsCompleted(iterations: SimulationIteration[]): boolean {
+  return iterations.every(
+    (iteration) =>
+      iteration.latestStatus.status === 'SUCCESS' || iteration.latestStatus.status === 'FAILED',
+  );
+}
+
+interface RuleConfigurationSimulationDrawerProps {
+  rule?: Rule;
+  ruleInstance: RuleInstance;
+  isVisible: boolean;
+  jobId?: string;
+  onChangeVisibility: (isVisible: boolean) => void;
+  onRuleInstanceUpdated?: (ruleInstance: RuleInstance) => void;
+}
+export function RuleConfigurationSimulationDrawer(props: RuleConfigurationSimulationDrawerProps) {
+  const { isVisible, ruleInstance, onChangeVisibility, onRuleInstanceUpdated, rule } = props;
+  const isPulseEnabled = useFeatureEnabled('PULSE');
+  const [showValidationError, setShowValidationError] = useState(false);
+  const [activeTabIndex, setActiveTabIndex] = useState(0);
+  const [activeStepKey, setActiveStepKey] = useState(RULE_CONFIGURATION_STEPS[0]);
+  const [newIterations, setNewIterations] = useState<SimulationBeaconParameters[]>([
+    {
+      ...DEFAULT_ITERATION,
+      ruleInstance,
+    },
+  ]);
+  const [createdJobId, setCreatedJobId] = useState<string | undefined>();
+  const jobId = useMemo(() => createdJobId ?? props.jobId, [createdJobId, props.jobId]);
+  const activeStepIndex = RULE_CONFIGURATION_STEPS.findIndex((key) => key === activeStepKey);
+  const formRef1 = useRef<FormRef<RuleConfigurationFormValues>>(null);
+  const formRef2 = useRef<FormRef<RuleConfigurationFormValues>>(null);
+  const formRef3 = useRef<FormRef<RuleConfigurationFormValues>>(null);
+  const iterationFormRefs = useMemo(
+    () => [formRef1, formRef2, formRef3],
+    [formRef1, formRef2, formRef3],
+  );
+  const syncFormValues = useCallback(() => {
+    const updatedIterations = newIterations.map((iteration, i) => {
+      const formValues = iterationFormRefs[i].current?.getValues();
+      return formValues
+        ? {
+            ...iteration,
+            name: formValues.basicDetailsStep.simulationIterationName || '',
+            description: formValues.basicDetailsStep.simulationIterationDescription || '',
+            ruleInstance: iterationFormRefs[i].current
+              ? formValuesToRuleInstance(ruleInstance, formValues, isPulseEnabled)
+              : iteration.ruleInstance ?? ruleInstance,
+          }
+        : iteration;
+    });
+    setNewIterations(updatedIterations);
+    return updatedIterations;
+  }, [isPulseEnabled, iterationFormRefs, newIterations, ruleInstance]);
+  const handleDuplicate = useCallback(() => {
+    const newIterations = syncFormValues();
+    const activeIteration = newIterations[activeTabIndex];
+    if (activeIteration) {
+      setNewIterations([...newIterations, _.cloneDeep(activeIteration)]);
+    }
+  }, [activeTabIndex, syncFormValues]);
+  const handleChangeIterationTab = useCallback(
+    (newActiveTabKey) => {
+      const newActiveTabIndex = Number(newActiveTabKey);
+      if (newActiveTabKey !== DUPLICATE_TAB_KEY) {
+        syncFormValues();
+        setActiveTabIndex(newActiveTabIndex);
+      }
+    },
+    [syncFormValues],
+  );
+  const api = useApi();
+  const updateRuleInstanceMutation = useUpdateRuleInstance(onRuleInstanceUpdated);
+  const createRuleInstanceMutation = useCreateRuleInstance(onRuleInstanceUpdated);
+  const startSimulationMutation = useMutation<
+    SimulationPostResponse,
+    unknown,
+    SimulationBeaconParameters[]
+  >(
+    async (iterations) => {
+      return api.postSimulation({
+        SimulationPulseParametersRequest___SimulationBeaconParametersRequest: {
+          type: 'BEACON',
+          parameters: iterations,
+          defaultRuleInstance: ruleInstance,
+        } as SimulationBeaconParametersRequest,
+      });
+    },
+    {
+      onSuccess: (data) => {
+        setCreatedJobId(data.jobId);
+      },
+      onError: (err: any) => {
+        message.fatal(`Unable to run simulation - ${getErrorMessage(err)}`, err);
+      },
+    },
+  );
+  const jobResult = useQuery(
+    SIMULATION_JOB(jobId!),
+    () =>
+      api.getSimulationTestId({
+        jobId: jobId!,
+      }) as Promise<SimulationBeaconJob>,
+    {
+      refetchInterval: (data) =>
+        allIterationsCompleted(data?.iterations || [])
+          ? false
+          : POLL_STATUS_INTERVAL_SECONDS * 1000,
+      enabled: Boolean(jobId),
+    },
+  );
+  const handleStartSimulation = useCallback(() => {
+    const formRef = iterationFormRefs[activeTabIndex];
+    const newIterations = syncFormValues();
+    const invalidIteration = newIterations.find(
+      (iteration) =>
+        !formRef.current?.validate(
+          ruleInstanceToFormValues(isPulseEnabled, iteration.ruleInstance),
+        ),
+    );
+    if (invalidIteration) {
+      setShowValidationError(true);
+      message.warn(
+        `Please make sure that all the required fields are filled. (${invalidIteration.name})`,
+      );
+    } else {
+      startSimulationMutation.mutate(newIterations);
+    }
+  }, [activeTabIndex, isPulseEnabled, iterationFormRefs, startSimulationMutation, syncFormValues]);
+
+  const prevIsVisible = usePrevious(isVisible);
+  const prevRuleInstance = usePrevious(ruleInstance);
+  useEffect(() => {
+    if (prevIsVisible !== isVisible) {
+      // Reset states
+      startSimulationMutation.reset();
+      setCreatedJobId(undefined);
+      setShowValidationError(false);
+      setActiveStepKey(RULE_CONFIGURATION_STEPS[0]);
+      setActiveTabIndex(0);
+      setNewIterations([
+        {
+          ...DEFAULT_ITERATION,
+          ruleInstance,
+        },
+      ]);
+    }
+    if (!prevRuleInstance && ruleInstance) {
+      setNewIterations([
+        {
+          ...DEFAULT_ITERATION,
+          ruleInstance,
+        },
+      ]);
+    }
+  }, [
+    activeStepKey,
+    isVisible,
+    prevIsVisible,
+    prevRuleInstance,
+    ruleInstance,
+    startSimulationMutation,
+  ]);
+  const isShowingResults = useMemo(
+    () => Boolean(startSimulationMutation.isLoading || jobId),
+    [jobId, startSimulationMutation.isLoading],
+  );
+  const iterations = useMemo(() => {
+    return jobId && isSuccess(jobResult.data)
+      ? jobResult.data?.value.iterations.map((iteration) => iteration.parameters) ?? []
+      : newIterations;
+  }, [jobId, jobResult.data, newIterations]);
+  const isLoading = useMemo(() => {
+    return Boolean(
+      startSimulationMutation.isLoading ||
+        (jobId &&
+          !(isSuccess(jobResult.data) && allIterationsCompleted(jobResult.data.value.iterations))),
+    );
+  }, [jobId, jobResult.data, startSimulationMutation.isLoading]);
+
+  return (
+    <Drawer
+      isVisible={isVisible}
+      onChangeVisibility={onChangeVisibility}
+      title={isShowingResults ? 'Simulation results' : 'New simulation'}
+      description="Run a simulation using different parameters to see how the rule performs on the existing transactions to make informed decisions."
+      isClickAwayEnabled={true}
+      footer={
+        <div className={s.footer}>
+          {jobId ? (
+            <div>{/* placeholder invisible component */}</div>
+          ) : (
             <StepButtons
-              nextDisabled={activeStepIndex >= STEPS.length - 1}
+              nextDisabled={activeStepIndex === RULE_CONFIGURATION_STEPS.length - 1}
               prevDisabled={activeStepIndex === 0}
               onNext={() => {
-                const nextStep = STEPS[activeStepIndex + 1];
-                setActiveStepKey(nextStep?.key);
-                setActiveTabKey(nextStep?.tabs[0]?.key);
+                const nextStep = RULE_CONFIGURATION_STEPS[activeStepIndex + 1];
+                setActiveStepKey(nextStep);
               }}
               onPrevious={() => {
-                const prevStep = STEPS[activeStepIndex - 1];
-                setActiveStepKey(prevStep?.key);
-                setActiveTabKey(prevStep?.tabs[0]?.key);
+                const prevStep = RULE_CONFIGURATION_STEPS[activeStepIndex - 1];
+                setActiveStepKey(prevStep);
               }}
             />
-            <div className={s.footerButtons}>
-              <Button type="TETRIARY" onClick={() => onChangeVisibility(false)}>
-                Cancel
-              </Button>
-              {!readOnly || props.type === 'CREATE' ? (
-                <SubmitButton formId={formId} isSubmitting={isSubmitting} isDisabled={readOnly}>
-                  {props.type === 'CREATE' ? 'Done' : 'Save'}
-                </SubmitButton>
-              ) : (
-                <Button
-                  type="SECONDARY"
-                  onClick={() => {
-                    if (props.changeToEditMode) {
-                      props.changeToEditMode();
-                    }
-                  }}
-                  icon={<EditOutlined />}
-                >
-                  Edit
-                </Button>
-              )}
-            </div>
-          </div>
-        }
-      >
-        <Stepper steps={STEPS} active={activeStepKey} onChange={handleStepChange}>
-          {(activeStepKey) => {
-            const activeStep = STEPS.find(({ key }) => key === activeStepKey);
-            const items = activeStep?.tabs ?? [];
-            if (rule == null) {
-              return;
-            }
-            return (
-              <VerticalMenu
-                items={items}
-                active={activeTabKey}
-                onChange={setActiveTabKey}
-                minWidth={200}
+          )}
+          <div className={s.footerButtons}>
+            <Button type="TETRIARY" onClick={() => onChangeVisibility(false)}>
+              Cancel
+            </Button>
+            {isShowingResults ? (
+              <Button
+                onClick={() => {
+                  if (iterations[activeTabIndex]?.ruleInstance?.id) {
+                    updateRuleInstanceMutation.mutate(iterations[activeTabIndex]?.ruleInstance);
+                  } else {
+                    createRuleInstanceMutation.mutate(iterations[activeTabIndex]?.ruleInstance);
+                  }
+                }}
+                isDisabled={isLoading}
               >
-                <div className={readOnly ? s.readOnlyScrollContainer : s.scrollContainer}>
-                  <div className={s.tabContent}>
-                    <ChangeJsonSchemaEditorSettings
-                      settings={{ showOptionalMark: !activeStep?.isOptional }}
-                    >
-                      {activeStepKey === BASIC_DETAILS_STEP && (
-                        <div className={readOnly ? s.readOnlyFormContent : ''}>
-                          <NestedForm<FormValues> name={'basicDetailsStep'}>
-                            <BasicDetailsStep activeTab={activeTabKey} rule={rule} />
-                          </NestedForm>
-                        </div>
-                      )}
-                      {activeStepKey === STANDARD_FILTERS_STEP && (
-                        <div className={readOnly ? s.readOnlyFormContent : ''}>
-                          <NestedForm<FormValues> name={'standardFiltersStep'}>
-                            <StandardFiltersStep
-                              activeTab={activeTabKey}
-                              rule={rule}
-                              standardFilters={formState?.standardFiltersStep}
-                              setFormValues={setFormState}
-                            />
-                          </NestedForm>
-                        </div>
-                      )}
-                      {activeStepKey === RULE_PARAMETERS_STEP && (
-                        <div className={readOnly ? s.readOnlyFormContent : ''}>
-                          <NestedForm<FormValues> name={'ruleParametersStep'}>
-                            <RuleParametersStep
-                              activeTab={activeTabKey}
-                              rule={rule}
-                              defaultInitialValues={defaultInitialValues.ruleParametersStep}
-                            />
-                          </NestedForm>
-                        </div>
-                      )}
-                    </ChangeJsonSchemaEditorSettings>
-                  </div>
-                </div>
-              </VerticalMenu>
-            );
-          }}
-        </Stepper>
-      </Drawer>
-    </Form>
-  );
-}
-
-function SubmitButton(props: {
-  formId: string;
-  isSubmitting: boolean;
-  isDisabled: boolean;
-  children: React.ReactNode;
-}) {
-  return (
-    <Button
-      htmlAttrs={{ form: props.formId }}
-      htmlType="submit"
-      isLoading={props.isSubmitting}
-      isDisabled={props.isDisabled}
+                {iterations[activeTabIndex]?.ruleInstance?.id ? 'Update rule' : 'Create rule'}
+              </Button>
+            ) : (
+              <Button isLoading={startSimulationMutation.isLoading} onClick={handleStartSimulation}>
+                Run simulation
+              </Button>
+            )}
+          </div>
+        </div>
+      }
     >
-      {props.children}
-    </Button>
+      <PageTabs
+        key={`${isVisible}`}
+        isPrimary={false}
+        type="card"
+        activeKey={`${activeTabIndex}`}
+        onChange={handleChangeIterationTab}
+        destroyInactiveTabPane
+      >
+        {iterations.map((iteration, i) => {
+          return (
+            <Tabs.TabPane tab={`Iteration ${i + 1}`} key={`${i}`}>
+              {isLoading ? (
+                <LoadingCard loadingMessage="Running the simulation for a subset of transactions & generating results for you." />
+              ) : (
+                <>
+                  {jobId && (
+                    <div>
+                      <Label label={iteration.name}>{iteration.description}</Label>
+                    </div>
+                  )}
+                  {jobId && (
+                    <div className={s.result}>
+                      {isSuccess(jobResult.data) ? (
+                        <SimulationStatistics iteration={jobResult.data.value.iterations[i]} />
+                      ) : undefined}
+                      <H4>Changed rule parameters</H4>
+                    </div>
+                  )}
+                  <RuleConfigurationForm
+                    key={iteration.ruleInstance?.ruleId}
+                    readOnly={Boolean(jobId)}
+                    ref={iterationFormRefs[i]}
+                    rule={rule}
+                    formInitialValues={_.merge(
+                      ruleInstanceToFormValues(isPulseEnabled, iteration.ruleInstance),
+                      {
+                        basicDetailsStep: {
+                          simulationIterationName: iteration.name,
+                          simulationIterationDescription: iteration.description,
+                        },
+                      },
+                    )}
+                    simulationMode={true}
+                    activeStepKey={activeStepKey}
+                    showValidationError={showValidationError}
+                    onSubmit={() => {}}
+                    onActiveStepKeyChange={setActiveStepKey}
+                  />
+                </>
+              )}
+            </Tabs.TabPane>
+          );
+        })}
+        {iterations.length < MAX_SIMULATION_ITERATIONS && !isShowingResults && (
+          <Tabs.TabPane
+            tab={
+              <Tooltip
+                title="You can simulate a maximum of 3 iterations for this rule at once."
+                placement="bottom"
+              >
+                <div onClick={handleDuplicate} className={s.duplicateButton}>
+                  <AddLineIcon width={20} /> <span>Duplicate</span>
+                </div>
+              </Tooltip>
+            }
+            key={DUPLICATE_TAB_KEY}
+          ></Tabs.TabPane>
+        )}
+      </PageTabs>
+    </Drawer>
   );
-}
-
-function useDefaultInitialValues(rule: Rule | null) {
-  const isPulseEnabled = useFeatureEnabled('PULSE');
-
-  return useMemo(() => {
-    const orderedProps = getOrderedProps(rule?.parametersSchema);
-
-    const ruleParametersDefaultState = makeDefaultState(orderedProps);
-    const ruleParametersStep = {
-      ...RULE_PARAMETERS_STEP_INITIAL_VALUES,
-    };
-    if (isPulseEnabled) {
-      ruleParametersStep.riskLevelParameters = rule?.defaultRiskLevelParameters ?? {
-        VERY_HIGH: rule?.defaultParameters ?? ruleParametersDefaultState,
-        HIGH: rule?.defaultParameters ?? ruleParametersDefaultState,
-        MEDIUM: rule?.defaultParameters ?? ruleParametersDefaultState,
-        LOW: rule?.defaultParameters ?? ruleParametersDefaultState,
-        VERY_LOW: rule?.defaultParameters ?? ruleParametersDefaultState,
-      };
-      ruleParametersStep.riskLevelActions = rule?.defaultRiskLevelActions ?? {
-        VERY_HIGH: 'FLAG',
-        HIGH: 'FLAG',
-        MEDIUM: 'FLAG',
-        LOW: 'FLAG',
-        VERY_LOW: 'FLAG',
-      };
-    } else {
-      ruleParametersStep.ruleAction =
-        rule?.defaultAction ?? RULE_PARAMETERS_STEP_INITIAL_VALUES.ruleAction;
-      ruleParametersStep.ruleParameters =
-        rule?.defaultParameters ?? RULE_PARAMETERS_STEP_INITIAL_VALUES.ruleParameters;
-    }
-    return {
-      basicDetailsStep: {
-        ruleName: rule?.name,
-        ruleDescription: rule?.description,
-        ruleNature: rule?.defaultNature ?? BASIC_DETAILS_STEP_INITIAL_VALUES.ruleNature,
-        casePriority: rule?.defaultCasePriority ?? BASIC_DETAILS_STEP_INITIAL_VALUES.casePriority,
-        ruleLabels: rule?.labels ?? BASIC_DETAILS_STEP_INITIAL_VALUES.ruleLabels,
-      },
-      standardFiltersStep: rule?.defaultFilters ?? STANDARD_FILTERS_STEP_INITIAL_VALUES,
-      ruleParametersStep: ruleParametersStep,
-    };
-  }, [
-    isPulseEnabled,
-    rule?.defaultAction,
-    rule?.defaultCasePriority,
-    rule?.defaultFilters,
-    rule?.defaultNature,
-    rule?.defaultParameters,
-    rule?.defaultRiskLevelActions,
-    rule?.defaultRiskLevelParameters,
-    rule?.description,
-    rule?.name,
-    rule?.parametersSchema,
-    rule?.labels,
-  ]);
 }

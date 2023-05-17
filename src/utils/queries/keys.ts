@@ -132,13 +132,11 @@ export const USERS_ITEM_RISKS_KRS = (userId: string): QueryKey => [
 ];
 export const ALERT_LIST = (params?: AnyParameters): QueryKey =>
   ['alerts', 'list', params].filter(Boolean);
-export const SIMULATION_PULSE_JOB = (jobId: string): QueryKey => ['simulation', 'pulse', jobId];
-export const SIMULATION_PULSE_JOB_ITERATION_RESULT = (
-  taskId: string,
-  params?: AnyParameters,
-): QueryKey => ['simulation', 'pulse', 'iteration', taskId, params].filter(Boolean);
-export const SIMULATION_PULSE_JOB_LIST = (params?: AnyParameters): QueryKey =>
-  ['simulation', 'pulse', params].filter(Boolean);
+export const SIMULATION_JOB = (jobId: string): QueryKey => ['simulation', jobId];
+export const SIMULATION_JOB_ITERATION_RESULT = (taskId: string, params?: AnyParameters): QueryKey =>
+  ['simulation', 'iteration', taskId, params].filter(Boolean);
+export const SIMULATION_JOBS = (params?: AnyParameters): QueryKey =>
+  ['simulation', params].filter(Boolean);
 export const ALERT_ITEM_TRANSACTION_LIST = (alertId: string, params?: AnyParameters): QueryKey =>
   ['alerts', 'item', alertId, 'transactions', 'list', params].filter(Boolean);
 export const ALERT_ITEM_SANCTIONS_MATCH_LIST = (
