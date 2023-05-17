@@ -342,7 +342,7 @@ const _RULES_LIBRARY: Array<
       merchantNames: [],
     }
     const defaultFilters: TransactionFilters = {
-      paymentMethod: 'WALLET',
+      paymentMethods: ['WALLET'],
     }
     return {
       id: 'R-13',
@@ -379,7 +379,7 @@ const _RULES_LIBRARY: Array<
       ],
     }
     const defaultFilters: PaymentMethodRuleFilterParameter = {
-      paymentMethod: 'CARD',
+      paymentMethods: ['CARD'],
     }
     return {
       id: 'R-22',
@@ -507,7 +507,7 @@ const _RULES_LIBRARY: Array<
       timeWindowInDays: 1,
     }
     const defaultFilters: TransactionFilters = {
-      paymentMethod: 'CARD',
+      paymentMethods: ['CARD'],
     }
     return {
       id: 'R-53',
@@ -536,7 +536,7 @@ const _RULES_LIBRARY: Array<
       timeWindowInDays: 1,
     }
     const defaultFilters: TransactionFilters = {
-      paymentMethod: 'CARD',
+      paymentMethods: ['CARD'],
     }
     return {
       id: 'R-54',
@@ -699,7 +699,7 @@ const _RULES_LIBRARY: Array<
       allowedCountries: [],
     }
     const defaultFilters: TransactionFilters = {
-      paymentMethod: 'CARD',
+      paymentMethods: ['CARD'],
     }
     return {
       id: 'R-114',
@@ -756,7 +756,7 @@ const _RULES_LIBRARY: Array<
       allowedDistancePercentage: 30,
     }
     const defaultFilters: TransactionFilters | UserFilters = {
-      paymentMethod: 'CARD',
+      paymentMethods: ['CARD'],
       userType: 'CONSUMER',
     }
     return {

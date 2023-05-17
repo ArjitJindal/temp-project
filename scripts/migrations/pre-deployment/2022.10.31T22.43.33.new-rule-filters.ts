@@ -87,9 +87,9 @@ async function migrateOldFiltersForTenant(tenant: Tenant) {
 export const up = async () => {
   await migrateAllTenants(migrateOldFiltersForTenant)
   await addRuleFilters(['R-22', 'R-53', 'R-54', 'R-114', 'R-118'], {
-    paymentMethod: 'CARD',
+    paymentMethods: ['CARD'],
   })
-  await addRuleFilters(['R-13'], { paymentMethod: 'WALLET' })
+  await addRuleFilters(['R-13'], { paymentMethods: ['WALLET'] })
   await addRuleFilters(['R-118'], { userType: 'CONSUMER' })
 }
 

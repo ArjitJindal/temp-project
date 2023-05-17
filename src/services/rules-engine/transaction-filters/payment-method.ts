@@ -1,21 +1,37 @@
 import { JSONSchemaType } from 'ajv'
-import { PAYMENT_METHOD_OPTIONAL_SCHEMA } from '../utils/rule-parameter-schemas'
+import { PAYMENT_METHODS_OPTIONAL_SCHEMA } from '../utils/rule-parameter-schemas'
 import { TransactionRuleFilter } from './filter'
 import { PaymentMethod } from '@/@types/openapi-public/PaymentMethod'
 import { Transaction } from '@/@types/openapi-public/Transaction'
 
 export function paymentMethodRuleFilterPredicate(
   transaction: Transaction,
-  paymentMethod?: PaymentMethod
-) {
-  return (
-    transaction.originPaymentDetails?.method === paymentMethod ||
-    transaction.destinationPaymentDetails?.method === paymentMethod
-  )
+  paymentMethods?: PaymentMethod[]
+): boolean {
+  if (!paymentMethods?.length) {
+    return true
+  }
+
+  const originPaymentMethod = transaction?.originPaymentDetails?.method
+  const destinationPaymentMethod =
+    transaction?.destinationPaymentDetails?.method
+
+  if (originPaymentMethod && paymentMethods.includes(originPaymentMethod)) {
+    return true
+  }
+
+  if (
+    destinationPaymentMethod &&
+    paymentMethods.includes(destinationPaymentMethod)
+  ) {
+    return true
+  }
+
+  return false
 }
 
 export type PaymentMethodRuleFilterParameter = {
-  paymentMethod?: PaymentMethod
+  paymentMethods?: PaymentMethod[]
 }
 
 export class PaymentMethodRuleFilter extends TransactionRuleFilter<PaymentMethodRuleFilterParameter> {
@@ -23,7 +39,7 @@ export class PaymentMethodRuleFilter extends TransactionRuleFilter<PaymentMethod
     return {
       type: 'object',
       properties: {
-        paymentMethod: PAYMENT_METHOD_OPTIONAL_SCHEMA({
+        paymentMethods: PAYMENT_METHODS_OPTIONAL_SCHEMA({
           uiSchema: { group: 'transaction' },
         }),
       },
@@ -33,7 +49,7 @@ export class PaymentMethodRuleFilter extends TransactionRuleFilter<PaymentMethod
   public async predicate(): Promise<boolean> {
     return paymentMethodRuleFilterPredicate(
       this.transaction,
-      this.parameters.paymentMethod
+      this.parameters?.paymentMethods
     )
   }
 }

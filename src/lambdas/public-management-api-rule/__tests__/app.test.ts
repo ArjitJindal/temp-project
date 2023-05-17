@@ -143,25 +143,28 @@ describe('Public Management API - Rule', () => {
     expect(response.statusCode).toEqual(200)
     const returnedSchema = JSON.parse(response.body)
     expect(returnedSchema.type).toEqual('object')
+    console.log(returnedSchema.properties.paymentMethods)
     expect(returnedSchema.properties).toMatchObject({
-      paymentMethod: {
-        type: 'string',
+      paymentMethods: {
+        type: 'array',
         'ui:schema': {
           'ui:group': 'transaction',
           'ui:subtype': 'PAYMENT_METHOD',
         },
-        title: 'Payment method',
-        enum: [
-          'ACH',
-          'CARD',
-          'IBAN',
-          'UPI',
-          'GENERIC_BANK_ACCOUNT',
-          'MPESA',
-          'SWIFT',
-          'WALLET',
-          'CHECK',
-        ],
+        title: 'Payment methods',
+        items: {
+          enum: [
+            'ACH',
+            'CARD',
+            'IBAN',
+            'UPI',
+            'GENERIC_BANK_ACCOUNT',
+            'MPESA',
+            'SWIFT',
+            'WALLET',
+            'CHECK',
+          ],
+        },
         nullable: true,
       },
     })

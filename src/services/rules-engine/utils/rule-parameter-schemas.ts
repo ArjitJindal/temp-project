@@ -247,6 +247,27 @@ export const PAYMENT_METHOD_SCHEMA = (options?: SchemaOptions) =>
     enum: PAYMENT_METHODS,
   } as const)
 
+export const PAYMENT_METHODS_SCHEMA = (options?: SchemaOptions) =>
+  ({
+    type: 'array',
+    ...uiSchema(options?.uiSchema, { subtype: 'PAYMENT_METHOD' }),
+    title: options?.title || 'Payment methods',
+    description:
+      options?.description ||
+      'Select one or more payment methods to target transactions with those payment methods',
+    items: {
+      type: 'string',
+      enum: PAYMENT_METHODS,
+    },
+    uniqueItems: true,
+  } as const)
+
+export const PAYMENT_METHODS_OPTIONAL_SCHEMA = (options?: SchemaOptions) =>
+  ({
+    ...PAYMENT_METHODS_SCHEMA(options),
+    nullable: true,
+  } as const)
+
 export const PAYMENT_METHOD_OPTIONAL_SCHEMA = (options?: SchemaOptions) =>
   ({
     ...PAYMENT_METHOD_SCHEMA(options),

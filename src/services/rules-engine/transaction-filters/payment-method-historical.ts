@@ -21,9 +21,12 @@ export class PaymentMethodHistoricalRuleFilter extends TransactionRuleFilter<Pay
   }
 
   public async predicate(): Promise<boolean> {
-    return paymentMethodRuleFilterPredicate(
-      this.transaction,
-      this.parameters.paymentMethodHistorical
-    )
+    if (!this.parameters.paymentMethodHistorical) {
+      return true
+    }
+
+    return paymentMethodRuleFilterPredicate(this.transaction, [
+      this.parameters.paymentMethodHistorical,
+    ])
   }
 }
