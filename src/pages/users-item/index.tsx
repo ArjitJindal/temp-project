@@ -124,44 +124,28 @@ function UserItem() {
                 isClosable: false,
                 isDisabled: false,
               },
-              ...(user.type === 'BUSINESS'
-                ? isMLDemoEnabled
-                  ? [
-                      {
-                        tab: 'AI Insights',
-                        key: 'ai-insights',
-                        children: <AIInsightsCard user={user} />,
-                        isClosable: false,
-                        isDisabled: false,
-                      },
-                      {
-                        tab: 'Expected Transaction Limits',
-                        key: 'expected-transaction-limits',
-                        children: (
-                          <Card.Root>
-                            <ExpectedTransactionLimits user={user} />
-                          </Card.Root>
-                        ),
-                        isClosable: false,
-                        isDisabled: false,
-                      },
-                    ]
-                  : []
-                : isMLDemoEnabled
+              ...(user.type === 'BUSINESS' && isMLDemoEnabled
                 ? [
                     {
-                      tab: 'Expected Transaction Limits',
-                      key: 'expected-transaction-limits',
-                      children: (
-                        <Card.Root>
-                          <ExpectedTransactionLimits user={user} />
-                        </Card.Root>
-                      ),
+                      tab: 'AI Insights',
+                      key: 'ai-insights',
+                      children: <AIInsightsCard user={user} />,
                       isClosable: false,
                       isDisabled: false,
                     },
                   ]
                 : []),
+              {
+                tab: 'Expected Transaction Limits',
+                key: 'expected-transaction-limits',
+                children: (
+                  <Card.Root>
+                    <ExpectedTransactionLimits user={user} />
+                  </Card.Root>
+                ),
+                isClosable: false,
+                isDisabled: false,
+              },
               {
                 tab: 'Transaction history',
                 key: 'transaction-history',
