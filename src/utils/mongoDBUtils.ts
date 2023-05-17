@@ -147,6 +147,14 @@ export const DASHBOARD_HITS_BY_USER_STATS_COLLECTION_HOURLY = (
   return `${tenantId}-dashboard-hits-by-user-stats-hourly`
 }
 
+export const DASHBOARD_TEAM_CASES_STATS_HOURLY = (tenantId: string) => {
+  return `${tenantId}-dashboard-team-cases-stats-hourly`
+}
+
+export const DASHBOARD_TEAM_ALERTS_STATS_HOURLY = (tenantId: string) => {
+  return `${tenantId}-dashboard-team-alerts-stats-hourly`
+}
+
 // Pulse
 export const KRS_SCORES_COLLECTION = (tenantId: string) => {
   return `${tenantId}-kyc-risk-values`
@@ -579,10 +587,19 @@ export const createMongoDBCollections = async (
       'assignments.assigneeUserId': 1,
     })
     await casesCollection.createIndex({
+      'assignments.timestamp': 1,
+    })
+    await casesCollection.createIndex({
       'statusChanges.timestamp': 1,
     })
     await casesCollection.createIndex({
+      'statusChanges.caseStatus': 1,
+    })
+    await casesCollection.createIndex({
       'alerts.statusChanges.timestamp': 1,
+    })
+    await casesCollection.createIndex({
+      'alerts.statusChanges.caseStatus': 1,
     })
     await casesCollection.createIndex({
       'lastStatusChange.timestamp': 1,
@@ -604,6 +621,9 @@ export const createMongoDBCollections = async (
     })
     await casesCollection.createIndex({
       'alerts.assignments.assigneeUserId': 1,
+    })
+    await casesCollection.createIndex({
+      'alerts.assignments.timestamp': 1,
     })
     await casesCollection.createIndex({
       'alerts.priority': 1,
@@ -742,6 +762,18 @@ export const createMongoDBCollections = async (
   await narrativeTemplateCollection.createIndex({
     createdAt: 1,
   })
+
+  try {
+    await db.createCollection(DASHBOARD_TEAM_CASES_STATS_HOURLY(tenantId))
+  } catch (e) {
+    // ignore already exists
+  }
+
+  try {
+    await db.createCollection(DASHBOARD_TEAM_ALERTS_STATS_HOURLY(tenantId))
+  } catch (e) {
+    // ignore already exists
+  }
 }
 
 export async function allCollections(tenantId: string, db: Db) {

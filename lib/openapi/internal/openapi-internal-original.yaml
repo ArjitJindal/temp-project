@@ -1581,6 +1581,47 @@ paths:
               - DESTINATION
           in: query
           name: direction
+  /dashboard_stats/team:
+    get:
+      summary: DashboardStats - Team
+      tags: []
+      x-flagright:
+        permissions:
+          - dashboard:download-data:read
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/DashboardTeamStatsItem'
+      operationId: get-dashboard-team-stats
+      description: ''
+      parameters:
+        - schema:
+            type: string
+            enum:
+              - CASES
+              - ALERTS
+          in: query
+          name: scope
+          required: true
+        - schema:
+            type: number
+          in: query
+          name: startTimestamp
+        - schema:
+            type: number
+          in: query
+          name: endTimestamp
+        - schema:
+            type: array
+            items:
+              $ref: '#/components/schemas/CaseStatus'
+          in: query
+          name: caseStatus
   /tenants:
     get:
       summary: Tenant - List
@@ -4208,6 +4249,20 @@ components:
               - percentageTransactionsHit
       required:
         - data
+    DashboardTeamStatsItem:
+      type: object
+      title: DashboardTeamStatsItem
+      properties:
+        accountId:
+          type: string
+        assignedTo:
+          type: number
+        closedBy:
+          type: number
+      required:
+        - accountId
+        - assignedTo
+        - closedBy
     Comment:
       title: Comment
       type: object

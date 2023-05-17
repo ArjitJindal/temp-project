@@ -4,25 +4,28 @@ import { getAffectedInterval, getTimeLabels } from '../utils'
 import { DashboardStatsDRSDistributionData } from './types'
 import dayjs from '@/utils/dayjs'
 import {
+  CASES_COLLECTION,
   DASHBOARD_HITS_BY_USER_STATS_COLLECTION_HOURLY,
   DASHBOARD_RULE_HIT_STATS_COLLECTION_HOURLY,
+  DASHBOARD_TEAM_ALERTS_STATS_HOURLY,
+  DASHBOARD_TEAM_CASES_STATS_HOURLY,
   DASHBOARD_TRANSACTIONS_STATS_COLLECTION_DAILY,
   DASHBOARD_TRANSACTIONS_STATS_COLLECTION_HOURLY,
   DASHBOARD_TRANSACTIONS_STATS_COLLECTION_MONTHLY,
-  DRS_SCORES_DISTRIBUTION_STATS_COLLECTION,
-  DRS_SCORES_COLLECTION,
   DAY_DATE_FORMAT_JS,
+  DRS_SCORES_COLLECTION,
+  DRS_SCORES_DISTRIBUTION_STATS_COLLECTION,
   HOUR_DATE_FORMAT,
   HOUR_DATE_FORMAT_JS,
   MONTH_DATE_FORMAT_JS,
   TRANSACTIONS_COLLECTION,
   USERS_COLLECTION,
-  CASES_COLLECTION,
   lookupPipelineStage,
 } from '@/utils/mongoDBUtils'
 import { InternalTransaction } from '@/@types/openapi-internal/InternalTransaction'
 import { InternalConsumerUser } from '@/@types/openapi-internal/InternalConsumerUser'
 import { InternalBusinessUser } from '@/@types/openapi-internal/InternalBusinessUser'
+import { DashboardTeamStatsItem } from '@/@types/openapi-internal/DashboardTeamStatsItem'
 import { RULE_ACTIONS } from '@/@types/rule/rule-actions'
 import { DashboardStatsRulesCountData } from '@/@types/openapi-internal/DashboardStatsRulesCountData'
 import { DashboardStatsTransactionsCountData } from '@/@types/openapi-internal/DashboardStatsTransactionsCountData'
@@ -32,6 +35,8 @@ import { getDynamoDbClient } from '@/utils/dynamodb'
 import { RiskClassificationScore } from '@/@types/openapi-internal/RiskClassificationScore'
 import { logger } from '@/core/logger'
 import { Case } from '@/@types/openapi-internal/Case'
+import { CaseStatus } from '@/@types/openapi-internal/CaseStatus'
+import { AlertStatus } from '@/@types/openapi-internal/AlertStatus'
 
 export type GranularityValuesType = 'HOUR' | 'MONTH' | 'DAY'
 const granularityValues = { HOUR: 'HOUR', MONTH: 'MONTH', DAY: 'DAY' }
@@ -251,6 +256,307 @@ export class DashboardStatsRepository {
       },
     ]
     await casesCollection.aggregate(pipeline).next()
+  }
+
+  private async recalculateTeamStats(
+    timestamp?: number,
+    scope: Array<'CASES' | 'ALERTS'> = ['CASES', 'ALERTS']
+  ) {
+    const db = this.mongoDb.db()
+    const casesCollection = db.collection<Case>(CASES_COLLECTION(this.tenantId))
+
+    let timestampCondition: { $gte: number; $lt: number } | null = null
+    if (timestamp) {
+      const { start, end } = getAffectedInterval(timestamp, 'HOUR')
+      timestampCondition = {
+        $gte: start,
+        $lt: end,
+      }
+    }
+
+    // Cases
+    if (scope.includes('CASES')) {
+      const aggregationCollection = DASHBOARD_TEAM_CASES_STATS_HOURLY(
+        this.tenantId
+      )
+      await db.collection(aggregationCollection).createIndex(
+        {
+          date: -1,
+          accountId: 1,
+          status: 1,
+        },
+        {
+          unique: true,
+        }
+      )
+      // Closed by
+      {
+        const pipeline = [
+          ...(timestampCondition != null
+            ? [
+                {
+                  $match: {
+                    'statusChanges.timestamp': timestampCondition,
+                  },
+                },
+              ]
+            : []),
+          {
+            $match: {
+              'statusChanges.caseStatus': 'CLOSED',
+            },
+          },
+          {
+            $unwind: '$statusChanges',
+          },
+          {
+            $match: {
+              'statusChanges.caseStatus': 'CLOSED',
+            },
+          },
+          {
+            $group: {
+              _id: {
+                accountId: '$statusChanges.userId',
+                status: '$caseStatus',
+                date: {
+                  $dateToString: {
+                    format: HOUR_DATE_FORMAT,
+                    date: {
+                      $toDate: {
+                        $toLong: '$statusChanges.timestamp',
+                      },
+                    },
+                  },
+                },
+              },
+              closedBy: {
+                $sum: 1,
+              },
+            },
+          },
+          {
+            $project: {
+              _id: false,
+              status: '$_id.status',
+              accountId: '$_id.accountId',
+              date: '$_id.date',
+              closedBy: true,
+            },
+          },
+          {
+            $merge: {
+              into: aggregationCollection,
+              on: ['accountId', 'status', 'date'],
+              whenMatched: 'merge',
+            },
+          },
+        ]
+        await casesCollection.aggregate(pipeline).next()
+      }
+      // Assigned to
+      {
+        const pipeline = [
+          ...(timestampCondition != null
+            ? [
+                {
+                  $match: {
+                    'assignments.timestamp': timestampCondition,
+                  },
+                },
+              ]
+            : []),
+          {
+            $unwind: {
+              path: '$assignments',
+            },
+          },
+          {
+            $group: {
+              _id: {
+                status: '$caseStatus',
+                accountId: '$assignments.assigneeUserId',
+                date: {
+                  $dateToString: {
+                    format: HOUR_DATE_FORMAT,
+                    date: {
+                      $toDate: {
+                        $toLong: '$assignments.timestamp',
+                      },
+                    },
+                  },
+                },
+              },
+              assignedTo: {
+                $sum: 1,
+              },
+            },
+          },
+          {
+            $project: {
+              _id: false,
+              status: '$_id.status',
+              accountId: '$_id.accountId',
+              date: '$_id.date',
+              assignedTo: true,
+            },
+          },
+          {
+            $merge: {
+              into: aggregationCollection,
+              on: ['accountId', 'status', 'date'],
+              whenMatched: 'merge',
+            },
+          },
+        ]
+        await casesCollection.aggregate(pipeline).next()
+      }
+    }
+
+    // Alerts
+    if (scope.includes('ALERTS')) {
+      const aggregationCollection = DASHBOARD_TEAM_ALERTS_STATS_HOURLY(
+        this.tenantId
+      )
+      await db.collection(aggregationCollection).createIndex(
+        {
+          date: -1,
+          accountId: 1,
+          status: 1,
+        },
+        {
+          unique: true,
+        }
+      )
+      // Closed by
+      {
+        const pipeline = [
+          ...(timestampCondition != null
+            ? [
+                {
+                  $match: {
+                    'alerts.statusChanges.timestamp': timestampCondition,
+                  },
+                },
+              ]
+            : []),
+          {
+            $match: {
+              'alerts.statusChanges.caseStatus': 'CLOSED',
+            },
+          },
+          {
+            $unwind: '$alerts',
+          },
+          {
+            $unwind: '$alerts.statusChanges',
+          },
+          {
+            $match: {
+              'alerts.statusChanges.caseStatus': 'CLOSED',
+            },
+          },
+          {
+            $group: {
+              _id: {
+                accountId: '$alerts.statusChanges.userId',
+                status: '$alerts.alertStatus',
+                date: {
+                  $dateToString: {
+                    format: HOUR_DATE_FORMAT,
+                    date: {
+                      $toDate: {
+                        $toLong: '$alerts.statusChanges.timestamp',
+                      },
+                    },
+                  },
+                },
+              },
+              closedBy: {
+                $sum: 1,
+              },
+            },
+          },
+          {
+            $project: {
+              _id: false,
+              status: '$_id.status',
+              accountId: '$_id.accountId',
+              date: '$_id.date',
+              closedBy: true,
+            },
+          },
+          {
+            $merge: {
+              into: aggregationCollection,
+              on: ['accountId', 'status', 'date'],
+              whenMatched: 'merge',
+            },
+          },
+        ]
+        await casesCollection.aggregate(pipeline).next()
+      }
+      // Assigned to
+      {
+        const pipeline = [
+          ...(timestampCondition != null
+            ? [
+                {
+                  $match: {
+                    'alerts.assignments.timestamp': timestampCondition,
+                  },
+                },
+              ]
+            : []),
+          {
+            $unwind: '$alerts',
+          },
+          {
+            $unwind: {
+              path: '$alerts.assignments',
+            },
+          },
+          {
+            $group: {
+              _id: {
+                status: '$alerts.alertStatus',
+                accountId: '$alerts.assignments.assigneeUserId',
+                date: {
+                  $dateToString: {
+                    format: HOUR_DATE_FORMAT,
+                    date: {
+                      $toDate: {
+                        $toLong: '$alerts.assignments.timestamp',
+                      },
+                    },
+                  },
+                },
+              },
+              assignedTo: {
+                $sum: 1,
+              },
+            },
+          },
+          {
+            $project: {
+              _id: false,
+              status: '$_id.status',
+              accountId: '$_id.accountId',
+              date: '$_id.date',
+              assignedTo: true,
+            },
+          },
+          {
+            $merge: {
+              into: aggregationCollection,
+              on: ['accountId', 'status', 'date'],
+              whenMatched: 'merge',
+            },
+          },
+        ]
+        await casesCollection.aggregate(pipeline).next()
+      }
+    }
   }
 
   private sanitizeBucketBoundry(riskIntervalBoundries: Array<number>) {
@@ -519,6 +825,7 @@ export class DashboardStatsRepository {
       this.refreshTransactionStats(),
       this.refreshCaseStats(),
       this.refreshUserStats(),
+      this.refreshTeamStats(),
     ])
   }
 
@@ -535,12 +842,17 @@ export class DashboardStatsRepository {
       this.recalculateRuleHitStats(caseTimestamp),
       this.recalculateHitsByUser('ORIGIN', caseTimestamp),
       this.recalculateHitsByUser('DESTINATION', caseTimestamp),
+      this.recalculateTeamStats(caseTimestamp),
     ])
   }
 
   public async refreshUserStats() {
     const db = this.mongoDb.db()
     await this.recalculateDRSDistributionStats(db)
+  }
+
+  public async refreshTeamStats() {
+    await this.recalculateTeamStats()
   }
 
   public async getTransactionCountStats(
@@ -730,6 +1042,7 @@ export class DashboardStatsRepository {
       ),
     }))
   }
+
   private createDistributionItems(
     riskClassificationValues: RiskClassificationScore[],
     buckets: WithId<DashboardStatsTransactionsCountData>[]
@@ -834,5 +1147,82 @@ export class DashboardStatsRepository {
       casesCount: x.casesCount,
       openCasesCount: x.openCasesCount,
     }))
+  }
+
+  async getTeamStatistics(
+    scope: 'CASES' | 'ALERTS',
+    startTimestamp?: number,
+    endTimestamp?: number,
+    status?: (CaseStatus | AlertStatus)[]
+  ): Promise<DashboardTeamStatsItem[]> {
+    const db = this.mongoDb.db()
+    const collectionName =
+      scope === 'ALERTS'
+        ? DASHBOARD_TEAM_ALERTS_STATS_HOURLY(this.tenantId)
+        : DASHBOARD_TEAM_CASES_STATS_HOURLY(this.tenantId)
+    const collection =
+      db.collection<DashboardStatsDRSDistributionData>(collectionName)
+
+    let dateCondition: Record<string, unknown> | null = null
+    if (startTimestamp != null || endTimestamp != null) {
+      dateCondition = {}
+      if (startTimestamp != null) {
+        dateCondition['$gt'] = dayjs(startTimestamp).format(HOUR_DATE_FORMAT_JS)
+      }
+      if (endTimestamp != null) {
+        dateCondition['$lte'] = dayjs(endTimestamp).format(HOUR_DATE_FORMAT_JS)
+      }
+    }
+
+    const pipeline = [
+      { $sort: { date: -1 } },
+      ...(dateCondition != null
+        ? [
+            {
+              $match: {
+                date: dateCondition,
+              },
+            },
+          ]
+        : []),
+      ...(status != null && status?.length > 0
+        ? [
+            {
+              $match: {
+                status: { $in: status },
+              },
+            },
+          ]
+        : []),
+      {
+        $group: {
+          _id: '$accountId',
+          closedBy: {
+            $sum: '$closedBy',
+          },
+          assignedTo: {
+            $sum: '$assignedTo',
+          },
+        },
+      },
+      {
+        $project: {
+          _id: false,
+          accountId: '$_id',
+          closedBy: true,
+          assignedTo: true,
+        },
+      },
+    ]
+
+    const result = await collection
+      .aggregate<{
+        accountId: string
+        closedBy: number
+        assignedTo: number
+      }>(pipeline, { allowDiskUse: true })
+      .toArray()
+
+    return result
   }
 }

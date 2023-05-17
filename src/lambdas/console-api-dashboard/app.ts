@@ -10,6 +10,9 @@ import {
 import { lambdaApi } from '@/core/middlewares/lambda-api-middlewares'
 import { assertRole, JWTAuthorizerResult } from '@/@types/jwt'
 import { getMongoDbClient } from '@/utils/mongoDBUtils'
+import { CaseStatus } from '@/@types/openapi-internal/CaseStatus'
+import { AlertStatus } from '@/@types/openapi-internal/AlertStatus'
+import { parseStrings } from '@/utils/lambda'
 
 function shouldRefreshAll(
   event: APIGatewayProxyWithLambdaAuthorizerEvent<
@@ -165,6 +168,32 @@ export const dashboardStatsHandler = lambdaApi()(
       return {
         data,
       }
+    } else if (
+      event.httpMethod === 'GET' &&
+      event.path.endsWith('/dashboard_stats/team')
+    ) {
+      const client = await getMongoDbClient()
+      const { principalId: tenantId } = event.requestContext.authorizer
+      const queryStringParameters = event.queryStringParameters as {
+        scope: 'CASES' | 'ALERTS'
+        startTimestamp: string
+        endTimestamp: string
+        caseStatus?: string
+      }
+      const { scope, startTimestamp, endTimestamp, caseStatus } =
+        queryStringParameters
+      const dashboardStatsRepository = new DashboardStatsRepository(tenantId, {
+        mongoDb: client,
+      })
+      if (shouldRefreshAll(event)) {
+        await dashboardStatsRepository.refreshAllStats()
+      }
+      return dashboardStatsRepository.getTeamStatistics(
+        scope,
+        startTimestamp ? parseInt(startTimestamp) : 0,
+        endTimestamp ? parseInt(endTimestamp) : Number.MAX_SAFE_INTEGER,
+        parseStrings<CaseStatus | AlertStatus>(caseStatus)
+      )
     }
     throw new BadRequest('Unsupported path')
   }
