@@ -13,7 +13,7 @@ export class UserIdRuleFilter extends UserRuleFilter<UserIdRuleFilterParameter> 
       properties: {
         userIds: {
           type: 'array',
-          title: 'User IDs',
+          title: 'Target user ID',
           description:
             'Add target user IDs to only run this rule for certain users',
           items: { type: 'string' },
