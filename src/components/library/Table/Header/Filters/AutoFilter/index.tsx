@@ -54,11 +54,23 @@ export function AutoFilter(props: Props): JSX.Element {
 
     const options = filter.dataType.options;
 
+    const selectedOptions = options.filter((option) => {
+      if (value == null) {
+        return false;
+      }
+      if (Array.isArray(value)) {
+        return value.includes(option.value);
+      }
+      return value === option.value;
+    });
+
     return (
       <InputQuickFilter<string[]>
         {...sharedProps}
         buttonText={
-          value == undefined ? undefined : joinReactNodes(options.map(({ label }) => label))
+          selectedOptions.length === 0
+            ? undefined
+            : joinReactNodes(selectedOptions.map(({ label }) => label))
         }
         inputComponent={Select as React.FunctionComponent<InputProps<string[]>>}
         extraInputProps={{

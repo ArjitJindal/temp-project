@@ -3,6 +3,7 @@ import TransactionsChartCard from './components/TransactionsChartCard';
 import RuleHitCard from './components/RulesHitCard';
 import TopUsersHitCard from './components/TopUsersHitCard';
 import DRSDistributionCard from './components/DRSDistributionCard';
+import TeamPerformanceCard from './components/TeamPerformanceCard';
 import PageWrapper from '@/components/PageWrapper';
 import { Feature } from '@/components/AppWrapper/Providers/SettingsProvider';
 import { usePageViewTracker } from '@/utils/tracker';
@@ -22,8 +23,11 @@ function Analysis() {
           <RuleHitCard />
         </Col>
         <Feature name="PULSE">
-          <Col span={24}>
+          <Col span={12}>
             <DRSDistributionCard />
+          </Col>
+          <Col span={12}>
+            <TeamPerformanceCard />
           </Col>
         </Feature>
       </Row>

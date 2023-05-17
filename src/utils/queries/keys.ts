@@ -164,3 +164,9 @@ export const NARRATIVE_TEMPLATE_ITEM = (id: string): QueryKey => [
   'item',
   id,
 ];
+
+export const DASHBOARD_TEAM_STATS = (params: AnyParameters): QueryKey => [
+  'dashboard',
+  'team',
+  params,
+];

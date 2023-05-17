@@ -144,7 +144,7 @@ export function PersistedSettingsProvider<Item extends object, Params>(props: {
 export function usePersistedSettingsContext(): PersistedSettingsContextValue {
   const context = useContext(PersistedSettingsContext);
   if (context == null) {
-    throw new Error(`ExtraTableContext is not initialized properly`);
+    throw new Error(`PersistedSettingsContext is not initialized properly`);
   }
   return context;
 }

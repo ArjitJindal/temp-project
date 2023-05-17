@@ -59,7 +59,7 @@ export default function QuickFilterBase(props: Props) {
           }
           onVisibleChange={setOpen}
           arrowPointAtCenter={true}
-          autoAdjustOverflow={false}
+          autoAdjustOverflow={true}
           placement="bottomLeft"
         >
           <div className={s.popoverAnchor} />
