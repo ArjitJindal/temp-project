@@ -13,6 +13,7 @@ import { DrsScore } from '@/@types/openapi-internal/DrsScore'
 import { KrsScore } from '@/@types/openapi-internal/KrsScore'
 import { RiskRepository } from '@/services/risk-scoring/repositories/risk-repository'
 import { Case } from '@/@types/openapi-internal/Case'
+import { UserRepository } from '@/services/users/repositories/user-repository'
 
 async function arsScoreEventHandler(
   tenantId: string,
@@ -75,10 +76,17 @@ async function drsScoreEventHandler(
   logger.info(`Processing DRS Score`)
   const mongoDb = await getMongoDbClient()
 
-  const riskRepository = new RiskRepository(tenantId, {
-    mongoDb,
-  })
-  await riskRepository.addDrsValueToMongo(drsScore)
+  const riskRepository = new RiskRepository(tenantId, { mongoDb })
+  const userRepository = new UserRepository(tenantId, { mongoDb })
+
+  const drsScoreUpdated = await riskRepository.addDrsValueToMongo(drsScore)
+
+  if (drsScoreUpdated?.userId) {
+    await userRepository.updateDrsScoreOfUserMongo(
+      drsScoreUpdated.userId,
+      drsScoreUpdated
+    )
+  }
 
   logger.info(`DRS Score Processed`)
 }
@@ -93,10 +101,17 @@ async function krsScoreEventHandler(
   logger.info(`Processing KRS Score`)
   const mongoDb = await getMongoDbClient()
 
-  const riskRepository = new RiskRepository(tenantId, {
-    mongoDb,
-  })
-  await riskRepository.addKrsValueToMongo(krsScore)
+  const riskRepository = new RiskRepository(tenantId, { mongoDb })
+  const userRepository = new UserRepository(tenantId, { mongoDb })
+
+  const krsScoreUpdated = await riskRepository.addKrsValueToMongo(krsScore)
+
+  if (krsScoreUpdated?.userId) {
+    await userRepository.updateKrsScoreOfUserMongo(
+      krsScoreUpdated.userId,
+      krsScoreUpdated
+    )
+  }
 
   logger.info(`KRS Score Processed`)
 }
