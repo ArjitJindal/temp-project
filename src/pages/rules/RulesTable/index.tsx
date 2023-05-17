@@ -75,6 +75,7 @@ export const RulesTable: React.FC<Props> = ({ onViewRule, onEditRule, simulation
               </>
             );
           },
+          defaultWrapMode: 'OVERFLOW',
         },
       }),
       helper.simple<'description'>({

@@ -82,7 +82,7 @@ export const UNKNOWN: Required<FullColumnDataType<unknown>> = {
     }
     return JSON.stringify(value);
   },
-  defaultWrapMode: 'OVERFLOW',
+  defaultWrapMode: 'WRAP',
   autoFilterDataType: { kind: 'string' },
 };
 
@@ -181,7 +181,7 @@ export const RULE_NATURE: ColumnDataType<RuleNature> = {
     }
     return <AntTag>{RULE_NATURE_LABELS[value]}</AntTag>;
   },
-  defaultWrapMode: 'OVERFLOW',
+  defaultWrapMode: 'WRAP',
   autoFilterDataType: {
     kind: 'select',
     options: RULE_NATURE_OPTIONS,
@@ -204,7 +204,7 @@ export const USER_NAME: FullColumnDataType<InternalConsumerUser | InternalBusine
     return user ? <UserLink user={user}>{userName}</UserLink> : <>{userName}</>;
   },
   stringify: (value) => getUserName(value),
-  defaultWrapMode: 'OVERFLOW',
+  defaultWrapMode: 'WRAP',
 };
 
 export const USER_TYPE: ColumnDataType<
@@ -215,7 +215,7 @@ export const USER_TYPE: ColumnDataType<
     return user ? <UserLink user={user}>{userName}</UserLink> : <>{userName}</>;
   },
   stringify: (value) => getUserName(value),
-  defaultWrapMode: 'OVERFLOW',
+  defaultWrapMode: 'WRAP',
 };
 
 export const TRANSACTION_TYPE: ColumnDataType<TransactionType> = {

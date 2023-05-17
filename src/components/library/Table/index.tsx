@@ -485,6 +485,8 @@ function getSizingProps<Item>(column: TanTable.Column<Item>) {
   return {
     width: size,
     maxWidth: size,
+    height: '64px',
+    maxHeight: '64px',
   };
 }
 
