@@ -1,10 +1,8 @@
-import { renameRuleParameter } from '../utils/rule'
+import { renameRuleFilter } from '../utils/rule'
 import { PaymentMethod } from '@/@types/tranasction/payment-type'
 
 export const up = async () => {
-  await renameRuleParameter(
-    undefined,
-    [],
+  await renameRuleFilter(
     'paymentMethod',
     'paymentMethods',
     (paymentMethod: PaymentMethod) => [paymentMethod]
