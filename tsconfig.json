@@ -1,7 +1,7 @@
 {
   "extends": "@tsconfig/node16/tsconfig.json",
   "include": ["**/*.ts"],
-  "exclude": ["node_modules", "**/*.spec.ts", "cdk.out", "cdktf.out", "infra"],
+  "exclude": ["node_modules", "**/*.spec.ts", "cdk.out", "cdktf.out"],
   "compilerOptions": {
     "alwaysStrict": true,
     "sourceMap": true,

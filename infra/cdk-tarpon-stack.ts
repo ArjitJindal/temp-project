@@ -59,6 +59,10 @@ import {
   SQSQueues,
   StackConstants,
 } from '@lib/constants'
+import {
+  DEFAULT_LAMBDA_TIMEOUT_SECONDS,
+  DEFAULT_ASYNC_JOB_LAMBDA_TIMEOUT_SECONDS,
+} from '@lib/lambdas'
 import { Config } from '@lib/configs/config'
 import {
   BATCH_JOB_PAYLOAD_RESULT_KEY,
@@ -77,15 +81,12 @@ import { createApiGateway } from './cdk-utils/cdk-apigateway-utils'
 import { createAPIGatewayThrottlingAlarm } from './cdk-utils/cdk-cw-alarms-utils'
 import { createFunction } from './cdk-utils/cdk-lambda-utils'
 
-const DEFAULT_LAMBDA_TIMEOUT = Duration.seconds(100)
 const DEFAULT_SQS_VISIBILITY_TIMEOUT = Duration.seconds(
-  DEFAULT_LAMBDA_TIMEOUT.toSeconds() * 6
+  DEFAULT_LAMBDA_TIMEOUT_SECONDS * 6
 )
-const CONSUMER_LAMBDA_TIMEOUT = Duration.minutes(15)
 const CONSUMER_SQS_VISIBILITY_TIMEOUT = Duration.seconds(
-  CONSUMER_LAMBDA_TIMEOUT.toSeconds() * 2
+  DEFAULT_ASYNC_JOB_LAMBDA_TIMEOUT_SECONDS * 2
 )
-const CRON_JOB_TIMEOUT = Duration.minutes(15)
 
 // SQS max receive count cannot go above 1000
 const MAX_SQS_RECEIVE_COUNT = 1000
@@ -597,7 +598,6 @@ export class CdkTarponStack extends cdk.Stack {
           AUTH0_DOMAIN: this.config.application.AUTH0_DOMAIN,
           AUTH0_AUDIENCE: this.config.application.AUTH0_AUDIENCE,
         },
-        timeout: CONSUMER_LAMBDA_TIMEOUT,
       }
     )
     tarponDynamoDbTable.grantReadWriteData(jobRunnerAlias)
@@ -692,7 +692,6 @@ export class CdkTarponStack extends cdk.Stack {
         },
         {
           ...atlasFunctionProps,
-          timeout: CRON_JOB_TIMEOUT,
         }
       )
 
@@ -735,7 +734,6 @@ export class CdkTarponStack extends cdk.Stack {
         TARPON_CHANGE_CAPTURE_RETRY_QUEUE_URL:
           tarponChangeCaptureRetryQueue.queueUrl,
       },
-      timeout: CONSUMER_LAMBDA_TIMEOUT,
     }
     const { alias: tarponChangeCaptureKinesisConsumerAlias } = createFunction(
       this,
@@ -809,7 +807,6 @@ export class CdkTarponStack extends cdk.Stack {
         WEBHOOK_TARPON_CHANGE_CAPTURE_RETRY_QUEUE_URL:
           webhookTarponChangeCaptureRetryQueue.queueUrl,
       },
-      timeout: CONSUMER_LAMBDA_TIMEOUT,
     }
     const { alias: webhookTarponChangeCaptureHandlerAlias } = createFunction(
       this,
@@ -895,7 +892,6 @@ export class CdkTarponStack extends cdk.Stack {
         HAMMERHEAD_CHANGE_CAPTURE_RETRY_QUEUE_URL:
           hammerheadChangeCaptureRetryQueue.queueUrl,
       },
-      timeout: CONSUMER_LAMBDA_TIMEOUT,
     }
 
     const { alias: hammerheadChangeCaptureKinesisConsumerAlias } =

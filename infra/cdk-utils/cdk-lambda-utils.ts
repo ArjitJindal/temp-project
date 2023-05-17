@@ -13,12 +13,12 @@ import {
 import { Construct } from 'constructs'
 import { ManagedPolicy, ServicePrincipal } from 'aws-cdk-lib/aws-iam'
 import { Metric } from 'aws-cdk-lib/aws-cloudwatch'
-import { Duration } from 'aws-cdk-lib'
 import { Topic } from 'aws-cdk-lib/aws-sns'
 import { Queue } from 'aws-cdk-lib/aws-sqs'
 import { LAMBDAS } from '@lib/lambdas'
 import { StackConstants } from '@lib/constants'
 import { Config } from '@lib/configs/config'
+import { Duration } from 'aws-cdk-lib'
 
 type InternalFunctionProps = {
   name: string
@@ -28,8 +28,6 @@ type InternalFunctionProps = {
   auditLogTopic: Topic
   batchJobQueue: Queue
 }
-
-const DEFAULT_LAMBDA_TIMEOUT = Duration.seconds(100)
 
 // IMPORTANT: We should use the returned `alias` for granting further roles.
 // We should only use the returned `func` to do the things that alias cannot do
@@ -102,7 +100,7 @@ export function createFunction(
       ? Code.fromInline("console.log('hello')")
       : Code.fromAsset(`dist/${LAMBDAS[name].codePath}`),
     tracing: Tracing.ACTIVE,
-    timeout: DEFAULT_LAMBDA_TIMEOUT,
+    timeout: Duration.seconds(LAMBDAS[name].timeoutSeconds),
     memorySize: memorySize
       ? memorySize
       : context.config.resource.LAMBDA_DEFAULT.MEMORY_SIZE,

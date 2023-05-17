@@ -1,3 +1,4 @@
+import { Duration } from 'aws-cdk-lib'
 import {
   Metric,
   Alarm,
@@ -7,7 +8,6 @@ import {
 } from 'aws-cdk-lib/aws-cloudwatch'
 import { SnsAction } from 'aws-cdk-lib/aws-cloudwatch-actions'
 import { Construct } from 'constructs'
-import { Duration } from 'aws-cdk-lib'
 import { Topic } from 'aws-cdk-lib/aws-sns'
 import { FilterPattern, ILogGroup, MetricFilter } from 'aws-cdk-lib/aws-logs'
 
@@ -319,14 +319,14 @@ export const createLambdaDurationAlarm = (
   context: Construct,
   betterUptimeTopic: Topic,
   lambdaName: string,
-  durationThresholdSeconds: number
+  duration: Duration
 ) => {
   if (isDevUserStack) {
     return null
   }
   return new Alarm(context, `${lambdaName}Duration`, {
     comparisonOperator: ComparisonOperator.GREATER_THAN_THRESHOLD,
-    threshold: durationThresholdSeconds * 1000,
+    threshold: duration.toSeconds() * 1000,
     evaluationPeriods: 3,
     datapointsToAlarm: 3,
     alarmName: `Lambda-${lambdaName}Duration`,

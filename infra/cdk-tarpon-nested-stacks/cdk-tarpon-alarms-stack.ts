@@ -89,7 +89,7 @@ export class CdkTarponAlarmsStack extends cdk.NestedStack {
         this,
         this.betterUptimeCloudWatchTopic,
         lambdaName,
-        LAMBDAS[lambdaName].expectedMaxDurationSeconds
+        Duration.seconds(LAMBDAS[lambdaName].expectedMaxSeconds)
       )
       createLambdaErrorPercentageAlarm(
         this,
