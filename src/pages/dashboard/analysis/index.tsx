@@ -5,11 +5,12 @@ import TopUsersHitCard from './components/TopUsersHitCard';
 import DRSDistributionCard from './components/DRSDistributionCard';
 import TeamPerformanceCard from './components/TeamPerformanceCard';
 import PageWrapper from '@/components/PageWrapper';
-import { Feature } from '@/components/AppWrapper/Providers/SettingsProvider';
+import { useFeatureEnabled } from '@/components/AppWrapper/Providers/SettingsProvider';
 import { usePageViewTracker } from '@/utils/tracker';
 
 function Analysis() {
   usePageViewTracker('Dashboard Analysis Page');
+  const isPulseEnabled = useFeatureEnabled('PULSE');
   return (
     <PageWrapper>
       <Row gutter={[16, 16]}>
@@ -22,14 +23,20 @@ function Analysis() {
         <Col span={24}>
           <RuleHitCard />
         </Col>
-        <Feature name="PULSE">
-          <Col span={12}>
-            <DRSDistributionCard />
-          </Col>
-          <Col span={12}>
+        {isPulseEnabled ? (
+          <>
+            <Col span={12}>
+              <DRSDistributionCard />
+            </Col>
+            <Col span={12}>
+              <TeamPerformanceCard />
+            </Col>
+          </>
+        ) : (
+          <Col span={24}>
             <TeamPerformanceCard />
           </Col>
-        </Feature>
+        )}
       </Row>
     </PageWrapper>
   );
