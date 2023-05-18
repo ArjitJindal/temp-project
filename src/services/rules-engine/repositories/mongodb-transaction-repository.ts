@@ -229,31 +229,27 @@ export class MongoDbTransactionRepository
       })
     }
 
-    if (params.filterUserId != null) {
+    if (params.filterOriginUserId || params.filterDestinationUserId) {
       let otherConditions = {}
       if (conditions.length > 0) {
         otherConditions = { $and: conditions }
       }
+      const $or = []
+      if (params.filterOriginUserId) {
+        $or.push({
+          originUserId: { $in: [params.filterOriginUserId] },
+          ...otherConditions,
+        })
+      }
+      if (params.filterDestinationUserId) {
+        $or.push({
+          destinationUserId: { $in: [params.filterDestinationUserId] },
+          ...otherConditions,
+        })
+      }
 
       return {
-        $or: [
-          { originUserId: { $in: [params.filterUserId] }, ...otherConditions },
-          {
-            destinationUserId: { $in: [params.filterUserId] },
-            ...otherConditions,
-          },
-        ],
-      }
-    } else {
-      if (params.filterOriginUserId != null) {
-        conditions.push({ originUserId: { $in: [params.filterOriginUserId] } })
-      }
-      if (params.filterDestinationUserId != null) {
-        conditions.push({
-          destinationUserId: {
-            $in: [params.filterDestinationUserId],
-          },
-        })
+        $or,
       }
     }
 
