@@ -10,7 +10,6 @@ import { Account } from '@/@types/openapi-internal/Account'
 import { ChangeTenantPayload } from '@/@types/openapi-internal/ChangeTenantPayload'
 import { AccountInvitePayload } from '@/@types/openapi-internal/AccountInvitePayload'
 import { AccountSettings } from '@/@types/openapi-internal/AccountSettings'
-import { ChangeRolePayload } from '@/@types/openapi-internal/ChangeRolePayload'
 import { RoleService } from '@/services/roles'
 import { AccountPatchPayload } from '@/@types/openapi-internal/AccountPatchPayload'
 import { getDynamoDbClientByEvent } from '@/utils/dynamodb'
@@ -75,26 +74,11 @@ export const accountsHandler = lambdaApi()(
         {
           email: body.email,
           role: inviteRole,
+          isEscalationContact: body.isEscalationContact,
         }
       )
       await rolesService.setRole(tenantId, user.id, inviteRole)
       return user
-    } else if (
-      event.httpMethod === 'POST' &&
-      event.resource === '/accounts/{accountId}/change_role'
-    ) {
-      assertRole({ role, verifiedEmail }, 'admin')
-      const { pathParameters } = event
-      const idToChange = pathParameters?.accountId
-      if (!idToChange) {
-        throw new BadRequest(`accountId is not provided`)
-      }
-      if (event.body == null) {
-        throw new BadRequest(`Body should not be empty`)
-      }
-      const { role: newRole } = JSON.parse(event.body) as ChangeRolePayload
-      await rolesService.setRole(tenantId, idToChange, newRole)
-      return true
     } else if (
       event.httpMethod === 'POST' &&
       event.resource === '/accounts/{accountId}/change_tenant'
@@ -127,14 +111,14 @@ export const accountsHandler = lambdaApi()(
 
         await accountsService.deleteUser(organization, accountId)
         return true
-      } else if (event.httpMethod === 'PATCH') {
+      } else if (event.httpMethod === 'POST') {
         assertRole({ role, verifiedEmail }, 'admin')
         if (event.body == null) {
           throw new BadRequest(`Body should not be empty`)
         }
         const patchPayload = JSON.parse(event.body) as AccountPatchPayload
         if (patchPayload.role === 'root') {
-          throw new Forbidden(`It's not possible to create a root user`)
+          throw new Forbidden(`It's not possible to set a root role`)
         }
 
         return await accountsService.patchUser(

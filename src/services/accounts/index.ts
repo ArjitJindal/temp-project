@@ -33,6 +33,7 @@ const CONNECTION_NAME = 'Username-Password-Authentication'
 
 export interface AppMetadata {
   role: string
+  isEscalationContact?: boolean
 }
 
 export type Account = ApiAccount
@@ -88,6 +89,7 @@ export class AccountsService {
       name: user.name ?? '',
       picture: user.picture,
       blocked: user.blocked ?? false,
+      isEscalationContact: app_metadata?.isEscalationContact === true,
     }
   }
 
@@ -139,6 +141,7 @@ export class AccountsService {
     params: {
       email: string
       role: string
+      isEscalationContact?: boolean
     }
   ): Promise<Account> {
     let user: User<AppMetadata, UserMetadata> | null = null
@@ -175,6 +178,7 @@ export class AccountsService {
           password: `P-${uuidv4()}`,
           app_metadata: {
             role: params.role,
+            isEscalationContact: params.isEscalationContact,
           },
           verify_email: false,
         })
@@ -373,7 +377,16 @@ export class AccountsService {
       {
         app_metadata: {
           ...user.app_metadata,
-          role: patch.role,
+          ...(patch.role != null
+            ? {
+                role: patch.role,
+              }
+            : {}),
+          ...(patch.isEscalationContact != null
+            ? {
+                isEscalationContact: patch.isEscalationContact,
+              }
+            : {}),
         },
       }
     )

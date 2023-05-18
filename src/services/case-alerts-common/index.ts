@@ -1,5 +1,4 @@
 import _ from 'lodash'
-import { NotFound } from 'http-errors'
 import { Account } from '@/@types/openapi-internal/Account'
 import { Assignment } from '@/@types/openapi-internal/Assignment'
 import { FileInfo } from '@/@types/openapi-internal/FileInfo'
@@ -18,18 +17,20 @@ export class CaseAlertsCommonService {
     this.s3Config = s3Config
   }
 
-  protected getEscalationAssignment(accounts: Account[]): Assignment {
+  protected getEscalationAssignments(accounts: Account[]): Assignment[] {
     const escalationAssineeCandidates = accounts.filter(
-      (account) => account.role === 'admin'
+      (account) => account.isEscalationContact
     )
     if (!escalationAssineeCandidates?.length) {
-      throw new NotFound(`Cannot find admin users to assign the case to.`)
+      return []
     }
     const assignee = _.sample(escalationAssineeCandidates)!
-    return {
-      assigneeUserId: assignee.id,
-      timestamp: Date.now(),
-    }
+    return [
+      {
+        assigneeUserId: assignee.id,
+        timestamp: Date.now(),
+      },
+    ]
   }
 
   protected async copyFiles(files: FileInfo[]): Promise<FileInfo[]> {

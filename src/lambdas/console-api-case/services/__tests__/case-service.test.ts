@@ -22,6 +22,7 @@ const TEST_ACCOUNT_1: Account = {
   emailVerified: true,
   name: 'ACCOUNT-1',
   blocked: false,
+  isEscalationContact: true,
 }
 
 const CASE_TRANSACTION_IDS = ['T-1', 'T-2', 'T-3', 'T-4']

@@ -196,7 +196,7 @@ export class AlertsService extends CaseAlertsCommonService {
           alertId,
           parentAlertId,
           alertStatus: 'ESCALATED',
-          reviewAssignments: [this.getEscalationAssignment(accounts)],
+          reviewAssignments: this.getEscalationAssignments(accounts),
           statusChanges: escalatedAlert.statusChanges
             ? [...escalatedAlert.statusChanges, lastStatusChange]
             : [lastStatusChange],
@@ -285,7 +285,7 @@ export class AlertsService extends CaseAlertsCommonService {
       alerts: escalatedAlerts,
       createdTimestamp: currentTimestamp,
       caseStatus: 'ESCALATED',
-      reviewAssignments: [this.getEscalationAssignment(accounts)],
+      reviewAssignments: this.getEscalationAssignments(accounts),
       caseTransactions: filteredTransactionsForNewCase,
       caseTransactionsIds: filteredTransactionIdsForNewCase,
       caseHierarchyDetails: { parentCaseId: caseId },

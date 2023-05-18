@@ -1,6 +1,5 @@
 import * as createError from 'http-errors'
 import { NotFound } from 'http-errors'
-import _ from 'lodash'
 import { Comment } from '@/@types/openapi-internal/Comment'
 import { DefaultApiGetCaseListRequest } from '@/@types/openapi-internal/RequestParameters'
 import { CaseRepository } from '@/services/rules-engine/repositories/case-repository'
@@ -226,7 +225,7 @@ export class CaseService extends CaseAlertsCommonService {
       reviewAssignments:
         existingReviewAssignments.length > 0
           ? existingReviewAssignments
-          : [this.getEscalationAssignment(accounts)],
+          : this.getEscalationAssignments(accounts),
       caseStatus: 'ESCALATED',
     })
   }
