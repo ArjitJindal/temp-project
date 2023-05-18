@@ -1,6 +1,12 @@
-import React, { useMemo, useRef, useState } from 'react';
-import { DrawerForm, ProFormInstance, ProFormSelect, ProFormText } from '@ant-design/pro-form';
-import { PlusOutlined, EditOutlined } from '@ant-design/icons';
+import React, { useMemo, useRef } from 'react';
+import {
+  DrawerForm,
+  ProFormCheckbox,
+  ProFormInstance,
+  ProFormSelect,
+  ProFormText,
+} from '@ant-design/pro-form';
+import { EditOutlined, PlusOutlined } from '@ant-design/icons';
 import { sentenceCase } from '@antv/x6/es/util/string/format';
 import { message } from '@/components/library/Message';
 import Button from '@/components/library/Button';
@@ -14,7 +20,7 @@ import { useSettings } from '@/components/AppWrapper/Providers/SettingsProvider'
 import { isSuccess } from '@/utils/asyncResource';
 import { getBranding } from '@/utils/branding';
 import { useApiTime } from '@/utils/tracker';
-import { UserRole, parseUserRole } from '@/utils/user-utils';
+import { parseUserRole, UserRole } from '@/utils/user-utils';
 import { P } from '@/components/ui/Typography';
 import Close from '@/components/ui/icons/close.react.svg';
 
@@ -28,7 +34,6 @@ export default function AccountForm(props: Props) {
   const measure = useApiTime();
 
   const formRef = useRef<ProFormInstance>();
-  const [emailIsEmpty, setEmailIsEmpty] = useState(true);
   const rolesResp = useQuery<AccountRole[]>(ROLES_LIST(), async () => {
     return await api.getRoles();
   });
@@ -81,14 +86,16 @@ export default function AccountForm(props: Props) {
       : {
           email: '',
           role: 'admin',
+          isEscalationContact: false,
         };
   const onFinish = async (values: Account) => {
     if (isEdit) {
       try {
-        await api.accountsChangeRole({
+        await api.accountsEdit({
           accountId: editAccount?.id,
-          ChangeRolePayload: {
+          AccountPatchPayload: {
             role: values.role,
+            isEscalationContact: values.isEscalationContact,
           },
         });
         message.success('Account updated!');
@@ -105,6 +112,7 @@ export default function AccountForm(props: Props) {
         AccountInvitePayload: {
           email: values.email.trim(),
           role: values.role,
+          isEscalationContact: values.isEscalationContact,
         },
       });
       message.success('User invited!');
@@ -122,13 +130,6 @@ export default function AccountForm(props: Props) {
       title={isEdit ? 'Edit account' : 'Invite user'}
       width={400}
       formRef={formRef}
-      onChange={(e) => {
-        if ((e?.target as HTMLInputElement)?.value) {
-          setEmailIsEmpty(false);
-        } else {
-          setEmailIsEmpty(true);
-        }
-      }}
       trigger={
         <div>
           {isEdit ? (
@@ -148,9 +149,6 @@ export default function AccountForm(props: Props) {
         searchConfig: {
           resetText: 'Cancel',
           submitText: isEdit ? 'Save' : 'Invite',
-        },
-        submitButtonProps: {
-          disabled: !isEdit && emailIsEmpty,
         },
       }}
       autoFocusFirstInput
@@ -206,6 +204,7 @@ export default function AccountForm(props: Props) {
           />
         )}
       </AsyncResourceRenderer>
+      <ProFormCheckbox width="md" name="isEscalationContact" label="Escalation reviewer" />
       {isInviteDisabled && (
         <P variant="sml">
           You have reached maximum no. of Seats ({maxSeats}). Please contact support at{' '}

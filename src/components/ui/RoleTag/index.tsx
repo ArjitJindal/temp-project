@@ -24,12 +24,16 @@ function getColor(role: string): ColorSet {
   }
 }
 
+export function getRoleTitle(role: string) {
+  return sentenceCase(role);
+}
+
 export default function RoleTag(props: Props): JSX.Element {
   const { role } = props;
   const color = getColor(role);
   return (
     <Tag style={{ background: color.tint, borderColor: color.base, color: color.base }}>
-      {sentenceCase(role)}
+      {getRoleTitle(role)}
     </Tag>
   );
 }

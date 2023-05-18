@@ -1,6 +1,6 @@
 import React, { useRef } from 'react';
 import { CheckCircleTwoTone, DeleteOutlined, MinusCircleTwoTone } from '@ant-design/icons';
-import { Popconfirm } from 'antd';
+import { Popconfirm, Tag } from 'antd';
 import s from './index.module.less';
 import { useApiTime, useButtonTracker } from '@/utils/tracker';
 import { isAtLeastAdmin, parseUserRole, useAuth0User, UserRole } from '@/utils/user-utils';
@@ -9,13 +9,16 @@ import { usePaginatedQuery } from '@/utils/queries/hooks';
 import { ACCOUNT_LIST } from '@/utils/queries/keys';
 import { TableColumn, TableRefType } from '@/components/library/Table/types';
 import { Account } from '@/apis';
-import COLORS from '@/components/ui/colors';
+import COLORS, {
+  COLORS_V2_HIGHLIGHT_FLAGRIGHTBLUE,
+  COLORS_V2_HIGHLIGHT_HIGHLIGHT_STROKE,
+} from '@/components/ui/colors';
 import AccountForm from '@/pages/accounts/components/AccountForm';
 import QueryResultsTable from '@/components/common/QueryResultsTable';
-import { capitalizeWords } from '@/utils/tags';
 import { message } from '@/components/library/Message';
 import { ColumnHelper } from '@/components/library/Table/columnHelper';
 import { PageWrapperContentContainer } from '@/components/PageWrapper';
+import RoleTag, { getRoleTitle } from '@/components/ui/RoleTag';
 
 export default function Team() {
   const actionRef = useRef<TableRefType>(null);
@@ -59,8 +62,28 @@ export default function Team() {
       key: 'role',
       title: 'Role',
       type: {
-        render: (role) => {
-          return <>{role ? capitalizeWords(role) : ''}</>;
+        render: (role, context) => {
+          return (
+            <div>
+              {role != null && <RoleTag role={role} />}
+              {context.item.isEscalationContact && (
+                <Tag
+                  style={{
+                    background: COLORS_V2_HIGHLIGHT_FLAGRIGHTBLUE,
+                    borderColor: COLORS_V2_HIGHLIGHT_HIGHLIGHT_STROKE,
+                    color: 'black',
+                  }}
+                >
+                  Escalation reviewer
+                </Tag>
+              )}
+            </div>
+          );
+        },
+        stringify: (role, item) => {
+          return [role && getRoleTitle(role), item.isEscalationContact && 'Escalation reviewer']
+            .filter((x) => !!x)
+            .join(', ');
         },
       },
     }),
