@@ -78,9 +78,12 @@ const TableList = () => {
             afterTimestamp: timestamp ? dayjs(timestamp[0]).valueOf() : undefined,
             beforeTimestamp: timestamp ? dayjs(timestamp[1]).valueOf() : undefined,
             filterId: transactionId,
-            filterUserId: userFilterMode === 'ALL' ? userId : undefined,
-            filterOriginUserId: userFilterMode === 'ORIGIN' ? userId : undefined,
-            filterDestinationUserId: userFilterMode === 'DESTINATION' ? userId : undefined,
+            filterOriginUserId:
+              userFilterMode && ['ORIGIN', 'ALL'].includes(userFilterMode) ? userId : undefined,
+            filterDestinationUserId:
+              userFilterMode && ['DESTINATION', 'ALL'].includes(userFilterMode)
+                ? userId
+                : undefined,
             filterOriginCurrencies: originCurrenciesFilter,
             filterDestinationCurrencies: destinationCurrenciesFilter,
             transactionType: type,
