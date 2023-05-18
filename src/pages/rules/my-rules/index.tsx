@@ -152,6 +152,16 @@ const MyRule = (props: { simulationMode?: boolean }) => {
           },
         },
       }),
+      helper.simple<'ruleDescriptionAlias'>({
+        title: 'Description',
+        key: 'ruleDescriptionAlias',
+      }),
+
+      helper.simple<'nature'>({
+        title: 'Nature',
+        key: 'nature',
+        defaultVisibility: false,
+      }),
       helper.derived<string>({
         id: 'hitCount',
         title: 'Hit rate',
@@ -180,7 +190,7 @@ const MyRule = (props: { simulationMode?: boolean }) => {
       }),
       helper.simple<'casePriority'>({
         key: 'casePriority',
-        title: 'Case priority',
+        title: 'Rule severity',
       }),
       helper.simple<'createdAt'>({
         key: 'createdAt',
