@@ -229,12 +229,28 @@ export class MongoDbTransactionRepository
       })
     }
 
-    if (params.filterOriginUserId || params.filterDestinationUserId) {
+    if (
+      params.filterOriginUserId ||
+      params.filterDestinationUserId ||
+      params.filterUserId
+    ) {
       let otherConditions = {}
       if (conditions.length > 0) {
         otherConditions = { $and: conditions }
       }
       const $or = []
+      if (params.filterUserId) {
+        $or.push(
+          {
+            originUserId: { $in: [params.filterUserId] },
+            ...otherConditions,
+          },
+          {
+            destinationUserId: { $in: [params.filterUserId] },
+            ...otherConditions,
+          }
+        )
+      }
       if (params.filterOriginUserId) {
         $or.push({
           originUserId: { $in: [params.filterOriginUserId] },
@@ -247,7 +263,6 @@ export class MongoDbTransactionRepository
           ...otherConditions,
         })
       }
-
       return {
         $or,
       }
