@@ -31,7 +31,7 @@ export default function SimplePropertyInput(props: Props) {
       }
       return <TextInput placeholder="Enter text" {...inputProps} />;
     case 'boolean':
-      return <Checkbox {...inputProps} />;
+      return <Checkbox {...inputProps} value={inputProps.value ?? false} />;
     case 'number':
     case 'integer':
       return (
