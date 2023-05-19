@@ -67,6 +67,7 @@ export default function ItemsTable(props: Props) {
   const isNewUserValid = newUserData.value.length > 0;
   const [isAddUserLoading, setAddUserLoading] = useState(false);
 
+  const [focusOnReasonInput, setFocusOnReasonInput] = useState(false);
   const handleAddItem = useCallback(() => {
     const hideMessage = message.loading('Adding item to a list...');
     if (isNewUserValid) {
@@ -239,9 +240,13 @@ export default function ItemsTable(props: Props) {
                     onChange={(e) => {
                       setNewUserData((prevState) => ({
                         ...prevState,
-                        reason: e.currentTarget.value,
+                        reason: e.target.value,
                       }));
                     }}
+                    onFocus={() => {
+                      setFocusOnReasonInput(true);
+                    }}
+                    autoFocus={focusOnReasonInput}
                   />
                 );
               } else if (entity.value === editUserData?.value) {
@@ -252,9 +257,13 @@ export default function ItemsTable(props: Props) {
                     onChange={(e) => {
                       setEditUserData({
                         ...editUserData,
-                        reason: e.currentTarget.value,
+                        reason: e.target.value,
                       });
                     }}
+                    onFocus={() => {
+                      setFocusOnReasonInput(false);
+                    }}
+                    autoFocus={!focusOnReasonInput}
                   />
                 );
               }
