@@ -88,6 +88,11 @@ export default function UserSearchButton(props: Props) {
           onCancel={() => {
             setOpen(false);
           }}
+          onEnterInput={(userId, mode) => {
+            setUserRest(init());
+            onConfirm(userId, mode);
+            setOpen(false);
+          }}
         />
       )}
     </QuickFilterBase>

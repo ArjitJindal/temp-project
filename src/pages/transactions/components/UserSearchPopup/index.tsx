@@ -12,6 +12,7 @@ interface Props {
   initialMode?: Mode | null;
   onConfirm: (user: User, mode: Mode | null) => void;
   showOriginAndDestination?: boolean;
+  onEnterInput: (userId: string, mode: Mode | null) => void;
 }
 
 export default function UserSearchPopup(props: Props) {
@@ -22,6 +23,7 @@ export default function UserSearchPopup(props: Props) {
     placement = 'bottomLeft',
     onConfirm,
     showOriginAndDestination = true,
+    onEnterInput,
   } = props;
   const [visible, setVisible] = useState(false);
 
@@ -42,6 +44,9 @@ export default function UserSearchPopup(props: Props) {
             }}
             onCancel={() => {
               setVisible(false);
+            }}
+            onEnterInput={(userId, mode) => {
+              onEnterInput(userId, mode);
             }}
           />
         </div>

@@ -16,6 +16,7 @@ interface Props {
   onConfirm: (user: User, mode: Mode | null) => void;
   onCancel: () => void;
   showOriginAndDestination: boolean;
+  onEnterInput: (userId: string, mode: Mode | null) => void;
 }
 
 export default function PopupContent(props: Props) {
@@ -25,6 +26,7 @@ export default function PopupContent(props: Props) {
     initialMode,
     onConfirm,
     showOriginAndDestination = true,
+    onEnterInput,
   } = props;
 
   const [search, setSearch] = useState(initialSearch);
@@ -66,6 +68,11 @@ export default function PopupContent(props: Props) {
           placeholder="Search user name or ID"
           value={search}
           onChange={(e) => setSearch(e.currentTarget.value)}
+          onKeyDown={(e) => {
+            if (e.key === 'Enter') {
+              onEnterInput(search, mode);
+            }
+          }}
           allowClear
         />
         {initialMode != null && (

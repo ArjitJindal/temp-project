@@ -59,7 +59,14 @@ function UserIdInput(props: Omit<Props, 'listSubtype'>) {
   );
 
   return (
-    <UserSearchPopup initialSearch={''} onConfirm={handleChooseUser} placement="top">
+    <UserSearchPopup
+      initialSearch={''}
+      onConfirm={handleChooseUser}
+      placement="top"
+      onEnterInput={(userId: string) => {
+        onChange?.([userId]);
+      }}
+    >
       <Button style={{ width: '100%' }}>{newUserData.userFullName || 'Choose user'}</Button>
     </UserSearchPopup>
   );
