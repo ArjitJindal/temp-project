@@ -21,7 +21,7 @@ describe('Comment Alerts from Table', () => {
     })
       .eq(1)
       .click();
-    cy.intercept('POST', '/console/alerts').as('alert');
+    cy.intercept('PATCH', '/console/alerts/statusChange').as('alert');
     cy.multiSelect('.ant-modal', 'False positive');
     cy.get('.ant-modal-root .ant-modal-title', { timeout: 8000 }).click();
     cy.get('.ant-modal-root textarea').eq(0).type('This is a test');
