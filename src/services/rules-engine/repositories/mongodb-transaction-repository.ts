@@ -418,23 +418,12 @@ export class MongoDbTransactionRepository
 
     const filter = this.getTransactionsMongoQuery(params)
 
-    return await cursorPaginate<InternalTransaction>(
-      collection,
-      filter,
-      {
-        pageSize: params.pageSize ? (params.pageSize as number) : 20,
-        sortField: params.sortField,
-        fromCursorKey: params._from,
-        sortOrder: params.sortOrder,
-      },
-      {
-        'destinationAmountDetails.transactionAmount': 'number',
-        'originAmountDetails.transactionAmount': 'number',
-        'arsScore.arsScore': 'number',
-        'arsScore.riskLevel': 'number',
-        timestamp: 'number',
-      }
-    )
+    return await cursorPaginate<InternalTransaction>(collection, filter, {
+      pageSize: params.pageSize ? (params.pageSize as number) : 20,
+      sortField: params.sortField,
+      fromCursorKey: params._from,
+      sortOrder: params.sortOrder,
+    })
   }
 
   public async getInternalTransaction(

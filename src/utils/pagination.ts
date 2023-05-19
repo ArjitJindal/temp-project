@@ -67,8 +67,7 @@ const PAGINATION_CURSOR_KEY_SEPERATOR = '___'
 export async function cursorPaginate<T extends Document>(
   collection: Collection<T>,
   filter: Filter<WithId<T>>,
-  query: CursorPaginationParams,
-  mapping?: { [field: string]: 'number' | 'string' }
+  query: CursorPaginationParams
 ): Promise<{
   items: WithId<T>[]
   next: string
@@ -97,10 +96,9 @@ export async function cursorPaginate<T extends Document>(
 
   let parsedSortValue: any = sortValue
   // Parse fields that are not string values
-  if (mapping && mapping[field]) {
-    if (mapping[field] === 'number') {
-      parsedSortValue = sortValue !== 'EMPTY' ? parseInt(sortValue) : undefined
-    }
+  const asNumber = parseFloat(sortValue)
+  if (!isNaN(asNumber)) {
+    parsedSortValue = asNumber
   }
 
   if (parsedSortValue === 'EMPTY') {
