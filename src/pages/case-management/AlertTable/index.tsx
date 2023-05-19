@@ -320,17 +320,13 @@ export default function AlertTable(props: Props) {
   const handleAssignTo = (account: Account, selectedEntities: string[]) => {
     const hideLoading = message.loading('Assigning alerts');
     api
-      .postAlerts({
-        AlertsUpdateRequest: {
+      .alertsAssignee({
+        AlertsAssignmentUpdateRequest: {
           alertIds: selectedEntities,
-          updates: {
-            assignments: [
-              {
-                assigneeUserId: account.id,
-                assignedByUserId: user.userId,
-                timestamp: Date.now(),
-              },
-            ],
+          assignment: {
+            assigneeUserId: account.id,
+            assignedByUserId: user.userId,
+            timestamp: Date.now(),
           },
         },
       })

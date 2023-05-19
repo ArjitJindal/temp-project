@@ -6,7 +6,7 @@ import StatusChangeModal, {
   Props as StatusChangeModalProps,
 } from '../StatusChangeModal';
 import { useApi } from '@/api';
-import { AlertStatus, AlertUpdateRequest } from '@/apis';
+import { AlertStatus, AlertStatusUpdateRequest } from '@/apis';
 import { message } from '@/components/library/Message';
 import { getErrorMessage } from '@/utils/lang';
 
@@ -25,7 +25,7 @@ export default function AlertsStatusChangeModal(props: Props) {
   >(async ({ ids, newStatus, formValues }) => {
     const hideMessage = message.loading(`Saving...`);
 
-    const updates: AlertUpdateRequest = {
+    const updates: AlertStatusUpdateRequest = {
       alertStatus: newStatus,
     };
 
@@ -56,10 +56,10 @@ export default function AlertsStatusChangeModal(props: Props) {
           `Alerts '${ids.join(', ')}' are escalated to a new child case '${response.childCaseId}'`,
         );
       } else {
-        await api.postAlerts({
-          AlertsUpdateRequest: {
+        await api.alertsStatusChange({
+          AlertsStatusUpdateRequest: {
             alertIds: ids,
-            updates: updates,
+            updates,
           },
         });
         message.success('Saved');
