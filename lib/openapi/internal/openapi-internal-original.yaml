@@ -2630,9 +2630,10 @@ paths:
               type: string
           in: query
           name: filterRuleInstanceId
-    post:
-      summary: Alerts - Update
-      operationId: post-alerts
+  /alerts/statusChange:
+    patch:
+      summary: Alerts - Status Change
+      operationId: alerts-status-change
       responses:
         '200':
           description: OK
@@ -2643,7 +2644,22 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/AlertsUpdateRequest'
+              $ref: '#/components/schemas/AlertsStatusUpdateRequest'
+  /alerts/assignee:
+    patch:
+      summary: Alerts - Update
+      operationId: alerts-assignee
+      responses:
+        '200':
+          description: OK
+      x-flagright:
+        permissions:
+          - case-management:case-overview:write
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AlertsAssignmentUpdateRequest'
   '/alerts/{alertId}':
     parameters:
       - schema:
@@ -5337,14 +5353,10 @@ components:
             $ref: '#/components/schemas/FileInfo'
       x-examples: {}
       description: ''
-    AlertUpdateRequest:
-      title: AlertUpdateRequest
+    AlertStatusUpdateRequest:
+      title: AlertStatusUpdateRequest
       type: object
       properties:
-        assignments:
-          type: array
-          items:
-            $ref: '#/components/schemas/Assignment'
         reason:
           type: array
           items:
@@ -5361,8 +5373,19 @@ components:
           type: array
           items:
             $ref: '#/components/schemas/FileInfo'
-      x-examples: {}
-      description: ''
+    AlertsAssignmentUpdateRequest:
+      title: AlertsAssignmentUpdateRequest
+      type: object
+      properties:
+        alertIds:
+          type: array
+          items:
+            type: string
+        assignment:
+          $ref: '#/components/schemas/Assignment'
+      required:
+        - alertIds
+        - assignment
     CasesUpdateRequest:
       title: CasesUpdateRequest
       type: object
@@ -5376,8 +5399,8 @@ components:
       required:
         - caseIds
         - updates
-    AlertsUpdateRequest:
-      title: AlertsUpdateRequest
+    AlertsStatusUpdateRequest:
+      title: AlertsStatusUpdateRequest
       type: object
       properties:
         alertIds:
@@ -5385,7 +5408,7 @@ components:
           items:
             type: string
         updates:
-          $ref: '#/components/schemas/AlertUpdateRequest'
+          $ref: '#/components/schemas/AlertStatusUpdateRequest'
       required:
         - alertIds
         - updates

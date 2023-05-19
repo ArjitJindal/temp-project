@@ -5,7 +5,7 @@ import _ from 'lodash'
 import { AlertsRepository } from '../rules-engine/repositories/alerts-repository'
 import { CaseAlertsCommonService, S3Config } from '../case-alerts-common'
 import { CaseRepository } from '../rules-engine/repositories/case-repository'
-import { sendWebhookTasks } from '../webhook/utils'
+import { ThinWebhookDeliveryTask, sendWebhookTasks } from '../webhook/utils'
 import { CaseStatus } from '@/@types/openapi-internal/CaseStatus'
 import { Alert } from '@/@types/openapi-internal/Alert'
 import { AlertListResponse } from '@/@types/openapi-internal/AlertListResponse'
@@ -22,11 +22,12 @@ import { Case } from '@/@types/openapi-internal/Case'
 import { Account } from '@/@types/openapi-internal/Account'
 import { Comment } from '@/@types/openapi-internal/Comment'
 import { CaseHierarchyDetails } from '@/@types/openapi-internal/CaseHierarchyDetails'
-import { AlertUpdateRequest } from '@/@types/openapi-internal/AlertUpdateRequest'
 import { CaseStatusChange } from '@/@types/openapi-internal/CaseStatusChange'
 import { AlertClosedDetails } from '@/@types/openapi-public/AlertClosedDetails'
 import { OptionalPagination } from '@/utils/pagination'
 import { TransactionsListResponse } from '@/@types/openapi-internal/TransactionsListResponse'
+import { AlertStatusUpdateRequest } from '@/@types/openapi-internal/AlertStatusUpdateRequest'
+import { Assignment } from '@/@types/openapi-internal/Assignment'
 
 export class AlertsService extends CaseAlertsCommonService {
   alertsRepository: AlertsRepository
@@ -68,6 +69,7 @@ export class AlertsService extends CaseAlertsCommonService {
             numberOfTransactionsHit: 1,
             transactionIds: [transaction.transactionId],
             priority: 'P1',
+            statusChanges: [],
           }
         } else {
           const alert = alertMap[hitRule.ruleInstanceId]
@@ -329,14 +331,10 @@ export class AlertsService extends CaseAlertsCommonService {
       throw new NotFound(`"${alertId}" alert not found`)
     }
 
-    if (alert.caseId == null) {
-      throw new Error(`Alert case id is null`)
-    }
-
     const files = await this.copyFiles(comment.files || [])
 
     const savedComment = await this.alertsRepository.saveAlertComment(
-      alert.caseId,
+      alert.caseId!,
       alertId,
       { ...comment, files }
     )
@@ -348,6 +346,35 @@ export class AlertsService extends CaseAlertsCommonService {
         downloadLink: this.getDownloadLink(file),
       })),
     }
+  }
+
+  private async saveAlertsComment(
+    alertIds: string[],
+    caseIds: string[],
+    comment: Comment
+  ): Promise<Comment> {
+    const files = await this.copyFiles(comment.files || [])
+
+    const savedComment = await this.alertsRepository.saveAlertsComment(
+      alertIds,
+      caseIds,
+      { ...comment, files }
+    )
+
+    return {
+      ...savedComment,
+      files: savedComment.files?.map((file) => ({
+        ...file,
+        downloadLink: this.getDownloadLink(file),
+      })),
+    }
+  }
+
+  public async updateAssigneeToAlerts(
+    alertIds: string[],
+    assignment: Assignment
+  ): Promise<void> {
+    await this.alertsRepository.updateAssigneeToAlerts(alertIds, assignment)
   }
 
   public async deleteAlertComment(
@@ -377,84 +404,106 @@ export class AlertsService extends CaseAlertsCommonService {
     )
   }
 
-  public async updateAlerts(
-    userId: string,
+  private getAlertStatusChangeCommentBody(
+    statusUpdateRequest: AlertStatusUpdateRequest
+  ): string {
+    const { alertStatus, reason, otherReason, comment } = statusUpdateRequest
+    let body = `Alert status changed to ${alertStatus}`
+    const allReasons = [
+      ...(reason?.filter((x) => x !== 'Other') ?? []),
+      ...(reason?.includes('Other') && otherReason ? [otherReason] : []),
+    ]
+
+    if (allReasons.length > 0) {
+      body += `. Reasons: ${allReasons.join(', ')}`
+    }
+
+    if (comment) {
+      body += `. ${comment}`
+    }
+
+    return body
+  }
+
+  public async updateAlertsStatus(
     alertIds: string[],
-    updateRequest: AlertUpdateRequest
+    statusUpdateRequest: AlertStatusUpdateRequest
   ) {
+    const userId = getContext()?.user?.id
+    const statusChange: CaseStatusChange = {
+      userId: userId!,
+      timestamp: Date.now(),
+      reason: statusUpdateRequest.reason,
+      caseStatus: statusUpdateRequest.alertStatus,
+      otherReason: statusUpdateRequest.otherReason,
+    }
+
     const caseRepository = new CaseRepository(this.tenantId, {
       mongoDb: this.mongoDb,
     })
 
-    const statusChange: CaseStatusChange | undefined =
-      updateRequest.alertStatus && {
-        userId,
-        timestamp: Date.now(),
-        reason: updateRequest.reason,
-        caseStatus: updateRequest.alertStatus,
-        otherReason: updateRequest.otherReason,
-      }
+    const cases = await caseRepository.getCasesByAlertIds(alertIds)
 
-    await this.alertsRepository.updateAlerts(alertIds, {
-      assignments: updateRequest.assignments,
-      statusChange: statusChange,
+    const caseIds = cases.map((c) => c.caseId!)
+
+    await this.alertsRepository.updateAlertsStatus(
+      alertIds,
+      caseIds,
+      statusChange
+    )
+
+    await this.sendAlertClosedWebhook(alertIds, cases, statusUpdateRequest)
+
+    const commentBody =
+      this.getAlertStatusChangeCommentBody(statusUpdateRequest)
+
+    await this.saveAlertsComment(alertIds, caseIds, {
+      userId,
+      body: commentBody,
+      files: statusUpdateRequest.files,
     })
+  }
 
-    if (updateRequest.alertStatus) {
-      let body = `Alert status changed to ${updateRequest.alertStatus}`
-      const allReasons = [
-        ...(updateRequest?.reason?.filter((x) => x !== 'Other') ?? []),
-        ...(updateRequest?.reason?.includes('Other') &&
-        updateRequest.otherReason
-          ? [updateRequest.otherReason]
-          : []),
-      ]
+  private async sendAlertClosedWebhook(
+    alertIds: string[],
+    cases: Case[],
+    statusUpdateRequest: AlertStatusUpdateRequest
+  ) {
+    const { reason, otherReason } = statusUpdateRequest
+    const commentBody =
+      this.getAlertStatusChangeCommentBody(statusUpdateRequest)
 
-      if (allReasons.length > 0) {
-        body += `. Reasons: ${allReasons.join(', ')}`
-      }
+    const webhookTasks: ThinWebhookDeliveryTask[] = []
 
-      if (updateRequest.comment) {
-        body += `. ${updateRequest.comment}`
-      }
-
-      const cases = await caseRepository.getCasesByAlertIds(alertIds)
-
-      await Promise.all(
-        alertIds.map((alertId) => {
-          this.saveAlertComment(alertId, {
-            userId,
-            body: body,
-            files: updateRequest.files,
-          })
-          const case_ = cases.find((c) =>
-            c.alerts.find((a) => a.alertId === alertId)
-          )
-          const alert = case_?.alerts.find((a) => a.alertId === alertId)
-          updateRequest.alertStatus === 'CLOSED' &&
-            sendWebhookTasks(this.tenantId, [
-              {
-                event: 'ALERT_CLOSED',
-                payload: {
-                  alertId,
-                  reasons: updateRequest.reason,
-                  reasonDescriptionForOther: updateRequest.otherReason,
-                  comment: updateRequest.comment,
-                  ruleId: alert?.ruleId,
-                  ruleInstanceId: alert?.ruleInstanceId,
-                  ruleName: alert?.ruleName,
-                  ruleDescription: alert?.ruleDescription,
-                  userId:
-                    case_?.caseUsers?.origin?.userId ??
-                    case_?.caseUsers?.destination?.userId,
-                  transactionIds: alert?.transactionIds,
-                } as AlertClosedDetails,
-              },
-            ])
-        })
+    for (const alertId of alertIds) {
+      const case_ = cases.find((c) =>
+        c.alerts?.some((a) => a.alertId === alertId)
       )
+
+      const alert = case_?.alerts?.find((a) => a.alertId === alertId)
+
+      if (alert) {
+        webhookTasks.push({
+          event: 'ALERT_CLOSED',
+          payload: {
+            alertId,
+            reasons: reason,
+            reasonDescriptionForOther: otherReason,
+            comment: commentBody,
+            ruleId: alert.ruleId,
+            ruleInstanceId: alert.ruleInstanceId,
+            ruleName: alert.ruleName,
+            ruleDescription: alert.ruleDescription,
+            userId:
+              case_?.caseUsers?.origin?.userId ??
+              case_?.caseUsers?.destination?.userId,
+            transactionIds: alert.transactionIds,
+          } as AlertClosedDetails,
+        })
+      }
     }
-    return 'OK'
+
+    await sendWebhookTasks(this.tenantId, webhookTasks)
   }
 
   public async getAlertTransactions(

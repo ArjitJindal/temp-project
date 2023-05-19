@@ -18,7 +18,6 @@ import { getMongoDbClient } from '@/utils/mongoDBUtils'
 import { JWTAuthorizerResult } from '@/@types/jwt'
 import { CaseRepository } from '@/services/rules-engine/repositories/case-repository'
 import { CasesUpdateRequest } from '@/@types/openapi-internal/CasesUpdateRequest'
-import { AlertsUpdateRequest } from '@/@types/openapi-internal/AlertsUpdateRequest'
 import { AlertsToNewCaseRequest } from '@/@types/openapi-internal/AlertsToNewCaseRequest'
 import { getDynamoDbClientByEvent } from '@/utils/dynamodb'
 import { TransactionState } from '@/@types/openapi-internal/TransactionState'
@@ -33,6 +32,8 @@ import { hasFeature } from '@/core/utils/context'
 import { AlertsService } from '@/services/alerts'
 import { AlertsRepository } from '@/services/rules-engine/repositories/alerts-repository'
 import { parseStrings } from '@/utils/lambda'
+import { AlertsStatusUpdateRequest } from '@/@types/openapi-internal/AlertsStatusUpdateRequest'
+import { AlertsAssignmentUpdateRequest } from '@/@types/openapi-internal/AlertsAssignmentUpdateRequest'
 
 export type CaseConfig = {
   TMP_BUCKET: string
@@ -396,12 +397,17 @@ export const casesHandler = lambdaApi()(
       }
       return alertsService.getAlerts(params)
     } else if (
-      event.httpMethod === 'POST' &&
-      event.resource === '/alerts' &&
+      event.httpMethod === 'PATCH' &&
+      event.resource === '/alerts/statusChange' &&
       event.body
     ) {
-      const updateRequest = JSON.parse(event.body) as AlertsUpdateRequest
-      const alertIds = updateRequest?.alertIds || []
+      const updateRequest = JSON.parse(event.body) as AlertsStatusUpdateRequest
+      const alertIds = updateRequest?.alertIds
+
+      if (!alertIds?.length) {
+        throw new BadRequest('Missing alertIds in request body or empty array')
+      }
+
       const { updates } = updateRequest
       const alertUpdateSegment = await addNewSubsegment(
         'Case Service',
@@ -410,8 +416,7 @@ export const casesHandler = lambdaApi()(
       try {
         alertUpdateSegment?.addAnnotation('tenantId', tenantId)
         alertUpdateSegment?.addAnnotation('alertIds', alertIds.toString())
-        const updateResult = await alertsService.updateAlerts(
-          userId,
+        const updateResult = await alertsService.updateAlertsStatus(
           alertIds,
           updates
         )
@@ -420,6 +425,51 @@ export const casesHandler = lambdaApi()(
           updates
         )
         return updateResult
+      } finally {
+        alertUpdateSegment?.close()
+      }
+    } else if (
+      event.httpMethod === 'PATCH' &&
+      event.resource === '/alerts/assignee' &&
+      event.body
+    ) {
+      const updateRequest = JSON.parse(
+        event.body
+      ) as AlertsAssignmentUpdateRequest
+      const alertIds = updateRequest?.alertIds
+
+      if (!alertIds?.length) {
+        throw new BadRequest('Missing alertIds or empty alertIds array')
+      }
+
+      const { assignment } = updateRequest
+
+      const alertUpdateSegment = await addNewSubsegment(
+        'Case Service',
+        'Alert Assignee Update'
+      )
+
+      const timestamp = Date.now()
+
+      try {
+        alertUpdateSegment?.addAnnotation('tenantId', tenantId)
+        alertUpdateSegment?.addAnnotation('alertIds', alertIds.toString())
+        await alertsService.updateAssigneeToAlerts(alertIds, {
+          ...assignment,
+          timestamp,
+        })
+        await casesAlertsAuditLogService.handleAuditLogForAlertsUpdate(
+          alertIds,
+          {
+            assignments: [
+              {
+                ...assignment,
+                timestamp,
+              },
+            ],
+          }
+        )
+        return 'OK'
       } finally {
         alertUpdateSegment?.close()
       }

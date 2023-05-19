@@ -19,7 +19,6 @@ import {
   USERS_COLLECTION,
 } from '@/utils/mongoDBUtils'
 import { Comment } from '@/@types/openapi-internal/Comment'
-import { Alert } from '@/@types/openapi-internal/Alert'
 import { Assignment } from '@/@types/openapi-internal/Assignment'
 import { DefaultApiGetCaseListRequest } from '@/@types/openapi-internal/RequestParameters'
 import { EntityCounter } from '@/@types/openapi-internal/EntityCounter'
@@ -44,7 +43,6 @@ import {
 } from '@/utils/pagination'
 import { InternalTransaction } from '@/@types/openapi-internal/InternalTransaction'
 import { PRIORITYS } from '@/@types/openapi-internal-custom/Priority'
-import { CaseCaseUsers } from '@/@types/openapi-internal/CaseCaseUsers'
 
 export const MAX_TRANSACTION_IN_A_CASE = 1000
 
@@ -787,24 +785,13 @@ export class CaseRepository {
     return await collection.findOne<Case>({ caseId })
   }
 
-  public async getCasesByAlertIds(alertIds: string[]): Promise<
-    Array<{
-      caseId: string
-      alerts: Alert[]
-      caseUsers: CaseCaseUsers
-    }>
-  > {
+  public async getCasesByAlertIds(alertIds: string[]): Promise<Case[]> {
     const db = this.mongoDb.db()
     const collection = db.collection<Case>(CASES_COLLECTION(this.tenantId))
     const cases = await collection
-      .find<{
-        caseId: string
-        alerts: Alert[]
-        caseUsers: CaseCaseUsers
-      }>(
-        { 'alerts.alertId': { $in: alertIds } },
-        { projection: { caseId: 1, alerts: 1, caseUsers: 1 } }
-      )
+      .find({
+        'alerts.alertId': { $in: alertIds },
+      })
       .toArray()
 
     return cases

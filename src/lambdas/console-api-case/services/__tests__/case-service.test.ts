@@ -1,5 +1,7 @@
 import { NotFound, BadRequest } from 'http-errors'
 import dayjs from 'dayjs'
+import { ObjectId } from 'mongodb'
+import { nanoid } from 'nanoid'
 import { CaseService } from '../case-service'
 import { CASE_TRANSACTIONS } from './utils/case-transactions'
 import { dynamoDbSetupHook } from '@/test-utils/dynamodb-test-utils'
@@ -14,6 +16,7 @@ import { CaseEscalationRequest } from '@/@types/openapi-internal/CaseEscalationR
 import { AlertsService } from '@/services/alerts'
 import { AlertsRepository } from '@/services/rules-engine/repositories/alerts-repository'
 import { getS3ClientByEvent } from '@/utils/s3'
+import { Comment } from '@/@types/openapi-internal/Comment'
 
 const TEST_ACCOUNT_1: Account = {
   id: 'ACCOUNT-1',
@@ -40,12 +43,27 @@ const TEST_ALERT_1: Alert = {
   numberOfTransactionsHit: 1,
   priority: 'P1' as Priority,
 }
+
 const TEST_ALERT_2: Alert = {
   alertId: 'A-2',
   alertStatus: 'CLOSED',
   createdTimestamp: 0,
   latestTransactionArrivalTimestamp: 0,
   ruleInstanceId: 'rid-2',
+  ruleName: '',
+  ruleDescription: '',
+  ruleId: '',
+  ruleAction: 'FLAG',
+  numberOfTransactionsHit: 1,
+  priority: 'P1' as Priority,
+}
+
+const TEST_ALERT_3: Alert = {
+  alertId: 'A-3',
+  alertStatus: 'OPEN',
+  createdTimestamp: 0,
+  latestTransactionArrivalTimestamp: 0,
+  ruleInstanceId: 'rid-3',
   ruleName: '',
   ruleDescription: '',
   ruleId: '',
@@ -357,6 +375,391 @@ describe('Case service', () => {
         caseId: 'C-2',
         caseStatus: 'CLOSED',
       })
+    })
+  })
+})
+
+describe('Post APIs Alerts Tests', () => {
+  const TEST_TENANT_ID = getTestTenantId()
+
+  test('Single ALert Comments', async () => {
+    const caseService = await getCaseService(TEST_TENANT_ID)
+    const alertsService = await getAlertsService(TEST_TENANT_ID)
+
+    await caseService.caseRepository.addCaseMongo({
+      caseId: 'C-1',
+      createdTimestamp: Date.now(),
+      caseStatus: 'OPEN',
+      alerts: [TEST_ALERT_1, TEST_ALERT_2],
+    })
+
+    const COMMENT_ID_1 = 'some-random-id'
+    const COMMENT_ID_2 = 'some-random-id-2'
+
+    const comment: Comment = {
+      id: COMMENT_ID_1,
+      body: 'some comment',
+    }
+
+    const comment2: Comment = {
+      id: COMMENT_ID_2,
+      body: 'some-comment-2',
+    }
+
+    await alertsService.saveAlertComment(TEST_ALERT_1.alertId!, comment)
+
+    const c = await caseService.getCase('C-1')
+
+    expect(c).toMatchObject({
+      _id: expect.any(ObjectId),
+      caseId: 'C-1',
+      createdTimestamp: expect.any(Number),
+      caseStatus: 'OPEN',
+      alerts: [
+        {
+          alertId: 'A-1',
+          alertStatus: 'OPEN',
+          _id: expect.any(Number),
+          caseId: 'C-1',
+          comments: [
+            {
+              id: 'some-random-id',
+              body: 'some comment',
+              files: [],
+              createdAt: expect.any(Number),
+              updatedAt: expect.any(Number),
+            },
+          ],
+        },
+        {
+          alertId: 'A-2',
+          alertStatus: 'CLOSED',
+          _id: expect.any(Number),
+          caseId: 'C-1',
+        },
+      ],
+    })
+    await alertsService.saveAlertComment(TEST_ALERT_2.alertId!, comment2)
+    await alertsService.deleteAlertComment(TEST_ALERT_1.alertId!, COMMENT_ID_1)
+
+    const caseAfterDeletion = await caseService.getCase('C-1')
+
+    expect(caseAfterDeletion).toMatchObject({
+      _id: expect.any(ObjectId),
+      caseId: 'C-1',
+      createdTimestamp: expect.any(Number),
+      caseStatus: 'OPEN',
+      alerts: [
+        {
+          alertId: 'A-1',
+          alertStatus: 'OPEN',
+          _id: expect.any(Number),
+          caseId: 'C-1',
+          comments: [],
+        },
+        {
+          alertId: 'A-2',
+          alertStatus: 'CLOSED',
+          _id: expect.any(Number),
+          caseId: 'C-1',
+          comments: [
+            {
+              id: 'some-random-id-2',
+              body: 'some-comment-2',
+              files: [],
+              createdAt: expect.any(Number),
+              updatedAt: expect.any(Number),
+            },
+          ],
+        },
+      ],
+    })
+  })
+  test('Two comments in a single alert only deletes a specific which is defined', async () => {
+    const caseService = await getCaseService(TEST_TENANT_ID)
+    const alertsService = await getAlertsService(TEST_TENANT_ID)
+
+    await caseService.caseRepository.addCaseMongo({
+      caseId: 'C-1',
+      createdTimestamp: Date.now(),
+      caseStatus: 'OPEN',
+      alerts: [TEST_ALERT_1],
+    })
+
+    const COMMENT_ID_1 = 'some-random-id'
+    const COMMENT_ID_2 = 'some-random-id-2'
+
+    const comment: Comment = {
+      id: COMMENT_ID_1,
+      body: 'some comment',
+    }
+
+    const comment2: Comment = {
+      id: COMMENT_ID_2,
+      body: 'some-comment-2',
+    }
+
+    await alertsService.saveAlertComment(TEST_ALERT_1.alertId!, comment)
+    await alertsService.saveAlertComment(TEST_ALERT_1.alertId!, comment2)
+
+    const c = await caseService.getCase('C-1')
+
+    expect(c).toMatchObject({
+      _id: expect.any(ObjectId),
+      caseId: 'C-1',
+      createdTimestamp: expect.any(Number),
+      caseStatus: 'OPEN',
+      alerts: [
+        {
+          alertId: 'A-1',
+          numberOfTransactionsHit: 1,
+          priority: 'P1',
+          _id: expect.any(Number),
+          caseId: 'C-1',
+          comments: [
+            {
+              id: 'some-random-id',
+              body: 'some comment',
+              files: [],
+              createdAt: expect.any(Number),
+              updatedAt: expect.any(Number),
+            },
+            {
+              id: 'some-random-id-2',
+              body: 'some-comment-2',
+              files: [],
+              createdAt: expect.any(Number),
+              updatedAt: expect.any(Number),
+            },
+          ],
+        },
+      ],
+    })
+
+    await alertsService.deleteAlertComment(TEST_ALERT_1.alertId!, COMMENT_ID_1)
+
+    const caseAfterDeletion = await caseService.getCase('C-1')
+
+    expect(caseAfterDeletion).toMatchObject({
+      _id: expect.any(ObjectId),
+      caseId: 'C-1',
+      createdTimestamp: expect.any(Number),
+      caseStatus: 'OPEN',
+      alerts: [
+        {
+          alertId: 'A-1',
+          numberOfTransactionsHit: 1,
+          priority: 'P1',
+          _id: expect.any(Number),
+          caseId: 'C-1',
+          comments: [
+            {
+              id: 'some-random-id-2',
+              body: 'some-comment-2',
+              files: [],
+              createdAt: expect.any(Number),
+              updatedAt: expect.any(Number),
+            },
+          ],
+        },
+      ],
+    })
+  })
+
+  test('Changing Status of a Case to Closed with Comments and Closes User Case', async () => {
+    const caseService = await getCaseService(TEST_TENANT_ID)
+    const alertsService = await getAlertsService(TEST_TENANT_ID)
+
+    await caseService.caseRepository.addCaseMongo({
+      caseId: 'C-1',
+      createdTimestamp: Date.now(),
+      caseStatus: 'OPEN',
+      alerts: [TEST_ALERT_1, TEST_ALERT_2],
+    })
+
+    await alertsService.updateAlertsStatus(['A-1'], {
+      alertStatus: 'CLOSED',
+      priority: 'P1',
+      comment: 'some comment',
+      otherReason: 'some other reason',
+      reason: ['False positive'],
+    })
+
+    const c = await caseService.getCase('C-1')
+
+    expect(c).toMatchObject({
+      _id: expect.any(ObjectId),
+      caseId: 'C-1',
+      createdTimestamp: expect.any(Number),
+      caseStatus: 'CLOSED',
+      alerts: [
+        {
+          alertId: 'A-1',
+          alertStatus: 'CLOSED',
+          createdTimestamp: 0,
+          latestTransactionArrivalTimestamp: 0,
+          lastStatusChange: {
+            timestamp: expect.any(Number),
+            reason: ['False positive'],
+            caseStatus: 'CLOSED',
+            otherReason: 'some other reason',
+          },
+          statusChanges: [
+            {
+              timestamp: expect.any(Number),
+              reason: ['False positive'],
+              caseStatus: 'CLOSED',
+              otherReason: 'some other reason',
+            },
+          ],
+          comments: [
+            {
+              body: 'Alert status changed to CLOSED. Reasons: False positive. some comment',
+              files: [],
+              createdAt: expect.any(Number),
+              updatedAt: expect.any(Number),
+            },
+          ],
+          _id: expect.any(Number),
+        },
+        {
+          alertId: 'A-2',
+          alertStatus: 'CLOSED',
+          createdTimestamp: 0,
+          latestTransactionArrivalTimestamp: 0,
+          ruleAction: 'FLAG',
+          numberOfTransactionsHit: 1,
+          priority: 'P1',
+          _id: expect.any(Number),
+          caseId: 'C-1',
+        },
+      ],
+      lastStatusChange: {
+        userId: null,
+        timestamp: expect.any(Number),
+        reason: ['False positive'],
+        caseStatus: 'CLOSED',
+        otherReason: 'some other reason',
+      },
+      statusChanges: [
+        {
+          userId: null,
+          timestamp: expect.any(Number),
+          reason: ['False positive'],
+          caseStatus: 'CLOSED',
+          otherReason: 'some other reason',
+        },
+      ],
+    })
+  })
+
+  test('Changing Status of a Case to Closed with Comments and Does not Close User Case', async () => {
+    const caseService = await getCaseService(TEST_TENANT_ID)
+    const alertsService = await getAlertsService(TEST_TENANT_ID)
+
+    await caseService.caseRepository.addCaseMongo({
+      caseId: 'C-1',
+      createdTimestamp: Date.now(),
+      caseStatus: 'OPEN',
+      alerts: [TEST_ALERT_1, TEST_ALERT_3],
+    })
+
+    await alertsService.updateAlertsStatus(['A-1'], {
+      alertStatus: 'CLOSED',
+      priority: 'P1',
+      comment: 'some comment',
+      otherReason: 'some other reason',
+      reason: ['False positive'],
+    })
+
+    const c = await caseService.getCase('C-1')
+
+    expect(c).toMatchObject({
+      _id: expect.any(ObjectId),
+      caseId: 'C-1',
+      createdTimestamp: expect.any(Number),
+      caseStatus: 'OPEN',
+      alerts: [
+        {
+          alertId: 'A-1',
+          alertStatus: 'CLOSED',
+          createdTimestamp: 0,
+          latestTransactionArrivalTimestamp: 0,
+          lastStatusChange: {
+            timestamp: expect.any(Number),
+            reason: ['False positive'],
+            caseStatus: 'CLOSED',
+          },
+          statusChanges: [
+            {
+              timestamp: expect.any(Number),
+              reason: ['False positive'],
+              caseStatus: 'CLOSED',
+            },
+          ],
+          comments: [
+            {
+              body: 'Alert status changed to CLOSED. Reasons: False positive. some comment',
+              files: [],
+              createdAt: expect.any(Number),
+              updatedAt: expect.any(Number),
+            },
+          ],
+        },
+        {
+          alertId: 'A-3',
+          alertStatus: 'OPEN',
+          createdTimestamp: 0,
+          latestTransactionArrivalTimestamp: 0,
+          ruleAction: 'FLAG',
+          numberOfTransactionsHit: 1,
+          priority: 'P1',
+          _id: expect.any(Number),
+          caseId: 'C-1',
+        },
+      ],
+    })
+  })
+  test('Assignments Test', async () => {
+    const caseService = await getCaseService(TEST_TENANT_ID)
+    const alertsService = await getAlertsService(TEST_TENANT_ID)
+
+    await caseService.caseRepository.addCaseMongo({
+      caseId: 'C-1',
+      createdTimestamp: Date.now(),
+      caseStatus: 'OPEN',
+      alerts: [TEST_ALERT_1, TEST_ALERT_2],
+    })
+
+    const USER_ID_1 = nanoid()
+    const USER_ID_2 = nanoid()
+
+    await alertsService.updateAssigneeToAlerts(['A-1'], {
+      assigneeUserId: USER_ID_1,
+      timestamp: Date.now(),
+      assignedByUserId: USER_ID_2,
+    })
+
+    const c = await caseService.getCase('C-1')
+
+    expect(c).toMatchObject({
+      _id: expect.any(ObjectId),
+      caseId: 'C-1',
+      alerts: [
+        {
+          alertId: 'A-1',
+          assignments: [
+            {
+              assigneeUserId: USER_ID_1,
+              timestamp: expect.any(Number),
+              assignedByUserId: USER_ID_2,
+            },
+          ],
+        },
+        {
+          alertId: 'A-2',
+        },
+      ],
     })
   })
 })

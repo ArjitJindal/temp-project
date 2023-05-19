@@ -26,11 +26,11 @@ import { AlertListResponse } from '@/@types/openapi-internal/AlertListResponse'
 import { PaymentMethod } from '@/@types/openapi-public/PaymentMethod'
 import { Alert } from '@/@types/openapi-internal/Alert'
 import { Comment } from '@/@types/openapi-internal/Comment'
-import { Assignment } from '@/@types/openapi-internal/Assignment'
-import { CaseStatusChange } from '@/@types/openapi-internal/CaseStatusChange'
 import { hasFeature } from '@/core/utils/context'
 import { TransactionsListResponse } from '@/@types/openapi-internal/TransactionsListResponse'
 import { RiskRepository } from '@/services/risk-scoring/repositories/risk-repository'
+import { CaseStatusChange } from '@/@types/openapi-internal/CaseStatusChange'
+import { Assignment } from '@/@types/openapi-internal/Assignment'
 
 export class AlertsRepository {
   mongoDb: MongoClient
@@ -278,13 +278,18 @@ export class AlertsRepository {
   }
 
   public async getAlertById(alertId: string): Promise<Alert | null> {
-    const { data } = await this.getAlerts({
-      filterAlertId: alertId,
-      page: 1,
-      pageSize: 1,
+    const db = this.mongoDb.db()
+    const collection = db.collection<Case>(CASES_COLLECTION(this.tenantId))
+
+    const result = await collection.findOne({
+      'alerts.alertId': alertId,
     })
 
-    return data?.find((c) => c.alert.alertId === alertId)?.alert ?? null
+    if (!result) {
+      return null
+    }
+
+    return result.alerts?.find((alert) => alert.alertId === alertId) ?? null
   }
 
   public async saveAlertComment(
@@ -304,9 +309,62 @@ export class AlertsRepository {
     }
 
     await collection.findOneAndUpdate(
-      { caseId },
-      { $push: { 'alerts.$[alert].comments': commentToSave } },
-      { arrayFilters: [{ 'alert.alertId': alertId }] }
+      {
+        caseId,
+      },
+      {
+        $push: {
+          'alerts.$[alert].comments': commentToSave,
+        },
+      },
+      {
+        arrayFilters: [
+          {
+            'alert.alertId': alertId,
+          },
+        ],
+      }
+    )
+
+    return commentToSave
+  }
+
+  public async saveAlertsComment(
+    alertIds: string[],
+    caseIds: string[],
+    comment: Comment
+  ): Promise<Comment> {
+    const db = this.mongoDb.db()
+    const collection = db.collection<Case>(CASES_COLLECTION(this.tenantId))
+    const now = Date.now()
+
+    const commentToSave: Comment = {
+      ...comment,
+      id: comment.id || uuidv4(),
+      createdAt: comment.createdAt ?? now,
+      updatedAt: now,
+    }
+
+    await collection.updateMany(
+      {
+        caseId: {
+          $in: caseIds,
+        },
+      },
+      {
+        $push: {
+          'alerts.$[alert].comments': commentToSave,
+        },
+      },
+      {
+        arrayFilters: [
+          {
+            'alert.alertId': {
+              $in: alertIds,
+            },
+          },
+        ],
+      }
     )
 
     return commentToSave
@@ -319,103 +377,90 @@ export class AlertsRepository {
   ): Promise<void> {
     const db = this.mongoDb.db()
     const collection = db.collection<Case>(CASES_COLLECTION(this.tenantId))
-    // todo: check if alert and comment exists
-    const caseItem = await collection.findOne({
-      caseId: caseId,
-    })
-    if (caseItem == null) {
-      throw new Error(`Unable to find case "${caseId}"`)
-    }
-    await collection.replaceOne(
+
+    await collection.updateOne(
       {
         caseId,
       },
       {
-        ...caseItem,
-        alerts: caseItem.alerts?.map((alert) => {
-          if (alert.alertId !== alertId) {
-            return alert
-          }
-          return {
-            ...alert,
-            comments: alert.comments?.filter(({ id }) => id !== commentId),
-          }
-        }),
+        $pull: {
+          'alerts.$[alert].comments': {
+            id: commentId,
+          },
+        },
+      },
+      {
+        arrayFilters: [
+          {
+            'alert.alertId': alertId,
+          },
+        ],
       }
     )
   }
 
-  public async updateAlerts(
+  public async updateAlertsStatus(
     alertIds: string[],
-    updates: {
-      assignments?: Assignment[]
-      statusChange?: CaseStatusChange
-    }
-  ) {
+    caseIds: string[],
+    statusChange: CaseStatusChange
+  ): Promise<void> {
     const db = this.mongoDb.db()
     const collection = db.collection<Case>(CASES_COLLECTION(this.tenantId))
 
-    const result: Promise<unknown>[] = []
-    const casesCursor = collection.find({
-      'alerts.alertId': { $in: alertIds },
-    })
-    while (await casesCursor.hasNext()) {
-      const caseItem = await casesCursor.next()
-      if (caseItem == null) {
-        break
+    await collection.updateMany(
+      {
+        caseId: {
+          $in: caseIds,
+        },
+      },
+      {
+        $set: {
+          'alerts.$[alert].alertStatus': statusChange.caseStatus,
+          'alerts.$[alert].lastStatusChange': statusChange,
+        },
+        $push: {
+          'alerts.$[alert].statusChanges': statusChange,
+        },
+      },
+      {
+        arrayFilters: [
+          {
+            'alert.alertId': {
+              $in: alertIds,
+            },
+          },
+        ],
       }
-      const newAlerts = caseItem.alerts?.map((alert) => {
-        if (!alertIds.includes(alert.alertId as string)) {
-          return alert
-        }
-        const newAlert: Alert = {
-          ...alert,
-        }
-        if (updates.assignments) {
-          newAlert.assignments = updates.assignments
-        }
-        if (updates.statusChange) {
-          newAlert.alertStatus = updates.statusChange.caseStatus
-          newAlert.lastStatusChange = updates.statusChange
-          newAlert.statusChanges = (newAlert.statusChanges ?? []).concat(
-            updates.statusChange
-          )
-        }
+    )
 
-        return newAlert
+    const caseItems = await collection
+      .find({
+        caseId: { $in: caseIds },
       })
+      .toArray()
 
-      const isAllAlertsClosed = newAlerts?.every(
+    for await (const caseItem of caseItems) {
+      const isAllAlertsClosed = caseItem.alerts?.every(
         (alert) => alert.alertStatus === 'CLOSED'
       )
 
-      if (caseItem.caseId != null && newAlerts) {
-        result.push(
-          collection.updateOne(
-            { caseId: caseItem.caseId },
-            {
-              $set: {
-                alerts: newAlerts,
-                ...(isAllAlertsClosed
-                  ? {
-                      caseStatus: 'CLOSED',
-                      lastStatusChange: updates.statusChange,
-                    }
-                  : {}),
-              },
-              ...(isAllAlertsClosed
-                ? {
-                    $push: {
-                      statusChanges: updates.statusChange,
-                    },
-                  }
-                : {}),
-            }
-          )
+      if (isAllAlertsClosed) {
+        await collection.updateOne(
+          {
+            caseId: caseItem.caseId,
+          },
+          {
+            $set: {
+              caseStatus: 'CLOSED',
+              lastStatusChange: statusChange,
+            },
+            $push: {
+              statusChanges: statusChange,
+            },
+          }
         )
       }
     }
-    await Promise.all(result)
   }
 
   public async getAlertTransactionsHit(
@@ -507,5 +552,35 @@ export class AlertsRepository {
       total: transactionsCount,
       data: transactions,
     }
+  }
+
+  public async updateAssigneeToAlerts(
+    alertIds: string[],
+    assignment: Assignment
+  ): Promise<void> {
+    const db = this.mongoDb.db()
+    const collection = db.collection<Case>(CASES_COLLECTION(this.tenantId))
+
+    await collection.updateMany(
+      {
+        'alerts.alertId': {
+          $in: alertIds,
+        },
+      },
+      {
+        $set: {
+          'alerts.$[alert].assignments': [assignment],
+        },
+      },
+      {
+        arrayFilters: [
+          {
+            'alert.alertId': {
+              $in: alertIds,
+            },
+          },
+        ],
+      }
+    )
   }
 }
