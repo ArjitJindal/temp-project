@@ -1,6 +1,7 @@
 import React from 'react';
 import { Col, Row, Tag } from 'antd';
 import cn from 'clsx';
+import _ from 'lodash';
 import s from './index.module.less';
 import { H1 } from '@/components/ui/Typography';
 import ArrowUpIcon from '@/components/ui/icons/Remix/system/arrow-up-line.react.svg';
@@ -30,17 +31,19 @@ export function DeltaCard(props: Props) {
             <H1 variant="displayLg">{Math.abs(delta)}</H1>
           </Col>
           <Col>
-            <Tag
-              className={s.tag}
-              color={delta > 0 ? 'red' : 'green'}
-              icon={
-                delta > 0 ? (
-                  <ArrowUpIcon width={12} height={12} />
-                ) : (
-                  <ArrowDownIcon width={12} height={12} />
-                )
-              }
-            >{`${Math.abs(deltaRatio * 100).toFixed(2)} %`}</Tag>
+            {_.isFinite(deltaRatio) && (
+              <Tag
+                className={s.tag}
+                color={delta > 0 ? 'red' : 'green'}
+                icon={
+                  delta > 0 ? (
+                    <ArrowUpIcon width={12} height={12} />
+                  ) : (
+                    <ArrowDownIcon width={12} height={12} />
+                  )
+                }
+              >{`${Math.abs(deltaRatio * 100).toFixed(2)} %`}</Tag>
+            )}
           </Col>
         </Row>
       ) : (
