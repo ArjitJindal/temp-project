@@ -5,6 +5,7 @@ import {
   SecretsManagerClient,
 } from '@aws-sdk/client-secrets-manager'
 import { fromIni } from '@aws-sdk/credential-providers'
+import { WrappedError } from '@/utils/errors'
 
 function getSecretManager() {
   return new SecretsManagerClient(
@@ -35,7 +36,7 @@ export async function getSecret<T>(secretId: string): Promise<T> {
         `❗❗Please run 'npm run aws-sso-login:dev' to refresh the aws credentials for the Dev account!`
       )
     }
-    throw e
+    throw new WrappedError(`No secret found for secret ${secretId}`, e)
   }
   if (!secretString) {
     throw new Error(`No secret found for secret ${secretId}`)

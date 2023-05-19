@@ -10,3 +10,11 @@ export function assertUserError(error: any) {
   }
   throw error
 }
+
+export class WrappedError extends Error {
+  constructor(message: string, error: unknown) {
+    // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+    // @ts-ignore cause not available in ES2020 typescript but is in the node runtime.
+    super(message, { cause: error })
+  }
+}

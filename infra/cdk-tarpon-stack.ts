@@ -385,6 +385,15 @@ export class CdkTarponStack extends cdk.Stack {
     tarponRuleDynamoDbTable.grantReadWriteData(transactionAlias)
     hammerheadDynamoDbTable.grantReadData(transactionAlias)
     grantMongoDbAccess(this, transactionAlias)
+    grantSecretsManagerAccess(
+      this,
+      transactionAlias,
+      [
+        this.config.application.COMPLYADVANTAGE_CREDENTIALS_SECRET_ARN,
+        this.config.application.IBANCOM_CREDENTIALS_SECRET_ARN,
+      ],
+      'READ'
+    )
 
     // Configure AutoScaling for Tx Function
     const as = transactionAlias.addAutoScaling({
