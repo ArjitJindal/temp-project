@@ -43,6 +43,22 @@ const generator = function* (seed: number): Generator<InternalTransaction> {
         destinationUserId,
         riskLevel: pickRandom(RISK_LEVEL1S),
         arsScore: randomFloat(100),
+        components: [
+          {
+            entityType: 'TRANSACTION',
+            score: randomFloat(100),
+            parameter: 'some txn parameter',
+            riskLevel: pickRandom(RISK_LEVEL1S),
+            value: 'Some txn value',
+          },
+          {
+            entityType: 'CONSUMER_USER',
+            score: randomFloat(100),
+            parameter: 'Some user parameter',
+            riskLevel: pickRandom(RISK_LEVEL1S),
+            value: 'Some user value',
+          },
+        ],
       },
       executedRules: rules,
       originAmountDetails: {
