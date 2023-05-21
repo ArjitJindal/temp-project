@@ -84,8 +84,8 @@ export class MerchantMonitoringService {
             try {
               await merchantRepository.createMerchant(
                 userId,
-                companyName,
                 domain,
+                companyName,
                 r
               )
             } catch (e) {
