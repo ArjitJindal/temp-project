@@ -50,7 +50,7 @@
     "deploy:pipeline-test:clean": "export ENV=deploy-test && npm run aws-sso-login:deploy && npm run synth:pipeline && npm run deploy:pipeline",
     "test": "jest --forceExit",
     "test:silent": "npm run test -- --silent",
-    "test:ci": "EXEC_SOURCE=CI npm run test -- --silent --ci --runInBand",
+    "test:ci": "EXEC_SOURCE=CI npm run test -- --silent --ci --runInBand --cacheDirectory ~/.jest-cache",
     "test:watch": "npm run test -- --watch",
     "format": "prettier --write . && npm run openapi:format",
     "format:check": "prettier --check .",
