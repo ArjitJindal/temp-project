@@ -14,6 +14,7 @@ import { CaseRepository } from '@/services/rules-engine/repositories/case-reposi
 import { Case } from '@/@types/openapi-internal/Case'
 import { RuleInstance } from '@/@types/openapi-internal/RuleInstance'
 import { SimulationBeaconStatisticsResult } from '@/@types/openapi-internal/SimulationBeaconStatisticsResult'
+import { logger } from '@/core/logger'
 
 const MAX_TRANSACTIONS = 10000
 const TIMEOUT = 14 * 60 * 1000
@@ -91,8 +92,12 @@ export class SimulationBeaconBatchJobRunner extends BatchJobRunner {
     transactions: InternalTransaction[],
     defaultRuleInstance: RuleInstance
   ): Promise<SimulationBeaconStatisticsResult> {
-    const numberOfTransactionsRun = executionDetails.length
-    const actualTransactionsRan = transactions.slice(0, numberOfTransactionsRun)
+    const executedTransactionIds = new Set(
+      executionDetails.map((d) => d.transaction.transactionId)
+    )
+    const actualTransactionsRan = transactions.filter((t) =>
+      executedTransactionIds.has(t.transactionId)
+    )
     const casesByTransactions = await this.getCasesFromTransactions(
       actualTransactionsRan,
       defaultRuleInstance
@@ -112,7 +117,7 @@ export class SimulationBeaconBatchJobRunner extends BatchJobRunner {
     const totalTransactions =
       (await this.transactionRepository?.getAllTransactionsCount()) ?? 0
 
-    const ratio = Math.max(1, totalTransactions / numberOfTransactionsRun) // extrapolated ratio
+    const ratio = Math.max(1, totalTransactions / actualTransactionsRan.length) // extrapolated ratio
 
     const transactionsHit = this.distinctTransactionsHitCount(
       actualTransactionsRan,
@@ -229,17 +234,34 @@ export class SimulationBeaconBatchJobRunner extends BatchJobRunner {
     if (!rulesEngineService) {
       return []
     }
+    const onePercentTransactionsCount = transactions.length * 0.01
+    let processedTransactionsCount = 0
     const executionResults = await pMap(
       transactions,
       async (transaction) => {
-        if (this.timeout) return
-        const executedRules =
-          await rulesEngineService.verifyTransactionForSimulation(
-            transaction,
-            ruleInstance
-          )
+        if (this.timeout) {
+          return
+        }
+        try {
+          const executedRules =
+            await rulesEngineService.verifyTransactionForSimulation(
+              transaction,
+              ruleInstance
+            )
 
-        return { transaction, executedRules }
+          return { transaction, executedRules }
+        } catch (e) {
+          logger.error(e)
+        } finally {
+          if (processedTransactionsCount % onePercentTransactionsCount === 0) {
+            const progress =
+              (processedTransactionsCount / transactions.length) * 100
+            logger.info(
+              `Progress: ${progress} % (${processedTransactionsCount} / ${transactions.length})`
+            )
+          }
+          processedTransactionsCount += 1
+        }
       },
       { concurrency: 10 }
     )
