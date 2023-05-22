@@ -165,7 +165,7 @@ export class CdkTarponPipelineStack extends cdk.Stack {
       const env = config.stage + (config.region ? `:${config.region}` : '')
       const assumeRuleCommands = [
         `ASSUME_ROLE_ARN="arn:aws:iam::${config.env.account}:role/CodePipelineDeployRole"`,
-        `TEMP_ROLE=$(aws sts assume-role --role-arn $ASSUME_ROLE_ARN --role-session-name deploy-${config.region})`,
+        `TEMP_ROLE=$(aws sts assume-role --duration-seconds 10800 --role-arn $ASSUME_ROLE_ARN --role-session-name deploy-${config.region})`,
         'export TEMP_ROLE',
         'export NODE_OPTIONS=--max-old-space-size=4096',
         'export AWS_ACCESS_KEY_ID=$(echo "${TEMP_ROLE}" | jq -r ".Credentials.AccessKeyId")',
