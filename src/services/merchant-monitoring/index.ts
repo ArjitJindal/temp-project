@@ -158,7 +158,7 @@ export class MerchantMonitoringService {
 
   private async companiesHouse(
     companyName: string
-  ): Promise<MerchantMonitoringSummary> {
+  ): Promise<MerchantMonitoringSummary | undefined> {
     const headers = new Headers()
     headers.set(
       'Authorization',
@@ -175,7 +175,7 @@ export class MerchantMonitoringService {
 
   private async linkedin(
     companyDomain: string
-  ): Promise<MerchantMonitoringSummary> {
+  ): Promise<MerchantMonitoringSummary | undefined> {
     const options: AxiosRequestConfig = {
       method: 'POST',
       url: 'https://linkedin-company-data.p.rapidapi.com/linkedInCompanyDataByDomainJson',
@@ -192,7 +192,7 @@ export class MerchantMonitoringService {
   }
   private async explorium(
     companyName: string
-  ): Promise<MerchantMonitoringSummary> {
+  ): Promise<MerchantMonitoringSummary | undefined> {
     const data = await axios.request({
       method: 'POST',
       url: ' https://app.explorium.ai/api/bundle/v1/enrich/firmographics',
@@ -209,7 +209,7 @@ export class MerchantMonitoringService {
   private async summarise(
     source: MerchantMonitoringSourceType,
     content: string
-  ): Promise<MerchantMonitoringSummary> {
+  ): Promise<MerchantMonitoringSummary | undefined> {
     const configuration = new Configuration({
       apiKey: (
         await getSecret<{ apiKey: string }>(OPENAI_CREDENTIALS_SECRET_ARN)
@@ -230,19 +230,20 @@ export class MerchantMonitoringService {
     const output = completion.data.choices[0].message?.content
     const re = new RegExp(OUTPUT_REGEX, 'm')
     const result: string[] = re.exec(output as string) as string[]
-
-    if (result && result.length < 2) {
-      logger.info(output)
-    }
-    return {
-      source: { sourceType: source },
-      industry: result[1],
-      products: result[2].split(','),
-      location: result[3],
-      employees: result[4],
-      revenue: result[5],
-      summary: result[6],
-      raw: content,
+    if (result) {
+      if (result.length < 2) {
+        logger.info(output)
+      }
+      return {
+        source: { sourceType: source },
+        industry: result[1],
+        products: result[2].split(','),
+        location: result[3] ?? '',
+        employees: result[4] ?? '',
+        revenue: result[5] ?? '',
+        summary: result[6] ?? '',
+        raw: content,
+      }
     }
   }
 }
