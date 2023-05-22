@@ -11,11 +11,7 @@ import {
   paginatePipeline,
   prefixRegexMatchFilter,
 } from '@/utils/mongoDBUtils'
-import {
-  COUNT_QUERY_LIMIT,
-  OptionalPagination,
-  OptionalPaginationParams,
-} from '@/utils/pagination'
+import { COUNT_QUERY_LIMIT, OptionalPagination } from '@/utils/pagination'
 import {
   DefaultApiGetAlertListRequest,
   DefaultApiGetAlertTransactionListRequest,
@@ -464,13 +460,12 @@ export class AlertsRepository {
   }
 
   public async getAlertTransactionsHit(
-    alertId: string,
-    params: OptionalPaginationParams
+    params: OptionalPagination<DefaultApiGetAlertTransactionListRequest>
   ): Promise<TransactionsListResponse> {
-    const alert = await this.getAlertById(alertId)
+    const alert = await this.getAlertById(params.alertId)
 
     if (alert == null) {
-      throw new NotFound(`Alert "${alertId}" not found `)
+      throw new NotFound(`Alert "${params.alertId}" not found`)
     }
 
     const transactionsRepo = new MongoDbTransactionRepository(
@@ -484,6 +479,9 @@ export class AlertsRepository {
       beforeTimestamp: Number.MAX_SAFE_INTEGER,
       page: params.page,
       pageSize: params.pageSize,
+      filterOriginUserId: params.originUserId,
+      filterDestinationUserId: params.destinationUserId,
+      filterUserId: params.userId,
     })
 
     const riskRepository = new RiskRepository(this.tenantId, {

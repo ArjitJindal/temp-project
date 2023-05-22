@@ -511,9 +511,13 @@ export class AlertsService extends CaseAlertsCommonService {
     params: OptionalPagination<DefaultApiGetAlertTransactionListRequest>
   ): Promise<TransactionsListResponse> {
     if (!params?.showExecutedTransactions) {
-      return await this.alertsRepository.getAlertTransactionsHit(alertId, {
+      return await this.alertsRepository.getAlertTransactionsHit({
+        alertId,
         page: params?.page,
         pageSize: params?.pageSize,
+        userId: params?.userId,
+        originUserId: params?.originUserId,
+        destinationUserId: params?.destinationUserId,
       })
     } else {
       return await this.alertsRepository.getAlertTransactionsExecuted(

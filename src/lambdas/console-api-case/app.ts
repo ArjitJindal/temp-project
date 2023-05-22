@@ -530,14 +530,23 @@ export const casesHandler = lambdaApi()(
       event.resource === '/alerts/{alertId}/transactions'
     ) {
       const alertId = event.pathParameters?.alertId as string
-      const { page, pageSize, showExecutedTransactions } =
-        event.queryStringParameters as any
+      const {
+        page,
+        pageSize,
+        showExecutedTransactions,
+        userId,
+        originUserId,
+        destinationUserId,
+      } = event.queryStringParameters as any
 
       return await alertsService.getAlertTransactions(alertId, {
         alertId,
         page,
         pageSize,
         showExecutedTransactions: showExecutedTransactions == 'true',
+        userId,
+        originUserId,
+        destinationUserId,
       })
     } else if (
       event.httpMethod === 'POST' &&

@@ -2374,6 +2374,18 @@ paths:
           type: boolean
         in: query
         name: showExecutedTransactions
+      - schema:
+          type: string
+        in: query
+        name: userId
+      - schema:
+          type: string
+        in: query
+        name: originUserId
+      - schema:
+          type: string
+        in: query
+        name: destinationUserId
     get:
       summary: Alerts - Item - Transaction List
       operationId: get-alert-transaction-list
