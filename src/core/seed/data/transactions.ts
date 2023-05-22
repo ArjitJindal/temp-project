@@ -58,6 +58,13 @@ const generator = function* (seed: number): Generator<InternalTransaction> {
             riskLevel: pickRandom(RISK_LEVEL1S),
             value: 'Some user value',
           },
+          {
+            entityType: 'TRANSACTION',
+            score: randomFloat(100),
+            parameter: 'Transaction Time',
+            riskLevel: pickRandom(RISK_LEVEL1S),
+            value: timestamp,
+          },
         ],
       },
       executedRules: rules,
