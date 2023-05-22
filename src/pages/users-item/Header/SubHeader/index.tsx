@@ -4,14 +4,14 @@ import KycStatusEditor from '../../UserDetails/KycStatusEditor';
 import UserStateEditor from '../../UserDetails/UserStateEditor';
 import KycRiskDisplay from '../../UserDetails/KycRiskDisplay';
 import DynamicRiskDisplay from '../../UserDetails/DynamicRiskDisplay';
-import AIRiskDisplay from '../../UserDetails/AIRiskDisplay';
-
 import s from './index.module.less';
+
 import { InternalBusinessUser, InternalConsumerUser } from '@/apis';
 import Spam2LineIcon from '@/components/ui/icons/Remix/system/spam-2-line.react.svg';
 import Calendar2LineIcon from '@/components/ui/icons/Remix/business/calendar-2-line.react.svg';
 import * as Form from '@/components/ui/Form';
 import { Feature } from '@/components/AppWrapper/Providers/SettingsProvider';
+import AIRiskDisplay from '@/components/ui/AIRiskDisplay';
 
 interface Props {
   user: InternalConsumerUser | InternalBusinessUser;

@@ -1,13 +1,10 @@
 import React, { useEffect, useState } from 'react';
 import { useParams } from 'react-router';
+
+//components
+import SubHeader from './SubHeader';
 import SenderReceiverDetails from './SenderReceiverDetails';
-import { dayjs, DEFAULT_DATE_TIME_FORMAT } from '@/utils/dayjs';
-import { makeUrl } from '@/utils/routing';
 import PageWrapper from '@/components/PageWrapper';
-import { useI18n } from '@/locales';
-import { AsyncResource, failed, init, isSuccess, loading, success } from '@/utils/asyncResource';
-import { ApiException, InternalTransaction } from '@/apis';
-import { useApi } from '@/api';
 import AsyncResourceRenderer from '@/components/common/AsyncResourceRenderer';
 import * as Card from '@/components/ui/Card';
 import * as Form from '@/components/ui/Form';
@@ -16,9 +13,15 @@ import { RuleActionStatus } from '@/components/ui/RuleActionStatus';
 import EntityHeader from '@/components/ui/entityPage/EntityHeader';
 import { TransactionTypeTag } from '@/components/ui/TransactionTypeTag';
 import TransactionEventsCard from '@/pages/transactions-item/TransactionEventsCard';
-import { Feature } from '@/components/AppWrapper/Providers/SettingsProvider';
+
+//utils and hooks
+import { dayjs, DEFAULT_DATE_TIME_FORMAT } from '@/utils/dayjs';
+import { makeUrl } from '@/utils/routing';
+import { useI18n } from '@/locales';
+import { AsyncResource, failed, init, isSuccess, loading, success } from '@/utils/asyncResource';
+import { ApiException, InternalTransaction } from '@/apis';
+import { useApi } from '@/api';
 import { useApiTime, usePageViewTracker } from '@/utils/tracker';
-import ActionRiskDisplay from '@/components/ui/ActionRiskDisplay';
 
 export default function TransactionsItem() {
   usePageViewTracker('Transactions Item');
@@ -84,13 +87,7 @@ export default function TransactionsItem() {
               <EntityHeader
                 id={transaction.transactionId}
                 idTitle="Transaction ID"
-                buttons={
-                  <>
-                    <Feature name="PULSE">
-                      <ActionRiskDisplay transactionId={transaction.transactionId} />
-                    </Feature>
-                  </>
-                }
+                subHeader={<SubHeader transaction={transaction} />}
               >
                 <Form.Layout.Label title="Time">
                   {dayjs(transaction.timestamp).format(DEFAULT_DATE_TIME_FORMAT)}

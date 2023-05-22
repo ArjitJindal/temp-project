@@ -17,6 +17,7 @@ interface Props {
   title: string;
   values: ValueItem[];
   components?: Array<RiskScoreComponent>;
+  factorExplanationText?: string;
 }
 
 const VARIABLES = [
@@ -24,7 +25,8 @@ const VARIABLES = [
 ].map((_, i) => String.fromCodePoint(('a'.codePointAt(0) as number) + i));
 
 export default function DetailsModal(props: Props) {
-  const { icon, title, isOpen, values, onCancel, components } = props;
+  const { icon, title, isOpen, values, onCancel, components, factorExplanationText } = props;
+  const explanationText = factorExplanationText || 'TRS =';
   return (
     <Modal title={title} hideFooter={true} isOpen={isOpen} onCancel={onCancel} width={640}>
       <div className={cn(s.root)}>
@@ -33,7 +35,7 @@ export default function DetailsModal(props: Props) {
           {components && (
             <div className={s.formulaWrapper}>
               <div className={s.formula}>
-                {`TRS = avg [ ${components.map((x, i) => VARIABLES[i]).join(' + ')} ]`}
+                {`${explanationText} [ ${components.map((x, i) => VARIABLES[i]).join(' + ')} ]`}
               </div>
               <div className={s.formulaLegend}>
                 {components.map(({ entityType, parameter }, i) => {
