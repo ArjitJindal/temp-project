@@ -36,6 +36,7 @@ import {
   COUNT_QUERY_LIMIT,
   OptionalPaginationParams,
   cursorPaginate,
+  CursorPaginationResponse,
 } from '@/utils/pagination'
 import { PaymentDetails } from '@/@types/tranasction/payment-type'
 import { getPaymentDetailsIdentifiers } from '@/core/dynamodb/dynamodb-keys'
@@ -405,13 +406,7 @@ export class MongoDbTransactionRepository
 
   public async getTransactionsCursorPaginate(
     params: OptionalPagination<DefaultApiGetTransactionsListRequest>
-  ): Promise<{
-    items: InternalTransaction[]
-    next: string
-    prev: string
-    hasNext: boolean
-    hasPrev: boolean
-  }> {
+  ): Promise<CursorPaginationResponse<InternalTransaction>> {
     const db = this.mongoDb.db()
     const name = TRANSACTIONS_COLLECTION(this.tenantId)
     const collection = db.collection<InternalTransaction>(name)

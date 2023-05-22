@@ -533,20 +533,22 @@ export const casesHandler = lambdaApi()(
       const {
         page,
         pageSize,
-        showExecutedTransactions,
         userId,
         originUserId,
         destinationUserId,
+        from,
+        order,
       } = event.queryStringParameters as any
 
       return await alertsService.getAlertTransactions(alertId, {
         alertId,
         page,
-        pageSize,
-        showExecutedTransactions: showExecutedTransactions == 'true',
+        pageSize: parseInt(pageSize) || 50,
         userId,
         originUserId,
         destinationUserId,
+        _from: from,
+        order,
       })
     } else if (
       event.httpMethod === 'POST' &&

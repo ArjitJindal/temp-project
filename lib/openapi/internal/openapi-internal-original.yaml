@@ -2359,6 +2359,17 @@ paths:
     parameters:
       - schema:
           type: string
+        in: query
+        name: from
+      - schema:
+          type: string
+          enum:
+            - asc
+            - desc
+        in: query
+        name: order
+      - schema:
+          type: string
         name: alertId
         in: path
         required: true
@@ -2370,10 +2381,6 @@ paths:
           $ref: '#/components/schemas/Page'
         in: query
         name: page
-      - schema:
-          type: boolean
-        in: query
-        name: showExecutedTransactions
       - schema:
           type: string
         in: query
@@ -2395,7 +2402,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/TransactionsListResponse'
+                $ref: '#/components/schemas/TransactionsResponse'
   /alerts:
     get:
       summary: Alerts - List
@@ -3853,21 +3860,6 @@ components:
           type: number
       required:
         - importedCount
-    TransactionsListResponse:
-      title: TransactionsListResponse
-      type: object
-      description: ''
-      x-examples: {}
-      properties:
-        total:
-          type: number
-        data:
-          type: array
-          items:
-            $ref: '#/components/schemas/InternalTransaction'
-      required:
-        - total
-        - data
     TransactionsResponse:
       title: TransactionsResponse
       type: object

@@ -11,7 +11,11 @@ import {
   paginatePipeline,
   prefixRegexMatchFilter,
 } from '@/utils/mongoDBUtils'
-import { COUNT_QUERY_LIMIT, OptionalPagination } from '@/utils/pagination'
+import {
+  COUNT_QUERY_LIMIT,
+  OptionalPagination,
+  CursorPaginationResponse,
+} from '@/utils/pagination'
 import {
   DefaultApiGetAlertListRequest,
   DefaultApiGetAlertTransactionListRequest,
@@ -23,10 +27,10 @@ import { PaymentMethod } from '@/@types/openapi-public/PaymentMethod'
 import { Alert } from '@/@types/openapi-internal/Alert'
 import { Comment } from '@/@types/openapi-internal/Comment'
 import { hasFeature } from '@/core/utils/context'
-import { TransactionsListResponse } from '@/@types/openapi-internal/TransactionsListResponse'
 import { RiskRepository } from '@/services/risk-scoring/repositories/risk-repository'
 import { CaseStatusChange } from '@/@types/openapi-internal/CaseStatusChange'
 import { Assignment } from '@/@types/openapi-internal/Assignment'
+import { InternalTransaction } from '@/@types/openapi-internal/InternalTransaction'
 
 export class AlertsRepository {
   mongoDb: MongoClient
@@ -461,7 +465,7 @@ export class AlertsRepository {
 
   public async getAlertTransactionsHit(
     params: OptionalPagination<DefaultApiGetAlertTransactionListRequest>
-  ): Promise<TransactionsListResponse> {
+  ): Promise<CursorPaginationResponse<InternalTransaction>> {
     const alert = await this.getAlertById(params.alertId)
 
     if (alert == null) {
@@ -473,7 +477,7 @@ export class AlertsRepository {
       this.mongoDb
     )
 
-    const result = await transactionsRepo.getTransactions({
+    const result = await transactionsRepo.getTransactionsCursorPaginate({
       filterIdList: alert.transactionIds,
       afterTimestamp: 0,
       beforeTimestamp: Number.MAX_SAFE_INTEGER,
@@ -482,6 +486,8 @@ export class AlertsRepository {
       filterOriginUserId: params.originUserId,
       filterDestinationUserId: params.destinationUserId,
       filterUserId: params.userId,
+      _from: params._from,
+      order: params.order,
     })
 
     const riskRepository = new RiskRepository(this.tenantId, {
@@ -489,67 +495,10 @@ export class AlertsRepository {
     })
 
     if (hasFeature('PULSE')) {
-      result.data = await riskRepository.augmentRiskLevel(result.data)
+      result.items = await riskRepository.augmentRiskLevel(result.items)
     }
 
     return result
-  }
-
-  public async getAlertTransactionsExecuted(
-    alertId: string,
-    params: OptionalPagination<DefaultApiGetAlertTransactionListRequest>
-  ): Promise<TransactionsListResponse> {
-    const caseRepository = new CaseRepository(this.tenantId, {
-      mongoDb: this.mongoDb,
-    })
-
-    const case_ = await caseRepository.getCaseByAlertId(alertId)
-
-    if (case_ == null) {
-      throw new NotFound(`Case not found for alert "${alertId}"`)
-    }
-
-    const alert = case_.alerts?.find((a) => a.alertId === alertId)
-    if (alert == null) {
-      throw new NotFound(`Alert "${alertId}" not found `)
-    }
-
-    const userId =
-      case_?.caseUsers?.origin?.userId ?? case_?.caseUsers?.destination?.userId
-
-    if (!userId) {
-      throw new NotFound(`User not found for case "${case_.caseId}"`)
-    }
-
-    const transactionsRepo = new MongoDbTransactionRepository(
-      this.tenantId,
-      this.mongoDb
-    )
-
-    let transactions = await transactionsRepo.getExecutedTransactionsOfAlert(
-      userId,
-      alert.ruleInstanceId,
-      { page: params.page, pageSize: params.pageSize }
-    )
-
-    const riskRepository = new RiskRepository(this.tenantId, {
-      dynamoDb: this.dynamoDb,
-    })
-
-    const transactionsCount =
-      await transactionsRepo.getExecutedTransactionsOfAlertCount(
-        userId,
-        alert.ruleInstanceId
-      )
-
-    if (hasFeature('PULSE')) {
-      transactions = await riskRepository.augmentRiskLevel(transactions)
-    }
-
-    return {
-      total: transactionsCount,
-      data: transactions,
-    }
   }
 
   public async updateAssigneeToAlerts(

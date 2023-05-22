@@ -23,6 +23,14 @@ export interface OptionalPaginationParams {
   page?: number
 }
 
+export interface CursorPaginationResponse<T> {
+  items: T[]
+  next: string
+  prev: string
+  hasNext: boolean
+  hasPrev: boolean
+}
+
 export type OptionalPagination<Params> = Omit<Params, 'pageSize' | 'page'> &
   OptionalPaginationParams
 

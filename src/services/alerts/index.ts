@@ -24,8 +24,10 @@ import { Comment } from '@/@types/openapi-internal/Comment'
 import { CaseHierarchyDetails } from '@/@types/openapi-internal/CaseHierarchyDetails'
 import { CaseStatusChange } from '@/@types/openapi-internal/CaseStatusChange'
 import { AlertClosedDetails } from '@/@types/openapi-public/AlertClosedDetails'
-import { OptionalPagination } from '@/utils/pagination'
-import { TransactionsListResponse } from '@/@types/openapi-internal/TransactionsListResponse'
+import {
+  CursorPaginationResponse,
+  OptionalPagination,
+} from '@/utils/pagination'
 import { AlertStatusUpdateRequest } from '@/@types/openapi-internal/AlertStatusUpdateRequest'
 import { Assignment } from '@/@types/openapi-internal/Assignment'
 
@@ -509,21 +511,15 @@ export class AlertsService extends CaseAlertsCommonService {
   public async getAlertTransactions(
     alertId: string,
     params: OptionalPagination<DefaultApiGetAlertTransactionListRequest>
-  ): Promise<TransactionsListResponse> {
-    if (!params?.showExecutedTransactions) {
-      return await this.alertsRepository.getAlertTransactionsHit({
-        alertId,
-        page: params?.page,
-        pageSize: params?.pageSize,
-        userId: params?.userId,
-        originUserId: params?.originUserId,
-        destinationUserId: params?.destinationUserId,
-      })
-    } else {
-      return await this.alertsRepository.getAlertTransactionsExecuted(
-        alertId,
-        params
-      )
-    }
+  ): Promise<CursorPaginationResponse<InternalTransaction>> {
+    return await this.alertsRepository.getAlertTransactionsHit({
+      alertId,
+      pageSize: params?.pageSize,
+      userId: params?.userId,
+      originUserId: params?.originUserId,
+      destinationUserId: params?.destinationUserId,
+      _from: params?._from,
+      order: params?.order,
+    })
   }
 }
