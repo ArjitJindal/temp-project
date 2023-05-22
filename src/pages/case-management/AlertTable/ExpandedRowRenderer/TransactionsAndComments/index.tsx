@@ -11,6 +11,7 @@ import TransactionsTable, {
 } from '@/pages/transactions/components/TransactionsTable';
 import Tabs from '@/components/library/Tabs';
 import DisplayCheckedTransactions from '@/pages/transactions/components/TransactionsTable/DisplayCheckedTransactions';
+import UserSearchButton from '@/pages/transactions/components/UserSearchButton';
 
 interface Props {
   alert: TableAlertItem;
@@ -40,6 +41,9 @@ export default function TransactionsAndComments(props: Props) {
             ...params,
             alertId: alertId,
             ...paginationParams,
+            userId: params.userFilterMode === 'ALL' ? params.userId : undefined,
+            originUserId: params.userFilterMode === 'ORIGIN' ? params.userId : undefined,
+            destinationUserId: params.userFilterMode === 'DESTINATION' ? params.userId : undefined,
           }),
         'Get Alert Transactions',
       );
@@ -85,6 +89,25 @@ export default function TransactionsAndComments(props: Props) {
                 isModalVisible={isModalVisible}
                 setIsModalVisible={setIsModalVisible}
                 alert={alert}
+                extraFilters={[
+                  {
+                    key: 'userId',
+                    title: 'User ID/name',
+                    renderer: ({ params, setParams }) => (
+                      <UserSearchButton
+                        initialMode={params.userFilterMode ?? 'ALL'}
+                        userId={params.userId ?? null}
+                        onConfirm={(userId, mode) => {
+                          setParams((state) => ({
+                            ...state,
+                            userId: userId ?? undefined,
+                            userFilterMode: mode ?? undefined,
+                          }));
+                        }}
+                      />
+                    ),
+                  },
+                ]}
               />
               {isModalVisible && alert && (
                 <DisplayCheckedTransactions
