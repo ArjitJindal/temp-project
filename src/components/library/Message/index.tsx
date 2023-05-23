@@ -4,6 +4,7 @@ import cn from 'clsx';
 import { NoticeType } from 'antd/lib/message';
 import * as Sentry from '@sentry/react';
 import s from './index.module.less';
+import InformationFillIcon from '@/components/ui/icons/Remix/system/information-fill.react.svg';
 import CheckboxCircleFillIcon from '@/components/ui/icons/Remix/system/checkbox-circle-fill.react.svg';
 import CloseCircleFillIcon from '@/components/ui/icons/Remix/system/close-circle-fill.react.svg';
 import CloseFillIcon from '@/components/ui/icons/Remix/system/close-fill.react.svg';
@@ -14,6 +15,11 @@ export type CloseMessage = () => void;
 
 export type ShowMessage = (message: string) => CloseMessage;
 export type ShowMessageWithOptionalError = (message: string, error?: any | unknown) => CloseMessage;
+
+export const info: ShowMessage = (message: string) => {
+  return open(message, 'INFO');
+};
+
 export const success: ShowMessage = (message: string) => {
   return open(message, 'SUCCESS');
 };
@@ -39,6 +45,7 @@ export const warn: ShowMessage = (message: string) => {
 };
 
 export const message = {
+  info,
   success,
   error,
   loading,
@@ -50,11 +57,16 @@ export const message = {
   Helper functions
  */
 
-function open(message: string, type: 'SUCCESS' | 'ERROR' | 'LOADING' | 'WARNING'): CloseMessage {
+function open(
+  message: string,
+  type: 'INFO' | 'SUCCESS' | 'ERROR' | 'LOADING' | 'WARNING',
+): CloseMessage {
   let icon: React.ReactNode | undefined;
   let antType: NoticeType | undefined = undefined;
   let isClosable = true;
-  if (type === 'SUCCESS') {
+  if (type === 'INFO') {
+    icon = <InformationFillIcon className={cn(s.icon, s.info)} />;
+  } else if (type === 'SUCCESS') {
     icon = <CheckboxCircleFillIcon className={cn(s.icon, s.success)} />;
   } else if (type === 'ERROR') {
     icon = <CloseCircleFillIcon className={cn(s.icon, s.error)} />;

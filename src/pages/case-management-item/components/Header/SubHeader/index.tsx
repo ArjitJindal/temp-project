@@ -1,7 +1,8 @@
-import React, { useCallback, useState } from 'react';
+import { useCallback, useMemo } from 'react';
+import { useMutation, useQueryClient } from '@tanstack/react-query';
 import s from './index.module.less';
 import { message } from '@/components/library/Message';
-import { Case } from '@/apis';
+import { Assignment, Case } from '@/apis';
 import { useApi } from '@/api';
 import FileListLineIcon from '@/components/ui/icons/Remix/document/file-list-line.react.svg';
 import * as Form from '@/components/ui/Form';
@@ -12,6 +13,9 @@ import { AssigneesDropdown } from '@/pages/case-management/components/AssigneesD
 import { Feature } from '@/components/AppWrapper/Providers/SettingsProvider';
 import KycRiskDisplay from '@/pages/users-item/UserDetails/KycRiskDisplay';
 import DynamicRiskDisplay from '@/pages/users-item/UserDetails/DynamicRiskDisplay';
+import { CASES_ITEM } from '@/utils/queries/keys';
+import { getErrorMessage } from '@/utils/lang';
+import { useUpdateCaseQueryData } from '@/utils/api/cases';
 
 interface Props {
   caseItem: Case;
@@ -26,12 +30,20 @@ export default function SubHeader(props: Props) {
   const currentUserId = user.userId ?? undefined;
   const caseUser = caseItem.caseUsers?.origin ?? caseItem.caseUsers?.destination ?? undefined;
   const isCaseInReview = caseItem.caseStatus === 'ESCALATED';
-  const [assignments, setAssignments] = useState(
-    (isCaseInReview ? caseItem.reviewAssignments : caseItem.assignments) ?? [],
+  const assignments = useMemo(
+    () => (isCaseInReview ? caseItem.reviewAssignments : caseItem.assignments) ?? [],
+    [caseItem.assignments, caseItem.reviewAssignments, isCaseInReview],
   );
+  const queryClient = useQueryClient();
 
-  const handleUpdateCase = useCallback(
-    async (assignments) => {
+  const updateCaseQueryData = useUpdateCaseQueryData();
+  const handleUpdateCaseMutation = useMutation<
+    unknown,
+    unknown,
+    Assignment[],
+    { previousCaseItem: Case | undefined }
+  >(
+    async (assignments): Promise<void> => {
       const hideMessage = message.loading(`Saving...`);
       try {
         await api.postCases({
@@ -44,13 +56,38 @@ export default function SubHeader(props: Props) {
           },
         });
         message.success('Saved');
-      } catch (e) {
-        message.fatal('Failed to save', e);
+      } catch (error) {
+        message.fatal(`Failed to save ${getErrorMessage(error)}`, error);
       } finally {
         hideMessage();
       }
     },
-    [api, caseId, isCaseInReview],
+    {
+      onMutate: async (assignments) => {
+        const previousCaseItem = queryClient.getQueryData<Case>(CASES_ITEM(caseId!));
+        updateCaseQueryData(caseId, (caseItem) => {
+          if (caseItem == null) {
+            return caseItem;
+          }
+          if (isCaseInReview) {
+            return {
+              ...caseItem,
+              reviewAssignments: assignments,
+            };
+          } else {
+            return {
+              ...caseItem,
+              assignments,
+            };
+          }
+        });
+        return { previousCaseItem };
+      },
+      onError: async (error, _event, context) => {
+        message.fatal(`Failed to save ${getErrorMessage(error)}`, error);
+        updateCaseQueryData(caseId, () => context?.previousCaseItem);
+      },
+    },
   );
 
   const handleUpdateAssignments = useCallback(
@@ -60,10 +97,9 @@ export default function SubHeader(props: Props) {
         assigneeUserId,
         timestamp: Date.now(),
       }));
-      setAssignments(newAssignments);
-      handleUpdateCase(newAssignments);
+      handleUpdateCaseMutation.mutate(newAssignments);
     },
-    [handleUpdateCase, currentUserId],
+    [handleUpdateCaseMutation, currentUserId],
   );
 
   return (

@@ -10,7 +10,8 @@ import { useApi } from '@/api';
 import { Case, Comment as ApiComment } from '@/apis';
 import { getErrorMessage, neverThrow } from '@/utils/lang';
 import { P } from '@/components/ui/Typography';
-import { ALERT_ITEM_COMMENTS, CASES_ITEM } from '@/utils/queries/keys';
+import { ALERT_ITEM_COMMENTS } from '@/utils/queries/keys';
+import { useUpdateCaseQueryData } from '@/utils/api/cases';
 
 export interface CommentGroup {
   title: string;
@@ -35,6 +36,7 @@ export default function CommentsCard(props: Props) {
   const api = useApi();
   const queryClient = useQueryClient();
 
+  const updateCaseQueryData = useUpdateCaseQueryData();
   const updatedComments = useMemo(() => {
     return _.orderBy(
       comments,
@@ -80,15 +82,13 @@ export default function CommentsCard(props: Props) {
             comments?.filter((x) => x.id !== commentId),
           );
         } else if (commentType === 'CASE') {
-          await queryClient.setQueryData<Case>(
-            CASES_ITEM(parentId),
-            (caseItem: Case | undefined): Case | undefined =>
-              caseItem
-                ? {
-                    ...caseItem,
-                    comments: caseItem.comments?.filter((x) => x.id !== commentId),
-                  }
-                : undefined,
+          updateCaseQueryData(parentId, (caseItem: Case | undefined): Case | undefined =>
+            caseItem
+              ? {
+                  ...caseItem,
+                  comments: caseItem.comments?.filter((x) => x.id !== commentId),
+                }
+              : undefined,
           );
         } else {
           throw neverThrow(commentType, 'Unknown type');

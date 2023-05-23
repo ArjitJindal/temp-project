@@ -2,6 +2,7 @@ import { useCallback, useContext, useMemo, useState } from 'react';
 import { useParams } from 'react-router';
 import { useQueryClient } from '@tanstack/react-query';
 import _ from 'lodash';
+import { usePrevious } from 'ahooks';
 import Header from './components/Header';
 import { Case, Comment } from '@/apis';
 import { useApi } from '@/api';
@@ -23,6 +24,10 @@ import {
 } from '@/components/AppWrapper/Providers/ExpandableProvider';
 import { useApiTime, usePageViewTracker } from '@/utils/tracker';
 import { useCloseSidebarByDefault } from '@/components/AppWrapper/Providers/SidebarProvider';
+import { isSuccess } from '@/utils/asyncResource';
+import { useUpdateCaseQueryData } from '@/utils/api/cases';
+
+const CASE_REFETCH_INTERVAL_SECONDS = 60;
 
 function CaseManagementItemPage() {
   const { id: caseId } = useParams<'id'>() as { id: string };
@@ -32,6 +37,7 @@ function CaseManagementItemPage() {
   usePageViewTracker('Single Case Management Item Page');
   useCloseSidebarByDefault();
 
+  const updateCaseQueryData = useUpdateCaseQueryData();
   const queryResults = useQuery(
     CASES_ITEM(caseId),
     (): Promise<Case> =>
@@ -42,10 +48,19 @@ function CaseManagementItemPage() {
           }),
         'Get Case Details',
       ),
+    {
+      refetchInterval: CASE_REFETCH_INTERVAL_SECONDS * 1000,
+    },
   );
+  const previousQueryResults = usePrevious(queryResults);
+  const caseData = useMemo(() => {
+    return isSuccess(queryResults.data) || !previousQueryResults
+      ? queryResults.data
+      : previousQueryResults.data;
+  }, [previousQueryResults, queryResults.data]);
 
   const handleCommentAdded = (newComment: Comment) => {
-    queryClient.setQueryData<Case>(CASES_ITEM(caseId), (caseItem) => {
+    updateCaseQueryData(caseId, (caseItem) => {
       if (caseItem == null) {
         return caseItem;
       }
@@ -81,7 +96,7 @@ function CaseManagementItemPage() {
 
   return (
     <Card.Root collapsable={false}>
-      <AsyncResourceRenderer resource={queryResults.data}>
+      <AsyncResourceRenderer resource={caseData}>
         {(caseItem) => (
           <>
             <Header caseItem={caseItem} onReload={onReload} onCommentAdded={handleCommentAdded} />
