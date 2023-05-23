@@ -1,0 +1,142 @@
+[
+  {
+    "type": "tc-001",
+    "resource": "text",
+    "request": {
+      "transaction": {
+        "destinationAmountDetails": {
+          "country": "IN",
+          "transactionCurrency": "INR",
+          "transactionAmount": 10132.8
+        },
+        "transactionState": "CREATED",
+        "destinationPaymentDetails": {
+          "method": "GENERIC_BANK_ACCOUNT"
+        },
+        "originPaymentDetails": {
+          "method": "GENERIC_BANK_ACCOUNT"
+        },
+        "originAmountDetails": {
+          "country": "IN",
+          "transactionCurrency": "INR",
+          "transactionAmount": 10132.8
+        },
+        "timestamp": {
+          "$numberLong": "1662358419786"
+        },
+        "transactionId": "bd70fcaebc254c23b07b29fd994ba5f2",
+        "originUserId": "29529892-22d3-4a74-b6f2-fbe1d5ee8b6f"
+      }
+    },
+    "response": {
+      "success": "true",
+      "label": { "predictions": [-1], "scores": [-0.0546] }
+    },
+    "interval": 2
+  },
+  {
+    "type": "tc-002",
+    "resource": "text",
+    "request": {
+      "transaction": {
+        "destinationAmountDetails": {
+          "country": "IN",
+          "transactionCurrency": "INR",
+          "transactionAmount": 100649.1
+        },
+        "transactionState": "CREATED",
+        "destinationPaymentDetails": {
+          "method": "GENERIC_BANK_ACCOUNT"
+        },
+        "originPaymentDetails": {
+          "method": "GENERIC_BANK_ACCOUNT"
+        },
+        "originAmountDetails": {
+          "country": "IN",
+          "transactionCurrency": "INR",
+          "transactionAmount": 100649.1
+        },
+        "timestamp": {
+          "$numberLong": "1662357305547"
+        },
+        "transactionId": "923396622683494fbf5eace33edc0dc9",
+        "originUserId": "0b85951b-c817-499e-ad17-453e5feaf87c"
+      }
+    },
+    "response": {
+      "success": "true",
+      "label": { "predictions": [-1], "scores": [-0.0546] }
+    },
+    "interval": 2
+  },
+  {
+    "type": "tc-003",
+    "resource": "text",
+    "request": {
+      "transaction": {
+        "destinationAmountDetails": {
+          "country": "IN",
+          "transactionCurrency": "INR",
+          "transactionAmount": 5000
+        },
+        "transactionState": "CREATED",
+        "destinationPaymentDetails": {
+          "method": "GENERIC_BANK_ACCOUNT"
+        },
+        "originPaymentDetails": {
+          "method": "GENERIC_BANK_ACCOUNT"
+        },
+        "originAmountDetails": {
+          "country": "IN",
+          "transactionCurrency": "INR",
+          "transactionAmount": 5000
+        },
+        "timestamp": {
+          "$numberLong": "1662357049068"
+        },
+        "transactionId": "227908030924203840346753049709176824284",
+        "destinationUserId": "4115204f-2efe-4b49-920d-79959524e44b"
+      }
+    },
+    "response": {
+      "success": "true",
+      "label": { "predictions": [-1], "scores": [-0.0546] }
+    },
+    "interval": 2
+  },
+  {
+    "type": "tc-004",
+    "resource": "text",
+    "request": {
+      "transaction": {
+        "destinationAmountDetails": {
+          "country": "IN",
+          "transactionCurrency": "INR",
+          "transactionAmount": 199939
+        },
+        "transactionState": "CREATED",
+        "destinationPaymentDetails": {
+          "method": "GENERIC_BANK_ACCOUNT"
+        },
+        "originPaymentDetails": {
+          "method": "GENERIC_BANK_ACCOUNT"
+        },
+        "originAmountDetails": {
+          "country": "IN",
+          "transactionCurrency": "INR",
+          "transactionAmount": 199939
+        },
+        "timestamp": {
+          "$numberLong": "1662356768406"
+        },
+        "transactionId": "168605915433725803888730810778033414614",
+        "destinationUserId": "2f6ec341-9075-4aaa-9db2-9fd5d8597f97"
+      }
+    },
+    "response": {
+      "success": "true",
+      "label": { "predictions": [-1], "scores": [-0.0546] }
+    },
+    "interval": 2
+  }
+]

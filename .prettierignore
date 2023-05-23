@@ -6,3 +6,5 @@ src/@types/openapi*
 *.sh
 *.png
 .*
+*.py
+*.txt

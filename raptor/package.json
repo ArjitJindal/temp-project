@@ -1,0 +1,29 @@
+{
+  "name": "transaction-risk-model",
+  "version": "0.1.0",
+  "bin": {
+    "transaction-risk-model": "bin/app-main.js"
+  },
+  "scripts": {
+    "build": "tsc",
+    "watch": "tsc -w",
+    "test": "jest",
+    "cdk": "cdk"
+  },
+  "devDependencies": {
+    "aws-cdk-lib": "^2.0.0",
+    "@aws-cdk/assertions": "1.201.0",
+    "@types/jest": "^29.5.1",
+    "@types/node": "20.1.2",
+    "aws-cdk": "2.79.0",
+    "jest": "^29.5.0",
+    "ts-jest": "^29.1.0",
+    "ts-node": "^10.9.1",
+    "typescript": "~5.0.4"
+  },
+  "dependencies": {
+    "aws-cdk-lib": "^2.0.0",
+    "constructs": "^10.0.0",
+    "source-map-support": "^0.5.21"
+  }
+}
