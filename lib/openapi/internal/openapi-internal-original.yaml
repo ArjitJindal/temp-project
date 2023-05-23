@@ -4860,7 +4860,6 @@ components:
         - IMPORT_FILES
         - LISTS
         - HELP_CENTER
-        - MACHINE_LEARNING_DEMO
         - GOOGLE_SSO
         - SANCTIONS
         - FALSE_POSITIVE_CHECK
@@ -4869,6 +4868,8 @@ components:
         - SALESFORCE
         - ESCALATION
         - IBAN_RESOLUTION
+        - MACHINE_LEARNING_DEMO
+        - SAR_DEMO
       description: ''
     ManagedRoleName:
       type: string
