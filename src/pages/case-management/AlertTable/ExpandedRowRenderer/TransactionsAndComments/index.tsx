@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { TableAlertItem } from '../../types';
 import Comments from './Comments';
-import { usePaginatedQuery, useQuery } from '@/utils/queries/hooks';
+import { useCursorQuery, useQuery } from '@/utils/queries/hooks';
 import { ALERT_ITEM, ALERT_ITEM_TRANSACTION_LIST } from '@/utils/queries/keys';
 import { useApi } from '@/api';
 import { useApiTime } from '@/utils/tracker';
@@ -12,6 +12,7 @@ import TransactionsTable, {
 import Tabs from '@/components/library/Tabs';
 import DisplayCheckedTransactions from '@/pages/transactions/components/TransactionsTable/DisplayCheckedTransactions';
 import UserSearchButton from '@/pages/transactions/components/UserSearchButton';
+import { FIXED_API_PARAMS } from '@/pages/case-management-item/CaseDetails/InsightsCard';
 
 interface Props {
   alert: TableAlertItem;
@@ -29,28 +30,27 @@ export default function TransactionsAndComments(props: Props) {
 
   const [params, setParams] = useState<TransactionsTableParams>(DEFAULT_PARAMS_STATE);
 
-  const transactionsResponse = usePaginatedQuery(
+  const transactionsResponse = useCursorQuery(
     ALERT_ITEM_TRANSACTION_LIST(alertId ?? '', { ...params }),
-    async (paginationParams) => {
+    async ({ from }) => {
       if (alertId == null) {
         throw new Error(`Unable to fetch transactions for alert, it's id is empty`);
       }
-      const response = await measure(
+      return await measure(
         () =>
           api.getAlertTransactionList({
+            ...FIXED_API_PARAMS,
             ...params,
             alertId: alertId,
-            ...paginationParams,
+            _from: from,
+            page: params.page,
+            pageSize: params.pageSize,
             userId: params.userFilterMode === 'ALL' ? params.userId : undefined,
             originUserId: params.userFilterMode === 'ORIGIN' ? params.userId : undefined,
             destinationUserId: params.userFilterMode === 'DESTINATION' ? params.userId : undefined,
           }),
         'Get Alert Transactions',
       );
-      return {
-        items: response?.data || [],
-        total: response?.total || 0,
-      };
     },
   );
 
