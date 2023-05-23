@@ -4521,7 +4521,7 @@ components:
         complyAdvantageSearchProfileId:
           type: string
         isAiEnabled:
-          type: string
+          type: boolean
         salesforceAuthToken:
           type: string
         limits:
