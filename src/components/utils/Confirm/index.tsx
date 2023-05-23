@@ -11,7 +11,7 @@ interface ChildrenProps {
 
 interface Props {
   title: string;
-  text: string;
+  text: string | React.ReactNode;
   res?: AsyncResource;
   onConfirm: () => void;
   children: (props: ChildrenProps) => React.ReactNode;
@@ -20,14 +20,12 @@ interface Props {
 export default function Confirm(props: Props) {
   const { title, text, res, children, onConfirm } = props;
   const [isVisible, setIsVisible] = useState(false);
-
   const isSuccess = useFinishedSuccessfully(res ?? init());
   useEffect(() => {
     if (isSuccess) {
       setIsVisible(false);
     }
   }, [isSuccess]);
-
   const handleOk = useCallback(() => {
     onConfirm();
     if (res == null) {

@@ -66,3 +66,7 @@ export function getBranding(): BrandingSettings {
   }
   return DEFAULT_BRANDING;
 }
+
+export function isWhiteLabeled(): boolean {
+  return getBranding().companyName !== 'Flagright';
+}

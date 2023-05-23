@@ -3,6 +3,7 @@ import { RuleActionSettings } from './components/RuleActionSettings';
 import { WebhookSettings } from './components/WebhookSettings';
 import { TransactionStateSettings } from './components/TransactionStateSettings';
 import { RiskLevelSettings } from './components/RiskLevelSettings';
+import { FlagrightAISettings } from './components/FlagrightAISettings';
 import { DefaultValuesSettings } from './components/DefaultValuesSettings';
 import { RiskAlgorithmsSettings } from './components/RiskAlgorithmsSettings';
 import NarrativeTemplates from './components/NarrativeTemplates';
@@ -13,10 +14,10 @@ import Button from '@/components/library/Button';
 import { useFeatureEnabled } from '@/components/AppWrapper/Providers/SettingsProvider';
 import { usePageViewTracker } from '@/utils/tracker';
 import { DefaultViewsSettings } from '@/pages/settings/components/DefaultViewsSettings';
-import { getBranding } from '@/utils/branding';
+import { getBranding, isWhiteLabeled } from '@/utils/branding';
 
 const branding = getBranding();
-
+const whiteLabeled = isWhiteLabeled();
 export default function SettingsPage() {
   const isMLDemoEnabled = useFeatureEnabled('MACHINE_LEARNING_DEMO');
   usePageViewTracker('Settings');
@@ -35,6 +36,10 @@ export default function SettingsPage() {
         {
           name: 'Narrative templates',
           content: <NarrativeTemplates />,
+        },
+        {
+          name: whiteLabeled ? 'AI Features' : 'Flagright AI Features',
+          content: <FlagrightAISettings />,
         },
         {
           name: 'Billing',

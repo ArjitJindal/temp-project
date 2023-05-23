@@ -111,7 +111,7 @@ export default function RuleConfigurationDrawer(props: RuleConfigurationDrawerPr
       description={
         readOnly
           ? props.type === 'EDIT'
-            ? `View the configured parameters of the rule. Click on ‘Edit’ to update the paramerters.`
+            ? `View the configured parameters of the rule. Click on ‘Edit’ to update the parameters.`
             : 'Read all relevant rule information'
           : props.type === 'EDIT'
           ? `Edit the parameters of the rule. Click on ‘Save’ to update the rule`
