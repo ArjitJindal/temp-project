@@ -7,7 +7,7 @@ Cypress.Commands.add('loginByForm', (username: string, password: string) => {
 
   cy.get('input#username').type(username);
   cy.get('input#password').type(password);
-  cy.get('button[type=submit]').first().click();
+  cy.get('div:not(.ulp-button-bar-hidden) > button[type=submit]').first().click({ force: true });
 
   cy.location('host', { timeout: 10000 }).should(
     'eq',
