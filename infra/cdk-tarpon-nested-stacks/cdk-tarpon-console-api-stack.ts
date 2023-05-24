@@ -374,6 +374,25 @@ export class CdkTarponConsoleLambdaStack extends cdk.NestedStack {
       'READ'
     )
 
+    /* Copilot */
+    const { alias: copilotAlias } = createFunction(
+      this,
+      {
+        name: StackConstants.CONSOLE_API_COPILOT_FUNCTION_NAME,
+        auditLogTopic,
+        batchJobQueue,
+      },
+      atlasFunctionProps
+    )
+
+    grantMongoDbAccess(this, copilotAlias)
+    grantSecretsManagerAccess(
+      this,
+      copilotAlias,
+      [this.config.application.OPENAI_CREDENTIALS_SECRET_ARN],
+      'READ'
+    )
+
     /* Consumer users view */
     const { alias: consumerUsersViewAlias } = createFunction(
       this,
