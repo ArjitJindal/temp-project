@@ -7,16 +7,11 @@ describe('Comment Alerts from Table', () => {
   });
 
   it('should create a comment alert from table and delete it', () => {
-    cy.visit('/case-management/cases', { timeout: 8000 });
+    cy.visit('/case-management/cases?showCases=ALL_ALERTS', { timeout: 8000 });
 
     /* eslint-disable cypress/no-unnecessary-waiting */
     const comment = `This is a comment from cypress test ${uuid()}`;
     cy.get('button[data-cy="expand-icon"]', { timeout: 15000 }).eq(0).click();
-    cy.get('[data-cy="expanded-content"] button[data-cy="expand-icon"]', {
-      timeout: 15000,
-    })
-      .eq(0)
-      .click();
     cy.get('.ant-tabs-tab-btn', { timeout: 8000 }).eq(1).click();
     cy.get('.toastui-editor-contents', { timeout: 8000 }).last().type(comment);
     let length = 0;
