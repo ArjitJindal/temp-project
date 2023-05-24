@@ -112,6 +112,8 @@ export const getStatus = (
 export default function TransactionsTable(props: Props) {
   const [showDetailsView, setShowDetailsView] = useState<boolean>(false);
   const isPulseEnabled = useFeatureEnabled('PULSE');
+  const escalationEnabled = useFeatureEnabled('ESCALATION');
+  const sarDemoEnabled = useFeatureEnabled('SAR_DEMO');
 
   const {
     queryResult,
@@ -337,7 +339,7 @@ export default function TransactionsTable(props: Props) {
     <QueryResultsTable<InternalTransaction, TransactionsTableParams>
       tableId={'transactions-list'}
       selection={
-        escalatedTransactions === undefined
+        !escalationEnabled && !sarDemoEnabled
           ? false
           : (row) =>
               (alert?.alertStatus === 'OPEN' ||
