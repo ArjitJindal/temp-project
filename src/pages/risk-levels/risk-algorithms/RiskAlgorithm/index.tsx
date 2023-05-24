@@ -33,7 +33,7 @@ const RiskAlgorithmTable: React.FC = () => {
                 upper bound score of risk levels configured in{' '}
                 <Link to={`/risk-levels/configure`}>risk levels section </Link>. For example, if the
                 risk score range for medium risk level is 60 - 80, medium risk level will have a
-                corresponding score of 70 ((60 + 80) /2).
+                corresponding score of 70 ((60 + 80) / 2).
               </p>
             </li>
             <li>

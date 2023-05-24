@@ -17,7 +17,6 @@ export interface Props {
 export default function QuickFilterBase(props: Props) {
   const { icon, title, buttonText, analyticsName, children, onClear } = props;
   const [isOpen, setOpen] = useState(false);
-
   return (
     <>
       <QuickFilterButton
@@ -25,7 +24,7 @@ export default function QuickFilterBase(props: Props) {
         buttonText={
           <>
             {title}
-            {buttonText && (
+            {buttonText == null ? null : (
               <>
                 {': '}
                 {buttonText}
