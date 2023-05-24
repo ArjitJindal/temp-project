@@ -1,5 +1,10 @@
 import * as createError from 'http-errors'
 import { NotFound } from 'http-errors'
+import {
+  APIGatewayEventLambdaAuthorizerContext,
+  APIGatewayProxyWithLambdaAuthorizerEvent,
+} from 'aws-lambda'
+import * as AWS from 'aws-sdk'
 import { Comment } from '@/@types/openapi-internal/Comment'
 import { DefaultApiGetCaseListRequest } from '@/@types/openapi-internal/RequestParameters'
 import { CaseRepository } from '@/services/rules-engine/repositories/case-repository'
@@ -20,9 +25,35 @@ import {
   CaseAlertsCommonService,
   S3Config,
 } from '@/services/case-alerts-common'
+import { getS3ClientByEvent } from '@/utils/s3'
+import { getMongoDbClient } from '@/utils/mongoDBUtils'
+import { getDynamoDbClientByEvent } from '@/utils/dynamodb'
+import { CaseConfig } from '@/lambdas/console-api-case/app'
 
 export class CaseService extends CaseAlertsCommonService {
   caseRepository: CaseRepository
+
+  public static async fromEvent(
+    event: APIGatewayProxyWithLambdaAuthorizerEvent<
+      APIGatewayEventLambdaAuthorizerContext<AWS.STS.Credentials>
+    >
+  ): Promise<CaseService> {
+    const { principalId: tenantId } = event.requestContext.authorizer
+    const { DOCUMENT_BUCKET, TMP_BUCKET } = process.env as CaseConfig
+    const s3 = getS3ClientByEvent(event)
+    const client = await getMongoDbClient()
+    const dynamoDb = await getDynamoDbClientByEvent(event)
+
+    const caseRepository = new CaseRepository(tenantId, {
+      mongoDb: client,
+      dynamoDb,
+    })
+
+    return new CaseService(caseRepository, s3, {
+      documentBucketName: DOCUMENT_BUCKET,
+      tmpBucketName: TMP_BUCKET,
+    })
+  }
 
   constructor(caseRepository: CaseRepository, s3: AWS.S3, s3Config: S3Config) {
     super(s3, s3Config)

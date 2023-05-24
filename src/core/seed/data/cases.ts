@@ -25,9 +25,8 @@ const init = () => {
       ...sampleUserCase(
         {
           transactions: transactionsForUserADestination,
-          user: {
-            destination: user,
-          },
+          userId: user.userId,
+          destination: user,
         },
         i * 0.001
       ),
@@ -38,9 +37,8 @@ const init = () => {
       ...sampleUserCase(
         {
           transactions: transactionsForUserAsOrigin,
-          user: {
-            origin: user,
-          },
+          userId: user.userId,
+          origin: user,
         },
         i * 0.001
       ),

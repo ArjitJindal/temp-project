@@ -5,8 +5,6 @@ import {
   sampleUserStateDetails,
 } from '@/core/seed/samplers/users'
 import { sampleTimestamp } from '@/core/seed/samplers/timestamp'
-import { User } from '@/@types/openapi-public/User'
-import { Business } from '@/@types/openapi-public/Business'
 import { InternalBusinessUser } from '@/@types/openapi-internal/InternalBusinessUser'
 import { InternalConsumerUser } from '@/@types/openapi-internal/InternalConsumerUser'
 import { pickRandom, randomFloat } from '@/utils/prng'
@@ -14,7 +12,7 @@ import { companies, randomName } from '@/core/seed/samplers/dictionary'
 import { COUNTRY_CODES } from '@/@types/openapi-internal-custom/CountryCode'
 import { RISK_LEVEL1S } from '@/@types/openapi-internal-custom/RiskLevel1'
 
-const data: (Business | User)[] = []
+const data: (InternalBusinessUser | InternalConsumerUser)[] = []
 
 const init = () => {
   if (data.length > 0) {

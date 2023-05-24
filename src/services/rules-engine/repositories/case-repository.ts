@@ -155,6 +155,12 @@ export class CaseRepository {
       })
     }
 
+    if (params.filterCaseClosureReasons) {
+      conditions.push({
+        'lastStatusChange.reason': { $all: params.filterCaseClosureReasons },
+      })
+    }
+
     if (
       params.beforeTransactionTimestamp != null &&
       params.afterTransactionTimestamp != null

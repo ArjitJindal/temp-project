@@ -35,3 +35,12 @@ export function pickRandom<T>(variants: T[], seed?: number): T {
   const index = randomInt(seed ?? 0.1, variants.length)
   return variants[index]
 }
+export function randomSubset<T>(variants: T[], seed?: number): T[] {
+  const output = [...variants]
+  const index = randomInt(seed ?? 0.1, output.length)
+  for (let i = 0; i < index; i++) {
+    const selected = randomInt(seed ?? 0.1, output.length)
+    output.splice(selected, 1)
+  }
+  return output
+}

@@ -166,6 +166,12 @@ export const LAMBDAS: {
     expectedMaxSeconds: DEFAULT_LAMBDA_EXPECTED_MAX_SECONDS,
     timeoutSeconds: DEFAULT_LAMBDA_TIMEOUT_SECONDS,
   },
+  [StackConstants.CONSOLE_API_COPILOT_FUNCTION_NAME]: {
+    codePath: 'console-api-copilot',
+    handlerName: 'copilotHandler',
+    expectedMaxSeconds: DEFAULT_LAMBDA_EXPECTED_MAX_SECONDS,
+    timeoutSeconds: DEFAULT_LAMBDA_TIMEOUT_SECONDS,
+  },
   [StackConstants.CONSOLE_API_AUDIT_LOG_FUNCTION_NAME]: {
     codePath: 'console-api-audit-log',
     handlerName: 'auditLogHandler',

@@ -1,7 +1,6 @@
 import { uuid4 } from '@sentry/utils'
 import { sampleCountry } from './countries'
 import { sampleString } from './strings'
-import { CompanyRegistrationDetails } from '@/@types/openapi-internal/CompanyRegistrationDetails'
 import { KYCStatus } from '@/@types/openapi-internal/KYCStatus'
 import { KYCStatusDetails } from '@/@types/openapi-internal/KYCStatusDetails'
 import { UserState } from '@/@types/openapi-internal/UserState'
@@ -34,15 +33,6 @@ export function sampleKycStatus(seed?: number): KYCStatus {
 export function sampleKycStatusDetails(seed?: number): KYCStatusDetails {
   return {
     status: sampleKycStatus(seed),
-  }
-}
-
-export function sampleCompanyRegistrationDetails(
-  seed?: number
-): CompanyRegistrationDetails {
-  return {
-    registrationIdentifier: sampleString(seed),
-    registrationCountry: sampleCountry(seed),
   }
 }
 
@@ -100,6 +90,8 @@ export function sampleBusinessUser(
   { legalName, country }: { legalName?: string; country?: CountryCode } = {},
   seed = 0.1
 ): InternalBusinessUser {
+  const name = legalName || randomName()
+  const domain = name.toLowerCase().replace(' ', '').replace('&', '')
   return {
     type: 'BUSINESS',
     userId: uuid4(),
@@ -117,13 +109,17 @@ export function sampleBusinessUser(
     createdTimestamp: sampleTimestamp(seed),
     legalEntity: {
       contactDetails: {
-        emailIds: ['tim@acme.com'],
+        emailIds: [`tim@${domain}.com`],
+        websites: [`https://${domain}.com`],
       },
       companyGeneralDetails: {
-        legalName: legalName || randomName(),
+        legalName: name,
         businessIndustry: [randomIndustry()],
       },
-      companyRegistrationDetails: sampleCompanyRegistrationDetails(seed),
+      companyRegistrationDetails: {
+        registrationIdentifier: sampleString(seed),
+        registrationCountry: country ?? sampleCountry(seed),
+      },
     },
     shareHolders: [
       {
@@ -138,10 +134,10 @@ export function sampleBusinessUser(
         },
         legalDocuments: [legalDocument1, legalDocument2],
         contactDetails: {
-          emailIds: ['first@email.com', 'second@email.com'],
+          emailIds: [`first@${domain}`, `second@${domain}`],
           contactNumbers: ['+4287878787', '+7777777'],
           faxNumbers: ['+999999'],
-          websites: ['www.example.com'],
+          websites: [domain],
           addresses: [
             {
               addressLines: ['Times Square 12B', 'App. 11'],

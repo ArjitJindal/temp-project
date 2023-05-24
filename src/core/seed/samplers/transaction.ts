@@ -9,22 +9,35 @@ import { MpesaDetails } from '@/@types/openapi-public/MpesaDetails'
 import { UPIDetails } from '@/@types/openapi-public/UPIDetails'
 import { WalletDetails } from '@/@types/openapi-public/WalletDetails'
 import { CheckDetails } from '@/@types/openapi-public/CheckDetails'
+import { CountryCode } from '@/@types/openapi-internal/CountryCode'
 
-export function sampleTransaction(seed?: number): InternalTransaction {
+export function sampleTransaction(
+  {
+    originUserId,
+    originCountry,
+    destinationCountry,
+  }: {
+    originUserId?: string
+    originCountry?: CountryCode
+    destinationCountry?: CountryCode
+  } = {},
+  seed?: number
+): InternalTransaction {
   const rnd = prng(seed)
 
   return {
     transactionId: `sample_transaction_${randomInt(seed)}`,
     type: 'TRANSFER',
     destinationAmountDetails: {
-      country: 'PH',
+      country: destinationCountry ?? 'PH',
       transactionCurrency: 'PHP',
       transactionAmount: 50,
     },
+    originUserId,
     productType: 'Payment link',
     transactionState: 'CREATED' as const,
     originAmountDetails: {
-      country: 'PH' as const,
+      country: originCountry ?? ('PH' as const),
       transactionCurrency: 'PHP' as const,
       transactionAmount: 50,
     },

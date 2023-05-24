@@ -236,6 +236,9 @@ export const StackConstants = {
   CONSOLE_API_CASE_FUNCTION_NAME: getResourceNameForTarpon(
     'ConsoleApiCaseFunction'
   ),
+  CONSOLE_API_COPILOT_FUNCTION_NAME: getResourceNameForTarpon(
+    'ConsoleApiCopilotFunction'
+  ),
   BATCH_JOB_TRIGGER_CONSUMER_FUNCTION_NAME: getResourceNameForTarpon(
     'BatchJobTriggerConsumerFunction'
   ),

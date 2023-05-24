@@ -17,7 +17,7 @@ const generator = function* (seed: number): Generator<InternalTransaction> {
       random() < 0.24 ? 'TRANSFER' : random() < 0.95 ? 'REFUND' : 'WITHDRAWAL'
     const status =
       random() < 0.24 ? 'BLOCK' : random() < 0.95 ? 'ALLOW' : 'FLAG'
-    const transaction = sampleTransaction(i)
+    const transaction = sampleTransaction({}, i)
     const hitRules = randomRules()
     const originUserId = users[randomInt(random(), users.length)].userId
 
@@ -27,6 +27,8 @@ const generator = function* (seed: number): Generator<InternalTransaction> {
 
     const transactionId = `T-${i + 1}`
     const timestamp = sampleTimestamp(i)
+
+    const transactionAmount = Math.round(Math.random() * 5000)
     const fullTransaction: InternalTransaction = {
       ...transaction,
       type: type,
@@ -71,15 +73,12 @@ const generator = function* (seed: number): Generator<InternalTransaction> {
       originAmountDetails: {
         country: sampleCountry(i),
         transactionCurrency: sampleCurrency(i),
-        transactionAmount:
-          status === 'BLOCK'
-            ? Math.round(random() * 5000)
-            : Math.round(random() * 1000),
+        transactionAmount,
       },
       destinationAmountDetails: {
         country: sampleCountry(i + 1),
         transactionCurrency: sampleCurrency(i + 1),
-        transactionAmount: Math.round(random() * 1000),
+        transactionAmount,
       },
       tags: i < 3 ? [sampleTag(i)] : [],
     }

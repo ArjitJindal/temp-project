@@ -1221,6 +1221,22 @@ paths:
           application/json:
             schema:
               $ref: '#/components/schemas/Comment'
+  /copilot/narrative:
+    post:
+      summary: Generate an AI narrative
+      operationId: generateNarrative
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/NarrativeResponse'
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/NarrativeRequest'
   '/users/{userId}/comments/{commentId}':
     parameters:
       - schema:
@@ -2969,6 +2985,12 @@ paths:
             type: number
           in: query
           name: beforeCaseLastUpdatedTimestamp
+        - schema:
+            type: array
+            items:
+              $ref: '#/components/schemas/CaseClosingReasons'
+          in: query
+          name: filterCaseClosureReasons
     post:
       summary: Cases - Update
       operationId: post-cases
@@ -4290,6 +4312,62 @@ components:
           type: number
       required:
         - body
+    NarrativeRequest:
+      title: NarrativeRequest
+      type: object
+      properties:
+        caseId:
+          type: string
+        reasons:
+          type: array
+          items:
+            $ref: '#/components/schemas/CaseClosingReasons'
+      required:
+        - reasons
+        - caseId
+    NarrativeResponse:
+      title: NarrativeResponse
+      type: object
+      properties:
+        caseId:
+          type: string
+        narrative:
+          type: string
+        userPrompts:
+          type: array
+          items:
+            type: object
+            properties:
+              text:
+                type: string
+              link:
+                type: string
+        attributes:
+          type: array
+          items:
+            type: object
+            properties:
+              attribute:
+                type: string
+              value:
+                oneOf:
+                  - type: string
+                  - type: array
+                    items:
+                      type: string
+                  - type: integer
+            required:
+              - attribute
+              - value
+        createdAt:
+          type: number
+        reason:
+          $ref: '#/components/schemas/CaseClosingReasons'
+      required:
+        - caseId
+        - narrative
+        - userPrompts
+        - attributes
     FileInfo:
       title: FileInfo
       type: object
@@ -4860,6 +4938,7 @@ components:
         - IMPORT_FILES
         - LISTS
         - HELP_CENTER
+        - COPILOT
         - GOOGLE_SSO
         - SANCTIONS
         - FALSE_POSITIVE_CHECK
