@@ -37,6 +37,7 @@ import { useRules } from '@/utils/rules';
 import { ColumnHelper } from '@/components/library/Table/columnHelper';
 import { DefaultApiGetAlertListRequest } from '@/apis/types/ObjectParamAPI';
 import { neverReturn } from '@/utils/lang';
+import { SarButton } from '@/components/SarDemo';
 
 export type AlertTableParams = AllParams<TableSearchParams>;
 
@@ -205,9 +206,10 @@ export default function AlertTable(props: Props) {
     expandTransactions = true,
   } = props;
   const escalationEnabled = useFeatureEnabled('ESCALATION');
+  const isPulseEnabled = useFeatureEnabled('PULSE');
+  const sarDemoEnabled = useFeatureEnabled('SAR_DEMO');
   const api = useApi();
   const user = useAuth0User();
-  const isPulseEnabled = useFeatureEnabled('PULSE');
   const [users, _] = useUsers({ includeBlockedUsers: true });
   const [selectedTxns, setSelectedTxns] = useState<{ [alertId: string]: string[] }>({});
   const [selectedAlerts, setSelectedAlerts] = useState<string[]>([]);
@@ -361,6 +363,14 @@ export default function AlertTable(props: Props) {
     () => makeExtraFilters(isPulseEnabled, ruleOptions, hideUserFilters),
     [isPulseEnabled, ruleOptions, hideUserFilters],
   );
+  let sarDemoButton: any = () => null;
+  if (process.env.ENV_NAME !== 'prod') {
+    sarDemoButton = () =>
+      sarDemoEnabled ? (
+        <SarButton transactionIds={Object.values(selectedTxns).flatMap((v) => v)} />
+      ) : null;
+  }
+
   return (
     <>
       <QueryResultsTable<TableAlertItem, AlertTableParams>
@@ -377,6 +387,7 @@ export default function AlertTable(props: Props) {
         extraFilters={extraFilters}
         pagination={isEmbedded ? 'HIDE_FOR_ONE_PAGE' : true}
         selectionActions={[
+          sarDemoButton,
           ({ selectedIds }) => <AssignToButton ids={selectedIds} onSelect={handleAssignTo} />,
 
           ({ selectedIds, selectedItems, params }) => {

@@ -7,7 +7,7 @@ import GenericFormField from '@/components/library/Form/GenericFormField';
 
 interface Props<FormValues, Key extends keyof FormValues> {
   name: Key;
-  label: string;
+  label: React.ReactNode;
   description?: string;
   labelProps?: Partial<LabelProps>;
   children: (inputProps: InputProps<FormValues[Key]>) => JSX.Element;

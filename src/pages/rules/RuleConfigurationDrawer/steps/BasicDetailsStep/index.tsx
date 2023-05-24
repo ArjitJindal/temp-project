@@ -9,6 +9,7 @@ import { RULE_CASE_PRIORITY, RULE_LABELS_OPTIONS, RULE_NATURE_OPTIONS } from '@/
 import { PropertyListLayout } from '@/pages/rules/RuleConfigurationDrawer/JsonSchemaEditor/PropertyList';
 import InputField from '@/components/library/Form/InputField';
 import Select from '@/components/library/Select';
+import TextArea from '@/components/library/TextArea';
 
 export interface FormValues {
   ruleName: string | undefined;
@@ -135,7 +136,7 @@ function SimulationIterationDetails() {
           label={'Description'}
           labelProps={{ isOptional: true }}
         >
-          {(inputProps) => <TextInput {...inputProps} placeholder={'Enter rule name'} />}
+          {(inputProps) => <TextArea {...inputProps} placeholder={'Enter iteration description'} />}
         </InputField>
       </PropertyListLayout>
     </>
