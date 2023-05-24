@@ -11,6 +11,8 @@ import { UploadFilesList } from '@/components/files/UploadFilesList';
 import { useDeepEqualEffect, usePrevious } from '@/utils/hooks';
 import { MAX_COMMENT_LENGTH } from '@/components/CommentEditor';
 import TextArea from '@/components/library/TextArea';
+import { useFeatureEnabled } from '@/components/AppWrapper/Providers/SettingsProvider';
+import { CopilotButtonContent } from '@/pages/case-management/components/Copilot/CopilotButtonContent';
 
 export interface RemoveAllFilesRef {
   removeAllFiles: () => void;
@@ -88,11 +90,14 @@ export default function StatusChangeModal(props: Props) {
     newStatusActionLabel,
   } = props;
   const [isOtherReason, setIsOtherReason] = useState(false);
+  const [reasons, setReasons] = useState<CaseClosingReasons[]>([]);
   const [isAwaitingConfirmation, setAwaitingConfirmation] = useState(false);
   const [formValues, setFormValues] = useState<FormValues>(initialValues);
   const [uploadingCount, setUploadingCount] = useState(0);
   const [form] = Form.useForm<FormValues>();
   const [fileList, setFileList] = useState<FileInfo[]>(initialValues.files);
+
+  const showCopilot = useFeatureEnabled('COPILOT');
 
   const showConfirmation = isVisible && (newStatus === 'REOPENED' || isAwaitingConfirmation);
 
@@ -137,6 +142,7 @@ export default function StatusChangeModal(props: Props) {
     if (!wasUpdateDone && isUpdateDone) {
       removeFiles();
       form.resetFields();
+      setReasons([]);
       setIsOtherReason(false);
       setAwaitingConfirmation(false);
       onClose();
@@ -197,7 +203,12 @@ export default function StatusChangeModal(props: Props) {
           >
             <Select<string[]>
               mode="multiple"
-              onChange={(value) => setIsOtherReason(value.includes(OTHER_REASON))}
+              onChange={(value) => {
+                // TODO is there a better way to get this state?
+                // form.getValue did not work, neither did values.
+                setReasons(value as CaseClosingReasons[]);
+                setIsOtherReason(value.includes(OTHER_REASON));
+              }}
             >
               {possibleReasons.map((label) => (
                 <Select.Option key={label} value={label}>
@@ -223,7 +234,7 @@ export default function StatusChangeModal(props: Props) {
               />
               <TextArea
                 rows={4}
-                placeholder={`Write a narrative explaning the ${entityName} closure reason and findings, if any.`}
+                placeholder={`Write a narrative explaining the ${entityName} closure reason and findings, if any.`}
                 value={commentValue || ''}
                 onChange={(comment) => {
                   setCommentValue(comment);
@@ -231,6 +242,13 @@ export default function StatusChangeModal(props: Props) {
               />
             </>
           </Form.Item>
+          {showCopilot && (
+            <CopilotButtonContent
+              reasons={reasons}
+              setCommentValue={setCommentValue}
+              caseId={ids[0]}
+            />
+          )}
           <Form.Item name="files" label="Attach documents">
             <FilesInput
               ref={uploadRef}

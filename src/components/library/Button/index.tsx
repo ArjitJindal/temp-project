@@ -19,6 +19,7 @@ interface Props {
   htmlType?: 'submit' | 'button';
   htmlAttrs?: React.ButtonHTMLAttributes<unknown>;
   style?: React.CSSProperties;
+  className?: string;
   testName?: string;
 }
 
@@ -36,6 +37,7 @@ function Button(props: Props, ref: React.Ref<HTMLButtonElement>) {
     htmlAttrs = {},
     style,
     testName,
+    className,
   } = props;
   const buttonTracker = useButtonTracker();
 
@@ -52,7 +54,7 @@ function Button(props: Props, ref: React.Ref<HTMLButtonElement>) {
     <button
       style={style}
       ref={ref}
-      className={cn(s.root, s[`size-${size}`], s[`type-${type}`])}
+      className={cn(s.root, s[`size-${size}`], s[`type-${type}`], className)}
       onClick={handleClick}
       disabled={isDisabled || isLoading}
       type={htmlType}
