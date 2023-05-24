@@ -192,6 +192,7 @@ interface Props {
   hideAlertStatusFilters?: boolean;
   hideUserFilters?: boolean;
   escalatedTransactionIds?: string[];
+  expandTransactions?: boolean;
 }
 
 export default function AlertTable(props: Props) {
@@ -201,9 +202,9 @@ export default function AlertTable(props: Props) {
     isEmbedded = false,
     hideAlertStatusFilters = false,
     hideUserFilters = false,
+    expandTransactions = true,
   } = props;
   const escalationEnabled = useFeatureEnabled('ESCALATION');
-
   const api = useApi();
   const user = useAuth0User();
   const isPulseEnabled = useFeatureEnabled('PULSE');
@@ -225,7 +226,6 @@ export default function AlertTable(props: Props) {
         businessIndustryFilter,
         tagKey,
         tagValue,
-        showCases,
         caseId,
         assignedTo,
         destinationMethodFilter,
@@ -251,9 +251,7 @@ export default function AlertTable(props: Props) {
         filterAlertStatus = neverReturn(alertStatus, []);
       }
 
-      if (showCases === 'MY_ALERTS') {
-        filterAssignmentsIds = [user.userId];
-      } else if (assignedTo?.length) {
+      if (assignedTo?.length) {
         filterAssignmentsIds = assignedTo;
       }
 
@@ -454,21 +452,25 @@ export default function AlertTable(props: Props) {
               />
             ),
         ]}
-        renderExpanded={(record) => (
-          <ExpandedRowRenderer
-            alert={record ?? null}
-            escalatedTransactionIds={props.escalatedTransactionIds}
-            onTransactionSelect={(alertId, txnIds) => {
-              setSelectedTxns((prevSelectedTxns) => {
-                prevSelectedTxns[alertId] = [...txnIds];
-                return prevSelectedTxns;
-              });
-              if (txnIds.length > 0) {
-                setSelectedAlerts((prev) => Array.from(new Set([...prev, alertId])));
-              }
-            }}
-          />
-        )}
+        renderExpanded={
+          expandTransactions
+            ? (record) => (
+                <ExpandedRowRenderer
+                  alert={record ?? null}
+                  escalatedTransactionIds={props.escalatedTransactionIds}
+                  onTransactionSelect={(alertId, txnIds) => {
+                    setSelectedTxns((prevSelectedTxns) => {
+                      prevSelectedTxns[alertId] = [...txnIds];
+                      return prevSelectedTxns;
+                    });
+                    if (txnIds.length > 0) {
+                      setSelectedAlerts((prev) => Array.from(new Set([...prev, alertId])));
+                    }
+                  }}
+                />
+              )
+            : undefined
+        }
         fixedExpandedContainer={true}
       />
     </>

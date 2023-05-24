@@ -334,6 +334,7 @@ export default function CaseTable(props: Props) {
               params={{ ...params, caseId: record.caseId }}
               escalatedTransactionIds={record.caseHierarchyDetails?.childTransactionIds || []}
               onChangeParams={onChangeParams}
+              expandTransactions={false}
             />
           )}
         </>

@@ -15,19 +15,20 @@ import { DEFAULT_PAGE_SIZE, DEFAULT_PARAMS_STATE } from '@/components/library/Ta
 import { useDeepEqualEffect } from '@/utils/hooks';
 import ScopeSelector from '@/pages/case-management/components/ScopeSelector';
 import StatusButtons from '@/pages/transactions/components/StatusButtons';
+import { useAuth0User } from '@/utils/user-utils';
 
 export default function CaseManagementPage() {
   const i18n = useI18n();
   usePageViewTracker(`Case Management Page`);
   useCloseSidebarByDefault();
 
+  const user = useAuth0User();
   const navigate = useNavigate();
   const parsedParams = queryAdapter.deserializer(parseQueryString(location.search));
   const [params, setParams] = useState<AllParams<TableSearchParams>>({
     ...DEFAULT_PARAMS_STATE,
     ...parsedParams,
   });
-
   const pushParamsToNavigation = useCallback(
     (params: TableSearchParams) => {
       if (params.showCases === 'ALL' || params.showCases === 'MY') {
@@ -95,7 +96,10 @@ export default function CaseManagementPage() {
         {isAlerts ? (
           <AlertTable
             hideAlertStatusFilters={true}
-            params={params}
+            params={{
+              ...params,
+              assignedTo: params.showCases === 'MY_ALERTS' ? [user.userId] : undefined,
+            }}
             onChangeParams={handleChangeParams}
           />
         ) : (
