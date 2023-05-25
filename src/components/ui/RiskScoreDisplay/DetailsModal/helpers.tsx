@@ -15,6 +15,7 @@ import {
   ALL_RISK_PARAMETERS,
   USER_SEGMENT_OPTIONS,
 } from '@/pages/risk-levels/risk-factors/ParametersTable/consts';
+import TimestampDisplay from '@/components/ui/TimestampDisplay';
 
 export type ParameterRenderer<V> = (value: V) => React.ReactNode;
 
@@ -22,6 +23,7 @@ export const DEFAULT_RENDERER: ParameterRenderer<unknown> = (value) => {
   if (typeof value === 'string' || typeof value === 'number') {
     return <>{`${value}`}</>;
   }
+
   if (typeof value === 'boolean') {
     return <>{value ? 'Yes' : 'No'}</>;
   }
@@ -56,7 +58,9 @@ export const PARAMETER_RENDERERS: { [key in DataType]: ParameterRenderer<any> } 
   USER_REGISTRATION_STATUS: DEFAULT_RENDERER,
   RANGE: DEFAULT_RENDERER,
   DAY_RANGE: DEFAULT_RENDERER,
-  TIME_RANGE: DEFAULT_RENDERER,
+  TIME_RANGE: (value) => {
+    return <TimestampDisplay timestamp={value} />;
+  },
   BOOLEAN: DEFAULT_RENDERER,
 };
 
