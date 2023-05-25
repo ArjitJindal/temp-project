@@ -90,9 +90,6 @@ export class CdkTarponConsoleLambdaStack extends cdk.NestedStack {
         ? [securityGroup]
         : undefined,
       vpc: this.config.resource.LAMBDA_VPC_ENABLED ? vpc : undefined,
-      environment: {
-        SM_SECRET_ARN: this.config.application.ATLAS_CREDENTIALS_SECRET_ARN,
-      },
     }
 
     const { api: consoleApi, logGroup: consoleApiLogGroup } = createApiGateway(

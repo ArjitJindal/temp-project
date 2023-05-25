@@ -30,7 +30,8 @@ interface DBCredentials {
   host: string
 }
 
-const SM_SECRET_ARN = process.env.SM_SECRET_ARN as string
+const ATLAS_CREDENTIALS_SECRET_ARN = process.env
+  .ATLAS_CREDENTIALS_SECRET_ARN as string
 
 let cacheClient: MongoClient
 
@@ -49,7 +50,9 @@ export async function getMongoDbClient(
     return await MongoClient.connect(`mongodb://localhost:27018/${dbName}`)
   }
 
-  const credentials = await getSecret<DBCredentials>(SM_SECRET_ARN as string)
+  const credentials = await getSecret<DBCredentials>(
+    ATLAS_CREDENTIALS_SECRET_ARN as string
+  )
   const DB_USERNAME = credentials['username']
   const DB_PASSWORD = encodeURIComponent(credentials['password'])
   const DB_HOST = credentials['host']

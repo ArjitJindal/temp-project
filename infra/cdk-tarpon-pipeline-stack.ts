@@ -184,7 +184,7 @@ export class CdkTarponPipelineStack extends cdk.Stack {
               },
               commands: [
                 'npm install @tsconfig/node16 ts-node typescript',
-                `export SM_SECRET_ARN=${config.application.ATLAS_CREDENTIALS_SECRET_ARN}`,
+                `export ATLAS_CREDENTIALS_SECRET_ARN=${config.application.ATLAS_CREDENTIALS_SECRET_ARN}`,
                 `export ENV=${env}`,
                 `export AWS_REGION=${config.env.region}`,
                 ...assumeRuleCommands,

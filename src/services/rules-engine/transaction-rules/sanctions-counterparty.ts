@@ -151,7 +151,7 @@ export class SanctionsCounterPartyRule extends TransactionRule<SanctionsCounterP
         const result = await sanctionsService.search({
           searchTerm: name,
           types: this.parameters.screeningTypes || [],
-          fuzziness,
+          fuzziness: fuzziness / 100,
           monitoring: {
             enabled: false,
           },

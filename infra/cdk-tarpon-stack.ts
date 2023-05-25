@@ -352,9 +352,6 @@ export class CdkTarponStack extends cdk.Stack {
         ? [securityGroup]
         : undefined,
       vpc: this.config.resource.LAMBDA_VPC_ENABLED ? vpc : undefined,
-      environment: {
-        SM_SECRET_ARN: config.application.ATLAS_CREDENTIALS_SECRET_ARN,
-      },
     }
 
     /* API Key Authorizer */
@@ -375,12 +372,16 @@ export class CdkTarponStack extends cdk.Stack {
       memorySize: config.resource.TRANSACTION_LAMBDA.MEMORY_SIZE,
     }
 
-    const { alias: transactionAlias } = createFunction(this, {
-      name: StackConstants.PUBLIC_API_TRANSACTION_FUNCTION_NAME,
-      auditLogTopic: this.auditLogTopic,
-      batchJobQueue,
-      ...transactionFunctionProps,
-    })
+    const { alias: transactionAlias } = createFunction(
+      this,
+      {
+        name: StackConstants.PUBLIC_API_TRANSACTION_FUNCTION_NAME,
+        auditLogTopic: this.auditLogTopic,
+        batchJobQueue,
+        ...transactionFunctionProps,
+      },
+      atlasFunctionProps
+    )
     tarponDynamoDbTable.grantReadWriteData(transactionAlias)
     tarponRuleDynamoDbTable.grantReadWriteData(transactionAlias)
     hammerheadDynamoDbTable.grantReadData(transactionAlias)
@@ -527,16 +528,7 @@ export class CdkTarponStack extends cdk.Stack {
         auditLogTopic: this.auditLogTopic,
         batchJobQueue,
       },
-      {
-        ...atlasFunctionProps,
-        environment: {
-          ...atlasFunctionProps.environment,
-          SLACK_CLIENT_ID: config.application.SLACK_CLIENT_ID,
-          SLACK_CLIENT_SECRET: config.application.SLACK_CLIENT_SECRET,
-          SLACK_REDIRECT_URI: config.application.SLACK_REDIRECT_URI,
-          CONSOLE_URI: config.application.CONSOLE_URI,
-        },
-      }
+      atlasFunctionProps
     )
     grantMongoDbAccess(this, slackAlertAlias)
     tarponDynamoDbTable.grantReadData(slackAlertAlias)
@@ -604,8 +596,6 @@ export class CdkTarponStack extends cdk.Stack {
           ...atlasFunctionProps.environment,
           IMPORT_BUCKET: importBucketName,
           TMP_BUCKET: tmpBucketName,
-          AUTH0_DOMAIN: this.config.application.AUTH0_DOMAIN,
-          AUTH0_AUDIENCE: this.config.application.AUTH0_AUDIENCE,
         },
       }
     )
@@ -873,16 +863,7 @@ export class CdkTarponStack extends cdk.Stack {
         auditLogTopic: this.auditLogTopic,
         batchJobQueue,
       },
-      {
-        ...atlasFunctionProps,
-        environment: {
-          ...atlasFunctionProps.environment,
-          COMPLYADVANTAGE_API_KEY: process.env
-            .COMPLYADVANTAGE_API_KEY as string,
-          COMPLYADVANTAGE_DEFAULT_SEARCH_PROFILE_ID: config.application
-            .COMPLYADVANTAGE_DEFAULT_SEARCH_PROFILE_ID as string,
-        },
-      }
+      atlasFunctionProps
     )
     grantMongoDbAccess(this, publicApiSanctionsHandlerAlias)
     grantSecretsManagerAccess(
