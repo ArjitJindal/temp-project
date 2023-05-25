@@ -216,7 +216,7 @@ export function merchantMonitoringSummaries(
     ].map((updatedAt) => ({
       source: {
         sourceType,
-        sourceValue: url,
+        sourceValue: `https://${url}`,
       },
       summary,
       userId: id,

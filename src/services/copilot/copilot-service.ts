@@ -20,7 +20,7 @@ export class CopilotService {
   async getNarrative(request: GenerateNarrative): Promise<NarrativeResponse> {
     // Timeout so that the delay seems like it could actually come from ChatGPT.
     let i = 0
-    while (i < 1_000_000_000) {
+    while (i < 500_000_000) {
       i++
     }
 

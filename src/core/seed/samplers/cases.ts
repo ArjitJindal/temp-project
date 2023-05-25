@@ -71,9 +71,7 @@ export function sampleUserCase(
 ): Case {
   const { transactions, origin, destination } = params
 
-  const ruleHits = _.uniq(transactions.flatMap((t) => t.hitRules)).filter(
-    (h) => h.ruleAction === 'FLAG'
-  )
+  const ruleHits = _.uniq(transactions.flatMap((t) => t.hitRules))
 
   let user = destination
   if (origin) {
@@ -136,9 +134,12 @@ export function sampleAlert(
     createdTimestamp: createdTimestamp,
     latestTransactionArrivalTimestamp: createdTimestamp - 3600 * 1000,
     caseId: params.caseId,
-    alertStatus: pickRandom(['OPEN', 'CLOSED', 'REOPENED'], seed),
+    alertStatus: pickRandom(
+      ['OPEN', 'OPEN', 'OPEN', 'OPEN', 'OPEN', 'CLOSED', 'REOPENED'],
+      Math.random()
+    ),
     ruleInstanceId: params.ruleHit.ruleInstanceId,
     numberOfTransactionsHit: randomInt(seed, 100),
-    priority: pickRandom(['P1', 'P2', 'P3', 'P4'], seed),
+    priority: pickRandom(['P1', 'P2', 'P3', 'P4'], Math.random()),
   }
 }
