@@ -6,13 +6,18 @@ import {
   createMongoDBCollections,
   DRS_SCORES_COLLECTION,
   KRS_SCORES_COLLECTION,
+  MERCHANT_MONITORING_DATA_COLLECTION,
   TRANSACTION_EVENTS_COLLECTION,
   TRANSACTIONS_COLLECTION,
   USERS_COLLECTION,
 } from '@/utils/mongoDBUtils'
 import { init as txnInit, transactions } from '@/core/seed/data/transactions'
 import { init as caseInit, data as cases } from '@/core/seed/data/cases'
-import { init as userInit, data as users } from '@/core/seed/data/users'
+import {
+  init as userInit,
+  data as users,
+  merchantMonitoring,
+} from '@/core/seed/data/users'
 import { init as krsInit, data as krs } from '@/core/seed/data/krs_scores'
 import { init as arsInit, data as ars } from '@/core/seed/data/ars_scores'
 import { init as drsInit, data as drs } from '@/core/seed/data/drs_scores'
@@ -35,6 +40,7 @@ const collections: [(tenantId: string) => string, Iterable<unknown>][] = [
   [ARS_SCORES_COLLECTION, ars],
   [DRS_SCORES_COLLECTION, drs],
   [TRANSACTION_EVENTS_COLLECTION, transactionEvents],
+  [MERCHANT_MONITORING_DATA_COLLECTION, merchantMonitoring],
 ]
 
 export async function seedMongo(client: MongoClient, tenantId: string) {

@@ -1,5 +1,6 @@
 import { uuid4 } from '@sentry/utils'
 import {
+  merchantMonitoringSummaries,
   sampleBusinessUser,
   sampleKycStatusDetails,
   sampleUserStateDetails,
@@ -11,18 +12,38 @@ import { pickRandom, randomFloat } from '@/utils/prng'
 import { companies, randomName } from '@/core/seed/samplers/dictionary'
 import { COUNTRY_CODES } from '@/@types/openapi-internal-custom/CountryCode'
 import { RISK_LEVEL1S } from '@/@types/openapi-internal-custom/RiskLevel1'
+import { MerchantMonitoringSummary } from '@/@types/openapi-internal/MerchantMonitoringSummary'
 
 const data: (InternalBusinessUser | InternalConsumerUser)[] = []
+const merchantMonitoring: MerchantMonitoringSummary[] = []
 
 const init = () => {
   if (data.length > 0) {
     return
   }
+  const businessUserData = companies.map(
+    (
+      c,
+      i
+    ): {
+      user: InternalBusinessUser
+      merchantMonitoring: MerchantMonitoringSummary[]
+    } => {
+      const user = sampleBusinessUser({ company: c }, i)
+      return {
+        user,
+        merchantMonitoring: merchantMonitoringSummaries(user.userId, c),
+      }
+    }
+  )
+
+  merchantMonitoring.push(
+    ...businessUserData.flatMap((b) => b.merchantMonitoring)
+  )
+
   data.push(
     ...[
-      ...companies.map(
-        (c, i): InternalBusinessUser => sampleBusinessUser({ legalName: c }, i)
-      ),
+      ...businessUserData.map((b) => b.user),
       ...[...new Array(30)].map(
         (_, i): InternalConsumerUser => ({
           type: 'CONSUMER' as const,
@@ -52,4 +73,4 @@ const init = () => {
   )
 }
 
-export { init, data }
+export { init, data, merchantMonitoring }

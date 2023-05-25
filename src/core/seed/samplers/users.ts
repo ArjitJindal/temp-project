@@ -9,12 +9,15 @@ import { pickRandom, randomFloat, randomInt } from '@/utils/prng'
 import { USER_STATES } from '@/@types/openapi-internal-custom/UserState'
 import { KYC_STATUSS } from '@/@types/openapi-internal-custom/KYCStatus'
 import { sampleTimestamp } from '@/core/seed/samplers/timestamp'
-import { randomIndustry, randomName } from '@/core/seed/samplers/dictionary'
+import { CompanySeedData, randomName } from '@/core/seed/samplers/dictionary'
 import { COUNTRY_CODES } from '@/@types/openapi-internal-custom/CountryCode'
 import { LegalDocument } from '@/@types/openapi-internal/LegalDocument'
 import { Tag } from '@/@types/openapi-internal/Tag'
 import { InternalBusinessUser } from '@/@types/openapi-internal/InternalBusinessUser'
 import { CountryCode } from '@/@types/openapi-internal/CountryCode'
+import { MerchantMonitoringSummary } from '@/@types/openapi-internal/MerchantMonitoringSummary'
+import { MerchantMonitoringSourceType } from '@/@types/openapi-internal/MerchantMonitoringSourceType'
+import { MERCHANT_MONITORING_SOURCE_TYPES } from '@/@types/openapi-internal-custom/MerchantMonitoringSourceType'
 
 export function sampleUserState(seed?: number): UserState {
   return USER_STATES[randomInt(seed, USER_STATES.length)]
@@ -87,10 +90,10 @@ const legalDocument2: LegalDocument = {
 }
 
 export function sampleBusinessUser(
-  { legalName, country }: { legalName?: string; country?: CountryCode } = {},
+  { company, country }: { company?: CompanySeedData; country?: CountryCode },
   seed = 0.1
 ): InternalBusinessUser {
-  const name = legalName || randomName()
+  const name = company?.name || randomName()
   const domain = name.toLowerCase().replace(' ', '').replace('&', '')
   return {
     type: 'BUSINESS',
@@ -109,12 +112,12 @@ export function sampleBusinessUser(
     createdTimestamp: sampleTimestamp(seed),
     legalEntity: {
       contactDetails: {
-        emailIds: [`tim@${domain}.com`],
-        websites: [`https://${domain}.com`],
+        emailIds: company?.contactEmails || [],
+        websites: company?.website ? [company.website] : [],
       },
       companyGeneralDetails: {
         legalName: name,
-        businessIndustry: [randomIndustry()],
+        businessIndustry: company?.industries || [],
       },
       companyRegistrationDetails: {
         registrationIdentifier: sampleString(seed),
@@ -134,7 +137,7 @@ export function sampleBusinessUser(
         },
         legalDocuments: [legalDocument1, legalDocument2],
         contactDetails: {
-          emailIds: [`first@${domain}`, `second@${domain}`],
+          emailIds: company?.contactEmails || [],
           contactNumbers: ['+4287878787', '+7777777'],
           faxNumbers: ['+999999'],
           websites: [domain],
@@ -179,4 +182,52 @@ export function sampleBusinessUser(
       },
     ],
   }
+}
+
+export function merchantMonitoringSummaries(
+  id: string,
+  c: CompanySeedData
+): MerchantMonitoringSummary[] {
+  return [0, 1, 2, 3].flatMap((n, i) => {
+    const summary = c.summaries[n % 2]
+    const sourceType: MerchantMonitoringSourceType =
+      MERCHANT_MONITORING_SOURCE_TYPES[n]
+    let url: string
+    switch (sourceType) {
+      case 'COMPANIES_HOUSE':
+        url =
+          'https://find-and-update.company-information.service.gov.uk/company/01772433'
+        break
+      case 'LINKEDIN':
+        url = 'https://www.linkedin.com/company/flagright'
+        break
+      case 'EXPLORIUM':
+        url = 'https://www.explorium.ai/'
+        break
+      case 'SCRAPE':
+        url = c.website
+        break
+    }
+    const days = 1000 * 60 * 60 * 24
+    return [
+      new Date().getTime(),
+      new Date().getTime() - days * randomInt(i, 365),
+      new Date().getTime() - days * randomInt(i, 365),
+    ].map((updatedAt) => ({
+      source: {
+        sourceType,
+      },
+      summary,
+      userId: id,
+      domain: c.website,
+      products: c.products,
+      employees: c.companySize.toString(),
+      industry: c.industries[0],
+      location: c.location,
+      companyName: c.name,
+      revenue: new Intl.NumberFormat('en-US').format(c.annualRevenue),
+      updatedAt,
+      url,
+    }))
+  })
 }
