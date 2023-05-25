@@ -17,6 +17,7 @@ import {
   groupTransactionsByHour,
 } from '@/services/rules-engine/utils/transaction-rule-utils'
 import { TransactionState } from '@/@types/openapi-public/TransactionState'
+import { mergeObjects } from '@/utils/object'
 
 type AggregationData = {
   filteredSendingCount?: number
@@ -303,7 +304,7 @@ export default class HighUnsuccessfullStateRateRule extends TransactionAggregati
     sendingTransactionsFiltered: AuxiliaryIndexTransaction[],
     receivingTransactionsFiltered: AuxiliaryIndexTransaction[]
   ) {
-    return _.merge(
+    return mergeObjects(
       await groupTransactionsByHour<AggregationData>(
         sendingTransactions,
         async (group) => ({

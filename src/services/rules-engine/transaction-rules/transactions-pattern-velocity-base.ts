@@ -18,6 +18,7 @@ import { RuleHitResultItem } from '../rule'
 import { getTimestampRange } from '../utils/time-utils'
 import { TransactionAggregationRule } from './aggregation-rule'
 import { Transaction } from '@/@types/openapi-public/Transaction'
+import { mergeObjects } from '@/utils/object'
 
 const DEFAULT_GROUP_KEY = 'all'
 
@@ -179,7 +180,7 @@ export default abstract class TransactionsPatternVelocityBaseRule<
     sendingTransactions: AuxiliaryIndexTransaction[],
     receivingTransactions: AuxiliaryIndexTransaction[]
   ) {
-    return _.merge(
+    return mergeObjects(
       await groupTransactionsByHour<AggregationData>(
         sendingTransactions,
         async (group) => ({ sendingCount: group.length })

@@ -20,6 +20,7 @@ import { RuleHitResultItem } from '@/services/rules-engine/rule'
 import { getTargetCurrencyAmount } from '@/utils/currency-utils'
 import { ExtendedJSONSchemaType } from '@/services/rules-engine/utils/rule-schema-utils'
 import { multiplierToPercents } from '@/services/rules-engine/utils/math-utils'
+import { mergeObjects } from '@/utils/object'
 
 type AggregationData = {
   sendingCount?: number
@@ -565,7 +566,7 @@ export default abstract class TransactionAverageExceededBaseRule<
     sendingTransactions: AuxiliaryIndexTransaction[],
     receivingTransactions: AuxiliaryIndexTransaction[]
   ) {
-    return _.merge(
+    return mergeObjects(
       await groupTransactionsByHour<AggregationData>(
         sendingTransactions,
         async (group) => ({

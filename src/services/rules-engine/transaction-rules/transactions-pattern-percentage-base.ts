@@ -17,6 +17,7 @@ import { getTimestampRange } from '../utils/time-utils'
 import { RuleHitResultItem } from '../rule'
 import { TransactionAggregationRule } from './aggregation-rule'
 import { Transaction } from '@/@types/openapi-public/Transaction'
+import { mergeObjects } from '@/utils/object'
 
 type AggregationData = {
   all?: number
@@ -179,7 +180,7 @@ export default abstract class TransactionsPatternPercentageBaseRule<
     allTransactions: AuxiliaryIndexTransaction[],
     matchedTransactions: AuxiliaryIndexTransaction[]
   ) {
-    return _.merge(
+    return mergeObjects(
       await groupTransactionsByHour<AggregationData>(
         allTransactions,
         async (group) => ({

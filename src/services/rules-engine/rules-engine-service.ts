@@ -51,6 +51,7 @@ import { getMongoDbClient } from '@/utils/mongoDBUtils'
 import { UserMonitoringResult } from '@/@types/openapi-public/UserMonitoringResult'
 import { UserWithRulesResult } from '@/@types/openapi-internal/UserWithRulesResult'
 import { BusinessWithRulesResult } from '@/@types/openapi-internal/BusinessWithRulesResult'
+import { mergeObjects } from '@/utils/object'
 
 const ruleAscendingComparator = (
   rule1: HitRulesDetails,
@@ -224,13 +225,13 @@ export class RulesEngineService {
       await this.transactionEventRepository.getTransactionEvents(
         transaction.transactionId
       )
-    const updatedTransaction: TransactionWithRulesResult = _.merge(
+    const updatedTransaction = mergeObjects(
       {
         ...transaction,
         transactionState: transactionEvent.transactionState,
       },
       transactionEvent.updatedTransactionAttributes || {}
-    )
+    ) as TransactionWithRulesResult
 
     const { executedRules, hitRules } = await this.verifyTransactionInternal(
       updatedTransaction

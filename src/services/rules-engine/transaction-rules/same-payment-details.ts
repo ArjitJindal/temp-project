@@ -16,6 +16,7 @@ import {
   getTransactionUserPastTransactionsByDirection,
   groupTransactionsByHour,
 } from '@/services/rules-engine/utils/transaction-rule-utils'
+import { mergeObjects } from '@/utils/object'
 
 type AggregationData = {
   sendingCount?: number
@@ -144,7 +145,7 @@ export default class SamePaymentDetailsRule extends TransactionAggregationRule<
     sendingTransactions: AuxiliaryIndexTransaction[],
     receivingTransactions: AuxiliaryIndexTransaction[]
   ) {
-    return _.merge(
+    return mergeObjects(
       await groupTransactionsByHour<AggregationData>(
         sendingTransactions,
         async (group) => ({

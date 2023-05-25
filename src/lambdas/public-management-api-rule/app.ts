@@ -18,6 +18,7 @@ import {
   TRANSACTION_HISTORICAL_FILTERS,
   USER_FILTERS,
 } from '@/services/rules-engine/filters'
+import { mergeObjects } from '@/utils/object'
 
 export const ruleHandler = lambdaApi()(
   async (
@@ -47,7 +48,7 @@ export const ruleHandler = lambdaApi()(
       ].map((filterClass) => (filterClass.getSchema() as any)?.properties || {})
       return {
         type: 'object',
-        properties: _.merge({}, ...filters),
+        properties: mergeObjects({}, ...filters),
       }
     } else if (
       event.httpMethod === 'GET' &&

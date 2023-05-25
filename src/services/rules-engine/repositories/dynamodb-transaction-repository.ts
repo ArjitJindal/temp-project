@@ -31,6 +31,7 @@ import { TransactionWithRulesResult } from '@/@types/openapi-public/TransactionW
 import { paginateQuery } from '@/utils/dynamodb'
 import { HitRulesDetails } from '@/@types/openapi-public/HitRulesDetails'
 import { TransactionType } from '@/@types/openapi-public/TransactionType'
+import { mergeObjects } from '@/utils/object'
 
 export function getNewTransactionID(transaction: Transaction) {
   return (
@@ -825,7 +826,7 @@ export class DynamoDbTransactionRepository
       return {}
     }
 
-    const expressionAttributeNames = _.merge(
+    const expressionAttributeNames = mergeObjects(
       filterOptions.originPaymentMethod ||
         filterOptions.destinationPaymentMethod
         ? _.omitBy(
@@ -859,7 +860,7 @@ export class DynamoDbTransactionRepository
         : undefined,
       attributesToFetch &&
         Object.fromEntries(attributesToFetch.map((name) => [`#${name}`, name]))
-    )
+    ) as Record<string, string>
 
     return {
       FilterExpression: _.isEmpty(filters) ? undefined : filters.join(' AND '),

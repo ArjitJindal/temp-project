@@ -31,6 +31,7 @@ import { getS3ClientByEvent } from '@/utils/s3'
 import { getMongoDbClient } from '@/utils/mongoDBUtils'
 import { getDynamoDbClientByEvent } from '@/utils/dynamodb'
 import { UserViewConfig } from '@/lambdas/console-api-user/app'
+import { mergeObjects } from '@/utils/object'
 
 export class UserService {
   userRepository: UserRepository
@@ -168,7 +169,7 @@ export class UserService {
       throw new NotFound('User not found')
     }
     const updatedUser: User = {
-      ..._.merge(user, updateRequest),
+      ...(mergeObjects(user, updateRequest) as User),
       transactionLimits: updateRequest.transactionLimits
         ? {
             ...user.transactionLimits,
@@ -199,7 +200,7 @@ export class UserService {
       throw new NotFound('User not found')
     }
     const updatedUser: Business = {
-      ..._.merge(user, updateRequest),
+      ...(mergeObjects(user, updateRequest) as Business),
       transactionLimits: updateRequest.transactionLimits
         ? {
             ...user.transactionLimits,

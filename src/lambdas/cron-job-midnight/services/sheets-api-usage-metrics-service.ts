@@ -13,6 +13,7 @@ import { logger } from '@/core/logger'
 import { Tenant } from '@/services/accounts'
 import { getSecret } from '@/utils/secrets-manager'
 import { exponentialRetry } from '@/utils/retry'
+import { mergeObjects } from '@/utils/object'
 
 const DAILY_USAGE_METRICS_SHEET_TITLE = 'DailyUsageMetrics'
 const MONTHLY_USAGE_METRICS_SHEET_TITLE = 'MonthlyUsageMetrics'
@@ -237,7 +238,7 @@ export class SheetsApiUsageMetricsService {
     )
 
     if (row > -1) {
-      rows[row] = _.merge(rows[row], data)
+      rows[row] = mergeObjects(rows[row], data as GoogleSpreadsheetRow)
       await rows[row].save()
     } else {
       await this.dailyUsageMetricsSheet.addRow(data)
@@ -288,7 +289,10 @@ export class SheetsApiUsageMetricsService {
     )
 
     if (tenantRow > -1) {
-      tenantRows[tenantRow] = _.merge(tenantRows[tenantRow], data)
+      tenantRows[tenantRow] = mergeObjects(
+        tenantRows[tenantRow],
+        data as GoogleSpreadsheetRow
+      )
       await tenantRows[tenantRow].save()
     } else {
       await this.monthlyUsageMetricsSheet.addRow(data)
@@ -300,7 +304,7 @@ export class SheetsApiUsageMetricsService {
     const transformedDailyUsageMetrics =
       this.transformDailyUsageMetrics(dailyUsageMetrics)
     await this.publishDailyUsageMetrics(
-      _.merge(this.getDailyUsageMetadata(), transformedDailyUsageMetrics)
+      mergeObjects(this.getDailyUsageMetadata(), transformedDailyUsageMetrics)
     )
     const monthlyUsageMetrics = await this.getMonthlyUsageMetricsData()
 
@@ -308,7 +312,10 @@ export class SheetsApiUsageMetricsService {
       this.transformMonthlyUsageMetrics(monthlyUsageMetrics)
 
     await this.publishMonthlyUsageMetrics(
-      _.merge(this.getMonthlyUsageMetadata(), transformedMonthlyUsageMetrics)
+      mergeObjects(
+        this.getMonthlyUsageMetadata(),
+        transformedMonthlyUsageMetrics
+      )
     )
   }
 

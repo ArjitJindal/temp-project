@@ -14,6 +14,7 @@ import { BusinessEntityLink } from '@/@types/openapi-internal/BusinessEntityLink
 import { UserType } from '@/@types/user/user-type'
 import { BusinessWithRulesResult } from '@/@types/openapi-internal/BusinessWithRulesResult'
 import { UserWithRulesResult } from '@/@types/openapi-internal/UserWithRulesResult'
+import { mergeObjects } from '@/utils/object'
 
 export class UserManagementService {
   tenantId: string
@@ -174,10 +175,10 @@ export class UserManagementService {
         `User ${userEvent.userId} not found. Please create the user ${userEvent.userId}`
       )
     }
-    const updatedConsumerUser: User = _.merge(
+    const updatedConsumerUser: User = mergeObjects(
       user,
       userEvent.updatedConsumerUserAttributes || {}
-    )
+    ) as User
     const updatedConsumerUserResult = {
       ...updatedConsumerUser,
       ...(await this.rulesEngineService.verifyUser(updatedConsumerUser)),

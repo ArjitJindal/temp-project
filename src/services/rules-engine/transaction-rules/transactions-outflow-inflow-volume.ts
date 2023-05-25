@@ -25,6 +25,7 @@ import { TransactionAmountDetails } from '@/@types/openapi-internal/TransactionA
 import { getTargetCurrencyAmount } from '@/utils/currency-utils'
 import { CurrencyCode } from '@/@types/openapi-internal/CurrencyCode'
 import { PaymentDetails } from '@/@types/tranasction/payment-type'
+import { mergeObjects } from '@/utils/object'
 
 export type TransactionsOutflowInflowVolumeRuleParameters = {
   timeWindow: TimeWindow
@@ -467,7 +468,7 @@ export default class TransactionsOutflowInflowVolumeRule extends TransactionAggr
     sendingTransactions: AuxiliaryIndexTransaction[],
     receivingTransactions: AuxiliaryIndexTransaction[]
   ) {
-    return _.merge(
+    return mergeObjects(
       await groupTransactionsByHour<AggregationData>(
         sendingTransactions,
         async (group) => {

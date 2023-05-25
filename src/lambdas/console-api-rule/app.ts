@@ -17,7 +17,7 @@ import {
   USER_FILTERS,
 } from '@/services/rules-engine/filters'
 import { RuleAuditLogService } from '@/services/rules-engine/rules-audit-log-service'
-import { replaceMagicKeyword } from '@/utils/object'
+import { mergeObjects, replaceMagicKeyword } from '@/utils/object'
 import { TenantRepository } from '@/services/tenants/repositories/tenant-repository'
 
 import { DEFAULT_CURRENCY_KEYWORD } from '@/services/rules-engine/transaction-rules/library'
@@ -64,7 +64,7 @@ export const ruleHandler = lambdaApi()(
       })
       const tenantSettings = await tenantRepository.getTenantSettings()
       const defaultCurrency = tenantSettings?.defaultValues?.currency
-      const mergedFilters = _.merge({}, ...filters)
+      const mergedFilters = mergeObjects({}, ...filters)
 
       return {
         schema: {
@@ -75,7 +75,7 @@ export const ruleHandler = lambdaApi()(
           },
         },
         defaultValues: replaceMagicKeyword(
-          _.merge({}, ...defaultValues),
+          mergeObjects({}, ...defaultValues),
           DEFAULT_CURRENCY_KEYWORD,
           defaultCurrency ?? 'USD'
         ),

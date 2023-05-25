@@ -25,6 +25,7 @@ import { TransactionAggregationRule } from './aggregation-rule'
 import { TransactionAmountDetails } from '@/@types/openapi-public/TransactionAmountDetails'
 import { CurrencyCode } from '@/@types/openapi-public/CurrencyCode'
 import { getTargetCurrencyAmount } from '@/utils/currency-utils'
+import { mergeObjects } from '@/utils/object'
 
 type AggregationData = {
   sendingCount?: number
@@ -301,7 +302,7 @@ export default class TransactionsVolumeRule extends TransactionAggregationRule<
     sendingTransactions: AuxiliaryIndexTransaction[],
     receivingTransactions: AuxiliaryIndexTransaction[]
   ) {
-    return _.merge(
+    return mergeObjects(
       await groupTransactionsByHour<AggregationData>(
         sendingTransactions,
         async (group) => ({

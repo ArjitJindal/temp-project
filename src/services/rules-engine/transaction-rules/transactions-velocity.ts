@@ -20,6 +20,7 @@ import { getTimestampRange } from '../utils/time-utils'
 import { getReceiverKeyId, getSenderKeyId } from '../utils'
 import { TransactionAggregationRule } from './aggregation-rule'
 import { CardDetails } from '@/@types/openapi-public/CardDetails'
+import { mergeObjects } from '@/utils/object'
 
 type AggregationData = {
   sendingCount?: number
@@ -207,7 +208,7 @@ export default class TransactionsVelocityRule extends TransactionAggregationRule
     sendingTransactions: AuxiliaryIndexTransaction[],
     receivingTransactions: AuxiliaryIndexTransaction[]
   ) {
-    return _.merge(
+    return mergeObjects(
       await groupTransactionsByHour<AggregationData>(
         sendingTransactions,
         async (group) => ({

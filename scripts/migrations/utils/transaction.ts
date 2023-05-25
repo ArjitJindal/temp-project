@@ -4,6 +4,7 @@ import {
   getMigrationLastCompletedTimestamp,
   updateMigrationLastCompletedTimestamp,
 } from './migration-progress'
+import { mergeObjects } from '@/utils/object'
 import { InternalTransaction } from '@/@types/openapi-internal/InternalTransaction'
 import { Transaction } from '@/@types/openapi-public/Transaction'
 import { getDynamoDbClient } from '@/utils/dynamodb'
@@ -115,13 +116,13 @@ export async function replayTransactionsAndEvents(
       hitRules: HitRulesDetails[]
     } = { executedRules: [], hitRules: [] }
     for (const transactionEvent of transactionEvents) {
-      currentTransaction = _.merge(
+      currentTransaction = mergeObjects(
         {
           ...currentTransaction,
           transactionState: transactionEvent.transactionState,
         },
         transactionEvent.updatedTransactionAttributes || {}
-      )
+      ) as Transaction
       const ruleResults = (
         await Promise.all(
           ruleInstances.map((ruleInstance) => {
