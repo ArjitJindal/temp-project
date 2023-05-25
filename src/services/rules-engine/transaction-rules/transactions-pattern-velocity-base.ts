@@ -180,11 +180,11 @@ export default abstract class TransactionsPatternVelocityBaseRule<
     receivingTransactions: AuxiliaryIndexTransaction[]
   ) {
     return _.merge(
-      groupTransactionsByHour<AggregationData>(
+      await groupTransactionsByHour<AggregationData>(
         sendingTransactions,
         async (group) => ({ sendingCount: group.length })
       ),
-      groupTransactionsByHour<AggregationData>(
+      await groupTransactionsByHour<AggregationData>(
         receivingTransactions,
         async (group) => ({ receivingCount: group.length })
       )
@@ -244,6 +244,6 @@ export default abstract class TransactionsPatternVelocityBaseRule<
   }
 
   override getRuleAggregationVersion(): number {
-    return 1
+    return 2
   }
 }

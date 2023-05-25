@@ -208,13 +208,13 @@ export default class TransactionsVelocityRule extends TransactionAggregationRule
     receivingTransactions: AuxiliaryIndexTransaction[]
   ) {
     return _.merge(
-      groupTransactionsByHour<AggregationData>(
+      await groupTransactionsByHour<AggregationData>(
         sendingTransactions,
         async (group) => ({
           sendingCount: group.length,
         })
       ),
-      groupTransactionsByHour<AggregationData>(
+      await groupTransactionsByHour<AggregationData>(
         receivingTransactions,
         async (group) => ({
           receivingCount: group.length,
@@ -250,7 +250,7 @@ export default class TransactionsVelocityRule extends TransactionAggregationRule
     return this.parameters.timeWindow
   }
   override getRuleAggregationVersion(): number {
-    return 1
+    return 2
   }
 
   override getUserKeyId(direction: 'origin' | 'destination') {

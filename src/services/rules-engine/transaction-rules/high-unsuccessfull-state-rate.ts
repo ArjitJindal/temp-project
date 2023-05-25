@@ -304,25 +304,25 @@ export default class HighUnsuccessfullStateRateRule extends TransactionAggregati
     receivingTransactionsFiltered: AuxiliaryIndexTransaction[]
   ) {
     return _.merge(
-      groupTransactionsByHour<AggregationData>(
+      await groupTransactionsByHour<AggregationData>(
         sendingTransactions,
         async (group) => ({
           allSendingCount: group.length,
         })
       ),
-      groupTransactionsByHour<AggregationData>(
+      await groupTransactionsByHour<AggregationData>(
         receivingTransactions,
         async (group) => ({
           allReceivingCount: group.length,
         })
       ),
-      groupTransactionsByHour<AggregationData>(
+      await groupTransactionsByHour<AggregationData>(
         sendingTransactionsFiltered,
         async (group) => ({
           filteredSendingCount: group.length,
         })
       ),
-      groupTransactionsByHour<AggregationData>(
+      await groupTransactionsByHour<AggregationData>(
         receivingTransactionsFiltered,
         async (group) => ({
           filteredReceivingCount: group.length,
@@ -365,6 +365,6 @@ export default class HighUnsuccessfullStateRateRule extends TransactionAggregati
   }
 
   override getRuleAggregationVersion(): number {
-    return 1
+    return 2
   }
 }

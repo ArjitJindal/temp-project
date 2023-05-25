@@ -327,20 +327,23 @@ export class AggregationRepository {
     },
     version: string
   ) {
-    const writeRequests = Object.entries(aggregationData).map((entry) => ({
-      PutRequest: {
-        Item: {
-          ...DynamoDbKeys.RULE_USER_TIME_AGGREGATION(
-            this.tenantId,
-            userKeyId,
-            ruleInstanceId,
-            version,
-            entry[0]
-          ),
-          ...entry[1],
+    const writeRequests = Object.entries(aggregationData).map((entry) => {
+      const keys = DynamoDbKeys.RULE_USER_TIME_AGGREGATION(
+        this.tenantId,
+        userKeyId,
+        ruleInstanceId,
+        version,
+        entry[0]
+      )
+      return {
+        PutRequest: {
+          Item: {
+            ...keys,
+            ...entry[1],
+          },
         },
-      },
-    }))
+      }
+    })
     await batchWrite(
       this.dynamoDb,
       writeRequests,

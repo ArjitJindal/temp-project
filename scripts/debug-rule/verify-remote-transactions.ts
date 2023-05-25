@@ -162,8 +162,12 @@ async function main() {
 
   const results = []
   for (let i = 0; i < transactionIds.length; i += 1) {
-    results.push(await verifyTransactionLocally(transactionIds[i]))
-    console.info(`${i + 1}. Verified transaction ${transactionIds[i]}`)
+    const result = await verifyTransactionLocally(transactionIds[i])
+    const hit = result?.hitRules?.length > 0
+    results.push(result)
+    console.info(
+      `${i + 1}. Verified transaction ${transactionIds[i]} (Hit: ${hit})`
+    )
   }
   const outputPath = path.join(
     __dirname,

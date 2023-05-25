@@ -429,13 +429,11 @@ export default abstract class TransactionAverageExceededBaseRule<
       )
 
     // Update aggregations
-    await this.refreshRuleAggregations(
-      direction,
-      await this.getTimeAggregatedResult(
-        sendingTransactions,
-        receivingTransactions
-      )
+    const aggregationResult = await this.getTimeAggregatedResult(
+      sendingTransactions,
+      receivingTransactions
     )
+    await this.refreshRuleAggregations(direction, aggregationResult)
 
     return {
       period1: {
@@ -568,7 +566,7 @@ export default abstract class TransactionAverageExceededBaseRule<
     receivingTransactions: AuxiliaryIndexTransaction[]
   ) {
     return _.merge(
-      groupTransactionsByHour<AggregationData>(
+      await groupTransactionsByHour<AggregationData>(
         sendingTransactions,
         async (group) => ({
           sendingCount: group.length,
@@ -583,7 +581,7 @@ export default abstract class TransactionAverageExceededBaseRule<
               : undefined,
         })
       ),
-      groupTransactionsByHour<AggregationData>(
+      await groupTransactionsByHour<AggregationData>(
         receivingTransactions,
         async (group) => ({
           receivingCount: group.length,
@@ -602,6 +600,6 @@ export default abstract class TransactionAverageExceededBaseRule<
   }
 
   override getRuleAggregationVersion(): number {
-    return 1
+    return 2
   }
 }

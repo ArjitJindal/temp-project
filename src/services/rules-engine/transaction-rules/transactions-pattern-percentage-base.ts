@@ -180,13 +180,13 @@ export default abstract class TransactionsPatternPercentageBaseRule<
     matchedTransactions: AuxiliaryIndexTransaction[]
   ) {
     return _.merge(
-      groupTransactionsByHour<AggregationData>(
+      await groupTransactionsByHour<AggregationData>(
         allTransactions,
         async (group) => ({
           all: group.length,
         })
       ),
-      groupTransactionsByHour<AggregationData>(
+      await groupTransactionsByHour<AggregationData>(
         matchedTransactions,
         async (group) => ({
           match: group.length,
@@ -203,6 +203,6 @@ export default abstract class TransactionsPatternPercentageBaseRule<
   protected abstract getNeededTransactionFields(): Array<keyof Transaction>
 
   override getRuleAggregationVersion(): number {
-    return 1
+    return 2
   }
 }

@@ -94,7 +94,7 @@ export default class TransactionsOutflowInflowVolumeRule extends TransactionAggr
   }
 
   protected override getRuleAggregationVersion(): number {
-    return 1
+    return 2
   }
 
   protected override async getUpdatedTargetAggregation(
@@ -468,7 +468,7 @@ export default class TransactionsOutflowInflowVolumeRule extends TransactionAggr
     receivingTransactions: AuxiliaryIndexTransaction[]
   ) {
     return _.merge(
-      groupTransactionsByHour<AggregationData>(
+      await groupTransactionsByHour<AggregationData>(
         sendingTransactions,
         async (group) => {
           const outflowAmounts = sendingTransactions
@@ -491,7 +491,7 @@ export default class TransactionsOutflowInflowVolumeRule extends TransactionAggr
           }
         }
       ),
-      groupTransactionsByHour<AggregationData>(
+      await groupTransactionsByHour<AggregationData>(
         receivingTransactions,
         async (group) => {
           const inflowAmounts = receivingTransactions
