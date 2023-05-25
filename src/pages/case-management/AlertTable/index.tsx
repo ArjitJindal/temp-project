@@ -30,6 +30,7 @@ import {
   ASSIGNMENTS,
   CASE_STATUS,
   DATE,
+  DATE_TIME,
   RULE_ACTION,
   RULE_NATURE,
 } from '@/components/library/Table/standardDataTypes';
@@ -182,6 +183,14 @@ const mergedColumns = (
           );
         },
       },
+    }),
+
+    helper.simple<'lastStatusChange.timestamp'>({
+      title: 'Last update time',
+      key: 'lastStatusChange.timestamp',
+      type: DATE_TIME,
+      filtering: true,
+      sorting: true,
     }),
   ]);
 };
