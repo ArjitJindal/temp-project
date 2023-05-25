@@ -1,10 +1,12 @@
 import { JSONSchemaType } from 'ajv'
 import { mergeRuleSchemas } from '../utils/rule-schema-utils'
-import { PERCENT_SCHEMA } from '../utils/rule-parameter-schemas'
+import {
+  CURRENCY_SCHEMA,
+  PERCENT_SCHEMA,
+} from '../utils/rule-parameter-schemas'
 import TransactionAverageExceededBaseRule, {
   TransactionsAverageExceededParameters,
 } from './transactions-average-exceeded-base'
-import { CURRENCY_SCHEMA } from '@/services/rules-engine/utils/currencies-utils'
 import { CurrencyCode } from '@/@types/openapi-public/CurrencyCode'
 
 type TransactionsAverageAmountExceededPartialParameters = {
