@@ -128,7 +128,7 @@ export default function TransactionsTable(props: Props) {
     alert,
     isModalVisible,
     setIsModalVisible,
-    escalatedTransactions,
+    escalatedTransactions = [],
   } = props;
 
   const columns: TableColumn<InternalTransaction>[] = useMemo(() => {
@@ -345,7 +345,7 @@ export default function TransactionsTable(props: Props) {
               (alert?.alertStatus === 'OPEN' ||
                 alert?.alertStatus === 'REOPENED' ||
                 alert?.alertStatus === 'ESCALATED') &&
-              escalatedTransactions?.indexOf(row.id) === -1
+              !escalatedTransactions?.includes(row.id)
       }
       onSelect={onSelect}
       params={params}
