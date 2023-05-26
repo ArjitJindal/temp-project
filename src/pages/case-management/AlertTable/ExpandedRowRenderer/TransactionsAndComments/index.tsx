@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import React, { useState } from 'react';
 import { TableAlertItem } from '../../types';
 import Comments from './Comments';
 import { useCursorQuery, useQuery } from '@/utils/queries/hooks';
@@ -16,12 +16,13 @@ import { FIXED_API_PARAMS } from '@/pages/case-management-item/CaseDetails/Insig
 
 interface Props {
   alert: TableAlertItem;
+  selectedTransactionIds: string[];
   onTransactionSelect: (alertId: string, transactionIds: string[]) => void;
   escalatedTransactionIds?: string[];
 }
 
 export default function TransactionsAndComments(props: Props) {
-  const { alert, onTransactionSelect, escalatedTransactionIds } = props;
+  const { selectedTransactionIds, alert, onTransactionSelect, escalatedTransactionIds } = props;
   const [isModalVisible, setIsModalVisible] = useState(false);
   const alertId = alert.alertId;
 
@@ -78,6 +79,7 @@ export default function TransactionsAndComments(props: Props) {
             <>
               <TransactionsTable
                 escalatedTransactions={escalatedTransactionIds}
+                selectedIds={selectedTransactionIds}
                 onSelect={(transactionIds) => {
                   onTransactionSelect(alertId as string, transactionIds);
                 }}

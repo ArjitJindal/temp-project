@@ -103,6 +103,7 @@ export function useTanstackTable<
   onChangeParams: (newParams: AllParams<Params>) => void;
   onEdit: ((rowKey: string, newValue: Item) => void) | undefined;
   selectedIds?: string[];
+  partiallySelectedIds?: string[];
   onSelect?: (ids: string[]) => void;
   isRowSelectionEnabled: boolean | ((row: Row<TableRow<Item>>) => boolean);
   isExpandable: boolean;
@@ -290,7 +291,7 @@ export function useTanstackTable<
 
   useEffect(() => {
     setRowSelection((prev) => {
-      return selectedIds?.reduce((r, id) => ({ ...r, [id]: true }), prev) || prev;
+      return selectedIds?.reduce((r, id) => ({ ...r, [id]: true }), {}) ?? prev;
     });
   }, [setRowSelection, selectedIds]);
 

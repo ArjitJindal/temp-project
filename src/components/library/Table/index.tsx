@@ -26,6 +26,7 @@ import { useTanstackTable } from './internal/helpers';
 import ScrollContainer from './ScrollContainer';
 import { ToolsOptions } from './Header/Tools';
 import { ExternalStateContext } from './internal/externalState';
+import { AdditionalContext } from './internal/partialySelectedRows';
 import Pagination from '@/components/library/Pagination';
 import { getPageCount, PaginationParams } from '@/utils/queries/hooks';
 import { AsyncResource, getOr, isFailed, isLoading, success } from '@/utils/asyncResource';
@@ -66,6 +67,7 @@ export interface Props<Item extends object, Params extends object = CommonParams
   onReload?: () => void;
   paginationBorder?: boolean;
   selectedIds?: string[];
+  partiallySelectedIds?: string[];
   externalState?: unknown;
 }
 
@@ -87,6 +89,7 @@ function Table<Item extends object, Params extends object = CommonParams>(
     pagination = false,
     selection = false,
     selectedIds,
+    partiallySelectedIds,
     fitHeight = false,
     hideFilters = false,
     disableSorting = false,
@@ -130,6 +133,7 @@ function Table<Item extends object, Params extends object = CommonParams>(
     params: params,
     onChangeParams: handleChangeParams,
     selectedIds,
+    partiallySelectedIds,
     onSelect,
     onEdit,
     isRowSelectionEnabled: selection || selectionActions.length > 0,
@@ -162,6 +166,9 @@ function Table<Item extends object, Params extends object = CommonParams>(
       },
       isAllExpanded: () => {
         return table.getIsAllRowsExpanded();
+      },
+      toggleSelected: (value?: boolean) => {
+        table.toggleAllRowsSelected(value);
       },
     }),
     [handleReload, table],
@@ -493,17 +500,19 @@ function getSizingProps<Item>(column: TanTable.Column<Item>) {
 export default function <Item extends object, Params extends object = CommonParams>(
   props: Props<Item, Params>,
 ) {
-  const { tableId, extraFilters, columns, externalState = null } = props;
+  const { tableId, extraFilters, columns, partiallySelectedIds, externalState = null } = props;
 
   return (
     <ExternalStateContext.Provider value={{ value: externalState }}>
-      <PersistedSettingsProvider
-        tableId={tableId ?? null}
-        columns={columns}
-        extraFilters={extraFilters}
-      >
-        <Table {...props} />
-      </PersistedSettingsProvider>
+      <AdditionalContext.Provider value={{ partiallySelectedIds }}>
+        <PersistedSettingsProvider
+          tableId={tableId ?? null}
+          columns={columns}
+          extraFilters={extraFilters}
+        >
+          <Table {...props} />
+        </PersistedSettingsProvider>
+      </AdditionalContext.Provider>
     </ExternalStateContext.Provider>
   );
 }

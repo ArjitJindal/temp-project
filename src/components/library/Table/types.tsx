@@ -283,4 +283,5 @@ export type TableRefType = {
   reload: () => void;
   isAllExpanded: () => boolean;
   toggleExpanded: (value?: boolean) => void;
+  toggleSelected: (value?: boolean) => void;
 };

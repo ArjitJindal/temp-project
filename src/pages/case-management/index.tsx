@@ -96,6 +96,7 @@ export default function CaseManagementPage() {
         {isAlerts ? (
           <AlertTable
             hideAlertStatusFilters={true}
+            escalatedTransactionIds={[]}
             params={{
               ...params,
               assignedTo: params.showCases === 'MY_ALERTS' ? [user.userId] : undefined,

@@ -18,6 +18,7 @@ import {
   SimpleColumn,
   TableColumn,
   TableData,
+  TableRefType,
 } from '@/components/library/Table/types';
 import { makeUrl } from '@/utils/routing';
 import { getUserLink } from '@/utils/api/users';
@@ -78,10 +79,12 @@ export interface TransactionsTableParams extends CommonParams {
 }
 
 type Props = {
+  tableRef?: React.Ref<TableRefType>;
   extraFilters?: ExtraFilter<TransactionsTableParams>[];
   queryResult: QueryResult<TableData<InternalTransaction>>;
   params?: TransactionsTableParams;
   onChangeParams?: (newState: AllParams<TransactionsTableParams>) => void;
+  selectedIds?: string[];
   onSelect?: (ids: string[]) => void;
   hideSearchForm?: boolean;
   disableSorting?: boolean;
@@ -116,11 +119,13 @@ export default function TransactionsTable(props: Props) {
   const sarDemoEnabled = useFeatureEnabled('SAR_DEMO');
 
   const {
+    tableRef,
     queryResult,
     params,
     hideSearchForm,
     disableSorting,
     extraFilters,
+    selectedIds,
     onSelect,
     onChangeParams,
     fitHeight,
@@ -337,6 +342,7 @@ export default function TransactionsTable(props: Props) {
   ];
   return (
     <QueryResultsTable<InternalTransaction, TransactionsTableParams>
+      innerRef={tableRef}
       tableId={'transactions-list'}
       selection={
         !escalationEnabled && !sarDemoEnabled
@@ -347,6 +353,7 @@ export default function TransactionsTable(props: Props) {
                 alert?.alertStatus === 'ESCALATED') &&
               !escalatedTransactions?.includes(row.id)
       }
+      selectedIds={selectedIds}
       onSelect={onSelect}
       params={params}
       onChangeParams={onChangeParams}

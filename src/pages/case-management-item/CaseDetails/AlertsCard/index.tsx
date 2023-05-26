@@ -29,7 +29,7 @@ export default function AlertsCard(props: Props) {
           params={params}
           onChangeParams={setParams}
           isEmbedded={true}
-          escalatedTransactionIds={caseItem.caseHierarchyDetails?.childTransactionIds}
+          escalatedTransactionIds={caseItem.caseHierarchyDetails?.childTransactionIds ?? []}
         />
       </Card.Section>
     </Card.Root>

@@ -392,7 +392,12 @@ export default function AlertTable(props: Props) {
         queryResults={queryResults}
         params={params}
         onChangeParams={onChangeParams}
-        selectedIds={selectedAlerts}
+        selectedIds={[
+          ...selectedAlerts,
+          ...Object.entries(selectedTxns)
+            .filter(([_, txns]) => txns.length > 0)
+            .map(([key]) => key),
+        ]}
         extraFilters={extraFilters}
         pagination={isEmbedded ? 'HIDE_FOR_ONE_PAGE' : true}
         selectionActions={[
@@ -400,41 +405,43 @@ export default function AlertTable(props: Props) {
           ({ selectedIds }) => <AssignToButton ids={selectedIds} onSelect={handleAssignTo} />,
 
           ({ selectedIds, selectedItems, params }) => {
-            const selectedStatuses = [
+            const selectedAlertStatuses = [
               ...new Set(
                 Object.values(selectedItems).map((item) => {
                   return item.alertStatus === 'CLOSED' ? 'CLOSED' : 'OPEN';
                 }),
               ),
             ];
+            const selectedAlertStatus =
+              selectedAlertStatuses.length === 1 ? selectedAlertStatuses[0] : undefined;
 
-            const statusChangeButtonValue =
-              selectedStatuses.length === 1 ? selectedStatuses[0] : undefined;
+            const selectedCaseIds = [
+              ...new Set(
+                Object.values(selectedItems)
+                  .map(({ caseId }) => caseId)
+                  .filter((x): x is string => typeof x === 'string'),
+              ),
+            ];
+            const selectedCaseId = selectedCaseIds.length === 1 ? selectedCaseIds[0] : undefined;
 
-            const alertClosedBefore = Object.values(selectedItems).some((item) => {
-              return item.statusChanges?.some((statusChange) => {
-                return statusChange?.caseStatus === 'CLOSED';
-              });
-            });
+            const caseId = params.caseId ?? selectedCaseId;
+            const alertStatus = params.alertStatus ?? selectedAlertStatus;
 
             return (
               escalationEnabled &&
-              params.caseId &&
-              params.alertStatus != 'ESCALATED' &&
-              statusChangeButtonValue && (
+              caseId &&
+              alertStatus &&
+              alertStatus != 'ESCALATED' && (
                 <AlertsStatusChangeButton
                   ids={selectedIds}
                   txnIds={selectedTxns}
                   onSaved={reloadTable}
-                  status={params.alertStatus ?? statusChangeButtonValue}
-                  caseId={params.caseId}
+                  status={alertStatus}
+                  caseId={caseId}
                   statusTransitions={{
                     OPEN: { status: 'ESCALATED', actionLabel: 'Escalate' },
                     REOPENED: { status: 'ESCALATED', actionLabel: 'Escalate' },
-                    ESCALATED: {
-                      status: alertClosedBefore ? 'REOPENED' : 'OPEN',
-                      actionLabel: 'Send back',
-                    },
+                    ESCALATED: { status: 'ESCALATED', actionLabel: 'Escalate' },
                     CLOSED: { status: 'ESCALATED', actionLabel: 'Escalate' },
                   }}
                 />
@@ -474,17 +481,18 @@ export default function AlertTable(props: Props) {
         ]}
         renderExpanded={
           expandTransactions
-            ? (record) => (
+            ? (alert) => (
                 <ExpandedRowRenderer
-                  alert={record ?? null}
+                  alert={alert ?? null}
                   escalatedTransactionIds={props.escalatedTransactionIds}
+                  selectedTransactionIds={selectedTxns[alert.alertId ?? ''] ?? []}
                   onTransactionSelect={(alertId, txnIds) => {
-                    setSelectedTxns((prevSelectedTxns) => {
-                      prevSelectedTxns[alertId] = [...txnIds];
-                      return prevSelectedTxns;
-                    });
+                    setSelectedTxns((prevSelectedTxns) => ({
+                      ...prevSelectedTxns,
+                      [alertId]: [...txnIds],
+                    }));
                     if (txnIds.length > 0) {
-                      setSelectedAlerts((prev) => Array.from(new Set([...prev, alertId])));
+                      setSelectedAlerts((prevState) => prevState.filter((x) => x !== alertId));
                     }
                   }}
                 />
@@ -492,6 +500,15 @@ export default function AlertTable(props: Props) {
             : undefined
         }
         fixedExpandedContainer={true}
+        partiallySelectedIds={Object.entries(selectedTxns)
+          .filter(([id, txns]) => !selectedAlerts.includes(id) && txns.length > 0)
+          .map(([id]) => id)}
+        onSelect={(ids) => {
+          setSelectedTxns((prevState) =>
+            ids.reduce((acc, id) => ({ ...acc, [id]: [] }), prevState),
+          );
+          setSelectedAlerts(ids);
+        }}
       />
     </>
   );

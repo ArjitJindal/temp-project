@@ -4,6 +4,7 @@ import { CommonParams, SortingParams, TableRow } from './types';
 import Checkbox from '@/components/library/Checkbox';
 import ExpandIcon from '@/components/library/Table/ExpandIcon';
 import { PaginationParams } from '@/utils/queries/hooks';
+import { AdditionalContext } from '@/components/library/Table/internal/partialySelectedRows';
 
 export const DEFAULT_PAGE_SIZE = 20;
 
@@ -32,24 +33,30 @@ export const SELECT_COLUMN: TanTable.ColumnDef<unknown> = {
   id: SELECT_COLUMN_ID,
   size: 30,
   enableResizing: false,
-  header: ({ table }) => (
-    <Checkbox
-      value={table.getIsSomePageRowsSelected() ? undefined : table.getIsAllPageRowsSelected()}
-      onChange={(newValue) => {
-        table.toggleAllPageRowsSelected(newValue);
-      }}
-      testName="header-table"
-    />
-  ),
+  header: ({ table }) => {
+    return (
+      <Checkbox
+        value={table.getIsSomePageRowsSelected() ? undefined : table.getIsAllPageRowsSelected()}
+        onChange={(newValue) => {
+          table.toggleAllPageRowsSelected(newValue);
+        }}
+        testName="header-table"
+      />
+    );
+  },
   cell: ({ row }) => (
-    <Checkbox
-      value={row.getIsSelected()}
-      isDisabled={!row.getCanSelect()}
-      onChange={(newValue) => {
-        row.toggleSelected(newValue);
-      }}
-      testName="row-table"
-    />
+    <AdditionalContext.Consumer>
+      {({ partiallySelectedIds }) => (
+        <Checkbox
+          value={partiallySelectedIds?.includes(row.id) ? undefined : row.getIsSelected()}
+          isDisabled={!row.getCanSelect()}
+          onChange={(newValue) => {
+            row.toggleSelected(newValue);
+          }}
+          testName="row-table"
+        />
+      )}
+    </AdditionalContext.Consumer>
   ),
 };
 
