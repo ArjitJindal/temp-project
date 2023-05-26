@@ -73,31 +73,37 @@ export class SanctionsCounterPartyRule extends TransactionRule<SanctionsCounterP
     }
 
     if (!this.senderUser && this.transaction.originPaymentDetails) {
-      const senderUserHitRulesResult = await this.checkCounterPartyTranasction(
-        this.transaction.originPaymentDetails,
-        'ORIGIN'
+      const sanctionsDeatils = await this.checkCounterPartyTranasction(
+        this.transaction.originPaymentDetails
       )
-
-      hitRules.push(...senderUserHitRulesResult)
+      if (sanctionsDeatils.length > 0) {
+        hitRules.push({
+          direction: 'DESTINATION',
+          vars: super.getTransactionVars('destination'),
+          sanctionsDetails: _.uniqBy(sanctionsDeatils, (detail) => detail.name),
+        })
+      }
     }
 
     if (!this.receiverUser && this.transaction.destinationPaymentDetails) {
-      const receiverUserHitRulesResult =
-        await this.checkCounterPartyTranasction(
-          this.transaction.destinationPaymentDetails,
-          'DESTINATION'
-        )
-
-      hitRules.push(...receiverUserHitRulesResult)
+      const sanctionsDeatils = await this.checkCounterPartyTranasction(
+        this.transaction.destinationPaymentDetails
+      )
+      if (sanctionsDeatils.length > 0) {
+        hitRules.push({
+          direction: 'ORIGIN',
+          vars: super.getTransactionVars('origin'),
+          sanctionsDetails: _.uniqBy(sanctionsDeatils, (detail) => detail.name),
+        })
+      }
     }
 
     return hitRules
   }
 
   private async checkCounterPartyTranasction(
-    paymentDetails: PaymentDetails,
-    type: 'ORIGIN' | 'DESTINATION'
-  ): Promise<RuleHitResult> {
+    paymentDetails: PaymentDetails
+  ): Promise<SanctionsDetails[]> {
     const namesToSearch: Array<string | undefined> = []
 
     let bankInfo: BankInfo | undefined = undefined
@@ -163,23 +169,7 @@ export class SanctionsCounterPartyRule extends TransactionRule<SanctionsCounterP
       })
     )
 
-    const hitResult: RuleHitResult = []
-
     const filteredData = data?.filter(Boolean) as SanctionsDetails[]
-
-    if (filteredData?.length > 0) {
-      hitResult.push({
-        direction: type,
-        vars: super.getTransactionVars(
-          type === 'ORIGIN' ? 'origin' : 'destination'
-        ),
-        sanctionsDetails: _.uniqBy(
-          filteredData as SanctionsDetails[],
-          (detail) => detail.name
-        ),
-      })
-    }
-
-    return hitResult
+    return filteredData ?? []
   }
 }

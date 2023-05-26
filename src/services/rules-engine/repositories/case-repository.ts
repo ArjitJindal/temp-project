@@ -96,8 +96,7 @@ export class CaseRepository {
               { upsert: true, returnDocument: 'after' }
             )
           ).value
-          caseEntity._id = caseCount?.count
-          caseEntity.caseId = `C-${caseEntity._id}`
+          caseEntity.caseId = `C-${caseCount?.count}`
         }
         if (caseEntity.alerts) {
           caseEntity.alerts = await Promise.all(
