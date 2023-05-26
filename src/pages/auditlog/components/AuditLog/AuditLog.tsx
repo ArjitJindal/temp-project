@@ -18,6 +18,7 @@ import { DATE } from '@/components/library/Table/standardDataTypes';
 import EntityFilterButton from '@/pages/auditlog/components/EntityFilterButton';
 import ActionTakenByFilterButton from '@/pages/auditlog/components/ActionTakeByFilterButton';
 import { PageWrapperContentContainer } from '@/components/PageWrapper';
+import { isSuperAdmin, useAuth0User } from '@/utils/user-utils';
 
 export default function AuditLogTable() {
   const api = useApi();
@@ -27,6 +28,7 @@ export default function AuditLogTable() {
     ...DEFAULT_PARAMS_STATE,
     createdTimestamp: [dayjs().subtract(1, 'day'), dayjs()],
   });
+  const user = useAuth0User();
 
   const queryResults = usePaginatedQuery<AuditLog>(
     AUDIT_LOGS_LIST(params),
@@ -46,6 +48,7 @@ export default function AuditLogTable() {
             sortOrder: sortOrder ?? undefined,
             filterTypes,
             filterActionTakenBy,
+            includeRootUserRecords: isSuperAdmin(user),
           }),
         'Get Audit Logs',
       );
