@@ -6,10 +6,6 @@ import { AUDITLOG_COLLECTION, paginatePipeline } from '@/utils/mongoDBUtils'
 import { DefaultApiGetAuditlogRequest } from '@/@types/openapi-internal/RequestParameters'
 import { COUNT_QUERY_LIMIT } from '@/utils/pagination'
 
-type QueryParams = DefaultApiGetAuditlogRequest & {
-  includeRootUserRecords?: boolean
-}
-
 export class AuditLogRepository {
   tenantId: string
   mongoDb: MongoClient
@@ -45,7 +41,7 @@ export class AuditLogRepository {
     return auditLog ? _.omit(auditLog, '_id') : null
   }
 
-  private getAuditLogMongoQuery(params: QueryParams): {
+  private getAuditLogMongoQuery(params: DefaultApiGetAuditlogRequest): {
     filter: Filter<AuditLog>
     requiresTransactions: boolean
   } {
@@ -83,7 +79,9 @@ export class AuditLogRepository {
     }
   }
 
-  private getAuditLogMongoPipeline(params: QueryParams): Document[] {
+  private getAuditLogMongoPipeline(
+    params: DefaultApiGetAuditlogRequest
+  ): Document[] {
     const sortField =
       params?.sortField !== undefined ? params?.sortField : 'timestamp'
     const sortOrder = params?.sortOrder === 'ascend' ? 1 : -1
@@ -96,7 +94,9 @@ export class AuditLogRepository {
     return pipeline
   }
 
-  public getAuditLogCursor(params: QueryParams): AggregationCursor<AuditLog> {
+  public getAuditLogCursor(
+    params: DefaultApiGetAuditlogRequest
+  ): AggregationCursor<AuditLog> {
     const pipeline = this.getAuditLogMongoPipeline(params)
     pipeline.push(...paginatePipeline(params))
     return this.getDenormalizedAuditLog(pipeline)
@@ -110,7 +110,9 @@ export class AuditLogRepository {
     return collection.aggregate<AuditLog>(pipeline)
   }
 
-  public async getAuditLogCount(params: QueryParams): Promise<number> {
+  public async getAuditLogCount(
+    params: DefaultApiGetAuditlogRequest
+  ): Promise<number> {
     const db = this.mongoDb.db()
     const collection = db.collection<AuditLog>(
       AUDITLOG_COLLECTION(this.tenantId)
@@ -123,7 +125,7 @@ export class AuditLogRepository {
   }
 
   public async getAllAuditLogs(
-    params: QueryParams
+    params: DefaultApiGetAuditlogRequest
   ): Promise<{ total: number; data: AuditLog[] }> {
     const cursor = this.getAuditLogCursor(params)
     const total = this.getAuditLogCount(params)

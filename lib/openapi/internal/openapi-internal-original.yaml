@@ -2186,6 +2186,10 @@ paths:
               type: string
           in: query
           name: filterActionTakenBy
+        - schema:
+            type: boolean
+          in: query
+          name: includeRootUserRecords
       description: ''
   /pulse/risk-parameter:
     parameters: []
