@@ -11,6 +11,7 @@ import {
   getWebhookSecrets,
 } from '../../services/webhook/utils'
 import { WebhookDeliveryRepository } from '../../services/webhook/repositories/webhook-delivery-repository'
+import { WebhookAuditLogService } from './services/webhook-audit-log-service'
 import { lambdaApi } from '@/core/middlewares/lambda-api-middlewares'
 import { JWTAuthorizerResult } from '@/@types/jwt'
 import { getMongoDbClient } from '@/utils/mongoDBUtils'
@@ -47,6 +48,12 @@ export const webhookConfigurationHandler = lambdaApi()(
         ...newWebhook,
         secret,
       }
+
+      const webhookAuditLogService = new WebhookAuditLogService(tenantId)
+      await webhookAuditLogService.handleAuditLogForWebhookCreated(
+        newWebhook._id as string
+      )
+
       return response
     } else if (
       event.httpMethod === 'POST' &&
@@ -60,6 +67,17 @@ export const webhookConfigurationHandler = lambdaApi()(
       if (existingWebhook == null) {
         throw new NotFound(`webhook ${webhookId} is not found`)
       }
+      const webhookAuditLogService = new WebhookAuditLogService(tenantId)
+      await webhookAuditLogService.handleAuditLogForWebhookUpdated(
+        webhookId as string,
+        existingWebhook,
+        {
+          ...existingWebhook,
+          webhookUrl: updatedWebhook.webhookUrl ?? existingWebhook.webhookUrl,
+          events: updatedWebhook.events ?? existingWebhook.events,
+          enabled: updatedWebhook.enabled ?? existingWebhook.enabled,
+        }
+      )
       return webhookRepository.saveWebhook({
         ...existingWebhook,
         webhookUrl: updatedWebhook.webhookUrl ?? existingWebhook.webhookUrl,
@@ -73,6 +91,10 @@ export const webhookConfigurationHandler = lambdaApi()(
     ) {
       await webhookRepository.deleteWebhook(event.pathParameters.webhookId)
       await deleteWebhookSecrets(tenantId, event.pathParameters.webhookId)
+      const webhookAuditLogService = new WebhookAuditLogService(tenantId)
+      await webhookAuditLogService.handleAuditLogForWebhookDeleted(
+        event.pathParameters.webhookId as string
+      )
       return 'OK'
     } else if (
       event.httpMethod === 'GET' &&
