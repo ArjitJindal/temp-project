@@ -3,6 +3,7 @@ import React, { useEffect, useState } from 'react';
 import s from './style.module.less';
 import { AuditLogType } from '@/apis';
 import Button from '@/components/library/Button';
+import { AUDIT_LOG_TYPES } from '@/apis/models-custom/AuditLogType';
 
 interface Props {
   initialState: AuditLogType[] | [];
@@ -12,8 +13,6 @@ interface Props {
 
 export default function PopupContent(props: Props) {
   const { initialState, onReset, onConfirm } = props;
-
-  const keys: AuditLogType[] = ['RULE', 'ACCOUNT', 'USER', 'CASE', 'ALERT'];
 
   const [state, setState] = useState<AuditLogType[]>(initialState);
 
@@ -29,7 +28,7 @@ export default function PopupContent(props: Props) {
       }}
     >
       <div className={s.root}>
-        {keys.map((key) => (
+        {AUDIT_LOG_TYPES.map((key) => (
           <Checkbox
             key={key}
             onChange={(e) => {
