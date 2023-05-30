@@ -10,10 +10,11 @@ interface ExtraProps {
   alwaysShowCopy?: boolean;
   to?: string;
   children?: string;
+  testName?: string;
 }
 
 export default function Id(props: ButtonProps & ExtraProps) {
-  const { alwaysShowCopy, to, children } = props;
+  const { alwaysShowCopy, to, children, testName } = props;
 
   const handleClickCopy = (e: React.MouseEvent<unknown>) => {
     e.preventDefault();
@@ -31,7 +32,7 @@ export default function Id(props: ButtonProps & ExtraProps) {
 
   if (to != null) {
     return (
-      <Link className={style.root} to={to} title={children}>
+      <Link className={style.root} to={to} title={children} data-cy={testName}>
         {children}
         {alwaysShowCopy && <FileCopyLineIcon className={style.icon} onClick={handleClickCopy} />}
       </Link>
@@ -40,7 +41,13 @@ export default function Id(props: ButtonProps & ExtraProps) {
 
   if (children != null) {
     return (
-      <a className={style.root} href="#" title={children} onClick={handleClickCopy}>
+      <a
+        className={style.root}
+        href="#"
+        title={children}
+        onClick={handleClickCopy}
+        data-cy={testName}
+      >
         <div className={style.inner}>
           <span className={style.id}>{children}</span>
           <div>

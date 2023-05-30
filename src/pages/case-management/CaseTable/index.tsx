@@ -85,6 +85,7 @@ export default function CaseTable(props: Props) {
                       caseId: entity.caseId,
                     }),
                   )}
+                  testName="case-id"
                 >
                   {entity.caseId}
                 </Id>
