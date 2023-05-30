@@ -175,7 +175,9 @@ export function getDynamoDbClient(
   const client = DynamoDBDocumentClient.from(rawClient, {
     marshallOptions: { removeUndefinedValues: true },
   })
-  const { retry = false, metrics = true } = { ...options }
+  const { retry = !!process.env.ASSUME_ROLE_ARN, metrics = true } = {
+    ...options,
+  }
 
   const opts: DynamoOption[] = []
   if (retry) {
