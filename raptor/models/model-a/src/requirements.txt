@@ -1,5 +1,4 @@
 category_encoders
 requests
-scikit-learn
 pandas
 numpy

@@ -24,5 +24,3 @@ function addProjectPrefix(config: AppConfig): AppConfig {
 
   return config
 }
-
-console.log(loadConfig('../../config/app-config.json'))

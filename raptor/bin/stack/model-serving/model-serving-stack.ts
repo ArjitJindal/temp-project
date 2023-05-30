@@ -16,6 +16,8 @@ interface ModelProps {
   modelS3Key: string
   modelDockerImage: string
   modelServerWorkers: string
+  entrypoint: string
+  submitDirectory: string
 }
 
 interface VariantConfigProps {
@@ -68,6 +70,8 @@ export class ModelServingStack extends BaseStack {
     const modelList: ModelDetails[] = stackConfig.ModelList
     for (const model of modelList) {
       const modelName = this.createModel({
+        entrypoint: model.Entrypoint,
+        submitDirectory: model.SagemakerSubmitDirectory,
         modelName: model.ModelName,
         modelDockerImage: model.ModelDockerImage,
         modelS3Key: model.ModelS3Key,
@@ -131,6 +135,9 @@ export class ModelServingStack extends BaseStack {
           modelDataUrl: `s3://${props.modelBucketName}/${props.modelS3Key}/model.tar.gz`,
           environment: {
             SAGEMAKER_MODEL_SERVER_WORKERS: props.modelServerWorkers,
+            SAGEMAKER_SUBMIT_DIRECTORY: props.submitDirectory,
+            ENTRYPOINT: props.entrypoint,
+            SAGEMAKER_PROGRAM: props.entrypoint,
           },
         },
       ],

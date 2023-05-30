@@ -1,8 +1,7 @@
-import pickle
-
 import os
 import json
 import logging
+import pandas as pd
 
 import threading
 import utils
@@ -25,7 +24,8 @@ def model_fn(model_dir):
     file_list = os.listdir(model_dir)
     logger.info("model_fn: model_dir list-{}".format(file_list))
 
-    model = pickle.load(open(os.path.join(model_dir, _model_file_name), 'rb'))
+    model = pd.read_pickle(os.path.join(model_dir, _model_file_name))
+    #model = pickle.load(open(os.path.join(model_dir, _model_file_name), 'rb'))
 
 
     return {'model': model }

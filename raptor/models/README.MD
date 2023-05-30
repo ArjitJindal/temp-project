@@ -2,11 +2,11 @@
 
 Don't delete this **_model_** directory.
 
-**_model.tar.gz_** file in this directory will be uploaded by **_ModelArchvingStack_**.
+**_model.tar.gz_** file in this directory will be uploaded by **_ModelArchivingStack_**.
 
 **_model.tar.gz_** file can be created by **_pack_models.sh_** script in **_script_** directory.
 
-The specific path can be set in **_app-config.json_** in **_config_** directory. **\*model.tar.gz** in "ModelLocalPath" will be uploaed into **_ModelS3Key_** in S3.
+The specific path can be set in **_app-config.json_** in **_config_** directory. **\*model.tar.gz** in "ModelLocalPath" will be uploaded into **_ModelS3Key_** in S3.
 
 ```json
 ...

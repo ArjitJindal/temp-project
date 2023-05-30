@@ -18,7 +18,7 @@ logger.addHandler(log_handler)
 _profile = None
 _sm_client = None
 
-_endpoint_name = os.environ.get('SAGEMAKER_ENDPOINT', 'TransactionRiskDemo-TransactionRisk-Endpoint')
+_endpoint_name = os.environ.get('SAGEMAKER_ENDPOINT', 'TransactionRisk-Endpoint')
 
 
 def set_profile(target):

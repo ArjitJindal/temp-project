@@ -41,7 +41,7 @@ export class BaseStack extends Stack {
         .toLowerCase()
         .replace('_', '-'),
       versioned: false,
-      removalPolicy: RemovalPolicy.DESTROY, // for prod, RETAIN is safe, while experimenting, DESTROY is easier
+      removalPolicy: RemovalPolicy.RETAIN,
     })
 
     return s3Bucket

@@ -14,6 +14,8 @@ export interface ModelPathDetails {
 export interface ModelDetails extends ModelPathDetails {
   ModelName: string
   ModelS3Key: string
+  SagemakerSubmitDirectory: string
+  Entrypoint: string
   ModelDockerImage: string
   'ModelDockerImage-Desc'?: string
   VariantName: string

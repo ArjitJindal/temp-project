@@ -2,7 +2,7 @@ import json
 import boto3
 
 profile = 'AWSAdministratorAccess-911899431626'
-_endpoint_name = 'TransactionRiskDemo-TransactionRisk-Endpoint'
+_endpoint_name = 'TransactionRisk-Endpoint'
 
 def set_profile(target):
     global profile
