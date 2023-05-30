@@ -30,15 +30,16 @@ type Props<Item extends object> = {
   onPaginateData: (params: PaginationParams) => Promise<TableData<Item>>;
   columns: TableColumn<Item>[];
   pageSize: number;
+  pagination: boolean;
 };
 
 export default function DownloadButton<T extends object>(props: Props<T>) {
-  const { currentPage, columns, onPaginateData, pageSize } = props;
+  const { currentPage, columns, onPaginateData, pageSize, pagination } = props;
 
   const [pagesMode, setPagesMode] = useState<'ALL' | 'CURRENT'>('ALL');
   const [progress, setProgress] = useState<null | { page: number; totalPages: number }>(null);
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  const handleDownload = async (e: React.FormEvent) => {
     e.preventDefault();
     try {
       const result: CsvRow[] = [];
@@ -95,11 +96,60 @@ export default function DownloadButton<T extends object>(props: Props<T>) {
     }
   };
 
+  const handleNonPaginatedDownload = async (e: React.FormEvent) => {
+    e.preventDefault();
+    try {
+      const result: CsvRow[] = [];
+      const columnsToExport = prepareColumns(columns);
+      result.push(
+        columnsToExport.map((adjustedColumn) =>
+          csvValue(typeof adjustedColumn.title === 'string' ? adjustedColumn.title : '-'),
+        ),
+      );
+
+      const { total, items } = await onPaginateData({ pageSize });
+      const totalItemsCount = total ?? items.length;
+      if (totalItemsCount > MAXIMUM_EXPORT_ITEMS) {
+        message.error(
+          `There is too much items to export (> ${MAXIMUM_EXPORT_ITEMS}). Try to change filters or export only current page.`,
+        );
+        return;
+      }
+      const flatData = flatDataItems<T>(items);
+      for (const row of flatData) {
+        const csvRow = columnsToExport.map((column): CsvValue => {
+          const columnDataType = { ...UNKNOWN, ...column.type };
+          const value = isSimpleColumn(column)
+            ? applyFieldAccessor(row, column.key)
+            : column.value(row);
+          return csvValue(columnDataType.stringify?.(value as any, row) ?? '');
+        });
+        result.push(csvRow);
+      }
+
+      const fileName = `table_data_${new Date().toISOString().replace(/[^\dA-Za-z]/g, '_')}.csv`;
+      message.success(`Data export finished, downloading should start in a moment!`);
+      download(fileName, serialize(result));
+    } catch (e) {
+      message.error(`Unable to export data. ${getErrorMessage(e)}`);
+      console.error(e);
+    } finally {
+      setProgress(null);
+    }
+  };
+
+  if (!pagination) {
+    return (
+      <div className={s.root} onClick={handleNonPaginatedDownload}>
+        <DownloadLineIcon className={s.icon} />
+      </div>
+    );
+  }
   return (
     <Popover
       placement="bottom"
       content={
-        <form onSubmit={handleSubmit}>
+        <form onSubmit={handleDownload}>
           <div className={s.form}>
             <Form.Layout.Label title="Data set">
               <Radio.Group

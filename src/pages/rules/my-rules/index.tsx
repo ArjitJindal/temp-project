@@ -71,6 +71,7 @@ const MyRule = (props: { simulationMode?: boolean }) => {
   const [params, setParams] = useState<CommonParams>({
     ...DEFAULT_PARAMS_STATE,
     sort: [DEFAULT_SORTING],
+    pagination: false,
   });
 
   const focusId = useMemo(() => parseQueryString(location.search).focus, []);

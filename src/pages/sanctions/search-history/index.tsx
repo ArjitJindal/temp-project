@@ -28,6 +28,7 @@ export const SanctionsSearchHistoryTable: React.FC = () => {
   const [params, setParams] = useState<AllParams<TableSearchParams>>({
     ...DEFAULT_PARAMS_STATE,
     createdTimestamp: [dayjs().subtract(7, 'day'), dayjs()],
+    pagination: false,
   });
 
   const measure = useApiTime();

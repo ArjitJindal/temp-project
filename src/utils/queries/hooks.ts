@@ -107,6 +107,7 @@ export type PaginationParams = {
   pageSize: number;
   page?: number;
   from?: string;
+  pagination?: boolean;
 };
 
 export type CursorPaginationParams = {

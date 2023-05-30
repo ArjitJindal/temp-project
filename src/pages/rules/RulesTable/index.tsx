@@ -138,6 +138,7 @@ export const RulesTable: React.FC<Props> = ({ onViewRule, onEditRule, simulation
   const [params, setParams] = useState<RulesTableParams>({
     ...DEFAULT_PARAMS_STATE,
     sort: [DEFAULT_SORTING],
+    pagination: false,
   });
 
   const rulesResult = usePaginatedQuery(GET_RULES(params), async () => {

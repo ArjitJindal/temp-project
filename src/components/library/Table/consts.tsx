@@ -7,6 +7,7 @@ import { PaginationParams } from '@/utils/queries/hooks';
 import { AdditionalContext } from '@/components/library/Table/internal/partialySelectedRows';
 
 export const DEFAULT_PAGE_SIZE = 20;
+export const DEFAULT_PAGINATION_ENABLED = true;
 
 export const DEFAULT_SORT_STATE: SortingParams = {
   sort: [],
@@ -15,6 +16,7 @@ export const DEFAULT_SORT_STATE: SortingParams = {
 export const DEFAULT_PAGINATION_STATE: PaginationParams = {
   page: 1,
   pageSize: DEFAULT_PAGE_SIZE,
+  pagination: DEFAULT_PAGINATION_ENABLED,
 };
 
 export const DEFAULT_PARAMS_STATE: CommonParams = {
