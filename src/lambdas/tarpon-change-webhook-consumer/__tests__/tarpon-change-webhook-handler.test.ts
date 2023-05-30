@@ -1,3 +1,5 @@
+import { SendMessageBatchRequestEntry } from '@aws-sdk/client-sqs/dist-types/models/models_0'
+
 const MOCK_WEBHOOK_DELIVERY_QUEUE_URL = 'mock-sqs-queue-url'
 const MOCK_WEBHOOK_TARPON_CHANGE_CAPTURE_RETRY_QUEUE_URL =
   'mock-retry-sqs-queue-url'
@@ -8,7 +10,11 @@ process.env.WEBHOOK_TARPON_CHANGE_CAPTURE_RETRY_QUEUE_URL =
 import 'aws-sdk-client-mock-jest'
 import { KinesisStreamEvent } from 'aws-lambda'
 import { AwsStub, mockClient } from 'aws-sdk-client-mock'
-import { SendMessageCommand, SQSClient } from '@aws-sdk/client-sqs'
+import {
+  SendMessageBatchCommand,
+  SendMessageCommand,
+  SQSClient,
+} from '@aws-sdk/client-sqs'
 import { WebhookRepository } from '../../../services/webhook/repositories/webhook-repository'
 import { tarponChangeWebhookHandler as handler } from '../app'
 import { getTestUser } from '@/test-utils/user-test-utils'
@@ -61,10 +67,12 @@ describe('Create webhook delivery tasks', () => {
 
     await tarponChangeWebhookHandler(event)
 
-    expect(sqsMock).toHaveReceivedCommandTimes(SendMessageCommand, 1)
-    const message = sqsMock.commandCalls(SendMessageCommand)[0].firstArg.input
+    expect(sqsMock).toHaveReceivedCommandTimes(SendMessageBatchCommand, 1)
+    const message = sqsMock.commandCalls(SendMessageBatchCommand)[0].firstArg
+      .input
     expect(message.QueueUrl).toBe(MOCK_WEBHOOK_DELIVERY_QUEUE_URL)
-    expect(JSON.parse(message.MessageBody as string)).toMatchObject({
+    const entries = message.Entries as SendMessageBatchRequestEntry[]
+    expect(JSON.parse(entries[0].MessageBody as string)).toMatchObject({
       event: 'USER_STATE_UPDATED',
       payload: {
         userId: user.userId,
@@ -96,7 +104,7 @@ describe('Create webhook delivery tasks', () => {
 
     await tarponChangeWebhookHandler(event)
 
-    expect(sqsMock).toHaveReceivedCommandTimes(SendMessageCommand, 0)
+    expect(sqsMock).toHaveReceivedCommandTimes(SendMessageBatchCommand, 0)
   })
 
   test("Don't send SQS meessage when there is not update but webhooks exist", async () => {
@@ -129,7 +137,7 @@ describe('Create webhook delivery tasks', () => {
 
     await tarponChangeWebhookHandler(event)
 
-    expect(sqsMock).toHaveReceivedCommandTimes(SendMessageCommand, 0)
+    expect(sqsMock).toHaveReceivedCommandTimes(SendMessageBatchCommand, 0)
   })
 
   test("Don't send SQS meessage when there is not update and no webhooks exist", async () => {
@@ -149,7 +157,7 @@ describe('Create webhook delivery tasks', () => {
 
     await tarponChangeWebhookHandler(event)
 
-    expect(sqsMock).toHaveReceivedCommandTimes(SendMessageCommand, 0)
+    expect(sqsMock).toHaveReceivedCommandTimes(SendMessageBatchCommand, 0)
   })
 
   test('Send to retry queue in case of failure', async () => {
@@ -183,11 +191,10 @@ describe('Create webhook delivery tasks', () => {
 
     await tarponChangeWebhookHandler(event)
 
-    expect(sqsMock).toHaveReceivedCommandTimes(SendMessageCommand, 2)
-    const message = sqsMock.commandCalls(SendMessageCommand)[1].firstArg.input
-    expect(message.QueueUrl).toBe(
-      MOCK_WEBHOOK_TARPON_CHANGE_CAPTURE_RETRY_QUEUE_URL
-    )
-    expect(JSON.parse(message.MessageBody as string)).toEqual(event.Records[0])
+    expect(sqsMock).toHaveReceivedCommandTimes(SendMessageBatchCommand, 1)
+    expect(sqsMock).toHaveReceivedCommandWith(SendMessageCommand, {
+      QueueUrl: MOCK_WEBHOOK_TARPON_CHANGE_CAPTURE_RETRY_QUEUE_URL,
+      MessageBody: JSON.stringify(event.Records[0]),
+    })
   })
 })

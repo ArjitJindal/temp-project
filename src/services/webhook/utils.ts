@@ -1,5 +1,6 @@
 import { v4 as uuidv4 } from 'uuid'
-import { SendMessageCommand, SQSClient } from '@aws-sdk/client-sqs'
+import { SendMessageBatchCommand, SQSClient } from '@aws-sdk/client-sqs'
+import { SendMessageBatchRequestEntry } from '@aws-sdk/client-sqs/dist-types/models/models_0'
 import {
   SecretsManagerWebhookSecrets,
   WebhookDeliveryTask,
@@ -62,6 +63,7 @@ export async function sendWebhookTasks(
     webhookTasks.map((task) => task.event)
   )
 
+  const entries: SendMessageBatchRequestEntry[] = []
   for (const webhookTask of webhookTasks) {
     for (const webhook of webhooksByEvent.get(webhookTask.event) || []) {
       const finalWebhookTask: WebhookDeliveryTask = {
@@ -71,15 +73,36 @@ export async function sendWebhookTasks(
         webhookId: webhook._id as string,
         createdAt,
       }
-      await sqs.send(
-        new SendMessageCommand({
-          MessageBody: JSON.stringify(finalWebhookTask),
+      entries.push({
+        Id: finalWebhookTask._id,
+        MessageBody: JSON.stringify(finalWebhookTask),
+      })
+      logger.info(
+        `Sending webhook delivery task for event type ${webhookTask.event}`
+      )
+    }
+  }
+
+  const batchSize = 10
+  const groups = []
+
+  for (let i = 0; i < entries.length; i += batchSize) {
+    const chunk = entries.slice(i, i + batchSize)
+    groups.push(chunk)
+  }
+
+  await Promise.all(
+    groups.map((entryGroup) => {
+      return sqs.send(
+        new SendMessageBatchCommand({
+          Entries: entryGroup,
           QueueUrl: process.env.WEBHOOK_DELIVERY_QUEUE_URL as string,
         })
       )
-      logger.info(
-        `Sent webhook delivery task for event ${finalWebhookTask.event}`
-      )
-    }
+    })
+  )
+
+  if (entries.length > 0) {
+    logger.info(`${entries.length} webhooks sent`)
   }
 }
