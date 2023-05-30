@@ -160,6 +160,9 @@ export const StackConstants = {
   CONSOLE_API_WEBHOOKS_FUNCTION_NAME: getResourceNameForTarpon(
     'ConsoleApiWebhooksFunction'
   ),
+  CONSOLE_API_SAR_FUNCTION_NAME: getResourceNameForTarpon(
+    'ConsoleApiSarFunction'
+  ),
   LAMBDA_LATEST_ALIAS_NAME: 'LATEST',
   JWT_AUTHORIZER_CACHE_TTL_SECONDS: 3600,
   API_KEY_AUTHORIZER_CACHE_TTL_SECONDS: 3600,

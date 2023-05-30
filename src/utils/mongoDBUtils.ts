@@ -158,6 +158,10 @@ export const DASHBOARD_TEAM_ALERTS_STATS_HOURLY = (tenantId: string) => {
   return `${tenantId}-dashboard-team-alerts-stats-hourly`
 }
 
+export const REPORT_COLLECTION = (tenandId: string) => {
+  return `${tenandId}-report`
+}
+
 // Pulse
 export const KRS_SCORES_COLLECTION = (tenantId: string) => {
   return `${tenantId}-kyc-risk-values`

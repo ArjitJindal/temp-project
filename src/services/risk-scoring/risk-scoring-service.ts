@@ -23,7 +23,6 @@ import { RiskParameterLevelKeyValue } from '@/@types/openapi-internal/RiskParame
 import dayjs, { convertToDays } from '@/utils/dayjs'
 import { RiskParameterValue } from '@/@types/openapi-internal/RiskParameterValue'
 import { RiskLevel } from '@/@types/openapi-internal/RiskLevel'
-import { logger } from '@/core/logger'
 import { Transaction } from '@/@types/openapi-public/Transaction'
 import { PulseAuditLogService } from '@/lambdas/console-api-pulse/services/pulse-audit-log'
 import { RiskClassificationScore } from '@/@types/openapi-internal/RiskClassificationScore'
@@ -113,7 +112,7 @@ function getIterableAttributeRiskLevel(
 } {
   const { parameter, targetIterableParameter, riskLevelAssignmentValues } =
     parameterAttributeDetails
-  const iterableValue = _.get(entity, parameter)
+  const iterableValue = _.get(entity, parameter) as unknown as any[]
   let individualRiskLevel
   let iterableMaxRiskLevel: {
     value: unknown
@@ -246,7 +245,6 @@ export class RiskScoringService {
       riskFactors || [],
       riskClassificationValues
     )
-    logger.info(`Risk scores: ${components}`)
 
     return {
       score: components.length

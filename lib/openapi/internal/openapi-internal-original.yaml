@@ -3536,6 +3536,150 @@ paths:
           in: path
           name: narrativeTemplateId
           required: true
+  /report-schemas:
+    get:
+      summary: Get a list of report schemas
+      tags: []
+      x-flagright:
+        permissions:
+          - reports:schema:read
+      parameters:
+        - schema:
+            $ref: '#/components/schemas/PageSize'
+          in: query
+          name: pageSize
+        - schema:
+            $ref: '#/components/schemas/Page'
+          in: query
+          name: page
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ReportSchemasResponse'
+      operationId: get-report-schemas
+  '/report-schemas/{schemaId}':
+    parameters:
+      - schema:
+          type: string
+        name: schemaId
+        in: path
+        required: true
+    get:
+      summary: Get a report schema
+      tags: []
+      x-flagright:
+        permissions:
+          - reports:schema:read
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                properties: {}
+            application/xml:
+              schema:
+                $ref: '#/components/schemas/ReportSchema'
+      operationId: get-report-schemas-reportId
+      description: ''
+      parameters: []
+  /reports/template:
+    get:
+      summary: Get a report template
+      tags: []
+      x-flagright:
+        permissions:
+          - reports:generated:read
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Report'
+      operationId: get-reports-template
+      parameters:
+        - schema:
+            type: string
+          in: query
+          name: schemaId
+          required: true
+        - schema:
+            type: string
+          in: query
+          name: caseId
+          required: true
+  /reports:
+    get:
+      summary: Get created reports
+      tags: []
+      x-flagright:
+        permissions:
+          - reports:generated:read
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ReportsResponse'
+      operationId: get-reports
+      parameters:
+        - schema:
+            type: string
+          in: query
+          name: caseId
+        - schema:
+            $ref: '#/components/schemas/PageSize'
+          in: query
+          name: pageSize
+        - schema:
+            $ref: '#/components/schemas/Page'
+          in: query
+          name: page
+    post:
+      summary: Create a new report
+      operationId: post-reports
+      x-flagright:
+        permissions:
+          - reports:generated:write
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Report'
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Report'
+  '/reports/{reportId}':
+    parameters:
+      - schema:
+          type: string
+        name: reportId
+        in: path
+        required: true
+    get:
+      summary: Get a created report
+      tags: []
+      x-flagright:
+        permissions:
+          - reports:generated:read
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Report'
+      operationId: get-reports-reportId
 components:
   schemas:
     KrsScore:
@@ -5027,6 +5171,9 @@ components:
         - simulator:rules:write
         - simulator:risk-scoring:read
         - simulator:risk-scoring:write
+        - reports:schema:read
+        - reports:generated:read
+        - reports:generated:write
     CaseStatus:
       type: string
       title: CaseStatus
@@ -6630,6 +6777,85 @@ components:
       required:
         - items
         - total
+    ReportSchema:
+      title: ReportSchema
+      x-stoplight:
+        id: mqa9mvj3lig5w
+      type: object
+      properties:
+        id:
+          type: string
+        type:
+          $ref: '#/components/schemas/ReportType'
+        country:
+          $ref: ../public/openapi-public-original.yaml#/components/schemas/CountryCode
+        schema:
+          type: object
+    Report:
+      title: Report
+      type: object
+      x-stoplight:
+        id: 4ac3be9ec658a
+      properties:
+        id:
+          type: string
+        caseId:
+          type: string
+        schemaId:
+          type: string
+        createdAt:
+          type: number
+        updatedAt:
+          type: number
+        parameters:
+          type: object
+        comments:
+          type: array
+          items:
+            $ref: '#/components/schemas/Comment'
+        revisions:
+          type: array
+          items:
+            $ref: '#/components/schemas/FileInfo'
+    ReportType:
+      title: ReportType
+      x-stoplight:
+        id: qatzyvtktpdmt
+      type: string
+      enum:
+        - SAR
+        - STR
+        - CTR
+    ReportSchemasResponse:
+      title: ReportSchemasResponse
+      x-stoplight:
+        id: h1kn4gtshio13
+      type: object
+      properties:
+        total:
+          type: integer
+        data:
+          type: array
+          items:
+            $ref: '#/components/schemas/ReportSchema'
+      required:
+        - total
+        - data
+    ReportsResponse:
+      title: ReportsResponse
+      type: object
+      x-stoplight:
+        id: 4152831a87596
+      properties:
+        total:
+          type: integer
+        data:
+          type: array
+          items:
+            $ref: '#/components/schemas/Report'
+      required:
+        - total
+        - data
   securitySchemes:
     Authorization:
       type: http

@@ -728,6 +728,19 @@ export class CdkTarponConsoleLambdaStack extends cdk.NestedStack {
     )
     grantMongoDbAccess(this, slackAppAlias)
 
+    const { alias: sarAlias } = createFunction(
+      this,
+      {
+        name: StackConstants.CONSOLE_API_SAR_FUNCTION_NAME,
+        auditLogTopic,
+        batchJobQueue,
+      },
+      atlasFunctionProps
+    )
+    s3TmpBucket.grantRead(sarAlias)
+    s3DocumentBucket.grantWrite(sarAlias)
+    grantMongoDbAccess(this, sarAlias)
+
     /**
      * Outputs
      */

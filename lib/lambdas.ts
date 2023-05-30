@@ -313,6 +313,12 @@ export const LAMBDAS: {
     expectedMaxSeconds: ASYNC_SHORT_JOB_LAMBDA_EXPECTED_MAX_SECONDS,
     timeoutSeconds: DEFAULT_ASYNC_JOB_LAMBDA_TIMEOUT_SECONDS,
   },
+  [StackConstants.CONSOLE_API_SAR_FUNCTION_NAME]: {
+    codePath: 'console-api-sar',
+    handlerName: 'sarHandler',
+    expectedMaxSeconds: DEFAULT_LAMBDA_EXPECTED_MAX_SECONDS,
+    timeoutSeconds: DEFAULT_LAMBDA_TIMEOUT_SECONDS,
+  },
   [StackConstants.BATCH_JOB_TRIGGER_CONSUMER_FUNCTION_NAME]: {
     codePath: 'batch-job',
     handlerName: 'jobTriggerHandler',
