@@ -26,10 +26,8 @@ describe('Escalating and Sending back the cases', () => {
       cy.wait('@escalate').then((interception) => {
         expect(interception.response.statusCode).to.eq(200);
       });
-      cy.get('button[data-cy="status-button"]').eq(0).click();
-      cy.get('.ant-dropdown-menu-title-content').eq(2).click();
-
-      cy.get('input[data-cy="row-table-checkbox"]').eq(0).click();
+      cy.visit('/case-management/cases?showCases=ALL&caseStatus=ESCALATED');
+      cy.get('input[data-cy="row-table-checkbox"]', { timeout: 15000 }).eq(0).click();
       cy.get('button[data-cy="update-status-button"]').eq(1).click();
 
       cy.intercept('POST', '/console/cases').as('case');
