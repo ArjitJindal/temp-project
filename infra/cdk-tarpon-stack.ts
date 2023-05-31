@@ -57,6 +57,7 @@ import {
   getDeadLetterQueueName,
   getNameForGlobalResource,
   getResourceNameForTarpon,
+  getSuffix,
   SQSQueues,
   StackConstants,
 } from '@lib/constants'
@@ -364,7 +365,7 @@ export class CdkTarponStack extends cdk.Stack {
     }
 
     const lambdaExecutionRole = new Role(this, `lambda-role`, {
-      roleName: 'flagrightPublicLambdaExecutionRole',
+      roleName: `flagrightLambdaExecutionRole${getSuffix()}`,
       assumedBy: new ServicePrincipal('lambda.amazonaws.com'),
       managedPolicies: [
         ManagedPolicy.fromAwsManagedPolicyName(

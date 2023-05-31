@@ -1,6 +1,6 @@
 import { Config } from './configs/config'
 
-function getSuffix(): string {
+export function getSuffix(): string {
   let suffix = ''
   if (process.env.ENV === 'dev:user') {
     suffix = process.env.QA_SUBDOMAIN || ''
