@@ -10,6 +10,7 @@ import {
   Policy,
   PolicyStatement,
   Role,
+  ServicePrincipal,
 } from 'aws-cdk-lib/aws-iam'
 import {
   ApiKey,
@@ -64,19 +65,15 @@ import {
   DEFAULT_ASYNC_JOB_LAMBDA_TIMEOUT_SECONDS,
 } from '@lib/lambdas'
 import { Config } from '@lib/configs/config'
+import { Metric } from 'aws-cdk-lib/aws-cloudwatch'
+import { getQaApiKey } from '@lib/qa'
 import {
   BATCH_JOB_PAYLOAD_RESULT_KEY,
   BATCH_JOB_RUN_TYPE_RESULT_KEY,
   LAMBDA_BATCH_JOB_RUN_TYPE,
-} from '@lib/cdk/constants'
+} from '../lib/cdk/constants'
 import { CdkTarponAlarmsStack } from './cdk-tarpon-nested-stacks/cdk-tarpon-alarms-stack'
 import { CdkTarponConsoleLambdaStack } from './cdk-tarpon-nested-stacks/cdk-tarpon-console-api-stack'
-import {
-  grantMongoDbAccess,
-  grantSecretsManagerAccess,
-  grantSecretsManagerAccessByPattern,
-  grantSecretsManagerAccessByPrefix,
-} from './cdk-utils/cdk-iam-utils'
 import { createApiGateway } from './cdk-utils/cdk-apigateway-utils'
 import { createAPIGatewayThrottlingAlarm } from './cdk-utils/cdk-cw-alarms-utils'
 import { createFunction } from './cdk-utils/cdk-lambda-utils'
@@ -91,18 +88,6 @@ const CONSUMER_SQS_VISIBILITY_TIMEOUT = Duration.seconds(
 // SQS max receive count cannot go above 1000
 const MAX_SQS_RECEIVE_COUNT = 1000
 const isDevUserStack = process.env.ENV === 'dev:user'
-const QA_API_KEY_IDS = [
-  'c4fr2s8zmi',
-  'nzwxj76073',
-  'nnuqku01gg',
-  'd1mh4vfs79',
-  '0vdidutr8c',
-  'ryxami7tcd',
-  'jvdub2angl',
-  'sx8jv69vmc',
-  'lriigh9bri',
-  '4wp619m7p3',
-]
 
 export class CdkTarponStack extends cdk.Stack {
   config: Config
@@ -173,6 +158,7 @@ export class CdkTarponStack extends cdk.Stack {
         visibilityTimeout: CONSUMER_SQS_VISIBILITY_TIMEOUT,
       }
     )
+
     const webhookTarponChangeCaptureRetryQueue = this.createQueue(
       SQSQueues.WEBHOOK_TARPON_CHANGE_CAPTURE_RETRY_QUEUE_NAME,
       {
@@ -181,6 +167,7 @@ export class CdkTarponStack extends cdk.Stack {
         visibilityTimeout: CONSUMER_SQS_VISIBILITY_TIMEOUT,
       }
     )
+
     const hammerheadChangeCaptureRetryQueue = this.createQueue(
       SQSQueues.HAMMERHEAD_CHANGE_CAPTURE_RETRY_QUEUE_NAME,
       {
@@ -336,7 +323,7 @@ export class CdkTarponStack extends cdk.Stack {
       {
         compatibleRuntimes: [Runtime.NODEJS_16_X],
         code:
-          process.env.CI === 'true'
+          process.env.INFRA_CI === 'true'
             ? Code.fromAsset('infra')
             : Code.fromAsset('dist/layers/fast-geoip'),
         description: 'fast-geoip npm module',
@@ -347,16 +334,118 @@ export class CdkTarponStack extends cdk.Stack {
      * Lambda Functions
      */
 
-    const atlasFunctionProps: Partial<FunctionProps> = {
+    const functionProps: Partial<FunctionProps> = {
       securityGroups: this.config.resource.LAMBDA_VPC_ENABLED
         ? [securityGroup]
         : undefined,
       vpc: this.config.resource.LAMBDA_VPC_ENABLED ? vpc : undefined,
+      environment: {
+        SM_SECRET_ARN: config.application.ATLAS_CREDENTIALS_SECRET_ARN,
+        IMPORT_BUCKET: importBucketName,
+        TMP_BUCKET: tmpBucketName,
+        AUTH0_DOMAIN: this.config.application.AUTH0_DOMAIN,
+        AUTH0_AUDIENCE: this.config.application.AUTH0_AUDIENCE,
+        WEBHOOK_DELIVERY_QUEUE_URL: webhookDeliveryQueue.queueUrl,
+        WEBHOOK_TARPON_CHANGE_CAPTURE_RETRY_QUEUE_URL:
+          webhookTarponChangeCaptureRetryQueue.queueUrl,
+        COMPLYADVANTAGE_API_KEY: process.env.COMPLYADVANTAGE_API_KEY as string,
+        COMPLYADVANTAGE_DEFAULT_SEARCH_PROFILE_ID: config.application
+          .COMPLYADVANTAGE_DEFAULT_SEARCH_PROFILE_ID as string,
+        SLACK_ALERT_QUEUE_URL: slackAlertQueue.queueUrl,
+        HAMMERHEAD_CHANGE_CAPTURE_RETRY_QUEUE_URL:
+          hammerheadChangeCaptureRetryQueue.queueUrl,
+        TARPON_CHANGE_CAPTURE_RETRY_QUEUE_URL:
+          tarponChangeCaptureRetryQueue.queueUrl,
+        SLACK_CLIENT_ID: config.application.SLACK_CLIENT_ID,
+        SLACK_CLIENT_SECRET: config.application.SLACK_CLIENT_SECRET,
+        SLACK_REDIRECT_URI: config.application.SLACK_REDIRECT_URI,
+        CONSOLE_URI: config.application.CONSOLE_URI,
+      },
     }
+
+    const lambdaExecutionRole = new Role(this, `lambda-role`, {
+      roleName: 'flagrightPublicLambdaExecutionRole',
+      assumedBy: new ServicePrincipal('lambda.amazonaws.com'),
+      managedPolicies: [
+        ManagedPolicy.fromAwsManagedPolicyName(
+          'service-role/AWSLambdaVPCAccessExecutionRole'
+        ),
+        ManagedPolicy.fromAwsManagedPolicyName(
+          'service-role/AWSLambdaBasicExecutionRole'
+        ),
+        ManagedPolicy.fromAwsManagedPolicyName(
+          'CloudWatchLambdaInsightsExecutionRolePolicy'
+        ),
+      ],
+    })
+
+    // Give role access to all secrets
+    lambdaExecutionRole.attachInlinePolicy(
+      new Policy(this, id, {
+        policyName: `${lambdaExecutionRole.roleName}-MongoDbPolicy`,
+        statements: [
+          new PolicyStatement({
+            effect: Effect.ALLOW,
+            actions: ['secretsmanager:GetSecretValue'],
+            resources: ['*'],
+          }),
+          new PolicyStatement({
+            effect: Effect.ALLOW,
+            actions: ['dynamodb:*'],
+            resources: [
+              hammerheadDynamoDbTable.tableArn,
+              tarponRuleDynamoDbTable.tableArn,
+              transientDynamoDbTable.tableArn,
+              tarponRuleDynamoDbTable.tableArn,
+              tarponDynamoDbTable.tableArn,
+            ],
+          }),
+          new PolicyStatement({
+            effect: Effect.ALLOW,
+            actions: [
+              'sqs:ChangeMessageVisibility',
+              'sqs:DeleteMessage',
+              'sqs:GetQueueAttributes',
+              'sqs:GetQueueUrl',
+              'sqs:ReceiveMessage',
+            ],
+            resources: [
+              auditLogQueue.queueArn,
+              tarponChangeCaptureRetryQueue.queueArn,
+              batchJobQueue.queueArn,
+              webhookTarponChangeCaptureRetryQueue.queueArn,
+              hammerheadChangeCaptureRetryQueue.queueArn,
+              webhookDeliveryQueue.queueArn,
+            ],
+          }),
+          new PolicyStatement({
+            effect: Effect.ALLOW,
+            actions: ['sns:Publish'],
+            resources: [this.auditLogTopic.topicArn],
+          }),
+          new PolicyStatement({
+            effect: Effect.ALLOW,
+            actions: ['s3:GetBucket*', 's3:GetObject*', 's3:List*'],
+            resources: [
+              s3TmpBucket.bucketArn,
+              s3ImportBucket.bucketArn,
+              s3DocumentBucket.bucketArn,
+              s3demoModeBucket.bucketArn,
+            ],
+          }),
+          new PolicyStatement({
+            effect: Effect.ALLOW,
+            actions: ['states:StartExecution'],
+            resources: ['*'],
+          }),
+        ],
+      })
+    )
+    Metric.grantPutMetricData(lambdaExecutionRole)
 
     /* API Key Authorizer */
     const { alias: apiKeyAuthorizerAlias, func: apiKeyAuthorizerFunction } =
-      createFunction(this, {
+      createFunction(this, lambdaExecutionRole, {
         name: StackConstants.API_KEY_AUTHORIZER_FUNCTION_NAME,
         provisionedConcurrency:
           config.resource.API_KEY_AUTHORIZER_LAMBDA.PROVISIONED_CONCURRENCY,
@@ -374,26 +463,13 @@ export class CdkTarponStack extends cdk.Stack {
 
     const { alias: transactionAlias } = createFunction(
       this,
+      lambdaExecutionRole,
       {
         name: StackConstants.PUBLIC_API_TRANSACTION_FUNCTION_NAME,
         auditLogTopic: this.auditLogTopic,
         batchJobQueue,
         ...transactionFunctionProps,
-      },
-      atlasFunctionProps
-    )
-    tarponDynamoDbTable.grantReadWriteData(transactionAlias)
-    tarponRuleDynamoDbTable.grantReadWriteData(transactionAlias)
-    hammerheadDynamoDbTable.grantReadData(transactionAlias)
-    grantMongoDbAccess(this, transactionAlias)
-    grantSecretsManagerAccess(
-      this,
-      transactionAlias,
-      [
-        this.config.application.COMPLYADVANTAGE_CREDENTIALS_SECRET_ARN,
-        this.config.application.IBANCOM_CREDENTIALS_SECRET_ARN,
-      ],
-      'READ'
+      }
     )
 
     // Configure AutoScaling for Tx Function
@@ -405,96 +481,70 @@ export class CdkTarponStack extends cdk.Stack {
       utilizationTarget: 0.7,
     })
 
-    const { alias: transactionEventAlias } = createFunction(
+    createFunction(
       this,
+      lambdaExecutionRole,
       {
         name: StackConstants.PUBLIC_API_TRANSACTION_EVENT_FUNCTION_NAME,
         auditLogTopic: this.auditLogTopic,
         batchJobQueue,
         ...transactionFunctionProps,
       },
-      atlasFunctionProps
-    )
-    tarponDynamoDbTable.grantReadWriteData(transactionEventAlias)
-    tarponRuleDynamoDbTable.grantReadWriteData(transactionEventAlias)
-    hammerheadDynamoDbTable.grantReadData(transactionEventAlias)
-    grantMongoDbAccess(this, transactionEventAlias)
-    grantSecretsManagerAccess(
-      this,
-      transactionEventAlias,
-      [
-        this.config.application.COMPLYADVANTAGE_CREDENTIALS_SECRET_ARN,
-        this.config.application.IBANCOM_CREDENTIALS_SECRET_ARN,
-      ],
-      'READ'
+      functionProps
     )
 
     /*  User Event */
-    const { alias: userEventAlias } = createFunction(
+    createFunction(
       this,
+      lambdaExecutionRole,
       {
         name: StackConstants.PUBLIC_API_USER_EVENT_FUNCTION_NAME,
         auditLogTopic: this.auditLogTopic,
         batchJobQueue,
       },
-      atlasFunctionProps
-    )
-    tarponDynamoDbTable.grantReadWriteData(userEventAlias)
-    tarponRuleDynamoDbTable.grantReadWriteData(userEventAlias)
-    hammerheadDynamoDbTable.grantReadData(userEventAlias)
-    grantMongoDbAccess(this, userEventAlias)
-    grantSecretsManagerAccess(
-      this,
-      userEventAlias,
-      [
-        this.config.application.COMPLYADVANTAGE_CREDENTIALS_SECRET_ARN,
-        this.config.application.IBANCOM_CREDENTIALS_SECRET_ARN,
-      ],
-      'READ'
+      functionProps
     )
 
     /* Rule Template (Public) */
-    const { alias: publicRuleAlias } = createFunction(
+    createFunction(
       this,
+      lambdaExecutionRole,
       {
         name: StackConstants.PUBLIC_MANAGEMENT_API_RULE_FUNCTION_NAME,
         auditLogTopic: this.auditLogTopic,
         batchJobQueue,
       },
-      atlasFunctionProps
+      functionProps
     )
-    tarponDynamoDbTable.grantReadData(publicRuleAlias)
-    tarponRuleDynamoDbTable.grantReadWriteData(publicRuleAlias)
 
     /* Rule Instance (Public) */
-    const { alias: publicRuleInstanceAlias } = createFunction(
+    createFunction(
       this,
+      lambdaExecutionRole,
       {
         name: StackConstants.PUBLIC_MANAGEMENT_API_RULE_INSTANCE_FUNCTION_NAME,
         auditLogTopic: this.auditLogTopic,
         batchJobQueue,
       },
-      atlasFunctionProps
+      functionProps
     )
-    tarponDynamoDbTable.grantReadWriteData(publicRuleInstanceAlias)
-    tarponRuleDynamoDbTable.grantReadWriteData(publicRuleInstanceAlias)
 
     /* Device Data (Public) */
-    const { alias: publicDeviceDataAlias } = createFunction(
+    createFunction(
       this,
+      lambdaExecutionRole,
       {
         name: StackConstants.PUBLIC_DEVICE_DATA_API_FUNCTION_NAME,
         auditLogTopic: this.auditLogTopic,
         batchJobQueue,
       },
-      atlasFunctionProps
+      functionProps
     )
-    tarponDynamoDbTable.grantReadWriteData(publicDeviceDataAlias)
-    grantMongoDbAccess(this, publicDeviceDataAlias)
 
     /* User */
-    const { alias: userAlias } = createFunction(
+    createFunction(
       this,
+      lambdaExecutionRole,
       {
         name: StackConstants.PUBLIC_API_USER_FUNCTION_NAME,
         layers: [fastGeoIpLayer],
@@ -504,35 +554,21 @@ export class CdkTarponStack extends cdk.Stack {
         auditLogTopic: this.auditLogTopic,
         batchJobQueue,
       },
-      atlasFunctionProps
-    )
-    tarponDynamoDbTable.grantReadWriteData(userAlias)
-    tarponRuleDynamoDbTable.grantReadWriteData(userAlias)
-    hammerheadDynamoDbTable.grantReadWriteData(userAlias)
-    grantMongoDbAccess(this, userAlias)
-    grantSecretsManagerAccess(
-      this,
-      userAlias,
-      [
-        this.config.application.COMPLYADVANTAGE_CREDENTIALS_SECRET_ARN,
-        this.config.application.IBANCOM_CREDENTIALS_SECRET_ARN,
-      ],
-      'READ'
+      functionProps
     )
 
     /* Slack App */
     const { alias: slackAlertAlias } = createFunction(
       this,
+      lambdaExecutionRole,
       {
         name: StackConstants.SLACK_ALERT_FUNCTION_NAME,
         auditLogTopic: this.auditLogTopic,
         batchJobQueue,
       },
-      atlasFunctionProps
+      functionProps
     )
-    grantMongoDbAccess(this, slackAlertAlias)
-    tarponDynamoDbTable.grantReadData(slackAlertAlias)
-    slackAlertQueue.grantConsumeMessages(slackAlertAlias)
+
     slackAlertAlias.addEventSource(
       // We set batch size to 1 then in case of error, we don't resend the already-sent alerts
       new SqsEventSource(slackAlertQueue, { batchSize: 1 })
@@ -541,21 +577,15 @@ export class CdkTarponStack extends cdk.Stack {
     /* Webhook */
     const { alias: webhookDelivererAlias } = createFunction(
       this,
+      lambdaExecutionRole,
       {
         name: StackConstants.WEBHOOK_DELIVERER_FUNCTION_NAME,
         auditLogTopic: this.auditLogTopic,
         batchJobQueue,
       },
-      atlasFunctionProps
+      functionProps
     )
-    grantMongoDbAccess(this, webhookDelivererAlias)
-    grantSecretsManagerAccessByPrefix(
-      this,
-      webhookDelivererAlias,
-      'webhooks',
-      'READ'
-    )
-    webhookDeliveryQueue.grantConsumeMessages(webhookDelivererAlias)
+
     webhookDelivererAlias.addEventSource(
       new SqsEventSource(webhookDeliveryQueue, { batchSize: 1 })
     )
@@ -563,25 +593,29 @@ export class CdkTarponStack extends cdk.Stack {
     /* Audit Log */
     const { alias: auditLogConsumerAlias } = createFunction(
       this,
+      lambdaExecutionRole,
       {
         name: StackConstants.AUDIT_LOG_CONSUMER_FUNCTION_NAME,
         auditLogTopic: this.auditLogTopic,
         batchJobQueue,
       },
-      atlasFunctionProps
+      functionProps
     )
-    grantMongoDbAccess(this, auditLogConsumerAlias)
-    auditLogQueue.grantConsumeMessages(auditLogConsumerAlias)
     auditLogConsumerAlias.addEventSource(new SqsEventSource(auditLogQueue))
 
     /* Batch Job */
-    const { alias: jobDecisionAlias } = createFunction(this, {
-      name: StackConstants.BATCH_JOB_DECISION_FUNCTION_NAME,
-      auditLogTopic: this.auditLogTopic,
-      batchJobQueue,
-    })
+    const { alias: jobDecisionAlias } = createFunction(
+      this,
+      lambdaExecutionRole,
+      {
+        name: StackConstants.BATCH_JOB_DECISION_FUNCTION_NAME,
+        auditLogTopic: this.auditLogTopic,
+        batchJobQueue,
+      }
+    )
     const { alias: jobRunnerAlias } = createFunction(
       this,
+      lambdaExecutionRole,
       {
         name: StackConstants.BATCH_JOB_RUNNER_FUNCTION_NAME,
         memorySize:
@@ -590,36 +624,7 @@ export class CdkTarponStack extends cdk.Stack {
         auditLogTopic: this.auditLogTopic,
         batchJobQueue,
       },
-      {
-        ...atlasFunctionProps,
-        environment: {
-          ...atlasFunctionProps.environment,
-          IMPORT_BUCKET: importBucketName,
-          TMP_BUCKET: tmpBucketName,
-        },
-      }
-    )
-    tarponDynamoDbTable.grantReadWriteData(jobRunnerAlias)
-    tarponRuleDynamoDbTable.grantReadWriteData(jobRunnerAlias)
-    hammerheadDynamoDbTable.grantReadData(jobRunnerAlias)
-    grantMongoDbAccess(this, jobRunnerAlias)
-    s3TmpBucket.grantRead(jobRunnerAlias)
-    s3ImportBucket.grantWrite(jobRunnerAlias)
-    s3demoModeBucket.grantRead(jobRunnerAlias)
-    grantSecretsManagerAccess(
-      this,
-      jobRunnerAlias,
-      [
-        this.config.application.COMPLYADVANTAGE_CREDENTIALS_SECRET_ARN,
-        this.config.application.IBANCOM_CREDENTIALS_SECRET_ARN,
-      ],
-      'READ'
-    )
-    grantSecretsManagerAccessByPattern(
-      this,
-      jobRunnerAlias,
-      'auth0.com',
-      'READ'
+      functionProps
     )
 
     const batchJobStateMachine = new StateMachine(
@@ -663,6 +668,7 @@ export class CdkTarponStack extends cdk.Stack {
     )
     const { alias: jobTriggerConsumerAlias } = createFunction(
       this,
+      lambdaExecutionRole,
       {
         name: StackConstants.BATCH_JOB_TRIGGER_CONSUMER_FUNCTION_NAME,
         auditLogTopic: this.auditLogTopic,
@@ -674,28 +680,22 @@ export class CdkTarponStack extends cdk.Stack {
         },
       }
     )
-    batchJobStateMachine.grantStartExecution(jobTriggerConsumerAlias)
     jobTriggerConsumerAlias.addEventSource(new SqsEventSource(batchJobQueue))
 
     /* API Metrics Lambda */
     if (!isDevUserStack) {
-      const {
-        alias: cronJobMidnightHandlerAlias,
-        func: cronJobMidnightHandler,
-      } = createFunction(
+      const { func: cronJobMidnightHandler } = createFunction(
         this,
+        lambdaExecutionRole,
         {
           name: StackConstants.CRON_JOB_MIDNIGHT_FUNCTION_NAME,
           auditLogTopic: this.auditLogTopic,
           batchJobQueue,
         },
         {
-          ...atlasFunctionProps,
+          ...functionProps,
         }
       )
-
-      grantMongoDbAccess(this, cronJobMidnightHandlerAlias)
-      tarponRuleDynamoDbTable.grantReadData(cronJobMidnightHandlerAlias)
 
       const apiMetricsRule = new Rule(
         this,
@@ -705,20 +705,6 @@ export class CdkTarponStack extends cdk.Stack {
         }
       )
 
-      grantSecretsManagerAccessByPattern(
-        this,
-        cronJobMidnightHandlerAlias,
-        'auth0.com',
-        'READ'
-      )
-
-      grantSecretsManagerAccess(
-        this,
-        cronJobMidnightHandlerAlias,
-        [this.config.application.GOOGLE_SHEETS_PRIVATE_KEY],
-        'READ'
-      )
-
       apiMetricsRule.addTarget(new LambdaFunctionTarget(cronJobMidnightHandler))
     }
 
@@ -726,16 +712,15 @@ export class CdkTarponStack extends cdk.Stack {
 
     // MongoDB mirror handler
     const tarponChangeConsumerProps = {
-      ...atlasFunctionProps,
-      environment: {
-        ...atlasFunctionProps.environment,
-        SLACK_ALERT_QUEUE_URL: slackAlertQueue.queueUrl,
-        TARPON_CHANGE_CAPTURE_RETRY_QUEUE_URL:
-          tarponChangeCaptureRetryQueue.queueUrl,
-      },
+      ...functionProps,
+      memorySize: config.resource.TARPON_CHANGE_CAPTURE_LAMBDA
+        ? config.resource.TARPON_CHANGE_CAPTURE_LAMBDA.MEMORY_SIZE
+        : 256,
+      environment: functionProps.environment,
     }
     const { alias: tarponChangeCaptureKinesisConsumerAlias } = createFunction(
       this,
+      lambdaExecutionRole,
       {
         name: StackConstants.TARPON_CHANGE_CAPTURE_KINESIS_CONSUMER_FUNCTION_NAME,
         memorySize:
@@ -748,6 +733,7 @@ export class CdkTarponStack extends cdk.Stack {
     const { alias: tarponChangeCaptureKinesisConsumerRetryAlias } =
       createFunction(
         this,
+        lambdaExecutionRole,
         {
           name: StackConstants.TARPON_CHANGE_CAPTURE_KINESIS_CONSUMER_RETRY_FUNCTION_NAME,
           auditLogTopic: this.auditLogTopic,
@@ -765,50 +751,11 @@ export class CdkTarponStack extends cdk.Stack {
         new SqsEventSource(tarponChangeCaptureRetryQueue)
       )
     }
-    transientDynamoDbTable.grantReadWriteData(
-      tarponChangeCaptureKinesisConsumerAlias
-    )
-    transientDynamoDbTable.grantReadWriteData(
-      tarponChangeCaptureKinesisConsumerRetryAlias
-    )
-    grantMongoDbAccess(this, tarponChangeCaptureKinesisConsumerAlias)
-    grantMongoDbAccess(this, tarponChangeCaptureKinesisConsumerRetryAlias)
-    tarponChangeCaptureRetryQueue.grantSendMessages(
-      tarponChangeCaptureKinesisConsumerAlias
-    )
-    slackAlertQueue.grantSendMessages(tarponChangeCaptureKinesisConsumerAlias)
-    slackAlertQueue.grantSendMessages(
-      tarponChangeCaptureKinesisConsumerRetryAlias
-    )
-    tarponDynamoDbTable.grantReadData(tarponChangeCaptureKinesisConsumerAlias)
-    tarponDynamoDbTable.grantReadData(
-      tarponChangeCaptureKinesisConsumerRetryAlias
-    )
-    tarponRuleDynamoDbTable.grantReadData(
-      tarponChangeCaptureKinesisConsumerAlias
-    )
-    tarponRuleDynamoDbTable.grantReadData(
-      tarponChangeCaptureKinesisConsumerRetryAlias
-    )
-    hammerheadDynamoDbTable.grantReadWriteData(
-      tarponChangeCaptureKinesisConsumerAlias
-    )
-    hammerheadDynamoDbTable.grantReadWriteData(
-      tarponChangeCaptureKinesisConsumerRetryAlias
-    )
-
     // Webhook handler
-    const webhookTarponChangeConsumerProps = {
-      ...atlasFunctionProps,
-      environment: {
-        ...atlasFunctionProps.environment,
-        WEBHOOK_DELIVERY_QUEUE_URL: webhookDeliveryQueue.queueUrl,
-        WEBHOOK_TARPON_CHANGE_CAPTURE_RETRY_QUEUE_URL:
-          webhookTarponChangeCaptureRetryQueue.queueUrl,
-      },
-    }
+    const webhookTarponChangeConsumerProps = functionProps
     const { alias: webhookTarponChangeCaptureHandlerAlias } = createFunction(
       this,
+      lambdaExecutionRole,
       {
         name: StackConstants.WEBHOOK_TARPON_CHANGE_CAPTURE_KINESIS_CONSUMER_FUNCTION_NAME,
         auditLogTopic: this.auditLogTopic,
@@ -819,6 +766,7 @@ export class CdkTarponStack extends cdk.Stack {
     const { alias: webhookTarponChangeCaptureHandlerRetryAlias } =
       createFunction(
         this,
+        lambdaExecutionRole,
         {
           name: StackConstants.WEBHOOK_TARPON_CHANGE_CAPTURE_KINESIS_CONSUMER_RETRY_FUNCTION_NAME,
           auditLogTopic: this.auditLogTopic,
@@ -835,58 +783,32 @@ export class CdkTarponStack extends cdk.Stack {
         new SqsEventSource(webhookTarponChangeCaptureRetryQueue)
       )
     }
-    webhookTarponChangeCaptureRetryQueue.grantSendMessages(
-      webhookTarponChangeCaptureHandlerAlias
-    )
-
-    webhookDeliveryQueue.grantSendMessages(
-      webhookTarponChangeCaptureHandlerAlias
-    )
-    webhookDeliveryQueue.grantSendMessages(
-      webhookTarponChangeCaptureHandlerRetryAlias
-    )
-
-    transientDynamoDbTable.grantReadWriteData(
-      webhookTarponChangeCaptureHandlerAlias
-    )
-    transientDynamoDbTable.grantReadWriteData(
-      webhookTarponChangeCaptureHandlerRetryAlias
-    )
-    grantMongoDbAccess(this, webhookTarponChangeCaptureHandlerAlias)
-    grantMongoDbAccess(this, webhookTarponChangeCaptureHandlerRetryAlias)
 
     // Public Sanctions handler
-    const { alias: publicApiSanctionsHandlerAlias } = createFunction(
+    createFunction(
       this,
+      lambdaExecutionRole,
       {
         name: StackConstants.PUBLIC_SANCTIONS_API_FUNCTION_NAME,
         auditLogTopic: this.auditLogTopic,
         batchJobQueue,
       },
-      atlasFunctionProps
-    )
-    grantMongoDbAccess(this, publicApiSanctionsHandlerAlias)
-    grantSecretsManagerAccess(
-      this,
-      publicApiSanctionsHandlerAlias,
-      [this.config.application.COMPLYADVANTAGE_CREDENTIALS_SECRET_ARN],
-      'READ'
+      functionProps
     )
 
     /* Hammerhead Kinesis Change capture consumer */
     const hammerheadChangeConsumerProps = {
-      ...atlasFunctionProps,
-      environment: {
-        ...atlasFunctionProps.environment,
-        SLACK_ALERT_QUEUE_URL: slackAlertQueue.queueUrl,
-        HAMMERHEAD_CHANGE_CAPTURE_RETRY_QUEUE_URL:
-          hammerheadChangeCaptureRetryQueue.queueUrl,
-      },
+      ...functionProps,
+      memorySize: config.resource.HAMMERHEAD_CHANGE_CAPTURE_LAMBDA
+        ? config.resource.HAMMERHEAD_CHANGE_CAPTURE_LAMBDA.MEMORY_SIZE
+        : 256,
+      environment: functionProps.environment,
     }
 
     const { alias: hammerheadChangeCaptureKinesisConsumerAlias } =
       createFunction(
         this,
+        lambdaExecutionRole,
         {
           name: StackConstants.HAMMERHEAD_CHANGE_CAPTURE_KINESIS_CONSUMER_FUNCTION_NAME,
           auditLogTopic: this.auditLogTopic,
@@ -898,6 +820,7 @@ export class CdkTarponStack extends cdk.Stack {
     const { alias: hammerheadChangeCaptureKinesisConsumerRetryAlias } =
       createFunction(
         this,
+        lambdaExecutionRole,
         {
           name: StackConstants.HAMMERHEAD_CHANGE_CAPTURE_KINESIS_CONSUMER_RETRY_FUNCTION_NAME,
           auditLogTopic: this.auditLogTopic,
@@ -922,42 +845,6 @@ export class CdkTarponStack extends cdk.Stack {
         new SqsEventSource(hammerheadChangeCaptureRetryQueue)
       )
     }
-
-    transientDynamoDbTable.grantReadWriteData(
-      hammerheadChangeCaptureKinesisConsumerAlias
-    )
-    transientDynamoDbTable.grantReadWriteData(
-      hammerheadChangeCaptureKinesisConsumerRetryAlias
-    )
-    grantMongoDbAccess(this, hammerheadChangeCaptureKinesisConsumerAlias)
-    grantMongoDbAccess(this, hammerheadChangeCaptureKinesisConsumerRetryAlias)
-    hammerheadChangeCaptureRetryQueue.grantSendMessages(
-      hammerheadChangeCaptureKinesisConsumerAlias
-    )
-    slackAlertQueue.grantSendMessages(
-      hammerheadChangeCaptureKinesisConsumerAlias
-    )
-    slackAlertQueue.grantSendMessages(
-      hammerheadChangeCaptureKinesisConsumerRetryAlias
-    )
-    tarponDynamoDbTable.grantReadData(
-      hammerheadChangeCaptureKinesisConsumerAlias
-    )
-    tarponDynamoDbTable.grantReadData(
-      hammerheadChangeCaptureKinesisConsumerRetryAlias
-    )
-    tarponRuleDynamoDbTable.grantReadData(
-      hammerheadChangeCaptureKinesisConsumerAlias
-    )
-    tarponRuleDynamoDbTable.grantReadData(
-      hammerheadChangeCaptureKinesisConsumerRetryAlias
-    )
-    hammerheadDynamoDbTable.grantReadWriteData(
-      hammerheadChangeCaptureKinesisConsumerAlias
-    )
-    hammerheadDynamoDbTable.grantReadWriteData(
-      hammerheadChangeCaptureKinesisConsumerRetryAlias
-    )
 
     /**
      * API Gateway
@@ -1062,17 +949,8 @@ export class CdkTarponStack extends cdk.Stack {
     )
 
     if (isDevUserStack) {
-      // NOTE: Each api key can only be used for at most 10 usage plans.
-      // We use a pool of API keys to spread out the usage.
+      const apiKey = ApiKey.fromApiKeyId(this, `api-key`, getQaApiKey())
       const qaSubdomain = process.env.QA_SUBDOMAIN as string
-      const apiKeyIdIndex =
-        _.sum(qaSubdomain.split('').map((c) => c.charCodeAt(0))) %
-        QA_API_KEY_IDS.length
-      const apiKey = ApiKey.fromApiKeyId(
-        this,
-        `api-key`,
-        QA_API_KEY_IDS[apiKeyIdIndex]
-      )
       const usagePlan = new UsagePlan(this, `usage-plan`, {
         name: `dev-${qaSubdomain}`,
         quota: {
@@ -1150,15 +1028,9 @@ export class CdkTarponStack extends cdk.Stack {
       `${config.stage}-tarpon-console-api`,
       {
         config,
-        s3TmpBucket,
-        s3ImportBucket,
-        s3DocumentBucket,
-        s3demoModeBucket,
+        lambdaExecutionRole,
         securityGroup,
         vpc,
-        tarponDynamoDbTable,
-        tarponRuleDynamoDbTable,
-        hammerheadDynamoDbTable,
         auditLogTopic: this.auditLogTopic,
         batchJobQueue,
         webhookDeliveryQueue,

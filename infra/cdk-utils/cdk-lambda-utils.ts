@@ -11,8 +11,7 @@ import {
   ILayerVersion,
 } from 'aws-cdk-lib/aws-lambda'
 import { Construct } from 'constructs'
-import { ManagedPolicy, ServicePrincipal } from 'aws-cdk-lib/aws-iam'
-import { Metric } from 'aws-cdk-lib/aws-cloudwatch'
+import { IRole, ServicePrincipal } from 'aws-cdk-lib/aws-iam'
 import { Topic } from 'aws-cdk-lib/aws-sns'
 import { Queue } from 'aws-cdk-lib/aws-sqs'
 import { LAMBDAS } from '@lib/lambdas'
@@ -34,6 +33,7 @@ type InternalFunctionProps = {
 // (e.g add environment variables)
 export function createFunction(
   context: Construct & { config: Config },
+  role: IRole,
   internalFunctionProps: InternalFunctionProps,
   props: Partial<FunctionProps> = {}
 ): { alias: Alias; func: LambdaFunction } {
@@ -96,7 +96,8 @@ export function createFunction(
     functionName: name,
     runtime: Runtime.NODEJS_16_X,
     handler: `app.${handlerName}`,
-    code: process.env.CI
+    role: role,
+    code: process.env.INFRA_CI
       ? Code.fromInline("console.log('hello')")
       : Code.fromAsset(`dist/${LAMBDAS[name].codePath}`),
     tracing: Tracing.ACTIVE,
@@ -135,14 +136,5 @@ export function createFunction(
   )
   // This is needed because of the usage of SpecRestApi
   alias.grantInvoke(new ServicePrincipal('apigateway.amazonaws.com'))
-  // Add permissions for lambda insights in cloudWatch
-  alias.role?.addManagedPolicy(
-    ManagedPolicy.fromAwsManagedPolicyName(
-      'CloudWatchLambdaInsightsExecutionRolePolicy'
-    )
-  )
-  Metric.grantPutMetricData(alias)
-  auditLogTopic?.grantPublish(alias)
-  batchJobQueue?.grantSendMessages(alias)
   return { alias, func }
 }

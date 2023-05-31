@@ -1,5 +1,4 @@
 import crypto from 'crypto'
-import { Alias } from 'aws-cdk-lib/aws-lambda'
 import { Construct } from 'constructs'
 import { Resource } from 'aws-cdk-lib'
 import { Effect, IRole, Policy, PolicyStatement } from 'aws-cdk-lib/aws-iam'
@@ -7,12 +6,12 @@ import { Config } from '@lib/configs/config'
 
 export function grantMongoDbAccess(
   context: Construct & { config: Config },
-  resource: Resource & { role?: IRole }
+  id: string,
+  role: IRole
 ) {
-  const aliasIdentifier = resource.node.id.replace(/:/g, '-')
-  resource.role?.attachInlinePolicy(
-    new Policy(context, `${aliasIdentifier}-MongoDbPolicy`, {
-      policyName: `${aliasIdentifier}-MongoDbPolicy`,
+  role?.attachInlinePolicy(
+    new Policy(context, id, {
+      policyName: `${role.roleName}-MongoDbPolicy`,
       statements: [
         new PolicyStatement({
           effect: Effect.ALLOW,
@@ -26,13 +25,13 @@ export function grantMongoDbAccess(
 
 export function grantSecretsManagerAccessByPrefix(
   context: Construct,
-  alias: Alias,
+  resource: Resource & { role?: IRole },
   prefix: string,
   mode: 'READ' | 'WRITE' | 'READ_WRITE'
 ) {
   grantSecretsManagerAccess(
     context,
-    alias,
+    resource,
     [`arn:aws:secretsmanager:*:*:secret:*/${prefix}/*`],
     mode
   )
@@ -40,13 +39,13 @@ export function grantSecretsManagerAccessByPrefix(
 
 export function grantSecretsManagerAccessByPattern(
   context: Construct,
-  alias: Alias,
+  resource: Resource & { role?: IRole },
   pattern: string,
   mode: 'READ' | 'WRITE' | 'READ_WRITE'
 ) {
   grantSecretsManagerAccess(
     context,
-    alias,
+    resource,
     [`arn:aws:secretsmanager:*:*:secret:*${pattern}*`],
     mode
   )

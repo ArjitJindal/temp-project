@@ -2,14 +2,13 @@ import * as cdk from 'aws-cdk-lib'
 import { Construct } from 'constructs'
 import { FunctionProps } from 'aws-cdk-lib/aws-lambda'
 import { SecurityGroup, Vpc } from 'aws-cdk-lib/aws-ec2'
-import { ITable } from 'aws-cdk-lib/aws-dynamodb'
-import { IBucket } from 'aws-cdk-lib/aws-s3'
 import { Topic } from 'aws-cdk-lib/aws-sns'
 import { Queue } from 'aws-cdk-lib/aws-sqs'
 import { DomainName } from 'aws-cdk-lib/aws-apigateway'
 import {
   ArnPrincipal,
   Effect,
+  IRole,
   ManagedPolicy,
   Policy,
   PolicyStatement,
@@ -24,23 +23,11 @@ import {
 import { Config } from '@lib/configs/config'
 import { createApiGateway } from '../cdk-utils/cdk-apigateway-utils'
 import { createFunction } from '../cdk-utils/cdk-lambda-utils'
-import {
-  grantMongoDbAccess,
-  grantSecretsManagerAccess,
-  grantSecretsManagerAccessByPattern,
-  grantSecretsManagerAccessByPrefix,
-} from '../cdk-utils/cdk-iam-utils'
 import { createAPIGatewayThrottlingAlarm } from '../cdk-utils/cdk-cw-alarms-utils'
 
 interface ConsoleLambdasProps extends cdk.NestedStackProps {
   config: Config
-  tarponDynamoDbTable: ITable
-  tarponRuleDynamoDbTable: ITable
-  hammerheadDynamoDbTable: ITable
-  s3TmpBucket: IBucket
-  s3ImportBucket: IBucket
-  s3DocumentBucket: IBucket
-  s3demoModeBucket: IBucket
+  lambdaExecutionRole: IRole
   securityGroup: SecurityGroup
   vpc: Vpc
   auditLogTopic: Topic
@@ -57,15 +44,9 @@ export class CdkTarponConsoleLambdaStack extends cdk.NestedStack {
     super(scope, id, props)
     this.config = props.config
     const {
-      tarponDynamoDbTable,
-      tarponRuleDynamoDbTable,
-      hammerheadDynamoDbTable,
+      lambdaExecutionRole,
       securityGroup,
       vpc,
-      s3TmpBucket,
-      s3ImportBucket,
-      s3DocumentBucket,
-      s3demoModeBucket,
       auditLogTopic,
       batchJobQueue,
       webhookDeliveryQueue,
@@ -85,11 +66,25 @@ export class CdkTarponConsoleLambdaStack extends cdk.NestedStack {
       StackConstants.S3_TMP_BUCKET_PREFIX,
       this.config
     )
-    const atlasFunctionProps: Partial<FunctionProps> = {
+    const functionProps: Partial<FunctionProps> = {
       securityGroups: this.config.resource.LAMBDA_VPC_ENABLED
         ? [securityGroup]
         : undefined,
       vpc: this.config.resource.LAMBDA_VPC_ENABLED ? vpc : undefined,
+      environment: {
+        ...Object.entries(this.config.application).reduce<{
+          [key: string]: string | number
+        }>((acc, [key, value]) => {
+          acc[key] = value
+          return acc
+        }, {}),
+        SM_SECRET_ARN: this.config.application.ATLAS_CREDENTIALS_SECRET_ARN,
+        WEBHOOK_DELIVERY_QUEUE_URL: webhookDeliveryQueue.queueUrl,
+        TMP_BUCKET: tmpBucketName,
+        DOCUMENT_BUCKET: documentBucketName,
+        IMPORT_BUCKET: importBucketName,
+        AUTH0_AUDIENCE: this.config.application.AUTH0_AUDIENCE,
+      },
     }
 
     const { api: consoleApi, logGroup: consoleApiLogGroup } = createApiGateway(
@@ -114,6 +109,7 @@ export class CdkTarponConsoleLambdaStack extends cdk.NestedStack {
     const { alias: jwtAuthorizerAlias, func: jwtAuthorizerFunction } =
       createFunction(
         this,
+        lambdaExecutionRole,
         {
           name: StackConstants.JWT_AUTHORIZER_FUNCTION_NAME,
           provisionedConcurrency:
@@ -157,141 +153,98 @@ export class CdkTarponConsoleLambdaStack extends cdk.NestedStack {
     )
 
     /* File Import */
-    const { alias: fileImportAlias } = createFunction(
+    createFunction(
       this,
+      lambdaExecutionRole,
       {
         name: StackConstants.CONSOLE_API_FILE_IMPORT_FUNCTION_NAME,
         auditLogTopic,
         batchJobQueue,
       },
-      {
-        ...atlasFunctionProps,
-        environment: {
-          ...atlasFunctionProps.environment,
-          IMPORT_BUCKET: importBucketName,
-          TMP_BUCKET: tmpBucketName,
-        },
-      }
+      functionProps
     )
-    tarponDynamoDbTable.grantReadWriteData(fileImportAlias)
-    s3TmpBucket.grantRead(fileImportAlias)
-    s3ImportBucket.grantWrite(fileImportAlias)
-    grantMongoDbAccess(this, fileImportAlias)
 
-    const { alias: getPresignedUrlAlias } = createFunction(
+    createFunction(
       this,
+      lambdaExecutionRole,
       {
         name: StackConstants.CONSOLE_API_GET_PRESIGNED_URL_FUNCTION_NAME,
         auditLogTopic,
         batchJobQueue,
       },
-      {
-        environment: {
-          TMP_BUCKET: tmpBucketName,
-        },
-      }
+      functionProps
     )
-    s3TmpBucket.grantPut(getPresignedUrlAlias)
 
     /* Rule Template */
-    const { alias: ruleAlias } = createFunction(
+    createFunction(
       this,
+      lambdaExecutionRole,
       {
         name: StackConstants.CONSOLE_API_RULE_FUNCTION_NAME,
         auditLogTopic,
         batchJobQueue,
       },
-      atlasFunctionProps
+      functionProps
     )
-    tarponDynamoDbTable.grantWriteData(ruleAlias)
-    tarponRuleDynamoDbTable.grantReadWriteData(ruleAlias)
-    grantMongoDbAccess(this, ruleAlias)
 
     /* Rule Instance */
-    const { alias: ruleInstanceAlias } = createFunction(
+    createFunction(
       this,
+      lambdaExecutionRole,
       {
         name: StackConstants.CONSOLE_API_RULE_INSTANCE_FUNCTION_NAME,
         auditLogTopic,
         batchJobQueue,
       },
-      atlasFunctionProps
+      functionProps
     )
-    tarponDynamoDbTable.grantReadWriteData(ruleInstanceAlias)
-    tarponRuleDynamoDbTable.grantReadWriteData(ruleInstanceAlias)
-    grantMongoDbAccess(this, ruleInstanceAlias)
 
     /* Transactions view */
-    const { alias: transactionsViewAlias } = createFunction(
+    createFunction(
       this,
+      lambdaExecutionRole,
       {
         name: StackConstants.CONSOLE_API_TRANSACTIONS_VIEW_FUNCTION_NAME,
         memorySize: this.config.resource.TRANSACTIONS_VIEW_LAMBDA?.MEMORY_SIZE,
         auditLogTopic,
         batchJobQueue,
       },
-      {
-        ...atlasFunctionProps,
-        environment: {
-          ...atlasFunctionProps.environment,
-          ...{
-            TMP_BUCKET: tmpBucketName,
-            DOCUMENT_BUCKET: documentBucketName,
-          },
-        },
-      }
+      functionProps
     )
-    tarponDynamoDbTable.grantReadWriteData(transactionsViewAlias)
-    hammerheadDynamoDbTable.grantReadData(transactionsViewAlias)
-    s3TmpBucket.grantRead(transactionsViewAlias)
-    s3DocumentBucket.grantWrite(transactionsViewAlias)
-    grantMongoDbAccess(this, transactionsViewAlias)
 
     /* Accounts */
-    const { alias: accountsFunctionAlias } = createFunction(
+    createFunction(
       this,
+      lambdaExecutionRole,
       {
         name: StackConstants.CONSOLE_API_ACCOUNT_FUNCTION_NAME,
         auditLogTopic,
         batchJobQueue,
       },
-      atlasFunctionProps
+      functionProps
     )
-    grantSecretsManagerAccessByPattern(
-      this,
-      accountsFunctionAlias,
-      'auth0.com',
-      'READ'
-    )
-    tarponDynamoDbTable.grantReadWriteData(accountsFunctionAlias)
-    grantMongoDbAccess(this, accountsFunctionAlias)
 
     /* Roles */
-    const { alias: rolesFunctionAlias } = createFunction(
+    createFunction(
       this,
+      lambdaExecutionRole,
       {
         name: StackConstants.CONSOLE_API_ROLE_FUNCTION_NAME,
         auditLogTopic,
         batchJobQueue,
       },
       {
-        ...atlasFunctionProps,
+        ...functionProps,
         environment: {
-          ...atlasFunctionProps.environment,
-          AUTH0_AUDIENCE: this.config.application.AUTH0_AUDIENCE,
+          ...functionProps.environment,
         },
       }
-    )
-    grantSecretsManagerAccessByPattern(
-      this,
-      rolesFunctionAlias,
-      'auth0.com',
-      'READ'
     )
 
     /* Tenants */
     const { alias: tenantsFunctionAlias } = createFunction(
       this,
+      lambdaExecutionRole,
       {
         name: StackConstants.CONSOLE_API_TENANT_FUNCTION_NAME,
         provisionedConcurrency:
@@ -300,15 +253,8 @@ export class CdkTarponConsoleLambdaStack extends cdk.NestedStack {
         auditLogTopic,
         batchJobQueue,
       },
-      atlasFunctionProps
+      functionProps
     )
-    grantSecretsManagerAccessByPattern(
-      this,
-      tenantsFunctionAlias,
-      'auth0.com',
-      'READ'
-    )
-    grantMongoDbAccess(this, tenantsFunctionAlias)
 
     tenantsFunctionAlias.role?.attachInlinePolicy(
       new Policy(this, getResourceNameForTarpon('TenantApiPolicy'), {
@@ -329,8 +275,9 @@ export class CdkTarponConsoleLambdaStack extends cdk.NestedStack {
     )
 
     /* Business users view */
-    const { alias: businessUsersViewAlias } = createFunction(
+    createFunction(
       this,
+      lambdaExecutionRole,
       {
         name: StackConstants.CONSOLE_API_BUSINESS_USERS_VIEW_FUNCTION_NAME,
         provisionedConcurrency:
@@ -339,60 +286,37 @@ export class CdkTarponConsoleLambdaStack extends cdk.NestedStack {
         auditLogTopic,
         batchJobQueue,
       },
-      {
-        ...atlasFunctionProps,
-        environment: {
-          ...atlasFunctionProps.environment,
-          ...{
-            TMP_BUCKET: tmpBucketName,
-            DOCUMENT_BUCKET: documentBucketName,
-          },
-        },
-      }
+      functionProps
     )
-    grantMongoDbAccess(this, businessUsersViewAlias)
 
     /* Merchant Monitoring */
-    const { alias: merchantMonitoringAlias } = createFunction(
+    createFunction(
       this,
+      lambdaExecutionRole,
       {
         name: StackConstants.CONSOLE_API_MERCHANT_MONITORING_FUNCTION_NAME,
         auditLogTopic,
         batchJobQueue,
       },
-      atlasFunctionProps
-    )
-
-    grantMongoDbAccess(this, merchantMonitoringAlias)
-    grantSecretsManagerAccess(
-      this,
-      merchantMonitoringAlias,
-      [this.config.application.OPENAI_CREDENTIALS_SECRET_ARN],
-      'READ'
+      functionProps
     )
 
     /* Copilot */
-    const { alias: copilotAlias } = createFunction(
+    createFunction(
       this,
+      lambdaExecutionRole,
       {
         name: StackConstants.CONSOLE_API_COPILOT_FUNCTION_NAME,
         auditLogTopic,
         batchJobQueue,
       },
-      atlasFunctionProps
-    )
-
-    grantMongoDbAccess(this, copilotAlias)
-    grantSecretsManagerAccess(
-      this,
-      copilotAlias,
-      [this.config.application.OPENAI_CREDENTIALS_SECRET_ARN],
-      'READ'
+      functionProps
     )
 
     /* Consumer users view */
-    const { alias: consumerUsersViewAlias } = createFunction(
+    createFunction(
       this,
+      lambdaExecutionRole,
       {
         name: StackConstants.CONSOLE_API_CONSUMER_USERS_VIEW_FUNCTION_NAME,
         provisionedConcurrency:
@@ -401,22 +325,13 @@ export class CdkTarponConsoleLambdaStack extends cdk.NestedStack {
         auditLogTopic,
         batchJobQueue,
       },
-      {
-        ...atlasFunctionProps,
-        environment: {
-          ...atlasFunctionProps.environment,
-          ...{
-            TMP_BUCKET: tmpBucketName,
-            DOCUMENT_BUCKET: documentBucketName,
-          },
-        },
-      }
+      functionProps
     )
-    grantMongoDbAccess(this, consumerUsersViewAlias)
 
     /* All users view */
-    const { alias: allUsersViewAlias } = createFunction(
+    createFunction(
       this,
+      lambdaExecutionRole,
       {
         name: StackConstants.CONSOLE_API_ALL_USERS_VIEW_FUNCTION_NAME,
         provisionedConcurrency:
@@ -425,28 +340,13 @@ export class CdkTarponConsoleLambdaStack extends cdk.NestedStack {
         auditLogTopic,
         batchJobQueue,
       },
-      {
-        ...atlasFunctionProps,
-        environment: {
-          ...atlasFunctionProps.environment,
-          ...{
-            TMP_BUCKET: tmpBucketName,
-            DOCUMENT_BUCKET: documentBucketName,
-          },
-        },
-      }
-    )
-    grantMongoDbAccess(this, allUsersViewAlias)
-    grantSecretsManagerAccess(
-      this,
-      allUsersViewAlias,
-      [this.config.application.OPENAI_CREDENTIALS_SECRET_ARN],
-      'READ'
+      functionProps
     )
 
     /* dashboard stats */
-    const { alias: dashboardStatsAlias } = createFunction(
+    createFunction(
       this,
+      lambdaExecutionRole,
       {
         name: StackConstants.CONSOLE_API_DASHBOARD_STATS_FUNCTION_NAME,
         provisionedConcurrency:
@@ -455,227 +355,154 @@ export class CdkTarponConsoleLambdaStack extends cdk.NestedStack {
         auditLogTopic,
         batchJobQueue,
       },
-      atlasFunctionProps
+      functionProps
     )
-    grantMongoDbAccess(this, dashboardStatsAlias)
-    hammerheadDynamoDbTable.grantReadData(dashboardStatsAlias)
 
     /* List Importer */
-    const { alias: listsAlias } = createFunction(this, {
+    createFunction(this, lambdaExecutionRole, {
       name: StackConstants.CONSOLE_API_LISTS_FUNCTION_NAME,
       auditLogTopic,
       batchJobQueue,
     })
-    tarponDynamoDbTable.grantReadWriteData(listsAlias)
 
     /* Case */
-    const { alias: caseAlias } = createFunction(
+    createFunction(
       this,
+      lambdaExecutionRole,
       {
         name: StackConstants.CONSOLE_API_CASE_FUNCTION_NAME,
         memorySize: this.config.resource.CASE_LAMBDA?.MEMORY_SIZE,
         auditLogTopic,
         batchJobQueue,
       },
-      {
-        ...atlasFunctionProps,
-        environment: {
-          ...atlasFunctionProps.environment,
-          WEBHOOK_DELIVERY_QUEUE_URL: webhookDeliveryQueue.queueUrl,
-          ...{
-            TMP_BUCKET: tmpBucketName,
-            DOCUMENT_BUCKET: documentBucketName,
-          },
-        },
-      }
+      functionProps
     )
-    tarponDynamoDbTable.grantReadWriteData(caseAlias)
-    hammerheadDynamoDbTable.grantReadData(caseAlias)
-    s3TmpBucket.grantRead(caseAlias)
-    s3DocumentBucket.grantWrite(caseAlias)
-    webhookDeliveryQueue.grantSendMessages(caseAlias)
-    grantMongoDbAccess(this, caseAlias)
-    grantSecretsManagerAccessByPattern(this, caseAlias, 'auth0.com', 'READ')
 
     /* Webhook */
-    const { alias: webhookConfigurationHandlerAlias } = createFunction(
+    createFunction(
       this,
+      lambdaExecutionRole,
       {
         name: StackConstants.CONSOLE_API_WEBHOOK_CONFIGURATION_FUNCTION_NAME,
         auditLogTopic,
         batchJobQueue,
       },
-      atlasFunctionProps
+      functionProps
     )
-    grantMongoDbAccess(this, webhookConfigurationHandlerAlias)
-    grantSecretsManagerAccessByPrefix(
+    createFunction(
       this,
-      webhookConfigurationHandlerAlias,
-      'webhooks',
-      'READ_WRITE'
-    )
-    const { alias: consoleApiWebhooksHandlerAlias } = createFunction(
-      this,
+      lambdaExecutionRole,
       {
         name: StackConstants.CONSOLE_API_WEBHOOKS_FUNCTION_NAME,
         auditLogTopic,
         batchJobQueue,
       },
-      {
-        ...atlasFunctionProps,
-        environment: {
-          ...atlasFunctionProps.environment,
-          COMPLYADVANTAGE_API_KEY: process.env
-            .COMPLYADVANTAGE_API_KEY as string,
-          COMPLYADVANTAGE_DEFAULT_SEARCH_PROFILE_ID: this.config.application
-            .COMPLYADVANTAGE_DEFAULT_SEARCH_PROFILE_ID as string,
-        },
-      }
-    )
-    grantSecretsManagerAccessByPattern(
-      this,
-      consoleApiWebhooksHandlerAlias,
-      'auth0.com',
-      'READ'
-    )
-    grantMongoDbAccess(this, consoleApiWebhooksHandlerAlias)
-    grantSecretsManagerAccess(
-      this,
-      consoleApiWebhooksHandlerAlias,
-      [this.config.application.COMPLYADVANTAGE_CREDENTIALS_SECRET_ARN],
-      'READ'
+      functionProps
     )
 
     /* Simulation */
-    const { alias: simulationHandlerAlias } = createFunction(
+    createFunction(
       this,
+      lambdaExecutionRole,
       {
         name: StackConstants.CONSOLE_API_SIMULATION_FUNCTION_NAME,
         auditLogTopic,
         batchJobQueue,
       },
-      atlasFunctionProps
+      functionProps
     )
-    grantMongoDbAccess(this, simulationHandlerAlias)
 
     /* Device Data */
-    const { alias: deviceDataHandlerAlias } = createFunction(
+    createFunction(
       this,
+      lambdaExecutionRole,
       {
         name: StackConstants.CONSOLE_API_DEVICE_DATA_FUNCTION_NAME,
         auditLogTopic,
         batchJobQueue,
       },
-      atlasFunctionProps
+      functionProps
     )
-    grantMongoDbAccess(this, deviceDataHandlerAlias)
 
     /* Sanctions */
-    const { alias: consoleApiSanctionsHandlerAlias } = createFunction(
+    createFunction(
       this,
+      lambdaExecutionRole,
       {
         name: StackConstants.CONSOLE_API_SANCTIONS_FUNCTION_NAME,
         auditLogTopic,
         batchJobQueue,
       },
-      {
-        ...atlasFunctionProps,
-        environment: {
-          ...atlasFunctionProps.environment,
-          COMPLYADVANTAGE_API_KEY: process.env
-            .COMPLYADVANTAGE_API_KEY as string,
-          COMPLYADVANTAGE_DEFAULT_SEARCH_PROFILE_ID: this.config.application
-            .COMPLYADVANTAGE_DEFAULT_SEARCH_PROFILE_ID as string,
-        },
-      }
+      functionProps
     )
-    grantMongoDbAccess(this, consoleApiSanctionsHandlerAlias)
-    grantSecretsManagerAccess(
-      this,
-      consoleApiSanctionsHandlerAlias,
-      [this.config.application.COMPLYADVANTAGE_CREDENTIALS_SECRET_ARN],
-      'READ'
-    )
-
     /* Risk Classification function */
-    const { alias: riskClassificationAlias } = createFunction(
+    createFunction(
       this,
+      lambdaExecutionRole,
       {
         name: StackConstants.CONSOLE_API_RISK_CLASSIFICATION_FUNCTION_NAME,
         auditLogTopic,
         batchJobQueue,
       },
-      atlasFunctionProps
+      functionProps
     )
-    hammerheadDynamoDbTable.grantReadWriteData(riskClassificationAlias)
 
     /* Manual User Risk Assignment function */
-    const { alias: manualUserRiskAssignmentAlias } = createFunction(
+    createFunction(
       this,
+      lambdaExecutionRole,
       {
         name: StackConstants.CONSOLE_API_MANUAL_USER_RISK_ASSIGNMENT_FUNCTION_NAME,
         auditLogTopic,
         batchJobQueue,
       },
-      atlasFunctionProps
+      functionProps
     )
-    hammerheadDynamoDbTable.grantReadWriteData(manualUserRiskAssignmentAlias)
-    grantMongoDbAccess(this, manualUserRiskAssignmentAlias)
-
     /* Parameter risk level assignment function */
-    const { alias: parameterRiskAssignmentAlias } = createFunction(this, {
+    createFunction(this, lambdaExecutionRole, {
       name: StackConstants.CONSOLE_API_PARAMETER_RISK_ASSIGNMENT_FUNCTION_NAME,
       auditLogTopic,
       batchJobQueue,
     })
-    hammerheadDynamoDbTable.grantReadWriteData(parameterRiskAssignmentAlias)
 
     /* NarrativeTemplate function */
-    const { alias: narrativeAlias } = createFunction(
+    createFunction(
       this,
+      lambdaExecutionRole,
       {
         name: StackConstants.CONSOLE_API_NARRATIVE_TEMPLATE_FUNCTION_NAME,
         auditLogTopic,
         batchJobQueue,
       },
-      atlasFunctionProps
+      functionProps
     )
 
-    grantMongoDbAccess(this, narrativeAlias)
-
     /* Get Risk Scores */
-    const { alias: riskLevelAndScoreAlias } = createFunction(
+    createFunction(
       this,
+      lambdaExecutionRole,
       {
         name: StackConstants.CONSOLE_API_RISK_LEVEL_AND_SCORE_FUNCTION_NAME,
         auditLogTopic,
         batchJobQueue,
       },
-      atlasFunctionProps
+      functionProps
     )
-    hammerheadDynamoDbTable.grantReadWriteData(riskLevelAndScoreAlias)
-    grantMongoDbAccess(this, riskLevelAndScoreAlias)
-
     /* Audit Log */
-    const { alias: auditLogAlias } = createFunction(
+    createFunction(
       this,
+      lambdaExecutionRole,
       {
         name: StackConstants.CONSOLE_API_AUDIT_LOG_FUNCTION_NAME,
         auditLogTopic,
         batchJobQueue,
       },
-      {
-        ...atlasFunctionProps,
-        environment: {
-          ...atlasFunctionProps.environment,
-        },
-      }
+      functionProps
     )
-    grantMongoDbAccess(this, auditLogAlias)
-
     /* API Key Generator */
     const { alias: apiKeyGeneratorAlias } = createFunction(
       this,
+      lambdaExecutionRole,
       {
         name: StackConstants.CONSOLE_API_API_KEY_GENERATOR_FUNCTION_NAME,
         memorySize:
@@ -685,13 +512,11 @@ export class CdkTarponConsoleLambdaStack extends cdk.NestedStack {
         batchJobQueue,
       },
       {
-        ...atlasFunctionProps,
+        ...functionProps,
         timeout: Duration.minutes(4),
       }
     )
-    grantMongoDbAccess(this, apiKeyGeneratorAlias)
-    tarponDynamoDbTable.grantWriteData(apiKeyGeneratorAlias)
-    s3demoModeBucket.grantRead(apiKeyGeneratorAlias)
+
     apiKeyGeneratorAlias.role?.attachInlinePolicy(
       new Policy(this, getResourceNameForTarpon('ApiKeyGeneratorPolicy'), {
         policyName: getResourceNameForTarpon('ApiKeyGeneratorPolicy'),
@@ -709,37 +534,27 @@ export class CdkTarponConsoleLambdaStack extends cdk.NestedStack {
     )
 
     /* Slack App Configuration */
-    const { alias: slackAppAlias } = createFunction(
+    createFunction(
       this,
+      lambdaExecutionRole,
       {
         name: StackConstants.CONSOLE_API_SLACK_APP_FUNCTION_NAME,
         auditLogTopic,
         batchJobQueue,
       },
-      {
-        ...atlasFunctionProps,
-        environment: {
-          ...atlasFunctionProps.environment,
-          SLACK_CLIENT_ID: this.config.application.SLACK_CLIENT_ID,
-          SLACK_CLIENT_SECRET: this.config.application.SLACK_CLIENT_SECRET,
-          SLACK_REDIRECT_URI: this.config.application.SLACK_REDIRECT_URI,
-        },
-      }
+      functionProps
     )
-    grantMongoDbAccess(this, slackAppAlias)
 
-    const { alias: sarAlias } = createFunction(
+    createFunction(
       this,
+      lambdaExecutionRole,
       {
         name: StackConstants.CONSOLE_API_SAR_FUNCTION_NAME,
         auditLogTopic,
         batchJobQueue,
       },
-      atlasFunctionProps
+      functionProps
     )
-    s3TmpBucket.grantRead(sarAlias)
-    s3DocumentBucket.grantWrite(sarAlias)
-    grantMongoDbAccess(this, sarAlias)
 
     /**
      * Outputs
