@@ -137,9 +137,7 @@ export function getAugmentedOpenapi(
       identitySource: `method.request.header.${
         authorization === 'API_KEY' ? 'x-api-key' : 'authorization'
       }`,
-      authorizerUri: {
-        'Fn::Sub': `arn:aws:apigateway:\${AWS::Region}:lambda:path/2015-03-31/functions/\${${authorizationFunctionName}.Arn}:${StackConstants.LAMBDA_LATEST_ALIAS_NAME}/invocations`,
-      },
+      authorizerUri: `arn:aws:apigateway:{{region}}:lambda:path/2015-03-31/functions/arn:aws:lambda:{{region}}:{{accountId}}:function:{{${authorizationFunctionName}}}:${StackConstants.LAMBDA_LATEST_ALIAS_NAME}/invocations`,
       authorizerResultTtlInSeconds,
       enableSimpleResponses: false,
     },
@@ -180,9 +178,7 @@ export function getAugmentedOpenapi(
       const lambdaFunctionName = pathToLambda[path]
       methodSetting['x-amazon-apigateway-request-validator'] = 'all'
       methodSetting['x-amazon-apigateway-integration'] = {
-        uri: {
-          'Fn::Sub': `arn:aws:apigateway:$\{AWS::Region}:lambda:path/2015-03-31/functions/$\{${lambdaFunctionName}.Arn}:${StackConstants.LAMBDA_LATEST_ALIAS_NAME}/invocations`,
-        },
+        uri: `arn:aws:apigateway:{{region}}:lambda:path/2015-03-31/functions/arn:aws:lambda:{{region}}:{{accountId}}:function:{{${lambdaFunctionName}}}:${StackConstants.LAMBDA_LATEST_ALIAS_NAME}/invocations`,
         httpMethod: 'POST',
         type: 'aws_proxy',
         passthroughBehavior: 'never',
