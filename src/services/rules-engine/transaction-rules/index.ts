@@ -44,6 +44,7 @@ import TransactionsOutflowInflowVolumeRule from './transactions-outflow-inflow-v
 import { SanctionsCounterPartyRule } from './sanctions-counterparty'
 import TestAlwaysHitRule from '@/services/rules-engine/transaction-rules/tests/test-always-hit-rule'
 import BlacklistTransactionMatchedValue from '@/services/rules-engine/transaction-rules/blacklist-transaction-related-value'
+import MachineLearningGenericModel from '@/services/rules-engine/transaction-rules/machine-learning-generic-model'
 
 export class TransactionRuleBase extends TransactionRule<unknown> {
   public async computeRule(): Promise<RuleHitResult | undefined> {
@@ -95,6 +96,10 @@ export const _TRANSACTION_RULES = {
   'blacklist-payment-details': BlacklistPaymentdetailsRule,
   'transactions-exceed-past-period': TransactionsExceedPastPeriodRule,
   'blacklist-transaction-related-value': BlacklistTransactionMatchedValue,
+  'machine-learning-generic-model': MachineLearningGenericModel,
+  'machine-learning-credit-card-model': MachineLearningGenericModel,
+  'machine-learning-ach-chargeback-model': MachineLearningGenericModel,
+  'machine-learning-anomaly-detection-model': MachineLearningGenericModel,
   'transactions-outflow-inflow-volume': TransactionsOutflowInflowVolumeRule,
   'sanctions-counterparty': SanctionsCounterPartyRule,
 
