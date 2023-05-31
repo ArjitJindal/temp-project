@@ -18,7 +18,7 @@ export function getConsumerUserColumns(): TableColumn<InternalConsumerUser>[] {
       type: {
         render: (userId) => {
           return (
-            <Link to={`/users/list/consumer/${userId}`} replace>
+            <Link to={`/users/list/consumer/${userId}`} data-cy="consumer-user-id" replace>
               {userId}
             </Link>
           );

@@ -148,7 +148,7 @@ export default function TransactionsTable(props: Props) {
           ...STRING,
           render: (value: string | undefined) => {
             return (
-              <Link to={makeUrl(`/transactions/item/:id`, { id: value })}>
+              <Link to={makeUrl(`/transactions/item/:id`, { id: value })} data-cy="transaction-id">
                 {value}
                 {escalatedTransactions && escalatedTransactions?.indexOf(value as string) > -1 && (
                   <>

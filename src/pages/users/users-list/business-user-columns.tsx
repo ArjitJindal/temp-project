@@ -17,7 +17,7 @@ export function getBusinessUserColumns(): TableColumn<InternalBusinessUser>[] {
       type: {
         render: (userId) => {
           return (
-            <Link to={`/users/list/business/${userId}`} replace>
+            <Link to={`/users/list/business/${userId}`} data-cy="business-user-id" replace>
               {userId}
             </Link>
           );
