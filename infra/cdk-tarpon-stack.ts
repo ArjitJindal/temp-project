@@ -395,7 +395,7 @@ export class CdkTarponStack extends cdk.Stack {
         statements: [
           new PolicyStatement({
             effect: Effect.ALLOW,
-            actions: ['secretsmanager:GetSecretValue'],
+            actions: ['secretsmanager:*'],
             resources: ['*'],
           }),
           new PolicyStatement({
@@ -419,6 +419,7 @@ export class CdkTarponStack extends cdk.Stack {
               webhookTarponChangeCaptureRetryQueue.queueArn,
               hammerheadChangeCaptureRetryQueue.queueArn,
               webhookDeliveryQueue.queueArn,
+              slackAlertQueue.queueArn,
             ],
           }),
           new PolicyStatement({
