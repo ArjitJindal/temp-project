@@ -365,7 +365,10 @@ export class CdkTarponStack extends cdk.Stack {
     }
 
     let roleName = `flagrightLambdaExecutionRole${getSuffix()}`
-    if (config.region !== 'asia-2') {
+
+    // On production the role name was set without a suffix, it's dangerous for us
+    // to change without downtime.
+    if (this.config.stage === 'prod' && config.region !== 'asia-2') {
       roleName += `-${config.region}`
     }
     const lambdaExecutionRole = new Role(this, `lambda-role`, {
