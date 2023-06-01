@@ -5741,6 +5741,8 @@ components:
           type: string
         fuzziness:
           type: number
+          minimum: 0
+          maximum: 1
         countryCodes:
           type: array
           items:
@@ -5876,6 +5878,8 @@ components:
                       type: boolean
                     fuzziness:
                       type: number
+                      minimum: 0
+                      maximum: 1
                 match_status:
                   type: string
                 risk_level:

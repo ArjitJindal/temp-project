@@ -106,6 +106,17 @@ export class SanctionsService {
     return responseWithId
   }
 
+  private getSanitizedFuzziness(
+    fuzziness: number | undefined
+  ): number | undefined {
+    // Sanization meants retunrning max 1 decimal place
+    if (fuzziness == null) {
+      return undefined
+    }
+
+    return Math.max(Math.round(fuzziness * 10) / 10, 0.1)
+  }
+
   private async complyAdvantageSearch(
     searchProfileId: string,
     request: SanctionsSearchRequest
@@ -115,7 +126,7 @@ export class SanctionsService {
         method: 'POST',
         body: JSON.stringify({
           search_term: request.searchTerm,
-          fuzziness: request.fuzziness,
+          fuzziness: this.getSanitizedFuzziness(request.fuzziness),
           search_profile: searchProfileId,
           filters: {
             country_codes: request.countryCodes,
