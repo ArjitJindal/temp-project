@@ -403,13 +403,7 @@ export class CdkTarponStack extends cdk.Stack {
           }),
           new PolicyStatement({
             effect: Effect.ALLOW,
-            actions: [
-              'sqs:ChangeMessageVisibility',
-              'sqs:DeleteMessage',
-              'sqs:GetQueueAttributes',
-              'sqs:GetQueueUrl',
-              'sqs:ReceiveMessage',
-            ],
+            actions: ['sqs:*'],
             resources: [
               auditLogQueue.queueArn,
               tarponChangeCaptureRetryQueue.queueArn,
@@ -437,6 +431,13 @@ export class CdkTarponStack extends cdk.Stack {
           new PolicyStatement({
             effect: Effect.ALLOW,
             actions: ['states:StartExecution'],
+            resources: ['*'],
+          }),
+
+          // TODO remove after initial deployment
+          new PolicyStatement({
+            effect: Effect.ALLOW,
+            actions: ['sts:AssumeRole'],
             resources: ['*'],
           }),
         ],
