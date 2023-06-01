@@ -36,8 +36,9 @@ describe('navigate sidebar', () => {
       .first()
       .should('have.length.gt', 0)
       .find('a[data-cy="transaction-id"]', { timeout: 10000 })
+      .should('be.visible')
       .eq(0)
-      .click();
+      .click({ force: true });
     cy.contains('h3', 'Origin (Sender) and Destination (Receiver) Details').should('be.visible');
 
     cy.visit('/case-management/cases', { timeout: 8000 });
@@ -50,8 +51,9 @@ describe('navigate sidebar', () => {
       .first()
       .should('have.length.gt', 0)
       .find('a[data-cy="case-id"]', { timeout: 10000 })
+      .should('be.visible')
       .eq(0)
-      .click();
+      .click({ force: true });
     cy.contains('h3', 'Alerts').should('be.visible');
 
     cy.visit('/users/list/consumer/all', { timeout: 8000 });
@@ -64,8 +66,9 @@ describe('navigate sidebar', () => {
       .first()
       .should('have.length.gt', 0)
       .find('a[data-cy="consumer-user-id"]', { timeout: 10000 })
+      .should('be.visible')
       .eq(0)
-      .click();
+      .click({ force: true });
     cy.contains('h3', 'User Details').should('be.visible');
 
     cy.visit('/users/list/business/all', { timeout: 8000 });
@@ -78,8 +81,9 @@ describe('navigate sidebar', () => {
       .first()
       .should('have.length.gt', 0)
       .find('a[data-cy="business-user-id"]', { timeout: 10000 })
+      .should('be.visible')
       .eq(0)
-      .click();
+      .click({ force: true });
     cy.contains('h3', 'User Details').should('be.visible');
   });
 });
