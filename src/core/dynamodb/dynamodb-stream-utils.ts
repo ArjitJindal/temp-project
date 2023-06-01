@@ -123,7 +123,7 @@ function getDynamoDbEntityMetadata(
       entityId: `KRS_VALUE:${entityId}`,
     }
   } else if (partitionKeyId.includes(ARS_KEY_IDENTIFIER)) {
-    const entityId = entity.userId
+    const entityId = entity.transactionId
     if (!entityId) {
       return null
     }
