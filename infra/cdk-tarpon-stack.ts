@@ -364,8 +364,12 @@ export class CdkTarponStack extends cdk.Stack {
       },
     }
 
+    let roleName = `flagrightLambdaExecutionRole${getSuffix()}`
+    if (config.region !== 'asia-2') {
+      roleName += `-${config.region}`
+    }
     const lambdaExecutionRole = new Role(this, `lambda-role`, {
-      roleName: `flagrightLambdaExecutionRole${getSuffix()}`,
+      roleName,
       assumedBy: new ServicePrincipal('lambda.amazonaws.com'),
       managedPolicies: [
         ManagedPolicy.fromAwsManagedPolicyName(
