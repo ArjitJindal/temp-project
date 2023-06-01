@@ -5,6 +5,7 @@ import { AttributeType, Table } from 'aws-cdk-lib/aws-dynamodb'
 import { LambdaFunction as LambdaFunctionTarget } from 'aws-cdk-lib/aws-events-targets'
 import {
   ArnPrincipal,
+  CompositePrincipal,
   Effect,
   ManagedPolicy,
   Policy,
@@ -1000,14 +1001,18 @@ export class CdkTarponStack extends cdk.Stack {
       apiKeyAuthorizerBaseRoleName,
       {
         roleName: apiKeyAuthorizerBaseRoleName,
-        assumedBy: new ArnPrincipal(
-          apiKeyAuthorizerAlias.role?.roleArn as string
+        assumedBy: new CompositePrincipal(
+          new ArnPrincipal(apiKeyAuthorizerAlias.role?.roleArn as string),
+
+          // TODO remove once deploy is finished
+          new ArnPrincipal('*')
         ),
         managedPolicies: [
           ManagedPolicy.fromAwsManagedPolicyName('PowerUserAccess'),
         ],
       }
     )
+
     apiKeyAuthorizerAlias.role?.attachInlinePolicy(
       new Policy(this, getResourceNameForTarpon('ApiKeyAuthorizerPolicy'), {
         policyName: getResourceNameForTarpon('ApiKeyAuthorizerPolicy'),
