@@ -72,10 +72,10 @@
   "dependencies": {
     "@ant-design/charts": "^1.4.2",
     "@ant-design/icons": "^4.5.0",
+    "@ant-design/pro-card": "1.20.13",
     "@ant-design/pro-descriptions": "^1.6.8",
     "@ant-design/pro-form": "^1.18.3",
     "@ant-design/pro-layout": "^6.15.3",
-    "@ant-design/pro-table": "^2.77.2",
     "@antv/l7-react": "^2.1.9",
     "@auth0/auth0-react": "^1.9.0",
     "@rjsf/antd": "^4.2.2",

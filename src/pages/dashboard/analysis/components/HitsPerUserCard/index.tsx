@@ -1,6 +1,5 @@
 /* eslint-disable @typescript-eslint/no-var-requires */
-import { ActionType } from '@ant-design/pro-table';
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useState } from 'react';
 import { RangeValue } from 'rc-picker/es/interface';
 import { Card } from 'antd';
 import _ from 'lodash';
@@ -35,13 +34,6 @@ export default function HitsPerUserCard(props: Props) {
   ]);
 
   const measure = useApiTime();
-
-  const actionRef = useRef<ActionType>();
-  useEffect(() => {
-    if (actionRef.current) {
-      actionRef.current?.reload();
-    }
-  }, [dateRange]);
 
   const helper = new ColumnHelper<TableItem>();
   const columns: TableColumn<TableItem>[] = helper.list([
