@@ -415,7 +415,6 @@ export const createMongoDBCollections = async (
         'caseStatus',
         'transactionState',
         'status',
-        'caseStatus',
         'executedRules.ruleId',
         'executedRules.ruleHit',
         'executedRules.ruleInstanceId',
@@ -807,10 +806,16 @@ export async function syncIndexes<T>(
       return
     }
 
-    if (!indexes.find((desired) => _.isEqual(desired, current))) {
+    // If index is not desired, delete it
+    if (!indexes.find((desired) => _.isEqual(desired, current.key))) {
       await collection.dropIndex(current.name)
     }
   })
 
-  await collection.createIndexes(indexes.map((key) => ({ key })))
+  const toCreate = indexes.filter(
+    (desired) =>
+      !currentIndexes.find((current) => _.isEqual(desired, current.key))
+  )
+
+  await collection.createIndexes(toCreate.map((key) => ({ key })))
 }
