@@ -25,6 +25,7 @@ import { Case } from '@/@types/openapi-internal/Case'
 import { AuditLog } from '@/@types/openapi-internal/AuditLog'
 import { WebhookConfiguration } from '@/@types/openapi-internal/WebhookConfiguration'
 import { logger } from '@/core/logger'
+import { exponentialRetry } from '@/utils/retry'
 
 interface DBCredentials {
   username: string
@@ -387,9 +388,6 @@ export const createMongoDBCollections = async (
     const transactionCollection = db.collection<InternalTransaction>(
       TRANSACTIONS_COLLECTION(tenantId)
     )
-    await transactionCollection.createIndex({
-      timestamp: -1,
-    })
 
     let txnIndexes: Document[] = [
       'timestamp',
@@ -817,5 +815,13 @@ export async function syncIndexes<T>(
       !currentIndexes.find((current) => _.isEqual(desired, current.key))
   )
 
-  await collection.createIndexes(toCreate.map((key) => ({ key })))
+  if (toCreate.length > 0) {
+    await exponentialRetry(
+      async () =>
+        await collection.createIndexes(toCreate.map((key) => ({ key })))
+    )
+  }
+  if (toCreate.length > 64) {
+    throw new Error("Can't create more than 64 indexes")
+  }
 }
