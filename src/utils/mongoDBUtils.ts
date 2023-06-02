@@ -1,12 +1,15 @@
 import { StackConstants } from '@lib/constants'
 import {
+  Collection,
   Db,
   Document,
   FindCursor,
   FindOptions,
+  IndexSpecification,
   MongoClient,
   WithId,
 } from 'mongodb'
+import _ from 'lodash'
 import { escapeStringRegexp } from './regex'
 import { getSecret } from './secrets-manager'
 import { MONGO_TEST_DB_NAME } from '@/test-utils/mongo-test-utils'
@@ -389,83 +392,81 @@ export const createMongoDBCollections = async (
       timestamp: -1,
     })
 
-    await Promise.all(
+    let txnIndexes: IndexSpecification[] = [
+      'timestamp',
+      'arsScore.arsScore',
+      'arsScore.riskLevel',
+      'transactionState',
+      'originUserId',
+      'destinationUserId',
+      'originAmountDetails.transactionAmount',
+      'destinationAmountDetails.transactionAmount',
+    ].flatMap((i) => {
+      return [
+        { [i]: 1, _id: 1 },
+        { [i]: -1, _id: -1 },
+      ]
+    })
+
+    txnIndexes = txnIndexes.concat(
       [
         'timestamp',
-        'arsScore.arsScore',
-        'arsScore.riskLevel',
+        'transactionId',
+        'type',
+        'caseStatus',
         'transactionState',
+        'status',
+        'caseStatus',
+        'executedRules.ruleId',
+        'executedRules.ruleHit',
+        'executedRules.ruleInstanceId',
+        'hitRules.ruleAction',
+        'originAmountDetails.country',
+        'destinationAmountDetails.country',
+        'originAmountDetails.transactionCurrency',
+        'destinationAmountDetails.transactionCurrency',
+        'originPaymentDetails.method',
+        'destinationPaymentDetails.method',
+        'originPaymentDetails.country',
+        'destinationPaymentDetails.country',
         'originUserId',
         'destinationUserId',
-        'originAmountDetails.transactionAmount',
-        'destinationAmountDetails.transactionAmount',
-      ].map(async (i) => {
-        await transactionCollection.createIndex({ [i]: 1, _id: 1 })
-        await transactionCollection.createIndex({ [i]: -1, _id: -1 })
-        return
-      })
+        'tags.key',
+      ].map((k) => ({ [k]: 1 }))
     )
 
-    await transactionCollection.createIndex({
-      type: 1,
-      status: 1,
-      timestamp: -1,
-    })
-    await transactionCollection.createIndex({ transactionId: 1 })
-    await transactionCollection.createIndex({
-      destinationUserId: 1,
-      timestamp: -1,
-    })
-    await transactionCollection.createIndex({ originUserId: 1, timestamp: -1 })
-    await transactionCollection.createIndex({
-      'destinationAmountDetails.transactionCurrency': 1,
-    })
-    await transactionCollection.createIndex({
-      'originAmountDetails.transactionCurrency': 1,
-    })
-    await transactionCollection.createIndex({
-      'destinationPaymentDetails.method': 1,
-    })
-    await transactionCollection.createIndex({
-      'originAmountDetails.country': 1,
-    })
-    await transactionCollection.createIndex({
-      'destinationPaymentDetails.country': 1,
-    })
-    await transactionCollection.createIndex({
-      'originPaymentDetails.method': 1,
-    })
-    await transactionCollection.createIndex({
-      'originPaymentDetails.method': 1,
-      'originPaymentDetails.paymentChannel': 1,
-    })
-    await transactionCollection.createIndex({
-      transactionState: 1,
-    })
-    await transactionCollection.createIndex({
-      type: 1,
-    })
-    await transactionCollection.createIndex({
-      'tags.key': 1,
-    })
-    await transactionCollection.createIndex({
-      'hitRules.ruleAction': 1,
-    })
-
     for (const fields of Object.values(PAYMENT_METHOD_IDENTIFIER_FIELDS)) {
-      await transactionCollection.createIndex({
+      txnIndexes.push({
         'originPaymentDetails.method': 1,
         ...Object.fromEntries(
           fields.map((field) => [`originPaymentDetails.${field}`, 1])
         ),
       })
-      await transactionCollection.createIndex({
+      txnIndexes.push({
         'destinationPaymentDetails.method': 1,
         ...Object.fromEntries(
           fields.map((field) => [`destinationPaymentDetails.${field}`, 1])
         ),
       })
     }
+
+    // TODO Do we need these indexes anymore?
+    txnIndexes.push({
+      'originPaymentDetails.method': 1,
+      'originPaymentDetails.paymentChannel': 1,
+    })
+    txnIndexes.push({
+      type: 1,
+      status: 1,
+      timestamp: -1,
+    })
+    txnIndexes.push({
+      destinationUserId: 1,
+      timestamp: -1,
+    })
+    txnIndexes.push({ originUserId: 1, timestamp: -1 })
+
+    await syncIndexes(transactionCollection, txnIndexes)
 
     try {
       await db.createCollection(USERS_COLLECTION(tenantId))
@@ -792,4 +793,29 @@ export async function allCollections(tenantId: string, db: Db) {
     .toArray()
 
   return collections.map((c) => c.name)
+}
+
+export async function syncIndexes<T>(
+  collection: Collection<T>,
+  indexes: IndexSpecification[]
+) {
+  const currentIndexes = await collection.indexes()
+  // Remove orphaned indexes
+  currentIndexes.map((current) => {
+    // Dont drop ID index
+    if (current.name === '_id_') {
+      return
+    }
+
+    if (!indexes.find((desired) => _.isEqual(desired, current))) {
+      collection.dropIndex(current.name)
+    }
+  })
+
+  // Create indexes
+  await Promise.allSettled(
+    indexes.map((i) => {
+      return collection.createIndex(i)
+    })
+  )
 }
