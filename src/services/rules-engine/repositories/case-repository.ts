@@ -145,6 +145,30 @@ export class CaseRepository {
   ): Promise<Filter<Case>[]> {
     const conditions: Filter<Case>[] = []
 
+    if (
+      params.filterAssignmentsIds != null &&
+      params.filterAssignmentsIds.length > 0
+    ) {
+      conditions.push({
+        $or: [
+          {
+            assignments: {
+              $elemMatch: {
+                assigneeUserId: { $in: params.filterAssignmentsIds },
+              },
+            },
+          },
+          {
+            reviewAssignments: {
+              $elemMatch: {
+                assigneeUserId: { $in: params.filterAssignmentsIds },
+              },
+            },
+          },
+        ],
+      })
+    }
+
     if (params.afterTimestamp != null || params.beforeTimestamp != null) {
       conditions.push({
         createdTimestamp: {
@@ -486,29 +510,6 @@ export class CaseRepository {
 
     const conditions = await this.getCasesConditions(params, true)
 
-    if (
-      params.filterAssignmentsIds != null &&
-      params.filterAssignmentsIds.length > 0
-    ) {
-      conditions.push({
-        $or: [
-          {
-            assignments: {
-              $elemMatch: {
-                assigneeUserId: { $in: params.filterAssignmentsIds },
-              },
-            },
-          },
-          {
-            reviewAssignments: {
-              $elemMatch: {
-                assigneeUserId: { $in: params.filterAssignmentsIds },
-              },
-            },
-          },
-        ],
-      })
-    }
     const filter = conditions.length > 0 ? { $and: conditions } : {}
 
     const preLimitPipeline: Document[] = []
