@@ -801,21 +801,18 @@ export async function syncIndexes<T>(
 ) {
   const currentIndexes = await collection.indexes()
   // Remove orphaned indexes
-  currentIndexes.map((current) => {
+  currentIndexes.map(async (current) => {
     // Dont drop ID index
     if (current.name === '_id_') {
       return
     }
 
     if (!indexes.find((desired) => _.isEqual(desired, current))) {
-      collection.dropIndex(current.name)
+      await collection.dropIndex(current.name)
     }
   })
 
-  // Create indexes
-  await Promise.allSettled(
-    indexes.map((i) => {
-      return collection.createIndex(i)
-    })
-  )
+  for (const i of indexes) {
+    await collection.createIndex(i)
+  }
 }
