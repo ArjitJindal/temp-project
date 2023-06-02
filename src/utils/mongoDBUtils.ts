@@ -5,7 +5,6 @@ import {
   Document,
   FindCursor,
   FindOptions,
-  IndexSpecification,
   MongoClient,
   WithId,
 } from 'mongodb'
@@ -392,7 +391,7 @@ export const createMongoDBCollections = async (
       timestamp: -1,
     })
 
-    let txnIndexes: IndexSpecification[] = [
+    let txnIndexes: Document[] = [
       'timestamp',
       'arsScore.arsScore',
       'arsScore.riskLevel',
@@ -797,9 +796,10 @@ export async function allCollections(tenantId: string, db: Db) {
 
 export async function syncIndexes<T>(
   collection: Collection<T>,
-  indexes: IndexSpecification[]
+  indexes: Document[]
 ) {
   const currentIndexes = await collection.indexes()
+
   // Remove orphaned indexes
   currentIndexes.map(async (current) => {
     // Dont drop ID index
@@ -812,7 +812,5 @@ export async function syncIndexes<T>(
     }
   })
 
-  for (const i of indexes) {
-    await collection.createIndex(i)
-  }
+  await collection.createIndexes(indexes.map((key) => ({ key })))
 }
