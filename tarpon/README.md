@@ -320,3 +320,4 @@ We can write tests in Postman and sync them to the repo using the following comm
 ```bash
 npm run postman:sync:collection
 ```
+

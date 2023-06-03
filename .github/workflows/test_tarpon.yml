@@ -15,10 +15,8 @@ on:
   pull_request:
     branches: [main]
     types: [opened, synchronize, reopened, ready_for_review]
-    paths-ignore:
-      - 'raptor'
-      - 'tarpon/infra'
-
+    paths:
+      - tarpon
 jobs:
   test:
     strategy:
