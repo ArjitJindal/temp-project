@@ -12,6 +12,7 @@ const LOCAL_OPENAPI_PATH = path.resolve(
   '..',
   '..',
   'tarpon',
+  'tarpon',
   'dist',
   'openapi',
   'internal',

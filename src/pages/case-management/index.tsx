@@ -99,7 +99,7 @@ export default function CaseManagementPage() {
             escalatedTransactionIds={[]}
             params={{
               ...params,
-              assignedTo: params.showCases === 'MY_ALERTS' ? [user.userId] : undefined,
+              assignedTo: params.showCases === 'MY_ALERTS' ? [user.userId] : params.assignedTo,
             }}
             onChangeParams={handleChangeParams}
           />
