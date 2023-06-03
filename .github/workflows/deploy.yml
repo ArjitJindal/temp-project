@@ -47,13 +47,13 @@ jobs:
         with:
           node-version: ${{ matrix.node-version }}
           cache: 'npm'
-          cache-dependency-path: 'tarpon/package-lock.json'
+          cache-dependency-path: 'tarpon/tarpon/package-lock.json'
       - run: npm ci
         if: steps.check.outputs.triggered == 'true'
-        working-directory: 'tarpon'
+        working-directory: 'tarpon/tarpon'
       - run: npm run openapi:prepare
         if: steps.check.outputs.triggered == 'true'
-        working-directory: 'tarpon'
+        working-directory: 'tarpon/tarpon'
       - name: Checkout PR branch
         if: steps.check.outputs.triggered == 'true'
         uses: actions/checkout@v3
@@ -84,7 +84,7 @@ jobs:
           commentArgs=($comment)
           TARPON_BRANCH_UNTRIMMED=${commentArgs[1]}
           export TARPON_BRANCH=${TARPON_BRANCH_UNTRIMMED##*( )}
-          cd tarpon
+          cd tarpon/tarpon
           if [ -n "$TARPON_BRANCH" ]
           then
             echo "Deploying tarpon with branch: $TARPON_BRANCH"
@@ -99,7 +99,7 @@ jobs:
 
           echo "Deploying Phytoplankton"
           npm run openapi:prepare
-          cd ../phytoplankton-console
+          cd ../../phytoplankton-console
           yarn run deploy:qa
           echo "phyto=${QA_SUBDOMAIN}" >> $GITHUB_OUTPUT
       - name: Comment PR
