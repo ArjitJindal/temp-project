@@ -70,6 +70,7 @@ export class CdkTarponPipelineStack extends cdk.Stack {
     const getSentryReleaseSpec = (production: boolean) => {
       return {
         commands: [
+          'cd tarpon',
           production
             ? undefined
             : `./node_modules/.bin/sentry-cli releases files ${getReleaseVersion(
@@ -121,10 +122,11 @@ export class CdkTarponPipelineStack extends cdk.Stack {
             'runtime-versions': {
               nodejs: 16,
             },
-            commands: ['npm ci'],
+            commands: ['cd tarpon', 'npm ci'],
           },
           build: {
             commands: [
+              'cd tarpon',
               ...installTerraform,
               'npm run build',
               ...devSandboxSentryReleaseSpec.commands,
@@ -183,6 +185,7 @@ export class CdkTarponPipelineStack extends cdk.Stack {
                 nodejs: 16,
               },
               commands: [
+                'cd tarpon',
                 'npm install @tsconfig/node16 ts-node typescript',
                 `export ATLAS_CREDENTIALS_SECRET_ARN=${config.application.ATLAS_CREDENTIALS_SECRET_ARN}`,
                 `export ENV=${env}`,
@@ -192,6 +195,7 @@ export class CdkTarponPipelineStack extends cdk.Stack {
             },
             build: {
               commands: [
+                'cd tarpon',
                 ...GENERATED_DIRS.map(
                   (dir) =>
                     `mv "$CODEBUILD_SRC_DIR_${buildOutput.artifactName}"/${dir} ${dir}`
@@ -211,6 +215,7 @@ export class CdkTarponPipelineStack extends cdk.Stack {
               ? {
                   post_build: {
                     commands: [
+                      'cd tarpon',
                       `export ENV=${env}`,
                       `export AWS_REGION=${config.env.region}`,
                       ...assumeRuleCommands,

@@ -33,7 +33,7 @@ jobs:
         with:
           node-version: ${{ matrix.node-version }}
           cache: 'npm'
-          cache-dependency-path: "tarpon/package-lock.json"
+          cache-dependency-path: "tarpon/tarpon/package-lock.json"
       - name: Use Node.js ${{ matrix.node-version }}
         uses: actions/setup-node@v3
         with:
@@ -41,7 +41,7 @@ jobs:
           cache: 'yarn'
           cache-dependency-path: "phytoplankton-console/yarn.lock"
       - run: npm ci
-        working-directory: "tarpon"
+        working-directory: "tarpon/tarpon"
       - name: Destroy
         run: |
           echo "Creating default AWS profile"
@@ -52,7 +52,7 @@ jobs:
           export QA_SUBDOMAIN="qa$(echo "${{ github.head_ref }}" | shasum | head -c5)"
           
           echo "Destroying QA deploy for $QA_SUBDOMAIN.api.flagright.dev"
-          cd tarpon
+          cd tarpon/tarpon
           npm run destroy:qa
           
           echo "Destroying QA deploy for $QA_SUBDOMAIN.console.flagright.dev if it exists"

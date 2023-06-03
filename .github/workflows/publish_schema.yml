@@ -31,9 +31,12 @@ jobs:
         with:
           node-version: '16'
           cache: 'npm'
+          cache-dependency-path: "tarpon/package-lock.json"
       - run: npm ci
+        working-directory: "tarpon"
       - name: Publish schemas
         run: npm run openapi:publish
+        working-directory: "tarpon"
         env:
           CONFIRM_PUSH_MAIN: true
           PUBLIC_PROJECT_TOKEN: ${{ secrets.STOPLIGHT_PUBLIC_PROJECT_TOKEN }}

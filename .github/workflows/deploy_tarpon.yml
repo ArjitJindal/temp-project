@@ -1,0 +1,124 @@
+name: Deploy to QA
+
+defaults:
+  run:
+    shell: bash
+    paths:
+      - 'tarpon'
+on:
+  issue_comment:
+    types: [ created ]
+
+jobs:
+  deploy:
+    strategy:
+      matrix:
+        node-version: [16.x]
+    runs-on: ubuntu-20.04
+    steps:
+      - uses: khan/pull-request-comment-trigger@v1.1.0
+        id: check
+        with:
+          trigger: '/deploy'
+          reaction: rocket
+        env:
+          GITHUB_TOKEN: ${{ secrets.DEPLOY_PAT }}
+      - name: Get PR branch
+        if: steps.check.outputs.triggered == 'true'
+        uses: xt0rted/pull-request-comment-branch@v1
+        id: comment-branch
+      - name: Set latest commit status as pending
+        if: steps.check.outputs.triggered == 'true'
+        uses: myrotvorets/set-commit-status-action@master
+        with:
+          sha: ${{ steps.comment-branch.outputs.head_sha }}
+          token: ${{ secrets.DEPLOY_PAT }}
+          status: pending
+          context: Deploy to QA
+      - name: Checkout PR branch
+        if: steps.check.outputs.triggered == 'true'
+        uses: actions/checkout@v3
+        with:
+          ref: ${{ steps.comment-branch.outputs.head_ref }}
+          path: "tarpon"
+          clean: false
+      - name: Use Node.js ${{ matrix.node-version }}
+        if: steps.check.outputs.triggered == 'true'
+        uses: actions/setup-node@v3
+        with:
+          node-version: ${{ matrix.node-version }}
+          cache: 'npm'
+          cache-dependency-path: "tarpon/tarpon/package-lock.json"
+      - run: npm ci
+        if: steps.check.outputs.triggered == 'true'
+        working-directory: "tarpon/tarpon"
+      - run: npm run openapi:prepare
+        if: steps.check.outputs.triggered == 'true'
+        working-directory: "tarpon/tarpon"
+      - name: Checkout Phytoplankton
+        if: steps.check.outputs.triggered == 'true'
+        uses: actions/checkout@v3
+        with:
+          repository: flagright/phytoplankton-console
+          token: ${{ secrets.DEPLOY_PAT }}
+          path: "phytoplankton-console"
+      - name: Use Node.js ${{ matrix.node-version }}
+        if: steps.check.outputs.triggered == 'true'
+        uses: actions/setup-node@v3
+        with:
+          node-version: ${{ matrix.node-version }}
+          cache: 'yarn'
+          cache-dependency-path: "phytoplankton-console/yarn.lock"
+      - name: Deploy
+        id: deploy
+        if: steps.check.outputs.triggered == 'true'
+        run: |
+          export QA=true
+          export NODE_OPTIONS="--max-old-space-size=8192"
+          echo "Create default AWS profile"
+          mkdir ~/.aws
+          printf "[default]\nregion = eu-central-1\naws_access_key_id=${{ secrets.DEV_AWS_ACCESS_KEY_ID }}\naws_secret_access_key=${{ secrets.DEV_AWS_SECRET_ACCESS_KEY }}" > ~/.aws/credentials
+          cat ~/.aws/credentials
+          export QA_SUBDOMAIN="qa$(echo "${{ steps.comment-branch.outputs.head_ref }}" | shasum | head -c5)"
+          
+          echo "Deploying Tarpon"
+          cd tarpon/tarpon
+          npm run deploy:qa
+
+          comment="${{ github.event.comment.body }}"
+          commentArgs=($comment)
+          export PHYTOPLANKTON_BRANCH=${commentArgs[1]}
+          export TARPON_BRANCH=${{ steps.comment-branch.outputs.head_ref }}
+          cd ../../phytoplankton-console
+          if [ -n "$PHYTOPLANKTON_BRANCH" ]
+          then
+            echo "Deploying phytoplankton with branch: $PHYTOPLANKTON_BRANCH"
+            git fetch origin $PHYTOPLANKTON_BRANCH
+            git checkout origin/$PHYTOPLANKTON_BRANCH
+          else
+            echo "Deploying phytoplankton from main"
+          fi
+          yarn run deploy:qa
+          echo "phyto=${QA_SUBDOMAIN}" >> $GITHUB_OUTPUT
+          echo "tarpon=${QA_SUBDOMAIN}.api" >> $GITHUB_OUTPUT
+      - name: Comment PR
+        if: steps.check.outputs.triggered == 'true'
+        uses: thollander/actions-comment-pull-request@v2
+        with:
+          message: |
+            Branch deployed!
+            Frontend: https://${{ steps.deploy.outputs.phyto }}.console.flagright.dev
+            Backend: https://${{ steps.deploy.outputs.tarpon }}.flagright.dev
+      - name: Run integration tests
+        if: steps.check.outputs.triggered == 'true'
+        run: |
+          cd tarpon/tarpon
+          DOMAIN=https://${{ steps.deploy.outputs.tarpon }}.flagright.dev npm run postman:integration:dev
+      - name: Set latest commit status as ${{ job.status }}
+        if: always() && steps.check.outputs.triggered == 'true'
+        uses: myrotvorets/set-commit-status-action@master
+        with:
+          sha: ${{ steps.comment-branch.outputs.head_sha }}
+          token: ${{ secrets.DEPLOY_PAT }}
+          status: ${{ job.status }}
+          context: Deploy to QA
