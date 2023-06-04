@@ -13,7 +13,6 @@ interface Props {
 export default function Property(props: Props) {
   const { item, labelProps } = props;
   const { schema, name } = item;
-
   const settings = useJsonSchemaEditorSettings();
 
   let labelElement: 'div' | 'label' = 'div';

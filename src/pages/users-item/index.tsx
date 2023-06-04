@@ -5,6 +5,7 @@ import { useState } from 'react';
 import UserDetails from './UserDetails';
 import Header from './Header';
 import s from './index.module.less';
+import CRMMonitoring from './UserDetails/CRMMonitoring';
 import { useI18n } from '@/locales';
 import PageWrapper, { PAGE_WRAPPER_PADDING } from '@/components/PageWrapper';
 import { makeUrl } from '@/utils/routing';
@@ -27,6 +28,7 @@ import { HEADER_HEIGHT } from '@/components/AppWrapper/Header';
 import { useElementSize } from '@/utils/browser';
 import AlertsCard from '@/pages/users-item/UserDetails/AlertsCard';
 import { useFeatureEnabled } from '@/components/AppWrapper/Providers/SettingsProvider';
+import BrainIcon from '@/components/ui/icons/brain-icon.react.svg';
 
 function UserItem() {
   const { list, id, tab = 'user-details' } = useParams<'list' | 'id' | 'tab'>(); // todo: handle nulls properly
@@ -35,6 +37,7 @@ function UserItem() {
   const measure = useApiTime();
   const queryClient = useQueryClient();
   const isMLDemoEnabled = useFeatureEnabled('MACHINE_LEARNING_DEMO');
+  const isSalesForceEnabled = useFeatureEnabled('SALESFORCE');
 
   const queryResult = useQuery<InternalConsumerUser | InternalBusinessUser>(
     USERS_ITEM(id as string),
@@ -124,6 +127,22 @@ function UserItem() {
                 isClosable: false,
                 isDisabled: false,
               },
+              ...(isSalesForceEnabled
+                ? [
+                    {
+                      tab: (
+                        <div className={s.icon}>
+                          {' '}
+                          <BrainIcon /> <span>&nbsp; CRM data</span>
+                        </div>
+                      ),
+                      key: 'crm-monitoring',
+                      children: <CRMMonitoring userId={user.userId} />,
+                      isClosable: false,
+                      isDisabled: false,
+                    },
+                  ]
+                : []),
               ...(user.type === 'BUSINESS' && isMLDemoEnabled
                 ? [
                     {
