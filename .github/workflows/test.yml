@@ -24,10 +24,15 @@ jobs:
         with:
           node-version: ${{ matrix.node-version }}
           cache: 'yarn'
+          cache-dependency-path: "phytoplankton-console/yarn.lock"
       - run: yarn install --frozen-lockfile
+        working-directory: "phytoplankton-console"
       - run: yarn run build:dev
+        working-directory: "phytoplankton-console"
       - run: yarn run lint
+        working-directory: "phytoplankton-console"
       - run: yarn run tsc
+        working-directory: "phytoplankton-console"
   # If we have more than one job in the future and we require all jobs to pass before we can
   # merge a PR. Consider to use https://github.com/marketplace/actions/alls-green (related to: https://github.com/orgs/community/discussions/26733).
   # Otherwise we'll need to manually add any new jobs to be required for the branch protection settings in the GitHub repo.

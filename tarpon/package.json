@@ -79,7 +79,6 @@
     "dev:api:public-sanctions": "API=PUBLIC_SANCTIONS npm run start-local-api",
     "dev:api:console": "API=CONSOLE npm run start-local-api",
     "dev": "ENV=local npm run parallel dev:databases dev:api",
-    "prepare": "cd ../ && husky install ./tarpon/.husky",
     "_migrator": "ts-node --transpileOnly scripts/migrations/migrator.ts",
     "migration:pre:create": "MIGRATION_TYPE=PRE_DEPLOYMENT ENV=local npm run _migrator create -- --name $npm_config_name.ts --allow-extension .ts",
     "migration:pre:up": "MIGRATION_TYPE=PRE_DEPLOYMENT npm run _migrator up",

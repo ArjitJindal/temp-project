@@ -55,7 +55,6 @@
     "tsc:watch": "tsc --noEmit --watch",
     "cypress:open": "cypress open",
     "cypress:test:dev": "cypress run",
-    "postinstall": "husky install"
   },
   "lint-staged": {
     "**/*.less": "stylelint --syntax less",

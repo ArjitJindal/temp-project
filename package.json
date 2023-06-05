@@ -1,0 +1,22 @@
+{
+  "name": "tarpon",
+  "version": "1.0.0",
+  "description": "`phytoplankton` - Frontend code for the console `tarpon` - Our backend API `raptor` - Our ML stack",
+  "main": "index.js",
+  "scripts": {
+    "prepare": "husky install .husky"
+  },
+  "devDependencies": {
+    "husky": "^8.0.1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/flagright/tarpon.git"
+  },
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/flagright/tarpon/issues"
+  },
+  "homepage": "https://github.com/flagright/tarpon#readme"
+}
