@@ -106,7 +106,7 @@ export function useTanstackTable<
   partiallySelectedIds?: string[];
   onSelect?: (ids: string[]) => void;
   isRowSelectionEnabled: boolean | ((row: Row<TableRow<Item>>) => boolean);
-  isExpandable: boolean;
+  isExpandable: boolean | ((row: TableRow<Item>) => boolean);
   isSortable: boolean;
   defaultSorting?: SortingParamsItem;
   onExpandedMetaChange?: (meta: { isAllExpanded: boolean }) => void;
@@ -133,6 +133,41 @@ export function useTanstackTable<
   const [columnPinning, setColumnPinning] = extraTableContext.columnPinning;
   const [columnSizing, setColumnSizing] = extraTableContext.columnSizing;
   const [columnVisibility, setColumnVisibility] = extraTableContext.columnVisibility;
+
+  const data = getOr(dataRes, { items: [] });
+  const preparedData: TableRow<Item>[] = useMemo(() => {
+    let rowIndex = 0;
+    return (data.items ?? []).flatMap((item, itemIndex): TableRow<Item>[] => {
+      if (isMultiRows(item)) {
+        const rows = item.rows ?? [];
+        return rows.map((row, i) => ({
+          spanBy: item.spanBy,
+          content: row,
+          rowsCount: rows.length,
+          rowIndex: rowIndex++,
+          itemIndex: itemIndex,
+          isFirstRow: i === 0,
+          isLastRow: i === rows.length - 1,
+        }));
+      } else {
+        return [
+          {
+            spanBy: [],
+            content: item,
+            rowsCount: 1,
+            rowIndex: rowIndex++,
+            itemIndex: itemIndex,
+            isFirstRow: true,
+            isLastRow: true,
+          },
+        ];
+      }
+    });
+  }, [data.items]);
+
+  const isAnythingExpandable =
+    typeof isExpandable === 'boolean' ? isExpandable : preparedData.some((x) => isExpandable(x));
+  console.log('isAnythingExpandable', isAnythingExpandable);
 
   const columnDefs = useMemo(() => {
     const columnHelper = TanTable.createColumnHelper<TableRow<Item>>();
@@ -237,52 +272,21 @@ export function useTanstackTable<
       return columnDef.columns?.map((column): string => column.id ?? '') ?? [];
     });
     return [
-      ...(isExpandable ? [EXPAND_COLUMN_ID] : []),
+      ...(isAnythingExpandable ? [EXPAND_COLUMN_ID] : []),
       ...(isRowSelectionEnabled ? [SELECT_COLUMN_ID] : []),
       ...result,
     ];
-  }, [isRowSelectionEnabled, isExpandable, columnDefs, columnOrder]);
+  }, [isRowSelectionEnabled, isAnythingExpandable, columnDefs, columnOrder]);
 
   const allColumns = useMemo(
     (): TanTable.ColumnDef<TableRow<Item>>[] => [
-      ...(isExpandable ? [EXPAND_COLUMN as TanTable.ColumnDef<TableDataItem<Item>>] : []),
+      ...(isAnythingExpandable ? [EXPAND_COLUMN as TanTable.ColumnDef<TableDataItem<Item>>] : []),
       ...(isRowSelectionEnabled ? [SELECT_COLUMN as TanTable.ColumnDef<TableDataItem<Item>>] : []),
       ...(columnDefs as any), // todo: fix any
       SPACER_COLUMN,
     ],
-    [isExpandable, isRowSelectionEnabled, columnDefs],
+    [isAnythingExpandable, isRowSelectionEnabled, columnDefs],
   );
-  const data = getOr(dataRes, { items: [] });
-
-  const preparedData: TableRow<Item>[] = useMemo(() => {
-    let rowIndex = 0;
-    return (data.items ?? []).flatMap((item, itemIndex): TableRow<Item>[] => {
-      if (isMultiRows(item)) {
-        const rows = item.rows ?? [];
-        return rows.map((row, i) => ({
-          spanBy: item.spanBy,
-          content: row,
-          rowsCount: rows.length,
-          rowIndex: rowIndex++,
-          itemIndex: itemIndex,
-          isFirstRow: i === 0,
-          isLastRow: i === rows.length - 1,
-        }));
-      } else {
-        return [
-          {
-            spanBy: [],
-            content: item,
-            rowsCount: 1,
-            rowIndex: rowIndex++,
-            itemIndex: itemIndex,
-            isFirstRow: true,
-            isLastRow: true,
-          },
-        ];
-      }
-    });
-  }, [data.items]);
 
   const paginationState = {
     pageSize: params.pageSize,
@@ -306,7 +310,9 @@ export function useTanstackTable<
     },
 
     getCoreRowModel: TanTable.getCoreRowModel(),
-    getRowCanExpand: () => isExpandable,
+    getRowCanExpand: (row) => {
+      return typeof isExpandable === 'boolean' ? isExpandable : isExpandable(row.original);
+    },
     manualSorting: isSortable,
     enableSorting: isSortable,
     manualPagination: true,
@@ -317,7 +323,7 @@ export function useTanstackTable<
     // eslint-disable-next-line @typescript-eslint/ban-ts-comment
     // @ts-ignore
     enableRowSelection: isRowSelectionEnabled,
-    enableExpanding: isExpandable,
+    enableExpanding: isAnythingExpandable,
     state: {
       sorting: sorting,
       expanded: expanded,

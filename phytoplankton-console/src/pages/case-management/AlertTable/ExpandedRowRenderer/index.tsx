@@ -1,7 +1,7 @@
 import React from 'react';
 import { TableAlertItem } from '../types';
 import TransactionsAndComments from './TransactionsAndComments';
-import ScreeningMatchList from './ScreeningMatchList';
+import ScreeningMatchList from '@/components/ScreeningMatchList';
 
 interface Props {
   alert: TableAlertItem;
@@ -13,8 +13,8 @@ interface Props {
 export default function ExpandedRowRenderer(props: Props) {
   const { alert, selectedTransactionIds, onTransactionSelect, escalatedTransactionIds } = props;
 
-  if (alert.ruleHitMeta?.sanctionsDetails) {
-    return <ScreeningMatchList alert={alert} />;
+  if (alert.ruleNature === 'SCREENING' && alert.ruleHitMeta?.sanctionsDetails) {
+    return <ScreeningMatchList details={alert.ruleHitMeta?.sanctionsDetails ?? []} />;
   }
 
   return (

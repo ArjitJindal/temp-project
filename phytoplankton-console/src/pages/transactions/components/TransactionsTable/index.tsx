@@ -2,6 +2,8 @@ import React, { useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { Tag } from 'antd';
 import DetailsViewButton from '../DetailsViewButton';
+import ExpandedRowRenderer from './ExpandedRowRenderer';
+import { isTransactionHasDetails } from './ExpandedRowRenderer/helpers';
 import {
   Alert,
   ExecutedRulesResult,
@@ -367,6 +369,8 @@ export default function TransactionsTable(props: Props) {
       disableSorting={disableSorting}
       fitHeight={fitHeight}
       paginationBorder
+      isExpandable={(row) => isTransactionHasDetails(row.content)}
+      renderExpanded={(entity) => <ExpandedRowRenderer transaction={entity} />}
       extraTools={[
         () => (
           <>

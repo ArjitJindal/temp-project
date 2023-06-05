@@ -5,7 +5,6 @@ import { Helmet } from 'react-helmet';
 import Providers, { StorybookMockProviders } from './Providers';
 import Menu from './Menu';
 import Header from './Header';
-
 import s from './styles.module.less';
 import ErrorBoundary from '@/components/ErrorBoundary';
 import StorybookPage from '@/pages/storybook';

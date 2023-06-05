@@ -47,23 +47,23 @@ export default function AIInsightsCard(props: Props) {
   }, [refresh]);
 
   return (
-    <AsyncResourceRenderer resource={queryResult.data}>
-      {(summariesResponse) => (
-        <Card.Root
-          header={title != null ? { title, collapsableKey } : undefined}
-          updateCollapseState={updateCollapseState}
-        >
-          {summariesResponse.data && (
+    <Card.Root
+      header={title != null ? { title, collapsableKey } : undefined}
+      updateCollapseState={updateCollapseState}
+    >
+      <AsyncResourceRenderer resource={queryResult.data}>
+        {(summariesResponse) =>
+          summariesResponse.data && (
             <Summaries
               userId={user.userId}
               summaries={summariesResponse.data}
               showHistory={true}
               onRefresh={() => setRefresh(true)}
             />
-          )}
-        </Card.Root>
-      )}
-    </AsyncResourceRenderer>
+          )
+        }
+      </AsyncResourceRenderer>
+    </Card.Root>
   );
 }
 

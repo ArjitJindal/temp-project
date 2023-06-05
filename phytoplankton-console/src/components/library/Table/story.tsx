@@ -581,7 +581,55 @@ export default function (): JSX.Element {
                 items: data.slice(0, 10),
               }}
               renderExpanded={(item) => {
+                return <h1>Bio: {item.bio}</h1>;
+              }}
+            />
+          )}
+        </WithParams>
+      </UseCase>
+      <UseCase title="Partial expanding">
+        <WithParams>
+          {(params, onChangeParams) => (
+            <Table<TableItem>
+              tableId="partial_expanding_table"
+              rowKey="id"
+              params={params}
+              onChangeParams={onChangeParams}
+              columns={[
+                {
+                  key: 'bio',
+                  type: LONG_TEXT,
+                  title: 'Bio',
+                  filtering: true,
+                  sorting: true,
+                } as SimpleColumn<TableItem, 'bio'>,
+                {
+                  title: 'Name',
+                  children: [
+                    {
+                      key: 'firstName',
+                      type: STRING,
+                      title: 'First name',
+                      filtering: true,
+                    } as SimpleColumn<TableItem, 'firstName'>,
+                    {
+                      key: 'lastName',
+                      type: STRING,
+                      title: 'Last name',
+                      filtering: true,
+                      sorting: 'desc',
+                    } as SimpleColumn<TableItem, 'lastName'>,
+                  ],
+                },
+              ]}
+              data={{
+                items: data.slice(0, 10),
+              }}
+              renderExpanded={(item) => {
                 return <h1>Bit: {item.bio}</h1>;
+              }}
+              isExpandable={(row) => {
+                return row.content.age > 45;
               }}
             />
           )}

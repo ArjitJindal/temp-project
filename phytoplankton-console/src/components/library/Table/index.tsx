@@ -57,6 +57,7 @@ export interface Props<Item extends object, Params extends object = CommonParams
   disableSorting?: boolean;
   extraFilters?: ExtraFilter<Params>[];
   extraTools?: ToolRenderer[];
+  isExpandable?: (item: TableRow<Item>) => boolean;
   renderExpanded?: (item: Item) => JSX.Element;
   fitHeight?: boolean | number;
   fixedExpandedContainer?: boolean;
@@ -103,6 +104,7 @@ function Table<Item extends object, Params extends object = CommonParams>(
     paginationBorder = false,
     cursor,
     onExpandedMetaChange,
+    isExpandable,
   } = props;
   const dataRes: AsyncResource<TableData<Item>> = useMemo(() => {
     return 'items' in props.data ? success(props.data) : props.data;
@@ -125,7 +127,6 @@ function Table<Item extends object, Params extends object = CommonParams>(
     [onChangeParams],
   );
 
-  const isExpandable = renderExpanded != null;
   const table = useTanstackTable<Item, Params>({
     dataRes: dataRes,
     rowKey: rowKey,
@@ -137,7 +138,7 @@ function Table<Item extends object, Params extends object = CommonParams>(
     onSelect,
     onEdit,
     isRowSelectionEnabled: selection || selectionActions.length > 0,
-    isExpandable: isExpandable,
+    isExpandable: renderExpanded == null ? false : isExpandable == null ? true : isExpandable,
     isSortable: !disableSorting,
     defaultSorting: defaultSorting,
     onExpandedMetaChange: onExpandedMetaChange,

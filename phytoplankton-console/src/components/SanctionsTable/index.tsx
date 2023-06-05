@@ -29,8 +29,8 @@ interface Props {
   searchId?: string;
   queryResult: QueryResult<TableData<ComplyAdvantageSearchHit>>;
   extraTools?: ToolRenderer[];
-  params: AllParams<TableSearchParams>;
-  onChangeParams: (newParams: AllParams<TableSearchParams>) => void;
+  params?: AllParams<TableSearchParams>;
+  onChangeParams?: (newParams: AllParams<TableSearchParams>) => void;
 }
 
 export default function SanctionsTable(props: Props) {
@@ -173,7 +173,7 @@ export default function SanctionsTable(props: Props) {
         toolsOptions={{
           reload: false,
         }}
-        fitHeight={!isEmbedded}
+        fitHeight={isEmbedded ? 400 : true}
       />
       {selectedSearchHit && (
         <SearchResultDetailsModal
