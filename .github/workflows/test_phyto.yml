@@ -27,11 +27,21 @@ jobs:
         uses: actions/setup-node@v3
         with:
           node-version: ${{ matrix.node-version }}
+          cache: 'npm'
+          cache-dependency-path: "tarpon/package-lock.json"
+      - name: Use Node.js ${{ matrix.node-version }}
+        uses: actions/setup-node@v3
+        with:
+          node-version: ${{ matrix.node-version }}
           cache: 'yarn'
           cache-dependency-path: "phytoplankton-console/yarn.lock"
+      - run: npm ci
+        working-directory: "tarpon"
+      - run: npm run openapi:prepare
+        working-directory: "tarpon"
       - run: yarn install --frozen-lockfile
         working-directory: "phytoplankton-console"
-      - run: yarn run build:dev
+      - run: yarn run build:local
         working-directory: "phytoplankton-console"
       - run: yarn run lint
         working-directory: "phytoplankton-console"

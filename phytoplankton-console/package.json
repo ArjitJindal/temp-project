@@ -26,6 +26,7 @@
     "deploy:prod:clean": "npm run clear && yarn && npm run aws-sso-login --profile=AWSAdministratorAccess-870721492449 && npm run build:prod && npm run synth:prod && npm run deploy:prod -- --profile=AWSAdministratorAccess-870721492449",
     "deploy:pipeline": "cdk deploy phytoplankton-pipeline --profile=AWSAdministratorAccess-073830519512",
     "deploy:pipeline:clean": "npm run aws-sso-login:deploy && npm run synth:pipeline && npm run deploy:pipeline",
+    "build:local": "ENV=local npm run openapi:build && cross-env ENV=local node build",
     "build:dev": "npm run openapi:build && cross-env ENV=dev node build",
     "build:sandbox": "npm run openapi:build && cross-env ENV=sandbox node build",
     "build:prod": "npm run openapi:build && cross-env ENV=prod node build",
