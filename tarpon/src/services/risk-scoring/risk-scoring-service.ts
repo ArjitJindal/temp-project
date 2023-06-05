@@ -2,6 +2,7 @@ import { DynamoDBDocumentClient } from '@aws-sdk/lib-dynamodb'
 import _ from 'lodash'
 import { FindCursor, MongoClient } from 'mongodb'
 import { UserRepository } from '../users/repositories/user-repository'
+import { isConsumerUser } from '../rules-engine/utils/user-rule-utils'
 import { RiskRepository } from './repositories/risk-repository'
 import {
   DEFAULT_RISK_LEVEL,
@@ -239,10 +240,14 @@ export class RiskScoringService {
     score: number
     components: RiskScoreComponent[]
   }> {
+    const isUserConsumerUser = isConsumerUser(user)
     const components = await this.getRiskFactorScores(
       ['BUSINESS', 'CONSUMER_USER'],
       user,
-      riskFactors || [],
+      riskFactors?.filter(
+        ({ riskEntityType }) =>
+          riskEntityType === (isUserConsumerUser ? 'CONSUMER_USER' : 'BUSINESS')
+      ) || [],
       riskClassificationValues
     )
 
@@ -287,6 +292,7 @@ export class RiskScoringService {
     const riskFactors = await this.riskRepository.getParameterRiskItems()
     const riskClassificationValues =
       await this.riskRepository.getRiskClassificationValues()
+
     const { score, components } = await this.calculateKrsScore(
       user,
       riskClassificationValues,

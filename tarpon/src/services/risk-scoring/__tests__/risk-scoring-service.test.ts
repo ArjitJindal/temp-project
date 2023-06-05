@@ -1,5 +1,8 @@
 import { RiskScoringService } from '..'
-import { RiskRepository } from '../repositories/risk-repository'
+import {
+  DEFAULT_CLASSIFICATION_SETTINGS,
+  RiskRepository,
+} from '../repositories/risk-repository'
 import { dynamoDbSetupHook } from '@/test-utils/dynamodb-test-utils'
 import { getTestTenantId } from '@/test-utils/tenant-test-utils'
 import { getTestUser, setUpUsersHooks } from '@/test-utils/user-test-utils'
@@ -11,6 +14,7 @@ import {
   TEST_VARIABLE_RISK_ITEM,
 } from '@/test-utils/pulse-test-utils'
 import { getMongoDbClient } from '@/utils/mongoDBUtils'
+import { ParameterAttributeRiskValues } from '@/@types/openapi-internal/ParameterAttributeRiskValues'
 
 const dynamoDb = getDynamoDbClient()
 withFeatureHook(['PULSE'])
@@ -183,5 +187,189 @@ describe('Risk Scoring', () => {
         destinationUserId: testUser2.userId,
       })
     )
+  })
+})
+
+const TEST_PARAMETERS = [
+  {
+    parameterType: 'VARIABLE',
+    isDerived: false,
+    riskLevelAssignmentValues: [
+      {
+        parameterValue: {
+          content: {
+            kind: 'MULTIPLE',
+            values: [
+              {
+                kind: 'LITERAL',
+                content: 'REGISTERED',
+              },
+            ],
+          },
+        },
+        riskLevel: 'LOW',
+      },
+    ],
+    parameter: 'legalEntity.companyGeneralDetails.userRegistrationStatus',
+    isActive: true,
+    riskEntityType: 'BUSINESS',
+  },
+  {
+    parameterType: 'VARIABLE',
+    isDerived: false,
+    riskLevelAssignmentValues: [
+      {
+        parameterValue: {
+          content: {
+            kind: 'MULTIPLE',
+            values: [
+              {
+                kind: 'LITERAL',
+                content: 'IN',
+              },
+            ],
+          },
+        },
+        riskLevel: 'VERY_LOW',
+      },
+    ],
+    parameter: 'legalEntity.companyRegistrationDetails.registrationCountry',
+    isActive: true,
+    riskEntityType: 'BUSINESS',
+  },
+  {
+    parameterType: 'VARIABLE',
+    isDerived: true,
+    riskLevelAssignmentValues: [
+      {
+        parameterValue: {
+          content: {
+            kind: 'MULTIPLE',
+            values: [
+              {
+                kind: 'LITERAL',
+                content: 'BUSINESS',
+              },
+            ],
+          },
+        },
+        riskLevel: 'LOW',
+      },
+    ],
+    parameter: 'type',
+    isActive: true,
+    riskEntityType: 'BUSINESS',
+  },
+  {
+    parameterType: 'VARIABLE',
+    isDerived: true,
+    riskLevelAssignmentValues: [
+      {
+        parameterValue: {
+          content: {
+            kind: 'MULTIPLE',
+            values: [
+              {
+                kind: 'LITERAL',
+                content: 'CONSUMER',
+              },
+            ],
+          },
+        },
+        riskLevel: 'MEDIUM',
+      },
+    ],
+    parameter: 'type',
+    isActive: true,
+    riskEntityType: 'CONSUMER_USER',
+  },
+  {
+    parameterType: 'VARIABLE',
+    isDerived: false,
+    riskLevelAssignmentValues: [
+      {
+        parameterValue: {
+          content: {
+            kind: 'MULTIPLE',
+            values: [
+              {
+                kind: 'LITERAL',
+                content: 'PK',
+              },
+            ],
+          },
+        },
+        riskLevel: 'MEDIUM',
+      },
+    ],
+    parameter: 'userDetails.countryOfResidence',
+    isActive: true,
+    riskEntityType: 'CONSUMER_USER',
+  },
+] as ParameterAttributeRiskValues[]
+
+describe('Risk Scoring Service KRS', () => {
+  it('Should only check for Consumer Risk Score', async () => {
+    const dynamoDb = await getDynamoDbClient()
+    const mongoDb = await getMongoDbClient()
+
+    const riskScoringService = new RiskScoringService(testTenantId, {
+      dynamoDb,
+      mongoDb,
+    })
+
+    const testUser = getTestUser({
+      createdTimestamp: 1685969811000,
+      userId: 'test-user-0',
+      reasonForAccountOpening: ['Payment', 'Deposits'],
+      userDetails: {
+        name: {
+          firstName: 'Aman Ji',
+          lastName: 'Dugar',
+        },
+        dateOfBirth: '2007-01-15',
+        countryOfResidence: 'IN',
+        countryOfNationality: 'PK',
+      },
+      legalDocuments: [
+        {
+          documentType: 'passport',
+          documentNumber: 'CB33GME6',
+          documentIssuedDate: 1639939034,
+          documentExpirationDate: 1839939034,
+          documentIssuedCountry: 'US',
+        },
+      ],
+      tags: [
+        {
+          key: 'hello',
+          value: 'wallet',
+        },
+      ],
+    })
+
+    const { components, score } = await riskScoringService.calculateKrsScore(
+      testUser,
+      DEFAULT_CLASSIFICATION_SETTINGS,
+      TEST_PARAMETERS
+    )
+
+    expect(score).toEqual(70)
+    expect(components).toMatchObject([
+      {
+        entityType: 'CONSUMER_USER',
+        parameter: 'type',
+        riskLevel: 'MEDIUM',
+        value: 'CONSUMER',
+        score: 50,
+      },
+      {
+        entityType: 'CONSUMER_USER',
+        parameter: 'userDetails.countryOfResidence',
+        riskLevel: 'VERY_HIGH',
+        value: 'IN',
+        score: 90,
+      },
+    ])
   })
 })
