@@ -9,3 +9,7 @@ export async function everyAsync<T>(
   }
   return true
 }
+
+export function notNullish<T>(value: T | undefined | null): value is T {
+  return value != null
+}

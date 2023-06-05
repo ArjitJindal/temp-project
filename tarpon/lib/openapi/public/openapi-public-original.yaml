@@ -4836,6 +4836,10 @@ components:
         - LEGAL_NAME
         - SHAREHOLDER
         - DIRECTOR
+        - NAME_ON_CARD
+        - PAYMENT_NAME
+        - PAYMENT_BENEFICIARY_NAME
+        - BANK_NAME
     BusinessEntityLink:
       title: BusinessEntityLink
       x-stoplight:
