@@ -37,6 +37,8 @@ export default function TransactionsAndComments(props: Props) {
       if (alertId == null) {
         throw new Error(`Unable to fetch transactions for alert, it's id is empty`);
       }
+      const [sortField, sortOrder] = params.sort[0] ?? [];
+
       return await measure(
         () =>
           api.getAlertTransactionList({
@@ -49,6 +51,8 @@ export default function TransactionsAndComments(props: Props) {
             userId: params.userFilterMode === 'ALL' ? params.userId : undefined,
             originUserId: params.userFilterMode === 'ORIGIN' ? params.userId : undefined,
             destinationUserId: params.userFilterMode === 'DESTINATION' ? params.userId : undefined,
+            sortField: sortField ?? undefined,
+            sortOrder: sortOrder ?? undefined,
           }),
         'Get Alert Transactions',
       );

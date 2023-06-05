@@ -244,6 +244,12 @@ export default function TransactionsTable(props: Props) {
         key: 'originPaymentDetails',
         type: PAYMENT_DETAILS_OR_METHOD(showDetailsView),
       } as SimpleColumn<InternalTransaction, 'originPaymentDetails'>,
+      {
+        title: 'Origin payment  identifier',
+        key: 'originPaymentMethodId',
+        type: STRING,
+        sorting: true,
+      } as SimpleColumn<InternalTransaction, 'originPaymentMethodId'>,
       helper.simple<'originAmountDetails.transactionAmount'>({
         title: 'Origin amount',
         type: MONEY_AMOUNT,
@@ -283,6 +289,12 @@ export default function TransactionsTable(props: Props) {
         key: 'destinationPaymentDetails',
         type: PAYMENT_DETAILS_OR_METHOD(showDetailsView),
       }),
+      {
+        title: 'Destination payment identifier',
+        key: 'destinationPaymentMethodId',
+        type: STRING,
+        sorting: true,
+      } as SimpleColumn<InternalTransaction, 'destinationPaymentMethodId'>,
       helper.simple<'destinationAmountDetails.transactionAmount'>({
         title: 'Destination amount',
         type: MONEY_AMOUNT,

@@ -41,6 +41,8 @@ export function prepareTableData(
         'originCountry',
         'destinationAmount',
         'destinationCountry',
+        'destinationPaymentMethodId',
+        'originPaymentMethodId',
       ],
       rows: item.hitRules.map((rule, i): DataItem => {
         const isLastRow = i === item.hitRules.length - 1;

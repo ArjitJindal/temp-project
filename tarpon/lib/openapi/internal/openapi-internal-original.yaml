@@ -2383,11 +2383,12 @@ paths:
         name: from
       - schema:
           type: string
-          enum:
-            - asc
-            - desc
         in: query
-        name: order
+        name: sortField
+      - schema:
+          $ref: '#/components/schemas/SortOrder'
+        in: query
+        name: sortOrder
       - schema:
           type: string
         name: alertId

@@ -28,6 +28,7 @@ import { MongoDbTransactionRepository } from '@/services/rules-engine/repositori
 import { isValidSortOrder } from '@/@types/openapi-internal-custom/SortOrder'
 import { Case } from '@/@types/openapi-internal/Case'
 import { CaseEscalationRequest } from '@/@types/openapi-internal/CaseEscalationRequest'
+import { SortOrder } from '@/@types/openapi-internal/SortOrder'
 import { hasFeature } from '@/core/utils/context'
 import { AlertsService } from '@/services/alerts'
 import { AlertsRepository } from '@/services/rules-engine/repositories/alerts-repository'
@@ -537,7 +538,8 @@ export const casesHandler = lambdaApi()(
         originUserId,
         destinationUserId,
         from,
-        order,
+        sortOrder,
+        sortField,
       } = event.queryStringParameters as any
 
       return await alertsService.getAlertTransactions(alertId, {
@@ -548,7 +550,8 @@ export const casesHandler = lambdaApi()(
         originUserId,
         destinationUserId,
         _from: from,
-        order,
+        sortOrder: sortOrder as SortOrder,
+        sortField: sortField as string,
       })
     } else if (
       event.httpMethod === 'POST' &&

@@ -486,7 +486,8 @@ export class AlertsRepository {
       filterDestinationUserId: params.destinationUserId,
       filterUserId: params.userId,
       _from: params._from,
-      order: params.order,
+      sortOrder: params.sortOrder,
+      sortField: params.sortField,
     })
 
     const riskRepository = new RiskRepository(this.tenantId, {
