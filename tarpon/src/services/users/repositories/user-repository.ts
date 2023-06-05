@@ -512,9 +512,12 @@ export class UserRepository {
     const user = {
       ...result.Item,
     }
+
     delete user.type
     delete user.PartitionKeyID
     delete user.SortKeyID
+    delete user.createdAt
+
     return user as T
   }
 
@@ -546,10 +549,12 @@ export class UserRepository {
     } as (UserWithRulesResult | BusinessWithRulesResult) & {
       PartitionKeyID?: string
       SortKeyID?: string
+      createdAt?: number
     }
 
     delete user.PartitionKeyID
     delete user.SortKeyID
+    delete user.createdAt
 
     if (
       process.env.NODE_ENV === 'development' ||
@@ -613,6 +618,7 @@ export class UserRepository {
       Item: {
         ...primaryKey,
         ...newUser,
+        createdAt: Date.now(),
       },
     }
     await this.dynamoDb.send(new PutCommand(putItemInput))
@@ -810,7 +816,7 @@ export class UserRepository {
     await collection.updateOne({ userId }, { $set: { krsScore } })
   }
 
-  public async getUsersCount(query: Filter<User>): Promise<number> {
+  public async getUsersCount(query: Filter<InternalUser>): Promise<number> {
     const db = this.mongoDb.db()
     const collection = db.collection<InternalUser>(
       USERS_COLLECTION(this.tenantId)

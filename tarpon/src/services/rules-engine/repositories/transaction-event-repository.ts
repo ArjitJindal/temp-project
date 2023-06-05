@@ -12,6 +12,7 @@ import { ExecutedRulesResult } from '@/@types/openapi-public/ExecutedRulesResult
 import { TransactionEvent } from '@/@types/openapi-public/TransactionEvent'
 import { HitRulesDetails } from '@/@types/openapi-public/HitRulesDetails'
 import { TRANSACTION_EVENTS_COLLECTION } from '@/utils/mongoDBUtils'
+import { InternalTransactionEvent } from '@/@types/openapi-internal/InternalTransactionEvent'
 
 export class TransactionEventRepository {
   dynamoDb: DynamoDBDocumentClient
@@ -54,6 +55,7 @@ export class TransactionEventRepository {
                   ...primaryKey,
                   eventId,
                   ...transactionEvent,
+                  createdAt: Date.now(),
                   ...rulesResult,
                 },
               },
@@ -94,10 +96,10 @@ export class TransactionEventRepository {
   }
 
   public async getTransactionEventCount(
-    query: Filter<TransactionEvent>
+    query: Filter<InternalTransactionEvent>
   ): Promise<number> {
     const db = this.mongoDb.db()
-    const transactionEventCollection = db.collection<TransactionEvent>(
+    const transactionEventCollection = db.collection<InternalTransactionEvent>(
       TRANSACTION_EVENTS_COLLECTION(this.tenantId)
     )
 

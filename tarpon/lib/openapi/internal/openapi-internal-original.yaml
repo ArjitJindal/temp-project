@@ -4206,6 +4206,30 @@ components:
               - values
       required:
         - data
+    InternalTransactionEvent:
+      allOf:
+        - $ref: ../public/openapi-public-original.yaml#/components/schemas/TransactionEvent
+        - type: object
+          additionalProperties: false
+          properties:
+            createdAt:
+              type: number
+    InternalConsumerUserEvent:
+      allOf:
+        - $ref: ../public/openapi-public-original.yaml#/components/schemas/ConsumerUserEvent
+        - type: object
+          additionalProperties: false
+          properties:
+            createdAt:
+              type: number
+    InternalBusinessUserEvent:
+      allOf:
+        - $ref: ../public/openapi-public-original.yaml#/components/schemas/BusinessUserEvent
+        - type: object
+          additionalProperties: false
+          properties:
+            createdAt:
+              type: number
     InternalTransaction:
       allOf:
         - $ref: ../public/openapi-public-original.yaml#/components/schemas/TransactionWithRulesResult
@@ -4229,9 +4253,11 @@ components:
             events:
               type: array
               items:
-                $ref: ../public/openapi-public-original.yaml#/components/schemas/TransactionEvent
+                $ref: '#/components/schemas/InternalTransactionEvent'
             arsScore:
               $ref: '#/components/schemas/ArsScore'
+            createdAt:
+              type: number
       title: InternalTransaction
     ConsumerUsersListResponse:
       title: ConsumerUsersListResponse
@@ -4371,6 +4397,8 @@ components:
               $ref: '#/components/schemas/DrsScore'
             casesCount:
               type: number
+            createdAt:
+              type: number
           required:
             - type
     InternalBusinessUser:
@@ -4391,6 +4419,8 @@ components:
             drsScore:
               $ref: '#/components/schemas/DrsScore'
             casesCount:
+              type: number
+            createdAt:
               type: number
           required:
             - type

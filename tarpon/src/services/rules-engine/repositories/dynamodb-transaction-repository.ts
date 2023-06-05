@@ -90,6 +90,7 @@ export class DynamoDbTransactionRepository
                   ...primaryKey,
                   ...transaction,
                   ...rulesResult,
+                  createdAt: Date.now(),
                 },
               },
             },
@@ -224,8 +225,11 @@ export class DynamoDbTransactionRepository
     const transaction = {
       ...result.Item,
     }
+
+    delete transaction.createdAt
     delete transaction.PartitionKeyID
     delete transaction.SortKeyID
+
     return transaction as TransactionWithRulesResult
   }
 

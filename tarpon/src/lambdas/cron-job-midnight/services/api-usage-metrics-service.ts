@@ -83,16 +83,9 @@ export class ApiUsageMetricsService {
     )
 
     const transactionsCount =
-      await mongoDbTransactionRepository.getTransactionsCount(
-        {
-          beforeTimestamp: !monthly
-            ? this.endTimestamp
-            : this.getMonthEndTimestamp(),
-          afterTimestamp: !monthly
-            ? this.startTimestamp
-            : this.getMonthStartTimestamp(),
-        },
-        false
+      await mongoDbTransactionRepository.getTransactionsCountByCreatedAt(
+        !monthly ? this.endTimestamp : this.getMonthEndTimestamp(),
+        !monthly ? this.startTimestamp : this.getMonthStartTimestamp()
       )
 
     return transactionsCount
@@ -106,7 +99,7 @@ export class ApiUsageMetricsService {
 
     const transactionEventsCount =
       await transactionEventsRepository.getTransactionEventCount({
-        timestamp: {
+        createdAt: {
           $gte: !monthly ? this.startTimestamp : this.getMonthStartTimestamp(),
           $lte: !monthly ? this.endTimestamp : this.getMonthEndTimestamp(),
         },
@@ -122,7 +115,7 @@ export class ApiUsageMetricsService {
     })
 
     return await usersRepository.getUsersCount({
-      createdTimestamp: {
+      createdAt: {
         $gte: !monthly ? this.startTimestamp : this.getMonthStartTimestamp(),
         $lt: !monthly ? this.endTimestamp : this.getMonthEndTimestamp(),
       },

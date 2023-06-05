@@ -383,19 +383,33 @@ export class MongoDbTransactionRepository
   }
 
   public async getTransactionsCount(
-    params: OptionalPagination<DefaultApiGetTransactionsListRequest>,
-    countQueryLimit = true // for cron jobs we need to disable the limit so pass false
+    params: OptionalPagination<DefaultApiGetTransactionsListRequest>
   ): Promise<number> {
     const db = this.mongoDb.db()
     const collection = db.collection<InternalTransaction>(
       TRANSACTIONS_COLLECTION(this.tenantId)
     )
     const query = this.getTransactionsMongoQuery(params)
-    return collection.countDocuments(query, {
-      ...(countQueryLimit
-        ? { limit: COUNT_QUERY_LIMIT }
-        : { allowDiskUse: true }),
-    })
+    return collection.countDocuments(query, { limit: COUNT_QUERY_LIMIT })
+  }
+
+  public async getTransactionsCountByCreatedAt(
+    beforeTimestamp: number,
+    afterTimestamp: number
+  ): Promise<number> {
+    const db = this.mongoDb.db()
+    const collection = db.collection<InternalTransaction>(
+      TRANSACTIONS_COLLECTION(this.tenantId)
+    )
+
+    const query = {
+      createdAt: {
+        $gte: afterTimestamp,
+        $lte: beforeTimestamp,
+      },
+    }
+
+    return await collection.countDocuments(query, { limit: COUNT_QUERY_LIMIT })
   }
 
   public async getAllTransactionsCount(): Promise<number> {
