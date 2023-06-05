@@ -46,8 +46,6 @@ async function migrateEntities(
   }
 
   console.log(`Migrated ${collectionName} for tenant ${tenant.id}`)
-
-  mongoDb.close()
 }
 
 export const up = async () => {
