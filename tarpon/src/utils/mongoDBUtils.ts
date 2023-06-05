@@ -808,7 +808,10 @@ export async function syncIndexes<T>(
 
     // If index is not desired, delete it
     if (!indexes.find((desired) => _.isEqual(desired, current.key))) {
-      await collection.dropIndex(current.name)
+      logger.info(`Dropping ${current.name}...`)
+      await exponentialRetry(
+        async () => await collection.dropIndex(current.name)
+      )
     }
   })
 
@@ -818,6 +821,7 @@ export async function syncIndexes<T>(
   )
 
   if (toCreate.length > 0) {
+    logger.info(`Creating indexes...`)
     await exponentialRetry(
       async () =>
         await collection.createIndexes(toCreate.map((key) => ({ key })))
