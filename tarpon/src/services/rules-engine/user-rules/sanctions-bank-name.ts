@@ -77,6 +77,7 @@ export default class SanctionsBankUserRule extends UserRule<SanctionsBankUserRul
 
     if (resolveIban) {
       try {
+        await ibanService.initialize()
         bankInfos = await ibanService.resolveBankName(bankInfos)
       } catch (e) {
         logger.error(
