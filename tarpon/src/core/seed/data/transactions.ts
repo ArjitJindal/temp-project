@@ -8,6 +8,7 @@ import { randomRules, rules } from '@/core/seed/data/rules'
 import { sampleCurrency } from '@/core/seed/samplers/currencies'
 import { sampleTimestamp } from '@/core/seed/samplers/timestamp'
 import { RISK_LEVEL1S } from '@/@types/openapi-internal-custom/RiskLevel1'
+import { getPaymentMethodId } from '@/core/dynamodb/dynamodb-keys'
 
 const TXN_COUNT = 10000
 const generator = function* (seed: number): Generator<InternalTransaction> {
@@ -38,6 +39,12 @@ const generator = function* (seed: number): Generator<InternalTransaction> {
       destinationUserId,
       status: status,
       hitRules,
+      destinationPaymentMethodId: getPaymentMethodId(
+        transaction?.destinationPaymentDetails
+      ),
+      originPaymentMethodId: getPaymentMethodId(
+        transaction?.originPaymentDetails
+      ),
       arsScore: {
         transactionId,
         createdAt: timestamp,
