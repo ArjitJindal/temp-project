@@ -31,6 +31,8 @@ export const TRANSACTION_EXPORT_HEADERS_SETTINGS: CsvHeaderSettings<InternalTran
     timestamp: 'INCLUDE',
     transactionState: 'INCLUDE',
     originUserId: 'INCLUDE',
+    originPaymentMethodId: 'SKIP',
+    destinationPaymentMethodId: 'SKIP',
     destinationUserId: 'INCLUDE',
     originAmountDetails: {
       transactionAmount: 'INCLUDE',

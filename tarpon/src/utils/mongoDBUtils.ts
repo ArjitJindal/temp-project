@@ -427,6 +427,8 @@ export const createMongoDBCollections = async (
         'destinationPaymentDetails.country',
         'originUserId',
         'destinationUserId',
+        'destinationPaymentMethodId',
+        'originPaymentMethodId',
         'tags.key',
       ].map((k) => ({ [k]: 1 }))
     )

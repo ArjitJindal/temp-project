@@ -4212,6 +4212,10 @@ components:
         - type: object
           additionalProperties: false
           properties:
+            originPaymentMethodId:
+              type: string
+            destinationPaymentMethodId:
+              type: string
             status:
               $ref: '#/components/schemas/RuleAction'
             originUser:

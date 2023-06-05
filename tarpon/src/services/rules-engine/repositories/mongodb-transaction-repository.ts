@@ -39,7 +39,10 @@ import {
   CursorPaginationResponse,
 } from '@/utils/pagination'
 import { PaymentDetails } from '@/@types/tranasction/payment-type'
-import { getPaymentDetailsIdentifiers } from '@/core/dynamodb/dynamodb-keys'
+import {
+  getPaymentDetailsIdentifiers,
+  getPaymentMethodId,
+} from '@/core/dynamodb/dynamodb-keys'
 
 export class MongoDbTransactionRepository
   implements RulesEngineTransactionRepositoryInterface
@@ -71,12 +74,19 @@ export class MongoDbTransactionRepository
     const transactionsCollection = db.collection<InternalTransaction>(
       TRANSACTIONS_COLLECTION(this.tenantId)
     )
+
     const internalTransaction: InternalTransaction = {
       ...transaction,
       status: MongoDbTransactionRepository.getAggregatedRuleStatus(
         transaction.executedRules
           .filter((rule) => rule.ruleHit)
           .map((rule) => rule.ruleAction)
+      ),
+      originPaymentMethodId: getPaymentMethodId(
+        transaction.originPaymentDetails
+      ),
+      destinationPaymentMethodId: getPaymentMethodId(
+        transaction.destinationPaymentDetails
       ),
     }
     await transactionsCollection.replaceOne(

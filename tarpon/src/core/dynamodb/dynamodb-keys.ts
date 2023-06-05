@@ -301,6 +301,34 @@ export const PAYMENT_METHOD_IDENTIFIER_FIELDS: Record<
   CHECK: ['checkIdentifier', 'checkNumber'],
 }
 
+export function getPaymentMethodId(
+  pm: PaymentDetails | undefined
+): string | undefined {
+  if (!pm) {
+    return
+  }
+  switch (pm.method) {
+    case 'ACH':
+      return pm.accountNumber
+    case 'CARD':
+      return pm.cardFingerprint
+    case 'GENERIC_BANK_ACCOUNT':
+      return pm.accountNumber
+    case 'WALLET':
+      return pm.walletId
+    case 'CHECK':
+      return pm.checkIdentifier
+    case 'IBAN':
+      return pm.IBAN
+    case 'MPESA':
+      return pm.phoneNumber
+    case 'SWIFT':
+      return pm.accountNumber
+    case 'UPI':
+      return pm.upiID
+  }
+}
+
 export function getPaymentDetailsIdentifiers(
   paymentDetails: PaymentDetails
 ): { [key: string]: string | undefined } | null {
