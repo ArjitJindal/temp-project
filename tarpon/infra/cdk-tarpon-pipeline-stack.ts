@@ -70,7 +70,6 @@ export class CdkTarponPipelineStack extends cdk.Stack {
     const getSentryReleaseSpec = (production: boolean) => {
       return {
         commands: [
-          'cd tarpon',
           production
             ? undefined
             : `./node_modules/.bin/sentry-cli releases files ${getReleaseVersion(
@@ -126,7 +125,6 @@ export class CdkTarponPipelineStack extends cdk.Stack {
           },
           build: {
             commands: [
-              'cd tarpon',
               ...installTerraform,
               'npm run build',
               ...devSandboxSentryReleaseSpec.commands,
@@ -137,7 +135,7 @@ export class CdkTarponPipelineStack extends cdk.Stack {
           paths: ['node_modules/**/*'],
         },
         artifacts: {
-          'base-directory': '.',
+          'base-directory': 'tarpon',
           files: GENERATED_DIRS.map((dir) => `${dir}/**/*`),
         },
         env: devSandboxSentryReleaseSpec.env,
@@ -195,7 +193,6 @@ export class CdkTarponPipelineStack extends cdk.Stack {
             },
             build: {
               commands: [
-                'cd tarpon',
                 ...GENERATED_DIRS.map(
                   (dir) =>
                     `mv "$CODEBUILD_SRC_DIR_${buildOutput.artifactName}"/${dir} ${dir}`
@@ -226,7 +223,7 @@ export class CdkTarponPipelineStack extends cdk.Stack {
               : {}),
           },
           artifacts: {
-            'base-directory': 'cdk.out',
+            'base-directory': 'tarpon/cdk.out',
             files: ['*.json'],
           },
           env: shouldReleaseSentry ? prodSentryReleaseSpec.env : undefined,
