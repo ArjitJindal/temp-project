@@ -54,7 +54,7 @@
     "tsc": "tsc --noEmit",
     "tsc:watch": "tsc --noEmit --watch",
     "cypress:open": "cypress open",
-    "cypress:test:dev": "cypress run",
+    "cypress:test:dev": "cypress run"
   },
   "lint-staged": {
     "**/*.less": "stylelint --syntax less",
