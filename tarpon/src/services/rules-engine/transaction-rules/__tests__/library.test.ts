@@ -39,7 +39,7 @@ describe('', () => {
   beforeAll(async () => {
     const REVISION = 'origin/main'
     const LIBRARY_FILE =
-      'src/services/rules-engine/transaction-rules/library.ts'
+      'tarpon/src/services/rules-engine/transaction-rules/library.ts'
     const LIBRARY_FILE_CONTENT = await git.show(`${REVISION}:${LIBRARY_FILE}`)
     fs.writeFileSync(
       path.join(__dirname, '..', '.library.ts'),

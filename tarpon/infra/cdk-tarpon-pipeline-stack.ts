@@ -212,7 +212,6 @@ export class CdkTarponPipelineStack extends cdk.Stack {
               ? {
                   post_build: {
                     commands: [
-                      'cd tarpon',
                       `export ENV=${env}`,
                       `export AWS_REGION=${config.env.region}`,
                       ...assumeRuleCommands,

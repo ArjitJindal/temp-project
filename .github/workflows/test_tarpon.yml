@@ -14,8 +14,7 @@ concurrency:
 on:
   pull_request:
     branches: [main]
-    paths:
-      - tarpon
+
 jobs:
   test:
     strategy:
