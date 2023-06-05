@@ -44,4 +44,3 @@ config/openapi.yaml
 .env
 cypress.env.json
 
-/build/certificates
