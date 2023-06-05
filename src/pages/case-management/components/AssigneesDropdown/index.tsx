@@ -19,7 +19,7 @@ export const AssigneesDropdown: React.FC<Props> = ({ assignments, editing, onCha
     <>
       <Select<string[]>
         className={s.select}
-        mode="multiple"
+        mode={'multiple'}
         allowClear
         style={{ width: '100%' }}
         disabled={loadingUsers}
@@ -33,7 +33,13 @@ export const AssigneesDropdown: React.FC<Props> = ({ assignments, editing, onCha
           )
         }
         onChange={onChange}
-        value={loadingUsers ? [] : assignments.map((assignment) => assignment.assigneeUserId)}
+        value={
+          loadingUsers
+            ? []
+            : assignments
+                .filter((assignment) => assignment.assigneeUserId !== undefined)
+                .map((assignment) => assignment.assigneeUserId)
+        }
       >
         {Object.values(users).map((user, index) => (
           <Select.Option key={user.id}>

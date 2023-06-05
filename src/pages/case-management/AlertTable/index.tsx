@@ -1,10 +1,10 @@
 import React, { useCallback, useMemo, useRef, useState } from 'react';
 import pluralize from 'pluralize';
-import { Avatar } from 'antd';
+import { AssigneesDropdown } from '../components/AssigneesDropdown';
 import CreateCaseConfirmModal from './CreateCaseConfirmModal';
 import { usePaginatedQuery } from '@/utils/queries/hooks';
 import { useApi } from '@/api';
-import { Account, AlertListResponseItem, AlertStatus, RuleInstance } from '@/apis';
+import { Account, AlertListResponseItem, AlertStatus, Assignment, RuleInstance } from '@/apis';
 import { ALERT_LIST } from '@/utils/queries/keys';
 import QueryResultsTable from '@/components/common/QueryResultsTable';
 import { AllParams, TableColumn, TableData, TableRefType } from '@/components/library/Table/types';
@@ -24,7 +24,6 @@ import { message } from '@/components/library/Message';
 import { TableSearchParams } from '@/pages/case-management/types';
 import { makeExtraFilters } from '@/pages/case-management/helpers';
 import { useFeatureEnabled } from '@/components/AppWrapper/Providers/SettingsProvider';
-import Tooltip from '@/components/library/Tooltip';
 import { UI_SETTINGS } from '@/pages/case-management-item/CaseDetails/ui-settings';
 import {
   ASSIGNMENTS,
@@ -41,11 +40,12 @@ import { neverReturn } from '@/utils/lang';
 import { SarButton } from '@/components/SarDemo';
 
 export type AlertTableParams = AllParams<TableSearchParams>;
-
 const mergedColumns = (
   users: Record<string, Account>,
   hideUserColumns: boolean,
   hideAlertStatusFilters: boolean,
+  handleAssignToRequest: (alertIds: Array<string>, assignment: Assignment) => void,
+  userId: string,
 ): TableColumn<TableAlertItem>[] => {
   const helper = new ColumnHelper<TableAlertItem>();
   return helper.list([
@@ -164,22 +164,20 @@ const mergedColumns = (
       sorting: true,
       type: {
         ...ASSIGNMENTS,
-        render: (assignments) => {
+        render: (assignments, { item: entity }) => {
           return (
-            <>
-              {users &&
-                assignments?.map((assignment) => {
-                  const user = users[assignment.assigneeUserId]?.name ?? assignment.assigneeUserId;
-
-                  return (
-                    <Tooltip key={user} title={user}>
-                      <Avatar key={user} size="small">
-                        {user.substring(0, 2).toUpperCase()}
-                      </Avatar>
-                    </Tooltip>
-                  );
-                })}
-            </>
+            <AssigneesDropdown
+              assignments={assignments || []}
+              editing={true}
+              onChange={(assignees) => {
+                const assignments = {
+                  assignedByUserId: userId,
+                  assigneeUserId: assignees[assignees.length - 1],
+                  timestamp: Date.now(),
+                };
+                handleAssignToRequest([entity.alertId as string], assignments);
+              }}
+            />
           );
         },
       },
@@ -327,33 +325,48 @@ export default function AlertTable(props: Props) {
   }, []);
 
   const handleAssignTo = (account: Account, selectedEntities: string[]) => {
-    const hideLoading = message.loading('Assigning alerts');
-    api
-      .alertsAssignee({
-        AlertsAssignmentUpdateRequest: {
-          alertIds: selectedEntities,
-          assignment: {
-            assigneeUserId: account.id,
-            assignedByUserId: user.userId,
-            timestamp: Date.now(),
-          },
-        },
-      })
-      .then(() => {
-        message.success('Done!');
-        reloadTable();
-      })
-      .catch(() => {
-        message.success('Unable to reassign alerts!');
-      })
-      .finally(() => {
-        hideLoading();
-      });
+    const assignment = {
+      assigneeUserId: account.id,
+      assignedByUserId: user.userId,
+      timestamp: Date.now(),
+    };
+    handleAssignToRequest(selectedEntities, assignment);
   };
 
+  const handleAssignToRequest = useCallback(
+    (alertIds: string[], assignment: Assignment) => {
+      const hideLoading = message.loading('Assigning alerts');
+      api
+        .alertsAssignee({
+          AlertsAssignmentUpdateRequest: {
+            alertIds: alertIds,
+            assignment: assignment,
+          },
+        })
+        .then(() => {
+          message.success('Done!');
+          reloadTable();
+        })
+        .catch(() => {
+          message.success('Unable to reassign alerts!');
+        })
+        .finally(() => {
+          hideLoading();
+        });
+    },
+    [reloadTable, api],
+  );
+
   const columns = useMemo(
-    () => mergedColumns(users, hideUserFilters, hideAlertStatusFilters),
-    [users, hideUserFilters, hideAlertStatusFilters],
+    () =>
+      mergedColumns(
+        users,
+        hideUserFilters,
+        hideAlertStatusFilters,
+        handleAssignToRequest,
+        user.userId,
+      ),
+    [users, hideUserFilters, hideAlertStatusFilters, handleAssignToRequest, user.userId],
   );
 
   const rules = useRules();
