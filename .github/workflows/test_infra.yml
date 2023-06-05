@@ -1,4 +1,4 @@
-name: Test Infrastructure
+name: test-infra
 
 defaults:
   run:
@@ -12,7 +12,7 @@ on:
   pull_request:
     branches: [main]
     paths:
-      - infra
+      - 'infra/**'
 jobs:
   test-infra:
     strategy:

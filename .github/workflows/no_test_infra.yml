@@ -1,0 +1,10 @@
+name: test-infra
+on:
+  pull_request:
+    paths-ignore:
+      - 'infra/**'
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - run: 'echo "No build required"'

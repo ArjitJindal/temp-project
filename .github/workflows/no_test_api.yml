@@ -1,0 +1,10 @@
+name: test-tarpon
+on:
+  pull_request:
+    paths-ignore:
+      - 'tarpon/**'
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - run: 'echo "No build required"'
