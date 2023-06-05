@@ -398,6 +398,9 @@ export const createMongoDBCollections = async (
       'destinationUserId',
       'originAmountDetails.transactionAmount',
       'destinationAmountDetails.transactionAmount',
+      'executedRules.ruleId',
+      'executedRules.ruleHit',
+      'executedRules.ruleInstanceId',
     ].flatMap((i) => {
       return [
         { [i]: 1, _id: 1 },
@@ -413,9 +416,6 @@ export const createMongoDBCollections = async (
         'caseStatus',
         'transactionState',
         'status',
-        'executedRules.ruleId',
-        'executedRules.ruleHit',
-        'executedRules.ruleInstanceId',
         'hitRules.ruleAction',
         'originAmountDetails.country',
         'destinationAmountDetails.country',
