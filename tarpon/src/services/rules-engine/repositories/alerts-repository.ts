@@ -87,7 +87,7 @@ export class AlertsRepository {
     })
 
     const caseConditions: Filter<Case>[] =
-      await caseRepository.getCasesConditions(params, false)
+      await caseRepository.getCasesConditions(params, false, false)
 
     const pipeline: Document[] = [
       ...(caseConditions.length > 0
@@ -273,7 +273,6 @@ export class AlertsRepository {
         },
       })
     }
-
     return pipeline
   }
 

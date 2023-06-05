@@ -141,13 +141,15 @@ export class CaseRepository {
 
   public async getCasesConditions(
     params: OptionalPagination<DefaultApiGetCaseListRequest>,
-    riskLevelsRequired = true
+    riskLevelsRequired = true,
+    assignments = true
   ): Promise<Filter<Case>[]> {
     const conditions: Filter<Case>[] = []
 
     if (
       params.filterAssignmentsIds != null &&
-      params.filterAssignmentsIds.length > 0
+      params.filterAssignmentsIds.length > 0 &&
+      assignments
     ) {
       conditions.push({
         $or: [
