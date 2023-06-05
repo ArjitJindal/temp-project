@@ -41,6 +41,7 @@ export class CdkPhytoplanktonPipelineStack extends cdk.Stack {
                 nodejs: 16,
               },
               commands: [
+                'cd phytoplankton-console',
                 'npm install -g aws-cdk yarn',
                 'yarn --ignore-engines',
                 `ASSUME_ROLE_ARN="${roleArn}"`,
@@ -85,6 +86,7 @@ export class CdkPhytoplanktonPipelineStack extends cdk.Stack {
                 nodejs: 16,
               },
               commands: [
+                'cd phytoplankton-console',
                 'apt-get update',
                 'apt-get -y install libgtk2.0-0 libgtk-3-0 libgbm-dev libnotify-dev libgconf-2-4 libnss3 libxss1 libasound2 libxtst6 xauth xvfb',
                 'npm install -g aws-cdk yarn',
