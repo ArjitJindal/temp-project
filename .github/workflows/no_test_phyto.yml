@@ -4,7 +4,7 @@ on:
     paths-ignore:
       - 'phytoplankton-console/**'
 jobs:
-  build:
+  test:
     runs-on: ubuntu-latest
     steps:
       - run: 'echo "No build required"'
