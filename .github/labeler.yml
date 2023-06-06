@@ -1,0 +1,11 @@
+backend:
+  - tarpon/**
+
+infra:
+  - infra/**
+
+frontend:
+  - phytoplankton-console/**
+
+raptor:
+  - raptor/**
