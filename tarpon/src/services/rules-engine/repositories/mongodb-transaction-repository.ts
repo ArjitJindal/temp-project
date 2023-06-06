@@ -409,7 +409,7 @@ export class MongoDbTransactionRepository
       },
     }
 
-    return await collection.countDocuments(query, { limit: COUNT_QUERY_LIMIT })
+    return await collection.countDocuments(query)
   }
 
   public async getAllTransactionsCount(): Promise<number> {
