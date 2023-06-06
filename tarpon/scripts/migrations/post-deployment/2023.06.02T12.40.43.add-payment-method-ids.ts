@@ -11,7 +11,9 @@ async function migrateTenant(tenant: Tenant) {
     TRANSACTIONS_COLLECTION(tenant.id)
   )
 
-  for await (const t of transactions.find()) {
+  for await (const t of transactions.find({
+    originPaymentMethodId: { $exists: false },
+  })) {
     const originPaymentMethodId = getPaymentMethodId(t.originPaymentDetails)
     const destinationPaymentMethodId = getPaymentMethodId(
       t.destinationPaymentDetails
