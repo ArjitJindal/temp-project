@@ -7,19 +7,25 @@ import { InternalTransaction } from '@/@types/openapi-internal/InternalTransacti
 async function migrateTenant(tenant: Tenant) {
   const mongoDb = await getMongoDbClient()
   const db = mongoDb.db()
-  const transactions = db.collection<InternalTransaction>(
+  const transactionsCollection = db.collection<InternalTransaction>(
     TRANSACTIONS_COLLECTION(tenant.id)
   )
 
-  for await (const t of transactions.find({
+  const transactions = await transactionsCollection.find({
     originPaymentMethodId: { $exists: false },
-  })) {
+  })
+
+  console.log(
+    `Found ${await transactions.count()} transactions without payment method ids`
+  )
+
+  for await (const t of transactions) {
     const originPaymentMethodId = getPaymentMethodId(t.originPaymentDetails)
     const destinationPaymentMethodId = getPaymentMethodId(
       t.destinationPaymentDetails
     )
 
-    await transactions.replaceOne(
+    await transactionsCollection.replaceOne(
       {
         _id: t._id,
       },
@@ -30,6 +36,8 @@ async function migrateTenant(tenant: Tenant) {
       },
       { upsert: true }
     )
+
+    console.log(`Updated transaction ${t._id} with payment method ids`)
   }
 }
 
