@@ -49,6 +49,7 @@ import { ExecutedRulesResult } from '@/@types/openapi-internal/ExecutedRulesResu
 import { HitRulesDetails } from '@/@types/openapi-internal/HitRulesDetails'
 import { BusinessWithRulesResult } from '@/@types/openapi-public/BusinessWithRulesResult'
 import { UserWithRulesResult } from '@/@types/openapi-internal/UserWithRulesResult'
+import { SortOrder } from '@/@types/openapi-internal/SortOrder'
 
 export class UserRepository {
   dynamoDb: DynamoDBDocumentClient
@@ -79,6 +80,8 @@ export class UserRepository {
       filterTagValue?: string
       filterRiskLevel?: RiskLevel[]
       filterUserRegistrationStatus?: UserRegistrationStatus[]
+      sortField?: string
+      sortOrder?: SortOrder
     }
   ): Promise<{ total: number; data: Array<InternalBusinessUser> }> {
     return (await this.getMongoUsers(params, 'BUSINESS')) as {
@@ -116,6 +119,8 @@ export class UserRepository {
       filterTagValue?: string
       filterRiskLevel?: RiskLevel[]
       includeCasesCount?: boolean
+      sortField?: string
+      sortOrder?: SortOrder
     }
   ): Promise<{
     total: number
@@ -140,6 +145,8 @@ export class UserRepository {
       filterTagValue?: string
       includeCasesCount?: boolean
       filterUserRegistrationStatus?: UserRegistrationStatus[]
+      sortField?: string
+      sortOrder?: SortOrder
     },
     userType?: UserType
   ): Promise<{
@@ -347,12 +354,18 @@ export class UserRepository {
       },
     ]
 
+    const sortOrder = params.sortOrder === 'ascend' ? 1 : -1
+
     let users = await collection
       .aggregate<InternalBusinessUser | InternalConsumerUser>([
         {
           $match: query,
         },
-        { $sort: { createdTimestamp: -1 } },
+        {
+          $sort: {
+            [params.sortField ?? 'createdTimestamp']: sortOrder,
+          },
+        },
         ...paginatePipeline(params),
         ...(params.includeCasesCount ? casesCountPipeline : []),
       ])

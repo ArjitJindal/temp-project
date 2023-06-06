@@ -1129,6 +1129,14 @@ paths:
               $ref: '#/components/schemas/RiskLevel'
           in: query
           name: filterRiskLevel
+        - schema:
+            type: string
+          in: query
+          name: sortField
+        - schema:
+            $ref: '#/components/schemas/SortOrder'
+          in: query
+          name: sortOrder
     parameters: []
   /users:
     get:
@@ -1195,6 +1203,14 @@ paths:
             type: boolean
           in: query
           name: includeCasesCount
+        - schema:
+            type: string
+          in: query
+          name: sortField
+        - schema:
+            $ref: '#/components/schemas/SortOrder'
+          in: query
+          name: sortOrder
     parameters: []
   '/users/{userId}/comments':
     parameters:
@@ -1369,6 +1385,14 @@ paths:
               $ref: '#/components/schemas/RiskLevel'
           in: query
           name: filterRiskLevel
+        - schema:
+            type: string
+          in: query
+          name: sortField
+        - schema:
+            $ref: '#/components/schemas/SortOrder'
+          in: query
+          name: sortOrder
     parameters: []
   '/business/users/{userId}':
     get:

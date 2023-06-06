@@ -458,6 +458,11 @@ export const createMongoDBCollections = async (
     const usersCollection = db.collection(USERS_COLLECTION(tenantId))
     await usersCollection.createIndex({
       type: 1,
+    })
+    await usersCollection.createIndex({
+      createdTimestamp: 1,
+    })
+    await usersCollection.createIndex({
       createdTimestamp: -1,
     })
     await usersCollection.createIndex({

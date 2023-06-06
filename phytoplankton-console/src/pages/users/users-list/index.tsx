@@ -204,7 +204,9 @@ const UsersTab = (props: { type: 'business' | 'consumer' | 'all' }) => {
   const queryResults = usePaginatedQuery(
     USERS(type, params),
     async (paginationParams): Promise<PaginatedData<InternalUser>> => {
-      const { userId, createdTimestamp, page, riskLevels, pageSize, tagKey, tagValue } = params;
+      const { userId, createdTimestamp, page, riskLevels, pageSize, tagKey, tagValue, sort } =
+        params;
+
       const queryObj = {
         page,
         pageSize,
@@ -218,6 +220,8 @@ const UsersTab = (props: { type: 'business' | 'consumer' | 'all' }) => {
         ...(type === 'business' && {
           filterUserRegistrationStatus: params.userRegistrationStatus,
         }),
+        sortField: sort[0]?.[0] ?? 'createdTimestamp',
+        sortOrder: sort[0]?.[1] ?? 'descend',
       };
 
       const response =

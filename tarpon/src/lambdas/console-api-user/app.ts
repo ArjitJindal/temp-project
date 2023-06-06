@@ -60,6 +60,8 @@ export const businessUsersViewHandler = lambdaApi()(
         filterTagValue,
         filterRiskLevel,
         filterUserRegistrationStatus,
+        sortField,
+        sortOrder,
       } = event.queryStringParameters as any
       const businessUserSegment = await addNewSubsegment(
         'User Service',
@@ -89,6 +91,8 @@ export const businessUsersViewHandler = lambdaApi()(
         filterUserRegistrationStatus: filterUserRegistrationStatus
           ? filterUserRegistrationStatus.split(',')
           : undefined,
+        sortField,
+        sortOrder,
       })
       businessUserSegment?.close()
       return result
@@ -164,6 +168,8 @@ export const consumerUsersViewHandler = lambdaApi()(
         filterTagKey,
         filterTagValue,
         filterRiskLevel,
+        sortField,
+        sortOrder,
       } = event.queryStringParameters as any
       const consumerUserSegment = await addNewSubsegment(
         'User Service',
@@ -187,36 +193,11 @@ export const consumerUsersViewHandler = lambdaApi()(
         filterRiskLevel: filterRiskLevel
           ? filterRiskLevel.split(',')
           : undefined,
+        sortField,
+        sortOrder,
       })
       consumerUserSegment?.close()
       return result
-    } else if (event.httpMethod === 'GET' && event.path.endsWith('/users')) {
-      const {
-        page,
-        pageSize,
-        afterTimestamp,
-        beforeTimestamp,
-        filterId,
-        filterName,
-        filterOperator,
-        filterTagKey,
-        filterTagValue,
-        filterRiskLevel,
-      } = event.queryStringParameters as any
-      return userService.getUsers({
-        page,
-        pageSize,
-        afterTimestamp: parseInt(afterTimestamp) || undefined,
-        beforeTimestamp: parseInt(beforeTimestamp),
-        filterId,
-        filterName,
-        filterOperator,
-        filterTagKey,
-        filterTagValue,
-        filterRiskLevel: filterRiskLevel
-          ? filterRiskLevel.split(',')
-          : undefined,
-      })
     } else if (
       event.httpMethod === 'POST' &&
       event.resource === '/users/{userId}/comments' &&
@@ -309,7 +290,10 @@ export const allUsersViewHandler = lambdaApi()(
         filterName,
         filterOperator,
         includeCasesCount,
+        sortField,
+        sortOrder,
       } = event.queryStringParameters as any
+
       return userService.getUsers({
         page,
         pageSize,
@@ -319,6 +303,8 @@ export const allUsersViewHandler = lambdaApi()(
         filterName,
         filterOperator,
         includeCasesCount: includeCasesCount === 'true',
+        sortField,
+        sortOrder,
       })
     } else if (
       event.httpMethod === 'POST' &&

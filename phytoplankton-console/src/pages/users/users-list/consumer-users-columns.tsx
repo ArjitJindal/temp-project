@@ -73,6 +73,7 @@ export function getConsumerUserColumns(): TableColumn<InternalConsumerUser>[] {
       title: 'Created on',
       key: 'createdTimestamp',
       type: DATE,
+      sorting: true,
     }),
   ];
 }
