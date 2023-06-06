@@ -390,6 +390,7 @@ export const createMongoDBCollections = async (
 
     let txnIndexes: Document[] = [
       'timestamp',
+      'createdAt',
       'arsScore.arsScore',
       'arsScore.riskLevel',
       'transactionState',
@@ -466,6 +467,9 @@ export const createMongoDBCollections = async (
       createdTimestamp: -1,
     })
     await usersCollection.createIndex({
+      createdAt: 1,
+    })
+    await usersCollection.createIndex({
       userId: 1,
     })
     await usersCollection.createIndex({
@@ -493,6 +497,9 @@ export const createMongoDBCollections = async (
     await userEventsCollection.createIndex({
       eventId: 1,
     })
+    await userEventsCollection.createIndex({
+      createdAt: 1,
+    })
 
     try {
       await db.createCollection(TRANSACTION_EVENTS_COLLECTION(tenantId))
@@ -509,6 +516,9 @@ export const createMongoDBCollections = async (
     })
     await transactionEventsCollection.createIndex({
       eventId: 1,
+    })
+    await transactionEventsCollection.createIndex({
+      createdAt: 1,
     })
     try {
       await db.createCollection(CASES_COLLECTION(tenantId))
