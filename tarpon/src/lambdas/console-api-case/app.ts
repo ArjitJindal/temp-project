@@ -479,7 +479,7 @@ export const casesHandler = lambdaApi()(
       event.resource === '/alerts/{alertId}'
     ) {
       const alertId = event.pathParameters?.alertId as string
-      const alert = await alertsRepository.getAlertById(alertId)
+      const alert = await alertsService.getAlert(alertId)
       if (alert == null) {
         throw new NotFound(`Alert "${alertId}" not found`)
       }

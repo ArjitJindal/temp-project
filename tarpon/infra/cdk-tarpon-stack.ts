@@ -429,7 +429,13 @@ export class CdkTarponStack extends cdk.Stack {
           }),
           new PolicyStatement({
             effect: Effect.ALLOW,
-            actions: ['s3:GetBucket*', 's3:GetObject*', 's3:List*'],
+            actions: [
+              's3:GetBucket*',
+              's3:GetObject*',
+              's3:List*',
+              's3:PutObject',
+              's3:PutObjectAcl',
+            ],
             resources: [
               s3TmpBucket.bucketArn,
               s3ImportBucket.bucketArn,

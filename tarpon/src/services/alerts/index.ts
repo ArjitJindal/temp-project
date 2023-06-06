@@ -113,7 +113,26 @@ export class AlertsService extends CaseAlertsCommonService {
     )
 
     try {
-      return await this.alertsRepository.getAlertById(alertId)
+      const alert = await this.alertsRepository.getAlertById(alertId)
+      if (!alert) {
+        throw new NotFound(`No alert for ${alertId}`)
+      }
+      alert.comments = alert?.comments?.map((c) => {
+        if (!c.files) {
+          return c
+        }
+        const files = c.files?.map((f) => {
+          return {
+            ...f,
+            downloadLink: this.getDownloadLink(f),
+          }
+        })
+        return {
+          ...c,
+          files,
+        }
+      })
+      return alert
     } finally {
       caseGetSegment?.close()
     }
