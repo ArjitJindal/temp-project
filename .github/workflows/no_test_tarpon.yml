@@ -1,6 +1,7 @@
 name: test-tarpon
 on:
   pull_request:
+    branches: [ main ]
     paths-ignore:
       - 'tarpon/**'
 jobs:

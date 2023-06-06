@@ -1,6 +1,7 @@
 name: test-infra
 on:
   pull_request:
+    branches: [ main ]
     paths-ignore:
       - 'infra/**'
 jobs:

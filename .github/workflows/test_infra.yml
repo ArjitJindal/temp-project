@@ -14,10 +14,7 @@ on:
     paths:
       - 'infra/**'
 jobs:
-  test-infra:
-    strategy:
-      matrix:
-        node-version: [16.x]
+  test:
     runs-on: ubuntu-20.04
     steps:
       - uses: actions/checkout@v3

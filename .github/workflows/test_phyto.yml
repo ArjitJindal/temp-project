@@ -14,25 +14,23 @@ concurrency:
 on:
   pull_request:
     branches: [main]
-
+    paths:
+      - 'phytoplankton-console/**'
 jobs:
   test:
-    strategy:
-      matrix:
-        node-version: [16.x]
     runs-on: ubuntu-20.04
     steps:
       - uses: actions/checkout@v3
-      - name: Use Node.js ${{ matrix.node-version }}
+      - name: Use Node.js 16x
         uses: actions/setup-node@v3
         with:
-          node-version: ${{ matrix.node-version }}
+          node-version: 16
           cache: 'npm'
           cache-dependency-path: "tarpon/package-lock.json"
-      - name: Use Node.js ${{ matrix.node-version }}
+      - name: Use Node.js 16x
         uses: actions/setup-node@v3
         with:
-          node-version: ${{ matrix.node-version }}
+          node-version: 16
           cache: 'yarn'
           cache-dependency-path: "phytoplankton-console/yarn.lock"
       - run: npm ci

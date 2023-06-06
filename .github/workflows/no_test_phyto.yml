@@ -1,6 +1,7 @@
 name: test-phytoplankton
 on:
   pull_request:
+    branches: [ main ]
     paths-ignore:
       - 'phytoplankton-console/**'
 jobs:
