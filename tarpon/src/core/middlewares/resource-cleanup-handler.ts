@@ -3,7 +3,7 @@ import { getContext } from '../utils/context'
 function cleanUpDynamoDbResources() {
   const dynamoDbClients = getContext()?.dynamoDbClients
   if (dynamoDbClients) {
-    Object.values(dynamoDbClients).forEach((client) => {
+    dynamoDbClients.forEach((client) => {
       client.destroy()
     })
   }

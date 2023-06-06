@@ -134,11 +134,6 @@ export function getDynamoDbClientByEvent(
 export function getDynamoDbRawClient(
   credentials?: Credentials | CredentialsOptions
 ): DynamoDBClient {
-  const cacheKey = JSON.stringify(credentials ?? {})
-  const context = getContext()
-  if (context?.dynamoDbClients?.[cacheKey]) {
-    return context?.dynamoDbClients?.[cacheKey]
-  }
   const isLocal = process.env.ENV === 'local'
   const rawClient = new DynamoDBClient({
     requestHandler: new NodeHttpHandler({
@@ -156,11 +151,12 @@ export function getDynamoDbRawClient(
       : undefined,
   })
 
+  const context = getContext()
   if (context) {
     if (!context.dynamoDbClients) {
-      context.dynamoDbClients = {}
+      context.dynamoDbClients = []
     }
-    context.dynamoDbClients[cacheKey] = rawClient
+    context.dynamoDbClients.push(rawClient)
   }
 
   return rawClient

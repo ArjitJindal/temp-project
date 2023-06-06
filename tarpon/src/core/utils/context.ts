@@ -27,7 +27,7 @@ type Context = LogMetaData & {
   logMetadata?: { [key: string]: string | undefined }
   metricDimensions?: { [key: string]: string | undefined }
   metrics?: { [namespace: string]: MetricDatum[] }
-  dynamoDbClients?: { [key: string]: DynamoDBClient }
+  dynamoDbClients?: DynamoDBClient[]
   user?: Partial<Account>
   authz?: {
     tenantId: string
