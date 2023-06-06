@@ -2,7 +2,7 @@ backend:
   - tarpon/**
 
 infra:
-  - infra/**
+  - tarpon/infra/**
 
 frontend:
   - phytoplankton-console/**
