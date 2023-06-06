@@ -22,7 +22,7 @@ async function migrateTenant(tenant: Tenant, auth0Domain: string) {
       { mongoDb, dynamoDb },
       {
         startTimestamp,
-        endTimestamp: dayjs(startTimestamp).add(1, 'day').valueOf(),
+        endTimestamp: dayjs(startTimestamp).add(1, 'day').valueOf() - 1,
       }
     )
     await apiMetricsService.publishApiUsageMetrics({
