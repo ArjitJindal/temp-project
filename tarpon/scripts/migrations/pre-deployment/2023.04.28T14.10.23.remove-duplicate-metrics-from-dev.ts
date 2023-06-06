@@ -1,7 +1,7 @@
 import { migrateAllTenants } from '../utils/tenant'
 import { METRICS_COLLECTION, getMongoDbClient } from '@/utils/mongoDBUtils'
 import { Tenant } from '@/services/accounts'
-import { ApiUsageMetrics } from '@/lambdas/cron-job-midnight/services/api-usage-metrics-service'
+import { ApiUsageMetrics } from '@/services/metrics/api-usage-metrics-service'
 
 async function migrateTenant(tenant: Tenant) {
   if (process.env.ENV !== 'dev') {

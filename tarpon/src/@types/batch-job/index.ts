@@ -3,6 +3,7 @@ import { SimulationPulseParameters } from '../openapi-internal/SimulationPulsePa
 import { SimulationBeaconParameters } from '../openapi-internal/SimulationBeaconParameters'
 import { RuleInstance } from '../openapi-internal/RuleInstance'
 import { ImportRequest } from '@/@types/openapi-internal/ImportRequest'
+import { TenantInfo } from '@/services/tenants'
 
 /* File Import */
 type FileImportBatchJobType = 'FILE_IMPORT'
@@ -70,6 +71,14 @@ export type PulseDataLoadBatchJob = {
   awsCredentials?: CredentialsOptions
 }
 
+/* Api Usage Metrics */
+type ApiUsageMetricsBatchJobType = 'API_USAGE_METRICS'
+export type ApiUsageMetricsBatchJob = {
+  type: ApiUsageMetricsBatchJobType
+  tenantInfo: TenantInfo
+  tenantId: string
+}
+
 export type BatchJobType =
   | FileImportBatchJobType
   | SimulationPulseBatchJobType
@@ -78,6 +87,7 @@ export type BatchJobType =
   | SimulationBeaconBatchJobType
   | OngoingScreeningUserRuleBatchJobType
   | PulseDataLoadBatchJobType
+  | ApiUsageMetricsBatchJobType
 
 export type BatchJob =
   | FileImportBatchJob
@@ -87,3 +97,4 @@ export type BatchJob =
   | SimulationBeaconBatchJob
   | OngoingScreeningUserRuleBatchJob
   | PulseDataLoadBatchJob
+  | ApiUsageMetricsBatchJob

@@ -4,8 +4,8 @@ import { Tenant } from '@/services/accounts'
 import {
   ApiUsageMetrics,
   ApiUsageMetricsService,
-} from '@/lambdas/cron-job-midnight/services/api-usage-metrics-service'
-import { SheetsApiUsageMetricsService } from '@/lambdas/cron-job-midnight/services/sheets-api-usage-metrics-service'
+} from '@/services/metrics/api-usage-metrics-service'
+import { SheetsApiUsageMetricsService } from '@/services/metrics/sheets-api-usage-metrics-service'
 import { getDynamoDbClient } from '@/utils/dynamodb'
 
 async function migrateTenant(tenant: Tenant) {

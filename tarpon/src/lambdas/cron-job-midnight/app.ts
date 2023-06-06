@@ -1,15 +1,16 @@
 import _ from 'lodash'
-import { ApiUsageMetricsService } from './services/api-usage-metrics-service'
 import { lambdaConsumer } from '@/core/middlewares/lambda-consumer-middlewares'
 import { getDynamoDbClient } from '@/utils/dynamodb'
 import { getMongoDbClient } from '@/utils/mongoDBUtils'
 import { TenantService } from '@/services/tenants'
 import { sendBatchJobCommand } from '@/services/batch-job'
-import { OngoingScreeningUserRuleBatchJob } from '@/@types/batch-job'
+import {
+  ApiUsageMetricsBatchJob,
+  OngoingScreeningUserRuleBatchJob,
+} from '@/@types/batch-job'
 import { RuleInstanceRepository } from '@/services/rules-engine/repositories/rule-instance-repository'
 import { UserRepository } from '@/services/users/repositories/user-repository'
 import { logger } from '@/core/logger'
-import dayjs from '@/utils/dayjs'
 
 /**
  * NOTE: This lambda is triggered by a cron job that runs every day at midnight.
@@ -48,23 +49,17 @@ export const cronJobMidnightHandler = lambdaConsumer()(async () => {
   )
 
   const mongoDb = await getMongoDbClient()
-  const dynamoDb = await getDynamoDbClient()
 
   // Wait for 1 second to make sure that it is already a new day
   await new Promise((resolve) => setTimeout(resolve, 1000))
 
-  const timestamp = dayjs().subtract(1, 'day').valueOf()
-  const startTimestamp = dayjs(timestamp).startOf('day').valueOf()
-  const endTimestamp = dayjs(timestamp).endOf('day').valueOf()
-
   for await (const tenant of tenantInfos) {
     try {
-      const apiMetricsService = new ApiUsageMetricsService(
-        tenant.tenant,
-        { mongoDb, dynamoDb },
-        { startTimestamp, endTimestamp }
-      )
-      await apiMetricsService.publishApiUsageMetrics(tenant)
+      await sendBatchJobCommand(tenant.tenant.id, {
+        type: 'API_USAGE_METRICS',
+        tenantInfo: tenant,
+        tenantId: tenant.tenant.id,
+      } as ApiUsageMetricsBatchJob)
     } catch (error) {
       logger.error(
         new Error(

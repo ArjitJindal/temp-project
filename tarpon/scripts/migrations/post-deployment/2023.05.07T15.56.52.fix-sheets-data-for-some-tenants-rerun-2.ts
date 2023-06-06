@@ -3,7 +3,7 @@ import dayjs from '@/utils/dayjs'
 import { getMongoDbClient } from '@/utils/mongoDBUtils'
 import { Tenant } from '@/services/accounts'
 import { getDynamoDbClient } from '@/utils/dynamodb'
-import { ApiUsageMetricsService } from '@/lambdas/cron-job-midnight/services/api-usage-metrics-service'
+import { ApiUsageMetricsService } from '@/services/metrics/api-usage-metrics-service'
 
 async function migrateTenant(tenant: Tenant, auth0Domain: string) {
   if (!process.env.ENV?.startsWith('prod')) {
