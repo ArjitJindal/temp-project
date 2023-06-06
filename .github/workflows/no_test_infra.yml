@@ -6,6 +6,7 @@ on:
       - 'infra/**'
 jobs:
   test:
+    name: test-infra
     runs-on: ubuntu-latest
     steps:
       - run: 'echo "No build required"'

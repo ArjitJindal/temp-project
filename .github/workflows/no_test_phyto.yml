@@ -6,6 +6,7 @@ on:
       - 'phytoplankton-console/**'
 jobs:
   test:
+    name: test-phytoplankton
     runs-on: ubuntu-latest
     steps:
       - run: 'echo "No build required"'

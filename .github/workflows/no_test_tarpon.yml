@@ -6,6 +6,7 @@ on:
       - 'tarpon/**'
 jobs:
   test:
+    name: test-tarpon
     runs-on: ubuntu-latest
     steps:
       - run: 'echo "No build required"'
