@@ -102,7 +102,7 @@ jobs:
             Frontend: https://${{ steps.deploy.outputs.phyto }}.console.flagright.dev
             Backend: https://${{ steps.deploy.outputs.tarpon }}.flagright.dev
       - name: Run integration tests
-        if: steps.check.outputs.triggered == 'true'
+        if: steps.check.outputs.triggered == 'true' && steps.deploy.outputs.tarpon != 'api'
         run: |
           cd tarpon
           QA_SUBDOMAIN=${{ steps.deploy.outputs.tarpon }} DOMAIN=https://${{ steps.deploy.outputs.tarpon }}.flagright.dev npm run postman:integration:dev
