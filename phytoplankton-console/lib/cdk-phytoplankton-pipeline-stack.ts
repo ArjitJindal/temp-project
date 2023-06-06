@@ -132,6 +132,7 @@ export class CdkPhytoplanktonPipelineStack extends cdk.Stack {
               branch: deployConfig.github.BRANCH,
               output: sourceOutput,
               connectionArn: deployConfig.github.GITHUB_CONNECTION_ARN,
+              triggerOnPush: false,
             }),
           ],
         },

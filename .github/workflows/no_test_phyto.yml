@@ -1,4 +1,4 @@
-name: test-phytoplankton
+name: phytoplankton
 on:
   pull_request:
     branches: [ main ]

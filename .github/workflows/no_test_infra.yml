@@ -1,4 +1,4 @@
-name: test-infra
+name: infra
 on:
   pull_request:
     branches: [ main ]

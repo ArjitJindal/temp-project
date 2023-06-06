@@ -1,4 +1,4 @@
-name: test-tarpon
+name: tarpon
 on:
   pull_request:
     branches: [ main ]

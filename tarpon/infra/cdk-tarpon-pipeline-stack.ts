@@ -253,6 +253,7 @@ export class CdkTarponPipelineStack extends cdk.Stack {
               output: sourceOutput,
               connectionArn: deployConfig.github.GITHUB_CONNECTION_ARN,
               variablesNamespace: 'SourceVariables',
+              triggerOnPush: false,
             }),
           ],
         },
