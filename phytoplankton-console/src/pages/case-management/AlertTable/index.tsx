@@ -161,7 +161,6 @@ const mergedColumns = (
       title: 'Assigned to',
       key: 'assignments',
       id: '_assigneeName',
-      sorting: true,
       type: {
         ...ASSIGNMENTS,
         render: (assignments, { item: entity }) => {
