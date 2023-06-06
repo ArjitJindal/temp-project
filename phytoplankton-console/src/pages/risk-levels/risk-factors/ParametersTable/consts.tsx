@@ -120,7 +120,7 @@ export const USER_RISK_PARAMETERS: RiskLevelTable = [
     description: 'Risk value for consumer (individuals) users',
     entity: 'CONSUMER_USER',
     dataType: 'CONSUMER_USER_TYPE',
-    isDerived: false,
+    isDerived: true,
     parameterType: 'VARIABLE',
   },
   {
@@ -189,7 +189,7 @@ export const BUSINESS_RISK_PARAMETERS: RiskLevelTable = [
     description: 'Risk value for businesses (merchants/legal entities) users',
     entity: 'BUSINESS',
     dataType: 'BUSINESS_USER_TYPE',
-    isDerived: false,
+    isDerived: true,
     parameterType: 'VARIABLE',
   },
   {
