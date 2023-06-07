@@ -5,12 +5,12 @@ on:
     branches: [main]
     paths:
       # Push events on above branches when files matching the pattern below have changed
-      - 'lib/openapi/**.yaml'
+      - 'tarpon/lib/openapi/**.yaml'
   pull_request:
     branches: [main]
     paths:
       # Push events on above branches when files matching the pattern below have changed
-      - 'lib/openapi/**.yaml'
+      - 'tarpon/lib/openapi/**.yaml'
 jobs:
   build:
     name: Push to Stoplight
