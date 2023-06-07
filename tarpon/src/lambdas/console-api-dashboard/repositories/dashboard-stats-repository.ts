@@ -1153,7 +1153,8 @@ export class DashboardStatsRepository {
     scope: 'CASES' | 'ALERTS',
     startTimestamp?: number,
     endTimestamp?: number,
-    status?: (CaseStatus | AlertStatus)[]
+    status?: (CaseStatus | AlertStatus)[],
+    accountIds?: Array<string>
   ): Promise<DashboardTeamStatsItem[]> {
     const db = this.mongoDb.db()
     const collectionName =
@@ -1162,7 +1163,6 @@ export class DashboardStatsRepository {
         : DASHBOARD_TEAM_CASES_STATS_HOURLY(this.tenantId)
     const collection =
       db.collection<DashboardStatsDRSDistributionData>(collectionName)
-
     let dateCondition: Record<string, unknown> | null = null
     if (startTimestamp != null || endTimestamp != null) {
       dateCondition = {}
@@ -1174,25 +1174,21 @@ export class DashboardStatsRepository {
       }
     }
 
+    const matchConditions: Record<string, unknown>[] = []
+    if (dateCondition != null) {
+      matchConditions.push({ date: dateCondition })
+    }
+    if (status != null && status.length > 0) {
+      matchConditions.push({ status: { $in: status } })
+    }
+    if (accountIds != null && accountIds.length > 0) {
+      matchConditions.push({ accountId: { $in: accountIds } })
+    }
+
     const pipeline = [
       { $sort: { date: -1 } },
-      ...(dateCondition != null
-        ? [
-            {
-              $match: {
-                date: dateCondition,
-              },
-            },
-          ]
-        : []),
-      ...(status != null && status?.length > 0
-        ? [
-            {
-              $match: {
-                status: { $in: status },
-              },
-            },
-          ]
+      ...(matchConditions.length > 0
+        ? [{ $match: { $and: matchConditions } }]
         : []),
       {
         $group: {

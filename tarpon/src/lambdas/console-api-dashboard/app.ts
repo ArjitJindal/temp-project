@@ -13,6 +13,8 @@ import { getMongoDbClient } from '@/utils/mongoDBUtils'
 import { CaseStatus } from '@/@types/openapi-internal/CaseStatus'
 import { AlertStatus } from '@/@types/openapi-internal/AlertStatus'
 import { parseStrings } from '@/utils/lambda'
+import { AccountsService } from '@/services/accounts'
+import { Account } from '@/@types/openapi-internal/Account'
 
 function shouldRefreshAll(
   event: APIGatewayProxyWithLambdaAuthorizerEvent<
@@ -173,13 +175,26 @@ export const dashboardStatsHandler = lambdaApi()(
       event.path.endsWith('/dashboard_stats/team')
     ) {
       const client = await getMongoDbClient()
-      const { principalId: tenantId } = event.requestContext.authorizer
+      const {
+        principalId: tenantId,
+        userId,
+        auth0Domain,
+      } = event.requestContext.authorizer
       const queryStringParameters = event.queryStringParameters as {
         scope: 'CASES' | 'ALERTS'
         startTimestamp: string
         endTimestamp: string
         caseStatus?: string
       }
+      const mongoDb = await getMongoDbClient()
+      const accountsService = new AccountsService({ auth0Domain }, { mongoDb })
+      const organization = await accountsService.getAccountTenant(userId)
+      const accounts: Account[] = await accountsService.getTenantAccounts(
+        organization
+      )
+      const accountIds = accounts
+        .filter((account) => account.role !== 'root')
+        .map((account) => account.id)
       const { scope, startTimestamp, endTimestamp, caseStatus } =
         queryStringParameters
       const dashboardStatsRepository = new DashboardStatsRepository(tenantId, {
@@ -192,7 +207,8 @@ export const dashboardStatsHandler = lambdaApi()(
         scope,
         startTimestamp ? parseInt(startTimestamp) : 0,
         endTimestamp ? parseInt(endTimestamp) : Number.MAX_SAFE_INTEGER,
-        parseStrings<CaseStatus | AlertStatus>(caseStatus)
+        parseStrings<CaseStatus | AlertStatus>(caseStatus),
+        accountIds
       )
     }
     throw new BadRequest('Unsupported path')
