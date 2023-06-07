@@ -139,6 +139,8 @@ export default abstract class TransactionsPatternVelocityBaseRule<
           transactionTypes: this.filters.transactionTypesHistorical,
           paymentMethod: this.filters.paymentMethodHistorical,
           countries: this.filters.transactionCountriesHistorical,
+          matchPaymentMethodDetails:
+            this.isMatchPaymentMethodDetailsEnabled(direction),
         },
         this.getNeededTransactionFields()
       )
@@ -163,6 +165,7 @@ export default abstract class TransactionsPatternVelocityBaseRule<
     const sendingMatchedTransactions = sendingTransactions.filter(
       (transaction) => this.matchPattern(transaction, 'origin', 'sender')
     )
+
     const receivingMatchedTransactions = receivingTransactions.filter(
       (transaction) => this.matchPattern(transaction, 'destination', 'sender')
     )
@@ -208,6 +211,10 @@ export default abstract class TransactionsPatternVelocityBaseRule<
   protected abstract getNeededTransactionFields(): Array<keyof Transaction>
 
   protected abstract isAggregationSupported(): boolean
+
+  protected abstract isMatchPaymentMethodDetailsEnabled(
+    direction: 'origin' | 'destination'
+  ): boolean | undefined
 
   override async getUpdatedTargetAggregation(
     direction: 'origin' | 'destination',

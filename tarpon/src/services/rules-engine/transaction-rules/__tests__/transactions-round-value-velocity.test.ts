@@ -12,6 +12,7 @@ import {
 } from '@/test-utils/rule-test-utils'
 import { dynamoDbSetupHook } from '@/test-utils/dynamodb-test-utils'
 import { TransactionAmountDetails } from '@/@types/openapi-public/TransactionAmountDetails'
+import { IBANDetails } from '@/@types/openapi-public/IBANDetails'
 
 const TEST_TRANSACTION_AMOUNT_100: TransactionAmountDetails = {
   transactionCurrency: 'EUR',
@@ -31,6 +32,24 @@ const TEST_TRANSACTION_AMOUNT_200: TransactionAmountDetails = {
 const TEST_TRANSACTION_AMOUNT_300: TransactionAmountDetails = {
   transactionCurrency: 'EUR',
   transactionAmount: 300,
+}
+
+const TEST_PAYMENT_DETAILS_1: IBANDetails = {
+  IBAN: 'NL02ABNA0123456789',
+  method: 'IBAN',
+  BIC: 'NABANL2A',
+}
+
+const TEST_PAYMENT_DETAILS_2: IBANDetails = {
+  IBAN: 'AT02ABNA0123456789',
+  method: 'IBAN',
+  BIC: 'ABNABE2A',
+}
+
+const TEST_PAYMENT_DETAILS_3: IBANDetails = {
+  IBAN: 'PT02ABNA0123456789',
+  method: 'IBAN',
+  BIC: 'PTBANL2A',
 }
 
 dynamoDbSetupHook()
@@ -206,6 +225,102 @@ ruleVariantsTest(false, () => {
           }),
         ],
         expectedHits: [false, false, true],
+      },
+    ])('', ({ name, transactions, expectedHits }) => {
+      createTransactionRuleTestCase(
+        name,
+        TEST_TENANT_ID,
+        transactions,
+        expectedHits
+      )
+    })
+  })
+
+  describe('Optional parameter - Match payment details', () => {
+    const TEST_TENANT_ID = getTestTenantId()
+
+    setUpRulesHooks(TEST_TENANT_ID, [
+      {
+        type: 'TRANSACTION',
+        ruleImplementationName: 'transactions-round-value-velocity',
+        defaultParameters: {
+          originMatchPaymentMethodDetails: true,
+          transactionsLimit: 2,
+          timeWindow: {
+            units: 10,
+            granularity: 'second',
+          },
+          checkSender: 'sending',
+        } as TransactionsRoundValueVelocityRuleParameters,
+      },
+    ])
+
+    describe.each<TransactionRuleTestCase>([
+      {
+        name: 'Payment details are same - hit',
+        transactions: [
+          getTestTransaction({
+            transactionId: '1-1',
+            originUserId: '1',
+            destinationUserId: '2',
+            originAmountDetails: TEST_TRANSACTION_AMOUNT_100,
+            destinationAmountDetails: TEST_TRANSACTION_AMOUNT_100,
+            originPaymentDetails: TEST_PAYMENT_DETAILS_1,
+            destinationPaymentDetails: TEST_PAYMENT_DETAILS_2,
+            timestamp: dayjs('2000-01-01T01:00:00.000Z').valueOf(),
+          }),
+          getTestTransaction({
+            transactionId: '1-2',
+            originUserId: '1',
+            destinationUserId: '2',
+            originAmountDetails: TEST_TRANSACTION_AMOUNT_200,
+            destinationAmountDetails: TEST_TRANSACTION_AMOUNT_200,
+            originPaymentDetails: TEST_PAYMENT_DETAILS_1,
+            destinationPaymentDetails: TEST_PAYMENT_DETAILS_3,
+            timestamp: dayjs('2000-01-01T01:00:01.000Z').valueOf(),
+          }),
+          getTestTransaction({
+            transactionId: '1-3',
+            originUserId: '6',
+            destinationUserId: '4',
+            originAmountDetails: TEST_TRANSACTION_AMOUNT_100,
+            destinationAmountDetails: TEST_TRANSACTION_AMOUNT_100,
+            originPaymentDetails: TEST_PAYMENT_DETAILS_2,
+            destinationPaymentDetails: TEST_PAYMENT_DETAILS_3,
+            timestamp: dayjs('2000-01-01T01:00:02.000Z').valueOf(),
+          }),
+          getTestTransaction({
+            transactionId: '1-4',
+            originUserId: '1',
+            destinationUserId: '2',
+            originAmountDetails: TEST_TRANSACTION_AMOUNT_100,
+            destinationAmountDetails: TEST_TRANSACTION_AMOUNT_100,
+            originPaymentDetails: TEST_PAYMENT_DETAILS_1,
+            destinationPaymentDetails: TEST_PAYMENT_DETAILS_2,
+            timestamp: dayjs('2000-01-01T01:00:03.000Z').valueOf(),
+          }),
+          getTestTransaction({
+            transactionId: '1-5',
+            originUserId: '1',
+            destinationUserId: '4',
+            originAmountDetails: TEST_TRANSACTION_AMOUNT_100,
+            destinationAmountDetails: TEST_TRANSACTION_AMOUNT_100,
+            originPaymentDetails: TEST_PAYMENT_DETAILS_2,
+            destinationPaymentDetails: TEST_PAYMENT_DETAILS_3,
+            timestamp: dayjs('2000-01-01T01:00:04.000Z').valueOf(),
+          }),
+          getTestTransaction({
+            transactionId: '1-6',
+            originUserId: '6',
+            destinationUserId: '4',
+            originAmountDetails: TEST_TRANSACTION_AMOUNT_100,
+            destinationAmountDetails: TEST_TRANSACTION_AMOUNT_100,
+            originPaymentDetails: TEST_PAYMENT_DETAILS_2,
+            destinationPaymentDetails: TEST_PAYMENT_DETAILS_3,
+            timestamp: dayjs('2000-01-01T01:00:05.000Z').valueOf(),
+          }),
+        ],
+        expectedHits: [false, false, false, true, false, true],
       },
     ])('', ({ name, transactions, expectedHits }) => {
       createTransactionRuleTestCase(

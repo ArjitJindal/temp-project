@@ -1,6 +1,7 @@
 import { JSONSchemaType } from 'ajv'
 import * as _ from 'lodash'
 import { mergeRuleSchemas } from '../utils/rule-schema-utils'
+import { MATCH_PAYMENT_METHOD_DETAILS_OPTIONAL_SCHEMA } from '../utils/rule-parameter-schemas'
 import TransactionsPatternVelocityBaseRule, {
   TransactionsPatternVelocityRuleParameters,
 } from './transactions-pattern-velocity-base'
@@ -8,6 +9,8 @@ import { Transaction } from '@/@types/openapi-public/Transaction'
 
 type TransactionsRoundValueVelocityRulePartialParameters = {
   sameAmount?: boolean
+  originMatchPaymentMethodDetails?: boolean
+  destinationMatchPaymentMethodDetails?: boolean
 }
 
 export type TransactionsRoundValueVelocityRuleParameters =
@@ -28,6 +31,18 @@ export default class TransactionsRoundValueVelocityRule extends TransactionsPatt
               'When same amount is enabled, system check for same amount of round transactions only',
             nullable: true,
           },
+          originMatchPaymentMethodDetails:
+            MATCH_PAYMENT_METHOD_DETAILS_OPTIONAL_SCHEMA({
+              title: 'Match origin payment method details',
+              description:
+                'When enabled, system will match origin payment method details',
+            }),
+          destinationMatchPaymentMethodDetails:
+            MATCH_PAYMENT_METHOD_DETAILS_OPTIONAL_SCHEMA({
+              title: 'Match destination payment method details',
+              description:
+                'When enabled, system will match destination payment method details',
+            }),
         },
         required: [],
       }
@@ -67,5 +82,13 @@ export default class TransactionsRoundValueVelocityRule extends TransactionsPatt
 
   private isRoundValue(value: number) {
     return value % 100 === 0
+  }
+
+  override isMatchPaymentMethodDetailsEnabled(
+    direction: 'origin' | 'destination'
+  ) {
+    return direction === 'origin'
+      ? this.parameters.originMatchPaymentMethodDetails
+      : this.parameters.destinationMatchPaymentMethodDetails
   }
 }

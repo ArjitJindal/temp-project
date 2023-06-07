@@ -84,4 +84,8 @@ export default class TooManyTransactionsToHighRiskCountryRule extends Transactio
   override isAggregationSupported() {
     return true
   }
+
+  override isMatchPaymentMethodDetailsEnabled() {
+    return false
+  }
 }

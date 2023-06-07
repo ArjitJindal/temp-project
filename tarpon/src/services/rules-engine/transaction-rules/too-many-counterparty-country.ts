@@ -65,4 +65,8 @@ export default class TooManyCounterpartyCountryRule extends TransactionsPatternV
   override isAggregationSupported() {
     return false
   }
+
+  override isMatchPaymentMethodDetailsEnabled() {
+    return false
+  }
 }
