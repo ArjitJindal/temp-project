@@ -7,7 +7,6 @@ import {
   DRS_SCORES_COLLECTION,
   KRS_SCORES_COLLECTION,
   MERCHANT_MONITORING_DATA_COLLECTION,
-  SANCTIONS_SEARCHES_COLLECTION,
   TRANSACTION_EVENTS_COLLECTION,
   TRANSACTIONS_COLLECTION,
   USERS_COLLECTION,
@@ -22,10 +21,6 @@ import {
 import { init as krsInit, data as krs } from '@/core/seed/data/krs_scores'
 import { init as arsInit, data as ars } from '@/core/seed/data/ars_scores'
 import { init as drsInit, data as drs } from '@/core/seed/data/drs_scores'
-import {
-  init as sanctionsInit,
-  data as sanctions,
-} from '@/core/seed/data/sanctions'
 import {
   init as transactionEventsInit,
   data as transactionEvents,
@@ -46,7 +41,7 @@ const collections: [(tenantId: string) => string, Iterable<unknown>][] = [
   [DRS_SCORES_COLLECTION, drs],
   [TRANSACTION_EVENTS_COLLECTION, transactionEvents],
   [MERCHANT_MONITORING_DATA_COLLECTION, merchantMonitoring],
-  [SANCTIONS_SEARCHES_COLLECTION, sanctions],
+  // [SANCTIONS_SEARCHES_COLLECTION, sanctions],
 ]
 
 export async function seedMongo(client: MongoClient, tenantId: string) {
@@ -72,7 +67,7 @@ export async function seedMongo(client: MongoClient, tenantId: string) {
   arsInit()
   drsInit()
   transactionEventsInit()
-  sanctionsInit()
+  // sanctionsInit()
 
   logger.info('Creating collections')
   for (const [collectionNameFn, data] of collections) {
