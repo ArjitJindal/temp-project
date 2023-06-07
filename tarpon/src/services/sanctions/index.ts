@@ -22,22 +22,23 @@ const COMPLYADVANTAGE_CREDENTIALS_SECRET_ARN = process.env
   .COMPLYADVANTAGE_CREDENTIALS_SECRET_ARN as string
 
 export class SanctionsService {
-  initPromise: Promise<void>
   apiKey!: string
   sanctionsSearchRepository!: SanctionsSearchRepository
   tenantId: string
 
   constructor(tenantId: string) {
-    this.initPromise = this.initialize(tenantId)
     this.tenantId = tenantId
   }
 
-  private async initialize(tenantId: string) {
+  private async initialize() {
+    if (this.apiKey) {
+      return
+    }
     const mongoDb = await getMongoDbClient(
       StackConstants.MONGO_DB_DATABASE_NAME
     )
     this.sanctionsSearchRepository = new SanctionsSearchRepository(
-      tenantId,
+      this.tenantId,
       mongoDb
     )
     this.apiKey = await this.getApiKey()
@@ -53,7 +54,7 @@ export class SanctionsService {
   }
 
   public async updateMonitoredSearch(caSearchId: number) {
-    await this.initPromise
+    await this.initialize()
     const result =
       await this.sanctionsSearchRepository.getSearchResultByCASearchId(
         caSearchId
@@ -74,7 +75,7 @@ export class SanctionsService {
     request: SanctionsSearchRequest,
     defaultSearchProfile?: string
   ): Promise<SanctionsSearchResponse> {
-    await this.initPromise
+    await this.initialize()
 
     // Normalize search term
     request.searchTerm = _.startCase(request.searchTerm.toLowerCase())
@@ -167,14 +168,14 @@ export class SanctionsService {
     params: DefaultApiGetSanctionsSearchRequest
   ): Promise<SanctionsSearchHistoryResponse> {
     // TODO: also based on params, filter return results based on dates
-    await this.initPromise
+    await this.initialize()
     return this.sanctionsSearchRepository.getSearchHistory(params)
   }
 
   public async getSearchHistory(
     searchId: string
   ): Promise<SanctionsSearchHistory> {
-    await this.initPromise
+    await this.initialize()
     const result = await this.sanctionsSearchRepository.getSearchResult(
       searchId
     )
@@ -190,7 +191,7 @@ export class SanctionsService {
     searchId: string,
     update: SanctionsSearchMonitoring
   ): Promise<void> {
-    await this.initPromise
+    await this.initialize()
     const search = await this.getSearchHistory(searchId)
     const caSearchId =
       search.response?.rawComplyAdvantageResponse?.content?.data?.id

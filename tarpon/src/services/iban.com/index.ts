@@ -75,7 +75,6 @@ async function getApiKey(): Promise<string> {
 }
 
 export class IBANService {
-  initPromise!: Promise<void>
   apiKey!: string
   ibanApiRepository!: IBANApiRepository
   tenantId: string
@@ -86,8 +85,7 @@ export class IBANService {
   }
 
   public async resolveBankName(bankInfos: BankInfo[]): Promise<BankInfo[]> {
-    this.initPromise = this.initialize()
-    await this.initPromise
+    await this.initialize()
 
     if (!this.hasIbanResolutionFeature) {
       logger.error(`IBAN_RESOLUTION feature flag required to resolve bank name`)
@@ -110,8 +108,7 @@ export class IBANService {
     rawIban: string,
     force = false
   ): Promise<IBANDetails | null> {
-    this.initPromise = this.initialize()
-    await this.initPromise
+    await this.initialize()
 
     if (!this.hasIbanResolutionFeature) {
       logger.error(`IBAN_RESOLUTION feature flag required to resolve bank name`)
@@ -163,8 +160,8 @@ export class IBANService {
   }
 
   public async initialize() {
-    if (this.initPromise) {
-      return this.initPromise
+    if (this.apiKey) {
+      return
     }
     const mongoDb = await getMongoDbClient()
     this.hasIbanResolutionFeature = await tenantHasFeature(
