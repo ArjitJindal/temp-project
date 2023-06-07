@@ -388,66 +388,65 @@ export const createMongoDBCollections = async (
       TRANSACTIONS_COLLECTION(tenantId)
     )
 
-    let txnIndexes: Document[] = [
-      'timestamp',
-      'createdAt',
+    const txnIndexes: Document[] = [
       'arsScore.arsScore',
       'arsScore.riskLevel',
-      'transactionState',
-      'originUserId',
-      'destinationUserId',
-      'originAmountDetails.transactionAmount',
+      'caseStatus',
+      'createdAt',
+      'destinationAmountDetails.country',
       'destinationAmountDetails.transactionAmount',
-      'executedRules.ruleId',
+      'destinationAmountDetails.transactionCurrency',
+      'destinationPaymentDetails.country',
+      'destinationPaymentDetails.method',
+      'originPaymentMethodId',
+      'destinationPaymentMethodId',
+      'destinationUserId',
       'executedRules.ruleHit',
+      'executedRules.ruleId',
       'executedRules.ruleInstanceId',
+      'hitRules.ruleAction',
+      'originAmountDetails.country',
+      'originAmountDetails.transactionAmount',
+      'originAmountDetails.transactionCurrency',
+      'originPaymentDetails.country',
+      'originPaymentDetails.method',
+      'originUserId',
+      'status',
+      'tags.key',
+      'timestamp',
+      'transactionId',
+      'transactionState',
+      'type',
     ].flatMap((i) => {
-      return [
-        { [i]: 1, _id: 1 },
-        { [i]: -1, _id: -1 },
-      ]
+      return [{ [i]: 1, _id: 1 }]
     })
 
-    txnIndexes = txnIndexes.concat(
-      [
-        'timestamp',
-        'transactionId',
-        'type',
-        'caseStatus',
-        'transactionState',
-        'status',
-        'hitRules.ruleAction',
-        'originAmountDetails.country',
-        'destinationAmountDetails.country',
-        'originAmountDetails.transactionCurrency',
-        'destinationAmountDetails.transactionCurrency',
-        'originPaymentDetails.method',
-        'destinationPaymentDetails.method',
-        'originPaymentDetails.country',
-        'destinationPaymentDetails.country',
-        'originUserId',
-        'destinationUserId',
-        'destinationPaymentMethodId',
-        'originPaymentMethodId',
-        'tags.key',
-      ].map((k) => ({ [k]: 1 }))
+    txnIndexes.push(
+      {
+        transactionId: 1,
+        timestamp: 1,
+      },
+      {
+        originUserId: 1,
+        timestamp: 1,
+        _id: 1,
+      },
+      {
+        destinationUserId: 1,
+        timestamp: 1,
+        _id: 1,
+      },
+      {
+        originUserId: 1,
+        timestamp: -1,
+        _id: -1,
+      },
+      {
+        destinationUserId: 1,
+        timestamp: -1,
+        _id: -1,
+      }
     )
-
-    // TODO Do we need these indexes anymore?
-    txnIndexes.push({
-      'originPaymentDetails.method': 1,
-      'originPaymentDetails.paymentChannel': 1,
-    })
-    txnIndexes.push({
-      type: 1,
-      status: 1,
-      timestamp: -1,
-    })
-    txnIndexes.push({
-      destinationUserId: 1,
-      timestamp: -1,
-    })
-    txnIndexes.push({ originUserId: 1, timestamp: -1 })
 
     await syncIndexes(transactionCollection, txnIndexes)
 
