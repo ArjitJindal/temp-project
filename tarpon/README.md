@@ -1,6 +1,6 @@
 # tarpon
 
-![tarpons](/resources/tarpons.png)
+![tarpons](/tarpon/resources/tarpons.png)
 
 Codenamed after the [majestic tarpons](https://youtu.be/wV2CF2WWGFQ).
 

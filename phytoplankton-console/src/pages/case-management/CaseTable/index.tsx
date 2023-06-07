@@ -202,7 +202,6 @@ export default function CaseTable(props: Props) {
             );
           },
         },
-        sorting: true,
       }),
       helper.simple<'caseStatus'>({
         title: 'Case status',
