@@ -46,7 +46,12 @@ async function getTenantScopeCredentials(
 }
 
 function getTenantIdFromApiKey(apiKey: string): string | null {
-  const decodedApiKey = base62.decode(apiKey).toString()
+  let decodedApiKey = ''
+  try {
+    decodedApiKey = base62.decode(apiKey).toString()
+  } catch (e) {
+    return null
+  }
   return decodedApiKey.match(/\w+\.\w+/) ? decodedApiKey.split('.')[0] : null
 }
 
