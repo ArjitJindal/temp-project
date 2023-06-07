@@ -66,9 +66,10 @@ async function migrateTenant(tenant: Tenant) {
       }
     )
 
-    await transactionsCollection.bulkWrite(operations)
+    if (operations.length > 0) {
+      await transactionsCollection.bulkWrite(operations)
+    }
     processedCount += transactions.length
-    console.timeLog()
     console.log(
       `Processed ${processedCount} of ${totalTransactions} transactions`
     )
