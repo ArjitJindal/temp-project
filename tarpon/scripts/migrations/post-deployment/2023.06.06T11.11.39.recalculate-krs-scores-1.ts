@@ -1,5 +1,8 @@
 import { StackConstants } from '@lib/constants'
-import { BatchWriteCommand } from '@aws-sdk/lib-dynamodb'
+import {
+  BatchWriteCommand,
+  DynamoDBDocumentClient,
+} from '@aws-sdk/lib-dynamodb'
 import { migrateAllTenants } from '../utils/tenant'
 import { USERS_COLLECTION, getMongoDbClient } from '@/utils/mongoDBUtils'
 import { Tenant } from '@/services/accounts'
@@ -18,6 +21,19 @@ const allowedTenants: Record<string, string[]> = {
 }
 
 const BATCH_SIZE = 20 // Max limit for batchWriteItem is 25
+
+const publishItems = async (
+  dynamoDb: DynamoDBDocumentClient,
+  putRequestItems: AWS.DynamoDB.DocumentClient.WriteRequest[]
+) => {
+  const batchWriteParams: AWS.DynamoDB.DocumentClient.BatchWriteItemInput = {
+    RequestItems: {
+      [StackConstants.HAMMERHEAD_DYNAMODB_TABLE_NAME]: putRequestItems,
+    },
+  }
+
+  await dynamoDb.send(new BatchWriteCommand(batchWriteParams))
+}
 
 async function migrateTenant(tenant: Tenant) {
   const env = process.env.ENV?.startsWith('prod')
@@ -83,17 +99,11 @@ async function migrateTenant(tenant: Tenant) {
     })
 
     if (putRequestItems.length >= BATCH_SIZE) {
-      const batchWriteParams: AWS.DynamoDB.DocumentClient.BatchWriteItemInput =
-        {
-          RequestItems: {
-            [StackConstants.HAMMERHEAD_DYNAMODB_TABLE_NAME]: putRequestItems,
-          },
-        }
-
-      await dynamoDb.send(new BatchWriteCommand(batchWriteParams))
-
+      await publishItems(dynamoDb, putRequestItems)
       putRequestItems.splice(0, putRequestItems.length)
+      continue
     }
+    await publishItems(dynamoDb, putRequestItems)
   }
 }
 
