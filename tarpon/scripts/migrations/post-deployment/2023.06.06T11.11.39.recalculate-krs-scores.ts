@@ -1,3 +1,5 @@
+import { StackConstants } from '@lib/constants'
+import { BatchWriteCommand } from '@aws-sdk/lib-dynamodb'
 import { migrateAllTenants } from '../utils/tenant'
 import { USERS_COLLECTION, getMongoDbClient } from '@/utils/mongoDBUtils'
 import { Tenant } from '@/services/accounts'
@@ -5,6 +7,8 @@ import { getDynamoDbClient } from '@/utils/dynamodb'
 import { InternalUser } from '@/@types/openapi-internal/InternalUser'
 import { RiskRepository } from '@/services/risk-scoring/repositories/risk-repository'
 import { RiskScoringService } from '@/services/risk-scoring'
+import { KrsScore } from '@/@types/openapi-internal/KrsScore'
+import { DynamoDbKeys } from '@/core/dynamodb/dynamodb-keys'
 
 const allowedTenants: Record<string, string[]> = {
   local: ['flagright'],
@@ -12,6 +16,8 @@ const allowedTenants: Record<string, string[]> = {
   sandbox: ['flagright'],
   prod: ['G7ZN1UYR9V', 'FT398YYJMD', '4PKTHPN204', '85J6QJ28BY', 'flagright'],
 }
+
+const BATCH_SIZE = 20 // Max limit for batchWriteItem is 25
 
 async function migrateTenant(tenant: Tenant) {
   const env = process.env.ENV?.startsWith('prod')
@@ -49,6 +55,8 @@ async function migrateTenant(tenant: Tenant) {
   const riskClassificationValues =
     await riskRepository.getRiskClassificationValues()
 
+  const putRequestItems: AWS.DynamoDB.DocumentClient.WriteRequest[] = []
+
   for await (const user of usersWithoutKrsScore) {
     const { score, components } = await riskScoringService.calculateKrsScore(
       user,
@@ -56,7 +64,36 @@ async function migrateTenant(tenant: Tenant) {
       riskFactors || []
     )
 
-    await riskRepository.createOrUpdateKrsScore(user.userId, score, components)
+    const newKrsScoreItem: KrsScore = {
+      krsScore: score,
+      createdAt: Date.now(),
+      userId: user.userId,
+      components,
+    }
+
+    const primaryKey = DynamoDbKeys.KRS_VALUE_ITEM(tenant.id, user.userId, '1')
+
+    putRequestItems.push({
+      PutRequest: {
+        Item: {
+          ...newKrsScoreItem,
+          ...primaryKey,
+        },
+      },
+    })
+
+    if (putRequestItems.length >= BATCH_SIZE) {
+      const batchWriteParams: AWS.DynamoDB.DocumentClient.BatchWriteItemInput =
+        {
+          RequestItems: {
+            [StackConstants.HAMMERHEAD_DYNAMODB_TABLE_NAME]: putRequestItems,
+          },
+        }
+
+      await dynamoDb.send(new BatchWriteCommand(batchWriteParams))
+
+      putRequestItems.splice(0, putRequestItems.length)
+    }
   }
 }
 

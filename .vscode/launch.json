@@ -35,6 +35,13 @@
       "request": "launch",
       "command": "cd tarpon && npm run dev:api",
       "cwd": "${workspaceFolder}"
+    },
+    {
+      "type": "node-terminal",
+      "name": "Run Phytoplankton Console",
+      "request": "launch",
+      "command": "cd phytoplankton-console && ENV=local yarn dev",
+      "cwd": "${workspaceFolder}"
     }
   ]
 }
