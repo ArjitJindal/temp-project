@@ -4,7 +4,11 @@ import {
   DynamoDBDocumentClient,
 } from '@aws-sdk/lib-dynamodb'
 import { migrateAllTenants } from '../utils/tenant'
-import { USERS_COLLECTION, getMongoDbClient } from '@/utils/mongoDBUtils'
+import {
+  KRS_SCORES_COLLECTION,
+  USERS_COLLECTION,
+  getMongoDbClient,
+} from '@/utils/mongoDBUtils'
 import { Tenant } from '@/services/accounts'
 import { getDynamoDbClient } from '@/utils/dynamodb'
 import { InternalUser } from '@/@types/openapi-internal/InternalUser'
@@ -53,7 +57,24 @@ async function migrateTenant(tenant: Tenant) {
   const usersCollectionName = USERS_COLLECTION(tenant.id)
   const usersCollection = db.collection<InternalUser>(usersCollectionName)
 
-  const usersWithoutKrsScore = await usersCollection.find()
+  const krsCollection = db.collection<KrsScore>(
+    KRS_SCORES_COLLECTION(tenant.id)
+  )
+
+  const krsBeforeMigration = await krsCollection
+    .find({
+      createdAt: {
+        $lt: 1686009600000,
+      },
+    })
+    .project({ userId: 1 })
+    .toArray()
+
+  const usersWithoutKrsScore = await usersCollection.find({
+    userId: {
+      $nin: krsBeforeMigration.map((krs) => krs.userId),
+    },
+  })
 
   console.log(`Found ${await usersWithoutKrsScore.count()} users`)
 
