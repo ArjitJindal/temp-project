@@ -49,19 +49,13 @@ export default function CaseManagementPage() {
   };
 
   useDeepEqualEffect(() => {
-    setParams((prevState: AllParams<TableSearchParams>) => {
-      let page = parsedParams.page;
-      if (prevState.page === parsedParams.page) {
-        page = 1;
-      }
-      return {
-        ...prevState,
-        ...parsedParams,
-        page: page ?? 1,
-        sort: parsedParams.sort ?? [],
-        pageSize: parsedParams.pageSize ?? DEFAULT_PAGE_SIZE,
-      };
-    });
+    setParams((prevState: AllParams<TableSearchParams>) => ({
+      ...prevState,
+      ...parsedParams,
+      page: parsedParams.page ?? 1,
+      sort: parsedParams.sort ?? [],
+      pageSize: parsedParams.pageSize ?? DEFAULT_PAGE_SIZE,
+    }));
   }, [parsedParams]);
 
   const isAlerts = params.showCases === 'MY_ALERTS' || params.showCases === 'ALL_ALERTS';

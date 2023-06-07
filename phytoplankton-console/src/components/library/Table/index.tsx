@@ -114,12 +114,23 @@ function Table<Item extends object, Params extends object = CommonParams>(
 
   const handleChangeParams = useCallback(
     (newParams: AllParams<Params>) => {
-      onChangeParams?.({
-        ...newParams,
-      });
+      if (
+        newParams?.page != null &&
+        !_.isEqual(_.omit(newParams, 'page'), _.omit(params, 'page'))
+      ) {
+        newParams.page = 1;
+      }
+      if (
+        newParams?.from != null &&
+        !_.isEqual(_.omit(newParams, 'from'), _.omit(params, 'from'))
+      ) {
+        newParams.from = '';
+      }
+      onChangeParams?.({ ...newParams });
     },
-    [onChangeParams],
+    [onChangeParams, params],
   );
+
   const handleChangeParamsPaginated = useCallback(
     (newParams: AllParams<Params>) => {
       onChangeParams?.(newParams);
