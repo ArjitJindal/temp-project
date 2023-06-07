@@ -146,7 +146,7 @@ function UserItem() {
               ...(user.type === 'BUSINESS' && isMLDemoEnabled
                 ? [
                     {
-                      tab: 'AI Insights',
+                      tab: 'AI merchant monitoring',
                       key: 'ai-insights',
                       children: <AIInsightsCard user={user} />,
                       isClosable: false,

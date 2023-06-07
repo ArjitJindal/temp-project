@@ -28,7 +28,7 @@ export function DeltaCard(props: Props) {
       {delta && deltaRatio ? (
         <Row justify="center" align="middle" gutter={20}>
           <Col>
-            <H1 variant="displayLg">{Math.abs(delta)}</H1>
+            <H1 variant="displayLg">{Math.abs(delta).toLocaleString()}</H1>
           </Col>
           <Col>
             {_.isFinite(deltaRatio) && (
