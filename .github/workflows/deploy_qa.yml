@@ -75,7 +75,10 @@ jobs:
           cat ~/.aws/credentials
           export QA_SUBDOMAIN="qa$(echo "${{ steps.comment-branch.outputs.head_ref }}" | shasum | head -c5)"
           
-          if git diff --quiet HEAD main; then
+          if git diff --quiet HEAD main -- tarpon; then
+            echo "Using dev API"
+            echo "tarpon=api" >> $GITHUB_OUTPUT
+          else
             echo "Deploying Tarpon"
             cd tarpon
             npm run deploy:qa
@@ -84,9 +87,6 @@ jobs:
             export TARPON_BRANCH=${{ steps.comment-branch.outputs.head_ref }}
             echo "tarpon=${QA_SUBDOMAIN}.api" >> $GITHUB_OUTPUT
             cd ../
-          else
-            echo "Using dev API"
-            echo "tarpon=api" >> $GITHUB_OUTPUT
           fi
           
           echo "Deploying Phytoplankton"
