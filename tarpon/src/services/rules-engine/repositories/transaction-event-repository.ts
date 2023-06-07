@@ -105,6 +105,7 @@ export class TransactionEventRepository {
 
     return await transactionEventCollection.countDocuments(query)
   }
+
   public async getMongoTransactionEvents(
     transactionIds: string[]
   ): Promise<Map<string, TransactionEvent[]>> {

@@ -83,10 +83,12 @@ export class ApiUsageMetricsService {
     )
 
     const transactionsCount =
-      await mongoDbTransactionRepository.getTransactionsCountByCreatedAt(
-        !monthly ? this.endTimestamp : this.getMonthEndTimestamp(),
-        !monthly ? this.startTimestamp : this.getMonthStartTimestamp()
-      )
+      await mongoDbTransactionRepository.getTransactionsCountByCreatedAt({
+        createdAt: {
+          $gte: !monthly ? this.startTimestamp : this.getMonthStartTimestamp(),
+          $lte: !monthly ? this.endTimestamp : this.getMonthEndTimestamp(),
+        },
+      })
 
     return transactionsCount
   }
@@ -106,7 +108,13 @@ export class ApiUsageMetricsService {
       })
 
     const transactionsCount = await this.getTransactionsCount(monthly)
-    return transactionEventsCount - transactionsCount
+    const transactionEvents = transactionEventsCount - transactionsCount
+
+    if (transactionEvents < 0) {
+      logger.error(`Transaction events count is negative: ${transactionEvents}`)
+    }
+
+    return transactionEvents
   }
 
   private async getUsersCount(monthly = false): Promise<number> {

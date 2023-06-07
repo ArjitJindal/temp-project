@@ -394,20 +394,12 @@ export class MongoDbTransactionRepository
   }
 
   public async getTransactionsCountByCreatedAt(
-    beforeTimestamp: number,
-    afterTimestamp: number
+    query: Filter<InternalTransaction>
   ): Promise<number> {
     const db = this.mongoDb.db()
     const collection = db.collection<InternalTransaction>(
       TRANSACTIONS_COLLECTION(this.tenantId)
     )
-
-    const query = {
-      createdAt: {
-        $gte: afterTimestamp,
-        $lte: beforeTimestamp,
-      },
-    }
 
     return await collection.countDocuments(query)
   }
