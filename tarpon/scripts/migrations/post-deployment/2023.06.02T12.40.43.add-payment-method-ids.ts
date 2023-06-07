@@ -1,4 +1,6 @@
+import { AnyBulkWriteOperation } from 'mongodb'
 import { migrateAllTenants } from '../utils/tenant'
+import { syncMongoDbIndices } from '../always-run/sync-mongodb-indices'
 import { Tenant } from '@/services/accounts'
 import { getMongoDbClient, TRANSACTIONS_COLLECTION } from '@/utils/mongoDBUtils'
 import { getPaymentMethodId } from '@/core/dynamodb/dynamodb-keys'
@@ -11,37 +13,71 @@ async function migrateTenant(tenant: Tenant) {
     TRANSACTIONS_COLLECTION(tenant.id)
   )
 
-  const transactions = await transactionsCollection.find({
-    originPaymentMethodId: { $exists: false },
+  const totalTransactions = await transactionsCollection.count({
+    $and: [
+      {
+        originPaymentMethodId: { $exists: false },
+      },
+      {
+        destinationPaymentMethodId: { $exists: false },
+      },
+    ],
   })
 
   console.log(
-    `Found ${await transactions.count()} transactions without payment method ids`
+    `Found ${totalTransactions} transactions without payment method ids`
   )
 
-  for await (const t of transactions) {
-    const originPaymentMethodId = getPaymentMethodId(t.originPaymentDetails)
-    const destinationPaymentMethodId = getPaymentMethodId(
-      t.destinationPaymentDetails
+  const batchSize = 1000
+  const totalBatches = Math.ceil(totalTransactions / batchSize)
+  let processedCount = 0
+
+  for (let batchIndex = 0; batchIndex < totalBatches; batchIndex++) {
+    const transactions = await transactionsCollection
+      .find({
+        $and: [
+          {
+            originPaymentMethodId: { $exists: false },
+          },
+          {
+            destinationPaymentMethodId: { $exists: false },
+          },
+        ],
+      })
+      .skip(batchIndex * batchSize)
+      .limit(batchSize)
+      .toArray()
+
+    const operations = transactions.map(
+      (t): AnyBulkWriteOperation<InternalTransaction> => {
+        return {
+          replaceOne: {
+            filter: { _id: t._id },
+            replacement: {
+              ...t,
+              originPaymentMethodId: getPaymentMethodId(t.originPaymentDetails),
+              destinationPaymentMethodId: getPaymentMethodId(
+                t.destinationPaymentDetails
+              ),
+            },
+            upsert: true,
+          },
+        }
+      }
     )
 
-    await transactionsCollection.replaceOne(
-      {
-        _id: t._id,
-      },
-      {
-        ...t,
-        originPaymentMethodId,
-        destinationPaymentMethodId,
-      },
-      { upsert: true }
+    await transactionsCollection.bulkWrite(operations)
+    processedCount += transactions.length
+    console.timeLog()
+    console.log(
+      `Processed ${processedCount} of ${totalTransactions} transactions`
     )
-
-    console.log(`Updated transaction ${t._id} with payment method ids`)
   }
 }
 
 export const up = async () => {
+  // Sync indices to that filtered query is efficient
+  await syncMongoDbIndices()
   await migrateAllTenants(migrateTenant)
 }
 export const down = async () => {
