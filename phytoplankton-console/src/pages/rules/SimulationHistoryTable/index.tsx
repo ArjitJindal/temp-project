@@ -1,5 +1,4 @@
 import { useState } from 'react';
-import { Space } from 'antd';
 import { RuleConfigurationSimulationDrawer } from '../RuleConfigurationDrawer';
 import { useApi } from '@/api';
 import { SimulationBeaconJob } from '@/apis';
@@ -63,12 +62,14 @@ export function SimulationHistoryTable() {
           helper.derived({
             title: 'Rule ID',
             sorting: true,
+            defaultWidth: 300,
             value: (item) => item.defaultRuleInstance,
             type: {
               render: (ruleInstance) => (
-                <Space direction="vertical">
-                  {ruleInstance?.ruleId} {ruleInstance?.ruleNameAlias}
-                </Space>
+                <>
+                  {ruleInstance?.ruleId} <br />
+                  {ruleInstance?.ruleNameAlias}
+                </>
               ),
             },
           }),
