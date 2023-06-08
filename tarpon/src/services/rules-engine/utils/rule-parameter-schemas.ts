@@ -25,11 +25,52 @@ export type TimeWindow = {
   rollingBasis?: boolean
 }
 
+export type TransactionsCounterPartiesThreshold = {
+  transactionsCounterPartiesCount: number
+  checkPaymentMethodDetails?: boolean
+}
+
 export type DayWindow = {
   units: number
   granularity: 'day'
   rollingBasis?: boolean
 }
+
+export const TRANSACTION_COUNTERPARTIES_THRESHOLD_SCHEMA = (
+  options?: SchemaOptions
+) =>
+  ({
+    type: 'object',
+    ...uiSchema(options?.uiSchema, { subtype: 'TRANSACTION_COUNTERPARTIES' }),
+    title: options?.title || 'Unique transaction counterparties threshold',
+    description:
+      options?.description || 'Unique transaction counterparties threshold',
+    properties: {
+      transactionsCounterPartiesCount: {
+        type: 'integer',
+        title: 'Unique transaction counterparties count',
+        description:
+          'Number of unique transaction counterparties in the time window',
+        minimum: 0,
+      },
+      checkPaymentMethodDetails: {
+        type: 'boolean',
+        title: 'Check payment method details',
+        description:
+          'If enabled, system will check only unique users with payment method details',
+        nullable: true,
+      },
+    },
+    required: ['transactionsCounterPartiesCount'],
+  } as const)
+
+export const TRANSACTION_COUNTERPARTIES_THRESHOLD_OPTIONAL_SCHEMA = (
+  options?: SchemaOptions
+) =>
+  ({
+    ...TRANSACTION_COUNTERPARTIES_THRESHOLD_SCHEMA(options),
+    nullable: true,
+  } as const)
 
 export const TIME_WINDOW_SCHEMA = (options?: SchemaOptions) =>
   ({

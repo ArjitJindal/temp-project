@@ -16,6 +16,8 @@ import {
   TIME_WINDOW_SCHEMA,
   TRANSACTION_AMOUNT_THRESHOLDS_SCHEMA,
   MATCH_PAYMENT_METHOD_DETAILS_OPTIONAL_SCHEMA,
+  TransactionsCounterPartiesThreshold,
+  TRANSACTION_COUNTERPARTIES_THRESHOLD_OPTIONAL_SCHEMA,
 } from '../utils/rule-parameter-schemas'
 import { TransactionHistoricalFilters } from '../filters'
 import { RuleHitResultItem } from '../rule'
@@ -25,6 +27,7 @@ import { TransactionAggregationRule } from './aggregation-rule'
 import { TransactionAmountDetails } from '@/@types/openapi-public/TransactionAmountDetails'
 import { CurrencyCode } from '@/@types/openapi-public/CurrencyCode'
 import { getTargetCurrencyAmount } from '@/utils/currency-utils'
+import { Transaction } from '@/@types/openapi-public/Transaction'
 import { mergeObjects } from '@/utils/object'
 
 type AggregationData = {
@@ -32,6 +35,8 @@ type AggregationData = {
   sendingAmount?: number
   receivingCount?: number
   receivingAmount?: number
+  senderKeys?: string[] // this is about number of unique receivers a sender has sent transactions to
+  receiverKeys?: string[] // this is about number of unique senders a receiver has received transactions from
 }
 
 export type TransactionsVolumeRuleParameters = {
@@ -40,6 +45,7 @@ export type TransactionsVolumeRuleParameters = {
     [currency: string]: number
   }
   timeWindow: TimeWindow
+  transactionsCounterPartiesThreshold?: TransactionsCounterPartiesThreshold
   checkSender: 'sending' | 'all' | 'none'
   checkReceiver: 'receiving' | 'all' | 'none'
   originMatchPaymentMethodDetails?: boolean
@@ -60,6 +66,8 @@ export default class TransactionsVolumeRule extends TransactionAggregationRule<
           title: 'Transactions volume threshold',
         }),
         timeWindow: TIME_WINDOW_SCHEMA(),
+        transactionsCounterPartiesThreshold:
+          TRANSACTION_COUNTERPARTIES_THRESHOLD_OPTIONAL_SCHEMA(),
         checkSender: CHECK_SENDER_SCHEMA(),
         checkReceiver: CHECK_RECEIVER_SCHEMA(),
         originMatchPaymentMethodDetails:
@@ -94,6 +102,7 @@ export default class TransactionsVolumeRule extends TransactionAggregationRule<
       checkReceiver,
       initialTransactions,
       transactionVolumeThreshold,
+      transactionsCounterPartiesThreshold,
     } = this.parameters
     if (direction === 'origin' && checkSender === 'none') {
       return
@@ -101,9 +110,19 @@ export default class TransactionsVolumeRule extends TransactionAggregationRule<
       return
     }
 
-    const { totalAmount, totalCount } = await this.getData(direction)
+    const { totalAmount, totalCount, transactionsCounterPartiesCount } =
+      await this.getData(direction)
 
     if (initialTransactions && totalCount <= initialTransactions) {
+      return
+    }
+
+    if (
+      transactionsCounterPartiesThreshold?.transactionsCounterPartiesCount !=
+        null &&
+      transactionsCounterPartiesCount <
+        transactionsCounterPartiesThreshold.transactionsCounterPartiesCount
+    ) {
       return
     }
 
@@ -162,9 +181,11 @@ export default class TransactionsVolumeRule extends TransactionAggregationRule<
     }
   }
 
-  private async getData(
-    direction: 'origin' | 'destination'
-  ): Promise<{ totalAmount: TransactionAmountDetails; totalCount: number }> {
+  private async getData(direction: 'origin' | 'destination'): Promise<{
+    totalAmount: TransactionAmountDetails
+    totalCount: number
+    transactionsCounterPartiesCount: number
+  }> {
     const {
       checkSender,
       checkReceiver,
@@ -183,9 +204,11 @@ export default class TransactionsVolumeRule extends TransactionAggregationRule<
       afterTimestamp,
       beforeTimestamp
     )
+
     if (userAggregationData) {
       const checkDirection =
         direction === 'origin' ? checkSender : checkReceiver
+
       const totalCount = _.sumBy(
         userAggregationData,
         (data) =>
@@ -195,6 +218,22 @@ export default class TransactionsVolumeRule extends TransactionAggregationRule<
             ? data.receivingCount
             : (data.sendingCount ?? 0) + (data.receivingCount ?? 0)) ?? 0
       )
+
+      const userKeys = _.uniq(
+        _.flatMap(userAggregationData, (data) =>
+          checkDirection === 'sending'
+            ? data.receiverKeys ?? []
+            : checkDirection === 'receiving'
+            ? data.senderKeys ?? []
+            : _.uniq(
+                _.compact<string>([
+                  ...(data.receiverKeys ?? []),
+                  ...(data.senderKeys ?? []),
+                ])
+              )
+        )
+      )
+
       const totalAmount = _.sumBy(
         userAggregationData,
         (data) =>
@@ -204,16 +243,22 @@ export default class TransactionsVolumeRule extends TransactionAggregationRule<
             ? data.receivingAmount
             : (data.sendingAmount ?? 0) + (data.receivingAmount ?? 0)) ?? 0
       )
+
       const currentAmountDetails =
         direction === 'origin'
           ? this.transaction.originAmountDetails
           : this.transaction.destinationAmountDetails
+
+      const currentUserId =
+        direction === 'origin' ? this.getReceiverKeyId() : this.getSenderKeyId()
+
       const currentAmount =
         currentAmountDetails &&
         (await getTargetCurrencyAmount(
           currentAmountDetails,
           this.getTargetCurrency()
         ))
+
       return {
         totalCount: totalCount + 1,
         totalAmount: {
@@ -221,6 +266,9 @@ export default class TransactionsVolumeRule extends TransactionAggregationRule<
             totalAmount + (currentAmount ? currentAmount.transactionAmount : 0),
           transactionCurrency: this.getTargetCurrency(),
         },
+        transactionsCounterPartiesCount: _.uniq(
+          _.compact<string>([...userKeys, currentUserId])
+        ).length,
       }
     }
 
@@ -249,17 +297,19 @@ export default class TransactionsVolumeRule extends TransactionAggregationRule<
           'destinationUserId',
           'originAmountDetails',
           'destinationAmountDetails',
+          'originPaymentDetails',
+          'destinationPaymentDetails',
         ]
       )
 
     // Update aggregations
-    await this.refreshRuleAggregations(
-      direction,
-      await this.getTimeAggregatedResult(
-        sendingTransactions,
-        receivingTransactions
-      )
+
+    const timeAggregatedResult = await this.getTimeAggregatedResult(
+      sendingTransactions,
+      receivingTransactions
     )
+
+    await this.refreshRuleAggregations(direction, timeAggregatedResult)
 
     // Sum up the transactions amount
     const targetCurrency = Object.keys(
@@ -271,10 +321,12 @@ export default class TransactionsVolumeRule extends TransactionAggregationRule<
     } else {
       receivingTransactions.push(this.transaction)
     }
+
     const sendingAmount = await getTransactionsTotalAmount(
       sendingTransactions.map((transaction) => transaction.originAmountDetails),
       targetCurrency
     )
+
     const receivingAmount = await getTransactionsTotalAmount(
       receivingTransactions.map(
         (transaction) => transaction.destinationAmountDetails
@@ -282,13 +334,28 @@ export default class TransactionsVolumeRule extends TransactionAggregationRule<
       targetCurrency
     )
 
+    const transactionsCounterPartiesCount = _.chain(timeAggregatedResult)
+      .flatMap(({ receiverKeys, senderKeys }) => [
+        ...(receiverKeys ?? []),
+        ...(senderKeys ?? []),
+        direction === 'origin'
+          ? this.getReceiverKeyId()
+          : this.getSenderKeyId(),
+      ])
+      .compact()
+      .uniq()
+      .size()
+      .value()
+
     const totalAmount = sumTransactionAmountDetails(
       sendingAmount,
       receivingAmount
     )
+
     return {
       totalAmount,
       totalCount: sendingTransactions.length + receivingTransactions.length,
+      transactionsCounterPartiesCount,
     }
   }
 
@@ -313,6 +380,15 @@ export default class TransactionsVolumeRule extends TransactionAggregationRule<
               this.getTargetCurrency()
             )
           ).transactionAmount,
+          ...(this.parameters.transactionsCounterPartiesThreshold
+            ? {
+                receiverKeys: _.uniq(
+                  _.compact<string>(
+                    group.map((t) => this.getReceiverKeyId(t as Transaction))
+                  )
+                ), // this is about the number of receivers a sender has sent transactions to
+              }
+            : {}),
         })
       ),
       await groupTransactionsByHour<AggregationData>(
@@ -325,6 +401,15 @@ export default class TransactionsVolumeRule extends TransactionAggregationRule<
               this.getTargetCurrency()
             )
           ).transactionAmount,
+          ...(this.parameters.transactionsCounterPartiesThreshold
+            ? {
+                senderKeys: _.uniq(
+                  _.compact<string>(
+                    group.map((t) => this.getSenderKeyId(t as Transaction))
+                  )
+                ),
+              }
+            : {}), // this is about the number of senders a receiver has received transactions from
         })
       )
     )
@@ -354,10 +439,22 @@ export default class TransactionsVolumeRule extends TransactionAggregationRule<
       result.sendingCount = (result.sendingCount ?? 0) + 1
       result.sendingAmount =
         (result.sendingAmount ?? 0) + targetAmount.transactionAmount
+      result.receiverKeys = _.uniq(
+        _.compact<string>([
+          ...(result.receiverKeys ?? []),
+          this.getReceiverKeyId(),
+        ]) as string[]
+      )
     } else {
       result.receivingCount = (result.receivingCount ?? 0) + 1
       result.receivingAmount =
         (result.receivingAmount ?? 0) + targetAmount.transactionAmount
+      result.senderKeys = _.uniq(
+        _.compact<string>([
+          ...(result.senderKeys ?? []),
+          this.getSenderKeyId(),
+        ]) as string[]
+      )
     }
     return result
   }
@@ -380,5 +477,23 @@ export default class TransactionsVolumeRule extends TransactionAggregationRule<
           matchPaymentDetails:
             this.parameters.destinationMatchPaymentMethodDetails,
         })
+  }
+
+  private getSenderKeyId(transaction?: Transaction) {
+    return getSenderKeyId(this.tenantId, transaction ?? this.transaction, {
+      disableDirection: true,
+      matchPaymentDetails:
+        this.parameters.transactionsCounterPartiesThreshold
+          ?.checkPaymentMethodDetails ?? false,
+    })
+  }
+
+  private getReceiverKeyId(transaction?: Transaction) {
+    return getReceiverKeyId(this.tenantId, transaction ?? this.transaction, {
+      disableDirection: true,
+      matchPaymentDetails:
+        this.parameters.transactionsCounterPartiesThreshold
+          ?.checkPaymentMethodDetails ?? false,
+    })
   }
 }
