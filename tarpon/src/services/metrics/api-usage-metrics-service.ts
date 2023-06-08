@@ -72,10 +72,6 @@ export class ApiUsageMetricsService {
     return dayjs(this.startTimestamp).startOf('month').valueOf()
   }
 
-  private getMonthEndTimestamp(): number {
-    return dayjs(this.startTimestamp).endOf('month').valueOf()
-  }
-
   private async getTransactionsCount(monthly = false): Promise<number> {
     const mongoDbTransactionRepository = new MongoDbTransactionRepository(
       this.tenantId,
@@ -86,7 +82,7 @@ export class ApiUsageMetricsService {
       await mongoDbTransactionRepository.getTransactionsCountByCreatedAt({
         createdAt: {
           $gte: !monthly ? this.startTimestamp : this.getMonthStartTimestamp(),
-          $lte: !monthly ? this.endTimestamp : this.getMonthEndTimestamp(),
+          $lte: this.endTimestamp,
         },
       })
 
@@ -103,7 +99,7 @@ export class ApiUsageMetricsService {
       await transactionEventsRepository.getTransactionEventCount({
         createdAt: {
           $gte: !monthly ? this.startTimestamp : this.getMonthStartTimestamp(),
-          $lte: !monthly ? this.endTimestamp : this.getMonthEndTimestamp(),
+          $lte: this.endTimestamp,
         },
       })
 
@@ -125,7 +121,7 @@ export class ApiUsageMetricsService {
     return await usersRepository.getUsersCount({
       createdAt: {
         $gte: !monthly ? this.startTimestamp : this.getMonthStartTimestamp(),
-        $lt: !monthly ? this.endTimestamp : this.getMonthEndTimestamp(),
+        $lt: this.endTimestamp,
       },
     })
   }
@@ -176,7 +172,7 @@ export class ApiUsageMetricsService {
 
     return await sanctionsSearchRepository.getNumberOfSearchesBetweenTimestamps(
       monthly ? this.getMonthStartTimestamp() : this.startTimestamp,
-      monthly ? this.getMonthEndTimestamp() : this.endTimestamp
+      this.endTimestamp
     )
   }
 
@@ -188,7 +184,7 @@ export class ApiUsageMetricsService {
 
     return ibanApiRepository.getNumberOfResolutionsBetweenTimestamps(
       monthly ? this.getMonthStartTimestamp() : this.startTimestamp,
-      monthly ? this.getMonthEndTimestamp() : this.endTimestamp
+      this.endTimestamp
     )
   }
 

@@ -83,10 +83,6 @@ export class SheetsApiUsageMetricsService {
     return dayjs(this.startTimestamp).startOf('month').valueOf()
   }
 
-  private getMonthEndTimestamp(): number {
-    return dayjs(this.startTimestamp).endOf('month').valueOf()
-  }
-
   private async createHeadersIfNotExists(
     sheetType: 'daily' | 'monthly'
   ): Promise<void> {
@@ -360,7 +356,7 @@ export class SheetsApiUsageMetricsService {
           $gte: this.getMonthStartTimestamp(),
         },
         endTimestamp: {
-          $lte: this.getMonthEndTimestamp(),
+          $lte: this.endTimestamp,
         },
       })
       .toArray()
@@ -369,7 +365,9 @@ export class SheetsApiUsageMetricsService {
       throw new Error(
         `No monthly usage metrics found for tenant '${
           this.tenantId
-        }' with startTimestamp '${this.getMonthStartTimestamp()}' and endTimestamp '${this.getMonthEndTimestamp()}'`
+        }' with startTimestamp '${this.getMonthStartTimestamp()}' and endTimestamp '${
+          this.endTimestamp
+        }'`
       )
     }
 

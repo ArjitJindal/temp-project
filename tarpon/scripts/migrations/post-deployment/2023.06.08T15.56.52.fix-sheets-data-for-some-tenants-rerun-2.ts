@@ -10,8 +10,8 @@ async function migrateTenant(tenant: Tenant, auth0Domain: string) {
     return
   }
 
-  let startTimestamp = 1685577600000
-  const endTimestamp = 1686009599999
+  let startTimestamp = 1685577600000 // June 1, 2023 00:00:00
+  const endTimestamp = 1686095999999 // June 7, 2023 23:59:59
 
   const mongoDb = await getMongoDbClient()
   const dynamoDb = getDynamoDbClient()
@@ -25,6 +25,7 @@ async function migrateTenant(tenant: Tenant, auth0Domain: string) {
         endTimestamp: dayjs(startTimestamp).add(1, 'day').valueOf() - 1,
       }
     )
+
     await apiMetricsService.publishApiUsageMetrics({
       tenant,
       auth0Domain,
