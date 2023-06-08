@@ -187,6 +187,7 @@ export function useCursorQuery<TData = unknown, TQueryKey extends QueryKey = Que
 
   return {
     ...results,
+    paginate: queryFn,
     cursor: {
       ...pageParams,
       from: pageParam,

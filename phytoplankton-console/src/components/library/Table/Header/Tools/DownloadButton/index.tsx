@@ -37,7 +37,7 @@ export default function DownloadButton<T extends object>(props: Props<T>) {
   const { currentPage, columns, onPaginateData, pageSize, pagination } = props;
 
   const [pagesMode, setPagesMode] = useState<'ALL' | 'CURRENT'>('ALL');
-  const [progress, setProgress] = useState<null | { page: number; totalPages: number }>(null);
+  const [progress, setProgress] = useState<null | { page: number; totalPages?: number }>(null);
 
   const handleDownload = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -53,15 +53,31 @@ export default function DownloadButton<T extends object>(props: Props<T>) {
       );
       let totalPages = 1;
       let page = pagesMode === 'ALL' ? 1 : currentPage;
+
+      // Params for cursor pagination.
+      let from = '';
+      let next = '';
+      let runningTotal = 0;
+      let cursorPaginated = false;
       do {
         setProgress({
           page: pagesMode === 'CURRENT' ? 1 : page,
-          totalPages,
+          totalPages: from ? undefined : totalPages,
         });
+        const { total, items, next: nextCursor } = await onPaginateData({ from, page, pageSize });
 
-        const { total, items } = await onPaginateData({ page, pageSize });
+        // If a cursor is returned, this is cursor paginated.
+        cursorPaginated = nextCursor !== undefined;
+
+        runningTotal += items.length;
+        if (cursorPaginated && nextCursor) {
+          next = nextCursor;
+        }
         const totalItemsCount = total ?? items.length;
-        if (pagesMode === 'ALL' && totalItemsCount > MAXIMUM_EXPORT_ITEMS) {
+        if (
+          pagesMode === 'ALL' &&
+          (totalItemsCount > MAXIMUM_EXPORT_ITEMS || runningTotal > MAXIMUM_EXPORT_ITEMS)
+        ) {
           message.error(
             `There is too much items to export (> ${MAXIMUM_EXPORT_ITEMS}). Try to change filters or export only current page.`,
           );
@@ -84,7 +100,17 @@ export default function DownloadButton<T extends object>(props: Props<T>) {
         }
         totalPages = Math.ceil(totalItemsCount / pageSize);
         page++;
-      } while (page <= totalPages);
+
+        if (cursorPaginated) {
+          if (!next || next == '') {
+            break;
+          }
+          if (from == next) {
+            break;
+          }
+          from = next;
+        }
+      } while ((totalPages && page <= totalPages) || cursorPaginated);
       const fileName = `table_data_${new Date().toISOString().replace(/[^\dA-Za-z]/g, '_')}.csv`;
       message.success(`Data export finished, downloading should start in a moment!`);
       download(fileName, serialize(result));
@@ -179,7 +205,9 @@ export default function DownloadButton<T extends object>(props: Props<T>) {
             <Button isDisabled={progress != null} htmlType="submit" type="PRIMARY">
               {progress == null
                 ? 'Download'
-                : `Downloading (${progress.page}/${progress.totalPages})...`}
+                : `Downloading (${progress.page}${
+                    progress.totalPages ? `/${progress.totalPages}` : ''
+                  })...`}
             </Button>
           </div>
         </form>
