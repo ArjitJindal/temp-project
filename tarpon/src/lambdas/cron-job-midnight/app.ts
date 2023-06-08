@@ -76,13 +76,24 @@ export const cronJobMidnightHandler = lambdaConsumer()(async () => {
         const userRepository = new UserRepository(tenantId, {
           mongoDb,
         })
-        const allUserIds = await userRepository.getAllUsersIds()
+        let userIdsBatch: string[] = []
         // One job only deals with a subset of users to avoid the job to run for over 15 minutes
-        for (const userIds of _.chunk(allUserIds, 1000)) {
+        for await (const item of await userRepository.getAllUserIdsCursor()) {
+          userIdsBatch.push(item.userId)
+          if (userIdsBatch.length === 1000) {
+            await sendBatchJobCommand(tenantId, {
+              type: 'ONGOING_SCREENING_USER_RULE',
+              tenantId,
+              userIds: userIdsBatch,
+            } as OngoingScreeningUserRuleBatchJob)
+            userIdsBatch = []
+          }
+        }
+        if (userIdsBatch.length > 0) {
           await sendBatchJobCommand(tenantId, {
             type: 'ONGOING_SCREENING_USER_RULE',
             tenantId,
-            userIds,
+            userIds: userIdsBatch,
           } as OngoingScreeningUserRuleBatchJob)
         }
       }

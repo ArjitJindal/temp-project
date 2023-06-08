@@ -429,19 +429,14 @@ export class UserRepository {
     return await this.getUser<User>(userId)
   }
 
-  public async getAllUsersIds(): Promise<string[]> {
+  public async getAllUserIdsCursor(): Promise<FindCursor<{ userId: string }>> {
     const db = await this.mongoDb.db()
     const collection = db.collection<InternalUser>(
       USERS_COLLECTION(this.tenantId)
     )
-    const users = (await collection
-      .find({})
-      .project({ userId: 1 })
-      .toArray()) as {
+    return collection.find({}).project({ userId: 1 }) as FindCursor<{
       userId: string
-    }[]
-
-    return users.map((user) => user.userId)
+    }>
   }
 
   public async getUsers(userIds: string[]): Promise<(User | Business)[]> {
