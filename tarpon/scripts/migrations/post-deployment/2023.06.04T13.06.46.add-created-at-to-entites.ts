@@ -1,3 +1,4 @@
+import { AnyBulkWriteOperation } from 'mongodb'
 import { migrateAllTenants } from '../utils/tenant'
 import {
   TRANSACTIONS_COLLECTION,
@@ -29,23 +30,59 @@ async function migrateEntities(
   const collection = db.collection(collectionName)
 
   const entities = await collection.find({
-    [key]: { $gt: thresholdTimestamp },
+    $and: [
+      {
+        createdAt: {
+          $exists: false,
+        },
+      },
+      {
+        [key]: {
+          $gte: thresholdTimestamp,
+        },
+      },
+    ],
   })
 
+  const totalCount = await entities.count()
+
+  console.log(
+    `Migrating ${totalCount} documents in ${collectionName} for tenant ${tenant.id} ${tenant.name}`
+  )
+
+  const bulkOps: AnyBulkWriteOperation[] = []
+  let count = 0
   for await (const entity of entities) {
     const updatedEntity = {
       ...entity,
       createdAt: entity[key],
     }
 
-    await collection.updateOne(
-      { _id: entity._id },
-      { $set: updatedEntity },
-      { upsert: true }
-    )
+    bulkOps.push({
+      updateOne: {
+        filter: { _id: entity._id },
+        update: { $set: updatedEntity },
+        upsert: true,
+      },
+    })
+
+    count++
+
+    if (count % 5000 === 0) {
+      await collection.bulkWrite(bulkOps)
+      bulkOps.length = 0
+      console.log(
+        `Migrated ${count} documents in ${collectionName} of ${totalCount}`
+      )
+    }
   }
 
-  console.log(`Migrated ${collectionName} for tenant ${tenant.id}`)
+  if (bulkOps.length > 0) {
+    await collection.bulkWrite(bulkOps)
+    console.log(
+      `Migrated ${count} documents in ${collectionName} of ${totalCount}`
+    )
+  }
 }
 
 export const up = async () => {
