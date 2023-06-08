@@ -72,7 +72,7 @@ async function migrateTenant(tenant: Tenant) {
 
   const usersWithoutKrsScore = await usersCollection.find({
     userId: {
-      $nin: krsBeforeMigration.map((krs) => krs.userId),
+      $in: krsBeforeMigration.map((krs) => krs.userId),
     },
   })
 
