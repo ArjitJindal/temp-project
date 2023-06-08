@@ -14,7 +14,7 @@ export const config: DeployConfig = {
     GITHUB_CONNECTION_ARN:
       'arn:aws:codestar-connections:eu-central-1:073830519512:connection/e7342cf6-a595-4984-a415-08f15ddbaa47',
     OWNER: 'flagright',
-    REPO: 'tarpon',
+    REPO: 'orca',
     BRANCH: '<your_branch_name>',
   },
 }
