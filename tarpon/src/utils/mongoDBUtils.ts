@@ -768,13 +768,27 @@ export const createMongoDBCollections = async (
   })
 
   try {
-    await db.createCollection(DASHBOARD_TEAM_CASES_STATS_HOURLY(tenantId))
+    const dashboardTeamCasesStatsHourly = await db.createCollection(
+      DASHBOARD_TEAM_CASES_STATS_HOURLY(tenantId)
+    )
+
+    await dashboardTeamCasesStatsHourly.createIndex(
+      { date: -1, accountId: 1, status: 1 },
+      { unique: true }
+    )
   } catch (e) {
     // ignore already exists
   }
 
   try {
-    await db.createCollection(DASHBOARD_TEAM_ALERTS_STATS_HOURLY(tenantId))
+    const dashboardTeamAlertsStatsHourly = await db.createCollection(
+      DASHBOARD_TEAM_ALERTS_STATS_HOURLY(tenantId)
+    )
+
+    await dashboardTeamAlertsStatsHourly.createIndex(
+      { date: -1, accountId: 1, status: 1 },
+      { unique: true }
+    )
   } catch (e) {
     // ignore already exists
   }

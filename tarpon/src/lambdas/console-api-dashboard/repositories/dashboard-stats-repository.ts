@@ -259,18 +259,23 @@ export class DashboardStatsRepository {
   }
 
   private async recalculateTeamStats(
-    timestamp?: number,
+    timestamps: { start?: number; end?: number; timestamp?: number },
     scope: Array<'CASES' | 'ALERTS'> = ['CASES', 'ALERTS']
   ) {
     const db = this.mongoDb.db()
     const casesCollection = db.collection<Case>(CASES_COLLECTION(this.tenantId))
 
-    let timestampCondition: { $gte: number; $lt: number } | null = null
-    if (timestamp) {
-      const { start, end } = getAffectedInterval(timestamp, 'HOUR')
+    let timestampCondition: { $gte: number; $lte: number } | null = null
+    if (timestamps.timestamp) {
+      const { start, end } = getAffectedInterval(timestamps.timestamp, 'HOUR')
       timestampCondition = {
         $gte: start,
-        $lt: end,
+        $lte: end,
+      }
+    } else if (timestamps.start && timestamps.end) {
+      timestampCondition = {
+        $gte: dayjs(timestamps.start).startOf('hour').valueOf(),
+        $lte: dayjs(timestamps.end).endOf('hour').valueOf(),
       }
     }
 
@@ -279,16 +284,11 @@ export class DashboardStatsRepository {
       const aggregationCollection = DASHBOARD_TEAM_CASES_STATS_HOURLY(
         this.tenantId
       )
-      await db.collection(aggregationCollection).createIndex(
-        {
-          date: -1,
-          accountId: 1,
-          status: 1,
-        },
-        {
-          unique: true,
-        }
-      )
+
+      await db
+        .collection(aggregationCollection)
+        .createIndex({ date: -1, accountId: 1, status: 1 }, { unique: true })
+
       // Closed by
       {
         const pipeline = [
@@ -352,6 +352,7 @@ export class DashboardStatsRepository {
             },
           },
         ]
+
         await casesCollection.aggregate(pipeline).next()
       }
       // Assigned to
@@ -418,16 +419,10 @@ export class DashboardStatsRepository {
       const aggregationCollection = DASHBOARD_TEAM_ALERTS_STATS_HOURLY(
         this.tenantId
       )
-      await db.collection(aggregationCollection).createIndex(
-        {
-          date: -1,
-          accountId: 1,
-          status: 1,
-        },
-        {
-          unique: true,
-        }
-      )
+
+      await db
+        .collection(aggregationCollection)
+        .createIndex({ date: -1, accountId: 1, status: 1 }, { unique: true })
       // Closed by
       {
         const pipeline = [
@@ -842,7 +837,7 @@ export class DashboardStatsRepository {
       this.recalculateRuleHitStats(caseTimestamp),
       this.recalculateHitsByUser('ORIGIN', caseTimestamp),
       this.recalculateHitsByUser('DESTINATION', caseTimestamp),
-      this.recalculateTeamStats(caseTimestamp),
+      this.recalculateTeamStats({ timestamp: caseTimestamp }),
     ])
   }
 
@@ -851,8 +846,10 @@ export class DashboardStatsRepository {
     await this.recalculateDRSDistributionStats(db)
   }
 
-  public async refreshTeamStats() {
-    await this.recalculateTeamStats()
+  public async refreshTeamStats(
+    timestamps: { start?: number; end?: number } = {}
+  ) {
+    await this.recalculateTeamStats(timestamps)
   }
 
   public async getTransactionCountStats(
@@ -1167,7 +1164,8 @@ export class DashboardStatsRepository {
     if (startTimestamp != null || endTimestamp != null) {
       dateCondition = {}
       if (startTimestamp != null) {
-        dateCondition['$gt'] = dayjs(startTimestamp).format(HOUR_DATE_FORMAT_JS)
+        dateCondition['$gte'] =
+          dayjs(startTimestamp).format(HOUR_DATE_FORMAT_JS)
       }
       if (endTimestamp != null) {
         dateCondition['$lte'] = dayjs(endTimestamp).format(HOUR_DATE_FORMAT_JS)

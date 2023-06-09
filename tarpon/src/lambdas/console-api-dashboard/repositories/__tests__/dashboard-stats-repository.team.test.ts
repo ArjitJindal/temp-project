@@ -59,9 +59,13 @@ describe('Team statistic for cases', () => {
           endTimestamp: createdTimestamp,
         }
       )
-      await expectCaseStats(statsRepository, [], {
-        startTimestamp: createdTimestamp,
-      })
+      await expectCaseStats(
+        statsRepository,
+        [{ accountId: 'TEST_ACCOUNT_ID_1', assignedTo: 0, closedBy: 1 }],
+        {
+          startTimestamp: createdTimestamp,
+        }
+      )
     })
     test(`single case with multiple changes`, async () => {
       const TENANT_ID = getTestTenantId()
@@ -244,9 +248,13 @@ describe('Team statistic for cases', () => {
           endTimestamp: timestamp,
         }
       )
-      await expectCaseStats(statsRepository, [], {
-        startTimestamp: timestamp,
-      })
+      await expectCaseStats(
+        statsRepository,
+        [{ accountId: 'TEST_ACCOUNT_ID_1', assignedTo: 1, closedBy: 0 }],
+        {
+          startTimestamp: timestamp,
+        }
+      )
     })
     test(`multiple cases with multiple assignments`, async () => {
       const TENANT_ID = getTestTenantId()
@@ -544,9 +552,13 @@ describe('Team statistic for alerts', () => {
           endTimestamp: createdTimestamp,
         }
       )
-      await expectAlertStats(statsRepository, [], {
-        startTimestamp: createdTimestamp,
-      })
+      await expectAlertStats(
+        statsRepository,
+        [{ accountId: 'TEST_ACCOUNT_ID_1', assignedTo: 0, closedBy: 1 }],
+        {
+          startTimestamp: createdTimestamp,
+        }
+      )
     })
     test(`two status changes, filtering by alert status`, async () => {
       const TENANT_ID = getTestTenantId()
@@ -738,9 +750,13 @@ describe('Team statistic for alerts', () => {
           endTimestamp: timestamp,
         }
       )
-      await expectAlertStats(statsRepository, [], {
-        startTimestamp: timestamp,
-      })
+      await expectAlertStats(
+        statsRepository,
+        [{ accountId: 'TEST_ACCOUNT_ID_1', assignedTo: 1, closedBy: 0 }],
+        {
+          startTimestamp: timestamp,
+        }
+      )
     })
     test(`two assignments, status filter`, async () => {
       const TENANT_ID = getTestTenantId()
@@ -765,13 +781,6 @@ describe('Team statistic for alerts', () => {
         ],
       })
 
-      // await expectAlertStats(statsRepository, [
-      //   {
-      //     accountId: TEST_ACCOUNT_ID_1,
-      //     closedBy: 0,
-      //     assignedTo: 2,
-      //   },
-      // ])
       await expectAlertStats(
         statsRepository,
         [

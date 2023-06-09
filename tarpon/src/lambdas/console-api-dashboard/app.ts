@@ -200,9 +200,12 @@ export const dashboardStatsHandler = lambdaApi()(
       const dashboardStatsRepository = new DashboardStatsRepository(tenantId, {
         mongoDb: client,
       })
-      if (shouldRefreshAll(event)) {
-        await dashboardStatsRepository.refreshAllStats()
-      }
+
+      await dashboardStatsRepository.refreshTeamStats({
+        start: startTimestamp ? parseInt(startTimestamp) : 0,
+        end: endTimestamp ? parseInt(endTimestamp) : Number.MAX_SAFE_INTEGER,
+      })
+
       return dashboardStatsRepository.getTeamStatistics(
         scope,
         startTimestamp ? parseInt(startTimestamp) : 0,
