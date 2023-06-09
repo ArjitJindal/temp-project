@@ -8,7 +8,7 @@ import { isValidEmail } from '@/utils/regex'
 describe('Anonymizer', () => {
   test('Data is anonymized', () => {
     const anonymizedCase = anonymize<WithId<Case>>('cases', {
-      _id: 1,
+      _id: new ObjectId('734033c379f3c58f5d21f29d'),
       caseTransactions: [
         {
           transactionId: '12345',

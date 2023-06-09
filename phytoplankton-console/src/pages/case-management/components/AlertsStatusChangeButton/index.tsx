@@ -8,7 +8,7 @@ import StatusChangeButton from '@/pages/case-management/components/StatusChangeB
 interface Props {
   entityName?: string;
   ids: string[];
-  txnIds: { [alertId: string]: string[] };
+  transactionIds: { [alertId: string]: string[] };
   caseId?: string;
   status?: AlertStatus;
   initialValues?: FormValues;
@@ -17,14 +17,17 @@ interface Props {
     isBlue?: boolean;
     rounded?: boolean;
   };
-  statusTransitions?: Record<AlertStatus, { status: AlertStatus; actionLabel: string }>;
+  statusTransitions?: Record<
+    AlertStatus,
+    { status: AlertStatus; actionLabel: 'Send back' | 'Escalate' }
+  >;
   onSaved: () => void;
 }
 
 export default function AlertsStatusChangeButton(props: Props) {
   const {
     ids,
-    txnIds,
+    transactionIds,
     onSaved,
     status,
     caseId,
@@ -33,6 +36,7 @@ export default function AlertsStatusChangeButton(props: Props) {
       reasonOther: null,
       comment: '',
       files: [],
+      closeRelatedCase: false,
     },
     statusTransitions,
     buttonProps = {},
@@ -48,8 +52,8 @@ export default function AlertsStatusChangeButton(props: Props) {
         {({ isVisible, setVisible, newStatus }) => (
           <AlertsStatusChangeModal
             isVisible={isVisible}
-            ids={ids}
-            txnIds={txnIds}
+            entityIds={ids}
+            transactionIds={transactionIds}
             caseId={caseId}
             newStatus={newStatus}
             onSaved={onSaved}

@@ -13,34 +13,40 @@ const errorsCaptured: string[] = [];
 
 export type CloseMessage = () => void;
 
-export type ShowMessage = (message: string) => CloseMessage;
-export type ShowMessageWithOptionalError = (message: string, error?: any | unknown) => CloseMessage;
+export type ShowMessage = (message: React.ReactNode) => CloseMessage;
+export type ShowMessageWithOptionalError = (
+  message: React.ReactNode,
+  error?: any | unknown,
+) => CloseMessage;
 
-export const info: ShowMessage = (message: string) => {
+export const info: ShowMessage = (message: React.ReactNode) => {
   return open(message, 'INFO');
 };
 
-export const success: ShowMessage = (message: string) => {
+export const success: ShowMessage = (message: React.ReactNode) => {
   return open(message, 'SUCCESS');
 };
 
-export const fatal: ShowMessageWithOptionalError = (message: string, error: any | unknown) => {
-  if (!errorsCaptured.includes(message) && process.env.ENV_NAME !== 'local') {
-    errorsCaptured.push(message); // prevent duplicate errors
+export const fatal: ShowMessageWithOptionalError = (
+  message: React.ReactNode,
+  error: any | unknown,
+) => {
+  if (!errorsCaptured.includes(message?.toString() || '') && process.env.ENV_NAME !== 'local') {
+    errorsCaptured.push(message?.toString() || ''); // prevent duplicate errors
     Sentry.captureException(error);
   }
   return open(message, 'ERROR');
 };
 
-export const error: ShowMessage = (message: string) => {
+export const error: ShowMessage = (message: React.ReactNode) => {
   return open(message, 'ERROR');
 };
 
-export const loading: ShowMessage = (message: string) => {
+export const loading: ShowMessage = (message: React.ReactNode) => {
   return open(message, 'LOADING');
 };
 
-export const warn: ShowMessage = (message: string) => {
+export const warn: ShowMessage = (message: React.ReactNode) => {
   return open(message, 'WARNING');
 };
 
@@ -58,7 +64,7 @@ export const message = {
  */
 
 function open(
-  message: string,
+  message: React.ReactNode,
   type: 'INFO' | 'SUCCESS' | 'ERROR' | 'LOADING' | 'WARNING',
 ): CloseMessage {
   let icon: React.ReactNode | undefined;
@@ -96,7 +102,7 @@ function open(
         )}
       </div>
     ),
-    duration: isClosable ? undefined : 0,
+    duration: isClosable ? 5 : 0,
     className: s.root,
   });
   return close;

@@ -10,6 +10,7 @@ export interface FormValues {
   reasonOther: string | null;
   comment: string | null;
   files: FileInfo[];
+  closeRelatedCase: boolean;
 }
 
 interface Props {
@@ -21,7 +22,10 @@ interface Props {
     isBlue?: boolean;
     rounded?: boolean;
   };
-  statusTransitions?: Record<CaseStatus, { status: CaseStatus; actionLabel: string }>;
+  statusTransitions?: Record<
+    CaseStatus,
+    { status: CaseStatus; actionLabel: 'Send back' | 'Escalate' }
+  >;
   onSaved: () => void;
 }
 
@@ -35,6 +39,7 @@ export default function CasesStatusChangeButton(props: Props) {
       reasonOther: null,
       comment: '',
       files: [],
+      closeRelatedCase: false,
     },
     buttonProps = {},
     statusTransitions,
@@ -50,7 +55,7 @@ export default function CasesStatusChangeButton(props: Props) {
         {({ isVisible, setVisible, newStatus }) => (
           <CasesStatusChangeModal
             isVisible={isVisible}
-            ids={caseIds}
+            entityIds={caseIds}
             newStatus={newStatus}
             newStatusActionLabel={caseStatus && statusTransitions?.[caseStatus].actionLabel}
             onSaved={onSaved}

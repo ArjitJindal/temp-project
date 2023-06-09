@@ -1,32 +1,32 @@
-import React from 'react';
-import { useMutation } from '@tanstack/react-query';
+import { useMutation, useQueryClient } from '@tanstack/react-query';
+import _ from 'lodash';
 import StatusChangeModal, {
   FormValues,
   OTHER_REASON,
   Props as StatusChangeModalProps,
 } from '../StatusChangeModal';
 import { useApi } from '@/api';
-import { AlertStatus, AlertStatusUpdateRequest } from '@/apis';
+import { AlertStatusUpdateRequest, CaseUpdateRequest } from '@/apis';
 import { message } from '@/components/library/Message';
 import { getErrorMessage } from '@/utils/lang';
+import { useUsers } from '@/utils/user-utils';
+import { CASES_ITEM } from '@/utils/queries/keys';
 
 interface Props extends Omit<StatusChangeModalProps, 'entityName' | 'updateMutation'> {
   caseId?: string;
+  transactionIds?: { [alertId: string]: string[] };
 }
 
 export default function AlertsStatusChangeModal(props: Props) {
-  const { ...rest } = props;
   const api = useApi();
-
-  const updateMutation = useMutation<
-    unknown,
-    unknown,
-    { ids: string[]; newStatus: AlertStatus; formValues?: FormValues }
-  >(async ({ ids, newStatus, formValues }) => {
+  const queryClient = useQueryClient();
+  const [users] = useUsers();
+  const isChildCase = props.caseId?.includes('.');
+  const updateMutation = useMutation<unknown, unknown, FormValues>(async (formValues) => {
     const hideMessage = message.loading(`Saving...`);
 
     const updates: AlertStatusUpdateRequest = {
-      alertStatus: newStatus,
+      alertStatus: props.newStatus,
     };
 
     if (formValues) {
@@ -38,27 +38,46 @@ export default function AlertsStatusChangeModal(props: Props) {
     }
 
     try {
-      if (updates.alertStatus === 'ESCALATED' && props.caseId) {
-        const response = await api.postCasesCaseIdEscalate({
+      if (updates.alertStatus === 'ESCALATED' && props.caseId && !isChildCase) {
+        const caseUpdateRequest: CaseUpdateRequest = updates;
+        if (formValues.closeRelatedCase) {
+          caseUpdateRequest.caseStatus = 'CLOSED';
+        }
+        const { childCaseId, assigneeIds } = await api.postCasesCaseIdEscalate({
           caseId: props.caseId,
           CaseEscalationRequest: {
-            caseUpdateRequest: updates,
-            alertEscalations: ids.map((alertId) => {
+            caseUpdateRequest,
+            alertEscalations: props.entityIds.map((alertId) => {
               return {
                 alertId,
-                transactionIds: props.txnIds ? props.txnIds[alertId] : [],
+                transactionIds: props.transactionIds ? props.transactionIds[alertId] : [],
               };
             }),
           },
         });
+        const transactionIds = Object.values(props.transactionIds ?? {})
+          .flatMap((v) => v)
+          .filter(Boolean);
+        const assignees = assigneeIds
+          ?.map((assigneeId) => users[assigneeId]?.name || assigneeId)
+          .map((name) => `'${name}'`)
+          .join(', ');
 
-        message.success(
-          `Alerts '${ids.join(', ')}' are escalated to a new child case '${response.childCaseId}'`,
-        );
+        const entities = props.entityIds.join(', ');
+        if (_.isEmpty(transactionIds)) {
+          message.success(
+            `Alerts '${entities}' are added to a new child case '${childCaseId}' and escalated successfully to ${assignees}`,
+          );
+        } else {
+          message.success(
+            `Selected transactions from alerts are added to new child case '${childCaseId}' with respective child alerts and escalated successfully to ${assignees}.`,
+          );
+        }
+        queryClient.invalidateQueries({ queryKey: CASES_ITEM(props.caseId) });
       } else {
         await api.alertsStatusChange({
           AlertsStatusUpdateRequest: {
-            alertIds: ids,
+            alertIds: props.entityIds,
             updates,
           },
         });
@@ -71,5 +90,15 @@ export default function AlertsStatusChangeModal(props: Props) {
     }
   });
 
-  return <StatusChangeModal {...rest} entityName="alert" updateMutation={updateMutation} />;
+  const transactionIds = Object.values(props.transactionIds ?? {}).flatMap((v) => v);
+  const entityIds = _.isEmpty(transactionIds) ? props.entityIds : transactionIds;
+  return (
+    <StatusChangeModal
+      {...props}
+      entityIds={entityIds}
+      entityName={_.isEmpty(transactionIds) ? 'alert' : 'transaction'}
+      updateMutation={updateMutation}
+      displayCloseRelatedCases={!isChildCase}
+    />
+  );
 }

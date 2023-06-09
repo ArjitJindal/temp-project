@@ -5372,8 +5372,6 @@ components:
       title: Case
       type: object
       properties:
-        _id:
-          type: integer
         caseId:
           type: string
         createdTimestamp:
@@ -5681,9 +5679,10 @@ components:
             type: string
         assignment:
           $ref: '#/components/schemas/Assignment'
+        reviewAssignment:
+          $ref: '#/components/schemas/Assignment'
       required:
         - alertIds
-        - assignment
     CasesUpdateRequest:
       title: CasesUpdateRequest
       type: object
@@ -5759,6 +5758,10 @@ components:
       properties:
         childCaseId:
           type: string
+        assigneeIds:
+          type: array
+          items:
+            type: string
     CaseStatusChange:
       title: CaseStatusChange
       type: object

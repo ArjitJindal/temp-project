@@ -142,7 +142,7 @@ export class AlertsService extends CaseAlertsCommonService {
     caseId: string,
     caseEscalationRequest: CaseEscalationRequest,
     accounts: Account[]
-  ): Promise<string> {
+  ): Promise<{ childCaseId?: string; assigneeIds: string[] }> {
     const caseRepository = new CaseRepository(this.tenantId, {
       mongoDb: this.mongoDb,
     })
@@ -181,7 +181,7 @@ export class AlertsService extends CaseAlertsCommonService {
 
     const updatingUserId = (getContext()?.user as Account).id
     const currentTimestamp = Date.now()
-
+    const reviewAssignments = this.getEscalationAssignments(accounts)
     const escalatedAlerts = c.alerts
       ?.filter((alert) =>
         alertEscalations!.some(
@@ -213,13 +213,12 @@ export class AlertsService extends CaseAlertsCommonService {
           alertId = `${escalatedAlert.alertId}.${childNumber}`
           parentAlertId = escalatedAlert.alertId
         }
-
         return {
           ...escalatedAlert,
           alertId,
           parentAlertId,
           alertStatus: 'ESCALATED',
-          reviewAssignments: this.getEscalationAssignments(accounts),
+          reviewAssignments,
           statusChanges: escalatedAlert.statusChanges
             ? [...escalatedAlert.statusChanges, lastStatusChange]
             : [lastStatusChange],
@@ -234,15 +233,14 @@ export class AlertsService extends CaseAlertsCommonService {
           (alertEscalation) =>
             alertEscalation.alertId === alert.alertId &&
             // Keep the original alert if only some transactions were escalated
-            (!alertEscalation.transactionIds ||
+            (_.isEmpty(alertEscalation.transactionIds) ||
               alertEscalation.transactionIds?.length ===
                 alert.transactionIds?.length)
         )
     )
 
     if (!remainingAlerts?.length && caseUpdateRequest) {
-      await caseService.escalateCase(caseId, caseUpdateRequest, accounts)
-      return caseId
+      return caseService.escalateCase(caseId, caseUpdateRequest, accounts)
     }
 
     const childNumber = c.caseHierarchyDetails?.childCaseIds
@@ -303,12 +301,11 @@ export class AlertsService extends CaseAlertsCommonService {
 
     const newCase: Case = {
       ...mainCaseAttributes,
-      _id: c._id! + parseFloat(`0.${childNumber}`),
       caseId: childCaseId,
       alerts: escalatedAlerts,
       createdTimestamp: currentTimestamp,
       caseStatus: 'ESCALATED',
-      reviewAssignments: this.getEscalationAssignments(accounts),
+      reviewAssignments,
       caseTransactions: filteredTransactionsForNewCase,
       caseTransactionsIds: filteredTransactionIdsForNewCase,
       caseHierarchyDetails: { parentCaseId: caseId },
@@ -322,7 +319,7 @@ export class AlertsService extends CaseAlertsCommonService {
       caseHierarchyDetails: caseHierarchyDetailsForOriginalCase,
     }
 
-    await caseRepository.addCaseMongo(newCase)
+    await caseRepository.addCaseMongo(_.omit(newCase, '_id'))
     await caseRepository.addCaseMongo(updatedExistingCase)
     if (caseUpdateRequest) {
       await caseService.updateCases(
@@ -338,8 +335,11 @@ export class AlertsService extends CaseAlertsCommonService {
         }
       )
     }
+    const assigneeIds = reviewAssignments
+      .map((v) => v.assigneeUserId)
+      .filter(Boolean)
 
-    return childCaseId
+    return { childCaseId, assigneeIds }
   }
 
   public async saveAlertComment(
@@ -396,6 +396,16 @@ export class AlertsService extends CaseAlertsCommonService {
     assignment: Assignment
   ): Promise<void> {
     await this.alertsRepository.updateAssigneeToAlerts(alertIds, assignment)
+  }
+
+  public async updateReviewAssigneeToAlerts(
+    alertIds: string[],
+    assignment: Assignment
+  ): Promise<void> {
+    await this.alertsRepository.updateReviewAssigneeToAlerts(
+      alertIds,
+      assignment
+    )
   }
 
   public async deleteAlertComment(

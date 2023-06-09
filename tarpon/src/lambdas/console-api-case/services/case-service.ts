@@ -5,6 +5,7 @@ import {
   APIGatewayProxyWithLambdaAuthorizerEvent,
 } from 'aws-lambda'
 import * as AWS from 'aws-sdk'
+import _ from 'lodash'
 import { Comment } from '@/@types/openapi-internal/Comment'
 import { DefaultApiGetCaseListRequest } from '@/@types/openapi-internal/RequestParameters'
 import { CaseRepository } from '@/services/rules-engine/repositories/case-repository'
@@ -244,20 +245,31 @@ export class CaseService extends CaseAlertsCommonService {
     caseId: string,
     caseUpdateRequest: CaseUpdateRequest,
     accounts: Account[]
-  ): Promise<void> {
+  ): Promise<{ assigneeIds: string[] }> {
     const c = await this.getCase(caseId)
     if (!c) {
       throw new NotFound(`Cannot find case ${caseId}`)
     }
 
     const existingReviewAssignments = c.reviewAssignments || []
+    const reviewAssignments =
+      existingReviewAssignments.length > 0
+        ? existingReviewAssignments
+        : this.getEscalationAssignments(accounts)
+
+    const account = getContext()?.user
+    if (_.isEmpty(c.assignments) && account?.id) {
+      caseUpdateRequest.assignments = [
+        { assigneeUserId: account.id, timestamp: Date.now() },
+      ]
+    }
     await this.updateCases((getContext()?.user as Account).id, [caseId], {
       ...caseUpdateRequest,
-      reviewAssignments:
-        existingReviewAssignments.length > 0
-          ? existingReviewAssignments
-          : this.getEscalationAssignments(accounts),
+      reviewAssignments,
       caseStatus: 'ESCALATED',
     })
+    return {
+      assigneeIds: reviewAssignments.map((v) => v.assigneeUserId),
+    }
   }
 }

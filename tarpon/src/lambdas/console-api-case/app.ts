@@ -36,6 +36,7 @@ import { parseStrings } from '@/utils/lambda'
 import { AlertsStatusUpdateRequest } from '@/@types/openapi-internal/AlertsStatusUpdateRequest'
 import { AlertsAssignmentUpdateRequest } from '@/@types/openapi-internal/AlertsAssignmentUpdateRequest'
 import { PaymentMethod } from '@/@types/openapi-public/PaymentMethod'
+import { CaseEscalationResponse } from '@/@types/openapi-internal/CaseEscalationResponse'
 
 export type CaseConfig = {
   TMP_BUCKET: string
@@ -439,12 +440,16 @@ export const casesHandler = lambdaApi()(
         event.body
       ) as AlertsAssignmentUpdateRequest
       const alertIds = updateRequest?.alertIds
+      const { assignment, reviewAssignment } = updateRequest
 
       if (!alertIds?.length) {
         throw new BadRequest('Missing alertIds or empty alertIds array')
       }
-
-      const { assignment } = updateRequest
+      if (!assignment && !reviewAssignment) {
+        throw new BadRequest(
+          'One of assignment or reviewAssignment should be defined'
+        )
+      }
 
       const alertUpdateSegment = await addNewSubsegment(
         'Case Service',
@@ -456,18 +461,30 @@ export const casesHandler = lambdaApi()(
       try {
         alertUpdateSegment?.addAnnotation('tenantId', tenantId)
         alertUpdateSegment?.addAnnotation('alertIds', alertIds.toString())
-        await alertsService.updateAssigneeToAlerts(alertIds, {
+        const updatedAssignment = assignment && {
           ...assignment,
           timestamp,
-        })
+        }
+        const updatedReviewAssignment = reviewAssignment && {
+          ...reviewAssignment,
+          timestamp,
+        }
+        if (updatedAssignment) {
+          await alertsService.updateAssigneeToAlerts(
+            alertIds,
+            updatedAssignment
+          )
+        } else if (updatedReviewAssignment) {
+          await alertsService.updateReviewAssigneeToAlerts(
+            alertIds,
+            updatedReviewAssignment
+          )
+        }
         await casesAlertsAuditLogService.handleAuditLogForAlertsUpdate(
           alertIds,
           {
-            assignments: [
-              {
-                ...assignment,
-                timestamp,
-              },
+            [updatedAssignment ? 'assignments' : 'reviewAssignments']: [
+              updatedAssignment ?? updatedReviewAssignment,
             ],
           }
         )
@@ -622,28 +639,32 @@ export const casesHandler = lambdaApi()(
         if (!escalationRequest.caseUpdateRequest) {
           throw new BadRequest('Case update request not provided')
         }
-        await caseService.escalateCase(
+        const { assigneeIds } = await caseService.escalateCase(
           caseId,
           escalationRequest.caseUpdateRequest,
           allAccounts
         )
-        return {
+        const response: CaseEscalationResponse = {
           childCaseId: undefined,
+          assigneeIds,
         }
+        return response
       } else if (escalationRequest.alertEscalations) {
         const allAccounts = (
           await accountsService.getTenantAccounts(
             await accountsService.getAccountTenant(userId)
           )
         ).filter((account) => !account.blocked)
-        const childCaseId = await alertsService.escalateAlerts(
+        const { childCaseId, assigneeIds } = await alertsService.escalateAlerts(
           caseId,
           escalationRequest,
           allAccounts
         )
-        return {
+        const response: CaseEscalationResponse = {
           childCaseId,
+          assigneeIds,
         }
+        return response
       }
     }
     throw new NotFound('Unhandled request')

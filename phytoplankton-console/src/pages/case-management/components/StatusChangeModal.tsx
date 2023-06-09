@@ -5,7 +5,7 @@ import { UseMutationResult } from '@tanstack/react-query';
 import _ from 'lodash';
 import { statusToOperationName } from './StatusChangeButton';
 import NarrativesSelectStatusChange from './NarrativesSelectStatusChange';
-import { AlertStatus, CaseStatus, FileInfo } from '@/apis';
+import { CaseStatus, FileInfo } from '@/apis';
 import { CaseClosingReasons } from '@/apis/models/CaseClosingReasons';
 import { UploadFilesList } from '@/components/files/UploadFilesList';
 import { useDeepEqualEffect, usePrevious } from '@/utils/hooks';
@@ -13,6 +13,8 @@ import { MAX_COMMENT_LENGTH } from '@/components/CommentEditor';
 import TextArea from '@/components/library/TextArea';
 import { useFeatureEnabled } from '@/components/AppWrapper/Providers/SettingsProvider';
 import { CopilotButtonContent } from '@/pages/case-management/components/Copilot/CopilotButtonContent';
+import Alert from '@/components/library/Alert';
+import Checkbox from '@/components/library/Checkbox';
 
 export interface RemoveAllFilesRef {
   removeAllFiles: () => void;
@@ -45,24 +47,21 @@ export interface FormValues {
   reasonOther: string | null;
   comment: string | null;
   files: FileInfo[];
+  closeRelatedCase: boolean;
 }
 
 export interface Props {
-  entityName?: string;
+  entityName: string;
   isVisible: boolean;
-  ids: string[];
-  txnIds?: { [alertId: string]: string[] };
+  entityIds: string[];
   newStatus: CaseStatus;
-  newStatusActionLabel?: string;
+  newStatusActionLabel?: 'Send back' | 'Escalate';
   defaultReasons?: CaseClosingReasons[];
   initialValues?: FormValues;
   onSaved: () => void;
   onClose: () => void;
-  updateMutation: UseMutationResult<
-    unknown,
-    unknown,
-    { ids: string[]; newStatus: CaseStatus | AlertStatus; formValues?: FormValues }
-  >;
+  updateMutation: UseMutationResult<unknown, unknown, FormValues>;
+  displayCloseRelatedCases?: boolean;
 }
 
 let uploadedFiles: FileInfo[] = [];
@@ -73,8 +72,8 @@ const handleFiles = (files: FileInfo[]) => {
 
 export default function StatusChangeModal(props: Props) {
   const {
-    ids,
-    entityName = 'case',
+    entityIds,
+    entityName,
     newStatus,
     isVisible,
     defaultReasons,
@@ -83,11 +82,13 @@ export default function StatusChangeModal(props: Props) {
       reasonOther: null,
       comment: '',
       files: [],
+      closeRelatedCase: false,
     },
     onSaved,
     onClose,
     updateMutation,
     newStatusActionLabel,
+    displayCloseRelatedCases,
   } = props;
   const [isOtherReason, setIsOtherReason] = useState(false);
   const [reasons, setReasons] = useState<CaseClosingReasons[]>([]);
@@ -118,14 +119,12 @@ export default function StatusChangeModal(props: Props) {
   ];
   const modalTitle = `${newStatusActionLabel ?? statusToOperationName(newStatus)} ${pluralize(
     entityName,
-    ids.length,
+    entityIds.length,
     true,
   )}`;
 
   const [narrative, setNarrative] = useState<string | undefined>(undefined);
   const [commentValue, setCommentValue] = useState<string | undefined>(undefined);
-
-  const caseIdsString = ids.join(', ');
   const uploadRef = useRef<RemoveAllFilesRef>(null);
 
   const removeFiles = useCallback(() => {
@@ -152,13 +151,9 @@ export default function StatusChangeModal(props: Props) {
 
   const handleConfirm = () => {
     updateMutation.mutate({
-      ids: ids,
-      newStatus,
-      formValues: {
-        ...formValues,
-        files: handleFiles([...fileList, ...formValues.files]),
-        comment: commentValue?.trim() || null,
-      },
+      ...formValues,
+      files: handleFiles([...fileList, ...formValues.files]),
+      comment: commentValue?.trim() || null,
     });
   };
 
@@ -169,6 +164,11 @@ export default function StatusChangeModal(props: Props) {
     }
   }, [narrative]);
 
+  const alertMessage =
+    newStatusActionLabel === 'Send back'
+      ? 'Please note that a case/alert will be reassigned to a previous assignee if available or else it will be assigned to the account that escalated the case/alert.'
+      : null;
+
   return (
     <>
       <Modal
@@ -177,6 +177,7 @@ export default function StatusChangeModal(props: Props) {
         okButtonProps={{
           disabled: updateMutation.isLoading,
         }}
+        okText="Confirm"
         onOk={() => {
           form.validateFields().then((values) => {
             removeFiles();
@@ -246,7 +247,7 @@ export default function StatusChangeModal(props: Props) {
             <CopilotButtonContent
               reasons={reasons}
               setCommentValue={setCommentValue}
-              caseId={ids[0]}
+              caseId={entityIds[0]}
             />
           )}
           <Form.Item name="files" label="Attach documents">
@@ -258,6 +259,16 @@ export default function StatusChangeModal(props: Props) {
               setUploadingCount={setUploadingCount}
             />
           </Form.Item>
+          {displayCloseRelatedCases && newStatus === 'ESCALATED' ? (
+            <Form.Item name="closeRelatedCase" label="Close related case">
+              <Checkbox />
+            </Form.Item>
+          ) : undefined}
+          {alertMessage ? (
+            <Form.Item>
+              <Alert type="info">{alertMessage}</Alert>
+            </Form.Item>
+          ) : null}
         </Form>
       </Modal>
       <Modal
@@ -275,7 +286,7 @@ export default function StatusChangeModal(props: Props) {
         }}
       >
         Are you sure you want to <b>{newStatusActionLabel ?? statusToOperationName(newStatus)}</b>{' '}
-        {pluralize(entityName, ids.length, true)} <b>{caseIdsString}</b> ?
+        {pluralize(entityName, entityIds.length, true)} <b>{entityIds.join(', ')}</b> ?
       </Modal>
     </>
   );

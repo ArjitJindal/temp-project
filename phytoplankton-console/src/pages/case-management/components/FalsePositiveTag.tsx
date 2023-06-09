@@ -40,7 +40,7 @@ export const FalsePositiveTag: React.FC<Props> = (props: Props) => {
         </Tooltip>
       </span>
       <CasesStatusChangeModal
-        ids={caseIds}
+        entityIds={caseIds}
         isVisible={isModalVisible}
         newStatus={newCaseStatus}
         defaultReasons={newCaseStatus === 'CLOSED' ? ['False positive'] : []}

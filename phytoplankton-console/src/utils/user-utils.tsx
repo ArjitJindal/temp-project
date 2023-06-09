@@ -93,6 +93,7 @@ export function useUsers(
     includeBlockedUsers: false,
   },
 ): [{ [userId: string]: Account }, boolean] {
+  const user = useAuth0User();
   const [users, setUsers] = useState<Account[]>([]);
   const [loading, setLoading] = useState(true);
   const api = useApi();
@@ -108,10 +109,11 @@ export function useUsers(
       setLoading(false);
     });
   }, [api, users]);
+  const isSuperAdmin = isAtLeast(user, UserRole.ROOT);
 
   let tempUsers = users;
 
-  if (!includeUsersObject.includeRootUsers) {
+  if (!includeUsersObject.includeRootUsers && !isSuperAdmin) {
     tempUsers = tempUsers.filter((user) => parseUserRole(user.role) !== UserRole.ROOT);
   }
 

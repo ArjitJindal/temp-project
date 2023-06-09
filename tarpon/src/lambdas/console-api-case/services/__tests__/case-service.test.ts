@@ -224,7 +224,9 @@ describe('Case service', () => {
       await alertsService.escalateAlerts(
         'C-2',
         {
-          alertEscalations: [{ alertId: TEST_ALERT_1.alertId! }],
+          alertEscalations: [
+            { alertId: TEST_ALERT_1.alertId!, transactionIds: [] },
+          ],
         },
         [TEST_ACCOUNT_1]
       )
@@ -268,6 +270,7 @@ describe('Case service', () => {
         caseHierarchyDetails: {
           childTransactionIds: ['T-101'],
         },
+        alerts: [TEST_ALERT_2],
       })
     })
     test('escalateAlerts throws error if caseId is null', async () => {

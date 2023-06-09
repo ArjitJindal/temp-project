@@ -190,11 +190,22 @@ export class AlertsRepository {
       params.filterAssignmentsIds?.length
     ) {
       conditions.push({
-        'alerts.assignments': {
-          $elemMatch: {
-            assigneeUserId: { $in: params.filterAssignmentsIds },
+        $or: [
+          {
+            'alerts.assignments': {
+              $elemMatch: {
+                assigneeUserId: { $in: params.filterAssignmentsIds },
+              },
+            },
           },
-        },
+          {
+            'alerts.reviewAssignments': {
+              $elemMatch: {
+                assigneeUserId: { $in: params.filterAssignmentsIds },
+              },
+            },
+          },
+        ],
       })
     }
     if (params.filterRuleInstanceId != null) {
@@ -500,9 +511,24 @@ export class AlertsRepository {
     return result
   }
 
+  public async updateReviewAssigneeToAlerts(
+    alertIds: string[],
+    assignment: Assignment
+  ): Promise<void> {
+    return this.updateAssigneeToAlertsPrivate(alertIds, assignment, true)
+  }
+
   public async updateAssigneeToAlerts(
     alertIds: string[],
     assignment: Assignment
+  ): Promise<void> {
+    return this.updateAssigneeToAlertsPrivate(alertIds, assignment, false)
+  }
+
+  private async updateAssigneeToAlertsPrivate(
+    alertIds: string[],
+    assignment: Assignment,
+    isReview: boolean
   ): Promise<void> {
     const db = this.mongoDb.db()
     const collection = db.collection<Case>(CASES_COLLECTION(this.tenantId))
@@ -515,7 +541,8 @@ export class AlertsRepository {
       },
       {
         $set: {
-          'alerts.$[alert].assignments': [assignment],
+          [`alerts.$[alert].${isReview ? 'reviewAssignments' : 'assignments'}`]:
+            [assignment],
         },
       },
       {

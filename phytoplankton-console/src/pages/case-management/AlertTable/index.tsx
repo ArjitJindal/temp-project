@@ -44,7 +44,11 @@ const mergedColumns = (
   users: Record<string, Account>,
   hideUserColumns: boolean,
   hideAlertStatusFilters: boolean,
-  handleAssignToRequest: (alertIds: Array<string>, assignment: Assignment) => void,
+  handleAssignToRequest: (
+    alertIds: Array<string>,
+    assignment: Assignment,
+    isReview: boolean,
+  ) => void,
   userId: string,
 ): TableColumn<TableAlertItem>[] => {
   const helper = new ColumnHelper<TableAlertItem>();
@@ -157,10 +161,12 @@ const mergedColumns = (
       type: DATE,
       sorting: true,
     }),
-    helper.simple<'assignments'>({
+    helper.derived({
       title: 'Assigned to',
-      key: 'assignments',
       id: '_assigneeName',
+      sorting: true,
+      value: (item) =>
+        item.alertStatus === 'ESCALATED' ? item.reviewAssignments : item.assignments,
       type: {
         ...ASSIGNMENTS,
         render: (assignments, { item: entity }) => {
@@ -174,7 +180,11 @@ const mergedColumns = (
                   assigneeUserId: assignees[assignees.length - 1],
                   timestamp: Date.now(),
                 };
-                handleAssignToRequest([entity.alertId as string], assignments);
+                handleAssignToRequest(
+                  [entity.alertId as string],
+                  assignments,
+                  entity.alertStatus === 'ESCALATED',
+                );
               }}
             />
           );
@@ -219,6 +229,11 @@ export default function AlertTable(props: Props) {
   const [users, _] = useUsers({ includeBlockedUsers: true });
   const [selectedTxns, setSelectedTxns] = useState<{ [alertId: string]: string[] }>({});
   const [selectedAlerts, setSelectedAlerts] = useState<string[]>([]);
+  const selectedTransactionIds = useMemo(() => {
+    return Object.values(selectedTxns)
+      .flatMap((v) => v)
+      .filter(Boolean);
+  }, [selectedTxns]);
 
   const queryResults: QueryResult<TableData<TableAlertItem>> = usePaginatedQuery(
     ALERT_LIST(params),
@@ -323,23 +338,24 @@ export default function AlertTable(props: Props) {
     actionRef.current?.reload();
   }, []);
 
-  const handleAssignTo = (account: Account, selectedEntities: string[]) => {
+  const handleAssignTo = (account: Account, selectedEntities: string[], isReview: boolean) => {
     const assignment = {
       assigneeUserId: account.id,
       assignedByUserId: user.userId,
       timestamp: Date.now(),
     };
-    handleAssignToRequest(selectedEntities, assignment);
+    handleAssignToRequest(selectedEntities, assignment, isReview);
   };
 
   const handleAssignToRequest = useCallback(
-    (alertIds: string[], assignment: Assignment) => {
+    (alertIds: string[], assignment: Assignment, isReview: boolean) => {
       const hideLoading = message.loading('Assigning alerts');
       api
         .alertsAssignee({
           AlertsAssignmentUpdateRequest: {
             alertIds: alertIds,
-            assignment: assignment,
+            assignment: isReview ? undefined : assignment,
+            reviewAssignment: isReview ? assignment : undefined,
           },
         })
         .then(() => {
@@ -414,19 +430,41 @@ export default function AlertTable(props: Props) {
         pagination={isEmbedded ? 'HIDE_FOR_ONE_PAGE' : true}
         selectionActions={[
           sarDemoButton,
-          ({ selectedIds }) => <AssignToButton ids={selectedIds} onSelect={handleAssignTo} />,
+          ({ selectedIds, selectedItems }) => {
+            if (selectedTransactionIds.length) {
+              return;
+            }
+
+            const selectedAlertStatuses = new Set(
+              Object.values(selectedItems).map((item) => item.alertStatus),
+            );
+            if (selectedAlertStatuses.has('ESCALATED') && selectedAlertStatuses.size === 1) {
+              return (
+                <AssignToButton
+                  ids={selectedIds}
+                  onSelect={(account, ids) => handleAssignTo(account, ids, true)}
+                />
+              );
+            } else if (!selectedAlertStatuses.has('ESCALATED')) {
+              return (
+                <AssignToButton
+                  ids={selectedIds}
+                  onSelect={(account, ids) => handleAssignTo(account, ids, false)}
+                />
+              );
+            }
+          },
 
           ({ selectedIds, selectedItems, params }) => {
             const selectedAlertStatuses = [
               ...new Set(
-                Object.values(selectedItems).map((item) => {
-                  return item.alertStatus === 'CLOSED' ? 'CLOSED' : 'OPEN';
-                }),
+                Object.values(selectedItems).map((item) =>
+                  item.alertStatus === 'REOPENED' ? 'OPEN' : item.alertStatus,
+                ),
               ),
             ];
             const selectedAlertStatus =
               selectedAlertStatuses.length === 1 ? selectedAlertStatuses[0] : undefined;
-
             const selectedCaseIds = [
               ...new Set(
                 Object.values(selectedItems)
@@ -435,25 +473,26 @@ export default function AlertTable(props: Props) {
               ),
             ];
             const selectedCaseId = selectedCaseIds.length === 1 ? selectedCaseIds[0] : undefined;
-
             const caseId = params.caseId ?? selectedCaseId;
             const alertStatus = params.alertStatus ?? selectedAlertStatus;
+            if (alertStatus === 'ESCALATED' && selectedTransactionIds.length) {
+              return;
+            }
 
             return (
               escalationEnabled &&
               caseId &&
-              alertStatus &&
-              alertStatus != 'ESCALATED' && (
+              alertStatus && (
                 <AlertsStatusChangeButton
                   ids={selectedIds}
-                  txnIds={selectedTxns}
+                  transactionIds={selectedTxns}
                   onSaved={reloadTable}
                   status={alertStatus}
                   caseId={caseId}
                   statusTransitions={{
                     OPEN: { status: 'ESCALATED', actionLabel: 'Escalate' },
                     REOPENED: { status: 'ESCALATED', actionLabel: 'Escalate' },
-                    ESCALATED: { status: 'ESCALATED', actionLabel: 'Escalate' },
+                    ESCALATED: { status: 'OPEN', actionLabel: 'Send back' },
                     CLOSED: { status: 'ESCALATED', actionLabel: 'Escalate' },
                   }}
                 />
@@ -468,28 +507,36 @@ export default function AlertTable(props: Props) {
                 }),
               ),
             ];
-
             const statusChangeButtonValue =
               selectedStatuses.length === 1 ? selectedStatuses[0] : undefined;
+            if (selectedTransactionIds.length) {
+              return;
+            }
 
             return statusChangeButtonValue ? (
               <AlertsStatusChangeButton
                 ids={selectedIds}
-                txnIds={selectedTxns}
+                transactionIds={selectedTxns}
                 onSaved={reloadTable}
                 status={params.alertStatus ?? statusChangeButtonValue}
                 caseId={params.caseId}
               />
             ) : null;
           },
-          ({ selectedIds, params, onResetSelection }) =>
-            params.caseId && (
-              <CreateCaseConfirmModal
-                selectedEntities={selectedIds}
-                caseId={params.caseId}
-                onResetSelection={onResetSelection}
-              />
-            ),
+          ({ selectedIds, params, onResetSelection }) => {
+            if (selectedTransactionIds.length) {
+              return;
+            }
+            return (
+              params.caseId && (
+                <CreateCaseConfirmModal
+                  selectedEntities={selectedIds}
+                  caseId={params.caseId}
+                  onResetSelection={onResetSelection}
+                />
+              )
+            );
+          },
         ]}
         renderExpanded={
           expandTransactions
@@ -498,12 +545,12 @@ export default function AlertTable(props: Props) {
                   alert={alert ?? null}
                   escalatedTransactionIds={props.escalatedTransactionIds}
                   selectedTransactionIds={selectedTxns[alert.alertId ?? ''] ?? []}
-                  onTransactionSelect={(alertId, txnIds) => {
+                  onTransactionSelect={(alertId, transactionIds) => {
                     setSelectedTxns((prevSelectedTxns) => ({
                       ...prevSelectedTxns,
-                      [alertId]: [...txnIds],
+                      [alertId]: [...transactionIds],
                     }));
-                    if (txnIds.length > 0) {
+                    if (transactionIds.length > 0) {
                       setSelectedAlerts((prevState) => prevState.filter((x) => x !== alertId));
                     }
                   }}
