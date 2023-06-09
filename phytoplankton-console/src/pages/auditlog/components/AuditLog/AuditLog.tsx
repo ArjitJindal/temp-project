@@ -71,16 +71,20 @@ export default function AuditLogTable() {
       title: 'Audit Log ID',
       key: 'auditlogId',
     }),
-    helper.simple<'type'>({
+    helper.derived({
       title: 'Entity',
-      key: 'type',
+      value: (item) => {
+        return {
+          entityType: item.type,
+          entityId: item.type === 'RULE' ? item.logMetadata.ruleId : item.entityId,
+        };
+      },
       type: {
-        render: (type, { item: entity }) => {
+        render: (value) => {
           return (
             <>
-              <Typography.Text>{type}</Typography.Text>
-              <br />
-              <Typography.Text type={'secondary'}>{entity.entityId}</Typography.Text>
+              <Typography.Text>{value?.entityType}</Typography.Text>
+              <Typography.Text type={'secondary'}>{value?.entityId}</Typography.Text>
             </>
           );
         },
