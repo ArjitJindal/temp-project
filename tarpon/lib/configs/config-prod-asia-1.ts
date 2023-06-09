@@ -40,7 +40,9 @@ export const config: Config = {
     USER_LAMBDA: {
       PROVISIONED_CONCURRENCY: 2,
     },
-    TARPON_CHANGE_CAPTURE_LAMBDA: {},
+    TARPON_CHANGE_CAPTURE_LAMBDA: {
+      MEMORY_SIZE: 1024,
+    },
     HAMMERHEAD_CHANGE_CAPTURE_LAMBDA: {},
     TENANT_LAMBDA: {
       PROVISIONED_CONCURRENCY: 1,
@@ -54,7 +56,6 @@ export const config: Config = {
     BATCH_JOB_LAMBDA: {
       MEMORY_SIZE: 1024,
     },
-    TARPON_CHANGE_CONSUMER_LAMBDA: {},
     LAMBDA_VPC_ENABLED: true,
   },
   application: {

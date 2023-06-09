@@ -43,7 +43,6 @@ export const config: Config = {
     CASE_LAMBDA: {
       PROVISIONED_CONCURRENCY: 0,
     },
-    TARPON_CHANGE_CONSUMER_LAMBDA: {},
   },
   application: {
     CERTIFICATE_ARN:

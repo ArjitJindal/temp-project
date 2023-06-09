@@ -728,24 +728,17 @@ export class CdkTarponStack extends cdk.Stack {
     /* Tarpon Kinesis Change capture consumer */
 
     // MongoDB mirror handler
-    const tarponChangeConsumerProps = {
-      ...functionProps,
-      memorySize: config.resource.TARPON_CHANGE_CAPTURE_LAMBDA
-        ? config.resource.TARPON_CHANGE_CAPTURE_LAMBDA.MEMORY_SIZE
-        : 256,
-      environment: functionProps.environment,
-    }
     const { alias: tarponChangeCaptureKinesisConsumerAlias } = createFunction(
       this,
       lambdaExecutionRole,
       {
         name: StackConstants.TARPON_CHANGE_CAPTURE_KINESIS_CONSUMER_FUNCTION_NAME,
         memorySize:
-          this.config.resource.TARPON_CHANGE_CONSUMER_LAMBDA.MEMORY_SIZE,
+          this.config.resource.TARPON_CHANGE_CAPTURE_LAMBDA?.MEMORY_SIZE,
         auditLogTopic: this.auditLogTopic,
         batchJobQueue,
       },
-      tarponChangeConsumerProps
+      functionProps
     )
     const { alias: tarponChangeCaptureKinesisConsumerRetryAlias } =
       createFunction(
@@ -756,20 +749,19 @@ export class CdkTarponStack extends cdk.Stack {
           auditLogTopic: this.auditLogTopic,
           batchJobQueue,
         },
-        tarponChangeConsumerProps
+        functionProps
       )
     if (!isDevUserStack) {
       this.createKinesisEventSource(
         tarponChangeCaptureKinesisConsumerAlias,
         tarponStream,
-        { startingPosition: StartingPosition.TRIM_HORIZON }
+        { startingPosition: StartingPosition.TRIM_HORIZON, batchSize: 200 }
       )
       tarponChangeCaptureKinesisConsumerRetryAlias.addEventSource(
         new SqsEventSource(tarponChangeCaptureRetryQueue)
       )
     }
     // Webhook handler
-    const webhookTarponChangeConsumerProps = functionProps
     const { alias: webhookTarponChangeCaptureHandlerAlias } = createFunction(
       this,
       lambdaExecutionRole,
@@ -778,7 +770,7 @@ export class CdkTarponStack extends cdk.Stack {
         auditLogTopic: this.auditLogTopic,
         batchJobQueue,
       },
-      webhookTarponChangeConsumerProps
+      functionProps
     )
     const { alias: webhookTarponChangeCaptureHandlerRetryAlias } =
       createFunction(
@@ -789,7 +781,7 @@ export class CdkTarponStack extends cdk.Stack {
           auditLogTopic: this.auditLogTopic,
           batchJobQueue,
         },
-        webhookTarponChangeConsumerProps
+        functionProps
       )
     if (!isDevUserStack) {
       this.createKinesisEventSource(
@@ -814,24 +806,18 @@ export class CdkTarponStack extends cdk.Stack {
     )
 
     /* Hammerhead Kinesis Change capture consumer */
-    const hammerheadChangeConsumerProps = {
-      ...functionProps,
-      memorySize: config.resource.HAMMERHEAD_CHANGE_CAPTURE_LAMBDA
-        ? config.resource.HAMMERHEAD_CHANGE_CAPTURE_LAMBDA.MEMORY_SIZE
-        : 256,
-      environment: functionProps.environment,
-    }
-
     const { alias: hammerheadChangeCaptureKinesisConsumerAlias } =
       createFunction(
         this,
         lambdaExecutionRole,
         {
           name: StackConstants.HAMMERHEAD_CHANGE_CAPTURE_KINESIS_CONSUMER_FUNCTION_NAME,
+          memorySize:
+            config.resource.HAMMERHEAD_CHANGE_CAPTURE_LAMBDA?.MEMORY_SIZE,
           auditLogTopic: this.auditLogTopic,
           batchJobQueue,
         },
-        hammerheadChangeConsumerProps
+        functionProps
       )
 
     const { alias: hammerheadChangeCaptureKinesisConsumerRetryAlias } =
@@ -843,7 +829,7 @@ export class CdkTarponStack extends cdk.Stack {
           auditLogTopic: this.auditLogTopic,
           batchJobQueue,
         },
-        hammerheadChangeConsumerProps
+        functionProps
       )
 
     const apiCert = Certificate.fromCertificateArn(
