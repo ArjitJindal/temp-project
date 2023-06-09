@@ -9,7 +9,7 @@ export async function getMigrationLastCompletedTimestamp(
   const mongoDb = (await getMongoDbClient()).db()
   const migrationProgress = await mongoDb
     .collection(MIGRATION_TMP_COLLECTION)
-    .findOne({ _id: migrationKey })
+    .findOne({ _id: migrationKey as any })
   return migrationProgress?.lastCompletedTimestamp
 }
 
@@ -20,7 +20,7 @@ export async function updateMigrationLastCompletedTimestamp(
   const mongoDb = (await getMongoDbClient()).db()
   await mongoDb.collection(MIGRATION_TMP_COLLECTION).replaceOne(
     {
-      _id: migrationKey,
+      _id: migrationKey as any,
     },
     { lastCompletedTimestamp },
     { upsert: true }

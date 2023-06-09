@@ -15,7 +15,7 @@ on:
   pull_request:
     branches: [main]
     paths:
-      - 'tarpon/**'
+      - "tarpon/**"
 jobs:
   test:
     name: test-tarpon
@@ -28,7 +28,7 @@ jobs:
         uses: actions/setup-node@v3
         with:
           node-version: 16
-          cache: 'npm'
+          cache: "npm"
           cache-dependency-path: "tarpon/package-lock.json"
       - name: Cache jest results
         uses: actions/cache@v3
@@ -51,11 +51,11 @@ jobs:
         uses: rrainn/dynamodb-action@v2.0.1
         with:
           port: 7999
-          cors: '*'
+          cors: "*"
       - name: Start MongoDB localy
         uses: supercharge/mongodb-github-action@1.7.0
         with:
-          mongodb-version: 4.4.0
+          mongodb-version: 5.0.18
           mongodb-port: 27018
       - name: Run Tests
         env:

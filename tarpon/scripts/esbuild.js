@@ -19,6 +19,7 @@ const IGNORED = [
   'aws-crt',
   'google-gax',
   'mongodb-client-encryption',
+  '@mongodb-js/zstd',
   'encoding',
   // The data files inside 'fast-geoip' package cannot be bundled by webpack, we exclude
   // it from being bundled and put it to a lambda layer instead.

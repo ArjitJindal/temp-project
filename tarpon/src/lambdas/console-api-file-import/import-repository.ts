@@ -21,7 +21,7 @@ export class ImportRepository {
     const collection = db.collection(IMPORT_COLLECTION(this.tenantId))
     await collection.replaceOne(
       {
-        _id: fileImport._id,
+        _id: fileImport._id as any,
       },
       fileImport,
       { upsert: true }

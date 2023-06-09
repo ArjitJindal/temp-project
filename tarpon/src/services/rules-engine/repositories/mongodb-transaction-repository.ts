@@ -637,6 +637,11 @@ export class MongoDbTransactionRepository
           }
         : {},
       {
+        $match: {
+          [fieldPath]: { $ne: null },
+        },
+      },
+      {
         $group: {
           _id: `$${fieldPath}`,
         },
