@@ -210,6 +210,12 @@ export AWS_SESSION_TOKEN=...
 ENV=dev AWS_REGION=eu-central-1 ATLAS_CREDENTIALS_SECRET_ARN='arn:aws:secretsmanager:eu-central-1:911899431626:secret:mongoAtlasCreds-RvzMVI' npm run migration:pre:up
 ```
 
+### Archived migrations
+
+Migrations are periodically deleted (archived). To find the archived migrations, please check the following PRs:
+
+1. https://github.com/flagright/orca/pull/1469
+
 ## Resources
 
 ### Working with Databases
