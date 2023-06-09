@@ -157,10 +157,7 @@ export default class TransactionsExceedPastPeriodRule extends TransactionAggrega
         {
           timeWindow: timeWindow1,
           checkDirection: checkDirection ?? 'all',
-          transactionTypes: this.filters.transactionTypesHistorical,
-          transactionStates: this.filters.transactionStatesHistorical,
-          paymentMethod: this.filters.paymentMethodHistorical,
-          countries: this.filters.transactionCountriesHistorical,
+          filters: this.filters,
         },
         ['timestamp']
       ),
@@ -171,10 +168,7 @@ export default class TransactionsExceedPastPeriodRule extends TransactionAggrega
         {
           timeWindow: timeWindow2,
           checkDirection: checkDirection ?? 'all',
-          transactionTypes: this.filters.transactionTypesHistorical,
-          transactionStates: this.filters.transactionStatesHistorical,
-          paymentMethod: this.filters.paymentMethodHistorical,
-          countries: this.filters.transactionCountriesHistorical,
+          filters: this.filters,
         },
         ['timestamp']
       ),

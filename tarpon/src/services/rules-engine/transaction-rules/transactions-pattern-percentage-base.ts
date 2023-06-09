@@ -146,10 +146,7 @@ export default abstract class TransactionsPatternPercentageBaseRule<
         {
           timeWindow,
           checkDirection: direction === 'origin' ? checkSender : checkReceiver,
-          transactionStates: this.filters.transactionStatesHistorical,
-          transactionTypes: this.filters.transactionTypesHistorical,
-          paymentMethod: this.filters.paymentMethodHistorical,
-          countries: this.filters.transactionCountriesHistorical,
+          filters: this.filters,
         },
         ['timestamp', ...this.getNeededTransactionFields()]
       )

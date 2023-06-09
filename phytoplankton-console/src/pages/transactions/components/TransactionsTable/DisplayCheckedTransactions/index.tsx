@@ -68,8 +68,10 @@ const DisplayCheckedTransactions = (props: Props) => {
             sortField: sortField ?? undefined,
             sortOrder: sortOrder ?? undefined,
             includeUsers: true,
-            filterOriginPaymentMethod: originMethodFilter,
-            filterDestinationPaymentMethod: destinationMethodFilter,
+            filterOriginPaymentMethods: originMethodFilter ? [originMethodFilter] : undefined,
+            filterDestinationPaymentMethods: destinationMethodFilter
+              ? [destinationMethodFilter]
+              : undefined,
             filterTagKey: tagKey,
             filterTagValue: tagValue,
             filterOriginUserId: params.userFilterMode === 'ORIGIN' ? params.userId : undefined,

@@ -92,8 +92,11 @@ const TableList = () => {
             sortField: sortField ?? undefined,
             sortOrder: sortOrder ?? undefined,
             includeUsers: true,
-            filterOriginPaymentMethod: originMethodFilter,
-            filterDestinationPaymentMethod: destinationMethodFilter,
+            filterOriginPaymentMethods: originMethodFilter ? [originMethodFilter] : undefined,
+            filterDestinationPaymentMethods: destinationMethodFilter
+              ? [destinationMethodFilter]
+              : undefined,
+
             filterTagKey: tagKey,
             filterTagValue: tagValue,
           }),

@@ -12,7 +12,12 @@ interface UiSchema<Type> {
 export type ExtendedJSONSchemaType<Type> = JSONSchemaType<Type> & UiSchema<Type>
 
 export interface UiSchemaParamsShared {
-  group?: 'user' | 'geography' | 'transaction' | 'transaction_historical'
+  group?:
+    | 'user'
+    | 'geography'
+    | 'transaction'
+    | 'transaction_historical'
+    | 'general'
 }
 
 export interface UiSchemaParamsAgeRange extends UiSchemaParamsShared {

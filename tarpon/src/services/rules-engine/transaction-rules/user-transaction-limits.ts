@@ -122,10 +122,12 @@ export default class UserTransactionLimitsRule extends TransactionRule<UserTrans
             ),
           },
           {
-            ...(this.parameters?.onlyCheckTypes?.includes('PAYMENT_METHOD')
+            ...(this.parameters?.onlyCheckTypes?.includes('PAYMENT_METHOD') &&
+            this.transaction.originPaymentDetails?.method
               ? {
-                  originPaymentMethod:
+                  originPaymentMethods: [
                     this.transaction.originPaymentDetails?.method,
+                  ],
                 }
               : {}),
           }

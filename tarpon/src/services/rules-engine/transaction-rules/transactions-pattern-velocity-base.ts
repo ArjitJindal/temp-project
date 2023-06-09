@@ -135,12 +135,9 @@ export default abstract class TransactionsPatternVelocityBaseRule<
         {
           timeWindow,
           checkDirection,
-          transactionStates: this.filters.transactionStatesHistorical,
-          transactionTypes: this.filters.transactionTypesHistorical,
-          paymentMethod: this.filters.paymentMethodHistorical,
-          countries: this.filters.transactionCountriesHistorical,
           matchPaymentMethodDetails:
             this.isMatchPaymentMethodDetailsEnabled(direction),
+          filters: this.filters,
         },
         this.getNeededTransactionFields()
       )

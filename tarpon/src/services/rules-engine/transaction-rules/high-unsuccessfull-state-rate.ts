@@ -234,6 +234,7 @@ export default class HighUnsuccessfullStateRateRule extends TransactionAggregati
         timeWindow: this.parameters.timeWindow,
         checkSender,
         checkReceiver,
+        filters: {},
       },
       ['timestamp']
     )
@@ -249,10 +250,7 @@ export default class HighUnsuccessfullStateRateRule extends TransactionAggregati
         timeWindow: this.parameters.timeWindow,
         checkSender,
         checkReceiver,
-        transactionTypes: this.filters.transactionTypesHistorical,
-        transactionStates: this.parameters.transactionStates,
-        paymentMethod: this.filters.paymentMethodHistorical,
-        countries: this.filters.transactionCountriesHistorical,
+        filters: this.filters,
       },
       ['timestamp']
     )

@@ -19,6 +19,11 @@ const TEST_TRANSACTION_AMOUNT_100: TransactionAmountDetails = {
   transactionAmount: 100,
 }
 
+const TEST_TRANSACTION_AMOUNT_200: TransactionAmountDetails = {
+  transactionCurrency: 'EUR',
+  transactionAmount: 200,
+}
+
 const TEST_TRANSACTION_METHOD_IBAN_1 = {
   method: 'IBAN',
   BIC: 'AXISINBB250',
@@ -827,6 +832,393 @@ ruleVariantsTest(true, () => {
           }),
         ],
         expectedHits: [false, false, true],
+      },
+    ])('', ({ name, transactions, expectedHits }) => {
+      createTransactionRuleTestCase(
+        name,
+        TEST_TENANT_ID,
+        transactions,
+        expectedHits
+      )
+    })
+  })
+
+  /**
+   * Transaction rule filters
+   */
+  const DEFAULT_RULE_PARAMETERS = {
+    timeWindow: {
+      units: 1,
+      granularity: 'day',
+      rollingBasis: true,
+    },
+    checkSender: 'all',
+    checkReceiver: 'all',
+    transactionVolumeThreshold: {
+      EUR: 400,
+    },
+  } as TransactionsVolumeRuleParameters
+
+  describe('transaction amount filter', () => {
+    const TEST_TENANT_ID = getTestTenantId()
+
+    setUpRulesHooks(TEST_TENANT_ID, [
+      {
+        type: 'TRANSACTION',
+        ruleImplementationName: 'transactions-volume',
+        filters: {
+          transactionAmountRangeHistorical: {
+            EUR: {
+              min: 150,
+            },
+          },
+        },
+        defaultParameters: DEFAULT_RULE_PARAMETERS,
+      },
+    ])
+
+    describe.each<TransactionRuleTestCase>([
+      {
+        name: '',
+        transactions: [
+          getTestTransaction({
+            originUserId: '1-1',
+            destinationUserId: '1-2',
+            originAmountDetails: TEST_TRANSACTION_AMOUNT_100,
+            destinationAmountDetails: TEST_TRANSACTION_AMOUNT_100,
+            timestamp: dayjs('2022-01-01T00:00:00.000Z').valueOf(),
+          }),
+          getTestTransaction({
+            originUserId: '1-1',
+            destinationUserId: '1-3',
+            originAmountDetails: TEST_TRANSACTION_AMOUNT_200,
+            destinationAmountDetails: TEST_TRANSACTION_AMOUNT_200,
+            timestamp: dayjs('2022-01-01T00:00:01.000Z').valueOf(),
+          }),
+          getTestTransaction({
+            originUserId: '1-1',
+            destinationUserId: '1-4',
+            originAmountDetails: TEST_TRANSACTION_AMOUNT_100,
+            destinationAmountDetails: TEST_TRANSACTION_AMOUNT_100,
+            timestamp: dayjs('2022-01-01T00:00:02.000Z').valueOf(),
+          }),
+          getTestTransaction({
+            originUserId: '1-1',
+            destinationUserId: '1-5',
+            originAmountDetails: TEST_TRANSACTION_AMOUNT_200,
+            destinationAmountDetails: TEST_TRANSACTION_AMOUNT_200,
+            timestamp: dayjs('2022-01-01T00:00:02.000Z').valueOf(),
+          }),
+        ],
+        expectedHits: [false, false, false, true],
+      },
+    ])('', ({ name, transactions, expectedHits }) => {
+      createTransactionRuleTestCase(
+        name,
+        TEST_TENANT_ID,
+        transactions,
+        expectedHits
+      )
+    })
+  })
+
+  describe('transaction state filter', () => {
+    const TEST_TENANT_ID = getTestTenantId()
+
+    setUpRulesHooks(TEST_TENANT_ID, [
+      {
+        type: 'TRANSACTION',
+        ruleImplementationName: 'transactions-volume',
+        filters: {
+          transactionStatesHistorical: ['DECLINED'],
+        },
+        defaultParameters: DEFAULT_RULE_PARAMETERS,
+      },
+    ])
+
+    describe.each<TransactionRuleTestCase>([
+      {
+        name: '',
+        transactions: [
+          getTestTransaction({
+            transactionState: 'CREATED',
+            originUserId: '1-1',
+            destinationUserId: '1-2',
+            originAmountDetails: TEST_TRANSACTION_AMOUNT_200,
+            destinationAmountDetails: TEST_TRANSACTION_AMOUNT_200,
+            timestamp: dayjs('2022-01-01T00:00:00.000Z').valueOf(),
+          }),
+          getTestTransaction({
+            transactionState: 'DECLINED',
+            originUserId: '1-1',
+            destinationUserId: '1-3',
+            originAmountDetails: TEST_TRANSACTION_AMOUNT_200,
+            destinationAmountDetails: TEST_TRANSACTION_AMOUNT_200,
+            timestamp: dayjs('2022-01-01T00:00:01.000Z').valueOf(),
+          }),
+          getTestTransaction({
+            transactionState: 'DECLINED',
+            originUserId: '1-1',
+            destinationUserId: '1-4',
+            originAmountDetails: TEST_TRANSACTION_AMOUNT_200,
+            destinationAmountDetails: TEST_TRANSACTION_AMOUNT_200,
+            timestamp: dayjs('2022-01-01T00:00:02.000Z').valueOf(),
+          }),
+        ],
+        expectedHits: [false, false, true],
+      },
+    ])('', ({ name, transactions, expectedHits }) => {
+      createTransactionRuleTestCase(
+        name,
+        TEST_TENANT_ID,
+        transactions,
+        expectedHits
+      )
+    })
+  })
+
+  describe('transaction type filter', () => {
+    const TEST_TENANT_ID = getTestTenantId()
+
+    setUpRulesHooks(TEST_TENANT_ID, [
+      {
+        type: 'TRANSACTION',
+        ruleImplementationName: 'transactions-volume',
+        filters: {
+          transactionTypesHistorical: ['DEPOSIT'],
+        },
+        defaultParameters: DEFAULT_RULE_PARAMETERS,
+      },
+    ])
+
+    describe.each<TransactionRuleTestCase>([
+      {
+        name: '',
+        transactions: [
+          getTestTransaction({
+            type: 'TRANSFER',
+            originUserId: '1-1',
+            destinationUserId: '1-2',
+            originAmountDetails: TEST_TRANSACTION_AMOUNT_200,
+            destinationAmountDetails: TEST_TRANSACTION_AMOUNT_200,
+            timestamp: dayjs('2022-01-01T00:00:00.000Z').valueOf(),
+          }),
+          getTestTransaction({
+            type: 'DEPOSIT',
+            originUserId: '1-1',
+            destinationUserId: '1-3',
+            originAmountDetails: TEST_TRANSACTION_AMOUNT_200,
+            destinationAmountDetails: TEST_TRANSACTION_AMOUNT_200,
+            timestamp: dayjs('2022-01-01T00:00:01.000Z').valueOf(),
+          }),
+          getTestTransaction({
+            type: 'DEPOSIT',
+            originUserId: '1-1',
+            destinationUserId: '1-4',
+            originAmountDetails: TEST_TRANSACTION_AMOUNT_200,
+            destinationAmountDetails: TEST_TRANSACTION_AMOUNT_200,
+            timestamp: dayjs('2022-01-01T00:00:02.000Z').valueOf(),
+          }),
+        ],
+        expectedHits: [false, false, true],
+      },
+    ])('', ({ name, transactions, expectedHits }) => {
+      createTransactionRuleTestCase(
+        name,
+        TEST_TENANT_ID,
+        transactions,
+        expectedHits
+      )
+    })
+  })
+
+  describe('transaction payment method filter', () => {
+    const TEST_TENANT_ID = getTestTenantId()
+
+    setUpRulesHooks(TEST_TENANT_ID, [
+      {
+        type: 'TRANSACTION',
+        ruleImplementationName: 'transactions-volume',
+        filters: {
+          paymentMethodsHistorical: ['ACH'],
+        },
+        defaultParameters: DEFAULT_RULE_PARAMETERS,
+      },
+    ])
+
+    describe.each<TransactionRuleTestCase>([
+      {
+        name: '',
+        transactions: [
+          getTestTransaction({
+            originPaymentDetails: {
+              method: 'CARD',
+            },
+            originUserId: '1-1',
+            destinationUserId: '1-2',
+            originAmountDetails: TEST_TRANSACTION_AMOUNT_200,
+            destinationAmountDetails: TEST_TRANSACTION_AMOUNT_200,
+            timestamp: dayjs('2022-01-01T00:00:00.000Z').valueOf(),
+          }),
+          getTestTransaction({
+            originPaymentDetails: {
+              method: 'ACH',
+            },
+            originUserId: '1-1',
+            destinationUserId: '1-3',
+            originAmountDetails: TEST_TRANSACTION_AMOUNT_200,
+            destinationAmountDetails: TEST_TRANSACTION_AMOUNT_200,
+            timestamp: dayjs('2022-01-01T00:00:01.000Z').valueOf(),
+          }),
+          getTestTransaction({
+            originPaymentDetails: {
+              method: 'ACH',
+            },
+            originUserId: '1-1',
+            destinationUserId: '1-4',
+            originAmountDetails: TEST_TRANSACTION_AMOUNT_200,
+            destinationAmountDetails: TEST_TRANSACTION_AMOUNT_200,
+            timestamp: dayjs('2022-01-01T00:00:02.000Z').valueOf(),
+          }),
+        ],
+        expectedHits: [false, false, true],
+      },
+    ])('', ({ name, transactions, expectedHits }) => {
+      createTransactionRuleTestCase(
+        name,
+        TEST_TENANT_ID,
+        transactions,
+        expectedHits
+      )
+    })
+  })
+
+  describe('transaction country filter', () => {
+    const TEST_TENANT_ID = getTestTenantId()
+
+    setUpRulesHooks(TEST_TENANT_ID, [
+      {
+        type: 'TRANSACTION',
+        ruleImplementationName: 'transactions-volume',
+        filters: {
+          transactionCountriesHistorical: ['DE'],
+        },
+        defaultParameters: DEFAULT_RULE_PARAMETERS,
+      },
+    ])
+
+    describe.each<TransactionRuleTestCase>([
+      {
+        name: '',
+        transactions: [
+          getTestTransaction({
+            originUserId: '1-1',
+            destinationUserId: '1-2',
+            originAmountDetails: {
+              ...TEST_TRANSACTION_AMOUNT_200,
+              country: 'FR',
+            },
+            destinationAmountDetails: undefined,
+            timestamp: dayjs('2022-01-01T00:00:00.000Z').valueOf(),
+          }),
+          getTestTransaction({
+            originUserId: '1-1',
+            destinationUserId: '1-3',
+            originAmountDetails: {
+              ...TEST_TRANSACTION_AMOUNT_200,
+              country: 'DE',
+            },
+            destinationAmountDetails: undefined,
+            timestamp: dayjs('2022-01-01T00:00:01.000Z').valueOf(),
+          }),
+          getTestTransaction({
+            originUserId: '1-1',
+            destinationUserId: '1-4',
+            originAmountDetails: {
+              ...TEST_TRANSACTION_AMOUNT_200,
+              country: 'DE',
+            },
+            destinationAmountDetails: undefined,
+            timestamp: dayjs('2022-01-01T00:00:02.000Z').valueOf(),
+          }),
+        ],
+        expectedHits: [false, false, true],
+      },
+    ])('', ({ name, transactions, expectedHits }) => {
+      createTransactionRuleTestCase(
+        name,
+        TEST_TENANT_ID,
+        transactions,
+        expectedHits
+      )
+    })
+  })
+
+  describe('multiple transaction filters', () => {
+    const TEST_TENANT_ID = getTestTenantId()
+
+    setUpRulesHooks(TEST_TENANT_ID, [
+      {
+        type: 'TRANSACTION',
+        ruleImplementationName: 'transactions-volume',
+        filters: {
+          transactionAmountRangeHistorical: {
+            EUR: {
+              min: 150,
+            },
+          },
+          transactionTypesHistorical: ['DEPOSIT'],
+        },
+        defaultParameters: DEFAULT_RULE_PARAMETERS,
+      },
+    ])
+
+    describe.each<TransactionRuleTestCase>([
+      {
+        name: '',
+        transactions: [
+          getTestTransaction({
+            type: 'TRANSFER',
+            originUserId: '1-1',
+            destinationUserId: '1-2',
+            originAmountDetails: TEST_TRANSACTION_AMOUNT_100,
+            destinationAmountDetails: TEST_TRANSACTION_AMOUNT_100,
+            timestamp: dayjs('2022-01-01T00:00:00.000Z').valueOf(),
+          }),
+          getTestTransaction({
+            type: 'TRANSFER',
+            originUserId: '1-1',
+            destinationUserId: '1-3',
+            originAmountDetails: TEST_TRANSACTION_AMOUNT_200,
+            destinationAmountDetails: TEST_TRANSACTION_AMOUNT_200,
+            timestamp: dayjs('2022-01-01T00:00:01.000Z').valueOf(),
+          }),
+          getTestTransaction({
+            type: 'DEPOSIT',
+            originUserId: '1-1',
+            destinationUserId: '1-4',
+            originAmountDetails: TEST_TRANSACTION_AMOUNT_200,
+            destinationAmountDetails: TEST_TRANSACTION_AMOUNT_200,
+            timestamp: dayjs('2022-01-01T00:00:02.000Z').valueOf(),
+          }),
+          getTestTransaction({
+            type: 'DEPOSIT',
+            originUserId: '1-1',
+            destinationUserId: '1-5',
+            originAmountDetails: TEST_TRANSACTION_AMOUNT_100,
+            destinationAmountDetails: TEST_TRANSACTION_AMOUNT_100,
+            timestamp: dayjs('2022-01-01T00:00:03.000Z').valueOf(),
+          }),
+          getTestTransaction({
+            type: 'DEPOSIT',
+            originUserId: '1-1',
+            destinationUserId: '1-6',
+            originAmountDetails: TEST_TRANSACTION_AMOUNT_200,
+            destinationAmountDetails: TEST_TRANSACTION_AMOUNT_200,
+            timestamp: dayjs('2022-01-01T00:00:04.000Z').valueOf(),
+          }),
+        ],
+        expectedHits: [false, false, false, false, true],
       },
     ])('', ({ name, transactions, expectedHits }) => {
       createTransactionRuleTestCase(

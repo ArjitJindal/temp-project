@@ -41,7 +41,9 @@ export default class FirstActivityAfterLongTimeRule extends TransactionRule<
           {
             transactionStates: this.filters.transactionStatesHistorical,
             transactionTypes: this.filters.transactionTypesHistorical,
-            originPaymentMethod: this.filters.paymentMethodHistorical,
+            transactionAmountRange:
+              this.filters.transactionAmountRangeHistorical,
+            originPaymentMethods: this.filters.paymentMethodsHistorical,
             originCountries: this.filters.transactionCountriesHistorical,
           },
           ['timestamp']

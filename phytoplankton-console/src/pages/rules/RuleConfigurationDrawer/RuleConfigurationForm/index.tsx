@@ -21,6 +21,7 @@ import Form, { FormRef } from '@/components/library/Form';
 import { useId, usePrevious } from '@/utils/hooks';
 import NestedForm from '@/components/library/Form/NestedForm';
 import HistoryLineIcon from '@/components/ui/icons/Remix/system/history-line.react.svg';
+import SettingsLineIcon from '@/components/ui/icons/Remix/system/settings-3-line.react.svg';
 import { notEmpty } from '@/components/library/Form/utils/validation/basicValidators';
 import { validateField } from '@/components/library/Form/utils/validation/utils';
 import {
@@ -154,6 +155,11 @@ const RuleConfigurationForm = (
                   key: 'transaction_details_historical',
                   icon: <HistoryLineIcon />,
                   title: 'Historical transactions',
+                },
+                {
+                  key: 'general',
+                  icon: <SettingsLineIcon />,
+                  title: 'General',
                 },
               ]
             : []),

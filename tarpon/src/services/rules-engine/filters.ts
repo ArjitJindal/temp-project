@@ -82,6 +82,10 @@ import {
   UserAcquisitionChannelRuleFilter,
   UserAcquisitionChannelRuleFilterParameter,
 } from './user-filters/user-acquisition-channel'
+import {
+  TransactionAmountHistoricalRuleFilter,
+  TransactionAmountHistoricalRuleFilterParameter,
+} from './transaction-filters/transaction-amount-historical'
 
 export type TransactionFilters = PaymentMethodRuleFilterParameter &
   TransactionTypeRuleFilterParameter &
@@ -95,7 +99,8 @@ export type TransactionHistoricalFilters =
   TransactionStateHistoricalRuleFilterParameter &
     TransactionTypeHistoricalRuleFilterParameter &
     PaymentMethodHistoricalRuleFilterParameter &
-    TransactionCountryHistoricalRuleFilterParameter
+    TransactionCountryHistoricalRuleFilterParameter &
+    TransactionAmountHistoricalRuleFilterParameter
 
 export type UserFilters = WhitelistUsersRuleFilterParameter &
   UserCreationAgeRuleFilterParameter &
@@ -122,10 +127,11 @@ const _TRANSACTION_FILTERS = [
 ]
 
 const _TRANSACTION_HISTORICAL_FILTERS = [
-  TransactionStateHistoricalRuleFilter,
-  TransactionTypeHistoricalRuleFilter,
   PaymentMethodHistoricalRuleFilter,
+  TransactionTypeHistoricalRuleFilter,
+  TransactionStateHistoricalRuleFilter,
   TransactionCountryHistoricalRuleFilter,
+  TransactionAmountHistoricalRuleFilter,
 ]
 
 // Order defined here will be reflected in console

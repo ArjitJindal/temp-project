@@ -17,6 +17,7 @@ import { getDynamoDbClient } from '@/utils/dynamodb'
 import { RiskRepository } from '@/services/risk-scoring/repositories/risk-repository'
 import { UserRepository } from '@/services/users/repositories/user-repository'
 import { TransactionEventRepository } from '@/services/rules-engine/repositories/transaction-event-repository'
+import { PaymentMethod } from '@/@types/tranasction/payment-type'
 
 export type TransactionViewConfig = {
   TMP_BUCKET: string
@@ -132,8 +133,8 @@ export const transactionsViewHandler = lambdaApi()(
         includeEvents,
         filterStatus,
         filterCaseStatus,
-        filterOriginPaymentMethod,
-        filterDestinationPaymentMethod,
+        filterOriginPaymentMethods,
+        filterDestinationPaymentMethods,
         filterTagKey,
         filterTagValue,
         from,
@@ -181,8 +182,12 @@ export const transactionsViewHandler = lambdaApi()(
           : undefined,
         includeUsers: includeUsers === 'true',
         includeEvents: includeEvents === 'true',
-        filterOriginPaymentMethod: filterOriginPaymentMethod,
-        filterDestinationPaymentMethod: filterDestinationPaymentMethod,
+        filterOriginPaymentMethods: filterOriginPaymentMethods
+          ? (filterOriginPaymentMethods.split(',') as PaymentMethod[])
+          : undefined,
+        filterDestinationPaymentMethods: filterDestinationPaymentMethods
+          ? (filterDestinationPaymentMethods.split(',') as PaymentMethod[])
+          : undefined,
         filterTagKey,
         filterTagValue,
       }
@@ -284,8 +289,12 @@ export const transactionsViewHandler = lambdaApi()(
           : undefined,
         includeUsers: includeUsers === 'true',
         includeEvents: includeEvents === 'true',
-        filterOriginPaymentMethod: filterOriginPaymentMethod,
-        filterDestinationPaymentMethod: filterDestinationPaymentMethod,
+        filterOriginPaymentMethods: filterOriginPaymentMethod
+          ? [filterOriginPaymentMethod]
+          : undefined,
+        filterDestinationPaymentMethods: filterDestinationPaymentMethod
+          ? [filterDestinationPaymentMethod]
+          : undefined,
         filterTagKey,
         filterTagValue,
       }
@@ -371,8 +380,12 @@ export const transactionsViewHandler = lambdaApi()(
           : undefined,
         includeUsers: includeUsers === 'true',
         includeEvents: includeEvents === 'true',
-        filterOriginPaymentMethod: filterOriginPaymentMethod,
-        filterDestinationPaymentMethod: filterDestinationPaymentMethod,
+        filterOriginPaymentMethods: filterOriginPaymentMethod
+          ? [filterOriginPaymentMethod]
+          : undefined,
+        filterDestinationPaymentMethods: filterDestinationPaymentMethod
+          ? [filterDestinationPaymentMethod]
+          : undefined,
         filterTagKey,
         filterTagValue,
       }

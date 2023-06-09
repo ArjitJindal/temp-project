@@ -390,11 +390,8 @@ export default class TransactionsOutflowInflowVolumeRule extends TransactionAggr
         {
           timeWindow,
           checkDirection: 'all',
-          transactionStates: this.filters.transactionStatesHistorical,
-          transactionTypes: this.filters.transactionTypesHistorical,
-          paymentMethod: this.filters.paymentMethodHistorical,
-          countries: this.filters.transactionCountriesHistorical,
           matchPaymentMethodDetails: false,
+          filters: this.filters,
         },
         [
           'originAmountDetails',

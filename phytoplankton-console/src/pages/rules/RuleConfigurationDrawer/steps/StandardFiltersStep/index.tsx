@@ -84,7 +84,11 @@ export default function StandardFiltersStep(props: Props) {
                 )}
               />
             )}
-            {/*{activeTab === 'device_details' && <DeviceDetails {...props} />}*/}
+            {activeTab === 'general' && (
+              <General
+                propertyItems={props.filter((x) => getUiSchema(x.schema)['ui:group'] === 'general')}
+              />
+            )}
           </>
         );
       }}
@@ -139,7 +143,11 @@ function TransactionDetailsHistorical(props: { propertyItems: PropertyItems }) {
   );
 }
 
-// const PAYMENT_METHOD_OPTIONS = PAYMENT_METHODS.map((method) => ({
-//   value: method,
-//   label: getPaymentMethodTitle(method),
-// }));
+function General(props: { propertyItems: PropertyItems }) {
+  return (
+    <>
+      <StepHeader title="General" description="" />
+      <PropertyList items={props.propertyItems} />
+    </>
+  );
+}

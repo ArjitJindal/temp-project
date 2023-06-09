@@ -121,8 +121,9 @@ export default class HighTrafficBetweenSameParties extends TransactionAggregatio
         },
         {
           transactionStates: this.filters.transactionStatesHistorical,
-          originPaymentMethod: this.filters.paymentMethodHistorical,
+          originPaymentMethods: this.filters.paymentMethodsHistorical,
           transactionTypes: this.filters.transactionTypesHistorical,
+          transactionAmountRange: this.filters.transactionAmountRangeHistorical,
           originCountries: this.filters.transactionCountriesHistorical,
         },
         ['timestamp', 'destinationUserId', 'destinationPaymentDetails'],

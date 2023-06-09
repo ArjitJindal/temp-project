@@ -579,13 +579,17 @@ paths:
           in: query
           name: includeEvents
         - schema:
-            type: string
+            type: array
+            items:
+              $ref: ../public/openapi-public-original.yaml#/components/schemas/PaymentMethod
           in: query
-          name: filterOriginPaymentMethod
+          name: filterOriginPaymentMethods
         - schema:
-            type: string
+            type: array
+            items:
+              $ref: ../public/openapi-public-original.yaml#/components/schemas/PaymentMethod
           in: query
-          name: filterDestinationPaymentMethod
+          name: filterDestinationPaymentMethods
         - schema:
             type: array
             items:
@@ -871,11 +875,11 @@ paths:
           in: query
           name: includeEvents
         - schema:
-            type: string
+            $ref: ../public/openapi-public-original.yaml#/components/schemas/PaymentMethod
           in: query
           name: filterOriginPaymentMethod
         - schema:
-            type: string
+            $ref: ../public/openapi-public-original.yaml#/components/schemas/PaymentMethod
           in: query
           name: filterDestinationPaymentMethod
         - schema:
@@ -1009,11 +1013,11 @@ paths:
           in: query
           name: includeEvents
         - schema:
-            type: string
+            $ref: ../public/openapi-public-original.yaml#/components/schemas/PaymentMethod
           in: query
           name: filterOriginPaymentMethod
         - schema:
-            type: string
+            $ref: ../public/openapi-public-original.yaml#/components/schemas/PaymentMethod
           in: query
           name: filterDestinationPaymentMethod
         - schema:
@@ -2595,15 +2599,15 @@ paths:
         - schema:
             type: array
             items:
-              type: string
+              $ref: ../public/openapi-public-original.yaml#/components/schemas/PaymentMethod
           in: query
-          name: filterOriginPaymentMethod
+          name: filterOriginPaymentMethods
         - schema:
             type: array
             items:
-              type: string
+              $ref: ../public/openapi-public-original.yaml#/components/schemas/PaymentMethod
           in: query
-          name: filterDestinationPaymentMethod
+          name: filterDestinationPaymentMethods
         - schema:
             type: array
             items:
@@ -2935,15 +2939,15 @@ paths:
         - schema:
             type: array
             items:
-              type: string
+              $ref: ../public/openapi-public-original.yaml#/components/schemas/PaymentMethod
           in: query
-          name: filterOriginPaymentMethod
+          name: filterOriginPaymentMethods
         - schema:
             type: array
             items:
-              type: string
+              $ref: ../public/openapi-public-original.yaml#/components/schemas/PaymentMethod
           in: query
-          name: filterDestinationPaymentMethod
+          name: filterDestinationPaymentMethods
         - schema:
             type: array
             items:

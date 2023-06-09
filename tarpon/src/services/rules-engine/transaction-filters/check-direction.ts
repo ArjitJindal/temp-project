@@ -19,7 +19,7 @@ export class CheckDirectionRuleFilter extends TransactionRuleFilter<CheckDirecti
           description:
             'If set to ORIGIN, only origin user will be checked. If empty, both origin and destination users will be checked.',
           nullable: true,
-          ...uiSchema({ group: 'transaction' }),
+          ...uiSchema({ group: 'general' }),
         },
       },
     }

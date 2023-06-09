@@ -1,6 +1,6 @@
 import { TransactionsTableParams } from '..';
 import { Mode } from '../../UserSearchPopup/types';
-import { TransactionState } from '@/apis';
+import { PaymentMethod, TransactionState } from '@/apis';
 import { defaultQueryAdapter } from '@/components/library/Table/queryAdapter';
 import { dayjs } from '@/utils/dayjs';
 import { Adapter } from '@/utils/routing';
@@ -46,8 +46,8 @@ export const queryAdapter: Adapter<TransactionsTableParams> = {
       userFilterMode: raw.userFilterMode as Mode,
       tagKey: raw.tagKey,
       tagValue: raw.tagValue,
-      originMethodFilter: raw.originMethodFilter,
-      destinationMethodFilter: raw.destinationMethodFilter,
+      originMethodFilter: raw.originMethodFilter as PaymentMethod,
+      destinationMethodFilter: raw.destinationMethodFilter as PaymentMethod,
     };
   },
 };

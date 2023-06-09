@@ -384,17 +384,17 @@ export class CaseRepository {
         },
       })
     }
-    if (params.filterOriginPaymentMethod != null) {
+    if (params.filterOriginPaymentMethods != null) {
       conditions.push({
         'caseTransactions.originPaymentDetails.method': {
-          $in: params.filterOriginPaymentMethod,
+          $in: params.filterOriginPaymentMethods,
         },
       })
     }
-    if (params.filterDestinationPaymentMethod != null) {
+    if (params.filterDestinationPaymentMethods != null) {
       conditions.push({
         'caseTransactions.destinationPaymentDetails.method': {
-          $in: params.filterDestinationPaymentMethod,
+          $in: params.filterDestinationPaymentMethods,
         },
       })
     }

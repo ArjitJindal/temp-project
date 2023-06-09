@@ -137,13 +137,10 @@ export default abstract class MultipleSendersWithinTimePeriodRuleBase extends Tr
           {
             timeWindow,
             checkDirection: 'receiving',
-            transactionStates: this.filters.transactionStatesHistorical,
-            transactionTypes: this.filters.transactionTypesHistorical,
-            paymentMethod: this.filters.paymentMethodHistorical,
-            countries: this.filters.transactionCountriesHistorical,
             matchPaymentMethodDetails: this.transaction.destinationUserId
               ? false
               : true,
+            filters: this.filters,
           },
           ['senderKeyId', 'originUserId']
         )

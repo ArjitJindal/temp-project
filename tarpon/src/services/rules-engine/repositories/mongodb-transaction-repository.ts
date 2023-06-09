@@ -211,17 +211,17 @@ export class MongoDbTransactionRepository
         },
       })
     }
-    if (params.filterOriginPaymentMethod != null) {
+    if (params.filterOriginPaymentMethods != null) {
       conditions.push({
         'originPaymentDetails.method': {
-          $in: [params.filterOriginPaymentMethod],
+          $in: params.filterOriginPaymentMethods,
         },
       })
     }
-    if (params.filterDestinationPaymentMethod != null) {
+    if (params.filterDestinationPaymentMethods != null) {
       conditions.push({
         'destinationPaymentDetails.method': {
-          $in: [params.filterDestinationPaymentMethod],
+          $in: params.filterDestinationPaymentMethods,
         },
       })
     }
@@ -1137,17 +1137,32 @@ export class MongoDbTransactionRepository
     timeRange: TimeRange | undefined,
     filterOptions: TransactionsFilterOptions
   ): Filter<InternalTransaction> {
+    const additionalFilters = [...filters]
+    if (!_.isEmpty(filterOptions.transactionAmountRange)) {
+      additionalFilters.push({
+        $or: Object.entries(filterOptions.transactionAmountRange).map(
+          (entry) => ({
+            'originAmountDetails.transactionCurrency': entry[0],
+            'originAmountDetails.transactionAmount': {
+              $gte: entry[1].min ?? 0,
+              $lte: entry[1].max ?? Number.MAX_SAFE_INTEGER,
+            },
+          })
+        ),
+      })
+    }
     return this.getTransactionsMongoQuery(
       {
         ...timeRange,
         filterTransactionTypes: filterOptions.transactionTypes,
         filterTransactionState: filterOptions.transactionStates,
-        filterOriginPaymentMethod: filterOptions.originPaymentMethod,
-        filterDestinationPaymentMethod: filterOptions.destinationPaymentMethod,
+        filterOriginPaymentMethods: filterOptions.originPaymentMethods,
+        filterDestinationPaymentMethods:
+          filterOptions.destinationPaymentMethods,
         filterOriginCountries: filterOptions.originCountries,
         filterDestinationCountries: filterOptions.destinationCountries,
       },
-      filters
+      additionalFilters
     )
   }
 

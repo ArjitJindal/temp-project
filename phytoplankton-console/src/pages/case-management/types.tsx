@@ -3,6 +3,7 @@ import {
   AuditLogType,
   CaseStatus,
   KYCStatus,
+  PaymentMethod,
   RiskLevel,
   RuleAction,
   TransactionState,
@@ -25,8 +26,8 @@ export type CommonCaseParams = {
   type: string;
   status: RuleAction[];
   transactionState: TransactionState[];
-  originMethodFilter: string[];
-  destinationMethodFilter: string[];
+  originMethodFilter: PaymentMethod[];
+  destinationMethodFilter: PaymentMethod[];
   tagKey: string;
   tagValue: string;
   caseStatus: CaseStatus;

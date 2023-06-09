@@ -397,9 +397,7 @@ export default abstract class TransactionAverageExceededBaseRule<
         {
           timeWindow: this.parameters.period2,
           checkDirection,
-          transactionStates: this.filters.transactionStatesHistorical,
-          transactionTypes: this.filters.transactionTypesHistorical,
-          paymentMethod: this.filters.paymentMethodHistorical,
+          filters: this.filters,
         },
         ['timestamp', 'originAmountDetails', 'destinationAmountDetails']
       )

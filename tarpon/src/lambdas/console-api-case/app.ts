@@ -35,6 +35,7 @@ import { AlertsRepository } from '@/services/rules-engine/repositories/alerts-re
 import { parseStrings } from '@/utils/lambda'
 import { AlertsStatusUpdateRequest } from '@/@types/openapi-internal/AlertsStatusUpdateRequest'
 import { AlertsAssignmentUpdateRequest } from '@/@types/openapi-internal/AlertsAssignmentUpdateRequest'
+import { PaymentMethod } from '@/@types/openapi-public/PaymentMethod'
 
 export type CaseConfig = {
   TMP_BUCKET: string
@@ -116,8 +117,8 @@ export const casesHandler = lambdaApi()(
         sortOrder,
         filterStatus,
         filterCaseStatus,
-        filterOriginPaymentMethod,
-        filterDestinationPaymentMethod,
+        filterOriginPaymentMethods,
+        filterDestinationPaymentMethods,
         filterPriority,
         filterTransactionId,
         filterTransactionTagKey,
@@ -172,11 +173,11 @@ export const casesHandler = lambdaApi()(
         filterDestinationCurrencies: filterDestinationCurrencies
           ? filterDestinationCurrencies.split(',')
           : undefined,
-        filterOriginPaymentMethod: filterOriginPaymentMethod
-          ? filterOriginPaymentMethod.split(',')
+        filterOriginPaymentMethods: filterOriginPaymentMethods
+          ? (filterOriginPaymentMethods.split(',') as PaymentMethod[])
           : undefined,
-        filterDestinationPaymentMethod: filterDestinationPaymentMethod
-          ? filterDestinationPaymentMethod.split(',')
+        filterDestinationPaymentMethods: filterDestinationPaymentMethods
+          ? (filterDestinationPaymentMethods.split(',') as PaymentMethod[])
           : undefined,
         filterPriority,
         filterTransactionTagKey,
@@ -337,8 +338,8 @@ export const casesHandler = lambdaApi()(
         filterBusinessIndustries,
         filterTransactionTagKey,
         filterTransactionTagValue,
-        filterOriginPaymentMethod,
-        filterDestinationPaymentMethod,
+        filterOriginPaymentMethods,
+        filterDestinationPaymentMethods,
         filterUserId,
         filterCaseId,
         sortField,
@@ -368,11 +369,11 @@ export const casesHandler = lambdaApi()(
         filterTransactionTagValue,
         filterUserId,
         filterCaseId,
-        filterOriginPaymentMethod: filterOriginPaymentMethod
-          ? filterOriginPaymentMethod.split(',')
+        filterOriginPaymentMethods: filterOriginPaymentMethods
+          ? (filterOriginPaymentMethods.split(',') as PaymentMethod[])
           : undefined,
-        filterDestinationPaymentMethod: filterDestinationPaymentMethod
-          ? filterDestinationPaymentMethod.split(',')
+        filterDestinationPaymentMethods: filterDestinationPaymentMethods
+          ? (filterDestinationPaymentMethods.split(',') as PaymentMethod[])
           : undefined,
         sortField,
         sortOrder: isValidSortOrder(sortOrder) ? sortOrder : undefined,

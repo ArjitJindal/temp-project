@@ -1,11 +1,11 @@
 import { JSONSchemaType } from 'ajv'
-import { PAYMENT_METHOD_OPTIONAL_SCHEMA } from '../utils/rule-parameter-schemas'
+import { PAYMENT_METHODS_OPTIONAL_SCHEMA } from '../utils/rule-parameter-schemas'
 import { TransactionRuleFilter } from './filter'
 import { paymentMethodRuleFilterPredicate } from './payment-method'
 import { PaymentMethod } from '@/@types/openapi-public/PaymentMethod'
 
 export type PaymentMethodHistoricalRuleFilterParameter = {
-  paymentMethodHistorical?: PaymentMethod
+  paymentMethodsHistorical?: PaymentMethod[]
 }
 
 export class PaymentMethodHistoricalRuleFilter extends TransactionRuleFilter<PaymentMethodHistoricalRuleFilterParameter> {
@@ -13,7 +13,7 @@ export class PaymentMethodHistoricalRuleFilter extends TransactionRuleFilter<Pay
     return {
       type: 'object',
       properties: {
-        paymentMethodHistorical: PAYMENT_METHOD_OPTIONAL_SCHEMA({
+        paymentMethodsHistorical: PAYMENT_METHODS_OPTIONAL_SCHEMA({
           uiSchema: { group: 'transaction_historical' },
         }),
       },
@@ -21,12 +21,13 @@ export class PaymentMethodHistoricalRuleFilter extends TransactionRuleFilter<Pay
   }
 
   public async predicate(): Promise<boolean> {
-    if (!this.parameters.paymentMethodHistorical) {
+    if (!this.parameters.paymentMethodsHistorical) {
       return true
     }
 
-    return paymentMethodRuleFilterPredicate(this.transaction, [
-      this.parameters.paymentMethodHistorical,
-    ])
+    return paymentMethodRuleFilterPredicate(
+      this.transaction,
+      this.parameters.paymentMethodsHistorical
+    )
   }
 }

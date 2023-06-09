@@ -8,6 +8,7 @@ import {
   Alert,
   ExecutedRulesResult,
   InternalTransaction,
+  PaymentMethod,
   RuleAction,
   TransactionState,
 } from '@/apis';
@@ -76,8 +77,8 @@ export interface TransactionsTableParams extends CommonParams {
   userFilterMode?: Mode;
   tagKey?: string;
   tagValue?: string;
-  originMethodFilter?: string;
-  destinationMethodFilter?: string;
+  originMethodFilter?: PaymentMethod;
+  destinationMethodFilter?: PaymentMethod;
 }
 
 type Props = {

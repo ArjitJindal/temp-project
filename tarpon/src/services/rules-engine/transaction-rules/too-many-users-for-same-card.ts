@@ -108,10 +108,7 @@ export default class TooManyUsersForSameCardRule extends TransactionAggregationR
             rollingBasis: true,
           },
           checkDirection: 'sending',
-          transactionStates: this.filters.transactionStatesHistorical,
-          transactionTypes: this.filters.transactionTypesHistorical,
-          paymentMethod: this.filters.paymentMethodHistorical,
-          countries: this.filters.transactionCountriesHistorical,
+          filters: this.filters,
         },
         ['timestamp', 'originUserId']
       )

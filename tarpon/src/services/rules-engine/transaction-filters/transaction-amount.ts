@@ -8,6 +8,27 @@ import {
 import { checkTransactionAmountBetweenThreshold } from '../utils/transaction-rule-utils'
 import { DEFAULT_CURRENCY_KEYWORD } from '../transaction-rules/library'
 import { TransactionRuleFilter } from './filter'
+import { Transaction } from '@/@types/openapi-public/Transaction'
+
+export async function transactionAmountRuleFilterPredicate(
+  transaction: Transaction,
+  transactionAmountRange?: TransactionAmountRange
+) {
+  if (!transactionAmountRange || _.isEmpty(transactionAmountRange)) {
+    return true
+  }
+
+  const isOriginAmountInRange = await checkTransactionAmountBetweenThreshold(
+    transaction.originAmountDetails,
+    transactionAmountRange
+  )
+  const isDestinationAmountInRange =
+    await checkTransactionAmountBetweenThreshold(
+      transaction.destinationAmountDetails,
+      transactionAmountRange
+    )
+  return Boolean(isOriginAmountInRange || isDestinationAmountInRange)
+}
 
 export type TransactionAmountRuleFilterParameter = {
   transactionAmountRange?: TransactionAmountRange
@@ -36,22 +57,9 @@ export class TransactionAmountRuleFilter extends TransactionRuleFilter<Transacti
   }
 
   public async predicate(): Promise<boolean> {
-    if (
-      !this.parameters.transactionAmountRange ||
-      _.isEmpty(this.parameters.transactionAmountRange)
-    ) {
-      return true
-    }
-
-    const isOriginAmountInRange = await checkTransactionAmountBetweenThreshold(
-      this.transaction.originAmountDetails,
+    return transactionAmountRuleFilterPredicate(
+      this.transaction,
       this.parameters.transactionAmountRange
     )
-    const isDestinationAmountInRange =
-      await checkTransactionAmountBetweenThreshold(
-        this.transaction.destinationAmountDetails,
-        this.parameters.transactionAmountRange
-      )
-    return Boolean(isOriginAmountInRange || isDestinationAmountInRange)
   }
 }

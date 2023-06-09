@@ -17,7 +17,7 @@ import BusinessIndustryButton from '@/pages/transactions/components/BusinessIndu
 import { RiskLevelButton } from '@/pages/users/users-list/RiskLevelFilterButton';
 import StackLineIcon from '@/components/ui/icons/Remix/business/stack-line.react.svg';
 import { denseArray } from '@/utils/lang';
-import { AlertStatus, CaseStatus } from '@/apis';
+import { AlertStatus, CaseStatus, PaymentMethod } from '@/apis';
 
 export const queryAdapter: Adapter<TableSearchParams> = {
   serializer: (params) => {
@@ -84,8 +84,8 @@ export const queryAdapter: Adapter<TableSearchParams> = {
       userFilterMode: isMode(raw.userFilterMode) ? raw.userFilterMode : undefined,
       type: raw.type,
       status: raw.status ? raw.status.split(',').filter(isRuleAction) : undefined,
-      originMethodFilter: raw.originMethodFilter?.split(','),
-      destinationMethodFilter: raw.destinationMethodFilter?.split(','),
+      originMethodFilter: raw.originMethodFilter?.split(',') as PaymentMethod[],
+      destinationMethodFilter: raw.destinationMethodFilter?.split(',') as PaymentMethod[],
       transactionState:
         raw.transactionState != null
           ? raw.transactionState.split(',').filter(isTransactionState)
@@ -238,7 +238,7 @@ export const makeExtraFilters = (
           onConfirm={(value) => {
             setParams((state) => ({
               ...state,
-              originMethodFilter: value ?? undefined,
+              originMethodFilter: (value as PaymentMethod[]) ?? undefined,
             }));
           }}
         />
@@ -255,7 +255,7 @@ export const makeExtraFilters = (
           onConfirm={(value) => {
             setParams((state) => ({
               ...state,
-              destinationMethodFilter: value ?? undefined,
+              destinationMethodFilter: (value as PaymentMethod[]) ?? undefined,
             }));
           }}
         />

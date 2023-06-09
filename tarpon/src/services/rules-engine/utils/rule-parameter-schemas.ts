@@ -216,7 +216,7 @@ export const TRANSACTION_STATES_SCHEMA = (options?: SchemaOptions) =>
   ({
     type: 'array',
     ...uiSchema(options?.uiSchema, { subtype: 'TRANSACTION_STATES' }),
-    title: options?.title || 'Target transaction state',
+    title: options?.title || 'Target transaction states',
     description:
       options?.description ||
       'If not specified, all transactions regardless of the state will be used for running the rule',
@@ -306,12 +306,6 @@ export const PAYMENT_METHODS_SCHEMA = (options?: SchemaOptions) =>
 export const PAYMENT_METHODS_OPTIONAL_SCHEMA = (options?: SchemaOptions) =>
   ({
     ...PAYMENT_METHODS_SCHEMA(options),
-    nullable: true,
-  } as const)
-
-export const PAYMENT_METHOD_OPTIONAL_SCHEMA = (options?: SchemaOptions) =>
-  ({
-    ...PAYMENT_METHOD_SCHEMA(options),
     nullable: true,
   } as const)
 

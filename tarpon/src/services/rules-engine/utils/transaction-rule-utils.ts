@@ -3,18 +3,14 @@ import {
   AuxiliaryIndexTransaction,
   RulesEngineTransactionRepositoryInterface,
 } from '../repositories/transaction-repository-interface'
+import { TransactionHistoricalFilters } from '../filters'
 import { getTimestampRange } from './time-utils'
 import { TimeWindow } from './rule-parameter-schemas'
 import dayjs from '@/utils/dayjs'
 import { TransactionAmountDetails } from '@/@types/openapi-public/TransactionAmountDetails'
 import { getTargetCurrencyAmount } from '@/utils/currency-utils'
 import { Transaction } from '@/@types/openapi-public/Transaction'
-import { TransactionType } from '@/@types/openapi-public/TransactionType'
-import {
-  PaymentDetails,
-  PaymentMethod,
-} from '@/@types/tranasction/payment-type'
-import { TransactionState } from '@/@types/openapi-public/TransactionState'
+import { PaymentDetails } from '@/@types/tranasction/payment-type'
 import { CurrencyCode } from '@/@types/openapi-public/CurrencyCode'
 
 export async function isTransactionAmountAboveThreshold(
@@ -133,11 +129,8 @@ async function getTransactions(
     afterTimestamp: number
     beforeTimestamp: number
     checkType: 'sending' | 'receiving' | 'all' | 'none'
-    transactionStates?: TransactionState[]
-    transactionTypes?: TransactionType[]
-    paymentMethod?: PaymentMethod
     matchPaymentMethodDetails?: boolean
-    countries?: string[]
+    filters: TransactionHistoricalFilters
   },
   attributesToFetch: Array<keyof AuxiliaryIndexTransaction>
 ): Promise<{
@@ -148,11 +141,8 @@ async function getTransactions(
     checkType,
     beforeTimestamp,
     afterTimestamp,
-    transactionStates,
-    transactionTypes,
-    paymentMethod,
     matchPaymentMethodDetails,
-    countries,
+    filters,
   } = options
   const [sendingTransactions, receivingTransactions] = await Promise.all([
     checkType === 'sending' || checkType === 'all'
@@ -164,10 +154,11 @@ async function getTransactions(
             beforeTimestamp,
           },
           {
-            transactionStates,
-            transactionTypes,
-            originPaymentMethod: paymentMethod,
-            originCountries: countries,
+            transactionStates: filters.transactionStatesHistorical,
+            transactionTypes: filters.transactionTypesHistorical,
+            transactionAmountRange: filters.transactionAmountRangeHistorical,
+            originPaymentMethods: filters.paymentMethodsHistorical,
+            originCountries: filters.transactionCountriesHistorical,
           },
           attributesToFetch,
           matchPaymentMethodDetails
@@ -182,10 +173,11 @@ async function getTransactions(
             beforeTimestamp,
           },
           {
-            transactionStates,
-            transactionTypes,
-            destinationPaymentMethod: paymentMethod,
-            destinationCountries: countries,
+            transactionStates: filters.transactionStatesHistorical,
+            transactionTypes: filters.transactionTypesHistorical,
+            transactionAmountRange: filters.transactionAmountRangeHistorical,
+            destinationPaymentMethods: filters.paymentMethodsHistorical,
+            destinationCountries: filters.transactionCountriesHistorical,
           },
           attributesToFetch,
           matchPaymentMethodDetails
@@ -205,11 +197,8 @@ export async function getTransactionUserPastTransactionsByDirection(
   options: {
     timeWindow: TimeWindow
     checkDirection: 'sending' | 'receiving' | 'all' | 'none'
-    transactionStates?: TransactionState[]
-    transactionTypes?: TransactionType[]
-    paymentMethod?: PaymentMethod
     matchPaymentMethodDetails?: boolean
-    countries?: string[]
+    filters: TransactionHistoricalFilters
   },
   attributesToFetch: Array<keyof AuxiliaryIndexTransaction>
 ): Promise<{
@@ -251,11 +240,8 @@ export async function getTransactionUserPastTransactions(
     timeWindow: TimeWindow
     checkSender: 'sending' | 'receiving' | 'all' | 'none'
     checkReceiver: 'sending' | 'receiving' | 'all' | 'none'
-    transactionStates?: TransactionState[]
-    transactionTypes?: TransactionType[]
-    paymentMethod?: PaymentMethod
     matchPaymentMethodDetails?: boolean
-    countries?: string[]
+    filters: TransactionHistoricalFilters
   },
   attributesToFetch: Array<keyof AuxiliaryIndexTransaction>
 ): Promise<{
@@ -268,11 +254,8 @@ export async function getTransactionUserPastTransactions(
     checkSender,
     checkReceiver,
     timeWindow,
-    transactionStates,
-    transactionTypes,
-    paymentMethod,
     matchPaymentMethodDetails,
-    countries,
+    filters,
   } = options
   const { afterTimestamp, beforeTimestamp } = getTimestampRange(
     transaction.timestamp!,
@@ -288,11 +271,8 @@ export async function getTransactionUserPastTransactions(
             afterTimestamp,
             beforeTimestamp,
             checkType: checkSender,
-            transactionStates,
-            transactionTypes,
-            paymentMethod,
             matchPaymentMethodDetails,
-            countries,
+            filters,
           },
           attributesToFetch
         )
@@ -310,11 +290,8 @@ export async function getTransactionUserPastTransactions(
             afterTimestamp,
             beforeTimestamp,
             checkType: checkReceiver,
-            transactionStates,
-            transactionTypes,
-            paymentMethod,
             matchPaymentMethodDetails,
-            countries,
+            filters,
           },
           attributesToFetch
         )

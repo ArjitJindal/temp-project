@@ -118,10 +118,7 @@ export default class SenderLocationChangesFrequencyRule extends TransactionAggre
             rollingBasis: true,
           },
           checkDirection: 'sending',
-          transactionStates: this.filters.transactionStatesHistorical,
-          transactionTypes: this.filters.transactionTypesHistorical,
-          paymentMethod: this.filters.paymentMethodHistorical,
-          countries: this.filters.transactionCountriesHistorical,
+          filters: this.filters,
         },
         ['timestamp', 'deviceData']
       )

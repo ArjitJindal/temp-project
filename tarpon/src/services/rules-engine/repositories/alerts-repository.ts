@@ -23,7 +23,6 @@ import {
 import { Case } from '@/@types/openapi-internal/Case'
 import { AlertListResponseItem } from '@/@types/openapi-internal/AlertListResponseItem'
 import { AlertListResponse } from '@/@types/openapi-internal/AlertListResponse'
-import { PaymentMethod } from '@/@types/openapi-public/PaymentMethod'
 import { Alert } from '@/@types/openapi-internal/Alert'
 import { Comment } from '@/@types/openapi-internal/Comment'
 import { hasFeature } from '@/core/utils/context'
@@ -155,17 +154,17 @@ export class AlertsRepository {
       })
     }
 
-    if (params.filterOriginPaymentMethod) {
+    if (params.filterOriginPaymentMethods) {
       conditions.push({
         'alerts.originPaymentMethods': {
-          $in: params.filterOriginPaymentMethod as PaymentMethod[],
+          $in: params.filterOriginPaymentMethods,
         },
       })
     }
-    if (params.filterDestinationPaymentMethod) {
+    if (params.filterDestinationPaymentMethods) {
       conditions.push({
         'alerts.destinationPaymentMethods': {
-          $in: params.filterDestinationPaymentMethod as PaymentMethod[],
+          $in: params.filterDestinationPaymentMethods,
         },
       })
     }

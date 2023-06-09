@@ -799,6 +799,20 @@ export class DynamoDbTransactionRepository
     const transactionStatesKeys = transactionStatesParams?.map(
       (params) => params[0]
     )
+    const originPaymentMethodsParams = filterOptions.originPaymentMethods?.map(
+      (paymentMethod, index) => [`:originPaymentMethod${index}`, paymentMethod]
+    )
+    const originPaymentMethodsKeys = originPaymentMethodsParams?.map(
+      (params) => params[0]
+    )
+    const destinationPaymentMethodsParams =
+      filterOptions.destinationPaymentMethods?.map((paymentMethod, index) => [
+        `:destinationPaymentMethod${index}`,
+        paymentMethod,
+      ])
+    const destinationPaymentMethodsKeys = destinationPaymentMethodsParams?.map(
+      (params) => params[0]
+    )
     const originCountriesParams = filterOptions.originCountries?.map(
       (country, index) => [`:originCountry${index}`, country]
     )
@@ -811,74 +825,92 @@ export class DynamoDbTransactionRepository
     const destinationCountriesKeys = destinationCountriesParams?.map(
       (params) => params[0]
     )
+    const transactionAmountParams = Object.entries(
+      filterOptions.transactionAmountRange ?? {}
+    ).flatMap((entry) => [
+      [`:${entry[0]}`, entry[0]],
+      [`:${entry[0]}_min`, entry[1].min ?? 0],
+      [`:${entry[0]}_max`, entry[1].max ?? Number.MAX_SAFE_INTEGER],
+    ])
+    const transactionAmountStatement = Object.keys(
+      filterOptions.transactionAmountRange ?? {}
+    )
+      .map((currency) => {
+        const statement = [
+          `(#originAmountDetails.#transactionCurrency = :${currency} AND (#originAmountDetails.#transactionAmount BETWEEN :${currency}_min AND :${currency}_max))`,
+          'OR',
+          `(#destinationAmountDetails.#transactionCurrency = :${currency} AND (#destinationAmountDetails.#transactionAmount BETWEEN :${currency}_min AND :${currency}_max))`,
+        ].join(' ')
+        return `(${statement})`
+      })
+      .join(' OR ')
+
     const filters = [
-      filterOptions.originPaymentMethod &&
-        '#originPaymentDetails.#method = :originPaymentMethod',
-      filterOptions.destinationPaymentMethod &&
-        '#destinationPaymentDetails.#method = :destinationPaymentMethod',
+      originPaymentMethodsKeys &&
+        !_.isEmpty(originPaymentMethodsKeys) &&
+        `#originPaymentDetails.#method IN (${originPaymentMethodsKeys.join(
+          ','
+        )})`,
+      destinationPaymentMethodsKeys &&
+        !_.isEmpty(destinationPaymentMethodsKeys) &&
+        `#destinationPaymentDetails.#method IN (${destinationPaymentMethodsKeys.join(
+          ','
+        )})`,
       transactionStatesKeys &&
+        !_.isEmpty(transactionStatesKeys) &&
         `transactionState IN (${transactionStatesKeys.join(',')})`,
       originCountriesKeys &&
+        !_.isEmpty(originCountriesKeys) &&
         `#originAmountDetails.#country IN (${originCountriesKeys.join(',')})`,
       destinationCountriesKeys &&
+        !_.isEmpty(destinationCountriesKeys) &&
         `#destinationAmountDetails.#country IN (${destinationCountriesKeys.join(
           ','
         )})`,
+      filterOptions.transactionAmountRange &&
+        !_.isEmpty(filterOptions.transactionAmountRange) &&
+        `${transactionAmountStatement}`,
     ].filter(Boolean)
 
     if (_.isEmpty(filters) && _.isEmpty(attributesToFetch)) {
       return {}
     }
 
+    const filterExpression = _.isEmpty(filters)
+      ? undefined
+      : filters.map((v) => (filters.length > 1 ? `(${v})` : v)).join(' AND ')
     const expressionAttributeNames = mergeObjects(
-      filterOptions.originPaymentMethod ||
-        filterOptions.destinationPaymentMethod
-        ? _.omitBy(
-            {
-              '#originPaymentDetails':
-                filterOptions.originPaymentMethod && 'originPaymentDetails',
-              '#destinationPaymentDetails':
-                filterOptions.destinationPaymentMethod &&
-                'destinationPaymentDetails',
-              '#method':
-                filterOptions.originPaymentMethod ||
-                filterOptions.destinationPaymentMethod
-                  ? 'method'
-                  : undefined,
-            },
-            _.isNil
-          )
-        : undefined,
-      filterOptions.originCountries || filterOptions.destinationCountries
-        ? _.omitBy(
-            {
-              '#originAmountDetails':
-                filterOptions.originCountries && 'originAmountDetails',
-              '#destinationAmountDetails':
-                filterOptions.destinationCountries &&
-                'destinationAmountDetails',
-              '#country': 'country',
-            },
-            _.isNil
-          )
-        : undefined,
+      _.pickBy(
+        {
+          '#originPaymentDetails': 'originPaymentDetails',
+          '#destinationPaymentDetails': 'destinationPaymentDetails',
+          '#method': 'method',
+          '#originAmountDetails': 'originAmountDetails',
+          '#destinationAmountDetails': 'destinationAmountDetails',
+          '#transactionAmount': 'transactionAmount',
+          '#transactionCurrency': 'transactionCurrency',
+          '#country': 'country',
+        },
+        (_value, key) => filterExpression?.includes(key)
+      ),
       attributesToFetch &&
         Object.fromEntries(attributesToFetch.map((name) => [`#${name}`, name]))
     ) as Record<string, string>
 
     return {
-      FilterExpression: _.isEmpty(filters) ? undefined : filters.join(' AND '),
+      FilterExpression: filterExpression,
       ExpressionAttributeNames: _.isEmpty(expressionAttributeNames)
         ? undefined
         : expressionAttributeNames,
       ExpressionAttributeValues: _.isEmpty(filters)
         ? undefined
         : {
-            ':originPaymentMethod': filterOptions.originPaymentMethod,
-            ':destinationPaymentMethod': filterOptions.destinationPaymentMethod,
             ...Object.fromEntries(transactionStatesParams || []),
+            ...Object.fromEntries(originPaymentMethodsParams || []),
+            ...Object.fromEntries(destinationPaymentMethodsParams || []),
             ...Object.fromEntries(originCountriesParams || []),
             ...Object.fromEntries(destinationCountriesParams || []),
+            ...Object.fromEntries(transactionAmountParams || []),
           },
       ProjectionExpression: _.isEmpty(attributesToFetch)
         ? undefined
@@ -899,5 +931,7 @@ function sortTransactionsDescendingTimestamp(
 function getTransactionTypes(
   transactionTypes: TransactionType[] | undefined
 ): (TransactionType | undefined)[] {
-  return transactionTypes || [undefined]
+  return transactionTypes && !_.isEmpty(transactionTypes)
+    ? transactionTypes
+    : [undefined]
 }

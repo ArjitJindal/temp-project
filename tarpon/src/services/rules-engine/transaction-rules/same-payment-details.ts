@@ -122,10 +122,7 @@ export default class SamePaymentDetailsRule extends TransactionAggregationRule<
           timeWindow,
           checkDirection:
             (direction === 'origin' ? checkSender : checkReceiver) ?? 'all',
-          transactionStates: this.filters.transactionStatesHistorical,
-          transactionTypes: this.filters.transactionTypesHistorical,
-          paymentMethod: this.filters.paymentMethodHistorical,
-          countries: this.filters.transactionCountriesHistorical,
+          filters: this.filters,
         },
         ['timestamp']
       )

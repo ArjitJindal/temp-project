@@ -33,6 +33,8 @@ export class TransactionCountryRuleFilter extends TransactionRuleFilter<Transact
       properties: {
         transactionCountries: COUNTRIES_OPTIONAL_SCHEMA({
           title: 'Transaction countries',
+          description:
+            'Filters origin and destination countries indside the payment details on which the rule will be applied',
           uiSchema: {
             group: 'transaction',
           },

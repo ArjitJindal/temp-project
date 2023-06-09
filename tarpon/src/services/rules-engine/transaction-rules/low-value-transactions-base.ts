@@ -84,7 +84,10 @@ export default abstract class LowValueTransactionsRule extends TransactionRule<
               {
                 transactionStates: this.filters.transactionStatesHistorical,
                 transactionTypes: this.filters.transactionTypesHistorical,
-                destinationPaymentMethod: this.filters.paymentMethodHistorical,
+                transactionAmountRange:
+                  this.filters.transactionAmountRangeHistorical,
+                destinationPaymentMethods:
+                  this.filters.paymentMethodsHistorical,
                 destinationCountries:
                   this.filters.transactionCountriesHistorical,
               },
@@ -96,7 +99,9 @@ export default abstract class LowValueTransactionsRule extends TransactionRule<
               {
                 transactionStates: this.filters.transactionStatesHistorical,
                 transactionTypes: this.filters.transactionTypesHistorical,
-                originPaymentMethod: this.filters.paymentMethodHistorical,
+                transactionAmountRange:
+                  this.filters.transactionAmountRangeHistorical,
+                originPaymentMethods: this.filters.paymentMethodsHistorical,
                 originCountries: this.filters.transactionCountriesHistorical,
               },
               ['originAmountDetails', 'destinationAmountDetails']

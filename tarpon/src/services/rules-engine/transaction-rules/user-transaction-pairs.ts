@@ -89,8 +89,9 @@ export default class UserTransactionPairsRule extends TransactionRule<
         },
         {
           transactionTypes: this.filters.transactionTypesHistorical,
+          transactionAmountRange: this.filters.transactionAmountRangeHistorical,
           transactionStates: this.filters.transactionStatesHistorical,
-          originPaymentMethod: this.filters.paymentMethodHistorical,
+          originPaymentMethods: this.filters.paymentMethodsHistorical,
           originCountries: this.filters.transactionCountriesHistorical,
         },
         ['receiverKeyId']

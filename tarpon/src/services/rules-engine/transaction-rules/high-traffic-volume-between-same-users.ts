@@ -190,8 +190,9 @@ export default class HighTrafficVolumeBetweenSameUsers extends TransactionAggreg
         },
         {
           transactionStates: this.filters.transactionStatesHistorical,
-          originPaymentMethod: this.filters.paymentMethodHistorical,
+          originPaymentMethods: this.filters.paymentMethodsHistorical,
           transactionTypes: this.filters.transactionTypesHistorical,
+          transactionAmountRange: this.filters.transactionAmountRangeHistorical,
           originCountries: this.filters.transactionCountriesHistorical,
         },
         [
