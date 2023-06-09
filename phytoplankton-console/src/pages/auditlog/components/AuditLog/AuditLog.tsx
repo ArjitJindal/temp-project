@@ -137,6 +137,7 @@ export default function AuditLogTable() {
         queryResults={tableQueryResult}
         params={params}
         onChangeParams={setParams}
+        pagination={true}
         extraFilters={[
           {
             key: 'filterTypes',
