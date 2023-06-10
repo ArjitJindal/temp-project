@@ -76,7 +76,8 @@ export default function AuditLogTable() {
       value: (item) => {
         return {
           entityType: item.type,
-          entityId: item.type === 'RULE' ? item.logMetadata.ruleId : item.entityId,
+          entityId:
+            item.type === 'RULE' ? `${item.logMetadata.ruleId} (${item.entityId})` : item.entityId,
         };
       },
       type: {
