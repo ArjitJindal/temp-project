@@ -2209,6 +2209,10 @@ paths:
           in: query
           name: filterTypes
         - schema:
+            type: string
+          in: query
+          name: searchEntityId
+        - schema:
             type: array
             items:
               $ref: '#/components/schemas/AuditLogActionEnum'

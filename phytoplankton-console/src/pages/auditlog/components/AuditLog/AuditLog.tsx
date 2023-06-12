@@ -4,6 +4,7 @@ import AuditLogModal from '../AuditLogModal';
 import ActionsFilterButton from '../ActionsFilterButton';
 import { TableItem, TableSearchParams } from './types';
 import { useTableData } from './helpers';
+import SearchIcon from '@/components/ui/icons/Remix/system/search-2-line.react.svg';
 import DatePicker from '@/components/ui/DatePicker';
 import { useApi } from '@/api';
 import { AllParams, TableColumn, TableRefType } from '@/components/library/Table/types';
@@ -34,8 +35,15 @@ export default function AuditLogTable() {
   const queryResults = usePaginatedQuery<AuditLog>(
     AUDIT_LOGS_LIST(params),
     async (paginationParams) => {
-      const { sort, page, filterTypes, createdTimestamp, filterActionTakenBy, filterActions } =
-        params;
+      const {
+        sort,
+        page,
+        filterTypes,
+        createdTimestamp,
+        filterActionTakenBy,
+        filterActions,
+        searchEntityId,
+      } = params;
       const [sortField, sortOrder] = sort[0] ?? [];
       const [start, end] = createdTimestamp ?? [];
 
@@ -51,6 +59,7 @@ export default function AuditLogTable() {
             filterTypes,
             filterActionTakenBy,
             includeRootUserRecords: isSuperAdmin(user),
+            searchEntityId,
             filterActions,
           }),
         'Get Audit Logs',
@@ -187,6 +196,13 @@ export default function AuditLogTable() {
                 }}
               />
             ),
+          },
+          {
+            title: 'Entity ID',
+            key: 'searchEntityId',
+            renderer: { kind: 'string' },
+            showFilterByDefault: true,
+            icon: <SearchIcon />,
           },
         ]}
         extraTools={[

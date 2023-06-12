@@ -10,6 +10,7 @@ export type TableSearchParams = Partial<{
   createdTimestamp: RangeValue<Dayjs>;
   filterTypes: AuditLogType[];
   filterActionTakenBy: string[];
+  searchEntityId: string;
   filterActions: AuditLogActionEnum[];
 }>;
 

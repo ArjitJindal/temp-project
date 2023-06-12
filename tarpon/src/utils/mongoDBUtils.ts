@@ -652,6 +652,7 @@ export const createMongoDBCollections = async (
     await auditlogCollection.createIndex({ auditlogId: 1 })
     await auditlogCollection.createIndex({ timestamp: -1 })
     await auditlogCollection.createIndex({ type: 1, action: 1 })
+    await auditlogCollection.createIndex({ entityId: 1 })
 
     try {
       await db.createCollection(SIMULATION_TASK_COLLECTION(tenantId))

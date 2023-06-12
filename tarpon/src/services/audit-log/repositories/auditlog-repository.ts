@@ -65,6 +65,12 @@ export class AuditLogRepository {
       })
     }
 
+    if (params.searchEntityId) {
+      conditions.push({
+        entityId: params.searchEntityId,
+      })
+    }
+
     if (params.filterActionTakenBy != null) {
       conditions.push({
         'user.id': { $in: params.filterActionTakenBy },
