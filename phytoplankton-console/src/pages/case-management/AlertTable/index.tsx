@@ -153,7 +153,7 @@ const mergedColumns = (
       title: 'Alert status',
       key: 'alertStatus',
       filtering: !hideAlertStatusFilters,
-      type: CASE_STATUS({ statusesToShow: ['OPEN', 'CLOSED'] }),
+      type: CASE_STATUS({ statusesToShow: ['OPEN', 'CLOSED', 'ESCALATED', 'REOPENED'] }),
     }),
     helper.simple<'caseCreatedTimestamp'>({
       title: 'Case created at',
@@ -264,8 +264,10 @@ export default function AlertTable(props: Props) {
       let filterAlertStatus: AlertStatus[];
       if (alertStatus == null) {
         filterAlertStatus = [];
-      } else if (alertStatus === 'OPEN' || alertStatus === 'REOPENED') {
-        filterAlertStatus = ['OPEN', 'REOPENED'];
+      } else if (alertStatus === 'OPEN') {
+        filterAlertStatus = ['OPEN'];
+      } else if (alertStatus === 'REOPENED') {
+        filterAlertStatus = ['REOPENED'];
       } else if (alertStatus === 'CLOSED') {
         filterAlertStatus = ['CLOSED'];
       } else if (alertStatus === 'ESCALATED') {
