@@ -1,6 +1,7 @@
 import React, { useRef, useState } from 'react';
 import { Typography } from 'antd';
 import AuditLogModal from '../AuditLogModal';
+import ActionsFilterButton from '../ActionsFilterButton';
 import { TableItem, TableSearchParams } from './types';
 import { useTableData } from './helpers';
 import DatePicker from '@/components/ui/DatePicker';
@@ -33,7 +34,8 @@ export default function AuditLogTable() {
   const queryResults = usePaginatedQuery<AuditLog>(
     AUDIT_LOGS_LIST(params),
     async (paginationParams) => {
-      const { sort, page, filterTypes, createdTimestamp, filterActionTakenBy } = params;
+      const { sort, page, filterTypes, createdTimestamp, filterActionTakenBy, filterActions } =
+        params;
       const [sortField, sortOrder] = sort[0] ?? [];
       const [start, end] = createdTimestamp ?? [];
 
@@ -49,6 +51,7 @@ export default function AuditLogTable() {
             filterTypes,
             filterActionTakenBy,
             includeRootUserRecords: isSuperAdmin(user),
+            filterActions,
           }),
         'Get Audit Logs',
       );
@@ -165,6 +168,21 @@ export default function AuditLogTable() {
                   setParams((prevState) => ({
                     ...prevState,
                     filterActionTakenBy: value,
+                  }));
+                }}
+              />
+            ),
+          },
+          {
+            key: 'filterActions',
+            title: 'Actions',
+            renderer: ({ params, setParams }) => (
+              <ActionsFilterButton
+                initialState={params.filterActions ?? []}
+                onConfirm={(value) => {
+                  setParams((prevState) => ({
+                    ...prevState,
+                    filterActions: value,
                   }));
                 }}
               />

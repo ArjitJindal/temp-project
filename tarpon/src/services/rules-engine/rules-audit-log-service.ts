@@ -1,8 +1,6 @@
 import { publishAuditLog } from '../audit-log'
-import {
-  AuditLog,
-  AuditLogActionEnum,
-} from '@/@types/openapi-internal/AuditLog'
+import { AuditLog } from '@/@types/openapi-internal/AuditLog'
+import { AuditLogActionEnum } from '@/@types/openapi-internal/AuditLogActionEnum'
 import { RuleInstance } from '@/@types/openapi-internal/RuleInstance'
 
 type AuditLogCreateRequest = {

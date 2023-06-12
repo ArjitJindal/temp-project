@@ -30,6 +30,7 @@ export const auditLogHandler = lambdaApi()(
       sortOrder,
       filterTypes,
       filterActionTakenBy,
+      filterActions,
     } = queryStringParameters
 
     const includeRootUserRecords =
@@ -51,6 +52,7 @@ export const auditLogHandler = lambdaApi()(
         ? filterActionTakenBy.split(',')
         : undefined,
       includeRootUserRecords,
+      filterActions: filterActions ? filterActions.split(',') : undefined,
     }
     const auditLogRepository = new AuditLogRepository(tenantId, mongoDb)
     const results = await auditLogRepository.getAllAuditLogs(params)

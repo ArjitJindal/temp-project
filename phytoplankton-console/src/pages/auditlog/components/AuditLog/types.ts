@@ -1,5 +1,5 @@
 import { RangeValue } from 'rc-picker/es/interface';
-import { AuditLog, AuditLogType } from '@/apis';
+import { AuditLog, AuditLogActionEnum, AuditLogType } from '@/apis';
 import { SortOrder } from '@/components/library/Table/types';
 import { Dayjs } from '@/utils/dayjs';
 
@@ -10,6 +10,7 @@ export type TableSearchParams = Partial<{
   createdTimestamp: RangeValue<Dayjs>;
   filterTypes: AuditLogType[];
   filterActionTakenBy: string[];
+  filterActions: AuditLogActionEnum[];
 }>;
 
 export type TableItem = AuditLog & {

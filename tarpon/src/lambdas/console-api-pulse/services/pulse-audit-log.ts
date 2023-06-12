@@ -1,8 +1,8 @@
 import {
   AuditLog,
-  AuditLogActionEnum,
   AuditLogSubtypeEnum,
 } from '@/@types/openapi-internal/AuditLog'
+import { AuditLogActionEnum } from '@/@types/openapi-internal/AuditLogActionEnum'
 import { DrsScore } from '@/@types/openapi-internal/DrsScore'
 import { ParameterAttributeRiskValues } from '@/@types/openapi-internal/ParameterAttributeRiskValues'
 import { RiskClassificationScore } from '@/@types/openapi-internal/RiskClassificationScore'

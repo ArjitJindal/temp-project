@@ -2,7 +2,6 @@ import _ from 'lodash'
 import { CaseService } from './case-service'
 import {
   AuditLog,
-  AuditLogActionEnum,
   AuditLogSubtypeEnum,
 } from '@/@types/openapi-internal/AuditLog'
 import { CaseUpdateRequest } from '@/@types/openapi-internal/CaseUpdateRequest'
@@ -11,6 +10,7 @@ import { publishAuditLog } from '@/services/audit-log'
 import { Case } from '@/@types/openapi-internal/Case'
 import { Comment } from '@/@types/openapi-internal/Comment'
 import { AlertsService } from '@/services/alerts'
+import { AuditLogActionEnum } from '@/@types/openapi-internal/AuditLogActionEnum'
 
 type AuditLogCreateRequest = {
   caseId: string

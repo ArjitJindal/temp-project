@@ -43,9 +43,7 @@ export class AuditLogRepository {
 
   private getAuditLogMongoQuery(params: DefaultApiGetAuditlogRequest): {
     filter: Filter<AuditLog>
-    requiresTransactions: boolean
   } {
-    let requiresTransactions = false
     const conditions: Filter<AuditLog>[] = []
     conditions.push({
       timestamp: {
@@ -65,7 +63,6 @@ export class AuditLogRepository {
           $in: params.filterTypes,
         },
       })
-      requiresTransactions = true
     }
 
     if (params.filterActionTakenBy != null) {
@@ -73,9 +70,17 @@ export class AuditLogRepository {
         'user.id': { $in: params.filterActionTakenBy },
       })
     }
+
+    if (params.filterActions?.length) {
+      conditions.push({
+        action: {
+          $in: params.filterActions,
+        },
+      })
+    }
+
     return {
       filter: { $and: conditions },
-      requiresTransactions,
     }
   }
 

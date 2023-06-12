@@ -2211,6 +2211,12 @@ paths:
         - schema:
             type: array
             items:
+              $ref: '#/components/schemas/AuditLogActionEnum'
+          in: query
+          name: filterActions
+        - schema:
+            type: array
+            items:
               type: string
           in: query
           name: filterActionTakenBy
@@ -6271,6 +6277,17 @@ components:
         - RISK_SCORING
         - ALERT
         - WEBHOOK
+    AuditLogActionEnum:
+      title: AuditLogActionEnum
+      type: string
+      enum:
+        - CREATE
+        - DELETE
+        - DEACTIVATE
+        - VIEW
+        - DOWNLOAD
+        - CALCULATE
+        - UPDATE
     Page:
       title: Page
       type: number
@@ -6301,15 +6318,7 @@ components:
             - DRS_RISK_LEVEL
             - PARAMETER_RISK_ITEM
         action:
-          type: string
-          enum:
-            - CREATE
-            - DELETE
-            - DEACTIVATE
-            - VIEW
-            - DOWNLOAD
-            - CALCULATE
-            - UPDATE
+          $ref: '#/components/schemas/AuditLogActionEnum'
         timestamp:
           type: number
         entityId:

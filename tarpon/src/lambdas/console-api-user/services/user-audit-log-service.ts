@@ -1,9 +1,7 @@
 import _ from 'lodash'
-import {
-  AuditLog,
-  AuditLogActionEnum,
-} from '@/@types/openapi-internal/AuditLog'
+import { AuditLog } from '@/@types/openapi-internal/AuditLog'
 import { publishAuditLog } from '@/services/audit-log'
+import { AuditLogActionEnum } from '@/@types/openapi-internal/AuditLogActionEnum'
 
 export class UserAuditLogService {
   tenantId: string
