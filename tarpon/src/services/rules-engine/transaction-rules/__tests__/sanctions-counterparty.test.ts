@@ -277,50 +277,6 @@ ruleVariantsTest(false, () => {
 
   describe.each<TransactionRuleTestCase>([
     {
-      name: 'No screening types',
-      transactions: [
-        getTestTransaction({
-          originUserId: undefined,
-          destinationUserId: 'U-1',
-          originPaymentDetails: {
-            method: 'IBAN',
-            IBAN: 'AL35202111090000000001234567',
-            name: 'Vladimir Putin',
-            bankName: 'Bank 100',
-          },
-        }),
-      ],
-      expectedHits: [false],
-    },
-  ])('', ({ transactions, expectedHits }) => {
-    setUpRulesHooks(TEST_TENANT_ID, [
-      {
-        id: 'R-169',
-        ruleImplementationName: 'sanctions-counterparty',
-        defaultParameters: {
-          screeningTypes: [],
-          fuzziness: 50,
-          resolveIban: true,
-        } as SanctionsCounterPartyRuleParameters,
-      },
-    ])
-
-    setUpUsersHooks(TEST_TENANT_ID, [
-      getTestUser({
-        userId: 'U-1',
-      }),
-    ])
-
-    createTransactionRuleTestCase(
-      'R-169 Sanctions Counterparty Rule No Screening Types',
-      TEST_TENANT_ID,
-      transactions,
-      expectedHits
-    )
-  })
-
-  describe.each<TransactionRuleTestCase>([
-    {
       name: 'Optional parameter transactionThreshold',
       transactions: [
         getTestTransaction({

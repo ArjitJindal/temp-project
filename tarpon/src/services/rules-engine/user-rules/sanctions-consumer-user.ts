@@ -2,8 +2,8 @@ import { JSONSchemaType } from 'ajv'
 import _ from 'lodash'
 import {
   FUZZINESS_SCHEMA,
-  SANCTIONS_SCREENING_TYPES_OPTIONAL_SCHEMA,
   ENABLE_ONGOING_SCREENING_SCHEMA,
+  SANCTIONS_SCREENING_TYPES_SCHEMA,
 } from '../utils/rule-parameter-schemas'
 import { isConsumerUser } from '../utils/user-rule-utils'
 import { RuleHitResult } from '../rule'
@@ -15,7 +15,7 @@ import dayjs from '@/utils/dayjs'
 import { User } from '@/@types/openapi-public/User'
 
 export type SanctionsConsumerUserRuleParameters = {
-  screeningTypes?: SanctionsSearchType[]
+  screeningTypes: SanctionsSearchType[]
   fuzziness: number
   ongoingScreening: boolean
 }
@@ -25,14 +25,14 @@ export default class SanctionsConsumerUserRule extends UserRule<SanctionsConsume
     return {
       type: 'object',
       properties: {
-        screeningTypes: SANCTIONS_SCREENING_TYPES_OPTIONAL_SCHEMA({}),
+        screeningTypes: SANCTIONS_SCREENING_TYPES_SCHEMA({}),
         fuzziness: FUZZINESS_SCHEMA,
         ongoingScreening: ENABLE_ONGOING_SCREENING_SCHEMA({
           description:
             'Enabling ongoing screening will do a historic screening of all the existing consumer users.',
         }),
       },
-      required: ['fuzziness'],
+      required: ['fuzziness', 'screeningTypes'],
       additionalProperties: false,
     }
   }

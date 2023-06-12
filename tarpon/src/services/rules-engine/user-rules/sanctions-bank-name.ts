@@ -2,8 +2,8 @@ import { JSONSchemaType } from 'ajv'
 import _ from 'lodash'
 import {
   FUZZINESS_SCHEMA,
-  SANCTIONS_SCREENING_TYPES_OPTIONAL_SCHEMA,
   ENABLE_ONGOING_SCREENING_SCHEMA,
+  SANCTIONS_SCREENING_TYPES_SCHEMA,
 } from '../utils/rule-parameter-schemas'
 import { isBusinessUser } from '../utils/user-rule-utils'
 import { RuleHitResult } from '../rule'
@@ -19,7 +19,7 @@ type BankInfo = { bankName?: string; iban?: string }
 
 export type SanctionsBankUserRuleParameters = {
   resolveIban?: boolean
-  screeningTypes?: SanctionsSearchType[]
+  screeningTypes: SanctionsSearchType[]
   ongoingScreening: boolean
   fuzziness: number
 }
@@ -36,14 +36,14 @@ export default class SanctionsBankUserRule extends UserRule<SanctionsBankUserRul
             'Enable if you want to identify Bank name using IBAN numbers.',
           nullable: true,
         },
-        screeningTypes: SANCTIONS_SCREENING_TYPES_OPTIONAL_SCHEMA({}),
+        screeningTypes: SANCTIONS_SCREENING_TYPES_SCHEMA({}),
         fuzziness: FUZZINESS_SCHEMA,
         ongoingScreening: ENABLE_ONGOING_SCREENING_SCHEMA({
           description:
             'Enabling ongoing screening will do a historic screening of all the existing bank names.',
         }),
       },
-      required: ['fuzziness'],
+      required: ['fuzziness', 'screeningTypes'],
       additionalProperties: false,
     }
   }

@@ -1246,6 +1246,7 @@ const _RULES_LIBRARY: Array<
     const defaultParameters: SanctionsBusinessUserRuleParameters = {
       fuzziness: 20,
       ongoingScreening: false,
+      screeningTypes: [],
     }
 
     return {
@@ -1269,6 +1270,7 @@ const _RULES_LIBRARY: Array<
     const defaultParameters: SanctionsBankUserRuleParameters = {
       fuzziness: 20,
       ongoingScreening: false,
+      screeningTypes: [],
     }
 
     return {
@@ -1291,6 +1293,7 @@ const _RULES_LIBRARY: Array<
   () => {
     const defaultParameters: SanctionsCounterPartyRuleParameters = {
       fuzziness: 20,
+      screeningTypes: [],
     }
 
     return {
@@ -1315,6 +1318,7 @@ const _RULES_LIBRARY: Array<
     const defaultParameters: SanctionsConsumerUserRuleParameters = {
       fuzziness: 20,
       ongoingScreening: false,
+      screeningTypes: [],
     }
 
     return {

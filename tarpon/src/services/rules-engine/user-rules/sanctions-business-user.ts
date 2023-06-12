@@ -2,8 +2,8 @@ import { JSONSchemaType } from 'ajv'
 import _ from 'lodash'
 import {
   FUZZINESS_SCHEMA,
-  SANCTIONS_SCREENING_TYPES_OPTIONAL_SCHEMA,
   ENABLE_ONGOING_SCREENING_SCHEMA,
+  SANCTIONS_SCREENING_TYPES_SCHEMA,
 } from '../utils/rule-parameter-schemas'
 import { isBusinessUser } from '../utils/user-rule-utils'
 import { RuleHitResult } from '../rule'
@@ -27,7 +27,7 @@ const BUSINESS_USER_ENTITY_TYPES: Array<{
 
 export type SanctionsBusinessUserRuleParameters = {
   entityTypes?: SanctionsDetailsEntityType[]
-  screeningTypes?: SanctionsSearchType[]
+  screeningTypes: SanctionsSearchType[]
   fuzziness: number
   ongoingScreening: boolean
 }
@@ -50,14 +50,14 @@ export default class SanctionsBusinessUserRule extends UserRule<SanctionsBusines
           uniqueItems: true,
           nullable: true,
         },
-        screeningTypes: SANCTIONS_SCREENING_TYPES_OPTIONAL_SCHEMA({}),
+        screeningTypes: SANCTIONS_SCREENING_TYPES_SCHEMA({}),
         fuzziness: FUZZINESS_SCHEMA,
         ongoingScreening: ENABLE_ONGOING_SCREENING_SCHEMA({
           description:
             'Enabling ongoing screening will do a historic screening of all the existing business users including shareholders and directors.',
         }),
       },
-      required: ['fuzziness'],
+      required: ['fuzziness', 'screeningTypes'],
       additionalProperties: false,
     }
   }

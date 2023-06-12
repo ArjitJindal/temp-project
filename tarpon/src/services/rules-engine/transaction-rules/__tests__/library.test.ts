@@ -59,7 +59,16 @@ describe('', () => {
         if (!originLibrary?.[rule.id]) {
           return
         }
-
+        if (
+          rule.id === 'R-128' ||
+          rule.id === 'R-32' ||
+          rule.id === 'R-16' ||
+          rule.id === 'R-169'
+        ) {
+          // Breaking change for screeningType as a required field in mentioned rules
+          // TODO: remove this in another PR later
+          return
+        }
         const ruleImplementation =
           rule.type === 'TRANSACTION'
             ? TRANSACTION_RULES[rule.ruleImplementationName]

@@ -2,7 +2,7 @@ import _ from 'lodash'
 import { JSONSchemaType } from 'ajv'
 import {
   FUZZINESS_SCHEMA,
-  SANCTIONS_SCREENING_TYPES_OPTIONAL_SCHEMA,
+  SANCTIONS_SCREENING_TYPES_SCHEMA,
   TRANSACTION_AMOUNT_THRESHOLDS_OPTIONAL_SCHEMA,
 } from '../utils/rule-parameter-schemas'
 import { RuleHitResult } from '../rule'
@@ -21,7 +21,7 @@ export type SanctionsCounterPartyRuleParameters = {
   transactionAmountThreshold?: {
     [currency: string]: number
   }
-  screeningTypes?: SanctionsSearchType[]
+  screeningTypes: SanctionsSearchType[]
   fuzziness: number
   resolveIban?: boolean
 }
@@ -33,7 +33,7 @@ export class SanctionsCounterPartyRule extends TransactionRule<SanctionsCounterP
       properties: {
         transactionAmountThreshold:
           TRANSACTION_AMOUNT_THRESHOLDS_OPTIONAL_SCHEMA({}),
-        screeningTypes: SANCTIONS_SCREENING_TYPES_OPTIONAL_SCHEMA({}),
+        screeningTypes: SANCTIONS_SCREENING_TYPES_SCHEMA({}),
         fuzziness: FUZZINESS_SCHEMA,
         resolveIban: {
           type: 'boolean',
@@ -43,7 +43,7 @@ export class SanctionsCounterPartyRule extends TransactionRule<SanctionsCounterP
           nullable: true,
         },
       },
-      required: ['fuzziness'],
+      required: ['fuzziness', 'screeningTypes'],
       additionalProperties: false,
     }
   }
