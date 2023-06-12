@@ -51,12 +51,19 @@ export const webhooksHandler = lambdaApi()(
       if (webhookEvent.event === 'monitored_search_updated') {
         const searchUpdated =
           webhookEvent.data as ComplyAdvantageMonitoredSearchUpdated
+        logger.info(
+          `Received ComplyAdvantage webhook event 'monitored_search_updated' (search ID: ${searchUpdated.search_id})`
+        )
         const allTenants = await TenantService.getAllTenants()
         for (const t of allTenants) {
           const searchId = searchUpdated.search_id as number
           const sanctionsService = new SanctionsService(t.tenant.id)
           await sanctionsService.updateMonitoredSearch(searchId)
         }
+      } else {
+        logger.error(
+          `Received unhandled ComplyAdvantage webhook event: ${event.body}`
+        )
       }
       return 'OK'
     }

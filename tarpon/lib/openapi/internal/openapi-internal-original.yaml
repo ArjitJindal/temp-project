@@ -5890,6 +5890,8 @@ components:
           $ref: '#/components/schemas/SanctionsSearchResponse'
         createdAt:
           type: number
+        updatedAt:
+          type: number
       required:
         - _id
         - request

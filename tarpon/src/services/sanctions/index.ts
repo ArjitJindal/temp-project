@@ -14,6 +14,7 @@ import { getSecret } from '@/utils/secrets-manager'
 import { SanctionsSearchHistoryResponse } from '@/@types/openapi-internal/SanctionsSearchHistoryResponse'
 import { SanctionsSearchMonitoring } from '@/@types/openapi-internal/SanctionsSearchMonitoring'
 import { SanctionsSearchType } from '@/@types/openapi-internal/SanctionsSearchType'
+import { logger } from '@/core/logger'
 
 const COMPLYADVANTAGE_SEARCH_API_URI =
   'https://api.complyadvantage.com/searches'
@@ -67,6 +68,9 @@ export class SanctionsService {
       await this.sanctionsSearchRepository.updateMonitoredSearch(
         caSearchId,
         response
+      )
+      logger.info(
+        `Updated monitored search (search ID: ${caSearchId}) for tenant ${this.tenantId}`
       )
     }
   }
