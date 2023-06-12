@@ -292,6 +292,7 @@ export const allUsersViewHandler = lambdaApi()(
         includeCasesCount,
         sortField,
         sortOrder,
+        filterRiskLevel,
       } = event.queryStringParameters as any
 
       return userService.getUsers({
@@ -304,6 +305,9 @@ export const allUsersViewHandler = lambdaApi()(
         filterOperator,
         includeCasesCount: includeCasesCount === 'true',
         sortField,
+        filterRiskLevel: filterRiskLevel
+          ? filterRiskLevel.split(',')
+          : undefined,
         sortOrder,
       })
     } else if (
