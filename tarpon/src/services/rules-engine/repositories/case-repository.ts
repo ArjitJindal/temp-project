@@ -348,25 +348,9 @@ export class CaseRepository {
       })
     }
 
-    const executedRulesFilters = []
-    if (params.filterRulesExecuted != null) {
-      executedRulesFilters.push({
-        $elemMatch: { ruleId: { $in: params.filterRulesExecuted } },
-      })
-    }
     if (params.filterRulesHit != null) {
-      executedRulesFilters.push({
-        $elemMatch: {
-          ruleHit: true,
-          ruleInstanceId: { $in: params.filterRulesHit },
-        },
-      })
-    }
-    if (executedRulesFilters.length > 0) {
       conditions.push({
-        'caseTransactions.executedRules': {
-          $all: executedRulesFilters,
-        },
+        'alerts.ruleInstanceId': { $in: params.filterRulesHit },
       })
     }
 
