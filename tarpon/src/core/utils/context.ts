@@ -10,7 +10,7 @@ import { MetricDatum } from '@aws-sdk/client-cloudwatch'
 import { DynamoDBClient } from '@aws-sdk/client-dynamodb'
 import { winstonLogger } from '../logger'
 import { Feature } from '@/@types/openapi-internal/Feature'
-import { getDynamoDbClientByEvent } from '@/utils/dynamodb'
+import { getDynamoDbClient, getDynamoDbClientByEvent } from '@/utils/dynamodb'
 import { TenantRepository } from '@/services/tenants/repositories/tenant-repository'
 
 import { Account } from '@/@types/openapi-internal/Account'
@@ -105,6 +105,27 @@ export async function getInitialContext(
     }
     return {}
   }
+}
+
+export async function initializeTenantContext(tenantId: string) {
+  const context = getContext()
+  if (!context) {
+    throw new Error('Cannot get context')
+  }
+  const dynamoDb = getDynamoDbClient()
+  const tenantRepository = new TenantRepository(tenantId, { dynamoDb })
+  const features = (await tenantRepository.getTenantSettings(['features']))
+    ?.features
+  context.tenantId = tenantId
+  if (!context.logMetadata) {
+    context.logMetadata = {}
+  }
+  if (!context.metricDimensions) {
+    context.metricDimensions = {}
+  }
+  context.logMetadata.tenantId = tenantId
+  context.metricDimensions.tenantId = tenantId
+  context.features = features
 }
 
 export function updateLogMetadata(addedMetadata: { [key: string]: any }) {

@@ -1,31 +1,18 @@
 import * as Sentry from '@sentry/serverless'
 import * as createError from 'http-errors'
 
-import {
-  APIGatewayEventLambdaAuthorizerContext,
-  APIGatewayProxyResult,
-  APIGatewayProxyWithLambdaAuthorizerHandler,
-} from 'aws-lambda'
 import { RewriteFrames } from '@sentry/integrations'
 import _ from 'lodash'
 import { getContext } from '../utils/context'
 import { JWTAuthorizerResult } from '@/@types/jwt'
 import { SENTRY_DSN } from '@/core/constants'
 
-type Handler = APIGatewayProxyWithLambdaAuthorizerHandler<
-  APIGatewayEventLambdaAuthorizerContext<AWS.STS.Credentials>
->
-
 export const initSentry =
   () =>
-  (handler: CallableFunction): Handler => {
+  (handler: CallableFunction): CallableFunction => {
     if (process.env.ENV === 'local') {
-      return async (
-        event: any,
-        context: any,
-        callback: any
-      ): Promise<APIGatewayProxyResult> => {
-        return handler(event, context, callback)
+      return async (event: any, ...args: any[]): Promise<any> => {
+        return handler(event, ...args)
       }
     }
 
@@ -59,7 +46,7 @@ export const initSentry =
     })
 
     return Sentry.AWSLambda.wrapHandler(
-      async (event, context, callback): Promise<APIGatewayProxyResult> => {
+      async (event: any, ...args): Promise<any> => {
         Sentry.configureScope((scope) => scope.clear())
         if (event.requestContext?.authorizer) {
           const { userId, verifiedEmail } = event.requestContext
@@ -71,7 +58,7 @@ export const initSentry =
         }
         Sentry.setTags(getContext()?.logMetadata || {})
 
-        return handler(event, context, callback)
+        return handler(event, ...args)
       }
     )
   }

@@ -14,8 +14,10 @@ import { logger } from '@/core/logger'
 import {
   getContext,
   getContextStorage,
+  initializeTenantContext,
   updateLogMetadata,
 } from '@/core/utils/context'
+import { initSentry } from '@/core/middlewares/init-sentry'
 
 function getBatchJobName(batchJobPayload: BatchJob) {
   return `${uuidv4()}-${batchJobPayload.tenantId}-${
@@ -55,14 +57,14 @@ export const jobDecisionHandler = async (
   }
 }
 
-export const jobRunnerHandler = async (job: BatchJob) => {
+export const jobRunnerHandler = initSentry()(async (job: BatchJob) => {
   logger.info(`Starting job - ${job.type}`, job)
   const jobRunner = BatchJobRunnerFactory.getBatchJobRunner(job.type)
   return getContextStorage().run(getContext() || {}, async () => {
+    await initializeTenantContext(job.tenantId)
     updateLogMetadata({
-      tenantId: job.tenantId,
       type: job.type,
     })
     return jobRunner.run(job)
   })
-}
+})

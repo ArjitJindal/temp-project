@@ -30,7 +30,14 @@ export class OngoingScreeningUserRuleBatchJobRunner extends BatchJobRunner {
 
     const ruleInstances = (
       await ruleInstanceRepository.getActiveRuleInstances('USER')
-    ).filter((ruleInstance) => ruleInstance.parameters?.ongoingScreening)
+    ).filter((ruleInstance) => {
+      return (
+        ruleInstance.parameters?.ongoingScreening ||
+        Object.values(ruleInstance.riskLevelParameters ?? {}).find(
+          (p) => p.ongoingScreening
+        )
+      )
+    })
     if (ruleInstances.length === 0) {
       logger.info('No active ongoing screening user rule found. Abort.')
       return

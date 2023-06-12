@@ -8,9 +8,9 @@ import { IBANValidation, IBANValidationResponse } from './types'
 import { IBANApiRepository } from './repositories/iban-api-repository'
 import { getMongoDbClient } from '@/utils/mongoDBUtils'
 import { getSecret } from '@/utils/secrets-manager'
-import { tenantHasFeature } from '@/core/middlewares/tenant-has-feature'
 import { IBANDetails } from '@/@types/openapi-public/IBANDetails'
 import { logger } from '@/core/logger'
+import { hasFeature } from '@/core/utils/context'
 
 const IBAN_API_URI = 'https://api.iban.com/clients/api/v4/iban/'
 
@@ -78,7 +78,6 @@ export class IBANService {
   apiKey!: string
   ibanApiRepository!: IBANApiRepository
   tenantId: string
-  hasIbanResolutionFeature!: boolean
 
   constructor(tenantId: string) {
     this.tenantId = tenantId
@@ -87,7 +86,7 @@ export class IBANService {
   public async resolveBankName(bankInfos: BankInfo[]): Promise<BankInfo[]> {
     await this.initialize()
 
-    if (!this.hasIbanResolutionFeature) {
+    if (!hasFeature('IBAN_RESOLUTION')) {
       logger.error(`IBAN_RESOLUTION feature flag required to resolve bank name`)
       return []
     }
@@ -110,7 +109,7 @@ export class IBANService {
   ): Promise<IBANDetails | null> {
     await this.initialize()
 
-    if (!this.hasIbanResolutionFeature) {
+    if (!hasFeature('IBAN_RESOLUTION')) {
       logger.error(`IBAN_RESOLUTION feature flag required to resolve bank name`)
       return null
     }
@@ -164,10 +163,6 @@ export class IBANService {
       return
     }
     const mongoDb = await getMongoDbClient()
-    this.hasIbanResolutionFeature = await tenantHasFeature(
-      this.tenantId,
-      'IBAN_RESOLUTION'
-    )
     this.ibanApiRepository = new IBANApiRepository(this.tenantId, mongoDb)
     this.apiKey = await getApiKey()
   }
