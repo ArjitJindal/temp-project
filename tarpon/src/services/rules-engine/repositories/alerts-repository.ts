@@ -189,24 +189,23 @@ export class AlertsRepository {
       params.filterAssignmentsIds != null &&
       params.filterAssignmentsIds?.length
     ) {
-      conditions.push({
-        $or: [
-          {
-            'alerts.assignments': {
-              $elemMatch: {
-                assigneeUserId: { $in: params.filterAssignmentsIds },
+      conditions.push(
+        params.filterCaseStatus?.includes('ESCALATED')
+          ? {
+              'alerts.assignments': {
+                $elemMatch: {
+                  assigneeUserId: { $in: params.filterAssignmentsIds },
+                },
               },
-            },
-          },
-          {
-            'alerts.reviewAssignments': {
-              $elemMatch: {
-                assigneeUserId: { $in: params.filterAssignmentsIds },
+            }
+          : {
+              'alerts.reviewAssignments': {
+                $elemMatch: {
+                  assigneeUserId: { $in: params.filterAssignmentsIds },
+                },
               },
-            },
-          },
-        ],
-      })
+            }
+      )
     }
     if (params.filterRuleInstanceId != null) {
       conditions.push({

@@ -151,24 +151,23 @@ export class CaseRepository {
       params.filterAssignmentsIds.length > 0 &&
       assignments
     ) {
-      conditions.push({
-        $or: [
-          {
-            assignments: {
-              $elemMatch: {
-                assigneeUserId: { $in: params.filterAssignmentsIds },
+      conditions.push(
+        !params.filterCaseStatus?.includes('ESCALATED')
+          ? {
+              assignments: {
+                $elemMatch: {
+                  assigneeUserId: { $in: params.filterAssignmentsIds },
+                },
               },
-            },
-          },
-          {
-            reviewAssignments: {
-              $elemMatch: {
-                assigneeUserId: { $in: params.filterAssignmentsIds },
+            }
+          : {
+              reviewAssignments: {
+                $elemMatch: {
+                  assigneeUserId: { $in: params.filterAssignmentsIds },
+                },
               },
-            },
-          },
-        ],
-      })
+            }
+      )
     }
 
     if (params.afterTimestamp != null || params.beforeTimestamp != null) {
