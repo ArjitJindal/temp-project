@@ -126,9 +126,11 @@ describe('Case service', () => {
         alerts: [TEST_ALERT_1, TEST_ALERT_2],
       })
 
-      await caseService.escalateCase('C-1', { comment: 'test comment' }, [
-        TEST_ACCOUNT_1,
-      ])
+      await caseService.escalateCase(
+        'C-1',
+        { comment: 'test comment', reason: ['Documents collected'] },
+        [TEST_ACCOUNT_1]
+      )
 
       const c = await caseService.getCase('C-1')
       expect(c).toMatchObject({
@@ -165,7 +167,7 @@ describe('Case service', () => {
         }),
         comments: [
           expect.objectContaining({
-            body: 'Case status changed to ESCALATED. test comment',
+            body: 'Case status changed to ESCALATED. Reason: Documents collected. test comment',
             createdAt: expect.any(Number),
             updatedAt: expect.any(Number),
           }),

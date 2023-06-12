@@ -116,6 +116,9 @@ export class CaseService extends CaseAlertsCommonService {
               userId,
               body:
                 `Case status changed to ${updateRequest.caseStatus}` +
+                (updateRequest.reason
+                  ? `. Reason: ${updateRequest.reason.join(', ')}`
+                  : '') +
                 (updateRequest.comment ? `. ${updateRequest.comment}` : ''),
               files: updateRequest.files,
             }),
