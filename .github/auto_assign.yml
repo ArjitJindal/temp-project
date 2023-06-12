@@ -1,4 +1,4 @@
 addReviewers: true
 addAssignees: author
 reviewers:
-  - flagright/engineering
+  - engineering
