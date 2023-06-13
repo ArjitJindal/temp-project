@@ -5,6 +5,12 @@ import { Comment as ApiComment } from '@/apis';
 import { useUser } from '@/utils/user-utils';
 import { FilesList } from '@/components/files/FilesList';
 import MarkdownViewer from '@/components/markdown/MarkdownViewer';
+import { COLORS_V2_GRAY_5 } from '@/components/ui/colors';
+
+const DEFAULT_AVATAR_STYLE = {
+  borderRadius: '50%',
+  backgroundColor: COLORS_V2_GRAY_5,
+};
 
 interface Props {
   deletingCommentIds: string[];
@@ -22,7 +28,13 @@ export default function Comment(props: Props) {
       <div className={styles.left}>
         <div
           className={styles.avatar}
-          style={{ backgroundImage: `url(${user?.picture})` }}
+          style={
+            user?.picture
+              ? {
+                  backgroundImage: `url(${user.picture})`,
+                }
+              : DEFAULT_AVATAR_STYLE
+          }
           title={`${user?.name || comment.userId} avatar`}
         />
       </div>

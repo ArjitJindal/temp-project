@@ -62,20 +62,21 @@ export function parseUserRole(role: string | null): UserRole {
       return UserRole.USER;
   }
 }
-export function getUserRole(user: FlagrightAuth0User | null): UserRole {
+export function getUserRole(user: FlagrightAuth0User | Account | null): UserRole {
   return parseUserRole(user?.role ?? null);
 }
 
-export function isSuperAdmin(user: FlagrightAuth0User | null) {
+export function isSuperAdmin(user: FlagrightAuth0User | Account | null) {
   return isAtLeast(user, UserRole.ROOT);
 }
 
-export function isAtLeast(user: FlagrightAuth0User | null, role: UserRole) {
+export function isAtLeast(user: FlagrightAuth0User | Account | null, role: UserRole) {
   if (ROLES_ORDER.indexOf(getUserRole(user)) > ROLES_ORDER.indexOf(role)) {
     return false;
   }
   if (role === UserRole.ROOT) {
-    const isFlagrightEmail = user?.verifiedEmail?.endsWith('@flagright.com') ?? false;
+    const email = (user as FlagrightAuth0User)?.verifiedEmail ?? (user as Account)?.email;
+    const isFlagrightEmail = email?.endsWith('@flagright.com') ?? false;
     if (!isFlagrightEmail) {
       return false;
     }
@@ -137,21 +138,16 @@ export function useUser(userId: string | null | undefined): Account | null {
   if (isLoading || !userId) {
     return null;
   }
-  return users[userId];
+  const user = users[userId];
+  if (user && isSuperAdmin(user)) {
+    return {
+      ...user,
+      name: 'System',
+      email: 'system',
+      picture: undefined,
+    };
+  }
+  return user;
 }
-
-// export async function useAccountSettings(): AsyncResource<AccountSettings> {
-//   const api = useApi();
-//   const { userId } = useAuth0User();
-//   const result = useQuery(ACCOUNT_ITEM_SETTINGS(userId ?? null), async () => {
-//     if (userId == null) {
-//       return {};
-//     }
-//     return await api.accountGetSettings({
-//       accountId: userId,
-//     });
-//   });
-//   return result.data;
-// }
 
 export const Context = React.createContext<{ user: FlagrightAuth0User } | null>(null);
