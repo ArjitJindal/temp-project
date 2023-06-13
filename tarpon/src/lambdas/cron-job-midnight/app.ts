@@ -12,6 +12,8 @@ import { RuleInstanceRepository } from '@/services/rules-engine/repositories/rul
 import { UserRepository } from '@/services/users/repositories/user-repository'
 import { logger } from '@/core/logger'
 
+const ONGOING_SCREENING_USERS_BATCH_SIZE = 500
+
 /**
  * NOTE: This lambda is triggered by a cron job that runs every day at midnight.
  * If it fails make sure that we make a migration to backfill the missing data.
@@ -80,7 +82,7 @@ export const cronJobMidnightHandler = lambdaConsumer()(async () => {
         // One job only deals with a subset of users to avoid the job to run for over 15 minutes
         for await (const item of await userRepository.getAllUserIdsCursor()) {
           userIdsBatch.push(item.userId)
-          if (userIdsBatch.length === 1000) {
+          if (userIdsBatch.length === ONGOING_SCREENING_USERS_BATCH_SIZE) {
             await sendBatchJobCommand(tenantId, {
               type: 'ONGOING_SCREENING_USER_RULE',
               tenantId,
