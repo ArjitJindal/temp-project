@@ -1,394 +1,152 @@
 import * as xml2js from 'xml2js'
+import { AnySchemaObject } from 'ajv'
 import { ReportGenerator } from '../..'
-import { Report1 } from './schema'
+import { Schema } from './schema'
 import { Case } from '@/@types/openapi-internal/Case'
 import { ReportSchema } from '@/@types/openapi-internal/ReportSchema'
 import { Account } from '@/@types/openapi-internal/Account'
+import { InternalConsumerUser } from '@/@types/openapi-internal/InternalConsumerUser'
+import { InternalBusinessUser } from '@/@types/openapi-internal/InternalBusinessUser'
+import { CardDetails } from '@/@types/openapi-public/CardDetails'
+import { GenericBankAccountDetails } from '@/@types/openapi-public/GenericBankAccountDetails'
+import { IBANDetails } from '@/@types/openapi-public/IBANDetails'
+import { ACHDetails } from '@/@types/openapi-public/ACHDetails'
+import { SWIFTDetails } from '@/@types/openapi-public/SWIFTDetails'
+import { MpesaDetails } from '@/@types/openapi-public/MpesaDetails'
+import { UPIDetails } from '@/@types/openapi-public/UPIDetails'
+import { WalletDetails } from '@/@types/openapi-public/WalletDetails'
+import { CheckDetails } from '@/@types/openapi-public/CheckDetails'
+import { InternalTransaction } from '@/@types/openapi-internal/InternalTransaction'
 
-type KenyaSarData = Report1
-
+type KenyaSarData = unknown
 export class KenyaSARReportGenerator implements ReportGenerator<KenyaSarData> {
   // TODO: Fix types
-  public static getSchema(): any {
+  public static getSchema(): AnySchemaObject {
+    return Schema
+  }
+  public prepopulate(
+    c: Case,
+    transactionIds: string[],
+    _reporter: Account
+  ): KenyaSarData {
+    const transactions = c.caseTransactions?.filter(
+      (t) => transactionIds.indexOf(t.transactionId) > -1
+    )
+    const firstTxn =
+      transactions && transactions.length > 0 ? transactions[0] : undefined
+
+    let firstName, lastName
+
+    if (_reporter && _reporter.name) {
+      ;[firstName, lastName] = _reporter ? _reporter.name.split(' ') : ['', '']
+    }
+
     return {
-      title: 'report',
-      type: 'object',
-      definitions: {
-        goods_services: {
-          type: 'array',
-          items: {
-            $ref: '#/definitions/t_trans_item',
-          },
-        },
-        t_account_my_client: {
-          type: 'object',
-          properties: {
-            account: {
-              type: 'string',
-            },
-            balance: {
-              type: 'number',
-            },
-            date_balance: {
-              type: 'string',
-            },
-            t_entity: {
-              $ref: '#/definitions/t_entity',
-            },
-          },
-          dependentRequired: {
-            balance: ['date_balance'],
-          },
-          oneOf: [
-            {
-              title: 'institution_code',
-              type: 'string',
-            },
-            {
-              title: 'swift',
-              type: 'string',
-            },
-          ],
-        },
-        t_from_my_client: {
-          type: 'object',
-          properties: {
-            from_funds_codes: {
-              type: 'string',
-            },
-          },
-          oneOf: [
-            {
-              title: 'from_account',
-              $ref: '#/definitions/t_account',
-            },
-            {
-              title: 'from_person',
-              $ref: '#/definitions/t_person',
-            },
-            {
-              title: 'from_entity',
-              $ref: '#/definitions/t_entity',
-            },
-          ],
-        },
-        t_to: {
-          type: 'object',
-          properties: {
-            to_funds_codes: {
-              type: 'string',
-            },
-          },
-          oneOf: [
-            {
-              title: 'to_account',
-              $ref: '#/definitions/t_account',
-            },
-            {
-              title: 'to_person',
-              $ref: '#/definitions/t_person',
-            },
-            {
-              title: 'to_entity',
-              $ref: '#/definitions/t_entity',
-            },
-          ],
-        },
-        t_to_my_client: {
-          type: 'object',
-          properties: {
-            to_funds_codes: {
-              type: 'string',
-            },
-          },
-          oneOf: [
-            {
-              title: 'to_account',
-              $ref: '#/definitions/t_account',
-            },
-            {
-              title: 'to_person',
-              $ref: '#/definitions/t_person',
-            },
-            {
-              title: 'to_entity',
-              $ref: '#/definitions/t_entity',
-            },
-          ],
-        },
-        t_from: {
-          type: 'object',
-          properties: {
-            from_funds_codes: {
-              type: 'string',
-            },
-          },
-          oneOf: [
-            {
-              title: 'from_account',
-              $ref: '#/definitions/t_account',
-            },
-            {
-              title: 'from_person',
-              $ref: '#/definitions/t_person',
-            },
-            {
-              title: 'from_entity',
-              $ref: '#/definitions/t_entity',
-            },
-          ],
-        },
-        t_account: {
-          type: 'object',
-          properties: {
-            account: {
-              type: 'string',
-            },
-            balance: {
-              type: 'number',
-            },
-            date_balance: {
-              type: 'string',
-            },
-            t_entity: {
-              $ref: '#/definitions/t_entity',
-            },
-          },
-          dependentRequired: {
-            balance: ['date_balance'],
-          },
-          oneOf: [
-            {
-              title: 'institution_code',
-              type: 'string',
-            },
-            {
-              title: 'swift',
-              type: 'string',
-            },
-          ],
-        },
-        t_entity: {
-          type: 'object',
-          properties: {
-            name: {
-              type: 'string',
-            },
-          },
-        },
-        t_entity_my_client: {
-          type: 'object',
-          properties: {
-            name: {
-              type: 'string',
-            },
-          },
-        },
-        t_person_my_client: {
-          type: 'object',
-          properties: {
-            first_name: {
-              type: 'string',
-            },
-          },
-        },
-        t_person: {
-          type: 'object',
-          properties: {
-            first_name: {
-              type: 'string',
-            },
-          },
-        },
-        t_person_registration_in_report: {
-          type: 'object',
-          properties: {
-            first_name: {
-              type: 'string',
-            },
-          },
-        },
-        t_address: {
-          type: 'object',
-          properties: {
-            address: {
-              type: 'string',
-            },
-          },
-        },
-
-        t_trans_item: {
-          type: 'object',
-          properties: {
-            item_type: {
-              type: 'string',
-            },
-            address: {
-              $ref: '#/definitions/t_address',
-            },
-          },
-        },
-        t_phone: {
-          type: 'object',
-          properties: {
-            tph_number: {
-              type: 'string',
-            },
-          },
-        },
-        t_foreign_currency: {
-          type: 'object',
-          properties: {
-            foreign_currency_code: {
-              type: 'string',
-            },
-          },
-        },
-
-        t_person_identification: {
-          type: 'object',
-          properties: {
-            number: {
-              type: 'string',
-            },
-          },
-        },
-        report_party_type: {
-          type: 'object',
-          oneOf: [
-            {
-              title: 'person',
-              type: {
-                $ref: '#/definitions/t_person',
-              },
-            },
-            {
-              title: 'account',
-              type: {
-                $ref: '#/definitions/t_account',
-              },
-            },
-            {
-              title: 'entity',
-              type: {
-                $ref: '#/definitions/t_entity',
-              },
-            },
-          ],
-          properties: {
-            reason: {
-              type: 'string',
-            },
-          },
-        },
-        transaction: {
-          type: 'object',
-          properties: {
-            transaction_number: {
-              type: 'number',
-            },
-          },
-          oneOf: [
-            {
-              title: 'Involved Parties',
-              $ref: '#/definitions/t_party',
-            },
-            {
-              title: 'Bi Party Transaction',
-              type: 'object',
-              properties: {
-                to: {
-                  type: 'object',
-                  oneOf: [
-                    {
-                      type: 'object',
-                      title: 't_to_my_client',
-                      $ref: '#/definitions/t_to_my_client',
-                    },
-                    {
-                      type: 'object',
-                      title: 't_to',
-                      $ref: '#/definitions/t_to',
-                    },
-                  ],
-                },
-                from: {
-                  type: 'object',
-                  oneOf: [
-                    {
-                      type: 'object',
-                      title: 't_from_my_client',
-                      $ref: '#/definitions/t_from_my_client',
-                    },
-                    {
-                      type: 'object',
-                      title: 't_from',
-                      $ref: '#/definitions/t_from',
-                    },
-                  ],
-                },
-              },
-            },
-          ],
-        },
-        t_party: {
-          type: 'object',
-          properties: {
-            role: {
-              type: 'string',
-            },
-          },
-          oneOf: [
-            {
-              title: 'person',
-              type: {
-                $ref: '#/definitions/t_person',
-              },
-            },
-            {
-              title: 'person_my_client',
-              type: {
-                $ref: '#/definitions/t_person_my_client',
-              },
-            },
-          ],
-        },
-      },
-      properties: {
-        reentity_id: {
-          type: 'string',
-        },
-        reporting_person: {
-          $ref: '#/definitions/t_person_registration_in_report',
-        },
-        Location: {
-          $ref: '#/definitions/t_address',
-        },
-      },
-      oneOf: [
+      submission_code: 'E',
+      report_code: 'SAR',
+      entity_reference: c.caseId,
+      submission_date: new Date().toISOString(),
+      currency_code_local:
+        firstTxn && firstTxn?.originAmountDetails?.transactionCurrency,
+      reporting_person: [
         {
-          title: 'transaction',
-          type: 'array',
-          items: {
-            $ref: '#/definitions/transaction',
-          },
-        },
-        {
-          title: 'activity',
-          type: 'string',
+          first_name: firstName,
+          last_name: lastName,
+          email: _reporter.email,
         },
       ],
-    }
-  }
+      location: [],
+      transaction: transactions?.map((t) => {
+        return {
+          t_from_my_client: {
+            from_account: this.account(t, t.originUser, t.originPaymentDetails),
+            from_person: this.person(t.originUser),
+          },
+          t_to_my_client: {
+            to_account: this.account(
+              t,
+              t.destinationUser,
+              t.destinationPaymentDetails
+            ),
+            to_person: this.person(t.originUser),
+          },
+          amount_local: t.originAmountDetails?.transactionAmount,
+          date_transaction:
+            t.createdAt && new Date(t.createdAt as number).toISOString(),
+          goods_services: [],
+          internal_ref_number: t.transactionId,
 
-  public prepopulate(_c: Case, _reporter: Account): KenyaSarData {
-    // TODO: Implement me
-    return {} as any
+          transaction_location: t.originAmountDetails?.country,
+          transaction_number: t.transactionId,
+        }
+      }),
+    }
   }
 
   public generate(data: KenyaSarData): string {
     const builder = new xml2js.Builder()
     return builder.buildObject(data)
+  }
+
+  private account(
+    t: InternalTransaction | undefined,
+    u: InternalConsumerUser | InternalBusinessUser | undefined,
+    pd:
+      | CardDetails
+      | GenericBankAccountDetails
+      | IBANDetails
+      | ACHDetails
+      | SWIFTDetails
+      | MpesaDetails
+      | UPIDetails
+      | WalletDetails
+      | CheckDetails
+      | undefined
+  ) {
+    let paymentDetails = {}
+    if (pd?.method === 'SWIFT') {
+      paymentDetails = {
+        institution_name: pd.bankName,
+        swift_code: pd.swiftCode,
+        account: pd.accountNumber,
+        currency_code: t?.originAmountDetails?.transactionCurrency,
+        account_name: pd.name,
+      }
+    }
+    if (pd?.method === 'IBAN') {
+      paymentDetails = {
+        institution_name: pd.bankName,
+        branch: pd.bankBranchCode,
+        iban: pd.IBAN,
+        currency_code: t?.originAmountDetails?.transactionCurrency,
+        account_name: pd.name,
+      }
+    }
+    if (u?.type === 'BUSINESS') {
+      return paymentDetails
+    }
+  }
+
+  private person(u: InternalConsumerUser | InternalBusinessUser | undefined) {
+    if (u?.type === 'CONSUMER') {
+      return [
+        {
+          first_name: u?.userDetails?.name.firstName,
+          middle_name: u?.userDetails?.name.middleName,
+          last_name: u?.userDetails?.name.lastName,
+          addresses: u?.contactDetails?.addresses?.map((a) => {
+            return {
+              address_type: '',
+              address: a.addressLines[0],
+              city: a.city,
+              zip: a.postcode,
+              state: a.state,
+            }
+          }),
+          nationality1: u?.userDetails?.countryOfNationality,
+        },
+      ]
+    }
   }
 }
 

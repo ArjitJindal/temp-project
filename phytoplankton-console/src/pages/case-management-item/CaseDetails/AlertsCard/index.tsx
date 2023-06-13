@@ -26,6 +26,7 @@ export default function AlertsCard(props: Props) {
     <Card.Root header={{ title, collapsableKey }} updateCollapseState={updateCollapseState}>
       <Card.Section>
         <AlertTable
+          caseId={caseId}
           params={params}
           onChangeParams={setParams}
           isEmbedded={true}

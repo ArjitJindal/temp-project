@@ -49,6 +49,14 @@ export const USER_INFO = (accessToken: string | null): QueryKey => ['userinfo', 
 export const SALESFORCE_ACCOUNT = (userId: string): QueryKey => ['salesforceaccount', userId];
 export const ROLES_LIST = (): QueryKey => ['roles', 'list'];
 export const ROLE = (roleId: string): QueryKey => ['role', roleId];
+
+export const REPORT_SCHEMAS = (): QueryKey => ['report', 'schemas'];
+export const REPORT_TEMPLATE = (caseId: string, schemaId: string): QueryKey => [
+  'report',
+  'template',
+  caseId,
+  schemaId,
+];
 export const TRANSACTIONS_LIST = (searchParams: AnyParameters): QueryKey => [
   'transactions',
   'list',

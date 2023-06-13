@@ -37,7 +37,8 @@ import { useRules } from '@/utils/rules';
 import { ColumnHelper } from '@/components/library/Table/columnHelper';
 import { DefaultApiGetAlertListRequest } from '@/apis/types/ObjectParamAPI';
 import { neverReturn } from '@/utils/lang';
-import { SarButton } from '@/components/SarDemo';
+import { SarButton as SarDemoButton } from '@/components/SarDemo';
+import { SarButton as SarButton } from '@/components/Sar';
 
 export type AlertTableParams = AllParams<TableSearchParams>;
 const mergedColumns = (
@@ -208,12 +209,14 @@ interface Props {
   isEmbedded?: boolean;
   hideAlertStatusFilters?: boolean;
   hideUserFilters?: boolean;
+  caseId?: string;
   escalatedTransactionIds?: string[];
   expandTransactions?: boolean;
 }
 
 export default function AlertTable(props: Props) {
   const {
+    caseId,
     params,
     onChangeParams,
     isEmbedded = false,
@@ -224,6 +227,7 @@ export default function AlertTable(props: Props) {
   const escalationEnabled = useFeatureEnabled('ESCALATION');
   const isPulseEnabled = useFeatureEnabled('PULSE');
   const sarDemoEnabled = useFeatureEnabled('SAR_DEMO');
+  const sarEnabled = useFeatureEnabled('SAR');
   const api = useApi();
   const user = useAuth0User();
   const [users, _] = useUsers({ includeBlockedUsers: true });
@@ -406,8 +410,16 @@ export default function AlertTable(props: Props) {
   if (process.env.ENV_NAME !== 'prod') {
     sarDemoButton = () =>
       sarDemoEnabled ? (
-        <SarButton transactionIds={Object.values(selectedTxns).flatMap((v) => v)} />
+        <SarDemoButton transactionIds={Object.values(selectedTxns).flatMap((v) => v)} />
       ) : null;
+  }
+
+  let sarButton: any = () => null;
+  if (caseId && sarEnabled) {
+    sarButton = () =>
+      selectedTransactionIds.length > 0 && (
+        <SarButton caseId={caseId} transactionIds={selectedTransactionIds} />
+      );
   }
 
   return (
@@ -432,6 +444,7 @@ export default function AlertTable(props: Props) {
         pagination={isEmbedded ? 'HIDE_FOR_ONE_PAGE' : true}
         selectionActions={[
           sarDemoButton,
+          sarButton,
           ({ selectedIds, selectedItems }) => {
             if (selectedTransactionIds.length) {
               return;
@@ -456,7 +469,6 @@ export default function AlertTable(props: Props) {
               );
             }
           },
-
           ({ selectedIds, selectedItems, params }) => {
             const selectedAlertStatuses = [
               ...new Set(

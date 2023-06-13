@@ -3648,6 +3648,13 @@ paths:
           name: schemaId
           required: true
         - schema:
+            type: array
+            items:
+              type: string
+          in: query
+          name: transactionIds
+          required: true
+        - schema:
             type: string
           in: query
           name: caseId
@@ -5170,6 +5177,7 @@ components:
         - IBAN_RESOLUTION
         - MACHINE_LEARNING_DEMO
         - SAR_DEMO
+        - SAR
       description: ''
     ManagedRoleName:
       type: string
@@ -6886,8 +6894,8 @@ components:
           type: string
         caseId:
           type: string
-        schemaId:
-          type: string
+        schema:
+          $ref: '#/components/schemas/ReportSchema'
         createdAt:
           type: number
         updatedAt:

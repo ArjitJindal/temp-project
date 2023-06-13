@@ -3,7 +3,7 @@ import { sampleTimestamp } from './timestamp'
 import { Case } from '@/@types/openapi-internal/Case'
 import { InternalTransaction } from '@/@types/openapi-internal/InternalTransaction'
 import { Alert } from '@/@types/openapi-internal/Alert'
-import { pickRandom, randomInt, randomSubset } from '@/utils/prng'
+import { pickRandom, randomSubset } from '@/utils/prng'
 import { HitRulesDetails } from '@/@types/openapi-internal/HitRulesDetails'
 import { CASE_CLOSING_REASONSS } from '@/@types/openapi-internal-custom/CaseClosingReasons'
 import { CASE_STATUSS } from '@/@types/openapi-internal-custom/CaseStatus'
@@ -113,7 +113,19 @@ export function sampleUserCase(
     caseTransactions: transactions,
     caseTransactionsIds: transactions.map((t) => t.transactionId!),
     alerts: ruleHits.map((ruleHit, i) =>
-      sampleAlert({ caseId, ruleHit }, i * 0.001)
+      sampleAlert(
+        {
+          caseId,
+          ruleHit,
+          transactions: transactions.filter(
+            (t) =>
+              !!t.hitRules.find(
+                (hr) => hr.ruleInstanceId === ruleHit.ruleInstanceId
+              )
+          ),
+        },
+        i * 0.001
+      )
     ),
   }
 }
@@ -122,6 +134,7 @@ export function sampleAlert(
   params: {
     caseId: string
     ruleHit: HitRulesDetails
+    transactions: InternalTransaction[]
   },
   seed?: number
 ): Alert {
@@ -139,7 +152,8 @@ export function sampleAlert(
       Math.random()
     ),
     ruleInstanceId: params.ruleHit.ruleInstanceId,
-    numberOfTransactionsHit: randomInt(seed, 100),
+    numberOfTransactionsHit: params.transactions.length,
     priority: pickRandom(['P1', 'P2', 'P3', 'P4'], Math.random()),
+    transactionIds: params.transactions.map((t) => t.transactionId),
   }
 }
