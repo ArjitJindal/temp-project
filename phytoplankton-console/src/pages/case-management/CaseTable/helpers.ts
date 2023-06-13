@@ -21,7 +21,6 @@ export function useTableData(
             otherReason: item.lastStatusChange?.otherReason ?? null,
           },
           ...item,
-          assignments: item.caseStatus === 'ESCALATED' ? item.reviewAssignments : item.assignments,
         };
         return dataItem;
       },

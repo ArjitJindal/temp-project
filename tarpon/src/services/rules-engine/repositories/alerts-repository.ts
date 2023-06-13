@@ -190,7 +190,7 @@ export class AlertsRepository {
       params.filterAssignmentsIds?.length
     ) {
       conditions.push(
-        params.filterCaseStatus?.includes('ESCALATED')
+        !params.filterAlertStatus?.includes('ESCALATED')
           ? {
               'alerts.assignments': {
                 $elemMatch: {
