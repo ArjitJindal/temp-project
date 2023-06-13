@@ -19,6 +19,29 @@ dynamoDbSetupHook()
 ruleVariantsTest(false, () => {
   describe('R-99 description formatting', () => {
     const TEST_TENANT_ID = getTestTenantId()
+    const testUser = getTestUser({
+      transactionLimits: {
+        maximumDailyTransactionLimit: {
+          amountCurrency: 'EUR',
+          amountValue: 100,
+        },
+        maximumTransactionLimit: { amountCurrency: 'EUR', amountValue: 200 },
+        paymentMethodLimits: {
+          CARD: {
+            transactionAmountLimit: {
+              day: { amountCurrency: 'EUR', amountValue: 300 },
+            },
+            transactionCountLimit: {
+              day: 1,
+              week: 1,
+            },
+            averageTransactionAmountLimit: {
+              month: { amountCurrency: 'EUR', amountValue: 400 },
+            },
+          },
+        },
+      },
+    })
     setUpRulesHooks(TEST_TENANT_ID, [
       {
         type: 'TRANSACTION',
@@ -27,29 +50,14 @@ ruleVariantsTest(false, () => {
       },
     ])
     setUpUsersHooks(TEST_TENANT_ID, [
-      getTestUser({
+      {
+        ...testUser,
         userId: '1',
-        transactionLimits: {
-          maximumDailyTransactionLimit: {
-            amountCurrency: 'EUR',
-            amountValue: 100,
-          },
-          maximumTransactionLimit: { amountCurrency: 'EUR', amountValue: 200 },
-          paymentMethodLimits: {
-            CARD: {
-              transactionAmountLimit: {
-                day: { amountCurrency: 'EUR', amountValue: 300 },
-              },
-              transactionCountLimit: {
-                week: 0,
-              },
-              averageTransactionAmountLimit: {
-                month: { amountCurrency: 'EUR', amountValue: 400 },
-              },
-            },
-          },
-        },
-      }),
+      },
+      {
+        ...testUser,
+        userId: '2',
+      },
     ])
 
     testRuleDescriptionFormatting(
@@ -57,17 +65,24 @@ ruleVariantsTest(false, () => {
       TEST_TENANT_ID,
       [
         getTestTransaction({
-          timestamp: dayjs('2022-01-01T00:00:00.000Z').valueOf(),
+          timestamp: dayjs('2022-01-04T00:00:00.000Z').valueOf(),
           originUserId: '1',
           originAmountDetails: {
             transactionAmount: 10000,
             transactionCurrency: 'EUR',
           },
+          destinationUserId: undefined,
+          destinationAmountDetails: undefined,
         }),
         getTestTransaction({
-          timestamp: dayjs('2023-01-01T00:00:00.000Z').valueOf(),
+          timestamp: dayjs('2022-01-06T00:00:00.000Z').valueOf(),
           originUserId: '1',
           originAmountDetails: {
+            transactionAmount: 1,
+            transactionCurrency: 'EUR',
+          },
+          destinationUserId: '2',
+          destinationAmountDetails: {
             transactionAmount: 1,
             transactionCurrency: 'EUR',
           },
@@ -77,8 +92,8 @@ ruleVariantsTest(false, () => {
         descriptionTemplate: getRuleByRuleId('R-99').descriptionTemplate,
       },
       [
-        'Sender sent a transaction amount of 10000.00 EUR more than the limit (200.00 EUR). Sender reached the daily transaction amount limit (100.00 EUR). Sender reached the daily transaction amount limit (300.00 EUR) of CARD payment method. Sender reached the monthly average transaction amount limit (400.00 EUR) of CARD payment method. Sender reached the weekly transaction count limit (0) of CARD payment method.',
-        'Sender reached the weekly transaction count limit (0) of CARD payment method.',
+        'Sender sent a transaction amount of 10000.00 EUR more than the limit (200.00 EUR). Sender reached the daily transaction amount limit (100.00 EUR). Sender reached the daily transaction amount limit (300.00 EUR) of CARD payment method. Sender reached the monthly average transaction amount limit (400.00 EUR) of CARD payment method.',
+        'Sender reached the monthly average transaction amount limit (400.00 EUR) of CARD payment method. Sender reached the weekly transaction count limit (1) of CARD payment method.',
       ]
     )
   })
@@ -121,8 +136,8 @@ ruleVariantsTest(false, () => {
         name: 'Transaction amount exceeds user specific limit (different currency) - hit',
         transactions: [
           getTestTransaction({
-            originUserId: '1',
-            originAmountDetails: {
+            destinationUserId: '1',
+            destinationAmountDetails: {
               transactionAmount: 10000,
               transactionCurrency: 'USD',
             },
@@ -181,8 +196,8 @@ ruleVariantsTest(false, () => {
           }),
           getTestTransaction({
             timestamp: dayjs('2022-01-01T12:00:00.000Z').valueOf(),
-            originUserId: '1',
-            originAmountDetails: {
+            destinationUserId: '1',
+            destinationAmountDetails: {
               transactionAmount: 600,
               transactionCurrency: 'EUR',
             },
@@ -203,8 +218,8 @@ ruleVariantsTest(false, () => {
         transactions: [
           getTestTransaction({
             timestamp: dayjs('2022-01-03T06:00:00.000Z').valueOf(),
-            originUserId: '1',
-            originAmountDetails: {
+            destinationUserId: '1',
+            destinationAmountDetails: {
               transactionAmount: 600,
               transactionCurrency: 'EUR',
             },
@@ -324,11 +339,11 @@ ruleVariantsTest(false, () => {
         transactions: [
           getTestTransaction({
             timestamp: dayjs('2022-01-01T06:00:00.000Z').valueOf(),
-            originUserId: '1',
-            originPaymentDetails: {
+            destinationUserId: '1',
+            destinationPaymentDetails: {
               method: 'CARD',
             },
-            originAmountDetails: {
+            destinationAmountDetails: {
               transactionAmount: 600,
               transactionCurrency: 'EUR',
             },
@@ -548,8 +563,8 @@ ruleVariantsTest(false, () => {
           originPaymentDetails: { method: 'ACH' },
         }),
         getTestTransaction({
-          originUserId: '1',
-          originAmountDetails: {
+          destinationUserId: '1',
+          destinationAmountDetails: {
             transactionAmount: 10000,
             transactionCurrency: 'EUR',
           },
@@ -592,12 +607,12 @@ ruleVariantsTest(false, () => {
       TEST_TENANT_ID,
       [
         getTestTransaction({
-          originUserId: '1',
-          originAmountDetails: {
+          destinationUserId: '1',
+          destinationAmountDetails: {
             transactionAmount: 10000,
             transactionCurrency: 'EUR',
           },
-          originPaymentDetails: { method: 'ACH' },
+          destinationPaymentDetails: { method: 'ACH' },
         }),
         getTestTransaction({
           originUserId: '1',
@@ -661,21 +676,21 @@ ruleVariantsTest(false, () => {
           timestamp: dayjs('2022-01-01T12:00:00.000Z').valueOf(),
         }),
         getTestTransaction({
-          originUserId: '10',
-          originAmountDetails: {
+          destinationUserId: '10',
+          destinationAmountDetails: {
             transactionAmount: 500,
             transactionCurrency: 'EUR',
           },
-          originPaymentDetails: { method: 'CARD' },
+          destinationPaymentDetails: { method: 'CARD' },
           timestamp: dayjs('2022-01-01T13:00:00.000Z').valueOf(),
         }),
         getTestTransaction({
-          originUserId: '10',
-          originAmountDetails: {
+          destinationUserId: '10',
+          destinationAmountDetails: {
             transactionAmount: 5000,
             transactionCurrency: 'EUR',
           },
-          originPaymentDetails: { method: 'CARD' },
+          destinationPaymentDetails: { method: 'CARD' },
           timestamp: dayjs('2022-01-01T14:00:00.000Z').valueOf(),
         }),
         getTestTransaction({
@@ -751,12 +766,12 @@ ruleVariantsTest(false, () => {
           timestamp: dayjs('2022-01-01T13:00:00.000Z').valueOf(),
         }),
         getTestTransaction({
-          originUserId: '10',
-          originAmountDetails: {
+          destinationUserId: '10',
+          destinationAmountDetails: {
             transactionAmount: 2000,
             transactionCurrency: 'EUR',
           },
-          originPaymentDetails: { method: 'CARD' },
+          destinationPaymentDetails: { method: 'CARD' },
           timestamp: dayjs('2022-01-01T14:00:00.000Z').valueOf(),
         }),
       ],
@@ -814,12 +829,12 @@ ruleVariantsTest(false, () => {
           timestamp: dayjs('2022-01-01T12:00:00.000Z').valueOf(),
         }),
         getTestTransaction({
-          originUserId: '10',
-          originAmountDetails: {
+          destinationUserId: '10',
+          destinationAmountDetails: {
             transactionAmount: 500,
             transactionCurrency: 'EUR',
           },
-          originPaymentDetails: { method: 'CARD' },
+          destinationPaymentDetails: { method: 'CARD' },
           timestamp: dayjs('2022-01-01T13:00:00.000Z').valueOf(),
         }),
         getTestTransaction({
@@ -832,12 +847,12 @@ ruleVariantsTest(false, () => {
           timestamp: dayjs('2022-01-01T14:00:00.000Z').valueOf(),
         }),
         getTestTransaction({
-          originUserId: '10',
-          originAmountDetails: {
+          destinationUserId: '10',
+          destinationAmountDetails: {
             transactionAmount: 500,
             transactionCurrency: 'EUR',
           },
-          originPaymentDetails: { method: 'CARD' },
+          destinationPaymentDetails: { method: 'CARD' },
           timestamp: dayjs('2022-01-01T15:00:00.000Z').valueOf(),
         }),
         getTestTransaction({

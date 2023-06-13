@@ -4,7 +4,7 @@ import {
   getTransactionsTotalAmount,
   isTransactionAmountAboveThreshold,
 } from '../utils/transaction-rule-utils'
-import { RuleHitResult } from '../rule'
+import { RuleHitResultItem } from '../rule'
 import { UserTimeAggregationAttributes } from '../repositories/aggregation-repository'
 import { formatMoney } from '../utils/format-description'
 import {
@@ -102,31 +102,64 @@ export default class UserTransactionLimitsRule extends TransactionRule<UserTrans
   }
 
   public async computeRule() {
-    if (
-      !this.senderUser?.transactionLimits ||
-      !this.transaction.originAmountDetails
-    ) {
+    return await Promise.all([
+      this.computeRuleUser('origin'),
+      this.computeRuleUser('destination'),
+    ])
+  }
+
+  protected async computeRuleUser(
+    direction: 'origin' | 'destination'
+  ): Promise<RuleHitResultItem | undefined> {
+    const user = direction === 'origin' ? this.senderUser : this.receiverUser
+    const transactionAmountDetails =
+      direction === 'origin'
+        ? this.transaction.originAmountDetails
+        : this.transaction.destinationAmountDetails
+    const transactionPaymentDetails =
+      direction === 'origin'
+        ? this.transaction.originPaymentDetails
+        : this.transaction.destinationPaymentDetails
+
+    if (!user?.transactionLimits || !transactionAmountDetails) {
       return
     }
 
     if (this.parameters.transactionsCountThreshold) {
-      const transactionsCount =
+      const timeRange = {
+        beforeTimestamp: this.transaction.timestamp,
+        afterTimestamp: subtractTime(
+          dayjs(this.transaction.timestamp),
+          this.parameters.transactionsCountThreshold.timeWindow
+        ),
+      }
+      const sendingTransactionsCount =
         await this.transactionRepository.getGenericUserSendingTransactionsCount(
-          this.senderUser.userId,
-          this.transaction.originPaymentDetails,
-          {
-            beforeTimestamp: this.transaction.timestamp,
-            afterTimestamp: subtractTime(
-              dayjs(this.transaction.timestamp),
-              this.parameters.transactionsCountThreshold.timeWindow
-            ),
-          },
+          user.userId,
+          transactionPaymentDetails,
+          timeRange,
           {
             ...(this.parameters?.onlyCheckTypes?.includes('PAYMENT_METHOD') &&
             this.transaction.originPaymentDetails?.method
               ? {
                   originPaymentMethods: [
-                    this.transaction.originPaymentDetails?.method,
+                    this.transaction.originPaymentDetails.method,
+                  ],
+                }
+              : {}),
+          }
+        )
+      const receivingTransactionsCount =
+        await this.transactionRepository.getGenericUserReceivingTransactionsCount(
+          user.userId,
+          transactionPaymentDetails,
+          timeRange,
+          {
+            ...(this.parameters?.onlyCheckTypes?.includes('PAYMENT_METHOD') &&
+            this.transaction.destinationPaymentDetails?.method
+              ? {
+                  originPaymentMethods: [
+                    this.transaction.destinationPaymentDetails.method,
                   ],
                 }
               : {}),
@@ -134,7 +167,7 @@ export default class UserTransactionLimitsRule extends TransactionRule<UserTrans
         )
 
       if (
-        transactionsCount + 1 <=
+        sendingTransactionsCount + receivingTransactionsCount + 1 <=
         this.parameters.transactionsCountThreshold.threshold
       ) {
         return
@@ -142,7 +175,6 @@ export default class UserTransactionLimitsRule extends TransactionRule<UserTrans
     }
 
     const { onlyCheckTypes } = this.parameters
-    const paymentMethod = this.transaction.originPaymentDetails?.method
     const {
       maximumDailyTransactionLimit,
       maximumMonthlyTransactionLimit,
@@ -150,7 +182,7 @@ export default class UserTransactionLimitsRule extends TransactionRule<UserTrans
       maximumYearlyTransactionLimit,
       maximumTransactionLimit,
       paymentMethodLimits,
-    } = this.senderUser.transactionLimits
+    } = user.transactionLimits
     const totalLimits = [
       { limit: maximumDailyTransactionLimit, granularity: 'day' },
       { limit: maximumWeeklyTransactionLimit, granularity: 'week' },
@@ -169,13 +201,16 @@ export default class UserTransactionLimitsRule extends TransactionRule<UserTrans
       // Check for maximum transaction limit
       if (maximumTransactionLimit) {
         transactionLimitResults.push(
-          await this.checkMaximumTransactionLimit(maximumTransactionLimit)
+          await this.checkMaximumTransactionLimit(
+            direction,
+            maximumTransactionLimit
+          )
         )
       }
 
       // Check for total transaction limits by time granularity
       transactionLimitResults.push(
-        ...(await this.checkTotalTransactionLimits(totalLimits))
+        ...(await this.checkTotalTransactionLimits(direction, totalLimits))
       )
     }
 
@@ -183,10 +218,15 @@ export default class UserTransactionLimitsRule extends TransactionRule<UserTrans
       _.isEmpty(onlyCheckTypes) ||
       onlyCheckTypes?.includes('PAYMENT_METHOD')
     ) {
+      const paymentMethod =
+        direction === 'origin'
+          ? this.transaction.originPaymentDetails?.method
+          : this.transaction.destinationPaymentDetails?.method
       // Check for payment method transaction limits by time granularity
       if (paymentMethod && paymentMethodLimits?.[paymentMethod]) {
         transactionLimitResults.push(
           ...(await this.checkPaymentMethodTransactionLimits(
+            direction,
             paymentMethod,
             paymentMethodLimits[paymentMethod]!
           ))
@@ -195,10 +235,9 @@ export default class UserTransactionLimitsRule extends TransactionRule<UserTrans
     }
 
     const transactionLimitHitResults = transactionLimitResults.filter(Boolean)
-    const hitResult: RuleHitResult = []
     if (transactionLimitHitResults.length > 0) {
-      hitResult.push({
-        direction: 'ORIGIN',
+      return {
+        direction: direction === 'origin' ? 'ORIGIN' : 'DESTINATION',
         vars: {
           hitDescription: transactionLimitHitResults
             .map((r) => r?.hitDescription)
@@ -207,76 +246,127 @@ export default class UserTransactionLimitsRule extends TransactionRule<UserTrans
         falsePositiveDetails: transactionLimitHitResults.find(
           (r) => r?.falsePositiveDetails
         )?.falsePositiveDetails,
-      })
+      }
     }
-    return hitResult
   }
 
   getStatsByGranularity = _.memoize(
     async (
+      direction: 'origin' | 'destination',
       granularity: 'day' | 'week' | 'month' | 'year'
     ): Promise<UserTimeAggregationAttributes> => {
+      const user =
+        direction === 'origin' ? this.senderUser! : this.receiverUser!
       if (this.aggregationRepository) {
-        return this.aggregationRepository.getUserTransactionStatsTimeGroup(
-          this.senderUser!.userId,
-          this.transaction.timestamp,
-          granularity
-        )
+        const data =
+          await this.aggregationRepository.getUserTransactionStatsTimeGroup(
+            user.userId,
+            this.transaction.timestamp,
+            granularity
+          )
+        return data
       }
       const afterTimestamp = dayjs(this.transaction.timestamp)
         .startOf(granularity)
         .valueOf()
-      const transactions =
-        await this.transactionRepository.getUserSendingTransactions(
-          this.senderUser!.userId,
+      const [sendingTransactions, receivingTransactions] = await Promise.all([
+        this.transactionRepository.getUserSendingTransactions(
+          user.userId,
           { afterTimestamp, beforeTimestamp: this.transaction.timestamp },
           { transactionStates: ['SUCCESSFUL'] },
-          []
-        )
+          ['originAmountDetails']
+        ),
+        this.transactionRepository.getUserReceivingTransactions(
+          user.userId,
+          { afterTimestamp, beforeTimestamp: this.transaction.timestamp },
+          { transactionStates: ['SUCCESSFUL'] },
+          ['destinationAmountDetails']
+        ),
+      ])
       const result: UserTimeAggregationAttributes = {
-        transactionsAmount: new Map(),
-        transactionsCount: new Map(),
+        sendingTransactionsAmount: new Map(),
+        sendingTransactionsCount: new Map(),
+        receivingTransactionsAmount: new Map(),
+        receivingTransactionsCount: new Map(),
       }
       const targetCurrency =
-        transactions.find((t) => t.originAmountDetails)?.originAmountDetails
-          ?.transactionCurrency || 'USD'
-      const allCount = transactions.length
-      const allAmount = await getTransactionsTotalAmount(
-        transactions.map((t) => t.originAmountDetails),
+        sendingTransactions.find((t) => t.originAmountDetails)
+          ?.originAmountDetails?.transactionCurrency ??
+        receivingTransactions.find((t) => t.destinationAmountDetails)
+          ?.destinationAmountDetails?.transactionCurrency ??
+        'USD'
+      const sendingCount = sendingTransactions.length
+      const receivingCount = receivingTransactions.length
+      const sendingAmount = await getTransactionsTotalAmount(
+        sendingTransactions.map((t) => t.originAmountDetails),
         targetCurrency
       )
-      result.transactionsAmount.set('ALL', allAmount)
-      result.transactionsCount.set('ALL', allCount)
-      const groups = _.groupBy(
-        transactions,
+      const receivingAmount = await getTransactionsTotalAmount(
+        receivingTransactions.map((t) => t.destinationAmountDetails),
+        targetCurrency
+      )
+      result.sendingTransactionsAmount.set('ALL', sendingAmount)
+      result.sendingTransactionsCount.set('ALL', sendingCount)
+      result.receivingTransactionsAmount.set('ALL', receivingAmount)
+      result.receivingTransactionsCount.set('ALL', receivingCount)
+      const sendingGroups = _.groupBy(
+        sendingTransactions,
         (transaction) => transaction.originPaymentDetails?.method
       )
-      for (const paymentMethod in groups) {
+      const receivingGroups = _.groupBy(
+        receivingTransactions,
+        (transaction) => transaction.destinationPaymentDetails?.method
+      )
+      for (const paymentMethod in sendingGroups) {
         if (paymentMethod) {
-          const totalCount = groups[paymentMethod].length
+          const totalCount = sendingGroups[paymentMethod].length
           const totalAmount = await getTransactionsTotalAmount(
-            transactions.map((t) => t.originAmountDetails),
+            sendingTransactions.map((t) => t.originAmountDetails),
             targetCurrency
           )
-          result.transactionsAmount.set(
+          result.sendingTransactionsAmount.set(
             paymentMethod as PaymentMethod,
             totalAmount
           )
-          result.transactionsCount.set(
+          result.sendingTransactionsCount.set(
+            paymentMethod as PaymentMethod,
+            totalCount
+          )
+        }
+      }
+      for (const paymentMethod in receivingGroups) {
+        if (paymentMethod) {
+          const totalCount = receivingGroups[paymentMethod].length
+          const totalAmount = await getTransactionsTotalAmount(
+            receivingTransactions.map((t) => t.destinationAmountDetails),
+            targetCurrency
+          )
+          result.receivingTransactionsAmount.set(
+            paymentMethod as PaymentMethod,
+            totalAmount
+          )
+          result.receivingTransactionsCount.set(
             paymentMethod as PaymentMethod,
             totalCount
           )
         }
       }
       return result
-    }
+    },
+    (...args) => args.join('_')
   )
 
   private async checkMaximumTransactionLimit(
+    direction: 'origin' | 'destination',
     maximumTransactionLimit: Amount
   ): Promise<TransacdtionLimitHitResult> {
+    const amountDetails =
+      direction === 'origin'
+        ? this.transaction.originAmountDetails
+        : this.transaction.destinationAmountDetails
+    const party = direction === 'origin' ? 'Sender' : 'Receiver'
     const transactionAmountHit = await isTransactionAmountAboveThreshold(
-      this.transaction.originAmountDetails,
+      amountDetails,
       {
         [maximumTransactionLimit.amountCurrency]: this.getLimit(
           maximumTransactionLimit.amountValue
@@ -288,11 +378,10 @@ export default class UserTransactionLimitsRule extends TransactionRule<UserTrans
       let falsePositiveDetails = undefined
       if (this.ruleInstance.falsePositiveCheckEnabled && thresholdHit != null) {
         if (
-          this.transaction.originAmountDetails &&
+          amountDetails &&
           thresholdHit.min &&
-          (this.transaction.originAmountDetails.transactionAmount -
-            thresholdHit.min) /
-            this.transaction.originAmountDetails.transactionAmount <
+          (amountDetails.transactionAmount - thresholdHit.min) /
+            amountDetails.transactionAmount <
             0.05
         ) {
           falsePositiveDetails = {
@@ -303,33 +392,45 @@ export default class UserTransactionLimitsRule extends TransactionRule<UserTrans
       }
       return {
         falsePositiveDetails,
-        hitDescription: `Sender sent a transaction amount of ${formatMoney(
-          this.transaction.originAmountDetails!
+        hitDescription: `${party} ${
+          direction === 'origin' ? 'sent' : 'received'
+        } a transaction amount of ${formatMoney(
+          amountDetails!
         )} more than the limit (${formatMoney(maximumTransactionLimit)}).`,
       }
     }
   }
 
   private async checkTotalTransactionLimits(
+    direction: 'origin' | 'destination',
     limits: Array<{
       limit: Amount
       granularity: 'day' | 'week' | 'month' | 'year'
     }>
   ) {
+    const amountDetails =
+      direction === 'origin'
+        ? this.transaction.originAmountDetails
+        : this.transaction.destinationAmountDetails
     const transactionLimitResults: TransacdtionLimitHitResult[] = []
     for (const { limit, granularity } of limits) {
-      const stats = await this.getStatsByGranularity(granularity)
-      const currentTotalAmount = stats.transactionsAmount.get('ALL')
+      const stats = await this.getStatsByGranularity(direction, granularity)
+      const currentSendingTotalAmount =
+        stats.sendingTransactionsAmount.get('ALL')
+      const currentReceivingTotalAmount =
+        stats.receivingTransactionsAmount.get('ALL')
       const totalAmount = await getTransactionsTotalAmount(
-        [currentTotalAmount, this.transaction.originAmountDetails],
-        this.transaction.originAmountDetails!.transactionCurrency
+        [currentSendingTotalAmount, currentReceivingTotalAmount, amountDetails],
+        amountDetails!.transactionCurrency
       )
       const hitInfo = await isTransactionAmountAboveThreshold(totalAmount, {
         [limit.amountCurrency]: this.getLimit(limit.amountValue),
       })
       if (hitInfo.isHit) {
         transactionLimitResults.push({
-          hitDescription: `Sender reached the ${granularityToAdverb(
+          hitDescription: `${
+            direction === 'origin' ? 'Sender' : 'Receiver'
+          } reached the ${granularityToAdverb(
             granularity
           )} transaction amount limit (${formatMoney(limit)}).`,
         })
@@ -339,27 +440,36 @@ export default class UserTransactionLimitsRule extends TransactionRule<UserTrans
   }
 
   private async checkPaymentMethodTransactionLimits(
+    direction: 'origin' | 'destination',
     paymentMethod: PaymentMethod,
     transactionLimit: TransactionLimit
   ): Promise<TransacdtionLimitHitResult[]> {
+    const amountDetails =
+      direction === 'origin'
+        ? this.transaction.originAmountDetails
+        : this.transaction.destinationAmountDetails
+    const party = direction === 'origin' ? 'Sender' : 'Receiver'
     const transactionLimitResults: TransacdtionLimitHitResult[] = []
     if (transactionLimit.transactionAmountLimit) {
       for (const g in transactionLimit.transactionAmountLimit) {
         const granularity = g as keyof TransactionAmountLimit
         const limit = transactionLimit.transactionAmountLimit[granularity]
         if (limit) {
-          const stats = await this.getStatsByGranularity(granularity)
-          const currentTotalAmount = stats.transactionsAmount.get(paymentMethod)
+          const stats = await this.getStatsByGranularity(direction, granularity)
+          const currentSendingAmount =
+            stats.sendingTransactionsAmount.get(paymentMethod)
+          const currentReceivingAmount =
+            stats.receivingTransactionsAmount.get(paymentMethod)
           const totalAmount = await getTransactionsTotalAmount(
-            [currentTotalAmount, this.transaction.originAmountDetails],
-            this.transaction.originAmountDetails!.transactionCurrency
+            [currentSendingAmount, currentReceivingAmount, amountDetails],
+            amountDetails!.transactionCurrency
           )
           const hitInfo = await isTransactionAmountAboveThreshold(totalAmount, {
             [limit.amountCurrency]: this.getLimit(limit.amountValue),
           })
           if (hitInfo.isHit) {
             transactionLimitResults.push({
-              hitDescription: `Sender reached the ${granularityToAdverb(
+              hitDescription: `${party} reached the ${granularityToAdverb(
                 granularity
               )} transaction amount limit (${formatMoney(
                 limit
@@ -378,16 +488,22 @@ export default class UserTransactionLimitsRule extends TransactionRule<UserTrans
           ]
         if (limit) {
           const stats = await this.getStatsByGranularity(
+            direction,
             granularity as keyof TransactionAmountLimit
           )
-          const currentTotalAmount = stats.transactionsAmount.get(paymentMethod)
+          const currentSendingAmount =
+            stats.sendingTransactionsAmount.get(paymentMethod)
+          const currentReceivingAmount =
+            stats.receivingTransactionsAmount.get(paymentMethod)
           const totalAmount = await getTransactionsTotalAmount(
-            [currentTotalAmount, this.transaction.originAmountDetails],
-            this.transaction.originAmountDetails!.transactionCurrency
+            [currentSendingAmount, currentReceivingAmount, amountDetails],
+            amountDetails!.transactionCurrency
           )
-          const currentTotalCount =
-            stats.transactionsCount.get(paymentMethod) ?? 0
-          const totalCount = currentTotalCount + 1
+          const currentSendingCount =
+            stats.sendingTransactionsCount.get(paymentMethod) ?? 0
+          const currentReceivingCount =
+            stats.receivingTransactionsCount.get(paymentMethod) ?? 0
+          const totalCount = currentSendingCount + currentReceivingCount + 1
           const averageAmount: TransactionAmountDetails = {
             ...totalAmount,
             transactionAmount: totalAmount.transactionAmount / totalCount,
@@ -401,7 +517,7 @@ export default class UserTransactionLimitsRule extends TransactionRule<UserTrans
           )
           if (hitInfo.isHit) {
             transactionLimitResults.push({
-              hitDescription: `Sender reached the ${granularityToAdverb(
+              hitDescription: `${party} reached the ${granularityToAdverb(
                 granularity
               )} average transaction amount limit (${formatMoney(
                 limit
@@ -420,13 +536,16 @@ export default class UserTransactionLimitsRule extends TransactionRule<UserTrans
           ]
         if (limit != null) {
           const stats = await this.getStatsByGranularity(
+            direction,
             granularity as keyof TransactionCountLimit
           )
-          const currentTotalCount =
-            stats.transactionsCount.get(paymentMethod) ?? 0
-          if (currentTotalCount + 1 > limit) {
+          const currentSendingCount =
+            stats.sendingTransactionsCount.get(paymentMethod) ?? 0
+          const currentReceivingCount =
+            stats.receivingTransactionsCount.get(paymentMethod) ?? 0
+          if (currentSendingCount + currentReceivingCount + 1 > limit) {
             transactionLimitResults.push({
-              hitDescription: `Sender reached the ${granularityToAdverb(
+              hitDescription: `${party} reached the ${granularityToAdverb(
                 granularity
               )} transaction count limit (${limit}) of ${paymentMethod} payment method.`,
             })

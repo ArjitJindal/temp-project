@@ -27,8 +27,16 @@ type UserAggregationAttributes = {
 }
 
 export type UserTimeAggregationAttributes = {
-  transactionsAmount: Map<PaymentMethod | 'ALL', TransactionAmountDetails>
-  transactionsCount: Map<PaymentMethod | 'ALL', number>
+  sendingTransactionsAmount: Map<
+    PaymentMethod | 'ALL',
+    TransactionAmountDetails
+  >
+  sendingTransactionsCount: Map<PaymentMethod | 'ALL', number>
+  receivingTransactionsAmount: Map<
+    PaymentMethod | 'ALL',
+    TransactionAmountDetails
+  >
+  receivingTransactionsCount: Map<PaymentMethod | 'ALL', number>
 }
 
 export class AggregationRepository {
@@ -188,17 +196,30 @@ export class AggregationRepository {
 
   public async addUserTransactionStatsTimeGroup(
     userId: string,
+    direction: 'origin' | 'destination',
     transactionAmountDetails: TransactionAmountDetails,
     paymentMethod: PaymentMethod | undefined,
     timestamp: number,
     timeGranularity: 'day' | 'week' | 'month' | 'year'
   ): Promise<void> {
-    const { transactionsAmount, transactionsCount } =
-      await this.getUserTransactionStatsTimeGroup(
-        userId,
-        timestamp,
-        timeGranularity
-      )
+    const {
+      sendingTransactionsAmount,
+      sendingTransactionsCount,
+      receivingTransactionsAmount,
+      receivingTransactionsCount,
+    } = await this.getUserTransactionStatsTimeGroup(
+      userId,
+      timestamp,
+      timeGranularity
+    )
+    const transactionsAmount =
+      direction === 'origin'
+        ? sendingTransactionsAmount
+        : receivingTransactionsAmount
+    const transactionsCount =
+      direction === 'origin'
+        ? sendingTransactionsCount
+        : receivingTransactionsCount
 
     // Transaction amount
     const defaultTransactionAmount = {
@@ -245,9 +266,13 @@ export class AggregationRepository {
     }
 
     const transactionAmountKey: keyof UserTimeAggregationAttributes =
-      'transactionsAmount'
+      direction === 'origin'
+        ? 'sendingTransactionsAmount'
+        : 'receivingTransactionsAmount'
     const transactionCountKey: keyof UserTimeAggregationAttributes =
-      'transactionsCount'
+      direction === 'origin'
+        ? 'sendingTransactionsCount'
+        : 'receivingTransactionsCount'
     const updateItemInput: AWS.DynamoDB.DocumentClient.UpdateItemInput = {
       TableName: StackConstants.TARPON_DYNAMODB_TABLE_NAME,
       Key: DynamoDbKeys.USER_TIME_AGGREGATION(
@@ -271,8 +296,10 @@ export class AggregationRepository {
     timeGranularity: 'day' | 'week' | 'month' | 'year'
   ): Promise<UserTimeAggregationAttributes> {
     const attributes: Array<keyof UserTimeAggregationAttributes> = [
-      'transactionsAmount',
-      'transactionsCount',
+      'sendingTransactionsAmount',
+      'sendingTransactionsCount',
+      'receivingTransactionsAmount',
+      'receivingTransactionsCount',
     ]
     const getItemInput: AWS.DynamoDB.DocumentClient.GetItemInput = {
       TableName: StackConstants.TARPON_DYNAMODB_TABLE_NAME,
@@ -284,13 +311,24 @@ export class AggregationRepository {
       ProjectionExpression: attributes.join(','),
     }
     const result = await this.dynamoDb.send(new GetCommand(getItemInput))
-    const { transactionsAmount, transactionsCount } = result.Item ?? {}
+    const {
+      sendingTransactionsAmount,
+      sendingTransactionsCount,
+      receivingTransactionsAmount,
+      receivingTransactionsCount,
+    } = result.Item ?? {}
     return {
-      transactionsAmount: new Map(
-        Object.entries(transactionsAmount ?? {})
+      sendingTransactionsAmount: new Map(
+        Object.entries(sendingTransactionsAmount ?? {})
       ) as Map<PaymentMethod | 'ALL', TransactionAmountDetails>,
-      transactionsCount: new Map(
-        Object.entries(transactionsCount ?? {})
+      sendingTransactionsCount: new Map(
+        Object.entries(sendingTransactionsCount ?? {})
+      ) as Map<PaymentMethod | 'ALL', number>,
+      receivingTransactionsAmount: new Map(
+        Object.entries(receivingTransactionsAmount ?? {})
+      ) as Map<PaymentMethod | 'ALL', TransactionAmountDetails>,
+      receivingTransactionsCount: new Map(
+        Object.entries(receivingTransactionsCount ?? {})
       ) as Map<PaymentMethod | 'ALL', number>,
     }
   }

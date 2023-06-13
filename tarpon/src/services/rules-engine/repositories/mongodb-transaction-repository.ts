@@ -1192,7 +1192,7 @@ export class MongoDbTransactionRepository
     filters: Filter<InternalTransaction>[],
     timeRange: TimeRange | undefined,
     filterOptions: TransactionsFilterOptions,
-    _attributesToFetch: Array<keyof AuxiliaryIndexTransaction>,
+    attributesToFetch: Array<keyof AuxiliaryIndexTransaction>,
     limit?: number
   ): Promise<Array<AuxiliaryIndexTransaction>> {
     const query = this.getRulesEngineTransactionsQuery(
@@ -1204,11 +1204,25 @@ export class MongoDbTransactionRepository
     const collection = db.collection<InternalTransaction>(
       TRANSACTIONS_COLLECTION(this.tenantId)
     )
+    const finalAttributesToFetch = _.uniq<keyof AuxiliaryIndexTransaction>(
+      attributesToFetch.concat([
+        'timestamp',
+        'originUserId',
+        'originPaymentDetails',
+        'destinationUserId',
+        'destinationPaymentDetails',
+      ])
+    )
     const transactions = (await collection
       .find(query, {
         sort: { timestamp: -1 },
         limit,
       })
+      .project(
+        Object.fromEntries(
+          finalAttributesToFetch.map((attribute) => [attribute, 1])
+        )
+      )
       .toArray()) as InternalTransaction[]
     return transactions.map((transaction) => ({
       ...transaction,
