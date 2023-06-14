@@ -550,6 +550,9 @@ export class AlertsService extends CaseAlertsCommonService {
       _from: params?._from,
       sortOrder: params?.sortOrder,
       sortField: params?.sortField,
+      filterOriginPaymentMethodId: params?.filterOriginPaymentMethodId,
+      filterDestinationPaymentMethodId:
+        params?.filterDestinationPaymentMethodId,
     })
   }
 }

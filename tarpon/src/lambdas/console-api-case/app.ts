@@ -558,6 +558,8 @@ export const casesHandler = lambdaApi()(
         from,
         sortOrder,
         sortField,
+        filterOriginPaymentMethodId,
+        filterDestinationPaymentMethodId,
       } = event.queryStringParameters as any
 
       return await alertsService.getAlertTransactions(alertId, {
@@ -570,6 +572,8 @@ export const casesHandler = lambdaApi()(
         _from: from,
         sortOrder: sortOrder as SortOrder,
         sortField: sortField as string,
+        filterOriginPaymentMethodId,
+        filterDestinationPaymentMethodId,
       })
     } else if (
       event.httpMethod === 'POST' &&

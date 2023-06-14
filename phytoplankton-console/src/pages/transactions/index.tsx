@@ -68,6 +68,8 @@ const TableList = () => {
         tagValue,
         originMethodFilter,
         destinationMethodFilter,
+        originPaymentMethodId,
+        destinationPaymentMethodId,
       } = parsedParams;
       const [sortField, sortOrder] = parsedParams.sort[0] ?? [];
       return await measure(
@@ -99,6 +101,8 @@ const TableList = () => {
 
             filterTagKey: tagKey,
             filterTagValue: tagValue,
+            filterOriginPaymentMethodId: originPaymentMethodId,
+            filterDestinationPaymentMethodId: destinationPaymentMethodId,
           }),
         'Transactions List',
       );

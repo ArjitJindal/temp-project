@@ -53,6 +53,8 @@ export default function TransactionsAndComments(props: Props) {
             destinationUserId: params.userFilterMode === 'DESTINATION' ? params.userId : undefined,
             sortField: sortField ?? undefined,
             sortOrder: sortOrder ?? undefined,
+            filterOriginPaymentMethodId: params.originPaymentMethodId,
+            filterDestinationPaymentMethodId: params.destinationPaymentMethodId,
           }),
         'Get Alert Transactions',
       );

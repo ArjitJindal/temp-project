@@ -602,6 +602,14 @@ paths:
               $ref: ../public/openapi-public-original.yaml#/components/schemas/TransactionType
           in: query
           name: filterTransactionTypes
+        - schema:
+            type: string
+          in: query
+          name: filterOriginPaymentMethodId
+        - schema:
+            type: string
+          in: query
+          name: filterDestinationPaymentMethodId
   /transactions/export:
     get:
       summary: Transaction - Export
@@ -2452,6 +2460,14 @@ paths:
           type: string
         in: query
         name: destinationUserId
+      - schema:
+          type: string
+        in: query
+        name: filterOriginPaymentMethodId
+      - schema:
+          type: string
+        in: query
+        name: filterDestinationPaymentMethodId
     get:
       summary: Alerts - Item - Transaction List
       operationId: get-alert-transaction-list

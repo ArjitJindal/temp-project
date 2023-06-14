@@ -139,6 +139,8 @@ export const transactionsViewHandler = lambdaApi()(
         filterTagValue,
         from,
         order,
+        filterOriginPaymentMethodId,
+        filterDestinationPaymentMethodId,
       } = event.queryStringParameters as any
       const transactionsGetSegment = await addNewSubsegment(
         'Transaction Service',
@@ -190,6 +192,8 @@ export const transactionsViewHandler = lambdaApi()(
           : undefined,
         filterTagKey,
         filterTagValue,
+        filterOriginPaymentMethodId,
+        filterDestinationPaymentMethodId,
       }
       transactionsGetSegment?.close()
       const response = await transactionService.getTransactions(params)

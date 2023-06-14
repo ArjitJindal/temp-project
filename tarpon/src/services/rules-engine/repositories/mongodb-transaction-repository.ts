@@ -127,6 +127,23 @@ export class MongoDbTransactionRepository
         type: prefixRegexMatchFilter(params.transactionType),
       })
     }
+
+    if (params.filterOriginPaymentMethodId != null) {
+      conditions.push({
+        originPaymentMethodId: prefixRegexMatchFilter(
+          params.filterOriginPaymentMethodId
+        ),
+      })
+    }
+
+    if (params.filterDestinationPaymentMethodId != null) {
+      conditions.push({
+        destinationPaymentMethodId: prefixRegexMatchFilter(
+          params.filterDestinationPaymentMethodId
+        ),
+      })
+    }
+
     if (params.filterOutStatus != null) {
       conditions.push({ status: { $ne: params.filterOutStatus } })
     }

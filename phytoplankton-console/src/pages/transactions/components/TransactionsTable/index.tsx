@@ -79,6 +79,8 @@ export interface TransactionsTableParams extends CommonParams {
   tagValue?: string;
   originMethodFilter?: PaymentMethod;
   destinationMethodFilter?: PaymentMethod;
+  originPaymentMethodId?: string;
+  destinationPaymentMethodId?: string;
 }
 
 type Props = {
@@ -247,10 +249,11 @@ export default function TransactionsTable(props: Props) {
         type: PAYMENT_DETAILS_OR_METHOD(showDetailsView),
       } as SimpleColumn<InternalTransaction, 'originPaymentDetails'>,
       {
-        title: 'Origin payment  identifier',
+        title: 'Origin payment identifier',
         key: 'originPaymentMethodId',
         type: STRING,
         sorting: true,
+        filtering: true,
       } as SimpleColumn<InternalTransaction, 'originPaymentMethodId'>,
       helper.simple<'originAmountDetails.transactionAmount'>({
         title: 'Origin amount',
@@ -296,6 +299,7 @@ export default function TransactionsTable(props: Props) {
         key: 'destinationPaymentMethodId',
         type: STRING,
         sorting: true,
+        filtering: true,
       } as SimpleColumn<InternalTransaction, 'destinationPaymentMethodId'>,
       helper.simple<'destinationAmountDetails.transactionAmount'>({
         title: 'Destination amount',

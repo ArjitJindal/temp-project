@@ -22,6 +22,8 @@ export const queryAdapter: Adapter<TransactionsTableParams> = {
       tagValue: params.tagValue,
       originMethodFilter: params.originMethodFilter,
       destinationMethodFilter: params.destinationMethodFilter,
+      originPaymentMethodId: params.originPaymentMethodId,
+      destinationPaymentMethodId: params.destinationPaymentMethodId,
     };
   },
   deserializer: (raw): TransactionsTableParams => {
@@ -48,6 +50,8 @@ export const queryAdapter: Adapter<TransactionsTableParams> = {
       tagValue: raw.tagValue,
       originMethodFilter: raw.originMethodFilter as PaymentMethod,
       destinationMethodFilter: raw.destinationMethodFilter as PaymentMethod,
+      originPaymentMethodId: raw.originPaymentMethodId,
+      destinationPaymentMethodId: raw.destinationPaymentMethodId,
     };
   },
 };

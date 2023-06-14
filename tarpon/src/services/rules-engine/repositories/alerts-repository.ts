@@ -497,6 +497,8 @@ export class AlertsRepository {
       _from: params._from,
       sortOrder: params.sortOrder,
       sortField: params.sortField,
+      filterOriginPaymentMethodId: params.filterOriginPaymentMethodId,
+      filterDestinationPaymentMethodId: params.filterDestinationPaymentMethodId,
     })
 
     const riskRepository = new RiskRepository(this.tenantId, {
