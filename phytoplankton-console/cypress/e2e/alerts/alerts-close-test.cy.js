@@ -35,7 +35,7 @@ describe('Comment Alerts from Table', () => {
         });
         cy.get('button[data-cy="segmented-control-all-alerts"]').click();
         cy.get('button[data-cy="status-button"]').eq(0).click();
-        cy.get('.ant-dropdown-menu-title-content').eq(1).click();
+        cy.get('.ant-dropdown-menu-title-content').contains('Closed').click();
         cy.get('input[data-cy="row-table-checkbox"]').eq(0).click();
         cy.get('button[data-cy="update-status-button"]').eq(1).click();
         cy.get('.ant-modal-footer button')
@@ -47,7 +47,7 @@ describe('Comment Alerts from Table', () => {
             });
             cy.get('button[data-cy="segmented-control-all-alerts"]').click();
             cy.get('button[data-cy="status-button"]').eq(0).click();
-            cy.get('.ant-dropdown-menu-title-content').eq(0).click();
+            cy.get('.ant-dropdown-menu-title-content').contains('Open').click();
             /* eslint-disable-next-line cypress/no-unnecessary-waiting */
             cy.wait(500);
             cy.get('table tbody tr').then((el) => {
