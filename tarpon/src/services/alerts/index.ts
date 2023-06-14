@@ -450,7 +450,7 @@ export class AlertsService extends CaseAlertsCommonService {
     }
 
     if (comment) {
-      body += `. ${comment}`
+      body += `\n${comment}`
     }
 
     return body

@@ -167,7 +167,7 @@ describe('Case service', () => {
         }),
         comments: [
           expect.objectContaining({
-            body: 'Case status changed to ESCALATED. Reason: Documents collected. test comment',
+            body: 'Case status changed to ESCALATED. Reason: Documents collected\ntest comment',
             createdAt: expect.any(Number),
             updatedAt: expect.any(Number),
           }),
@@ -619,7 +619,7 @@ describe('Post APIs Alerts Tests', () => {
           ],
           comments: [
             {
-              body: 'Alert status changed to CLOSED. Reasons: False positive. some comment',
+              body: 'Alert status changed to CLOSED. Reasons: False positive\nsome comment',
               files: [],
               createdAt: expect.any(Number),
               updatedAt: expect.any(Number),
@@ -704,7 +704,7 @@ describe('Post APIs Alerts Tests', () => {
           ],
           comments: [
             {
-              body: 'Alert status changed to CLOSED. Reasons: False positive. some comment',
+              body: 'Alert status changed to CLOSED. Reasons: False positive\nsome comment',
               files: [],
               createdAt: expect.any(Number),
               updatedAt: expect.any(Number),

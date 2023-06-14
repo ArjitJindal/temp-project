@@ -119,7 +119,7 @@ export class CaseService extends CaseAlertsCommonService {
                 (updateRequest.reason
                   ? `. Reason: ${updateRequest.reason.join(', ')}`
                   : '') +
-                (updateRequest.comment ? `. ${updateRequest.comment}` : ''),
+                (updateRequest.comment ? `\n${updateRequest.comment}` : ''),
               files: updateRequest.files,
             }),
             updateRequest.caseStatus === 'CLOSED' &&
