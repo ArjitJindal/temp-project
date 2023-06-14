@@ -9,3 +9,12 @@ export const Aggregators = [
   UserTransactionsCount,
   UserTransactionStatsTimeGroup,
 ]
+
+export const AGGREGATORS = {
+  UserTransactionCountries: UserTransactionCountries,
+  UserTransactionCurrencies: UserTransactionCurrencies,
+  UserTransactionsCount: UserTransactionsCount,
+  UserTransactionStatsTimeGroup: UserTransactionStatsTimeGroup,
+}
+
+export type AggregatorName = keyof typeof AGGREGATORS

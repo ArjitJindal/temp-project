@@ -172,9 +172,12 @@ export const DynamoDbKeys = {
     tenantId: string,
     userId: string,
     // e.g 2022-01-01, 2022-W10, 2022-01, 2022
-    timeLabel?: string
+    timeLabel?: string,
+    version?: number
   ) => ({
-    PartitionKeyID: `${tenantId}#aggregation#${USER_ID_PREFIX}${userId}#time`,
+    PartitionKeyID:
+      `${tenantId}#aggregation#${USER_ID_PREFIX}${userId}#time` +
+      (version ?? ''),
     SortKeyID: timeLabel,
   }),
   RULE_USER_TIME_AGGREGATION_MARKER: (

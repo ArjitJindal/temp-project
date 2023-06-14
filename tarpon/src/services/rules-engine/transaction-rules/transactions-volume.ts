@@ -306,7 +306,7 @@ export default class TransactionsVolumeRule extends TransactionAggregationRule<
       receivingTransactions
     )
 
-    await this.refreshRuleAggregations(direction, timeAggregatedResult)
+    await this.rebuildRuleAggregations(direction, timeAggregatedResult)
 
     // Sum up the transactions amount
     const targetCurrency = Object.keys(

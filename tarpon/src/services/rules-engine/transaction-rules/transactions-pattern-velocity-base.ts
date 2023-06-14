@@ -144,7 +144,7 @@ export default abstract class TransactionsPatternVelocityBaseRule<
 
     // Update aggregations
     if (this.isAggregationSupported()) {
-      await this.refreshRuleAggregations(
+      await this.rebuildRuleAggregations(
         direction,
         await this.getTimeAggregatedResult(
           sendingTransactions,

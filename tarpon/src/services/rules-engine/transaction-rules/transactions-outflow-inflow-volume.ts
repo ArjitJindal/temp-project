@@ -402,7 +402,7 @@ export default class TransactionsOutflowInflowVolumeRule extends TransactionAggr
       )
 
     // update aggregation
-    await this.refreshRuleAggregations(
+    await this.rebuildRuleAggregations(
       direction,
       await this.getTimeAggregatedResult(
         sendingTransactions,

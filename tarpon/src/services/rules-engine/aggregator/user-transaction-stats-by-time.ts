@@ -1,7 +1,15 @@
+import _ from 'lodash'
+import { MongoDbTransactionRepository } from '../repositories/mongodb-transaction-repository'
+import { UserTimeAggregationAttributes } from '../repositories/aggregation-repository'
+import { getTransactionsTotalAmount } from '../utils/transaction-rule-utils'
 import { Aggregator } from './aggregator'
 import { TransactionAmountDetails } from '@/@types/openapi-public/TransactionAmountDetails'
 import { TransactionState } from '@/@types/openapi-internal/TransactionState'
 import { PaymentMethod } from '@/@types/openapi-public/PaymentMethod'
+import { getMongoDbClient } from '@/utils/mongoDBUtils'
+import { logger } from '@/core/logger'
+import { Transaction } from '@/@types/openapi-public/Transaction'
+import dayjs from '@/utils/dayjs'
 
 const GRANULARITIES: Array<'day' | 'week' | 'month' | 'year'> = [
   'day',
@@ -10,25 +18,39 @@ const GRANULARITIES: Array<'day' | 'week' | 'month' | 'year'> = [
   'year',
 ]
 
+type RebuildResult = {
+  day: {
+    [timeLabel: string]: UserTimeAggregationAttributes
+  }
+  week: {
+    [timeLabel: string]: UserTimeAggregationAttributes
+  }
+  month: {
+    [timeLabel: string]: UserTimeAggregationAttributes
+  }
+  year: {
+    [timeLabel: string]: UserTimeAggregationAttributes
+  }
+}
+
 export class UserTransactionStatsTimeGroup extends Aggregator {
-  public async aggregate(): Promise<void> {
-    if (this.transaction.originUserId && this.transaction.originAmountDetails) {
+  public async aggregate(transaction: Transaction): Promise<void> {
+    if (transaction.originUserId && transaction.originAmountDetails) {
       await this.aggregateUser(
-        this.transaction.originUserId,
+        transaction.originUserId,
         'origin',
-        this.transaction.originAmountDetails,
-        this.transaction.originPaymentDetails?.method
+        transaction.originAmountDetails,
+        transaction.originPaymentDetails?.method,
+        transaction.timestamp
       )
     }
-    if (
-      this.transaction.destinationUserId &&
-      this.transaction.destinationAmountDetails
-    ) {
+    if (transaction.destinationUserId && transaction.destinationAmountDetails) {
       await this.aggregateUser(
-        this.transaction.destinationUserId,
+        transaction.destinationUserId,
         'destination',
-        this.transaction.destinationAmountDetails,
-        this.transaction.destinationPaymentDetails?.method
+        transaction.destinationAmountDetails,
+        transaction.destinationPaymentDetails?.method,
+        transaction.timestamp
       )
     }
   }
@@ -37,7 +59,8 @@ export class UserTransactionStatsTimeGroup extends Aggregator {
     userId: string,
     direction: 'origin' | 'destination',
     transactionAmount: TransactionAmountDetails,
-    paymentMethod: PaymentMethod | undefined
+    paymentMethod: PaymentMethod | undefined,
+    timestamp: number
   ) {
     await Promise.all(
       GRANULARITIES.map((granularity) =>
@@ -46,7 +69,7 @@ export class UserTransactionStatsTimeGroup extends Aggregator {
           direction,
           transactionAmount,
           paymentMethod,
-          this.transaction.timestamp!,
+          timestamp,
           granularity
         )
       )
@@ -55,5 +78,171 @@ export class UserTransactionStatsTimeGroup extends Aggregator {
 
   public getTargetTransactionState(): TransactionState {
     return 'SUCCESSFUL'
+  }
+
+  public async rebuildAggregation(
+    userId: string,
+    options?: { now: number }
+  ): Promise<RebuildResult> {
+    logger.info('Starting to rebuild.')
+    const mongoClient = await getMongoDbClient()
+    const transactionRepository = new MongoDbTransactionRepository(
+      this.tenantId,
+      mongoClient
+    )
+    const now = dayjs(options?.now)
+    const cursor = transactionRepository.getTransactionsCursor({
+      filterUserId: userId,
+      afterTimestamp: now.startOf('year').valueOf(),
+      beforeTimestamp: now.valueOf(),
+      sortOrder: 'descend',
+      sortField: 'timestamp',
+    })
+
+    const allAggregation = {
+      day: {},
+      week: {},
+      month: {},
+      year: {},
+    }
+    let processedTransactions = 0
+
+    for await (const transaction of cursor) {
+      for (const granularity of GRANULARITIES) {
+        await this.updateAggregation(
+          userId,
+          allAggregation[granularity],
+          transaction,
+          granularity
+        )
+      }
+      processedTransactions += 1
+      if (processedTransactions % 10000 === 0) {
+        logger.info(`Processed ${processedTransactions} transactions`)
+      }
+    }
+
+    // Consider the new transactions created after the rebuilding above is done
+    const cursorAfterNow = transactionRepository.getTransactionsCursor({
+      filterUserId: userId,
+      afterTimestamp: now.valueOf(),
+    })
+    for await (const transaction of cursorAfterNow) {
+      for (const granularity of GRANULARITIES) {
+        await this.updateAggregation(
+          userId,
+          allAggregation[granularity],
+          transaction,
+          granularity
+        )
+      }
+    }
+
+    // Persist the rebuilt aggregation data
+    for (const granularity of GRANULARITIES) {
+      await this.aggregationRepository.rebuildUserTransactionStatsTimeGroups(
+        userId,
+        allAggregation[granularity]
+      )
+    }
+    logger.info('Finished rebuild.')
+    return allAggregation
+  }
+
+  private async updateAggregation(
+    userId: string,
+    allAggregation: {
+      [key: string]: UserTimeAggregationAttributes
+    },
+    transaction: Transaction,
+    granularity: 'day' | 'week' | 'month' | 'year'
+  ) {
+    const timeLabel =
+      this.aggregationRepository.getTransactionStatsTimeGroupLabel(
+        transaction.timestamp,
+        granularity
+      )
+    if (!allAggregation[timeLabel]) {
+      allAggregation[timeLabel] = {
+        sendingTransactionsCount: new Map(),
+        sendingTransactionsAmount: new Map(),
+        receivingTransactionsCount: new Map(),
+        receivingTransactionsAmount: new Map(),
+      }
+    }
+    const aggregation = allAggregation[timeLabel]
+
+    if (
+      transaction.originUserId === userId &&
+      transaction.originAmountDetails
+    ) {
+      const paymentMethod = transaction.originPaymentDetails?.method
+      const allAmount = await getTransactionsTotalAmount(
+        [
+          transaction.originAmountDetails,
+          aggregation.sendingTransactionsAmount.get('ALL'),
+        ],
+        transaction.originAmountDetails.transactionCurrency
+      )
+
+      aggregation.sendingTransactionsCount.set(
+        'ALL',
+        (aggregation.sendingTransactionsCount.get('ALL') ?? 0) + 1
+      )
+      aggregation.sendingTransactionsAmount.set('ALL', allAmount)
+      if (paymentMethod) {
+        const paymentMethodAmount = await getTransactionsTotalAmount(
+          [
+            transaction.originAmountDetails,
+            aggregation.sendingTransactionsAmount.get(paymentMethod),
+          ],
+          transaction.originAmountDetails.transactionCurrency
+        )
+        aggregation.sendingTransactionsCount.set(
+          paymentMethod,
+          (aggregation.sendingTransactionsCount.get(paymentMethod) ?? 0) + 1
+        )
+        aggregation.sendingTransactionsAmount.set(
+          paymentMethod,
+          paymentMethodAmount
+        )
+      }
+    }
+    if (
+      transaction.destinationUserId === userId &&
+      transaction.destinationAmountDetails
+    ) {
+      const paymentMethod = transaction.destinationPaymentDetails?.method
+      const allAmount = await getTransactionsTotalAmount(
+        [
+          transaction.destinationAmountDetails,
+          aggregation.receivingTransactionsAmount.get('ALL'),
+        ],
+        transaction.destinationAmountDetails.transactionCurrency
+      )
+
+      aggregation.receivingTransactionsCount.set(
+        'ALL',
+        (aggregation.receivingTransactionsCount.get('ALL') ?? 0) + 1
+      )
+      aggregation.receivingTransactionsAmount.set('ALL', allAmount)
+      if (paymentMethod) {
+        const paymentMethodAmount = await getTransactionsTotalAmount(
+          [
+            transaction.destinationAmountDetails,
+            aggregation.receivingTransactionsAmount.get(paymentMethod),
+          ],
+          transaction.destinationAmountDetails.transactionCurrency
+        )
+        aggregation.receivingTransactionsCount.set(
+          paymentMethod,
+          (aggregation.receivingTransactionsCount.get(paymentMethod) ?? 0) + 1
+        )
+        aggregation.receivingTransactionsAmount.set(
+          paymentMethod,
+          paymentMethodAmount
+        )
+      }
+    }
   }
 }

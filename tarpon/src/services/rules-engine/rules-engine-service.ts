@@ -836,11 +836,7 @@ export class RulesEngineService {
     await Promise.all(
       Aggregators.map(async (Aggregator) => {
         try {
-          const aggregator = new Aggregator(
-            this.tenantId,
-            transaction,
-            this.dynamoDb
-          )
+          const aggregator = new Aggregator(this.tenantId, this.dynamoDb)
 
           if (
             aggregator.getTargetTransactionState() ===
@@ -849,7 +845,7 @@ export class RulesEngineService {
               .map((event) => event.transactionState)
               .includes(aggregator.getTargetTransactionState())
           ) {
-            await aggregator.aggregate()
+            await aggregator.aggregate(transaction)
           }
         } catch (e) {
           logger.error(

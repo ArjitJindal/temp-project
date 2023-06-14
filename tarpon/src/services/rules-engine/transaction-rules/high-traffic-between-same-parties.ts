@@ -131,7 +131,7 @@ export default class HighTrafficBetweenSameParties extends TransactionAggregatio
       )
 
     // Update aggregations
-    await this.refreshRuleAggregations(
+    await this.rebuildRuleAggregations(
       'origin',
       await this.getTimeAggregatedResult(transactions)
     )

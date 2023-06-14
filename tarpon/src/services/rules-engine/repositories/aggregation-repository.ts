@@ -7,7 +7,7 @@ import {
 } from '@aws-sdk/lib-dynamodb'
 import AWS from 'aws-sdk'
 import _ from 'lodash'
-import dayjs from '@/utils/dayjs'
+import dayjs, { duration } from '@/utils/dayjs'
 import { DynamoDbKeys } from '@/core/dynamodb/dynamodb-keys'
 import { PaymentDirection } from '@/@types/tranasction/payment-direction'
 import { TransactionAmountDetails } from '@/@types/openapi-public/TransactionAmountDetails'
@@ -193,6 +193,48 @@ export class AggregationRepository {
   /**
    *  User transactions stats
    */
+  USER_TRANSACTION_STATS_VERSION = 1
+
+  public async rebuildUserTransactionStatsTimeGroups(
+    userId: string,
+    aggregationData: {
+      [timeLabel: string]: UserTimeAggregationAttributes
+    }
+  ): Promise<void> {
+    const ttl =
+      Math.floor(Date.now() / 1000) +
+      duration(1, 'year').asSeconds() +
+      duration(7, 'day').asSeconds()
+
+    const writeRequests = Object.entries(aggregationData).map((entry) => {
+      const keys = DynamoDbKeys.USER_TIME_AGGREGATION(
+        this.tenantId,
+        userId,
+        entry[0],
+        this.USER_TRANSACTION_STATS_VERSION
+      )
+      const data = _.mapValues(
+        entry[1],
+        (v) => v && Object.fromEntries(v.entries())
+      )
+      return {
+        PutRequest: {
+          Item: {
+            ...keys,
+            ...{
+              ...data,
+              ttl,
+            },
+          },
+        },
+      }
+    })
+    await batchWrite(
+      this.dynamoDb,
+      writeRequests,
+      StackConstants.TARPON_DYNAMODB_TABLE_NAME
+    )
+  }
 
   public async addUserTransactionStatsTimeGroup(
     userId: string,
@@ -273,17 +315,26 @@ export class AggregationRepository {
       direction === 'origin'
         ? 'sendingTransactionsCount'
         : 'receivingTransactionsCount'
+    const ttl =
+      Math.floor(Date.now() / 1000) +
+      duration(1, 'year').asSeconds() +
+      duration(7, 'day').asSeconds()
     const updateItemInput: AWS.DynamoDB.DocumentClient.UpdateItemInput = {
       TableName: StackConstants.TARPON_DYNAMODB_TABLE_NAME,
       Key: DynamoDbKeys.USER_TIME_AGGREGATION(
         this.tenantId,
         userId,
-        this.getTransactionStatsTimeGroupLabel(timestamp, timeGranularity)
+        this.getTransactionStatsTimeGroupLabel(timestamp, timeGranularity),
+        this.USER_TRANSACTION_STATS_VERSION
       ),
-      UpdateExpression: `SET ${transactionAmountKey} = :amount, ${transactionCountKey} = :count`,
+      UpdateExpression: `SET ${transactionAmountKey} = :amount, ${transactionCountKey} = :count, #ttl = :ttl`,
       ExpressionAttributeValues: {
         ':amount': Object.fromEntries(transactionsAmount.entries()),
         ':count': Object.fromEntries(transactionsCount.entries()),
+        ':ttl': ttl,
+      },
+      ExpressionAttributeNames: {
+        '#ttl': 'ttl',
       },
       ReturnValues: 'UPDATED_NEW',
     }
@@ -306,7 +357,8 @@ export class AggregationRepository {
       Key: DynamoDbKeys.USER_TIME_AGGREGATION(
         this.tenantId,
         userId,
-        this.getTransactionStatsTimeGroupLabel(timestamp, timeGranularity)
+        this.getTransactionStatsTimeGroupLabel(timestamp, timeGranularity),
+        this.USER_TRANSACTION_STATS_VERSION
       ),
       ProjectionExpression: attributes.join(','),
     }
@@ -335,7 +387,7 @@ export class AggregationRepository {
 
   // TODO: We use UTC time for getting the time label for now. We could use
   // the customer specified timezone if there's a need.
-  private getTransactionStatsTimeGroupLabel(
+  public getTransactionStatsTimeGroupLabel(
     timestamp: number,
     timeGranularity: 'day' | 'week' | 'month' | 'year'
   ): string {
@@ -357,7 +409,7 @@ export class AggregationRepository {
    *  User rule time aggregation
    */
 
-  public async refreshUserRuleTimeAggregations(
+  public async rebuildUserRuleTimeAggregations(
     userKeyId: string,
     ruleInstanceId: string,
     aggregationData: {

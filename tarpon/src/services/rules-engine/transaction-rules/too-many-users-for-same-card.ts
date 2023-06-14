@@ -117,7 +117,7 @@ export default class TooManyUsersForSameCardRule extends TransactionAggregationR
     )
 
     // Update aggregations
-    await this.refreshRuleAggregations(
+    await this.rebuildRuleAggregations(
       'origin',
       await this.getTimeAggregatedResult(sendingTransactionsWithOriginUserId)
     )

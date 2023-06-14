@@ -697,7 +697,9 @@ export class CdkTarponStack extends cdk.Stack {
         },
       }
     )
-    jobTriggerConsumerAlias.addEventSource(new SqsEventSource(batchJobQueue))
+    jobTriggerConsumerAlias.addEventSource(
+      new SqsEventSource(batchJobQueue, { maxConcurrency: 100 })
+    )
 
     /* API Metrics Lambda */
     if (!isDevUserStack) {

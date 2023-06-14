@@ -432,7 +432,7 @@ export default abstract class TransactionAverageExceededBaseRule<
       sendingTransactions,
       receivingTransactions
     )
-    await this.refreshRuleAggregations(direction, aggregationResult)
+    await this.rebuildRuleAggregations(direction, aggregationResult)
 
     return {
       period1: {

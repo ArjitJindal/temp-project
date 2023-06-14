@@ -205,7 +205,7 @@ export default class HighTrafficVolumeBetweenSameUsers extends TransactionAggreg
       )
 
     // Update aggregations
-    await this.refreshRuleAggregations(
+    await this.rebuildRuleAggregations(
       'origin',
       await this.getTimeAggregatedResult(transactions)
     )

@@ -1,35 +1,36 @@
 import { Aggregator } from './aggregator'
+import { Transaction } from '@/@types/openapi-public/Transaction'
 import { TransactionState } from '@/@types/openapi-internal/TransactionState'
 
 export class UserTransactionCountries extends Aggregator {
-  public async aggregate(): Promise<void> {
+  public async aggregate(transaction: Transaction): Promise<void> {
     await Promise.all([
-      this.transaction.originUserId &&
-        this.transaction.originAmountDetails?.country &&
+      transaction.originUserId &&
+        transaction.originAmountDetails?.country &&
         this.aggregationRepository.addUserTransactionCountry(
-          this.transaction.originUserId,
-          this.transaction.originAmountDetails.country,
+          transaction.originUserId,
+          transaction.originAmountDetails.country,
           'sendingFrom'
         ),
-      this.transaction.originUserId &&
-        this.transaction.destinationAmountDetails?.country &&
+      transaction.originUserId &&
+        transaction.destinationAmountDetails?.country &&
         this.aggregationRepository.addUserTransactionCountry(
-          this.transaction.originUserId,
-          this.transaction.destinationAmountDetails.country,
+          transaction.originUserId,
+          transaction.destinationAmountDetails.country,
           'sendingTo'
         ),
-      this.transaction.destinationUserId &&
-        this.transaction.originAmountDetails?.country &&
+      transaction.destinationUserId &&
+        transaction.originAmountDetails?.country &&
         this.aggregationRepository.addUserTransactionCountry(
-          this.transaction.destinationUserId,
-          this.transaction.originAmountDetails.country,
+          transaction.destinationUserId,
+          transaction.originAmountDetails.country,
           'receivingFrom'
         ),
-      this.transaction.destinationUserId &&
-        this.transaction.destinationAmountDetails?.country &&
+      transaction.destinationUserId &&
+        transaction.destinationAmountDetails?.country &&
         this.aggregationRepository.addUserTransactionCountry(
-          this.transaction.destinationUserId,
-          this.transaction.destinationAmountDetails.country,
+          transaction.destinationUserId,
+          transaction.destinationAmountDetails.country,
           'receivingTo'
         ),
     ])
@@ -37,5 +38,9 @@ export class UserTransactionCountries extends Aggregator {
 
   public getTargetTransactionState(): TransactionState {
     return 'SUCCESSFUL'
+  }
+
+  public async rebuildAggregation(_userId: string): Promise<void> {
+    // TODO: Implement me
   }
 }

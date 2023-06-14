@@ -83,7 +83,7 @@ export abstract class TransactionAggregationRule<
     }
 
     const ttl = this.getUpdatedTTLAttribute()
-    await this.aggregationRepository.refreshUserRuleTimeAggregations(
+    await this.aggregationRepository.rebuildUserRuleTimeAggregations(
       userKeyId,
       this.ruleInstance.id as string,
       { [targetHour]: { ...updatedAggregation, ttl } },
@@ -99,7 +99,7 @@ export abstract class TransactionAggregationRule<
     logger.info('Updated aggregation')
   }
 
-  protected async refreshRuleAggregations<A>(
+  protected async rebuildRuleAggregations<A>(
     direction: 'origin' | 'destination',
     data: {
       [key1: string]: A
@@ -115,7 +115,7 @@ export abstract class TransactionAggregationRule<
       return
     }
     const ttl = this.getUpdatedTTLAttribute()
-    await this.aggregationRepository.refreshUserRuleTimeAggregations(
+    await this.aggregationRepository.rebuildUserRuleTimeAggregations(
       userKeyId,
       this.ruleInstance.id as string,
       _.mapValues(data, (v) => ({ ...v, ttl })),

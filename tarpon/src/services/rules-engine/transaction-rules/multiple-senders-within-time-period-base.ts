@@ -148,7 +148,7 @@ export default abstract class MultipleSendersWithinTimePeriodRuleBase extends Tr
       senderTransactions = receivingTransactions
     }
 
-    await this.refreshRuleAggregations(
+    await this.rebuildRuleAggregations(
       'destination',
       await this.getTimeAggregatedResult(senderTransactions)
     )

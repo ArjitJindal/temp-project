@@ -188,7 +188,7 @@ export default class TransactionsVelocityRule extends TransactionAggregationRule
     )
 
     // Update aggregations
-    await this.refreshRuleAggregations(
+    await this.rebuildRuleAggregations(
       direction,
       await this.getTimeAggregatedResult(
         filteredSendingTransactions,

@@ -42,7 +42,8 @@ export async function getCurrencyExchangeRate(
       if (i === MAX_CURRENCY_API_RETRY) {
         throw e
       } else {
-        await new Promise((resolve) => setTimeout(resolve, i * 500))
+        // Exponential retry
+        await new Promise((resolve) => setTimeout(resolve, i ** 2 * 500))
       }
     }
   }

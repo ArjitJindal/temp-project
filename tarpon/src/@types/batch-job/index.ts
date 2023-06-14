@@ -4,6 +4,7 @@ import { SimulationBeaconParameters } from '../openapi-internal/SimulationBeacon
 import { RuleInstance } from '../openapi-internal/RuleInstance'
 import { ImportRequest } from '@/@types/openapi-internal/ImportRequest'
 import { TenantInfo } from '@/services/tenants'
+import { AggregatorName } from '@/services/rules-engine/aggregator'
 
 /* File Import */
 type FileImportBatchJobType = 'FILE_IMPORT'
@@ -79,6 +80,19 @@ export type ApiUsageMetricsBatchJob = {
   tenantId: string
 }
 
+/* Global rule aggregation */
+type GlobalRuleAggregationRebuildBatchJobType =
+  'GLOBAL_RULE_AGGREGATION_REBUILD'
+type GlobalRuleAggregationRebuildBatchJobParameters = {
+  userId: string
+  aggregatorName: AggregatorName
+}
+export type GlobalRuleAggregationRebuildBatchJob = {
+  type: GlobalRuleAggregationRebuildBatchJobType
+  tenantId: string
+  parameters: GlobalRuleAggregationRebuildBatchJobParameters
+}
+
 export type BatchJobType =
   | FileImportBatchJobType
   | SimulationPulseBatchJobType
@@ -88,6 +102,7 @@ export type BatchJobType =
   | OngoingScreeningUserRuleBatchJobType
   | PulseDataLoadBatchJobType
   | ApiUsageMetricsBatchJobType
+  | GlobalRuleAggregationRebuildBatchJobType
 
 export type BatchJob =
   | FileImportBatchJob
@@ -98,3 +113,4 @@ export type BatchJob =
   | OngoingScreeningUserRuleBatchJob
   | PulseDataLoadBatchJob
   | ApiUsageMetricsBatchJob
+  | GlobalRuleAggregationRebuildBatchJob
