@@ -1,7 +1,7 @@
 import { forwardRef, useImperativeHandle } from 'react';
 import Toggle from '../library/Toggle';
 import AsyncResourceRenderer from '../common/AsyncResourceRenderer';
-import { Feature, useFeatureEnabled, useSettings } from '../AppWrapper/Providers/SettingsProvider';
+import { useFeatureEnabled, useSettings } from '../AppWrapper/Providers/SettingsProvider';
 import { H4, P } from '../ui/Typography';
 import PageWrapper, { PageWrapperProps } from '../PageWrapper';
 import s from './styles.module.less';
@@ -9,6 +9,10 @@ import { useApi } from '@/api';
 import { useQuery } from '@/utils/queries/hooks';
 import { getBranding } from '@/utils/branding';
 import { SIMULATION_COUNT } from '@/utils/queries/keys';
+import Tooltip from '@/components/library/Tooltip';
+
+const SIMULATOR_DISABLED_TOOLTIP_MESSAGE =
+  'This is an advanced feature. Please contact support@flagright.com to enable it.';
 
 export type SimulationPageWrapperRef = {
   refetchSimulationCount: () => void;
@@ -55,27 +59,37 @@ export const SimulationPageWrapper = forwardRef<
       simulationCountResults.refetch();
     },
   }));
+
   return (
     <PageWrapper
       {...props}
       actionButton={
-        <Feature name="SIMULATOR">
-          <div className={s.simulationRoot}>
-            {props.isSimulationModeEnabled && (
-              <AsyncResourceRenderer resource={simulationCountResults.data}>
-                {(data) => <SimulationUsageCard usageCount={data.count} />}
-              </AsyncResourceRenderer>
-            )}
-            <div className={s.simulationSwitch}>
-              <p className={s.simulationSwitchTitle}>Simulator</p>
+        <div className={s.simulationRoot}>
+          {isSimulationFeatureEnabled && props.isSimulationModeEnabled && (
+            <AsyncResourceRenderer resource={simulationCountResults.data}>
+              {(data) => <SimulationUsageCard usageCount={data.count} />}
+            </AsyncResourceRenderer>
+          )}
+          <div className={s.simulationSwitch}>
+            <p className={s.simulationSwitchTitle}>Simulator</p>
+            {!isSimulationFeatureEnabled ? (
+              <div>
+                <Tooltip title={SIMULATOR_DISABLED_TOOLTIP_MESSAGE} placement="left">
+                  <span>
+                    <Toggle disabled={true} />
+                  </span>
+                </Tooltip>
+              </div>
+            ) : (
               <Toggle
                 value={props.isSimulationModeEnabled}
                 onChange={props.onSimulationModeChange}
                 green
+                disabled={false}
               />
-            </div>
+            )}
           </div>
-        </Feature>
+        </div>
       }
     />
   );

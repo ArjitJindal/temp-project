@@ -23,6 +23,7 @@ export default function Toggle(props: Props) {
       onChange={(value) => {
         onChange?.(value);
       }}
+      disabled={disabled}
       {...rest}
     />
   );

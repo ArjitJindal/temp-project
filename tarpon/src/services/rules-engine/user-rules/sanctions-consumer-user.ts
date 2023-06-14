@@ -29,7 +29,7 @@ export default class SanctionsConsumerUserRule extends UserRule<SanctionsConsume
         fuzziness: FUZZINESS_SCHEMA,
         ongoingScreening: ENABLE_ONGOING_SCREENING_SCHEMA({
           description:
-            'Enabling ongoing screening will do a historic screening of all the existing consumer users.',
+            'It will do a screening every 24hrs of all the existing consumer users after it is enabled.',
         }),
       },
       required: ['fuzziness', 'screeningTypes'],
