@@ -6891,6 +6891,13 @@ components:
       x-stoplight:
         id: mqa9mvj3lig5w
       type: object
+      required:
+        - id
+        - type
+        - country
+        - reportSchema
+        - transactionSchema
+        - indicators
       properties:
         id:
           type: string
@@ -6898,15 +6905,39 @@ components:
           $ref: '#/components/schemas/ReportType'
         country:
           $ref: ../public/openapi-public-original.yaml#/components/schemas/CountryCode
-        schema:
+        reportSchema:
           type: object
+        transactionSchema:
+          type: object
+        indicators:
+          type: array
+          items:
+            type: object
+            required:
+              - key
+              - description
+            properties:
+              key:
+                type: string
+              description:
+                type: string
     Report:
       title: Report
       type: object
       x-stoplight:
         id: 4ac3be9ec658a
+      required:
+        - caseId
+        - schema
+        - createdAt
+        - updatedAt
+        - parameters
+        - comments
+        - revisions
       properties:
         id:
+          type: string
+        output:
           type: string
         caseId:
           type: string
@@ -6917,7 +6948,7 @@ components:
         updatedAt:
           type: number
         parameters:
-          type: object
+          $ref: '#/components/schemas/ReportParameters'
         comments:
           type: array
           items:
@@ -6926,6 +6957,31 @@ components:
           type: array
           items:
             $ref: '#/components/schemas/FileInfo'
+    ReportParameters:
+      type: object
+      required:
+        - report
+        - transactions
+        - indicators
+      properties:
+        report:
+          type: object
+        indicators:
+          type: array
+          items:
+            type: string
+        transactions:
+          type: array
+          items:
+            type: object
+            required:
+              - id
+              - transaction
+            properties:
+              id:
+                type: string
+              transaction:
+                type: object
     ReportType:
       title: ReportType
       x-stoplight:

@@ -1,17 +1,24 @@
-import { KenyaSARReportGenerator, KenyaSarReportSchema } from './KE/SAR'
+import { KenyaSARReportGenerator } from './KE/SAR'
 import { Account } from '@/@types/openapi-internal/Account'
 import { Case } from '@/@types/openapi-internal/Case'
 import { ReportSchema } from '@/@types/openapi-internal/ReportSchema'
+import { ReportParameters } from '@/@types/openapi-internal/ReportParameters'
 
-export interface ReportGenerator<T> {
+export interface ReportGenerator {
+  getSchema(): ReportSchema
+
   // Prepare the report data with what we already know about the suspicious user
-  prepopulate(c: Case, transactionIds: string[], reporter: Account): T
+  prepopulate(
+    c: Case,
+    transactionIds: string[],
+    reporter: Account
+  ): ReportParameters
 
   // Generate the report (XML)
-  generate(data: T): string
+  generate(reportParams: ReportParameters): string
 }
 
-export const REPORT_SCHEMAS: ReportSchema[] = [KenyaSarReportSchema]
-export const REPORT_GENERATORS = new Map([
-  [KenyaSarReportSchema, KenyaSARReportGenerator],
-])
+const reportGenerators = [KenyaSARReportGenerator]
+export const REPORT_GENERATORS = new Map<string, ReportGenerator>(
+  reportGenerators.map((rg) => [new rg().getSchema().id, new rg()])
+)

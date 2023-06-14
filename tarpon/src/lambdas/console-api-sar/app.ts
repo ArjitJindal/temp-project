@@ -5,7 +5,7 @@ import {
 import { NotFound } from 'http-errors'
 import { JWTAuthorizerResult } from '@/@types/jwt'
 import { lambdaApi } from '@/core/middlewares/lambda-api-middlewares'
-import { REPORT_GENERATORS, REPORT_SCHEMAS } from '@/services/sar/generators'
+import { REPORT_GENERATORS } from '@/services/sar/generators'
 import { ReportRepository } from '@/services/sar/repositories/report-repository'
 import { getMongoDbClient } from '@/utils/mongoDBUtils'
 import {
@@ -29,8 +29,10 @@ export const sarHandler = lambdaApi()(
 
     if (event.httpMethod === 'GET' && event.resource === '/report-schemas') {
       return {
-        data: REPORT_SCHEMAS,
-        total: REPORT_SCHEMAS.length,
+        data: Array.from(REPORT_GENERATORS.values()).map((rg) =>
+          rg.getSchema()
+        ),
+        total: REPORT_GENERATORS.size,
       }
     }
     if (
@@ -39,27 +41,18 @@ export const sarHandler = lambdaApi()(
       event.pathParameters?.schemaId
     ) {
       const { schemaId } = event.pathParameters
-      const reportSchema = REPORT_SCHEMAS.find(
-        (schema) => schema.id === schemaId
-      )
-      if (!reportSchema) {
+      const generator = REPORT_GENERATORS.get(schemaId)
+      if (!generator) {
         throw new NotFound(`Cannot find schema ${schemaId}`)
       }
-
-      return reportSchema
+      return generator.getSchema()
     }
 
     if (event.httpMethod === 'GET' && event.resource === '/reports/template') {
       const params =
         event.queryStringParameters as unknown as DefaultApiGetReportsTemplateRequest
-      const reportSchema = REPORT_SCHEMAS.find(
-        (schema) => schema.id === params.schemaId
-      )
-      if (!reportSchema) {
-        throw new NotFound(`Cannot find schema ${params.schemaId}`)
-      }
-      const ReportGenerator = REPORT_GENERATORS.get(reportSchema)
-      if (!ReportGenerator) {
+      const generator = REPORT_GENERATORS.get(params.schemaId)
+      if (!generator) {
         throw new NotFound(`Cannot find report generator`)
       }
       const txnIds =
@@ -68,20 +61,21 @@ export const sarHandler = lambdaApi()(
         throw new NotFound(`Cant select more than 20 transactions`)
       }
       const caseRepository = new CaseRepository(tenantId, { mongoDb })
-      const reportGenerator = new ReportGenerator()
       const c = await caseRepository.getCaseById(params.caseId)
       if (!c) {
         throw new NotFound(`Cannot find case ${params.caseId}`)
       }
       const account = getContext()?.user as Account
-      const parameters = await reportGenerator.prepopulate(c, txnIds, account)
+      const parameters = generator.prepopulate(c, txnIds, account)
       const now = new Date().valueOf()
       const report: Report = {
         caseId: params.caseId,
-        schema: reportSchema,
+        schema: generator.getSchema(),
         createdAt: now,
         updatedAt: now,
         parameters,
+        comments: [],
+        revisions: [],
       }
       return report
     }
@@ -113,6 +107,10 @@ export const sarHandler = lambdaApi()(
       event.body
     ) {
       const report: Report = JSON.parse(event.body)
+
+      report.output = REPORT_GENERATORS.get(report.schema.id)?.generate(
+        report.parameters
+      )
       return reportRepository.saveOrUpdateReport(report)
     }
   }
