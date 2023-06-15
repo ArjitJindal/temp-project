@@ -1,4 +1,5 @@
 import { MongoClient } from 'mongodb'
+import _ from 'lodash'
 import { DynamoDBDocumentClient } from '@aws-sdk/lib-dynamodb'
 import {
   APIGatewayClient,
@@ -16,11 +17,14 @@ import { createNewApiKeyForTenant } from '@/services/api-key'
 import { checkMultipleEmails } from '@/utils/helpers'
 import { getAuth0Domain } from '@/utils/auth0-utils'
 import { getMongoDbClient } from '@/utils/mongoDBUtils'
+import { logger } from '@/core/logger'
 
 export type TenantInfo = {
   tenant: Tenant
   auth0Domain: string
 }
+
+export const USAGE_PLAN_REGEX = /tarpon:(.*):(.*)/
 
 type Stage = 'local' | 'dev' | 'sandbox' | 'prod'
 export class TenantService {
@@ -112,7 +116,7 @@ export class TenantService {
 
     tenantData.tenantName = tenantData.tenantName.replace(/[^a-zA-Z0-9]/g, '-')
 
-    await this.checkUsagePlanExists(tenantData.tenantName)
+    await this.assertUsagePlanNotExist(tenantData.tenantName)
 
     const tenantId = this.tenantId
 
@@ -150,26 +154,43 @@ export class TenantService {
     }
   }
 
-  async checkUsagePlanExists(planName: string): Promise<void> {
+  static async getAllUsagePlans(): Promise<AWS.APIGateway.UsagePlan[]> {
     const apigateway = new APIGatewayClient({
       region: process.env.AWS_REGION,
     })
 
     const usagePlansCommand = new GetUsagePlansCommand({})
-
     const usagePlans = await apigateway.send(usagePlansCommand)
 
-    const usagePlan = usagePlans.items?.find((x) =>
-      x.name?.includes(`${planName}`)
-    )
+    if (usagePlans.items?.length) {
+      const filteredUsagePlans = _.filter(usagePlans.items, (usagePlan) => {
+        if (usagePlan.name && usagePlan.name.match(USAGE_PLAN_REGEX)) {
+          return true
+        }
+        logger.error(
+          `Invalid usage plan id ${usagePlan.id} for tenant ${usagePlan.name}`
+        )
+        return false
+      })
 
+      return filteredUsagePlans
+    }
+
+    logger.error('No usage plans found')
+    return []
+  }
+
+  async assertUsagePlanNotExist(planName: string): Promise<void> {
+    const usagePlans = await TenantService.getAllUsagePlans()
+
+    const usagePlan = usagePlans?.find((x) => x.name?.includes(`${planName}`))
     const usagePlanName = usagePlan?.name
 
     if (usagePlanName == null) {
       return
     }
 
-    if (usagePlanName.match(/tarpon:(.*):(.*)/)?.[2] === planName) {
+    if (usagePlanName.match(USAGE_PLAN_REGEX)?.[2] === planName) {
       throw new BadRequest(`Usage plan for tenant ${planName} already exists`)
     }
   }

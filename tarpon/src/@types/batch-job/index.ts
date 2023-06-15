@@ -3,8 +3,8 @@ import { SimulationPulseParameters } from '../openapi-internal/SimulationPulsePa
 import { SimulationBeaconParameters } from '../openapi-internal/SimulationBeaconParameters'
 import { RuleInstance } from '../openapi-internal/RuleInstance'
 import { ImportRequest } from '@/@types/openapi-internal/ImportRequest'
-import { TenantInfo } from '@/services/tenants'
 import { AggregatorName } from '@/services/rules-engine/aggregator'
+import { TenantBasic } from '@/services/accounts'
 
 /* File Import */
 type FileImportBatchJobType = 'FILE_IMPORT'
@@ -76,7 +76,7 @@ export type PulseDataLoadBatchJob = {
 type ApiUsageMetricsBatchJobType = 'API_USAGE_METRICS'
 export type ApiUsageMetricsBatchJob = {
   type: ApiUsageMetricsBatchJobType
-  tenantInfo: TenantInfo
+  tenantInfo: TenantBasic
   tenantId: string
 }
 

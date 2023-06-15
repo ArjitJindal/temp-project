@@ -10,7 +10,7 @@ import dayjs from '@/utils/dayjs'
 import { METRICS_COLLECTION } from '@/utils/mongoDBUtils'
 import { CUSTOM_API_USAGE_METRIC_NAMES } from '@/core/cloudwatch/metrics'
 import { logger } from '@/core/logger'
-import { Tenant } from '@/services/accounts'
+import { TenantBasic } from '@/services/accounts'
 import { getSecret } from '@/utils/secrets-manager'
 import { exponentialRetry } from '@/utils/retry'
 import { mergeObjects } from '@/utils/object'
@@ -56,7 +56,7 @@ type DataCounts = {
 export class SheetsApiUsageMetricsService {
   private dailyUsageMetricsSheet?: GoogleSpreadsheetWorksheet
   private monthlyUsageMetricsSheet?: GoogleSpreadsheetWorksheet
-  private tenant: Tenant
+  private tenant: TenantBasic
   private mongoDb: MongoClient
   private tenantId: string
   private monthlyCounts: DataCounts
@@ -64,7 +64,7 @@ export class SheetsApiUsageMetricsService {
   private endTimestamp: number
 
   constructor(
-    tenant: Tenant,
+    tenant: TenantBasic,
     connections: { mongoDb: MongoClient },
     monthlyCounts: DataCounts,
     timestamps: { startTimestamp: number; endTimestamp: number }

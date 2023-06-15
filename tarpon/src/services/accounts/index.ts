@@ -51,6 +51,11 @@ export type Tenant = {
   region: string
 }
 
+export type TenantBasic = {
+  id: string
+  name: string
+}
+
 export class AccountsService {
   private config: { auth0Domain: string }
   private mongoDb: MongoClient

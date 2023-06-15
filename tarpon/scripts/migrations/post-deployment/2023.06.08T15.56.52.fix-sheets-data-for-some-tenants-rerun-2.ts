@@ -5,7 +5,7 @@ import { Tenant } from '@/services/accounts'
 import { getDynamoDbClient } from '@/utils/dynamodb'
 import { ApiUsageMetricsService } from '@/services/metrics/api-usage-metrics-service'
 
-async function migrateTenant(tenant: Tenant, auth0Domain: string) {
+async function migrateTenant(tenant: Tenant) {
   if (!process.env.ENV?.startsWith('prod')) {
     return
   }
@@ -27,8 +27,8 @@ async function migrateTenant(tenant: Tenant, auth0Domain: string) {
     )
 
     await apiMetricsService.publishApiUsageMetrics({
-      tenant,
-      auth0Domain,
+      id: tenant.id,
+      name: tenant.name,
     })
 
     startTimestamp = dayjs(startTimestamp).add(1, 'day').valueOf()

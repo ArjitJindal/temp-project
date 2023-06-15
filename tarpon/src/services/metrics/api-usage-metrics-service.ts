@@ -6,7 +6,6 @@ import { SheetsApiUsageMetricsService } from './sheets-api-usage-metrics-service
 import { logger } from '@/core/logger'
 import { METRICS_COLLECTION } from '@/utils/mongoDBUtils'
 import { RuleInstanceRepository } from '@/services/rules-engine/repositories/rule-instance-repository'
-import { TenantInfo } from '@/services/tenants'
 import {
   publishMetrics,
   Metric,
@@ -22,7 +21,7 @@ import {
 import { MongoDbTransactionRepository } from '@/services/rules-engine/repositories/mongodb-transaction-repository'
 import { UserRepository } from '@/services/users/repositories/user-repository'
 import { TransactionEventRepository } from '@/services/rules-engine/repositories/transaction-event-repository'
-import { AccountsService, Tenant } from '@/services/accounts'
+import { AccountsService, TenantBasic } from '@/services/accounts'
 import { SanctionsSearchRepository } from '@/services/sanctions/repositories/sanctions-search-repository'
 import { IBANApiRepository } from '@/services/iban.com/repositories/iban-api-repository'
 import dayjs from '@/utils/dayjs'
@@ -37,7 +36,7 @@ export type ApiUsageMetrics = {
 
 export class ApiUsageMetricsService {
   tenantId: string
-  tenant: Tenant
+  tenant: TenantBasic
   connections: {
     mongoDb: MongoClient
     dynamoDb: DynamoDBDocumentClient
@@ -46,7 +45,7 @@ export class ApiUsageMetricsService {
   endTimestamp: number
 
   constructor(
-    tenant: Tenant,
+    tenant: TenantBasic,
     connections: {
       mongoDb: MongoClient
       dynamoDb: DynamoDBDocumentClient
@@ -138,24 +137,31 @@ export class ApiUsageMetricsService {
     return allInstances.length
   }
 
-  private getDimensions(tenantInfo: TenantInfo): Dimension[] {
+  private getDimensions(tenantInfo: TenantBasic): Dimension[] {
     logger.info(
-      `Tenant Id: ${tenantInfo.tenant.id}, Tenant Name: ${tenantInfo.tenant.name}, Region: ${process.env.AWS_REGION}`
+      `Tenant Id: ${tenantInfo.id}, Tenant Name: ${tenantInfo.name}, Region: ${process.env.AWS_REGION}`
     )
     return [
-      { Name: 'Tenant Id', Value: tenantInfo.tenant.id },
-      { Name: 'Tenant Name', Value: tenantInfo.tenant.name },
+      { Name: 'Tenant Id', Value: tenantInfo.id },
+      { Name: 'Tenant Name', Value: tenantInfo.name },
       { Name: 'Region', Value: process.env.AWS_REGION as string },
     ]
   }
 
-  private async getNumberOfSeats(tenantInfo: TenantInfo): Promise<number> {
+  private async getNumberOfSeats(tenantInfo: TenantBasic): Promise<number> {
     const accountsService = new AccountsService(
-      { auth0Domain: tenantInfo.auth0Domain },
+      { auth0Domain: process.env.AUTH0_DOMAIN as string },
       { mongoDb: this.connections.mongoDb }
     )
 
-    const account = await accountsService.getTenantAccounts(tenantInfo.tenant)
+    const tenant = await accountsService.getTenantById(tenantInfo.id)
+
+    if (!tenant) {
+      logger.error(`Tenant not found: ${tenantInfo.id}, ${tenantInfo.name}`)
+      return 0
+    }
+
+    const account = await accountsService.getTenantAccounts(tenant)
 
     const filteredAccount = account.filter(
       (account) => account.role !== 'root' && !account.blocked
@@ -189,7 +195,7 @@ export class ApiUsageMetricsService {
   }
 
   private async getValuesOfMetrics(
-    tenantInfo: TenantInfo
+    tenantInfo: TenantBasic
   ): Promise<Array<[Metric, number]>> {
     const transactionsCount = await this.getTransactionsCount()
     const transactionEventsCount = await this.getTransactionsEventsCount()
@@ -243,7 +249,7 @@ export class ApiUsageMetricsService {
     await sheetsService.updateUsageMetrics()
   }
 
-  public async publishApiUsageMetrics(tenantInfo: TenantInfo): Promise<void> {
+  public async publishApiUsageMetrics(tenantInfo: TenantBasic): Promise<void> {
     const dimensions = this.getDimensions(tenantInfo)
     const values = await this.getValuesOfMetrics(tenantInfo)
 

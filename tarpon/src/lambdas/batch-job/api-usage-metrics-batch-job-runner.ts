@@ -15,7 +15,7 @@ export class ApiUsageMetricsBatchJobRunner extends BatchJobRunner {
     const endTimestamp = dayjs(timestamp).endOf('day').valueOf()
 
     const apiMetricsService = new ApiUsageMetricsService(
-      tenantInfo.tenant,
+      tenantInfo,
       { mongoDb, dynamoDb },
       { startTimestamp, endTimestamp }
     )
