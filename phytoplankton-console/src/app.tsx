@@ -17,6 +17,7 @@ Sentry.init({
   integrations: [new BrowserTracing()],
   tracesSampleRate: 0.05,
   environment: process.env.ENV_NAME,
+  enabled: process.env.ENV_NAME !== 'local',
 });
 
 function renderRoutes(routes: RouteItem[]) {

@@ -1,4 +1,5 @@
-import React, { useState } from 'react';
+import * as Sentry from '@sentry/react';
+import React, { useEffect, useState } from 'react';
 import cn from 'clsx';
 import { useLocation } from 'react-router';
 import { Helmet } from 'react-helmet';
@@ -12,6 +13,7 @@ import { useDemoMode } from '@/components/AppWrapper/Providers/DemoModeProvider'
 import { getOr } from '@/utils/asyncResource';
 import RouterProvider from '@/components/AppWrapper/Providers/RouterProvider';
 import { getBranding } from '@/utils/branding';
+import { useAuth0User } from '@/utils/user-utils';
 
 interface Props {
   children?: React.ReactNode;
@@ -22,6 +24,19 @@ const branding = getBranding();
 function MainContent(props: Props) {
   const [isCollapsed, setCollapsed] = useState(false);
   const [isDemoModeRes] = useDemoMode();
+
+  const auth0User = useAuth0User();
+
+  useEffect(() => {
+    Sentry.setTags({
+      userId: auth0User?.userId,
+      email: auth0User?.verifiedEmail,
+      tenantId: auth0User.tenantId,
+      tenantName: auth0User.tenantName,
+      companyName: branding.companyName,
+      role: auth0User.role,
+    });
+  }, [auth0User]);
 
   return (
     <div className={`${s.root} ${isCollapsed && s.isCollapsed}`}>
