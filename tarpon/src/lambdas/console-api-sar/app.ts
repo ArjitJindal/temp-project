@@ -10,7 +10,7 @@ import { ReportRepository } from '@/services/sar/repositories/report-repository'
 import { getMongoDbClient } from '@/utils/mongoDBUtils'
 import {
   DefaultApiGetReportsRequest,
-  DefaultApiGetReportsTemplateRequest,
+  DefaultApiGetReportsDraftRequest,
 } from '@/@types/openapi-internal/RequestParameters'
 import { Report } from '@/@types/openapi-internal/Report'
 import { CaseRepository } from '@/services/rules-engine/repositories/case-repository'
@@ -48,9 +48,9 @@ export const sarHandler = lambdaApi()(
       return generator.getSchema()
     }
 
-    if (event.httpMethod === 'GET' && event.resource === '/reports/template') {
+    if (event.httpMethod === 'POST' && event.resource === '/reports/draft') {
       const params =
-        event.queryStringParameters as unknown as DefaultApiGetReportsTemplateRequest
+        event.queryStringParameters as unknown as DefaultApiGetReportsDraftRequest
       const generator = REPORT_GENERATORS.get(params.schemaId)
       if (!generator) {
         throw new NotFound(`Cannot find report generator`)
@@ -68,11 +68,16 @@ export const sarHandler = lambdaApi()(
       const account = getContext()?.user as Account
       const parameters = generator.prepopulate(c, txnIds, account)
       const now = new Date().valueOf()
+
       const report: Report = {
+        name: params.caseId,
+        description: `SAR report for ${params.caseId}`,
         caseId: params.caseId,
         schema: generator.getSchema(),
         createdAt: now,
         updatedAt: now,
+        createdById: account.id,
+        status: 'draft',
         parameters,
         comments: [],
         revisions: [],
@@ -108,9 +113,14 @@ export const sarHandler = lambdaApi()(
     ) {
       const report: Report = JSON.parse(event.body)
 
-      report.output = REPORT_GENERATORS.get(report.schema.id)?.generate(
-        report.parameters
-      )
+      report.status = 'complete'
+      report.revisions.push({
+        output:
+          REPORT_GENERATORS.get(report.schema.id)?.generate(
+            report.parameters
+          ) || '',
+        createdAt: Date.now(),
+      })
       return reportRepository.saveOrUpdateReport(report)
     }
   }

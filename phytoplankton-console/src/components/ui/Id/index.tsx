@@ -8,13 +8,14 @@ import { copyTextToClipboard } from '@/utils/browser';
 
 interface ExtraProps {
   alwaysShowCopy?: boolean;
+  onClick?: () => void;
   to?: string;
   children?: string;
   testName?: string;
 }
 
 export default function Id(props: ButtonProps & ExtraProps) {
-  const { alwaysShowCopy, to, children, testName } = props;
+  const { alwaysShowCopy, to, children, testName, onClick } = props;
 
   const handleClickCopy = (e: React.MouseEvent<unknown>) => {
     e.preventDefault();
@@ -45,14 +46,12 @@ export default function Id(props: ButtonProps & ExtraProps) {
         className={style.root}
         href="#"
         title={children}
-        onClick={handleClickCopy}
+        onClick={onClick || handleClickCopy}
         data-cy={testName}
       >
         <div className={style.inner}>
           <span className={style.id}>{children}</span>
-          <div>
-            <FileCopyLineIcon className={style.icon} />
-          </div>
+          <div>{alwaysShowCopy && <FileCopyLineIcon className={style.icon} />}</div>
         </div>
       </a>
     );

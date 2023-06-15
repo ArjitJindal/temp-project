@@ -3642,9 +3642,9 @@ paths:
       operationId: get-report-schemas-reportId
       description: ''
       parameters: []
-  /reports/template:
-    get:
-      summary: Get a report template
+  /reports/draft:
+    post:
+      summary: Get a report draft
       tags: []
       x-flagright:
         permissions:
@@ -3656,7 +3656,7 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/Report'
-      operationId: get-reports-template
+      operationId: get-reports-draft
       parameters:
         - schema:
             type: string
@@ -6921,14 +6921,31 @@ components:
                 type: string
               description:
                 type: string
+    ReportRevision:
+      title: ReportRevision
+      type: object
+      x-stoplight:
+        id: 4ac3be9ec6581
+      required:
+        - output
+        - createdAt
+      properties:
+        output:
+          type: string
+        createdAt:
+          type: number
     Report:
       title: Report
       type: object
       x-stoplight:
         id: 4ac3be9ec658a
       required:
+        - name
+        - description
+        - createdById
         - caseId
         - schema
+        - status
         - createdAt
         - updatedAt
         - parameters
@@ -6937,12 +6954,23 @@ components:
       properties:
         id:
           type: string
-        output:
+        name:
           type: string
+        description:
+          type: string
+        status:
+          type: string
+          enum:
+            - complete
+            - draft
         caseId:
           type: string
         schema:
           $ref: '#/components/schemas/ReportSchema'
+        createdById:
+          type: string
+        createdByName:
+          type: string
         createdAt:
           type: number
         updatedAt:
@@ -6956,7 +6984,7 @@ components:
         revisions:
           type: array
           items:
-            $ref: '#/components/schemas/FileInfo'
+            $ref: '#/components/schemas/ReportRevision'
     ReportParameters:
       type: object
       required:
@@ -7014,13 +7042,13 @@ components:
       properties:
         total:
           type: integer
-        data:
+        items:
           type: array
           items:
             $ref: '#/components/schemas/Report'
       required:
         - total
-        - data
+        - items
   securitySchemes:
     Authorization:
       type: http

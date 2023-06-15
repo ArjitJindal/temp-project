@@ -1,9 +1,13 @@
 import { MongoClient, Document } from 'mongodb'
-import { v4 as uuidv4 } from 'uuid'
 import _ from 'lodash'
 import { Report } from '@/@types/openapi-internal/Report'
-import { REPORT_COLLECTION, paginatePipeline } from '@/utils/mongoDBUtils'
+import {
+  REPORT_COLLECTION,
+  paginatePipeline,
+  COUNTER_COLLECTION,
+} from '@/utils/mongoDBUtils'
 import { DefaultApiGetReportsRequest } from '@/@types/openapi-internal/RequestParameters'
+import { EntityCounter } from '@/@types/openapi-internal/EntityCounter'
 
 export class ReportRepository {
   tenantId: string
@@ -17,7 +21,19 @@ export class ReportRepository {
   public async saveOrUpdateReport(report: Report): Promise<Report> {
     const db = this.mongoDb.db()
     const collection = db.collection<Report>(REPORT_COLLECTION(this.tenantId))
-    const reportId = report.id ?? uuidv4()
+
+    const counterCollection = db.collection<EntityCounter>(
+      COUNTER_COLLECTION(this.tenantId)
+    )
+    const reportCount = (
+      await counterCollection.findOneAndUpdate(
+        { entity: 'Report' },
+        { $inc: { count: 1 } },
+        { upsert: true, returnDocument: 'after' }
+      )
+    ).value
+
+    const reportId = report.id ?? `R-${reportCount?.count}`
     const newReport: Report = {
       ...report,
       id: reportId,
@@ -41,7 +57,7 @@ export class ReportRepository {
 
   public async getReports(
     params: DefaultApiGetReportsRequest
-  ): Promise<{ total: number; data: Report[] }> {
+  ): Promise<{ total: number; items: Report[] }> {
     const db = this.mongoDb.db()
     const collection = db.collection<Report>(REPORT_COLLECTION(this.tenantId))
     const filter = _.omitBy(
@@ -61,7 +77,7 @@ export class ReportRepository {
     ])
     return {
       total,
-      data: reports,
+      items: reports,
     }
   }
 }

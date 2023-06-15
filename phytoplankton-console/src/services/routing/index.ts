@@ -30,6 +30,7 @@ import {
 } from '@/utils/user-utils';
 import { Permission } from '@/apis';
 import ForbiddenPage from '@/pages/403';
+import ReportsList from '@/pages/reports';
 
 export function useRoutes(): RouteItem[] {
   const isRiskLevelsEnabled = useFeatureEnabled('PULSE');
@@ -37,6 +38,7 @@ export function useRoutes(): RouteItem[] {
   const isListsFeatureEnabled = useFeatureEnabled('LISTS');
   const isSanctionsEnabled = useFeatureEnabled('SANCTIONS');
   const isAuditLogEnabled = useFeatureEnabled('AUDIT_LOGS');
+  const isSarEnabled = useFeatureEnabled('SAR');
   const [lastActiveTab] = useLocalStorageState('user-active-tab', 'consumer');
   const [lastActiveRuleTab] = useLocalStorageState('rule-active-tab', 'rules-library');
   const [lastActiveList] = useLocalStorageState('user-active-list', 'whitelist');
@@ -188,6 +190,20 @@ export function useRoutes(): RouteItem[] {
             path: '/rules/:rule',
             name: 'rule',
             component: RulesPage,
+          },
+        ],
+      },
+      isSarEnabled && {
+        path: '/reports',
+        name: 'reports',
+        icon: 'Article',
+        hideChildrenInMenu: true,
+        position: 'top',
+        routes: [
+          {
+            path: '/reports',
+            name: 'reports',
+            component: ReportsList,
           },
         ],
       },
@@ -358,6 +374,7 @@ export function useRoutes(): RouteItem[] {
     lastActiveRuleTab,
     isRiskLevelsEnabled,
     isImportFilesEnabled,
+    isSarEnabled,
     isListsFeatureEnabled,
     lastActiveList,
     isSanctionsEnabled,

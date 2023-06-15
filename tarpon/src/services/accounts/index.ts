@@ -8,6 +8,10 @@ import {
 } from 'auth0'
 import { UserMetadata } from 'aws-sdk/clients/elastictranscoder'
 import { MongoClient } from 'mongodb'
+import {
+  APIGatewayEventLambdaAuthorizerContext,
+  APIGatewayProxyWithLambdaAuthorizerEvent,
+} from 'aws-lambda'
 import { Account as ApiAccount } from '@/@types/openapi-internal/Account'
 import { logger } from '@/core/logger'
 import { AccountSettings } from '@/@types/openapi-internal/AccountSettings'
@@ -15,7 +19,8 @@ import { getAuth0Credentials } from '@/utils/auth0-utils'
 import { TenantCreationRequest } from '@/@types/openapi-internal/TenantCreationRequest'
 import { AccountPatchPayload } from '@/@types/openapi-internal/AccountPatchPayload'
 import { RoleService } from '@/services/roles'
-import { ACCOUNTS_COLLECTION } from '@/utils/mongoDBUtils'
+import { ACCOUNTS_COLLECTION, getMongoDbClient } from '@/utils/mongoDBUtils'
+import { JWTAuthorizerResult } from '@/@types/jwt'
 
 // Current TS typings for auth0  (@types/auth0@2.35.0) are outdated and
 // doesn't have definitions for users management api. Hope they will fix it soon
@@ -50,6 +55,16 @@ export class AccountsService {
   private config: { auth0Domain: string }
   private mongoDb: MongoClient
 
+  public static async fromEvent(
+    event: APIGatewayProxyWithLambdaAuthorizerEvent<
+      APIGatewayEventLambdaAuthorizerContext<JWTAuthorizerResult>
+    >
+  ): Promise<AccountsService> {
+    const { auth0Domain } = event.requestContext.authorizer
+    const mongoDb = await getMongoDbClient()
+
+    return new AccountsService({ auth0Domain }, { mongoDb })
+  }
   constructor(
     config: { auth0Domain: string },
     connections: { mongoDb: MongoClient }
@@ -294,6 +309,14 @@ export class AccountsService {
     const managementClient: ManagementClient<AppMetadata> =
       await this.getManagementClient()
     return AccountsService.userToAccount(await managementClient.getUser({ id }))
+  }
+
+  async getAccounts(ids: string[]): Promise<Account[]> {
+    const managementClient: ManagementClient<AppMetadata> =
+      await this.getManagementClient()
+    const q = `user_id: "${ids.join('" OR "')}"`
+    const users = await managementClient.getUsers({ q })
+    return users.map(AccountsService.userToAccount)
   }
 
   async getTenants(): Promise<Tenant[]> {

@@ -22,6 +22,8 @@ export default {
   'menu.import': 'Import',
   'menu.import.import-users': 'Import Users',
   'menu.import.import-transactions': 'Import Transactions',
+  'menu.reports': 'Reports',
+  'menu.reports.reports-list': 'Reports',
   'menu.users': 'Users',
   'menu.users.lists': 'Users',
   'menu.users.lists.list': 'Users',

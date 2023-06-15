@@ -22,6 +22,7 @@ import Dashboard from './Dashboard.react.svg';
 import Table from './Table.react.svg';
 import GavelIcon from './gavel.react.svg';
 import s from './styles.module.less';
+import Article from '@/components/ui/icons/Remix/document/article-line.react.svg';
 import { I18n, TranslationId, useI18n } from '@/locales';
 import { useRoutes } from '@/services/routing';
 import { hasName, isTree, RouteItem } from '@/services/routing/types';
@@ -32,6 +33,7 @@ const icons = {
   UsergroupAddOutlined: <UsergroupAddOutlined />,
   UnorderedListOutlined: <UnorderedListOutlined />,
   Gavel: <GavelIcon />,
+  Article: <Article />,
   TeamOutlined: <TeamOutlined />,
   BarChartOutlined: <BarChartOutlined />,
   SettingOutlined: <SettingOutlined />,

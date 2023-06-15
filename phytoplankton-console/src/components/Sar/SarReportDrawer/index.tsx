@@ -1,5 +1,6 @@
-import { useState, useEffect, Fragment, useCallback } from 'react';
+import React, { useState, Fragment, useCallback } from 'react';
 import { Button } from 'antd';
+import { useMutation } from '@tanstack/react-query';
 import Drawer from '@/components/library/Drawer';
 import { Report } from '@/apis';
 import { JsonSchemaForm } from '@/components/JsonSchemaForm';
@@ -8,15 +9,16 @@ import Stepper from '@/components/library/Stepper';
 import VerticalMenu from '@/components/library/VerticalMenu';
 import Checkbox from '@/components/library/Checkbox';
 import Label from '@/components/library/Label';
+import VersionHistory from '@/components/Sar/VersionHistory';
+import { message } from '@/components/library/Message';
+import { getErrorMessage } from '@/utils/lang';
 
 const REPORT_STEP = '1';
 const TRANSACTION_STEP = '2';
 const INDICATOR_STEP = '3';
 const FINALIZE_STEP = '4';
 export default function SarReportDrawer(props: {
-  caseId: string;
-  schemaId: string;
-  transactionIds: string[];
+  initialReport: Report;
   isVisible: boolean;
   onChangeVisibility: (isVisible: boolean) => void;
 }) {
@@ -43,24 +45,38 @@ export default function SarReportDrawer(props: {
     },
   ];
   const api = useApi();
-  const { caseId, schemaId, transactionIds } = props;
-  const [reportTemplate, setReportTemplate] = useState<Report>();
-  const [activeStep, setActiveStep] = useState<string>(STEPS[0].key);
-  const [activeTransaction, setActiveTransaction] = useState<string>(transactionIds[0]);
 
-  const onSubmit = () => {
-    api
-      .postReports({
-        Report: reportTemplate,
-      })
-      .then(setReportTemplate);
-  };
+  const { initialReport } = props;
+  const [activeStep, setActiveStep] = useState<string>(STEPS[0].key);
+  const [activeTransaction, setActiveTransaction] = useState<string>(
+    initialReport.parameters.transactions[0].id,
+  );
+
+  const [report, setReport] = useState<Report>(initialReport);
+
+  const [dirty, setDirty] = useState(false);
+
+  const update = useMutation<Report, unknown>(
+    async () => {
+      return api.postReports({
+        Report: report,
+      });
+    },
+    {
+      onSuccess: (r) => {
+        message.success('Report generated!');
+        setReport(r);
+        setDirty(false);
+      },
+      onError: (error) => {
+        message.fatal(`Unable generate report! ${getErrorMessage(error)}`, error);
+      },
+    },
+  );
 
   const handleReportChange = useCallback((newFormDetails) => {
-    setReportTemplate((report) => {
-      if (!report) {
-        return;
-      }
+    setReport((report) => {
+      setDirty(true);
       report.parameters.report = newFormDetails.formData;
       return { ...report };
     });
@@ -68,10 +84,8 @@ export default function SarReportDrawer(props: {
 
   const handleTransactionChange = useCallback(
     (newFormDetails) => {
-      setReportTemplate((report) => {
-        if (!report) {
-          return;
-        }
+      setReport((report) => {
+        setDirty(true);
         report.parameters.transactions = report.parameters.transactions.map((t) => {
           if (t.id !== activeTransaction) {
             return t;
@@ -88,10 +102,8 @@ export default function SarReportDrawer(props: {
   const handleIndicatorChange = (indicatorKey: string) => {
     return (v: boolean | undefined) =>
       v &&
-      setReportTemplate((report) => {
-        if (!report) {
-          return;
-        }
+      setReport((report) => {
+        setDirty(true);
         let indicators = report.parameters.indicators;
         if (v) {
           indicators = [...report.parameters.indicators, indicatorKey];
@@ -108,19 +120,7 @@ export default function SarReportDrawer(props: {
       });
   };
 
-  useEffect(() => {
-    if (props.isVisible) {
-      api
-        .getReportsTemplate({
-          caseId,
-          schemaId,
-          transactionIds,
-        })
-        .then(setReportTemplate);
-    }
-  }, [props.isVisible, api, caseId, schemaId, transactionIds]);
-
-  const currentTransaction = reportTemplate?.parameters.transactions.find(
+  const currentTransaction = report.parameters.transactions.find(
     (t) => t.id === activeTransaction,
   )?.transaction;
   return (
@@ -129,32 +129,30 @@ export default function SarReportDrawer(props: {
       onChangeVisibility={props.onChangeVisibility}
       title={'Report Generator'}
     >
-      {reportTemplate && (
+      {report && (
         <Stepper steps={STEPS} active={activeStep} onChange={setActiveStep}>
           {(activeStepKey) => {
             return (
               <>
                 {activeStepKey == REPORT_STEP && (
-                  <>
-                    <JsonSchemaForm
-                      schema={reportTemplate.schema.reportSchema}
-                      formData={reportTemplate?.parameters.report}
-                      liveValidate={false}
-                      onChange={handleReportChange}
-                    >
-                      {/* Add a dummy fragment for disabling the submit button */}
-                      <Fragment />
-                    </JsonSchemaForm>
-                  </>
+                  <JsonSchemaForm
+                    schema={report.schema?.reportSchema}
+                    formData={report.parameters.report}
+                    liveValidate={false}
+                    onChange={handleReportChange}
+                  >
+                    {/* Add a dummy fragment for disabling the submit button */}
+                    <Fragment />
+                  </JsonSchemaForm>
                 )}
                 {activeStepKey == TRANSACTION_STEP && (
                   <VerticalMenu
-                    items={transactionIds.map((tid) => ({ key: tid, title: tid }))}
+                    items={report.parameters.transactions.map((t) => ({ key: t.id, title: t.id }))}
                     active={activeTransaction}
                     onChange={setActiveTransaction}
                   >
                     <JsonSchemaForm
-                      schema={reportTemplate?.schema.transactionSchema}
+                      schema={report.schema?.transactionSchema}
                       formData={currentTransaction}
                       liveValidate={false}
                       onChange={handleTransactionChange}
@@ -165,18 +163,20 @@ export default function SarReportDrawer(props: {
                   </VerticalMenu>
                 )}
                 {activeStepKey == INDICATOR_STEP &&
-                  reportTemplate.schema.indicators.map((i) => (
+                  report.schema?.indicators.map((i) => (
                     <Label label={i.description} position="RIGHT" level={1}>
                       <Checkbox
-                        value={reportTemplate.parameters.indicators.indexOf(i.key) > -1}
+                        value={report.parameters.indicators.indexOf(i.key) > -1}
                         onChange={handleIndicatorChange(i.key)}
                       />
                     </Label>
                   ))}
                 {activeStepKey === FINALIZE_STEP && (
                   <>
-                    <Button onClick={onSubmit}>Test Output</Button>
-                    <div>{reportTemplate.output}</div>
+                    <Button onClick={() => update.mutate()} disabled={!dirty}>
+                      Generate
+                    </Button>
+                    <VersionHistory report={report} />
                   </>
                 )}
               </>

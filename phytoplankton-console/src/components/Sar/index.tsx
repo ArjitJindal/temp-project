@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { Alert, Col, Row } from 'antd';
 import _ from 'lodash';
+import { useMutation } from '@tanstack/react-query';
 import Button from '../library/Button';
 import Modal from '../ui/Modal';
 import Select from '../library/Select';
@@ -9,10 +10,12 @@ import { PropertyListLayout } from '@/pages/rules/RuleConfigurationDrawer/JsonSc
 import ErrorWarningFillIcon from '@/components/ui/icons/Remix/system/error-warning-fill.react.svg';
 import { useApi } from '@/api';
 import SarReportDrawer from '@/components/Sar/SarReportDrawer';
-import { ReportSchema, ReportSchemasResponse } from '@/apis';
+import { Report, ReportSchema, ReportSchemasResponse } from '@/apis';
 import { useQuery } from '@/utils/queries/hooks';
 import { REPORT_SCHEMAS } from '@/utils/queries/keys';
 import AsyncResourceRenderer from '@/components/common/AsyncResourceRenderer';
+import { message } from '@/components/library/Message';
+import { getErrorMessage } from '@/utils/lang';
 export function SarButton({
   caseId,
   transactionIds,
@@ -25,10 +28,25 @@ export function SarButton({
     return api.getReportSchemas();
   });
 
-  const [isDrawerVisible, setIsDrawerVisible] = useState(false);
   const [isModalVisible, setIsModalVisible] = useState(false);
   const [reportType, setReportType] = useState<string>();
   const [schemaId, setSchemaId] = useState<string>();
+
+  const draft = useMutation<Report, unknown, string>(
+    async (schemaId) => {
+      return api.getReportsDraft({
+        caseId,
+        schemaId,
+        transactionIds,
+      });
+    },
+    {
+      onSuccess: () => setIsModalVisible(false),
+      onError: (error) => {
+        message.fatal(`Failed to generate report draft! ${getErrorMessage(error)}`, error);
+      },
+    },
+  );
 
   return (
     <>
@@ -47,8 +65,9 @@ export function SarButton({
                 disabled: !schemaId,
               }}
               onOk={() => {
-                setIsDrawerVisible(true);
-                setIsModalVisible(false);
+                if (schemaId) {
+                  draft.mutate(schemaId);
+                }
               }}
             >
               <PropertyListLayout>
@@ -97,13 +116,13 @@ export function SarButton({
                 />
               </PropertyListLayout>
             </Modal>
-            <SarReportDrawer
-              caseId={caseId}
-              schemaId={schemaId as string}
-              transactionIds={transactionIds}
-              isVisible={isDrawerVisible}
-              onChangeVisibility={setIsDrawerVisible}
-            />
+            {draft.data && (
+              <SarReportDrawer
+                initialReport={draft.data}
+                isVisible={!!draft.data}
+                onChangeVisibility={() => draft.reset()}
+              />
+            )}
           </>
         )}
       </AsyncResourceRenderer>
