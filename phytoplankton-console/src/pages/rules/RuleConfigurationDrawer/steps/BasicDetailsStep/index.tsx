@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import StepHeader from '../../StepHeader';
 import s from './style.module.less';
 import Label from '@/components/library/Label';
@@ -49,6 +49,11 @@ export default function BasicDetailsStep(props: Props) {
 function RuleDetails(props: Props) {
   const { rule } = props;
   const [ruleNature, setRuleNature] = useState<RuleNature>(rule.defaultNature);
+  const [ruleLabels, setRuleLabels] = useState<RuleLabels[]>(rule.labels);
+
+  useEffect(() => {
+    setRuleLabels([]);
+  }, [ruleNature]);
 
   return (
     <>
@@ -98,6 +103,15 @@ function RuleDetails(props: Props) {
               options={RULE_LABELS_OPTIONS[ruleNature]}
               mode="MULTIPLE"
               {...inputProps}
+              onChange={(value) => {
+                if (value) {
+                  setRuleLabels(value);
+                }
+                if (inputProps.onChange) {
+                  inputProps.onChange(value);
+                }
+              }}
+              value={ruleLabels}
             />
           )}
         </InputField>
