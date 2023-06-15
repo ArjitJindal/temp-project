@@ -69,7 +69,10 @@ export const TRANSACTIONS_ITEM_RISKS_ARS = (transactionId: string): QueryKey => 
   'risks',
   'ars-score',
 ];
-export const AUDIT_LOGS_LIST = (searchParams: AnyParameters): QueryKey => [searchParams];
+export const AUDIT_LOGS_LIST = (searchParams: AnyParameters): QueryKey => [
+  'audit-logs',
+  searchParams,
+];
 export const TRANSACTIONS_STATS = (
   type: 'by-type' | 'by-date',
   searchParams: AnyParameters,

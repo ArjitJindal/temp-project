@@ -49,7 +49,11 @@ export default function PageWrapper(props: PageWrapperProps) {
               )}
             </Col>
             <Col xs={6}>
-              {actionButton && <div style={{ textAlign: 'end' }}>{actionButton}</div>}
+              {actionButton && (
+                <div style={{ textAlign: 'end', display: 'flex', justifyContent: 'end' }}>
+                  {actionButton}
+                </div>
+              )}
             </Col>
           </Row>
         </header>
