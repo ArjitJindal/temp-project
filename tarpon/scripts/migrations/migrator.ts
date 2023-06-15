@@ -1,6 +1,6 @@
 import path from 'path'
 import { exit } from 'process'
-import { StackConstants } from '@lib/constants'
+import { SQSQueues, StackConstants } from '@lib/constants'
 import { Umzug, MongoDBStorage } from 'umzug'
 import AWS from 'aws-sdk'
 import { syncMongoDbIndices } from './always-run/sync-mongodb-indices'
@@ -69,8 +69,14 @@ function refreshCredentialsPeriodically() {
   )
 }
 
+function initializeEnvVars() {
+  process.env.BATCH_JOB_QUEUE_URL = `https://sqs.${process.env.AWS_REGION}.amazonaws.com/${process.env.AWS_ACCOUNT}/${SQSQueues.BATCH_JOB_QUEUE_NAME}`
+  process.env.AUDITLOG_TOPIC_ARN = `arn:aws:sns:${process.env.AWS_REGION}:${process.env.AWS_ACCOUNT}:${StackConstants.AUDIT_LOG_TOPIC_NAME}`
+}
+
 async function main() {
   refreshCredentialsPeriodically()
+  initializeEnvVars()
 
   const mongodb = await getMongoDbClient(StackConstants.MONGO_DB_DATABASE_NAME)
   const umzug = new Umzug({

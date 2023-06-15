@@ -188,6 +188,7 @@ export class CdkTarponPipelineStack extends cdk.Stack {
                 `export ATLAS_CREDENTIALS_SECRET_ARN=${config.application.ATLAS_CREDENTIALS_SECRET_ARN}`,
                 `export ENV=${env}`,
                 `export AWS_REGION=${config.env.region}`,
+                `export AWS_ACCOUNT=${config.env.account}`,
                 ...assumeRuleCommands,
               ],
             },

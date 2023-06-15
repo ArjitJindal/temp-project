@@ -6,9 +6,6 @@ import { publishAuditLog } from '@/services/audit-log'
 import { AlertStatusUpdateRequest } from '@/@types/openapi-internal/AlertStatusUpdateRequest'
 import { logger } from '@/core/logger'
 
-process.env.AUDITLOG_TOPIC_ARN =
-  'arn:aws:sns:eu-central-1:870721492449:AuditLogTopic'
-
 const DATA = [
   {
     originalComment: 'Alert status changed to CLOSED. Reasons: False positive',
