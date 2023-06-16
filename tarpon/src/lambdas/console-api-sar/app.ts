@@ -16,6 +16,7 @@ import { Report } from '@/@types/openapi-internal/Report'
 import { CaseRepository } from '@/services/rules-engine/repositories/case-repository'
 import { getContext } from '@/core/utils/context'
 import { Account } from '@/@types/openapi-internal/Account'
+import { MongoDbTransactionRepository } from '@/services/rules-engine/repositories/mongodb-transaction-repository'
 
 export const sarHandler = lambdaApi()(
   async (
@@ -66,11 +67,27 @@ export const sarHandler = lambdaApi()(
         throw new NotFound(`Cannot find case ${params.caseId}`)
       }
       const account = getContext()?.user as Account
-      const parameters = generator.prepopulate(c, txnIds, account)
+      const reportId = await reportRepository.getId()
+
+      const txpRepo = new MongoDbTransactionRepository(tenantId, mongoDb)
+
+      const transactions = await txpRepo.getTransactions({
+        filterIdList: txnIds,
+        includeUsers: true,
+        pageSize: 20,
+      })
+
+      const parameters = generator.prepopulate(
+        reportId,
+        c,
+        transactions.data,
+        account
+      )
       const now = new Date().valueOf()
 
       const schema = generator.getSchema()
       const report: Report = {
+        id: reportId,
         name: params.caseId,
         description: `SAR report for ${params.caseId}`,
         caseId: params.caseId,
@@ -84,7 +101,7 @@ export const sarHandler = lambdaApi()(
         comments: [],
         revisions: [],
       }
-      return report
+      return reportRepository.saveOrUpdateReport(report)
     }
 
     if (event.httpMethod === 'GET' && event.resource === '/reports') {

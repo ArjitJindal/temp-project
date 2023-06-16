@@ -172,7 +172,24 @@ export function sampleBusinessUser(
     ],
     directors: [
       {
+        legalDocuments: [legalDocument1, legalDocument2],
+        contactDetails: {
+          emailIds: ['some@email.com'],
+          addresses: [
+            {
+              addressLines: ['Times Square 12B', 'App. 11'],
+              postcode: '88173',
+              city: 'New York',
+              state: 'New York',
+              country: 'USA',
+              tags: [tag1],
+            },
+          ],
+        },
         generalDetails: {
+          gender: 'M',
+          countryOfResidence: 'AF',
+          dateOfBirth: new Date().toISOString(),
           name: {
             firstName: randomName(),
             middleName: randomName(),

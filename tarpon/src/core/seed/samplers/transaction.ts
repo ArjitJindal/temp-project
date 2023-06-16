@@ -21,7 +21,7 @@ export function sampleTransaction(
     originCountry?: CountryCode
     destinationCountry?: CountryCode
   } = {},
-  seed?: number
+  seed = 0.1
 ): InternalTransaction {
   const rnd = prng(seed)
 
@@ -42,22 +42,18 @@ export function sampleTransaction(
       transactionAmount: 50,
     },
     timestamp: new Date().getTime(),
-    destinationPaymentDetails: {
-      method: 'WALLET' as const,
-      walletType: 'internal' as const,
-      paymentChannel: 'nextpay',
-    },
+    destinationPaymentDetails: samplePaymentDetails(seed + 0.1),
     deviceData: {
       ipAddress: [...new Array(4)].map(() => randomInt(rnd(), 256)).join('.'),
     },
-    originPaymentDetails: sampleOriginPaymentDetails(seed),
+    originPaymentDetails: samplePaymentDetails(seed),
     hitRules: [],
     executedRules: [],
     status: 'ALLOW' as const,
   }
 }
 
-export function sampleOriginPaymentDetails(seed?: number) {
+export function samplePaymentDetails(seed?: number) {
   switch (randomInt(seed, 9)) {
     case 0:
       return sampleCardDetails(seed)
@@ -68,13 +64,13 @@ export function sampleOriginPaymentDetails(seed?: number) {
     case 3:
       return sampleACHDetails(seed)
     case 4:
-      return sampleSWIFTDetails(seed)
+      return sampleWalletDetails(seed)
     case 5:
       return sampleMpesaDetails(seed)
     case 6:
       return sampleUPIDetails(seed)
     case 7:
-      return sampleWalletDetails(seed)
+      return sampleSWIFTDetails(seed)
     case 8:
       return sampleCheckDetails(seed)
   }

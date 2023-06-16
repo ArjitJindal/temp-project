@@ -48,15 +48,18 @@ const fromProperties = {
       'If the transaction is conducted in foreign currency, then specify the foreign currency details.',
     $ref: '#/definitions/t_foreign_currency',
   },
-  t_conductor: {
-    title: 'Conductor',
-    description: 'The person performing the transaction.',
-    $ref: '#/definitions/t_person',
-  },
+  // t_conductor: {
+  //   title: 'Conductor',
+  //   description: 'The person performing the transaction.',
+  //   $ref: '#/definitions/t_person',
+  // },
   from_country: {
     title: 'Currency',
     description: 'Country where transaction was initiated.',
     $ref: '#/definitions/country_code',
+  },
+  from_account: {
+    $ref: '#/definitions/t_account',
   },
 }
 
@@ -80,6 +83,10 @@ const toProperties = {
   },
   to_country: {
     $ref: '#/definitions/country_code',
+  },
+  to_account: {
+    title: 'To Account',
+    $ref: '#/definitions/t_account_my_client',
   },
 }
 
@@ -155,9 +162,7 @@ const entityProperties = {
     description: 'Individuals authorized',
     type: 'array',
     items: {
-      type: {
-        $ref: '#/definitions/t_person_my_client',
-      },
+      $ref: '#/definitions/t_person_my_client',
     },
   },
   incorporation_date: {
@@ -310,35 +315,35 @@ const accountProperties = {
       type: 'string',
       format: 'date',
     },
-    balance: {
-      title: 'Balance',
-      type: 'number',
-      description: 'The account balance after the transaction was conducted.',
-    },
-    date_balance: {
-      title: 'Date',
-      type: 'string',
-      format: 'date',
-      description:
-        'A date field to specify the date of the reported balance. Application will show balance history',
-    },
+    // balance: {
+    //   title: 'Balance',
+    //   type: 'number',
+    //   description: 'The account balance after the transaction was conducted.',
+    // },
+    // date_balance: {
+    //   title: 'Date',
+    //   type: 'string',
+    //   format: 'date',
+    //   description:
+    //     'A date field to specify the date of the reported balance. Application will show balance history',
+    // },
     status_code: {
       $ref: '#/definitions/account_status_code',
       title: 'Status code',
       description: 'Account status when transaction was initiated',
     },
-    beneficiary: {
-      type: 'string',
-      maxLength: 50,
-      title: 'Beneficiary',
-      description: 'Ultimate beneficiary of the account',
-    },
-    beneficiary_comment: {
-      title: 'Beneficiary comment',
-      description: 'Any special remark on the beneficiary',
-      type: 'string',
-      maxLength: 255,
-    },
+    // beneficiary: {
+    //   type: 'string',
+    //   maxLength: 50,
+    //   title: 'Beneficiary',
+    //   description: 'Ultimate beneficiary of the account',
+    // },
+    // beneficiary_comment: {
+    //   title: 'Beneficiary comment',
+    //   description: 'Any special remark on the beneficiary',
+    //   type: 'string',
+    //   maxLength: 255,
+    // },
     comments: {
       title: 'Comments',
       description: 'Generic comments elements',
@@ -622,36 +627,39 @@ const Definitions: AnySchemaObject = {
         description: 'Generic comments element',
         maxLength: 4000,
       },
+      account: {
+        $ref: '#/definitions/t_account',
+      },
     },
-    oneOf: [
-      {
-        title: 'Person',
-        required: ['person'],
-        properties: {
-          person: {
-            $ref: '#/definitions/t_person',
-          },
-        },
-      },
-      {
-        title: 'Account',
-        required: ['account'],
-        properties: {
-          account: {
-            $ref: '#/definitions/t_account',
-          },
-        },
-      },
-      {
-        title: 'Entity',
-        required: ['entity'],
-        properties: {
-          entity: {
-            $ref: '#/definitions/t_entity',
-          },
-        },
-      },
-    ],
+    // oneOf: [
+    //   {
+    //     title: 'Person',
+    //     required: ['person'],
+    //     properties: {
+    //       person: {
+    //         $ref: '#/definitions/t_person',
+    //       },
+    //     },
+    //   },
+    //   {
+    //     title: 'Account',
+    //     required: ['account'],
+    //     properties: {
+    //       account: {
+    //         $ref: '#/definitions/t_account',
+    //       },
+    //     },
+    //   },
+    //   {
+    //     title: 'Entity',
+    //     required: ['entity'],
+    //     properties: {
+    //       entity: {
+    //         $ref: '#/definitions/t_entity',
+    //       },
+    //     },
+    //   },
+    // ],
   },
   t_person_my_client: {
     type: 'object',
@@ -670,35 +678,35 @@ const Definitions: AnySchemaObject = {
     title: 'From details',
     required: ['from_funds_code'],
     properties: fromProperties,
-    oneOf: [
-      {
-        title: 'Account',
-        required: ['from_account'],
-        properties: {
-          from_account: {
-            $ref: '#/definitions/t_account',
-          },
-        },
-      },
-      {
-        title: 'Person',
-        required: ['from_person'],
-        properties: {
-          from_person: {
-            $ref: '#/definitions/t_person',
-          },
-        },
-      },
-      {
-        title: 'Entity',
-        required: ['from_entity'],
-        properties: {
-          from_entity: {
-            $ref: '#/definitions/t_entity',
-          },
-        },
-      },
-    ],
+    // oneOf: [
+    //   {
+    //     title: 'Account',
+    //     required: ['from_account'],
+    //     properties: {
+    //       from_account: {
+    //         $ref: '#/definitions/t_account',
+    //       },
+    //     },
+    //   },
+    // {
+    //   title: 'Person',
+    //   required: ['from_person'],
+    //   properties: {
+    //     from_person: {
+    //       $ref: '#/definitions/t_person',
+    //     },
+    //   },
+    // },
+    // {
+    //   title: 'Entity',
+    //   required: ['from_entity'],
+    //   properties: {
+    //     from_entity: {
+    //       $ref: '#/definitions/t_entity',
+    //     },
+    //   },
+    // },
+    // ],
   },
   account_status_code: {
     type: 'string',
@@ -744,11 +752,6 @@ const Definitions: AnySchemaObject = {
     title: 'Transaction item status',
     type: 'string',
     enum: ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H'],
-  },
-  report_code: {
-    title: 'Report code',
-    type: 'string',
-    enum: ['CTR', 'STR', 'SAR', 'MID', 'EFT', 'ORI', 'ORD', 'IRI', 'IRD'],
   },
   contact_type: {
     title: 'Contract type',
@@ -863,11 +866,9 @@ const Definitions: AnySchemaObject = {
       'account_name',
       'personal_account_type',
       'signatory',
-      't_person',
+      't_entity',
       'role',
       'opened',
-      'balance',
-      'date_balance',
       'status_code',
     ],
     ...accountProperties,
@@ -877,109 +878,109 @@ const Definitions: AnySchemaObject = {
     title: 'From details',
     required: ['from_funds_code'],
     properties: fromProperties,
-    oneOf: [
-      {
-        required: ['from_account'],
-        title: 'Account',
-        properties: {
-          from_account: {
-            $ref: '#/definitions/t_account_my_client',
-          },
-        },
-      },
-      {
-        required: ['from_person'],
-        title: 'Person',
-        properties: {
-          from_person: {
-            $ref: '#/definitions/t_person_my_client',
-          },
-        },
-      },
-      {
-        required: ['from_entity'],
-        title: 'Entity',
-        properties: {
-          from_entity: {
-            $ref: '#/definitions/t_entity_my_client',
-          },
-        },
-      },
-    ],
+    // oneOf: [
+    // {
+    //   required: ['from_account'],
+    //   title: 'Account',
+    //   properties: {
+    //     from_account: {
+    //       $ref: '#/definitions/t_account_my_client',
+    //     },
+    //   },
+    // },
+    // {
+    //   required: ['from_person'],
+    //   title: 'Person',
+    //   properties: {
+    //     from_person: {
+    //       $ref: '#/definitions/t_person_my_client',
+    //     },
+    //   },
+    // },
+    // {
+    //   required: ['from_entity'],
+    //   title: 'Entity',
+    //   properties: {
+    //     from_entity: {
+    //       $ref: '#/definitions/t_entity_my_client',
+    //     },
+    //   },
+    // },
+    // ],
   },
   t_to: {
     type: 'object',
     title: 'To details',
     required: ['to_funds_code', 'to_country'],
     properties: toProperties,
-    anyOf: [
-      {
-        required: ['to_account'],
-        title: 'Account',
-        properties: {
-          to_account: {
-            $ref: '#/definitions/t_account',
-          },
-        },
-      },
-      {
-        required: ['to_person'],
-        title: 'Person',
-        properties: {
-          to_person: {
-            $ref: '#/definitions/t_person',
-          },
-        },
-      },
-      {
-        required: ['to_entity'],
-        title: 'Entity',
-        properties: {
-          to_entity: {
-            $ref: '#/definitions/t_entity',
-          },
-        },
-      },
-    ],
+    // anyOf: [
+    //   {
+    //     required: ['to_account'],
+    //     title: 'Account',
+    //     properties: {
+    //       to_account: {
+    //         $ref: '#/definitions/t_account',
+    //       },
+    //     },
+    //   },
+    //   {
+    //     required: ['to_person'],
+    //     title: 'Person',
+    //     properties: {
+    //       to_person: {
+    //         $ref: '#/definitions/t_person',
+    //       },
+    //     },
+    //   },
+    //   {
+    //     required: ['to_entity'],
+    //     title: 'Entity',
+    //     properties: {
+    //       to_entity: {
+    //         $ref: '#/definitions/t_entity',
+    //       },
+    //     },
+    //   },
+    // ],
   },
   t_to_my_client: {
     title: 'To details',
     type: 'object',
     required: [],
     properties: toProperties,
-    oneOf: [
-      {
-        required: ['to_account'],
-        properties: {
-          to_account: {
-            title: 'To Account',
-            $ref: '#/definitions/t_account_my_client',
-          },
-        },
-      },
-      {
-        required: ['to_person'],
-        properties: {
-          to_person: {
-            title: 'To Person',
-            type: {
-              $ref: '#/definitions/t_person_my_client',
-            },
-          },
-        },
-      },
-      {
-        required: ['to_entity'],
-        properties: {
-          to_entity: {
-            title: 'To Entity',
-            type: {
-              $ref: '#/definitions/t_entity_my_client',
-            },
-          },
-        },
-      },
-    ],
+    // oneOf: [
+    // {
+    //   required: ['to_account'],
+    //   properties: {
+    //     to_account: {
+    //       title: 'To Account',
+    //       $ref: '#/definitions/t_account_my_client',
+    //     },
+    //   },
+    // },
+    // {
+    //   required: ['to_person'],
+    //   properties: {
+    //     to_person: {
+    //       title: 'To Person',
+    //       type: {
+    //         $ref: '#/definitions/t_person_my_client',
+    //       },
+    //     },
+    //   },
+    // },
+    // {
+    //   required: ['to_entity'],
+    //   properties: {
+    //     to_entity: {
+    //       title: 'To Entity',
+    //       type: {
+    //         $ref: '#/definitions/t_entity_my_client',
+    //       },
+    //     },
+    //   },
+    // },
+    // ],
   },
   t_party: {
     title: 'Party',
@@ -1024,57 +1025,60 @@ const Definitions: AnySchemaObject = {
         description: 'Generic comments',
         maxLength: 4000,
       },
+      account: {
+        $ref: '#/definitions/t_account',
+      },
     },
-    oneOf: [
-      {
-        required: ['person'],
-        properties: {
-          person: {
-            $ref: '#/definitions/t_person',
-          },
-        },
-      },
-      {
-        required: ['person_my_client'],
-        properties: {
-          person_my_client: {
-            $ref: '#/definitions/t_person_my_client',
-          },
-        },
-      },
-      {
-        required: ['account'],
-        properties: {
-          account: {
-            $ref: '#/definitions/t_account',
-          },
-        },
-      },
-      {
-        required: ['account_my_client'],
-        properties: {
-          account_my_client: {
-            $ref: '#/definitions/t_account_my_client',
-          },
-        },
-      },
-      {
-        required: ['entity'],
-        properties: {
-          entity: {
-            $ref: '#/definitions/t_entity',
-          },
-        },
-      },
-      {
-        required: ['entity_my_client'],
-        properties: {
-          entity_my_client: {
-            $ref: '#/definitions/t_entity_my_client',
-          },
-        },
-      },
-    ],
+    // oneOf: [
+    // {
+    //   required: ['person'],
+    //   properties: {
+    //     person: {
+    //       $ref: '#/definitions/t_person',
+    //     },
+    //   },
+    // },
+    // {
+    //   required: ['person_my_client'],
+    //   properties: {
+    //     person_my_client: {
+    //       $ref: '#/definitions/t_person_my_client',
+    //     },
+    //   },
+    // },
+    // {
+    //   required: ['account'],
+    //   properties: {
+    //     account: {
+    //       $ref: '#/definitions/t_account',
+    //     },
+    //   },
+    // },
+    // {
+    //   required: ['account_my_client'],
+    //   properties: {
+    //     account_my_client: {
+    //       $ref: '#/definitions/t_account_my_client',
+    //     },
+    //   },
+    // },
+    // {
+    //   required: ['entity'],
+    //   properties: {
+    //     entity: {
+    //       $ref: '#/definitions/t_entity',
+    //     },
+    //   },
+    // },
+    // {
+    //   required: ['entity_my_client'],
+    //   properties: {
+    //     entity_my_client: {
+    //       $ref: '#/definitions/t_entity_my_client',
+    //     },
+    //   },
+    // },
+    // ],
   },
   t_account: {
     type: 'object',
@@ -1295,7 +1299,7 @@ const Definitions: AnySchemaObject = {
 
 export const KenyaTransactionSchema: AnySchemaObject = {
   type: 'object',
-  required: ['transaction_number'],
+  required: ['transaction_number', 't_from_my_client', 't_to_my_client'],
   properties: {
     transaction_number: {
       type: 'string',
@@ -1309,12 +1313,12 @@ export const KenyaTransactionSchema: AnySchemaObject = {
       title: 'Internal ref number',
       description: 'Reporting Entity internal transaction reference number',
     },
-    transaction_location: {
-      type: 'string',
-      maxLength: 255,
-      title: 'Location',
-      description: 'Branch/Location where the transaction took place',
-    },
+    // transaction_location: {
+    //   type: 'string',
+    //   maxLength: 255,
+    //   title: 'Location',
+    //   description: 'Branch/Location where the transaction took place',
+    // },
     transaction_description: {
       type: 'string',
       title: 'Description',
@@ -1325,43 +1329,43 @@ export const KenyaTransactionSchema: AnySchemaObject = {
       type: 'string',
       title: 'Transaction date',
       description: 'Date and time of the transaction',
-      format: 'date',
+      format: 'date-time',
     },
-    teller: {
-      type: 'string',
-      title: 'Teller',
-      maxLength: 20,
-      description: 'Bank staff who conducted the transaction',
-    },
-    authorized: {
-      type: 'string',
-      title: 'Authorized',
-      maxLength: 20,
-      description: 'Bank staff who authorized the transaction',
-    },
-    late_deposit: {
-      title: 'Late deposit indicator',
-      type: 'boolean',
-    },
-    date_posting: {
-      title: 'Date of Posting',
-      description: 'If different from date of transaction',
-      type: 'string',
-      format: 'date',
-    },
-    value_date: {
-      type: 'string',
-      title: 'Value date',
-      format: 'date',
-      description:
-        'The actual date when the money will be credited (For example, Value date of a cheque)',
-    },
-    transmode_code: {
-      $ref: '#/definitions/conduction_type',
-      title: 'Transmode code',
-      description:
-        'How the transaction was conducted ie the Transaction Method',
-    },
+    // teller: {
+    //   type: 'string',
+    //   title: 'Teller',
+    //   maxLength: 20,
+    //   description: 'Bank staff who conducted the transaction',
+    // },
+    // authorized: {
+    //   type: 'string',
+    //   title: 'Authorized',
+    //   maxLength: 20,
+    //   description: 'Bank staff who authorized the transaction',
+    // },
+    // late_deposit: {
+    //   title: 'Late deposit indicator',
+    //   type: 'boolean',
+    // },
+    // date_posting: {
+    //   title: 'Date of Posting',
+    //   description: 'If different from date of transaction',
+    //   type: 'string',
+    //   format: 'date',
+    // },
+    // value_date: {
+    //   type: 'string',
+    //   title: 'Value date',
+    //   format: 'date',
+    //   description:
+    //     'The actual date when the money will be credited (For example, Value date of a cheque)',
+    // },
+    // transmode_code: {
+    //   $ref: '#/definitions/conduction_type',
+    //   title: 'Transmode code',
+    //   description:
+    //     'How the transaction was conducted ie the Transaction Method',
+    // },
     transmode_comment: {
       type: 'string',
       title: 'Transmode comment',
@@ -1387,33 +1391,13 @@ export const KenyaTransactionSchema: AnySchemaObject = {
       description: 'Free text field to describe the source of Funds',
       maxLength: 4000,
     },
+    t_from_my_client: {
+      $ref: '#/definitions/t_from_my_client',
+    },
+    t_to_my_client: {
+      $ref: '#/definitions/t_to_my_client',
+    },
   },
-  oneOf: [
-    {
-      title: 'From my client',
-      properties: {
-        t_from_my_client: {
-          $ref: '#/definitions/t_from_my_client',
-        },
-        t_to: {
-          $ref: '#/definitions/t_to',
-        },
-      },
-      required: ['t_from_my_client', 't_to'],
-    },
-    {
-      title: 'To my client',
-      properties: {
-        t_from: {
-          $ref: '#/definitions/t_from',
-        },
-        t_to_my_client: {
-          $ref: '#/definitions/t_to_my_client',
-        },
-      },
-      required: ['t_from', 't_to_my_client'],
-    },
-  ],
   definitions: Definitions,
 }
 
@@ -1423,7 +1407,6 @@ export const KenyaReportSchema: AnySchemaObject = {
     'reentity_id',
     'submission_code',
     'report_code',
-    'submission_date',
     'currency_code_local',
     'reporting_person',
   ],
@@ -1446,11 +1429,11 @@ export const KenyaReportSchema: AnySchemaObject = {
       type: 'string',
       enum: ['E', 'M'],
     },
-    report_code: {
-      title: 'Report code',
-      type: 'string',
-      $ref: '#/definitions/report_code',
-    },
+    // report_code: {
+    //   title: 'Report code',
+    //   type: 'string',
+    //   $ref: '#/definitions/report_code',
+    // },
     entity_reference: {
       title: 'Entity reference',
       type: 'string',
@@ -1464,12 +1447,6 @@ export const KenyaReportSchema: AnySchemaObject = {
       maxLength: 255,
       description:
         'Optional ref. number to be used as communication channel between the FRC and the Reporting Entity',
-    },
-    submission_date: {
-      title: 'Submission date',
-      type: 'string',
-      format: 'date',
-      description: 'Submission date and time',
     },
     currency_code_local: {
       title: 'Currency code',

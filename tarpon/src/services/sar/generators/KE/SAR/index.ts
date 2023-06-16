@@ -4,7 +4,6 @@ import { indicators, KenyaReportSchema, KenyaTransactionSchema } from './schema'
 import { Case } from '@/@types/openapi-internal/Case'
 import { ReportSchema } from '@/@types/openapi-internal/ReportSchema'
 import { Account } from '@/@types/openapi-internal/Account'
-import { InternalConsumerUser } from '@/@types/openapi-internal/InternalConsumerUser'
 import { InternalBusinessUser } from '@/@types/openapi-internal/InternalBusinessUser'
 import { CardDetails } from '@/@types/openapi-public/CardDetails'
 import { GenericBankAccountDetails } from '@/@types/openapi-public/GenericBankAccountDetails'
@@ -17,6 +16,8 @@ import { WalletDetails } from '@/@types/openapi-public/WalletDetails'
 import { CheckDetails } from '@/@types/openapi-public/CheckDetails'
 import { InternalTransaction } from '@/@types/openapi-internal/InternalTransaction'
 import { ReportParameters } from '@/@types/openapi-internal/ReportParameters'
+import { Address } from '@/@types/openapi-internal/Address'
+import { InternalConsumerUser } from '@/@types/openapi-internal/InternalConsumerUser'
 
 export class KenyaSARReportGenerator implements ReportGenerator {
   getSchema(): ReportSchema {
@@ -31,13 +32,11 @@ export class KenyaSARReportGenerator implements ReportGenerator {
   }
 
   public prepopulate(
+    reportId: string,
     c: Case,
-    transactionIds: string[],
+    transactions: InternalTransaction[],
     _reporter: Account
   ): ReportParameters {
-    const transactions = c.caseTransactions?.filter(
-      (t) => transactionIds.indexOf(t.transactionId) > -1
-    )
     const firstTxn =
       transactions && transactions.length > 0 ? transactions[0] : undefined
 
@@ -52,31 +51,38 @@ export class KenyaSARReportGenerator implements ReportGenerator {
       report: {
         submission_code: 'E',
         report_code: 'SAR',
-        entity_reference: c.caseId,
+        entity_reference: reportId,
         submission_date: new Date().toISOString(),
         currency_code_local:
           firstTxn && firstTxn?.originAmountDetails?.transactionCurrency,
-        reporting_person: [
-          {
-            first_name: firstName,
-            last_name: lastName,
-            email: _reporter.email,
-          },
-        ],
-        location: [],
+        reporting_person: {
+          first_name: firstName,
+          last_name: lastName,
+          email: _reporter.email,
+        },
       },
       transactions:
         transactions?.map((t) => {
           return {
             id: t.transactionId,
             transaction: {
+              transaction_number: t.transactionId,
+              internal_ref_number: t.transactionId,
+              transaction_description: t.reference,
+              date_transaction:
+                t.createdAt && new Date(t.createdAt).toISOString(),
+              transmode_comment: `${t.originPaymentDetails?.method} to ${t.destinationPaymentDetails?.method}`,
+              amount_local: t.originAmountDetails?.transactionAmount,
               t_from_my_client: {
                 from_account: this.account(
                   t,
                   t.originUser,
                   t.originPaymentDetails
                 ),
-                from_person: this.person(t.originUser),
+                from_funds_code: 'E',
+                from_foreign_currency:
+                  t.originAmountDetails?.transactionCurrency,
+                from_country: t.originAmountDetails?.country,
               },
               t_to_my_client: {
                 to_account: this.account(
@@ -84,16 +90,11 @@ export class KenyaSARReportGenerator implements ReportGenerator {
                   t.destinationUser,
                   t.destinationPaymentDetails
                 ),
-                to_person: this.person(t.originUser),
+                to_funds_code: 'E',
+                to_foreign_currency:
+                  t.destinationAmountDetails?.transactionCurrency,
+                to_country: t.destinationAmountDetails?.country,
               },
-              amount_local: t.originAmountDetails?.transactionAmount,
-              date_transaction:
-                t.createdAt && new Date(t.createdAt as number).toISOString(),
-              goods_services: [],
-              internal_ref_number: t.transactionId,
-
-              transaction_location: t.originAmountDetails?.country,
-              transaction_number: t.transactionId,
             },
           }
         }) || [],
@@ -104,14 +105,27 @@ export class KenyaSARReportGenerator implements ReportGenerator {
     const builder = new xml2js.Builder()
     return builder.buildObject({
       ...reportParams.report,
+      report_code: 'SAR',
       transaction: reportParams.transactions.map((t) => t.transaction),
       indicators: reportParams.indicators,
     })
   }
 
+  private address(a: Address): object | undefined {
+    if (a.addressLines.length === 0) {
+      return
+    }
+    return {
+      address_type: 'B',
+      address: a.addressLines[0],
+      zip: a.postcode,
+      country_code: a.country,
+      state: a.state,
+    }
+  }
   private account(
     t: InternalTransaction | undefined,
-    u: InternalConsumerUser | InternalBusinessUser | undefined,
+    u: InternalBusinessUser | InternalConsumerUser | undefined,
     pd:
       | CardDetails
       | GenericBankAccountDetails
@@ -124,49 +138,84 @@ export class KenyaSARReportGenerator implements ReportGenerator {
       | CheckDetails
       | undefined
   ) {
+    if (!u || u?.type === 'CONSUMER') {
+      return
+    }
     let paymentDetails = {}
     if (pd?.method === 'SWIFT') {
       paymentDetails = {
         institution_name: pd.bankName,
         swift_code: pd.swiftCode,
         account: pd.accountNumber,
-        currency_code: t?.originAmountDetails?.transactionCurrency,
         account_name: pd.name,
       }
-    }
-    if (pd?.method === 'IBAN') {
+    } else if (pd?.method === 'IBAN') {
       paymentDetails = {
         institution_name: pd.bankName,
         branch: pd.bankBranchCode,
         iban: pd.IBAN,
-        currency_code: t?.originAmountDetails?.transactionCurrency,
         account_name: pd.name,
       }
+    } else if (pd?.method === 'CHECK') {
+      paymentDetails = {
+        account_name: `${pd.name}`,
+      }
     }
-    if (u?.type === 'BUSINESS') {
-      return paymentDetails
+    return {
+      t_entity: this.userToEntity(u),
+      personal_account_type: 'KeB',
+      opened: new Date(u.createdTimestamp).toISOString(),
+      status_code: 'A',
+      comments: `Comments from case management system: \n\n${u.comments?.join(
+        '\n\n'
+      )}`,
+      currency_code: t?.originAmountDetails?.transactionCurrency,
+      ...paymentDetails,
     }
   }
 
-  private person(u: InternalConsumerUser | InternalBusinessUser | undefined) {
-    if (u?.type === 'CONSUMER') {
-      return [
-        {
-          first_name: u?.userDetails?.name.firstName,
-          middle_name: u?.userDetails?.name.middleName,
-          last_name: u?.userDetails?.name.lastName,
-          addresses: u?.contactDetails?.addresses?.map((a) => {
-            return {
-              address_type: '',
-              address: a.addressLines[0],
-              city: a.city,
-              zip: a.postcode,
-              state: a.state,
-            }
-          }),
-          nationality1: u?.userDetails?.countryOfNationality,
-        },
-      ]
+  private userToEntity(user: InternalBusinessUser) {
+    return {
+      phones: user.legalEntity.contactDetails?.contactNumbers?.map((c) => ({
+        tph_contact_type: 'B',
+        tph_communication_type: 'L',
+        tph_number: c,
+      })),
+      addresses: user.legalEntity.contactDetails?.addresses?.map(this.address),
+      director_id: user.directors?.map((d) => {
+        const passport = d.legalDocuments?.find(
+          (l) => l.documentType.toLowerCase() === 'passport'
+        )
+        const email = d.contactDetails?.emailIds?.slice(0, -1)
+        return {
+          gender: d.generalDetails.gender,
+          first_name: d.generalDetails.name.firstName,
+          last_name: d.generalDetails.name.lastName,
+          nationality1: d.generalDetails.countryOfNationality,
+          residence: d.generalDetails.countryOfResidence,
+          birthdate: d.generalDetails.dateOfBirth,
+          passport_number: passport?.documentNumber,
+          passport_country: passport?.documentIssuedCountry,
+          email: email,
+          addresses: d.contactDetails?.addresses?.map(this.address),
+        }
+      }),
+      incorporation_date:
+        user.legalEntity.companyRegistrationDetails?.dateOfRegistration,
+      name: user.legalEntity.companyGeneralDetails.legalName,
+      commercial_name: user.legalEntity.companyGeneralDetails.legalName,
+      incorporation_legal_form:
+        user.legalEntity.companyGeneralDetails.legalName,
+      incorporation_number:
+        user.legalEntity.companyRegistrationDetails?.registrationIdentifier,
+      business: user.legalEntity.companyGeneralDetails.businessIndustry?.slice(
+        0,
+        -1
+      ),
+      email: user.legalEntity.contactDetails?.emailIds?.slice(0, -1),
+      tax_number: user.legalEntity.companyRegistrationDetails?.taxIdentifier,
+      tax_registration_number:
+        user.legalEntity.companyRegistrationDetails?.registrationIdentifier,
     }
   }
 }

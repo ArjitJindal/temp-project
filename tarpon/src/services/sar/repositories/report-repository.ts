@@ -18,30 +18,34 @@ export class ReportRepository {
     this.mongoDb = mongoDb
   }
 
+  public async getId(): Promise<string> {
+    const db = this.mongoDb.db()
+    const counterCollection = db.collection<EntityCounter>(
+      COUNTER_COLLECTION(this.tenantId)
+    )
+    const reportCount = (
+      await counterCollection.findOneAndUpdate(
+        { entity: 'Report' },
+        { $inc: { count: 1 } },
+        { upsert: true, returnDocument: 'after' }
+      )
+    ).value
+    return `RP-${reportCount?.count}`
+  }
+
   public async saveOrUpdateReport(report: Report): Promise<Report> {
     const db = this.mongoDb.db()
     const collection = db.collection<Report>(REPORT_COLLECTION(this.tenantId))
 
-    if (!report.id) {
-      const counterCollection = db.collection<EntityCounter>(
-        COUNTER_COLLECTION(this.tenantId)
-      )
-      const reportCount = (
-        await counterCollection.findOneAndUpdate(
-          { entity: 'Report' },
-          { $inc: { count: 1 } },
-          { upsert: true, returnDocument: 'after' }
-        )
-      ).value
-      report.id = `R-${reportCount?.count}`
-    }
+    const reportId = report.id ?? (await this.getId())
 
     const newReport: Report = {
       ...report,
+      id: reportId,
     }
     await collection.replaceOne(
       {
-        _id: report.id as any,
+        _id: reportId as any,
       },
       newReport,
       { upsert: true }
