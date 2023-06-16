@@ -2,7 +2,7 @@ import * as TanTable from '@tanstack/react-table';
 import React from 'react';
 import { CommonParams, SortingParams, TableRow } from './types';
 import Checkbox from '@/components/library/Checkbox';
-import ExpandIcon from '@/components/library/Table/ExpandIcon';
+import ExpandIcon from '@/components/library/ExpandIcon';
 import { PaginationParams } from '@/utils/queries/hooks';
 import { AdditionalContext } from '@/components/library/Table/internal/partialySelectedRows';
 
@@ -76,7 +76,12 @@ export const EXPAND_COLUMN: TanTable.ColumnDef<TableRow<unknown>> = {
       return <></>;
     }
     return (
-      <ExpandIcon isExpanded={cell.row.getIsExpanded()} onClick={() => cell.row.toggleExpanded()} />
+      <ExpandIcon
+        isExpanded={cell.row.getIsExpanded()}
+        color="BLACK"
+        size="SMALL"
+        onClick={() => cell.row.toggleExpanded()}
+      />
     );
   },
 };

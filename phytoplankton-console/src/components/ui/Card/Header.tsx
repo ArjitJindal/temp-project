@@ -2,7 +2,7 @@ import React from 'react';
 import cn from 'clsx';
 import Section from './Section';
 import s from './index.module.less';
-import CollapsableIcon from '@/components/ui/CollapsableIcon';
+import ExpandIcon from '@/components/library/ExpandIcon';
 
 export interface HeaderSettings {
   title: string;
@@ -31,7 +31,7 @@ export default function Header(props: Props) {
           }
         }}
       >
-        {collapsable && <CollapsableIcon expanded={!isCollapsed} />}
+        {collapsable && <ExpandIcon isExpanded={!isCollapsed} color="BLUE" size="BIG" />}
         <h3 className={s.title}>{title}</h3>
         {link}
       </div>
