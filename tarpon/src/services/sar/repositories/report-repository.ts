@@ -22,25 +22,26 @@ export class ReportRepository {
     const db = this.mongoDb.db()
     const collection = db.collection<Report>(REPORT_COLLECTION(this.tenantId))
 
-    const counterCollection = db.collection<EntityCounter>(
-      COUNTER_COLLECTION(this.tenantId)
-    )
-    const reportCount = (
-      await counterCollection.findOneAndUpdate(
-        { entity: 'Report' },
-        { $inc: { count: 1 } },
-        { upsert: true, returnDocument: 'after' }
+    if (!report.id) {
+      const counterCollection = db.collection<EntityCounter>(
+        COUNTER_COLLECTION(this.tenantId)
       )
-    ).value
+      const reportCount = (
+        await counterCollection.findOneAndUpdate(
+          { entity: 'Report' },
+          { $inc: { count: 1 } },
+          { upsert: true, returnDocument: 'after' }
+        )
+      ).value
+      report.id = `R-${reportCount?.count}`
+    }
 
-    const reportId = report.id ?? `R-${reportCount?.count}`
     const newReport: Report = {
       ...report,
-      id: reportId,
     }
     await collection.replaceOne(
       {
-        _id: reportId as any,
+        _id: report.id as any,
       },
       newReport,
       { upsert: true }

@@ -1,4 +1,5 @@
 import { JSONSchema4Type } from 'json-schema';
+import * as _ from 'lodash';
 import { ExtendedSchema } from './types';
 
 export function isString(schema: JSONSchema4Type): schema is string {
@@ -29,4 +30,23 @@ export function getEnum(property: ExtendedSchema): ExtendedSchema[] {
     return items.enum.filter((x): x is ExtendedSchema => x != null) ?? [];
   }
   return [];
+}
+
+export function dereferenceType(type: ExtendedSchema, rootSchema?: ExtendedSchema): ExtendedSchema {
+  if (type.$ref != null) {
+    const path = type.$ref;
+    if (!path.startsWith('#/')) {
+      throw new Error(`Only local refs ('#/...') are supported`);
+    }
+    if (rootSchema == null) {
+      throw new Error(`Unable to dereference, rootSchema is not defined`);
+    }
+    const pathArray = path.substring('#/'.length).split('/');
+    const result = _.get(rootSchema, pathArray);
+    if (result == null) {
+      throw new Error(`Unable to resolve ref "${path}"`);
+    }
+    return result;
+  }
+  return type;
 }

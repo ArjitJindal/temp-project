@@ -23,6 +23,18 @@ export function useDeepEqualEffect(effect: EffectCallback, deps: unknown[]) {
   }, [effect, depsChanged]);
 }
 
+export function useDeepEqualMemo<T>(factory: () => T, deps: unknown[]): T {
+  const [state, setState] = useState(factory);
+  const prevDeps = usePrevious(deps);
+  const depsChanged = !isEqual(prevDeps, deps);
+  useEffect(() => {
+    if (depsChanged) {
+      setState(factory);
+    }
+  }, [factory, depsChanged]);
+  return state;
+}
+
 export function useId(prefix = `id`): string {
   const [id] = useState(nanoid());
   return prefix + id;

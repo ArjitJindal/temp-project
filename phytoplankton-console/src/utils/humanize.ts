@@ -7,6 +7,10 @@ export function humanizeConstant(name: string): string {
   return _.startCase(_.toLower(name.split('_').join(' ')));
 }
 
+export function humanizeSnakeCase(name: string): string {
+  return _.capitalize(_.toLower(name.split('_').join(' ')));
+}
+
 export function humanizeStrings(items: string[]): string {
   return items.reduce((acc, x, i) => {
     if (acc === '') {

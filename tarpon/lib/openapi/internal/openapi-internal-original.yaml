@@ -6943,8 +6943,8 @@ components:
         - name
         - description
         - createdById
+        - schemaId
         - caseId
-        - schema
         - status
         - createdAt
         - updatedAt
@@ -6964,6 +6964,8 @@ components:
             - complete
             - draft
         caseId:
+          type: string
+        schemaId:
           type: string
         schema:
           $ref: '#/components/schemas/ReportSchema'

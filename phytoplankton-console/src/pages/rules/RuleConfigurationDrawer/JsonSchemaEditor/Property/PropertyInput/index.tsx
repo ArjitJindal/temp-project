@@ -1,5 +1,8 @@
 import React from 'react';
 import { ExtendedSchema } from '../../types';
+import { getUiSchema } from '../../utils';
+import { useJsonSchemaEditorContext } from '../../context';
+import { dereferenceType } from '../../schema-utils';
 import SimplePropertyInput from './SimplePropertyInput';
 import ArrayPropertyInput from './ArrayPropertyInput';
 import DayWindowInput from './custom/DayWindowInput';
@@ -8,12 +11,11 @@ import AgeRangeInput from './custom/AgeRangeInput';
 import CountriesInput from './custom/CountriesInput';
 import ObjectPropertyInput from './ObjectPropertyInput';
 import PaymentChannelInput from './custom/PaymentChannelInput';
-import { getUiSchema } from '@/pages/rules/RuleConfigurationDrawer/JsonSchemaEditor/utils';
+import TransactionAmountRangeInput from './custom/TransactionAmountRangeInput';
+import UserTypeInput from './custom/UserTypeInput';
+import CurrencyInput from './custom/CurrencyInput';
+import TransactionAmountThresholdsInput from './custom/TransactionAmountThresholdsInput';
 import { InputProps } from '@/components/library/Form';
-import TransactionAmountRangeInput from '@/pages/rules/RuleConfigurationDrawer/JsonSchemaEditor/Property/PropertyInput/custom/TransactionAmountRangeInput';
-import UserTypeInput from '@/pages/rules/RuleConfigurationDrawer/JsonSchemaEditor/Property/PropertyInput/custom/UserTypeInput';
-import CurrencyInput from '@/pages/rules/RuleConfigurationDrawer/JsonSchemaEditor/Property/PropertyInput/custom/CurrencyInput';
-import TransactionAmountThresholdsInput from '@/pages/rules/RuleConfigurationDrawer/JsonSchemaEditor/Property/PropertyInput/custom/TransactionAmountThresholdsInput';
 
 // todo: fix any
 interface Props extends InputProps<any> {
@@ -21,15 +23,17 @@ interface Props extends InputProps<any> {
 }
 
 export default function PropertyInput(props: Props) {
-  const { schema } = props;
+  const { schema: _schema } = props;
+  const { rootSchema } = useJsonSchemaEditorContext();
+  const schema = dereferenceType(_schema, rootSchema);
 
   const uiSchema = getUiSchema(schema);
 
   if (uiSchema['ui:subtype'] === 'DAY_WINDOW') {
-    return <DayWindowInput {...props} uiSchema={uiSchema} />;
+    return <DayWindowInput {...props} schema={schema} uiSchema={uiSchema} />;
   }
   if (uiSchema['ui:subtype'] === 'TIME_WINDOW') {
-    return <TimeWindowInput {...props} uiSchema={uiSchema} />;
+    return <TimeWindowInput {...props} schema={schema} uiSchema={uiSchema} />;
   }
   if (uiSchema['ui:subtype'] === 'COUNTRIES') {
     return <CountriesInput {...props} uiSchema={uiSchema} />;
@@ -58,11 +62,11 @@ export default function PropertyInput(props: Props) {
     case 'boolean':
     case 'integer':
     case 'string':
-      return <SimplePropertyInput {...props} />;
+      return <SimplePropertyInput {...props} schema={schema} />;
     case 'object':
-      return <ObjectPropertyInput {...props} />;
+      return <ObjectPropertyInput {...props} schema={schema} />;
     case 'array':
-      return <ArrayPropertyInput {...props} />;
+      return <ArrayPropertyInput {...props} schema={schema} />;
   }
 
   console.error(`Schema type "${schema.type}" is not supported`);

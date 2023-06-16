@@ -74,19 +74,10 @@ export function GenericArrayPropertyInput(props: Props) {
     setNewItem(null);
   }, [newItem, value, onChange]);
 
+  console.log('GenericArrayPropertyInput: schema', schema);
   return (
     <div className={cn(s.root)}>
       <div className={s.items}>
-        <>
-          <PropertyInput
-            value={newItem}
-            onChange={setNewItem}
-            schema={schema.items as ExtendedSchema}
-          />
-          <Button type="PRIMARY" onClick={handleClickAdd}>
-            Add
-          </Button>
-        </>
         {value.map((item, i) => (
           <React.Fragment key={i}>
             <PropertyInput
@@ -109,6 +100,9 @@ export function GenericArrayPropertyInput(props: Props) {
             </Button>
           </React.Fragment>
         ))}
+        <Button type="PRIMARY" onClick={handleClickAdd}>
+          Add
+        </Button>
       </div>
     </div>
   );

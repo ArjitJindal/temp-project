@@ -184,3 +184,9 @@ export const DASHBOARD_TEAM_STATS = (params: AnyParameters): QueryKey => [
   'team',
   params,
 ];
+
+export const REPORTS_TEMPLATE = (params: AnyParameters): QueryKey => [
+  'reports',
+  'template',
+  params,
+];

@@ -9,8 +9,8 @@ import { REPORT_GENERATORS } from '@/services/sar/generators'
 import { ReportRepository } from '@/services/sar/repositories/report-repository'
 import { getMongoDbClient } from '@/utils/mongoDBUtils'
 import {
-  DefaultApiGetReportsRequest,
   DefaultApiGetReportsDraftRequest,
+  DefaultApiGetReportsRequest,
 } from '@/@types/openapi-internal/RequestParameters'
 import { Report } from '@/@types/openapi-internal/Report'
 import { CaseRepository } from '@/services/rules-engine/repositories/case-repository'
@@ -69,11 +69,13 @@ export const sarHandler = lambdaApi()(
       const parameters = generator.prepopulate(c, txnIds, account)
       const now = new Date().valueOf()
 
+      const schema = generator.getSchema()
       const report: Report = {
         name: params.caseId,
         description: `SAR report for ${params.caseId}`,
         caseId: params.caseId,
-        schema: generator.getSchema(),
+        schema: schema,
+        schemaId: schema.id,
         createdAt: now,
         updatedAt: now,
         createdById: account.id,
@@ -88,7 +90,12 @@ export const sarHandler = lambdaApi()(
     if (event.httpMethod === 'GET' && event.resource === '/reports') {
       const params = (event.queryStringParameters ||
         {}) as DefaultApiGetReportsRequest
-      return reportRepository.getReports(params)
+      const reports = await reportRepository.getReports(params)
+      reports.items = reports.items.map((r) => {
+        r.schema = REPORT_GENERATORS.get(r.schemaId)?.getSchema()
+        return r
+      })
+      return reports
     }
 
     if (
@@ -116,12 +123,13 @@ export const sarHandler = lambdaApi()(
       report.status = 'complete'
       report.revisions.push({
         output:
-          REPORT_GENERATORS.get(report.schema.id)?.generate(
-            report.parameters
-          ) || '',
+          REPORT_GENERATORS.get(report.schemaId)?.generate(report.parameters) ||
+          '',
         createdAt: Date.now(),
       })
-      return reportRepository.saveOrUpdateReport(report)
+      const updatedReport = await reportRepository.saveOrUpdateReport(report)
+      updatedReport.schema = REPORT_GENERATORS.get(report.schemaId)?.getSchema()
+      return updatedReport
     }
   }
 )

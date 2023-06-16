@@ -167,7 +167,6 @@ export function useTanstackTable<
 
   const isAnythingExpandable =
     typeof isExpandable === 'boolean' ? isExpandable : preparedData.some((x) => isExpandable(x));
-  console.log('isAnythingExpandable', isAnythingExpandable);
 
   const columnDefs = useMemo(() => {
     const columnHelper = TanTable.createColumnHelper<TableRow<Item>>();

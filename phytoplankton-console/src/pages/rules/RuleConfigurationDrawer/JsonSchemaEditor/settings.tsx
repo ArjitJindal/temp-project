@@ -1,10 +1,13 @@
-import React, { useContext, useMemo } from 'react';
+import React, { useContext } from 'react';
+import { useDeepEqualMemo } from '@/utils/hooks';
 
 export interface JsonSchemaEditorSettings {
+  propertyNameStyle: 'SNAKE_CASE' | 'AS_IS';
   showOptionalMark: boolean;
 }
 
-const DEFAULT_FORM_SETTINGS: JsonSchemaEditorSettings = {
+export const DEFAULT_FORM_SETTINGS: JsonSchemaEditorSettings = {
+  propertyNameStyle: 'AS_IS',
   showOptionalMark: true,
 };
 export const JsonSchemaEditorSettingsContext =
@@ -15,10 +18,11 @@ export function ChangeJsonSchemaEditorSettings(props: {
   children: React.ReactNode;
 }) {
   const settings = useContext(JsonSchemaEditorSettingsContext);
-  const newSettings = useMemo(
+  const newSettings = useDeepEqualMemo(
     () => ({ ...settings, ...props.settings }),
     [settings, props.settings],
   );
+
   return (
     <JsonSchemaEditorSettingsContext.Provider value={newSettings}>
       {props.children}

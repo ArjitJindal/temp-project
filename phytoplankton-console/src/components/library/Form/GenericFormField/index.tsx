@@ -3,7 +3,7 @@ import { NestedValidationResult } from '../utils/validation/types';
 import { useFieldState } from '@/components/library/Form/utils/hooks';
 import { InputProps } from '@/components/library/Form';
 
-interface FormFieldRenderProps<Value> extends InputProps<Value> {
+export interface FormFieldRenderProps<Value> extends InputProps<Value> {
   isValid: boolean;
   isTouched: boolean;
   isVisited: boolean;

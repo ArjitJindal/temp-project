@@ -53,9 +53,7 @@ function Form<FormValues>(props: Props<FormValues>, ref: React.Ref<FormRef<FormV
         );
       },
       submit: () => {
-        onSubmit?.(formValues, {
-          isValid: checkFormValid(formValues, formValidators, fieldValidators),
-        });
+        formRef.current?.submit();
       },
     }),
   );
@@ -95,7 +93,9 @@ function Form<FormValues>(props: Props<FormValues>, ref: React.Ref<FormRef<FormV
       className={className}
       onSubmit={(e) => {
         e.preventDefault();
-        formRef.current?.submit();
+        onSubmit?.(formValues, {
+          isValid: checkFormValid(formValues, formValidators, fieldValidators),
+        });
       }}
     >
       <FormContext.Provider value={formContext as FormContextValue<unknown>}>
