@@ -157,7 +157,9 @@ export class ApiUsageMetricsService {
     const tenant = await accountsService.getTenantById(tenantInfo.id)
 
     if (!tenant) {
-      logger.error(`Tenant not found: ${tenantInfo.id}, ${tenantInfo.name}`)
+      logger.warn(
+        `Tenant not found for getting seats: ${tenantInfo.id}, ${tenantInfo.name}`
+      )
       return 0
     }
 

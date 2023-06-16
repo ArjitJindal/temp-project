@@ -5,6 +5,7 @@ import {
   APIGatewayClient,
   CreateUsagePlanCommand,
   GetRestApisCommand,
+  GetUsagePlanKeysCommand,
   GetUsagePlansCommand,
 } from '@aws-sdk/client-api-gateway'
 import { StackConstants } from '@lib/constants'
@@ -12,7 +13,7 @@ import { getAuth0TenantConfigs } from '@lib/configs/auth0/tenant-config'
 import { BadRequest } from 'http-errors'
 import { TenantCreationResponse } from '@/@types/openapi-internal/TenantCreationResponse'
 import { TenantCreationRequest } from '@/@types/openapi-internal/TenantCreationRequest'
-import { AccountsService, Tenant } from '@/services/accounts'
+import { AccountsService, Tenant, TenantBasic } from '@/services/accounts'
 import { createNewApiKeyForTenant } from '@/services/api-key'
 import { checkMultipleEmails } from '@/utils/helpers'
 import { getAuth0Domain } from '@/utils/auth0-utils'
@@ -154,30 +155,80 @@ export class TenantService {
     }
   }
 
-  static async getAllUsagePlans(): Promise<AWS.APIGateway.UsagePlan[]> {
+  static async getTenantInfoFromUsagePlans(): Promise<TenantBasic[]> {
     const apigateway = new APIGatewayClient({
       region: process.env.AWS_REGION,
     })
 
-    const usagePlansCommand = new GetUsagePlansCommand({})
+    const allUsagePlans = await TenantService.getAllUsagePlans()
+
+    const usagePlanKeys = _.compact(
+      await Promise.all(
+        await allUsagePlans.map(async (usagePlan) => {
+          const usagePlanKeysCommand = new GetUsagePlanKeysCommand({
+            usagePlanId: usagePlan.id,
+          })
+
+          const usagePlanKeys = await apigateway.send(usagePlanKeysCommand)
+
+          if (usagePlanKeys.items?.length) {
+            return usagePlan
+          } else {
+            logger.warn(
+              `Usage plan ${usagePlan.id} does not have any keys associated with it`
+            )
+            return null
+          }
+        })
+      )
+    )
+
+    const tenantDetails = _.compact(
+      _.map(usagePlanKeys, (usagePlan) => {
+        if (usagePlan.name && USAGE_PLAN_REGEX.test(usagePlan.name)) {
+          const id = usagePlan.name?.match(USAGE_PLAN_REGEX)?.[2]
+          const name = usagePlan.name?.match(USAGE_PLAN_REGEX)?.[1]
+
+          if (!id || !name) {
+            logger.error(
+              `Invalid usage plan name ${usagePlan.name} for usage plan ${usagePlan.id}`
+            )
+            return null
+          }
+
+          return {
+            id: id as string,
+            name: name as string,
+          }
+        } else {
+          logger.error(
+            `Invalid usage plan name ${usagePlan.name} for usage plan ${usagePlan.id}`
+          )
+        }
+        return null
+      })
+    )
+
+    return tenantDetails
+  }
+
+  static async getAllUsagePlans(): Promise<AWS.APIGateway.UsagePlan[]> {
+    const apigateway = new APIGatewayClient({
+      region: process.env.AWS_REGION,
+    })
+    // TODO: handle for more than 500 usage plans
+    const usagePlansCommand = new GetUsagePlansCommand({
+      limit: 500,
+    })
+
     const usagePlans = await apigateway.send(usagePlansCommand)
 
-    if (usagePlans.items?.length) {
-      const filteredUsagePlans = _.filter(usagePlans.items, (usagePlan) => {
-        if (usagePlan.name && usagePlan.name.match(USAGE_PLAN_REGEX)) {
-          return true
-        }
-        logger.error(
-          `Invalid usage plan id ${usagePlan.id} for tenant ${usagePlan.name}`
-        )
-        return false
-      })
-
-      return filteredUsagePlans
+    if (!usagePlans?.items?.length) {
+      logger.error('No usage plans found')
+      return []
     }
 
-    logger.error('No usage plans found')
-    return []
+    return usagePlans.items
   }
 
   async assertUsagePlanNotExist(planName: string): Promise<void> {

@@ -88,7 +88,7 @@ if [ -n "$tenantId" ]; then
 else
     tenantId=`node -e "console.log(require('nanoid').customAlphabet('1234567890ABCDEFGHIJKLMNOPQRSTUVWXYZ', 10)())"`
 fi
-usagePlanName="tarpon:$tenantName:$tenantId"
+usagePlanName="tarpon:$tenantId:$tenantName"
 
 if [ "$env" == "dev" ] || [ "$env" == "sandbox" ]; then
     usagePlanId=$(aws apigateway create-usage-plan \

@@ -2,7 +2,7 @@ import _ from 'lodash'
 import { lambdaConsumer } from '@/core/middlewares/lambda-consumer-middlewares'
 import { getDynamoDbClient } from '@/utils/dynamodb'
 import { getMongoDbClient } from '@/utils/mongoDBUtils'
-import { TenantService, USAGE_PLAN_REGEX } from '@/services/tenants'
+import { TenantService } from '@/services/tenants'
 import { sendBatchJobCommand } from '@/services/batch-job'
 import {
   ApiUsageMetricsBatchJob,
@@ -54,50 +54,24 @@ export const cronJobMidnightHandler = lambdaConsumer()(async () => {
 
   // Wait for 1 second to make sure that it is already a new day
   await new Promise((resolve) => setTimeout(resolve, 1000))
-  const allUsagePlans = await TenantService.getAllUsagePlans()
+  const allBasicTenantDetails =
+    await TenantService.getTenantInfoFromUsagePlans()
 
-  if (allUsagePlans?.length) {
-    const usageTenantInfos = _.compact(
-      _.map(allUsagePlans, (usageTenant) => {
-        const usagePlanName = usageTenant.name
-
-        if (usagePlanName == null) {
-          logger.error(
-            `Usage plan ${usageTenant.id} does not have a name in ${process.env.ENV} ${process.env.REGION}`
-          )
-          return null
-        }
-
-        const id = usagePlanName.match(USAGE_PLAN_REGEX)?.[1]
-        const name = usagePlanName.match(USAGE_PLAN_REGEX)?.[2]
-
-        if (!id || !name) {
-          logger.error(
-            `Invalid usage plan id ${usageTenant.id} for tenant ${usageTenant.name}`
-          )
-          return null
-        }
-
-        return { id, name }
-      })
-    )
-
-    for await (const usageTenant of usageTenantInfos) {
-      try {
-        await sendBatchJobCommand(usageTenant.id, {
-          type: 'API_USAGE_METRICS',
-          tenantInfo: usageTenant,
-          tenantId: usageTenant.id,
-        } as ApiUsageMetricsBatchJob)
-      } catch (error) {
-        logger.error(
-          new Error(
-            `Error publishing API usage metrics for tenant ${usageTenant.id}, ${
-              (error as Error).message
-            }`
-          )
+  for await (const usageTenant of allBasicTenantDetails) {
+    try {
+      await sendBatchJobCommand(usageTenant.id, {
+        type: 'API_USAGE_METRICS',
+        tenantInfo: usageTenant,
+        tenantId: usageTenant.id,
+      } as ApiUsageMetricsBatchJob)
+    } catch (error) {
+      logger.error(
+        new Error(
+          `Error publishing API usage metrics for tenant ${usageTenant.id}, ${
+            (error as Error).message
+          }`
         )
-      }
+      )
     }
   }
 
