@@ -44,10 +44,10 @@ export function SarButton(props: { transactionIds: string[] }) {
               {(inputProps) => (
                 <Select
                   options={[
-                    { label: 'United States', value: '1' },
-                    { label: 'United Kingdom', value: '2' },
-                    { label: 'Singapore', value: '3' },
-                    { label: 'Republic of South Africa', value: '4' },
+                    { label: 'Dubai', value: '1' },
+                    { label: 'Kenya', value: '2' },
+                    { label: 'Lithuania', value: '3' },
+                    { label: 'United States', value: '4' },
                   ]}
                   {...inputProps}
                 />

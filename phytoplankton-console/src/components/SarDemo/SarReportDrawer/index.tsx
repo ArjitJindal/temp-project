@@ -142,7 +142,7 @@ export default function SarReportDrawer(props: {
     <Drawer
       isVisible={props.isVisible}
       onChangeVisibility={props.onChangeVisibility}
-      title={'GoAML SAR filing'}
+      title={'Suspicious activity report filing'}
       footer={
         <div className={s.footer}>
           <StepButtons

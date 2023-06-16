@@ -137,7 +137,6 @@ export default function AuditLogTable() {
       type: DATE,
     }),
   ]);
-
   return (
     <PageWrapperContentContainer>
       <QueryResultsTable<TableItem, TableSearchParams>
