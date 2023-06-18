@@ -172,7 +172,10 @@ export class TenantService {
           const usagePlanKeys = await apigateway.send(usagePlanKeysCommand)
 
           if (usagePlanKeys.items?.length) {
-            return usagePlan
+            return {
+              ...usagePlan,
+              tenantId: usagePlanKeys.items[0].name,
+            }
           } else {
             logger.warn(
               `Usage plan ${usagePlan.id} does not have any keys associated with it`
@@ -185,20 +188,18 @@ export class TenantService {
 
     const tenantDetails = _.compact(
       _.map(usagePlanKeys, (usagePlan) => {
-        if (usagePlan.name && USAGE_PLAN_REGEX.test(usagePlan.name)) {
-          const id = usagePlan.name?.match(USAGE_PLAN_REGEX)?.[2]
-          const name = usagePlan.name?.match(USAGE_PLAN_REGEX)?.[1]
-
-          if (!id || !name) {
-            logger.error(
-              `Invalid usage plan name ${usagePlan.name} for usage plan ${usagePlan.id}`
-            )
-            return null
-          }
-
+        if (
+          usagePlan.name &&
+          USAGE_PLAN_REGEX.test(usagePlan.name) &&
+          usagePlan.tenantId &&
+          usagePlan.name?.includes(usagePlan.tenantId)
+        ) {
           return {
-            id: id as string,
-            name: name as string,
+            id: usagePlan.tenantId,
+            name: usagePlan.name
+              .replace('tenant:', '')
+              .replace(':', '')
+              .replace(usagePlan.tenantId, ''),
           }
         } else {
           logger.error(
