@@ -7,7 +7,6 @@
 - Describe your changes in a few succinct bullet points
 
 ### What's the scope of this change
-<<<<<<< HEAD
 - [ ] Are Public APIs Affected
 - [ ] Is Rules Engine Affected
 - [ ] Are Adequate Permissions Verified
