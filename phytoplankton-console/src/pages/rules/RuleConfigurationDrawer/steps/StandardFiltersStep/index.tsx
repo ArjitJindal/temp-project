@@ -42,7 +42,16 @@ export default function StandardFiltersStep(props: Props) {
         return prev;
       });
     }
-  }, [standardFilters?.paymentMethods, setFormValues]);
+
+    if (standardFilters?.userType !== 'CONSUMER') {
+      setFormValues((prev) => {
+        if (prev?.standardFiltersStep?.consumerUserSegments) {
+          delete prev?.standardFiltersStep?.consumerUserSegments;
+        }
+        return prev;
+      });
+    }
+  }, [standardFilters?.paymentMethods, setFormValues, standardFilters?.userType]);
 
   return (
     <AsyncResourceRenderer resource={queryResults.data}>
@@ -53,7 +62,15 @@ export default function StandardFiltersStep(props: Props) {
           <>
             {activeTab === 'user_details' && (
               <UserDetails
-                propertyItems={props.filter((x) => getUiSchema(x.schema)['ui:group'] === 'user')}
+                propertyItems={props
+                  .filter((x) => getUiSchema(x.schema)['ui:group'] === 'user')
+                  .filter((x) => {
+                    const nameToFilter = 'consumerUserSegments';
+                    if (x.name === nameToFilter) {
+                      return standardFilters?.userType?.includes('CONSUMER');
+                    }
+                    return true;
+                  })}
               />
             )}
             {activeTab === 'geography_details' && (

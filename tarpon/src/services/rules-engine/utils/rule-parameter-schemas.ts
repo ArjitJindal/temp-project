@@ -12,6 +12,7 @@ import { PAYMENT_METHODS } from '@/@types/openapi-public-custom/PaymentMethod'
 import { TRANSACTION_TYPES } from '@/@types/openapi-public-custom/TransactionType'
 import { SANCTIONS_SEARCH_TYPES } from '@/@types/openapi-internal-custom/SanctionsSearchType'
 import { ACQUISITION_CHANNELS } from '@/@types/openapi-internal-custom/AcquisitionChannel'
+import { CONSUMER_USER_SEGMENTS } from '@/@types/openapi-internal-custom/ConsumerUserSegment'
 
 type SchemaOptions = {
   title?: string
@@ -402,7 +403,7 @@ export const ACQUISITION_CHANNEL_SCHEMA = (options?: SchemaOptions) =>
       subtype: 'ACQUISITION_CHANNEL',
     }),
     type: 'array',
-    title: options?.title || 'Acquisition Channel',
+    title: options?.title || 'Acquisition channel',
     description: options?.description,
     items: {
       type: 'string',
@@ -417,6 +418,34 @@ export const ACQUISITION_CHANNEL_SCHEMA = (options?: SchemaOptions) =>
 export const ACQUISITION_CHANNEL_OPTIONAL_SCHEMA = (options?: SchemaOptions) =>
   ({
     ...ACQUISITION_CHANNEL_SCHEMA(options),
+    nullable: true,
+  } as const)
+
+export const CONSUMER_USER_SEGMENT_SCHEMA = (options?: SchemaOptions) =>
+  ({
+    ...uiSchema(options?.uiSchema, {
+      subtype: 'CONSUMER_USER_SEGMENT',
+    }),
+    type: 'array',
+    title: options?.title || 'User consumer segment',
+    description:
+      options?.description ||
+      'Select one or more user consumer segments to target transactions with those consumer user segments',
+    items: {
+      type: 'string',
+      enum: CONSUMER_USER_SEGMENTS,
+      enumNames: CONSUMER_USER_SEGMENTS.map((segment) =>
+        _.startCase(segment.replace('_', ' ').toLowerCase())
+      ),
+    },
+    uniqueItems: true,
+  } as const)
+
+export const CONSUMER_USER_SEGMENT_OPTIONAL_SCHEMA = (
+  options?: SchemaOptions
+) =>
+  ({
+    ...CONSUMER_USER_SEGMENT_SCHEMA(options),
     nullable: true,
   } as const)
 

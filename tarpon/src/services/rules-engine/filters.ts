@@ -86,6 +86,10 @@ import {
   TransactionAmountHistoricalRuleFilter,
   TransactionAmountHistoricalRuleFilterParameter,
 } from './transaction-filters/transaction-amount-historical'
+import {
+  ConsumerUserSegmentRuleFilter,
+  ConsumerUserSegmentRuleFilterParameter,
+} from './user-filters/user-consumer-segment'
 
 export type TransactionFilters = PaymentMethodRuleFilterParameter &
   TransactionTypeRuleFilterParameter &
@@ -110,7 +114,8 @@ export type UserFilters = WhitelistUsersRuleFilterParameter &
   UserCountryOfResidenceRuleFilterParameter &
   UserCountryOfNationalityRuleFilterParameter &
   UserCountryOfRegistrationRuleFilterParameter &
-  UserAcquisitionChannelRuleFilterParameter
+  UserAcquisitionChannelRuleFilterParameter &
+  ConsumerUserSegmentRuleFilterParameter
 
 export type TransactionFilterKeys = keyof TransactionFilters
 export type TransactionHistoricalFilterKeys = keyof TransactionHistoricalFilters
@@ -137,6 +142,7 @@ const _TRANSACTION_HISTORICAL_FILTERS = [
 // Order defined here will be reflected in console
 const _USER_FILTERS = [
   UserTypeRuleFilter,
+  ConsumerUserSegmentRuleFilter,
   UserAgeRuleFilter,
   UserCreationAgeRuleFilter,
   WhitelistUsersRuleFilter,
