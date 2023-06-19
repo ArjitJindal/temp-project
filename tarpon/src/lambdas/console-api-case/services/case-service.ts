@@ -6,6 +6,7 @@ import {
 } from 'aws-lambda'
 import * as AWS from 'aws-sdk'
 import _ from 'lodash'
+import { MongoClient } from 'mongodb'
 import { Comment } from '@/@types/openapi-internal/Comment'
 import { DefaultApiGetCaseListRequest } from '@/@types/openapi-internal/RequestParameters'
 import { CaseRepository } from '@/services/rules-engine/repositories/case-repository'
@@ -30,9 +31,14 @@ import { getS3ClientByEvent } from '@/utils/s3'
 import { getMongoDbClient } from '@/utils/mongoDBUtils'
 import { getDynamoDbClientByEvent } from '@/utils/dynamodb'
 import { CaseConfig } from '@/lambdas/console-api-case/app'
+import { AlertsRepository } from '@/services/rules-engine/repositories/alerts-repository'
+import { AlertsService } from '@/services/alerts'
+import { AlertClosedDetails } from '@/@types/openapi-public/AlertClosedDetails'
 
 export class CaseService extends CaseAlertsCommonService {
   caseRepository: CaseRepository
+  tenantId: string
+  mongoDb: MongoClient
 
   public static async fromEvent(
     event: APIGatewayProxyWithLambdaAuthorizerEvent<
@@ -59,6 +65,8 @@ export class CaseService extends CaseAlertsCommonService {
   constructor(caseRepository: CaseRepository, s3: AWS.S3, s3Config: S3Config) {
     super(s3, s3Config)
     this.caseRepository = caseRepository
+    this.tenantId = caseRepository.tenantId
+    this.mongoDb = caseRepository.mongoDb
   }
 
   public async getCases(
@@ -84,6 +92,14 @@ export class CaseService extends CaseAlertsCommonService {
     const dashboardStatsRepository = new DashboardStatsRepository(
       this.caseRepository.tenantId,
       { mongoDb: this.caseRepository.mongoDb }
+    )
+    const alertsRepository = new AlertsRepository(this.tenantId, {
+      mongoDb: this.mongoDb,
+    })
+    const alertsService = new AlertsService(
+      alertsRepository,
+      this.s3,
+      this.s3Config
     )
 
     const statusChange: CaseStatusChange | undefined =
@@ -111,35 +127,71 @@ export class CaseService extends CaseAlertsCommonService {
       await Promise.all(
         caseIds.flatMap((caseId) => {
           const case_ = cases.find((c) => c.caseId === caseId)
-          return [
-            this.saveCaseComment(caseId, {
-              userId,
-              body:
-                `Case status changed to ${updateRequest.caseStatus}` +
-                (updateRequest.reason
-                  ? `. Reason: ${updateRequest.reason.join(', ')}`
-                  : '') +
-                (updateRequest.comment ? `\n${updateRequest.comment}` : ''),
-              files: updateRequest.files,
-            }),
-            updateRequest.caseStatus === 'CLOSED' &&
-              sendWebhookTasks(tenantId, [
-                {
-                  event: 'CASE_CLOSED',
-                  payload: {
-                    caseId,
-                    reasons: updateRequest.reason,
-                    reasonDescriptionForOther: updateRequest.otherReason,
-                    status: updateRequest.caseStatus,
-                    comment: updateRequest.comment,
-                    userId:
-                      case_?.caseUsers?.origin?.userId ??
-                      case_?.caseUsers?.destination?.userId,
-                    transactionIds: case_?.caseTransactionsIds,
-                  } as CaseClosedDetails,
-                },
-              ]),
-          ]
+          if (case_) {
+            const { alerts } = case_
+            return [
+              this.saveCaseComment(caseId, {
+                userId,
+                body:
+                  `Case status changed to ${updateRequest.caseStatus}` +
+                  (updateRequest.reason
+                    ? `. Reason: ${updateRequest.reason.join(', ')}`
+                    : '') +
+                  (updateRequest.comment ? `\n${updateRequest.comment}` : ''),
+                files: updateRequest.files,
+              }),
+              updateRequest.caseStatus === 'CLOSED' &&
+                sendWebhookTasks(tenantId, [
+                  {
+                    event: 'CASE_CLOSED',
+                    payload: {
+                      caseId,
+                      reasons: updateRequest.reason,
+                      reasonDescriptionForOther: updateRequest.otherReason,
+                      status: updateRequest.caseStatus,
+                      comment: updateRequest.comment,
+                      userId:
+                        case_?.caseUsers?.origin?.userId ??
+                        case_?.caseUsers?.destination?.userId,
+                      transactionIds: case_?.caseTransactionsIds,
+                    } as CaseClosedDetails,
+                  },
+                ]),
+              alerts
+                ? Promise.all(
+                    alerts?.flatMap((alert) => {
+                      return [
+                        alertsService.saveAlertComment(alert.alertId!, {
+                          userId,
+                          body:
+                            `Alert status automatically changed to ${updateRequest.caseStatus} because the status of the case this alert was part of was changed to ${updateRequest.caseStatus}` +
+                            (updateRequest.reason
+                              ? `. Reason: ${updateRequest.reason.join(', ')}`
+                              : ''),
+                        }),
+                        updateRequest.caseStatus === 'CLOSED' &&
+                          sendWebhookTasks(tenantId, [
+                            {
+                              event: 'ALERT_CLOSED',
+                              payload: {
+                                alert: alert.alertId!,
+                                reasons: updateRequest.reason,
+                                reasonDescriptionForOther:
+                                  updateRequest.otherReason,
+                                status: updateRequest.caseStatus,
+                                userId:
+                                  case_?.caseUsers?.origin?.userId ??
+                                  case_?.caseUsers?.destination?.userId,
+                                transactionIds: case_?.caseTransactionsIds,
+                              } as AlertClosedDetails,
+                            },
+                          ]),
+                      ]
+                    })
+                  )
+                : {},
+            ]
+          }
         })
       )
 
