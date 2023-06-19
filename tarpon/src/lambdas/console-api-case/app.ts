@@ -35,6 +35,7 @@ import { AlertsRepository } from '@/services/rules-engine/repositories/alerts-re
 import { parseStrings } from '@/utils/lambda'
 import { AlertsStatusUpdateRequest } from '@/@types/openapi-internal/AlertsStatusUpdateRequest'
 import { AlertsAssignmentUpdateRequest } from '@/@types/openapi-internal/AlertsAssignmentUpdateRequest'
+import { TenantRepository } from '@/services/tenants/repositories/tenant-repository'
 import { PaymentMethod } from '@/@types/openapi-public/PaymentMethod'
 import { CaseEscalationResponse } from '@/@types/openapi-internal/CaseEscalationResponse'
 
@@ -85,11 +86,18 @@ export const casesHandler = lambdaApi()(
       tmpBucketName: TMP_BUCKET,
     })
 
+    const tenantRepository = new TenantRepository(tenantId, {
+      dynamoDb,
+    })
+
+    const tenantSettings = await tenantRepository.getTenantSettings()
+
     const caseCreationService = new CaseCreationService(
       caseRepository,
       userService,
       ruleInstanceRepository,
-      transactionRepository
+      transactionRepository,
+      tenantSettings
     )
     const casesAlertsAuditLogService = new CasesAlertsAuditLogService(
       caseService,

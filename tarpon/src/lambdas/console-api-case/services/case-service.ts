@@ -31,6 +31,7 @@ import { getS3ClientByEvent } from '@/utils/s3'
 import { getMongoDbClient } from '@/utils/mongoDBUtils'
 import { getDynamoDbClientByEvent } from '@/utils/dynamodb'
 import { CaseConfig } from '@/lambdas/console-api-case/app'
+import { isCaseAvailable } from '@/lambdas/console-api-case/services/utils'
 import { AlertsRepository } from '@/services/rules-engine/repositories/alerts-repository'
 import { AlertsService } from '@/services/alerts'
 import { AlertClosedDetails } from '@/@types/openapi-public/AlertClosedDetails'
@@ -212,7 +213,12 @@ export class CaseService extends CaseAlertsCommonService {
     const caseEntity = await this.caseRepository.getCaseById(caseId)
     caseGetSegment?.close()
 
-    return caseEntity && this.getAugmentedCase(caseEntity)
+    return (
+      (caseEntity &&
+        isCaseAvailable(caseEntity) &&
+        this.getAugmentedCase(caseEntity)) ||
+      null
+    )
   }
 
   public async getCaseRules(caseId: string): Promise<Array<RulesHitPerCase>> {

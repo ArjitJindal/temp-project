@@ -13,8 +13,8 @@ import {
 } from '@/utils/mongoDBUtils'
 import {
   COUNT_QUERY_LIMIT,
-  OptionalPagination,
   CursorPaginationResponse,
+  OptionalPagination,
 } from '@/utils/pagination'
 import {
   DefaultApiGetAlertListRequest,
@@ -224,6 +224,20 @@ export class AlertsRepository {
         'alerts.alertStatus': { $in: params.filterAlertStatus },
       })
     }
+
+    conditions.push({
+      $or: [
+        {
+          // Need to compare to null, because mongo sometimes replaces undefined with null when saves objects
+          // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+          // @ts-ignore
+          'alerts.availableAfterTimestamp': { $eq: null },
+        },
+        {
+          'alerts.availableAfterTimestamp': { $lt: Date.now() },
+        },
+      ],
+    })
 
     if (conditions.length > 0) {
       pipeline.push({

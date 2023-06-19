@@ -1,3 +1,4 @@
+import MockDate from 'mockdate'
 import { dynamoDbSetupHook } from '@/test-utils/dynamodb-test-utils'
 import { CaseCreationService } from '@/lambdas/console-api-case/services/case-creation-service'
 import { CaseRepository } from '@/services/rules-engine/repositories/case-repository'
@@ -10,6 +11,7 @@ import { getTestTransaction } from '@/test-utils/transaction-test-utils'
 import {
   bulkVerifyTransactions,
   bulkVerifyUsers,
+  createRule,
   setUpRulesHooks,
 } from '@/test-utils/rule-test-utils'
 import {
@@ -29,10 +31,20 @@ import {
 import { HitRulesDetails } from '@/@types/openapi-internal/HitRulesDetails'
 import { InternalBusinessUser } from '@/@types/openapi-internal/InternalBusinessUser'
 import { InternalConsumerUser } from '@/@types/openapi-internal/InternalConsumerUser'
+import { AlertCreationIntervalInstantly } from '@/@types/openapi-internal/AlertCreationIntervalInstantly'
+import { AlertCreationIntervalWeekly } from '@/@types/openapi-internal/AlertCreationIntervalWeekly'
+import { AlertCreationIntervalMonthly } from '@/@types/openapi-internal/AlertCreationIntervalMonthly'
+import { AlertsRepository } from '@/services/rules-engine/repositories/alerts-repository'
+import { AlertsService } from '@/services/alerts'
+import { getS3ClientByEvent } from '@/utils/s3'
+import { CaseService } from '@/lambdas/console-api-case/services/case-service'
+import { TenantRepository } from '@/services/tenants/repositories/tenant-repository'
+import { User } from '@/@types/openapi-public/User'
+import { InternalUser } from '@/@types/openapi-internal/InternalUser'
 
 dynamoDbSetupHook()
 
-async function getService(tenantId: string) {
+async function getServices(tenantId: string) {
   const dynamoDb = getDynamoDbClient()
   const mongoDb = await getMongoDbClient()
   const caseRepository = new CaseRepository(tenantId, {
@@ -49,25 +61,51 @@ async function getService(tenantId: string) {
     tenantId,
     mongoDb
   )
+  const tenantRepository = new TenantRepository(tenantId, {
+    dynamoDb: dynamoDb,
+  })
+  const tenantSettings = await tenantRepository.getTenantSettings()
+
   const caseCreationService = new CaseCreationService(
     caseRepository,
     userRepository,
     ruleInstanceRepository,
-    transactionRepository
+    transactionRepository,
+    tenantSettings
   )
-  return caseCreationService
+  const s3 = getS3ClientByEvent(null as any)
+  const alertsRepository = new AlertsRepository(tenantId, {
+    mongoDb,
+    dynamoDb,
+  })
+  const alertsService = new AlertsService(alertsRepository, s3, {
+    documentBucketName: 'test-bucket',
+    tmpBucketName: 'test-bucket',
+  })
+  const caseService = new CaseService(caseRepository, s3, {
+    documentBucketName: 'test-bucket',
+    tmpBucketName: 'test-bucket',
+  })
+  return {
+    caseCreationService,
+    alertsService,
+    caseService,
+  }
 }
+
+const TODAY = '2023-06-09T12:00:00.000Z'
 
 const TEST_USER_1 = getTestUser({ userId: 'test_user_id_1' })
 const TEST_USER_2 = getTestUser({ userId: 'test_user_id_2' })
 
 describe('Cases (Transaction hit)', () => {
-  describe('Run #1', () => {
+  describe('Env #1', () => {
     const TEST_TENANT_ID = getTestTenantId()
-    setup(TEST_TENANT_ID)
+    setupRules(TEST_TENANT_ID)
+    setupUsers(TEST_TENANT_ID)
 
     test('By origin user, no prior cases', async () => {
-      const caseCreationService = await getService(TEST_TENANT_ID)
+      const { caseCreationService } = await getServices(TEST_TENANT_ID)
 
       const transaction = getTestTransaction({
         originUserId: TEST_USER_1.userId,
@@ -93,11 +131,12 @@ describe('Cases (Transaction hit)', () => {
     })
   })
 
-  describe('Run #2', () => {
+  describe('Env #2', () => {
     const TEST_TENANT_ID = getTestTenantId()
-    setup(TEST_TENANT_ID)
+    setupRules(TEST_TENANT_ID)
+    setupUsers(TEST_TENANT_ID)
     test('By destination user, no prior cases', async () => {
-      const caseCreationService = await getService(TEST_TENANT_ID)
+      const { caseCreationService } = await getServices(TEST_TENANT_ID)
 
       const transaction = getTestTransaction({
         originUserId: undefined,
@@ -124,9 +163,10 @@ describe('Cases (Transaction hit)', () => {
 
   describe('Alert separation logic', () => {
     const TEST_TENANT_ID = getTestTenantId()
-    setup(TEST_TENANT_ID, {
+    setupRules(TEST_TENANT_ID, {
       hitDirections: ['ORIGIN', 'DESTINATION'],
     })
+    setupUsers(TEST_TENANT_ID)
 
     const justRehitRules: HitRulesDetails[] = [
       {
@@ -198,7 +238,7 @@ describe('Cases (Transaction hit)', () => {
     ]
 
     test('Alerts are correctly separated', async () => {
-      const caseCreationService = await getService(TEST_TENANT_ID)
+      const { caseCreationService } = await getServices(TEST_TENANT_ID)
 
       const { newAlerts, existingAlerts } =
         caseCreationService.separateExistingAndNewAlerts(
@@ -224,7 +264,7 @@ describe('Cases (Transaction hit)', () => {
     })
 
     test('Alerts are correctly separated when just rehit', async () => {
-      const caseCreationService = await getService(TEST_TENANT_ID)
+      const { caseCreationService } = await getServices(TEST_TENANT_ID)
 
       const { existingAlerts } =
         caseCreationService.separateExistingAndNewAlerts(
@@ -248,13 +288,14 @@ describe('Cases (Transaction hit)', () => {
     })
   })
 
-  describe('Run #3', () => {
+  describe('Env #3', () => {
     const TEST_TENANT_ID = getTestTenantId()
-    setup(TEST_TENANT_ID, {
+    setupRules(TEST_TENANT_ID, {
       hitDirections: ['ORIGIN', 'DESTINATION'],
     })
+    setupUsers(TEST_TENANT_ID)
     test('Both users, no prior cases', async () => {
-      const caseCreationService = await getService(TEST_TENANT_ID)
+      const { caseCreationService } = await getServices(TEST_TENANT_ID)
 
       const transaction = getTestTransaction({
         originUserId: TEST_USER_1.userId,
@@ -287,11 +328,12 @@ describe('Cases (Transaction hit)', () => {
     })
   })
 
-  describe('Run #4', () => {
+  describe('Env #4', () => {
     const TEST_TENANT_ID = getTestTenantId()
-    setup(TEST_TENANT_ID)
+    setupRules(TEST_TENANT_ID)
+    setupUsers(TEST_TENANT_ID)
     test('Previous open case should be updated', async () => {
-      const caseCreationService = await getService(TEST_TENANT_ID)
+      const { caseCreationService } = await getServices(TEST_TENANT_ID)
 
       // Create case
       let firstCase: Case
@@ -304,12 +346,13 @@ describe('Cases (Transaction hit)', () => {
         const results = await bulkVerifyTransactions(TEST_TENANT_ID, [
           transaction,
         ])
-        expect(results.length).not.toEqual(0)
+        expect(results).toHaveLength(1)
         const [result] = results
         const cases = await caseCreationService.handleTransaction({
           ...transaction,
           ...result,
         })
+        expect(cases).toHaveLength(1)
         firstCase = cases[0]
       }
 
@@ -330,18 +373,20 @@ describe('Cases (Transaction hit)', () => {
           ...result,
         })
 
+        expect(cases).toHaveLength(1)
         const nextCase = cases[0]
-        expect(firstCase.caseId).toEqual(nextCase.caseId)
+        expect(nextCase.caseId).toEqual(firstCase.caseId)
         expect(nextCase.caseTransactions).toHaveLength(2)
       }
     })
   })
 
-  describe('Run #5', () => {
+  describe('Env #5', () => {
     const TEST_TENANT_ID = getTestTenantId()
-    setup(TEST_TENANT_ID)
+    setupRules(TEST_TENANT_ID)
+    setupUsers(TEST_TENANT_ID)
     test('Previous case should be updated when user is a different party', async () => {
-      const caseCreationService = await getService(TEST_TENANT_ID)
+      const { caseCreationService } = await getServices(TEST_TENANT_ID)
 
       // Create case
       let firstCase: Case
@@ -388,12 +433,13 @@ describe('Cases (Transaction hit)', () => {
     })
   })
 
-  describe('Run #6', () => {
+  describe('Env #6', () => {
     const TEST_TENANT_ID = getTestTenantId()
-    setup(TEST_TENANT_ID)
+    setupRules(TEST_TENANT_ID)
+    setupUsers(TEST_TENANT_ID)
 
     test('Check that cases are not created for missing users', async () => {
-      const caseCreationService = await getService(TEST_TENANT_ID)
+      const { caseCreationService } = await getServices(TEST_TENANT_ID)
 
       const transaction = getTestTransaction({
         originUserId: 'this_user_id_does_not_exists',
@@ -414,12 +460,14 @@ describe('Cases (Transaction hit)', () => {
     })
   })
 
-  describe('Run #7', () => {
+  describe('Env #7', () => {
     const TEST_TENANT_ID = getTestTenantId()
-    setup(TEST_TENANT_ID)
+    setupRules(TEST_TENANT_ID)
+    setupUsers(TEST_TENANT_ID)
 
     test('Make sure to select next open and not over fulled case', async () => {
-      const caseCreationService = await getService(TEST_TENANT_ID)
+      const { caseCreationService } = await getServices(TEST_TENANT_ID)
+
       async function addTransaction(counter: number, expectCase: boolean) {
         const transaction = getTestTransaction({
           transactionId: `transaction_${counter}`,
@@ -466,13 +514,15 @@ describe('Cases (Transaction hit)', () => {
     })
   })
 
-  describe('Run #8', () => {
+  describe('Env #8', () => {
     const TEST_TENANT_ID = getTestTenantId()
-    setup(TEST_TENANT_ID, {
+    setupRules(TEST_TENANT_ID, {
       hitDirections: ['ORIGIN'],
     })
+    setupUsers(TEST_TENANT_ID)
+
     test('Both users exist, but only create the case for the hit direction - origin', async () => {
-      const caseCreationService = await getService(TEST_TENANT_ID)
+      const { caseCreationService } = await getServices(TEST_TENANT_ID)
 
       const transaction = getTestTransaction({
         originUserId: TEST_USER_1.userId,
@@ -497,13 +547,15 @@ describe('Cases (Transaction hit)', () => {
     })
   })
 
-  describe('Run #9', () => {
+  describe('Env #9', () => {
     const TEST_TENANT_ID = getTestTenantId()
-    setup(TEST_TENANT_ID, {
+    setupRules(TEST_TENANT_ID, {
       hitDirections: ['DESTINATION'],
     })
+    setupUsers(TEST_TENANT_ID)
+
     test('Both users exist, but only create the case for the hit direction - destination', async () => {
-      const caseCreationService = await getService(TEST_TENANT_ID)
+      const { caseCreationService } = await getServices(TEST_TENANT_ID)
 
       const transaction = getTestTransaction({
         originUserId: TEST_USER_1.userId,
@@ -528,14 +580,16 @@ describe('Cases (Transaction hit)', () => {
     })
   })
 
-  describe('Run #10', () => {
+  describe('Env #10', () => {
     const TEST_TENANT_ID = getTestTenantId()
-    setup(TEST_TENANT_ID, {
+    setupRules(TEST_TENANT_ID, {
       hitDirections: ['DESTINATION'],
       rulesCount: 2,
     })
+    setupUsers(TEST_TENANT_ID)
+
     test('For multiple rules hit only one case should be created', async () => {
-      const caseCreationService = await getService(TEST_TENANT_ID)
+      const { caseCreationService } = await getServices(TEST_TENANT_ID)
 
       const transaction = getTestTransaction({
         originUserId: TEST_USER_1.userId,
@@ -560,14 +614,16 @@ describe('Cases (Transaction hit)', () => {
     })
   })
 
-  describe('Run #11', () => {
+  describe('Env #11', () => {
     const TEST_TENANT_ID = getTestTenantId()
-    setup(TEST_TENANT_ID, {
+    setupRules(TEST_TENANT_ID, {
       hitDirections: ['ORIGIN', 'DESTINATION'],
       rulesCount: 2,
     })
+    setupUsers(TEST_TENANT_ID)
+
     test('New transaction should be put into the correct alert', async () => {
-      const caseCreationService = await getService(TEST_TENANT_ID)
+      const { caseCreationService } = await getServices(TEST_TENANT_ID)
 
       const transactions = [
         getTestTransaction({
@@ -625,14 +681,16 @@ describe('Cases (Transaction hit)', () => {
     })
   })
 
-  describe('Run #12', () => {
+  describe('Env #12', () => {
     const TEST_TENANT_ID = getTestTenantId()
-    setup(TEST_TENANT_ID, {
+    setupRules(TEST_TENANT_ID, {
       hitDirections: ['ORIGIN'],
       rulesCount: 2,
     })
+    setupUsers(TEST_TENANT_ID)
+
     test('New transaction update should replace the transaction in an existing case', async () => {
-      const caseCreationService = await getService(TEST_TENANT_ID)
+      const { caseCreationService } = await getServices(TEST_TENANT_ID)
 
       const transaction = getTestTransaction({
         originUserId: TEST_USER_1.userId,
@@ -671,11 +729,12 @@ describe('Cases (Transaction hit)', () => {
 
 describe('Cases (User hit)', () => {
   const TEST_TENANT_ID = getTestTenantId()
-  setup(TEST_TENANT_ID, { ruleType: 'USER' })
-  setup(TEST_TENANT_ID, { ruleType: 'TRANSACTION' })
+  setupRules(TEST_TENANT_ID, { ruleType: 'USER' })
+  setupRules(TEST_TENANT_ID, { ruleType: 'TRANSACTION' })
+  setupUsers(TEST_TENANT_ID)
 
   test('Create a new case for a user rule hit', async () => {
-    const caseCreationService = await getService(TEST_TENANT_ID)
+    const { caseCreationService } = await getServices(TEST_TENANT_ID)
     const user = getTestBusiness()
     const results = await bulkVerifyUsers(TEST_TENANT_ID, [user])
     expect(results).toHaveLength(1)
@@ -695,7 +754,7 @@ describe('Cases (User hit)', () => {
   })
 
   test('Merge a user rule alert into an existing case', async () => {
-    const caseCreationService = await getService(TEST_TENANT_ID)
+    const { caseCreationService } = await getServices(TEST_TENANT_ID)
     const transaction = getTestTransaction({
       transactionId: '111',
       originUserId: TEST_USER_1.userId,
@@ -725,12 +784,13 @@ describe('Cases (User hit)', () => {
   })
 })
 
-describe('Run #1', () => {
+describe('Env #1', () => {
   const TEST_TENANT_ID = getTestTenantId()
-  setup(TEST_TENANT_ID, {})
+  setupRules(TEST_TENANT_ID, {})
+  setupUsers(TEST_TENANT_ID)
 
   test('No prior cases', async () => {
-    const caseCreationService = await getService(TEST_TENANT_ID)
+    const { caseCreationService } = await getServices(TEST_TENANT_ID)
 
     const transaction = getTestTransaction({
       originUserId: TEST_USER_1.userId,
@@ -749,12 +809,13 @@ describe('Run #1', () => {
   })
 })
 
-describe('Run #2', () => {
+describe('Env #2', () => {
   const TEST_TENANT_ID = getTestTenantId()
-  setup(TEST_TENANT_ID, {})
+  setupRules(TEST_TENANT_ID, {})
+  setupUsers(TEST_TENANT_ID)
 
   test('Check that cases are not created for missing users', async () => {
-    const caseCreationService = await getService(TEST_TENANT_ID)
+    const { caseCreationService } = await getServices(TEST_TENANT_ID)
 
     const transaction = getTestTransaction({
       originUserId: 'this_user_id_does_not_exists',
@@ -773,12 +834,13 @@ describe('Run #2', () => {
   })
 })
 
-describe('Run #3', () => {
+describe('Env #3', () => {
   const TEST_TENANT_ID = getTestTenantId()
-  setup(TEST_TENANT_ID, {})
+  setupRules(TEST_TENANT_ID, {})
+  setupUsers(TEST_TENANT_ID)
 
   async function createCase(): Promise<Case> {
-    const caseCreationService = await getService(TEST_TENANT_ID)
+    const { caseCreationService } = await getServices(TEST_TENANT_ID)
 
     const transaction = getTestTransaction({
       originUserId: TEST_USER_1.userId,
@@ -800,7 +862,7 @@ describe('Run #3', () => {
   }
 
   test('Create case using existed alerts', async () => {
-    const caseCreationService = await getService(TEST_TENANT_ID)
+    const { caseCreationService } = await getServices(TEST_TENANT_ID)
 
     const caseItem = await createCase()
     expect(caseItem.caseId).toBeTruthy()
@@ -835,11 +897,434 @@ describe('Run #3', () => {
   })
 })
 
+describe('Test delayed publishing', () => {
+  const CREATION_INTERVAL = {
+    type: 'MONTHLY',
+    day: 10,
+  } as const
+
+  const DAY_BEFORE_PUBLISH_DATE = '2023-06-09T12:00:00.000Z'
+  const EXPECTED_PUBLISH_DATE = '2023-06-10T00:00:00.000Z'
+  const DAY_AFTER_PUBLISH_DATE = '2023-06-11T12:00:00.000Z'
+  const WEEK_AFTER_PUBLISH_DATE = '2023-06-17T12:00:00.000Z'
+
+  beforeAll(async () => {
+    MockDate.set(TODAY)
+  })
+
+  describe('Env #1', () => {
+    const TEST_TENANT_ID = getTestTenantId()
+    setUpUsersHooks(TEST_TENANT_ID, [TEST_USER_1, TEST_USER_2])
+
+    test('Alert should be created and availableAfterTimestamp should be assigned', async () => {
+      await underRules(
+        TEST_TENANT_ID,
+        [
+          {
+            alertCreationInterval: CREATION_INTERVAL,
+          },
+        ],
+        async () => {
+          const alerts = await createAlerts(TEST_TENANT_ID)
+          for (const alert of alerts) {
+            expect(
+              new Date(alert.availableAfterTimestamp as number).toISOString()
+            ).toEqual(EXPECTED_PUBLISH_DATE)
+          }
+        }
+      )
+    })
+
+    test('Alert is not available until published and then available after publishing', async () => {
+      const { alertsService } = await getServices(TEST_TENANT_ID)
+
+      await underRules(
+        TEST_TENANT_ID,
+        [
+          {
+            alertCreationInterval: CREATION_INTERVAL,
+          },
+        ],
+        async () => {
+          const [alert] = await createAlerts(TEST_TENANT_ID)
+          const alertId = alert.alertId as string
+
+          MockDate.set(DAY_BEFORE_PUBLISH_DATE)
+          {
+            expect(alertId).toBeDefined()
+            await expect(alertsService.getAlert(alertId)).rejects.not.toBeNull()
+          }
+
+          MockDate.set(DAY_AFTER_PUBLISH_DATE)
+          {
+            const alert = await alertsService.getAlert(alertId)
+            expect(alert).not.toBeNull()
+          }
+        }
+      )
+    })
+  })
+
+  describe('Env #2', () => {
+    const TEST_TENANT_ID = getTestTenantId()
+    setUpUsersHooks(TEST_TENANT_ID, [TEST_USER_1, TEST_USER_2])
+
+    test('Cases with no published alerts is not available via id', async () => {
+      const { caseService } = await getServices(TEST_TENANT_ID)
+
+      const { caseId } = await underRules(
+        TEST_TENANT_ID,
+        [
+          {
+            alertCreationInterval: CREATION_INTERVAL,
+          },
+        ],
+        () => createCase(TEST_TENANT_ID)
+      )
+
+      MockDate.set(DAY_BEFORE_PUBLISH_DATE)
+      {
+        const caseItem = await caseService.getCase(caseId as string)
+        expect(caseItem).toBeNull()
+      }
+
+      MockDate.set(DAY_AFTER_PUBLISH_DATE)
+      {
+        const caseItem = await caseService.getCase(caseId as string)
+        expect(caseItem).not.toBeNull()
+      }
+    })
+
+    test('Cases with no published alerts is not listed until published and then listed after publishing', async () => {
+      const { caseService } = await getServices(TEST_TENANT_ID)
+
+      await underRules(
+        TEST_TENANT_ID,
+        [
+          {
+            alertCreationInterval: CREATION_INTERVAL,
+          },
+        ],
+        async () => {
+          await createAlerts(TEST_TENANT_ID)
+
+          MockDate.set(DAY_BEFORE_PUBLISH_DATE)
+          {
+            const cases = await caseService.getCases({})
+            expect(cases.total).toEqual(0)
+          }
+
+          MockDate.set(DAY_AFTER_PUBLISH_DATE)
+          {
+            const cases = await caseService.getCases({})
+            expect(cases.total).toEqual(1)
+          }
+        }
+      )
+    })
+
+    // todo: test different user ids with the same interval
+
+    test('Create cases should become listed available when publish day passed', async () => {
+      const { caseService } = await getServices(TEST_TENANT_ID)
+
+      const createdCases = await underRules(
+        TEST_TENANT_ID,
+        [
+          {
+            alertCreationInterval: CREATION_INTERVAL,
+          },
+          {
+            alertCreationInterval: {
+              ...CREATION_INTERVAL,
+              day: 12,
+            },
+          },
+        ],
+        () => createCases(TEST_TENANT_ID)
+      )
+      expect(createdCases).toHaveLength(2)
+
+      MockDate.set(DAY_BEFORE_PUBLISH_DATE)
+      {
+        const cases = await caseService.getCases({})
+        expect(cases.total).toEqual(0)
+      }
+
+      MockDate.set(DAY_AFTER_PUBLISH_DATE)
+      {
+        const cases = await caseService.getCases({})
+        expect(cases.total).toEqual(1)
+      }
+
+      MockDate.set(WEEK_AFTER_PUBLISH_DATE)
+      {
+        const cases = await caseService.getCases({})
+        expect(cases.total).toEqual(2)
+      }
+    })
+  })
+
+  describe('Env #4', () => {
+    const TEST_TENANT_ID = getTestTenantId()
+    setUpUsersHooks(TEST_TENANT_ID, [TEST_USER_1, TEST_USER_2])
+
+    test('Alerts with the same creation interval should land into the same case', async () => {
+      const case1: Case = await underRules(
+        TEST_TENANT_ID,
+        [
+          {
+            ruleInstanceId: 'RI-1',
+            alertCreationInterval: CREATION_INTERVAL,
+          },
+        ],
+        () => createCase(TEST_TENANT_ID)
+      )
+      expect(
+        new Date(case1.availableAfterTimestamp as number).toISOString()
+      ).toEqual(EXPECTED_PUBLISH_DATE)
+
+      const case2: Case = await underRules(
+        TEST_TENANT_ID,
+        [
+          {
+            ruleInstanceId: 'RI-2',
+            alertCreationInterval: CREATION_INTERVAL,
+          },
+        ],
+        () => createCase(TEST_TENANT_ID)
+      )
+      expect(
+        new Date(case2.availableAfterTimestamp as number).toISOString()
+      ).toEqual(EXPECTED_PUBLISH_DATE)
+
+      expect(case2.caseId as string).toEqual(case2.caseId)
+    })
+  })
+
+  describe('Env #5', () => {
+    const TEST_TENANT_ID = getTestTenantId()
+    setUpUsersHooks(TEST_TENANT_ID, [TEST_USER_1, TEST_USER_2])
+
+    test('Delayed hit and undelayed hit should create two cases', async () => {
+      await underRules(
+        TEST_TENANT_ID,
+        [
+          {
+            ruleInstanceId: 'RI-1',
+            alertCreationInterval: CREATION_INTERVAL,
+          },
+          {},
+        ],
+        async () => {
+          const { caseCreationService } = await getServices(TEST_TENANT_ID)
+          MockDate.set(TODAY)
+
+          const transaction = getTestTransaction({
+            originUserId: TEST_USER_1.userId,
+          })
+
+          const results = await bulkVerifyTransactions(TEST_TENANT_ID, [
+            transaction,
+          ])
+          expect(results.length).not.toEqual(0)
+          const [result] = results
+
+          const cases = await caseCreationService.handleTransaction({
+            ...transaction,
+            ...result,
+          })
+          expect(cases.length).toEqual(2)
+        }
+      )
+    })
+  })
+  describe('Env #6', () => {
+    const TEST_TENANT_ID = getTestTenantId()
+    setUpUsersHooks(TEST_TENANT_ID, [TEST_USER_1, TEST_USER_2])
+
+    test('Different publish intervals should create separate cases', async () => {
+      await underRules(
+        TEST_TENANT_ID,
+        [
+          {
+            ruleInstanceId: 'RI-1',
+            alertCreationInterval: CREATION_INTERVAL,
+          },
+          {
+            ruleInstanceId: 'RI-2',
+            alertCreationInterval: CREATION_INTERVAL,
+          },
+          {
+            ruleInstanceId: 'RI-3',
+            alertCreationInterval: {
+              ...CREATION_INTERVAL,
+              day: 11,
+            },
+          },
+        ],
+        async () => {
+          const cases = await createCases(TEST_TENANT_ID)
+          expect(cases.length).toEqual(2)
+        }
+      )
+    })
+  })
+  describe('Env #6', () => {
+    const TEST_TENANT_ID = getTestTenantId()
+    setUpUsersHooks(TEST_TENANT_ID, [TEST_USER_1, TEST_USER_2])
+
+    test('If there is no specified date in the month, take the last one', async () => {
+      const FEBRUARY_01 = '2023-02-01T12:00:00.000Z'
+      const FEBRUARY_28 = '2023-02-28T00:00:00.000Z'
+      const cases = await underRules(
+        TEST_TENANT_ID,
+        [
+          {
+            ruleInstanceId: 'RI-1',
+            alertCreationInterval: {
+              type: 'MONTHLY',
+              day: 31,
+            },
+          },
+        ],
+        () => createCases(TEST_TENANT_ID, FEBRUARY_01)
+      )
+      const caseItem = expectUserCase(cases)
+      expect(
+        new Date(caseItem.availableAfterTimestamp as number).toISOString()
+      ).toEqual(FEBRUARY_28)
+    })
+  })
+
+  describe('Env #7', () => {
+    const TEST_TENANT_ID = getTestTenantId()
+    setUpUsersHooks(TEST_TENANT_ID, [TEST_USER_1, TEST_USER_2])
+
+    test('Alert is not available until published and then available after publishing', async () => {
+      const { alertsService } = await getServices(TEST_TENANT_ID)
+
+      await underRules(
+        TEST_TENANT_ID,
+        [
+          {
+            alertCreationInterval: CREATION_INTERVAL,
+          },
+        ],
+        async () => {
+          const [alert] = await createAlerts(TEST_TENANT_ID)
+          const alertId = alert.alertId as string
+
+          MockDate.set(DAY_BEFORE_PUBLISH_DATE)
+          {
+            expect(alertId).toBeDefined()
+            await expect(alertsService.getAlert(alertId)).rejects.not.toBeNull()
+          }
+
+          MockDate.set(DAY_AFTER_PUBLISH_DATE)
+          {
+            const alert = await alertsService.getAlert(alertId)
+            expect(alert).not.toBeNull()
+          }
+        }
+      )
+    })
+  })
+
+  describe('Env #8', () => {
+    const TEST_TENANT_ID = getTestTenantId()
+    setUpUsersHooks(TEST_TENANT_ID, [TEST_USER_1, TEST_USER_2])
+
+    test('Alert is not listed until published and then listed after publishing', async () => {
+      const { alertsService } = await getServices(TEST_TENANT_ID)
+
+      await underRules(
+        TEST_TENANT_ID,
+        [
+          {
+            alertCreationInterval: CREATION_INTERVAL,
+          },
+        ],
+        async () => {
+          const [alert] = await createAlerts(TEST_TENANT_ID)
+          const alertId = alert.alertId as string
+
+          MockDate.set(DAY_BEFORE_PUBLISH_DATE)
+          {
+            const alerts = await alertsService.getAlerts({})
+            expect(alerts.total).toEqual(0)
+          }
+
+          MockDate.set(DAY_AFTER_PUBLISH_DATE)
+          {
+            const alerts = await alertsService.getAlerts({})
+            expect(alerts.total).toEqual(1)
+            expect(alerts.data[0]?.alert.alertId).toEqual(alertId)
+          }
+        }
+      )
+    })
+  })
+
+  describe('Env #9', () => {
+    const TEST_TENANT_ID = getTestTenantId()
+    setUpUsersHooks(TEST_TENANT_ID, [TEST_USER_1, TEST_USER_2])
+
+    test('New case should have creation time equal to availableAfterTimestamp', async () => {
+      const caseItem = await underRules(
+        TEST_TENANT_ID,
+        [
+          {
+            alertCreationInterval: CREATION_INTERVAL,
+          },
+        ],
+        () => createCase(TEST_TENANT_ID)
+      )
+      expect(
+        new Date(caseItem.availableAfterTimestamp ?? 0).toISOString()
+      ).toEqual(EXPECTED_PUBLISH_DATE)
+      expect(caseItem.createdTimestamp).toEqual(
+        caseItem.availableAfterTimestamp
+      )
+    })
+  })
+
+  describe('Env #10', () => {
+    const TEST_TENANT_ID = getTestTenantId()
+    setUpUsersHooks(TEST_TENANT_ID, [TEST_USER_1, TEST_USER_2])
+
+    test('New alerts should have creation time equal to availableAfterTimestamp', async () => {
+      const alerts = await underRules(
+        TEST_TENANT_ID,
+        [
+          {
+            alertCreationInterval: CREATION_INTERVAL,
+          },
+        ],
+        () => createAlerts(TEST_TENANT_ID)
+      )
+      for (const alert of alerts) {
+        expect(
+          new Date(alert.availableAfterTimestamp ?? 0).toISOString()
+        ).toEqual(EXPECTED_PUBLISH_DATE)
+        expect(alert.createdTimestamp).toEqual(alert.availableAfterTimestamp)
+      }
+    })
+  })
+})
+
 /*
   Helpers
  */
 
-function setup(
+function setupUsers(
+  tenantId: string,
+  users: (User | InternalUser)[] = [TEST_USER_1, TEST_USER_2]
+) {
+  setUpUsersHooks(tenantId, users)
+}
+
+function setupRules(
   tenantId: string,
   parameters: {
     hitDirections?: RuleHitDirection[]
@@ -860,7 +1345,6 @@ function setup(
       },
     ])
   }
-  setUpUsersHooks(tenantId, [TEST_USER_1, TEST_USER_2])
 }
 
 function expectUserCase(
@@ -895,4 +1379,80 @@ function expectUserCase(
     )
   }
   return caseItem as Case
+}
+
+async function underRules<R = void>(
+  tenantId: string,
+  rules: {
+    ruleInstanceId?: string
+    hitDirections?: RuleHitDirection[]
+    rulesCount?: number
+    ruleType?: RuleInstanceTypeEnum
+    alertCreationInterval?:
+      | AlertCreationIntervalInstantly
+      | AlertCreationIntervalWeekly
+      | AlertCreationIntervalMonthly
+  }[],
+  cb: () => Promise<R>
+): Promise<R> {
+  const deleteRules = await Promise.all(
+    rules.map(async (parameters, i) => {
+      const ruleType = parameters.ruleType ?? 'TRANSACTION'
+      return await createRule(
+        tenantId,
+        {
+          ruleImplementationName: 'tests/test-always-hit-rule',
+        },
+        {
+          id: parameters.ruleInstanceId ?? `${ruleType}-R-${i + 1}`,
+          type: ruleType,
+          parameters: {
+            hitDirections: parameters.hitDirections,
+          },
+          alertCreationInterval: parameters.alertCreationInterval,
+        }
+      )
+    })
+  )
+  const result = await cb()
+  await Promise.all(deleteRules.map((deleteRule) => deleteRule()))
+  return result
+}
+
+async function createCases(
+  tenantId: string,
+  date: string = TODAY
+): Promise<Case[]> {
+  const { caseCreationService } = await getServices(tenantId)
+  MockDate.set(date)
+
+  const transaction = getTestTransaction({
+    originUserId: TEST_USER_1.userId,
+  })
+
+  const results = await bulkVerifyTransactions(tenantId, [transaction])
+  expect(results.length).not.toEqual(0)
+  const [result] = results
+
+  const cases = await caseCreationService.handleTransaction({
+    ...transaction,
+    ...result,
+  })
+  return cases
+}
+
+async function createCase(tenantId: string): Promise<Case> {
+  const cases = await createCases(tenantId)
+
+  expect(cases.length).toEqual(1)
+  const caseItem = expectUserCase(cases, {
+    originUserId: TEST_USER_1.userId,
+  })
+  return caseItem
+}
+
+async function createAlerts(tenantId: string): Promise<Alert[]> {
+  const caseItem = await createCase(tenantId)
+  expect(caseItem.alerts).toBeDefined()
+  return caseItem.alerts ?? []
 }

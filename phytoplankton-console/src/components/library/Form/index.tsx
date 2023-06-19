@@ -1,4 +1,4 @@
-import React, { useImperativeHandle, useRef, useState } from 'react';
+import React, { useCallback, useImperativeHandle, useRef, useState } from 'react';
 import { FieldValidators, Validator } from './utils/validation/types';
 import { FieldMeta, FormContext, FormContextValue } from '@/components/library/Form/context';
 import { useDeepEqualEffect, usePrevious } from '@/utils/hooks';
@@ -40,6 +40,12 @@ function Form<FormValues>(props: Props<FormValues>, ref: React.Ref<FormRef<FormV
   const [fieldMeta, setFieldsMeta] = useState<{ [key: string]: FieldMeta }>({});
   const formRef = useRef<HTMLFormElement>(null);
 
+  const handleSubmit = useCallback(() => {
+    onSubmit?.(formValues, {
+      isValid: checkFormValid(formValues, formValidators, fieldValidators),
+    });
+  }, [formValues, onSubmit, formValidators, fieldValidators]);
+
   useImperativeHandle(
     ref,
     (): FormRef<FormValues> => ({
@@ -53,7 +59,7 @@ function Form<FormValues>(props: Props<FormValues>, ref: React.Ref<FormRef<FormV
         );
       },
       submit: () => {
-        formRef.current?.submit();
+        handleSubmit();
       },
     }),
   );
@@ -93,9 +99,7 @@ function Form<FormValues>(props: Props<FormValues>, ref: React.Ref<FormRef<FormV
       className={className}
       onSubmit={(e) => {
         e.preventDefault();
-        onSubmit?.(formValues, {
-          isValid: checkFormValid(formValues, formValidators, fieldValidators),
-        });
+        handleSubmit();
       }}
     >
       <FormContext.Provider value={formContext as FormContextValue<unknown>}>

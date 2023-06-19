@@ -102,11 +102,19 @@ async function transactionHandler(
     dynamoDb,
   })
   const usersRepo = new UserRepository(tenantId, { mongoDb, dynamoDb })
+
+  const tenantRepository = new TenantRepository(tenantId, {
+    dynamoDb,
+  })
+
+  const tenantSettings = await tenantRepository.getTenantSettings()
+
   const caseCreationService = new CaseCreationService(
     casesRepo,
     usersRepo,
     ruleInstancesRepo,
-    transactionsRepo
+    transactionsRepo,
+    tenantSettings
   )
   const riskScoringService = new RiskScoringService(tenantId, {
     dynamoDb,
@@ -166,11 +174,19 @@ async function userHandler(
     dynamoDb,
   })
   const usersRepo = new UserRepository(tenantId, { mongoDb, dynamoDb })
+
+  const tenantRepository = new TenantRepository(tenantId, {
+    dynamoDb,
+  })
+
+  const tenantSettings = await tenantRepository.getTenantSettings()
+
   const caseCreationService = new CaseCreationService(
     casesRepo,
     usersRepo,
     ruleInstancesRepo,
-    transactionsRepo
+    transactionsRepo,
+    tenantSettings
   )
 
   if (await tenantHasFeature(tenantId, 'PULSE')) {

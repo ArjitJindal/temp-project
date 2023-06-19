@@ -30,6 +30,7 @@ import {
 } from '@/utils/pagination'
 import { AlertStatusUpdateRequest } from '@/@types/openapi-internal/AlertStatusUpdateRequest'
 import { Assignment } from '@/@types/openapi-internal/Assignment'
+import { isAlertAvailable } from '@/lambdas/console-api-case/services/utils'
 
 export class AlertsService extends CaseAlertsCommonService {
   alertsRepository: AlertsRepository
@@ -114,7 +115,7 @@ export class AlertsService extends CaseAlertsCommonService {
 
     try {
       const alert = await this.alertsRepository.getAlertById(alertId)
-      if (!alert) {
+      if (!alert || !isAlertAvailable(alert)) {
         throw new NotFound(`No alert for ${alertId}`)
       }
       alert.comments = alert?.comments?.map((c) => {

@@ -525,6 +525,7 @@ export const createMongoDBCollections = async (
       // ignore already exists
     }
     const casesCollection = db.collection<Case>(CASES_COLLECTION(tenantId))
+    await casesCollection.createIndex({ availableAfterTimestamp: 1 })
     await casesCollection.createIndex({ caseId: 1 })
     await casesCollection.createIndex({
       createdTimestamp: -1,

@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import StepHeader from '../../StepHeader';
 import s from './style.module.less';
+import CreationIntervalInput, { AlertCreationInterval } from './CreationIntervalInput';
 import Label from '@/components/library/Label';
 import { Priority, Rule, RuleLabels, RuleNature } from '@/apis';
 import TextInput from '@/components/library/TextInput';
@@ -18,6 +19,7 @@ export interface FormValues {
   casePriority: Priority;
   ruleLabels: RuleLabels[];
   ruleInstanceId?: string;
+  alertCreationInterval?: AlertCreationInterval;
   simulationIterationName?: string;
   simulationIterationDescription?: string;
 }
@@ -29,6 +31,9 @@ export const INITIAL_VALUES: FormValues = {
   casePriority: 'P1',
   ruleLabels: [],
   simulationIterationName: 'Iteration 1',
+  alertCreationInterval: {
+    type: 'INSTANTLY',
+  },
 };
 
 interface Props {
@@ -114,6 +119,14 @@ function RuleDetails(props: Props) {
               value={ruleLabels}
             />
           )}
+        </InputField>
+
+        <InputField<FormValues, 'alertCreationInterval'>
+          name={'alertCreationInterval'}
+          label={'Alert creation interval'}
+          labelProps={{ element: 'div', isOptional: false }}
+        >
+          {(inputProps) => <CreationIntervalInput {...inputProps} />}
         </InputField>
 
         <InputField<FormValues, 'casePriority'>

@@ -474,6 +474,20 @@ export class CaseRepository {
       })
     }
 
+    conditions.push({
+      $or: [
+        {
+          // Need to compare to null, because mongo sometimes replaces undefined with null when saves objects
+          // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+          // @ts-ignore
+          availableAfterTimestamp: { $eq: null },
+        },
+        {
+          availableAfterTimestamp: { $lt: Date.now() },
+        },
+      ],
+    })
+
     return conditions
   }
 
@@ -1002,12 +1016,19 @@ export class CaseRepository {
       filterMaxTransactions?: number
       filterOutCaseStatus?: CaseStatus
       filterTransactionId?: string
+      filterAvailableAfterTimestamp?: (number | undefined)[]
     }
   ): Promise<Case[]> {
     const db = this.mongoDb.db()
     const casesCollection = db.collection<Case>(CASES_COLLECTION(this.tenantId))
 
     const filters: Filter<Case>[] = []
+
+    if (params.filterAvailableAfterTimestamp != null) {
+      filters.push({
+        availableAfterTimestamp: { $in: params.filterAvailableAfterTimestamp },
+      })
+    }
 
     if (params.filterOutCaseStatus != null) {
       filters.push({

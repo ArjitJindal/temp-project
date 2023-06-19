@@ -1,4 +1,4 @@
-import dayjsLib, { ConfigType, OptionType } from 'dayjs'
+import dayjsLib, { ConfigType } from 'dayjs'
 import utc from 'dayjs/plugin/utc'
 import timezone from 'dayjs/plugin/timezone'
 import weekOfYear from 'dayjs/plugin/weekOfYear'
@@ -6,20 +6,28 @@ import durationPlugin, {
   Duration,
   DurationUnitType,
 } from 'dayjs/plugin/duration'
+import localizedFormat from 'dayjs/plugin/localizedFormat'
+import { Timezone as ApiTimezone } from '@/@types/openapi-internal/Timezone'
 
 dayjsLib.extend(utc)
 dayjsLib.extend(durationPlugin)
 dayjsLib.extend(timezone)
 dayjsLib.extend(weekOfYear)
+dayjsLib.extend(localizedFormat)
 
+dayjsLib.locale('en')
+
+export type Timezone = ApiTimezone
 export type Dayjs = dayjsLib.Dayjs
 
 export default function dayjs(
   config?: ConfigType,
-  format?: OptionType
+  format?: string
 ): dayjsLib.Dayjs {
-  const dayjs = dayjsLib(config, format)
-  return dayjs.utc()
+  if (format != null) {
+    return dayjsLib.tz(config, format, 'Etc/UTC')
+  }
+  return dayjsLib.tz(config, 'Etc/UTC')
 }
 
 export function duration(time: number, unit?: DurationUnitType): Duration {
@@ -37,4 +45,21 @@ export const convertToDays = (value: number, unit: string) => {
     default:
       return value
   }
+}
+
+export const WEEKDAY_NUMBERS = {
+  SUNDAY: 0,
+  MONDAY: 1,
+  TUESDAY: 2,
+  WEDNESDAY: 3,
+  THURSDAY: 4,
+  FRIDAY: 5,
+  SATURDAY: 6,
+}
+
+export function getDefaultTimezone(): Timezone {
+  if (process.env.TZ != null) {
+    return process.env.TZ as Timezone
+  }
+  return 'Etc/UTC'
 }

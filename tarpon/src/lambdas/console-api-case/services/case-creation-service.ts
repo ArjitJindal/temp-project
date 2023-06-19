@@ -18,23 +18,30 @@ import { logger } from '@/core/logger'
 import { RuleInstance } from '@/@types/openapi-internal/RuleInstance'
 import { HitRulesDetails } from '@/@types/openapi-internal/HitRulesDetails'
 import { PRIORITYS } from '@/@types/openapi-internal-custom/Priority'
+import { calculateCaseAvailableDate } from '@/lambdas/console-api-case/services/utils'
+import { TenantSettings } from '@/@types/openapi-internal/TenantSettings'
+import { notNullish } from '@/core/utils/array'
+import { getDefaultTimezone } from '@/utils/dayjs'
 
 export class CaseCreationService {
   caseRepository: CaseRepository
   userRepository: UserRepository
   ruleInstanceRepository: RuleInstanceRepository
   transactionRepository: MongoDbTransactionRepository
+  tenantSettings: TenantSettings
 
   constructor(
     caseRepository: CaseRepository,
     userRepository: UserRepository,
     ruleInstanceRepository: RuleInstanceRepository,
-    transactionRepository: MongoDbTransactionRepository
+    transactionRepository: MongoDbTransactionRepository,
+    tenantSettings: TenantSettings
   ) {
     this.caseRepository = caseRepository
     this.userRepository = userRepository
     this.ruleInstanceRepository = ruleInstanceRepository
     this.transactionRepository = transactionRepository
+    this.tenantSettings = tenantSettings
   }
 
   async getUsers(
@@ -184,17 +191,26 @@ export class CaseCreationService {
     transaction?: InternalTransaction
   ): Alert[] {
     const alerts: Alert[] = hitRules.map((hitRule: HitRulesDetails) => {
-      let priority
-      ruleInstances.map((ruleInstance: RuleInstance) => {
-        if (hitRule.ruleInstanceId === ruleInstance.id) {
-          priority = ruleInstance.casePriority
-        }
-      })
+      const ruleInstanceMatch: RuleInstance | null =
+        ruleInstances.find(
+          (ruleInstance) => hitRule.ruleInstanceId === ruleInstance.id
+        ) ?? null
+
+      const now = Date.now()
+      const availableAfterTimestamp: number | undefined =
+        ruleInstanceMatch?.alertCreationInterval != null
+          ? calculateCaseAvailableDate(
+              now,
+              ruleInstanceMatch?.alertCreationInterval,
+              this.tenantSettings.tenantTimezone ?? getDefaultTimezone()
+            )
+          : undefined
       return {
-        createdTimestamp: createdTimestamp,
+        createdTimestamp: availableAfterTimestamp ?? createdTimestamp,
         latestTransactionArrivalTimestamp,
         alertStatus: 'OPEN',
         ruleId: hitRule.ruleId,
+        availableAfterTimestamp: availableAfterTimestamp,
         ruleInstanceId: hitRule.ruleInstanceId,
         ruleName: hitRule.ruleName,
         ruleDescription: hitRule.ruleDescription,
@@ -203,7 +219,8 @@ export class CaseCreationService {
         ruleNature: hitRule.nature,
         numberOfTransactionsHit: transaction ? 1 : 0,
         transactionIds: transaction ? [transaction.transactionId] : [],
-        priority: (priority ?? _.last(PRIORITYS)) as Priority,
+        priority: (ruleInstanceMatch?.casePriority ??
+          _.last(PRIORITYS)) as Priority,
         originPaymentMethods: transaction?.originPaymentDetails?.method
           ? [transaction?.originPaymentDetails?.method]
           : [],
@@ -414,77 +431,124 @@ export class CaseCreationService {
             break
           }
         }
+
+        const now = Date.now()
+
+        const delayTimestamps = filteredHitRules.map((hitRule) => {
+          const ruleInstanceMatch: RuleInstance | undefined =
+            ruleInstances.find((x) => hitRule.ruleInstanceId === x.id)
+          const availableAfterTimestamp: number | undefined =
+            ruleInstanceMatch?.alertCreationInterval != null
+              ? calculateCaseAvailableDate(
+                  now,
+                  ruleInstanceMatch?.alertCreationInterval,
+                  this.tenantSettings.tenantTimezone ?? getDefaultTimezone()
+                )
+              : undefined
+          return {
+            hitRule,
+            ruleInstance: ruleInstanceMatch,
+            availableAfterTimestamp,
+          }
+        })
+        const delayTimestampsGroups = Object.entries(
+          _.groupBy(delayTimestamps, (x) => x.availableAfterTimestamp)
+        ).map(([key, values]) => ({
+          availableAfterTimestamp:
+            key === 'undefined' ? undefined : parseInt(key),
+          hitRules: values.map((x) => x.hitRule).filter(notNullish),
+          ruleInstances: values.map((x) => x.ruleInstance).filter(notNullish),
+        }))
+
         const cases = await this.caseRepository.getCasesByUserId(userId, {
           filterOutCaseStatus: 'CLOSED',
           filterMaxTransactions: MAX_TRANSACTION_IN_A_CASE,
-        })
-        const existedCase = cases.find(
-          ({ caseStatus }) => caseStatus !== 'CLOSED'
-        )
-        logger.info(`Existed case for user`, {
-          existedCaseId: existedCase?.caseId ?? null,
-          existedCaseTransactionsIdsLength: (
-            existedCase?.caseTransactionsIds || []
-          ).length,
+          filterAvailableAfterTimestamp: delayTimestampsGroups.map(
+            ({ availableAfterTimestamp }) => availableAfterTimestamp
+          ),
         })
 
-        if (existedCase) {
-          const alerts = this.getOrCreateAlertsForExistingCase(
-            filteredHitRules,
-            existedCase.alerts,
-            ruleInstances,
-            params.createdTimestamp,
-            filteredTransaction,
-            params.latestTransactionArrivalTimestamp
+        for (const {
+          availableAfterTimestamp,
+          ruleInstances,
+          hitRules,
+        } of delayTimestampsGroups) {
+          const existedCase = cases.find(
+            (x) =>
+              x.availableAfterTimestamp === availableAfterTimestamp ||
+              (x.availableAfterTimestamp == null &&
+                availableAfterTimestamp == null)
           )
 
-          const caseTransactionsIds = _.uniq(
-            [
-              ...(existedCase.caseTransactionsIds ?? []),
-              filteredTransaction?.transactionId as string,
-            ].filter(Boolean)
-          )
+          if (existedCase) {
+            logger.info(`Existed case for user`, {
+              existedCaseId: existedCase?.caseId ?? null,
+              existedCaseTransactionsIdsLength: (
+                existedCase?.caseTransactionsIds || []
+              ).length,
+            })
 
-          logger.info('Update existed case with transaction')
-          result.push({
-            ...existedCase,
-            latestTransactionArrivalTimestamp:
-              params.latestTransactionArrivalTimestamp,
-            caseTransactionsIds,
-            caseTransactions: _.uniqBy(
-              // NOTE: filteredTransaction comes first to replace the existing transaction
-              [
-                filteredTransaction,
-                ...(existedCase.caseTransactions ?? []),
-              ].filter(Boolean) as InternalTransaction[],
-              (t) => t.transactionId
-            ),
-            caseTransactionsCount: caseTransactionsIds.length,
-            priority:
-              _.minBy(alerts, 'priority')?.priority ?? _.last(PRIORITYS),
-            alerts,
-          })
-        } else {
-          logger.info('Create a new case for a transaction')
-          result.push({
-            ...this.getNewCase(hitUser.direction, hitUser.user),
-            createdTimestamp: params.createdTimestamp,
-            latestTransactionArrivalTimestamp:
-              params.latestTransactionArrivalTimestamp,
-            caseTransactionsIds: filteredTransaction
-              ? [filteredTransaction.transactionId as string]
-              : [],
-            caseTransactionsCount: filteredTransaction ? 1 : 0,
-            caseTransactions: filteredTransaction ? [filteredTransaction] : [],
-            priority: params.priority,
-            alerts: this.getAlertsForNewCase(
-              filteredHitRules,
+            const alerts = this.getOrCreateAlertsForExistingCase(
+              hitRules,
+              existedCase.alerts,
               ruleInstances,
               params.createdTimestamp,
-              params.latestTransactionArrivalTimestamp,
-              params.transaction
-            ),
-          })
+              filteredTransaction,
+              params.latestTransactionArrivalTimestamp
+            )
+
+            const caseTransactionsIds = _.uniq(
+              [
+                ...(existedCase.caseTransactionsIds ?? []),
+                filteredTransaction?.transactionId as string,
+              ].filter(Boolean)
+            )
+
+            logger.info('Update existed case with transaction')
+            result.push({
+              ...existedCase,
+              latestTransactionArrivalTimestamp:
+                params.latestTransactionArrivalTimestamp,
+              caseTransactionsIds,
+              caseTransactions: _.uniqBy(
+                // NOTE: filteredTransaction comes first to replace the existing transaction
+                [
+                  filteredTransaction,
+                  ...(existedCase.caseTransactions ?? []),
+                ].filter(Boolean) as InternalTransaction[],
+                (t) => t.transactionId
+              ),
+              caseTransactionsCount: caseTransactionsIds.length,
+              priority:
+                _.minBy(alerts, 'priority')?.priority ?? _.last(PRIORITYS),
+              alerts,
+            })
+          } else {
+            logger.info('Create a new case for a transaction')
+            result.push({
+              ...this.getNewCase(hitUser.direction, hitUser.user),
+              createdTimestamp:
+                availableAfterTimestamp ?? params.createdTimestamp,
+              latestTransactionArrivalTimestamp:
+                params.latestTransactionArrivalTimestamp,
+              caseTransactionsIds: filteredTransaction
+                ? [filteredTransaction.transactionId as string]
+                : [],
+              caseTransactionsCount: filteredTransaction ? 1 : 0,
+              caseTransactions: filteredTransaction
+                ? [filteredTransaction]
+                : [],
+              priority: params.priority,
+              availableAfterTimestamp,
+              alerts: this.getAlertsForNewCase(
+                hitRules,
+                ruleInstances,
+                params.createdTimestamp,
+                params.latestTransactionArrivalTimestamp,
+                params.transaction
+              ),
+            })
+          }
         }
       }
     }
@@ -612,6 +676,7 @@ export class CaseCreationService {
     }
     return await Promise.all(
       savedCases.map((nextCase) => {
+        // todo: filter unpublished cases?
         const relatedCases = nextCase.relatedCases ?? []
         return this.caseRepository.addCaseMongo({
           ...nextCase,

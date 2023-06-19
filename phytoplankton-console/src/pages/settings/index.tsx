@@ -6,6 +6,7 @@ import { RiskLevelSettings } from './components/RiskLevelSettings';
 import { FlagrightAISettings } from './components/FlagrightAISettings';
 import { DefaultValuesSettings } from './components/DefaultValuesSettings';
 import { RiskAlgorithmsSettings } from './components/RiskAlgorithmsSettings';
+import { OtherSettings } from './components/OtherSettings';
 import NarrativeTemplates from './components/NarrativeTemplates';
 import PageWrapper from '@/components/PageWrapper';
 import { useI18n } from '@/locales';
@@ -40,6 +41,10 @@ export default function SettingsPage() {
         {
           name: whiteLabeled ? 'AI Features' : 'Flagright AI Features',
           content: <FlagrightAISettings />,
+        },
+        {
+          name: 'Other settings',
+          content: <OtherSettings />,
         },
         {
           name: 'Billing',

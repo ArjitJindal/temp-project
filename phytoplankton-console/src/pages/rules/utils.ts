@@ -97,6 +97,7 @@ export function ruleInstanceToFormValues(isPulseEnabled: boolean, ruleInstance?:
           ruleDescription: ruleInstance.ruleDescriptionAlias,
           ruleNature: ruleInstance.nature,
           casePriority: ruleInstance.casePriority,
+          alertCreationInterval: ruleInstance.alertCreationInterval,
           ruleLabels: ruleInstance.labels,
           ruleInstanceId: ruleInstance.id,
         },
@@ -145,6 +146,7 @@ export function formValuesToRuleInstance(
     ruleDescriptionAlias: basicDetailsStep.ruleDescription,
     filters: standardFiltersStep,
     casePriority: basicDetailsStep.casePriority,
+    alertCreationInterval: basicDetailsStep.alertCreationInterval,
     nature: basicDetailsStep.ruleNature,
     labels: basicDetailsStep.ruleLabels,
     ...(isPulseEnabled
@@ -199,7 +201,6 @@ export function useUpdateRuleInstance(
         ruleInstanceId: ruleInstance.id!,
         RuleInstance: ruleInstance,
       });
-      console.log(gg);
       return gg;
     },
     {

@@ -40,6 +40,7 @@ function toRuleInstance(item: any): RuleInstance {
     falsePositiveCheckEnabled: item.falsePositiveCheckEnabled,
     nature: item.nature,
     labels: item.labels,
+    alertCreationInterval: item.alertCreationInterval,
   }
 }
 
@@ -92,6 +93,7 @@ export class RuleInstanceRepository {
       updatedAt: now,
       runCount: ruleInstance.runCount || 0,
       hitCount: ruleInstance.hitCount || 0,
+      alertCreationInterval: ruleInstance.alertCreationInterval,
     }
     const putItemInput: AWS.DynamoDB.DocumentClient.PutItemInput = {
       TableName: StackConstants.TARPON_RULE_DYNAMODB_TABLE_NAME,

@@ -1,3 +1,4 @@
+import { ManipulateType } from 'dayjs'
 import dayjs from '@/utils/dayjs'
 
 export function getTimeLabels(
@@ -10,7 +11,7 @@ export function getTimeLabels(
   for (
     let time = dayjs(getAffectedInterval(startTimestamp, granularity).start);
     time < dayjs(getAffectedInterval(endTimestamp, granularity).end);
-    time = dayjs(time).add(1, granularity.toLowerCase())
+    time = dayjs(time).add(1, granularity.toLowerCase() as ManipulateType)
   ) {
     timeLabels.push(time.format(formatType))
   }
