@@ -643,25 +643,16 @@ export class UserRepository {
     return newUser
   }
 
-  public async saveUserMongo(
-    user: UserWithRulesResult | BusinessWithRulesResult
-  ): Promise<InternalConsumerUser | InternalBusinessUser> {
+  public async saveUserMongo(user: InternalUser): Promise<InternalUser> {
     const db = this.mongoDb.db()
-
-    const users = await this.getMongoUsersByIds([user.userId])
-    const existingUser = users[0] as InternalUser
-    const updatedUser = {
-      ...existingUser,
-      ...user,
-    }
     const userCollection = db.collection<InternalUser>(
       USERS_COLLECTION(this.tenantId)
     )
 
-    await userCollection.replaceOne({ userId: user.userId }, updatedUser, {
+    await userCollection.replaceOne({ userId: user.userId }, user, {
       upsert: true,
     })
-    return updatedUser
+    return user
   }
 
   public async deleteUser(userId: string): Promise<void> {

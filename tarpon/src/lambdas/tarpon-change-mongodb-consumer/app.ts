@@ -32,6 +32,7 @@ import { RiskRepository } from '@/services/risk-scoring/repositories/risk-reposi
 import { Case } from '@/@types/openapi-internal/Case'
 import { BusinessWithRulesResult } from '@/@types/openapi-internal/BusinessWithRulesResult'
 import { UserWithRulesResult } from '@/@types/openapi-internal/UserWithRulesResult'
+import { InternalUser } from '@/@types/openapi-internal/InternalUser'
 
 const sqs = new AWS.SQS()
 
@@ -150,6 +151,7 @@ async function userHandler(
   updateLogMetadata({ userId: user.userId })
   logger.info(`Processing User`)
 
+  let internalUser = user as InternalUser
   const mongoDb = await getMongoDbClient()
   const dynamoDb = await getDynamoDbClient()
   const transactionsRepo = new MongoDbTransactionRepository(tenantId, mongoDb)
@@ -175,29 +177,29 @@ async function userHandler(
     const dynamoDb = await getDynamoDbClient()
     const riskRepository = new RiskRepository(tenantId, { dynamoDb })
 
-    const krsScore = await riskRepository.getKrsScore(user.userId)
-    const drsScore = await riskRepository.getDrsScore(user.userId)
+    const krsScore = await riskRepository.getKrsScore(internalUser.userId)
+    const drsScore = await riskRepository.getDrsScore(internalUser.userId)
 
     if (!krsScore && !drsScore) {
       logger.error(
         new Error(
-          `KRS and DRS scores are not available for user ${user.userId} in tenant ${tenantId}`
+          `KRS and DRS scores are not available for user ${internalUser.userId} in tenant ${tenantId}`
         )
       )
     }
 
-    user = {
-      ...user,
+    internalUser = {
+      ...internalUser,
       ...(krsScore && { krsScore }),
       ...(drsScore && { drsScore }),
     }
 
     if (drsScore) {
-      await usersRepo.updateDrsScoreOfUserMongo(user.userId, drsScore)
+      await usersRepo.updateDrsScoreOfUserMongo(internalUser.userId, drsScore)
     }
   }
 
-  const savedUser = await usersRepo.saveUserMongo(user)
+  const savedUser = await usersRepo.saveUserMongo(internalUser)
 
   if (await tenantHasFeature(tenantId, 'PULSE')) {
     logger.info(`Refreshing DRS User distribution stats`)
@@ -208,7 +210,7 @@ async function userHandler(
   const timestampBeforeCasesCreation = Date.now()
   const cases = await caseCreationService.handleUser(savedUser)
   await handleNewCases(tenantId, timestampBeforeCasesCreation, cases)
-  await casesRepo.updateUsersInCases(user)
+  await casesRepo.updateUsersInCases(internalUser)
 }
 
 async function userEventHandler(

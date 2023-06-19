@@ -52,14 +52,14 @@ paths:
       operationId: post-consumer-transaction
       parameters:
         - schema:
-            type: string
+            $ref: '#/components/schemas/BooleanString'
           in: query
           name: validateOriginUserId
           description:
             Boolean string whether Flagright should validate if provided
             originUserId exist. True by default
         - schema:
-            type: string
+            $ref: '#/components/schemas/BooleanString'
           in: query
           description:
             Boolean string whether Flagright should validate if provided
@@ -899,7 +899,15 @@ paths:
 
         In order to make individual events retrievable, you also need to pass in a unique `eventId` to the request body.
       operationId: post-user-event
-      parameters: []
+      parameters:
+        - schema:
+            $ref: '#/components/schemas/BooleanString'
+          in: query
+          name: allowUserTypeConversion
+          description:
+            Boolean string whether Flagright should allow a Consumer user event
+            to be applied to a Business user with the same user ID. This will
+            converts a Business user to a Consumer user.
       requestBody:
         description: ''
         content:
@@ -964,7 +972,15 @@ paths:
 
         In order to make individual events retrievable, you also need to pass in a unique `eventId` to the request body.
       operationId: post-business-user-event
-      parameters: []
+      parameters:
+        - schema:
+            $ref: '#/components/schemas/BooleanString'
+          in: query
+          name: allowUserTypeConversion
+          description:
+            Boolean string whether Flagright should allow a Business user event
+            to be applied to a Consumer user with the same user ID. This will
+            converts a Consumer user to a Business user.
       requestBody:
         description: ''
         content:
@@ -1132,8 +1148,6 @@ components:
           minLength: 1
           type: string
           description: Unique user ID
-        userDetails:
-          $ref: '#/components/schemas/UserDetails'
         createdTimestamp:
           type: number
           minimum: 1262300400000
@@ -1230,6 +1244,8 @@ components:
             - key: customKey
               value: customValue
       properties:
+        userDetails:
+          $ref: '#/components/schemas/UserDetails'
         userStateDetails:
           $ref: '#/components/schemas/UserStateDetails'
         kycStatusDetails:
@@ -2674,10 +2690,12 @@ components:
           minimum: 1262300400000
           description: Timestamp when the user was created
           maximum: 4133890801000
+        legalEntity:
+          $ref: '#/components/schemas/LegalEntity'
       required:
         - userId
-        - legalEntity
         - createdTimestamp
+        - legalEntity
     BusinessOptional:
       title: BusinessOptional
       type: object
@@ -4882,6 +4900,12 @@ components:
               type: array
               items:
                 $ref: '#/components/schemas/HitRulesDetails'
+    BooleanString:
+      title: Boolean string value
+      type: string
+      enum:
+        - 'true'
+        - 'false'
   securitySchemes:
     x-api-key:
       name: x-api-key

@@ -5,6 +5,10 @@ import { MongoClient } from 'mongodb'
 import { UserRepository } from '../users/repositories/user-repository'
 import { UserEventRepository } from '../rules-engine/repositories/user-event-repository'
 import { RulesEngineService } from '../rules-engine'
+import {
+  isBusinessUser,
+  isConsumerUser,
+} from '../rules-engine/utils/user-rule-utils'
 import { logger } from '@/core/logger'
 import { Business } from '@/@types/openapi-public/Business'
 import { User } from '@/@types/openapi-public/User'
@@ -15,6 +19,8 @@ import { UserType } from '@/@types/user/user-type'
 import { BusinessWithRulesResult } from '@/@types/openapi-internal/BusinessWithRulesResult'
 import { UserWithRulesResult } from '@/@types/openapi-internal/UserWithRulesResult'
 import { mergeObjects } from '@/utils/object'
+import { BusinessBase } from '@/@types/openapi-public/BusinessBase'
+import { UserBase } from '@/@types/openapi-internal/UserBase'
 
 export class UserManagementService {
   tenantId: string
@@ -167,14 +173,27 @@ export class UserManagementService {
   }
 
   public async verifyConsumerUserEvent(
-    userEvent: ConsumerUserEvent
+    userEvent: ConsumerUserEvent,
+    allowUserTypeConversion = false
   ): Promise<UserWithRulesResult> {
-    const user = await this.userRepository.getConsumerUser(userEvent.userId)
+    let user = await this.userRepository.getConsumerUser(userEvent.userId)
     if (!user) {
       throw new NotFound(
         `User ${userEvent.userId} not found. Please create the user ${userEvent.userId}`
       )
     }
+    if (isBusinessUser(user)) {
+      if (!allowUserTypeConversion) {
+        throw new BadRequest(
+          `Converting a Business user to a Consumer user is not allowed.`
+        )
+      }
+      user = _.pick(
+        user,
+        UserBase.getAttributeTypeMap().map((v) => v.name)
+      ) as UserWithRulesResult
+    }
+
     const updatedConsumerUser: User = mergeObjects(
       user,
       userEvent.updatedConsumerUserAttributes || {}
@@ -189,13 +208,32 @@ export class UserManagementService {
   }
 
   public async verifyBusinessUserEvent(
-    userEvent: BusinessUserEvent
+    userEvent: BusinessUserEvent,
+    allowUserTypeConversion = false
   ): Promise<BusinessWithRulesResult> {
-    const user = await this.userRepository.getBusinessUser(userEvent.userId)
+    let user = await this.userRepository.getBusinessUser(userEvent.userId)
     if (!user) {
       throw new NotFound(
         `User ${userEvent.userId} not found. Please create the user ${userEvent.userId}`
       )
+    }
+    const updatedBusinessUserAttributes =
+      userEvent.updatedBusinessUserAttributes || {}
+    if (isConsumerUser(user)) {
+      if (!allowUserTypeConversion) {
+        throw new BadRequest(
+          `Converting a Consumer user to a Business user is not allowed.`
+        )
+      }
+      if (!updatedBusinessUserAttributes?.legalEntity) {
+        throw new BadRequest(
+          `Converting user ${user.userId} to a Business user. 'legalEntity' is a required field`
+        )
+      }
+      user = _.pick(
+        user,
+        BusinessBase.getAttributeTypeMap().map((v) => v.name)
+      ) as BusinessWithRulesResult
     }
 
     const updatedBusinessUser: Business = _.mergeWith(

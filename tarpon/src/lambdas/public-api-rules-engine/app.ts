@@ -14,7 +14,10 @@ import { RulesEngineService } from '@/services/rules-engine'
 import { ConsumerUserEvent } from '@/@types/openapi-public/ConsumerUserEvent'
 import { TransactionEvent } from '@/@types/openapi-public/TransactionEvent'
 import { BusinessUserEvent } from '@/@types/openapi-public/BusinessUserEvent'
-import { DefaultApiPostConsumerTransactionRequest } from '@/@types/openapi-public/RequestParameters'
+import {
+  DefaultApiPostBusinessUserEventRequest,
+  DefaultApiPostConsumerTransactionRequest,
+} from '@/@types/openapi-public/RequestParameters'
 import { Transaction } from '@/@types/openapi-public/Transaction'
 import { UserRepository } from '@/services/users/repositories/user-repository'
 import { updateLogMetadata } from '@/core/utils/context'
@@ -219,6 +222,9 @@ export const userEventsHandler = lambdaApi()(
   ) => {
     const { principalId: tenantId } = event.requestContext.authorizer
     const dynamoDb = getDynamoDbClientByEvent(event)
+    const { allowUserTypeConversion } =
+      (event.queryStringParameters as DefaultApiPostBusinessUserEventRequest) ??
+      {}
 
     if (
       event.httpMethod === 'POST' &&
@@ -237,7 +243,10 @@ export const userEventsHandler = lambdaApi()(
         dynamoDb,
         await getMongoDbClient()
       )
-      return await userManagementService.verifyConsumerUserEvent(userEvent)
+      return await userManagementService.verifyConsumerUserEvent(
+        userEvent,
+        allowUserTypeConversion === 'true'
+      )
     }
     if (
       event.httpMethod === 'POST' &&
@@ -263,7 +272,10 @@ export const userEventsHandler = lambdaApi()(
           userEvent.userId
         )
       }
-      return await userManagementService.verifyBusinessUserEvent(userEvent)
+      return await userManagementService.verifyBusinessUserEvent(
+        userEvent,
+        allowUserTypeConversion === 'true'
+      )
     }
     throw new Error('Unhandled request')
   }

@@ -359,6 +359,70 @@ describe('Public API - Create a Consumer User Event', () => {
       hitRules: [],
     })
   })
+
+  test('Converts from Business user to a Consumer user', async () => {
+    const businessUser = getTestBusiness({ userId: 'business-user-1' })
+    await userHandler(
+      getApiGatewayPostEvent(TEST_TENANT_ID, '/business/users', businessUser),
+      null as any,
+      null as any
+    )
+    const userEvent = getTestUserEvent({
+      eventId: '1',
+      userId: 'business-user-1',
+      updatedConsumerUserAttributes: {
+        tags: [{ key: 'key', value: 'value' }],
+      },
+    })
+    const response = await userEventsHandler(
+      getApiGatewayPostEvent(
+        TEST_TENANT_ID,
+        '/events/consumer/user',
+        userEvent,
+        {
+          queryStringParameters: {
+            allowUserTypeConversion: 'true',
+          },
+        }
+      ),
+      null as any,
+      null as any
+    )
+    expect(response?.statusCode).toBe(200)
+    expect(JSON.parse(response?.body as string)).toEqual({
+      userId: businessUser.userId,
+      createdTimestamp: businessUser.createdTimestamp,
+      tags: [{ key: 'key', value: 'value' }],
+      executedRules: [],
+      hitRules: [],
+    })
+  })
+
+  test('Forbid converting to a consumer user if allowUserConversion is not set', async () => {
+    const businessUser = getTestBusiness({ userId: 'business-user-2' })
+    await userHandler(
+      getApiGatewayPostEvent(TEST_TENANT_ID, '/business/users', businessUser),
+      null as any,
+      null as any
+    )
+    const userEvent = getTestUserEvent({
+      eventId: '1',
+      userId: 'business-user-2',
+      updatedConsumerUserAttributes: {
+        tags: [{ key: 'key', value: 'value' }],
+      },
+    })
+    const response = await userEventsHandler(
+      getApiGatewayPostEvent(
+        TEST_TENANT_ID,
+        '/events/consumer/user',
+        userEvent
+      ),
+      null as any,
+      null as any
+    )
+    expect(response?.statusCode).toBe(400)
+  })
 })
 
 describe('Public API - Create a Business User Event', () => {
@@ -440,6 +504,70 @@ describe('Public API - Create a Business User Event', () => {
     const userRepository = new UserRepository(TEST_TENANT_ID, { dynamoDb })
     const businessUserDynamo = await userRepository.getBusinessUser('foo')
     expect(businessUserDynamo).toMatchObject(toMatchObject)
+  })
+
+  test('Converts from Consumer user to a Business user', async () => {
+    const consumerUser = getTestUser({ userId: 'consumer-user-1' })
+    await userHandler(
+      getApiGatewayPostEvent(TEST_TENANT_ID, '/consumer/users', consumerUser),
+      null as any,
+      null as any
+    )
+    const userEvent = getTestBusinessEvent({
+      eventId: '1',
+      userId: 'consumer-user-1',
+      updatedBusinessUserAttributes: {
+        legalEntity: { companyGeneralDetails: { legalName: 'Test Business' } },
+      },
+    })
+    const response = await userEventsHandler(
+      getApiGatewayPostEvent(
+        TEST_TENANT_ID,
+        '/events/business/user',
+        userEvent,
+        {
+          queryStringParameters: {
+            allowUserTypeConversion: 'true',
+          },
+        }
+      ),
+      null as any,
+      null as any
+    )
+    expect(response?.statusCode).toBe(200)
+    expect(JSON.parse(response?.body as string)).toEqual({
+      userId: consumerUser.userId,
+      createdTimestamp: consumerUser.createdTimestamp,
+      legalEntity: { companyGeneralDetails: { legalName: 'Test Business' } },
+      executedRules: [],
+      hitRules: [],
+    })
+  })
+
+  test('Forbid converting to a business user if allowUserConversion is not set', async () => {
+    const consumerUser = getTestUser({ userId: 'consumer-user-2' })
+    await userHandler(
+      getApiGatewayPostEvent(TEST_TENANT_ID, '/consumer/users', consumerUser),
+      null as any,
+      null as any
+    )
+    const userEvent = getTestBusinessEvent({
+      eventId: '1',
+      userId: 'consumer-user-2',
+      updatedBusinessUserAttributes: {
+        legalEntity: { companyGeneralDetails: { legalName: 'Test Business' } },
+      },
+    })
+    const response = await userEventsHandler(
+      getApiGatewayPostEvent(
+        TEST_TENANT_ID,
+        '/events/business/user',
+        userEvent
+      ),
+      null as any,
+      null as any
+    )
+    expect(response?.statusCode).toBe(400)
   })
 })
 

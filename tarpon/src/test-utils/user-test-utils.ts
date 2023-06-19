@@ -93,7 +93,7 @@ export async function createConsumerUser(
   const mongoDb = await getMongoDbClient()
   const userRepository = new UserRepository(testTenantId, { dynamoDb, mongoDb })
   const createdUser = await userRepository.saveConsumerUser(user)
-  await userRepository.saveUserMongo(createdUser)
+  await userRepository.saveUserMongo(createdUser as InternalUser)
   return async () => {
     await userRepository.deleteUser(createdUser.userId)
     await userRepository.deleteUserMongo(createdUser.userId)
@@ -114,7 +114,7 @@ export async function createBusinessUser(testTenantId: string, user: Business) {
   const mongoDb = await getMongoDbClient()
   const userRepository = new UserRepository(testTenantId, { dynamoDb, mongoDb })
   const createdUser = await userRepository.saveBusinessUser(user)
-  await userRepository.saveUserMongo(createdUser)
+  await userRepository.saveUserMongo(createdUser as InternalUser)
   return async () => {
     await userRepository.deleteUser(createdUser.userId)
     await userRepository.deleteUserMongo(createdUser.userId)
