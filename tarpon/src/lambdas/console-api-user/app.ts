@@ -3,6 +3,7 @@ import {
   APIGatewayProxyWithLambdaAuthorizerEvent,
 } from 'aws-lambda'
 import { Forbidden, NotFound } from 'http-errors'
+import _ from 'lodash'
 import { UserService } from './services/user-service'
 import { UserAuditLogService } from './services/user-audit-log-service'
 import { JWTAuthorizerResult } from '@/@types/jwt'
@@ -111,7 +112,7 @@ export const businessUsersViewHandler = lambdaApi()(
       await CasesAlertsAuditLogService.handleAuditLogForuserViewed(
         event.pathParameters?.userId
       )
-      return user
+      return _.omit(user, 'type')
     } else if (
       event.httpMethod === 'POST' &&
       event.resource === '/business/users/{userId}' &&
@@ -234,7 +235,7 @@ export const consumerUsersViewHandler = lambdaApi()(
       await CasesAlertsAuditLogService.handleAuditLogForuserViewed(
         event.pathParameters?.userId
       )
-      return user
+      return _.omit(user, 'type')
     } else if (
       event.httpMethod === 'POST' &&
       event.resource === '/consumer/users/{userId}' &&

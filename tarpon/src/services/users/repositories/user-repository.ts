@@ -421,12 +421,16 @@ export class UserRepository {
 
   public async getBusinessUser(
     userId: string
-  ): Promise<BusinessWithRulesResult | undefined> {
-    return await this.getUser<BusinessWithRulesResult>(userId)
+  ): Promise<(BusinessWithRulesResult & { type: UserType }) | undefined> {
+    return await this.getUser<BusinessWithRulesResult & { type: UserType }>(
+      userId
+    )
   }
 
-  public async getConsumerUser(userId: string): Promise<User | undefined> {
-    return await this.getUser<User>(userId)
+  public async getConsumerUser(
+    userId: string
+  ): Promise<(UserWithRulesResult & { type: UserType }) | undefined> {
+    return await this.getUser<UserWithRulesResult & { type: UserType }>(userId)
   }
 
   public async getAllUserIdsCursor(): Promise<FindCursor<{ userId: string }>> {
@@ -521,7 +525,6 @@ export class UserRepository {
       ...result.Item,
     }
 
-    delete user.type
     delete user.PartitionKeyID
     delete user.SortKeyID
     delete user.createdAt

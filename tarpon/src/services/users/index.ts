@@ -5,10 +5,6 @@ import { MongoClient } from 'mongodb'
 import { UserRepository } from '../users/repositories/user-repository'
 import { UserEventRepository } from '../rules-engine/repositories/user-event-repository'
 import { RulesEngineService } from '../rules-engine'
-import {
-  isBusinessUser,
-  isConsumerUser,
-} from '../rules-engine/utils/user-rule-utils'
 import { logger } from '@/core/logger'
 import { Business } from '@/@types/openapi-public/Business'
 import { User } from '@/@types/openapi-public/User'
@@ -182,7 +178,7 @@ export class UserManagementService {
         `User ${userEvent.userId} not found. Please create the user ${userEvent.userId}`
       )
     }
-    if (isBusinessUser(user)) {
+    if (user.type === 'BUSINESS') {
       if (!allowUserTypeConversion) {
         throw new BadRequest(
           `Converting a Business user to a Consumer user is not allowed.`
@@ -191,7 +187,7 @@ export class UserManagementService {
       user = _.pick(
         user,
         UserBase.getAttributeTypeMap().map((v) => v.name)
-      ) as UserWithRulesResult
+      ) as UserWithRulesResult & { type: UserType }
     }
 
     const updatedConsumerUser: User = mergeObjects(
@@ -204,7 +200,7 @@ export class UserManagementService {
     }
     await this.userEventRepository.saveUserEvent(userEvent, 'CONSUMER')
     await this.userRepository.saveConsumerUser(updatedConsumerUserResult)
-    return updatedConsumerUserResult
+    return _.omit(updatedConsumerUserResult, 'type')
   }
 
   public async verifyBusinessUserEvent(
@@ -219,7 +215,7 @@ export class UserManagementService {
     }
     const updatedBusinessUserAttributes =
       userEvent.updatedBusinessUserAttributes || {}
-    if (isConsumerUser(user)) {
+    if (user.type === 'CONSUMER') {
       if (!allowUserTypeConversion) {
         throw new BadRequest(
           `Converting a Consumer user to a Business user is not allowed.`
@@ -233,7 +229,7 @@ export class UserManagementService {
       user = _.pick(
         user,
         BusinessBase.getAttributeTypeMap().map((v) => v.name)
-      ) as BusinessWithRulesResult
+      ) as BusinessWithRulesResult & { type: UserType }
     }
 
     const updatedBusinessUser: Business = _.mergeWith(
@@ -253,6 +249,6 @@ export class UserManagementService {
 
     await this.userEventRepository.saveUserEvent(userEvent, 'BUSINESS')
     await this.userRepository.saveBusinessUser(updatedBusinessUserResult)
-    return updatedBusinessUserResult
+    return _.omit(updatedBusinessUserResult, 'type')
   }
 }
