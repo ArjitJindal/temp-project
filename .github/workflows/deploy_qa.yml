@@ -94,21 +94,21 @@ jobs:
           yarn run deploy:qa
           echo "phyto=${QA_SUBDOMAIN}" >> $GITHUB_OUTPUT
           cd ../
-        - name: Resolve QA API Key
-          id: resolve-api-key
-          run: |
-            cd tarpon
-            export QA_API_KEY=$(npm run get-qa-api-key)
-            echo "::set-output name=api_key::$QA_API_KEY"
-        - name: Comment PR
-          if: steps.check.outputs.triggered == 'true'
-          uses: thollander/actions-comment-pull-request@v2
-          with:
-            message: |
-              Branch deployed!
-              Frontend: https://${{ steps.deploy.outputs.phyto }}.console.flagright.dev
-              Backend: https://${{ steps.deploy.outputs.tarpon }}.flagright.dev
-              API Key: ${{ steps.resolve-api-key.outputs.api_key }}
+      - name: Resolve QA API Key
+        id: resolve-api-key
+        run: |
+          cd tarpon
+          export QA_API_KEY=$(npm run get-qa-api-key)
+          echo "::set-output name=api_key::$QA_API_KEY"
+      - name: Comment PR
+        if: steps.check.outputs.triggered == 'true'
+        uses: thollander/actions-comment-pull-request@v2
+        with:
+          message: |
+            Branch deployed!
+            Frontend: https://${{ steps.deploy.outputs.phyto }}.console.flagright.dev
+            Backend: https://${{ steps.deploy.outputs.tarpon }}.flagright.dev
+            API Key: ${{ steps.resolve-api-key.outputs.api_key }}
       - name: Run integration tests
         if: steps.check.outputs.triggered == 'true' && steps.deploy.outputs.tarpon != 'api'
         run: |
