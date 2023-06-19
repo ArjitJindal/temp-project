@@ -197,7 +197,7 @@ export class TenantService {
           return {
             id: usagePlan.tenantId,
             name: usagePlan.name
-              .replace('tenant:', '')
+              .replace('tarpon:', '')
               .replace(':', '')
               .replace(usagePlan.tenantId, ''),
           }
