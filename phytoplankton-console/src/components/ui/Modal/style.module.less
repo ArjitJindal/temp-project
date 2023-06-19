@@ -1,0 +1,75 @@
+@import 'src/components/ui/colors';
+
+.root {
+  :global {
+    @radius: 8px;
+
+    .ant-modal-body {
+      padding: 4px 20px;
+    }
+    .ant-modal-content {
+      border-radius: @radius;
+      max-height: unset;
+    }
+    .ant-modal-header {
+      padding: 24px 20px;
+      border-bottom: none;
+      border-radius: @radius @radius 0 0;
+    }
+    .ant-modal-footer {
+      padding: 24px 20px;
+      border-top: none;
+      border-radius: 0 0 @radius @radius;
+    }
+  }
+}
+
+.header {
+  display: flex;
+  gap: 14px;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.headerLeft {
+  display: flex;
+  gap: 14px;
+  align-items: center;
+
+  &,
+  .title {
+    color: @fr-colors-v2-gray-10;
+  }
+}
+
+.icon {
+  display: flex;
+  align-items: center;
+  width: 28px;
+}
+
+.title {
+  margin: 0 !important;
+  line-height: 1 !important;
+  font-size: 16px;
+}
+
+.close {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  color: @fr-colors-v2-gray-10;
+  font-size: 12px;
+  background: none;
+  border: none;
+  cursor: pointer;
+
+  > svg {
+    width: 24px;
+    height: 24px;
+  }
+}
+
+.fixedHeight {
+  overflow-y: scroll;
+}

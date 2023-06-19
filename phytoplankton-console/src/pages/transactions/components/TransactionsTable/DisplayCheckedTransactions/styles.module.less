@@ -1,0 +1,46 @@
+@import '../../../../../components/ui/colors.less';
+
+.container {
+  display: flex;
+  flex-direction: row;
+  margin-bottom: 1rem;
+  width: 100%;
+  gap: 30px;
+}
+
+.header {
+  display: flex;
+  flex-direction: column;
+}
+
+.headerContent {
+  color: @fr-colors-v2-gray-6;
+  font-size: 14px;
+}
+
+.content {
+  color: @fr-colors-v2-gray-10;
+  font-size: 14px;
+}
+
+.info {
+  margin-top: 8px;
+  margin-bottom: 8px;
+  font-size: 12px;
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  gap: 2px;
+  font-weight: 600;
+}
+
+.modal {
+  top: 80px !important;
+}
+
+:global {
+  .ant-modal-content {
+    max-height: calc(100vh - 160px);
+    overflow-y: scroll;
+  }
+}

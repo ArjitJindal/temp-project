@@ -1,0 +1,56 @@
+@import 'src/components/ui/colors.less';
+@import 'src/components/ui/animation.less';
+
+.root {
+  :global {
+    .ant-message-custom-content {
+      display: flex;
+      gap: 8px;
+      max-width: 800px;
+    }
+
+    .ant-message-notice-content {
+      min-height: 56px;
+      padding: 16px 18px;
+      border-radius: 4px;
+    }
+
+    .ant-message-warning {
+      .anticon {
+        display: flex;
+        align-items: center;
+        margin-right: 4px;
+      }
+    }
+  }
+}
+
+.icon {
+  width: 20px;
+  flex-shrink: 0;
+
+  &.success {
+    color: @fr-colors-v2-alert-success;
+  }
+
+  &.error {
+    color: @fr-colors-v2-alert-critical;
+  }
+}
+
+.message {
+  display: flex;
+  align-items: center;
+  font-weight: 600;
+  gap: 32px;
+}
+
+.closeIcon {
+  width: 16px;
+  cursor: pointer;
+  flex-shrink: 0;
+}
+
+.extraBottomMargin {
+  margin-bottom: 8px;
+}

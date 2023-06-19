@@ -1,0 +1,32 @@
+@import 'src/components/ui/colors';
+
+.stepsContainer {
+  max-width: 900px;
+}
+
+.root {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+
+.rowDark {
+  :global {
+    .ant-table-cell-fix-right {
+      background-color: @fr-colors-brandBlueTint !important;
+    }
+  }
+}
+
+.tableRowLight {
+  &,
+  &:hover {
+    > td {
+      background-color: #fff !important;
+    }
+  }
+}
+
+.tableRowDark {
+  background-color: fade(@fr-colors-brandBlueTint, 45%) !important;
+}

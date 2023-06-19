@@ -1,0 +1,55 @@
+@import 'src/components/ui/colors';
+
+:root {
+  .root {
+    display: flex;
+    flex: 1;
+    flex-direction: column;
+  }
+
+  .head {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    min-height: 56px;
+  }
+
+  .body {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+  }
+
+  .title {
+    margin-bottom: 0;
+    color: white;
+    line-height: 1;
+  }
+
+  .description {
+    margin-top: 16px;
+    margin-bottom: 0;
+    color: white;
+  }
+
+  .backButton {
+    display: flex;
+    gap: 8px;
+    align-items: center;
+    color: white;
+
+    > svg {
+      width: 20px;
+    }
+  }
+}
+
+.contentContainer {
+  display: flex;
+  flex-direction: column;
+  background: white;
+  padding: 16px;
+  border-radius: 4px;
+  flex: 1;
+  gap: 16px;
+}

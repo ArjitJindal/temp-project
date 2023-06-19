@@ -1,0 +1,52 @@
+import { Space } from 'antd';
+import { CloseCircleFilled, PaperClipOutlined } from '@ant-design/icons';
+import filesize from 'filesize';
+import cn from 'clsx';
+import COLORS from '../ui/colors';
+import s from './styles.module.less';
+import { FileInfo } from '@/apis';
+
+interface Props {
+  files: FileInfo[];
+  showGreyBackground?: boolean;
+  removeFile?: (s3Key: string) => void;
+  showDeleteButton?: boolean;
+  fixedHeight?: boolean;
+}
+
+export const FilesList: React.FC<Props> = ({
+  files,
+  showGreyBackground,
+  removeFile,
+  showDeleteButton = false,
+  fixedHeight = false,
+}) => {
+  if (files.length === 0) {
+    return <></>;
+  }
+  return (
+    <div className={cn(s.fileList, fixedHeight && s.fileListContainerFixedHeight)}>
+      {files.map((file) => (
+        <div key={file.s3Key} className={s.fileAttachmentButton}>
+          <Space>
+            <PaperClipOutlined style={{ color: COLORS.purpleGray.base }} />
+            <a className={`${showGreyBackground ? s.fileListText : ''}`} href={file.downloadLink}>
+              {file.filename}
+            </a>
+            <span className={`${showGreyBackground ? s.fileListText : ''}`}>
+              {`(${filesize(file.size)})`}
+            </span>
+          </Space>
+          {showDeleteButton && (
+            <button
+              className={s.fileListDeleteButton}
+              onClick={removeFile && (() => removeFile(file.s3Key))}
+            >
+              <CloseCircleFilled style={{ color: COLORS.purpleGray.base }} />
+            </button>
+          )}
+        </div>
+      ))}
+    </div>
+  );
+};

@@ -1,0 +1,70 @@
+@import '../../ui/colors.less';
+
+:root {
+  .root {
+    display: flex;
+    flex: 1;
+    flex-direction: column;
+  }
+
+  .menuWrapper {
+    position: relative;
+    flex: 1;
+    overflow-x: hidden;
+    overflow-y: auto;
+    background: @fr-colors-navyBlueShade;
+    border-right: none;
+
+    &::-webkit-scrollbar {
+      width: 6px;
+      height: 6px;
+    }
+    &::-webkit-scrollbar-thumb {
+      background: hsla(0, 0%, 60%, 0.2);
+      border-radius: 3px;
+      box-shadow: inset 0 0 5px hsl(0deg 0% 100% / 5%);
+    }
+    &::-webkit-scrollbar-track {
+      background: hsla(0, 0%, 80%, 0.15);
+      border-radius: 3px;
+      box-shadow: inset 0 0 5px rgb(37 37 37 / 5%);
+    }
+  }
+
+  .menu {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+  }
+
+  .links {
+    color: @fr-colors-purpleGray;
+    &:hover {
+      color: #fff;
+    }
+  }
+
+  .menuItem {
+    font-weight: 600;
+    font-size: 16px !important;
+  }
+
+  .dark {
+    .action {
+      &:hover {
+        background: @fr-colors-navyBlueShade;
+      }
+      & :global .opened {
+        background: @fr-colors-navyBlueShade;
+      }
+    }
+  }
+
+  .menufold {
+    &:hover {
+      color: #fff;
+    }
+  }
+}

@@ -1,0 +1,16 @@
+@import 'src/components/ui/colors';
+
+.root {
+  width: 16px;
+  color: @fr-colors-v2-gray-4;
+  cursor: pointer;
+
+  &.value-right,
+  &.value-left {
+    color: @fr-colors-v2-state-active;
+  }
+
+  &.value-right {
+    transform: scaleX(-1);
+  }
+}

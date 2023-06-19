@@ -1,0 +1,30 @@
+@import 'src/components/ui/colors.less';
+@import 'src/components/ui/animation.less';
+
+.root {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 16px;
+  min-height: 32px;
+
+  &.filtersVisible {
+    .right {
+      border-left: 1px solid @fr-colors-v2-gray-2;
+    }
+  }
+
+  &.externalHeader {
+    position: absolute;
+    top: 0;
+    width: 100%;
+    transform: translateY(-100%);
+    margin-bottom: 0;
+  }
+}
+
+.right {
+  padding-left: 20px;
+  display: flex;
+  gap: 20px;
+}

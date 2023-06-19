@@ -1,0 +1,54 @@
+export const UI_SETTINGS = {
+  title: 'User Case Details',
+  key: 'user-case-details',
+  cards: {
+    USER_DETAILS: {
+      title: 'User Details',
+      key: 'user-case-details-user-details',
+    },
+    LEGAL_DOCUMENTS: {
+      title: 'Legal Documents',
+      key: 'user-case-details-legal-documents',
+    },
+    EXPECTED_TRANSACTION_LIMITS: {
+      title: 'Expected Transaction Limits',
+      key: 'user-case-details-expected-transaction-limits',
+    },
+    SHAREHOLDERS: {
+      title: 'Shareholders',
+      key: 'user-case-details-shareholders',
+    },
+    DIRECTORS: {
+      title: 'Directors',
+      key: 'user-case-details-directors',
+    },
+    TRANSACTION_HISTORY: {
+      title: 'Transaction History',
+      key: 'user-case-details-transaction-history',
+    },
+    ALERTS: {
+      title: 'Alerts',
+      key: 'user-case-details-alerts',
+    },
+    TRANSACTION_INSIGHTS: {
+      title: 'Transaction Insights',
+      key: 'user-case-details-transaction-insights',
+    },
+    AI_INSIGHTS: {
+      title: 'AI Insights',
+      key: 'user-details-ai-insights',
+    },
+    COMMENTS: {
+      title: 'Comments',
+      key: 'user-case-details-comments',
+    },
+    SALESFORCE: {
+      title: 'Salesforce',
+      key: 'user-case-details-salesforce',
+    },
+    DEVICE_DATA: {
+      title: 'Device data',
+      key: 'user-case-details-device-data',
+    },
+  },
+};

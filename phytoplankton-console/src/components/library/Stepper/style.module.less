@@ -1,0 +1,95 @@
+@import 'src/components/ui/colors';
+@import 'src/components/ui/animation';
+
+.root {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+  flex: 1;
+
+  .step {
+    * {
+      transition-duration: @default-animation-speed;
+      transition-timing-function: @default-animation-function;
+    }
+
+    .stepTitle {
+      transition-property: color;
+    }
+    .optional {
+      transition-property: color;
+    }
+    .stepNumber {
+      transition-property: color, background-color;
+    }
+  }
+}
+
+.steps {
+  display: flex;
+  gap: 24px;
+  grid-auto-flow: column;
+}
+
+.step {
+  display: flex;
+  gap: 8px;
+  max-width: 250px;
+  cursor: pointer;
+
+  &.isActive {
+    .stepTitle {
+      &,
+      .optional {
+        color: @fr-colors-brandBlue;
+      }
+    }
+  }
+
+  &.isPassed,
+  &.isActive {
+    .stepNumber {
+      background-color: @fr-colors-brandBlue;
+      color: white;
+    }
+  }
+}
+
+.stepNumber {
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  background: @fr-colors-v2-gray-2;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  flex-shrink: 0;
+  padding: 3px;
+}
+
+.stepTitle {
+  font-size: 16px;
+  font-weight: 600;
+  line-height: 24px;
+  transition-property: color;
+
+  .optional {
+    font-weight: normal;
+    transition-property: color;
+    color: @fr-colors-gray-4;
+  }
+}
+
+.stepDescription {
+  font-size: 12px;
+  font-style: italic;
+  color: @fr-colors-gray-4;
+  line-height: 20px;
+  margin-top: 2px;
+}
+
+.children {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+}

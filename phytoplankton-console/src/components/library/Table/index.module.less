@@ -1,0 +1,270 @@
+@import 'src/components/ui/colors.less';
+@import 'src/components/ui/animation.less';
+
+@border-radius: 4px;
+
+.root {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  flex: 1;
+  position: relative;
+}
+
+.table {
+  box-shadow: 0 0 2px 2px rgba(0, 0, 0, 0.02);
+  min-width: 100%;
+  z-index: 1;
+  position: relative;
+
+  &.fitHeight {
+    position: absolute;
+    top: 0;
+    left: 0;
+  }
+}
+
+.tableHead {
+  position: sticky;
+  top: 0;
+  z-index: 1000;
+
+  > tr:first-child {
+    > th {
+      &:first-child {
+        border-top-left-radius: @border-radius;
+      }
+      &:last-child {
+        border-top-right-radius: @border-radius;
+      }
+    }
+  }
+}
+
+.tableBody {
+  &.isLoading {
+    opacity: 0.5;
+  }
+
+  > tr:last-child {
+    > td {
+      &:first-child {
+        border-bottom-left-radius: @border-radius;
+      }
+      &:last-child {
+        border-bottom-right-radius: @border-radius;
+      }
+    }
+  }
+}
+
+.tableSizeLimiter {
+  overflow-x: auto;
+}
+
+.th,
+.td {
+  padding: 8px;
+  font-size: 14px;
+
+  &.pinned-left,
+  &.pinned-right {
+    position: sticky;
+    z-index: 1;
+
+    &::before {
+      content: ' ';
+      display: block;
+      position: absolute;
+      height: 100%;
+      width: 20px;
+      top: 0;
+      background: linear-gradient(-90deg, transparent, #0000000a);
+      pointer-events: none;
+    }
+  }
+
+  &.pinned-left {
+    &::before {
+      transform: translateX(100%);
+      right: 0;
+    }
+  }
+
+  &.pinned-right {
+    &::before {
+      transform: translateX(-100%) rotate(180deg);
+      left: 0;
+    }
+  }
+}
+
+.tdExpanded {
+  background: @fr-colors-v2-unknown-3;
+  z-index: 1;
+  position: relative;
+  padding: 0;
+}
+
+.tdExpandedContent {
+  padding: 12px;
+
+  &.fixedExpandedContainer {
+    position: sticky;
+    left: 0;
+  }
+}
+
+.th {
+  background: @fr-colors-v2-gray-1;
+  font-size: 14px;
+  font-weight: 600;
+  min-height: 60px;
+  text-align: left;
+  position: relative;
+
+  &.grouped {
+    background: @fr-colors-v2-unknown-2;
+    border: 1px solid @fr-colors-v2-unknown-1;
+    text-align: center;
+    border-right-width: 2px;
+
+    > .thContent {
+      justify-content: center;
+    }
+  }
+
+  &.isClickable {
+    cursor: pointer;
+    user-select: none;
+  }
+
+  > .thContent {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 4px;
+
+    .titles {
+      display: flex;
+      gap: 4px;
+      align-items: flex-start;
+      flex-direction: column;
+    }
+
+    .tooltipIcon {
+      width: 16px;
+      color: @fr-colors-v2-gray-4;
+      flex-shrink: 0;
+      align-items: center;
+    }
+
+    .title {
+      display: flex;
+      gap: 4px;
+      align-items: flex-start;
+    }
+
+    .subtitle {
+      color: @fr-colors-v2-gray-6;
+      font-size: 12px;
+      font-weight: normal;
+    }
+  }
+}
+
+.td {
+  --bg-color: @fr-colors-v2-unknown-1;
+
+  vertical-align: top;
+  background: var(--bg-color);
+  position: relative;
+
+  .tdContentWrapper {
+    display: flex;
+    gap: 8px;
+  }
+
+  &.wrapMode-WRAP {
+    .tdContent {
+      overflow-y: auto;
+    }
+  }
+
+  &.wrapMode-OVERFLOW {
+    .tdContent {
+      white-space: nowrap;
+      text-overflow: ellipsis;
+      overflow: auto;
+      padding-right: 8px;
+    }
+
+    &::after {
+      content: ' ';
+      display: block;
+      position: absolute;
+      top: 0;
+      right: 0;
+      height: 100%;
+      width: 20px;
+      background: linear-gradient(90deg, transparent, var(--bg-color) 70%, var(--bg-color));
+      pointer-events: none;
+    }
+  }
+
+  .tdContent {
+    display: flex;
+    gap: 4px;
+    align-items: flex-start;
+    flex-direction: column;
+    flex: 1;
+    min-height: 48px;
+    max-height: 48px;
+  }
+
+  &.isOdd {
+    --bg-color: white;
+  }
+}
+
+.resizer {
+  display: flex;
+  justify-content: center;
+  position: absolute;
+  right: -4px;
+  top: 0;
+  width: 8px;
+  height: 100%;
+  z-index: 1;
+  cursor: col-resize;
+
+  &::before {
+    content: ' ';
+    display: block;
+    width: 4px;
+    transition: background-color @default-animation-speed @default-animation-function;
+  }
+
+  &:hover,
+  &.isResizing {
+    &::before {
+      background-color: @fr-colors-v2-primary-flagrightBlue;
+    }
+  }
+}
+
+.bodyBlockSelection {
+  user-select: none;
+}
+
+.error {
+  padding: 20px;
+  pointer-events: none;
+}
+
+.noData {
+  padding: 20px;
+  text-align: center;
+  color: @fr-colors-v2-gray-4;
+  background: white;
+}

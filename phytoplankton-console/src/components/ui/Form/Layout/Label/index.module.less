@@ -1,0 +1,39 @@
+@import 'src/components/ui/colors';
+
+.root {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+
+  &.bold {
+    .title {
+      font-weight: bold;
+    }
+  }
+
+  &.orientation-horizontal {
+    flex-direction: row;
+  }
+}
+
+.header {
+  display: flex;
+  gap: 8px;
+  color: @fr-colors-purpleGray;
+  align-items: center;
+}
+
+.title {
+  display: flex;
+  gap: 8px;
+}
+
+.dark {
+  color: #000;
+}
+
+.icon {
+  width: 18px;
+  height: 18px;
+  flex-shrink: 0;
+}

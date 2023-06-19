@@ -1,0 +1,65 @@
+@import 'src/components/ui/colors';
+
+.root {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+
+  :global {
+    .ant-list-items {
+      border-radius: 4px;
+      overflow: hidden;
+    }
+  }
+}
+
+.subtitle {
+  padding: 8px 20px;
+  color: @fr-colors-brandBlue;
+  font-weight: 600;
+}
+
+.nothingFound {
+  padding: 8px 20px;
+  color: @fr-colors-purpleGray;
+  text-align: center;
+}
+
+.spinner {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 16px;
+}
+
+.list {
+  border-radius: 4px;
+}
+
+.item {
+  padding: 8px 12px !important;
+  border: none !important;
+  cursor: pointer;
+
+  &:hover,
+  &.isActive {
+    background: @fr-colors-brandBlueTint;
+  }
+
+  &.isActive {
+    .itemTitle {
+      color: @fr-colors-brandBlue;
+    }
+  }
+
+  :global {
+    .ant-list-item-meta-title {
+      margin-bottom: 0 !important;
+    }
+  }
+}
+
+.buttons {
+  display: flex;
+  gap: 1rem;
+}

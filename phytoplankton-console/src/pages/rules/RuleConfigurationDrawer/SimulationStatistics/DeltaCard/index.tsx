@@ -1,0 +1,54 @@
+import React from 'react';
+import { Col, Row, Tag } from 'antd';
+import cn from 'clsx';
+import _ from 'lodash';
+import s from './index.module.less';
+import { H1 } from '@/components/ui/Typography';
+import ArrowUpIcon from '@/components/ui/icons/Remix/system/arrow-up-line.react.svg';
+import ArrowDownIcon from '@/components/ui/icons/Remix/system/arrow-down-line.react.svg';
+
+interface Props {
+  icon: React.ReactNode;
+  title: string;
+  beforeValue?: number;
+  afterValue?: number;
+}
+
+export function DeltaCard(props: Props) {
+  const { title, icon, beforeValue, afterValue } = props;
+  const hasMissingValue = beforeValue == null || afterValue == null;
+  const delta = hasMissingValue ? undefined : afterValue - beforeValue;
+  const deltaRatio = hasMissingValue ? undefined : (afterValue - beforeValue) / beforeValue;
+  return (
+    <div className={cn(s.root)}>
+      <div className={s.title}>
+        <div className={s.icon}>{icon}</div>
+        {title}
+      </div>
+      {delta && deltaRatio ? (
+        <Row justify="center" align="middle" gutter={20}>
+          <Col>
+            <H1 variant="displayLg">{Math.abs(delta)}</H1>
+          </Col>
+          <Col>
+            {_.isFinite(deltaRatio) && (
+              <Tag
+                className={s.tag}
+                color={delta > 0 ? 'red' : 'green'}
+                icon={
+                  delta > 0 ? (
+                    <ArrowUpIcon width={12} height={12} />
+                  ) : (
+                    <ArrowDownIcon width={12} height={12} />
+                  )
+                }
+              >{`${Math.abs(deltaRatio * 100).toFixed(2)} %`}</Tag>
+            )}
+          </Col>
+        </Row>
+      ) : (
+        '-'
+      )}
+    </div>
+  );
+}

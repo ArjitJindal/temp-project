@@ -1,0 +1,144 @@
+import { useState } from 'react';
+import { Space } from 'antd';
+import { RuleConfigurationSimulationDrawer } from '../RuleConfigurationDrawer';
+import { useApi } from '@/api';
+import { SimulationBeaconJob } from '@/apis';
+import QueryResultsTable from '@/components/common/QueryResultsTable';
+import { AllParams } from '@/components/library/Table/types';
+import { DEFAULT_PARAMS_STATE } from '@/components/library/Table/consts';
+import COLORS from '@/components/ui/colors';
+import { usePaginatedQuery } from '@/utils/queries/hooks';
+import { SIMULATION_JOBS } from '@/utils/queries/keys';
+import { useUsers } from '@/utils/user-utils';
+import { ColumnHelper } from '@/components/library/Table/columnHelper';
+import { DATE_TIME, NUMBER } from '@/components/library/Table/standardDataTypes';
+import { PageWrapperContentContainer } from '@/components/PageWrapper';
+import { DefaultApiGetSimulationsRequest } from '@/apis/types/ObjectParamAPI';
+import { useRules } from '@/utils/rules';
+
+export function SimulationHistoryTable() {
+  const api = useApi();
+  const { rules } = useRules();
+  const [users, loading] = useUsers({ includeRootUsers: true, includeBlockedUsers: true });
+  const [params, setParams] = useState<AllParams<DefaultApiGetSimulationsRequest>>({
+    ...DEFAULT_PARAMS_STATE,
+    page: 1,
+    type: 'BEACON',
+  });
+  const [selectedJob, setSelectedJob] = useState<SimulationBeaconJob | undefined>();
+  const queryResults = usePaginatedQuery(SIMULATION_JOBS(params), async () => {
+    const simulations = await api.getSimulations(params);
+    return {
+      items: simulations.data as SimulationBeaconJob[],
+      total: simulations.total,
+    };
+  });
+
+  const helper = new ColumnHelper<SimulationBeaconJob>();
+  return (
+    <PageWrapperContentContainer>
+      <QueryResultsTable<SimulationBeaconJob, typeof params>
+        rowKey="jobId"
+        queryResults={queryResults}
+        params={params}
+        onChangeParams={setParams}
+        paginationBorder
+        pagination={true}
+        columns={helper.list([
+          helper.derived({
+            title: 'Simulation ID',
+            sorting: true,
+            value: (item) => item,
+            type: {
+              render: (job) =>
+                job ? (
+                  <a style={{ color: COLORS.brandBlue.base }} onClick={() => setSelectedJob(job)}>
+                    {job.jobId}
+                  </a>
+                ) : (
+                  <></>
+                ),
+            },
+          }),
+          helper.derived({
+            title: 'Rule ID',
+            sorting: true,
+            value: (item) => item.defaultRuleInstance,
+            type: {
+              render: (ruleInstance) => (
+                <Space direction="vertical">
+                  {ruleInstance?.ruleId} {ruleInstance?.ruleNameAlias}
+                </Space>
+              ),
+            },
+          }),
+          helper.derived({
+            title: 'Description',
+            sorting: true,
+            value: (item) => item.defaultRuleInstance,
+            type: {
+              render: (ruleInstance) => (
+                <span>
+                  {ruleInstance?.ruleDescriptionAlias ||
+                    (ruleInstance?.ruleId && rules?.[ruleInstance.ruleId]?.description) ||
+                    '-'}
+                </span>
+              ),
+            },
+          }),
+          helper.simple<'createdAt'>({
+            title: 'Created on',
+            key: 'createdAt',
+            sorting: true,
+            type: DATE_TIME,
+          }),
+          helper.simple<'createdBy'>({
+            title: 'Created by',
+            key: 'createdBy',
+            type: {
+              render: (createdBy) => {
+                if (loading || !createdBy) {
+                  return <></>;
+                }
+
+                const user = users[createdBy]?.name;
+
+                return <span>{user}</span>;
+              },
+              stringify: (createdBy) => {
+                if (loading || !createdBy) {
+                  return '';
+                }
+
+                return users[createdBy]?.name;
+              },
+            },
+          }),
+          helper.derived<number>({
+            title: '# Iterations',
+            value: (item) => item.iterations.length,
+            type: NUMBER,
+            sorting: true,
+          }),
+        ])}
+        hideFilters={true}
+      />
+      <RuleConfigurationSimulationDrawer
+        rule={
+          selectedJob?.defaultRuleInstance.ruleId
+            ? rules?.[selectedJob?.defaultRuleInstance.ruleId]
+            : undefined
+        }
+        ruleInstance={selectedJob?.defaultRuleInstance as any}
+        jobId={selectedJob?.jobId}
+        isVisible={Boolean(selectedJob)}
+        onChangeVisibility={(isVisible) => {
+          if (!isVisible) {
+            setSelectedJob(undefined);
+          }
+        }}
+        onRuleInstanceUpdated={() => setSelectedJob(undefined)}
+      />
+    </PageWrapperContentContainer>
+  );
+}

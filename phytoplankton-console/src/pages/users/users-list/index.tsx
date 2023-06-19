@@ -1,0 +1,284 @@
+import { Tabs } from 'antd';
+import { useCallback, useEffect, useState } from 'react';
+import { useNavigate, useParams } from 'react-router';
+import { useLocalStorageState } from 'ahooks';
+import { getBusinessUserColumns } from './business-user-columns';
+import { getConsumerUserColumns } from './consumer-users-columns';
+import { getAllUserColumns } from './all-user-columns';
+import { RiskLevelButton } from './RiskLevelFilterButton';
+import { queryAdapter } from './helpers/queryAdapter';
+import { UserRegistrationStatusFilterButton } from './UserRegistrationStatusFilterButton';
+import { dayjs } from '@/utils/dayjs';
+import { useApi } from '@/api';
+import { useFeatureEnabled } from '@/components/AppWrapper/Providers/SettingsProvider';
+import { InternalUser, RiskLevel, UserRegistrationStatus } from '@/apis';
+import PageWrapper, { PageWrapperContentContainer } from '@/components/PageWrapper';
+import '../../../components/ui/colors';
+import { useI18n } from '@/locales';
+import PageTabs from '@/components/ui/PageTabs';
+import { makeUrl, parseQueryString } from '@/utils/routing';
+import { CommonParams, ExtraFilter, TableColumn } from '@/components/library/Table/types';
+import UserSearchButton from '@/pages/transactions/components/UserSearchButton';
+import QueryResultsTable from '@/components/common/QueryResultsTable';
+import { USERS } from '@/utils/queries/keys';
+import { PaginatedData, usePaginatedQuery } from '@/utils/queries/hooks';
+import { useApiTime, usePageViewTracker } from '@/utils/tracker';
+import { useDeepEqualEffect } from '@/utils/hooks';
+import UserTagSearchButton from '@/pages/transactions/components/UserTagSearchButton';
+import { DEFAULT_PAGE_SIZE, DEFAULT_PARAMS_STATE } from '@/components/library/Table/consts';
+import { BOOLEAN, FLOAT, RISK_LEVEL } from '@/components/library/Table/standardDataTypes';
+import { ColumnHelper } from '@/components/library/Table/columnHelper';
+
+export interface UserSearchParams extends CommonParams {
+  riskLevels?: RiskLevel[];
+  userId?: string;
+  tagKey?: string;
+  tagValue?: string;
+  createdTimestamp?: string[];
+  userRegistrationStatus?: UserRegistrationStatus[];
+}
+
+function getPulseColumns(): TableColumn<InternalUser>[] {
+  const helper = new ColumnHelper<InternalUser>();
+
+  return helper.list([
+    helper.derived<RiskLevel>({
+      title: 'CRA Risk Level',
+      // key: 'drsRiskLevel',
+      type: RISK_LEVEL,
+      tooltip: 'Customer risk assessment - accounts for both Base risk and action risk scores.',
+      value: (entity): RiskLevel | undefined => {
+        return entity?.drsScore?.manualRiskLevel ?? entity?.drsScore?.derivedRiskLevel;
+      },
+    }),
+    helper.simple<'drsScore.drsScore'>({
+      key: 'drsScore.drsScore',
+      title: 'CRA Risk Score',
+      type: FLOAT,
+      tooltip: 'Customer risk assessment - accounts for both Base risk and action risk scores.',
+    }),
+    helper.simple<'drsScore.isUpdatable'>({
+      key: 'drsScore.isUpdatable',
+      title: 'Is Locked',
+      type: BOOLEAN,
+      tooltip: 'Whether customer risk assessment score is locked',
+    }),
+    helper.simple<'krsScore.riskLevel'>({
+      key: 'krsScore.riskLevel',
+      title: 'KRS Risk Level',
+      type: RISK_LEVEL,
+      tooltip: 'Know your customer - accounts for KYC Risk Level',
+    }),
+    helper.simple<'krsScore.krsScore'>({
+      key: 'krsScore.krsScore',
+      title: 'KRS Risk Score',
+      type: FLOAT,
+      tooltip: 'Know your customer - accounts for KYC Risk Score',
+    }),
+  ]);
+}
+
+const extraFilters = (list: 'business' | 'consumer' | 'all'): ExtraFilter<UserSearchParams>[] => {
+  const extraFilters: ExtraFilter<UserSearchParams>[] = [
+    {
+      key: 'userId',
+      title: 'User ID/Name',
+      renderer: ({ params, setParams }) => (
+        <UserSearchButton
+          initialMode={'ALL'}
+          userId={params.userId ?? null}
+          showOriginAndDestination={false}
+          onConfirm={(userId, mode) => {
+            setParams((state) => ({
+              ...state,
+              userId: userId ?? undefined,
+              userFilterMode: mode ?? undefined,
+            }));
+          }}
+        />
+      ),
+    },
+    {
+      key: 'tagKey',
+      title: 'Tags',
+      renderer: ({ params, setParams }) => (
+        <UserTagSearchButton
+          initialState={{
+            key: params.tagKey ?? null,
+            value: params.tagValue ?? null,
+          }}
+          onConfirm={(value) => {
+            setParams((state) => ({
+              ...state,
+              tagKey: value.key ?? undefined,
+              tagValue: value.value ?? undefined,
+            }));
+          }}
+        />
+      ),
+    },
+    {
+      key: 'riskLevels',
+      title: 'CRA',
+      renderer: ({ params, setParams }) => (
+        <RiskLevelButton
+          riskLevels={params.riskLevels ?? []}
+          onConfirm={(riskLevels) => {
+            setParams((state) => ({
+              ...state,
+              riskLevels: riskLevels ?? undefined,
+            }));
+          }}
+        />
+      ),
+    },
+  ];
+
+  if (list === 'business') {
+    extraFilters.push({
+      key: 'userRegistrationStatus',
+      title: 'Registration Status',
+      renderer: ({ params, setParams }) => (
+        <UserRegistrationStatusFilterButton
+          userRegistrationStatus={params.userRegistrationStatus ?? []}
+          onConfirm={(registrationStatus) => {
+            setParams((state) => ({
+              ...state,
+              userRegistrationStatus: registrationStatus ?? undefined,
+            }));
+          }}
+        />
+      ),
+    });
+  }
+
+  return extraFilters;
+};
+
+const UsersTab = (props: { type: 'business' | 'consumer' | 'all' }) => {
+  const type = props.type;
+  usePageViewTracker(`Users List - ${type}`);
+
+  const isPulseEnabled = useFeatureEnabled('PULSE');
+  const api = useApi();
+  const measure = useApiTime();
+  const navigate = useNavigate();
+
+  const columns: TableColumn<InternalUser>[] =
+    type === 'business'
+      ? (getBusinessUserColumns() as TableColumn<InternalUser>[])
+      : type === 'consumer'
+      ? (getConsumerUserColumns() as TableColumn<InternalUser>[])
+      : (getAllUserColumns() as TableColumn<InternalUser>[]);
+
+  if (isPulseEnabled) {
+    columns.push(...getPulseColumns());
+  }
+
+  const [params, setParams] = useState<UserSearchParams>(DEFAULT_PARAMS_STATE);
+  const parsedParams = queryAdapter.deserializer(parseQueryString(location.search));
+
+  const pushParamsToNavigation = useCallback(
+    (params: UserSearchParams) => {
+      navigate(makeUrl('/users/list/:list/all', { list: type }, queryAdapter.serializer(params)), {
+        replace: true,
+      });
+    },
+    [navigate, type],
+  );
+
+  const handleChangeParams = (newParams: UserSearchParams) => {
+    pushParamsToNavigation(newParams);
+  };
+
+  useDeepEqualEffect(() => {
+    setParams((prevState: UserSearchParams) => ({
+      ...prevState,
+      ...parsedParams,
+      page: parsedParams.page ?? 1,
+      sort: parsedParams.sort ?? [],
+      pageSize: parsedParams.pageSize ?? DEFAULT_PAGE_SIZE,
+    }));
+  }, [parsedParams]);
+
+  const queryResults = usePaginatedQuery(
+    USERS(type, params),
+    async (paginationParams): Promise<PaginatedData<InternalUser>> => {
+      const { userId, createdTimestamp, page, riskLevels, pageSize, tagKey, tagValue } = params;
+      const queryObj = {
+        page,
+        pageSize,
+        ...paginationParams,
+        afterTimestamp: createdTimestamp ? dayjs(createdTimestamp[0]).valueOf() : 0,
+        beforeTimestamp: createdTimestamp ? dayjs(createdTimestamp[1]).valueOf() : Date.now(),
+        filterId: userId,
+        filterTagKey: tagKey,
+        filterTagValue: tagValue,
+        filterRiskLevel: riskLevels,
+        ...(type === 'business' && {
+          filterUserRegistrationStatus: params.userRegistrationStatus,
+        }),
+      };
+
+      const response =
+        type === 'business'
+          ? await measure(() => api.getBusinessUsersList(queryObj), `Get Business Users List`)
+          : type === 'consumer'
+          ? await measure(() => api.getConsumerUsersList(queryObj), `Get Consumer Users List`)
+          : await measure(() => api.getAllUsersList(queryObj), `Get Users List`);
+
+      return {
+        items: response.data as InternalUser[],
+        total: response.total,
+      };
+    },
+  );
+
+  return (
+    <PageWrapperContentContainer>
+      <QueryResultsTable<InternalUser, UserSearchParams>
+        tableId={`users-list/${type}`}
+        rowKey={'userId'}
+        extraFilters={extraFilters(type)}
+        columns={columns}
+        queryResults={queryResults}
+        params={params}
+        onChangeParams={handleChangeParams}
+        fitHeight={true}
+        pagination={true}
+      />
+    </PageWrapperContentContainer>
+  );
+};
+
+export default function UsersList() {
+  const { list = 'consumer' } = useParams<'list' | 'id'>() as {
+    list: 'business' | 'consumer' | 'all';
+  };
+  const navigate = useNavigate();
+  const i18n = useI18n();
+  const [_, setLocalStorageActiveTab] = useLocalStorageState('user-active-tab', list);
+  useEffect(() => {
+    setLocalStorageActiveTab(list);
+  }, [setLocalStorageActiveTab, list]);
+  return (
+    <PageWrapper title={i18n('menu.users.lists')}>
+      <PageTabs
+        activeKey={list}
+        onChange={(key) => {
+          navigate(makeUrl(`/users/list/:list/all`, { list: key }), { replace: true });
+        }}
+      >
+        <Tabs.TabPane tab={'All Users'} key="all">
+          <UsersTab type={list} />
+        </Tabs.TabPane>
+        <Tabs.TabPane tab="Consumer Users" key="consumer">
+          <UsersTab type={list} />
+        </Tabs.TabPane>
+        <Tabs.TabPane tab="Business Users" key="business">
+          <UsersTab type={list} />
+        </Tabs.TabPane>
+      </PageTabs>
+    </PageWrapper>
+  );
+}

@@ -1,0 +1,172 @@
+import { RangeValue } from 'rc-picker/es/interface';
+import { QueryKey } from '@tanstack/react-query';
+import { Dayjs } from '@/utils/dayjs';
+import { ListType, MerchantMonitoringSource } from '@/apis';
+import { TransactionsUniquesField } from '@/apis/models/TransactionsUniquesField';
+import { UsersUniquesField } from '@/apis/models/UsersUniquesField';
+
+type AnyParameters = unknown;
+
+export const CASES_LIST = (params: AnyParameters): QueryKey => ['cases', 'list', { params }];
+export const CASES_ITEM = (caseId: string): QueryKey => ['cases', caseId];
+export const CASES_ITEM_ALERT_LIST = (caseId: string, params?: AnyParameters): QueryKey =>
+  ['cases', caseId, 'alerts', 'list', params].filter(Boolean);
+export const CASES_ITEM_RULES = (caseId: string): QueryKey => ['cases', caseId, 'rules'];
+export const CASES_RULE_TRANSACTIONS = (
+  caseId: string,
+  params: AnyParameters,
+  ruleInstanceId: string,
+): QueryKey => ['cases', caseId, 'transactions', 'list', ruleInstanceId, params];
+export const CASES_ITEM_TRANSACTIONS = (caseId: string, searchParams: AnyParameters): QueryKey => [
+  'cases',
+  caseId,
+  'transactions',
+  'list',
+  searchParams,
+];
+export const LISTS_OF_TYPE = (type: ListType): QueryKey => ['lists', { type }, 'list'];
+export const LISTS_ITEM = (id: string): QueryKey => ['lists', 'item', id];
+export const LISTS_ITEM_TYPE = (id: string, type: ListType): QueryKey => [
+  'lists',
+  'item',
+  id,
+  type,
+];
+export const LISTS = (): QueryKey => ['lists'];
+export const USERS_ITEM_TRANSACTIONS_HISTORY = (
+  userId: string,
+  params: AnyParameters,
+): QueryKey => ['users', userId, 'transactions-history', params];
+export const USERS_FIND = (search: string): QueryKey => ['users', 'list', 'search', search];
+export const TRANSACTIONS_FIND = (search: string): QueryKey => [
+  'transactions',
+  'list',
+  'search',
+  search,
+];
+export const ACCOUNT_LIST = (): QueryKey => ['accounts', 'list'];
+export const USER_INFO = (accessToken: string | null): QueryKey => ['userinfo', accessToken];
+export const SALESFORCE_ACCOUNT = (userId: string): QueryKey => ['salesforceaccount', userId];
+export const ROLES_LIST = (): QueryKey => ['roles', 'list'];
+export const ROLE = (roleId: string): QueryKey => ['role', roleId];
+export const TRANSACTIONS_LIST = (searchParams: AnyParameters): QueryKey => [
+  'transactions',
+  'list',
+  searchParams,
+];
+export const TRANSACTIONS_ITEM_RISKS_ARS = (transactionId: string): QueryKey => [
+  'transactions',
+  'list',
+  transactionId,
+  'risks',
+  'ars-score',
+];
+export const AUDIT_LOGS_LIST = (searchParams: AnyParameters): QueryKey => [searchParams];
+export const TRANSACTIONS_STATS = (
+  type: 'by-type' | 'by-date',
+  searchParams: AnyParameters,
+): QueryKey => ['transactions', 'stats', type, searchParams];
+export const USERS_STATS = (): QueryKey => ['users', 'stats'];
+export const TRANSACTIONS_UNIQUES = (
+  field: TransactionsUniquesField,
+  params: {
+    filter?: string;
+  } = {},
+): QueryKey => ['transactions', 'uniques', field, params];
+export const USERS_UNIQUES = (
+  field: UsersUniquesField,
+  params: {
+    filter?: string;
+  } = {},
+): QueryKey => ['users', 'uniques', field, params];
+export const SANCTIONS_SEARCH = (params: AnyParameters): QueryKey => [
+  'sanctions',
+  'search',
+  { params },
+];
+export const SANCTIONS_SEARCH_HISTORY = (searchId?: string): QueryKey =>
+  ['sanctions', 'search', searchId].filter(Boolean);
+export const RULES = (): QueryKey => ['rules'];
+export const RULE_INSTANCES = (): QueryKey => ['rule-instances'];
+export const RULE_FILTERS = (): QueryKey => ['rule-filters'];
+export const HITS_PER_USER = (dateRange: RangeValue<Dayjs>, direction?: string): QueryKey =>
+  ['hits-per-user', dateRange, direction].filter(Boolean);
+export const HITS_PER_USER_STATS = (dateRange: RangeValue<Dayjs>): QueryKey => [
+  'hits-per-user-stats',
+  dateRange,
+];
+export const TRANSACTION_FILES = (params?: AnyParameters): QueryKey =>
+  ['transaction-files', params].filter(Boolean);
+export const USER_FILES = (params?: AnyParameters): QueryKey =>
+  ['user-files', params].filter(Boolean);
+export const RULES_AND_RULE_INSTANCES = (): QueryKey => ['rules-and-rule-instances'];
+export const GET_RULES = (params: AnyParameters): QueryKey => ['get-rules', params];
+export const GET_RULE_INSTANCES = (params: AnyParameters): QueryKey => [
+  'get-rule-instances',
+  params,
+];
+export const WEBHOOKS = (id?: string): QueryKey => ['webhooks', id].filter(Boolean);
+export const WEBHOOKS_LIST = (): QueryKey => ['webhooks', 'list'];
+export const USERS = (type: string, params?: AnyParameters): QueryKey =>
+  ['users', type, params].filter(Boolean);
+export const USERS_ITEM = (userId: string): QueryKey => ['users', 'item', userId];
+export const USERS_ITEM_RISKS_DRS = (userId: string): QueryKey => [
+  'users',
+  'item',
+  userId,
+  'risks',
+  'drs-score',
+];
+
+export const MERCHANT_SUMMARY = (userId: string): QueryKey => ['merchant', 'summary', userId];
+export const MERCHANT_SUMMARY_HISTORY = (
+  userId: string,
+  source: MerchantMonitoringSource,
+): QueryKey => ['merchant', 'summary', userId, source.sourceType, source.sourceValue];
+export const USERS_ITEM_RISKS_KRS = (userId: string): QueryKey => [
+  'users',
+  'item',
+  userId,
+  'risks',
+  'krs-score',
+];
+export const ALERT_LIST = (params?: AnyParameters): QueryKey =>
+  ['alerts', 'list', params].filter(Boolean);
+export const SIMULATION_JOB = (jobId: string): QueryKey => ['simulation', jobId];
+export const SIMULATION_JOB_ITERATION_RESULT = (taskId: string, params?: AnyParameters): QueryKey =>
+  ['simulation', 'iteration', taskId, params].filter(Boolean);
+export const SIMULATION_JOBS = (params?: AnyParameters): QueryKey =>
+  ['simulation', params].filter(Boolean);
+export const ALERT_ITEM_TRANSACTION_LIST = (alertId: string, params?: AnyParameters): QueryKey =>
+  ['alerts', 'item', alertId, 'transactions', 'list', params].filter(Boolean);
+export const ALERT_ITEM_SANCTIONS_MATCH_LIST = (
+  alertId: string,
+  params?: AnyParameters,
+): QueryKey => ['alerts', 'item', alertId, 'sanctions-match', 'list', params];
+export const ALERT_ITEM = (alertId: string): QueryKey => ['alerts', 'item', alertId];
+export const SIMULATION_COUNT = (): QueryKey => ['simulation', 'count'];
+export const ALERT_ITEM_COMMENTS = (alertId: string): QueryKey => [
+  'alerts',
+  'item',
+  alertId,
+  'comments',
+];
+export const DEVICE_DATA_USER = (userId?: string): QueryKey =>
+  ['device-data', 'user', userId].filter(Boolean);
+export const RISK_CLASSIFICATION_VALUES = (): QueryKey => ['risk-classification-values'];
+export const NARRATIVE_TEMPLATE_LIST = (params?: AnyParameters): QueryKey => [
+  'narrative-templates',
+  'list',
+  params,
+];
+export const NARRATIVE_TEMPLATE_ITEM = (id: string): QueryKey => [
+  'narrative-templates',
+  'item',
+  id,
+];
+
+export const DASHBOARD_TEAM_STATS = (params: AnyParameters): QueryKey => [
+  'dashboard',
+  'team',
+  params,
+];

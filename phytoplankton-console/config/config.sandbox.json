@@ -1,0 +1,16 @@
+{
+  "mode": "production",
+  "envName": "sandbox",
+  "define": {
+    "EXPORT_ENTRIES_LIMIT": 10000,
+    "API_BASE_PATH": "https://sandbox.api.flagright.com/console",
+    "AUTH0_AUDIENCE": "https://sandbox.api.flagright.com/",
+    "AUTH0_DOMAIN": "login.sandbox.console.flagright.com",
+    "AUTH0_CLIENT_ID": "dbinWZ63vFLquTEcbvg56o32HpVpuEJU",
+    "SENTRY_DSN": "https://02c8d2cba7c34122b3e765ef586a0dac@o1295082.ingest.sentry.io/6520175",
+    "SLACK_CLIENT_ID": "2800969986821.3789460302231",
+    "FEATURES_ENABLED": [],
+    "IS_SENTRY_INSTANCE": false,
+    "MIXPANEL_TOKEN": "6547d4fa921f71e8aafb458d36426c8e"
+  }
+}

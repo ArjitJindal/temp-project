@@ -1,0 +1,44 @@
+@import 'src/components/ui/colors';
+@import 'src/components/ui/animation';
+
+.root {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  flex: 1;
+}
+
+.optional {
+  font-weight: normal;
+  color: @fr-colors-v2-gray-6;
+}
+
+.row {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+}
+
+.label {
+  line-height: 20px;
+
+  &.level-1 {
+    font-weight: 600;
+  }
+
+  &.level-2 {
+  }
+
+  &.level-3 {
+    color: @fr-colors-v2-gray-6;
+  }
+}
+
+.description {
+  color: @fr-colors-v2-gray-6;
+  line-height: 24px;
+}
+
+.labelDescription {
+  //margin-bottom: 8px;
+}

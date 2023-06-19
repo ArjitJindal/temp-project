@@ -1,0 +1,31 @@
+@import 'src/components/ui/colors';
+
+.root {
+  display: flex;
+  gap: 1rem;
+}
+
+.button {
+  width: 32px;
+  height: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: white;
+  border: 1px solid @fr-colors-brandBlue;
+  color: @fr-colors-brandBlue;
+  border-radius: 2px;
+  cursor: pointer;
+
+  &:hover {
+    color: @fr-colors-v2-state-hover;
+    border-color: @fr-colors-v2-state-hover;
+  }
+
+  &:disabled {
+    pointer-events: none;
+    background-color: @fr-colors-v2-gray-1;
+    border-color: @fr-colors-v2-state-disabled;
+    color: @fr-colors-v2-state-disabled;
+  }
+}

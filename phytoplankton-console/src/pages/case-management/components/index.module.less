@@ -1,0 +1,64 @@
+@import 'src/components/ui/colors.less';
+
+.tag {
+  :global {
+    .ant-tag {
+      margin-bottom: 5px;
+      color: @fr-colors-gray-2;
+    }
+  }
+}
+
+// tag on hover mouse pointer
+.tagOnHover {
+  :hover {
+    cursor: pointer;
+  }
+}
+
+.otherLabel {
+  color: @fr-colors-purpleGray;
+}
+
+.icon {
+  display: flex;
+  svg {
+    width: 14px;
+    height: 14px;
+  }
+}
+
+.falsePositiveTag {
+  color: #fff;
+  display: flex;
+  :global {
+    .ant-tag {
+      display: flex;
+      gap: 8px;
+      align-items: center;
+      border-radius: 8px;
+    }
+  }
+}
+
+.narrativeTemplateSelectContainer {
+  display: flex;
+  flex-direction: row;
+  width: fit-content;
+  justify-content: end;
+  float: right;
+  margin-top: -32px;
+
+  :global {
+    .ant-select-arrow,
+    .ant-select-selection-placeholder,
+    .ant-select-item-option-content,
+    .ant-select-selection-item {
+      color: @fr-colors-brandBlue !important;
+    }
+
+    .ant-select-selector {
+      border: none !important;
+    }
+  }
+}

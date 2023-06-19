@@ -37,40 +37,32 @@ jobs:
       - name: Checkout PR branch
         if: steps.check.outputs.triggered == 'true'
         uses: actions/checkout@v3
-        with:
-          ref: ${{ steps.comment-branch.outputs.head_ref }}
-          path: "tarpon"
-          clean: false
       - name: Use Node.js ${{ matrix.node-version }}
         if: steps.check.outputs.triggered == 'true'
         uses: actions/setup-node@v3
         with:
           node-version: ${{ matrix.node-version }}
           cache: 'npm'
-          cache-dependency-path: "tarpon/tarpon/package-lock.json"
-      - run: npm ci
-        if: steps.check.outputs.triggered == 'true'
-        working-directory: "tarpon/tarpon"
-      - run: npm run openapi:prepare
-        if: steps.check.outputs.triggered == 'true'
-        working-directory: "tarpon/tarpon"
-      - name: Checkout Phytoplankton
-        if: steps.check.outputs.triggered == 'true'
-        uses: actions/checkout@v3
-        with:
-          repository: flagright/phytoplankton-console
-          token: ${{ secrets.DEPLOY_PAT }}
-          path: "phytoplankton-console"
+          cache-dependency-path: "phytoplankton-console/package-lock.json"
       - name: Use Node.js ${{ matrix.node-version }}
         if: steps.check.outputs.triggered == 'true'
         uses: actions/setup-node@v3
         with:
           node-version: ${{ matrix.node-version }}
-          cache: 'yarn'
-          cache-dependency-path: "phytoplankton-console/yarn.lock"
-      - name: Deploy
-        id: deploy
+          cache: 'npm'
+          cache-dependency-path: "tarpon/package-lock.json"
+      - run: npm ci
         if: steps.check.outputs.triggered == 'true'
+        working-directory: "tarpon"
+      - run: npm ci
+        if: steps.check.outputs.triggered == 'true'
+        working-directory: "phytoplankton-console"
+      - run: npm run openapi:prepare
+        if: steps.check.outputs.triggered == 'true'
+        working-directory: "tarpon"
+      - name: Deploy
+        if: steps.check.outputs.triggered == 'true'
+        id: deploy
         run: |
           export QA=true
           export NODE_OPTIONS="--max-old-space-size=8192"
@@ -81,21 +73,12 @@ jobs:
           export QA_SUBDOMAIN="qa$(echo "${{ steps.comment-branch.outputs.head_ref }}" | shasum | head -c5)"
           
           echo "Deploying Tarpon"
-          cd tarpon/tarpon
+          cd tarpon
           npm run deploy:qa
           comment="${{ github.event.comment.body }}"
           commentArgs=($comment)
-          export PHYTOPLANKTON_BRANCH=${commentArgs[1]}
           export TARPON_BRANCH=${{ steps.comment-branch.outputs.head_ref }}
-          cd ../../phytoplankton-console
-          if [ -n "$PHYTOPLANKTON_BRANCH" ]
-          then
-            echo "Deploying phytoplankton with branch: $PHYTOPLANKTON_BRANCH"
-            git fetch origin $PHYTOPLANKTON_BRANCH
-            git checkout origin/$PHYTOPLANKTON_BRANCH
-          else
-            echo "Deploying phytoplankton from main"
-          fi
+          cd ../phytoplankton-console
           yarn run deploy:qa
           echo "phyto=${QA_SUBDOMAIN}" >> $GITHUB_OUTPUT
           echo "tarpon=${QA_SUBDOMAIN}.api" >> $GITHUB_OUTPUT
@@ -110,7 +93,7 @@ jobs:
       - name: Run integration tests
         if: steps.check.outputs.triggered == 'true'
         run: |
-          cd tarpon/tarpon
+          cd tarpon
           QA_SUBDOMAIN=${{ steps.deploy.outputs.tarpon }} DOMAIN=https://${{ steps.deploy.outputs.tarpon }}.flagright.dev npm run postman:integration:dev
       - name: Set latest commit status as ${{ job.status }}
         if: always() && steps.check.outputs.triggered == 'true'

@@ -1,0 +1,77 @@
+import { useState } from 'react';
+import SelectionGroup from '@/components/library/SelectionGroup';
+
+export const RiskAlgorithmsSettings = () => {
+  const [value, setValue] = useState<string>('HEURISTIC');
+  const [modelValue, setModalValue] = useState<string>('IF');
+
+  return (
+    <div>
+      <h3>Risk Algorithms</h3>
+      <p>Select the algorithm type you want to use for transaction monitoring.</p>
+      <br />
+      <p>
+        <b>Algorithm Type</b>
+      </p>
+      <SelectionGroup
+        mode={'SINGLE'}
+        value={value == null ? 'HEURISTIC' : value}
+        options={[
+          {
+            label: 'Heuristic',
+            value: 'HEURISTIC',
+            description:
+              'Use Heuristic based risk levels for your transaction monitoring. This risk score is calculated using your manually set risk factors.',
+          },
+          {
+            label: 'Flagright AI',
+            value: 'AI',
+            description:
+              "Use risk levels calculated by Flagright's AI model of your choice for your transaction monitoring",
+          },
+        ]}
+        onChange={(newValue) => {
+          setValue(newValue ?? 'AI');
+        }}
+      />
+      {value === 'AI' && (
+        <>
+          <br />
+          <p>
+            <b>Model Type</b>
+          </p>
+          <SelectionGroup
+            mode={'SINGLE'}
+            value={modelValue == null ? 'IF' : modelValue}
+            options={[
+              {
+                label: 'Isolation Forest',
+                value: 'IF',
+                description: "Use Flagright's Isolation forest model to risk score your users",
+              },
+              {
+                label: 'XGBoost',
+                value: 'XG',
+                description:
+                  "Use Flagright's Isolation forest model to risk score your users (this model needs 1000 closed cases at least to be effective)",
+              },
+              {
+                label: 'Graph Learning',
+                value: 'GF',
+                description: "Use Flagright's new Graph learning model - this is experimental",
+              },
+              {
+                label: 'Gaussian Mixture',
+                value: 'GM',
+                description: "Use Flagright's new Gaussian mixture model - this is experimental",
+              },
+            ]}
+            onChange={(newValue) => {
+              setModalValue(newValue ?? 'IF');
+            }}
+          />
+        </>
+      )}
+    </div>
+  );
+};

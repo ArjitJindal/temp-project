@@ -1,0 +1,63 @@
+@import 'src/components/ui/colors';
+@import 'src/components/ui/animation';
+
+.root {
+  display: inline-flex;
+
+  :global {
+    .ant-select {
+      flex: 1;
+    }
+
+    .ant-select-selector {
+      min-height: 32px !important;
+      align-items: center;
+      border-radius: 4px;
+      border-color: @fr-colors-v2-gray-2 !important;
+      transition-duration: @default-animation-speed !important;
+    }
+
+    .ant-select-selection-placeholder {
+      color: @fr-colors-v2-gray-6;
+    }
+
+    .ant-select-focused {
+      .ant-select-selector {
+        border-color: @fr-colors-v2-primary-flagrightBlue !important;
+        box-shadow: none !important;
+      }
+    }
+
+    .ant-select-arrow {
+      font-size: 8px;
+      transform: scaleX(1.2);
+      color: @fr-colors-v2-gray-6;
+    }
+
+    .ant-select-disabled {
+      pointer-events: none;
+
+      .ant-select-selector {
+        border-color: @fr-colors-v2-state-disabled !important;
+        color: @fr-colors-v2-state-disabled !important;
+        background: @fr-colors-v2-gray-1 !important;
+      }
+    }
+  }
+
+  &.isError {
+    :global {
+      .ant-select-selector {
+        border-color: @fr-colors-v2-alert-critical !important;
+      }
+    }
+  }
+
+  &.size-LARGE {
+    :global {
+      .ant-select-selector {
+        min-height: 40px !important;
+      }
+    }
+  }
+}
