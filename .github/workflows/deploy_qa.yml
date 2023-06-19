@@ -98,6 +98,7 @@ jobs:
         id: resolve-api-key
         run: |
           cd tarpon
+          export QA_SUBDOMAIN="qa$(echo "${{ steps.comment-branch.outputs.head_ref }}" | shasum | head -c5)"
           export QA_API_KEY=$(npm run get-qa-api-key)
           echo "::set-output name=api_key::$QA_API_KEY"
       - name: Comment PR
