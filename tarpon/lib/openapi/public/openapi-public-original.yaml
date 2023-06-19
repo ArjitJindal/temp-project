@@ -590,7 +590,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/User'
+                $ref: '#/components/schemas/UserResponse'
               examples:
                 example-1:
                   value:
@@ -738,7 +738,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Business'
+                $ref: '#/components/schemas/BusinessResponse'
               examples:
                 example-2:
                   value:
@@ -4888,6 +4888,28 @@ components:
               type: array
               items:
                 $ref: '#/components/schemas/HitRulesDetails'
+    RiskScoreDetails:
+      title: RiskScoreDetails
+      x-stoplight:
+        id: 4b3f3f522e84a3
+      type: object
+      properties:
+        kycRiskScore:
+          type: number
+        craRiskScore:
+          type: number
+        kycRiskLevel:
+          $ref: '#/components/schemas/RiskLevel'
+        craRiskLevel:
+          $ref: '#/components/schemas/RiskLevel'
+    UserResponse:
+      title: UserResponse
+      allOf:
+        - $ref: '#/components/schemas/UserWithRulesResult'
+        - type: object
+          properties:
+            riskScoreDetails:
+              $ref: '#/components/schemas/RiskScoreDetails'
     BusinessWithRulesResult:
       title: BusinessWithRulesResult
       description: Model for business payload with rules result
@@ -4903,6 +4925,14 @@ components:
               type: array
               items:
                 $ref: '#/components/schemas/HitRulesDetails'
+    BusinessResponse:
+      title: BusinessResponse
+      allOf:
+        - $ref: '#/components/schemas/BusinessWithRulesResult'
+        - type: object
+          properties:
+            riskScoreDetails:
+              $ref: '#/components/schemas/RiskScoreDetails'
     BooleanString:
       title: Boolean string value
       type: string

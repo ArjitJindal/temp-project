@@ -433,6 +433,26 @@ export class RiskScoringService {
     return result
   }
 
+  public async getKrsScore(userId: string): Promise<number | undefined> {
+    const krsScore = await this.riskRepository.getKrsScore(userId)
+
+    if (krsScore == null) {
+      return undefined
+    }
+
+    return krsScore.krsScore
+  }
+
+  public async getDrsScore(userId: string): Promise<number | undefined> {
+    const drsScore = await this.riskRepository.getDrsScore(userId)
+
+    if (drsScore == null) {
+      return undefined
+    }
+
+    return drsScore.drsScore
+  }
+
   private async calculateAndUpdateDRS(
     userId: string,
     arsScore: number,

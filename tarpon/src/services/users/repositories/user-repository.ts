@@ -50,6 +50,10 @@ import { HitRulesDetails } from '@/@types/openapi-internal/HitRulesDetails'
 import { BusinessWithRulesResult } from '@/@types/openapi-public/BusinessWithRulesResult'
 import { UserWithRulesResult } from '@/@types/openapi-internal/UserWithRulesResult'
 import { SortOrder } from '@/@types/openapi-internal/SortOrder'
+import { UserResponse } from '@/@types/openapi-public/UserResponse'
+import { RiskScoringService } from '@/services/risk-scoring'
+import { RiskScoreDetails } from '@/@types/openapi-public/RiskScoreDetails'
+import { BusinessResponse } from '@/@types/openapi-public/BusinessResponse'
 
 export class UserRepository {
   dynamoDb: DynamoDBDocumentClient
@@ -431,6 +435,81 @@ export class UserRepository {
     userId: string
   ): Promise<(UserWithRulesResult & { type: UserType }) | undefined> {
     return await this.getUser<UserWithRulesResult & { type: UserType }>(userId)
+  }
+
+  private async getRiskScoringResult(
+    userId: string
+  ): Promise<RiskScoreDetails> {
+    const riskScoringService = new RiskScoringService(this.tenantId, {
+      dynamoDb: this.dynamoDb,
+      mongoDb: this.mongoDb,
+    })
+
+    const [kycRiskScore, craRiskScore, riskClassificationValues] =
+      await Promise.all([
+        riskScoringService.getKrsScore(userId),
+        riskScoringService.getDrsScore(userId),
+        riskScoringService.riskRepository.getRiskClassificationValues(),
+      ])
+
+    const kycRiskLevel = getRiskLevelFromScore(
+      riskClassificationValues,
+      kycRiskScore ?? null
+    )
+
+    const craRiskLevel = getRiskLevelFromScore(
+      riskClassificationValues,
+      craRiskScore ?? null
+    )
+
+    return {
+      kycRiskScore,
+      craRiskScore,
+      kycRiskLevel,
+      craRiskLevel,
+    }
+  }
+
+  public async getConsumerUserWithRiskScores(
+    userId: string
+  ): Promise<UserResponse | undefined> {
+    const user = await this.getConsumerUser(userId)
+
+    if (user == null) {
+      return
+    }
+
+    if (!hasFeature('PULSE')) {
+      return user
+    }
+
+    const riskScoreDetails = await this.getRiskScoringResult(userId)
+
+    return {
+      ...user,
+      riskScoreDetails,
+    }
+  }
+
+  public async getBusinessUserWithRiskScores(
+    userId: string
+  ): Promise<BusinessResponse | undefined> {
+    const user = await this.getBusinessUser(userId)
+
+    if (user == null) {
+      return
+    }
+
+    if (!hasFeature('PULSE')) {
+      return user
+    }
+
+    const riskScoreDetails = await this.getRiskScoringResult(userId)
+
+    return {
+      ...user,
+      riskScoreDetails,
+    }
   }
 
   public async getAllUserIdsCursor(): Promise<FindCursor<{ userId: string }>> {

@@ -50,11 +50,13 @@ export const userHandler = lambdaApi()(
 
     if (event.httpMethod === 'GET' && userId) {
       const user = isConsumerUser
-        ? await userRepository.getConsumerUser(userId)
-        : await userRepository.getBusinessUser(userId)
+        ? await userRepository.getConsumerUserWithRiskScores(userId)
+        : await userRepository.getBusinessUserWithRiskScores(userId)
+
       if (!user) {
         throw new NotFound(`User ${userId} not found`)
       }
+
       return user
     } else if (event.httpMethod === 'POST' && event.body) {
       const userPayload = JSON.parse(event.body)

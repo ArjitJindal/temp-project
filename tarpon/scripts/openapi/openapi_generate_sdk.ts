@@ -109,6 +109,9 @@ function buildApi(
     `src/@types/openapi-${type}/InternalUser.ts`,
     `src/@types/openapi-${type}/InternalBusinessUser.ts`,
   ])
+  replaceUserSavedPaymentDetails([
+    `src/@types/openapi-${type}/BusinessResponse.ts`,
+  ]) // Was not working if I put it in the array above Weird Behavior hence the duplication
   replaceSimulationGetResponse(
     `src/@types/openapi-${type}/SimulationGetResponse.ts`
   )

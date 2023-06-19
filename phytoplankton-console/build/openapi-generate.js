@@ -78,6 +78,7 @@ const pathsToReplace = [
   'src/apis/models/InternalBusinessUser.ts',
   'src/apis/models/BusinessOptional.ts',
   'src/apis/models/BusinessWithRulesResult.ts',
+  'src/apis/models/BusinessResponse.ts',
 ];
 
 replaceUserSavedPaymentDetails(pathsToReplace);
