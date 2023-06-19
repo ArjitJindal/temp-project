@@ -96,7 +96,8 @@ jobs:
       - name: Resolve QA API Key
         id: resolve-api-key
         run: |
-          export QA_API_KEY=$(node -p "require('tarpon/lib/qa.ts').getQaApiKey()")
+          pwd
+          export QA_API_KEY=$(node -p "require('../tarpon/lib/qa.ts').getQaApiKey()")
           echo "::set-output name=api_key::$QA_API_KEY"
       - name: Comment PR
         if: steps.check.outputs.triggered == 'true'
