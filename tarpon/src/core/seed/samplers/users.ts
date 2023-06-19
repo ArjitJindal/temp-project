@@ -108,6 +108,11 @@ export function sampleBusinessUser(
       krsScore: randomFloat(),
       createdAt: sampleTimestamp(seed),
     },
+    comments: [
+      {
+        body: 'User is behaving suspiciously',
+      },
+    ],
     kycStatusDetails: sampleKycStatusDetails(seed),
     createdTimestamp: sampleTimestamp(seed),
     legalEntity: {

@@ -70,7 +70,7 @@ export class KenyaSARReportGenerator implements ReportGenerator {
               internal_ref_number: t.transactionId,
               transaction_description: t.reference,
               date_transaction:
-                t.createdAt && new Date(t.createdAt).toISOString(),
+                t.timestamp && new Date(t.timestamp).toISOString(),
               transmode_comment: `${t.originPaymentDetails?.method} to ${t.destinationPaymentDetails?.method}`,
               amount_local: t.originAmountDetails?.transactionAmount,
               t_from_my_client: {
@@ -106,7 +106,7 @@ export class KenyaSARReportGenerator implements ReportGenerator {
     return builder.buildObject({
       ...reportParams.report,
       report_code: 'SAR',
-      transaction: reportParams.transactions.map((t) => t.transaction),
+      transaction: reportParams.transactions?.map((t) => t.transaction),
       indicators: reportParams.indicators,
     })
   }
@@ -176,30 +176,33 @@ export class KenyaSARReportGenerator implements ReportGenerator {
 
   private userToEntity(user: InternalBusinessUser) {
     return {
-      phones: user.legalEntity.contactDetails?.contactNumbers?.map((c) => ({
-        tph_contact_type: 'B',
-        tph_communication_type: 'L',
-        tph_number: c,
-      })),
-      addresses: user.legalEntity.contactDetails?.addresses?.map(this.address),
-      director_id: user.directors?.map((d) => {
-        const passport = d.legalDocuments?.find(
-          (l) => l.documentType.toLowerCase() === 'passport'
-        )
-        const email = d.contactDetails?.emailIds?.slice(0, -1)
-        return {
-          gender: d.generalDetails.gender,
-          first_name: d.generalDetails.name.firstName,
-          last_name: d.generalDetails.name.lastName,
-          nationality1: d.generalDetails.countryOfNationality,
-          residence: d.generalDetails.countryOfResidence,
-          birthdate: d.generalDetails.dateOfBirth,
-          passport_number: passport?.documentNumber,
-          passport_country: passport?.documentIssuedCountry,
-          email: email,
-          addresses: d.contactDetails?.addresses?.map(this.address),
-        }
-      }),
+      phones:
+        user.legalEntity.contactDetails?.contactNumbers?.map((c) => ({
+          tph_contact_type: 'B',
+          tph_communication_type: 'L',
+          tph_number: c,
+        })) || [],
+      addresses:
+        user.legalEntity.contactDetails?.addresses?.map(this.address) || [],
+      director_id:
+        user.directors?.map((d) => {
+          const passport = d.legalDocuments?.find(
+            (l) => l.documentType.toLowerCase() === 'passport'
+          )
+          const email = d.contactDetails?.emailIds?.slice(0, -1)
+          return {
+            gender: d.generalDetails.gender,
+            first_name: d.generalDetails.name.firstName,
+            last_name: d.generalDetails.name.lastName,
+            nationality1: d.generalDetails.countryOfNationality,
+            residence: d.generalDetails.countryOfResidence,
+            birthdate: d.generalDetails.dateOfBirth,
+            passport_number: passport?.documentNumber,
+            passport_country: passport?.documentIssuedCountry,
+            email: email,
+            addresses: d.contactDetails?.addresses?.map(this.address),
+          }
+        }) || [],
       incorporation_date:
         user.legalEntity.companyRegistrationDetails?.dateOfRegistration,
       name: user.legalEntity.companyGeneralDetails.legalName,
