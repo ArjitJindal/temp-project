@@ -1,7 +1,7 @@
 import React, { useEffect } from 'react';
 import StepHeader from '../../StepHeader';
 import { RuleConfigurationFormValues } from '../../RuleConfigurationForm';
-import { Rule } from '@/apis';
+import { PaymentMethod, Rule } from '@/apis';
 import PropertyList from '@/pages/rules/RuleConfigurationDrawer/JsonSchemaEditor/PropertyList';
 import { useQuery } from '@/utils/queries/hooks';
 import { RULE_FILTERS } from '@/utils/queries/keys';
@@ -27,6 +27,11 @@ interface Props {
   setFormValues: React.Dispatch<React.SetStateAction<RuleConfigurationFormValues>>;
 }
 
+const requiredPaymentMethodMap: Record<string, PaymentMethod> = {
+  walletType: 'WALLET',
+  transactionCardIssuedCountries: 'CARD',
+};
+
 export default function StandardFiltersStep(props: Props) {
   const { activeTab, standardFilters, setFormValues } = props;
 
@@ -34,14 +39,17 @@ export default function StandardFiltersStep(props: Props) {
   const queryResults = useQuery(RULE_FILTERS(), () => api.getRuleFilters());
 
   useEffect(() => {
-    if (standardFilters?.paymentMethods?.includes('WALLET')) {
-      setFormValues((prev) => {
-        if (prev?.standardFiltersStep?.walletType) {
-          delete prev?.standardFiltersStep?.walletType;
-        }
-        return prev;
-      });
-    }
+    Object.keys(requiredPaymentMethodMap).forEach((key) => {
+      const paymentMethod = requiredPaymentMethodMap[key];
+      if (!standardFilters?.paymentMethods?.includes(paymentMethod)) {
+        setFormValues((prev) => {
+          if (prev?.standardFiltersStep?.[key]) {
+            delete prev?.standardFiltersStep?.[key];
+          }
+          return prev;
+        });
+      }
+    });
 
     if (standardFilters?.userType !== 'CONSUMER') {
       setFormValues((prev) => {
@@ -86,10 +94,12 @@ export default function StandardFiltersStep(props: Props) {
                 propertyItems={props
                   .filter((x) => getUiSchema(x.schema)['ui:group'] === 'transaction')
                   .filter((x) => {
-                    const nameToFilter = 'walletType';
-                    if (x.name === nameToFilter) {
-                      return standardFilters?.paymentMethods?.includes('WALLET');
+                    if (Object.keys(requiredPaymentMethodMap).includes(x.name)) {
+                      return standardFilters?.paymentMethods?.includes(
+                        requiredPaymentMethodMap[x.name],
+                      );
                     }
+
                     return true;
                   })}
               />
