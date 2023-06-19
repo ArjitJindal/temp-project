@@ -5403,6 +5403,7 @@ components:
         - Fraud
         - Anti-money laundering
         - Terrorist financing
+        - All alerts of this case are closed
     MissingUser:
       title: MissingUser
       type: object

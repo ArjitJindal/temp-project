@@ -304,6 +304,7 @@ export class DashboardStatsRepository {
           {
             $match: {
               'statusChanges.caseStatus': 'CLOSED',
+              'statusChanges.userId': { $ne: null, $exists: true },
             },
           },
           {
@@ -312,6 +313,7 @@ export class DashboardStatsRepository {
           {
             $match: {
               'statusChanges.caseStatus': 'CLOSED',
+              'statusChanges.userId': { $ne: null, $exists: true },
             },
           },
           {
@@ -368,8 +370,18 @@ export class DashboardStatsRepository {
               ]
             : []),
           {
+            $match: {
+              'assignments.assigneeUserId': { $ne: null, $exists: true },
+            },
+          },
+          {
             $unwind: {
               path: '$assignments',
+            },
+          },
+          {
+            $match: {
+              'assignments.assigneeUserId': { $ne: null, $exists: true },
             },
           },
           {
@@ -438,6 +450,7 @@ export class DashboardStatsRepository {
           {
             $match: {
               'alerts.statusChanges.caseStatus': 'CLOSED',
+              'alerts.statusChanges.userId': { $ne: null, $exists: true },
             },
           },
           {
@@ -449,6 +462,7 @@ export class DashboardStatsRepository {
           {
             $match: {
               'alerts.statusChanges.caseStatus': 'CLOSED',
+              'alerts.statusChanges.userId': { $ne: null, $exists: true },
             },
           },
           {
@@ -504,7 +518,18 @@ export class DashboardStatsRepository {
               ]
             : []),
           {
+            $match: {
+              'alerts.assignments.assigneeUserId': { $ne: null, $exists: true },
+            },
+          },
+
+          {
             $unwind: '$alerts',
+          },
+          {
+            $match: {
+              'alerts.assignments.assigneeUserId': { $ne: null, $exists: true },
+            },
           },
           {
             $unwind: {

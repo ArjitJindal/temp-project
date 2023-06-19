@@ -88,7 +88,8 @@ export class CaseService extends CaseAlertsCommonService {
   public async updateCases(
     userId: string,
     caseIds: string[],
-    updateRequest: CaseUpdateRequest
+    updateRequest: CaseUpdateRequest,
+    autoUpdate = true
   ) {
     const dashboardStatsRepository = new DashboardStatsRepository(
       this.caseRepository.tenantId,
@@ -158,7 +159,7 @@ export class CaseService extends CaseAlertsCommonService {
                     } as CaseClosedDetails,
                   },
                 ]),
-              alerts
+              autoUpdate && alerts?.length
                 ? Promise.all(
                     alerts?.flatMap((alert) => {
                       return [

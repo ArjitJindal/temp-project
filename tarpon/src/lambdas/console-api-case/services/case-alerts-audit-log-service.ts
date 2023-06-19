@@ -1,5 +1,6 @@
 import _ from 'lodash'
-import { CaseService } from './case-service'
+import { MongoClient } from 'mongodb'
+import { DynamoDBDocumentClient } from '@aws-sdk/lib-dynamodb'
 import {
   AuditLog,
   AuditLogSubtypeEnum,
@@ -9,8 +10,10 @@ import { Alert } from '@/@types/openapi-internal/Alert'
 import { publishAuditLog } from '@/services/audit-log'
 import { Case } from '@/@types/openapi-internal/Case'
 import { Comment } from '@/@types/openapi-internal/Comment'
-import { AlertsService } from '@/services/alerts'
 import { AuditLogActionEnum } from '@/@types/openapi-internal/AuditLogActionEnum'
+
+import { AlertsRepository } from '@/services/rules-engine/repositories/alerts-repository'
+import { CaseRepository } from '@/services/rules-engine/repositories/case-repository'
 
 type AuditLogCreateRequest = {
   caseId: string
@@ -31,18 +34,20 @@ type AlertAuditLogCreateRequest = {
 }
 
 export class CasesAlertsAuditLogService {
-  caseService: CaseService
-  alertsService: AlertsService
   tenantId: string
+  mongoDb: MongoClient
+  dynamoDb: DynamoDBDocumentClient
 
   constructor(
-    caseService: CaseService,
-    alertsService: AlertsService,
-    tenantId: string
+    tenantId: string,
+    connections: {
+      mongoDb: MongoClient
+      dynamoDb: DynamoDBDocumentClient
+    }
   ) {
-    this.caseService = caseService
     this.tenantId = tenantId
-    this.alertsService = alertsService
+    this.mongoDb = connections.mongoDb as MongoClient
+    this.dynamoDb = connections.dynamoDb as DynamoDBDocumentClient
   }
 
   public async handleAuditLogForCaseUpdate(
@@ -58,8 +63,13 @@ export class CasesAlertsAuditLogService {
     alertIds: string[],
     updates: CaseUpdateRequest
   ): Promise<void> {
+    const alertsRepository = new AlertsRepository(this.tenantId, {
+      mongoDb: this.mongoDb,
+      dynamoDb: this.dynamoDb,
+    })
+
     for (const alertId of alertIds) {
-      const alertEntity = await this.alertsService.getAlert(alertId)
+      const alertEntity = await alertsRepository.getAlertById(alertId)
       const oldImage: { [key: string]: string } = {}
       for (const field in Object.keys(updates)) {
         const oldValue = _.get(alertEntity, field)
@@ -119,7 +129,13 @@ export class CasesAlertsAuditLogService {
     logAction: AuditLogActionEnum,
     updates: CaseUpdateRequest
   ) {
-    const caseEntity = await this.caseService.getCase(caseId)
+    const caseRepository = new CaseRepository(this.tenantId, {
+      mongoDb: this.mongoDb,
+      dynamoDb: this.dynamoDb,
+    })
+
+    const caseEntity = await caseRepository.getCaseById(caseId)
+
     const oldImage: { [key: string]: string } = {}
     for (const field in Object.keys(updates)) {
       const oldValue = _.get(caseEntity, field)
@@ -139,7 +155,14 @@ export class CasesAlertsAuditLogService {
   public async createAuditLog(auditLogCreateRequest: AuditLogCreateRequest) {
     const { caseId, logAction, oldImage, newImage, caseDetails, subtype } =
       auditLogCreateRequest
-    const caseEntity = caseDetails ?? (await this.caseService.getCase(caseId))
+
+    const caseRepository = new CaseRepository(this.tenantId, {
+      mongoDb: this.mongoDb,
+      dynamoDb: this.dynamoDb,
+    })
+
+    const caseEntity = caseDetails ?? (await caseRepository.getCaseById(caseId))
+
     const auditLog: AuditLog = {
       type: 'CASE',
       action: logAction,
@@ -162,8 +185,15 @@ export class CasesAlertsAuditLogService {
   ) {
     const { alertId, logAction, oldImage, newImage, alertDetails, subtype } =
       auditLogCreateRequest
+
+    const alertsRepository = new AlertsRepository(this.tenantId, {
+      mongoDb: this.mongoDb,
+      dynamoDb: this.dynamoDb,
+    })
+
     const alertEntity =
-      alertDetails ?? (await this.alertsService.getAlert(alertId))
+      alertDetails ?? (await alertsRepository.getAlertById(alertId))
+
     const auditLog: AuditLog = {
       type: 'ALERT',
       action: logAction,

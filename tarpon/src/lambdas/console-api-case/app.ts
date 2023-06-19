@@ -100,10 +100,10 @@ export const casesHandler = lambdaApi()(
       tenantSettings
     )
     const casesAlertsAuditLogService = new CasesAlertsAuditLogService(
-      caseService,
-      alertsService,
-      tenantId
+      tenantId,
+      { mongoDb: client, dynamoDb }
     )
+
     if (event.httpMethod === 'GET' && event.resource === '/cases') {
       const {
         page,
@@ -435,6 +435,7 @@ export const casesHandler = lambdaApi()(
           alertIds,
           updates
         )
+
         return updateResult
       } finally {
         alertUpdateSegment?.close()

@@ -14,7 +14,10 @@ import { Alert } from '@/@types/openapi-internal/Alert'
 import { Case } from '@/@types/openapi-internal/Case'
 import { CaseEscalationRequest } from '@/@types/openapi-internal/CaseEscalationRequest'
 import { AlertsService } from '@/services/alerts'
-import { AlertsRepository } from '@/services/rules-engine/repositories/alerts-repository'
+import {
+  AlertsRepository,
+  FLAGRIGHT_SYSTEM_USER,
+} from '@/services/rules-engine/repositories/alerts-repository'
 import { getS3ClientByEvent } from '@/utils/s3'
 import { Comment } from '@/@types/openapi-internal/Comment'
 
@@ -640,19 +643,31 @@ describe('Post APIs Alerts Tests', () => {
         },
       ],
       lastStatusChange: {
-        userId: null,
+        userId: FLAGRIGHT_SYSTEM_USER,
         timestamp: expect.any(Number),
-        reason: ['False positive'],
+        reason: ['All alerts of this case are closed'],
         caseStatus: 'CLOSED',
         otherReason: 'some other reason',
       },
       statusChanges: [
         {
-          userId: null,
+          userId: FLAGRIGHT_SYSTEM_USER,
           timestamp: expect.any(Number),
-          reason: ['False positive'],
+          reason: ['All alerts of this case are closed'],
           caseStatus: 'CLOSED',
           otherReason: 'some other reason',
+        },
+      ],
+      comments: [
+        {
+          userId: 'Flagright System',
+          body:
+            'Case status changed to CLOSED. Reason: All alerts of this case are closed\n' +
+            'some comment',
+          files: [],
+          id: expect.any(String),
+          createdAt: expect.any(Number),
+          updatedAt: expect.any(Number),
         },
       ],
     })

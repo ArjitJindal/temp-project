@@ -133,8 +133,24 @@ export function useUserName(userId: string | null | undefined): string {
   return users[userId]?.name ?? userId ?? 'Unknown user';
 }
 
+export const FLAGRIGHT_SYSTEM_USER = 'Flagright System';
+
 export function useUser(userId: string | null | undefined): Account | null {
   const [users, isLoading] = useUsers({ includeBlockedUsers: true, includeRootUsers: true });
+
+  if (userId === FLAGRIGHT_SYSTEM_USER) {
+    return {
+      name: FLAGRIGHT_SYSTEM_USER,
+      email: FLAGRIGHT_SYSTEM_USER,
+      picture: undefined,
+      role: UserRole.USER,
+      id: FLAGRIGHT_SYSTEM_USER,
+      isEscalationContact: false,
+      emailVerified: true,
+      blocked: false,
+    };
+  }
+
   if (isLoading || !userId) {
     return null;
   }
@@ -147,6 +163,7 @@ export function useUser(userId: string | null | undefined): Account | null {
       picture: undefined,
     };
   }
+
   return user;
 }
 

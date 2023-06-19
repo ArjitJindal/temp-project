@@ -1,6 +1,7 @@
 import { Document, Filter, MongoClient } from 'mongodb'
 import { DynamoDBDocumentClient } from '@aws-sdk/lib-dynamodb'
 import { v4 as uuidv4 } from 'uuid'
+import _ from 'lodash'
 import { NotFound } from 'http-errors'
 import { CaseRepository } from './case-repository'
 import { MongoDbTransactionRepository } from './mongodb-transaction-repository'
@@ -30,6 +31,8 @@ import { RiskRepository } from '@/services/risk-scoring/repositories/risk-reposi
 import { CaseStatusChange } from '@/@types/openapi-internal/CaseStatusChange'
 import { Assignment } from '@/@types/openapi-internal/Assignment'
 import { InternalTransaction } from '@/@types/openapi-internal/InternalTransaction'
+
+export const FLAGRIGHT_SYSTEM_USER = 'Flagright System'
 
 export class AlertsRepository {
   mongoDb: MongoClient
@@ -425,7 +428,9 @@ export class AlertsRepository {
     alertIds: string[],
     caseIds: string[],
     statusChange: CaseStatusChange
-  ): Promise<void> {
+  ): Promise<{
+    caseIdsWithAllAlertsClosed: string[]
+  }> {
     const db = this.mongoDb.db()
     const collection = db.collection<Case>(CASES_COLLECTION(this.tenantId))
 
@@ -461,28 +466,13 @@ export class AlertsRepository {
       })
       .toArray()
 
-    for await (const caseItem of caseItems) {
-      const isAllAlertsClosed = caseItem.alerts?.every(
-        (alert) => alert.alertStatus === 'CLOSED'
+    const caseIdsWithAllAlertsClosed = caseItems
+      .filter((caseItem) =>
+        caseItem.alerts?.every((alert) => alert.alertStatus === 'CLOSED')
       )
+      .map((caseItem) => caseItem.caseId)
 
-      if (isAllAlertsClosed) {
-        await collection.updateOne(
-          {
-            caseId: caseItem.caseId,
-          },
-          {
-            $set: {
-              caseStatus: 'CLOSED',
-              lastStatusChange: statusChange,
-            },
-            $push: {
-              statusChanges: statusChange,
-            },
-          }
-        )
-      }
-    }
+    return { caseIdsWithAllAlertsClosed: _.compact(caseIdsWithAllAlertsClosed) }
   }
 
   public async getAlertTransactionsHit(
