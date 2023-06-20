@@ -49,7 +49,7 @@ function replaceUserSavedPaymentDetails(paths) {
 function replaceSimulationGetResponse(paths) {
   for (const path of paths) {
     if (!fs.existsSync(path)) {
-      return;
+      continue;
     }
     const newText = fs
       .readFileSync(path)
@@ -82,6 +82,7 @@ const pathsToReplace = [
 ];
 
 replaceUserSavedPaymentDetails(pathsToReplace);
+
 replaceSimulationGetResponse([
   'src/apis/apis/DefaultApi.ts',
   'src/apis/models/SimulationGetResponse.ts',

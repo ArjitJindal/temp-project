@@ -24,7 +24,7 @@ function replaceRequestParameters(path: string) {
 function replaceUserSavedPaymentDetails(paths: string[]) {
   for (const path of paths) {
     if (!fs.existsSync(path)) {
-      return
+      continue
     }
     const newText = fs
       .readFileSync(path)
@@ -108,10 +108,9 @@ function buildApi(
     `src/@types/openapi-${type}/BusinessWithRulesResult.ts`,
     `src/@types/openapi-${type}/InternalUser.ts`,
     `src/@types/openapi-${type}/InternalBusinessUser.ts`,
-  ])
-  replaceUserSavedPaymentDetails([
     `src/@types/openapi-${type}/BusinessResponse.ts`,
-  ]) // Was not working if I put it in the array above Weird Behavior hence the duplication
+  ])
+
   replaceSimulationGetResponse(
     `src/@types/openapi-${type}/SimulationGetResponse.ts`
   )
