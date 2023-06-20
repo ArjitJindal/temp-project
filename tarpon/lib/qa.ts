@@ -12,7 +12,7 @@ const QA_API_KEY_IDS = [
   'lriigh9bri',
   '4wp619m7p3',
 ]
-export function getQaApiKey(): string {
+export function getQaApiKeyId(): string {
   // NOTE: Each api key can only be used for at most 10 usage plans.
   // We use a pool of API keys to spread out the usage.
   const qaSubdomain = process.env.QA_SUBDOMAIN as string

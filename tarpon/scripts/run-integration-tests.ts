@@ -2,7 +2,7 @@ import { v4 as uuidv4 } from 'uuid'
 import newman from 'newman'
 import { Collection } from 'postman-collection'
 import { APIGatewayClient, GetApiKeyCommand } from '@aws-sdk/client-api-gateway'
-import { getQaApiKey } from '@lib/qa'
+import { getQaApiKeyId } from '@lib/qa'
 import PostmanCollection from '../test-resources/public-api-transactions-tests.postman_collection.json'
 import { getConfig, loadConfigEnv } from './migrations/utils/config'
 
@@ -15,7 +15,7 @@ async function main() {
   let flagrightTenantApiKeyId = config.application.INTEGRATION_TEST_API_KEY_ID
 
   if (process.env.QA_SUBDOMAIN) {
-    flagrightTenantApiKeyId = getQaApiKey()
+    flagrightTenantApiKeyId = getQaApiKeyId()
   }
 
   const apiGateway = new APIGatewayClient({

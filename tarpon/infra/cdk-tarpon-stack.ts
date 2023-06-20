@@ -68,7 +68,7 @@ import {
 } from '@lib/lambdas'
 import { Config } from '@lib/configs/config'
 import { Metric } from 'aws-cdk-lib/aws-cloudwatch'
-import { getQaApiKey } from '@lib/qa'
+import { getQaApiKeyId } from '@lib/qa'
 import {
   BATCH_JOB_PAYLOAD_RESULT_KEY,
   BATCH_JOB_RUN_TYPE_RESULT_KEY,
@@ -954,7 +954,7 @@ export class CdkTarponStack extends cdk.Stack {
     )
 
     if (isDevUserStack) {
-      const apiKey = ApiKey.fromApiKeyId(this, `api-key`, getQaApiKey())
+      const apiKey = ApiKey.fromApiKeyId(this, `api-key`, getQaApiKeyId())
       const qaSubdomain = process.env.QA_SUBDOMAIN as string
       const usagePlan = new UsagePlan(this, `usage-plan`, {
         name: `dev-${qaSubdomain}`,

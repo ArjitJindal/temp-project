@@ -86,6 +86,10 @@ jobs:
             commentArgs=($comment)
             export TARPON_BRANCH=${{ steps.comment-branch.outputs.head_ref }}
             echo "tarpon=${QA_SUBDOMAIN}.api" >> $GITHUB_OUTPUT
+            
+            export QA_API_KEY=$(npm --silent run get-qa-api-key)
+            echo "api_key=${QA_API_KEY}" >> $GITHUB_OUTPUT
+            
             cd ../
           fi
           
@@ -94,13 +98,6 @@ jobs:
           yarn run deploy:qa
           echo "phyto=${QA_SUBDOMAIN}" >> $GITHUB_OUTPUT
           cd ../
-      - name: Resolve QA API Key
-        id: resolve-api-key
-        run: |
-          cd tarpon
-          export QA_SUBDOMAIN="qa$(echo "${{ steps.comment-branch.outputs.head_ref }}" | shasum | head -c5)"
-          export QA_API_KEY=$(npm --silent run get-qa-api-key)
-          echo "api_key=${QA_API_KEY}" >> $GITHUB_OUTPUT
       - name: Comment PR
         if: steps.check.outputs.triggered == 'true'
         uses: thollander/actions-comment-pull-request@v2
@@ -109,7 +106,7 @@ jobs:
             Branch deployed!
             Frontend: https://${{ steps.deploy.outputs.phyto }}.console.flagright.dev
             Backend: https://${{ steps.deploy.outputs.tarpon }}.flagright.dev
-            API Key: ${{ steps.resolve-api-key.outputs.api_key }}
+            API Key: ${{ steps.deploy.outputs.api_key }}
       - name: Run integration tests
         if: steps.check.outputs.triggered == 'true' && steps.deploy.outputs.tarpon != 'api'
         run: |
