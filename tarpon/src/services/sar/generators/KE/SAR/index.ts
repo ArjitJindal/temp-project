@@ -102,12 +102,14 @@ export class KenyaSARReportGenerator implements ReportGenerator {
   }
 
   public generate(reportParams: ReportParameters): string {
-    const builder = new xml2js.Builder()
+    const builder = new xml2js.Builder({
+      rootName: 'report',
+    })
     return builder.buildObject({
       ...reportParams.report,
       report_code: 'SAR',
       transaction: reportParams.transactions?.map((t) => t.transaction),
-      indicators: reportParams.indicators,
+      report_indicators: reportParams.indicators,
     })
   }
 
