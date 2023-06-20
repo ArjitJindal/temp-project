@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useState } from 'react';
 import Property from '../../../index';
 import PropertyInput from '../../index';
 import { ExtendedSchema, UiSchemaTimeWindow } from '../../../../types';
@@ -64,23 +64,6 @@ export default function TimeWindowInput(props: Props) {
 
   const rollingBasisProperty = findRequiredProperty(properties, 'rollingBasis');
 
-  useEffect(() => {
-    if (value?.granularity === 'fiscal_year' && !fiscalYearType) {
-      onChange?.({
-        ...value,
-        fiscalYear: {
-          startMonth: fiscalYearMapping['default'].startMonth,
-          startDay: fiscalYearMapping['default'].startDay,
-        },
-      });
-    } else if (value?.granularity !== 'fiscal_year' && fiscalYearType) {
-      onChange?.({
-        ...value,
-        fiscalYear: undefined,
-      });
-    }
-  }, [value?.granularity, fiscalYearType, onChange, value]);
-
   // todo: fix any
   return (
     <FormContext.Provider value={subContext as FormContextValue<unknown>}>
@@ -92,7 +75,27 @@ export default function TimeWindowInput(props: Props) {
             label={granularityProperty.schema.title ?? ''}
             labelProps={{ level: 2 }}
           >
-            {(inputProps) => <PropertyInput schema={granularityProperty.schema} {...inputProps} />}
+            {(inputProps) => (
+              <PropertyInput
+                schema={granularityProperty.schema}
+                {...inputProps}
+                onChange={(v) => {
+                  if (v !== 'fiscal_year') {
+                    delete value?.fiscalYear;
+                  }
+                  onChange?.({
+                    ...value,
+                    granularity: v,
+                    ...(v === 'fiscal_year' && {
+                      fiscalYear: {
+                        startMonth: fiscalYearMapping[fiscalYearType].startMonth,
+                        startDay: fiscalYearMapping[fiscalYearType].startDay,
+                      },
+                    }),
+                  });
+                }}
+              />
+            )}
           </InputField>
           {value?.granularity === 'fiscal_year' && (
             <InputField<ValueType, 'fiscalYear'>
