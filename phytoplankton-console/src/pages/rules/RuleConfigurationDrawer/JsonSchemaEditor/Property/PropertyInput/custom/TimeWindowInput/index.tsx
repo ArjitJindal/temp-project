@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import Property from '../../../index';
 import PropertyInput from '../../index';
 import { ExtendedSchema, UiSchemaTimeWindow } from '../../../../types';
@@ -13,7 +13,16 @@ interface ValueType {
   granularity?: string;
   rollingBasis?: boolean;
   units?: number;
+  fiscalYear?: {
+    startMonth: number;
+    startDay: number;
+  };
 }
+
+const fiscalYearMapping: { [type: string]: { startMonth: number; startDay: number } } = {
+  default: { startMonth: 1, startDay: 1 },
+  indian: { startMonth: 4, startDay: 1 },
+};
 
 interface Props extends InputProps<ValueType> {
   uiSchema: UiSchemaTimeWindow;
@@ -23,6 +32,7 @@ interface Props extends InputProps<ValueType> {
 export default function TimeWindowInput(props: Props) {
   const { value, schema, onChange } = props;
   const [fieldMeta, setFieldsMeta] = useState<{ [key: string]: FieldMeta }>({});
+  const [fiscalYearType, setFiscalYearType] = useState<'default' | 'indian'>('default');
 
   const { alwaysShowErrors } = useFormContext();
 
@@ -44,7 +54,32 @@ export default function TimeWindowInput(props: Props) {
 
   const unitsProperty = findRequiredProperty(properties, 'units');
   const granularityProperty = findRequiredProperty(properties, 'granularity');
+
+  const fiscalYearTypeProperty: ExtendedSchema = {
+    type: 'string',
+    title: 'Fiscal year',
+    enum: ['default', 'indian'],
+    enumNames: ['1st January - 31st December', '1st April - 31st March'],
+  };
+
   const rollingBasisProperty = findRequiredProperty(properties, 'rollingBasis');
+
+  useEffect(() => {
+    if (value?.granularity === 'fiscal_year' && !fiscalYearType) {
+      onChange?.({
+        ...value,
+        fiscalYear: {
+          startMonth: fiscalYearMapping['default'].startMonth,
+          startDay: fiscalYearMapping['default'].startDay,
+        },
+      });
+    } else if (value?.granularity !== 'fiscal_year' && fiscalYearType) {
+      onChange?.({
+        ...value,
+        fiscalYear: undefined,
+      });
+    }
+  }, [value?.granularity, fiscalYearType, onChange, value]);
 
   // todo: fix any
   return (
@@ -59,8 +94,33 @@ export default function TimeWindowInput(props: Props) {
           >
             {(inputProps) => <PropertyInput schema={granularityProperty.schema} {...inputProps} />}
           </InputField>
+          {value?.granularity === 'fiscal_year' && (
+            <InputField<ValueType, 'fiscalYear'>
+              name="fiscalYear"
+              label={fiscalYearTypeProperty.title ?? ''}
+              labelProps={{ level: 2 }}
+            >
+              {(inputProps) => (
+                <PropertyInput
+                  schema={fiscalYearTypeProperty}
+                  {...inputProps}
+                  value={fiscalYearType}
+                  onChange={(v) => {
+                    setFiscalYearType(v);
+                    onChange?.({
+                      ...value,
+                      fiscalYear: {
+                        startMonth: fiscalYearMapping[v].startMonth,
+                        startDay: fiscalYearMapping[v].startDay,
+                      },
+                    });
+                  }}
+                />
+              )}
+            </InputField>
+          )}
         </div>
-        <Property item={rollingBasisProperty} />
+        {value?.granularity !== 'fiscal_year' && <Property item={rollingBasisProperty} />}
       </div>
     </FormContext.Provider>
   );

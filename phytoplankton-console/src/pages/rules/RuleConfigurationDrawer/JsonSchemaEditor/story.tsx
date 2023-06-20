@@ -138,13 +138,43 @@ const SAMPLE_SCHEMAS: [string, ExtendedSchema][] = [
           'ui:subtype': 'TIME_WINDOW',
           type: 'object',
           title: 'Time period',
-          description: 'Example description',
+          description: 'Select the time period from the dropdown',
           properties: {
             units: { type: 'integer', title: 'Number of time unit', minimum: 0 },
             granularity: {
               type: 'string',
               title: 'Time granularity',
-              enum: ['second', 'minute', 'hour', 'day', 'week', 'month'],
+              enum: ['second', 'minute', 'hour', 'day', 'week', 'month', 'year', 'fiscal_year'],
+              enumNames: [
+                'Second',
+                'Minute',
+                'Hour',
+                'Day',
+                'Week',
+                'Month',
+                'Year',
+                'Fiscal year',
+              ],
+            },
+            fiscalYear: {
+              type: 'object',
+              title: 'Fiscal year settings',
+              description: 'Select the fiscal year from the dropdown',
+              properties: {
+                startMonth: {
+                  type: 'integer',
+                  title: 'Start month',
+                  minimum: 1,
+                  maximum: 12,
+                },
+                startDay: {
+                  type: 'integer',
+                  title: 'Start day',
+                  minimum: 1,
+                  maximum: 31,
+                },
+              },
+              required: ['startMonth', 'startDay'],
             },
             rollingBasis: {
               type: 'boolean',

@@ -1,5 +1,5 @@
 import _ from 'lodash'
-import { TimeWindowGranularity } from './time-utils'
+import { TimeWindowFiscalYear, TimeWindowGranularity } from './time-utils'
 import { USER_TYPES } from '@/@types/user/user-type'
 import { COUNTRY_CODES } from '@/utils/countries'
 import {
@@ -24,6 +24,7 @@ export type TimeWindow = {
   units: number
   granularity: TimeWindowGranularity
   rollingBasis?: boolean
+  fiscalYear?: TimeWindowFiscalYear
 }
 
 export type TransactionsCounterPartiesThreshold = {
@@ -84,7 +85,49 @@ export const TIME_WINDOW_SCHEMA = (options?: SchemaOptions) =>
       granularity: {
         type: 'string',
         title: 'Time granularity',
-        enum: ['second', 'minute', 'hour', 'day', 'week', 'month'],
+        enum: [
+          'second',
+          'minute',
+          'hour',
+          'day',
+          'week',
+          'month',
+          'year',
+          'fiscal_year',
+        ],
+        enumNames: [
+          'Second',
+          'Minute',
+          'Hour',
+          'Day',
+          'Week',
+          'Month',
+          'Year',
+          'Fiscal year',
+        ],
+      },
+      fiscalYear: {
+        type: 'object',
+        title: 'Fiscal year',
+        description: 'Fiscal year',
+        properties: {
+          startMonth: {
+            type: 'integer',
+            title: 'Start month',
+            description: 'Start month',
+            minimum: 1,
+            maximum: 12,
+          },
+          startDay: {
+            type: 'integer',
+            title: 'Start day',
+            description: 'Start day',
+            minimum: 1,
+            maximum: 31,
+          },
+        },
+        required: ['startMonth', 'startDay'],
+        nullable: true,
       },
       rollingBasis: {
         type: 'boolean',

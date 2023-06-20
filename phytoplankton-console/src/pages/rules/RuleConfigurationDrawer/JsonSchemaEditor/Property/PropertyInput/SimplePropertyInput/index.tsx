@@ -18,6 +18,14 @@ export default function SimplePropertyInput(props: Props) {
   switch (schema.type) {
     case 'string':
       if (schema.enum != null) {
+        const enums = schema.enum ?? [];
+        const enumNames = schema.enumNames ?? [];
+
+        const displayOptions =
+          enumNames?.length && enumNames.length === enums.length
+            ? (enumNames as string[])
+            : (enums as string[]);
+
         return (
           <Select
             {...inputProps}
@@ -25,7 +33,7 @@ export default function SimplePropertyInput(props: Props) {
             placeholder={`Select ${uiSchema['ui:entityName'] ?? 'option'}`}
             options={(schema.enum ?? [])
               .filter((x): x is string => typeof x === 'string')
-              .map((item) => ({ value: item, label: item }))}
+              .map((item, i) => ({ value: item, label: displayOptions[i] ?? item }))}
           />
         );
       }

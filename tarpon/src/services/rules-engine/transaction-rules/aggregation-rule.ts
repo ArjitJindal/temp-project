@@ -134,9 +134,11 @@ export abstract class TransactionAggregationRule<
     }
 
     const userKeyId = this.getUserKeyId(direction)
+
     if (!userKeyId) {
       return
     }
+
     return this.aggregationRepository.getUserRuleTimeAggregations<A>(
       userKeyId,
       this.ruleInstance.id as string,
@@ -153,7 +155,13 @@ export abstract class TransactionAggregationRule<
   }
 
   private getUpdatedTTLAttribute(): number {
-    const { units, granularity } = this.getMaxTimeWindow()
+    const units = this.getMaxTimeWindow().units
+    let granularity = this.getMaxTimeWindow().granularity
+
+    if (granularity === 'fiscal_year') {
+      granularity = 'year'
+    }
+
     return (
       Math.floor(Date.now() / 1000) +
       duration(units, granularity).asSeconds() +
@@ -168,10 +176,17 @@ export abstract class TransactionAggregationRule<
     ) {
       return false
     }
-    const { units, granularity } = this.getMaxTimeWindow()
+    const units = this.getMaxTimeWindow().units
+    let granularity = this.getMaxTimeWindow().granularity
+
+    if (granularity === 'fiscal_year') {
+      granularity = 'year'
+    }
     // When testing, we want to make sure aggregation is used if the feature flag is on.
+
     const isMoreThanOneDay =
       duration(units, granularity).asHours() > 24 || process.env.ENV === 'local'
+
     return isMoreThanOneDay
   }
 }

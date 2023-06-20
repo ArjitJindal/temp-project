@@ -1,5 +1,5 @@
 import { TimeWindow } from './rule-parameter-schemas'
-import dayjs, { Dayjs, duration } from '@/utils/dayjs'
+import dayjs, { Dayjs } from '@/utils/dayjs'
 
 export type TimeWindowGranularity =
   | 'second'
@@ -8,35 +8,62 @@ export type TimeWindowGranularity =
   | 'day'
   | 'week'
   | 'month'
+  | 'year'
+  | 'fiscal_year'
 
-export function toGranularity(
-  timeWindow: TimeWindow,
-  granularity: TimeWindowGranularity
-): TimeWindow {
-  if (timeWindow.granularity === granularity) {
-    return timeWindow
-  }
-  return {
-    granularity: granularity,
-    units: duration(timeWindow.units, timeWindow.granularity).as(granularity),
-  }
+export type TimeWindowFiscalYear = {
+  startMonth: number
+  startDay: number
+}
+
+function getFiscalYearStart(
+  transactionDate: Dayjs,
+  fiscalYear: TimeWindowFiscalYear
+): Dayjs {
+  const { startMonth, startDay } = fiscalYear
+  const fiscalYearStart =
+    transactionDate.month() < startMonth - 1
+      ? transactionDate
+          .subtract(1, 'year')
+          .startOf('year')
+          .add(startMonth - 1, 'month')
+          .add(startDay - 1, 'day')
+      : transactionDate
+          .startOf('year')
+          .add(startMonth - 1, 'month')
+          .add(startDay - 1, 'day')
+
+  return fiscalYearStart
 }
 
 export function subtractTime(timeStamp: Dayjs, timeWindow: TimeWindow): number {
+  const granularity =
+    timeWindow.granularity === 'fiscal_year' ? 'year' : timeWindow.granularity
+
+  if (timeWindow.granularity === 'fiscal_year' && timeWindow.fiscalYear) {
+    const fiscalYearStart = getFiscalYearStart(timeStamp, timeWindow.fiscalYear)
+    const afterTimestamp = fiscalYearStart.subtract(
+      timeWindow.units - 1,
+      'year'
+    )
+
+    return afterTimestamp.valueOf()
+  }
+
   let afterTimestamp = timeStamp
-    .subtract(timeWindow.units, timeWindow.granularity)
+    .subtract(timeWindow.units, granularity)
     .valueOf()
+
   if (
     !timeWindow.rollingBasis &&
-    (timeWindow.granularity === 'day' ||
-      timeWindow.granularity === 'week' ||
-      timeWindow.granularity === 'month')
+    ['day', 'week', 'month', 'year'].includes(timeWindow.granularity)
   ) {
     afterTimestamp = timeStamp
-      .startOf(timeWindow.granularity)
-      .subtract(timeWindow.units - 1, timeWindow.granularity)
+      .startOf(granularity)
+      .subtract(timeWindow.units - 1, granularity)
       .valueOf()
   }
+
   return afterTimestamp
 }
 
