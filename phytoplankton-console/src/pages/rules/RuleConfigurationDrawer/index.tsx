@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { EditOutlined } from '@ant-design/icons';
 import { usePrevious } from 'ahooks';
+import { EditOutlined } from '@ant-design/icons';
 import { Tabs, Tooltip } from 'antd';
 import _ from 'lodash';
 import { useMutation } from '@tanstack/react-query';
@@ -16,6 +16,8 @@ import RuleConfigurationForm, {
   RuleConfigurationFormValues,
 } from './RuleConfigurationForm';
 import { SimulationStatistics } from './SimulationStatistics';
+import ArrowLeftSLineIcon from '@/components/ui/icons/Remix/system/arrow-left-s-line.react.svg';
+import ArrowRightSLineIcon from '@/components/ui/icons/Remix/system/arrow-right-s-line.react.svg';
 import AddLineIcon from '@/components/ui/icons/Remix/system/add-line.react.svg';
 import { isSuccess } from '@/utils/asyncResource';
 import Button from '@/components/library/Button';
@@ -119,24 +121,54 @@ export default function RuleConfigurationDrawer(props: RuleConfigurationDrawerPr
       }
       isClickAwayEnabled={props.isClickAwayEnabled}
       footer={
-        <div className={s.footer}>
-          <StepButtons
-            nextDisabled={activeStepIndex === RULE_CONFIGURATION_STEPS.length - 1}
-            prevDisabled={activeStepIndex === 0}
-            onNext={() => {
-              const nextStep = RULE_CONFIGURATION_STEPS[activeStepIndex + 1];
-              setActiveStepKey(nextStep);
-            }}
-            onPrevious={() => {
-              const prevStep = RULE_CONFIGURATION_STEPS[activeStepIndex - 1];
-              setActiveStepKey(prevStep);
-            }}
-          />
+        <div className={!readOnly && ['CREATE', 'EDIT'].includes(type) ? s.footerEnd : s.footer}>
+          {type === 'EDIT' && readOnly && (
+            <StepButtons
+              nextDisabled={activeStepIndex === RULE_CONFIGURATION_STEPS.length - 1}
+              prevDisabled={activeStepIndex === 0}
+              onNext={() => {
+                const nextStep = RULE_CONFIGURATION_STEPS[activeStepIndex + 1];
+                setActiveStepKey(nextStep);
+              }}
+              onPrevious={() => {
+                const prevStep = RULE_CONFIGURATION_STEPS[activeStepIndex - 1];
+                setActiveStepKey(prevStep);
+              }}
+            />
+          )}
           <div className={s.footerButtons}>
-            <Button type="TETRIARY" onClick={() => onChangeVisibility(false)}>
-              Cancel
-            </Button>
-            {!readOnly || type === 'CREATE' ? (
+            {readOnly && type === 'EDIT' && (
+              <Button type="TETRIARY" onClick={() => onChangeVisibility(false)}>
+                Cancel
+              </Button>
+            )}
+            {!readOnly && ['CREATE', 'EDIT'].includes(type) && (
+              <Button
+                type="TETRIARY"
+                onClick={() => {
+                  const prevStep = RULE_CONFIGURATION_STEPS[activeStepIndex - 1];
+                  setActiveStepKey(prevStep);
+                }}
+                icon={<ArrowLeftSLineIcon />}
+                isDisabled={activeStepIndex === 0}
+              >
+                Previous
+              </Button>
+            )}
+            {!readOnly && ['CREATE', 'EDIT'].includes(type) && activeStepIndex !== 2 && (
+              <Button
+                type="SECONDARY"
+                onClick={() => {
+                  const nextStep = RULE_CONFIGURATION_STEPS[activeStepIndex + 1];
+                  setActiveStepKey(nextStep);
+                }}
+                isDisabled={activeStepIndex === RULE_CONFIGURATION_STEPS.length - 1}
+                iconRight={<ArrowRightSLineIcon />}
+              >
+                Next
+              </Button>
+            )}
+            {(!readOnly || type === 'CREATE') && activeStepIndex === 2 && (
               <Button
                 htmlType="submit"
                 isLoading={
@@ -149,7 +181,8 @@ export default function RuleConfigurationDrawer(props: RuleConfigurationDrawerPr
               >
                 {props.type === 'CREATE' ? 'Done' : 'Save'}
               </Button>
-            ) : (
+            )}
+            {readOnly && type === 'EDIT' && (
               <Button
                 type="SECONDARY"
                 onClick={() => {

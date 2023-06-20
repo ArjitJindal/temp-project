@@ -21,6 +21,7 @@ interface Props {
   style?: React.CSSProperties;
   className?: string;
   testName?: string;
+  iconRight?: React.ReactNode;
 }
 
 function Button(props: Props, ref: React.Ref<HTMLButtonElement>) {
@@ -38,6 +39,7 @@ function Button(props: Props, ref: React.Ref<HTMLButtonElement>) {
     style,
     testName,
     className,
+    iconRight,
   } = props;
   const buttonTracker = useButtonTracker();
 
@@ -63,6 +65,7 @@ function Button(props: Props, ref: React.Ref<HTMLButtonElement>) {
     >
       {icon && <div className={s.icon}>{icon}</div>}
       {children}
+      {iconRight && <div className={s.icon}>{iconRight}</div>}
     </button>
   );
 }
