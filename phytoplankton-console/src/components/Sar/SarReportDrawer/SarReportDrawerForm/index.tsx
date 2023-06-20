@@ -9,15 +9,15 @@ import NestedForm from '@/components/library/Form/NestedForm';
 import JsonSchemaEditor from '@/pages/rules/RuleConfigurationDrawer/JsonSchemaEditor';
 import VerticalMenu from '@/components/library/VerticalMenu';
 import GenericFormField, { FormFieldRenderProps } from '@/components/library/Form/GenericFormField';
-import Label from '@/components/library/Label';
-import Checkbox from '@/components/library/Checkbox';
 import {
-  VERSION_STEP,
   INDICATOR_STEP,
   REPORT_STEP,
   STEPS,
   TRANSACTION_STEP,
+  VERSION_STEP,
 } from '@/components/Sar/SarReportDrawer';
+import IndicatorsStep from '@/components/Sar/SarReportDrawer/SarReportDrawerForm/IndicatorsStep';
+import ReportStep from '@/components/Sar/SarReportDrawer/SarReportDrawerForm/ReportStep';
 
 const settings: Partial<JsonSchemaEditorSettings> = { propertyNameStyle: 'SNAKE_CASE' };
 type FormState = Partial<{
@@ -28,6 +28,7 @@ type FormState = Partial<{
   [INDICATOR_STEP]: {
     selection: string[];
   };
+  [VERSION_STEP]: unknown;
 }>;
 
 export default function SarReportDrawerForm(props: {
@@ -56,15 +57,10 @@ export default function SarReportDrawerForm(props: {
         {(activeStepKey) => {
           return (
             <NestedForm<any> name={activeStepKey}>
-              {activeStepKey == REPORT_STEP && (
-                <JsonSchemaEditor
-                  settings={settings}
-                  parametersSchema={report.schema?.reportSchema}
-                />
-              )}
+              {activeStepKey == REPORT_STEP && <ReportStep report={report} settings={settings} />}
               {activeStepKey == TRANSACTION_STEP && (
                 <VerticalMenu
-                  items={transactionIds.map((tid) => ({ key: tid, title: tid }))}
+                  items={transactionIds.map((tid) => ({ key: tid, title: `Transaction ${tid}` }))}
                   active={activeTransaction}
                   onChange={setActiveTransaction}
                 >
@@ -80,29 +76,7 @@ export default function SarReportDrawerForm(props: {
                 <GenericFormField<any> name={'selection'}>
                   {(props: FormFieldRenderProps<string[]>) => {
                     const { value = [], onChange } = props;
-                    return (
-                      <>
-                        {report?.schema?.indicators.map((indicator) => (
-                          <Label
-                            key={indicator.key}
-                            label={indicator.description}
-                            position="RIGHT"
-                            level={1}
-                          >
-                            <Checkbox
-                              value={value.includes(indicator.key)}
-                              onChange={(newValue) => {
-                                onChange?.(
-                                  newValue === false
-                                    ? value?.filter((x) => x !== indicator.key)
-                                    : [...value, indicator.key],
-                                );
-                              }}
-                            />
-                          </Label>
-                        ))}
-                      </>
-                    );
+                    return <IndicatorsStep report={report} value={value} onChange={onChange} />;
                   }}
                 </GenericFormField>
               )}

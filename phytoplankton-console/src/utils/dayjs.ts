@@ -26,6 +26,7 @@ export const DEFAULT_DATE_FORMAT = 'll';
 export const DEFAULT_TIME_FORMAT = 'LTS';
 export const DEFAULT_DATE_TIME_FORMAT = 'll LTS';
 export const YEAR_MONTH_DATE_FORMAT = 'YYYY-MM-DD';
+export const DATE_TIME_ISO_FORMAT = 'YYYY-MM-DDTHH:mm:ssZ[Z]';
 
 export const convertToDays = (
   value: number,

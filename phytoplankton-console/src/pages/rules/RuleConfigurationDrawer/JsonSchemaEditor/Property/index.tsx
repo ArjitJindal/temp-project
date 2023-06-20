@@ -45,6 +45,13 @@ export default function Property(props: Props) {
       break;
   }
 
+  let labelLevel: 1 | 2 | 3 | undefined = undefined;
+  switch (schema.type) {
+    case 'object':
+      labelLevel = 1;
+      break;
+  }
+
   let labelPosition: 'TOP' | 'RIGHT' = 'TOP';
   switch (schema.type) {
     case 'boolean':
@@ -55,13 +62,14 @@ export default function Property(props: Props) {
   return (
     <InputField<any>
       name={name}
-      label={String(schema.title ?? humanizeFunction(name))}
+      label={schema.title ?? humanizeFunction(name)}
       description={schema.description}
       labelProps={{
         element: labelElement,
         position: labelPosition,
         isOptional: !item.isRequired && settings.showOptionalMark,
         ...labelProps,
+        level: labelLevel,
       }}
     >
       {(inputProps) => <PropertyInput {...inputProps} schema={schema} />}

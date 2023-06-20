@@ -6,6 +6,8 @@ import Checkbox from '@/components/library/Checkbox';
 import Select from '@/components/library/Select';
 import { InputProps } from '@/components/library/Form';
 import { getUiSchema } from '@/pages/rules/RuleConfigurationDrawer/JsonSchemaEditor/utils';
+import DatePicker from '@/components/ui/DatePicker';
+import { DATE_TIME_ISO_FORMAT, Dayjs, dayjs, YEAR_MONTH_DATE_FORMAT } from '@/utils/dayjs';
 
 // todo: fix any
 interface Props extends InputProps<any> {
@@ -16,7 +18,7 @@ export default function SimplePropertyInput(props: Props) {
   const { schema, ...inputProps } = props;
   const uiSchema = getUiSchema(schema);
   switch (schema.type) {
-    case 'string':
+    case 'string': {
       if (schema.enum != null) {
         const enums = schema.enum ?? [];
         const enumNames = schema.enumNames ?? [];
@@ -37,7 +39,36 @@ export default function SimplePropertyInput(props: Props) {
           />
         );
       }
+      if (schema.format === 'date-time' || schema.format === 'date') {
+        let value: Dayjs | null = null;
+        if (inputProps.value == null) {
+          value = null;
+        } else if (schema.format === 'date-time') {
+          value = dayjs(inputProps.value, DATE_TIME_ISO_FORMAT);
+        } else if (schema.format === 'date') {
+          value = dayjs(inputProps.value, YEAR_MONTH_DATE_FORMAT);
+        }
+        return (
+          <DatePicker
+            showTime={schema.format === 'date-time'}
+            value={value}
+            allowClear
+            onChange={(dayjsValue) => {
+              let newValue: string | undefined;
+              if (dayjsValue == null) {
+                newValue = undefined;
+              } else if (schema.format === 'date-time') {
+                newValue = dayjsValue.format(DATE_TIME_ISO_FORMAT);
+              } else if (schema.format === 'date') {
+                newValue = dayjsValue.format(YEAR_MONTH_DATE_FORMAT);
+              }
+              inputProps.onChange?.(newValue);
+            }}
+          />
+        );
+      }
       return <TextInput placeholder="Enter text" {...inputProps} />;
+    }
     case 'boolean':
       return <Checkbox {...inputProps} value={inputProps.value ?? false} />;
     case 'number':

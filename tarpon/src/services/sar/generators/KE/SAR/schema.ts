@@ -633,6 +633,7 @@ const Definitions: AnySchemaObject = {
     },
     // oneOf: [
     //   {
+    //     type: 'object',
     //     title: 'Person',
     //     required: ['person'],
     //     properties: {
@@ -642,6 +643,7 @@ const Definitions: AnySchemaObject = {
     //     },
     //   },
     //   {
+    //     type: 'object',
     //     title: 'Account',
     //     required: ['account'],
     //     properties: {
@@ -651,6 +653,7 @@ const Definitions: AnySchemaObject = {
     //     },
     //   },
     //   {
+    //     type: 'object',
     //     title: 'Entity',
     //     required: ['entity'],
     //     properties: {
@@ -680,6 +683,7 @@ const Definitions: AnySchemaObject = {
     properties: fromProperties,
     // oneOf: [
     //   {
+    //     type: 'object',
     //     title: 'Account',
     //     required: ['from_account'],
     //     properties: {
@@ -689,6 +693,7 @@ const Definitions: AnySchemaObject = {
     //     },
     //   },
     // {
+    //     type: 'object',
     //   title: 'Person',
     //   required: ['from_person'],
     //   properties: {
@@ -698,6 +703,7 @@ const Definitions: AnySchemaObject = {
     //   },
     // },
     // {
+    //     type: 'object',
     //   title: 'Entity',
     //   required: ['from_entity'],
     //   properties: {
@@ -880,6 +886,7 @@ const Definitions: AnySchemaObject = {
     properties: fromProperties,
     // oneOf: [
     // {
+    //     type: 'object',
     //   required: ['from_account'],
     //   title: 'Account',
     //   properties: {
@@ -889,6 +896,7 @@ const Definitions: AnySchemaObject = {
     //   },
     // },
     // {
+    //     type: 'object',
     //   required: ['from_person'],
     //   title: 'Person',
     //   properties: {
@@ -898,6 +906,7 @@ const Definitions: AnySchemaObject = {
     //   },
     // },
     // {
+    //     type: 'object',
     //   required: ['from_entity'],
     //   title: 'Entity',
     //   properties: {
@@ -950,6 +959,7 @@ const Definitions: AnySchemaObject = {
     properties: toProperties,
     // oneOf: [
     // {
+    //     type: 'object',
     //   required: ['to_account'],
     //   properties: {
     //     to_account: {
@@ -959,6 +969,7 @@ const Definitions: AnySchemaObject = {
     //   },
     // },
     // {
+    //     type: 'object',
     //   required: ['to_person'],
     //   properties: {
     //     to_person: {
@@ -970,6 +981,7 @@ const Definitions: AnySchemaObject = {
     //   },
     // },
     // {
+    //     type: 'object',
     //   required: ['to_entity'],
     //   properties: {
     //     to_entity: {
@@ -1031,6 +1043,7 @@ const Definitions: AnySchemaObject = {
     },
     // oneOf: [
     // {
+    //     type: 'object',
     //   required: ['person'],
     //   properties: {
     //     person: {
@@ -1039,6 +1052,7 @@ const Definitions: AnySchemaObject = {
     //   },
     // },
     // {
+    //     type: 'object',
     //   required: ['person_my_client'],
     //   properties: {
     //     person_my_client: {
@@ -1047,6 +1061,7 @@ const Definitions: AnySchemaObject = {
     //   },
     // },
     // {
+    //     type: 'object',
     //   required: ['account'],
     //   properties: {
     //     account: {
@@ -1417,17 +1432,26 @@ export const KenyaReportSchema: AnySchemaObject = {
         'Reporting Entity number assigned to Registered Reporting Institution',
       type: 'string',
       maxLength: 20,
+      'ui:schema': {
+        'ui:group': 'Reporting entity details',
+      },
     },
     reentity_branch: {
       title: 'Reentity branch',
       description: 'Branch of current reporting entity.',
       type: 'string',
       maxLength: 255,
+      'ui:schema': {
+        'ui:group': 'Reporting entity details',
+      },
     },
     submission_code: {
       title: 'Submission code',
       type: 'string',
       enum: ['E', 'M'],
+      'ui:schema': {
+        'ui:group': 'Report details',
+      },
     },
     // report_code: {
     //   title: 'Report code',
@@ -1440,6 +1464,9 @@ export const KenyaReportSchema: AnySchemaObject = {
       description:
         'Optional reference to the report, used by reporting entity to uniquely identify the specific report',
       maxLength: 255,
+      'ui:schema': {
+        'ui:group': 'Reporting entity details',
+      },
     },
     fiu_ref_number: {
       title: 'FIU reference number',
@@ -1447,33 +1474,52 @@ export const KenyaReportSchema: AnySchemaObject = {
       maxLength: 255,
       description:
         'Optional ref. number to be used as communication channel between the FRC and the Reporting Entity',
+      'ui:schema': {
+        'ui:group': 'Report details',
+      },
     },
     currency_code_local: {
       title: 'Currency code',
       $ref: '#/definitions/currency',
       description: 'Local Currency code',
+      'ui:schema': {
+        'ui:group': 'Report details',
+      },
     },
     reporting_person: {
       title: 'Reporting person',
       $ref: '#/definitions/t_person_registration_in_report',
       description: 'Full details of the report’s reporting person',
+      'ui:schema': {
+        'ui:group': 'Reporting person details',
+      },
     },
     location: {
       title: 'Location',
       $ref: '#/definitions/t_address',
       description: 'Describes location of the reported report',
+      'ui:schema': {
+        'ui:group': 'Report details',
+      },
     },
     reason: {
       title: 'Reason',
       type: 'string',
       maxLength: 4000,
       description: 'Description of suspicious Activity or Transaction',
+      'ui:schema': {
+        'ui:group': 'Report details',
+      },
     },
     action: {
       title: 'Action',
       type: 'string',
       maxLength: 4000,
       description: 'Describes the Basic of Suspicion',
+
+      'ui:schema': {
+        'ui:group': 'Report details',
+      },
     },
   },
   definitions: Definitions,

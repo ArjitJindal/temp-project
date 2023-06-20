@@ -5,7 +5,7 @@ interface UiSchema<Type> {
   'ui:schema'?: {
     'ui:subtype'?: string
     'ui:order'?: (keyof Type)[]
-    'ui:group'?: 'user' | 'geography' | 'transaction' | 'transaction_historical'
+    'ui:group'?: string
   }
 }
 

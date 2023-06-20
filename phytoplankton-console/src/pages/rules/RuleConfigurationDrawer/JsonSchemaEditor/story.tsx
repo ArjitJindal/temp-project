@@ -34,7 +34,12 @@ export default function (): JSX.Element {
           />
         </div>
         <Form initialValues={{}}>
-          <Component parametersSchema={SAMPLE_SCHEMAS[schemaIndex][1]} />
+          <Component
+            parametersSchema={SAMPLE_SCHEMAS[schemaIndex][1]}
+            settings={{
+              propertyNameStyle: 'SNAKE_CASE',
+            }}
+          />
         </Form>
       </UseCase>
     </>
@@ -602,6 +607,57 @@ const SAMPLE_SCHEMAS: [string, ExtendedSchema][] = [
               },
             },
           },
+        },
+      },
+    },
+  ],
+  [
+    'Object with "oneOf"',
+    {
+      type: 'object',
+      properties: {
+        objectsField: {
+          type: 'object',
+          title: 'Objects field',
+          description: 'Sample object field',
+          properties: {
+            stringsField: {
+              type: 'object',
+              title: 'Strings field',
+              description: 'Shared field for subtypes',
+            },
+          },
+          oneOf: [
+            {
+              type: 'object',
+              title: 'To my client',
+              properties: {
+                to_name: {
+                  type: 'string',
+                },
+              },
+              required: ['to'],
+            },
+            {
+              type: 'object',
+              title: 'From my client',
+              properties: {
+                from_name: {
+                  type: 'string',
+                },
+              },
+              required: ['from'],
+            },
+            {
+              type: 'object',
+              properties: {
+                f1: {
+                  type: 'string',
+                },
+              },
+              required: ['f1'],
+            },
+          ],
         },
       },
     },
