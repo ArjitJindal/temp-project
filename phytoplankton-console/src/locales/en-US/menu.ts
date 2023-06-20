@@ -19,6 +19,7 @@ export default {
   'menu.transactions': 'Transactions',
   'menu.transactions.transactions-list': 'Transactions',
   'menu.transactions.transactions-list.item': 'Transactions',
+  'menu.transactions.transactions-list.item.back-button': 'Back to Transactions',
   'menu.import': 'Import',
   'menu.import.import-users': 'Import Users',
   'menu.import.import-transactions': 'Import Transactions',

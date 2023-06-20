@@ -76,7 +76,7 @@ export default function TransactionsItem() {
   return (
     <PageWrapper
       backButton={{
-        title: i18n('menu.transactions.transactions-list'),
+        title: i18n('menu.transactions.transactions-list.item.back-button'),
         url: makeUrl('/transactions/list'),
       }}
     >

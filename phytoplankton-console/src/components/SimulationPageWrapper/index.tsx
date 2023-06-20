@@ -84,7 +84,6 @@ export const SimulationPageWrapper = forwardRef<
               <Toggle
                 value={props.isSimulationModeEnabled}
                 onChange={props.onSimulationModeChange}
-                green
                 disabled={false}
               />
             )}

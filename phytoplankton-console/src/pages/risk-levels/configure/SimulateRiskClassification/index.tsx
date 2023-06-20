@@ -4,7 +4,6 @@ import _ from 'lodash';
 import { useLocalStorageState } from 'ahooks';
 import RiskClassificationSimulationResults from '../RiskClassificationSimulationResults';
 import { State } from '../RiskClassificationTable';
-import s from './styles.module.less';
 import NewSimulation, { SimulationRef } from './NewSimulation';
 import SimulationHistory from './SimulationHistory';
 import { SimulationPostResponse } from '@/apis';
@@ -29,7 +28,6 @@ export const SimulateRiskClassification = (props: Props): JSX.Element => {
     <Feature name="SIMULATOR">
       <Tabs
         defaultActiveKey={activeKey}
-        className={s.tabsRoot}
         onChange={(key) => {
           if (key === 'NEW' || key === 'HISTORY') {
             setActiveKey(key);

@@ -14,11 +14,8 @@
 
   &.isPrimary {
     :global {
-      .ant-tabs-tab-btn {
-        color: #fff !important;
-      }
       .ant-tabs-ink-bar {
-        background-color: #fff;
+        background-color: @fr-colors-v2-primary-flagrightBlue;
       }
     }
   }
@@ -27,14 +24,14 @@
     :global {
       .ant-tabs-tab-active {
         .ant-tabs-tab-btn {
-          color: @fr-colors-brandBlue !important;
+          color: @fr-colors-v2-gray-10 !important;
         }
         .ant-tabs-ink-bar {
           background-color: @fr-colors-brandBlue;
         }
       }
       .ant-tabs-tab-btn {
-        color: @fr-color-black-1 !important;
+        color: @fr-colors-v2-gray-10 !important;
       }
     }
   }
@@ -75,6 +72,9 @@
           }
         }
       }
+    }
+    .ant-tabs-nav-wrap {
+      border-bottom: 1px solid @fr-colors-v2-gray-2;
     }
 
     > .ant-tabs-nav::before {

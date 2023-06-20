@@ -29,7 +29,7 @@ export default function PageWrapper(props: PageWrapperProps) {
   return (
     <div className={s.root} id="page-wrapper-root">
       {(title || description || backButton || actionButton) && (
-        <header className={s.head} style={{ padding: PAGE_WRAPPER_PADDING, paddingBottom: 0 }}>
+        <header className={s.head} style={{ padding: PAGE_WRAPPER_PADDING, paddingBottom: 8 }}>
           <Row>
             <Col xs={18}>
               {title && (
@@ -58,7 +58,10 @@ export default function PageWrapper(props: PageWrapperProps) {
           </Row>
         </header>
       )}
-      <div className={cn(s.body, 'print-container')} style={{ padding: PAGE_WRAPPER_PADDING }}>
+      <div
+        className={cn(s.body, 'print-container')}
+        style={{ padding: PAGE_WRAPPER_PADDING, paddingTop: 8 }}
+      >
         <ErrorBoundary>{props.children}</ErrorBoundary>
       </div>
     </div>
