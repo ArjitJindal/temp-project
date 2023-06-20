@@ -1,26 +1,16 @@
 import React, { useMemo } from 'react';
 import cn from 'clsx';
 import * as TanTable from '@tanstack/react-table';
-import {
-  AllParams,
-  ExtraFilter,
-  SelectionAction,
-  TableColumn,
-  TableData,
-  TableRow,
-  ToolRenderer,
-} from '../types';
+import { AllParams, ExtraFilter, TableColumn, TableData, TableRow, ToolRenderer } from '../types';
 import { useAutoFilters } from '../internal/filters';
 import s from './index.module.less';
 import Filters from './Filters';
-import SelectionActions from './SelectionActions';
 import Tools, { ToolsOptions } from './Tools';
 import { PaginationParams } from '@/utils/queries/hooks';
 
 interface Props<Item extends object, Params extends object> {
   table: TanTable.Table<TableRow<Item>>;
   columns: TableColumn<Item>[];
-  selectionActions?: SelectionAction<Item, Params>[];
   extraFilters?: ExtraFilter<Params>[];
   extraTools?: ToolRenderer[];
   toolsOptions?: ToolsOptions | false;
@@ -37,7 +27,6 @@ export default function Header<Item extends object, Params extends object>(
 ) {
   const {
     table,
-    selectionActions,
     columns,
     params,
     onChangeParams,
@@ -82,14 +71,6 @@ export default function Header<Item extends object, Params extends object>(
         <div />
       )}
       <div className={s.right}>
-        <SelectionActions
-          table={table}
-          params={params}
-          onChangeParams={(cb) => {
-            onChangeParams(cb(params));
-          }}
-          actions={selectionActions ?? []}
-        />
         {toolsOptions != false && (
           <Tools
             options={toolsOptions}

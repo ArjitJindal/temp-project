@@ -27,6 +27,7 @@ import ScrollContainer from './ScrollContainer';
 import { ToolsOptions } from './Header/Tools';
 import { ExternalStateContext } from './internal/externalState';
 import { AdditionalContext } from './internal/partialySelectedRows';
+import Footer from './Footer';
 import Pagination from '@/components/library/Pagination';
 import { getPageCount, PaginationParams } from '@/utils/queries/hooks';
 import { AsyncResource, getOr, isFailed, isLoading, success } from '@/utils/asyncResource';
@@ -70,6 +71,10 @@ export interface Props<Item extends object, Params extends object = CommonParams
   selectedIds?: string[];
   partiallySelectedIds?: string[];
   externalState?: unknown;
+  selectionInfo?: {
+    entityName: string;
+    entityCount: number;
+  };
 }
 
 function Table<Item extends object, Params extends object = CommonParams>(
@@ -79,7 +84,6 @@ function Table<Item extends object, Params extends object = CommonParams>(
     innerRef,
     rowKey,
     columns,
-    selectionActions = [],
     onSelect,
     params = DEFAULT_PARAMS_STATE as AllParams<Params>,
     extraFilters,
@@ -105,6 +109,8 @@ function Table<Item extends object, Params extends object = CommonParams>(
     cursor,
     onExpandedMetaChange,
     isExpandable,
+    selectionActions = [],
+    selectionInfo,
   } = props;
   const dataRes: AsyncResource<TableData<Item>> = useMemo(() => {
     return 'items' in props.data ? success(props.data) : props.data;
@@ -202,7 +208,6 @@ function Table<Item extends object, Params extends object = CommonParams>(
         table={table}
         columns={columns}
         params={params}
-        selectionActions={selectionActions}
         hideFilters={hideFilters}
         extraFilters={extraFilters}
         extraTools={extraTools}
@@ -366,6 +371,15 @@ function Table<Item extends object, Params extends object = CommonParams>(
           onChange={(page, pageSize) => handleChangeParamsPaginated({ ...params, page, pageSize })}
           total={data.total ?? data.items.length}
           paginationBorder={paginationBorder}
+        />
+      )}
+      {selectionActions.length > 0 && (
+        <Footer
+          table={table}
+          selectionActions={selectionActions}
+          params={params}
+          onChangeParams={handleChangeParams}
+          selectionInfo={selectionInfo}
         />
       )}
     </div>

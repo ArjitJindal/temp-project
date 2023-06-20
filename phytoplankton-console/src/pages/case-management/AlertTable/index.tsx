@@ -422,6 +422,24 @@ export default function AlertTable(props: Props) {
       );
   }
 
+  const getSelectionInfo = () => {
+    const selectedTransactions = [
+      ...new Set(
+        Object.entries(selectedTxns)
+          .filter(([_, txns]) => txns.length > 0)
+          .flatMap(([, txns]) => txns),
+      ),
+    ];
+    const entityName = selectedTransactions.length ? 'transaction' : 'alert';
+    const count = entityName === 'alert' ? selectedAlerts.length : selectedTransactions.length;
+    return count > 0
+      ? {
+          entityName: entityName,
+          entityCount: count,
+        }
+      : undefined;
+  };
+
   return (
     <>
       <QueryResultsTable<TableAlertItem, AlertTableParams>
@@ -442,6 +460,7 @@ export default function AlertTable(props: Props) {
         ]}
         extraFilters={extraFilters}
         pagination={isEmbedded ? 'HIDE_FOR_ONE_PAGE' : true}
+        selectionInfo={getSelectionInfo()}
         selectionActions={[
           sarDemoButton,
           sarButton,
@@ -492,7 +511,6 @@ export default function AlertTable(props: Props) {
             if (alertStatus === 'ESCALATED' && selectedTransactionIds.length) {
               return;
             }
-
             return (
               escalationEnabled &&
               caseId &&
@@ -500,7 +518,10 @@ export default function AlertTable(props: Props) {
                 <AlertsStatusChangeButton
                   ids={selectedIds}
                   transactionIds={selectedTxns}
-                  onSaved={reloadTable}
+                  onSaved={() => {
+                    reloadTable();
+                    setSelectedTxns({});
+                  }}
                   status={alertStatus}
                   caseId={caseId}
                   statusTransitions={{

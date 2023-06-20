@@ -1,4 +1,4 @@
-import React, { useCallback, useMemo, useRef } from 'react';
+import React, { useCallback, useMemo, useRef, useState } from 'react';
 import _ from 'lodash';
 import { TableSearchParams } from '../types';
 import CasesStatusChangeButton from '../components/CasesStatusChangeButton';
@@ -60,6 +60,7 @@ export default function CaseTable(props: Props) {
   const tableRef = useRef<TableRefType>(null);
   const user = useAuth0User();
   const isPulseEnabled = useFeatureEnabled('PULSE');
+  const [selectedCases, setSelectedCases] = useState<string[]>([]);
 
   const reloadTable = useCallback(() => {
     tableRef.current?.reload();
@@ -343,6 +344,14 @@ export default function CaseTable(props: Props) {
       params={params}
       onChangeParams={onChangeParams}
       extraFilters={makeExtraFilters(isPulseEnabled, props.rules, false)}
+      selectionInfo={
+        selectedCases.length
+          ? {
+              entityName: 'case',
+              entityCount: selectedCases.length,
+            }
+          : undefined
+      }
       selectionActions={[
         ({ selectedIds }) => <AssignToButton ids={selectedIds} onSelect={handleAssignTo} />,
         ({ selectedIds, params }) => (
@@ -382,6 +391,7 @@ export default function CaseTable(props: Props) {
           );
         },
       ]}
+      onSelect={(ids) => setSelectedCases(ids)}
       rowKey="caseId"
       columns={columns}
       pagination={true}
