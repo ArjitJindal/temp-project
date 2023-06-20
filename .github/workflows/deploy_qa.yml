@@ -99,7 +99,7 @@ jobs:
         run: |
           cd tarpon
           export QA_SUBDOMAIN="qa$(echo "${{ steps.comment-branch.outputs.head_ref }}" | shasum | head -c5)"
-          export QA_API_KEY=$(ts-node -e 'console.log(require("./lib/qa.ts").getQaApiKey())')
+          export QA_API_KEY=$(npm --silent run get-qa-api-key)
           echo "api_key=${QA_API_KEY}" >> $GITHUB_OUTPUT
       - name: Comment PR
         if: steps.check.outputs.triggered == 'true'
