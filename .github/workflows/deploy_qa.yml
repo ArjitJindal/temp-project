@@ -103,10 +103,13 @@ jobs:
         uses: thollander/actions-comment-pull-request@v2
         with:
           message: |
-            Branch deployed!
-            Frontend: https://${{ steps.deploy.outputs.phyto }}.console.flagright.dev
-            Backend: https://${{ steps.deploy.outputs.tarpon }}.flagright.dev
-            API Key: ${{ steps.deploy.outputs.api_key }}
+            🚀🚀🚀 Branch deployed 🚀🚀🚀
+
+            | Resource | Value |
+            |--------|--------|
+            | Frontend | https://${{ steps.deploy.outputs.phyto }}.console.flagright.dev/ |
+            | Backend | https://${{ steps.deploy.outputs.tarpon }}.flagright.dev/ |
+            | API Key | `${{ steps.deploy.outputs.api_key }}` | 
       - name: Run integration tests
         if: steps.check.outputs.triggered == 'true' && steps.deploy.outputs.tarpon != 'api'
         run: |
