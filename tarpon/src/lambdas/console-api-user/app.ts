@@ -112,7 +112,7 @@ export const businessUsersViewHandler = lambdaApi()(
       await CasesAlertsAuditLogService.handleAuditLogForuserViewed(
         event.pathParameters?.userId
       )
-      return _.omit(user, 'type')
+      return user
     } else if (
       event.httpMethod === 'POST' &&
       event.resource === '/business/users/{userId}' &&
@@ -235,7 +235,7 @@ export const consumerUsersViewHandler = lambdaApi()(
       await CasesAlertsAuditLogService.handleAuditLogForuserViewed(
         event.pathParameters?.userId
       )
-      return _.omit(user, 'type')
+      return user
     } else if (
       event.httpMethod === 'POST' &&
       event.resource === '/consumer/users/{userId}' &&
