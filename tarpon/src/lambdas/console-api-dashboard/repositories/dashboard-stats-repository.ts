@@ -13,7 +13,6 @@ import {
   DASHBOARD_TRANSACTIONS_STATS_COLLECTION_HOURLY,
   DASHBOARD_TRANSACTIONS_STATS_COLLECTION_MONTHLY,
   DAY_DATE_FORMAT_JS,
-  DRS_SCORES_COLLECTION,
   DRS_SCORES_DISTRIBUTION_STATS_COLLECTION,
   HOUR_DATE_FORMAT,
   HOUR_DATE_FORMAT_JS,
@@ -37,6 +36,7 @@ import { logger } from '@/core/logger'
 import { Case } from '@/@types/openapi-internal/Case'
 import { CaseStatus } from '@/@types/openapi-internal/CaseStatus'
 import { AlertStatus } from '@/@types/openapi-internal/AlertStatus'
+import { InternalUser } from '@/@types/openapi-internal/InternalUser'
 
 export type GranularityValuesType = 'HOUR' | 'MONTH' | 'DAY'
 const granularityValues = { HOUR: 'HOUR', MONTH: 'MONTH', DAY: 'DAY' }
@@ -597,8 +597,8 @@ export class DashboardStatsRepository {
   }
 
   private async recalculateDRSDistributionStats(db: Db) {
-    const drsScoresCollection = db.collection<InternalTransaction>(
-      DRS_SCORES_COLLECTION(this.tenantId)
+    const usersCollection = db.collection<InternalUser>(
+      USERS_COLLECTION(this.tenantId)
     )
     const aggregationCollection = DRS_SCORES_DISTRIBUTION_STATS_COLLECTION(
       this.tenantId
@@ -623,15 +623,12 @@ export class DashboardStatsRepository {
       ...new Set(this.sanitizeBucketBoundry(riskIntervalBoundries)), // duplicate values are not allowed in bucket boundaries
     ]
 
-    await drsScoresCollection
+    await usersCollection
       .aggregate(
         [
-          { $sort: { createdAt: -1, userId: 1 } },
-          { $group: { _id: '$userId', drsScore: { $first: '$$ROOT' } } },
-          { $replaceRoot: { newRoot: '$drsScore' } },
           {
             $bucket: {
-              groupBy: '$drsScore',
+              groupBy: '$drsScore.drsScore',
               boundaries: sanitizedBounries,
               default: sanitizedBounries[sanitizedBounries.length - 1],
               output: {
