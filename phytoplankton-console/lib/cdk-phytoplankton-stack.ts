@@ -44,7 +44,7 @@ export class CdkPhytoplanktonStack extends cdk.Stack {
 
     const viewerCertificate = cloudfront.ViewerCertificate.fromAcmCertificate(
       acm.Certificate.fromCertificateArn(this, 'SiteCertificate', config.SITE_CERTIFICATE_ARN),
-      { aliases: [config.SITE_DOMAIN] },
+      { aliases: [config.SITE_DOMAIN], securityPolicy: cloudfront.SecurityPolicyProtocol.TLS_V1_2_2021 },
     );
 
     const extraBehaviours =
