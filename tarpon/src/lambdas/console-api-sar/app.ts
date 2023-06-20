@@ -77,6 +77,10 @@ export const sarHandler = lambdaApi()(
         pageSize: 20,
       })
 
+      const lastGeneratedReport = await reportRepository.getLastGeneratedReport(
+        params.schemaId
+      )
+
       const parameters = generator.prepopulate(
         reportId,
         c,
@@ -97,7 +101,13 @@ export const sarHandler = lambdaApi()(
         updatedAt: now,
         createdById: account.id,
         status: 'draft',
-        parameters,
+        parameters: {
+          ...parameters,
+          report: {
+            ...(lastGeneratedReport?.parameters?.report || {}),
+            ...parameters.report,
+          },
+        },
         comments: [],
         revisions: [],
       }

@@ -8,6 +8,8 @@ import {
 } from '@/utils/mongoDBUtils'
 import { DefaultApiGetReportsRequest } from '@/@types/openapi-internal/RequestParameters'
 import { EntityCounter } from '@/@types/openapi-internal/EntityCounter'
+import { Account } from '@/@types/openapi-internal/Account'
+import { getContext } from '@/core/utils/context'
 
 export class ReportRepository {
   tenantId: string
@@ -84,5 +86,24 @@ export class ReportRepository {
       total,
       items: reports,
     }
+  }
+
+  public async getLastGeneratedReport(
+    schemaId: string
+  ): Promise<Report | null> {
+    const db = this.mongoDb.db()
+    const collection = db.collection<Report>(REPORT_COLLECTION(this.tenantId))
+
+    const report = await collection
+      .find({
+        schemaId,
+        status: 'complete',
+        createdById: (getContext()?.user as Account)?.id,
+      })
+      .sort({ createdAt: -1 })
+      .limit(1)
+      .toArray()
+
+    return report.length > 0 ? report[0] : null
   }
 }
