@@ -1,4 +1,4 @@
-import React, { useCallback, useState } from 'react';
+import React, { useCallback, useMemo, useState } from 'react';
 import cn from 'clsx';
 import pluralize from 'pluralize';
 import { ExtendedSchema } from '../../../types';
@@ -65,9 +65,9 @@ export default function ArrayPropertyInput(props: Props) {
 }
 
 export function GenericArrayPropertyInput(props: Props) {
-  const { value = [], onChange, schema } = props;
-
+  const { onChange, schema } = props;
   const [newItem, setNewItem] = useState<unknown>(undefined);
+  const value = useMemo(() => props.value ?? [], [props.value]);
 
   const handleClickAdd = useCallback(() => {
     onChange?.([...value, newItem]);
