@@ -12,10 +12,10 @@ describe('Escalating and Sending back the cases', () => {
 
     cy.get('@caseId').then((text) => {
       const caseIdValue = text.trim();
-      cy.get('button[data-cy="update-status-button"]', {
+      cy.get('div[data-cy="table-footer"] button[data-cy="update-status-button"]', {
         timeout: 8000,
       })
-        .eq(1)
+        .contains('Escalate')
         .click();
       cy.intercept('POST', `/console/cases/${caseIdValue}/escalate`).as('escalate');
       cy.multiSelect('.ant-modal', 'Fraud');

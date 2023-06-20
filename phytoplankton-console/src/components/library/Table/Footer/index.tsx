@@ -22,7 +22,7 @@ export default function Footer<Item extends object, Params extends object>(
 ) {
   const { table, selectionActions, params, onChangeParams, selectionInfo } = props;
   return (
-    <div className={s.tableSelectionFooter}>
+    <div className={s.tableSelectionFooter} data-cy="table-footer">
       {selectionInfo && (
         <div className={s.selectionInfo}>
           {' '}

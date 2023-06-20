@@ -11,10 +11,10 @@ describe('Closing and Re-Opening the cases', () => {
     cy.get('@caseId').then((text) => {
       const caseIdValue = text.trim();
       console.log(caseIdValue);
-      cy.get('button[data-cy="update-status-button"]', {
+      cy.get('div[data-cy="table-footer"] button[data-cy="update-status-button"]', {
         timeout: 8000,
       })
-        .eq(0)
+        .contains('Close')
         .click();
       cy.intercept('POST', '/console/cases').as('case');
       cy.multiSelect('.ant-modal', 'False positive');
