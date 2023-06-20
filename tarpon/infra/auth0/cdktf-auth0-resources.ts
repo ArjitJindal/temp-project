@@ -91,8 +91,8 @@ export const createAuth0TenantResources = (
     },
     refreshToken: {
       leeway: 0,
-      idleTokenLifetime: 1296000,
-      tokenLifetime: 2592000,
+      idleTokenLifetime: 60 * 60,
+      tokenLifetime: 8 * 60 * 60,
       rotationType: 'rotating',
       expirationType: 'expiring',
     },
