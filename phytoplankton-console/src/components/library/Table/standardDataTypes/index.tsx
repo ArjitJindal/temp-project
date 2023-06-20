@@ -20,6 +20,7 @@ import {
   TransactionState as ApiTransactionState,
   TransactionType,
   UserState,
+  Case,
 } from '@/apis';
 import { getUserName } from '@/utils/api/users';
 import { TransactionTypeTag } from '@/components/ui/TransactionTypeTag';
@@ -46,6 +47,8 @@ import NumberInput from '@/components/library/NumberInput';
 import TextArea from '@/components/library/TextArea';
 import { humanizeConstant } from '@/utils/humanize';
 import Id from '@/components/ui/Id';
+import { addBackUrlToRoute } from '@/utils/backUrl';
+import { makeUrl } from '@/utils/routing';
 
 export const UNKNOWN: Required<FullColumnDataType<unknown>> = {
   render: (value) => {
@@ -258,6 +261,28 @@ export const MONEY: ColumnDataType<Amount> = {
   },
   stringify: (value) => (value ? `${value.amountCurrency} ${value.amountValue.toFixed(2)}` : ''),
   autoFilterDataType: { kind: 'dateTimeRange' },
+};
+
+export const CASEID_PRIORITY: ColumnDataType<string, Case> = {
+  render: (_value, { item: entity }) => {
+    return (
+      <>
+        {entity?.caseId && (
+          <Id
+            id={entity.caseId}
+            to={addBackUrlToRoute(
+              makeUrl(`/case-management/case/:caseId`, {
+                caseId: entity.caseId,
+              }),
+            )}
+          >
+            {entity.caseId}
+          </Id>
+        )}
+        {entity?.priority && <p style={{ marginBottom: 0 }}>Priority: {entity.priority}</p>}
+      </>
+    );
+  },
 };
 
 export const MONEY_AMOUNT: ColumnDataType<number> = {

@@ -27,6 +27,7 @@ import { useFeatureEnabled } from '@/components/AppWrapper/Providers/SettingsPro
 import { UI_SETTINGS } from '@/pages/case-management-item/CaseDetails/ui-settings';
 import {
   ASSIGNMENTS,
+  CASEID_PRIORITY,
   CASE_STATUS,
   DATE,
   DATE_TIME,
@@ -85,25 +86,7 @@ const mergedColumns = (
       title: 'Case ID',
       subtitle: 'Priority',
       key: 'caseId',
-      type: {
-        render: (_value, { item: entity }) => {
-          return (
-            <>
-              <Id
-                id={entity.caseId}
-                to={addBackUrlToRoute(
-                  makeUrl(`/case-management/case/:caseId`, {
-                    caseId: entity.caseId,
-                  }),
-                )}
-              >
-                {entity.caseId}
-              </Id>
-              {entity.priority && <p>Priority: {entity.priority}</p>}
-            </>
-          );
-        },
-      },
+      type: CASEID_PRIORITY,
     }),
     helper.simple<'createdTimestamp'>({
       title: 'Created at',

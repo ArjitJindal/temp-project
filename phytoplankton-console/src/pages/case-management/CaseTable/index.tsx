@@ -6,7 +6,6 @@ import AlertTable from '../AlertTable';
 import { Account, Case, CaseUpdateRequest } from '@/apis';
 import { QueryResult } from '@/utils/queries/types';
 import { useAuth0User, useUsers } from '@/utils/user-utils';
-import { makeUrl } from '@/utils/routing';
 import {
   AllParams,
   DerivedColumn,
@@ -15,7 +14,6 @@ import {
 } from '@/components/library/Table/types';
 import QueryResultsTable from '@/components/common/QueryResultsTable';
 import Id from '@/components/ui/Id';
-import { addBackUrlToRoute } from '@/utils/backUrl';
 import { useTableData } from '@/pages/case-management/CaseTable/helpers';
 import { TableItem } from '@/pages/case-management/CaseTable/types';
 import { getUserLink, USER_STATES } from '@/utils/api/users';
@@ -35,6 +33,7 @@ import { useApi } from '@/api';
 import { makeExtraFilters } from '@/pages/case-management/helpers';
 import {
   ASSIGNMENTS,
+  CASEID_PRIORITY,
   CASE_STATUS,
   DATE,
   DATE_TIME,
@@ -75,26 +74,7 @@ export default function CaseTable(props: Props) {
         title: 'Case ID',
         subtitle: 'Priority',
         key: 'caseId',
-        type: {
-          render: (_value, { item: entity }) => {
-            return (
-              <>
-                <Id
-                  id={entity.caseId}
-                  to={addBackUrlToRoute(
-                    makeUrl(`/case-management/case/:caseId`, {
-                      caseId: entity.caseId,
-                    }),
-                  )}
-                  testName="case-id"
-                >
-                  {entity.caseId}
-                </Id>
-                {entity.priority && <p>Priority: {entity.priority}</p>}
-              </>
-            );
-          },
-        },
+        type: CASEID_PRIORITY,
         sorting: true,
       }),
       helper.simple<'createdTimestamp'>({
