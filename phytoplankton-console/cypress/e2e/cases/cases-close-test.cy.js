@@ -10,12 +10,7 @@ describe('Closing and Re-Opening the cases', () => {
     cy.get('a[data-cy="case-id"]').invoke('prop', 'title').as('caseId');
     cy.get('@caseId').then((text) => {
       const caseIdValue = text.trim();
-      console.log(caseIdValue);
-      cy.get('div[data-cy="table-footer"] button[data-cy="update-status-button"]', {
-        timeout: 8000,
-      })
-        .contains('Close')
-        .click();
+      cy.caseAlertAction('Close');
       cy.intercept('POST', '/console/cases').as('case');
       cy.multiSelect('.ant-modal', 'False positive');
       cy.get('.ant-modal-root .ant-modal-title', { timeout: 8000 }).click();
@@ -29,7 +24,7 @@ describe('Closing and Re-Opening the cases', () => {
         '/case-management/cases?sort=-lastStatusChange.timestamp&showCases=ALL&caseStatus=CLOSED',
       );
       cy.get('input[data-cy="row-table-checkbox"]', { timeout: 15000 }).eq(0).click();
-      cy.get('button[data-cy="update-status-button"]').eq(0).click();
+      cy.caseAlertAction('Re-Open');
       cy.get('.ant-modal-footer button').eq(1).click();
       cy.wait('@case').then((interception) => {
         expect(interception.response.statusCode).to.eq(200);
@@ -42,7 +37,7 @@ describe('Closing and Re-Opening the cases', () => {
       );
       cy.get('input[data-cy="row-table-checkbox"]', { timeout: 15000 }).eq(0);
       cy.get('input[data-cy="header-table-checkbox"]', { timeout: 15000 }).click();
-      cy.get('button[data-cy="update-status-button"]').eq(1).click();
+      cy.caseAlertAction('Re-Open');
       cy.get('.ant-modal-footer button').eq(1).click();
     });
   });

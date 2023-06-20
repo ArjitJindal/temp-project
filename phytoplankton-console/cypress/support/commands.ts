@@ -77,3 +77,11 @@ Cypress.Commands.add('multiSelect', (preSelector, text) => {
       cy.get(`div[title="${text}"]`).click();
     });
 });
+
+Cypress.Commands.add('caseAlertAction', (action: string) => {
+  cy.get('div[data-cy="table-footer"] button[data-cy="update-status-button"]', {
+    timeout: 8000,
+  })
+    .contains(action)
+    .click();
+});

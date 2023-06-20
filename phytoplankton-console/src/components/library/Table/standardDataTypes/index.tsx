@@ -275,6 +275,7 @@ export const CASEID_PRIORITY: ColumnDataType<string, Case> = {
                 caseId: entity.caseId,
               }),
             )}
+            testName="case-id"
           >
             {entity.caseId}
           </Id>

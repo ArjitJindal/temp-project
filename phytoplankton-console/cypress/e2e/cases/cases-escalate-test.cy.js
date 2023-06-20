@@ -12,11 +12,7 @@ describe('Escalating and Sending back the cases', () => {
 
     cy.get('@caseId').then((text) => {
       const caseIdValue = text.trim();
-      cy.get('div[data-cy="table-footer"] button[data-cy="update-status-button"]', {
-        timeout: 8000,
-      })
-        .contains('Escalate')
-        .click();
+      cy.caseAlertAction('Escalate');
       cy.intercept('POST', `/console/cases/${caseIdValue}/escalate`).as('escalate');
       cy.multiSelect('.ant-modal', 'Fraud');
       cy.get('.ant-modal-root .ant-modal-title', { timeout: 8000 }).click();
@@ -31,7 +27,7 @@ describe('Escalating and Sending back the cases', () => {
         '/case-management/cases?sort=-lastStatusChange.timestamp&showCases=ALL&caseStatus=ESCALATED',
       );
       cy.get('input[data-cy="row-table-checkbox"]', { timeout: 15000 }).eq(0).click();
-      cy.get('button[data-cy="update-status-button"]').eq(1).click();
+      cy.caseAlertAction('Send back');
 
       cy.intercept('POST', '/console/cases').as('case');
       cy.multiSelect('.ant-modal', 'False positive');

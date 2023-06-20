@@ -251,10 +251,8 @@ export default function AlertTable(props: Props) {
       let filterAlertStatus: AlertStatus[];
       if (alertStatus == null) {
         filterAlertStatus = [];
-      } else if (alertStatus === 'OPEN') {
-        filterAlertStatus = ['OPEN'];
-      } else if (alertStatus === 'REOPENED') {
-        filterAlertStatus = ['REOPENED'];
+      } else if (alertStatus === 'OPEN' || alertStatus === 'REOPENED') {
+        filterAlertStatus = ['OPEN', 'REOPENED'];
       } else if (alertStatus === 'CLOSED') {
         filterAlertStatus = ['CLOSED'];
       } else if (alertStatus === 'ESCALATED') {

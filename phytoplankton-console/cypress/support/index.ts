@@ -10,6 +10,7 @@ declare global {
       loginByForm(username: string, password: string): Chainable<Element>;
       loginByRequest(username: string, password: string): Chainable<Element>;
       multiSelect(preSelector: string, text: string): Chainable<Element>;
+      caseAlertAction(action: string): Chainable<Element>;
     }
   }
 }

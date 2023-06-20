@@ -20,7 +20,6 @@ export default function StatusButtons(props: Props) {
 
   const caseStatuses: CaseStatus[] = [
     'OPEN',
-    'REOPENED',
     'CLOSED',
     ...(escalationEnabled ? (['ESCALATED'] as const) : []),
   ];

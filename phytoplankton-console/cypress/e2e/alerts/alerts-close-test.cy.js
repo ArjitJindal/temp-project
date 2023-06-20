@@ -16,11 +16,7 @@ describe('Comment Alerts from Table', () => {
       .eq(0)
       .click();
 
-    cy.get('div[data-cy="expanded-content"] button[data-cy="update-status-button"]', {
-      timeout: 8000,
-    })
-      .eq(1)
-      .click();
+    cy.caseAlertAction('Close');
     cy.intercept('PATCH', '/console/alerts/statusChange').as('alert');
     cy.multiSelect('.ant-modal', 'False positive');
     cy.get('.ant-modal-root .ant-modal-title', { timeout: 8000 }).click();
@@ -37,7 +33,7 @@ describe('Comment Alerts from Table', () => {
         cy.get('button[data-cy="status-button"]').eq(0).click();
         cy.get('.ant-dropdown-menu-title-content').contains('Closed').click();
         cy.get('input[data-cy="row-table-checkbox"]').eq(0).click();
-        cy.get('button[data-cy="update-status-button"]').eq(1).click();
+        cy.caseAlertAction('Re-Open');
         cy.get('.ant-modal-footer button')
           .eq(1)
           .click()
