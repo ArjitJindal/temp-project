@@ -1,10 +1,9 @@
 import { useMemo } from 'react';
 import ReactCountryFlag from 'react-country-flag';
-import LocationInfoCard from './LocationInfoCard';
-import DeviceInformation from './DeviceInformation';
-import DeviceSettings from './DeviceSettings';
-import OtherInformation from './OtherInformation';
+import styles from './index.module.less';
 import * as Card from '@/components/ui/Card';
+import SmartPhoneLine from '@/components/ui/icons/Remix/device/smartphone-line.react.svg';
+import { H4 } from '@/components/ui/Typography';
 import { DeviceMetric } from '@/apis';
 import COUNTRIES from '@/utils/countries';
 import LANGUAGES, { LanguageCode } from '@/utils/languages';
@@ -101,7 +100,7 @@ const DeviceDataInternalCard = ({ deviceData }: { deviceData: Partial<DeviceMetr
     [deviceData],
   );
 
-  const otherInformation: { title: string; value: string | React.ReactNode }[] = useMemo(
+  const otherSettings: { title: string; value: string | React.ReactNode }[] = useMemo(
     () => [
       {
         title: 'Number of contacts',
@@ -142,35 +141,64 @@ const DeviceDataInternalCard = ({ deviceData }: { deviceData: Partial<DeviceMetr
   );
 
   return (
-    <Card.Root>
-      <Card.Row>
-        <Card.Column>
-          <Card.Section>
-            <LocationInfoCard deviceData={deviceData} headValues={headValues} />
-          </Card.Section>
-        </Card.Column>
-      </Card.Row>
-
-      <Card.Row>
-        <Card.Column>
-          <Card.Section>
-            <DeviceInformation deviceInfo={deviceInfo} />
-          </Card.Section>
-        </Card.Column>
-
-        <Card.Column>
-          <Card.Section>
-            <DeviceSettings deviceSettings={deviceSettings} />
-          </Card.Section>
-        </Card.Column>
-
-        <Card.Column>
-          <Card.Section>
-            <OtherInformation otherInformation={otherInformation} />
-          </Card.Section>
-        </Card.Column>
-      </Card.Row>
-    </Card.Root>
+    <div className={styles.card}>
+      <div className={styles.card_head}>
+        <div className={styles.device_brand_info}>
+          <div className={styles.device_logo}>
+            <SmartPhoneLine width={24} height={24} />
+          </div>
+          <div className={styles.device_name}>
+            <div className={styles.device_brand}>
+              {deviceData.manufacturer ?? 'Unknown'}, {deviceData.model ?? 'Unknown'}
+            </div>
+            <div className={styles.device_model}>
+              {deviceData?.operatingSystem?.name} {deviceData?.operatingSystem?.version}
+            </div>
+          </div>
+        </div>
+        {headValues.map((item) => (
+          <div className={styles.device}>
+            <div className={styles.device_title}>{item.title}</div>
+            <div className={styles.device_value}>{item.value}</div>
+          </div>
+        ))}
+      </div>
+      <div className={styles.card_body}>
+        <div className={styles.card_body_0}>
+          <H4>Device information</H4>
+          <div className={styles.deviceInfo}>
+            {deviceInfo.map((item) => (
+              <div className={styles.device}>
+                <div className={styles.device_title}>{item.title}</div>
+                <div className={styles.device_value}>{item.value}</div>
+              </div>
+            ))}
+          </div>
+        </div>
+        <div className={styles.card_body_1}>
+          <H4>Device settings</H4>
+          <div className={styles.deviceSettings}>
+            {deviceSettings.map((item) => (
+              <div className={styles.device}>
+                <div className={styles.device_title}>{item.title}</div>
+                <div className={styles.device_value}>{item.value}</div>
+              </div>
+            ))}
+          </div>
+        </div>
+        <div className={styles.card_body_2}>
+          <H4>Other information</H4>
+          <div className={styles.otherSettings}>
+            {otherSettings.map((item) => (
+              <div className={styles.device}>
+                <div className={styles.device_title}>{item.title}</div>
+                <div className={styles.device_value}>{item.value}</div>
+              </div>
+            ))}
+          </div>
+        </div>
+      </div>
+    </div>
   );
 };
 
