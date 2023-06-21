@@ -2,7 +2,7 @@ import {
   APIGatewayEventLambdaAuthorizerContext,
   APIGatewayProxyWithLambdaAuthorizerEvent,
 } from 'aws-lambda'
-import { BadRequest, Forbidden } from 'http-errors'
+import { Forbidden } from 'http-errors'
 import { JWTAuthorizerResult } from '@/@types/jwt'
 import { lambdaApi } from '@/core/middlewares/lambda-api-middlewares'
 import { SanctionsService } from '@/services/sanctions'
@@ -17,6 +17,7 @@ export const webhooksHandler = lambdaApi()(
       APIGatewayEventLambdaAuthorizerContext<JWTAuthorizerResult>
     >
   ) => {
+    const { sourceIp } = event.requestContext.identity
     if (
       event.httpMethod === 'POST' &&
       event.resource === '/webhooks/complyadvantage' &&
@@ -24,11 +25,6 @@ export const webhooksHandler = lambdaApi()(
     ) {
       // Check source IPs in production
       if (process.env.ENV === 'prod') {
-        if (!event.headers['x-forwarded-for']) {
-          throw new BadRequest('Could not determine source IP')
-        }
-
-        const sourceIP = event.headers['x-forwarded-for'][0]
         const complyAdvantageIPs = [
           '54.76.153.128',
           '52.19.50.164',
@@ -40,10 +36,10 @@ export const webhooksHandler = lambdaApi()(
           '54.79.153.96',
           '52.63.190.126',
         ]
-        if (!complyAdvantageIPs.includes(sourceIP)) {
-          logger.error(`${sourceIP} is not authorized to make this request`)
+        if (!complyAdvantageIPs.includes(sourceIp)) {
+          logger.error(`${sourceIp} is not authorized to make this request`)
           throw new Forbidden(
-            `${sourceIP} is not authorized to make this request`
+            `${sourceIp} is not authorized to make this request`
           )
         }
       }

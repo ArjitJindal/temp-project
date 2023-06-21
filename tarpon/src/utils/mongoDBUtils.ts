@@ -745,6 +745,9 @@ export const createMongoDBCollections = async (
   await sanctionsSearchesCollection.createIndex({
     createdAt: 1,
   })
+  await sanctionsSearchesCollection.createIndex({
+    'response.rawComplyAdvantageResponse.content.data.id': 1,
+  })
 
   try {
     await db.createCollection(NARRATIVE_TEMPLATE_COLLECTION(tenantId))

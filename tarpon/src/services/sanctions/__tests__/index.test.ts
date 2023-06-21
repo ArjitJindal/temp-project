@@ -60,6 +60,7 @@ describe('Sanctions Service', () => {
       expect(await service.getSearchHistory(response.searchId)).toEqual({
         _id: response.searchId,
         createdAt: expect.any(Number),
+        updatedAt: expect.any(Number),
         request,
         response: response,
       })

@@ -10,7 +10,6 @@ import { SanctionsSearchHistoryResponse } from '@/@types/openapi-internal/Sancti
 import { DefaultApiGetSanctionsSearchRequest } from '@/@types/openapi-internal/RequestParameters'
 import { COUNT_QUERY_LIMIT } from '@/utils/pagination'
 import { SanctionsSearchMonitoring } from '@/@types/openapi-internal/SanctionsSearchMonitoring'
-import { ComplyAdvantageSearchResponse } from '@/@types/openapi-internal/ComplyAdvantageSearchResponse'
 import dayjs from '@/utils/dayjs'
 
 const DEFAULT_EXPIRY_TIME = 168 // hours
@@ -26,41 +25,27 @@ export class SanctionsSearchRepository {
 
   public async saveSearchResult(
     request: SanctionsSearchRequest,
-    response: SanctionsSearchResponse
+    response: SanctionsSearchResponse,
+    createdAt?: number,
+    updatedAt?: number
   ): Promise<void> {
     const db = this.mongoDb.db()
     const collection = db.collection<SanctionsSearchHistory>(
       SANCTIONS_SEARCHES_COLLECTION(this.tenantId)
     )
 
-    await collection.insertOne({
-      _id: response.searchId,
-      request,
-      response,
-      createdAt: Date.now(),
-      ...(!request.monitoring?.enabled && {
-        expiresAt: dayjs().add(DEFAULT_EXPIRY_TIME, 'hours').valueOf(),
-      }),
-    })
-  }
-
-  public async updateMonitoredSearch(
-    searchId: number,
-    response: ComplyAdvantageSearchResponse
-  ): Promise<void> {
-    const db = this.mongoDb.db()
-    const collection = db.collection<SanctionsSearchHistory>(
-      SANCTIONS_SEARCHES_COLLECTION(this.tenantId)
-    )
-
-    await collection.updateMany(
-      { 'response.rawComplyAdvantageResponse.content.data.id': searchId },
+    await collection.replaceOne(
+      { _id: response.searchId },
       {
-        $set: {
-          'response.rawComplyAdvantageResponse': response,
-          updatedAt: Date.now(),
-        },
-      }
+        request,
+        response,
+        createdAt: createdAt ?? Date.now(),
+        updatedAt: updatedAt ?? Date.now(),
+        ...(!request.monitoring?.enabled && {
+          expiresAt: dayjs().add(DEFAULT_EXPIRY_TIME, 'hours').valueOf(),
+        }),
+      },
+      { upsert: true }
     )
   }
 
@@ -184,6 +169,7 @@ export class SanctionsSearchRepository {
     )
     return await collection.findOne({ _id: searchId as any })
   }
+
   public async getSearchResultByCASearchId(
     caSearchId: number
   ): Promise<SanctionsSearchHistory | null> {

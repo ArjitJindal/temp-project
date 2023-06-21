@@ -22,6 +22,19 @@ const COMPLYADVANTAGE_SEARCH_API_URI =
 const COMPLYADVANTAGE_CREDENTIALS_SECRET_ARN = process.env
   .COMPLYADVANTAGE_CREDENTIALS_SECRET_ARN as string
 
+function getSanctionsSearchResponse(
+  rawComplyAdvantageResponse: ComplyAdvantageSearchResponse,
+  searchId: string
+): SanctionsSearchResponse {
+  const hits = rawComplyAdvantageResponse.content?.data?.hits || []
+  return {
+    total: hits.length,
+    data: hits,
+    rawComplyAdvantageResponse,
+    searchId,
+  }
+}
+
 export class SanctionsService {
   apiKey!: string
   sanctionsSearchRepository!: SanctionsSearchRepository
@@ -60,14 +73,16 @@ export class SanctionsService {
       await this.sanctionsSearchRepository.getSearchResultByCASearchId(
         caSearchId
       )
-    if (!result?.request) {
+    if (!result) {
       return
     }
     const response = await this.complyAdvantageMonitoredSearch(caSearchId)
     if (response) {
-      await this.sanctionsSearchRepository.updateMonitoredSearch(
-        caSearchId,
-        response
+      await this.sanctionsSearchRepository.saveSearchResult(
+        result.request,
+        getSanctionsSearchResponse(response, result._id),
+        result.createdAt,
+        Date.now()
       )
       logger.info(
         `Updated monitored search (search ID: ${caSearchId}) for tenant ${this.tenantId}`
@@ -100,7 +115,7 @@ export class SanctionsService {
       ...request,
     })
 
-    const responseWithId = { ...response, searchId }
+    const responseWithId = getSanctionsSearchResponse(response, searchId)
     await this.sanctionsSearchRepository.saveSearchResult(
       request,
       responseWithId
@@ -125,7 +140,7 @@ export class SanctionsService {
   private async complyAdvantageSearch(
     searchProfileId: string,
     request: SanctionsSearchRequest
-  ): Promise<Omit<SanctionsSearchResponse, 'searchId'>> {
+  ): Promise<ComplyAdvantageSearchResponse> {
     const rawComplyAdvantageResponse = (await (
       await fetch(`${COMPLYADVANTAGE_SEARCH_API_URI}?api_key=${this.apiKey}`, {
         method: 'POST',
@@ -144,19 +159,14 @@ export class SanctionsService {
       throw new Error((rawComplyAdvantageResponse as any).message)
     }
 
-    const hits = rawComplyAdvantageResponse.content?.data?.hits || []
-    return {
-      total: hits.length,
-      data: hits,
-      rawComplyAdvantageResponse,
-    }
+    return rawComplyAdvantageResponse
   }
   private async complyAdvantageMonitoredSearch(
     searchId: number
   ): Promise<ComplyAdvantageSearchResponse> {
     const rawComplyAdvantageResponse = (await (
       await fetch(
-        `${COMPLYADVANTAGE_SEARCH_API_URI}/${searchId}?api_key=${this.apiKey}`,
+        `${COMPLYADVANTAGE_SEARCH_API_URI}/${searchId}/details?api_key=${this.apiKey}`,
         {
           method: 'GET',
         }
