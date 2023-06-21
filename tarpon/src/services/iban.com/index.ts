@@ -14,9 +14,6 @@ import { hasFeature } from '@/core/utils/context'
 
 const IBAN_API_URI = 'https://api.iban.com/clients/api/v4/iban/'
 
-const IBANCOM_CREDENTIALS_SECRET_ARN = process.env
-  .IBANCOM_CREDENTIALS_SECRET_ARN as string
-
 export type BankInfo = { bankName?: string; iban?: string }
 
 function ibanValidationResponseToIBANDetails(
@@ -70,8 +67,9 @@ async function getApiKey(): Promise<string> {
   if (process.env.IBAN_API_KEY) {
     return process.env.IBAN_API_KEY
   }
-  return (await getSecret<{ apiKey: string }>(IBANCOM_CREDENTIALS_SECRET_ARN))!
-    .apiKey
+  return (await getSecret<{ apiKey: string }>(
+    process.env.IBANCOM_CREDENTIALS_SECRET_ARN as string
+  ))!.apiKey
 }
 
 export class IBANService {

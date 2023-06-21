@@ -19,9 +19,6 @@ import { logger } from '@/core/logger'
 const COMPLYADVANTAGE_SEARCH_API_URI =
   'https://api.complyadvantage.com/searches'
 
-const COMPLYADVANTAGE_CREDENTIALS_SECRET_ARN = process.env
-  .COMPLYADVANTAGE_CREDENTIALS_SECRET_ARN as string
-
 function getSanctionsSearchResponse(
   rawComplyAdvantageResponse: ComplyAdvantageSearchResponse,
   searchId: string
@@ -63,7 +60,7 @@ export class SanctionsService {
       return process.env.COMPLYADVANTAGE_API_KEY
     }
     return (await getSecret<{ apiKey: string }>(
-      COMPLYADVANTAGE_CREDENTIALS_SECRET_ARN
+      process.env.COMPLYADVANTAGE_CREDENTIALS_SECRET_ARN as string
     ))!.apiKey
   }
 
