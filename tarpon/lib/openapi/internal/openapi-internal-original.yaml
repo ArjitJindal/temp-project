@@ -2635,12 +2635,6 @@ paths:
           in: query
           name: filterDestinationPaymentMethods
         - schema:
-            type: array
-            items:
-              $ref: ../public/openapi-public-original.yaml#/components/schemas/TransactionState
-          in: query
-          name: filterTransactionState
-        - schema:
             $ref: '#/components/schemas/Priority'
           in: query
           name: filterPriority
@@ -2974,12 +2968,6 @@ paths:
               $ref: ../public/openapi-public-original.yaml#/components/schemas/PaymentMethod
           in: query
           name: filterDestinationPaymentMethods
-        - schema:
-            type: array
-            items:
-              $ref: ../public/openapi-public-original.yaml#/components/schemas/TransactionState
-          in: query
-          name: filterTransactionState
         - schema:
             $ref: '#/components/schemas/Priority'
           in: query

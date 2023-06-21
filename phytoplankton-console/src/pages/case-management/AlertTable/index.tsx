@@ -232,7 +232,6 @@ export default function AlertTable(props: Props) {
         alertId,
         alertStatus,
         userId,
-        transactionState,
         businessIndustryFilter,
         tagKey,
         tagValue,
@@ -272,8 +271,6 @@ export default function AlertTable(props: Props) {
         filterCaseId: caseId,
         filterAlertStatus: filterAlertStatus,
         filterAssignmentsIds,
-        filterTransactionState:
-          transactionState && transactionState.length > 0 ? transactionState : undefined,
         filterBusinessIndustries:
           businessIndustryFilter && businessIndustryFilter.length > 0
             ? businessIndustryFilter

@@ -11,7 +11,6 @@ import { isMode } from '@/pages/transactions/components/UserSearchPopup/types';
 import { defaultQueryAdapter } from '@/components/library/Table/queryAdapter';
 import { ExtraFilter } from '@/components/library/Table/types';
 import UserSearchButton from '@/pages/transactions/components/UserSearchButton';
-import { TransactionStateButton } from '@/pages/transactions/components/TransactionStateButton';
 import TagSearchButton from '@/pages/transactions/components/TagSearchButton';
 import BusinessIndustryButton from '@/pages/transactions/components/BusinessIndustryButton';
 import { RiskLevelButton } from '@/pages/users/users-list/RiskLevelFilterButton';
@@ -155,22 +154,6 @@ export const makeExtraFilters = (
               ...state,
               userId: userId ?? undefined,
               userFilterMode: mode ?? 'ALL',
-            }));
-          }}
-        />
-      ),
-    },
-    {
-      key: 'transactionState',
-      title: 'Transaction state',
-      showFilterByDefault: true,
-      renderer: ({ params, setParams }) => (
-        <TransactionStateButton
-          transactionStates={params.transactionState ?? []}
-          onConfirm={(value) => {
-            setParams((state) => ({
-              ...state,
-              transactionState: value ?? undefined,
             }));
           }}
         />

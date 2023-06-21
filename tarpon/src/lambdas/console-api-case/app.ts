@@ -20,7 +20,6 @@ import { CaseRepository } from '@/services/rules-engine/repositories/case-reposi
 import { CasesUpdateRequest } from '@/@types/openapi-internal/CasesUpdateRequest'
 import { AlertsToNewCaseRequest } from '@/@types/openapi-internal/AlertsToNewCaseRequest'
 import { getDynamoDbClientByEvent } from '@/utils/dynamodb'
-import { TransactionState } from '@/@types/openapi-internal/TransactionState'
 import { CaseCreationService } from '@/lambdas/console-api-case/services/case-creation-service'
 import { UserRepository } from '@/services/users/repositories/user-repository'
 import { RuleInstanceRepository } from '@/services/rules-engine/repositories/rule-instance-repository'
@@ -113,7 +112,6 @@ export const casesHandler = lambdaApi()(
         filterId,
         filterOutStatus,
         filterOutCaseStatus,
-        filterTransactionState,
         filterRulesHit,
         filterRulesExecuted,
         filterOriginCurrencies,
@@ -160,9 +158,6 @@ export const casesHandler = lambdaApi()(
         filterId,
         filterOutStatus,
         filterOutCaseStatus: parseStrings(filterOutCaseStatus),
-        filterTransactionState: filterTransactionState
-          ? filterTransactionState.split(',')
-          : undefined,
         filterStatus: filterStatus ? filterStatus.split(',') : undefined,
         filterCaseStatus: parseStrings(filterCaseStatus),
         filterRulesExecuted: filterRulesExecuted
@@ -343,7 +338,6 @@ export const casesHandler = lambdaApi()(
         filterOutAlertStatus,
         filterAlertStatus,
         filterAssignmentsIds,
-        filterTransactionState,
         filterBusinessIndustries,
         filterTransactionTagKey,
         filterTransactionTagValue,
@@ -371,9 +365,6 @@ export const casesHandler = lambdaApi()(
         filterOutAlertStatus: parseStrings(filterOutAlertStatus),
         filterAssignmentsIds: filterAssignmentsIds?.split(','),
         filterBusinessIndustries: filterBusinessIndustries?.split(','),
-        filterTransactionState: filterTransactionState?.split(',') as
-          | TransactionState[]
-          | undefined,
         filterTransactionTagKey,
         filterTransactionTagValue,
         filterUserId,

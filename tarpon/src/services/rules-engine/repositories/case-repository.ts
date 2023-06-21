@@ -233,13 +233,6 @@ export class CaseRepository {
         caseStatus: { $nin: params.filterOutCaseStatus },
       })
     }
-    if (params.filterTransactionState != null) {
-      conditions.push({
-        'caseTransactions.transactionState': {
-          $in: params.filterTransactionState,
-        },
-      })
-    }
     if (params.filterStatus != null) {
       conditions.push({
         'caseTransactions.status': { $in: params.filterStatus },
