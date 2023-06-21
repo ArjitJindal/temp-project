@@ -4,22 +4,25 @@
 
 ### Notes
 
-- Describe your changes in a few succinct bullet points
+<!-- Describe the changes in a few succinct bullet points -->
 
-### What's the scope of this change
-- [ ] Are Public APIs Affected
-- [ ] Is Rules Engine Affected
-- [ ] Are Adequate Permissions Verified
-- [ ] Did you touch the core component like the Table
-- [ ] Does this impact case managment flow (cases, alerts, escalations, reviews, assignment)
-- [ ] Does this update RBAC?
+### Scope
+
+This change impacts:
+- [ ] Public APIs
+- [ ] Rules Engine
+- [ ] Core frontend components
+- [ ] Case management <!-- cases, alerts, escalations, reviews, assignment -->
+- [ ] RBAC
 
 ### Testing
 
-- [ ] Locally Tested
-- [ ] QA Deployed (mention reason if not)
-- Other ways on how the changes were tested
+This change was deployed:
+- [ ] Locally
+- [ ] QA
+
+<!-- Now describe how the review can test these changes -->
 
 ### Screenshots
 
-- Screenshots if any
+<!-- Include screenshots if they are relevant -->
