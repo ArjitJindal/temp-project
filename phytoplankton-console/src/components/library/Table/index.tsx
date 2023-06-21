@@ -37,6 +37,8 @@ import Alert from '@/components/library/Alert';
 import CursorPagination from '@/components/library/CursorPagination';
 import { Cursor } from '@/utils/queries/types';
 
+type RowHeightMode = 'FIXED' | 'AUTO';
+
 export interface Props<Item extends object, Params extends object = CommonParams> {
   innerRef?: React.Ref<TableRefType>;
   cursor?: Cursor;
@@ -55,6 +57,7 @@ export interface Props<Item extends object, Params extends object = CommonParams
   columns: TableColumn<Item>[];
   showResultsInfo?: boolean; // todo:implement
   hideFilters?: boolean;
+  rowHeightMode?: RowHeightMode;
   disableSorting?: boolean;
   extraFilters?: ExtraFilter<Params>[];
   extraTools?: ToolRenderer[];
@@ -111,6 +114,7 @@ function Table<Item extends object, Params extends object = CommonParams>(
     isExpandable,
     selectionActions = [],
     selectionInfo,
+    rowHeightMode = 'FIXED',
   } = props;
   const dataRes: AsyncResource<TableData<Item>> = useMemo(() => {
     return 'items' in props.data ? success(props.data) : props.data;
@@ -264,7 +268,13 @@ function Table<Item extends object, Params extends object = CommonParams>(
                           return header.column.id === SPACER_COLUMN_ID && !showSizer ? (
                             <></>
                           ) : (
-                            <Th key={header.id} index={i} header={header} pinOffset={offset} />
+                            <Th
+                              key={header.id}
+                              index={i}
+                              header={header}
+                              pinOffset={offset}
+                              rowHeightMode={rowHeightMode}
+                            />
                           );
                         })}
                       </tr>
@@ -322,7 +332,13 @@ function Table<Item extends object, Params extends object = CommonParams>(
                               return cell.column.id === SPACER_COLUMN_ID && !showSizer ? (
                                 <></>
                               ) : (
-                                <Td<Item> key={cell.id} index={i} cell={cell} offset={offset} />
+                                <Td<Item>
+                                  key={cell.id}
+                                  index={i}
+                                  cell={cell}
+                                  offset={offset}
+                                  rowHeightMode={rowHeightMode}
+                                />
                               );
                             })}
                           </tr>
@@ -390,8 +406,9 @@ function Td<Item>(props: {
   cell: TanTable.Cell<TableRow<Item>, unknown>;
   index: number;
   offset: number;
+  rowHeightMode: RowHeightMode;
 }) {
-  const { cell, index, offset } = props;
+  const { cell, index, offset, rowHeightMode } = props;
   const { column } = cell;
   const isPinned = column.getIsPinned();
   const columnId = column.id;
@@ -413,10 +430,11 @@ function Td<Item>(props: {
         s.td,
         isPinned && s[`pinned-${isPinned}`],
         s[`wrapMode-${wrapMode}`],
+        s[`rowHeightMode-${rowHeightMode}`],
         item.itemIndex % 2 === 0 && s.isOdd,
       )}
       style={{
-        ...getSizingProps(cell.column),
+        ...getSizingProps(cell.column, rowHeightMode),
         ...getPinnedStyles(column.getIsPinned(), index, offset),
       }}
       rowSpan={rowSpan}
@@ -434,8 +452,9 @@ function Th<Item>(props: {
   index: number;
   header: TanTable.Header<Item, unknown>;
   pinOffset: number;
+  rowHeightMode: RowHeightMode;
 }) {
-  const { index, header, pinOffset } = props;
+  const { index, header, pinOffset, rowHeightMode } = props;
   const column = header.column;
   const isSortable = column.getCanSort();
   const isSorted = column.getIsSorted();
@@ -456,7 +475,7 @@ function Th<Item>(props: {
         }
       }}
       style={{
-        ...getSizingProps(column),
+        ...getSizingProps(column, rowHeightMode),
         ...getPinnedStyles(column.getIsPinned(), index, pinOffset),
       }}
     >
@@ -510,7 +529,7 @@ function getPinnedStyles(isPinned: boolean | 'left' | 'right', index: number, pi
   };
 }
 
-function getSizingProps<Item>(column: TanTable.Column<Item>) {
+function getSizingProps<Item>(column: TanTable.Column<Item>, rowHeightMode: RowHeightMode) {
   if (column.id === SPACER_COLUMN_ID) {
     return {};
   }
@@ -518,8 +537,8 @@ function getSizingProps<Item>(column: TanTable.Column<Item>) {
   return {
     width: size,
     maxWidth: size,
-    height: '64px',
-    maxHeight: '64px',
+    height: rowHeightMode === 'FIXED' ? '64px' : undefined,
+    maxHeight: rowHeightMode === 'FIXED' ? '64px' : undefined,
   };
 }
 

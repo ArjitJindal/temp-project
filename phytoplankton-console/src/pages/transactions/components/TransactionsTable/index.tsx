@@ -408,6 +408,7 @@ export default function TransactionsTable(props: Props) {
           </>
         ),
       ]}
+      rowHeightMode={showDetailsView ? 'AUTO' : 'FIXED'}
     />
   );
 }

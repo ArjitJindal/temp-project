@@ -1,6 +1,5 @@
 import React from 'react';
 import cn from 'clsx';
-import { capitalize } from 'lodash';
 import s from './index.module.less';
 import * as Card from '@/components/ui/Card';
 import { P } from '@/components/ui/Typography';
@@ -9,12 +8,13 @@ import {
   CardDetails,
   GenericBankAccountDetails,
   IBANDetails,
+  MpesaDetails,
   SWIFTDetails,
   UPIDetails,
   WalletDetails,
-  MpesaDetails,
 } from '@/apis';
 import { CheckDetails } from '@/apis/models/CheckDetails';
+import { humanizeCamelCase } from '@/utils/humanize';
 
 export type PaymentDetails =
   | CardDetails
@@ -31,18 +31,10 @@ interface Props {
   paymentDetails: PaymentDetails | undefined;
 }
 
-export function humanizePropertyName(key: string): string {
-  const parts = key.match(/(^|[A-Z])[a-z]*/g);
-  if (parts == null) {
-    return '';
-  }
-  return parts.map(capitalize).join(' ');
-}
-
 function Property(props: { name: string[]; value: unknown }) {
   const { name, value } = props;
 
-  const humanizedName = name.map(humanizePropertyName).join(' / ');
+  const humanizedName = name.map(humanizeCamelCase).join(' / ');
   if (value != null) {
     if (Array.isArray(value)) {
       return (

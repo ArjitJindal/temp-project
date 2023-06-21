@@ -2,14 +2,14 @@ import { EllipsisOutlined } from '@ant-design/icons';
 import CountryDisplay from '../../CountryDisplay';
 import { BooleanDisplay } from '../../BooleanDisplay';
 import { CardBrandDisplay } from '../../CardBrandDisplay';
-import { humanizePropertyName } from '@/pages/transactions-item/UserDetails/PaymentDetails';
 import * as Form from '@/components/ui/Form';
 import COUNTRIES from '@/utils/countries';
+import { humanizeCamelCase } from '@/utils/humanize';
 
 export function Property(props: { name: string[]; value: unknown }) {
   const { name, value } = props;
 
-  const humanizedName = name.map(humanizePropertyName).join(' / ');
+  const humanizedName = name.map(humanizeCamelCase).join(' / ');
   if (value != null) {
     if (Array.isArray(value)) {
       return (

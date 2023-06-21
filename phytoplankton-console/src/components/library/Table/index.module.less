@@ -191,6 +191,18 @@
     }
   }
 
+  &.rowHeightMode-FIXED {
+    .tdContent {
+      max-height: 48px;
+    }
+  }
+
+  &.rowHeightMode-AUTO {
+    .tdContent {
+      max-height: 200px;
+    }
+  }
+
   &.wrapMode-OVERFLOW {
     .tdContent {
       white-space: nowrap;
@@ -219,7 +231,6 @@
     flex-direction: column;
     flex: 1;
     min-height: 48px;
-    max-height: 48px;
   }
 
   &.isOdd {
