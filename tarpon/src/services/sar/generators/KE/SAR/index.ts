@@ -109,7 +109,9 @@ export class KenyaSARReportGenerator implements ReportGenerator {
       ...reportParams.report,
       report_code: 'SAR',
       transaction: reportParams.transactions?.map((t) => t.transaction),
-      report_indicators: reportParams.indicators,
+      report_indicators: reportParams.indicators.map((indicator) => ({
+        indicator,
+      })),
     })
   }
 
@@ -168,9 +170,11 @@ export class KenyaSARReportGenerator implements ReportGenerator {
       personal_account_type: 'KeB',
       opened: new Date(u.createdTimestamp).toISOString(),
       status_code: 'A',
-      comments: `Comments from case management system: \n\n${u.comments?.join(
-        '\n\n'
-      )}`,
+      comments: u.comments
+        ? `Comments from case management system: \n\n${u.comments?.join(
+            '\n\n'
+          )}`
+        : '',
       currency_code: t?.originAmountDetails?.transactionCurrency,
       ...paymentDetails,
     }

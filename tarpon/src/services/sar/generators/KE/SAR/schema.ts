@@ -1314,9 +1314,9 @@ const Definitions: AnySchemaObject = {
 
 export const KenyaTransactionSchema: AnySchemaObject = {
   type: 'object',
-  required: ['transaction_number', 't_from_my_client', 't_to_my_client'],
+  required: ['transactionnumber', 't_from_my_client', 't_to_my_client'],
   properties: {
-    transaction_number: {
+    transactionnumber: {
       type: 'string',
       title: 'Transaction number',
       maxLength: 50,
@@ -1375,12 +1375,12 @@ export const KenyaTransactionSchema: AnySchemaObject = {
     //   description:
     //     'The actual date when the money will be credited (For example, Value date of a cheque)',
     // },
-    // transmode_code: {
-    //   $ref: '#/definitions/conduction_type',
-    //   title: 'Transmode code',
-    //   description:
-    //     'How the transaction was conducted ie the Transaction Method',
-    // },
+    transmode_code: {
+      $ref: '#/definitions/conduction_type',
+      title: 'Transmode code',
+      description:
+        'How the transaction was conducted ie the Transaction Method',
+    },
     transmode_comment: {
       type: 'string',
       title: 'Transmode comment',
