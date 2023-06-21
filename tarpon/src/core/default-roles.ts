@@ -18,6 +18,7 @@ export const DEFAULT_ROLES: {
     permissions: [
       'case-management:case-overview:read',
       'case-management:case-details:read',
+      'case-management:case-reopen:write',
       'case-management:export:read',
       'rules:my-rules:read',
       'rules:library:read',
@@ -45,6 +46,7 @@ export const DEFAULT_ROLES: {
       'case-management:case-overview:write',
       'case-management:case-details:read',
       'case-management:case-details:write',
+      'case-management:case-reopen:write',
       'case-management:export:read',
       'rules:my-rules:read',
       'rules:library:read',
@@ -68,6 +70,7 @@ export const DEFAULT_ROLES: {
       'case-management:case-overview:write',
       'case-management:case-details:read',
       'case-management:case-details:write',
+      'case-management:case-reopen:write',
       'case-management:export:read',
       'rules:my-rules:read',
       'rules:library:read',
@@ -96,6 +99,7 @@ export const DEFAULT_ROLES: {
     permissions: [
       'case-management:case-overview:read',
       'case-management:case-details:read',
+      'case-management:case-reopen:write',
       'case-management:export:read',
       'rules:my-rules:read',
       'rules:library:read',
