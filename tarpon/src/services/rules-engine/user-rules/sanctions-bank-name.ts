@@ -83,14 +83,16 @@ export default class SanctionsBankUserRule extends UserRule<SanctionsBankUserRul
         logger.error(e)
       }
     }
-    const bankNames = _.uniq(
-      bankInfos.map((bankInfo) => bankInfo.bankName).filter(Boolean) as string[]
+    const bankInfosToCheck = _.uniqBy(
+      bankInfos.filter((bankInfo) => bankInfo.bankName),
+      (bankInfo) => JSON.stringify(bankInfo)
     )
 
     const sanctionsService = new SanctionsService(this.tenantId)
     const hitResult: RuleHitResult = []
     const sanctionsDetails: SanctionsDetails[] = []
-    for (const bankName of bankNames) {
+    for (const bankInfo of bankInfosToCheck) {
+      const bankName = bankInfo.bankName!
       const result = await sanctionsService.search({
         searchTerm: bankName,
         types: screeningTypes,
@@ -100,6 +102,7 @@ export default class SanctionsBankUserRule extends UserRule<SanctionsBankUserRul
       if (result.data && result.data.length > 0) {
         sanctionsDetails.push({
           name: bankName,
+          iban: bankInfo.iban,
           searchId: result.searchId,
         })
       }
@@ -108,7 +111,7 @@ export default class SanctionsBankUserRule extends UserRule<SanctionsBankUserRul
       hitResult.push({
         direction: 'ORIGIN',
         vars: this.getUserVars(),
-        sanctionsDetails: _.uniqBy(sanctionsDetails, (details) => details.name),
+        sanctionsDetails,
       })
     }
     return hitResult

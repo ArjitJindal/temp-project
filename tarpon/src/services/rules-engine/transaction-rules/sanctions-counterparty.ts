@@ -108,6 +108,7 @@ export class SanctionsCounterPartyRule extends TransactionRule<SanctionsCounterP
   ): Promise<SanctionsDetails[]> {
     const namesToSearch: Array<{
       name: string
+      iban?: string
       entityType: SanctionsDetailsEntityType
     }> = []
 
@@ -132,7 +133,11 @@ export class SanctionsCounterPartyRule extends TransactionRule<SanctionsCounterP
     if (this.parameters.resolveIban && bankInfo) {
       bankInfo = (await ibanService.resolveBankName([bankInfo]))[0]
       if (bankInfo?.bankName != null) {
-        namesToSearch.push({ name: bankInfo.bankName, entityType: 'BANK_NAME' })
+        namesToSearch.push({
+          name: bankInfo.bankName,
+          iban: bankInfo.iban,
+          entityType: 'BANK_NAME',
+        })
       }
     }
 
@@ -177,18 +182,17 @@ export class SanctionsCounterPartyRule extends TransactionRule<SanctionsCounterP
         break
     }
 
-    const namesToSearchFiltered = []
-    for (const item of namesToSearch) {
-      if (namesToSearchFiltered.find((x) => x.name === item.name) == null) {
-        namesToSearchFiltered.push(item)
-      }
-    }
+    const namesToSearchFiltered = _.uniqBy(namesToSearch, (item) => item.name)
     const sanctionsService = new SanctionsService(this.tenantId)
     const fuzziness = this.parameters.fuzziness
 
     const data = await Promise.all(
       namesToSearchFiltered.map(
-        async ({ name, entityType }): Promise<SanctionsDetails | undefined> => {
+        async ({
+          name,
+          iban,
+          entityType,
+        }): Promise<SanctionsDetails | undefined> => {
           const result = await sanctionsService.search({
             searchTerm: name,
             types: this.parameters.screeningTypes || [],
@@ -199,7 +203,12 @@ export class SanctionsCounterPartyRule extends TransactionRule<SanctionsCounterP
           })
 
           if (result.data.length > 0) {
-            return { name, searchId: result.searchId, entityType }
+            return {
+              name,
+              iban,
+              searchId: result.searchId,
+              entityType,
+            }
           }
         }
       )

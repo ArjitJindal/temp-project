@@ -175,6 +175,7 @@ describe('IBAN resolution enabled', () => {
           sanctionsDetails: [
             {
               name: 'Bank 1',
+              iban: 'AD1400080001001234567890',
               searchId: 'test-search-id',
             },
           ],
@@ -184,6 +185,7 @@ describe('IBAN resolution enabled', () => {
           sanctionsDetails: [
             {
               name: 'Bank 1',
+              iban: 'AL35202111090000000001234567',
               searchId: 'test-search-id',
             },
           ],
@@ -193,10 +195,17 @@ describe('IBAN resolution enabled', () => {
           sanctionsDetails: [
             {
               name: 'Bank 1',
+              iban: 'AL35202111090000000001234567',
+              searchId: 'test-search-id',
+            },
+            {
+              name: 'Bank 1',
+              iban: 'AL35202111090000000001234568',
               searchId: 'test-search-id',
             },
             {
               name: 'Bank 3',
+              iban: 'AD1400080001001234567891',
               searchId: 'test-search-id',
             },
           ],

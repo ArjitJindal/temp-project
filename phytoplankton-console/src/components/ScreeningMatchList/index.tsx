@@ -96,7 +96,10 @@ function useScreeningResults(sanctionDetails: SanctionsDetails[]): QueryResult<S
 
 function getTabName(details: SanctionsDetails) {
   let result = details.name;
-  if (details.entityType != null) {
+  if (details.iban) {
+    result += ` (IBAN: ${details.iban})`;
+  }
+  if (details.entityType) {
     result += ` (${humanizeConstant(details.entityType)})`;
   }
   return result;

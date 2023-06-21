@@ -4833,6 +4833,8 @@ components:
           type: string
         searchId:
           type: string
+        iban:
+          type: string
         entityType:
           $ref: '#/components/schemas/SanctionsDetailsEntityType'
       required:
