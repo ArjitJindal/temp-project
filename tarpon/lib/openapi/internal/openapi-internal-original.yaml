@@ -2436,6 +2436,14 @@ paths:
         in: query
         name: sortOrder
       - schema:
+          type: number
+        in: query
+        name: beforeTimestamp
+      - schema:
+          type: number
+        in: query
+        name: afterTimestamp
+      - schema:
           type: string
         name: alertId
         in: path
@@ -2468,6 +2476,38 @@ paths:
           type: string
         in: query
         name: filterDestinationPaymentMethodId
+      - schema:
+          type: string
+        in: query
+        name: filterTransactionId
+      - schema:
+          $ref: ../public/openapi-public-original.yaml#/components/schemas/TransactionType
+        in: query
+        name: filterTransactionType
+      - schema:
+          type: array
+          items:
+            $ref: ../public/openapi-public-original.yaml#/components/schemas/PaymentMethod
+        in: query
+        name: filterOriginPaymentMethods
+      - schema:
+          type: array
+          items:
+            $ref: ../public/openapi-public-original.yaml#/components/schemas/PaymentMethod
+        in: query
+        name: filterDestinationPaymentMethods
+      - schema:
+          type: array
+          items:
+            $ref: ../public/openapi-public-original.yaml#/components/schemas/CurrencyCode
+        in: query
+        name: filterOriginCurrencies
+      - schema:
+          type: array
+          items:
+            $ref: ../public/openapi-public-original.yaml#/components/schemas/CurrencyCode
+        in: query
+        name: filterDestinationCurrencies
     get:
       summary: Alerts - Item - Transaction List
       operationId: get-alert-transaction-list

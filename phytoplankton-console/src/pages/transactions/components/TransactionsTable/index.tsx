@@ -180,7 +180,6 @@ export default function TransactionsTable(props: Props) {
               title: 'TRS level',
               type: RISK_LEVEL,
               key: 'arsScore.riskLevel',
-              sorting: true,
               tooltip: 'Transaction Risk Score level',
             }),
           ]
@@ -223,7 +222,6 @@ export default function TransactionsTable(props: Props) {
         key: 'transactionState',
         title: 'Last transaction state',
         type: TRANSACTION_STATE,
-        sorting: true,
       }),
       helper.simple<'originUserId'>({
         key: 'originUserId',
@@ -235,7 +233,6 @@ export default function TransactionsTable(props: Props) {
             return <Id to={getUserLink(entity.originUser)}>{value}</Id>;
           },
         },
-        sorting: true,
       }),
       helper.simple<'originUser'>({
         key: 'originUser',
@@ -252,7 +249,6 @@ export default function TransactionsTable(props: Props) {
         title: 'Origin payment identifier',
         key: 'originPaymentMethodId',
         type: STRING,
-        sorting: true,
         filtering: true,
       } as SimpleColumn<InternalTransaction, 'originPaymentMethodId'>,
       helper.simple<'originAmountDetails.transactionAmount'>({
@@ -281,7 +277,6 @@ export default function TransactionsTable(props: Props) {
             return <Id to={getUserLink(entity.destinationUser)}>{value}</Id>;
           },
         },
-        sorting: true,
       }),
       helper.simple<'destinationUser'>({
         title: 'Destination user name',
@@ -298,7 +293,6 @@ export default function TransactionsTable(props: Props) {
         title: 'Destination payment identifier',
         key: 'destinationPaymentMethodId',
         type: STRING,
-        sorting: true,
         filtering: true,
       } as SimpleColumn<InternalTransaction, 'destinationPaymentMethodId'>,
       helper.simple<'destinationAmountDetails.transactionAmount'>({

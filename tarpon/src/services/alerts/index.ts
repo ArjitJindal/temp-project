@@ -594,6 +594,14 @@ export class AlertsService extends CaseAlertsCommonService {
       filterOriginPaymentMethodId: params?.filterOriginPaymentMethodId,
       filterDestinationPaymentMethodId:
         params?.filterDestinationPaymentMethodId,
+      filterTransactionId: params?.filterTransactionId,
+      filterTransactionType: params?.filterTransactionType,
+      filterOriginPaymentMethods: params?.filterOriginPaymentMethods,
+      filterDestinationPaymentMethods: params?.filterDestinationPaymentMethods,
+      filterDestinationCurrencies: params?.filterDestinationCurrencies,
+      filterOriginCurrencies: params?.filterOriginCurrencies,
+      beforeTimestamp: params?.beforeTimestamp,
+      afterTimestamp: params?.afterTimestamp,
     })
   }
 }

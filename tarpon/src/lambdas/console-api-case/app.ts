@@ -560,6 +560,14 @@ export const casesHandler = lambdaApi()(
         sortField,
         filterOriginPaymentMethodId,
         filterDestinationPaymentMethodId,
+        filterTransactionId,
+        filterOriginPaymentMethods,
+        filterDestinationPaymentMethods,
+        filterTransactionType,
+        filterOriginCurrencies,
+        filterDestinationCurrencies,
+        beforeTimestamp,
+        afterTimestamp,
       } = event.queryStringParameters as any
 
       return await alertsService.getAlertTransactions(alertId, {
@@ -574,6 +582,24 @@ export const casesHandler = lambdaApi()(
         sortField: sortField as string,
         filterOriginPaymentMethodId,
         filterDestinationPaymentMethodId,
+        filterTransactionId,
+        filterTransactionType,
+        filterOriginPaymentMethods: filterOriginPaymentMethods
+          ? filterOriginPaymentMethods.split(',')
+          : undefined,
+        filterDestinationPaymentMethods: filterDestinationPaymentMethods
+          ? filterDestinationPaymentMethods.split(',')
+          : undefined,
+        filterOriginCurrencies: filterOriginCurrencies
+          ? filterOriginCurrencies.split(',')
+          : undefined,
+        filterDestinationCurrencies: filterDestinationCurrencies
+          ? filterDestinationCurrencies.split(',')
+          : undefined,
+        beforeTimestamp: beforeTimestamp
+          ? parseInt(beforeTimestamp)
+          : Number.MAX_SAFE_INTEGER,
+        afterTimestamp: afterTimestamp ? parseInt(afterTimestamp) : 0,
       })
     } else if (
       event.httpMethod === 'POST' &&

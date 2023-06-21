@@ -491,8 +491,8 @@ export class AlertsRepository {
 
     const result = await transactionsRepo.getTransactionsCursorPaginate({
       filterIdList: alert.transactionIds,
-      afterTimestamp: 0,
-      beforeTimestamp: Number.MAX_SAFE_INTEGER,
+      afterTimestamp: params.afterTimestamp || 0,
+      beforeTimestamp: params.beforeTimestamp || Number.MAX_SAFE_INTEGER,
       page: params.page,
       pageSize: params.pageSize,
       filterOriginUserId: params.originUserId,
@@ -503,6 +503,12 @@ export class AlertsRepository {
       sortField: params.sortField,
       filterOriginPaymentMethodId: params.filterOriginPaymentMethodId,
       filterDestinationPaymentMethodId: params.filterDestinationPaymentMethodId,
+      filterId: params.filterTransactionId,
+      transactionType: params.filterTransactionType,
+      filterOriginCurrencies: params.filterOriginCurrencies,
+      filterDestinationCurrencies: params.filterDestinationCurrencies,
+      filterOriginPaymentMethods: params.filterOriginPaymentMethods,
+      filterDestinationPaymentMethods: params.filterDestinationPaymentMethods,
     })
 
     const riskRepository = new RiskRepository(this.tenantId, {

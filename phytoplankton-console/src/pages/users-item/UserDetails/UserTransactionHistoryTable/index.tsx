@@ -142,26 +142,11 @@ export function Content(props: { userId: string }) {
                 type: FLOAT,
                 sorting: true,
                 tooltip: 'Transaction Risk Score',
-                // dataIndex: 'arsScore.arsScore',
-                // exportData: 'arsScore',
-                // render: (_, entity) => entity?.arsScore?.toFixed(2),
-                // onCell: (_) => ({
-                //   rowSpan: _.isFirstRow ? _.rowsCount : 0,
-                // }),
               }),
               helper.simple<'arsRiskLevel'>({
                 title: 'TRS level',
                 type: RISK_LEVEL,
                 key: 'arsRiskLevel',
-                sorting: true,
-                // dataIndex: 'arsScore.arsScore',
-                // exportData: 'arsRiskLevel',
-                // render: (_, entity) => {
-                //   return <RiskLevelTag level={entity?.arsRiskLevel} />;
-                // },
-                // onCell: (_) => ({
-                //   rowSpan: _.isFirstRow ? _.rowsCount : 0,
-                // }),
                 tooltip: 'Transaction Risk Score level',
               }),
             ]

@@ -13,6 +13,8 @@ import Tabs from '@/components/library/Tabs';
 import DisplayCheckedTransactions from '@/pages/transactions/components/TransactionsTable/DisplayCheckedTransactions';
 import UserSearchButton from '@/pages/transactions/components/UserSearchButton';
 import { FIXED_API_PARAMS } from '@/pages/case-management-item/CaseDetails/InsightsCard';
+import { dayjs } from '@/utils/dayjs';
+import { CurrencyCode, TransactionType } from '@/apis';
 
 interface Props {
   alert: TableAlertItem;
@@ -55,6 +57,18 @@ export default function TransactionsAndComments(props: Props) {
             sortOrder: sortOrder ?? undefined,
             filterOriginPaymentMethodId: params.originPaymentMethodId,
             filterDestinationPaymentMethodId: params.destinationPaymentMethodId,
+            filterTransactionId: params.transactionId,
+            filterOriginCurrencies: params.originCurrenciesFilter as CurrencyCode[],
+            filterDestinationCurrencies: params.destinationCurrenciesFilter as CurrencyCode[],
+            filterOriginPaymentMethods: params.originMethodFilter
+              ? [params.originMethodFilter]
+              : undefined,
+            filterDestinationPaymentMethods: params.destinationMethodFilter
+              ? [params.destinationMethodFilter]
+              : undefined,
+            filterTransactionType: params.type as TransactionType,
+            beforeTimestamp: params.timestamp ? dayjs(params.timestamp[1]).valueOf() : undefined,
+            afterTimestamp: params.timestamp ? dayjs(params.timestamp[0]).valueOf() : undefined,
           }),
         'Get Alert Transactions',
       );
