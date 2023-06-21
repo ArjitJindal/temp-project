@@ -36,6 +36,7 @@ import { Assignment } from '@/@types/openapi-internal/Assignment'
 import { isAlertAvailable } from '@/lambdas/console-api-case/services/utils'
 import { CaseUpdateRequest } from '@/@types/openapi-internal/CaseUpdateRequest'
 import { CasesAlertsAuditLogService } from '@/lambdas/console-api-case/services/case-alerts-audit-log-service'
+import { withTransaction } from '@/utils/mongoDBUtils'
 
 export class AlertsService extends CaseAlertsCommonService {
   alertsRepository: AlertsRepository
@@ -483,57 +484,56 @@ export class AlertsService extends CaseAlertsCommonService {
 
     const caseIds = cases.map((c) => c.caseId!)
 
-    const response = await this.alertsRepository.updateAlertsStatus(
-      alertIds,
-      caseIds,
-      statusChange
-    )
-
-    await this.sendAlertClosedWebhook(alertIds, cases, statusUpdateRequest)
-
     const commentBody =
       this.getAlertStatusChangeCommentBody(statusUpdateRequest)
 
-    await this.saveAlertsComment(alertIds, caseIds, {
-      userId,
-      body: commentBody,
+    const casesAlertsAuditLogService = new CasesAlertsAuditLogService(
+      this.tenantId,
+      { mongoDb: this.mongoDb, dynamoDb: this.dynamoDb }
+    )
+
+    const caseService = new CaseService(caseRepository, this.s3, this.s3Config)
+
+    const caseUpdateStatus: CaseUpdateRequest = {
+      caseStatus: 'CLOSED',
+      reason: ['All alerts of this case are closed'],
+      comment: statusUpdateRequest.comment,
+      otherReason: statusUpdateRequest.otherReason,
       files: statusUpdateRequest.files,
+    }
+
+    await withTransaction(async () => {
+      const [response, _] = await Promise.all([
+        this.alertsRepository.updateAlertsStatus(
+          alertIds,
+          caseIds,
+          statusChange
+        ),
+        this.saveAlertsComment(alertIds, caseIds, {
+          userId,
+          body: commentBody,
+          files: statusUpdateRequest.files,
+        }),
+      ])
+
+      const caseIdsWithAllAlertsClosed = response.caseIdsWithAllAlertsClosed
+
+      if (caseIdsWithAllAlertsClosed.length) {
+        await caseService.updateCases(
+          FLAGRIGHT_SYSTEM_USER,
+          caseIdsWithAllAlertsClosed,
+          caseUpdateStatus,
+          false
+        )
+
+        await casesAlertsAuditLogService.handleAuditLogForCaseUpdate(
+          caseIdsWithAllAlertsClosed,
+          caseUpdateStatus
+        )
+      }
     })
 
-    const caseIdsWithAllAlertsClosed = response.caseIdsWithAllAlertsClosed
-
-    if (caseIdsWithAllAlertsClosed.length) {
-      const caseService = new CaseService(
-        caseRepository,
-        this.s3,
-        this.s3Config
-      )
-
-      const caseUpdateStatus: CaseUpdateRequest = {
-        caseStatus: 'CLOSED',
-        reason: ['All alerts of this case are closed'],
-        comment: statusUpdateRequest.comment,
-        otherReason: statusUpdateRequest.otherReason,
-        files: statusUpdateRequest.files,
-      }
-
-      await caseService.updateCases(
-        FLAGRIGHT_SYSTEM_USER,
-        caseIdsWithAllAlertsClosed,
-        caseUpdateStatus,
-        false
-      )
-
-      const casesAlertsAuditLogService = new CasesAlertsAuditLogService(
-        this.tenantId,
-        { mongoDb: this.mongoDb, dynamoDb: this.dynamoDb }
-      )
-
-      await casesAlertsAuditLogService.handleAuditLogForCaseUpdate(
-        caseIdsWithAllAlertsClosed,
-        caseUpdateStatus
-      )
-    }
+    await this.sendAlertClosedWebhook(alertIds, cases, statusUpdateRequest)
   }
 
   private async sendAlertClosedWebhook(

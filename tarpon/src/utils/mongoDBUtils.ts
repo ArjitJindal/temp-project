@@ -845,3 +845,19 @@ export async function syncIndexes<T>(
     throw new Error("Can't create more than 64 indexes")
   }
 }
+
+export const withTransaction = async (callback: () => Promise<void>) => {
+  const mongoDb = await getMongoDbClient()
+  const session = mongoDb.startSession()
+
+  session.startTransaction()
+  try {
+    await callback()
+    await session.commitTransaction()
+  } catch (error) {
+    await session.abortTransaction()
+    throw error
+  } finally {
+    await session.endSession()
+  }
+}
