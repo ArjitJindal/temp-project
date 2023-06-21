@@ -613,6 +613,11 @@ paths:
                         tags:
                           - key: customerType
                             value: wallet
+                    riskScoreDetails:
+                      kycRiskScore: 11.72
+                      craRiskScore: 41.72
+                      kycRiskLevel: MEDIUM
+                      craRiskLevel: HIGH
                     contactDetails:
                       emailIds:
                         - baran@flagright.com
@@ -853,6 +858,11 @@ paths:
                     tags:
                       - key: customKey
                         value: customValue
+                    riskScoreDetails:
+                      kycRiskScore: 11.72
+                      craRiskScore: 41.72
+                      kycRiskLevel: MEDIUM
+                      craRiskLevel: HIGH
         '401':
           description: Unauthorized
           headers: {}
@@ -2180,27 +2190,6 @@ components:
       example:
         exceptionName: MISSING_DATA
         exceptionDescription: Some data is missing
-    RiskScoringResult:
-      title: RiskScoringResult
-      required:
-        - kycRiskScore
-        - transactionRiskScore
-      type: object
-      properties:
-        kycRiskScore:
-          type: number
-          description: Quantified KYC risk score
-        transactionRiskScore:
-          type: number
-          description: Quantified action risk score
-        customerRiskAssessment:
-          type: number
-          description: Quantified dynamic risk score
-      description: Model for results from Risk Scoring
-      example:
-        kycRiskScore: 87.5
-        transactionRiskScore: 58.33
-        customerRiskAssessment: 73.92
     ConsumerName:
       title: ConsumerName
       required:
