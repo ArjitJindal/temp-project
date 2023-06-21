@@ -1,2 +1,14 @@
-# Changes to the default roles requires CTO approval.
-src/core/default-roles.ts  @madhug-nadig
+# By default, one of the engineering team must approve a PR.
+*       @flagright/engineering
+
+# RBAC
+tarpon/src/core/default-roles.ts  @madhug-nadig @timrcoulson
+
+# Public APIs
+tarpon/src/lambdas/public-* @chialunwu @timrcoulson @madhug-nadig
+
+# Rules Engine
+tarpon/src/services/rules-engine/* @chialunwu @madhug-nadig
+
+# Core frontend components
+phytoplankton-console/src/components/library/* @chialunwu @koluch
