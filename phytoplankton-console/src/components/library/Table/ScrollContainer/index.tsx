@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import cn from 'clsx';
 import s from './index.module.less';
 import { useElementSize } from '@/utils/browser';
 
@@ -14,7 +15,7 @@ export default function ScrollContainer(props: Props) {
 
   const rect = useElementSize(ref);
   return (
-    <div ref={setRef} className={s.root}>
+    <div ref={setRef} className={cn(s.root, enableHorizontalScroll && s.scroll)}>
       <div
         style={{
           maxWidth: rect && enableHorizontalScroll ? rect.width : undefined,
