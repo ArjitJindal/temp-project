@@ -6,7 +6,6 @@ import { jsonSerializer } from './json-serializer'
 import { localDev } from './local-dev'
 import { initSentry } from './init-sentry'
 import { metricsMiddleware } from './metrics-middleware'
-import { emfilesHandler } from './emfiles-handler'
 import { resourceCleanupHandler } from './resource-cleanup-handler'
 import { Feature } from '@/@types/openapi-internal/Feature'
 import { rbacMiddleware } from '@/core/middlewares/rbac'
@@ -22,7 +21,6 @@ export const lambdaApi = (options?: { requiredFeatures?: Feature[] }) => {
     featureProtected(options?.requiredFeatures),
     metricsMiddleware(),
     resourceCleanupHandler(),
-    emfilesHandler(),
   ] as const
   return compose(...middlewares)
 }

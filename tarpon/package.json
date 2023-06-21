@@ -188,7 +188,6 @@
     "@aws-sdk/util-arn-parser": "^3.47.1",
     "@fast-csv/format": "^4.3.5",
     "@fast-csv/parse": "^4.3.6",
-    "@samwen/lambda-emfiles": "^1.1.1",
     "@sentry/integrations": "^7.7.0",
     "@sentry/serverless": "^7.7.0",
     "@slack/web-api": "^6.7.2",
