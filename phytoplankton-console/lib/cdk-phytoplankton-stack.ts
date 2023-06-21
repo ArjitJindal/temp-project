@@ -18,7 +18,7 @@ object-src 'none';
 base-uri 'self';
 connect-src 'self' https://api-js.mixpanel.com https://*.${domain} https://ipinfo.io https://*.ingest.sentry.io;
 font-src 'self' https://fonts.gstatic.com;
-frame-src 'self' https://login.console.${domain};
+frame-src 'self' https://*.${domain};
 img-src 'self' https://s.gravatar.com https://*.wp.com https://cdnjs.cloudflare.com https://platform.slack-edge.com;
 manifest-src 'self';
 media-src 'self';
