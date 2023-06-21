@@ -132,10 +132,10 @@ export class CdkTarponStack extends cdk.Stack {
       SQSQueues.WEBHOOK_DELIVERY_QUEUE_NAME,
       {
         visibilityTimeout: DEFAULT_SQS_VISIBILITY_TIMEOUT,
-        // Retry up to 3 days
         maxReceiveCount:
-          Duration.days(3).toSeconds() /
+          Duration.days(5).toSeconds() /
           DEFAULT_SQS_VISIBILITY_TIMEOUT.toSeconds(),
+        retentionPeriod: Duration.days(7),
       }
     )
 
@@ -1192,6 +1192,7 @@ export class CdkTarponStack extends cdk.Stack {
       visibilityTimeout?: Duration
       maxReceiveCount?: number
       fifo?: boolean
+      retentionPeriod?: Duration
     }
   ): Queue {
     const maxReceiveCount = options?.maxReceiveCount || 30
@@ -1206,6 +1207,7 @@ export class CdkTarponStack extends cdk.Stack {
         }),
         maxReceiveCount,
       },
+      retentionPeriod: options?.retentionPeriod,
     })
     return queue
   }

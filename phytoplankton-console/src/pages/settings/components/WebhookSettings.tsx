@@ -1,4 +1,4 @@
-import { Drawer, Switch, Tag } from 'antd';
+import { Drawer, Switch, Tag, Space } from 'antd';
 import { useCallback, useRef, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { PlusOutlined } from '@ant-design/icons';
@@ -113,17 +113,25 @@ export const WebhookSettings: React.FC = () => {
       value: (entity): WebhookConfiguration | undefined => {
         return updatedWebhooks[entity._id as string] ?? entity;
       },
+      defaultWidth: 500,
       type: {
         render: (webhook) => {
           return (
-            <Switch
-              checked={webhook?.enabled ?? false}
-              onChange={(checked) => {
-                if (webhook) {
-                  handleSaveWebhook({ ...webhook, enabled: checked });
-                }
-              }}
-            />
+            <Space style={{ alignItems: 'baseline' }}>
+              <Switch
+                checked={webhook?.enabled ?? false}
+                onChange={(checked) => {
+                  if (webhook) {
+                    handleSaveWebhook({ ...webhook, enabled: checked });
+                  }
+                }}
+              />
+              {!webhook?.enabled && webhook?.autoDisableMessage && (
+                <span>
+                  <i>{webhook?.autoDisableMessage}</i>
+                </span>
+              )}
+            </Space>
           );
         },
         stringify: (row) => (row?.enabled ? 'Yes' : 'No'),
@@ -131,8 +139,7 @@ export const WebhookSettings: React.FC = () => {
     }),
   ]);
   const handleCreateWebhook = useCallback(() => {
-    // NOTE: retryCount will be removed by FDT-82158
-    setSelectedWebhook({ webhookUrl: '', events: [], enabled: true, retryCount: 0 });
+    setSelectedWebhook({ webhookUrl: '', events: [], enabled: true });
   }, []);
 
   const webhooksListResult = usePaginatedQuery(WEBHOOKS_LIST(), async () => {

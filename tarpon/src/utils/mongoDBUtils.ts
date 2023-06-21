@@ -25,6 +25,7 @@ import { AuditLog } from '@/@types/openapi-internal/AuditLog'
 import { WebhookConfiguration } from '@/@types/openapi-internal/WebhookConfiguration'
 import { logger } from '@/core/logger'
 import { exponentialRetry } from '@/utils/retry'
+import { WebhookDeliveryAttempt } from '@/@types/openapi-internal/WebhookDeliveryAttempt'
 
 interface DBCredentials {
   username: string
@@ -728,6 +729,23 @@ export const createMongoDBCollections = async (
     )
     await webhookCollection.createIndex({
       events: 1,
+    })
+
+    try {
+      await db.createCollection(WEBHOOK_DELIVERY_COLLECTION(tenantId))
+    } catch (e) {
+      // ignore already exists
+    }
+    const webhookDeliveryCollection = db.collection<WebhookDeliveryAttempt>(
+      WEBHOOK_COLLECTION(tenantId)
+    )
+    await webhookDeliveryCollection.createIndex({
+      webhookId: 1,
+      requestStartedAt: -1,
+    })
+    await webhookDeliveryCollection.createIndex({
+      deliveryTaskId: 1,
+      deliveredAt: 1,
     })
   } catch (e) {
     logger.error(`Error in creating MongoDB collections: ${e}`)

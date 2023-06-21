@@ -18,6 +18,7 @@ import { WebhookEvent } from '@/@types/openapi-public/WebhookEvent'
 import { WebhookDeliveryTask } from '@/@types/webhook'
 import { WebhookEventType } from '@/@types/openapi-internal/WebhookEventType'
 import { createSqsEvent } from '@/test-utils/sqs-test-utils'
+import dayjs from '@/utils/dayjs'
 
 // eslint-disable-next-line @typescript-eslint/no-var-requires
 const getPort = require('get-port')
@@ -109,7 +110,6 @@ describe('Webhook delivery', () => {
         webhookUrl: webhookUrl,
         events: ['USER_STATE_UPDATED'],
         enabled: true,
-        retryCount: 0,
       })
 
       const deliveryTask: WebhookDeliveryTask = {
@@ -170,7 +170,6 @@ describe('Webhook delivery', () => {
         webhookUrl: 'http://foo',
         events: ['USER_STATE_UPDATED'],
         enabled: true,
-        retryCount: 0,
       })
 
       const deliveryTask: WebhookDeliveryTask = {
@@ -224,7 +223,6 @@ describe('Webhook delivery', () => {
         webhookUrl,
         events: ['USER_STATE_UPDATED'],
         enabled: true,
-        retryCount: 0,
       })
       const deliveryTask = {
         event: 'USER_STATE_UPDATED',
@@ -258,7 +256,6 @@ describe('Webhook delivery', () => {
         webhookUrl,
         events: ['USER_STATE_UPDATED'],
         enabled: true,
-        retryCount: 0,
       })
       const deliveryTask = {
         event: 'USER_STATE_UPDATED',
@@ -300,7 +297,6 @@ describe('Webhook delivery', () => {
         webhookUrl,
         events: ['USER_STATE_UPDATED'],
         enabled: true,
-        retryCount: 0,
       })
       const deliveryTask = {
         event: 'USER_STATE_UPDATED',
@@ -312,6 +308,103 @@ describe('Webhook delivery', () => {
         createdAt: Date.now(),
       }
       await webhookDeliveryHandler(createSqsEvent([deliveryTask]))
+    })
+
+    test('Stop retrying after 96 hours', async () => {
+      const TEST_TENANT_ID = getTestTenantId()
+      const webhookUrl = await startTestWebhookServer(
+        {
+          status: 301,
+          headers: {},
+          body: 'ERROR',
+        },
+        async () => null
+      )
+      const deliveryTask = {
+        event: 'USER_STATE_UPDATED',
+        payload: {},
+        _id: 'task_id',
+        tenantId: TEST_TENANT_ID,
+        webhookId: ACTIVE_WEBHOOK_ID,
+        createdAt: Date.now(),
+      }
+      const mongoDb = await getMongoDbClient()
+      const webhookDeliveryRepository = new WebhookDeliveryRepository(
+        TEST_TENANT_ID,
+        mongoDb
+      )
+      const webhookRepository = new WebhookRepository(TEST_TENANT_ID, mongoDb)
+      await webhookRepository.saveWebhook({
+        _id: ACTIVE_WEBHOOK_ID,
+        webhookUrl,
+        events: ['USER_STATE_UPDATED'],
+        enabled: true,
+      })
+      await webhookDeliveryRepository.addWebhookDeliveryAttempt({
+        _id: '1',
+        deliveryTaskId: deliveryTask._id,
+        webhookId: ACTIVE_WEBHOOK_ID,
+        webhookUrl: webhookUrl,
+        requestStartedAt: dayjs().subtract(4, 'day').valueOf(),
+        requestFinishedAt: dayjs().subtract(4, 'day').valueOf(),
+        success: false,
+        event: 'USER_STATE_UPDATED',
+        eventCreatedAt: dayjs().subtract(4, 'day').valueOf(),
+        request: {},
+      })
+      await webhookDeliveryHandler(createSqsEvent([deliveryTask]))
+      expect(
+        (await webhookRepository.getWebhook(ACTIVE_WEBHOOK_ID))?.enabled
+      ).toBe(false)
+    })
+    test('Keep retrying before 96 hours', async () => {
+      const TEST_TENANT_ID = getTestTenantId()
+      const webhookUrl = await startTestWebhookServer(
+        {
+          status: 301,
+          headers: {},
+          body: 'ERROR',
+        },
+        async () => null
+      )
+      const deliveryTask = {
+        event: 'USER_STATE_UPDATED',
+        payload: {},
+        _id: 'task_id',
+        tenantId: TEST_TENANT_ID,
+        webhookId: ACTIVE_WEBHOOK_ID,
+        createdAt: Date.now(),
+      }
+      const mongoDb = await getMongoDbClient()
+      const webhookDeliveryRepository = new WebhookDeliveryRepository(
+        TEST_TENANT_ID,
+        mongoDb
+      )
+      const webhookRepository = new WebhookRepository(TEST_TENANT_ID, mongoDb)
+      await webhookRepository.saveWebhook({
+        _id: ACTIVE_WEBHOOK_ID,
+        webhookUrl,
+        events: ['USER_STATE_UPDATED'],
+        enabled: true,
+      })
+      await webhookDeliveryRepository.addWebhookDeliveryAttempt({
+        _id: '1',
+        deliveryTaskId: deliveryTask._id,
+        webhookId: ACTIVE_WEBHOOK_ID,
+        webhookUrl: webhookUrl,
+        requestStartedAt: dayjs().subtract(3, 'day').valueOf(),
+        requestFinishedAt: dayjs().subtract(3, 'day').valueOf(),
+        success: false,
+        event: 'USER_STATE_UPDATED',
+        eventCreatedAt: dayjs().subtract(4, 'day').valueOf(),
+        request: {},
+      })
+      await expect(
+        webhookDeliveryHandler(createSqsEvent([deliveryTask]))
+      ).rejects.toThrow()
+      expect(
+        (await webhookRepository.getWebhook(ACTIVE_WEBHOOK_ID))?.enabled
+      ).toBe(true)
     })
   })
   describe('Invalid webhook', () => {
@@ -352,7 +445,6 @@ describe('Webhook delivery', () => {
         webhookUrl: 'http://foo',
         events: ['USER_STATE_UPDATED'],
         enabled: false,
-        retryCount: 0,
       })
       const deliveryTask = {
         event: 'USER_STATE_UPDATED',
@@ -385,7 +477,6 @@ describe('Webhook delivery', () => {
         webhookUrl: 'http://foo',
         events: [],
         enabled: true,
-        retryCount: 0,
       })
       const deliveryTask = {
         event: 'USER_STATE_UPDATED',

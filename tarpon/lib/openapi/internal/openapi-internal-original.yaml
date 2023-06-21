@@ -5345,6 +5345,9 @@ components:
         createdAt:
           type: number
           minimum: 1262300400000
+        enabledAt:
+          type: number
+          minimum: 1262300400000
         webhookUrl:
           type: string
         events:
@@ -5353,17 +5356,16 @@ components:
             $ref: ../public/openapi-public-original.yaml#/components/schemas/WebhookEventType
         enabled:
           type: boolean
+        autoDisableMessage:
+          type: string
         secret:
           type: string
         expiringSecret:
           type: string
-        retryCount:
-          type: number
       required:
         - webhookUrl
         - events
         - enabled
-        - retryCount
     WebhookSecrets:
       title: WebhookSecrets
       x-stoplight:

@@ -27,6 +27,22 @@ export class WebhookDeliveryRepository {
       .next()
   }
 
+  public async getFirstWebhookDeliveryAttempt(
+    deliveryTaskId: string
+  ): Promise<WebhookDeliveryAttempt | null> {
+    const db = this.mongoDb.db()
+    const collection = db.collection<WebhookDeliveryAttempt>(
+      WEBHOOK_DELIVERY_COLLECTION(this.tenantId)
+    )
+    return collection
+      .find({
+        deliveryTaskId,
+      })
+      .sort({ deliveredAt: 1 })
+      .limit(1)
+      .next()
+  }
+
   public async getWebhookDeliveryAttempts(
     webhookId: string,
     limit: number

@@ -61,7 +61,6 @@ describe('Create webhook delivery tasks', () => {
       webhookUrl: 'https://example.com',
       events: ['USER_STATE_UPDATED'],
       enabled: true,
-      retryCount: 0,
     }
     await webhookRepository.saveWebhook(webhook)
 
@@ -119,7 +118,6 @@ describe('Create webhook delivery tasks', () => {
       webhookUrl: 'https://example.com',
       events: ['USER_STATE_UPDATED'],
       enabled: true,
-      retryCount: 0,
     }
     await webhookRepository.saveWebhook(webhook)
     const user = getTestUser({
@@ -173,7 +171,6 @@ describe('Create webhook delivery tasks', () => {
       webhookUrl: 'https://example.com',
       events: ['USER_STATE_UPDATED'],
       enabled: true,
-      retryCount: 0,
     }
     await webhookRepository.saveWebhook(webhook)
     const user = getTestUser({

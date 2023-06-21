@@ -25,14 +25,15 @@ import {
   getContextStorage,
   updateLogMetadata,
 } from '@/core/utils/context'
+import dayjs from '@/utils/dayjs'
+
+const MAX_RETRY_HOURS = 4 * 24
 
 function getNotExpiredSecrets(keys: SecretsManagerWebhookSecrets): string[] {
   return Object.keys(keys).filter(
     (secret) => (keys?.[secret] || Number.MAX_SAFE_INTEGER) > Date.now()
   )
 }
-
-const MAX_RETRY_ATTEMPTS = Number.MAX_SAFE_INTEGER
 
 async function deliverWebhookEvent(
   webhook: WebhookConfiguration,
@@ -83,24 +84,32 @@ async function deliverWebhookEvent(
       webhook.webhookUrl,
       fetchOptions
     )
+    let retryErrorMessage = ''
     if (response && response.status >= 300 && response.status < 600) {
-      throw new Error(
-        `Client server returned status ${response.status}. Will retry`
-      )
-      if (webhook._id) {
-        await webhookRepository.incrementRetryCount(webhook._id as string)
-      }
+      retryErrorMessage = `Client server returned status ${response.status}. Will retry`
     } else if (!response) {
-      throw new Error('Client server did not respond. Will retry')
-      if (webhook._id) {
-        await webhookRepository.incrementRetryCount(webhook._id as string)
-      }
-    } else {
-      logger.info(
-        `Successfully delivered event ${webhookDeliveryTask.event} to ${webhook.webhookUrl}`
+      retryErrorMessage = 'Client server did not respond. Will retry'
+    }
+    if (retryErrorMessage) {
+      const firstAttempt =
+        await webhookDeliveryRepository.getFirstWebhookDeliveryAttempt(
+          webhookDeliveryTask._id
+        )
+
+      const retryHours = dayjs().diff(
+        dayjs(firstAttempt?.requestStartedAt),
+        'hour'
       )
-      if (webhook._id) {
-        await webhookRepository.resetRetryCount(webhook._id as string)
+      if (retryHours >= MAX_RETRY_HOURS) {
+        logger.error(
+          `Failed to deliver event ${webhookDeliveryTask.event} to ${webhook.webhookUrl} after ${MAX_RETRY_HOURS} hours. Will not retry`
+        )
+        await webhookRepository.disableWebhook(
+          webhook._id as string,
+          `Automatically deactivated at ${dayjs().format()} by the system as it has reached the maximum retry limit (${MAX_RETRY_HOURS} hours)`
+        )
+      } else {
+        throw new Error(retryErrorMessage)
       }
     }
   } catch (e) {
@@ -119,20 +128,7 @@ async function deliverWebhookEvent(
       logger.info(
         `Successfully delivered event ${webhookDeliveryTask.event} to ${webhook.webhookUrl}`
       )
-    } else {
-      if (webhook._id) {
-        const retryCount = await webhookRepository.getRetryCount(
-          webhook._id as string
-        )
-        if (retryCount >= MAX_RETRY_ATTEMPTS) {
-          logger.error(
-            `Failed to deliver event ${webhookDeliveryTask.event} to ${webhook.webhookUrl} after ${MAX_RETRY_ATTEMPTS} attempts. Will not retry`
-          )
-          await webhookRepository.disableWebhook(webhook._id as string)
-        }
-      }
     }
-
     await webhookDeliveryRepository.addWebhookDeliveryAttempt({
       _id: uuidv4(),
       deliveryTaskId: webhookDeliveryTask._id,

@@ -43,13 +43,21 @@ export class WebhookRepository {
     const collection = db.collection<WebhookConfiguration>(
       WEBHOOK_COLLECTION(this.tenantId)
     )
+    const existingWebhook = webhook._id
+      ? await this.getWebhook(webhook._id)
+      : null
     const newWebhook: WebhookConfiguration = {
       _id: webhook._id ?? uuidv4(),
       createdAt: webhook.createdAt ?? Date.now(),
       webhookUrl: webhook.webhookUrl,
       events: webhook.events,
       enabled: webhook.enabled ?? true,
-      retryCount: 0,
+      enabledAt:
+        webhook.enabledAt ??
+        (!existingWebhook?.enabled && webhook.enabled
+          ? Date.now()
+          : existingWebhook?.enabledAt),
+      autoDisableMessage: '',
     }
     await collection.replaceOne({ _id: newWebhook._id }, newWebhook, {
       upsert: true,
@@ -57,41 +65,15 @@ export class WebhookRepository {
     return newWebhook
   }
 
-  public async disableWebhook(id: string): Promise<void> {
+  public async disableWebhook(id: string, message: string): Promise<void> {
     const db = this.mongoDb.db()
     const collection = db.collection<WebhookConfiguration>(
       WEBHOOK_COLLECTION(this.tenantId)
     )
     await collection.findOneAndUpdate(
       { _id: id },
-      { $set: { enabled: false, retryCount: 0 } }
+      { $set: { enabled: false, autoDisableMessage: message } }
     )
-  }
-
-  public async incrementRetryCount(id: string): Promise<void> {
-    const db = this.mongoDb.db()
-    const collection = db.collection<WebhookConfiguration>(
-      WEBHOOK_COLLECTION(this.tenantId)
-    )
-
-    await collection.findOneAndUpdate({ _id: id }, { $inc: { retryCount: 1 } })
-  }
-
-  public async resetRetryCount(id: string): Promise<void> {
-    const db = this.mongoDb.db()
-    const collection = db.collection<WebhookConfiguration>(
-      WEBHOOK_COLLECTION(this.tenantId)
-    )
-    await collection.findOneAndUpdate({ _id: id }, { $set: { retryCount: 0 } })
-  }
-
-  public async getRetryCount(id: string): Promise<number> {
-    const db = this.mongoDb.db()
-    const collection = db.collection<WebhookConfiguration>(
-      WEBHOOK_COLLECTION(this.tenantId)
-    )
-    const webhook = await collection.findOne({ _id: id })
-    return webhook?.retryCount ?? 0
   }
 
   public async getWebhook(id: string): Promise<WebhookConfiguration | null> {
