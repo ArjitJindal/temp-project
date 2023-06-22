@@ -100,6 +100,14 @@ export const DynamoDbKeys = {
       if (!bankCode) {
         bankCode = (paymentDetails as any).bankId
       }
+
+      if (!accountNumber) {
+        logger.warn(
+          'Payment identifier for GENERIC_BANK_IDENTIFIER - Account Number not found'
+        )
+        return null
+      }
+
       // We keep the legacy identifier to avoid migrating data in DynamoDB
       const legacyIdentifier =
         accountNumber && accountType
