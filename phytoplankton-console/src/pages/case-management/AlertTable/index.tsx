@@ -381,7 +381,7 @@ export default function AlertTable(props: Props) {
   }, [rules.ruleInstances, rules.rules]);
 
   const extraFilters = useMemo(
-    () => makeExtraFilters(isPulseEnabled, ruleOptions, hideUserFilters),
+    () => makeExtraFilters(isPulseEnabled, ruleOptions, hideUserFilters, 'ALERTS'),
     [isPulseEnabled, ruleOptions, hideUserFilters],
   );
   let sarDemoButton: any = () => null;

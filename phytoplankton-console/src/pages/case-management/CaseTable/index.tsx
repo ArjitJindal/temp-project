@@ -323,7 +323,7 @@ export default function CaseTable(props: Props) {
       queryResults={tableQueryResult}
       params={params}
       onChangeParams={onChangeParams}
-      extraFilters={makeExtraFilters(isPulseEnabled, props.rules, false)}
+      extraFilters={makeExtraFilters(isPulseEnabled, props.rules, false, 'CASES')}
       selectionInfo={
         selectedCases.length
           ? {

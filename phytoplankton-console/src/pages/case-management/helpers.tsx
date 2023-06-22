@@ -120,6 +120,7 @@ export const makeExtraFilters = (
   isPulseEnabled: boolean,
   ruleOptions: { value: string; label: string }[],
   hideUserFilters: boolean,
+  table: 'ALERTS' | 'CASES',
 ): ExtraFilter<TableSearchParams>[] =>
   denseArray([
     {
@@ -210,7 +211,7 @@ export const makeExtraFilters = (
         />
       ),
     },
-    {
+    table === 'ALERTS' && {
       key: 'originMethodFilterId',
       title: 'Origin Method',
       showFilterByDefault: false,
@@ -227,7 +228,7 @@ export const makeExtraFilters = (
         />
       ),
     },
-    {
+    table === 'ALERTS' && {
       key: 'destinationMethodFilterId',
       title: 'Destination Method',
       showFilterByDefault: false,
