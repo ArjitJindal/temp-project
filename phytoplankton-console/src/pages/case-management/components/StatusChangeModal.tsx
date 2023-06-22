@@ -260,8 +260,8 @@ export default function StatusChangeModal(props: Props) {
             />
           </Form.Item>
           {displayCloseRelatedCases && newStatus === 'ESCALATED' ? (
-            <Form.Item name="closeRelatedCase" label="Close related case">
-              <Checkbox />
+            <Form.Item name="closeRelatedCase">
+              <Checkbox label="Close related cases" />
             </Form.Item>
           ) : undefined}
           {alertMessage ? (
