@@ -239,23 +239,6 @@ export class CaseRepository {
       })
     }
 
-    if (params.filterUserKYCStatus != null) {
-      conditions.push({
-        $or: [
-          {
-            'caseUsers.origin.kycStatusDetails.status': {
-              $in: params.filterUserKYCStatus,
-            },
-          },
-          {
-            'caseUsers.destination.kycStatusDetails.status': {
-              $in: params.filterUserKYCStatus,
-            },
-          },
-        ],
-      })
-    }
-
     if (params.filterUserState != null) {
       conditions.push({
         $or: [

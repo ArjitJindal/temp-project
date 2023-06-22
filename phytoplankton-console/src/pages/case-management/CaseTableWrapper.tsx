@@ -50,7 +50,6 @@ export default function CaseTableWrapper(props: {
       originCountryFilter,
       destinationCountryFilter,
       businessIndustryFilter,
-      kycStatuses,
       riskLevels,
       userStates,
       showCases,
@@ -115,7 +114,6 @@ export default function CaseTableWrapper(props: {
           filterTransactionAmoutAbove: amountGreaterThanFilter,
           filterTransactionAmoutBelow: amountLessThanFilter,
           filterBusinessIndustries: businessIndustryFilter,
-          filterUserKYCStatus: kycStatuses,
           filterRiskLevel: riskLevels,
           filterUserState: userStates,
           filterAssignmentsIds:

@@ -140,20 +140,9 @@ export default function CaseTable(props: Props) {
       helper.simple<'user.kycStatusDetails'>({
         title: 'KYC status',
         key: 'user.kycStatusDetails',
-        id: 'kycStatuses',
-        filtering: true,
         icon: <AccountCircleLineIcon />,
         type: {
           render: (value) => (value ? <UserKycStatusTag kycStatusDetails={value} /> : <></>),
-          autoFilterDataType: {
-            kind: 'select',
-            options: USER_STATES.map((state) => ({
-              label: humanizeConstant(state),
-              value: state,
-            })),
-            mode: 'MULTIPLE',
-            displayMode: 'list',
-          },
         },
       }),
       ...((isPulseEnabled

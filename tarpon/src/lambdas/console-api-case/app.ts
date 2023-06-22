@@ -137,7 +137,6 @@ export const casesHandler = lambdaApi()(
         filterOriginCountry,
         filterDestinationCountry,
         filterBusinessIndustries,
-        filterUserKYCStatus,
         filterUserState,
         filterRiskLevel,
         filterAssignmentsIds,
@@ -202,9 +201,6 @@ export const casesHandler = lambdaApi()(
         filterDestinationCountry,
         filterBusinessIndustries: filterBusinessIndustries
           ? filterBusinessIndustries.split(',')
-          : undefined,
-        filterUserKYCStatus: filterUserKYCStatus
-          ? filterUserKYCStatus.split(',')
           : undefined,
         filterUserState: filterUserState
           ? filterUserState.split(',')

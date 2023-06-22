@@ -2,7 +2,6 @@ import {
   AlertStatus,
   AuditLogType,
   CaseStatus,
-  KYCStatus,
   PaymentMethod,
   RiskLevel,
   RuleAction,
@@ -40,7 +39,6 @@ export type CommonCaseParams = {
   destinationCountryFilter: string;
   businessIndustryFilter: string[];
   filterTypes: AuditLogType[];
-  kycStatuses: KYCStatus[];
   userStates: UserState[];
   riskLevels: RiskLevel[];
   alertId: string;
