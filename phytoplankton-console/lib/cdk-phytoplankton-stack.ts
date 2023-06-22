@@ -7,16 +7,24 @@ import * as cloudfront from 'aws-cdk-lib/aws-cloudfront';
 import * as s3deploy from 'aws-cdk-lib/aws-s3-deployment';
 import { CfnOutput, Duration, RemovalPolicy } from 'aws-cdk-lib';
 import { CnameRecord, HostedZone } from 'aws-cdk-lib/aws-route53';
+import { RegionInfo } from '@aws-cdk/region-info';
 import { userAlias } from './configs/config-dev-user';
 import type { Config } from './configs/config';
 
-function contentSecurityPolicy(domain: string) {
+const DEPLOYED_REGIONS = ['ap-southeast-1', 'ap-south-1', 'eu-central-1', 'eu-west-2', 'us-west-2'];
+function contentSecurityPolicy(domain: string, stage: string) {
+  const buckets = DEPLOYED_REGIONS.flatMap((region) =>
+    ['tmp', 'document', 'import'].map(
+      (tarponBucket) =>
+        `https://tarpon-${tarponBucket}-${stage}-${region}.s3.${region}.amazonaws.com`,
+    ),
+  ).join(' ');
   return `default-src 'self';
 script-src 'self';
 style-src 'self' 'unsafe-inline' https://fonts.googleapis.com;
 object-src 'none';
 base-uri 'self';
-connect-src 'self' https://api-js.mixpanel.com https://*.${domain} https://ipinfo.io https://*.ingest.sentry.io;
+connect-src 'self' ${buckets} https://api-js.mixpanel.com https://*.${domain} https://ipinfo.io https://*.ingest.sentry.io;
 font-src 'self' https://fonts.gstatic.com;
 frame-src 'self' https://*.${domain};
 img-src 'self' https://s.gravatar.com https://*.wp.com https://cdnjs.cloudflare.com https://platform.slack-edge.com;
@@ -34,6 +42,7 @@ export class CdkPhytoplanktonStack extends cdk.Stack {
     const cloudfrontOAI = new cloudfront.OriginAccessIdentity(this, 'cloudfront-OAI', {
       comment: `OAI for ${config.SITE_DOMAIN}`,
     });
+    RegionInfo;
 
     // Content bucket
     const siteBucket = new s3.Bucket(this, 'SiteBucket', {
@@ -122,7 +131,7 @@ export class CdkPhytoplanktonStack extends cdk.Stack {
           Name: `ContentSecurity${userAlias()}`,
           SecurityHeadersConfig: {
             ContentSecurityPolicy: {
-              ContentSecurityPolicy: contentSecurityPolicy(domainName),
+              ContentSecurityPolicy: contentSecurityPolicy(domainName, config.stage),
               Override: true,
             },
           },
