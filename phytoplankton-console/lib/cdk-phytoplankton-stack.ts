@@ -7,7 +7,6 @@ import * as cloudfront from 'aws-cdk-lib/aws-cloudfront';
 import * as s3deploy from 'aws-cdk-lib/aws-s3-deployment';
 import { CfnOutput, Duration, RemovalPolicy } from 'aws-cdk-lib';
 import { CnameRecord, HostedZone } from 'aws-cdk-lib/aws-route53';
-import { RegionInfo } from '@aws-cdk/region-info';
 import { userAlias } from './configs/config-dev-user';
 import type { Config } from './configs/config';
 
@@ -42,7 +41,6 @@ export class CdkPhytoplanktonStack extends cdk.Stack {
     const cloudfrontOAI = new cloudfront.OriginAccessIdentity(this, 'cloudfront-OAI', {
       comment: `OAI for ${config.SITE_DOMAIN}`,
     });
-    RegionInfo;
 
     // Content bucket
     const siteBucket = new s3.Bucket(this, 'SiteBucket', {
