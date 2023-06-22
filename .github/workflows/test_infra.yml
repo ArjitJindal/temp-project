@@ -13,6 +13,11 @@ on:
     branches: [main]
     paths:
       - 'infra/**'
+  workflow_call:
+    inputs:
+      slack:
+        required: false
+        type: boolean
 jobs:
   test:
     name: test-infra
@@ -33,3 +38,15 @@ jobs:
         working-directory: "tarpon"
         env:
           NODE_OPTIONS: "--max-old-space-size=4096"
+      - name: Post to a Slack channel on failure
+        id: slack
+        uses: slackapi/slack-github-action@v1.24.0
+        if: ${{ inputs.slack && failure() }}
+        with:
+          channel-id: 'C03L5KRE2E8'
+          payload: |
+            {
+              "text": "main branch failed for tarpon!"
+            }
+        env:
+          SLACK_BOT_TOKEN: ${{ secrets.SLACK_BOT_TOKEN }}

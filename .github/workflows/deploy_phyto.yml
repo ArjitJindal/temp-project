@@ -1,4 +1,4 @@
-name: Trigger phytoplankton codepipeline
+name: Deploy Phytoplankton
 on:
   workflow_dispatch:
   pull_request:
@@ -8,8 +8,13 @@ on:
     paths:
       - 'phytoplankton-console/**'
 jobs:
+  test:
+    uses: ./.github/workflows/test_phyto.yml
+    with:
+      slack: true
   build:
     name: Deploy Phytoplankton
+    needs: test
     runs-on: ubuntu-latest
     steps:
       - name: Trigger AWS CodePipeline

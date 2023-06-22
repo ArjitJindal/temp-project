@@ -1,4 +1,4 @@
-name: Trigger tarpon codepipeline
+name: Deploy Tarpon
 on:
   workflow_dispatch:
   pull_request:
@@ -8,11 +8,17 @@ on:
     paths:
       - 'tarpon/**'
 jobs:
-  test:
+  test-tarpon:
     uses: ./.github/workflows/test_tarpon.yml
+    with:
+      slack: true
+  test-infra:
+    uses: ./.github/workflows/test_infra.yml
+    with:
+      slack: true
   deploy:
     name: Deploy Tarpon
-    needs: test
+    needs: [test-tarpon, test-infra]
     runs-on: ubuntu-latest
     steps:
       - name: Trigger AWS CodePipeline
