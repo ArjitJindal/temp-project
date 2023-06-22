@@ -1103,12 +1103,13 @@ const _RULES_LIBRARY: Array<
       checkReceiver: 'all',
     }
     return {
-      id: 'R-127',
+      id: 'R-94',
       type: 'TRANSACTION',
-      name: 'Same payment details used too many times',
-      description: 'Same payment details used >= x times in unit time t',
+      name: 'Payment identifier used too frequently',
+      description:
+        'Particular payment identifier (card fingerprint, account number etc.) is used too many times at the origin or destination of a transaction within a specified time period (1 day, 2 hours etc.)',
       descriptionTemplate:
-        'Same payment details used {{ numberOfUses }} times within {{ format-time-window parameters.timeWindow }}, which is more or equal than threshold of {{ parameters.threshold }}',
+        'Same payment identifier used {{ numberOfUses }} times within {{ format-time-window parameters.timeWindow }}, which is more or equal than threshold of {{ parameters.threshold }}',
       defaultParameters,
       defaultAction: 'FLAG',
       ruleImplementationName: 'same-payment-details',
