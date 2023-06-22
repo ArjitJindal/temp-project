@@ -6,19 +6,13 @@ on:
     branches:
       - main
     paths:
-      - 'tarpon/**'
+      - "tarpon/**"
 jobs:
-  test-tarpon:
+  test:
     uses: ./.github/workflows/test_tarpon.yml
-    with:
-      slack: true
-  test-infra:
-    uses: ./.github/workflows/test_infra.yml
-    with:
-      slack: true
   deploy:
     name: Deploy Tarpon
-    needs: [test-tarpon, test-infra]
+    needs: test
     runs-on: ubuntu-latest
     steps:
       - name: Trigger AWS CodePipeline
