@@ -29,6 +29,10 @@ export default function SettingsProvider(props: {
   const [settings, setSettings] = useState<TenantSettings>({});
   const [features, setFeatures] = useState<FeatureName[] | null>(null);
   useEffect(() => {
+    if (!_.isEmpty(settings)) {
+      return;
+    }
+
     async function fetch() {
       const settings = await measure(() => api.getTenantsSettings(), 'Tenant Settings');
       setSettings(settings);
@@ -38,7 +42,7 @@ export default function SettingsProvider(props: {
       setFeatures(globalFeatures ?? []);
       console.error(e);
     });
-  }, [api, globalFeatures, measure]);
+  }, [api, globalFeatures, measure, settings]);
   if (features == null) {
     return <PageLoading />;
   }

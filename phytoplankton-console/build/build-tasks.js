@@ -130,6 +130,7 @@ async function buildCode(env, options) {
               release,
               include: './dist',
               authToken: process.env.SENTRY_AUTH_TOKEN,
+              cleanArtifacts: true,
             }),
           ]),
     ],
