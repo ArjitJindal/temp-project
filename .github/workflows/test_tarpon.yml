@@ -16,6 +16,7 @@ on:
     branches: [main]
     paths:
       - "tarpon/**"
+  workflow_call:
 jobs:
   test:
     name: test-tarpon
