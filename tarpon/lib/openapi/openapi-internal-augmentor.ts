@@ -151,8 +151,7 @@ export const ConsoleApiPathToLambda: any = {
     StackConstants.CONSOLE_API_NARRATIVE_TEMPLATE_FUNCTION_NAME,
   '/narrative-templates':
     StackConstants.CONSOLE_API_NARRATIVE_TEMPLATE_FUNCTION_NAME,
-  '/report-schemas': StackConstants.CONSOLE_API_SAR_FUNCTION_NAME,
-  '/report-schemas/{schemaId}': StackConstants.CONSOLE_API_SAR_FUNCTION_NAME,
+  '/report-types': StackConstants.CONSOLE_API_SAR_FUNCTION_NAME,
   '/reports/draft': StackConstants.CONSOLE_API_SAR_FUNCTION_NAME,
   '/reports': StackConstants.CONSOLE_API_SAR_FUNCTION_NAME,
   '/reports/{reportId}': StackConstants.CONSOLE_API_SAR_FUNCTION_NAME,

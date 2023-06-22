@@ -3619,9 +3619,9 @@ paths:
           in: path
           name: narrativeTemplateId
           required: true
-  /report-schemas:
+  /report-types:
     get:
-      summary: Get a list of report schemas
+      summary: Get a list of report types
       tags: []
       x-flagright:
         permissions:
@@ -3641,35 +3641,8 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ReportSchemasResponse'
-      operationId: get-report-schemas
-  '/report-schemas/{schemaId}':
-    parameters:
-      - schema:
-          type: string
-        name: schemaId
-        in: path
-        required: true
-    get:
-      summary: Get a report schema
-      tags: []
-      x-flagright:
-        permissions:
-          - reports:schema:read
-      responses:
-        '200':
-          description: OK
-          content:
-            application/json:
-              schema:
-                type: object
-                properties: {}
-            application/xml:
-              schema:
-                $ref: '#/components/schemas/ReportSchema'
-      operationId: get-report-schemas-reportId
-      description: ''
-      parameters: []
+                $ref: '#/components/schemas/ReportTypesResponse'
+      operationId: get-report-types
   /reports/draft:
     post:
       summary: Get a report draft
@@ -3689,7 +3662,7 @@ paths:
         - schema:
             type: string
           in: query
-          name: schemaId
+          name: reportTypeId
           required: true
         - schema:
             type: array
@@ -6935,19 +6908,10 @@ components:
         id: mqa9mvj3lig5w
       type: object
       required:
-        - id
-        - type
-        - country
         - reportSchema
         - transactionSchema
         - indicators
       properties:
-        id:
-          type: string
-        type:
-          $ref: '#/components/schemas/ReportType'
-        country:
-          $ref: ../public/openapi-public-original.yaml#/components/schemas/CountryCode
         reportSchema:
           type: object
         transactionSchema:
@@ -6964,6 +6928,27 @@ components:
                 type: string
               description:
                 type: string
+    ReportType:
+      title: ReportType
+      x-stoplight:
+        id: mqa9mvj3lig5w
+      type: object
+      required:
+        - id
+        - type
+        - countryCode
+        - country
+      properties:
+        id:
+          type: string
+        type:
+          type: string
+        implemented:
+          type: boolean
+        country:
+          type: string
+        countryCode:
+          $ref: ../public/openapi-public-original.yaml#/components/schemas/CountryCode
     ReportRevision:
       title: ReportRevision
       type: object
@@ -6986,7 +6971,7 @@ components:
         - name
         - description
         - createdById
-        - schemaId
+        - reportTypeId
         - caseId
         - status
         - createdAt
@@ -7008,10 +6993,11 @@ components:
             - draft
         caseId:
           type: string
-        schemaId:
+        reportTypeId:
           type: string
         schema:
           $ref: '#/components/schemas/ReportSchema'
+          readOnly: true
         createdById:
           type: string
         createdByName:
@@ -7055,17 +7041,8 @@ components:
                 type: string
               transaction:
                 type: object
-    ReportType:
-      title: ReportType
-      x-stoplight:
-        id: qatzyvtktpdmt
-      type: string
-      enum:
-        - SAR
-        - STR
-        - CTR
-    ReportSchemasResponse:
-      title: ReportSchemasResponse
+    ReportTypesResponse:
+      title: ReportTypesResponse
       x-stoplight:
         id: h1kn4gtshio13
       type: object
@@ -7075,7 +7052,7 @@ components:
         data:
           type: array
           items:
-            $ref: '#/components/schemas/ReportSchema'
+            $ref: '#/components/schemas/ReportType'
       required:
         - total
         - data

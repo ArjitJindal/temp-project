@@ -1,8 +1,7 @@
 import * as xml2js from 'xml2js'
-import { ReportGenerator } from '../..'
+import { InternalReportType, PopulatedSchema, ReportGenerator } from '../..'
 import { indicators, KenyaReportSchema, KenyaTransactionSchema } from './schema'
 import { Case } from '@/@types/openapi-internal/Case'
-import { ReportSchema } from '@/@types/openapi-internal/ReportSchema'
 import { Account } from '@/@types/openapi-internal/Account'
 import { InternalBusinessUser } from '@/@types/openapi-internal/InternalBusinessUser'
 import { CardDetails } from '@/@types/openapi-public/CardDetails'
@@ -20,23 +19,19 @@ import { Address } from '@/@types/openapi-internal/Address'
 import { InternalConsumerUser } from '@/@types/openapi-internal/InternalConsumerUser'
 
 export class KenyaSARReportGenerator implements ReportGenerator {
-  getSchema(): ReportSchema {
+  getType(): InternalReportType {
     return {
-      id: 'KE-SAR',
+      countryCode: 'KE',
       type: 'SAR',
-      country: 'KE',
-      transactionSchema: KenyaTransactionSchema,
-      reportSchema: KenyaReportSchema,
-      indicators,
     }
   }
 
-  public prepopulate(
+  public getPopulatedSchema(
     reportId: string,
     c: Case,
     transactions: InternalTransaction[],
     _reporter: Account
-  ): ReportParameters {
+  ): PopulatedSchema {
     const firstTxn =
       transactions && transactions.length > 0 ? transactions[0] : undefined
 
@@ -46,7 +41,7 @@ export class KenyaSARReportGenerator implements ReportGenerator {
       ;[firstName, lastName] = _reporter ? _reporter.name.split(' ') : ['', '']
     }
 
-    return {
+    const params = {
       indicators: [],
       report: {
         submission_code: 'E',
@@ -98,6 +93,17 @@ export class KenyaSARReportGenerator implements ReportGenerator {
             },
           }
         }) || [],
+    }
+
+    const schema = {
+      transactionSchema: KenyaTransactionSchema,
+      reportSchema: KenyaReportSchema,
+      indicators,
+    }
+
+    return {
+      params,
+      schema,
     }
   }
 

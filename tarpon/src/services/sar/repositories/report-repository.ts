@@ -41,10 +41,17 @@ export class ReportRepository {
 
     const reportId = report.id ?? (await this.getId())
 
+    const existingReport = await collection.findOne({ id: reportId })
     const newReport: Report = {
       ...report,
       id: reportId,
     }
+
+    // Schema is immutable once the initial report is created.
+    if (existingReport) {
+      newReport.schema = existingReport.schema
+    }
+
     await collection.replaceOne(
       {
         _id: reportId as any,

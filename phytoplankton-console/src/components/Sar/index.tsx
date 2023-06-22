@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { Alert, Col, Row } from 'antd';
-import _ from 'lodash';
 import { useMutation } from '@tanstack/react-query';
+import { uniqBy } from 'lodash';
 import Button from '../library/Button';
 import Modal from '../ui/Modal';
 import Select from '../library/Select';
@@ -10,7 +10,7 @@ import { PropertyListLayout } from '@/pages/rules/RuleConfigurationDrawer/JsonSc
 import ErrorWarningFillIcon from '@/components/ui/icons/Remix/system/error-warning-fill.react.svg';
 import { useApi } from '@/api';
 import SarReportDrawer from '@/components/Sar/SarReportDrawer';
-import { Report, ReportSchema, ReportSchemasResponse } from '@/apis';
+import { Report, ReportTypesResponse } from '@/apis';
 import { useQuery } from '@/utils/queries/hooks';
 import { REPORT_SCHEMAS } from '@/utils/queries/keys';
 import AsyncResourceRenderer from '@/components/common/AsyncResourceRenderer';
@@ -24,19 +24,19 @@ export function SarButton({
   transactionIds: string[];
 }) {
   const api = useApi();
-  const queryResult = useQuery<ReportSchemasResponse>(REPORT_SCHEMAS(), () => {
-    return api.getReportSchemas();
+  const queryResult = useQuery<ReportTypesResponse>(REPORT_SCHEMAS(), () => {
+    return api.getReportTypes();
   });
 
   const [isModalVisible, setIsModalVisible] = useState(false);
-  const [reportType, setReportType] = useState<string>();
-  const [schemaId, setSchemaId] = useState<string>();
+  const [country, setCountry] = useState<string>();
+  const [reportTypeId, setReportTypeId] = useState<string>();
 
   const draft = useMutation<Report, unknown, string>(
-    async (schemaId) => {
+    async (reportTypeId) => {
       return api.getReportsDraft({
         caseId,
-        schemaId,
+        reportTypeId,
         transactionIds,
       });
     },
@@ -53,79 +53,83 @@ export function SarButton({
       <Button type="TETRIARY" onClick={() => setIsModalVisible(true)}>
         Generate report
       </Button>
-      <AsyncResourceRenderer<ReportSchemasResponse> resource={queryResult.data}>
-        {(result) => (
-          <>
-            <Modal
-              title="Generate report"
-              isOpen={isModalVisible}
-              onCancel={() => setIsModalVisible(false)}
-              okText="Generate"
-              okProps={{
-                disabled: !schemaId,
-              }}
-              onOk={() => {
-                if (schemaId) {
-                  draft.mutate(schemaId);
-                }
-              }}
-            >
-              <PropertyListLayout>
+      <Modal
+        title="Generate report"
+        isOpen={isModalVisible}
+        onCancel={() => setIsModalVisible(false)}
+        okText="Generate"
+        okProps={{
+          disabled: !reportTypeId,
+        }}
+        onOk={() => {
+          if (reportTypeId) {
+            draft.mutate(reportTypeId);
+          }
+        }}
+      >
+        <AsyncResourceRenderer<ReportTypesResponse> resource={queryResult.data}>
+          {(result) => (
+            <PropertyListLayout>
+              <Label label={'Select Jurisdiction'}>
+                <Select
+                  value={country}
+                  options={uniqBy(
+                    result.data?.map((s) => {
+                      return {
+                        label: s.country,
+                        value: s.countryCode,
+                      };
+                    }),
+                    'value',
+                  )}
+                  onChange={(country) => {
+                    setCountry(country);
+                  }}
+                />
+              </Label>
+              {country && (
                 <Label label={'Select report type'}>
                   <Select
-                    value={reportType}
-                    options={_.uniq(result.data?.map((rs) => rs.type)).map((type) => ({
-                      label: type,
-                      value: type as string,
-                    }))}
-                    onChange={setReportType}
+                    value={reportTypeId}
+                    options={result.data
+                      ?.filter((t) => t.countryCode == country)
+                      .map((type) => ({
+                        label: type.type,
+                        value: type.id,
+                        isDisabled: !type.implemented,
+                      }))}
+                    onChange={(reportTypeId) => {
+                      setReportTypeId(reportTypeId);
+                    }}
                   />
                 </Label>
-                {reportType && (
-                  <Label label={'Select Jurisdiction'}>
-                    <Select
-                      value={schemaId}
-                      options={result.data
-                        ?.filter((r) => r.type == reportType)
-                        .map((s: ReportSchema) => {
-                          return {
-                            label: s.country,
-                            value: s.id as string,
-                          };
-                        })}
-                      onChange={(schemaId) => {
-                        setSchemaId(schemaId);
-                      }}
-                    />
-                  </Label>
-                )}
-                <Alert
-                  style={{ marginTop: 10 }}
-                  description={
-                    <Row style={{ flexFlow: 'row' }}>
-                      <Col>
-                        <ErrorWarningFillIcon width={14} style={{ color: 'orange' }} />
-                      </Col>
-                      <Col style={{ paddingLeft: 5 }}>
-                        A maximum of 20 transactions can be selected to file an STR/SAR. Please
-                        contact Flagright if the limit needs to be increased.
-                      </Col>
-                    </Row>
-                  }
-                  type="warning"
-                />
-              </PropertyListLayout>
-            </Modal>
-            {draft.data && (
-              <SarReportDrawer
-                initialReport={draft.data}
-                isVisible={!!draft.data}
-                onChangeVisibility={() => draft.reset()}
+              )}
+              <Alert
+                style={{ marginTop: 10 }}
+                description={
+                  <Row style={{ flexFlow: 'row' }}>
+                    <Col>
+                      <ErrorWarningFillIcon width={14} style={{ color: 'orange' }} />
+                    </Col>
+                    <Col style={{ paddingLeft: 5 }}>
+                      A maximum of 20 transactions can be selected to file an STR/SAR. Please
+                      contact Flagright if the limit needs to be increased.
+                    </Col>
+                  </Row>
+                }
+                type="warning"
               />
-            )}
-          </>
-        )}
-      </AsyncResourceRenderer>
+            </PropertyListLayout>
+          )}
+        </AsyncResourceRenderer>
+      </Modal>
+      {draft.data && (
+        <SarReportDrawer
+          initialReport={draft.data}
+          isVisible={!!draft.data}
+          onChangeVisibility={() => draft.reset()}
+        />
+      )}
     </>
   );
 }
