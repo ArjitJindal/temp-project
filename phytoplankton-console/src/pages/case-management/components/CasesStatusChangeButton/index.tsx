@@ -27,6 +27,7 @@ interface Props {
     { status: CaseStatus; actionLabel: 'Send back' | 'Escalate' }
   >;
   onSaved: () => void;
+  isDisabled?: boolean;
 }
 
 export default function CasesStatusChangeButton(props: Props) {
@@ -43,6 +44,7 @@ export default function CasesStatusChangeButton(props: Props) {
     },
     buttonProps = {},
     statusTransitions,
+    isDisabled = false,
   } = props;
   return (
     <>
@@ -51,6 +53,7 @@ export default function CasesStatusChangeButton(props: Props) {
         status={caseStatus}
         buttonProps={buttonProps}
         statusTransitions={statusTransitions}
+        isDisabled={isDisabled}
       >
         {({ isVisible, setVisible, newStatus }) => (
           <CasesStatusChangeModal

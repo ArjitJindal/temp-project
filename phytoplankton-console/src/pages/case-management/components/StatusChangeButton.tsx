@@ -59,10 +59,11 @@ interface Props {
   };
   statusTransitions?: Record<CaseStatus, { status: CaseStatus; actionLabel: string }>;
   children: (childrenProps: ChildrenProps) => React.ReactNode;
+  isDisabled?: boolean;
 }
 
 export default function StatusChangeButton(props: Props) {
-  const { ids, status, buttonProps = {}, children, statusTransitions } = props;
+  const { ids, status, buttonProps = {}, children, statusTransitions, isDisabled = false } = props;
   const [isModalVisible, setModalVisible] = useState(false);
   const overridenStatus = status ? statusTransitions?.[status] : null;
   const newStatus = overridenStatus?.status ?? getNextStatus(status);
@@ -75,7 +76,7 @@ export default function StatusChangeButton(props: Props) {
           onClick={() => {
             setModalVisible(true);
           }}
-          isDisabled={!ids.length}
+          isDisabled={isDisabled ? isDisabled : !ids.length}
           size={buttonProps.size}
           style={{ width: 'max-content' }}
           testName="update-status-button"

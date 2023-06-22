@@ -22,6 +22,7 @@ interface Props {
     { status: AlertStatus; actionLabel: 'Send back' | 'Escalate' }
   >;
   onSaved: () => void;
+  isDisabled?: boolean;
 }
 
 export default function AlertsStatusChangeButton(props: Props) {
@@ -40,6 +41,7 @@ export default function AlertsStatusChangeButton(props: Props) {
     },
     statusTransitions,
     buttonProps = {},
+    isDisabled = false,
   } = props;
   return (
     <>
@@ -48,6 +50,7 @@ export default function AlertsStatusChangeButton(props: Props) {
         buttonProps={buttonProps}
         ids={ids}
         statusTransitions={statusTransitions}
+        isDisabled={isDisabled}
       >
         {({ isVisible, setVisible, newStatus }) => (
           <AlertsStatusChangeModal

@@ -15,6 +15,7 @@ import { getUserLink, getUserName } from '@/utils/api/users';
 import Id from '@/components/ui/Id';
 import { useFeatureEnabled } from '@/components/AppWrapper/Providers/SettingsProvider';
 import { makeUrl } from '@/utils/routing';
+import { useHasPermissions } from '@/utils/user-utils';
 
 interface Props {
   caseItem: Case;
@@ -25,12 +26,15 @@ interface Props {
 export default function Header(props: Props) {
   const { caseItem, onReload, onCommentAdded } = props;
   const { caseId } = caseItem;
+
   const user = caseItem.caseUsers?.origin?.userId
     ? caseItem.caseUsers?.origin
     : caseItem.caseUsers?.destination?.userId
     ? caseItem.caseUsers?.destination
     : undefined;
   const escalationEnabled = useFeatureEnabled('ESCALATION');
+  const isReopenEnabled = useHasPermissions(['case-management:case-reopen:write']);
+
   const caseClosedBefore = Boolean(
     caseItem.statusChanges?.find((statusChange) => statusChange.caseStatus === 'CLOSED'),
   );
@@ -75,6 +79,7 @@ export default function Header(props: Props) {
             caseIds={[caseId as string]}
             caseStatus={caseItem.caseStatus}
             onSaved={onReload}
+            isDisabled={caseItem.caseStatus === 'CLOSED' && !isReopenEnabled}
           />
           {escalationEnabled && (
             <CasesStatusChangeButton
