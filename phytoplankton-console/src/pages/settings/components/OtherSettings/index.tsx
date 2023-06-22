@@ -20,7 +20,9 @@ export function OtherSettings() {
       setSaving(true);
       try {
         await api.postTenantsSettings({
-          TenantSettings: values,
+          TenantSettings: {
+            tenantTimezone: values.tenantTimezone,
+          },
         });
         message.success('Saved');
       } catch (e) {
