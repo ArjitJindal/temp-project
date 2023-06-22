@@ -22,22 +22,8 @@
     "types": ["cypress", "node"],
     "paths": {
       "@/*": ["./src/*"]
-      //      "@@/*": ["./src/.umi/*"]
     }
   },
-  "include": [
-    "mock/**/*",
-    "src/**/*",
-    "tests/**/*",
-    "test/**/*",
-    "__test__/**/*",
-    "typings/**/*",
-    "config/**/*",
-    ".eslintrc.js",
-    ".stylelintrc.js",
-    ".prettierrc.js",
-    "cypress/**/*",
-    "mock/*"
-  ],
-  "exclude": ["node_modules", "build", "dist", "scripts", "src/.umi/*", "webpack", "jest"]
+  "include": ["**/*.ts"],
+  "exclude": ["node_modules", "build", "dist", "cdk.out"]
 }

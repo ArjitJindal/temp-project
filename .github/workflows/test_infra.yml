@@ -12,7 +12,8 @@ on:
   pull_request:
     branches: [main]
     paths:
-      - 'infra/**'
+      - "tarpon/infra/**"
+      - "tarpon/lib/**"
   workflow_call:
     inputs:
       slack:
@@ -30,7 +31,7 @@ jobs:
         uses: actions/setup-node@v3
         with:
           node-version: 16
-          cache: 'npm'
+          cache: "npm"
           cache-dependency-path: "tarpon/package-lock.json"
       - run: npm ci
         working-directory: "tarpon"
