@@ -103,6 +103,8 @@ Local environment config (ex: tenantID) is stored in `local-dev.ts`.
 You can start the local APIs using "Run and Debug" in VSCode, then you can set breakpoints to debug things more easily.
 ![vscode-debug](/resources/vscode-debug.png)
 
+You can also use JetBrains
+
 ## Deploy
 
 In order to deploy to a new account (or the first time you're deploying), you have to run `cdk bootstrap` like so:
