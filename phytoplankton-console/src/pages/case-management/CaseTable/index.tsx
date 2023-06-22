@@ -1,5 +1,6 @@
 import React, { useCallback, useMemo, useRef, useState } from 'react';
 import _ from 'lodash';
+import { Link } from 'react-router-dom';
 import { TableSearchParams } from '../types';
 import CasesStatusChangeButton from '../components/CasesStatusChangeButton';
 import AlertTable from '../AlertTable';
@@ -13,10 +14,9 @@ import {
   TableRefType,
 } from '@/components/library/Table/types';
 import QueryResultsTable from '@/components/common/QueryResultsTable';
-import Id from '@/components/ui/Id';
 import { useTableData } from '@/pages/case-management/CaseTable/helpers';
 import { TableItem } from '@/pages/case-management/CaseTable/types';
-import { getUserLink, USER_STATES } from '@/utils/api/users';
+import { USER_STATES } from '@/utils/api/users';
 import UserKycStatusTag from '@/components/ui/UserKycStatusTag';
 import { AssigneesDropdown } from '@/pages/case-management/components/AssigneesDropdown';
 import UserStateTag from '@/components/ui/UserStateTag';
@@ -91,9 +91,17 @@ export default function CaseTable(props: Props) {
       helper.simple<'userId'>({
         title: 'User ID',
         key: 'userId',
+        defaultWidth: 200,
         type: {
           render: (userId, { item: caseItem }) => {
-            return userId ? <Id to={getUserLink(caseItem.user)}>{userId}</Id> : <>{'-'}</>;
+            const { user } = caseItem;
+            return (
+              <div style={{ overflowWrap: 'anywhere' }}>
+                <Link to={`/users/list/${user?.type.toLowerCase()}/${userId}`} replace>
+                  {userId}
+                </Link>
+              </div>
+            );
           },
         },
       }),
