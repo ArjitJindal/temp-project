@@ -8,8 +8,11 @@ on:
     paths:
       - 'tarpon/**'
 jobs:
-  build:
+  test:
+    uses: ./.github/workflows/test_tarpon.yml
+  deploy:
     name: Deploy Tarpon
+    needs: test
     runs-on: ubuntu-latest
     steps:
       - name: Trigger AWS CodePipeline
