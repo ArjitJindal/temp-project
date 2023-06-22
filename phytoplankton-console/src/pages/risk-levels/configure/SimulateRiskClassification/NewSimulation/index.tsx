@@ -198,7 +198,6 @@ const NewSimulation = forwardRef((props: Props, ref: React.Ref<SimulationRef>) =
     return values.find((item) => item.key === active);
   }, [active, values]);
 
-  console.log('state', state);
   return (
     <Card.Root className={s.cardRoot}>
       <VerticalMenu

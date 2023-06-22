@@ -16,7 +16,6 @@ export default function ReportStep(props: {
   const { settings, report } = props;
 
   const orderedProps = getOrderedProps(report.schema?.reportSchema);
-  console.log('orderedProps', orderedProps);
 
   const groups = Object.entries(
     _.groupBy(orderedProps, (property) => getUiSchema(property.schema)['ui:group']),
@@ -30,8 +29,6 @@ export default function ReportStep(props: {
   const [activeMenuItem, setActiveMenuItem] = useState<string>(groups[0]?.group ?? 'Other');
 
   const activeGroup = groups.find((x) => x.group === activeMenuItem);
-  console.log('activeGroup', activeGroup);
-  console.log('groups', groups);
 
   return (
     <VerticalMenu items={menuItems} active={activeMenuItem} onChange={setActiveMenuItem}>

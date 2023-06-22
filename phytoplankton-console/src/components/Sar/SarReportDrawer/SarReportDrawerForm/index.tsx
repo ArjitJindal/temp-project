@@ -36,7 +36,7 @@ export default function SarReportDrawerForm(props: {
   report: Report;
   activeStepState: StatePair<string>;
   onSubmit: (formState: Report) => void;
-  onChange: () => void;
+  onChange: (formState: Report) => void;
 }) {
   const { formId, report, activeStepState, onSubmit, onChange } = props;
   const transactionIds = report.parameters.transactions.map((t) => t.id);
@@ -48,7 +48,9 @@ export default function SarReportDrawerForm(props: {
     <Form
       id={formId}
       initialValues={initialValues}
-      onChange={onChange}
+      onChange={({ values }) => {
+        onChange(serializeFormState(report, values));
+      }}
       onSubmit={(values) => {
         onSubmit(serializeFormState(report, values));
       }}

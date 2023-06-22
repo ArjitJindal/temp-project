@@ -51,6 +51,7 @@ export default function SarReportDrawer(props: Props) {
   const api = useApi();
   const [activeStep, setActiveStep] = useState<string>(STEPS[0].key);
   const [report, setReport] = useState(props.initialReport);
+  const [draft, setDraft] = useState<Report>(props.initialReport);
   const [dirty, setDirty] = useState(props.initialReport.revisions.length === 0);
   const submitMutation = useMutation<
     Report,
@@ -80,7 +81,40 @@ export default function SarReportDrawer(props: Props) {
         setDirty(false);
       },
       onError: (e) => {
-        message.error(getErrorMessage(e));
+        message.fatal(`Failed to submit report: ${getErrorMessage(e)}`);
+      },
+    },
+  );
+
+  const saveDraftMutation = useMutation<
+    Report,
+    unknown,
+    {
+      report: Report;
+    }
+  >(
+    async (event) => {
+      const reportWithoutSchema = { ...event.report };
+      reportWithoutSchema.schema = undefined;
+
+      if (!report.id) {
+        throw new Error('Report ID is not defined!');
+      }
+
+      const result = await api.postReportsReportIdDraft({
+        reportId: report.id,
+        Report: reportWithoutSchema,
+      });
+      return result;
+    },
+    {
+      onSuccess: (r) => {
+        setReport(r);
+        setDirty(false);
+        message.success(`Draft of report saved successfully!`);
+      },
+      onError: (e) => {
+        message.fatal(`Failed to save draft of report: ${getErrorMessage(e)}`);
       },
     },
   );
@@ -108,6 +142,14 @@ export default function SarReportDrawer(props: Props) {
           />
           <div className={s.footerButtons}>
             <Button
+              isLoading={saveDraftMutation.isLoading}
+              type="TETRIARY"
+              onClick={() => saveDraftMutation.mutate({ report: draft })}
+            >
+              {'Save draft'}
+            </Button>
+
+            <Button
               isLoading={submitMutation.isLoading}
               type="PRIMARY"
               htmlAttrs={{
@@ -126,7 +168,10 @@ export default function SarReportDrawer(props: Props) {
         report={report}
         formId={formId}
         activeStepState={[activeStep, setActiveStep]}
-        onChange={() => setDirty(true)}
+        onChange={(report) => {
+          setDirty(true);
+          setDraft(report);
+        }}
         onSubmit={(report: Report) => {
           submitMutation.mutate({
             report,

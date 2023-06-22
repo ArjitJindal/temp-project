@@ -3743,6 +3743,32 @@ paths:
               schema:
                 $ref: '#/components/schemas/Report'
       operationId: get-reports-reportId
+  '/reports/{reportId}/draft':
+    parameters:
+      - schema:
+          type: string
+        name: reportId
+        in: path
+        required: true
+    post:
+      summary: Save a report draft
+      tags: []
+      x-flagright:
+        permissions:
+          - reports:generated:write
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Report'
+      operationId: post-reports-reportId-draft
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Report'
 components:
   schemas:
     KrsScore:

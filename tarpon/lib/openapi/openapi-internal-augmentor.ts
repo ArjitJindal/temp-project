@@ -155,6 +155,7 @@ export const ConsoleApiPathToLambda: any = {
   '/reports/draft': StackConstants.CONSOLE_API_SAR_FUNCTION_NAME,
   '/reports': StackConstants.CONSOLE_API_SAR_FUNCTION_NAME,
   '/reports/{reportId}': StackConstants.CONSOLE_API_SAR_FUNCTION_NAME,
+  '/reports/{reportId}/draft': StackConstants.CONSOLE_API_SAR_FUNCTION_NAME,
 }
 
 const openapi = getAugmentedOpenapi(

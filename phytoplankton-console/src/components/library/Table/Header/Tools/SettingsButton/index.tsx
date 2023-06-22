@@ -39,7 +39,6 @@ export default function SettingsButton<Item extends object>(props: Props<Item>) 
       const [dndState, setDndState] = dndStatePair;
       const { newIndex, columnId } = dndState;
       if (newIndex != null && columnId != null) {
-        console.log('newIndex, columnId', newIndex, columnId);
         setColumnOrder((order) => {
           const oldIndex = order.indexOf(columnId);
           const result = order.filter((x) => x !== columnId);
