@@ -79,6 +79,8 @@ const DisplayCheckedTransactions = (props: Props) => {
               params.userFilterMode === 'DESTINATION' ? params.userId : undefined,
             filterUserId: caseUserId,
             filterRuleInstancesHit: [alert.ruleInstanceId],
+            filterOriginPaymentMethodId: params.originPaymentMethodId,
+            filterDestinationPaymentMethodId: params.destinationPaymentMethodId,
           }),
         'Transactions List',
       );
