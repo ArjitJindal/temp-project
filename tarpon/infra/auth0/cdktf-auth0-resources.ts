@@ -103,7 +103,7 @@ export const createAuth0TenantResources = (
   /**
    * Applications::APIs
    */
-  new auth0.resourceServer.ResourceServer(
+  const resourceServer = new auth0.resourceServer.ResourceServer(
     context,
     getTenantResourceId(tenantName, `api-gateway-`),
     {
@@ -136,9 +136,10 @@ export const createAuth0TenantResources = (
         name: `default:${role}`,
         permissions: permissions.map((p) => ({
           name: p,
-          resourceServerIdentifier: config.application.AUTH0_AUDIENCE,
+          resourceServerIdentifier: resourceServer.identifier,
         })),
         description,
+        dependsOn: [resourceServer],
       })
   )
 
@@ -148,8 +149,9 @@ export const createAuth0TenantResources = (
     name: `root`,
     permissions: PERMISSIONS.map((p) => ({
       name: p,
-      resourceServerIdentifier: config.application.AUTH0_AUDIENCE,
+      resourceServerIdentifier: resourceServer.identifier,
     })),
+    dependsOn: [resourceServer],
   })
 
   /**
