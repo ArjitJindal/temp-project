@@ -91,12 +91,7 @@ export const sarHandler = lambdaApi()(
       event.body
     ) {
       const report: Report = JSON.parse(event.body)
-
-      report.status = 'draft'
-      report.updatedAt = Date.now()
-      const updatedReport = await reportRepository.saveOrUpdateReport(report)
-      updatedReport.schema = REPORT_GENERATORS.get(report.schemaId)?.getSchema()
-      return updatedReport
+      return reportService.draftReport(report)
     }
   }
 )

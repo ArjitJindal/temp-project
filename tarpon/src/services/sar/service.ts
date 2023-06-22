@@ -134,4 +134,10 @@ export class ReportService {
     })
     return await this.reportRepository.saveOrUpdateReport(report)
   }
+
+  async draftReport(report: Report): Promise<Report> {
+    report.status = 'draft'
+    report.updatedAt = Date.now()
+    return await this.reportRepository.saveOrUpdateReport(report)
+  }
 }
