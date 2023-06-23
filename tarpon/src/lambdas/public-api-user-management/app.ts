@@ -17,6 +17,7 @@ import { RiskScoringService } from '@/services/risk-scoring'
 import { hasFeature, updateLogMetadata } from '@/core/utils/context'
 import { getMongoDbClient } from '@/utils/mongoDBUtils'
 import { UserManagementService } from '@/services/users'
+import { pickKnownEntityFields } from '@/utils/object'
 
 const handleRiskLevelParam = (
   tenantId: string,
@@ -59,7 +60,11 @@ export const userHandler = lambdaApi()(
 
       return user
     } else if (event.httpMethod === 'POST' && event.body) {
-      const userPayload = JSON.parse(event.body)
+      const userPayload = pickKnownEntityFields(
+        JSON.parse(event.body),
+        isConsumerUser ? User : Business
+      ) as User | Business
+
       updateLogMetadata({ userId: userPayload.userId })
       logger.info(`Processing User`) // Need to log to show on the logs
 

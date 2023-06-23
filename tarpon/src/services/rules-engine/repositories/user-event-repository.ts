@@ -12,11 +12,6 @@ import { paginateQuery } from '@/utils/dynamodb'
 import { BusinessUserEvent } from '@/@types/openapi-public/BusinessUserEvent'
 import { UserType } from '@/@types/user/user-type'
 
-type TimeRange = {
-  beforeTimestamp: number // exclusive
-  afterTimestamp: number // inclusive
-}
-
 export class UserEventRepository {
   dynamoDb: DynamoDBDocumentClient
   mongoDb: MongoClient
@@ -81,50 +76,37 @@ export class UserEventRepository {
     return eventId
   }
 
-  public async getTypeUserEvents(
+  public async getConsumerUserEvents(
+    userId: string
+  ): Promise<ReadonlyArray<ConsumerUserEvent>> {
+    return this.getUserEventsByType(userId, 'CONSUMER')
+  }
+
+  public async getBusinessUserEvents(
+    userId: string
+  ): Promise<ReadonlyArray<BusinessUserEvent>> {
+    return this.getUserEventsByType(userId, 'BUSINESS')
+  }
+
+  private async getUserEventsByType(
     userId: string,
-    timeRange: TimeRange
-  ): Promise<ReadonlyArray<ConsumerUserEvent>> {
-    return this.getUserEvents(
-      DynamoDbKeys.CONSUMER_USER_EVENT(this.tenantId, userId).PartitionKeyID,
-      timeRange
-    )
-  }
-
-  private async getUserEvents(
-    partitionKeyId: string,
-    timeRange: TimeRange
-  ): Promise<ReadonlyArray<ConsumerUserEvent>> {
-    const result = await paginateQuery(
-      this.dynamoDb,
-      this.getUserEventsQuery(partitionKeyId, timeRange)
-    )
-    return result.Items as unknown as ReadonlyArray<ConsumerUserEvent>
-  }
-
-  private getUserEventsQuery(
-    partitionKeyId: string,
-    timeRange: TimeRange
-  ): AWS.DynamoDB.DocumentClient.QueryInput {
-    const userEventAttributeNames = ConsumerUserEvent.getAttributeTypeMap().map(
-      (attribute) => attribute.name
-    )
-    return {
+    type: UserType
+  ): Promise<ReadonlyArray<ConsumerUserEvent | BusinessUserEvent>> {
+    const result = await paginateQuery(this.dynamoDb, {
       TableName: StackConstants.TARPON_DYNAMODB_TABLE_NAME,
-      KeyConditionExpression:
-        'PartitionKeyID = :pk AND SortKeyID BETWEEN :skfrom AND :skto',
+      KeyConditionExpression: 'PartitionKeyID = :pk',
       ExpressionAttributeValues: {
-        ':pk': partitionKeyId,
-        ':skfrom': `${timeRange.afterTimestamp}`,
-        ':skto': `${timeRange.beforeTimestamp - 1}`,
+        ':pk':
+          type === 'CONSUMER'
+            ? DynamoDbKeys.CONSUMER_USER_EVENT(this.tenantId, userId)
+                .PartitionKeyID
+            : DynamoDbKeys.BUSINESS_USER_EVENT(this.tenantId, userId)
+                .PartitionKeyID,
       },
-      ProjectionExpression: userEventAttributeNames
-        .map((name) => `#${name}`)
-        .join(', '),
-      ExpressionAttributeNames: Object.fromEntries(
-        userEventAttributeNames.map((name) => [`#${name}`, name])
-      ),
       ScanIndexForward: false,
-    }
+    })
+    return result.Items as unknown as ReadonlyArray<
+      ConsumerUserEvent | BusinessUserEvent
+    >
   }
 }

@@ -33,12 +33,17 @@ import { getMongoDbClient } from '@/utils/mongoDBUtils'
 import { UserService } from '@/lambdas/console-api-user/services/user-service'
 import { UserRepository } from '@/services/users/repositories/user-repository'
 import { getS3Client } from '@/utils/s3'
+import { DynamoDbTransactionRepository } from '@/services/rules-engine/repositories/dynamodb-transaction-repository'
+import { UserEventRepository } from '@/services/rules-engine/repositories/user-event-repository'
+import { ConsumerUserEvent } from '@/@types/openapi-internal/ConsumerUserEvent'
+import { BusinessUserEvent } from '@/@types/openapi-internal/BusinessUserEvent'
+import { TransactionEventRepository } from '@/services/rules-engine/repositories/transaction-event-repository'
 
 const features: Feature[] = ['PULSE']
 
 withFeatureHook(features)
-
 dynamoDbSetupHook()
+
 describe('Public API - Verify a transaction', () => {
   const TEST_TENANT_ID = getTestTenantId()
 
@@ -177,6 +182,30 @@ describe('Public API - Verify a transaction', () => {
       ],
     })
   })
+
+  test('drop unknown fields', async () => {
+    const transaction = getTestTransaction({
+      originUserId: undefined,
+      destinationUserId: undefined,
+    })
+    await transactionHandler(
+      getApiGatewayPostEvent(TEST_TENANT_ID, '/transactions', {
+        ...transaction,
+        foo: 'bar',
+      }),
+      null as any,
+      null as any
+    )
+    const transactionRepository = new DynamoDbTransactionRepository(
+      TEST_TENANT_ID,
+      getDynamoDbClient()
+    )
+    expect(
+      await transactionRepository.getTransactionById(transaction.transactionId)
+    ).not.toMatchObject({
+      foo: 'bar',
+    })
+  })
 })
 
 describe('Public API - Retrieve a Transaction', () => {
@@ -305,6 +334,47 @@ describe('Public API - Create a Transaction Event', () => {
       hitRules: [],
     })
   })
+
+  test('drop unknown fields', async () => {
+    const transaction = getTestTransaction({
+      transactionId: 'foo',
+      originUserId: undefined,
+      destinationUserId: undefined,
+    })
+    await transactionHandler(
+      getApiGatewayPostEvent(TEST_TENANT_ID, '/transactions', transaction),
+      null as any,
+      null as any
+    )
+    const transactionEvent = getTestTransactionEvent({
+      eventId: '1',
+      transactionId: 'foo',
+    })
+    ;(transactionEvent as any).foo = 'bar'
+    ;(transactionEvent.updatedTransactionAttributes as any).foo = 'bar'
+    await transactionEventHandler(
+      getApiGatewayPostEvent(
+        TEST_TENANT_ID,
+        '/events/transaction',
+        transactionEvent
+      ),
+      null as any,
+      null as any
+    )
+    const transactionEventRepository = new TransactionEventRepository(
+      TEST_TENANT_ID,
+      { dynamoDb: getDynamoDbClient() }
+    )
+    const savedEvent = (
+      await transactionEventRepository.getTransactionEvents('foo')
+    ).find((e) => e.eventId === '1')
+    expect(savedEvent).not.toMatchObject({
+      foo: 'bar',
+    })
+    expect(savedEvent?.updatedTransactionAttributes).not.toMatchObject({
+      foo: 'bar',
+    })
+  })
 })
 
 describe('Public API - Create a Consumer User Event', () => {
@@ -422,6 +492,47 @@ describe('Public API - Create a Consumer User Event', () => {
       null as any
     )
     expect(response?.statusCode).toBe(400)
+  })
+
+  test('drop unknown fields', async () => {
+    const consumerUser = getTestUser({ userId: 'foo' })
+    await userHandler(
+      getApiGatewayPostEvent(TEST_TENANT_ID, '/consumer/users', consumerUser),
+      null as any,
+      null as any
+    )
+    const userEvent = getTestUserEvent({
+      eventId: '1',
+      userId: 'foo',
+      updatedConsumerUserAttributes: {
+        tags: [{ key: 'key', value: 'value' }],
+      },
+    })
+    ;(userEvent.updatedConsumerUserAttributes as any).foo = 'bar'
+    ;(userEvent as any).foo = 'bar'
+    await userEventsHandler(
+      getApiGatewayPostEvent(
+        TEST_TENANT_ID,
+        '/events/consumer/user',
+        userEvent
+      ),
+      null as any,
+      null as any
+    )
+    const userEventRepository = new UserEventRepository(TEST_TENANT_ID, {
+      dynamoDb: getDynamoDbClient(),
+    })
+    const savedEvent = (
+      await userEventRepository.getConsumerUserEvents('foo')
+    ).find((e) => e.eventId === '1')
+    expect(savedEvent).not.toMatchObject({
+      foo: 'bar',
+    })
+    expect(
+      (savedEvent as ConsumerUserEvent).updatedConsumerUserAttributes
+    ).not.toMatchObject({
+      foo: 'bar',
+    })
   })
 })
 
@@ -568,6 +679,47 @@ describe('Public API - Create a Business User Event', () => {
       null as any
     )
     expect(response?.statusCode).toBe(400)
+  })
+
+  test('drop unknown fields', async () => {
+    const user = getTestBusiness({ userId: 'foo' })
+    await userHandler(
+      getApiGatewayPostEvent(TEST_TENANT_ID, '/business/users', user),
+      null as any,
+      null as any
+    )
+    const userEvent = getTestBusinessEvent({
+      eventId: '1',
+      userId: 'foo',
+      updatedBusinessUserAttributes: {
+        tags: [{ key: 'key', value: 'value' }],
+      },
+    })
+    ;(userEvent.updatedBusinessUserAttributes as any).foo = 'bar'
+    ;(userEvent as any).foo = 'bar'
+    await userEventsHandler(
+      getApiGatewayPostEvent(
+        TEST_TENANT_ID,
+        '/events/business/user',
+        userEvent
+      ),
+      null as any,
+      null as any
+    )
+    const userEventRepository = new UserEventRepository(TEST_TENANT_ID, {
+      dynamoDb: getDynamoDbClient(),
+    })
+    const savedEvent = (
+      await userEventRepository.getBusinessUserEvents('foo')
+    ).find((e) => e.eventId === '1')
+    expect(savedEvent).not.toMatchObject({
+      foo: 'bar',
+    })
+    expect(
+      (savedEvent as BusinessUserEvent).updatedBusinessUserAttributes
+    ).not.toMatchObject({
+      foo: 'bar',
+    })
   })
 })
 

@@ -16,7 +16,7 @@ export function getTestUserEvent(
 
 export function getTestBusinessEvent(
   userEvent: Partial<BusinessUserEvent> = {}
-): ConsumerUserEvent {
+): BusinessUserEvent {
   return {
     timestamp: dayjs().valueOf(),
     userId: 'user id',

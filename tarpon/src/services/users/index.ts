@@ -14,7 +14,7 @@ import { BusinessEntityLink } from '@/@types/openapi-internal/BusinessEntityLink
 import { UserType } from '@/@types/user/user-type'
 import { BusinessWithRulesResult } from '@/@types/openapi-internal/BusinessWithRulesResult'
 import { UserWithRulesResult } from '@/@types/openapi-internal/UserWithRulesResult'
-import { mergeObjects } from '@/utils/object'
+import { mergeObjects, pickKnownEntityFields } from '@/utils/object'
 import { BusinessBase } from '@/@types/openapi-public/BusinessBase'
 import { UserBase } from '@/@types/openapi-internal/UserBase'
 
@@ -184,10 +184,7 @@ export class UserManagementService {
           `Converting a Business user to a Consumer user is not allowed.`
         )
       }
-      user = _.pick(
-        user,
-        UserBase.getAttributeTypeMap().map((v) => v.name)
-      ) as UserWithRulesResult & { type: UserType }
+      user = pickKnownEntityFields(user, UserBase)
     }
 
     const updatedConsumerUser: User = mergeObjects(
@@ -226,10 +223,7 @@ export class UserManagementService {
           `Converting user ${user.userId} to a Business user. 'legalEntity' is a required field`
         )
       }
-      user = _.pick(
-        user,
-        BusinessBase.getAttributeTypeMap().map((v) => v.name)
-      ) as BusinessWithRulesResult & { type: UserType }
+      user = pickKnownEntityFields(user, BusinessBase)
     }
 
     const updatedBusinessUser: Business = _.mergeWith(

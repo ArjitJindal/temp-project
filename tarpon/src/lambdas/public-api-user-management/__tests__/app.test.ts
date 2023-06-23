@@ -5,6 +5,11 @@ import {
 } from '@/test-utils/apigateway-test-utils'
 import { getTestBusiness, getTestUser } from '@/test-utils/user-test-utils'
 import { getTestTenantId } from '@/test-utils/tenant-test-utils'
+import { dynamoDbSetupHook } from '@/test-utils/dynamodb-test-utils'
+import { UserRepository } from '@/services/users/repositories/user-repository'
+import { getDynamoDbClient } from '@/utils/dynamodb'
+
+dynamoDbSetupHook()
 
 describe('Public API - Create a Consumer User', () => {
   const TEST_TENANT_ID = getTestTenantId()
@@ -39,6 +44,24 @@ describe('Public API - Create a Consumer User', () => {
       userId: '2',
       message:
         'The provided userId already exists. The user attribute updates are not saved. If you want to update the attributes of this user, please use user events instead.',
+    })
+  })
+
+  test('drop unknown fields', async () => {
+    const consumerUser = getTestUser({ userId: '3' })
+    await userHandler(
+      getApiGatewayPostEvent(TEST_TENANT_ID, '/consumer/users', {
+        ...consumerUser,
+        foo: 'bar',
+      }),
+      null as any,
+      null as any
+    )
+    const userRepository = new UserRepository(TEST_TENANT_ID, {
+      dynamoDb: getDynamoDbClient(),
+    })
+    expect(await userRepository.getUser('3')).not.toMatchObject({
+      foo: 'bar',
     })
   })
 })
@@ -113,6 +136,24 @@ describe('Public API - Create a Business User', () => {
       userId: '2',
       message:
         'The provided userId already exists. The user attribute updates are not saved. If you want to update the attributes of this user, please use user events instead.',
+    })
+  })
+
+  test('drop unknown fields', async () => {
+    const business = getTestBusiness({ userId: '3' })
+    await userHandler(
+      getApiGatewayPostEvent(TEST_TENANT_ID, '/business/users', {
+        ...business,
+        foo: 'bar',
+      }),
+      null as any,
+      null as any
+    )
+    const userRepository = new UserRepository(TEST_TENANT_ID, {
+      dynamoDb: getDynamoDbClient(),
+    })
+    expect(await userRepository.getUser('3')).not.toMatchObject({
+      foo: 'bar',
     })
   })
 })

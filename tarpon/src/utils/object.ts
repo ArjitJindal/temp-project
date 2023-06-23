@@ -28,3 +28,24 @@ export function mergeObjects<T>(
 ): NotPromiseType<T> {
   return _.merge(object, ...objects)
 }
+
+class Model {
+  public static getAttributeTypeMap(): Array<{
+    name: string
+    baseName: string
+    type: string
+    format: string
+  }> {
+    return []
+  }
+}
+
+export function pickKnownEntityFields<T>(
+  entity: T,
+  modelClass: typeof Model
+): T {
+  return _.pick(
+    entity,
+    modelClass.getAttributeTypeMap().map((v) => v.name)
+  ) as T
+}

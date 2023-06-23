@@ -25,6 +25,10 @@ import { logger } from '@/core/logger'
 import { addNewSubsegment } from '@/core/xray'
 import { UserManagementService } from '@/services/users'
 import { getMongoDbClient } from '@/utils/mongoDBUtils'
+import { pickKnownEntityFields } from '@/utils/object'
+import { UserOptional } from '@/@types/openapi-public/UserOptional'
+import { BusinessOptional } from '@/@types/openapi-public/BusinessOptional'
+import { TransactionUpdatable } from '@/@types/openapi-public/TransactionUpdatable'
 
 type MissingUserIdMap = { field: string; userId: string }
 
@@ -133,7 +137,10 @@ export const transactionHandler = lambdaApi()(
     if (event.httpMethod === 'POST' && event.body) {
       const validationSegment = await addNewSubsegment('API', 'Validation')
       const validationParams = event.queryStringParameters
-      const transaction = JSON.parse(event.body)
+      const transaction = pickKnownEntityFields(
+        JSON.parse(event.body) as Transaction,
+        Transaction
+      )
       const transactionId = getNewTransactionID(transaction)
 
       validationSegment?.addAnnotation('tenantId', tenantId)
@@ -200,7 +207,16 @@ export const transactionEventHandler = lambdaApi()(
     const dynamoDb = getDynamoDbClientByEvent(event)
 
     if (event.httpMethod === 'POST' && event.body) {
-      const transactionEvent = JSON.parse(event.body) as TransactionEvent
+      const transactionEvent = pickKnownEntityFields(
+        JSON.parse(event.body) as TransactionEvent,
+        TransactionEvent
+      )
+      transactionEvent.updatedTransactionAttributes =
+        transactionEvent.updatedTransactionAttributes &&
+        pickKnownEntityFields(
+          transactionEvent.updatedTransactionAttributes,
+          TransactionUpdatable
+        )
       updateLogMetadata({
         transactionId: transactionEvent.transactionId,
         eventId: transactionEvent.eventId,
@@ -231,7 +247,16 @@ export const userEventsHandler = lambdaApi()(
       event.resource === '/events/consumer/user' &&
       event.body
     ) {
-      const userEvent = JSON.parse(event.body) as ConsumerUserEvent
+      const userEvent = pickKnownEntityFields(
+        JSON.parse(event.body) as ConsumerUserEvent,
+        ConsumerUserEvent
+      )
+      userEvent.updatedConsumerUserAttributes =
+        userEvent.updatedConsumerUserAttributes &&
+        pickKnownEntityFields(
+          userEvent.updatedConsumerUserAttributes,
+          UserOptional
+        )
       updateLogMetadata({
         userId: userEvent.userId,
         eventId: userEvent.eventId,
@@ -253,7 +278,16 @@ export const userEventsHandler = lambdaApi()(
       event.resource === '/events/business/user' &&
       event.body
     ) {
-      const userEvent = JSON.parse(event.body) as BusinessUserEvent
+      const userEvent = pickKnownEntityFields(
+        JSON.parse(event.body) as BusinessUserEvent,
+        BusinessUserEvent
+      )
+      userEvent.updatedBusinessUserAttributes =
+        userEvent.updatedBusinessUserAttributes &&
+        pickKnownEntityFields(
+          userEvent.updatedBusinessUserAttributes,
+          BusinessOptional
+        )
       updateLogMetadata({
         businessUserId: userEvent.userId,
         eventId: userEvent.eventId,
