@@ -44,3 +44,12 @@ export function useElementSize(el: HTMLElement | null): { width: number; height:
   }, [el]);
   return rect;
 }
+
+export function escapeHtml(unsafe: string): string {
+  return unsafe
+    .replaceAll('&', '&amp;')
+    .replaceAll('<', '&lt;')
+    .replaceAll('>', '&gt;')
+    .replaceAll('"', '&quot;')
+    .replaceAll("'", '&#039;');
+}

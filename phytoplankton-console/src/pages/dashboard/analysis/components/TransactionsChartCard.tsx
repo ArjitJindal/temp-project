@@ -1,7 +1,7 @@
 /* eslint-disable @typescript-eslint/no-var-requires */
-import { Card, Empty, Spin, Tabs } from 'antd';
-import { Column } from '@ant-design/plots';
-import { useEffect, useState } from 'react';
+import { Card, Empty, Tabs } from 'antd';
+import { Column } from '@ant-design/charts';
+import React, { useEffect, useState } from 'react';
 import { RangeValue } from 'rc-picker/es/interface';
 import { useLocalStorageState } from 'ahooks';
 import { each, groupBy } from 'lodash';
@@ -12,17 +12,11 @@ import { getRuleActionColor } from '@/utils/rules';
 import DatePicker from '@/components/ui/DatePicker';
 import { dayjs, Dayjs, YEAR_MONTH_DATE_FORMAT } from '@/utils/dayjs';
 import { useApi } from '@/api';
-import {
-  AsyncResource,
-  failed,
-  getOr,
-  init,
-  isLoading,
-  loading,
-  success,
-} from '@/utils/asyncResource';
+import { AsyncResource, failed, getOr, init, loading, success } from '@/utils/asyncResource';
 import { DashboardStatsTransactionsCountData } from '@/apis';
 import { useRiskActionLabel } from '@/components/AppWrapper/Providers/SettingsProvider';
+import AsyncResourceRenderer from '@/components/common/AsyncResourceRenderer';
+import { escapeHtml } from '@/utils/browser';
 
 type StatsKey = keyof DashboardStatsTransactionsCountData;
 const TOTAL_TRANSACTIONS_KEY: StatsKey = 'totalTransactions';
@@ -157,7 +151,7 @@ const TransactionsChartCard = () => {
     annotations.push({
       type: 'text',
       position: [k, value],
-      content: `${value}`,
+      content: escapeHtml(`${value}`),
       style: {
         textAlign: 'center',
         fontSize: 14,
@@ -219,88 +213,98 @@ const TransactionsChartCard = () => {
             { title: `${blockAlias}`, key: STOPPED_TRANSACTIONS_KEY },
           ].map(({ title, key }) => (
             <TabPane tab={title} key={key}>
-              <Spin spinning={isLoading(transactionsCountData)}>
-                <div className={styles.salesBar}>
-                  {data.length === 0 ? (
-                    <Empty
-                      className={styles.empty}
-                      description="No data available for selected period"
-                    />
-                  ) : (
-                    <Column
-                      height={400}
-                      isStack={true}
-                      data={
-                        key !== 'totalTransactions'
-                          ? data.map((item) => {
-                              const y = item[key] ?? 0;
-                              const x = formatDate(item._id);
-                              return {
-                                x,
-                                y,
-                              };
-                            })
-                          : value.map((item) => {
-                              const _id = formatDate(item._id);
-                              const value = item.value;
-                              const type = item.type;
-                              return {
-                                _id,
-                                value,
-                                type,
-                              };
-                            })
-                      }
-                      xField={key !== 'totalTransactions' ? 'x' : '_id'}
-                      yField={key !== 'totalTransactions' ? 'y' : 'value'}
-                      color={({ type }) => {
-                        if (key === 'totalTransactions') {
-                          if (type === `${suspendAlias}`) return getRuleActionColor('SUSPEND');
-                          if (type === `${flagAlias}`) return getRuleActionColor('FLAG');
-                          if (type === `${blockAlias}`) return getRuleActionColor('BLOCK');
-                          return getRuleActionColor('ALLOW');
-                        } else if (key === FLAGGED_TRANSACTIONS_KEY)
-                          return getRuleActionColor('FLAG');
-                        else if (key === STOPPED_TRANSACTIONS_KEY)
-                          return getRuleActionColor('FLAG');
-                        return getRuleActionColor('SUSPEND');
-                      }}
-                      xAxis={{
-                        label: {
-                          autoRotate: false,
-                          autoHide: true,
-                          rotate: -Math.PI / 6,
-                          offsetX: -10,
-                          offsetY: 10,
-                          style: {
-                            textAlign: 'right',
-                            textBaseline: 'bottom',
-                          },
-                        },
-                        title: null,
-                      }}
-                      yAxis={{
-                        title: null,
-                        label: {
-                          formatter: (value) => value.toLocaleString(),
-                        },
-                      }}
-                      meta={{
-                        y: {
-                          alias: 'Transaction Count',
-                        },
-                      }}
-                      seriesField={key !== 'totalTransactions' ? '' : 'type'}
-                      annotations={annotations}
-                      legend={{
-                        layout: 'horizontal',
-                        position: 'top-right',
-                        reversed: true,
-                      }}
-                    />
-                  )}
-                </div>
-              </Spin>
+              <AsyncResourceRenderer resource={transactionsCountData}>
+                {(data) => {
+                  const preparedData =
+                    key !== 'totalTransactions'
+                      ? data.map((item) => {
+                          const y = item[key] ?? 0;
+                          const x = formatDate(item._id);
+                          return {
+                            x,
+                            y,
+                          };
+                        })
+                      : value.map((item) => {
+                          const _id = formatDate(item._id);
+                          const value = item.value;
+                          const type = item.type;
+                          return {
+                            _id,
+                            value,
+                            // required because of XSS issue inside of chart library: https://www.notion.so/flagright/Pen-Test-Fix-Cross-site-scripting-stored-62fcbe075a42476aac5963fc18e845f5?pvs=4
+                            type: escapeHtml(type),
+                          };
+                        });
+                  return (
+                    <div className={styles.salesBar}>
+                      {data.length === 0 ? (
+                        <Empty
+                          className={styles.empty}
+                          description="No data available for selected period"
+                        />
+                      ) : (
+                        <Column
+                          height={400}
+                          isStack={true}
+                          data={preparedData}
+                          xField={key !== 'totalTransactions' ? 'x' : '_id'}
+                          yField={key !== 'totalTransactions' ? 'y' : 'value'}
+                          color={({ type }) => {
+                            if (key === 'totalTransactions') {
+                              if (type === `${escapeHtml(suspendAlias ?? '')}`)
+                                return getRuleActionColor('SUSPEND');
+                              if (type === `${escapeHtml(flagAlias ?? '')}`)
+                                return getRuleActionColor('FLAG');
+                              if (type === `${escapeHtml(blockAlias ?? '')}`)
+                                return getRuleActionColor('BLOCK');
+                              return getRuleActionColor('ALLOW');
+                            } else if (key === FLAGGED_TRANSACTIONS_KEY)
+                              return getRuleActionColor('FLAG');
+                            else if (key === STOPPED_TRANSACTIONS_KEY)
+                              return getRuleActionColor('FLAG');
+                            return getRuleActionColor('SUSPEND');
+                          }}
+                          xAxis={{
+                            label: {
+                              autoRotate: false,
+                              autoHide: true,
+                              rotate: -Math.PI / 6,
+                              offsetX: -10,
+                              offsetY: 10,
+                              style: {
+                                textAlign: 'right',
+                                textBaseline: 'bottom',
+                              },
+                            },
+                            title: null,
+                          }}
+                          yAxis={{
+                            title: null,
+                            label: {
+                              formatter: (value) => {
+                                return value.toLocaleString();
+                              },
+                            },
+                          }}
+                          meta={{
+                            y: {
+                              alias: 'Transaction Count',
+                            },
+                          }}
+                          seriesField={key !== 'totalTransactions' ? '' : 'type'}
+                          annotations={annotations}
+                          legend={{
+                            layout: 'horizontal',
+                            position: 'top-right',
+                            reversed: true,
+                          }}
+                        />
+                      )}
+                    </div>
+                  );
+                }}
+              </AsyncResourceRenderer>
             </TabPane>
           ))}
         </Tabs>
