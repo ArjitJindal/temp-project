@@ -6,7 +6,7 @@ defaults:
 
 concurrency:
   group: ${{ github.ref }}-${{ github.workflow }}
-  cancel-in-progress: true
+  cancel-in-progress: ${{ github.ref != 'refs/heads/main' }}
 
 on:
   pull_request:
@@ -14,6 +14,7 @@ on:
     paths:
       - "tarpon/infra/**"
       - "tarpon/lib/**"
+  workflow_call:
 jobs:
   test:
     name: test-infra
@@ -34,3 +35,15 @@ jobs:
         working-directory: "tarpon"
         env:
           NODE_OPTIONS: "--max-old-space-size=4096"
+      - name: Post to a Slack channel on failure
+        id: slack
+        uses: slackapi/slack-github-action@v1.24.0
+        if: ${{ github.ref == 'refs/heads/main' && failure() }}
+        with:
+          channel-id: 'C03L5KRE2E8'
+          payload: |
+            {
+              "text": "main branch failed for infra!"
+            }
+        env:
+          SLACK_BOT_TOKEN: ${{ secrets.SLACK_BOT_TOKEN }}
