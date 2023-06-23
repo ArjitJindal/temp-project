@@ -25,14 +25,6 @@ jobs:
       - uses: actions/checkout@v3
         with:
           fetch-depth: 0
-      - uses: dorny/paths-filter@v2
-        id: filter
-        with:
-          filters: |
-            backend:
-              - 'src/**'
-              - 'package-lock.json'
-              - 'tsconfig.json'
       - name: Use Node.js 16x
         uses: actions/setup-node@v3
         with:
@@ -57,19 +49,16 @@ jobs:
       - run: npm run format:check
         working-directory: "tarpon"
       - name: Setup DynamoDB localy
-        if: steps.filter.outputs.src == 'backend'
         uses: rrainn/dynamodb-action@v2.0.1
         with:
           port: 7999
           cors: "*"
       - name: Start MongoDB localy
-        if: steps.filter.outputs.src == 'backend'
         uses: supercharge/mongodb-github-action@1.7.0
         with:
           mongodb-version: 5.0.18
           mongodb-port: 27018
       - name: Run Tests
-        if: steps.filter.outputs.src == 'backend'
         env:
           NODE_OPTIONS: --max-old-space-size=8192
         run: npm run test:ci
@@ -79,7 +68,7 @@ jobs:
         uses: slackapi/slack-github-action@v1.24.0
         if: ${{ github.ref == 'refs/heads/main' && failure() }}
         with:
-          channel-id: 'C03L5KRE2E8'
+          channel-id: "C03L5KRE2E8"
           payload: |
             {
               "text": "main branch failed for tarpon!"
