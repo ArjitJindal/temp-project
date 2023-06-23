@@ -25,9 +25,9 @@ export default function dayjs(
   format?: string
 ): dayjsLib.Dayjs {
   if (format != null) {
-    return dayjsLib.tz(config, format, 'Etc/UTC')
+    return dayjsLib.tz(config, format, 'Etc/UTC').utcOffset(0)
   }
-  return dayjsLib.tz(config, 'Etc/UTC')
+  return dayjsLib.tz(config, 'Etc/UTC').utcOffset(0)
 }
 
 export function duration(time: number, unit?: DurationUnitType): Duration {

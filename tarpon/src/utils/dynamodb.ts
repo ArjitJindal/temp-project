@@ -354,59 +354,6 @@ export function getUpdateAttributesUpdateItemInput(attributes: {
   }
 }
 
-export function dynamoDbQueryHelper(query: {
-  tableName: string
-  filterExpression?: string
-  expressionAttributeNames?: AWS.DynamoDB.DocumentClient.ExpressionAttributeNameMap
-  sortKey: {
-    from: string
-    to: string
-  }
-  partitionKey: string
-  scanIndexForward?: boolean
-  projectionExpression?: string
-}): AWS.DynamoDB.DocumentClient.QueryInput {
-  const {
-    tableName,
-    filterExpression,
-    expressionAttributeNames,
-    sortKey,
-    partitionKey,
-    scanIndexForward,
-    projectionExpression,
-  } = query
-
-  const queryInput: AWS.DynamoDB.DocumentClient.QueryInput = {
-    TableName: tableName,
-    ..._.omitBy(
-      {
-        FilterExpression: filterExpression,
-        ExpressionAttributeNames: expressionAttributeNames,
-        ScanIndexForward: scanIndexForward,
-        ProjectionExpression: projectionExpression,
-      },
-      _.isNil
-    ),
-  }
-
-  if (sortKey.from === sortKey.to) {
-    queryInput.KeyConditionExpression = `PartitionKeyID = :partitionKey AND SortKeyID = :sortKey`
-    queryInput.ExpressionAttributeValues = {
-      ':partitionKey': partitionKey,
-      ':sortKey': sortKey.from,
-    }
-  } else {
-    queryInput.KeyConditionExpression = `PartitionKeyID = :partitionKey AND SortKeyID BETWEEN :from AND :to`
-    queryInput.ExpressionAttributeValues = {
-      ':partitionKey': partitionKey,
-      ':from': sortKey.from,
-      ':to': sortKey.to,
-    }
-  }
-
-  return queryInput
-}
-
 export type CursorPaginatedResponse<Item> = {
   items: Item[]
   cursor?: string

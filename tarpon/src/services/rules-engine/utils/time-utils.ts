@@ -17,18 +17,18 @@ export type TimeWindowFiscalYear = {
 }
 
 function getFiscalYearStart(
-  transactionDate: Dayjs,
+  timestamp: Dayjs,
   fiscalYear: TimeWindowFiscalYear
 ): Dayjs {
   const { startMonth, startDay } = fiscalYear
   const fiscalYearStart =
-    transactionDate.month() < startMonth - 1
-      ? transactionDate
+    timestamp.month() < startMonth - 1
+      ? timestamp
           .subtract(1, 'year')
           .startOf('year')
           .add(startMonth - 1, 'month')
           .add(startDay - 1, 'day')
-      : transactionDate
+      : timestamp
           .startOf('year')
           .add(startMonth - 1, 'month')
           .add(startDay - 1, 'day')
