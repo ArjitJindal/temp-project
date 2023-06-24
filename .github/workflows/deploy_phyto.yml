@@ -10,8 +10,6 @@ on:
 jobs:
   test:
     uses: ./.github/workflows/test_phyto.yml
-    with:
-      slack: true
   build:
     name: Deploy Phytoplankton
     needs: test
