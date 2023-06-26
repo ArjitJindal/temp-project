@@ -1,4 +1,5 @@
 import { createHmac } from 'node:crypto'
+import { BadRequest } from 'http-errors'
 import { SQSEvent, SQSRecord } from 'aws-lambda'
 // No types defined for this polyfill
 // eslint-disable-next-line @typescript-eslint/ban-ts-comment
@@ -26,6 +27,8 @@ import {
   updateLogMetadata,
 } from '@/core/utils/context'
 import dayjs from '@/utils/dayjs'
+
+export class ClientServerError extends Error {}
 
 const MAX_RETRY_HOURS = 4 * 24
 
@@ -109,13 +112,13 @@ async function deliverWebhookEvent(
           `Automatically deactivated at ${dayjs().format()} by the system as it has reached the maximum retry limit (${MAX_RETRY_HOURS} hours)`
         )
       } else {
-        throw new Error(retryErrorMessage)
+        throw new ClientServerError(retryErrorMessage)
       }
     }
   } catch (e) {
     if ((e as any)?.type === 'aborted') {
       // We don't retry if customer server fails to respond before the timeout
-      logger.error(`Request timeout after ${requestTimeoutSec} seconds`)
+      logger.warning(`Request timeout after ${requestTimeoutSec} seconds`)
     } else {
       throw e
     }
@@ -206,13 +209,16 @@ export const webhookDeliveryHandler = lambdaConsumer()(
             await handleWebhookDeliveryTask(record)
           })
         } catch (e) {
-          logger.error(e)
+          if (!(e instanceof ClientServerError)) {
+            logger.error(e)
+          }
           throw e
         }
       })
     )
     if (results.find((result) => result.status === 'rejected')) {
-      throw new Error(
+      // We throw BadRequest here to avoid sending error to Sentry
+      throw new BadRequest(
         'Failed to process all the SQS messages in the same batch. Will retry'
       )
     }
