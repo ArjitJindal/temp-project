@@ -227,17 +227,7 @@ export default function StatusChangeModal(props: Props) {
               <Input />
             </Form.Item>
           )}
-          <Form.Item
-            name="comment"
-            label="Comment"
-            rules={[
-              {
-                required: true,
-                message: 'Please enter a comment narrative',
-                max: MAX_COMMENT_LENGTH,
-              },
-            ]}
-          >
+          <Form.Item name="comment" label="Comment" rules={[{ max: MAX_COMMENT_LENGTH }]}>
             <>
               <NarrativesSelectStatusChange
                 templateValue={narrative}
