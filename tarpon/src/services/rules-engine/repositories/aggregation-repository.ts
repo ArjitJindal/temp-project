@@ -12,7 +12,11 @@ import { DynamoDbKeys } from '@/core/dynamodb/dynamodb-keys'
 import { PaymentDirection } from '@/@types/tranasction/payment-direction'
 import { TransactionAmountDetails } from '@/@types/openapi-public/TransactionAmountDetails'
 import { getTargetCurrencyAmount } from '@/utils/currency-utils'
-import { batchWrite, paginateQuery } from '@/utils/dynamodb'
+import {
+  batchWrite,
+  dynamoDbQueryHelper,
+  paginateQuery,
+} from '@/utils/dynamodb'
 import { PaymentMethod } from '@/@types/tranasction/payment-type'
 
 type UserAggregationAttributes = {
@@ -449,21 +453,21 @@ export class AggregationRepository {
     timeLabelFormat: string,
     version: string
   ): Promise<Array<T & { hour: string }> | undefined> {
-    const queryInput: AWS.DynamoDB.DocumentClient.QueryInput = {
-      TableName: StackConstants.TARPON_DYNAMODB_TABLE_NAME,
-      KeyConditionExpression:
-        'PartitionKeyID = :pk AND SortKeyID BETWEEN :skfrom AND :skto',
-      ExpressionAttributeValues: {
-        ':pk': DynamoDbKeys.RULE_USER_TIME_AGGREGATION(
+    const queryInput: AWS.DynamoDB.DocumentClient.QueryInput =
+      dynamoDbQueryHelper({
+        tableName: StackConstants.TARPON_DYNAMODB_TABLE_NAME,
+        sortKey: {
+          from: dayjs(afterTimestamp).format(timeLabelFormat),
+          to: dayjs(beforeTimestamp - 1).format(timeLabelFormat),
+        },
+        partitionKey: DynamoDbKeys.RULE_USER_TIME_AGGREGATION(
           this.tenantId,
           userKeyId,
           ruleInstanceId,
           version
         ).PartitionKeyID,
-        ':skfrom': dayjs(afterTimestamp).format(timeLabelFormat),
-        ':skto': dayjs(beforeTimestamp - 1).format(timeLabelFormat),
-      },
-    }
+      })
+
     const result = await paginateQuery(this.dynamoDb, queryInput)
     return (result?.Items?.length || 0) > 0
       ? result?.Items?.map((item) => ({

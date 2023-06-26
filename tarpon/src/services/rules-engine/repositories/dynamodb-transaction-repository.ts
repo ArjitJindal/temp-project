@@ -28,7 +28,7 @@ import { DynamoDbKeys } from '@/core/dynamodb/dynamodb-keys'
 import { getTimestampBasedIDPrefix } from '@/utils/timestampUtils'
 import { ExecutedRulesResult } from '@/@types/openapi-public/ExecutedRulesResult'
 import { TransactionWithRulesResult } from '@/@types/openapi-public/TransactionWithRulesResult'
-import { paginateQuery } from '@/utils/dynamodb'
+import { dynamoDbQueryHelper, paginateQuery } from '@/utils/dynamodb'
 import { HitRulesDetails } from '@/@types/openapi-public/HitRulesDetails'
 import { TransactionType } from '@/@types/openapi-public/TransactionType'
 import { mergeObjects } from '@/utils/object'
@@ -732,21 +732,25 @@ export class DynamoDbTransactionRepository
       filterOptions,
       attributesToFetch
     )
-    return {
-      TableName: StackConstants.TARPON_DYNAMODB_TABLE_NAME,
-      KeyConditionExpression:
-        'PartitionKeyID = :pk AND SortKeyID BETWEEN :skfrom AND :skto',
-      FilterExpression: transactionFilterQuery.FilterExpression,
-      ExpressionAttributeValues: {
-        ':pk': partitionKeyId,
-        ':skfrom': `${timeRange.afterTimestamp}`,
-        ':skto': `${timeRange.beforeTimestamp - 1}`,
-        ...transactionFilterQuery.ExpressionAttributeValues,
-      },
-      ExpressionAttributeNames: transactionFilterQuery.ExpressionAttributeNames,
-      ProjectionExpression: transactionFilterQuery.ProjectionExpression,
-      ScanIndexForward: false,
-    }
+
+    const queryInput: AWS.DynamoDB.DocumentClient.QueryInput =
+      dynamoDbQueryHelper({
+        tableName: StackConstants.TARPON_DYNAMODB_TABLE_NAME,
+        filterExpression: transactionFilterQuery.FilterExpression,
+        expressionAttributeNames:
+          transactionFilterQuery.ExpressionAttributeNames,
+        expressionAttributeValues:
+          transactionFilterQuery.ExpressionAttributeValues,
+        scanIndexForward: false,
+        projectionExpression: transactionFilterQuery.ProjectionExpression,
+        partitionKey: partitionKeyId,
+        sortKey: {
+          from: `${timeRange.afterTimestamp}`,
+          to: `${timeRange.beforeTimestamp - 1}`,
+        },
+      })
+
+    return queryInput
   }
 
   private async getDynamoDBTransactions(
