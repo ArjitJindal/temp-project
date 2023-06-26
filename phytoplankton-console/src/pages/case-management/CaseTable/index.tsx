@@ -1,4 +1,4 @@
-import React, { useCallback, useMemo, useRef, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import _ from 'lodash';
 import { Link } from 'react-router-dom';
 import { TableSearchParams } from '../types';
@@ -66,6 +66,10 @@ export default function CaseTable(props: Props) {
   const reloadTable = useCallback(() => {
     tableRef.current?.reload();
   }, []);
+
+  useEffect(() => {
+    reloadTable();
+  }, [params.caseStatus, reloadTable]);
 
   const [users, loadingUsers] = useUsers({ includeBlockedUsers: true });
 

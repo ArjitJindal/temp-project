@@ -1,4 +1,4 @@
-import React, { useCallback, useMemo, useRef, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import pluralize from 'pluralize';
 import { AssigneesDropdown } from '../components/AssigneesDropdown';
 import CreateCaseConfirmModal from './CreateCaseConfirmModal';
@@ -323,6 +323,10 @@ export default function AlertTable(props: Props) {
   const reloadTable = useCallback(() => {
     actionRef.current?.reload();
   }, []);
+
+  useEffect(() => {
+    reloadTable();
+  }, [params.alertStatus, reloadTable]);
 
   const handleAssignTo = (account: Account, selectedEntities: string[], isReview: boolean) => {
     const assignment = {
