@@ -11,13 +11,13 @@ function exec(command) {
 exec('rm -rf src/apis');
 
 exec(
-  'yarn exec openapi-generator-cli generate -- -i ../tarpon/dist/openapi/internal/openapi-internal-original.yaml -g typescript -o src/apis --additional-properties=modelPropertyNaming=original --template-dir build/openapi_generate_templates/overrides',
+  'yarn exec openapi-generator-cli generate -- -i config/openapi.yaml -g typescript -o src/apis --additional-properties=modelPropertyNaming=original --template-dir build/openapi_generate_templates/overrides',
 );
 
 exec('mkdir -p /tmp/flagright/phytoplankton || true');
 
 exec(
-  'yarn exec openapi-generator-cli generate -- -i ../tarpon/dist/openapi/internal/openapi-internal-original.yaml -g typescript -o /tmp/flagright/phytoplankton --additional-properties=modelPropertyNaming=original --template-dir build/openapi_generate_templates/custom',
+  'yarn exec openapi-generator-cli generate -- -i config/openapi.yaml -g typescript -o /tmp/flagright/phytoplankton --additional-properties=modelPropertyNaming=original --template-dir build/openapi_generate_templates/custom',
 );
 
 exec('mv /tmp/flagright/phytoplankton/models src/apis/models-custom');
