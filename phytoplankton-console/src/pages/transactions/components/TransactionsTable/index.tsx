@@ -41,6 +41,7 @@ import {
   MONEY_CURRENCY,
   PAYMENT_METHOD,
   RISK_LEVEL,
+  RULE_ACTION,
   STRING,
   TAGS,
   TRANSACTION_STATE,
@@ -49,7 +50,6 @@ import {
 } from '@/components/library/Table/standardDataTypes';
 import { PaymentDetails } from '@/pages/transactions-item/UserDetails/PaymentDetails';
 import Button from '@/components/library/Button';
-import { RuleActionTag } from '@/components/rules/RuleActionTag';
 import { ColumnHelper } from '@/components/library/Table/columnHelper';
 
 const PAYMENT_DETAILS_OR_METHOD = (showDetailsView: boolean): ColumnDataType<PaymentDetails> => ({
@@ -81,6 +81,7 @@ export interface TransactionsTableParams extends CommonParams {
   destinationMethodFilter?: PaymentMethod;
   originPaymentMethodId?: string;
   destinationPaymentMethodId?: string;
+  transactionStatusFilter?: RuleAction[];
 }
 
 type Props = {
@@ -191,17 +192,7 @@ export default function TransactionsTable(props: Props) {
               defaultWidth: 80,
               key: 'executedRules.ruleAction',
               value: (entity) => getStatus(entity.executedRules, alert),
-              type: {
-                render: (status) => {
-                  return status ? (
-                    <span>
-                      <RuleActionTag ruleAction={status} />
-                    </span>
-                  ) : (
-                    <></>
-                  );
-                },
-              },
+              type: RULE_ACTION,
             } as DerivedColumn<InternalTransaction, RuleAction>,
           ]
         : []),

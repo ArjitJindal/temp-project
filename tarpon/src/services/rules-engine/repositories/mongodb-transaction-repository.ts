@@ -183,11 +183,11 @@ export class MongoDbTransactionRepository
         },
       })
     }
-    if (params.filterRuleInstancesHit?.length ?? 0 > 0) {
+    if (params.filterRuleInstancesHit) {
       executedRulesFilters.push({
         $elemMatch: {
           ruleHit: true,
-          ruleInstanceId: { $in: params.filterRuleInstancesHit },
+          ruleInstanceId: { $eq: params.filterRuleInstancesHit },
         },
       })
     }
@@ -197,6 +197,40 @@ export class MongoDbTransactionRepository
         executedRules: {
           $all: executedRulesFilters,
         },
+      })
+    }
+
+    if (params.filterTransactionStatus && params.filterRuleInstancesHit) {
+      const ruleInstanceId = params.filterRuleInstancesHit
+      conditions.push({
+        $or: [
+          {
+            executedRules: {
+              $elemMatch: {
+                ruleInstanceId: ruleInstanceId,
+                ruleHit: true,
+                ruleAction: { $in: params.filterTransactionStatus },
+              },
+            },
+          },
+          {
+            $and: [
+              {
+                executedRules: {
+                  $all: [
+                    {
+                      $elemMatch: {
+                        ruleInstanceId: ruleInstanceId,
+                        ruleHit: false,
+                      },
+                    },
+                  ],
+                },
+              },
+              { $expr: { $in: ['ALLOW', params.filterTransactionStatus] } },
+            ],
+          },
+        ],
       })
     }
 

@@ -15,6 +15,7 @@ import { useApiTime } from '@/utils/tracker';
 import InformationIcon from '@/components/ui/icons/Remix/system/information-line.react.svg';
 import COLORS from '@/components/ui/colors';
 import { dayjs } from '@/utils/dayjs';
+import { RULE_ACTIONS } from '@/apis/models-custom/RuleAction';
 
 type Props = {
   alert: Alert;
@@ -29,6 +30,9 @@ const DisplayCheckedTransactions = (props: Props) => {
   const [params, setParams] = useState<TransactionsTableParams>({
     ...DEFAULT_PARAMS_STATE,
     sort: [['timestamp', 'descend']],
+  });
+  const ruleActionOptions = RULE_ACTIONS.map((action) => {
+    return { value: action, label: action };
   });
 
   const api = useApi();
@@ -49,9 +53,10 @@ const DisplayCheckedTransactions = (props: Props) => {
         tagValue,
         originMethodFilter,
         destinationMethodFilter,
+        transactionStatusFilter,
       } = params;
-      const [sortField, sortOrder] = params.sort[0] ?? [];
 
+      const [sortField, sortOrder] = params.sort[0] ?? [];
       return await measure(
         () =>
           api.getTransactionsList({
@@ -78,9 +83,10 @@ const DisplayCheckedTransactions = (props: Props) => {
             filterDestinationUserId:
               params.userFilterMode === 'DESTINATION' ? params.userId : undefined,
             filterUserId: caseUserId,
-            filterRuleInstancesHit: [alert.ruleInstanceId],
+            filterRuleInstancesHit: alert.ruleInstanceId,
             filterOriginPaymentMethodId: params.originPaymentMethodId,
             filterDestinationPaymentMethodId: params.destinationPaymentMethodId,
+            filterTransactionStatus: transactionStatusFilter,
           }),
         'Transactions List',
       );
@@ -136,6 +142,16 @@ const DisplayCheckedTransactions = (props: Props) => {
                   }}
                 />
               ),
+            },
+            {
+              key: 'transactionStatusFilter',
+              title: 'Status',
+              renderer: {
+                kind: 'select',
+                mode: 'MULTIPLE',
+                displayMode: 'select',
+                options: ruleActionOptions,
+              },
             },
           ]}
           alert={alert}

@@ -499,9 +499,7 @@ paths:
           in: query
           name: filterRulesHit
         - schema:
-            type: array
-            items:
-              type: string
+            type: string
           in: query
           name: filterRuleInstancesHit
         - schema:
@@ -610,6 +608,12 @@ paths:
             type: string
           in: query
           name: filterDestinationPaymentMethodId
+        - schema:
+            type: array
+            items:
+              $ref: '#/components/schemas/RuleAction'
+          in: query
+          name: filterTransactionStatus
   /transactions/export:
     get:
       summary: Transaction - Export
