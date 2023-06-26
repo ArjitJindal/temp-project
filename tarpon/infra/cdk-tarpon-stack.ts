@@ -185,12 +185,12 @@ export class CdkTarponStack extends cdk.Stack {
     const tarponStream = this.createKinesisStream(
       StackConstants.TARPON_STREAM_ID,
       StackConstants.TARPON_STREAM_NAME,
-      Duration.days(3)
+      Duration.days(7)
     )
     const hammerheadStream = this.createKinesisStream(
       StackConstants.HAMMERHEAD_STREAM_ID,
       StackConstants.HAMMERHEAD_STREAM_NAME,
-      Duration.days(3)
+      Duration.days(7)
     )
 
     /**
