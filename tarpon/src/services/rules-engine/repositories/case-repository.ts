@@ -1101,14 +1101,30 @@ export class CaseRepository {
   ) {
     const db = this.mongoDb.db()
     const collection = db.collection<Case>(CASES_COLLECTION(this.tenantId))
-    await collection.updateOne(
-      { caseTransactionsIds: { $elemMatch: { $eq: transactionId } } },
-      {
-        $set: {
-          'caseUsers.originUserDrsScore': originDrsScore,
-          'caseUsers.destinationUserDrsScore': destinationDrsScore,
+
+    await Promise.all([
+      collection.updateOne(
+        {
+          caseTransactionsIds: { $elemMatch: { $eq: transactionId } },
+          'caseUsers.origin': { $ne: null },
         },
-      }
-    )
+        {
+          $set: {
+            'caseUsers.originUserDrsScore': originDrsScore,
+          },
+        }
+      ),
+      collection.updateOne(
+        {
+          caseTransactionsIds: { $elemMatch: { $eq: transactionId } },
+          'caseUsers.destination': { $ne: null },
+        },
+        {
+          $set: {
+            'caseUsers.destinationUserDrsScore': destinationDrsScore,
+          },
+        }
+      ),
+    ])
   }
 }
