@@ -1,5 +1,6 @@
 import React, { useRef, useState, useContext } from 'react';
 import { Typography } from 'antd';
+import _ from 'lodash';
 import AuditLogModal from '../AuditLogModal';
 import ActionsFilterButton from '../ActionsFilterButton';
 import { AuditLogPageContext } from '../..';
@@ -20,6 +21,7 @@ import { DATE } from '@/components/library/Table/standardDataTypes';
 import EntityFilterButton from '@/pages/auditlog/components/EntityFilterButton';
 import ActionTakenByFilterButton from '@/pages/auditlog/components/ActionTakeByFilterButton';
 import { PageWrapperContentContainer } from '@/components/PageWrapper';
+import { Assignee } from '@/components/Assignee';
 
 export default function AuditLogTable() {
   const api = useApi();
@@ -103,33 +105,26 @@ export default function AuditLogTable() {
       title: 'Event',
       key: 'action',
     }),
-    helper.simple<'oldImage'>({
-      key: 'oldImage',
-      title: 'Before',
+    helper.derived({
+      title: 'Changes',
+      value: (item) => item,
       type: {
-        render: (oldImage, { item: entity }) => {
-          if (!oldImage || !Object.keys(oldImage).length) {
+        render: (item) => {
+          if (!item || _.isEqual(item.oldImage, item.newImage)) {
             return <Typography.Text type={'secondary'}>-</Typography.Text>;
           }
-          return <AuditLogModal data={entity} />;
+          return <AuditLogModal data={item} />;
         },
       },
     }),
-    helper.simple<'newImage'>({
-      key: 'newImage',
-      title: 'After',
-      type: {
-        render: (newImage, { item: entity }) => {
-          if (!newImage || !Object.keys(newImage).length) {
-            return <Typography.Text type={'secondary'}>-</Typography.Text>;
-          }
-          return <AuditLogModal data={entity} />;
-        },
-      },
-    }),
-    helper.simple<'user.email'>({
-      key: 'user.email',
+    helper.simple<'user.id'>({
+      key: 'user.id',
       title: 'Action Taken By',
+      type: {
+        render: (userId) => {
+          return <Assignee accountId={userId} />;
+        },
+      },
     }),
     helper.simple<'timestamp'>({
       title: 'Time of Action',

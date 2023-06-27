@@ -1,90 +1,111 @@
-import { Modal, Table, Typography } from 'antd';
+import { Modal, Typography } from 'antd';
 import _ from 'lodash';
 import { useState } from 'react';
 import COLORS from '@/components/ui/colors';
 import { AuditLog } from '@/apis';
-import { flattenObject } from '@/utils/json';
+import { flattenObject, getFlattenedObjectHumanReadableKey } from '@/utils/json';
+import Table from '@/components/library/Table';
+import { ColumnHelper } from '@/components/library/Table/columnHelper';
+import TimestampDisplay from '@/components/ui/TimestampDisplay';
+import { Assignee } from '@/components/Assignee';
 
 interface Props {
   data: AuditLog;
 }
 
+type TableItem = {
+  key: string;
+  oldImage: object;
+  newImage: object;
+};
 interface TableTemplateProp {
-  details: object[];
+  details: TableItem[];
 }
 
-const RenderModalData = (data: any) => {
-  if (data?.length === 0) {
+const UNIX_TIMESTAMP_MS_REGEX = /^\d{13}$/;
+const AUTH0_USER_ID_REGEX = /^(google-oauth2|auth0)\|\S+$/;
+const RenderModalData = (value: any | undefined) => {
+  if (typeof value === 'object' && _.isEmpty(value)) {
     return <em>Empty</em>;
-  } else if (Array.isArray(data)) {
-    if (data.length && typeof data[0] === 'object') {
-      return <pre>{JSON.stringify(data, null, 2)}</pre>;
+  } else if (typeof value === 'number' && UNIX_TIMESTAMP_MS_REGEX.test(String(value))) {
+    return <TimestampDisplay timestamp={value} />;
+  } else if (typeof value === 'string' && AUTH0_USER_ID_REGEX.test(value)) {
+    return <Assignee accountId={value} />;
+  } else if (Array.isArray(value)) {
+    if (value.length && typeof value[0] === 'object') {
+      return <pre>{JSON.stringify(value, null, 2)}</pre>;
     } else {
-      return <p>{data.join(', ')}</p>;
+      return <p>{value.join(', ')}</p>;
     }
-  } else if (typeof data === 'object') {
-    return <pre>{JSON.stringify(data, null, 2)}</pre>;
-  } else if (typeof data === 'boolean') {
-    return <p>{data ? 'True' : 'False'}</p>;
+  } else if (typeof value === 'object') {
+    return <pre>{JSON.stringify(value, null, 2)}</pre>;
+  } else if (typeof value === 'boolean') {
+    return <p>{value ? 'True' : 'False'}</p>;
   } else {
-    return <p>{data}</p>;
+    return <p>{value}</p>;
   }
 };
 
 const TableTemplate = (props: TableTemplateProp) => {
+  const helper = new ColumnHelper<TableItem>();
   return (
-    <Table
-      dataSource={props.details}
+    <Table<TableItem>
+      rowKey={'key'}
+      data={{ items: props.details }}
       pagination={false}
-      style={{ overflowX: 'scroll' }}
+      toolsOptions={false}
       columns={[
-        {
+        helper.simple<'key'>({
           title: 'Parameter Name',
-          dataIndex: 'key',
           key: 'key',
-          render: (text) =>
-            typeof text === 'string' ? <b>{_.startCase(text.replaceAll('.', ' > '))}</b> : '',
-          width: 80,
-        },
-        {
+          defaultWidth: 250,
+          type: {
+            render: (text) => (
+              <>{text ? <b>{getFlattenedObjectHumanReadableKey(text)}</b> : 'N/A'}</>
+            ),
+          },
+        }),
+        helper.simple<'oldImage'>({
           title: 'Old Value',
-          dataIndex: 'oldImage',
           key: 'oldImage',
-          render: (data) => {
-            return RenderModalData(data);
+          defaultWidth: 350,
+          type: {
+            render: (data) => {
+              return RenderModalData(data);
+            },
           },
-          width: 150,
-        },
-        {
+        }),
+        helper.simple<'newImage'>({
           title: 'New Value',
-          dataIndex: 'newImage',
           key: 'newImage',
-          render: (data) => {
-            return RenderModalData(data);
+          defaultWidth: 350,
+          type: {
+            render: (data) => {
+              return RenderModalData(data);
+            },
           },
-          width: 150,
-        },
+        }),
       ]}
     />
   );
 };
 
-type convertDataReturn = {
-  changedDetails: object[];
-  notChangedDetails: object[];
-};
-
-const convertDataOldImageAndNewImageToArr = (data: AuditLog): convertDataReturn => {
-  const changedDetails: object[] = [];
-  const notChangedDetails: object[] = [];
-  const oldImage: any = data?.oldImage && flattenObject(data?.oldImage);
-  const newImage: any = data?.newImage && flattenObject(data?.newImage);
+const summariseChanges = (
+  data: AuditLog,
+): {
+  changedDetails: TableItem[];
+  notChangedDetails: TableItem[];
+} => {
+  const changedDetails: TableItem[] = [];
+  const notChangedDetails: TableItem[] = [];
+  const oldImage: object = data?.oldImage && flattenObject(data?.oldImage);
+  const newImage: object = data?.newImage && flattenObject(data?.newImage);
 
   const oldImageKeys = oldImage ? Object.keys(oldImage) : [];
   const newImageKeys = newImage ? Object.keys(newImage) : [];
   const allKeys = _.uniq([...oldImageKeys, ...newImageKeys]);
   allKeys.forEach((key) => {
-    const obj = {
+    const obj: TableItem = {
       key,
       oldImage: oldImage && oldImage[key] != null ? oldImage[key] : 'N/A',
       newImage: newImage && newImage[key] != null ? newImage[key] : 'N/A',
@@ -102,7 +123,7 @@ const AuditLogModal = (props: Props) => {
   const { data } = props;
   const [isModalVisible, setIsModalVisible] = useState(false);
 
-  const { changedDetails, notChangedDetails } = convertDataOldImageAndNewImageToArr(data);
+  const { changedDetails, notChangedDetails } = summariseChanges(data);
 
   return (
     <>

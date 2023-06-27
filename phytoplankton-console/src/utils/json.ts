@@ -42,7 +42,11 @@ export function removeEmpty<T>(o: T): T {
 }
 
 export function flattenObject(object: any): any {
-  return flatten(object, { safe: true, delimiter: '.' }) as any;
+  return flatten(object, { safe: false, delimiter: '.' }) as any;
+}
+
+export function getFlattenedObjectHumanReadableKey(flattenedKey: string): string {
+  return flattenedKey.split('.').map(_.startCase).join(' > ');
 }
 
 export function getFixedSchemaJsonForm(schema: object) {
