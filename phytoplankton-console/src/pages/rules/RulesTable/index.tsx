@@ -50,6 +50,7 @@ export const RulesTable: React.FC<Props> = ({ onViewRule, onEditRule, simulation
         title: 'ID',
         subtitle: 'Name',
         key: 'id',
+        defaultWidth: 170,
         sorting: true,
         type: {
           render: (id: string | undefined, { item: entity }) => {
@@ -71,7 +72,7 @@ export const RulesTable: React.FC<Props> = ({ onViewRule, onEditRule, simulation
                     )}
                   </span>
                 </a>
-                <span style={{ fontSize: '12px' }}>{entity.name}</span>
+                <span style={{ fontSize: '12px', whiteSpace: 'normal' }}>{entity.name}</span>
               </>
             );
           },
@@ -81,17 +82,20 @@ export const RulesTable: React.FC<Props> = ({ onViewRule, onEditRule, simulation
       helper.simple<'description'>({
         title: 'Description',
         key: 'description',
+        defaultWidth: 425,
         type: LONG_TEXT,
       }),
       helper.simple<'defaultNature'>({
         title: 'Default nature',
         key: 'defaultNature',
+        defaultWidth: 80,
       }),
       helper.simple<'defaultAction'>({
         title: 'Default action',
         key: 'defaultAction',
         type: RULE_ACTION,
         sorting: true,
+        defaultWidth: 80,
         // todo: implement
         // sorter: (a, b) => a.defaultAction.localeCompare(b.defaultAction),
         // exportData: (row) => row.defaultAction,
@@ -99,18 +103,22 @@ export const RulesTable: React.FC<Props> = ({ onViewRule, onEditRule, simulation
       helper.simple<'typology'>({
         title: 'Typology',
         key: 'typology',
+        defaultWidth: 250,
       }),
       helper.simple<'typologyGroup'>({
         title: 'Typology group',
         key: 'typologyGroup',
+        defaultWidth: 220,
       }),
       helper.simple<'typologyDescription'>({
         title: 'Typology description',
         key: 'typologyDescription',
+        defaultWidth: 300,
       }),
       helper.simple<'source'>({
         title: 'Source',
         key: 'source',
+        defaultWidth: 300,
       }),
       helper.display({
         id: 'actions',
@@ -196,6 +204,7 @@ export const RulesTable: React.FC<Props> = ({ onViewRule, onEditRule, simulation
       fitHeight={true}
       params={params}
       onChangeParams={setParams}
+      rowHeightMode={'AUTO'}
     />
   );
 };
