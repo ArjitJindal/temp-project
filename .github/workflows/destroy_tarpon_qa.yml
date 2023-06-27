@@ -1,4 +1,4 @@
-name: Destroy QA Env
+name: Destroy Tarpon QA Env
 
 defaults:
   run:
@@ -9,14 +9,13 @@ on:
     types: [closed]
     branches:
       - main
+    paths:
+      - 'tarpon/**'
 jobs:
   destroy:
-    strategy:
-      matrix:
-        node-version: [16.x]
     runs-on: ubuntu-20.04
     steps:
-      - name: Checkout Tarpon
+      - name: Checkout
         uses: actions/checkout@v3
         with:
           ref: "main"
@@ -27,15 +26,7 @@ jobs:
           node-version: ${{ matrix.node-version }}
           cache: 'npm'
           cache-dependency-path: "tarpon/package-lock.json"
-      - name: Use Node.js ${{ matrix.node-version }}
-        uses: actions/setup-node@v3
-        with:
-          node-version: ${{ matrix.node-version }}
-          cache: 'yarn'
-          cache-dependency-path: "phytoplankton-console/yarn.lock"
       - run: npm ci
-        working-directory: "tarpon"
-      - run: yarn install --frozen-lockfile
         working-directory: "tarpon"
       - name: Destroy
         run: |
@@ -49,7 +40,3 @@ jobs:
           echo "Destroying QA deploy for $QA_SUBDOMAIN.api.flagright.dev"
           cd tarpon
           npm run destroy:qa
-          
-          echo "Destroying QA deploy for $QA_SUBDOMAIN.console.flagright.dev if it exists"
-          cd ../phytoplankton-console
-          yarn run destroy:qa || exit 0
