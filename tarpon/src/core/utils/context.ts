@@ -22,7 +22,7 @@ type LogMetaData = {
   tenantId?: string
 }
 
-type Context = LogMetaData & {
+export type Context = LogMetaData & {
   features?: Feature[]
   logMetadata?: { [key: string]: string | undefined }
   metricDimensions?: { [key: string]: string | undefined }

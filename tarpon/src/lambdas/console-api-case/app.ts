@@ -8,10 +8,7 @@ import { CasesAlertsAuditLogService } from './services/case-alerts-audit-log-ser
 import { AccountsService } from '@/services/accounts'
 import { lambdaApi } from '@/core/middlewares/lambda-api-middlewares'
 import { addNewSubsegment } from '@/core/xray'
-import {
-  DefaultApiGetAlertListRequest,
-  DefaultApiGetCaseListRequest,
-} from '@/@types/openapi-internal/RequestParameters'
+import { DefaultApiGetAlertListRequest } from '@/@types/openapi-internal/RequestParameters'
 import { getS3ClientByEvent } from '@/utils/s3'
 import { Comment } from '@/@types/openapi-internal/Comment'
 import { getMongoDbClient } from '@/utils/mongoDBUtils'
@@ -37,6 +34,7 @@ import { AlertsAssignmentUpdateRequest } from '@/@types/openapi-internal/AlertsA
 import { TenantRepository } from '@/services/tenants/repositories/tenant-repository'
 import { PaymentMethod } from '@/@types/openapi-public/PaymentMethod'
 import { CaseEscalationResponse } from '@/@types/openapi-internal/CaseEscalationResponse'
+import { Handlers } from '@/@types/openapi-internal-custom/DefaultApi'
 
 export type CaseConfig = {
   TMP_BUCKET: string
@@ -103,123 +101,17 @@ export const casesHandler = lambdaApi()(
       { mongoDb: client, dynamoDb }
     )
 
-    if (event.httpMethod === 'GET' && event.resource === '/cases') {
-      const {
-        page,
-        pageSize,
-        afterTimestamp,
-        beforeTimestamp,
-        filterId,
-        filterOutStatus,
-        filterOutCaseStatus,
-        filterRulesHit,
-        filterRulesExecuted,
-        filterOriginCurrencies,
-        filterDestinationCurrencies,
-        filterUserId,
-        filterOriginUserId,
-        filterDestinationUserId,
-        transactionType,
-        sortField,
-        sortOrder,
-        filterStatus,
-        filterCaseStatus,
-        filterOriginPaymentMethods,
-        filterDestinationPaymentMethods,
-        filterPriority,
-        filterTransactionId,
-        filterTransactionTagKey,
-        filterTransactionTagValue,
-        beforeTransactionTimestamp,
-        afterTransactionTimestamp,
-        filterTransactionAmoutBelow,
-        filterTransactionAmoutAbove,
-        filterOriginCountry,
-        filterDestinationCountry,
-        filterBusinessIndustries,
-        filterUserState,
-        filterRiskLevel,
-        filterAssignmentsIds,
-        afterCaseLastUpdatedTimestamp,
-        beforeCaseLastUpdatedTimestamp,
-      } = event.queryStringParameters as any
-      const params: DefaultApiGetCaseListRequest = {
-        page,
-        pageSize,
-        afterTimestamp: parseInt(afterTimestamp) || undefined,
-        beforeTimestamp: parseInt(beforeTimestamp),
-        afterCaseLastUpdatedTimestamp: parseInt(afterCaseLastUpdatedTimestamp)
-          ? parseInt(afterCaseLastUpdatedTimestamp)
-          : undefined,
-        beforeCaseLastUpdatedTimestamp: parseInt(beforeCaseLastUpdatedTimestamp)
-          ? parseInt(beforeCaseLastUpdatedTimestamp)
-          : undefined,
-        filterId,
-        filterOutStatus,
-        filterOutCaseStatus: parseStrings(filterOutCaseStatus),
-        filterStatus: filterStatus ? filterStatus.split(',') : undefined,
-        filterCaseStatus: parseStrings(filterCaseStatus),
-        filterRulesExecuted: filterRulesExecuted
-          ? filterRulesExecuted.split(',')
-          : undefined, // todo: need a proper parser for url
-        filterRulesHit: filterRulesHit ? filterRulesHit.split(',') : undefined, // todo: need a proper parser for url
-        filterUserId,
-        filterOriginUserId,
-        filterDestinationUserId,
-        filterTransactionId,
-        transactionType,
-        sortField: sortField,
-        sortOrder: sortOrder,
-        filterOriginCurrencies: filterOriginCurrencies
-          ? filterOriginCurrencies.split(',')
-          : undefined,
-        filterDestinationCurrencies: filterDestinationCurrencies
-          ? filterDestinationCurrencies.split(',')
-          : undefined,
-        filterOriginPaymentMethods: filterOriginPaymentMethods
-          ? (filterOriginPaymentMethods.split(',') as PaymentMethod[])
-          : undefined,
-        filterDestinationPaymentMethods: filterDestinationPaymentMethods
-          ? (filterDestinationPaymentMethods.split(',') as PaymentMethod[])
-          : undefined,
-        filterPriority,
-        filterTransactionTagKey,
-        filterTransactionTagValue,
-        beforeTransactionTimestamp: beforeTransactionTimestamp
-          ? parseInt(beforeTransactionTimestamp)
-          : undefined,
-        afterTransactionTimestamp: afterTransactionTimestamp
-          ? parseInt(afterTransactionTimestamp)
-          : undefined,
-        filterTransactionAmoutBelow: filterTransactionAmoutBelow
-          ? parseInt(filterTransactionAmoutBelow)
-          : undefined,
-        filterTransactionAmoutAbove: filterTransactionAmoutAbove
-          ? parseInt(filterTransactionAmoutAbove)
-          : undefined,
-        filterOriginCountry,
-        filterDestinationCountry,
-        filterBusinessIndustries: filterBusinessIndustries
-          ? filterBusinessIndustries.split(',')
-          : undefined,
-        filterUserState: filterUserState
-          ? filterUserState.split(',')
-          : undefined,
-        filterRiskLevel: filterRiskLevel
-          ? filterRiskLevel.split(',')
-          : undefined,
-        filterAssignmentsIds: filterAssignmentsIds
-          ? filterAssignmentsIds.split(',')
-          : undefined,
-      }
+    const handlers = new Handlers()
+    handlers.registerGetCaseList(async (ctx, request) => {
       const caseGetSegment = await addNewSubsegment('Case Service', 'Get Cases')
       caseGetSegment?.addAnnotation('tenantId', tenantId)
-      caseGetSegment?.addAnnotation('getParams', JSON.stringify(params))
-      const cases = caseService.getCases(params)
+      caseGetSegment?.addAnnotation('request', JSON.stringify(request))
+      const response = caseService.getCases(request)
       caseGetSegment?.close()
+      return response
+    })
 
-      return cases
-    } else if (
+    if (
       event.httpMethod === 'POST' &&
       event.resource === '/cases' &&
       event.body
@@ -693,7 +585,7 @@ export const casesHandler = lambdaApi()(
         return response
       }
     }
-    throw new NotFound('Unhandled request')
+    handlers.handle(event)
   }
 )
 

@@ -21,7 +21,7 @@ function replaceRequestParameters(path: string) {
   fs.writeFileSync(path, newText)
 }
 
-function replaceUserSavedPaymentDetails(paths: string[]) {
+function removeBadImports(paths: string[]) {
   for (const path of paths) {
     if (!fs.existsSync(path)) {
       continue
@@ -29,26 +29,9 @@ function replaceUserSavedPaymentDetails(paths: string[]) {
     const newText = fs
       .readFileSync(path)
       .toString()
-      .replace(
-        "import { CardDetails | GenericBankAccountDetails | IBANDetails | ACHDetails | SWIFTDetails | MpesaDetails | UPIDetails | WalletDetails | CheckDetails } from './CardDetails | GenericBankAccountDetails | IBANDetails | ACHDetails | SWIFTDetails | MpesaDetails | UPIDetails | WalletDetails | CheckDetails';",
-        ''
-      )
+      .replace(/import \{ \S+ \| \S+ .*/g, '')
     fs.writeFileSync(path, newText)
   }
-}
-
-function replaceSimulationGetResponse(path: string) {
-  if (!fs.existsSync(path)) {
-    return
-  }
-  const newText = fs
-    .readFileSync(path)
-    .toString()
-    .replace(
-      "import { SimulationPulseJob | SimulationBeaconJob } from './SimulationPulseJob | SimulationBeaconJob';",
-      ''
-    )
-  fs.writeFileSync(path, newText)
 }
 
 function buildApi(
@@ -86,9 +69,11 @@ function buildApi(
   )
 
   // Move custom generated code
-  exec(
-    `mv /tmp/flagright/${type}_openapi_custom/apis/DefaultApi.ts src/@types/openapi-${type}-custom/`
-  )
+  if (type == 'internal') {
+    exec(
+      `mv /tmp/flagright/${type}_openapi_custom/apis/DefaultApi.ts src/@types/openapi-${type}-custom/`
+    )
+  }
   exec(
     `mv /tmp/flagright/${type}_openapi_custom/models/* src/@types/openapi-${type}-custom/`
   )
@@ -102,18 +87,17 @@ function buildApi(
     fi`
   )
   replaceRequestParameters(`src/@types/openapi-${type}/RequestParameters.ts`)
-  replaceUserSavedPaymentDetails([
+  removeBadImports([
     `src/@types/openapi-${type}/Business.ts`,
     `src/@types/openapi-${type}/BusinessOptional.ts`,
     `src/@types/openapi-${type}/BusinessWithRulesResult.ts`,
     `src/@types/openapi-${type}/InternalUser.ts`,
     `src/@types/openapi-${type}/InternalBusinessUser.ts`,
     `src/@types/openapi-${type}/BusinessResponse.ts`,
+    `src/@types/openapi-${type}/SimulationGetResponse.ts`,
+    `src/@types/openapi-${type}-custom/DefaultApi.ts`,
   ])
 
-  replaceSimulationGetResponse(
-    `src/@types/openapi-${type}/SimulationGetResponse.ts`
-  )
   exec(
     `rm -f src/@types/openapi-${type}/ObjectSerializer.ts src/@types/openapi-${type}/all.ts`
   )

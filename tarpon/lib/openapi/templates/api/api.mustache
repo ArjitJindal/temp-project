@@ -1,4 +1,105 @@
+{{#imports}}
+import { {{classname}} } from '@/@types/openapi-{{api}}/{{classname}}';
+{{/imports}}
+import { SimulationBeaconType } from "@/@types/openapi-internal/SimulationBeaconType";
+import { SimulationPulseType } from "@/@types/openapi-internal/SimulationPulseType";
 import { Permission } from "@/@types/openapi-internal/Permission";
+import {
+APIGatewayEventLambdaAuthorizerContext,
+APIGatewayProxyWithLambdaAuthorizerEvent,
+} from 'aws-lambda'
+import { JWTAuthorizerResult } from "@/@types/jwt";
+import { Context } from '@/console-api/context'
+import { BadRequest } from "http-errors";
+import { fromGlobalContext } from '@/console-api/context'
+import { getContext } from '@/core/utils/context'
+{{#operations}}
+{{#operation}}
+import {DefaultApi{{#lambda.titlecase}}{{ nickname }}{{/lambda.titlecase}}Request} from "@/@types/openapi-internal/RequestParameters";
+{{/operation}}
+{{/operations}}
+
+export class Handlers {
+{{#operations}}
+    {{#operation}}
+        private {{nickname}}Handler?: (ctx: Context, request: DefaultApi{{#lambda.titlecase}}{{ nickname }}{{/lambda.titlecase}}Request) => Promise<{{{returnType}}} {{^returnType}}void{{/returnType}}> | {{{returnType}}} {{^returnType}}void{{/returnType}}
+    {{/operation}}
+{{/operations}}
+{{#operations}}
+    {{#operation}}
+        private {{nickname}}(ctx: Context, request: DefaultApi{{#lambda.titlecase}}{{ nickname }}{{/lambda.titlecase}}Request): Promise<{{{returnType}}} {{^returnType}}void{{/returnType}}> | {{{returnType}}} {{^returnType}}void{{/returnType}} {
+           if (this.{{nickname}}Handler == undefined) {
+               throw new Error("No handler registered")
+           }
+           return this.{{nickname}}Handler(ctx, request)
+        }
+        register{{#lambda.titlecase}}{{nickname}}{{/lambda.titlecase}}(handler: (ctx: Context, request: DefaultApi{{#lambda.titlecase}}{{ nickname }}{{/lambda.titlecase}}Request) => Promise<{{{returnType}}} {{^returnType}}void{{/returnType}}> | {{{returnType}}} {{^returnType}}void{{/returnType}}) {
+           this.{{nickname}}Handler = handler
+        }
+    {{/operation}}
+{{/operations}}
+        handle(event: APIGatewayProxyWithLambdaAuthorizerEvent<APIGatewayEventLambdaAuthorizerContext<JWTAuthorizerResult>>) {
+            const ctx = fromGlobalContext(getContext())
+    {{#operations}}
+    {{#operation}}
+            if (event.httpMethod === '{{httpMethod}}' && event.resource === '{{path}}') {
+                {{#bodyParam}}
+                if (!event.body) {
+                    throw new BadRequest('Empty request body')
+                }
+                {{/bodyParam}}
+                return this.{{nickname}}(
+                    ctx,
+                    {
+                        {{#pathParams}}
+                            {{#isNumber}}
+                        {{paramName}}: event.pathParameters?.{{paramName}} ? parseInt(event.pathParameters?.{{paramName}}) : undefined,
+                            {{/isNumber}}
+                            {{^isNumber}}
+                        {{paramName}}: event.pathParameters?.{{paramName}} as string,
+                            {{/isNumber}}
+                        {{/pathParams}}
+                        {{#queryParams}}
+                            {{#isArray}}
+                              {{#isNumber}}
+                        {{paramName}}: event.queryStringParameters?.{{paramName}}?.split(',').map(i => parseInt(i)) as {{baseType}}[] || undefined,
+                              {{/isNumber}}
+                              {{^isNumber}}
+                        {{paramName}}: event.queryStringParameters?.{{paramName}}?.split(',') as {{baseType}}[] || undefined,
+                              {{/isNumber}}
+                            {{/isArray}}
+                            {{^isArray}}
+                                {{#isNumber}}
+                        {{paramName}}: event.queryStringParameters?.{{paramName}} ? parseInt(event.queryStringParameters?.{{paramName}}) : {{#required}}0{{/required}}{{^required}}undefined{{/required}},
+                                {{/isNumber}}
+                                {{#isString}}
+                        {{paramName}}: event.queryStringParameters?.{{paramName}} as {{{dataType}}},
+                                {{/isString}}
+                                {{#isBoolean}}
+                        {{paramName}}: event.queryStringParameters?.{{paramName}} == "true",
+                                {{/isBoolean}}
+                                {{^isNumber}}
+                                {{^isString}}
+                                {{^isBoolean}}
+                                {{^isEnum}}
+                        {{paramName}}: event.queryStringParameters?.{{paramName}} as {{{dataType}}},
+                                {{/isEnum}}
+                                {{/isBoolean}}
+                                {{/isString}}
+                                {{/isNumber}}
+                            {{/isArray}}
+                        {{/queryParams}}
+                        {{#bodyParam}}
+                        {{paramName}}: JSON.parse(event.body) as {{{dataType}}}
+                        {{/bodyParam}}
+                    }
+                )
+            }
+        {{/operation}}
+            throw new BadRequest('Unsupported path')
+{{/operations}}
+    }
+}
 
 export function getApiRequiredPermissions(resource: string, method: string): Permission[] {
     return {{#lambda.uppercase}}{{#lambda.snakecase}}{{api}}{{/lambda.snakecase}}{{/lambda.uppercase}}_PERMISSIONS[`${resource}-${method}`]
