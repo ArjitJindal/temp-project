@@ -90,31 +90,21 @@ export const DynamoDbKeys = {
     timestamp?: number
   ) => {
     const tranasctionTypeKey = getTransactionTypeKey(transactionType)
+    const identifiers = getPaymentDetailsIdentifiers(paymentDetails)
+    if (!identifiers) {
+      logger.warn(`Payment identifier not found for ${paymentDetails.method}`)
+      return null
+    }
     if (paymentDetails.method === 'GENERIC_BANK_ACCOUNT') {
-      const { accountNumber, accountType } =
-        paymentDetails as GenericBankAccountDetails
-      let bankCode = paymentDetails.bankCode
-
-      // NOTE: bankId is currently being sent by Kevin. We'll ask them to send bankCode
-      // instead later
-      if (!bankCode) {
-        bankCode = (paymentDetails as any).bankId
-      }
-
-      if (!accountNumber) {
-        logger.warn(
-          'Payment identifier for GENERIC_BANK_IDENTIFIER - Account Number not found'
-        )
-        return null
-      }
-
+      const { accountNumber, accountType, bankCode, bankId } = identifiers
       // We keep the legacy identifier to avoid migrating data in DynamoDB
       const legacyIdentifier =
         accountNumber && accountType
           ? `accountNumber:${accountNumber}#accountType:${accountType}`
           : undefined
       const identifier =
-        legacyIdentifier ?? [accountNumber, bankCode].filter(Boolean).join('.')
+        legacyIdentifier ??
+        [accountNumber, bankCode ?? bankId].filter(Boolean).join('.')
 
       if (!identifier) {
         logger.warn('Payment identifier not found')
@@ -125,10 +115,6 @@ export const DynamoDbKeys = {
         SortKeyID: `${timestamp}`,
       }
     } else {
-      const identifiers = getPaymentDetailsIdentifiers(paymentDetails)
-      if (!identifiers) {
-        return null
-      }
       const identifiersString = Object.entries(identifiers)
         .map((entry) => `${entry[0]}:${entry[1]}`)
         .join('#')
@@ -349,13 +335,23 @@ export function getPaymentDetailsIdentifiers(
   if (paymentDetails.method === 'GENERIC_BANK_ACCOUNT') {
     const { accountNumber, accountType, bankCode } =
       paymentDetails as GenericBankAccountDetails
-    if (!accountNumber && !accountType && !bankCode) {
+    // legacy identifier
+    if (accountNumber && accountType) {
+      return {
+        accountNumber,
+        accountType,
+      }
+    }
+    if (!accountNumber) {
       return null
     }
+
     return {
       accountNumber,
-      accountType,
       bankCode,
+      // NOTE: bankId is currently being sent by Kevin. We'll ask them to send bankCode
+      // instead later
+      bankId: (paymentDetails as any).bankId,
     }
   } else {
     // All fields need to be non-empty

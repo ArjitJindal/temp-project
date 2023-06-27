@@ -20,6 +20,7 @@ import {
   PageSize,
 } from '@/utils/pagination'
 import { InternalTransaction } from '@/@types/openapi-internal/InternalTransaction'
+import { PAYMENT_METHOD_IDENTIFIER_FIELDS } from '@/core/dynamodb/dynamodb-keys'
 import { Case } from '@/@types/openapi-internal/Case'
 import { AuditLog } from '@/@types/openapi-internal/AuditLog'
 import { WebhookConfiguration } from '@/@types/openapi-internal/WebhookConfiguration'
@@ -449,6 +450,21 @@ export const createMongoDBCollections = async (
       }
     )
 
+    // NOTE: These indexes are for running the rules in the Simulation mode
+    for (const fields of Object.values(PAYMENT_METHOD_IDENTIFIER_FIELDS)) {
+      txnIndexes.push({
+        'originPaymentDetails.method': 1,
+        ...Object.fromEntries(
+          fields.map((field) => [`originPaymentDetails.${field}`, 1])
+        ),
+      })
+      txnIndexes.push({
+        'destinationPaymentDetails.method': 1,
+        ...Object.fromEntries(
+          fields.map((field) => [`destinationPaymentDetails.${field}`, 1])
+        ),
+      })
+    }
     await syncIndexes(transactionCollection, txnIndexes)
 
     try {
