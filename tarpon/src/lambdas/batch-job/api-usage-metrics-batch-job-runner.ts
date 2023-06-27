@@ -10,7 +10,7 @@ export class ApiUsageMetricsBatchJobRunner extends BatchJobRunner {
     const { tenantInfo } = job
     const mongoDb = await getMongoDbClient()
     const dynamoDb = getDynamoDbClient()
-    const timestamp = dayjs().subtract(1, 'day').valueOf()
+    const timestamp = dayjs().subtract(2, 'day').valueOf()
     const startTimestamp = dayjs(timestamp).startOf('day').valueOf()
     const endTimestamp = dayjs(timestamp).endOf('day').valueOf()
 
