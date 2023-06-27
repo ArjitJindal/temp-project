@@ -1,13 +1,10 @@
 import { useAuth0 } from '@auth0/auth0-react';
 import { useMemo } from 'react';
-import jwt_decode from 'jwt-decode';
-import { useLocalStorageState } from 'ahooks';
 import {
   AuthorizationAuthentication,
   Configuration,
   IsomorphicFetchHttpLibrary,
   Middleware,
-  Permission,
   RequestContext,
   ResponseContext,
   SecurityAuthentication,
@@ -35,27 +32,11 @@ class AuthorizationMiddleware implements Middleware {
 }
 
 export function useAuth(): SecurityAuthentication {
-  const user = useAuth0User();
-
-  // Transform permissions to Array from Map, since Maps always serialise as "{}"
-  let permissions: Permission[] = [];
-  if (user.permissions) {
-    permissions = [...user.permissions.keys()];
-  }
-  const userIdentityKey = JSON.stringify({ ...user, permissions });
-  const [jwt, setJwt] = useLocalStorageState<{ [key: string]: string }>('jwt', {});
   const { getAccessTokenSilently, getAccessTokenWithPopup } = useAuth0();
   return useMemo(() => {
     const audience = AUTH0_AUDIENCE;
     return new AuthorizationAuthentication({
       getToken: async () => {
-        const cachedJwt = jwt[userIdentityKey];
-        if (cachedJwt) {
-          const decodedJwt = jwt_decode<{ exp: number }>(cachedJwt);
-          if (decodedJwt.exp > Date.now() / 1000) {
-            return cachedJwt;
-          }
-        }
         let token;
         try {
           token = await getAccessTokenSilently({
@@ -68,13 +49,10 @@ export function useAuth(): SecurityAuthentication {
             audience,
           });
         }
-        setJwt({
-          [userIdentityKey]: token,
-        });
         return token;
       },
     });
-  }, [jwt, userIdentityKey, setJwt, getAccessTokenSilently, getAccessTokenWithPopup]);
+  }, [getAccessTokenSilently, getAccessTokenWithPopup]);
 }
 
 export function useApi(): FlagrightApi {

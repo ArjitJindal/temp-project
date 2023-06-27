@@ -13,7 +13,7 @@ const providerConfig = {
   domain: branding.auth0Domain,
   clientId: branding.auth0ClientId,
   scope: 'openid profile email',
-  cacheLocation: IS_SENTRY_INSTANCE ? ('localstorage' as const) : ('memory' as const),
+  cacheLocation: 'localstorage',
   audience: AUTH0_AUDIENCE ?? undefined,
   redirectUri: `${window.location.origin}${branding.redirectPath || ''}`,
 };
