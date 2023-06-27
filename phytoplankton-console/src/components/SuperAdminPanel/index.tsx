@@ -69,6 +69,10 @@ export default function SuperAdminPanel() {
         },
       });
       await unsetDemoMode;
+      const auth0Key = Object.keys(window.localStorage).find((key) => key.includes('@auth0'));
+      if (auth0Key) {
+        window.localStorage.removeItem(auth0Key);
+      }
       window.location.reload();
     } catch (e) {
       message.fatal('Failed to switch tenant', e);
