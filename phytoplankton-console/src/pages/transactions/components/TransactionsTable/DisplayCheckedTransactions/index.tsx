@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import UserSearchButton from '../../UserSearchButton';
 import s from './styles.module.less';
@@ -26,7 +26,7 @@ type Props = {
 
 const DisplayCheckedTransactions = (props: Props) => {
   const { alert, caseUserId, visible: isModalVisible, setVisible: setIsModalVisible } = props;
-  const [count] = useState(0);
+  const [count, setCount] = useState(0);
   const [params, setParams] = useState<TransactionsTableParams>({
     ...DEFAULT_PARAMS_STATE,
     sort: [['timestamp', 'descend']],
@@ -34,7 +34,6 @@ const DisplayCheckedTransactions = (props: Props) => {
   const ruleActionOptions = RULE_ACTIONS.map((action) => {
     return { value: action, label: action };
   });
-
   const api = useApi();
   const measure = useApiTime();
   const queryResult = useCursorQuery(
@@ -92,6 +91,10 @@ const DisplayCheckedTransactions = (props: Props) => {
       );
     },
   );
+
+  useEffect(() => {
+    if (queryResult.data?.kind === 'SUCCESS') setCount(queryResult.data.value.count);
+  }, [queryResult.data]);
 
   return (
     <Modal
