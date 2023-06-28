@@ -106,7 +106,7 @@ export const casesHandler = lambdaApi()(
       const caseGetSegment = await addNewSubsegment('Case Service', 'Get Cases')
       caseGetSegment?.addAnnotation('tenantId', tenantId)
       caseGetSegment?.addAnnotation('request', JSON.stringify(request))
-      const response = caseService.getCases(request)
+      const response = await caseService.getCases(request)
       caseGetSegment?.close()
       return response
     })
@@ -585,7 +585,7 @@ export const casesHandler = lambdaApi()(
         return response
       }
     }
-    handlers.handle(event)
+    return handlers.handle(event)
   }
 )
 
