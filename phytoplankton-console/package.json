@@ -54,7 +54,7 @@
     "test:all": "npm run test:unit && npm run test:cypress",
     "tsc": "tsc --noEmit",
     "tsc:watch": "tsc --noEmit --watch",
-    "cypress:open": "cypress open",
+    "cypress:open": "CYPRESS_BASE_URL=https://localhost:8001/ cypress open",
     "cypress:test:dev": "cypress run"
   },
   "lint-staged": {
