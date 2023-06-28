@@ -38,8 +38,11 @@ describe('Sanctions Service', () => {
       })
       expect(mockFetch).toBeCalledTimes(2)
       expect(mockFetch.mock.calls[0]).toEqual([
-        `https://api.complyadvantage.com/searches?api_key=fake`,
+        `https://api.complyadvantage.com/searches`,
         {
+          headers: {
+            Authorization: 'Token fake',
+          },
           body: JSON.stringify({
             search_term: 'Foo Bar',
             fuzziness: 0.5,
@@ -49,8 +52,11 @@ describe('Sanctions Service', () => {
         },
       ])
       expect(mockFetch.mock.calls[1]).toEqual([
-        `https://api.complyadvantage.com/searches/1051192082/monitors?api_key=fake`,
+        `https://api.complyadvantage.com/searches/1051192082/monitors`,
         {
+          headers: {
+            Authorization: 'Token fake',
+          },
           body: JSON.stringify({
             is_monitored: true,
           }),
@@ -75,8 +81,11 @@ describe('Sanctions Service', () => {
       })
       expect(mockFetch).toBeCalledTimes(1)
       expect(mockFetch.mock.calls[0]).toEqual([
-        `https://api.complyadvantage.com/searches/1051192082/monitors?api_key=fake`,
+        `https://api.complyadvantage.com/searches/1051192082/monitors`,
         {
+          headers: {
+            Authorization: 'Token fake',
+          },
           body: JSON.stringify({
             is_monitored: false,
           }),

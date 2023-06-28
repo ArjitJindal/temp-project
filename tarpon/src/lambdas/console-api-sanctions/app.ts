@@ -26,10 +26,9 @@ export const sanctionsHandler = lambdaApi({ requiredFeatures: ['SANCTIONS'] })(
       const dynamoDb = getDynamoDbClientByEvent(event)
       const tenantRepository = new TenantRepository(tenantId, { dynamoDb })
       const settings = await tenantRepository.getTenantSettings()
-      return sanctionsService.search(
-        searchRequest,
-        settings.complyAdvantageSearchProfileId
-      )
+      return sanctionsService.search(searchRequest, {
+        defaultSearchProfile: settings.complyAdvantageSearchProfileId,
+      })
     }
 
     if (event.httpMethod === 'GET' && event.resource === '/sanctions/search') {

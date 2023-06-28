@@ -89,24 +89,24 @@ export class SanctionsService {
 
   public async search(
     request: SanctionsSearchRequest,
-    defaultSearchProfile?: string
+    options?: { defaultSearchProfile?: string; searchIdToReplace?: string }
   ): Promise<SanctionsSearchResponse> {
     await this.initialize()
 
     // Normalize search term
     request.searchTerm = _.startCase(request.searchTerm.toLowerCase())
 
-    const result = await this.sanctionsSearchRepository.getSearchResultByParams(
-      request
-    )
+    const result = options?.searchIdToReplace
+      ? null
+      : await this.sanctionsSearchRepository.getSearchResultByParams(request)
     if (result?.response) {
       return result?.response
     }
 
-    const searchId = uuidv4()
+    const searchId = options?.searchIdToReplace ?? uuidv4()
     const searchProfileId =
       this.pickSearchProfileId(request.types) ||
-      defaultSearchProfile ||
+      options?.defaultSearchProfile ||
       (process.env.COMPLYADVANTAGE_DEFAULT_SEARCH_PROFILE_ID as string)
     const response = await this.complyAdvantageSearch(searchProfileId, {
       ...request,
@@ -126,12 +126,12 @@ export class SanctionsService {
   private getSanitizedFuzziness(
     fuzziness: number | undefined
   ): number | undefined {
-    // Sanization meants retunrning max 1 decimal place
     if (fuzziness == null) {
       return undefined
     }
 
-    return Math.max(Math.round(fuzziness * 10) / 10, 0.1)
+    // From ComplyAdvantage: Ensure that there are no more than 1 decimal places.
+    return _.round(fuzziness, 1)
   }
 
   private async complyAdvantageSearch(
@@ -139,7 +139,7 @@ export class SanctionsService {
     request: SanctionsSearchRequest
   ): Promise<ComplyAdvantageSearchResponse> {
     const rawComplyAdvantageResponse = (await (
-      await fetch(`${COMPLYADVANTAGE_SEARCH_API_URI}?api_key=${this.apiKey}`, {
+      await fetch(`${COMPLYADVANTAGE_SEARCH_API_URI}`, {
         method: 'POST',
         body: JSON.stringify({
           search_term: request.searchTerm,
@@ -150,6 +150,9 @@ export class SanctionsService {
             birth_year: request.yearOfBirth,
           },
         }),
+        headers: {
+          Authorization: `Token ${this.apiKey}`,
+        },
       })
     ).json()) as ComplyAdvantageSearchResponse
     if (rawComplyAdvantageResponse.status === 'failure') {
@@ -158,16 +161,17 @@ export class SanctionsService {
 
     return rawComplyAdvantageResponse
   }
+
   private async complyAdvantageMonitoredSearch(
     searchId: number
   ): Promise<ComplyAdvantageSearchResponse> {
     const rawComplyAdvantageResponse = (await (
-      await fetch(
-        `${COMPLYADVANTAGE_SEARCH_API_URI}/${searchId}/details?api_key=${this.apiKey}`,
-        {
-          method: 'GET',
-        }
-      )
+      await fetch(`${COMPLYADVANTAGE_SEARCH_API_URI}/${searchId}/details`, {
+        method: 'GET',
+        headers: {
+          Authorization: `Token ${this.apiKey}`,
+        },
+      })
     ).json()) as ComplyAdvantageSearchResponse
     if (rawComplyAdvantageResponse.status === 'failure') {
       throw new Error((rawComplyAdvantageResponse as any).message)
@@ -207,15 +211,15 @@ export class SanctionsService {
     const caSearchId =
       search.response?.rawComplyAdvantageResponse?.content?.data?.id
     const monitorResponse = await (
-      await fetch(
-        `${COMPLYADVANTAGE_SEARCH_API_URI}/${caSearchId}/monitors?api_key=${this.apiKey}`,
-        {
-          method: 'PATCH',
-          body: JSON.stringify({
-            is_monitored: update.enabled,
-          }),
-        }
-      )
+      await fetch(`${COMPLYADVANTAGE_SEARCH_API_URI}/${caSearchId}/monitors`, {
+        method: 'PATCH',
+        body: JSON.stringify({
+          is_monitored: update.enabled,
+        }),
+        headers: {
+          Authorization: `Token ${this.apiKey}`,
+        },
+      })
     ).json()
     if (monitorResponse.status === 'failure') {
       throw new Error(monitorResponse.message)
@@ -224,6 +228,33 @@ export class SanctionsService {
       searchId,
       update
     )
+  }
+
+  public async dangerousDeleteComplyAdvantageSearch(
+    caSearchId: number
+  ): Promise<void> {
+    await this.initialize()
+    const response = await fetch(
+      `${COMPLYADVANTAGE_SEARCH_API_URI}/${caSearchId}`,
+      {
+        method: 'DELETE',
+        headers: {
+          Authorization: `Token ${this.apiKey}`,
+        },
+      }
+    )
+
+    if (response.status === 404) {
+      logger.warn(`Search ${caSearchId} not found`)
+    } else if (response.status === 204) {
+      logger.info(`Search ${caSearchId} deleted.`)
+    } else {
+      throw new Error(
+        `Failed to delete: status=${response.status} body=${JSON.stringify(
+          await response.json()
+        )}`
+      )
+    }
   }
 
   private pickSearchProfileId(
