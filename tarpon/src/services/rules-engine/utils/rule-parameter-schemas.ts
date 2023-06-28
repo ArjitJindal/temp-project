@@ -386,6 +386,22 @@ export const PAYMENT_CHANNEL_OPTIONAL_SCHEMA = (options?: SchemaOptions) =>
     nullable: true,
   } as const)
 
+export const PRODUCT_TYPE_SCHEMA = (options?: SchemaOptions) =>
+  ({
+    type: 'string',
+    ...uiSchema(options?.uiSchema, {
+      subtype: 'PRODUCT_TYPE',
+    }),
+    title: options?.title || 'Product type',
+    description: options?.description,
+  } as const)
+
+export const PRODUCT_TYPE_SCHEMA_OPTIONAL = (options?: SchemaOptions) =>
+  ({
+    ...PRODUCT_TYPE_SCHEMA(options),
+    nullable: true,
+  } as const)
+
 export const TRANSACTION_AMOUNT_THRESHOLDS_SCHEMA = (options?: SchemaOptions) =>
   ({
     ...uiSchema(options?.uiSchema, {
