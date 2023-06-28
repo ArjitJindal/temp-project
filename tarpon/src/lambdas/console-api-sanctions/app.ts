@@ -7,8 +7,7 @@ import { lambdaApi } from '@/core/middlewares/lambda-api-middlewares'
 import { SanctionsSearchRequest } from '@/@types/openapi-internal/SanctionsSearchRequest'
 import { SanctionsService } from '@/services/sanctions'
 import { DefaultApiGetSanctionsSearchRequest } from '@/@types/openapi-internal/RequestParameters'
-import { getDynamoDbClientByEvent } from '@/utils/dynamodb'
-import { TenantRepository } from '@/services/tenants/repositories/tenant-repository'
+
 export const sanctionsHandler = lambdaApi({ requiredFeatures: ['SANCTIONS'] })(
   async (
     event: APIGatewayProxyWithLambdaAuthorizerEvent<
@@ -23,12 +22,8 @@ export const sanctionsHandler = lambdaApi({ requiredFeatures: ['SANCTIONS'] })(
       event.body
     ) {
       const searchRequest = JSON.parse(event.body) as SanctionsSearchRequest
-      const dynamoDb = getDynamoDbClientByEvent(event)
-      const tenantRepository = new TenantRepository(tenantId, { dynamoDb })
-      const settings = await tenantRepository.getTenantSettings()
-      return sanctionsService.search(searchRequest, {
-        defaultSearchProfile: settings.complyAdvantageSearchProfileId,
-      })
+
+      return sanctionsService.search(searchRequest)
     }
 
     if (event.httpMethod === 'GET' && event.resource === '/sanctions/search') {

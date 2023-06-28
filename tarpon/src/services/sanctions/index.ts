@@ -3,6 +3,7 @@ import fetch from 'node-fetch'
 import { NotFound } from 'http-errors'
 import { StackConstants } from '@lib/constants'
 import _ from 'lodash'
+import { TenantRepository } from '../tenants/repositories/tenant-repository'
 import { SanctionsSearchRepository } from './repositories/sanctions-search-repository'
 import { SanctionsSearchRequest } from '@/@types/openapi-internal/SanctionsSearchRequest'
 import { SanctionsSearchResponse } from '@/@types/openapi-internal/SanctionsSearchResponse'
@@ -15,6 +16,7 @@ import { SanctionsSearchHistoryResponse } from '@/@types/openapi-internal/Sancti
 import { SanctionsSearchMonitoring } from '@/@types/openapi-internal/SanctionsSearchMonitoring'
 import { SanctionsSearchType } from '@/@types/openapi-internal/SanctionsSearchType'
 import { logger } from '@/core/logger'
+import { getDynamoDbClient } from '@/utils/dynamodb'
 
 const COMPLYADVANTAGE_SEARCH_API_URI =
   'https://api.complyadvantage.com/searches'
@@ -89,9 +91,13 @@ export class SanctionsService {
 
   public async search(
     request: SanctionsSearchRequest,
-    options?: { defaultSearchProfile?: string; searchIdToReplace?: string }
+    options?: { searchIdToReplace?: string }
   ): Promise<SanctionsSearchResponse> {
     await this.initialize()
+    const dynamoDb = getDynamoDbClient()
+    const tenantRepository = new TenantRepository(this.tenantId, { dynamoDb })
+
+    const settings = await tenantRepository.getTenantSettings()
 
     // Normalize search term
     request.searchTerm = _.startCase(request.searchTerm.toLowerCase())
@@ -105,9 +111,10 @@ export class SanctionsService {
 
     const searchId = options?.searchIdToReplace ?? uuidv4()
     const searchProfileId =
+      settings.complyAdvantageSearchProfileId ||
       this.pickSearchProfileId(request.types) ||
-      options?.defaultSearchProfile ||
       (process.env.COMPLYADVANTAGE_DEFAULT_SEARCH_PROFILE_ID as string)
+
     const response = await this.complyAdvantageSearch(searchProfileId, {
       ...request,
     })
