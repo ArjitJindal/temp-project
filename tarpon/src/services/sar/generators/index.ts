@@ -1,4 +1,5 @@
 import { KenyaSARReportGenerator } from './KE/SAR'
+import { UsSarReportGenerator } from './US/SAR'
 import { Account } from '@/@types/openapi-internal/Account'
 import { Case } from '@/@types/openapi-internal/Case'
 import { ReportSchema } from '@/@types/openapi-internal/ReportSchema'
@@ -24,7 +25,7 @@ export interface ReportGenerator {
   generate(reportParams: ReportParameters): string
 }
 
-const reportGenerators = [KenyaSARReportGenerator]
+const reportGenerators = [KenyaSARReportGenerator, UsSarReportGenerator]
 export const REPORT_GENERATORS = new Map<string, ReportGenerator>(
   reportGenerators.map((rg) => {
     const generator = new rg()
