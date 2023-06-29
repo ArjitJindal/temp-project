@@ -122,25 +122,33 @@ export class CdkPhytoplanktonStack extends cdk.Stack {
 
     // Hack taken from https://stackoverflow.com/questions/72306740/how-to-enable-managed-response-header-policy-of-securityheaders-with-cloudfrontw
     const cfnDistribution = distribution.node.defaultChild as cloudfront.CfnDistribution;
-    const responseHeaderCfn = new cdk.CfnResource(this, 'ResponseHeadersPolicyCfn', {
-      type: 'AWS::CloudFront::ResponseHeadersPolicy',
-      properties: {
-        ResponseHeadersPolicyConfig: {
-          Name: `ContentSecurity${userAlias()}`,
-          SecurityHeadersConfig: {
-            ContentSecurityPolicy: {
-              ContentSecurityPolicy: contentSecurityPolicy(domainName, config.stage),
-              Override: true,
+
+    if (process.env.ENV !== 'dev:user') {
+      const responseHeaderCfn = new cdk.CfnResource(this, 'ResponseHeadersPolicyCfn', {
+        type: 'AWS::CloudFront::ResponseHeadersPolicy',
+        properties: {
+          ResponseHeadersPolicyConfig: {
+            Name: `ContentSecurity${userAlias()}`,
+            SecurityHeadersConfig: {
+              ContentSecurityPolicy: {
+                ContentSecurityPolicy: contentSecurityPolicy(domainName, config.stage),
+                Override: true,
+              },
             },
           },
         },
-      },
-    });
-    cfnDistribution.addDependsOn(responseHeaderCfn);
-    cfnDistribution.addPropertyOverride(
-      'DistributionConfig.DefaultCacheBehavior.ResponseHeadersPolicyId',
-      responseHeaderCfn.ref,
-    );
+      });
+      cfnDistribution.addDependsOn(responseHeaderCfn);
+      cfnDistribution.addPropertyOverride(
+        'DistributionConfig.DefaultCacheBehavior.ResponseHeadersPolicyId',
+        responseHeaderCfn.ref,
+      );
+    } else {
+      cfnDistribution.addPropertyOverride(
+        'DistributionConfig.DefaultCacheBehavior.ResponseHeadersPolicyId',
+        'a9f5965f-4ffc-430c-9575-aa0dde714199', // ID for the dev response header policy
+      );
+    }
 
     // Deploy site contents to S3 bucket
     new s3deploy.BucketDeployment(this, 'DeployWithInvalidation', {
