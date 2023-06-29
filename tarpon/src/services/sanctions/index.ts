@@ -101,6 +101,7 @@ export class SanctionsService {
 
     // Normalize search term
     request.searchTerm = _.startCase(request.searchTerm.toLowerCase())
+    request.fuzziness = this.getSanitizedFuzziness(request.fuzziness)
 
     const result = options?.searchIdToReplace
       ? null
@@ -150,7 +151,7 @@ export class SanctionsService {
         method: 'POST',
         body: JSON.stringify({
           search_term: request.searchTerm,
-          fuzziness: this.getSanitizedFuzziness(request.fuzziness),
+          fuzziness: request.fuzziness,
           search_profile: searchProfileId,
           filters: {
             country_codes: request.countryCodes,
