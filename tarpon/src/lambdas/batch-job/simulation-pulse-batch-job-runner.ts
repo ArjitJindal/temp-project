@@ -36,7 +36,7 @@ export class SimulationPulseBatchJobRunner extends BatchJobRunner {
     const { tenantId, parameters, awsCredentials } = job
     const dynamoDb = getDynamoDbClient(awsCredentials)
     const mongoDb = await getMongoDbClient()
-    this.usersRepository = new UserRepository(tenantId, { mongoDb })
+    this.usersRepository = new UserRepository(tenantId, { mongoDb, dynamoDb })
     this.transactionRepository = new MongoDbTransactionRepository(
       tenantId,
       mongoDb
