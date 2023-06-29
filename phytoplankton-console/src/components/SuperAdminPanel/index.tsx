@@ -4,9 +4,9 @@ import { useQuery } from '@tanstack/react-query';
 import { validate } from 'uuid';
 import NumberInput from '../library/NumberInput';
 import Label from '../library/Label';
-import Modal from '../ui/Modal';
 import { CreateTenantModal } from './CreateTenantModal';
 import s from './styles.module.less';
+import Modal from '@/components/library/Modal';
 import { message } from '@/components/library/Message';
 import { useApi } from '@/api';
 import Button from '@/components/library/Button';
@@ -129,13 +129,11 @@ export default function SuperAdminPanel() {
       </Button>
       <Modal
         title="Super Admin Panel"
-        width="80%"
+        width="L"
         isOpen={isModalVisible}
         okText="Save"
-        okProps={{ danger: true }}
         onCancel={handleCancel}
         onOk={handleSave}
-        style={{ top: 20 }}
       >
         <Form<{ currentTenantId: string; searchProfileId: string }>
           name="basic"

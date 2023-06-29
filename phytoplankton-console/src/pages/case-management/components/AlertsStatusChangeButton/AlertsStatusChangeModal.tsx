@@ -22,73 +22,80 @@ export default function AlertsStatusChangeModal(props: Props) {
   const queryClient = useQueryClient();
   const [users] = useUsers();
   const isChildCase = props.caseId?.includes('.');
-  const updateMutation = useMutation<unknown, unknown, FormValues>(async (formValues) => {
-    const hideMessage = message.loading(`Saving...`);
+  const updateMutation = useMutation<unknown, unknown, FormValues>(
+    async (formValues) => {
+      const hideMessage = message.loading(`Saving...`);
 
-    const updates: AlertStatusUpdateRequest = {
-      alertStatus: props.newStatus,
-    };
+      const updates: AlertStatusUpdateRequest = {
+        alertStatus: props.newStatus,
+      };
 
-    if (formValues) {
-      updates.otherReason =
-        formValues.reasons.indexOf(OTHER_REASON) !== -1 ? formValues.reasonOther ?? '' : undefined;
-      updates.reason = formValues.reasons;
-      updates.files = formValues.files;
-      updates.comment = formValues.comment ?? undefined;
-    }
-
-    try {
-      if (updates.alertStatus === 'ESCALATED' && props.caseId && !isChildCase) {
-        const caseUpdateRequest: CaseUpdateRequest = updates;
-        if (formValues.closeRelatedCase) {
-          caseUpdateRequest.caseStatus = 'CLOSED';
-        }
-        const { childCaseId, assigneeIds } = await api.postCasesCaseIdEscalate({
-          caseId: props.caseId,
-          CaseEscalationRequest: {
-            caseUpdateRequest,
-            alertEscalations: props.entityIds.map((alertId) => {
-              return {
-                alertId,
-                transactionIds: props.transactionIds ? props.transactionIds[alertId] : [],
-              };
-            }),
-          },
-        });
-        const transactionIds = Object.values(props.transactionIds ?? {})
-          .flatMap((v) => v)
-          .filter(Boolean);
-        const assignees = assigneeIds
-          ?.map((assigneeId) => users[assigneeId]?.name || assigneeId)
-          .map((name) => `'${name}'`)
-          .join(', ');
-
-        const entities = props.entityIds.join(', ');
-        if (_.isEmpty(transactionIds)) {
-          message.success(
-            `Alerts '${entities}' are added to a new child case '${childCaseId}' and escalated successfully to ${assignees}`,
-          );
-        } else {
-          message.success(
-            `Selected transactions from alerts are added to new child case '${childCaseId}' with respective child alerts and escalated successfully to ${assignees}.`,
-          );
-        }
-        queryClient.invalidateQueries({ queryKey: CASES_ITEM(props.caseId) });
-      } else {
-        await api.alertsStatusChange({
-          AlertsStatusUpdateRequest: {
-            alertIds: props.entityIds,
-            updates,
-          },
-        });
-        message.success('Saved');
+      if (formValues) {
+        updates.otherReason =
+          formValues.reasons.indexOf(OTHER_REASON) !== -1
+            ? formValues.reasonOther ?? ''
+            : undefined;
+        updates.reason = formValues.reasons;
+        updates.files = formValues.files;
+        updates.comment = formValues.comment ?? undefined;
       }
-    } catch (e) {
-      message.error(`Failed to update the alert! ${getErrorMessage(e)}`);
-    } finally {
-      hideMessage();
-    }
-  });
+
+      try {
+        if (updates.alertStatus === 'ESCALATED' && props.caseId && !isChildCase) {
+          const caseUpdateRequest: CaseUpdateRequest = updates;
+          if (formValues.closeRelatedCase) {
+            caseUpdateRequest.caseStatus = 'CLOSED';
+          }
+          const { childCaseId, assigneeIds } = await api.postCasesCaseIdEscalate({
+            caseId: props.caseId,
+            CaseEscalationRequest: {
+              caseUpdateRequest,
+              alertEscalations: props.entityIds.map((alertId) => {
+                return {
+                  alertId,
+                  transactionIds: props.transactionIds ? props.transactionIds[alertId] : [],
+                };
+              }),
+            },
+          });
+          const transactionIds = Object.values(props.transactionIds ?? {})
+            .flatMap((v) => v)
+            .filter(Boolean);
+          const assignees = assigneeIds
+            ?.map((assigneeId) => users[assigneeId]?.name || assigneeId)
+            .map((name) => `'${name}'`)
+            .join(', ');
+
+          const entities = props.entityIds.join(', ');
+          if (_.isEmpty(transactionIds)) {
+            message.success(
+              `Alerts '${entities}' are added to a new child case '${childCaseId}' and escalated successfully to ${assignees}`,
+            );
+          } else {
+            message.success(
+              `Selected transactions from alerts are added to new child case '${childCaseId}' with respective child alerts and escalated successfully to ${assignees}.`,
+            );
+          }
+          await queryClient.invalidateQueries({ queryKey: CASES_ITEM(props.caseId) });
+        } else {
+          await api.alertsStatusChange({
+            AlertsStatusUpdateRequest: {
+              alertIds: props.entityIds,
+              updates,
+            },
+          });
+          message.success('Saved');
+        }
+      } finally {
+        hideMessage();
+      }
+    },
+    {
+      onError: (e) => {
+        message.error(`Failed to update the alert! ${getErrorMessage(e)}`);
+      },
+    },
+  );
 
   const transactionIds = Object.values(props.transactionIds ?? {}).flatMap((v) => v);
   const entityIds = _.isEmpty(transactionIds) ? props.entityIds : transactionIds;

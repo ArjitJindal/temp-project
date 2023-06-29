@@ -1,6 +1,6 @@
 import { Fragment, useCallback, useMemo, useState } from 'react';
 import { Typography } from 'antd';
-import Modal from '@/components/ui/Modal';
+import Modal from '@/components/library/Modal';
 import { JsonSchemaForm } from '@/components/JsonSchemaForm';
 import { getFixedSchemaJsonForm } from '@/utils/json';
 import { useApi } from '@/api';
@@ -220,16 +220,15 @@ export const CreateTenantModal = (props: Props) => {
 
   return (
     <Modal
+      width="L"
       title={`Create Tenant (${envToDisplay}: ${
         auth0User?.tenantConsoleApiUrl.split('://')[1]?.split('.')[0] ?? 'Unknown'
       })`}
-      style={{ top: 20 }}
-      width="80%"
       isOpen={visible}
       onCancel={onClose}
       okText="Create"
       onOk={handleCreateTenant}
-      okProps={{ danger: true }}
+      okProps={{ type: 'DANGER' }}
     >
       <JsonSchemaForm
         schema={getFixedSchemaJsonForm(schema)}

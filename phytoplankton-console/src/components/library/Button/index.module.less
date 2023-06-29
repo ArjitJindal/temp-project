@@ -93,6 +93,23 @@
     }
   }
 
+  &.type-DANGER {
+    border-color: @fr-colors-v2-alert-critical;
+    background: white;
+    color: @fr-colors-v2-alert-critical;
+
+    &:hover,
+    &:active {
+      background: @fr-colors-v2-risk-level-bg-very-high;
+    }
+
+    &:disabled {
+      border-color: @fr-colors-v2-gray-2;
+      background: @fr-colors-v2-gray-1;
+      color: @fr-colors-v2-state-disabled;
+    }
+  }
+
   &.size-SMALL {
     min-height: 24px;
   }

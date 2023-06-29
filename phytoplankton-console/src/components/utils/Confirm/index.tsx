@@ -1,6 +1,6 @@
 import React, { useCallback, useEffect, useState } from 'react';
 import s from './style.module.less';
-import Modal from '@/components/ui/Modal';
+import Modal from '@/components/library/Modal';
 import { AsyncResource, init, isLoading, useFinishedSuccessfully } from '@/utils/asyncResource';
 
 export type Confirm = () => void;
@@ -10,22 +10,27 @@ interface ChildrenProps {
 }
 
 interface Props {
-  title: string;
+  title?: string;
   text: string | React.ReactNode;
   res?: AsyncResource;
+  isDanger?: boolean;
   onConfirm: () => void;
+  onSuccess?: () => void;
   children: (props: ChildrenProps) => React.ReactNode;
 }
 
 export default function Confirm(props: Props) {
-  const { title, text, res, children, onConfirm } = props;
+  const { isDanger, title, text, res, children, onConfirm, onSuccess } = props;
   const [isVisible, setIsVisible] = useState(false);
-  const isSuccess = useFinishedSuccessfully(res ?? init());
+  const isSuccessfull = useFinishedSuccessfully(res ?? init());
   useEffect(() => {
-    if (isSuccess) {
+    if (isSuccessfull) {
       setIsVisible(false);
+      if (onSuccess) {
+        onSuccess();
+      }
     }
-  }, [isSuccess]);
+  }, [isSuccessfull, onSuccess]);
   const handleOk = useCallback(() => {
     onConfirm();
     if (res == null) {
@@ -33,17 +38,23 @@ export default function Confirm(props: Props) {
     }
   }, [res, onConfirm]);
 
+  const handleClick = useCallback(() => {
+    setIsVisible(true);
+  }, []);
+
   return (
     <>
       <Modal
-        title={title}
+        width="S"
+        title={title ?? 'Confirm action'}
         isOpen={isVisible}
         onCancel={() => {
           setIsVisible(false);
         }}
         onOk={handleOk}
         okProps={{
-          loading: res != null && isLoading(res),
+          isLoading: res != null && isLoading(res),
+          type: isDanger ? 'DANGER' : undefined,
         }}
         okText="Yes"
         cancelText="No"
@@ -51,9 +62,7 @@ export default function Confirm(props: Props) {
         <div className={s.text}>{text}</div>
       </Modal>
       {children({
-        onClick: () => {
-          setIsVisible(true);
-        },
+        onClick: handleClick,
       })}
     </>
   );

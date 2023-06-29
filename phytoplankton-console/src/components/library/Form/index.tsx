@@ -1,9 +1,8 @@
 import React, { useCallback, useImperativeHandle, useRef, useState } from 'react';
 import { FieldValidators, Validator } from './utils/validation/types';
 import { FieldMeta, FormContext, FormContextValue } from '@/components/library/Form/context';
-import { useDeepEqualEffect, usePrevious } from '@/utils/hooks';
-import { isEqual } from '@/utils/lang';
-import { checkFormValid, validateForm } from '@/components/library/Form/utils/validation/utils';
+import { useDeepEqualEffect, useIsChanged } from '@/utils/hooks';
+import { validateForm } from '@/components/library/Form/utils/validation/utils';
 
 export interface FormRef<FormValues> {
   getValues: () => FormValues;
@@ -37,14 +36,15 @@ function Form<FormValues>(props: Props<FormValues>, ref: React.Ref<FormRef<FormV
     onChange,
   } = props;
   const [formValues, setFormValues] = useState<FormValues>(initialValues);
+  const [isFormValid, setFormValid] = useState<boolean>(false);
   const [fieldMeta, setFieldsMeta] = useState<{ [key: string]: FieldMeta }>({});
   const formRef = useRef<HTMLFormElement>(null);
 
   const handleSubmit = useCallback(() => {
     onSubmit?.(formValues, {
-      isValid: checkFormValid(formValues, formValidators, fieldValidators),
+      isValid: isFormValid,
     });
-  }, [formValues, onSubmit, formValidators, fieldValidators]);
+  }, [formValues, isFormValid, onSubmit]);
 
   useImperativeHandle(
     ref,
@@ -79,18 +79,26 @@ function Form<FormValues>(props: Props<FormValues>, ref: React.Ref<FormRef<FormV
     formValidators,
   };
 
-  const previouValues = usePrevious(formValues);
+  const formValuesChanged = useIsChanged(formValues);
+  const formValidChanged = useIsChanged(isFormValid);
   useDeepEqualEffect(() => {
     if (onChange) {
-      if (!isEqual(formValues, previouValues)) {
-        const validationResult = validateForm(formValues, formValidators, fieldValidators);
+      if (formValuesChanged || formValidChanged) {
         onChange({
           values: formValues,
-          isValid: validationResult == null,
+          isValid: isFormValid,
         });
       }
     }
-  }, [onChange, formValues, previouValues]);
+  }, [onChange, formValuesChanged, formValidChanged]);
+
+  useDeepEqualEffect(() => {
+    const validationResult = validateForm(formValues, formValidators, fieldValidators);
+    const isFormValidNew = validationResult == null;
+    if (isFormValid !== isFormValidNew) {
+      setFormValid(isFormValidNew);
+    }
+  }, [isFormValid, formValues, formValidators, fieldValidators]);
 
   return (
     <form

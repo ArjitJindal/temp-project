@@ -33,6 +33,7 @@ import Slider from '@/components/library/Slider/story';
 import Table from '@/components/library/Table/story';
 import RiskScoreDisplay from '@/components/ui/RiskScoreDisplay/story';
 import RiskLevelTag from '@/components/library/RiskLevelTag/story';
+import Modal from '@/components/library/Modal/story';
 
 interface StoryProps {}
 
@@ -157,6 +158,10 @@ const config: Config = [
       {
         component: 'RiskLevelTag',
         story: RiskLevelTag,
+      },
+      {
+        component: 'Modal',
+        story: Modal,
       },
     ],
   },

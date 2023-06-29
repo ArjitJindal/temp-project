@@ -1,20 +1,18 @@
-import React, { Dispatch, SetStateAction, useState } from 'react';
+import React, { useState } from 'react';
 import cn from 'clsx';
 import s from './index.module.less';
+import { StatePair } from '@/utils/state';
 
 interface Props {
   title: string;
   description?: string;
-  children:
-    | React.ReactNode
-    | ((
-        state: [Record<string, any>, Dispatch<SetStateAction<Record<string, any>>>],
-      ) => React.ReactNode);
+  initialState?: Record<string, any>;
+  children: React.ReactNode | ((state: StatePair<Record<string, any>>) => React.ReactNode);
 }
 
 export default function UseCase(props: Props) {
-  const state = useState<Record<string, any>>({});
-  const { children, title, description } = props;
+  const { children, title, description, initialState } = props;
+  const state = useState<Record<string, any>>(initialState ?? {});
   const [bgColor, setBgColor] = useState('transparent');
   const [fullWidth, setFullWidth] = useState(false);
   return (

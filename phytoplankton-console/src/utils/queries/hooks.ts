@@ -8,7 +8,7 @@ import {
 } from '@tanstack/react-query/src/types';
 import { QueriesOptions } from '@tanstack/react-query/build/types/packages/react-query/src/useQueries';
 import { getErrorMessage, neverThrow } from '@/utils/lang';
-import { AsyncResource, failed, loading, success } from '@/utils/asyncResource';
+import { AsyncResource, failed, init, loading, success } from '@/utils/asyncResource';
 import { QueryResult } from '@/utils/queries/types';
 
 export function useQuery<
@@ -74,6 +74,9 @@ export function getMutationAsyncResource<
   TVariables = unknown,
   TContext = unknown,
 >(mutation: UseMutationResult<TData, TError, TVariables, TContext>): AsyncResource {
+  if (mutation.isIdle) {
+    return init();
+  }
   if (mutation.isLoading) {
     return loading();
   }

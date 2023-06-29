@@ -34,7 +34,7 @@ export default function AlertsStatusChangeButton(props: Props) {
     caseId,
     initialValues = {
       reasons: [],
-      reasonOther: null,
+      reasonOther: undefined,
       comment: '',
       files: [],
       closeRelatedCase: false,

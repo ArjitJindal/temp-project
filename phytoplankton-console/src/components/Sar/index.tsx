@@ -3,9 +3,9 @@ import { Alert, Col, Row } from 'antd';
 import { useMutation } from '@tanstack/react-query';
 import { uniqBy } from 'lodash';
 import Button from '../library/Button';
-import Modal from '../ui/Modal';
 import Select from '../library/Select';
 import Label from '../library/Label';
+import Modal from '@/components/library/Modal';
 import { PropertyListLayout } from '@/pages/rules/RuleConfigurationDrawer/JsonSchemaEditor/PropertyList';
 import ErrorWarningFillIcon from '@/components/ui/icons/Remix/system/error-warning-fill.react.svg';
 import { useApi } from '@/api';
@@ -59,7 +59,7 @@ export function SarButton({
         onCancel={() => setIsModalVisible(false)}
         okText="Generate"
         okProps={{
-          disabled: !reportTypeId,
+          isDisabled: !reportTypeId,
         }}
         onOk={() => {
           if (reportTypeId) {

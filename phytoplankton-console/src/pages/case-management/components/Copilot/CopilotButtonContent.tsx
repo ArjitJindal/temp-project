@@ -42,21 +42,20 @@ export const CopilotButtonContent = ({
   };
   return (
     <>
-      <div className={s.copilotWrapper}>
-        {reasons.length > 0 && (
-          <Button
-            isLoading={copilotLoading}
-            className={s.copilotButton}
-            onClick={onCopilotNarrative}
-            type={'TEXT'}
-            icon={<BrainLineIcon />}
-          >
-            {copilotLoading ? 'Loading...' : 'Ask Copilot'}
-          </Button>
-        )}
-        {copilotResponse &&
-          copilotResponse?.userPrompts &&
-          copilotResponse?.userPrompts?.length > 0 && (
+      {(reasons.length > 0 || (copilotResponse?.userPrompts?.length ?? 0) > 0) && (
+        <div className={s.copilotWrapper}>
+          {reasons.length > 0 && (
+            <Button
+              isLoading={copilotLoading}
+              className={s.copilotButton}
+              onClick={onCopilotNarrative}
+              type={'TEXT'}
+              icon={<BrainLineIcon />}
+            >
+              {copilotLoading ? 'Loading...' : 'Ask Copilot'}
+            </Button>
+          )}
+          {(copilotResponse?.userPrompts?.length ?? 0) > 0 && (
             <Button
               className={s.copilotShowSourcesButton}
               type={'TEXT'}
@@ -65,7 +64,8 @@ export const CopilotButtonContent = ({
               Check my sources
             </Button>
           )}
-      </div>
+        </div>
+      )}
       {copilotResponse?.userPrompts && copilotResponse?.userPrompts?.length > 0 && (
         <div className={s.copilotPrompts}>
           {copilotResponse?.userPrompts.map((p) => (
@@ -83,7 +83,7 @@ export const CopilotButtonContent = ({
         cancelButtonProps={{ hidden: true }}
         onCancel={() => setShowSources(false)}
       >
-        {<CopilotSources attributes={copilotResponse?.attributes || []} />}
+        <CopilotSources attributes={copilotResponse?.attributes || []} />
       </Modal>
     </>
   );

@@ -3,11 +3,11 @@ import cn from 'clsx';
 import s from './index.module.less';
 import { useButtonTracker } from '@/utils/tracker';
 
-export type ButtonType = 'PRIMARY' | 'SECONDARY' | 'TETRIARY' | 'TEXT';
+export type ButtonType = 'PRIMARY' | 'SECONDARY' | 'TETRIARY' | 'TEXT' | 'DANGER';
 
 export type ButtonSize = 'SMALL' | 'MEDIUM' | 'LARGE';
 
-interface Props {
+export interface Props {
   type?: ButtonType;
   icon?: React.ReactNode;
   size?: ButtonSize;

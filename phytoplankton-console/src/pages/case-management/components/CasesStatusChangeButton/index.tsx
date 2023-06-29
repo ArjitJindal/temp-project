@@ -1,17 +1,9 @@
 import React from 'react';
-import { CaseStatus, FileInfo } from '@/apis';
+import { CaseStatus } from '@/apis';
 import { ButtonSize } from '@/components/library/Button';
-import { CaseClosingReasons } from '@/apis/models/CaseClosingReasons';
 import CasesStatusChangeModal from '@/pages/case-management/components/CasesStatusChangeButton/CasesStatusChangeModal';
 import StatusChangeButton from '@/pages/case-management/components/StatusChangeButton';
-
-export interface FormValues {
-  reasons: CaseClosingReasons[];
-  reasonOther: string | null;
-  comment: string | null;
-  files: FileInfo[];
-  closeRelatedCase: boolean;
-}
+import { FormValues } from '@/pages/case-management/components/StatusChangeModal';
 
 interface Props {
   caseIds: string[];
@@ -37,7 +29,7 @@ export default function CasesStatusChangeButton(props: Props) {
     caseStatus,
     initialValues = {
       reasons: [],
-      reasonOther: null,
+      reasonOther: undefined,
       comment: '',
       files: [],
       closeRelatedCase: false,

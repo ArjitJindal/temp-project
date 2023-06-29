@@ -10,7 +10,7 @@ export function usePrevious<T>(value: T): T | null {
   useEffect(() => {
     ref.current = value;
   }, [value]);
-  return ref.current || null;
+  return ref.current ?? null;
 }
 
 export function useDeepEqualEffect(effect: EffectCallback, deps: unknown[]) {
@@ -61,4 +61,9 @@ export function useScrollToFocus() {
       scrolledRef.current = true;
     }
   });
+}
+
+export function useIsChanged<T>(value: T): boolean {
+  const prev = usePrevious(value);
+  return !isEqual(prev, value);
 }

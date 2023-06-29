@@ -5426,6 +5426,8 @@ components:
         - Anti-money laundering
         - Terrorist financing
         - All alerts of this case are closed
+        - User Blacklisted
+        - User Terminated
     MissingUser:
       title: MissingUser
       type: object

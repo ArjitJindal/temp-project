@@ -1,29 +1,34 @@
 import React, { useCallback, useEffect, useRef, useState } from 'react';
-import { Form, Input, Modal, Select } from 'antd';
 import pluralize from 'pluralize';
 import { UseMutationResult } from '@tanstack/react-query';
-import _ from 'lodash';
 import { statusToOperationName } from './StatusChangeButton';
 import NarrativesSelectStatusChange from './NarrativesSelectStatusChange';
+import s from './index.module.less';
+import { CopilotButtonContent } from './Copilot/CopilotButtonContent';
 import { CaseStatus, FileInfo } from '@/apis';
 import { CaseClosingReasons } from '@/apis/models/CaseClosingReasons';
-import { UploadFilesList } from '@/components/files/UploadFilesList';
-import { useDeepEqualEffect, usePrevious } from '@/utils/hooks';
+import { useFeatureEnabled } from '@/components/AppWrapper/Providers/SettingsProvider';
+import Modal from '@/components/library/Modal';
+import Form, { FormRef, InputProps } from '@/components/library/Form';
+import InputField from '@/components/library/Form/InputField';
+import Select from '@/components/library/Select';
+import TextInput from '@/components/library/TextInput';
 import { MAX_COMMENT_LENGTH } from '@/components/CommentEditor';
 import TextArea from '@/components/library/TextArea';
-import { useFeatureEnabled } from '@/components/AppWrapper/Providers/SettingsProvider';
-import { CopilotButtonContent } from '@/pages/case-management/components/Copilot/CopilotButtonContent';
-import Alert from '@/components/library/Alert';
 import Checkbox from '@/components/library/Checkbox';
+import Alert from '@/components/library/Alert';
+import { and } from '@/components/library/Form/utils/validation/combinators';
+import { maxLength, notEmpty } from '@/components/library/Form/utils/validation/basicValidators';
+import GenericFormField from '@/components/library/Form/GenericFormField';
+import { useFinishedSuccessfully } from '@/utils/asyncResource';
+import { getMutationAsyncResource } from '@/utils/queries/hooks';
+import { useDeepEqualEffect } from '@/utils/hooks';
+import FilesInput, { RemoveAllFilesRef } from '@/components/ui/FilesInput';
 
-export interface RemoveAllFilesRef {
-  removeAllFiles: () => void;
-}
-
-export const OTHER_REASON = 'Other';
+export const OTHER_REASON: CaseClosingReasons = 'Other';
 export const COMMON_REASONS = [OTHER_REASON];
 // todo: need to take from tenant storage when we implement it
-export const CLOSING_REASONS = [
+export const CLOSING_REASONS: CaseClosingReasons[] = [
   'False positive',
   'Investigation completed',
   'Documents collected',
@@ -44,8 +49,8 @@ export const ESCALATION_REASONS: CaseClosingReasons[] = [
 
 export interface FormValues {
   reasons: CaseClosingReasons[];
-  reasonOther: string | null;
-  comment: string | null;
+  reasonOther: string | undefined;
+  comment: string | undefined;
   files: FileInfo[];
   closeRelatedCase: boolean;
 }
@@ -64,10 +69,12 @@ export interface Props {
   displayCloseRelatedCases?: boolean;
 }
 
-let uploadedFiles: FileInfo[] = [];
-
-const handleFiles = (files: FileInfo[]) => {
-  return _.uniqBy([...uploadedFiles, ...files], 's3Key');
+const DEFAULT_INITIAL_VALUES: FormValues = {
+  reasons: [],
+  reasonOther: undefined,
+  comment: '',
+  files: [],
+  closeRelatedCase: false,
 };
 
 export default function StatusChangeModal(props: Props) {
@@ -78,11 +85,8 @@ export default function StatusChangeModal(props: Props) {
     isVisible,
     defaultReasons,
     initialValues = {
-      reasons: defaultReasons ?? [],
-      reasonOther: null,
-      comment: '',
-      files: [],
-      closeRelatedCase: false,
+      ...DEFAULT_INITIAL_VALUES,
+      defaultReasons,
     },
     onSaved,
     onClose,
@@ -90,30 +94,23 @@ export default function StatusChangeModal(props: Props) {
     newStatusActionLabel,
     displayCloseRelatedCases,
   } = props;
-  const [isOtherReason, setIsOtherReason] = useState(false);
-  const [reasons, setReasons] = useState<CaseClosingReasons[]>([]);
+  const [alwaysShowErrors, setAlwaysShowErrors] = useState(false);
   const [isAwaitingConfirmation, setAwaitingConfirmation] = useState(false);
-  const [formValues, setFormValues] = useState<FormValues>(initialValues);
-  const [uploadingCount, setUploadingCount] = useState(0);
-  const [form] = Form.useForm<FormValues>();
-  const [fileList, setFileList] = useState<FileInfo[]>(initialValues.files);
+  const [formState, setFormState] = useState<{ values: FormValues; isValid: boolean }>({
+    values: initialValues,
+    isValid: false,
+  });
 
+  const formRef = useRef<FormRef<FormValues>>(null);
   const showCopilot = useFeatureEnabled('COPILOT');
-
   const showConfirmation = isVisible && (newStatus === 'REOPENED' || isAwaitingConfirmation);
 
   useDeepEqualEffect(() => {
-    form.setFieldsValue(initialValues);
-    setFormValues(initialValues);
+    formRef.current?.setValues(initialValues);
+    formRef.current?.validate();
   }, [initialValues]);
 
-  useEffect(() => {
-    if (uploadingCount === 0) {
-      uploadedFiles = [];
-    }
-  }, [uploadingCount]);
-
-  const possibleReasons = [
+  const possibleReasons: CaseClosingReasons[] = [
     ...(newStatus === 'ESCALATED' ? ESCALATION_REASONS : CLOSING_REASONS),
     ...COMMON_REASONS,
   ];
@@ -123,159 +120,154 @@ export default function StatusChangeModal(props: Props) {
     true,
   )}`;
 
-  const [narrative, setNarrative] = useState<string | undefined>(undefined);
-  const [commentValue, setCommentValue] = useState<string | undefined>(undefined);
   const uploadRef = useRef<RemoveAllFilesRef>(null);
 
   const removeFiles = useCallback(() => {
-    setFormValues((prevState) => ({
+    setFormState((prevState) => ({
       ...prevState,
       files: [],
     }));
     uploadRef.current?.removeAllFiles();
   }, []);
 
-  const wasUpdateDone = usePrevious(updateMutation.isSuccess);
-  const isUpdateDone = updateMutation.isSuccess;
+  const updateRes = getMutationAsyncResource(updateMutation);
+  const isFinishedSuccessfully = useFinishedSuccessfully(updateRes);
   useEffect(() => {
-    if (!wasUpdateDone && isUpdateDone) {
+    if (isFinishedSuccessfully) {
       removeFiles();
-      form.resetFields();
-      setReasons([]);
-      setIsOtherReason(false);
-      setAwaitingConfirmation(false);
+      formRef.current?.setValues(initialValues);
       onClose();
       onSaved();
     }
-  }, [wasUpdateDone, isUpdateDone, removeFiles, onSaved, onClose, form]);
-
-  const handleConfirm = () => {
-    updateMutation.mutate({
-      ...formValues,
-      files: handleFiles([...fileList, ...formValues.files]),
-      comment: commentValue?.trim() || null,
-    });
-  };
-
-  useEffect(() => {
-    if (narrative) {
-      setCommentValue(narrative);
-      setNarrative(undefined);
-    }
-  }, [narrative]);
+  }, [isFinishedSuccessfully, removeFiles, initialValues, onSaved, onClose]);
 
   const alertMessage =
     newStatusActionLabel === 'Send back'
       ? 'Please note that a case/alert will be reassigned to a previous assignee if available or else it will be assigned to the account that escalated the case/alert.'
       : null;
 
+  const isOtherReason = formState.values.reasons?.includes(OTHER_REASON) ?? false;
+  const handleConfirm = useCallback(() => {
+    updateMutation.mutate({
+      ...formState.values,
+      comment: formState.values.comment?.trim(),
+      reasonOther: formState.values.reasonOther?.trim(),
+    });
+  }, [formState, updateMutation]);
+
   return (
     <>
       <Modal
         title={modalTitle}
-        visible={isVisible && !showConfirmation}
-        okButtonProps={{
-          disabled: updateMutation.isLoading,
+        isOpen={isVisible && !showConfirmation}
+        okProps={{
+          isLoading: updateMutation.isLoading,
         }}
+        width="S"
         okText="Confirm"
         onOk={() => {
-          form.validateFields().then((values) => {
-            removeFiles();
-            setFormValues(values);
-            setAwaitingConfirmation(true);
-          });
+          formRef?.current?.submit();
         }}
         onCancel={() => {
           removeFiles();
-          setAwaitingConfirmation(false);
           onClose();
         }}
       >
         <Form<FormValues>
-          form={form}
-          layout="vertical"
-          name="form_in_modal"
+          ref={formRef}
           initialValues={initialValues}
+          className={s.root}
+          onSubmit={(_, state) => {
+            setAlwaysShowErrors(true);
+            if (state.isValid) {
+              setAwaitingConfirmation(true);
+            }
+          }}
+          fieldValidators={{
+            reasons: notEmpty,
+            reasonOther: isOtherReason ? and([notEmpty, maxLength(500)]) : undefined,
+            comment: maxLength(MAX_COMMENT_LENGTH),
+          }}
+          onChange={setFormState}
+          alwaysShowErrors={alwaysShowErrors}
         >
-          <Form.Item
-            name="reasons"
-            label="Reason"
-            rules={[{ required: true, message: 'Please enter a Reason' }]}
-          >
-            <Select<string[]>
-              mode="multiple"
-              onChange={(value) => {
-                // TODO is there a better way to get this state?
-                // form.getValue did not work, neither did values.
-                setReasons(value as CaseClosingReasons[]);
-                setIsOtherReason(value.includes(OTHER_REASON));
+          <InputField<FormValues, 'reasons'> name={'reasons'} label={'Reason'}>
+            {(inputProps: InputProps<CaseClosingReasons[]>) => (
+              <Select<CaseClosingReasons>
+                {...inputProps}
+                mode="MULTIPLE"
+                options={possibleReasons.map((label) => ({ value: label, label }))}
+              />
+            )}
+          </InputField>
+          {isOtherReason && (
+            <InputField<FormValues, 'reasonOther'> name="reasonOther" label="Describe the reason">
+              {(inputProps) => <TextInput {...inputProps} />}
+            </InputField>
+          )}
+          <div className={s.comment}>
+            <InputField<FormValues, 'comment'> name={'comment'} label={'Comment'}>
+              {(inputProps) => (
+                <>
+                  <NarrativesSelectStatusChange
+                    templateValue={null}
+                    setTemplateValue={(value) => {
+                      inputProps?.onChange?.(value);
+                    }}
+                  />
+                  <TextArea
+                    {...inputProps}
+                    rows={4}
+                    placeholder={`Write a narrative explaining the ${entityName} closure reason and findings, if any.`}
+                  />
+                </>
+              )}
+            </InputField>
+            {showCopilot && (
+              <GenericFormField<FormValues, 'comment'> name="comment">
+                {(props) => (
+                  <CopilotButtonContent
+                    reasons={formState.values.reasons ?? []}
+                    setCommentValue={(value) => {
+                      props.onChange?.(value);
+                    }}
+                    caseId={entityIds[0]}
+                  />
+                )}
+              </GenericFormField>
+            )}
+          </div>
+          <InputField<FormValues, 'files'> name={'files'} label={'Attach documents'}>
+            {(inputProps) => (
+              <FilesInput
+                {...inputProps}
+                ref={uploadRef}
+                onChange={(value) => {
+                  inputProps.onChange?.(value);
+                }}
+                value={inputProps.value}
+              />
+            )}
+          </InputField>
+          {displayCloseRelatedCases && newStatus === 'ESCALATED' && (
+            <InputField<FormValues, 'closeRelatedCase'>
+              name={'closeRelatedCase'}
+              label={'Close related cases'}
+              labelProps={{
+                position: 'RIGHT',
               }}
             >
-              {possibleReasons.map((label) => (
-                <Select.Option key={label} value={label}>
-                  {label}
-                </Select.Option>
-              ))}
-            </Select>
-          </Form.Item>
-          {isOtherReason && (
-            <Form.Item
-              name="reasonOther"
-              label="Describe the reason"
-              rules={[{ required: true, message: 'Please describe the reason', max: 500 }]}
-            >
-              <Input />
-            </Form.Item>
+              {(inputProps) => <Checkbox {...inputProps} />}
+            </InputField>
           )}
-          <Form.Item name="comment" label="Comment" rules={[{ max: MAX_COMMENT_LENGTH }]}>
-            <>
-              <NarrativesSelectStatusChange
-                templateValue={narrative}
-                setTemplateValue={setNarrative}
-              />
-              <TextArea
-                rows={4}
-                placeholder={`Write a narrative explaining the ${entityName} closure reason and findings, if any.`}
-                value={commentValue || ''}
-                onChange={(comment) => {
-                  setCommentValue(comment);
-                }}
-              />
-            </>
-          </Form.Item>
-          {showCopilot && (
-            <CopilotButtonContent
-              reasons={reasons}
-              setCommentValue={setCommentValue}
-              caseId={entityIds[0]}
-            />
-          )}
-          <Form.Item name="files" label="Attach documents">
-            <FilesInput
-              ref={uploadRef}
-              onChange={(value) => setFileList(handleFiles([...fileList, ...value]))}
-              value={fileList}
-              uploadingCount={uploadingCount}
-              setUploadingCount={setUploadingCount}
-            />
-          </Form.Item>
-          {displayCloseRelatedCases && newStatus === 'ESCALATED' ? (
-            <Form.Item name="closeRelatedCase">
-              <Checkbox label="Close related cases" />
-            </Form.Item>
-          ) : undefined}
-          {alertMessage ? (
-            <Form.Item>
-              <Alert type="info">{alertMessage}</Alert>
-            </Form.Item>
-          ) : null}
+          {alertMessage && <Alert type="info">{alertMessage}</Alert>}
         </Form>
       </Modal>
       <Modal
         title="ⓘ Confirm action"
-        visible={showConfirmation}
-        okButtonProps={{
-          disabled: updateMutation.isLoading,
+        isOpen={showConfirmation}
+        okProps={{
+          isDisabled: updateMutation.isLoading,
         }}
         okText="Confirm"
         onOk={handleConfirm}
@@ -291,33 +283,3 @@ export default function StatusChangeModal(props: Props) {
     </>
   );
 }
-
-const FilesInput = React.forwardRef(
-  (
-    props: {
-      value?: FileInfo[];
-      onChange?: (value: FileInfo[]) => void;
-      uploadingCount: number;
-      setUploadingCount: React.Dispatch<React.SetStateAction<number>>;
-    },
-    ref: React.Ref<RemoveAllFilesRef>,
-  ) => {
-    const { value = [], onChange } = props;
-
-    return (
-      <UploadFilesList
-        files={value}
-        onFileUploaded={async (file) => {
-          uploadedFiles.push(file);
-          onChange?.(handleFiles([file, ...value]));
-        }}
-        onFileRemoved={async (fileS3Key) => {
-          onChange?.(value.filter((prevFile) => prevFile.s3Key !== fileS3Key));
-        }}
-        uploadingCount={props.uploadingCount}
-        setUploadingCount={props.setUploadingCount}
-        ref={ref}
-      />
-    );
-  },
-);

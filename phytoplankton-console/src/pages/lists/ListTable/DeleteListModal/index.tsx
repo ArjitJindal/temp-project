@@ -3,7 +3,7 @@ import { Typography } from 'antd';
 import Icon from './icon-judge.react.svg';
 import s from './index.module.less';
 import Spam2FillIcon from '@/components/ui/icons/Remix/system/spam-2-fill.react.svg';
-import Modal from '@/components/ui/Modal';
+import Modal from '@/components/library/Modal';
 import COLORS from '@/components/ui/colors';
 import { ListHeader, ListType } from '@/apis';
 import { useApi } from '@/api';
@@ -57,9 +57,8 @@ export default function DeleteListModal(props: Props) {
       onOk={handleOk}
       okText={'Delete'}
       okProps={{
-        type: 'default',
-        danger: true,
-        loading: isLoading,
+        type: 'DANGER',
+        isLoading: isLoading,
       }}
     >
       <div className={s.title}>

@@ -1,0 +1,19 @@
+.root {
+  :global {
+    > .ant-tabs-nav {
+      margin-bottom: 0 !important;
+    }
+
+    .ant-tabs-tabpane {
+      margin-top: 16px !important;
+    }
+  }
+
+  &.noChildren {
+    :global {
+      .ant-tabs-content-holder {
+        display: none !important;
+      }
+    }
+  }
+}

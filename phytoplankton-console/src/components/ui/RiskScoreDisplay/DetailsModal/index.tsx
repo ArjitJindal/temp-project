@@ -4,7 +4,7 @@ import MainPanel from '../MainPanel';
 import s from './index.module.less';
 import { columns, TableRow } from './consts';
 import { findParameter } from './helpers';
-import Modal from '@/components/ui/Modal';
+import Modal from '@/components/library/Modal';
 import { ValueItem } from '@/components/ui/RiskScoreDisplay/types';
 import Table from '@/components/library/Table';
 import { RiskScoreComponent } from '@/apis';
@@ -28,7 +28,7 @@ export default function DetailsModal(props: Props) {
   const { icon, title, isOpen, values, onCancel, components, factorExplanationText } = props;
   const explanationText = factorExplanationText || 'TRS =';
   return (
-    <Modal title={title} hideFooter={true} isOpen={isOpen} onCancel={onCancel} width={640}>
+    <Modal title={title} hideFooter={true} isOpen={isOpen} onCancel={onCancel} width="M">
       <div className={cn(s.root)}>
         <div className={s.header}>
           <MainPanel icon={icon} title={title} values={values} />

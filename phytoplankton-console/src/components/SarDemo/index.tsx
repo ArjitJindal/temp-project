@@ -1,11 +1,11 @@
 import { useState } from 'react';
 import { Alert, Col, Row } from 'antd';
 import Button from '../library/Button';
-import Modal from '../ui/Modal';
 import InputField from '../library/Form/InputField';
 import Select from '../library/Select';
 import Form from '../library/Form';
 import SarReportDrawer from './SarReportDrawer';
+import Modal from '@/components/library/Modal';
 import { PropertyListLayout } from '@/pages/rules/RuleConfigurationDrawer/JsonSchemaEditor/PropertyList';
 import ErrorWarningFillIcon from '@/components/ui/icons/Remix/system/error-warning-fill.react.svg';
 

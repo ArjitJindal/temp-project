@@ -4,7 +4,7 @@ import UserSearchButton from '../../UserSearchButton';
 import s from './styles.module.less';
 import { useApi } from '@/api';
 import { Alert } from '@/apis';
-import Modal from '@/components/ui/Modal';
+import Modal from '@/components/library/Modal';
 import { DEFAULT_PARAMS_STATE } from '@/components/library/Table/consts';
 import TransactionsTable, {
   TransactionsTableParams,
@@ -101,9 +101,8 @@ const DisplayCheckedTransactions = (props: Props) => {
       title={`Transactions checked (${count})`}
       isOpen={isModalVisible}
       onCancel={() => setIsModalVisible(false)}
-      width={'calc(100vw - 160px)'}
+      width="L"
       hideFooter
-      className={s.modal}
     >
       <div>
         <div className={s.container}>

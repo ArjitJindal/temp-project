@@ -21,6 +21,7 @@ interface CommonProps<Value extends Comparable> {
   dropdownPlacement?: SelectCommonPlacement;
   allowClear?: boolean;
   notFoundContent?: React.ReactNode;
+  className?: string;
 }
 
 interface SingleProps<Value extends Comparable> extends CommonProps<Value>, InputProps<Value> {
@@ -38,7 +39,16 @@ interface TagsProps<Value extends Comparable> extends CommonProps<Value>, InputP
 type Props<Value extends Comparable> = SingleProps<Value> | MultipleProps<Value> | TagsProps<Value>;
 
 export default function Select<Value extends Comparable = string>(props: Props<Value>) {
-  const { isDisabled, options, placeholder, size = 'DEFAULT', isError, onFocus, onBlur } = props;
+  const {
+    isDisabled,
+    options,
+    placeholder,
+    size = 'DEFAULT',
+    isError,
+    onFocus,
+    onBlur,
+    className,
+  } = props;
 
   const antSelectProps: SelectProps<Value | Value[], Option<Value>> = {
     disabled: isDisabled,
@@ -68,7 +78,10 @@ export default function Select<Value extends Comparable = string>(props: Props<V
   };
 
   return (
-    <div className={cn(s.root, isError && s.isError, s[`size-${size}`])} style={props.style}>
+    <div
+      className={cn(s.root, isError && s.isError, s[`size-${size}`], className)}
+      style={props.style}
+    >
       <AntSelect {...antSelectProps}>
         {options?.map((option) => (
           <AntSelect.Option
