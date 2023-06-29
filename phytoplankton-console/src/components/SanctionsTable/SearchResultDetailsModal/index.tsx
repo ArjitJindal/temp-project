@@ -2,11 +2,13 @@ import { useRef } from 'react';
 import { Modal, Space, Tag } from 'antd';
 import _ from 'lodash';
 import ProDescriptions from '@ant-design/pro-descriptions';
+import s from './index.module.less';
 import SearchResultDetailsModalFooter from './SearchResultDetailsModalFooter';
 import { ComplyAdvantageSearchHit } from '@/apis/models/ComplyAdvantageSearchHit';
 import * as Card from '@/components/ui/Card';
 import EntityHeader from '@/components/ui/entityPage/EntityHeader';
 import * as Form from '@/components/ui/Form';
+import LinkIcon from '@/components/ui/icons/Remix/system/external-link-line.react.svg';
 
 interface Props {
   hit: ComplyAdvantageSearchHit;
@@ -114,6 +116,29 @@ export default function SearchResultDetailsModal(props: Props) {
                       {field.value}
                     </ProDescriptions.Item>
                   ))}
+                </ProDescriptions>
+              </Card.Section>
+            );
+          })}
+        </Card.Root>
+        <br />
+        <Card.Root
+          header={{
+            title: 'Adverse Media',
+          }}
+        >
+          {hit.doc?.media?.map((media) => {
+            return (
+              <Card.Section key={media.title}>
+                <ProDescriptions column={1} colon={false} layout="horizontal">
+                  <ProDescriptions.Item>
+                    <Space>
+                      <a href={media.url} target="_blank" className={s.link}>
+                        <span>{media.title}</span> <LinkIcon height={16} />
+                      </a>
+                    </Space>
+                  </ProDescriptions.Item>
+                  <ProDescriptions.Item>{media.snippet}</ProDescriptions.Item>
                 </ProDescriptions>
               </Card.Section>
             );
