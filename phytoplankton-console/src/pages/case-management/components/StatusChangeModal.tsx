@@ -185,8 +185,8 @@ export default function StatusChangeModal(props: Props) {
           }}
           fieldValidators={{
             reasons: notEmpty,
+            comment: and([notEmpty, maxLength(MAX_COMMENT_LENGTH)]),
             reasonOther: isOtherReason ? and([notEmpty, maxLength(500)]) : undefined,
-            comment: maxLength(MAX_COMMENT_LENGTH),
           }}
           onChange={setFormState}
           alwaysShowErrors={alwaysShowErrors}
