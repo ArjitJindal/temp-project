@@ -188,7 +188,7 @@ const mergedColumns = (
 
 interface Props {
   params: AlertTableParams;
-  onChangeParams: (newState: AlertTableParams) => void;
+  onChangeParams?: (newState: AlertTableParams) => void;
   isEmbedded?: boolean;
   hideAlertStatusFilters?: boolean;
   hideUserFilters?: boolean;
@@ -200,7 +200,7 @@ interface Props {
 export default function AlertTable(props: Props) {
   const {
     caseId,
-    params,
+    params: externalParams,
     onChangeParams,
     isEmbedded = false,
     hideAlertStatusFilters = false,
@@ -218,6 +218,8 @@ export default function AlertTable(props: Props) {
   const [users, _] = useUsers({ includeBlockedUsers: true });
   const [selectedTxns, setSelectedTxns] = useState<{ [alertId: string]: string[] }>({});
   const [selectedAlerts, setSelectedAlerts] = useState<string[]>([]);
+  const [internalParams, setInternalParams] = useState<AlertTableParams | null>(null);
+  const params = useMemo(() => internalParams ?? externalParams, [externalParams, internalParams]);
   const selectedTransactionIds = useMemo(() => {
     return Object.values(selectedTxns)
       .flatMap((v) => v)
@@ -423,6 +425,16 @@ export default function AlertTable(props: Props) {
         }
       : undefined;
   };
+  const handleChangeParams = useCallback(
+    (params: AlertTableParams) => {
+      if (isEmbedded) {
+        setInternalParams(params);
+      } else if (onChangeParams) {
+        onChangeParams(params);
+      }
+    },
+    [isEmbedded, onChangeParams],
+  );
 
   return (
     <>
@@ -434,8 +446,8 @@ export default function AlertTable(props: Props) {
         innerRef={actionRef}
         columns={columns}
         queryResults={queryResults}
-        params={params}
-        onChangeParams={onChangeParams}
+        params={internalParams ?? params}
+        onChangeParams={handleChangeParams}
         selectedIds={[
           ...selectedAlerts,
           ...Object.entries(selectedTxns)

@@ -43,6 +43,7 @@ import {
 } from '@/components/library/Table/standardDataTypes';
 import { RiskLevel } from '@/utils/risk-levels';
 import { ColumnHelper } from '@/components/library/Table/columnHelper';
+import { DEFAULT_PARAMS_STATE } from '@/components/library/Table/consts';
 
 interface Props {
   params: AllParams<TableSearchParams>;
@@ -315,9 +316,8 @@ export default function CaseTable(props: Props) {
           {record.caseId && (
             <AlertTable
               isEmbedded={true}
-              params={{ ...params }}
+              params={{ ...DEFAULT_PARAMS_STATE, caseId: record.caseId }}
               escalatedTransactionIds={record.caseHierarchyDetails?.childTransactionIds || []}
-              onChangeParams={onChangeParams}
               expandTransactions={false}
             />
           )}

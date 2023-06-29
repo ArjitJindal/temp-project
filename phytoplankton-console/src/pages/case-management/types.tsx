@@ -47,5 +47,5 @@ export type CommonCaseParams = {
 };
 
 export type TableSearchParams = CommonParams & {
-  showCases: 'MY' | 'ALL' | 'MY_ALERTS' | 'ALL_ALERTS';
+  showCases?: 'MY' | 'ALL' | 'MY_ALERTS' | 'ALL_ALERTS';
 } & Partial<CommonCaseParams>;
