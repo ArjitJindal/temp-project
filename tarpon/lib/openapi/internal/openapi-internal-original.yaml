@@ -5218,7 +5218,6 @@ components:
         - ESCALATION
         - IBAN_RESOLUTION
         - MACHINE_LEARNING_DEMO
-        - SAR_DEMO
         - SAR
       description: ''
     ManagedRoleName:

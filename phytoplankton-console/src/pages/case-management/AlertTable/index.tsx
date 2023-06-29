@@ -38,7 +38,6 @@ import { useRules } from '@/utils/rules';
 import { ColumnHelper } from '@/components/library/Table/columnHelper';
 import { DefaultApiGetAlertListRequest } from '@/apis/types/ObjectParamAPI';
 import { neverReturn } from '@/utils/lang';
-import { SarButton as SarDemoButton } from '@/components/SarDemo';
 import { SarButton as SarButton } from '@/components/Sar';
 
 export type AlertTableParams = AllParams<TableSearchParams>;
@@ -209,7 +208,6 @@ export default function AlertTable(props: Props) {
   } = props;
   const escalationEnabled = useFeatureEnabled('ESCALATION');
   const isPulseEnabled = useFeatureEnabled('PULSE');
-  const sarDemoEnabled = useFeatureEnabled('SAR_DEMO');
   const sarEnabled = useFeatureEnabled('SAR');
   const api = useApi();
   const user = useAuth0User();
@@ -392,13 +390,6 @@ export default function AlertTable(props: Props) {
     () => makeExtraFilters(isPulseEnabled, ruleOptions, hideUserFilters, 'ALERTS'),
     [isPulseEnabled, ruleOptions, hideUserFilters],
   );
-  let sarDemoButton: any = () => null;
-  if (process.env.ENV_NAME !== 'prod') {
-    sarDemoButton = () =>
-      sarDemoEnabled ? (
-        <SarDemoButton transactionIds={Object.values(selectedTxns).flatMap((v) => v)} />
-      ) : null;
-  }
 
   let sarButton: any = () => null;
   if (caseId && sarEnabled) {
@@ -458,7 +449,6 @@ export default function AlertTable(props: Props) {
         pagination={isEmbedded ? 'HIDE_FOR_ONE_PAGE' : true}
         selectionInfo={getSelectionInfo()}
         selectionActions={[
-          sarDemoButton,
           sarButton,
           ({ selectedIds, selectedItems }) => {
             if (selectedTransactionIds.length) {

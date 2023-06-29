@@ -122,7 +122,6 @@ export default function TransactionsTable(props: Props) {
   const [showDetailsView, setShowDetailsView] = useState<boolean>(false);
   const isPulseEnabled = useFeatureEnabled('PULSE');
   const escalationEnabled = useFeatureEnabled('ESCALATION');
-  const sarDemoEnabled = useFeatureEnabled('SAR_DEMO');
   const sarEnabled = useFeatureEnabled('SAR');
 
   const {
@@ -350,7 +349,7 @@ export default function TransactionsTable(props: Props) {
       innerRef={tableRef}
       tableId={'transactions-list'}
       selection={
-        !escalationEnabled && !sarDemoEnabled && !sarEnabled
+        !escalationEnabled && !sarEnabled
           ? false
           : (row) =>
               (alert?.alertStatus === 'OPEN' ||

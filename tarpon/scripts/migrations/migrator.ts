@@ -7,6 +7,7 @@ import { syncMongoDbIndices } from './always-run/sync-mongodb-indices'
 import { syncRulesLibrary } from './always-run/sync-rules-library'
 import { loadConfigEnv } from './utils/config'
 import { syncListLibrary } from './always-run/sync-list-library'
+import { syncFeatureFlags } from './utils/tenant'
 import { getMongoDbClient } from '@/utils/mongoDBUtils'
 
 const MIGRATION_TEMPLATE = `import { migrateAllTenants } from '../utils/tenant'
@@ -99,7 +100,15 @@ async function main() {
     exit(1)
   }
 
-  if (migrationType === 'POST_DEPLOYMENT' && !process.argv.includes('create')) {
+  if (process.argv.includes('create')) {
+    return
+  }
+
+  if (migrationType === 'PRE_DEPLOYMENT') {
+    await syncFeatureFlags()
+  }
+
+  if (migrationType === 'POST_DEPLOYMENT') {
     await syncMongoDbIndices()
     await syncRulesLibrary()
     await syncListLibrary()

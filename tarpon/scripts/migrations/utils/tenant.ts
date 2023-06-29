@@ -3,6 +3,8 @@ import { Tenant } from '@/services/accounts'
 import { getDynamoDbClient } from '@/utils/dynamodb'
 import { TenantRepository } from '@/services/tenants/repositories/tenant-repository'
 import { TenantService } from '@/services/tenants'
+import { FEATURES } from '@/@types/openapi-internal-custom/Feature'
+import { Feature } from '@/@types/openapi-internal/Feature'
 
 const config = getConfig()
 
@@ -38,7 +40,7 @@ export async function migrateAllTenants(
   }
 }
 
-export async function removeFeatureFlags(featuresToRemove: string[]) {
+export async function syncFeatureFlags() {
   await migrateAllTenants(async (tenant: Tenant) => {
     const dynamoDb = await getDynamoDbClient()
     const tenantRepository = new TenantRepository(tenant.id, {
@@ -50,14 +52,10 @@ export async function removeFeatureFlags(featuresToRemove: string[]) {
     if (!tenantSettings.features) {
       return
     }
-    const newFeatures = tenantSettings.features.filter(
-      (feature) => !featuresToRemove.includes(feature as string)
-    )
-    if (newFeatures.length === tenantSettings.features.length) {
-      return
-    }
     await tenantRepository.createOrUpdateTenantSettings({
-      features: newFeatures || [],
+      features: tenantSettings.features.filter((feature) =>
+        FEATURES.includes(feature as Feature)
+      ),
     })
   })
 }
