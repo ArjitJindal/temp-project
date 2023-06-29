@@ -56,13 +56,16 @@ export default class SanctionsConsumerUserRule extends UserRule<SanctionsConsume
       ? dayjs(user.userDetails.dateOfBirth).year()
       : undefined
     const name = formatConsumerName(user.userDetails.name) || ''
-    const result = await sanctionsService.search({
-      searchTerm: name || '',
-      yearOfBirth,
-      types: screeningTypes,
-      fuzziness: fuzziness / 100,
-      monitoring: { enabled: ongoingScreening },
-    })
+    const result = await sanctionsService.search(
+      {
+        searchTerm: name || '',
+        yearOfBirth,
+        types: screeningTypes,
+        fuzziness: fuzziness / 100,
+        monitoring: { enabled: ongoingScreening },
+      },
+      { userId: this.user.userId }
+    )
     if (result.data && result.data.length > 0) {
       hitResult.push({
         direction: 'ORIGIN',

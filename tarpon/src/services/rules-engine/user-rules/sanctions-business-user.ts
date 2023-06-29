@@ -102,13 +102,16 @@ export default class SanctionsBusinessUserRule extends UserRule<SanctionsBusines
       const yearOfBirth = entity.dateOfBirth
         ? dayjs(entity.dateOfBirth).year()
         : undefined
-      const result = await sanctionsService.search({
-        searchTerm: entity.name,
-        yearOfBirth,
-        types: screeningTypes,
-        fuzziness: fuzziness / 100,
-        monitoring: { enabled: ongoingScreening },
-      })
+      const result = await sanctionsService.search(
+        {
+          searchTerm: entity.name,
+          yearOfBirth,
+          types: screeningTypes,
+          fuzziness: fuzziness / 100,
+          monitoring: { enabled: ongoingScreening },
+        },
+        { userId: this.user.userId }
+      )
       if (result.data && result.data.length > 0) {
         sanctionsDetails.push({
           name: entity.name,

@@ -170,6 +170,16 @@ export class SanctionsSearchRepository {
     return await collection.findOne({ _id: searchId as any })
   }
 
+  public async getSearchResultByIds(
+    searchIds: string[]
+  ): Promise<SanctionsSearchHistory[]> {
+    const db = this.mongoDb.db()
+    const collection = db.collection<SanctionsSearchHistory>(
+      SANCTIONS_SEARCHES_COLLECTION(this.tenantId)
+    )
+    return collection.find({ _id: { $in: searchIds } }).toArray()
+  }
+
   public async getSearchResultByCASearchId(
     caSearchId: number
   ): Promise<SanctionsSearchHistory | null> {

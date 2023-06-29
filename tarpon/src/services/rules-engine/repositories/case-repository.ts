@@ -766,6 +766,12 @@ export class CaseRepository {
     return await collection.findOne<Case>({ caseId })
   }
 
+  public async getCaseByIds(caseIds: string[]): Promise<Case[]> {
+    const db = this.mongoDb.db()
+    const collection = db.collection<Case>(CASES_COLLECTION(this.tenantId))
+    return collection.find({ caseId: { $in: caseIds } }).toArray()
+  }
+
   public async getCasesByAlertIds(alertIds: string[]): Promise<Case[]> {
     const db = this.mongoDb.db()
     const collection = db.collection<Case>(CASES_COLLECTION(this.tenantId))

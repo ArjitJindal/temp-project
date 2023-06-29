@@ -93,12 +93,15 @@ export default class SanctionsBankUserRule extends UserRule<SanctionsBankUserRul
     const sanctionsDetails: SanctionsDetails[] = []
     for (const bankInfo of bankInfosToCheck) {
       const bankName = bankInfo.bankName!
-      const result = await sanctionsService.search({
-        searchTerm: bankName,
-        types: screeningTypes,
-        fuzziness: fuzziness / 100,
-        monitoring: { enabled: ongoingScreening },
-      })
+      const result = await sanctionsService.search(
+        {
+          searchTerm: bankName,
+          types: screeningTypes,
+          fuzziness: fuzziness / 100,
+          monitoring: { enabled: ongoingScreening },
+        },
+        { userId: this.user.userId }
+      )
       if (result.data && result.data.length > 0) {
         sanctionsDetails.push({
           name: bankName,

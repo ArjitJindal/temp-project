@@ -5,6 +5,7 @@ import { getTestTenantId } from '@/test-utils/tenant-test-utils'
 import { getMongoDbClient } from '@/utils/mongoDBUtils'
 import { SanctionsSearchRequest } from '@/@types/openapi-internal/SanctionsSearchRequest'
 import { mockComplyAdvantageSearch } from '@/test-utils/complyadvantage-test-utils'
+import { ComplyAdvantageSearchHitDoc } from '@/@types/openapi-internal/ComplyAdvantageSearchHitDoc'
 
 jest.mock('node-fetch')
 const mockFetch = mockComplyAdvantageSearch()
@@ -71,6 +72,62 @@ describe('Sanctions Service', () => {
         response: response,
       })
     })
+
+    test('Skip searching CA on cache hit', async () => {
+      const service = new SanctionsService(TEST_TENANT_ID)
+      const request: SanctionsSearchRequest = {
+        searchTerm: 'test',
+        fuzziness: 0.5,
+        countryCodes: ['DE', 'FR'],
+        yearOfBirth: 1992,
+        types: ['SANCTIONS', 'PEP'],
+      }
+      await service.search(request)
+      await service.search(request)
+      expect(mockFetch).toBeCalledTimes(1)
+    })
+
+    test('Filter out whitelist entities (global level)', async () => {
+      const service = new SanctionsService(TEST_TENANT_ID)
+      const request: SanctionsSearchRequest = {
+        searchTerm: 'test',
+        fuzziness: 0.5,
+        countryCodes: ['DE', 'FR'],
+        yearOfBirth: 1992,
+        types: ['SANCTIONS', 'PEP'],
+      }
+      await service.addWhitelistEntities(
+        MOCK_CA_SEARCH_RESPONSE.content.data.hits.map(
+          (v) => v.doc
+        ) as any as ComplyAdvantageSearchHitDoc[]
+      )
+      const response = await service.search(request)
+      expect(response.data).toHaveLength(0)
+      expect(
+        (await service.search(request, { userId: 'foo' })).data
+      ).toHaveLength(0)
+    })
+
+    test('Filter out whitelist entities (user level)', async () => {
+      const service = new SanctionsService(TEST_TENANT_ID)
+      const testUserId = 'test-user-id'
+      const request: SanctionsSearchRequest = {
+        searchTerm: 'test',
+        fuzziness: 0.5,
+        countryCodes: ['DE', 'FR'],
+        yearOfBirth: 1992,
+        types: ['SANCTIONS', 'PEP'],
+      }
+      await service.addWhitelistEntities(
+        MOCK_CA_SEARCH_RESPONSE.content.data.hits.map(
+          (v) => v.doc
+        ) as any as ComplyAdvantageSearchHitDoc[],
+        testUserId
+      )
+      const response = await service.search(request, { userId: testUserId })
+      expect(response.data).toHaveLength(0)
+      expect((await service.search(request)).data.length).toBeGreaterThan(0)
+    })
   })
 
   describe('Update search', () => {
@@ -104,12 +161,12 @@ describe('Sanctions Service', () => {
   })
 
   describe('Get search histories', () => {
-    test('Get a single search history', async () => {
+    test('Get search histories', async () => {
       const service = new SanctionsService(TEST_TENANT_ID)
       const result = await service.getSearchHistories({})
       expect(mockFetch).toBeCalledTimes(0)
-      expect(result.total).toBe(1)
-      expect(result.items).toHaveLength(1)
+      expect(result.total).toBeGreaterThan(0)
+      expect(result.items?.length).toBeGreaterThan(0)
     })
   })
 })

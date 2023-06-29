@@ -306,19 +306,15 @@ export const casesHandler = lambdaApi()(
       try {
         alertUpdateSegment?.addAnnotation('tenantId', tenantId)
         alertUpdateSegment?.addAnnotation('alertIds', alertIds.toString())
-        const updateResult = await alertsService.updateAlertsStatus(
-          alertIds,
-          updates
-        )
+        await alertsService.updateAlertsStatus(alertIds, updates)
         await casesAlertsAuditLogService.handleAuditLogForAlertsUpdate(
           alertIds,
           updates
         )
-
-        return updateResult
       } finally {
         alertUpdateSegment?.close()
       }
+      return
     } else if (
       event.httpMethod === 'PATCH' &&
       event.resource === '/alerts/assignee' &&

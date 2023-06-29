@@ -19,7 +19,7 @@ import { PaginationParams } from '@/utils/pagination'
 import { DashboardStatsRepository } from '@/lambdas/console-api-dashboard/repositories/dashboard-stats-repository'
 import { addNewSubsegment } from '@/core/xray'
 import { sendWebhookTasks } from '@/services/webhook/utils'
-import { getContext } from '@/core/utils/context'
+import { getContext, hasFeature } from '@/core/utils/context'
 import { Case } from '@/@types/openapi-internal/Case'
 import { Account } from '@/@types/openapi-internal/Account'
 import { CaseClosedDetails } from '@/@types/openapi-public/CaseClosedDetails'
@@ -32,12 +32,13 @@ import { getMongoDbClient } from '@/utils/mongoDBUtils'
 import { getDynamoDbClientByEvent } from '@/utils/dynamodb'
 import { CaseConfig } from '@/lambdas/console-api-case/app'
 import { isCaseAvailable } from '@/lambdas/console-api-case/services/utils'
-import { AlertsRepository } from '@/services/rules-engine/repositories/alerts-repository'
 import { AlertsService } from '@/services/alerts'
 import { AlertClosedDetails } from '@/@types/openapi-public/AlertClosedDetails'
+import { AlertsRepository } from '@/services/rules-engine/repositories/alerts-repository'
 
 export class CaseService extends CaseAlertsCommonService {
   caseRepository: CaseRepository
+  alertsService: AlertsService
   tenantId: string
   mongoDb: MongoClient
 
@@ -68,6 +69,14 @@ export class CaseService extends CaseAlertsCommonService {
     this.caseRepository = caseRepository
     this.tenantId = caseRepository.tenantId
     this.mongoDb = caseRepository.mongoDb
+    const alertsRepository = new AlertsRepository(this.tenantId, {
+      mongoDb: this.mongoDb,
+    })
+    this.alertsService = new AlertsService(
+      alertsRepository,
+      this.s3,
+      this.s3Config
+    )
   }
 
   public async getCases(
@@ -95,15 +104,6 @@ export class CaseService extends CaseAlertsCommonService {
       this.caseRepository.tenantId,
       { mongoDb: this.caseRepository.mongoDb }
     )
-    const alertsRepository = new AlertsRepository(this.tenantId, {
-      mongoDb: this.mongoDb,
-    })
-    const alertsService = new AlertsService(
-      alertsRepository,
-      this.s3,
-      this.s3Config
-    )
-
     const statusChange: CaseStatusChange | undefined =
       updateRequest.caseStatus && {
         userId,
@@ -163,7 +163,7 @@ export class CaseService extends CaseAlertsCommonService {
                 ? Promise.all(
                     alerts?.flatMap((alert) => {
                       return [
-                        alertsService.saveAlertComment(alert.alertId!, {
+                        this.alertsService.saveAlertComment(alert.alertId!, {
                           userId,
                           body:
                             `Alert status automatically changed to ${updateRequest.caseStatus} because the status of the case this alert was part of was changed to ${updateRequest.caseStatus}` +
@@ -201,6 +201,20 @@ export class CaseService extends CaseAlertsCommonService {
         cases.map((c) =>
           dashboardStatsRepository.refreshCaseStats(c.createdTimestamp)
         )
+      )
+    }
+
+    if (updateRequest.caseStatus === 'CLOSED' && hasFeature('SANCTIONS')) {
+      const cases = await this.caseRepository.getCaseByIds(caseIds)
+      await Promise.all(
+        cases.map(async (c) => {
+          const userId =
+            c?.caseUsers?.origin?.userId ?? c?.caseUsers?.destination?.userId
+          const alerts = c?.alerts ?? []
+          if (userId && alerts.length) {
+            await this.alertsService.whiltelistSanctionEntities(userId, alerts)
+          }
+        })
       )
     }
     return 'OK'

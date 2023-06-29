@@ -201,6 +201,10 @@ export const SANCTIONS_SEARCHES_COLLECTION = (tenantId: string) => {
   return `${tenantId}-sanctions-searches`
 }
 
+export const SANCTIONS_WHITELIST_ENTITIES_COLLECTION = (tenantId: string) => {
+  return `${tenantId}-sanctions-whitelist-entities`
+}
+
 export const IBAN_COM_COLLECTION = (tenantId: string) => {
   return `${tenantId}-iban-com`
 }

@@ -1,4 +1,4 @@
-import { BadRequest } from 'http-errors'
+import { BadRequest, NotFound } from 'http-errors'
 import {
   APIGatewayEventLambdaAuthorizerContext,
   APIGatewayProxyWithLambdaAuthorizerEvent,
@@ -68,16 +68,20 @@ export const sanctionsHandler = lambdaApi({ requiredFeatures: ['SANCTIONS'] })(
         monitoring: searchRequest.monitoring,
       })
       return internalToPublicSearchResult(
-        await sanctionsService.getSearchHistory(searchResult.searchId)
+        (await sanctionsService.getSearchHistory(searchResult.searchId))!
       )
     } else if (
       event.httpMethod === 'GET' &&
       event.resource === '/searches/{searchId}' &&
       event.pathParameters?.searchId
     ) {
-      const searchResult = await sanctionsService.getSearchHistory(
-        event.pathParameters?.searchId
-      )
+      const { searchId } = event.pathParameters
+      const searchResult = await sanctionsService.getSearchHistory(searchId)
+      if (!searchResult) {
+        throw new NotFound(
+          `Unable to find search history by searchId=${searchId}`
+        )
+      }
       return internalToPublicSearchResult(searchResult)
     } else if (
       event.httpMethod === 'PATCH' &&

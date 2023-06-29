@@ -2,6 +2,7 @@ import {
   APIGatewayEventLambdaAuthorizerContext,
   APIGatewayProxyWithLambdaAuthorizerEvent,
 } from 'aws-lambda'
+import { NotFound } from 'http-errors'
 import { JWTAuthorizerResult } from '@/@types/jwt'
 import { lambdaApi } from '@/core/middlewares/lambda-api-middlewares'
 import { SanctionsSearchRequest } from '@/@types/openapi-internal/SanctionsSearchRequest'
@@ -43,7 +44,14 @@ export const sanctionsHandler = lambdaApi({ requiredFeatures: ['SANCTIONS'] })(
       event.resource === '/sanctions/search/{searchId}' &&
       event.pathParameters?.searchId
     ) {
-      return sanctionsService.getSearchHistory(event.pathParameters.searchId)
+      const { searchId } = event.pathParameters
+      const search = await sanctionsService.getSearchHistory(searchId)
+      if (!search) {
+        throw new NotFound(
+          `Unable to find search history by searchId=${searchId}`
+        )
+      }
+      return search
     }
     throw new Error('Unhandled request')
   }

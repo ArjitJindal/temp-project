@@ -9,6 +9,7 @@ import {
 import { CaseAlertsCommonService, S3Config } from '../case-alerts-common'
 import { CaseRepository } from '../rules-engine/repositories/case-repository'
 import { ThinWebhookDeliveryTask, sendWebhookTasks } from '../webhook/utils'
+import { SanctionsService } from '../sanctions'
 import { CaseStatus } from '@/@types/openapi-internal/CaseStatus'
 import { Alert } from '@/@types/openapi-internal/Alert'
 import { AlertListResponse } from '@/@types/openapi-internal/AlertListResponse'
@@ -20,7 +21,7 @@ import {
 import { addNewSubsegment } from '@/core/xray'
 import { CaseEscalationRequest } from '@/@types/openapi-internal/CaseEscalationRequest'
 import { CaseService } from '@/lambdas/console-api-case/services/case-service'
-import { getContext } from '@/core/utils/context'
+import { getContext, hasFeature } from '@/core/utils/context'
 import { Case } from '@/@types/openapi-internal/Case'
 import { Account } from '@/@types/openapi-internal/Account'
 import { Comment } from '@/@types/openapi-internal/Comment'
@@ -37,6 +38,7 @@ import { isAlertAvailable } from '@/lambdas/console-api-case/services/utils'
 import { CaseUpdateRequest } from '@/@types/openapi-internal/CaseUpdateRequest'
 import { CasesAlertsAuditLogService } from '@/lambdas/console-api-case/services/case-alerts-audit-log-service'
 import { withTransaction } from '@/utils/mongoDBUtils'
+import { ComplyAdvantageSearchHitDoc } from '@/@types/openapi-internal/ComplyAdvantageSearchHitDoc'
 
 export class AlertsService extends CaseAlertsCommonService {
   alertsRepository: AlertsRepository
@@ -531,9 +533,31 @@ export class AlertsService extends CaseAlertsCommonService {
           caseUpdateStatus
         )
       }
+
+      if (
+        statusUpdateRequest.alertStatus === 'CLOSED' &&
+        hasFeature('SANCTIONS')
+      ) {
+        await Promise.all(
+          alertIds.map(async (alertId) => {
+            const alert = await this.getAlert(alertId)
+            if (!alert) {
+              return
+            }
+            const c = await caseService.getCase(alert.caseId!)
+            const userId =
+              c?.caseUsers?.origin?.userId ?? c?.caseUsers?.destination?.userId
+            if (userId) {
+              await this.whiltelistSanctionEntities(userId, [alert])
+            }
+          })
+        )
+      }
     })
 
-    await this.sendAlertClosedWebhook(alertIds, cases, statusUpdateRequest)
+    if (statusUpdateRequest.alertStatus === 'CLOSED') {
+      await this.sendAlertClosedWebhook(alertIds, cases, statusUpdateRequest)
+    }
   }
 
   private async sendAlertClosedWebhook(
@@ -603,5 +627,21 @@ export class AlertsService extends CaseAlertsCommonService {
       beforeTimestamp: params?.beforeTimestamp,
       afterTimestamp: params?.afterTimestamp,
     })
+  }
+
+  public async whiltelistSanctionEntities(userId: string, alerts: Alert[]) {
+    const sanctionsService = new SanctionsService(this.tenantId)
+    const searchIds = alerts
+      .flatMap((alert) =>
+        alert.ruleHitMeta?.sanctionsDetails?.map((v) => v.searchId)
+      )
+      .filter(Boolean) as string[]
+
+    const searchs = await sanctionsService.getSearchHistoriesByIds(searchIds)
+    const entities = searchs
+      .flatMap((search) => search?.response?.data)
+      .map((v) => v?.doc)
+      .filter(Boolean) as ComplyAdvantageSearchHitDoc[]
+    await sanctionsService.addWhitelistEntities(entities, userId)
   }
 }

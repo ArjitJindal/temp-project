@@ -1,10 +1,10 @@
 import { v4 as uuidv4 } from 'uuid'
 import fetch from 'node-fetch'
-import { NotFound } from 'http-errors'
 import { StackConstants } from '@lib/constants'
 import _ from 'lodash'
 import { TenantRepository } from '../tenants/repositories/tenant-repository'
 import { SanctionsSearchRepository } from './repositories/sanctions-search-repository'
+import { SanctionsWhitelistEntityRepository } from './repositories/sanctions-whitelist-entity-repository'
 import { SanctionsSearchRequest } from '@/@types/openapi-internal/SanctionsSearchRequest'
 import { SanctionsSearchResponse } from '@/@types/openapi-internal/SanctionsSearchResponse'
 import { ComplyAdvantageSearchResponse } from '@/@types/openapi-internal/ComplyAdvantageSearchResponse'
@@ -17,6 +17,7 @@ import { SanctionsSearchMonitoring } from '@/@types/openapi-internal/SanctionsSe
 import { SanctionsSearchType } from '@/@types/openapi-internal/SanctionsSearchType'
 import { logger } from '@/core/logger'
 import { getDynamoDbClient } from '@/utils/dynamodb'
+import { ComplyAdvantageSearchHitDoc } from '@/@types/openapi-internal/ComplyAdvantageSearchHitDoc'
 
 const COMPLYADVANTAGE_SEARCH_API_URI =
   'https://api.complyadvantage.com/searches'
@@ -37,6 +38,7 @@ function getSanctionsSearchResponse(
 export class SanctionsService {
   apiKey!: string
   sanctionsSearchRepository!: SanctionsSearchRepository
+  sanctionsWhitelistEntityRepository!: SanctionsWhitelistEntityRepository
   tenantId: string
 
   constructor(tenantId: string) {
@@ -54,6 +56,8 @@ export class SanctionsService {
       this.tenantId,
       mongoDb
     )
+    this.sanctionsWhitelistEntityRepository =
+      new SanctionsWhitelistEntityRepository(this.tenantId, mongoDb)
     this.apiKey = await this.getApiKey()
   }
 
@@ -91,7 +95,10 @@ export class SanctionsService {
 
   public async search(
     request: SanctionsSearchRequest,
-    options?: { searchIdToReplace?: string }
+    options?: {
+      searchIdToReplace?: string
+      userId?: string
+    }
   ): Promise<SanctionsSearchResponse> {
     await this.initialize()
     const dynamoDb = getDynamoDbClient()
@@ -107,7 +114,7 @@ export class SanctionsService {
       ? null
       : await this.sanctionsSearchRepository.getSearchResultByParams(request)
     if (result?.response) {
-      return result?.response
+      return this.filterWhitelistEntites(result?.response, options?.userId)
     }
 
     const searchId = options?.searchIdToReplace ?? uuidv4()
@@ -128,7 +135,36 @@ export class SanctionsService {
     if (request.monitoring) {
       await this.updateSearch(searchId, request.monitoring)
     }
-    return responseWithId
+    return this.filterWhitelistEntites(responseWithId, options?.userId)
+  }
+
+  private async filterWhitelistEntites(
+    response: SanctionsSearchResponse,
+    userId?: string
+  ): Promise<SanctionsSearchResponse> {
+    await this.initialize()
+    const entityIds = response.data
+      .map((d) => d?.doc?.id)
+      .filter(Boolean) as string[]
+    const [globalWhitelistEntityIds, userLevelWhitelistEntityIds] =
+      await Promise.all([
+        this.sanctionsWhitelistEntityRepository.getWhitelistEntityIds(
+          entityIds
+        ),
+        userId
+          ? this.sanctionsWhitelistEntityRepository.getWhitelistEntityIds(
+              entityIds,
+              userId
+            )
+          : Promise.resolve([]),
+      ])
+    const whitelistEntityIds = _.uniq(
+      globalWhitelistEntityIds.concat(userLevelWhitelistEntityIds)
+    )
+    const filteredData = response.data.filter(
+      (d) => !whitelistEntityIds.includes(d?.doc?.id as string)
+    )
+    return { ...response, total: filteredData.length, data: filteredData }
   }
 
   private getSanitizedFuzziness(
@@ -197,17 +233,19 @@ export class SanctionsService {
 
   public async getSearchHistory(
     searchId: string
-  ): Promise<SanctionsSearchHistory> {
+  ): Promise<SanctionsSearchHistory | null> {
     await this.initialize()
     const result = await this.sanctionsSearchRepository.getSearchResult(
       searchId
     )
-    if (!result) {
-      throw new NotFound(
-        `Unable to find search history by searchId=${searchId}`
-      )
-    }
     return result
+  }
+
+  public async getSearchHistoriesByIds(
+    searchIds: string[]
+  ): Promise<SanctionsSearchHistory[]> {
+    await this.initialize()
+    return this.sanctionsSearchRepository.getSearchResultByIds(searchIds)
   }
 
   public async updateSearch(
@@ -216,13 +254,17 @@ export class SanctionsService {
   ): Promise<void> {
     await this.initialize()
     const search = await this.getSearchHistory(searchId)
+    if (!search) {
+      logger.warn(`Cannot find search ${searchId}. Skip updating search.`)
+      return
+    }
     const caSearchId =
       search.response?.rawComplyAdvantageResponse?.content?.data?.id
     const monitorResponse = await (
       await fetch(`${COMPLYADVANTAGE_SEARCH_API_URI}/${caSearchId}/monitors`, {
         method: 'PATCH',
         body: JSON.stringify({
-          is_monitored: update.enabled,
+          is_monitored: update.enabled ?? false,
         }),
         headers: {
           Authorization: `Token ${this.apiKey}`,
@@ -290,5 +332,18 @@ export class SanctionsService {
     } else if (_.isEqual(types, ['ADVERSE_MEDIA'] as SanctionsSearchType[])) {
       return '5a67aa5f-4ec8-4a61-af3a-78e3c132a24d'
     }
+  }
+
+  public async addWhitelistEntities(
+    caEntities: ComplyAdvantageSearchHitDoc[],
+    userId?: string,
+    createdAt?: number
+  ) {
+    await this.initialize()
+    await this.sanctionsWhitelistEntityRepository.addWhitelistEntities(
+      caEntities,
+      userId,
+      createdAt
+    )
   }
 }
