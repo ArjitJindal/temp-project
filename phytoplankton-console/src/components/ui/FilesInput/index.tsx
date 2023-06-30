@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React from 'react';
 import _ from 'lodash';
 import { InputProps } from '@/components/library/Form';
 import { UploadFilesList } from '@/components/files/UploadFilesList';
@@ -8,15 +8,19 @@ export interface RemoveAllFilesRef {
   removeAllFiles: () => void;
 }
 
-interface Props extends InputProps<FileInfo[]> {}
+interface Props extends InputProps<FileInfo[]> {
+  uploadingCount: number;
+  setUploadingCount: React.Dispatch<React.SetStateAction<number>>;
+  uploadedFiles: FileInfo[];
+}
 
 function FilesInput(props: Props, ref: React.Ref<RemoveAllFilesRef>) {
-  const { value = [], onChange } = props;
-  const [uploadingCount, setUploadingCount] = useState(0);
+  const { value = [], onChange, uploadingCount, setUploadingCount, uploadedFiles } = props;
   return (
     <UploadFilesList
       files={value}
       onFileUploaded={async (file) => {
+        uploadedFiles.push(file);
         onChange?.(_.uniqBy([...value, file], 's3Key'));
       }}
       onFileRemoved={async (fileS3Key) => {

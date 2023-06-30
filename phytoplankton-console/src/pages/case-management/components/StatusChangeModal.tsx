@@ -1,4 +1,5 @@
 import React, { useCallback, useEffect, useRef, useState } from 'react';
+import _ from 'lodash';
 import pluralize from 'pluralize';
 import { UseMutationResult } from '@tanstack/react-query';
 import { statusToOperationName } from './StatusChangeButton';
@@ -77,6 +78,12 @@ const DEFAULT_INITIAL_VALUES: FormValues = {
   closeRelatedCase: false,
 };
 
+const uploadedFiles: FileInfo[] = [];
+
+const handleFiles = (files: FileInfo[]) => {
+  return _.uniqBy([...files, ...uploadedFiles], 's3Key');
+};
+
 export default function StatusChangeModal(props: Props) {
   const {
     entityIds,
@@ -100,10 +107,17 @@ export default function StatusChangeModal(props: Props) {
     values: initialValues,
     isValid: false,
   });
-
+  const [uploadingCount, setUploadingCount] = useState(0);
+  const [fileList, setFileList] = useState<FileInfo[]>(initialValues.files);
   const formRef = useRef<FormRef<FormValues>>(null);
   const showCopilot = useFeatureEnabled('COPILOT');
   const showConfirmation = isVisible && (newStatus === 'REOPENED' || isAwaitingConfirmation);
+
+  useEffect(() => {
+    if (uploadingCount === 0) {
+      uploadedFiles.splice(0, uploadedFiles.length);
+    }
+  }, [uploadingCount]);
 
   useDeepEqualEffect(() => {
     formRef.current?.setValues(initialValues);
@@ -243,9 +257,12 @@ export default function StatusChangeModal(props: Props) {
                 {...inputProps}
                 ref={uploadRef}
                 onChange={(value) => {
-                  inputProps.onChange?.(value);
+                  setFileList(handleFiles([...(value ?? []), ...fileList]));
                 }}
-                value={inputProps.value}
+                value={fileList}
+                uploadingCount={uploadingCount}
+                setUploadingCount={setUploadingCount}
+                uploadedFiles={uploadedFiles}
               />
             )}
           </InputField>
