@@ -1,13 +1,4 @@
-import { getContext } from '../utils/context'
-
-function cleanUpDynamoDbResources() {
-  const dynamoDbClients = getContext()?.dynamoDbClients
-  if (dynamoDbClients) {
-    dynamoDbClients.forEach((client) => {
-      client.destroy()
-    })
-  }
-}
+import { cleanUpDynamoDbResources } from '@/utils/dynamodb'
 
 export const resourceCleanupHandler =
   () =>

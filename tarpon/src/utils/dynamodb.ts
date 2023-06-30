@@ -415,3 +415,12 @@ export type CursorPaginatedResponse<Item> = {
   items: Item[]
   cursor?: string
 }
+
+export function cleanUpDynamoDbResources() {
+  const dynamoDbClients = getContext()?.dynamoDbClients
+  if (dynamoDbClients) {
+    dynamoDbClients.forEach((client) => {
+      client.destroy()
+    })
+  }
+}
