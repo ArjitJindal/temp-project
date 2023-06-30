@@ -3,6 +3,7 @@ import _ from 'lodash'
 import { TransactionAmountDetails } from '@/@types/openapi-public/TransactionAmountDetails'
 import { logger } from '@/core/logger'
 import { CurrencyCode } from '@/@types/openapi-public/CurrencyCode'
+import { addNewSubsegment } from '@/core/xray'
 
 const MAX_CURRENCY_API_RETRY = 3
 
@@ -31,13 +32,16 @@ export async function getCurrencyExchangeRate(
       return cachedData[sourceCurr][targetCurr]
     }
     const apiUri = `https://cdn.jsdelivr.net/gh/fawazahmed0/currency-api@1/latest/currencies/${sourceCurr}/${targetCurr}.min.json`
+    const segment = await addNewSubsegment('Currency API', 'Fetch')
     try {
       const rate = (
         (await (await fetch(apiUri)).json()) as { [key: string]: number }
       )[targetCurr]
       _.set(cachedData, `${sourceCurr}.${targetCurr}`, rate)
+      segment?.close()
       return rate
-    } catch (e) {
+    } catch (e: any) {
+      segment?.close(e)
       logger.error('Failed to fetch the exchange rate!')
       if (i === MAX_CURRENCY_API_RETRY) {
         throw e
