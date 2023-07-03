@@ -74,6 +74,7 @@ export default function Header(props: Props) {
                 ...commentData,
               });
             }}
+            requiredPermissions={['case-management:case-overview:write']}
           />
           <CasesStatusChangeButton
             caseIds={[caseId as string]}

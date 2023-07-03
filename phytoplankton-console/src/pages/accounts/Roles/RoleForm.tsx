@@ -129,7 +129,14 @@ export default function RoleForm({ role, onChange }: { role?: AccountRole; onCha
         </div>
       )}
       <ButtonGroup>
-        {canEdit && !isEditing && <Button onClick={() => setEdit(true)}>Edit</Button>}
+        {canEdit && !isEditing && (
+          <Button
+            onClick={() => setEdit(true)}
+            requiredPermissions={['settings:organisation:write']}
+          >
+            Edit
+          </Button>
+        )}
         {isEditing && (
           <>
             <Button htmlType={'submit'} isLoading={isLoading}>

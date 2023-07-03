@@ -19,7 +19,7 @@ import ExpandedRowRenderer from '@/pages/case-management/AlertTable/ExpandedRowR
 import { TableAlertItem } from '@/pages/case-management/AlertTable/types';
 import AlertsStatusChangeButton from '@/pages/case-management/components/AlertsStatusChangeButton';
 import AssignToButton from '@/pages/case-management/components/AssignToButton';
-import { useAuth0User, useHasPermissions, useUsers } from '@/utils/user-utils';
+import { useAuth0User, useUsers } from '@/utils/user-utils';
 import { message } from '@/components/library/Message';
 import { TableSearchParams } from '@/pages/case-management/types';
 import { makeExtraFilters } from '@/pages/case-management/helpers';
@@ -211,7 +211,6 @@ export default function AlertTable(props: Props) {
   const sarEnabled = useFeatureEnabled('SAR');
   const api = useApi();
   const user = useAuth0User();
-  const isReopenEnabled = useHasPermissions(['case-management:case-reopen:write']);
 
   const [users, _] = useUsers({ includeBlockedUsers: true });
   const [selectedTxns, setSelectedTxns] = useState<{ [alertId: string]: string[] }>({});
@@ -541,7 +540,6 @@ export default function AlertTable(props: Props) {
                 onSaved={reloadTable}
                 status={status}
                 caseId={params.caseId}
-                isDisabled={status === 'CLOSED' && !isReopenEnabled}
               />
             ) : null;
           },

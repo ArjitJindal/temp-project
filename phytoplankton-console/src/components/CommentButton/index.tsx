@@ -12,16 +12,17 @@ import CommentEditor, {
 import WechatLineIcon from '@/components/ui/icons/Remix/logos/wechat-line.react.svg';
 import { getErrorMessage } from '@/utils/lang';
 import { getMutationAsyncResource } from '@/utils/queries/hooks';
-import { Comment } from '@/apis';
+import { Comment, Permission } from '@/apis';
 
 interface Props {
   submitRequest: (values: CommentEditorFormValues) => Promise<Comment>;
   onSuccess: (createdComment: Comment) => void;
   disabled?: boolean;
+  requiredPermissions?: Permission[];
 }
 
 export default function CommentButton(props: Props) {
-  const { submitRequest, onSuccess } = props;
+  const { submitRequest, onSuccess, requiredPermissions = [] } = props;
   const [commentFormValues, setCommentFormValues] = useState<CommentEditorFormValues>({
     comment: '',
     files: [],
@@ -76,7 +77,11 @@ export default function CommentButton(props: Props) {
       }
     >
       <div ref={popoverTargetRef} className={s.commentButtonDiv}>
-        <Button isDisabled={props.disabled} icon={<WechatLineIcon />}>
+        <Button
+          isDisabled={props.disabled}
+          icon={<WechatLineIcon />}
+          requiredPermissions={requiredPermissions}
+        >
           Comment
         </Button>
       </div>

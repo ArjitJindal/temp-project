@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { AlertStatus, CaseStatus, FileInfo } from '@/apis';
+import { AlertStatus, CaseStatus, FileInfo, Permission } from '@/apis';
 import Button, { ButtonSize } from '@/components/library/Button';
 import { CaseClosingReasons } from '@/apis/models/CaseClosingReasons';
 import { neverReturn } from '@/utils/lang';
@@ -67,6 +67,8 @@ export default function StatusChangeButton(props: Props) {
   const [isModalVisible, setModalVisible] = useState(false);
   const overridenStatus = status ? statusTransitions?.[status] : null;
   const newStatus = overridenStatus?.status ?? getNextStatus(status);
+  const requiredPermissions: Permission[] = ['case-management:case-overview:write'];
+  if (status === 'CLOSED') requiredPermissions.push('case-management:case-reopen:write');
   return (
     <>
       {ids.length > 0 && (
@@ -80,6 +82,7 @@ export default function StatusChangeButton(props: Props) {
           size={buttonProps.size}
           style={{ width: 'max-content' }}
           testName="update-status-button"
+          requiredPermissions={requiredPermissions}
         >
           {overridenStatus?.actionLabel ?? statusToOperationName(newStatus)}
         </Button>

@@ -42,6 +42,7 @@ const RolesLayout = ({ roles, onChange }: { roles: AccountRole[]; onChange: () =
             size="MEDIUM"
             style={{ width: '100%', position: 'relative', marginBottom: '1rem' }}
             onClick={() => setIsCreateRoleForm(true)}
+            requiredPermissions={['settings:organisation:write']}
           >
             + Create role
           </Button>

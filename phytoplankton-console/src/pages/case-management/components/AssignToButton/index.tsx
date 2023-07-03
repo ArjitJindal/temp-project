@@ -37,7 +37,12 @@ export default function AssignToButton(props: Props) {
 
   return (
     <AntDropdown overlay={menu} trigger={['click']}>
-      <Button type="TETRIARY" onClick={() => {}} testName="update-assignment-button">
+      <Button
+        type="TETRIARY"
+        onClick={() => {}}
+        testName="update-assignment-button"
+        requiredPermissions={['case-management:case-overview:write']}
+      >
         Assign to
       </Button>
     </AntDropdown>

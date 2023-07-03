@@ -92,6 +92,7 @@ export function SanctionsSearchTable(props: Props) {
               onClick={() => {
                 setSearchParams(params);
               }}
+              requiredPermissions={['sanctions:search:read']}
             >
               Search
             </Button>

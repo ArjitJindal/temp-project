@@ -58,11 +58,16 @@ export default function RiskQualification(props: Props) {
         <Button
           type="PRIMARY"
           onClick={handleSave}
-          isDisabled={!riskValues.length || !hasRiskLevelPermission}
+          isDisabled={!riskValues.length}
+          requiredPermissions={['risk-scoring:risk-levels:write']}
         >
           Save
         </Button>
-        <Button onClick={handleCancel} isDisabled={!riskValues.length || !hasRiskLevelPermission}>
+        <Button
+          onClick={handleCancel}
+          isDisabled={!riskValues.length}
+          requiredPermissions={['risk-scoring:risk-levels:write']}
+        >
           Cancel
         </Button>
       </div>

@@ -6,7 +6,7 @@ import CasesStatusChangeButton from '../components/CasesStatusChangeButton';
 import AlertTable from '../AlertTable';
 import { Account, Case, CaseUpdateRequest } from '@/apis';
 import { QueryResult } from '@/utils/queries/types';
-import { useAuth0User, useHasPermissions, useUsers } from '@/utils/user-utils';
+import { useAuth0User, useUsers } from '@/utils/user-utils';
 import {
   AllParams,
   DerivedColumn,
@@ -61,8 +61,6 @@ export default function CaseTable(props: Props) {
   const user = useAuth0User();
   const isPulseEnabled = useFeatureEnabled('PULSE');
   const [selectedCases, setSelectedCases] = useState<string[]>([]);
-
-  const isReopenEnabled = useHasPermissions(['case-management:case-reopen:write']);
 
   const reloadTable = useCallback(() => {
     tableRef.current?.reload();
@@ -342,7 +340,6 @@ export default function CaseTable(props: Props) {
             caseIds={selectedIds}
             onSaved={reloadTable}
             caseStatus={params.caseStatus}
-            isDisabled={params.caseStatus === 'CLOSED' && !isReopenEnabled}
           />
         ),
         ({ selectedIds, selectedItems }) => {
