@@ -110,6 +110,7 @@ export default function RoleForm({ role, onChange }: { role?: AccountRole; onCha
       onSubmit={onSubmit}
       initialValues={{ roleName: role?.name as string, description: role?.description as string }}
       fieldValidators={fieldValidators}
+      alwaysShowErrors={true}
     >
       {!isEditing && (
         <>
