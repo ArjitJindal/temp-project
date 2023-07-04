@@ -28,6 +28,13 @@ let cachedUsers: Promise<Account[]> | null = null;
 
 export const NAMESPACE = 'https://flagright.com';
 
+export function clearAuth0LocalStorage() {
+  const auth0Key = Object.keys(window.localStorage).find((key) => key.includes('@auth0'));
+  if (auth0Key) {
+    window.localStorage.removeItem(auth0Key);
+  }
+}
+
 export function useAuth0User(): FlagrightAuth0User {
   const context = useContext(Context);
   if (context == null) {

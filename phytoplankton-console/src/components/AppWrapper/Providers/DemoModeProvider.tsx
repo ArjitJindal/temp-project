@@ -1,7 +1,7 @@
 import React, { useContext, useMemo, useState } from 'react';
 import { useMutation } from '@tanstack/react-query';
 import { message } from '@/components/library/Message';
-import { useAuth0User } from '@/utils/user-utils';
+import { clearAuth0LocalStorage, useAuth0User } from '@/utils/user-utils';
 import { useFeatureEnabled } from '@/components/AppWrapper/Providers/SettingsProvider';
 import { useApi } from '@/api';
 import { AsyncResource, failed, loading, success } from '@/utils/asyncResource';
@@ -45,6 +45,7 @@ export default function DemoModeProvider(props: { children: React.ReactNode }) {
     {
       onSuccess: (data, variables) => {
         setDemoMode(success(variables.demoMode));
+        clearAuth0LocalStorage();
         // todo: instead of reloading page we need to refresh auth0 token and invalidate data in react-query
         window.location.reload();
       },

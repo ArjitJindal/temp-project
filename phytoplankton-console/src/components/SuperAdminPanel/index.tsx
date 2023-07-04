@@ -11,7 +11,7 @@ import { message } from '@/components/library/Message';
 import { useApi } from '@/api';
 import Button from '@/components/library/Button';
 import { Feature, TenantSettings } from '@/apis';
-import { useAuth0User } from '@/utils/user-utils';
+import { clearAuth0LocalStorage, useAuth0User } from '@/utils/user-utils';
 import { useFeatures, useSettings } from '@/components/AppWrapper/Providers/SettingsProvider';
 import { FEATURES } from '@/apis/models-custom/Feature';
 
@@ -69,10 +69,7 @@ export default function SuperAdminPanel() {
         },
       });
       await unsetDemoMode;
-      const auth0Key = Object.keys(window.localStorage).find((key) => key.includes('@auth0'));
-      if (auth0Key) {
-        window.localStorage.removeItem(auth0Key);
-      }
+      clearAuth0LocalStorage();
       window.location.reload();
     } catch (e) {
       message.fatal('Failed to switch tenant', e);
