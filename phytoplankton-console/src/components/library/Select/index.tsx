@@ -82,7 +82,7 @@ export default function Select<Value extends Comparable = string>(props: Props<V
       className={cn(s.root, isError && s.isError, s[`size-${size}`], className)}
       style={props.style}
     >
-      <AntSelect {...antSelectProps}>
+      <AntSelect {...antSelectProps} allowClear>
         {options?.map((option) => (
           <AntSelect.Option
             key={key(option.value)}
