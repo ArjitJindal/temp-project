@@ -54,7 +54,7 @@
     "test:watch": "npm run test -- --watch",
     "format": "prettier --write . && npm run openapi:format",
     "format:check": "prettier --check .",
-    "lint": "eslint .",
+    "lint": "NODE_OPTIONS='--max-old-space-size=8192' eslint .",
     "tsc": "NODE_OPTIONS='--max-old-space-size=8192' tsc --noEmit",
     "tsc:watch": "NODE_OPTIONS='--max-old-space-size=8192' tsc --noEmit --watch",
     "lint:fix": "eslint --fix .",

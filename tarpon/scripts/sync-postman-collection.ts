@@ -31,4 +31,4 @@ const getPostmanCollection = async () => {
   )
 }
 
-getPostmanCollection()
+void getPostmanCollection()

@@ -23,6 +23,11 @@
         "ignore": ["aws-lambda", "@/*", "@cdk/*"]
       }
     ],
-    "import/order": "error"
+    "import/order": "error",
+    "@typescript-eslint/no-floating-promises": ["error", {"ignoreIIFE": true}]
+  },
+  "parserOptions": {
+    "parser": "@typescript-eslint/parser",
+    "project": "./tsconfig.json"
   }
 }

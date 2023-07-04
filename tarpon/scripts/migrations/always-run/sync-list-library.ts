@@ -73,5 +73,5 @@ export async function syncListLibrary() {
 }
 
 if (require.main === module) {
-  syncListLibrary()
+  void syncListLibrary()
 }

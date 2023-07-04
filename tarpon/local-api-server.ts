@@ -54,7 +54,7 @@ type ServerInfo = {
   port: number
 }
 
-async function createServer(serverInfo: ServerInfo) {
+function createServer(serverInfo: ServerInfo) {
   const app = express()
   const { openapiPath } = serverInfo
   const apiDefinition = yaml.load(fs.readFileSync(openapiPath, 'utf8')) as any

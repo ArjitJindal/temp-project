@@ -17,5 +17,5 @@ export async function syncMongoDbIndices() {
 }
 
 if (require.main === module) {
-  syncMongoDbIndices()
+  void syncMongoDbIndices()
 }

@@ -22,5 +22,5 @@ export async function syncRulesLibrary() {
 }
 
 if (require.main === module) {
-  syncRulesLibrary()
+  void syncRulesLibrary()
 }

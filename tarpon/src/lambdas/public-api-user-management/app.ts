@@ -19,14 +19,14 @@ import { getMongoDbClient } from '@/utils/mongoDBUtils'
 import { UserManagementService } from '@/services/users'
 import { pickKnownEntityFields } from '@/utils/object'
 
-const handleRiskLevelParam = (
+const handleRiskLevelParam = async (
   tenantId: string,
   dynamoDb: DynamoDBDocumentClient,
   userPayload: User | Business,
   mongoDb: MongoClient
 ) => {
   const riskRepository = new RiskRepository(tenantId, { dynamoDb, mongoDb })
-  riskRepository.createOrUpdateManualDRSRiskItem(
+  await riskRepository.createOrUpdateManualDRSRiskItem(
     userPayload.userId,
     userPayload.riskLevel!
   )

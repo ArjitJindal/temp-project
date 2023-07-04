@@ -34,7 +34,7 @@ const createCardPaymentDetails = (sendingCountry: CountryCode, name: any) => {
   }
 }
 
-const createBusinessUsers = (
+const createBusinessUsers = async (
   dynamoDb: DynamoDBDocumentClient,
   tenantId: string,
   numberOfUsers: number,
@@ -56,7 +56,7 @@ const createBusinessUsers = (
         Math.floor(Date.now() / 1000) - getRandomIntInclusive(1, 10000),
     }
 
-    userRepository.saveBusinessUser(userObject)
+    await userRepository.saveBusinessUser(userObject)
     logger.info(JSON.stringify(userObject))
   }
   return userIDs
@@ -124,7 +124,7 @@ export const createAndUploadTestData = async (
   const countryTwo = countries[countryCurrencyIndexTwo]
   const currencyTwo = currencies[countryCurrencyIndexTwo]
 
-  const userIds: string[] = createBusinessUsers(
+  const userIds: string[] = await createBusinessUsers(
     dynamoDb,
     tenantId,
     numberOfUsers,

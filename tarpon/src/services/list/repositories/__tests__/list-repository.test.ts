@@ -267,11 +267,15 @@ describe('Verify list repository', () => {
     // Trying to work with non existed list
     {
       const key = 'aaa'
-      expect(
+      await expect(
         listRepo.setListItem('not_existed', { key })
       ).rejects.not.toBeNull()
-      expect(listRepo.getListItem('not_existed', key)).rejects.not.toBeNull()
-      expect(listRepo.deleteListItem('not_existed', key)).rejects.not.toBeNull()
+      await expect(
+        listRepo.getListItem('not_existed', key)
+      ).rejects.not.toBeNull()
+      await expect(
+        listRepo.deleteListItem('not_existed', key)
+      ).rejects.not.toBeNull()
     }
 
     // Trying to work with non existed key

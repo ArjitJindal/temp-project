@@ -279,7 +279,7 @@ async function deviceDataMetricsHandler(
   const metricsRepository = new MetricsRepository(tenantId, {
     mongoDb: mongoDb,
   })
-  metricsRepository.saveMetricMongo(deviceMetrics)
+  await metricsRepository.saveMetricMongo(deviceMetrics)
 }
 
 async function transactionEventHandler(

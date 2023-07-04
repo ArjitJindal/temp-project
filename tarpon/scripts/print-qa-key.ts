@@ -14,4 +14,4 @@ async function main() {
   console.log(key.value)
 }
 
-main()
+void main()
