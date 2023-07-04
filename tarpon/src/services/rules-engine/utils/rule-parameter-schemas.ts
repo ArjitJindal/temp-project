@@ -370,19 +370,24 @@ export const USER_TYPE_OPTIONAL_SCHEMA = (options?: SchemaOptions) =>
     nullable: true,
   } as const)
 
-export const PAYMENT_CHANNEL_SCHEMA = (options?: SchemaOptions) =>
+export const PAYMENT_CHANNELS_SCHEMA = (options?: SchemaOptions) =>
   ({
-    type: 'string',
+    type: 'array',
     ...uiSchema(options?.uiSchema, {
-      subtype: 'PAYMENT_CHANNEL',
+      subtype: 'PAYMENT_CHANNELS',
     }),
-    title: options?.title || 'Payment channel',
+    title: options?.title || 'Payment channels',
     description: options?.description,
+    items: {
+      type: 'string',
+      enum: [],
+    },
+    uniqueItems: true,
   } as const)
 
-export const PAYMENT_CHANNEL_OPTIONAL_SCHEMA = (options?: SchemaOptions) =>
+export const PAYMENT_CHANNELs_OPTIONAL_SCHEMA = (options?: SchemaOptions) =>
   ({
-    ...PAYMENT_CHANNEL_SCHEMA(options),
+    ...PAYMENT_CHANNELS_SCHEMA(options),
     nullable: true,
   } as const)
 

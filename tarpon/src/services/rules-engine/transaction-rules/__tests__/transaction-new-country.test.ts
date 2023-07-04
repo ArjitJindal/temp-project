@@ -341,9 +341,11 @@ ruleVariantsTest(false, () => {
         ruleImplementationName: 'transaction-new-country',
         defaultParameters: {
           initialTransactions: 2,
-          paymentChannel: 'ATM',
         } as TransactionNewCountryRuleParameters,
         defaultAction: 'FLAG',
+        filters: {
+          paymentChannels: ['ATM'],
+        },
       },
     ])
 

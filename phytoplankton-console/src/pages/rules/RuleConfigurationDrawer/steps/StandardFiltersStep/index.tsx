@@ -30,6 +30,7 @@ interface Props {
 const requiredPaymentMethodMap: Record<string, PaymentMethod> = {
   walletType: 'WALLET',
   transactionCardIssuedCountries: 'CARD',
+  paymentChannels: 'CARD',
 };
 
 export default function StandardFiltersStep(props: Props) {

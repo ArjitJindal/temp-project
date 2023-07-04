@@ -8,7 +8,6 @@ import {
   TimeWindow,
   TIME_WINDOW_SCHEMA,
   TRANSACTIONS_THRESHOLD_SCHEMA,
-  PAYMENT_CHANNEL_OPTIONAL_SCHEMA,
   MATCH_PAYMENT_METHOD_DETAILS_OPTIONAL_SCHEMA,
 } from '../utils/rule-parameter-schemas'
 import { RuleHitResultItem } from '../rule'
@@ -19,7 +18,6 @@ import {
 import { getTimestampRange } from '../utils/time-utils'
 import { getReceiverKeyId, getSenderKeyId } from '../utils'
 import { TransactionAggregationRule } from './aggregation-rule'
-import { CardDetails } from '@/@types/openapi-public/CardDetails'
 import { mergeObjects } from '@/utils/object'
 
 type AggregationData = {
@@ -36,7 +34,6 @@ export type TransactionsVelocityRuleParameters = {
 
   // Optional parameters
   onlyCheckKnownUsers?: boolean
-  paymentChannel?: string
   originMatchPaymentMethodDetails?: boolean
   destinationMatchPaymentMethodDetails?: boolean
 }
@@ -71,7 +68,6 @@ export default class TransactionsVelocityRule extends TransactionAggregationRule
           title: 'Only check transactions from known users (with user ID)',
           nullable: true,
         },
-        paymentChannel: PAYMENT_CHANNEL_OPTIONAL_SCHEMA(),
       },
       required: ['transactionsLimit', 'timeWindow'],
     }
@@ -90,7 +86,6 @@ export default class TransactionsVelocityRule extends TransactionAggregationRule
     const {
       transactionsLimit,
       onlyCheckKnownUsers,
-      paymentChannel,
       checkSender,
       checkReceiver,
     } = this.parameters
@@ -98,14 +93,6 @@ export default class TransactionsVelocityRule extends TransactionAggregationRule
     if (direction === 'origin' && checkSender === 'none') {
       return
     } else if (direction === 'destination' && checkReceiver === 'none') {
-      return
-    }
-
-    if (
-      paymentChannel &&
-      (this.transaction.originPaymentDetails as CardDetails).paymentChannel !==
-        paymentChannel
-    ) {
       return
     }
 

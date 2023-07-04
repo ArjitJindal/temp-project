@@ -227,6 +227,14 @@ export async function addRuleFilters(
   )
 }
 
+export async function addRuleFiltersForTenant(
+  tenantId: string,
+  ruleIds: string[] | undefined,
+  filters: UserFilters & TransactionFilters & TransactionHistoricalFilters
+) {
+  await addRuleFiltersPrivate(ruleIds, filters, tenantId)
+}
+
 async function addRuleFiltersPrivate(
   ruleIds: string[] | undefined, //  if undefined, run for all rules
   filters: UserFilters & TransactionFilters & TransactionHistoricalFilters,

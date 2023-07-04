@@ -8,7 +8,7 @@ import { TRANSACTIONS_UNIQUES } from '@/utils/queries/keys';
 import { getOr } from '@/utils/asyncResource';
 import { QueryResult } from '@/utils/queries/types';
 
-interface Props extends InputProps<string> {
+interface Props extends InputProps<string[]> {
   uiSchema?: UiSchemaPaymentChannel;
 }
 
@@ -17,11 +17,12 @@ export default function PaymentChannelInput(props: Props) {
   const api = useApi();
 
   const result: QueryResult<Option<string>[]> = useQuery(
-    TRANSACTIONS_UNIQUES('PAYMENT_CHANNEL'),
+    TRANSACTIONS_UNIQUES('PAYMENT_CHANNELS'),
     async () => {
       const uniques = await api.getTransactionsUniques({
-        field: 'PAYMENT_CHANNEL',
+        field: 'PAYMENT_CHANNELS',
       });
+
       return uniques.map((value) => {
         if (value) {
           return { value: value, label: value };
@@ -35,6 +36,7 @@ export default function PaymentChannelInput(props: Props) {
       options={getOr(result.data, [])}
       placeholder="Select payment channel"
       showSearch={true}
+      mode="MULTIPLE"
       {...rest}
     />
   );

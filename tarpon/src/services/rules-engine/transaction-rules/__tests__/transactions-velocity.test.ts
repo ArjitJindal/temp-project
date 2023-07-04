@@ -687,10 +687,12 @@ ruleVariantsTest(true, () => {
             units: 5,
             granularity: 'hour',
           },
-          paymentChannel: 'ATM',
           checkSender: 'all',
           checkReceiver: 'all',
         } as TransactionsVelocityRuleParameters,
+        filters: {
+          paymentChannels: ['ATM'],
+        },
       },
     ])
 

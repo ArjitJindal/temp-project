@@ -53,7 +53,7 @@ export default function PropertyInput(props: Props) {
   if (uiSchema['ui:subtype'] === 'CURRENCY') {
     return <CurrencyInput {...props} uiSchema={uiSchema} />;
   }
-  if (uiSchema['ui:subtype'] === 'PAYMENT_CHANNEL') {
+  if (uiSchema['ui:subtype'] === 'PAYMENT_CHANNELS') {
     return <PaymentChannelInput {...props} uiSchema={uiSchema} />;
   }
 

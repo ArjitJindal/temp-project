@@ -590,7 +590,7 @@ export class MongoDbTransactionRepository
       case 'TRANSACTION_STATE':
         fieldPath = 'transactionState'
         break
-      case 'PAYMENT_CHANNEL':
+      case 'PAYMENT_CHANNELS':
         fieldPath = `${paymentDetailsPath}.paymentChannel`
         filterConditions.push({
           [`${paymentDetailsPath}.method`]: 'CARD',

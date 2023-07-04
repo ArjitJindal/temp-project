@@ -32,7 +32,7 @@ export interface UiSchemaTransactionAmountThresholds extends UiSchemaCommon {
 }
 
 export interface UiSchemaPaymentChannel extends UiSchemaCommon {
-  'ui:subtype': 'PAYMENT_CHANNEL';
+  'ui:subtype': 'PAYMENT_CHANNELS';
 }
 
 export interface UiSchemaUserType extends UiSchemaCommon {

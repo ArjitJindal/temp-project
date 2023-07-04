@@ -6306,7 +6306,7 @@ components:
         - BANK_SWIFT_CODE
         - UPI_IDENTIFYING_NUMBER
         - IP_ADDRESS
-        - PAYMENT_CHANNEL
+        - PAYMENT_CHANNELS
         - CURRENCY
         - COUNTRY
     UsersUniquesField:

@@ -98,6 +98,10 @@ import {
   TransactionProductTypeRuleFilter,
   TransactionProductTypeRuleFilterParameter,
 } from './transaction-filters/transaction-product-type'
+import {
+  PaymentChannelsRuleFilter,
+  PaymentChannelsRuleFilterParameter,
+} from './transaction-filters/payment-channels'
 
 export type TransactionFilters = PaymentMethodRuleFilterParameter &
   TransactionTypeRuleFilterParameter &
@@ -107,7 +111,8 @@ export type TransactionFilters = PaymentMethodRuleFilterParameter &
   TransactionAmountRuleFilterParameter &
   TransactionWalletTypeRuleFilterParameter &
   TransactionProductTypeRuleFilterParameter &
-  TransactionCardIssuedCountryFilterParameter
+  TransactionCardIssuedCountryFilterParameter &
+  PaymentChannelsRuleFilterParameter
 
 export type TransactionHistoricalFilters =
   TransactionStateHistoricalRuleFilterParameter &
@@ -141,6 +146,7 @@ const _TRANSACTION_FILTERS = [
   TransactionAmountRuleFilter,
   CheckDirectionRuleFilter,
   TransactionProductTypeRuleFilter,
+  PaymentChannelsRuleFilter,
 ]
 
 const _TRANSACTION_HISTORICAL_FILTERS = [

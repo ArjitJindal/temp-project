@@ -110,11 +110,6 @@ describe('Public Management API - Rule', () => {
               title: 'Transactions amount threshold',
               required: [],
             },
-            paymentChannel: {
-              type: 'string',
-              title: 'Payment channel',
-              nullable: true,
-            },
           },
           required: ['transactionAmountThreshold'],
         },
