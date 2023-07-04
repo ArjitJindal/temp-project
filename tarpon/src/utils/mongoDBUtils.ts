@@ -715,7 +715,7 @@ export const createMongoDBCollections = async (
       // ignore already exists
     }
     const webhookDeliveryCollection = db.collection<WebhookDeliveryAttempt>(
-      WEBHOOK_COLLECTION(tenantId)
+      WEBHOOK_DELIVERY_COLLECTION(tenantId)
     )
     const webhookDeliveryIndexes: Document[] = [
       { webhookId: 1, requestStartedAt: -1 },
@@ -815,38 +815,41 @@ export async function syncIndexes<T>(
   const currentIndexes = await collection.indexes()
 
   // Remove orphaned indexes
-  currentIndexes.map(async (current) => {
-    // Dont drop ID index
-    if (current.name === '_id_') {
-      return
-    }
+  await Promise.all(
+    currentIndexes.map(async (current) => {
+      // Dont drop ID index
+      if (current.name === '_id_') {
+        return
+      }
 
-    // If index is not desired, delete it
-    if (!indexes.find((desired) => _.isEqual(desired, current.key))) {
-      logger.info(`Dropping ${current.name}...`)
-      await exponentialRetry(
-        async () => await collection.dropIndex(current.name)
-      )
-    }
-  })
+      // If index is not desired, delete it
+      if (!indexes.find((desired) => _.isEqual(desired, current.key))) {
+        logger.info(`Dropping ${current.name}...`)
+        await exponentialRetry(
+          async () => await collection.dropIndex(current.name)
+        )
+      }
+    })
+  )
 
-  const toCreate = indexes.filter(
+  const indexesToCreate = indexes.filter(
     (desired) =>
       !currentIndexes.find((current) => _.isEqual(desired, current.key))
   )
 
-  if (toCreate.length > 0) {
-    logger.info(`Creating indexes...`)
-    await exponentialRetry(
-      async () =>
-        await collection.createIndexes(
-          toCreate.map((key) => ({ key })),
-          options
-        )
-    )
-  }
-  if (toCreate.length > 64) {
+  if (indexesToCreate.length > 64) {
     throw new Error("Can't create more than 64 indexes")
+  }
+
+  if (indexesToCreate.length > 0) {
+    logger.info(`Creating indexes...`)
+    await Promise.all(
+      indexesToCreate.map((index) =>
+        exponentialRetry(
+          async () => await collection.createIndex(index, options)
+        )
+      )
+    )
   }
 }
 
