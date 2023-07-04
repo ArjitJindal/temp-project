@@ -1,4 +1,5 @@
 import { ManipulateType } from 'dayjs'
+import { isEmpty } from 'lodash'
 import dayjs from '@/utils/dayjs'
 
 export function getTimeLabels(
@@ -8,9 +9,13 @@ export function getTimeLabels(
   granularity: 'HOUR' | 'DAY' | 'MONTH'
 ) {
   const timeLabels: string[] = []
+  const { start, end } = getAffectedInterval(
+    { startTimestamp, endTimestamp },
+    granularity
+  )
   for (
-    let time = dayjs(getAffectedInterval(startTimestamp, granularity).start);
-    time < dayjs(getAffectedInterval(endTimestamp, granularity).end);
+    let time = dayjs(start);
+    time < dayjs(end);
     time = dayjs(time).add(1, granularity.toLowerCase() as ManipulateType)
   ) {
     timeLabels.push(time.format(formatType))
@@ -20,19 +25,48 @@ export function getTimeLabels(
 }
 
 export function getAffectedInterval(
-  timestamp: number,
+  timeRange: {
+    startTimestamp?: number
+    endTimestamp?: number
+  },
   granularity: 'HOUR' | 'DAY' | 'MONTH'
 ) {
-  const time = dayjs(timestamp)
+  if (isEmpty(timeRange)) {
+    return { start: 0, end: Number.MAX_SAFE_INTEGER }
+  }
+
+  const { startTimestamp, endTimestamp } = timeRange
+  const startTime = dayjs(startTimestamp)
+  const endTime = endTimestamp ? dayjs(endTimestamp) : null
   if (granularity === 'HOUR') {
-    const newTime = time.minute(0).second(0).millisecond(0)
-    return { start: newTime.valueOf(), end: newTime.add(1, 'hour').valueOf() }
+    const newStart = startTime.minute(0).second(0).millisecond(0)
+    const newEnd = endTime
+      ? endTime.minute(0).second(0).millisecond(0).add(1, 'hour')
+      : newStart.add(1, 'hour')
+    return { start: newStart.valueOf(), end: newEnd.valueOf() }
   } else if (granularity === 'DAY') {
-    const newTime = time.hour(0).minute(0).second(0).millisecond(0)
-    return { start: newTime.valueOf(), end: newTime.add(1, 'day').valueOf() }
+    const newStart = startTime.hour(0).minute(0).second(0).millisecond(0)
+    const newEnd = endTime
+      ? endTime.hour(0).minute(0).second(0).millisecond(0).add(1, 'day')
+      : newStart.add(1, 'day')
+    return { start: newStart.valueOf(), end: newEnd.valueOf() }
   } else if (granularity === 'MONTH') {
-    const newTime = time.date(1).hour(0).minute(0).second(0).millisecond(0)
-    return { start: newTime.valueOf(), end: newTime.add(1, 'month').valueOf() }
+    const newStart = startTime
+      .date(1)
+      .hour(0)
+      .minute(0)
+      .second(0)
+      .millisecond(0)
+    const newEnd = endTime
+      ? endTime
+          .date(1)
+          .hour(0)
+          .minute(0)
+          .second(0)
+          .millisecond(0)
+          .add(1, 'month')
+      : newStart.add(1, 'month')
+    return { start: newStart.valueOf(), end: newEnd.valueOf() }
   }
   throw new Error('Unhandled granularity')
 }

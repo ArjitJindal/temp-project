@@ -412,6 +412,7 @@ export const createMongoDBCollections = async (
       'executedRules.ruleId',
       'executedRules.ruleInstanceId',
       'hitRules.ruleAction',
+      'hitRules.ruleInstanceId',
       'originAmountDetails.country',
       'originAmountDetails.transactionAmount',
       'originAmountDetails.transactionCurrency',

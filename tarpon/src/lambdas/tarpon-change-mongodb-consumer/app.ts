@@ -49,7 +49,9 @@ async function handleNewCases(
   // Update dashboard stats
   await Promise.all(
     cases.map((c) =>
-      dashboardStatsRepository.refreshCaseStats(c.createdTimestamp)
+      dashboardStatsRepository.refreshCaseStats({
+        startTimestamp: c.createdTimestamp,
+      })
     )
   )
 
@@ -145,7 +147,9 @@ async function transactionHandler(
     logger.info(`DRS Updated in Cases`)
   }
 
-  await dashboardStatsRepository.refreshTransactionStats(transaction.timestamp)
+  await dashboardStatsRepository.refreshTransactionStats({
+    startTimestamp: transaction.timestamp,
+  })
   await handleNewCases(tenantId, timestampBeforeCasesCreation, cases)
 }
 

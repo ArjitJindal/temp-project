@@ -38,6 +38,11 @@ import { CaseStatus } from '@/@types/openapi-internal/CaseStatus'
 import { AlertStatus } from '@/@types/openapi-internal/AlertStatus'
 import { InternalUser } from '@/@types/openapi-internal/InternalUser'
 
+type TimeRange = {
+  startTimestamp?: number
+  endTimestamp?: number
+}
+
 export type GranularityValuesType = 'HOUR' | 'MONTH' | 'DAY'
 const granularityValues = { HOUR: 'HOUR', MONTH: 'MONTH', DAY: 'DAY' }
 
@@ -92,7 +97,7 @@ export class DashboardStatsRepository {
 
   public async recalculateHitsByUser(
     direction: 'ORIGIN' | 'DESTINATION',
-    timestamp?: number
+    timeRange?: TimeRange
   ) {
     const db = this.mongoDb.db()
     const casesCollection = db.collection<Case>(CASES_COLLECTION(this.tenantId))
@@ -114,8 +119,8 @@ export class DashboardStatsRepository {
     )
 
     let timestampMatch = undefined
-    if (timestamp) {
-      const { start, end } = getAffectedInterval(timestamp, 'HOUR')
+    if (timeRange) {
+      const { start, end } = getAffectedInterval(timeRange, 'HOUR')
       timestampMatch = {
         createdTimestamp: {
           $gte: start,
@@ -183,15 +188,15 @@ export class DashboardStatsRepository {
     await casesCollection.aggregate(pipeline).next()
   }
 
-  public async recalculateRuleHitStats(timestamp?: number) {
+  public async recalculateRuleHitStats(timeRange?: TimeRange) {
     const db = this.mongoDb.db()
     const casesCollection = db.collection<Case>(CASES_COLLECTION(this.tenantId))
     const aggregationCollection = DASHBOARD_RULE_HIT_STATS_COLLECTION_HOURLY(
       this.tenantId
     )
     let timestampMatch = undefined
-    if (timestamp) {
-      const { start, end } = getAffectedInterval(timestamp, 'HOUR')
+    if (timeRange) {
+      const { start, end } = getAffectedInterval(timeRange, 'HOUR')
       timestampMatch = {
         createdTimestamp: {
           $gte: start,
@@ -259,23 +264,18 @@ export class DashboardStatsRepository {
   }
 
   private async recalculateTeamStats(
-    timestamps: { start?: number; end?: number; timestamp?: number },
+    timeRange?: TimeRange,
     scope: Array<'CASES' | 'ALERTS'> = ['CASES', 'ALERTS']
   ) {
     const db = this.mongoDb.db()
     const casesCollection = db.collection<Case>(CASES_COLLECTION(this.tenantId))
 
     let timestampCondition: { $gte: number; $lte: number } | null = null
-    if (timestamps.timestamp) {
-      const { start, end } = getAffectedInterval(timestamps.timestamp, 'HOUR')
+    if (timeRange) {
+      const { start, end } = getAffectedInterval(timeRange, 'HOUR')
       timestampCondition = {
         $gte: start,
         $lte: end,
-      }
-    } else if (timestamps.start && timestamps.end) {
-      timestampCondition = {
-        $gte: dayjs(timestamps.start).startOf('hour').valueOf(),
-        $lte: dayjs(timestamps.end).endOf('hour').valueOf(),
       }
     }
 
@@ -650,7 +650,10 @@ export class DashboardStatsRepository {
     logger.info(`Aggregation done`)
   }
 
-  public async recalculateTransactionsVolumeStats(db: Db, timestamp?: number) {
+  public async recalculateTransactionsVolumeStats(
+    db: Db,
+    timeRange?: TimeRange
+  ) {
     const transactionsCollection = db.collection<InternalTransaction>(
       TRANSACTIONS_COLLECTION(this.tenantId)
     )
@@ -720,8 +723,8 @@ export class DashboardStatsRepository {
       const ruleAction = TRANSACTION_STATE_KEY_TO_RULE_ACTION.get(key)
       const ruleActionMatch = ruleAction && { hitRulesResult: ruleAction }
       let timestampMatch = undefined
-      if (timestamp) {
-        const { start, end } = getAffectedInterval(timestamp, 'HOUR')
+      if (timeRange) {
+        const { start, end } = getAffectedInterval(timeRange, 'HOUR')
         timestampMatch = {
           timestamp: {
             $gte: start,
@@ -768,11 +771,11 @@ export class DashboardStatsRepository {
 
     const getDerivedAggregationPipeline = (
       granularity: 'DAY' | 'MONTH',
-      timestamp?: number
+      timeRange?: TimeRange
     ) => {
       let timestampMatch = undefined
-      if (timestamp) {
-        const { start, end } = getAffectedInterval(timestamp, granularity)
+      if (timeRange) {
+        const { start, end } = getAffectedInterval(timeRange, granularity)
         const format =
           granularity === 'DAY' ? HOUR_DATE_FORMAT_JS : DAY_DATE_FORMAT_JS
         timestampMatch = {
@@ -825,7 +828,7 @@ export class DashboardStatsRepository {
       .collection<DashboardStatsTransactionsCountData>(
         aggregatedHourlyCollectionName
       )
-      .aggregate(getDerivedAggregationPipeline('DAY', timestamp))
+      .aggregate(getDerivedAggregationPipeline('DAY', timeRange))
       .next()
 
     // Monthly stats
@@ -833,7 +836,7 @@ export class DashboardStatsRepository {
       .collection<DashboardStatsTransactionsCountData>(
         aggregatedDailyCollectionName
       )
-      .aggregate(getDerivedAggregationPipeline('MONTH', timestamp))
+      .aggregate(getDerivedAggregationPipeline('MONTH', timeRange))
       .next()
   }
 
@@ -846,20 +849,18 @@ export class DashboardStatsRepository {
     ])
   }
 
-  public async refreshTransactionStats(transactionTimestamp?: number) {
+  public async refreshTransactionStats(timeRange?: TimeRange) {
     const db = this.mongoDb.db()
 
-    await Promise.all([
-      this.recalculateTransactionsVolumeStats(db, transactionTimestamp),
-    ])
+    await Promise.all([this.recalculateTransactionsVolumeStats(db, timeRange)])
   }
 
-  public async refreshCaseStats(caseTimestamp?: number) {
+  public async refreshCaseStats(timeRange?: TimeRange) {
     await Promise.all([
-      this.recalculateRuleHitStats(caseTimestamp),
-      this.recalculateHitsByUser('ORIGIN', caseTimestamp),
-      this.recalculateHitsByUser('DESTINATION', caseTimestamp),
-      this.recalculateTeamStats({ timestamp: caseTimestamp }),
+      this.recalculateRuleHitStats(timeRange),
+      this.recalculateHitsByUser('ORIGIN', timeRange),
+      this.recalculateHitsByUser('DESTINATION', timeRange),
+      this.recalculateTeamStats(timeRange),
     ])
   }
 
@@ -868,10 +869,8 @@ export class DashboardStatsRepository {
     await this.recalculateDRSDistributionStats(db)
   }
 
-  public async refreshTeamStats(
-    timestamps: { start?: number; end?: number } = {}
-  ) {
-    await this.recalculateTeamStats(timestamps)
+  public async refreshTeamStats(timeRange?: TimeRange) {
+    await this.recalculateTeamStats(timeRange)
   }
 
   public async getTransactionCountStats(

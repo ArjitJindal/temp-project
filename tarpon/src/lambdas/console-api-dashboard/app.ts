@@ -205,8 +205,10 @@ export const dashboardStatsHandler = lambdaApi()(
       })
 
       await dashboardStatsRepository.refreshTeamStats({
-        start: startTimestamp ? parseInt(startTimestamp) : 0,
-        end: endTimestamp ? parseInt(endTimestamp) : Number.MAX_SAFE_INTEGER,
+        startTimestamp: startTimestamp ? parseInt(startTimestamp) : 0,
+        endTimestamp: endTimestamp
+          ? parseInt(endTimestamp)
+          : Number.MAX_SAFE_INTEGER,
       })
 
       return dashboardStatsRepository.getTeamStatistics(

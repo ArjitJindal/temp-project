@@ -231,7 +231,9 @@ export class CaseService extends CaseAlertsCommonService {
 
     await Promise.all(
       cases.map((c) =>
-        dashboardStatsRepository.refreshCaseStats(c.createdTimestamp)
+        dashboardStatsRepository.refreshCaseStats({
+          startTimestamp: c.createdTimestamp,
+        })
       )
     )
 

@@ -45,7 +45,9 @@ describe('Verify case stats', () => {
       caseTransactions: transactions,
       caseTransactionsIds: transactions.map((t) => t.transactionId),
     })
-    await statsRepository.recalculateRuleHitStats(createdTimestamp)
+    await statsRepository.recalculateRuleHitStats({
+      startTimestamp: createdTimestamp,
+    })
     const stats = await statsRepository.getRuleHitCountStats(
       dayjs('2022-01-30T11:00:00.000Z').valueOf(),
       dayjs('2022-01-30T13:00:00.000Z').valueOf()
@@ -99,7 +101,7 @@ test(`Multiple cases`, async () => {
     caseTransactions: [transaction],
     caseTransactionsIds: [transaction.transactionId],
   })
-  await statsRepository.recalculateRuleHitStats(timestamp)
+  await statsRepository.recalculateRuleHitStats({ startTimestamp: timestamp })
   const stats = await statsRepository.getRuleHitCountStats(
     dayjs('2022-01-30T00:00:00.000Z').valueOf(),
     dayjs('2022-01-31T00:00:00.000Z').valueOf()
@@ -162,7 +164,7 @@ test(`Multiple cases - opened and closed`, async () => {
     caseTransactions: [transaction],
     caseTransactionsIds: [transaction.transactionId],
   })
-  await statsRepository.recalculateRuleHitStats(timestamp)
+  await statsRepository.recalculateRuleHitStats({ startTimestamp: timestamp })
   const stats = await statsRepository.getRuleHitCountStats(
     dayjs('2022-01-30T00:00:00.000Z').valueOf(),
     dayjs('2022-01-31T00:00:00.000Z').valueOf()

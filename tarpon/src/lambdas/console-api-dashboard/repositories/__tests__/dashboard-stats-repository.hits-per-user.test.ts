@@ -42,8 +42,12 @@ describe('Verify hits-per-user statistics', () => {
         destination: getTestUser({ userId: destinationUserId }),
       },
     })
-    await statsRepository.recalculateHitsByUser('ORIGIN', timestamp)
-    await statsRepository.recalculateHitsByUser('DESTINATION', timestamp)
+    await statsRepository.recalculateHitsByUser('ORIGIN', {
+      startTimestamp: timestamp,
+    })
+    await statsRepository.recalculateHitsByUser('DESTINATION', {
+      startTimestamp: timestamp,
+    })
     {
       const stats = await statsRepository.getHitsByUserStats(
         dayjs('2022-01-30T00:00:00.000Z').valueOf(),
@@ -112,8 +116,12 @@ describe('Verify hits-per-user statistics', () => {
         destination: getTestUser({ userId: destinationUserId }),
       },
     })
-    await statsRepository.recalculateHitsByUser('ORIGIN', timestamp)
-    await statsRepository.recalculateHitsByUser('DESTINATION', timestamp)
+    await statsRepository.recalculateHitsByUser('ORIGIN', {
+      startTimestamp: timestamp,
+    })
+    await statsRepository.recalculateHitsByUser('DESTINATION', {
+      startTimestamp: timestamp,
+    })
     {
       const stats = await statsRepository.getHitsByUserStats(
         dayjs('2022-01-30T00:00:00.000Z').valueOf(),
@@ -185,8 +193,12 @@ describe('Verify hits-per-user statistics', () => {
           destination: getTestUser({ userId: destinationUserId }),
         },
       })
-      await statsRepository.recalculateHitsByUser('ORIGIN', timestamp)
-      await statsRepository.recalculateHitsByUser('DESTINATION', timestamp)
+      await statsRepository.recalculateHitsByUser('ORIGIN', {
+        startTimestamp: timestamp,
+      })
+      await statsRepository.recalculateHitsByUser('DESTINATION', {
+        startTimestamp: timestamp,
+      })
     }
     {
       const stats = await statsRepository.getHitsByUserStats(
@@ -259,8 +271,12 @@ describe('Verify hits-per-user statistics', () => {
           destination: getTestUser({ userId: destinationUserId }),
         },
       })
-      await statsRepository.recalculateHitsByUser('ORIGIN', timestamp)
-      await statsRepository.recalculateHitsByUser('DESTINATION', timestamp)
+      await statsRepository.recalculateHitsByUser('ORIGIN', {
+        startTimestamp: timestamp,
+      })
+      await statsRepository.recalculateHitsByUser('DESTINATION', {
+        startTimestamp: timestamp,
+      })
     }
     {
       const stats = await statsRepository.getHitsByUserStats(
@@ -321,8 +337,12 @@ describe('Verify hits-per-user statistics', () => {
       caseTransactions: [transaction],
       caseTransactionsIds: [transaction.transactionId],
     })
-    await statsRepository.recalculateHitsByUser('ORIGIN', timestamp)
-    await statsRepository.recalculateHitsByUser('DESTINATION', timestamp)
+    await statsRepository.recalculateHitsByUser('ORIGIN', {
+      startTimestamp: timestamp,
+    })
+    await statsRepository.recalculateHitsByUser('DESTINATION', {
+      startTimestamp: timestamp,
+    })
     {
       const stats = await statsRepository.getHitsByUserStats(
         dayjs('2022-01-30T00:00:00.000Z').valueOf(),
@@ -384,8 +404,12 @@ describe('Verify hits-per-user statistics', () => {
         destination: getTestUser({ userId: destinationUserId }),
       },
     })
-    await statsRepository.recalculateHitsByUser('ORIGIN', createdTimestamp)
-    await statsRepository.recalculateHitsByUser('DESTINATION', createdTimestamp)
+    await statsRepository.recalculateHitsByUser('ORIGIN', {
+      startTimestamp: createdTimestamp,
+    })
+    await statsRepository.recalculateHitsByUser('DESTINATION', {
+      startTimestamp: createdTimestamp,
+    })
     {
       const stats = await statsRepository.getHitsByUserStats(
         dayjs('2022-01-30T11:00:00.000Z').valueOf(),

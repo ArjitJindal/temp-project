@@ -182,6 +182,21 @@ export class RuleInstanceRepository {
     runRuleInstanceIds: string[],
     hitRuleInstanceIds: string[]
   ) {
+    await this.updateRuleInstanceStatsCount(
+      runRuleInstanceIds,
+      hitRuleInstanceIds,
+      {
+        runCountStep: 1,
+        hitCountStep: 1,
+      }
+    )
+  }
+
+  public async updateRuleInstanceStatsCount(
+    runRuleInstanceIds: string[],
+    hitRuleInstanceIds: string[],
+    update: { runCountStep: number; hitCountStep: number }
+  ) {
     const hitRuleInstanceIdsSet = new Set(hitRuleInstanceIds)
     await Promise.all(
       runRuleInstanceIds.map((runRuleInstanceId) => {
@@ -190,9 +205,9 @@ export class RuleInstanceRepository {
           Key: DynamoDbKeys.RULE_INSTANCE(this.tenantId, runRuleInstanceId),
           UpdateExpression: `SET runCount = runCount + :runCountInc, hitCount = hitCount + :hitCountInc`,
           ExpressionAttributeValues: {
-            ':runCountInc': 1,
+            ':runCountInc': update.runCountStep,
             ':hitCountInc': hitRuleInstanceIdsSet.has(runRuleInstanceId)
-              ? 1
+              ? update.hitCountStep
               : 0,
           },
           ReturnValues: 'UPDATED_NEW',
