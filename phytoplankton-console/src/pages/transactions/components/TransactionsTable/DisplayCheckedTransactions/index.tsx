@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
 import UserSearchButton from '../../UserSearchButton';
 import s from './styles.module.less';
@@ -26,7 +26,6 @@ type Props = {
 
 const DisplayCheckedTransactions = (props: Props) => {
   const { alert, caseUserId, visible: isModalVisible, setVisible: setIsModalVisible } = props;
-  const [count, setCount] = useState(0);
   const [params, setParams] = useState<TransactionsTableParams>({
     ...DEFAULT_PARAMS_STATE,
     sort: [['timestamp', 'descend']],
@@ -92,8 +91,8 @@ const DisplayCheckedTransactions = (props: Props) => {
     },
   );
 
-  useEffect(() => {
-    if (queryResult.data?.kind === 'SUCCESS') setCount(queryResult.data.value.count);
+  const count = useMemo(() => {
+    return queryResult.data?.kind === 'SUCCESS' ? queryResult.data.value.count : 0;
   }, [queryResult.data]);
 
   return (
