@@ -29,7 +29,7 @@ describe('Escalating and Sending back the cases', () => {
       cy.get('input[data-cy="row-table-checkbox"]', { timeout: 15000 }).eq(0).click();
       cy.caseAlertAction('Send back');
 
-      cy.intercept('POST', '/console/cases').as('case');
+      cy.intercept('PATCH', '/console/cases/statusChange').as('case');
       cy.multiSelect('.ant-modal', 'False positive');
       cy.get('.ant-modal-root .ant-modal-title', { timeout: 8000 }).click();
       cy.get('.ant-modal-root textarea').eq(0).type('This is a test');
