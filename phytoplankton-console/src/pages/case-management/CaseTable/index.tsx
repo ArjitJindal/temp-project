@@ -1,10 +1,11 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import _ from 'lodash';
+import { useMutation } from '@tanstack/react-query';
 import { Link } from 'react-router-dom';
 import { TableSearchParams } from '../types';
 import CasesStatusChangeButton from '../components/CasesStatusChangeButton';
 import AlertTable from '../AlertTable';
-import { Account, Case, CaseUpdateRequest } from '@/apis';
+import { Case, CasesAssignmentsUpdateRequest, CasesReviewAssignmentsUpdateRequest } from '@/apis';
 import { QueryResult } from '@/utils/queries/types';
 import { useAuth0User, useUsers } from '@/utils/user-utils';
 import {
@@ -14,7 +15,11 @@ import {
   TableRefType,
 } from '@/components/library/Table/types';
 import QueryResultsTable from '@/components/common/QueryResultsTable';
-import { useTableData } from '@/pages/case-management/CaseTable/helpers';
+import {
+  useCaseAssignmentUpdateMutation,
+  useCaseReviewAssignmentUpdateMutation,
+  useTableData,
+} from '@/pages/case-management/CaseTable/helpers';
 import { TableItem } from '@/pages/case-management/CaseTable/types';
 import { USER_STATES } from '@/utils/api/users';
 import UserKycStatusTag from '@/components/ui/UserKycStatusTag';
@@ -49,12 +54,11 @@ interface Props {
   params: AllParams<TableSearchParams>;
   queryResult: QueryResult<PaginatedData<Case>>;
   onChangeParams: (newState: AllParams<TableSearchParams>) => void;
-  onUpdateCases: (caseIds: string[], updates: CaseUpdateRequest) => void;
   rules: { value: string; label: string }[];
 }
 
 export default function CaseTable(props: Props) {
-  const { queryResult, params, onUpdateCases, onChangeParams } = props;
+  const { queryResult, params, onChangeParams } = props;
 
   const tableQueryResult = useTableData(queryResult);
   const tableRef = useRef<TableRefType>(null);
@@ -65,6 +69,45 @@ export default function CaseTable(props: Props) {
   const reloadTable = useCallback(() => {
     tableRef.current?.reload();
   }, []);
+
+  const api = useApi();
+
+  const caseReviewAssignmentUpdateMutation = useCaseReviewAssignmentUpdateMutation(tableRef);
+  const caseAssignmentUpdateMutation = useCaseAssignmentUpdateMutation(tableRef);
+
+  const casesAssignmentUpdateMutation = useMutation<unknown, Error, CasesAssignmentsUpdateRequest>(
+    async ({ caseIds, assignments }) =>
+      await api.patchCasesAssignment({ CasesAssignmentsUpdateRequest: { caseIds, assignments } }),
+    {
+      onSuccess: () => {
+        reloadTable();
+        message.success('Assignee updated successfully');
+      },
+      onError: () => {
+        message.fatal('Failed to update bulk assignees');
+      },
+    },
+  );
+
+  const casesReviewAssignmentUpdateMutation = useMutation<
+    unknown,
+    Error,
+    CasesReviewAssignmentsUpdateRequest
+  >(
+    async ({ caseIds, reviewAssignments }) =>
+      await api.patchCasesReviewAssignment({
+        CasesReviewAssignmentsUpdateRequest: { caseIds, reviewAssignments },
+      }),
+    {
+      onSuccess: () => {
+        reloadTable();
+        message.success('Review assignee updated successfully');
+      },
+      onError: () => {
+        message.fatal('Failed to update bulk review assignees');
+      },
+    },
+  );
 
   useEffect(() => {
     reloadTable();
@@ -177,9 +220,24 @@ export default function CaseTable(props: Props) {
                     assigneeUserId,
                     timestamp: Date.now(),
                   }));
-                  onUpdateCases([entity.caseId as string], {
-                    assignments,
-                  });
+
+                  if (!entity.caseId) {
+                    message.fatal('Case ID is missing');
+                    return;
+                  }
+
+                  if (entity.caseStatus === 'ESCALATED') {
+                    caseReviewAssignmentUpdateMutation.mutate({
+                      caseIds: [entity.caseId],
+                      reviewAssignments: assignments,
+                    });
+                    return;
+                  } else {
+                    caseAssignmentUpdateMutation.mutate({
+                      caseIds: [entity.caseId],
+                      assignments,
+                    });
+                  }
                 }}
               />
             );
@@ -270,40 +328,11 @@ export default function CaseTable(props: Props) {
     reloadTable,
     users,
     loadingUsers,
-    onUpdateCases,
     isPulseEnabled,
+    caseAssignmentUpdateMutation,
+    caseReviewAssignmentUpdateMutation,
   ]);
 
-  const api = useApi();
-
-  const handleAssignTo = (account: Account, ids: string[]) => {
-    const hideLoading = message.loading('Assigning cases');
-    api
-      .postCases({
-        CasesUpdateRequest: {
-          caseIds: ids,
-          updates: {
-            assignments: [
-              {
-                assigneeUserId: account.id,
-                assignedByUserId: user.userId,
-                timestamp: Date.now(),
-              },
-            ],
-          },
-        },
-      })
-      .then(() => {
-        message.success('Done!');
-        reloadTable();
-      })
-      .catch(() => {
-        message.success('Unable to reassign cases!');
-      })
-      .finally(() => {
-        hideLoading();
-      });
-  };
   const escalationEnabled = useFeatureEnabled('ESCALATION');
   return (
     <QueryResultsTable<TableItem, TableSearchParams>
@@ -334,7 +363,41 @@ export default function CaseTable(props: Props) {
           : undefined
       }
       selectionActions={[
-        ({ selectedIds }) => <AssignToButton ids={selectedIds} onSelect={handleAssignTo} />,
+        ({ selectedIds, selectedItems }) => {
+          const selectedCaseStatuses = new Set(
+            Object.values(selectedItems).map((item) => item.caseStatus),
+          );
+          return (
+            <AssignToButton
+              onSelect={(account) => {
+                if (selectedCaseStatuses.has('ESCALATED') && selectedCaseStatuses.size === 1) {
+                  casesReviewAssignmentUpdateMutation.mutate({
+                    caseIds: selectedIds,
+                    reviewAssignments: [
+                      {
+                        assignedByUserId: user.userId,
+                        assigneeUserId: account.id,
+                        timestamp: Date.now(),
+                      },
+                    ],
+                  });
+                } else {
+                  casesAssignmentUpdateMutation.mutate({
+                    caseIds: selectedIds,
+                    assignments: [
+                      {
+                        assignedByUserId: user.userId,
+                        assigneeUserId: account.id,
+                        timestamp: Date.now(),
+                      },
+                    ],
+                  });
+                }
+              }}
+            />
+          );
+        },
+
         ({ selectedIds, params }) => (
           <CasesStatusChangeButton
             caseIds={selectedIds}

@@ -6,7 +6,7 @@ import StatusChangeModal, {
   Props as StatusChangeModalProps,
 } from '../StatusChangeModal';
 import { useApi } from '@/api';
-import { AlertStatusUpdateRequest, CaseUpdateRequest } from '@/apis';
+import { AlertStatusUpdateRequest, CaseStatusUpdate } from '@/apis';
 import { message } from '@/components/library/Message';
 import { getErrorMessage } from '@/utils/lang';
 import { useUsers } from '@/utils/user-utils';
@@ -28,6 +28,7 @@ export default function AlertsStatusChangeModal(props: Props) {
 
       const updates: AlertStatusUpdateRequest = {
         alertStatus: props.newStatus,
+        reason: formValues?.reasons ?? [],
       };
 
       if (formValues) {
@@ -35,14 +36,13 @@ export default function AlertsStatusChangeModal(props: Props) {
           formValues.reasons.indexOf(OTHER_REASON) !== -1
             ? formValues.reasonOther ?? ''
             : undefined;
-        updates.reason = formValues.reasons;
         updates.files = formValues.files;
         updates.comment = formValues.comment ?? undefined;
       }
 
       try {
         if (updates.alertStatus === 'ESCALATED' && props.caseId && !isChildCase) {
-          const caseUpdateRequest: CaseUpdateRequest = updates;
+          const caseUpdateRequest: CaseStatusUpdate = updates;
           if (formValues.closeRelatedCase) {
             caseUpdateRequest.caseStatus = 'CLOSED';
           }

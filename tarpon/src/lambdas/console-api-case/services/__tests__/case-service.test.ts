@@ -77,6 +77,39 @@ const TEST_ALERT_3: Alert = {
 
 dynamoDbSetupHook()
 
+jest.mock('@/services/accounts', () => {
+  const originalModule = jest.requireActual<
+    typeof import('@/services/accounts')
+  >('@/services/accounts')
+  return {
+    ...originalModule,
+    __esModule: true,
+    AccountsService: jest.fn().mockImplementation(() => {
+      return {
+        getAllActiveAccounts: jest.fn().mockImplementation(() => {
+          return [TEST_ACCOUNT_1]
+        }),
+      }
+    }),
+  }
+})
+
+jest.mock('@/core/utils/context', () => {
+  const originalModule = jest.requireActual<
+    typeof import('@/core/utils/context')
+  >('@/core/utils/context')
+
+  return {
+    ...originalModule,
+    __esModule: true,
+    getContext: jest.fn().mockImplementation(() => {
+      return {
+        user: TEST_ACCOUNT_1,
+      }
+    }),
+  }
+})
+
 async function getCaseService(tenantId: string) {
   const mongoDb = await getMongoDbClient()
   const s3 = getS3ClientByEvent(null as any)
@@ -112,9 +145,11 @@ describe('Case service', () => {
 
     test('throw NotFound error if case ID cannot be found', async () => {
       const caseService = await getCaseService(TEST_TENANT_ID)
-      await expect(caseService.escalateCase('ghost', {}, [])).rejects.toThrow(
-        NotFound
-      )
+      await expect(
+        caseService.escalateCase('ghost', {
+          reason: ['Documents collected'],
+        })
+      ).rejects.toThrow(NotFound)
     })
 
     test('update case status, update alert statuses, and assign review assignments', async () => {
@@ -129,18 +164,18 @@ describe('Case service', () => {
         alerts: [TEST_ALERT_1, TEST_ALERT_2],
       })
 
-      await caseService.escalateCase(
-        'C-1',
-        { comment: 'test comment', reason: ['Documents collected'] },
-        [TEST_ACCOUNT_1]
-      )
+      await caseService.escalateCase('C-1', {
+        comment: 'test comment',
+        reason: ['Documents collected'],
+      })
 
       const c = await caseService.getCase('C-1')
+
       expect(c).toMatchObject({
         caseId: 'C-1',
         createdTimestamp: t,
         caseStatus: 'ESCALATED',
-        assignments: [{ assigneeUserId: 'U-1', timestamp: 1672531200000 }],
+        assignments: [{ assigneeUserId: 'U-1', timestamp: expect.any(Number) }],
         reviewAssignments: [
           { assigneeUserId: 'ACCOUNT-1', timestamp: expect.any(Number) },
         ],
@@ -189,7 +224,7 @@ describe('Case service', () => {
         reviewAssignments: [{ assigneeUserId: 'U-2', timestamp: t }],
         alerts: [TEST_ALERT_1, TEST_ALERT_2],
       })
-      await caseService.escalateCase('C-2', {}, [TEST_ACCOUNT_1])
+      await caseService.escalateCase('C-2', { reason: ['Documents collected'] })
       const c = await caseService.getCase('C-2')
       expect(c).toMatchObject({
         caseId: 'C-2',
@@ -202,9 +237,9 @@ describe('Case service', () => {
 
     test('throw NotFound error if case ID cannot be found', async () => {
       const caseService = await getCaseService(TEST_TENANT_ID)
-      await expect(caseService.escalateCase('ghost', {}, [])).rejects.toThrow(
-        NotFound
-      )
+      await expect(
+        caseService.escalateCase('ghost', { reason: ['Anti-money laundering'] })
+      ).rejects.toThrow(NotFound)
     })
 
     test('escalate alert - new case status, updated alert statuses, and keep old case status the same', async () => {
@@ -226,21 +261,17 @@ describe('Case service', () => {
       })
 
       const alertsService = await getAlertsService(TEST_TENANT_ID)
-      await alertsService.escalateAlerts(
-        'C-2',
-        {
-          alertEscalations: [
-            { alertId: TEST_ALERT_1.alertId!, transactionIds: [] },
-          ],
-        },
-        [TEST_ACCOUNT_1]
-      )
+      await alertsService.escalateAlerts('C-2', {
+        alertEscalations: [
+          { alertId: TEST_ALERT_1.alertId!, transactionIds: [] },
+        ],
+      })
 
       const c = await caseService.getCase('C-2.1')
       expect(c).toMatchObject({
         caseId: 'C-2.1',
         caseStatus: 'ESCALATED',
-        assignments: [{ assigneeUserId: 'U-1', timestamp: 1672531200000 }],
+        assignments: [{ assigneeUserId: 'U-1', timestamp: expect.any(Number) }],
         reviewAssignments: [
           { assigneeUserId: 'ACCOUNT-1', timestamp: expect.any(Number) },
         ],
@@ -281,14 +312,14 @@ describe('Case service', () => {
     test('escalateAlerts throws error if caseId is null', async () => {
       const alertsService = await getAlertsService(TEST_TENANT_ID)
       await expect(
-        alertsService.escalateAlerts(null as unknown as string, {}, [])
+        alertsService.escalateAlerts(null as unknown as string, {})
       ).rejects.toThrow(NotFound)
     })
 
     test('escalateAlerts throws error if caseId is undefined', async () => {
       const alertsService = await getAlertsService(TEST_TENANT_ID)
       await expect(
-        alertsService.escalateAlerts(undefined as unknown as string, {}, [])
+        alertsService.escalateAlerts(undefined as unknown as string, {})
       ).rejects.toThrow(NotFound)
     })
 
@@ -320,9 +351,7 @@ describe('Case service', () => {
       await caseService.caseRepository.addCaseMongo(childCase)
 
       await expect(
-        alertsService.escalateAlerts(childCaseId, caseEscalationRequest, [
-          TEST_ACCOUNT_1,
-        ])
+        alertsService.escalateAlerts(childCaseId, caseEscalationRequest)
       ).rejects.toThrowError(BadRequest)
     })
 
@@ -340,20 +369,25 @@ describe('Case service', () => {
         alerts: [TEST_ALERT_1, TEST_ALERT_2],
       })
 
-      await alertsService.escalateAlerts(
-        'C-2',
-        {
-          alertEscalations: [{ alertId: TEST_ALERT_1.alertId! }],
-          caseUpdateRequest: { caseStatus: 'CLOSED', comment: 'New comment' },
+      await alertsService.escalateAlerts('C-2', {
+        alertEscalations: [{ alertId: TEST_ALERT_1.alertId! }],
+        caseUpdateRequest: {
+          caseStatus: 'CLOSED',
+          comment: 'New comment',
+          reason: ['Other'],
         },
-        [TEST_ACCOUNT_1]
-      )
+      })
 
       const c = await caseService.getCase('C-2.1')
       expect(c).toMatchObject({
         caseId: 'C-2.1',
         caseStatus: 'ESCALATED',
-        assignments: [{ assigneeUserId: 'U-1', timestamp: 1672531200000 }],
+        assignments: [
+          {
+            assigneeUserId: 'U-1',
+            timestamp: expect.any(Number),
+          },
+        ],
         reviewAssignments: [
           { assigneeUserId: 'ACCOUNT-1', timestamp: expect.any(Number) },
         ],
@@ -645,17 +679,17 @@ describe('Post APIs Alerts Tests', () => {
       lastStatusChange: {
         userId: FLAGRIGHT_SYSTEM_USER,
         timestamp: expect.any(Number),
-        reason: ['All alerts of this case are closed'],
+        reason: ['Other'],
         caseStatus: 'CLOSED',
-        otherReason: 'some other reason',
+        otherReason: 'All alerts of this case are closed',
       },
       statusChanges: [
         {
           userId: FLAGRIGHT_SYSTEM_USER,
           timestamp: expect.any(Number),
-          reason: ['All alerts of this case are closed'],
+          reason: ['Other'],
           caseStatus: 'CLOSED',
-          otherReason: 'some other reason',
+          otherReason: 'All alerts of this case are closed',
         },
       ],
       comments: [
@@ -754,11 +788,16 @@ describe('Post APIs Alerts Tests', () => {
     const USER_ID_1 = nanoid()
     const USER_ID_2 = nanoid()
 
-    await alertsService.updateAssigneeToAlerts(['A-1'], {
-      assigneeUserId: USER_ID_1,
-      timestamp: Date.now(),
-      assignedByUserId: USER_ID_2,
-    })
+    await alertsService.updateAssigneeToAlerts(
+      ['A-1'],
+      [
+        {
+          assigneeUserId: USER_ID_1,
+          timestamp: Date.now(),
+          assignedByUserId: USER_ID_2,
+        },
+      ]
+    )
 
     const c = await caseService.getCase('C-1')
 
@@ -778,6 +817,670 @@ describe('Post APIs Alerts Tests', () => {
         },
         {
           alertId: 'A-2',
+        },
+      ],
+    })
+  })
+})
+
+describe('Case Service - Post Api Tests', () => {
+  const tenantId = getTestTenantId()
+
+  test('Closing a case without alerts', async () => {
+    const caseService = await getCaseService(tenantId)
+
+    await caseService.caseRepository.addCaseMongo({
+      caseId: 'C-1-2',
+      createdTimestamp: Date.now(),
+      caseStatus: 'OPEN',
+      alerts: [],
+    })
+
+    await caseService.updateCasesStatus(['C-1-2'], {
+      caseStatus: 'CLOSED',
+      reason: ['False positive'],
+      comment: 'some comment',
+    })
+
+    const c = await caseService.getCase('C-1-2')
+
+    expect(c).toMatchObject({
+      _id: expect.any(ObjectId),
+      caseId: 'C-1-2',
+      createdTimestamp: expect.any(Number),
+      caseStatus: 'CLOSED',
+      alerts: [],
+      lastStatusChange: {
+        userId: 'ACCOUNT-1',
+        timestamp: expect.any(Number),
+        reason: ['False positive'],
+        caseStatus: 'CLOSED',
+        otherReason: null,
+      },
+      statusChanges: [
+        {
+          userId: 'ACCOUNT-1',
+          timestamp: expect.any(Number),
+          reason: ['False positive'],
+          caseStatus: 'CLOSED',
+          otherReason: null,
+        },
+      ],
+      comments: [
+        {
+          userId: 'ACCOUNT-1',
+          body: 'Case status changed to CLOSED. Reason: False positive\nsome comment',
+          files: [],
+          createdAt: expect.any(Number),
+          updatedAt: expect.any(Number),
+        },
+      ],
+    })
+  })
+
+  test('Closing a case closes all it alerts', async () => {
+    const caseService = await getCaseService(tenantId)
+
+    await caseService.caseRepository.addCaseMongo({
+      caseId: 'C-1-1',
+      createdTimestamp: Date.now(),
+      caseStatus: 'OPEN',
+      alerts: [TEST_ALERT_1, TEST_ALERT_3],
+    })
+
+    await caseService.updateCasesStatus(['C-1-1'], {
+      caseStatus: 'CLOSED',
+      reason: ['False positive'],
+      comment: 'some comment',
+    })
+
+    const c = await caseService.getCase('C-1-1')
+
+    expect(c).toMatchObject({
+      _id: expect.any(ObjectId),
+      caseId: 'C-1-1',
+      createdTimestamp: expect.any(Number),
+      caseStatus: 'CLOSED',
+      alerts: [
+        {
+          alertId: 'A-1',
+          alertStatus: 'CLOSED',
+          caseId: 'C-1-1',
+          lastStatusChange: {
+            userId: 'ACCOUNT-1',
+            timestamp: expect.any(Number),
+            reason: ['Other'],
+            caseStatus: 'CLOSED',
+            otherReason: 'Case of this alert was closed',
+          },
+          statusChanges: [
+            {
+              userId: 'ACCOUNT-1',
+              timestamp: expect.any(Number),
+              reason: ['Other'],
+              caseStatus: 'CLOSED',
+              otherReason: 'Case of this alert was closed',
+            },
+          ],
+        },
+        {
+          alertId: 'A-3',
+          alertStatus: 'CLOSED',
+          caseId: 'C-1-1',
+          lastStatusChange: {
+            userId: 'ACCOUNT-1',
+            timestamp: expect.any(Number),
+            reason: ['Other'],
+            caseStatus: 'CLOSED',
+            otherReason: 'Case of this alert was closed',
+          },
+          statusChanges: [
+            {
+              userId: 'ACCOUNT-1',
+              timestamp: expect.any(Number),
+              reason: ['Other'],
+              caseStatus: 'CLOSED',
+              otherReason: 'Case of this alert was closed',
+            },
+          ],
+        },
+      ],
+      lastStatusChange: {
+        userId: 'ACCOUNT-1',
+        timestamp: expect.any(Number),
+        reason: ['False positive'],
+        caseStatus: 'CLOSED',
+        otherReason: null,
+      },
+      statusChanges: [
+        {
+          userId: 'ACCOUNT-1',
+          timestamp: expect.any(Number),
+          reason: ['False positive'],
+          caseStatus: 'CLOSED',
+          otherReason: null,
+        },
+      ],
+      comments: [
+        {
+          userId: 'ACCOUNT-1',
+          body: 'Case status changed to CLOSED. Reason: False positive\nsome comment',
+          files: [],
+          createdAt: expect.any(Number),
+          updatedAt: expect.any(Number),
+        },
+      ],
+    })
+  })
+
+  test('Updates only Assignments', async () => {
+    const caseService = await getCaseService(tenantId)
+
+    await caseService.caseRepository.addCaseMongo({
+      caseId: 'C-1-2',
+      createdTimestamp: Date.now(),
+      caseStatus: 'OPEN',
+      alerts: [TEST_ALERT_1, TEST_ALERT_3],
+      assignments: undefined,
+      reviewAssignments: undefined,
+    })
+
+    await caseService.updateCasesAssignments(
+      ['C-1-2'],
+      [
+        {
+          assigneeUserId: 'ACCOUNT-1',
+          timestamp: Date.now(),
+          assignedByUserId: 'ACCOUNT-2',
+        },
+      ]
+    )
+
+    const c = await caseService.getCase('C-1-2')
+
+    expect(c).toMatchObject({
+      _id: expect.any(ObjectId),
+      caseId: 'C-1-2',
+      createdTimestamp: expect.any(Number),
+      caseStatus: 'OPEN',
+      assignments: [
+        {
+          assigneeUserId: 'ACCOUNT-1',
+          timestamp: expect.any(Number),
+          assignedByUserId: 'ACCOUNT-2',
+        },
+      ],
+      reviewAssignments: null,
+    })
+  })
+
+  test('Updates only Review Assignments', async () => {
+    const caseService = await getCaseService(tenantId)
+
+    await caseService.caseRepository.addCaseMongo({
+      caseId: 'C-1-3',
+      createdTimestamp: Date.now(),
+      caseStatus: 'OPEN',
+      alerts: [TEST_ALERT_1, TEST_ALERT_3],
+      assignments: undefined,
+      reviewAssignments: undefined,
+    })
+
+    await caseService.updateCasesReviewAssignments(
+      ['C-1-3'],
+      [
+        {
+          assigneeUserId: 'ACCOUNT-1',
+          timestamp: Date.now(),
+          assignedByUserId: 'ACCOUNT-2',
+        },
+      ]
+    )
+
+    const c = await caseService.getCase('C-1-3')
+
+    expect(c).toMatchObject({
+      _id: expect.any(ObjectId),
+      caseId: 'C-1-3',
+      createdTimestamp: expect.any(Number),
+      caseStatus: 'OPEN',
+      assignments: null,
+      reviewAssignments: [
+        {
+          assigneeUserId: 'ACCOUNT-1',
+          timestamp: expect.any(Number),
+          assignedByUserId: 'ACCOUNT-2',
+        },
+      ],
+    })
+  })
+
+  test('Update Case Assignments Multiple Cases Single Assignee', async () => {
+    const caseService = await getCaseService(tenantId)
+
+    await caseService.caseRepository.addCaseMongo({
+      caseId: 'C-1-4',
+      createdTimestamp: Date.now(),
+      caseStatus: 'OPEN',
+      alerts: [TEST_ALERT_1, TEST_ALERT_3],
+      assignments: undefined,
+      reviewAssignments: undefined,
+    })
+
+    await caseService.caseRepository.addCaseMongo({
+      caseId: 'C-1-5',
+      createdTimestamp: Date.now(),
+      caseStatus: 'OPEN',
+      alerts: [TEST_ALERT_1, TEST_ALERT_3],
+      assignments: undefined,
+      reviewAssignments: undefined,
+    })
+
+    await caseService.updateCasesAssignments(
+      ['C-1-4', 'C-1-5'],
+      [
+        {
+          assigneeUserId: 'ACCOUNT-1',
+          timestamp: Date.now(),
+          assignedByUserId: 'ACCOUNT-2',
+        },
+      ]
+    )
+
+    const c1 = await caseService.getCase('C-1-4')
+
+    expect(c1).toMatchObject({
+      _id: expect.any(ObjectId),
+      caseId: 'C-1-4',
+      createdTimestamp: expect.any(Number),
+      caseStatus: 'OPEN',
+      assignments: [
+        {
+          assigneeUserId: 'ACCOUNT-1',
+          timestamp: expect.any(Number),
+          assignedByUserId: 'ACCOUNT-2',
+        },
+      ],
+      reviewAssignments: null,
+    })
+
+    const c2 = await caseService.getCase('C-1-5')
+
+    expect(c2).toMatchObject({
+      _id: expect.any(ObjectId),
+      caseId: 'C-1-5',
+      createdTimestamp: expect.any(Number),
+      caseStatus: 'OPEN',
+      assignments: [
+        {
+          assigneeUserId: 'ACCOUNT-1',
+          timestamp: expect.any(Number),
+          assignedByUserId: 'ACCOUNT-2',
+        },
+      ],
+      reviewAssignments: null,
+    })
+  })
+
+  test('Update Case Review Assignments Multiple Cases Single Assignee', async () => {
+    const caseService = await getCaseService(tenantId)
+
+    await caseService.caseRepository.addCaseMongo({
+      caseId: 'C-1-4',
+      createdTimestamp: Date.now(),
+      caseStatus: 'OPEN',
+      alerts: [TEST_ALERT_1, TEST_ALERT_3],
+      assignments: undefined,
+      reviewAssignments: undefined,
+    })
+
+    await caseService.caseRepository.addCaseMongo({
+      caseId: 'C-1-5',
+      createdTimestamp: Date.now(),
+      caseStatus: 'OPEN',
+      alerts: [TEST_ALERT_1, TEST_ALERT_3],
+      assignments: undefined,
+      reviewAssignments: undefined,
+    })
+
+    await caseService.updateCasesReviewAssignments(
+      ['C-1-4', 'C-1-5'],
+      [
+        {
+          assigneeUserId: 'ACCOUNT-1',
+          timestamp: Date.now(),
+          assignedByUserId: 'ACCOUNT-2',
+        },
+      ]
+    )
+
+    const c1 = await caseService.getCase('C-1-4')
+
+    expect(c1).toMatchObject({
+      _id: expect.any(ObjectId),
+      caseId: 'C-1-4',
+      createdTimestamp: expect.any(Number),
+      caseStatus: 'OPEN',
+      assignments: null,
+      reviewAssignments: [
+        {
+          assigneeUserId: 'ACCOUNT-1',
+          timestamp: expect.any(Number),
+          assignedByUserId: 'ACCOUNT-2',
+        },
+      ],
+    })
+
+    const c2 = await caseService.getCase('C-1-5')
+
+    expect(c2).toMatchObject({
+      _id: expect.any(ObjectId),
+      caseId: 'C-1-5',
+      createdTimestamp: expect.any(Number),
+      caseStatus: 'OPEN',
+      assignments: null,
+      reviewAssignments: [
+        {
+          assigneeUserId: 'ACCOUNT-1',
+          timestamp: expect.any(Number),
+          assignedByUserId: 'ACCOUNT-2',
+        },
+      ],
+    })
+  })
+
+  test('Close an Case and repoepn it but alerts should not reopen', async () => {
+    const caseService = await getCaseService(tenantId)
+
+    await caseService.caseRepository.addCaseMongo({
+      caseId: 'C-1-6',
+      createdTimestamp: Date.now(),
+      caseStatus: 'OPEN',
+      alerts: [TEST_ALERT_1, TEST_ALERT_3],
+      assignments: undefined,
+      reviewAssignments: undefined,
+    })
+
+    await caseService.updateCasesStatus(['C-1-6'], {
+      caseStatus: 'CLOSED',
+      comment: 'I am closing this case',
+      reason: ['False positive', 'Other'],
+      otherReason: 'This is a duplicate case',
+    })
+
+    const c1 = await caseService.getCase('C-1-6')
+
+    expect(c1).toMatchObject({
+      caseId: 'C-1-6',
+      caseStatus: 'CLOSED',
+      alerts: [
+        {
+          alertId: 'A-1',
+          alertStatus: 'CLOSED',
+          caseId: 'C-1-6',
+          lastStatusChange: {
+            userId: 'ACCOUNT-1',
+            timestamp: expect.any(Number),
+            reason: ['Other'],
+            caseStatus: 'CLOSED',
+            otherReason: 'Case of this alert was closed',
+          },
+          statusChanges: [
+            {
+              userId: 'ACCOUNT-1',
+              timestamp: expect.any(Number),
+              reason: ['Other'],
+              caseStatus: 'CLOSED',
+              otherReason: 'Case of this alert was closed',
+            },
+          ],
+        },
+        {
+          alertId: 'A-3',
+          alertStatus: 'CLOSED',
+          caseId: 'C-1-6',
+          lastStatusChange: {
+            userId: 'ACCOUNT-1',
+            timestamp: expect.any(Number),
+            reason: ['Other'],
+            caseStatus: 'CLOSED',
+            otherReason: 'Case of this alert was closed',
+          },
+          statusChanges: [
+            {
+              userId: 'ACCOUNT-1',
+              timestamp: expect.any(Number),
+              reason: ['Other'],
+              caseStatus: 'CLOSED',
+              otherReason: 'Case of this alert was closed',
+            },
+          ],
+        },
+      ],
+      assignments: null,
+      reviewAssignments: null,
+      lastStatusChange: {
+        userId: 'ACCOUNT-1',
+        timestamp: expect.any(Number),
+        reason: ['False positive', 'Other'],
+        caseStatus: 'CLOSED',
+        otherReason: 'This is a duplicate case',
+      },
+      statusChanges: [
+        {
+          userId: 'ACCOUNT-1',
+          timestamp: expect.any(Number),
+          reason: ['False positive', 'Other'],
+          caseStatus: 'CLOSED',
+          otherReason: 'This is a duplicate case',
+        },
+      ],
+      comments: [
+        {
+          userId: 'ACCOUNT-1',
+          body: 'Case status changed to CLOSED. Reasons: False positive, This is a duplicate case\nI am closing this case',
+        },
+      ],
+    })
+
+    await caseService.updateCasesStatus(['C-1-6'], {
+      caseStatus: 'REOPENED',
+      reason: ['Other'],
+      otherReason: 'This is a duplicate case',
+    })
+
+    const c2 = await caseService.getCase('C-1-6')
+
+    expect(c2).toMatchObject({
+      caseId: 'C-1-6',
+      createdTimestamp: expect.any(Number),
+      caseStatus: 'REOPENED',
+      alerts: [
+        {
+          alertId: 'A-1',
+          alertStatus: 'CLOSED',
+          caseId: 'C-1-6',
+          lastStatusChange: {
+            userId: 'ACCOUNT-1',
+            timestamp: expect.any(Number),
+            reason: ['Other'],
+            caseStatus: 'CLOSED',
+            otherReason: 'Case of this alert was closed',
+          },
+          statusChanges: [
+            {
+              userId: 'ACCOUNT-1',
+              timestamp: expect.any(Number),
+              reason: ['Other'],
+              caseStatus: 'CLOSED',
+              otherReason: 'Case of this alert was closed',
+            },
+          ],
+        },
+        {
+          alertId: 'A-3',
+          alertStatus: 'CLOSED',
+          caseId: 'C-1-6',
+          lastStatusChange: {
+            userId: 'ACCOUNT-1',
+            timestamp: expect.any(Number),
+            reason: ['Other'],
+            caseStatus: 'CLOSED',
+            otherReason: 'Case of this alert was closed',
+          },
+          statusChanges: [
+            {
+              userId: 'ACCOUNT-1',
+              timestamp: expect.any(Number),
+              reason: ['Other'],
+              caseStatus: 'CLOSED',
+              otherReason: 'Case of this alert was closed',
+            },
+          ],
+        },
+      ],
+      lastStatusChange: {
+        userId: 'ACCOUNT-1',
+        timestamp: expect.any(Number),
+        reason: ['Other'],
+        caseStatus: 'REOPENED',
+        otherReason: 'This is a duplicate case',
+      },
+      statusChanges: [
+        {
+          userId: 'ACCOUNT-1',
+          timestamp: expect.any(Number),
+          reason: ['False positive', 'Other'],
+          caseStatus: 'CLOSED',
+          otherReason: 'This is a duplicate case',
+        },
+        {
+          userId: 'ACCOUNT-1',
+          timestamp: expect.any(Number),
+          reason: ['Other'],
+          caseStatus: 'REOPENED',
+          otherReason: 'This is a duplicate case',
+        },
+      ],
+      comments: [
+        {
+          userId: 'ACCOUNT-1',
+          body: 'Case status changed to CLOSED. Reasons: False positive, This is a duplicate case\nI am closing this case',
+          files: [],
+          id: expect.any(String),
+          createdAt: expect.any(Number),
+          updatedAt: expect.any(Number),
+        },
+        {
+          userId: 'ACCOUNT-1',
+          body: 'Case status changed to REOPENED. Reason: This is a duplicate case',
+          files: [],
+          id: expect.any(String),
+          createdAt: expect.any(Number),
+          updatedAt: expect.any(Number),
+        },
+      ],
+    })
+  })
+
+  it('should not affect reviewAssignments when reviewAssignments are already present', async () => {
+    const caseService = await getCaseService(tenantId)
+
+    // Create a case with reviewAssignments
+    await caseService.caseRepository.addCaseMongo({
+      caseId: 'C-1-5',
+      caseStatus: 'OPEN',
+      reviewAssignments: [
+        {
+          assigneeUserId: 'ACCOUNT-1',
+          timestamp: Date.now(),
+          assignedByUserId: 'ACCOUNT-2',
+        },
+      ],
+    })
+
+    // Add assignments to the case
+    await caseService.updateCasesAssignments(
+      ['C-1-5'],
+      [
+        {
+          assigneeUserId: 'ACCOUNT-3',
+          assignedByUserId: 'ACCOUNT-2',
+          timestamp: Date.now(),
+        },
+      ]
+    )
+
+    // Get the case and check that reviewAssignments are still present
+    const c = await caseService.getCase('C-1-5')
+
+    expect(c).toMatchObject({
+      _id: expect.any(ObjectId),
+      caseId: 'C-1-5',
+      caseStatus: 'OPEN',
+      assignments: [
+        {
+          assigneeUserId: 'ACCOUNT-3',
+          assignedByUserId: 'ACCOUNT-2',
+        },
+      ],
+      reviewAssignments: [
+        {
+          assigneeUserId: 'ACCOUNT-1',
+          timestamp: expect.any(Number),
+          assignedByUserId: 'ACCOUNT-2',
+        },
+      ],
+    })
+  })
+
+  it('should not affect assignements when assignments are already present and reviewAssigments are updated', async () => {
+    const caseService = await getCaseService(tenantId)
+
+    // Create a case with reviewAssignments
+    await caseService.caseRepository.addCaseMongo({
+      caseId: 'C-1-5',
+      caseStatus: 'OPEN',
+      assignments: [
+        {
+          assigneeUserId: 'ACCOUNT-1',
+          timestamp: Date.now(),
+          assignedByUserId: 'ACCOUNT-2',
+        },
+      ],
+    })
+
+    // Add assignments to the case
+    await caseService.updateCasesReviewAssignments(
+      ['C-1-5'],
+      [
+        {
+          assigneeUserId: 'ACCOUNT-3',
+          assignedByUserId: 'ACCOUNT-2',
+          timestamp: Date.now(),
+        },
+      ]
+    )
+
+    // Get the case and check that reviewAssignments are still present
+    const c = await caseService.getCase('C-1-5')
+
+    expect(c).toMatchObject({
+      _id: expect.any(ObjectId),
+      caseId: 'C-1-5',
+      caseStatus: 'OPEN',
+      assignments: [
+        {
+          assigneeUserId: 'ACCOUNT-1',
+          timestamp: expect.any(Number),
+          assignedByUserId: 'ACCOUNT-2',
+        },
+      ],
+      reviewAssignments: [
+        {
+          assigneeUserId: 'ACCOUNT-3',
+          timestamp: expect.any(Number),
+          assignedByUserId: 'ACCOUNT-2',
         },
       ],
     })

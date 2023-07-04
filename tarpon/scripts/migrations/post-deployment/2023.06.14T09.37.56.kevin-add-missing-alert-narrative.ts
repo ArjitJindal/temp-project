@@ -912,9 +912,9 @@ async function migrateTenant(tenant: Tenant) {
 
         // Backfill audit log
         const update: AlertStatusUpdateRequest = {
-          reason: targetAlert?.lastStatusChange?.reason,
+          reason: targetAlert?.lastStatusChange?.reason ?? [],
           otherReason: targetAlert?.lastStatusChange?.otherReason,
-          alertStatus: targetAlert?.lastStatusChange?.caseStatus,
+          alertStatus: targetAlert?.lastStatusChange?.caseStatus ?? 'CLOSED',
           comment: newBody,
         }
         await publishAuditLog(tenant.id, {

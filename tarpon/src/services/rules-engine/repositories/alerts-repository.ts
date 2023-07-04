@@ -524,22 +524,21 @@ export class AlertsRepository {
 
   public async updateReviewAssigneeToAlerts(
     alertIds: string[],
-    assignment: Assignment
+    reviewAssignments: Assignment[]
   ): Promise<void> {
-    return this.updateAssigneeToAlertsPrivate(alertIds, assignment, true)
+    return this.updateReviewAssigneeToAlertsPrivate(alertIds, reviewAssignments)
   }
 
   public async updateAssigneeToAlerts(
     alertIds: string[],
-    assignment: Assignment
+    assignments: Assignment[]
   ): Promise<void> {
-    return this.updateAssigneeToAlertsPrivate(alertIds, assignment, false)
+    return this.updateAssigneeToAlertsPrivate(alertIds, assignments)
   }
 
-  private async updateAssigneeToAlertsPrivate(
+  private async updateReviewAssigneeToAlertsPrivate(
     alertIds: string[],
-    assignment: Assignment,
-    isReview: boolean
+    reviewAssignments: Assignment[]
   ): Promise<void> {
     const db = this.mongoDb.db()
     const collection = db.collection<Case>(CASES_COLLECTION(this.tenantId))
@@ -552,8 +551,37 @@ export class AlertsRepository {
       },
       {
         $set: {
-          [`alerts.$[alert].${isReview ? 'reviewAssignments' : 'assignments'}`]:
-            [assignment],
+          'alerts.$[alert].reviewAssignments': reviewAssignments,
+        },
+      },
+      {
+        arrayFilters: [
+          {
+            'alert.alertId': {
+              $in: alertIds,
+            },
+          },
+        ],
+      }
+    )
+  }
+
+  private async updateAssigneeToAlertsPrivate(
+    alertIds: string[],
+    assignments: Assignment[]
+  ): Promise<void> {
+    const db = this.mongoDb.db()
+    const collection = db.collection<Case>(CASES_COLLECTION(this.tenantId))
+
+    await collection.updateMany(
+      {
+        'alerts.alertId': {
+          $in: alertIds,
+        },
+      },
+      {
+        $set: {
+          'alerts.$[alert].assignments': assignments,
         },
       },
       {

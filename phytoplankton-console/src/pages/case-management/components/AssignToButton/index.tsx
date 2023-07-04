@@ -7,23 +7,19 @@ import { Account } from '@/apis';
 import { useUsers } from '@/utils/user-utils';
 
 interface Props {
-  ids: string[];
-  onSelect: (account: Account, ids: string[]) => void;
+  onSelect: (account: Account) => void;
 }
 
 export default function AssignToButton(props: Props) {
   const { onSelect } = props;
   const [users] = useUsers();
-  if (props.ids.length === 0) {
-    return <></>;
-  }
   const menu = (
     <AntMenu>
       {Object.values(users).map((account) => (
         <AntMenu.Item
           key={account.id}
           onClick={() => {
-            onSelect(account, props.ids);
+            onSelect(account);
           }}
         >
           <div className={cn(s.item)}>

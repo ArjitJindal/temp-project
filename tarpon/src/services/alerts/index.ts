@@ -34,10 +34,11 @@ import {
 } from '@/utils/pagination'
 import { AlertStatusUpdateRequest } from '@/@types/openapi-internal/AlertStatusUpdateRequest'
 import { Assignment } from '@/@types/openapi-internal/Assignment'
+import { AccountsService } from '@/services/accounts'
 import { isAlertAvailable } from '@/lambdas/console-api-case/services/utils'
-import { CaseUpdateRequest } from '@/@types/openapi-internal/CaseUpdateRequest'
 import { CasesAlertsAuditLogService } from '@/lambdas/console-api-case/services/case-alerts-audit-log-service'
 import { withTransaction } from '@/utils/mongoDBUtils'
+import { CaseStatusUpdate } from '@/@types/openapi-internal/CaseStatusUpdate'
 import { ComplyAdvantageSearchHitDoc } from '@/@types/openapi-internal/ComplyAdvantageSearchHitDoc'
 
 export class AlertsService extends CaseAlertsCommonService {
@@ -149,9 +150,15 @@ export class AlertsService extends CaseAlertsCommonService {
 
   public async escalateAlerts(
     caseId: string,
-    caseEscalationRequest: CaseEscalationRequest,
-    accounts: Account[]
+    caseEscalationRequest: CaseEscalationRequest
   ): Promise<{ childCaseId?: string; assigneeIds: string[] }> {
+    const accountsService = new AccountsService(
+      { auth0Domain: process.env.AUTH0_DOMAIN as string },
+      { mongoDb: this.mongoDb }
+    )
+
+    const accounts = await accountsService.getAllActiveAccounts()
+
     const caseRepository = new CaseRepository(this.tenantId, {
       mongoDb: this.mongoDb,
     })
@@ -249,7 +256,7 @@ export class AlertsService extends CaseAlertsCommonService {
     )
 
     if (!remainingAlerts?.length && caseUpdateRequest) {
-      return caseService.escalateCase(caseId, caseUpdateRequest, accounts)
+      return caseService.escalateCase(caseId, caseUpdateRequest)
     }
 
     const childNumber = c.caseHierarchyDetails?.childCaseIds
@@ -330,19 +337,13 @@ export class AlertsService extends CaseAlertsCommonService {
 
     await caseRepository.addCaseMongo(_.omit(newCase, '_id'))
     await caseRepository.addCaseMongo(updatedExistingCase)
+
     if (caseUpdateRequest) {
-      await caseService.updateCases(
-        (getContext()?.user as Account).id,
-        [caseId],
-        {
-          ...caseUpdateRequest,
-          comment: `Alert(s) ${escalatedAlerts!
-            .map((alert) => alert.alertId)
-            .join(', ')} ESCALATED by: ${
-            (getContext()?.user as Account).name
-          }. ${caseUpdateRequest.comment}`,
-        }
-      )
+      await caseService.updateCaseForEscalation(caseId, {
+        ...caseUpdateRequest,
+        caseStatus: caseUpdateRequest.caseStatus ?? c.caseStatus,
+        comment: caseUpdateRequest.comment,
+      })
     }
     const assigneeIds = reviewAssignments
       .map((v) => v.assigneeUserId)
@@ -400,20 +401,100 @@ export class AlertsService extends CaseAlertsCommonService {
     }
   }
 
+  public async updateAssigneeToAlert(
+    alertId: string,
+    assignments: Assignment[]
+  ): Promise<void> {
+    const alert = await this.alertsRepository.getAlertById(alertId)
+
+    if (alert == null) {
+      throw new NotFound(`"${alertId}" alert not found`)
+    }
+
+    const uniqueAssignments = _.uniqBy(assignments, 'assigneeUserId')
+    const currentUniqueAssignments = _.uniqBy(
+      alert.assignments || [],
+      'assigneeUserId'
+    )
+
+    const updatedAssignments: Assignment[] = uniqueAssignments.map((a) => {
+      const currentAssignment = currentUniqueAssignments.find(
+        (cA) => cA.assigneeUserId === a.assigneeUserId
+      )
+
+      if (currentAssignment) {
+        return currentAssignment
+      }
+
+      return { ...a, timestamp: Date.now() }
+    })
+
+    await this.alertsRepository.updateAssigneeToAlerts(
+      [alertId],
+      updatedAssignments
+    )
+  }
+
+  public async updateReviewAssigneeToAlert(
+    alertId: string,
+    assignments: Assignment[]
+  ): Promise<void> {
+    const alert = await this.alertsRepository.getAlertById(alertId)
+
+    if (alert == null) {
+      throw new NotFound(`"${alertId}" alert not found`)
+    }
+
+    const uniqueAssignments = _.uniqBy(assignments, 'assigneeUserId')
+    const currentUniqueAssignments = _.uniqBy(
+      alert.reviewAssignments || [],
+      'assigneeUserId'
+    )
+
+    const updatedAssignments: Assignment[] = uniqueAssignments.map((a) => {
+      const currentAssignment = currentUniqueAssignments.find(
+        (cA) => cA.assigneeUserId === a.assigneeUserId
+      )
+
+      if (currentAssignment) {
+        return currentAssignment
+      }
+
+      return { ...a, timestamp: Date.now() }
+    })
+
+    await this.alertsRepository.updateReviewAssigneeToAlerts(
+      [alertId],
+      updatedAssignments
+    )
+  }
+
   public async updateAssigneeToAlerts(
     alertIds: string[],
-    assignment: Assignment
+    assignments: Assignment[]
   ): Promise<void> {
-    await this.alertsRepository.updateAssigneeToAlerts(alertIds, assignment)
+    const timestamp = Date.now()
+
+    assignments.forEach((a) => {
+      a.timestamp = timestamp
+    })
+
+    await this.alertsRepository.updateAssigneeToAlerts(alertIds, assignments)
   }
 
   public async updateReviewAssigneeToAlerts(
     alertIds: string[],
-    assignment: Assignment
+    reviewAssignments: Assignment[]
   ): Promise<void> {
+    const timestamp = Date.now()
+
+    reviewAssignments.forEach((a) => {
+      a.timestamp = timestamp
+    })
+
     await this.alertsRepository.updateReviewAssigneeToAlerts(
       alertIds,
-      assignment
+      reviewAssignments
     )
   }
 
@@ -467,11 +548,13 @@ export class AlertsService extends CaseAlertsCommonService {
 
   public async updateAlertsStatus(
     alertIds: string[],
-    statusUpdateRequest: AlertStatusUpdateRequest
+    statusUpdateRequest: AlertStatusUpdateRequest,
+    options?: { cascadeCaseUpdates?: boolean }
   ): Promise<void> {
+    const { cascadeCaseUpdates = true } = options ?? {}
     const userId = getContext()?.user?.id
     const statusChange: CaseStatusChange = {
-      userId: userId!,
+      userId: cascadeCaseUpdates ? FLAGRIGHT_SYSTEM_USER : userId!,
       timestamp: Date.now(),
       reason: statusUpdateRequest.reason,
       caseStatus: statusUpdateRequest.alertStatus,
@@ -496,14 +579,6 @@ export class AlertsService extends CaseAlertsCommonService {
 
     const caseService = new CaseService(caseRepository, this.s3, this.s3Config)
 
-    const caseUpdateStatus: CaseUpdateRequest = {
-      caseStatus: 'CLOSED',
-      reason: ['All alerts of this case are closed'],
-      comment: statusUpdateRequest.comment,
-      otherReason: statusUpdateRequest.otherReason,
-      files: statusUpdateRequest.files,
-    }
-
     await withTransaction(async () => {
       const [response, _] = await Promise.all([
         this.alertsRepository.updateAlertsStatus(
@@ -512,7 +587,7 @@ export class AlertsService extends CaseAlertsCommonService {
           statusChange
         ),
         this.saveAlertsComment(alertIds, caseIds, {
-          userId,
+          userId: cascadeCaseUpdates ? userId : FLAGRIGHT_SYSTEM_USER,
           body: commentBody,
           files: statusUpdateRequest.files,
         }),
@@ -520,12 +595,18 @@ export class AlertsService extends CaseAlertsCommonService {
 
       const caseIdsWithAllAlertsClosed = response.caseIdsWithAllAlertsClosed
 
-      if (caseIdsWithAllAlertsClosed.length) {
-        await caseService.updateCases(
-          FLAGRIGHT_SYSTEM_USER,
+      if (caseIdsWithAllAlertsClosed.length && cascadeCaseUpdates) {
+        const caseUpdateStatus: CaseStatusUpdate = {
+          caseStatus: 'CLOSED',
+          reason: ['Other'],
+          comment: statusUpdateRequest.comment,
+          otherReason: 'All alerts of this case are closed',
+          files: statusUpdateRequest.files,
+        }
+        await caseService.updateCasesStatus(
           caseIdsWithAllAlertsClosed,
           caseUpdateStatus,
-          false
+          { cascadeAlertsUpdate: false }
         )
 
         await casesAlertsAuditLogService.handleAuditLogForCaseUpdate(

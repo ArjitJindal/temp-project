@@ -5,7 +5,6 @@ import {
 import { NotFound, BadRequest } from 'http-errors'
 import { CaseService } from './services/case-service'
 import { CasesAlertsAuditLogService } from './services/case-alerts-audit-log-service'
-import { AccountsService } from '@/services/accounts'
 import { lambdaApi } from '@/core/middlewares/lambda-api-middlewares'
 import { addNewSubsegment } from '@/core/xray'
 import { DefaultApiGetAlertListRequest } from '@/@types/openapi-internal/RequestParameters'
@@ -14,7 +13,6 @@ import { Comment } from '@/@types/openapi-internal/Comment'
 import { getMongoDbClient } from '@/utils/mongoDBUtils'
 import { JWTAuthorizerResult } from '@/@types/jwt'
 import { CaseRepository } from '@/services/rules-engine/repositories/case-repository'
-import { CasesUpdateRequest } from '@/@types/openapi-internal/CasesUpdateRequest'
 import { AlertsToNewCaseRequest } from '@/@types/openapi-internal/AlertsToNewCaseRequest'
 import { getDynamoDbClientByEvent } from '@/utils/dynamodb'
 import { CaseCreationService } from '@/lambdas/console-api-case/services/case-creation-service'
@@ -30,11 +28,15 @@ import { AlertsService } from '@/services/alerts'
 import { AlertsRepository } from '@/services/rules-engine/repositories/alerts-repository'
 import { parseStrings } from '@/utils/lambda'
 import { AlertsStatusUpdateRequest } from '@/@types/openapi-internal/AlertsStatusUpdateRequest'
-import { AlertsAssignmentUpdateRequest } from '@/@types/openapi-internal/AlertsAssignmentUpdateRequest'
+import { CasesStatusUpdateRequest } from '@/@types/openapi-internal/CasesStatusUpdateRequest'
 import { TenantRepository } from '@/services/tenants/repositories/tenant-repository'
 import { PaymentMethod } from '@/@types/openapi-public/PaymentMethod'
 import { CaseEscalationResponse } from '@/@types/openapi-internal/CaseEscalationResponse'
 import { Handlers } from '@/@types/openapi-internal-custom/DefaultApi'
+import { CasesReviewAssignmentsUpdateRequest } from '@/@types/openapi-internal/CasesReviewAssignmentsUpdateRequest'
+import { CasesAssignmentsUpdateRequest } from '@/@types/openapi-internal/CasesAssignmentsUpdateRequest'
+import { AlertsReviewAssignmentsUpdateRequest } from '@/@types/openapi-internal/AlertsReviewAssignmentsUpdateRequest'
+import { AlertsAssignmentsUpdateRequest } from '@/@types/openapi-internal/AlertsAssignmentsUpdateRequest'
 
 export type CaseConfig = {
   TMP_BUCKET: string
@@ -47,11 +49,7 @@ export const casesHandler = lambdaApi()(
       APIGatewayEventLambdaAuthorizerContext<JWTAuthorizerResult>
     >
   ) => {
-    const {
-      principalId: tenantId,
-      userId,
-      auth0Domain,
-    } = event.requestContext.authorizer
+    const { principalId: tenantId, userId } = event.requestContext.authorizer
     const { DOCUMENT_BUCKET, TMP_BUCKET } = process.env as CaseConfig
     const s3 = getS3ClientByEvent(event)
     const client = await getMongoDbClient()
@@ -112,32 +110,101 @@ export const casesHandler = lambdaApi()(
     })
 
     if (
-      event.httpMethod === 'POST' &&
-      event.resource === '/cases' &&
+      event.httpMethod === 'PATCH' &&
+      event.resource === '/cases/statusChange' &&
       event.body
     ) {
-      const updateRequest = JSON.parse(event.body) as CasesUpdateRequest
-      const caseIds = updateRequest?.caseIds || []
-      const { updates } = updateRequest
+      const updateRequest = JSON.parse(event.body) as CasesStatusUpdateRequest
+
+      const { updates, caseIds = [] } = updateRequest
+
       const caseUpdateSegment = await addNewSubsegment(
         'Case Service',
         'Case Update'
       )
+
       caseUpdateSegment?.addAnnotation('tenantId', tenantId)
       caseUpdateSegment?.addAnnotation('caseIds', caseIds.toString())
 
-      const updateResult = await caseService.updateCases(
-        userId,
-        caseIds,
-        updates
-      )
+      const updateResult = await caseService.updateCasesStatus(caseIds, updates)
+
       caseUpdateSegment?.close()
 
       await casesAlertsAuditLogService.handleAuditLogForCaseUpdate(
         caseIds,
         updates
       )
+
       return updateResult
+    } else if (
+      event.httpMethod === 'PATCH' &&
+      event.resource === '/cases/assignments' &&
+      event.body
+    ) {
+      const updateRequest = JSON.parse(
+        event.body
+      ) as CasesAssignmentsUpdateRequest
+
+      const { assignments, caseIds } = updateRequest
+
+      const caseUpdateSegment = await addNewSubsegment(
+        'Case Service',
+        'Case Update Assignee'
+      )
+
+      try {
+        caseUpdateSegment?.addAnnotation('tenantId', tenantId)
+        caseUpdateSegment?.addAnnotation('caseIds', caseIds.toString())
+
+        await caseService.updateCasesAssignments(caseIds, assignments)
+
+        await casesAlertsAuditLogService.handleAuditLogForCaseUpdate(caseIds, {
+          assignments,
+        })
+      } catch (error) {
+        caseUpdateSegment?.addMetadata('error', error)
+        throw error
+      } finally {
+        caseUpdateSegment?.close()
+      }
+
+      return 'OK'
+    } else if (
+      event.httpMethod === 'PATCH' &&
+      event.resource === '/cases/reviewAssignments' &&
+      event.body
+    ) {
+      const updateRequest = JSON.parse(
+        event.body
+      ) as CasesReviewAssignmentsUpdateRequest
+
+      const { caseIds, reviewAssignments } = updateRequest
+
+      const caseUpdateSegment = await addNewSubsegment(
+        'Case Service',
+        'Case Update Review Assignee'
+      )
+
+      try {
+        caseUpdateSegment?.addAnnotation('tenantId', tenantId)
+        caseUpdateSegment?.addAnnotation('caseIds', caseIds.toString())
+
+        await caseService.updateCasesReviewAssignments(
+          caseIds,
+          reviewAssignments
+        )
+
+        await casesAlertsAuditLogService.handleAuditLogForCaseUpdate(caseIds, {
+          reviewAssignments,
+        })
+      } catch (error) {
+        caseUpdateSegment?.addMetadata('error', error)
+        throw error
+      } finally {
+        caseUpdateSegment?.close()
+      }
+
+      return 'OK'
     } else if (
       event.httpMethod === 'GET' &&
       event.resource === '/cases/{caseId}' &&
@@ -150,8 +217,12 @@ export const casesHandler = lambdaApi()(
       )
       caseGetSegment?.addAnnotation('tenantId', tenantId)
       caseGetSegment?.addAnnotation('caseId', caseId)
-      const caseItem: Case | null = await caseService.getCase(caseId)
+      const caseItem: Case | null = await caseService.getCase(caseId, {
+        logAuditLogView: true,
+      })
+
       caseGetSegment?.close()
+
       if (caseItem == null) {
         throw new NotFound(`Case not found: ${caseId}`)
       }
@@ -212,10 +283,12 @@ export const casesHandler = lambdaApi()(
       event.pathParameters?.caseId &&
       event.pathParameters?.commentId
     ) {
-      return caseService.deleteCaseComment(
+      await caseService.deleteCaseComment(
         event.pathParameters.caseId,
         event.pathParameters.commentId
       )
+
+      return 'OK'
     } else if (event.httpMethod === 'GET' && event.resource === '/alerts') {
       const {
         page,
@@ -311,71 +384,92 @@ export const casesHandler = lambdaApi()(
           alertIds,
           updates
         )
+      } catch (e) {
+        alertUpdateSegment?.addError(e as Error)
+        throw e
       } finally {
         alertUpdateSegment?.close()
       }
       return
     } else if (
       event.httpMethod === 'PATCH' &&
-      event.resource === '/alerts/assignee' &&
+      event.resource === '/alerts/assignments' &&
       event.body
     ) {
       const updateRequest = JSON.parse(
         event.body
-      ) as AlertsAssignmentUpdateRequest
+      ) as AlertsAssignmentsUpdateRequest
       const alertIds = updateRequest?.alertIds
-      const { assignment, reviewAssignment } = updateRequest
+      const { assignments } = updateRequest
 
       if (!alertIds?.length) {
         throw new BadRequest('Missing alertIds or empty alertIds array')
       }
-      if (!assignment && !reviewAssignment) {
-        throw new BadRequest(
-          'One of assignment or reviewAssignment should be defined'
-        )
-      }
 
       const alertUpdateSegment = await addNewSubsegment(
-        'Case Service',
-        'Alert Assignee Update'
+        'Alert Service',
+        'Alerts Assignee Update'
       )
-
-      const timestamp = Date.now()
 
       try {
         alertUpdateSegment?.addAnnotation('tenantId', tenantId)
         alertUpdateSegment?.addAnnotation('alertIds', alertIds.toString())
-        const updatedAssignment = assignment && {
-          ...assignment,
-          timestamp,
-        }
-        const updatedReviewAssignment = reviewAssignment && {
-          ...reviewAssignment,
-          timestamp,
-        }
-        if (updatedAssignment) {
-          await alertsService.updateAssigneeToAlerts(
-            alertIds,
-            updatedAssignment
-          )
-        } else if (updatedReviewAssignment) {
-          await alertsService.updateReviewAssigneeToAlerts(
-            alertIds,
-            updatedReviewAssignment
-          )
-        }
+
+        await alertsService.updateAssigneeToAlerts(alertIds, assignments)
+
         await casesAlertsAuditLogService.handleAuditLogForAlertsUpdate(
           alertIds,
-          {
-            [updatedAssignment ? 'assignments' : 'reviewAssignments']: [
-              updatedAssignment ?? updatedReviewAssignment,
-            ],
-          }
+          { assignments }
         )
-        return 'OK'
+      } catch (error) {
+        alertUpdateSegment?.addError(error as Error)
+        throw error
       } finally {
         alertUpdateSegment?.close()
       }
+      return 'OK'
+    } else if (
+      event.httpMethod === 'PATCH' &&
+      event.resource === '/alerts/reviewAssignments' &&
+      event.body
+    ) {
+      const updateRequest = JSON.parse(
+        event.body
+      ) as AlertsReviewAssignmentsUpdateRequest
+
+      const alertIds = updateRequest?.alertIds
+      const { reviewAssignments } = updateRequest
+
+      if (!alertIds?.length) {
+        throw new BadRequest('Missing alertIds or empty alertIds array')
+      }
+
+      const alertUpdateSegment = await addNewSubsegment(
+        'Alert Service',
+        'Alerts Review Assignee Update'
+      )
+
+      try {
+        alertUpdateSegment?.addAnnotation('tenantId', tenantId)
+        alertUpdateSegment?.addAnnotation('alertIds', alertIds.toString())
+
+        await alertsService.updateReviewAssigneeToAlerts(
+          alertIds,
+          reviewAssignments
+        )
+
+        await casesAlertsAuditLogService.handleAuditLogForAlertsUpdate(
+          alertIds,
+          { reviewAssignments }
+        )
+      } catch (error) {
+        alertUpdateSegment?.addError(error as Error)
+        throw error
+      } finally {
+        alertUpdateSegment?.close()
+      }
+
+      return 'OK'
     } else if (
       event.httpMethod === 'GET' &&
       event.resource === '/alerts/{alertId}'
@@ -537,43 +631,32 @@ export const casesHandler = lambdaApi()(
       }
       const caseId = event.pathParameters.caseId as string
       const escalationRequest = JSON.parse(event.body) as CaseEscalationRequest
-      const accountsService = new AccountsService(
-        { auth0Domain },
-        { mongoDb: client }
-      )
+
       if (
         !escalationRequest.alertEscalations ||
         escalationRequest.alertEscalations.length === 0
       ) {
-        const allAccounts = (
-          await accountsService.getTenantAccounts(
-            await accountsService.getAccountTenant(userId)
-          )
-        ).filter((account) => !account.blocked)
         if (!escalationRequest.caseUpdateRequest) {
           throw new BadRequest('Case update request not provided')
         }
+
         const { assigneeIds } = await caseService.escalateCase(
           caseId,
-          escalationRequest.caseUpdateRequest,
-          allAccounts
+          escalationRequest.caseUpdateRequest
         )
+
         const response: CaseEscalationResponse = {
           childCaseId: undefined,
           assigneeIds,
         }
+
         return response
       } else if (escalationRequest.alertEscalations) {
-        const allAccounts = (
-          await accountsService.getTenantAccounts(
-            await accountsService.getAccountTenant(userId)
-          )
-        ).filter((account) => !account.blocked)
         const { childCaseId, assigneeIds } = await alertsService.escalateAlerts(
           caseId,
-          escalationRequest,
-          allAccounts
+          escalationRequest
         )
+
         const response: CaseEscalationResponse = {
           childCaseId,
           assigneeIds,

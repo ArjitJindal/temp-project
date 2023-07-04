@@ -141,13 +141,11 @@ describe('Simulation Beacon Batch Job Runner', () => {
     const cases = await caseRepository.getCases({})
     expect(cases.data).toHaveLength(8)
 
-    await caseRepository.updateCases(['C-1', 'C-3', 'C-5'], {
-      statusChange: {
-        userId: 'auth0|635f9aed8eca9c6258ce7f6e',
-        timestamp: 1681209082803,
-        reason: ['False positive'],
-        caseStatus: 'CLOSED',
-      },
+    await caseRepository.updateStatusOfCases(['C-1', 'C-3', 'C-5'], {
+      userId: 'auth0|635f9aed8eca9c6258ce7f6e',
+      timestamp: 1681209082803,
+      reason: ['False positive'],
+      caseStatus: 'CLOSED',
     })
 
     const casesAfterUpdate = await caseRepository.getCases({})

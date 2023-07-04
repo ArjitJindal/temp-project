@@ -1,8 +1,11 @@
+import { useMutation } from '@tanstack/react-query';
 import { TableItem } from './types';
 import { map, QueryResult } from '@/utils/queries/types';
-import { TableData, TableDataItem } from '@/components/library/Table/types';
-import { Case } from '@/apis';
+import { TableData, TableDataItem, TableRefType } from '@/components/library/Table/types';
+import { Case, CasesAssignmentsUpdateRequest, CasesReviewAssignmentsUpdateRequest } from '@/apis';
 import { PaginatedData } from '@/utils/queries/hooks';
+import { useApi } from '@/api';
+import { message } from '@/components/library/Message';
 
 export function useTableData(
   queryResult: QueryResult<PaginatedData<Case>>,
@@ -21,6 +24,7 @@ export function useTableData(
             otherReason: item.lastStatusChange?.otherReason ?? null,
           },
           ...item,
+          assignments: item.caseStatus === 'ESCALATED' ? item.reviewAssignments : item.assignments,
         };
         return dataItem;
       },
@@ -31,3 +35,52 @@ export function useTableData(
     };
   });
 }
+
+const reloadTable = (ref: React.RefObject<TableRefType>) => {
+  if (ref.current) {
+    ref.current.reload();
+  }
+};
+
+export const useCaseReviewAssignmentUpdateMutation = (ref: React.RefObject<TableRefType>) => {
+  const api = useApi();
+
+  return useMutation<unknown, Error, CasesReviewAssignmentsUpdateRequest>(
+    async ({ caseIds, reviewAssignments }) =>
+      await api.patchCasesReviewAssignment({
+        CasesReviewAssignmentsUpdateRequest: { caseIds, reviewAssignments },
+      }),
+    {
+      onSuccess: () => {
+        reloadTable(ref);
+        message.success('Review assignees updated successfully');
+      },
+      onError: () => {
+        message.fatal('Failed to update review assignees');
+      },
+    },
+  );
+};
+
+export const useCaseAssignmentUpdateMutation = (ref: React.RefObject<TableRefType>) => {
+  const api = useApi();
+
+  return useMutation<unknown, Error, CasesAssignmentsUpdateRequest>(
+    async ({ caseIds, assignments }) =>
+      await api.patchCasesAssignment({
+        CasesAssignmentsUpdateRequest: {
+          caseIds,
+          assignments,
+        },
+      }),
+    {
+      onSuccess: () => {
+        reloadTable(ref);
+        message.success('Assignees updated successfully');
+      },
+      onError: () => {
+        message.fatal('Failed to update assignees');
+      },
+    },
+  );
+};

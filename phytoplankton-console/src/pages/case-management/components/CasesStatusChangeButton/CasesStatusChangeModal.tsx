@@ -6,7 +6,7 @@ import StatusChangeModal, {
   Props as StatusChangeModalProps,
 } from '../StatusChangeModal';
 import { useApi } from '@/api';
-import { CaseUpdateRequest } from '@/apis';
+import { CaseStatusUpdate } from '@/apis';
 import { message } from '@/components/library/Message';
 import { getErrorMessage } from '@/utils/lang';
 import { useUsers } from '@/utils/user-utils';
@@ -20,8 +20,9 @@ export default function CasesStatusChangeModal(props: Props) {
     async (formValues) => {
       const hideMessage = message.loading(`Saving...`);
 
-      const updates: CaseUpdateRequest = {
+      const updates: CaseStatusUpdate = {
         caseStatus: props.newStatus,
+        reason: formValues?.reasons ?? [],
       };
 
       if (formValues) {
@@ -54,8 +55,8 @@ export default function CasesStatusChangeModal(props: Props) {
             `Case '${props.entityIds[0]}' is escalated successfully to ${assignees}. Please note that all 'Open' alert statuses are changed to 'Escalated'.`,
           );
         } else {
-          await api.postCases({
-            CasesUpdateRequest: {
+          await api.patchCasesStatusChange({
+            CasesStatusUpdateRequest: {
               caseIds: props.entityIds,
               updates: updates,
             },

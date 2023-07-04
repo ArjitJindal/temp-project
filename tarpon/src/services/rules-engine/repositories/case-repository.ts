@@ -4,6 +4,7 @@ import {
   Document,
   Filter,
   MongoClient,
+  UpdateFilter,
   UpdateResult,
 } from 'mongodb'
 import _ from 'lodash'
@@ -19,7 +20,6 @@ import {
   USERS_COLLECTION,
 } from '@/utils/mongoDBUtils'
 import { Comment } from '@/@types/openapi-internal/Comment'
-import { Assignment } from '@/@types/openapi-internal/Assignment'
 import { DefaultApiGetCaseListRequest } from '@/@types/openapi-internal/RequestParameters'
 import { EntityCounter } from '@/@types/openapi-internal/EntityCounter'
 import { CaseStatus } from '@/@types/openapi-internal/CaseStatus'
@@ -43,6 +43,7 @@ import {
 } from '@/utils/pagination'
 import { InternalTransaction } from '@/@types/openapi-internal/InternalTransaction'
 import { PRIORITYS } from '@/@types/openapi-internal-custom/Priority'
+import { Assignment } from '@/@types/openapi-internal/Assignment'
 
 export const MAX_TRANSACTION_IN_A_CASE = 1000
 
@@ -653,60 +654,58 @@ export class CaseRepository {
     return { total: await total, data: await cursor.toArray() }
   }
 
-  public async updateCases(
-    caseIds: string[],
-    updates: {
-      assignments?: Assignment[]
-      reviewAssignments?: Assignment[]
-      statusChange?: CaseStatusChange
+  public getUpdatePipeline(statusChange: CaseStatusChange): {
+    updatePipeline: UpdateFilter<Case>
+  } {
+    const updatePipeline: UpdateFilter<Case> = {
+      $set: {
+        caseStatus: statusChange?.caseStatus,
+        lastStatusChange: statusChange,
+      },
+      $push: {
+        statusChanges: statusChange,
+      },
     }
+
+    return { updatePipeline }
+  }
+
+  public async updateStatusOfCases(
+    caseIds: string[],
+    statusChange: CaseStatusChange
   ) {
     const db = this.mongoDb.db()
     const collection = db.collection<Case>(CASES_COLLECTION(this.tenantId))
-    const newCaseStatus = updates.statusChange?.caseStatus
-    const alertsSetUpdate = _.omitBy(
-      {
-        'alerts.$[alert].alertStatus': updates.statusChange?.caseStatus,
-        'alerts.$[alert].lastStatusChange': updates.statusChange,
-        'alerts.$[alert].reviewAssignments':
-          newCaseStatus === 'ESCALATED' ? updates.reviewAssignments : undefined,
-      },
-      _.isNil
-    )
-    const alertsPushUpdate = _.omitBy(
-      {
-        'alerts.$[alert].statusChanges': updates.statusChange,
-      },
-      _.isNil
-    )
 
     await collection.updateMany(
       { caseId: { $in: caseIds } },
-      {
-        $set: _.omitBy<Partial<Case>>(
-          {
-            assignments: updates.assignments,
-            reviewAssignments: updates.reviewAssignments,
-            caseStatus: updates.statusChange?.caseStatus,
-            lastStatusChange: updates.statusChange,
-            ...alertsSetUpdate,
-          },
-          _.isNil
-        ),
-        ...(updates.statusChange
-          ? {
-              $push: {
-                statusChanges: updates.statusChange,
-                ...alertsPushUpdate,
-              },
-            }
-          : {}),
-      },
-      {
-        arrayFilters: updates.statusChange
-          ? [{ 'alert.alertStatus': { $ne: 'CLOSED' } }]
-          : undefined,
-      }
+      this.getUpdatePipeline(statusChange).updatePipeline
+    )
+  }
+
+  public async updateCasesAssignments(
+    caseIds: string[],
+    assignments: Assignment[]
+  ): Promise<void> {
+    const db = this.mongoDb.db()
+    const collection = db.collection<Case>(CASES_COLLECTION(this.tenantId))
+
+    await collection.updateMany(
+      { caseId: { $in: caseIds } },
+      { $set: { assignments } }
+    )
+  }
+
+  public async updateReviewAssignmentsOfCases(
+    caseIds: string[],
+    reviewAssignments: Assignment[]
+  ): Promise<void> {
+    const db = this.mongoDb.db()
+    const collection = db.collection<Case>(CASES_COLLECTION(this.tenantId))
+
+    await collection.updateMany(
+      { caseId: { $in: caseIds } },
+      { $set: { reviewAssignments } }
     )
   }
 
@@ -739,6 +738,40 @@ export class CaseRepository {
         },
       ]
     )
+    return commentToSave
+  }
+
+  public async saveCasesComment(
+    caseIds: string[],
+    comment: Comment
+  ): Promise<Comment> {
+    const db = this.mongoDb.db()
+    const collection = db.collection<Case>(CASES_COLLECTION(this.tenantId))
+    const commentToSave: Comment = {
+      ...comment,
+      id: comment.id || uuidv4(),
+      createdAt: Date.now(),
+      updatedAt: Date.now(),
+    }
+
+    await collection.updateMany(
+      {
+        caseId: { $in: caseIds },
+      },
+      [
+        {
+          $set: {
+            comments: {
+              $ifNull: [
+                { $concatArrays: ['$comments', [commentToSave]] },
+                [commentToSave],
+              ],
+            },
+          },
+        },
+      ]
+    )
+
     return commentToSave
   }
 

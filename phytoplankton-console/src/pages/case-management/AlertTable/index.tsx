@@ -1,10 +1,19 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import pluralize from 'pluralize';
+import { useMutation } from '@tanstack/react-query';
 import { AssigneesDropdown } from '../components/AssigneesDropdown';
 import CreateCaseConfirmModal from './CreateCaseConfirmModal';
 import { usePaginatedQuery } from '@/utils/queries/hooks';
 import { useApi } from '@/api';
-import { Account, AlertListResponseItem, AlertStatus, Assignment, RuleInstance } from '@/apis';
+import {
+  Account,
+  AlertListResponseItem,
+  AlertStatus,
+  AlertsAssignmentsUpdateRequest,
+  AlertsReviewAssignmentsUpdateRequest,
+  Assignment,
+  RuleInstance,
+} from '@/apis';
 import { ALERT_LIST } from '@/utils/queries/keys';
 import QueryResultsTable from '@/components/common/QueryResultsTable';
 import { AllParams, TableColumn, TableData, TableRefType } from '@/components/library/Table/types';
@@ -41,15 +50,13 @@ import { neverReturn } from '@/utils/lang';
 import { SarButton as SarButton } from '@/components/Sar';
 
 export type AlertTableParams = AllParams<TableSearchParams>;
+
 const mergedColumns = (
   users: Record<string, Account>,
   hideUserColumns: boolean,
   hideAlertStatusFilters: boolean,
-  handleAssignToRequest: (
-    alertIds: Array<string>,
-    assignment: Assignment,
-    isReview: boolean,
-  ) => void,
+  handleAlertsAssignments: (updateRequest: AlertsAssignmentsUpdateRequest) => void,
+  handleAlertsReviewAssignments: (updateRequest: AlertsReviewAssignmentsUpdateRequest) => void,
   userId: string,
 ): TableColumn<TableAlertItem>[] => {
   const helper = new ColumnHelper<TableAlertItem>();
@@ -158,16 +165,30 @@ const mergedColumns = (
               assignments={assignments || []}
               editing={true}
               onChange={(assignees) => {
-                const assignments = {
+                const assignments: Assignment[] = assignees.map((assignee) => ({
+                  assigneeUserId: assignee,
                   assignedByUserId: userId,
-                  assigneeUserId: assignees[assignees.length - 1],
                   timestamp: Date.now(),
-                };
-                handleAssignToRequest(
-                  [entity.alertId as string],
-                  assignments,
-                  entity.alertStatus === 'ESCALATED',
-                );
+                }));
+
+                const alertId = entity?.alertId;
+
+                if (alertId == null) {
+                  message.fatal('Alert ID is null');
+                  return;
+                }
+
+                if (entity.alertStatus === 'ESCALATED') {
+                  handleAlertsReviewAssignments({
+                    alertIds: [alertId],
+                    reviewAssignments: assignments,
+                  });
+                } else {
+                  handleAlertsAssignments({
+                    alertIds: [alertId],
+                    assignments,
+                  });
+                }
               }}
             />
           );
@@ -222,6 +243,50 @@ export default function AlertTable(props: Props) {
       .flatMap((v) => v)
       .filter(Boolean);
   }, [selectedTxns]);
+
+  const assignmentsToMutationAlerts = useMutation<unknown, Error, AlertsAssignmentsUpdateRequest>(
+    async ({ alertIds, assignments }) => {
+      await api.alertsAssignment({
+        AlertsAssignmentsUpdateRequest: {
+          alertIds,
+          assignments,
+        },
+      });
+    },
+    {
+      onSuccess: () => {
+        message.success('Assignees updated successfully');
+        reloadTable();
+      },
+      onError: (error) => {
+        message.fatal(`Unable to assign alert: ${error.message}`);
+      },
+    },
+  );
+
+  const reviewAssignmentsToMutationAlerts = useMutation<
+    unknown,
+    Error,
+    AlertsReviewAssignmentsUpdateRequest
+  >(
+    async ({ alertIds, reviewAssignments }) => {
+      await api.alertsReviewAssignment({
+        AlertsReviewAssignmentsUpdateRequest: {
+          alertIds,
+          reviewAssignments,
+        },
+      });
+    },
+    {
+      onSuccess: () => {
+        message.success('Review assignees updated successfully');
+        reloadTable();
+      },
+      onError: (error) => {
+        message.fatal(`Unable to assign alert: ${error.message}`);
+      },
+    },
+  );
 
   const queryResults: QueryResult<TableData<TableAlertItem>> = usePaginatedQuery(
     ALERT_LIST(params),
@@ -327,38 +392,28 @@ export default function AlertTable(props: Props) {
     reloadTable();
   }, [params.alertStatus, reloadTable]);
 
-  const handleAssignTo = (account: Account, selectedEntities: string[], isReview: boolean) => {
-    const assignment = {
-      assigneeUserId: account.id,
-      assignedByUserId: user.userId,
-      timestamp: Date.now(),
-    };
-    handleAssignToRequest(selectedEntities, assignment, isReview);
-  };
+  const handleAlertAssignments = useCallback(
+    (updateRequest: AlertsAssignmentsUpdateRequest) => {
+      const { alertIds, assignments } = updateRequest;
 
-  const handleAssignToRequest = useCallback(
-    (alertIds: string[], assignment: Assignment, isReview: boolean) => {
-      const hideLoading = message.loading('Assigning alerts');
-      api
-        .alertsAssignee({
-          AlertsAssignmentUpdateRequest: {
-            alertIds: alertIds,
-            assignment: isReview ? undefined : assignment,
-            reviewAssignment: isReview ? assignment : undefined,
-          },
-        })
-        .then(() => {
-          message.success('Done!');
-          reloadTable();
-        })
-        .catch(() => {
-          message.success('Unable to reassign alerts!');
-        })
-        .finally(() => {
-          hideLoading();
-        });
+      assignmentsToMutationAlerts.mutate({
+        alertIds,
+        assignments,
+      });
     },
-    [reloadTable, api],
+    [assignmentsToMutationAlerts],
+  );
+
+  const handleAlertsReviewAssignments = useCallback(
+    (updateRequest: AlertsReviewAssignmentsUpdateRequest) => {
+      const { alertIds, reviewAssignments } = updateRequest;
+
+      reviewAssignmentsToMutationAlerts.mutate({
+        alertIds,
+        reviewAssignments,
+      });
+    },
+    [reviewAssignmentsToMutationAlerts],
   );
 
   const columns = useMemo(
@@ -367,10 +422,18 @@ export default function AlertTable(props: Props) {
         users,
         hideUserFilters,
         hideAlertStatusFilters,
-        handleAssignToRequest,
+        handleAlertAssignments,
+        handleAlertsReviewAssignments,
         user.userId,
       ),
-    [users, hideUserFilters, hideAlertStatusFilters, handleAssignToRequest, user.userId],
+    [
+      users,
+      hideUserFilters,
+      hideAlertStatusFilters,
+      handleAlertAssignments,
+      handleAlertsReviewAssignments,
+      user.userId,
+    ],
   );
 
   const rules = useRules();
@@ -457,18 +520,39 @@ export default function AlertTable(props: Props) {
             const selectedAlertStatuses = new Set(
               Object.values(selectedItems).map((item) => item.alertStatus),
             );
+
             if (selectedAlertStatuses.has('ESCALATED') && selectedAlertStatuses.size === 1) {
               return (
                 <AssignToButton
-                  ids={selectedIds}
-                  onSelect={(account, ids) => handleAssignTo(account, ids, true)}
+                  onSelect={(account) =>
+                    handleAlertsReviewAssignments({
+                      alertIds: selectedIds,
+                      reviewAssignments: [
+                        {
+                          assigneeUserId: account.id,
+                          assignedByUserId: user.userId,
+                          timestamp: Date.now(),
+                        },
+                      ],
+                    })
+                  }
                 />
               );
             } else if (!selectedAlertStatuses.has('ESCALATED')) {
               return (
                 <AssignToButton
-                  ids={selectedIds}
-                  onSelect={(account, ids) => handleAssignTo(account, ids, false)}
+                  onSelect={(account) =>
+                    handleAlertAssignments({
+                      alertIds: selectedIds,
+                      assignments: [
+                        {
+                          assigneeUserId: account.id,
+                          assignedByUserId: user.userId,
+                          timestamp: Date.now(),
+                        },
+                      ],
+                    })
+                  }
                 />
               );
             }

@@ -1,13 +1,10 @@
-import React, { useEffect, useMemo, useState } from 'react';
-import { useMutation, useQueryClient } from '@tanstack/react-query';
+import React, { useMemo } from 'react';
 import { TableSearchParams } from './types';
 import CaseTable from './CaseTable';
-import { message } from '@/components/library/Message';
 import { dayjs } from '@/utils/dayjs';
-import { Case, CaseStatus, CaseUpdateRequest, RuleInstance } from '@/apis';
+import { Case, CaseStatus, RuleInstance } from '@/apis';
 import { useApi } from '@/api';
-import { usePrevious } from '@/utils/hooks';
-import { PaginatedData, usePaginatedQuery } from '@/utils/queries/hooks';
+import { usePaginatedQuery } from '@/utils/queries/hooks';
 import { AllParams } from '@/components/library/Table/types';
 import { CASES_LIST } from '@/utils/queries/keys';
 import { useRules } from '@/utils/rules';
@@ -136,83 +133,6 @@ export default function CaseTableWrapper(props: {
     };
   });
 
-  const queryClient = useQueryClient();
-
-  const updateCasesMutation = useMutation<
-    unknown,
-    unknown,
-    { caseIds: string[]; updates: CaseUpdateRequest },
-    { previousState: CaseUpdateRequest | undefined }
-  >(
-    async (event) => {
-      const { caseIds, updates } = event;
-      await api.postCases({
-        CasesUpdateRequest: {
-          caseIds,
-          updates,
-        },
-      });
-    },
-    {
-      onMutate: async (event) => {
-        const { caseIds, updates } = event;
-        const cases = CASES_LIST({ ...params });
-        const previousState = queryClient.getQueryData<CaseUpdateRequest>(cases);
-        queryClient.setQueryData<PaginatedData<Case>>(
-          cases,
-          (prevState): PaginatedData<Case> | undefined => {
-            if (prevState == null) {
-              return prevState;
-            }
-            return {
-              ...prevState,
-              items:
-                prevState?.items.map((caseItem): Case => {
-                  if (caseItem.caseId == null || caseIds.indexOf(caseItem.caseId) === -1) {
-                    return caseItem;
-                  }
-                  return {
-                    ...caseItem,
-                    ...updates,
-                  };
-                }) ?? [],
-            };
-          },
-        );
-        return { previousState };
-      },
-      onError: (err, event, context) => {
-        queryClient.setQueryData(CASES_LIST({ ...params }), context?.previousState);
-      },
-    },
-  );
-
-  const [close, setClose] = useState(() => () => {});
-  const prevIsLoading = usePrevious(updateCasesMutation.isLoading);
-  useEffect(() => {
-    if (prevIsLoading !== updateCasesMutation.isLoading && prevIsLoading === true) {
-      if (updateCasesMutation.isLoading) {
-        close();
-        const hideMessage = message.loading(`Saving...`);
-        setClose(() => hideMessage);
-      } else {
-        close();
-        if (updateCasesMutation.isError) {
-          console.error(updateCasesMutation.error);
-          message.fatal('Unable to save!', updateCasesMutation.error);
-        } else {
-          message.success('Saved');
-        }
-      }
-    }
-  }, [
-    close,
-    prevIsLoading,
-    updateCasesMutation.isLoading,
-    updateCasesMutation.isError,
-    updateCasesMutation.error,
-  ]);
-
   const rules = useRules();
 
   const getRulesAndInstances = useMemo(() => {
@@ -230,9 +150,6 @@ export default function CaseTableWrapper(props: {
       params={params}
       onChangeParams={onChangeParams}
       queryResult={queryResults}
-      onUpdateCases={(caseIds, updates) => {
-        updateCasesMutation.mutate({ caseIds, updates });
-      }}
       rules={getRulesAndInstances}
     />
   );

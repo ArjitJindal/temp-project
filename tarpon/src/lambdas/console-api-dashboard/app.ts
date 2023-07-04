@@ -192,11 +192,14 @@ export const dashboardStatsHandler = lambdaApi()(
       const accounts: Account[] = await accountsService.getTenantAccounts(
         organization
       )
+
       const accountIds = accounts
         .filter((account) => account.role !== 'root')
         .map((account) => account.id)
+
       const { scope, startTimestamp, endTimestamp, caseStatus } =
         queryStringParameters
+
       const dashboardStatsRepository = new DashboardStatsRepository(tenantId, {
         mongoDb: client,
       })

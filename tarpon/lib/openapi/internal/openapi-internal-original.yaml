@@ -2771,10 +2771,10 @@ paths:
           application/json:
             schema:
               $ref: '#/components/schemas/AlertsStatusUpdateRequest'
-  /alerts/assignee:
+  /alerts/assignments:
     patch:
       summary: Alerts - Update
-      operationId: alerts-assignee
+      operationId: alerts-assignment
       responses:
         '200':
           description: OK
@@ -2785,7 +2785,22 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/AlertsAssignmentUpdateRequest'
+              $ref: '#/components/schemas/AlertsAssignmentsUpdateRequest'
+  /alerts/reviewAssignments:
+    patch:
+      summary: Alerts - Update
+      operationId: alerts-review-assignment
+      responses:
+        '200':
+          description: OK
+      x-flagright:
+        permissions:
+          - case-management:case-overview:write
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AlertsReviewAssignmentsUpdateRequest'
   '/alerts/{alertId}':
     parameters:
       - schema:
@@ -3070,9 +3085,10 @@ paths:
               $ref: '#/components/schemas/CaseClosingReasons'
           in: query
           name: filterCaseClosureReasons
-    post:
+  /cases/statusChange:
+    patch:
       summary: Cases - Update
-      operationId: post-cases
+      operationId: patch-cases-status-change
       responses:
         '200':
           description: OK
@@ -3083,7 +3099,37 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/CasesUpdateRequest'
+              $ref: '#/components/schemas/CasesStatusUpdateRequest'
+  /cases/assignments:
+    patch:
+      summary: Cases - Update
+      operationId: patch-cases-assignment
+      responses:
+        '200':
+          description: OK
+      x-flagright:
+        permissions:
+          - case-management:case-overview:write
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CasesAssignmentsUpdateRequest'
+  /cases/reviewAssignments:
+    patch:
+      summary: Cases - Update
+      operationId: patch-cases-reviewAssignment
+      responses:
+        '200':
+          description: OK
+      x-flagright:
+        permissions:
+          - case-management:case-overview:write
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CasesReviewAssignmentsUpdateRequest'
   '/cases/{caseId}':
     parameters:
       - schema:
@@ -4688,24 +4734,6 @@ components:
       required:
         - userId
         - timestamp
-    TransactionUpdateRequest:
-      title: TransactionUpdateRequest
-      type: object
-      properties:
-        status:
-          $ref: '#/components/schemas/RuleAction'
-        assignments:
-          type: array
-          items:
-            $ref: '#/components/schemas/Assignment'
-        reason:
-          type: array
-          items:
-            $ref: '#/components/schemas/CaseClosingReasons'
-        caseStatus:
-          $ref: '#/components/schemas/CaseStatus'
-        otherReason:
-          type: string
     UserUpdateRequest:
       title: UserUpdateRequest
       type: object
@@ -5424,7 +5452,6 @@ components:
         - Fraud
         - Anti-money laundering
         - Terrorist financing
-        - All alerts of this case are closed
         - User Blacklisted
         - User Terminated
     MissingUser:
@@ -5688,18 +5715,10 @@ components:
       required:
         - total
         - data
-    CaseUpdateRequest:
-      title: CaseUpdateRequest
+    CaseStatusUpdate:
+      title: CaseStatusUpdate
       type: object
       properties:
-        assignments:
-          type: array
-          items:
-            $ref: '#/components/schemas/Assignment'
-        reviewAssignments:
-          type: array
-          items:
-            $ref: '#/components/schemas/Assignment'
         reason:
           type: array
           items:
@@ -5716,8 +5735,54 @@ components:
           type: array
           items:
             $ref: '#/components/schemas/FileInfo'
+      required:
+        - reason
       x-examples: {}
       description: ''
+    CasesAssignmentsUpdateRequest:
+      title: CasesAssignmentsUpdateRequest
+      type: object
+      properties:
+        caseIds:
+          type: array
+          items:
+            type: string
+        assignments:
+          type: array
+          items:
+            $ref: '#/components/schemas/Assignment'
+      required:
+        - caseIds
+        - assignments
+    CasesReviewAssignmentsUpdateRequest:
+      title: CasesReviewAssignmentsUpdateRequest
+      type: object
+      properties:
+        caseIds:
+          type: array
+          items:
+            type: string
+        reviewAssignments:
+          type: array
+          items:
+            $ref: '#/components/schemas/Assignment'
+      required:
+        - caseIds
+        - reviewAssignments
+    CaseEscalationsUpdateRequest:
+      title: CaseEscalationsUpdateRequest
+      allOf:
+        - $ref: '#/components/schemas/CaseStatusUpdate'
+        - type: object
+          properties:
+            reviewAssignments:
+              type: array
+              items:
+                $ref: '#/components/schemas/Assignment'
+            assignments:
+              type: array
+              items:
+                $ref: '#/components/schemas/Assignment'
     AlertStatusUpdateRequest:
       title: AlertStatusUpdateRequest
       type: object
@@ -5738,22 +5803,41 @@ components:
           type: array
           items:
             $ref: '#/components/schemas/FileInfo'
-    AlertsAssignmentUpdateRequest:
-      title: AlertsAssignmentUpdateRequest
+      required:
+        - alertStatus
+        - reason
+    AlertsAssignmentsUpdateRequest:
+      title: AlertsAssignmentsUpdateRequest
       type: object
       properties:
         alertIds:
           type: array
           items:
             type: string
-        assignment:
-          $ref: '#/components/schemas/Assignment'
-        reviewAssignment:
-          $ref: '#/components/schemas/Assignment'
+        assignments:
+          type: array
+          items:
+            $ref: '#/components/schemas/Assignment'
       required:
         - alertIds
-    CasesUpdateRequest:
-      title: CasesUpdateRequest
+        - assignments
+    AlertsReviewAssignmentsUpdateRequest:
+      title: AlertsReviewAssignmentsUpdateRequest
+      type: object
+      properties:
+        alertIds:
+          type: array
+          items:
+            type: string
+        reviewAssignments:
+          type: array
+          items:
+            $ref: '#/components/schemas/Assignment'
+      required:
+        - alertIds
+        - reviewAssignments
+    CasesStatusUpdateRequest:
+      title: CasesStatusUpdateRequest
       type: object
       properties:
         caseIds:
@@ -5761,7 +5845,7 @@ components:
           items:
             type: string
         updates:
-          $ref: '#/components/schemas/CaseUpdateRequest'
+          $ref: '#/components/schemas/CaseStatusUpdate'
       required:
         - caseIds
         - updates
@@ -5812,7 +5896,7 @@ components:
         id: b20285c502568
       properties:
         caseUpdateRequest:
-          $ref: '#/components/schemas/CaseUpdateRequest'
+          $ref: '#/components/schemas/CaseEscalationsUpdateRequest'
         alertEscalations:
           type: array
           items:

@@ -46,15 +46,27 @@ export default function SubHeader(props: Props) {
     async (assignments): Promise<void> => {
       const hideMessage = message.loading(`Saving...`);
       try {
-        await api.postCases({
-          CasesUpdateRequest: {
-            caseIds: caseId ? [caseId] : [],
-            updates: {
-              assignments: isCaseInReview ? undefined : assignments,
-              reviewAssignments: isCaseInReview ? assignments : undefined,
+        if (caseId == null) {
+          message.fatal('Case ID is missing');
+          return;
+        }
+
+        if (isCaseInReview) {
+          await api.patchCasesReviewAssignment({
+            CasesReviewAssignmentsUpdateRequest: {
+              caseIds: [caseId],
+              reviewAssignments: assignments,
             },
-          },
-        });
+          });
+        } else {
+          await api.patchCasesAssignment({
+            CasesAssignmentsUpdateRequest: {
+              caseIds: [caseId],
+              assignments,
+            },
+          });
+        }
+
         message.success('Saved');
       } catch (error) {
         message.fatal(`Failed to save ${getErrorMessage(error)}`, error);

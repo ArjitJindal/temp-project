@@ -19,6 +19,7 @@ import { getAuth0Credentials } from '@/utils/auth0-utils'
 import { TenantCreationRequest } from '@/@types/openapi-internal/TenantCreationRequest'
 import { AccountPatchPayload } from '@/@types/openapi-internal/AccountPatchPayload'
 import { RoleService } from '@/services/roles'
+import { getContext } from '@/core/utils/context'
 import { ACCOUNTS_COLLECTION, getMongoDbClient } from '@/utils/mongoDBUtils'
 import { JWTAuthorizerResult } from '@/@types/jwt'
 
@@ -76,6 +77,14 @@ export class AccountsService {
   ) {
     this.config = config
     this.mongoDb = connections.mongoDb
+  }
+
+  public async getAllActiveAccounts(): Promise<Account[]> {
+    const userId = (getContext()?.user as Account).id
+
+    const tenant = await this.getAccountTenant(userId)
+    const accounts = await this.getTenantAccounts(tenant)
+    return accounts.filter((account) => !account.blocked)
   }
 
   private static organizationToTenant(organization: Organization): Tenant {

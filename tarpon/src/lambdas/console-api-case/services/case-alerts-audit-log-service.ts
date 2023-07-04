@@ -5,13 +5,17 @@ import {
   AuditLog,
   AuditLogSubtypeEnum,
 } from '@/@types/openapi-internal/AuditLog'
-import { CaseUpdateRequest } from '@/@types/openapi-internal/CaseUpdateRequest'
 import { Alert } from '@/@types/openapi-internal/Alert'
 import { publishAuditLog } from '@/services/audit-log'
 import { Case } from '@/@types/openapi-internal/Case'
 import { Comment } from '@/@types/openapi-internal/Comment'
 import { AuditLogActionEnum } from '@/@types/openapi-internal/AuditLogActionEnum'
-
+import { CaseStatusUpdate } from '@/@types/openapi-internal/CaseStatusUpdate'
+import { CasesAssignmentsUpdateRequest } from '@/@types/openapi-internal/CasesAssignmentsUpdateRequest'
+import { AlertStatusUpdateRequest } from '@/@types/openapi-internal/AlertStatusUpdateRequest'
+import { AlertsAssignmentsUpdateRequest } from '@/@types/openapi-internal/AlertsAssignmentsUpdateRequest'
+import { AlertsReviewAssignmentsUpdateRequest } from '@/@types/openapi-internal/AlertsReviewAssignmentsUpdateRequest'
+import { CasesReviewAssignmentsUpdateRequest } from '@/@types/openapi-internal/CasesReviewAssignmentsUpdateRequest'
 import { AlertsRepository } from '@/services/rules-engine/repositories/alerts-repository'
 import { CaseRepository } from '@/services/rules-engine/repositories/case-repository'
 
@@ -19,7 +23,7 @@ type AuditLogCreateRequest = {
   caseId: string
   logAction: AuditLogActionEnum
   oldImage?: any
-  newImage: any
+  newImage?: any
   caseDetails?: Case | null
   subtype?: AuditLogSubtypeEnum
 }
@@ -52,7 +56,11 @@ export class CasesAlertsAuditLogService {
 
   public async handleAuditLogForCaseUpdate(
     caseIds: string[],
-    updates: CaseUpdateRequest
+    updates: Partial<
+      CaseStatusUpdate &
+        CasesAssignmentsUpdateRequest &
+        CasesReviewAssignmentsUpdateRequest
+    >
   ): Promise<void> {
     for (const caseId of caseIds) {
       await this.handleCaseUpdateAuditLog(caseId, 'UPDATE', updates)
@@ -61,7 +69,11 @@ export class CasesAlertsAuditLogService {
 
   public async handleAuditLogForAlertsUpdate(
     alertIds: string[],
-    updates: CaseUpdateRequest
+    updates: Partial<
+      AlertStatusUpdateRequest &
+        AlertsAssignmentsUpdateRequest &
+        AlertsReviewAssignmentsUpdateRequest
+    >
   ): Promise<void> {
     const alertsRepository = new AlertsRepository(this.tenantId, {
       mongoDb: this.mongoDb,
@@ -99,6 +111,19 @@ export class CasesAlertsAuditLogService {
     })
   }
 
+  public async handleAuditLogForCommentDelete(
+    caseId: string,
+    comment: Comment
+  ): Promise<void> {
+    await this.createAuditLog({
+      caseId,
+      logAction: 'DELETE',
+      subtype: 'COMMENT',
+      oldImage: comment,
+      newImage: {},
+    })
+  }
+
   public async handleAuditLogForAlerts(
     caseId: string,
     oldAlerts: Alert[] | undefined,
@@ -127,7 +152,11 @@ export class CasesAlertsAuditLogService {
   private async handleCaseUpdateAuditLog(
     caseId: string,
     logAction: AuditLogActionEnum,
-    updates: CaseUpdateRequest
+    updates: Partial<
+      CaseStatusUpdate &
+        CasesAssignmentsUpdateRequest &
+        CasesReviewAssignmentsUpdateRequest
+    >
   ) {
     const caseRepository = new CaseRepository(this.tenantId, {
       mongoDb: this.mongoDb,
@@ -149,6 +178,13 @@ export class CasesAlertsAuditLogService {
       oldImage: oldImage,
       newImage: updates,
       caseDetails: caseEntity,
+    })
+  }
+
+  public async handleViewCase(caseId: string) {
+    await this.createAuditLog({
+      logAction: 'VIEW',
+      caseId,
     })
   }
 
