@@ -40,6 +40,7 @@ export function getNameForGlobalResource(name: string, config: Config) {
 export const StackConstants = {
   VPC_NAME: 'vpc',
   VPC_SECURITY_GROUP_ID: 'atlas-lambda-sg',
+  S3_SERVER_ACCESS_LOGS_BUCKET_NAME: 's3-server-access-logs',
   TARPON_DYNAMODB_TABLE_NAME: 'Tarpon',
   TARPON_RULE_DYNAMODB_TABLE_NAME: 'TarponRule',
   TRANSIENT_DYNAMODB_TABLE_NAME: 'Transient',

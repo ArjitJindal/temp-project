@@ -20,6 +20,7 @@ import { config as prodEU2Config } from '@lib/configs/config-prod-eu-2'
 import { config as prodUS1Config } from '@lib/configs/config-prod-us-1'
 import { Config } from '@lib/configs/config'
 import { DeployConfig } from '@lib/configs/config-deployment'
+import { createVpcLogGroup } from './cdk-utils/cdk-log-group-utils'
 
 const PIPELINE_NAME = 'tarpon-pipeline'
 const GENERATED_DIRS = [
@@ -161,6 +162,12 @@ export class CdkTarponPipelineStack extends cdk.Stack {
         },
       ],
     })
+
+    createVpcLogGroup(this, vpc, {
+      name: 'codebuild',
+      isDev: false,
+    })
+
     const getDeployCodeBuildProject = (config: Config) => {
       const env = config.stage + (config.region ? `:${config.region}` : '')
       const assumeRuleCommands = [

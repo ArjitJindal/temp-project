@@ -2,6 +2,7 @@ import { URL } from 'url'
 import * as cdk from 'aws-cdk-lib'
 import { CfnOutput, Duration, RemovalPolicy } from 'aws-cdk-lib'
 import { AttributeType, Table } from 'aws-cdk-lib/aws-dynamodb'
+import { Bucket, BucketEncryption, HttpMethods } from 'aws-cdk-lib/aws-s3'
 import { LambdaFunction as LambdaFunctionTarget } from 'aws-cdk-lib/aws-events-targets'
 import {
   ArnPrincipal,
@@ -32,8 +33,6 @@ import {
 } from 'aws-cdk-lib/aws-lambda'
 
 import { Construct } from 'constructs'
-import * as s3 from 'aws-cdk-lib/aws-s3'
-
 import { IStream, Stream } from 'aws-cdk-lib/aws-kinesis'
 import {
   KinesisEventSource,
@@ -79,6 +78,7 @@ import { CdkTarponConsoleLambdaStack } from './cdk-tarpon-nested-stacks/cdk-tarp
 import { createApiGateway } from './cdk-utils/cdk-apigateway-utils'
 import { createAPIGatewayThrottlingAlarm } from './cdk-utils/cdk-cw-alarms-utils'
 import { createFunction } from './cdk-utils/cdk-lambda-utils'
+import { createVpcLogGroup } from './cdk-utils/cdk-log-group-utils'
 
 const DEFAULT_SQS_VISIBILITY_TIMEOUT = Duration.seconds(
   DEFAULT_LAMBDA_TIMEOUT_SECONDS * 6
@@ -234,7 +234,7 @@ export class CdkTarponStack extends cdk.Stack {
 
     const s3BucketCors = [
       {
-        allowedMethods: [s3.HttpMethods.GET, s3.HttpMethods.PUT],
+        allowedMethods: [HttpMethods.GET, HttpMethods.PUT],
         allowedOrigins: ['*'],
         allowedHeaders: ['*'],
       },
@@ -255,60 +255,83 @@ export class CdkTarponStack extends cdk.Stack {
       StackConstants.S3_DEMO_MODE_BUCKET_NAME,
       config
     )
+
+    const serverAccessLogBucketName = getNameForGlobalResource(
+      StackConstants.S3_SERVER_ACCESS_LOGS_BUCKET_NAME,
+      config
+    )
+
+    const serverAccessLogBucket = new Bucket(this, serverAccessLogBucketName, {
+      bucketName: serverAccessLogBucketName,
+      cors: s3BucketCors,
+      removalPolicy:
+        config.stage === 'dev' ? RemovalPolicy.DESTROY : RemovalPolicy.RETAIN,
+      autoDeleteObjects: config.stage === 'dev',
+      encryption: BucketEncryption.S3_MANAGED,
+    })
+
     if (!isDevUserStack) {
-      s3ImportBucket = new s3.Bucket(this, importBucketName, {
+      s3ImportBucket = new Bucket(this, importBucketName, {
         bucketName: importBucketName,
         cors: s3BucketCors,
         removalPolicy:
           config.stage === 'dev' ? RemovalPolicy.DESTROY : RemovalPolicy.RETAIN,
         autoDeleteObjects: config.stage === 'dev',
-        encryption: s3.BucketEncryption.S3_MANAGED,
+        encryption: BucketEncryption.S3_MANAGED,
+        serverAccessLogsBucket: serverAccessLogBucket,
+        serverAccessLogsPrefix: `tarpon/${importBucketName}`,
       })
 
-      s3DocumentBucket = new s3.Bucket(this, documentBucketName, {
+      s3DocumentBucket = new Bucket(this, documentBucketName, {
         bucketName: documentBucketName,
         cors: s3BucketCors,
         removalPolicy:
           config.stage === 'dev' ? RemovalPolicy.DESTROY : RemovalPolicy.RETAIN,
         autoDeleteObjects: config.stage === 'dev',
-        encryption: s3.BucketEncryption.S3_MANAGED,
+        encryption: BucketEncryption.S3_MANAGED,
+        serverAccessLogsBucket: serverAccessLogBucket,
+        serverAccessLogsPrefix: `tarpon/${documentBucketName}`,
       })
 
-      s3TmpBucket = new s3.Bucket(this, tmpBucketName, {
+      s3TmpBucket = new Bucket(this, tmpBucketName, {
         bucketName: tmpBucketName,
         cors: s3BucketCors,
         removalPolicy:
           config.stage === 'dev' ? RemovalPolicy.DESTROY : RemovalPolicy.RETAIN,
         autoDeleteObjects: config.stage === 'dev',
-        encryption: s3.BucketEncryption.S3_MANAGED,
+        encryption: BucketEncryption.S3_MANAGED,
         lifecycleRules: [
           {
             abortIncompleteMultipartUploadAfter: cdk.Duration.days(1),
             expiration: cdk.Duration.days(1),
           },
         ],
+        serverAccessLogsBucket: serverAccessLogBucket,
+        serverAccessLogsPrefix: `tarpon/${tmpBucketName}`,
       })
 
-      s3demoModeBucket = new s3.Bucket(this, s3demoModeBucketName, {
+      s3demoModeBucket = new Bucket(this, s3demoModeBucketName, {
         bucketName: s3demoModeBucketName,
         cors: s3BucketCors,
         removalPolicy:
           config.stage === 'dev' ? RemovalPolicy.DESTROY : RemovalPolicy.RETAIN,
-        encryption: s3.BucketEncryption.S3_MANAGED,
+        encryption: BucketEncryption.S3_MANAGED,
+        serverAccessLogsBucket: serverAccessLogBucket,
+        serverAccessLogsPrefix: `tarpon/${s3demoModeBucketName}`,
       })
     } else {
-      s3ImportBucket = s3.Bucket.fromBucketName(
+      s3ImportBucket = Bucket.fromBucketName(
         this,
         importBucketName,
         importBucketName
       )
-      s3DocumentBucket = s3.Bucket.fromBucketName(
+      s3DocumentBucket = Bucket.fromBucketName(
         this,
         documentBucketName,
         documentBucketName
       )
-      s3TmpBucket = s3.Bucket.fromBucketName(this, tmpBucketName, tmpBucketName)
-      s3demoModeBucket = s3.Bucket.fromBucketName(
+      s3TmpBucket = Bucket.fromBucketName(this, tmpBucketName, tmpBucketName)
+      s3demoModeBucket = Bucket.fromBucketName(
         this,
         s3demoModeBucketName,
         s3demoModeBucketName
@@ -1167,6 +1190,11 @@ export class CdkTarponStack extends cdk.Stack {
           name: 'PublicSubnet1',
         },
       ],
+    })
+
+    createVpcLogGroup(this, vpc, {
+      name: 'MongoAtlas',
+      isDev: false,
     })
 
     const securityGroup = new SecurityGroup(

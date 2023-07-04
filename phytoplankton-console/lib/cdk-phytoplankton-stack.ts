@@ -43,6 +43,13 @@ export class CdkPhytoplanktonStack extends cdk.Stack {
     });
 
     // Content bucket
+    const serverAccessLogBucket = new s3.Bucket(this, 'ServerAccessLogBucketConsole', {
+      bucketName: 'console-' + config.SITE_DOMAIN.replace('.', '-') + '-access-log-' + config.stage,
+      removalPolicy: config.stage === 'dev' ? RemovalPolicy.DESTROY : RemovalPolicy.RETAIN,
+      autoDeleteObjects: config.stage === 'dev',
+      objectOwnership: s3.ObjectOwnership.BUCKET_OWNER_PREFERRED,
+    });
+
     const siteBucket = new s3.Bucket(this, 'SiteBucket', {
       bucketName: config.SITE_DOMAIN,
       websiteIndexDocument: 'index.html',
@@ -51,6 +58,8 @@ export class CdkPhytoplanktonStack extends cdk.Stack {
       blockPublicAccess: s3.BlockPublicAccess.BLOCK_ALL,
       removalPolicy: config.stage === 'dev' ? RemovalPolicy.DESTROY : RemovalPolicy.RETAIN,
       autoDeleteObjects: config.stage === 'dev',
+      serverAccessLogsBucket: serverAccessLogBucket,
+      serverAccessLogsPrefix: 'console/',
     });
 
     // Grant access to cloudfront
