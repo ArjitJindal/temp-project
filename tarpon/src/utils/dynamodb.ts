@@ -23,6 +23,7 @@ import {
   UpdateCommand,
 } from '@aws-sdk/lib-dynamodb'
 import { ConsumedCapacity, DynamoDBClient } from '@aws-sdk/client-dynamodb'
+import * as AWSXRay from 'aws-xray-sdk'
 import { getCredentialsFromEvent } from './credentials'
 import {
   DYNAMODB_READ_CAPACITY_METRIC,
@@ -31,6 +32,7 @@ import {
 import { logger } from '@/core/logger'
 import { addNewSubsegment } from '@/core/xray'
 import { getContext, publishMetric } from '@/core/utils/context'
+import { envIs, envIsNot } from '@/utils/env'
 
 function getAugmentedDynamoDBCommand(command: any): {
   type: 'READ' | 'WRITE' | null
@@ -127,14 +129,15 @@ export function getDynamoDbClientByEvent(
     APIGatewayEventLambdaAuthorizerContext<AWS.STS.Credentials>
   >
 ): DynamoDBDocumentClient {
-  const isLocal = process.env.ENV === 'local'
-  return getDynamoDbClient(isLocal ? undefined : getCredentialsFromEvent(event))
+  return getDynamoDbClient(
+    envIs('local') ? undefined : getCredentialsFromEvent(event)
+  )
 }
 
 export function getDynamoDbRawClient(
   credentials?: Credentials | CredentialsOptions
 ): DynamoDBClient {
-  const isLocal = process.env.ENV === 'local'
+  const isLocal = envIs('local')
   const rawClient = new DynamoDBClient({
     requestHandler: new NodeHttpHandler({
       socketTimeout: 10000, // this decreases the emfiles count, the Node.js default is 120000
@@ -168,9 +171,17 @@ export function getDynamoDbClient(
   options?: { retry?: boolean; metrics?: boolean }
 ): DynamoDBDocumentClient {
   const rawClient = getDynamoDbRawClient(credentials)
-  const client = DynamoDBDocumentClient.from(rawClient, {
-    marshallOptions: { removeUndefinedValues: true },
-  })
+  const client =
+    envIsNot('local') && envIsNot('test')
+      ? AWSXRay.captureAWSv3Client(
+          DynamoDBDocumentClient.from(rawClient, {
+            marshallOptions: { removeUndefinedValues: true },
+          })
+        )
+      : DynamoDBDocumentClient.from(rawClient, {
+          marshallOptions: { removeUndefinedValues: true },
+        })
+
   const { retry = !!process.env.ASSUME_ROLE_ARN, metrics = true } = {
     ...options,
   }

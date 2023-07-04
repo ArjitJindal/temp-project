@@ -1,11 +1,20 @@
-export function envIs(env: 'dev' | 'sandbox' | 'prod') {
+type Env = 'test' | 'local' | 'dev' | 'sandbox' | 'prod'
+export function envIs(env: Env) {
+  if (env === 'test') {
+    return process.env.CI === 'true'
+  }
+
   if (!process.env.ENV) {
     // We don't know, return false to be safe.
     return false
   }
   return process.env.ENV.startsWith(env)
 }
-export function envIsNot(env: 'dev' | 'sandbox' | 'prod') {
+export function envIsNot(env: Env) {
+  if (env === 'test') {
+    return process.env.CI !== 'true'
+  }
+
   if (!process.env.ENV) {
     // We don't know, return false to be safe.
     return false

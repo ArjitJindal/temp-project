@@ -201,6 +201,7 @@
     "abortcontroller-polyfill": "^1.7.5",
     "ajv": "8.11.0",
     "auth0": "^2.40.0",
+    "aws-xray-sdk": "^3.5.0",
     "aws-xray-sdk-core": "^3.3.8",
     "base-x": "^3.0.9",
     "cdktf": "^0.15.3",
