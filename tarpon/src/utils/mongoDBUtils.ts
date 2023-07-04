@@ -1,6 +1,7 @@
 import { StackConstants } from '@lib/constants'
 import {
   Collection,
+  CreateIndexesOptions,
   Db,
   Document,
   FindCursor,
@@ -451,6 +452,9 @@ export const createMongoDBCollections = async (
         destinationUserId: 1,
         timestamp: -1,
         _id: -1,
+      },
+      {
+        arsScore: 1,
       }
     )
 
@@ -477,36 +481,41 @@ export const createMongoDBCollections = async (
       // ignore already exists
     }
     const usersCollection = db.collection(USERS_COLLECTION(tenantId))
-    await usersCollection.createIndex({
-      type: 1,
-    })
-    await usersCollection.createIndex({
-      createdTimestamp: 1,
-    })
-    await usersCollection.createIndex({
-      createdTimestamp: -1,
-    })
-    await usersCollection.createIndex({
-      createdAt: 1,
-    })
-    await usersCollection.createIndex({
-      userId: 1,
-    })
-    await usersCollection.createIndex({
-      'userDetails.name.firstName': 1,
-    })
-    await usersCollection.createIndex({
-      'userDetails.name.middleName': 1,
-    })
-    await usersCollection.createIndex({
-      'userDetails.name.lastName': 1,
-    })
-    await usersCollection.createIndex({
-      'legalEntity.companyGeneralDetails.legalName': 1,
-    })
-    await usersCollection.createIndex({
-      'legalEntity.companyGeneralDetails.businessIndustry': 1,
-    })
+
+    const userIndexes = [
+      {
+        type: 1,
+      },
+      {
+        createdTimestamp: 1,
+      },
+      {
+        createdTimestamp: -1,
+      },
+      {
+        createdAt: 1,
+      },
+      {
+        userId: 1,
+      },
+      {
+        'userDetails.name.firstName': 1,
+      },
+      {
+        'userDetails.name.middleName': 1,
+      },
+      {
+        'userDetails.name.lastName': 1,
+      },
+      {
+        'legalEntity.companyGeneralDetails.legalName': 1,
+      },
+      {
+        'legalEntity.companyGeneralDetails.businessIndustry': 1,
+      },
+    ]
+
+    await syncIndexes(usersCollection, userIndexes)
 
     try {
       await db.createCollection(USER_EVENTS_COLLECTION(tenantId))
@@ -514,12 +523,16 @@ export const createMongoDBCollections = async (
       // ignore already exists
     }
     const userEventsCollection = db.collection(USER_EVENTS_COLLECTION(tenantId))
-    await userEventsCollection.createIndex({
-      eventId: 1,
-    })
-    await userEventsCollection.createIndex({
-      createdAt: 1,
-    })
+    const userEventsIndexes: Document[] = [
+      {
+        eventId: 1,
+      },
+      {
+        createdAt: 1,
+      },
+    ]
+
+    await syncIndexes(userEventsCollection, userEventsIndexes)
 
     try {
       await db.createCollection(TRANSACTION_EVENTS_COLLECTION(tenantId))
@@ -529,140 +542,77 @@ export const createMongoDBCollections = async (
     const transactionEventsCollection = db.collection(
       TRANSACTION_EVENTS_COLLECTION(tenantId)
     )
-    await transactionEventsCollection.createIndex({
-      transactionId: 1,
-      transactionState: 1,
-      timestamp: -1,
-    })
-    await transactionEventsCollection.createIndex({
-      eventId: 1,
-    })
-    await transactionEventsCollection.createIndex({
-      createdAt: 1,
-    })
+    const transactionEventsIndexes: Document[] = [
+      {
+        transactionId: 1,
+        transactionState: 1,
+        timestamp: -1,
+      },
+      {
+        eventId: 1,
+      },
+      {
+        createdAt: 1,
+      },
+    ]
+
+    await syncIndexes(transactionEventsCollection, transactionEventsIndexes)
     try {
       await db.createCollection(CASES_COLLECTION(tenantId))
     } catch (e) {
       // ignore already exists
     }
     const casesCollection = db.collection<Case>(CASES_COLLECTION(tenantId))
-    await casesCollection.createIndex({ availableAfterTimestamp: 1 })
-    await casesCollection.createIndex({ caseId: 1 })
-    await casesCollection.createIndex({
-      createdTimestamp: -1,
-    })
-    await casesCollection.createIndex({
-      caseStatus: 1,
-      createdTimestamp: 1,
-    })
-    await casesCollection.createIndex({ 'caseUsers.origin.userId': 1 })
-    await casesCollection.createIndex({ 'caseUsers.destination.userId': 1 })
-    await casesCollection.createIndex({
-      'caseUsers.origin.userId': 1,
-    })
-    await casesCollection.createIndex({
-      'caseUsers.destination.userId': 1,
-    })
-    await casesCollection.createIndex({
-      'caseTransactions.transactionId': 1,
-    })
-    await casesCollection.createIndex({ 'caseTransactions.status': 1 })
-    await casesCollection.createIndex({
-      'caseTransactions.destinationAmountDetails.transactionCurrency': 1,
-    })
-    await casesCollection.createIndex({
-      'caseTransactions.originAmountDetails.transactionCurrency': 1,
-    })
-    await casesCollection.createIndex({
-      'caseTransactions.destinationPaymentDetails.method': 1,
-    })
-    await casesCollection.createIndex({
-      'caseTransactions.originPaymentDetails.method': 1,
-    })
-    await casesCollection.createIndex({
-      'caseTransactions.timestamp': 1,
-    })
-    await casesCollection.createIndex({
-      'caseTransactions.originAmountDetails.transactionAmount': 1,
-    })
-    await casesCollection.createIndex({
-      'caseTransactions.destinationAmountDetails.transactionAmount': 1,
-    })
-    await casesCollection.createIndex({
-      'caseTransactions.originAmountDetails.country': 1,
-    })
-    await casesCollection.createIndex({
-      'caseTransactions.destinationAmountDetails.country': 1,
-    })
-    await casesCollection.createIndex({
-      'caseUsers.destination.legalEntity.companyGeneralDetails.businessIndustry': 1,
-    })
-    await casesCollection.createIndex({
-      'caseUsers.origin.legalEntity.companyGeneralDetails.businessIndustry': 1,
-    })
-    await casesCollection.createIndex({
-      'caseUsers.originUserDrsScore': 1,
-    })
-    await casesCollection.createIndex({
-      'caseUsers.destinationUserDrsScore': 1,
-    })
-    await casesCollection.createIndex({
-      'caseTransactions.arsScore': 1,
-    })
-    await casesCollection.createIndex({
-      'assignments.assigneeUserId': 1,
-    })
-    await casesCollection.createIndex({
-      'assignments.timestamp': 1,
-    })
-    await casesCollection.createIndex({
-      'statusChanges.timestamp': 1,
-    })
-    await casesCollection.createIndex({
-      'statusChanges.caseStatus': 1,
-    })
-    await casesCollection.createIndex({
-      'alerts.statusChanges.timestamp': 1,
-    })
-    await casesCollection.createIndex({
-      'alerts.statusChanges.caseStatus': 1,
-    })
-    await casesCollection.createIndex({
-      'lastStatusChange.timestamp': 1,
-    })
-    await casesCollection.createIndex({
-      'alerts._id': 1,
-    })
-    await casesCollection.createIndex({
-      'alerts.lastStatusChange.timestamp': 1,
-    })
-    await casesCollection.createIndex({
-      'alerts.alertId': 1,
-    })
-    await casesCollection.createIndex({
-      'alerts.alertStatus': 1,
-    })
-    await casesCollection.createIndex({
-      'alerts.alertStatus': 1,
-    })
-    await casesCollection.createIndex({
-      'alerts.assignments.assigneeUserId': 1,
-    })
-    await casesCollection.createIndex({
-      'alerts.assignments.timestamp': 1,
-    })
-    await casesCollection.createIndex({
-      'alerts.priority': 1,
-    })
-    await casesCollection.createIndex({
-      'alerts.createdTimestamp': 1,
-    })
-    await casesCollection.createIndex({
-      'alerts.numberOfTransactionsHit': 1,
-    })
-    await transactionCollection.createIndex({
-      arsScore: 1,
-    })
+    const casesIndexes: Document[] = [
+      { availableAfterTimestamp: 1 },
+      { caseId: 1 },
+      { createdTimestamp: -1 },
+      { caseStatus: 1, createdTimestamp: 1 },
+      { 'caseUsers.origin.userId': 1 },
+      { 'caseUsers.destination.userId': 1 },
+      { 'caseUsers.origin.userId': 1 },
+      { 'caseUsers.destination.userId': 1 },
+      { 'caseTransactions.transactionId': 1 },
+      { 'caseTransactions.status': 1 },
+      { 'caseTransactions.destinationAmountDetails.transactionCurrency': 1 },
+      { 'caseTransactions.originAmountDetails.transactionCurrency': 1 },
+      { 'caseTransactions.destinationPaymentDetails.method': 1 },
+      { 'caseTransactions.originPaymentDetails.method': 1 },
+      { 'caseTransactions.timestamp': 1 },
+      { 'caseTransactions.originAmountDetails.transactionAmount': 1 },
+      { 'caseTransactions.destinationAmountDetails.transactionAmount': 1 },
+      { 'caseTransactions.originAmountDetails.country': 1 },
+      { 'caseTransactions.destinationAmountDetails.country': 1 },
+      {
+        'caseUsers.destination.legalEntity.companyGeneralDetails.businessIndustry': 1,
+      },
+      {
+        'caseUsers.origin.legalEntity.companyGeneralDetails.businessIndustry': 1,
+      },
+      { 'caseUsers.originUserDrsScore': 1 },
+      { 'caseUsers.destinationUserDrsScore': 1 },
+      { 'caseTransactions.arsScore': 1 },
+      { 'assignments.assigneeUserId': 1 },
+      { 'assignments.timestamp': 1 },
+      { 'statusChanges.timestamp': 1 },
+      { 'statusChanges.caseStatus': 1 },
+      { 'alerts.statusChanges.timestamp': 1 },
+      { 'alerts.statusChanges.caseStatus': 1 },
+      { 'lastStatusChange.timestamp': 1 },
+      { 'alerts._id': 1 },
+      { 'alerts.lastStatusChange.timestamp': 1 },
+      { 'alerts.alertId': 1 },
+      { 'alerts.alertStatus': 1 },
+      { 'alerts.alertStatus': 1 },
+      { 'alerts.assignments.assigneeUserId': 1 },
+      { 'alerts.assignments.timestamp': 1 },
+      { 'alerts.priority': 1 },
+      { 'alerts.createdTimestamp': 1 },
+      { 'alerts.numberOfTransactionsHit': 1 },
+    ]
+
+    await syncIndexes(casesCollection, casesIndexes)
+
     try {
       await db.createCollection(AUDITLOG_COLLECTION(tenantId))
     } catch (e) {
@@ -671,10 +621,14 @@ export const createMongoDBCollections = async (
     const auditlogCollection = db.collection<AuditLog>(
       AUDITLOG_COLLECTION(tenantId)
     )
-    await auditlogCollection.createIndex({ auditlogId: 1 })
-    await auditlogCollection.createIndex({ timestamp: -1 })
-    await auditlogCollection.createIndex({ type: 1, action: 1 })
-    await auditlogCollection.createIndex({ entityId: 1 })
+    const auditlogIndexes: Document[] = [
+      { auditlogId: 1 },
+      { timestamp: -1 },
+      { type: 1, action: 1 },
+      { entityId: 1 },
+    ]
+
+    await syncIndexes(auditlogCollection, auditlogIndexes)
 
     try {
       await db.createCollection(SIMULATION_TASK_COLLECTION(tenantId))
@@ -684,10 +638,9 @@ export const createMongoDBCollections = async (
     const simulationTaskCollection = db.collection(
       SIMULATION_TASK_COLLECTION(tenantId)
     )
-    await simulationTaskCollection.createIndex({
-      type: 1,
-      createdAt: -1,
-    })
+    const simulationTaskIndexes: Document[] = [{ type: 1, createdAt: -1 }]
+
+    await syncIndexes(simulationTaskCollection, simulationTaskIndexes)
 
     try {
       await db.createCollection(SIMULATION_RESULT_COLLECTION(tenantId))
@@ -697,19 +650,22 @@ export const createMongoDBCollections = async (
     const simulationResultCollection = db.collection(
       SIMULATION_RESULT_COLLECTION(tenantId)
     )
-    await simulationResultCollection.createIndex({
-      taskId: 1,
-    })
+    const simulationResultIndexes: Document[] = [{ taskId: 1 }]
+
+    await syncIndexes(simulationResultCollection, simulationResultIndexes)
 
     try {
       await db.createCollection(ACCOUNTS_COLLECTION(tenantId))
     } catch (e) {
       // ignore already exists
     }
+    const accountsCollectionIndexes: Document[] = [{ id: 1 }]
 
-    await db
-      .collection(ACCOUNTS_COLLECTION(tenantId))
-      .createIndex({ id: 1 }, { unique: true })
+    await syncIndexes(
+      db.collection(ACCOUNTS_COLLECTION(tenantId)),
+      accountsCollectionIndexes,
+      { unique: true }
+    )
 
     try {
       await db.createCollection(KRS_SCORES_COLLECTION(tenantId))
@@ -717,27 +673,29 @@ export const createMongoDBCollections = async (
       // ignore already exists
     }
     const krsScoresCollection = db.collection(KRS_SCORES_COLLECTION(tenantId))
-    await krsScoresCollection.createIndex({
-      userId: 1,
-    })
+    const krsScoresIndexes: Document[] = [{ userId: 1 }]
+
+    await syncIndexes(krsScoresCollection, krsScoresIndexes)
+
     try {
       await db.createCollection(ARS_SCORES_COLLECTION(tenantId))
     } catch (e) {
       // ignore already exists
     }
     const arsScoresCollection = db.collection(ARS_SCORES_COLLECTION(tenantId))
-    await arsScoresCollection.createIndex({
-      transactionId: 1,
-    })
+    const arsScoresIndexes: Document[] = [{ transactionId: 1 }]
+
+    await syncIndexes(arsScoresCollection, arsScoresIndexes)
+
     try {
       await db.createCollection(DRS_SCORES_COLLECTION(tenantId))
     } catch (e) {
       // ignore already exists
     }
     const drsScoresCollection = db.collection(DRS_SCORES_COLLECTION(tenantId))
-    await drsScoresCollection.createIndex({
-      userId: 1,
-    })
+    const drsScoresIndexes: Document[] = [{ userId: 1 }]
+
+    await syncIndexes(drsScoresCollection, drsScoresIndexes)
 
     try {
       await db.createCollection(WEBHOOK_COLLECTION(tenantId))
@@ -747,9 +705,9 @@ export const createMongoDBCollections = async (
     const webhookCollection = db.collection<WebhookConfiguration>(
       WEBHOOK_COLLECTION(tenantId)
     )
-    await webhookCollection.createIndex({
-      events: 1,
-    })
+    const webhookIndexes: Document[] = [{ events: 1 }]
+
+    await syncIndexes(webhookCollection, webhookIndexes)
 
     try {
       await db.createCollection(WEBHOOK_DELIVERY_COLLECTION(tenantId))
@@ -759,14 +717,12 @@ export const createMongoDBCollections = async (
     const webhookDeliveryCollection = db.collection<WebhookDeliveryAttempt>(
       WEBHOOK_COLLECTION(tenantId)
     )
-    await webhookDeliveryCollection.createIndex({
-      webhookId: 1,
-      requestStartedAt: -1,
-    })
-    await webhookDeliveryCollection.createIndex({
-      deliveryTaskId: 1,
-      deliveredAt: 1,
-    })
+    const webhookDeliveryIndexes: Document[] = [
+      { webhookId: 1, requestStartedAt: -1 },
+      { deliveryTaskId: 1, deliveredAt: 1 },
+    ]
+
+    await syncIndexes(webhookDeliveryCollection, webhookDeliveryIndexes)
   } catch (e) {
     logger.error(`Error in creating MongoDB collections: ${e}`)
   }
@@ -780,12 +736,12 @@ export const createMongoDBCollections = async (
     SANCTIONS_SEARCHES_COLLECTION(tenantId)
   )
 
-  await sanctionsSearchesCollection.createIndex({
-    createdAt: 1,
-  })
-  await sanctionsSearchesCollection.createIndex({
-    'response.rawComplyAdvantageResponse.content.data.id': 1,
-  })
+  const sanctionsSearchesIndexes: Document[] = [
+    { createdAt: 1 },
+    { 'response.rawComplyAdvantageResponse.content.data.id': 1 },
+  ]
+
+  await syncIndexes(sanctionsSearchesCollection, sanctionsSearchesIndexes)
 
   try {
     await db.createCollection(NARRATIVE_TEMPLATE_COLLECTION(tenantId))
@@ -797,26 +753,26 @@ export const createMongoDBCollections = async (
     NARRATIVE_TEMPLATE_COLLECTION(tenantId)
   )
 
-  await narrativeTemplateCollection.createIndex({
-    id: 1,
-  })
-  await narrativeTemplateCollection.createIndex({
-    name: 1,
-  })
-  await narrativeTemplateCollection.createIndex({
-    description: 1,
-  })
-  await narrativeTemplateCollection.createIndex({
-    createdAt: 1,
-  })
+  const narrativeTemplateIndexes: Document[] = [
+    { id: 1 },
+    { name: 1 },
+    { description: 1 },
+    { createdAt: 1 },
+  ]
+
+  await syncIndexes(narrativeTemplateCollection, narrativeTemplateIndexes)
 
   try {
     const dashboardTeamCasesStatsHourly = await db.createCollection(
       DASHBOARD_TEAM_CASES_STATS_HOURLY(tenantId)
     )
 
-    await dashboardTeamCasesStatsHourly.createIndex(
+    const dashboardTeamCasesStatsHourlyIndexes = [
       { date: -1, accountId: 1, status: 1 },
+    ]
+    await syncIndexes(
+      dashboardTeamCasesStatsHourly,
+      dashboardTeamCasesStatsHourlyIndexes,
       { unique: true }
     )
   } catch (e) {
@@ -827,9 +783,12 @@ export const createMongoDBCollections = async (
     const dashboardTeamAlertsStatsHourly = await db.createCollection(
       DASHBOARD_TEAM_ALERTS_STATS_HOURLY(tenantId)
     )
-
-    await dashboardTeamAlertsStatsHourly.createIndex(
+    const dashboardTeamAlertsStatsHourlyIndexes: Document[] = [
       { date: -1, accountId: 1, status: 1 },
+    ]
+    await syncIndexes(
+      dashboardTeamAlertsStatsHourly,
+      dashboardTeamAlertsStatsHourlyIndexes,
       { unique: true }
     )
   } catch (e) {
@@ -850,7 +809,8 @@ export async function allCollections(tenantId: string, db: Db) {
 
 export async function syncIndexes<T>(
   collection: Collection<T>,
-  indexes: Document[]
+  indexes: Document[],
+  options?: CreateIndexesOptions
 ) {
   const currentIndexes = await collection.indexes()
 
@@ -879,7 +839,10 @@ export async function syncIndexes<T>(
     logger.info(`Creating indexes...`)
     await exponentialRetry(
       async () =>
-        await collection.createIndexes(toCreate.map((key) => ({ key })))
+        await collection.createIndexes(
+          toCreate.map((key) => ({ key })),
+          options
+        )
     )
   }
   if (toCreate.length > 64) {
