@@ -29,7 +29,6 @@ import { Priority } from '@/@types/openapi-internal/Priority'
 import { User } from '@/@types/openapi-public/User'
 import { Business } from '@/@types/openapi-public/Business'
 import { Tag } from '@/@types/openapi-public/Tag'
-import { RulesHitPerCase } from '@/@types/openapi-internal/RulesHitPerCase'
 import { RiskRepository } from '@/services/risk-scoring/repositories/risk-repository'
 import {
   getRiskLevelFromScore,
@@ -815,66 +814,6 @@ export class CaseRepository {
       .toArray()
 
     return cases
-  }
-
-  private getCaseRulesMongoPipeline(caseFilter: string) {
-    return [
-      {
-        $match: {
-          caseId: prefixRegexMatchFilter(caseFilter),
-        },
-      },
-      {
-        $unwind: {
-          path: '$caseTransactions',
-          preserveNullAndEmptyArrays: false,
-        },
-      },
-      {
-        $unwind: {
-          path: '$caseTransactions.hitRules',
-          preserveNullAndEmptyArrays: false,
-        },
-      },
-      {
-        $group: {
-          _id: '$caseTransactions.hitRules.ruleInstanceId',
-          transactionsCount: {
-            $sum: 1,
-          },
-          ruleName: {
-            $first: '$caseTransactions.hitRules.ruleName',
-          },
-          ruleAction: {
-            $first: '$caseTransactions.hitRules.ruleAction',
-          },
-          ruleDescription: {
-            $first: '$caseTransactions.hitRules.ruleDescription',
-          },
-          ruleInstanceId: {
-            $first: '$caseTransactions.hitRules.ruleInstanceId',
-          },
-          ruleId: {
-            $first: '$caseTransactions.hitRules.ruleId',
-          },
-        },
-      },
-    ]
-  }
-
-  private getCaseRulesCursor(caseFilter: string) {
-    const pipeline = this.getCaseRulesMongoPipeline(caseFilter)
-
-    const db = this.mongoDb.db()
-    const collection = db.collection<Case>(CASES_COLLECTION(this.tenantId))
-    return collection.aggregate<RulesHitPerCase>(pipeline, {
-      allowDiskUse: true,
-    })
-  }
-
-  public async getCaseRules(caseId: string): Promise<Array<RulesHitPerCase>> {
-    const cursor = this.getCaseRulesCursor(caseId)
-    return await cursor.toArray()
   }
 
   private getCaseRuleTransactionsMongoPipeline(

@@ -3222,32 +3222,6 @@ paths:
         '404':
           description: Not found
       description: ''
-  '/cases/{caseId}/rules':
-    parameters:
-      - schema:
-          type: string
-        name: caseId
-        in: path
-        required: true
-    get:
-      summary: Get rules related to case
-      operationId: get-case-rules
-      x-flagright:
-        permissions:
-          - case-management:case-details:read
-          - rules:my-rules:read
-      responses:
-        '200':
-          description: OK
-          content:
-            application/json:
-              schema:
-                type: array
-                items:
-                  $ref: '#/components/schemas/RulesHitPerCase'
-        '404':
-          description: Not found
-      description: ''
   '/cases/{caseId}/comments':
     parameters:
       - schema:
@@ -6483,15 +6457,6 @@ components:
       required:
         - type
         - action
-    RulesHitPerCase:
-      allOf:
-        - $ref: ../public/openapi-public-original.yaml#/components/schemas/HitRulesDetails
-        - type: object
-          properties:
-            transactionsCount:
-              type: number
-          required:
-            - transactionsCount
     RuleCaseTransactionItem:
       title: RuleCaseTransactionItem
       x-stoplight:

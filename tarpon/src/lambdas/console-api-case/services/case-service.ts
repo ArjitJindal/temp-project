@@ -13,7 +13,6 @@ import { DefaultApiGetCaseListRequest } from '@/@types/openapi-internal/RequestP
 import { CaseRepository } from '@/services/rules-engine/repositories/case-repository'
 import { CasesListResponse } from '@/@types/openapi-internal/CasesListResponse'
 import { CaseStatusChange } from '@/@types/openapi-internal/CaseStatusChange'
-import { RulesHitPerCase } from '@/@types/openapi-internal/RulesHitPerCase'
 import { PaginationParams } from '@/utils/pagination'
 import { DashboardStatsRepository } from '@/lambdas/console-api-dashboard/repositories/dashboard-stats-repository'
 import { addNewSubsegment } from '@/core/xray'
@@ -278,10 +277,6 @@ export class CaseService extends CaseAlertsCommonService {
         this.getAugmentedCase(caseEntity)) ||
       null
     )
-  }
-
-  public async getCaseRules(caseId: string): Promise<Array<RulesHitPerCase>> {
-    return await this.caseRepository.getCaseRules(caseId)
   }
 
   public async getCaseRuleTransactions(

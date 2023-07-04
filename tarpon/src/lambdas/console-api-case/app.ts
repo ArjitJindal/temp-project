@@ -247,12 +247,6 @@ export const casesHandler = lambdaApi()(
       return saveCommentResult
     } else if (
       event.httpMethod === 'GET' &&
-      event.resource === '/cases/{caseId}/rules' &&
-      event.pathParameters?.caseId
-    ) {
-      return await caseService.getCaseRules(event.pathParameters.caseId)
-    } else if (
-      event.httpMethod === 'GET' &&
       event.resource ===
         '/cases/{caseId}/rule/{rulesInstanceId}/transactions' &&
       event.pathParameters?.caseId &&
