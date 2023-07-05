@@ -3,7 +3,6 @@ import cn from 'clsx';
 import * as TanTable from '@tanstack/react-table';
 import _ from 'lodash';
 import { Spin } from 'antd';
-import { Row } from '@tanstack/table-core/src/types';
 import s from './index.module.less';
 import {
   AllParams,
@@ -46,7 +45,7 @@ export interface Props<Item extends object, Params extends object = CommonParams
   rowKey: FieldAccessor<Item>;
   data: TableData<Item> | AsyncResource<TableData<Item>>;
   pagination?: boolean | 'HIDE_FOR_ONE_PAGE';
-  selection?: boolean | ((row: Row<TableRow<Item>>) => boolean);
+  selection?: boolean | ((row: TanTable.Row<TableRow<Item>>) => boolean);
   selectionActions?: SelectionAction<Item, Params>[];
   onSelect?: (ids: string[]) => void;
   sizingMode?: 'FULL_WIDTH' | 'SCROLL';
@@ -545,11 +544,18 @@ function getSizingProps<Item>(column: TanTable.Column<Item>, rowHeightMode: RowH
 export default function <Item extends object, Params extends object = CommonParams>(
   props: Props<Item, Params>,
 ) {
-  const { tableId, extraFilters, columns, partiallySelectedIds, externalState = null } = props;
+  const {
+    tableId,
+    extraFilters,
+    columns,
+    partiallySelectedIds,
+    externalState = null,
+    selectionInfo,
+  } = props;
 
   return (
     <ExternalStateContext.Provider value={{ value: externalState }}>
-      <AdditionalContext.Provider value={{ partiallySelectedIds }}>
+      <AdditionalContext.Provider value={{ partiallySelectedIds, selectionInfo }}>
         <PersistedSettingsProvider
           tableId={tableId ?? null}
           columns={columns}

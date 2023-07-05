@@ -1,7 +1,9 @@
 import { createContext } from 'react';
+import { SelectionInfo } from '../types';
 
 interface AdditionalContextValue {
   partiallySelectedIds?: string[];
+  selectionInfo?: SelectionInfo;
 }
 
 /*

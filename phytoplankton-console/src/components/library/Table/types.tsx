@@ -40,6 +40,7 @@ export type SelectionActionProps<Item, Params extends object | unknown> = {
   params: Params;
   setParams: (cb: (oldState: AllParams<Params>) => AllParams<Params>) => void;
   onResetSelection: () => void;
+  isDisabled: boolean;
 };
 
 export type SelectionAction<Item, Params extends object | unknown> = (
@@ -285,3 +286,10 @@ export type TableRefType = {
   toggleExpanded: (value?: boolean) => void;
   toggleSelected: (value?: boolean) => void;
 };
+
+/* Selection Info */
+
+export interface SelectionInfo {
+  entityName: string;
+  entityCount: number;
+}

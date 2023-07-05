@@ -453,14 +453,6 @@ export default function AlertTable(props: Props) {
     [isPulseEnabled, ruleOptions, hideUserFilters],
   );
 
-  let sarButton: any = () => null;
-  if (caseId && sarEnabled) {
-    sarButton = () =>
-      selectedTransactionIds.length > 0 && (
-        <SarButton caseId={caseId} transactionIds={selectedTransactionIds} />
-      );
-  }
-
   const getSelectionInfo = () => {
     const selectedTransactions = [
       ...new Set(
@@ -511,8 +503,28 @@ export default function AlertTable(props: Props) {
         pagination={isEmbedded ? 'HIDE_FOR_ONE_PAGE' : true}
         selectionInfo={getSelectionInfo()}
         selectionActions={[
-          sarButton,
-          ({ selectedIds, selectedItems }) => {
+          ({ isDisabled }) => {
+            if (!sarEnabled) {
+              return;
+            }
+
+            if (selectedTransactionIds.length) {
+              return;
+            }
+
+            if (!caseId) {
+              return;
+            }
+
+            return (
+              <SarButton
+                caseId={caseId}
+                transactionIds={selectedTransactionIds}
+                isDisabled={isDisabled}
+              />
+            );
+          },
+          ({ selectedIds, selectedItems, isDisabled }) => {
             if (selectedTransactionIds.length) {
               return;
             }
@@ -536,6 +548,7 @@ export default function AlertTable(props: Props) {
                       ],
                     })
                   }
+                  isDisabled={isDisabled}
                 />
               );
             } else if (!selectedAlertStatuses.has('ESCALATED')) {
@@ -553,11 +566,12 @@ export default function AlertTable(props: Props) {
                       ],
                     })
                   }
+                  isDisabled={isDisabled}
                 />
               );
             }
           },
-          ({ selectedIds, selectedItems, params }) => {
+          ({ selectedIds, selectedItems, params, isDisabled }) => {
             const selectedAlertStatuses = [
               ...new Set(
                 Object.values(selectedItems).map((item) =>
@@ -599,11 +613,12 @@ export default function AlertTable(props: Props) {
                     ESCALATED: { status: 'OPEN', actionLabel: 'Send back' },
                     CLOSED: { status: 'ESCALATED', actionLabel: 'Escalate' },
                   }}
+                  isDisabled={isDisabled}
                 />
               )
             );
           },
-          ({ selectedIds, selectedItems, params }) => {
+          ({ selectedIds, selectedItems, params, isDisabled }) => {
             const selectedStatuses = [
               ...new Set(
                 Object.values(selectedItems).map((item) => {
@@ -624,6 +639,7 @@ export default function AlertTable(props: Props) {
                 onSaved={reloadTable}
                 status={status}
                 caseId={params.caseId}
+                isDisabled={isDisabled}
               />
             ) : null;
           },

@@ -5,6 +5,8 @@ import { map, QueryResult } from '@/utils/queries/types';
 import { TableDataItem } from '@/components/library/Table/types';
 import { PaginatedData } from '@/utils/queries/hooks';
 
+export const DEFAULT_BULK_ACTIONS_LIMIT = 20;
+
 export const ResizableTitle = (
   props: React.HTMLAttributes<any> & {
     onResize: (e: React.SyntheticEvent<Element>, data: ResizeCallbackData) => void;

@@ -404,6 +404,7 @@ export default function (): JSX.Element {
                       onClick={() => {
                         props.onResetSelection();
                       }}
+                      isDisabled={props.isDisabled}
                     >
                       Print
                     </Button>

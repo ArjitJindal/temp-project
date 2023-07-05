@@ -12,7 +12,6 @@ import {
   getPaginationRowModel,
   RowSelectionState,
 } from '@tanstack/react-table';
-import { Row } from '@tanstack/table-core/src/types';
 import {
   AllParams,
   applyFieldAccessor,
@@ -105,7 +104,7 @@ export function useTanstackTable<
   selectedIds?: string[];
   partiallySelectedIds?: string[];
   onSelect?: (ids: string[]) => void;
-  isRowSelectionEnabled: boolean | ((row: Row<TableRow<Item>>) => boolean);
+  isRowSelectionEnabled: boolean | ((row: TanTable.Row<TableRow<Item>>) => boolean);
   isExpandable: boolean | ((row: TableRow<Item>) => boolean);
   isSortable: boolean;
   defaultSorting?: SortingParamsItem;
@@ -308,7 +307,7 @@ export function useTanstackTable<
     },
 
     getCoreRowModel: TanTable.getCoreRowModel(),
-    getRowCanExpand: (row) => {
+    getRowCanExpand: (row: TanTable.Row<TableRow<Item>>) => {
       return typeof isExpandable === 'boolean' ? isExpandable : isExpandable(row.original);
     },
     manualSorting: isSortable,
@@ -318,8 +317,6 @@ export function useTanstackTable<
     enablePinning: true,
     enableHiding: true,
     pageCount: getPageCount(params, data),
-    // eslint-disable-next-line @typescript-eslint/ban-ts-comment
-    // @ts-ignore
     enableRowSelection: isRowSelectionEnabled,
     enableExpanding: isAnythingExpandable,
     state: {

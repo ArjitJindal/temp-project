@@ -8,6 +8,7 @@ import { useUsers } from '@/utils/user-utils';
 
 interface Props {
   onSelect: (account: Account) => void;
+  isDisabled?: boolean;
 }
 
 export default function AssignToButton(props: Props) {
@@ -38,6 +39,7 @@ export default function AssignToButton(props: Props) {
         onClick={() => {}}
         testName="update-assignment-button"
         requiredPermissions={['case-management:case-overview:write']}
+        isDisabled={props.isDisabled}
       >
         Assign to
       </Button>

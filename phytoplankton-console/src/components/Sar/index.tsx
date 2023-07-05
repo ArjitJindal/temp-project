@@ -19,9 +19,11 @@ import { getErrorMessage } from '@/utils/lang';
 export function SarButton({
   caseId,
   transactionIds,
+  isDisabled,
 }: {
   caseId: string;
   transactionIds: string[];
+  isDisabled?: boolean;
 }) {
   const api = useApi();
   const queryResult = useQuery<ReportTypesResponse>(REPORT_SCHEMAS(), () => {
@@ -50,7 +52,7 @@ export function SarButton({
 
   return (
     <>
-      <Button type="TETRIARY" onClick={() => setIsModalVisible(true)}>
+      <Button type="TETRIARY" onClick={() => setIsModalVisible(true)} isDisabled={isDisabled}>
         Generate report
       </Button>
       <Modal

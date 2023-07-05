@@ -1,10 +1,11 @@
 import * as TanTable from '@tanstack/react-table';
-import React from 'react';
-import { CommonParams, SortingParams, TableRow } from './types';
+import React, { useMemo } from 'react';
+import { CommonParams, SelectionInfo, SortingParams, TableRow } from './types';
 import Checkbox from '@/components/library/Checkbox';
 import ExpandIcon from '@/components/library/ExpandIcon';
 import { PaginationParams } from '@/utils/queries/hooks';
 import { AdditionalContext } from '@/components/library/Table/internal/partialySelectedRows';
+import { DEFAULT_BULK_ACTIONS_LIMIT } from '@/utils/table-utils';
 
 export const DEFAULT_PAGE_SIZE = 20;
 export const DEFAULT_PAGINATION_ENABLED = true;
@@ -46,20 +47,61 @@ export const SELECT_COLUMN: TanTable.ColumnDef<unknown> = {
       />
     );
   },
-  cell: ({ row }) => (
+  cell: ({ row, table }) => (
     <AdditionalContext.Consumer>
-      {({ partiallySelectedIds }) => (
-        <Checkbox
-          value={partiallySelectedIds?.includes(row.id) ? undefined : row.getIsSelected()}
-          isDisabled={!row.getCanSelect()}
-          onChange={(newValue) => {
-            row.toggleSelected(newValue);
-          }}
-          testName="row-table"
+      {({ partiallySelectedIds, selectionInfo }) => (
+        <ExpandCheckbox
+          row={row}
+          table={table}
+          partiallySelectedIds={partiallySelectedIds}
+          selectionInfo={selectionInfo}
         />
       )}
     </AdditionalContext.Consumer>
   ),
+};
+
+const ExpandCheckbox = ({
+  row,
+  table,
+  partiallySelectedIds,
+  selectionInfo,
+}: {
+  row: TanTable.Row<unknown>;
+  table: TanTable.Table<unknown>;
+  partiallySelectedIds?: string[];
+  selectionInfo?: SelectionInfo;
+}) => {
+  const count = useMemo(() => {
+    return selectionInfo?.entityCount ?? Object.keys(table.getState().rowSelection).length;
+  }, [selectionInfo, table]);
+
+  const isDisabled = useMemo(() => {
+    if (!row.getCanSelect()) {
+      return true;
+    }
+
+    if (row.getIsSelected()) {
+      return false;
+    }
+
+    if (count >= DEFAULT_BULK_ACTIONS_LIMIT) {
+      return true;
+    }
+
+    return false;
+  }, [row, count]);
+
+  return (
+    <Checkbox
+      value={partiallySelectedIds?.includes(row.id) ? undefined : row.getIsSelected()}
+      isDisabled={isDisabled}
+      onChange={(newValue) => {
+        row.toggleSelected(newValue);
+      }}
+      testName="row-table"
+    />
+  );
 };
 
 export const EXPAND_COLUMN: TanTable.ColumnDef<TableRow<unknown>> = {

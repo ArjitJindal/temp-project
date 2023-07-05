@@ -3,6 +3,7 @@ import * as TanTable from '@tanstack/react-table';
 import { AllParams, SelectionAction, TableRow } from '@/components/library/Table/types';
 import { usePrevious } from '@/utils/hooks';
 import { isEqual } from '@/utils/lang';
+import { DEFAULT_BULK_ACTIONS_LIMIT } from '@/utils/table-utils';
 
 interface Props<Item, Params> {
   table: TanTable.Table<TableRow<Item>>;
@@ -43,6 +44,10 @@ export default function SelectionActions<Item, Params>(props: Props<Item, Params
 
   const selectedIds = Object.keys(table.getState().rowSelection);
 
+  const isDisabled = useMemo(() => {
+    return selectedIds.length > DEFAULT_BULK_ACTIONS_LIMIT;
+  }, [selectedIds]);
+
   if (selectedIds.length === 0) {
     return <></>;
   }
@@ -56,6 +61,7 @@ export default function SelectionActions<Item, Params>(props: Props<Item, Params
               params,
               selectedIds,
               selectedItems,
+              isDisabled,
               setParams: onChangeParams,
               onResetSelection: () => {
                 table.resetRowSelection();

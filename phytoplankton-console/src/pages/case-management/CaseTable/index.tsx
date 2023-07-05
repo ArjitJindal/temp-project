@@ -363,12 +363,13 @@ export default function CaseTable(props: Props) {
           : undefined
       }
       selectionActions={[
-        ({ selectedIds, selectedItems }) => {
+        ({ selectedIds, selectedItems, isDisabled }) => {
           const selectedCaseStatuses = new Set(
             Object.values(selectedItems).map((item) => item.caseStatus),
           );
           return (
             <AssignToButton
+              isDisabled={isDisabled}
               onSelect={(account) => {
                 if (selectedCaseStatuses.has('ESCALATED') && selectedCaseStatuses.size === 1) {
                   casesReviewAssignmentUpdateMutation.mutate({
@@ -398,14 +399,15 @@ export default function CaseTable(props: Props) {
           );
         },
 
-        ({ selectedIds, params }) => (
+        ({ selectedIds, params, isDisabled }) => (
           <CasesStatusChangeButton
             caseIds={selectedIds}
             onSaved={reloadTable}
             caseStatus={params.caseStatus}
+            isDisabled={isDisabled}
           />
         ),
-        ({ selectedIds, selectedItems }) => {
+        ({ selectedIds, selectedItems, isDisabled }) => {
           if (_.isEmpty(selectedItems)) return;
 
           const selectedIdsCount = selectedIds.length;
@@ -421,6 +423,7 @@ export default function CaseTable(props: Props) {
                 caseIds={selectedIds}
                 caseStatus={caseItem.caseStatus}
                 onSaved={reloadTable}
+                isDisabled={isDisabled}
                 statusTransitions={{
                   OPEN: { status: 'ESCALATED', actionLabel: 'Escalate' },
                   REOPENED: { status: 'ESCALATED', actionLabel: 'Escalate' },
