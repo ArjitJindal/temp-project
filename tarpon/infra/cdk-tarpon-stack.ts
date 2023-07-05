@@ -261,16 +261,22 @@ export class CdkTarponStack extends cdk.Stack {
       config
     )
 
-    const serverAccessLogBucket = new Bucket(this, serverAccessLogBucketName, {
-      bucketName: serverAccessLogBucketName,
-      cors: s3BucketCors,
-      removalPolicy:
-        config.stage === 'dev' ? RemovalPolicy.DESTROY : RemovalPolicy.RETAIN,
-      autoDeleteObjects: config.stage === 'dev',
-      encryption: BucketEncryption.S3_MANAGED,
-    })
-
     if (!isDevUserStack) {
+      const serverAccessLogBucket = new Bucket(
+        this,
+        serverAccessLogBucketName,
+        {
+          bucketName: serverAccessLogBucketName,
+          cors: s3BucketCors,
+          removalPolicy:
+            config.stage === 'dev'
+              ? RemovalPolicy.DESTROY
+              : RemovalPolicy.RETAIN,
+          autoDeleteObjects: config.stage === 'dev',
+          encryption: BucketEncryption.S3_MANAGED,
+        }
+      )
+
       s3ImportBucket = new Bucket(this, importBucketName, {
         bucketName: importBucketName,
         cors: s3BucketCors,
