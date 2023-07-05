@@ -251,7 +251,11 @@ export default function StatusChangeModal(props: Props) {
               </GenericFormField>
             )}
           </div>
-          <InputField<FormValues, 'files'> name={'files'} label={'Attach documents'}>
+          <InputField<FormValues, 'files'>
+            name={'files'}
+            label={'Attach documents'}
+            labelProps={{ isOptional: true }}
+          >
             {(inputProps) => (
               <FilesInput
                 {...inputProps}
@@ -272,6 +276,7 @@ export default function StatusChangeModal(props: Props) {
               label={'Close related cases'}
               labelProps={{
                 position: 'RIGHT',
+                isOptional: true,
               }}
             >
               {(inputProps) => <Checkbox {...inputProps} />}

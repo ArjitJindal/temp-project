@@ -25,6 +25,7 @@ export default function Label(props: Props) {
   } = props;
   const labelEl = (
     <div className={cn(s.label, s[`level-${level}`])}>
+      {!isOptional && <span className={s.required}> * </span>}
       {label}
       {isOptional && (
         <>
