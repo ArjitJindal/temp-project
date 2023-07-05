@@ -38,13 +38,14 @@ export type Context = LogMetaData & {
 }
 
 const asyncLocalStorage = new AsyncLocalStorage<Context>()
+type APIGatewayEvent = APIGatewayProxyWithLambdaAuthorizerEvent<
+  APIGatewayEventLambdaAuthorizerContext<
+    Partial<AWS.STS.Credentials & JWTAuthorizerResult>
+  >
+>
 
 export async function getInitialContext(
-  event: APIGatewayProxyWithLambdaAuthorizerEvent<
-    APIGatewayEventLambdaAuthorizerContext<
-      Partial<AWS.STS.Credentials & JWTAuthorizerResult>
-    >
-  >,
+  event: unknown,
   lambdaContext: LambdaContext
 ): Promise<Context> {
   try {
@@ -55,7 +56,7 @@ export async function getInitialContext(
       userId,
       role,
       encodedPermissions,
-    } = event.requestContext?.authorizer || {}
+    } = (event as APIGatewayEvent).requestContext?.authorizer || {}
 
     if (tenantId) {
       const dynamoDb = getDynamoDbClientByEvent(
@@ -76,7 +77,7 @@ export async function getInitialContext(
 
     const context: Context = {
       tenantId,
-      requestId: event.requestContext.requestId,
+      requestId: (event as APIGatewayEvent).requestContext?.requestId,
       logMetadata: {
         tenantId,
         functionName: lambdaContext?.functionName,
@@ -103,7 +104,10 @@ export async function getInitialContext(
     return context
   } catch (e) {
     if (process.env.ENV !== 'local') {
-      winstonLogger.error(`Failed to initialize context`, e)
+      winstonLogger.error(
+        `Failed to initialize context: ${(e as Error)?.message}`,
+        e
+      )
     }
     return {}
   }
