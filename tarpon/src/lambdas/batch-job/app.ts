@@ -65,6 +65,6 @@ export const jobRunnerHandler = initSentry()(async (job: BatchJob) => {
     updateLogMetadata({
       type: job.type,
     })
-    return jobRunner.run(job)
+    return jobRunner.execute(job)
   })
 })

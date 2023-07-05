@@ -13,7 +13,7 @@ import { UserRepository } from '@/services/users/repositories/user-repository'
 const CONCURRENT_BATCH_SIZE = 10
 
 export class OngoingScreeningUserRuleBatchJobRunner extends BatchJobRunner {
-  public async run(job: OngoingScreeningUserRuleBatchJob) {
+  protected async run(job: OngoingScreeningUserRuleBatchJob): Promise<any> {
     const { tenantId, userIds } = job
     const mongoDb = await getMongoDbClient()
     const dynamoDb = getDynamoDbClient()

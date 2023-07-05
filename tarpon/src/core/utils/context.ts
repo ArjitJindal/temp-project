@@ -23,6 +23,7 @@ type LogMetaData = {
 }
 
 export type Context = LogMetaData & {
+  requestId?: string
   features?: Feature[]
   logMetadata?: { [key: string]: string | undefined }
   metricDimensions?: { [key: string]: string | undefined }
@@ -75,6 +76,7 @@ export async function getInitialContext(
 
     const context: Context = {
       tenantId,
+      requestId: event.requestContext.requestId,
       logMetadata: {
         tenantId,
         functionName: lambdaContext?.functionName,

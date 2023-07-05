@@ -16,7 +16,7 @@ export async function sendBatchJobCommand(
 
   if (process.env.ENV === 'local' && process.env.EXEC_SOURCE !== 'CI') {
     const jobRunner = BatchJobRunnerFactory.getBatchJobRunner(job.type)
-    await jobRunner.run(batchJob as BatchJob)
+    await jobRunner.execute(batchJob as BatchJob)
     return
   }
 

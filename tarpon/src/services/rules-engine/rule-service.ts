@@ -42,7 +42,7 @@ export class RuleService {
   }
 
   async getAllRules(): Promise<Array<Rule>> {
-    let rules = await this.ruleRepository.getAllRules()
+    const rulesPromise = this.ruleRepository.getAllRules()
 
     const tenantRepo = new TenantRepository(
       this.ruleInstanceRepository.tenantId,
@@ -51,8 +51,8 @@ export class RuleService {
 
     const tenantSettings = await tenantRepo.getTenantSettings()
 
-    rules = replaceMagicKeyword(
-      rules,
+    const rules = replaceMagicKeyword(
+      await rulesPromise,
       DEFAULT_CURRENCY_KEYWORD,
       tenantSettings?.defaultValues?.currency ?? 'USD'
     ) as Array<Rule>

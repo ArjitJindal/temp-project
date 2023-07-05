@@ -5,7 +5,7 @@ import { getDynamoDbClient } from '@/utils/dynamodb'
 import { RiskScoringService } from '@/services/risk-scoring'
 
 export class PulseDataLoadJobRunner extends BatchJobRunner {
-  public async run(job: PulseDataLoadBatchJob): Promise<void> {
+  protected async run(job: PulseDataLoadBatchJob): Promise<any> {
     const { tenantId, awsCredentials } = job
     const dynamoDb = getDynamoDbClient(awsCredentials)
     const mongoDb = await getMongoDbClient()

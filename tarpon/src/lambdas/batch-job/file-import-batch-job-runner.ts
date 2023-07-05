@@ -12,7 +12,7 @@ import { assertUserError } from '@/utils/errors'
 const { TMP_BUCKET, IMPORT_BUCKET } = process.env as FileImportConfig
 
 export class FileImportBatchJobRunner extends BatchJobRunner {
-  public async run(job: FileImportBatchJob) {
+  protected async run(job: FileImportBatchJob): Promise<any> {
     const { tenantId, parameters, awsCredentials } = job
     const { tenantName, importRequest } = parameters
     const dynamoDb = getDynamoDbClient(awsCredentials)

@@ -3,10 +3,8 @@ import { AGGREGATORS } from '@/services/rules-engine/aggregator'
 import { GlobalRuleAggregationRebuildBatchJob } from '@/@types/batch-job'
 import { getDynamoDbClient } from '@/utils/dynamodb'
 
-export class GlobalRuleAggregationRebuildBatchJobRunner
-  implements BatchJobRunner
-{
-  public async run(job: GlobalRuleAggregationRebuildBatchJob) {
+export class GlobalRuleAggregationRebuildBatchJobRunner extends BatchJobRunner {
+  protected async run(job: GlobalRuleAggregationRebuildBatchJob): Promise<any> {
     const { tenantId, parameters } = job
     const Aggregator = AGGREGATORS[parameters.aggregatorName]
     const dynamoDb = getDynamoDbClient()

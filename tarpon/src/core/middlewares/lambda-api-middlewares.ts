@@ -9,10 +9,12 @@ import { metricsMiddleware } from './metrics-middleware'
 import { resourceCleanupHandler } from './resource-cleanup-handler'
 import { Feature } from '@/@types/openapi-internal/Feature'
 import { rbacMiddleware } from '@/core/middlewares/rbac'
+import { bgProcessingMiddleware } from '@/core/middlewares/bg-processing-middleware'
 
 export const lambdaApi = (options?: { requiredFeatures?: Feature[] }) => {
   const middlewares = [
     localDev(),
+    bgProcessingMiddleware(),
     httpErrorHandler(),
     jsonSerializer(),
     contextProvider(),

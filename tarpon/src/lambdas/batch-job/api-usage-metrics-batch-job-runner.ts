@@ -6,7 +6,7 @@ import { getDynamoDbClient } from '@/utils/dynamodb'
 import { getMongoDbClient } from '@/utils/mongoDBUtils'
 
 export class ApiUsageMetricsBatchJobRunner extends BatchJobRunner {
-  public async run(job: ApiUsageMetricsBatchJob): Promise<void> {
+  protected async run(job: ApiUsageMetricsBatchJob): Promise<any> {
     const { tenantInfo } = job
     const mongoDb = await getMongoDbClient()
     const dynamoDb = getDynamoDbClient()
