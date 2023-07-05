@@ -195,6 +195,12 @@ export class CdkTarponAlarmsStack extends cdk.NestedStack {
         getDeadLetterQueueName(sqsQueue),
         Duration.minutes(5)
       )
+      createSQSOldestMessageAgeAlarm(
+        this,
+        this.betterUptimeCloudWatchTopic,
+        `NintyMin${getDeadLetterQueueName(sqsQueue)}`,
+        Duration.minutes(90)
+      )
     }
     // Create a GuardDuty Detector
     const detector = new guardduty.CfnDetector(this, 'GuardDutyDetector', {
