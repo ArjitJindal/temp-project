@@ -694,19 +694,32 @@ export class RulesEngineService {
   >(
     ruleFilters: { [key: string]: any },
     filters: { [key: string]: T },
-    data: any
+    data:
+      | {
+          transaction?: Transaction
+          senderUser?: User | Business
+          receiverUser?: User | Business
+        }
+      | {
+          user?: User | Business
+        }
   ): Promise<boolean> {
     const promises: Promise<boolean>[] = []
     for (const filterKey in ruleFilters) {
       const FilterClass = filters[filterKey]
       if (FilterClass && ruleFilters[filterKey]) {
-        const ruleFilter = new FilterClass(
-          this.tenantId,
-          data,
-          { [filterKey]: ruleFilters[filterKey] },
-          this.dynamoDb
-        )
-        promises.push(ruleFilter.predicate())
+        const isUserFilter = Boolean(USER_FILTERS[filterKey])
+        if (isUserFilter && !(data as { user?: User | Business }).user) {
+          promises.push(Promise.resolve(false))
+        } else {
+          const ruleFilter = new FilterClass(
+            this.tenantId,
+            data as any,
+            { [filterKey]: ruleFilters[filterKey] },
+            this.dynamoDb
+          )
+          promises.push(ruleFilter.predicate())
+        }
       }
     }
     return this.allTrue(promises)

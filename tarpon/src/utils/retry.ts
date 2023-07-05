@@ -1,3 +1,5 @@
+import { logger } from '@/core/logger'
+
 export async function exponentialRetry<T>(
   fn: () => Promise<T>,
   warningString = 'Retrying...',
@@ -10,7 +12,7 @@ export async function exponentialRetry<T>(
     if (retries === 0) {
       throw error
     }
-    console.log(
+    logger.warning(
       `${warningString} Retrying in ${
         delay / 1000
       } seconds..., Retries left: ${retries}, Error: ${

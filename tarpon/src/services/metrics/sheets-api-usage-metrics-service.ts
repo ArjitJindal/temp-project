@@ -9,7 +9,6 @@ import { ApiUsageMetrics } from './api-usage-metrics-service'
 import dayjs from '@/utils/dayjs'
 import { METRICS_COLLECTION } from '@/utils/mongoDBUtils'
 import { CUSTOM_API_USAGE_METRIC_NAMES } from '@/core/cloudwatch/metrics'
-import { logger } from '@/core/logger'
 import { TenantBasic } from '@/services/accounts'
 import { getSecret } from '@/utils/secrets-manager'
 import { exponentialRetry } from '@/utils/retry'
@@ -105,11 +104,10 @@ export class SheetsApiUsageMetricsService {
     } catch (error) {
       // If the sheet is empty, loadHeaderRow() will throw an error
       // We can ignore this error and continue
-      logger.error(
-        `Error while loading header row for sheet ${sheet.title}: ${
-          (error as Error).message
-        } Maybe a false alarm, continuing...`
-      )
+      const errorMessage = (error as Error).message
+      if (errorMessage.includes('Quota exceed')) {
+        throw error
+      }
     }
 
     const META_DATA_HEADERS =
