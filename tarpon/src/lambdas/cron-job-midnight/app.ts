@@ -12,7 +12,7 @@ import { RuleInstanceRepository } from '@/services/rules-engine/repositories/rul
 import { UserRepository } from '@/services/users/repositories/user-repository'
 import { logger } from '@/core/logger'
 
-const ONGOING_SCREENING_USERS_BATCH_SIZE = 500
+const ONGOING_SCREENING_USERS_BATCH_SIZE = 100
 
 /**
  * NOTE: This lambda is triggered by a cron job that runs every day at midnight.
