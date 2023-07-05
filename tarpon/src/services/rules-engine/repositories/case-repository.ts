@@ -16,8 +16,6 @@ import {
   lookupPipelineStage,
   paginatePipeline,
   prefixRegexMatchFilter,
-  TRANSACTION_EVENTS_COLLECTION,
-  USERS_COLLECTION,
 } from '@/utils/mongoDBUtils'
 import { Comment } from '@/@types/openapi-internal/Comment'
 import { DefaultApiGetCaseListRequest } from '@/@types/openapi-internal/RequestParameters'
@@ -34,13 +32,8 @@ import {
   getRiskLevelFromScore,
   getRiskScoreBoundsFromLevel,
 } from '@/services/risk-scoring/utils'
-import { hasFeature, hasFeatures } from '@/core/utils/context'
-import {
-  COUNT_QUERY_LIMIT,
-  OptionalPagination,
-  PaginationParams,
-} from '@/utils/pagination'
-import { InternalTransaction } from '@/@types/openapi-internal/InternalTransaction'
+import { hasFeature } from '@/core/utils/context'
+import { COUNT_QUERY_LIMIT, OptionalPagination } from '@/utils/pagination'
 import { PRIORITYS } from '@/@types/openapi-internal-custom/Priority'
 import { Assignment } from '@/@types/openapi-internal/Assignment'
 
@@ -814,153 +807,6 @@ export class CaseRepository {
       .toArray()
 
     return cases
-  }
-
-  private getCaseRuleTransactionsMongoPipeline(
-    caseId: string,
-    ruleInstanceId: string
-  ) {
-    return [
-      {
-        $match: {
-          caseId,
-        },
-      },
-      {
-        $unwind: {
-          path: '$caseTransactions',
-          preserveNullAndEmptyArrays: false,
-        },
-      },
-      {
-        $unwind: {
-          path: '$caseTransactions.hitRules',
-          preserveNullAndEmptyArrays: false,
-        },
-      },
-      {
-        $match: {
-          'caseTransactions.hitRules.ruleInstanceId': ruleInstanceId,
-        },
-      },
-      lookupPipelineStage({
-        from: USERS_COLLECTION(this.tenantId),
-        localField: 'caseTransactions.originUserId',
-        foreignField: 'userId',
-        as: 'originUser',
-      }),
-      lookupPipelineStage({
-        from: USERS_COLLECTION(this.tenantId),
-        localField: 'caseTransactions.destinationUserId',
-        foreignField: 'userId',
-        as: 'destinationUser',
-      }),
-      lookupPipelineStage({
-        from: TRANSACTION_EVENTS_COLLECTION(this.tenantId),
-        localField: 'caseTransactions.transactionId',
-        foreignField: 'transactionId',
-        as: 'events',
-      }),
-      {
-        $set: {
-          'caseTransactions.originUser': { $first: '$originUser' },
-          'caseTransactions.destinationUser': { $first: '$destinationUser' },
-          'caseTransactions.events': '$events',
-        },
-      },
-    ]
-  }
-
-  public getCaseRuleTransactionsCursor(
-    caseId: string,
-    ruleInstanceId: string,
-    params: PaginationParams,
-    sortFields: { sortField: string; sortOrder: string }
-  ) {
-    const pipeline = this.getCaseRuleTransactionsMongoPipeline(
-      caseId,
-      ruleInstanceId
-    )
-
-    const sortOrder = sortFields.sortOrder === 'ascend' ? 1 : -1
-
-    const db = this.mongoDb.db()
-    const collection = db.collection<InternalTransaction>(
-      CASES_COLLECTION(this.tenantId)
-    )
-    return collection.aggregate<InternalTransaction>(
-      [
-        ...pipeline,
-        {
-          $sort: {
-            [sortFields.sortField ?? 'caseTransactions.timestamp']:
-              sortOrder ?? -1,
-          },
-        },
-        ...paginatePipeline(params),
-      ],
-      {
-        allowDiskUse: true,
-      }
-    )
-  }
-
-  public async getCaseRuleTransactionsCount(
-    caseId: string,
-    ruleInstanceId: string
-  ): Promise<number> {
-    const pipeline = this.getCaseRuleTransactionsMongoPipeline(
-      caseId,
-      ruleInstanceId
-    )
-
-    const db = this.mongoDb.db()
-    const collection = db.collection<Case>(CASES_COLLECTION(this.tenantId))
-    const cursor = await collection.aggregate([
-      ...pipeline,
-      { $group: { _id: null, count: { $sum: 1 } } },
-    ])
-    const res = await cursor.next()
-    return res?.count ?? 0
-  }
-
-  public async getCaseRuleTransactions(
-    caseId: string,
-    ruleInstanceId: string,
-    params: PaginationParams,
-    sortFields: { sortField: string; sortOrder: string }
-  ): Promise<{ total: number; cases: InternalTransaction[] }> {
-    const cursor = this.getCaseRuleTransactionsCursor(
-      caseId,
-      ruleInstanceId,
-      params,
-      sortFields
-    )
-
-    let res = await cursor.toArray()
-
-    if (hasFeatures(['PULSE'])) {
-      const riskRepository = new RiskRepository(this.tenantId, {
-        dynamoDb: this.dynamoDb,
-      })
-
-      res = await riskRepository.augmentRiskLevel(res)
-    }
-
-    return {
-      total: await this.getCaseRuleTransactionsCount(caseId, ruleInstanceId),
-      cases: res,
-    }
-  }
-
-  public async getCasesByTransactionId(transactionId: string): Promise<Case[]> {
-    const db = this.mongoDb.db()
-    const casesCollection = db.collection<Case>(CASES_COLLECTION(this.tenantId))
-    return await casesCollection
-      .find({
-        'caseTransactions.transactionId': transactionId,
-      })
-      .toArray()
   }
 
   public async getCasesByUserId(

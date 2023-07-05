@@ -3177,51 +3177,6 @@ paths:
           application/json:
             schema:
               $ref: '#/components/schemas/CaseEscalationRequest'
-  '/cases/{caseId}/rule/{rulesInstanceId}/transactions':
-    parameters:
-      - schema:
-          type: string
-        name: caseId
-        in: path
-        required: true
-      - schema:
-          type: string
-        name: rulesInstanceId
-        in: path
-        required: true
-      - schema:
-          $ref: '#/components/schemas/PageSize'
-        in: query
-        name: pageSize
-      - schema:
-          $ref: '#/components/schemas/Page'
-        in: query
-        name: page
-      - schema:
-          type: string
-        in: query
-        name: sortField
-      - schema:
-          type: string
-        in: query
-        name: sortOrder
-    get:
-      summary: Get transactions related to a case rule
-      operationId: get-case-transactions-for-rule
-      x-flagright:
-        permissions:
-          - case-management:case-details:read
-          - transactions:overview:read
-      responses:
-        '200':
-          description: OK
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/RuleCaseTransactionItem'
-        '404':
-          description: Not found
-      description: ''
   '/cases/{caseId}/comments':
     parameters:
       - schema:
@@ -6457,18 +6412,6 @@ components:
       required:
         - type
         - action
-    RuleCaseTransactionItem:
-      title: RuleCaseTransactionItem
-      x-stoplight:
-        id: p2637fel700im
-      type: array
-      items:
-        type: object
-        properties:
-          _id:
-            type: string
-          caseTransactions:
-            $ref: '#/components/schemas/InternalTransaction'
     NewListPayload:
       title: NewListPayload
       type: object
