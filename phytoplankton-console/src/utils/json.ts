@@ -46,7 +46,11 @@ export function flattenObject(object: any): any {
 }
 
 export function getFlattenedObjectHumanReadableKey(flattenedKey: string): string {
-  return flattenedKey.split('.').map(_.startCase).join(' > ');
+  return flattenedKey
+    .split('.')
+    .filter((key) => isNaN(Number(key)))
+    .map(_.startCase)
+    .join(' > ');
 }
 
 export function getFixedSchemaJsonForm(schema: object) {
