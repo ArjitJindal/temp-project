@@ -515,7 +515,8 @@ export class CdkTarponStack extends cdk.Stack {
         auditLogTopic: this.auditLogTopic,
         batchJobQueue,
         ...transactionFunctionProps,
-      }
+      },
+      functionProps
     )
 
     // Configure AutoScaling for Tx Function
@@ -740,9 +741,7 @@ export class CdkTarponStack extends cdk.Stack {
           auditLogTopic: this.auditLogTopic,
           batchJobQueue,
         },
-        {
-          ...functionProps,
-        }
+        functionProps
       )
 
       const apiMetricsRule = new Rule(
