@@ -25,7 +25,7 @@ export default function Checkbox(props: Props) {
           onChange={(e) => {
             onChange?.(e.target.checked);
           }}
-          data-cy={`${_.kebabCase(testName)}-checkbox`}
+          data-cy={`${testName}-checkbox`}
           {...rest}
         />
         <div className={s.content}>

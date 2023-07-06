@@ -16,7 +16,7 @@ const providerConfig = {
   cacheLocation: 'localstorage',
   audience: AUTH0_AUDIENCE ?? undefined,
   redirectUri: `${window.location.origin}${branding.redirectPath || ''}`,
-};
+} as const;
 
 const AuthProvider: React.FC = ({ children }) => {
   return (

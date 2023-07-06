@@ -17,13 +17,16 @@
     "noUnusedLocals": false,
     "allowJs": true,
     "skipLibCheck": true,
+    "esModuleInterop": true,
     "experimentalDecorators": true,
     "strict": true,
     "types": ["cypress", "node"],
     "paths": {
-      "@/*": ["./src/*"]
+      "@/*": ["./src/*"],
+      "testing-library-wrapper": ["./jest/testing-library-wrapper"],
+      "jest-utils": ["./jest/jest-utils"]
     }
   },
-  "include": ["**/*.ts"],
+  "include": ["**/*.ts", "**/*.tsx"],
   "exclude": ["node_modules", "build", "dist", "cdk.out"]
 }

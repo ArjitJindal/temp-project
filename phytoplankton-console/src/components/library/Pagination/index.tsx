@@ -33,6 +33,8 @@ export default function Pagination(props: Props) {
 
   return (
     <div
+      role="pagination"
+      data-cy="pagination"
       style={{
         display: 'flex',
         flexDirection: 'row',

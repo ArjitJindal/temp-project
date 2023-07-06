@@ -93,7 +93,7 @@ function Table<Item extends object, Params extends object = CommonParams>(
     onChangeParams = () => {},
     onPaginateData,
     onEdit,
-    pagination = false,
+    pagination = 'HIDE_FOR_ONE_PAGE',
     selection = false,
     selectedIds,
     partiallySelectedIds,
@@ -265,7 +265,7 @@ function Table<Item extends object, Params extends object = CommonParams>(
                           }
 
                           return header.column.id === SPACER_COLUMN_ID && !showSizer ? (
-                            <></>
+                            <React.Fragment key={header.id}></React.Fragment>
                           ) : (
                             <Th
                               key={header.id}
@@ -280,7 +280,10 @@ function Table<Item extends object, Params extends object = CommonParams>(
                     );
                   })}
               </thead>
-              <tbody className={cn(s.tableBody, isLoading(dataRes) && s.isLoading)}>
+              <tbody
+                className={cn(s.tableBody, isLoading(dataRes) && s.isLoading)}
+                aria-label="Table body"
+              >
                 {isFailed(dataRes) ? (
                   <tr>
                     <td colSpan={table.getAllFlatColumns().length} className={s.error}>
@@ -329,7 +332,7 @@ function Table<Item extends object, Params extends object = CommonParams>(
                               }
 
                               return cell.column.id === SPACER_COLUMN_ID && !showSizer ? (
-                                <></>
+                                <React.Fragment key={cell.id}></React.Fragment>
                               ) : (
                                 <Td<Item>
                                   key={cell.id}
@@ -378,16 +381,20 @@ function Table<Item extends object, Params extends object = CommonParams>(
           onFromChange={(from) => handleChangeParamsPaginated({ ...params, from })}
         />
       )}
-      {!cursor && showPagination && (
-        <Pagination
-          isDisabled={isLoading(dataRes)}
-          current={params?.page ?? 1}
-          pageSize={params?.pageSize ?? DEFAULT_PAGE_SIZE}
-          onChange={(page, pageSize) => handleChangeParamsPaginated({ ...params, page, pageSize })}
-          total={data.total ?? data.items.length}
-          paginationBorder={paginationBorder}
-        />
-      )}
+      <div data-cy="pagination-wrapper">
+        {!cursor && showPagination && (
+          <Pagination
+            isDisabled={isLoading(dataRes)}
+            current={params?.page ?? 1}
+            pageSize={params?.pageSize ?? DEFAULT_PAGE_SIZE}
+            onChange={(page, pageSize) =>
+              handleChangeParamsPaginated({ ...params, page, pageSize })
+            }
+            total={data.total ?? data.items.length}
+            paginationBorder={paginationBorder}
+          />
+        )}
+      </div>
       {selectionActions.length > 0 && (
         <Footer
           table={table}
@@ -425,6 +432,7 @@ function Td<Item>(props: {
 
   return (
     <td
+      data-cy={column.id}
       className={cn(
         s.td,
         isPinned && s[`pinned-${isPinned}`],
@@ -459,8 +467,10 @@ function Th<Item>(props: {
   const isSorted = column.getIsSorted();
   const isPinned = column.getIsPinned();
   const isResizable = column.getCanResize();
+
   return (
     <th
+      aria-label={`"${column.columnDef.header ?? 'unknown'}" column header`}
       className={cn(
         s.th,
         isPinned && s[`pinned-${isPinned}`],

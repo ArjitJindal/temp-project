@@ -1,3 +1,5 @@
+import type { TestingLibraryMatchers } from '@types/testing-library__jest-dom/matchers';
+import expectModule from 'expect';
 import { Feature } from '@/apis';
 
 declare global {
@@ -11,6 +13,12 @@ declare global {
   declare const SENTRY_DSN: string;
   declare const SLACK_CLIENT_ID: string;
   declare const MIXPANEL_TOKEN: string;
+}
+
+// Patching Jest matcher types since we export 'expect' explicitly
+declare module '@jest/expect' {
+  export interface Matchers<R = void>
+    extends TestingLibraryMatchers<typeof expectModule.stringContaining, R> {}
 }
 
 export {};

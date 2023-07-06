@@ -66,7 +66,7 @@ export default function SettingsButton<Item extends object>(props: Props<Item>) 
         trigger="click"
         placement="bottomLeft"
         content={
-          <div className={s.content}>
+          <div className={s.content} data-cy="popup-content">
             <div className={s.headerGroupList}>
               <ColumnList table={table} columns={table.getAllColumns()} dndState={dndStatePair} />
             </div>
@@ -81,7 +81,12 @@ export default function SettingsButton<Item extends object>(props: Props<Item>) 
           </div>
         }
       >
-        <Settings3LineIcon className={s.icon} />
+        <Settings3LineIcon
+          role="button"
+          aria-label="Settings button"
+          aria-haspopup={true}
+          className={s.icon}
+        />
       </Popover>
     </div>
   );
@@ -181,6 +186,7 @@ function Column<Item>(props: {
           </div>
         )}
         <Checkbox
+          testName={column.id}
           value={
             column.columns.length === 0
               ? column.getIsVisible()
