@@ -5,12 +5,12 @@ const tasksByRequestId: Map<string, Promise<unknown>[]> = new Map()
 let processInBackground = false
 
 export const initBackground = () => {
-  processInBackground = true
+  processInBackground = false
 }
 
 export const background = async (...tasks: Promise<unknown>[]) => {
   if (!processInBackground) {
-    await Promise.all(tasks)
+    return await Promise.all(tasks)
   }
   const ctx = getContext()
   let key = GLOBAL_KEY
