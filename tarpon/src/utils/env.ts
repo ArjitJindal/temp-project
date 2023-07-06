@@ -1,7 +1,7 @@
 type Env = 'test' | 'local' | 'dev' | 'sandbox' | 'prod'
 export function envIs(env: Env) {
   if (env === 'test') {
-    return process.env.CI === 'true'
+    return process.env.NODE_ENV === 'test'
   }
 
   if (!process.env.ENV) {
@@ -11,13 +11,5 @@ export function envIs(env: Env) {
   return process.env.ENV.startsWith(env)
 }
 export function envIsNot(env: Env) {
-  if (env === 'test') {
-    return process.env.CI !== 'true'
-  }
-
-  if (!process.env.ENV) {
-    // We don't know, return false to be safe.
-    return false
-  }
-  return !process.env.ENV.startsWith(env)
+  return !envIs(env)
 }

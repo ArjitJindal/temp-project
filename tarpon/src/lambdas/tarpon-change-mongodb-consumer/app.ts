@@ -21,7 +21,7 @@ import { StreamConsumerBuilder } from '@/core/dynamodb/dynamodb-stream-consumer-
 import { BusinessUserEvent } from '@/@types/openapi-public/BusinessUserEvent'
 import { CaseRepository } from '@/services/rules-engine/repositories/case-repository'
 import { RuleInstanceRepository } from '@/services/rules-engine/repositories/rule-instance-repository'
-import { getDynamoDbClient } from '@/utils/dynamodb'
+import { cleanUpDynamoDbResources, getDynamoDbClient } from '@/utils/dynamodb'
 import { UserRepository } from '@/services/users/repositories/user-repository'
 import { updateLogMetadata } from '@/core/utils/context'
 import { RiskScoringService } from '@/services/risk-scoring'
@@ -151,6 +151,8 @@ async function transactionHandler(
     startTimestamp: transaction.timestamp,
   })
   await handleNewCases(tenantId, timestampBeforeCasesCreation, cases)
+
+  cleanUpDynamoDbResources()
 }
 
 async function userHandler(
@@ -231,6 +233,8 @@ async function userHandler(
   const cases = await caseCreationService.handleUser(savedUser)
   await handleNewCases(tenantId, timestampBeforeCasesCreation, cases)
   await casesRepo.updateUsersInCases(internalUser)
+
+  cleanUpDynamoDbResources()
 }
 
 async function userEventHandler(

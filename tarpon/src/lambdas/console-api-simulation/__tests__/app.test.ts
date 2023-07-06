@@ -10,6 +10,7 @@ import { getTestTenantId } from '@/test-utils/tenant-test-utils'
 import { SimulationPulseParametersRequest } from '@/@types/openapi-internal/SimulationPulseParametersRequest'
 import { DEFAULT_CLASSIFICATION_SETTINGS } from '@/services/risk-scoring/repositories/risk-repository'
 import { withFeatureHook } from '@/test-utils/feature-test-utils'
+import { dynamoDbSetupHook } from '@/test-utils/dynamodb-test-utils'
 
 const TEST_PARAMETERS: SimulationPulseParametersRequest = {
   parameters: [
@@ -28,6 +29,7 @@ const TEST_PARAMETERS: SimulationPulseParametersRequest = {
 }
 
 withFeatureHook(['SIMULATOR'])
+dynamoDbSetupHook()
 
 describe('Consoel API - Simulation', () => {
   let sqsMock: any
