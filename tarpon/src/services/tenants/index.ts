@@ -11,6 +11,7 @@ import {
 import { StackConstants } from '@lib/constants'
 import { getAuth0TenantConfigs } from '@lib/configs/auth0/tenant-config'
 import { BadRequest } from 'http-errors'
+import { TenantRepository } from './repositories/tenant-repository'
 import { TenantCreationResponse } from '@/@types/openapi-internal/TenantCreationResponse'
 import { TenantCreationRequest } from '@/@types/openapi-internal/TenantCreationRequest'
 import { AccountsService, Tenant, TenantBasic } from '@/services/accounts'
@@ -19,6 +20,7 @@ import { checkMultipleEmails } from '@/utils/helpers'
 import { getAuth0Domain } from '@/utils/auth0-utils'
 import { getMongoDbClient } from '@/utils/mongoDBUtils'
 import { logger } from '@/core/logger'
+import { TenantSettings } from '@/@types/openapi-internal/TenantSettings'
 
 export type TenantInfo = {
   tenant: Tenant
@@ -145,6 +147,16 @@ export class TenantService {
         'admin'
       )
     }
+
+    const newTenantSettings: TenantSettings = {
+      limits: {
+        seats: tenantData.seats ?? 3,
+      },
+      features: tenantData.features ?? [],
+    }
+    const dynamoDb = this.dynamoDb
+    const tenantRepository = new TenantRepository(tenantId, { dynamoDb })
+    await tenantRepository.createOrUpdateTenantSettings(newTenantSettings)
 
     return {
       tenantId,

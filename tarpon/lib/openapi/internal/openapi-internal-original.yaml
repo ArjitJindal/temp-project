@@ -6698,6 +6698,8 @@ components:
           type: string
         auth0DisplayName:
           type: string
+        seats:
+          type: number
       required:
         - tenantName
         - tenantWebsite

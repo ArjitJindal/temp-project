@@ -9,7 +9,7 @@ import { TenantCreationRequest } from '@/@types/openapi-internal/TenantCreationR
 import { lambdaApi } from '@/core/middlewares/lambda-api-middlewares'
 import { assertRole, JWTAuthorizerResult } from '@/@types/jwt'
 import { Tenant } from '@/@types/openapi-internal/Tenant'
-import { getDynamoDbClientByEvent } from '@/utils/dynamodb'
+import { getDynamoDbClientByEvent, getDynamoDbClient } from '@/utils/dynamodb'
 import { TenantService } from '@/services/tenants'
 import { TenantSettings } from '@/@types/openapi-internal/TenantSettings'
 import { TenantRepository } from '@/services/tenants/repositories/tenant-repository'
@@ -65,15 +65,14 @@ export const tenantsHandler = lambdaApi()(
       const request = JSON.parse(event.body) as TenantCreationRequest
       const requestTenantId = request.tenantId
       const tenantId = requestTenantId || newTenantId
+      const dynamoDb = getDynamoDbClient()
 
       const tenantService = new TenantService(tenantId, {
         mongoDb,
-        dynamoDb: getDynamoDbClientByEvent(event),
+        dynamoDb,
       })
 
       const response = tenantService.createTenant(JSON.parse(event.body))
-
-      // Create demo mode environment in non-prod environments.
       if (envIsNot('prod')) {
         const fullTenantId = getFullTenantId(tenantId, true)
         const batchJob: DemoModeDataLoadBatchJob = {
