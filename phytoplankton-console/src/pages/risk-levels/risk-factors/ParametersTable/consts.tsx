@@ -175,6 +175,7 @@ const timeZonesDataMap = _.keyBy(timeZonesData, 'value');
 
 export const USER_SEGMENT_OPTIONS = [
   { value: 'SOLE_PROPRIETORSHIP', label: 'Sole Proprietorship' },
+  { value: 'LIMITED', label: 'Limited' },
   { value: 'SMB', label: 'SMB' },
   { value: 'SMALL', label: 'Small' },
   { value: 'MEDIUM', label: 'Medium' },

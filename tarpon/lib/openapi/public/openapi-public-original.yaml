@@ -2387,6 +2387,7 @@ components:
           description: Segmentation of the business user
           enum:
             - SOLE_PROPRIETORSHIP
+            - LIMITED
             - SMB
             - SMALL
             - MEDIUM
