@@ -12,7 +12,7 @@ export async function exponentialRetry<T>(
     if (retries === 0) {
       throw error
     }
-    logger.warning(
+    logger.warn(
       `${warningString} Retrying in ${
         delay / 1000
       } seconds..., Retries left: ${retries}, Error: ${
