@@ -124,6 +124,7 @@ export const RulesTable: React.FC<Props> = ({ onViewRule, onEditRule, simulation
         id: 'actions',
         title: 'Action',
         defaultSticky: 'RIGHT',
+        enableResizing: false,
         render: (entity) => {
           return (
             <span>

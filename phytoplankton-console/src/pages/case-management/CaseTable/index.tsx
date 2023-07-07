@@ -207,6 +207,8 @@ export default function CaseTable(props: Props) {
         title: 'Assignees',
         key: 'assignments',
         id: '_assignmentName',
+        defaultWidth: 300,
+        enableResizing: false,
         type: {
           ...ASSIGNMENTS,
           render: (assignments, { item: entity }) => {
@@ -251,7 +253,7 @@ export default function CaseTable(props: Props) {
       }),
       helper.display({
         title: 'Operations',
-        defaultWidth: 100,
+        enableResizing: false,
         render: (entity) => {
           return (
             entity?.caseId && (

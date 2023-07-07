@@ -40,7 +40,7 @@ const columns: TableColumn<TableItem>[] = helper.list([
   }),
   helper.display({
     title: 'Action',
-    defaultWidth: 120,
+    enableResizing: false,
     render: (item, context) => {
       const { handleSaveAlias, savingLevel, newLevelToAlias, savedLevelToAlias } =
         context.external as ExternalState;

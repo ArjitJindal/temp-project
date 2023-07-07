@@ -53,7 +53,7 @@ const columns: TableColumn<TableItem>[] = columnHelper.list([
   }),
   columnHelper.display({
     title: 'Action',
-    defaultWidth: 150,
+    enableResizing: false,
     render: (item, context) => {
       const externalState = context.external as ExternalState;
       const { newActionToAlias, savingAction, savedActionToAlias, onSaveAlias } = externalState;

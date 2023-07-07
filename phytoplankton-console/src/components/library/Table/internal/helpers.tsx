@@ -55,6 +55,7 @@ import { getPageCount } from '@/utils/queries/hooks';
 export function useLocalStorageOptionally<Value>(
   key: string | null,
   defaultValueFactory: () => Value,
+  nonResizableColumns: string[],
 ): StatePair<Value> {
   const [state, setState] = useState<Value>(() => {
     if (key != null) {
@@ -62,9 +63,16 @@ export function useLocalStorageOptionally<Value>(
       try {
         if (storedValue != null) {
           // todo: validate parsed state and use default if invalid
+          const parsedValue = JSON.parse(storedValue);
+          const defaultValues = defaultValueFactory() as any;
+          if (parsedValue.columnSizing != null) {
+            nonResizableColumns.forEach((columnId) => {
+              parsedValue.columnSizing[columnId] = defaultValues.columnSizing[columnId];
+            });
+          }
           return {
-            ...defaultValueFactory(),
-            ...(JSON.parse(storedValue) as Value),
+            ...(defaultValues as Value),
+            ...(parsedValue as Value),
           };
         }
       } catch (e) {
@@ -185,6 +193,7 @@ export function useTanstackTable<
         return columnHelper.accessor(accessor, {
           id: columnId,
           header: column.title,
+          enableResizing: column.enableResizing ?? true,
           enableSorting: column.sorting === true || column.sorting === 'desc',
           sortDescFirst: column.sorting === 'desc',
           cell: makeSimpleColumnCellComponent({ column, rowKey }),
@@ -199,6 +208,7 @@ export function useTanstackTable<
           id: columnId,
           header: column.title,
           cell: makeDisplayColumnCellComponent({ column, rowKey }),
+          enableResizing: column.enableResizing ?? true,
           meta: {
             wrapMode: DEFAULT_COLUMN_WRAP_MODE,
             tooltip: column.tooltip,
@@ -213,6 +223,7 @@ export function useTanstackTable<
         return columnHelper.display({
           id: columnId,
           header: column.title,
+          enableResizing: column.enableResizing ?? true,
           cell: makeDerivedColumnCellComponent({ column }),
           meta: {
             wrapMode: columnDataType.defaultWrapMode ?? DEFAULT_COLUMN_WRAP_MODE,
@@ -225,6 +236,7 @@ export function useTanstackTable<
           id: columnId,
           header: column.title,
           columns: convertColumns(column.children),
+          enableResizing: column.enableResizing ?? true,
           meta: {
             wrapMode: DEFAULT_COLUMN_WRAP_MODE,
             tooltip: column.tooltip,

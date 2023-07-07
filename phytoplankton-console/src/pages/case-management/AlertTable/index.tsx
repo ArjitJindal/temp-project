@@ -155,6 +155,8 @@ const mergedColumns = (
       title: 'Assigned to',
       id: '_assigneeName',
       sorting: true,
+      defaultWidth: 300,
+      enableResizing: false,
       value: (item) =>
         item.alertStatus === 'ESCALATED' ? item.reviewAssignments : item.assignments,
       type: {

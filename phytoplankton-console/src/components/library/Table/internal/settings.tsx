@@ -34,6 +34,10 @@ export function PersistedSettingsProvider<Item extends object, Params>(props: {
   const autoFilters = useAutoFilters(columns);
   const allFilters = useMemo(() => [...extraFilters, ...autoFilters], [extraFilters, autoFilters]);
 
+  const nonResizableColumns = columns
+    .filter((column) => column.enableResizing === false && column.defaultWidth)
+    .map((column) => getColumnId(column));
+
   const getDefaultValue = useCallback((): PersistedState => {
     return {
       columnVisibility: columns.reduce(
@@ -64,7 +68,11 @@ export function PersistedSettingsProvider<Item extends object, Params>(props: {
     };
   }, [columns, allFilters]);
 
-  const [persistedState, setPersistedState] = usePersistedState(tableId ?? null, getDefaultValue);
+  const [persistedState, setPersistedState] = usePersistedState(
+    tableId ?? null,
+    getDefaultValue,
+    nonResizableColumns,
+  );
 
   const providerValue: PersistedSettingsContextValue = useMemo<PersistedSettingsContextValue>(
     () => ({
@@ -160,11 +168,13 @@ export interface PersistedState {
 export function usePersistedState(
   tableId: string | null,
   defaultValue: () => PersistedState,
+  nonResizableColumns: string[],
 ): StatePair<PersistedState> {
   // todo: add versioning and validation of settings
   const [state, setState] = useLocalStorageOptionally<PersistedState>(
     tableId ? `table-${tableId}-settings` : null,
     defaultValue,
+    nonResizableColumns,
   );
   return [
     state,
