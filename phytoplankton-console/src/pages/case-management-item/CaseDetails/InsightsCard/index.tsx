@@ -32,7 +32,7 @@ interface Props {
 }
 
 export default function InsightsCard(props: Props) {
-  const { userId, updateCollapseState, title, collapsableKey } = props;
+  const { userId } = props;
   const settings = useSettings();
   const [selectorParams, setSelectorParams] = useState<Params>({
     selectedRuleActions: [],
@@ -44,10 +44,7 @@ export default function InsightsCard(props: Props) {
   const statsQueryResult = useStatsQuery(selectorParams, userId, selectorParams.currency);
 
   return (
-    <Card.Root
-      header={title != null ? { title, collapsableKey } : undefined}
-      updateCollapseState={updateCollapseState}
-    >
+    <Card.Root>
       <Card.Section className={s.root}>
         <TransactionsSelector
           currency={selectorParams.currency}

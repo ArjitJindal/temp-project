@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react';
-import { useParams } from 'react-router';
+import { useNavigate, useParams } from 'react-router';
+import { Tabs as AntTabs } from 'antd';
 
 //components
 import SubHeader from './SubHeader';
@@ -22,6 +23,10 @@ import { AsyncResource, failed, init, isSuccess, loading, success } from '@/util
 import { ApiException, InternalTransaction } from '@/apis';
 import { useApi } from '@/api';
 import { useApiTime, usePageViewTracker } from '@/utils/tracker';
+import PageTabs from '@/components/ui/PageTabs';
+import { HEADER_HEIGHT } from '@/components/AppWrapper/Header';
+import { keepBackUrl } from '@/utils/backUrl';
+import { useElementSize } from '@/utils/browser';
 
 export default function TransactionsItem() {
   usePageViewTracker('Transactions Item');
@@ -29,9 +34,12 @@ export default function TransactionsItem() {
   const [currentItem, setCurrentItem] = useState<AsyncResource<InternalTransaction>>(init());
   const currentTransactionId = isSuccess(currentItem) ? currentItem.value.transactionId : null;
   // const { id: transactionId } = useParams<'id'>();
+  const { tab = 'user-details' } = useParams<'tab'>();
   const { id: transactionId } = useParams<'id'>();
   const api = useApi();
   const measure = useApiTime();
+  const navigate = useNavigate();
+
   useEffect(() => {
     if (transactionId == null || transactionId === 'all') {
       setCurrentItem(init());
@@ -73,6 +81,10 @@ export default function TransactionsItem() {
     };
   }, [currentTransactionId, transactionId, api, measure]);
 
+  const [headerStickyElRef, setHeaderStickyElRef] = useState<HTMLDivElement | null>(null);
+  const rect = useElementSize(headerStickyElRef);
+  const entityHeaderHeight = rect?.height ?? 0;
+
   return (
     <PageWrapper
       backButton={{
@@ -80,11 +92,12 @@ export default function TransactionsItem() {
         url: makeUrl('/transactions/list'),
       }}
     >
-      <Card.Root>
-        <AsyncResourceRenderer resource={currentItem}>
-          {(transaction) => (
-            <>
+      <AsyncResourceRenderer resource={currentItem}>
+        {(transaction) => (
+          <>
+            <Card.Root>
               <EntityHeader
+                stickyElRef={setHeaderStickyElRef}
                 id={transaction.transactionId}
                 idTitle="Transaction ID"
                 subHeader={<SubHeader transaction={transaction} />}
@@ -108,14 +121,52 @@ export default function TransactionsItem() {
                   {transaction.reference ?? '-'}
                 </Form.Layout.Label>
               </EntityHeader>
-              <Card.Section>
-                <SenderReceiverDetails transaction={transaction} />
-                <TransactionEventsCard events={transaction.events ?? []} />
-              </Card.Section>
+            </Card.Root>
+            <>
+              <PageTabs
+                sticky={HEADER_HEIGHT + entityHeaderHeight}
+                activeKey={tab}
+                onTabClick={(newTab) => {
+                  navigate(
+                    keepBackUrl(
+                      makeUrl('/transactions/item/:id/:tab', { id: transactionId, tab: newTab }),
+                    ),
+                    {
+                      replace: true,
+                    },
+                  );
+                }}
+              >
+                {[
+                  {
+                    tab: 'Transaction Details',
+                    key: 'user-details',
+                    children: <SenderReceiverDetails transaction={transaction} />,
+                    isClosable: false,
+                    isDisabled: false,
+                  },
+                  {
+                    tab: 'Transaction Events',
+                    key: 'transaction-events',
+                    children: <TransactionEventsCard events={transaction.events ?? []} />,
+                    isClosable: false,
+                    isDisabled: false,
+                  },
+                ].map(({ tab, key, isDisabled, isClosable, children }) => (
+                  <AntTabs.TabPane
+                    key={key}
+                    tab={tab}
+                    closable={isClosable}
+                    disabled={isDisabled ?? false}
+                  >
+                    <div>{children}</div>
+                  </AntTabs.TabPane>
+                ))}
+              </PageTabs>
             </>
-          )}
-        </AsyncResourceRenderer>
-      </Card.Root>
+          </>
+        )}
+      </AsyncResourceRenderer>
     </PageWrapper>
   );
 }

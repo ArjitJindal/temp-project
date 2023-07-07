@@ -21,10 +21,11 @@ interface Props {
   caseItem: Case;
   onReload: () => void;
   onCommentAdded: (newComment: Comment) => void;
+  headerStickyElRef?: React.RefCallback<HTMLDivElement>;
 }
 
 export default function Header(props: Props) {
-  const { caseItem, onReload, onCommentAdded } = props;
+  const { caseItem, onReload, headerStickyElRef, onCommentAdded } = props;
   const { caseId } = caseItem;
 
   const user = caseItem.caseUsers?.origin?.userId
@@ -41,6 +42,7 @@ export default function Header(props: Props) {
   const api = useApi();
   return (
     <EntityHeader
+      stickyElRef={headerStickyElRef}
       idTitle={'Case ID'}
       tag={
         caseItem.falsePositiveDetails &&

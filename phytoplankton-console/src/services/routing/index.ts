@@ -85,6 +85,12 @@ export function useRoutes(): RouteItem[] {
             permissions: ['case-management:case-details:read'],
           },
           {
+            path: '/case-management/case/:id/:tab',
+            component: CaseManagementItemPage,
+            name: 'item-tab',
+            permissions: ['case-management:case-details:read'],
+          },
+          {
             path: '/case-management',
             redirect: '/case-management/cases',
           },
@@ -107,6 +113,12 @@ export function useRoutes(): RouteItem[] {
             path: '/transactions/item/:id',
             component: TransactionsItemPage,
             name: 'transactions-item',
+            permissions: ['transactions:details:read'],
+          },
+          {
+            path: '/transactions/item/:id/:tab',
+            component: TransactionsItemPage,
+            name: 'transactions-item-tab',
             permissions: ['transactions:details:read'],
           },
           {

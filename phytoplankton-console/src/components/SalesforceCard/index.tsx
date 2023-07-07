@@ -12,7 +12,7 @@ import { SALESFORCE_ACCOUNT } from '@/utils/queries/keys';
 import Alert from '@/components/library/Alert';
 interface Props {
   userId: string;
-  collapsableKey: string;
+  collapsableKey?: string;
   updateCollapseState?: (key: string, value: boolean) => void;
 }
 

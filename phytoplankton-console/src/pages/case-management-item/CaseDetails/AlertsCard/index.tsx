@@ -6,13 +6,13 @@ import { DEFAULT_PARAMS_STATE } from '@/components/library/Table/consts';
 
 interface Props {
   caseItem: Case;
-  updateCollapseState: (key: string, value: boolean) => void;
+  updateCollapseState?: (key: string, value: boolean) => void;
   title: string;
-  collapsableKey: string;
+  collapsableKey?: string;
 }
 
 export default function AlertsCard(props: Props) {
-  const { caseItem, updateCollapseState, title, collapsableKey } = props;
+  const { caseItem } = props;
 
   const caseId = caseItem.caseId as string;
   const [params, setParams] = useState<AlertTableParams>({
@@ -23,7 +23,7 @@ export default function AlertsCard(props: Props) {
   });
 
   return (
-    <Card.Root header={{ title, collapsableKey }} updateCollapseState={updateCollapseState}>
+    <Card.Root>
       <Card.Section>
         <AlertTable
           caseId={caseId}

@@ -24,12 +24,12 @@ interface Props {
   id?: string;
   comments: CommentGroup[];
   updateCollapseState?: (key: string, value: boolean) => void;
-  collapsableKey: string;
+  collapsableKey?: string;
   title: string;
 }
 
 export default function CommentsCard(props: Props) {
-  const { comments, updateCollapseState, collapsableKey, title } = props;
+  const { comments } = props;
   const user = useAuth0User();
   const currentUserId = user.userId ?? undefined;
   const [deletingCommentIds, setDeletingCommentIds] = useState<string[]>([]);
@@ -101,40 +101,40 @@ export default function CommentsCard(props: Props) {
 
   return (
     <>
-      <Card.Root
-        header={{ title: `${title} (${totalCommentsLength})`, collapsableKey }}
-        updateCollapseState={updateCollapseState}
-        disabled={totalCommentsLength === 0}
-      >
+      <Card.Root>
         <Card.Section>
-          <div className={s.root}>
-            {updatedComments
-              .filter((group) => group.comments.length > 0)
-              .map((group) => (
-                <div className={s.group} key={group.title}>
-                  <P bold>{group.title}</P>
-                  <div className={s.groupComments}>
-                    {group.comments.map((comment) => (
-                      <Comment
-                        key={comment.id}
-                        comment={comment}
-                        currentUserId={currentUserId}
-                        deletingCommentIds={deletingCommentIds}
-                        onDelete={() => {
-                          if (comment.id != null) {
-                            deleteCommentMutation.mutate({
-                              parentId: group.id,
-                              commentId: comment.id,
-                              commentType: group.type,
-                            });
-                          }
-                        }}
-                      />
-                    ))}
+          {totalCommentsLength === 0 ? (
+            <div>No comments yet</div>
+          ) : (
+            <div className={s.root}>
+              {updatedComments
+                .filter((group) => group.comments.length > 0)
+                .map((group) => (
+                  <div className={s.group} key={group.title}>
+                    <P bold>{group.title}</P>
+                    <div className={s.groupComments}>
+                      {group.comments.map((comment) => (
+                        <Comment
+                          key={comment.id}
+                          comment={comment}
+                          currentUserId={currentUserId}
+                          deletingCommentIds={deletingCommentIds}
+                          onDelete={() => {
+                            if (comment.id != null) {
+                              deleteCommentMutation.mutate({
+                                parentId: group.id,
+                                commentId: comment.id,
+                                commentType: group.type,
+                              });
+                            }
+                          }}
+                        />
+                      ))}
+                    </div>
                   </div>
-                </div>
-              ))}
-          </div>
+                ))}
+            </div>
+          )}
         </Card.Section>
       </Card.Root>
     </>
