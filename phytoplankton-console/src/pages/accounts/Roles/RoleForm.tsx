@@ -120,10 +120,18 @@ export default function RoleForm({ role, onChange }: { role?: AccountRole; onCha
       )}
       {isEditing && (
         <div className={s.input}>
-          <InputField<FormValues> name={'roleName'} label={'Role name'}>
+          <InputField<FormValues>
+            name={'roleName'}
+            label={'Role name'}
+            labelProps={{ required: { value: true, showHint: true } }}
+          >
             {(inputProps) => <TextInput {...inputProps} placeholder={'Enter role name'} />}
           </InputField>
-          <InputField<FormValues> name={'description'} label={'Role description'}>
+          <InputField<FormValues>
+            name={'description'}
+            label={'Role description'}
+            labelProps={{ required: { value: true, showHint: true } }}
+          >
             {(inputProps) => <TextInput {...inputProps} placeholder={'Enter a description'} />}
           </InputField>
         </div>

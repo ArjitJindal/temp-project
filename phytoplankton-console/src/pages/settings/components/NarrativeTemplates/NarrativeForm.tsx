@@ -26,7 +26,7 @@ const NarrativeForm = (props: FormProps) => {
       <InputField<FormValues, 'name'>
         name={'name'}
         label={'Name'}
-        labelProps={{ isOptional: false, element: 'div' }}
+        labelProps={{ required: { value: true, showHint: true }, element: 'div' }}
       >
         {(inputProps) => <TextInput {...inputProps} placeholder={'Enter name'} />}
       </InputField>
@@ -34,7 +34,7 @@ const NarrativeForm = (props: FormProps) => {
         <InputField<FormValues, 'description'>
           name={'description'}
           label={'Description'}
-          labelProps={{ isOptional: false }}
+          labelProps={{ required: { value: true, showHint: true } }}
         >
           {(inputProps) => (
             <TextArea

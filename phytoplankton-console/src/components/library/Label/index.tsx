@@ -10,7 +10,10 @@ export interface Props extends InputProps<string> {
   level?: 1 | 2 | 3;
   description?: string;
   element?: 'label' | 'div';
-  isOptional?: boolean;
+  required?: {
+    value: boolean;
+    showHint: boolean;
+  };
 }
 
 export default function Label(props: Props) {
@@ -21,21 +24,27 @@ export default function Label(props: Props) {
     children,
     description,
     element = 'label',
-    isOptional = false,
+    required = {
+      value: false,
+      showHint: false,
+    },
   } = props;
+  const { value: isRequired, showHint } = required;
   const labelEl = (
     <div className={cn(s.label, s[`level-${level}`])}>
       {label}
-      {isOptional && (
-        <>
-          {' - '}
-          <span className={s.optional}>Optional</span>
-        </>
-      )}
+      {showHint &&
+        (isRequired ? (
+          <span className={s.required}> *</span>
+        ) : (
+          <>
+            {' - '}
+            <span className={s.optional}>Optional</span>
+          </>
+        ))}
     </div>
   );
   const descriptionEl = description && <div className={s.description}>{description}</div>;
-
   return React.createElement(
     element,
     {

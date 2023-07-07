@@ -205,7 +205,16 @@ export default function StatusChangeModal(props: Props) {
           onChange={setFormState}
           alwaysShowErrors={alwaysShowErrors}
         >
-          <InputField<FormValues, 'reasons'> name={'reasons'} label={'Reason'}>
+          <InputField<FormValues, 'reasons'>
+            name={'reasons'}
+            label={'Reason'}
+            labelProps={{
+              required: {
+                value: true,
+                showHint: true,
+              },
+            }}
+          >
             {(inputProps: InputProps<CaseClosingReasons[]>) => (
               <Select<CaseClosingReasons>
                 {...inputProps}
@@ -215,12 +224,30 @@ export default function StatusChangeModal(props: Props) {
             )}
           </InputField>
           {isOtherReason && (
-            <InputField<FormValues, 'reasonOther'> name="reasonOther" label="Describe the reason">
+            <InputField<FormValues, 'reasonOther'>
+              name="reasonOther"
+              label="Describe the reason"
+              labelProps={{
+                required: {
+                  value: true,
+                  showHint: true,
+                },
+              }}
+            >
               {(inputProps) => <TextInput {...inputProps} />}
             </InputField>
           )}
           <div className={s.comment}>
-            <InputField<FormValues, 'comment'> name={'comment'} label={'Comment'}>
+            <InputField<FormValues, 'comment'>
+              name={'comment'}
+              label={'Comment'}
+              labelProps={{
+                required: {
+                  value: true,
+                  showHint: true,
+                },
+              }}
+            >
               {(inputProps) => (
                 <>
                   <NarrativesSelectStatusChange

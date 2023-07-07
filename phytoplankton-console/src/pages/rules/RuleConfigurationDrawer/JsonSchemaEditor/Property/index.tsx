@@ -67,7 +67,7 @@ export default function Property(props: Props) {
       labelProps={{
         element: labelElement,
         position: labelPosition,
-        isOptional: !item.isRequired && settings.showOptionalMark,
+        required: { value: item.isRequired, showHint: settings.showOptionalMark },
         ...labelProps,
         level: labelLevel,
       }}

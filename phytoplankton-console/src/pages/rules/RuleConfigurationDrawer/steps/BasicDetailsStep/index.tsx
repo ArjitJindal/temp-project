@@ -68,14 +68,14 @@ function RuleDetails(props: Props) {
         <InputField<FormValues, 'ruleName'>
           name={'ruleName'}
           label={'Rule name'}
-          labelProps={{ isOptional: true }}
+          labelProps={{ required: { value: false, showHint: true } }}
         >
           {(inputProps) => <TextInput {...inputProps} placeholder={'Enter rule name'} />}
         </InputField>
         <InputField<FormValues, 'ruleDescription'>
           name={'ruleDescription'}
           label={'Rule description'}
-          labelProps={{ isOptional: true }}
+          labelProps={{ required: { value: false, showHint: true } }}
         >
           {(inputProps) => <TextInput {...inputProps} placeholder={'Enter rule description'} />}
         </InputField>
@@ -101,7 +101,7 @@ function RuleDetails(props: Props) {
         <InputField<FormValues, 'ruleLabels'>
           name={'ruleLabels'}
           label={'Rule labels'}
-          labelProps={{ isOptional: true }}
+          labelProps={{ required: { value: false, showHint: true } }}
         >
           {(inputProps) => (
             <Select<RuleLabels>
@@ -124,7 +124,7 @@ function RuleDetails(props: Props) {
         <InputField<FormValues, 'alertCreationInterval'>
           name={'alertCreationInterval'}
           label={'Alert creation interval'}
-          labelProps={{ element: 'div', isOptional: false }}
+          labelProps={{ element: 'div', required: { value: true, showHint: false } }}
         >
           {(inputProps) => <CreationIntervalInput {...inputProps} />}
         </InputField>
@@ -154,14 +154,14 @@ function SimulationIterationDetails() {
         <InputField<FormValues, 'simulationIterationName'>
           name={'simulationIterationName'}
           label={'Iteration name'}
-          labelProps={{ isOptional: true }}
+          labelProps={{ required: { value: false, showHint: true } }}
         >
           {(inputProps) => <TextInput {...inputProps} placeholder={'Enter iteration name'} />}
         </InputField>
         <InputField<FormValues, 'simulationIterationDescription'>
           name={'simulationIterationDescription'}
           label={'Description'}
-          labelProps={{ isOptional: true }}
+          labelProps={{ required: { value: false, showHint: true } }}
         >
           {(inputProps) => <TextArea {...inputProps} placeholder={'Enter iteration description'} />}
         </InputField>
