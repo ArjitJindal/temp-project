@@ -707,7 +707,11 @@ export class RulesEngineService {
     const promises: Promise<boolean>[] = []
     for (const filterKey in ruleFilters) {
       const FilterClass = filters[filterKey]
-      if (FilterClass && ruleFilters[filterKey]) {
+      const filterParams = ruleFilters[filterKey]
+      const isEmpty =
+        _.isNil(filterParams) ||
+        (_.isObject(filterParams) && _.isEmpty(filterParams))
+      if (FilterClass && !isEmpty) {
         const isUserFilter = Boolean(USER_FILTERS[filterKey])
         if (isUserFilter && !(data as { user?: User | Business }).user) {
           promises.push(Promise.resolve(false))

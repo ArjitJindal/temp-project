@@ -144,7 +144,7 @@ export function formValuesToRuleInstance(
     ruleId: initialRuleInstance.ruleId,
     ruleNameAlias: basicDetailsStep.ruleName,
     ruleDescriptionAlias: basicDetailsStep.ruleDescription,
-    filters: standardFiltersStep,
+    filters: removeEmpty(standardFiltersStep),
     casePriority: basicDetailsStep.casePriority,
     alertCreationInterval: basicDetailsStep.alertCreationInterval,
     nature: basicDetailsStep.ruleNature,
