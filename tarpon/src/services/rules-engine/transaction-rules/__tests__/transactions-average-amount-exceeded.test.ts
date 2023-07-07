@@ -79,7 +79,7 @@ ruleVariantsTest(true, () => {
           descriptionTemplate: getRuleByRuleId('R-122').descriptionTemplate,
         },
         [
-          'Sender made more than 2.00 times avg. amount of transactions in last 1 day than avg. amount of transactions in last 2 days.',
+          'Sender made more than 2.00 times average daily amount of transactions in last 1 day than average daily amount of transactions in last 2 days.',
         ]
       )
     })

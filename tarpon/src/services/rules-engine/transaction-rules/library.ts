@@ -875,10 +875,10 @@ const _RULES_LIBRARY: Array<
     return {
       id: 'R-122',
       type: 'TRANSACTION',
-      name: 'Average transaction amount exceed past period average',
+      name: 'Average daily transaction amount exceed past period average',
       description:
         'The average daily amount of transactions of a user in the first period, is >= X times higher than avg. amount of transactions in the second periods',
-      descriptionTemplate: `{{ if-sender 'Sender' 'Receiver' }} made more than {{ to-fixed multiplier }} times avg. amount of transactions in last {{ format-time-window period1 }} than avg. amount of transactions in last {{ format-time-window period2 }}`,
+      descriptionTemplate: `{{ if-sender 'Sender' 'Receiver' }} made more than {{ to-fixed multiplier }} times average daily amount of transactions in last {{ format-time-window period1 }} than average daily amount of transactions in last {{ format-time-window period2 }}`,
       defaultParameters,
       defaultAction: 'FLAG',
       ruleImplementationName: 'transactions-average-amount-exceeded',
