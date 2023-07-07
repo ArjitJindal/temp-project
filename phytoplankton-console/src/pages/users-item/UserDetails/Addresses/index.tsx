@@ -12,16 +12,16 @@ export default function Addresses(props: Props) {
   return (
     <span>
       <div className={s.fields}>
-        {user.type === 'CONSUMER'
-          ? user.contactDetails?.addresses?.map((address: Address) => {
-              const addressLines = address.addressLines;
-              const city = address.city;
-              const country = address.country;
-              const postcode = address.postcode;
+        {user?.type === 'CONSUMER'
+          ? user?.contactDetails?.addresses?.map((address: Address) => {
+              const addressLines = address?.addressLines;
+              const city = address?.city;
+              const country = address?.country;
+              const postcode = address?.postcode;
               return (
                 <>
                   <div className={s.detail}>
-                    <div className={s.items}>{addressLines.join(', ')}</div>
+                    <div className={s.items}>{addressLines?.join(', ')}</div>
                     <div>
                       {city} {postcode}
                       {''} {country}
@@ -31,14 +31,14 @@ export default function Addresses(props: Props) {
                 </>
               );
             })
-          : user.legalEntity?.contactDetails?.addresses?.map((address: Address) => {
-              const addressLines = address.addressLines;
-              const city = address.city;
-              const country = address.country;
+          : user?.legalEntity?.contactDetails?.addresses?.map((address: Address) => {
+              const addressLines = address?.addressLines;
+              const city = address?.city;
+              const country = address?.country;
               return (
                 <>
                   <div className={s.detail}>
-                    <div className={s.items}>{addressLines.join(', ')}</div>
+                    <div className={s.items}>{addressLines?.join(', ')}</div>
                     <div>
                       {city}
                       {''} {country}

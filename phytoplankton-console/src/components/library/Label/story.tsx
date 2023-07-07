@@ -13,7 +13,7 @@ export default function (): JSX.Element {
         <Component label="Label text">
           <TextInput value={textValue} onChange={setTextValue} />
         </Component>
-        <Component label="Optional label" isOptional={true}>
+        <Component label="Optional label" required={{ value: true, showHint: true }}>
           <TextInput value={textValue} onChange={setTextValue} />
         </Component>
       </UseCase>
