@@ -51,7 +51,7 @@ describe('Create webhook delivery tasks', () => {
         ...user,
         userStateDetails: {
           reason: 'reason',
-          state: 'DELETED',
+          state: 'TERMINATED',
         },
       }
     )
@@ -76,7 +76,7 @@ describe('Create webhook delivery tasks', () => {
       payload: {
         userId: user.userId,
         reason: 'reason',
-        state: 'DELETED',
+        state: 'TERMINATED',
       },
       _id: expect.any(String),
       tenantId: TEST_TENANT_ID,
@@ -96,7 +96,7 @@ describe('Create webhook delivery tasks', () => {
         ...user,
         userStateDetails: {
           reason: 'reason',
-          state: 'DELETED',
+          state: 'TERMINATED',
         },
       }
     )
@@ -123,7 +123,7 @@ describe('Create webhook delivery tasks', () => {
     const user = getTestUser({
       userStateDetails: {
         reason: 'reason',
-        state: 'DELETED',
+        state: 'TERMINATED',
       },
     })
     const event = createKinesisStreamEvent(
@@ -143,7 +143,7 @@ describe('Create webhook delivery tasks', () => {
     const user = getTestUser({
       userStateDetails: {
         reason: 'reason',
-        state: 'DELETED',
+        state: 'TERMINATED',
       },
     })
     const event = createKinesisStreamEvent(
@@ -176,7 +176,7 @@ describe('Create webhook delivery tasks', () => {
     const user = getTestUser({
       userStateDetails: {
         reason: 'reason',
-        state: 'DELETED',
+        state: 'TERMINATED',
       },
     })
     const event = createKinesisStreamEvent(

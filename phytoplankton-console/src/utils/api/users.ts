@@ -14,13 +14,10 @@ export const USER_STATES: UserState[] = [
   'ACTIVE',
   'BLOCKED',
   'CREATED',
-  'DELETED',
   'DORMANT',
-  'INACTIVE',
   'SUSPENDED',
   'TERMINATED',
   'UNACCEPTABLE',
-  'UNDECIDED',
 ];
 
 export const KYC_STATUSES: KYCStatus[] = [
