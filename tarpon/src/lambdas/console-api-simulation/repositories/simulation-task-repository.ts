@@ -1,4 +1,4 @@
-import { MongoClient } from 'mongodb'
+import { Filter, MongoClient } from 'mongodb'
 import { v4 as uuidv4 } from 'uuid'
 import _ from 'lodash'
 import {
@@ -22,6 +22,8 @@ import { SimulationPostResponse } from '@/@types/openapi-internal/SimulationPost
 import { SimulationBeaconJob } from '@/@types/openapi-internal/SimulationBeaconJob'
 import { SimulationBeaconParametersRequest } from '@/@types/openapi-internal/SimulationBeaconParametersRequest'
 import { SimulationBeaconIteration } from '@/@types/openapi-internal/SimulationBeaconIteration'
+import { SimulationJob } from '@/@types/openapi-internal/SimulationJob'
+import { isCurrentUserAtLeastRole } from '@/@types/jwt'
 
 export class SimulationTaskRepository {
   tenantId: string
@@ -129,19 +131,18 @@ export class SimulationTaskRepository {
         }
       )
     } else {
-      const baseJob = {
+      const createdByUser = getContext()?.user as Account
+      const baseJob: SimulationJob = {
         createdAt: now,
         jobId,
-        type: simulationRequest.type,
-        createdBy:
-          process.env.NODE_ENV === 'test'
-            ? 'test'
-            : (getContext()?.user as Account)?.id,
+        createdBy: process.env.NODE_ENV === 'test' ? 'test' : createdByUser?.id,
+        internal: isCurrentUserAtLeastRole('root'),
       }
       let job: SimulationPulseJob | SimulationBeaconJob | null = null
       if (simulationRequest.type === 'PULSE') {
         job = {
           ...baseJob,
+          type: 'PULSE',
           defaultRiskClassifications:
             simulationRequest.defaultRiskClassifications,
           iterations: this.generateIterationsObject(
@@ -152,6 +153,7 @@ export class SimulationTaskRepository {
       } else {
         job = {
           ...baseJob,
+          type: 'BEACON',
           defaultRuleInstance: simulationRequest.defaultRuleInstance,
           iterations: this.generateIterationsObject(
             simulationRequest,
@@ -257,7 +259,14 @@ export class SimulationTaskRepository {
     const collection = db.collection<SimulationPulseJob | SimulationBeaconJob>(
       SIMULATION_TASK_COLLECTION(this.tenantId)
     )
-    const query = { type: params.type }
+    const query: Filter<Partial<SimulationPulseJob | SimulationBeaconJob>> = {
+      type: params.type,
+    }
+    if (!params.includeInternal) {
+      query.internal = {
+        $ne: true,
+      }
+    }
     const simulationTasks = await collection
       .aggregate<SimulationPulseJob | SimulationBeaconJob>([
         { $match: query },
@@ -305,6 +314,6 @@ export class SimulationTaskRepository {
     const collection = db.collection<SimulationPulseJob | SimulationBeaconJob>(
       SIMULATION_TASK_COLLECTION(this.tenantId)
     )
-    return collection.countDocuments()
+    return collection.countDocuments({ internal: { $ne: true } })
   }
 }

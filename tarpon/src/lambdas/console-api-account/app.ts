@@ -5,7 +5,7 @@ import {
 import { BadRequest, Forbidden } from 'http-errors'
 import { AccountsService } from '../../services/accounts'
 import { lambdaApi } from '@/core/middlewares/lambda-api-middlewares'
-import { assertRole, JWTAuthorizerResult } from '@/@types/jwt'
+import { assertCurrentUserRole, JWTAuthorizerResult } from '@/@types/jwt'
 import { Account } from '@/@types/openapi-internal/Account'
 import { ChangeTenantPayload } from '@/@types/openapi-internal/ChangeTenantPayload'
 import { AccountInvitePayload } from '@/@types/openapi-internal/AccountInvitePayload'
@@ -22,8 +22,7 @@ export const accountsHandler = lambdaApi()(
       APIGatewayEventLambdaAuthorizerContext<JWTAuthorizerResult>
     >
   ) => {
-    const { userId, verifiedEmail, role, tenantId, auth0Domain } =
-      event.requestContext.authorizer
+    const { userId, tenantId, auth0Domain } = event.requestContext.authorizer
     const mongoDb = await getMongoDbClient()
     const accountsService = new AccountsService({ auth0Domain }, { mongoDb })
     const rolesService = new RoleService({ auth0Domain })
@@ -40,7 +39,7 @@ export const accountsHandler = lambdaApi()(
       )
       return accounts
     } else if (event.httpMethod === 'POST' && event.resource === '/accounts') {
-      assertRole({ role, verifiedEmail }, 'admin')
+      assertCurrentUserRole('admin')
       if (event.body == null) {
         throw new BadRequest(`Body should not be empty`)
       }
@@ -83,7 +82,7 @@ export const accountsHandler = lambdaApi()(
       event.httpMethod === 'POST' &&
       event.resource === '/accounts/{accountId}/change_tenant'
     ) {
-      assertRole({ role, verifiedEmail }, 'root')
+      assertCurrentUserRole('root')
       const { pathParameters } = event
       const idToChange = pathParameters?.accountId
       if (!idToChange) {
@@ -107,12 +106,12 @@ export const accountsHandler = lambdaApi()(
         throw new BadRequest(`accountId is not provided`)
       }
       if (event.httpMethod === 'DELETE') {
-        assertRole({ role, verifiedEmail }, 'admin')
+        assertCurrentUserRole('admin')
 
         await accountsService.deleteUser(organization, accountId)
         return true
       } else if (event.httpMethod === 'POST') {
-        assertRole({ role, verifiedEmail }, 'admin')
+        assertCurrentUserRole('admin')
         if (event.body == null) {
           throw new BadRequest(`Body should not be empty`)
         }
@@ -134,7 +133,7 @@ export const accountsHandler = lambdaApi()(
         throw new BadRequest(`accountId is not provided`)
       }
       if (accountId != userId) {
-        assertRole({ role, verifiedEmail }, 'root')
+        assertCurrentUserRole('root')
       }
       if (event.httpMethod === 'GET') {
         return await accountsService.getUserSettings(organization, accountId)

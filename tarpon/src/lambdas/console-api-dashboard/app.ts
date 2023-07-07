@@ -8,7 +8,7 @@ import {
   GranularityValuesType,
 } from './repositories/dashboard-stats-repository'
 import { lambdaApi } from '@/core/middlewares/lambda-api-middlewares'
-import { assertRole, JWTAuthorizerResult } from '@/@types/jwt'
+import { JWTAuthorizerResult, assertCurrentUserRole } from '@/@types/jwt'
 import { getMongoDbClient } from '@/utils/mongoDBUtils'
 import { CaseStatus } from '@/@types/openapi-internal/CaseStatus'
 import { AlertStatus } from '@/@types/openapi-internal/AlertStatus'
@@ -21,12 +21,11 @@ function shouldRefreshAll(
     APIGatewayEventLambdaAuthorizerContext<JWTAuthorizerResult>
   >
 ): boolean {
-  const { role, verifiedEmail } = event.requestContext.authorizer
   if (process.env.ENV === 'local') {
     return true
   }
   if (event.queryStringParameters?.forceRefresh) {
-    assertRole({ role, verifiedEmail }, 'root')
+    assertCurrentUserRole('root')
     return true
   }
   return false

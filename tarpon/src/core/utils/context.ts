@@ -21,6 +21,9 @@ import { Permission } from '@/@types/openapi-internal/Permission'
 type LogMetaData = {
   tenantId?: string
 }
+export type ContextUser =
+  | (Pick<Account, 'id' | 'role'> & { email?: string })
+  | undefined
 
 export type Context = LogMetaData & {
   requestId?: string
@@ -29,7 +32,7 @@ export type Context = LogMetaData & {
   metricDimensions?: { [key: string]: string | undefined }
   metrics?: { [namespace: string]: MetricDatum[] }
   dynamoDbClients?: DynamoDBClient[]
-  user?: Partial<Account>
+  user?: ContextUser
   authz?: {
     tenantId: string
     permissions: Map<Permission, boolean>
@@ -97,7 +100,7 @@ export async function getInitialContext(
         ? {
             id: userId,
             email: verifiedEmail,
-            role,
+            role: role!,
           }
         : undefined,
     }
@@ -190,6 +193,10 @@ export function getContextStorage(): AsyncLocalStorage<Context> {
 
 export function getContext(): Context | undefined {
   return asyncLocalStorage.getStore()
+}
+
+export function currentUser(): ContextUser {
+  return getContext()?.user
 }
 
 export function hasFeature(feature: Feature): boolean {

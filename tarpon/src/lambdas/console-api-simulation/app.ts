@@ -21,7 +21,7 @@ import { getCredentialsFromEvent } from '@/utils/credentials'
 import { SimulationPulseParametersRequest } from '@/@types/openapi-internal/SimulationPulseParametersRequest'
 import { TenantRepository } from '@/services/tenants/repositories/tenant-repository'
 import { getDynamoDbClientByEvent } from '@/utils/dynamodb'
-import { SimulationSettings } from '@/@types/openapi-internal/SimulationSettings'
+import { SimulationStats } from '@/@types/openapi-internal/SimulationStats'
 import { SimulationBeaconParametersRequest } from '@/@types/openapi-internal/SimulationBeaconParametersRequest'
 
 export const simulationHandler = lambdaApi({ requiredFeatures: ['SIMULATOR'] })(
@@ -44,9 +44,12 @@ export const simulationHandler = lambdaApi({ requiredFeatures: ['SIMULATOR'] })(
 
     if (event.resource === '/simulation') {
       if (event.httpMethod === 'GET') {
-        return simulationTaskRepository.getSimulationJobs(
+        const params =
           event.queryStringParameters as any as DefaultApiGetSimulationsRequest
-        )
+        return simulationTaskRepository.getSimulationJobs({
+          ...params,
+          includeInternal: String(params.includeInternal) === 'true',
+        })
       } else if (event.httpMethod === 'POST' && event.body) {
         const simulationParameters = JSON.parse(event.body) as
           | SimulationPulseParametersRequest
@@ -139,12 +142,12 @@ export const simulationHandler = lambdaApi({ requiredFeatures: ['SIMULATOR'] })(
 
       return { items, total }
     } else if (
-      event.resource === '/simulation/settings' &&
+      event.resource === '/simulation/stats' &&
       event.httpMethod === 'GET'
     ) {
       return {
-        count: await simulationTaskRepository.getSimulationJobsCount(),
-      } as SimulationSettings
+        runJobsCount: await simulationTaskRepository.getSimulationJobsCount(),
+      } as SimulationStats
     }
 
     throw new BadRequest('Unhandled request')

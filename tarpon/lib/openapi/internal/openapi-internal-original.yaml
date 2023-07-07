@@ -3365,6 +3365,10 @@ paths:
           in: query
           name: type
           required: true
+        - schema:
+            type: boolean
+          in: query
+          name: includeInternal
   '/simulation/jobs/{jobId}':
     get:
       summary: Get a simulation task by test ID
@@ -3425,7 +3429,7 @@ paths:
           $ref: '#/components/schemas/Page'
         in: query
         name: page
-  /simulation/settings:
+  /simulation/stats:
     get:
       summary: Get simulation tasks count
       operationId: get-simulation-jobs-count
@@ -3438,7 +3442,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/SimulationSettings'
+                $ref: '#/components/schemas/SimulationStats'
   /device-data/transactions:
     get:
       summary: Get Device Data Transactions
@@ -6615,6 +6619,8 @@ components:
           type: number
         createdBy:
           type: string
+        internal:
+          type: boolean
       required:
         - jobId
         - createdBy
@@ -6846,13 +6852,13 @@ components:
       required:
         - total
         - data
-    SimulationSettings:
+    SimulationStats:
       type: object
       properties:
-        count:
+        runJobsCount:
           type: integer
       required:
-        - count
+        - runJobsCount
     CaseHierarchyDetails:
       title: CaseHierarchyDetails
       x-stoplight:

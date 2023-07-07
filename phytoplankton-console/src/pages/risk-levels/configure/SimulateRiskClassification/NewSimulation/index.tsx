@@ -13,7 +13,7 @@ import { message } from '@/components/library/Message';
 import { useApi } from '@/api';
 import {
   SimulationPostResponse,
-  SimulationSettings,
+  SimulationStats,
   RiskClassificationScore,
   SimulationPulseParameters,
   SimulationPulseParametersRequest,
@@ -67,9 +67,9 @@ const NewSimulation = forwardRef((props: Props, ref: React.Ref<SimulationRef>) =
 
   const simulationCountResults = useQuery(SIMULATION_COUNT(), () => api.getSimulationJobsCount());
 
-  const simulationCount = getOr<SimulationSettings>(simulationCountResults.data, {
-    count: 0,
-  }).count;
+  const simulationCount = getOr<SimulationStats>(simulationCountResults.data, {
+    runJobsCount: 0,
+  }).runJobsCount;
 
   const totalSimulations = useSettings()?.limits?.simulations ?? 0;
 

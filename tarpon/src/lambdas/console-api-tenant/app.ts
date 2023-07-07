@@ -7,7 +7,7 @@ import { customAlphabet } from 'nanoid'
 import { AccountsService } from '../../services/accounts'
 import { TenantCreationRequest } from '@/@types/openapi-internal/TenantCreationRequest'
 import { lambdaApi } from '@/core/middlewares/lambda-api-middlewares'
-import { assertRole, JWTAuthorizerResult } from '@/@types/jwt'
+import { JWTAuthorizerResult, assertCurrentUserRole } from '@/@types/jwt'
 import { Tenant } from '@/@types/openapi-internal/Tenant'
 import { getDynamoDbClientByEvent, getDynamoDbClient } from '@/utils/dynamodb'
 import { TenantService } from '@/services/tenants'
@@ -33,17 +33,13 @@ export const tenantsHandler = lambdaApi()(
       APIGatewayEventLambdaAuthorizerContext<JWTAuthorizerResult>
     >
   ) => {
-    const {
-      role,
-      principalId: tenantId,
-      verifiedEmail,
-      auth0Domain,
-    } = event.requestContext.authorizer
+    const { principalId: tenantId, auth0Domain } =
+      event.requestContext.authorizer
     const mongoDb = await getMongoDbClient()
     const accountsService = new AccountsService({ auth0Domain }, { mongoDb })
 
     if (event.httpMethod === 'GET' && event.resource === '/tenants') {
-      assertRole({ role, verifiedEmail }, 'root')
+      assertCurrentUserRole('root')
       const tenants: Tenant[] = (await accountsService.getTenants()).map(
         (tenant: Tenant): Tenant => ({
           id: tenant.id,
@@ -56,7 +52,7 @@ export const tenantsHandler = lambdaApi()(
       event.httpMethod === 'POST' &&
       event.body
     ) {
-      assertRole({ role, verifiedEmail }, 'root')
+      assertCurrentUserRole('root')
       const newTenantId = customAlphabet(
         '1234567890ABCDEFGHIJKLMNOPQRSTUVWXYZ',
         10
@@ -95,9 +91,9 @@ export const tenantsHandler = lambdaApi()(
             (settingName) => newTenantSettings[settingName]
           )
         ) {
-          assertRole({ role, verifiedEmail }, 'root')
+          assertCurrentUserRole('root')
         }
-        assertRole({ role, verifiedEmail }, 'admin')
+        assertCurrentUserRole('admin')
 
         const tenantSettingsCurrent = await tenantRepository.getTenantSettings()
 

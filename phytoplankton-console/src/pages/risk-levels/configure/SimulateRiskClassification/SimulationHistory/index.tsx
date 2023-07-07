@@ -1,11 +1,6 @@
-import { useRef, useState } from 'react';
+import { useContext, useMemo, useRef, useState } from 'react';
 import { useApi } from '@/api';
-import {
-  RiskClassificationScore,
-  SimulationPostResponse,
-  SimulationPulseJob,
-  SimulationPulseType,
-} from '@/apis';
+import { RiskClassificationScore, SimulationPostResponse, SimulationPulseJob } from '@/apis';
 import QueryResultsTable from '@/components/common/QueryResultsTable';
 import { AllParams, TableRefType } from '@/components/library/Table/types';
 import { DEFAULT_PARAMS_STATE } from '@/components/library/Table/consts';
@@ -16,7 +11,8 @@ import { RISK_LEVEL_LABELS, RISK_LEVELS } from '@/utils/risk-levels';
 import { useUsers } from '@/utils/user-utils';
 import { ColumnHelper } from '@/components/library/Table/columnHelper';
 import { DATE_TIME, NUMBER } from '@/components/library/Table/standardDataTypes';
-import { PageWrapperContentContainer } from '@/components/PageWrapper';
+import { PageWrapperContentContainer, PageWrapperContext } from '@/components/PageWrapper';
+import { DefaultApiGetSimulationsRequest } from '@/apis/types/ObjectParamAPI';
 
 type SimulationHistoryProps = {
   setResult: (results: SimulationPostResponse) => void;
@@ -38,19 +34,25 @@ export default function SimulationHistory(props: SimulationHistoryProps) {
   const api = useApi();
   const [users, loading] = useUsers({ includeRootUsers: true, includeBlockedUsers: true });
   const { setResult, setOpen } = props;
-  const [params, setParams] = useState<AllParams<{ type: SimulationPulseType }>>({
+  const [params, setParams] = useState<AllParams<DefaultApiGetSimulationsRequest>>({
     ...DEFAULT_PARAMS_STATE,
+    page: 1,
     type: 'PULSE',
     sort: [['createdAt', 'descend']],
   });
-
-  const allSimulationsQueryResult = usePaginatedQuery(SIMULATION_JOBS(params), async () => {
+  const context = useContext(PageWrapperContext);
+  const finalParams = useMemo(
+    () => ({ ...params, includeInternal: context?.superAdminMode }),
+    [context?.superAdminMode, params],
+  );
+  const allSimulationsQueryResult = usePaginatedQuery(SIMULATION_JOBS(finalParams), async () => {
     const simulations = await api.getSimulations({
-      type: params.type,
-      page: params.page ?? 1,
-      pageSize: params.pageSize,
-      sortField: params.sort[0]?.[0],
-      sortOrder: params.sort[0]?.[1] ?? 'ascend',
+      type: finalParams.type,
+      page: finalParams.page ?? 1,
+      pageSize: finalParams.pageSize,
+      sortField: finalParams.sort[0]?.[0],
+      sortOrder: finalParams.sort[0]?.[1] ?? 'ascend',
+      includeInternal: finalParams?.includeInternal,
     });
 
     return {

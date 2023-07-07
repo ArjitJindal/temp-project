@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useContext, useMemo, useState } from 'react';
 import { RuleConfigurationSimulationDrawer } from '../RuleConfigurationDrawer';
 import { useApi } from '@/api';
 import { SimulationBeaconJob } from '@/apis';
@@ -11,7 +11,7 @@ import { SIMULATION_JOBS } from '@/utils/queries/keys';
 import { useUsers } from '@/utils/user-utils';
 import { ColumnHelper } from '@/components/library/Table/columnHelper';
 import { DATE_TIME, NUMBER } from '@/components/library/Table/standardDataTypes';
-import { PageWrapperContentContainer } from '@/components/PageWrapper';
+import { PageWrapperContentContainer, PageWrapperContext } from '@/components/PageWrapper';
 import { DefaultApiGetSimulationsRequest } from '@/apis/types/ObjectParamAPI';
 import { useRules } from '@/utils/rules';
 
@@ -25,8 +25,13 @@ export function SimulationHistoryTable() {
     type: 'BEACON',
   });
   const [selectedJob, setSelectedJob] = useState<SimulationBeaconJob | undefined>();
-  const queryResults = usePaginatedQuery(SIMULATION_JOBS(params), async () => {
-    const simulations = await api.getSimulations(params);
+  const context = useContext(PageWrapperContext);
+  const finalParams = useMemo(
+    () => ({ ...params, includeInternal: context?.superAdminMode }),
+    [context?.superAdminMode, params],
+  );
+  const queryResults = usePaginatedQuery(SIMULATION_JOBS(finalParams), async () => {
+    const simulations = await api.getSimulations(finalParams);
     return {
       items: simulations.data as SimulationBeaconJob[],
       total: simulations.total,

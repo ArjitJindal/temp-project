@@ -2,7 +2,7 @@ import {
   APIGatewayEventLambdaAuthorizerContext,
   APIGatewayProxyWithLambdaAuthorizerEvent,
 } from 'aws-lambda'
-import { JWTAuthorizerResult, assertRole } from '@/@types/jwt'
+import { JWTAuthorizerResult, assertCurrentUserRole } from '@/@types/jwt'
 import { lambdaApi } from '@/core/middlewares/lambda-api-middlewares'
 import { getMongoDbClient } from '@/utils/mongoDBUtils'
 import { AuditLogRepository } from '@/services/audit-log/repositories/auditlog-repository'
@@ -14,11 +14,7 @@ export const auditLogHandler = lambdaApi()(
       APIGatewayEventLambdaAuthorizerContext<JWTAuthorizerResult>
     >
   ) => {
-    const {
-      principalId: tenantId,
-      role,
-      verifiedEmail,
-    } = event.requestContext.authorizer
+    const { principalId: tenantId } = event.requestContext.authorizer
     const mongoDb = await getMongoDbClient()
     const queryStringParameters = event.queryStringParameters as any
     const {
@@ -38,7 +34,7 @@ export const auditLogHandler = lambdaApi()(
       queryStringParameters.includeRootUserRecords === 'true'
 
     if (includeRootUserRecords) {
-      assertRole({ role, verifiedEmail }, 'root')
+      assertCurrentUserRole('root')
     }
 
     const params: DefaultApiGetAuditlogRequest = {

@@ -142,7 +142,7 @@ export const ConsoleApiPathToLambda: any = {
     StackConstants.CONSOLE_API_SIMULATION_FUNCTION_NAME,
   '/simulation/tasks/{taskId}/results':
     StackConstants.CONSOLE_API_SIMULATION_FUNCTION_NAME,
-  '/simulation/settings': StackConstants.CONSOLE_API_SIMULATION_FUNCTION_NAME,
+  '/simulation/stats': StackConstants.CONSOLE_API_SIMULATION_FUNCTION_NAME,
   '/device-data/transactions':
     StackConstants.CONSOLE_API_DEVICE_DATA_FUNCTION_NAME,
   '/device-data/users': StackConstants.CONSOLE_API_DEVICE_DATA_FUNCTION_NAME,

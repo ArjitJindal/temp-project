@@ -50,7 +50,7 @@ export const SimulationPageWrapper = forwardRef<
   const isSimulationFeatureEnabled = useFeatureEnabled('SIMULATOR');
   const simulationCountResults = useQuery(SIMULATION_COUNT(), async () => {
     if (!isSimulationFeatureEnabled) {
-      return { count: 0 };
+      return { runJobsCount: 0 };
     }
     return api.getSimulationJobsCount();
   });
@@ -63,11 +63,19 @@ export const SimulationPageWrapper = forwardRef<
   return (
     <PageWrapper
       {...props}
+      superAdminMode={
+        props.isSimulationModeEnabled
+          ? {
+              tooltip:
+                'Turn on to make the simulation jobs triggered from super admin users visible.',
+            }
+          : undefined
+      }
       actionButton={
         <div className={s.simulationRoot}>
           {isSimulationFeatureEnabled && props.isSimulationModeEnabled && (
             <AsyncResourceRenderer resource={simulationCountResults.data}>
-              {(data) => <SimulationUsageCard usageCount={data.count} />}
+              {(data) => <SimulationUsageCard usageCount={data.runJobsCount} />}
             </AsyncResourceRenderer>
           )}
           <div className={s.simulationSwitch}>
@@ -90,6 +98,8 @@ export const SimulationPageWrapper = forwardRef<
           </div>
         </div>
       }
-    />
+    >
+      {props.children}
+    </PageWrapper>
   );
 });

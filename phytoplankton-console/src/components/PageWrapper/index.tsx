@@ -1,13 +1,19 @@
-import React from 'react';
+import React, { useState } from 'react';
+import { Space, Col, Row, Typography } from 'antd';
 import cn from 'clsx';
-import { Col, Row, Typography } from 'antd';
 import { Link } from 'react-router-dom';
 import ErrorBoundary from '../ErrorBoundary';
+import SuperAdminContainer from '../library/SuperAdminContainer';
+import COLORS from '../ui/colors';
+import Toggle from '../library/Toggle';
 import s from './styles.module.less';
 import ArrowLeftSLine from '@/components/ui/icons/Remix/system/arrow-left-s-line.react.svg';
 import { usePageTimeLoadTracker, usePageViewTimeTracker } from '@/utils/tracker';
+import { isSuperAdmin, useAuth0User } from '@/utils/user-utils';
 
 export const PAGE_WRAPPER_PADDING = 16;
+
+export const PageWrapperContext = React.createContext<{ superAdminMode: boolean } | null>(null);
 
 export interface PageWrapperProps {
   title?: string;
@@ -18,53 +24,80 @@ export interface PageWrapperProps {
   };
   actionButton?: React.ReactNode;
   loading?: boolean;
+  superAdminMode?: {
+    tooltip: string;
+  };
   children?: React.ReactNode;
 }
 
 export default function PageWrapper(props: PageWrapperProps) {
-  const { title, description, backButton, actionButton } = props;
+  const { title, description, backButton, actionButton, superAdminMode } = props;
+  const user = useAuth0User();
+  const [isSuperAdminMode, setIsSuperAdminMode] = useState(false);
   usePageViewTimeTracker();
   usePageTimeLoadTracker();
 
   return (
-    <div className={s.root} id="page-wrapper-root">
-      {(title || description || backButton || actionButton) && (
-        <header className={s.head} style={{ padding: PAGE_WRAPPER_PADDING, paddingBottom: 8 }}>
-          <Row>
-            <Col xs={18}>
-              {title && (
-                <Typography.Title id={title} level={2} className={s.title}>
-                  {title}
-                </Typography.Title>
-              )}
-              {description && (
-                <Typography.Paragraph className={s.description}>{description}</Typography.Paragraph>
-              )}
+    <PageWrapperContext.Provider value={{ superAdminMode: isSuperAdminMode }}>
+      <div className={s.root} id="page-wrapper-root">
+        {(title || description || backButton || actionButton) && (
+          <header className={s.head} style={{ padding: PAGE_WRAPPER_PADDING, paddingBottom: 8 }}>
+            <Row>
+              <Col xs={18}>
+                {title && (
+                  <Typography.Title id={title} level={2} className={s.title}>
+                    {title}
+                  </Typography.Title>
+                )}
+                {description && (
+                  <Typography.Paragraph className={s.description}>
+                    {description}
+                  </Typography.Paragraph>
+                )}
 
-              {backButton && (
-                <Link className={s.backButton} to={backButton.url}>
-                  <ArrowLeftSLine />
-                  {backButton.title}
-                </Link>
-              )}
-            </Col>
-            <Col xs={6}>
-              {actionButton && (
-                <div style={{ textAlign: 'end', display: 'flex', justifyContent: 'end' }}>
-                  {actionButton}
-                </div>
-              )}
-            </Col>
-          </Row>
-        </header>
-      )}
-      <div
-        className={cn(s.body, 'print-container')}
-        style={{ padding: PAGE_WRAPPER_PADDING, paddingTop: 8 }}
-      >
-        <ErrorBoundary>{props.children}</ErrorBoundary>
+                {backButton && (
+                  <Link className={s.backButton} to={backButton.url}>
+                    <ArrowLeftSLine />
+                    {backButton.title}
+                  </Link>
+                )}
+              </Col>
+              <Col xs={6}>
+                {(actionButton || superAdminMode) && (
+                  <div style={{ textAlign: 'end', display: 'flex', justifyContent: 'end' }}>
+                    <Space>
+                      {superAdminMode && isSuperAdmin(user) && (
+                        <SuperAdminContainer
+                          tooltip={superAdminMode.tooltip}
+                          tooltipPlacement="left"
+                        >
+                          <Toggle
+                            height={20}
+                            width={40}
+                            uncheckedIcon={false}
+                            checkedIcon={false}
+                            onColor={COLORS.red.base}
+                            value={isSuperAdminMode}
+                            onChange={(v) => setIsSuperAdminMode(v as boolean)}
+                          />
+                        </SuperAdminContainer>
+                      )}
+                      {actionButton}
+                    </Space>
+                  </div>
+                )}
+              </Col>
+            </Row>
+          </header>
+        )}
+        <div
+          className={cn(s.body, 'print-container')}
+          style={{ padding: PAGE_WRAPPER_PADDING, paddingTop: 8 }}
+        >
+          <ErrorBoundary>{props.children}</ErrorBoundary>
+        </div>
       </div>
-    </div>
+    </PageWrapperContext.Provider>
   );
 }
 

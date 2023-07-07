@@ -86,7 +86,7 @@ describe('Consoel API - Simulation', () => {
     )
 
     expect(response?.statusCode).toEqual(200)
-    expect(JSON.parse(response?.body as string)).toEqual({
+    expect(JSON.parse(response?.body as string)).toMatchObject({
       createdAt: expect.any(Number),
       jobId: expect.any(String),
       type: 'PULSE',
@@ -148,41 +148,39 @@ describe('Consoel API - Simulation', () => {
       null as any
     )
     expect(response?.statusCode).toEqual(200)
-    expect(JSON.parse(response?.body as string)).toEqual({
-      total: 1,
-      data: [
+    const body = JSON.parse(response?.body as string)
+    expect(body.total).toBe(1)
+    expect(body.data).toHaveLength(1)
+    expect(body.data[0]).toMatchObject({
+      createdAt: expect.any(Number),
+      jobId,
+      type: 'PULSE',
+      defaultRiskClassifications: DEFAULT_CLASSIFICATION_SETTINGS,
+      iterations: [
         {
+          taskId: taskIds[0],
+          parameters: {
+            type: 'PULSE',
+            classificationValues: [],
+            parameterAttributeRiskValues: [],
+            sampling: { usersCount: 100 },
+            name: 'Test Simulation',
+          },
+          progress: 0,
+          statistics: { current: [], simulated: [] },
+          latestStatus: {
+            status: 'PENDING',
+            timestamp: expect.any(Number),
+          },
+          statuses: [{ status: 'PENDING', timestamp: expect.any(Number) }],
           createdAt: expect.any(Number),
-          jobId,
+          name: 'Test Simulation',
+          description: null,
           type: 'PULSE',
-          defaultRiskClassifications: DEFAULT_CLASSIFICATION_SETTINGS,
-          iterations: [
-            {
-              taskId: taskIds[0],
-              parameters: {
-                type: 'PULSE',
-                classificationValues: [],
-                parameterAttributeRiskValues: [],
-                sampling: { usersCount: 100 },
-                name: 'Test Simulation',
-              },
-              progress: 0,
-              statistics: { current: [], simulated: [] },
-              latestStatus: {
-                status: 'PENDING',
-                timestamp: expect.any(Number),
-              },
-              statuses: [{ status: 'PENDING', timestamp: expect.any(Number) }],
-              createdAt: expect.any(Number),
-              name: 'Test Simulation',
-              description: null,
-              type: 'PULSE',
-              createdBy: 'test',
-            },
-          ],
           createdBy: 'test',
         },
       ],
+      createdBy: 'test',
     })
     const unknownResponse = await simulationHandler(
       getApiGatewayGetEvent(tenantId, '/simulation', {
