@@ -57,6 +57,14 @@ export const initSentry =
           })
         }
         Sentry.setTags(getContext()?.logMetadata || {})
+        Sentry.setContext(
+          'query',
+          (event?.queryStringParameters as object) || {}
+        )
+        Sentry.setContext('body', (event?.body as object) || {})
+        Sentry.setContext('path', (event?.pathParameters as object) || {})
+        Sentry.setTag('httpMethod', event?.httpMethod || '')
+        Sentry.setTag('resource', event?.resource || '')
 
         return handler(event, ...args)
       }
