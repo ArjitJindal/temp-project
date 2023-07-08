@@ -39,7 +39,7 @@ describe('navigate sidebar', () => {
       .should('be.visible')
       .eq(0)
       .click({ force: true });
-    cy.contains('h3', 'Origin (Sender) and Destination (Receiver) Details').should('be.visible');
+    cy.contains('div[role="tab"]', 'Transaction Details').should('be.visible');
 
     cy.visit('/case-management/cases', { timeout: 8000 });
     cy.get(TABLE_SELECTOR).should('exist');
@@ -54,7 +54,7 @@ describe('navigate sidebar', () => {
       .should('be.visible')
       .eq(0)
       .click({ force: true });
-    cy.contains('h3', 'Alerts').should('be.visible');
+    cy.contains('div[role="tab"]', 'Alerts').should('be.visible');
 
     cy.visit('/users/list/consumer/all', { timeout: 8000 });
     cy.get(TABLE_SELECTOR).should('exist');
