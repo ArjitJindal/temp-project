@@ -60,6 +60,7 @@ export type TenantBasic = {
 export class AccountsService {
   private config: { auth0Domain: string }
   private mongoDb: MongoClient
+  private roleService: RoleService
 
   public static async fromEvent(
     event: APIGatewayProxyWithLambdaAuthorizerEvent<
@@ -77,6 +78,9 @@ export class AccountsService {
   ) {
     this.config = config
     this.mongoDb = connections.mongoDb
+    this.roleService = new RoleService({
+      auth0Domain: this.config.auth0Domain,
+    })
   }
 
   public async getAllActiveAccounts(): Promise<Account[]> {
@@ -178,10 +182,6 @@ export class AccountsService {
     const managementClient: ManagementClient<AppMetadata> =
       await this.getManagementClient()
 
-    const roleService = new RoleService({
-      auth0Domain: this.config.auth0Domain,
-    })
-
     const authenticationClient = await this.getAuthenticationClient()
 
     try {
@@ -214,7 +214,7 @@ export class AccountsService {
         logger.info('Created user', {
           email: params.email,
         })
-        await roleService.setRole(
+        await this.roleService.setRole(
           tenant.id,
           user.user_id as string,
           params.role
@@ -403,10 +403,12 @@ export class AccountsService {
       )
     }
 
+    if (patch.role) {
+      await this.roleService.setRole(tenant.id, accountId, patch.role)
+    }
     const user = await managementClient.getUser({
       id: accountId,
     })
-
     const patchedUser = await managementClient.updateUser(
       {
         id: accountId,
@@ -414,11 +416,6 @@ export class AccountsService {
       {
         app_metadata: {
           ...user.app_metadata,
-          ...(patch.role != null
-            ? {
-                role: patch.role,
-              }
-            : {}),
           ...(patch.isEscalationContact != null
             ? {
                 isEscalationContact: patch.isEscalationContact,
