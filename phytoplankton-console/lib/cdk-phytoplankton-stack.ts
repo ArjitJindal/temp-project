@@ -7,6 +7,7 @@ import * as cloudfront from 'aws-cdk-lib/aws-cloudfront';
 import * as s3deploy from 'aws-cdk-lib/aws-s3-deployment';
 import { CfnOutput, Duration, RemovalPolicy } from 'aws-cdk-lib';
 import { CnameRecord, HostedZone } from 'aws-cdk-lib/aws-route53';
+import { BucketProps } from 'aws-cdk-lib/aws-s3/lib/bucket';
 import { userAlias } from './configs/config-dev-user';
 import type { Config } from './configs/config';
 
@@ -35,22 +36,16 @@ worker-src blob:;`.replace(/(\r\n|\n|\r)/gm, ' ');
 export class CdkPhytoplanktonStack extends cdk.Stack {
   constructor(scope: Construct, id: string, config: Config) {
     super(scope, id, { env: config.env });
-    const prefix = process.env.ENV === 'dev:user' ? `${userAlias()}.` : '';
+    const isQaDeployment = process.env.ENV === 'dev:user';
+
+    const prefix = isQaDeployment ? `${userAlias()}.` : '';
     const domainName = config.SITE_DOMAIN.replace(prefix, '').replace('console.', '');
 
     const cloudfrontOAI = new cloudfront.OriginAccessIdentity(this, 'cloudfront-OAI', {
       comment: `OAI for ${config.SITE_DOMAIN}`,
     });
 
-    // Content bucket
-    const serverAccessLogBucket = new s3.Bucket(this, 'ServerAccessLogBucketConsole', {
-      bucketName: 'console-' + config.SITE_DOMAIN.replace('.', '-') + '-access-log-' + config.stage,
-      removalPolicy: config.stage === 'dev' ? RemovalPolicy.DESTROY : RemovalPolicy.RETAIN,
-      autoDeleteObjects: config.stage === 'dev',
-      objectOwnership: s3.ObjectOwnership.BUCKET_OWNER_PREFERRED,
-    });
-
-    const siteBucket = new s3.Bucket(this, 'SiteBucket', {
+    let s3BucketConfig: BucketProps = {
       bucketName: config.SITE_DOMAIN,
       websiteIndexDocument: 'index.html',
       websiteErrorDocument: 'index.html',
@@ -58,9 +53,24 @@ export class CdkPhytoplanktonStack extends cdk.Stack {
       blockPublicAccess: s3.BlockPublicAccess.BLOCK_ALL,
       removalPolicy: config.stage === 'dev' ? RemovalPolicy.DESTROY : RemovalPolicy.RETAIN,
       autoDeleteObjects: config.stage === 'dev',
-      serverAccessLogsBucket: serverAccessLogBucket,
-      serverAccessLogsPrefix: 'console/',
-    });
+    };
+    if (!isQaDeployment) {
+      const serverAccessLogBucket = new s3.Bucket(this, 'ServerAccessLogBucketConsole', {
+        bucketName:
+          'console-' + config.SITE_DOMAIN.replace('.', '-') + '-access-log-' + config.stage,
+        removalPolicy: config.stage === 'dev' ? RemovalPolicy.DESTROY : RemovalPolicy.RETAIN,
+        autoDeleteObjects: config.stage === 'dev',
+        objectOwnership: s3.ObjectOwnership.BUCKET_OWNER_PREFERRED,
+      });
+      s3BucketConfig = {
+        ...s3BucketConfig,
+        serverAccessLogsBucket: serverAccessLogBucket,
+        serverAccessLogsPrefix: 'console/',
+      };
+    }
+
+    // Content bucket
+    const siteBucket = new s3.Bucket(this, 'SiteBucket', s3BucketConfig);
 
     // Grant access to cloudfront
     siteBucket.addToResourcePolicy(
