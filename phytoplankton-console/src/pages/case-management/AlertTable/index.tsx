@@ -510,7 +510,7 @@ export default function AlertTable(props: Props) {
               return;
             }
 
-            if (selectedTransactionIds.length) {
+            if (!selectedTransactionIds.length) {
               return;
             }
 
