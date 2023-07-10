@@ -38,6 +38,7 @@ export type Context = LogMetaData & {
     permissions: Map<Permission, boolean>
   }
   lastError?: Error
+  promises?: Promise<any>[]
 }
 
 const asyncLocalStorage = new AsyncLocalStorage<Context>()
