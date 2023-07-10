@@ -2,6 +2,7 @@ import { publishAuditLog } from '../audit-log'
 import { AuditLog } from '@/@types/openapi-internal/AuditLog'
 import { AuditLogActionEnum } from '@/@types/openapi-internal/AuditLogActionEnum'
 import { RuleInstance } from '@/@types/openapi-internal/RuleInstance'
+import { traceable } from '@/core/xray'
 
 type AuditLogCreateRequest = {
   ruleInstanceId?: string
@@ -11,6 +12,7 @@ type AuditLogCreateRequest = {
   ruleDetails: RuleInstance | null
 }
 
+@traceable
 export class RuleAuditLogService {
   tenantId: string
 

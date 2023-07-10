@@ -22,7 +22,9 @@ import { calculateCaseAvailableDate } from '@/lambdas/console-api-case/services/
 import { TenantSettings } from '@/@types/openapi-internal/TenantSettings'
 import { notNullish } from '@/core/utils/array'
 import { getDefaultTimezone } from '@/utils/dayjs'
+import { traceable } from '@/core/xray'
 
+@traceable
 export class CaseCreationService {
   caseRepository: CaseRepository
   userRepository: UserRepository

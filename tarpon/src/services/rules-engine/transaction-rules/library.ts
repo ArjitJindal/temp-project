@@ -1454,6 +1454,10 @@ export const RULES_LIBRARY: Array<Rule> = _RULES_LIBRARY.map((getRule) => {
   }
 })
 
+export const RULES_LOOKUP: Map<string, Rule> = new Map(
+  RULES_LIBRARY.map((r) => [r.id, r])
+)
+
 export function getRuleByRuleId(ruleId: string): Rule {
-  return RULES_LIBRARY.find((rule) => rule.id === ruleId) as Rule
+  return RULES_LOOKUP.get(ruleId) as Rule
 }

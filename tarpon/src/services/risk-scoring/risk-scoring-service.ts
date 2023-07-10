@@ -29,6 +29,7 @@ import { PulseAuditLogService } from '@/lambdas/console-api-pulse/services/pulse
 import { RiskClassificationScore } from '@/@types/openapi-internal/RiskClassificationScore'
 import { RiskEntityType } from '@/@types/openapi-internal/RiskEntityType'
 import { RiskScoreComponent } from '@/@types/openapi-internal/RiskScoreComponent'
+import { traceable } from '@/core/xray'
 
 function getDefaultRiskValue(riskClassificationValues: Array<any>) {
   let riskScore = 75 // Make this configurable
@@ -211,6 +212,7 @@ function getSchemaAttributeRiskLevel(
   return { value: resultValue, riskLevel: resultRiskLevel }
 }
 
+@traceable
 export class RiskScoringService {
   tenantId: string
   riskRepository: RiskRepository

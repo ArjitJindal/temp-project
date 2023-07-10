@@ -8,6 +8,7 @@ import {
   AttributeGenerator,
   DefaultAttributeBuilders,
 } from '@/services/copilot/attributes/builder'
+import { traceable } from '@/core/xray'
 
 type GenerateNarrative = {
   _case: Case
@@ -16,6 +17,7 @@ type GenerateNarrative = {
   reasons: CaseClosingReasons[]
 }
 
+@traceable
 export class CopilotService {
   async getNarrative(request: GenerateNarrative): Promise<NarrativeResponse> {
     // Timeout so that the delay seems like it could actually come from ChatGPT.

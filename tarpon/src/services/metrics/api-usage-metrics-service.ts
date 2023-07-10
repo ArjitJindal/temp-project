@@ -25,6 +25,7 @@ import { AccountsService, TenantBasic } from '@/services/accounts'
 import { SanctionsSearchRepository } from '@/services/sanctions/repositories/sanctions-search-repository'
 import { IBANApiRepository } from '@/services/iban.com/repositories/iban-api-repository'
 import dayjs from '@/utils/dayjs'
+import { traceable } from '@/core/xray'
 
 export type ApiUsageMetrics = {
   name: string
@@ -34,6 +35,7 @@ export type ApiUsageMetrics = {
   collectedTimestamp: number
 }
 
+@traceable
 export class ApiUsageMetricsService {
   tenantId: string
   tenant: TenantBasic

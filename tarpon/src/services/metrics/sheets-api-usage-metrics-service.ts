@@ -13,6 +13,7 @@ import { TenantBasic } from '@/services/accounts'
 import { getSecret } from '@/utils/secrets-manager'
 import { exponentialRetry } from '@/utils/retry'
 import { mergeObjects } from '@/utils/object'
+import { traceable } from '@/core/xray'
 
 const DAILY_USAGE_METRICS_SHEET_TITLE = 'DailyUsageMetrics'
 const MONTHLY_USAGE_METRICS_SHEET_TITLE = 'MonthlyUsageMetrics'
@@ -52,6 +53,7 @@ type DataCounts = {
   ibanResolutinosCount: number
 }
 
+@traceable
 export class SheetsApiUsageMetricsService {
   private dailyUsageMetricsSheet?: GoogleSpreadsheetWorksheet
   private monthlyUsageMetricsSheet?: GoogleSpreadsheetWorksheet

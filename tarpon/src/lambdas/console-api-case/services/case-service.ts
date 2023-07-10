@@ -14,7 +14,6 @@ import { CaseRepository } from '@/services/rules-engine/repositories/case-reposi
 import { CasesListResponse } from '@/@types/openapi-internal/CasesListResponse'
 import { CaseStatusChange } from '@/@types/openapi-internal/CaseStatusChange'
 import { DashboardStatsRepository } from '@/lambdas/console-api-dashboard/repositories/dashboard-stats-repository'
-import { addNewSubsegment } from '@/core/xray'
 import {
   ThinWebhookDeliveryTask,
   sendWebhookTasks,
@@ -93,12 +92,7 @@ export class CaseService extends CaseAlertsCommonService {
   public async getCases(
     params: DefaultApiGetCaseListRequest
   ): Promise<CasesListResponse> {
-    const caseGetSegment = await addNewSubsegment(
-      'Case Service',
-      'Mongo Get Cases Query'
-    )
     const result = await this.caseRepository.getCases(params)
-    caseGetSegment?.close()
     result.data = result.data.map((caseEntity) =>
       this.getAugmentedCase(caseEntity)
     )
@@ -259,12 +253,7 @@ export class CaseService extends CaseAlertsCommonService {
     caseId: string,
     options?: { logAuditLogView?: boolean }
   ): Promise<Case | null> {
-    const caseGetSegment = await addNewSubsegment(
-      'Case Service',
-      'Mongo Get Case Query'
-    )
     const caseEntity = await this.caseRepository.getCaseById(caseId)
-    caseGetSegment?.close()
 
     if (options?.logAuditLogView) {
       await this.auditLogService.handleViewCase(caseId)

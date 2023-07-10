@@ -1,7 +1,9 @@
 import { MongoClient } from 'mongodb'
 import { DeviceDataRepository } from './device-data-repository'
 import { DeviceMetricTypeEnum } from '@/@types/openapi-internal/DeviceMetric'
+import { traceable } from '@/core/xray'
 
+@traceable
 export class DeviceDataService {
   tenantId: string
   connections: {

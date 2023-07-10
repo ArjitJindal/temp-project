@@ -22,6 +22,7 @@ import { RoleService } from '@/services/roles'
 import { getContext } from '@/core/utils/context'
 import { ACCOUNTS_COLLECTION, getMongoDbClient } from '@/utils/mongoDBUtils'
 import { JWTAuthorizerResult } from '@/@types/jwt'
+import { traceable } from '@/core/xray'
 
 // Current TS typings for auth0  (@types/auth0@2.35.0) are outdated and
 // doesn't have definitions for users management api. Hope they will fix it soon
@@ -56,7 +57,7 @@ export type TenantBasic = {
   id: string
   name: string
 }
-
+@traceable
 export class AccountsService {
   private config: { auth0Domain: string }
   private mongoDb: MongoClient

@@ -6,6 +6,7 @@ import { InternalConsumerUser } from '@/@types/openapi-internal/InternalConsumer
 import { SalesforceAccountResponse } from '@/@types/openapi-internal/SalesforceAccountResponse'
 import { logger } from '@/core/logger'
 import { getSecret } from '@/utils/secrets-manager'
+import { traceable } from '@/core/xray'
 
 const FLAGRIGHT_SALESFORCE_DEV_URL =
   'https://flagright-dev-ed.develop.my.salesforce.com'
@@ -53,6 +54,8 @@ type Response<T> = {
 
 const OPENAI_CREDENTIALS_SECRET_ARN = process.env
   .OPENAI_CREDENTIALS_SECRET_ARN as string
+
+@traceable
 export class SalesforceService {
   token!: string
   constructor(token: string) {

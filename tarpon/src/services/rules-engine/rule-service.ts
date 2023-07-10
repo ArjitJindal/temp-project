@@ -15,6 +15,7 @@ import { RiskLevel } from '@/@types/openapi-internal/RiskLevel'
 import { RiskLevelRuleActions } from '@/@types/openapi-internal/RiskLevelRuleActions'
 import { replaceMagicKeyword } from '@/utils/object'
 import { hasFeatures } from '@/core/utils/context'
+import { traceable } from '@/core/xray'
 
 const RISK_LEVELS = RiskLevelRuleParameters.attributeTypeMap.map(
   (attribute) => attribute.name
@@ -29,6 +30,7 @@ const ajv = new Ajv()
 ajv.addKeyword('ui:schema')
 ajv.addKeyword('enumNames')
 
+@traceable
 export class RuleService {
   ruleRepository: RuleRepository
   ruleInstanceRepository: RuleInstanceRepository

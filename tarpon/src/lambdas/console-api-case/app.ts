@@ -6,7 +6,6 @@ import { NotFound, BadRequest } from 'http-errors'
 import { CaseService } from './services/case-service'
 import { CasesAlertsAuditLogService } from './services/case-alerts-audit-log-service'
 import { lambdaApi } from '@/core/middlewares/lambda-api-middlewares'
-import { addNewSubsegment } from '@/core/xray'
 import { DefaultApiGetAlertListRequest } from '@/@types/openapi-internal/RequestParameters'
 import { getS3ClientByEvent } from '@/utils/s3'
 import { Comment } from '@/@types/openapi-internal/Comment'
@@ -101,12 +100,7 @@ export const casesHandler = lambdaApi()(
 
     const handlers = new Handlers()
     handlers.registerGetCaseList(async (ctx, request) => {
-      const caseGetSegment = await addNewSubsegment('Case Service', 'Get Cases')
-      caseGetSegment?.addAnnotation('tenantId', tenantId)
-      caseGetSegment?.addAnnotation('request', JSON.stringify(request))
-      const response = await caseService.getCases(request)
-      caseGetSegment?.close()
-      return response
+      return await caseService.getCases(request)
     })
 
     if (
@@ -118,17 +112,7 @@ export const casesHandler = lambdaApi()(
 
       const { updates, caseIds = [] } = updateRequest
 
-      const caseUpdateSegment = await addNewSubsegment(
-        'Case Service',
-        'Case Update'
-      )
-
-      caseUpdateSegment?.addAnnotation('tenantId', tenantId)
-      caseUpdateSegment?.addAnnotation('caseIds', caseIds.toString())
-
       const updateResult = await caseService.updateCasesStatus(caseIds, updates)
-
-      caseUpdateSegment?.close()
 
       await casesAlertsAuditLogService.handleAuditLogForCaseUpdate(
         caseIds,
@@ -147,26 +131,11 @@ export const casesHandler = lambdaApi()(
 
       const { assignments, caseIds } = updateRequest
 
-      const caseUpdateSegment = await addNewSubsegment(
-        'Case Service',
-        'Case Update Assignee'
-      )
+      await caseService.updateCasesAssignments(caseIds, assignments)
 
-      try {
-        caseUpdateSegment?.addAnnotation('tenantId', tenantId)
-        caseUpdateSegment?.addAnnotation('caseIds', caseIds.toString())
-
-        await caseService.updateCasesAssignments(caseIds, assignments)
-
-        await casesAlertsAuditLogService.handleAuditLogForCaseUpdate(caseIds, {
-          assignments,
-        })
-      } catch (error) {
-        caseUpdateSegment?.addMetadata('error', error)
-        throw error
-      } finally {
-        caseUpdateSegment?.close()
-      }
+      await casesAlertsAuditLogService.handleAuditLogForCaseUpdate(caseIds, {
+        assignments,
+      })
 
       return 'OK'
     } else if (
@@ -180,29 +149,11 @@ export const casesHandler = lambdaApi()(
 
       const { caseIds, reviewAssignments } = updateRequest
 
-      const caseUpdateSegment = await addNewSubsegment(
-        'Case Service',
-        'Case Update Review Assignee'
-      )
+      await caseService.updateCasesReviewAssignments(caseIds, reviewAssignments)
 
-      try {
-        caseUpdateSegment?.addAnnotation('tenantId', tenantId)
-        caseUpdateSegment?.addAnnotation('caseIds', caseIds.toString())
-
-        await caseService.updateCasesReviewAssignments(
-          caseIds,
-          reviewAssignments
-        )
-
-        await casesAlertsAuditLogService.handleAuditLogForCaseUpdate(caseIds, {
-          reviewAssignments,
-        })
-      } catch (error) {
-        caseUpdateSegment?.addMetadata('error', error)
-        throw error
-      } finally {
-        caseUpdateSegment?.close()
-      }
+      await casesAlertsAuditLogService.handleAuditLogForCaseUpdate(caseIds, {
+        reviewAssignments,
+      })
 
       return 'OK'
     } else if (
@@ -211,17 +162,9 @@ export const casesHandler = lambdaApi()(
       event.pathParameters?.caseId
     ) {
       const caseId = event.pathParameters?.caseId as string
-      const caseGetSegment = await addNewSubsegment(
-        'Case Service',
-        'Get Case Details'
-      )
-      caseGetSegment?.addAnnotation('tenantId', tenantId)
-      caseGetSegment?.addAnnotation('caseId', caseId)
       const caseItem: Case | null = await caseService.getCase(caseId, {
         logAuditLogView: true,
       })
-
-      caseGetSegment?.close()
 
       if (caseItem == null) {
         throw new NotFound(`Case not found: ${caseId}`)
@@ -340,24 +283,11 @@ export const casesHandler = lambdaApi()(
       }
 
       const { updates } = updateRequest
-      const alertUpdateSegment = await addNewSubsegment(
-        'Case Service',
-        'Alert Update'
+      await alertsService.updateAlertsStatus(alertIds, updates)
+      await casesAlertsAuditLogService.handleAuditLogForAlertsUpdate(
+        alertIds,
+        updates
       )
-      try {
-        alertUpdateSegment?.addAnnotation('tenantId', tenantId)
-        alertUpdateSegment?.addAnnotation('alertIds', alertIds.toString())
-        await alertsService.updateAlertsStatus(alertIds, updates)
-        await casesAlertsAuditLogService.handleAuditLogForAlertsUpdate(
-          alertIds,
-          updates
-        )
-      } catch (e) {
-        alertUpdateSegment?.addError(e as Error)
-        throw e
-      } finally {
-        alertUpdateSegment?.close()
-      }
       return
     } else if (
       event.httpMethod === 'PATCH' &&
@@ -374,27 +304,10 @@ export const casesHandler = lambdaApi()(
         throw new BadRequest('Missing alertIds or empty alertIds array')
       }
 
-      const alertUpdateSegment = await addNewSubsegment(
-        'Alert Service',
-        'Alerts Assignee Update'
-      )
-
-      try {
-        alertUpdateSegment?.addAnnotation('tenantId', tenantId)
-        alertUpdateSegment?.addAnnotation('alertIds', alertIds.toString())
-
-        await alertsService.updateAssigneeToAlerts(alertIds, assignments)
-
-        await casesAlertsAuditLogService.handleAuditLogForAlertsUpdate(
-          alertIds,
-          { assignments }
-        )
-      } catch (error) {
-        alertUpdateSegment?.addError(error as Error)
-        throw error
-      } finally {
-        alertUpdateSegment?.close()
-      }
+      await alertsService.updateAssigneeToAlerts(alertIds, assignments)
+      await casesAlertsAuditLogService.handleAuditLogForAlertsUpdate(alertIds, {
+        assignments,
+      })
       return 'OK'
     } else if (
       event.httpMethod === 'PATCH' &&
@@ -412,31 +325,14 @@ export const casesHandler = lambdaApi()(
         throw new BadRequest('Missing alertIds or empty alertIds array')
       }
 
-      const alertUpdateSegment = await addNewSubsegment(
-        'Alert Service',
-        'Alerts Review Assignee Update'
+      await alertsService.updateReviewAssigneeToAlerts(
+        alertIds,
+        reviewAssignments
       )
 
-      try {
-        alertUpdateSegment?.addAnnotation('tenantId', tenantId)
-        alertUpdateSegment?.addAnnotation('alertIds', alertIds.toString())
-
-        await alertsService.updateReviewAssigneeToAlerts(
-          alertIds,
-          reviewAssignments
-        )
-
-        await casesAlertsAuditLogService.handleAuditLogForAlertsUpdate(
-          alertIds,
-          { reviewAssignments }
-        )
-      } catch (error) {
-        alertUpdateSegment?.addError(error as Error)
-        throw error
-      } finally {
-        alertUpdateSegment?.close()
-      }
-
+      await casesAlertsAuditLogService.handleAuditLogForAlertsUpdate(alertIds, {
+        reviewAssignments,
+      })
       return 'OK'
     } else if (
       event.httpMethod === 'GET' &&
@@ -463,33 +359,23 @@ export const casesHandler = lambdaApi()(
       const requestPayload = JSON.parse(event.body) as AlertsToNewCaseRequest
       const sourceCaseId = requestPayload?.sourceCaseId
       const alertIds = requestPayload?.alertIds || []
-      const segment = await addNewSubsegment(
-        'Case Service',
-        'Create new case from alerts'
-      )
-      try {
-        const sourceCase = await caseService.getCase(sourceCaseId)
-        if (sourceCase == null) {
-          throw new NotFound(
-            `Unable to find source case by id "${sourceCaseId}"`
-          )
-        }
-        const newCase = await caseCreationService.createNewCaseFromAlerts(
-          sourceCase,
-          alertIds
-        )
-        await casesAlertsAuditLogService.handleAuditLogForNewCase(newCase)
-        await casesAlertsAuditLogService.handleAuditLogForAlerts(
-          sourceCaseId,
-          sourceCase.alerts,
-          (
-            await caseService.getCase(sourceCaseId)
-          )?.alerts
-        )
-        return caseResponse(newCase)
-      } finally {
-        segment?.close()
+      const sourceCase = await caseService.getCase(sourceCaseId)
+      if (sourceCase == null) {
+        throw new NotFound(`Unable to find source case by id "${sourceCaseId}"`)
       }
+      const newCase = await caseCreationService.createNewCaseFromAlerts(
+        sourceCase,
+        alertIds
+      )
+      await casesAlertsAuditLogService.handleAuditLogForNewCase(newCase)
+      await casesAlertsAuditLogService.handleAuditLogForAlerts(
+        sourceCaseId,
+        sourceCase.alerts,
+        (
+          await caseService.getCase(sourceCaseId)
+        )?.alerts
+      )
+      return caseResponse(newCase)
     } else if (
       event.httpMethod === 'GET' &&
       event.resource === '/alerts/{alertId}/transactions'

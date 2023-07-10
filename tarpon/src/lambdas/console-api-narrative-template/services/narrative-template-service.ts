@@ -6,7 +6,9 @@ import { NarrativeTemplate } from '@/@types/openapi-internal/NarrativeTemplate'
 import { NarrativeTemplateResponse } from '@/@types/openapi-internal/NarrativeTemplateResponse'
 import { NarrativeTemplateRequest } from '@/@types/openapi-internal/NarrativeTemplateRequest'
 import { DefaultApiGetNarrativesRequest } from '@/@types/openapi-internal/RequestParameters'
+import { traceable } from '@/core/xray'
 
+@traceable
 export class NarrativeService {
   private narrativeRepository: NarrativeRepository
 

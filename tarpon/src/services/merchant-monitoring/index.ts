@@ -32,6 +32,9 @@ const EXPLORIUM = 'c260b2b2-acc4-4770-adbf-949a673299f7'
 const RAPID_API_KEY = '809e3aafbfmsh01888023c671678p1980dfjsn243d2752ecf7'
 const COMPANIES_HOUSE_API_KEY = 'd42c2fb8-a93a-4545-bf7f-58dc77e826b3'
 const SCRAPFLY_KEY = '7f58b1ed27ca4587bb666e595ddf2a6c'
+import { traceable } from '@/core/xray'
+
+@traceable
 export class MerchantMonitoringService {
   async getMerchantMonitoringSummaries(
     tenantId: string,

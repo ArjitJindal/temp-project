@@ -17,6 +17,7 @@ import { SanctionsSearchMonitoring } from '@/@types/openapi-internal/SanctionsSe
 import { SanctionsSearchType } from '@/@types/openapi-internal/SanctionsSearchType'
 import { logger } from '@/core/logger'
 import { getDynamoDbClient } from '@/utils/dynamodb'
+import { traceable } from '@/core/xray'
 import { ComplyAdvantageSearchHitDoc } from '@/@types/openapi-internal/ComplyAdvantageSearchHitDoc'
 
 const COMPLYADVANTAGE_SEARCH_API_URI =
@@ -35,6 +36,7 @@ function getSanctionsSearchResponse(
   }
 }
 
+@traceable
 export class SanctionsService {
   apiKey!: string
   sanctionsSearchRepository!: SanctionsSearchRepository

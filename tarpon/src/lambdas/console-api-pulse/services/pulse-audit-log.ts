@@ -7,6 +7,7 @@ import { DrsScore } from '@/@types/openapi-internal/DrsScore'
 import { ParameterAttributeRiskValues } from '@/@types/openapi-internal/ParameterAttributeRiskValues'
 import { RiskClassificationScore } from '@/@types/openapi-internal/RiskClassificationScore'
 import { publishAuditLog } from '@/services/audit-log'
+import { traceable } from '@/core/xray'
 
 type AuditLogCreateRequest = {
   instanceId?: string
@@ -17,6 +18,7 @@ type AuditLogCreateRequest = {
   subtype?: AuditLogSubtypeEnum
 }
 
+@traceable
 export class PulseAuditLogService {
   tenantId: string
 

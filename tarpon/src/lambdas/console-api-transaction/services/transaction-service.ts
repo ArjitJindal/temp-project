@@ -8,7 +8,9 @@ import { TransactionsStatsByTimeResponse } from '@/@types/openapi-internal/Trans
 import { TransactionsUniquesField } from '@/@types/openapi-internal/TransactionsUniquesField'
 import { RiskRepository } from '@/services/risk-scoring/repositories/risk-repository'
 import { getRiskLevelFromScore } from '@/services/risk-scoring/utils'
+import { traceable } from '@/core/xray'
 
+@traceable
 export class TransactionService {
   transactionRepository: MongoDbTransactionRepository
   s3: AWS.S3

@@ -4,7 +4,9 @@ import { AccountRole } from '@/@types/openapi-internal/AccountRole'
 import { Permission } from '@/@types/openapi-internal/Permission'
 import { getAuth0Credentials } from '@/utils/auth0-utils'
 import { isValidManagedRoleName } from '@/@types/openapi-internal-custom/ManagedRoleName'
+import { traceable } from '@/core/xray'
 
+@traceable
 export class RoleService {
   private authenticationClient: AuthenticationClient
   private config: { auth0Domain: string }

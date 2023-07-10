@@ -20,6 +20,7 @@ import { checkMultipleEmails } from '@/utils/helpers'
 import { getAuth0Domain } from '@/utils/auth0-utils'
 import { getMongoDbClient } from '@/utils/mongoDBUtils'
 import { logger } from '@/core/logger'
+import { traceable } from '@/core/xray'
 import { TenantSettings } from '@/@types/openapi-internal/TenantSettings'
 
 export type TenantInfo = {
@@ -30,6 +31,8 @@ export type TenantInfo = {
 export const USAGE_PLAN_REGEX = /tarpon:(.*):(.*)/
 
 type Stage = 'local' | 'dev' | 'sandbox' | 'prod'
+
+@traceable
 export class TenantService {
   tenantId: string
   dynamoDb: DynamoDBDocumentClient

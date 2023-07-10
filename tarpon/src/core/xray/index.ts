@@ -33,3 +33,40 @@ export async function addNewSubsegment(
     logger.error(e)
   }
 }
+
+export function traceable(target: any) {
+  // Get all property keys of the class prototype
+  const propertyKeys = Object.getOwnPropertyNames(target.prototype)
+
+  // Iterate over each property key
+  propertyKeys.forEach((key) => {
+    const originalMethod = target.prototype[key]
+
+    // Check if the property is a method
+    if (typeof originalMethod === 'function') {
+      // Create a new function to replace the original method
+      if (target.prototype[key].constructor.name !== 'AsyncFunction') {
+        return
+      }
+
+      target.prototype[key] = async function (...args: any[]) {
+        if (!target.segmentInProgress) {
+          target.segmentInProgress = true
+          const segment = await addNewSubsegment('serviceMethod', key)
+          try {
+            return await originalMethod.apply(this, args)
+          } catch (err: any) {
+            segment?.addError(err)
+            throw err
+          } finally {
+            segment?.close()
+            target.segmentInProgress = false
+          }
+        }
+        return await originalMethod.apply(this, args)
+      }
+    }
+  })
+
+  return target
+}

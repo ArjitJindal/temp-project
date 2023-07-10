@@ -11,6 +11,7 @@ import { getSecret } from '@/utils/secrets-manager'
 import { IBANDetails } from '@/@types/openapi-public/IBANDetails'
 import { logger } from '@/core/logger'
 import { hasFeature } from '@/core/utils/context'
+import { traceable } from '@/core/xray'
 
 const IBAN_API_URI = 'https://api.iban.com/clients/api/v4/iban/'
 
@@ -72,6 +73,7 @@ async function getApiKey(): Promise<string> {
   ))!.apiKey
 }
 
+@traceable
 export class IBANService {
   apiKey!: string
   ibanApiRepository!: IBANApiRepository

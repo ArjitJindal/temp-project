@@ -2,7 +2,6 @@ import * as createError from 'http-errors'
 import { MongoClient } from 'mongodb'
 import { NotFound } from 'http-errors'
 import { DynamoDBDocumentClient } from '@aws-sdk/lib-dynamodb'
-import _ from 'lodash'
 import {
   APIGatewayEventLambdaAuthorizerContext,
   APIGatewayProxyWithLambdaAuthorizerEvent,
@@ -32,7 +31,9 @@ import { getMongoDbClient } from '@/utils/mongoDBUtils'
 import { getDynamoDbClientByEvent } from '@/utils/dynamodb'
 import { UserViewConfig } from '@/lambdas/console-api-user/app'
 import { mergeObjects } from '@/utils/object'
+import { traceable } from '@/core/xray'
 
+@traceable
 export class UserService {
   userRepository: UserRepository
   userEventRepository: UserEventRepository

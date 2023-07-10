@@ -104,6 +104,7 @@ async function main() {
     metafile: true,
     logLevel: 'warning',
     sourcemap: 'external',
+    minifyIdentifiers: false,
     plugins: [customResolvePlugin],
   })
 

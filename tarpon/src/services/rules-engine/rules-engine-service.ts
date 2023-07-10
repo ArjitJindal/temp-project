@@ -48,7 +48,7 @@ import { TransactionEvent } from '@/@types/openapi-public/TransactionEvent'
 import { TransactionEventMonitoringResult } from '@/@types/openapi-public/TransactionEventMonitoringResult'
 import { TransactionWithRulesResult } from '@/@types/openapi-public/TransactionWithRulesResult'
 import { RULE_EXECUTION_TIME_MS_METRIC } from '@/core/cloudwatch/metrics'
-import { addNewSubsegment } from '@/core/xray'
+import { addNewSubsegment, traceable } from '@/core/xray'
 import { getMongoDbClient } from '@/utils/mongoDBUtils'
 import { UserMonitoringResult } from '@/@types/openapi-public/UserMonitoringResult'
 import { UserWithRulesResult } from '@/@types/openapi-internal/UserWithRulesResult'
@@ -101,6 +101,7 @@ export type DuplicateTransactionReturnType = TransactionMonitoringResult & {
   message: string
 }
 
+@traceable
 export class RulesEngineService {
   tenantId: string
   dynamoDb: DynamoDBDocumentClient

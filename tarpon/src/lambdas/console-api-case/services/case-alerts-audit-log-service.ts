@@ -18,6 +18,7 @@ import { AlertsReviewAssignmentsUpdateRequest } from '@/@types/openapi-internal/
 import { CasesReviewAssignmentsUpdateRequest } from '@/@types/openapi-internal/CasesReviewAssignmentsUpdateRequest'
 import { AlertsRepository } from '@/services/rules-engine/repositories/alerts-repository'
 import { CaseRepository } from '@/services/rules-engine/repositories/case-repository'
+import { traceable } from '@/core/xray'
 
 type AuditLogCreateRequest = {
   caseId: string
@@ -37,6 +38,7 @@ type AlertAuditLogCreateRequest = {
   subtype?: AuditLogSubtypeEnum
 }
 
+@traceable
 export class CasesAlertsAuditLogService {
   tenantId: string
   mongoDb: MongoClient

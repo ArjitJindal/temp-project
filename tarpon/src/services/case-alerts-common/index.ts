@@ -2,12 +2,14 @@ import _ from 'lodash'
 import { Account } from '@/@types/openapi-internal/Account'
 import { Assignment } from '@/@types/openapi-internal/Assignment'
 import { FileInfo } from '@/@types/openapi-internal/FileInfo'
+import { traceable } from '@/core/xray'
 
 export type S3Config = {
   tmpBucketName: string
   documentBucketName: string
 }
 
+@traceable
 export class CaseAlertsCommonService {
   protected s3: AWS.S3
   protected s3Config: S3Config

@@ -17,7 +17,9 @@ import { UserWithRulesResult } from '@/@types/openapi-internal/UserWithRulesResu
 import { mergeObjects, pickKnownEntityFields } from '@/utils/object'
 import { BusinessBase } from '@/@types/openapi-public/BusinessBase'
 import { UserBase } from '@/@types/openapi-internal/UserBase'
+import { traceable } from '@/core/xray'
 
+@traceable
 export class UserManagementService {
   tenantId: string
   dynamoDb: DynamoDBDocumentClient

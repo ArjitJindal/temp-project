@@ -3,12 +3,10 @@ import {
   APIGatewayProxyWithLambdaAuthorizerEvent,
 } from 'aws-lambda'
 import { Forbidden, NotFound } from 'http-errors'
-import _ from 'lodash'
 import { UserService } from './services/user-service'
 import { UserAuditLogService } from './services/user-audit-log-service'
 import { JWTAuthorizerResult } from '@/@types/jwt'
 import { lambdaApi } from '@/core/middlewares/lambda-api-middlewares'
-import { addNewSubsegment } from '@/core/xray'
 import { getS3ClientByEvent } from '@/utils/s3'
 import { getMongoDbClient } from '@/utils/mongoDBUtils'
 import { getDynamoDbClientByEvent } from '@/utils/dynamodb'
@@ -64,15 +62,6 @@ export const businessUsersViewHandler = lambdaApi()(
         sortField,
         sortOrder,
       } = event.queryStringParameters as any
-      const businessUserSegment = await addNewSubsegment(
-        'User Service',
-        'Get Business Users'
-      )
-      businessUserSegment?.addAnnotation('tenantId', tenantId)
-      businessUserSegment?.addAnnotation(
-        'getParams',
-        JSON.stringify(event.queryStringParameters)
-      )
       const result = await userService.getBusinessUsers({
         page,
         pageSize,
@@ -95,7 +84,6 @@ export const businessUsersViewHandler = lambdaApi()(
         sortField,
         sortOrder,
       })
-      businessUserSegment?.close()
       return result
     } else if (
       event.httpMethod === 'GET' &&
@@ -172,15 +160,6 @@ export const consumerUsersViewHandler = lambdaApi()(
         sortField,
         sortOrder,
       } = event.queryStringParameters as any
-      const consumerUserSegment = await addNewSubsegment(
-        'User Service',
-        'Get Consumer Users'
-      )
-      consumerUserSegment?.addAnnotation('tenantId', tenantId)
-      consumerUserSegment?.addAnnotation(
-        'getParams',
-        JSON.stringify(event.queryStringParameters)
-      )
       const result = await userService.getConsumerUsers({
         page,
         pageSize,
@@ -197,7 +176,6 @@ export const consumerUsersViewHandler = lambdaApi()(
         sortField,
         sortOrder,
       })
-      consumerUserSegment?.close()
       return result
     } else if (
       event.httpMethod === 'POST' &&
