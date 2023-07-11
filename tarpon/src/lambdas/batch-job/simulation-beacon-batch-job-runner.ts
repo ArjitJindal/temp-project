@@ -119,18 +119,20 @@ export class SimulationBeaconBatchJobRunner extends BatchJobRunner {
 
     const ratio = Math.max(1, totalTransactions / actualTransactionsRan.length) // extrapolated ratio
 
-    const transactionsHit = this.distinctTransactionsHitCount(
-      actualTransactionsRan,
-      defaultRuleInstance.ruleId
-    )
+    const transactionsHit = defaultRuleInstance.id
+      ? this.distinctTransactionsHitCount(
+          actualTransactionsRan,
+          defaultRuleInstance.id
+        )
+      : 0
 
     const transactionsHitSimulated =
       this.numberOfTransactionsHit(executionDetails)
 
-    const usersHit = this.getUsersHitByTransactions(
-      transactions,
-      defaultRuleInstance.ruleId
-    ).length
+    const usersHit = defaultRuleInstance.id
+      ? this.getUsersHitByTransactions(transactions, defaultRuleInstance.id)
+          .length
+      : 0
 
     return {
       current: {
@@ -154,11 +156,11 @@ export class SimulationBeaconBatchJobRunner extends BatchJobRunner {
 
   private getUsersHitByTransactions(
     transactions: InternalTransaction[],
-    ruleId: string
+    ruleInstanceId: string
   ): string[] {
     const userIds = transactions.flatMap((transaction) => {
       const hit = transaction.hitRules.find(
-        (ruleHit) => ruleHit.ruleId === ruleId
+        (ruleHit) => ruleHit.ruleInstanceId === ruleInstanceId
       )
       if (!hit) {
         return []
@@ -319,7 +321,7 @@ export class SimulationBeaconBatchJobRunner extends BatchJobRunner {
 
   private distinctTransactionsHitCount(
     transactions: InternalTransaction[],
-    ruleId: string
+    ruleInstanceId: string
   ): number {
     /**
      * To get the number of transactions hit by the rule we need to filter
@@ -327,7 +329,9 @@ export class SimulationBeaconBatchJobRunner extends BatchJobRunner {
      * and then get the length of the array
      */
     return transactions.filter((transaction) =>
-      transaction.hitRules.find((rule) => rule.ruleId === ruleId)
+      transaction.hitRules.find(
+        (rule) => rule.ruleInstanceId === ruleInstanceId
+      )
     ).length
   }
 
