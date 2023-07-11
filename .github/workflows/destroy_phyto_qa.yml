@@ -9,8 +9,6 @@ on:
     types: [closed]
     branches:
       - main
-    paths:
-      - 'phytoplankton-console/**'
 jobs:
   destroy:
     runs-on: ubuntu-20.04
