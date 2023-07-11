@@ -17,11 +17,13 @@ export const xrayMiddleware =
   (handler: CallableFunction): Handler =>
   async (event, ctx): Promise<APIGatewayProxyResult> => {
     const namespace = determineApi(ctx) || 'Unknown'
-    const { principalId: tenantId, userId } = event.requestContext.authorizer
     const segmentName = `${event.httpMethod} ${event.path}`
     const segment = await addNewSubsegment(namespace, segmentName)
-    segment?.addAnnotation('tenantId', tenantId)
-    segment?.addAnnotation('userId', userId)
+    if (event.requestContext.authorizer) {
+      const { principalId: tenantId, userId } = event.requestContext.authorizer
+      segment?.addAnnotation('tenantId', tenantId)
+      segment?.addAnnotation('userId', userId)
+    }
     segment?.addAnnotation(
       'queryStringParameters',
       JSON.stringify(event.queryStringParameters)
