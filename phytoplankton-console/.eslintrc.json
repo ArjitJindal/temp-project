@@ -14,7 +14,7 @@
     "plugin:cypress/recommended"
   ],
   "rules": {
-    "no-console": "off",
+    "no-console": ["error", { "allow": ["error", "warn"] }],
     "@typescript-eslint/no-empty-function": "off",
     "@typescript-eslint/no-empty-interface": "off",
     "@typescript-eslint/no-unused-vars": [
@@ -22,9 +22,12 @@
       { "argsIgnorePattern": "^_", "varsIgnorePattern": "^_" }
     ],
     "import/no-unresolved": "off",
-    "@typescript-eslint/no-empty-interface": "off",
     "import/order": "error",
     "react-hooks/rules-of-hooks": "error",
-    "react-hooks/exhaustive-deps": "error"
+    "react-hooks/exhaustive-deps": "error",
+    "import/no-named-as-default": "off",
+    "@typescript-eslint/no-explicit-any": "off",
+    "import/no-duplicates": "error",
+    "@typescript-eslint/no-non-null-assertion": "off"
   }
 }

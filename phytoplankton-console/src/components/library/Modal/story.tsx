@@ -261,7 +261,7 @@ export default function (): JSX.Element {
               title={'Title example'}
               text={'Text example'}
               onConfirm={() => {
-                console.log('confirm');
+                console.warn('confirm');
               }}
             >
               {(props) => <Button onClick={props.onClick}>Show modal</Button>}
@@ -312,7 +312,7 @@ export default function (): JSX.Element {
                 }, 3000);
               }}
               onSuccess={() => {
-                console.log('Done!');
+                console.warn('Done!');
               }}
             >
               {(props) => <Button onClick={props.onClick}>Show modal</Button>}

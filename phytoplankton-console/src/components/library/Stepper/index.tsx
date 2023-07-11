@@ -1,5 +1,4 @@
 import React from 'react';
-import classNames from 'clsx';
 import cn from 'clsx';
 import s from './style.module.less';
 import CheckLineIcon from '@/components/ui/icons/Remix/system/check-line.react.svg';
@@ -28,7 +27,7 @@ export default function Stepper(props: Props) {
   };
 
   return (
-    <div className={classNames(s.root, className)}>
+    <div className={cn(s.root, className)}>
       <div className={s.steps}>
         {steps.map((step, i) => {
           const isPassed = i < number;
