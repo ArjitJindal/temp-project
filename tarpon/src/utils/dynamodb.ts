@@ -23,6 +23,7 @@ import {
   UpdateCommand,
 } from '@aws-sdk/lib-dynamodb'
 import { ConsumedCapacity, DynamoDBClient } from '@aws-sdk/client-dynamodb'
+import * as AWSXRay from 'aws-xray-sdk'
 import { getCredentialsFromEvent } from './credentials'
 import {
   DYNAMODB_READ_CAPACITY_METRIC,
@@ -31,7 +32,7 @@ import {
 import { logger } from '@/core/logger'
 import { addNewSubsegment } from '@/core/xray'
 import { getContext, publishMetric } from '@/core/utils/context'
-import { envIs } from '@/utils/env'
+import { envIs, envIsNot } from '@/utils/env'
 
 function getAugmentedDynamoDBCommand(command: any): {
   type: 'READ' | 'WRITE' | null
@@ -170,9 +171,16 @@ export function getDynamoDbClient(
   options?: { retry?: boolean; metrics?: boolean }
 ): DynamoDBDocumentClient {
   const rawClient = getDynamoDbRawClient(credentials)
-  const client = DynamoDBDocumentClient.from(rawClient, {
-    marshallOptions: { removeUndefinedValues: true },
-  })
+  const client =
+    envIsNot('local') && envIsNot('test')
+      ? AWSXRay.captureAWSv3Client(
+          DynamoDBDocumentClient.from(rawClient, {
+            marshallOptions: { removeUndefinedValues: true },
+          })
+        )
+      : DynamoDBDocumentClient.from(rawClient, {
+          marshallOptions: { removeUndefinedValues: true },
+        })
 
   const { retry = !!process.env.ASSUME_ROLE_ARN, metrics = true } = {
     ...options,
