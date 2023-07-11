@@ -24,7 +24,6 @@ import { ApiException, InternalTransaction } from '@/apis';
 import { useApi } from '@/api';
 import { useApiTime, usePageViewTracker } from '@/utils/tracker';
 import PageTabs from '@/components/ui/PageTabs';
-import { HEADER_HEIGHT } from '@/components/AppWrapper/Header';
 import { keepBackUrl } from '@/utils/backUrl';
 import { useElementSize } from '@/utils/browser';
 
@@ -124,7 +123,7 @@ export default function TransactionsItem() {
             </Card.Root>
             <>
               <PageTabs
-                sticky={HEADER_HEIGHT + entityHeaderHeight}
+                sticky={entityHeaderHeight}
                 activeKey={tab}
                 onTabClick={(newTab) => {
                   navigate(

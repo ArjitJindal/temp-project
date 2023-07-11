@@ -73,7 +73,7 @@ export function useRoutes(): RouteItem[] {
       {
         path: '/case-management',
         name: 'case-management',
-        icon: 'FlagOutlined',
+        icon: 'case-management',
         position: 'top',
         hideChildrenInMenu: true,
         permissions: ['case-management:case-overview:read'],
@@ -103,7 +103,7 @@ export function useRoutes(): RouteItem[] {
       },
       {
         path: '/transactions',
-        icon: 'table',
+        icon: 'transactions',
         name: 'transactions',
         hideChildrenInMenu: true,
         position: 'top',
@@ -139,7 +139,7 @@ export function useRoutes(): RouteItem[] {
       },
       {
         path: '/users',
-        icon: 'TeamOutlined',
+        icon: 'users',
         name: 'users',
         hideChildrenInMenu: true,
         position: 'top',
@@ -190,7 +190,7 @@ export function useRoutes(): RouteItem[] {
       {
         path: '/rules',
         name: 'rules',
-        icon: 'Gavel',
+        icon: 'rules',
         hideChildrenInMenu: true,
         position: 'top',
         routes: [
@@ -208,7 +208,7 @@ export function useRoutes(): RouteItem[] {
       isSarEnabled && {
         path: '/reports',
         name: 'reports',
-        icon: 'Article',
+        icon: 'reports',
         hideChildrenInMenu: true,
         position: 'top',
         routes: [
@@ -221,13 +221,13 @@ export function useRoutes(): RouteItem[] {
       },
       isRiskLevelsEnabled && {
         path: '/risk-levels',
-        icon: 'BarChartOutlined',
+        icon: 'risk-scoring',
         name: 'risk-levels',
         position: 'top',
         routes: [
           {
             path: '/risk-levels',
-            redirect: '/risk-levels/risk-factors/user',
+            redirect: '/risk-levels/risk-factors',
           },
           {
             name: 'risk-factors',
@@ -259,9 +259,13 @@ export function useRoutes(): RouteItem[] {
       isImportFilesEnabled && {
         path: '/import',
         name: 'import',
-        icon: 'ImportOutlined',
+        icon: 'import',
         position: 'top',
         routes: [
+          {
+            path: '/import',
+            redirect: '/import/import-users',
+          },
           {
             name: 'import-users',
             path: '/import/import-users',
@@ -279,7 +283,7 @@ export function useRoutes(): RouteItem[] {
       isListsFeatureEnabled && {
         name: 'lists',
         path: '/lists',
-        icon: 'UnorderedListOutlined',
+        icon: 'lists',
         position: 'top',
         hideChildrenInMenu: true,
         permissions: ['lists:all:read'],
@@ -303,7 +307,7 @@ export function useRoutes(): RouteItem[] {
       {
         path: '/sanctions',
         name: 'sanctions',
-        icon: 'GlobalOutlined',
+        icon: 'sanctions',
         hideChildrenInMenu: true,
         position: 'top',
         disabled: !isSanctionsEnabled,
@@ -332,16 +336,16 @@ export function useRoutes(): RouteItem[] {
       },
       (isAtLeastAdminUser || hasAuditLogPermission) && {
         path: '/auditlog',
-        icon: 'ContainerOutlined',
+        icon: 'auditlog',
         name: 'auditlog',
-        position: 'bottom',
+        position: 'top',
         permissions: ['audit-log:export:read'],
         disabled: !isAuditLogEnabled,
         component: AuditLogPage,
       },
       {
         path: '/settings',
-        icon: 'SettingOutlined',
+        icon: 'settings',
         name: 'settings',
         position: 'bottom',
         permissions: ['settings:organisation:read'],
@@ -349,7 +353,7 @@ export function useRoutes(): RouteItem[] {
       },
       {
         path: '/accounts',
-        icon: 'UsergroupAddOutlined',
+        icon: 'accounts',
         name: 'accounts',
         position: 'bottom',
         hideChildrenInMenu: true,

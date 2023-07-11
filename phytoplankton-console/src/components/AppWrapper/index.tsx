@@ -1,11 +1,9 @@
 import * as Sentry from '@sentry/react';
 import React, { useEffect, useState } from 'react';
-import cn from 'clsx';
 import { useLocation } from 'react-router';
 import { Helmet } from 'react-helmet';
 import Providers, { StorybookMockProviders } from './Providers';
 import Menu from './Menu';
-import Header from './Header';
 import s from './styles.module.less';
 import ErrorBoundary from '@/components/ErrorBoundary';
 import StorybookPage from '@/pages/storybook';
@@ -43,7 +41,11 @@ function MainContent(props: Props) {
       <Helmet>
         <link rel="icon" href={branding.faviconUrl} />
       </Helmet>
-      <Header className={cn(s.header, getOr(isDemoModeRes, true) && s.isDemoMode)} />
+      {getOr(isDemoModeRes, true) && (
+        <div className={s.demoMode}>
+          <div>Demo mode</div>
+        </div>
+      )}
       <aside className={s.aside}>
         <Menu isCollapsed={isCollapsed} onChangeCollapsed={setCollapsed} />
       </aside>

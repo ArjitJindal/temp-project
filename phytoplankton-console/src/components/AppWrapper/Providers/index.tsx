@@ -7,9 +7,9 @@ import SideBarProvider from './SidebarProvider';
 import DemoModeProvider from './DemoModeProvider';
 import FlagrightUserProvider from './FlagrightUserProvider';
 import AuthProvider from './AuthProvider';
+import SettingsProviderMock from './mocks/SettingsProvider';
+import FlagrightUserProviderMock from './mocks/FlagrightUserProvider';
 import { Feature } from '@/apis';
-import SettingsProviderMock from '@/components/AppWrapper/Providers/mocks/SettingsProvider';
-import FlagrightUserProviderMock from '@/components/AppWrapper/Providers/mocks/FlagrightUserProvider';
 
 interface Props {
   children?: React.ReactNode;

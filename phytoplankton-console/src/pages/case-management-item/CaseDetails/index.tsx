@@ -19,7 +19,6 @@ import * as Card from '@/components/ui/Card';
 import { useApi } from '@/api';
 import { useFeatureEnabled } from '@/components/AppWrapper/Providers/SettingsProvider';
 import PageTabs, { TABS_LINE_HEIGHT } from '@/components/ui/PageTabs';
-import { HEADER_HEIGHT } from '@/components/AppWrapper/Header';
 import { keepBackUrl } from '@/utils/backUrl';
 import { makeUrl } from '@/utils/routing';
 import { PAGE_WRAPPER_PADDING } from '@/components/PageWrapper';
@@ -52,7 +51,7 @@ function CaseDetails(props: Props) {
   return (
     <>
       <PageTabs
-        sticky={HEADER_HEIGHT + entityHeaderHeight}
+        sticky={entityHeaderHeight}
         activeKey={tab}
         onTabClick={(newTab) => {
           navigate(
@@ -160,7 +159,7 @@ function CaseDetails(props: Props) {
               // className={s.sizeWrapper}
               style={{
                 minHeight: `calc(100vh - ${
-                  HEADER_HEIGHT + entityHeaderHeight + TABS_LINE_HEIGHT + PAGE_WRAPPER_PADDING
+                  entityHeaderHeight + TABS_LINE_HEIGHT + PAGE_WRAPPER_PADDING
                 }px)`,
               }}
             >

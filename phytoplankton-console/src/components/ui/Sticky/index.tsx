@@ -3,7 +3,6 @@ import ReactDOM from 'react-dom';
 import { useScroll } from 'ahooks';
 import s from './index.module.less';
 import ContainerRectMeasure from '@/components/utils/ContainerRectMeasure';
-import { HEADER_HEIGHT } from '@/components/AppWrapper/Header';
 
 interface Props {
   top?: number;
@@ -11,7 +10,7 @@ interface Props {
 }
 
 export default function Sticky(props: Props) {
-  const { top = HEADER_HEIGHT, children } = props;
+  const { top = 0, children } = props;
   const target = useMemo<HTMLElement>((): HTMLElement => {
     const result = document.getElementById('body-prepend-target');
     if (result == null) {

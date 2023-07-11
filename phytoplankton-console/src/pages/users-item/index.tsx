@@ -24,7 +24,6 @@ import UserTransactionHistoryTable from '@/pages/users-item/UserDetails/UserTran
 import CommentsCard from '@/components/CommentsCard';
 import ExpectedTransactionLimits from '@/pages/users-item/UserDetails/BusinessUserDetails/TransactionLimits';
 import InsightsCard from '@/pages/case-management-item/CaseDetails/InsightsCard';
-import { HEADER_HEIGHT } from '@/components/AppWrapper/Header';
 import { useElementSize } from '@/utils/browser';
 import AlertsCard from '@/pages/users-item/UserDetails/AlertsCard';
 import { useFeatureEnabled } from '@/components/AppWrapper/Providers/SettingsProvider';
@@ -91,7 +90,7 @@ function UserItem() {
             />
           </Card.Root>
           <PageTabs
-            sticky={HEADER_HEIGHT + entityHeaderHeight}
+            sticky={entityHeaderHeight}
             activeKey={tab}
             onTabClick={(newTab) => {
               navigate(
@@ -206,7 +205,7 @@ function UserItem() {
                   className={s.sizeWrapper}
                   style={{
                     minHeight: `calc(100vh - ${
-                      HEADER_HEIGHT + entityHeaderHeight + TABS_LINE_HEIGHT + PAGE_WRAPPER_PADDING
+                      entityHeaderHeight + TABS_LINE_HEIGHT + PAGE_WRAPPER_PADDING
                     }px)`,
                   }}
                 >

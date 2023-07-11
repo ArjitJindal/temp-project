@@ -2,8 +2,9 @@
 @import 'src/components/ui/animation';
 @import 'src/components/ui/z-indexes';
 
-@collapsed-menu-width: 80px;
-@open-menu-width: 250px;
+@collapsed-menu-width: 60px;
+@open-menu-width: 220px;
+@menu-animation-speed: @default-animation-speed;
 
 :root {
   .root {
@@ -16,6 +17,10 @@
       }
       .main {
         padding-left: @collapsed-menu-width;
+      }
+      .demoMode {
+        left: @collapsed-menu-width;
+        width: ~'calc(100% - @{collapsed-menu-width})';
       }
     }
   }
@@ -36,24 +41,19 @@
     background-color: @fr-colors-brandBlue;
     box-shadow: 0 4px 4px rgb(0 0 0 / 10%);
     transition: background-color @default-animation-speed, color @default-animation-speed;
-
-    &.isDemoMode {
-      background-color: white;
-      color: black;
-    }
   }
 
   .aside {
     position: fixed;
     z-index: @menu-z-index;
-    top: 48px;
+    top: 0;
     bottom: 0;
     left: 0;
     display: flex;
     flex-direction: column;
     width: @open-menu-width;
-    height: calc(100vh - 48px);
-    transition: width 300ms;
+    height: 100vh;
+    transition: width @menu-animation-speed;
 
     &::-webkit-scrollbar {
       width: 6px;
@@ -65,9 +65,8 @@
     display: flex;
     flex-direction: column;
     min-height: 100vh;
-    padding-top: 48px;
     padding-left: @open-menu-width;
-    transition: padding-left 300ms;
+    transition: padding-left @menu-animation-speed;
   }
 
   .footer {
@@ -84,8 +83,26 @@
   }
 }
 
-:global {
-  .ant-popover {
-    z-index: @popover-z-index;
+.demoMode {
+  background: @fr-colors-brandBlue;
+  height: 4px;
+  pointer-events: none;
+  z-index: @demo-mode-notification-z-index;
+  position: fixed;
+  top: 0;
+  left: @open-menu-width;
+  width: ~'calc(100% - @{open-menu-width})';
+  transition-property: left, width;
+  transition-duration: @menu-animation-speed;
+
+  > div {
+    position: absolute;
+    left: 50%;
+    transform: translateX(-50%);
+    background: @fr-colors-brandBlue;
+    color: white;
+    font-size: 12px;
+    border-radius: 0 0 4px 4px;
+    padding: 0 12px;
   }
 }

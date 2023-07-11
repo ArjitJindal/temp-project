@@ -1,0 +1,71 @@
+@import 'src/components/ui/colors.less';
+@import 'src/components/ui/animation.less';
+
+.root {
+  display: grid;
+  grid-template-columns: auto min-content;
+  align-items: center;
+  padding: 14px;
+  justify-content: space-between;
+  transition-duration: @default-animation-speed;
+  transition-property: padding;
+  border-top: 1px solid @fr-colors-navyBlue;
+  gap: 8px;
+
+  &.isCollapsed {
+    .nameAndEmail {
+      opacity: 0;
+    }
+  }
+}
+
+.section {
+  display: grid;
+  grid-template-columns: min-content 1fr;
+  gap: 8px;
+  align-items: center;
+}
+
+.nameAndEmail {
+  color: white;
+  flex-basis: 0;
+  white-space: nowrap;
+  transition-duration: @default-animation-speed;
+  transition-property: opacity;
+  display: grid;
+}
+
+.name {
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.12px;
+}
+
+.email {
+  font-size: 10px;
+  color: @fr-colors-v2-gray-4;
+}
+
+.email,
+.name {
+  overflow-x: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.logoutButton {
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+
+  &:not(.isCollapsed) {
+    color: white;
+  }
+}
+
+.logoutIcon {
+  transition-duration: @default-animation-speed;
+  transition-property: opacity;
+  flex-shrink: 0;
+}
