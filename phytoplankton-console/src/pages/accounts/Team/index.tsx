@@ -113,7 +113,7 @@ export default function Team() {
         title: 'Actions',
         render: (item) => {
           // Do not let people edit themselves or roots.
-          if (user.userId === item.id || item.role == 'root') {
+          if (item.role == 'root') {
             return null;
           }
 

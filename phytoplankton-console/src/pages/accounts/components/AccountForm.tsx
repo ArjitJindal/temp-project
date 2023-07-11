@@ -20,7 +20,7 @@ import { useSettings } from '@/components/AppWrapper/Providers/SettingsProvider'
 import { isSuccess } from '@/utils/asyncResource';
 import { getBranding } from '@/utils/branding';
 import { useApiTime } from '@/utils/tracker';
-import { parseUserRole, UserRole } from '@/utils/user-utils';
+import { parseUserRole, useAuth0User, UserRole } from '@/utils/user-utils';
 import { P } from '@/components/ui/Typography';
 import Close from '@/components/ui/icons/close.react.svg';
 
@@ -31,6 +31,7 @@ interface Props {
 export default function AccountForm(props: Props) {
   const { editAccount, onSuccess } = props;
   const api = useApi();
+  const user = useAuth0User();
   const measure = useApiTime();
 
   const formRef = useRef<ProFormInstance>();
@@ -191,6 +192,7 @@ export default function AccountForm(props: Props) {
             name="role"
             label="Role"
             allowClear={false}
+            disabled={user.userId === editAccount?.id || editAccount?.role == 'root'}
             options={roles.map((name) => ({
               value: name.name,
               label: sentenceCase(name.name as string),
