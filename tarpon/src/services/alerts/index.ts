@@ -156,7 +156,6 @@ export class AlertsService extends CaseAlertsCommonService {
       { auth0Domain: process.env.AUTH0_DOMAIN as string },
       { mongoDb: this.mongoDb }
     )
-
     const accounts = await accountsService.getAllActiveAccounts()
 
     const caseRepository = new CaseRepository(this.tenantId, {
@@ -176,6 +175,10 @@ export class AlertsService extends CaseAlertsCommonService {
     }
     let { alertEscalations } = caseEscalationRequest
     const { caseUpdateRequest } = caseEscalationRequest
+
+    const isTransactionsEscalation = alertEscalations?.some(
+      (ae) => ae.transactionIds?.length ?? 0 > 0
+    )
 
     // Hydrate escalation requests with the txn IDS if none were specified
     alertEscalations = alertEscalations?.map((ae) => {
@@ -198,13 +201,14 @@ export class AlertsService extends CaseAlertsCommonService {
     const updatingUserId = (getContext()?.user as Account).id
     const currentTimestamp = Date.now()
     const reviewAssignments = this.getEscalationAssignments(accounts)
-    const escalatedAlerts = c.alerts
-      ?.filter((alert) =>
-        alertEscalations!.some(
-          (alertEscalation) => alertEscalation.alertId === alert.alertId
-        )
+    const escalatedAlerts = c.alerts?.filter((alert) =>
+      alertEscalations!.some(
+        (alertEscalation) => alertEscalation.alertId === alert.alertId
       )
-      .map((escalatedAlert: Alert): Alert => {
+    )
+
+    const escalatedAlertsDetails = escalatedAlerts?.map(
+      (escalatedAlert: Alert): Alert => {
         const lastStatusChange = {
           userId: updatingUserId,
           caseStatus: 'ESCALATED' as CaseStatus,
@@ -241,7 +245,8 @@ export class AlertsService extends CaseAlertsCommonService {
           lastStatusChange: lastStatusChange,
           transactionIds,
         }
-      })
+      }
+    )
 
     const remainingAlerts = c.alerts?.filter(
       (alert) =>
@@ -267,7 +272,7 @@ export class AlertsService extends CaseAlertsCommonService {
     const filteredTransactionsForNewCase = c.caseTransactions?.filter(
       (transaction) =>
         transaction.hitRules.some((ruleInstance) =>
-          escalatedAlerts
+          escalatedAlertsDetails
             ?.map((eA) => eA.ruleInstanceId)
             .includes(ruleInstance.ruleInstanceId)
         )
@@ -318,7 +323,7 @@ export class AlertsService extends CaseAlertsCommonService {
     const newCase: Case = {
       ...mainCaseAttributes,
       caseId: childCaseId,
-      alerts: escalatedAlerts,
+      alerts: escalatedAlertsDetails,
       createdTimestamp: currentTimestamp,
       caseStatus: 'ESCALATED',
       reviewAssignments,
@@ -338,13 +343,27 @@ export class AlertsService extends CaseAlertsCommonService {
     await caseRepository.addCaseMongo(_.omit(newCase, '_id'))
     await caseRepository.addCaseMongo(updatedExistingCase)
 
-    if (caseUpdateRequest) {
-      await caseService.updateCaseForEscalation(caseId, {
-        ...caseUpdateRequest,
-        caseStatus: caseUpdateRequest.caseStatus ?? c.caseStatus,
-        comment: caseUpdateRequest.comment,
-      })
+    if (caseUpdateRequest && caseUpdateRequest.caseStatus) {
+      if (!isTransactionsEscalation) {
+        await caseService.updateCaseForEscalation(caseId, {
+          ...caseUpdateRequest,
+          comment: caseUpdateRequest.comment,
+        })
+      } else {
+        await this.updateAlertsStatus(
+          _.compact(escalatedAlerts?.map((alert) => alert.alertId)),
+          {
+            alertStatus: caseUpdateRequest.caseStatus,
+            comment: caseUpdateRequest.comment,
+            reason: caseUpdateRequest.reason,
+            files: caseUpdateRequest.files,
+            otherReason: caseUpdateRequest.otherReason,
+            priority: caseUpdateRequest.priority,
+          }
+        )
+      }
     }
+
     const assigneeIds = reviewAssignments
       .map((v) => v.assigneeUserId)
       .filter(Boolean)

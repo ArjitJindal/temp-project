@@ -296,7 +296,7 @@ export default function StatusChangeModal(props: Props) {
           {displayCloseRelatedCases && newStatus === 'ESCALATED' && (
             <InputField<FormValues, 'closeRelatedCase'>
               name={'closeRelatedCase'}
-              label={'Close related cases'}
+              label={`Close related ${entityName === 'alert' ? 'cases' : 'alerts'}`}
               labelProps={{
                 position: 'RIGHT',
               }}
