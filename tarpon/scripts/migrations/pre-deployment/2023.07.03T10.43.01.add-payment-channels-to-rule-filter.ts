@@ -19,13 +19,17 @@ async function migrateTenant(tenant: Tenant) {
   )
 
   for (const ruleInstance of ruleInstances) {
-    const paymentChannels = [ruleInstance.parameters.paymentChannel as string]
+    const cardPaymentChannels = [
+      ruleInstance.parameters.paymentChannel as string,
+    ]
     if (ruleInstance.id) {
       await addRuleFiltersForTenant(tenant.id, [ruleInstance.id], {
-        paymentChannels,
+        paymentFilters: {
+          cardPaymentChannels,
+        },
       })
       console.log(
-        `Added paymentChannels filter for tenant ${tenant.id} and ruleInstance ${ruleInstance.id}`
+        `Added cardPaymentChannels filter for tenant ${tenant.id} and ruleInstance ${ruleInstance.id}`
       )
     }
   }

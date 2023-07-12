@@ -222,7 +222,10 @@ describe('Optional parameters - Payment Channel', () => {
         transactionAmountThreshold: { EUR: 1000 },
       } as TransactionAmountRuleParameters,
       filters: {
-        paymentChannels: ['ATM'],
+        paymentFilters: {
+          cardPaymentChannels: ['ATM'],
+          paymentMethods: ['CARD'],
+        },
       },
       defaultAction: 'FLAG',
     },

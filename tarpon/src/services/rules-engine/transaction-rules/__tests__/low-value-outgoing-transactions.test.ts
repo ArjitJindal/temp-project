@@ -133,7 +133,10 @@ ruleVariantsTest(false, () => {
           lowTransactionCount: 2,
         },
         filters: {
-          paymentChannels: ['ATM'],
+          paymentFilters: {
+            cardPaymentChannels: ['ATM'],
+            paymentMethods: ['CARD'],
+          },
         },
         defaultAction: 'FLAG',
       },

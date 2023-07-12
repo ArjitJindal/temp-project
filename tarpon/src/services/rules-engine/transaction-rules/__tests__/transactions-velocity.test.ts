@@ -691,7 +691,10 @@ ruleVariantsTest(true, () => {
           checkReceiver: 'all',
         } as TransactionsVelocityRuleParameters,
         filters: {
-          paymentChannels: ['ATM'],
+          paymentFilters: {
+            cardPaymentChannels: ['ATM'],
+            paymentMethods: ['CARD'],
+          },
         },
       },
     ])

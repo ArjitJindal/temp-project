@@ -14,6 +14,7 @@ import PaymentChannelInput from './custom/PaymentChannelInput';
 import TransactionAmountRangeInput from './custom/TransactionAmountRangeInput';
 import UserTypeInput from './custom/UserTypeInput';
 import CurrencyInput from './custom/CurrencyInput';
+import PaymentFiltersInput from './custom/PaymentFiltersInput';
 import TransactionAmountThresholdsInput from './custom/TransactionAmountThresholdsInput';
 import { InputProps } from '@/components/library/Form';
 
@@ -31,6 +32,9 @@ export default function PropertyInput(props: Props) {
 
   if (uiSchema['ui:subtype'] === 'DAY_WINDOW') {
     return <DayWindowInput {...props} schema={schema} uiSchema={uiSchema} />;
+  }
+  if (uiSchema['ui:subtype'] === 'PAYMENT_FILTERS') {
+    return <PaymentFiltersInput {...props} uiSchema={uiSchema} />;
   }
   if (uiSchema['ui:subtype'] === 'TIME_WINDOW') {
     return <TimeWindowInput {...props} schema={schema} uiSchema={uiSchema} />;

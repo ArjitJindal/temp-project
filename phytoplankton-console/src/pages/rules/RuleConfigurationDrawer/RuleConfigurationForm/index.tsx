@@ -260,7 +260,6 @@ const RuleConfigurationForm = (
                             activeTab={activeTabKey}
                             rule={rule}
                             standardFilters={formState?.standardFiltersStep}
-                            setFormValues={setFormState}
                           />
                         </NestedForm>
                       </div>

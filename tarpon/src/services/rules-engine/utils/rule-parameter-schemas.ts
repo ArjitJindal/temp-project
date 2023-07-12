@@ -370,7 +370,7 @@ export const USER_TYPE_OPTIONAL_SCHEMA = (options?: SchemaOptions) =>
     nullable: true,
   } as const)
 
-export const PAYMENT_CHANNELS_SCHEMA = (options?: SchemaOptions) =>
+export const CARD_PAYMENT_CHANNELS_SCHEMA = (options?: SchemaOptions) =>
   ({
     type: 'array',
     ...uiSchema(options?.uiSchema, {
@@ -385,9 +385,11 @@ export const PAYMENT_CHANNELS_SCHEMA = (options?: SchemaOptions) =>
     uniqueItems: true,
   } as const)
 
-export const PAYMENT_CHANNELs_OPTIONAL_SCHEMA = (options?: SchemaOptions) =>
+export const CARD_PAYMENT_CHANNELS_OPTIONAL_SCHEMA = (
+  options?: SchemaOptions
+) =>
   ({
-    ...PAYMENT_CHANNELS_SCHEMA(options),
+    ...CARD_PAYMENT_CHANNELS_SCHEMA(options),
     nullable: true,
   } as const)
 

@@ -6,9 +6,9 @@ import {
 } from './transaction-filters/check-direction'
 import { TransactionRuleFilter } from './transaction-filters/filter'
 import {
-  PaymentMethodRuleFilter,
-  PaymentMethodRuleFilterParameter,
-} from './transaction-filters/payment-method'
+  PaymentFilterRuleFilter,
+  PaymentFilterRuleFilterParameter,
+} from './transaction-filters/payment-filters'
 import {
   PaymentMethodHistoricalRuleFilter,
   PaymentMethodHistoricalRuleFilterParameter,
@@ -75,10 +75,6 @@ import {
   WhitelistUsersRuleFilterParameter,
 } from './user-filters/whitelist-users'
 import {
-  TransactionWalletTypeRuleFilter,
-  TransactionWalletTypeRuleFilterParameter,
-} from './transaction-filters/transaction-wallet-type'
-import {
   UserAcquisitionChannelRuleFilter,
   UserAcquisitionChannelRuleFilterParameter,
 } from './user-filters/user-acquisition-channel'
@@ -87,10 +83,6 @@ import {
   TransactionAmountHistoricalRuleFilterParameter,
 } from './transaction-filters/transaction-amount-historical'
 import {
-  TransactionCardIssuedCountry,
-  TransactionCardIssuedCountryFilterParameter,
-} from './transaction-filters/transaction-card-issued-country'
-import {
   ConsumerUserSegmentRuleFilter,
   ConsumerUserSegmentRuleFilterParameter,
 } from './user-filters/user-consumer-segment'
@@ -98,21 +90,14 @@ import {
   TransactionProductTypeRuleFilter,
   TransactionProductTypeRuleFilterParameter,
 } from './transaction-filters/transaction-product-type'
-import {
-  PaymentChannelsRuleFilter,
-  PaymentChannelsRuleFilterParameter,
-} from './transaction-filters/payment-channels'
 
-export type TransactionFilters = PaymentMethodRuleFilterParameter &
+export type TransactionFilters = PaymentFilterRuleFilterParameter &
   TransactionTypeRuleFilterParameter &
   TransactionStateRuleFilterParameter &
   TransactionCountryRuleFilterParameter &
   CheckDirectionRuleFilterParameter &
   TransactionAmountRuleFilterParameter &
-  TransactionWalletTypeRuleFilterParameter &
-  TransactionProductTypeRuleFilterParameter &
-  TransactionCardIssuedCountryFilterParameter &
-  PaymentChannelsRuleFilterParameter
+  TransactionProductTypeRuleFilterParameter
 
 export type TransactionHistoricalFilters =
   TransactionStateHistoricalRuleFilterParameter &
@@ -137,16 +122,13 @@ export type TransactionHistoricalFilterKeys = keyof TransactionHistoricalFilters
 export type UserFilterKeys = keyof UserFilters
 
 const _TRANSACTION_FILTERS = [
-  PaymentMethodRuleFilter,
-  TransactionWalletTypeRuleFilter,
-  TransactionCardIssuedCountry,
+  PaymentFilterRuleFilter,
   TransactionTypeRuleFilter,
   TransactionStateRuleFilter,
   TransactionCountryRuleFilter,
   TransactionAmountRuleFilter,
   CheckDirectionRuleFilter,
   TransactionProductTypeRuleFilter,
-  PaymentChannelsRuleFilter,
 ]
 
 const _TRANSACTION_HISTORICAL_FILTERS = [

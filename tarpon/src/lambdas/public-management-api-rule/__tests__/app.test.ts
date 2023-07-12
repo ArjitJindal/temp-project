@@ -138,27 +138,32 @@ describe('Public Management API - Rule', () => {
     expect(response.statusCode).toEqual(200)
     const returnedSchema = JSON.parse(response.body)
     expect(returnedSchema.type).toEqual('object')
-    console.log(returnedSchema.properties.paymentMethods)
     expect(returnedSchema.properties).toMatchObject({
-      paymentMethods: {
-        type: 'array',
-        'ui:schema': {
-          'ui:group': 'transaction',
-          'ui:subtype': 'PAYMENT_METHOD',
-        },
-        title: 'Payment methods',
-        items: {
-          enum: [
-            'ACH',
-            'CARD',
-            'IBAN',
-            'UPI',
-            'GENERIC_BANK_ACCOUNT',
-            'MPESA',
-            'SWIFT',
-            'WALLET',
-            'CHECK',
-          ],
+      paymentFilters: {
+        description:
+          'Filters payment methods, wallet types, card issued countries and payment channels inside the payment details on which the rule will be applied',
+        properties: {
+          paymentMethods: {
+            type: 'array',
+            'ui:schema': {
+              'ui:subtype': 'PAYMENT_METHOD',
+            },
+            title: 'Payment methods',
+            items: {
+              enum: [
+                'ACH',
+                'CARD',
+                'IBAN',
+                'UPI',
+                'GENERIC_BANK_ACCOUNT',
+                'MPESA',
+                'SWIFT',
+                'WALLET',
+                'CHECK',
+              ],
+            },
+            nullable: true,
+          },
         },
         nullable: true,
       },

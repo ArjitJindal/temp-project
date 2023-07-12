@@ -4,7 +4,7 @@
  * Spreadsheet: https://docs.google.com/spreadsheets/d/1xAl3cqF6cGMyFTpiIOXguyq7P_EGlTldbOWCYj0lMA8
  */
 
-import { PaymentMethodRuleFilterParameter } from '../transaction-filters/payment-method'
+import { PaymentFilterRuleFilterParameter } from '../transaction-filters/payment-filters'
 import { TransactionFilters, UserFilters } from '../filters'
 import { USER_RULES, UserRuleImplementationName } from '../user-rules'
 import { SanctionsBusinessUserRuleParameters } from '../user-rules/sanctions-business-user'
@@ -343,7 +343,9 @@ const _RULES_LIBRARY: Array<
       merchantNames: [],
     }
     const defaultFilters: TransactionFilters = {
-      paymentMethods: ['WALLET'],
+      paymentFilters: {
+        paymentMethods: ['WALLET'],
+      },
     }
     return {
       id: 'R-13',
@@ -379,8 +381,10 @@ const _RULES_LIBRARY: Array<
         'AF',
       ],
     }
-    const defaultFilters: PaymentMethodRuleFilterParameter = {
-      paymentMethods: ['CARD'],
+    const defaultFilters: PaymentFilterRuleFilterParameter = {
+      paymentFilters: {
+        paymentMethods: ['CARD'],
+      },
     }
     return {
       id: 'R-22',
@@ -508,7 +512,9 @@ const _RULES_LIBRARY: Array<
       timeWindowInDays: 1,
     }
     const defaultFilters: TransactionFilters = {
-      paymentMethods: ['CARD'],
+      paymentFilters: {
+        paymentMethods: ['CARD'],
+      },
     }
     return {
       id: 'R-53',
@@ -537,7 +543,9 @@ const _RULES_LIBRARY: Array<
       timeWindowInDays: 1,
     }
     const defaultFilters: TransactionFilters = {
-      paymentMethods: ['CARD'],
+      paymentFilters: {
+        paymentMethods: ['CARD'],
+      },
     }
     return {
       id: 'R-54',
@@ -700,7 +708,9 @@ const _RULES_LIBRARY: Array<
       allowedCountries: [],
     }
     const defaultFilters: TransactionFilters = {
-      paymentMethods: ['CARD'],
+      paymentFilters: {
+        paymentMethods: ['CARD'],
+      },
     }
     return {
       id: 'R-114',
@@ -757,7 +767,9 @@ const _RULES_LIBRARY: Array<
       allowedDistancePercentage: 30,
     }
     const defaultFilters: TransactionFilters | UserFilters = {
-      paymentMethods: ['CARD'],
+      paymentFilters: {
+        paymentMethods: ['CARD'],
+      },
       userType: 'CONSUMER',
     }
     return {

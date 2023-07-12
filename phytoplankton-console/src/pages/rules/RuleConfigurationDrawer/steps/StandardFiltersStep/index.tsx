@@ -1,7 +1,6 @@
-import React, { useEffect } from 'react';
+import React from 'react';
 import StepHeader from '../../StepHeader';
-import { RuleConfigurationFormValues } from '../../RuleConfigurationForm';
-import { PaymentMethod, Rule } from '@/apis';
+import { Rule } from '@/apis';
 import PropertyList from '@/pages/rules/RuleConfigurationDrawer/JsonSchemaEditor/PropertyList';
 import { useQuery } from '@/utils/queries/hooks';
 import { RULE_FILTERS } from '@/utils/queries/keys';
@@ -24,43 +23,13 @@ interface Props {
   activeTab: string;
   rule: Rule;
   standardFilters: FormValues;
-  setFormValues: React.Dispatch<React.SetStateAction<RuleConfigurationFormValues>>;
 }
 
-const requiredPaymentMethodMap: Record<string, PaymentMethod> = {
-  walletType: 'WALLET',
-  transactionCardIssuedCountries: 'CARD',
-  paymentChannels: 'CARD',
-};
-
 export default function StandardFiltersStep(props: Props) {
-  const { activeTab, standardFilters, setFormValues } = props;
+  const { activeTab, standardFilters } = props;
 
   const api = useApi();
   const queryResults = useQuery(RULE_FILTERS(), () => api.getRuleFilters());
-
-  useEffect(() => {
-    Object.keys(requiredPaymentMethodMap).forEach((key) => {
-      const paymentMethod = requiredPaymentMethodMap[key];
-      if (!standardFilters?.paymentMethods?.includes(paymentMethod)) {
-        setFormValues((prev) => {
-          if (prev?.standardFiltersStep?.[key]) {
-            delete prev?.standardFiltersStep?.[key];
-          }
-          return prev;
-        });
-      }
-    });
-
-    if (standardFilters?.userType !== 'CONSUMER') {
-      setFormValues((prev) => {
-        if (prev?.standardFiltersStep?.consumerUserSegments) {
-          delete prev?.standardFiltersStep?.consumerUserSegments;
-        }
-        return prev;
-      });
-    }
-  }, [standardFilters?.paymentMethods, setFormValues, standardFilters?.userType]);
 
   return (
     <AsyncResourceRenderer resource={queryResults.data}>
@@ -89,20 +58,11 @@ export default function StandardFiltersStep(props: Props) {
                 )}
               />
             )}
-            {/* TODO: Implement Optional filters in proper way */}
             {activeTab === 'transaction_details' && (
               <TransactionDetails
-                propertyItems={props
-                  .filter((x) => getUiSchema(x.schema)['ui:group'] === 'transaction')
-                  .filter((x) => {
-                    if (Object.keys(requiredPaymentMethodMap).includes(x.name)) {
-                      return standardFilters?.paymentMethods?.includes(
-                        requiredPaymentMethodMap[x.name],
-                      );
-                    }
-
-                    return true;
-                  })}
+                propertyItems={props.filter(
+                  (x) => getUiSchema(x.schema)['ui:group'] === 'transaction',
+                )}
               />
             )}
             {activeTab === 'transaction_details_historical' && (
