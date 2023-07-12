@@ -58,6 +58,22 @@ export default function SanctionsTable(props: Props) {
       },
     }),
     helper.derived<string>({
+      title: 'Date of Birth',
+      value: (item: ComplyAdvantageSearchHit): string | undefined => {
+        const fields = item?.doc?.fields;
+        const dob =
+          fields?.find(
+            (field) => field.source === 'complyadvantage' && field.tag === 'date_of_birth',
+          )?.value ?? fields?.find((field) => field.tag === 'date_of_birth')?.value;
+        return dob;
+      },
+      type: {
+        render: (dob) => {
+          return <>{dob}</>;
+        },
+      },
+    }),
+    helper.derived<string>({
       title: 'Countries',
       value: (item: ComplyAdvantageSearchHit): string | undefined => {
         return item?.doc?.fields?.find((field) => field.name === 'Countries')?.value;
@@ -72,6 +88,7 @@ export default function SanctionsTable(props: Props) {
           </>
         ),
       },
+      sorting: true,
     }),
     helper.derived<string[]>({
       title: 'Matched Types',

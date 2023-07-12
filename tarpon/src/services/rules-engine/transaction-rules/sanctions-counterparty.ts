@@ -180,6 +180,8 @@ export class SanctionsCounterPartyRule extends TransactionRule<SanctionsCounterP
           })
         }
         break
+      case 'MPESA':
+        break
     }
 
     const namesToSearchFiltered = _.uniqBy(namesToSearch, (item) => item.name)

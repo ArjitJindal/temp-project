@@ -247,6 +247,29 @@ export default class BlacklistTransactionMatchedFieldRule extends TransactionRul
 
         return bankAccountFields
       }
+
+      case 'UPI_IDENTIFYING_NUMBER': {
+        const fields: TransactionField[] = []
+
+        if (transaction?.originPaymentDetails?.method === 'UPI') {
+          fields.push({
+            label: 'UPI Identifier Number',
+            value: transaction?.originPaymentDetails?.upiID,
+            direction: 'ORIGIN',
+          })
+        }
+        if (transaction?.destinationPaymentDetails?.method === 'UPI') {
+          fields.push({
+            label: 'UPI Identifier Number',
+            value: transaction?.destinationPaymentDetails?.upiID,
+            direction: 'DESTINATION',
+          })
+        }
+        return fields
+      }
+      case 'IP_ADDRESS':
+      case 'STRING':
+        return []
     }
   }
 }

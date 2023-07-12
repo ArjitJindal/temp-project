@@ -1,7 +1,9 @@
 import { AggregationCursor, MongoClient, Document, Filter } from 'mongodb'
+import { isNil, omitBy } from 'lodash'
 import { SanctionsSearchHistory } from '@/@types/openapi-internal/SanctionsSearchHistory'
 import {
   paginatePipeline,
+  prefixRegexMatchFilter,
   SANCTIONS_SEARCHES_COLLECTION,
 } from '@/utils/mongoDBUtils'
 import { SanctionsSearchRequest } from '@/@types/openapi-internal/SanctionsSearchRequest'
@@ -11,8 +13,20 @@ import { DefaultApiGetSanctionsSearchRequest } from '@/@types/openapi-internal/R
 import { COUNT_QUERY_LIMIT } from '@/utils/pagination'
 import { SanctionsSearchMonitoring } from '@/@types/openapi-internal/SanctionsSearchMonitoring'
 import dayjs from '@/utils/dayjs'
+import { SanctionsSearchType } from '@/@types/openapi-internal/SanctionsSearchType'
 
 const DEFAULT_EXPIRY_TIME = 168 // hours
+
+function toComplyAdvantageType(type: SanctionsSearchType) {
+  switch (type) {
+    case 'SANCTIONS':
+      return 'sanction'
+    case 'PEP':
+      return 'pep'
+    case 'ADVERSE_MEDIA':
+      return 'adverse-media'
+  }
+}
 
 export class SanctionsSearchRepository {
   tenantId: string
@@ -83,14 +97,29 @@ export class SanctionsSearchRepository {
   private getSanctionsSearchHistoryCondition(
     params: DefaultApiGetSanctionsSearchRequest
   ): Filter<SanctionsSearchHistory> {
-    const conditions: Filter<SanctionsSearchHistory>[] = []
-    conditions.push({
-      createdAt: {
-        $gte: params.afterTimestamp || 0,
-        $lte: params.beforeTimestamp || Number.MAX_SAFE_INTEGER,
-      },
-    })
-
+    const conditions: Filter<SanctionsSearchHistory>[] = [
+      omitBy(
+        {
+          createdAt: {
+            $gte: params.afterTimestamp || 0,
+            $lte: params.beforeTimestamp || Number.MAX_SAFE_INTEGER,
+          },
+          'request.searchTerm': params.searchTerm
+            ? prefixRegexMatchFilter(params.searchTerm, true)
+            : undefined,
+        },
+        isNil
+      ),
+    ]
+    if (params.types && params.types.length > 0) {
+      conditions.push({
+        $or: params.types.map((type) => ({
+          'response.data.doc.types': prefixRegexMatchFilter(
+            toComplyAdvantageType(type)
+          ),
+        })),
+      })
+    }
     return { $and: conditions }
   }
 

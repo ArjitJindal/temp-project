@@ -6,10 +6,11 @@ import {
 import { ComplyAdvantageSearchHitDoc } from '@/@types/openapi-internal/ComplyAdvantageSearchHitDoc'
 
 export type SanctionsWhitelistEntity = {
-  _id: string
+  createdAt: number
   caEntity: ComplyAdvantageSearchHitDoc
   userId?: string
-  createdAt: number
+  reason?: string
+  comment?: string
 }
 
 export class SanctionsWhitelistEntityRepository {
@@ -24,7 +25,11 @@ export class SanctionsWhitelistEntityRepository {
   public async addWhitelistEntities(
     caEntities: ComplyAdvantageSearchHitDoc[],
     userId?: string,
-    createdAt?: number
+    options?: {
+      reason?: string
+      comment?: string
+      createdAt?: number
+    }
   ): Promise<void> {
     const db = this.mongoDb.db()
     const collection = db.collection<SanctionsWhitelistEntity>(
@@ -35,11 +40,13 @@ export class SanctionsWhitelistEntityRepository {
       await Promise.all(
         caEntities.map((caEntity) =>
           collection.replaceOne(
-            { _id: caEntity.id },
+            { 'caEntity.id': caEntity.id, userId },
             {
               caEntity,
               userId,
-              createdAt: createdAt ?? Date.now(),
+              createdAt: options?.createdAt ?? Date.now(),
+              reason: options?.reason,
+              comment: options?.comment,
             },
             { upsert: true }
           )
@@ -57,22 +64,22 @@ export class SanctionsWhitelistEntityRepository {
       SANCTIONS_WHITELIST_ENTITIES_COLLECTION(this.tenantId)
     )
     await collection.deleteMany({
-      _id: { $in: caEntityIds },
+      'caEntity.id': { $in: caEntityIds },
       userId,
     })
   }
 
-  public async getWhitelistEntityIds(
+  public async getWhitelistEntities(
     requestEntityIds: string[],
     userId?: string
-  ): Promise<string[]> {
+  ): Promise<SanctionsWhitelistEntity[]> {
     const db = this.mongoDb.db()
     const collection = db.collection<SanctionsWhitelistEntity>(
       SANCTIONS_WHITELIST_ENTITIES_COLLECTION(this.tenantId)
     )
     const result = await collection
-      .find({ _id: { $in: requestEntityIds }, userId })
+      .find({ 'caEntity.id': { $in: requestEntityIds }, userId })
       .toArray()
-    return result.map((item) => item._id)
+    return result
   }
 }

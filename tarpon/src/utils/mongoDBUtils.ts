@@ -737,9 +737,25 @@ export const createMongoDBCollections = async (
   const sanctionsSearchesIndexes: Document[] = [
     { createdAt: 1 },
     { 'response.rawComplyAdvantageResponse.content.data.id': 1 },
+    { 'request.searchTerm': 1 },
+    { 'response.data.doc.types': 1 },
   ]
 
   await syncIndexes(sanctionsSearchesCollection, sanctionsSearchesIndexes)
+
+  try {
+    await db.createCollection(SANCTIONS_WHITELIST_ENTITIES_COLLECTION(tenantId))
+  } catch (e) {
+    // ignore already exists
+  }
+  const sanctionsWhitelistCollection = db.collection(
+    SANCTIONS_WHITELIST_ENTITIES_COLLECTION(tenantId)
+  )
+  const sanctionsWhitelistIndexes: Document[] = [
+    { 'caEntity.id': 1, userId: 1 },
+  ]
+
+  await syncIndexes(sanctionsWhitelistCollection, sanctionsWhitelistIndexes)
 
   try {
     await db.createCollection(NARRATIVE_TEMPLATE_COLLECTION(tenantId))

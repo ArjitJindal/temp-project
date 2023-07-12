@@ -19,6 +19,7 @@ import { logger } from '@/core/logger'
 import { getDynamoDbClient } from '@/utils/dynamodb'
 import { traceable } from '@/core/xray'
 import { ComplyAdvantageSearchHitDoc } from '@/@types/openapi-internal/ComplyAdvantageSearchHitDoc'
+import { ComplyAdvantageSearchHit } from '@/@types/openapi-internal/ComplyAdvantageSearchHit'
 
 const COMPLYADVANTAGE_SEARCH_API_URI =
   'https://api.complyadvantage.com/searches'
@@ -116,7 +117,7 @@ export class SanctionsService {
       ? null
       : await this.sanctionsSearchRepository.getSearchResultByParams(request)
     if (result?.response) {
-      return this.filterWhitelistEntites(result?.response, options?.userId)
+      return this.filterOutWhitelistEntites(result?.response, options?.userId)
     }
 
     const searchId = options?.searchIdToReplace ?? uuidv4()
@@ -137,10 +138,24 @@ export class SanctionsService {
     if (request.monitoring) {
       await this.updateSearch(searchId, request.monitoring)
     }
-    return this.filterWhitelistEntites(responseWithId, options?.userId)
+    return this.filterOutWhitelistEntites(responseWithId, options?.userId)
   }
 
-  private async filterWhitelistEntites(
+  private async filterOutWhitelistEntites(
+    response: SanctionsSearchResponse,
+    userId?: string
+  ): Promise<SanctionsSearchResponse> {
+    const augmentedResponse = await this.augmentWhitelistEntites(
+      response,
+      userId
+    )
+    const filteredData = augmentedResponse.data.filter(
+      (d) => !d.doc?.flagrightWhitelistInfo?.whitelisted
+    )
+    return { ...response, total: filteredData.length, data: filteredData }
+  }
+
+  private async augmentWhitelistEntites(
     response: SanctionsSearchResponse,
     userId?: string
   ): Promise<SanctionsSearchResponse> {
@@ -148,25 +163,44 @@ export class SanctionsService {
     const entityIds = response.data
       .map((d) => d?.doc?.id)
       .filter(Boolean) as string[]
-    const [globalWhitelistEntityIds, userLevelWhitelistEntityIds] =
+    const [globalWhitelistEntities, userLevelWhitelistEntities] =
       await Promise.all([
-        this.sanctionsWhitelistEntityRepository.getWhitelistEntityIds(
-          entityIds
-        ),
+        this.sanctionsWhitelistEntityRepository.getWhitelistEntities(entityIds),
         userId
-          ? this.sanctionsWhitelistEntityRepository.getWhitelistEntityIds(
+          ? this.sanctionsWhitelistEntityRepository.getWhitelistEntities(
               entityIds,
               userId
             )
           : Promise.resolve([]),
       ])
-    const whitelistEntityIds = _.uniq(
-      globalWhitelistEntityIds.concat(userLevelWhitelistEntityIds)
-    )
-    const filteredData = response.data.filter(
-      (d) => !whitelistEntityIds.includes(d?.doc?.id as string)
-    )
-    return { ...response, total: filteredData.length, data: filteredData }
+    const augmentedData: ComplyAdvantageSearchHit[] = response.data.map((d) => {
+      const whitelistEntity =
+        globalWhitelistEntities.find(
+          (entity) => entity.caEntity.id === d.doc?.id
+        ) ??
+        userLevelWhitelistEntities.find(
+          (entity) =>
+            entity.caEntity.id === d.doc?.id && entity.userId === userId
+        )
+      const newData: ComplyAdvantageSearchHit = {
+        ...d,
+        doc: {
+          ...d.doc,
+          flagrightWhitelistInfo: whitelistEntity
+            ? {
+                whitelisted: true,
+                reason: whitelistEntity.reason,
+                comment: whitelistEntity.comment,
+              }
+            : undefined,
+        },
+      }
+      return newData
+    })
+    return {
+      ...response,
+      data: augmentedData,
+    }
   }
 
   private getSanitizedFuzziness(
@@ -234,12 +268,19 @@ export class SanctionsService {
   }
 
   public async getSearchHistory(
-    searchId: string
+    searchId: string,
+    userId?: string
   ): Promise<SanctionsSearchHistory | null> {
     await this.initialize()
     const result = await this.sanctionsSearchRepository.getSearchResult(
       searchId
     )
+    if (result?.response) {
+      result.response = await this.augmentWhitelistEntites(
+        result?.response,
+        userId
+      )
+    }
     return result
   }
 
@@ -339,13 +380,28 @@ export class SanctionsService {
   public async addWhitelistEntities(
     caEntities: ComplyAdvantageSearchHitDoc[],
     userId?: string,
-    createdAt?: number
+    options?: {
+      reason?: string
+      comment?: string
+      createdAt?: number
+    }
   ) {
     await this.initialize()
     await this.sanctionsWhitelistEntityRepository.addWhitelistEntities(
       caEntities,
       userId,
-      createdAt
+      options
+    )
+  }
+
+  public async removeWhitelistEntities(
+    caEntityIds: string[],
+    userId?: string
+  ): Promise<void> {
+    await this.initialize()
+    await this.sanctionsWhitelistEntityRepository.removeWhitelistEntities(
+      caEntityIds,
+      userId
     )
   }
 }

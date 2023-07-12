@@ -47,6 +47,8 @@ export function generateNarrative(
           return 'This user is potentially financing terrorism.'
         case 'Suspicious activity reported (SAR)':
           return 'The case has been closed as an SAR has been raised.'
+        default:
+          return 'Investigation completed.'
       }
     })
     .join(' ')

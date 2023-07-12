@@ -26,6 +26,7 @@ module.exports = {
     ],
     'import/order': 'error',
     '@typescript-eslint/no-floating-promises': ['error', { ignoreIIFE: true }],
+    "@typescript-eslint/switch-exhaustiveness-check": "error"
   },
   parserOptions: {
     parser: '@typescript-eslint/parser',

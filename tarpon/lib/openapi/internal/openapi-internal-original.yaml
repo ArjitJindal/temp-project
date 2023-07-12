@@ -3272,6 +3272,16 @@ paths:
             type: number
           in: query
           name: beforeTimestamp
+        - schema:
+            type: string
+          in: query
+          name: searchTerm
+        - schema:
+            type: array
+            items:
+              $ref: '#/components/schemas/SanctionsSearchType'
+          in: query
+          name: types
   '/sanctions/search/{searchId}':
     get:
       summary: Get single search history
@@ -3292,7 +3302,26 @@ paths:
           name: searchId
           in: path
           required: true
+        - schema:
+            type: string
+          in: query
+          name: userId
       operationId: get-sanctions-search-$-searchId
+  /sanctions/whitelist:
+    post:
+      summary: Whitelist sanctions entities
+      operationId: post-sanctions-whitelist
+      x-flagright:
+        permissions:
+          - sanctions:search:write
+      responses:
+        '200':
+          description: OK
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SanctionsWhitelistRequest'
   /webhooks/complyadvantage:
     post:
       summary: Receive webhook events from Comply Advantage
@@ -5241,6 +5270,7 @@ components:
         - settings:developers:read
         - settings:developers:write
         - sanctions:search:read
+        - sanctions:search:write
         - transactions:overview:read
         - transactions:overview:write
         - transactions:details:read
@@ -5984,6 +6014,28 @@ components:
           type: string
       required:
         - enabled
+    SanctionsWhitelistRequest:
+      title: SanctionsWhitelistRequest
+      type: object
+      properties:
+        whitelisted:
+          type: boolean
+        searchId:
+          type: string
+        caEntityIds:
+          type: array
+          items:
+            type: string
+        reason:
+          type: string
+        comment:
+          type: string
+        userId:
+          type: string
+      required:
+        - whitelisted
+        - searchId
+        - caEntityIds
     ComplyAdvantageSearchResponse:
       title: ComplyAdvantageSearchResponse
       type: object
@@ -6176,60 +6228,7 @@ components:
       type: object
       properties:
         doc:
-          type: object
-          properties:
-            aka:
-              type: array
-              items:
-                type: object
-                properties:
-                  name:
-                    type: string
-            entity_type:
-              type: string
-            fields:
-              type: array
-              items:
-                type: object
-                properties:
-                  name:
-                    type: string
-                  source:
-                    type: string
-                  value:
-                    type: string
-            id:
-              type: string
-            keywords:
-              type: array
-              items:
-                type: string
-            last_updated_utc:
-              type: string
-              format: date-time
-            media:
-              type: array
-              items:
-                type: object
-                properties:
-                  snippet:
-                    type: string
-                  title:
-                    type: string
-                  url:
-                    type: string
-            name:
-              type: string
-            source_notes:
-              type: object
-            sources:
-              type: array
-              items:
-                type: string
-            types:
-              type: array
-              items:
-                type: string
+          $ref: '#/components/schemas/ComplyAdvantageSearchHitDoc'
         match_types:
           type: array
           items:
@@ -6273,6 +6272,74 @@ components:
                   type: string
         score:
           type: number
+    ComplyAdvantageSearchHitDoc:
+      type: object
+      properties:
+        aka:
+          type: array
+          items:
+            type: object
+            properties:
+              name:
+                type: string
+        entity_type:
+          type: string
+        fields:
+          type: array
+          items:
+            type: object
+            properties:
+              name:
+                type: string
+              source:
+                type: string
+              value:
+                type: string
+              tag:
+                type: string
+        id:
+          type: string
+        keywords:
+          type: array
+          items:
+            type: string
+        last_updated_utc:
+          type: string
+          format: date-time
+        media:
+          type: array
+          items:
+            type: object
+            properties:
+              snippet:
+                type: string
+              title:
+                type: string
+              url:
+                type: string
+        name:
+          type: string
+        source_notes:
+          type: object
+        sources:
+          type: array
+          items:
+            type: string
+        types:
+          type: array
+          items:
+            type: string
+        flagrightWhitelistInfo:
+          type: object
+          properties:
+            whitelisted:
+              type: boolean
+            reason:
+              type: string
+            comment:
+              type: string
+          required:
+            - whitelisted
     ComplyAdvantageWebhookEvent:
       title: ComplyAdvantageWebhookEvent
       x-stoplight:

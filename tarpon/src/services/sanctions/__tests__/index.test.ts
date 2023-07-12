@@ -6,9 +6,11 @@ import { getMongoDbClient } from '@/utils/mongoDBUtils'
 import { SanctionsSearchRequest } from '@/@types/openapi-internal/SanctionsSearchRequest'
 import { mockComplyAdvantageSearch } from '@/test-utils/complyadvantage-test-utils'
 import { ComplyAdvantageSearchHitDoc } from '@/@types/openapi-internal/ComplyAdvantageSearchHitDoc'
+import { dynamoDbSetupHook } from '@/test-utils/dynamodb-test-utils'
 
 jest.mock('node-fetch')
 const mockFetch = mockComplyAdvantageSearch()
+dynamoDbSetupHook()
 
 describe('Sanctions Service', () => {
   const TEST_TENANT_ID = getTestTenantId()
@@ -88,6 +90,7 @@ describe('Sanctions Service', () => {
     })
 
     test('Filter out whitelist entities (global level)', async () => {
+      const TEST_TENANT_ID = getTestTenantId()
       const service = new SanctionsService(TEST_TENANT_ID)
       const request: SanctionsSearchRequest = {
         searchTerm: 'test',
@@ -109,6 +112,7 @@ describe('Sanctions Service', () => {
     })
 
     test('Filter out whitelist entities (user level)', async () => {
+      const TEST_TENANT_ID = getTestTenantId()
       const service = new SanctionsService(TEST_TENANT_ID)
       const testUserId = 'test-user-id'
       const request: SanctionsSearchRequest = {
