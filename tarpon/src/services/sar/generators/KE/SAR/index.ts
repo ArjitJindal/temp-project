@@ -1,4 +1,4 @@
-import * as xml2js from 'xml2js'
+import { XMLBuilder } from 'fast-xml-parser'
 import { InternalReportType, PopulatedSchema, ReportGenerator } from '../..'
 import { indicators, KenyaReportSchema, KenyaTransactionSchema } from './schema'
 import { Case } from '@/@types/openapi-internal/Case'
@@ -108,17 +108,26 @@ export class KenyaSARReportGenerator implements ReportGenerator {
   }
 
   public generate(reportParams: ReportParameters): string {
-    const builder = new xml2js.Builder({
-      rootName: 'report',
-    })
-    return builder.buildObject({
-      ...reportParams.report,
+    const builder = new XMLBuilder()
+    const xmlContent = builder.build({
+      reentity_id: reportParams.report.reentity_id,
+      reentity_branch: reportParams.report.reentity_branch,
+      submission_code: reportParams.report.submission_code,
       report_code: 'SAR',
+      entity_reference: reportParams.report.entity_reference,
+      fiu_ref_number: reportParams.report.fiu_ref_number,
+      submission_date: reportParams.report.submission_date,
+      currency_code_local: reportParams.report.currency_code_local,
+      reporting_person: reportParams.report.reporting_person,
+      location: reportParams.report.location,
+      reason: reportParams.report.reason,
+      action: reportParams.report.action,
       transaction: reportParams.transactions?.map((t) => t.transaction),
       report_indicators: reportParams.indicators.map((indicator) => ({
         indicator,
       })),
     })
+    return `<?xml version="1.0" encoding="UTF-8" standalone="yes"?><report>${xmlContent}</report>`
   }
 
   private address(a: Address): object | undefined {
