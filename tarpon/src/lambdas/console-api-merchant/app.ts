@@ -17,7 +17,7 @@ export const merchantMonitoringHandler = lambdaApi()(
     >
   ) => {
     const { principalId: tenantId } = event.requestContext.authorizer
-    const mms = new MerchantMonitoringService()
+    const mms = await MerchantMonitoringService.init()
     const userService = await UserService.fromEvent(event)
 
     if (event.httpMethod === 'POST' && event.body) {

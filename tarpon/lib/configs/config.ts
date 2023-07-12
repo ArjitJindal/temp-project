@@ -97,6 +97,7 @@ export type Config = {
     POSTMAN_COLLECTION_ID?: string
     GOOGLE_SHEETS_CLIENT_EMAIL: string
     GOOGLE_SHEETS_PRIVATE_KEY: string
+    MERCHANT_MONITORING_SECRETS_ARN: string
     SHEET_ID: string
   }
 }
