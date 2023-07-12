@@ -25,6 +25,7 @@ export async function getCurrencyExchangeRate(
   sourceCurrency: Currency,
   targetCurrency: Currency
 ): Promise<number> {
+  // TODO: Proper retry - FR-2724
   for (let i = 1; i <= MAX_CURRENCY_API_RETRY; i++) {
     const sourceCurr = sourceCurrency.toLowerCase()
     const targetCurr = targetCurrency.toLowerCase()

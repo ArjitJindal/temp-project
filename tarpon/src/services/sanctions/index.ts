@@ -1,5 +1,5 @@
 import { v4 as uuidv4 } from 'uuid'
-import fetch from 'node-fetch'
+import fetch, { RequestInfo, RequestInit, Response } from 'node-fetch'
 import { StackConstants } from '@lib/constants'
 import _ from 'lodash'
 import { TenantRepository } from '../tenants/repositories/tenant-repository'
@@ -35,6 +35,25 @@ function getSanctionsSearchResponse(
     rawComplyAdvantageResponse,
     searchId,
   }
+}
+
+// TODO: Proper retry - FR-2724
+async function apiFetch(
+  url: RequestInfo,
+  init?: RequestInit
+): Promise<Response> {
+  let response: Response
+  for (let i = 0; i < 10; i++) {
+    response = await fetch(url, init)
+    if (response.status !== 429) {
+      return response
+    }
+    // Too many requests
+    await new Promise((resolve) => {
+      setTimeout(() => resolve(null), 1000 + _.random(500))
+    })
+  }
+  return response!
 }
 
 @traceable
@@ -219,7 +238,7 @@ export class SanctionsService {
     request: SanctionsSearchRequest
   ): Promise<ComplyAdvantageSearchResponse> {
     const rawComplyAdvantageResponse = (await (
-      await fetch(`${COMPLYADVANTAGE_SEARCH_API_URI}`, {
+      await apiFetch(`${COMPLYADVANTAGE_SEARCH_API_URI}`, {
         method: 'POST',
         body: JSON.stringify({
           search_term: request.searchTerm,
@@ -246,7 +265,7 @@ export class SanctionsService {
     searchId: number
   ): Promise<ComplyAdvantageSearchResponse> {
     const rawComplyAdvantageResponse = (await (
-      await fetch(`${COMPLYADVANTAGE_SEARCH_API_URI}/${searchId}/details`, {
+      await apiFetch(`${COMPLYADVANTAGE_SEARCH_API_URI}/${searchId}/details`, {
         method: 'GET',
         headers: {
           Authorization: `Token ${this.apiKey}`,
@@ -304,15 +323,18 @@ export class SanctionsService {
     const caSearchId =
       search.response?.rawComplyAdvantageResponse?.content?.data?.id
     const monitorResponse = await (
-      await fetch(`${COMPLYADVANTAGE_SEARCH_API_URI}/${caSearchId}/monitors`, {
-        method: 'PATCH',
-        body: JSON.stringify({
-          is_monitored: update.enabled ?? false,
-        }),
-        headers: {
-          Authorization: `Token ${this.apiKey}`,
-        },
-      })
+      await apiFetch(
+        `${COMPLYADVANTAGE_SEARCH_API_URI}/${caSearchId}/monitors`,
+        {
+          method: 'PATCH',
+          body: JSON.stringify({
+            is_monitored: update.enabled ?? false,
+          }),
+          headers: {
+            Authorization: `Token ${this.apiKey}`,
+          },
+        }
+      )
     ).json()
     if (monitorResponse.status === 'failure') {
       throw new Error(monitorResponse.message)
@@ -327,7 +349,7 @@ export class SanctionsService {
     caSearchId: number
   ): Promise<void> {
     await this.initialize()
-    const response = await fetch(
+    const response = await apiFetch(
       `${COMPLYADVANTAGE_SEARCH_API_URI}/${caSearchId}`,
       {
         method: 'DELETE',

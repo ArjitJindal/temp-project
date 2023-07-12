@@ -1,5 +1,6 @@
 import { logger } from '@/core/logger'
 
+// TODO: Proper retry - FR-2724
 export async function exponentialRetry<T>(
   fn: () => Promise<T>,
   warningString = 'Retrying...',
