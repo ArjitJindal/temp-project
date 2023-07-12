@@ -1,11 +1,12 @@
 import { Select, SelectProps } from 'antd';
 import { useState, useEffect } from 'react';
-import { useApi } from '@/api';
-import { useSettings } from '@/components/AppWrapper/Providers/SettingsProvider';
+import {
+  useSettings,
+  useUpdateTenantSettings,
+} from '@/components/AppWrapper/Providers/SettingsProvider';
 import Button from '@/components/library/Button';
 import Table from '@/components/library/Table';
 import { CURRENCIES_SELECT_OPTIONS } from '@/utils/currencies';
-import { message } from '@/components/library/Message';
 import { ColumnHelper } from '@/components/library/Table/columnHelper';
 import { StatePair } from '@/utils/state';
 
@@ -17,7 +18,7 @@ type TableItem = {
 
 type ExternalState = {
   value: StatePair<{ [key: string]: string }>;
-  saving: StatePair<boolean>;
+  saving: boolean;
   onSave: (key: string, value: string) => void;
 };
 
@@ -63,7 +64,7 @@ const columns = columnHelper.list([
       const externalState: ExternalState = context.external as ExternalState;
       const { onSave } = externalState;
       const [value] = externalState.value;
-      const [saving] = externalState.saving;
+      const saving = externalState.saving;
       return (
         <Button
           type="PRIMARY"
@@ -81,9 +82,7 @@ const columns = columnHelper.list([
 
 export const DefaultValuesSettings = () => {
   const [value, setValue] = useState<{ [key: string]: string }>(DEFAULT_VALUES);
-  const [saving, setSaving] = useState(false);
   const settings = useSettings();
-  const api = useApi();
 
   useEffect(() => {
     if (settings.defaultValues) {
@@ -96,27 +95,19 @@ export const DefaultValuesSettings = () => {
     }
   }, [settings.defaultValues]);
 
+  const mutateTenantSettings = useUpdateTenantSettings();
   const handleSave = async (key: string, value: string) => {
-    try {
-      setSaving(true);
-      await api.postTenantsSettings({
-        TenantSettings: {
-          defaultValues: {
-            ...settings.defaultValues,
-            [key]: value,
-          },
-        },
-      });
-      message.success('Saved');
-      setSaving(false);
-    } catch (e) {
-      message.fatal('Failed to update default values', e);
-    }
+    mutateTenantSettings.mutate({
+      defaultValues: {
+        ...settings.defaultValues,
+        [key]: value,
+      },
+    });
   };
 
   const externalState: ExternalState = {
     value: [value, setValue],
-    saving: [saving, setSaving],
+    saving: mutateTenantSettings.isLoading,
     onSave: handleSave,
   };
   return (

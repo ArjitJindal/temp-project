@@ -1,5 +1,5 @@
 import { Divider, Form, Input, Select } from 'antd';
-import React, { ChangeEvent, useState } from 'react';
+import { ChangeEvent, useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { validate } from 'uuid';
 import NumberInput from '../library/NumberInput';
@@ -11,8 +11,12 @@ import { message } from '@/components/library/Message';
 import { useApi } from '@/api';
 import Button from '@/components/library/Button';
 import { Feature, TenantSettings } from '@/apis';
-import { clearAuth0LocalStorage, useAuth0User } from '@/utils/user-utils';
-import { useFeatures, useSettings } from '@/components/AppWrapper/Providers/SettingsProvider';
+import { useAuth0User, clearAuth0LocalStorage } from '@/utils/user-utils';
+import {
+  useUpdateTenantSettings,
+  useFeatures,
+  useSettings,
+} from '@/components/AppWrapper/Providers/SettingsProvider';
 import { FEATURES } from '@/apis/models-custom/Feature';
 
 export default function SuperAdminPanel() {
@@ -78,24 +82,13 @@ export default function SuperAdminPanel() {
     }
   };
 
-  const updateTenantSettings = async (TenantSettings: Partial<TenantSettings>) => {
-    const hideMessage = message.loading('Saving...');
-    try {
-      await api.postTenantsSettings({ TenantSettings });
-      hideMessage();
-      message.success('Saved');
-    } catch (e) {
-      hideMessage();
-      message.fatal('Failed to save tenant settings', e);
-    }
-  };
-
+  const mutateTenantSettings = useUpdateTenantSettings();
   const handleSave = async () => {
     if (complyAdvantageSearchProfileId.length > 0 && !validate(complyAdvantageSearchProfileId)) {
       message.fatal('Comply Advantage Search profile ID must be a valid UUID');
       return;
     }
-    await updateTenantSettings({
+    mutateTenantSettings.mutate({
       ...(features && features.length && { features }),
       ...(limits && { limits }),
       ...(complyAdvantageSearchProfileId && { complyAdvantageSearchProfileId }),

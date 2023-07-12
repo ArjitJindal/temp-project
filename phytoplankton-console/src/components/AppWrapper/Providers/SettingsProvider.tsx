@@ -1,6 +1,7 @@
-import React, { useContext, useEffect, useState } from 'react';
+import React, { useContext, useMemo } from 'react';
 import { PageLoading } from '@ant-design/pro-layout';
 import _ from 'lodash';
+import { useMutation } from '@tanstack/react-query';
 import { useApi } from '@/api';
 import {
   Feature as FeatureName,
@@ -11,10 +12,16 @@ import {
 } from '@/apis';
 import { capitalizeWords } from '@/utils/tags';
 import { useApiTime } from '@/utils/tracker';
+import { useQuery } from '@/utils/queries/hooks';
+import { SETTINGS } from '@/utils/queries/keys';
+import { usePrevious } from '@/utils/hooks';
+import { isSuccess } from '@/utils/asyncResource';
+import { message } from '@/components/library/Message';
 
 interface ContextValue {
   features: FeatureName[];
   settings: TenantSettings;
+  reloadSettings: () => void;
 }
 
 export const Context = React.createContext<ContextValue | null>(null);
@@ -26,27 +33,40 @@ export default function SettingsProvider(props: {
   const globalFeatures = props.globalFeatures;
   const api = useApi();
   const measure = useApiTime();
-  const [settings, setSettings] = useState<TenantSettings>({});
-  const [features, setFeatures] = useState<FeatureName[] | null>(null);
-  useEffect(() => {
-    if (!_.isEmpty(settings)) {
-      return;
-    }
 
-    async function fetch() {
-      const settings = await measure(() => api.getTenantsSettings(), 'Tenant Settings');
-      setSettings(settings);
-      setFeatures((settings.features || []).concat(globalFeatures ?? []));
-    }
-    fetch().catch((e) => {
-      setFeatures(globalFeatures ?? []);
-      console.error(e);
-    });
-  }, [api, globalFeatures, measure, settings]);
+  const queryResults = useQuery(
+    SETTINGS(),
+    (): Promise<TenantSettings> => measure(() => api.getTenantsSettings(), 'Tenant Settings'),
+  );
+
+  const previousQueryResults = usePrevious(queryResults);
+
+  const settings = useMemo(() => {
+    return isSuccess(queryResults.data) || !previousQueryResults
+      ? isSuccess(queryResults.data)
+        ? queryResults.data.value
+        : {}
+      : isSuccess(previousQueryResults.data)
+      ? previousQueryResults.data.value
+      : {};
+  }, [queryResults.data, previousQueryResults]);
+
+  const features = useMemo(() => {
+    return !_.isEmpty(settings) ? (settings.features || []).concat(globalFeatures ?? []) : null;
+  }, [settings, globalFeatures]);
+
+  const reloadSettings = () => {
+    queryResults.refetch();
+  };
+
   if (features == null) {
     return <PageLoading />;
   }
-  return <Context.Provider value={{ features, settings }}>{props.children}</Context.Provider>;
+  return (
+    <Context.Provider value={{ features, settings, reloadSettings }}>
+      {props.children}
+    </Context.Provider>
+  );
 }
 
 function useSettingsContext() {
@@ -60,6 +80,11 @@ function useSettingsContext() {
 export function useSettings(): TenantSettings {
   const context = useSettingsContext();
   return context.settings;
+}
+
+export function useReloadSettings() {
+  const context = useSettingsContext();
+  return context.reloadSettings;
 }
 
 export function useFeatures(): FeatureName[] {
@@ -138,4 +163,26 @@ export function useTransactionStateLabel(
 ): string | undefined {
   const settings = useSettings();
   return getTransactionStateLabel(transactionState, settings);
+}
+
+export function useUpdateTenantSettings() {
+  const api = useApi();
+  const reloadSettings = useReloadSettings();
+  return useMutation<unknown, unknown, TenantSettings>(
+    async (partialTenantSettings) => {
+      await api.postTenantsSettings({
+        TenantSettings: partialTenantSettings,
+      });
+    },
+    {
+      retry: false,
+      onSuccess: () => {
+        message.success('Settings saved');
+        reloadSettings();
+      },
+      onError: (e) => {
+        message.fatal('Failed to save settings', e);
+      },
+    },
+  );
 }

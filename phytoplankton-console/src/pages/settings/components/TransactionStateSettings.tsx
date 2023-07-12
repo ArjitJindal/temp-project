@@ -1,11 +1,12 @@
 import React, { useCallback, useMemo, useState } from 'react';
 import { Button, Input } from 'antd';
 import Table from '@/components/library/Table';
-import { useSettings } from '@/components/AppWrapper/Providers/SettingsProvider';
+import {
+  useSettings,
+  useUpdateTenantSettings,
+} from '@/components/AppWrapper/Providers/SettingsProvider';
 import { TransactionState, TransactionStateAlias } from '@/apis';
-import { useApi } from '@/api';
 import { TableColumn } from '@/components/library/Table/types';
-import { message } from '@/components/library/Message';
 import { H4 } from '@/components/ui/Typography';
 import { ColumnHelper } from '@/components/library/Table/columnHelper';
 
@@ -76,7 +77,6 @@ const columns: TableColumn<TableItem>[] = columnHelper.list([
 ]);
 
 export const TransactionStateSettings: React.FC = () => {
-  const api = useApi();
   const settings = useSettings();
   const [savingState, setSavingState] = useState<TransactionState | null>(null);
   const stateToAlias = useMemo<Map<TransactionState | undefined, string>>(
@@ -98,6 +98,7 @@ export const TransactionStateSettings: React.FC = () => {
     },
     [newStateToAlias],
   );
+  const mutateTenantSettings = useUpdateTenantSettings();
   const handleSaveAlias = useCallback(
     async (state: TransactionState) => {
       setSavingState(state);
@@ -112,16 +113,13 @@ export const TransactionStateSettings: React.FC = () => {
             alias: entry[1],
           }))
           .filter((item) => !!item.alias) as TransactionStateAlias[];
-        await api.postTenantsSettings({ TenantSettings: { transactionStateAlias } });
+        await mutateTenantSettings.mutateAsync({ transactionStateAlias });
         setCommitedStateToAlias(updatedStateToAlias);
-        message.success('Saved');
-      } catch (e) {
-        message.fatal('Failed to save the alias', e);
       } finally {
         setSavingState(null);
       }
     },
-    [api, newStateToAlias, savedStateToAlias],
+    [mutateTenantSettings, newStateToAlias, savedStateToAlias],
   );
   const tableData = useMemo<TableItem[]>(
     () => [

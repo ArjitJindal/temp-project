@@ -1,11 +1,12 @@
 import React, { useCallback, useMemo, useState } from 'react';
 import { Button, Input } from 'antd';
 import Table from '@/components/library/Table';
-import { useSettings } from '@/components/AppWrapper/Providers/SettingsProvider';
+import {
+  useSettings,
+  useUpdateTenantSettings,
+} from '@/components/AppWrapper/Providers/SettingsProvider';
 import { RuleAction, RuleActionAlias } from '@/apis';
-import { useApi } from '@/api';
 import { TableColumn } from '@/components/library/Table/types';
-import { message } from '@/components/library/Message';
 import { H4 } from '@/components/ui/Typography';
 import { ColumnHelper } from '@/components/library/Table/columnHelper';
 
@@ -77,7 +78,6 @@ const columns: TableColumn<TableItem>[] = columnHelper.list([
 ]);
 
 export const RuleActionSettings: React.FC = () => {
-  const api = useApi();
   const settings = useSettings();
   const [savingAction, setSavingAction] = useState<RuleAction | null>(null);
   const actionToAlias = useMemo<Map<RuleAction, string>>(
@@ -98,6 +98,7 @@ export const RuleActionSettings: React.FC = () => {
     },
     [newActionToAlias],
   );
+  const mutateTenantSettings = useUpdateTenantSettings();
   const handleSaveAlias = useCallback(
     async (action: RuleAction) => {
       setSavingAction(action);
@@ -112,16 +113,13 @@ export const RuleActionSettings: React.FC = () => {
             alias: entry[1],
           }))
           .filter((item) => !!item.alias) as RuleActionAlias[];
-        await api.postTenantsSettings({ TenantSettings: { ruleActionAliases } });
+        await mutateTenantSettings.mutateAsync({ ruleActionAliases });
         setCommitedActionToAlias(updatedActionToAlias);
-        message.success('Saved');
-      } catch (e) {
-        message.fatal('Failed to save the alias', e);
       } finally {
         setSavingAction(null);
       }
     },
-    [api, newActionToAlias, savedActionToAlias],
+    [mutateTenantSettings, newActionToAlias, savedActionToAlias],
   );
   const tableData = useMemo<TableItem[]>(
     () => [

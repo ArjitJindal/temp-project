@@ -190,3 +190,5 @@ export const REPORTS_TEMPLATE = (params: AnyParameters): QueryKey => [
   'template',
   params,
 ];
+
+export const SETTINGS = (): QueryKey => ['settings'];

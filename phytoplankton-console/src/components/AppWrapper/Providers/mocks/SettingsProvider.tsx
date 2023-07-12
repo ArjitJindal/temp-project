@@ -11,6 +11,7 @@ export default function SettingsProviderMock(props: Props) {
       value={{
         features: [],
         settings: {},
+        reloadSettings: () => {},
       }}
     >
       {props.children}

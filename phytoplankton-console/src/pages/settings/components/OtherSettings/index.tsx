@@ -1,37 +1,26 @@
 import { Select } from 'antd';
-import React, { useCallback, useState } from 'react';
+import { useCallback } from 'react';
 import s from './index.module.less';
-import { useApi } from '@/api';
-import { useSettings } from '@/components/AppWrapper/Providers/SettingsProvider';
+import {
+  useSettings,
+  useUpdateTenantSettings,
+} from '@/components/AppWrapper/Providers/SettingsProvider';
 import Button from '@/components/library/Button';
 import { TenantSettings } from '@/apis';
 import { TIMEZONES } from '@/utils/dayjs';
 import Form from '@/components/library/Form';
 import InputField from '@/components/library/Form/InputField';
-import { message } from '@/components/library/Message';
 
 export function OtherSettings() {
   const settings = useSettings();
-  const [saving, setSaving] = useState(false);
-  const api = useApi();
-
+  const mutateTenantSettings = useUpdateTenantSettings();
   const handleSubmit = useCallback(
     async (values) => {
-      setSaving(true);
-      try {
-        await api.postTenantsSettings({
-          TenantSettings: {
-            tenantTimezone: values.tenantTimezone,
-          },
-        });
-        message.success('Saved');
-      } catch (e) {
-        message.fatal('Failed to update default values', e);
-      } finally {
-        setSaving(false);
-      }
+      mutateTenantSettings.mutate({
+        tenantTimezone: values.tenantTimezone,
+      });
     },
-    [api],
+    [mutateTenantSettings],
   );
 
   return (
@@ -49,7 +38,7 @@ export function OtherSettings() {
           )}
         </InputField>
         <div>
-          <Button htmlType="submit" type="PRIMARY" isLoading={saving}>
+          <Button htmlType="submit" type="PRIMARY" isLoading={mutateTenantSettings.isLoading}>
             Save
           </Button>
         </div>

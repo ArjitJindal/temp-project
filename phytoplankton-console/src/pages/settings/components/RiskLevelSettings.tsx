@@ -1,10 +1,11 @@
 import React, { useCallback, useMemo, useState } from 'react';
 import Table from '@/components/library/Table';
-import { useSettings } from '@/components/AppWrapper/Providers/SettingsProvider';
+import {
+  useSettings,
+  useUpdateTenantSettings,
+} from '@/components/AppWrapper/Providers/SettingsProvider';
 import { RiskLevel, RiskLevelAlias } from '@/apis';
-import { useApi } from '@/api';
 import { TableColumn } from '@/components/library/Table/types';
-import { message } from '@/components/library/Message';
 import { ColumnHelper } from '@/components/library/Table/columnHelper';
 import { STRING } from '@/components/library/Table/standardDataTypes';
 import Button from '@/components/library/Button';
@@ -65,7 +66,6 @@ const columns: TableColumn<TableItem>[] = helper.list([
 ]);
 
 export const RiskLevelSettings: React.FC = () => {
-  const api = useApi();
   const settings = useSettings();
   const [savingLevel, setSavingLevel] = useState<RiskLevel | null>(null);
   const levelToAlias = useMemo<Map<RiskLevel | undefined, string>>(
@@ -89,6 +89,7 @@ export const RiskLevelSettings: React.FC = () => {
     [newLevelToAlias],
   );
 
+  const mutateTenantSettings = useUpdateTenantSettings();
   const handleSaveAlias = useCallback(
     async (level: RiskLevel) => {
       setSavingLevel(level);
@@ -103,43 +104,39 @@ export const RiskLevelSettings: React.FC = () => {
             alias: entry[1],
           }))
           .filter((item) => !!item.alias) as RiskLevelAlias[];
-        await api.postTenantsSettings({ TenantSettings: { riskLevelAlias } });
+        await mutateTenantSettings.mutateAsync({ riskLevelAlias });
         setCommitedLevelToAlias(updatedLevelToAlias);
-        message.success('Saved');
-      } catch (e) {
-        message.fatal('Failed to save the alias', e);
       } finally {
         setSavingLevel(null);
       }
     },
-    [api, newLevelToAlias, savedLevelToAlias],
+    [savedLevelToAlias, newLevelToAlias, mutateTenantSettings],
   );
   const tableData = useMemo<TableItem[]>(
     () => [
       {
         level: 'VERY_HIGH',
-        levelAlias: newLevelToAlias['VERY_HIGH'] ?? levelToAlias.get('VERY_LOW') ?? '',
+        levelAlias: newLevelToAlias.get('VERY_HIGH') ?? '',
       },
       {
         level: 'HIGH',
-        levelAlias: newLevelToAlias['HIGH'] ?? levelToAlias.get('HIGH') ?? '',
+        levelAlias: newLevelToAlias.get('HIGH') ?? '',
       },
       {
         level: 'MEDIUM',
-        levelAlias: newLevelToAlias['MEDIUM'] ?? levelToAlias.get('MEDIUM') ?? '',
+        levelAlias: newLevelToAlias.get('MEDIUM') ?? '',
       },
       {
         level: 'LOW',
-        levelAlias: newLevelToAlias['LOW'] ?? levelToAlias.get('LOW') ?? '',
+        levelAlias: newLevelToAlias.get('LOW') ?? '',
       },
       {
         level: 'VERY_LOW',
-        levelAlias: newLevelToAlias['VERY_LOW'] ?? levelToAlias.get('VERY_LOW') ?? '',
+        levelAlias: newLevelToAlias.get('VERY_LOW') ?? '',
       },
     ],
-    [newLevelToAlias, levelToAlias],
+    [newLevelToAlias],
   );
-
   const externalState: ExternalState = {
     savingLevel,
     newLevelToAlias,
