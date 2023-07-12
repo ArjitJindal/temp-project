@@ -5,14 +5,16 @@ import { SanctionsSearchHistoryTable } from './search-history';
 import PageWrapper, { PageWrapperContentContainer } from '@/components/PageWrapper';
 import PageTabs from '@/components/ui/PageTabs';
 import { usePageViewTracker } from '@/utils/tracker';
+import { useI18n } from '@/locales';
 
 const SanctionsPage: React.FC = () => {
   usePageViewTracker('Sanctions Page');
   const { type = 'search' } = useParams<'type'>();
   const { searchId } = useParams<'searchId'>();
   const navigate = useNavigate();
+  const i18n = useI18n();
   return (
-    <PageWrapper>
+    <PageWrapper title={i18n('menu.sanctions')}>
       <PageTabs
         activeKey={type}
         onChange={(key) => {

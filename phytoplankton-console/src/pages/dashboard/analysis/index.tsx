@@ -7,12 +7,14 @@ import TeamPerformanceCard from './components/TeamPerformanceCard';
 import PageWrapper from '@/components/PageWrapper';
 import { useFeatureEnabled } from '@/components/AppWrapper/Providers/SettingsProvider';
 import { usePageViewTracker } from '@/utils/tracker';
+import { useI18n } from '@/locales';
 
 function Analysis() {
   usePageViewTracker('Dashboard Analysis Page');
   const isPulseEnabled = useFeatureEnabled('PULSE');
+  const i18n = useI18n();
   return (
-    <PageWrapper>
+    <PageWrapper title={i18n('menu.dashboard')}>
       <Row gutter={[16, 16]}>
         <Col span={24}>
           <TransactionsChartCard />
