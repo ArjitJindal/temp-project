@@ -1,4 +1,5 @@
 import { TransactionsAverageExceededParameters } from '../transactions-average-exceeded-base'
+import { getRuleByRuleId } from '../library'
 import dayjs from '@/utils/dayjs'
 import { getTestTenantId } from '@/test-utils/tenant-test-utils'
 import { getTestTransaction } from '@/test-utils/transaction-test-utils'
@@ -6,11 +7,12 @@ import {
   createTransactionRuleTestCase,
   ruleVariantsTest,
   setUpRulesHooks,
+  testRuleDescriptionFormatting,
   TransactionRuleTestCase,
 } from '@/test-utils/rule-test-utils'
 import { dynamoDbSetupHook } from '@/test-utils/dynamodb-test-utils'
 import { getTestUser, setUpUsersHooks } from '@/test-utils/user-test-utils'
-import { TransactionsAverageAmountExceededParameters } from '@/services/rules-engine/transaction-rules/transactions-average-amount-exceeded'
+import { TransactionsAverageAmountExceededParameters } from '@/services/rules-engine/transaction-rules/transactions-average-daily-amount-exceeded'
 import { TransactionAmountDetails } from '@/@types/openapi-public/TransactionAmountDetails'
 
 const TEST_TRANSACTION_AMOUNT_100: TransactionAmountDetails = {
@@ -47,6 +49,42 @@ function getDefaultParams(): TransactionsAverageAmountExceededParameters {
 }
 
 ruleVariantsTest(true, () => {
+  describe('Description formatting', () => {
+    describe('R-122 description formatting', () => {
+      const TEST_TENANT_ID = getTestTenantId()
+      const now = dayjs('2022-01-01T00:00:00.000Z')
+
+      setUpRulesHooks(TEST_TENANT_ID, [
+        {
+          type: 'TRANSACTION',
+          ruleImplementationName: 'transactions-average-daily-amount-exceeded',
+          defaultParameters: getDefaultParams(),
+        },
+      ])
+
+      testRuleDescriptionFormatting(
+        'first',
+        TEST_TENANT_ID,
+        [
+          getTestTransaction({
+            transactionId: '333',
+            originUserId: 'Nick',
+            destinationUserId: 'Mike',
+            originAmountDetails: TEST_TRANSACTION_AMOUNT_300,
+            destinationAmountDetails: undefined,
+            timestamp: now.valueOf(),
+          }),
+        ],
+        {
+          descriptionTemplate: getRuleByRuleId('R-122').descriptionTemplate,
+        },
+        [
+          'Sender made more than 2.00 times average daily amount of transactions in last 1 day than average daily amount of transactions in last 2 days.',
+        ]
+      )
+    })
+  })
+
   const defaultParams = getDefaultParams()
 
   describe('Core logic', () => {
@@ -55,6 +93,19 @@ ruleVariantsTest(true, () => {
     describe.each<
       TransactionRuleTestCase<Partial<TransactionsAverageExceededParameters>>
     >([
+      {
+        name: 'Single transaction always trigger the rule',
+        transactions: [
+          getTestTransaction({
+            originUserId: 'Nick',
+            destinationUserId: 'Mike',
+            originAmountDetails: TEST_TRANSACTION_AMOUNT_100,
+            destinationAmountDetails: undefined,
+            timestamp: now.valueOf(),
+          }),
+        ],
+        expectedHits: [true],
+      },
       {
         name: 'Multiple transactions which keep the average the same do not trigger the rule',
         transactions: [
@@ -74,7 +125,7 @@ ruleVariantsTest(true, () => {
             timestamp: now.valueOf(),
           }),
         ],
-        expectedHits: [false, false],
+        expectedHits: [true, false],
       },
       {
         name: 'Last transaction increases average and triggers',
@@ -104,7 +155,7 @@ ruleVariantsTest(true, () => {
             timestamp: now.valueOf(),
           }),
         ],
-        expectedHits: [false, false, true],
+        expectedHits: [true, false, true],
       },
       {
         name: 'Check exclude mode',
@@ -126,7 +177,7 @@ ruleVariantsTest(true, () => {
             timestamp: now.valueOf(),
           }),
         ],
-        expectedHits: [false, false],
+        expectedHits: [true, false],
         ruleParams: {
           excludePeriod1: true,
         },
@@ -151,7 +202,7 @@ ruleVariantsTest(true, () => {
             timestamp: now.valueOf(),
           }),
         ],
-        expectedHits: [false, false],
+        expectedHits: [true, false],
         ruleParams: {
           period1: {
             granularity: 'day',
@@ -209,7 +260,7 @@ ruleVariantsTest(true, () => {
       setUpRulesHooks(TEST_TENANT_ID, [
         {
           type: 'TRANSACTION',
-          ruleImplementationName: 'transactions-average-amount-exceeded',
+          ruleImplementationName: 'transactions-average-daily-amount-exceeded',
           defaultParameters: {
             ...defaultParams,
             ...ruleParams,
@@ -271,7 +322,7 @@ ruleVariantsTest(true, () => {
       setUpRulesHooks(TEST_TENANT_ID, [
         {
           type: 'TRANSACTION',
-          ruleImplementationName: 'transactions-average-amount-exceeded',
+          ruleImplementationName: 'transactions-average-daily-amount-exceeded',
           defaultParameters: {
             ...defaultParams,
             ...ruleParams,
@@ -332,8 +383,8 @@ ruleVariantsTest(true, () => {
         ],
         ruleParams: {
           averageThreshold: {
-            min: 150,
-            max: 250,
+            min: 250,
+            max: 350,
           },
         },
         expectedHits: [false, false, false, false],
@@ -344,7 +395,7 @@ ruleVariantsTest(true, () => {
       setUpRulesHooks(TEST_TENANT_ID, [
         {
           type: 'TRANSACTION',
-          ruleImplementationName: 'transactions-average-amount-exceeded',
+          ruleImplementationName: 'transactions-average-daily-amount-exceeded',
           defaultParameters: {
             ...defaultParams,
             ...ruleParams,
@@ -403,7 +454,7 @@ ruleVariantsTest(true, () => {
             timestamp: now.valueOf(),
           }),
         ],
-        expectedHits: [false, false, true, false],
+        expectedHits: [true, false, true, false],
         ruleParams: {
           checkSender: 'sending',
           checkReceiver: 'none',
@@ -441,11 +492,11 @@ ruleVariantsTest(true, () => {
             originUserId: 'Mike',
             destinationUserId: 'Nick',
             originAmountDetails: TEST_TRANSACTION_AMOUNT_100,
-            destinationAmountDetails: TEST_TRANSACTION_AMOUNT_300,
+            destinationAmountDetails: TEST_TRANSACTION_AMOUNT_100,
             timestamp: now.valueOf(),
           }),
         ],
-        expectedHits: [false, false, false, true],
+        expectedHits: [true, false, true, true],
         ruleParams: {
           checkSender: 'all',
           checkReceiver: 'none',
@@ -495,7 +546,7 @@ ruleVariantsTest(true, () => {
             timestamp: now.valueOf(),
           }),
         ],
-        expectedHits: [false, false, false, false, true],
+        expectedHits: [true, false, true, false, true],
         ruleParams: {
           checkSender: 'none',
           checkReceiver: 'receiving',
@@ -537,7 +588,7 @@ ruleVariantsTest(true, () => {
             timestamp: now.valueOf(),
           }),
         ],
-        expectedHits: [false, false, false, true],
+        expectedHits: [true, false, true, true],
         ruleParams: {
           checkSender: 'none',
           checkReceiver: 'all',
@@ -549,7 +600,7 @@ ruleVariantsTest(true, () => {
       setUpRulesHooks(TEST_TENANT_ID, [
         {
           type: 'TRANSACTION',
-          ruleImplementationName: 'transactions-average-amount-exceeded',
+          ruleImplementationName: 'transactions-average-daily-amount-exceeded',
           defaultParameters: {
             ...defaultParams,
             ...ruleParams,

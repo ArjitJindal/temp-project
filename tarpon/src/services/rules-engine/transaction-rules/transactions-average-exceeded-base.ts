@@ -129,7 +129,7 @@ export default abstract class TransactionAverageExceededBaseRule<
     value: number
   }
 
-  protected abstract getAvgMethod(): 'AMOUNT' | 'NUMBER'
+  protected abstract getAvgMethod(): 'AMOUNT' | 'NUMBER' | 'DAILY_AMOUNT'
 
   public async computeRule() {
     return await Promise.all([
@@ -178,6 +178,14 @@ export default abstract class TransactionAverageExceededBaseRule<
       ) {
         return
       }
+    } else if (avgMethod === 'DAILY_AMOUNT') {
+      const avg = period1.totalAmount! / units1
+      if (
+        (avgMin != null && avg < avgMin) ||
+        (avgMax != null && avg > avgMax)
+      ) {
+        return
+      }
     } else {
       const avg = period1.totalCount / units1
       if (
@@ -207,12 +215,16 @@ export default abstract class TransactionAverageExceededBaseRule<
     // Check against the real threshold
     const avgPeriod1 =
       avgMethod === 'AMOUNT'
-        ? period1.totalAmount! / units1
-        : period1.totalCount / units1
+        ? period1.totalAmount! / period1.totalCount
+        : avgMethod === 'NUMBER'
+        ? period1.totalCount / units1
+        : period1.totalAmount! / units1
     const avgPeriod2 =
       avgMethod === 'AMOUNT'
-        ? period2.totalAmount! / units2
-        : period2.totalCount / units2
+        ? period2.totalAmount! / period2.totalCount
+        : avgMethod === 'NUMBER'
+        ? period2.totalCount / units2
+        : period2.totalAmount! / units2
     const multiplier = avgPeriod1 / avgPeriod2
     const { value: maxMultiplier, currency } = this.getMultiplierThresholds()
 
@@ -313,7 +325,7 @@ export default abstract class TransactionAverageExceededBaseRule<
       const transactionsCountPeriod2 =
         transactionsSendingCountPeriod2 + transactionsReceivingCountPeriod2
 
-      if (avgMethod === 'AMOUNT') {
+      if (avgMethod === 'AMOUNT' || avgMethod === 'DAILY_AMOUNT') {
         const amountDetails =
           direction === 'origin'
             ? this.transaction.originAmountDetails!
@@ -438,7 +450,7 @@ export default abstract class TransactionAverageExceededBaseRule<
       period1: {
         totalCount: period1AmountDetails.length,
         totalAmount:
-          avgMethod === 'AMOUNT'
+          avgMethod === 'AMOUNT' || avgMethod === 'DAILY_AMOUNT'
             ? (await getTransactionsTotalAmount(period1AmountDetails, currency))
                 .transactionAmount
             : undefined,
@@ -446,7 +458,7 @@ export default abstract class TransactionAverageExceededBaseRule<
       period2: {
         totalCount: period2AmountDetails.length,
         totalAmount:
-          avgMethod === 'AMOUNT'
+          avgMethod === 'AMOUNT' || avgMethod === 'DAILY_AMOUNT'
             ? (await getTransactionsTotalAmount(period2AmountDetails, currency))
                 .transactionAmount
             : undefined,
@@ -529,7 +541,7 @@ export default abstract class TransactionAverageExceededBaseRule<
       data.receivingCount = (data.receivingCount ?? 0) + 1
     }
 
-    if (avgMethod === 'AMOUNT') {
+    if (avgMethod === 'AMOUNT' || avgMethod === 'DAILY_AMOUNT') {
       if (direction === 'origin' && this.transaction.originAmountDetails) {
         data.sendingAmount =
           (data.sendingAmount ?? 0) +
@@ -570,7 +582,8 @@ export default abstract class TransactionAverageExceededBaseRule<
         async (group) => ({
           sendingCount: group.length,
           sendingAmount:
-            this.getAvgMethod() === 'AMOUNT'
+            this.getAvgMethod() === 'AMOUNT' ||
+            this.getAvgMethod() === 'DAILY_AMOUNT'
               ? (
                   await getTransactionsTotalAmount(
                     group.map((t) => t.originAmountDetails),
@@ -585,7 +598,8 @@ export default abstract class TransactionAverageExceededBaseRule<
         async (group) => ({
           receivingCount: group.length,
           receivingAmount:
-            this.getAvgMethod() === 'AMOUNT'
+            this.getAvgMethod() === 'AMOUNT' ||
+            this.getAvgMethod() === 'DAILY_AMOUNT'
               ? (
                   await getTransactionsTotalAmount(
                     group.map((t) => t.destinationAmountDetails),

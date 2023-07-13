@@ -94,7 +94,7 @@ export default class TransactionAverageAmountExceededRule extends TransactionAve
     )
   }
 
-  protected getAvgMethod(): 'AMOUNT' | 'NUMBER' {
+  protected getAvgMethod(): 'AMOUNT' | 'NUMBER' | 'DAILY_AMOUNT' {
     return 'AMOUNT'
   }
 

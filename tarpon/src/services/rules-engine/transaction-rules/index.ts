@@ -31,7 +31,8 @@ import HighTrafficVolumeBetweenSameUsersParameters from './high-traffic-volume-b
 import ToomanyUsersForSameCardRule from './too-many-users-for-same-card'
 import SameUserUsingTooManyCardsRule from './same-user-using-too-many-cards'
 import TransactionsAverageNumberExceededRule from './transactions-average-number-exceeded'
-import TransactionsAverageAmountExceededRule from './transactions-average-amount-exceeded'
+import TransactionAverageAmountExceededRule from './transactions-average-amount-exceeded'
+import TransactionAverageDailyAmountExceededRule from './transactions-average-daily-amount-exceeded'
 import TransactionsRoundValuePercentageRule from './transactions-round-value-percentage'
 import TooManyTransactionsToHighRiskCountryRule from './too-many-transactions-to-high-risk-country'
 import HighUnsuccessfullStateRateRule from './high-unsuccessfull-state-rate'
@@ -87,7 +88,9 @@ export const _TRANSACTION_RULES = {
   'transactions-round-value-percentage': TransactionsRoundValuePercentageRule,
   'transactions-round-value-velocity': TransactionsRoundValueVelocityRule,
   'transactions-average-number-exceeded': TransactionsAverageNumberExceededRule,
-  'transactions-average-amount-exceeded': TransactionsAverageAmountExceededRule,
+  'transactions-average-amount-exceeded': TransactionAverageAmountExceededRule,
+  'transactions-average-daily-amount-exceeded':
+    TransactionAverageDailyAmountExceededRule,
   'too-many-transactions-to-high-risk-country':
     TooManyTransactionsToHighRiskCountryRule,
   'high-unsuccessfull-state-rate': HighUnsuccessfullStateRateRule,

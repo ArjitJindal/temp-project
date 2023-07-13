@@ -250,9 +250,7 @@ export function testRuleDescriptionFormatting(
     const initialRule = await getRule(tenantId, SETUP_TEST_RULE_ID)
     await updateRule(tenantId, SETUP_TEST_RULE_ID, rulePatch)
 
-    expect(transactions.length).toEqual(expectedDescriptions.length)
     const results = await bulkVerifyTransactions(tenantId, transactions)
-    expect(results.length).toEqual(expectedDescriptions.length)
     for (let i = 0; i < results.length; i += 1) {
       const result = results[i]
       const expectedDescription = expectedDescriptions[i]

@@ -42,7 +42,7 @@ import { SanctionsCounterPartyRuleParameters } from './sanctions-counterparty'
 import { TRANSACTION_RULES, TransactionRuleImplementationName } from './index'
 import { Rule } from '@/@types/openapi-internal/Rule'
 import { HighUnsuccessfullStateRateParameters } from '@/services/rules-engine/transaction-rules/high-unsuccessfull-state-rate'
-import { TransactionsAverageAmountExceededParameters } from '@/services/rules-engine/transaction-rules/transactions-average-amount-exceeded'
+import { TransactionsAverageAmountExceededParameters } from '@/services/rules-engine/transaction-rules/transactions-average-daily-amount-exceeded'
 import { TransactionsAverageNumberExceededParameters } from '@/services/rules-engine/transaction-rules/transactions-average-number-exceeded'
 import { SamePaymentDetailsParameters } from '@/services/rules-engine/transaction-rules/same-payment-details'
 import { BlacklistTransactionMatchedFieldRuleParameters } from '@/services/rules-engine/transaction-rules/blacklist-transaction-related-value'
@@ -826,6 +826,49 @@ const _RULES_LIBRARY: Array<
     }
   },
   () => {
+    const defaultParameters: TransactionsAverageAmountExceededParameters = {
+      period1: {
+        units: 1,
+        granularity: 'day',
+      },
+      period2: {
+        units: 2,
+        granularity: 'day',
+      },
+      transactionsNumberThreshold2: {
+        min: 5,
+      },
+      multiplierThreshold: {
+        currency: DEFAULT_CURRENCY_KEYWORD,
+        value: 200,
+      },
+      checkSender: 'sending',
+      checkReceiver: 'receiving',
+    }
+    return {
+      id: 'R-120',
+      type: 'TRANSACTION',
+      name: 'Average transaction amount exceed past period average',
+      description:
+        'The average amount of transactions of a user in the first period, is >= X times higher than avg. amount of transactions in the second periods',
+      descriptionTemplate: `{{ if-sender 'Sender' 'Receiver' }} made more than {{ to-fixed multiplier }} times average amount of transactions in last {{ format-time-window period1 }} than average amount of transactions in last {{ format-time-window period2 }}`,
+      defaultParameters,
+      defaultAction: 'FLAG',
+      ruleImplementationName: 'transactions-average-amount-exceeded',
+      labels: [],
+      defaultNature: 'FRAUD',
+      defaultCasePriority: 'P1',
+      defaultFalsePositiveCheckEnabled: true,
+      typology:
+        'Change in behavior driven by an increase in a value of transactions',
+      typologyGroup: 'Unusual Behaviour',
+      typologyDescription:
+        'Typologies that identify transactional activity characteristics that are unexpected or uncommon for a customer.',
+      source:
+        'Guidelines to MAS Notice PS-N01 On Prevention of Money Laundering and Countering the Financing of Terrorism',
+    }
+  },
+  () => {
     const defaultParameters: TransactionsAverageNumberExceededParameters = {
       period1: {
         units: 1,
@@ -893,7 +936,7 @@ const _RULES_LIBRARY: Array<
       descriptionTemplate: `{{ if-sender 'Sender' 'Receiver' }} made more than {{ to-fixed multiplier }} times average daily amount of transactions in last {{ format-time-window period1 }} than average daily amount of transactions in last {{ format-time-window period2 }}`,
       defaultParameters,
       defaultAction: 'FLAG',
-      ruleImplementationName: 'transactions-average-amount-exceeded',
+      ruleImplementationName: 'transactions-average-daily-amount-exceeded',
       labels: [],
       defaultNature: 'FRAUD',
       defaultCasePriority: 'P1',
