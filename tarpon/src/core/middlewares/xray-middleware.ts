@@ -22,7 +22,9 @@ export const xrayMiddleware =
     if (event.requestContext.authorizer) {
       const { principalId: tenantId, userId } = event.requestContext.authorizer
       segment?.addAnnotation('tenantId', tenantId)
-      segment?.addAnnotation('userId', userId)
+      if (userId) {
+        segment?.addAnnotation('userId', userId)
+      }
     }
     segment?.addAnnotation(
       'queryStringParameters',
