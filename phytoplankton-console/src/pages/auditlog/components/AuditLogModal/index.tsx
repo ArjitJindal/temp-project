@@ -1,6 +1,7 @@
 import { Modal, Typography } from 'antd';
 import _ from 'lodash';
 import { useState } from 'react';
+import s from './style.module.less';
 import COLORS from '@/components/ui/colors';
 import { AuditLog } from '@/apis';
 import { flattenObject, getFlattenedObjectHumanReadableKey } from '@/utils/json';
@@ -136,6 +137,7 @@ const AuditLogModal = (props: Props) => {
         View Changes
       </Typography.Text>
       <Modal
+        className={s.root}
         visible={isModalVisible}
         onCancel={() => setIsModalVisible(false)}
         width={'80%'}

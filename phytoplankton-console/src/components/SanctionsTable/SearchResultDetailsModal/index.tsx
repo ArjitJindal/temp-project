@@ -26,6 +26,7 @@ export default function SearchResultDetailsModal(props: Props) {
   const pdfRef = useRef() as React.MutableRefObject<HTMLInputElement>;
   return (
     <Modal
+      className={s.modal}
       width={1500}
       visible={Boolean(hit)}
       onCancel={onClose}

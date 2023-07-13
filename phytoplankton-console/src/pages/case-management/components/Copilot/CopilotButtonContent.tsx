@@ -76,6 +76,7 @@ export const CopilotButtonContent = ({
         </div>
       )}
       <Modal
+        className={s.modal}
         title="ⓘ Copilot Sources"
         visible={showSources}
         okText="Back"

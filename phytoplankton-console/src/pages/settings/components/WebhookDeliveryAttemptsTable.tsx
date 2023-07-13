@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { CheckCircleOutlined, CloseCircleOutlined } from '@ant-design/icons';
 import { Modal, Tag } from 'antd';
 import ProDescriptions from '@ant-design/pro-descriptions';
+import s from './WebhookDeliveryAttemptsTable.module.less';
 import { WebhookDeliveryAttempt } from '@/apis';
 import { useApi } from '@/api';
 import Colors from '@/components/ui/colors';
@@ -81,6 +82,7 @@ export const WebhookDeliveryAttemptsTable: React.FC<Props> = ({ webhookId }) => 
         pagination={false}
       />
       <Modal
+        className={s.modal}
         visible={Boolean(selectedWebhookDelivery)}
         onCancel={() => setSelectedWebhookDelivery(undefined)}
         footer={null}
