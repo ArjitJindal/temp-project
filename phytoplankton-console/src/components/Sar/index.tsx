@@ -52,7 +52,12 @@ export function SarButton({
 
   return (
     <>
-      <Button type="TETRIARY" onClick={() => setIsModalVisible(true)} isDisabled={isDisabled}>
+      <Button
+        type="TETRIARY"
+        onClick={() => setIsModalVisible(true)}
+        isDisabled={isDisabled}
+        testName="sar-button"
+      >
         Generate report
       </Button>
       <Modal
@@ -72,7 +77,7 @@ export function SarButton({
         <AsyncResourceRenderer<ReportTypesResponse> resource={queryResult.data}>
           {(result) => (
             <PropertyListLayout>
-              <Label label={'Select Jurisdiction'}>
+              <Label label={'Select Jurisdiction'} testId="sar-country-select">
                 <Select
                   value={country}
                   options={uniqBy(
@@ -90,7 +95,7 @@ export function SarButton({
                 />
               </Label>
               {country && (
-                <Label label={'Select report type'}>
+                <Label label={'Select report type'} testId="sar-report-type-select">
                   <Select
                     value={reportTypeId}
                     options={result.data

@@ -1,5 +1,6 @@
 import React, { useEffect } from 'react';
 import ReactDOM from 'react-dom';
+import _ from 'lodash';
 import cn from 'clsx';
 import s from './index.module.less';
 import CrossIcon from './cross.react.svg';
@@ -60,7 +61,9 @@ export default function Drawer(props: Props) {
       >
         <div className={s.header}>
           <div className={s.headerSection}>
-            <div className={s.title}>{title}</div>
+            <div className={s.title} data-cy={`drawer-title-${_.kebabCase(title)}`}>
+              {title}
+            </div>
             {description && <div className={s.description}>{description}</div>}
           </div>
           <div className={s.headerSection}>

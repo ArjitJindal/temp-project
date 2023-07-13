@@ -14,6 +14,7 @@ export interface Props extends InputProps<string> {
     value: boolean;
     showHint: boolean;
   };
+  testId?: string;
 }
 
 export default function Label(props: Props) {
@@ -28,6 +29,7 @@ export default function Label(props: Props) {
       value: false,
       showHint: false,
     },
+    testId,
   } = props;
   const { value: isRequired, showHint } = required;
   const labelEl = (
@@ -49,6 +51,7 @@ export default function Label(props: Props) {
     element,
     {
       className: cn(s.root, s[`position-${position}`], s[`level-${level}`]),
+      ['data-cy']: testId,
     },
     position === 'RIGHT' ? (
       <>

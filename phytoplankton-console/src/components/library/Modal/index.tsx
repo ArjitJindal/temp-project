@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import _ from 'lodash';
 import { Modal as AntModal, Typography } from 'antd';
 import cn from 'clsx';
 import s from './style.module.less';
@@ -87,7 +88,13 @@ export default function Modal(props: Props) {
             <Button type="TETRIARY" htmlType="button" onClick={onCancel} {...cancelProps}>
               {cancelText ?? 'Cancel'}
             </Button>
-            <Button type="PRIMARY" htmlType="button" onClick={onOk} {...okProps}>
+            <Button
+              type="PRIMARY"
+              htmlType="button"
+              onClick={onOk}
+              {...okProps}
+              testName={`modal-ok-${_.kebabCase(title)}`}
+            >
               {okText ?? 'OK'}
             </Button>
           </>
