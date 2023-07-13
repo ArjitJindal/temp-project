@@ -222,6 +222,7 @@ const MyRule = (props: { simulationMode?: boolean }) => {
         id: 'actions',
         title: 'Action',
         defaultSticky: 'RIGHT',
+        defaultWidth: 250,
         enableResizing: false,
         render: (entity) => {
           return props.simulationMode ? (
