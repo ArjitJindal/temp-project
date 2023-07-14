@@ -34,6 +34,7 @@ type RebuildResult = {
 }
 
 export class UserTransactionStatsTimeGroup extends Aggregator {
+  public static aggregatorName = 'UserTransactionStatsTimeGroup'
   public async aggregate(transaction: Transaction): Promise<void> {
     if (transaction.originUserId && transaction.originAmountDetails) {
       await this.aggregateUser(

@@ -3,6 +3,7 @@ import { Transaction } from '@/@types/openapi-public/Transaction'
 import { TransactionState } from '@/@types/openapi-internal/TransactionState'
 
 export class UserTransactionCurrencies extends Aggregator {
+  public static aggregatorName = 'UserTransactionCurrencies'
   public async aggregate(transaction: Transaction): Promise<void> {
     if (
       transaction.originUserId &&

@@ -3,6 +3,7 @@ import { Transaction } from '@/@types/openapi-public/Transaction'
 import { TransactionState } from '@/@types/openapi-internal/TransactionState'
 
 export class UserTransactionsCount extends Aggregator {
+  public static aggregatorName = 'UserTransactionsCount'
   public async aggregate(transaction: Transaction): Promise<void> {
     if (transaction.originUserId) {
       await this.aggregationRepository.addUserTransactionsCount(

@@ -872,7 +872,9 @@ export class RulesEngineService {
           }
         } catch (e) {
           logger.error(
-            `Aggregator ${Aggregator.name} failed: ${(e as Error)?.message}`
+            `Aggregator ${Aggregator.aggregatorName} failed: ${
+              (e as Error)?.message
+            }`
           )
           logger.error(e)
         }
