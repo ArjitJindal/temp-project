@@ -54,7 +54,9 @@ function LogOutButton(props: { isCollapsed: boolean }) {
       title={'Are you sure you want to log out?'}
       text={'You will be returned to the login screen.'}
       onConfirm={() => {
-        logout();
+        logout({
+          returnTo: window.location.origin,
+        });
       }}
     >
       {({ onClick }) => (
