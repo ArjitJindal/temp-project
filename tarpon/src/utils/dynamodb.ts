@@ -152,6 +152,7 @@ export function getDynamoDbRawClient(
     endpoint: isLocal
       ? process.env.DYNAMODB_URI || 'http://localhost:8000'
       : undefined,
+    maxAttempts: 6, // Default is 3
   })
 
   const context = getContext()
