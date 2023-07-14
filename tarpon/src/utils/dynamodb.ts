@@ -32,7 +32,7 @@ import {
 import { logger } from '@/core/logger'
 import { addNewSubsegment } from '@/core/xray'
 import { getContext, publishMetric } from '@/core/utils/context'
-import { envIs, envIsNot } from '@/utils/env'
+import { envIs } from '@/utils/env'
 
 function getAugmentedDynamoDBCommand(command: any): {
   type: 'READ' | 'WRITE' | null
@@ -171,17 +171,15 @@ export function getDynamoDbClient(
   options?: { retry?: boolean; metrics?: boolean }
 ): DynamoDBDocumentClient {
   const rawClient = getDynamoDbRawClient(credentials)
-  const client =
-    envIsNot('local') && envIsNot('test')
-      ? AWSXRay.captureAWSv3Client(
-          DynamoDBDocumentClient.from(rawClient, {
-            marshallOptions: { removeUndefinedValues: true },
-          })
-        )
-      : DynamoDBDocumentClient.from(rawClient, {
+  const client = !(envIs('local') || envIs('test'))
+    ? AWSXRay.captureAWSv3Client(
+        DynamoDBDocumentClient.from(rawClient, {
           marshallOptions: { removeUndefinedValues: true },
         })
-
+      )
+    : DynamoDBDocumentClient.from(rawClient, {
+        marshallOptions: { removeUndefinedValues: true },
+      })
   const { retry = !!process.env.ASSUME_ROLE_ARN, metrics = true } = {
     ...options,
   }
