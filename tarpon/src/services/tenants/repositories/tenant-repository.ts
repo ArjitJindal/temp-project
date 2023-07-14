@@ -68,6 +68,19 @@ export class TenantRepository {
     return newTenantSettings
   }
 
+  public async deleteTenantSettings(
+    settingNames: TenantSettingName[]
+  ): Promise<void> {
+    const updateItemInput: AWS.DynamoDB.DocumentClient.UpdateItemInput = {
+      TableName: StackConstants.TARPON_DYNAMODB_TABLE_NAME,
+      Key: DynamoDbKeys.TENANT_SETTINGS(this.tenantId),
+      ReturnValues: 'UPDATED_NEW',
+      UpdateExpression: `REMOVE ${settingNames.join(',')}`,
+    }
+
+    await this.dynamoDb.send(new UpdateCommand(updateItemInput))
+  }
+
   public async getTenantMetadata(
     type: MetadataType
   ): Promise<MetadataPayload | null> {

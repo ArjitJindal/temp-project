@@ -11,22 +11,12 @@ interface Props {
   id?: string;
   comments: Array<TransactionComment>;
   onCommentsUpdate: (newComments: TransactionComment[]) => void;
-  updateCollapseState?: (key: string, value: boolean) => void;
   commentType: 'CASE' | 'USER';
-  collapsableKey?: string;
   title?: string;
 }
 
 export default function CommentsCard(props: Props) {
-  const {
-    comments,
-    id,
-    onCommentsUpdate,
-    updateCollapseState,
-    commentType,
-    collapsableKey,
-    title,
-  } = props;
+  const { comments, id, onCommentsUpdate, commentType, title } = props;
   const user = useAuth0User();
   const currentUserId = user.userId ?? undefined;
   const [deletingCommentIds, setDeletingCommentIds] = useState<string[]>([]);
@@ -54,12 +44,7 @@ export default function CommentsCard(props: Props) {
 
   return (
     <>
-      <Card.Root
-        header={
-          title != null ? { title: `${title} (${comments.length})`, collapsableKey } : undefined
-        }
-        updateCollapseState={updateCollapseState}
-      >
+      <Card.Root header={title != null ? { title: `${title} (${comments.length})` } : undefined}>
         <Card.Section>
           {comments.length === 0 && <div>No comments yet</div>}
           {comments.map((comment) => (

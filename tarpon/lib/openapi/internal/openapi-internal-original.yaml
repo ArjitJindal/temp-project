@@ -4847,13 +4847,6 @@ components:
           properties:
             currency:
               $ref: ../public/openapi-public-original.yaml#/components/schemas/CurrencyCode
-        defaultViews:
-          type: object
-          properties:
-            expandedCards:
-              type: array
-              items:
-                type: string
         complyAdvantageSearchProfileId:
           type: string
         isAiEnabled:

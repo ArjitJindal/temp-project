@@ -106,7 +106,7 @@ export default function Comments(props: Props) {
   return (
     <AsyncResourceRenderer<Alert> resource={alertsRes}>
       {(alert) => (
-        <Card.Root collapsable={false}>
+        <Card.Root>
           <Card.Section>
             {alert && alert?.comments?.length ? (
               <div className={s.list}>

@@ -14,7 +14,6 @@ import SidebarPanel, { MenuSection } from '@/components/ui/SidebarPanel';
 import Button from '@/components/library/Button';
 import { useFeatureEnabled } from '@/components/AppWrapper/Providers/SettingsProvider';
 import { usePageViewTracker } from '@/utils/tracker';
-import { DefaultViewsSettings } from '@/pages/settings/components/DefaultViewsSettings';
 import { getBranding, isWhiteLabeled } from '@/utils/branding';
 
 const branding = getBranding();
@@ -29,10 +28,6 @@ export default function SettingsPage() {
         {
           name: 'Default Values',
           content: <DefaultValuesSettings />,
-        },
-        {
-          name: 'Default Views',
-          content: <DefaultViewsSettings />,
         },
         {
           name: 'Narrative templates',

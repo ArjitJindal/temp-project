@@ -26,9 +26,7 @@ export const FIXED_API_PARAMS = {
 
 interface Props {
   userId: string;
-  updateCollapseState?: (key: string, value: boolean) => void;
   title?: string;
-  collapsableKey?: string;
 }
 
 export default function InsightsCard(props: Props) {

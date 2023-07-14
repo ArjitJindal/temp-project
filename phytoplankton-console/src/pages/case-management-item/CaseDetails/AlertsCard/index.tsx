@@ -6,9 +6,7 @@ import { DEFAULT_PARAMS_STATE } from '@/components/library/Table/consts';
 
 interface Props {
   caseItem: Case;
-  updateCollapseState?: (key: string, value: boolean) => void;
   title: string;
-  collapsableKey?: string;
 }
 
 export default function AlertsCard(props: Props) {

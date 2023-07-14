@@ -4,7 +4,6 @@ import TransactionEventsTable from '@/pages/transactions-item/TransactionEventsT
 
 interface Props {
   events: Array<TransactionEvent>;
-  updateCollapseState?: (key: string, value: boolean) => void;
 }
 
 export default function TransactionEventsCard(props: Props) {

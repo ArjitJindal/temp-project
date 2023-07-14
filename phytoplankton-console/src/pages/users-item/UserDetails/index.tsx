@@ -17,7 +17,6 @@ import AIInsightsCard from '@/pages/case-management-item/CaseDetails/AIInsightsC
 interface Props {
   user?: InternalConsumerUser | InternalBusinessUser | MissingUser;
   isEmbedded?: boolean;
-  updateCollapseState?: (key: string, value: boolean) => void;
   onUserUpdate?: (userItem: InternalBusinessUser | InternalConsumerUser) => void;
   onReload: () => void;
   showCommentEditor?: boolean;
@@ -58,25 +57,16 @@ function UserDetails(props: Props) {
           {user?.type === 'BUSINESS' && (
             <BusinessUserDetails
               user={user}
-              updateCollapseState={props.updateCollapseState}
               uiSettings={uiSettings}
               hideExpectedTransactionLimits={hideExpectedTransactionLimits}
             />
           )}
-          {user?.type === 'CONSUMER' && (
-            <ConsumerUserDetails
-              user={user}
-              updateCollapseState={props.updateCollapseState}
-              uiSettings={uiSettings}
-            />
-          )}
+          {user?.type === 'CONSUMER' && <ConsumerUserDetails user={user} uiSettings={uiSettings} />}
           <AsyncResourceRenderer resource={deviceDataRes.data}>
             {(deviceData) =>
               deviceData ? (
                 <DeviceDataCard
-                  updateCollapseState={props.updateCollapseState}
                   title={uiSettings.cards.DEVICE_DATA.title}
-                  collapsableKey={uiSettings.cards.DEVICE_DATA.key}
                   deviceData={deviceData}
                 />
               ) : null
@@ -85,12 +75,7 @@ function UserDetails(props: Props) {
         </>
       </Authorized>
       {isMLDemoEnabled && user?.type === 'BUSINESS' && !hideAIInsights && (
-        <AIInsightsCard
-          user={user}
-          updateCollapseState={props.updateCollapseState}
-          title={UI_SETTINGS.cards.AI_INSIGHTS.title}
-          collapsableKey={UI_SETTINGS.cards.AI_INSIGHTS.key}
-        />
+        <AIInsightsCard user={user} title={UI_SETTINGS.cards.AI_INSIGHTS.title} />
       )}
       {showCommentEditor && (
         <CommentsCard
@@ -99,10 +84,8 @@ function UserDetails(props: Props) {
           onCommentsUpdate={(newComments) => {
             onUserUpdate && onUserUpdate({ ...user, comments: newComments });
           }}
-          updateCollapseState={props.updateCollapseState}
           commentType={'USER'}
           title={UI_SETTINGS.cards.COMMENTS.title}
-          collapsableKey={UI_SETTINGS.cards.COMMENTS.key}
         />
       )}
     </div>

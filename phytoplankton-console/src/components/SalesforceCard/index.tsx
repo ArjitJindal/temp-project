@@ -12,8 +12,6 @@ import { SALESFORCE_ACCOUNT } from '@/utils/queries/keys';
 import Alert from '@/components/library/Alert';
 interface Props {
   userId: string;
-  collapsableKey?: string;
-  updateCollapseState?: (key: string, value: boolean) => void;
 }
 
 const NewTab = ({ href }: { href?: string }) => (
@@ -25,7 +23,7 @@ const NewTab = ({ href }: { href?: string }) => (
 
 export type Email = { id: string; body: string; userId: string; createdAt: Date };
 export default function SalesForceCard(props: Props) {
-  const { userId, collapsableKey, updateCollapseState } = props;
+  const { userId } = props;
   const api = useApi();
 
   const { data: salesforceResource } = useQuery<SalesforceAccountResponse>(
@@ -42,10 +40,8 @@ export default function SalesForceCard(props: Props) {
             <Card.Root
               header={{
                 title: `Salesforce Summary`,
-                collapsableKey,
                 link: <NewTab href={salesforceResponse.account?.link} />,
               }}
-              updateCollapseState={updateCollapseState}
             >
               <Card.Section>
                 {salesforceResponse.account.summary.good && (
@@ -64,10 +60,8 @@ export default function SalesForceCard(props: Props) {
             <Card.Root
               header={{
                 title: `Salesforce Emails (${salesforceResponse?.emails.length})`,
-                collapsableKey,
                 link: <NewTab href={salesforceResponse.account?.link} />,
               }}
-              updateCollapseState={updateCollapseState}
               disabled={salesforceResponse?.emails.length === 0}
             >
               <Card.Section>
@@ -90,10 +84,8 @@ export default function SalesForceCard(props: Props) {
             <Card.Root
               header={{
                 title: `Salesforce Comments (${salesforceResponse?.comments.length})`,
-                collapsableKey,
                 link: <NewTab href={salesforceResponse.account?.link} />,
               }}
-              updateCollapseState={updateCollapseState}
               disabled={salesforceResponse?.comments.length === 0}
             >
               <Card.Section>
@@ -113,10 +105,8 @@ export default function SalesForceCard(props: Props) {
             <Card.Root
               header={{
                 title: `Salesforce Notes (${salesforceResponse?.notes.length})`,
-                collapsableKey,
                 link: <NewTab href={salesforceResponse.account?.link} />,
               }}
-              updateCollapseState={updateCollapseState}
               disabled={salesforceResponse?.notes.length === 0}
             >
               <Card.Section>

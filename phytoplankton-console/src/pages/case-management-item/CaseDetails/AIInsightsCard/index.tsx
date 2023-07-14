@@ -23,13 +23,11 @@ import { message } from '@/components/library/Message';
 
 interface Props {
   user: InternalBusinessUser;
-  updateCollapseState?: (key: string, value: boolean) => void;
   title?: string;
-  collapsableKey?: string;
 }
 
 export default function AIInsightsCard(props: Props) {
-  const { updateCollapseState, title, collapsableKey, user } = props;
+  const { title, user } = props;
   const api = useApi();
 
   const [refresh, setRefresh] = useState<boolean>(false);
@@ -47,10 +45,7 @@ export default function AIInsightsCard(props: Props) {
   }, [refresh]);
 
   return (
-    <Card.Root
-      header={title != null ? { title, collapsableKey } : undefined}
-      updateCollapseState={updateCollapseState}
-    >
+    <Card.Root header={title != null ? { title } : undefined}>
       <AsyncResourceRenderer resource={queryResult.data}>
         {(summariesResponse) =>
           summariesResponse.data && (

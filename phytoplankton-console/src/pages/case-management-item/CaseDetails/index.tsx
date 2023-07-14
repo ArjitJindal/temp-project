@@ -27,7 +27,6 @@ import ExpectedTransactionLimits from '@/pages/users-item/UserDetails/BusinessUs
 
 interface Props {
   caseItem: Case;
-  updateCollapseState?: (key: string, value: boolean) => void;
   onReload: () => void;
   headerStickyElRef: HTMLDivElement | null;
 }

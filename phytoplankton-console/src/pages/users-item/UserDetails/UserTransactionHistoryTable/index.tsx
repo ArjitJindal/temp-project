@@ -257,19 +257,16 @@ export function Content(props: { userId: string }) {
 
 interface Props {
   userId: string | undefined;
-  updateCollapseState?: (key: string, value: boolean) => void;
   title?: string;
-  collapsableKey?: string;
 }
 
 export default function UserTransactionHistoryTable(props: Props) {
-  const { userId, updateCollapseState, title, collapsableKey } = props;
+  const { userId, title } = props;
   return (
     <Card.Root
       className={style.root}
       disabled={userId == null}
-      header={title != null ? { title, collapsableKey } : undefined}
-      updateCollapseState={updateCollapseState}
+      header={title != null ? { title } : undefined}
     >
       {userId && (
         <Card.Section>

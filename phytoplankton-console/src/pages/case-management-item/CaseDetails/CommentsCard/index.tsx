@@ -23,8 +23,6 @@ export interface CommentGroup {
 interface Props {
   id?: string;
   comments: CommentGroup[];
-  updateCollapseState?: (key: string, value: boolean) => void;
-  collapsableKey?: string;
   title: string;
 }
 

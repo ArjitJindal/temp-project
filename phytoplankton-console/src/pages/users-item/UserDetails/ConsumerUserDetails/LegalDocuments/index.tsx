@@ -9,24 +9,18 @@ import { COUNTRY, DATE_TIME, TAGS } from '@/components/library/Table/standardDat
 
 interface Props {
   person: InternalConsumerUser;
-  updateCollapseState?: (key: string, value: boolean) => void;
   title: string;
-  collapsableKey: string;
 }
 
 type TableItem = LegalDocument & { i: number };
 
 export function LegalDocumentsTable(prop: Props) {
-  const { person, updateCollapseState, title, collapsableKey } = prop;
+  const { person, title } = prop;
 
   const helper = new ColumnHelper<TableItem>();
 
   return (
-    <Card.Root
-      header={{ title, collapsableKey }}
-      updateCollapseState={updateCollapseState}
-      collapsable={updateCollapseState != null}
-    >
+    <Card.Root header={{ title }}>
       <Card.Section>
         <Table<TableItem>
           rowKey="i"

@@ -9,19 +9,13 @@ import CommunityLineIcon from '@/components/ui/icons/Remix/buildings/community-l
 
 interface Props {
   user: InternalConsumerUser;
-  updateCollapseState?: (key: string, value: boolean) => void;
   title: string;
-  collapsableKey: string;
 }
 
 export default function UserDetails(props: Props) {
-  const { user, updateCollapseState, title, collapsableKey } = props;
+  const { user, title } = props;
   return (
-    <Card.Root
-      header={{ title, collapsableKey }}
-      updateCollapseState={updateCollapseState}
-      collapsable={updateCollapseState != null}
-    >
+    <Card.Root header={{ title }}>
       <Card.Row className={s.container}>
         <Card.Column className={s.all}>
           <Card.Section>

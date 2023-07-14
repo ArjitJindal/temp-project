@@ -10,9 +10,7 @@ import COUNTRIES from '@/utils/countries';
 import LANGUAGES, { LanguageCode } from '@/utils/languages';
 
 type Props = {
-  updateCollapseState?: (key: string, value: boolean) => void;
   title: string;
-  collapsableKey: string;
   deviceData: Partial<DeviceMetric>;
 };
 
@@ -175,10 +173,10 @@ const DeviceDataInternalCard = ({ deviceData }: { deviceData: Partial<DeviceMetr
 };
 
 const DeviceDataCard = (props: Props) => {
-  const { updateCollapseState, title, collapsableKey, deviceData } = props;
+  const { title, deviceData } = props;
 
   return (
-    <Card.Root header={{ title, collapsableKey }} updateCollapseState={updateCollapseState}>
+    <Card.Root header={{ title }}>
       <DeviceDataInternalCard deviceData={deviceData != null ? deviceData : {}} />;
     </Card.Root>
   );

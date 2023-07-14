@@ -15,7 +15,6 @@ import { useBackUrl } from '@/utils/backUrl';
 import AsyncResourceRenderer from '@/components/common/AsyncResourceRenderer';
 import { ALERT_LIST, CASES_ITEM } from '@/utils/queries/keys';
 import CaseDetails from '@/pages/case-management-item/CaseDetails';
-import { ExpandableProvider } from '@/components/AppWrapper/Providers/ExpandableProvider';
 import { useApiTime, usePageViewTracker } from '@/utils/tracker';
 import { useCloseSidebarByDefault } from '@/components/AppWrapper/Providers/SidebarProvider';
 import { isSuccess } from '@/utils/asyncResource';
@@ -76,7 +75,7 @@ function CaseManagementItemPage() {
     <AsyncResourceRenderer resource={caseData}>
       {(caseItem) => (
         <>
-          <Card.Root collapsable={false}>
+          <Card.Root>
             <Header
               headerStickyElRef={setHeaderStickyElRef}
               caseItem={caseItem}
@@ -105,9 +104,7 @@ export default function CaseManagementItemPageWrapper() {
         url: backUrl ?? makeUrl('/case-management'),
       }}
     >
-      <ExpandableProvider>
-        <CaseManagementItemPage />
-      </ExpandableProvider>
+      <CaseManagementItemPage />
     </PageWrapper>
   );
 }
