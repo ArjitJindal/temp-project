@@ -4,7 +4,7 @@
   display: inline-flex;
   align-items: center;
   line-height: 1.3em;
-  white-space: nowrap;
+  overflow-wrap: anywhere;
   color: @fr-colors-brandBlue;
 }
 
@@ -24,7 +24,5 @@
 }
 
 .id {
-  text-overflow: ellipsis;
-  max-width: 100px;
-  overflow: hidden;
+  word-break: break-word;
 }

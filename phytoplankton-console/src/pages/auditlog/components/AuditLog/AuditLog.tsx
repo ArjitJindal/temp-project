@@ -124,7 +124,11 @@ export default function AuditLogTable() {
       title: 'Action Taken By',
       type: {
         render: (userId) => {
-          return <Assignee accountId={userId} />;
+          return (
+            <div style={{ overflowWrap: 'anywhere' }}>
+              <Assignee accountId={userId} />
+            </div>
+          );
         },
       },
     }),
