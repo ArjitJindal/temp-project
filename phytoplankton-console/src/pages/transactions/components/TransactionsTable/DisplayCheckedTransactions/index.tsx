@@ -100,7 +100,7 @@ const DisplayCheckedTransactions = (props: Props) => {
       title={`Transactions checked (${count})`}
       isOpen={isModalVisible}
       onCancel={() => setIsModalVisible(false)}
-      width="L"
+      width="XL"
       hideFooter
     >
       <div>

@@ -7,7 +7,7 @@ import CloseCircleLineIcon from '@/components/ui/icons/Remix/system/close-fill.r
 import Button, { Props as ButtonProps } from '@/components/library/Button';
 import Tabs, { TabItem } from '@/components/library/Tabs';
 
-export const MODAL_WIDTHS = ['S', 'M', 'L'] as const;
+export const MODAL_WIDTHS = ['S', 'M', 'L', 'XL'] as const;
 export type ModalWidth = typeof MODAL_WIDTHS[number];
 
 interface Props {
@@ -26,10 +26,11 @@ interface Props {
   children?: React.ReactNode;
 }
 
-const WIDTH: { [K in ModalWidth]: number } = {
+const WIDTH: { [K in ModalWidth]: number | string } = {
   S: 500,
   M: 650,
   L: 1000,
+  XL: '100vw',
 };
 
 export default function Modal(props: Props) {
