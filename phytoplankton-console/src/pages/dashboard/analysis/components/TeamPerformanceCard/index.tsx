@@ -18,17 +18,25 @@ import { humanizeConstant } from '@/utils/humanize';
 
 interface Params extends CommonParams {
   scope: 'CASES' | 'ALERTS';
-  dateRange: RangeValue<Dayjs>;
+  dateRange?: RangeValue<Dayjs>;
   caseStatus?: (CaseStatus | AlertStatus)[];
 }
 
 export default function TeamPerformanceCard() {
+  const startTime = dayjs().subtract(1, 'day').startOf('day');
+  const endTime = dayjs().endOf('day');
+
   const [params, setParams] = useState<AllParams<Params>>({
     ...DEFAULT_PARAMS_STATE,
     scope: 'CASES',
-    dateRange: [dayjs().subtract(1, 'year'), dayjs()],
+    dateRange: [startTime, endTime],
   });
 
+  const defaultDateRange: RangeValue<Dayjs> = [startTime, endTime];
+  const [isDatePickerOpen, setIsDatePickerOpen] = useState<boolean>(false);
+  const getDateRangeToShow = (dateRange: RangeValue<Dayjs> | undefined) => {
+    return isDatePickerOpen ? dateRange ?? defaultDateRange : dateRange;
+  };
   const api = useApi();
 
   const queryResult = useQuery(
@@ -54,14 +62,18 @@ export default function TeamPerformanceCard() {
       title={header('Team overview')}
       bordered={false}
       headStyle={{ borderBottom: 'none' }}
+      className={s.root}
       extra={
         <DatePicker.RangePicker
-          value={params.dateRange}
+          value={getDateRangeToShow(params.dateRange)}
           onChange={(value) => {
             setParams((prevState) => ({
               ...prevState,
               dateRange: value,
             }));
+          }}
+          onOpenChange={(state) => {
+            setIsDatePickerOpen(state);
           }}
         />
       }

@@ -1,6 +1,7 @@
 import { useRef, useState, useContext, useMemo } from 'react';
 import { Typography } from 'antd';
 import _ from 'lodash';
+import { RangeValue } from 'rc-picker/es/interface';
 import AuditLogModal from '../AuditLogModal';
 import ActionsFilterButton from '../ActionsFilterButton';
 import { TableItem, TableSearchParams } from './types';
@@ -21,16 +22,23 @@ import EntityFilterButton from '@/pages/auditlog/components/EntityFilterButton';
 import ActionTakenByFilterButton from '@/pages/auditlog/components/ActionTakeByFilterButton';
 import { PageWrapperContentContainer, PageWrapperContext } from '@/components/PageWrapper';
 import { Assignee } from '@/components/Assignee';
+import { dayjs, Dayjs } from '@/utils/dayjs';
 
 export default function AuditLogTable() {
   const api = useApi();
   const measure = useApiTime();
   const [params, setParams] = useState<AllParams<TableSearchParams>>(DEFAULT_PARAMS_STATE);
+  const [isDatePickerOpen, setIsDatePickerOpen] = useState<boolean>(false);
   const context = useContext(PageWrapperContext);
   const finalParams = useMemo(
     () => ({ ...params, includeRootUserRecords: context?.superAdminMode }),
     [context?.superAdminMode, params],
   );
+
+  const startTime = dayjs().subtract(1, 'day').startOf('day');
+  const endTime = dayjs().endOf('day');
+
+  const defaultDateRange: RangeValue<Dayjs> = [startTime, endTime];
   const queryResults = usePaginatedQuery<AuditLog>(
     AUDIT_LOGS_LIST(finalParams),
     async (paginationParams) => {
@@ -71,6 +79,10 @@ export default function AuditLogTable() {
       };
     },
   );
+
+  const getDateRangeToShow = (createdTimeStamp: RangeValue<Dayjs> | undefined) => {
+    return isDatePickerOpen ? createdTimeStamp ?? defaultDateRange : createdTimeStamp;
+  };
 
   const tableQueryResult = useTableData(queryResults);
 
@@ -204,10 +216,13 @@ export default function AuditLogTable() {
         extraTools={[
           () => (
             <DatePicker.RangePicker
-              value={params.createdTimestamp}
+              value={getDateRangeToShow(params.createdTimestamp)}
               onChange={(createdTimestamp) =>
                 setParams((prevState) => ({ ...prevState, createdTimestamp }))
               }
+              onOpenChange={(state) => {
+                setIsDatePickerOpen(state);
+              }}
             />
           ),
         ]}
