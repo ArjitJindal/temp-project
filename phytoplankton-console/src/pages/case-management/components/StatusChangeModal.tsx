@@ -124,6 +124,16 @@ export default function StatusChangeModal(props: Props) {
     formRef.current?.validate();
   }, [initialValues]);
 
+  useEffect(() => {
+    setFormState((prevState) => ({
+      ...prevState,
+      values: {
+        ...prevState.values,
+        files: fileList,
+      },
+    }));
+  }, [fileList]);
+
   const possibleReasons: CaseClosingReasons[] = [
     ...(newStatus === 'ESCALATED' ? ESCALATION_REASONS : CLOSING_REASONS),
     ...COMMON_REASONS,
@@ -284,7 +294,7 @@ export default function StatusChangeModal(props: Props) {
                 {...inputProps}
                 ref={uploadRef}
                 onChange={(value) => {
-                  setFileList(handleFiles([...(value ?? []), ...fileList]));
+                  setFileList(handleFiles([...(value ?? [])]));
                 }}
                 value={fileList}
                 uploadingCount={uploadingCount}
