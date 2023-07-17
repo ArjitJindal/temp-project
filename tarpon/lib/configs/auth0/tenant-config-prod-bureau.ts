@@ -24,4 +24,5 @@ export const Auth0ProdBureauTenantConfig: Auth0TenantConfig = {
     credentialsAwsSecretName: 'bureau/auth0EmailProviderCreds',
     fromAddress: 'tm@bureau.id',
   },
+  apiUsageGoogleSheetId: '1qjKijmohJjXs6HqS4aNO7AKtyO6T6WsdmWQFLHmRkYA',
 }

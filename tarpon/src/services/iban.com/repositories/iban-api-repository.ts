@@ -41,20 +41,4 @@ export class IBANApiRepository {
       .toArray()
     return result[0] ?? null
   }
-
-  public async getNumberOfResolutionsBetweenTimestamps(
-    afterTimestamp: number,
-    beforeTimestamp: number
-  ) {
-    const db = this.mongoDb.db()
-    const collection = db.collection<IBANApiHistory>(
-      IBAN_COM_COLLECTION(this.tenantId)
-    )
-    return collection.countDocuments({
-      createdAt: {
-        $gte: afterTimestamp,
-        $lt: beforeTimestamp,
-      },
-    })
-  }
 }

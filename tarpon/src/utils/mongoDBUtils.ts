@@ -10,6 +10,7 @@ import {
   WithId,
 } from 'mongodb'
 import _ from 'lodash'
+import { backOff } from 'exponential-backoff'
 import { escapeStringRegexp } from './regex'
 import { getSecret } from './secrets-manager'
 import { MONGO_TEST_DB_NAME } from '@/test-utils/mongo-test-utils'
@@ -26,7 +27,7 @@ import { Case } from '@/@types/openapi-internal/Case'
 import { AuditLog } from '@/@types/openapi-internal/AuditLog'
 import { WebhookConfiguration } from '@/@types/openapi-internal/WebhookConfiguration'
 import { logger } from '@/core/logger'
-import { exponentialRetry } from '@/utils/retry'
+
 import { WebhookDeliveryAttempt } from '@/@types/openapi-internal/WebhookDeliveryAttempt'
 
 interface DBCredentials {
@@ -34,9 +35,6 @@ interface DBCredentials {
   password: string
   host: string
 }
-
-const ATLAS_CREDENTIALS_SECRET_ARN = process.env
-  .ATLAS_CREDENTIALS_SECRET_ARN as string
 
 let cacheClient: MongoClient
 
@@ -56,7 +54,7 @@ export async function getMongoDbClient(
   }
 
   const credentials = await getSecret<DBCredentials>(
-    ATLAS_CREDENTIALS_SECRET_ARN as string
+    process.env.ATLAS_CREDENTIALS_SECRET_ARN as string
   )
   const DB_USERNAME = credentials['username']
   const DB_PASSWORD = encodeURIComponent(credentials['password'])
@@ -809,6 +807,18 @@ export const createMongoDBCollections = async (
   } catch (e) {
     // ignore already exists
   }
+
+  try {
+    const metricsCollection = await db.createCollection(
+      METRICS_COLLECTION(tenantId)
+    )
+    const metricsCollectionIndexes: Document[] = [{ name: 1, date: 1 }]
+    await syncIndexes(metricsCollection, metricsCollectionIndexes, {
+      unique: true,
+    })
+  } catch (e) {
+    // ignore already exists
+  }
 }
 
 export async function allCollections(tenantId: string, db: Db) {
@@ -840,9 +850,7 @@ export async function syncIndexes<T>(
       // If index is not desired, delete it
       if (!indexes.find((desired) => _.isEqual(desired, current.key))) {
         logger.info(`Dropping ${current.name}...`)
-        await exponentialRetry(
-          async () => await collection.dropIndex(current.name)
-        )
+        await backOff(async () => await collection.dropIndex(current.name))
       }
     })
   )
@@ -860,9 +868,7 @@ export async function syncIndexes<T>(
     logger.info(`Creating indexes...`)
     await Promise.all(
       indexesToCreate.map((index) =>
-        exponentialRetry(
-          async () => await collection.createIndex(index, options)
-        )
+        backOff(async () => await collection.createIndex(index, options))
       )
     )
   }

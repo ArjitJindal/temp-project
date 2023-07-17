@@ -337,9 +337,9 @@ export const LAMBDAS: {
     expectedMaxSeconds: ASYNC_JOB_LAMBDA_EXPECTED_MAX_SECONDS,
     timeoutSeconds: DEFAULT_ASYNC_JOB_LAMBDA_TIMEOUT_SECONDS,
   },
-  [StackConstants.CRON_JOB_MIDNIGHT_FUNCTION_NAME]: {
-    codePath: 'cron-job-midnight',
-    handlerName: 'cronJobMidnightHandler',
+  [StackConstants.CRON_JOB_DAILY]: {
+    codePath: 'cron-job-daily',
+    handlerName: 'cronJobDailyHandler',
     expectedMaxSeconds: ASYNC_JOB_LAMBDA_EXPECTED_MAX_SECONDS,
     timeoutSeconds: DEFAULT_ASYNC_JOB_LAMBDA_TIMEOUT_SECONDS,
   },

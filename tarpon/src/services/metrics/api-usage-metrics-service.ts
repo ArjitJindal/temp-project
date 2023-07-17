@@ -1,14 +1,35 @@
+/**
+ * API usage metrics service - Gathers API usages of a tenant and publish to CloudWatch, MongoDB and Google Spreadsheet
+ * Spreadsheeets: https://drive.google.com/drive/folders/1yQQJL1gEO5UlmsQkY-KXSgPil2sn7iQU
+ *
+ * Debugging:
+ * ENV=prod:asia-2 ts-node scripts/billing/get-tenant-api-usages.ts --tenantId U7O12AVVL9 --month 2023-07
+ * ENV=dev ts-node scripts/billing/publish-tenant-api-usages.ts --tenantId flagright --tenantName flagright --month 2023-05
+ */
+
 import { DynamoDBDocumentClient } from '@aws-sdk/lib-dynamodb'
 import { MongoClient } from 'mongodb'
 import { Dimension } from '@aws-sdk/client-cloudwatch'
 import _ from 'lodash'
+import {
+  DailyMetricStats,
+  DailyStats,
+  MonthlyMetricStats,
+  getDailyUsage,
+} from './utils'
 import { SheetsApiUsageMetricsService } from './sheets-api-usage-metrics-service'
 import { logger } from '@/core/logger'
-import { METRICS_COLLECTION } from '@/utils/mongoDBUtils'
+import {
+  IBAN_COM_COLLECTION,
+  METRICS_COLLECTION,
+  SANCTIONS_SEARCHES_COLLECTION,
+  TRANSACTIONS_COLLECTION,
+  TRANSACTION_EVENTS_COLLECTION,
+  USERS_COLLECTION,
+} from '@/utils/mongoDBUtils'
 import { RuleInstanceRepository } from '@/services/rules-engine/repositories/rule-instance-repository'
 import {
   publishMetrics,
-  Metric,
   TRANSACTIONS_COUNT_METRIC,
   TRANSACTION_EVENTS_COUNT_METRIC,
   USERS_COUNT_METRIC,
@@ -17,118 +38,227 @@ import {
   SANCTIONS_SEARCHES_COUNT_METRIC,
   TENANT_SEATS_COUNT_METRIC,
   IBAN_RESOLUTION_COUNT_METRIC,
+  Metric,
 } from '@/core/cloudwatch/metrics'
-import { MongoDbTransactionRepository } from '@/services/rules-engine/repositories/mongodb-transaction-repository'
-import { UserRepository } from '@/services/users/repositories/user-repository'
-import { TransactionEventRepository } from '@/services/rules-engine/repositories/transaction-event-repository'
 import { AccountsService, TenantBasic } from '@/services/accounts'
-import { SanctionsSearchRepository } from '@/services/sanctions/repositories/sanctions-search-repository'
-import { IBANApiRepository } from '@/services/iban.com/repositories/iban-api-repository'
 import dayjs from '@/utils/dayjs'
 import { traceable } from '@/core/xray'
+
+type TimeRange = { startTimestamp: number; endTimestamp: number }
 
 export type ApiUsageMetrics = {
   name: string
   value: string | number | undefined
-  startTimestamp: number
-  endTimestamp: number
+  date: string
   collectedTimestamp: number
 }
 
 @traceable
 export class ApiUsageMetricsService {
-  tenantId: string
-  tenant: TenantBasic
   connections: {
     mongoDb: MongoClient
     dynamoDb: DynamoDBDocumentClient
   }
-  startTimestamp: number
-  endTimestamp: number
 
-  constructor(
-    tenant: TenantBasic,
-    connections: {
-      mongoDb: MongoClient
-      dynamoDb: DynamoDBDocumentClient
-    },
-    timestamp: {
-      startTimestamp: number
-      endTimestamp: number
-    }
-  ) {
-    this.tenantId = tenant.id
-    this.tenant = tenant
+  constructor(connections: {
+    mongoDb: MongoClient
+    dynamoDb: DynamoDBDocumentClient
+  }) {
     this.connections = connections
-    this.startTimestamp = dayjs(timestamp.startTimestamp)
-      .startOf('day')
-      .valueOf()
-    this.endTimestamp = dayjs(timestamp.endTimestamp).endOf('day').valueOf()
-    logger.info(
-      `ApiUsageMetricsService: ${this.tenantId} ${this.startTimestamp} ${this.endTimestamp}`
-    )
   }
 
-  private getMonthStartTimestamp(): number {
-    return dayjs(this.startTimestamp).startOf('month').valueOf()
-  }
-
-  private async getTransactionsCount(monthly = false): Promise<number> {
-    const mongoDbTransactionRepository = new MongoDbTransactionRepository(
-      this.tenantId,
-      this.connections.mongoDb
+  public async getDailyMetricValues(
+    tenantInfo: TenantBasic,
+    timeRange: TimeRange
+  ): Promise<DailyMetricStats[]> {
+    const transactionsCounts = await getDailyUsage(
+      TRANSACTIONS_COLLECTION(tenantInfo.id),
+      'createdAt',
+      timeRange
     )
-
-    const transactionsCount =
-      await mongoDbTransactionRepository.getTransactionsCountByQuery({
-        createdAt: {
-          $gte: !monthly ? this.startTimestamp : this.getMonthStartTimestamp(),
-          $lte: this.endTimestamp,
+    const transactionEventsCounts = await this.getDailyTransactionsEventsCounts(
+      tenantInfo,
+      timeRange,
+      transactionsCounts
+    )
+    const usersCounts = await getDailyUsage(
+      USERS_COLLECTION(tenantInfo.id),
+      'createdAt',
+      timeRange
+    )
+    const sanctionsChecksCounts = await getDailyUsage(
+      SANCTIONS_SEARCHES_COLLECTION(tenantInfo.id),
+      'createdAt',
+      timeRange
+    )
+    const ibanResolutinosCounts = await getDailyUsage(
+      IBAN_COM_COLLECTION(tenantInfo.id),
+      'createdAt',
+      timeRange
+    )
+    const result: any = _.mergeWith(
+      _.mapValues(transactionsCounts, (v) => [
+        {
+          metric: TRANSACTIONS_COUNT_METRIC,
+          value: v,
         },
-      })
-
-    return transactionsCount
-  }
-
-  private async getTransactionsEventsCount(monthly = false): Promise<number> {
-    const transactionEventsRepository = new TransactionEventRepository(
-      this.tenantId,
-      { mongoDb: this.connections.mongoDb }
+      ]),
+      _.mapValues(transactionEventsCounts, (v) => [
+        {
+          metric: TRANSACTION_EVENTS_COUNT_METRIC,
+          value: v,
+        },
+      ]),
+      _.mapValues(usersCounts, (v) => [
+        {
+          metric: USERS_COUNT_METRIC,
+          value: v,
+        },
+      ]),
+      _.mapValues(sanctionsChecksCounts, (v) => [
+        {
+          metric: SANCTIONS_SEARCHES_COUNT_METRIC,
+          value: v,
+        },
+      ]),
+      _.mapValues(ibanResolutinosCounts, (v) => [
+        {
+          metric: IBAN_RESOLUTION_COUNT_METRIC,
+          value: v,
+        },
+      ]),
+      (a: any[], b: any[]) => (a ?? []).concat(b ?? [])
     )
 
-    const transactionEventsCount =
-      await transactionEventsRepository.getTransactionEventCount({
-        createdAt: {
-          $gte: !monthly ? this.startTimestamp : this.getMonthStartTimestamp(),
-          $lte: this.endTimestamp,
-        },
-      })
+    const activeRuleInstancesCount =
+      await this.getCurrentActiveRuleInstancesCount(tenantInfo)
+    const numberOfSeats = await this.getCurrentNumberOfSeats(tenantInfo)
 
-    const transactionsCount = await this.getTransactionsCount(monthly)
-    const transactionEvents = transactionEventsCount - transactionsCount
+    return _.sortBy(
+      Object.entries(result).map((entry) => ({
+        date: entry[0],
+        values: (
+          entry[1] as Array<{
+            metric: Metric
+            value: number
+          }>
+        )
+          // TODO: Support getting retorspective gauge metrics
+          .concat([
+            {
+              metric: ACTIVE_RULE_INSTANCES_COUNT_METRIC,
+              value: activeRuleInstancesCount,
+            },
+            {
+              metric: TENANT_SEATS_COUNT_METRIC,
+              value: numberOfSeats,
+            },
+          ]),
+      })),
+      (v) => v.date
+    )
+  }
 
-    if (transactionEvents < 0) {
-      logger.error(`Transaction events count is negative: ${transactionEvents}`)
+  public getMonthlyMetricValues(
+    dailyMetrics: DailyMetricStats[]
+  ): MonthlyMetricStats[] {
+    const monthlyMetrics = _.mapValues(
+      _.groupBy(dailyMetrics, (dailyMetric) =>
+        dayjs(dailyMetric.date).format('YYYY-MM')
+      ),
+      (metrics) => {
+        return Object.values(
+          _.mapValues(
+            _.groupBy(
+              metrics.flatMap((metric) => metric.values),
+              (metric) => metric.metric.name
+            ),
+            (metrics) => {
+              if (metrics[0].metric.kind === 'GAUGE') {
+                return {
+                  metric: metrics[0].metric,
+                  value: _.maxBy(metrics, (metric) => metric.value)
+                    ?.value as number,
+                }
+              } else if (metrics[0].metric.kind === 'CULMULATIVE') {
+                return {
+                  metric: metrics[0].metric,
+                  value: _.sumBy(metrics, (metric) => metric.value),
+                }
+              } else {
+                throw new Error(
+                  `Unsupported metric kind: ${metrics[0].metric.kind}`
+                )
+              }
+            }
+          )
+        )
+      }
+    )
+    return _.sortBy(
+      Object.entries(monthlyMetrics).map((entry) => ({
+        month: entry[0],
+        values: entry[1],
+      })),
+      (v) => v.month
+    )
+  }
+
+  public async publishApiUsageMetrics(
+    tenantInfo: TenantBasic,
+    month: string, // e.g '2023-01,
+    googleSheetIds: string[]
+  ): Promise<void> {
+    const timeRange: TimeRange = {
+      startTimestamp: dayjs(month).startOf('month').valueOf(),
+      endTimestamp: dayjs(month).endOf('month').valueOf(),
     }
-
-    return transactionEvents
+    const dimensions = this.getDimensions(tenantInfo)
+    const dailyValues = await this.getDailyMetricValues(tenantInfo, timeRange)
+    const monthlyMetrics = await this.getMonthlyMetricValues(dailyValues)
+    const dailyMetricsData: MetricsData[] = dailyValues.flatMap((entry) =>
+      entry.values.map((item) => ({
+        metric: item.metric,
+        dimensions,
+        value: item.value,
+        timestamp: new Date(entry.date).valueOf(),
+      }))
+    )
+    logger.info('Publishing to CloudWatch...')
+    await publishMetrics(dailyMetricsData)
+    logger.info('Published to CloudWatch')
+    logger.info('Publishing to MongoDB...')
+    await this.publishMetricsToMongoDb(tenantInfo, dailyValues)
+    logger.info('Published to MongoDB')
+    logger.info('Publishing to Google Sheet...')
+    await this.publishToGoogleSheets(
+      tenantInfo,
+      googleSheetIds,
+      dailyValues,
+      monthlyMetrics
+    )
+    logger.info('Published to Google Sheet')
   }
 
-  private async getUsersCount(monthly = false): Promise<number> {
-    const usersRepository = new UserRepository(this.tenantId, {
-      mongoDb: this.connections.mongoDb,
-    })
-
-    return await usersRepository.getUsersCount({
-      createdAt: {
-        $gte: !monthly ? this.startTimestamp : this.getMonthStartTimestamp(),
-        $lt: this.endTimestamp,
-      },
-    })
+  private async getDailyTransactionsEventsCounts(
+    tenantInfo: TenantBasic,
+    timeRange: TimeRange,
+    dailyTransactionsCountsStats: DailyStats
+  ): Promise<DailyStats> {
+    const transactionEventsCounts = await getDailyUsage(
+      TRANSACTION_EVENTS_COLLECTION(tenantInfo.id),
+      'createdAt',
+      timeRange
+    )
+    return _.mapValues(transactionEventsCounts, (value, key) =>
+      Math.max(value - (dailyTransactionsCountsStats[key] ?? 0, 0))
+    )
   }
 
-  private async getAllActiveRuleInstancesCount(): Promise<number> {
-    const ruleInstanceRepository = new RuleInstanceRepository(this.tenantId, {
+  private async getCurrentActiveRuleInstancesCount(
+    tenantInfo: TenantBasic
+  ): Promise<number> {
+    const ruleInstanceRepository = new RuleInstanceRepository(tenantInfo.id, {
       dynamoDb: this.connections.dynamoDb,
     })
 
@@ -139,20 +269,14 @@ export class ApiUsageMetricsService {
     return allInstances.length
   }
 
-  private getDimensions(tenantInfo: TenantBasic): Dimension[] {
-    logger.info(
-      `Tenant Id: ${tenantInfo.id}, Tenant Name: ${tenantInfo.name}, Region: ${process.env.AWS_REGION}`
-    )
-    return [
-      { Name: 'Tenant Id', Value: tenantInfo.id },
-      { Name: 'Tenant Name', Value: tenantInfo.name },
-      { Name: 'Region', Value: process.env.AWS_REGION as string },
-    ]
-  }
-
-  private async getNumberOfSeats(tenantInfo: TenantBasic): Promise<number> {
+  private async getCurrentNumberOfSeats(
+    tenantInfo: TenantBasic
+  ): Promise<number> {
+    if (!tenantInfo.auth0Domain) {
+      return 0
+    }
     const accountsService = new AccountsService(
-      { auth0Domain: process.env.AUTH0_DOMAIN as string },
+      { auth0Domain: tenantInfo.auth0Domain },
       { mongoDb: this.connections.mongoDb }
     )
 
@@ -174,142 +298,60 @@ export class ApiUsageMetricsService {
     return filteredAccount.length
   }
 
-  private async getNumberOfSanctionsChecks(monthly = false): Promise<number> {
-    const sanctionsSearchRepository = new SanctionsSearchRepository(
-      this.tenantId,
-      this.connections.mongoDb
-    )
-
-    return await sanctionsSearchRepository.getNumberOfSearchesBetweenTimestamps(
-      monthly ? this.getMonthStartTimestamp() : this.startTimestamp,
-      this.endTimestamp
-    )
-  }
-
-  private async getNumberOfIbanResolutions(monthly = false): Promise<number> {
-    const ibanApiRepository = new IBANApiRepository(
-      this.tenantId,
-      this.connections.mongoDb
-    )
-
-    return ibanApiRepository.getNumberOfResolutionsBetweenTimestamps(
-      monthly ? this.getMonthStartTimestamp() : this.startTimestamp,
-      this.endTimestamp
-    )
-  }
-
-  private async getValuesOfMetrics(
-    tenantInfo: TenantBasic
-  ): Promise<Array<[Metric, number]>> {
-    const transactionsCount = await this.getTransactionsCount()
-    const transactionEventsCount = await this.getTransactionsEventsCount()
-    const usersCount = await this.getUsersCount()
-    const activeRuleInstancesCount = await this.getAllActiveRuleInstancesCount()
-    const sanctionsChecksCount = await this.getNumberOfSanctionsChecks()
-    const ibanResolutinosCount = await this.getNumberOfIbanResolutions()
-    const numberOfSeats = await this.getNumberOfSeats(tenantInfo)
-
-    logger.info(
-      `Transactions count: ${transactionsCount}, Transaction events count: ${transactionEventsCount}, Users count: ${usersCount}, Active rule instances count: ${activeRuleInstancesCount}`
-    )
-
+  private getDimensions(tenantInfo: TenantBasic): Dimension[] {
     return [
-      [TRANSACTIONS_COUNT_METRIC, transactionsCount],
-      [TRANSACTION_EVENTS_COUNT_METRIC, transactionEventsCount],
-      [USERS_COUNT_METRIC, usersCount],
-      [ACTIVE_RULE_INSTANCES_COUNT_METRIC, activeRuleInstancesCount],
-      [SANCTIONS_SEARCHES_COUNT_METRIC, sanctionsChecksCount],
-      [IBAN_RESOLUTION_COUNT_METRIC, ibanResolutinosCount],
-      [TENANT_SEATS_COUNT_METRIC, numberOfSeats],
+      { Name: 'Tenant Id', Value: tenantInfo.id },
+      { Name: 'Tenant Name', Value: tenantInfo.name },
+      { Name: 'Region', Value: process.env.AWS_REGION as string },
     ]
   }
 
-  public async getMonthlyData() {
-    const transactionsCount = await this.getTransactionsCount(true)
-    const transactionEventsCount = await this.getTransactionsEventsCount(true)
-    const usersCount = await this.getUsersCount(true)
-    const sanctionsChecksCount = await this.getNumberOfSanctionsChecks(true)
-    const ibanResolutinosCount = await this.getNumberOfIbanResolutions(true)
-
-    return {
-      transactionsCount,
-      transactionEventsCount,
-      usersCount,
-      sanctionsChecksCount,
-      ibanResolutinosCount,
-    }
-  }
-
-  private async publishToGoogleSheets() {
-    const monthlyData = await this.getMonthlyData()
-    const sheetsService = new SheetsApiUsageMetricsService(
-      this.tenant,
-      { mongoDb: this.connections.mongoDb },
-      monthlyData,
-      { startTimestamp: this.startTimestamp, endTimestamp: this.endTimestamp }
-    )
-
-    await sheetsService.initialize()
-    await sheetsService.updateUsageMetrics()
-  }
-
-  public async publishApiUsageMetrics(tenantInfo: TenantBasic): Promise<void> {
-    const dimensions = this.getDimensions(tenantInfo)
-    const values = await this.getValuesOfMetrics(tenantInfo)
-
-    const metricsData: Array<MetricsData> = values.map(([metric, value]) => {
-      return {
-        metric,
-        dimensions,
-        value,
-      }
-    })
-
-    logger.info(`Metrics data: ${JSON.stringify(metricsData)}`)
-
-    await publishMetrics(metricsData)
-    await this.pushMetricsToMongoDb(
-      _.fromPairs(values.map(([metric, value]) => [metric.name, value]))
-    )
-    await this.publishToGoogleSheets()
-  }
-
-  private async pushMetricsToMongoDb(
-    data: Record<string, number | string | undefined>
+  private async publishMetricsToMongoDb(
+    tenantInfo: TenantBasic,
+    metrics: DailyMetricStats[]
   ): Promise<void> {
     const mongoDb = this.connections.mongoDb.db()
-    const metricsCollectionName = METRICS_COLLECTION(this.tenantId)
+    const metricsCollectionName = METRICS_COLLECTION(tenantInfo.id)
     const metricsCollection = mongoDb.collection(metricsCollectionName)
-
-    logger.info(
-      `Pushing metrics to MongoDB collection: ${metricsCollectionName}`
-    )
-
-    const metric: ApiUsageMetrics[] = Object.keys(data).map((key) => {
-      return {
-        name: key,
-        value: data[key],
-        startTimestamp: this.startTimestamp,
-        endTimestamp: this.endTimestamp,
-        collectedTimestamp: Date.now(),
-      }
+    const mongoMetrics: ApiUsageMetrics[] = metrics.flatMap((metric) => {
+      return metric.values.map((value) => {
+        return {
+          name: value.metric.name,
+          value: value.value,
+          date: metric.date,
+          collectedTimestamp: Date.now(),
+        }
+      })
     })
 
-    logger.info(`Metrics MongoDB document: ${JSON.stringify(metric)}`)
-
     await Promise.all(
-      metric.map(
+      mongoMetrics.map(
         async (metric) =>
           await metricsCollection.updateOne(
             {
               name: metric.name,
-              startTimestamp: metric.startTimestamp,
-              endTimestamp: metric.endTimestamp,
+              date: metric.date,
             },
             { $set: metric },
             { upsert: true }
           )
       )
     )
+  }
+
+  private async publishToGoogleSheets(
+    tenantInfo: TenantBasic,
+    googleSheetIds: string[],
+    dailyMetrics: DailyMetricStats[],
+    monthlyMetrics: MonthlyMetricStats[]
+  ) {
+    for (const sheetId of googleSheetIds) {
+      const sheetsService = new SheetsApiUsageMetricsService(
+        tenantInfo,
+        sheetId
+      )
+      await sheetsService.initialize()
+      await sheetsService.updateUsageMetrics(dailyMetrics, monthlyMetrics)
+    }
   }
 }

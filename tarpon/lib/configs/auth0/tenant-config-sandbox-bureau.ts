@@ -24,4 +24,5 @@ export const Auth0SandboxBureauTenantConfig: Auth0TenantConfig = {
     credentialsAwsSecretName: 'bureau/auth0EmailProviderCreds',
     fromAddress: 'tm@bureau.id',
   },
+  apiUsageGoogleSheetId: '1DTv1z68Cz1K_YE9U7HiypShN8ONnez3UDNw7QNL1_TI',
 }

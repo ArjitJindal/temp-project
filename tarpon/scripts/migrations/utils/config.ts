@@ -39,4 +39,7 @@ export function loadConfigEnv() {
   Object.entries(config.application).forEach((entry) => {
     process.env[entry[0]] = String(entry[1])
   })
+  process.env.ENV = config.stage
+  process.env.REGION = config.region
+  process.env.AWS_REGION = config.env.region
 }

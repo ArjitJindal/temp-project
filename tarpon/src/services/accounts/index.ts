@@ -59,6 +59,7 @@ export type Tenant = {
 export type TenantBasic = {
   id: string
   name: string
+  auth0Domain?: string
 }
 @traceable
 export class AccountsService {

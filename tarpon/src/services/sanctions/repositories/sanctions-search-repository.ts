@@ -123,22 +123,6 @@ export class SanctionsSearchRepository {
     return { $and: conditions }
   }
 
-  public async getNumberOfSearchesBetweenTimestamps(
-    afterTimestamp: number,
-    beforeTimestamp: number
-  ): Promise<number> {
-    const db = this.mongoDb.db()
-    const collection = db.collection<SanctionsSearchHistory>(
-      SANCTIONS_SEARCHES_COLLECTION(this.tenantId)
-    )
-    return await collection.countDocuments({
-      createdAt: {
-        $gte: afterTimestamp,
-        $lt: beforeTimestamp,
-      },
-    })
-  }
-
   private getSanctionsSearchHistoryMongoPipeline(
     params: DefaultApiGetSanctionsSearchRequest
   ): Document[] {

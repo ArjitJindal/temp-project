@@ -98,6 +98,6 @@ export type Config = {
     GOOGLE_SHEETS_CLIENT_EMAIL: string
     GOOGLE_SHEETS_PRIVATE_KEY: string
     MERCHANT_MONITORING_SECRETS_ARN: string
-    SHEET_ID: string
+    API_USAGE_GOOGLE_SHEET_ID: string
   }
 }

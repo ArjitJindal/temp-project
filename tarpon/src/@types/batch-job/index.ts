@@ -76,8 +76,10 @@ export type PulseDataLoadBatchJob = {
 type ApiUsageMetricsBatchJobType = 'API_USAGE_METRICS'
 export type ApiUsageMetricsBatchJob = {
   type: ApiUsageMetricsBatchJobType
-  tenantInfo: TenantBasic
   tenantId: string
+  targetMonth: string
+  tenantInfos: TenantBasic[]
+  googleSheetIds: string[]
 }
 
 /* Global rule aggregation */

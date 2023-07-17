@@ -17,4 +17,5 @@ export type Auth0TenantConfig = {
     credentialsAwsSecretName: string
     fromAddress: string
   }
+  apiUsageGoogleSheetId?: string
 }

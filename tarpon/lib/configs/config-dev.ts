@@ -76,6 +76,6 @@ export const config: Config = {
     GOOGLE_SHEETS_CLIENT_EMAIL: `google-sheets-api-usage-metric@linen-waters-385109.iam.gserviceaccount.com`,
     GOOGLE_SHEETS_PRIVATE_KEY: `arn:aws:secretsmanager:${region}:${account}:secret:GoogleSheetsPrivateKey-0WCDHP`,
     MERCHANT_MONITORING_SECRETS_ARN: `arn:aws:secretsmanager:${region}:${account}:secret:MerchantMonitoring-kr2u3Z`,
-    SHEET_ID: '1JiK5HTWQVfNXO5XeoGheZTx9TwaHpDTQQUc2uNeH5Uw',
+    API_USAGE_GOOGLE_SHEET_ID: '1JiK5HTWQVfNXO5XeoGheZTx9TwaHpDTQQUc2uNeH5Uw',
   },
 }

@@ -11,6 +11,7 @@ import {
 import { StackConstants } from '@lib/constants'
 import { getAuth0TenantConfigs } from '@lib/configs/auth0/tenant-config'
 import { BadRequest } from 'http-errors'
+import { Auth0TenantConfig } from '@lib/configs/auth0/type'
 import { TenantRepository } from './repositories/tenant-repository'
 import { TenantCreationResponse } from '@/@types/openapi-internal/TenantCreationResponse'
 import { TenantCreationRequest } from '@/@types/openapi-internal/TenantCreationRequest'
@@ -26,6 +27,7 @@ import { TenantSettings } from '@/@types/openapi-internal/TenantSettings'
 export type TenantInfo = {
   tenant: Tenant
   auth0Domain: string
+  auth0TenantConfig: Auth0TenantConfig
 }
 
 export const USAGE_PLAN_REGEX = /tarpon:(.*):(.*)/
@@ -69,6 +71,7 @@ export class TenantService {
         ...(await accountsService.getTenants()).map((tenant) => ({
           tenant,
           auth0Domain,
+          auth0TenantConfig,
         }))
       )
     }

@@ -733,11 +733,11 @@ export class CdkTarponStack extends cdk.Stack {
 
     /* API Metrics Lambda */
     if (!isDevUserStack) {
-      const { func: cronJobMidnightHandler } = createFunction(
+      const { func: cronJobDailyHandler } = createFunction(
         this,
         lambdaExecutionRole,
         {
-          name: StackConstants.CRON_JOB_MIDNIGHT_FUNCTION_NAME,
+          name: StackConstants.CRON_JOB_DAILY,
           auditLogTopic: this.auditLogTopic,
           batchJobQueue,
         },
@@ -748,11 +748,11 @@ export class CdkTarponStack extends cdk.Stack {
         this,
         getResourceNameForTarpon('ApiMetricsRule'),
         {
-          schedule: Schedule.cron({ minute: '0', hour: '0' }),
+          schedule: Schedule.cron({ minute: '0', hour: '20' }),
         }
       )
 
-      apiMetricsRule.addTarget(new LambdaFunctionTarget(cronJobMidnightHandler))
+      apiMetricsRule.addTarget(new LambdaFunctionTarget(cronJobDailyHandler))
     }
 
     /* Tarpon Kinesis Change capture consumer */
