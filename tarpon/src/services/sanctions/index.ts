@@ -17,7 +17,7 @@ import { SanctionsSearchMonitoring } from '@/@types/openapi-internal/SanctionsSe
 import { SanctionsSearchType } from '@/@types/openapi-internal/SanctionsSearchType'
 import { logger } from '@/core/logger'
 import { getDynamoDbClient } from '@/utils/dynamodb'
-import { traceable } from '@/core/xray'
+import { addNewSubsegment, traceable } from '@/core/xray'
 import { ComplyAdvantageSearchHitDoc } from '@/@types/openapi-internal/ComplyAdvantageSearchHitDoc'
 import { ComplyAdvantageSearchHit } from '@/@types/openapi-internal/ComplyAdvantageSearchHit'
 
@@ -42,10 +42,12 @@ async function apiFetch(
   url: RequestInfo,
   init?: RequestInit
 ): Promise<Response> {
+  const subsegment = await addNewSubsegment('apiFetch', url.toString())
   let response: Response
   for (let i = 0; i < 10; i++) {
     response = await fetch(url, init)
     if (response.status !== 429) {
+      subsegment?.close()
       return response
     }
     // Too many requests
@@ -53,6 +55,7 @@ async function apiFetch(
       setTimeout(() => resolve(null), 1000 + _.random(500))
     })
   }
+  subsegment?.close()
   return response!
 }
 

@@ -90,31 +90,40 @@ export default class SanctionsBankUserRule extends UserRule<SanctionsBankUserRul
 
     const sanctionsService = new SanctionsService(this.tenantId)
     const hitResult: RuleHitResult = []
-    const sanctionsDetails: SanctionsDetails[] = []
-    for (const bankInfo of bankInfosToCheck) {
-      const bankName = bankInfo.bankName!
-      const result = await sanctionsService.search(
-        {
-          searchTerm: bankName,
-          types: screeningTypes,
-          fuzziness: fuzziness / 100,
-          monitoring: { enabled: ongoingScreening },
-        },
-        { userId: this.user.userId }
-      )
-      if (result.data && result.data.length > 0) {
-        sanctionsDetails.push({
-          name: bankName,
-          iban: bankInfo.iban,
-          searchId: result.searchId,
+    const sanctionsDetails: (SanctionsDetails | undefined)[] =
+      await Promise.all(
+        bankInfosToCheck.map(async (bankInfo) => {
+          const bankName = bankInfo.bankName!
+          const result = await sanctionsService.search(
+            {
+              searchTerm: bankName,
+              types: screeningTypes,
+              fuzziness: fuzziness / 100,
+              monitoring: { enabled: ongoingScreening },
+            },
+            { userId: this.user.userId }
+          )
+          let sanctionsDetails: SanctionsDetails
+          if (result.data && result.data.length > 0) {
+            sanctionsDetails = {
+              name: bankName,
+              iban: bankInfo.iban,
+              searchId: result.searchId,
+            }
+            return sanctionsDetails
+          }
         })
-      }
-    }
-    if (sanctionsDetails.length > 0) {
+      )
+
+    const filteredSanctionsDetails = sanctionsDetails.filter(
+      (searchResponse): searchResponse is SanctionsDetails => !!searchResponse
+    )
+
+    if (filteredSanctionsDetails.length > 0) {
       hitResult.push({
         direction: 'ORIGIN',
         vars: this.getUserVars(),
-        sanctionsDetails,
+        sanctionsDetails: filteredSanctionsDetails,
       })
     }
     return hitResult
