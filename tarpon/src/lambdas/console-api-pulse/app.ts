@@ -73,7 +73,7 @@ export const riskClassificationHandler = lambdaApi({
   }
 )
 
-const validateClassificationRequest = (
+export const validateClassificationRequest = (
   classificationValues: Array<RiskClassificationScore>
 ) => {
   if (classificationValues.length != StackConstants.NUMBER_OF_RISK_LEVELS) {

@@ -1,17 +1,18 @@
 import { v4 as uuidv4 } from 'uuid'
-import { BadRequest, Conflict } from 'http-errors'
+import { BadRequest, Conflict, Forbidden } from 'http-errors'
 import {
   ManagementClient,
   Organization,
   User,
   AuthenticationClient,
 } from 'auth0'
-import { UserMetadata } from 'aws-sdk/clients/elastictranscoder'
-import { MongoClient } from 'mongodb'
 import {
   APIGatewayEventLambdaAuthorizerContext,
   APIGatewayProxyWithLambdaAuthorizerEvent,
 } from 'aws-lambda'
+import { UserMetadata } from 'aws-sdk/clients/elastictranscoder'
+import { MongoClient } from 'mongodb'
+import { TenantRepository } from '../tenants/repositories/tenant-repository'
 import { Account as ApiAccount } from '@/@types/openapi-internal/Account'
 import { logger } from '@/core/logger'
 import { AccountSettings } from '@/@types/openapi-internal/AccountSettings'
@@ -23,6 +24,8 @@ import { getContext } from '@/core/utils/context'
 import { ACCOUNTS_COLLECTION, getMongoDbClient } from '@/utils/mongoDBUtils'
 import { JWTAuthorizerResult } from '@/@types/jwt'
 import { traceable } from '@/core/xray'
+import { getDynamoDbClient } from '@/utils/dynamodb'
+import { AccountInvitePayload } from '@/@types/openapi-internal/AccountInvitePayload'
 
 // Current TS typings for auth0  (@types/auth0@2.35.0) are outdated and
 // doesn't have definitions for users management api. Hope they will fix it soon
@@ -168,6 +171,43 @@ export class AccountsService {
   async getTenantById(tenantId: string): Promise<Tenant | null> {
     const allTenants = await this.getTenants()
     return allTenants.find((tenant) => tenant.id === tenantId) ?? null
+  }
+
+  public async inviteAccount(
+    organization: Tenant,
+    values: AccountInvitePayload
+  ): Promise<ApiAccount> {
+    const { role, email, isEscalationContact } = values
+    const inviteRole = role ?? 'analyst'
+    if (inviteRole === 'root') {
+      throw new Forbidden(`It's not possible to create a root user`)
+    }
+    const dynamoDb = await getDynamoDbClient()
+    const allAccounts: Account[] = await this.getTenantAccounts(organization)
+
+    const existingAccount = allAccounts.filter(
+      (account) => account.role !== 'root' && account.blocked === false
+    )
+
+    const tenantRepository = new TenantRepository(organization.id, { dynamoDb })
+
+    const tenantSettings = await tenantRepository.getTenantSettings()
+
+    if (
+      tenantSettings?.limits?.seats &&
+      existingAccount.length >= tenantSettings?.limits?.seats
+    ) {
+      throw new Forbidden(`You have reached the maximum number of users`)
+    }
+
+    const user = await this.createAccountInOrganization(organization, {
+      email,
+      role: inviteRole,
+      isEscalationContact,
+    })
+    await this.roleService.setRole(organization.id, user.id, inviteRole)
+
+    return user
   }
 
   async createAccountInOrganization(
@@ -341,17 +381,21 @@ export class AccountsService {
   }
 
   async changeUserTenant(
-    oldTenant: Tenant,
-    newTenant: Tenant,
+    accountId: string,
+    newTenantId: string,
     userId: string
-  ): Promise<void> {
+  ) {
+    const idToChange = accountId
+    const oldTenant = await this.getAccountTenant(idToChange)
+    const newTenant = await this.getTenantById(newTenantId)
+    if (newTenant == null) {
+      throw new BadRequest(`Unable to find tenant by id: ${newTenantId}`)
+    }
     const managementClient = new ManagementClient(await this.getAuth0Client())
     const user = await this.getAccount(userId)
     await managementClient.organizations.removeMembers(
       { id: oldTenant.orgId },
-      {
-        members: [userId],
-      }
+      { members: [userId] }
     )
     // Need to do this call to make sure operations are executed in exact order.
     // Without it if you try to remove and add member from the same organization,
@@ -361,9 +405,7 @@ export class AccountsService {
     })
     await managementClient.organizations.addMembers(
       { id: newTenant.orgId },
-      {
-        members: [userId],
-      }
+      { members: [userId] }
     )
 
     await this.deleteAuth0UserFromMongo(oldTenant.id, userId)
@@ -433,10 +475,7 @@ export class AccountsService {
     return AccountsService.userToAccount(patchedUser)
   }
 
-  async getUserSettings(
-    tenant: Tenant,
-    accountId: string
-  ): Promise<AccountSettings> {
+  async getUserSettings(accountId: string): Promise<AccountSettings> {
     const managementClient = await this.getManagementClient()
     const user = await managementClient.getUser({
       id: accountId,
@@ -450,10 +489,12 @@ export class AccountsService {
    * @deprecated The role service setRole method should be used instead.
    */
   async patchUserSettings(
-    tenant: Tenant,
     accountId: string,
     patch: Partial<AccountSettings>
   ): Promise<AccountSettings> {
+    if (!accountId) {
+      throw new BadRequest(`accountId is not provided`)
+    }
     const managementClient = await this.getManagementClient()
     const user = await managementClient.getUser({
       id: accountId,

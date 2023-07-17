@@ -12,9 +12,7 @@ import { ImportRequest } from '@/@types/openapi-internal/ImportRequest'
 import { lambdaApi } from '@/core/middlewares/lambda-api-middlewares'
 import { JWTAuthorizerResult } from '@/@types/jwt'
 import { getMongoDbClient } from '@/utils/mongoDBUtils'
-import { sendBatchJobCommand } from '@/services/batch-job'
 import { getCredentialsFromEvent } from '@/utils/credentials'
-import { FileImportBatchJob } from '@/@types/batch-job'
 
 export type FileImportConfig = {
   IMPORT_BUCKET: string
@@ -36,14 +34,11 @@ export const fileImportHandler = lambdaApi()(
 
     if (event.httpMethod === 'POST' && event.body) {
       const importRequest: ImportRequest = JSON.parse(event.body)
-      await sendBatchJobCommand(tenantId, {
-        type: 'FILE_IMPORT',
-        parameters: {
-          tenantName,
-          importRequest,
-        },
-        awsCredentials: getCredentialsFromEvent(event),
-      } as FileImportBatchJob)
+      await importRepository.postFileImport(
+        importRequest,
+        tenantName,
+        getCredentialsFromEvent(event)
+      )
       return
     } else if (event.httpMethod === 'GET' && event.pathParameters?.importId) {
       return importRepository.getFileImport(event.pathParameters.importId)

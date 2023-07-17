@@ -492,6 +492,9 @@ export class AlertsService extends CaseAlertsCommonService {
     alertIds: string[],
     assignments: Assignment[]
   ): Promise<void> {
+    if (!alertIds?.length) {
+      throw new BadRequest('Missing alertIds or empty alertIds array')
+    }
     const timestamp = Date.now()
 
     assignments.forEach((a) => {
@@ -505,6 +508,9 @@ export class AlertsService extends CaseAlertsCommonService {
     alertIds: string[],
     reviewAssignments: Assignment[]
   ): Promise<void> {
+    if (!alertIds?.length) {
+      throw new BadRequest('Missing alertIds or empty alertIds array')
+    }
     const timestamp = Date.now()
 
     reviewAssignments.forEach((a) => {
@@ -520,8 +526,12 @@ export class AlertsService extends CaseAlertsCommonService {
   public async deleteAlertComment(
     alertId: string,
     commentId: string
-  ): Promise<void> {
+  ): Promise<Comment> {
     const alert = await this.alertsRepository.getAlertById(alertId)
+    const comment = alert?.comments?.find(({ id }) => id === commentId) ?? null
+    if (comment == null) {
+      throw new NotFound(`"${commentId}" comment not found`)
+    }
 
     if (alert == null) {
       throw new NotFound(`"${alertId}" alert not found`)
@@ -531,17 +541,13 @@ export class AlertsService extends CaseAlertsCommonService {
       throw new Error(`Alert case id is null`)
     }
 
-    const comment = alert.comments?.find(({ id }) => id === commentId) ?? null
-
-    if (comment == null) {
-      throw new NotFound(`"${commentId}" comment not found`)
-    }
-
     await this.alertsRepository.deleteAlertComment(
       alert.caseId,
       alertId,
       commentId
     )
+
+    return comment
   }
 
   private getAlertStatusChangeCommentBody(

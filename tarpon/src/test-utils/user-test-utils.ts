@@ -144,3 +144,15 @@ export function setUpUsersHooks(
     await Promise.all(cleanups.map((cleanup) => cleanup()))
   })
 }
+
+export let skipRoleCheck = false
+
+export function setSkipRoleCheck() {
+  beforeAll(() => {
+    skipRoleCheck = true
+  })
+
+  afterAll(() => {
+    skipRoleCheck = false
+  })
+}

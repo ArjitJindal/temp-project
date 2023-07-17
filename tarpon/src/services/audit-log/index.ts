@@ -4,6 +4,7 @@ import { AuditLogRecord } from '@/@types/audit-log'
 import { getContext } from '@/core/utils/context'
 import { Account } from '@/@types/openapi-internal/Account'
 import { logger } from '@/core/logger'
+import { skipAuditLogs } from '@/test-utils/auditlog-test-utils'
 
 const snsClient = new SNSClient({})
 
@@ -11,6 +12,9 @@ export async function publishAuditLog(
   tenantId: string,
   auditlog: AuditLog
 ): Promise<void> {
+  if (skipAuditLogs) {
+    return
+  }
   try {
     const auditLogRecord: AuditLogRecord = {
       tenantId,

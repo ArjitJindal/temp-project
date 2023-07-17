@@ -1,7 +1,9 @@
 import {
   APIGatewayEventLambdaAuthorizerContext,
   APIGatewayProxyWithLambdaAuthorizerEvent,
+  Handler,
 } from 'aws-lambda'
+import { getTestTenantId } from './tenant-test-utils'
 
 function getPathFromPathParams(
   resource: string,
@@ -136,5 +138,127 @@ export function getApiGatewayDeleteEvent(
     isBase64Encoded: false,
     multiValueQueryStringParameters: {},
     stageVariables: null,
+  }
+}
+
+export function getApiGatewayPutEvent(
+  tenantId: string,
+  resource: string,
+  body: object,
+  params?: {
+    pathParameters?: { [key: string]: string }
+    queryStringParameters?: { [key: string]: string }
+  }
+): APIGatewayProxyWithLambdaAuthorizerEvent<
+  APIGatewayEventLambdaAuthorizerContext<AWS.STS.Credentials>
+> {
+  return {
+    resource,
+    path: getPathFromPathParams(resource, params?.pathParameters),
+    httpMethod: 'PUT',
+    queryStringParameters: params?.queryStringParameters || {},
+    pathParameters: params?.pathParameters || {},
+    requestContext: {
+      authorizer: {
+        principalId: tenantId,
+      },
+    } as any,
+    body: JSON.stringify(body),
+    headers: {},
+    multiValueHeaders: {},
+    isBase64Encoded: false,
+    multiValueQueryStringParameters: {},
+    stageVariables: null,
+  }
+}
+
+export function mockServiceMethod(
+  service: any,
+  methodName: string,
+  returnValue?: any
+) {
+  const mock = jest.spyOn(service.prototype, methodName)
+  if (returnValue) {
+    mock.mockReturnValue(returnValue)
+  }
+  return mock
+}
+
+export function mockStaticMethod(
+  service: any,
+  methodName: string,
+  returnValue?: any
+) {
+  const mock = jest.spyOn(service, methodName)
+  if (returnValue) {
+    mock.mockReturnValue(returnValue)
+  }
+  return mock
+}
+
+export type TestApiEndpointOptions = {
+  method: string
+  path: string
+  methodName: string
+  payload?: any
+}
+
+export class TestApiEndpoint {
+  service: any
+  lambdaHandler: Handler
+  tenantId: string
+
+  constructor(service: any, lambdaHandler: Handler) {
+    this.service = service
+    this.lambdaHandler = lambdaHandler
+    this.tenantId = getTestTenantId()
+  }
+
+  public testApi(
+    endpoint: { method: string; path: string; payload?: any },
+    methodName: string
+  ) {
+    const { method, path, payload } = endpoint
+    test(`${method} ${path} should call the correct service method`, async () => {
+      let event
+      switch (method) {
+        case 'GET':
+          event = getApiGatewayGetEvent(this.tenantId, path, {
+            queryStringParameters: payload,
+            pathParameters: payload,
+          })
+          break
+        case 'POST':
+          event = getApiGatewayPostEvent(this.tenantId, path, payload || {}, {
+            queryStringParameters: payload,
+            pathParameters: payload,
+          })
+          break
+        case 'DELETE':
+          event = getApiGatewayDeleteEvent(this.tenantId, path, {
+            pathParameters: payload,
+            queryStringParameters: payload,
+          })
+
+          break
+        case 'PATCH':
+          event = getApiGatewayPatchEvent(this.tenantId, path, payload || {}, {
+            pathParameters: payload,
+            queryStringParameters: payload,
+          })
+          break
+        case 'PUT':
+          event = getApiGatewayPutEvent(this.tenantId, path, payload || {}, {
+            pathParameters: payload,
+            queryStringParameters: payload,
+          })
+          break
+        default:
+          throw new Error(`Unsupported method ${method}`)
+      }
+      const mock = mockServiceMethod(this.service, methodName, {})
+      await this.lambdaHandler(event, null as any, null as any)
+      expect(mock).toHaveBeenCalled()
+    })
   }
 }

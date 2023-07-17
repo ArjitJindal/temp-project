@@ -16,7 +16,7 @@ import { parseStrings } from '@/utils/lambda'
 import { AccountsService } from '@/services/accounts'
 import { Account } from '@/@types/openapi-internal/Account'
 
-function shouldRefreshAll(
+export function shouldRefreshAll(
   event: APIGatewayProxyWithLambdaAuthorizerEvent<
     APIGatewayEventLambdaAuthorizerContext<JWTAuthorizerResult>
   >

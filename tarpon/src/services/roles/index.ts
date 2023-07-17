@@ -5,6 +5,7 @@ import { Permission } from '@/@types/openapi-internal/Permission'
 import { getAuth0Credentials } from '@/utils/auth0-utils'
 import { isValidManagedRoleName } from '@/@types/openapi-internal-custom/ManagedRoleName'
 import { traceable } from '@/core/xray'
+import { envIs } from '@/utils/env'
 
 @traceable
 export class RoleService {
@@ -14,8 +15,9 @@ export class RoleService {
   constructor(config: { auth0Domain: string }) {
     this.config = config
     const options = {
-      domain: config.auth0Domain,
+      domain: envIs('test') ? 'test' : config.auth0Domain,
     }
+
     this.authenticationClient = new AuthenticationClient(options)
   }
 

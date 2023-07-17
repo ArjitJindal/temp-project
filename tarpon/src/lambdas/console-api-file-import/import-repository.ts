@@ -1,6 +1,10 @@
 import { MongoClient } from 'mongodb'
+import { CredentialsOptions } from 'aws-sdk/lib/credentials'
 import { IMPORT_COLLECTION } from '@/utils/mongoDBUtils'
 import { FileImport } from '@/@types/openapi-internal/FileImport'
+import { ImportRequest } from '@/@types/openapi-internal/ImportRequest'
+import { sendBatchJobCommand } from '@/services/batch-job'
+import { FileImportBatchJob } from '@/@types/batch-job'
 
 export class ImportRepository {
   mongoDb: MongoClient
@@ -61,5 +65,20 @@ export class ImportRepository {
       IMPORT_COLLECTION(this.tenantId)
     )
     return collection.findOne({ _id: importId })
+  }
+
+  public async postFileImport(
+    importRequest: ImportRequest,
+    tenantName: string,
+    awsCredentials?: CredentialsOptions
+  ) {
+    await sendBatchJobCommand(this.tenantId, {
+      type: 'FILE_IMPORT',
+      parameters: {
+        tenantName,
+        importRequest,
+      },
+      awsCredentials,
+    } as FileImportBatchJob)
   }
 }

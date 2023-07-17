@@ -10,18 +10,7 @@ import { getDynamoDbClientByEvent } from '@/utils/dynamodb'
 import { RuleRepository } from '@/services/rules-engine/repositories/rule-repository'
 import { RuleInstanceRepository } from '@/services/rules-engine/repositories/rule-instance-repository'
 import { Rule } from '@/@types/openapi-internal/Rule'
-import {
-  TRANSACTION_FILTERS,
-  TRANSACTION_FILTER_DEFAULT_VALUES,
-  TRANSACTION_HISTORICAL_FILTERS,
-  USER_FILTERS,
-} from '@/services/rules-engine/filters'
 import { RuleAuditLogService } from '@/services/rules-engine/rules-audit-log-service'
-import { mergeObjects, replaceMagicKeyword } from '@/utils/object'
-import { TenantRepository } from '@/services/tenants/repositories/tenant-repository'
-
-import { DEFAULT_CURRENCY_KEYWORD } from '@/services/rules-engine/transaction-rules/library'
-import { RuleFilters } from '@/@types/openapi-internal/RuleFilters'
 
 export const ruleHandler = lambdaApi()(
   async (
@@ -37,7 +26,6 @@ export const ruleHandler = lambdaApi()(
       dynamoDb,
     })
     const ruleService = new RuleService(ruleRepository, ruleInstanceRepository)
-    const tenantRepository = new TenantRepository(tenantId, { dynamoDb })
 
     if (event.httpMethod === 'GET' && event.path.endsWith('/rules')) {
       const rules = await ruleService.getAllRules()
@@ -46,40 +34,7 @@ export const ruleHandler = lambdaApi()(
       event.httpMethod === 'GET' &&
       event.resource === '/rule-filters'
     ) {
-      const filters = [
-        ...Object.values(USER_FILTERS),
-        ...Object.values(TRANSACTION_FILTERS),
-        ...Object.values(TRANSACTION_HISTORICAL_FILTERS),
-      ].map((filterClass) => (filterClass.getSchema() as any)?.properties || {})
-
-      const defaultValues = [
-        ...Object.values(TRANSACTION_FILTER_DEFAULT_VALUES),
-      ].map((defaultValue) => {
-        if (
-          defaultValue &&
-          defaultValue?.getDefaultValues instanceof Function
-        ) {
-          return defaultValue.getDefaultValues()
-        }
-      })
-      const tenantSettings = await tenantRepository.getTenantSettings()
-      const defaultCurrency = tenantSettings?.defaultValues?.currency
-      const mergedFilters = mergeObjects({}, ...filters)
-
-      return {
-        schema: {
-          type: 'object',
-          properties: mergedFilters,
-          'ui:schema': {
-            'ui:order': Object.keys(mergedFilters),
-          },
-        },
-        defaultValues: replaceMagicKeyword(
-          mergeObjects({}, ...defaultValues),
-          DEFAULT_CURRENCY_KEYWORD,
-          defaultCurrency ?? 'USD'
-        ),
-      } as RuleFilters
+      return await ruleService.getAllRuleFilters()
     } else if (
       event.httpMethod === 'POST' &&
       event.path.endsWith('/rules') &&
@@ -143,7 +98,7 @@ export const ruleInstanceHandler = lambdaApi()(
         ruleInstanceId
       )
       if (oldRuleInstance != null) {
-        await ruleInstanceRepository.deleteRuleInstance(ruleInstanceId)
+        await ruleService.deleteRuleInstance(ruleInstanceId)
         await rulesAuditLogService.handleAuditLogForRuleInstanceDeleted(
           oldRuleInstance
         )

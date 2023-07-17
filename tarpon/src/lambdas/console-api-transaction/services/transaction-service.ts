@@ -9,6 +9,7 @@ import { TransactionsUniquesField } from '@/@types/openapi-internal/Transactions
 import { RiskRepository } from '@/services/risk-scoring/repositories/risk-repository'
 import { getRiskLevelFromScore } from '@/services/risk-scoring/utils'
 import { traceable } from '@/core/xray'
+import { OptionalPagination } from '@/utils/pagination'
 
 @traceable
 export class TransactionService {
@@ -30,6 +31,12 @@ export class TransactionService {
     this.tmpBucketName = tmpBucketName
     this.documentBucketName = documentBucketName
     this.riskRepository = riskRepository
+  }
+
+  public async getTransactionsCount(
+    params: OptionalPagination<DefaultApiGetTransactionsListRequest>
+  ): Promise<number> {
+    return await this.transactionRepository.getTransactionsCount(params)
   }
 
   public async getTransactions(params: DefaultApiGetTransactionsListRequest) {

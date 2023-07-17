@@ -30,12 +30,12 @@ import { AlertsStatusUpdateRequest } from '@/@types/openapi-internal/AlertsStatu
 import { CasesStatusUpdateRequest } from '@/@types/openapi-internal/CasesStatusUpdateRequest'
 import { TenantRepository } from '@/services/tenants/repositories/tenant-repository'
 import { PaymentMethod } from '@/@types/openapi-public/PaymentMethod'
-import { CaseEscalationResponse } from '@/@types/openapi-internal/CaseEscalationResponse'
 import { Handlers } from '@/@types/openapi-internal-custom/DefaultApi'
 import { CasesReviewAssignmentsUpdateRequest } from '@/@types/openapi-internal/CasesReviewAssignmentsUpdateRequest'
 import { CasesAssignmentsUpdateRequest } from '@/@types/openapi-internal/CasesAssignmentsUpdateRequest'
 import { AlertsReviewAssignmentsUpdateRequest } from '@/@types/openapi-internal/AlertsReviewAssignmentsUpdateRequest'
 import { AlertsAssignmentsUpdateRequest } from '@/@types/openapi-internal/AlertsAssignmentsUpdateRequest'
+import { CaseEscalationResponse } from '@/@types/openapi-internal/CaseEscalationResponse'
 
 export type CaseConfig = {
   TMP_BUCKET: string
@@ -158,10 +158,12 @@ export const casesHandler = lambdaApi()(
       return 'OK'
     } else if (
       event.httpMethod === 'GET' &&
-      event.resource === '/cases/{caseId}' &&
-      event.pathParameters?.caseId
+      event.resource === '/cases/{caseId}'
     ) {
-      const caseId = event.pathParameters?.caseId as string
+      const caseId = event.pathParameters?.caseId
+      if (!caseId) {
+        throw new BadRequest('Case id is required')
+      }
       const caseItem: Case | null = await caseService.getCase(caseId, {
         logAuditLogView: true,
       })
@@ -173,30 +175,34 @@ export const casesHandler = lambdaApi()(
     } else if (
       event.httpMethod === 'POST' &&
       event.resource === '/cases/{caseId}/comments' &&
-      event.pathParameters?.caseId &&
       event.body
     ) {
       const comment = JSON.parse(event.body) as Comment
 
       const saveCommentResult = await caseService.saveCaseComment(
-        event.pathParameters.caseId,
+        event?.pathParameters?.caseId,
         { ...comment, userId }
       )
 
+      if (!event?.pathParameters?.caseId) {
+        throw new BadRequest('Case id is required')
+      }
+
       await casesAlertsAuditLogService.handleAuditLogForComments(
-        event.pathParameters.caseId,
+        event?.pathParameters?.caseId,
         comment
       )
       return saveCommentResult
     } else if (
       event.httpMethod === 'DELETE' &&
-      event.resource === '/cases/{caseId}/comments/{commentId}' &&
-      event.pathParameters?.caseId &&
-      event.pathParameters?.commentId
+      event.resource === '/cases/{caseId}/comments/{commentId}'
     ) {
+      if (!event?.pathParameters?.caseId || !event?.pathParameters?.commentId) {
+        throw new BadRequest('Case id and comment id are required')
+      }
       await caseService.deleteCaseComment(
-        event.pathParameters.caseId,
-        event.pathParameters.commentId
+        event?.pathParameters?.caseId,
+        event?.pathParameters?.commentId
       )
 
       return 'OK'
@@ -276,11 +282,7 @@ export const casesHandler = lambdaApi()(
       event.body
     ) {
       const updateRequest = JSON.parse(event.body) as AlertsStatusUpdateRequest
-      const alertIds = updateRequest?.alertIds
-
-      if (!alertIds?.length) {
-        throw new BadRequest('Missing alertIds in request body or empty array')
-      }
+      const alertIds = updateRequest?.alertIds || []
 
       const { updates } = updateRequest
       await alertsService.updateAlertsStatus(alertIds, updates)
@@ -297,13 +299,8 @@ export const casesHandler = lambdaApi()(
       const updateRequest = JSON.parse(
         event.body
       ) as AlertsAssignmentsUpdateRequest
-      const alertIds = updateRequest?.alertIds
+      const alertIds = updateRequest?.alertIds ?? []
       const { assignments } = updateRequest
-
-      if (!alertIds?.length) {
-        throw new BadRequest('Missing alertIds or empty alertIds array')
-      }
-
       await alertsService.updateAssigneeToAlerts(alertIds, assignments)
       await casesAlertsAuditLogService.handleAuditLogForAlertsUpdate(alertIds, {
         assignments,
@@ -318,12 +315,8 @@ export const casesHandler = lambdaApi()(
         event.body
       ) as AlertsReviewAssignmentsUpdateRequest
 
-      const alertIds = updateRequest?.alertIds
+      const alertIds = updateRequest?.alertIds ?? []
       const { reviewAssignments } = updateRequest
-
-      if (!alertIds?.length) {
-        throw new BadRequest('Missing alertIds or empty alertIds array')
-      }
 
       await alertsService.updateReviewAssigneeToAlerts(
         alertIds,
@@ -458,14 +451,7 @@ export const casesHandler = lambdaApi()(
     ) {
       const alertId = event.pathParameters?.alertId as string
       const commentId = event.pathParameters?.commentId as string
-      const alert = await alertsRepository.getAlertById(alertId)
-      const comment =
-        alert?.comments?.find(({ id }) => id === commentId) ?? null
-      if (comment == null) {
-        throw new NotFound(`"${commentId}" comment not found`)
-      }
-
-      await alertsService.deleteAlertComment(alertId, commentId)
+      const comment = await alertsService.deleteAlertComment(alertId, commentId)
       await casesAlertsAuditLogService.createAlertAuditLog({
         alertId,
         logAction: 'DELETE',
@@ -477,15 +463,17 @@ export const casesHandler = lambdaApi()(
     } else if (
       event.httpMethod === 'POST' &&
       event.resource === '/cases/{caseId}/escalate' &&
-      event.pathParameters?.caseId &&
       event.body
     ) {
       if (!hasFeature('ESCALATION')) {
         throw new BadRequest('Feature not enabled')
       }
-      const caseId = event.pathParameters.caseId as string
+      const caseId = event?.pathParameters?.caseId as string
       const escalationRequest = JSON.parse(event.body) as CaseEscalationRequest
 
+      if (!caseId) {
+        throw new BadRequest('Case id is required')
+      }
       if (
         !escalationRequest.alertEscalations ||
         escalationRequest.alertEscalations.length === 0
@@ -517,6 +505,7 @@ export const casesHandler = lambdaApi()(
         }
         return response
       }
+      throw new BadRequest('Invalid escalation request')
     }
     return handlers.handle(event)
   }

@@ -433,8 +433,9 @@ export const transactionsViewHandler = lambdaApi()(
         sortOrder: sortOrder,
       }
 
-      const transactionsCount =
-        await transactionRepository.getTransactionsCount(params)
+      const transactionsCount = await transactionService.getTransactionsCount(
+        params
+      )
       const maximumExportSize = parseInt(MAXIMUM_ALLOWED_EXPORT_SIZE)
       if (Number.isNaN(maximumExportSize)) {
         throw new InternalServerError(

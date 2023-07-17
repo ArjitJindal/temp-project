@@ -10,10 +10,7 @@ import { Account } from '@/@types/openapi-internal/Account'
 import { ChangeTenantPayload } from '@/@types/openapi-internal/ChangeTenantPayload'
 import { AccountInvitePayload } from '@/@types/openapi-internal/AccountInvitePayload'
 import { AccountSettings } from '@/@types/openapi-internal/AccountSettings'
-import { RoleService } from '@/services/roles'
 import { AccountPatchPayload } from '@/@types/openapi-internal/AccountPatchPayload'
-import { getDynamoDbClientByEvent } from '@/utils/dynamodb'
-import { TenantRepository } from '@/services/tenants/repositories/tenant-repository'
 import { getMongoDbClient } from '@/utils/mongoDBUtils'
 
 export const accountsHandler = lambdaApi()(
@@ -22,10 +19,9 @@ export const accountsHandler = lambdaApi()(
       APIGatewayEventLambdaAuthorizerContext<JWTAuthorizerResult>
     >
   ) => {
-    const { userId, tenantId, auth0Domain } = event.requestContext.authorizer
+    const { userId, auth0Domain } = event.requestContext.authorizer
     const mongoDb = await getMongoDbClient()
     const accountsService = new AccountsService({ auth0Domain }, { mongoDb })
-    const rolesService = new RoleService({ auth0Domain })
     const organization = await accountsService.getAccountTenant(userId)
 
     if (event.httpMethod === 'GET' && event.resource === '/me') {
@@ -44,70 +40,37 @@ export const accountsHandler = lambdaApi()(
         throw new BadRequest(`Body should not be empty`)
       }
       const body: AccountInvitePayload = JSON.parse(event.body)
-      const inviteRole = body.role ?? 'analyst'
-      if (inviteRole === 'root') {
-        throw new Forbidden(`It's not possible to create a root user`)
-      }
-      const dynamoDb = await getDynamoDbClientByEvent(event)
-      const allAccounts: Account[] = await accountsService.getTenantAccounts(
-        organization
-      )
-
-      const existingAccount = allAccounts.filter(
-        (account) => account.role !== 'root' && account.blocked === false
-      )
-
-      const tenantRepository = new TenantRepository(tenantId, { dynamoDb })
-
-      const tenantSettings = await tenantRepository.getTenantSettings()
-
-      if (
-        tenantSettings?.limits?.seats &&
-        existingAccount.length >= tenantSettings?.limits?.seats
-      ) {
-        throw new Forbidden(`You have reached the maximum number of users`)
-      }
-
-      const user = await accountsService.createAccountInOrganization(
-        organization,
-        {
-          email: body.email,
-          role: inviteRole,
-          isEscalationContact: body.isEscalationContact,
-        }
-      )
-      await rolesService.setRole(tenantId, user.id, inviteRole)
-      return user
+      return await accountsService.inviteAccount(organization, body)
     } else if (
       event.httpMethod === 'POST' &&
       event.resource === '/accounts/{accountId}/change_tenant'
     ) {
       assertCurrentUserRole('root')
       const { pathParameters } = event
-      const idToChange = pathParameters?.accountId
-      if (!idToChange) {
-        throw new BadRequest(`accountId is not provided`)
-      }
       if (event.body == null) {
         throw new BadRequest(`Body should not be empty`)
       }
       const { newTenantId } = JSON.parse(event.body) as ChangeTenantPayload
-      const oldTenant = await accountsService.getAccountTenant(idToChange)
-      const newTenant = await accountsService.getTenantById(newTenantId)
-      if (newTenant == null) {
-        throw new BadRequest(`Unable to find tenant by id: ${newTenantId}`)
+      if (!pathParameters?.accountId) {
+        throw new BadRequest(`accountId is not provided`)
       }
-      await accountsService.changeUserTenant(oldTenant, newTenant, userId)
+      if (newTenantId == null) {
+        throw new BadRequest(`newTenantId is not provided`)
+      }
+      await accountsService.changeUserTenant(
+        pathParameters?.accountId,
+        newTenantId,
+        userId
+      )
       return true
     } else if (event.resource === '/accounts/{accountId}') {
       const { pathParameters } = event
       const accountId = pathParameters?.accountId
-      if (!accountId) {
-        throw new BadRequest(`accountId is not provided`)
-      }
       if (event.httpMethod === 'DELETE') {
         assertCurrentUserRole('admin')
-
+        if (!accountId) {
+          throw new BadRequest(`accountId is not provided`)
+        }
         await accountsService.deleteUser(organization, accountId)
         return true
       } else if (event.httpMethod === 'POST') {
@@ -118,6 +81,10 @@ export const accountsHandler = lambdaApi()(
         const patchPayload = JSON.parse(event.body) as AccountPatchPayload
         if (patchPayload.role === 'root') {
           throw new Forbidden(`It's not possible to set a root role`)
+        }
+
+        if (!accountId) {
+          throw new BadRequest(`accountId is not provided`)
         }
 
         return await accountsService.patchUser(
@@ -136,17 +103,13 @@ export const accountsHandler = lambdaApi()(
         assertCurrentUserRole('root')
       }
       if (event.httpMethod === 'GET') {
-        return await accountsService.getUserSettings(organization, accountId)
+        return await accountsService.getUserSettings(accountId)
       } else if (event.httpMethod === 'PATCH') {
         if (event.body == null) {
           throw new BadRequest(`Body should not be empty`)
         }
         const payload = JSON.parse(event.body) as AccountSettings
-        return await accountsService.patchUserSettings(
-          organization,
-          accountId,
-          payload
-        )
+        return await accountsService.patchUserSettings(accountId, payload)
       }
     }
 

@@ -2,6 +2,12 @@ import Ajv, { ValidateFunction } from 'ajv'
 import createHttpError from 'http-errors'
 import _ from 'lodash'
 import { DEFAULT_CURRENCY_KEYWORD } from './transaction-rules/library'
+import {
+  TRANSACTION_FILTERS,
+  TRANSACTION_FILTER_DEFAULT_VALUES,
+  TRANSACTION_HISTORICAL_FILTERS,
+  USER_FILTERS,
+} from './filters'
 import { TenantRepository } from '@/services/tenants/repositories/tenant-repository'
 
 import { RuleInstance } from '@/@types/openapi-internal/RuleInstance'
@@ -13,9 +19,11 @@ import { USER_RULES } from '@/services/rules-engine/user-rules'
 import { RiskLevelRuleParameters } from '@/@types/openapi-internal/RiskLevelRuleParameters'
 import { RiskLevel } from '@/@types/openapi-internal/RiskLevel'
 import { RiskLevelRuleActions } from '@/@types/openapi-internal/RiskLevelRuleActions'
-import { replaceMagicKeyword } from '@/utils/object'
+import { mergeObjects, replaceMagicKeyword } from '@/utils/object'
 import { hasFeatures } from '@/core/utils/context'
 import { traceable } from '@/core/xray'
+import { RuleFilters } from '@/@types/openapi-internal/RuleFilters'
+import { getMongoDbClient } from '@/utils/mongoDBUtils'
 
 const RISK_LEVELS = RiskLevelRuleParameters.attributeTypeMap.map(
   (attribute) => attribute.name
@@ -41,6 +49,53 @@ export class RuleService {
   ) {
     this.ruleRepository = ruleRepository
     this.ruleInstanceRepository = ruleInstanceRepository
+  }
+
+  async getAllRuleFilters(): Promise<RuleFilters> {
+    const mongoDb = await getMongoDbClient()
+    const tenantRepository = new TenantRepository(
+      this.ruleRepository.tenantId,
+      {
+        mongoDb,
+        dynamoDb: this.ruleRepository.dynamoDb,
+      }
+    )
+
+    const filters = [
+      ...Object.values(USER_FILTERS),
+      ...Object.values(TRANSACTION_FILTERS),
+      ...Object.values(TRANSACTION_HISTORICAL_FILTERS),
+    ].map((filterClass) => (filterClass.getSchema() as any)?.properties || {})
+
+    const defaultValues = [
+      ...Object.values(TRANSACTION_FILTER_DEFAULT_VALUES),
+    ].map((defaultValue) => {
+      if (defaultValue && defaultValue?.getDefaultValues instanceof Function) {
+        return defaultValue.getDefaultValues()
+      }
+    })
+    const tenantSettings = await tenantRepository.getTenantSettings()
+    const defaultCurrency = tenantSettings?.defaultValues?.currency
+    const mergedFilters = mergeObjects({}, ...filters)
+
+    return {
+      schema: {
+        type: 'object',
+        properties: mergedFilters,
+        'ui:schema': {
+          'ui:order': Object.keys(mergedFilters),
+        },
+      },
+      defaultValues: replaceMagicKeyword(
+        mergeObjects({}, ...defaultValues),
+        DEFAULT_CURRENCY_KEYWORD,
+        defaultCurrency ?? 'USD'
+      ),
+    } as RuleFilters
+  }
+
+  public async deleteRuleInstance(ruleInstanceId: string): Promise<void> {
+    await this.ruleInstanceRepository.deleteRuleInstance(ruleInstanceId)
   }
 
   async getAllRules(): Promise<Array<Rule>> {

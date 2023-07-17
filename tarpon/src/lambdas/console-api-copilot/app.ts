@@ -2,7 +2,7 @@ import {
   APIGatewayEventLambdaAuthorizerContext,
   APIGatewayProxyWithLambdaAuthorizerEvent,
 } from 'aws-lambda'
-import { NotFound } from 'http-errors'
+import { NotFound, BadRequest } from 'http-errors'
 import { lambdaApi } from '@/core/middlewares/lambda-api-middlewares'
 import { JWTAuthorizerResult } from '@/@types/jwt'
 import { CopilotService } from '@/services/copilot/copilot-service'
@@ -19,13 +19,15 @@ export const copilotHandler = lambdaApi({ requiredFeatures: ['COPILOT'] })(
     const copilotService = new CopilotService()
     const caseService = await CaseService.fromEvent(event)
     const userService = await UserService.fromEvent(event)
-
     if (
       event.httpMethod === 'POST' &&
       event.resource?.endsWith('/copilot/narrative') &&
       event.body
     ) {
       const request: NarrativeRequest = JSON.parse(event.body)
+      if (!request.caseId) {
+        throw new BadRequest('Case id is required')
+      }
       const _case = await caseService.getCase(request.caseId)
       const user = await userService.getUser(
         _case?.caseUsers?.origin?.userId ||

@@ -11,6 +11,7 @@ import { SimulationPulseParametersRequest } from '@/@types/openapi-internal/Simu
 import { DEFAULT_CLASSIFICATION_SETTINGS } from '@/services/risk-scoring/repositories/risk-repository'
 import { withFeatureHook } from '@/test-utils/feature-test-utils'
 import { dynamoDbSetupHook } from '@/test-utils/dynamodb-test-utils'
+import * as jwt from '@/@types/jwt'
 
 const TEST_PARAMETERS: SimulationPulseParametersRequest = {
   parameters: [
@@ -131,6 +132,7 @@ describe('Consoel API - Simulation', () => {
 
   test('gets simulation tasks', async () => {
     const tenantId = getTestTenantId()
+    jest.spyOn(jwt, 'isCurrentUserAtLeastRole').mockReturnValue(false)
     const { jobId, taskIds } = JSON.parse(
       (
         await simulationHandler(

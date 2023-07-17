@@ -1,5 +1,5 @@
 import * as createError from 'http-errors'
-import { NotFound } from 'http-errors'
+import { NotFound, BadRequest } from 'http-errors'
 import {
   APIGatewayEventLambdaAuthorizerContext,
   APIGatewayProxyWithLambdaAuthorizerEvent,
@@ -267,8 +267,11 @@ export class CaseService extends CaseAlertsCommonService {
     )
   }
 
-  public async saveCaseComment(caseId: string, comment: Comment) {
+  public async saveCaseComment(caseId: string | undefined, comment: Comment) {
     // Copy the files from tmp bucket to document bucket
+    if (!caseId) {
+      throw new BadRequest('Case id is required')
+    }
     const files = await this.copyFiles(comment.files ?? [])
 
     const savedComment = await this.caseRepository.saveCaseComment(caseId, {
