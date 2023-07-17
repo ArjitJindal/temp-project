@@ -11,7 +11,6 @@ import { InternalTransaction } from '@/@types/openapi-internal/InternalTransacti
 import { SimulationBeaconParameters } from '@/@types/openapi-internal/SimulationBeaconParameters'
 import { ExecutedRulesResult } from '@/@types/openapi-internal/ExecutedRulesResult'
 import { CaseRepository } from '@/services/rules-engine/repositories/case-repository'
-import { Case } from '@/@types/openapi-internal/Case'
 import { RuleInstance } from '@/@types/openapi-internal/RuleInstance'
 import { SimulationBeaconStatisticsResult } from '@/@types/openapi-internal/SimulationBeaconStatisticsResult'
 import { logger } from '@/core/logger'
@@ -60,7 +59,10 @@ export class SimulationBeaconBatchJobRunner extends BatchJobRunner {
 
     try {
       // get transactions
-      const transactions = await this.getTransactions(parameters.sampling)
+      const transactions = await this.getTransactions(
+        parameters.sampling,
+        parameters.defaultRuleInstance
+      )
 
       // simulate transactions
       const executionDetails = await this.simulateTransactions(
@@ -98,15 +100,12 @@ export class SimulationBeaconBatchJobRunner extends BatchJobRunner {
     const actualTransactionsRan = transactions.filter((t) =>
       executedTransactionIds.has(t.transactionId)
     )
-    const casesByTransactions = await this.getCasesFromTransactions(
-      actualTransactionsRan,
-      defaultRuleInstance
-    )
 
     const simulationUsersHit = this.simulationUsersHit(executionDetails)
 
-    const originalFalsePositiveUsers =
-      this.getFalsePositiveCases(casesByTransactions)
+    const originalFalsePositiveUsers = defaultRuleInstance.id
+      ? await this.getFalsePositiveUserIdsByRuleInstance(defaultRuleInstance.id)
+      : []
 
     const falsePositiveCasesCountSimulated =
       this.getSimulatedTransactionsFalsePositiveCount(
@@ -120,28 +119,22 @@ export class SimulationBeaconBatchJobRunner extends BatchJobRunner {
     const ratio = Math.max(1, totalTransactions / actualTransactionsRan.length) // extrapolated ratio
 
     const transactionsHit = defaultRuleInstance.id
-      ? this.distinctTransactionsHitCount(
-          actualTransactionsRan,
-          defaultRuleInstance.id
-        )
+      ? await this.actualTransactionsHitCount(defaultRuleInstance.id)
       : 0
 
     const transactionsHitSimulated =
       this.numberOfTransactionsHit(executionDetails)
 
     const usersHit = defaultRuleInstance.id
-      ? this.getUsersHitByTransactions(transactions, defaultRuleInstance.id)
-          .length
+      ? await this.actualUsersHitCount(defaultRuleInstance.id)
       : 0
 
     return {
       current: {
-        totalCases: Math.round(usersHit * ratio),
-        falsePositivesCases: Math.round(
-          originalFalsePositiveUsers.length * ratio
-        ),
-        usersHit: Math.round(usersHit * ratio),
-        transactionsHit: Math.round(transactionsHit * ratio),
+        totalCases: usersHit,
+        falsePositivesCases: originalFalsePositiveUsers.length,
+        usersHit,
+        transactionsHit,
       },
       simulated: {
         totalCases: Math.round(simulationUsersHit.length * ratio),
@@ -154,31 +147,12 @@ export class SimulationBeaconBatchJobRunner extends BatchJobRunner {
     }
   }
 
-  private getUsersHitByTransactions(
-    transactions: InternalTransaction[],
-    ruleInstanceId: string
-  ): string[] {
-    const userIds = transactions.flatMap((transaction) => {
-      const hit = transaction.hitRules.find(
-        (ruleHit) => ruleHit.ruleInstanceId === ruleInstanceId
-      )
-      if (!hit) {
-        return []
-      }
-      const userIds = []
-      if (!hit.ruleHitMeta?.hitDirections?.length) {
-        return [transaction.originUserId, transaction.destinationUserId]
-      }
-      if (hit.ruleHitMeta?.hitDirections.includes('ORIGIN')) {
-        userIds.push(transaction.originUserId)
-      }
-      if (hit.ruleHitMeta?.hitDirections.includes('DESTINATION')) {
-        userIds.push(transaction.destinationUserId)
-      }
-      return userIds
-    })
-
-    return [...new Set(userIds)].filter((userId) => userId != null) as string[]
+  private async actualUsersHitCount(ruleInstanceId: string): Promise<number> {
+    return (
+      (await this.casesRepository?.getUserCountByRuleInstance(
+        ruleInstanceId
+      )) ?? 0
+    )
   }
 
   private numberOfTransactionsHit(
@@ -211,18 +185,45 @@ export class SimulationBeaconBatchJobRunner extends BatchJobRunner {
   }
 
   private async getTransactions(
-    sampling: SimulationBeaconParameters['sampling']
+    sampling: SimulationBeaconParameters['sampling'],
+    ruleInstance: RuleInstance
   ): Promise<InternalTransaction[]> {
     const transactionRepository = this.transactionRepository
+
+    const ruleHitRatio =
+      ruleInstance.hitCount && ruleInstance.runCount
+        ? ruleInstance.hitCount / ruleInstance.runCount
+        : 0
+
+    const totalCount = Math.min(
+      sampling?.transactionsCount ?? Number.MAX_SAFE_INTEGER,
+      MAX_TRANSACTIONS
+    )
+
+    const hitCount = Math.ceil(totalCount * ruleHitRatio) // Will give as 1 hit at least
+    const missCount = totalCount - hitCount
+
     if (transactionRepository) {
-      const count = Math.min(
-        sampling?.transactionsCount ?? Number.MAX_SAFE_INTEGER,
-        MAX_TRANSACTIONS
+      const transactionsHit =
+        hitCount > 0 && ruleInstance.id
+          ? await transactionRepository.getLastNTransactionsHitByRuleInstance(
+              hitCount,
+              ruleInstance.id
+            )
+          : []
+
+      const transactionsMiss =
+        missCount > 0
+          ? await transactionRepository.getLastNTransactionsNotHitByRuleInstance(
+              missCount,
+              ruleInstance.id
+            )
+          : []
+
+      return _.uniqBy(
+        [...transactionsHit, ...transactionsMiss],
+        'transactionId'
       )
-      const transactions = await transactionRepository.getLastNTransactions(
-        count
-      )
-      return transactions
     }
     return []
   }
@@ -275,64 +276,25 @@ export class SimulationBeaconBatchJobRunner extends BatchJobRunner {
     return filteredExecutionResults
   }
 
-  private getFalsePositiveCases(cases: Case[]): string[] {
-    /**
-     * To get the false positive cases we filter the cases that are closed
-     * and have the reason False positive
-     */
-    const falsePostiveCases = cases.filter(
-      (caseItem) =>
-        caseItem.caseStatus === 'CLOSED' &&
-        caseItem.lastStatusChange?.reason?.includes('False positive')
-    )
-
-    const uniqueUsers = _.chain(falsePostiveCases)
-      .flatMap((caseItem) => [
-        caseItem.caseUsers?.origin?.userId,
-        caseItem.caseUsers?.destination?.userId,
-      ])
-      .compact()
-      .uniq()
-      .value()
-
-    return uniqueUsers
-  }
-
-  private async getCasesFromTransactions(
-    transactions: InternalTransaction[],
-    ruleInstance: RuleInstance
-  ): Promise<Case[]> {
-    const transactionIds = transactions.map(
-      (transaction) => transaction.transactionId
-    )
-    /**
-     * To get the cases hit by the rule we need to get the cases that have
-     * the rule instance id and the transaction id
-     */
-    if (this.casesRepository) {
-      const cases = await this.casesRepository.getCasesByTransactionIds(
-        transactionIds,
-        { 'alerts.ruleInstanceId': ruleInstance.id }
-      )
-      return cases
-    }
-    return []
-  }
-
-  private distinctTransactionsHitCount(
-    transactions: InternalTransaction[],
+  private async getFalsePositiveUserIdsByRuleInstance(
     ruleInstanceId: string
-  ): number {
-    /**
-     * To get the number of transactions hit by the rule we need to filter
-     * the transactions that have the rule id in the hit rules
-     * and then get the length of the array
-     */
-    return transactions.filter((transaction) =>
-      transaction.hitRules.find(
-        (rule) => rule.ruleInstanceId === ruleInstanceId
+  ): Promise<string[]> {
+    const falsePositiveCases =
+      await this.casesRepository?.getFalsePositiveUserIdsByRuleInstance(
+        ruleInstanceId
       )
-    ).length
+
+    return falsePositiveCases ?? []
+  }
+
+  private async actualTransactionsHitCount(
+    ruleInstanceId: string
+  ): Promise<number> {
+    return (
+      (await this.transactionRepository?.getTransactionsCountByQuery({
+        'hitRules.ruleInstanceId': ruleInstanceId,
+      })) ?? 0
+    )
   }
 
   private getSimulatedTransactionsFalsePositiveCount(

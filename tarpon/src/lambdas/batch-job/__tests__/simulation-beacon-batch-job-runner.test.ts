@@ -167,17 +167,15 @@ describe('Simulation Beacon Batch Job Runner', () => {
       },
     ]
 
-    const ruleInstance = await ruleInstanceRepository.getAllRuleInstances()
-    expect(ruleInstance).toHaveLength(1)
+    const ruleInstances = await ruleInstanceRepository.getAllRuleInstances()
+    expect(ruleInstances).toHaveLength(1)
 
-    const ruleInstanceId = ruleInstance[0].id
-
-    const defaultRuleInstance = getRuleInstance(4000, ruleInstanceId)
+    const ruleInstance = ruleInstances[0]
 
     const { jobId, taskIds } =
       await simulationTaskRepository.createSimulationJob({
         type: 'BEACON',
-        defaultRuleInstance,
+        defaultRuleInstance: ruleInstance,
         parameters,
       })
 
@@ -188,7 +186,7 @@ describe('Simulation Beacon Batch Job Runner', () => {
         jobId,
         taskId: taskIds[0],
         ...parameters[0],
-        defaultRuleInstance,
+        defaultRuleInstance: ruleInstance,
       },
     }
 

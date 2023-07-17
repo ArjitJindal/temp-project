@@ -80,7 +80,7 @@ export class ApiUsageMetricsService {
     )
 
     const transactionsCount =
-      await mongoDbTransactionRepository.getTransactionsCountByCreatedAt({
+      await mongoDbTransactionRepository.getTransactionsCountByQuery({
         createdAt: {
           $gte: !monthly ? this.startTimestamp : this.getMonthStartTimestamp(),
           $lte: this.endTimestamp,

@@ -601,6 +601,7 @@ export const createMongoDBCollections = async (
       { 'alerts._id': 1 },
       { 'alerts.lastStatusChange.timestamp': 1 },
       { 'alerts.alertId': 1 },
+      { 'alerts.ruleInstanceId': 1 },
       { 'alerts.alertStatus': 1 },
       { 'alerts.assignments.assigneeUserId': 1 },
       { 'alerts.assignments.timestamp': 1 },
@@ -822,7 +823,7 @@ export async function allCollections(tenantId: string, db: Db) {
 }
 
 export async function syncIndexes<T>(
-  collection: Collection<T>,
+  collection: Collection<T extends Document ? T : Document>,
   indexes: Document[],
   options?: CreateIndexesOptions
 ) {

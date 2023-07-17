@@ -599,6 +599,67 @@ export class CaseRepository {
     return count
   }
 
+  public async getUserCountByRuleInstance(
+    ruleInstanceId: string
+  ): Promise<number> {
+    const db = this.mongoDb.db()
+    const collection = db.collection<Case>(CASES_COLLECTION(this.tenantId))
+
+    const count = await collection.aggregate([
+      {
+        $match: {
+          'alerts.ruleInstanceId': ruleInstanceId,
+        },
+      },
+      {
+        $group: {
+          _id: {
+            $ifNull: [
+              '$caseUsers.origin.userId',
+              '$caseUsers.destination.userId',
+            ],
+          },
+        },
+      },
+      {
+        $count: 'count',
+      },
+    ])
+
+    return count.next().then((result) => result?.count ?? 0)
+  }
+
+  public async getFalsePositiveUserIdsByRuleInstance(
+    ruleInstanceId: string
+  ): Promise<string[]> {
+    const db = this.mongoDb.db()
+    const collection = db.collection<Case>(CASES_COLLECTION(this.tenantId))
+
+    const count = await collection
+      .aggregate([
+        {
+          $match: {
+            'alerts.ruleInstanceId': ruleInstanceId,
+            caseStatus: 'CLOSED',
+            'lastStatusChange.reason': 'False positive',
+          },
+        },
+        {
+          $group: {
+            _id: {
+              $ifNull: [
+                '$caseUsers.origin.userId',
+                '$caseUsers.destination.userId',
+              ],
+            },
+          },
+        },
+      ])
+      .toArray()
+
+    return [...new Set(count.map((item) => item._id))]
+  }
+
   public async getCases(
     params: DefaultApiGetCaseListRequest,
     options: CaseListOptions = {}
