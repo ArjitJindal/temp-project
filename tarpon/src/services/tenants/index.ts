@@ -315,7 +315,7 @@ export class TenantService {
       apiStages: await this.getApiStages(),
       description: tenantData.tenantWebsite,
       ...(!process.env.ENV?.startsWith('prod') && {
-        quota: { limit: 1000, offset: 0, period: 'MONTH' },
+        quota: { limit: 5000, offset: 0, period: 'MONTH' },
       }),
     })
 

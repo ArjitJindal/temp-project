@@ -96,7 +96,7 @@ if [ "$env" == "dev" ] || [ "$env" == "sandbox" ]; then
     --description $tenantWebsite \
     --api-stages "[{\"apiId\": \"$apiId\", \"stage\": \"prod\"}, {\"apiId\": \"$managementApiId\", \"stage\": \"prod\"}]" \
     --throttle burstLimit=6,rateLimit=3 \
-    --quota limit=1000,offset=0,period=MONTH \
+    --quota limit=5000,offset=0,period=MONTH \
     --profile $profile \
     --region $region \
     | jq -r '.id')
