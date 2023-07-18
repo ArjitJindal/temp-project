@@ -10,6 +10,7 @@ export default defineConfig({
     // password: 'SHOULD_BE_PROVIDED_IN_ENV',
   },
   e2e: {
+    defaultCommandTimeout: 15000,
     video: false,
     baseUrl: 'https://console.flagright.dev/',
     experimentalSessionAndOrigin: true,

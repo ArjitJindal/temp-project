@@ -87,7 +87,5 @@ Cypress.Commands.add('caseAlertAction', (action: string) => {
 });
 
 Cypress.Commands.add('message', (text: string) => {
-  cy.get('.ant-message', {
-    timeout: 15000,
-  }).contains(text);
+  cy.get('.ant-message').contains(text);
 });

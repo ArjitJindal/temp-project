@@ -3,7 +3,7 @@ describe('Add a comment to a user', () => {
     cy.loginByForm(Cypress.env('username'), Cypress.env('password'));
   });
 
-  it('should be able to create a comment for a first consumer user', () => {
+  it('should be able to create a comment for a first consumer user with file attachment', () => {
     const commentText = `Test comment body (${new Date().toUTCString()})`;
     const fileName = `file_${Date.now()}.txt`;
     const fileContent = `file content of ${fileName}`;
