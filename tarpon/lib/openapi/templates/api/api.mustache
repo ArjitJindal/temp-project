@@ -62,10 +62,10 @@ export class Handlers {
                         {{#queryParams}}
                             {{#isArray}}
                               {{#isNumber}}
-                        {{paramName}}: event.queryStringParameters?.{{paramName}}?.split(',').map(i => parseInt(i)) as {{baseType}}[] || undefined,
+                        {{paramName}}: (event.queryStringParameters?.{{paramName}} ? event.queryStringParameters.{{paramName}}.split(',').map(i => parseInt(i)) : undefined) as {{baseType}}[],
                               {{/isNumber}}
                               {{^isNumber}}
-                        {{paramName}}: event.queryStringParameters?.{{paramName}}?.split(',') as {{baseType}}[] || undefined,
+                        {{paramName}}: (event.queryStringParameters?.{{paramName}} ? event.queryStringParameters.{{paramName}}.split(',') : undefined) as {{baseType}}[],
                               {{/isNumber}}
                             {{/isArray}}
                             {{^isArray}}
