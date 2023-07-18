@@ -8,6 +8,7 @@ import { config as sandboxConfig } from '@lib/configs/config-sandbox'
 import { config as prodConfigAsia2 } from '@lib/configs/config-prod-asia-2'
 import { config as prodConfigAsia1 } from '@lib/configs/config-prod-asia-1'
 import { config as prodConfigUS1 } from '@lib/configs/config-prod-us-1'
+import { config as prodConfigAu1 } from '@lib/configs/config-prod-au-1'
 import { config as prodConfigEu1 } from '@lib/configs/config-prod-eu-1'
 import { config as prodConfigEu2 } from '@lib/configs/config-prod-eu-2'
 import { CdkTarponStack } from '../cdk-tarpon-stack'
@@ -54,6 +55,10 @@ if (process.env.ENV === 'prod:eu-1') {
 
 if (process.env.ENV === 'prod:eu-2') {
   new CdkTarponStack(app, `${prodConfigEu2.stage}-tarpon`, prodConfigEu2)
+}
+
+if (process.env.ENV === 'prod:au-1') {
+  new CdkTarponStack(app, `${prodConfigAu1.stage}-tarpon`, prodConfigAu1)
 }
 
 if (process.env.ENV === 'prod:us-1') {

@@ -5,6 +5,7 @@ import { config as prodConfigAsia2 } from '@lib/configs/config-prod-asia-2'
 import { config as prodConfigAsia1 } from '@lib/configs/config-prod-asia-1'
 import { config as prodConfigEu1 } from '@lib/configs/config-prod-eu-1'
 import { config as prodConfigEu2 } from '@lib/configs/config-prod-eu-2'
+import { config as prodConfigAu1 } from '@lib/configs/config-prod-au-1'
 import { config as prodConfigUS1 } from '@lib/configs/config-prod-us-1'
 
 export function getConfig() {
@@ -27,6 +28,8 @@ export function getConfig() {
       return prodConfigEu1
     case 'prod:eu-2':
       return prodConfigEu2
+    case 'prod:au-1':
+      return prodConfigAu1
     case 'prod:us-1':
       return prodConfigUS1
     default:

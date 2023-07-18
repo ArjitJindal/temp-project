@@ -9,7 +9,7 @@
     "aws-sso-login:dev": "npm run aws-sso-login --profile=AWSAdministratorAccess-911899431626",
     "aws-sso-login:sandbox": "npm run aws-sso-login --profile=AWSAdministratorAccess-293986822825",
     "aws-sso-login:prod": "npm run aws-sso-login --profile=AWSAdministratorAccess-870721492449",
-    "sso-fallback-message": "echo 'Clear the cookies manually of START_URL i.e. https://d-9a6713bec9.awsapps.com/start#/ and try again. \nOR\nFollow the steps mentioned below:\n1. Open the START_URL i.e. https://d-9a6713bec9.awsapps.com/start#/ in a browser.\n2. Click on the AWS Account Button you see\n3. Click DevsAtFlagright\n4. Click AWSAdministratorAccess | Command Line or Programmatic Access\n5. Click Copy to Clipboard in Option 1\n6. Paste the copied value in the terminal and press enter\n\nNow you should be able to run the command again' && exit 1",
+    "sso-fallback-message": "echo 'Clear the cookies manually of START_URL i.e. https://d-9a6713bec9.awsapps.com/start#/ and try again. \nOR\nFollow the steps mentioned below:\n1. Open the START_URL i.e. https://d-9a6713bec9.awsapps.com/start#/ in a browser.\n2. Click on the AWS Account Button you see\n3. Click Deploy\n4. Click AWSAdministratorAccess | Command Line or Programmatic Access\n5. Click Copy to Clipboard in Option 1\n6. Paste the copied value in the terminal and press enter\n\nNow you should be able to run the command again' && exit 1",
     "synth:dev": "ENV=dev cdk synth dev-phytoplankton",
     "synth:dev:user": "ENV=dev:user cdk synth dev-phytoplankton-$QA_SUBDOMAIN",
     "synth:sandbox": "ENV=sandbox cdk synth sandbox-phytoplankton",

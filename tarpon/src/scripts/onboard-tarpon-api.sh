@@ -59,6 +59,13 @@ elif [ "$env" == "prod-eu-2" ]; then
     profile="AWSAdministratorAccess-870721492449"
     region="eu-west-2"
     tsScriptRegion="prod:eu-2"
+elif [ "$env" == "prod-au-1" ]; then
+    apiPrefix="au-1."
+    apiId=qxh2t1k4gc
+    managementApiId=b6u5mvzk8c
+    profile="AWSAdministratorAccess-870721492449"
+    region="ap-southeast-2"
+    tsScriptRegion="prod:au-1"
 elif [ "$env" == "prod-us-1" ]; then
     apiPrefix="us-1."
     apiId=eb7lsu6eqb

@@ -54,7 +54,7 @@ export class TenantService {
 
   public static getAllTenants = async (
     stage?: Stage,
-    region?: 'eu-1' | 'asia-1' | 'asia-2' | 'us-1' | 'eu-2'
+    region?: 'eu-1' | 'asia-1' | 'asia-2' | 'us-1' | 'eu-2' | 'au-1'
   ): Promise<TenantInfo[]> => {
     const stageOrDefault = stage ?? (process.env.ENV as Stage)
     const regionOrDefault = region ?? process.env.REGION

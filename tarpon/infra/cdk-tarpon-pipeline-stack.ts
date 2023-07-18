@@ -17,6 +17,7 @@ import { config as prodAisa1Config } from '@lib/configs/config-prod-asia-1'
 import { config as prodAisa2Config } from '@lib/configs/config-prod-asia-2'
 import { config as prodEU1Config } from '@lib/configs/config-prod-eu-1'
 import { config as prodEU2Config } from '@lib/configs/config-prod-eu-2'
+import { config as prodAU1Config } from '@lib/configs/config-prod-au-1'
 import { config as prodUS1Config } from '@lib/configs/config-prod-us-1'
 import { Config } from '@lib/configs/config'
 import { DeployConfig } from '@lib/configs/config-deployment'
@@ -337,6 +338,13 @@ export class CdkTarponPipelineStack extends cdk.Stack {
             new codepipeline_actions.CodeBuildAction({
               actionName: 'Deploy_eu-2',
               project: getDeployCodeBuildProject(prodEU2Config),
+              input: sourceOutput,
+              extraInputs: [buildOutput],
+              environmentVariables: prodSentryReleaseSpec.actionEnv,
+            }),
+            new codepipeline_actions.CodeBuildAction({
+              actionName: 'Deploy_au-1',
+              project: getDeployCodeBuildProject(prodAU1Config),
               input: sourceOutput,
               extraInputs: [buildOutput],
               environmentVariables: prodSentryReleaseSpec.actionEnv,
