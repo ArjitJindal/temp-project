@@ -1,5 +1,6 @@
 import { Duration, Environment } from 'aws-cdk-lib'
 import { BillingMode } from 'aws-cdk-lib/aws-dynamodb'
+import { RetentionDays } from 'aws-cdk-lib/aws-logs'
 
 type ApiGatewayConfig = {
   CACHE?: {
@@ -13,6 +14,9 @@ export type Config = {
   region?: 'eu-1' | 'asia-1' | 'asia-2' | 'us-1' | 'eu-2' | 'au-1'
   env: Environment
   resource: {
+    CLOUD_WATCH: {
+      logRetention: RetentionDays
+    }
     DYNAMODB: {
       READ_CAPACITY?: number
       WRITE_CAPACITY?: number

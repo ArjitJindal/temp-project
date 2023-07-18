@@ -10,15 +10,15 @@ export const createVpcLogGroup = (
   scope: Construct,
   vpc: IVpc,
   options: {
-    isDev?: boolean
     name: string
+    logRetention: RetentionDays
   }
 ): void => {
-  const { isDev, name } = options
+  const { name, logRetention } = options
 
   const logGroup = new LogGroup(scope, `log-group-${name}`, {
     logGroupName: `/aws/vpc/${name}`,
-    retention: isDev ? RetentionDays.TWO_WEEKS : undefined,
+    retention: logRetention,
   })
 
   vpc.addFlowLog(`flow-log-${name}`, {

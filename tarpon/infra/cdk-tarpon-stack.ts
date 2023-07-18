@@ -1199,7 +1199,7 @@ export class CdkTarponStack extends cdk.Stack {
 
     createVpcLogGroup(this, vpc, {
       name: 'MongoAtlas',
-      isDev: false,
+      logRetention: this.config.resource.CLOUD_WATCH.logRetention,
     })
 
     const securityGroup = new SecurityGroup(

@@ -1,4 +1,5 @@
 import { BillingMode } from 'aws-cdk-lib/aws-dynamodb'
+import { RetentionDays } from 'aws-cdk-lib/aws-logs'
 import { Config } from './config'
 
 const account = '911899431626'
@@ -8,6 +9,9 @@ export const config: Config = {
   stage: 'dev',
   env: { account, region },
   resource: {
+    CLOUD_WATCH: {
+      logRetention: RetentionDays.TWO_WEEKS,
+    },
     DYNAMODB: {
       BILLING_MODE: BillingMode.PAY_PER_REQUEST,
     },

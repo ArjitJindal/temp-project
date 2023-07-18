@@ -18,7 +18,6 @@ import { LAMBDAS } from '@lib/lambdas'
 import { StackConstants } from '@lib/constants'
 import { Config } from '@lib/configs/config'
 import { Duration } from 'aws-cdk-lib'
-import { RetentionDays } from 'aws-cdk-lib/aws-logs'
 
 type InternalFunctionProps = {
   name: string
@@ -107,8 +106,7 @@ export function createFunction(
       ? memorySize
       : context.config.resource.LAMBDA_DEFAULT.MEMORY_SIZE,
     layers: layersArray,
-    logRetention:
-      context.config.stage === 'dev' ? RetentionDays.TWO_WEEKS : undefined,
+    logRetention: context.config.resource.CLOUD_WATCH.logRetention,
   })
   // This is needed to allow using ${Function.Arn} in openapi.yaml
   ;(func.node.defaultChild as CfnFunction).overrideLogicalId(name)

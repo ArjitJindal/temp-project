@@ -11,7 +11,7 @@ import {
   ResponseType,
   SpecRestApi,
 } from 'aws-cdk-lib/aws-apigateway'
-import { LogGroup, RetentionDays } from 'aws-cdk-lib/aws-logs'
+import { LogGroup } from 'aws-cdk-lib/aws-logs'
 import { Asset } from 'aws-cdk-lib/aws-s3-assets'
 import { Construct } from 'constructs'
 import _ from 'lodash'
@@ -120,8 +120,7 @@ export function createApiGateway(
   const logGroupName = getResourceName(`API-Gateway-Execution-Logs_${apiName}`)
   const apiLogGroup = new LogGroup(context, logGroupId, {
     logGroupName,
-    retention:
-      context.config.stage === 'dev' ? RetentionDays.TWO_WEEKS : undefined,
+    retention: context.config.resource.CLOUD_WATCH.logRetention,
     removalPolicy:
       context.config.stage === 'dev'
         ? RemovalPolicy.DESTROY

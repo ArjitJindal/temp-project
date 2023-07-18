@@ -21,6 +21,7 @@ import { config as prodAU1Config } from '@lib/configs/config-prod-au-1'
 import { config as prodUS1Config } from '@lib/configs/config-prod-us-1'
 import { Config } from '@lib/configs/config'
 import { DeployConfig } from '@lib/configs/config-deployment'
+import { RetentionDays } from 'aws-cdk-lib/aws-logs'
 import { createVpcLogGroup } from './cdk-utils/cdk-log-group-utils'
 
 const PIPELINE_NAME = 'tarpon-pipeline'
@@ -166,7 +167,7 @@ export class CdkTarponPipelineStack extends cdk.Stack {
 
     createVpcLogGroup(this, vpc, {
       name: 'codebuild',
-      isDev: false,
+      logRetention: RetentionDays.TWO_MONTHS,
     })
 
     const getDeployCodeBuildProject = (config: Config) => {

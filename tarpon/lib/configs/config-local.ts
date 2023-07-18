@@ -1,3 +1,4 @@
+import { RetentionDays } from 'aws-cdk-lib/aws-logs'
 import { Config } from './config'
 
 const account = '911899431626'
@@ -7,6 +8,9 @@ export const config: Config = {
   stage: 'local',
   env: { account: account, region: region },
   resource: {
+    CLOUD_WATCH: {
+      logRetention: RetentionDays.TWO_WEEKS,
+    },
     DYNAMODB: {
       READ_CAPACITY: 1,
       WRITE_CAPACITY: 1,
