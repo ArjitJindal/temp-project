@@ -12,5 +12,7 @@ export default defineConfig({
   e2e: {
     video: false,
     baseUrl: 'https://console.flagright.dev/',
+    experimentalSessionAndOrigin: true,
   },
+  chromeWebSecurity: false,
 });

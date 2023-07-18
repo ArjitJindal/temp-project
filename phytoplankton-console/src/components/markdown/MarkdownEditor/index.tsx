@@ -96,6 +96,7 @@ function createToolButton(content: string, cb: () => void) {
   button.style.backgroundImage = 'none';
   button.style.margin = '0';
   button.innerHTML = content;
+  button.setAttribute('data-cy', 'attach-files-button');
   button.addEventListener('click', cb);
   return button;
 }

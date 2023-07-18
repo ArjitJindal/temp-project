@@ -11,6 +11,12 @@ declare global {
       loginByRequest(username: string, password: string): Chainable<Element>;
       multiSelect(preSelector: string, text: string): Chainable<Element>;
       caseAlertAction(action: string): Chainable<Element>;
+
+      /**
+       * Looks for a popup message by a text
+       * @param text
+       */
+      message(text: string): Chainable<Element>;
     }
   }
 }

@@ -40,6 +40,7 @@ export default function CommentButton(props: Props) {
         setCommentFormValues((prev) => {
           return { ...prev, files: [] };
         });
+        setTooltipVisible(false);
       },
       onError: (error) => {
         message.fatal(`Unable to add comment! ${getErrorMessage(error)}`, error);
@@ -81,6 +82,7 @@ export default function CommentButton(props: Props) {
           isDisabled={props.disabled}
           icon={<WechatLineIcon />}
           requiredPermissions={requiredPermissions}
+          testName="comment-button"
         >
           Comment
         </Button>

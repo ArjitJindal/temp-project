@@ -75,7 +75,7 @@ function CommentEditor(props: Props, ref: React.Ref<CommentEditorRef>) {
 
   const isCommentTooLong = values.comment.length > MAX_COMMENT_LENGTH;
   return (
-    <div className={s.commentEditor}>
+    <div className={s.commentEditor} data-cy="comment-editor">
       <div className={s.commentEditorInput}>
         <MarkdownEditor
           ref={editorRef}

@@ -2,9 +2,9 @@
 
 Cypress.Commands.add('loginByForm', (username: string, password: string) => {
   const loginUrl = Cypress.env('loginUrl');
-  cy.visit(loginUrl);
-  cy.location('host').should('eq', new URL(loginUrl).host);
+  cy.visit(Cypress.config('baseUrl') as string);
 
+  cy.url().should('contains', `${loginUrl}`);
   cy.get('input#username').type(username);
   cy.get('input#password').type(password);
   cy.get('div:not(.ulp-button-bar-hidden) > button[type=submit]').first().click({ force: true });
@@ -84,4 +84,10 @@ Cypress.Commands.add('caseAlertAction', (action: string) => {
   })
     .contains(action)
     .click();
+});
+
+Cypress.Commands.add('message', (text: string) => {
+  cy.get('.ant-message', {
+    timeout: 15000,
+  }).contains(text);
 });

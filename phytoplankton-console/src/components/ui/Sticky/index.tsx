@@ -29,6 +29,7 @@ export default function Sticky(props: Props) {
           <>
             {ReactDOM.createPortal(
               <div
+                data-cy="sticky"
                 className={s.root}
                 style={{
                   position: isSticky ? 'fixed' : 'absolute',

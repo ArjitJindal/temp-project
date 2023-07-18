@@ -27,7 +27,7 @@ export const FilesList: React.FC<Props> = ({
   return (
     <div className={cn(s.fileList, fixedHeight && s.fileListContainerFixedHeight)}>
       {files.map((file) => (
-        <div key={file.s3Key} className={s.fileAttachmentButton}>
+        <div key={file.s3Key} className={s.fileAttachmentButton} data-cy="attached-file">
           <Space>
             <PaperClipOutlined style={{ color: COLORS.purpleGray.base }} />
             <a className={`${showGreyBackground ? s.fileListText : ''}`} href={file.downloadLink}>

@@ -24,7 +24,7 @@ export default function Comment(props: Props) {
   const user = useUser(comment.userId);
 
   return (
-    <div className={styles.root}>
+    <div className={styles.root} data-cy="comment">
       <div className={styles.left}>
         <div
           className={styles.avatar}
