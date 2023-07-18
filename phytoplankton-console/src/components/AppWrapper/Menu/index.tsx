@@ -1,4 +1,3 @@
-import { Popover } from 'antd';
 import { ImportOutlined } from '@ant-design/icons';
 import React, { useContext, useEffect } from 'react';
 import { SideBarContext } from '../Providers/SidebarProvider';
@@ -42,11 +41,6 @@ const icons = {
 };
 
 const branding = getBranding();
-const disabledMessage = (
-  <div>
-    Please <a href={`mailto:${branding.supportEmail}`}>contact us</a> to access this feature.
-  </div>
-);
 
 function renderItems(
   parentTranslationKey: string,
@@ -79,15 +73,7 @@ function renderItems(
           to={item.path}
           isCollapsed={isCollapsed}
           isDisabled={item.disabled}
-          icon={
-            item.disabled ? (
-              <Popover content={disabledMessage} placement={'left'}>
-                {icon}
-              </Popover>
-            ) : (
-              icon
-            )
-          }
+          icon={icon}
           submenu={submenu}
         >
           {i18n(fullKey as TranslationId)}

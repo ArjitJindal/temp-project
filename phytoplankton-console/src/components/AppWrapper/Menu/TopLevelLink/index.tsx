@@ -4,6 +4,7 @@ import { Popover } from 'antd';
 import s from './index.module.less';
 import SubMenu, { SubMenuItem } from './SubMenu';
 import ChevronDownIcon from './chevron-down.react.svg';
+import { getBranding } from '@/utils/branding';
 
 interface Props {
   to: string;
@@ -18,7 +19,12 @@ interface Props {
 
 export default function TopLevelLink(props: Props) {
   const { to, icon, children, submenu, isExternal, isCollapsed, isActive, isDisabled } = props;
-
+  const branding = getBranding();
+  const disabledMessage = (
+    <div>
+      Please <a href={`mailto:${branding.supportEmail}`}>contact us</a> to access this feature.
+    </div>
+  );
   const sharedProps = {
     'aria-disabled': isDisabled,
     title: isCollapsed ? children : undefined,
@@ -44,7 +50,11 @@ export default function TopLevelLink(props: Props) {
   let resultEl: JSX.Element;
 
   if (isDisabled) {
-    resultEl = <li {...sharedProps}>{newChildren}</li>;
+    resultEl = (
+      <Popover content={disabledMessage} placement="left">
+        <li {...sharedProps}>{newChildren}</li>
+      </Popover>
+    );
   } else if (isExternal) {
     resultEl = (
       <a href={to} target="_blank" {...sharedProps}>
