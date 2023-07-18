@@ -201,7 +201,7 @@ export class CaseService extends CaseAlertsCommonService {
           .map((alert) => alert.alertId!)
 
         if (updates.caseStatus === 'ESCALATED' && options?.reviewAssignments) {
-          await this.alertsService.updateReviewAssigneeToAlerts(
+          await this.alertsService.updateAlertsReviewAssignments(
             alertIds,
             options.reviewAssignments
           )
@@ -252,19 +252,24 @@ export class CaseService extends CaseAlertsCommonService {
   public async getCase(
     caseId: string,
     options?: { logAuditLogView?: boolean }
-  ): Promise<Case | null> {
+  ): Promise<Case> {
     const caseEntity = await this.caseRepository.getCaseById(caseId)
 
     if (options?.logAuditLogView) {
       await this.auditLogService.handleViewCase(caseId)
     }
 
-    return (
+    const case_ =
       (caseEntity &&
         isCaseAvailable(caseEntity) &&
         this.getAugmentedCase(caseEntity)) ||
       null
-    )
+
+    if (case_ == null) {
+      throw new NotFound(`Case not found: ${caseId}`)
+    }
+
+    return case_
   }
 
   public async saveCaseComment(caseId: string | undefined, comment: Comment) {

@@ -5,12 +5,12 @@ import {
   Organization,
   User,
   AuthenticationClient,
+  UserMetadata,
 } from 'auth0'
 import {
   APIGatewayEventLambdaAuthorizerContext,
   APIGatewayProxyWithLambdaAuthorizerEvent,
 } from 'aws-lambda'
-import { UserMetadata } from 'aws-sdk/clients/elastictranscoder'
 import { MongoClient } from 'mongodb'
 import { TenantRepository } from '../tenants/repositories/tenant-repository'
 import { Account as ApiAccount } from '@/@types/openapi-internal/Account'
@@ -23,8 +23,13 @@ import { RoleService } from '@/services/roles'
 import { getContext } from '@/core/utils/context'
 import { ACCOUNTS_COLLECTION, getMongoDbClient } from '@/utils/mongoDBUtils'
 import { JWTAuthorizerResult } from '@/@types/jwt'
-import { traceable } from '@/core/xray'
+import {
+  DefaultApiAccountsChangeTenantRequest,
+  DefaultApiAccountsEditRequest,
+  DefaultApiAccountsInviteRequest,
+} from '@/@types/openapi-internal/RequestParameters'
 import { getDynamoDbClient } from '@/utils/dynamodb'
+import { traceable } from '@/core/xray'
 import { AccountInvitePayload } from '@/@types/openapi-internal/AccountInvitePayload'
 
 // Current TS typings for auth0  (@types/auth0@2.35.0) are outdated and
@@ -77,6 +82,7 @@ export class AccountsService {
 
     return new AccountsService({ auth0Domain }, { mongoDb })
   }
+
   constructor(
     config: { auth0Domain: string },
     connections: { mongoDb: MongoClient }
@@ -86,6 +92,46 @@ export class AccountsService {
     this.roleService = new RoleService({
       auth0Domain: this.config.auth0Domain,
     })
+  }
+
+  public async accountsInviteHandler(
+    request: DefaultApiAccountsInviteRequest,
+    tenantId: string,
+    organization: Tenant
+  ): Promise<Account> {
+    const {
+      role: inviteRole = 'analyst',
+      email,
+      isEscalationContact,
+    } = request.AccountInvitePayload
+
+    const rolesService = new RoleService({
+      auth0Domain: this.config.auth0Domain,
+    })
+
+    if (inviteRole === 'root') {
+      throw new Forbidden(`It's not possible to create a root user`)
+    }
+    const dynamoDb = await getDynamoDbClient()
+    const allAccounts: Account[] = await this.getTenantAccounts(organization)
+    const existingAccount = allAccounts.filter(
+      (account) => account.role !== 'root' && account.blocked === false
+    )
+    const tenantRepository = new TenantRepository(tenantId, { dynamoDb })
+    const tenantSettings = await tenantRepository.getTenantSettings()
+    if (
+      tenantSettings?.limits?.seats &&
+      existingAccount.length >= tenantSettings?.limits?.seats
+    ) {
+      throw new Forbidden(`You have reached the maximum number of users`)
+    }
+    const user = await this.createAccountInOrganization(organization, {
+      email,
+      role: inviteRole,
+      isEscalationContact,
+    })
+    await rolesService.setRole(tenantId, user.id, inviteRole)
+    return user
   }
 
   public async getAllActiveAccounts(): Promise<Account[]> {
@@ -166,7 +212,17 @@ export class AccountsService {
     if (organization == null) {
       throw new Conflict('User suppose to be a member of tenant organization')
     }
+
     return AccountsService.organizationToTenant(organization)
+  }
+
+  public async accountsChangeTenantHandler(
+    request: DefaultApiAccountsChangeTenantRequest,
+    userId: string
+  ) {
+    const { newTenantId } = request.ChangeTenantPayload
+    await this.changeUserTenant(request.accountId, newTenantId, userId)
+    return
   }
 
   async getTenantById(tenantId: string): Promise<Tenant | null> {
@@ -429,6 +485,20 @@ export class AccountsService {
 
     await this.updateAuth0UserInMongo(tenant.id, idToDelete, {
       blocked: true,
+    })
+  }
+
+  async patchUserHandler(
+    request: DefaultApiAccountsEditRequest,
+    tenant: Tenant
+  ): Promise<Account> {
+    const { role, isEscalationContact } = request.AccountPatchPayload
+    if (role === 'root') {
+      throw new Forbidden(`It's not possible to set a root role`)
+    }
+    return await this.patchUser(tenant, request.accountId, {
+      role,
+      isEscalationContact,
     })
   }
 

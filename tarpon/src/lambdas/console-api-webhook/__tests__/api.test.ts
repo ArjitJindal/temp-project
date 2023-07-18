@@ -5,11 +5,14 @@ import {
   TestApiEndpointOptions,
 } from '@/test-utils/apigateway-test-utils'
 import { WebhookDeliveryRepository } from '@/services/webhook/repositories/webhook-delivery-repository'
+import { setSkipAuditLogs } from '@/test-utils/auditlog-test-utils'
 
 const testApiEndPoints = new TestApiEndpoint(
   WebhookRepository,
   webhookConfigurationHandler
 )
+
+setSkipAuditLogs()
 
 describe.each<TestApiEndpointOptions>([
   { method: 'GET', path: '/webhooks', methodName: 'getWebhooks' },

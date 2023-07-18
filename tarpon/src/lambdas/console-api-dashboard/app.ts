@@ -3,18 +3,13 @@ import {
   APIGatewayProxyWithLambdaAuthorizerEvent,
 } from 'aws-lambda'
 import { BadRequest } from 'http-errors'
-import {
-  DashboardStatsRepository,
-  GranularityValuesType,
-} from './repositories/dashboard-stats-repository'
+import { DashboardStatsRepository } from './repositories/dashboard-stats-repository'
 import { lambdaApi } from '@/core/middlewares/lambda-api-middlewares'
 import { JWTAuthorizerResult, assertCurrentUserRole } from '@/@types/jwt'
 import { getMongoDbClient } from '@/utils/mongoDBUtils'
-import { CaseStatus } from '@/@types/openapi-internal/CaseStatus'
-import { AlertStatus } from '@/@types/openapi-internal/AlertStatus'
-import { parseStrings } from '@/utils/lambda'
 import { AccountsService } from '@/services/accounts'
 import { Account } from '@/@types/openapi-internal/Account'
+import { Handlers } from '@/@types/openapi-internal-custom/DefaultApi'
 
 export function shouldRefreshAll(
   event: APIGatewayProxyWithLambdaAuthorizerEvent<
@@ -37,28 +32,16 @@ export const dashboardStatsHandler = lambdaApi()(
       APIGatewayEventLambdaAuthorizerContext<JWTAuthorizerResult>
     >
   ) => {
-    if (
-      event.httpMethod === 'GET' &&
-      event.path.endsWith('/dashboard_stats/transactions')
-    ) {
+    const handlers = new Handlers()
+
+    handlers.registerGetDashboardStatsTransactions(async (ctx, request) => {
+      const { tenantId } = ctx
+      const { startTimestamp, endTimestamp, granularity } = request
       const client = await getMongoDbClient()
-      const { principalId: tenantId } = event.requestContext.authorizer
-      const { startTimestamp, endTimestamp, granularity } =
-        event.queryStringParameters as {
-          startTimestamp?: string
-          endTimestamp?: string
-          granularity?: GranularityValuesType
-        }
-      const endTimestampNumber = endTimestamp
-        ? parseInt(endTimestamp)
-        : Number.NaN
-      if (Number.isNaN(endTimestampNumber)) {
+      if (!endTimestamp) {
         throw new BadRequest(`Wrong timestamp format: ${endTimestamp}`)
       }
-      const startTimestampNumber = startTimestamp
-        ? parseInt(startTimestamp)
-        : Number.NaN
-      if (Number.isNaN(startTimestampNumber)) {
+      if (!startTimestamp) {
         throw new BadRequest(`Wrong timestamp format: ${startTimestamp}`)
       }
       const dashboardStatsRepository = new DashboardStatsRepository(tenantId, {
@@ -67,157 +50,110 @@ export const dashboardStatsHandler = lambdaApi()(
       if (shouldRefreshAll(event)) {
         await dashboardStatsRepository.refreshAllStats()
       }
-
       const data = await dashboardStatsRepository.getTransactionCountStats(
-        startTimestampNumber,
-        endTimestampNumber,
+        startTimestamp,
+        endTimestamp,
         granularity
       )
       return {
         data,
       }
-    } else if (
-      event.httpMethod === 'GET' &&
-      event.path.endsWith('/dashboard_stats/hits_per_user')
-    ) {
+    })
+
+    handlers.registerGetDashboardStatsHitsPerUser(async (ctx, request) => {
       const client = await getMongoDbClient()
-      const { principalId: tenantId } = event.requestContext.authorizer
-      const { startTimestamp, endTimestamp, direction } =
-        event.queryStringParameters as {
-          startTimestamp?: string
-          endTimestamp?: string
-          direction: 'ORIGIN' | 'DESTINATION'
-        }
-      const endTimestampNumber = endTimestamp
-        ? parseInt(endTimestamp)
-        : Number.NaN
-      if (Number.isNaN(endTimestampNumber)) {
+      const { tenantId } = ctx
+      const { startTimestamp, endTimestamp, direction } = request
+      if (!endTimestamp) {
         throw new BadRequest(`Wrong timestamp format: ${endTimestamp}`)
       }
-      const startTimestampNumber = startTimestamp
-        ? parseInt(startTimestamp)
-        : Number.NaN
-      if (Number.isNaN(startTimestampNumber)) {
+      if (!startTimestamp) {
         throw new BadRequest(`Wrong timestamp format: ${startTimestamp}`)
       }
-
       const dashboardStatsRepository = new DashboardStatsRepository(tenantId, {
         mongoDb: client,
       })
       if (shouldRefreshAll(event)) {
         await dashboardStatsRepository.refreshAllStats()
       }
-
       return {
         data: await dashboardStatsRepository.getHitsByUserStats(
-          startTimestampNumber,
-          endTimestampNumber,
+          startTimestamp,
+          endTimestamp,
           direction
         ),
       }
-    } else if (
-      event.httpMethod === 'GET' &&
-      event.path.endsWith('/dashboard_stats/rule_hit')
-    ) {
+    })
+
+    handlers.registerGetDashboardStatsRuleHit(async (ctx, request) => {
       const client = await getMongoDbClient()
-      const { principalId: tenantId } = event.requestContext.authorizer
-      const { startTimestamp, endTimestamp } = event.queryStringParameters as {
-        startTimestamp?: string
-        endTimestamp?: string
-      }
+      const { tenantId } = ctx
+      const { startTimestamp, endTimestamp } = request
       const dashboardStatsRepository = new DashboardStatsRepository(tenantId, {
         mongoDb: client,
       })
       if (shouldRefreshAll(event)) {
         await dashboardStatsRepository.refreshAllStats()
       }
-
-      const endTimestampNumber = endTimestamp
-        ? parseInt(endTimestamp)
-        : Number.NaN
-      if (Number.isNaN(endTimestampNumber)) {
+      if (!endTimestamp) {
         throw new BadRequest(`Wrong timestamp format: ${endTimestamp}`)
       }
-      const startTimestampNumber = startTimestamp
-        ? parseInt(startTimestamp)
-        : Number.NaN
-      if (Number.isNaN(startTimestampNumber)) {
+      if (!startTimestamp) {
         throw new BadRequest(`Wrong timestamp format: ${startTimestamp}`)
       }
-
       return {
         data: await dashboardStatsRepository.getRuleHitCountStats(
-          startTimestampNumber,
-          endTimestampNumber
+          startTimestamp,
+          endTimestamp
         ),
       }
-    } else if (
-      event.httpMethod === 'GET' &&
-      event.path.endsWith('/dashboard_stats/drs-distribution')
-    ) {
-      const client = await getMongoDbClient()
-      const { principalId: tenantId } = event.requestContext.authorizer
+    })
 
-      const dashboardStatsRepository = new DashboardStatsRepository(tenantId, {
-        mongoDb: client,
-      })
+    handlers.registerGetDashboardStatsDrsDistribution(async (ctx) => {
+      const client = await getMongoDbClient()
+      const dashboardStatsRepository = new DashboardStatsRepository(
+        ctx.tenantId,
+        { mongoDb: client }
+      )
       if (shouldRefreshAll(event)) {
         await dashboardStatsRepository.refreshAllStats()
       }
-
       const data = await dashboardStatsRepository.getDRSDistributionStats()
       return {
         data,
       }
-    } else if (
-      event.httpMethod === 'GET' &&
-      event.path.endsWith('/dashboard_stats/team')
-    ) {
+    })
+
+    handlers.registerGetDashboardTeamStats(async (ctx, request) => {
       const client = await getMongoDbClient()
-      const {
-        principalId: tenantId,
-        userId,
-        auth0Domain,
-      } = event.requestContext.authorizer
-      const queryStringParameters = event.queryStringParameters as {
-        scope: 'CASES' | 'ALERTS'
-        startTimestamp: string
-        endTimestamp: string
-        caseStatus?: string
-      }
+      const { auth0Domain } = event.requestContext.authorizer
+      const { scope, startTimestamp, endTimestamp, caseStatus } = request
+      const { tenantId, userId } = ctx
       const mongoDb = await getMongoDbClient()
       const accountsService = new AccountsService({ auth0Domain }, { mongoDb })
       const organization = await accountsService.getAccountTenant(userId)
       const accounts: Account[] = await accountsService.getTenantAccounts(
         organization
       )
-
       const accountIds = accounts
         .filter((account) => account.role !== 'root')
         .map((account) => account.id)
-
-      const { scope, startTimestamp, endTimestamp, caseStatus } =
-        queryStringParameters
-
       const dashboardStatsRepository = new DashboardStatsRepository(tenantId, {
         mongoDb: client,
       })
-
       await dashboardStatsRepository.refreshTeamStats({
-        startTimestamp: startTimestamp ? parseInt(startTimestamp) : 0,
-        endTimestamp: endTimestamp
-          ? parseInt(endTimestamp)
-          : Number.MAX_SAFE_INTEGER,
+        startTimestamp: startTimestamp ? startTimestamp : 0,
+        endTimestamp: endTimestamp ? endTimestamp : Number.MAX_SAFE_INTEGER,
       })
-
-      return dashboardStatsRepository.getTeamStatistics(
+      return await dashboardStatsRepository.getTeamStatistics(
         scope,
-        startTimestamp ? parseInt(startTimestamp) : 0,
-        endTimestamp ? parseInt(endTimestamp) : Number.MAX_SAFE_INTEGER,
-        parseStrings<CaseStatus | AlertStatus>(caseStatus),
+        startTimestamp ? startTimestamp : 0,
+        endTimestamp ? endTimestamp : Number.MAX_SAFE_INTEGER,
+        caseStatus,
         accountIds
       )
-    }
-    throw new BadRequest('Unsupported path')
+    })
+
+    return await handlers.handle(event)
   }
 )

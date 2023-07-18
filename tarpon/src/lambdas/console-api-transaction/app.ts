@@ -9,14 +9,13 @@ import { lambdaApi } from '@/core/middlewares/lambda-api-middlewares'
 import { getS3ClientByEvent } from '@/utils/s3'
 import { getMongoDbClient } from '@/utils/mongoDBUtils'
 import { MongoDbTransactionRepository } from '@/services/rules-engine/repositories/mongodb-transaction-repository'
-import { DefaultApiGetTransactionsListRequest } from '@/@types/openapi-internal/RequestParameters'
 import { CsvHeaderSettings, ExportService } from '@/services/export'
 import { InternalTransaction } from '@/@types/openapi-internal/InternalTransaction'
 import { getDynamoDbClient } from '@/utils/dynamodb'
 import { RiskRepository } from '@/services/risk-scoring/repositories/risk-repository'
 import { UserRepository } from '@/services/users/repositories/user-repository'
 import { TransactionEventRepository } from '@/services/rules-engine/repositories/transaction-event-repository'
-import { PaymentMethod } from '@/@types/tranasction/payment-type'
+import { Handlers } from '@/@types/openapi-internal-custom/DefaultApi'
 
 export type TransactionViewConfig = {
   TMP_BUCKET: string
@@ -108,90 +107,11 @@ export const transactionsViewHandler = lambdaApi()(
       DOCUMENT_BUCKET
     )
 
-    if (event.httpMethod === 'GET' && event.path.endsWith('/transactions')) {
-      const {
-        page,
-        pageSize,
-        afterTimestamp,
-        beforeTimestamp,
-        filterId,
-        filterOutStatus,
-        filterOutCaseStatus,
-        filterTransactionState,
-        filterRulesHit,
-        filterRulesExecuted,
-        filterOriginCurrencies,
-        filterDestinationCurrencies,
-        filterUserId,
-        filterOriginUserId,
-        filterDestinationUserId,
-        transactionType,
-        sortField,
-        sortOrder,
-        includeUsers,
-        includeEvents,
-        filterStatus,
-        filterCaseStatus,
-        filterOriginPaymentMethods,
-        filterDestinationPaymentMethods,
-        filterTagKey,
-        filterTagValue,
-        from,
-        order,
-        filterOriginPaymentMethodId,
-        filterDestinationPaymentMethodId,
-        filterTransactionStatus,
-        filterRuleInstancesHit,
-      } = event.queryStringParameters as any
-      const params: DefaultApiGetTransactionsListRequest = {
-        pageSize: parseInt(pageSize) || 50,
-        _from: from,
-        order,
-        page,
-        afterTimestamp: parseInt(afterTimestamp) || undefined,
-        beforeTimestamp: parseInt(beforeTimestamp),
-        filterId,
-        filterOutStatus,
-        filterOutCaseStatus,
-        filterTransactionState: filterTransactionState
-          ? filterTransactionState.split(',')
-          : undefined,
-        filterStatus: filterStatus ? filterStatus.split(',') : undefined,
-        filterCaseStatus,
-        filterRulesExecuted: filterRulesExecuted
-          ? filterRulesExecuted.split(',')
-          : undefined, // todo: need a proper parser for url
-        filterRulesHit: filterRulesHit ? filterRulesHit.split(',') : undefined, // todo: need a proper parser for url
-        filterUserId,
-        filterOriginUserId,
-        filterDestinationUserId,
-        transactionType,
-        sortField: sortField,
-        sortOrder: sortOrder,
-        filterOriginCurrencies: filterOriginCurrencies
-          ? filterOriginCurrencies.split(',')
-          : undefined,
-        filterDestinationCurrencies: filterDestinationCurrencies
-          ? filterDestinationCurrencies.split(',')
-          : undefined,
-        includeUsers: includeUsers === 'true',
-        includeEvents: includeEvents === 'true',
-        filterOriginPaymentMethods: filterOriginPaymentMethods
-          ? (filterOriginPaymentMethods.split(',') as PaymentMethod[])
-          : undefined,
-        filterDestinationPaymentMethods: filterDestinationPaymentMethods
-          ? (filterDestinationPaymentMethods.split(',') as PaymentMethod[])
-          : undefined,
-        filterTagKey,
-        filterTagValue,
-        filterOriginPaymentMethodId,
-        filterDestinationPaymentMethodId,
-        filterTransactionStatus: filterTransactionStatus
-          ? filterTransactionStatus.split(',')
-          : undefined,
-        filterRuleInstancesHit: filterRuleInstancesHit,
-      }
-      const response = await transactionService.getTransactions(params)
+    const handlers = new Handlers()
+
+    handlers.registerGetTransactionsList(async (context, request) => {
+      const { includeUsers, includeEvents } = request
+      const response = await transactionService.getTransactions(request)
       if (includeUsers) {
         const userIds = Array.from(
           new Set<string>(
@@ -223,233 +143,44 @@ export const transactionsViewHandler = lambdaApi()(
         })
       }
       return response
-    } else if (
-      event.httpMethod === 'GET' &&
-      event.path.endsWith('/transactions/stats/by-types')
-    ) {
-      const {
-        page,
-        pageSize,
-        afterTimestamp,
-        beforeTimestamp,
-        filterId,
-        filterOutStatus,
-        filterOutCaseStatus,
-        filterTransactionState,
-        filterRulesHit,
-        filterRulesExecuted,
-        filterOriginCurrencies,
-        filterDestinationCurrencies,
-        filterUserId,
-        filterOriginUserId,
-        filterDestinationUserId,
-        transactionType,
-        sortField,
-        sortOrder,
-        includeUsers,
-        includeEvents,
-        filterStatus,
-        filterCaseStatus,
-        filterOriginPaymentMethod,
-        filterDestinationPaymentMethod,
-        filterTagKey,
-        filterTagValue,
-        referenceCurrency,
-      } = event.queryStringParameters as any
+    })
 
-      const params: DefaultApiGetTransactionsListRequest = {
-        page,
-        pageSize,
-        afterTimestamp: parseInt(afterTimestamp) || undefined,
-        beforeTimestamp: parseInt(beforeTimestamp),
-        filterId,
-        filterOutStatus,
-        filterOutCaseStatus,
-        filterTransactionState: filterTransactionState
-          ? filterTransactionState.split(',')
-          : undefined,
-        filterStatus: filterStatus ? filterStatus.split(',') : undefined,
-        filterCaseStatus,
-        filterRulesExecuted: filterRulesExecuted
-          ? filterRulesExecuted.split(',')
-          : undefined, // todo: need a proper parser for url
-        filterRulesHit: filterRulesHit ? filterRulesHit.split(',') : undefined, // todo: need a proper parser for url
-        filterUserId,
-        filterOriginUserId,
-        filterDestinationUserId,
-        transactionType,
-        sortField: sortField,
-        sortOrder: sortOrder,
-        filterOriginCurrencies: filterOriginCurrencies
-          ? filterOriginCurrencies.split(',')
-          : undefined,
-        filterDestinationCurrencies: filterDestinationCurrencies
-          ? filterDestinationCurrencies.split(',')
-          : undefined,
-        includeUsers: includeUsers === 'true',
-        includeEvents: includeEvents === 'true',
-        filterOriginPaymentMethods: filterOriginPaymentMethod
-          ? [filterOriginPaymentMethod]
-          : undefined,
-        filterDestinationPaymentMethods: filterDestinationPaymentMethod
-          ? [filterDestinationPaymentMethod]
-          : undefined,
-        filterTagKey,
-        filterTagValue,
-      }
-      const result = await transactionService.getStatsByType(
-        params,
-        referenceCurrency ?? 'USD'
-      )
-      return {
-        data: result,
-      }
-    } else if (
-      event.httpMethod === 'GET' &&
-      event.path.endsWith('/transactions/stats/by-time')
-    ) {
-      const {
-        pageSize,
-        page,
-        afterTimestamp,
-        beforeTimestamp,
-        filterId,
-        filterOutStatus,
-        filterOutCaseStatus,
-        filterTransactionState,
-        filterRulesHit,
-        filterRulesExecuted,
-        filterOriginCurrencies,
-        filterDestinationCurrencies,
-        filterUserId,
-        filterOriginUserId,
-        filterDestinationUserId,
-        transactionType,
-        sortField,
-        sortOrder,
-        includeUsers,
-        includeEvents,
-        filterStatus,
-        filterCaseStatus,
-        filterOriginPaymentMethod,
-        filterDestinationPaymentMethod,
-        filterTagKey,
-        filterTagValue,
-        referenceCurrency,
-      } = event.queryStringParameters as any
+    handlers.registerGetTransactionsStatsByType(async (context, request) => ({
+      data: await transactionService.getStatsByType(
+        request,
+        request.referenceCurrency || 'USD'
+      ),
+    }))
 
-      const params: DefaultApiGetTransactionsListRequest = {
-        pageSize,
-        page,
-        afterTimestamp: parseInt(afterTimestamp) || undefined,
-        beforeTimestamp: parseInt(beforeTimestamp),
-        filterId,
-        filterOutStatus,
-        filterOutCaseStatus,
-        filterTransactionState: filterTransactionState
-          ? filterTransactionState.split(',')
-          : undefined,
-        filterStatus: filterStatus ? filterStatus.split(',') : undefined,
-        filterCaseStatus,
-        filterRulesExecuted: filterRulesExecuted
-          ? filterRulesExecuted.split(',')
-          : undefined, // todo: need a proper parser for url
-        filterRulesHit: filterRulesHit ? filterRulesHit.split(',') : undefined, // todo: need a proper parser for url
-        filterUserId,
-        filterOriginUserId,
-        filterDestinationUserId,
-        transactionType,
-        sortField: sortField,
-        sortOrder: sortOrder,
-        filterOriginCurrencies: filterOriginCurrencies
-          ? filterOriginCurrencies.split(',')
-          : undefined,
-        filterDestinationCurrencies: filterDestinationCurrencies
-          ? filterDestinationCurrencies.split(',')
-          : undefined,
-        includeUsers: includeUsers === 'true',
-        includeEvents: includeEvents === 'true',
-        filterOriginPaymentMethods: filterOriginPaymentMethod
-          ? [filterOriginPaymentMethod]
-          : undefined,
-        filterDestinationPaymentMethods: filterDestinationPaymentMethod
-          ? [filterDestinationPaymentMethod]
-          : undefined,
-        filterTagKey,
-        filterTagValue,
-      }
-      const result = await transactionService.getStatsByTime(
-        params,
-        referenceCurrency ?? 'USD'
-      )
-      return {
-        data: result,
-      }
-    } else if (
-      event.httpMethod === 'GET' &&
-      event.path.endsWith('/transactions/export')
-    ) {
+    handlers.registerGetTransactionsStatsByTime(async (context, request) => ({
+      data: await transactionService.getStatsByTime(
+        request,
+        request.referenceCurrency || 'USD'
+      ),
+    }))
+
+    handlers.registerGetTransactionsListExport(async (context, request) => {
       const exportService = new ExportService<InternalTransaction>(
         'case',
         s3,
         TMP_BUCKET
       )
-      const {
-        pageSize,
-        page,
-        afterTimestamp,
-        beforeTimestamp,
-        filterId,
-        filterOutStatus,
-        filterRulesHit,
-        filterRulesExecuted,
-        filterOriginCurrencies,
-        filterDestinationCurrencies,
-        filterTagKey,
-        filterTagValue,
-        sortField,
-        sortOrder,
-      } = event.queryStringParameters as any
-      const params: DefaultApiGetTransactionsListRequest = {
-        pageSize: pageSize,
-        page: page,
-        afterTimestamp: parseInt(afterTimestamp) || undefined,
-        beforeTimestamp: parseInt(beforeTimestamp),
-        filterId,
-        filterOutStatus,
-        filterRulesExecuted: filterRulesExecuted
-          ? filterRulesExecuted.split(',')
-          : undefined, // todo: need a proper parser for url
-        filterRulesHit: filterRulesHit ? filterRulesHit.split(',') : undefined, // todo: need a proper parser for url
-        filterOriginCurrencies: filterOriginCurrencies
-          ? filterOriginCurrencies.split(',')
-          : undefined,
-        filterDestinationCurrencies: filterDestinationCurrencies
-          ? filterDestinationCurrencies.split(',')
-          : undefined,
-        filterTagKey,
-        filterTagValue,
-        sortField: sortField,
-        sortOrder: sortOrder,
-      }
-
       const transactionsCount = await transactionService.getTransactionsCount(
-        params
+        request
       )
-      const maximumExportSize = parseInt(MAXIMUM_ALLOWED_EXPORT_SIZE)
-      if (Number.isNaN(maximumExportSize)) {
+      const maxAllowedExportSize = parseInt(MAXIMUM_ALLOWED_EXPORT_SIZE)
+      if (Number.isNaN(maxAllowedExportSize)) {
         throw new InternalServerError(
           `Wrong environment configuration, cannot get MAXIMUM_ALLOWED_EXPORT_SIZE`
         )
       }
-      if (transactionsCount > maximumExportSize) {
-        // todo: i18n
+      if (transactionsCount > maxAllowedExportSize) {
         throw new BadRequest(
-          `File size is too large, it should not have more than ${maximumExportSize} rows! Please add more filters to make it smaller`
+          `File size is too large, it should not have more than ${maxAllowedExportSize} rows! Please add more filters to make it smaller`
         )
       }
       let transactionsCursor =
-        await transactionRepository.getTransactionsCursor(params)
+        await transactionRepository.getTransactionsCursor(request)
 
       transactionsCursor = transactionsCursor.map((transaction) => {
         return {
@@ -464,31 +195,28 @@ export const transactionsViewHandler = lambdaApi()(
         transactionsCursor,
         TRANSACTION_EXPORT_HEADERS_SETTINGS
       )
-    } else if (
-      event.httpMethod === 'GET' &&
-      event.path.endsWith('/transactions/uniques')
-    ) {
-      const { field, filter } = event.queryStringParameters as any
+    })
+
+    handlers.registerGetTransactionsUniques(async (context, request) => {
+      const { field, filter } = request
       const result = await transactionService.getUniques({
         field,
         direction: 'origin',
         filter,
       })
       return result.filter((item) => item != null)
-    } else if (
-      event.httpMethod === 'GET' &&
-      event.resource === '/transactions/{transactionId}' &&
-      event.pathParameters?.transactionId
-    ) {
+    })
+
+    handlers.registerGetTransaction(async (context, request) => {
       const transaction = await transactionService.getTransaction(
-        event.pathParameters.transactionId
+        request.transactionId
       )
       if (transaction == null) {
         throw new NotFound(`Unable to find transaction`)
       }
       return transaction
-    }
+    })
 
-    throw new Error('Unhandled request')
+    return await handlers.handle(event)
   }
 )

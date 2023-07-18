@@ -29,6 +29,9 @@ export interface CursorPaginationResponse<T> {
   prev: string
   hasNext: boolean
   hasPrev: boolean
+  count: number
+  limit: number
+  last: string
 }
 
 export type OptionalPagination<Params> = Omit<Params, 'pageSize' | 'page'> &

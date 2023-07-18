@@ -189,7 +189,7 @@ export class UserService {
       },
       'CONSUMER'
     )
-    return 'OK'
+    return
   }
 
   public async updateBusinessUser(
@@ -221,7 +221,7 @@ export class UserService {
       },
       'BUSINESS'
     )
-    return 'OK'
+    return
   }
 
   private getDownloadLink(file: FileInfo): string {

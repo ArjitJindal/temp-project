@@ -8,10 +8,12 @@ import { AccountsService } from '@/services/accounts'
 import { TenantService } from '@/services/tenants'
 import { TenantRepository } from '@/services/tenants/repositories/tenant-repository'
 import { setSkipRoleCheck } from '@/test-utils/user-test-utils'
+import { setSkipAuditLogs } from '@/test-utils/auditlog-test-utils'
 
 const testApiEndPoints = new TestApiEndpoint(AccountsService, tenantsHandler)
 
 setSkipRoleCheck()
+setSkipAuditLogs()
 
 describe.each<TestApiEndpointOptions>([
   { method: 'GET', path: '/tenants', methodName: 'getTenants' },

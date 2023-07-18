@@ -6,8 +6,11 @@ import {
   mockServiceMethod,
 } from '@/test-utils/apigateway-test-utils'
 import { RuleInstanceRepository } from '@/services/rules-engine/repositories/rule-instance-repository'
+import { setSkipAuditLogs } from '@/test-utils/auditlog-test-utils'
 
 const testApiEndPoints = new TestApiEndpoint(RuleService, ruleHandler)
+
+setSkipAuditLogs()
 
 describe.each<TestApiEndpointOptions>([
   { method: 'GET', path: '/rules', methodName: 'getAllRules' },
@@ -37,13 +40,13 @@ const ruleInstanceTestApiEndPoints = new TestApiEndpoint(
 describe.each<TestApiEndpointOptions>([
   {
     method: 'PUT',
-    path: '/{ruleInstanceId}',
+    path: '/rule_instances/{ruleInstanceId}',
     methodName: 'createOrUpdateRuleInstance',
     payload: { ruleInstanceId: 'ruleInstanceId' },
   },
   {
     method: 'DELETE',
-    path: '/{ruleInstanceId}',
+    path: '/rule_instances/{ruleInstanceId}',
     methodName: 'deleteRuleInstance',
     payload: { ruleInstanceId: 'ruleInstanceId' },
   },

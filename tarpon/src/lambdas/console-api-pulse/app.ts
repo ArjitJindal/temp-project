@@ -5,20 +5,14 @@ import {
 import { BadRequest } from 'http-errors'
 import { StackConstants } from '@lib/constants'
 import { PulseAuditLogService } from './services/pulse-audit-log'
-import { logger } from '@/core/logger'
 import { lambdaApi } from '@/core/middlewares/lambda-api-middlewares'
-import { updateLogMetadata } from '@/core/utils/context'
 import { getDynamoDbClientByEvent } from '@/utils/dynamodb'
 import { JWTAuthorizerResult } from '@/@types/jwt'
 import { RiskRepository } from '@/services/risk-scoring/repositories/risk-repository'
 import { RiskClassificationScore } from '@/@types/openapi-internal/RiskClassificationScore'
-import { PostPulseRiskParameters } from '@/@types/openapi-internal/PostPulseRiskParameters'
 import { getMongoDbClient } from '@/utils/mongoDBUtils'
-import { RiskEntityType } from '@/@types/openapi-internal/RiskEntityType'
-import {
-  ParameterAttributeRiskValues,
-  ParameterAttributeRiskValuesParameterEnum,
-} from '@/@types/openapi-internal/ParameterAttributeRiskValues'
+import { Handlers } from '@/@types/openapi-internal-custom/DefaultApi'
+import { ParameterAttributeRiskValuesParameterEnum } from '@/@types/openapi-internal/ParameterAttributeRiskValues'
 
 export const riskClassificationHandler = lambdaApi({
   requiredFeatures: ['PULSE'],
@@ -34,42 +28,31 @@ export const riskClassificationHandler = lambdaApi({
     const riskRepository = new RiskRepository(tenantId, { dynamoDb })
     const auditLogService = new PulseAuditLogService(tenantId)
 
-    if (
-      event.httpMethod === 'GET' &&
-      event.resource === '/pulse/risk-classification'
-    ) {
-      try {
-        return riskRepository.getRiskClassificationValues()
-      } catch (e) {
-        logger.error(e)
-        return e
-      }
-    } else if (
-      event.httpMethod === 'POST' &&
-      event.resource === '/pulse/risk-classification' &&
-      event.body
-    ) {
-      const classificationValues = JSON.parse(
-        event.body
-      ) as RiskClassificationScore[]
-      validateClassificationRequest(classificationValues)
+    const handlers = new Handlers()
 
+    handlers.registerGetPulseRiskClassification(
+      async () => await riskRepository.getRiskClassificationValues()
+    )
+
+    handlers.registerPostPulseRiskClassification(async (ctx, request) => {
+      validateClassificationRequest(request.RiskClassificationScore)
       const oldClassificationValues =
         await riskRepository.getRiskClassificationValues()
-
       const result =
         await riskRepository.createOrUpdateRiskClassificationConfig(
-          classificationValues
+          request.RiskClassificationScore
         )
       const newClassificationValues = result.classificationValues
-
+      const oldClassificationValuesAsRiskClassificationScore =
+        oldClassificationValues
       await auditLogService.handleAuditLogForRiskClassificationsUpdated(
-        oldClassificationValues as unknown as RiskClassificationScore[],
+        oldClassificationValuesAsRiskClassificationScore,
         newClassificationValues
       )
       return newClassificationValues
-    }
-    throw new BadRequest('Unhandled request')
+    })
+
+    return await handlers.handle(event)
   }
 )
 
@@ -97,60 +80,43 @@ export const parameterRiskAssignmentHandler = lambdaApi({
     >
   ) => {
     const { principalId: tenantId } = event.requestContext.authorizer
-    logger.info('tenantId', tenantId)
     const auditLogService = new PulseAuditLogService(tenantId)
     const dynamoDb = getDynamoDbClientByEvent(event)
     const riskRepository = new RiskRepository(tenantId, { dynamoDb })
-    if (
-      event.httpMethod === 'POST' &&
-      event.resource === '/pulse/risk-parameter'
-    ) {
-      if (!event.body) {
-        throw new BadRequest('Empty body')
+    const handlers = new Handlers()
+
+    handlers.registerGetPulseRiskParameter(async (ctx, request) => {
+      const { parameter, entityType } = request
+      if (parameter == null || entityType == null) {
+        throw new BadRequest(
+          'Invalid request - please provide parameter and entityType'
+        )
       }
-      let parameterRiskLevels: PostPulseRiskParameters
-      try {
-        parameterRiskLevels = JSON.parse(event.body)
-      } catch (e) {
-        throw new BadRequest('Invalid Request')
-      }
+      return await riskRepository.getParameterRiskItem(
+        parameter as ParameterAttributeRiskValuesParameterEnum,
+        entityType
+      )
+    })
+
+    handlers.registerPostPulseRiskParameter(async (ctx, request) => {
+      const { parameterAttributeRiskValues } = request.PostPulseRiskParameters
       const oldParameterRiskItemValue =
         await riskRepository.getParameterRiskItem(
-          parameterRiskLevels.parameterAttributeRiskValues.parameter,
-          parameterRiskLevels.parameterAttributeRiskValues.riskEntityType
+          parameterAttributeRiskValues.parameter,
+          parameterAttributeRiskValues.riskEntityType
         )
-
       const newParameterRiskItemValue =
         await riskRepository.createOrUpdateParameterRiskItem(
-          parameterRiskLevels.parameterAttributeRiskValues
+          parameterAttributeRiskValues
         )
-
       await auditLogService.handleParameterRiskItemUpdate(
-        oldParameterRiskItemValue as unknown as ParameterAttributeRiskValues,
+        oldParameterRiskItemValue,
         newParameterRiskItemValue
       )
-
       return newParameterRiskItemValue
-    } else if (
-      event.httpMethod === 'GET' &&
-      event.resource === '/pulse/risk-parameter'
-    ) {
-      const parameter = (event.queryStringParameters || {})
-        .parameter as ParameterAttributeRiskValuesParameterEnum
+    })
 
-      const entityType = (event.queryStringParameters || {})
-        .entityType as RiskEntityType
-
-      if (parameter == null) {
-        throw new BadRequest(`"parameter" is a required query parameter`)
-      }
-      if (entityType == null) {
-        throw new BadRequest(`"entity type" is a required query parameter`)
-      }
-
-      return await riskRepository.getParameterRiskItem(parameter, entityType)
-    }
-    throw new BadRequest('Unhandled request')
+    return await handlers.handle(event)
   }
 )
 
@@ -163,7 +129,6 @@ export const manualRiskAssignmentHandler = lambdaApi({
     >
   ) => {
     const { principalId: tenantId } = event.requestContext.authorizer
-    const { userId } = event.queryStringParameters as any
     const auditLogService = new PulseAuditLogService(tenantId)
     // todo: need to assert that user has this feature enabled
     const dynamoDb = getDynamoDbClientByEvent(event)
@@ -172,43 +137,34 @@ export const manualRiskAssignmentHandler = lambdaApi({
       dynamoDb,
       mongoDb: client,
     })
-    if (
-      event.httpMethod === 'POST' &&
-      event.resource === '/pulse/risk-assignment'
-    ) {
-      if (!event.body) {
-        throw new BadRequest('Empty body')
-      }
-      let body
-      try {
-        body = JSON.parse(event.body)
-      } catch (e) {
-        throw new BadRequest('Invalid Request')
-      }
+    const handlers = new Handlers()
 
+    handlers.registerGetPulseRiskAssignment(async (ctx, request) =>
+      riskRepository.getDRSRiskItem(request.userId)
+    )
+
+    handlers.registerPulseManualRiskAssignment(async (ctx, request) => {
+      const { riskLevel, isUpdatable } = request.ManualRiskAssignmentPayload
+      const { userId } = request
+      if (!riskLevel) {
+        throw new BadRequest('Invalid request - please provide riskLevel')
+      }
       const oldDrsRiskItem = await riskRepository.getDRSRiskItem(userId)
-
       const newDrsRiskItem =
         await riskRepository.createOrUpdateManualDRSRiskItem(
           userId,
-          body.riskLevel,
-          body.isUpdatable
+          riskLevel,
+          isUpdatable
         )
-
       await auditLogService.handleDrsUpdate(
         oldDrsRiskItem,
         newDrsRiskItem,
         'MANUAL'
       )
-
       return newDrsRiskItem
-    } else if (
-      event.httpMethod === 'GET' &&
-      event.resource === '/pulse/risk-assignment'
-    ) {
-      return riskRepository.getDRSRiskItem(userId)
-    }
-    throw new BadRequest('Unhandled request')
+    })
+
+    return await handlers.handle(event)
   }
 )
 
@@ -230,43 +186,23 @@ export const riskLevelAndScoreHandler = lambdaApi({
       mongoDb: client,
     })
 
-    if (event.httpMethod === 'GET' && event.resource === '/pulse/krs-value') {
-      const userId = (event.queryStringParameters || {}).userId as string
-      logger.info(`userId: ${userId}`)
-      if (userId == null) {
-        throw new BadRequest(`"userId" is a requred query parameter`)
-      }
-      logger.info(`Getting KRS`)
+    const handlers = new Handlers()
 
-      return riskRepository.getKrsValueFromMongo(userId)
-    }
-    if (event.httpMethod === 'GET' && event.resource === '/pulse/ars-value') {
-      const transactionId = (event.queryStringParameters || {})
-        .transactionId as string
-      logger.info(`transactionId: ${transactionId}`)
-      if (transactionId == null) {
-        throw new BadRequest(`"transactionId" is a requred query parameter`)
-      }
-      logger.info(`Getting ARS`)
-      logger.info(
-        `ARS: ${await riskRepository.getArsValueFromMongo(transactionId)}`
-      )
+    handlers.registerGetKrsValue(
+      async (ctx, request) =>
+        await riskRepository.getKrsValueFromMongo(request.userId)
+    )
 
-      return await riskRepository.getArsValueFromMongo(transactionId)
-    }
-    if (event.httpMethod === 'GET' && event.resource === '/pulse/drs-value') {
-      const userId = (event.queryStringParameters || {}).userId as string
-      updateLogMetadata({
-        userId,
-      })
-      if (userId == null) {
-        throw new BadRequest(`"transactionId" is a requred query parameter`)
-      }
-      logger.info(`Getting DRS`)
-      const score = await riskRepository.getDrsValueFromMongo(userId)
-      logger.info(`DRS: ${score}`)
-      return score
-    }
-    throw new BadRequest('Unhandled request')
+    handlers.registerGetArsValue(
+      async (ctx, request) =>
+        await riskRepository.getArsValueFromMongo(request.transactionId)
+    )
+
+    handlers.registerGetDrsValue(
+      async (ctx, request) =>
+        await riskRepository.getDrsValueFromMongo(request.userId)
+    )
+
+    return await handlers.handle(event)
   }
 )

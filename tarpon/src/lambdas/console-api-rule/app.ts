@@ -3,14 +3,15 @@ import {
   APIGatewayProxyWithLambdaAuthorizerEvent,
 } from 'aws-lambda'
 import _ from 'lodash'
+import { NotFound } from 'http-errors'
 import { RuleService } from '@/services/rules-engine/rule-service'
 import { lambdaApi } from '@/core/middlewares/lambda-api-middlewares'
 import { JWTAuthorizerResult } from '@/@types/jwt'
 import { getDynamoDbClientByEvent } from '@/utils/dynamodb'
 import { RuleRepository } from '@/services/rules-engine/repositories/rule-repository'
 import { RuleInstanceRepository } from '@/services/rules-engine/repositories/rule-instance-repository'
-import { Rule } from '@/@types/openapi-internal/Rule'
 import { RuleAuditLogService } from '@/services/rules-engine/rules-audit-log-service'
+import { Handlers } from '@/@types/openapi-internal-custom/DefaultApi'
 
 export const ruleHandler = lambdaApi()(
   async (
@@ -27,37 +28,31 @@ export const ruleHandler = lambdaApi()(
     })
     const ruleService = new RuleService(ruleRepository, ruleInstanceRepository)
 
-    if (event.httpMethod === 'GET' && event.path.endsWith('/rules')) {
-      const rules = await ruleService.getAllRules()
-      return rules
-    } else if (
-      event.httpMethod === 'GET' &&
-      event.resource === '/rule-filters'
-    ) {
-      return await ruleService.getAllRuleFilters()
-    } else if (
-      event.httpMethod === 'POST' &&
-      event.path.endsWith('/rules') &&
-      event.body
-    ) {
-      const rule = JSON.parse(event.body) as Rule
-      return ruleService.createOrUpdateRule(rule)
-    } else if (
-      event.httpMethod === 'PUT' &&
-      event.pathParameters?.ruleId &&
-      event.body
-    ) {
-      const rule = JSON.parse(event.body) as Rule
-      return ruleService.createOrUpdateRule({
-        ...rule,
-        id: event.pathParameters.ruleId,
-      })
-    } else if (event.httpMethod === 'DELETE' && event.pathParameters?.ruleId) {
-      await ruleService.deleteRule(event.pathParameters.ruleId)
-      return 'OK'
-    }
+    const handlers = new Handlers()
 
-    throw new Error('Unhandled request')
+    handlers.registerGetRules(async () => await ruleService.getAllRules())
+
+    handlers.registerGetRuleFilters(async () => {
+      return await ruleService.getAllRuleFilters()
+    })
+
+    handlers.registerPostRules(
+      async (ctx, request) => await ruleService.createOrUpdateRule(request.Rule)
+    )
+
+    handlers.registerPutRuleRuleId(async (ctx, request) => {
+      await ruleService.createOrUpdateRule({
+        ...request.Rule,
+        id: request.ruleId,
+      })
+      return
+    })
+
+    handlers.registerDeleteRulesRuleId(
+      async (ctx, request) => await ruleService.deleteRule(request.ruleId)
+    )
+
+    return await handlers.handle(event)
   }
 )
 
@@ -75,53 +70,53 @@ export const ruleInstanceHandler = lambdaApi()(
       dynamoDb,
     })
     const ruleService = new RuleService(ruleRepository, ruleInstanceRepository)
-    const ruleInstanceId = event.pathParameters?.ruleInstanceId
     const rulesAuditLogService = new RuleAuditLogService(tenantId)
-    if (event.httpMethod === 'PUT' && ruleInstanceId) {
-      if (!event.body) {
-        throw new Error('missing payload!')
-      }
+
+    const handlers = new Handlers()
+
+    handlers.registerGetRuleInstances(
+      async () => await ruleService.getAllRuleInstances()
+    )
+
+    handlers.registerPutRuleInstancesRuleInstanceId(async (ctx, request) => {
       const oldRuleInstance = await ruleInstanceRepository.getRuleInstanceById(
-        ruleInstanceId
+        request.ruleInstanceId
       )
       const newRuleInstance = await ruleService.createOrUpdateRuleInstance({
-        id: ruleInstanceId,
-        ...JSON.parse(event.body),
+        id: request.ruleInstanceId,
+        ...request.RuleInstance,
       })
       await rulesAuditLogService.handleAuditLogForRuleInstanceUpdated(
         oldRuleInstance,
         newRuleInstance
       )
       return newRuleInstance
-    } else if (event.httpMethod === 'DELETE' && ruleInstanceId) {
+    })
+
+    handlers.registerDeleteRuleInstancesRuleInstanceId(async (ctx, request) => {
       const oldRuleInstance = await ruleInstanceRepository.getRuleInstanceById(
-        ruleInstanceId
+        request.ruleInstanceId
       )
-      if (oldRuleInstance != null) {
-        await ruleService.deleteRuleInstance(ruleInstanceId)
-        await rulesAuditLogService.handleAuditLogForRuleInstanceDeleted(
-          oldRuleInstance
-        )
+      if (!oldRuleInstance) {
+        throw new NotFound('Rule instance not found')
       }
-      return 'OK'
-    } else if (
-      event.httpMethod === 'POST' &&
-      event.path.endsWith('/rule_instances') &&
-      event.body
-    ) {
+      await ruleService.deleteRuleInstance(request.ruleInstanceId)
+      await rulesAuditLogService.handleAuditLogForRuleInstanceDeleted(
+        oldRuleInstance
+      )
+      return
+    })
+
+    handlers.registerPostRuleInstances(async (ctx, request) => {
       const newRuleInstance = await ruleService.createOrUpdateRuleInstance(
-        JSON.parse(event.body)
+        request.RuleInstance
       )
       await rulesAuditLogService.handleAuditLogForRuleInstanceCreated(
         newRuleInstance
       )
       return newRuleInstance
-    } else if (
-      event.httpMethod === 'GET' &&
-      event.path.endsWith('/rule_instances')
-    ) {
-      return ruleService.getAllRuleInstances()
-    }
-    throw new Error('Unhandled request')
+    })
+
+    return await handlers.handle(event)
   }
 )

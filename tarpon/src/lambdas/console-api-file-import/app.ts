@@ -1,17 +1,14 @@
-import * as AWS from 'aws-sdk'
 import { v4 as uuidv4 } from 'uuid'
 import {
   APIGatewayEventLambdaAuthorizerContext,
   APIGatewayProxyWithLambdaAuthorizerEvent,
 } from 'aws-lambda'
-import * as createError from 'http-errors'
 import { ImportRepository } from './import-repository'
 import { getS3ClientByEvent } from '@/utils/s3'
-import { PresignedUrlResponse } from '@/@types/openapi-internal/PresignedUrlResponse'
-import { ImportRequest } from '@/@types/openapi-internal/ImportRequest'
 import { lambdaApi } from '@/core/middlewares/lambda-api-middlewares'
 import { JWTAuthorizerResult } from '@/@types/jwt'
 import { getMongoDbClient } from '@/utils/mongoDBUtils'
+import { Handlers } from '@/@types/openapi-internal-custom/DefaultApi'
 import { getCredentialsFromEvent } from '@/utils/credentials'
 
 export type FileImportConfig = {
@@ -32,19 +29,23 @@ export const fileImportHandler = lambdaApi()(
       mongoDb,
     })
 
-    if (event.httpMethod === 'POST' && event.body) {
-      const importRequest: ImportRequest = JSON.parse(event.body)
-      await importRepository.postFileImport(
-        importRequest,
-        tenantName,
-        getCredentialsFromEvent(event)
-      )
-      return
-    } else if (event.httpMethod === 'GET' && event.pathParameters?.importId) {
-      return importRepository.getFileImport(event.pathParameters.importId)
-    }
+    const handlers = new Handlers()
 
-    throw new createError.NotImplemented()
+    handlers.registerPostImport(
+      async (ctx, request) =>
+        await importRepository.postFileImport(
+          request.ImportRequest,
+          tenantName,
+          getCredentialsFromEvent(event)
+        )
+    )
+
+    handlers.registerGetImportImportId(
+      async (ctx, request) =>
+        await importRepository.getFileImport(request.importId)
+    )
+
+    return await handlers.handle(event)
   }
 )
 
@@ -55,21 +56,21 @@ export type GetPresignedUrlConfig = {
 export const getPresignedUrlHandler = lambdaApi()(
   async (
     event: APIGatewayProxyWithLambdaAuthorizerEvent<
-      APIGatewayEventLambdaAuthorizerContext<AWS.STS.Credentials>
+      APIGatewayEventLambdaAuthorizerContext<JWTAuthorizerResult>
     >
-  ): Promise<PresignedUrlResponse> => {
+  ) => {
     const { TMP_BUCKET } = process.env as GetPresignedUrlConfig
-    const { principalId: tenantId } = event.requestContext.authorizer
     const s3 = getS3ClientByEvent(event)
 
-    const s3Key = `${tenantId}/${uuidv4()}`
-    const bucketParams = {
-      Bucket: TMP_BUCKET,
-      Key: s3Key,
-      Expires: 3600,
-    }
-    const presignedUrl = s3.getSignedUrl('putObject', bucketParams)
+    const handlers = new Handlers()
 
-    return { presignedUrl, s3Key }
+    handlers.registerPostGetPresignedUrl(async (ctx) => {
+      const s3Key = `${ctx.tenantId}/${uuidv4()}`
+      const bucketParams = { Bucket: TMP_BUCKET, Key: s3Key, Expires: 3600 }
+      const presignedUrl = s3.getSignedUrl('putObject', bucketParams)
+      return { presignedUrl, s3Key }
+    })
+
+    return await handlers.handle(event)
   }
 )

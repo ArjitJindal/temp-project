@@ -164,7 +164,7 @@ export class RuleService {
     await this.ruleRepository.deleteRule(ruleId)
   }
 
-  async getAllRuleInstances(): Promise<ReadonlyArray<RuleInstance>> {
+  async getAllRuleInstances(): Promise<RuleInstance[]> {
     return this.ruleInstanceRepository.getAllRuleInstances()
   }
 

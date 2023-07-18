@@ -59,12 +59,16 @@ export class ImportRepository {
     )
   }
 
-  public async getFileImport(importId: string): Promise<FileImport | null> {
+  public async getFileImport(importId: string): Promise<FileImport> {
     const db = this.mongoDb.db()
     const collection = db.collection<FileImport>(
       IMPORT_COLLECTION(this.tenantId)
     )
-    return collection.findOne({ _id: importId })
+    const data = await collection.findOne({ _id: importId })
+    if (!data) {
+      throw new Error(`File import ${importId} not found`)
+    }
+    return data
   }
 
   public async postFileImport(

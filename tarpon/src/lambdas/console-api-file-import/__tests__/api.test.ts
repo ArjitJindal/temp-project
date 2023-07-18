@@ -13,11 +13,16 @@ const testApiEndPoints = new TestApiEndpoint(
 describe.each<TestApiEndpointOptions>([
   {
     method: 'GET',
-    path: '/',
+    path: '/import/{importId}',
     methodName: 'getFileImport',
     payload: { importId: 'importId' },
   },
-  { method: 'POST', path: '/', methodName: 'postFileImport' },
+  {
+    method: 'POST',
+    path: '/import',
+    methodName: 'postFileImport',
+    payload: { importId: 'importId' },
+  },
 ])('File Import API', ({ method, path, payload, methodName }) => {
   testApiEndPoints.testApi({ method, path, payload }, methodName)
 })

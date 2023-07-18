@@ -2,16 +2,11 @@ import {
   APIGatewayEventLambdaAuthorizerContext,
   APIGatewayProxyWithLambdaAuthorizerEvent,
 } from 'aws-lambda'
-import { BadRequest, Forbidden } from 'http-errors'
 import { AccountsService } from '../../services/accounts'
 import { lambdaApi } from '@/core/middlewares/lambda-api-middlewares'
 import { assertCurrentUserRole, JWTAuthorizerResult } from '@/@types/jwt'
-import { Account } from '@/@types/openapi-internal/Account'
-import { ChangeTenantPayload } from '@/@types/openapi-internal/ChangeTenantPayload'
-import { AccountInvitePayload } from '@/@types/openapi-internal/AccountInvitePayload'
-import { AccountSettings } from '@/@types/openapi-internal/AccountSettings'
-import { AccountPatchPayload } from '@/@types/openapi-internal/AccountPatchPayload'
 import { getMongoDbClient } from '@/utils/mongoDBUtils'
+import { Handlers } from '@/@types/openapi-internal-custom/DefaultApi'
 
 export const accountsHandler = lambdaApi()(
   async (
@@ -23,96 +18,55 @@ export const accountsHandler = lambdaApi()(
     const mongoDb = await getMongoDbClient()
     const accountsService = new AccountsService({ auth0Domain }, { mongoDb })
     const organization = await accountsService.getAccountTenant(userId)
+    const handlers = new Handlers()
 
-    if (event.httpMethod === 'GET' && event.resource === '/me') {
-      return await accountsService.getAccount(userId)
-    }
+    handlers.registerMe(async () => await accountsService.getAccount(userId))
 
-    if (event.httpMethod === 'GET' && event.resource === '/accounts') {
-      // todo: this call can only return up to 1000 users, need to handle this
-      const accounts: Account[] = await accountsService.getTenantAccounts(
-        organization
-      )
-      return accounts
-    } else if (event.httpMethod === 'POST' && event.resource === '/accounts') {
+    handlers.registerGetAccounts(
+      async () => await accountsService.getTenantAccounts(organization)
+    )
+
+    handlers.registerAccountsInvite(async (ctx, request) => {
       assertCurrentUserRole('admin')
-      if (event.body == null) {
-        throw new BadRequest(`Body should not be empty`)
-      }
-      const body: AccountInvitePayload = JSON.parse(event.body)
-      return await accountsService.inviteAccount(organization, body)
-    } else if (
-      event.httpMethod === 'POST' &&
-      event.resource === '/accounts/{accountId}/change_tenant'
-    ) {
-      assertCurrentUserRole('root')
-      const { pathParameters } = event
-      if (event.body == null) {
-        throw new BadRequest(`Body should not be empty`)
-      }
-      const { newTenantId } = JSON.parse(event.body) as ChangeTenantPayload
-      if (!pathParameters?.accountId) {
-        throw new BadRequest(`accountId is not provided`)
-      }
-      if (newTenantId == null) {
-        throw new BadRequest(`newTenantId is not provided`)
-      }
-      await accountsService.changeUserTenant(
-        pathParameters?.accountId,
-        newTenantId,
-        userId
+      return await accountsService.inviteAccount(
+        organization,
+        request.AccountInvitePayload
       )
-      return true
-    } else if (event.resource === '/accounts/{accountId}') {
-      const { pathParameters } = event
-      const accountId = pathParameters?.accountId
-      if (event.httpMethod === 'DELETE') {
-        assertCurrentUserRole('admin')
-        if (!accountId) {
-          throw new BadRequest(`accountId is not provided`)
-        }
-        await accountsService.deleteUser(organization, accountId)
-        return true
-      } else if (event.httpMethod === 'POST') {
-        assertCurrentUserRole('admin')
-        if (event.body == null) {
-          throw new BadRequest(`Body should not be empty`)
-        }
-        const patchPayload = JSON.parse(event.body) as AccountPatchPayload
-        if (patchPayload.role === 'root') {
-          throw new Forbidden(`It's not possible to set a root role`)
-        }
+    })
 
-        if (!accountId) {
-          throw new BadRequest(`accountId is not provided`)
-        }
+    handlers.registerAccountsChangeTenant(async (ctx, request) => {
+      assertCurrentUserRole('root')
+      await accountsService.accountsChangeTenantHandler(request, ctx.userId)
+      return
+    })
 
-        return await accountsService.patchUser(
-          organization,
-          accountId,
-          patchPayload
-        )
-      }
-    } else if (event.resource === '/accounts/{accountId}/settings') {
-      const { pathParameters } = event
-      const accountId = pathParameters?.accountId
-      if (!accountId) {
-        throw new BadRequest(`accountId is not provided`)
-      }
+    handlers.registerAccountsDelete(async (ctx, request) => {
+      const accountId = request.accountId
+      assertCurrentUserRole('admin')
+      return await accountsService.deleteUser(organization, accountId)
+    })
+
+    handlers.registerAccountsEdit(async (ctx, request) => {
+      assertCurrentUserRole('admin')
+      return await accountsService.patchUserHandler(request, organization)
+    })
+
+    handlers.registerAccountGetSettings(async (ctx, request) => {
+      const accountId = request.accountId
       if (accountId != userId) {
         assertCurrentUserRole('root')
       }
-      if (event.httpMethod === 'GET') {
-        return await accountsService.getUserSettings(accountId)
-      } else if (event.httpMethod === 'PATCH') {
-        if (event.body == null) {
-          throw new BadRequest(`Body should not be empty`)
-        }
-        const payload = JSON.parse(event.body) as AccountSettings
-        return await accountsService.patchUserSettings(accountId, payload)
-      }
-    }
+      return await accountsService.getUserSettings(accountId)
+    })
 
-    throw new BadRequest('Unhandled request')
+    handlers.registerAccountChangeSettings(
+      async (ctx, request) =>
+        await accountsService.patchUserSettings(
+          request.accountId,
+          request.AccountSettings
+        )
+    )
+
+    return await handlers.handle(event)
   }
 )

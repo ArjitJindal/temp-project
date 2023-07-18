@@ -9,7 +9,7 @@ import { SanctionsService } from '@/services/sanctions'
 import { TenantService } from '@/services/tenants'
 import { logger } from '@/core/logger'
 import { ComplyAdvantageMonitoredSearchUpdated } from '@/@types/openapi-internal/ComplyAdvantageMonitoredSearchUpdated'
-import { ComplyAdvantageWebhookEvent } from '@/@types/openapi-internal/ComplyAdvantageWebhookEvent'
+import { Handlers } from '@/@types/openapi-internal-custom/DefaultApi'
 
 export const webhooksHandler = lambdaApi()(
   async (
@@ -18,12 +18,10 @@ export const webhooksHandler = lambdaApi()(
     >
   ) => {
     const { sourceIp } = event.requestContext.identity
-    if (
-      event.httpMethod === 'POST' &&
-      event.resource === '/webhooks/complyadvantage' &&
-      event.body
-    ) {
-      // Check source IPs in production
+
+    const handlers = new Handlers()
+
+    handlers.registerPostWebhookComplyAdvantage(async (ctx, request) => {
       if (process.env.ENV === 'prod') {
         const complyAdvantageIPs = [
           '54.76.153.128',
@@ -43,7 +41,7 @@ export const webhooksHandler = lambdaApi()(
           )
         }
       }
-      const webhookEvent = JSON.parse(event.body) as ComplyAdvantageWebhookEvent
+      const webhookEvent = request.ComplyAdvantageWebhookEvent
       if (webhookEvent.event === 'monitored_search_updated') {
         const searchUpdated =
           webhookEvent.data as ComplyAdvantageMonitoredSearchUpdated
@@ -61,8 +59,9 @@ export const webhooksHandler = lambdaApi()(
           `Received unhandled ComplyAdvantage webhook event: ${event.body}`
         )
       }
-      return 'OK'
-    }
-    throw new Error('Unhandled request')
+      return
+    })
+
+    return await handlers.handle(event)
   }
 )

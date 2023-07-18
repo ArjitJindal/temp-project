@@ -3,6 +3,7 @@ import {
   APIGatewayProxyWithLambdaAuthorizerEvent,
 } from 'aws-lambda'
 import { Forbidden, NotFound } from 'http-errors'
+import _ from 'lodash'
 import { UserService } from './services/user-service'
 import { UserAuditLogService } from './services/user-audit-log-service'
 import { JWTAuthorizerResult } from '@/@types/jwt'
@@ -10,13 +11,12 @@ import { lambdaApi } from '@/core/middlewares/lambda-api-middlewares'
 import { getS3ClientByEvent } from '@/utils/s3'
 import { getMongoDbClient } from '@/utils/mongoDBUtils'
 import { getDynamoDbClientByEvent } from '@/utils/dynamodb'
-import { UserUpdateRequest } from '@/@types/openapi-internal/UserUpdateRequest'
-import { Comment } from '@/@types/openapi-internal/Comment'
 import { SalesforceService } from '@/services/salesforce'
 import { TenantRepository } from '@/services/tenants/repositories/tenant-repository'
 import { hasFeature } from '@/core/utils/context'
 import { RuleInstanceRepository } from '@/services/rules-engine/repositories/rule-instance-repository'
 import { AlertsRepository } from '@/services/rules-engine/repositories/alerts-repository'
+import { Handlers } from '@/@types/openapi-internal-custom/DefaultApi'
 
 export type UserViewConfig = {
   TMP_BUCKET: string
@@ -36,91 +36,42 @@ export const businessUsersViewHandler = lambdaApi()(
     const dynamoDb = getDynamoDbClientByEvent(event)
     const userService = new UserService(
       tenantId,
-      {
-        mongoDb: client,
-        dynamoDb,
-      },
+      { mongoDb: client, dynamoDb },
       s3,
       TMP_BUCKET,
       DOCUMENT_BUCKET
     )
+    const handlers = new Handlers()
 
-    if (event.httpMethod === 'GET' && event.path.endsWith('/business/users')) {
-      const {
-        page,
-        pageSize,
-        afterTimestamp,
-        beforeTimestamp,
-        filterId,
-        filterName,
-        filterOperator,
-        filterBusinessIndustries,
-        filterTagKey,
-        filterTagValue,
-        filterRiskLevel,
-        filterUserRegistrationStatus,
-        sortField,
-        sortOrder,
-      } = event.queryStringParameters as any
-      const result = await userService.getBusinessUsers({
-        page,
-        pageSize,
-        afterTimestamp: parseInt(afterTimestamp) || undefined,
-        beforeTimestamp: parseInt(beforeTimestamp),
-        filterId,
-        filterName,
-        filterOperator,
-        filterBusinessIndustries: filterBusinessIndustries
-          ? filterBusinessIndustries.split(',')
-          : undefined,
-        filterTagKey,
-        filterTagValue,
-        filterRiskLevel: filterRiskLevel
-          ? filterRiskLevel.split(',')
-          : undefined,
-        filterUserRegistrationStatus: filterUserRegistrationStatus
-          ? filterUserRegistrationStatus.split(',')
-          : undefined,
-        sortField,
-        sortOrder,
-      })
-      return result
-    } else if (
-      event.httpMethod === 'GET' &&
-      event.resource === '/business/users/{userId}' &&
-      event.pathParameters?.userId
-    ) {
-      const user = await userService.getBusinessUser(
-        event.pathParameters?.userId
-      )
+    handlers.registerGetBusinessUsersList(
+      async (ctx, request) => await userService.getBusinessUsers(request)
+    )
+
+    handlers.registerGetBusinessUsersItem(async (ctx, request) => {
+      const user = await userService.getBusinessUser(request.userId)
       if (user == null) {
         throw new NotFound(`Unable to find user by id`)
       }
       const CasesAlertsAuditLogService = new UserAuditLogService(tenantId)
       await CasesAlertsAuditLogService.handleAuditLogForuserViewed(
-        event.pathParameters?.userId
+        request.userId
       )
       return user
-    } else if (
-      event.httpMethod === 'POST' &&
-      event.resource === '/business/users/{userId}' &&
-      event.pathParameters?.userId &&
-      event.body
-    ) {
-      const updateRequest = JSON.parse(event.body) as UserUpdateRequest
-      return userService.updateBusinessUser(
-        event.pathParameters.userId,
-        updateRequest
-      )
-    } else if (
-      event.httpMethod === 'GET' &&
-      event.path.endsWith('/users/uniques')
-    ) {
-      const { field, filter } = event.queryStringParameters as any
-      return (await userService.getUniques({ field, filter })).filter(
-        (item) => item != null
-      )
-    }
+    })
+
+    handlers.registerPostBusinessUsersUserId(
+      async (ctx, request) =>
+        await userService.updateBusinessUser(
+          request.userId,
+          request.UserUpdateRequest
+        )
+    )
+
+    handlers.registerGetUsersUniques(async (ctx, request) =>
+      _.compact(await userService.getUniques(request))
+    )
+
+    return await handlers.handle(event)
   }
 )
 
@@ -145,87 +96,34 @@ export const consumerUsersViewHandler = lambdaApi()(
       TMP_BUCKET,
       DOCUMENT_BUCKET
     )
-    if (event.httpMethod === 'GET' && event.path.endsWith('/consumer/users')) {
-      const {
-        page,
-        pageSize,
-        afterTimestamp,
-        beforeTimestamp,
-        filterId,
-        filterName,
-        filterOperator,
-        filterTagKey,
-        filterTagValue,
-        filterRiskLevel,
-        sortField,
-        sortOrder,
-      } = event.queryStringParameters as any
-      const result = await userService.getConsumerUsers({
-        page,
-        pageSize,
-        afterTimestamp: parseInt(afterTimestamp) || undefined,
-        beforeTimestamp: parseInt(beforeTimestamp),
-        filterId,
-        filterName,
-        filterOperator,
-        filterTagKey,
-        filterTagValue,
-        filterRiskLevel: filterRiskLevel
-          ? filterRiskLevel.split(',')
-          : undefined,
-        sortField,
-        sortOrder,
-      })
-      return result
-    } else if (
-      event.httpMethod === 'POST' &&
-      event.resource === '/users/{userId}/comments' &&
-      event.pathParameters?.userId &&
-      event.body
-    ) {
-      const comment = JSON.parse(event.body) as Comment
-      const savedComment: Comment = await userService.saveUserComment(
-        event.pathParameters.userId,
-        comment
-      )
-      return savedComment
-    } else if (
-      event.httpMethod === 'DELETE' &&
-      event.pathParameters?.userId &&
-      event.pathParameters?.commentId
-    ) {
-      return userService.deleteUserComment(
-        event.pathParameters.userId,
-        event.pathParameters.commentId
-      )
-    } else if (
-      event.httpMethod === 'GET' &&
-      event.resource === '/consumer/users/{userId}' &&
-      event.pathParameters?.userId
-    ) {
-      const user = await userService.getConsumerUser(
-        event.pathParameters?.userId
-      )
+
+    const handlers = new Handlers()
+
+    handlers.registerGetConsumerUsersList(
+      async (ctx, request) => await userService.getConsumerUsers(request)
+    )
+
+    handlers.registerGetConsumerUsersItem(async (ctx, request) => {
+      const user = await userService.getConsumerUser(request.userId)
       if (user == null) {
         throw new NotFound(`Unable to find user by id`)
       }
       const CasesAlertsAuditLogService = new UserAuditLogService(tenantId)
       await CasesAlertsAuditLogService.handleAuditLogForuserViewed(
-        event.pathParameters?.userId
+        request.userId
       )
       return user
-    } else if (
-      event.httpMethod === 'POST' &&
-      event.resource === '/consumer/users/{userId}' &&
-      event.pathParameters?.userId &&
-      event.body
-    ) {
-      const updateRequest = JSON.parse(event.body) as UserUpdateRequest
-      return userService.updateConsumerUser(
-        event.pathParameters.userId,
-        updateRequest
-      )
-    }
+    })
+
+    handlers.registerPostConsumerUsersUserId(
+      async (ctx, request) =>
+        await userService.updateConsumerUser(
+          request.userId,
+          request.UserUpdateRequest
+        )
+    )
+
+    return await handlers.handle(event)
   }
 )
 
@@ -259,80 +157,41 @@ export const allUsersViewHandler = lambdaApi()(
     const ruleInstanceRepository = new RuleInstanceRepository(tenantId, {
       dynamoDb,
     })
-    if (event.httpMethod === 'GET' && event.path.endsWith('/users')) {
-      const {
-        page,
-        pageSize,
-        afterTimestamp,
-        beforeTimestamp,
-        filterId,
-        filterName,
-        filterOperator,
-        includeCasesCount,
-        sortField,
-        sortOrder,
-        filterRiskLevel,
-      } = event.queryStringParameters as any
 
-      return userService.getUsers({
-        page,
-        pageSize,
-        afterTimestamp: parseInt(afterTimestamp) || undefined,
-        beforeTimestamp: parseInt(beforeTimestamp),
-        filterId,
-        filterName,
-        filterOperator,
-        includeCasesCount: includeCasesCount === 'true',
-        sortField,
-        filterRiskLevel: filterRiskLevel
-          ? filterRiskLevel.split(',')
-          : undefined,
-        sortOrder,
-      })
-    } else if (
-      event.httpMethod === 'POST' &&
-      event.resource === '/users/{userId}/comments' &&
-      event.pathParameters?.userId &&
-      event.body
-    ) {
-      const comment = JSON.parse(event.body) as Comment
-      const savedComment: Comment = await userService.saveUserComment(
-        event.pathParameters.userId,
-        { ...comment, userId }
-      )
-      return savedComment
-    } else if (
-      event.resource === '/users/{userId}/comments/{commentId}' &&
-      event.httpMethod === 'DELETE' &&
-      event.pathParameters?.userId &&
-      event.pathParameters?.commentId
-    ) {
-      return userService.deleteUserComment(
-        event.pathParameters.userId,
-        event.pathParameters.commentId
-      )
-    } else if (
-      event.httpMethod === 'GET' &&
-      event.resource === '/users/{userId}/salesforce'
-    ) {
+    const handlers = new Handlers()
+
+    handlers.registerGetAllUsersList(
+      async (ctx, request) => await userService.getUsers(request)
+    )
+
+    handlers.registerPostUserComments(
+      async (ctx, request) =>
+        await userService.saveUserComment(request.userId, {
+          ...request.Comment,
+          userId,
+        })
+    )
+
+    handlers.registerDeleteUsersUserIdCommentsCommentId(
+      async (ctx, request) =>
+        await userService.deleteUserComment(request.userId, request.commentId)
+    )
+
+    handlers.registerGetSalesforceAccount(async (ctx, request) => {
       if (!hasFeature('SALESFORCE')) {
         throw new Forbidden('SALESFORCE feature not enabled')
       }
-      const { userId } = event.pathParameters as any
-      const user = await userService.getUser(userId)
+      const user = await userService.getUser(request.userId)
       const dynamoDb = getDynamoDbClientByEvent(event)
       const tenantRepository = new TenantRepository(tenantId, { dynamoDb })
       const settings = await tenantRepository.getTenantSettings()
       return await new SalesforceService(
         settings.salesforceAuthToken as string
       ).getAccount(user)
-    } else if (
-      event.httpMethod === 'GET' &&
-      event.resource === '/users/{userId}/screening-status'
-    ) {
-      const { userId } = event.pathParameters as any
-      const user = await userService.getUser(userId)
+    })
 
+    handlers.registerGetUserScreeningStatus(async (ctx, request) => {
+      const user = await userService.getUser(request.userId)
       const ruleInstances = await ruleInstanceRepository.getAllRuleInstances()
       const ongoingRuleInstanceIds: string[] = ruleInstances
         .filter(
@@ -348,17 +207,16 @@ export const allUsersViewHandler = lambdaApi()(
           isOngoingScreening: false,
         }
       }
-
       const alerts = await alertsRepository.getAlerts({
         filterUserId: user.userId,
         filterRuleInstanceId: ongoingRuleInstanceIds,
         pageSize: 1,
       })
-
       return {
         isOngoingScreening: alerts.data.length > 0,
       }
-    }
-    throw new Error('Unhandled request')
+    })
+
+    return await handlers.handle(event)
   }
 )

@@ -2,11 +2,10 @@ import {
   APIGatewayEventLambdaAuthorizerContext,
   APIGatewayProxyWithLambdaAuthorizerEvent,
 } from 'aws-lambda'
-import { BadRequest } from 'http-errors'
 import { RoleService } from '@/services/roles'
 import { lambdaApi } from '@/core/middlewares/lambda-api-middlewares'
 import { JWTAuthorizerResult } from '@/@types/jwt'
-import { AccountRole } from '@/@types/openapi-internal/AccountRole'
+import { Handlers } from '@/@types/openapi-internal-custom/DefaultApi'
 
 export const rolesHandler = lambdaApi()(
   async (
@@ -18,42 +17,35 @@ export const rolesHandler = lambdaApi()(
     const rolesService = new RoleService({ auth0Domain })
     const { tenantId } = event.requestContext.authorizer
 
-    if (event.httpMethod === 'GET' && event.resource === '/roles') {
-      return await rolesService.getTenantRoles(tenantId)
-    }
-    if (
-      event.httpMethod === 'POST' &&
-      event.resource === '/roles' &&
-      event.body
-    ) {
-      return await rolesService.createRole(
-        tenantId,
-        JSON.parse(event.body) as AccountRole
-      )
-    }
-    if (
-      event.httpMethod === 'PATCH' &&
-      event.resource === '/roles/{roleId}' &&
-      event.body
-    ) {
-      const roleId = event.pathParameters?.roleId as string
-      return await rolesService.updateRole(
-        tenantId,
-        roleId,
-        JSON.parse(event.body) as AccountRole
-      )
-    }
-    if (event.httpMethod === 'DELETE' && event.resource === '/roles/{roleId}') {
-      const roleId = event.pathParameters?.roleId as string
-      return await rolesService.deleteRole(tenantId, roleId)
-    }
-    if (
-      event.httpMethod === 'GET' &&
-      event.resource === '/roles/{roleId}' &&
-      event.pathParameters?.roleId
-    ) {
-      return await rolesService.getRole(event.pathParameters?.roleId)
-    }
-    throw new BadRequest('Unhandled request')
+    const handlers = new Handlers()
+
+    handlers.registerGetRoles(
+      async () => await rolesService.getTenantRoles(tenantId)
+    )
+
+    handlers.registerCreateRole(
+      async (ctx, request) =>
+        await rolesService.createRole(tenantId, request.AccountRole)
+    )
+
+    handlers.registerUpdateRole(
+      async (ctx, request) =>
+        await rolesService.updateRole(
+          tenantId,
+          request.roleId,
+          request.AccountRole
+        )
+    )
+
+    handlers.registerDeleteRole(
+      async (ctx, request) =>
+        await rolesService.deleteRole(tenantId, request.roleId)
+    )
+
+    handlers.registerGetRole(
+      async (ctx, request) => await rolesService.getRole(request.roleId)
+    )
+
+    return await handlers.handle(event)
   }
 )

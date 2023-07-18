@@ -2,11 +2,11 @@ import {
   APIGatewayEventLambdaAuthorizerContext,
   APIGatewayProxyWithLambdaAuthorizerEvent,
 } from 'aws-lambda'
-import { BadRequest } from 'http-errors'
 import { DeviceDataService } from './services/device-data-service'
 import { JWTAuthorizerResult } from '@/@types/jwt'
 import { lambdaApi } from '@/core/middlewares/lambda-api-middlewares'
 import { getMongoDbClient } from '@/utils/mongoDBUtils'
+import { Handlers } from '@/@types/openapi-internal-custom/DefaultApi'
 
 export const deviceDataHandler = lambdaApi()(
   async (
@@ -17,35 +17,21 @@ export const deviceDataHandler = lambdaApi()(
     const { principalId: tenantId } = event.requestContext.authorizer
     const mongoDb = await getMongoDbClient()
     const deviceDataService = new DeviceDataService(tenantId, { mongoDb })
+    const handlers = new Handlers()
 
-    if (event.httpMethod === 'GET') {
-      if (event.resource?.endsWith('/transactions')) {
-        const { userId, transactionId } = event.queryStringParameters as {
-          userId?: string
-          transactionId?: string
-        }
-
-        if (!userId || !transactionId) {
-          throw new BadRequest('User ID and Transaction ID are required')
-        }
-
-        return await deviceDataService.getDeviceDataForTransaction(
-          userId,
-          transactionId
+    handlers.registerGetDeviceDataTransactions(
+      async (ctx, request) =>
+        await deviceDataService.getDeviceDataForTransaction(
+          request.userId,
+          request.transactionId
         )
-      } else if (event.resource?.endsWith('/users')) {
-        const { userId } = event.queryStringParameters as {
-          userId?: string
-        }
+    )
 
-        if (!userId) {
-          throw new BadRequest('User ID is required')
-        }
+    handlers.registerGetDeviceDataUsers(
+      async (ctx, request) =>
+        await deviceDataService.getDeviceDataForUser(request.userId)
+    )
 
-        return await deviceDataService.getDeviceDataForUser(userId)
-      }
-    }
-
-    throw new BadRequest('Invalid request')
+    return await handlers.handle(event)
   }
 )

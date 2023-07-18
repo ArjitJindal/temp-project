@@ -2,13 +2,10 @@ import {
   APIGatewayEventLambdaAuthorizerContext,
   APIGatewayProxyWithLambdaAuthorizerEvent,
 } from 'aws-lambda'
-import { NotFound } from 'http-errors'
 import { JWTAuthorizerResult } from '@/@types/jwt'
 import { lambdaApi } from '@/core/middlewares/lambda-api-middlewares'
-import { SanctionsSearchRequest } from '@/@types/openapi-internal/SanctionsSearchRequest'
 import { SanctionsService } from '@/services/sanctions'
-import { DefaultApiGetSanctionsSearchRequest } from '@/@types/openapi-internal/RequestParameters'
-import { SanctionsWhitelistRequest } from '@/@types/openapi-internal/SanctionsWhitelistRequest'
+import { Handlers } from '@/@types/openapi-internal-custom/DefaultApi'
 import { ComplyAdvantageSearchHitDoc } from '@/@types/openapi-internal/ComplyAdvantageSearchHitDoc'
 
 export const sanctionsHandler = lambdaApi({ requiredFeatures: ['SANCTIONS'] })(
@@ -19,51 +16,24 @@ export const sanctionsHandler = lambdaApi({ requiredFeatures: ['SANCTIONS'] })(
   ) => {
     const { principalId: tenantId } = event.requestContext.authorizer
     const sanctionsService = new SanctionsService(tenantId)
-    if (
-      event.httpMethod === 'POST' &&
-      event.resource === '/sanctions/search' &&
-      event.body
-    ) {
-      const searchRequest = JSON.parse(event.body) as SanctionsSearchRequest
-      return sanctionsService.search(searchRequest)
-    }
+    const handlers = new Handlers()
 
-    if (event.httpMethod === 'GET' && event.resource === '/sanctions/search') {
-      const q = event.queryStringParameters as any
-      const params: DefaultApiGetSanctionsSearchRequest = {
-        page: q.page,
-        pageSize: q.pageSize,
-        beforeTimestamp: parseInt(q.beforeTimestamp),
-        afterTimestamp: parseInt(q.afterTimestamp),
-        searchTerm: q.searchTerm,
-        types: q.types ? q.types.split(',') : [],
-      }
-      return sanctionsService.getSearchHistories(params)
-    }
+    handlers.registerPostSanctions(
+      async (ctx, request) =>
+        await sanctionsService.search(request.SanctionsSearchRequest)
+    )
 
-    if (
-      event.httpMethod === 'GET' &&
-      event.resource === '/sanctions/search/{searchId}' &&
-      event.pathParameters?.searchId
-    ) {
-      const { searchId } = event.pathParameters
-      const { userId } = event.queryStringParameters ?? {}
-      const search = await sanctionsService.getSearchHistory(searchId, userId)
-      if (!search) {
-        throw new NotFound(
-          `Unable to find search history by searchId=${searchId}`
-        )
-      }
-      return search
-    }
+    handlers.registerGetSanctionsSearch(
+      async (ctx, request) => await sanctionsService.getSearchHistories(request)
+    )
 
-    if (
-      event.httpMethod === 'POST' &&
-      event.resource === '/sanctions/whitelist' &&
-      event.body
-    ) {
-      const request = JSON.parse(event.body) as SanctionsWhitelistRequest
+    handlers.registerGetSanctionsSearchSearchId(
+      async (ctx, request) =>
+        await sanctionsService.getSearchHistory(request.searchId)
+    )
 
+    handlers.registerPostSanctionsWhitelist(async (ctx, _request) => {
+      const request = _request.SanctionsWhitelistRequest
       if (request.whitelisted) {
         const search = await sanctionsService.getSearchHistory(request.searchId)
         const entities = search?.response?.data
@@ -81,8 +51,8 @@ export const sanctionsHandler = lambdaApi({ requiredFeatures: ['SANCTIONS'] })(
           request.userId
         )
       }
-      return
-    }
-    throw new Error('Unhandled request')
+    })
+
+    return await handlers.handle(event)
   }
 )

@@ -9,6 +9,9 @@ import {
   TestApiEndpointOptions,
 } from '@/test-utils/apigateway-test-utils'
 import { withFeatureHook } from '@/test-utils/feature-test-utils'
+import { setSkipAuditLogs } from '@/test-utils/auditlog-test-utils'
+
+setSkipAuditLogs()
 
 const testApiEndPoints = new TestApiEndpoint(
   UserService,
@@ -53,18 +56,6 @@ describe.each<TestApiEndpointOptions>([
     methodName: 'updateConsumerUser',
     payload: { userId: '123' },
   },
-  {
-    method: 'POST',
-    path: '/users/{userId}/comments',
-    methodName: 'saveUserComment',
-    payload: { userId: '123' },
-  },
-  {
-    method: 'DELETE',
-    path: '/users/{userId}/comments/{commentId}',
-    methodName: 'deleteUserComment',
-    payload: { userId: '123', commentId: '456' },
-  },
 ])('Consumer Users API', ({ method, path, methodName, payload }) => {
   userApiEndPoints.testApi({ method, path, payload }, methodName)
 })
@@ -87,6 +78,18 @@ describe.each<TestApiEndpointOptions>([
     method: 'GET',
     path: '/users/{userId}/screening-status',
     methodName: 'getUser',
+  },
+  {
+    method: 'POST',
+    path: '/users/{userId}/comments',
+    methodName: 'saveUserComment',
+    payload: { userId: '123' },
+  },
+  {
+    method: 'DELETE',
+    path: '/users/{userId}/comments/{commentId}',
+    methodName: 'deleteUserComment',
+    payload: { userId: '123', commentId: '456' },
   },
 ])('All Users API', ({ method, path, methodName, payload }) => {
   allUsersApiEndPoints.testApi({ method, path, payload }, methodName)

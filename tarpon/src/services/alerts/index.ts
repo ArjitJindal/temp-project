@@ -420,75 +420,7 @@ export class AlertsService extends CaseAlertsCommonService {
     }
   }
 
-  public async updateAssigneeToAlert(
-    alertId: string,
-    assignments: Assignment[]
-  ): Promise<void> {
-    const alert = await this.alertsRepository.getAlertById(alertId)
-
-    if (alert == null) {
-      throw new NotFound(`"${alertId}" alert not found`)
-    }
-
-    const uniqueAssignments = _.uniqBy(assignments, 'assigneeUserId')
-    const currentUniqueAssignments = _.uniqBy(
-      alert.assignments || [],
-      'assigneeUserId'
-    )
-
-    const updatedAssignments: Assignment[] = uniqueAssignments.map((a) => {
-      const currentAssignment = currentUniqueAssignments.find(
-        (cA) => cA.assigneeUserId === a.assigneeUserId
-      )
-
-      if (currentAssignment) {
-        return currentAssignment
-      }
-
-      return { ...a, timestamp: Date.now() }
-    })
-
-    await this.alertsRepository.updateAssigneeToAlerts(
-      [alertId],
-      updatedAssignments
-    )
-  }
-
-  public async updateReviewAssigneeToAlert(
-    alertId: string,
-    assignments: Assignment[]
-  ): Promise<void> {
-    const alert = await this.alertsRepository.getAlertById(alertId)
-
-    if (alert == null) {
-      throw new NotFound(`"${alertId}" alert not found`)
-    }
-
-    const uniqueAssignments = _.uniqBy(assignments, 'assigneeUserId')
-    const currentUniqueAssignments = _.uniqBy(
-      alert.reviewAssignments || [],
-      'assigneeUserId'
-    )
-
-    const updatedAssignments: Assignment[] = uniqueAssignments.map((a) => {
-      const currentAssignment = currentUniqueAssignments.find(
-        (cA) => cA.assigneeUserId === a.assigneeUserId
-      )
-
-      if (currentAssignment) {
-        return currentAssignment
-      }
-
-      return { ...a, timestamp: Date.now() }
-    })
-
-    await this.alertsRepository.updateReviewAssigneeToAlerts(
-      [alertId],
-      updatedAssignments
-    )
-  }
-
-  public async updateAssigneeToAlerts(
+  public async updateAlertsAssignments(
     alertIds: string[],
     assignments: Assignment[]
   ): Promise<void> {
@@ -501,10 +433,10 @@ export class AlertsService extends CaseAlertsCommonService {
       a.timestamp = timestamp
     })
 
-    await this.alertsRepository.updateAssigneeToAlerts(alertIds, assignments)
+    await this.alertsRepository.updateAlertsAssignments(alertIds, assignments)
   }
 
-  public async updateReviewAssigneeToAlerts(
+  public async updateAlertsReviewAssignments(
     alertIds: string[],
     reviewAssignments: Assignment[]
   ): Promise<void> {
@@ -517,7 +449,7 @@ export class AlertsService extends CaseAlertsCommonService {
       a.timestamp = timestamp
     })
 
-    await this.alertsRepository.updateReviewAssigneeToAlerts(
+    await this.alertsRepository.updateAlertsReviewAssignments(
       alertIds,
       reviewAssignments
     )

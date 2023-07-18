@@ -65,6 +65,7 @@ paths:
           application/json:
             schema:
               $ref: '#/components/schemas/Rule'
+        required: true
   /rule-filters:
     get:
       summary: Rule Filters - List
@@ -106,6 +107,7 @@ paths:
           application/json:
             schema:
               $ref: '#/components/schemas/Rule'
+        required: true
     delete:
       summary: Rule - Delete
       operationId: delete-rules-ruleId
@@ -143,6 +145,7 @@ paths:
           application/json:
             schema:
               $ref: '#/components/schemas/RuleInstance'
+        required: true
     get:
       summary: Rule Instance - List
       operationId: get-rule_instances
@@ -198,6 +201,7 @@ paths:
           application/json:
             schema:
               $ref: '#/components/schemas/RuleInstance'
+        required: true
   /import:
     parameters: []
     post:
@@ -206,14 +210,6 @@ paths:
       responses:
         '200':
           description: OK
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ImportResponse'
-              examples:
-                example-1:
-                  value:
-                    importedCount: 100
       requestBody:
         content:
           application/json:
@@ -226,6 +222,7 @@ paths:
                   format: flagright
                   filename: filename
                   s3Key: s3-key-in-a-bucket
+        required: true
   '/import/{importId}':
     parameters:
       - schema:
@@ -292,6 +289,7 @@ paths:
           application/json:
             schema:
               $ref: '#/components/schemas/NewListPayload'
+        required: true
       responses:
         '200':
           description: OK
@@ -329,6 +327,7 @@ paths:
           application/json:
             schema:
               $ref: ../public/openapi-public-original.yaml#/components/schemas/ListData
+        required: true
       responses:
         '200':
           description: OK
@@ -394,6 +393,7 @@ paths:
           application/json:
             schema:
               $ref: ../public/openapi-public-original.yaml#/components/schemas/ListItem
+        required: true
       responses:
         '200':
           description: OK
@@ -1253,6 +1253,7 @@ paths:
           application/json:
             schema:
               $ref: '#/components/schemas/Comment'
+        required: true
   /copilot/narrative:
     post:
       summary: Generate an AI narrative
@@ -1269,6 +1270,7 @@ paths:
           application/json:
             schema:
               $ref: '#/components/schemas/NarrativeRequest'
+        required: true
   '/users/{userId}/comments/{commentId}':
     parameters:
       - schema:
@@ -1328,6 +1330,7 @@ paths:
           application/json:
             schema:
               $ref: '#/components/schemas/UserUpdateRequest'
+        required: true
   /business/users:
     get:
       summary: Business Users - List
@@ -1448,6 +1451,7 @@ paths:
           application/json:
             schema:
               $ref: '#/components/schemas/UserUpdateRequest'
+        required: true
   /merchant-monitoring/summary:
     post:
       summary: Merchant Monitoring
@@ -1464,6 +1468,7 @@ paths:
           application/json:
             schema:
               $ref: '#/components/schemas/MerchantMonitoringSummaryRequest'
+        required: true
   /merchant-monitoring/scrape:
     post:
       summary: Merchant Monitoring Scrape
@@ -1480,6 +1485,7 @@ paths:
           application/json:
             schema:
               $ref: '#/components/schemas/MerchantMonitoringScrapeRequest'
+        required: true
   /merchant-monitoring/history:
     post:
       summary: Merchant Monitoring
@@ -1496,6 +1502,7 @@ paths:
           application/json:
             schema:
               $ref: '#/components/schemas/MerchantMonitoringSummaryRequest'
+        required: true
   /users/uniques:
     get:
       summary: User - Unique values for different fields
@@ -1706,6 +1713,7 @@ paths:
           application/json:
             schema:
               $ref: '#/components/schemas/TenantCreationRequest'
+        required: true
   /tenants/settings:
     get:
       summary: Tenant - Get Settings
@@ -1733,6 +1741,7 @@ paths:
           application/json:
             schema:
               $ref: '#/components/schemas/TenantSettings'
+        required: true
   /tenants/seed:
     post:
       summary: Tenant - Seed
@@ -1770,6 +1779,7 @@ paths:
           application/json:
             schema:
               $ref: '#/components/schemas/AccountRole'
+        required: true
       responses:
         '200':
           description: OK
@@ -1798,6 +1808,7 @@ paths:
           application/json:
             schema:
               $ref: '#/components/schemas/AccountRole'
+        required: true
       responses:
         '200':
           description: OK
@@ -1862,13 +1873,10 @@ paths:
                   type: string
               required:
                 - newTenantId
+        required: true
       responses:
         '200':
           description: OK
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/DrsScore'
         '403':
           description: Not enough privileges
   '/accounts/{accountId}/settings':
@@ -1899,6 +1907,7 @@ paths:
           application/json:
             schema:
               $ref: '#/components/schemas/AccountSettings'
+        required: true
       responses:
         '200':
           description: OK
@@ -1923,6 +1932,7 @@ paths:
           application/json:
             schema:
               $ref: '#/components/schemas/AccountPatchPayload'
+        required: true
       responses:
         '200':
           description: OK
@@ -1967,6 +1977,7 @@ paths:
           application/json:
             schema:
               $ref: '#/components/schemas/AccountInvitePayload'
+        required: true
       operationId: accounts-invite
     get:
       summary: Account - List
@@ -2035,6 +2046,7 @@ paths:
               type: array
               items:
                 $ref: '#/components/schemas/RiskClassificationScore'
+        required: true
     parameters: []
   /pulse/risk-assignment:
     parameters: []
@@ -2055,6 +2067,7 @@ paths:
                   $ref: '#/components/schemas/RiskLevel'
                 isUpdatable:
                   type: boolean
+        required: true
         description: ''
       responses:
         '200':
@@ -2260,6 +2273,7 @@ paths:
                   $ref: '#/components/schemas/ParameterAttributeRiskValues'
               required:
                 - parameterAttributeRiskValues
+        required: true
       responses:
         '200':
           description: OK
@@ -2323,6 +2337,7 @@ paths:
           application/json:
             schema:
               $ref: '#/components/schemas/WebhookConfiguration'
+        required: true
     get:
       summary: Get all webhooks
       operationId: get-webhooks
@@ -2357,6 +2372,7 @@ paths:
           application/json:
             schema:
               $ref: '#/components/schemas/WebhookConfiguration'
+        required: true
     parameters:
       - schema:
           type: string
@@ -2771,6 +2787,7 @@ paths:
           application/json:
             schema:
               $ref: '#/components/schemas/AlertsStatusUpdateRequest'
+        required: true
   /alerts/assignments:
     patch:
       summary: Alerts - Update
@@ -2786,6 +2803,7 @@ paths:
           application/json:
             schema:
               $ref: '#/components/schemas/AlertsAssignmentsUpdateRequest'
+        required: true
   /alerts/reviewAssignments:
     patch:
       summary: Alerts - Update
@@ -2801,6 +2819,7 @@ paths:
           application/json:
             schema:
               $ref: '#/components/schemas/AlertsReviewAssignmentsUpdateRequest'
+        required: true
   '/alerts/{alertId}':
     parameters:
       - schema:
@@ -2837,6 +2856,7 @@ paths:
           application/json:
             schema:
               $ref: '#/components/schemas/AlertsToNewCaseRequest'
+        required: true
   '/alerts/{alertId}/comments':
     parameters:
       - schema:
@@ -2862,6 +2882,7 @@ paths:
           application/json:
             schema:
               $ref: '#/components/schemas/Comment'
+        required: true
   '/alerts/{alertId}/comments/{commentId}':
     parameters:
       - schema:
@@ -3100,6 +3121,7 @@ paths:
           application/json:
             schema:
               $ref: '#/components/schemas/CasesStatusUpdateRequest'
+        required: true
   /cases/assignments:
     patch:
       summary: Cases - Update
@@ -3115,6 +3137,7 @@ paths:
           application/json:
             schema:
               $ref: '#/components/schemas/CasesAssignmentsUpdateRequest'
+        required: true
   /cases/reviewAssignments:
     patch:
       summary: Cases - Update
@@ -3130,6 +3153,7 @@ paths:
           application/json:
             schema:
               $ref: '#/components/schemas/CasesReviewAssignmentsUpdateRequest'
+        required: true
   '/cases/{caseId}':
     parameters:
       - schema:
@@ -3177,6 +3201,7 @@ paths:
           application/json:
             schema:
               $ref: '#/components/schemas/CaseEscalationRequest'
+        required: true
   '/cases/{caseId}/comments':
     parameters:
       - schema:
@@ -3202,6 +3227,7 @@ paths:
           application/json:
             schema:
               $ref: '#/components/schemas/Comment'
+        required: true
   '/cases/{caseId}/comments/{commentId}':
     parameters:
       - schema:
@@ -3242,6 +3268,7 @@ paths:
           application/json:
             schema:
               $ref: '#/components/schemas/SanctionsSearchRequest'
+        required: true
     get:
       summary: Get all search history
       operationId: get-sanctions-search
@@ -3322,6 +3349,7 @@ paths:
           application/json:
             schema:
               $ref: '#/components/schemas/SanctionsWhitelistRequest'
+        required: true
   /webhooks/complyadvantage:
     post:
       summary: Receive webhook events from Comply Advantage
@@ -3331,6 +3359,7 @@ paths:
           application/json:
             schema:
               $ref: '#/components/schemas/ComplyAdvantageWebhookEvent'
+        required: true
       responses:
         '200':
           description: OK
@@ -3356,6 +3385,7 @@ paths:
               oneOf:
                 - $ref: '#/components/schemas/SimulationPulseParametersRequest'
                 - $ref: '#/components/schemas/SimulationBeaconParametersRequest'
+        required: true
     get:
       summary: Get simulation tasks
       operationId: get-simulations
@@ -3560,6 +3590,7 @@ paths:
           application/json:
             schema:
               $ref: '#/components/schemas/NarrativeTemplateRequest'
+        required: true
   '/narrative-template/{narrativeTemplateId}':
     get:
       summary: Get narrative
@@ -3598,6 +3629,7 @@ paths:
           application/json:
             schema:
               $ref: '#/components/schemas/NarrativeTemplateRequest'
+        required: true
       parameters:
         - schema:
             type: string
@@ -3722,6 +3754,7 @@ paths:
           application/json:
             schema:
               $ref: '#/components/schemas/Report'
+        required: true
   '/reports/{reportId}':
     parameters:
       - schema:
@@ -3769,6 +3802,7 @@ paths:
           application/json:
             schema:
               $ref: '#/components/schemas/Report'
+        required: true
 components:
   schemas:
     KrsScore:
@@ -4116,14 +4150,6 @@ components:
         - listName
         - indexName
         - data
-    ImportResponse:
-      title: ImportResponse
-      type: object
-      properties:
-        importedCount:
-          type: number
-      required:
-        - importedCount
     TransactionsResponse:
       title: TransactionsResponse
       type: object
@@ -4977,6 +5003,9 @@ components:
           type: array
           items:
             $ref: '#/components/schemas/RiskClassificationScore'
+      required:
+        - updatedAt
+        - classificationValues
     RiskLevelRuleActions:
       title: RiskLevelRuleActions
       x-stoplight:

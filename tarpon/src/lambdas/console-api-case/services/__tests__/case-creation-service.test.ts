@@ -1,4 +1,5 @@
 import MockDate from 'mockdate'
+import * as createError from 'http-errors'
 import { dynamoDbSetupHook } from '@/test-utils/dynamodb-test-utils'
 import { CaseCreationService } from '@/lambdas/console-api-case/services/case-creation-service'
 import { CaseRepository } from '@/services/rules-engine/repositories/case-repository'
@@ -984,8 +985,9 @@ describe('Test delayed publishing', () => {
 
       MockDate.set(DAY_BEFORE_PUBLISH_DATE)
       {
-        const caseItem = await caseService.getCase(caseId as string)
-        expect(caseItem).toBeNull()
+        await expect(caseService.getCase(caseId as string)).rejects.toThrow(
+          createError.NotFound
+        )
       }
 
       MockDate.set(DAY_AFTER_PUBLISH_DATE)

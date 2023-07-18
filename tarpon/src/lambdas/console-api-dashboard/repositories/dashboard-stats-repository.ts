@@ -37,6 +37,7 @@ import { Case } from '@/@types/openapi-internal/Case'
 import { CaseStatus } from '@/@types/openapi-internal/CaseStatus'
 import { AlertStatus } from '@/@types/openapi-internal/AlertStatus'
 import { InternalUser } from '@/@types/openapi-internal/InternalUser'
+import { DashboardStatsHitsPerUserData } from '@/@types/openapi-internal/DashboardStatsHitsPerUserData'
 
 type TimeRange = {
   startTimestamp?: number
@@ -951,16 +952,7 @@ export class DashboardStatsRepository {
     startTimestamp: number,
     endTimestamp: number,
     direction?: 'ORIGIN' | 'DESTINATION'
-  ): Promise<
-    {
-      userId: string
-      user: InternalConsumerUser | InternalBusinessUser | null
-      transactionsHit: number
-      rulesHit: number
-      casesCount: number
-      openCasesCount: number
-    }[]
-  > {
+  ): Promise<DashboardStatsHitsPerUserData[]> {
     const db = this.mongoDb.db()
     const collection = db.collection<DashboardStatsTransactionsCountData>(
       DASHBOARD_HITS_BY_USER_STATS_COLLECTION_HOURLY(this.tenantId)
@@ -1049,7 +1041,7 @@ export class DashboardStatsRepository {
 
     return result.map((x) => ({
       userId: x._id,
-      user: x.user ?? null,
+      user: x.user ?? undefined,
       transactionsHit: x.transactionsHit,
       rulesHit: x.rulesHit,
       casesCount: x.casesCount,

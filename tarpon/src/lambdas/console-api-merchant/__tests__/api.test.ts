@@ -14,18 +14,30 @@ const testApiEndPoints = new TestApiEndpoint(
 describe.each<TestApiEndpointOptions>([
   {
     method: 'POST',
-    path: '/summary',
+    path: '/merchant-monitoring/summary',
     methodName: 'getMerchantMonitoringSummaries',
+    payload: {
+      userId: 'userId',
+      refresh: true,
+    },
   },
   {
     method: 'POST',
-    path: '/history',
+    path: '/merchant-monitoring/history',
     methodName: 'getMerchantMonitoringHistory',
+    payload: {
+      userId: 'userId',
+      source: true,
+    },
   },
   {
     method: 'POST',
-    path: '/scrape',
-    methodName: 'getMerchantMonitoringHistory',
+    path: '/merchant-monitoring/scrape',
+    methodName: 'scrapeMerchantMonitoringSummary',
+    payload: {
+      userId: 'userId',
+      url: true,
+    },
   },
 ])('Merchant Monitoring API', ({ method, path, payload, methodName }) => {
   beforeAll(() => {

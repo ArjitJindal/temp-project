@@ -132,7 +132,9 @@ describe('Consoel API - Simulation', () => {
 
   test('gets simulation tasks', async () => {
     const tenantId = getTestTenantId()
-    jest.spyOn(jwt, 'isCurrentUserAtLeastRole').mockReturnValue(false)
+    const spy = jest
+      .spyOn(jwt, 'isCurrentUserAtLeastRole')
+      .mockReturnValue(false)
     const { jobId, taskIds } = JSON.parse(
       (
         await simulationHandler(
@@ -142,6 +144,7 @@ describe('Consoel API - Simulation', () => {
         )
       )?.body as string
     )
+    spy.mockRestore()
     const response = await simulationHandler(
       getApiGatewayGetEvent(tenantId, '/simulation', {
         queryStringParameters: { page: '0', type: 'PULSE' },

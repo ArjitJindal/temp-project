@@ -39,14 +39,12 @@ export async function publishAuditLog(
       return
     }
 
-    if (process.env.NODE_ENV !== 'test') {
-      await snsClient.send(
-        new PublishCommand({
-          TopicArn: process.env.AUDITLOG_TOPIC_ARN as string,
-          Message: JSON.stringify(auditLogRecord),
-        })
-      )
-    }
+    await snsClient.send(
+      new PublishCommand({
+        TopicArn: process.env.AUDITLOG_TOPIC_ARN as string,
+        Message: JSON.stringify(auditLogRecord),
+      })
+    )
   } catch (e) {
     logger.error('Failed to publish audit log', e)
   }

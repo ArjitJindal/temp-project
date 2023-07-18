@@ -155,9 +155,7 @@ export class TenantService {
     }
 
     const newTenantSettings: TenantSettings = {
-      limits: {
-        seats: tenantData.seats ?? 3,
-      },
+      limits: { seats: tenantData.seats ?? 3 },
       features: tenantData.features ?? [],
     }
     const dynamoDb = this.dynamoDb

@@ -1,6 +1,7 @@
 import { InternalUser } from '@/@types/openapi-internal/InternalUser'
 import { Business } from '@/@types/openapi-public/Business'
 import { User } from '@/@types/openapi-public/User'
+import { RiskScoringService } from '@/services/risk-scoring'
 import { isConsumerUser } from '@/services/rules-engine/utils/user-rule-utils'
 import { UserRepository } from '@/services/users/repositories/user-repository'
 import { getDynamoDbClient } from '@/utils/dynamodb'
@@ -92,6 +93,11 @@ export async function createConsumerUser(
   const dynamoDb = getDynamoDbClient()
   const mongoDb = await getMongoDbClient()
   const userRepository = new UserRepository(testTenantId, { dynamoDb, mongoDb })
+  const riskScoringService = new RiskScoringService(testTenantId, {
+    dynamoDb,
+    mongoDb,
+  })
+  await riskScoringService.updateInitialRiskScores(user)
   const createdUser = await userRepository.saveConsumerUser(user)
   await userRepository.saveUserMongo(createdUser as InternalUser)
   return async () => {
@@ -113,7 +119,13 @@ export async function createBusinessUser(testTenantId: string, user: Business) {
   const dynamoDb = getDynamoDbClient()
   const mongoDb = await getMongoDbClient()
   const userRepository = new UserRepository(testTenantId, { dynamoDb, mongoDb })
+  const riskScoringService = new RiskScoringService(testTenantId, {
+    dynamoDb,
+    mongoDb,
+  })
+  await riskScoringService.updateInitialRiskScores(user)
   const createdUser = await userRepository.saveBusinessUser(user)
+
   await userRepository.saveUserMongo(createdUser as InternalUser)
   return async () => {
     await userRepository.deleteUser(createdUser.userId)

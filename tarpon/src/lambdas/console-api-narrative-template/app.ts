@@ -2,13 +2,11 @@ import {
   APIGatewayEventLambdaAuthorizerContext,
   APIGatewayProxyWithLambdaAuthorizerEvent,
 } from 'aws-lambda'
-import { BadRequest } from 'http-errors'
 import { NarrativeService } from './services/narrative-template-service'
 import { JWTAuthorizerResult } from '@/@types/jwt'
 import { lambdaApi } from '@/core/middlewares/lambda-api-middlewares'
 import { getMongoDbClient } from '@/utils/mongoDBUtils'
-import { NarrativeTemplateRequest } from '@/@types/openapi-internal/NarrativeTemplateRequest'
-import { NarrativeTemplateResponse } from '@/@types/openapi-internal/NarrativeTemplateResponse'
+import { Handlers } from '@/@types/openapi-internal-custom/DefaultApi'
 
 export const narrativeTemplateHandler = lambdaApi()(
   async (
@@ -20,46 +18,43 @@ export const narrativeTemplateHandler = lambdaApi()(
     const mongoDb = await getMongoDbClient()
     const narrativeService = new NarrativeService(tenantId, mongoDb)
 
-    if (event.resource.endsWith('/narrative-templates')) {
-      if (event.httpMethod === 'GET' && event.queryStringParameters) {
-        const { page, pageSize } = event.queryStringParameters as any
+    const handlers = new Handlers()
 
-        return (await narrativeService.getNarrativeTemplates({
-          page,
-          pageSize,
-        })) as NarrativeTemplateResponse
-      }
-    } else if (
-      event.resource.endsWith('/narrative-template/{narrativeTemplateId}')
-    ) {
-      const narrativeTemplateId = event.pathParameters
-        ?.narrativeTemplateId as string
+    handlers.registerGetNarratives(
+      async (ctx, request) =>
+        await narrativeService.getNarrativeTemplates({
+          page: request.page,
+          pageSize: request.pageSize,
+        })
+    )
 
-      if (!narrativeTemplateId) {
-        throw new BadRequest('NarrativeTemplate ID is required')
-      }
+    handlers.registerGetNarrativeTemplate(
+      async (ctx, request) =>
+        await narrativeService.getNarrativeTemplate(request.narrativeTemplateId)
+    )
 
-      if (event.httpMethod === 'GET') {
-        return await narrativeService.getNarrativeTemplate(narrativeTemplateId)
-      } else if (event.httpMethod === 'PUT' && event.body) {
-        const narrative = JSON.parse(event.body) as NarrativeTemplateRequest
-        return await narrativeService.updateNarrativeTemplate(
-          narrativeTemplateId,
-          narrative
+    handlers.registerPutNarrativeTemplate(
+      async (ctx, request) =>
+        await narrativeService.updateNarrativeTemplate(
+          request.narrativeTemplateId,
+          request.NarrativeTemplateRequest
         )
-      } else if (event.httpMethod === 'DELETE') {
-        return await narrativeService.deleteNarrativeTemplate(
-          narrativeTemplateId
+    )
+
+    handlers.registerDeleteNarrativeTemplate(
+      async (ctx, request) =>
+        await narrativeService.deleteNarrativeTemplate(
+          request.narrativeTemplateId
         )
-      }
-    } else if (event.resource.endsWith('/narrative-template')) {
-      if (event.httpMethod === 'POST' && event.body) {
-        const narrative = JSON.parse(event.body) as NarrativeTemplateRequest
+    )
 
-        return await narrativeService.createNarrativeTemplate(narrative)
-      }
-    }
+    handlers.registerPostNarrativeTemplate(
+      async (ctx, request) =>
+        await narrativeService.createNarrativeTemplate(
+          request.NarrativeTemplateRequest
+        )
+    )
 
-    throw new BadRequest('Invalid request')
+    return await handlers.handle(event)
   }
 )

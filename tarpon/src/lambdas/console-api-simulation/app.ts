@@ -1,4 +1,4 @@
-import { BadRequest, NotFound } from 'http-errors'
+import { BadRequest } from 'http-errors'
 import {
   APIGatewayEventLambdaAuthorizerContext,
   APIGatewayProxyWithLambdaAuthorizerEvent,
@@ -13,16 +13,10 @@ import {
   SimulationPulseBatchJob,
 } from '@/@types/batch-job'
 import { getMongoDbClient } from '@/utils/mongoDBUtils'
-import {
-  DefaultApiGetSimulationTaskIdResultRequest,
-  DefaultApiGetSimulationsRequest,
-} from '@/@types/openapi-internal/RequestParameters'
 import { getCredentialsFromEvent } from '@/utils/credentials'
-import { SimulationPulseParametersRequest } from '@/@types/openapi-internal/SimulationPulseParametersRequest'
 import { TenantRepository } from '@/services/tenants/repositories/tenant-repository'
 import { getDynamoDbClientByEvent } from '@/utils/dynamodb'
-import { SimulationStats } from '@/@types/openapi-internal/SimulationStats'
-import { SimulationBeaconParametersRequest } from '@/@types/openapi-internal/SimulationBeaconParametersRequest'
+import { Handlers } from '@/@types/openapi-internal-custom/DefaultApi'
 
 export const simulationHandler = lambdaApi({ requiredFeatures: ['SIMULATOR'] })(
   async (
@@ -42,114 +36,85 @@ export const simulationHandler = lambdaApi({ requiredFeatures: ['SIMULATOR'] })(
       mongoDb
     )
 
-    if (event.resource === '/simulation') {
-      if (event.httpMethod === 'GET') {
-        const params =
-          event.queryStringParameters as any as DefaultApiGetSimulationsRequest
-        return simulationTaskRepository.getSimulationJobs({
-          ...params,
-          includeInternal: String(params.includeInternal) === 'true',
-        })
-      } else if (event.httpMethod === 'POST' && event.body) {
-        const simulationParameters = JSON.parse(event.body) as
-          | SimulationPulseParametersRequest
-          | SimulationBeaconParametersRequest
+    const handlers = new Handlers()
 
-        const tenantRepositry = new TenantRepository(tenantId, {
-          dynamoDb,
-        })
+    handlers.registerGetSimulations(
+      async (ctx, request) =>
+        await simulationTaskRepository.getSimulationJobs(request)
+    )
 
-        const tenantSettings = await tenantRepositry.getTenantSettings()
-        const simulationsLimit = tenantSettings.limits?.simulations ?? 0
-        const usedSimulations =
-          await simulationTaskRepository.getSimulationJobsCount()
-
-        if (
-          usedSimulations >= simulationsLimit &&
-          process.env.NODE_ENV !== 'test'
-        ) {
-          throw new BadRequest('Simulations Limit Reached')
-        }
-
-        const { taskIds, jobId } =
-          await simulationTaskRepository.createSimulationJob(
-            simulationParameters
+    handlers.registerPostSimulation(async (ctx, request) => {
+      const simulationParameters =
+        request.SimulationPulseParametersRequest___SimulationBeaconParametersRequest
+      const tenantRepositry = new TenantRepository(tenantId, {
+        dynamoDb,
+      })
+      const tenantSettings = await tenantRepositry.getTenantSettings()
+      const simulationsLimit = tenantSettings.limits?.simulations ?? 0
+      const usedSimulations =
+        await simulationTaskRepository.getSimulationJobsCount()
+      if (
+        usedSimulations >= simulationsLimit &&
+        process.env.NODE_ENV !== 'test'
+      ) {
+        throw new BadRequest('Simulations Limit Reached')
+      }
+      const { taskIds, jobId } =
+        await simulationTaskRepository.createSimulationJob(simulationParameters)
+      if (simulationParameters.type === 'BEACON') {
+        const defaultRuleInstance = simulationParameters.defaultRuleInstance
+        if (defaultRuleInstance.type === 'USER') {
+          throw new BadRequest(
+            'User rule is not supported for beacon simulation'
           )
-
-        if (simulationParameters.type === 'BEACON') {
-          const defaultRuleInstance = simulationParameters.defaultRuleInstance
-          if (defaultRuleInstance.type === 'USER') {
-            throw new BadRequest(
-              'User rule is not supported for beacon simulation'
-            )
-          }
         }
-
-        for (let i = 0; i < taskIds.length; i++) {
-          if (taskIds[i] && simulationParameters.parameters[i])
-            await sendBatchJobCommand(
-              tenantId,
-              simulationParameters.type === 'PULSE'
-                ? ({
-                    type: 'SIMULATION_PULSE',
-                    tenantId,
-                    parameters: {
-                      taskId: taskIds[i],
-                      jobId,
-                      ...simulationParameters.parameters[i],
-                    },
-                    awsCredentials: getCredentialsFromEvent(event),
-                  } as SimulationPulseBatchJob)
-                : ({
-                    type: 'SIMULATION_BEACON',
-                    tenantId,
-                    parameters: {
-                      taskId: taskIds[i],
-                      jobId,
-                      defaultRuleInstance:
-                        simulationParameters.defaultRuleInstance,
-                      ...simulationParameters.parameters[i],
-                    },
-                    awsCredentials: getCredentialsFromEvent(event),
-                  } as SimulationBeaconBatchJob)
-            )
-        }
-
-        return { taskIds, jobId }
       }
-    } else if (
-      event.resource === '/simulation/jobs/{jobId}' &&
-      event.httpMethod === 'GET' &&
-      event.pathParameters?.jobId
-    ) {
-      const job = await simulationTaskRepository.getSimulationJob(
-        event.pathParameters.jobId
-      )
-      if (job == null) {
-        throw new NotFound(`Simulation job not found`)
+      for (let i = 0; i < taskIds.length; i++) {
+        if (taskIds[i] && simulationParameters.parameters[i])
+          await sendBatchJobCommand(
+            tenantId,
+            simulationParameters.type === 'PULSE'
+              ? ({
+                  type: 'SIMULATION_PULSE',
+                  tenantId,
+                  parameters: {
+                    taskId: taskIds[i],
+                    jobId,
+                    ...simulationParameters.parameters[i],
+                  },
+                  awsCredentials: getCredentialsFromEvent(event),
+                } as SimulationPulseBatchJob)
+              : ({
+                  type: 'SIMULATION_BEACON',
+                  tenantId,
+                  parameters: {
+                    taskId: taskIds[i],
+                    jobId,
+                    defaultRuleInstance:
+                      simulationParameters.defaultRuleInstance,
+                    ...simulationParameters.parameters[i],
+                  },
+                  awsCredentials: getCredentialsFromEvent(event),
+                } as SimulationBeaconBatchJob)
+          )
       }
-      return job
-    } else if (
-      event.resource === '/simulation/tasks/{taskId}/results' &&
-      event.httpMethod === 'GET' &&
-      event.pathParameters?.taskId
-    ) {
-      const { items, total } =
-        await simulationResultRepository.getSimulationResults({
-          taskId: event.pathParameters.taskId,
-          ...event.queryStringParameters,
-        } as any as DefaultApiGetSimulationTaskIdResultRequest)
+      return { taskIds, jobId }
+    })
 
-      return { items, total }
-    } else if (
-      event.resource === '/simulation/stats' &&
-      event.httpMethod === 'GET'
-    ) {
-      return {
-        runJobsCount: await simulationTaskRepository.getSimulationJobsCount(),
-      } as SimulationStats
-    }
+    handlers.registerGetSimulationTestId(
+      async (ctx, request) =>
+        await simulationTaskRepository.getSimulationJob(request.jobId)
+    )
 
-    throw new BadRequest('Unhandled request')
+    handlers.registerGetSimulationTaskIdResult(
+      async (ctx, request) =>
+        await simulationResultRepository.getSimulationResults(request)
+    )
+
+    handlers.registerGetSimulationJobsCount(async () => ({
+      runJobsCount: await simulationTaskRepository.getSimulationJobsCount(),
+    }))
+
+    return await handlers.handle(event)
   }
 )

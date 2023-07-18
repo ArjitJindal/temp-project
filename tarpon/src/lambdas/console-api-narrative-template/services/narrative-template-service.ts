@@ -38,10 +38,7 @@ export class NarrativeService {
       params
     )
 
-    return {
-      total: count,
-      items: narratives,
-    }
+    return { total: count, items: narratives }
   }
 
   public async createNarrativeTemplate(
@@ -64,21 +61,16 @@ export class NarrativeService {
   public async updateNarrativeTemplate(
     narrativeTemplateId: string,
     narrative: NarrativeTemplateRequest
-  ): Promise<NarrativeTemplate | null> {
+  ): Promise<NarrativeTemplate> {
     const updatedAt = Date.now()
 
     const data = await this.narrativeRepository.updateNarrativeTemplate(
       narrativeTemplateId,
-      {
-        ...narrative,
-        updatedAt,
-      }
+      { ...narrative, updatedAt }
     )
-
     if (!data) {
       throw new NotFound('NarrativeTemplate not found')
     }
-
     return data
   }
 

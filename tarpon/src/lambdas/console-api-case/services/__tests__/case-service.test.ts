@@ -788,7 +788,7 @@ describe('Post APIs Alerts Tests', () => {
     const USER_ID_1 = nanoid()
     const USER_ID_2 = nanoid()
 
-    await alertsService.updateAssigneeToAlerts(
+    await alertsService.updateAlertsAssignments(
       ['A-1'],
       [
         {

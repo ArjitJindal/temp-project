@@ -131,7 +131,7 @@ export class RuleInstanceRepository {
     })
   }
 
-  public async getAllRuleInstances(): Promise<ReadonlyArray<RuleInstance>> {
+  public async getAllRuleInstances(): Promise<RuleInstance[]> {
     return this.getRuleInstances({})
   }
 
@@ -163,7 +163,7 @@ export class RuleInstanceRepository {
 
   private async getRuleInstances(
     query: Partial<AWS.DynamoDB.DocumentClient.QueryInput>
-  ): Promise<ReadonlyArray<RuleInstance>> {
+  ): Promise<RuleInstance[]> {
     const queryInput: AWS.DynamoDB.DocumentClient.QueryInput = {
       ...query,
       TableName: StackConstants.TARPON_RULE_DYNAMODB_TABLE_NAME,

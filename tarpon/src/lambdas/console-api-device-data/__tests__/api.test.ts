@@ -13,7 +13,7 @@ const testApiEndPointsCases = new TestApiEndpoint(
 describe.each<TestApiEndpointOptions>([
   {
     method: 'GET',
-    path: '/transactions',
+    path: '/device-data/transactions',
     payload: {
       transactionId: 'transactionId',
       userId: 'userId',
@@ -22,7 +22,7 @@ describe.each<TestApiEndpointOptions>([
   },
   {
     method: 'GET',
-    path: '/users',
+    path: '/device-data/users',
     payload: {
       userId: 'userId',
     },

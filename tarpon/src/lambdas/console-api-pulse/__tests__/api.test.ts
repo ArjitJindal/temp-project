@@ -6,8 +6,10 @@ import {
   mockServiceMethod,
 } from '@/test-utils/apigateway-test-utils'
 import { RiskRepository } from '@/services/risk-scoring/repositories/risk-repository'
+import { setSkipAuditLogs } from '@/test-utils/auditlog-test-utils'
 
 withFeatureHook(['PULSE'])
+setSkipAuditLogs()
 
 const classificationEndpoints = new TestApiEndpoint(
   RiskRepository,
@@ -74,6 +76,7 @@ describe.each<TestApiEndpointOptions>([
     method: 'POST',
     path: '/pulse/risk-assignment',
     methodName: 'createOrUpdateManualDRSRiskItem',
+    payload: { riskLevel: 'riskLevel', entityType: 'entityType' },
   },
   {
     method: 'GET',

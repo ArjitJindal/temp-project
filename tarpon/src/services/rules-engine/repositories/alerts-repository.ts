@@ -522,14 +522,14 @@ export class AlertsRepository {
     return result
   }
 
-  public async updateReviewAssigneeToAlerts(
+  public async updateAlertsReviewAssignments(
     alertIds: string[],
     reviewAssignments: Assignment[]
   ): Promise<void> {
     return this.updateReviewAssigneeToAlertsPrivate(alertIds, reviewAssignments)
   }
 
-  public async updateAssigneeToAlerts(
+  public async updateAlertsAssignments(
     alertIds: string[],
     assignments: Assignment[]
   ): Promise<void> {

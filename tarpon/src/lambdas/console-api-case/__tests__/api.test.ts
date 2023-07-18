@@ -18,6 +18,8 @@ withFeatureHook(['ESCALATION'])
 setSkipRoleCheck()
 setSkipAuditLogs()
 
+process.env.MAXIMUM_ALLOWED_EXPORT_SIZE = '1000'
+
 describe.each<TestApiEndpointOptions>([
   { method: 'GET', path: '/cases', methodName: 'getCases' },
   {
@@ -91,17 +93,20 @@ describe.each<TestApiEndpointOptions>([
     method: 'PATCH',
     path: '/alerts/statusChange',
     methodName: 'updateAlertsStatus',
+    payload: {
+      alertIds: ['1'],
+    },
   },
   {
     method: 'PATCH',
     path: '/alerts/assignments',
-    methodName: 'updateAssigneeToAlerts',
+    methodName: 'updateAlertsAssignments',
   },
   {
     method: 'PATCH',
     path: '/alerts/reviewAssignments',
-    methodName: 'updateReviewAssigneeToAlerts',
+    methodName: 'updateAlertsReviewAssignments',
   },
-])('Test alertsHandler', ({ method, path, methodName }) => {
-  testApiEndPointsAlerts.testApi({ method, path }, methodName)
+])('Test alertsHandler', ({ method, path, methodName, payload }) => {
+  testApiEndPointsAlerts.testApi({ method, path, payload }, methodName)
 })

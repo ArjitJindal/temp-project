@@ -75,7 +75,7 @@ export class RoleService {
     tenantId: string,
     id: string,
     inputRole: AccountRole
-  ): Promise<AccountRole> {
+  ): Promise<void> {
     const managementClient = new ManagementClient(await this.getAuth0Client())
     if (isValidManagedRoleName(inputRole.name?.toLowerCase())) {
       throw new BadRequest(
@@ -98,19 +98,12 @@ export class RoleService {
     await Promise.all(
       users.map((u) => {
         return managementClient.updateUser(
-          {
-            id: u.user_id as string,
-          },
-          {
-            app_metadata: {
-              ...u.app_metadata,
-              role: inputRole.name,
-            },
-          }
+          { id: u.user_id as string },
+          { app_metadata: { ...u.app_metadata, role: inputRole.name } }
         )
       })
     )
-    return { id, ...inputRole }
+    return
   }
 
   async deleteRole(tenantId: string, id: string): Promise<void> {
