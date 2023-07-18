@@ -1,3 +1,5 @@
+process.env.AWS_XRAY_CONTEXT_MISSING = 'IGNORE_ERROR'
+
 import path from 'path'
 import { exit } from 'process'
 import { SQSQueues, StackConstants } from '@lib/constants'
