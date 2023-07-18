@@ -1,5 +1,6 @@
 import { JSONSchemaType } from 'ajv'
 import { ValueComparator } from './rule-parameter-schemas'
+import { Feature } from '@/@types/openapi-internal/Feature'
 
 interface UiSchema<Type> {
   'ui:schema'?: {
@@ -30,9 +31,14 @@ export interface UiSchemaGeneric<Type> extends UiSchemaParamsShared {
   order?: (keyof Type)[]
 }
 
+export interface UiSchemaRequiredFeatures extends UiSchemaParamsShared {
+  requiredFeatures: Feature[]
+}
+
 export type UiSchemaParams<Type> =
   | UiSchemaParamsAgeRange
   | UiSchemaGeneric<Type>
+  | UiSchemaRequiredFeatures
 
 export function uiSchema<T extends object>(
   ...args: (UiSchemaParams<T> | undefined)[]

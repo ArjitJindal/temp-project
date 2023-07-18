@@ -1,5 +1,6 @@
 import React from 'react';
 import { PropertyItem } from '../types';
+import { getUiSchema } from '../utils';
 import PropertyInput from './PropertyInput';
 import { Props as LabelProps } from '@/components/library/Label';
 import InputField from '@/components/library/Form/InputField';
@@ -9,6 +10,7 @@ import { useDeepEqualMemo } from '@/utils/hooks';
 import { neverReturn } from '@/utils/lang';
 import { dereferenceType } from '@/pages/rules/RuleConfigurationDrawer/JsonSchemaEditor/schema-utils';
 import { useJsonSchemaEditorContext } from '@/pages/rules/RuleConfigurationDrawer/JsonSchemaEditor/context';
+import { useFeaturesEnabled } from '@/components/AppWrapper/Providers/SettingsProvider';
 
 interface Props {
   item: PropertyItem;
@@ -58,8 +60,11 @@ export default function Property(props: Props) {
       labelPosition = 'RIGHT';
       break;
   }
+  const uiSchema = getUiSchema(schema);
 
-  return (
+  const requiredFeatures = uiSchema['ui:requiredFeatures'] ?? [];
+  const canShowProperty = useFeaturesEnabled(requiredFeatures);
+  return canShowProperty ? (
     <InputField<any>
       name={name}
       label={schema.title ?? humanizeFunction(name)}
@@ -74,6 +79,8 @@ export default function Property(props: Props) {
     >
       {(inputProps) => <PropertyInput {...inputProps} schema={schema} />}
     </InputField>
+  ) : (
+    <></>
   );
 }
 

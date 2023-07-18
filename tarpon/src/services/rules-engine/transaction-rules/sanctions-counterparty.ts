@@ -2,6 +2,7 @@ import _ from 'lodash'
 import { JSONSchemaType } from 'ajv'
 import {
   FUZZINESS_SCHEMA,
+  RESOLVE_IBAN_NUMBER_SCHEMA,
   SANCTIONS_SCREENING_TYPES_SCHEMA,
   TRANSACTION_AMOUNT_THRESHOLDS_OPTIONAL_SCHEMA,
 } from '../utils/rule-parameter-schemas'
@@ -35,13 +36,11 @@ export class SanctionsCounterPartyRule extends TransactionRule<SanctionsCounterP
           TRANSACTION_AMOUNT_THRESHOLDS_OPTIONAL_SCHEMA({}),
         screeningTypes: SANCTIONS_SCREENING_TYPES_SCHEMA({}),
         fuzziness: FUZZINESS_SCHEMA,
-        resolveIban: {
-          type: 'boolean',
-          title: 'Resolve IBAN number',
-          description:
-            'Enable if you want to identify Bank name using IBAN numbers.',
-          nullable: true,
-        },
+        resolveIban: RESOLVE_IBAN_NUMBER_SCHEMA({
+          uiSchema: {
+            requiredFeatures: ['IBAN_RESOLUTION'],
+          },
+        }),
       },
       required: ['fuzziness', 'screeningTypes'],
       additionalProperties: false,

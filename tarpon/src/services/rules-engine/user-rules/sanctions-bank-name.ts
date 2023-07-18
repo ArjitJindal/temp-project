@@ -4,6 +4,7 @@ import {
   FUZZINESS_SCHEMA,
   ENABLE_ONGOING_SCREENING_SCHEMA,
   SANCTIONS_SCREENING_TYPES_SCHEMA,
+  RESOLVE_IBAN_NUMBER_SCHEMA,
 } from '../utils/rule-parameter-schemas'
 import { isBusinessUser } from '../utils/user-rule-utils'
 import { RuleHitResult } from '../rule'
@@ -29,13 +30,11 @@ export default class SanctionsBankUserRule extends UserRule<SanctionsBankUserRul
     return {
       type: 'object',
       properties: {
-        resolveIban: {
-          type: 'boolean',
-          title: 'Resolve IBAN number',
-          description:
-            'Enable if you want to identify Bank name using IBAN numbers.',
-          nullable: true,
-        },
+        resolveIban: RESOLVE_IBAN_NUMBER_SCHEMA({
+          uiSchema: {
+            requiredFeatures: ['IBAN_RESOLUTION'],
+          },
+        }),
         screeningTypes: SANCTIONS_SCREENING_TYPES_SCHEMA({}),
         fuzziness: FUZZINESS_SCHEMA,
         ongoingScreening: ENABLE_ONGOING_SCREENING_SCHEMA({

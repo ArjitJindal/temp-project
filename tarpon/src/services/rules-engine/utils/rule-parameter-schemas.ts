@@ -709,3 +709,14 @@ export const ENABLE_ONGOING_SCREENING_SCHEMA = (options?: SchemaOptions) =>
     title: options?.title || 'Enable ongoing screening',
     description: options?.description,
   } as const)
+
+export const RESOLVE_IBAN_NUMBER_SCHEMA = (options?: SchemaOptions) =>
+  ({
+    ...uiSchema(options?.uiSchema),
+    type: 'boolean',
+    title: 'Resolve IBAN number',
+    description:
+      options?.description ||
+      'Enable if you want to identify Bank name using IBAN numbers.',
+    nullable: true,
+  } as const)
