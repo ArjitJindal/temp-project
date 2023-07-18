@@ -127,7 +127,7 @@ export function getAugmentedOpenapi(
   const authorizerResultTtlInSeconds =
     (authorization === 'API_KEY'
       ? StackConstants.API_KEY_AUTHORIZER_CACHE_TTL_SECONDS
-      : StackConstants.JWT_AUTHORIZER_CACHE_TTL_SECONDS) - 100
+      : StackConstants.JWT_AUTHORIZER_CACHE_TTL_SECONDS) - 600
   openapi['components']['securitySchemes']['lambda-authorizer'] = {
     type: 'apiKey',
     name: 'Authorization',

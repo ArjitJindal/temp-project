@@ -7,12 +7,14 @@ import { localDev } from './local-dev'
 import { initSentry } from './init-sentry'
 import { metricsMiddleware } from './metrics-middleware'
 import { resourceCleanupHandler } from './resource-cleanup-handler'
+import { registerUnhandledErrorHandler } from './lambda-utils'
 import { Feature } from '@/@types/openapi-internal/Feature'
 import { rbacMiddleware } from '@/core/middlewares/rbac'
 import { xrayMiddleware } from '@/core/middlewares/xray-middleware'
 import { bgProcessingMiddleware } from '@/core/middlewares/bg-processing-middleware'
 
 export const lambdaApi = (options?: { requiredFeatures?: Feature[] }) => {
+  registerUnhandledErrorHandler()
   const middlewares = [
     localDev(),
     xrayMiddleware(),
