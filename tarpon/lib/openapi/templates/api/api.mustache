@@ -22,18 +22,18 @@ import {DefaultApi{{#lambda.titlecase}}{{ nickname }}{{/lambda.titlecase}}Reques
 export class Handlers {
 {{#operations}}
     {{#operation}}
-        private {{nickname}}Handler?: (ctx: Context, request: DefaultApi{{#lambda.titlecase}}{{ nickname }}{{/lambda.titlecase}}Request) => Promise<{{{returnType}}} {{^returnType}}void{{/returnType}}> | {{{returnType}}} {{^returnType}}void{{/returnType}}
+        private {{nickname}}Handler?: (ctx: Context, request: DefaultApi{{#lambda.titlecase}}{{ nickname }}{{/lambda.titlecase}}Request) => Promise<{{{returnType}}} {{^returnType}}void{{/returnType}}  | null> | {{{returnType}}} {{^returnType}}void{{/returnType}} | Promise<null> | null
     {{/operation}}
 {{/operations}}
 {{#operations}}
     {{#operation}}
-        private {{nickname}}(ctx: Context, request: DefaultApi{{#lambda.titlecase}}{{ nickname }}{{/lambda.titlecase}}Request): Promise<{{{returnType}}} {{^returnType}}void{{/returnType}}> | {{{returnType}}} {{^returnType}}void{{/returnType}} {
+        private {{nickname}}(ctx: Context, request: DefaultApi{{#lambda.titlecase}}{{ nickname }}{{/lambda.titlecase}}Request): Promise<{{{returnType}}} {{^returnType}}void{{/returnType}} | null> | {{{returnType}}} {{^returnType}}void{{/returnType}} | Promise<null> | null {
            if (this.{{nickname}}Handler == undefined) {
                throw new Error("No handler registered")
            }
            return this.{{nickname}}Handler(ctx, request)
         }
-        register{{#lambda.titlecase}}{{nickname}}{{/lambda.titlecase}}(handler: (ctx: Context, request: DefaultApi{{#lambda.titlecase}}{{ nickname }}{{/lambda.titlecase}}Request) => Promise<{{{returnType}}} {{^returnType}}void{{/returnType}}> | {{{returnType}}} {{^returnType}}void{{/returnType}}) {
+        register{{#lambda.titlecase}}{{nickname}}{{/lambda.titlecase}}(handler: (ctx: Context, request: DefaultApi{{#lambda.titlecase}}{{ nickname }}{{/lambda.titlecase}}Request) => Promise<{{{returnType}}} {{^returnType}}void{{/returnType}} | null> | {{{returnType}}} {{^returnType}}void{{/returnType}} | Promise<null> | null) {
            this.{{nickname}}Handler = handler
         }
     {{/operation}}

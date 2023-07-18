@@ -1,4 +1,3 @@
-import { NotFound } from 'http-errors'
 import {
   APIGatewayEventLambdaAuthorizerContext,
   APIGatewayProxyWithLambdaAuthorizerEvent,
@@ -39,13 +38,9 @@ export const listsHandler = lambdaApi({
         )
     )
 
-    handlers.registerGetList(async (ctx, request) => {
-      const list = await listRepository.getListHeader(request.listId)
-      if (list == null) {
-        throw new NotFound(`List with id "${request.listId}" not found`)
-      }
-      return list
-    })
+    handlers.registerGetList(
+      async (ctx, request) => await listRepository.getListHeader(request.listId)
+    )
 
     handlers.registerDeleteList(
       async (ctx, request) => await listRepository.deleteList(request.listId)
@@ -56,7 +51,7 @@ export const listsHandler = lambdaApi({
       const body = request.ListData
       const list = await listRepository.getListHeader(listId)
       if (list == null) {
-        throw new NotFound(`List with id "${listId}" not found`)
+        return null
       }
       if (body.metadata != null) {
         await listRepository.updateListHeader({

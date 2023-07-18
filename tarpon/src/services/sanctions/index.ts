@@ -2,7 +2,6 @@ import { v4 as uuidv4 } from 'uuid'
 import fetch, { RequestInfo, RequestInit, Response } from 'node-fetch'
 import { StackConstants } from '@lib/constants'
 import _ from 'lodash'
-import { NotFound } from 'http-errors'
 import { TenantRepository } from '../tenants/repositories/tenant-repository'
 import { SanctionsSearchRepository } from './repositories/sanctions-search-repository'
 import { SanctionsWhitelistEntityRepository } from './repositories/sanctions-whitelist-entity-repository'
@@ -293,7 +292,7 @@ export class SanctionsService {
   public async getSearchHistory(
     searchId: string,
     userId?: string
-  ): Promise<SanctionsSearchHistory> {
+  ): Promise<SanctionsSearchHistory | null> {
     await this.initialize()
     const result = await this.sanctionsSearchRepository.getSearchResult(
       searchId
@@ -303,10 +302,6 @@ export class SanctionsService {
         result?.response,
         userId
       )
-    }
-
-    if (!result) {
-      throw new NotFound(`Cannot find search ${searchId}`)
     }
 
     return result

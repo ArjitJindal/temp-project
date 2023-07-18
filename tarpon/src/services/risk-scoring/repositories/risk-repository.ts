@@ -1,7 +1,7 @@
 import { MongoClient } from 'mongodb'
 import { StackConstants } from '@lib/constants'
 import _ from 'lodash'
-import { NotFound, InternalServerError } from 'http-errors'
+import { InternalServerError } from 'http-errors'
 import {
   DynamoDBDocumentClient,
   GetCommand,
@@ -270,10 +270,10 @@ export class RiskRepository {
     return newRiskClassificationValues
   }
 
-  async getDRSRiskItem(userId: string): Promise<DrsScore> {
+  async getDRSRiskItem(userId: string): Promise<DrsScore | null> {
     const drsScore = await this.getDrsScore(userId)
     if (!drsScore) {
-      throw new NotFound(`DRS Score not found for user ${userId}`)
+      return null
     }
 
     const riskClassificationValues = await this.getRiskClassificationValues()
@@ -342,7 +342,7 @@ export class RiskRepository {
   async getParameterRiskItem(
     parameter: ParameterAttributeRiskValuesParameterEnum,
     entityType: RiskEntityType
-  ): Promise<ParameterAttributeRiskValues> {
+  ): Promise<ParameterAttributeRiskValues | null> {
     const keyConditionExpr = 'PartitionKeyID = :pk AND SortKeyID = :sk'
     const { PartitionKeyID, SortKeyID } =
       DynamoDbKeys.PARAMETER_RISK_SCORES_DETAILS(
@@ -365,9 +365,7 @@ export class RiskRepository {
       const result = await paginateQuery(this.dynamoDb, queryInput)
 
       if (!result.Items?.length) {
-        throw new NotFound(
-          `Parameter Risk Item not found for ${parameter} and ${entityType}`
-        )
+        return null
       }
 
       return _.omit(result.Items[0], [
@@ -443,16 +441,12 @@ export class RiskRepository {
     return krsScore
   }
 
-  async getKrsValueFromMongo(userId: string): Promise<KrsScore> {
+  async getKrsValueFromMongo(userId: string): Promise<KrsScore | null> {
     const db = this.mongoDb.db()
     const krsValuesCollection = db.collection<KrsScore>(
       KRS_SCORES_COLLECTION(this.tenantId)
     )
-    const data = await krsValuesCollection.findOne({ userId })
-    if (!data) {
-      throw new NotFound(`No KRS score found for userId: ${userId}`)
-    }
-    return data
+    return await krsValuesCollection.findOne({ userId })
   }
 
   async addArsValueToMongo(arsScore: ArsScore): Promise<ArsScore> {
@@ -471,18 +465,12 @@ export class RiskRepository {
     return arsScore
   }
 
-  async getArsValueFromMongo(transactionId: string): Promise<ArsScore> {
+  async getArsValueFromMongo(transactionId: string): Promise<ArsScore | null> {
     const db = this.mongoDb.db()
     const arsValuesCollection = db.collection<ArsScore>(
       ARS_SCORES_COLLECTION(this.tenantId)
     )
-    const data = await arsValuesCollection.findOne({ transactionId })
-    if (!data) {
-      throw new NotFound(
-        `No ARS score found for transactionId: ${transactionId}`
-      )
-    }
-    return data
+    return await arsValuesCollection.findOne({ transactionId })
   }
   async addDrsValueToMongo(drsScore: DrsScore): Promise<DrsScore> {
     const db = this.mongoDb.db()

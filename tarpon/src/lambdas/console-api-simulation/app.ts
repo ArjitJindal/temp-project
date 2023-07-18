@@ -1,8 +1,9 @@
-import { BadRequest } from 'http-errors'
+import { BadRequest, NotFound } from 'http-errors'
 import {
   APIGatewayEventLambdaAuthorizerContext,
   APIGatewayProxyWithLambdaAuthorizerEvent,
 } from 'aws-lambda'
+import _ from 'lodash'
 import { SimulationTaskRepository } from './repositories/simulation-task-repository'
 import { SimulationResultRepository } from './repositories/simulation-result-repository'
 import { JWTAuthorizerResult } from '@/@types/jwt'
@@ -101,10 +102,16 @@ export const simulationHandler = lambdaApi({ requiredFeatures: ['SIMULATOR'] })(
       return { taskIds, jobId }
     })
 
-    handlers.registerGetSimulationTestId(
-      async (ctx, request) =>
-        await simulationTaskRepository.getSimulationJob(request.jobId)
-    )
+    handlers.registerGetSimulationTestId(async (ctx, request) => {
+      const data = await simulationTaskRepository.getSimulationJob(
+        request.jobId
+      )
+      if (_.isEmpty(data)) {
+        throw new NotFound(`Simulation job ${request.jobId} not found`)
+      }
+
+      return data
+    })
 
     handlers.registerGetSimulationTaskIdResult(
       async (ctx, request) =>

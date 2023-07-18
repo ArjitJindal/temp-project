@@ -1,6 +1,5 @@
 import { Filter, MongoClient } from 'mongodb'
 import { v4 as uuidv4 } from 'uuid'
-import { NotFound } from 'http-errors'
 import _ from 'lodash'
 import {
   SIMULATION_TASK_COLLECTION,
@@ -242,15 +241,14 @@ export class SimulationTaskRepository {
     }
   }
 
-  public async getSimulationJob(jobId: string): Promise<SimulationPulseJob> {
+  public async getSimulationJob(
+    jobId: string
+  ): Promise<SimulationPulseJob | null> {
     const db = this.mongoDb.db()
     const collection = db.collection<SimulationPulseJob>(
       SIMULATION_TASK_COLLECTION(this.tenantId)
     )
     const task = await collection.findOne({ _id: jobId as any })
-    if (!task) {
-      throw new NotFound(`Simulation job with id ${jobId} not found`)
-    }
     return _.omit(task, '_id')
   }
 
