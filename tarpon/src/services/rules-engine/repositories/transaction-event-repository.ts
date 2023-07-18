@@ -54,7 +54,6 @@ export class TransactionEventRepository {
                   ...primaryKey,
                   eventId,
                   ...transactionEvent,
-                  createdAt: Date.now(),
                   ...rulesResult,
                 },
               },

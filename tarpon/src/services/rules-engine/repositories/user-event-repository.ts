@@ -58,7 +58,6 @@ export class UserEventRepository {
                   ...primaryKey,
                   eventId,
                   ...userEvent,
-                  createdAt: Date.now(),
                 },
               },
             },

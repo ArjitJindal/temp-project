@@ -33,6 +33,9 @@ import { Case } from '@/@types/openapi-internal/Case'
 import { BusinessWithRulesResult } from '@/@types/openapi-internal/BusinessWithRulesResult'
 import { UserWithRulesResult } from '@/@types/openapi-internal/UserWithRulesResult'
 import { InternalUser } from '@/@types/openapi-internal/InternalUser'
+import { InternalConsumerUserEvent } from '@/@types/openapi-internal/InternalConsumerUserEvent'
+import { InternalBusinessUserEvent } from '@/@types/openapi-internal/InternalBusinessUserEvent'
+import { InternalTransactionEvent } from '@/@types/openapi-internal/InternalTransactionEvent'
 
 const sqs = new AWS.SQS()
 
@@ -126,6 +129,7 @@ async function transactionHandler(
   const transactionInMongo = await transactionsRepo.addTransactionToMongo(
     transaction
   )
+
   logger.info(`Starting Case Creation`)
   const timestampBeforeCasesCreation = Date.now()
   const cases = await caseCreationService.handleTransaction(transactionInMongo)
@@ -221,6 +225,10 @@ async function userHandler(
     }
   }
 
+  const existingUser = await usersRepo.getUserById(internalUser.userId)
+
+  internalUser.createdAt = existingUser?.createdAt ?? Date.now()
+
   const savedUser = await usersRepo.saveUserMongo(internalUser)
 
   if (await tenantHasFeature(tenantId, 'PULSE')) {
@@ -252,18 +260,14 @@ async function userEventHandler(
 
   const db = (await getMongoDbClient()).db()
   const userEventCollection = db.collection<
-    ConsumerUserEvent | BusinessUserEvent
+    InternalConsumerUserEvent | InternalBusinessUserEvent
   >(USER_EVENTS_COLLECTION(tenantId))
 
   // TODO: Update user status: https://flagright.atlassian.net/browse/FDT-150
   await userEventCollection.replaceOne(
     { eventId: userEvent.eventId },
-    {
-      ...userEvent,
-    },
-    {
-      upsert: true,
-    }
+    { ...userEvent, createdAt: Date.now() },
+    { upsert: true }
   )
 }
 
@@ -300,17 +304,15 @@ async function transactionEventHandler(
   logger.info(`Processing Transaction Event`)
 
   const db = (await getMongoDbClient()).db()
-  const transactionEventCollection = db.collection<TransactionEvent>(
+
+  const transactionEventCollection = db.collection<InternalTransactionEvent>(
     TRANSACTION_EVENTS_COLLECTION(tenantId)
   )
+
   await transactionEventCollection.replaceOne(
     { eventId: transactionEvent.eventId },
-    {
-      ...transactionEvent,
-    },
-    {
-      upsert: true,
-    }
+    { ...transactionEvent, createdAt: Date.now() },
+    { upsert: true }
   )
 }
 

@@ -89,12 +89,34 @@ export class MongoDbTransactionRepository
         transaction.destinationPaymentDetails
       ),
     }
+
+    const existingTransaction = await this.getTransactionById(
+      transaction.transactionId
+    )
+
+    internalTransaction.createdAt = existingTransaction?.createdAt ?? Date.now()
+
     await transactionsCollection.replaceOne(
       { transactionId: transaction.transactionId },
       internalTransaction,
       { upsert: true }
     )
     return internalTransaction
+  }
+
+  public async getTransactionById(
+    transactionId: string
+  ): Promise<InternalTransaction | null> {
+    const db = this.mongoDb.db()
+    const transactionsCollection = db.collection<InternalTransaction>(
+      TRANSACTIONS_COLLECTION(this.tenantId)
+    )
+
+    const transaction = await transactionsCollection.findOne({
+      transactionId,
+    })
+
+    return transaction
   }
 
   public getTransactionsMongoQuery(

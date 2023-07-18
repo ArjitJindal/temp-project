@@ -708,7 +708,6 @@ export class UserRepository {
       Item: {
         ...primaryKey,
         ...newUser,
-        createdAt: Date.now(),
       },
     }
     await this.dynamoDb.send(new PutCommand(putItemInput))

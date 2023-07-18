@@ -90,7 +90,6 @@ export class DynamoDbTransactionRepository
                   ...primaryKey,
                   ...transaction,
                   ...rulesResult,
-                  createdAt: Date.now(),
                 },
               },
             },
