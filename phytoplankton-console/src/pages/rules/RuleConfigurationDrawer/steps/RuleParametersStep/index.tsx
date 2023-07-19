@@ -73,7 +73,11 @@ function RiskBasedThresholds(props: Props) {
   const { rule, defaultInitialValues } = props;
   const settings = useSettings();
   const formState = useFormState<FormValues>();
-  const riskLevelParametersField = useFieldState('riskLevelParameters');
+  const riskLevelParametersField = useFieldState<FormValues, 'riskLevelParameters'>(
+    'riskLevelParameters',
+  );
+  const riskLevelActionsField = useFieldState<FormValues, 'riskLevelActions'>('riskLevelActions');
+
   return (
     <>
       <StepHeader
@@ -119,16 +123,34 @@ function RiskBasedThresholds(props: Props) {
                   currentRiskLevel={riskLevel}
                   formValues={formState.values}
                   onConfirm={(riskLevels) => {
-                    const currentRiskLevelParams = riskLevelParametersField.value[riskLevel];
-                    riskLevelParametersField.onChange(
-                      riskLevels.reduce(
+                    const currentRiskLevelParams = riskLevelParametersField?.value?.[riskLevel];
+                    const currentRiskLevelActions = riskLevelActionsField?.value?.[riskLevel];
+                    let newParams: RiskLevelRuleParameters | undefined = undefined;
+                    let newActions: RiskLevelRuleActions | undefined = undefined;
+                    if (currentRiskLevelParams && riskLevelParametersField.value) {
+                      newParams = riskLevels.reduce<RiskLevelRuleParameters>(
                         (acc, riskLevel) => ({
                           ...acc,
                           [riskLevel]: currentRiskLevelParams,
                         }),
                         riskLevelParametersField.value,
-                      ),
-                    );
+                      );
+                    }
+                    if (currentRiskLevelActions && riskLevelActionsField.value) {
+                      newActions = riskLevels.reduce<RiskLevelRuleActions>(
+                        (acc, riskLevel) => ({
+                          ...acc,
+                          [riskLevel]: currentRiskLevelActions,
+                        }),
+                        riskLevelActionsField.value,
+                      );
+                    }
+
+                    formState.setValues({
+                      ...formState.values,
+                      ...(newParams && { riskLevelParameters: newParams }),
+                      ...(newActions && { riskLevelActions: newActions }),
+                    });
                   }}
                 />
               </PropertyListLayout>

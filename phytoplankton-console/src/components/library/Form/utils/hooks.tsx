@@ -22,7 +22,7 @@ export function useFormContext<FormValues>(): FormContextValue<FormValues> {
 }
 
 export function useFormState<FormValues>(): FormState<FormValues> {
-  const { values, fieldValidators, formValidators } = useFormContext<FormValues>();
+  const { values, fieldValidators, formValidators, setValues } = useFormContext<FormValues>();
 
   const validationResult = useMemo(() => {
     return validateForm(values, formValidators, fieldValidators);
@@ -32,6 +32,7 @@ export function useFormState<FormValues>(): FormState<FormValues> {
     values: values,
     isValid: validationResult == null,
     validationErrors: validationResult?.formValidationErrors ?? [],
+    setValues: setValues,
   };
 }
 
