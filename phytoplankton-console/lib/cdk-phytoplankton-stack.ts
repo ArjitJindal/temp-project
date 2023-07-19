@@ -20,14 +20,14 @@ function contentSecurityPolicy(domain: string, stage: string) {
     ),
   ).join(' ');
   return `default-src 'self';
-script-src 'self';
-style-src 'self' 'unsafe-inline' https://fonts.googleapis.com;
+script-src 'self' https://cdn.heapanalytics.com https://heapanalytics.com ‘sha256-12Sr3zsuj4S5dhD99YsMaB85Xqg6R/TGFur0VAPzLsM=‘;
+style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://heapanalytics.com 'sha256-DOu86drLfwUr1Wcsx/wxfqAogK7tFvJGjVmF/300H/M=' 'sha256-iYwYhiMcsGmXCUzLEpEzZNz5dINrlkqf1sLbLhEcqGM=';
 object-src 'none';
 base-uri 'self';
-connect-src 'self' ${buckets} https://api-js.mixpanel.com https://*.${domain} https://ipinfo.io https://*.ingest.sentry.io;
-font-src 'self' https://fonts.gstatic.com;
+connect-src 'self' ${buckets} https://api-js.mixpanel.com https://*.${domain} https://ipinfo.io https://*.ingest.sentry.io https://heapanalytics.com;
+font-src 'self' https://fonts.gstatic.com https://heapanalytics.com;
 frame-src 'self' https://*.${domain};
-img-src 'self' data: https://s.gravatar.com https://*.wp.com https://cdnjs.cloudflare.com https://platform.slack-edge.com;
+img-src 'self' data: https://s.gravatar.com https://*.wp.com https://cdnjs.cloudflare.com https://platform.slack-edge.com https://heapanalytics.com;
 manifest-src 'self';
 media-src 'self';
 worker-src blob:;`.replace(/(\r\n|\n|\r)/gm, ' ');
