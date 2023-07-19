@@ -5219,7 +5219,6 @@ components:
         - SLACK_ALERTS
         - IMPORT_FILES
         - LISTS
-        - HELP_CENTER
         - COPILOT
         - GOOGLE_SSO
         - SANCTIONS

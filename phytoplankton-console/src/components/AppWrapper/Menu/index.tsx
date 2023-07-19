@@ -1,7 +1,7 @@
 import { ImportOutlined } from '@ant-design/icons';
 import React, { useContext, useEffect } from 'react';
 import { SideBarContext } from '../Providers/SidebarProvider';
-import { useFeatureEnabled, useFeaturesEnabled } from '../Providers/SettingsProvider';
+import { useFeaturesEnabled } from '../Providers/SettingsProvider';
 import TeamOutlined from './icons/Team_Outlined.react.svg';
 import ListsIcon from './icons/lists.react.svg';
 import GavelIcon from './icons/gavel.react.svg';
@@ -92,7 +92,6 @@ export default function Menu(props: {
 
   const i18n = useI18n();
   const routes = useRoutes();
-  const isHelpCenterEnabled = useFeatureEnabled('HELP_CENTER');
   const sideBarCollapseContext = useContext(SideBarContext);
 
   useEffect(() => {
@@ -120,7 +119,7 @@ export default function Menu(props: {
             i18n,
             isCollapsed,
           ).concat([
-            ...(isHelpCenterEnabled && branding.knowledgeBaseUrl
+            ...(branding.knowledgeBaseUrl
               ? [
                   <TopLevelLink
                     to={branding.knowledgeBaseUrl}
