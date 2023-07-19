@@ -424,9 +424,6 @@ export class AlertsService extends CaseAlertsCommonService {
     alertIds: string[],
     assignments: Assignment[]
   ): Promise<void> {
-    if (!alertIds?.length) {
-      throw new BadRequest('Missing alertIds or empty alertIds array')
-    }
     const timestamp = Date.now()
 
     assignments.forEach((a) => {
@@ -440,9 +437,6 @@ export class AlertsService extends CaseAlertsCommonService {
     alertIds: string[],
     reviewAssignments: Assignment[]
   ): Promise<void> {
-    if (!alertIds?.length) {
-      throw new BadRequest('Missing alertIds or empty alertIds array')
-    }
     const timestamp = Date.now()
 
     reviewAssignments.forEach((a) => {
