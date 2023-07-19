@@ -137,6 +137,7 @@ export function createApiGateway(
     deployOptions: {
       loggingLevel: MethodLoggingLevel.INFO,
       tracingEnabled: true,
+      metricsEnabled: true,
       accessLogDestination: new LogGroupLogDestination(apiLogGroup),
     },
   })
