@@ -10,17 +10,19 @@ import {
   TRANSACTION_EVENTS_COLLECTION,
   TRANSACTIONS_COLLECTION,
   USERS_COLLECTION,
+  AUDITLOG_COLLECTION,
 } from '@/utils/mongoDBUtils'
 import { init as txnInit, transactions } from '@/core/seed/data/transactions'
 import { init as caseInit, data as cases } from '@/core/seed/data/cases'
 import {
   init as userInit,
   data as users,
+  drsData as drs,
+  krsData as krs,
   merchantMonitoring,
 } from '@/core/seed/data/users'
-import { init as krsInit, data as krs } from '@/core/seed/data/krs_scores'
+import { init as auditLogInit, auditlogs } from '@/core/seed/data/auditlogs'
 import { init as arsInit, data as ars } from '@/core/seed/data/ars_scores'
-import { init as drsInit, data as drs } from '@/core/seed/data/drs_scores'
 import {
   init as transactionEventsInit,
   data as transactionEvents,
@@ -37,6 +39,7 @@ const collections: [(tenantId: string) => string, Iterable<unknown>][] = [
   [CASES_COLLECTION, cases],
   [USERS_COLLECTION, users],
   [KRS_SCORES_COLLECTION, krs],
+  [AUDITLOG_COLLECTION, auditlogs],
   [ARS_SCORES_COLLECTION, ars],
   [DRS_SCORES_COLLECTION, drs],
   [TRANSACTION_EVENTS_COLLECTION, transactionEvents],
@@ -63,9 +66,8 @@ export async function seedMongo(client: MongoClient, tenantId: string) {
   userInit()
   txnInit()
   caseInit()
-  krsInit()
+  auditLogInit()
   arsInit()
-  drsInit()
   transactionEventsInit()
   // sanctionsInit()
 

@@ -8,7 +8,7 @@ import {
 describe('Attribute generator', () => {
   test('Attributes are built correctly', async () => {
     const attributeGenerator = new AttributeGenerator(DefaultAttributeBuilders)
-    const user = sampleBusinessUser({ country: 'AF' })
+    const { user } = sampleBusinessUser({ country: 'AF' })
     const originUserId = user.userId
     const attributes = attributeGenerator.getAttributes({
       transactions: [

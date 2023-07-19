@@ -1,6 +1,7 @@
 import { uuid4 } from '@sentry/utils'
 import { sampleCountry } from './countries'
 import { sampleString } from './strings'
+import { sampleBusinessUserRiskScoreComponents } from './risk_score_components'
 import { KYCStatus } from '@/@types/openapi-internal/KYCStatus'
 import { KYCStatusDetails } from '@/@types/openapi-internal/KYCStatusDetails'
 import { UserState } from '@/@types/openapi-internal/UserState'
@@ -18,6 +19,9 @@ import { CountryCode } from '@/@types/openapi-internal/CountryCode'
 import { MerchantMonitoringSummary } from '@/@types/openapi-internal/MerchantMonitoringSummary'
 import { MerchantMonitoringSourceType } from '@/@types/openapi-internal/MerchantMonitoringSourceType'
 import { MERCHANT_MONITORING_SOURCE_TYPES } from '@/@types/openapi-internal-custom/MerchantMonitoringSourceType'
+import { DrsScore } from '@/@types/openapi-internal/DrsScore'
+import { RISK_LEVEL1S } from '@/@types/openapi-internal-custom/RiskLevel1'
+import { KrsScore } from '@/@types/openapi-internal/KrsScore'
 
 export function sampleUserState(seed?: number): UserState {
   return USER_STATES[randomInt(seed, USER_STATES.length)]
@@ -78,7 +82,7 @@ const legalDocument1: LegalDocument = {
 
 const legalDocument2: LegalDocument = {
   documentType: 'INN',
-  documentNumber: '7474018285741827',
+  documentNumber: 'HDPNE233',
   documentIssuedDate: generateRandomTimestamp(),
   documentIssuedCountry: 'US',
   tags: [documentTag1, documentTag2],
@@ -92,117 +96,156 @@ const legalDocument2: LegalDocument = {
 export function sampleBusinessUser(
   { company, country }: { company?: CompanySeedData; country?: CountryCode },
   seed = 0.1
-): InternalBusinessUser {
+): { user: InternalBusinessUser; drsScore: DrsScore; krsScore: KrsScore } {
   const name = company?.name || randomName()
   const domain = name.toLowerCase().replace(' ', '').replace('&', '')
+  const drsScore = Number((randomFloat() * 100).toFixed(2))
+  const krsScore = Number((randomFloat() * 100).toFixed(2))
+  const userId = uuid4()
   return {
-    type: 'BUSINESS',
-    userId: uuid4(),
-    drsScore: {
-      drsScore: randomFloat(seed, 1),
-      createdAt: Date.now(),
-      isUpdatable: true,
-    },
-    userStateDetails: sampleUserStateDetails(seed),
-    krsScore: {
-      krsScore: randomFloat(),
-      createdAt: sampleTimestamp(seed),
-    },
-    comments: [
-      {
-        body: 'User is behaving suspiciously',
+    user: {
+      type: 'BUSINESS',
+      userId: userId,
+      drsScore: {
+        drsScore: drsScore,
+        createdAt: Date.now(),
+        isUpdatable: true,
       },
-    ],
-    kycStatusDetails: sampleKycStatusDetails(seed),
-    createdTimestamp: sampleTimestamp(seed),
-    legalEntity: {
-      contactDetails: {
-        emailIds: company?.contactEmails || [],
-        websites: company?.website ? [company.website] : [],
+      userStateDetails: sampleUserStateDetails(seed),
+      krsScore: {
+        krsScore: krsScore,
+        createdAt: sampleTimestamp(seed),
       },
-      companyGeneralDetails: {
-        legalName: name,
-        businessIndustry: company?.industries || [],
-      },
-      companyRegistrationDetails: {
-        registrationIdentifier: sampleString(seed),
-        registrationCountry: country ?? sampleCountry(seed),
-      },
-    },
-    shareHolders: [
-      {
-        generalDetails: {
-          name: {
-            firstName: randomName(),
-            middleName: randomName(),
-            lastName: randomName(),
-          },
-          countryOfResidence: country ?? pickRandom(COUNTRY_CODES, seed),
-          countryOfNationality: country ?? pickRandom(COUNTRY_CODES, seed),
+      comments: [
+        {
+          body: 'User is behaving suspiciously',
         },
-        legalDocuments: [legalDocument1, legalDocument2],
+      ],
+      kycStatusDetails: sampleKycStatusDetails(seed),
+      createdTimestamp: sampleTimestamp(seed),
+      legalEntity: {
         contactDetails: {
           emailIds: company?.contactEmails || [],
-          contactNumbers: ['+4287878787', '+7777777'],
-          faxNumbers: ['+999999'],
-          websites: [domain],
-          addresses: [
-            {
-              addressLines: ['Times Square 12B', 'App. 11'],
-              postcode: '88173',
-              city: 'New York',
-              state: 'New York',
-              country: 'USA',
-              tags: [tag1],
-            },
-            {
-              addressLines: ['Baker St. 55'],
-              postcode: '777',
-              city: 'London',
-              country: 'UK',
-            },
-          ],
+          websites: company?.website ? [company.website] : [],
         },
-        tags: [tag1],
-      },
-      {
-        generalDetails: {
-          name: {
-            firstName: randomName(),
-            middleName: randomName(),
-            lastName: randomName(),
+        companyFinancialDetails: {
+          expectedTransactionAmountPerMonth: {
+            amountValue: Math.floor(Math.random() * 10000),
+            amountCurrency: 'USD',
+          },
+          expectedTurnoverPerMonth: {
+            amountValue: Math.floor(Math.random() * 100000),
+            amountCurrency: 'USD',
           },
         },
-      },
-    ],
-    directors: [
-      {
-        legalDocuments: [legalDocument1, legalDocument2],
-        contactDetails: {
-          emailIds: ['some@email.com'],
-          addresses: [
-            {
-              addressLines: ['Times Square 12B', 'App. 11'],
-              postcode: '88173',
-              city: 'New York',
-              state: 'New York',
-              country: 'USA',
-              tags: [tag1],
-            },
-          ],
+        companyGeneralDetails: {
+          legalName: name,
+          businessIndustry: company?.industries || [],
+          userRegistrationStatus:
+            Math.floor(Math.random() * 9 + 1) > 8
+              ? 'UNREGISTERED'
+              : 'REGISTERED',
         },
-        generalDetails: {
-          gender: 'M',
-          countryOfResidence: 'AF',
-          dateOfBirth: new Date().toISOString(),
-          name: {
-            firstName: randomName(),
-            middleName: randomName(),
-            lastName: randomName(),
+        companyRegistrationDetails: {
+          registrationIdentifier: sampleString(seed),
+          registrationCountry: country ?? sampleCountry(seed),
+        },
+      },
+      transactionLimits: {
+        maximumDailyTransactionLimit: {
+          amountValue: Math.floor(Math.random() * 10000),
+          amountCurrency: 'USD',
+        },
+      },
+      shareHolders: [
+        {
+          generalDetails: {
+            name: {
+              firstName: randomName(),
+              middleName: randomName(),
+              lastName: randomName(),
+            },
+            countryOfResidence: country ?? pickRandom(COUNTRY_CODES, seed),
+            countryOfNationality: country ?? pickRandom(COUNTRY_CODES, seed),
+          },
+          legalDocuments: [legalDocument1, legalDocument2],
+          contactDetails: {
+            emailIds: company?.contactEmails || [],
+            contactNumbers: ['+4287878787', '+1 656 332134'],
+            faxNumbers: ['+999999'],
+            websites: [domain],
+            addresses: [
+              {
+                addressLines: ['Times Square 12B', 'App. 11'],
+                postcode: '88173',
+                city: 'New York',
+                state: 'New York',
+                country: 'USA',
+                tags: [tag1],
+              },
+              {
+                addressLines: ['Baker St. 55'],
+                postcode: '777',
+                city: 'London',
+                country: 'UK',
+              },
+            ],
+          },
+          tags: [tag1],
+        },
+        {
+          generalDetails: {
+            name: {
+              firstName: randomName(),
+              middleName: randomName(),
+              lastName: randomName(),
+            },
           },
         },
-      },
-    ],
+      ],
+      directors: [
+        {
+          legalDocuments: [legalDocument1, legalDocument2],
+          contactDetails: {
+            emailIds: ['some@email.com'],
+            addresses: [
+              {
+                addressLines: ['Times Square 12B', 'App. 11'],
+                postcode: '88173',
+                city: 'New York',
+                state: 'New York',
+                country: 'USA',
+                tags: [tag1],
+              },
+            ],
+          },
+          generalDetails: {
+            gender: 'M',
+            countryOfResidence: 'AF',
+            dateOfBirth: new Date().toISOString(),
+            name: {
+              firstName: randomName(),
+              middleName: randomName(),
+              lastName: randomName(),
+            },
+          },
+        },
+      ],
+    },
+    drsScore: {
+      createdAt: sampleTimestamp(),
+      userId: userId,
+      derivedRiskLevel: pickRandom(RISK_LEVEL1S),
+      drsScore: drsScore,
+      isUpdatable: true,
+    },
+    krsScore: {
+      createdAt: sampleTimestamp(),
+      krsScore: krsScore,
+      userId: userId,
+      riskLevel: pickRandom(RISK_LEVEL1S),
+      components: sampleBusinessUserRiskScoreComponents(),
+    },
   }
 }
 

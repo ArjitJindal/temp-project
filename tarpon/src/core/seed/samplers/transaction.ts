@@ -30,7 +30,7 @@ export function sampleTransaction(
     type: 'TRANSFER',
     destinationAmountDetails: {
       country: destinationCountry ?? 'PH',
-      transactionCurrency: 'PHP',
+      transactionCurrency: 'USD',
       transactionAmount: 50,
     },
     originUserId,
@@ -38,7 +38,7 @@ export function sampleTransaction(
     transactionState: 'CREATED' as const,
     originAmountDetails: {
       country: originCountry ?? ('PH' as const),
-      transactionCurrency: 'PHP' as const,
+      transactionCurrency: 'USD' as const,
       transactionAmount: 50,
     },
     timestamp: new Date().getTime(),

@@ -9,6 +9,7 @@ import { sampleCurrency } from '@/core/seed/samplers/currencies'
 import { sampleTimestamp } from '@/core/seed/samplers/timestamp'
 import { RISK_LEVEL1S } from '@/@types/openapi-internal-custom/RiskLevel1'
 import { getPaymentMethodId } from '@/core/dynamodb/dynamodb-keys'
+import { MongoDbTransactionRepository } from '@/services/rules-engine/repositories/mongodb-transaction-repository'
 
 const TXN_COUNT = 10000
 const generator = function* (seed: number): Generator<InternalTransaction> {
@@ -18,8 +19,8 @@ const generator = function* (seed: number): Generator<InternalTransaction> {
       random() < 0.24 ? 'TRANSFER' : random() < 0.95 ? 'REFUND' : 'WITHDRAWAL'
     const status =
       random() < 0.24 ? 'BLOCK' : random() < 0.95 ? 'ALLOW' : 'FLAG'
+    const hitRules = status === 'ALLOW' ? [] : randomRules()
     const transaction = sampleTransaction({}, i)
-    const hitRules = randomRules()
     const originUserId = users[randomInt(random(), users.length)].userId
 
     const withoutOrigin = users.filter((u) => u.userId !== originUserId)
@@ -37,7 +38,9 @@ const generator = function* (seed: number): Generator<InternalTransaction> {
       transactionId,
       originUserId,
       destinationUserId,
-      status: status,
+      status: MongoDbTransactionRepository.getAggregatedRuleStatus(
+        hitRules.map((hr) => hr.ruleAction)
+      ),
       hitRules,
       destinationPaymentMethodId: getPaymentMethodId(
         transaction?.destinationPaymentDetails
@@ -51,7 +54,7 @@ const generator = function* (seed: number): Generator<InternalTransaction> {
         originUserId,
         destinationUserId,
         riskLevel: pickRandom(RISK_LEVEL1S),
-        arsScore: randomFloat(100),
+        arsScore: Number((randomFloat(i * 2) * 100).toFixed(2)),
         components: [
           {
             entityType: 'TRANSACTION',

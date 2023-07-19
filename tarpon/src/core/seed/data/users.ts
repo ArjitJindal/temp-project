@@ -1,4 +1,5 @@
 import { uuid4 } from '@sentry/utils'
+import { sampleConsumerUserRiskScoreComponents } from '../samplers/risk_score_components'
 import {
   merchantMonitoringSummaries,
   sampleBusinessUser,
@@ -13,9 +14,13 @@ import { companies, randomName } from '@/core/seed/samplers/dictionary'
 import { COUNTRY_CODES } from '@/@types/openapi-internal-custom/CountryCode'
 import { RISK_LEVEL1S } from '@/@types/openapi-internal-custom/RiskLevel1'
 import { MerchantMonitoringSummary } from '@/@types/openapi-internal/MerchantMonitoringSummary'
+import { DrsScore } from '@/@types/openapi-internal/DrsScore'
+import { KrsScore } from '@/@types/openapi-internal/KrsScore'
 
 const data: (InternalBusinessUser | InternalConsumerUser)[] = []
 const merchantMonitoring: MerchantMonitoringSummary[] = []
+const drsData: DrsScore[] = []
+const krsData: KrsScore[] = []
 
 const init = () => {
   if (data.length > 0) {
@@ -29,7 +34,9 @@ const init = () => {
       user: InternalBusinessUser
       merchantMonitoring: MerchantMonitoringSummary[]
     } => {
-      const user = sampleBusinessUser({ company: c }, i)
+      const { user, drsScore, krsScore } = sampleBusinessUser({ company: c }, i)
+      drsData.push(drsScore)
+      krsData.push(krsScore)
       return {
         user,
         merchantMonitoring: merchantMonitoringSummaries(user.userId, c),
@@ -44,14 +51,35 @@ const init = () => {
   data.push(
     ...[
       ...businessUserData.map((b) => b.user),
-      ...[...new Array(30)].map(
-        (_, i): InternalConsumerUser => ({
+      ...[...new Array(30)].map((_, i): InternalConsumerUser => {
+        const userId = uuid4()
+        const drsScore = Number((randomFloat(i * 2) * 100).toFixed(2))
+        const krsScore = Number((randomFloat(i * 2) * 100).toFixed(2))
+        drsData.push({
+          createdAt: sampleTimestamp(i),
+          userId: userId,
+          derivedRiskLevel: pickRandom(RISK_LEVEL1S),
+          drsScore: drsScore,
+          isUpdatable: true,
+        })
+        krsData.push({
+          createdAt: sampleTimestamp(i),
+          krsScore: krsScore,
+          userId: userId,
+          riskLevel: pickRandom(RISK_LEVEL1S),
+          components: sampleConsumerUserRiskScoreComponents(),
+        })
+        return {
           type: 'CONSUMER' as const,
-          userId: uuid4(),
+          userId: userId,
           drsScore: {
-            drsScore: randomFloat(i, 1),
+            drsScore: drsScore,
             createdAt: Date.now(),
             isUpdatable: true,
+          },
+          krsScore: {
+            krsScore: krsScore,
+            createdAt: Date.now(),
           },
           riskLevel: pickRandom(RISK_LEVEL1S, i),
           userStateDetails: sampleUserStateDetails(0.9 * i),
@@ -67,10 +95,10 @@ const init = () => {
             },
           },
           createdTimestamp: sampleTimestamp(0.9 * i),
-        })
-      ),
+        }
+      }),
     ]
   )
 }
 
-export { init, data, merchantMonitoring }
+export { init, data, merchantMonitoring, drsData, krsData }
