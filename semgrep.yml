@@ -1,0 +1,21 @@
+rules:
+  - id: lodash
+    pattern: import _ from 'lodash'
+    message: import { ... } from 'lodash' instead
+    languages:
+      - typescript
+    severity: ERROR
+    metadata:
+      category: best-practice
+      technology:
+        - typescript
+  - id: dayjs
+    pattern: import dayjs from 'dayjs'
+    message: import dayjs from '@/utils/dayjs' instead
+    languages:
+      - typescript
+    severity: ERROR
+    metadata:
+      category: best-practice
+      technology:
+        - typescript
