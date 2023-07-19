@@ -15,14 +15,29 @@ interface Props {
   isActive?: boolean;
   isDisabled?: boolean;
   submenu?: SubMenuItem[];
+  disabledByFeature?: boolean;
 }
 
 export default function TopLevelLink(props: Props) {
-  const { to, icon, children, submenu, isExternal, isCollapsed, isActive, isDisabled } = props;
+  const {
+    to,
+    icon,
+    children,
+    submenu,
+    isExternal,
+    isCollapsed,
+    isActive,
+    isDisabled,
+    disabledByFeature,
+  } = props;
   const branding = getBranding();
-  const disabledMessage = (
+  const disabledMessage = disabledByFeature ? (
     <div>
       Please <a href={`mailto:${branding.supportEmail}`}>contact us</a> to access this feature.
+    </div>
+  ) : (
+    <div>
+      You do not have access to this module. Please contact your team manager to get access.
     </div>
   );
   const sharedProps = {

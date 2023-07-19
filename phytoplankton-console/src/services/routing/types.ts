@@ -1,4 +1,4 @@
-import { Permission } from '@/apis';
+import { Feature, Permission } from '@/apis';
 
 export interface RouteCommonProps {
   path: string;
@@ -12,6 +12,7 @@ export interface LeafRouteItem extends RouteCommonProps {
   component: React.FC<any>; // todo: improve types
   disabled?: boolean;
   permissions?: Permission[];
+  associatedFeatures?: Feature[];
 }
 
 export interface TreeRouteItem extends RouteCommonProps {
@@ -22,6 +23,7 @@ export interface TreeRouteItem extends RouteCommonProps {
   hideChildrenInMenu?: boolean;
   disabled?: boolean;
   permissions?: Permission[];
+  associatedFeatures?: Feature[];
 }
 
 export interface RedirectRouteItem extends RouteCommonProps {

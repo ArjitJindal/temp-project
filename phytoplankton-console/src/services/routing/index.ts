@@ -210,6 +210,7 @@ export function useRoutes(): RouteItem[] {
         name: 'reports',
         icon: 'reports',
         hideChildrenInMenu: true,
+        permissions: ['reports:generated:read'],
         position: 'top',
         routes: [
           {
@@ -311,6 +312,7 @@ export function useRoutes(): RouteItem[] {
         hideChildrenInMenu: true,
         position: 'top',
         disabled: !isSanctionsEnabled,
+        associatedFeatures: ['SANCTIONS'],
         permissions: ['sanctions:search:read'],
         routes: isSanctionsEnabled
           ? [
@@ -341,6 +343,7 @@ export function useRoutes(): RouteItem[] {
         position: 'top',
         permissions: ['audit-log:export:read'],
         disabled: !isAuditLogEnabled,
+        associatedFeatures: ['AUDIT_LOGS'],
         component: AuditLogPage,
       },
       {

@@ -1,7 +1,7 @@
 import { ImportOutlined } from '@ant-design/icons';
 import React, { useContext, useEffect } from 'react';
 import { SideBarContext } from '../Providers/SidebarProvider';
-import { useFeatureEnabled } from '../Providers/SettingsProvider';
+import { useFeatureEnabled, useFeaturesEnabled } from '../Providers/SettingsProvider';
 import TeamOutlined from './icons/Team_Outlined.react.svg';
 import ListsIcon from './icons/lists.react.svg';
 import GavelIcon from './icons/gavel.react.svg';
@@ -67,6 +67,7 @@ function renderItems(
                 title: i18n(`${fullKey}.${x.name}` as TranslationId),
               }))
           : undefined;
+      const disabledByFeature = !useFeaturesEnabled(item.associatedFeatures ?? []);
       return (
         <TopLevelLink
           key={item.name}
@@ -75,6 +76,7 @@ function renderItems(
           isDisabled={item.disabled}
           icon={icon}
           submenu={submenu}
+          disabledByFeature={disabledByFeature}
         >
           {i18n(fullKey as TranslationId)}
         </TopLevelLink>
