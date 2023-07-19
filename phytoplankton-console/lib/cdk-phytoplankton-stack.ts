@@ -20,7 +20,7 @@ function contentSecurityPolicy(domain: string, stage: string) {
     ),
   ).join(' ');
   return `default-src 'self';
-script-src 'self' https://cdn.heapanalytics.com https://heapanalytics.com ‘sha256-12Sr3zsuj4S5dhD99YsMaB85Xqg6R/TGFur0VAPzLsM=‘;
+script-src 'self' https://cdn.heapanalytics.com https://heapanalytics.com 'sha256-12Sr3zsuj4S5dhD99YsMaB85Xqg6R/TGFur0VAPzLsM=';
 style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://heapanalytics.com 'sha256-DOu86drLfwUr1Wcsx/wxfqAogK7tFvJGjVmF/300H/M=' 'sha256-iYwYhiMcsGmXCUzLEpEzZNz5dINrlkqf1sLbLhEcqGM=';
 object-src 'none';
 base-uri 'self';
