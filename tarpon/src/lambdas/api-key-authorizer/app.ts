@@ -10,6 +10,7 @@ import { StackConstants } from '@lib/constants'
 import PolicyBuilder from '@/core/policies/policy-generator'
 import { lambdaAuthorizer } from '@/core/middlewares/lambda-authorizer-middlewares'
 import { updateLogMetadata } from '@/core/utils/context'
+import { addNewSubsegment } from '@/core/xray'
 
 // eslint-disable-next-line @typescript-eslint/no-var-requires
 const base62 = require('base-x')(
@@ -21,6 +22,10 @@ async function getTenantScopeCredentials(
   accountId: string,
   requestId: string
 ): Promise<AWS.STS.Credentials> {
+  const subgement = await addNewSubsegment(
+    'apiKeyAuthorizer',
+    'getTenantScopeCredentials'
+  )
   const sts = new AWS.STS()
   const assumeRoleResult = await sts
     .assumeRole({
@@ -39,9 +44,12 @@ async function getTenantScopeCredentials(
     })
     .promise()
   if (!assumeRoleResult.Credentials) {
-    throw new Error('Got empty credentials from STS')
+    const err = new Error('Got empty credentials from STS')
+    subgement?.close(err)
+    throw err
   }
 
+  subgement?.close()
   return assumeRoleResult.Credentials
 }
 

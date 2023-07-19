@@ -409,7 +409,6 @@ export class RiskRepository {
     const queryInput: AWS.DynamoDB.DocumentClient.QueryInput = {
       TableName: StackConstants.HAMMERHEAD_DYNAMODB_TABLE_NAME,
       KeyConditionExpression: keyConditionExpr,
-
       ExpressionAttributeValues: expressionAttributeVals,
     }
     try {
