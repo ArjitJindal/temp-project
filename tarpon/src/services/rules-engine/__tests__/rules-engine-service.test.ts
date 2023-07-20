@@ -544,9 +544,13 @@ describe('Verify Transaction for Simulation', () => {
     expect(eventsBefore.length).toEqual(1)
 
     await rulesEngine.applyTransactionAction(
-      [t.transactionId],
-      'user1',
-      'ALLOW'
+      {
+        transactionIds: [t.transactionId],
+        action: 'ALLOW',
+        reason: ['Anti-money laundering'],
+        comment: 'test',
+      },
+      'user1'
     )
     const txn = await transactionRepository.getInternalTransactionById(
       t.transactionId

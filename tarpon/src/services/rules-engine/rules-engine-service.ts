@@ -10,6 +10,7 @@ import { RiskRepository } from '../risk-scoring/repositories/risk-repository'
 import { UserRepository } from '../users/repositories/user-repository'
 import { DEFAULT_RISK_LEVEL } from '../risk-scoring/utils'
 import { TenantRepository } from '../tenants/repositories/tenant-repository'
+import { ThinWebhookDeliveryTask, sendWebhookTasks } from '../webhook/utils'
 import { DynamoDbTransactionRepository } from './repositories/dynamodb-transaction-repository'
 import { TransactionEventRepository } from './repositories/transaction-event-repository'
 import { RuleRepository } from './repositories/rule-repository'
@@ -63,6 +64,8 @@ import { JWTAuthorizerResult } from '@/@types/jwt'
 import { getDynamoDbClientByEvent } from '@/utils/dynamodb'
 import { TransactionState } from '@/@types/openapi-public/TransactionState'
 import { getAggregatedRuleStatus } from '@/services/rules-engine/utils'
+import { TransactionStatusUpdateWebhook } from '@/@types/openapi-public/TransactionStatusUpdateWebhook'
+import { TransactionAction } from '@/@types/openapi-internal/TransactionAction'
 
 const ruleAscendingComparator = (
   rule1: HitRulesDetails,
@@ -907,10 +910,10 @@ export class RulesEngineService {
   }
 
   public async applyTransactionAction(
-    transactionIds: string[],
-    userId: string,
-    action: RuleAction
+    data: TransactionAction,
+    userId: string
   ): Promise<void> {
+    const { transactionIds, action, reason } = data
     const txns = await Promise.all(
       transactionIds.map((txnId) => {
         return this.transactionRepository.getTransactionById(txnId)
@@ -947,6 +950,21 @@ export class RulesEngineService {
           }),
         ]
       })
+    )
+
+    const webhooksData: ThinWebhookDeliveryTask<TransactionStatusUpdateWebhook>[] =
+      txns.map((txn) => ({
+        event: 'TRANSACTION_STATUS_UPDATED',
+        payload: {
+          transactionId: txn?.transactionId as string,
+          action,
+          reasons: reason,
+        } as TransactionStatusUpdateWebhook,
+      }))
+
+    await sendWebhookTasks<TransactionStatusUpdateWebhook>(
+      this.tenantId,
+      webhooksData
     )
   }
 }

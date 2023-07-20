@@ -626,7 +626,7 @@ export class AlertsService extends CaseAlertsCommonService {
     const commentBody =
       this.getAlertStatusChangeCommentBody(statusUpdateRequest)
 
-    const webhookTasks: ThinWebhookDeliveryTask[] = []
+    const webhookTasks: ThinWebhookDeliveryTask<AlertClosedDetails>[] = []
 
     for (const alertId of alertIds) {
       const case_ = cases.find((c) =>
@@ -651,12 +651,12 @@ export class AlertsService extends CaseAlertsCommonService {
               case_?.caseUsers?.origin?.userId ??
               case_?.caseUsers?.destination?.userId,
             transactionIds: alert.transactionIds,
-          } as AlertClosedDetails,
+          },
         })
       }
     }
 
-    await sendWebhookTasks(this.tenantId, webhookTasks)
+    await sendWebhookTasks<AlertClosedDetails>(this.tenantId, webhookTasks)
   }
 
   public async getAlertTransactions(

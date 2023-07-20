@@ -4,11 +4,11 @@ export type SecretsManagerWebhookSecrets = {
   [key: string]: number | null
 }
 
-export type WebhookDeliveryTask = {
+export type WebhookDeliveryTask<T extends object = object> = {
   _id: string
   webhookId: string
   tenantId: string
   event: WebhookEventType
   createdAt: number
-  payload: any
+  payload: T
 }

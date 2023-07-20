@@ -45,14 +45,14 @@ export async function getWebhookSecrets(
 }
 
 const sqs = new SQSClient({})
-export type ThinWebhookDeliveryTask = Pick<
-  WebhookDeliveryTask,
+export type ThinWebhookDeliveryTask<T extends object = object> = Pick<
+  WebhookDeliveryTask<T>,
   'event' | 'payload'
 >
 
-export async function sendWebhookTasks(
+export async function sendWebhookTasks<T extends object = object>(
   tenantId: string,
-  webhookTasks: ThinWebhookDeliveryTask[]
+  webhookTasks: ThinWebhookDeliveryTask<T>[]
 ) {
   const createdAt = Date.now()
   const webhookRepository = new WebhookRepository(
@@ -66,7 +66,7 @@ export async function sendWebhookTasks(
   const entries: SendMessageBatchRequestEntry[] = []
   for (const webhookTask of webhookTasks) {
     for (const webhook of webhooksByEvent.get(webhookTask.event) || []) {
-      const finalWebhookTask: WebhookDeliveryTask = {
+      const finalWebhookTask: WebhookDeliveryTask<T> = {
         ...webhookTask,
         _id: uuidv4(),
         tenantId,

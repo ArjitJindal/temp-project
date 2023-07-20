@@ -3956,9 +3956,7 @@ components:
           items:
             type: string
         reasonDescriptionForOther:
-          type: array
-          items:
-            type: string
+          type: string
         comment:
           type: string
         userId:
@@ -3982,9 +3980,7 @@ components:
           items:
             type: string
         reasonDescriptionForOther:
-          type: array
-          items:
-            type: string
+          type: string
         comment:
           type: string
         userId:
@@ -4001,6 +3997,24 @@ components:
           type: string
         ruleInstanceId:
           type: string
+    TransactionStatusUpdateWebhook:
+      title: TransactionStatusUpdateWebhook
+      type: object
+      x-stoplight:
+        id: ev3mslr5s7fqf
+      properties:
+        transactionId:
+          type: string
+        reasons:
+          type: array
+          items:
+            type: string
+        action:
+          $ref: '#/components/schemas/RuleAction'
+      required:
+        - transactionId
+        - action
+        - reasons
     RiskLevel:
       type: string
       title: RiskLevel
@@ -4051,6 +4065,9 @@ components:
         data:
           oneOf:
             - $ref: '#/components/schemas/UserStateDetails'
+            - $ref: '#/components/schemas/CaseClosedDetails'
+            - $ref: '#/components/schemas/AlertClosedDetails'
+            - $ref: '#/components/schemas/TransactionStatusUpdateWebhook'
         createdTimestamp:
           type: number
           minimum: 1262300400000
@@ -4068,6 +4085,7 @@ components:
         - CASE_CLOSED
         - USER_STATE_UPDATED
         - ALERT_CLOSED
+        - TRANSACTION_STATUS_UPDATED
     ListType:
       type: string
       enum:

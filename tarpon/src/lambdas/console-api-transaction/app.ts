@@ -224,9 +224,8 @@ export const transactionsViewHandler = lambdaApi()(
 
     handlers.registerApplyTransactionsAction(async (ctx, req) => {
       const response = await rulesEngineService.applyTransactionAction(
-        req.TransactionAction.transactionIds,
-        ctx.userId,
-        req.TransactionAction.action
+        req.TransactionAction,
+        ctx.userId
       )
       const alerts = await alertService.getAlerts({
         filterTransactionIds: req.TransactionAction.transactionIds,
@@ -254,6 +253,7 @@ export const transactionsViewHandler = lambdaApi()(
           })
         )
       )
+
       return response
     })
     return await handlers.handle(event)

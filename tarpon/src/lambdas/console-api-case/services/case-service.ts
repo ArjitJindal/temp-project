@@ -40,6 +40,7 @@ import {
   FLAGRIGHT_SYSTEM_USER,
 } from '@/services/rules-engine/repositories/alerts-repository'
 import { AlertsService } from '@/services/alerts'
+import { WebhookEventType } from '@/@types/openapi-public/WebhookEventType'
 
 export class CaseService extends CaseAlertsCommonService {
   caseRepository: CaseRepository
@@ -141,22 +142,23 @@ export class CaseService extends CaseAlertsCommonService {
     cases: Case[],
     updateRequest: CaseStatusUpdate
   ) {
-    const webhookTasks = cases.map((case_) => ({
-      event: 'CASE_CLOSED',
-      payload: {
-        caseId: case_.caseId,
-        reasons: updateRequest.reason,
-        reasonDescriptionForOther: updateRequest.otherReason,
-        status: updateRequest.caseStatus,
-        comment: updateRequest.comment,
-        userId:
-          case_?.caseUsers?.origin?.userId ??
-          case_?.caseUsers?.destination?.userId,
-        transactionIds: case_?.caseTransactionsIds,
-      } as CaseClosedDetails,
-    })) as ThinWebhookDeliveryTask[]
+    const webhookTasks: ThinWebhookDeliveryTask<CaseClosedDetails>[] =
+      cases.map((case_) => ({
+        event: 'CASE_CLOSED' as WebhookEventType,
+        payload: {
+          caseId: case_.caseId,
+          reasons: updateRequest.reason,
+          reasonDescriptionForOther: updateRequest.otherReason,
+          status: updateRequest.caseStatus,
+          comment: updateRequest.comment,
+          userId:
+            case_?.caseUsers?.origin?.userId ??
+            case_?.caseUsers?.destination?.userId,
+          transactionIds: case_?.caseTransactionsIds,
+        },
+      }))
 
-    await sendWebhookTasks(this.tenantId, webhookTasks)
+    await sendWebhookTasks<CaseClosedDetails>(this.tenantId, webhookTasks)
   }
 
   public async updateCasesStatus(
