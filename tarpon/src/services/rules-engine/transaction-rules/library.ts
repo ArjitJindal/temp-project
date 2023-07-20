@@ -10,6 +10,7 @@ import { USER_RULES, UserRuleImplementationName } from '../user-rules'
 import { SanctionsBusinessUserRuleParameters } from '../user-rules/sanctions-business-user'
 import { SanctionsBankUserRuleParameters } from '../user-rules/sanctions-bank-name'
 import { SanctionsConsumerUserRuleParameters } from '../user-rules/sanctions-consumer-user'
+import { UserAddressChangeRuleParameters } from '../user-rules/user-address-change'
 import { TransactionAmountRuleParameters } from './transaction-amount'
 import { TransactionNewCountryRuleParameters } from './transaction-new-country'
 import { TransactionNewCurrencyRuleParameters } from './transaction-new-currency'
@@ -1494,6 +1495,25 @@ const _RULES_LIBRARY: Array<
       defaultNature: 'SCREENING',
       defaultCasePriority: 'P1',
       requiredFeatures: ['MACHINE_LEARNING_DEMO'],
+    }
+  },
+
+  () => {
+    const defaultParameters: UserAddressChangeRuleParameters = {}
+
+    return {
+      id: 'R-61',
+      name: 'User address change',
+      type: 'USER',
+      description:
+        'Check if user address has changed. For Business users (Legal Entity > Contact Details > Address) is used. For Consumer users (Contact Details  > Address) is used.',
+      descriptionTemplate: 'User address has changed.',
+      defaultParameters,
+      defaultAction: 'FLAG',
+      ruleImplementationName: 'user-address-change',
+      labels: [],
+      defaultNature: 'FRAUD',
+      defaultCasePriority: 'P2',
     }
   },
 ]

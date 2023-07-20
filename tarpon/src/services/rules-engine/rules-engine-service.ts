@@ -494,11 +494,7 @@ export class RulesEngineService {
     const ruleClassInstance = transaction
       ? new (RuleClass as typeof TransactionRuleBase)(
           this.tenantId,
-          {
-            transaction,
-            senderUser,
-            receiverUser,
-          },
+          { transaction, senderUser, receiverUser },
           { parameters, filters: ruleFilters },
           { ruleInstance },
           mode,
@@ -507,11 +503,10 @@ export class RulesEngineService {
         )
       : new (RuleClass as typeof UserRuleBase)(
           this.tenantId,
-          {
-            user: senderUser!,
-          },
+          { user: senderUser! },
           { parameters, filters: ruleFilters },
-          await getMongoDbClient()
+          await getMongoDbClient(),
+          this.dynamoDb
         )
 
     const segmentNamespace = `Rules Engine - ${ruleInstance.ruleId} (${ruleInstance.id})`

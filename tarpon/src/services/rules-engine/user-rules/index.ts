@@ -4,6 +4,7 @@ import SanctionsBankUserRule from './sanctions-bank-name'
 import SanctionsBusinessUserRule from './sanctions-business-user'
 import SanctionsConsumerUserRule from './sanctions-consumer-user'
 import TestAlwaysHitRule from './tests/test-always-hit-rule'
+import UserAddressChange from './user-address-change'
 import MerchantMonitoringIndustryUserRule from '@/services/rules-engine/user-rules/merchant-monitoring-industry'
 
 export class UserRuleBase extends UserRule<unknown> {
@@ -18,6 +19,7 @@ export const _USER_RULES = {
   'sanctions-business-user': SanctionsBusinessUserRule,
   'sanctions-bank-name': SanctionsBankUserRule,
   'sanctions-consumer-user': SanctionsConsumerUserRule,
+  'user-address-change': UserAddressChange,
 
   // TESTING-ONLY RULES
   'tests/test-always-hit-rule': TestAlwaysHitRule,

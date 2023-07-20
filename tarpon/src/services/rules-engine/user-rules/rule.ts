@@ -1,4 +1,5 @@
 import { MongoClient } from 'mongodb'
+import { DynamoDBDocumentClient } from '@aws-sdk/lib-dynamodb'
 import { Rule } from '../rule'
 import { Vars } from '../utils/format-description'
 import { Business } from '@/@types/openapi-public/Business'
@@ -14,6 +15,7 @@ export abstract class UserRule<P, T extends object = object> extends Rule {
   parameters: P
   filters: T
   mongoDb: MongoClient
+  dynamoDb: DynamoDBDocumentClient
 
   constructor(
     tenantId: string,
@@ -24,7 +26,8 @@ export abstract class UserRule<P, T extends object = object> extends Rule {
       parameters: P
       filters: T
     },
-    mongoDb: MongoClient
+    mongoDb: MongoClient,
+    dynamoDb: DynamoDBDocumentClient
   ) {
     super()
     this.tenantId = tenantId
@@ -32,6 +35,7 @@ export abstract class UserRule<P, T extends object = object> extends Rule {
     this.parameters = params.parameters
     this.filters = params.filters || {}
     this.mongoDb = mongoDb
+    this.dynamoDb = dynamoDb
   }
 
   public getUserVars(): UserVars<P> {
