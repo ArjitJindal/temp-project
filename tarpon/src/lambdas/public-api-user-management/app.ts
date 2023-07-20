@@ -118,9 +118,12 @@ export const userHandler = lambdaApi()(
 
         const riskLevel = getRiskLevelFromScore(riskClassificationValues, score)
 
-        krsRiskLevel = craRiskLevel = riskLevel
+        krsRiskLevel = riskLevel
+        craRiskLevel = riskLevel
 
-        if (userPayload.riskLevel) {
+        const preDefinedRiskLevel = userPayload.riskLevel
+
+        if (preDefinedRiskLevel) {
           await handleRiskLevelParam(
             tenantId,
             dynamoDb,
@@ -130,10 +133,10 @@ export const userHandler = lambdaApi()(
 
           craScore = getRiskScoreFromLevel(
             riskClassificationValues,
-            userPayload.riskLevel
+            preDefinedRiskLevel
           )
 
-          craRiskLevel = userPayload.riskLevel
+          craRiskLevel = preDefinedRiskLevel
         }
       }
 
