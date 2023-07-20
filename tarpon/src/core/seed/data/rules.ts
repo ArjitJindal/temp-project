@@ -1,6 +1,7 @@
 import { ExecutedRulesResult } from '@/@types/openapi-public/ExecutedRulesResult'
 import { sampleGuid } from '@/core/seed/samplers/id'
 import { randomArray } from '@/utils/prng'
+import { RuleInstance } from '@/@types/openapi-internal/RuleInstance'
 
 export const rules: ExecutedRulesResult[] = [
   {
@@ -99,6 +100,96 @@ export const rules: ExecutedRulesResult[] = [
     ruleDescription:
       'Same receiver and destination details are used >= x times in time t',
     ruleHit: true,
+  },
+]
+
+export const ruleInstances: RuleInstance[] = [
+  {
+    id: 'a25685ad',
+    ruleId: 'R-2',
+    casePriority: 'P1',
+    parameters: {
+      transactionAmountThreshold: {
+        USD: 10000,
+      },
+    },
+    action: 'SUSPEND',
+    type: 'TRANSACTION',
+    ruleNameAlias: 'Transaction amount too high',
+    filters: {},
+    riskLevelParameters: {
+      VERY_HIGH: {
+        transactionAmountThreshold: {
+          USD: 10000,
+        },
+      },
+      HIGH: {
+        transactionAmountThreshold: {
+          USD: 10000,
+        },
+      },
+      MEDIUM: {
+        transactionAmountThreshold: {
+          USD: 10000,
+        },
+      },
+      LOW: {
+        transactionAmountThreshold: {
+          USD: 10000,
+        },
+      },
+      VERY_LOW: {
+        transactionAmountThreshold: {
+          USD: 10000,
+          ADA: 1000,
+        },
+      },
+    },
+    riskLevelActions: {
+      VERY_HIGH: 'SUSPEND',
+      HIGH: 'SUSPEND',
+      MEDIUM: 'SUSPEND',
+      LOW: 'SUSPEND',
+      VERY_LOW: 'SUSPEND',
+    },
+    nature: 'AML',
+    labels: [],
+    status: 'ACTIVE',
+    createdAt: 1685604282954,
+    updatedAt: 1688114634781,
+    runCount: 1848,
+    hitCount: 1434,
+  },
+  {
+    id: 'e8c3b853',
+    ruleId: 'R-1',
+    casePriority: 'P1',
+    parameters: {},
+    action: 'FLAG',
+    type: 'TRANSACTION',
+    ruleNameAlias: 'First payment of a Customers',
+    filters: {},
+    riskLevelParameters: {
+      VERY_HIGH: {},
+      HIGH: {},
+      MEDIUM: {},
+      LOW: {},
+      VERY_LOW: {},
+    },
+    riskLevelActions: {
+      VERY_HIGH: 'FLAG',
+      HIGH: 'FLAG',
+      MEDIUM: 'FLAG',
+      LOW: 'FLAG',
+      VERY_LOW: 'FLAG',
+    },
+    nature: 'AML',
+    labels: [],
+    status: 'ACTIVE',
+    createdAt: 1685604237253,
+    updatedAt: 1688115753059,
+    runCount: 1848,
+    hitCount: 8,
   },
 ]
 

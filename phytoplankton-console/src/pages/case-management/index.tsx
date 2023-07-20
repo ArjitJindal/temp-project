@@ -16,6 +16,7 @@ import { useDeepEqualEffect } from '@/utils/hooks';
 import ScopeSelector from '@/pages/case-management/components/ScopeSelector';
 import StatusButtons from '@/pages/transactions/components/StatusButtons';
 import { useAuth0User } from '@/utils/user-utils';
+import PaymentApprovalsTable from '@/pages/case-management/PaymentApprovalTable';
 
 export default function CaseManagementPage() {
   const i18n = useI18n();
@@ -69,38 +70,55 @@ export default function CaseManagementPage() {
               handleChangeParams(cb(params));
             }}
           />
-          <StatusButtons
-            status={isAlerts ? params.alertStatus : params.caseStatus}
-            onChange={(newStatus) => {
-              handleChangeParams(
-                isAlerts
-                  ? {
-                      ...params,
-                      alertStatus: newStatus,
-                    }
-                  : {
-                      ...params,
-                      caseStatus: newStatus,
-                    },
-              );
-            }}
-            suffix={isAlerts ? 'alerts' : 'cases'}
-          />
+          {params.showCases !== 'PAYMENT_APPROVALS' && (
+            <StatusButtons
+              status={isAlerts ? params.alertStatus : params.caseStatus}
+              onChange={(newStatus) => {
+                handleChangeParams(
+                  isAlerts
+                    ? {
+                        ...params,
+                        alertStatus: newStatus,
+                      }
+                    : {
+                        ...params,
+                        caseStatus: newStatus,
+                      },
+                );
+              }}
+              suffix={isAlerts ? 'alerts' : 'cases'}
+            />
+          )}
         </div>
-        {isAlerts ? (
-          <AlertTable
-            hideAlertStatusFilters={true}
-            escalatedTransactionIds={[]}
-            params={{
-              ...params,
-              assignedTo: params.showCases === 'MY_ALERTS' ? [user.userId] : params.assignedTo,
-            }}
-            onChangeParams={handleChangeParams}
-          />
-        ) : (
-          <CaseTableWrapper params={params} onChangeParams={handleChangeParams} />
-        )}
+        {getTable(user.userId, params, handleChangeParams)}
       </PageWrapperContentContainer>
     </PageWrapper>
   );
+}
+
+function getTable(
+  userId: string,
+  params: AllParams<TableSearchParams>,
+  handleChangeParams: (newParams: AllParams<TableSearchParams>) => void,
+) {
+  switch (params.showCases) {
+    case 'MY_ALERTS':
+    case 'ALL_ALERTS':
+      return (
+        <AlertTable
+          hideAlertStatusFilters={true}
+          escalatedTransactionIds={[]}
+          params={{
+            ...params,
+            assignedTo: params.showCases === 'MY_ALERTS' ? [userId] : params.assignedTo,
+          }}
+          onChangeParams={handleChangeParams}
+        />
+      );
+    case 'MY':
+    case 'ALL':
+      return <CaseTableWrapper params={params} onChangeParams={handleChangeParams} />;
+    case 'PAYMENT_APPROVALS':
+      return <PaymentApprovalsTable />;
+  }
 }

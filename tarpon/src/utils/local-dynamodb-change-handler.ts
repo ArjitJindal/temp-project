@@ -7,6 +7,28 @@ import { StackConstants } from '@lib/constants'
 import { DynamoDB } from 'aws-sdk'
 import { GetCommand } from '@aws-sdk/lib-dynamodb'
 import { getDynamoDbClientByEvent } from './dynamodb'
+import { envIs } from './env'
+
+let localChangeHandlerEnabled = false
+let localChangeHandlerDisabled = false
+export function disableLocalChangeHandler() {
+  localChangeHandlerDisabled = true
+  localChangeHandlerEnabled = false
+}
+export function enableLocalChangeHandler() {
+  localChangeHandlerEnabled = true
+  localChangeHandlerDisabled = false
+}
+
+export function runLocalChangeHandler(): boolean {
+  if (localChangeHandlerEnabled) {
+    return true
+  }
+  if (localChangeHandlerDisabled) {
+    return false
+  }
+  return envIs('local') || !!process.env.__INTERNAL_MONGODB_MIRROR__
+}
 
 export function createKinesisStreamEvent<T>(
   partitionKeyId: string,
@@ -41,10 +63,6 @@ export async function localTarponChangeCaptureHandler(key: {
   PartitionKeyID: string
   SortKeyID?: string
 }) {
-  if (process.env.ENV !== 'local') {
-    return
-  }
-
   const dynamoDb = getDynamoDbClientByEvent(null as any)
   const entity = await dynamoDb.send(
     new GetCommand({
@@ -72,10 +90,6 @@ export async function localHammerheadChangeCaptureHandler(key: {
   PartitionKeyID: string
   SortKeyID?: string
 }) {
-  if (process.env.ENV !== 'local') {
-    return
-  }
-
   const dynamoDb = getDynamoDbClientByEvent(null as any)
   const entity = await dynamoDb.send(
     new GetCommand({

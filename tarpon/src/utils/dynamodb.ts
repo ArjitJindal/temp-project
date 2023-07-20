@@ -23,7 +23,6 @@ import {
   UpdateCommand,
 } from '@aws-sdk/lib-dynamodb'
 import { ConsumedCapacity, DynamoDBClient } from '@aws-sdk/client-dynamodb'
-import * as AWSXRay from 'aws-xray-sdk'
 import { getCredentialsFromEvent } from './credentials'
 import {
   DYNAMODB_READ_CAPACITY_METRIC,
@@ -32,7 +31,7 @@ import {
 import { logger } from '@/core/logger'
 import { addNewSubsegment } from '@/core/xray'
 import { getContext, publishMetric } from '@/core/utils/context'
-import { envIs } from '@/utils/env'
+import { envIs, envIsNot } from '@/utils/env'
 
 function getAugmentedDynamoDBCommand(command: any): {
   type: 'READ' | 'WRITE' | null
@@ -130,14 +129,14 @@ export function getDynamoDbClientByEvent(
   >
 ): DynamoDBDocumentClient {
   return getDynamoDbClient(
-    envIs('local') ? undefined : getCredentialsFromEvent(event)
+    envIs('local', 'test') ? undefined : getCredentialsFromEvent(event)
   )
 }
 
 export function getDynamoDbRawClient(
   credentials?: Credentials | CredentialsOptions
 ): DynamoDBClient {
-  const isLocal = envIs('local')
+  const isLocal = envIs('local', 'test')
   const rawClient = new DynamoDBClient({
     requestHandler: new NodeHttpHandler({
       socketTimeout: 10000, // this decreases the emfiles count, the Node.js default is 120000
@@ -169,19 +168,15 @@ export function getDynamoDbRawClient(
 type DynamoOption = (client: DynamoDBDocumentClient) => DynamoDBDocumentClient
 export function getDynamoDbClient(
   credentials?: Credentials | CredentialsOptions,
-  options?: { retry?: boolean; metrics?: boolean }
+  options?: { retry?: boolean }
 ): DynamoDBDocumentClient {
   const rawClient = getDynamoDbRawClient(credentials)
-  const client = !(envIs('local') || envIs('test'))
-    ? AWSXRay.captureAWSv3Client(
-        DynamoDBDocumentClient.from(rawClient, {
-          marshallOptions: { removeUndefinedValues: true },
-        })
-      )
-    : DynamoDBDocumentClient.from(rawClient, {
-        marshallOptions: { removeUndefinedValues: true },
-      })
-  const { retry = !!process.env.ASSUME_ROLE_ARN, metrics = true } = {
+
+  const client = DynamoDBDocumentClient.from(rawClient, {
+    marshallOptions: { removeUndefinedValues: true },
+  })
+
+  const { retry = !!process.env.ASSUME_ROLE_ARN } = {
     ...options,
   }
 
@@ -189,7 +184,7 @@ export function getDynamoDbClient(
   if (retry) {
     opts.push(withRetry)
   }
-  if (metrics) {
+  if (envIsNot('test') && envIsNot('local')) {
     opts.push(withMetrics)
   }
   return opts.reduce((client, opt) => opt(client), client)

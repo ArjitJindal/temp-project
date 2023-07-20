@@ -13,3 +13,7 @@ export function getErrorMessage(e: unknown) {
   }
   return 'Unknown error'
 }
+
+export type Undefined<T> = {
+  [K in keyof T]?: T[K]
+}

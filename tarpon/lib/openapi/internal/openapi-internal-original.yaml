@@ -2441,6 +2441,19 @@ paths:
             $ref: '#/components/schemas/Page'
           in: query
           name: page
+  /transactions/action:
+    post:
+      summary: Apply an action on transactions
+      operationId: apply-transactions-action
+      responses:
+        '200':
+          description: OK
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/TransactionAction'
   '/alerts/{alertId}/transactions':
     parameters:
       - schema:
@@ -2710,6 +2723,12 @@ paths:
             type: string
           in: query
           name: filterTransactionId
+        - schema:
+            type: array
+            items:
+              type: string
+          in: query
+          name: filterTransactionIds
         - schema:
             type: number
           in: query
@@ -3058,6 +3077,12 @@ paths:
             type: string
           in: query
           name: filterTransactionId
+        - schema:
+            type: array
+            items:
+              type: string
+          in: query
+          name: filterTransactionIds
         - schema:
             type: number
           in: query
@@ -4076,7 +4101,7 @@ components:
       title: TransactionStateAlias
       properties:
         state:
-          $ref: '#/components/schemas/TransactionState'
+          $ref: ../public/openapi-public-original.yaml#/components/schemas/TransactionState
         alias:
           type: string
       required:
@@ -4360,8 +4385,6 @@ components:
               type: string
             destinationPaymentMethodId:
               type: string
-            status:
-              $ref: '#/components/schemas/RuleAction'
             originUser:
               oneOf:
                 - $ref: '#/components/schemas/InternalConsumerUser'
@@ -4701,27 +4724,27 @@ components:
       required:
         - assigneeUserId
         - timestamp
-    TransactionStatusChange:
-      title: TransactionStatusChange
+    TransactionAction:
+      title: TransactionAction
       type: object
       properties:
-        userId:
+        transactionIds:
+          type: array
+          items:
+            type: string
+        comment:
           type: string
-        status:
+        action:
           $ref: '#/components/schemas/RuleAction'
         reason:
           type: array
           items:
             $ref: '#/components/schemas/CaseClosingReasons'
-        timestamp:
-          type: number
-        caseStatus:
-          $ref: '#/components/schemas/CaseStatus'
-        otherReason:
-          type: string
       required:
-        - userId
-        - timestamp
+        - comment
+        - transactionIds
+        - reason
+        - action
     UserUpdateRequest:
       title: UserUpdateRequest
       type: object
@@ -4873,6 +4896,8 @@ components:
           properties:
             currency:
               $ref: ../public/openapi-public-original.yaml#/components/schemas/CurrencyCode
+        isPaymentApprovalEnabled:
+          type: boolean
         complyAdvantageSearchProfileId:
           type: string
         isAiEnabled:

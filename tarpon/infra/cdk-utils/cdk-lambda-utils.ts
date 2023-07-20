@@ -18,6 +18,7 @@ import { LAMBDAS } from '@lib/lambdas'
 import { StackConstants } from '@lib/constants'
 import { Config } from '@lib/configs/config'
 import { Duration } from 'aws-cdk-lib'
+import { isQaEnv } from '@lib/qa'
 
 type InternalFunctionProps = {
   name: string
@@ -73,6 +74,7 @@ export function createFunction(
       environment: {
         ...props.environment,
         ENV: context.config.stage,
+        DEV_ENV: isQaEnv() ? 'true' : 'false',
         REGION: context.config.region as string,
         ...{
           ...Object.entries(context.config.application).reduce(

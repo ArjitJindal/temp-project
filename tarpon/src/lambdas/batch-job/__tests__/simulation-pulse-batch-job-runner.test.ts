@@ -247,6 +247,7 @@ describe('Simulation (Pulse) batch job runner', () => {
           arsScore: 90,
         },
       }),
+      status: 'ALLOW',
       hitRules: [],
       executedRules: [],
     })
@@ -264,6 +265,7 @@ describe('Simulation (Pulse) batch job runner', () => {
           arsScore: 20,
         },
       }),
+      status: 'ALLOW',
       hitRules: [],
       executedRules: [],
     })

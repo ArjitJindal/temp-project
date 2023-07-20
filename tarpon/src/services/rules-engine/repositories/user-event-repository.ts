@@ -11,6 +11,7 @@ import { ConsumerUserEvent } from '@/@types/openapi-public/ConsumerUserEvent'
 import { paginateQuery } from '@/utils/dynamodb'
 import { BusinessUserEvent } from '@/@types/openapi-public/BusinessUserEvent'
 import { UserType } from '@/@types/user/user-type'
+import { runLocalChangeHandler } from '@/utils/local-dynamodb-change-handler'
 
 export class UserEventRepository {
   dynamoDb: DynamoDBDocumentClient
@@ -66,7 +67,7 @@ export class UserEventRepository {
       }
     await this.dynamoDb.send(new BatchWriteCommand(batchWriteItemParams))
 
-    if (process.env.NODE_ENV === 'development') {
+    if (runLocalChangeHandler()) {
       const { localTarponChangeCaptureHandler } = await import(
         '@/utils/local-dynamodb-change-handler'
       )

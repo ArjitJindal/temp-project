@@ -5,7 +5,7 @@ import s from './style.module.less';
 import SameWidthDiv from '@/components/library/SameWidthDiv';
 import { Comparable, compare, key } from '@/utils/comparable';
 
-interface Item<Value> {
+export interface Item<Value> {
   value: Value;
   label: string;
   isDisabled?: boolean;

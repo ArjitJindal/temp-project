@@ -16,6 +16,9 @@ import { RiskRepository } from '@/services/risk-scoring/repositories/risk-reposi
 import { UserRepository } from '@/services/users/repositories/user-repository'
 import { TransactionEventRepository } from '@/services/rules-engine/repositories/transaction-event-repository'
 import { Handlers } from '@/@types/openapi-internal-custom/DefaultApi'
+import { RulesEngineService } from '@/services/rules-engine'
+import { AlertsService } from '@/services/alerts'
+import { background } from '@/utils/background'
 
 export type TransactionViewConfig = {
   TMP_BUCKET: string
@@ -89,6 +92,8 @@ export const transactionsViewHandler = lambdaApi()(
       tenantId,
       client
     )
+    const rulesEngineService = await RulesEngineService.fromEvent(event)
+    const alertService = await AlertsService.fromEvent(event)
     const userRepository = new UserRepository(tenantId, { mongoDb: client })
     const transactionEventsRepository = new TransactionEventRepository(
       tenantId,
@@ -217,6 +222,40 @@ export const transactionsViewHandler = lambdaApi()(
       return transaction
     })
 
+    handlers.registerApplyTransactionsAction(async (ctx, req) => {
+      const response = await rulesEngineService.applyTransactionAction(
+        req.TransactionAction.transactionIds,
+        ctx.userId,
+        req.TransactionAction.action
+      )
+      const alerts = await alertService.getAlerts({
+        filterTransactionIds: req.TransactionAction.transactionIds,
+        filterStatus: ['SUSPEND'],
+      })
+      await background(
+        Promise.all(
+          alerts.data.map((alert) => {
+            if (!alert.alert.alertId) {
+              return
+            }
+            const txnIds: string[] = []
+            req.TransactionAction.transactionIds.forEach((tid) => {
+              if (alert.alert.transactionIds?.includes(tid)) {
+                txnIds.push(tid)
+              }
+            })
+            return alertService.saveAlertComment(alert.alert.alertId, {
+              body: `${txnIds.join(', ')} set to ${
+                req.TransactionAction.action
+              }. Reasons: ${req.TransactionAction.reason.join(
+                ', '
+              )}. Comment: ${req.TransactionAction.comment}`,
+            })
+          })
+        )
+      )
+      return response
+    })
     return await handlers.handle(event)
   }
 )

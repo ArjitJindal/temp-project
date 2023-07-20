@@ -1,8 +1,9 @@
 import React from 'react';
-import SegmentedControl from '@/components/library/SegmentedControl';
+import SegmentedControl, { Item } from '@/components/library/SegmentedControl';
 import { AllParams } from '@/components/library/Table/types';
+import { useSettings } from '@/components/AppWrapper/Providers/SettingsProvider';
 
-type ScopeSelectorValue = 'MY' | 'ALL' | 'ALL_ALERTS' | 'MY_ALERTS';
+export type ScopeSelectorValue = 'MY' | 'ALL' | 'ALL_ALERTS' | 'MY_ALERTS' | 'PAYMENT_APPROVALS';
 
 interface Props<Params> {
   params: Params;
@@ -15,6 +16,19 @@ export default function ScopeSelector<
   },
 >(props: Props<Params>) {
   const { params, onChangeParams } = props;
+  const settings = useSettings();
+
+  const items: Item<ScopeSelectorValue>[] = [
+    { value: 'ALL', label: 'All cases' },
+    { value: 'MY', label: 'My cases' },
+    { value: 'ALL_ALERTS', label: 'All alerts' },
+    { value: 'MY_ALERTS', label: 'My alerts' },
+  ];
+
+  if (settings.isPaymentApprovalEnabled) {
+    items.push({ value: 'PAYMENT_APPROVALS', label: 'Payment approval' });
+  }
+
   return (
     <SegmentedControl<ScopeSelectorValue>
       size="LARGE"
@@ -22,12 +36,7 @@ export default function ScopeSelector<
       onChange={(newValue) => {
         onChangeParams((oldState) => ({ ...oldState, showCases: newValue }));
       }}
-      items={[
-        { value: 'ALL', label: 'All cases' },
-        { value: 'MY', label: 'My cases' },
-        { value: 'ALL_ALERTS', label: 'All alerts' },
-        { value: 'MY_ALERTS', label: 'My alerts' },
-      ]}
+      items={items}
     />
   );
 }

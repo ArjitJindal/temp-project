@@ -19,7 +19,7 @@ export const xrayMiddleware =
     const namespace = determineApi(ctx) || 'Unknown'
     const segmentName = `${event.httpMethod} ${event.path}`
     const segment = await addNewSubsegment(namespace, segmentName)
-    if (event.requestContext.authorizer) {
+    if (event.requestContext && event.requestContext.authorizer) {
       const { principalId: tenantId, userId } = event.requestContext.authorizer
       segment?.addAnnotation('tenantId', tenantId)
       if (userId) {

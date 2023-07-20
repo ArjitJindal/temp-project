@@ -10,6 +10,7 @@ import {
 } from '@/apis';
 import { CommonParams } from '@/components/library/Table/types';
 import { Mode as UserSearchMode } from '@/pages/transactions/components/UserSearchPopup/types';
+import { ScopeSelectorValue } from '@/pages/case-management/components/ScopeSelector';
 
 export type CommonCaseParams = {
   caseId: string;
@@ -47,5 +48,5 @@ export type CommonCaseParams = {
 };
 
 export type TableSearchParams = CommonParams & {
-  showCases?: 'MY' | 'ALL' | 'MY_ALERTS' | 'ALL_ALERTS';
+  showCases?: ScopeSelectorValue;
 } & Partial<CommonCaseParams>;

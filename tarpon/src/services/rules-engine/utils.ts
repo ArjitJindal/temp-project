@@ -1,5 +1,7 @@
 import { Transaction } from '@/@types/openapi-public/Transaction'
 import { DynamoDbKeys } from '@/core/dynamodb/dynamodb-keys'
+import { RuleAction } from '@/@types/openapi-public/RuleAction'
+import { RULE_ACTIONS } from '@/@types/rule/rule-actions'
 
 export function getSenderKeys(
   tenantId: string,
@@ -151,4 +153,16 @@ export function getNonUserReceiverKeys(
         transaction.timestamp
       )
     : null
+}
+
+export function getAggregatedRuleStatus(
+  ruleActions: ReadonlyArray<RuleAction>
+): RuleAction {
+  return ruleActions.reduce((prev, curr) => {
+    if (RULE_ACTIONS.indexOf(curr) < RULE_ACTIONS.indexOf(prev)) {
+      return curr
+    } else {
+      return prev
+    }
+  }, 'ALLOW')
 }

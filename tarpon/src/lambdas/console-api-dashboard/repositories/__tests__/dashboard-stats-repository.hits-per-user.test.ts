@@ -6,6 +6,7 @@ import { getTestTenantId } from '@/test-utils/tenant-test-utils'
 import { logger } from '@/core/logger'
 import { getMongoDbClient } from '@/utils/mongoDBUtils'
 import { createConsumerUsers, getTestUser } from '@/test-utils/user-test-utils'
+import { RuleAction } from '@/@types/openapi-public/RuleAction'
 
 dynamoDbSetupHook()
 
@@ -26,6 +27,7 @@ describe('Verify hits-per-user statistics', () => {
       ...getTestTransaction({
         timestamp,
       }),
+      status: 'BLOCK' as RuleAction,
       hitRules: hitRules,
       executedRules: hitRules,
       originUserId,
@@ -100,6 +102,7 @@ describe('Verify hits-per-user statistics', () => {
       ...getTestTransaction({
         timestamp,
       }),
+      status: 'BLOCK' as RuleAction,
       hitRules: hitRules,
       executedRules: [...hitRules, notHitRule('BLOCK'), notHitRule('FLAG')],
       originUserId: originUserId,
@@ -178,6 +181,7 @@ describe('Verify hits-per-user statistics', () => {
         ...getTestTransaction({
           timestamp,
         }),
+        status: 'BLOCK' as RuleAction,
         hitRules: hitRules,
         executedRules: hitRules,
         originUserId: originUserId,
@@ -256,6 +260,7 @@ describe('Verify hits-per-user statistics', () => {
         ...getTestTransaction({
           timestamp,
         }),
+        status: 'BLOCK' as RuleAction,
         hitRules: hitRules,
         executedRules: [...hitRules, notHitRule()],
         originUserId: originUserId,
@@ -326,6 +331,7 @@ describe('Verify hits-per-user statistics', () => {
       ...getTestTransaction({
         timestamp,
       }),
+      status: 'BLOCK' as RuleAction,
       hitRules: hitRules,
       executedRules: hitRules,
       originUserId,
@@ -379,6 +385,7 @@ describe('Verify hits-per-user statistics', () => {
         }),
         hitRules: hitRules,
         executedRules: hitRules,
+        status: 'BLOCK' as RuleAction,
         originUserId,
         destinationUserId,
       },
@@ -388,6 +395,7 @@ describe('Verify hits-per-user statistics', () => {
         }),
         hitRules: hitRules,
         executedRules: hitRules,
+        status: 'BLOCK' as RuleAction,
         originUserId,
         destinationUserId,
       },

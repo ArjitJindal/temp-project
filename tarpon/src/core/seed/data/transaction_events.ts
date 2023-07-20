@@ -37,7 +37,7 @@ const init = () => {
         updatedTransactionAttributes: undefined,
       },
       {
-        transactionState: 'REFUNDED',
+        transactionState: t.transactionState || 'REFUNDED',
         timestamp: t.timestamp + 3600000 + 3600000,
         transactionId: t.transactionId,
         eventId: sampleGuid(random()),

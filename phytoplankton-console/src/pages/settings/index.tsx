@@ -1,5 +1,6 @@
 import { AddToSlackButton } from '../case-management/components/AddToSlackButton';
 import { RuleActionSettings } from './components/RuleActionSettings';
+import { PaymentApprovalSettings } from './components/PaymentApprovalSettings';
 import { WebhookSettings } from './components/WebhookSettings';
 import { TransactionStateSettings } from './components/TransactionStateSettings';
 import { RiskLevelSettings } from './components/RiskLevelSettings';
@@ -36,6 +37,10 @@ export default function SettingsPage() {
         {
           name: whiteLabeled ? 'AI Features' : 'Flagright AI Features',
           content: <FlagrightAISettings />,
+        },
+        {
+          name: 'Payment Approval',
+          content: <PaymentApprovalSettings />,
         },
         {
           name: 'Other settings',

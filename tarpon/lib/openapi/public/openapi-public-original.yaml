@@ -1763,9 +1763,12 @@ components:
               type: array
               items:
                 $ref: '#/components/schemas/HitRulesDetails'
+            status:
+              $ref: '#/components/schemas/RuleAction'
           required:
             - executedRules
             - hitRules
+            - status
       x-examples:
         example-1:
           transactionId: 7b80a539eea6e78acbd6d458e5971482
@@ -1891,8 +1894,11 @@ components:
             transactionId:
               type: string
               description: Transaction ID that the results pertain to
+            status:
+              $ref: '#/components/schemas/RuleAction'
           required:
             - transactionId
+            - status
         - $ref: '#/components/schemas/RulesResults'
       x-examples:
         example-1:

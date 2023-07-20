@@ -5,6 +5,7 @@ import { getTestTransaction } from '@/test-utils/transaction-test-utils'
 import { getTestTenantId } from '@/test-utils/tenant-test-utils'
 import { logger } from '@/core/logger'
 import { getMongoDbClient } from '@/utils/mongoDBUtils'
+import { RuleAction } from '@/@types/openapi-internal/RuleAction'
 
 dynamoDbSetupHook()
 
@@ -22,6 +23,7 @@ describe('Verify case stats', () => {
         ...getTestTransaction({
           timestamp: dayjs('2022-01-30T12:00:00.000Z').valueOf(),
         }),
+        status: 'BLOCK' as RuleAction,
         hitRules: hitRules,
         executedRules: hitRules,
         originUserId: originUserId,
@@ -31,6 +33,7 @@ describe('Verify case stats', () => {
         ...getTestTransaction({
           timestamp: dayjs('2022-01-30T18:00:00.000Z').valueOf(),
         }),
+        status: 'BLOCK' as RuleAction,
         hitRules: hitRules,
         executedRules: hitRules,
         originUserId: originUserId,
@@ -77,6 +80,7 @@ test(`Multiple cases`, async () => {
     ...getTestTransaction({
       timestamp,
     }),
+    status: 'BLOCK' as RuleAction,
     hitRules: [hitRule()],
     executedRules: [hitRule()],
     originUserId: originUserId,
@@ -130,6 +134,7 @@ test(`Multiple cases - opened and closed`, async () => {
     ...getTestTransaction({
       timestamp,
     }),
+    status: 'BLOCK' as RuleAction,
     hitRules: [hitRule()],
     executedRules: [hitRule()],
     originUserId: originUserId,

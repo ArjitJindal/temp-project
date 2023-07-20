@@ -316,6 +316,12 @@ export class CaseRepository {
       })
     }
 
+    if (params.filterTransactionIds != null) {
+      conditions.push({
+        'caseTransactions.transactionId': { $in: params.filterTransactionIds },
+      })
+    }
+
     if (params.filterRulesHit != null) {
       conditions.push({
         'alerts.ruleInstanceId': { $in: params.filterRulesHit },

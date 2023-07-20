@@ -16,6 +16,8 @@ import { getContextStorage } from '@/core/utils/context'
 import { getTestUser, setUpUsersHooks } from '@/test-utils/user-test-utils'
 import { getDynamoDbClient } from '@/utils/dynamodb'
 import { getMongoDbClient } from '@/utils/mongoDBUtils'
+import { TransactionEventRepository } from '@/services/rules-engine/repositories/transaction-event-repository'
+import { enableLocalChangeHandler } from '@/utils/local-dynamodb-change-handler'
 
 const RULE_INSTANCE_ID_MATCHER = expect.stringMatching(/^([a-z0-9]){8}$/)
 
@@ -32,6 +34,7 @@ describe('Verify Transaction', () => {
       transactionId: 'dummy',
       executedRules: [],
       hitRules: [],
+      status: 'ALLOW',
     })
   })
 
@@ -66,6 +69,7 @@ describe('Verify Transaction', () => {
             },
           },
         ],
+        status: 'FLAG',
         hitRules: [
           {
             ruleId: 'TEST-R-1',
@@ -127,6 +131,7 @@ describe('Verify Transaction', () => {
             ruleHit: true,
           },
         ],
+        status: 'FLAG',
         hitRules: [expectedRuleResult],
       } as TransactionMonitoringResult)
     })
@@ -160,6 +165,7 @@ describe('Verify Transaction', () => {
             labels: [],
           },
         ],
+        status: 'ALLOW',
         hitRules: [],
       } as TransactionMonitoringResult)
     })
@@ -219,6 +225,7 @@ describe('Verify Transaction', () => {
             },
           },
         ],
+        status: 'FLAG',
         hitRules: [
           {
             ruleId: 'TEST-R-1',
@@ -386,6 +393,7 @@ describe('Verify Transaction Event', () => {
               },
             },
           ],
+          status: 'BLOCK',
           hitRules: [
             {
               ruleId: 'TEST-R-1',
@@ -425,6 +433,7 @@ describe('Verify Transaction Event', () => {
             },
           },
         ],
+        status: 'FLAG',
         hitRules: [
           {
             ruleId: 'TEST-R-1',
@@ -508,5 +517,45 @@ describe('Verify Transaction for Simulation', () => {
     expect(
       await ruleInstanceRepository.getRuleInstanceById(testRuleInstanceId)
     ).toBeNull()
+  })
+
+  test('Applies manual action to transaction', async () => {
+    enableLocalChangeHandler()
+    const rulesEngine = new RulesEngineService(TEST_TENANT_ID, dynamoDb)
+    const transaction = getTestTransaction({ status: 'SUSPEND' })
+    transaction.transactionId = ''
+    const t = await rulesEngine.verifyTransaction(transaction)
+    const mongoDb = await getMongoDbClient()
+    const transactionRepository = new MongoDbTransactionRepository(
+      TEST_TENANT_ID,
+      mongoDb
+    )
+    const transactionEventRepository = new TransactionEventRepository(
+      TEST_TENANT_ID,
+      { mongoDb, dynamoDb }
+    )
+    const txnBefore = await transactionRepository.getInternalTransactionById(
+      t.transactionId
+    )
+    const eventsBefore = await transactionEventRepository.getTransactionEvents(
+      t.transactionId
+    )
+    expect(txnBefore?.status).toEqual('FLAG')
+    expect(eventsBefore.length).toEqual(1)
+
+    await rulesEngine.applyTransactionAction(
+      [t.transactionId],
+      'user1',
+      'ALLOW'
+    )
+    const txn = await transactionRepository.getInternalTransactionById(
+      t.transactionId
+    )
+    expect(txn?.status).toEqual('ALLOW')
+
+    const eventsAfter = await transactionEventRepository.getTransactionEvents(
+      t.transactionId
+    )
+    expect(eventsAfter.length).toEqual(2)
   })
 })

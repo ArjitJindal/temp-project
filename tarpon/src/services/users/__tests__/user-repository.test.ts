@@ -7,6 +7,10 @@ import { getTestTenantId } from '@/test-utils/tenant-test-utils'
 import { ExecutedRulesResult } from '@/@types/openapi-internal/ExecutedRulesResult'
 import { HitRulesDetails } from '@/@types/openapi-internal/HitRulesDetails'
 import { getMongoDbClient } from '@/utils/mongoDBUtils'
+import {
+  disableLocalChangeHandler,
+  enableLocalChangeHandler,
+} from '@/utils/local-dynamodb-change-handler'
 
 dynamoDbSetupHook()
 
@@ -14,6 +18,12 @@ const dynamoDb = getDynamoDbClient()
 const tenantID = getTestTenantId()
 
 describe('Test Dynamo Db User Update', () => {
+  beforeAll(() => {
+    enableLocalChangeHandler()
+  })
+  afterAll(() => {
+    disableLocalChangeHandler()
+  })
   it('should update user', async () => {
     const userId = uuidv4()
     const user = getTestUser({

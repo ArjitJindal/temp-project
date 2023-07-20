@@ -18,7 +18,6 @@ import { MongoDbTransactionRepository } from '@/services/rules-engine/repositori
 import { Case } from '@/@types/openapi-internal/Case'
 import { hasFeature } from '@/core/utils/context'
 import { AlertsService } from '@/services/alerts'
-import { AlertsRepository } from '@/services/rules-engine/repositories/alerts-repository'
 import { TenantRepository } from '@/services/tenants/repositories/tenant-repository'
 import { CaseEscalationResponse } from '@/@types/openapi-internal/CaseEscalationResponse'
 import { Handlers } from '@/@types/openapi-internal-custom/DefaultApi'
@@ -44,15 +43,8 @@ export const casesHandler = lambdaApi()(
       dynamoDb,
     }
     const caseRepository = new CaseRepository(tenantId, dbs)
-    const alertsRepository = new AlertsRepository(tenantId, {
-      mongoDb: client,
-      dynamoDb,
-    })
 
-    const alertsService = new AlertsService(alertsRepository, s3, {
-      documentBucketName: DOCUMENT_BUCKET,
-      tmpBucketName: TMP_BUCKET,
-    })
+    const alertsService = await AlertsService.fromEvent(event)
 
     const userService = new UserRepository(tenantId, dbs)
     const ruleInstanceRepository = new RuleInstanceRepository(tenantId, dbs)

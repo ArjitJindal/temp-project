@@ -26,6 +26,7 @@ export const CASE_TRANSACTIONS: InternalTransaction[] = [
       walletType: '4hhye912dasdkc',
       method: 'WALLET',
     },
+    status: 'FLAG',
     hitRules: [
       {
         ruleAction: 'FLAG',
@@ -77,7 +78,6 @@ export const CASE_TRANSACTIONS: InternalTransaction[] = [
       },
     ],
     type: 'REFUND',
-    status: 'FLAG',
   },
   {
     destinationAmountDetails: {
@@ -103,6 +103,7 @@ export const CASE_TRANSACTIONS: InternalTransaction[] = [
       walletType: '4hhye912dasdkc',
       method: 'WALLET',
     },
+    status: 'FLAG',
     hitRules: [
       {
         ruleName: 'Transactions exceed past period',
@@ -164,6 +165,7 @@ export const CASE_TRANSACTIONS: InternalTransaction[] = [
       walletType: '4hhye912dasdkc',
       method: 'WALLET',
     },
+    status: 'FLAG',
     hitRules: [
       {
         ruleAction: 'FLAG',
@@ -205,7 +207,6 @@ export const CASE_TRANSACTIONS: InternalTransaction[] = [
       },
     ],
     type: 'REFUND',
-    status: 'FLAG',
   },
   {
     destinationAmountDetails: {
@@ -231,6 +232,7 @@ export const CASE_TRANSACTIONS: InternalTransaction[] = [
       walletType: '4hhye912dasdkc',
       method: 'WALLET',
     },
+    status: 'FLAG',
     hitRules: [
       {
         ruleAction: 'FLAG',
@@ -282,6 +284,5 @@ export const CASE_TRANSACTIONS: InternalTransaction[] = [
     ],
 
     type: 'REFUND',
-    status: 'FLAG',
   },
 ]

@@ -26,6 +26,7 @@ describe('Verify transactions counting statistics', () => {
       ...getTestTransaction({
         timestamp: timestamp,
       }),
+      status: 'ALLOW',
       hitRules: [],
       executedRules: [],
     })
@@ -57,6 +58,7 @@ describe('Verify transactions counting statistics', () => {
       ...getTestTransaction({
         timestamp: timestamp,
       }),
+      status: 'BLOCK',
       hitRules: [hitRule('BLOCK')],
       executedRules: [hitRule('BLOCK')],
     })
@@ -65,12 +67,14 @@ describe('Verify transactions counting statistics', () => {
         timestamp: timestamp,
       }),
       hitRules: [hitRule('SUSPEND')],
+      status: 'SUSPEND',
       executedRules: [hitRule('SUSPEND')],
     })
     await transactionRepository.addTransactionToMongo({
       ...getTestTransaction({
         timestamp: timestamp,
       }),
+      status: 'FLAG',
       hitRules: [hitRule('FLAG')],
       executedRules: [hitRule('FLAG')],
     })
@@ -109,6 +113,7 @@ describe('Verify transactions counting statistics', () => {
       ...getTestTransaction({
         timestamp: timestamp,
       }),
+      status: 'BLOCK',
       hitRules: hitRules,
       executedRules: hitRules,
     })
@@ -140,6 +145,7 @@ describe('Verify transactions counting statistics', () => {
       ...getTestTransaction({
         timestamp: timestamp,
       }),
+      status: 'ALLOW',
       hitRules: [],
       executedRules: [notHitRule(), notHitRule(), notHitRule()],
     })
@@ -171,6 +177,7 @@ describe('Verify transactions counting statistics', () => {
         ...getTestTransaction({
           timestamp,
         }),
+        status: 'ALLOW',
         hitRules: [],
         executedRules: [],
       })
@@ -221,6 +228,7 @@ describe('Verify transactions counting statistics', () => {
         ...getTestTransaction({
           timestamp,
         }),
+        status: 'SUSPEND',
         hitRules: [hitRule('SUSPEND')],
         executedRules: [],
       })
@@ -270,6 +278,7 @@ describe('Verify transactions counting statistics', () => {
         ...getTestTransaction({
           timestamp,
         }),
+        status: 'BLOCK',
         hitRules: [hitRule('BLOCK')],
         executedRules: [hitRule('BLOCK')],
       })

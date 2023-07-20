@@ -11,6 +11,7 @@ import { config as prodConfigUS1 } from '@lib/configs/config-prod-us-1'
 import { config as prodConfigAu1 } from '@lib/configs/config-prod-au-1'
 import { config as prodConfigEu1 } from '@lib/configs/config-prod-eu-1'
 import { config as prodConfigEu2 } from '@lib/configs/config-prod-eu-2'
+import { isQaEnv } from '@lib/qa'
 import { CdkTarponStack } from '../cdk-tarpon-stack'
 import { CdkTarponPipelineStack } from '../cdk-tarpon-pipeline-stack'
 
@@ -24,7 +25,7 @@ if (process.env.ENV === 'dev') {
   new CdkTarponStack(app, `${devConfig.stage}-tarpon`, devConfig)
 }
 
-if (process.env.ENV === 'dev:user') {
+if (isQaEnv()) {
   const qaSubdomain = process.env.QA_SUBDOMAIN || ''
   if (qaSubdomain) {
     new CdkTarponStack(

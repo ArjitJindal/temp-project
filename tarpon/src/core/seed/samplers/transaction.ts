@@ -1,5 +1,5 @@
 import { InternalTransaction } from '@/@types/openapi-internal/InternalTransaction'
-import { prng, randomInt } from '@/utils/prng'
+import { pickRandom, prng, randomInt } from '@/utils/prng'
 import { CardDetails } from '@/@types/openapi-public/CardDetails'
 import { IBANDetails } from '@/@types/openapi-public/IBANDetails'
 import { GenericBankAccountDetails } from '@/@types/openapi-public/GenericBankAccountDetails'
@@ -10,6 +10,7 @@ import { UPIDetails } from '@/@types/openapi-public/UPIDetails'
 import { WalletDetails } from '@/@types/openapi-public/WalletDetails'
 import { CheckDetails } from '@/@types/openapi-public/CheckDetails'
 import { CountryCode } from '@/@types/openapi-internal/CountryCode'
+import { RULE_ACTIONS } from '@/@types/openapi-public-custom/RuleAction'
 
 export function sampleTransaction(
   {
@@ -49,7 +50,7 @@ export function sampleTransaction(
     originPaymentDetails: samplePaymentDetails(seed),
     hitRules: [],
     executedRules: [],
-    status: 'ALLOW' as const,
+    status: pickRandom(RULE_ACTIONS),
   }
 }
 
@@ -137,6 +138,7 @@ export function sampleACHDetails(seed?: number): ACHDetails {
   return {
     method: 'ACH',
     accountNumber: 'ACH' + randomInt(rnd()),
+    routingNumber: '123',
   }
 }
 export function sampleSWIFTDetails(seed?: number): SWIFTDetails {
@@ -144,6 +146,7 @@ export function sampleSWIFTDetails(seed?: number): SWIFTDetails {
   return {
     method: 'SWIFT',
     accountNumber: 'SWIFT' + randomInt(rnd()),
+    swiftCode: '123',
   }
 }
 export function sampleMpesaDetails(_seed?: number): MpesaDetails {
@@ -165,10 +168,13 @@ export function sampleWalletDetails(_seed?: number): WalletDetails {
   return {
     method: 'WALLET',
     walletType: 'vault',
+    walletId: '123',
   }
 }
 export function sampleCheckDetails(_seed?: number): CheckDetails {
   return {
     method: 'CHECK',
+    checkIdentifier: '123',
+    checkNumber: '123',
   }
 }

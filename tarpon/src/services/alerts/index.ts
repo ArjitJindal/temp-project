@@ -3,6 +3,10 @@ import { MongoClient } from 'mongodb'
 import { NotFound, BadRequest } from 'http-errors'
 import _ from 'lodash'
 import {
+  APIGatewayEventLambdaAuthorizerContext,
+  APIGatewayProxyWithLambdaAuthorizerEvent,
+} from 'aws-lambda'
+import {
   AlertsRepository,
   FLAGRIGHT_SYSTEM_USER,
 } from '../rules-engine/repositories/alerts-repository'
@@ -37,15 +41,36 @@ import { Assignment } from '@/@types/openapi-internal/Assignment'
 import { AccountsService } from '@/services/accounts'
 import { isAlertAvailable } from '@/lambdas/console-api-case/services/utils'
 import { CasesAlertsAuditLogService } from '@/lambdas/console-api-case/services/case-alerts-audit-log-service'
-import { withTransaction } from '@/utils/mongoDBUtils'
+import { getMongoDbClient, withTransaction } from '@/utils/mongoDBUtils'
 import { CaseStatusUpdate } from '@/@types/openapi-internal/CaseStatusUpdate'
 import { ComplyAdvantageSearchHitDoc } from '@/@types/openapi-internal/ComplyAdvantageSearchHitDoc'
+import { getDynamoDbClientByEvent } from '@/utils/dynamodb'
+import { getS3ClientByEvent } from '@/utils/s3'
+import { CaseConfig } from '@/lambdas/console-api-case/app'
+import { JWTAuthorizerResult } from '@/@types/jwt'
 
 export class AlertsService extends CaseAlertsCommonService {
   alertsRepository: AlertsRepository
   tenantId: string
   mongoDb: MongoClient
   dynamoDb: DynamoDBDocumentClient
+
+  public static async fromEvent(
+    event: APIGatewayProxyWithLambdaAuthorizerEvent<
+      APIGatewayEventLambdaAuthorizerContext<JWTAuthorizerResult>
+    >
+  ): Promise<AlertsService> {
+    const { principalId: tenantId } = event.requestContext.authorizer
+    const mongoDb = await getMongoDbClient()
+    const s3 = getS3ClientByEvent(event)
+    const dynamoDb = getDynamoDbClientByEvent(event)
+    const repo = new AlertsRepository(tenantId, { mongoDb, dynamoDb })
+    const { DOCUMENT_BUCKET, TMP_BUCKET } = process.env as CaseConfig
+    return new AlertsService(repo, s3, {
+      documentBucketName: DOCUMENT_BUCKET,
+      tmpBucketName: TMP_BUCKET,
+    })
+  }
 
   constructor(
     alertsRepository: AlertsRepository,

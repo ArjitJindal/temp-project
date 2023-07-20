@@ -16,8 +16,9 @@ import { Asset } from 'aws-cdk-lib/aws-s3-assets'
 import { Construct } from 'constructs'
 import _ from 'lodash'
 import { LAMBDAS } from '@lib/lambdas'
+import { isQaEnv } from '@lib/qa'
 
-const isDevUserStack = process.env.ENV === 'dev:user'
+const isDevUserStack = isQaEnv()
 
 const MockDefinition = {
   openapi: '3.0.2',

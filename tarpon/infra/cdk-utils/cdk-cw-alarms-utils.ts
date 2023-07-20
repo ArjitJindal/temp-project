@@ -10,9 +10,10 @@ import { SnsAction } from 'aws-cdk-lib/aws-cloudwatch-actions'
 import { Construct } from 'constructs'
 import { Topic } from 'aws-cdk-lib/aws-sns'
 import { FilterPattern, ILogGroup, MetricFilter } from 'aws-cdk-lib/aws-logs'
+import { isQaEnv } from '@lib/qa'
 
 export const TARPON_CUSTOM_METRIC_NAMESPACE = 'TarponCustom'
-const isDevUserStack = process.env.ENV === 'dev:user'
+const isDevUserStack = isQaEnv()
 
 export const createTarponOverallLambdaAlarm = (
   context: Construct,

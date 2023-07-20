@@ -7,7 +7,6 @@
 
 import * as fs from 'fs'
 import * as yaml from 'js-yaml'
-import _ from 'lodash'
 import mkdirp from 'mkdirp'
 import { StackConstants } from '../constants'
 import { getAugmentedOpenapi } from './openapi-augmentor-util'
@@ -51,6 +50,8 @@ export const ConsoleApiPathToLambda: any = {
   '/merchant-monitoring/scrape':
     StackConstants.CONSOLE_API_MERCHANT_MONITORING_FUNCTION_NAME,
   '/transactions': StackConstants.CONSOLE_API_TRANSACTIONS_VIEW_FUNCTION_NAME,
+  '/transactions/action':
+    StackConstants.CONSOLE_API_TRANSACTIONS_VIEW_FUNCTION_NAME,
   '/transactions/stats/by-types':
     StackConstants.CONSOLE_API_TRANSACTIONS_VIEW_FUNCTION_NAME,
   '/transactions/stats/by-time':

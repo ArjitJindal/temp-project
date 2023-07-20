@@ -8,10 +8,11 @@ import {
   QueryCommand,
 } from '@aws-sdk/lib-dynamodb'
 import { DynamoDbKeys } from '@/core/dynamodb/dynamodb-keys'
-import { ExecutedRulesResult } from '@/@types/openapi-public/ExecutedRulesResult'
 import { TransactionEvent } from '@/@types/openapi-public/TransactionEvent'
-import { HitRulesDetails } from '@/@types/openapi-public/HitRulesDetails'
 import { TRANSACTION_EVENTS_COLLECTION } from '@/utils/mongoDBUtils'
+import { TransactionMonitoringResult } from '@/@types/openapi-public/TransactionMonitoringResult'
+import { Undefined } from '@/utils/lang'
+import { runLocalChangeHandler } from '@/utils/local-dynamodb-change-handler'
 
 export class TransactionEventRepository {
   dynamoDb: DynamoDBDocumentClient
@@ -32,10 +33,7 @@ export class TransactionEventRepository {
 
   public async saveTransactionEvent(
     transactionEvent: TransactionEvent,
-    rulesResult: {
-      executedRules?: ExecutedRulesResult[]
-      hitRules?: HitRulesDetails[]
-    } = {}
+    rulesResult: Undefined<TransactionMonitoringResult>
   ): Promise<string> {
     const eventId = transactionEvent.eventId || uuidv4()
 
@@ -62,8 +60,7 @@ export class TransactionEventRepository {
         },
       }
     await this.dynamoDb.send(new BatchWriteCommand(batchWriteItemParams))
-
-    if (process.env.NODE_ENV === 'development') {
+    if (runLocalChangeHandler()) {
       const { localTarponChangeCaptureHandler } = await import(
         '@/utils/local-dynamodb-change-handler'
       )

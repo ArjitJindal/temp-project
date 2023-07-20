@@ -9,17 +9,25 @@ import { sampleCurrency } from '@/core/seed/samplers/currencies'
 import { sampleTimestamp } from '@/core/seed/samplers/timestamp'
 import { RISK_LEVEL1S } from '@/@types/openapi-internal-custom/RiskLevel1'
 import { getPaymentMethodId } from '@/core/dynamodb/dynamodb-keys'
-import { MongoDbTransactionRepository } from '@/services/rules-engine/repositories/mongodb-transaction-repository'
+import { TRANSACTION_STATES } from '@/@types/openapi-internal-custom/TransactionState'
+import { TransactionWithRulesResult } from '@/@types/openapi-public/TransactionWithRulesResult'
+import { getAggregatedRuleStatus } from '@/services/rules-engine/utils'
 
-const TXN_COUNT = 10000
+const TXN_COUNT = 1000
 const generator = function* (seed: number): Generator<InternalTransaction> {
   for (let i = 0; i < TXN_COUNT; i += 1) {
     const random = prng(seed * i)
     const type =
       random() < 0.24 ? 'TRANSFER' : random() < 0.95 ? 'REFUND' : 'WITHDRAWAL'
-    const status =
-      random() < 0.24 ? 'BLOCK' : random() < 0.95 ? 'ALLOW' : 'FLAG'
-    const hitRules = status === 'ALLOW' ? [] : randomRules()
+    let hitRules = randomRules()
+
+    // Hack in some suspended transactions
+    if (hitRules.find((hr) => hr.ruleAction === 'SUSPEND')) {
+      hitRules = hitRules.filter(
+        (hitRules) => hitRules.ruleAction === 'SUSPEND'
+      )
+    }
+
     const transaction = sampleTransaction({}, i)
     const originUserId = users[randomInt(random(), users.length)].userId
 
@@ -38,9 +46,7 @@ const generator = function* (seed: number): Generator<InternalTransaction> {
       transactionId,
       originUserId,
       destinationUserId,
-      status: MongoDbTransactionRepository.getAggregatedRuleStatus(
-        hitRules.map((hr) => hr.ruleAction)
-      ),
+      status: getAggregatedRuleStatus(hitRules.map((hr) => hr.ruleAction)),
       hitRules,
       destinationPaymentMethodId: getPaymentMethodId(
         transaction?.destinationPaymentDetails
@@ -48,6 +54,7 @@ const generator = function* (seed: number): Generator<InternalTransaction> {
       originPaymentMethodId: getPaymentMethodId(
         transaction?.originPaymentDetails
       ),
+      transactionState: pickRandom(TRANSACTION_STATES),
       arsScore: {
         transactionId,
         createdAt: timestamp,
@@ -99,6 +106,26 @@ const generator = function* (seed: number): Generator<InternalTransaction> {
 const generate: () => Iterable<InternalTransaction> = () => generator(42)
 
 const transactions: InternalTransaction[] = []
+
+export function internalToPublic(
+  internal: InternalTransaction
+): TransactionWithRulesResult {
+  return {
+    transactionId: internal.transactionId,
+    timestamp: internal.timestamp,
+    transactionState: internal.transactionState,
+    executedRules: internal.executedRules,
+    hitRules: internal.hitRules,
+    status: internal.status,
+    originPaymentDetails: internal.originPaymentDetails,
+    destinationPaymentDetails: internal.destinationPaymentDetails,
+    originAmountDetails: internal.originAmountDetails,
+    destinationAmountDetails: internal.destinationAmountDetails,
+    destinationUserId: internal.destinationUserId,
+    originUserId: internal.originUserId,
+    type: internal.type,
+  }
+}
 
 const init = () => {
   if (transactions.length > 0) {

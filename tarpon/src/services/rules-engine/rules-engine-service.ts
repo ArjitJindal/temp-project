@@ -2,6 +2,10 @@ import { DynamoDBDocumentClient } from '@aws-sdk/lib-dynamodb'
 import { NotFound } from 'http-errors'
 import _ from 'lodash'
 import { MongoClient } from 'mongodb'
+import {
+  APIGatewayEventLambdaAuthorizerContext,
+  APIGatewayProxyWithLambdaAuthorizerEvent,
+} from 'aws-lambda'
 import { RiskRepository } from '../risk-scoring/repositories/risk-repository'
 import { UserRepository } from '../users/repositories/user-repository'
 import { DEFAULT_RISK_LEVEL } from '../risk-scoring/utils'
@@ -55,6 +59,10 @@ import { UserWithRulesResult } from '@/@types/openapi-internal/UserWithRulesResu
 import { BusinessWithRulesResult } from '@/@types/openapi-internal/BusinessWithRulesResult'
 import { mergeObjects } from '@/utils/object'
 import { background } from '@/utils/background'
+import { JWTAuthorizerResult } from '@/@types/jwt'
+import { getDynamoDbClientByEvent } from '@/utils/dynamodb'
+import { TransactionState } from '@/@types/openapi-public/TransactionState'
+import { getAggregatedRuleStatus } from '@/services/rules-engine/utils'
 
 const ruleAscendingComparator = (
   rule1: HitRulesDetails,
@@ -66,6 +74,7 @@ export function getExecutedAndHitRulesResult(
 ): {
   executedRules: ExecutedRulesResult[]
   hitRules: HitRulesDetails[]
+  status: RuleAction
 } {
   const executedRules = ruleResults
     .filter((result) => result.ruleAction)
@@ -87,6 +96,7 @@ export function getExecutedAndHitRulesResult(
   return {
     executedRules,
     hitRules,
+    status: getAggregatedRuleStatus(hitRules.map((hr) => hr.ruleAction)),
   }
 }
 
@@ -145,6 +155,16 @@ export class RulesEngineService {
     })
   }
 
+  public static async fromEvent(
+    event: APIGatewayProxyWithLambdaAuthorizerEvent<
+      APIGatewayEventLambdaAuthorizerContext<JWTAuthorizerResult>
+    >
+  ): Promise<RulesEngineService> {
+    const { principalId: tenantId } = event.requestContext.authorizer
+    const dynamoDb = getDynamoDbClientByEvent(event)
+    return new RulesEngineService(tenantId, dynamoDb)
+  }
+
   public async verifyTransaction(
     transaction: Transaction
   ): Promise<TransactionMonitoringResult | DuplicateTransactionReturnType> {
@@ -160,6 +180,7 @@ export class RulesEngineService {
             'The provided transactionId already exists. No rules were run. If you want to update the attributes of this transaction, please use transaction events instead.',
           executedRules: existingTransaction.executedRules,
           hitRules: existingTransaction.hitRules,
+          status: existingTransaction.status,
         }
       }
     }
@@ -183,6 +204,7 @@ export class RulesEngineService {
         transactionState: initialTransactionState,
       },
       {
+        status: getAggregatedRuleStatus(hitRules.map((hr) => hr.ruleAction)),
         executedRules,
         hitRules,
       }
@@ -211,6 +233,7 @@ export class RulesEngineService {
       transactionId: savedTransaction.transactionId as string,
       executedRules,
       hitRules,
+      status: getAggregatedRuleStatus(hitRules.map((hr) => hr.ruleAction)),
     }
   }
 
@@ -253,12 +276,16 @@ export class RulesEngineService {
       }
     )
     // Update transaction with the latest payload.
+    const mergedHitRules = mergeRules(updatedTransaction.hitRules, hitRules)
     await this.transactionRepository.saveTransaction(updatedTransaction, {
       executedRules: mergeRules(
         updatedTransaction.executedRules,
         executedRules
       ),
-      hitRules: mergeRules(updatedTransaction.hitRules, hitRules),
+      hitRules: mergedHitRules,
+      status: getAggregatedRuleStatus(
+        mergedHitRules.map((hr) => hr.ruleAction)
+      ),
     })
     saveTransactionSegment?.close()
 
@@ -882,5 +909,49 @@ export class RulesEngineService {
     )
     logger.info(`Updated global aggregations`)
     updateAggregationsSegment?.close()
+  }
+
+  public async applyTransactionAction(
+    transactionIds: string[],
+    userId: string,
+    action: RuleAction
+  ): Promise<void> {
+    const txns = await Promise.all(
+      transactionIds.map((txnId) => {
+        return this.transactionRepository.getTransactionById(txnId)
+      })
+    )
+    if (txns.length === 0) {
+      throw new Error('No transactions')
+    }
+
+    await Promise.all(
+      txns.flatMap((transaction) => {
+        if (!transaction) {
+          return
+        }
+        return [
+          this.transactionEventRepository.saveTransactionEvent(
+            {
+              transactionState:
+                transaction.transactionState as TransactionState,
+              timestamp: Date.now(),
+              transactionId: transaction.transactionId,
+              eventDescription: `Transaction status was manually changed to ${action} by ${userId}`,
+            },
+            {
+              status: action,
+              hitRules: transaction.hitRules,
+              executedRules: transaction.executedRules,
+            }
+          ),
+          this.transactionRepository.saveTransaction(transaction, {
+            status: action,
+            hitRules: transaction.hitRules,
+            executedRules: transaction.executedRules,
+          }),
+        ]
+      })
+    )
   }
 }

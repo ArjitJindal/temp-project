@@ -17,6 +17,7 @@ import { RiskLevelButton } from '@/pages/users/users-list/RiskLevelFilterButton'
 import StackLineIcon from '@/components/ui/icons/Remix/business/stack-line.react.svg';
 import { denseArray } from '@/utils/lang';
 import { AlertStatus, CaseStatus, PaymentMethod } from '@/apis';
+import { ScopeSelectorValue } from '@/pages/case-management/components/ScopeSelector';
 
 export const queryAdapter: Adapter<TableSearchParams> = {
   serializer: (params) => {
@@ -105,7 +106,7 @@ export const queryAdapter: Adapter<TableSearchParams> = {
       businessIndustryFilter: raw.businessIndustryFilter?.split(','),
       userStates: raw.userStates?.split(',') as unknown as TableSearchParams['userStates'],
       riskLevels: raw.riskLevels?.split(',') as unknown as TableSearchParams['riskLevels'],
-      showCases: (showCases as 'MY' | 'ALL' | 'MY_ALERTS' | 'ALL_ALERTS' | undefined) ?? 'ALL',
+      showCases: (showCases as ScopeSelectorValue | undefined) ?? 'ALL',
       assignedTo: raw.assignedTo?.split(',') as unknown as TableSearchParams['assignedTo'],
       'lastStatusChange.timestamp': raw?.['lastStatusChange.timestamp']
         ?.split(',')

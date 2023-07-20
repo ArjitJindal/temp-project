@@ -73,11 +73,13 @@ export interface Props<Item extends object, Params extends object = CommonParams
   selectedIds?: string[];
   partiallySelectedIds?: string[];
   externalState?: unknown;
-  selectionInfo?: {
-    entityName: string;
-    entityCount: number;
-  };
+  selectionInfo?: SelectionInfo;
 }
+
+export type SelectionInfo = {
+  entityName: string;
+  entityCount: number;
+};
 
 function Table<Item extends object, Params extends object = CommonParams>(
   props: Props<Item, Params>,

@@ -6,6 +6,7 @@ import PageWrapper, { PageWrapperContentContainer } from '@/components/PageWrapp
 import { useI18n } from '@/locales';
 import '../../components/ui/colors';
 import TransactionsTable, {
+  transactionParamsToRequest,
   TransactionsTableParams,
 } from '@/pages/transactions/components/TransactionsTable';
 import { useCursorQuery } from '@/utils/queries/hooks';
@@ -13,7 +14,6 @@ import UserSearchButton from '@/pages/transactions/components/UserSearchButton';
 import TagSearchButton from '@/pages/transactions/components/TagSearchButton';
 import { TRANSACTIONS_LIST } from '@/utils/queries/keys';
 import { DEFAULT_PAGE_SIZE } from '@/components/library/Table/consts';
-import { dayjs } from '@/utils/dayjs';
 import { useApiTime, usePageViewTracker } from '@/utils/tracker';
 import { makeUrl, parseQueryString } from '@/utils/routing';
 import { useDeepEqualEffect } from '@/utils/hooks';
@@ -55,54 +55,11 @@ const TableList = () => {
   const queryResult = useCursorQuery<InternalTransaction>(
     TRANSACTIONS_LIST(parsedParams),
     async ({ from }) => {
-      const {
-        timestamp,
-        transactionId,
-        type,
-        transactionState,
-        originCurrenciesFilter,
-        destinationCurrenciesFilter,
-        userId,
-        userFilterMode,
-        tagKey,
-        tagValue,
-        originMethodFilter,
-        destinationMethodFilter,
-        originPaymentMethodId,
-        destinationPaymentMethodId,
-      } = parsedParams;
-      const [sortField, sortOrder] = parsedParams.sort[0] ?? [];
       return await measure(
         () =>
           api.getTransactionsList({
             _from: from || parsedParams.from,
-            pageSize: parsedParams.pageSize,
-            afterTimestamp: timestamp ? dayjs(timestamp[0]).valueOf() : undefined,
-            beforeTimestamp: timestamp ? dayjs(timestamp[1]).valueOf() : undefined,
-            filterId: transactionId,
-            filterOriginUserId:
-              userFilterMode && ['ORIGIN', 'ALL'].includes(userFilterMode) ? userId : undefined,
-            filterDestinationUserId:
-              userFilterMode && ['DESTINATION', 'ALL'].includes(userFilterMode)
-                ? userId
-                : undefined,
-            filterOriginCurrencies: originCurrenciesFilter,
-            filterDestinationCurrencies: destinationCurrenciesFilter,
-            transactionType: type,
-            filterTransactionState: transactionState,
-            field: 'transactionId',
-            sortField: sortField ?? undefined,
-            sortOrder: sortOrder ?? undefined,
-            includeUsers: true,
-            filterOriginPaymentMethods: originMethodFilter ? [originMethodFilter] : undefined,
-            filterDestinationPaymentMethods: destinationMethodFilter
-              ? [destinationMethodFilter]
-              : undefined,
-
-            filterTagKey: tagKey,
-            filterTagValue: tagValue,
-            filterOriginPaymentMethodId: originPaymentMethodId,
-            filterDestinationPaymentMethodId: destinationPaymentMethodId,
+            ...transactionParamsToRequest(parsedParams),
           }),
         'Transactions List',
       );

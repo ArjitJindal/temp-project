@@ -8,6 +8,7 @@ interface Props extends InputProps<boolean>, Omit<ReactSwitchProps, 'checked' | 
   large?: boolean;
   showOnOffLabel?: boolean;
   green?: boolean;
+  loading?: boolean;
 }
 
 export default function Toggle(props: Props) {

@@ -54,6 +54,7 @@ import { UserResponse } from '@/@types/openapi-public/UserResponse'
 import { RiskScoringService } from '@/services/risk-scoring'
 import { RiskScoreDetails } from '@/@types/openapi-public/RiskScoreDetails'
 import { BusinessResponse } from '@/@types/openapi-public/BusinessResponse'
+import { runLocalChangeHandler } from '@/utils/local-dynamodb-change-handler'
 
 export class UserRepository {
   dynamoDb: DynamoDBDocumentClient
@@ -646,10 +647,7 @@ export class UserRepository {
     delete user.SortKeyID
     delete user.createdAt
 
-    if (
-      process.env.NODE_ENV === 'development' ||
-      process.env.NODE_ENV === 'test'
-    ) {
+    if (runLocalChangeHandler()) {
       const { localTarponChangeCaptureHandler } = await import(
         '@/utils/local-dynamodb-change-handler'
       )
@@ -712,10 +710,7 @@ export class UserRepository {
     }
     await this.dynamoDb.send(new PutCommand(putItemInput))
 
-    if (
-      process.env.NODE_ENV === 'development' ||
-      process.env.NODE_ENV === 'test'
-    ) {
+    if (runLocalChangeHandler()) {
       const { localTarponChangeCaptureHandler } = await import(
         '@/utils/local-dynamodb-change-handler'
       )

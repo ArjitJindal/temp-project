@@ -71,7 +71,7 @@ const init = () => {
         })
         return {
           type: 'CONSUMER' as const,
-          userId: userId,
+          userId,
           drsScore: {
             drsScore: drsScore,
             createdAt: Date.now(),

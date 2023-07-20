@@ -8,6 +8,7 @@ import {
   DynamoDBDocumentClient,
   GetCommand,
 } from '@aws-sdk/lib-dynamodb'
+import * as AWS from 'aws-sdk'
 import {
   getNonUserReceiverKeys,
   getNonUserSenderKeys,
@@ -26,12 +27,13 @@ import { Transaction } from '@/@types/openapi-public/Transaction'
 import { PaymentDetails } from '@/@types/tranasction/payment-type'
 import { DynamoDbKeys } from '@/core/dynamodb/dynamodb-keys'
 import { getTimestampBasedIDPrefix } from '@/utils/timestampUtils'
-import { ExecutedRulesResult } from '@/@types/openapi-public/ExecutedRulesResult'
 import { TransactionWithRulesResult } from '@/@types/openapi-public/TransactionWithRulesResult'
 import { dynamoDbQueryHelper, paginateQuery } from '@/utils/dynamodb'
-import { HitRulesDetails } from '@/@types/openapi-public/HitRulesDetails'
 import { TransactionType } from '@/@types/openapi-public/TransactionType'
 import { mergeObjects } from '@/utils/object'
+import { TransactionMonitoringResult } from '@/@types/openapi-public/TransactionMonitoringResult'
+import { Undefined } from '@/utils/lang'
+import { runLocalChangeHandler } from '@/utils/local-dynamodb-change-handler'
 
 export function getNewTransactionID(transaction: Transaction) {
   return (
@@ -67,10 +69,7 @@ export class DynamoDbTransactionRepository
 
   public async saveTransaction(
     transaction: Transaction,
-    rulesResult: {
-      executedRules?: ExecutedRulesResult[]
-      hitRules?: HitRulesDetails[]
-    } = {}
+    rulesResult: Undefined<TransactionMonitoringResult> = {}
   ): Promise<Transaction> {
     this.sanitizeTransactionInPlace(transaction)
     transaction.transactionId = getNewTransactionID(transaction)
@@ -80,6 +79,7 @@ export class DynamoDbTransactionRepository
       this.tenantId,
       transaction.transactionId
     )
+
     const batchWriteItemParams: AWS.DynamoDB.DocumentClient.BatchWriteItemInput =
       {
         RequestItems: {
@@ -103,10 +103,7 @@ export class DynamoDbTransactionRepository
       }
     await this.dynamoDb.send(new BatchWriteCommand(batchWriteItemParams))
 
-    if (
-      process.env.NODE_ENV === 'development' ||
-      process.env.__INTERNAL_MONGODB_MIRROR__
-    ) {
+    if (runLocalChangeHandler()) {
       const { localTarponChangeCaptureHandler } = await import(
         '@/utils/local-dynamodb-change-handler'
       )

@@ -18,6 +18,7 @@ import {
   CommonParams,
   DerivedColumn,
   ExtraFilter,
+  SelectionAction,
   SimpleColumn,
   TableColumn,
   TableData,
@@ -31,7 +32,7 @@ import { Mode } from '@/pages/transactions/components/UserSearchPopup/types';
 import Id from '@/components/ui/Id';
 import { PaymentDetailsCard } from '@/components/ui/PaymentDetailsCard';
 import { PaymentMethodTag } from '@/components/ui/PaymentTypeTag';
-import { useFeatureEnabled } from '@/components/AppWrapper/Providers/SettingsProvider';
+import { useFeatureEnabled, useSettings } from '@/components/AppWrapper/Providers/SettingsProvider';
 import {
   COUNTRY,
   DATE_TIME,
@@ -51,6 +52,9 @@ import {
 import { PaymentDetails } from '@/pages/transactions-item/UserDetails/PaymentDetails';
 import Button from '@/components/library/Button';
 import { ColumnHelper } from '@/components/library/Table/columnHelper';
+import { SelectionInfo } from '@/components/library/Table';
+import { dayjs } from '@/utils/dayjs';
+import { DefaultApiGetTransactionsListRequest } from '@/apis/types/ObjectParamAPI';
 
 const PAYMENT_DETAILS_OR_METHOD = (showDetailsView: boolean): ColumnDataType<PaymentDetails> => ({
   stringify: (value) => {
@@ -84,6 +88,50 @@ export interface TransactionsTableParams extends CommonParams {
   transactionStatusFilter?: RuleAction[];
 }
 
+export const transactionParamsToRequest = (
+  params: TransactionsTableParams,
+): DefaultApiGetTransactionsListRequest => {
+  const {
+    pageSize,
+    page,
+    timestamp,
+    transactionId,
+    type,
+    transactionState,
+    originCurrenciesFilter,
+    destinationCurrenciesFilter,
+    tagKey,
+    tagValue,
+    originMethodFilter,
+    destinationMethodFilter,
+  } = params;
+  const [sortField, sortOrder] = params.sort[0] ?? [];
+  return {
+    page,
+    pageSize,
+    afterTimestamp: timestamp ? dayjs(timestamp[0]).valueOf() : 0,
+    beforeTimestamp: timestamp ? dayjs(timestamp[1]).valueOf() : undefined,
+    filterId: transactionId,
+    filterOriginCurrencies: originCurrenciesFilter,
+    filterDestinationCurrencies: destinationCurrenciesFilter,
+    transactionType: type,
+    filterTransactionState: transactionState,
+    sortField: sortField ?? undefined,
+    sortOrder: sortOrder ?? undefined,
+    includeUsers: true,
+    filterOriginPaymentMethods: originMethodFilter ? [originMethodFilter] : undefined,
+    filterDestinationPaymentMethods: destinationMethodFilter
+      ? [destinationMethodFilter]
+      : undefined,
+    filterTagKey: tagKey,
+    filterTagValue: tagValue,
+    filterOriginUserId: params.userFilterMode === 'ORIGIN' ? params.userId : undefined,
+    filterDestinationUserId: params.userFilterMode === 'DESTINATION' ? params.userId : undefined,
+    filterOriginPaymentMethodId: params.originPaymentMethodId,
+    filterDestinationPaymentMethodId: params.destinationPaymentMethodId,
+  };
+};
+
 type Props = {
   tableRef?: React.Ref<TableRefType>;
   extraFilters?: ExtraFilter<TransactionsTableParams>[];
@@ -104,6 +152,8 @@ type Props = {
   setIsModalVisible?: React.Dispatch<React.SetStateAction<boolean>>;
   paginationBorder?: boolean;
   escalatedTransactions?: string[];
+  selectionActions?: SelectionAction<InternalTransaction, TransactionsTableParams>[];
+  selectionInfo?: SelectionInfo;
 };
 
 export const getStatus = (
@@ -132,6 +182,8 @@ export default function TransactionsTable(props: Props) {
     disableSorting,
     extraFilters,
     selectedIds,
+    selectionInfo,
+    selectionActions,
     onSelect,
     onChangeParams,
     fitHeight,
@@ -217,6 +269,7 @@ export default function TransactionsTable(props: Props) {
         key: 'transactionState',
         title: 'Last transaction state',
         type: TRANSACTION_STATE,
+        filtering: true,
       }),
       helper.simple<'originUserId'>({
         key: 'originUserId',
@@ -349,20 +402,30 @@ export default function TransactionsTable(props: Props) {
       renderer: PAYMENT_METHOD.autoFilterDataType,
     },
   ];
+
+  const settings = useSettings();
   return (
     <QueryResultsTable<InternalTransaction, TransactionsTableParams>
       innerRef={tableRef}
       tableId={'transactions-list'}
-      selection={
-        !escalationEnabled && !sarEnabled
-          ? false
-          : (row) =>
-              (alert?.alertStatus === 'OPEN' ||
-                alert?.alertStatus === 'REOPENED' ||
-                alert?.alertStatus === 'ESCALATED') &&
-              !escalatedTransactions?.includes(row.id)
-      }
+      selection={(row) => {
+        if (!(escalationEnabled || sarEnabled || settings.isPaymentApprovalEnabled)) {
+          return false;
+        }
+
+        const alertNotClosed =
+          alert?.alertStatus === 'OPEN' ||
+          alert?.alertStatus === 'REOPENED' ||
+          alert?.alertStatus === 'ESCALATED';
+        const notEscalated = !escalatedTransactions?.includes(row.id);
+        if ((escalationEnabled || sarEnabled) && alertNotClosed && notEscalated) {
+          return true;
+        }
+        return !!(settings.isPaymentApprovalEnabled && row.original.content.status === 'SUSPEND');
+      }}
       selectedIds={selectedIds}
+      selectionInfo={selectionInfo}
+      selectionActions={selectionActions}
       onSelect={onSelect}
       params={params}
       onChangeParams={onChangeParams}

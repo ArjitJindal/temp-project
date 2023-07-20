@@ -5,6 +5,7 @@ import { v4 as uuidv4 } from 'uuid'
 import { DynamoDbKeys } from '@/core/dynamodb/dynamodb-keys'
 import { DEVICE_DATA_COLLECTION } from '@/utils/mongoDBUtils'
 import { DeviceMetric } from '@/@types/openapi-public-device-data/DeviceMetric'
+import { runLocalChangeHandler } from '@/utils/local-dynamodb-change-handler'
 
 export class MetricsRepository {
   dynamoDb: DynamoDBDocumentClient
@@ -72,10 +73,7 @@ export class MetricsRepository {
     }
     await this.dynamoDb.send(new PutCommand(putItemInput))
 
-    if (
-      process.env.NODE_ENV === 'development' ||
-      process.env.NODE_ENV === 'test'
-    ) {
+    if (runLocalChangeHandler()) {
       const { localTarponChangeCaptureHandler } = await import(
         '@/utils/local-dynamodb-change-handler'
       )

@@ -13,7 +13,6 @@ import { lambdaConsumer } from '@/core/middlewares/lambda-consumer-middlewares'
 import { MongoDbTransactionRepository } from '@/services/rules-engine/repositories/mongodb-transaction-repository'
 import { NewCaseAlertPayload } from '@/@types/alert/alert-payload'
 import { TenantRepository } from '@/services/tenants/repositories/tenant-repository'
-
 import { TransactionEvent } from '@/@types/openapi-public/TransactionEvent'
 import { logger } from '@/core/logger'
 import { ConsumerUserEvent } from '@/@types/openapi-public/ConsumerUserEvent'
@@ -94,6 +93,7 @@ async function transactionHandler(
   logger.info(`Processing Transaction`)
 
   const mongoDb = await getMongoDbClient()
+
   const dynamoDb = await getDynamoDbClient()
   const transactionsRepo = new MongoDbTransactionRepository(tenantId, mongoDb)
   const casesRepo = new CaseRepository(tenantId, {
@@ -111,9 +111,7 @@ async function transactionHandler(
   const tenantRepository = new TenantRepository(tenantId, {
     dynamoDb,
   })
-
   const tenantSettings = await tenantRepository.getTenantSettings()
-
   const caseCreationService = new CaseCreationService(
     casesRepo,
     usersRepo,
@@ -125,7 +123,6 @@ async function transactionHandler(
     dynamoDb,
     mongoDb,
   })
-
   const transactionInMongo = await transactionsRepo.addTransactionToMongo(
     transaction
   )

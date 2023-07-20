@@ -157,6 +157,7 @@ export const createAndUploadTestData = async (
       promotionCodeUsed: getRandomIntInclusive(0, 10) > 8 ? true : false,
       executedRules: ruleInstances,
       hitRules: [],
+      status: 'ALLOW',
     }
     const ddbSaveTransactionResult =
       await transactionRepository.saveTransaction(transactionObject)

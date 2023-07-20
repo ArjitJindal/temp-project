@@ -38,6 +38,10 @@ import { UserEventRepository } from '@/services/rules-engine/repositories/user-e
 import { ConsumerUserEvent } from '@/@types/openapi-internal/ConsumerUserEvent'
 import { BusinessUserEvent } from '@/@types/openapi-internal/BusinessUserEvent'
 import { TransactionEventRepository } from '@/services/rules-engine/repositories/transaction-event-repository'
+import {
+  disableLocalChangeHandler,
+  enableLocalChangeHandler,
+} from '@/utils/local-dynamodb-change-handler'
 
 const features: Feature[] = ['PULSE']
 
@@ -46,7 +50,12 @@ dynamoDbSetupHook()
 
 describe('Public API - Verify a transaction', () => {
   const TEST_TENANT_ID = getTestTenantId()
-
+  beforeAll(() => {
+    enableLocalChangeHandler()
+  })
+  afterAll(() => {
+    disableLocalChangeHandler()
+  })
   setUpUsersHooks(TEST_TENANT_ID, [
     getTestUser({ userId: '1' }),
     getTestUser({ userId: '2' }),
@@ -252,6 +261,7 @@ describe('Public API - Retrieve a Transaction', () => {
     expect(response?.statusCode).toBe(200)
     expect(JSON.parse(response?.body as string)).toEqual({
       ...transaction,
+      status: 'ALLOW',
       executedRules: [],
       hitRules: [],
     })
@@ -425,6 +435,7 @@ describe('Public API - Create a Consumer User Event', () => {
     expect(JSON.parse(response?.body as string)).toEqual({
       ...consumerUser,
       tags: [{ key: 'key', value: 'value' }],
+      status: 'ALLOW',
       executedRules: [],
       hitRules: [],
     })
@@ -465,6 +476,7 @@ describe('Public API - Create a Consumer User Event', () => {
       tags: [{ key: 'key', value: 'value' }],
       executedRules: [],
       hitRules: [],
+      status: 'ALLOW',
     })
   })
 
@@ -538,7 +550,12 @@ describe('Public API - Create a Consumer User Event', () => {
 
 describe('Public API - Create a Business User Event', () => {
   const TEST_TENANT_ID = getTestTenantId()
-
+  beforeAll(() => {
+    enableLocalChangeHandler()
+  })
+  afterAll(() => {
+    disableLocalChangeHandler()
+  })
   test('throws if user not found', async () => {
     const userEvent = getTestBusinessEvent({ userId: 'foo' })
     const response = await userEventsHandler(
@@ -595,6 +612,7 @@ describe('Public API - Create a Business User Event', () => {
           legalName: 'legalName',
         },
       },
+      status: 'ALLOW',
       executedRules: [],
       hitRules: [],
     }
@@ -652,6 +670,7 @@ describe('Public API - Create a Business User Event', () => {
       legalEntity: { companyGeneralDetails: { legalName: 'Test Business' } },
       executedRules: [],
       hitRules: [],
+      status: 'ALLOW',
     })
   })
 
@@ -725,8 +744,10 @@ describe('Public API - Create a Business User Event', () => {
 
 describe('Risk Scoring Tests', () => {
   beforeAll(() => {
-    process.env.NODE_ENV = 'development'
-    process.env.ENV = 'local'
+    enableLocalChangeHandler()
+  })
+  afterAll(() => {
+    disableLocalChangeHandler()
   })
   const TEST_TENANT_ID = getTestTenantId()
   const dynamoDb = getDynamoDbClient()

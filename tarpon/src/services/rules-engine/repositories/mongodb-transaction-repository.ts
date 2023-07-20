@@ -20,9 +20,7 @@ import {
   lookupPipelineStage,
 } from '@/utils/mongoDBUtils'
 import { InternalTransaction } from '@/@types/openapi-internal/InternalTransaction'
-import { RuleAction } from '@/@types/openapi-internal/RuleAction'
 import { DefaultApiGetTransactionsListRequest } from '@/@types/openapi-internal/RequestParameters'
-import { RULE_ACTIONS } from '@/@types/rule/rule-actions'
 import { TransactionType } from '@/@types/openapi-public/TransactionType'
 import { Currency, getCurrencyExchangeRate } from '@/utils/currency-utils'
 import { TransactionsStatsByTypesResponse } from '@/@types/openapi-internal/TransactionsStatsByTypesResponse'
@@ -43,6 +41,7 @@ import {
   getPaymentDetailsIdentifiers,
   getPaymentMethodId,
 } from '@/core/dynamodb/dynamodb-keys'
+import { getAggregatedRuleStatus } from '@/services/rules-engine/utils'
 
 export class MongoDbTransactionRepository
   implements RulesEngineTransactionRepositoryInterface
@@ -55,18 +54,6 @@ export class MongoDbTransactionRepository
     this.tenantId = tenantId
   }
 
-  static getAggregatedRuleStatus(
-    ruleActions: ReadonlyArray<RuleAction>
-  ): RuleAction {
-    return ruleActions.reduce((prev, curr) => {
-      if (RULE_ACTIONS.indexOf(curr) < RULE_ACTIONS.indexOf(prev)) {
-        return curr
-      } else {
-        return prev
-      }
-    }, 'ALLOW')
-  }
-
   async addTransactionToMongo(
     transaction: TransactionWithRulesResult
   ): Promise<InternalTransaction> {
@@ -77,11 +64,6 @@ export class MongoDbTransactionRepository
 
     const internalTransaction: InternalTransaction = {
       ...transaction,
-      status: MongoDbTransactionRepository.getAggregatedRuleStatus(
-        transaction.executedRules
-          .filter((rule) => rule.ruleHit)
-          .map((rule) => rule.ruleAction)
-      ),
       originPaymentMethodId: getPaymentMethodId(
         transaction.originPaymentDetails
       ),
@@ -95,6 +77,14 @@ export class MongoDbTransactionRepository
     )
 
     internalTransaction.createdAt = existingTransaction?.createdAt ?? Date.now()
+
+    // TODO we are moving status to be populated in dynamo, however in the transition we may
+    // process transactions without a status set.
+    if (internalTransaction && !internalTransaction.status) {
+      internalTransaction.status = getAggregatedRuleStatus(
+        internalTransaction.hitRules.map((hr) => hr.ruleAction)
+      )
+    }
 
     await transactionsCollection.replaceOne(
       { transactionId: transaction.transactionId },

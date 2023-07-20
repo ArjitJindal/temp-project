@@ -21,7 +21,7 @@ import {
   UsagePlan,
 } from 'aws-cdk-lib/aws-apigateway'
 import { Queue } from 'aws-cdk-lib/aws-sqs'
-import { Topic, Subscription, SubscriptionProtocol } from 'aws-cdk-lib/aws-sns'
+import { Subscription, SubscriptionProtocol, Topic } from 'aws-cdk-lib/aws-sns'
 
 import {
   Alias,
@@ -33,14 +33,12 @@ import {
 } from 'aws-cdk-lib/aws-lambda'
 
 import { Construct } from 'constructs'
-import { IStream, Stream } from 'aws-cdk-lib/aws-kinesis'
+import { IStream, Stream, StreamMode } from 'aws-cdk-lib/aws-kinesis'
 import {
   KinesisEventSource,
   KinesisEventSourceProps,
   SqsEventSource,
 } from 'aws-cdk-lib/aws-lambda-event-sources'
-
-import _ from 'lodash'
 import { SqsSubscription } from 'aws-cdk-lib/aws-sns-subscriptions'
 import { Peer, Port, SecurityGroup, SubnetType, Vpc } from 'aws-cdk-lib/aws-ec2'
 import {
@@ -62,12 +60,12 @@ import {
   StackConstants,
 } from '@lib/constants'
 import {
-  DEFAULT_LAMBDA_TIMEOUT_SECONDS,
   DEFAULT_ASYNC_JOB_LAMBDA_TIMEOUT_SECONDS,
+  DEFAULT_LAMBDA_TIMEOUT_SECONDS,
 } from '@lib/lambdas'
 import { Config } from '@lib/configs/config'
 import { Metric } from 'aws-cdk-lib/aws-cloudwatch'
-import { getQaApiKeyId } from '@lib/qa'
+import { getQaApiKeyId, isQaEnv } from '@lib/qa'
 import {
   BATCH_JOB_PAYLOAD_RESULT_KEY,
   BATCH_JOB_RUN_TYPE_RESULT_KEY,
@@ -89,7 +87,10 @@ const CONSUMER_SQS_VISIBILITY_TIMEOUT = Duration.seconds(
 
 // SQS max receive count cannot go above 1000
 const MAX_SQS_RECEIVE_COUNT = 1000
-const isDevUserStack = process.env.ENV === 'dev:user'
+const isDevUserStack = isQaEnv()
+
+// TODO make this equal to !isQaEnv before merge
+const deployKinesis = !isQaEnv()
 
 export class CdkTarponStack extends cdk.Stack {
   config: Config
@@ -781,7 +782,8 @@ export class CdkTarponStack extends cdk.Stack {
         },
         functionProps
       )
-    if (!isDevUserStack) {
+
+    if (deployKinesis) {
       this.createKinesisEventSource(
         tarponChangeCaptureKinesisConsumerAlias,
         tarponStream,
@@ -791,7 +793,6 @@ export class CdkTarponStack extends cdk.Stack {
         new SqsEventSource(tarponChangeCaptureRetryQueue)
       )
     }
-    // Webhook handler
     const { alias: webhookTarponChangeCaptureHandlerAlias } = createFunction(
       this,
       lambdaExecutionRole,
@@ -813,7 +814,7 @@ export class CdkTarponStack extends cdk.Stack {
         },
         functionProps
       )
-    if (!isDevUserStack) {
+    if (deployKinesis) {
       this.createKinesisEventSource(
         webhookTarponChangeCaptureHandlerAlias,
         tarponStream
@@ -868,7 +869,7 @@ export class CdkTarponStack extends cdk.Stack {
       config.application.CERTIFICATE_ARN
     )
 
-    if (!isDevUserStack) {
+    if (deployKinesis) {
       this.createKinesisEventSource(
         hammerheadChangeCaptureKinesisConsumerAlias,
         hammerheadStream,
@@ -1104,11 +1105,6 @@ export class CdkTarponStack extends cdk.Stack {
     enableTimeToLive = false,
     contributorInsightsEnabled = false
   ) {
-    const isDevUserStack = process.env.ENV === 'dev:user'
-    if (isDevUserStack) {
-      return Table.fromTableName(this, tableName, tableName)
-    }
-
     const table = new Table(this, tableName, {
       tableName: tableName,
       partitionKey: { name: 'PartitionKeyID', type: AttributeType.STRING },
@@ -1134,15 +1130,18 @@ export class CdkTarponStack extends cdk.Stack {
     retentionPeriod: Duration,
     shardCount = 1
   ): IStream {
-    const isDevUserStack = process.env.ENV === 'dev:user'
-    if (isDevUserStack) {
+    if (!deployKinesis) {
       const streamArn = `arn:aws:kinesis:${this.config.env.region}:${this.config.env.account}:stream/${streamName}`
       return Stream.fromStreamArn(this, streamId, streamArn)
     }
+    const isDevUserStack = isQaEnv()
+    const onDemand = isDevUserStack && deployKinesis
+
     const stream = new Stream(this, streamId, {
       streamName,
       retentionPeriod: retentionPeriod,
-      shardCount,
+      streamMode: onDemand ? StreamMode.ON_DEMAND : StreamMode.PROVISIONED,
+      shardCount: onDemand ? undefined : shardCount,
     })
     if (this.config.stage === 'dev') {
       stream.applyRemovalPolicy(RemovalPolicy.DESTROY)
@@ -1247,7 +1246,7 @@ export class CdkTarponStack extends cdk.Stack {
 }
 
 const getSubdomain = (): string => {
-  if (process.env.ENV === 'dev:user') {
+  if (isQaEnv()) {
     return `${process.env.QA_SUBDOMAIN}.api`
   }
   if (process.env.ENV === 'sandbox') {

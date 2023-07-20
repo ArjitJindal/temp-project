@@ -1,10 +1,10 @@
-import { Switch } from 'antd';
 import Confirm from '@/components/utils/Confirm/index';
 import {
   useSettings,
   useUpdateTenantSettings,
 } from '@/components/AppWrapper/Providers/SettingsProvider';
 import { isWhiteLabeled } from '@/utils/branding';
+import Toggle from '@/components/library/Toggle';
 
 const whiteLabeled = isWhiteLabeled();
 
@@ -31,8 +31,8 @@ export const FlagrightAISettings = () => {
 
       <Confirm title="Are you sure?" text={displayText} onConfirm={handleEnable}>
         {({ onClick }) => (
-          <Switch
-            checked={settings.isAiEnabled}
+          <Toggle
+            value={settings.isAiEnabled}
             onChange={!settings.isAiEnabled ? onClick : handleDisable}
             loading={mutateTenantSettings.isLoading}
           />
