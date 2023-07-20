@@ -251,7 +251,7 @@ export class ApiUsageMetricsService {
       timeRange
     )
     return _.mapValues(transactionEventsCounts, (value, key) =>
-      Math.max(value - (dailyTransactionsCountsStats[key] ?? 0, 0))
+      Math.max(value - (dailyTransactionsCountsStats[key] ?? 0), 0)
     )
   }
 

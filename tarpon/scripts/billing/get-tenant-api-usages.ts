@@ -1,3 +1,5 @@
+process.env.AWS_XRAY_CONTEXT_MISSING = 'IGNORE_ERROR'
+
 import { exit } from 'process'
 import commandLineArgs from 'command-line-args'
 import _ from 'lodash'
