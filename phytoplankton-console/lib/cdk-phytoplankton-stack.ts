@@ -14,7 +14,7 @@ import type { Config } from './configs/config';
 function contentSecurityPolicy(domain: string) {
   return `default-src 'self';
 script-src 'self' https://cdn.heapanalytics.com https://heapanalytics.com 'sha256-12Sr3zsuj4S5dhD99YsMaB85Xqg6R/TGFur0VAPzLsM=';
-style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://heapanalytics.com 'sha256-DOu86drLfwUr1Wcsx/wxfqAogK7tFvJGjVmF/300H/M=' 'sha256-iYwYhiMcsGmXCUzLEpEzZNz5dINrlkqf1sLbLhEcqGM=';
+style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://heapanalytics.com;
 object-src 'none';
 base-uri 'self';
 connect-src 'self' *.amazonaws.com https://api-js.mixpanel.com https://*.${domain} https://ipinfo.io https://*.ingest.sentry.io https://heapanalytics.com;
