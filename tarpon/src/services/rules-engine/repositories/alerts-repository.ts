@@ -498,7 +498,7 @@ export class AlertsRepository {
       filterOriginUserId: params.originUserId,
       filterDestinationUserId: params.destinationUserId,
       filterUserId: params.userId,
-      _from: params._from,
+      start: params.start,
       sortOrder: params.sortOrder,
       sortField: params.sortField,
       filterOriginPaymentMethodId: params.filterOriginPaymentMethodId,

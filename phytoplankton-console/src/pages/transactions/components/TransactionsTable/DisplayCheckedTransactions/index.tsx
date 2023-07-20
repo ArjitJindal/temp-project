@@ -42,7 +42,7 @@ const DisplayCheckedTransactions = (props: Props) => {
         () =>
           api.getTransactionsList({
             ...transactionParamsToRequest(params),
-            _from: from,
+            start: from,
           }),
         'Transactions List',
       );

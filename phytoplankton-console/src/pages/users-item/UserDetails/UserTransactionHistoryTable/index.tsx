@@ -72,7 +72,7 @@ export function Content(props: { userId: string }) {
 
       const newParams: DefaultApiGetTransactionsListRequest = {
         ...params,
-        _from: from,
+        start: from,
         sortField: sortField ?? undefined,
         sortOrder: sortOrder ?? undefined,
         includeEvents: true,

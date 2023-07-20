@@ -20,7 +20,7 @@ export default function PaymentApprovalsTable() {
     return await api.getTransactionsList({
       ...transactionParamsToRequest(params),
       filterStatus: ['SUSPEND'],
-      _from: from,
+      start: from,
     });
   });
 

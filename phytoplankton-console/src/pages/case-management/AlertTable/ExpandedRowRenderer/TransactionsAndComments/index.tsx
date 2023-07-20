@@ -47,7 +47,7 @@ export default function TransactionsAndComments(props: Props) {
             ...FIXED_API_PARAMS,
             ...params,
             alertId: alertId,
-            _from: from,
+            start: from,
             page: params.page,
             pageSize: params.pageSize,
             userId: params.userFilterMode === 'ALL' ? params.userId : undefined,

@@ -58,7 +58,7 @@ const TableList = () => {
       return await measure(
         () =>
           api.getTransactionsList({
-            _from: from || parsedParams.from,
+            start: from || parsedParams.from,
             ...transactionParamsToRequest(parsedParams),
           }),
         'Transactions List',

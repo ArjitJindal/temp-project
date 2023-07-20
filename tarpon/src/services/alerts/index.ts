@@ -669,7 +669,7 @@ export class AlertsService extends CaseAlertsCommonService {
       userId: params?.userId,
       originUserId: params?.originUserId,
       destinationUserId: params?.destinationUserId,
-      _from: params?._from,
+      start: params?.start,
       sortOrder: params?.sortOrder,
       sortField: params?.sortField,
       filterOriginPaymentMethodId: params?.filterOriginPaymentMethodId,

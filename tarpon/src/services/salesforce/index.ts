@@ -138,7 +138,7 @@ export class SalesforceService {
         body: e.TextBody || 'No Content',
         createdAt: e.CreatedDate,
         to: e.ToAddress?.split(';').map((e) => e.trim()),
-        _from: e.FromAddress,
+        start: e.FromAddress,
         link: `${FLAGRIGHT_SALESFORCE_DEV_URL}/lightning/r/EmailMessage/${e.Id}/view`,
       })),
     }

@@ -46,7 +46,7 @@ export default function TransactionsList(props: Props) {
             ...FIXED_API_PARAMS,
             ...tableParams,
             pageSize: tableParams.pageSize,
-            _from: from,
+            start: from,
             filterUserId: userId,
             filterStatus: selectorParams.selectedRuleActions,
             includeEvents: true,
