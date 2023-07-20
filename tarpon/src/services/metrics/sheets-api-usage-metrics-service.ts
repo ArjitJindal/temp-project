@@ -12,13 +12,19 @@ import {
   GoogleSpreadsheetWorksheet,
 } from 'google-spreadsheet'
 import _ from 'lodash'
-import { backOff } from 'exponential-backoff'
+import { BackoffOptions, backOff } from 'exponential-backoff'
 import { DailyMetricStats, MonthlyMetricStats } from './utils'
 import { CUSTOM_API_USAGE_METRIC_NAMES } from '@/core/cloudwatch/metrics'
 import { TenantBasic } from '@/services/accounts'
 import { getSecret } from '@/utils/secrets-manager'
 import { mergeObjects } from '@/utils/object'
 import { traceable } from '@/core/xray'
+
+const RETRY_OPTIONS: BackoffOptions = {
+  startingDelay: 10,
+  maxDelay: 60 * 1000,
+  jitter: 'full',
+}
 
 const DAILY_USAGE_METRICS_SHEET_TITLE = 'DailyUsageMetrics'
 const MONTHLY_USAGE_METRICS_SHEET_TITLE = 'MonthlyUsageMetrics'
@@ -141,7 +147,7 @@ export class SheetsApiUsageMetricsService {
   public async initialize(): Promise<void> {
     await backOff(async () => {
       await this.initializePrivate()
-    })
+    }, RETRY_OPTIONS)
   }
 
   private getDailyUsageMetadata(date: string): {
@@ -262,16 +268,16 @@ export class SheetsApiUsageMetricsService {
     monthlyMetrics: MonthlyMetricStats[]
   ): Promise<void> {
     for (const metric of dailyMetrics) {
-      await backOff(async () => await this.publishDailyUsageMetrics(metric), {
-        maxDelay: 60 * 1000,
-        jitter: 'full',
-      })
+      await backOff(
+        async () => await this.publishDailyUsageMetrics(metric),
+        RETRY_OPTIONS
+      )
     }
     for (const metric of monthlyMetrics) {
-      await backOff(async () => await this.publishMonthlyUsageMetrics(metric), {
-        maxDelay: 60 * 1000,
-        jitter: 'full',
-      })
+      await backOff(
+        async () => await this.publishMonthlyUsageMetrics(metric),
+        RETRY_OPTIONS
+      )
     }
   }
 }
