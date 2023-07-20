@@ -41,9 +41,9 @@ export const StackConstants = {
   VPC_NAME: 'vpc',
   VPC_SECURITY_GROUP_ID: 'atlas-lambda-sg',
   S3_SERVER_ACCESS_LOGS_BUCKET_NAME: 's3-server-access-logs',
-  TARPON_DYNAMODB_TABLE_NAME: getResourceName('Tarpon'),
-  TARPON_RULE_DYNAMODB_TABLE_NAME: getResourceName('TarponRule'),
-  TRANSIENT_DYNAMODB_TABLE_NAME: getResourceName('Transient'),
+  TARPON_DYNAMODB_TABLE_NAME: 'Tarpon',
+  TARPON_RULE_DYNAMODB_TABLE_NAME: 'TarponRule',
+  TRANSIENT_DYNAMODB_TABLE_NAME: 'Transient',
   DYNAMODB_TTL_ATTRIBUTE_NAME: '_ttl',
   MONGO_DB_DATABASE_NAME: 'tarpon',
   MONGO_DB_USERNAME_NAME: 'tarponUser',
@@ -206,7 +206,7 @@ export const StackConstants = {
   CONSOLE_API_GATEWAY_THROTTLING_ALARM_NAME: getResourceName(
     'ConsoleApiThrottlingCount'
   ),
-  HAMMERHEAD_DYNAMODB_TABLE_NAME: getResourceName('Hammerhead'),
+  HAMMERHEAD_DYNAMODB_TABLE_NAME: 'Hammerhead',
   HAMMERHEAD_CHANGE_CAPTURE_KINESIS_CONSUMER_FUNCTION_NAME:
     getResourceNameForHammerhead('ChangeCaptureKinesisConsumer'),
   HAMMERHEAD_CHANGE_CAPTURE_KINESIS_CONSUMER_RETRY_FUNCTION_NAME:
@@ -232,12 +232,10 @@ export const StackConstants = {
     'ConsoleApiAuditLogFunction'
   ),
   NUMBER_OF_RISK_LEVELS: 5,
-  TARPON_STREAM_ID: getResourceNameForTarpon('Stream'),
-  TARPON_STREAM_NAME: getResourceNameForTarpon('DynamoChangeCaptureStream'),
-  HAMMERHEAD_STREAM_ID: getResourceNameForHammerhead('Stream'),
-  HAMMERHEAD_STREAM_NAME: getResourceNameForHammerhead(
-    'DynamoChangeCaptureStream'
-  ),
+  TARPON_STREAM_ID: 'tarponStream',
+  TARPON_STREAM_NAME: 'tarponDynamoChangeCaptureStream',
+  HAMMERHEAD_STREAM_ID: 'hammerheadStream',
+  HAMMERHEAD_STREAM_NAME: 'hammerheadDynamoChangeCaptureStream',
   DATA_MIGRATION_CODEBUILD_PROJECT_NAME: 'DataMigration',
   CONSOLE_API_CASE_FUNCTION_NAME: getResourceNameForTarpon(
     'ConsoleApiCaseFunction'

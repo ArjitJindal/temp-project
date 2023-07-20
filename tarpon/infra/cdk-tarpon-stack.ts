@@ -1105,6 +1105,10 @@ export class CdkTarponStack extends cdk.Stack {
     enableTimeToLive = false,
     contributorInsightsEnabled = false
   ) {
+    const isDevUserStack = process.env.ENV === 'dev:user'
+    if (isDevUserStack) {
+      return Table.fromTableName(this, tableName, tableName)
+    }
     const table = new Table(this, tableName, {
       tableName: tableName,
       partitionKey: { name: 'PartitionKeyID', type: AttributeType.STRING },
