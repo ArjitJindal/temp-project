@@ -18,6 +18,12 @@ import { hasFeature, updateLogMetadata } from '@/core/utils/context'
 import { getMongoDbClient } from '@/utils/mongoDBUtils'
 import { UserManagementService } from '@/services/users'
 import { pickKnownEntityFields } from '@/utils/object'
+import {
+  getRiskLevelFromScore,
+  getRiskScoreFromLevel,
+} from '@/services/risk-scoring/utils'
+import { RiskLevel } from '@/@types/openapi-internal/RiskLevel'
+import { ConsumerUsersResponse } from '@/@types/openapi-public/ConsumerUsersResponse'
 
 const handleRiskLevelParam = async (
   tenantId: string,
@@ -70,27 +76,49 @@ export const userHandler = lambdaApi()(
 
       if (userPayload.userId) {
         const user = isConsumerUser
-          ? await userRepository.getConsumerUser(userPayload.userId as string)
-          : await userRepository.getBusinessUser(userPayload.userId as string)
+          ? await userRepository.getConsumerUserWithRiskScores(
+              userPayload.userId as string
+            )
+          : await userRepository.getBusinessUserWithRiskScores(
+              userPayload.userId as string
+            )
+
         if (user) {
           return {
             userId: user.userId,
             message:
               'The provided userId already exists. The user attribute updates are not saved. If you want to update the attributes of this user, please use user events instead.',
-            // TODO: Implement risk score
-            userRiskScoreDetails: undefined,
+            riskScoreDetails: user.riskScoreDetails,
           }
         }
       }
+
+      let krsScore: number | undefined
+      let craScore: number | undefined
+      let krsRiskLevel: RiskLevel | undefined
+      let craRiskLevel: RiskLevel | undefined
 
       if (hasFeature('PULSE')) {
         const riskScoringService = new RiskScoringService(tenantId, {
           dynamoDb,
           mongoDb,
         })
-        await riskScoringService.updateInitialRiskScores(
+        const score = await riskScoringService.updateInitialRiskScores(
           userPayload as User | Business
         )
+
+        krsScore = craScore = score
+        const riskRepository = new RiskRepository(tenantId, {
+          dynamoDb,
+          mongoDb,
+        })
+
+        const riskClassificationValues =
+          await riskRepository.getRiskClassificationValues()
+
+        const riskLevel = getRiskLevelFromScore(riskClassificationValues, score)
+
+        krsRiskLevel = craRiskLevel = riskLevel
 
         if (userPayload.riskLevel) {
           await handleRiskLevelParam(
@@ -99,6 +127,13 @@ export const userHandler = lambdaApi()(
             userPayload as User | Business,
             mongoDb
           )
+
+          craScore = getRiskScoreFromLevel(
+            riskClassificationValues,
+            userPayload.riskLevel
+          )
+
+          craRiskLevel = userPayload.riskLevel
         }
       }
 
@@ -115,9 +150,15 @@ export const userHandler = lambdaApi()(
 
       return {
         userId: user.userId,
-        // TODO: Implement risk score
-        userRiskScoreDetails: undefined,
-      }
+        ...(krsScore && {
+          riskScoreDetails: {
+            kycRiskLevel: krsRiskLevel,
+            craRiskLevel: craRiskLevel,
+            kycRiskScore: krsScore,
+            craRiskScore: craScore,
+          },
+        }),
+      } as ConsumerUsersResponse
     }
     return 'Unhandled request'
   }

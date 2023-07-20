@@ -8,8 +8,17 @@ import { getTestTenantId } from '@/test-utils/tenant-test-utils'
 import { dynamoDbSetupHook } from '@/test-utils/dynamodb-test-utils'
 import { UserRepository } from '@/services/users/repositories/user-repository'
 import { getDynamoDbClient } from '@/utils/dynamodb'
+import { withFeatureHook } from '@/test-utils/feature-test-utils'
 
 dynamoDbSetupHook()
+withFeatureHook(['PULSE'])
+
+const riskScoreDetails = {
+  kycRiskLevel: 'VERY_HIGH',
+  craRiskLevel: 'VERY_HIGH',
+  kycRiskScore: 90,
+  craRiskScore: 90,
+}
 
 describe('Public API - Create a Consumer User', () => {
   const TEST_TENANT_ID = getTestTenantId()
@@ -24,6 +33,7 @@ describe('Public API - Create a Consumer User', () => {
     expect(response?.statusCode).toBe(200)
     expect(JSON.parse(response?.body as string)).toMatchObject({
       userId: '1',
+      riskScoreDetails,
     })
   })
 
@@ -44,6 +54,7 @@ describe('Public API - Create a Consumer User', () => {
       userId: '2',
       message:
         'The provided userId already exists. The user attribute updates are not saved. If you want to update the attributes of this user, please use user events instead.',
+      riskScoreDetails,
     })
   })
 
@@ -99,7 +110,10 @@ describe('Public API - Retrieve a Consumer User', () => {
       null as any
     )
     expect(response?.statusCode).toBe(200)
-    expect(JSON.parse(response?.body as string)).toMatchObject(consumerUser)
+    expect(JSON.parse(response?.body as string)).toMatchObject({
+      ...consumerUser,
+      riskScoreDetails,
+    })
   })
 })
 
@@ -116,6 +130,7 @@ describe('Public API - Create a Business User', () => {
     expect(response?.statusCode).toBe(200)
     expect(JSON.parse(response?.body as string)).toMatchObject({
       userId: '1',
+      riskScoreDetails,
     })
   })
 
@@ -136,6 +151,7 @@ describe('Public API - Create a Business User', () => {
       userId: '2',
       message:
         'The provided userId already exists. The user attribute updates are not saved. If you want to update the attributes of this user, please use user events instead.',
+      riskScoreDetails,
     })
   })
 
@@ -191,6 +207,9 @@ describe('Public API - Retrieve a Business User', () => {
       null as any
     )
     expect(response?.statusCode).toBe(200)
-    expect(JSON.parse(response?.body as string)).toMatchObject(business)
+    expect(JSON.parse(response?.body as string)).toMatchObject({
+      ...business,
+      riskScoreDetails,
+    })
   })
 })

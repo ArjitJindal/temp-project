@@ -290,7 +290,7 @@ export class RiskScoringService {
     return _.mean([currentDrsScore, newArsScore])
   }
 
-  public async updateInitialRiskScores(user: User | Business): Promise<void> {
+  public async updateInitialRiskScores(user: User | Business): Promise<number> {
     const riskFactors = await this.riskRepository.getParameterRiskItems()
     const riskClassificationValues =
       await this.riskRepository.getRiskClassificationValues()
@@ -311,6 +311,8 @@ export class RiskScoringService {
       'FIRST_DRS',
       components
     )
+
+    return score
   }
 
   public async updateDynamicRiskScores(transaction: Transaction): Promise<{

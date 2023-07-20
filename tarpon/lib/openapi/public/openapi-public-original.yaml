@@ -2978,11 +2978,21 @@ components:
       title: BusinessUsersResponse
       type: object
       description: Model for business user risk score response
+      x-examples:
+        example-1:
+          userId: string
+          riskScoreDetails:
+            kycRiskScore: 27.5
+            craRiskScore: 23.92
+            kycRiskLevel: LOW
+            craRiskLevel: LOW
       properties:
         userId:
           minLength: 1
           type: string
           description: user ID the risk score pertains to
+        riskScoreDetails:
+          $ref: '#/components/schemas/RiskScoreDetails'
       required:
         - userId
     ConsumerUsersResponse:
@@ -2991,16 +3001,19 @@ components:
       x-examples:
         example-1:
           userId: string
-          userRiskScoreDetails:
-            kycRiskScore: 87.5
-            transactionRiskScore: 58.33
-            customerRiskAssessment: 73.92
+          riskScoreDetails:
+            kycRiskScore: 27.5
+            craRiskScore: 23.92
+            kycRiskLevel: LOW
+            craRiskLevel: LOW
       description: Model for consumer user risk score response
       properties:
         userId:
           minLength: 1
           type: string
           description: user ID the risk score pertains to
+        riskScoreDetails:
+          $ref: '#/components/schemas/RiskScoreDetails'
       required:
         - userId
     CardDetails:
