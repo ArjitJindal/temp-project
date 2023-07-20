@@ -11,20 +11,13 @@ import { BucketProps } from 'aws-cdk-lib/aws-s3/lib/bucket';
 import { userAlias } from './configs/config-dev-user';
 import type { Config } from './configs/config';
 
-const DEPLOYED_REGIONS = ['ap-southeast-1', 'ap-south-1', 'eu-central-1', 'eu-west-2', 'us-west-2'];
-function contentSecurityPolicy(domain: string, stage: string) {
-  const buckets = DEPLOYED_REGIONS.flatMap((region) =>
-    ['tmp', 'document', 'import'].map(
-      (tarponBucket) =>
-        `https://tarpon-${tarponBucket}-${stage}-${region}.s3.${region}.amazonaws.com`,
-    ),
-  ).join(' ');
+function contentSecurityPolicy(domain: string) {
   return `default-src 'self';
 script-src 'self' https://cdn.heapanalytics.com https://heapanalytics.com 'sha256-12Sr3zsuj4S5dhD99YsMaB85Xqg6R/TGFur0VAPzLsM=';
 style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://heapanalytics.com 'sha256-DOu86drLfwUr1Wcsx/wxfqAogK7tFvJGjVmF/300H/M=' 'sha256-iYwYhiMcsGmXCUzLEpEzZNz5dINrlkqf1sLbLhEcqGM=';
 object-src 'none';
 base-uri 'self';
-connect-src 'self' ${buckets} https://api-js.mixpanel.com https://*.${domain} https://ipinfo.io https://*.ingest.sentry.io https://heapanalytics.com;
+connect-src 'self' *.amazonaws.com https://api-js.mixpanel.com https://*.${domain} https://ipinfo.io https://*.ingest.sentry.io https://heapanalytics.com;
 font-src 'self' https://fonts.gstatic.com https://heapanalytics.com;
 frame-src 'self' https://*.${domain};
 img-src 'self' data: https://s.gravatar.com https://*.wp.com https://cdnjs.cloudflare.com https://platform.slack-edge.com https://heapanalytics.com;
@@ -150,7 +143,7 @@ export class CdkPhytoplanktonStack extends cdk.Stack {
             Name: `ContentSecurity${userAlias()}`,
             SecurityHeadersConfig: {
               ContentSecurityPolicy: {
-                ContentSecurityPolicy: contentSecurityPolicy(domainName, config.stage),
+                ContentSecurityPolicy: contentSecurityPolicy(domainName),
                 Override: true,
               },
             },
