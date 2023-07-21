@@ -43,6 +43,8 @@ const DisplayCheckedTransactions = (props: Props) => {
           api.getTransactionsList({
             ...transactionParamsToRequest(params),
             start: from,
+            filterUserId: caseUserId,
+            filterRuleInstancesHit: alert.ruleInstanceId,
           }),
         'Transactions List',
       );

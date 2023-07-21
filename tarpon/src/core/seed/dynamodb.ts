@@ -1,6 +1,7 @@
 import _ from 'lodash'
 import { DynamoDBDocumentClient } from '@aws-sdk/lib-dynamodb'
 import { syncRulesLibrary } from '../../../scripts/migrations/always-run/sync-rules-library'
+import { logger } from '../logger'
 import { UserRepository } from '@/services/users/repositories/user-repository'
 import { TenantRepository } from '@/services/tenants/repositories/tenant-repository'
 import { init as userInit, data as usersData } from '@/core/seed/data/users'
@@ -36,15 +37,20 @@ export async function seedDynamo(
   const txnRepo = new DynamoDbTransactionRepository(tenantId, dynamoDb)
   const ruleRepo = new RuleInstanceRepository(tenantId, { dynamoDb })
 
+  logger.info('Creating rules...')
+  await syncRulesLibrary()
   for (const ruleInstance of ruleInstances) {
     await ruleRepo.createOrUpdateRuleInstance(ruleInstance)
   }
+  logger.info('Creating users...')
   for (const user of usersData) {
     await userRepo.saveUser(_.omit(user, '_id'), (user as any).type as UserType)
   }
+  logger.info('Creating lists...')
   for (const list of listsData) {
     await listRepo.createList(list.listType, list.subtype, list.data)
   }
+  logger.info('Creating transactions...')
   for (const txn of transactions) {
     const publicTxn = internalToPublic(txn)
     await txnRepo.saveTransaction(publicTxn, {
@@ -56,8 +62,8 @@ export async function seedDynamo(
     })
   }
 
+  logger.info('Setting tenant settings...')
   await tenantRepo.createOrUpdateTenantSettings({
     features: FEATURES,
   })
-  await syncRulesLibrary()
 }

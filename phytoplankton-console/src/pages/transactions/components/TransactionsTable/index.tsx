@@ -104,6 +104,7 @@ export const transactionParamsToRequest = (
     tagValue,
     originMethodFilter,
     destinationMethodFilter,
+    transactionStatusFilter,
   } = params;
   const [sortField, sortOrder] = params.sort[0] ?? [];
   return {
@@ -129,6 +130,7 @@ export const transactionParamsToRequest = (
     filterDestinationUserId: params.userFilterMode === 'DESTINATION' ? params.userId : undefined,
     filterOriginPaymentMethodId: params.originPaymentMethodId,
     filterDestinationPaymentMethodId: params.destinationPaymentMethodId,
+    filterTransactionStatus: transactionStatusFilter,
   };
 };
 

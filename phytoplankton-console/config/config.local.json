@@ -3,7 +3,7 @@
   "envName": "local",
   "define": {
     "EXPORT_ENTRIES_LIMIT": 10000,
-    "API_BASE_PATH": "http://flagright.local:3002",
+    "API_BASE_PATH": "http://localhost:3002",
     "AUTH0_AUDIENCE": "https://api.flagright.dev/",
     "AUTH0_DOMAIN": "login.console.flagright.dev",
     "AUTH0_CLIENT_ID": "uGGbVNumU7d57NswPLD5UaTwvf17tc7y",

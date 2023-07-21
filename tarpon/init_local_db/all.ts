@@ -22,11 +22,10 @@ async function main() {
     console.error(e)
   }
 
-  console.log('Creating users...')
+  console.info('Seeding DynamoDB...')
   await seedDynamo(getDynamoDbClient(), TENANT)
 
-  console.log('Done')
-
+  console.info('Seeding MongoDB...')
   const client = await MongoClient.connect(
     `mongodb://localhost:27018/${DB_NAME}`
   )

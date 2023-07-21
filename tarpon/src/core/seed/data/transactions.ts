@@ -13,7 +13,9 @@ import { TRANSACTION_STATES } from '@/@types/openapi-internal-custom/Transaction
 import { TransactionWithRulesResult } from '@/@types/openapi-public/TransactionWithRulesResult'
 import { getAggregatedRuleStatus } from '@/services/rules-engine/utils'
 
-const TXN_COUNT = 1000
+const TXN_COUNT = process.env.SEED_TRANSACTIONS_COUNT
+  ? Number(process.env.SEED_TRANSACTIONS_COUNT)
+  : 50
 const generator = function* (seed: number): Generator<InternalTransaction> {
   for (let i = 0; i < TXN_COUNT; i += 1) {
     const random = prng(seed * i)

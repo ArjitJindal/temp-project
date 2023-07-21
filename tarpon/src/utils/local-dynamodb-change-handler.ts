@@ -12,8 +12,8 @@ import { envIs } from './env'
 let localChangeHandlerEnabled = false
 let localChangeHandlerDisabled = false
 export function disableLocalChangeHandler() {
-  localChangeHandlerDisabled = true
   localChangeHandlerEnabled = false
+  localChangeHandlerDisabled = true
 }
 export function enableLocalChangeHandler() {
   localChangeHandlerEnabled = true
@@ -21,13 +21,14 @@ export function enableLocalChangeHandler() {
 }
 
 export function runLocalChangeHandler(): boolean {
-  if (localChangeHandlerEnabled) {
-    return true
-  }
   if (localChangeHandlerDisabled) {
     return false
   }
-  return envIs('local') || !!process.env.__INTERNAL_MONGODB_MIRROR__
+  return (
+    envIs('local') ||
+    Boolean(process.env.__INTERNAL_MONGODB_MIRROR__) ||
+    localChangeHandlerEnabled
+  )
 }
 
 export function createKinesisStreamEvent<T>(
