@@ -14,8 +14,11 @@ export const RULE_ACTION_OPTIONS: { label: string; value: RuleAction }[] = [
   { label: 'Block', value: 'BLOCK' },
 ];
 
-export function getRuleInstanceDisplayId(ruleId: string, ruleInstanceId: string | undefined) {
-  return `${ruleId} (${ruleInstanceId || 'N/A'})`;
+export function getRuleInstanceDisplayId(
+  ruleId: string | undefined,
+  ruleInstanceId: string | undefined,
+): string {
+  return ruleId ? `${ruleId} (${ruleInstanceId || 'N/A'})` : ruleInstanceId ?? 'N/A';
 }
 
 export function ruleHeaderKeyToDescription(key: string) {

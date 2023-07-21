@@ -441,7 +441,8 @@ export default function TransactionsTable(props: Props) {
       disableSorting={disableSorting}
       fitHeight={fitHeight}
       paginationBorder
-      isExpandable={(row) => isTransactionHasDetails(row.content)}
+      fixedExpandedContainer={true}
+      isExpandable={(row) => isTransactionHasDetails(row.content, settings)}
       renderExpanded={(entity) => <ExpandedRowRenderer transaction={entity} />}
       extraTools={[
         () => (

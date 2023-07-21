@@ -133,7 +133,7 @@ const MyRule = (props: { simulationMode?: boolean }) => {
                 }}
                 id={entity.id ?? ''}
               >
-                {ruleId ? getRuleInstanceDisplayId(ruleId, entity.id) : entity.id}
+                {getRuleInstanceDisplayId(ruleId, entity.id)}
               </a>
             );
           },

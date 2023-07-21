@@ -8,9 +8,9 @@ import { useApi } from '@/api';
 import {
   Account,
   AlertListResponseItem,
-  AlertStatus,
   AlertsAssignmentsUpdateRequest,
   AlertsReviewAssignmentsUpdateRequest,
+  AlertStatus,
   Assignment,
   RuleInstance,
 } from '@/apis';
@@ -33,11 +33,10 @@ import { message } from '@/components/library/Message';
 import { TableSearchParams } from '@/pages/case-management/types';
 import { makeExtraFilters } from '@/pages/case-management/helpers';
 import { useFeatureEnabled } from '@/components/AppWrapper/Providers/SettingsProvider';
-import { UI_SETTINGS } from '@/pages/case-management-item/CaseDetails/ui-settings';
 import {
   ASSIGNMENTS,
-  CASEID_PRIORITY,
   CASE_STATUS,
+  CASEID_PRIORITY,
   DATE,
   DATE_TIME,
   RULE_ACTION,
@@ -73,13 +72,10 @@ const mergedColumns = (
             <Id
               id={alertId}
               to={addBackUrlToRoute(
-                makeUrl(
-                  `/case-management/case/:caseId`,
-                  {
-                    caseId: entity.caseId,
-                  },
-                  { focus: UI_SETTINGS.cards.ALERTS.key },
-                ),
+                makeUrl(`/case-management/case/:caseId/:tab`, {
+                  caseId: entity.caseId,
+                  tab: 'alerts',
+                }),
               )}
             >
               {alertId}

@@ -1,7 +1,13 @@
 import _ from 'lodash';
-import { InternalTransaction } from '@/apis';
+import { InternalTransaction, TenantSettings } from '@/apis';
 
-export function isTransactionHasDetails(transaction: InternalTransaction) {
+export function isTransactionHasDetails(
+  transaction: InternalTransaction,
+  settings: TenantSettings,
+) {
+  if (settings.isPaymentApprovalEnabled && transaction.status === 'SUSPEND') {
+    return true;
+  }
   const detailsList = getFlatSanctionsDetails(transaction);
   return detailsList.length > 0;
 }
