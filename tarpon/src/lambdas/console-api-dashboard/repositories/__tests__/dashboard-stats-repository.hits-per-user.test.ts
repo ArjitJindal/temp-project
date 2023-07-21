@@ -3,8 +3,6 @@ import dayjs from '@/utils/dayjs'
 import { dynamoDbSetupHook } from '@/test-utils/dynamodb-test-utils'
 import { getTestTransaction } from '@/test-utils/transaction-test-utils'
 import { getTestTenantId } from '@/test-utils/tenant-test-utils'
-import { logger } from '@/core/logger'
-import { getMongoDbClient } from '@/utils/mongoDBUtils'
 import { createConsumerUsers, getTestUser } from '@/test-utils/user-test-utils'
 import { RuleAction } from '@/@types/openapi-public/RuleAction'
 
@@ -451,15 +449,4 @@ describe('Verify hits-per-user statistics', () => {
       ])
     }
   })
-})
-
-afterAll(async () => {
-  const mongoDb = await getMongoDbClient()
-  const db = mongoDb.db()
-
-  try {
-    await db.dropDatabase()
-  } catch (e) {
-    logger.error(`Mongo: unable to drop test db`, e)
-  }
 })

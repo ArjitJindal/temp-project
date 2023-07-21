@@ -1,31 +1,24 @@
-import { CaseService } from '../services/case-service'
 import { casesHandler } from '../app'
 import {
   TestApiEndpoint,
   TestApiEndpointOptions,
 } from '@/test-utils/apigateway-test-utils'
 import { dynamoDbSetupHook } from '@/test-utils/dynamodb-test-utils'
-import { AlertsService } from '@/services/alerts'
 import { withFeatureHook } from '@/test-utils/feature-test-utils'
-import { setSkipRoleCheck } from '@/test-utils/user-test-utils'
-import { setSkipAuditLogs } from '@/test-utils/auditlog-test-utils'
 
-const testApiEndPointsCases = new TestApiEndpoint(CaseService, casesHandler)
-const testApiEndPointsAlerts = new TestApiEndpoint(AlertsService, casesHandler)
+const testApiEndPointsCases = new TestApiEndpoint(casesHandler)
+const testApiEndPointsAlerts = new TestApiEndpoint(casesHandler)
 
 dynamoDbSetupHook()
 withFeatureHook(['ESCALATION'])
-setSkipRoleCheck()
-setSkipAuditLogs()
 
 process.env.MAXIMUM_ALLOWED_EXPORT_SIZE = '1000'
 
 describe.each<TestApiEndpointOptions>([
-  { method: 'GET', path: '/cases', methodName: 'getCases' },
+  { method: 'GET', path: '/cases' },
   {
     method: 'GET',
     path: '/cases/{caseId}',
-    methodName: 'getCase',
     payload: {
       caseId: '1',
     },
@@ -33,22 +26,18 @@ describe.each<TestApiEndpointOptions>([
   {
     method: 'PATCH',
     path: '/cases/statusChange',
-    methodName: 'updateCasesStatus',
   },
   {
     method: 'PATCH',
     path: '/cases/assignments',
-    methodName: 'updateCasesAssignments',
   },
   {
     method: 'PATCH',
     path: '/cases/reviewAssignments',
-    methodName: 'updateCasesReviewAssignments',
   },
   {
     method: 'POST',
     path: '/cases/{caseId}/comments',
-    methodName: 'saveCaseComment',
     payload: {
       caseId: 'caseId',
       comment: 'comment',
@@ -57,7 +46,6 @@ describe.each<TestApiEndpointOptions>([
   {
     method: 'DELETE',
     path: '/cases/{caseId}/comments/{commentId}',
-    methodName: 'deleteCaseComment',
     payload: {
       caseId: 'caseId',
       commentId: 'commentId',
@@ -66,7 +54,6 @@ describe.each<TestApiEndpointOptions>([
   {
     method: 'POST',
     path: '/cases/{caseId}/escalate',
-    methodName: 'escalateCase',
     payload: {
       caseId: 'caseId',
       caseUpdateRequest: {},
@@ -75,24 +62,21 @@ describe.each<TestApiEndpointOptions>([
   {
     method: 'POST',
     path: '/alerts/new-case',
-    methodName: 'getCase',
   },
-])('Test casesHandler', ({ method, path, methodName, payload }) => {
-  testApiEndPointsCases.testApi({ method, path, payload }, methodName)
+])('Test casesHandler', ({ method, path, payload }) => {
+  testApiEndPointsCases.testApi({ method, path, payload })
 })
 
 describe.each<TestApiEndpointOptions>([
-  { method: 'GET', path: '/alerts', methodName: 'getAlerts' },
-  { method: 'GET', path: '/alerts/{alertId}', methodName: 'getAlert' },
+  { method: 'GET', path: '/alerts' },
+  { method: 'GET', path: '/alerts/{alertId}' },
   {
     method: 'DELETE',
     path: '/alerts/{alertId}/comments/{commentId}',
-    methodName: 'deleteAlertComment',
   },
   {
     method: 'PATCH',
     path: '/alerts/statusChange',
-    methodName: 'updateAlertsStatus',
     payload: {
       alertIds: ['1'],
     },
@@ -100,13 +84,11 @@ describe.each<TestApiEndpointOptions>([
   {
     method: 'PATCH',
     path: '/alerts/assignments',
-    methodName: 'updateAlertsAssignments',
   },
   {
     method: 'PATCH',
     path: '/alerts/reviewAssignments',
-    methodName: 'updateAlertsReviewAssignments',
   },
-])('Test alertsHandler', ({ method, path, methodName, payload }) => {
-  testApiEndPointsAlerts.testApi({ method, path, payload }, methodName)
+])('Test alertsHandler', ({ method, path, payload }) => {
+  testApiEndPointsAlerts.testApi({ method, path, payload })
 })

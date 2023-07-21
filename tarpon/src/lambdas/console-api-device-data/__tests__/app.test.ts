@@ -1,14 +1,10 @@
 import { deviceDataHandler } from '../app'
-import { DeviceDataService } from '../services/device-data-service'
 import {
   TestApiEndpoint,
   TestApiEndpointOptions,
 } from '@/test-utils/apigateway-test-utils'
 
-const testApiEndPointsCases = new TestApiEndpoint(
-  DeviceDataService,
-  deviceDataHandler
-)
+const testApiEndPointsCases = new TestApiEndpoint(deviceDataHandler)
 
 describe.each<TestApiEndpointOptions>([
   {
@@ -18,7 +14,6 @@ describe.each<TestApiEndpointOptions>([
       transactionId: 'transactionId',
       userId: 'userId',
     },
-    methodName: 'getDeviceDataForTransaction',
   },
   {
     method: 'GET',
@@ -26,8 +21,7 @@ describe.each<TestApiEndpointOptions>([
     payload: {
       userId: 'userId',
     },
-    methodName: 'getDeviceDataForUser',
   },
-])('Device Data API', ({ method, path, payload, methodName }) => {
-  testApiEndPointsCases.testApi({ method, path, payload }, methodName)
+])('Device Data API', ({ method, path, payload }) => {
+  testApiEndPointsCases.testApi({ method, path, payload })
 })

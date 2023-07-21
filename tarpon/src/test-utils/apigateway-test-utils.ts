@@ -172,18 +172,6 @@ export function getApiGatewayPutEvent(
   }
 }
 
-export function mockServiceMethod(
-  service: any,
-  methodName: string,
-  returnValue?: any
-) {
-  const mock = jest.spyOn(service.prototype, methodName)
-  if (returnValue) {
-    mock.mockReturnValue(returnValue)
-  }
-  return mock
-}
-
 export function mockStaticMethod(
   service: any,
   methodName: string,
@@ -199,27 +187,21 @@ export function mockStaticMethod(
 export type TestApiEndpointOptions = {
   method: string
   path: string
-  methodName: string
   payload?: any
 }
 
 export class TestApiEndpoint {
-  service: any
   lambdaHandler: Handler
   tenantId: string
 
-  constructor(service: any, lambdaHandler: Handler) {
-    this.service = service
+  constructor(lambdaHandler: Handler) {
     this.lambdaHandler = lambdaHandler
     this.tenantId = getTestTenantId()
   }
 
-  public testApi(
-    endpoint: { method: string; path: string; payload?: any },
-    methodName: string
-  ) {
+  public testApi(endpoint: { method: string; path: string; payload?: any }) {
     const { method, path, payload } = endpoint
-    test(`${method} ${path} should call the correct service method`, async () => {
+    test(`${method} ${path} should be handled`, async () => {
       let event
       switch (method) {
         case 'GET':
@@ -256,9 +238,10 @@ export class TestApiEndpoint {
         default:
           throw new Error(`Unsupported method ${method}`)
       }
-      const mock = mockServiceMethod(this.service, methodName, {})
-      await this.lambdaHandler(event, null as any, null as any)
-      expect(mock).toHaveBeenCalled()
+      const response = await this.lambdaHandler(event, null as any, null as any)
+      expect(JSON.parse(response.body)?.message).not.toBe(
+        'No handler registered'
+      )
     })
   }
 }

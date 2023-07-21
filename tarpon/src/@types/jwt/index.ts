@@ -7,7 +7,6 @@ import {
   MANAGED_ROLE_NAMES,
   isValidManagedRoleName,
 } from '@/@types/openapi-internal-custom/ManagedRoleName'
-import { skipRoleCheck } from '@/test-utils/user-test-utils'
 
 export function isCurrentUserAtLeastRole(requiredRole: ManagedRoleName) {
   return isAtLeastRole(currentUser(), requiredRole)
@@ -28,16 +27,10 @@ export function isAtLeastRole(
 }
 
 export function assertCurrentUserRole(requiredRole: ManagedRoleName) {
-  if (skipRoleCheck) {
-    return
-  }
   assertRole(currentUser(), requiredRole)
 }
 
 export function assertRole(user: ContextUser, requiredRole: ManagedRoleName) {
-  if (skipRoleCheck) {
-    return
-  }
   if (!user) {
     throw new Forbidden('Unknown user')
   }

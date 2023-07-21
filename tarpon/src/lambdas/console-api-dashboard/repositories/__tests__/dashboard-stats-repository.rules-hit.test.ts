@@ -3,8 +3,6 @@ import dayjs from '@/utils/dayjs'
 import { dynamoDbSetupHook } from '@/test-utils/dynamodb-test-utils'
 import { getTestTransaction } from '@/test-utils/transaction-test-utils'
 import { getTestTenantId } from '@/test-utils/tenant-test-utils'
-import { logger } from '@/core/logger'
-import { getMongoDbClient } from '@/utils/mongoDBUtils'
 import { RuleAction } from '@/@types/openapi-internal/RuleAction'
 
 dynamoDbSetupHook()
@@ -183,15 +181,4 @@ test(`Multiple cases - opened and closed`, async () => {
       openCasesCount: 3,
     },
   ])
-})
-
-afterAll(async () => {
-  const mongoDb = await getMongoDbClient()
-  const db = mongoDb.db()
-
-  try {
-    await db.dropDatabase()
-  } catch (e) {
-    logger.error(`Mongo: unable to drop test db`, e)
-  }
 })

@@ -2,8 +2,6 @@ import { getCaseRepo, getStatsRepo } from './helpers'
 import dayjs from '@/utils/dayjs'
 import { dynamoDbSetupHook } from '@/test-utils/dynamodb-test-utils'
 import { getTestTenantId } from '@/test-utils/tenant-test-utils'
-import { logger } from '@/core/logger'
-import { getMongoDbClient } from '@/utils/mongoDBUtils'
 import { CaseStatusChange } from '@/@types/openapi-internal/CaseStatusChange'
 import { Case } from '@/@types/openapi-internal/Case'
 import { CaseStatus } from '@/@types/openapi-internal/CaseStatus'
@@ -957,17 +955,6 @@ describe('Team statistic for alerts', () => {
       ])
     })
   })
-})
-
-afterAll(async () => {
-  const mongoDb = await getMongoDbClient()
-  const db = mongoDb.db()
-
-  try {
-    await db.dropDatabase()
-  } catch (e) {
-    logger.error(`Mongo: unable to drop test db`, e)
-  }
 })
 
 /*

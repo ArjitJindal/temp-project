@@ -105,6 +105,64 @@ You can start the local APIs using "Run and Debug" in VSCode, then you can set b
 
 You can also use JetBrains
 
+## Test
+
+### Unit Tests
+
+Run all the unit tests
+
+```bash
+npm run test
+```
+
+Run the unit tests related to rules only
+
+```bash
+npm run test:rule
+npm run test:rule:watch
+```
+
+Run the unit tests not related to rules
+
+```bash
+npm run test:others
+npm run test:others:watch
+```
+
+### Integration Tests
+
+#### Introduction
+
+We are having Integrations tests to ensure that the APIs are working as expected. Every API has its own set of integration tests written in `Postman Collection` and stored in `test-resources/` folder.
+
+Collection Link: https://lively-firefly-529317.postman.co/workspace/Flagright-Workspace~7e6e7bab-de2f-4a94-84a0-dca68b5b3d52/collection/24163049-503b80a7-dd73-4ed0-8aa6-5eaaa06f9ea5
+
+#### Running Integration Tests
+
+For Dev environment:
+
+```bash
+npm run postman:integration:dev
+```
+
+For Sandbox environment:
+
+```bash
+npm run postman:integration:sandbox
+```
+
+We have integration tests for the following APIs:
+
+- Public API Transactions
+
+#### Sync Postman collection
+
+We can write tests in Postman and sync them to the repo using the following command this will sync the collection to `test-resources/` folder. But only the tests will be synced, not the environment variables. Environment variables are needed to be managed in code as required under `scripts/run-integration-tests.ts`.
+
+```bash
+npm run postman:sync:collection
+```
+
 ## Deploy
 
 In order to deploy to a new account (or the first time you're deploying), you have to run `cdk bootstrap` like so:
@@ -294,37 +352,3 @@ For example, if you want to use the transactions from tenant A
 9. Run `npm run verify-remote-transactions`
 
 - The rules result for the transactions will be saved in `scripts/debug-rule/.output/`
-
-### Integration Tests
-
-#### Introduction
-
-We are having Integrations tests to ensure that the APIs are working as expected. Every API has its own set of integration tests written in `Postman Collection` and stored in `test-resources/` folder.
-
-Collection Link: https://lively-firefly-529317.postman.co/workspace/Flagright-Workspace~7e6e7bab-de2f-4a94-84a0-dca68b5b3d52/collection/24163049-503b80a7-dd73-4ed0-8aa6-5eaaa06f9ea5
-
-#### Running Integration Tests
-
-For Dev environment:
-
-```bash
-npm run postman:integration:dev
-```
-
-For Sandbox environment:
-
-```bash
-npm run postman:integration:sandbox
-```
-
-We have integration tests for the following APIs:
-
-- Public API Transactions
-
-#### Sync Postman collection
-
-We can write tests in Postman and sync them to the repo using the following command this will sync the collection to `test-resources/` folder. But only the tests will be synced, not the environment variables. Environment variables are needed to be managed in code as required under `scripts/run-integration-tests.ts`.
-
-```bash
-npm run postman:sync:collection
-```
