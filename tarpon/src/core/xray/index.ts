@@ -1,11 +1,12 @@
 import { Subsegment } from 'aws-xray-sdk-core'
 import { logger } from '@/core/logger'
+import { envIsNot } from '@/utils/env'
 
 // NOTE: Allowed special chars: _, ., :, /, %, &, #, =, +, \, -, @
 // ref: https://docs.aws.amazon.com/xray/latest/devguide/xray-api-segmentdocuments.html
 const ALLOWED_SPECIAL_CHAR_REGEX = /[`,~!#$^*()|?;'"<>{}[\]/]/g
 
-const xrayDisabled = process.env.ENV === 'local' || !!process.env.MIGRATION_TYPE
+const xrayDisabled = envIsNot('dev', 'sandbox', 'prod')
 
 let xrayInitialized = false
 
