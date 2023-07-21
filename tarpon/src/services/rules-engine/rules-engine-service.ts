@@ -64,7 +64,7 @@ import { JWTAuthorizerResult } from '@/@types/jwt'
 import { getDynamoDbClientByEvent } from '@/utils/dynamodb'
 import { TransactionState } from '@/@types/openapi-public/TransactionState'
 import { getAggregatedRuleStatus } from '@/services/rules-engine/utils'
-import { TransactionStatusUpdateWebhook } from '@/@types/openapi-public/TransactionStatusUpdateWebhook'
+import { TransactionStatusDetails } from '@/@types/openapi-public/TransactionStatusDetails'
 import { TransactionAction } from '@/@types/openapi-internal/TransactionAction'
 
 const ruleAscendingComparator = (
@@ -952,17 +952,17 @@ export class RulesEngineService {
       })
     )
 
-    const webhooksData: ThinWebhookDeliveryTask<TransactionStatusUpdateWebhook>[] =
+    const webhooksData: ThinWebhookDeliveryTask<TransactionStatusDetails>[] =
       txns.map((txn) => ({
         event: 'TRANSACTION_STATUS_UPDATED',
         payload: {
           transactionId: txn?.transactionId as string,
-          action,
+          status: action,
           reasons: reason,
-        } as TransactionStatusUpdateWebhook,
+        } as TransactionStatusDetails,
       }))
 
-    await sendWebhookTasks<TransactionStatusUpdateWebhook>(
+    await sendWebhookTasks<TransactionStatusDetails>(
       this.tenantId,
       webhooksData
     )
