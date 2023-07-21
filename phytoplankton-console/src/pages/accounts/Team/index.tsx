@@ -1,6 +1,6 @@
 import React, { useRef } from 'react';
 import { CheckCircleTwoTone, DeleteOutlined, MinusCircleTwoTone } from '@ant-design/icons';
-import { Popconfirm, Tag } from 'antd';
+import { Tag } from 'antd';
 import s from './index.module.less';
 import { useApiTime, useButtonTracker } from '@/utils/tracker';
 import { isAtLeastAdmin, parseUserRole, useAuth0User, UserRole } from '@/utils/user-utils';
@@ -19,6 +19,7 @@ import { message } from '@/components/library/Message';
 import { ColumnHelper } from '@/components/library/Table/columnHelper';
 import { PageWrapperContentContainer } from '@/components/PageWrapper';
 import RoleTag, { getRoleTitle } from '@/components/ui/RoleTag';
+import Confirm from '@/components/utils/Confirm';
 
 export default function Team() {
   const actionRef = useRef<TableRefType>(null);
@@ -120,8 +121,9 @@ export default function Team() {
           // todo: i18n
           return (
             <div className={s.buttons}>
-              <Popconfirm
-                title="Are you sure that you want to delete this user?"
+              <Confirm
+                text="Are you sure that you want to delete this user?"
+                title="Are you sure?"
                 onConfirm={async () => {
                   try {
                     await api.accountsDelete({ accountId: item.id });
@@ -133,8 +135,15 @@ export default function Team() {
                   }
                 }}
               >
-                <DeleteOutlined onClick={() => handleClick('Delete account')} />
-              </Popconfirm>
+                {({ onClick }) => (
+                  <DeleteOutlined
+                    onClick={() => {
+                      onClick();
+                      handleClick('Delete account');
+                    }}
+                  />
+                )}
+              </Confirm>
               <AccountForm editAccount={item} onSuccess={refreshTable} />
             </div>
           );
