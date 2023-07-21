@@ -24,6 +24,11 @@ const TEST_TRANSACTION_AMOUNT_200: TransactionAmountDetails = {
   transactionAmount: 200,
 }
 
+const TEST_TRANSACTION_AMOUNT_50: TransactionAmountDetails = {
+  transactionCurrency: 'EUR',
+  transactionAmount: 50,
+}
+
 const TEST_TRANSACTION_METHOD_IBAN_1 = {
   method: 'IBAN',
   BIC: 'AXISINBB250',
@@ -701,6 +706,80 @@ ruleVariantsTest(true, () => {
           }),
         ],
         expectedHits: [false, false, true],
+      },
+    ])('', ({ name, transactions, expectedHits }) => {
+      createTransactionRuleTestCase(
+        name,
+        TEST_TENANT_ID,
+        transactions,
+        expectedHits
+      )
+    })
+  })
+
+  describe('Unique Users Sending Money is Above Upper Threshold', () => {
+    const TEST_TENANT_ID = getTestTenantId()
+
+    setUpRulesHooks(TEST_TENANT_ID, [
+      {
+        type: 'TRANSACTION',
+        ruleImplementationName: 'transactions-volume',
+        defaultParameters: {
+          timeWindow: {
+            units: 1,
+            granularity: 'day',
+            rollingBasis: true,
+          },
+          checkSender: 'all',
+          checkReceiver: 'none',
+          transactionVolumeThreshold: {
+            EUR: 100,
+          },
+          transactionVolumeUpperThreshold: {
+            EUR: 500,
+          },
+          transactionsCounterPartiesThreshold: {
+            transactionsCounterPartiesCount: 2,
+            checkPaymentMethodDetails: false,
+          },
+        } as TransactionsVolumeRuleParameters,
+      },
+    ])
+
+    describe.each<TransactionRuleTestCase>([
+      {
+        name: 'rule is hit when the number of unique users is more than transactionsCounterPartiesThreshold',
+        transactions: [
+          getTestTransaction({
+            originUserId: '1-1',
+            destinationUserId: '1-2',
+            originAmountDetails: TEST_TRANSACTION_AMOUNT_200,
+            destinationAmountDetails: TEST_TRANSACTION_AMOUNT_200,
+            timestamp: dayjs('2022-01-01T00:00:00.000Z').valueOf(),
+          }),
+          getTestTransaction({
+            originUserId: '1-3',
+            destinationUserId: '1-2',
+            originAmountDetails: TEST_TRANSACTION_AMOUNT_200,
+            destinationAmountDetails: TEST_TRANSACTION_AMOUNT_200,
+            timestamp: dayjs('2022-01-01T00:00:01.000Z').valueOf(),
+          }),
+          getTestTransaction({
+            originUserId: '1-2',
+            destinationUserId: '1-1',
+            originAmountDetails: TEST_TRANSACTION_AMOUNT_50,
+            destinationAmountDetails: TEST_TRANSACTION_AMOUNT_50,
+            timestamp: dayjs('2022-01-01T00:00:02.000Z').valueOf(),
+          }),
+          getTestTransaction({
+            originUserId: '1-2',
+            destinationUserId: '1-6',
+            originAmountDetails: TEST_TRANSACTION_AMOUNT_200,
+            destinationAmountDetails: TEST_TRANSACTION_AMOUNT_200,
+            timestamp: dayjs('2022-01-01T00:00:03.000Z').valueOf(),
+          }),
+        ],
+        expectedHits: [false, false, true, false],
       },
     ])('', ({ name, transactions, expectedHits }) => {
       createTransactionRuleTestCase(

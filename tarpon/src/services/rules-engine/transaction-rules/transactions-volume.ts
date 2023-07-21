@@ -18,6 +18,7 @@ import {
   MATCH_PAYMENT_METHOD_DETAILS_OPTIONAL_SCHEMA,
   TransactionsCounterPartiesThreshold,
   TRANSACTION_COUNTERPARTIES_THRESHOLD_OPTIONAL_SCHEMA,
+  TRANSACTION_AMOUNT_THRESHOLDS_OPTIONAL_SCHEMA,
 } from '../utils/rule-parameter-schemas'
 import { TransactionHistoricalFilters } from '../filters'
 import { RuleHitResultItem } from '../rule'
@@ -44,6 +45,9 @@ export type TransactionsVolumeRuleParameters = {
   transactionVolumeThreshold: {
     [currency: string]: number
   }
+  transactionVolumeUpperThreshold?: {
+    [currency: string]: number
+  }
   timeWindow: TimeWindow
   transactionsCounterPartiesThreshold?: TransactionsCounterPartiesThreshold
   checkSender: 'sending' | 'all' | 'none'
@@ -64,7 +68,15 @@ export default class TransactionsVolumeRule extends TransactionAggregationRule<
         initialTransactions: INITIAL_TRANSACTIONS_OPTIONAL_SCHEMA(),
         transactionVolumeThreshold: TRANSACTION_AMOUNT_THRESHOLDS_SCHEMA({
           title: 'Transactions volume threshold',
+          description:
+            'Transactions volume below this amount rule will not be hit',
         }),
+        transactionVolumeUpperThreshold:
+          TRANSACTION_AMOUNT_THRESHOLDS_OPTIONAL_SCHEMA({
+            title: 'Upper transactions volume threshold',
+            description:
+              'If set, transactions volume exceeds this amount rule will not be hit',
+          }),
         timeWindow: TIME_WINDOW_SCHEMA(),
         transactionsCounterPartiesThreshold:
           TRANSACTION_COUNTERPARTIES_THRESHOLD_OPTIONAL_SCHEMA(),
@@ -103,6 +115,7 @@ export default class TransactionsVolumeRule extends TransactionAggregationRule<
       initialTransactions,
       transactionVolumeThreshold,
       transactionsCounterPartiesThreshold,
+      transactionVolumeUpperThreshold,
     } = this.parameters
     if (direction === 'origin' && checkSender === 'none') {
       return
@@ -132,6 +145,17 @@ export default class TransactionsVolumeRule extends TransactionAggregationRule<
     )
     if (!result.isHit) {
       return
+    }
+
+    if (!_.isEmpty(transactionVolumeUpperThreshold)) {
+      const result = await isTransactionAmountAboveThreshold(
+        totalAmount,
+        transactionVolumeUpperThreshold
+      )
+
+      if (result.isHit) {
+        return
+      }
     }
 
     let volumeDelta
