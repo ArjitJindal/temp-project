@@ -1,6 +1,6 @@
 describe('SAR Generate', () => {
   beforeEach(() => {
-    cy.loginByForm(Cypress.env('username'), Cypress.env('password'));
+    cy.loginByForm();
   });
 
   it('should generate SAR', () => {
@@ -12,7 +12,7 @@ describe('SAR Generate', () => {
       if (body.find('input[data-cy="row-table-checkbox"]').length > 0) {
         cy.get('input[data-cy="header-table-checkbox"]', { timeout: 15000 }).click();
         cy.get('button[data-cy="update-status-button"]', { timeout: 15000 }).eq(1).click();
-        cy.get('button[data-cy="modal-ok-ⓘ-confirm-action"]').eq(0).click();
+        cy.get('button[data-cy="modal-ok"]').eq(0).click();
       }
     });
     cy.visit(
@@ -34,7 +34,7 @@ describe('SAR Generate', () => {
     cy.get('div[title="Kenya"]').click();
     cy.get('label[data-cy="sar-report-type-select"] input').click();
     cy.get('div[title="SAR"]').click();
-    cy.get('button[data-cy="modal-ok-generate-report"]').click();
+    cy.get('button[data-cy="modal-ok"]').click();
     cy.get('div[data-cy="drawer-title-report-generator"]').should('contain', 'Report Generator');
   });
 });

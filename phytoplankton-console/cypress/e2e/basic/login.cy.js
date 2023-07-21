@@ -2,8 +2,7 @@
 
 describe('login', () => {
   beforeEach(() => {
-    // cy.loginByRequest();
-    cy.loginByForm(Cypress.env('username'), Cypress.env('password'));
+    cy.loginByForm();
   });
 
   it('should redirect to dashboard by default', () => {

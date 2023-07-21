@@ -1,6 +1,6 @@
 describe('Closing and Re-Opening the cases', () => {
   beforeEach(() => {
-    cy.loginByForm(Cypress.env('username'), Cypress.env('password'));
+    cy.loginByForm();
   });
 
   it('should close a case', () => {
@@ -11,7 +11,7 @@ describe('Closing and Re-Opening the cases', () => {
     cy.get('@caseId').then((text) => {
       const caseIdValue = text.trim();
       cy.caseAlertAction('Close');
-      cy.intercept('PATCH', '/console/cases/statusChange').as('case');
+      cy.intercept('PATCH', '**/cases/statusChange').as('case');
       cy.multiSelect('.ant-modal', 'False positive');
       cy.get('.ant-modal-root .ant-modal-title', { timeout: 8000 }).click();
       cy.get('.ant-modal-root textarea').eq(0).type('This is a test');

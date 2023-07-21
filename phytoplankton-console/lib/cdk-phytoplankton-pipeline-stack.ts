@@ -94,7 +94,7 @@ export class CdkPhytoplanktonPipelineStack extends cdk.Stack {
               ],
             },
             build: {
-              commands: ['npm run cypress:test:dev'],
+              commands: ['ENV=dev CI=true npm run cypress:run'],
             },
           },
           cache: {
@@ -102,9 +102,9 @@ export class CdkPhytoplanktonPipelineStack extends cdk.Stack {
           },
           env: {
             'secrets-manager': {
-              cypress_username:
+              CYPRESS_USERNAME:
                 'arn:aws:secretsmanager:eu-central-1:073830519512:secret:cypressCreds-yNKjtZ:username',
-              cypress_password:
+              CYPRESS_PASSWORD:
                 'arn:aws:secretsmanager:eu-central-1:073830519512:secret:cypressCreds-yNKjtZ:password',
             },
           },

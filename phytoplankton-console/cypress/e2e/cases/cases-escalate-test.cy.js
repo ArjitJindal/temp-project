@@ -1,6 +1,6 @@
 describe('Escalating and Sending back the cases', () => {
   beforeEach(() => {
-    cy.loginByForm(Cypress.env('username'), Cypress.env('password'));
+    cy.loginByForm();
   });
 
   it('should escalate a case and send it back', () => {
@@ -13,7 +13,7 @@ describe('Escalating and Sending back the cases', () => {
     cy.get('@caseId').then((text) => {
       const caseIdValue = text.trim();
       cy.caseAlertAction('Escalate');
-      cy.intercept('POST', `/console/cases/${caseIdValue}/escalate`).as('escalate');
+      cy.intercept('POST', `**/cases/${caseIdValue}/escalate`).as('escalate');
       cy.multiSelect('.ant-modal', 'Fraud');
       cy.get('.ant-modal-root .ant-modal-title', { timeout: 8000 }).click();
       cy.get('.ant-modal-root textarea').eq(0).type('This is a test');
@@ -29,7 +29,7 @@ describe('Escalating and Sending back the cases', () => {
       cy.get('input[data-cy="row-table-checkbox"]', { timeout: 15000 }).eq(0).click();
       cy.caseAlertAction('Send back');
 
-      cy.intercept('PATCH', '/console/cases/statusChange').as('case');
+      cy.intercept('PATCH', '**/cases/statusChange').as('case');
       cy.multiSelect('.ant-modal', 'False positive');
       cy.get('.ant-modal-root .ant-modal-title', { timeout: 8000 }).click();
       cy.get('.ant-modal-root textarea').eq(0).type('This is a test');

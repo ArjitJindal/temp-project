@@ -3,7 +3,7 @@ import { v4 as uuid } from 'uuid';
 
 describe('Comment Alerts from Table', () => {
   beforeEach(() => {
-    cy.loginByForm(Cypress.env('username'), Cypress.env('password'));
+    cy.loginByForm();
   });
 
   it('should create a comment alert from table and delete it', () => {

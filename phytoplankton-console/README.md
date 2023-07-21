@@ -110,6 +110,32 @@ In order for integration tests to work, you need to have a cypress env file: `cy
 
 For running integs locally, install Cypress and run `npm run cypress:open`. This will open the Cypress window, choose your browser engine and manually run the test.
 
-### Test in Command line
+### Cypress Tests (E2E tests)
 
-For testing in command line itself, run: `npm run cypress:test:dev`.
+#### Run cypress tests interactively
+
+Run against local Console
+
+```bash
+npm run cypress:open
+```
+
+Run against Dev Console
+
+```bash
+ENV=dev npm run cypress:open
+```
+
+#### Run all cypress tests
+
+Run against local Console
+
+```bash
+npm run cypress:run
+```
+
+Run against Dev Console
+
+```bash
+ENV=dev npm run cypress:run
+```

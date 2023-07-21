@@ -94,7 +94,7 @@ export default function Modal(props: Props) {
               htmlType="button"
               onClick={onOk}
               {...okProps}
-              testName={`modal-ok-${_.kebabCase(title)}`}
+              testName={`modal-ok`}
             >
               {okText ?? 'OK'}
             </Button>

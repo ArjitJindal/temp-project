@@ -3,7 +3,7 @@ const TABLE_SELECTOR = '[data-test="table"]';
 
 describe('navigate sidebar', () => {
   beforeEach(() => {
-    cy.loginByForm(Cypress.env('username'), Cypress.env('password'));
+    cy.loginByForm();
   });
   it('should load main pages', () => {
     cy.visit('/case-management/cases');

@@ -1,25 +1,29 @@
 /// <reference types="cypress" />
 
-Cypress.Commands.add('loginByForm', (username: string, password: string) => {
-  const loginUrl = Cypress.env('loginUrl');
-  cy.visit(Cypress.config('baseUrl') as string);
+Cypress.Commands.add('loginByForm', (inputUsername?: string, inputPassword?: string) => {
+  cy.session('login-session', () => {
+    const username = (inputUsername || Cypress.env('username')) as string;
+    const password = (inputPassword || Cypress.env('password')) as string;
+    const loginUrl = Cypress.env('loginUrl');
+    cy.visit(Cypress.config('baseUrl') as string);
 
-  cy.url().should('contains', `${loginUrl}`);
-  cy.get('input#username').type(username);
-  cy.get('input#password').type(password);
-  cy.get('div:not(.ulp-button-bar-hidden) > button[type=submit]').first().click({ force: true });
+    cy.url().should('contains', `${loginUrl}`);
+    cy.get('input#username').type(username);
+    cy.get('input#password').type(password);
+    cy.get('div:not(.ulp-button-bar-hidden) > button[type=submit]').first().click({ force: true });
 
-  cy.location('host', { timeout: 10000 }).should(
-    'eq',
-    new URL(Cypress.config('baseUrl') as string).host,
-  );
-  /* eslint-disable-next-line cypress/no-unnecessary-waiting */
-  cy.wait(3000);
+    cy.location('host', { timeout: 10000 }).should(
+      'eq',
+      new URL(Cypress.config('baseUrl') as string).host,
+    );
+    /* eslint-disable-next-line cypress/no-unnecessary-waiting */
+    cy.wait(3000);
+  });
 });
 
 Cypress.on('uncaught:exception', (err) => {
-  if (err.message.includes('ResizeObserver loop limit exceeded')) {
-    console.error('Cypress caught "> ResizeObserver loop limit exceeded", continuing tests', err);
+  if (err.message.includes('ResizeObserver')) {
+    console.error('Cypress caught "> ResizeObserver error", continuing tests', err);
     return false; // test continues
   }
   return true; // test fails

@@ -1,6 +1,6 @@
 describe('Add a comment to a user', () => {
   beforeEach(() => {
-    cy.loginByForm(Cypress.env('username'), Cypress.env('password'));
+    cy.loginByForm();
   });
 
   it('should be able to create a comment for a first consumer user with file attachment', () => {

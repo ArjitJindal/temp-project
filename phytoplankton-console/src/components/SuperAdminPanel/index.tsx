@@ -41,7 +41,7 @@ export default function SuperAdminPanel() {
   const tenantOptions =
     queryResult.data?.map((tenant) => ({
       value: tenant.id,
-      label: tenant.name,
+      label: `${tenant.name} (${tenant.id})`,
     })) || [];
 
   const handleSeed = () => {

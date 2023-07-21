@@ -1,6 +1,6 @@
 describe('Assigning single and multiple cases', () => {
   beforeEach(() => {
-    cy.loginByForm(Cypress.env('username'), Cypress.env('password'));
+    cy.loginByForm();
   });
 
   it('should assign single and multiple cases', () => {
@@ -8,7 +8,7 @@ describe('Assigning single and multiple cases', () => {
 
     cy.get('[data-cy="row-table-checkbox"]', { timeout: 15000 }).eq(0).click();
 
-    cy.intercept('PATCH', '/console/cases/assignments').as('case');
+    cy.intercept('PATCH', '**/cases/assignments').as('case');
     cy.get('button[data-cy="update-assignment-button"]').eq(0).click();
     cy.get('.ant-dropdown-menu-item-only-child').eq(0).click();
     cy.wait('@case').then((interception) => {

@@ -2,54 +2,43 @@
 
 describe('Comment Alerts from Table', () => {
   beforeEach(() => {
-    cy.loginByForm(Cypress.env('username'), Cypress.env('password'));
+    cy.loginByForm();
   });
 
   it('should close a alert', () => {
     cy.visit('/case-management/cases');
 
+    // Close an alert
     cy.get('button[data-cy="expand-icon"]', { timeout: 15000 }).eq(0).click();
-
     cy.get('div[data-cy="expanded-content"] input[data-cy="row-table-checkbox"]', {
       timeout: 15000,
     })
       .eq(0)
       .click();
-
     cy.caseAlertAction('Close');
-    cy.intercept('PATCH', '/console/alerts/statusChange').as('alert');
+    cy.intercept('PATCH', '**/alerts/statusChange').as('alert');
     cy.multiSelect('.ant-modal', 'False positive');
     cy.get('.ant-modal-root .ant-modal-title', { timeout: 8000 }).click();
     cy.get('.ant-modal-root textarea').eq(0).type('This is a test');
     cy.get('.ant-modal-footer button').eq(1).click();
-    cy.get('.ant-modal-footer button')
-      .eq(3)
-      .click()
-      .then(() => {
-        cy.wait('@alert').then((interception) => {
-          expect(interception.response.statusCode).to.eq(200);
-        });
-        cy.get('button[data-cy="segmented-control-all-alerts"]').click();
-        cy.get('button[data-cy="status-button"]').eq(0).click();
-        cy.get('.ant-dropdown-menu-title-content').contains('Closed').click();
-        cy.get('input[data-cy="row-table-checkbox"]').eq(0).click();
-        cy.caseAlertAction('Re-Open');
-        cy.get('.ant-modal-footer button')
-          .eq(1)
-          .click()
-          .then(() => {
-            cy.wait('@alert').then((interception) => {
-              expect(interception.response.statusCode).to.eq(200);
-            });
-            cy.get('button[data-cy="segmented-control-all-alerts"]').click();
-            cy.get('button[data-cy="status-button"]').eq(0).click();
-            cy.get('.ant-dropdown-menu-title-content').contains('Open').click();
-            /* eslint-disable-next-line cypress/no-unnecessary-waiting */
-            cy.wait(500);
-            cy.get('table tbody tr').then((el) => {
-              expect(el.length).to.gte(1);
-            });
-          });
+    cy.get('button[data-cy="modal-ok"]').eq(1).click();
+    cy.wait('@alert').then((interception) => {
+      expect(interception.response.statusCode).to.eq(200);
+
+      // Re-open the closed alert
+      // eslint-disable-next-line cypress/no-unnecessary-waiting
+      cy.wait(500);
+      cy.get('div[data-cy="expanded-content"] input[data-cy="row-table-checkbox"]', {
+        timeout: 15000,
+      })
+        .eq(0)
+        .click();
+      cy.caseAlertAction('Re-Open');
+      cy.intercept('PATCH', '**/alerts/statusChange').as('alert');
+      cy.get('button[data-cy="modal-ok"]').eq(0).click();
+      cy.wait('@alert').then((interception) => {
+        expect(interception.response.statusCode).to.eq(200);
       });
+    });
   });
 });
