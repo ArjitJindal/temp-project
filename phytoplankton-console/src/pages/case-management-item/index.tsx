@@ -47,9 +47,12 @@ function CaseManagementItemPage() {
   );
   const previousQueryResults = usePrevious(queryResults);
   const caseData = useMemo(() => {
-    return isSuccess(queryResults.data) || !previousQueryResults
-      ? queryResults.data
-      : previousQueryResults.data;
+    if (isSuccess(queryResults.data)) {
+      return queryResults.data;
+    } else if (previousQueryResults != null && isSuccess(previousQueryResults.data)) {
+      return previousQueryResults.data;
+    }
+    return queryResults.data;
   }, [previousQueryResults, queryResults.data]);
 
   const handleCommentAdded = (newComment: Comment) => {

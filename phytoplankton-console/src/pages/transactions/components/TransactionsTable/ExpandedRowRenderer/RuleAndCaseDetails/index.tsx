@@ -1,6 +1,6 @@
-import React, { useMemo } from 'react';
+import React, { useMemo, useState } from 'react';
 import s from './styles.module.less';
-import { Alert, InternalTransaction } from '@/apis';
+import { Alert, InternalTransaction, RuleInstance } from '@/apis';
 import { ColumnHelper } from '@/components/library/Table/columnHelper';
 import { useApi } from '@/api';
 import { usePaginatedQuery } from '@/utils/queries/hooks';
@@ -10,24 +10,32 @@ import Id from '@/components/ui/Id';
 import { getRuleInstanceDisplayId } from '@/pages/rules/utils';
 import { makeUrl } from '@/utils/routing';
 import { P } from '@/components/ui/Typography';
+import { DefaultApiGetAlertListRequest } from '@/apis/types/ObjectParamAPI';
+import { AllParams } from '@/components/library/Table/types';
+import { DEFAULT_PARAMS_STATE } from '@/components/library/Table/consts';
+import { useRules } from '@/utils/rules';
+
+type TableParams = AllParams<DefaultApiGetAlertListRequest>;
 
 interface Props {
   transaction: InternalTransaction;
 }
 
-export default function ApprovalDetails(props: Props) {
+export default function RuleAndCaseDetails(props: Props) {
   const { transaction } = props;
 
   const api = useApi();
-  const params = useMemo(
+  const [params, setParams] = useState<TableParams>(DEFAULT_PARAMS_STATE);
+  const fullParams = useMemo(
     () => ({
+      ...params,
       filterTransactionId: transaction.transactionId,
     }),
-    [transaction.transactionId],
+    [params, transaction.transactionId],
   );
-  const queryResults = usePaginatedQuery<Alert>(ALERT_LIST(params), async ({ page }) => {
+  const queryResults = usePaginatedQuery<Alert>(ALERT_LIST(fullParams), async ({ page }) => {
     const response = await api.getAlertList({
-      ...params,
+      ...fullParams,
       page: page,
     });
     return {
@@ -36,16 +44,40 @@ export default function ApprovalDetails(props: Props) {
     };
   });
 
+  const rules = useRules();
+  const ruleOptions = useMemo(() => {
+    return Object.values(rules.ruleInstances).map((rulesInstance: RuleInstance) => {
+      const ruleName = rulesInstance.ruleNameAlias || rules.rules[rulesInstance.ruleId]?.name;
+      return {
+        value: rulesInstance.id ?? '',
+        label: `${ruleName} ${rulesInstance.ruleId} (${rulesInstance.id})`,
+      };
+    });
+  }, [rules.ruleInstances, rules.rules]);
+
   return (
     <div>
       <P bold={true} className={s.title}>
         {'Rule & Case details'}
       </P>
-      <QueryResultsTable<Alert>
+      <QueryResultsTable<Alert, TableParams>
         rowKey={'alertId'}
         columns={columns}
         queryResults={queryResults}
-        externalHeader={true}
+        params={params}
+        onChangeParams={setParams}
+        extraFilters={[
+          {
+            key: 'filterRulesHit',
+            title: 'Rule',
+            renderer: {
+              kind: 'select',
+              mode: 'MULTIPLE',
+              displayMode: 'select',
+              options: ruleOptions,
+            },
+          },
+        ]}
       />
     </div>
   );
@@ -76,9 +108,12 @@ const columns = columnHelper.list([
     },
   }),
   columnHelper.simple({
+    id: 'filterCaseId',
     key: 'caseId',
     title: 'Case ID',
     defaultWidth: 150,
+    filtering: true,
+    showFilterByDefault: true,
     type: {
       render: (caseId) => (
         <Id to={caseId ? makeUrl('/case-management/case/:id', { id: caseId }) : undefined}>
@@ -88,8 +123,11 @@ const columns = columnHelper.list([
     },
   }),
   columnHelper.simple({
+    id: 'filterAlertId',
     key: 'alertId',
     title: 'Alert ID',
+    filtering: true,
+    showFilterByDefault: true,
     defaultWidth: 150,
     type: {
       render: (alertId, { item: alert }) => (
