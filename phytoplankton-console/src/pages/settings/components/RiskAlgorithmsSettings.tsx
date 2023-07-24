@@ -1,9 +1,14 @@
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 import SelectionGroup from '@/components/library/SelectionGroup';
+import { isWhiteLabeled } from '@/utils/branding';
 
 export const RiskAlgorithmsSettings = () => {
   const [value, setValue] = useState<string>('HEURISTIC');
   const [modelValue, setModalValue] = useState<string>('IF');
+  const whiteLabeled = isWhiteLabeled();
+  const selectionTernary = useMemo(() => {
+    return whiteLabeled ? '' : "Flagright's ";
+  }, [whiteLabeled]);
 
   return (
     <div>
@@ -24,10 +29,9 @@ export const RiskAlgorithmsSettings = () => {
               'Use Heuristic based risk levels for your transaction monitoring. This risk score is calculated using your manually set risk factors.',
           },
           {
-            label: 'Flagright AI',
+            label: `${selectionTernary}AI`,
             value: 'AI',
-            description:
-              "Use risk levels calculated by Flagright's AI model of your choice for your transaction monitoring",
+            description: `Use risk levels calculated by ${selectionTernary}AI model of your choice for your transaction monitoring`,
           },
         ]}
         onChange={(newValue) => {
@@ -47,23 +51,22 @@ export const RiskAlgorithmsSettings = () => {
               {
                 label: 'Isolation Forest',
                 value: 'IF',
-                description: "Use Flagright's Isolation forest model to risk score your users",
+                description: `Use ${selectionTernary}Isolation forest model to risk score your users`,
               },
               {
                 label: 'XGBoost',
                 value: 'XG',
-                description:
-                  "Use Flagright's Isolation forest model to risk score your users (this model needs 1000 closed cases at least to be effective)",
+                description: `Use ${selectionTernary}XGBoost model to risk score your users(this model needs 1000 closed cases at least to be effective)`,
               },
               {
                 label: 'Graph Learning',
                 value: 'GF',
-                description: "Use Flagright's new Graph learning model - this is experimental",
+                description: `Use ${selectionTernary}Graph learning model - this is experimental`,
               },
               {
                 label: 'Gaussian Mixture',
                 value: 'GM',
-                description: "Use Flagright's new Gaussian mixture model - this is experimental",
+                description: `Use ${selectionTernary}Gaussian mixture model - this is experimental`,
               },
             ]}
             onChange={(newValue) => {

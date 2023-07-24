@@ -1,4 +1,4 @@
-import { forwardRef, useImperativeHandle } from 'react';
+import { forwardRef, useImperativeHandle, useMemo } from 'react';
 import Toggle from '../library/Toggle';
 import AsyncResourceRenderer from '../common/AsyncResourceRenderer';
 import { useFeatureEnabled, useSettings } from '../AppWrapper/Providers/SettingsProvider';
@@ -10,9 +10,6 @@ import { useQuery } from '@/utils/queries/hooks';
 import { getBranding } from '@/utils/branding';
 import { SIMULATION_COUNT } from '@/utils/queries/keys';
 import Tooltip from '@/components/library/Tooltip';
-
-const SIMULATOR_DISABLED_TOOLTIP_MESSAGE =
-  'This is an advanced feature. Please contact support@flagright.com to enable it.';
 
 export type SimulationPageWrapperRef = {
   refetchSimulationCount: () => void;
@@ -26,6 +23,7 @@ export type SimulationPageWrapperProps = PageWrapperProps & {
 const SimulationUsageCard = (props: { usageCount: number }) => {
   const settings = useSettings();
   const branding = getBranding();
+
   const remainingSimulations = !settings?.limits?.simulations
     ? 0
     : Math.max(settings.limits.simulations - props.usageCount, 0);
@@ -59,7 +57,11 @@ export const SimulationPageWrapper = forwardRef<
       simulationCountResults.refetch();
     },
   }));
-
+  const branding = getBranding();
+  const SIMULATOR_DISABLED_TOOLTIP_MESSAGE = useMemo(
+    () => `This is an advanced feature. Please contact ${branding.supportEmail} to enable it.`,
+    [branding.supportEmail],
+  );
   return (
     <PageWrapper
       {...props}
