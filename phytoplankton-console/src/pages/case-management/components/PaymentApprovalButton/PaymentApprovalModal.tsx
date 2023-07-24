@@ -89,7 +89,16 @@ export default function PaymentApprovalModal({ visible, action, transactionIds, 
         }}
         alwaysShowErrors={alwaysShowErrors}
       >
-        <InputField<FormValues, 'reasons'> name={'reasons'} label={'Reason'}>
+        <InputField<FormValues, 'reasons'>
+          name={'reasons'}
+          label={'Reason'}
+          labelProps={{
+            required: {
+              value: true,
+              showHint: true,
+            },
+          }}
+        >
           {(inputProps: InputProps<CaseClosingReasons[]>) => (
             <Select<CaseClosingReasons>
               {...inputProps}
@@ -99,7 +108,16 @@ export default function PaymentApprovalModal({ visible, action, transactionIds, 
           )}
         </InputField>
         <div className={s.comment}>
-          <InputField<FormValues, 'comment'> name={'comment'} label={'Comment'}>
+          <InputField<FormValues, 'comment'>
+            name={'comment'}
+            label={'Comment'}
+            labelProps={{
+              required: {
+                value: true,
+                showHint: true,
+              },
+            }}
+          >
             {(inputProps) => (
               <TextArea
                 {...inputProps}

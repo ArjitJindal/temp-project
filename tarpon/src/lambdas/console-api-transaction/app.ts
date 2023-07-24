@@ -18,6 +18,7 @@ import { TransactionEventRepository } from '@/services/rules-engine/repositories
 import { Handlers } from '@/@types/openapi-internal-custom/DefaultApi'
 import { RulesEngineService } from '@/services/rules-engine'
 import { AlertsService } from '@/services/alerts'
+import { CaseService } from '@/lambdas/console-api-case/services/case-service'
 import { background } from '@/utils/background'
 
 export type TransactionViewConfig = {
@@ -94,6 +95,7 @@ export const transactionsViewHandler = lambdaApi()(
     )
     const rulesEngineService = await RulesEngineService.fromEvent(event)
     const alertService = await AlertsService.fromEvent(event)
+    const caseService = await CaseService.fromEvent(event)
     const userRepository = new UserRepository(tenantId, { mongoDb: client })
     const transactionEventsRepository = new TransactionEventRepository(
       tenantId,
@@ -227,33 +229,40 @@ export const transactionsViewHandler = lambdaApi()(
         req.TransactionAction,
         ctx.userId
       )
-      const alerts = await alertService.getAlerts({
+      const cases = await caseService.getCases({
         filterTransactionIds: req.TransactionAction.transactionIds,
-        filterStatus: ['SUSPEND'],
       })
-      await background(
-        Promise.all(
-          alerts.data.map((alert) => {
-            if (!alert.alert.alertId) {
-              return
-            }
-            const txnIds: string[] = []
-            req.TransactionAction.transactionIds.forEach((tid) => {
-              if (alert.alert.transactionIds?.includes(tid)) {
-                txnIds.push(tid)
+      if (!cases) {
+        throw new NotFound('Case(s) not found for transactions')
+      }
+      await Promise.all(
+        cases.data.map(async (c) => {
+          if (!c.alerts) {
+            return
+          }
+          await Promise.all(
+            c.alerts?.map((alert) => {
+              const txnIds: string[] = []
+              req.TransactionAction.transactionIds.forEach((tid) => {
+                if (alert.transactionIds?.includes(tid)) {
+                  txnIds.push(tid)
+                }
+              })
+              if (txnIds.length > 0 && alert.alertId) {
+                return background(
+                  alertService.saveAlertComment(alert.alertId, {
+                    body: `${txnIds.join(', ')} set to ${
+                      req.TransactionAction.action
+                    }. Reasons: ${req.TransactionAction.reason.join(
+                      ', '
+                    )}. Comment: ${req.TransactionAction.comment}`,
+                  })
+                )
               }
             })
-            return alertService.saveAlertComment(alert.alert.alertId, {
-              body: `${txnIds.join(', ')} set to ${
-                req.TransactionAction.action
-              }. Reasons: ${req.TransactionAction.reason.join(
-                ', '
-              )}. Comment: ${req.TransactionAction.comment}`,
-            })
-          })
-        )
+          )
+        })
       )
-
       return response
     })
     return await handlers.handle(event)
