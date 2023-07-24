@@ -21,3 +21,4 @@ yarn-error.log
 CNAME
 /public
 cdk.out
+config/openapi.yaml
