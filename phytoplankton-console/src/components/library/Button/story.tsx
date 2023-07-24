@@ -19,6 +19,18 @@ export default function (): JSX.Element {
           )}
         </PropertyMatrix>
       </UseCase>
+      <UseCase title="Danger">
+        <PropertyMatrix<ButtonType, ButtonSize>
+          x={['PRIMARY', 'SECONDARY', 'TETRIARY', 'TEXT']}
+          y={['SMALL', 'MEDIUM', 'LARGE']}
+        >
+          {(type, size) => (
+            <Button type={type} size={size} isDanger={true}>
+              Button
+            </Button>
+          )}
+        </PropertyMatrix>
+      </UseCase>
       <UseCase title="With icon">
         <PropertyMatrix<ButtonType, ButtonSize>
           x={['PRIMARY', 'SECONDARY', 'TETRIARY', 'TEXT']}

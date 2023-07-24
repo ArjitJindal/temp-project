@@ -228,7 +228,7 @@ export const CreateTenantModal = (props: Props) => {
       onCancel={onClose}
       okText="Create"
       onOk={handleCreateTenant}
-      okProps={{ type: 'DANGER' }}
+      okProps={{ isDanger: true }}
     >
       <JsonSchemaForm
         schema={getFixedSchemaJsonForm(schema)}

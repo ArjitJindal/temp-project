@@ -5,7 +5,7 @@ import { useButtonTracker } from '@/utils/tracker';
 import { Permission } from '@/apis';
 import { useHasPermissions } from '@/utils/user-utils';
 
-export type ButtonType = 'PRIMARY' | 'SECONDARY' | 'TETRIARY' | 'TEXT' | 'DANGER';
+export type ButtonType = 'PRIMARY' | 'SECONDARY' | 'TETRIARY' | 'TEXT';
 
 export type ButtonSize = 'SMALL' | 'MEDIUM' | 'LARGE';
 
@@ -25,6 +25,7 @@ export interface Props {
   testName?: string;
   iconRight?: React.ReactNode;
   requiredPermissions?: Permission[];
+  isDanger?: boolean;
 }
 
 function Button(props: Props, ref: React.Ref<HTMLButtonElement>) {
@@ -44,6 +45,7 @@ function Button(props: Props, ref: React.Ref<HTMLButtonElement>) {
     className,
     iconRight,
     requiredPermissions = [],
+    isDanger = false,
   } = props;
   const buttonTracker = useButtonTracker();
   const hasUserPermissions = useHasPermissions(requiredPermissions);
@@ -60,7 +62,12 @@ function Button(props: Props, ref: React.Ref<HTMLButtonElement>) {
     <button
       style={style}
       ref={ref}
-      className={cn(s.root, s[`size-${size}`], s[`type-${type}`], className)}
+      className={cn(
+        s.root,
+        s[`size-${size}`],
+        s[`type-${type}${isDanger ? '-danger' : ''}`],
+        className,
+      )}
       onClick={handleClick}
       disabled={isDisabled || isLoading || !hasUserPermissions}
       type={htmlType}

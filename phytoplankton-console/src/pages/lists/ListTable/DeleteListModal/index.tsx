@@ -57,7 +57,7 @@ export default function DeleteListModal(props: Props) {
       onOk={handleOk}
       okText={'Delete'}
       okProps={{
-        type: 'DANGER',
+        isDanger: true,
         isLoading: isLoading,
       }}
     >

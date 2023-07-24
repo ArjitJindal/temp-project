@@ -54,7 +54,7 @@ export default function Confirm(props: Props) {
         onOk={handleOk}
         okProps={{
           isLoading: res != null && isLoading(res),
-          type: isDanger ? 'DANGER' : undefined,
+          isDanger,
         }}
         okText="Yes"
         cancelText="No"

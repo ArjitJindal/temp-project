@@ -42,6 +42,24 @@
     }
   }
 
+  &.type-PRIMARY-danger {
+    border-color: @fr-colors-v2-alert-critical;
+    background: @fr-colors-v2-alert-critical;
+    color: white;
+
+    &:hover,
+    &:active {
+      background: @fr-colors-v2-alert-critical-dark;
+      border-color: @fr-colors-v2-alert-critical-dark;
+    }
+
+    &:disabled {
+      border-color: @fr-colors-v2-gray-1;
+      background: @fr-colors-v2-gray-1;
+      color: @fr-colors-v2-state-disabled;
+    }
+  }
+
   &.type-SECONDARY {
     border-color: @fr-colors-v2-primary-flagrightBlue;
     background: white;
@@ -52,6 +70,24 @@
       border-color: @fr-colors-v2-state-hover;
       color: @fr-colors-v2-state-hover;
       background: @fr-colors-v2-highlight-flagrightBlue;
+    }
+
+    &:disabled {
+      border-color: @fr-colors-v2-gray-2;
+      background: @fr-colors-v2-gray-1;
+      color: @fr-colors-v2-state-disabled;
+    }
+  }
+
+  &.type-SECONDARY-danger {
+    border-color: @fr-colors-v2-alert-critical;
+    background: white;
+    color: @fr-colors-v2-alert-critical;
+
+    &:hover,
+    &:active {
+      border-color: @fr-colors-v2-alert-critical-dark;
+      color: @fr-colors-v2-alert-critical-dark;
     }
 
     &:disabled {
@@ -78,6 +114,25 @@
     }
   }
 
+  &.type-TETRIARY-danger {
+    border-color: @fr-colors-v2-alert-critical;
+    background: white;
+    color: @fr-colors-v2-alert-critical;
+
+    &:hover,
+    &:active {
+      background: @fr-colors-v2-risk-level-bg-very-high;
+      color: @fr-colors-v2-alert-critical-dark;
+      border-color: @fr-colors-v2-alert-critical-dark;
+    }
+
+    &:disabled {
+      border-color: @fr-colors-v2-gray-2;
+      background: @fr-colors-v2-gray-1;
+      color: @fr-colors-v2-state-disabled;
+    }
+  }
+
   &.type-TEXT {
     background: transparent;
     border-color: transparent;
@@ -93,9 +148,9 @@
     }
   }
 
-  &.type-DANGER {
-    border-color: @fr-colors-v2-alert-critical;
-    background: white;
+  &.type-TEXT-danger {
+    background: transparent;
+    border-color: transparent;
     color: @fr-colors-v2-alert-critical;
 
     &:hover,
@@ -104,8 +159,6 @@
     }
 
     &:disabled {
-      border-color: @fr-colors-v2-gray-2;
-      background: @fr-colors-v2-gray-1;
       color: @fr-colors-v2-state-disabled;
     }
   }
