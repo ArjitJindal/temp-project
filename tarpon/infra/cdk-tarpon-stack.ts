@@ -2,7 +2,12 @@ import { URL } from 'url'
 import * as cdk from 'aws-cdk-lib'
 import { CfnOutput, Duration, RemovalPolicy } from 'aws-cdk-lib'
 import { AttributeType, Table } from 'aws-cdk-lib/aws-dynamodb'
-import { Bucket, BucketEncryption, HttpMethods } from 'aws-cdk-lib/aws-s3'
+import {
+  Bucket,
+  BucketEncryption,
+  HttpMethods,
+  BlockPublicAccess,
+} from 'aws-cdk-lib/aws-s3'
 import { LambdaFunction as LambdaFunctionTarget } from 'aws-cdk-lib/aws-events-targets'
 import {
   ArnPrincipal,
@@ -269,6 +274,7 @@ export class CdkTarponStack extends cdk.Stack {
         {
           bucketName: serverAccessLogBucketName,
           cors: s3BucketCors,
+          blockPublicAccess: BlockPublicAccess.BLOCK_ALL,
           removalPolicy:
             config.stage === 'dev'
               ? RemovalPolicy.DESTROY
@@ -281,6 +287,7 @@ export class CdkTarponStack extends cdk.Stack {
       s3ImportBucket = new Bucket(this, importBucketName, {
         bucketName: importBucketName,
         cors: s3BucketCors,
+        blockPublicAccess: BlockPublicAccess.BLOCK_ALL,
         removalPolicy:
           config.stage === 'dev' ? RemovalPolicy.DESTROY : RemovalPolicy.RETAIN,
         autoDeleteObjects: config.stage === 'dev',
@@ -292,6 +299,7 @@ export class CdkTarponStack extends cdk.Stack {
       s3DocumentBucket = new Bucket(this, documentBucketName, {
         bucketName: documentBucketName,
         cors: s3BucketCors,
+        blockPublicAccess: BlockPublicAccess.BLOCK_ALL,
         removalPolicy:
           config.stage === 'dev' ? RemovalPolicy.DESTROY : RemovalPolicy.RETAIN,
         autoDeleteObjects: config.stage === 'dev',
@@ -303,6 +311,7 @@ export class CdkTarponStack extends cdk.Stack {
       s3TmpBucket = new Bucket(this, tmpBucketName, {
         bucketName: tmpBucketName,
         cors: s3BucketCors,
+        blockPublicAccess: BlockPublicAccess.BLOCK_ALL,
         removalPolicy:
           config.stage === 'dev' ? RemovalPolicy.DESTROY : RemovalPolicy.RETAIN,
         autoDeleteObjects: config.stage === 'dev',
@@ -320,6 +329,7 @@ export class CdkTarponStack extends cdk.Stack {
       s3demoModeBucket = new Bucket(this, s3demoModeBucketName, {
         bucketName: s3demoModeBucketName,
         cors: s3BucketCors,
+        blockPublicAccess: BlockPublicAccess.BLOCK_ALL,
         removalPolicy:
           config.stage === 'dev' ? RemovalPolicy.DESTROY : RemovalPolicy.RETAIN,
         encryption: BucketEncryption.S3_MANAGED,
