@@ -41,4 +41,20 @@ export class IBANApiRepository {
       .toArray()
     return result[0] ?? null
   }
+
+  public async getLatestIbanValidationHistories(
+    ibans: string[]
+  ): Promise<IBANApiHistory[] | null> {
+    const db = this.mongoDb.db()
+    const collection = db.collection<IBANApiHistory>(
+      IBAN_COM_COLLECTION(this.tenantId)
+    )
+    const results = await collection
+      .find(
+        { type: 'IBAN_VALIDATION', 'request.iban': { $in: ibans } },
+        { sort: { createdAt: -1 }, limit: 1 }
+      )
+      .toArray()
+    return results ?? null
+  }
 }

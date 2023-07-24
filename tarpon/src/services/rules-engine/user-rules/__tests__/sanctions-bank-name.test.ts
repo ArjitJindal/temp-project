@@ -18,24 +18,24 @@ import { IBANDetails } from '@/@types/openapi-public/IBANDetails'
 process.env.IBAN_API_KEY = 'fake'
 
 const TEST_IBAN_BANK_NAME_MAPPING: { [key: string]: IBANDetails } = {
-  AL35202111090000000001234567: {
+  DE19500105178788668945: {
     method: 'IBAN',
-    IBAN: 'AL35202111090000000001234567',
+    IBAN: 'DE19500105178788668945',
     bankName: 'Bank 1',
   },
-  AL35202111090000000001234568: {
+  DE27500105174885852364: {
     method: 'IBAN',
-    IBAN: 'AL35202111090000000001234568',
+    IBAN: 'DE27500105174885852364',
     bankName: 'Bank 1',
   },
-  AD1400080001001234567890: {
+  DE57500105176644695691: {
     method: 'IBAN',
-    IBAN: 'AD1400080001001234567890',
+    IBAN: 'DE57500105176644695691',
     bankName: 'Bank 2',
   },
-  AD1400080001001234567891: {
+  DE60500105171315276629: {
     method: 'IBAN',
-    IBAN: 'AD1400080001001234567891',
+    IBAN: 'DE60500105171315276629',
     bankName: 'Bank 3',
   },
 }
@@ -52,11 +52,13 @@ jest.mock('@/services/iban.com', () => {
     ...originalModule,
     IBANService: jest.fn().mockImplementation(() => {
       return {
-        resolveBankName: originalModule.IBANService.prototype.resolveBankName,
+        resolveBankNames: originalModule.IBANService.prototype.resolveBankNames,
         initialize: originalModule.IBANService.prototype.initialize,
         tenantId: TEST_TENANT_ID,
-        validateIBAN: jest.fn().mockImplementation((iban: string) => {
-          return TEST_IBAN_BANK_NAME_MAPPING[iban]
+        queryIban: jest.fn().mockImplementation((iban: string) => {
+          return new Promise((resolve) =>
+            resolve(TEST_IBAN_BANK_NAME_MAPPING[iban])
+          )
         }),
       }
     }),
@@ -115,7 +117,7 @@ describe('IBAN resolution enabled', () => {
           savedPaymentDetails: [
             {
               method: 'IBAN',
-              IBAN: 'AD1400080001001234567890',
+              IBAN: 'DE57500105176644695691',
             },
           ],
         }),
@@ -128,8 +130,7 @@ describe('IBAN resolution enabled', () => {
           savedPaymentDetails: [
             {
               method: 'IBAN',
-              IBAN: 'AD1400080001001234567890',
-              bankName: 'Bank 1',
+              IBAN: 'DE57500105176644695691',
             },
           ],
         }),
@@ -142,7 +143,7 @@ describe('IBAN resolution enabled', () => {
           savedPaymentDetails: [
             {
               method: 'IBAN',
-              IBAN: 'AL35202111090000000001234567',
+              IBAN: 'DE19500105178788668945',
             },
           ],
         }),
@@ -155,27 +156,28 @@ describe('IBAN resolution enabled', () => {
           savedPaymentDetails: [
             {
               method: 'IBAN',
-              IBAN: 'AL35202111090000000001234567',
+              IBAN: 'DE19500105178788668945',
             },
             {
               method: 'IBAN',
-              IBAN: 'AL35202111090000000001234568',
+              IBAN: 'DE27500105174885852364',
             },
             {
               method: 'GENERIC_BANK_ACCOUNT',
-              accountNumber: 'AD1400080001001234567891',
+              accountNumber: 'DE60500105171315276629',
             },
           ],
         }),
       ],
       expectetRuleHitMetadata: [
         undefined,
+        undefined,
         {
           hitDirections: ['ORIGIN'],
           sanctionsDetails: [
             {
               name: 'Bank 1',
-              iban: 'AD1400080001001234567890',
+              iban: 'DE19500105178788668945',
               searchId: 'test-search-id',
             },
           ],
@@ -185,27 +187,17 @@ describe('IBAN resolution enabled', () => {
           sanctionsDetails: [
             {
               name: 'Bank 1',
-              iban: 'AL35202111090000000001234567',
-              searchId: 'test-search-id',
-            },
-          ],
-        },
-        {
-          hitDirections: ['ORIGIN'],
-          sanctionsDetails: [
-            {
-              name: 'Bank 1',
-              iban: 'AL35202111090000000001234567',
+              iban: 'DE19500105178788668945',
               searchId: 'test-search-id',
             },
             {
               name: 'Bank 1',
-              iban: 'AL35202111090000000001234568',
+              iban: 'DE27500105174885852364',
               searchId: 'test-search-id',
             },
             {
               name: 'Bank 3',
-              iban: 'AD1400080001001234567891',
+              iban: 'DE60500105171315276629',
               searchId: 'test-search-id',
             },
           ],
@@ -244,7 +236,7 @@ describe('IBAN resolution disabled', () => {
           savedPaymentDetails: [
             {
               method: 'IBAN',
-              IBAN: 'AL35202111090000000001234567',
+              IBAN: 'DE19500105178788668945',
             },
           ],
         }),

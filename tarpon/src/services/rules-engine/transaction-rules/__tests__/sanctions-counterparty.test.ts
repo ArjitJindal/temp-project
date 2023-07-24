@@ -82,11 +82,13 @@ jest.mock('@/services/iban.com', () => {
     ...originalModule,
     IBANService: jest.fn().mockImplementation(() => {
       return {
-        resolveBankName: originalModule.IBANService.prototype.resolveBankName,
+        resolveBankNames: originalModule.IBANService.prototype.resolveBankNames,
         initialize: originalModule.IBANService.prototype.initialize,
         tenantId: TEST_TENANT_ID,
-        validateIBAN: jest.fn().mockImplementation((iban: string) => {
-          return TEST_IBAN_BANK_NAME_MAPPING[iban]
+        queryIban: jest.fn().mockImplementation((iban: string) => {
+          return new Promise((resolve) =>
+            resolve(TEST_IBAN_BANK_NAME_MAPPING[iban])
+          )
         }),
       }
     }),

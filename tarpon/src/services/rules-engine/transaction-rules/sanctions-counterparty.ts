@@ -130,7 +130,7 @@ export class SanctionsCounterPartyRule extends TransactionRule<SanctionsCounterP
     const ibanService = new IBANService(this.tenantId)
 
     if (this.parameters.resolveIban && bankInfo) {
-      bankInfo = (await ibanService.resolveBankName([bankInfo]))[0]
+      bankInfo = (await ibanService.resolveBankNames([bankInfo]))[0]
       if (bankInfo?.bankName != null) {
         namesToSearch.push({
           name: bankInfo.bankName,

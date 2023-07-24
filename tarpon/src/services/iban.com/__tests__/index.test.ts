@@ -18,18 +18,8 @@ const mockFetch = mockIbanComValidation()
 
 const TEST_VALID_IBAN = 'DE75512108001245126199'
 const EXPECTED_RESPONSE = {
-  BIC: 'BUKBGB22XXX',
-  IBAN: 'DE75512108001245126199',
-  bankAddress: {
-    addressLines: [''],
-    city: 'Leicester',
-    country: 'United Kingdom',
-    postcode: 'LE87 2BB',
-    state: '',
-  },
-  bankBranchCode: '202015',
+  iban: 'DE75512108001245126199',
   bankName: 'BARCLAYS BANK UK PLC',
-  method: 'IBAN',
 }
 
 beforeEach(() => {
@@ -40,8 +30,11 @@ describe('IBAN Validation', () => {
   test('Requests iban.com and persists the result', async () => {
     const TEST_TENANT_ID = getTestTenantId()
     const service = new IBANService(TEST_TENANT_ID)
-    const response = await service.validateIBAN(TEST_VALID_IBAN)
-    expect(response).toEqual(EXPECTED_RESPONSE)
+    const response = await service.resolveBankNames([{ iban: TEST_VALID_IBAN }])
+    expect(response).toBeTruthy()
+    if (response) {
+      expect(response[0]).toEqual(EXPECTED_RESPONSE)
+    }
     expect(mockFetch).toBeCalledTimes(1)
     expect(mockFetch).toBeCalledWith(
       'https://api.iban.com/clients/api/v4/iban/',
@@ -70,19 +63,19 @@ describe('IBAN Validation', () => {
   test('Requesting same iban multiple times should only call the API once', async () => {
     const TEST_TENANT_ID = getTestTenantId()
     const service = new IBANService(TEST_TENANT_ID)
-    await service.validateIBAN('DE75512108001245126199')
-    await service.validateIBAN(' DE75512108001245126199 ')
-    await service.validateIBAN('DE75 5121 0800 1245 1261 99')
-    await service.validateIBAN(' DE75 5121 0800 1245 1261 99 ')
+    await service.resolveBankNames([{ iban: 'DE75512108001245126199' }])
+    await service.resolveBankNames([{ iban: '  DE75512108001245126199  ' }])
+    await service.resolveBankNames([{ iban: 'DE75 5121 0800 1245 1261 99' }])
+    await service.resolveBankNames([{ iban: ' DE75 5121 0800 1245 1261 99 ' }])
     expect(mockFetch).toBeCalledTimes(1)
   })
 
   test('Requesting invalid iban should not call the API', async () => {
     const TEST_TENANT_ID = getTestTenantId()
     const service = new IBANService(TEST_TENANT_ID)
-    await service.validateIBAN('not a valid iban')
-    await service.validateIBAN('75512108001245126199')
-    await service.validateIBAN('GG75512108001245126199')
+    await service.resolveBankNames([{ iban: 'not a valid iban' }])
+    await service.resolveBankNames([{ iban: '75512108001245126199' }])
+    await service.resolveBankNames([{ iban: 'GG75512108001245126199' }])
     expect(mockFetch).toBeCalledTimes(0)
   })
 
@@ -96,6 +89,8 @@ describe('IBAN Validation', () => {
           errors: [{ code: '303', message: 'No queries available' }],
         }),
     } as Response)
-    await expect(service.validateIBAN(TEST_VALID_IBAN)).rejects.toThrow()
+    await expect(
+      service.resolveBankNames([{ iban: TEST_VALID_IBAN }])
+    ).rejects.toThrow()
   })
 })

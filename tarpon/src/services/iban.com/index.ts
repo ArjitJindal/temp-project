@@ -83,51 +83,73 @@ export class IBANService {
     this.tenantId = tenantId
   }
 
-  public async resolveBankName(bankInfos: BankInfo[]): Promise<BankInfo[]> {
+  public async resolveBankNames(bankInfos: BankInfo[]): Promise<BankInfo[]> {
     await this.initialize()
 
     if (!hasFeature('IBAN_RESOLUTION')) {
       logger.error(`IBAN_RESOLUTION feature flag required to resolve bank name`)
-      return []
+      return bankInfos
     }
 
-    const result: BankInfo[] = []
-    for (const bankInfo of bankInfos) {
-      if (!bankInfo.bankName && bankInfo.iban) {
-        const ibanDetails = await this.validateIBAN(bankInfo.iban)
-        result.push({ bankName: ibanDetails?.bankName, iban: bankInfo.iban })
-      } else {
-        result.push(bankInfo)
+    const sanitizedToRawIban = new Map<string, string>()
+
+    // Sanitize IBANs
+    const sanitizedIbans = bankInfos
+      .map((bankInfo) => {
+        if (bankInfo.iban) {
+          const iban = sanitizeAndValidateIban(bankInfo.iban)
+          if (iban) {
+            sanitizedToRawIban.set(iban, bankInfo.iban)
+            return iban
+          } else {
+            logger.warn(`'${iban}' is not a valid IBAN (ibantools)`)
+          }
+        }
+      })
+      .filter((iban): iban is string => !!iban)
+
+    // Get IBAN validation histories for the sanitized IBANS
+    const ibanHistories =
+      await this.ibanApiRepository.getLatestIbanValidationHistories(
+        sanitizedIbans
+      )
+
+    // Convert the IBAN histories to details
+    const ibanDetails = new Map<string, IBANDetails | null>()
+    ibanHistories?.forEach((history) => {
+      const rawIban = sanitizedToRawIban.get(history.request.iban)
+      if (rawIban) {
+        ibanDetails.set(
+          rawIban,
+          ibanValidationResponseToIBANDetails(
+            history.request.iban,
+            history.response
+          )
+        )
       }
-    }
-    return result
+    })
+
+    // For all the input bankInfos, find the results in the map.
+    return await Promise.all(
+      bankInfos.map(async (bankInfo) => {
+        if (bankInfo.iban) {
+          const ibanDetail = ibanDetails.get(bankInfo.iban)
+          if (ibanDetail) {
+            bankInfo.bankName = ibanDetail.bankName
+          } else {
+            const sanitized = sanitizeAndValidateIban(bankInfo.iban)
+            if (sanitized) {
+              const ibanDetail = await this.queryIban(sanitized)
+              bankInfo.bankName = ibanDetail?.bankName
+            }
+          }
+        }
+        return bankInfo
+      })
+    )
   }
 
-  public async validateIBAN(
-    rawIban: string,
-    force = false
-  ): Promise<IBANDetails | null> {
-    await this.initialize()
-
-    if (!hasFeature('IBAN_RESOLUTION')) {
-      logger.error(`IBAN_RESOLUTION feature flag required to resolve bank name`)
-      return null
-    }
-
-    const iban = sanitizeAndValidateIban(rawIban)
-    if (!iban) {
-      logger.warn(`'${rawIban}' is not a valid IBAN (ibantools)`)
-      return null
-    }
-
-    if (!force) {
-      const result =
-        await this.ibanApiRepository.getLatestIbanValidationHistory(iban)
-      if (result) {
-        return ibanValidationResponseToIBANDetails(iban, result.response)
-      }
-    }
-
+  private async queryIban(iban: string): Promise<IBANDetails | null> {
     const rawIbanResponse = (await (
       await fetch(IBAN_API_URI, {
         method: 'POST',
@@ -150,7 +172,7 @@ export class IBANService {
     const result = ibanValidationResponseToIBANDetails(iban, rawIbanResponse)
     if (!result) {
       logger.error(
-        `'${rawIban}' is not a valid IBAN (${JSON.stringify(
+        `'${iban}' is not a valid IBAN (${JSON.stringify(
           rawIbanResponse.validations
         )})`
       )
