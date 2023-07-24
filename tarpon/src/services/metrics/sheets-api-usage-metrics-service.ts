@@ -11,7 +11,7 @@ import {
   GoogleSpreadsheetRow,
   GoogleSpreadsheetWorksheet,
 } from 'google-spreadsheet'
-import _ from 'lodash'
+import { memoize, merge } from 'lodash'
 import { BackoffOptions, backOff } from 'exponential-backoff'
 import { DailyMetricStats, MonthlyMetricStats } from './utils'
 import { CUSTOM_API_USAGE_METRIC_NAMES } from '@/core/cloudwatch/metrics'
@@ -45,6 +45,17 @@ const META_DATA_HEADERS_MONTHLY = {
 
 const DEFAULT_METRIC_VALUES = Object.fromEntries(
   Object.values(CUSTOM_API_USAGE_METRIC_NAMES).map((v) => [v, 0])
+)
+
+const getAllUsageMetricsRows = memoize(
+  async (type: 'DAILY' | 'MONTHLY', sheet: GoogleSpreadsheetWorksheet) => {
+    if (!sheet) {
+      throw new Error(
+        `Sheet ${type} is not initialized. Please call initialize() first.`
+      )
+    }
+    return await sheet.getRows()
+  }
 )
 
 @traceable
@@ -189,13 +200,16 @@ export class SheetsApiUsageMetricsService {
       )
     }
 
-    const rows = await this.getAllDailyUsageMetricsRows()
+    const rows = await getAllUsageMetricsRows(
+      'DAILY',
+      this.dailyUsageMetricsSheet
+    )
     const row = rows.findIndex(
       (row) =>
         row[META_DATA_HEADERS_DAILY.DATE].toString() === dailyMetrics.date &&
         row[META_DATA_HEADERS_DAILY.TENANT_ID].toString() === this.tenantId
     )
-    const newRow = _.merge(
+    const newRow = merge(
       this.getDailyUsageMetadata(dailyMetrics.date),
       ...dailyMetrics.values.map((value) => ({
         [value.metric.name]: value.value,
@@ -219,14 +233,17 @@ export class SheetsApiUsageMetricsService {
       )
     }
 
-    const tenantRows = await this.getAllMonthlyUsageMetricsRows()
+    const tenantRows = await getAllUsageMetricsRows(
+      'MONTHLY',
+      this.monthlyUsageMetricsSheet
+    )
 
     const tenantRow = tenantRows.findIndex(
       (row) =>
         row[META_DATA_HEADERS_MONTHLY.MONTH] === monthlyMetrics.month &&
         row[META_DATA_HEADERS_MONTHLY.TENANT_ID] === this.tenantId
     )
-    const newRow = _.merge(
+    const newRow = merge(
       this.getMonthlyUsageMetadata(monthlyMetrics.month),
       ...monthlyMetrics.values.map((value) => ({
         [value.metric.name]: value.value,
@@ -244,24 +261,6 @@ export class SheetsApiUsageMetricsService {
       await this.monthlyUsageMetricsSheet.addRow(newRow)
     }
   }
-
-  getAllDailyUsageMetricsRows = _.memoize(async () => {
-    if (!this.dailyUsageMetricsSheet) {
-      throw new Error(
-        `Sheet daily is not initialized. Please call initialize() first.`
-      )
-    }
-    return await this.dailyUsageMetricsSheet.getRows()
-  })
-
-  getAllMonthlyUsageMetricsRows = _.memoize(async () => {
-    if (!this.monthlyUsageMetricsSheet) {
-      throw new Error(
-        `Sheet monthly is not initialized. Please call initialize() first.`
-      )
-    }
-    return await this.monthlyUsageMetricsSheet.getRows()
-  })
 
   public async updateUsageMetrics(
     dailyMetrics: DailyMetricStats[],
