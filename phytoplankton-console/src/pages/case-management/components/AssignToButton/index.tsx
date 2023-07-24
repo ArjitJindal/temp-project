@@ -15,7 +15,7 @@ export default function AssignToButton(props: Props) {
   const { onSelect } = props;
   const [users] = useUsers();
   const menu = (
-    <AntMenu>
+    <AntMenu className={s.assigneeMenu}>
       {Object.values(users).map((account) => (
         <AntMenu.Item
           key={account.id}
