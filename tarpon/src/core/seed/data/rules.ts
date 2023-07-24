@@ -12,6 +12,9 @@ export const rules: ExecutedRulesResult[] = [
     ruleInstanceId: sampleGuid(0.1),
     ruleDescription: 'First transaction of a user',
     ruleHit: true,
+    ruleHitMeta: {
+      hitDirections: ['ORIGIN'],
+    },
   },
   {
     ruleName: 'Transaction amount too high',
@@ -21,6 +24,9 @@ export const rules: ExecutedRulesResult[] = [
     ruleInstanceId: sampleGuid(0.2),
     ruleDescription: 'Transaction amount is >= x in USD or equivalent',
     ruleHit: true,
+    ruleHitMeta: {
+      hitDirections: ['DESTINATION'],
+    },
   },
   {
     ruleName: 'Unexpected origin or destination country',
@@ -31,6 +37,9 @@ export const rules: ExecutedRulesResult[] = [
     ruleDescription:
       'Transaction to or from a country that has not been used before by this user. Trigger the rule after x transactions have been completed. x configurable - mostly relevant for when you are moving between countries.',
     ruleHit: true,
+    ruleHitMeta: {
+      hitDirections: ['ORIGIN', 'DESTINATION'],
+    },
   },
   {
     ruleName: 'Unexpected origin or destination currency',
@@ -41,6 +50,9 @@ export const rules: ExecutedRulesResult[] = [
     ruleDescription:
       'Transaction to or from a currency that has not been used before by this user. Trigger the rule after x transactions have been completed. x configurable - mostly relevant for when you are moving between different currencies.',
     ruleHit: true,
+    ruleHitMeta: {
+      hitDirections: ['ORIGIN', 'DESTINATION'],
+    },
   },
   {
     ruleName: 'High velocity user',
@@ -50,6 +62,9 @@ export const rules: ExecutedRulesResult[] = [
     ruleInstanceId: sampleGuid(0.5),
     ruleDescription: 'If a user makes >= x transactions within time t',
     ruleHit: true,
+    ruleHitMeta: {
+      hitDirections: ['ORIGIN', 'DESTINATION'],
+    },
   },
   {
     ruleName: 'Same user using too many cards',
@@ -60,6 +75,9 @@ export const rules: ExecutedRulesResult[] = [
     ruleDescription:
       'Same user using >= x unique cards counted by card fingerprint id',
     ruleHit: true,
+    ruleHitMeta: {
+      hitDirections: ['ORIGIN', 'DESTINATION'],
+    },
   },
   {
     ruleName: 'Customer money flow is above the expected volume',
@@ -70,6 +88,9 @@ export const rules: ExecutedRulesResult[] = [
     ruleDescription:
       'Customer is spending/receiving much more money than expected',
     ruleHit: true,
+    ruleHitMeta: {
+      hitDirections: ['ORIGIN', 'DESTINATION'],
+    },
   },
   {
     ruleName: 'Currency transaction report needed',
@@ -80,6 +101,9 @@ export const rules: ExecutedRulesResult[] = [
     ruleDescription:
       'If a transaction amount is more than x - a "CTR" is required by law. x depends on jurisdiction. EU is 10,000 euro; US is 10,000 USD',
     ruleHit: true,
+    ruleHitMeta: {
+      hitDirections: ['ORIGIN', 'DESTINATION'],
+    },
   },
   {
     ruleName: 'Average transaction amount exceed past period average',
@@ -100,6 +124,9 @@ export const rules: ExecutedRulesResult[] = [
     ruleDescription:
       'Same receiver and destination details are used >= x times in time t',
     ruleHit: true,
+    ruleHitMeta: {
+      hitDirections: ['ORIGIN', 'DESTINATION'],
+    },
   },
 ]
 

@@ -35,6 +35,7 @@ const DisplayCheckedTransactions = (props: Props) => {
   });
   const api = useApi();
   const measure = useApiTime();
+
   const queryResult = useCursorQuery(
     TRANSACTIONS_LIST({ ...params, caseUserId }),
     async ({ from }) => {
@@ -43,7 +44,13 @@ const DisplayCheckedTransactions = (props: Props) => {
           api.getTransactionsList({
             ...transactionParamsToRequest(params),
             start: from,
-            filterUserId: caseUserId,
+            filterDestinationUserId: props.alert.ruleHitMeta?.hitDirections?.includes('DESTINATION')
+              ? caseUserId
+              : undefined,
+            filterOriginUserId: props.alert.ruleHitMeta?.hitDirections?.includes('ORIGIN')
+              ? caseUserId
+              : undefined,
+            filterUserId: !props.alert.ruleHitMeta?.hitDirections ? caseUserId : undefined,
             filterRuleInstancesHit: alert.ruleInstanceId,
           }),
         'Transactions List',

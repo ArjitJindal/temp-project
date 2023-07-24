@@ -73,7 +73,20 @@ export function sampleUserCase(
 ): Case {
   const { transactions, origin, destination } = params
 
-  const ruleHits = _.uniq(transactions.flatMap((t) => t.hitRules))
+  const ruleHits = _.uniq(transactions.flatMap((t) => t.hitRules)).filter(
+    (rh) => {
+      if (rh.ruleHitMeta?.hitDirections?.includes('ORIGIN') && origin) {
+        return true
+      }
+      if (
+        rh.ruleHitMeta?.hitDirections?.includes('DESTINATION') &&
+        destination
+      ) {
+        return true
+      }
+      return false
+    }
+  )
 
   let user = destination
   if (origin) {
