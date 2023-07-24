@@ -17,8 +17,14 @@
       display: flex;
       flex-direction: column;
       border-radius: @radius;
-      max-height: ~'calc(100vh - 8px)';
+      max-height: calc(100vh - 8px);
       overflow-y: auto;
+    }
+
+    @media (min-height: 728px) {
+      .ant-modal-content {
+        max-height: 720px;
+      }
     }
 
     .ant-modal-body {
@@ -41,9 +47,6 @@
       justify-content: flex-end;
     }
   }
-}
-
-.header {
 }
 
 .mainHeader {

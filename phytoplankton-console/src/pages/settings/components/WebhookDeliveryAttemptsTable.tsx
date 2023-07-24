@@ -1,8 +1,7 @@
 import { useState } from 'react';
 import { CheckCircleOutlined, CloseCircleOutlined } from '@ant-design/icons';
-import { Modal, Tag } from 'antd';
+import { Tag } from 'antd';
 import ProDescriptions from '@ant-design/pro-descriptions';
-import s from './WebhookDeliveryAttemptsTable.module.less';
 import { WebhookDeliveryAttempt } from '@/apis';
 import { useApi } from '@/api';
 import Colors from '@/components/ui/colors';
@@ -12,6 +11,7 @@ import { WEBHOOKS } from '@/utils/queries/keys';
 import QueryResultsTable from '@/components/common/QueryResultsTable';
 import { ColumnHelper } from '@/components/library/Table/columnHelper';
 import { DATE_TIME } from '@/components/library/Table/standardDataTypes';
+import Modal from '@/components/library/Modal';
 
 interface Props {
   webhookId: string;
@@ -82,10 +82,9 @@ export const WebhookDeliveryAttemptsTable: React.FC<Props> = ({ webhookId }) => 
         pagination={false}
       />
       <Modal
-        className={s.modal}
-        visible={Boolean(selectedWebhookDelivery)}
+        isOpen={Boolean(selectedWebhookDelivery)}
         onCancel={() => setSelectedWebhookDelivery(undefined)}
-        footer={null}
+        hideFooter
       >
         <ProDescriptions column={1}>
           <ProDescriptions.Item>Request</ProDescriptions.Item>

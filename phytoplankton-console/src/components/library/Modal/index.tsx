@@ -11,13 +11,14 @@ export const MODAL_WIDTHS = ['S', 'M', 'L', 'XL'] as const;
 export type ModalWidth = typeof MODAL_WIDTHS[number];
 
 interface Props {
-  title: string;
+  title?: string;
   icon?: React.ReactNode;
   hideFooter?: boolean;
+  hideHeader?: boolean;
   isOpen: boolean;
   onOk?: () => void;
   onCancel: () => void;
-  okText?: string;
+  okText?: string | React.ReactNode;
   okProps?: ButtonProps;
   cancelText?: string;
   cancelProps?: ButtonProps;
@@ -46,6 +47,7 @@ export default function Modal(props: Props) {
     onCancel,
     children,
     hideFooter = false,
+    hideHeader = false,
     width = 'M',
     tabs = [],
   } = props;
@@ -57,26 +59,28 @@ export default function Modal(props: Props) {
     <AntModal
       className={cn(s.root, withTabs && s.withTabs)}
       title={
-        <div className={s.header}>
-          <div className={s.mainHeader}>
-            <div className={s.headerLeft}>
-              {icon && <div className={s.icon}>{icon}</div>}
-              <Typography.Title level={3} className={s.title}>
-                {title}
-              </Typography.Title>
+        !hideHeader ? (
+          <div className={s.header}>
+            <div className={s.mainHeader}>
+              <div className={s.headerLeft}>
+                {icon && <div className={s.icon}>{icon}</div>}
+                <Typography.Title level={3} className={s.title}>
+                  {title}
+                </Typography.Title>
+              </div>
+              <button className={s.close} onClick={onCancel}>
+                <CloseCircleLineIcon />
+              </button>
             </div>
-            <button className={s.close} onClick={onCancel}>
-              <CloseCircleLineIcon />
-            </button>
+            {withTabs && (
+              <Tabs
+                activeKey={activeTab}
+                onChange={setActiveTab}
+                items={tabs.map((tab) => ({ ...tab, children: undefined }))}
+              />
+            )}
           </div>
-          {withTabs && (
-            <Tabs
-              activeKey={activeTab}
-              onChange={setActiveTab}
-              items={tabs.map((tab) => ({ ...tab, children: undefined }))}
-            />
-          )}
-        </div>
+        ) : null
       }
       visible={isOpen}
       onCancel={onCancel}

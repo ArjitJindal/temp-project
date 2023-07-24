@@ -1,7 +1,6 @@
-import { Modal, Typography } from 'antd';
+import { Typography } from 'antd';
 import _ from 'lodash';
 import { useState } from 'react';
-import s from './style.module.less';
 import COLORS from '@/components/ui/colors';
 import { AuditLog } from '@/apis';
 import { flattenObject, getFlattenedObjectHumanReadableKey } from '@/utils/json';
@@ -9,6 +8,7 @@ import Table from '@/components/library/Table';
 import { ColumnHelper } from '@/components/library/Table/columnHelper';
 import TimestampDisplay from '@/components/ui/TimestampDisplay';
 import { Assignee } from '@/components/Assignee';
+import Modal from '@/components/library/Modal';
 
 interface Props {
   data: AuditLog;
@@ -137,11 +137,11 @@ const AuditLogModal = (props: Props) => {
         View Changes
       </Typography.Text>
       <Modal
-        className={s.root}
-        visible={isModalVisible}
+        isOpen={isModalVisible}
         onCancel={() => setIsModalVisible(false)}
-        width={'80%'}
-        footer={null}
+        width={'L'}
+        hideFooter
+        hideHeader
       >
         <div style={{ padding: '1rem', width: '100%' }}>
           {changedDetails.length && (

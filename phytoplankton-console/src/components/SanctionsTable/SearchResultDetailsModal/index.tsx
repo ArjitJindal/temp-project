@@ -1,14 +1,18 @@
-import { useRef } from 'react';
-import { Modal, Space, Tag } from 'antd';
+import { useRef, useState } from 'react';
+import { Space, Tag } from 'antd';
 import _ from 'lodash';
 import ProDescriptions from '@ant-design/pro-descriptions';
+import { LoadingOutlined } from '@ant-design/icons';
 import s from './index.module.less';
-import SearchResultDetailsModalFooter from './SearchResultDetailsModalFooter';
+import DownloadAsPDF from './DownloadAsPDF';
 import { ComplyAdvantageSearchHit } from '@/apis/models/ComplyAdvantageSearchHit';
 import * as Card from '@/components/ui/Card';
 import EntityHeader from '@/components/ui/entityPage/EntityHeader';
 import * as Form from '@/components/ui/Form';
 import LinkIcon from '@/components/ui/icons/Remix/system/external-link-line.react.svg';
+import Modal from '@/components/library/Modal';
+import DownloadLineIcon from '@/components/ui/icons/Remix/system/download-line.react.svg';
+import { message } from '@/components/library/Message';
 
 interface Props {
   hit: ComplyAdvantageSearchHit;
@@ -24,15 +28,33 @@ export default function SearchResultDetailsModal(props: Props) {
     fields: allFields?.filter((field) => field.source === source),
   }));
   const pdfRef = useRef() as React.MutableRefObject<HTMLInputElement>;
+  const pdfName = hit.doc?.name;
+  const [isLoading, setIsLoading] = useState<boolean>(false);
+  const handleDownloadClick = (): void => {
+    setIsLoading(true);
+    DownloadAsPDF(pdfRef, pdfName)
+      .then(() => setIsLoading(false))
+      .catch((err) => {
+        message.fatal(`Unable to complete the download!`, err);
+      });
+  };
+  const okText = isLoading ? (
+    <>
+      <LoadingOutlined className={s.spinner} spin /> Downloding
+    </>
+  ) : (
+    <>
+      <DownloadLineIcon className={s.icon} /> Download as PDF
+    </>
+  );
   return (
     <Modal
-      className={s.modal}
-      width={1500}
-      visible={Boolean(hit)}
+      title={pdfName ?? ''}
+      width={'L'}
+      isOpen={Boolean(hit)}
+      okText={okText}
       onCancel={onClose}
-      footer={
-        <SearchResultDetailsModalFooter onClose={onClose} pdfRef={pdfRef} pdfName={hit.doc?.name} />
-      }
+      onOk={handleDownloadClick}
     >
       <div ref={pdfRef}>
         <Card.Section>

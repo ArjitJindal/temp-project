@@ -1,5 +1,4 @@
 import React, { useState } from 'react';
-import { Modal } from 'antd';
 import s from './index.module.less';
 import Button from '@/components/library/Button';
 import BrainLineIcon from '@/components/ui/icons/Remix/health/brain-line.react.svg';
@@ -8,6 +7,7 @@ import { CaseClosingReasons, NarrativeResponse } from '@/apis';
 import { useApi } from '@/api';
 import { message } from '@/components/library/Message';
 import CopilotSources from '@/pages/case-management/components/Copilot/CopilotSources';
+import Modal from '@/components/library/Modal';
 
 export const CopilotButtonContent = ({
   reasons,
@@ -76,12 +76,11 @@ export const CopilotButtonContent = ({
         </div>
       )}
       <Modal
-        className={s.modal}
         title="ⓘ Copilot Sources"
-        visible={showSources}
         okText="Back"
+        isOpen={showSources}
         onOk={() => setShowSources(false)}
-        cancelButtonProps={{ hidden: true }}
+        hideFooter
         onCancel={() => setShowSources(false)}
       >
         <CopilotSources attributes={copilotResponse?.attributes || []} />
