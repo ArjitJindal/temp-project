@@ -14,6 +14,7 @@ import { CaseRepository } from '@/services/rules-engine/repositories/case-reposi
 import { RuleInstance } from '@/@types/openapi-internal/RuleInstance'
 import { SimulationBeaconStatisticsResult } from '@/@types/openapi-internal/SimulationBeaconStatisticsResult'
 import { logger } from '@/core/logger'
+import { UserRepository } from '@/services/users/repositories/user-repository'
 
 const MAX_TRANSACTIONS = 10000
 const TIMEOUT = 14 * 60 * 1000
@@ -27,6 +28,7 @@ export class SimulationBeaconBatchJobRunner extends BatchJobRunner {
   private transactionRepository?: MongoDbTransactionRepository
   private rulesEngineService?: RulesEngineService
   private casesRepository?: CaseRepository
+  private userRepository?: UserRepository
   private timeout = false
 
   private startTimer() {
@@ -43,6 +45,7 @@ export class SimulationBeaconBatchJobRunner extends BatchJobRunner {
     const rulesEngineService = new RulesEngineService(tenantId, dynamoDb)
     const simulationRepository = new SimulationTaskRepository(tenantId, mongoDb)
     const caseRepository = new CaseRepository(tenantId, { mongoDb })
+    const userRepository = new UserRepository(tenantId, { mongoDb })
     const transactionRepository = new MongoDbTransactionRepository(
       tenantId,
       mongoDb
@@ -51,6 +54,7 @@ export class SimulationBeaconBatchJobRunner extends BatchJobRunner {
     this.rulesEngineService = rulesEngineService
     this.casesRepository = caseRepository
     this.transactionRepository = transactionRepository
+    this.userRepository = userRepository
 
     await simulationRepository.updateTaskStatus(
       parameters.taskId,
@@ -101,6 +105,12 @@ export class SimulationBeaconBatchJobRunner extends BatchJobRunner {
       executedTransactionIds.has(t.transactionId)
     )
 
+    const totalUsers = (await this.userRepository?.getUsersCount()) ?? 0
+
+    const usersByTransactionsRan = this.getUsersByTransactionsRan(
+      actualTransactionsRan
+    )
+
     const simulationUsersHit = this.simulationUsersHit(executionDetails)
 
     const originalFalsePositiveUsers = defaultRuleInstance.id
@@ -116,7 +126,15 @@ export class SimulationBeaconBatchJobRunner extends BatchJobRunner {
     const totalTransactions =
       (await this.transactionRepository?.getAllTransactionsCount()) ?? 0
 
-    const ratio = Math.max(1, totalTransactions / actualTransactionsRan.length) // extrapolated ratio
+    const transactionExtrapolationRatio = Math.max(
+      1,
+      totalTransactions / actualTransactionsRan.length
+    ) // extrapolated ratio
+
+    const userExtrapolationRatio = Math.max(
+      1,
+      totalUsers / usersByTransactionsRan
+    )
 
     const transactionsHit = defaultRuleInstance.id
       ? await this.actualTransactionsHitCount(defaultRuleInstance.id)
@@ -137,12 +155,18 @@ export class SimulationBeaconBatchJobRunner extends BatchJobRunner {
         transactionsHit,
       },
       simulated: {
-        totalCases: Math.round(simulationUsersHit.length * ratio),
-        falsePositivesCases: Math.round(
-          falsePositiveCasesCountSimulated * ratio
+        totalCases: Math.round(
+          simulationUsersHit.length * userExtrapolationRatio
         ),
-        usersHit: Math.round(simulationUsersHit.length * ratio),
-        transactionsHit: Math.round(transactionsHitSimulated * ratio),
+        falsePositivesCases: Math.round(
+          falsePositiveCasesCountSimulated * userExtrapolationRatio
+        ),
+        usersHit: Math.round(
+          simulationUsersHit.length * userExtrapolationRatio
+        ),
+        transactionsHit: Math.round(
+          transactionsHitSimulated * transactionExtrapolationRatio
+        ),
       },
     }
   }
@@ -321,5 +345,16 @@ export class SimulationBeaconBatchJobRunner extends BatchJobRunner {
     }
 
     return falsePositiveUsers.size
+  }
+
+  private getUsersByTransactionsRan(
+    transactions: InternalTransaction[]
+  ): number {
+    const users = new Set()
+    transactions.forEach((transaction) => {
+      users.add(transaction.originUserId)
+      users.add(transaction.destinationUserId)
+    })
+    return users.size
   }
 }

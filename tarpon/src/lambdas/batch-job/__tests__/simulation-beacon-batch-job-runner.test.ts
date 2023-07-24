@@ -125,7 +125,7 @@ describe('Simulation Beacon Batch Job Runner', () => {
       dynamoDb,
     })
 
-    const testUsers = range(0, 100).map((i) =>
+    const testUsers = range(0, 10).map((i) =>
       getTestUser({
         userId: `test-user-${i}`,
       })
@@ -137,8 +137,8 @@ describe('Simulation Beacon Batch Job Runner', () => {
       getTransaction(
         `test-transaction-${i}`,
         (i + 1) * 1000,
-        `test-user-${i}`,
-        `test-user-${i + 1}`
+        `test-user-${i % 10}`,
+        `test-user-${(i + 1) % 10}`
       )
     )
 

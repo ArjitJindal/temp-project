@@ -907,4 +907,13 @@ export class UserRepository {
 
     return users
   }
+
+  public async getUsersCount(): Promise<number> {
+    const db = this.mongoDb.db()
+    const collection = db.collection<InternalUser>(
+      USERS_COLLECTION(this.tenantId)
+    )
+    const count = await collection.estimatedDocumentCount()
+    return count
+  }
 }
