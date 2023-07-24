@@ -1,10 +1,12 @@
-import { Link } from 'react-router-dom';
 import { Tag } from 'antd';
+import React from 'react';
 import { InternalBusinessUser } from '@/apis';
 import { TableColumn } from '@/components/library/Table/types';
 import { capitalizeWords } from '@/utils/tags';
 import { ColumnHelper } from '@/components/library/Table/columnHelper';
 import { DATE, MONEY, TAGS } from '@/components/library/Table/standardDataTypes';
+import Id from '@/components/ui/Id';
+import { getUserLink } from '@/utils/api/users';
 
 export function getBusinessUserColumns(): TableColumn<InternalBusinessUser>[] {
   const helper = new ColumnHelper<InternalBusinessUser>();
@@ -15,11 +17,11 @@ export function getBusinessUserColumns(): TableColumn<InternalBusinessUser>[] {
       key: 'userId',
       tooltip: 'Unique identification of user.',
       type: {
-        render: (userId) => {
+        render: (userId, { item: entity }) => {
           return (
-            <Link to={`/users/list/business/${userId}`} data-cy="business-user-id" replace>
+            <Id to={getUserLink(entity)} testName="business-user-id">
               {userId}
-            </Link>
+            </Id>
           );
         },
       },

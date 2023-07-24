@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import DetailsModal from './DetailsModal';
-import MainPanel from './MainPanel';
+import MainPanel, { MainPanelCustomStyles } from './MainPanel';
 import { ValueItem } from './types';
 
 interface Props {
@@ -8,10 +8,11 @@ interface Props {
   title: string;
   values: ValueItem[];
   factorExplanationText?: string;
+  mainPanelCustomStyling?: MainPanelCustomStyles;
 }
 
 export default function RiskScoreDisplay(props: Props) {
-  const { icon, title, values, factorExplanationText } = props;
+  const { icon, title, values, factorExplanationText, mainPanelCustomStyling } = props;
   const [isModalOpen, setModalOpen] = useState(false);
   const lastValue = values.reduce<ValueItem | null>(
     (acc, x) => (acc == null || x.createdAt > acc.createdAt ? x : acc),
@@ -25,6 +26,7 @@ export default function RiskScoreDisplay(props: Props) {
         title={title}
         values={values}
         onClickInfo={components && components.length > 0 ? () => setModalOpen(true) : undefined}
+        customStyling={mainPanelCustomStyling}
       />
       <DetailsModal
         icon={icon}

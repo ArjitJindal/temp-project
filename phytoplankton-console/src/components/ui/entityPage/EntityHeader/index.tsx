@@ -1,23 +1,20 @@
 import React from 'react';
 import cn from 'clsx';
 import s from './index.module.less';
-import EntityId from '@/components/ui/entityPage/EntityId';
-import * as Form from '@/components/ui/Form';
+import Breadcrumbs, { BreadcrumbItem } from './Breadcrumbs';
 import Sticky from '@/components/ui/Sticky';
 import * as Card from '@/components/ui/Card';
 
 interface Props {
   stickyElRef?: React.RefCallback<HTMLDivElement>;
-  idTitle?: string;
-  id?: string | undefined;
-  tag?: React.ReactNode;
-  buttons?: React.ReactNode;
-  children?: React.ReactNode;
+  breadcrumbItems: BreadcrumbItem[];
+  chips?: React.ReactNode[];
+  buttons?: React.ReactNode[];
   subHeader?: React.ReactNode;
 }
 
 export default function EntityHeader(props: Props) {
-  const { id, idTitle, tag, children, buttons, subHeader, stickyElRef } = props;
+  const { chips, breadcrumbItems, buttons, subHeader, stickyElRef } = props;
 
   return (
     <Card.Section className={cn(s.root)}>
@@ -27,13 +24,17 @@ export default function EntityHeader(props: Props) {
             className={cn(s.main, isSticky && s.isSticky)}
             ref={isSticky ? stickyElRef : undefined}
           >
-            {idTitle && (
-              <Form.Layout.Label title={idTitle}>
-                <EntityId>{id}</EntityId>
-                {tag}
-              </Form.Layout.Label>
-            )}
-            <div className={s.items}>{children}</div>
+            <div className={s.breadcrumbs}>
+              <Breadcrumbs items={breadcrumbItems} />
+              {chips != null && chips.length > 0 && (
+                <>
+                  <div className={s.breadcrumbsSeparator} />
+                  {chips?.map((chip, i) => (
+                    <React.Fragment key={i}>{chip}</React.Fragment>
+                  ))}
+                </>
+              )}
+            </div>
             {buttons && <div className={s.buttons}>{buttons}</div>}
           </div>
         )}

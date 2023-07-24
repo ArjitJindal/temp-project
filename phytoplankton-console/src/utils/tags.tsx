@@ -1,7 +1,7 @@
 // todo: move this tags to common UI package
 import _ from 'lodash';
 import { getPaymentMethodTitle } from './payments';
-import { TransactionTypeTag } from '@/components/ui/TransactionTypeTag';
+import TransactionTypeTag from '@/components/library/TransactionTypeTag';
 import { TRANSACTION_TYPES } from '@/apis/models-custom/TransactionType';
 import { PAYMENT_METHODS } from '@/apis/models-custom/PaymentMethod';
 

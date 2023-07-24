@@ -7,7 +7,7 @@ import s from './index.module.less';
 import DownloadAsPDF from './DownloadAsPDF';
 import { ComplyAdvantageSearchHit } from '@/apis/models/ComplyAdvantageSearchHit';
 import * as Card from '@/components/ui/Card';
-import EntityHeader from '@/components/ui/entityPage/EntityHeader';
+import LegacyEntityHeader from '@/components/ui/entityPage/LegacyEntityHeader';
 import * as Form from '@/components/ui/Form';
 import LinkIcon from '@/components/ui/icons/Remix/system/external-link-line.react.svg';
 import Modal from '@/components/library/Modal';
@@ -58,7 +58,7 @@ export default function SearchResultDetailsModal(props: Props) {
     >
       <div ref={pdfRef}>
         <Card.Section>
-          <EntityHeader idTitle={'Name'} id={hit.doc?.name}>
+          <LegacyEntityHeader idTitle={'Name'} id={hit.doc?.name}>
             <Form.Layout.Label title="Matched Types">
               {hit.doc?.types?.map((matchType) => (
                 <Tag key={matchType} color="volcano">
@@ -66,7 +66,7 @@ export default function SearchResultDetailsModal(props: Props) {
                 </Tag>
               ))}
             </Form.Layout.Label>
-          </EntityHeader>
+          </LegacyEntityHeader>
         </Card.Section>
         <Card.Root
           header={{

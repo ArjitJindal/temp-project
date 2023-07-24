@@ -23,7 +23,7 @@ import {
   Case,
 } from '@/apis';
 import { getUserName } from '@/utils/api/users';
-import { TransactionTypeTag } from '@/components/ui/TransactionTypeTag';
+import TransactionTypeTag from '@/components/library/TransactionTypeTag';
 import { paymethodOptions, transactionType } from '@/utils/tags';
 import { dayjs, DEFAULT_DATE_TIME_FORMAT } from '@/utils/dayjs';
 import TransactionStateTag from '@/components/ui/TransactionStateTag';
@@ -35,7 +35,7 @@ import { PaymentMethod } from '@/utils/payments';
 import { PaymentMethodTag } from '@/components/ui/PaymentTypeTag';
 import TimestampDisplay from '@/components/ui/TimestampDisplay';
 import UserLink from '@/components/UserLink';
-import CaseStatusTag from '@/components/ui/CaseStatusTag';
+import CaseStatusTag from '@/components/library/CaseStatusTag';
 import { RuleActionTag } from '@/components/rules/RuleActionTag';
 import Money from '@/components/ui/Money';
 import UserKycStatusTag from '@/components/ui/UserKycStatusTag';
@@ -269,7 +269,6 @@ export const CASEID_PRIORITY: ColumnDataType<string, Case> = {
       <>
         {entity?.caseId && (
           <Id
-            id={entity.caseId}
             to={addBackUrlToRoute(
               makeUrl(`/case-management/case/:caseId`, {
                 caseId: entity.caseId,

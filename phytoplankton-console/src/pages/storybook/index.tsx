@@ -1,5 +1,5 @@
 import React from 'react';
-import { Navigate, Route, Routes } from 'react-router';
+import { Navigate, Route, Routes, useParams } from 'react-router';
 import s from './index.module.less';
 import CategoriesMenu from './CategoriesMenu';
 import { makeUrl } from '@/utils/routing';
@@ -18,13 +18,13 @@ import Card from '@/components/ui/Card/story';
 import Form from '@/components/library/Form/story';
 import Drawer from '@/components/library/Drawer/story';
 import Alert from '@/components/library/Alert/story';
+import AlertComponent from '@/components/library/Alert';
 import QuickFilter from '@/components/library/QuickFilter/story';
 import Pagination from '@/components/library/Pagination/story';
 import Message from '@/components/library/Message/story';
 import Dropdown from '@/components/library/Dropdown/story';
 import SegmentedControl from '@/components/library/SegmentedControl/story';
 import JsonSchemaEditor from '@/pages/rules/RuleConfigurationDrawer/JsonSchemaEditor/story';
-import { Component } from '@/pages/storybook/components';
 import Tooltip from '@/components/library/Tooltip/story';
 import Toggle from '@/components/library/Toggle/story';
 import Tabs from '@/components/library/Tabs/story';
@@ -33,158 +33,172 @@ import Slider from '@/components/library/Slider/story';
 import Table from '@/components/library/Table/story';
 import RiskScoreDisplay from '@/components/ui/RiskScoreDisplay/story';
 import RiskLevelTag from '@/components/library/RiskLevelTag/story';
+import RiskLevelSwitch from '@/components/library/RiskLevelSwitch/story';
 import Modal from '@/components/library/Modal/story';
-
-interface StoryProps {}
-
-interface CategoryComponent {
-  component: string;
-  story: React.FunctionComponent<StoryProps>;
-}
-
-interface Category {
-  key: string;
-  category: string;
-  components: CategoryComponent[];
-}
-
-type Config = Category[];
+import TransactionTypeTag from '@/components/library/TransactionTypeTag/story';
+import CaseStatusTag from '@/components/library/CaseStatusTag/story';
+import CaseGenerationMethodTag from '@/components/library/CaseGenerationMethodTag/story';
+import { Category, Config } from '@/pages/storybook/types';
+import {
+  CATEGORY_ROUTE,
+  CATEGORY_SEGMENT,
+  COMPONENT_ROUTE,
+  COMPONENT_SEGMENT,
+  ROOT_SEGMENT,
+} from '@/pages/storybook/routes';
+import { Component } from '@/pages/storybook/components';
 
 const config: Config = [
   {
     key: 'library',
-    category: 'Library',
+    title: 'Library',
     components: [
       {
-        component: 'Table',
+        key: 'TransactionTypeTag',
+        story: TransactionTypeTag,
+      },
+      {
+        key: 'RiskLevelSwitch',
+        story: RiskLevelSwitch,
+      },
+      {
+        key: 'CaseStatusTag',
+        story: CaseStatusTag,
+      },
+      {
+        key: 'CaseGenerationMethodTag',
+        story: CaseGenerationMethodTag,
+      },
+      {
+        key: 'Table',
         story: Table,
       },
       {
-        component: 'VerticalMenu',
+        key: 'VerticalMenu',
         story: VerticalMenu,
       },
       {
-        component: 'Stepper',
+        key: 'Stepper',
         story: Stepper,
       },
       {
-        component: 'StepButtons',
+        key: 'StepButtons',
         story: StepButtons,
       },
       {
-        component: 'SegmentedControl',
+        key: 'SegmentedControl',
         story: SegmentedControl,
       },
       {
-        component: 'Tabs',
+        key: 'Tabs',
         story: Tabs,
       },
       {
-        component: 'Pagination',
+        key: 'Pagination',
         story: Pagination,
       },
       {
-        component: 'Alert',
+        key: 'Alert',
         story: Alert,
       },
       {
-        component: 'Message',
+        key: 'Message',
         story: Message,
       },
       {
-        component: 'Tooltip',
+        key: 'Tooltip',
         story: Tooltip,
       },
       {
-        component: 'Form',
+        key: 'Form',
         story: Form,
       },
       {
-        component: 'Button',
+        key: 'Button',
         story: Button,
       },
       {
-        component: 'Label',
+        key: 'Label',
         story: Label,
       },
       {
-        component: 'Select',
+        key: 'Select',
         story: Select,
       },
       {
-        component: 'TextInput',
+        key: 'TextInput',
         story: TextInput,
       },
       {
-        component: 'NumberInput',
+        key: 'NumberInput',
         story: NumberInput,
       },
       {
-        component: 'Radio',
+        key: 'Radio',
         story: Radio,
       },
       {
-        component: 'Checkbox',
+        key: 'Checkbox',
         story: Checkbox,
       },
       {
-        component: 'SelectionGroup',
+        key: 'SelectionGroup',
         story: SelectionGroup,
       },
       {
-        component: 'TextArea',
+        key: 'TextArea',
         story: TextArea,
       },
       {
-        component: 'Toggle',
+        key: 'Toggle',
         story: Toggle,
       },
       {
-        component: 'QuickFilter',
+        key: 'QuickFilter',
         story: QuickFilter,
       },
       {
-        component: 'Drawer',
+        key: 'Drawer',
         story: Drawer,
       },
       {
-        component: 'Card',
+        key: 'Card',
         story: Card,
       },
       {
-        component: 'Dropdown',
+        key: 'Dropdown',
         story: Dropdown,
       },
       {
-        component: 'RiskLevelTag',
+        key: 'RiskLevelTag',
         story: RiskLevelTag,
       },
       {
-        component: 'Modal',
+        key: 'Modal',
         story: Modal,
       },
     ],
   },
   {
     key: 'to_add',
-    category: 'To add',
+    title: 'To add',
     components: [
       {
-        component: 'Slider',
+        key: 'Slider',
         story: Slider,
       },
     ],
   },
   {
     key: 'misc',
-    category: 'Misc',
+    title: 'Misc',
     components: [
       {
-        component: '@/components/ui/RiskScoreDisplay',
+        key: '@/components/ui/RiskScoreDisplay',
         story: RiskScoreDisplay,
       },
       {
-        component: '@/pages/rules/RuleConfigurationDrawer/RuleParametersStep/JsonSchemaEditor',
+        key: '@/pages/rules/RuleConfigurationDrawer/RuleParametersStep/JsonSchemaEditor',
         story: JsonSchemaEditor,
       },
     ],
@@ -194,46 +208,81 @@ const config: Config = [
 export default function () {
   // todo: i18n
   return (
-    <div className={s.root}>
-      <div className={s.menu}>
-        <CategoriesMenu
-          items={config.map((category) => ({ key: category.key, title: category.category }))}
-          onMakeUrl={(category) => makeUrl(`/storybook/:category`, { category })}
-        />
-      </div>
-      {config.length > 0 && (
-        <div className={s.content}>
-          <Routes>
-            {config.map((category) => (
-              <Route
-                key={category.key}
-                path={makeUrl(`/storybook/:category`, { category: category.key })}
-                element={
-                  <>
-                    {category.components.map((component) => {
-                      const Story = component.story;
-                      return (
-                        <Component key={component.component} title={component.component}>
-                          <Story />
-                        </Component>
-                      );
-                    })}
-                  </>
-                }
-              />
-            ))}
-            <Route
-              path="/storybook"
-              element={
-                <Navigate
-                  replace
-                  to={makeUrl(`/storybook/:category`, { category: config[0].key })}
-                />
-              }
-            />
-          </Routes>
-        </div>
-      )}
-    </div>
+    <Routes>
+      <Route
+        path={`/${ROOT_SEGMENT}/*`}
+        element={
+          <div className={s.root}>
+            <div className={s.menu}>
+              <CategoriesMenu items={config} />
+            </div>
+            {config.length > 0 && (
+              <div className={s.content}>
+                <Routes>
+                  <Route
+                    index
+                    element={
+                      <Navigate replace to={makeUrl(CATEGORY_ROUTE, { category: config[0].key })} />
+                    }
+                  />
+                  <Route path={`${CATEGORY_SEGMENT}/*`} element={<CategoryPage />} />
+                </Routes>
+              </div>
+            )}
+          </div>
+        }
+      />
+    </Routes>
+  );
+}
+
+function ComponentPage(props: { category: Category }) {
+  const { category } = props;
+  const params = useParams();
+  const component = category.components.find((x) => x.key === params.component);
+  if (component == null) {
+    return (
+      <AlertComponent type="error">
+        {`Component not found: ${params.component ?? '(empty)'}`}
+      </AlertComponent>
+    );
+  }
+
+  const Story = component.story;
+
+  return (
+    <Component title={component.key}>
+      <Story />
+    </Component>
+  );
+}
+
+function CategoryPage() {
+  const params = useParams();
+  const category = config.find((x) => x.key === params.category);
+  if (category == null) {
+    return (
+      <AlertComponent type="error">
+        {`Category not found: ${params.category ?? '(empty)'}`}
+      </AlertComponent>
+    );
+  }
+
+  return (
+    <Routes>
+      <Route
+        index
+        element={
+          <Navigate
+            replace
+            to={makeUrl(COMPONENT_ROUTE, {
+              category: category.key,
+              component: category.components[0].key,
+            })}
+          />
+        }
+      />
+      <Route path={`${COMPONENT_SEGMENT}/*`} element={<ComponentPage category={category} />} />
+    </Routes>
   );
 }

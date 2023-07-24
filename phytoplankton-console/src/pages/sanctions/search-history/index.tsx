@@ -72,9 +72,7 @@ export const SanctionsSearchHistoryTable: React.FC = () => {
       key: 'request.searchTerm',
       type: {
         render: (searchTerm, { item: entity }) => (
-          <Id id={entity.request._id} to={`/sanctions/search/${entity._id}`}>
-            {searchTerm}
-          </Id>
+          <Id to={`/sanctions/search/${entity._id}`}>{searchTerm}</Id>
         ),
       },
     }),

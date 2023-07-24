@@ -1,10 +1,11 @@
 import React from 'react';
 import SubHeader from './SubHeader';
 import { Comment, InternalBusinessUser, InternalConsumerUser } from '@/apis';
-import UserIdNameCard from '@/components/ui/UserIdNameCard';
 import CommentButton from '@/components/CommentButton';
 import { useApi } from '@/api';
 import EntityHeader from '@/components/ui/entityPage/EntityHeader';
+import Id from '@/components/ui/Id';
+import { getUserName } from '@/utils/api/users';
 
 interface Props {
   headerStickyElRef?: React.RefCallback<HTMLDivElement>;
@@ -21,7 +22,17 @@ export default function Header(props: Props) {
   return (
     <EntityHeader
       stickyElRef={headerStickyElRef}
-      buttons={
+      chips={[<Id alwaysShowCopy>{userId}</Id>]}
+      breadcrumbItems={[
+        {
+          title: 'Users',
+          to: '/users',
+        },
+        {
+          title: getUserName(user),
+        },
+      ]}
+      buttons={[
         <CommentButton
           onSuccess={onNewComment}
           submitRequest={async (commentFormValues) => {
@@ -37,11 +48,9 @@ export default function Header(props: Props) {
             });
           }}
           requiredPermissions={['users:user-comments:write']}
-        />
-      }
+        />,
+      ]}
       subHeader={<SubHeader user={user} />}
-    >
-      <UserIdNameCard user={user} />
-    </EntityHeader>
+    />
   );
 }

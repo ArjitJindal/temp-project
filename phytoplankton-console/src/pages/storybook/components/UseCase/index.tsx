@@ -15,17 +15,29 @@ export default function UseCase(props: Props) {
   const state = useState<Record<string, any>>(initialState ?? {});
   const [bgColor, setBgColor] = useState('transparent');
   const [fullWidth, setFullWidth] = useState(false);
+  const [stretchMode, setStretchMode] = useState(true);
   return (
-    <div className={s.root} style={{ maxWidth: fullWidth ? 'unset' : undefined }}>
+    <div
+      className={s.root}
+      style={{
+        maxWidth: fullWidth ? 'unset' : undefined,
+      }}
+    >
       <div className={s.header}>
         <div className={s.title}>{title}</div>
         <div className={s.headerButtons}>
+          <StretchMode value={stretchMode} onChange={setStretchMode} />
           <FullWidth value={fullWidth} onChange={setFullWidth} />
           <ChangeColor value={bgColor} onChange={setBgColor} />
         </div>
       </div>
       <div className={s.content} style={{ background: bgColor }}>
-        <div className={s.children}>
+        <div
+          className={s.children}
+          style={{
+            alignItems: stretchMode ? 'unset' : 'start',
+          }}
+        >
           {typeof children === 'function' ? children(state) : children}
         </div>
       </div>
@@ -64,6 +76,21 @@ function FullWidth(props: { value: boolean; onChange: (newValue: boolean) => voi
       }}
     >
       W
+    </div>
+  );
+}
+
+function StretchMode(props: { value: boolean; onChange: (newValue: boolean) => void }) {
+  return (
+    <div
+      title="Change stretch mode"
+      className={cn(s.button, s.fullWidth, props.value && s.isEnabled)}
+      style={{}}
+      onClick={() => {
+        props.onChange(!props.value);
+      }}
+    >
+      S
     </div>
   );
 }

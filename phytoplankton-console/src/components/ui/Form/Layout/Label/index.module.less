@@ -3,6 +3,7 @@
 .root {
   display: flex;
   flex-direction: column;
+  gap: 4px;
 
   &.bold {
     .title {
@@ -12,19 +13,21 @@
 
   &.orientation-horizontal {
     flex-direction: row;
+    gap: 8px;
+    align-items: center;
   }
 }
 
 .header {
   display: flex;
-  gap: 8px;
-  color: @fr-colors-purpleGray;
+  gap: 4px;
+  color: @fr-colors-v2-gray-6;
   align-items: center;
 }
 
 .title {
   display: flex;
-  gap: 8px;
+  gap: 4px;
 }
 
 .dark {

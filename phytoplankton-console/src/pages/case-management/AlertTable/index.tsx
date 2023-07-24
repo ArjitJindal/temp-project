@@ -70,7 +70,6 @@ const mergedColumns = (
         render: (alertId, { item: entity }) => {
           return (
             <Id
-              id={alertId}
               to={addBackUrlToRoute(
                 makeUrl(`/case-management/case/:caseId/:tab`, {
                   caseId: entity.caseId,

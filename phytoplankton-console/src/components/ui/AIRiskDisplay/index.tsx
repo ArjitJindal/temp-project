@@ -2,12 +2,13 @@ import React from 'react';
 
 //types
 import { ValueItem } from '../RiskScoreDisplay/types';
+import AiLogoIcon from './ai-logo.react.svg';
 import { RiskLevel } from '@/utils/risk-levels';
 import { RiskEntityType } from '@/apis';
 
 //components
 import RiskScoreDisplay from '@/components/ui/RiskScoreDisplay';
-import User3LineIcon from '@/components/ui/icons/Remix/user/user-3-line.react.svg';
+import { COLORS_V2_AI_RISK_DISPLAY_BACKGROUND } from '@/components/ui/colors';
 
 export interface ExtendedValueItem extends ValueItem {
   drsScore: number;
@@ -197,13 +198,16 @@ export default function AIRiskDisplay() {
   const data = shuffleArray(randomizedData);
   return (
     <RiskScoreDisplay
+      mainPanelCustomStyling={{
+        background: COLORS_V2_AI_RISK_DISPLAY_BACKGROUND,
+      }}
       factorExplanationText={aiText}
       values={data.map((x) => ({
         score: x.drsScore,
         createdAt: x.createdAt,
         components: x.components,
       }))}
-      icon={<User3LineIcon />}
+      icon={<AiLogoIcon />}
       title="AI risk score"
     />
   );

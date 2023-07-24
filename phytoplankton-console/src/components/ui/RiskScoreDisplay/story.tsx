@@ -9,8 +9,8 @@ export default function (): JSX.Element {
   return (
     <>
       <UseCase title={'Risk levels'}>
-        <PropertyMatrix x={[...RISK_LEVELS, undefined]}>
-          {(riskLevel) => (
+        <PropertyMatrix yLabel="riskLevel" y={[...RISK_LEVELS, undefined]}>
+          {(_, riskLevel) => (
             <Component
               title="CRA risk score"
               icon={<User3LineIcon />}

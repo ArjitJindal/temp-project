@@ -1,0 +1,34 @@
+@import 'src/components/ui/colors.less';
+
+.root {
+  display: flex;
+}
+
+.body {
+  border: 1px solid gray;
+  background: lightgray;
+  border-radius: 4px;
+  padding: 4px 8px;
+  font-size: 10px;
+  line-height: 12px;
+
+  &.caseStatus-OPEN {
+    border-color: @fr-colors-v2-risk-level-base-medium;
+    background: @fr-colors-v2-risk-level-bg-medium;
+  }
+
+  &.caseStatus-CLOSED {
+    border-color: @fr-colors-v2-risk-level-base-low;
+    background: @fr-colors-v2-risk-level-bg-low;
+  }
+
+  &.caseStatus-REOPENED {
+    border-color: @fr-colors-v2-risk-level-base-high;
+    background: @fr-colors-v2-risk-level-bg-high;
+  }
+
+  &.caseStatus-ESCALATED {
+    border-color: @fr-colors-purpleGrayShade;
+    background: @fr-colors-purpleGrayTint;
+  }
+}

@@ -11,8 +11,8 @@ import * as Card from '@/components/ui/Card';
 import * as Form from '@/components/ui/Form';
 import TransactionState from '@/components/ui/TransactionStateTag';
 import { RuleActionStatus } from '@/components/ui/RuleActionStatus';
-import EntityHeader from '@/components/ui/entityPage/EntityHeader';
-import { TransactionTypeTag } from '@/components/ui/TransactionTypeTag';
+import LegacyEntityHeader from '@/components/ui/entityPage/LegacyEntityHeader';
+import TransactionTypeTag from '@/components/library/TransactionTypeTag';
 import TransactionEventsCard from '@/pages/transactions-item/TransactionEventsCard';
 
 //utils and hooks
@@ -95,7 +95,7 @@ export default function TransactionsItem() {
         {(transaction) => (
           <>
             <Card.Root>
-              <EntityHeader
+              <LegacyEntityHeader
                 stickyElRef={setHeaderStickyElRef}
                 id={transaction.transactionId}
                 idTitle="Transaction ID"
@@ -119,7 +119,7 @@ export default function TransactionsItem() {
                 <Form.Layout.Label title="Reference">
                   {transaction.reference ?? '-'}
                 </Form.Layout.Label>
-              </EntityHeader>
+              </LegacyEntityHeader>
             </Card.Root>
             <>
               <PageTabs

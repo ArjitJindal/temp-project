@@ -1,20 +1,20 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
 import { InternalBusinessUser, InternalConsumerUser } from '@/apis';
-import { neverReturn } from '@/utils/lang';
+import { getUserLink } from '@/utils/api/users';
 
 interface Props {
   user: InternalBusinessUser | InternalConsumerUser;
-  children: React.ReactNode;
+  children?: string;
+  testName?: string;
 }
 
 export default function UserLink(props: Props) {
-  const { user, children } = props;
-  if (user.type === 'CONSUMER') {
-    return <Link to={`/users/list/consumer/${user.userId}`}>{children}</Link>;
-  }
-  if (user.type === 'BUSINESS') {
-    return <Link to={`/users/list/business/${user.userId}`}>{children}</Link>;
-  }
-  return <>{neverReturn(user, children)}</>;
+  const { user, children, testName } = props;
+  const userLink = getUserLink(user);
+  return (
+    <Link to={userLink ?? '#'} data-cy={testName}>
+      {children}
+    </Link>
+  );
 }

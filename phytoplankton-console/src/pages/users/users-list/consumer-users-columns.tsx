@@ -1,11 +1,11 @@
-import { Link } from 'react-router-dom';
 import React from 'react';
 import { dayjs, DEFAULT_DATE_FORMAT } from '@/utils/dayjs';
 import { InternalConsumerUser } from '@/apis';
 import { TableColumn } from '@/components/library/Table/types';
 import { ColumnHelper } from '@/components/library/Table/columnHelper';
 import { COUNTRY, DATE, TAGS } from '@/components/library/Table/standardDataTypes';
-import { getFullName } from '@/utils/api/users';
+import { getFullName, getUserLink } from '@/utils/api/users';
+import Id from '@/components/ui/Id';
 
 export function getConsumerUserColumns(): TableColumn<InternalConsumerUser>[] {
   const helper = new ColumnHelper<InternalConsumerUser>();
@@ -16,11 +16,11 @@ export function getConsumerUserColumns(): TableColumn<InternalConsumerUser>[] {
       key: 'userId',
       tooltip: 'Unique identification of user.',
       type: {
-        render: (userId) => {
+        render: (userId, { item: entity }) => {
           return (
-            <Link to={`/users/list/consumer/${userId}`} data-cy="consumer-user-id" replace>
+            <Id to={getUserLink(entity)} testName="consumer-user-id">
               {userId}
-            </Link>
+            </Id>
           );
         },
       },

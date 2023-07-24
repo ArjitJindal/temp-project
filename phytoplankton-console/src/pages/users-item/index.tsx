@@ -6,7 +6,6 @@ import UserDetails from './UserDetails';
 import Header from './Header';
 import s from './index.module.less';
 import CRMMonitoring from './UserDetails/CRMMonitoring';
-import { useI18n } from '@/locales';
 import PageWrapper, { PAGE_WRAPPER_PADDING } from '@/components/PageWrapper';
 import { makeUrl } from '@/utils/routing';
 import { Comment, InternalBusinessUser, InternalConsumerUser } from '@/apis';
@@ -16,7 +15,7 @@ import * as Card from '@/components/ui/Card';
 import { useApiTime, usePageViewTracker } from '@/utils/tracker';
 import { useQuery } from '@/utils/queries/hooks';
 import { UI_SETTINGS } from '@/pages/users-item/ui-settings';
-import { USERS_ITEM } from '@/utils/queries/keys';
+import { USERS_ITEM_BY_TYPE } from '@/utils/queries/keys';
 import PageTabs, { TABS_LINE_HEIGHT } from '@/components/ui/PageTabs';
 import { keepBackUrl } from '@/utils/backUrl';
 import AIInsightsCard from '@/pages/case-management-item/CaseDetails/AIInsightsCard';
@@ -29,17 +28,18 @@ import AlertsCard from '@/pages/users-item/UserDetails/AlertsCard';
 import { useFeatureEnabled } from '@/components/AppWrapper/Providers/SettingsProvider';
 import BrainIcon from '@/components/ui/icons/brain-icon.react.svg';
 
-function UserItem() {
+export default function UserItem() {
   const { list, id, tab = 'user-details' } = useParams<'list' | 'id' | 'tab'>(); // todo: handle nulls properly
   usePageViewTracker('User Item');
   const api = useApi();
+
   const measure = useApiTime();
   const queryClient = useQueryClient();
   const isMLDemoEnabled = useFeatureEnabled('MACHINE_LEARNING_DEMO');
   const isSalesForceEnabled = useFeatureEnabled('SALESFORCE');
 
   const queryResult = useQuery<InternalConsumerUser | InternalBusinessUser>(
-    USERS_ITEM(id as string),
+    USERS_ITEM_BY_TYPE(list as string, id as string),
     () => {
       if (id == null) {
         throw new Error(`Id is not defined`);
@@ -52,14 +52,14 @@ function UserItem() {
 
   const handleUserUpdate = (userItem: InternalConsumerUser | InternalBusinessUser) => {
     queryClient.setQueryData<InternalConsumerUser | InternalBusinessUser>(
-      USERS_ITEM(id as string),
+      USERS_ITEM_BY_TYPE(list as string, id as string),
       userItem,
     );
   };
 
   const handleNewComment = (newComment: Comment) => {
     queryClient.setQueryData<InternalConsumerUser | InternalBusinessUser>(
-      USERS_ITEM(id as string),
+      USERS_ITEM_BY_TYPE(list as string, id as string),
       (user) => {
         if (user == null) {
           return user;
@@ -81,14 +81,17 @@ function UserItem() {
   return (
     <AsyncResourceRenderer resource={queryResult.data}>
       {(user) => (
-        <>
-          <Card.Root noBorder>
-            <Header
-              headerStickyElRef={setHeaderStickyElRef}
-              user={user}
-              onNewComment={handleNewComment}
-            />
-          </Card.Root>
+        <PageWrapper
+          header={
+            <Card.Root noBorder>
+              <Header
+                headerStickyElRef={setHeaderStickyElRef}
+                user={user}
+                onNewComment={handleNewComment}
+              />
+            </Card.Root>
+          }
+        >
           <PageTabs
             sticky={entityHeaderHeight}
             activeKey={tab}
@@ -219,25 +222,8 @@ function UserItem() {
               </AntTabs.TabPane>
             ))}
           </PageTabs>
-        </>
+        </PageWrapper>
       )}
     </AsyncResourceRenderer>
-  );
-}
-
-export default function UserItemWrapper() {
-  const i18n = useI18n();
-  const { list } = useParams<'list' | 'id'>(); // todo: handle nulls properly
-  return (
-    <PageWrapper
-      backButton={{
-        title: i18n(
-          list === 'consumer' ? 'menu.users.lists.consumer' : 'menu.users.lists.business',
-        ),
-        url: makeUrl('/users/list/:list/all', { list }),
-      }}
-    >
-      <UserItem />
-    </PageWrapper>
   );
 }

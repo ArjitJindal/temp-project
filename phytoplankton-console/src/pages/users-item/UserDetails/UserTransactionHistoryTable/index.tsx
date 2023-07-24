@@ -1,5 +1,4 @@
 import { useState } from 'react';
-import { Link } from 'react-router-dom';
 import style from './style.module.less';
 import { prepareTableData } from './helpers';
 import * as Card from '@/components/ui/Card';
@@ -31,6 +30,7 @@ import {
   TRANSACTION_STATE,
 } from '@/components/library/Table/standardDataTypes';
 import { makeUrl } from '@/utils/routing';
+import Id from '@/components/ui/Id';
 
 export type DataItem = {
   index: number;
@@ -125,9 +125,9 @@ export function Content(props: { userId: string }) {
             render: (transactionId) => {
               return (
                 <div className={style.idColumn}>
-                  <Link to={makeUrl(`/transactions/item/:id`, { id: transactionId ?? '' })}>
+                  <Id to={makeUrl(`/transactions/item/:id`, { id: transactionId ?? '' })}>
                     {transactionId}
-                  </Link>
+                  </Id>
                 </div>
               );
             },

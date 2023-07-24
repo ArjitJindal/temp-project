@@ -1,5 +1,4 @@
 import React, { useMemo, useState } from 'react';
-import { Link } from 'react-router-dom';
 import { Tag } from 'antd';
 import DetailsViewButton from '../DetailsViewButton';
 import ExpandedRowRenderer from './ExpandedRowRenderer';
@@ -209,18 +208,15 @@ export default function TransactionsTable(props: Props) {
           render: (value: string | undefined) => {
             return (
               <div style={{ overflowWrap: 'anywhere' }}>
-                <Link
-                  to={makeUrl(`/transactions/item/:id`, { id: value })}
-                  data-cy="transaction-id"
-                >
+                <Id to={makeUrl(`/transactions/item/:id`, { id: value })} testName="transaction-id">
                   {value}
-                  {escalatedTransactions && escalatedTransactions?.indexOf(value as string) > -1 && (
-                    <>
-                      <br />
-                      <Tag color="blue">Escalated</Tag>
-                    </>
-                  )}
-                </Link>
+                </Id>
+                {escalatedTransactions && escalatedTransactions?.indexOf(value as string) > -1 && (
+                  <>
+                    <br />
+                    <Tag color="blue">Escalated</Tag>
+                  </>
+                )}
               </div>
             );
           },

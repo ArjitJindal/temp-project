@@ -2,7 +2,7 @@ import { Form, Tooltip } from 'antd';
 import { useEffect, useState } from 'react';
 import cn from 'clsx';
 import s from './index.module.less';
-import RiskLevelSwitch from '@/components/ui/RiskLevelSwitch';
+import RiskLevelSwitch from '@/components/library/RiskLevelSwitch';
 import { useApi } from '@/api';
 import { RiskLevel } from '@/utils/risk-levels';
 import { message } from '@/components/library/Message';
@@ -88,8 +88,8 @@ export default function UserManualRiskPanel(props: Props) {
       });
   };
 
-  const handleChangeRiskLevel = (newRiskLevel: RiskLevel) => {
-    if (!isLocked) {
+  const handleChangeRiskLevel = (newRiskLevel: RiskLevel | undefined) => {
+    if (!isLocked && newRiskLevel != null) {
       setSyncState(loading(getOr(syncState, null)));
       api
         .pulseManualRiskAssignment({
@@ -116,15 +116,19 @@ export default function UserManualRiskPanel(props: Props) {
     <Form.Item name="field" style={{ margin: 0 }}>
       <div className={s.root}>
         <RiskLevelSwitch
-          disabled={isLoading(syncState) || isFailed(syncState)}
-          current={getOr(
-            map(
-              syncState,
-              ({ manualRiskLevel, derivedRiskLevel }) =>
-                manualRiskLevel || derivedRiskLevel || null,
-            ),
-            null,
-          )}
+          isDisabled={isLocked || isLoading(syncState) || isFailed(syncState)}
+          value={
+            isLocked
+              ? undefined
+              : getOr(
+                  map(
+                    syncState,
+                    ({ manualRiskLevel, derivedRiskLevel }) =>
+                      manualRiskLevel || derivedRiskLevel || undefined,
+                  ),
+                  undefined,
+                )
+          }
           onChange={handleChangeRiskLevel}
         />
         <Tooltip

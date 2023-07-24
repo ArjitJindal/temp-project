@@ -1,5 +1,4 @@
-import { Select } from 'antd';
-import { useCallback, useState } from 'react';
+import React, { useCallback, useState } from 'react';
 import { InternalBusinessUser, InternalConsumerUser } from '@/apis';
 import { KYC_STATUSES } from '@/utils/api/users';
 import { useApi } from '@/api';
@@ -7,6 +6,8 @@ import { KYCStatus } from '@/apis/models/KYCStatus';
 import { KYCStatusDetails } from '@/apis/models/KYCStatusDetails';
 import { useHasPermissions } from '@/utils/user-utils';
 import { message } from '@/components/library/Message';
+import { humanizeConstant } from '@/utils/humanize';
+import Select from '@/components/library/Select';
 
 const updatedKYCStatusDetails: { [key: string]: KYCStatusDetails } = {};
 
@@ -21,7 +22,10 @@ export default function KycStatusEditor({ user }: Props) {
   );
   const hasUserOveviewWritePermissions = useHasPermissions(['users:user-overview:write']);
   const handleChangeKYCStatus = useCallback(
-    async (newState: KYCStatus) => {
+    async (newState: KYCStatus | undefined) => {
+      if (newState == null) {
+        return;
+      }
       const newStateDetails = {
         status: newState,
         reason: 'Manually updated from Console',
@@ -50,13 +54,12 @@ export default function KycStatusEditor({ user }: Props) {
   );
   return (
     <Select
-      style={{ minWidth: 140 }}
-      options={KYC_STATUSES.map((status) => ({ value: status, label: status }))}
+      options={KYC_STATUSES.map((status) => ({ value: status, label: humanizeConstant(status) }))}
       value={kycStatusDetails?.status}
       onChange={handleChangeKYCStatus}
       allowClear
       placeholder="Please select"
-      disabled={!hasUserOveviewWritePermissions}
+      isDisabled={!hasUserOveviewWritePermissions}
     />
   );
 }

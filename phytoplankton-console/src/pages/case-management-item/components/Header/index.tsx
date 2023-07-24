@@ -7,7 +7,7 @@ import { Case, Comment } from '@/apis';
 import { useApi } from '@/api';
 import BriefcaseLineIcon from '@/components/ui/icons/Remix/business/briefcase-line.react.svg';
 import * as Form from '@/components/ui/Form';
-import EntityHeader from '@/components/ui/entityPage/EntityHeader';
+import LegacyEntityHeader from '@/components/ui/entityPage/LegacyEntityHeader';
 import CasesStatusChangeButton from '@/pages/case-management/components/CasesStatusChangeButton';
 import { FalsePositiveTag } from '@/pages/case-management/components/FalsePositiveTag';
 import CommentButton from '@/components/CommentButton';
@@ -41,7 +41,7 @@ export default function Header(props: Props) {
   );
   const api = useApi();
   return (
-    <EntityHeader
+    <LegacyEntityHeader
       stickyElRef={headerStickyElRef}
       idTitle={'Case ID'}
       tag={
@@ -125,7 +125,6 @@ export default function Header(props: Props) {
       {caseItem.caseHierarchyDetails?.parentCaseId && (
         <Form.Layout.Label title={'Parent Case ID'}>
           <Id
-            id={caseItem.caseHierarchyDetails?.parentCaseId}
             to={makeUrl(`/case-management/case/:caseId`, {
               caseId: caseItem.caseHierarchyDetails?.parentCaseId,
             })}
@@ -137,20 +136,17 @@ export default function Header(props: Props) {
       )}
       {caseItem.caseHierarchyDetails?.childCaseIds && (
         <Form.Layout.Label title={'Child Case IDs'}>
-          {caseItem.caseHierarchyDetails?.childCaseIds.map((caseId) => {
-            return (
-              <Id
-                id={caseId}
-                to={makeUrl(`/case-management/case/:caseId`, {
-                  caseId,
-                })}
-              >
-                {caseId}
-              </Id>
-            );
-          })}
+          {caseItem.caseHierarchyDetails?.childCaseIds.map((caseId) => (
+            <Id
+              to={makeUrl(`/case-management/case/:caseId`, {
+                caseId,
+              })}
+            >
+              {caseId}
+            </Id>
+          ))}
         </Form.Layout.Label>
       )}
-    </EntityHeader>
+    </LegacyEntityHeader>
   );
 }

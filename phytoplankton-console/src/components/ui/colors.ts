@@ -106,6 +106,9 @@ export const COLORS_V2_RISK_LEVEL_BG_HIGH = '#f7d8c1';
 export const COLORS_V2_RISK_LEVEL_BASE_VERY_HIGH = '#e93134';
 export const COLORS_V2_RISK_LEVEL_BG_VERY_HIGH = '#f8c1c2';
 
+export const COLORS_V2_AI_RISK_DISPLAY_BACKGROUND =
+  'linear-gradient(144deg, rgba(72, 40, 222, 0.06) 0%, rgba(219, 23, 176, 0.06) 100%), #FFF';
+
 /*
   Color to use for text when it's over the specified color
  */

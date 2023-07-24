@@ -13,6 +13,7 @@ import {
   USER_KYC_STATUS_TAG,
   USER_STATE_TAG,
 } from '@/components/library/Table/standardDataTypes';
+import UserLink from '@/components/UserLink';
 
 export function getAllUserColumns(): TableColumn<InternalConsumerUser | InternalBusinessUser>[] {
   const helper = new ColumnHelper<InternalConsumerUser | InternalBusinessUser>();
@@ -24,11 +25,7 @@ export function getAllUserColumns(): TableColumn<InternalConsumerUser | Internal
       tooltip: 'Unique identification of user.',
       type: {
         render: (userId, { item: entity }) => {
-          return (
-            <Link to={`/users/list/${entity.type.toLowerCase()}/${entity.userId}`} replace>
-              {userId}
-            </Link>
-          );
+          return <UserLink user={entity}>{userId}</UserLink>;
         },
       },
     }),

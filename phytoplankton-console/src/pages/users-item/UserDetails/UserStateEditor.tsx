@@ -1,4 +1,3 @@
-import { Select } from 'antd';
 import { useCallback, useState } from 'react';
 import { InternalBusinessUser, InternalConsumerUser } from '@/apis';
 import { USER_STATES } from '@/utils/api/users';
@@ -7,6 +6,8 @@ import { UserState } from '@/apis/models/UserState';
 import { UserStateDetails } from '@/apis/models/UserStateDetails';
 import { useHasPermissions } from '@/utils/user-utils';
 import { message } from '@/components/library/Message';
+import { humanizeConstant } from '@/utils/humanize';
+import Select from '@/components/library/Select';
 
 // TODO: Use react-query to properly do optimistic updates
 const updatedUserStateDetails: { [key: string]: UserStateDetails } = {};
@@ -22,7 +23,10 @@ export default function UserStateEditor({ user }: Props) {
   );
   const hasUserOveviewWritePermissions = useHasPermissions(['users:user-overview:write']);
   const handleChangeUserState = useCallback(
-    async (newState: UserState) => {
+    async (newState: UserState | undefined) => {
+      if (newState == null) {
+        return;
+      }
       const newStateDetails = {
         state: newState,
         // TODO: Allow editing `userStateDetails.reason`
@@ -52,13 +56,12 @@ export default function UserStateEditor({ user }: Props) {
   );
   return (
     <Select
-      style={{ minWidth: 140 }}
       allowClear
-      options={USER_STATES.map((state) => ({ value: state, label: state }))}
+      options={USER_STATES.map((state) => ({ value: state, label: humanizeConstant(state) }))}
       value={userStateDetails?.state}
       onChange={handleChangeUserState}
       placeholder="Please select"
-      disabled={!hasUserOveviewWritePermissions}
+      isDisabled={!hasUserOveviewWritePermissions}
     />
   );
 }

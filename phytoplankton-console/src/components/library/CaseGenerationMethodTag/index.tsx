@@ -1,0 +1,20 @@
+import React from 'react';
+import cn from 'clsx';
+import s from './index.module.less';
+import { humanizeConstant } from '@/utils/humanize';
+
+export type CaseGenerationMethod = 'SYSTEM' | 'MANUAL';
+
+interface Props {
+  method: CaseGenerationMethod;
+}
+
+export default function CaseGenerationMethodTag(props: Props) {
+  const { method } = props;
+
+  return (
+    <div className={cn(s.root)}>
+      <div className={cn(s.body)}>{humanizeConstant(method)}</div>
+    </div>
+  );
+}

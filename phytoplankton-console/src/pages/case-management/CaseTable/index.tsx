@@ -1,7 +1,6 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import _ from 'lodash';
 import { useMutation } from '@tanstack/react-query';
-import { Link } from 'react-router-dom';
 import { TableSearchParams } from '../types';
 import CasesStatusChangeButton from '../components/CasesStatusChangeButton';
 import AlertTable from '../AlertTable';
@@ -21,7 +20,7 @@ import {
   useTableData,
 } from '@/pages/case-management/CaseTable/helpers';
 import { TableItem } from '@/pages/case-management/CaseTable/types';
-import { USER_STATES } from '@/utils/api/users';
+import { getUserLink, USER_STATES } from '@/utils/api/users';
 import UserKycStatusTag from '@/components/ui/UserKycStatusTag';
 import { AssigneesDropdown } from '@/pages/case-management/components/AssigneesDropdown';
 import UserStateTag from '@/components/ui/UserStateTag';
@@ -38,8 +37,8 @@ import { useApi } from '@/api';
 import { makeExtraFilters } from '@/pages/case-management/helpers';
 import {
   ASSIGNMENTS,
-  CASEID_PRIORITY,
   CASE_STATUS,
+  CASEID_PRIORITY,
   DATE,
   DATE_TIME,
   NUMBER,
@@ -49,6 +48,7 @@ import {
 import { RiskLevel } from '@/utils/risk-levels';
 import { ColumnHelper } from '@/components/library/Table/columnHelper';
 import { DEFAULT_PARAMS_STATE } from '@/components/library/Table/consts';
+import Id from '@/components/ui/Id';
 
 interface Props {
   params: AllParams<TableSearchParams>;
@@ -143,9 +143,7 @@ export default function CaseTable(props: Props) {
             const { user } = caseItem;
             return (
               <div style={{ overflowWrap: 'anywhere' }}>
-                <Link to={`/users/list/${user?.type.toLowerCase()}/${userId}`} replace>
-                  {userId}
-                </Link>
+                <Id to={getUserLink(user)}>{userId}</Id>
               </div>
             );
           },

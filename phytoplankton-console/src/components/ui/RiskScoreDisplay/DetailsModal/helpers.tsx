@@ -8,7 +8,7 @@ import { RiskEntityType, TransactionType } from '@/apis';
 import CountryDisplay from '@/components/ui/CountryDisplay';
 import { PaymentMethodTag } from '@/components/ui/PaymentTypeTag';
 import { PaymentMethod } from '@/utils/payments';
-import { TransactionTypeTag } from '@/components/ui/TransactionTypeTag';
+import TransactionTypeTag from '@/components/library/TransactionTypeTag';
 import { humanizeConstant } from '@/utils/humanize';
 import { CURRENCIES } from '@/utils/currencies';
 import {

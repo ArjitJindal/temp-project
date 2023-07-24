@@ -35,7 +35,7 @@ import {
 } from '@/apis';
 import CountryDisplay from '@/components/ui/CountryDisplay';
 import { PaymentMethodTag } from '@/components/ui/PaymentTypeTag';
-import { TransactionTypeTag } from '@/components/ui/TransactionTypeTag';
+import TransactionTypeTag from '@/components/library/TransactionTypeTag';
 import { isTransactionType } from '@/utils/api/transactions';
 import { RESIDENCE_TYPES } from '@/utils/residence-types';
 import { capitalizeWords } from '@/utils/tags';

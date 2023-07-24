@@ -13,7 +13,7 @@ import {
 import { INPUT_RENDERERS, NEW_VALUE_VALIDATIONS, VALUE_RENDERERS } from '../consts';
 import style from './style.module.less';
 import { RiskLevel } from '@/apis';
-import RiskLevelSwitch from '@/components/ui/RiskLevelSwitch';
+import RiskLevelSwitch from '@/components/library/RiskLevelSwitch';
 import { AsyncResource, isLoading, useLastSuccessValue } from '@/utils/asyncResource';
 import { DEFAULT_COUNTRY_RISK_VALUES } from '@/utils/defaultCountriesRiskLevel';
 import { useHasPermissions } from '@/utils/user-utils';
@@ -51,7 +51,7 @@ export default function ValuesTable(props: Props) {
   const loading = isLoading(currentValuesRes);
 
   const [newValue, setNewValue] = useState<RiskValueContent | null>(null);
-  const [newRiskLevel, setNewRiskLevel] = useState<RiskLevel | null>(null);
+  const [newRiskLevel, setNewRiskLevel] = useState<RiskLevel>();
   const [shouldShowNewValueInput, setShouldShowNewValueInput] = useState(true);
   const [onlyDeleteLast, setOnlyDeleteLast] = useState(false);
   const handleUpdateValues = useCallback((cb: (oldValues: ParameterValues) => ParameterValues) => {
@@ -70,7 +70,7 @@ export default function ValuesTable(props: Props) {
         },
       ]);
       setNewValue(null);
-      setNewRiskLevel(null);
+      setNewRiskLevel(undefined);
     }
   };
 
@@ -89,7 +89,7 @@ export default function ValuesTable(props: Props) {
       }
       return validation({
         newValue: newValue,
-        newRiskLevel: newRiskLevel,
+        newRiskLevel: newRiskLevel ?? null,
         newParameterName: parameter,
         previousValues: values,
       });
@@ -136,17 +136,19 @@ export default function ValuesTable(props: Props) {
           )}
         </div>
         {values.map(({ parameterValue, riskLevel }, index) => {
-          const handleChangeRiskLevel = (newRiskLevel: RiskLevel) => {
-            handleUpdateValues((values) =>
-              values.map((x) =>
-                x.parameterValue === parameterValue
-                  ? {
-                      ...x,
-                      riskLevel: newRiskLevel,
-                    }
-                  : x,
-              ),
-            );
+          const handleChangeRiskLevel = (newRiskLevel: RiskLevel | undefined) => {
+            if (newRiskLevel != null) {
+              handleUpdateValues((values) =>
+                values.map((x) =>
+                  x.parameterValue === parameterValue
+                    ? {
+                        ...x,
+                        riskLevel: newRiskLevel,
+                      }
+                    : x,
+                ),
+              );
+            }
           };
 
           const handleDeleteKey = () => {
@@ -165,8 +167,8 @@ export default function ValuesTable(props: Props) {
               </div>
               <div style={labelExistsStyle(dataType, 'value')}>
                 <RiskLevelSwitch
-                  disabled={loading}
-                  current={riskLevel}
+                  isDisabled={loading}
+                  value={riskLevel}
                   onChange={handleChangeRiskLevel}
                 />
               </div>
@@ -199,8 +201,8 @@ export default function ValuesTable(props: Props) {
             <>
               <div style={labelExistsStyle(dataType, 'input')}>
                 <RiskLevelSwitch
-                  disabled={loading}
-                  current={newRiskLevel}
+                  isDisabled={loading}
+                  value={newRiskLevel}
                   onChange={setNewRiskLevel}
                 />
               </div>

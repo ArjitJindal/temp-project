@@ -34,12 +34,7 @@ export default function ReportsTable(props: Props) {
         render: (_value, { item: entity }) => {
           return (
             <>
-              <Id
-                id={entity.id}
-                testName="report-id"
-                onClick={() => setReport(entity)}
-                alwaysShowCopy={false}
-              >
+              <Id testName="report-id" onClick={() => setReport(entity)} alwaysShowCopy={false}>
                 {entity.id}
               </Id>
             </>

@@ -7,15 +7,20 @@ import { RISK_LEVEL_COLORS, RiskLevel, useRiskLevel } from '@/utils/risk-levels'
 import RiskLevelTag from '@/components/library/RiskLevelTag';
 import { useId } from '@/utils/hooks';
 
+export type MainPanelCustomStyles = Partial<{
+  background?: string;
+}>;
+
 interface Props {
   icon: React.ReactNode;
   title: string;
   values: ValueItem[];
   onClickInfo?: () => void;
+  customStyling?: MainPanelCustomStyles;
 }
 
 export default function MainPanel(props: Props) {
-  const { title, values, icon, onClickInfo } = props;
+  const { title, values, icon, customStyling, onClickInfo } = props;
   const sortedItems = useMemo(() => sortByDate(values), [values]);
   const sortedScores = useMemo(() => sortedItems.map(({ score }) => score), [sortedItems]);
   const lastItem = sortedItems[values.length - 1];
@@ -24,7 +29,7 @@ export default function MainPanel(props: Props) {
   const derivedRiskLevel = useRiskLevel(currentScore);
   const currentRiskLevel = manualRiskLevel ?? derivedRiskLevel ?? undefined;
   return (
-    <div className={cn(s.root)}>
+    <div className={cn(s.root)} style={{ background: customStyling?.background }}>
       <div className={s.header}>
         <div className={s.title}>
           <div className={s.icon}>{icon}</div>

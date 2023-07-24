@@ -1,10 +1,10 @@
 import _ from 'lodash';
 
 /*
-  SOME_CONSTANT_NAME => Some Constant Name
+  SOME_CONSTANT_NAME => Some constant name
  */
 export function humanizeConstant(name: string): string {
-  return _.startCase(_.toLower(name.split('_').join(' ')));
+  return _.capitalize(_.toLower(name.split('_').join(' ')));
 }
 
 /*
