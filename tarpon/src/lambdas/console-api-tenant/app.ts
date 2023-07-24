@@ -7,7 +7,7 @@ import { AccountsService } from '../../services/accounts'
 import { lambdaApi } from '@/core/middlewares/lambda-api-middlewares'
 import { JWTAuthorizerResult, assertCurrentUserRole } from '@/@types/jwt'
 import { Tenant } from '@/@types/openapi-internal/Tenant'
-import { getDynamoDbClientByEvent } from '@/utils/dynamodb'
+import { getDynamoDbClient, getDynamoDbClientByEvent } from '@/utils/dynamodb'
 import { TenantService } from '@/services/tenants'
 import { TenantSettings } from '@/@types/openapi-internal/TenantSettings'
 import { TenantRepository } from '@/services/tenants/repositories/tenant-repository'
@@ -56,9 +56,10 @@ export const tenantsHandler = lambdaApi()(
         '1234567890ABCDEFGHIJKLMNOPQRSTUVWXYZ',
         10
       )()
+      const dynamoDb = getDynamoDbClient()
       const tenantService = new TenantService(
         request.TenantCreationRequest.tenantId ?? newTenantId,
-        { mongoDb, dynamoDb: getDynamoDbClientByEvent(event) }
+        { mongoDb, dynamoDb }
       )
       const response = await tenantService.createTenant(
         request.TenantCreationRequest
