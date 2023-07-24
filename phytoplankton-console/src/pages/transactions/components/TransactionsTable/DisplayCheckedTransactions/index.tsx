@@ -50,9 +50,12 @@ const DisplayCheckedTransactions = (props: Props) => {
       );
     },
   );
-
   const count = useMemo(() => {
-    return queryResult.data?.kind === 'SUCCESS' ? queryResult.data.value.count : 0;
+    const [count, limit] =
+      queryResult.data?.kind === 'SUCCESS'
+        ? [queryResult.data.value.count, queryResult.data.value.limit]
+        : [0, 0];
+    return count > limit ? `${limit}+` : `${count}`;
   }, [queryResult.data]);
 
   return (
