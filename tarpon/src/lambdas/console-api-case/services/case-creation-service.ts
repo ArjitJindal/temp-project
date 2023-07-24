@@ -210,6 +210,7 @@ export class CaseCreationService {
       return {
         createdTimestamp: availableAfterTimestamp ?? createdTimestamp,
         latestTransactionArrivalTimestamp,
+        updatedAt: now,
         alertStatus: 'OPEN',
         ruleId: hitRule.ruleId,
         availableAfterTimestamp: availableAfterTimestamp,
@@ -273,6 +274,7 @@ export class CaseCreationService {
         originPaymentMethods: Array.from(originPaymentDetails),
         destinationPaymentMethods: Array.from(destinationPaymentDetails),
         numberOfTransactionsHit: txnSet.size,
+        updatedAt: Date.now(),
       }
     })
   }
@@ -330,10 +332,12 @@ export class CaseCreationService {
       newCaseAlertsTransactions.map(({ transactionId }) => transactionId)
     )
 
+    const now = Date.now()
+
     // Create new case
     const newCase = await this.caseRepository.addCaseMongo({
       alerts: newCaseAlerts,
-      createdTimestamp: Date.now(),
+      createdTimestamp: now,
       caseStatus: 'OPEN',
       priority:
         _.minBy(newCaseAlerts, 'priority')?.priority ?? _.last(PRIORITYS),
@@ -344,6 +348,7 @@ export class CaseCreationService {
       caseTransactions: newCaseAlertsTransactions,
       caseTransactionsIds,
       caseTransactionsCount: caseTransactionsIds.length,
+      updatedAt: now,
     })
 
     const oldCaseTransactionsIds = _.uniq(
@@ -359,6 +364,7 @@ export class CaseCreationService {
       caseTransactionsCount: oldCaseTransactionsIds.length,
       priority:
         _.minBy(oldCaseAlerts, 'priority')?.priority ?? _.last(PRIORITYS),
+      updatedAt: now,
     })
     return newCase
   }
@@ -524,6 +530,7 @@ export class CaseCreationService {
               priority:
                 _.minBy(alerts, 'priority')?.priority ?? _.last(PRIORITYS),
               alerts,
+              updatedAt: now,
             })
           } else {
             logger.info('Create a new case for a transaction')
@@ -549,6 +556,7 @@ export class CaseCreationService {
                 params.latestTransactionArrivalTimestamp,
                 params.transaction
               ),
+              updatedAt: now,
             })
           }
         }

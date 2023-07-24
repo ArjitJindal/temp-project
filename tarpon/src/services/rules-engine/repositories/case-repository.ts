@@ -195,7 +195,7 @@ export class CaseRepository {
       params.afterCaseLastUpdatedTimestamp != null
     ) {
       conditions.push({
-        'lastStatusChange.timestamp': {
+        updatedAt: {
           $lte: params.beforeCaseLastUpdatedTimestamp,
           $gte: params.afterCaseLastUpdatedTimestamp,
         },
@@ -556,6 +556,7 @@ export class CaseRepository {
       $project: {
         _id: 1,
         assignments: 1,
+        updatedAt: 1,
         reviewAssignments: 1,
         caseId: 1,
         caseStatus: 1,
@@ -720,6 +721,7 @@ export class CaseRepository {
       $set: {
         caseStatus: statusChange?.caseStatus,
         lastStatusChange: statusChange,
+        updatedAt: Date.now(),
       },
       $push: {
         statusChanges: statusChange,
@@ -751,7 +753,7 @@ export class CaseRepository {
 
     await collection.updateMany(
       { caseId: { $in: caseIds } },
-      { $set: { assignments } }
+      { $set: { assignments, updatedAt: Date.now() } }
     )
   }
 
@@ -764,7 +766,7 @@ export class CaseRepository {
 
     await collection.updateMany(
       { caseId: { $in: caseIds } },
-      { $set: { reviewAssignments } }
+      { $set: { reviewAssignments, updatedAt: Date.now() } }
     )
   }
 
@@ -793,6 +795,7 @@ export class CaseRepository {
                 [commentToSave],
               ],
             },
+            updatedAt: Date.now(),
           },
         },
       ]
@@ -826,6 +829,7 @@ export class CaseRepository {
                 [commentToSave],
               ],
             },
+            updatedAt: Date.now(),
           },
         },
       ]
@@ -839,7 +843,10 @@ export class CaseRepository {
     const collection = db.collection<Case>(CASES_COLLECTION(this.tenantId))
     await collection.updateOne(
       { caseId },
-      { $pull: { comments: { id: commentId } } }
+      {
+        $pull: { comments: { id: commentId } },
+        $set: { updatedAt: Date.now() },
+      }
     )
   }
 

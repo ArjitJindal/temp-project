@@ -5,9 +5,7 @@ describe('SAR Generate', () => {
 
   it('should generate SAR', () => {
     cy.visit('/case-management/cases', { timeout: 15000 });
-    cy.visit(
-      '/case-management/cases?sort=-lastStatusChange.timestamp&showCases=ALL_ALERTS&alertStatus=CLOSED',
-    );
+    cy.visit('/case-management/cases?sort=-updatedAt&showCases=ALL_ALERTS&alertStatus=CLOSED');
     cy.get('body').then((body) => {
       if (body.find('input[data-cy="row-table-checkbox"]').length > 0) {
         cy.get('input[data-cy="header-table-checkbox"]', { timeout: 15000 }).click();
@@ -15,9 +13,7 @@ describe('SAR Generate', () => {
         cy.get('button[data-cy="modal-ok"]').eq(0).click();
       }
     });
-    cy.visit(
-      '/case-management/cases?sort=-lastStatusChange.timestamp&showCases=ALL&caseStatus=OPEN',
-    );
+    cy.visit('/case-management/cases?sort=-updatedAt&showCases=ALL&caseStatus=OPEN');
     cy.get('a[data-cy="case-id"]', { timeout: 15000 })
       .should('be.visible')
       .first()

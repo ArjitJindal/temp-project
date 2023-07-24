@@ -5534,6 +5534,8 @@ components:
             $ref: '#/components/schemas/CaseStatusChange'
         lastStatusChange:
           $ref: '#/components/schemas/CaseStatusChange'
+        updatedAt:
+          type: number
         priority:
           $ref: '#/components/schemas/Priority'
         relatedCases:
@@ -5600,6 +5602,8 @@ components:
             $ref: '#/components/schemas/CaseStatusChange'
         lastStatusChange:
           $ref: '#/components/schemas/CaseStatusChange'
+        updatedAt:
+          type: number
         transactionIds:
           type: array
           items:

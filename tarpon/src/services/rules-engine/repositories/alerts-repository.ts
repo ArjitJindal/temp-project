@@ -150,7 +150,7 @@ export class AlertsRepository {
       params.beforeAlertLastUpdatedTimestamp != null
     ) {
       conditions.push({
-        'alerts.lastStatusChange.timestamp': {
+        'alerts.updatedAt': {
           $lte: params.beforeAlertLastUpdatedTimestamp,
           $gte: params.afterAlertLastUpdatedTimestamp,
         },
@@ -341,6 +341,10 @@ export class AlertsRepository {
         $push: {
           'alerts.$[alert].comments': commentToSave,
         },
+        $set: {
+          updatedAt: now,
+          'alerts.$[alert].updatedAt': now,
+        },
       },
       {
         arrayFilters: [
@@ -380,6 +384,10 @@ export class AlertsRepository {
         $push: {
           'alerts.$[alert].comments': commentToSave,
         },
+        $set: {
+          updatedAt: now,
+          'alerts.$[alert].updatedAt': now,
+        },
       },
       {
         arrayFilters: [
@@ -403,6 +411,8 @@ export class AlertsRepository {
     const db = this.mongoDb.db()
     const collection = db.collection<Case>(CASES_COLLECTION(this.tenantId))
 
+    const now = Date.now()
+
     await collection.updateOne(
       {
         caseId,
@@ -412,6 +422,10 @@ export class AlertsRepository {
           'alerts.$[alert].comments': {
             id: commentId,
           },
+        },
+        $set: {
+          updatedAt: now,
+          'alerts.$[alert].updatedAt': now,
         },
       },
       {
@@ -434,6 +448,8 @@ export class AlertsRepository {
     const db = this.mongoDb.db()
     const collection = db.collection<Case>(CASES_COLLECTION(this.tenantId))
 
+    const now = Date.now()
+
     await collection.updateMany(
       {
         caseId: {
@@ -444,6 +460,8 @@ export class AlertsRepository {
         $set: {
           'alerts.$[alert].alertStatus': statusChange.caseStatus,
           'alerts.$[alert].lastStatusChange': statusChange,
+          updatedAt: now,
+          'alerts.$[alert].updatedAt': now,
         },
         $push: {
           'alerts.$[alert].statusChanges': statusChange,
@@ -543,6 +561,8 @@ export class AlertsRepository {
     const db = this.mongoDb.db()
     const collection = db.collection<Case>(CASES_COLLECTION(this.tenantId))
 
+    const now = Date.now()
+
     await collection.updateMany(
       {
         'alerts.alertId': {
@@ -552,6 +572,7 @@ export class AlertsRepository {
       {
         $set: {
           'alerts.$[alert].reviewAssignments': reviewAssignments,
+          'alerts.$[alert].updatedAt': now,
         },
       },
       {
@@ -573,6 +594,8 @@ export class AlertsRepository {
     const db = this.mongoDb.db()
     const collection = db.collection<Case>(CASES_COLLECTION(this.tenantId))
 
+    const now = Date.now()
+
     await collection.updateMany(
       {
         'alerts.alertId': {
@@ -582,6 +605,8 @@ export class AlertsRepository {
       {
         $set: {
           'alerts.$[alert].assignments': assignments,
+          'alerts.$[alert].updatedAt': now,
+          updatedAt: now,
         },
       },
       {

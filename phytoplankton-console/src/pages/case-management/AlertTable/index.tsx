@@ -193,10 +193,9 @@ const mergedColumns = (
         },
       },
     }),
-
-    helper.simple<'lastStatusChange.timestamp'>({
+    helper.simple<'updatedAt'>({
       title: 'Last update time',
-      key: 'lastStatusChange.timestamp',
+      key: 'updatedAt',
       type: DATE_TIME,
       filtering: true,
       sorting: true,

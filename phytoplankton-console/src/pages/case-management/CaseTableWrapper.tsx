@@ -51,7 +51,7 @@ export default function CaseTableWrapper(props: {
       userStates,
       showCases,
       assignedTo,
-      'lastStatusChange.timestamp': lastStatusChangeTimestamp,
+      updatedAt,
     } = params;
 
     const [sortField, sortOrder] = sort[0] ?? [];
@@ -115,12 +115,10 @@ export default function CaseTableWrapper(props: {
           filterUserState: userStates,
           filterAssignmentsIds:
             showCases === 'MY' ? [auth0user.userId] : assignedTo?.length ? assignedTo : undefined,
-          ...(lastStatusChangeTimestamp && {
-            afterCaseLastUpdatedTimestamp: lastStatusChangeTimestamp
-              ? dayjs(lastStatusChangeTimestamp[0]).valueOf()
-              : 0,
-            beforeCaseLastUpdatedTimestamp: lastStatusChangeTimestamp
-              ? dayjs(lastStatusChangeTimestamp[1]).valueOf()
+          ...(updatedAt && {
+            afterCaseLastUpdatedTimestamp: updatedAt ? dayjs(updatedAt[0]).valueOf() : 0,
+            beforeCaseLastUpdatedTimestamp: updatedAt
+              ? dayjs(updatedAt[1]).valueOf()
               : Number.MAX_SAFE_INTEGER,
           }),
         }),

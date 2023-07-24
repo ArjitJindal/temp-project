@@ -20,9 +20,7 @@ describe('Closing and Re-Opening the cases', () => {
       cy.wait('@case').then((interception) => {
         expect(interception.response.statusCode).to.eq(200);
       });
-      cy.visit(
-        '/case-management/cases?sort=-lastStatusChange.timestamp&showCases=ALL&caseStatus=CLOSED',
-      );
+      cy.visit('/case-management/cases?sort=-updatedAt&showCases=ALL&caseStatus=CLOSED');
       cy.get('input[data-cy="row-table-checkbox"]', { timeout: 15000 }).eq(0).click();
       cy.caseAlertAction('Re-Open');
       cy.get('.ant-modal-footer button').eq(1).click();
