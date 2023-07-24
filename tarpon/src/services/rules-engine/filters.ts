@@ -90,6 +90,14 @@ import {
   TransactionProductTypeRuleFilter,
   TransactionProductTypeRuleFilterParameter,
 } from './transaction-filters/transaction-product-type'
+import {
+  UserKycStatusRuleFilter,
+  UserKycStatusRuleFilterParameter,
+} from './user-filters/user-kyc-status'
+import {
+  UserStatusRuleFilter,
+  UserStatusRuleFilterParameter,
+} from './user-filters/user-status'
 
 export type TransactionFilters = PaymentFilterRuleFilterParameter &
   TransactionTypeRuleFilterParameter &
@@ -115,7 +123,9 @@ export type UserFilters = WhitelistUsersRuleFilterParameter &
   UserCountryOfNationalityRuleFilterParameter &
   UserCountryOfRegistrationRuleFilterParameter &
   UserAcquisitionChannelRuleFilterParameter &
-  ConsumerUserSegmentRuleFilterParameter
+  ConsumerUserSegmentRuleFilterParameter &
+  UserKycStatusRuleFilterParameter &
+  UserStatusRuleFilterParameter
 
 export type TransactionFilterKeys = keyof TransactionFilters
 export type TransactionHistoricalFilterKeys = keyof TransactionHistoricalFilters
@@ -151,6 +161,8 @@ const _USER_FILTERS = [
   UserCountryOfNationalityRuleFilter,
   UserCountryOfRegistrationRuleFilter,
   UserAcquisitionChannelRuleFilter,
+  UserKycStatusRuleFilter,
+  UserStatusRuleFilter,
 ]
 
 function createFiltersMap<T>(filters: Array<any>): { [key: string]: T } {

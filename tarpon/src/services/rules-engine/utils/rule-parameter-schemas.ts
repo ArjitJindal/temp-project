@@ -13,6 +13,8 @@ import { TRANSACTION_TYPES } from '@/@types/openapi-public-custom/TransactionTyp
 import { SANCTIONS_SEARCH_TYPES } from '@/@types/openapi-internal-custom/SanctionsSearchType'
 import { ACQUISITION_CHANNELS } from '@/@types/openapi-internal-custom/AcquisitionChannel'
 import { CONSUMER_USER_SEGMENTS } from '@/@types/openapi-internal-custom/ConsumerUserSegment'
+import { KYC_STATUSS } from '@/@types/openapi-public-custom/KYCStatus'
+import { USER_STATES } from '@/@types/openapi-internal-custom/UserState'
 
 type SchemaOptions = {
   title?: string
@@ -718,5 +720,57 @@ export const RESOLVE_IBAN_NUMBER_SCHEMA = (options?: SchemaOptions) =>
     description:
       options?.description ||
       'Enable if you want to identify Bank name using IBAN numbers.',
+    nullable: true,
+  } as const)
+
+export const USER_KYC_STATUS_SCHEMA = (options?: SchemaOptions) =>
+  ({
+    ...uiSchema(options?.uiSchema, {
+      subtype: 'KYC_STATUS',
+    }),
+    type: 'array',
+    title: options?.title || 'User KYC status',
+    description:
+      options?.description ||
+      'Select one or more user KYC status to target transactions for those users',
+    items: {
+      type: 'string',
+      enum: KYC_STATUSS,
+      enumNames: KYC_STATUSS.map((segment) =>
+        _.startCase(segment.replace('_', ' ').toLowerCase())
+      ),
+    },
+    uniqueItems: true,
+  } as const)
+
+export const USER_KYC_STATUS_OPTIONAL_SCHEMA = (options?: SchemaOptions) =>
+  ({
+    ...USER_KYC_STATUS_SCHEMA(options),
+    nullable: true,
+  } as const)
+
+export const USER_STATUS_SCHEMA = (options?: SchemaOptions) =>
+  ({
+    ...uiSchema(options?.uiSchema, {
+      subtype: 'USER_STATUS',
+    }),
+    type: 'array',
+    title: options?.title || 'User status',
+    description:
+      options?.description ||
+      'Select one or more user status states to target transactions for those users',
+    items: {
+      type: 'string',
+      enum: USER_STATES,
+      enumNames: USER_STATES.map((segment) =>
+        _.startCase(segment.replace('_', ' ').toLowerCase())
+      ),
+    },
+    uniqueItems: true,
+  } as const)
+
+export const USER_STATUS_OPTIONAL_SCHEMA = (options?: SchemaOptions) =>
+  ({
+    ...USER_STATUS_SCHEMA(options),
     nullable: true,
   } as const)
