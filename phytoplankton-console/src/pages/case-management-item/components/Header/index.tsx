@@ -110,7 +110,11 @@ export default function Header(props: Props) {
           {user?.userId}
         </Id>
       </Form.Layout.Label>
-      <Form.Layout.Label icon={<BriefcaseLineIcon />} title={'Case Status'}>
+      <Form.Layout.Label
+        icon={<BriefcaseLineIcon />}
+        title={'Case Status'}
+        className={s.preventShrinkage}
+      >
         <Tag
           className={s.caseStatusTag}
           color={caseItem.caseStatus === 'CLOSED' ? 'success' : 'warning'}

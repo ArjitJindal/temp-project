@@ -9,6 +9,7 @@ interface Props {
   variant?: 'default' | 'bold';
   color?: 'default' | 'dark';
   children?: React.ReactNode;
+  className?: string;
 }
 
 export default function Label(props: Props) {
@@ -19,9 +20,10 @@ export default function Label(props: Props) {
     orientation = 'vertical',
     color = 'default',
     children,
+    className = '',
   } = props;
   return (
-    <div className={cn(s.root, s[variant], s[`orientation-${orientation}`])}>
+    <div className={cn(s.root, s[variant], s[`orientation-${orientation}`], className)}>
       <div className={s.header}>
         {icon && <div className={s.icon}>{icon}</div>}
         <div className={cn(s.title, s[color])}>{title}</div>
