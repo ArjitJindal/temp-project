@@ -9,6 +9,8 @@ import { DefaultValuesSettings } from './components/DefaultValuesSettings';
 import { RiskAlgorithmsSettings } from './components/RiskAlgorithmsSettings';
 import { OtherSettings } from './components/OtherSettings';
 import NarrativeTemplates from './components/NarrativeTemplates';
+import s from './styles.module.less';
+import ComplyAdvantageLogo from '@/branding/Comply-Advantage-logo.svg';
 import PageWrapper from '@/components/PageWrapper';
 import { useI18n } from '@/locales';
 import SidebarPanel, { MenuSection } from '@/components/ui/SidebarPanel';
@@ -16,11 +18,24 @@ import Button from '@/components/library/Button';
 import { useFeatureEnabled } from '@/components/AppWrapper/Providers/SettingsProvider';
 import { usePageViewTracker } from '@/utils/tracker';
 import { getBranding, isWhiteLabeled } from '@/utils/branding';
+import { message } from '@/components/library/Message';
 
 const branding = getBranding();
 const whiteLabeled = isWhiteLabeled();
 export default function SettingsPage() {
   const isMLDemoEnabled = useFeatureEnabled('MACHINE_LEARNING_DEMO');
+  const isSanctionsEnabled = useFeatureEnabled('SANCTIONS');
+
+  const handleDownload = () => {
+    message.success('Sanctions list download started');
+    const downloadLink = document.createElement('a');
+    downloadLink.href =
+      'https://phytoplankton-assets-sanctionslist.s3.eu-central-1.amazonaws.com/Data+Compliance+Overview+January+2023.xlsx';
+    // Sanctions list has been stored in a s3 bucket with the name 'phytoplankton-assets-sanctionslist'
+    downloadLink.download = 'File.xlsx';
+    downloadLink.click();
+  };
+
   usePageViewTracker('Settings');
   const menuSections: (MenuSection | boolean)[] = [
     {
@@ -86,11 +101,39 @@ export default function SettingsPage() {
       menuItems: [
         {
           name: 'Sanctions/PEP/Adverse media screening',
-          content: (
+          content: isSanctionsEnabled ? (
             <>
-              <div style={{ marginTop: '200px' }}>
+              <div className={s.sanctionsModal}>
+                <div className={s.sanctionsLayout}>
+                  <h3 className={s.sanctionsHeading}>
+                    Sanctions list (as of the 31 January, 2023){'     '}
+                  </h3>
+                  <img src={ComplyAdvantageLogo} alt="Comply Advantage" />
+                </div>
+                <div className={s.sanctionsText}>
+                  ComplyAdvantage data provides a holistic solution to due diligence and compliance
+                  requirements. Their global data sources are continuously updated, reflecting the
+                  ever-changing risks to corporates and financial institutions in their dealings
+                  with global counterparties. The data includes millions of profiles on high-risk
+                  individuals and corporations worldwide.
+                </div>
+                <div className={s.sanctionsDownloadButton}>
+                  <Button
+                    type="PRIMARY"
+                    onClick={() => {
+                      handleDownload();
+                    }}
+                  >
+                    Download List
+                  </Button>
+                </div>
+              </div>
+            </>
+          ) : (
+            <>
+              <div>
                 <h3>Sanctions/PEP/Adverse media screening{'     '}</h3>
-                <a href={`mailto:${branding.supportEmail}`}>
+                <a href={`mailto:${branding.supportEmail}`} className={s.sanctionsAccessButton}>
                   <Button type="PRIMARY">Request access</Button>
                 </a>
               </div>
