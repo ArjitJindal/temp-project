@@ -2,6 +2,7 @@ import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import pluralize from 'pluralize';
 import { useMutation } from '@tanstack/react-query';
 import { AssigneesDropdown } from '../components/AssigneesDropdown';
+import { ApproveSendBackButton } from '../components/ApproveSendBackButton';
 import CreateCaseConfirmModal from './CreateCaseConfirmModal';
 import { usePaginatedQuery } from '@/utils/queries/hooks';
 import { useApi } from '@/api';
@@ -47,8 +48,28 @@ import { ColumnHelper } from '@/components/library/Table/columnHelper';
 import { DefaultApiGetAlertListRequest } from '@/apis/types/ObjectParamAPI';
 import { neverReturn } from '@/utils/lang';
 import { SarButton as SarButton } from '@/components/Sar';
+import {
+  canReviewCases,
+  getSingleCaseStatusCurrent,
+  getSingleCaseStatusPreviousForInReview,
+  isInReviewCases,
+  statusInReview,
+} from '@/utils/case-utils';
+import { CASE_STATUSS } from '@/apis/models-custom/CaseStatus';
 
 export type AlertTableParams = AllParams<TableSearchParams>;
+
+const getSelectedCaseIdsForAlerts = (selectedItems: Record<string, TableAlertItem>) => {
+  const selectedCaseIds = [
+    ...new Set(
+      Object.values(selectedItems)
+        .map(({ caseId }) => caseId)
+        .filter((x): x is string => typeof x === 'string'),
+    ),
+  ];
+
+  return selectedCaseIds;
+};
 
 const mergedColumns = (
   users: Record<string, Account>,
@@ -138,7 +159,9 @@ const mergedColumns = (
       title: 'Alert status',
       key: 'alertStatus',
       filtering: !hideAlertStatusFilters,
-      type: CASE_STATUS({ statusesToShow: ['OPEN', 'CLOSED', 'ESCALATED', 'REOPENED'] }),
+      type: CASE_STATUS({
+        statusesToShow: CASE_STATUSS,
+      }),
     }),
     helper.simple<'caseCreatedTimestamp'>({
       title: 'Case created at',
@@ -153,14 +176,16 @@ const mergedColumns = (
       defaultWidth: 300,
       enableResizing: false,
       value: (item) =>
-        item.alertStatus === 'ESCALATED' ? item.reviewAssignments : item.assignments,
+        item.alertStatus === 'ESCALATED' || statusInReview(item.alertStatus)
+          ? item.reviewAssignments
+          : item.assignments,
       type: {
         ...ASSIGNMENTS,
         render: (assignments, { item: entity }) => {
           return (
             <AssigneesDropdown
               assignments={assignments || []}
-              editing={true}
+              editing={!statusInReview(entity.alertStatus) ?? true}
               onChange={(assignees) => {
                 const assignments: Assignment[] = assignees.map((assignee) => ({
                   assigneeUserId: assignee,
@@ -229,7 +254,7 @@ export default function AlertTable(props: Props) {
   const api = useApi();
   const user = useAuth0User();
 
-  const [users, _] = useUsers({ includeBlockedUsers: true });
+  const [users] = useUsers({ includeBlockedUsers: true });
   const [selectedTxns, setSelectedTxns] = useState<{ [alertId: string]: string[] }>({});
   const [selectedAlerts, setSelectedAlerts] = useState<string[]>([]);
   const [internalParams, setInternalParams] = useState<AlertTableParams | null>(null);
@@ -318,6 +343,13 @@ export default function AlertTable(props: Props) {
         filterAlertStatus = ['CLOSED'];
       } else if (alertStatus === 'ESCALATED') {
         filterAlertStatus = ['ESCALATED'];
+      } else if (statusInReview(alertStatus)) {
+        filterAlertStatus = [
+          'IN_REVIEW_OPEN',
+          'IN_REVIEW_ESCALATED',
+          'IN_REVIEW_CLOSED',
+          'IN_REVIEW_REOPENED',
+        ];
       } else {
         filterAlertStatus = neverReturn(alertStatus, []);
       }
@@ -577,23 +609,21 @@ export default function AlertTable(props: Props) {
             ];
             const selectedAlertStatus =
               selectedAlertStatuses.length === 1 ? selectedAlertStatuses[0] : undefined;
-            const selectedCaseIds = [
-              ...new Set(
-                Object.values(selectedItems)
-                  .map(({ caseId }) => caseId)
-                  .filter((x): x is string => typeof x === 'string'),
-              ),
-            ];
+            const selectedCaseIds = getSelectedCaseIdsForAlerts(selectedItems);
             const selectedCaseId = selectedCaseIds.length === 1 ? selectedCaseIds[0] : undefined;
             const caseId = params.caseId ?? selectedCaseId;
             const alertStatus = params.alertStatus ?? selectedAlertStatus;
             if (alertStatus === 'ESCALATED' && selectedTransactionIds.length) {
               return;
             }
+
+            const isReviewAlerts = isInReviewCases(selectedItems, true);
+
             return (
               escalationEnabled &&
               caseId &&
-              alertStatus && (
+              alertStatus &&
+              !isReviewAlerts && (
                 <AlertsStatusChangeButton
                   ids={selectedIds}
                   transactionIds={selectedTxns}
@@ -614,6 +644,34 @@ export default function AlertTable(props: Props) {
               )
             );
           },
+          ({ selectedIds, selectedItems, isDisabled }) => {
+            const isReviewAlerts =
+              canReviewCases(selectedItems, user.userId) && isInReviewCases(selectedItems, true);
+            const [previousStatus, isSingle] =
+              getSingleCaseStatusPreviousForInReview(selectedItems);
+            const [currentStatus, isSingleCurrent] = getSingleCaseStatusCurrent(
+              selectedItems,
+              true,
+            );
+            const selectedCaseIds = getSelectedCaseIdsForAlerts(selectedItems);
+            const selectedCaseId = selectedCaseIds.length === 1 ? selectedCaseIds[0] : undefined;
+
+            if (isReviewAlerts && selectedCaseId) {
+              return (
+                <ApproveSendBackButton
+                  ids={selectedIds}
+                  onReload={reloadTable}
+                  type="ALERT"
+                  isDisabled={isDisabled}
+                  status={currentStatus}
+                  previousStatus={previousStatus}
+                  isDeclineHidden={!isSingle}
+                  isApproveHidden={!isSingleCurrent}
+                  selectedCaseId={selectedCaseId}
+                />
+              );
+            }
+          },
           ({ selectedIds, selectedItems, params, isDisabled }) => {
             const selectedStatuses = [
               ...new Set(
@@ -622,6 +680,11 @@ export default function AlertTable(props: Props) {
                 }),
               ),
             ];
+            const isReviewAlerts = isInReviewCases(selectedItems, true);
+
+            if (isReviewAlerts) {
+              return;
+            }
             const statusChangeButtonValue =
               selectedStatuses.length === 1 ? selectedStatuses[0] : undefined;
             if (selectedTransactionIds.length) {

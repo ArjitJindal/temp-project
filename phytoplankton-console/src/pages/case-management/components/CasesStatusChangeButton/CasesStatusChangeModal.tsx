@@ -1,5 +1,6 @@
 import React from 'react';
 import { useMutation } from '@tanstack/react-query';
+import pluralize from 'pluralize';
 import StatusChangeModal, {
   FormValues,
   OTHER_REASON,
@@ -9,13 +10,15 @@ import { useApi } from '@/api';
 import { CaseStatusUpdate } from '@/apis';
 import { message } from '@/components/library/Message';
 import { getErrorMessage } from '@/utils/lang';
-import { useUsers } from '@/utils/user-utils';
+import { useAuth0User, useUsers } from '@/utils/user-utils';
 
 interface Props extends Omit<StatusChangeModalProps, 'entityName' | 'updateMutation'> {}
 
 export default function CasesStatusChangeModal(props: Props) {
   const api = useApi();
   const [users] = useUsers();
+  const user = useAuth0User();
+  const currentUser = users[user.userId];
   const updateMutation = useMutation<unknown, unknown, FormValues>(
     async (formValues) => {
       const hideMessage = message.loading(`Saving...`);
@@ -51,6 +54,9 @@ export default function CasesStatusChangeModal(props: Props) {
             ?.map((assigneeId) => users[assigneeId]?.name || assigneeId)
             .map((name) => `'${name}'`)
             .join(', ');
+          if (currentUser.reviewerId) {
+            return;
+          }
           message.success(
             `Case '${props.entityIds[0]}' is escalated successfully to ${assignees}. Please note that all 'Open' alert statuses are changed to 'Escalated'.`,
           );
@@ -85,6 +91,19 @@ export default function CasesStatusChangeModal(props: Props) {
     {
       onError: (e) => {
         message.fatal(`Failed to update the case! ${getErrorMessage(e)}`, e);
+      },
+      onSuccess: () => {
+        if (currentUser.reviewerId) {
+          message.warn(
+            `${pluralize('Case', props.entityIds.length, true)} ${props.entityIds.join(', ')} ${
+              props.entityIds.length > 1 ? 'are' : 'is'
+            } sent to review ${
+              users[currentUser.reviewerId]?.name ||
+              users[currentUser.reviewerId]?.email ||
+              currentUser?.reviewerId
+            }. Once approved your case action will be performed successfully.`,
+          );
+        }
       },
     },
   );

@@ -4826,6 +4826,8 @@ components:
           type: boolean
         isEscalationContact:
           type: boolean
+        reviewerId:
+          type: string
       required:
         - id
         - role
@@ -4850,6 +4852,8 @@ components:
           type: string
         isEscalationContact:
           type: boolean
+        reviewerId:
+          type: string
       required:
         - email
     AccountPatchPayload:
@@ -4860,6 +4864,8 @@ components:
           type: string
         isEscalationContact:
           type: boolean
+        reviewerId:
+          type: string
     Tenant:
       title: Tenant
       type: object
@@ -5344,6 +5350,10 @@ components:
         - CLOSED
         - REOPENED
         - ESCALATED
+        - IN_REVIEW_OPEN
+        - IN_REVIEW_CLOSED
+        - IN_REVIEW_REOPENED
+        - IN_REVIEW_ESCALATED
     AlertStatus:
       type: string
       title: AlertStatus
@@ -5354,6 +5364,10 @@ components:
         - CLOSED
         - REOPENED
         - ESCALATED
+        - IN_REVIEW_OPEN
+        - IN_REVIEW_CLOSED
+        - IN_REVIEW_REOPENED
+        - IN_REVIEW_ESCALATED
     FilterOperator:
       type: string
       title: FilterOperator

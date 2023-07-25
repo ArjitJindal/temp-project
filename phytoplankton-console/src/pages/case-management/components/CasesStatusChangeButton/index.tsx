@@ -14,12 +14,15 @@ interface Props {
     isBlue?: boolean;
     rounded?: boolean;
   };
-  statusTransitions?: Record<
-    CaseStatus,
-    { status: CaseStatus; actionLabel: 'Send back' | 'Escalate' }
+  statusTransitions?: Partial<
+    Record<
+      CaseStatus,
+      { status: CaseStatus; actionLabel: 'Send back' | 'Escalate' | 'Approve' | 'Decline' }
+    >
   >;
   onSaved: () => void;
   isDisabled?: boolean;
+  skipReasonsModal?: boolean;
 }
 
 export default function CasesStatusChangeButton(props: Props) {
@@ -52,12 +55,13 @@ export default function CasesStatusChangeButton(props: Props) {
             isVisible={isVisible}
             entityIds={caseIds}
             newStatus={newStatus}
-            newStatusActionLabel={caseStatus && statusTransitions?.[caseStatus].actionLabel}
+            newStatusActionLabel={caseStatus && statusTransitions?.[caseStatus]?.actionLabel}
             onSaved={onSaved}
             initialValues={initialValues}
             onClose={() => {
               setVisible(false);
             }}
+            skipReasonsModal={props.skipReasonsModal}
           />
         )}
       </StatusChangeButton>

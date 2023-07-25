@@ -1,9 +1,22 @@
-import React, { useRef } from 'react';
-import { CheckCircleTwoTone, DeleteOutlined, MinusCircleTwoTone } from '@ant-design/icons';
+import React, { useMemo, useRef, useState } from 'react';
+import { some } from 'lodash';
+import {
+  CheckCircleTwoTone,
+  DeleteOutlined,
+  EditOutlined,
+  MinusCircleTwoTone,
+  PlusOutlined,
+} from '@ant-design/icons';
 import { Tag } from 'antd';
 import s from './index.module.less';
 import { useApiTime, useButtonTracker } from '@/utils/tracker';
-import { isAtLeastAdmin, parseUserRole, useAuth0User, UserRole } from '@/utils/user-utils';
+import {
+  isAtLeastAdmin,
+  parseUserRole,
+  useAuth0User,
+  UserRole,
+  useUsers,
+} from '@/utils/user-utils';
 import { useApi } from '@/api';
 import { usePaginatedQuery } from '@/utils/queries/hooks';
 import { ACCOUNT_LIST } from '@/utils/queries/keys';
@@ -14,6 +27,7 @@ import COLORS, {
   COLORS_V2_HIGHLIGHT_HIGHLIGHT_STROKE,
 } from '@/components/ui/colors';
 import AccountForm from '@/pages/accounts/components/AccountForm';
+import Button from '@/components/library/Button';
 import QueryResultsTable from '@/components/common/QueryResultsTable';
 import { message } from '@/components/library/Message';
 import { ColumnHelper } from '@/components/library/Table/columnHelper';
@@ -44,13 +58,26 @@ export default function Team() {
     };
   });
 
+  const [isInviteVisible, setIsInviteVisible] = useState(false);
+  const [editAccount, setEditAccount] = useState<Account | null>(null);
+
   const buttonTracker = useButtonTracker();
+  const [users, loadingUsers] = useUsers();
 
   const handleClick = (analyticsName: string) => {
     if (analyticsName) {
       buttonTracker(analyticsName);
     }
   };
+
+  const tagStyle = useMemo(
+    () => ({
+      background: COLORS_V2_HIGHLIGHT_FLAGRIGHTBLUE,
+      borderColor: COLORS_V2_HIGHLIGHT_HIGHLIGHT_STROKE,
+      color: 'black',
+    }),
+    [],
+  );
 
   const columnHelper = new ColumnHelper<Account>();
   const columns: TableColumn<Account>[] = columnHelper.list([
@@ -67,16 +94,10 @@ export default function Team() {
           return (
             <div>
               {role != null && <RoleTag role={role} />}
-              {context.item.isEscalationContact && (
-                <Tag
-                  style={{
-                    background: COLORS_V2_HIGHLIGHT_FLAGRIGHTBLUE,
-                    borderColor: COLORS_V2_HIGHLIGHT_HIGHLIGHT_STROKE,
-                    color: 'black',
-                  }}
-                >
-                  Escalation reviewer
-                </Tag>
+              {context.item.isEscalationContact && <Tag style={tagStyle}>Escalation reviewer</Tag>}
+              {context.item.reviewerId && <Tag style={tagStyle}>Requires review</Tag>}
+              {!loadingUsers && some(users, (u) => u.reviewerId === context.item.id) && (
+                <Tag style={tagStyle}>Reviewer</Tag>
               )}
             </div>
           );
@@ -144,7 +165,17 @@ export default function Team() {
                   />
                 )}
               </Confirm>
-              <AccountForm editAccount={item} onSuccess={refreshTable} />
+              <div>
+                <div
+                  style={{ cursor: 'pointer' }}
+                  onClick={() => {
+                    setEditAccount(item);
+                    setIsInviteVisible(true);
+                  }}
+                >
+                  <EditOutlined />
+                </div>
+              </div>
             </div>
           );
         },
@@ -160,13 +191,32 @@ export default function Team() {
         innerRef={actionRef}
         extraTools={
           isAtLeastAdmin(user)
-            ? [() => <AccountForm editAccount={null} onSuccess={refreshTable} />]
+            ? [
+                () => (
+                  <Button
+                    type="TETRIARY"
+                    onClick={() => {
+                      setEditAccount(null);
+                      setIsInviteVisible(true);
+                    }}
+                  >
+                    <PlusOutlined />
+                    {'Invite'}
+                  </Button>
+                ),
+              ]
             : []
         }
         queryResults={accountsResult}
         columns={columns}
         pagination={false}
         fitHeight
+      />
+      <AccountForm
+        editAccount={editAccount}
+        isVisibile={isInviteVisible}
+        onChangeVisibility={setIsInviteVisible}
+        onSuccess={refreshTable}
       />
     </PageWrapperContentContainer>
   );

@@ -4,6 +4,7 @@ import { ConsumerName } from '@/@types/openapi-public/ConsumerName'
 import { InternalBusinessUser } from '@/@types/openapi-internal/InternalBusinessUser'
 import { MissingUser } from '@/@types/openapi-internal/MissingUser'
 import { InternalConsumerUser } from '@/@types/openapi-internal/InternalConsumerUser'
+import { CaseStatus } from '@/@types/openapi-internal/CaseStatus'
 
 export const checkEmail = (email: string) => {
   return isValidEmail(email)
@@ -56,4 +57,8 @@ export function getUserName(
     return businessName(user)
   }
   return neverReturn(user, '-')
+}
+
+export function isStatusInReview(status: CaseStatus | undefined): boolean {
+  return status?.startsWith('IN_REVIEW_') ?? false
 }

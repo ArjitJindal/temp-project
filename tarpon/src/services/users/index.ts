@@ -1,6 +1,6 @@
 import { DynamoDBDocumentClient } from '@aws-sdk/lib-dynamodb'
 import { NotFound, BadRequest } from 'http-errors'
-import _ from 'lodash'
+import { omit, mergeWith, isNil } from 'lodash'
 import { MongoClient } from 'mongodb'
 import { UserRepository } from '../users/repositories/user-repository'
 import { UserEventRepository } from '../rules-engine/repositories/user-event-repository'
@@ -199,7 +199,7 @@ export class UserManagementService {
     }
     await this.userEventRepository.saveUserEvent(userEvent, 'CONSUMER')
     await this.userRepository.saveConsumerUser(updatedConsumerUserResult)
-    return _.omit(updatedConsumerUserResult, 'type')
+    return omit(updatedConsumerUserResult, 'type')
   }
 
   public async verifyBusinessUserEvent(
@@ -228,11 +228,11 @@ export class UserManagementService {
       user = pickKnownEntityFields(user, BusinessBase)
     }
 
-    const updatedBusinessUser: Business = _.mergeWith(
+    const updatedBusinessUser: Business = mergeWith(
       user,
       userEvent.updatedBusinessUserAttributes || {},
       function (obj, src) {
-        if (!_.isNil(src)) {
+        if (!isNil(src)) {
           return src
         }
         return obj
@@ -245,6 +245,6 @@ export class UserManagementService {
 
     await this.userEventRepository.saveUserEvent(userEvent, 'BUSINESS')
     await this.userRepository.saveBusinessUser(updatedBusinessUserResult)
-    return _.omit(updatedBusinessUserResult, 'type')
+    return omit(updatedBusinessUserResult, 'type')
   }
 }
