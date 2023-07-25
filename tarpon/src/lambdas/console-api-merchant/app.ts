@@ -23,8 +23,8 @@ export const merchantMonitoringHandler = lambdaApi()(
 
     handlers.registerPostMerchantSummary(async (ctx, request) => {
       const { userId, refresh } = request.MerchantMonitoringSummaryRequest
-      if (!userId || !refresh) {
-        throw new BadRequest('Missing userId or refresh')
+      if (!userId) {
+        throw new BadRequest('Missing userId')
       }
       const user = await userService.getBusinessUser(userId)
       const domain = user?.legalEntity.contactDetails?.websites
