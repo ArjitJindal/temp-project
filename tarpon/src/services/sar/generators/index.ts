@@ -40,7 +40,6 @@ export const UNIMPLEMENTED_GENERATORS: [CountryCode, string][] = [
   ['LT', 'SAR'],
   ['LT', 'STR'],
   ['LT', 'CTR'],
-  ['US', 'SAR'],
   ['US', 'CTR'],
   ['US', 'DOEP'],
 ]

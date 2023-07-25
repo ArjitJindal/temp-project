@@ -119,9 +119,9 @@ async function main() {
 
   console.timeEnd('Bundle time')
 
-  // Copy geoip
   await Promise.all([
     (async () => {
+      // Copy geoip
       await fs.ensureDir(
         `${OUT_DIR}/layers/fast-geoip/nodejs/node_modules/fast-geoip`
       )
@@ -136,6 +136,15 @@ async function main() {
       await fs.copy(
         `${ROOT_DIR}/src/lambdas/slack-app/templates`,
         `${OUT_DIR}/slack-app/templates`
+      )
+    })(),
+    (async () => {
+      // Copy fincen binaries
+      await fs.ensureDir(`${OUT_DIR}/console-api-sar/bin`)
+      fs.copy
+      await fs.copy(
+        `${ROOT_DIR}/src/services/sar/generators/US/SAR/bin`,
+        `${OUT_DIR}/console-api-sar/bin`
       )
     })(),
   ])

@@ -1,24 +1,24 @@
 import { useState } from 'react';
-import _ from 'lodash';
+import { groupBy } from 'lodash';
 import { JsonSchemaEditorSettings } from '@/pages/rules/RuleConfigurationDrawer/JsonSchemaEditor/settings';
-import { Report } from '@/apis';
 import JsonSchemaEditor from '@/pages/rules/RuleConfigurationDrawer/JsonSchemaEditor';
 import VerticalMenu from '@/components/library/VerticalMenu';
 import {
-  getOrderedProps,
+  useOrderedProps,
   getUiSchema,
 } from '@/pages/rules/RuleConfigurationDrawer/JsonSchemaEditor/utils';
+import { ExtendedSchema } from '@/pages/rules/RuleConfigurationDrawer/JsonSchemaEditor/types';
 
 export default function ReportStep(props: {
   settings: Partial<JsonSchemaEditorSettings>;
-  report: Report;
+  parametersSchema: ExtendedSchema;
 }) {
-  const { settings, report } = props;
+  const { settings, parametersSchema } = props;
 
-  const orderedProps = getOrderedProps(report.schema?.reportSchema);
+  const orderedProps = useOrderedProps(parametersSchema);
 
   const groups = Object.entries(
-    _.groupBy(orderedProps, (property) => getUiSchema(property.schema)['ui:group']),
+    groupBy(orderedProps, (property) => getUiSchema(property.schema)['ui:group']),
   ).map(([group, properties]) => ({ group: group === 'undefined' ? 'Other' : group, properties }));
 
   const menuItems = groups.map(({ group }) => ({
@@ -36,7 +36,7 @@ export default function ReportStep(props: {
         <JsonSchemaEditor
           settings={settings}
           parametersSchema={{
-            ...report.schema?.reportSchema,
+            ...parametersSchema,
             properties: activeGroup?.properties.reduce(
               (acc, x) => ({ ...acc, [x.name]: x.schema }),
               {},

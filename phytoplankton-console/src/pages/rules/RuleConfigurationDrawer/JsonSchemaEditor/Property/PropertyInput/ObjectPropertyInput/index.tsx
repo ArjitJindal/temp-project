@@ -5,7 +5,7 @@ import s from './style.module.less';
 import AdditionalProperties from './AdditionalProperties';
 import OneOf from './OneOf';
 import { FieldMeta, FormContext, FormContextValue } from '@/components/library/Form/context';
-import { getOrderedProps } from '@/pages/rules/RuleConfigurationDrawer/JsonSchemaEditor/utils';
+import { useOrderedProps } from '@/pages/rules/RuleConfigurationDrawer/JsonSchemaEditor/utils';
 import { isSchema } from '@/pages/rules/RuleConfigurationDrawer/JsonSchemaEditor/schema-utils';
 import { InputProps } from '@/components/library/Form';
 import { useFormContext } from '@/components/library/Form/utils/hooks';
@@ -19,7 +19,7 @@ interface Props extends InputProps<any> {
 
 export default function GenericObjectInput(props: Props) {
   const { schema, value, onChange, labelProps } = props;
-  const properties = getOrderedProps(schema);
+  const properties = useOrderedProps(schema);
   const [fieldMeta, setFieldsMeta] = useState<{ [key: string]: FieldMeta }>({});
 
   const { alwaysShowErrors } = useFormContext();

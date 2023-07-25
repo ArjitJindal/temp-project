@@ -1,7 +1,7 @@
 import React, { useMemo, useState } from 'react';
 import Property from '../../../index';
 import { ExtendedSchema, UiSchemaDayWindow } from '../../../../types';
-import { findRequiredProperty, getOrderedProps } from '../../../../utils';
+import { findRequiredProperty, useOrderedProps } from '../../../../utils';
 import s from './style.module.less';
 import { FieldMeta, FormContext, FormContextValue } from '@/components/library/Form/context';
 import { InputProps } from '@/components/library/Form';
@@ -42,7 +42,7 @@ export default function DayWindowInput(props: Props) {
     [alwaysShowErrors, value, fieldMeta, onChange],
   );
 
-  const properties = getOrderedProps(schema);
+  const properties = useOrderedProps(schema);
 
   const unitsProperty = findRequiredProperty(properties, 'units');
   const rollingBasisProperty = findRequiredProperty(properties, 'rollingBasis');

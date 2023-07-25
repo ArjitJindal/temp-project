@@ -1,4 +1,5 @@
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
+import { isEmpty } from 'lodash';
 import { useMutation } from '@tanstack/react-query';
 import s from './style.module.less';
 import Drawer from '@/components/library/Drawer';
@@ -14,32 +15,16 @@ import { useId } from '@/utils/hooks';
 import SarReportDrawerForm from '@/components/Sar/SarReportDrawer/SarReportDrawerForm';
 
 export const REPORT_STEP = 'REPORT_STEP';
+export const TRANSACTION_METADATA_STEP = 'TRANSACTION_METADATA_STEP';
 export const TRANSACTION_STEP = 'TRANSACTION_STEP';
 export const INDICATOR_STEP = 'INDICATOR_STEP';
 export const VERSION_STEP = 'VERSION_STEP';
 
-export const STEPS = [
-  {
-    key: REPORT_STEP,
-    title: 'General Details',
-    description: 'Enter reporting entity, person and report details',
-  },
-  {
-    key: TRANSACTION_STEP,
-    title: 'Transaction Details',
-    description: 'Enter details of transactions that you want to report',
-  },
-  {
-    key: INDICATOR_STEP,
-    title: 'Indicators',
-    description: 'Select one or more indicators that are relevant to your report',
-  },
-  {
-    key: VERSION_STEP,
-    title: 'Versions',
-    description: 'View the version history for this report',
-  },
-];
+export type Step = {
+  key: string;
+  title: string;
+  description: string;
+};
 
 interface Props {
   initialReport: Report;
@@ -49,7 +34,42 @@ interface Props {
 
 export default function SarReportDrawer(props: Props) {
   const api = useApi();
-  const [activeStep, setActiveStep] = useState<string>(STEPS[0].key);
+  const steps = useMemo(
+    () =>
+      [
+        {
+          key: REPORT_STEP,
+          title: 'General Details',
+          description: 'Enter reporting entity, person and report details',
+        },
+        !isEmpty(props.initialReport.schema?.transactionMetadataSchema) && {
+          key: TRANSACTION_METADATA_STEP,
+          title: 'Transaction Details',
+          description: 'Enter details of transactions that you want to report',
+        },
+        !isEmpty(props.initialReport.schema?.transactionSchema) && {
+          key: TRANSACTION_STEP,
+          title: 'Transaction Details',
+          description: 'Enter details of transactions that you want to report',
+        },
+        !isEmpty(props.initialReport.schema?.indicators) && {
+          key: INDICATOR_STEP,
+          title: 'Indicators',
+          description: 'Select one or more indicators that are relevant to your report',
+        },
+        {
+          key: VERSION_STEP,
+          title: 'Versions',
+          description: 'View the version history for this report',
+        },
+      ].filter(Boolean) as Step[],
+    [
+      props.initialReport.schema?.indicators,
+      props.initialReport.schema?.transactionMetadataSchema,
+      props.initialReport.schema?.transactionSchema,
+    ],
+  );
+  const [activeStep, setActiveStep] = useState<string>(steps[0].key);
   const [report, setReport] = useState(props.initialReport);
   const [draft, setDraft] = useState<Report>(props.initialReport);
   const [dirty, setDirty] = useState(props.initialReport.revisions.length === 0);
@@ -119,7 +139,7 @@ export default function SarReportDrawer(props: Props) {
     },
   );
 
-  const activeStepIndex = STEPS.findIndex(({ key }) => key === activeStep);
+  const activeStepIndex = steps.findIndex(({ key }) => key === activeStep);
 
   const formId = useId(`form-`);
 
@@ -131,13 +151,13 @@ export default function SarReportDrawer(props: Props) {
       footer={
         <div className={s.footer}>
           <StepButtons
-            nextDisabled={activeStepIndex === STEPS.length - 1}
+            nextDisabled={activeStepIndex === steps.length - 1}
             prevDisabled={activeStepIndex === 0}
             onNext={() => {
-              setActiveStep(STEPS[activeStepIndex + 1].key);
+              setActiveStep(steps[activeStepIndex + 1].key);
             }}
             onPrevious={() => {
-              setActiveStep(STEPS[activeStepIndex - 1].key);
+              setActiveStep(steps[activeStepIndex - 1].key);
             }}
           />
           <div className={s.footerButtons}>
@@ -167,6 +187,7 @@ export default function SarReportDrawer(props: Props) {
       <SarReportDrawerForm
         report={report}
         formId={formId}
+        steps={steps}
         activeStepState={[activeStep, setActiveStep]}
         onChange={(report) => {
           setDirty(true);

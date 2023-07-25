@@ -119,9 +119,10 @@ export class KenyaSARReportGenerator implements ReportGenerator {
       reason: reportParams.report.reason,
       action: reportParams.report.action,
       transaction: reportParams.transactions?.map((t) => t.transaction),
-      report_indicators: reportParams.indicators.map((indicator) => ({
-        indicator,
-      })),
+      report_indicators:
+        reportParams?.indicators?.map((indicator) => ({
+          indicator,
+        })) ?? [],
     })
     return `<?xml version="1.0" encoding="UTF-8" standalone="yes"?><report>${xmlContent}</report>`
   }

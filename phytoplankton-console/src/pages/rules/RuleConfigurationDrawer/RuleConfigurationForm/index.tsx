@@ -25,7 +25,7 @@ import SettingsLineIcon from '@/components/ui/icons/Remix/system/settings-3-line
 import { notEmpty } from '@/components/library/Form/utils/validation/basicValidators';
 import { validateField } from '@/components/library/Form/utils/validation/utils';
 import {
-  getOrderedProps,
+  useOrderedProps,
   makeDefaultState,
   makeValidators,
 } from '@/pages/rules/RuleConfigurationDrawer/JsonSchemaEditor/utils';
@@ -77,7 +77,7 @@ const RuleConfigurationForm = (
   } = props;
   const isPulseEnabled = useFeatureEnabled('PULSE');
   const defaultInitialValues = useDefaultInitialValues(rule);
-  const orderedProps = getOrderedProps(rule?.parametersSchema);
+  const orderedProps = useOrderedProps(rule?.parametersSchema);
   const initialValues: RuleConfigurationFormValues = formInitialValues
     ? {
         basicDetailsStep: BASIC_DETAILS_STEP_INITIAL_VALUES,
@@ -290,10 +290,9 @@ export default React.forwardRef(RuleConfigurationForm);
 
 function useDefaultInitialValues(rule: Rule | undefined | null) {
   const isPulseEnabled = useFeatureEnabled('PULSE');
+  const orderedProps = useOrderedProps(rule?.parametersSchema);
 
   return useMemo(() => {
-    const orderedProps = getOrderedProps(rule?.parametersSchema);
-
     const ruleParametersDefaultState = makeDefaultState(orderedProps);
     const ruleParametersStep = {
       ...RULE_PARAMETERS_STEP_INITIAL_VALUES,
@@ -331,17 +330,17 @@ function useDefaultInitialValues(rule: Rule | undefined | null) {
       ruleParametersStep: ruleParametersStep,
     };
   }, [
+    orderedProps,
     isPulseEnabled,
-    rule?.defaultAction,
-    rule?.defaultCasePriority,
-    rule?.defaultFilters,
+    rule?.name,
+    rule?.description,
     rule?.defaultNature,
+    rule?.defaultCasePriority,
+    rule?.labels,
+    rule?.defaultFilters,
+    rule?.defaultRiskLevelParameters,
     rule?.defaultParameters,
     rule?.defaultRiskLevelActions,
-    rule?.defaultRiskLevelParameters,
-    rule?.description,
-    rule?.name,
-    rule?.parametersSchema,
-    rule?.labels,
+    rule?.defaultAction,
   ]);
 }

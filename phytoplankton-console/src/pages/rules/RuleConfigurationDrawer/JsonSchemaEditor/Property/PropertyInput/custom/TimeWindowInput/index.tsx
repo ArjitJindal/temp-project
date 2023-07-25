@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import Property from '../../../index';
 import PropertyInput from '../../index';
 import { ExtendedSchema, UiSchemaTimeWindow } from '../../../../types';
-import { findRequiredProperty, getOrderedProps } from '../../../../utils';
+import { findRequiredProperty, useOrderedProps } from '../../../../utils';
 import s from './style.module.less';
 import { FieldMeta, FormContext, FormContextValue } from '@/components/library/Form/context';
 import InputField from '@/components/library/Form/InputField';
@@ -50,7 +50,7 @@ export default function TimeWindowInput(props: Props) {
     setValues: onChange ?? (() => {}),
   };
 
-  const properties = getOrderedProps(schema);
+  const properties = useOrderedProps(schema);
 
   const unitsProperty = findRequiredProperty(properties, 'units');
   const granularityProperty = findRequiredProperty(properties, 'granularity');

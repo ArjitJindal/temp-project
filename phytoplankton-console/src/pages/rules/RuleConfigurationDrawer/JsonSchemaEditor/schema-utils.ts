@@ -50,3 +50,26 @@ export function dereferenceType(type: ExtendedSchema, rootSchema?: ExtendedSchem
   }
   return type;
 }
+
+export function flattenAllOf(schema: ExtendedSchema, rootSchema?: ExtendedSchema) {
+  const newSchema: any = {
+    ...schema,
+    type: 'object',
+    properties: {},
+    required: [],
+  };
+  schema.allOf?.forEach((subSchema: any) => {
+    const deRefSchema = dereferenceType(subSchema, rootSchema);
+    if (!deRefSchema) {
+      return;
+    }
+    if (deRefSchema.required) {
+      newSchema.required.push(...((deRefSchema.required as string[]) ?? []));
+    }
+    newSchema.properties = {
+      ...newSchema.properties,
+      ...deRefSchema.properties,
+    };
+  });
+  return newSchema;
+}

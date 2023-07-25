@@ -1,4 +1,4 @@
-import React from 'react';
+import { isEmpty } from 'lodash';
 import { ExtendedSchema } from '../../types';
 import { getUiSchema } from '../../utils';
 import { useJsonSchemaEditorContext } from '../../context';
@@ -61,7 +61,8 @@ export default function PropertyInput(props: Props) {
     return <PaymentChannelInput {...props} uiSchema={uiSchema} />;
   }
 
-  switch (schema.type) {
+  const schemaType = schema.oneOf ? 'object' : schema.type;
+  switch (schemaType) {
     case 'number':
     case 'boolean':
     case 'integer':
@@ -73,7 +74,9 @@ export default function PropertyInput(props: Props) {
       return <ArrayPropertyInput {...props} schema={schema} />;
   }
 
-  console.error(`Schema type "${schema.type}" is not supported`);
+  if (!isEmpty(schema)) {
+    console.error(`Schema type "${schema.type}" is not supported: ${JSON.stringify(schema)}`);
+  }
 
   return <></>;
 }

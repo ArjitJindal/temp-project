@@ -7049,10 +7049,10 @@ components:
       type: object
       required:
         - reportSchema
-        - transactionSchema
-        - indicators
       properties:
         reportSchema:
+          type: object
+        transactionMetadataSchema:
           type: object
         transactionSchema:
           type: object
@@ -7160,10 +7160,10 @@ components:
       type: object
       required:
         - report
-        - transactions
-        - indicators
       properties:
         report:
+          type: object
+        transactionMetadata:
           type: object
         indicators:
           type: array

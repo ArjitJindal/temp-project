@@ -14,6 +14,7 @@
     "aws-sso-login:all": "npm run aws-sso-login:dev && npm run aws-sso-login:sandbox && npm run aws-sso-login:prod",
     "build": "npm run openapi:build && npm run cdktf:init && node scripts/esbuild.js",
     "build:local": "export ENV=local && npm run build",
+    "build:fincen": "ts-node src/services/sar/generators/US/SAR/scripts/build-fincen.ts",
     "clear": "rm -rf ./dist cdk.out",
     "synth": "cdk synth --quiet",
     "sso-fallback-message": "echo 'Clear the cookies manually of START_URL i.e. https://d-9a6713bec9.awsapps.com/start#/ and try again. \nOR\nFollow the steps mentioned below:\n1. Open the START_URL i.e. https://d-9a6713bec9.awsapps.com/start#/ in a browser.\n2. Click on the AWS Account Button you see\n3. Click Deploy\n4. Click AWSAdministratorAccess | Command Line or Programmatic Access\n5. Click Copy to Clipboard in Option 1\n6. Paste the copied value in the terminal and press enter\n\nNow you should be able to run the command again' && exit 1",
@@ -175,7 +176,8 @@
     "ts-node": "^10.9.1",
     "ts-node-dev": "^2.0.0",
     "tsconfig-paths": "^4.1.2",
-    "typescript": "^4.5.5",
+    "typescript": "~4.5.0",
+    "typescript-json-schema": "^0.58.1",
     "xsd2jsonschema": "^0.3.7",
     "yaml": "^2.1.1"
   },

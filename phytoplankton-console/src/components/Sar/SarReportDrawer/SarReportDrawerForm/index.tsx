@@ -12,7 +12,8 @@ import GenericFormField, { FormFieldRenderProps } from '@/components/library/For
 import {
   INDICATOR_STEP,
   REPORT_STEP,
-  STEPS,
+  Step,
+  TRANSACTION_METADATA_STEP,
   TRANSACTION_STEP,
   VERSION_STEP,
 } from '@/components/Sar/SarReportDrawer';
@@ -22,6 +23,7 @@ import ReportStep from '@/components/Sar/SarReportDrawer/SarReportDrawerForm/Rep
 const settings: Partial<JsonSchemaEditorSettings> = { propertyNameStyle: 'SNAKE_CASE' };
 type FormState = Partial<{
   [REPORT_STEP]: unknown;
+  [TRANSACTION_METADATA_STEP]: unknown;
   [TRANSACTION_STEP]: {
     [transactionId: string]: unknown;
   };
@@ -34,12 +36,13 @@ type FormState = Partial<{
 export default function SarReportDrawerForm(props: {
   formId: string;
   report: Report;
+  steps: Step[];
   activeStepState: StatePair<string>;
   onSubmit: (formState: Report) => void;
   onChange: (formState: Report) => void;
 }) {
-  const { formId, report, activeStepState, onSubmit, onChange } = props;
-  const transactionIds = report.parameters.transactions.map((t) => t.id);
+  const { formId, report, steps, activeStepState, onSubmit, onChange } = props;
+  const transactionIds = report.parameters.transactions?.map((t) => t.id) ?? [];
   const [activeStep, setActiveStep] = activeStepState;
   const initialValues = deserializeFormState(report);
   const [activeTransaction, setActiveTransaction] = useState<string>(transactionIds[0]);
@@ -55,11 +58,19 @@ export default function SarReportDrawerForm(props: {
         onSubmit(serializeFormState(report, values));
       }}
     >
-      <Stepper steps={STEPS} active={activeStep} onChange={setActiveStep}>
+      <Stepper steps={steps} active={activeStep} onChange={setActiveStep}>
         {(activeStepKey) => {
           return (
             <NestedForm<any> name={activeStepKey}>
-              {activeStepKey == REPORT_STEP && <ReportStep report={report} settings={settings} />}
+              {activeStepKey == REPORT_STEP && (
+                <ReportStep parametersSchema={report.schema?.reportSchema} settings={settings} />
+              )}
+              {activeStepKey == TRANSACTION_METADATA_STEP && (
+                <ReportStep
+                  parametersSchema={report.schema?.transactionMetadataSchema}
+                  settings={settings}
+                />
+              )}
               {activeStepKey == TRANSACTION_STEP && (
                 <VerticalMenu
                   items={transactionIds.map((tid) => ({ key: tid, title: `Transaction ${tid}` }))}
@@ -94,14 +105,15 @@ export default function SarReportDrawerForm(props: {
 function deserializeFormState(reportTemplate: Report): FormState {
   return {
     [REPORT_STEP]: reportTemplate?.parameters.report,
-    [TRANSACTION_STEP]: reportTemplate?.parameters.transactions.reduce((acc, x) => {
+    [TRANSACTION_METADATA_STEP]: reportTemplate?.parameters.transactionMetadata,
+    [TRANSACTION_STEP]: reportTemplate?.parameters.transactions?.reduce((acc, x) => {
       return {
         ...acc,
         [x.id]: x.transaction,
       };
     }, {}),
     [INDICATOR_STEP]: {
-      selection: reportTemplate?.parameters.indicators,
+      selection: reportTemplate?.parameters.indicators ?? [],
     },
   };
 }
@@ -112,6 +124,7 @@ export function serializeFormState(originalReport: Report, formState: FormState)
     parameters: {
       report: formState[REPORT_STEP],
       indicators: formState[INDICATOR_STEP]?.selection ?? [],
+      transactionMetadata: formState[TRANSACTION_METADATA_STEP],
       transactions: Object.entries(formState[TRANSACTION_STEP] ?? {}).map(([id, transaction]) => ({
         id,
         transaction,

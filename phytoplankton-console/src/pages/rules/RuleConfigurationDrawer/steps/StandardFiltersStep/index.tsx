@@ -1,4 +1,3 @@
-import React from 'react';
 import StepHeader from '../../StepHeader';
 import { Rule } from '@/apis';
 import PropertyList from '@/pages/rules/RuleConfigurationDrawer/JsonSchemaEditor/PropertyList';
@@ -11,8 +10,8 @@ import {
   PropertyItems,
 } from '@/pages/rules/RuleConfigurationDrawer/JsonSchemaEditor/types';
 import {
-  getOrderedProps,
   getUiSchema,
+  getOrderedProps,
 } from '@/pages/rules/RuleConfigurationDrawer/JsonSchemaEditor/utils';
 
 export interface FormValues extends Record<string, any> {}

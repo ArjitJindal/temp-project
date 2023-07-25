@@ -1,7 +1,7 @@
 import { useMemo, useState } from 'react';
 import { ExtendedSchema, UiSchemaPaymentFilters } from '../../../../types';
 import Property from '../../..';
-import { findRequiredProperty, getOrderedProps } from '../../../../utils';
+import { findRequiredProperty, useOrderedProps } from '../../../../utils';
 import { InputProps } from '@/components/library/Form';
 import { CountryCode, PaymentMethod } from '@/apis';
 import { FieldMeta, FormContext, FormContextValue } from '@/components/library/Form/context';
@@ -27,7 +27,7 @@ export const requiredPaymentMethodMap: Record<string, PaymentMethod> = {
 
 export default function PaymentFiltersInput(props: Props) {
   const { value, schema, onChange } = props;
-  const properties = getOrderedProps(schema);
+  const properties = useOrderedProps(schema);
   const [fieldMeta, setFieldsMeta] = useState<{ [key: string]: FieldMeta }>({});
 
   const { alwaysShowErrors } = useFormContext();

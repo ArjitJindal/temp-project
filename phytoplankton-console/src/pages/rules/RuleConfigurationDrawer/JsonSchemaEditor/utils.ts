@@ -1,5 +1,7 @@
 import { ExtendedSchema, PropertyItem, PropertyItems, UiSchema } from './types';
+import { useJsonSchemaEditorContext } from './context';
 import {
+  flattenAllOf,
   isArray,
   isObject,
 } from '@/pages/rules/RuleConfigurationDrawer/JsonSchemaEditor/schema-utils';
@@ -10,12 +12,16 @@ export function getUiSchema(schema: ExtendedSchema): UiSchema {
   return schema['ui:schema'] ?? {};
 }
 
-export function getOrderedProps(schema: boolean | ExtendedSchema | undefined): PropertyItems {
-  if (schema == null || typeof schema === 'boolean') {
+export function getOrderedProps(
+  rawSchema: boolean | ExtendedSchema | undefined,
+  rootSchema?: ExtendedSchema,
+): PropertyItems {
+  if (rawSchema == null || typeof rawSchema === 'boolean') {
     return [];
   }
-
   let keys: string[] = [];
+  const schema: ExtendedSchema =
+    rawSchema.allOf && rootSchema ? flattenAllOf(rawSchema, rootSchema) : rawSchema;
   const properties = schema.properties ?? {};
   const uiSchema = schema['ui:schema'] ?? {};
   if (uiSchema['ui:order'] != null) {
@@ -33,6 +39,11 @@ export function getOrderedProps(schema: boolean | ExtendedSchema | undefined): P
   return propertiesOrdered;
 }
 
+export function useOrderedProps(rawSchema: boolean | ExtendedSchema | undefined): PropertyItems {
+  const { rootSchema } = useJsonSchemaEditorContext();
+  return getOrderedProps(rawSchema, rootSchema);
+}
+
 export function findRequiredProperty(propertyItems: PropertyItems, name: string): PropertyItem {
   const propertyItem = propertyItems.find((x) => x.name === name);
   if (propertyItem == null) {
@@ -45,7 +56,7 @@ export function makeValidators<T>(props: PropertyItems): ObjectFieldValidator<T>
   return props.reduce((acc, prop): ObjectFieldValidator<T> => {
     let propValidators;
     if (isObject(prop.schema)) {
-      const orderedProps = getOrderedProps(prop.schema);
+      const orderedProps = useOrderedProps(prop.schema);
       const nestedValidators = makeValidators(orderedProps);
       if (Object.keys(nestedValidators).length > 0) {
         propValidators = nestedValidators;
@@ -77,7 +88,7 @@ export function makeDefaultState(props: PropertyItems): unknown {
         granularity: 'day',
       };
     } else if (isObject(prop)) {
-      const nestedProps = getOrderedProps(prop.schema);
+      const nestedProps = useOrderedProps(prop.schema);
       result = makeDefaultState(nestedProps);
     } else if (isArray(prop)) {
       result = [];
