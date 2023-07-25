@@ -126,6 +126,11 @@ export class AlertsRepository {
         'alerts.caseId': params.filterCaseId,
       })
     }
+    if (params.filterAction != null) {
+      conditions.push({
+        'alerts.ruleAction': params.filterAction,
+      })
+    }
 
     if (params.filterRulesHit?.length) {
       conditions.push({

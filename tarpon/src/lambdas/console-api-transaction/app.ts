@@ -248,7 +248,11 @@ export const transactionsViewHandler = lambdaApi()(
                   txnIds.push(tid)
                 }
               })
-              if (txnIds.length > 0 && alert.alertId) {
+              if (
+                txnIds.length > 0 &&
+                alert.alertId &&
+                alert.ruleAction === 'SUSPEND'
+              ) {
                 return background(
                   alertService.saveAlertComment(alert.alertId, {
                     body: `${txnIds.join(', ')} set to ${

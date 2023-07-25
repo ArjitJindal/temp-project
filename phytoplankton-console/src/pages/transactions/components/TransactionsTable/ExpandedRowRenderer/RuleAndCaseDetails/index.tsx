@@ -19,11 +19,11 @@ type TableParams = AllParams<DefaultApiGetAlertListRequest>;
 
 interface Props {
   transaction: InternalTransaction;
-  statuses?: RuleAction[];
+  action?: RuleAction;
 }
 
 export default function RuleAndCaseDetails(props: Props) {
-  const { transaction, statuses } = props;
+  const { transaction, action } = props;
 
   const api = useApi();
   const [params, setParams] = useState<TableParams>(DEFAULT_PARAMS_STATE);
@@ -38,7 +38,7 @@ export default function RuleAndCaseDetails(props: Props) {
     const response = await api.getAlertList({
       ...fullParams,
       page: page,
-      filterStatus: statuses ? statuses : undefined,
+      filterAction: action ? action : undefined,
     });
     return {
       items: response.data.map(({ alert }) => alert),

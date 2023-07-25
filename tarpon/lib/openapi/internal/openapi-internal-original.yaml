@@ -2762,6 +2762,10 @@ paths:
           in: query
           name: filterCaseId
         - schema:
+            $ref: '#/components/schemas/RuleAction'
+          in: query
+          name: filterAction
+        - schema:
             type: number
           in: query
           name: beforeAlertLastUpdatedTimestamp

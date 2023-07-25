@@ -13,7 +13,7 @@ export default function ExpandedRowRenderer(props: Props) {
   const { transaction } = props;
   const settings = useSettings();
   if (settings.isPaymentApprovalEnabled && transaction.status === 'SUSPEND') {
-    return <ApprovalDetails transaction={transaction} statuses={['SUSPEND']} />;
+    return <ApprovalDetails transaction={transaction} action={'SUSPEND'} />;
   }
 
   return <ScreeningMatchList details={getFlatSanctionsDetails(transaction)} />;
