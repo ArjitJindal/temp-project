@@ -48,10 +48,10 @@ const DEFAULT_METRIC_VALUES = Object.fromEntries(
 )
 
 const getAllUsageMetricsRows = memoize(
-  async (type: 'DAILY' | 'MONTHLY', sheet: GoogleSpreadsheetWorksheet) => {
+  async (cacheKey: string, sheet: GoogleSpreadsheetWorksheet) => {
     if (!sheet) {
       throw new Error(
-        `Sheet ${type} is not initialized. Please call initialize() first.`
+        `Sheet ${cacheKey} is not initialized. Please call initialize() first.`
       )
     }
     return await sheet.getRows()
@@ -201,7 +201,7 @@ export class SheetsApiUsageMetricsService {
     }
 
     const rows = await getAllUsageMetricsRows(
-      'DAILY',
+      `${this.googleSheetId}-DAILY`,
       this.dailyUsageMetricsSheet
     )
     const row = rows.findIndex(
@@ -234,7 +234,7 @@ export class SheetsApiUsageMetricsService {
     }
 
     const tenantRows = await getAllUsageMetricsRows(
-      'MONTHLY',
+      `${this.googleSheetId}-MONTHLY`,
       this.monthlyUsageMetricsSheet
     )
 
