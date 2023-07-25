@@ -102,8 +102,8 @@ export default function TeamPerformanceCard() {
             title: params.scope === 'CASES' ? 'Case status' : 'Alert status',
             dataType: {
               kind: 'select',
-              options: (['OPEN', 'CLOSED', 'REOPENED', 'ESCALATED', 'IN_REVIEW'] as const).map(
-                (caseStatus: CaseStatus | 'IN_REVIEW') => ({
+              options: (['OPEN', 'CLOSED', 'REOPENED', 'ESCALATED'] as const).map(
+                (caseStatus: CaseStatus) => ({
                   value: caseStatus,
                   label: humanizeConstant(caseStatus),
                 }),

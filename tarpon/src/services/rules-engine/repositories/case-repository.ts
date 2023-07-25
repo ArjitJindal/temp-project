@@ -36,7 +36,6 @@ import { hasFeature } from '@/core/utils/context'
 import { COUNT_QUERY_LIMIT, OptionalPagination } from '@/utils/pagination'
 import { PRIORITYS } from '@/@types/openapi-internal-custom/Priority'
 import { Assignment } from '@/@types/openapi-internal/Assignment'
-import { isStatusInReview } from '@/utils/helpers'
 
 export const MAX_TRANSACTION_IN_A_CASE = 1000
 
@@ -145,26 +144,23 @@ export class CaseRepository {
       params.filterAssignmentsIds.length > 0 &&
       assignments
     ) {
-      if (
-        params.filterCaseStatus?.includes('ESCALATED') ||
-        params.filterCaseStatus?.some((status) => isStatusInReview(status))
-      ) {
-        conditions.push({
-          reviewAssignments: {
-            $elemMatch: {
-              assigneeUserId: { $in: params.filterAssignmentsIds },
-            },
-          },
-        })
-      } else {
-        conditions.push({
-          assignments: {
-            $elemMatch: {
-              assigneeUserId: { $in: params.filterAssignmentsIds },
-            },
-          },
-        })
-      }
+      conditions.push(
+        !params.filterCaseStatus?.includes('ESCALATED')
+          ? {
+              assignments: {
+                $elemMatch: {
+                  assigneeUserId: { $in: params.filterAssignmentsIds },
+                },
+              },
+            }
+          : {
+              reviewAssignments: {
+                $elemMatch: {
+                  assigneeUserId: { $in: params.filterAssignmentsIds },
+                },
+              },
+            }
+      )
     }
 
     if (params.afterTimestamp != null || params.beforeTimestamp != null) {
@@ -569,7 +565,6 @@ export class CaseRepository {
         caseUsers: 1,
         caseTransactionsCount: 1,
         lastStatusChange: 1,
-        statusChanges: 1,
         comments: 1,
         falsePositiveDetails: 1,
         alerts: 1,
@@ -722,9 +717,6 @@ export class CaseRepository {
   public getUpdatePipeline(statusChange: CaseStatusChange): {
     updatePipeline: UpdateFilter<Case>
   } {
-    if (!statusChange.caseStatus) {
-      throw new Error('Case status is required')
-    }
     const updatePipeline: UpdateFilter<Case> = {
       $set: {
         caseStatus: statusChange?.caseStatus,
@@ -745,6 +737,7 @@ export class CaseRepository {
   ) {
     const db = this.mongoDb.db()
     const collection = db.collection<Case>(CASES_COLLECTION(this.tenantId))
+
     await collection.updateMany(
       { caseId: { $in: caseIds } },
       this.getUpdatePipeline(statusChange).updatePipeline
@@ -774,20 +767,6 @@ export class CaseRepository {
     await collection.updateMany(
       { caseId: { $in: caseIds } },
       { $set: { reviewAssignments, updatedAt: Date.now() } }
-    )
-  }
-
-  public async updateInReviewAssignmentsOfCases(
-    caseIds: string[],
-    assignments: Assignment[],
-    reviewAssignments: Assignment[]
-  ): Promise<void> {
-    const db = this.mongoDb.db()
-    const collection = db.collection<Case>(CASES_COLLECTION(this.tenantId))
-
-    await collection.updateMany(
-      { caseId: { $in: caseIds } },
-      { $set: { reviewAssignments, assignments } }
     )
   }
 

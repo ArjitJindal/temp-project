@@ -14,7 +14,6 @@ interface Props {
   footer?: React.ReactNode;
   drawerMaxWidth?: string;
   isClickAwayEnabled?: boolean;
-  rightAlignButtonsFooter?: boolean;
 }
 
 export default function Drawer(props: Props) {
@@ -72,11 +71,7 @@ export default function Drawer(props: Props) {
           </div>
         </div>
         <div className={s.children}>{children}</div>
-        {footer && (
-          <div className={cn(s.footer, props.rightAlignButtonsFooter && s.rightAlignButtonsFooter)}>
-            {footer}
-          </div>
-        )}
+        {footer && <div className={s.footer}>{footer}</div>}
       </div>
     </div>,
     window.document.body,

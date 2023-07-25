@@ -1,6 +1,5 @@
 import React from 'react';
 import { Switch, Tag as AntTag } from 'antd';
-import { uniqBy } from 'lodash';
 import { ColumnDataType, FullColumnDataType } from '../types';
 import s from './index.module.less';
 import RiskLevelTag from '@/components/library/RiskLevelTag';
@@ -22,7 +21,6 @@ import {
   TransactionType,
   UserState,
   Case,
-  CaseStatusChange,
 } from '@/apis';
 import { getUserName } from '@/utils/api/users';
 import TransactionTypeTag from '@/components/library/TransactionTypeTag';
@@ -51,8 +49,6 @@ import { humanizeConstant } from '@/utils/humanize';
 import Id from '@/components/ui/Id';
 import { addBackUrlToRoute } from '@/utils/backUrl';
 import { makeUrl } from '@/utils/routing';
-import { findLastStatusForInReview, statusInReview } from '@/utils/case-utils';
-import { CASE_STATUSS } from '@/apis/models-custom/CaseStatus';
 
 export const UNKNOWN: Required<FullColumnDataType<unknown>> = {
   render: (value) => {
@@ -351,26 +347,18 @@ export const PAYMENT_METHOD: ColumnDataType<PaymentMethod> = {
 
 export const CASE_STATUS = (options?: {
   statusesToShow?: CaseStatus[];
-}): ColumnDataType<CaseStatus, { statusChanges?: CaseStatusChange[] }> => ({
-  render: (caseStatus, { item: entity }) => {
-    return caseStatus ? (
-      <CaseStatusTag
-        caseStatus={caseStatus}
-        previousStatus={findLastStatusForInReview(entity?.statusChanges ?? [])}
-      />
-    ) : (
-      <></>
-    );
+}): ColumnDataType<CaseStatus> => ({
+  render: (caseStatus) => {
+    return caseStatus ? <CaseStatusTag caseStatus={caseStatus} /> : <></>;
   },
   autoFilterDataType: {
     kind: 'select',
-    options: uniqBy(
-      (options?.statusesToShow ?? CASE_STATUSS).map((status) => ({
-        value: status,
-        label: humanizeConstant(statusInReview(status) ? 'IN_REVIEW' : status),
-      })),
-      'label',
-    ),
+    options: (
+      options?.statusesToShow ?? (['OPEN', 'CLOSED', 'REOPENED', 'ESCALATED'] as const)
+    ).map((status) => ({
+      value: status,
+      label: humanizeConstant(status),
+    })),
     displayMode: 'list',
     mode: 'SINGLE',
   },

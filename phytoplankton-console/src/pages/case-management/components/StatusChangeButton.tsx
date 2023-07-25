@@ -15,11 +15,6 @@ export const statusToOperationName = (status: AlertStatus | CaseStatus) => {
       return 'Re-Open';
     case 'ESCALATED':
       return 'Escalate';
-    case 'IN_REVIEW_OPEN':
-    case 'IN_REVIEW_ESCALATED':
-    case 'IN_REVIEW_CLOSED':
-    case 'IN_REVIEW_REOPENED':
-      return 'In-Review';
     default:
       return neverReturn(status, humanizeConstant(status));
   }
@@ -62,7 +57,7 @@ interface Props {
     isBlue?: boolean;
     rounded?: boolean;
   };
-  statusTransitions?: Partial<Record<CaseStatus, { status: CaseStatus; actionLabel: string }>>;
+  statusTransitions?: Record<CaseStatus, { status: CaseStatus; actionLabel: string }>;
   children: (childrenProps: ChildrenProps) => React.ReactNode;
   isDisabled?: boolean;
 }

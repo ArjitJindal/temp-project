@@ -1,7 +1,8 @@
-import React, { useMemo } from 'react';
+import React from 'react';
+import { Tag } from 'antd';
 import _ from 'lodash';
-import SubHeader from './SubHeader';
 import s from './index.module.less';
+import SubHeader from './SubHeader';
 import { Case, Comment } from '@/apis';
 import { useApi } from '@/api';
 import BriefcaseLineIcon from '@/components/ui/icons/Remix/business/briefcase-line.react.svg';
@@ -14,15 +15,7 @@ import { getUserLink, getUserName } from '@/utils/api/users';
 import Id from '@/components/ui/Id';
 import { useFeatureEnabled } from '@/components/AppWrapper/Providers/SettingsProvider';
 import { makeUrl } from '@/utils/routing';
-import { ApproveSendBackButton } from '@/pages/case-management/components/ApproveSendBackButton';
-import {
-  canReviewCases,
-  findLastStatusForInReview,
-  isInReviewCases,
-  statusInReview,
-} from '@/utils/case-utils';
-import CaseStatusTag from '@/components/ui/CaseStatusTag';
-import { useAuth0User, useHasPermissions } from '@/utils/user-utils';
+import { useHasPermissions } from '@/utils/user-utils';
 
 interface Props {
   caseItem: Case;
@@ -47,32 +40,16 @@ export default function Header(props: Props) {
     caseItem.statusChanges?.find((statusChange) => statusChange.caseStatus === 'CLOSED'),
   );
   const api = useApi();
-
-  const currentUser = useAuth0User();
-
-  const displayApproveButtons = useMemo(() => {
-    return (
-      isInReviewCases({ [caseId as string]: caseItem }) &&
-      canReviewCases({ [caseId as string]: caseItem }, currentUser.userId)
-    );
-  }, [caseItem, caseId, currentUser]);
-
-  const previousStatus = useMemo(() => {
-    return findLastStatusForInReview(caseItem.statusChanges ?? []);
-  }, [caseItem]);
-
-  const isReview = useMemo(() => statusInReview(caseItem.caseStatus), [caseItem]);
-
   return (
     <LegacyEntityHeader
       stickyElRef={headerStickyElRef}
       idTitle={'Case ID'}
       tag={
         caseItem.falsePositiveDetails &&
-        caseId &&
+        caseItem.caseId &&
         caseItem.falsePositiveDetails.isFalsePositive && (
           <FalsePositiveTag
-            caseIds={[caseId]}
+            caseIds={[caseItem.caseId]}
             onSaved={() => {
               // todo: implement in-place update instead of reloading
               onReload();
@@ -82,43 +59,32 @@ export default function Header(props: Props) {
           />
         )
       }
-      id={caseId}
+      id={caseItem.caseId}
       buttons={
         <>
           <CommentButton
             onSuccess={onCommentAdded}
             submitRequest={async (commentFormValues) => {
-              if (caseId == null) {
+              if (caseItem.caseId == null) {
                 throw new Error(`Case ID is not defined`);
               }
               const commentData = {
                 Comment: { body: commentFormValues.comment, files: commentFormValues.files },
               };
               return await api.postCaseComments({
-                caseId: caseId,
+                caseId: caseItem.caseId,
                 ...commentData,
               });
             }}
             requiredPermissions={['case-management:case-overview:write']}
           />
-          {isReview && caseId && displayApproveButtons && (
-            <ApproveSendBackButton
-              ids={[caseId as string]}
-              onReload={onReload}
-              type="CASE"
-              status={caseItem.caseStatus ?? 'OPEN'}
-              previousStatus={previousStatus}
-            />
-          )}
-          {!isReview && caseId && (
-            <CasesStatusChangeButton
-              caseIds={[caseId as string]}
-              caseStatus={caseItem.caseStatus}
-              onSaved={onReload}
-              isDisabled={caseItem.caseStatus === 'CLOSED' && !isReopenEnabled}
-            />
-          )}
-          {escalationEnabled && !isReview && caseId && (
+          <CasesStatusChangeButton
+            caseIds={[caseId as string]}
+            caseStatus={caseItem.caseStatus}
+            onSaved={onReload}
+            isDisabled={caseItem.caseStatus === 'CLOSED' && !isReopenEnabled}
+          />
+          {escalationEnabled && (
             <CasesStatusChangeButton
               caseIds={[caseId as string]}
               caseStatus={caseItem.caseStatus}
@@ -149,7 +115,12 @@ export default function Header(props: Props) {
         title={'Case Status'}
         className={s.preventShrinkage}
       >
-        <CaseStatusTag caseStatus={caseItem.caseStatus ?? 'OPEN'} previousStatus={previousStatus} />
+        <Tag
+          className={s.caseStatusTag}
+          color={caseItem.caseStatus === 'CLOSED' ? 'success' : 'warning'}
+        >
+          {_.capitalize(caseItem.caseStatus ? caseItem.caseStatus : 'OPEN')}
+        </Tag>
       </Form.Layout.Label>
       {caseItem.caseHierarchyDetails?.parentCaseId && (
         <Form.Layout.Label title={'Parent Case ID'}>

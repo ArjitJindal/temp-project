@@ -5,7 +5,7 @@ import {
   APIGatewayProxyWithLambdaAuthorizerEvent,
 } from 'aws-lambda'
 import * as AWS from 'aws-sdk'
-import { capitalize, isEqual, isEmpty } from 'lodash'
+import _ from 'lodash'
 import { MongoClient } from 'mongodb'
 import { CasesAlertsAuditLogService } from './case-alerts-audit-log-service'
 import { Comment } from '@/@types/openapi-internal/Comment'
@@ -40,9 +40,6 @@ import {
   FLAGRIGHT_SYSTEM_USER,
 } from '@/services/rules-engine/repositories/alerts-repository'
 import { AlertsService } from '@/services/alerts'
-import { AlertStatusUpdateRequest } from '@/@types/openapi-internal/AlertStatusUpdateRequest'
-import { CaseStatus } from '@/@types/openapi-internal/CaseStatus'
-import { isStatusInReview } from '@/utils/helpers'
 import { WebhookEventType } from '@/@types/openapi-public/WebhookEventType'
 
 export class CaseService extends CaseAlertsCommonService {
@@ -119,19 +116,9 @@ export class CaseService extends CaseAlertsCommonService {
     }
   }
 
-  private getCaseCommentBody(
-    updateRequest: CaseStatusUpdate,
-    isReview = false
-  ) {
+  private getCaseCommentBody(updateRequest: CaseStatusUpdate): string {
     const { caseStatus, reason, otherReason, comment } = updateRequest
-    let body = `Case status changed to ${
-      isReview ? 'In Review' : capitalize(caseStatus?.toLowerCase())
-    }${
-      isReview
-        ? ' and is requested to be ' +
-          capitalize(caseStatus?.replace('IN_REVIEW_', '').toLowerCase())
-        : ''
-    }`
+    let body = `Case status changed to ${caseStatus}`
 
     const allReasons = [
       ...(reason?.filter((x) => x !== 'Other') ?? []),
@@ -180,58 +167,20 @@ export class CaseService extends CaseAlertsCommonService {
     options?: {
       cascadeAlertsUpdate?: boolean
       reviewAssignments?: Assignment[]
-      skipReview?: boolean
-      account?: Account
-      filterInReview?: boolean
     }
   ): Promise<void> {
-    const {
-      cascadeAlertsUpdate = true,
-      skipReview = false,
-      account,
-    } = options ?? {}
+    const { cascadeAlertsUpdate = true } = options ?? {}
     const dashboardStatsRepository = new DashboardStatsRepository(
       this.caseRepository.tenantId,
       { mongoDb: this.caseRepository.mongoDb }
     )
+    const commentBody = this.getCaseCommentBody(updates)
 
-    const statusChange = this.getStatusChange(updates, {
+    const statusChange = await this.getStatusChange(updates, {
       cascadeAlertsUpdate,
     })
 
     const cases = await this.caseRepository.getCasesByIds(caseIds)
-
-    const accountsService = new AccountsService(
-      { auth0Domain: process.env.AUTH0_DOMAIN as string },
-      { mongoDb: this.mongoDb }
-    )
-
-    const userId = getContext()?.user?.id as string
-
-    const accountUser = account ?? (await accountsService.getAccount(userId))
-    const isLastInReview = isStatusInReview(
-      cases[0].lastStatusChange?.caseStatus
-    )
-
-    const isReviewRequired = accountUser?.reviewerId ?? false
-    let isReview = false
-
-    if (
-      isReviewRequired &&
-      !skipReview &&
-      hasFeature('ESCALATION') &&
-      !isLastInReview
-    ) {
-      const caseStatusToChange = `IN_REVIEW_${updates.caseStatus?.replace(
-        'IN_REVIEW_',
-        ''
-      )}`
-      updates.caseStatus = caseStatusToChange as CaseStatus
-      statusChange.caseStatus = caseStatusToChange as CaseStatus
-      isReview = true
-    }
-
-    const commentBody = this.getCaseCommentBody(updates, isReview)
 
     await withTransaction(async () => {
       await Promise.all([
@@ -241,31 +190,9 @@ export class CaseService extends CaseAlertsCommonService {
           files: updates.files,
           userId: statusChange.userId,
         }),
-        ...(isReview && hasFeature('ESCALATION')
-          ? [
-              this.caseRepository.updateInReviewAssignmentsOfCases(
-                caseIds,
-                [
-                  {
-                    assigneeUserId: userId!,
-                    assignedByUserId: FLAGRIGHT_SYSTEM_USER,
-                    timestamp: Date.now(),
-                  },
-                ],
-                [
-                  {
-                    assigneeUserId: accountUser.reviewerId!,
-                    assignedByUserId: userId!,
-                    timestamp: Date.now(),
-                  },
-                ]
-              ),
-            ]
-          : []),
       ])
-
       if (updates.caseStatus && cascadeAlertsUpdate) {
-        const alerts = cases
+        const alertIds = cases
           .flatMap((c) => c.alerts ?? [])
           .filter(
             (alert) =>
@@ -273,44 +200,25 @@ export class CaseService extends CaseAlertsCommonService {
                 alert.alertStatus
               )
           )
-          .filter((alert) => {
-            if (options?.filterInReview) {
-              return !isStatusInReview(alert.alertStatus)
-            }
-            return true
-          })
+          .map((alert) => alert.alertId!)
 
         if (updates.caseStatus === 'ESCALATED' && options?.reviewAssignments) {
           await this.alertsService.updateAlertsReviewAssignments(
-            alerts.map((a) => a.alertId!),
+            alertIds,
             options.reviewAssignments
           )
         }
 
-        const otherReason = isReview
-          ? `In Review Requested to be ${capitalize(
-              updates.caseStatus?.replace('IN_REVIEW_', '')
-            )}`
-          : capitalize(updates.caseStatus)
-
-        const message = `Case of this alert was ${otherReason}`
-
-        const alertsStatusChange = {
-          alertStatus: updates.caseStatus,
-          comment: updates.comment,
-          otherReason: message,
-          reason: ['Other'],
-          files: updates.files,
-        } as AlertStatusUpdateRequest
-
         await this.alertsService.updateAlertsStatus(
-          alerts.map((a) => a.alertId!),
-          alertsStatusChange,
+          alertIds,
           {
-            cascadeCaseUpdates: false,
-            account,
-            skipReview: skipReview || isLastInReview,
-          }
+            alertStatus: updates.caseStatus,
+            comment: updates.comment,
+            otherReason: `Case of this alert was ${updates.caseStatus.toLowerCase()}`,
+            reason: ['Other'],
+            files: updates.files,
+          },
+          { cascadeCaseUpdates: false }
         )
       }
     })
@@ -474,7 +382,6 @@ export class CaseService extends CaseAlertsCommonService {
       this.updateCasesStatus([caseId], statusChange, {
         cascadeAlertsUpdate: true,
         reviewAssignments: caseUpdateRequest.reviewAssignments,
-        skipReview: true,
       }),
       this.updateCasesReviewAssignments(
         [caseId],
@@ -508,7 +415,7 @@ export class CaseService extends CaseAlertsCommonService {
 
     const account = getContext()?.user
 
-    if (isEmpty(case_.assignments) && account?.id) {
+    if (_.isEmpty(case_.assignments) && account?.id) {
       caseUpdateRequest.assignments = [
         { assigneeUserId: account.id, timestamp: Date.now() },
       ]
@@ -534,7 +441,7 @@ export class CaseService extends CaseAlertsCommonService {
         cascadeAlertsUpdate: true,
         reviewAssignments,
       }),
-      !isEqual(case_.reviewAssignments, reviewAssignments) &&
+      !_.isEqual(case_.reviewAssignments, reviewAssignments) &&
         this.updateCasesReviewAssignments([caseId], reviewAssignments),
     ])
 

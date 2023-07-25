@@ -1,52 +1,40 @@
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useMemo, useRef } from 'react';
+import {
+  DrawerForm,
+  ProFormCheckbox,
+  ProFormInstance,
+  ProFormSelect,
+  ProFormText,
+} from '@ant-design/pro-form';
+import { EditOutlined, PlusOutlined } from '@ant-design/icons';
 import { sentenceCase } from '@antv/x6/es/util/string/format';
-import { useMutation } from '@tanstack/react-query';
-import s from './styles.module.less';
-import { CloseMessage, message } from '@/components/library/Message';
+import { message } from '@/components/library/Message';
 import Button from '@/components/library/Button';
 import { useApi } from '@/api';
-import { Account, AccountInvitePayload, AccountPatchPayload, AccountRole } from '@/apis';
-import { useQuery } from '@/utils/queries/hooks';
-import { ROLES_LIST } from '@/utils/queries/keys';
+import { Account, AccountRole } from '@/apis';
+import { usePaginatedQuery, useQuery } from '@/utils/queries/hooks';
+import { ACCOUNT_LIST, ROLES_LIST } from '@/utils/queries/keys';
 import AsyncResourceRenderer from '@/components/common/AsyncResourceRenderer';
 import { getErrorMessage } from '@/utils/lang';
-import {
-  Feature,
-  useFeatures,
-  useSettings,
-} from '@/components/AppWrapper/Providers/SettingsProvider';
+import { useSettings } from '@/components/AppWrapper/Providers/SettingsProvider';
+import { isSuccess } from '@/utils/asyncResource';
 import { getBranding } from '@/utils/branding';
-import { useUsers, useAuth0User } from '@/utils/user-utils';
+import { useApiTime } from '@/utils/tracker';
+import { parseUserRole, useAuth0User, UserRole } from '@/utils/user-utils';
 import { P } from '@/components/ui/Typography';
-import COLORS from '@/components/ui/colors';
-import Radio from '@/components/library/Radio';
-import Label from '@/components/library/Label';
-import { AssigneesDropdown } from '@/pages/case-management/components/AssigneesDropdown';
-import Select from '@/components/library/Select';
-import Drawer from '@/components/library/Drawer';
-import TextInput from '@/components/library/TextInput';
+import Close from '@/components/ui/icons/close.react.svg';
 
 interface Props {
   editAccount: Account | null;
   onSuccess: () => void;
-  isVisibile: boolean;
-  onChangeVisibility: (isVisible: boolean) => void;
 }
-
-const REQUIRED_FIELDS = ['email', 'role'];
-
-const defaultState = {
-  name: '',
-  isEscalationContact: false,
-  reviewerId: undefined,
-  role: 'admin',
-  email: '',
-};
-
 export default function AccountForm(props: Props) {
   const { editAccount, onSuccess } = props;
   const api = useApi();
   const user = useAuth0User();
+  const measure = useApiTime();
+
+  const formRef = useRef<ProFormInstance>();
   const rolesResp = useQuery<AccountRole[]>(ROLES_LIST(), async () => {
     return await api.getRoles();
   });
@@ -57,7 +45,18 @@ export default function AccountForm(props: Props) {
 
   const isEdit = editAccount !== null;
 
-  const [accounts, isLoading] = useUsers();
+  const accountsResult = usePaginatedQuery<Account>(ACCOUNT_LIST(), async () => {
+    const accounts = await measure(() => api.getAccounts(), 'Get accounts');
+    const filteredAccounts = accounts.filter(
+      (account) => parseUserRole(account.role) !== UserRole.ROOT && !account.blocked,
+    );
+
+    return {
+      items: filteredAccounts,
+      success: true,
+      total: filteredAccounts.length,
+    };
+  });
   // todo: i18n
 
   const isInviteDisabled = useMemo(() => {
@@ -65,7 +64,7 @@ export default function AccountForm(props: Props) {
       return false;
     }
 
-    if (isLoading) {
+    if (!isSuccess(accountsResult.data)) {
       return true;
     }
 
@@ -73,262 +72,148 @@ export default function AccountForm(props: Props) {
       return true;
     }
 
-    const existingSeats = Object.values(accounts).length;
+    const existingSeats = accountsResult.data.value?.total;
 
     if (existingSeats == null) {
       return true;
     }
 
     return existingSeats >= maxSeats;
-  }, [maxSeats, isEdit, isLoading, accounts]);
+  }, [accountsResult, maxSeats, isEdit]);
 
-  const [values, setValues] = useState<Partial<Account>>(defaultState);
-
-  const features = useFeatures();
-
-  const isEscalationsEnabled = useMemo(() => features.includes('ESCALATION'), [features]);
-
-  const [isReviewRequired, setIsReviewRequired] = useState(false);
-
-  useEffect(() => {
-    if (editAccount) {
-      setValues({
-        name: editAccount?.name || '',
-        ...(isEscalationsEnabled && {
-          isEscalationContact: editAccount?.isEscalationContact || false,
-          reviewerId: editAccount?.reviewerId || undefined,
-        }),
-        role: editAccount?.role || 'admin',
-        email: editAccount?.email || '',
-        id: editAccount?.id,
-      });
-      setIsReviewRequired(editAccount?.reviewerId != null);
-    } else {
-      setValues(defaultState);
-      setIsReviewRequired(false);
-    }
-  }, [editAccount, isEscalationsEnabled]);
-
-  const allRequiredFieldsFilled = useMemo(() => {
-    return REQUIRED_FIELDS.every((field) => values[field] !== '' && values[field] !== undefined);
-  }, [values]);
-
-  const isInviteButtonDisabled = useMemo(() => {
-    if (isInviteDisabled) {
-      return true;
-    }
-    if (!allRequiredFieldsFilled) {
-      return true;
-    }
-    return false;
-  }, [isInviteDisabled, allRequiredFieldsFilled]);
-
-  let hide: CloseMessage | undefined;
-
-  const inviteMutation = useMutation<unknown, unknown, AccountInvitePayload>(
-    async (payload) => {
-      if (isReviewRequired && !payload.reviewerId) {
-        message.error('Reviewer is required');
-        return;
-      }
-
-      return await api.accountsInvite({
-        AccountInvitePayload: payload,
-      });
-    },
-    {
-      onSuccess: () => {
-        message.success('User invited!');
-        onSuccess();
-        hide?.();
-      },
-      onError: (e) => {
-        message.fatal(`Failed to invite user - ${getErrorMessage(e)}`, e);
-        hide?.();
-      },
-      onMutate: () => {
-        hide = message.loading('Sending invitation...');
-      },
-    },
-  );
-
-  const editMutation = useMutation<
-    unknown,
-    unknown,
-    { accountId: string; AccountPatchPayload: AccountPatchPayload }
-  >(
-    async (payload) => {
-      if (isReviewRequired && !payload.AccountPatchPayload.reviewerId) {
-        message.error('Reviewer is required');
-        return;
-      }
-      return await api.accountsEdit(payload);
-    },
-    {
-      onSuccess: () => {
+  const initialValues =
+    editAccount != null
+      ? editAccount
+      : {
+          email: '',
+          role: 'admin',
+          isEscalationContact: false,
+        };
+  const onFinish = async (values: Account) => {
+    if (isEdit) {
+      try {
+        await api.accountsEdit({
+          accountId: editAccount?.id,
+          AccountPatchPayload: {
+            role: values.role,
+            isEscalationContact: values.isEscalationContact,
+          },
+        });
         message.success('Account updated!');
         onSuccess();
-        hide?.();
-      },
-      onError: (e) => {
+        return true;
+      } catch (e) {
         message.fatal(`Failed to update account - ${getErrorMessage(e)}`, e);
-        hide?.();
-      },
-      onMutate: () => {
-        hide = message.loading('Updating account...');
-      },
-    },
-  );
-
-  const onFinish = async () => {
-    const { email, role, isEscalationContact, reviewerId } = values;
-    if (isEdit) {
-      editMutation.mutate({
-        accountId: editAccount?.id,
-        AccountPatchPayload: { role, isEscalationContact, reviewerId },
-      });
-      return;
+        return false;
+      }
     }
 
-    inviteMutation.mutate({ email: email!.trim(), role: role!, isEscalationContact, reviewerId });
+    try {
+      await api.accountsInvite({
+        AccountInvitePayload: {
+          email: values.email.trim(),
+          role: values.role,
+          isEscalationContact: values.isEscalationContact,
+        },
+      });
+      message.success('User invited!');
+      onSuccess();
+      return true;
+    } catch (e) {
+      message.fatal(`Failed to invite user - ${getErrorMessage(e)}`, e);
+      return false;
+    }
   };
 
   return (
-    <Drawer
+    <DrawerForm<Account>
+      initialValues={initialValues}
       title={isEdit ? 'Edit account' : 'Invite user'}
-      drawerMaxWidth={'400px'}
-      isVisible={props.isVisibile}
-      onChangeVisibility={props.onChangeVisibility}
-      rightAlignButtonsFooter
-      footer={
-        <>
-          <Button
-            type="TETRIARY"
-            style={{ marginRight: '0.5rem' }}
-            isLoading={inviteMutation.isLoading || editMutation.isLoading}
-            onClick={() => {
-              props.onChangeVisibility(false);
-            }}
-          >
-            Cancel
-          </Button>
-          <Button
-            type="PRIMARY"
-            onClick={() => {
-              onFinish();
-            }}
-            isDisabled={isInviteButtonDisabled}
-            isLoading={inviteMutation.isLoading || editMutation.isLoading}
-          >
-            {isEdit ? 'Save' : 'Invite'}
-          </Button>
-        </>
-      }
-    >
-      <div className={s.container}>
-        <Label label="Email" level={4}>
-          <TextInput
-            isDisabled={isEdit}
-            allowClear={false}
-            value={values.email}
-            onChange={(value) => {
-              setValues({
-                ...values,
-                email: value,
-              });
-            }}
-          />
-        </Label>
-        <AsyncResourceRenderer resource={rolesResp.data}>
-          {(roles) => (
-            <Label label="Role" level={4}>
-              <Select
-                allowClear={false}
-                options={roles.map((name) => ({
-                  value: name.name,
-                  label: sentenceCase(name.name as string),
-                }))}
-                value={values.role}
-                onChange={(value) => {
-                  setValues({
-                    ...values,
-                    role: value,
-                  });
-                }}
-                isDisabled={user.userId === editAccount?.id || editAccount?.role == 'root'}
-              />
-            </Label>
-          )}
-        </AsyncResourceRenderer>
-        <Feature name="ESCALATION">
-          <div>
-            <P style={{ color: COLORS.purpleGray.base, fontSize: 14, marginBottom: '0.5rem' }}>
-              Review permissions
-            </P>
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr' }}>
-              <Label position="RIGHT" label="Escalation reviewer" level={2}>
-                <Radio
-                  value={values.isEscalationContact}
-                  onChange={(value) => {
-                    setIsReviewRequired(false);
-                    setValues({
-                      ...values,
-                      isEscalationContact: value,
-                      reviewerId: value ? undefined : values.reviewerId,
-                    });
-                  }}
-                />
-              </Label>
-              {user.role === 'root' && (
-                <Label position="RIGHT" label="Requires review" level={2}>
-                  <Radio
-                    value={isReviewRequired}
-                    onChange={(value) => {
-                      setIsReviewRequired(true);
-                      setValues({
-                        ...values,
-                        isEscalationContact: value ? false : values.isEscalationContact,
-                      });
-                    }}
-                  />
-                </Label>
-              )}
+      width={400}
+      formRef={formRef}
+      trigger={
+        <div>
+          {isEdit ? (
+            <div style={{ marginTop: '-0.2rem' }}>
+              <EditOutlined />
             </div>
+          ) : (
+            <Button type="TETRIARY">
+              <PlusOutlined />
+              {'Invite'}
+            </Button>
+          )}
+        </div>
+      }
+      disabled={isInviteDisabled}
+      submitter={{
+        searchConfig: {
+          resetText: 'Cancel',
+          submitText: isEdit ? 'Save' : 'Invite',
+        },
+      }}
+      autoFocusFirstInput
+      onVisibleChange={(isVisible) => {
+        if (isVisible) {
+          formRef.current?.setFieldsValue(initialValues);
+        }
+      }}
+      onFinish={onFinish}
+      requiredMark={false}
+      drawerProps={{
+        closeIcon: (
+          <div style={{ position: 'absolute', right: '1rem', top: '1rem', scale: '1.2' }}>
+            <Close />
           </div>
-        </Feature>
-        {isReviewRequired && isLoading === false && isEscalationsEnabled && user.role === 'root' && (
-          <div style={{ marginTop: '1rem' }}>
-            <Label label="Select a reviewer">
-              <AssigneesDropdown
-                maxAssignees={1}
-                editing={true}
-                placeholder="Select a reviewer"
-                assignments={
-                  values.reviewerId
-                    ? [
-                        {
-                          assigneeUserId: values.reviewerId,
-                          assignedByUserId: '',
-                          timestamp: 0,
-                        },
-                      ]
-                    : []
-                }
-                onChange={(value) => {
-                  setValues({ ...values, reviewerId: value[0] });
-                }}
-              />
-            </Label>
-          </div>
+        ),
+        headerStyle: {
+          marginLeft: '-1.5rem',
+        },
+      }}
+    >
+      <ProFormText
+        disabled={isEdit}
+        width="md"
+        name="email"
+        label="E-mail"
+        allowClear={false}
+        rules={[
+          {
+            required: true,
+            type: 'email',
+            message: 'Please enter the E-mail',
+          },
+        ]}
+      />
+      <AsyncResourceRenderer resource={rolesResp.data}>
+        {(roles) => (
+          <ProFormSelect
+            width="md"
+            name="role"
+            label="Role"
+            allowClear={false}
+            disabled={user.userId === editAccount?.id || editAccount?.role == 'root'}
+            options={roles.map((name) => ({
+              value: name.name,
+              label: sentenceCase(name.name as string),
+            }))}
+            rules={[
+              {
+                required: true,
+                message: 'Please select the role for a user',
+              },
+            ]}
+          />
         )}
-        {isInviteDisabled && (
-          <P variant="sml">
-            You have reached maximum no. of Seats ({maxSeats}). Please contact support at{' '}
-            <a href={`mailto:${branding.supportEmail}`}>{branding.supportEmail}</a> if you want
-            additional seats
-          </P>
-        )}
-      </div>
-    </Drawer>
+      </AsyncResourceRenderer>
+      <ProFormCheckbox width="md" name="isEscalationContact" label="Escalation reviewer" />
+      {isInviteDisabled && (
+        <P variant="sml">
+          You have reached maximum no. of Seats ({maxSeats}). Please contact support at{' '}
+          <a href={`mailto:${branding.supportEmail}`}>{branding.supportEmail}</a> if you want
+          additional seats
+        </P>
+      )}
+    </DrawerForm>
   );
 }

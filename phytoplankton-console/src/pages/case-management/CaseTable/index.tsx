@@ -3,7 +3,6 @@ import _ from 'lodash';
 import { useMutation } from '@tanstack/react-query';
 import { TableSearchParams } from '../types';
 import CasesStatusChangeButton from '../components/CasesStatusChangeButton';
-import { ApproveSendBackButton } from '../components/ApproveSendBackButton';
 import AlertTable from '../AlertTable';
 import { Case, CasesAssignmentsUpdateRequest, CasesReviewAssignmentsUpdateRequest } from '@/apis';
 import { QueryResult } from '@/utils/queries/types';
@@ -49,14 +48,6 @@ import {
 import { RiskLevel } from '@/utils/risk-levels';
 import { ColumnHelper } from '@/components/library/Table/columnHelper';
 import { DEFAULT_PARAMS_STATE } from '@/components/library/Table/consts';
-import {
-  canReviewCases,
-  findLastStatusForInReview,
-  getSingleCaseStatusCurrent,
-  getSingleCaseStatusPreviousForInReview,
-  isInReviewCases,
-  statusInReview,
-} from '@/utils/case-utils';
 import Id from '@/components/ui/Id';
 
 interface Props {
@@ -218,16 +209,11 @@ export default function CaseTable(props: Props) {
         enableResizing: false,
         type: {
           ...ASSIGNMENTS,
-          render: (__, { item: entity }) => {
-            const isStatusInReview = statusInReview(entity.caseStatus);
-            const assignments =
-              entity.caseStatus === 'ESCALATED' || isStatusInReview
-                ? entity.reviewAssignments
-                : entity.assignments;
+          render: (assignments, { item: entity }) => {
             return (
               <AssigneesDropdown
                 assignments={assignments || []}
-                editing={!isStatusInReview}
+                editing={true}
                 onChange={(assignees) => {
                   const assignments = assignees.map((assigneeUserId) => ({
                     assignedByUserId: user.userId,
@@ -267,35 +253,14 @@ export default function CaseTable(props: Props) {
         title: 'Operations',
         enableResizing: false,
         render: (entity) => {
-          if (!entity.caseId) {
-            return <></>;
-          }
-          const isInReview = isInReviewCases({
-            [entity.caseId]: entity,
-          });
-          const canReview = canReviewCases({ [entity.caseId]: entity }, user.userId);
-          const previousStatus = findLastStatusForInReview(entity.statusChanges ?? []);
-
           return (
-            <>
-              {entity?.caseId && !statusInReview(entity.caseStatus) && (
-                <CasesStatusChangeButton
-                  caseIds={[entity.caseId]}
-                  caseStatus={entity.caseStatus}
-                  onSaved={reloadTable}
-                />
-              )}
-              {entity?.caseId && isInReview && canReview && entity.caseStatus && (
-                <ApproveSendBackButton
-                  ids={[entity.caseId]}
-                  onReload={reloadTable}
-                  type="CASE"
-                  previousStatus={previousStatus}
-                  status={entity.caseStatus}
-                  key={entity.caseId}
-                />
-              )}
-            </>
+            entity?.caseId && (
+              <CasesStatusChangeButton
+                caseIds={[entity.caseId]}
+                caseStatus={entity.caseStatus}
+                onSaved={reloadTable}
+              />
+            )
           );
         },
       }),
@@ -433,47 +398,15 @@ export default function CaseTable(props: Props) {
             />
           );
         },
-        ({ selectedIds, params, isDisabled, selectedItems }) => {
-          if (_.isEmpty(selectedItems)) return;
 
-          const isInReview = isInReviewCases(selectedItems);
-
-          return (
-            !isInReview && (
-              <CasesStatusChangeButton
-                caseIds={selectedIds}
-                onSaved={reloadTable}
-                caseStatus={params.caseStatus}
-                isDisabled={isDisabled}
-              />
-            )
-          );
-        },
-        ({ selectedIds, selectedItems, isDisabled }) => {
-          if (_.isEmpty(selectedItems)) return;
-
-          const [currentCaseStatus, isSingle] = getSingleCaseStatusCurrent(selectedItems);
-          const [previousCaseStatus, isSinglePrevious] =
-            getSingleCaseStatusPreviousForInReview(selectedItems);
-          const userCanReviewCases = canReviewCases(selectedItems, user.userId);
-          const inReviewCases = isInReviewCases(selectedItems);
-
-          return (
-            inReviewCases &&
-            userCanReviewCases && (
-              <ApproveSendBackButton
-                ids={selectedIds}
-                onReload={reloadTable}
-                type="CASE"
-                isDisabled={isDisabled}
-                status={currentCaseStatus}
-                isApproveHidden={!isSingle}
-                isDeclineHidden={!isSinglePrevious}
-                previousStatus={previousCaseStatus}
-              />
-            )
-          );
-        },
+        ({ selectedIds, params, isDisabled }) => (
+          <CasesStatusChangeButton
+            caseIds={selectedIds}
+            onSaved={reloadTable}
+            caseStatus={params.caseStatus}
+            isDisabled={isDisabled}
+          />
+        ),
         ({ selectedIds, selectedItems, isDisabled }) => {
           if (_.isEmpty(selectedItems)) return;
 
@@ -482,11 +415,10 @@ export default function CaseTable(props: Props) {
           const caseClosedBefore = Boolean(
             caseItem.statusChanges?.find((statusChange) => statusChange.caseStatus === 'CLOSED'),
           );
-          const isInReview = isInReviewCases(selectedItems);
+
           return (
             selectedIdsCount === 1 &&
-            escalationEnabled &&
-            !isInReview && (
+            escalationEnabled && (
               <CasesStatusChangeButton
                 caseIds={selectedIds}
                 caseStatus={caseItem.caseStatus}

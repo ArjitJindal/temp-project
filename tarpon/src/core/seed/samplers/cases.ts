@@ -1,4 +1,4 @@
-import { uniq } from 'lodash'
+import _ from 'lodash'
 import { sampleTimestamp } from './timestamp'
 import { Case } from '@/@types/openapi-internal/Case'
 import { InternalTransaction } from '@/@types/openapi-internal/InternalTransaction'
@@ -10,7 +10,6 @@ import { CASE_STATUSS } from '@/@types/openapi-internal-custom/CaseStatus'
 import { InternalBusinessUser } from '@/@types/openapi-internal/InternalBusinessUser'
 import { InternalConsumerUser } from '@/@types/openapi-internal/InternalConsumerUser'
 import { CaseClosingReasons } from '@/@types/openapi-internal/CaseClosingReasons'
-import { isStatusInReview } from '@/utils/helpers'
 
 let counter = 1
 let alertCounter = 1
@@ -74,7 +73,7 @@ export function sampleUserCase(
 ): Case {
   const { transactions, origin, destination } = params
 
-  const ruleHits = uniq(transactions.flatMap((t) => t.hitRules)).filter(
+  const ruleHits = _.uniq(transactions.flatMap((t) => t.hitRules)).filter(
     (rh) => {
       if (rh.ruleHitMeta?.hitDirections?.includes('ORIGIN') && origin) {
         return true
@@ -96,10 +95,7 @@ export function sampleUserCase(
 
   const caseId = `C-${counter}`
   counter++
-  const caseStatus = pickRandom(
-    CASE_STATUSS.filter((s) => !isStatusInReview(s)),
-    seed
-  )
+  const caseStatus = pickRandom(CASE_STATUSS, seed)
   const reasons = randomSubset(CASE_CLOSING_REASONSS)
   return {
     caseId: caseId,

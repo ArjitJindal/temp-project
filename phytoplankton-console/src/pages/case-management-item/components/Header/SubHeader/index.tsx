@@ -16,7 +16,6 @@ import DynamicRiskDisplay from '@/pages/users-item/UserDetails/DynamicRiskDispla
 import { CASES_ITEM } from '@/utils/queries/keys';
 import { getErrorMessage } from '@/utils/lang';
 import { useUpdateCaseQueryData } from '@/utils/api/cases';
-import { statusInReview } from '@/utils/case-utils';
 
 interface Props {
   caseItem: Case;
@@ -30,14 +29,11 @@ export default function SubHeader(props: Props) {
   const user = useAuth0User();
   const currentUserId = user.userId ?? undefined;
   const caseUser = caseItem.caseUsers?.origin ?? caseItem.caseUsers?.destination ?? undefined;
-  const isCaseEscalated = caseItem.caseStatus === 'ESCALATED';
-  const isCaseInReview = statusInReview(caseItem.caseStatus);
-
+  const isCaseInReview = caseItem.caseStatus === 'ESCALATED';
   const assignments = useMemo(
-    () => (isCaseEscalated || isCaseInReview ? caseItem.reviewAssignments : caseItem.assignments),
-    [caseItem.assignments, caseItem.reviewAssignments, isCaseInReview, isCaseEscalated],
+    () => (isCaseInReview ? caseItem.reviewAssignments : caseItem.assignments) ?? [],
+    [caseItem.assignments, caseItem.reviewAssignments, isCaseInReview],
   );
-
   const queryClient = useQueryClient();
 
   const updateCaseQueryData = useUpdateCaseQueryData();
@@ -55,7 +51,7 @@ export default function SubHeader(props: Props) {
           return;
         }
 
-        if (isCaseEscalated) {
+        if (isCaseInReview) {
           await api.patchCasesReviewAssignment({
             CasesReviewAssignmentsUpdateRequest: {
               caseIds: [caseId],
@@ -85,7 +81,7 @@ export default function SubHeader(props: Props) {
           if (caseItem == null) {
             return caseItem;
           }
-          if (isCaseEscalated) {
+          if (isCaseInReview) {
             return {
               ...caseItem,
               reviewAssignments: assignments,
@@ -129,13 +125,11 @@ export default function SubHeader(props: Props) {
         )}
       </Feature>
       <Form.Layout.Label icon={<UserShared2LineIcon />} title={'Assigned to'}>
-        <div style={{ marginLeft: 0, marginTop: 8 }}>
-          <AssigneesDropdown
-            assignments={assignments ?? []}
-            editing={!isCaseInReview}
-            onChange={handleUpdateAssignments}
-          />
-        </div>
+        <AssigneesDropdown
+          assignments={assignments}
+          editing={true}
+          onChange={handleUpdateAssignments}
+        />
       </Form.Layout.Label>
       {caseItem.caseStatus === 'CLOSED' && caseItem.lastStatusChange && (
         <Form.Layout.Label icon={<FileListLineIcon />} title={'Reason for closing'}>

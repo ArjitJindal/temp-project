@@ -1,4 +1,4 @@
-import { sample } from 'lodash'
+import _ from 'lodash'
 import { Account } from '@/@types/openapi-internal/Account'
 import { Assignment } from '@/@types/openapi-internal/Assignment'
 import { FileInfo } from '@/@types/openapi-internal/FileInfo'
@@ -26,7 +26,7 @@ export class CaseAlertsCommonService {
     if (!escalationAssineeCandidates?.length) {
       return []
     }
-    const assignee = sample(escalationAssineeCandidates)!
+    const assignee = _.sample(escalationAssineeCandidates)!
     return [
       {
         assigneeUserId: assignee.id,

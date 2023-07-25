@@ -1,3 +1,4 @@
+import React from 'react';
 import { Avatar, Select } from 'antd';
 import { LoadingOutlined } from '@ant-design/icons';
 import { colorSchema } from './utils';
@@ -10,30 +11,16 @@ interface Props {
   editing: boolean;
   assignments: Array<Assignment>;
   onChange: (assignees: string[]) => void;
-  maxAssignees?: number;
-  placeholder?: string;
 }
 
-export const AssigneesDropdown: React.FC<Props> = ({
-  assignments,
-  editing,
-  onChange,
-  maxAssignees,
-  placeholder,
-}) => {
+export const AssigneesDropdown: React.FC<Props> = ({ assignments, editing, onChange }) => {
   const [users, loadingUsers] = useUsers();
-
   return editing ? (
     <>
       <Select<string[]>
-        open={maxAssignees && assignments.length >= maxAssignees ? false : undefined}
         className={s.select}
         mode={'multiple'}
         allowClear
-        filterOption={(input, option) => {
-          const accountId = option?.value as string;
-          return users[accountId].name.includes(input) || users[accountId].email.includes(input);
-        }}
         style={{ width: '100%' }}
         disabled={loadingUsers}
         placeholder={
@@ -42,7 +29,7 @@ export const AssigneesDropdown: React.FC<Props> = ({
               <LoadingOutlined /> Loading...
             </>
           ) : (
-            placeholder ?? 'Unassigned'
+            'Unassigned'
           )
         }
         onChange={onChange}

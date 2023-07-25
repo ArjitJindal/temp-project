@@ -20,7 +20,7 @@ import { getAuth0Credentials } from '@/utils/auth0-utils'
 import { TenantCreationRequest } from '@/@types/openapi-internal/TenantCreationRequest'
 import { AccountPatchPayload } from '@/@types/openapi-internal/AccountPatchPayload'
 import { RoleService } from '@/services/roles'
-import { getContext, hasFeature } from '@/core/utils/context'
+import { getContext } from '@/core/utils/context'
 import { ACCOUNTS_COLLECTION, getMongoDbClient } from '@/utils/mongoDBUtils'
 import { JWTAuthorizerResult } from '@/@types/jwt'
 import {
@@ -49,9 +49,6 @@ const CONNECTION_NAME = 'Username-Password-Authentication'
 export interface AppMetadata {
   role: string
   isEscalationContact?: boolean
-  isReviewer?: boolean
-  isReviewRequired?: boolean
-  reviewerId?: string
 }
 
 export type Account = ApiAccount
@@ -177,7 +174,6 @@ export class AccountsService {
       picture: user.picture,
       blocked: user.blocked ?? false,
       isEscalationContact: app_metadata?.isEscalationContact === true,
-      reviewerId: app_metadata?.reviewerId,
     }
   }
 
@@ -277,8 +273,6 @@ export class AccountsService {
       email: string
       role: string
       isEscalationContact?: boolean
-      isReviewer?: boolean
-      isReviewRequired?: boolean
     }
   ): Promise<Account> {
     let user: User<AppMetadata, UserMetadata> | null = null
@@ -312,9 +306,7 @@ export class AccountsService {
           app_metadata: {
             role: params.role,
             isEscalationContact: params.isEscalationContact,
-            isReviewer: params.isReviewer,
-            isReviewRequired: params.isReviewRequired,
-          } as AppMetadata,
+          },
           verify_email: false,
         })
         logger.info('Created user', {
@@ -489,17 +481,6 @@ export class AccountsService {
         `Unable to find user "${idToDelete}" in the tenant |${tenant.id}|`
       )
     }
-    if (hasFeature('ESCALATION')) {
-      const allUsers = await this.getTenantAccounts(tenant)
-      const reviewer = allUsers.find((u) => u.reviewerId === idToDelete)
-      if (reviewer) {
-        throw new BadRequest(
-          `Unable to delete user "${idToDelete}" because it is a reviewer of ${
-            reviewer.name ?? reviewer.email ?? reviewer.id
-          }`
-        )
-      }
-    }
     await managementClient.updateUser({ id: idToDelete }, { blocked: true })
 
     await this.updateAuth0UserInMongo(tenant.id, idToDelete, {
@@ -511,15 +492,14 @@ export class AccountsService {
     request: DefaultApiAccountsEditRequest,
     tenant: Tenant
   ): Promise<Account> {
-    const { role } = request.AccountPatchPayload
+    const { role, isEscalationContact } = request.AccountPatchPayload
     if (role === 'root') {
       throw new Forbidden(`It's not possible to set a root role`)
     }
-    return await this.patchUser(
-      tenant,
-      request.accountId,
-      request.AccountPatchPayload
-    )
+    return await this.patchUser(tenant, request.accountId, {
+      role,
+      isEscalationContact,
+    })
   }
 
   async patchUser(
@@ -543,24 +523,24 @@ export class AccountsService {
     const user = await managementClient.getUser({
       id: accountId,
     })
-
     const patchedUser = await managementClient.updateUser(
-      { id: accountId },
+      {
+        id: accountId,
+      },
       {
         app_metadata: {
           ...user.app_metadata,
           ...(patch.isEscalationContact != null
-            ? { isEscalationContact: patch.isEscalationContact }
+            ? {
+                isEscalationContact: patch.isEscalationContact,
+              }
             : {}),
-          ...(patch.reviewerId != null ? { reviewerId: patch.reviewerId } : {}),
         },
       }
     )
 
     await this.updateAuth0UserInMongo(tenant.id, accountId, {
       role: patch.role,
-      isEscalationContact: patch.isEscalationContact ?? false,
-      reviewerId: patch?.reviewerId,
     })
 
     return AccountsService.userToAccount(patchedUser)

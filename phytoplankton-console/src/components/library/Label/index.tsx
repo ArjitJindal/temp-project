@@ -7,7 +7,7 @@ export interface Props extends InputProps<string> {
   label: React.ReactNode;
   children: React.ReactNode;
   position?: 'TOP' | 'RIGHT';
-  level?: 1 | 2 | 3 | 4;
+  level?: 1 | 2 | 3;
   description?: string;
   element?: 'label' | 'div';
   required?: {

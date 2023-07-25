@@ -1,6 +1,5 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import _ from 'lodash';
-import pluralize from 'pluralize';
 import StatusChangeModal, {
   FormValues,
   OTHER_REASON,
@@ -10,7 +9,7 @@ import { useApi } from '@/api';
 import { AlertStatusUpdateRequest, CaseStatusUpdate } from '@/apis';
 import { message } from '@/components/library/Message';
 import { getErrorMessage } from '@/utils/lang';
-import { useAuth0User, useUsers } from '@/utils/user-utils';
+import { useUsers } from '@/utils/user-utils';
 import { CASES_ITEM } from '@/utils/queries/keys';
 
 interface Props extends Omit<StatusChangeModalProps, 'entityName' | 'updateMutation'> {
@@ -22,9 +21,6 @@ export default function AlertsStatusChangeModal(props: Props) {
   const api = useApi();
   const queryClient = useQueryClient();
   const [users] = useUsers();
-  const user = useAuth0User();
-
-  const currentUser = users[user.userId];
   const isChildCase = props.caseId?.includes('.');
   const updateMutation = useMutation<unknown, unknown, FormValues>(
     async (formValues) => {
@@ -71,16 +67,14 @@ export default function AlertsStatusChangeModal(props: Props) {
             .join(', ');
 
           const entities = props.entityIds.join(', ');
-          if (!currentUser?.reviewerId) {
-            if (_.isEmpty(transactionIds)) {
-              message.success(
-                `Alerts '${entities}' are added to a new child case '${childCaseId}' and escalated successfully to ${assignees}`,
-              );
-            } else {
-              message.success(
-                `Selected transactions from alerts are added to new child case '${childCaseId}' with respective child alerts and escalated successfully to ${assignees}.`,
-              );
-            }
+          if (_.isEmpty(transactionIds)) {
+            message.success(
+              `Alerts '${entities}' are added to a new child case '${childCaseId}' and escalated successfully to ${assignees}`,
+            );
+          } else {
+            message.success(
+              `Selected transactions from alerts are added to new child case '${childCaseId}' with respective child alerts and escalated successfully to ${assignees}.`,
+            );
           }
           await queryClient.invalidateQueries({ queryKey: CASES_ITEM(props.caseId) });
         } else {
@@ -90,21 +84,7 @@ export default function AlertsStatusChangeModal(props: Props) {
               updates,
             },
           });
-          if (!currentUser?.reviewerId) {
-            message.success('Saved');
-          }
-        }
-        if (currentUser?.reviewerId) {
-          message.warn(
-            `${pluralize('Case', props.entityIds.length, true)} ${props.entityIds.join(', ')} ${
-              props.entityIds.length > 1 ? 'are' : 'is'
-            } sent to review ${
-              users[currentUser.reviewerId]?.name ||
-              users[currentUser.reviewerId]?.email ||
-              currentUser?.reviewerId
-            }. Once approved your case action will be performed successfully.`,
-          );
-          return;
+          message.success('Saved');
         }
       } finally {
         hideMessage();
