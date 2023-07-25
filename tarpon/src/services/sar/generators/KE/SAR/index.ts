@@ -75,8 +75,6 @@ export class KenyaSARReportGenerator implements ReportGenerator {
                   t.originPaymentDetails
                 ),
                 from_funds_code: 'E',
-                from_foreign_currency:
-                  t.originAmountDetails?.transactionCurrency,
                 from_country: t.originAmountDetails?.country,
               },
               t_to_my_client: {
@@ -86,8 +84,6 @@ export class KenyaSARReportGenerator implements ReportGenerator {
                   t.destinationPaymentDetails
                 ),
                 to_funds_code: 'E',
-                to_foreign_currency:
-                  t.destinationAmountDetails?.transactionCurrency,
                 to_country: t.destinationAmountDetails?.country,
               },
             },
