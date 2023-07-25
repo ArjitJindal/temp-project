@@ -107,6 +107,10 @@ export function createFunction(
       : context.config.resource.LAMBDA_DEFAULT.MEMORY_SIZE,
     layers: layersArray,
     logRetention: context.config.resource.CLOUD_WATCH.logRetention,
+    logRetentionRetryOptions: {
+      base: Duration.millis(200),
+      maxRetries: 10,
+    },
   })
   // This is needed to allow using ${Function.Arn} in openapi.yaml
   ;(func.node.defaultChild as CfnFunction).overrideLogicalId(name)
