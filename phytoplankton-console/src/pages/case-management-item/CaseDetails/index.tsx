@@ -6,6 +6,7 @@ import CommentsCard, { CommentGroup } from './CommentsCard';
 import AlertsCard from './AlertsCard';
 import InsightsCard from './InsightsCard';
 import { UI_SETTINGS } from './ui-settings';
+import style from './index.module.less';
 import { Comment as ApiComment, Case, InternalBusinessUser, InternalConsumerUser } from '@/apis';
 import UserDetails from '@/pages/users-item/UserDetails';
 import { usePageViewTracker } from '@/utils/tracker';
@@ -24,7 +25,7 @@ import { makeUrl } from '@/utils/routing';
 import { PAGE_WRAPPER_PADDING } from '@/components/PageWrapper';
 import { useElementSize } from '@/utils/browser';
 import ExpectedTransactionLimits from '@/pages/users-item/UserDetails/BusinessUserDetails/TransactionLimits';
-
+import BrainIcon from '@/components/ui/icons/brain-icon.react.svg';
 interface Props {
   caseItem: Case;
   onReload: () => void;
@@ -90,7 +91,11 @@ function CaseDetails(props: Props) {
           ...(user && 'type' in user && user?.type === 'BUSINESS' && isMLDemoEnabled
             ? [
                 {
-                  tab: 'AI Insights',
+                  tab: (
+                    <div className={style.icon}>
+                      <BrainIcon /> <span>&nbsp; Insights</span>
+                    </div>
+                  ),
                   key: 'ai-insights',
                   children: <AIInsightsCard user={user as InternalBusinessUser} />,
                   isClosable: false,
