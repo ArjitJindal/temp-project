@@ -61,13 +61,14 @@ export interface Props {
   isVisible: boolean;
   entityIds: string[];
   newStatus: CaseStatus;
-  newStatusActionLabel?: 'Send back' | 'Escalate';
+  newStatusActionLabel?: 'Send back' | 'Escalate' | 'Approve' | 'Decline';
   defaultReasons?: CaseClosingReasons[];
   initialValues?: FormValues;
   onSaved: () => void;
   onClose: () => void;
   updateMutation: UseMutationResult<unknown, unknown, FormValues>;
   displayCloseRelatedCases?: boolean;
+  skipReasonsModal?: boolean;
 }
 
 const DEFAULT_INITIAL_VALUES: FormValues = {
@@ -100,6 +101,7 @@ export default function StatusChangeModal(props: Props) {
     updateMutation,
     newStatusActionLabel,
     displayCloseRelatedCases,
+    skipReasonsModal = false,
   } = props;
   const [alwaysShowErrors, setAlwaysShowErrors] = useState(false);
   const [isAwaitingConfirmation, setAwaitingConfirmation] = useState(false);
@@ -111,7 +113,8 @@ export default function StatusChangeModal(props: Props) {
   const [fileList, setFileList] = useState<FileInfo[]>(initialValues.files);
   const formRef = useRef<FormRef<FormValues>>(null);
   const showCopilot = useFeatureEnabled('COPILOT');
-  const showConfirmation = isVisible && (newStatus === 'REOPENED' || isAwaitingConfirmation);
+  const showConfirmation =
+    isVisible && (newStatus === 'REOPENED' || isAwaitingConfirmation || skipReasonsModal);
 
   useEffect(() => {
     if (uploadingCount === 0) {

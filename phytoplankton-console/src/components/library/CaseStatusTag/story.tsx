@@ -9,7 +9,7 @@ export default function (): JSX.Element {
     <>
       <UseCase title={'Types'}>
         <PropertyMatrix<CaseStatus> xLabel={'type'} x={['OPEN', 'CLOSED', 'REOPENED', 'ESCALATED']}>
-          {(x) => <Component caseStatus={x} />}
+          {(x) => <Component caseStatus={x} previousStatus="OPEN" />}
         </PropertyMatrix>
       </UseCase>
     </>

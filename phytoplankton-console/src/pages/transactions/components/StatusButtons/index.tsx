@@ -18,11 +18,12 @@ export default function StatusButtons(props: Props) {
 
   const escalationEnabled = useFeatureEnabled('ESCALATION');
 
-  const caseStatuses: CaseStatus[] = [
+  const caseStatuses: (CaseStatus | 'IN_REVIEW_')[] = [
     'OPEN',
     'CLOSED',
-    ...(escalationEnabled ? (['ESCALATED'] as const) : []),
+    ...(escalationEnabled ? (['ESCALATED', 'IN_REVIEW_'] as const) : []),
   ];
+
   const options = caseStatuses.map((status) => ({
     value: status,
     label: `${humanizeConstant(status)} ${suffix}`,

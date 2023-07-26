@@ -17,12 +17,15 @@ interface Props {
     isBlue?: boolean;
     rounded?: boolean;
   };
-  statusTransitions?: Record<
-    AlertStatus,
-    { status: AlertStatus; actionLabel: 'Send back' | 'Escalate' }
+  statusTransitions?: Partial<
+    Record<
+      AlertStatus,
+      { status: AlertStatus; actionLabel: 'Send back' | 'Escalate' | 'Approve' | 'Decline' }
+    >
   >;
   onSaved: () => void;
   isDisabled?: boolean;
+  skipReasonsModal?: boolean;
 }
 
 export default function AlertsStatusChangeButton(props: Props) {
@@ -60,11 +63,12 @@ export default function AlertsStatusChangeButton(props: Props) {
             caseId={caseId}
             newStatus={newStatus}
             onSaved={onSaved}
-            newStatusActionLabel={status && statusTransitions?.[status].actionLabel}
+            newStatusActionLabel={status && statusTransitions?.[status]?.actionLabel}
             initialValues={initialValues}
             onClose={() => {
               setVisible(false);
             }}
+            skipReasonsModal={props.skipReasonsModal}
           />
         )}
       </StatusChangeButton>

@@ -31,6 +31,8 @@ import { RiskRepository } from '@/services/risk-scoring/repositories/risk-reposi
 import { CaseStatusChange } from '@/@types/openapi-internal/CaseStatusChange'
 import { Assignment } from '@/@types/openapi-internal/Assignment'
 import { InternalTransaction } from '@/@types/openapi-internal/InternalTransaction'
+import { CaseStatus } from '@/@types/openapi-internal/CaseStatus'
+import { isStatusInReview } from '@/utils/helpers'
 
 export const FLAGRIGHT_SYSTEM_USER = 'Flagright System'
 
@@ -197,23 +199,26 @@ export class AlertsRepository {
       params.filterAssignmentsIds != null &&
       params.filterAssignmentsIds?.length
     ) {
-      conditions.push(
-        !params.filterAlertStatus?.includes('ESCALATED')
-          ? {
-              'alerts.assignments': {
-                $elemMatch: {
-                  assigneeUserId: { $in: params.filterAssignmentsIds },
-                },
-              },
-            }
-          : {
-              'alerts.reviewAssignments': {
-                $elemMatch: {
-                  assigneeUserId: { $in: params.filterAssignmentsIds },
-                },
-              },
-            }
-      )
+      if (
+        params.filterAlertStatus?.includes('ESCALATED') ||
+        params.filterAlertStatus?.some((status) => isStatusInReview(status))
+      ) {
+        conditions.push({
+          'alerts.reviewAssignments': {
+            $elemMatch: {
+              assigneeUserId: { $in: params.filterAssignmentsIds },
+            },
+          },
+        })
+      } else {
+        conditions.push({
+          'alerts.assignments': {
+            $elemMatch: {
+              assigneeUserId: { $in: params.filterAssignmentsIds },
+            },
+          },
+        })
+      }
     }
     if (params.filterRuleInstanceId != null) {
       conditions.push({
@@ -320,6 +325,20 @@ export class AlertsRepository {
     }
 
     return result.alerts?.find((alert) => alert.alertId === alertId) ?? null
+  }
+
+  public async getAlertsByIds(alertIds: string[]): Promise<Alert[]> {
+    const db = this.mongoDb.db()
+    const collection = db.collection<Case>(CASES_COLLECTION(this.tenantId))
+
+    const result = await collection
+      .find({ 'alerts.alertId': { $in: alertIds } })
+      .project({ alerts: 1 })
+      .toArray()
+
+    return result
+      .flatMap((caseItem) => caseItem.alerts ?? [])
+      .filter((alert) => alertIds.includes(alert.alertId))
   }
 
   public async saveAlertComment(
@@ -448,7 +467,8 @@ export class AlertsRepository {
     caseIds: string[],
     statusChange: CaseStatusChange
   ): Promise<{
-    caseIdsWithAllAlertsClosed: string[]
+    caseIdsWithAllAlertsSameStatus: string[]
+    caseStatusToChange?: CaseStatus
   }> {
     const db = this.mongoDb.db()
     const collection = db.collection<Case>(CASES_COLLECTION(this.tenantId))
@@ -489,13 +509,28 @@ export class AlertsRepository {
       })
       .toArray()
 
-    const caseIdsWithAllAlertsClosed = caseItems
-      .filter((caseItem) =>
-        caseItem.alerts?.every((alert) => alert.alertStatus === 'CLOSED')
-      )
-      .map((caseItem) => caseItem.caseId)
+    const caseStatusToCheck = ['ESCALATED', 'CLOSED'].includes(
+      statusChange?.caseStatus ?? ''
+    )
+      ? statusChange?.caseStatus
+      : statusChange?.caseStatus === 'IN_REVIEW_CLOSED'
+      ? 'IN_REVIEW_CLOSED'
+      : undefined
 
-    return { caseIdsWithAllAlertsClosed: _.compact(caseIdsWithAllAlertsClosed) }
+    const caseIdsWithAllAlertsSameStatus = caseStatusToCheck
+      ? caseItems
+          .filter((caseItem) =>
+            caseItem.alerts?.every((alert) => {
+              return alert.alertStatus === caseStatusToCheck
+            })
+          )
+          .map((caseItem) => caseItem.caseId)
+      : []
+
+    return {
+      caseIdsWithAllAlertsSameStatus: _.compact(caseIdsWithAllAlertsSameStatus),
+      caseStatusToChange: caseStatusToCheck,
+    }
   }
 
   public async getAlertTransactionsHit(
@@ -578,6 +613,38 @@ export class AlertsRepository {
         $set: {
           'alerts.$[alert].reviewAssignments': reviewAssignments,
           'alerts.$[alert].updatedAt': now,
+        },
+      },
+      {
+        arrayFilters: [
+          {
+            'alert.alertId': {
+              $in: alertIds,
+            },
+          },
+        ],
+      }
+    )
+  }
+
+  public async updateInReviewAssignemnts(
+    alertIds: string[],
+    assignments: Assignment[],
+    reviewAssignments: Assignment[]
+  ) {
+    const db = this.mongoDb.db()
+    const collection = db.collection<Case>(CASES_COLLECTION(this.tenantId))
+
+    await collection.updateMany(
+      {
+        'alerts.alertId': {
+          $in: alertIds,
+        },
+      },
+      {
+        $set: {
+          'alerts.$[alert].assignments': assignments,
+          'alerts.$[alert].reviewAssignments': reviewAssignments,
         },
       },
       {

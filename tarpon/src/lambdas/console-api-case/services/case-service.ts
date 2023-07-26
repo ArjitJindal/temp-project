@@ -5,7 +5,7 @@ import {
   APIGatewayProxyWithLambdaAuthorizerEvent,
 } from 'aws-lambda'
 import * as AWS from 'aws-sdk'
-import _ from 'lodash'
+import { capitalize, isEqual, isEmpty } from 'lodash'
 import { MongoClient } from 'mongodb'
 import { CasesAlertsAuditLogService } from './case-alerts-audit-log-service'
 import { Comment } from '@/@types/openapi-internal/Comment'
@@ -40,6 +40,9 @@ import {
   FLAGRIGHT_SYSTEM_USER,
 } from '@/services/rules-engine/repositories/alerts-repository'
 import { AlertsService } from '@/services/alerts'
+import { AlertStatusUpdateRequest } from '@/@types/openapi-internal/AlertStatusUpdateRequest'
+import { CaseStatus } from '@/@types/openapi-internal/CaseStatus'
+import { isStatusInReview } from '@/utils/helpers'
 import { WebhookEventType } from '@/@types/openapi-public/WebhookEventType'
 
 export class CaseService extends CaseAlertsCommonService {
@@ -116,12 +119,36 @@ export class CaseService extends CaseAlertsCommonService {
     }
   }
 
-  private getCaseCommentBody(updateRequest: CaseStatusUpdate): string {
+  private getCaseCommentBody(
+    updateRequest: CaseStatusUpdate,
+    currentStatus?: CaseStatus
+  ) {
     const { caseStatus, reason, otherReason, comment } = updateRequest
-    let body = `Case status changed to ${caseStatus}`
+    const isReview = isStatusInReview(caseStatus)
+    const currentStatusInReview = isStatusInReview(currentStatus)
+    let body = `Case status changed to ${
+      isReview ? 'In Review' : capitalize(caseStatus?.toLowerCase())
+    }${
+      isReview
+        ? ' and is requested to be ' +
+          capitalize(caseStatus?.replace('IN_REVIEW_', '').toLowerCase())
+        : ''
+    }`
+
+    if (currentStatusInReview) {
+      if (currentStatus?.replace('IN_REVIEW_', '') === caseStatus) {
+        body = `Case is Approved and its status is changed to ${capitalize(
+          caseStatus?.toLowerCase()
+        )}.`
+      } else {
+        body = `Case is Declined and its status is changed to ${capitalize(
+          caseStatus?.toLowerCase()
+        )}.`
+      }
+    }
 
     const allReasons = [
-      ...(reason?.filter((x) => x !== 'Other') ?? []),
+      ...(reason?.filter((reason) => reason !== 'Other') ?? []),
       ...(reason?.includes('Other') && otherReason ? [otherReason] : []),
     ]
 
@@ -167,20 +194,60 @@ export class CaseService extends CaseAlertsCommonService {
     options?: {
       cascadeAlertsUpdate?: boolean
       reviewAssignments?: Assignment[]
+      skipReview?: boolean
+      account?: Account
+      filterInReview?: boolean
     }
   ): Promise<void> {
-    const { cascadeAlertsUpdate = true } = options ?? {}
+    const {
+      cascadeAlertsUpdate = true,
+      skipReview = false,
+      account,
+    } = options ?? {}
     const dashboardStatsRepository = new DashboardStatsRepository(
       this.caseRepository.tenantId,
       { mongoDb: this.caseRepository.mongoDb }
     )
-    const commentBody = this.getCaseCommentBody(updates)
 
-    const statusChange = await this.getStatusChange(updates, {
+    const statusChange = this.getStatusChange(updates, {
       cascadeAlertsUpdate,
     })
 
     const cases = await this.caseRepository.getCasesByIds(caseIds)
+
+    const accountsService = new AccountsService(
+      { auth0Domain: process.env.AUTH0_DOMAIN as string },
+      { mongoDb: this.mongoDb }
+    )
+
+    const userId = getContext()?.user?.id as string
+
+    const accountUser = account ?? (await accountsService.getAccount(userId))
+    const isLastInReview = isStatusInReview(
+      cases[0].lastStatusChange?.caseStatus
+    )
+
+    const isReviewRequired = accountUser?.reviewerId ?? false
+    let isReview = false
+
+    if (
+      isReviewRequired &&
+      !skipReview &&
+      hasFeature('ESCALATION') &&
+      !isLastInReview
+    ) {
+      const caseStatusToChange = `IN_REVIEW_${updates.caseStatus?.replace(
+        'IN_REVIEW_',
+        ''
+      )}`
+      updates.caseStatus = caseStatusToChange as CaseStatus
+      statusChange.caseStatus = caseStatusToChange as CaseStatus
+      isReview = true
+    }
+
+    const currentStatus = cases[0].caseStatus
+
+    const commentBody = this.getCaseCommentBody(updates, currentStatus)
 
     await withTransaction(async () => {
       await Promise.all([
@@ -190,9 +257,31 @@ export class CaseService extends CaseAlertsCommonService {
           files: updates.files,
           userId: statusChange.userId,
         }),
+        ...(isReview && hasFeature('ESCALATION')
+          ? [
+              this.caseRepository.updateInReviewAssignmentsOfCases(
+                caseIds,
+                [
+                  {
+                    assigneeUserId: userId!,
+                    assignedByUserId: FLAGRIGHT_SYSTEM_USER,
+                    timestamp: Date.now(),
+                  },
+                ],
+                [
+                  {
+                    assigneeUserId: accountUser.reviewerId!,
+                    assignedByUserId: userId!,
+                    timestamp: Date.now(),
+                  },
+                ]
+              ),
+            ]
+          : []),
       ])
+
       if (updates.caseStatus && cascadeAlertsUpdate) {
-        const alertIds = cases
+        const alerts = cases
           .flatMap((c) => c.alerts ?? [])
           .filter(
             (alert) =>
@@ -200,25 +289,44 @@ export class CaseService extends CaseAlertsCommonService {
                 alert.alertStatus
               )
           )
-          .map((alert) => alert.alertId!)
+          .filter((alert) => {
+            if (options?.filterInReview) {
+              return !isStatusInReview(alert.alertStatus)
+            }
+            return true
+          })
 
         if (updates.caseStatus === 'ESCALATED' && options?.reviewAssignments) {
           await this.alertsService.updateAlertsReviewAssignments(
-            alertIds,
+            alerts.map((a) => a.alertId!),
             options.reviewAssignments
           )
         }
 
+        const otherReason = isReview
+          ? `In Review Requested to be ${capitalize(
+              updates.caseStatus?.replace('IN_REVIEW_', '')
+            )}`
+          : capitalize(updates.caseStatus)
+
+        const message = `Case of this alert was ${otherReason}`
+
+        const alertsStatusChange = {
+          alertStatus: updates.caseStatus,
+          comment: updates.comment,
+          otherReason: message,
+          reason: ['Other'],
+          files: updates.files,
+        } as AlertStatusUpdateRequest
+
         await this.alertsService.updateAlertsStatus(
-          alertIds,
+          alerts.map((a) => a.alertId!),
+          alertsStatusChange,
           {
-            alertStatus: updates.caseStatus,
-            comment: updates.comment,
-            otherReason: `Case of this alert was ${updates.caseStatus.toLowerCase()}`,
-            reason: ['Other'],
-            files: updates.files,
-          },
-          { cascadeCaseUpdates: false }
+            cascadeCaseUpdates: false,
+            account,
+            skipReview: skipReview || isLastInReview,
+          }
         )
       }
     })
@@ -382,6 +490,7 @@ export class CaseService extends CaseAlertsCommonService {
       this.updateCasesStatus([caseId], statusChange, {
         cascadeAlertsUpdate: true,
         reviewAssignments: caseUpdateRequest.reviewAssignments,
+        skipReview: true,
       }),
       this.updateCasesReviewAssignments(
         [caseId],
@@ -415,7 +524,7 @@ export class CaseService extends CaseAlertsCommonService {
 
     const account = getContext()?.user
 
-    if (_.isEmpty(case_.assignments) && account?.id) {
+    if (isEmpty(case_.assignments) && account?.id) {
       caseUpdateRequest.assignments = [
         { assigneeUserId: account.id, timestamp: Date.now() },
       ]
@@ -441,7 +550,7 @@ export class CaseService extends CaseAlertsCommonService {
         cascadeAlertsUpdate: true,
         reviewAssignments,
       }),
-      !_.isEqual(case_.reviewAssignments, reviewAssignments) &&
+      !isEqual(case_.reviewAssignments, reviewAssignments) &&
         this.updateCasesReviewAssignments([caseId], reviewAssignments),
     ])
 

@@ -1,4 +1,5 @@
 import { NotFound, BadRequest } from 'http-errors'
+import { cloneDeep } from 'lodash'
 import dayjs from 'dayjs'
 import { ObjectId } from 'mongodb'
 import { nanoid } from 'nanoid'
@@ -20,6 +21,9 @@ import {
 } from '@/services/rules-engine/repositories/alerts-repository'
 import { getS3ClientByEvent } from '@/utils/s3'
 import { Comment } from '@/@types/openapi-internal/Comment'
+import * as Context from '@/core/utils/context'
+import { AlertStatus } from '@/@types/openapi-internal/AlertStatus'
+import { withFeatureHook } from '@/test-utils/feature-test-utils'
 
 const TEST_ACCOUNT_1: Account = {
   id: 'ACCOUNT-1',
@@ -29,6 +33,27 @@ const TEST_ACCOUNT_1: Account = {
   name: 'ACCOUNT-1',
   blocked: false,
   isEscalationContact: true,
+}
+
+const TEST_ACCOUNT_2: Account = {
+  id: 'ACCOUNT-2',
+  role: 'analyst',
+  email: 'abc@email.com',
+  emailVerified: true,
+  name: 'ACCOUNT-2',
+  blocked: false,
+  isEscalationContact: false,
+}
+
+const TEST_ACCOUNT_3: Account = {
+  id: 'ACCOUNT-3',
+  role: 'admin',
+  email: 'abcd@email.com',
+  emailVerified: true,
+  name: 'ACCOUNT-3',
+  blocked: false,
+  isEscalationContact: false,
+  reviewerId: 'ACCOUNT-1',
 }
 
 const CASE_TRANSACTION_IDS = ['T-1', 'T-2', 'T-3', 'T-4']
@@ -77,6 +102,8 @@ const TEST_ALERT_3: Alert = {
 
 dynamoDbSetupHook()
 
+withFeatureHook(['ESCALATION'])
+
 jest.mock('@/services/accounts', () => {
   const originalModule = jest.requireActual<
     typeof import('@/services/accounts')
@@ -87,7 +114,16 @@ jest.mock('@/services/accounts', () => {
     AccountsService: jest.fn().mockImplementation(() => {
       return {
         getAllActiveAccounts: jest.fn().mockImplementation(() => {
-          return [TEST_ACCOUNT_1]
+          return [TEST_ACCOUNT_1, TEST_ACCOUNT_2, TEST_ACCOUNT_3]
+        }),
+        getAccount: jest.fn().mockImplementation((accountId: string) => {
+          if (accountId === TEST_ACCOUNT_1.id) {
+            return TEST_ACCOUNT_1
+          } else if (accountId === TEST_ACCOUNT_2.id) {
+            return TEST_ACCOUNT_2
+          } else if (accountId === TEST_ACCOUNT_3.id) {
+            return TEST_ACCOUNT_3
+          }
         }),
       }
     }),
@@ -139,7 +175,17 @@ async function getAlertsService(tenantId: string) {
   return alertsService
 }
 
+const getContextMocker = jest.spyOn(Context, 'getContext')
+
 describe('Case service', () => {
+  beforeAll(async () => {
+    getContextMocker.mockReturnValue({
+      user: {
+        id: 'ACCOUNT-1',
+        role: 'admin',
+      },
+    })
+  })
   describe('Escalation: single case', () => {
     const TEST_TENANT_ID = getTestTenantId()
 
@@ -205,7 +251,7 @@ describe('Case service', () => {
         }),
         comments: [
           expect.objectContaining({
-            body: 'Case status changed to ESCALATED. Reason: Documents collected\ntest comment',
+            body: 'Case status changed to Escalated. Reason: Documents collected\ntest comment',
             createdAt: expect.any(Number),
             updatedAt: expect.any(Number),
           }),
@@ -323,7 +369,7 @@ describe('Case service', () => {
       ).rejects.toThrow(NotFound)
     })
 
-    test('should throw BadRequest error when trying to escalate an already escalated case', async () => {
+    test('should throw BadRequest error when trying to escalate an already Escalated case', async () => {
       const parentCaseId = 'C-1'
       const childCaseId = 'C-2'
       const caseService = await getCaseService(TEST_TENANT_ID)
@@ -656,7 +702,7 @@ describe('Post APIs Alerts Tests', () => {
           ],
           comments: [
             {
-              body: 'Alert status changed to CLOSED. Reasons: False positive\nsome comment',
+              body: 'Alert status changed to Closed. Reasons: False positive\nsome comment',
               files: [],
               createdAt: expect.any(Number),
               updatedAt: expect.any(Number),
@@ -681,7 +727,7 @@ describe('Post APIs Alerts Tests', () => {
         timestamp: expect.any(Number),
         reason: ['Other'],
         caseStatus: 'CLOSED',
-        otherReason: 'All alerts of this case are closed',
+        otherReason: 'All alerts of this case are Closed',
       },
       statusChanges: [
         {
@@ -689,14 +735,14 @@ describe('Post APIs Alerts Tests', () => {
           timestamp: expect.any(Number),
           reason: ['Other'],
           caseStatus: 'CLOSED',
-          otherReason: 'All alerts of this case are closed',
+          otherReason: 'All alerts of this case are Closed',
         },
       ],
       comments: [
         {
           userId: 'Flagright System',
           body:
-            'Case status changed to CLOSED. Reason: All alerts of this case are closed\n' +
+            'Case status changed to Closed. Reason: All alerts of this case are Closed\n' +
             'some comment',
           files: [],
           id: expect.any(String),
@@ -753,7 +799,7 @@ describe('Post APIs Alerts Tests', () => {
           ],
           comments: [
             {
-              body: 'Alert status changed to CLOSED. Reasons: False positive\nsome comment',
+              body: 'Alert status changed to Closed. Reasons: False positive\nsome comment',
               files: [],
               createdAt: expect.any(Number),
               updatedAt: expect.any(Number),
@@ -869,7 +915,7 @@ describe('Case Service - Post Api Tests', () => {
       comments: [
         {
           userId: 'ACCOUNT-1',
-          body: 'Case status changed to CLOSED. Reason: False positive\nsome comment',
+          body: 'Case status changed to Closed. Reason: False positive\nsome comment',
           files: [],
           createdAt: expect.any(Number),
           updatedAt: expect.any(Number),
@@ -911,7 +957,7 @@ describe('Case Service - Post Api Tests', () => {
             timestamp: expect.any(Number),
             reason: ['Other'],
             caseStatus: 'CLOSED',
-            otherReason: 'Case of this alert was closed',
+            otherReason: 'Case of this alert was Closed',
           },
           statusChanges: [
             {
@@ -919,7 +965,7 @@ describe('Case Service - Post Api Tests', () => {
               timestamp: expect.any(Number),
               reason: ['Other'],
               caseStatus: 'CLOSED',
-              otherReason: 'Case of this alert was closed',
+              otherReason: 'Case of this alert was Closed',
             },
           ],
         },
@@ -932,7 +978,7 @@ describe('Case Service - Post Api Tests', () => {
             timestamp: expect.any(Number),
             reason: ['Other'],
             caseStatus: 'CLOSED',
-            otherReason: 'Case of this alert was closed',
+            otherReason: 'Case of this alert was Closed',
           },
           statusChanges: [
             {
@@ -940,7 +986,7 @@ describe('Case Service - Post Api Tests', () => {
               timestamp: expect.any(Number),
               reason: ['Other'],
               caseStatus: 'CLOSED',
-              otherReason: 'Case of this alert was closed',
+              otherReason: 'Case of this alert was Closed',
             },
           ],
         },
@@ -964,7 +1010,7 @@ describe('Case Service - Post Api Tests', () => {
       comments: [
         {
           userId: 'ACCOUNT-1',
-          body: 'Case status changed to CLOSED. Reason: False positive\nsome comment',
+          body: 'Case status changed to Closed. Reason: False positive\nsome comment',
           files: [],
           createdAt: expect.any(Number),
           updatedAt: expect.any(Number),
@@ -1223,7 +1269,7 @@ describe('Case Service - Post Api Tests', () => {
             timestamp: expect.any(Number),
             reason: ['Other'],
             caseStatus: 'CLOSED',
-            otherReason: 'Case of this alert was closed',
+            otherReason: 'Case of this alert was Closed',
           },
           statusChanges: [
             {
@@ -1231,7 +1277,7 @@ describe('Case Service - Post Api Tests', () => {
               timestamp: expect.any(Number),
               reason: ['Other'],
               caseStatus: 'CLOSED',
-              otherReason: 'Case of this alert was closed',
+              otherReason: 'Case of this alert was Closed',
             },
           ],
         },
@@ -1244,7 +1290,7 @@ describe('Case Service - Post Api Tests', () => {
             timestamp: expect.any(Number),
             reason: ['Other'],
             caseStatus: 'CLOSED',
-            otherReason: 'Case of this alert was closed',
+            otherReason: 'Case of this alert was Closed',
           },
           statusChanges: [
             {
@@ -1252,7 +1298,7 @@ describe('Case Service - Post Api Tests', () => {
               timestamp: expect.any(Number),
               reason: ['Other'],
               caseStatus: 'CLOSED',
-              otherReason: 'Case of this alert was closed',
+              otherReason: 'Case of this alert was Closed',
             },
           ],
         },
@@ -1278,7 +1324,7 @@ describe('Case Service - Post Api Tests', () => {
       comments: [
         {
           userId: 'ACCOUNT-1',
-          body: 'Case status changed to CLOSED. Reasons: False positive, This is a duplicate case\nI am closing this case',
+          body: 'Case status changed to Closed. Reasons: False positive, This is a duplicate case\nI am closing this case',
         },
       ],
     })
@@ -1305,7 +1351,7 @@ describe('Case Service - Post Api Tests', () => {
             timestamp: expect.any(Number),
             reason: ['Other'],
             caseStatus: 'CLOSED',
-            otherReason: 'Case of this alert was closed',
+            otherReason: 'Case of this alert was Closed',
           },
           statusChanges: [
             {
@@ -1313,7 +1359,7 @@ describe('Case Service - Post Api Tests', () => {
               timestamp: expect.any(Number),
               reason: ['Other'],
               caseStatus: 'CLOSED',
-              otherReason: 'Case of this alert was closed',
+              otherReason: 'Case of this alert was Closed',
             },
           ],
         },
@@ -1326,7 +1372,7 @@ describe('Case Service - Post Api Tests', () => {
             timestamp: expect.any(Number),
             reason: ['Other'],
             caseStatus: 'CLOSED',
-            otherReason: 'Case of this alert was closed',
+            otherReason: 'Case of this alert was Closed',
           },
           statusChanges: [
             {
@@ -1334,7 +1380,7 @@ describe('Case Service - Post Api Tests', () => {
               timestamp: expect.any(Number),
               reason: ['Other'],
               caseStatus: 'CLOSED',
-              otherReason: 'Case of this alert was closed',
+              otherReason: 'Case of this alert was Closed',
             },
           ],
         },
@@ -1365,7 +1411,7 @@ describe('Case Service - Post Api Tests', () => {
       comments: [
         {
           userId: 'ACCOUNT-1',
-          body: 'Case status changed to CLOSED. Reasons: False positive, This is a duplicate case\nI am closing this case',
+          body: 'Case status changed to Closed. Reasons: False positive, This is a duplicate case\nI am closing this case',
           files: [],
           id: expect.any(String),
           createdAt: expect.any(Number),
@@ -1373,7 +1419,7 @@ describe('Case Service - Post Api Tests', () => {
         },
         {
           userId: 'ACCOUNT-1',
-          body: 'Case status changed to REOPENED. Reason: This is a duplicate case',
+          body: 'Case status changed to Reopened. Reason: This is a duplicate case',
           files: [],
           id: expect.any(String),
           createdAt: expect.any(Number),
@@ -1483,6 +1529,717 @@ describe('Case Service - Post Api Tests', () => {
           assignedByUserId: 'ACCOUNT-2',
         },
       ],
+    })
+  })
+})
+
+describe('Test Review Approvals Send Back Flow', () => {
+  const tenantId = getTestTenantId()
+
+  it('Should Send a Case To In Review when closed', async () => {
+    const caseService = await getCaseService(tenantId)
+    getContextMocker.mockReturnValue({
+      user: { id: TEST_ACCOUNT_3.id, role: 'admin' },
+    })
+    await caseService.caseRepository.addCaseMongo({
+      caseId: 'C-1-5',
+      caseStatus: 'OPEN',
+      alerts: [TEST_ALERT_1, TEST_ALERT_2],
+    })
+    await caseService.updateCasesStatus(['C-1-5'], {
+      caseStatus: 'CLOSED',
+      reason: ['False positive'],
+      otherReason: 'This is a duplicate case',
+      comment: 'I am closing this case',
+    })
+    const c = await caseService.getCase('C-1-5')
+    expect(c).toMatchObject({
+      caseId: 'C-1-5',
+      caseStatus: 'IN_REVIEW_CLOSED',
+      alerts: [
+        {
+          alertId: 'A-1',
+          alertStatus: 'IN_REVIEW_CLOSED',
+          caseId: 'C-1-5',
+          comments: [
+            {
+              userId: 'Flagright System',
+              body: 'Alert status changed to In Review and is requested to be Closed. Reasons: Case of this alert was In Review Requested to be Closed\nI am closing this case',
+              files: [],
+            },
+          ],
+          lastStatusChange: {
+            userId: 'ACCOUNT-3',
+            reason: ['Other'],
+            caseStatus: 'IN_REVIEW_CLOSED',
+            otherReason:
+              'Case of this alert was In Review Requested to be Closed',
+          },
+          statusChanges: [
+            {
+              userId: 'ACCOUNT-3',
+              reason: ['Other'],
+              caseStatus: 'IN_REVIEW_CLOSED',
+              otherReason:
+                'Case of this alert was In Review Requested to be Closed',
+            },
+          ],
+        },
+        {
+          alertId: 'A-2',
+          alertStatus: 'CLOSED',
+          caseId: 'C-1-5',
+        },
+      ],
+      lastStatusChange: {
+        userId: 'ACCOUNT-3',
+        reason: ['False positive'],
+        caseStatus: 'IN_REVIEW_CLOSED',
+        otherReason: 'This is a duplicate case',
+      },
+      statusChanges: [
+        {
+          userId: 'ACCOUNT-3',
+          reason: ['False positive'],
+          caseStatus: 'IN_REVIEW_CLOSED',
+          otherReason: 'This is a duplicate case',
+        },
+      ],
+      comments: [
+        {
+          body: 'Case status changed to In Review and is requested to be Closed. Reason: False positive\nI am closing this case',
+          files: [],
+          userId: 'ACCOUNT-3',
+        },
+      ],
+    })
+  })
+
+  it('Should Send a Case To In Review when Escalated', async () => {
+    const caseService = await getCaseService(tenantId)
+    getContextMocker.mockReturnValue({
+      user: { id: TEST_ACCOUNT_3.id, role: 'admin' },
+    })
+    await caseService.caseRepository.addCaseMongo({
+      caseId: 'C-1-5',
+      caseStatus: 'OPEN',
+      alerts: [TEST_ALERT_1, TEST_ALERT_2],
+    })
+    await caseService.escalateCase('C-1-5', {
+      assignments: [
+        {
+          assigneeUserId: 'ACCOUNT-1',
+          assignedByUserId: 'ACCOUNT-2',
+          timestamp: Date.now(),
+        },
+      ],
+      reason: ['False positive'],
+      caseStatus: 'ESCALATED',
+      otherReason: 'This is a duplicate case',
+      comment: 'I am closing this case',
+      reviewAssignments: [
+        {
+          assigneeUserId: 'ACCOUNT-3',
+          assignedByUserId: 'ACCOUNT-2',
+          timestamp: Date.now(),
+        },
+      ],
+    })
+
+    const c = await caseService.getCase('C-1-5')
+    expect(c).toMatchObject({
+      caseId: 'C-1-5',
+      caseStatus: 'IN_REVIEW_ESCALATED',
+      reviewAssignments: [{ assigneeUserId: 'ACCOUNT-1' }],
+      alerts: [
+        {
+          alertId: 'A-1',
+          alertStatus: 'IN_REVIEW_ESCALATED',
+          caseId: 'C-1-5',
+          comments: [
+            {
+              userId: 'Flagright System',
+              body: 'Alert status changed to In Review and is requested to be Escalated. Reasons: Case of this alert was In Review Requested to be Escalated\nI am closing this case',
+              files: [],
+            },
+          ],
+          lastStatusChange: {
+            userId: 'ACCOUNT-3',
+            reason: ['Other'],
+            caseStatus: 'IN_REVIEW_ESCALATED',
+            otherReason:
+              'Case of this alert was In Review Requested to be Escalated',
+          },
+          reviewAssignments: [{ assigneeUserId: 'ACCOUNT-1' }],
+          statusChanges: [
+            {
+              userId: 'ACCOUNT-3',
+              reason: ['Other'],
+              caseStatus: 'IN_REVIEW_ESCALATED',
+              otherReason:
+                'Case of this alert was In Review Requested to be Escalated',
+            },
+          ],
+        },
+        {
+          alertId: 'A-2',
+          alertStatus: 'CLOSED',
+          caseId: 'C-1-5',
+        },
+      ],
+      lastStatusChange: {
+        userId: 'ACCOUNT-3',
+        reason: ['False positive'],
+        caseStatus: 'IN_REVIEW_ESCALATED',
+        otherReason: 'This is a duplicate case',
+      },
+      statusChanges: [
+        {
+          userId: 'ACCOUNT-3',
+          reason: ['False positive'],
+          caseStatus: 'IN_REVIEW_ESCALATED',
+          otherReason: 'This is a duplicate case',
+        },
+      ],
+      comments: [
+        {
+          body: 'Case status changed to In Review and is requested to be Escalated. Reason: False positive\nI am closing this case',
+          files: [],
+          userId: 'ACCOUNT-3',
+        },
+      ],
+    })
+  })
+
+  test('Reviewer chooses to Approve whole Open case', async () => {
+    const caseService = await getCaseService(tenantId)
+    const caseId = 'C-1-5'
+    getContextMocker.mockReturnValue({
+      user: { id: TEST_ACCOUNT_3.id, role: 'REVIEWER' },
+    })
+    await caseService.caseRepository.addCaseMongo({
+      caseId,
+      caseStatus: 'OPEN',
+      alerts: [TEST_ALERT_1, TEST_ALERT_2],
+    })
+
+    await caseService.updateCasesStatus([caseId], {
+      caseStatus: 'CLOSED',
+      reason: ['False positive'],
+      otherReason: 'This is a duplicate case',
+      comment: 'I am closing this case',
+    })
+
+    const c = await caseService.getCase(caseId)
+    expect(c?.caseStatus).toBe('IN_REVIEW_CLOSED')
+    expect(c?.alerts?.[0]?.alertStatus).toBe('IN_REVIEW_CLOSED')
+    expect(c?.alerts?.[1]?.alertStatus).toBe('CLOSED')
+    expect(c?.alerts?.[0]).toMatchObject({
+      lastStatusChange: {
+        userId: 'ACCOUNT-3',
+        reason: ['Other'],
+        caseStatus: 'IN_REVIEW_CLOSED',
+        otherReason: 'Case of this alert was In Review Requested to be Closed',
+      },
+      statusChanges: [
+        {
+          userId: 'ACCOUNT-3',
+          reason: ['Other'],
+          caseStatus: 'IN_REVIEW_CLOSED',
+          otherReason:
+            'Case of this alert was In Review Requested to be Closed',
+        },
+      ],
+      comments: [
+        {
+          userId: 'Flagright System',
+          body:
+            'Alert status changed to In Review and is requested to be Closed. Reasons: Case of this alert was In Review Requested to be Closed\n' +
+            'I am closing this case',
+        },
+      ],
+    })
+    await caseService.updateCasesStatus([caseId], {
+      caseStatus: 'CLOSED',
+      reason: [],
+    })
+    const c2 = await caseService.getCase(caseId)
+    expect(c2?.caseStatus).toBe('CLOSED')
+    expect(c2).toMatchObject({
+      caseId: 'C-1-5',
+      caseStatus: 'CLOSED',
+      alerts: [
+        {
+          alertId: 'A-1',
+          alertStatus: 'CLOSED',
+          caseId: 'C-1-5',
+          comments: [
+            {
+              userId: 'Flagright System',
+              body: 'Alert status changed to In Review and is requested to be Closed. Reasons: Case of this alert was In Review Requested to be Closed\nI am closing this case',
+            },
+            {
+              userId: 'Flagright System',
+              body: 'Alert is Approved and its status is changed to Closed. Reasons: Case of this alert was Closed',
+            },
+          ],
+          lastStatusChange: {
+            userId: 'ACCOUNT-3',
+            reason: ['Other'],
+            caseStatus: 'CLOSED',
+            otherReason: 'Case of this alert was Closed',
+          },
+          statusChanges: [
+            {
+              userId: 'ACCOUNT-3',
+              reason: ['Other'],
+              caseStatus: 'IN_REVIEW_CLOSED',
+              otherReason:
+                'Case of this alert was In Review Requested to be Closed',
+            },
+            {
+              userId: 'ACCOUNT-3',
+              reason: ['Other'],
+              caseStatus: 'CLOSED',
+              otherReason: 'Case of this alert was Closed',
+            },
+          ],
+        },
+        { alertId: 'A-2', alertStatus: 'CLOSED', caseId: 'C-1-5' },
+      ],
+      lastStatusChange: {
+        userId: 'ACCOUNT-3',
+        reason: [],
+        caseStatus: 'CLOSED',
+      },
+      statusChanges: [
+        {
+          userId: 'ACCOUNT-3',
+          reason: ['False positive'],
+          caseStatus: 'IN_REVIEW_CLOSED',
+          otherReason: 'This is a duplicate case',
+        },
+        {
+          userId: 'ACCOUNT-3',
+          reason: [],
+          caseStatus: 'CLOSED',
+        },
+      ],
+      comments: [
+        {
+          body: 'Case status changed to In Review and is requested to be Closed. Reason: False positive\nI am closing this case',
+          userId: 'ACCOUNT-3',
+        },
+        {
+          body: 'Case is Approved and its status is changed to Closed.',
+          userId: 'ACCOUNT-3',
+        },
+      ],
+    })
+  })
+
+  test('Reviewer chooses to Send Back the whole case', async () => {
+    const caseService = await getCaseService(tenantId)
+    const caseId = 'C-1-6'
+    getContextMocker.mockReturnValue({
+      user: { id: TEST_ACCOUNT_3.id, role: 'REVIEWER' },
+    })
+    await caseService.caseRepository.addCaseMongo({
+      caseId,
+      caseStatus: 'OPEN',
+      alerts: [TEST_ALERT_1, TEST_ALERT_2],
+    })
+    await caseService.updateCasesStatus([caseId], {
+      caseStatus: 'CLOSED',
+      reason: ['False positive'],
+      otherReason: 'This is a duplicate case',
+      comment: 'I am closing this case',
+    })
+    await caseService.updateCasesStatus([caseId], {
+      caseStatus: 'OPEN',
+      reason: [],
+    })
+    const c = await caseService.getCase(caseId)
+    expect(c?.caseStatus).toBe('OPEN')
+  })
+
+  test('Reviewer chooses to Approve the whole Escalated case', async () => {
+    const caseService = await getCaseService(tenantId)
+    const caseId = 'C-1-6'
+    getContextMocker.mockReturnValue({
+      user: { id: TEST_ACCOUNT_3.id, role: 'REVIEWER' },
+    })
+    const alertId1 = nanoid()
+    const alertId2 = nanoid()
+    await caseService.caseRepository.addCaseMongo({
+      caseId,
+      caseStatus: 'OPEN',
+      alerts: [
+        {
+          ...TEST_ALERT_1,
+          alertId: alertId1,
+        },
+        {
+          ...TEST_ALERT_2,
+          alertId: alertId2,
+        },
+      ],
+    })
+    await caseService.escalateCase(caseId, {
+      reason: ['False positive'],
+      otherReason: 'This is a duplicate case',
+      comment: 'I am closing this case',
+      caseStatus: 'ESCALATED',
+      assignments: [
+        {
+          assignedByUserId: 'ACCOUNT-3',
+          assigneeUserId: 'ACCOUNT-1',
+          timestamp: Date.now(),
+        },
+      ],
+      reviewAssignments: [
+        {
+          assignedByUserId: 'ACCOUNT-3',
+          assigneeUserId: 'ACCOUNT-1',
+          timestamp: Date.now(),
+        },
+      ],
+    })
+    const c = await caseService.getCase(caseId)
+    expect(c?.caseStatus).toBe('IN_REVIEW_ESCALATED')
+    expect(c?.alerts?.[0]?.alertStatus).toBe('IN_REVIEW_ESCALATED')
+    expect(c?.alerts?.[1]?.alertStatus).toBe('CLOSED')
+    await caseService.escalateCase(caseId, {
+      reason: [],
+    })
+
+    const c2 = await caseService.getCase(caseId)
+    expect(c2).toMatchObject({
+      caseId: 'C-1-6',
+      caseStatus: 'ESCALATED',
+      alerts: [
+        {
+          alertId: alertId1,
+          alertStatus: 'ESCALATED',
+          reviewAssignments: [{ assigneeUserId: 'ACCOUNT-1' }],
+          lastStatusChange: {
+            userId: 'ACCOUNT-3',
+            reason: ['Other'],
+            caseStatus: 'ESCALATED',
+            otherReason: 'Case of this alert was Escalated',
+          },
+          statusChanges: [
+            {
+              userId: 'ACCOUNT-3',
+              reason: ['Other'],
+              caseStatus: 'IN_REVIEW_ESCALATED',
+              otherReason:
+                'Case of this alert was In Review Requested to be Escalated',
+            },
+            {
+              userId: 'ACCOUNT-3',
+              reason: ['Other'],
+              caseStatus: 'ESCALATED',
+              otherReason: 'Case of this alert was Escalated',
+            },
+          ],
+          comments: [
+            {
+              userId: 'Flagright System',
+              body: 'Alert status changed to In Review and is requested to be Escalated. Reasons: Case of this alert was In Review Requested to be Escalated\nI am closing this case',
+            },
+            {
+              userId: 'Flagright System',
+              body: 'Alert is Approved and its status is changed to Escalated. Reasons: Case of this alert was Escalated',
+            },
+          ],
+        },
+        { alertId: alertId2, alertStatus: 'CLOSED' },
+      ],
+      assignments: [{ assigneeUserId: 'ACCOUNT-3' }],
+      reviewAssignments: [{ assigneeUserId: 'ACCOUNT-1' }],
+      lastStatusChange: {
+        userId: 'ACCOUNT-3',
+        reason: [],
+        caseStatus: 'ESCALATED',
+      },
+      statusChanges: [
+        {
+          userId: 'ACCOUNT-3',
+          reason: ['False positive'],
+          caseStatus: 'IN_REVIEW_ESCALATED',
+          otherReason: 'This is a duplicate case',
+        },
+        {
+          userId: 'ACCOUNT-3',
+          reason: [],
+          caseStatus: 'ESCALATED',
+        },
+      ],
+      comments: [
+        {
+          body: 'Case status changed to In Review and is requested to be Escalated. Reason: False positive\nI am closing this case',
+          userId: 'ACCOUNT-3',
+        },
+        {
+          body: 'Case is Approved and its status is changed to Escalated.',
+          userId: 'ACCOUNT-3',
+        },
+      ],
+    })
+  })
+
+  test('Reviewer chooses to Send Back the whole Escalated case', async () => {
+    const caseService = await getCaseService(tenantId)
+    const caseId = 'C-1-7'
+    getContextMocker.mockReturnValue({
+      user: { id: TEST_ACCOUNT_3.id, role: 'REVIEWER' },
+    })
+    await caseService.caseRepository.addCaseMongo({
+      caseId,
+      caseStatus: 'OPEN',
+      alerts: [TEST_ALERT_1, TEST_ALERT_2],
+    })
+    await caseService.escalateCase(caseId, {
+      reason: ['False positive'],
+      otherReason: 'This is a duplicate case',
+      comment: 'I am closing this case',
+      caseStatus: 'ESCALATED',
+      assignments: [
+        {
+          assignedByUserId: 'ACCOUNT-3',
+          assigneeUserId: 'ACCOUNT-1',
+          timestamp: Date.now(),
+        },
+      ],
+      reviewAssignments: [
+        {
+          assignedByUserId: 'ACCOUNT-3',
+          assigneeUserId: 'ACCOUNT-1',
+          timestamp: Date.now(),
+        },
+      ],
+    })
+    const c = await caseService.getCase(caseId)
+    expect(c?.caseStatus).toBe('IN_REVIEW_ESCALATED')
+    expect(c?.alerts?.[0]?.alertStatus).toBe('IN_REVIEW_ESCALATED')
+    expect(c?.alerts?.[1]?.alertStatus).toBe('CLOSED')
+    await caseService.updateCasesStatus([caseId], {
+      caseStatus: 'OPEN',
+      reason: [],
+    })
+    const c2 = await caseService.getCase(caseId)
+    expect(c2).toMatchObject({
+      caseId: 'C-1-7',
+      caseStatus: 'OPEN',
+      alerts: [
+        {
+          alertId: 'A-1',
+          alertStatus: 'OPEN',
+          reviewAssignments: [{ assigneeUserId: 'ACCOUNT-1' }],
+          lastStatusChange: {
+            userId: 'ACCOUNT-3',
+            reason: ['Other'],
+            caseStatus: 'OPEN',
+            otherReason: 'Case of this alert was Open',
+          },
+          statusChanges: [
+            {
+              userId: 'ACCOUNT-3',
+              reason: ['Other'],
+              caseStatus: 'IN_REVIEW_ESCALATED',
+              otherReason:
+                'Case of this alert was In Review Requested to be Escalated',
+            },
+            {
+              userId: 'ACCOUNT-3',
+              reason: ['Other'],
+              caseStatus: 'OPEN',
+              otherReason: 'Case of this alert was Open',
+            },
+          ],
+        },
+        { alertId: 'A-2', alertStatus: 'CLOSED' },
+      ],
+      assignments: [{ assigneeUserId: 'ACCOUNT-3' }],
+      reviewAssignments: [{ assigneeUserId: 'ACCOUNT-1' }],
+    })
+  })
+
+  test('Alert stauts is changed to IN_REVIEW when reviewer chooses to close the alert', async () => {
+    const caseService = await getCaseService(tenantId)
+    const alertsService = await getAlertsService(tenantId)
+    const caseId = 'C-1-8'
+    const testAlertId = nanoid()
+    const testAlertId2 = nanoid()
+    getContextMocker.mockReturnValue({
+      user: { id: TEST_ACCOUNT_3.id, role: 'REVIEWER' },
+    })
+    await caseService.caseRepository.addCaseMongo({
+      caseId,
+      caseStatus: 'OPEN',
+      alerts: [
+        {
+          ...TEST_ALERT_1,
+          alertStatus: 'OPEN',
+          alertId: testAlertId,
+        },
+        {
+          ...TEST_ALERT_2,
+          alertStatus: 'CLOSED',
+          alertId: testAlertId2,
+        },
+      ],
+    })
+    await alertsService.updateAlertsStatus([testAlertId], {
+      alertStatus: 'CLOSED',
+      reason: ['False positive'],
+      otherReason: 'This is a duplicate alert',
+      comment: 'I am closing this alert',
+    })
+    const a = await alertsService.getAlert(testAlertId)
+    expect(a?.alertStatus).toBe('IN_REVIEW_CLOSED')
+    const a2 = await alertsService.getAlert(testAlertId2)
+    expect(a2?.alertStatus).toBe('CLOSED')
+    expect(a).toMatchObject({
+      alertStatus: 'IN_REVIEW_CLOSED',
+      caseId: 'C-1-8',
+      lastStatusChange: {
+        userId: 'Flagright System',
+        reason: ['False positive'],
+        caseStatus: 'IN_REVIEW_CLOSED',
+        otherReason: 'This is a duplicate alert',
+      },
+      statusChanges: [
+        {
+          userId: 'Flagright System',
+          reason: ['False positive'],
+          caseStatus: 'IN_REVIEW_CLOSED',
+          otherReason: 'This is a duplicate alert',
+        },
+      ],
+      comments: [
+        {
+          userId: 'ACCOUNT-3',
+          body:
+            'Alert status changed to In Review and is requested to be Closed. Reasons: False positive\n' +
+            'I am closing this alert',
+        },
+      ],
+    })
+  })
+
+  test('Alerts Partial Escaltaion', async () => {
+    const caseService = await getCaseService(tenantId)
+    const alertsService = await getAlertsService(tenantId)
+
+    const caseId = nanoid()
+    const caseId2 = nanoid()
+    const testAlertIds = [nanoid(), nanoid(), nanoid(), nanoid()]
+    const closedTestAlertId = nanoid()
+
+    getContextMocker.mockReturnValue({
+      user: { id: TEST_ACCOUNT_3.id, role: 'REVIEWER' },
+    })
+
+    const testAlerts = testAlertIds
+      .map((alertId) => ({
+        ...TEST_ALERT_1,
+        alertStatus: 'OPEN' as AlertStatus,
+        alertId,
+      }))
+      .concat({
+        ...TEST_ALERT_1,
+        alertStatus: 'CLOSED' as AlertStatus,
+        alertId: closedTestAlertId,
+      })
+
+    await caseService.caseRepository.addCaseMongo({
+      caseId,
+      caseStatus: 'OPEN',
+      alerts: cloneDeep(testAlerts),
+    })
+
+    await alertsService.escalateAlerts(caseId, {
+      alertEscalations: testAlertIds.slice(0, 2).map((alertId) => ({
+        alertId,
+        transactionIds: [],
+      })),
+      caseUpdateRequest: {
+        reason: ['False positive'],
+        comment: 'I am closing this case',
+      },
+    })
+    const c = await caseService.getCase(caseId)
+    expect(c?.caseStatus).toBe('OPEN')
+    expect(c?.alerts?.[0]?.alertStatus).toBe('IN_REVIEW_ESCALATED')
+    expect(c?.alerts?.[1]?.alertStatus).toBe('IN_REVIEW_ESCALATED')
+    expect(c?.alerts?.[2]?.alertStatus).toBe('OPEN')
+    expect(c?.alerts?.[3]?.alertStatus).toBe('OPEN')
+    expect(c?.alerts?.[4]?.alertStatus).toBe('CLOSED')
+
+    await caseService.caseRepository.addCaseMongo({
+      caseId: caseId2,
+      caseStatus: 'OPEN',
+      alerts: cloneDeep(testAlerts).map((alert) => ({
+        ...alert,
+        alertId: alert.alertId + '2',
+      })),
+    })
+
+    await alertsService.escalateAlerts(caseId2, {
+      alertEscalations: testAlertIds.slice(0, 2).map((alertId) => ({
+        alertId: alertId + '2',
+        transactionIds: [],
+      })),
+      caseUpdateRequest: {
+        reason: ['False positive'],
+        comment: 'I am closing this case',
+        caseStatus: 'CLOSED',
+      },
+    })
+
+    const c2 = await caseService.getCase(caseId2)
+
+    expect(c2?.caseStatus).toBe('IN_REVIEW_CLOSED')
+    Array.from({ length: 2 }).forEach((_, i) => {
+      expect(c2?.alerts?.[i]?.alertStatus).toBe('IN_REVIEW_ESCALATED')
+    })
+    Array.from({ length: 2 }).forEach((_, i) => {
+      expect(c2?.alerts?.[i + 2]?.alertStatus).toBe('IN_REVIEW_CLOSED')
+    })
+    expect(c2?.alerts?.[4]?.alertStatus).toBe('CLOSED')
+    await alertsService.escalateAlerts(caseId2, {
+      alertEscalations: [
+        { alertId: testAlertIds[0] + '2', transactionIds: [] },
+      ],
+    })
+    const c3 = await caseService.getCase(caseId2)
+    expect(c3?.caseStatus).toBe('IN_REVIEW_CLOSED')
+    expect(c3?.alerts?.[0]?.alertStatus).toBe('IN_REVIEW_ESCALATED')
+    Array.from({ length: 2 }).forEach((_, i) => {
+      expect(c3?.alerts?.[i + 1]?.alertStatus).toBe('IN_REVIEW_CLOSED')
+    })
+    expect(c3?.alerts?.[3]?.alertStatus).toBe('CLOSED')
+    const c4 = await caseService.getCase(`${caseId2}.1`)
+    expect(c4?.caseStatus).toBe('ESCALATED')
+    expect(c4?.alerts?.[0]?.alertStatus).toBe('ESCALATED')
+    await alertsService.updateAlertsStatus([testAlertIds[1]], {
+      alertStatus: 'OPEN',
+      reason: [],
+    })
+    const c5 = await caseService.getCase(caseId)
+    expect(c5?.caseStatus).toBe('OPEN')
+    expect(c5?.alerts?.[1]?.alertStatus).toBe('OPEN')
+    expect(c5?.alerts?.[0]?.alertStatus).toBe('IN_REVIEW_ESCALATED')
+    await caseService.updateCasesStatus([caseId2], {
+      reason: [],
+      caseStatus: 'CLOSED',
+    })
+    const c6 = await caseService.getCase(caseId2)
+    expect(c6?.caseStatus).toBe('CLOSED')
+    Array.from({ length: 3 }).forEach((_, i) => {
+      expect(c6?.alerts?.[i]?.alertStatus).toBe('CLOSED')
     })
   })
 })

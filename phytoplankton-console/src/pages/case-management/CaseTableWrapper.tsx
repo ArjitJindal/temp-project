@@ -11,6 +11,7 @@ import { useRules } from '@/utils/rules';
 import { useApiTime } from '@/utils/tracker';
 import { useAuth0User } from '@/utils/user-utils';
 import { neverReturn } from '@/utils/lang';
+import { statusInReview } from '@/utils/case-utils';
 
 export default function CaseTableWrapper(props: {
   params: TableSearchParams;
@@ -57,6 +58,7 @@ export default function CaseTableWrapper(props: {
     const [sortField, sortOrder] = sort[0] ?? [];
 
     let filterCaseStatus: CaseStatus[];
+    console.warn('caseStatus', caseStatus);
     if (caseStatus == null) {
       filterCaseStatus = [];
     } else if (caseStatus === 'OPEN' || caseStatus === 'REOPENED') {
@@ -65,6 +67,14 @@ export default function CaseTableWrapper(props: {
       filterCaseStatus = ['CLOSED'];
     } else if (caseStatus === 'ESCALATED') {
       filterCaseStatus = ['ESCALATED'];
+    } else if (statusInReview(caseStatus)) {
+      console.warn('statusInReview', caseStatus);
+      filterCaseStatus = [
+        'IN_REVIEW_OPEN',
+        'IN_REVIEW_ESCALATED',
+        'IN_REVIEW_CLOSED',
+        'IN_REVIEW_REOPENED',
+      ];
     } else {
       filterCaseStatus = neverReturn(caseStatus, []);
     }
