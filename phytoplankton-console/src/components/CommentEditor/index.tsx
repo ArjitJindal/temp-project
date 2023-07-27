@@ -7,7 +7,7 @@ import { message } from '@/components/library/Message';
 import Button from '@/components/library/Button';
 import { useApi } from '@/api';
 import { FileInfo } from '@/apis';
-import { FilesList } from '@/components/files/FilesList';
+import FilesList from '@/components/files/FilesList';
 import MarkdownEditor from '@/components/markdown/MarkdownEditor';
 import { AsyncResource, isLoading } from '@/utils/asyncResource';
 import { Hint } from '@/components/library/Form/InputField';
@@ -97,13 +97,7 @@ function CommentEditor(props: Props, ref: React.Ref<CommentEditorRef>) {
         </Hint>
       )}
       {showFileList && (
-        <FilesList
-          files={values.files}
-          showGreyBackground={true}
-          removeFile={removeFile}
-          showDeleteButton={true}
-          fixedHeight={true}
-        />
+        <FilesList files={values.files} onDeleteFile={removeFile} fixedHeight={true} />
       )}
       <div className={s.commentEditorActions}>
         <Button

@@ -37,6 +37,8 @@ import RiskLevelSwitch from '@/components/library/RiskLevelSwitch/story';
 import Modal from '@/components/library/Modal/story';
 import TransactionTypeTag from '@/components/library/TransactionTypeTag/story';
 import CaseStatusTag from '@/components/library/CaseStatusTag/story';
+import FilesDraggerInput from '@/components/ui/FilesDraggerInput/story';
+import FilesList from '@/components/files/FilesList/story';
 import CaseGenerationMethodTag from '@/components/library/CaseGenerationMethodTag/story';
 import { Category, Config } from '@/pages/storybook/types';
 import {
@@ -193,6 +195,14 @@ const config: Config = [
     key: 'misc',
     title: 'Misc',
     components: [
+      {
+        key: '@/components/ui/FilesDraggerInput',
+        story: FilesDraggerInput,
+      },
+      {
+        key: '@/components/files/FilesList',
+        story: FilesList,
+      },
       {
         key: '@/components/ui/RiskScoreDisplay',
         story: RiskScoreDisplay,

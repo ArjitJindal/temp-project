@@ -1,6 +1,8 @@
-import React, { useState } from 'react';
+import React from 'react';
 import { Tag } from 'antd';
 import { sentenceCase } from '@antv/x6/es/util/string/format';
+import cn from 'clsx';
+import s from './index.module.less';
 import { Report } from '@/apis';
 import { QueryResult } from '@/utils/queries/types';
 import QueryResultsTable from '@/components/common/QueryResultsTable';
@@ -9,13 +11,8 @@ import { ColumnHelper } from '@/components/library/Table/columnHelper';
 import { TableData } from '@/components/library/Table/types';
 import { useUsers } from '@/utils/user-utils';
 import { ConsoleUserAvatar } from '@/pages/case-management/components/ConsoleUserAvatar';
-import {
-  COLORS_V2_ALERT_SUCCESS,
-  COLORS_V2_HIGHLIGHT_FLAGRIGHTBLUE,
-  COLORS_V2_HIGHLIGHT_HIGHLIGHT_STROKE,
-} from '@/components/ui/colors';
 import Id from '@/components/ui/Id';
-import SarReportDrawer from '@/components/Sar/SarReportDrawer';
+import { makeUrl } from '@/utils/routing';
 
 type Props = {
   queryResult: QueryResult<TableData<Report>>;
@@ -24,7 +21,6 @@ type Props = {
 export default function ReportsTable(props: Props) {
   const helper = new ColumnHelper<Report>();
   const [users, loadingUsers] = useUsers({ includeBlockedUsers: true });
-  const [report, setReport] = useState<Report>();
 
   const columns = helper.list([
     helper.simple<'id'>({
@@ -34,7 +30,11 @@ export default function ReportsTable(props: Props) {
         render: (_value, { item: entity }) => {
           return (
             <>
-              <Id testName="report-id" onClick={() => setReport(entity)} alwaysShowCopy={false}>
+              <Id
+                to={makeUrl('/reports/:reportId', { reportId: entity.id })}
+                testName="report-id"
+                alwaysShowCopy={false}
+              >
                 {entity.id}
               </Id>
             </>
@@ -75,16 +75,7 @@ export default function ReportsTable(props: Props) {
           return (
             <div>
               {status && (
-                <Tag
-                  style={{
-                    background:
-                      status === 'draft'
-                        ? COLORS_V2_HIGHLIGHT_FLAGRIGHTBLUE
-                        : COLORS_V2_ALERT_SUCCESS,
-                    borderColor: COLORS_V2_HIGHLIGHT_HIGHLIGHT_STROKE,
-                    color: 'black',
-                  }}
-                >
+                <Tag className={cn('TEST', s.tag, s[`status-${status}`])}>
                   {sentenceCase(status)}
                 </Tag>
               )}
@@ -106,13 +97,6 @@ export default function ReportsTable(props: Props) {
   return (
     <>
       <QueryResultsTable rowKey={'id'} columns={columns} queryResults={props.queryResult} />
-      {report && (
-        <SarReportDrawer
-          initialReport={report}
-          isVisible={!!report}
-          onChangeVisibility={() => setReport(undefined)}
-        />
-      )}
     </>
   );
 }

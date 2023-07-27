@@ -18,7 +18,7 @@ export const REPORT_STEP = 'REPORT_STEP';
 export const TRANSACTION_METADATA_STEP = 'TRANSACTION_METADATA_STEP';
 export const TRANSACTION_STEP = 'TRANSACTION_STEP';
 export const INDICATOR_STEP = 'INDICATOR_STEP';
-export const VERSION_STEP = 'VERSION_STEP';
+export const ATTACHMENTS_STEP = 'ATTACHMENTS_STEP';
 
 export type Step = {
   key: string;
@@ -58,9 +58,9 @@ export default function SarReportDrawer(props: Props) {
           description: 'Select one or more indicators that are relevant to your report',
         },
         {
-          key: VERSION_STEP,
-          title: 'Versions',
-          description: 'View the version history for this report',
+          key: ATTACHMENTS_STEP,
+          title: 'Attachments',
+          description: 'Upload any supporting documents for your report',
         },
       ].filter(Boolean) as Step[],
     [
@@ -81,24 +81,30 @@ export default function SarReportDrawer(props: Props) {
     }
   >(
     async (event) => {
-      const reportWithoutSchema = { ...event.report };
-      reportWithoutSchema.schema = undefined;
-      const result = await api.postReports({
-        Report: reportWithoutSchema,
-      });
-      const reportName = `SAR-report-${dayjs().format(YEAR_MONTH_DATE_FORMAT)}.xml`;
-      const output = result.revisions[result.revisions.length - 1].output;
-      if (output) {
-        download(reportName, output);
-      } else {
-        throw new Error(`XML output in response is empty, unable to download!`);
+      const hideLoading = message.loading(`Generating...`);
+      try {
+        const reportWithoutSchema = { ...event.report };
+        reportWithoutSchema.schema = undefined;
+        const result = await api.postReports({
+          Report: reportWithoutSchema,
+        });
+        const reportName = `SAR-report-${dayjs().format(YEAR_MONTH_DATE_FORMAT)}.xml`;
+        const output = result.revisions[result.revisions.length - 1].output;
+        if (output) {
+          download(reportName, output);
+        } else {
+          throw new Error(`XML output in response is empty, unable to download!`);
+        }
+        return result;
+      } finally {
+        hideLoading();
       }
-      return result;
     },
     {
       onSuccess: (r) => {
         setReport(r);
         setDirty(false);
+        message.success(`Report ${r.id} successfully generated`);
       },
       onError: (e) => {
         message.fatal(`Failed to submit report: ${getErrorMessage(e)}`);
@@ -130,6 +136,7 @@ export default function SarReportDrawer(props: Props) {
     {
       onSuccess: (r) => {
         setReport(r);
+        setDraft(r);
         setDirty(false);
         message.success(`Draft of report saved successfully!`);
       },

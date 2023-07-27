@@ -79,12 +79,6 @@ const DEFAULT_INITIAL_VALUES: FormValues = {
   closeRelatedCase: false,
 };
 
-const uploadedFiles: FileInfo[] = [];
-
-const handleFiles = (files: FileInfo[]) => {
-  return _.uniqBy([...files, ...uploadedFiles], 's3Key');
-};
-
 export default function StatusChangeModal(props: Props) {
   const {
     entityIds,
@@ -115,12 +109,6 @@ export default function StatusChangeModal(props: Props) {
   const showCopilot = useFeatureEnabled('COPILOT');
   const showConfirmation =
     isVisible && (newStatus === 'REOPENED' || isAwaitingConfirmation || skipReasonsModal);
-
-  useEffect(() => {
-    if (uploadingCount === 0) {
-      uploadedFiles.splice(0, uploadedFiles.length);
-    }
-  }, [uploadingCount]);
 
   useDeepEqualEffect(() => {
     formRef.current?.setValues(initialValues);
@@ -297,12 +285,11 @@ export default function StatusChangeModal(props: Props) {
                 {...inputProps}
                 ref={uploadRef}
                 onChange={(value) => {
-                  setFileList(handleFiles([...(value ?? [])]));
+                  setFileList(value ?? []);
                 }}
                 value={fileList}
                 uploadingCount={uploadingCount}
                 setUploadingCount={setUploadingCount}
-                uploadedFiles={uploadedFiles}
               />
             )}
           </InputField>

@@ -1,0 +1,12 @@
+@import 'src/components/ui/colors.less';
+
+.tag {
+  &.status-draft {
+    border-color: @fr-colors-v2-primary-flagrightBlue;
+    background: @fr-colors-v2-highlight-flagrightBlue;
+  }
+  &.status-complete {
+    border-color: @fr-colors-v2-alert-success;
+    background: fade(@fr-colors-v2-alert-success, 10%);
+  }
+}

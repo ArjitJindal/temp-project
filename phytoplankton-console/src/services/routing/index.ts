@@ -218,6 +218,11 @@ export function useRoutes(): RouteItem[] {
             name: 'reports',
             component: ReportsList,
           },
+          {
+            path: '/reports/:reportId',
+            name: 'reports-item',
+            component: ReportsList,
+          },
         ],
       },
       isRiskLevelsEnabled && {

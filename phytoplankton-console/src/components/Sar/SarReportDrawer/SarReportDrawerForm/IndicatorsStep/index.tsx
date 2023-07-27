@@ -7,11 +7,13 @@ import { ColumnHelper } from '@/components/library/Table/columnHelper';
 
 const columnHelper = new ColumnHelper<ReportSchemaIndicators>();
 
-export default function IndicatorsStep(props: {
+interface Props {
   report: Report;
   value?: string[] | undefined;
   onChange?: (value: string[] | undefined) => void;
-}) {
+}
+
+export default function IndicatorsStep(props: Props) {
   const { report, value = [], onChange } = props;
 
   const [search, setSearch] = useState<string>();

@@ -1,27 +1,26 @@
-import { useState } from 'react';
-import VersionHistory from '../../VersionHistory';
 import { JsonSchemaEditorSettings } from '@/pages/rules/RuleConfigurationDrawer/JsonSchemaEditor/settings';
 import { StatePair } from '@/utils/state';
-import { Report } from '@/apis';
+import { FileInfo, Report } from '@/apis';
 import Form from '@/components/library/Form';
 import Stepper from '@/components/library/Stepper';
 import NestedForm from '@/components/library/Form/NestedForm';
-import JsonSchemaEditor from '@/pages/rules/RuleConfigurationDrawer/JsonSchemaEditor';
-import VerticalMenu from '@/components/library/VerticalMenu';
 import GenericFormField, { FormFieldRenderProps } from '@/components/library/Form/GenericFormField';
 import {
+  ATTACHMENTS_STEP,
   INDICATOR_STEP,
   REPORT_STEP,
   Step,
   TRANSACTION_METADATA_STEP,
   TRANSACTION_STEP,
-  VERSION_STEP,
 } from '@/components/Sar/SarReportDrawer';
 import IndicatorsStep from '@/components/Sar/SarReportDrawer/SarReportDrawerForm/IndicatorsStep';
 import ReportStep from '@/components/Sar/SarReportDrawer/SarReportDrawerForm/ReportStep';
+import TransactionStep from '@/components/Sar/SarReportDrawer/SarReportDrawerForm/TransactionStep';
+import AttachmentsStep from '@/components/Sar/SarReportDrawer/SarReportDrawerForm/AttachmentsStep';
 
 const settings: Partial<JsonSchemaEditorSettings> = { propertyNameStyle: 'SNAKE_CASE' };
-type FormState = Partial<{
+
+export type FormState = Partial<{
   [REPORT_STEP]: unknown;
   [TRANSACTION_METADATA_STEP]: unknown;
   [TRANSACTION_STEP]: {
@@ -30,22 +29,24 @@ type FormState = Partial<{
   [INDICATOR_STEP]: {
     selection: string[];
   };
-  [VERSION_STEP]: unknown;
+  [ATTACHMENTS_STEP]: {
+    files?: FileInfo[];
+  };
 }>;
 
-export default function SarReportDrawerForm(props: {
+interface Props {
   formId: string;
   report: Report;
   steps: Step[];
   activeStepState: StatePair<string>;
   onSubmit: (formState: Report) => void;
   onChange: (formState: Report) => void;
-}) {
+}
+
+export default function SarReportDrawerForm(props: Props) {
   const { formId, report, steps, activeStepState, onSubmit, onChange } = props;
-  const transactionIds = report.parameters.transactions?.map((t) => t.id) ?? [];
   const [activeStep, setActiveStep] = activeStepState;
   const initialValues = deserializeFormState(report);
-  const [activeTransaction, setActiveTransaction] = useState<string>(transactionIds[0]);
 
   return (
     <Form
@@ -71,29 +72,17 @@ export default function SarReportDrawerForm(props: {
                   settings={settings}
                 />
               )}
-              {activeStepKey == TRANSACTION_STEP && (
-                <VerticalMenu
-                  items={transactionIds.map((tid) => ({ key: tid, title: `Transaction ${tid}` }))}
-                  active={activeTransaction}
-                  onChange={setActiveTransaction}
-                >
-                  <NestedForm name={activeTransaction}>
-                    <JsonSchemaEditor
-                      settings={settings}
-                      parametersSchema={report?.schema?.transactionSchema}
-                    />
-                  </NestedForm>
-                </VerticalMenu>
+              {activeStepKey === TRANSACTION_STEP && (
+                <TransactionStep settings={settings} report={report} />
               )}
-              {activeStepKey == INDICATOR_STEP && (
+              {activeStepKey === INDICATOR_STEP && (
                 <GenericFormField<any> name={'selection'}>
-                  {(props: FormFieldRenderProps<string[]>) => {
-                    const { value = [], onChange } = props;
-                    return <IndicatorsStep report={report} value={value} onChange={onChange} />;
-                  }}
+                  {(props: FormFieldRenderProps<string[]>) => (
+                    <IndicatorsStep report={report} {...props} />
+                  )}
                 </GenericFormField>
               )}
-              {activeStepKey === VERSION_STEP && <VersionHistory report={report} />}
+              {activeStepKey === ATTACHMENTS_STEP && <AttachmentsStep />}
             </NestedForm>
           );
         }}
@@ -115,6 +104,9 @@ function deserializeFormState(reportTemplate: Report): FormState {
     [INDICATOR_STEP]: {
       selection: reportTemplate?.parameters.indicators ?? [],
     },
+    [ATTACHMENTS_STEP]: {
+      files: reportTemplate?.attachments ?? undefined,
+    },
   };
 }
 
@@ -130,5 +122,6 @@ export function serializeFormState(originalReport: Report, formState: FormState)
         transaction,
       })),
     },
+    attachments: formState.ATTACHMENTS_STEP?.files,
   };
 }

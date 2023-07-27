@@ -1,10 +1,10 @@
-import { MongoClient, Document } from 'mongodb'
+import { Document, MongoClient, WithId } from 'mongodb'
 import _ from 'lodash'
 import { Report } from '@/@types/openapi-internal/Report'
 import {
-  REPORT_COLLECTION,
-  paginatePipeline,
   COUNTER_COLLECTION,
+  paginatePipeline,
+  REPORT_COLLECTION,
 } from '@/utils/mongoDBUtils'
 import { DefaultApiGetReportsRequest } from '@/@types/openapi-internal/RequestParameters'
 import { EntityCounter } from '@/@types/openapi-internal/EntityCounter'
@@ -35,29 +35,82 @@ export class ReportRepository {
     return `RP-${reportCount?.count}`
   }
 
-  public async saveOrUpdateReport(report: Report): Promise<Report> {
+  public async saveOrUpdateReport(reportPayload: Report): Promise<Report> {
     const db = this.mongoDb.db()
     const collection = db.collection<Report>(REPORT_COLLECTION(this.tenantId))
 
-    const reportId = report.id ?? (await this.getId())
+    const existingReport =
+      reportPayload.id != null
+        ? await collection.findOne({ id: reportPayload.id })
+        : undefined
 
-    const existingReport = await collection.findOne({ id: reportId })
-    const newReport: Report = {
-      ...report,
-      id: reportId,
-    }
-
-    // Schema is immutable once the initial report is created.
+    let newReport: Report
     if (existingReport) {
-      newReport.schema = existingReport.schema
+      if (existingReport.status === 'draft') {
+        if (reportPayload.status === existingReport.status) {
+          newReport = {
+            ...existingReport,
+            ...reportPayload,
+          }
+        } else {
+          newReport = {
+            ...existingReport,
+            ...reportPayload,
+            status: 'complete',
+          }
+        }
+      } else {
+        let topParent: WithId<Report> | null = existingReport
+        while (topParent?.hierarchy?.parentId != null) {
+          topParent = await collection.findOne({
+            id: topParent.hierarchy.parentId,
+          })
+        }
+        if (topParent == null) {
+          throw new Error(`Unable to find parent`)
+        }
+        const childrenCount = topParent.hierarchy?.childIds?.length ?? 0
+        const childReportId = `${reportPayload.id}.${childrenCount + 1}`
+        newReport = {
+          ...existingReport,
+          ...reportPayload,
+          id: childReportId,
+          hierarchy: {
+            parentId: reportPayload.id,
+          },
+        }
+        await collection.replaceOne(
+          {
+            _id: topParent._id,
+          },
+          {
+            ...topParent,
+            hierarchy: {
+              ...topParent.hierarchy,
+              childIds: [
+                ...(topParent.hierarchy?.childIds ?? []),
+                childReportId,
+              ],
+            },
+          },
+          { upsert: false }
+        )
+      }
+    } else {
+      newReport = {
+        ...reportPayload,
+        id: await this.getId(),
+      }
     }
 
     await collection.replaceOne(
       {
-        _id: reportId as any,
+        _id: newReport.id as any,
       },
-      newReport,
-      { upsert: true }
+      _.omit(newReport, '_id'),
+      {
+        upsert: true,
+      }
     )
     return newReport
   }

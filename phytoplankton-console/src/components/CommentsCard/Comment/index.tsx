@@ -3,7 +3,7 @@ import React from 'react';
 import styles from './index.module.less';
 import { Comment as ApiComment } from '@/apis';
 import { useUser } from '@/utils/user-utils';
-import { FilesList } from '@/components/files/FilesList';
+import FilesList from '@/components/files/FilesList';
 import MarkdownViewer from '@/components/markdown/MarkdownViewer';
 import { COLORS_V2_GRAY_5 } from '@/components/ui/colors';
 
@@ -42,7 +42,7 @@ export default function Comment(props: Props) {
         <div className={styles.commentBody}>
           <MarkdownViewer value={comment.body} />
         </div>
-        <FilesList files={comment.files ? comment.files : []} showGreyBackground={true} />
+        <FilesList files={comment.files ? comment.files : []} />
         <div className={styles.footer}>
           {comment.createdAt && (
             <div className={styles.footerText} style={{ width: 'fit-content' }}>

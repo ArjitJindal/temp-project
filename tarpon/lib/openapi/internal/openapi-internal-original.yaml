@@ -7010,6 +7010,16 @@ components:
           type: array
           items:
             type: string
+    ReportHierarchyDetails:
+      title: ReportHierarchyDetails
+      type: object
+      properties:
+        parentId:
+          type: string
+        childIds:
+          type: array
+          items:
+            type: string
     NarrativeTemplateRequest:
       title: NarrativeTemplateRequest
       type: object
@@ -7170,6 +7180,12 @@ components:
           type: array
           items:
             $ref: '#/components/schemas/ReportRevision'
+        attachments:
+          type: array
+          items:
+            $ref: '#/components/schemas/FileInfo'
+        hierarchy:
+          $ref: '#/components/schemas/ReportHierarchyDetails'
     ReportParameters:
       type: object
       required:

@@ -35,6 +35,9 @@ function serve() {
   app.get('/', function (req, res) {
     return res.end('<p>This server serves up static files.</p>');
   });
+  app.put('/fake/url', function (req, res) {
+    return res.status(200).end('ok');
+  });
 
   /*
   openssl genrsa -out build/certificates/self_priv.pem 1024
