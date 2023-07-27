@@ -1,5 +1,5 @@
 import { JSONSchemaType } from 'ajv'
-import _ from 'lodash'
+import { mapValues, sumBy, groupBy } from 'lodash'
 import { AuxiliaryIndexTransaction } from '../repositories/transaction-repository-interface'
 import {
   getTransactionUserPastTransactionsByDirection,
@@ -77,6 +77,12 @@ export default abstract class TransactionsPatternVelocityBaseRule<
     if (!matchPattern) {
       return
     }
+    const { checkSender, checkReceiver } = this.parameters
+    if (direction === 'origin' && checkSender === 'none') {
+      return
+    } else if (direction === 'destination' && checkReceiver === 'none') {
+      return
+    }
 
     const groupCounts = await this.getData(direction)
     for (const group in groupCounts) {
@@ -112,7 +118,7 @@ export default abstract class TransactionsPatternVelocityBaseRule<
     )
     const checkDirection = direction === 'origin' ? checkSender : checkReceiver
     if (userAggregationData) {
-      const transactionsCount = _.sumBy(
+      const transactionsCount = sumBy(
         userAggregationData,
         (data) =>
           (checkDirection === 'sending'
@@ -167,8 +173,8 @@ export default abstract class TransactionsPatternVelocityBaseRule<
       (transaction) => this.matchPattern(transaction, 'destination', 'sender')
     )
 
-    return _.mapValues(
-      _.groupBy(
+    return mapValues(
+      groupBy(
         sendingMatchedTransactions.concat(receivingMatchedTransactions),
         (t) => this.getTransactionGroupKey(t) || DEFAULT_GROUP_KEY
       ),

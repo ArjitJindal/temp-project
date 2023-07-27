@@ -71,7 +71,7 @@ export abstract class TransactionAggregationRule<
     }
 
     const targetHour =
-      targetAggregations?.[0].hour ||
+      targetAggregations?.[0]?.hour ||
       dayjs(this.transaction.timestamp).format(AGGREGATION_TIME_FORMAT)
     const updatedAggregation = await this.getUpdatedTargetAggregation(
       direction,

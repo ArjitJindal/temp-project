@@ -1,5 +1,5 @@
 import { JSONSchemaType } from 'ajv'
-import _ from 'lodash'
+import { sumBy } from 'lodash'
 import { AuxiliaryIndexTransaction } from '../repositories/transaction-repository-interface'
 import {
   getTransactionUserPastTransactionsByDirection,
@@ -90,6 +90,13 @@ export default abstract class TransactionsPatternPercentageBaseRule<
   protected async computeRuleUser(
     direction: 'origin' | 'destination'
   ): Promise<RuleHitResultItem | undefined> {
+    const { checkSender, checkReceiver } = this.parameters
+    if (direction === 'origin' && checkSender === 'none') {
+      return
+    } else if (direction === 'destination' && checkReceiver === 'none') {
+      return
+    }
+
     if (!this.matchPattern(this.transaction, direction)) {
       return
     }
@@ -129,9 +136,9 @@ export default abstract class TransactionsPatternPercentageBaseRule<
     )
     if (userAggregationData) {
       const allTransactionsCount =
-        _.sumBy(userAggregationData, (data) => data.all || 0) + 1
+        sumBy(userAggregationData, (data) => data.all || 0) + 1
       const matchTransactionsCount =
-        _.sumBy(userAggregationData, (data) => data.match || 0) + 1
+        sumBy(userAggregationData, (data) => data.match || 0) + 1
       return {
         allTransactionsCount,
         matchTransactionsCount,

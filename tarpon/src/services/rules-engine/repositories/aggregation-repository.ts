@@ -469,12 +469,47 @@ export class AggregationRepository {
       })
 
     const result = await paginateQuery(this.dynamoDb, queryInput)
-    return (result?.Items?.length || 0) > 0
+    const hasData = (result?.Items?.length || 0) > 0
+    if (!hasData) {
+      const isRebuilt = await this.isUserRuleTimeAggregationsRebuilt(
+        userKeyId,
+        ruleInstanceId,
+        version
+      )
+      if (isRebuilt) {
+        // We return an empty array instead of undefined as it's not a cache miss.
+        return []
+      }
+    }
+
+    return hasData
       ? result?.Items?.map((item) => ({
           ...(_.omit(item, ['PartitionKeyID', 'SortKeyID']) as T),
           hour: item.SortKeyID,
         }))
       : undefined
+  }
+
+  private async isUserRuleTimeAggregationsRebuilt(
+    userKeyId: string,
+    ruleInstanceId: string,
+    version: string
+  ): Promise<boolean> {
+    const queryInput: AWS.DynamoDB.DocumentClient.QueryInput = {
+      TableName: StackConstants.TARPON_DYNAMODB_TABLE_NAME,
+      KeyConditionExpression: 'PartitionKeyID = :pk',
+      ExpressionAttributeValues: {
+        ':pk': DynamoDbKeys.RULE_USER_TIME_AGGREGATION(
+          this.tenantId,
+          userKeyId,
+          ruleInstanceId,
+          version
+        ).PartitionKeyID,
+      },
+      Limit: 1,
+    }
+    const result = await paginateQuery(this.dynamoDb, queryInput)
+    return Boolean(result.Count)
   }
 
   public async markTransactionApplied(

@@ -1,5 +1,5 @@
 import { JSONSchemaType } from 'ajv'
-import _ from 'lodash'
+import { sumBy } from 'lodash'
 import { AuxiliaryIndexTransaction } from '../repositories/transaction-repository-interface'
 import {
   getTransactionUserPastTransactionsByDirection,
@@ -88,6 +88,13 @@ export default class TransactionsExceedPastPeriodRule extends TransactionAggrega
   protected async computeRuleUser(
     direction: 'origin' | 'destination'
   ): Promise<RuleHitResultItem | undefined> {
+    const { checkSender, checkReceiver } = this.parameters
+    if (direction === 'origin' && checkSender === 'none') {
+      return
+    } else if (direction === 'destination' && checkReceiver === 'none') {
+      return
+    }
+
     const { transactionsCountP1, transactionsCountP2 } = await this.getData(
       direction
     )
@@ -121,22 +128,23 @@ export default class TransactionsExceedPastPeriodRule extends TransactionAggrega
       this.transaction.timestamp!,
       timeWindow2
     )
-    const userAggregationDataPeriod1 =
-      await this.getRuleAggregations<AggregationData>(
-        direction,
-        afterTimestamp1,
-        beforeTimestamp1
-      )
-    const userAggregationDataPeriod2 =
-      await this.getRuleAggregations<AggregationData>(
-        direction,
-        afterTimestamp2,
-        afterTimestamp1
-      )
+    const [userAggregationDataPeriod1, userAggregationDataPeriod2] =
+      await Promise.all([
+        this.getRuleAggregations<AggregationData>(
+          direction,
+          afterTimestamp1,
+          beforeTimestamp1
+        ),
+        this.getRuleAggregations<AggregationData>(
+          direction,
+          afterTimestamp2,
+          afterTimestamp1
+        ),
+      ])
     if (userAggregationDataPeriod1 && userAggregationDataPeriod2) {
       const transactionsCountP1 =
-        _.sumBy(userAggregationDataPeriod1, (data) => data.count || 0) + 1
-      const transactionsCountP2 = _.sumBy(
+        sumBy(userAggregationDataPeriod1, (data) => data.count || 0) + 1
+      const transactionsCountP2 = sumBy(
         userAggregationDataPeriod2,
         (data) => data.count || 0
       )

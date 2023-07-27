@@ -100,7 +100,7 @@ export default class TransactionsOutflowInflowVolumeRule extends TransactionAggr
 
   protected override async getUpdatedTargetAggregation(
     direction: 'origin' | 'destination',
-    aggregation: AggregationData,
+    aggregation: AggregationData | undefined,
     isTransactionFiltered: boolean
   ): Promise<AggregationData | null> {
     if (!isTransactionFiltered) {
