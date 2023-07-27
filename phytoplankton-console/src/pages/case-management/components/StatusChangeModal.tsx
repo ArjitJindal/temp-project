@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useRef, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import _ from 'lodash';
 import pluralize from 'pluralize';
 import { UseMutationResult } from '@tanstack/react-query';
@@ -107,8 +107,13 @@ export default function StatusChangeModal(props: Props) {
   const [fileList, setFileList] = useState<FileInfo[]>(initialValues.files);
   const formRef = useRef<FormRef<FormValues>>(null);
   const showCopilot = useFeatureEnabled('COPILOT');
-  const showConfirmation =
-    isVisible && (newStatus === 'REOPENED' || isAwaitingConfirmation || skipReasonsModal);
+  const showConfirmation = useMemo(() => {
+    return isVisible && (newStatus === 'REOPENED' || isAwaitingConfirmation || skipReasonsModal);
+  }, [isVisible, newStatus, isAwaitingConfirmation, skipReasonsModal]);
+
+  useEffect(() => {
+    setAwaitingConfirmation(false);
+  }, [isVisible]);
 
   useDeepEqualEffect(() => {
     formRef.current?.setValues(initialValues);
