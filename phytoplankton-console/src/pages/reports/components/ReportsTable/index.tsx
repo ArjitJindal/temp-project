@@ -28,7 +28,7 @@ export default function ReportsTable(props: Props) {
 
   const columns = helper.list([
     helper.simple<'id'>({
-      title: 'Report ID',
+      title: 'SAR ID',
       key: 'id',
       type: {
         render: (_value, { item: entity }) => {
