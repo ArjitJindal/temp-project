@@ -108,5 +108,12 @@ export default function CasesStatusChangeModal(props: Props) {
     },
   );
 
-  return <StatusChangeModal {...props} entityName="case" updateMutation={updateMutation} />;
+  return (
+    <StatusChangeModal
+      {...props}
+      key={String(props.isVisible)}
+      entityName="case"
+      updateMutation={updateMutation}
+    />
+  );
 }

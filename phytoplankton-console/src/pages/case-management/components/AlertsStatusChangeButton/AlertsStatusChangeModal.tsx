@@ -122,6 +122,7 @@ export default function AlertsStatusChangeModal(props: Props) {
   return (
     <StatusChangeModal
       {...props}
+      key={String(props.isVisible)}
       entityIds={entityIds}
       entityName={_.isEmpty(transactionIds) ? 'alert' : 'transaction'}
       updateMutation={updateMutation}
