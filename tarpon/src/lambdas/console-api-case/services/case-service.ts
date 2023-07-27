@@ -257,7 +257,7 @@ export class CaseService extends CaseAlertsCommonService {
           files: updates.files,
           userId: statusChange.userId,
         }),
-        ...(isReview && hasFeature('ESCALATION')
+        ...(isReview && accountUser.reviewerId && hasFeature('ESCALATION')
           ? [
               this.caseRepository.updateInReviewAssignmentsOfCases(
                 caseIds,
@@ -270,7 +270,7 @@ export class CaseService extends CaseAlertsCommonService {
                 ],
                 [
                   {
-                    assigneeUserId: accountUser.reviewerId!,
+                    assigneeUserId: accountUser.reviewerId,
                     assignedByUserId: userId!,
                     timestamp: Date.now(),
                   },

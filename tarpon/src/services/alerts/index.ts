@@ -340,15 +340,16 @@ export class AlertsService extends CaseAlertsCommonService {
           alertId,
           parentAlertId,
           alertStatus: lastStatusChange.caseStatus,
-          reviewAssignments: !isReviewRequired
-            ? reviewAssignments
-            : [
-                {
-                  assignedByUserId: currentUserId!,
-                  assigneeUserId: currentUserAccount.reviewerId!,
-                  timestamp: currentTimestamp,
-                },
-              ],
+          reviewAssignments:
+            isReviewRequired && currentUserAccount.reviewerId
+              ? [
+                  {
+                    assignedByUserId: currentUserId!,
+                    assigneeUserId: currentUserAccount.reviewerId,
+                    timestamp: currentTimestamp,
+                  },
+                ]
+              : reviewAssignments,
           statusChanges: escalatedAlert.statusChanges
             ? [...escalatedAlert.statusChanges, lastStatusChange]
             : [lastStatusChange],
@@ -714,7 +715,7 @@ export class AlertsService extends CaseAlertsCommonService {
           body: commentBody,
           files: statusUpdateRequest.files,
         }),
-        ...(isReview && hasFeature('ESCALATION')
+        ...(isReview && userAccount.reviewerId && !skipReview
           ? [
               this.alertsRepository.updateInReviewAssignemnts(
                 alertIds,
@@ -727,7 +728,7 @@ export class AlertsService extends CaseAlertsCommonService {
                 ],
                 [
                   {
-                    assigneeUserId: userAccount.reviewerId!,
+                    assigneeUserId: userAccount.reviewerId,
                     assignedByUserId: userId!,
                     timestamp: Date.now(),
                   },
