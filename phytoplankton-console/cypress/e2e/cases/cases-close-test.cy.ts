@@ -9,7 +9,7 @@ describe('Closing and Re-Opening the cases', () => {
 
     cy.get('a[data-cy="case-id"]').invoke('prop', 'title').as('caseId');
     cy.get('@caseId').then((text) => {
-      const caseIdValue = text.trim();
+      const caseIdValue = text.toString().trim();
       cy.caseAlertAction('Close');
       cy.intercept('PATCH', '**/cases/statusChange').as('case');
       cy.multiSelect('.ant-modal', 'False positive');
@@ -18,14 +18,14 @@ describe('Closing and Re-Opening the cases', () => {
       cy.get('.ant-modal-footer button').eq(1).click();
       cy.get('.ant-modal-footer button').eq(3).click();
       cy.wait('@case').then((interception) => {
-        expect(interception.response.statusCode).to.eq(200);
+        expect(interception.response?.statusCode).to.eq(200);
       });
       cy.visit('/case-management/cases?sort=-updatedAt&showCases=ALL&caseStatus=CLOSED');
       cy.get('input[data-cy="row-table-checkbox"]', { timeout: 15000 }).eq(0).click();
       cy.caseAlertAction('Re-Open');
       cy.get('.ant-modal-footer button').eq(1).click();
       cy.wait('@case').then((interception) => {
-        expect(interception.response.statusCode).to.eq(200);
+        expect(interception.response?.statusCode).to.eq(200);
       });
       cy.get('table tbody tr').then((el) => {
         expect(el.length).to.gte(1);

@@ -47,7 +47,7 @@ describe('Add a comment to a user', () => {
         cy.get('[data-cy="attached-file"] a')
           .invoke('attr', 'href')
           .then((actionLink) => {
-            cy.request(actionLink).then((response) => {
+            cy.request(actionLink!).then((response) => {
               expect(response.body).to.eq(fileContent);
             });
           });

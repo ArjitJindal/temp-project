@@ -12,13 +12,13 @@ describe('Assigning single and multiple cases', () => {
     cy.get('button[data-cy="update-assignment-button"]').eq(0).click();
     cy.get('.ant-dropdown-menu-item-only-child').eq(0).click();
     cy.wait('@case').then((interception) => {
-      expect(interception.response.statusCode).to.eq(200);
+      expect(interception.response?.statusCode).to.eq(200);
     });
     cy.get('[data-cy="header-table-checkbox"]').click();
     cy.get('button[data-cy="update-assignment-button"]').eq(0).click();
     cy.get('.ant-dropdown-menu-item-only-child').eq(0).click();
     cy.wait('@case').then((interception) => {
-      expect(interception.response.statusCode).to.eq(200);
+      expect(interception.response?.statusCode).to.eq(200);
     });
   });
 });

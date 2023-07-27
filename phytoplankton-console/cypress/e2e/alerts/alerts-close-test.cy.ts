@@ -23,7 +23,7 @@ describe('Comment Alerts from Table', () => {
     cy.get('.ant-modal-footer button').eq(1).click();
     cy.get('button[data-cy="modal-ok"]').eq(1).click();
     cy.wait('@alert').then((interception) => {
-      expect(interception.response.statusCode).to.eq(200);
+      expect(interception.response?.statusCode).to.eq(200);
 
       // Re-open the closed alert
       // eslint-disable-next-line cypress/no-unnecessary-waiting
@@ -37,7 +37,7 @@ describe('Comment Alerts from Table', () => {
       cy.intercept('PATCH', '**/alerts/statusChange').as('alert');
       cy.get('button[data-cy="modal-ok"]').eq(0).click();
       cy.wait('@alert').then((interception) => {
-        expect(interception.response.statusCode).to.eq(200);
+        expect(interception.response?.statusCode).to.eq(200);
       });
     });
   });
