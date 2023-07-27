@@ -555,7 +555,7 @@ export type ValidateActivityNarrativeSequenceNumber =
 /**
  * Schema tag attributes: xmlns='www.fincen.gov/base' xmlns:xsd='http://www.w3.org/2001/XMLSchema' xmlns:vc='http://www.w3.org/2007/XMLSchema-versioning' xmlns:fc2='www.fincen.gov/base' xmlns:xsi='http://www.w3.org/2001/XMLSchema-instance' targetNamespace='www.fincen.gov/base' elementFormDefault='qualified' attributeFormDefault='unqualified' vc:minVersion='1.1'
  */
-export interface ThisJSONSchemaFileWasGeneratedFromSchemaOnTueJul252023160512GMT0200CentralEuropeanSummerTimeForMoreInformationPleaseSeeHttpWwwXsd2JsonschemaOrg {
+export interface ThisJSONSchemaFileWasGeneratedFromSchemaOnThuJul272023150749GMT0200CentralEuropeanSummerTimeForMoreInformationPleaseSeeHttpWwwXsd2JsonschemaOrg {
   EFilingBatchXML?: EFilingBatchXML
   [k: string]: unknown
 }
