@@ -21,8 +21,8 @@ import { mergeObjects } from '@/utils/object'
 import { traceable } from '@/core/xray'
 
 const RETRY_OPTIONS: BackoffOptions = {
-  startingDelay: 10,
-  maxDelay: 60 * 1000,
+  startingDelay: 15 * 1000, // ms
+  maxDelay: 120 * 1000, // ms
   jitter: 'full',
 }
 
