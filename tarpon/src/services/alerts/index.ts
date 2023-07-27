@@ -642,7 +642,7 @@ export class AlertsService extends CaseAlertsCommonService {
     } = options ?? {}
     const userId = getContext()?.user?.id
     const statusChange: CaseStatusChange = {
-      userId: cascadeCaseUpdates ? FLAGRIGHT_SYSTEM_USER : userId!,
+      userId: !cascadeCaseUpdates ? FLAGRIGHT_SYSTEM_USER : userId!,
       timestamp: Date.now(),
       reason: statusUpdateRequest.reason,
       caseStatus: statusUpdateRequest.alertStatus,
