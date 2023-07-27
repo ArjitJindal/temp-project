@@ -60,6 +60,7 @@ export interface Props {
   entityName: string;
   isVisible: boolean;
   entityIds: string[];
+  oldStatus?: CaseStatus;
   newStatus: CaseStatus;
   newStatusActionLabel?: 'Send back' | 'Escalate' | 'Approve' | 'Decline';
   defaultReasons?: CaseClosingReasons[];
@@ -83,6 +84,7 @@ export default function StatusChangeModal(props: Props) {
   const {
     entityIds,
     entityName,
+    oldStatus,
     newStatus,
     isVisible,
     defaultReasons,
@@ -107,8 +109,8 @@ export default function StatusChangeModal(props: Props) {
   const [fileList, setFileList] = useState<FileInfo[]>(initialValues.files);
   const formRef = useRef<FormRef<FormValues>>(null);
   const showCopilot = useFeatureEnabled('COPILOT');
-  const showConfirmation =
-    isVisible && (newStatus === 'REOPENED' || isAwaitingConfirmation || skipReasonsModal);
+  const isReopen = oldStatus === 'CLOSED' && newStatus === 'REOPENED';
+  const showConfirmation = isVisible && (isReopen || isAwaitingConfirmation || skipReasonsModal);
 
   useDeepEqualEffect(() => {
     formRef.current?.setValues(initialValues);

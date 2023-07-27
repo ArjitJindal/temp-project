@@ -54,6 +54,7 @@ export default function CasesStatusChangeButton(props: Props) {
           <CasesStatusChangeModal
             isVisible={isVisible}
             entityIds={caseIds}
+            oldStatus={caseStatus}
             newStatus={newStatus}
             newStatusActionLabel={caseStatus && statusTransitions?.[caseStatus]?.actionLabel}
             onSaved={onSaved}

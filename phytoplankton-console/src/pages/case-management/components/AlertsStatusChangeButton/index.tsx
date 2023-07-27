@@ -61,6 +61,7 @@ export default function AlertsStatusChangeButton(props: Props) {
             entityIds={ids}
             transactionIds={transactionIds}
             caseId={caseId}
+            oldStatus={status}
             newStatus={newStatus}
             onSaved={onSaved}
             newStatusActionLabel={status && statusTransitions?.[status]?.actionLabel}
