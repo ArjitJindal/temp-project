@@ -1,19 +1,13 @@
-import fs from 'node:fs'
-import { SanctionsSearchResponse } from '@/@types/openapi-internal/SanctionsSearchResponse'
+import s1Response from './raw-data/search1.json'
+import s2Response from './raw-data/search2.json'
+import s3Response from './raw-data/search3.json'
+import { SanctionsSearchHistory } from '@/@types/openapi-internal/SanctionsSearchHistory'
+const data: SanctionsSearchHistory[] = [
+  s1Response,
+  s2Response,
+  s3Response,
+] as unknown as SanctionsSearchHistory[]
 
-const data: SanctionsSearchResponse[] = []
-
-const init = () => {
-  const pathes = [
-    './src/core/seed/data/raw-data/search1.json',
-    './src/core/seed/data/raw-data/search2.json',
-    './src/core/seed/data/raw-data/search3.json',
-  ]
-  for (const path of pathes) {
-    const fileText = fs.readFileSync(path)
-    const json: SanctionsSearchResponse = JSON.parse(fileText.toString())
-    data.push(json)
-  }
-}
+const init = () => undefined
 
 export { init, data }

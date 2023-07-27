@@ -39,9 +39,19 @@ export async function seedDynamo(
 
   logger.info('Creating rules...')
   await syncRulesLibrary()
+
+  logger.info('Clear rule instances')
+  const existingRuleInstances = await ruleRepo.getAllRuleInstances()
+  for (const ruleInstance of existingRuleInstances) {
+    if (ruleInstance.id) {
+      await ruleRepo.deleteRuleInstance(ruleInstance.id)
+    }
+  }
+  logger.info('Create rule instances')
   for (const ruleInstance of ruleInstances) {
     await ruleRepo.createOrUpdateRuleInstance(ruleInstance)
   }
+
   logger.info('Creating users...')
   for (const user of usersData) {
     await userRepo.saveUser(_.omit(user, '_id'), (user as any).type as UserType)
