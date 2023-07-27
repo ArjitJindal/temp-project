@@ -1,7 +1,9 @@
 import { randomInt } from '@/utils/prng'
 import { CurrencyCode } from '@/@types/openapi-internal/CurrencyCode'
-import { CURRENCY_CODES } from '@/@types/openapi-internal-custom/CurrencyCode'
+
+// NOTE: We limit the sample currencies to only 3 to reduce currency conversion cache miss
+const SAMPLE_CURRENCIES: CurrencyCode[] = ['USD', 'EUR', 'GBP']
 
 export function sampleCurrency(seed?: number): CurrencyCode {
-  return CURRENCY_CODES[randomInt(seed, CURRENCY_CODES.length)]
+  return SAMPLE_CURRENCIES[randomInt(seed, SAMPLE_CURRENCIES.length)]
 }
