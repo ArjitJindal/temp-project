@@ -85,6 +85,7 @@ async function main() {
     context: {
       bundleJs: bundleJs,
       bundleCss: bundleCss,
+      ...config.define,
     },
   });
   await buildStatic(env);
