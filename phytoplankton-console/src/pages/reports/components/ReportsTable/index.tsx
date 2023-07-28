@@ -1,26 +1,36 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { Tag } from 'antd';
 import { sentenceCase } from '@antv/x6/es/util/string/format';
 import cn from 'clsx';
 import s from './index.module.less';
 import { Report } from '@/apis';
-import { QueryResult } from '@/utils/queries/types';
 import QueryResultsTable from '@/components/common/QueryResultsTable';
 import { DATE_TIME, LONG_TEXT } from '@/components/library/Table/standardDataTypes';
 import { ColumnHelper } from '@/components/library/Table/columnHelper';
-import { TableData } from '@/components/library/Table/types';
+import { AllParams } from '@/components/library/Table/types';
 import { useUsers } from '@/utils/user-utils';
 import { ConsoleUserAvatar } from '@/pages/case-management/components/ConsoleUserAvatar';
 import Id from '@/components/ui/Id';
 import { makeUrl } from '@/utils/routing';
+import { DefaultApiGetReportsRequest } from '@/apis/types/ObjectParamAPI';
+import { useApi } from '@/api';
+import { DEFAULT_PARAMS_STATE } from '@/components/library/Table/consts';
+import { useApiTime } from '@/utils/tracker';
+import { usePaginatedQuery } from '@/utils/queries/hooks';
+import { REPORTS_LIST } from '@/utils/queries/keys';
 
-type Props = {
-  queryResult: QueryResult<TableData<Report>>;
-};
+type TableParams = AllParams<DefaultApiGetReportsRequest>;
 
-export default function ReportsTable(props: Props) {
+export default function ReportsTable() {
   const helper = new ColumnHelper<Report>();
   const [users, loadingUsers] = useUsers({ includeBlockedUsers: true });
+  const api = useApi();
+  const [params, setParams] = useState<TableParams>(DEFAULT_PARAMS_STATE);
+  const measure = useApiTime();
+
+  const queryResult = usePaginatedQuery<Report>(REPORTS_LIST(params), async (paginationParams) => {
+    return await measure(() => api.getReports({ ...params, ...paginationParams }), 'Reports List');
+  });
 
   const columns = helper.list([
     helper.simple<'id'>({
@@ -96,7 +106,13 @@ export default function ReportsTable(props: Props) {
 
   return (
     <>
-      <QueryResultsTable rowKey={'id'} columns={columns} queryResults={props.queryResult} />
+      <QueryResultsTable
+        rowKey={'id'}
+        columns={columns}
+        queryResults={queryResult}
+        params={params}
+        onChangeParams={setParams}
+      />
     </>
   );
 }

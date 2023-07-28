@@ -135,7 +135,7 @@ export class ReportRepository {
     )
     const pipeline: Document[] = [
       { $match: filter },
-      { $sort: { createdAt: 1 } },
+      { $sort: { createdAt: -1 } },
       ...paginatePipeline(params),
     ]
     const [total, reports] = await Promise.all([

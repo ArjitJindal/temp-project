@@ -64,7 +64,7 @@ export const TRANSACTIONS_LIST = (searchParams: AnyParameters): QueryKey => [
 ];
 
 export const REPORTS_ITEM = (id: string): QueryKey => ['reports', 'item', id];
-export const REPORTS_LIST = (): QueryKey => ['reports', 'list'];
+export const REPORTS_LIST = (params: AnyParameters): QueryKey => ['reports', 'list', params];
 export const TRANSACTIONS_ITEM_RISKS_ARS = (transactionId: string): QueryKey => [
   'transactions',
   'list',
