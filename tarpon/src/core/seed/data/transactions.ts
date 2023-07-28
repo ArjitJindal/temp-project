@@ -21,18 +21,15 @@ const generator = function* (seed: number): Generator<InternalTransaction> {
     const random = prng(seed * i)
     const type =
       random() < 0.24 ? 'TRANSFER' : random() < 0.95 ? 'REFUND' : 'WITHDRAWAL'
-    let hitRules = randomRules()
 
-    // Hack in some suspended transactions
-    if (hitRules.find((hr) => hr.ruleAction === 'SUSPEND')) {
-      hitRules = hitRules.filter(
-        (hitRules) => hitRules.ruleAction === 'SUSPEND'
-      )
-    }
+    // Hack in some suspended transactions for payment approvals
+    const hitRules =
+      random() < 0.75
+        ? randomRules()
+        : rules.filter((r) => r.ruleAction === 'SUSPEND')
 
     const transaction = sampleTransaction({}, i)
     const originUserId = users[randomInt(random(), users.length)].userId
-
     const withoutOrigin = users.filter((u) => u.userId !== originUserId)
     const destinationUserId =
       withoutOrigin[randomInt(random(), withoutOrigin.length)].userId

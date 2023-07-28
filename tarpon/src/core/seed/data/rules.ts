@@ -145,8 +145,8 @@ export const ruleInstances: RuleInstance[] = [
     status: 'ACTIVE',
     createdAt: 1685604282954,
     updatedAt: 1688114634781,
-    runCount: 210,
-    hitCount: 340,
+    runCount: 295,
+    hitCount: 102,
   },
   {
     id: 'skn2ls',
@@ -199,7 +199,7 @@ export const ruleInstances: RuleInstance[] = [
     status: 'ACTIVE',
     createdAt: 1685604282954,
     updatedAt: 1688114634781,
-    runCount: 210,
+    runCount: 603,
     hitCount: 340,
   },
   {
@@ -254,8 +254,8 @@ export const ruleInstances: RuleInstance[] = [
     status: 'ACTIVE',
     createdAt: 1685604282954,
     updatedAt: 1688114634781,
-    runCount: 210,
-    hitCount: 340,
+    runCount: 340,
+    hitCount: 240,
   },
 ]
 

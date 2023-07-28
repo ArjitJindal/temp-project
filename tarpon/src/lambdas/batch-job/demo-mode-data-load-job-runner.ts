@@ -14,7 +14,6 @@ export class DemoModeDataLoadJobRunner extends BatchJobRunner {
     const dynamo = await getDynamoDbClient()
     const mongoDb = await getMongoDbClient()
 
-    process.env.SEED_TRANSACTIONS_COUNT = '1000'
     await seedDynamo(dynamo, tenantId)
     await seedMongo(mongoDb, tenantId)
   }
