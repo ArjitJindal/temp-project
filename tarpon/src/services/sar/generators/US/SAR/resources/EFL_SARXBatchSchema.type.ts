@@ -8,14 +8,32 @@
 export type Activity = ActivityType & {
   ActivityAssociation: ActivityAssociationType
   ActivitySupportDocument?: ActivitySupportDocumentType
-  Party: Party | [Party, Party, Party, Party, Party, Party, ...Party[]]
+  /**
+   * @minItems 6
+   * @maxItems 1203
+   */
+  Party: [Party, Party, Party, Party, Party, Party, ...Party[]]
   SuspiciousActivity: SuspiciousActivity
-  ActivityIPAddress?: ActivityIPAddressType | ActivityIPAddressType[]
-  CyberEventIndicators?: CyberEventIndicatorsType | CyberEventIndicatorsType[]
-  Assets?: AssetsTableType | AssetsTableType[]
-  AssetsAttribute?: AssetsAttributeType | AssetsAttributeType[]
+  /**
+   * @maxItems 99
+   */
+  ActivityIPAddress?: ActivityIPAddressType[]
+  /**
+   * @maxItems 99
+   */
+  CyberEventIndicators?: CyberEventIndicatorsType[]
+  /**
+   * @maxItems 31
+   */
+  Assets?: AssetsTableType[]
+  /**
+   * @maxItems 396
+   */
+  AssetsAttribute?: AssetsAttributeType[]
+  /**
+   * @maxItems 5
+   */
   ActivityNarrativeInformation:
-    | ActivityNarrativeInformationType
     | []
     | [ActivityNarrativeInformationType]
     | [ActivityNarrativeInformationType, ActivityNarrativeInformationType]
@@ -69,12 +87,26 @@ export type InitialReportIndicator = 'Y' | ''
 export type JointReportIndicator = 'Y' | ''
 export type RestrictString150 = string
 export type Party = PartyType & {
-  PartyName?: PartyNameType | PartyNameType[]
-  Address?: AddressType | AddressType[]
-  PhoneNumber?: PhoneNumberType | PhoneNumberType[]
-  PartyIdentification?: PartyIdentificationType | PartyIdentificationType[]
+  /**
+   * @maxItems 100
+   */
+  PartyName?: PartyNameType[]
+  /**
+   * @maxItems 99
+   */
+  Address?: AddressType[]
+  /**
+   * @maxItems 99
+   */
+  PhoneNumber?: PhoneNumberType[]
+  /**
+   * @maxItems 100
+   */
+  PartyIdentification?: PartyIdentificationType[]
+  /**
+   * @maxItems 15
+   */
   OrganizationClassificationTypeSubtype?:
-    | OrganizationClassificationTypeSubtypeType
     | []
     | [OrganizationClassificationTypeSubtypeType]
     | [
@@ -225,8 +257,14 @@ export type Party = PartyType & {
         OrganizationClassificationTypeSubtypeType
       ]
   PartyOccupationBusiness?: PartyOccupationBusinessType
-  ElectronicAddress?: ElectronicAddressType | ElectronicAddressType[]
-  PartyAssociation?: PartyAssociation | PartyAssociation[]
+  /**
+   * @maxItems 198
+   */
+  ElectronicAddress?: ElectronicAddressType[]
+  /**
+   * @maxItems 99
+   */
+  PartyAssociation?: PartyAssociation[]
   PartyAccountAssociation?: PartyAccountAssociation
   [k: string]: unknown
 }
@@ -353,11 +391,11 @@ export type RestrictString517 = string
  */
 export type ValidateElectronicAddressTypeCode = 'E' | 'U'
 export type PartyAssociation = PartyAssociationType & {
-  Party?: unknown
+  Party?: unknown | unknown[]
   [k: string]: unknown
 }
 export type PartyAccountAssociation = PartyAccountAssociationType & {
-  Party: unknown
+  Party: unknown | [unknown, ...unknown[]]
   [k: string]: unknown
 }
 /**
@@ -365,9 +403,10 @@ export type PartyAccountAssociation = PartyAccountAssociationType & {
  */
 export type ValidatePartyAccountAssociationCodeType = '5' | '7'
 export type SuspiciousActivity = SuspiciousActivityType & {
-  SuspiciousActivityClassification:
-    | SuspiciousActivityClassificationType
-    | SuspiciousActivityClassificationType[]
+  /**
+   * @maxItems 99
+   */
+  SuspiciousActivityClassification: SuspiciousActivityClassificationType[]
   [k: string]: unknown
 }
 export type DateYYYYMMDDType = string
@@ -555,13 +594,13 @@ export type ValidateActivityNarrativeSequenceNumber =
 /**
  * Schema tag attributes: xmlns='www.fincen.gov/base' xmlns:xsd='http://www.w3.org/2001/XMLSchema' xmlns:vc='http://www.w3.org/2007/XMLSchema-versioning' xmlns:fc2='www.fincen.gov/base' xmlns:xsi='http://www.w3.org/2001/XMLSchema-instance' targetNamespace='www.fincen.gov/base' elementFormDefault='qualified' attributeFormDefault='unqualified' vc:minVersion='1.1'
  */
-export interface ThisJSONSchemaFileWasGeneratedFromSchemaOnThuJul272023150749GMT0200CentralEuropeanSummerTimeForMoreInformationPleaseSeeHttpWwwXsd2JsonschemaOrg {
+export interface ThisJSONSchemaFileWasGeneratedFromSchemaOnThuJul272023232138GMT0200CentralEuropeanSummerTimeForMoreInformationPleaseSeeHttpWwwXsd2JsonschemaOrg {
   EFilingBatchXML?: EFilingBatchXML
   [k: string]: unknown
 }
 export interface EFilingBatchXML {
   FormTypeCode: string
-  Activity: Activity | Activity[]
+  Activity: Activity[]
   '@TotalAmount': number
   '@PartyCount': number
   '@ActivityCount': number

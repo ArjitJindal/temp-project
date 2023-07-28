@@ -2,7 +2,7 @@ export const FincenJsonSchema = {
   $id: 'schema.json',
   $schema: 'http://json-schema.org/draft-07/schema#',
   title:
-    'This JSON Schema file was generated from schema on Thu Jul 27 2023 15:07:49 GMT+0200 (Central European Summer Time).  For more information please see http://www.xsd2jsonschema.org',
+    'This JSON Schema file was generated from schema on Thu Jul 27 2023 23:21:38 GMT+0200 (Central European Summer Time).  For more information please see http://www.xsd2jsonschema.org',
   description:
     "Schema tag attributes: xmlns='www.fincen.gov/base' xmlns:xsd='http://www.w3.org/2001/XMLSchema' xmlns:vc='http://www.w3.org/2007/XMLSchema-versioning' xmlns:fc2='www.fincen.gov/base' xmlns:xsi='http://www.w3.org/2001/XMLSchema-instance' targetNamespace='www.fincen.gov/base' elementFormDefault='qualified' attributeFormDefault='unqualified' vc:minVersion='1.1'",
   properties: {
@@ -520,17 +520,10 @@ export const FincenJsonSchema = {
           type: 'string',
         },
         Activity: {
-          oneOf: [
-            {
-              $ref: '#/definitions/Activity',
-            },
-            {
-              items: {
-                $ref: '#/definitions/Activity',
-              },
-              type: 'array',
-            },
-          ],
+          items: {
+            $ref: '#/definitions/Activity',
+          },
+          type: 'array',
         },
         '@TotalAmount': {
           type: 'number',
@@ -579,92 +572,50 @@ export const FincenJsonSchema = {
               $ref: '#/definitions/ActivitySupportDocumentType',
             },
             Party: {
-              oneOf: [
-                {
-                  $ref: '#/definitions/Party',
-                },
-                {
-                  items: {
-                    $ref: '#/definitions/Party',
-                  },
-                  maxItems: 1203,
-                  minItems: 6,
-                  type: 'array',
-                },
-              ],
+              items: {
+                $ref: '#/definitions/Party',
+              },
+              maxItems: 1203,
+              minItems: 6,
+              type: 'array',
             },
             SuspiciousActivity: {
               $ref: '#/definitions/SuspiciousActivity',
             },
             ActivityIPAddress: {
-              oneOf: [
-                {
-                  $ref: '#/definitions/ActivityIPAddressType',
-                },
-                {
-                  items: {
-                    $ref: '#/definitions/ActivityIPAddressType',
-                  },
-                  maxItems: 99,
-                  type: 'array',
-                },
-              ],
+              items: {
+                $ref: '#/definitions/ActivityIPAddressType',
+              },
+              maxItems: 99,
+              type: 'array',
             },
             CyberEventIndicators: {
-              oneOf: [
-                {
-                  $ref: '#/definitions/CyberEventIndicatorsType',
-                },
-                {
-                  items: {
-                    $ref: '#/definitions/CyberEventIndicatorsType',
-                  },
-                  maxItems: 99,
-                  type: 'array',
-                },
-              ],
+              items: {
+                $ref: '#/definitions/CyberEventIndicatorsType',
+              },
+              maxItems: 99,
+              type: 'array',
             },
             Assets: {
-              oneOf: [
-                {
-                  $ref: '#/definitions/AssetsTableType',
-                },
-                {
-                  items: {
-                    $ref: '#/definitions/AssetsTableType',
-                  },
-                  maxItems: 31,
-                  type: 'array',
-                },
-              ],
+              items: {
+                $ref: '#/definitions/AssetsTableType',
+              },
+              maxItems: 31,
+              type: 'array',
             },
             AssetsAttribute: {
-              oneOf: [
-                {
-                  $ref: '#/definitions/AssetsAttributeType',
-                },
-                {
-                  items: {
-                    $ref: '#/definitions/AssetsAttributeType',
-                  },
-                  maxItems: 396,
-                  type: 'array',
-                },
-              ],
+              items: {
+                $ref: '#/definitions/AssetsAttributeType',
+              },
+              maxItems: 396,
+              type: 'array',
             },
             ActivityNarrativeInformation: {
-              oneOf: [
-                {
-                  $ref: '#/definitions/ActivityNarrativeInformationType',
-                },
-                {
-                  items: {
-                    $ref: '#/definitions/ActivityNarrativeInformationType',
-                  },
-                  maxItems: 5,
-                  type: 'array',
-                },
-              ],
+              items: {
+                $ref: '#/definitions/ActivityNarrativeInformationType',
+              },
+              maxItems: 5,
+              type: 'array',
             },
           },
         },
@@ -679,105 +630,56 @@ export const FincenJsonSchema = {
         {
           properties: {
             PartyName: {
-              oneOf: [
-                {
-                  $ref: '#/definitions/PartyNameType',
-                },
-                {
-                  items: {
-                    $ref: '#/definitions/PartyNameType',
-                  },
-                  maxItems: 100,
-                  type: 'array',
-                },
-              ],
+              items: {
+                $ref: '#/definitions/PartyNameType',
+              },
+              maxItems: 100,
+              type: 'array',
             },
             Address: {
-              oneOf: [
-                {
-                  $ref: '#/definitions/AddressType',
-                },
-                {
-                  items: {
-                    $ref: '#/definitions/AddressType',
-                  },
-                  maxItems: 99,
-                  type: 'array',
-                },
-              ],
+              items: {
+                $ref: '#/definitions/AddressType',
+              },
+              maxItems: 99,
+              type: 'array',
             },
             PhoneNumber: {
-              oneOf: [
-                {
-                  $ref: '#/definitions/PhoneNumberType',
-                },
-                {
-                  items: {
-                    $ref: '#/definitions/PhoneNumberType',
-                  },
-                  maxItems: 99,
-                  type: 'array',
-                },
-              ],
+              items: {
+                $ref: '#/definitions/PhoneNumberType',
+              },
+              maxItems: 99,
+              type: 'array',
             },
             PartyIdentification: {
-              oneOf: [
-                {
-                  $ref: '#/definitions/PartyIdentificationType',
-                },
-                {
-                  items: {
-                    $ref: '#/definitions/PartyIdentificationType',
-                  },
-                  maxItems: 100,
-                  type: 'array',
-                },
-              ],
+              items: {
+                $ref: '#/definitions/PartyIdentificationType',
+              },
+              maxItems: 100,
+              type: 'array',
             },
             OrganizationClassificationTypeSubtype: {
-              oneOf: [
-                {
-                  $ref: '#/definitions/OrganizationClassificationTypeSubtypeType',
-                },
-                {
-                  items: {
-                    $ref: '#/definitions/OrganizationClassificationTypeSubtypeType',
-                  },
-                  maxItems: 15,
-                  type: 'array',
-                },
-              ],
+              items: {
+                $ref: '#/definitions/OrganizationClassificationTypeSubtypeType',
+              },
+              maxItems: 15,
+              type: 'array',
             },
             PartyOccupationBusiness: {
               $ref: '#/definitions/PartyOccupationBusinessType',
             },
             ElectronicAddress: {
-              oneOf: [
-                {
-                  $ref: '#/definitions/ElectronicAddressType',
-                },
-                {
-                  items: {
-                    $ref: '#/definitions/ElectronicAddressType',
-                  },
-                  maxItems: 198,
-                  type: 'array',
-                },
-              ],
+              items: {
+                $ref: '#/definitions/ElectronicAddressType',
+              },
+              maxItems: 198,
+              type: 'array',
             },
             PartyAssociation: {
-              oneOf: [
-                {
-                  $ref: '#/definitions/PartyAssociation',
-                },
-                {
-                  items: {
-                    $ref: '#/definitions/PartyAssociation',
-                  },
-                  maxItems: 99,
-                  type: 'array',
-                },
-              ],
+              items: {
+                $ref: '#/definitions/PartyAssociation',
+              },
+              maxItems: 99,
+              type: 'array',
             },
             PartyAccountAssociation: {
               $ref: '#/definitions/PartyAccountAssociation',
@@ -842,18 +744,11 @@ export const FincenJsonSchema = {
           required: ['SuspiciousActivityClassification'],
           properties: {
             SuspiciousActivityClassification: {
-              oneOf: [
-                {
-                  $ref: '#/definitions/SuspiciousActivityClassificationType',
-                },
-                {
-                  items: {
-                    $ref: '#/definitions/SuspiciousActivityClassificationType',
-                  },
-                  maxItems: 99,
-                  type: 'array',
-                },
-              ],
+              items: {
+                $ref: '#/definitions/SuspiciousActivityClassificationType',
+              },
+              maxItems: 99,
+              type: 'array',
             },
           },
         },

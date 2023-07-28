@@ -7,6 +7,7 @@ import { isObject, keys, omit, pick } from 'lodash'
 import { compile } from 'json-schema-to-typescript'
 import { XMLParser } from 'fast-xml-parser'
 import { AttributeInfos } from './attribute-infos'
+import { removeUnnecessaryOneOf } from '@/services/sar/generators/US/SAR/scripts/augmentations/removeUnnecessaryOneOf'
 
 // Augment the auto-generated json schema by adding additional information (e.g title) and
 // remove fields which should not be displayed to the users (e.g @SeqNum)
@@ -20,8 +21,10 @@ function augmentJsonSchema(
   }
   object = object as any
   keys(object).forEach(function (key) {
-    const localObj = object[key]
+    let localObj = object[key]
     if (isObject(localObj)) {
+      localObj = removeUnnecessaryOneOf(localObj)
+      object[key] = localObj
       // Augment with attribute title/description
       if (attributesInfo[key]) {
         ;(localObj as any).title = attributesInfo[key].title
