@@ -936,6 +936,7 @@ export class RulesEngineService {
               timestamp: Date.now(),
               transactionId: transaction.transactionId,
               eventDescription: `Transaction status was manually changed to ${action} by ${userId}`,
+              reason: reason.join(', '),
             },
             {
               status: action,
