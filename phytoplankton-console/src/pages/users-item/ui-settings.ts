@@ -42,9 +42,9 @@ export const UI_SETTINGS = {
       title: 'Device data',
       key: 'user-details-device-data',
     },
-    SALESFORCE: {
-      title: 'Salesforce',
-      key: 'user-details-salesforce',
+    CRM: {
+      title: 'CRM',
+      key: 'user-details-crm',
     },
   },
 };

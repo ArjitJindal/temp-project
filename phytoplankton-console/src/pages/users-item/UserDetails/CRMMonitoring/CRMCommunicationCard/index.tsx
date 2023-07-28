@@ -1,27 +1,24 @@
-import _ from 'lodash';
 import { PaperClipOutlined } from '@ant-design/icons';
 import CompanyHeader from '../CompanyHeader';
-import { getFormatedDate } from './GetFormatedDate';
 import styles from './index.module.less';
-import { SalesforceAccountResponseComments } from '@/apis';
 import MarkdownViewer from '@/components/markdown/MarkdownViewer';
+import { DATE_TIME_ISO_FORMAT, dayjs } from '@/utils/dayjs';
 
 interface Props {
   title?: string;
   body?: string;
   to?: string[];
   name?: string;
-  createdAt?: string;
+  createdAt?: number;
   link?: string;
   userId?: string;
   tab: string;
-  replies?: Array<SalesforceAccountResponseComments>;
   attachments?: string[];
 }
 
 export default function CRMCommunicationCard(props: Props) {
-  const { title, body, to, name, createdAt, link, tab, replies, attachments } = props;
-  const date = createdAt ? getFormatedDate(createdAt) : '';
+  const { title, body, to, name, createdAt, link, tab, attachments } = props;
+  const date = createdAt ? dayjs(createdAt).format(DATE_TIME_ISO_FORMAT) : '';
   return (
     <div className={styles.root}>
       <div className={styles.header}>
@@ -29,7 +26,7 @@ export default function CRMCommunicationCard(props: Props) {
           <div className={styles.avatar}>{name ? name[0].toUpperCase() : 'N'}</div>
           <div className={styles.commentHeader}>
             <span className={styles.bold}>{name ?? 'No name'}</span>
-            {tab === 'comments' && <span className={styles.greyText}>Edited on: {date}</span>}
+            {tab === 'tasks' && <span className={styles.greyText}>Edited on: {date}</span>}
             {tab === 'notes' && <span className={styles.greyText}>Created on: {date}</span>}
             {tab === 'emails' && (
               <span className={styles.greyText}>
@@ -60,25 +57,6 @@ export default function CRMCommunicationCard(props: Props) {
       {tab === 'notes' && (
         <div className={styles.greyText}>
           Last modified - {date} AM by {name}
-        </div>
-      )}
-      {replies && (
-        <div className={styles.replies}>
-          <span>{replies.length} replies</span>
-          <div className={styles.repliesContainer}>
-            {_.sortBy(replies, 'createdAt')
-              .reverse()
-              .map((reply, i) => (
-                <CRMCommunicationCard
-                  key={`comments-${i}`}
-                  body={reply?.body}
-                  name={reply?.user}
-                  createdAt={reply?.createdAt}
-                  link={reply?.link}
-                  tab="comments"
-                />
-              ))}
-          </div>
         </div>
       )}
     </div>

@@ -46,7 +46,7 @@ describe.each<TestApiEndpointOptions>([
   userApiEndPoints.testApi({ method, path, payload })
 })
 
-withFeatureHook(['SALESFORCE'])
+withFeatureHook(['CRM'])
 
 const allUsersApiEndPoints = new TestApiEndpoint(allUsersViewHandler)
 
@@ -54,7 +54,7 @@ describe.each<TestApiEndpointOptions>([
   { method: 'GET', path: '/users' },
   {
     method: 'GET',
-    path: '/users/{userId}/salesforce',
+    path: '/users/{userId}/crm',
   },
   {
     method: 'GET',

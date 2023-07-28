@@ -30,9 +30,6 @@ export default function SuperAdminPanel() {
   const [complyAdvantageSearchProfileId, setSearchProfileId] = useState<string>(
     settings.complyAdvantageSearchProfileId || '',
   );
-  const [salesforceAuthToken, setSalesforceAuthToken] = useState<string>(
-    settings.salesforceAuthToken || '',
-  );
 
   const [seeding, setSeeding] = useState(false);
   const user = useAuth0User();
@@ -92,18 +89,12 @@ export default function SuperAdminPanel() {
       ...(features && features.length && { features }),
       ...(limits && { limits }),
       ...(complyAdvantageSearchProfileId && { complyAdvantageSearchProfileId }),
-      ...(salesforceAuthToken && { salesforceAuthToken }),
     });
   };
 
   const handleChangeSearchProfileID = async (event: ChangeEvent<HTMLInputElement>) => {
     setSearchProfileId(event.target.value.trim());
   };
-
-  const handleChangeSalesforceAuthToken = async (event: ChangeEvent<HTMLInputElement>) => {
-    setSalesforceAuthToken(event.target.value.trim());
-  };
-
   const showModal = () => {
     setIsModalVisible(true);
   };
@@ -196,11 +187,6 @@ export default function SuperAdminPanel() {
         <div className={s.field}>
           <Label label="CA Search Profile ID">
             <Input value={complyAdvantageSearchProfileId} onChange={handleChangeSearchProfileID} />
-          </Label>
-        </div>
-        <div className={s.field}>
-          <Label label="Salesforce Auth Token">
-            <Input value={salesforceAuthToken} onChange={handleChangeSalesforceAuthToken} />
           </Label>
         </div>
         <div className={s.field}>

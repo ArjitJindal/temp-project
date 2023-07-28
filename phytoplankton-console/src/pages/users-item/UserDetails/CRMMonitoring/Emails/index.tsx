@@ -1,13 +1,12 @@
 import { Collapse } from 'antd';
 import _ from 'lodash';
-import CompanyHeader from '../CompanyHeader';
 import CRMCommunicationCard from '../CRMCommunicationCard';
-import { getFormatedDate } from '../CRMCommunicationCard/GetFormatedDate';
 import s from './index.module.less';
-import { SalesforceAccountResponseEmails } from '@/apis';
+import { CrmAccountResponseEngagements } from '@/apis';
+import { DATE_TIME_ISO_FORMAT, dayjs } from '@/utils/dayjs';
 
 interface Props {
-  emails: Array<SalesforceAccountResponseEmails>;
+  emails: Array<CrmAccountResponseEngagements>;
 }
 
 const { Panel } = Collapse;
@@ -26,19 +25,21 @@ const Emails = (props: Props) => {
                     {thisEmail.subject ? thisEmail.subject : 'No subject'}
                   </span>
                   {thisEmail.createdAt && (
-                    <span className={s.greyText}>{getFormatedDate(thisEmail.createdAt)}</span>
+                    <span className={s.greyText}>
+                      {dayjs(thisEmail.createdAt).format(DATE_TIME_ISO_FORMAT)}
+                    </span>
                   )}
                 </div>
-                {thisEmail.link && <CompanyHeader link={thisEmail.link} />}
               </div>
             }
             key={i}
           >
             <div className={s.emails}>
               <CRMCommunicationCard
-                name={thisEmail?._from}
-                to={thisEmail?.to}
-                body={thisEmail?.body}
+                name={thisEmail.user}
+                to={thisEmail.to}
+                body={thisEmail.content}
+                createdAt={thisEmail.createdAt}
                 tab="emails"
               />
             </div>

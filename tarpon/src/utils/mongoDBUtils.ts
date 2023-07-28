@@ -103,8 +103,23 @@ export const METRICS_COLLECTION = (tenandId: string) => {
   return `${tenandId}-metrics`
 }
 
-export const COUNTER_COLLECTION = (tenandId: string) => {
-  return `${tenandId}-counter`
+export const COUNTER_COLLECTION = (tenantId: string) => {
+  return `${tenantId}-counter`
+}
+
+export const CRM_ENGAGEMENTS_COLLECTION = (tenantId: string) => {
+  return `${tenantId}-crm-engagements`
+}
+export const CRM_NOTES_COLLECTION = (tenantId: string) => {
+  return `${tenantId}-crm-notes`
+}
+
+export const CRM_TASKS_COLLECTION = (tenantId: string) => {
+  return `${tenantId}-crm-tasks`
+}
+
+export const CRM_SUMMARY_COLLECTION = (tenantId: string) => {
+  return `${tenantId}-crm-summary`
 }
 
 export const USERS_COLLECTION = (tenantId: string) => {
@@ -818,6 +833,22 @@ export const createMongoDBCollections = async (
     })
   } catch (e) {
     // ignore already exists
+  }
+
+  const collections: [string, Document[]][] = [
+    [CRM_SUMMARY_COLLECTION(tenantId), [{ account: 1 }]],
+    [CRM_NOTES_COLLECTION(tenantId), [{ account: 1 }]],
+    [CRM_ENGAGEMENTS_COLLECTION(tenantId), [{ account: 1 }]],
+    [CRM_TASKS_COLLECTION(tenantId), [{ account: 1 }]],
+  ]
+
+  for (const [collectionName, indexes] of collections) {
+    try {
+      const collection = await db.createCollection(collectionName)
+      await syncIndexes(collection, indexes)
+    } catch (e) {
+      // ignore already exists
+    }
   }
 }
 

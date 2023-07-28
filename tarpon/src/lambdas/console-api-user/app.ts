@@ -11,8 +11,7 @@ import { lambdaApi } from '@/core/middlewares/lambda-api-middlewares'
 import { getS3ClientByEvent } from '@/utils/s3'
 import { getMongoDbClient } from '@/utils/mongoDBUtils'
 import { getDynamoDbClientByEvent } from '@/utils/dynamodb'
-import { SalesforceService } from '@/services/salesforce'
-import { TenantRepository } from '@/services/tenants/repositories/tenant-repository'
+import { CrmService } from '@/services/crm'
 import { hasFeature } from '@/core/utils/context'
 import { RuleInstanceRepository } from '@/services/rules-engine/repositories/rule-instance-repository'
 import { AlertsRepository } from '@/services/rules-engine/repositories/alerts-repository'
@@ -177,17 +176,19 @@ export const allUsersViewHandler = lambdaApi()(
         await userService.deleteUserComment(request.userId, request.commentId)
     )
 
-    handlers.registerGetSalesforceAccount(async (ctx, request) => {
-      if (!hasFeature('SALESFORCE')) {
-        throw new Forbidden('SALESFORCE feature not enabled')
+    handlers.registerGetCrmAccount(async (ctx, request) => {
+      if (!hasFeature('CRM')) {
+        throw new Forbidden('CRM feature not enabled')
       }
       const user = await userService.getUser(request.userId)
-      const dynamoDb = getDynamoDbClientByEvent(event)
-      const tenantRepository = new TenantRepository(tenantId, { dynamoDb })
-      const settings = await tenantRepository.getTenantSettings()
-      return await new SalesforceService(
-        settings.salesforceAuthToken as string
-      ).getAccount(user)
+      const crmAccountId = user.tags?.find(
+        (t) => t.key === 'crmAccountId'
+      )?.value
+
+      if (!crmAccountId) {
+        return null
+      }
+      return await new CrmService(tenantId).getAccount(crmAccountId)
     })
 
     handlers.registerGetUserScreeningStatus(async (ctx, request) => {

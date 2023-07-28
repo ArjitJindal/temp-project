@@ -12,6 +12,10 @@ import {
   USERS_COLLECTION,
   AUDITLOG_COLLECTION,
   SANCTIONS_SEARCHES_COLLECTION,
+  CRM_ENGAGEMENTS_COLLECTION,
+  CRM_TASKS_COLLECTION,
+  CRM_NOTES_COLLECTION,
+  CRM_SUMMARY_COLLECTION,
 } from '@/utils/mongoDBUtils'
 import { init as txnInit, transactions } from '@/core/seed/data/transactions'
 import { init as caseInit, data as cases } from '@/core/seed/data/cases'
@@ -28,6 +32,13 @@ import {
   init as sanctionsInit,
   data as sanctions,
 } from '@/core/seed/data/sanctions'
+import {
+  init as crmInit,
+  notes,
+  engagements,
+  tasks,
+  summaries,
+} from '@/core/seed/data/crm'
 import {
   init as transactionEventsInit,
   data as transactionEvents,
@@ -50,6 +61,10 @@ const collections: [(tenantId: string) => string, Iterable<unknown>][] = [
   [TRANSACTION_EVENTS_COLLECTION, transactionEvents],
   [MERCHANT_MONITORING_DATA_COLLECTION, merchantMonitoring],
   [SANCTIONS_SEARCHES_COLLECTION, sanctions],
+  [CRM_ENGAGEMENTS_COLLECTION, engagements],
+  [CRM_TASKS_COLLECTION, tasks],
+  [CRM_NOTES_COLLECTION, notes],
+  [CRM_SUMMARY_COLLECTION, summaries],
 ]
 
 export async function seedMongo(client: MongoClient, tenantId: string) {
@@ -75,6 +90,7 @@ export async function seedMongo(client: MongoClient, tenantId: string) {
   arsInit()
   transactionEventsInit()
   sanctionsInit()
+  crmInit()
 
   logger.info('Creating collections')
   for (const [collectionNameFn, data] of collections) {

@@ -1,11 +1,11 @@
 import React from 'react';
 import SegmentedControl from '@/components/library/SegmentedControl';
 
-type ScopeSelectorValue = 'SUMMARY' | 'EMAILS' | 'COMMENTS' | 'NOTES';
+type ScopeSelectorValue = 'SUMMARY' | 'EMAILS' | 'TASKS' | 'NOTES';
 
 interface Count {
-  email: number;
-  comments: number;
+  emails: number;
+  tasks: number;
   notes: number;
 }
 interface Props {
@@ -16,7 +16,7 @@ interface Props {
 
 export default function ScopeSelector(props: Props) {
   const { selectedSection, setSelectedSection, count } = props;
-  const { email, comments, notes } = count;
+  const { emails, tasks, notes } = count;
   return (
     <SegmentedControl<ScopeSelectorValue>
       size="LARGE"
@@ -26,9 +26,9 @@ export default function ScopeSelector(props: Props) {
       }}
       items={[
         { value: 'SUMMARY', label: 'AI Summary' },
-        { value: 'EMAILS', label: `Emails (${email})` },
-        { value: 'COMMENTS', label: `Comments (${comments})` },
-        { value: 'NOTES', label: `Notes & Attachments (${notes})` },
+        { value: 'EMAILS', label: `Emails (${emails})` },
+        { value: 'TASKS', label: `Tasks (${tasks})` },
+        { value: 'NOTES', label: `Notes (${notes})` },
       ]}
     />
   );

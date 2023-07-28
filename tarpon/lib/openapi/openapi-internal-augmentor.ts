@@ -74,7 +74,7 @@ export const ConsoleApiPathToLambda: any = {
   '/users/uniques':
     StackConstants.CONSOLE_API_BUSINESS_USERS_VIEW_FUNCTION_NAME,
   '/users': StackConstants.CONSOLE_API_ALL_USERS_VIEW_FUNCTION_NAME,
-  '/users/{userId}/salesforce':
+  '/users/{userId}/crm':
     StackConstants.CONSOLE_API_ALL_USERS_VIEW_FUNCTION_NAME,
   '/users/{userId}/screening-status':
     StackConstants.CONSOLE_API_ALL_USERS_VIEW_FUNCTION_NAME,

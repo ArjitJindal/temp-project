@@ -1,9 +1,9 @@
 import _ from 'lodash';
 import CRMCommunicationCard from '../CRMCommunicationCard';
-import { SalesforceAccountResponseNotes } from '@/apis';
+import { CrmAccountResponseNotes } from '@/apis';
 
 interface Props {
-  notes: Array<SalesforceAccountResponseNotes>;
+  notes: Array<CrmAccountResponseNotes>;
 }
 
 const Notes = (props: Props) => {
@@ -15,11 +15,9 @@ const Notes = (props: Props) => {
         .map((note, i) => (
           <CRMCommunicationCard
             key={`notes-${i}`}
-            body={note?.body}
-            name={note?.user}
-            createdAt={note?.createdAt}
-            link={note?.link}
-            title={note?.title}
+            body={note.body}
+            name={note.user}
+            createdAt={note.createdAt}
             tab="notes"
           />
         ))}

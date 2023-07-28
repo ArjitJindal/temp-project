@@ -1,9 +1,9 @@
 import s from './index.module.less';
 import Alert from '@/components/library/Alert';
-import { SalesforceAccountResponseAccountSummary } from '@/apis';
+import { CrmSummary } from '@/apis';
 
 interface Props {
-  summary: SalesforceAccountResponseAccountSummary;
+  summary: CrmSummary;
 }
 
 const Highlights = (props: Props) => {

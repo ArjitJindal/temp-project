@@ -1042,18 +1042,18 @@ paths:
             type: string
           in: query
           name: referenceCurrency
-  '/users/{userId}/salesforce':
+  '/users/{userId}/crm':
     get:
-      summary: Salesforce Account - List
+      summary: CRM Account - List
       responses:
         '200':
           description: OK
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/SalesforceAccountResponse'
+                $ref: '#/components/schemas/CrmAccountResponse'
               examples: {}
-      operationId: get-salesforce-account
+      operationId: get-crm-account
       description: ''
       parameters:
         - schema:
@@ -4212,45 +4212,54 @@ components:
         - items
         - hasNext
         - hasPrev
-    SalesforceAccountResponse:
-      title: SalesforceAccountResponse
+    CrmSummary:
+      title: CrmSummary
       type: object
       properties:
-        account:
-          type: object
-          properties:
-            id:
-              type: string
-            type:
-              type: string
-            industry:
-              type: string
-            annualRevenue:
-              type: string
-            link:
-              type: string
-            summary:
-              type: object
-              properties:
-                good:
-                  type: string
-                bad:
-                  type: string
-                neutral:
-                  type: string
-        comments:
+        accountId:
+          type: string
+        summary:
+          type: string
+        sentiment:
+          type: number
+        good:
+          type: string
+        bad:
+          type: string
+        neutral:
+          type: string
+      required:
+        - accountId
+        - summary
+        - sentiment
+        - good
+        - bad
+        - neutral
+    CrmAccountResponse:
+      title: CrmAccountResponse
+      type: object
+      required:
+        - summary
+        - tasks
+        - notes
+        - engagements
+      properties:
+        summary:
+          $ref: '#/components/schemas/CrmSummary'
+        tasks:
           type: array
           items:
             type: object
             properties:
-              body:
+              content:
                 type: string
               user:
                 type: string
               createdAt:
-                type: string
-              link:
-                type: string
+                type: number
+            required:
+              - content
+              - user
         notes:
           type: array
           items:
@@ -4258,36 +4267,35 @@ components:
             properties:
               user:
                 type: string
-              title:
-                type: string
               body:
                 type: string
               createdAt:
-                type: string
-              link:
-                type: string
-        emails:
+                type: number
+            required:
+              - user
+              - body
+              - createdAt
+        engagements:
           type: array
           items:
             type: object
             properties:
-              from:
+              subject:
                 type: string
+              content:
+                type: string
+              user:
+                type: string
+              createdAt:
+                type: number
               to:
                 type: array
                 items:
                   type: string
-              subject:
-                type: string
-              body:
-                type: string
-              createdAt:
-                type: string
-              link:
-                type: string
             required:
               - subject
-              - body
+              - content
+              - user
     TransactionsStatsByTypesResponse:
       title: TransactionsStatsByTypesResponse
       type: object
@@ -4912,8 +4920,6 @@ components:
           type: string
         isAiEnabled:
           type: boolean
-        salesforceAuthToken:
-          type: string
         limits:
           type: object
           properties:
@@ -5260,7 +5266,7 @@ components:
         - FALSE_POSITIVE_CHECK
         - DEMO_MODE
         - SIMULATOR
-        - SALESFORCE
+        - CRM
         - ESCALATION
         - IBAN_RESOLUTION
         - MACHINE_LEARNING_DEMO

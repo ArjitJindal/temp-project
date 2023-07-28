@@ -36,7 +36,7 @@ export default function UserItem() {
   const measure = useApiTime();
   const queryClient = useQueryClient();
   const isMLDemoEnabled = useFeatureEnabled('MACHINE_LEARNING_DEMO');
-  const isSalesForceEnabled = useFeatureEnabled('SALESFORCE');
+  const isCrmEnabled = useFeatureEnabled('CRM');
 
   const queryResult = useQuery<InternalConsumerUser | InternalBusinessUser>(
     USERS_ITEM_BY_TYPE(list as string, id as string),
@@ -129,7 +129,7 @@ export default function UserItem() {
                 isClosable: false,
                 isDisabled: false,
               },
-              ...(isSalesForceEnabled
+              ...(isCrmEnabled
                 ? [
                     {
                       tab: (

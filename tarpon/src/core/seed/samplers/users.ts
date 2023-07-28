@@ -106,6 +106,12 @@ export function sampleBusinessUser(
     user: {
       type: 'BUSINESS',
       userId: userId,
+      tags: [
+        {
+          key: 'crmAccountId',
+          value: uuid4(),
+        },
+      ],
       drsScore: {
         drsScore: drsScore,
         createdAt: Date.now(),
