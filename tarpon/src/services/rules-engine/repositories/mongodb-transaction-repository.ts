@@ -187,6 +187,13 @@ export class MongoDbTransactionRepository
         $elemMatch: { ruleId: { $in: params.filterRulesExecuted } },
       })
     }
+    if (params.filterRuleInstancesExecuted != null) {
+      executedRulesFilters.push({
+        $elemMatch: {
+          ruleInstanceId: { $in: params.filterRuleInstancesExecuted },
+        },
+      })
+    }
     if (params.filterRulesHit != null) {
       executedRulesFilters.push({
         $elemMatch: {

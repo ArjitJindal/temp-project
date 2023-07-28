@@ -51,7 +51,7 @@ const DisplayCheckedTransactions = (props: Props) => {
               ? caseUserId
               : undefined,
             filterUserId: !props.alert.ruleHitMeta?.hitDirections ? caseUserId : undefined,
-            filterRuleInstancesHit: alert.ruleInstanceId,
+            filterRuleInstancesExecuted: [alert.ruleInstanceId],
           }),
         'Transactions List',
       );
