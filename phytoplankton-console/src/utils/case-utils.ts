@@ -1,7 +1,13 @@
 import { every, some, uniq, map } from 'lodash';
 import { Assignment, CaseStatus, CaseStatusChange } from '@/apis';
 
-export const statusInReview = (status: CaseStatus | undefined): boolean => {
+export const statusInReview = (
+  status: CaseStatus | undefined,
+): status is
+  | 'IN_REVIEW_OPEN'
+  | 'IN_REVIEW_CLOSED'
+  | 'IN_REVIEW_REOPENED'
+  | 'IN_REVIEW_ESCALATED' => {
   return status?.startsWith('IN_REVIEW_') ?? false;
 };
 

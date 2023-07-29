@@ -7,8 +7,9 @@ import { RuleAction } from '@/apis';
 interface Props {
   ids: string[];
   action: RuleAction;
+  onSuccess?: () => void;
 }
-export default function PaymentApprovalButton({ ids, action }: Props) {
+export default function PaymentApprovalButton({ ids, action, onSuccess }: Props) {
   const [modalVisible, setModalVisible] = useState(false);
   return (
     <>
@@ -28,6 +29,7 @@ export default function PaymentApprovalButton({ ids, action }: Props) {
         transactionIds={ids}
         action={action}
         hide={() => setModalVisible(false)}
+        onSuccess={onSuccess}
       />
     </>
   );

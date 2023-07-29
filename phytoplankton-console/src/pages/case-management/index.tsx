@@ -14,7 +14,7 @@ import { AllParams } from '@/components/library/Table/types';
 import { DEFAULT_PAGE_SIZE, DEFAULT_PARAMS_STATE } from '@/components/library/Table/consts';
 import { useDeepEqualEffect } from '@/utils/hooks';
 import ScopeSelector from '@/pages/case-management/components/ScopeSelector';
-import StatusButtons from '@/pages/transactions/components/StatusButtons';
+import StatusButtons from '@/pages/case-management/components/StatusButtons';
 import { useAuth0User } from '@/utils/user-utils';
 import PaymentApprovalsTable from '@/pages/case-management/PaymentApprovalTable';
 
@@ -59,7 +59,6 @@ export default function CaseManagementPage() {
     }));
   }, [parsedParams]);
 
-  const isAlerts = params.showCases === 'MY_ALERTS' || params.showCases === 'ALL_ALERTS';
   return (
     <PageWrapper title={i18n('menu.case-management')}>
       <PageWrapperContentContainer>
@@ -70,25 +69,7 @@ export default function CaseManagementPage() {
               handleChangeParams(cb(params));
             }}
           />
-          {params.showCases !== 'PAYMENT_APPROVALS' && (
-            <StatusButtons
-              status={isAlerts ? params.alertStatus : params.caseStatus}
-              onChange={(newStatus) => {
-                handleChangeParams(
-                  isAlerts
-                    ? {
-                        ...params,
-                        alertStatus: newStatus,
-                      }
-                    : {
-                        ...params,
-                        caseStatus: newStatus,
-                      },
-                );
-              }}
-              suffix={isAlerts ? 'alerts' : 'cases'}
-            />
-          )}
+          <StatusButtons params={params} onChangeParams={handleChangeParams} />
         </div>
         {getTable(user.userId, params, handleChangeParams)}
       </PageWrapperContentContainer>
@@ -119,6 +100,6 @@ function getTable(
     case 'ALL':
       return <CaseTableWrapper params={params} onChangeParams={handleChangeParams} />;
     case 'PAYMENT_APPROVALS':
-      return <PaymentApprovalsTable />;
+      return <PaymentApprovalsTable filterStatus={params.status} />;
   }
 }

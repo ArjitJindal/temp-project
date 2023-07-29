@@ -50,6 +50,8 @@ export function getListSubtypeTitle(subtype: ListSubtype) {
       return 'UPI/Identifying number';
     case 'IP_ADDRESS':
       return 'IP address';
+    case 'STRING':
+      return 'String';
   }
   return neverReturn(subtype, 'Unknown subtype');
 }

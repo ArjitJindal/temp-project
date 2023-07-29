@@ -8,21 +8,30 @@ import { useCursorQuery } from '@/utils/queries/hooks';
 import { TRANSACTIONS_LIST } from '@/utils/queries/keys';
 import { useApi } from '@/api';
 import PaymentApprovalButton from '@/pages/case-management/components/PaymentApprovalButton';
+import { RuleAction } from '@/apis';
 
-export default function PaymentApprovalsTable() {
+interface Props {
+  filterStatus?: Array<RuleAction>;
+}
+
+export default function PaymentApprovalsTable(props: Props) {
+  const { filterStatus = ['SUSPEND'] } = props;
   const [params, setParams] = useState<TransactionsTableParams>({
     ...DEFAULT_PARAMS_STATE,
     sort: [['timestamp', 'descend']],
   });
   const api = useApi();
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
-  const queryResult = useCursorQuery(TRANSACTIONS_LIST(params), async ({ from }) => {
-    return await api.getTransactionsList({
-      ...transactionParamsToRequest(params),
-      filterStatus: ['SUSPEND'],
-      start: from,
-    });
-  });
+  const queryResult = useCursorQuery(
+    TRANSACTIONS_LIST({ ...params, filterStatus }),
+    async ({ from }) => {
+      return await api.getTransactionsList({
+        ...transactionParamsToRequest(params),
+        filterStatus,
+        start: from,
+      });
+    },
+  );
 
   return (
     <TransactionsTable
@@ -42,8 +51,26 @@ export default function PaymentApprovalsTable() {
           : undefined
       }
       selectionActions={[
-        () => <PaymentApprovalButton ids={selectedIds} action={'BLOCK'} />,
-        () => <PaymentApprovalButton ids={selectedIds} action={'ALLOW'} />,
+        ({ selectedIds, onResetSelection }) => (
+          <PaymentApprovalButton
+            ids={selectedIds}
+            action={'BLOCK'}
+            onSuccess={() => {
+              onResetSelection();
+              queryResult.refetch();
+            }}
+          />
+        ),
+        ({ selectedIds, onResetSelection }) => (
+          <PaymentApprovalButton
+            ids={selectedIds}
+            action={'ALLOW'}
+            onSuccess={() => {
+              onResetSelection();
+              queryResult.refetch();
+            }}
+          />
+        ),
       ]}
     />
   );

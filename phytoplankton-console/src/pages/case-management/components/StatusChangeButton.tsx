@@ -36,6 +36,14 @@ const getNextStatus = (status: CaseStatus | AlertStatus | undefined): CaseStatus
       return 'CLOSED';
     case 'CLOSED':
       return 'REOPENED';
+    case 'IN_REVIEW_OPEN':
+      return 'OPEN';
+    case 'IN_REVIEW_CLOSED':
+      return 'CLOSED';
+    case 'IN_REVIEW_REOPENED':
+      return 'REOPENED';
+    case 'IN_REVIEW_ESCALATED':
+      return 'ESCALATED';
     default:
       return neverReturn(status, status);
   }

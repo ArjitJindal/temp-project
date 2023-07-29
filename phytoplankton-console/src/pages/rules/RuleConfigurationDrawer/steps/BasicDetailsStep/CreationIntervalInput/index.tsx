@@ -25,6 +25,9 @@ export default function CreationIntervalInput(props: Props) {
 
   function handleChangeType(newIntervalType: CreationIntervalType | undefined) {
     let newValue: AlertCreationInterval;
+    if (newIntervalType == null) {
+      return null;
+    }
     switch (newIntervalType) {
       case 'INSTANTLY':
         newValue = {

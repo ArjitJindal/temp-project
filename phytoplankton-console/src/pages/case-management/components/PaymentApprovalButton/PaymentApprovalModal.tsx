@@ -20,13 +20,20 @@ interface Props {
   transactionIds: string[];
   action: RuleAction;
   hide: () => void;
+  onSuccess?: () => void;
 }
 
 export interface FormValues {
   reasons: CaseClosingReasons[];
   comment: string;
 }
-export default function PaymentApprovalModal({ visible, action, transactionIds, hide }: Props) {
+export default function PaymentApprovalModal({
+  visible,
+  action,
+  transactionIds,
+  hide,
+  onSuccess,
+}: Props) {
   const formRef = useRef<FormRef<FormValues>>(null);
   const initialValues: FormValues = {
     reasons: [],
@@ -57,6 +64,7 @@ export default function PaymentApprovalModal({ visible, action, transactionIds, 
             `Transaction(s) were blocked  (It might take a few seconds to be visible in Console)`,
           );
         }
+        onSuccess?.();
         hide();
       },
       onError: (e) => {

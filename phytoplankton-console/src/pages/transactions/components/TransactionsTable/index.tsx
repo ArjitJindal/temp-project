@@ -269,6 +269,11 @@ export default function TransactionsTable(props: Props) {
         type: TRANSACTION_STATE,
         filtering: true,
       }),
+      helper.simple<'status'>({
+        title: 'Status',
+        key: 'status',
+        type: RULE_ACTION,
+      }),
       helper.simple<'originUserId'>({
         key: 'originUserId',
         title: 'Origin user ID',
@@ -415,11 +420,11 @@ export default function TransactionsTable(props: Props) {
           alert?.alertStatus === 'OPEN' ||
           alert?.alertStatus === 'REOPENED' ||
           alert?.alertStatus === 'ESCALATED';
-        const notEscalated = !escalatedTransactions?.includes(row.id);
+        const notEscalated = !escalatedTransactions?.includes(row.content.transactionId);
         if ((escalationEnabled || sarEnabled) && alertNotClosed && notEscalated) {
           return true;
         }
-        return !!(settings.isPaymentApprovalEnabled && row.original.content.status === 'SUSPEND');
+        return !!(settings.isPaymentApprovalEnabled && row.content.status === 'SUSPEND');
       }}
       selectedIds={selectedIds}
       selectionInfo={selectionInfo}

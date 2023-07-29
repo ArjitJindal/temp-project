@@ -112,7 +112,7 @@ export function useTanstackTable<
   selectedIds?: string[];
   partiallySelectedIds?: string[];
   onSelect?: (ids: string[]) => void;
-  isRowSelectionEnabled: boolean | ((row: TanTable.Row<TableRow<Item>>) => boolean);
+  isRowSelectionEnabled: boolean | ((row: TableRow<Item>) => boolean);
   isExpandable: boolean | ((row: TableRow<Item>) => boolean);
   isSortable: boolean;
   defaultSorting?: SortingParamsItem;
@@ -174,6 +174,10 @@ export function useTanstackTable<
 
   const isAnythingExpandable =
     typeof isExpandable === 'boolean' ? isExpandable : preparedData.some((x) => isExpandable(x));
+  const isAnythingSelectable =
+    typeof isRowSelectionEnabled === 'boolean'
+      ? isRowSelectionEnabled
+      : preparedData.some((x) => isRowSelectionEnabled(x));
 
   const columnDefs = useMemo(() => {
     const columnHelper = TanTable.createColumnHelper<TableRow<Item>>();
@@ -282,19 +286,19 @@ export function useTanstackTable<
     });
     return [
       ...(isAnythingExpandable ? [EXPAND_COLUMN_ID] : []),
-      ...(isRowSelectionEnabled ? [SELECT_COLUMN_ID] : []),
+      ...(isAnythingSelectable ? [SELECT_COLUMN_ID] : []),
       ...result,
     ];
-  }, [isRowSelectionEnabled, isAnythingExpandable, columnDefs, columnOrder]);
+  }, [isAnythingSelectable, isAnythingExpandable, columnDefs, columnOrder]);
 
   const allColumns = useMemo(
     (): TanTable.ColumnDef<TableRow<Item>>[] => [
       ...(isAnythingExpandable ? [EXPAND_COLUMN as TanTable.ColumnDef<TableDataItem<Item>>] : []),
-      ...(isRowSelectionEnabled ? [SELECT_COLUMN as TanTable.ColumnDef<TableDataItem<Item>>] : []),
+      ...(isAnythingSelectable ? [SELECT_COLUMN as TanTable.ColumnDef<TableDataItem<Item>>] : []),
       ...(columnDefs as any), // todo: fix any
       SPACER_COLUMN,
     ],
-    [isAnythingExpandable, isRowSelectionEnabled, columnDefs],
+    [isAnythingExpandable, isAnythingSelectable, columnDefs],
   );
 
   const paginationState = {
@@ -329,7 +333,10 @@ export function useTanstackTable<
     enablePinning: true,
     enableHiding: true,
     pageCount: getPageCount(params, data),
-    enableRowSelection: isRowSelectionEnabled,
+    enableRowSelection:
+      typeof isRowSelectionEnabled === 'boolean'
+        ? isRowSelectionEnabled
+        : (row) => isRowSelectionEnabled(row.original),
     enableExpanding: isAnythingExpandable,
     state: {
       sorting: sorting,

@@ -1,9 +1,12 @@
-// https://basarat.gitbooks.io/typescript/docs/types/never.html
-export function neverThrow(obj: any, message?: string): never {
+/*
+ IMPORTANT: These two functions accept 'never' parameter for a reason, they are
+ used to implement exhaustive pattern matching in TS. Details:
+ https://stackoverflow.com/a/39419171/916330
+ */
+export function neverThrow(obj: never, message?: string): never {
   throw new Error(message ?? 'Should never happen');
 }
-
-export function neverReturn<T>(obj: any, defaultValue: T): T {
+export function neverReturn<T>(obj: never, defaultValue: T): T {
   return defaultValue;
 }
 

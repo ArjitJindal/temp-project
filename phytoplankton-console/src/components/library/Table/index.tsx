@@ -45,7 +45,7 @@ export interface Props<Item extends object, Params extends object = CommonParams
   rowKey: FieldAccessor<Item>;
   data: TableData<Item> | AsyncResource<TableData<Item>>;
   pagination?: boolean | 'HIDE_FOR_ONE_PAGE';
-  selection?: boolean | ((row: TanTable.Row<TableRow<Item>>) => boolean);
+  selection?: boolean | ((row: TableRow<Item>) => boolean);
   selectionActions?: SelectionAction<Item, Params>[];
   onSelect?: (ids: string[]) => void;
   sizingMode?: 'FULL_WIDTH' | 'SCROLL';
