@@ -3,6 +3,7 @@ import { Assignee } from '@/components/Assignee';
 import { DashboardTeamStatsItem } from '@/apis';
 import { map, QueryResult } from '@/utils/queries/types';
 import QueryResultsTable from '@/components/common/QueryResultsTable';
+import { DURATION } from '@/components/library/Table/standardDataTypes';
 
 const helper = new ColumnHelper<DashboardTeamStatsItem>();
 
@@ -35,6 +36,12 @@ const columns = (scope: 'CASES' | 'ALERTS') => {
           ? 'where all the alerts were closed by user'
           : 'where case was closed by user'
       }`,
+    }),
+    helper.simple({
+      key: 'investigationTime',
+      title: 'Average investigation time',
+      defaultWidth: 100,
+      type: DURATION,
     }),
   ]);
 };

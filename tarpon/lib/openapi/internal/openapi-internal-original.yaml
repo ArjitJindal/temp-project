@@ -4631,6 +4631,12 @@ components:
           type: number
         closedBy:
           type: number
+        caseIds:
+          type: array
+          items:
+            type: string
+        investigationTime:
+          type: number
         closedBySystem:
           type: number
       required:

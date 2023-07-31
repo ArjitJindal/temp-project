@@ -57,6 +57,8 @@ import { useApi } from '@/api';
 import { CaseStatusWithDropDown } from '@/pages/case-management-item/CaseStatusWithDropDown';
 import { TableAlertItem } from '@/pages/case-management/AlertTable/types';
 import { TableItem } from '@/pages/case-management/CaseTable/types';
+import { DurationDisplay } from '@/components/ui/DurationDisplay';
+import { getDuration, formatDuration } from '@/utils/time-utils';
 
 export const UNKNOWN: Required<FullColumnDataType<unknown>> = {
   render: (value) => {
@@ -255,6 +257,11 @@ export const DATE_TIME: ColumnDataType<number> = {
   render: (timestamp) => <TimestampDisplay timestamp={timestamp} />,
   stringify: (timestamp) => dayjs(timestamp).format(DEFAULT_DATE_TIME_FORMAT),
   autoFilterDataType: { kind: 'dateTimeRange' },
+};
+
+export const DURATION: ColumnDataType<number> = {
+  render: (milliseconds) => <DurationDisplay milliseconds={milliseconds} />,
+  stringify: (milliseconds) => (milliseconds ? formatDuration(getDuration(milliseconds)) : ''),
 };
 
 export const DATE: ColumnDataType<number> = {

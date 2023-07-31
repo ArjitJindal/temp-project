@@ -43,6 +43,8 @@ describe('Team statistic for cases', () => {
           accountId: TEST_ACCOUNT_ID_1,
           closedBy: 1,
           assignedTo: 0,
+          caseIds: [],
+          investigationTime: 0,
           closedBySystem: 0,
         },
       ])
@@ -53,6 +55,8 @@ describe('Team statistic for cases', () => {
             accountId: TEST_ACCOUNT_ID_1,
             closedBy: 1,
             assignedTo: 0,
+            caseIds: [],
+            investigationTime: 0,
             closedBySystem: 0,
           },
         ],
@@ -66,8 +70,10 @@ describe('Team statistic for cases', () => {
           {
             accountId: 'TEST_ACCOUNT_ID_1',
             assignedTo: 0,
-            closedBySystem: 0,
             closedBy: 1,
+            caseIds: [],
+            investigationTime: 0,
+            closedBySystem: 0,
           },
         ],
         {
@@ -93,6 +99,8 @@ describe('Team statistic for cases', () => {
           accountId: TEST_ACCOUNT_ID_1,
           closedBy: 2,
           assignedTo: 0,
+          caseIds: [],
+          investigationTime: 0,
           closedBySystem: 0,
         },
       ])
@@ -122,6 +130,8 @@ describe('Team statistic for cases', () => {
           accountId: TEST_ACCOUNT_ID_1,
           closedBy: 4,
           assignedTo: 0,
+          caseIds: [],
+          investigationTime: 0,
           closedBySystem: 0,
         },
       ])
@@ -151,6 +161,8 @@ describe('Team statistic for cases', () => {
           accountId: TEST_ACCOUNT_ID_1,
           closedBy: 4,
           assignedTo: 0,
+          caseIds: [],
+          investigationTime: 0,
           closedBySystem: 0,
         },
       ])
@@ -181,12 +193,16 @@ describe('Team statistic for cases', () => {
           accountId: TEST_ACCOUNT_ID_1,
           closedBy: 2,
           assignedTo: 0,
+          caseIds: [],
+          investigationTime: 0,
           closedBySystem: 0,
         },
         {
           accountId: TEST_ACCOUNT_ID_2,
           closedBy: 2,
           assignedTo: 0,
+          caseIds: [],
+          investigationTime: 0,
           closedBySystem: 0,
         },
       ])
@@ -220,6 +236,8 @@ describe('Team statistic for cases', () => {
             accountId: TEST_ACCOUNT_ID_1,
             closedBy: 2,
             assignedTo: 0,
+            caseIds: [],
+            investigationTime: 0,
             closedBySystem: 0,
           },
         ],
@@ -247,6 +265,8 @@ describe('Team statistic for cases', () => {
           accountId: TEST_ACCOUNT_ID_1,
           closedBy: 0,
           assignedTo: 1,
+          caseIds: [],
+          investigationTime: 0,
           closedBySystem: 0,
         },
       ])
@@ -257,6 +277,8 @@ describe('Team statistic for cases', () => {
             accountId: TEST_ACCOUNT_ID_1,
             closedBy: 0,
             assignedTo: 1,
+            caseIds: [],
+            investigationTime: 0,
             closedBySystem: 0,
           },
         ],
@@ -271,6 +293,8 @@ describe('Team statistic for cases', () => {
             accountId: 'TEST_ACCOUNT_ID_1',
             assignedTo: 1,
             closedBy: 0,
+            caseIds: [],
+            investigationTime: 0,
             closedBySystem: 0,
           },
         ],
@@ -307,6 +331,8 @@ describe('Team statistic for cases', () => {
           accountId: TEST_ACCOUNT_ID_1,
           closedBy: 0,
           assignedTo: 5,
+          caseIds: [],
+          investigationTime: 0,
           closedBySystem: 0,
         },
       ])
@@ -341,12 +367,16 @@ describe('Team statistic for cases', () => {
           accountId: TEST_ACCOUNT_ID_1,
           closedBy: 0,
           assignedTo: 4,
+          caseIds: [],
+          investigationTime: 0,
           closedBySystem: 0,
         },
         {
           accountId: TEST_ACCOUNT_ID_2,
           closedBy: 0,
           assignedTo: 3,
+          caseIds: [],
+          investigationTime: 0,
           closedBySystem: 0,
         },
       ])
@@ -394,12 +424,16 @@ describe('Team statistic for cases', () => {
             accountId: TEST_ACCOUNT_ID_1,
             closedBy: 0,
             assignedTo: 4,
+            caseIds: [],
+            investigationTime: 0,
             closedBySystem: 0,
           },
           {
             accountId: TEST_ACCOUNT_ID_2,
             closedBy: 0,
             assignedTo: 3,
+            caseIds: [],
+            investigationTime: 0,
             closedBySystem: 0,
           },
         ],
@@ -414,12 +448,16 @@ describe('Team statistic for cases', () => {
             accountId: TEST_ACCOUNT_ID_1,
             closedBy: 0,
             assignedTo: 1,
+            caseIds: [],
+            investigationTime: 0,
             closedBySystem: 0,
           },
           {
             accountId: TEST_ACCOUNT_ID_2,
             closedBy: 0,
             assignedTo: 2,
+            caseIds: [],
+            investigationTime: 0,
             closedBySystem: 0,
           },
         ],
@@ -466,12 +504,16 @@ describe('Team statistic for cases', () => {
           accountId: TEST_ACCOUNT_ID_1,
           closedBy: 2,
           assignedTo: 4,
+          caseIds: [],
+          investigationTime: 0,
           closedBySystem: 0,
         },
         {
           accountId: TEST_ACCOUNT_ID_2,
           closedBy: 1,
           assignedTo: 3,
+          caseIds: [],
+          investigationTime: 0,
           closedBySystem: 0,
         },
       ])
@@ -531,12 +573,16 @@ describe('Team statistic for cases', () => {
             accountId: TEST_ACCOUNT_ID_1,
             closedBy: 2,
             assignedTo: 4,
+            caseIds: [],
+            investigationTime: 0,
             closedBySystem: 0,
           },
           {
             accountId: TEST_ACCOUNT_ID_2,
             closedBy: 1,
             assignedTo: 3,
+            caseIds: [],
+            investigationTime: 0,
             closedBySystem: 0,
           },
         ],
@@ -571,6 +617,8 @@ describe('Team statistic for alerts', () => {
           accountId: TEST_ACCOUNT_ID_1,
           closedBy: 1,
           assignedTo: 0,
+          caseIds: [],
+          investigationTime: 0,
           closedBySystem: 0,
         },
       ])
@@ -581,6 +629,8 @@ describe('Team statistic for alerts', () => {
             accountId: TEST_ACCOUNT_ID_1,
             closedBy: 1,
             assignedTo: 0,
+            caseIds: [],
+            investigationTime: 0,
             closedBySystem: 0,
           },
         ],
@@ -594,8 +644,10 @@ describe('Team statistic for alerts', () => {
           {
             accountId: 'TEST_ACCOUNT_ID_1',
             assignedTo: 0,
-            closedBySystem: 0,
             closedBy: 1,
+            caseIds: [],
+            investigationTime: 0,
+            closedBySystem: 0,
           },
         ],
         {
@@ -630,6 +682,8 @@ describe('Team statistic for alerts', () => {
           accountId: TEST_ACCOUNT_ID_1,
           closedBy: 2,
           assignedTo: 0,
+          caseIds: [],
+          investigationTime: 0,
           closedBySystem: 0,
         },
       ])
@@ -640,6 +694,8 @@ describe('Team statistic for alerts', () => {
             accountId: TEST_ACCOUNT_ID_1,
             closedBy: 1,
             assignedTo: 0,
+            caseIds: [],
+            investigationTime: 0,
             closedBySystem: 0,
           },
         ],
@@ -671,6 +727,8 @@ describe('Team statistic for alerts', () => {
           accountId: TEST_ACCOUNT_ID_1,
           closedBy: 2,
           assignedTo: 0,
+          caseIds: [],
+          investigationTime: 0,
           closedBySystem: 0,
         },
       ])
@@ -710,6 +768,8 @@ describe('Team statistic for alerts', () => {
           accountId: TEST_ACCOUNT_ID_1,
           closedBy: 4,
           assignedTo: 0,
+          caseIds: [],
+          investigationTime: 0,
           closedBySystem: 0,
         },
       ])
@@ -750,12 +810,16 @@ describe('Team statistic for alerts', () => {
           accountId: TEST_ACCOUNT_ID_1,
           closedBy: 2,
           assignedTo: 0,
+          caseIds: [],
+          investigationTime: 0,
           closedBySystem: 0,
         },
         {
           accountId: TEST_ACCOUNT_ID_2,
           closedBy: 2,
           assignedTo: 0,
+          caseIds: [],
+          investigationTime: 0,
           closedBySystem: 0,
         },
       ])
@@ -784,6 +848,8 @@ describe('Team statistic for alerts', () => {
           accountId: TEST_ACCOUNT_ID_1,
           closedBy: 0,
           assignedTo: 1,
+          caseIds: [],
+          investigationTime: 0,
           closedBySystem: 0,
         },
       ])
@@ -794,6 +860,8 @@ describe('Team statistic for alerts', () => {
             accountId: TEST_ACCOUNT_ID_1,
             closedBy: 0,
             assignedTo: 1,
+            caseIds: [],
+            investigationTime: 0,
             closedBySystem: 0,
           },
         ],
@@ -808,6 +876,8 @@ describe('Team statistic for alerts', () => {
             accountId: 'TEST_ACCOUNT_ID_1',
             assignedTo: 1,
             closedBy: 0,
+            caseIds: [],
+            investigationTime: 0,
             closedBySystem: 0,
           },
         ],
@@ -846,6 +916,8 @@ describe('Team statistic for alerts', () => {
             accountId: TEST_ACCOUNT_ID_1,
             closedBy: 0,
             assignedTo: 1,
+            caseIds: [],
+            investigationTime: 0,
             closedBySystem: 0,
           },
         ],
@@ -897,6 +969,8 @@ describe('Team statistic for alerts', () => {
           accountId: TEST_ACCOUNT_ID_1,
           closedBy: 0,
           assignedTo: 5,
+          caseIds: [],
+          investigationTime: 0,
           closedBySystem: 0,
         },
       ])
@@ -947,12 +1021,16 @@ describe('Team statistic for alerts', () => {
           accountId: TEST_ACCOUNT_ID_1,
           closedBy: 0,
           assignedTo: 4,
+          caseIds: [],
+          investigationTime: 0,
           closedBySystem: 0,
         },
         {
           accountId: TEST_ACCOUNT_ID_2,
           closedBy: 0,
           assignedTo: 3,
+          caseIds: [],
+          investigationTime: 0,
           closedBySystem: 0,
         },
       ])
@@ -1010,17 +1088,22 @@ describe('Team statistic for alerts', () => {
           accountId: TEST_ACCOUNT_ID_1,
           closedBy: 2,
           assignedTo: 4,
+          caseIds: [],
+          investigationTime: 0,
           closedBySystem: 0,
         },
         {
           accountId: TEST_ACCOUNT_ID_2,
           closedBy: 1,
           assignedTo: 3,
+          caseIds: [],
+          investigationTime: 0,
           closedBySystem: 0,
         },
       ])
     })
   })
+
   describe('Test Closed By Syatem for Alerts', () => {
     test(`closed by system`, async () => {
       const TENANT_ID = getTestTenantId()
@@ -1055,12 +1138,16 @@ describe('Team statistic for alerts', () => {
           assignedTo: 0,
           closedBy: 2,
           closedBySystem: 0,
+          caseIds: [],
+          investigationTime: 0,
         },
         {
           accountId: 'TEST_ACCOUNT_ID_1',
           assignedTo: 2,
           closedBy: 0,
           closedBySystem: 2,
+          caseIds: [],
+          investigationTime: 0,
         },
       ])
     })
@@ -1098,12 +1185,16 @@ describe('Team statistic for alerts', () => {
           assignedTo: 2,
           closedBy: 1,
           closedBySystem: 1,
+          caseIds: [],
+          investigationTime: 0,
         },
         {
           accountId: 'Flagright System',
           assignedTo: 0,
           closedBy: 1,
           closedBySystem: 0,
+          caseIds: [],
+          investigationTime: 0,
         },
       ])
     })
@@ -1137,12 +1228,16 @@ describe('Team statistic for alerts', () => {
           assignedTo: 1,
           closedBy: 0,
           closedBySystem: 1,
+          caseIds: [],
+          investigationTime: 0,
         },
         {
           accountId: 'Flagright System',
           assignedTo: 0,
           closedBy: 1,
           closedBySystem: 0,
+          caseIds: [],
+          investigationTime: 0,
         },
       ])
     })
@@ -1174,12 +1269,44 @@ describe('Team statistic for alerts', () => {
           assignedTo: 1,
           closedBy: 0,
           closedBySystem: 0,
+          caseIds: [],
+          investigationTime: 0,
         },
         {
           accountId: 'Flagright System',
           assignedTo: 0,
           closedBy: 1,
           closedBySystem: 0,
+          caseIds: [],
+          investigationTime: 0,
+        },
+      ])
+    })
+  })
+
+  describe('Test Closed Investigation Time', () => {
+    test('Investigation Time Case', async () => {
+      const TENANT_ID = getTestTenantId()
+      const caseRepository = await getCaseRepo(TENANT_ID)
+      const statsRepository = await getStatsRepo(TENANT_ID)
+
+      await caseRepository.addCaseMongo({
+        ...emptyCase(),
+        statusChanges: [
+          inProgressOpen(TEST_ACCOUNT_ID_1, 0),
+          closed(TEST_ACCOUNT_ID_1, 5000),
+        ],
+        assignments: [assignment(TEST_ACCOUNT_ID_1)],
+      })
+
+      await expectCaseStats(statsRepository, [
+        {
+          accountId: 'TEST_ACCOUNT_ID_1',
+          assignedTo: 1,
+          closedBy: 1,
+          closedBySystem: 0,
+          caseIds: [expect.any(String)],
+          investigationTime: 5000,
         },
       ])
     })
@@ -1233,6 +1360,8 @@ async function expectCaseStats(
     accountId: string
     closedBy: number
     assignedTo: number
+    caseIds: Array<any>
+    investigationTime: number
     closedBySystem: number
   }[],
   filters?: {
@@ -1258,6 +1387,8 @@ async function expectAlertStats(
     accountId: string
     closedBy: number
     assignedTo: number
+    caseIds: string[]
+    investigationTime: number
     closedBySystem: number
   }[],
   dateFilter?: {
@@ -1296,6 +1427,14 @@ function reopened(userId: string, timestamp?: number): CaseStatusChange {
   return {
     userId: userId,
     caseStatus: 'REOPENED',
+    timestamp: timestamp ?? Date.now(),
+  }
+}
+
+function inProgressOpen(userId: string, timestamp?: number): CaseStatusChange {
+  return {
+    userId: userId,
+    caseStatus: 'OPEN_IN_PROGRESS',
     timestamp: timestamp ?? Date.now(),
   }
 }

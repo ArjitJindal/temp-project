@@ -281,6 +281,136 @@ export class DashboardStatsRepository {
       }
     }
 
+    const commonInvestigationTimePipeline = (
+      timestampCondition: {
+        $gte: number
+        $lte: number
+      } | null
+    ) => {
+      return [
+        {
+          $project: {
+            assignments: 1,
+            reviewAssignments: 1,
+            transitions: {
+              $zip: {
+                inputs: ['$statusChanges', '$nextStatusChanges'],
+                useLongestLength: true,
+              },
+            },
+            caseId: 1,
+            caseStatus: 1,
+          },
+        },
+        {
+          $unwind: '$transitions',
+        },
+        {
+          $addFields: {
+            start: { $arrayElemAt: ['$transitions', 0] },
+            end: { $arrayElemAt: ['$transitions', 1] },
+          },
+        },
+        {
+          $match: {
+            'start.caseStatus': {
+              $in: ['OPEN_IN_PROGRESS', 'ESCALATED_IN_PROGRESS'],
+            },
+            'end.timestamp': {
+              $gte: timestampCondition ? timestampCondition.$gte : 0,
+              $lte: timestampCondition
+                ? timestampCondition.$lte
+                : Number.MAX_SAFE_INTEGER,
+            },
+          },
+        },
+        {
+          $project: {
+            assignments: {
+              $cond: {
+                if: { $eq: ['$start.caseStatus', 'ESCALATED_IN_PROGRESS'] },
+                then: '$reviewAssignments',
+                else: '$assignments',
+              },
+            },
+            start: 1,
+            end: 1,
+            caseId: 1,
+            caseStatus: 1,
+          },
+        },
+        {
+          $match: {
+            'assignments.0': { $exists: true },
+          },
+        },
+        {
+          $unwind: '$assignments',
+        },
+        {
+          $project: {
+            user: '$assignments.assigneeUserId',
+            investigationTime: {
+              $subtract: ['$end.timestamp', '$start.timestamp'],
+            },
+            timestamp: '$end.timestamp',
+            caseId: 1,
+            caseStatus: 1,
+          },
+        },
+        {
+          $group: {
+            _id: {
+              assigneeUserId: '$user',
+              caseStatus: {
+                $switch: {
+                  branches: [
+                    {
+                      case: {
+                        $in: [
+                          '$caseStatus',
+                          ['OPEN_IN_PROGRESS', 'OPEN_ON_HOLD'],
+                        ],
+                      },
+                      then: 'OPEN',
+                    },
+                    {
+                      case: {
+                        $in: [
+                          '$caseStatus',
+                          ['ESCALATED_IN_PROGRESS', 'ESCALATED_ON_HOLD'],
+                        ],
+                      },
+                      then: 'ESCALATED',
+                    },
+                  ],
+                  default: '$caseStatus',
+                },
+              },
+              date: {
+                $dateToString: {
+                  format: HOUR_DATE_FORMAT,
+                  date: { $toDate: { $toLong: '$timestamp' } },
+                },
+              },
+            },
+            investigationTime: { $sum: '$investigationTime' },
+            caseIds: { $addToSet: '$caseId' },
+          },
+        },
+        {
+          $project: {
+            accountId: '$_id.assigneeUserId',
+            date: '$_id.date',
+            investigationTime: 1,
+            status: '$_id.caseStatus',
+            caseIds: 1,
+            _id: false,
+          },
+        },
+      ]
+    }
+
     // Cases
     if (scope.includes('CASES')) {
       const aggregationCollection = DASHBOARD_TEAM_CASES_STATS_HOURLY(
@@ -585,6 +715,44 @@ export class DashboardStatsRepository {
 
         await casesCollection.aggregate(pipeline).next()
       }
+
+      // Investigation time
+      {
+        const matchPipeline = {
+          $match: {
+            ...(timestampCondition != null
+              ? { 'statusChanges.timestamp': timestampCondition }
+              : {}),
+            'statusChanges.1': { $exists: true },
+          },
+        }
+
+        const pipeline = [
+          matchPipeline,
+          {
+            $project: {
+              assignments: 1,
+              reviewAssignments: 1,
+              statusChanges: 1,
+              caseStatus: 1,
+              nextStatusChanges: {
+                $slice: ['$statusChanges', 1, { $size: '$statusChanges' }],
+              },
+              caseId: '$caseId',
+            },
+          },
+          ...commonInvestigationTimePipeline(timestampCondition),
+          {
+            $merge: {
+              into: aggregationCollection,
+              on: ['accountId', 'status', 'date'],
+              whenMatched: 'merge',
+            },
+          },
+        ]
+
+        await casesCollection.aggregate(pipeline).next()
+      }
     }
 
     // Alerts
@@ -814,6 +982,52 @@ export class DashboardStatsRepository {
               closedBySystem: '$count',
             },
           },
+          {
+            $merge: {
+              into: aggregationCollection,
+              on: ['accountId', 'status', 'date'],
+              whenMatched: 'merge',
+            },
+          },
+        ]
+
+        await casesCollection.aggregate(pipeline).next()
+      }
+
+      // Investigation Time
+      {
+        const matchPipeline = {
+          $match: {
+            ...(timestampCondition != null
+              ? { 'alerts.statusChanges.timestamp': timestampCondition }
+              : {}),
+            'alerts.statusChanges.1': { $exists: true },
+          },
+        }
+
+        const pipeline = [
+          matchPipeline,
+          {
+            $unwind: '$alerts',
+          },
+          matchPipeline,
+          {
+            $project: {
+              assignments: '$alerts.assignments',
+              reviewAssignments: '$alerts.reviewAssignments',
+              statusChanges: '$alerts.statusChanges',
+              caseStatus: '$alerts.alertStatus',
+              nextStatusChanges: {
+                $slice: [
+                  '$alerts.statusChanges',
+                  1,
+                  { $size: '$alerts.statusChanges' },
+                ],
+              },
+              caseId: '$alerts.alertId',
+            },
+          },
+          ...commonInvestigationTimePipeline(timestampCondition),
           {
             $merge: {
               into: aggregationCollection,
@@ -1450,6 +1664,12 @@ export class DashboardStatsRepository {
         ? [{ $match: { $and: matchConditions } }]
         : []),
       {
+        $unwind: {
+          path: '$caseIds',
+          preserveNullAndEmptyArrays: true,
+        },
+      },
+      {
         $group: {
           _id: '$accountId',
           closedBy: {
@@ -1457,6 +1677,12 @@ export class DashboardStatsRepository {
           },
           assignedTo: {
             $sum: '$assignedTo',
+          },
+          investigationTime: {
+            $sum: '$investigationTime',
+          },
+          caseIds: {
+            $addToSet: '$caseIds',
           },
           closedBySystem: {
             $sum: '$closedBySystem',
@@ -1469,6 +1695,8 @@ export class DashboardStatsRepository {
           accountId: '$_id',
           closedBy: true,
           assignedTo: true,
+          caseIds: true,
+          investigationTime: true,
           closedBySystem: true,
         },
       },
@@ -1479,6 +1707,8 @@ export class DashboardStatsRepository {
         accountId: string
         closedBy: number
         assignedTo: number
+        caseIds: string[]
+        investigationTime: number
         closedBySystem: number
       }>(pipeline, { allowDiskUse: true })
       .toArray()

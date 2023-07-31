@@ -48,12 +48,22 @@ export default function TeamPerformanceCard() {
         startTimestamp = start.startOf('day').valueOf();
         endTimestamp = end.endOf('day').valueOf();
       }
-      return await api.getDashboardTeamStats({
+      const data = await api.getDashboardTeamStats({
         scope: params.scope,
         startTimestamp,
         endTimestamp,
         caseStatus: params.caseStatus,
       });
+
+      const updatedData = data.map((item) => ({
+        ...item,
+        investigationTime:
+          item.investigationTime && item.caseIds?.length
+            ? item.investigationTime / item.caseIds.length
+            : 0,
+      }));
+
+      return updatedData;
     },
   );
 
