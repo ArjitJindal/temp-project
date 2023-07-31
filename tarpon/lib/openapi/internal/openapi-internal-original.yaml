@@ -4631,6 +4631,8 @@ components:
           type: number
         closedBy:
           type: number
+        closedBySystem:
+          type: number
       required:
         - accountId
         - assignedTo

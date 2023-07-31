@@ -119,7 +119,7 @@ export default function TeamPerformanceCard() {
           }}
         />
       </div>
-      <AccountsStatisticsTable queryResult={queryResult} />
+      <AccountsStatisticsTable queryResult={queryResult} scope={params.scope} />
     </Card>
   );
 }

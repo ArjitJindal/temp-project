@@ -38,6 +38,7 @@ import { CaseStatus } from '@/@types/openapi-internal/CaseStatus'
 import { AlertStatus } from '@/@types/openapi-internal/AlertStatus'
 import { InternalUser } from '@/@types/openapi-internal/InternalUser'
 import { DashboardStatsHitsPerUserData } from '@/@types/openapi-internal/DashboardStatsHitsPerUserData'
+import { FLAGRIGHT_SYSTEM_USER } from '@/services/rules-engine/repositories/alerts-repository'
 
 type TimeRange = {
   startTimestamp?: number
@@ -425,6 +426,165 @@ export class DashboardStatsRepository {
         ]
         await casesCollection.aggregate(pipeline).next()
       }
+      // Number of Cases Closed by system of result all the alerts are closed by same person
+      {
+        const toMatchPipeline = {
+          $match: {
+            ...(timestampCondition != null && {
+              'statusChanges.timestamp': timestampCondition,
+              'alerts.statusChanges.timestamp': timestampCondition,
+            }),
+            'statusChanges.caseStatus': 'CLOSED',
+            'statusChanges.userId': FLAGRIGHT_SYSTEM_USER,
+            'alerts.statusChanges.caseStatus': 'CLOSED',
+          },
+        }
+
+        const pipeline = [
+          toMatchPipeline,
+          {
+            $unwind: '$statusChanges',
+          },
+          toMatchPipeline,
+          {
+            $unwind: '$alerts',
+          },
+          {
+            $addFields: {
+              'alerts.updatedStatusChanges': {
+                $filter: {
+                  input: '$alerts.statusChanges',
+                  cond: {
+                    $and: [
+                      {
+                        $gte: [
+                          '$$this.timestamp',
+                          timestampCondition?.$gte || 0,
+                        ],
+                      },
+                      {
+                        $lte: [
+                          '$$this.timestamp',
+                          timestampCondition?.$lte || Number.MAX_SAFE_INTEGER,
+                        ],
+                      },
+                      {
+                        $eq: ['$$this.caseStatus', 'CLOSED'],
+                      },
+                    ],
+                  },
+                },
+              },
+            },
+          },
+          {
+            $addFields: {
+              'alerts.updatedStatusChanges': {
+                $cond: {
+                  if: { $eq: ['$alerts.updatedStatusChanges', null] },
+                  then: [],
+                  else: '$alerts.updatedStatusChanges',
+                },
+              },
+            },
+          },
+          {
+            $addFields: {
+              'alerts.lastStatusChange': {
+                $cond: {
+                  if: { $eq: ['$alerts.updatedStatusChanges', []] },
+                  then: {
+                    userId: null,
+                  },
+                  else: {
+                    $arrayElemAt: ['$alerts.updatedStatusChanges', -1],
+                  },
+                },
+              },
+            },
+          },
+          {
+            $group: {
+              _id: '$caseId',
+              alerts: {
+                $push: {
+                  _id: '$alerts._id',
+                  lastStatusChange: '$alerts.lastStatusChange',
+                  alertId: '$alerts.alertId',
+                },
+              },
+              userIds: {
+                $addToSet: '$alerts.lastStatusChange.userId',
+              },
+              status: {
+                $first: '$caseStatus',
+              },
+              statusChanges: {
+                $addToSet: '$statusChanges',
+              },
+            },
+          },
+          {
+            $unwind: '$statusChanges',
+          },
+          {
+            $match: {
+              userIds: {
+                $size: 1,
+                $elemMatch: {
+                  $ne: null,
+                },
+              },
+            },
+          },
+          {
+            $addFields: {
+              accountId: {
+                $arrayElemAt: ['$userIds', 0],
+              },
+            },
+          },
+          {
+            $group: {
+              _id: {
+                accountId: '$accountId',
+                status: '$status',
+                date: {
+                  $dateToString: {
+                    format: HOUR_DATE_FORMAT,
+                    date: {
+                      $toDate: {
+                        $toLong: '$statusChanges.timestamp',
+                      },
+                    },
+                  },
+                },
+              },
+              count: {
+                $sum: 1,
+              },
+            },
+          },
+          {
+            $project: {
+              _id: 0,
+              accountId: '$_id.accountId',
+              status: '$_id.status',
+              date: '$_id.date',
+              closedBySystem: '$count',
+            },
+          },
+          {
+            $merge: {
+              into: aggregationCollection,
+              on: ['accountId', 'status', 'date'],
+              whenMatched: 'merge',
+            },
+          },
+        ]
+
+        await casesCollection.aggregate(pipeline).next()
+      }
     }
 
     // Alerts
@@ -575,6 +735,94 @@ export class DashboardStatsRepository {
             },
           },
         ]
+        await casesCollection.aggregate(pipeline).next()
+      }
+
+      // Alerts Closed By System
+      {
+        const pipeline = [
+          {
+            $match: {
+              ...(timestampCondition != null
+                ? {
+                    'alerts.statusChanges.timestamp': timestampCondition,
+                    'statusChanges.timestamp': timestampCondition,
+                  }
+                : {}),
+              'alerts.statusChanges.caseStatus': 'CLOSED',
+              'alerts.statusChanges.userId': FLAGRIGHT_SYSTEM_USER,
+              'statusChanges.caseStatus': 'CLOSED',
+            },
+          },
+          {
+            $unwind: '$statusChanges',
+          },
+          {
+            $match: {
+              'statusChanges.caseStatus': 'CLOSED',
+              ...(timestampCondition != null
+                ? {
+                    'statusChanges.timestamp': timestampCondition,
+                  }
+                : {}),
+            },
+          },
+          {
+            $unwind: '$alerts',
+          },
+          {
+            $unwind: '$alerts.statusChanges',
+          },
+          {
+            $match: {
+              ...(timestampCondition != null
+                ? {
+                    'alerts.statusChanges.timestamp': timestampCondition,
+                  }
+                : {}),
+              'alerts.statusChanges.caseStatus': 'CLOSED',
+              'alerts.statusChanges.userId': FLAGRIGHT_SYSTEM_USER,
+            },
+          },
+          {
+            $group: {
+              _id: {
+                accountId: '$statusChanges.userId',
+                caseStatus: '$alerts.statusChanges.caseStatus',
+                timestamp: {
+                  $dateToString: {
+                    format: HOUR_DATE_FORMAT,
+                    date: {
+                      $toDate: {
+                        $toLong: '$statusChanges.timestamp',
+                      },
+                    },
+                  },
+                },
+              },
+              count: {
+                $sum: 1,
+              },
+            },
+          },
+          {
+            $project: {
+              _id: 0,
+              accountId: '$_id.accountId',
+              status: '$_id.caseStatus',
+              date: '$_id.timestamp',
+              closedBySystem: '$count',
+            },
+          },
+          {
+            $merge: {
+              into: aggregationCollection,
+              on: ['accountId', 'status', 'date'],
+              whenMatched: 'merge',
+            },
+          },
+        ]
+
         await casesCollection.aggregate(pipeline).next()
       }
     }
@@ -1210,6 +1458,9 @@ export class DashboardStatsRepository {
           assignedTo: {
             $sum: '$assignedTo',
           },
+          closedBySystem: {
+            $sum: '$closedBySystem',
+          },
         },
       },
       {
@@ -1218,6 +1469,7 @@ export class DashboardStatsRepository {
           accountId: '$_id',
           closedBy: true,
           assignedTo: true,
+          closedBySystem: true,
         },
       },
     ]
@@ -1227,6 +1479,7 @@ export class DashboardStatsRepository {
         accountId: string
         closedBy: number
         assignedTo: number
+        closedBySystem: number
       }>(pipeline, { allowDiskUse: true })
       .toArray()
 

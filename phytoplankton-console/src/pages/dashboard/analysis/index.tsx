@@ -25,20 +25,16 @@ function Analysis() {
         <Col span={24}>
           <RuleHitCard />
         </Col>
-        {isPulseEnabled ? (
+        {isPulseEnabled && (
           <>
-            <Col span={12}>
+            <Col span={24}>
               <DRSDistributionCard />
             </Col>
-            <Col span={12}>
-              <TeamPerformanceCard />
-            </Col>
           </>
-        ) : (
-          <Col span={24}>
-            <TeamPerformanceCard />
-          </Col>
         )}
+        <Col span={24}>
+          <TeamPerformanceCard />
+        </Col>
       </Row>
     </PageWrapper>
   );

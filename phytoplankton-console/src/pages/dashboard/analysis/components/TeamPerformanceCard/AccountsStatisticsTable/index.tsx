@@ -6,36 +6,50 @@ import QueryResultsTable from '@/components/common/QueryResultsTable';
 
 const helper = new ColumnHelper<DashboardTeamStatsItem>();
 
-const columns = helper.list([
-  helper.simple({
-    key: 'accountId',
-    title: 'Team member',
-    defaultWidth: 250,
-    type: {
-      render: (accountId) => <Assignee accountId={accountId} />,
-    },
-  }),
-  helper.simple({
-    key: 'assignedTo',
-    title: 'Assigned to',
-    defaultWidth: 100,
-  }),
-  helper.simple({
-    key: 'closedBy',
-    title: 'Closed by',
-    defaultWidth: 100,
-  }),
-]);
+const columns = (scope: 'CASES' | 'ALERTS') => {
+  return helper.list([
+    helper.simple({
+      key: 'accountId',
+      title: 'Team member',
+      defaultWidth: 250,
+      type: {
+        render: (accountId) => <Assignee accountId={accountId} />,
+      },
+    }),
+    helper.simple({
+      key: 'assignedTo',
+      title: 'Assigned to',
+      defaultWidth: 100,
+    }),
+    helper.simple({
+      key: 'closedBy',
+      title: 'Closed by',
+      defaultWidth: 100,
+    }),
+    helper.simple({
+      key: 'closedBySystem',
+      title: 'Closed by system',
+      defaultWidth: 100,
+      tooltip: `Number of ${scope.toLowerCase()} closed by system ${
+        scope === 'CASES'
+          ? 'where all the alerts were closed by user'
+          : 'where case was closed by user'
+      }`,
+    }),
+  ]);
+};
 
 interface Props {
   queryResult: QueryResult<DashboardTeamStatsItem[]>;
+  scope: 'CASES' | 'ALERTS';
 }
 
 export default function AccountsStatisticsTable(props: Props) {
-  const { queryResult } = props;
+  const { queryResult, scope } = props;
+
   return (
     <QueryResultsTable<DashboardTeamStatsItem>
-      columns={columns}
+      columns={columns(scope)}
       rowKey="accountId"
       sizingMode="FULL_WIDTH"
       toolsOptions={{

@@ -9,6 +9,7 @@ import { AlertStatus } from '@/@types/openapi-internal/AlertStatus'
 import { Alert } from '@/@types/openapi-internal/Alert'
 import { Assignment } from '@/@types/openapi-internal/Assignment'
 import { DashboardStatsRepository } from '@/lambdas/console-api-dashboard/repositories/dashboard-stats-repository'
+import { FLAGRIGHT_SYSTEM_USER } from '@/services/rules-engine/repositories/alerts-repository'
 
 dynamoDbSetupHook()
 
@@ -42,6 +43,7 @@ describe('Team statistic for cases', () => {
           accountId: TEST_ACCOUNT_ID_1,
           closedBy: 1,
           assignedTo: 0,
+          closedBySystem: 0,
         },
       ])
       await expectCaseStats(
@@ -51,6 +53,7 @@ describe('Team statistic for cases', () => {
             accountId: TEST_ACCOUNT_ID_1,
             closedBy: 1,
             assignedTo: 0,
+            closedBySystem: 0,
           },
         ],
         {
@@ -59,7 +62,14 @@ describe('Team statistic for cases', () => {
       )
       await expectCaseStats(
         statsRepository,
-        [{ accountId: 'TEST_ACCOUNT_ID_1', assignedTo: 0, closedBy: 1 }],
+        [
+          {
+            accountId: 'TEST_ACCOUNT_ID_1',
+            assignedTo: 0,
+            closedBySystem: 0,
+            closedBy: 1,
+          },
+        ],
         {
           startTimestamp: createdTimestamp,
         }
@@ -83,6 +93,7 @@ describe('Team statistic for cases', () => {
           accountId: TEST_ACCOUNT_ID_1,
           closedBy: 2,
           assignedTo: 0,
+          closedBySystem: 0,
         },
       ])
     })
@@ -111,6 +122,7 @@ describe('Team statistic for cases', () => {
           accountId: TEST_ACCOUNT_ID_1,
           closedBy: 4,
           assignedTo: 0,
+          closedBySystem: 0,
         },
       ])
     })
@@ -139,6 +151,7 @@ describe('Team statistic for cases', () => {
           accountId: TEST_ACCOUNT_ID_1,
           closedBy: 4,
           assignedTo: 0,
+          closedBySystem: 0,
         },
       ])
     })
@@ -168,11 +181,13 @@ describe('Team statistic for cases', () => {
           accountId: TEST_ACCOUNT_ID_1,
           closedBy: 2,
           assignedTo: 0,
+          closedBySystem: 0,
         },
         {
           accountId: TEST_ACCOUNT_ID_2,
           closedBy: 2,
           assignedTo: 0,
+          closedBySystem: 0,
         },
       ])
     })
@@ -205,6 +220,7 @@ describe('Team statistic for cases', () => {
             accountId: TEST_ACCOUNT_ID_1,
             closedBy: 2,
             assignedTo: 0,
+            closedBySystem: 0,
           },
         ],
         {
@@ -231,6 +247,7 @@ describe('Team statistic for cases', () => {
           accountId: TEST_ACCOUNT_ID_1,
           closedBy: 0,
           assignedTo: 1,
+          closedBySystem: 0,
         },
       ])
       await expectCaseStats(
@@ -240,6 +257,7 @@ describe('Team statistic for cases', () => {
             accountId: TEST_ACCOUNT_ID_1,
             closedBy: 0,
             assignedTo: 1,
+            closedBySystem: 0,
           },
         ],
         {
@@ -248,7 +266,14 @@ describe('Team statistic for cases', () => {
       )
       await expectCaseStats(
         statsRepository,
-        [{ accountId: 'TEST_ACCOUNT_ID_1', assignedTo: 1, closedBy: 0 }],
+        [
+          {
+            accountId: 'TEST_ACCOUNT_ID_1',
+            assignedTo: 1,
+            closedBy: 0,
+            closedBySystem: 0,
+          },
+        ],
         {
           startTimestamp: timestamp,
         }
@@ -282,6 +307,7 @@ describe('Team statistic for cases', () => {
           accountId: TEST_ACCOUNT_ID_1,
           closedBy: 0,
           assignedTo: 5,
+          closedBySystem: 0,
         },
       ])
     })
@@ -315,11 +341,13 @@ describe('Team statistic for cases', () => {
           accountId: TEST_ACCOUNT_ID_1,
           closedBy: 0,
           assignedTo: 4,
+          closedBySystem: 0,
         },
         {
           accountId: TEST_ACCOUNT_ID_2,
           closedBy: 0,
           assignedTo: 3,
+          closedBySystem: 0,
         },
       ])
     })
@@ -366,11 +394,13 @@ describe('Team statistic for cases', () => {
             accountId: TEST_ACCOUNT_ID_1,
             closedBy: 0,
             assignedTo: 4,
+            closedBySystem: 0,
           },
           {
             accountId: TEST_ACCOUNT_ID_2,
             closedBy: 0,
             assignedTo: 3,
+            closedBySystem: 0,
           },
         ],
         {
@@ -384,11 +414,13 @@ describe('Team statistic for cases', () => {
             accountId: TEST_ACCOUNT_ID_1,
             closedBy: 0,
             assignedTo: 1,
+            closedBySystem: 0,
           },
           {
             accountId: TEST_ACCOUNT_ID_2,
             closedBy: 0,
             assignedTo: 2,
+            closedBySystem: 0,
           },
         ],
         {
@@ -434,11 +466,13 @@ describe('Team statistic for cases', () => {
           accountId: TEST_ACCOUNT_ID_1,
           closedBy: 2,
           assignedTo: 4,
+          closedBySystem: 0,
         },
         {
           accountId: TEST_ACCOUNT_ID_2,
           closedBy: 1,
           assignedTo: 3,
+          closedBySystem: 0,
         },
       ])
     })
@@ -497,11 +531,13 @@ describe('Team statistic for cases', () => {
             accountId: TEST_ACCOUNT_ID_1,
             closedBy: 2,
             assignedTo: 4,
+            closedBySystem: 0,
           },
           {
             accountId: TEST_ACCOUNT_ID_2,
             closedBy: 1,
             assignedTo: 3,
+            closedBySystem: 0,
           },
         ],
         {
@@ -535,6 +571,7 @@ describe('Team statistic for alerts', () => {
           accountId: TEST_ACCOUNT_ID_1,
           closedBy: 1,
           assignedTo: 0,
+          closedBySystem: 0,
         },
       ])
       await expectAlertStats(
@@ -544,6 +581,7 @@ describe('Team statistic for alerts', () => {
             accountId: TEST_ACCOUNT_ID_1,
             closedBy: 1,
             assignedTo: 0,
+            closedBySystem: 0,
           },
         ],
         {
@@ -552,7 +590,14 @@ describe('Team statistic for alerts', () => {
       )
       await expectAlertStats(
         statsRepository,
-        [{ accountId: 'TEST_ACCOUNT_ID_1', assignedTo: 0, closedBy: 1 }],
+        [
+          {
+            accountId: 'TEST_ACCOUNT_ID_1',
+            assignedTo: 0,
+            closedBySystem: 0,
+            closedBy: 1,
+          },
+        ],
         {
           startTimestamp: createdTimestamp,
         }
@@ -585,6 +630,7 @@ describe('Team statistic for alerts', () => {
           accountId: TEST_ACCOUNT_ID_1,
           closedBy: 2,
           assignedTo: 0,
+          closedBySystem: 0,
         },
       ])
       await expectAlertStats(
@@ -594,6 +640,7 @@ describe('Team statistic for alerts', () => {
             accountId: TEST_ACCOUNT_ID_1,
             closedBy: 1,
             assignedTo: 0,
+            closedBySystem: 0,
           },
         ],
         {
@@ -624,6 +671,7 @@ describe('Team statistic for alerts', () => {
           accountId: TEST_ACCOUNT_ID_1,
           closedBy: 2,
           assignedTo: 0,
+          closedBySystem: 0,
         },
       ])
     })
@@ -662,6 +710,7 @@ describe('Team statistic for alerts', () => {
           accountId: TEST_ACCOUNT_ID_1,
           closedBy: 4,
           assignedTo: 0,
+          closedBySystem: 0,
         },
       ])
     })
@@ -701,11 +750,13 @@ describe('Team statistic for alerts', () => {
           accountId: TEST_ACCOUNT_ID_1,
           closedBy: 2,
           assignedTo: 0,
+          closedBySystem: 0,
         },
         {
           accountId: TEST_ACCOUNT_ID_2,
           closedBy: 2,
           assignedTo: 0,
+          closedBySystem: 0,
         },
       ])
     })
@@ -733,6 +784,7 @@ describe('Team statistic for alerts', () => {
           accountId: TEST_ACCOUNT_ID_1,
           closedBy: 0,
           assignedTo: 1,
+          closedBySystem: 0,
         },
       ])
       await expectAlertStats(
@@ -742,6 +794,7 @@ describe('Team statistic for alerts', () => {
             accountId: TEST_ACCOUNT_ID_1,
             closedBy: 0,
             assignedTo: 1,
+            closedBySystem: 0,
           },
         ],
         {
@@ -750,7 +803,14 @@ describe('Team statistic for alerts', () => {
       )
       await expectAlertStats(
         statsRepository,
-        [{ accountId: 'TEST_ACCOUNT_ID_1', assignedTo: 1, closedBy: 0 }],
+        [
+          {
+            accountId: 'TEST_ACCOUNT_ID_1',
+            assignedTo: 1,
+            closedBy: 0,
+            closedBySystem: 0,
+          },
+        ],
         {
           startTimestamp: timestamp,
         }
@@ -786,6 +846,7 @@ describe('Team statistic for alerts', () => {
             accountId: TEST_ACCOUNT_ID_1,
             closedBy: 0,
             assignedTo: 1,
+            closedBySystem: 0,
           },
         ],
         {
@@ -836,6 +897,7 @@ describe('Team statistic for alerts', () => {
           accountId: TEST_ACCOUNT_ID_1,
           closedBy: 0,
           assignedTo: 5,
+          closedBySystem: 0,
         },
       ])
     })
@@ -885,11 +947,13 @@ describe('Team statistic for alerts', () => {
           accountId: TEST_ACCOUNT_ID_1,
           closedBy: 0,
           assignedTo: 4,
+          closedBySystem: 0,
         },
         {
           accountId: TEST_ACCOUNT_ID_2,
           closedBy: 0,
           assignedTo: 3,
+          closedBySystem: 0,
         },
       ])
     })
@@ -946,11 +1010,176 @@ describe('Team statistic for alerts', () => {
           accountId: TEST_ACCOUNT_ID_1,
           closedBy: 2,
           assignedTo: 4,
+          closedBySystem: 0,
         },
         {
           accountId: TEST_ACCOUNT_ID_2,
           closedBy: 1,
           assignedTo: 3,
+          closedBySystem: 0,
+        },
+      ])
+    })
+  })
+  describe('Test Closed By Syatem for Alerts', () => {
+    test(`closed by system`, async () => {
+      const TENANT_ID = getTestTenantId()
+      const caseRepository = await getCaseRepo(TENANT_ID)
+      const statsRepository = await getStatsRepo(TENANT_ID)
+
+      await caseRepository.addCaseMongo({
+        ...emptyCase(),
+        alerts: [
+          {
+            ...emptyAlert(),
+            statusChanges: [closedBySystem()],
+            assignments: [assignment(TEST_ACCOUNT_ID_1)],
+          },
+          {
+            ...emptyAlert(),
+            statusChanges: [closedBySystem()],
+            assignments: [assignment(TEST_ACCOUNT_ID_1)],
+          },
+        ],
+        statusChanges: [
+          {
+            ...closedBySystem(),
+            userId: TEST_ACCOUNT_ID_1,
+          },
+        ],
+      })
+
+      await expectAlertStats(statsRepository, [
+        {
+          accountId: 'Flagright System',
+          assignedTo: 0,
+          closedBy: 2,
+          closedBySystem: 0,
+        },
+        {
+          accountId: 'TEST_ACCOUNT_ID_1',
+          assignedTo: 2,
+          closedBy: 0,
+          closedBySystem: 2,
+        },
+      ])
+    })
+
+    test(`closed by system semi work`, async () => {
+      const TENANT_ID = getTestTenantId()
+      const caseRepository = await getCaseRepo(TENANT_ID)
+      const statsRepository = await getStatsRepo(TENANT_ID)
+
+      await caseRepository.addCaseMongo({
+        ...emptyCase(),
+        alerts: [
+          {
+            ...emptyAlert(),
+            statusChanges: [{ ...closedBySystem(), userId: TEST_ACCOUNT_ID_1 }],
+            assignments: [assignment(TEST_ACCOUNT_ID_1)],
+          },
+          {
+            ...emptyAlert(),
+            statusChanges: [closedBySystem()],
+            assignments: [assignment(TEST_ACCOUNT_ID_1)],
+          },
+        ],
+        statusChanges: [
+          {
+            ...closedBySystem(),
+            userId: TEST_ACCOUNT_ID_1,
+          },
+        ],
+      })
+
+      await expectAlertStats(statsRepository, [
+        {
+          accountId: 'TEST_ACCOUNT_ID_1',
+          assignedTo: 2,
+          closedBy: 1,
+          closedBySystem: 1,
+        },
+        {
+          accountId: 'Flagright System',
+          assignedTo: 0,
+          closedBy: 1,
+          closedBySystem: 0,
+        },
+      ])
+    })
+  })
+
+  describe('Test Closed By Syatem for Cases', () => {
+    test(`closed by system case`, async () => {
+      const TENANT_ID = getTestTenantId()
+      const caseRepository = await getCaseRepo(TENANT_ID)
+      const statsRepository = await getStatsRepo(TENANT_ID)
+
+      await caseRepository.addCaseMongo({
+        ...emptyCase(),
+        statusChanges: [closedBySystem()],
+        assignments: [assignment(TEST_ACCOUNT_ID_1)],
+        alerts: [
+          {
+            ...emptyAlert(),
+            statusChanges: [closed(TEST_ACCOUNT_ID_1)],
+          },
+          {
+            ...emptyAlert(),
+            statusChanges: [closed(TEST_ACCOUNT_ID_1)],
+          },
+        ],
+      })
+
+      await expectCaseStats(statsRepository, [
+        {
+          accountId: 'TEST_ACCOUNT_ID_1',
+          assignedTo: 1,
+          closedBy: 0,
+          closedBySystem: 1,
+        },
+        {
+          accountId: 'Flagright System',
+          assignedTo: 0,
+          closedBy: 1,
+          closedBySystem: 0,
+        },
+      ])
+    })
+
+    test(`closed by system not work`, async () => {
+      const TENANT_ID = getTestTenantId()
+      const caseRepository = await getCaseRepo(TENANT_ID)
+      const statsRepository = await getStatsRepo(TENANT_ID)
+
+      await caseRepository.addCaseMongo({
+        ...emptyCase(),
+        statusChanges: [closedBySystem()],
+        assignments: [assignment(TEST_ACCOUNT_ID_1)],
+        alerts: [
+          {
+            ...emptyAlert(),
+            statusChanges: [closed(TEST_ACCOUNT_ID_2)],
+          },
+          {
+            ...emptyAlert(),
+            statusChanges: [closed(TEST_ACCOUNT_ID_1)],
+          },
+        ],
+      })
+
+      await expectCaseStats(statsRepository, [
+        {
+          accountId: 'TEST_ACCOUNT_ID_1',
+          assignedTo: 1,
+          closedBy: 0,
+          closedBySystem: 0,
+        },
+        {
+          accountId: 'Flagright System',
+          assignedTo: 0,
+          closedBy: 1,
+          closedBySystem: 0,
         },
       ])
     })
@@ -970,6 +1199,16 @@ function emptyCase(): Case {
     caseTransactionsIds: [],
     statusChanges: [],
     assignments: [],
+  }
+}
+
+function closedBySystem(): CaseStatusChange {
+  return {
+    caseStatus: 'CLOSED',
+    timestamp: Date.now(),
+    userId: FLAGRIGHT_SYSTEM_USER,
+    otherReason: '',
+    reason: [],
   }
 }
 
@@ -994,6 +1233,7 @@ async function expectCaseStats(
     accountId: string
     closedBy: number
     assignedTo: number
+    closedBySystem: number
   }[],
   filters?: {
     startTimestamp?: number
@@ -1018,6 +1258,7 @@ async function expectAlertStats(
     accountId: string
     closedBy: number
     assignedTo: number
+    closedBySystem: number
   }[],
   dateFilter?: {
     startTimestamp?: number
