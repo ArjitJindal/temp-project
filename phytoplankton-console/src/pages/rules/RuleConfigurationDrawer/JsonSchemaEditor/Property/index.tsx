@@ -65,20 +65,22 @@ export default function Property(props: Props) {
   const requiredFeatures = uiSchema['ui:requiredFeatures'] ?? [];
   const canShowProperty = useFeaturesEnabled(requiredFeatures);
   return canShowProperty ? (
-    <InputField<any>
-      name={name}
-      label={schema.title ?? humanizeFunction(name)}
-      description={schema.description}
-      labelProps={{
-        element: labelElement,
-        position: labelPosition,
-        required: { value: item.isRequired, showHint: settings.showOptionalMark },
-        ...labelProps,
-        level: labelLevel,
-      }}
-    >
-      {(inputProps) => <PropertyInput {...inputProps} schema={schema} />}
-    </InputField>
+    <PropertyContext.Provider value={{ item }}>
+      <InputField<any>
+        name={name}
+        label={schema.title ?? humanizeFunction(name)}
+        description={schema.description}
+        labelProps={{
+          element: labelElement,
+          position: labelPosition,
+          required: { value: item.isRequired, showHint: settings.showOptionalMark },
+          ...labelProps,
+          level: labelLevel,
+        }}
+      >
+        {(inputProps) => <PropertyInput {...inputProps} schema={schema} />}
+      </InputField>
+    </PropertyContext.Provider>
   ) : (
     <></>
   );
@@ -87,3 +89,8 @@ export default function Property(props: Props) {
 function dontHumanize(name: string): string {
   return name;
 }
+
+interface PropertyContextValue {
+  item: PropertyItem;
+}
+export const PropertyContext = React.createContext<PropertyContextValue | null>(null);

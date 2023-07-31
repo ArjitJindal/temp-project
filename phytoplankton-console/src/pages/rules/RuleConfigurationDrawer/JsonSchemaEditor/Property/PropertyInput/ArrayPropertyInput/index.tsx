@@ -1,4 +1,4 @@
-import React, { useCallback, useMemo, useState } from 'react';
+import React, { useCallback, useContext, useMemo, useState } from 'react';
 import cn from 'clsx';
 import pluralize from 'pluralize';
 import { ExtendedSchema } from '../../../types';
@@ -6,13 +6,18 @@ import PropertyInput from '../index';
 import s from './style.module.less';
 import Button from '@/components/library/Button';
 import Select from '@/components/library/Select';
-import { isString } from '@/pages/rules/RuleConfigurationDrawer/JsonSchemaEditor/schema-utils';
+import {
+  dereferenceType,
+  isString,
+} from '@/pages/rules/RuleConfigurationDrawer/JsonSchemaEditor/schema-utils';
 import DeleteBin7LineIcon from '@/components/ui/icons/Remix/system/delete-bin-7-line.react.svg';
 import { InputProps } from '@/components/library/Form';
 import { getUiSchema } from '@/pages/rules/RuleConfigurationDrawer/JsonSchemaEditor/utils';
 import SelectionGroup from '@/components/library/SelectionGroup';
+import { useJsonSchemaEditorContext } from '@/pages/rules/RuleConfigurationDrawer/JsonSchemaEditor/context';
+import { PropertyContext } from '@/pages/rules/RuleConfigurationDrawer/JsonSchemaEditor/Property';
+import { firstLetterLower, humanizeAuto } from '@/utils/humanize';
 
-// todo: fix any
 interface Props extends InputProps<unknown[]> {
   schema: ExtendedSchema;
 }
@@ -68,6 +73,7 @@ export function GenericArrayPropertyInput(props: Props) {
   const { onChange, schema } = props;
   const [newItem, setNewItem] = useState<unknown>(undefined);
   const value = useMemo(() => props.value ?? [], [props.value]);
+  const entityName = useEntityName(schema);
 
   const handleClickAdd = useCallback(() => {
     onChange?.([...value, newItem]);
@@ -101,10 +107,26 @@ export function GenericArrayPropertyInput(props: Props) {
         ))}
         <div>
           <Button type="PRIMARY" onClick={handleClickAdd}>
-            Add
+            Add {entityName ? ` ${entityName}` : ''}
           </Button>
         </div>
       </div>
     </div>
   );
+}
+
+function useEntityName(schema: ExtendedSchema): string | undefined {
+  const { rootSchema } = useJsonSchemaEditorContext();
+  const propertyContext = useContext(PropertyContext);
+  if (propertyContext != null) {
+    return firstLetterLower(humanizeAuto(pluralize.singular(propertyContext.item.name)));
+  }
+  if (schema.items == null) {
+    return undefined;
+  }
+  const fullType = dereferenceType(schema.items, rootSchema);
+  if (fullType.title != null) {
+    return firstLetterLower(fullType.title);
+  }
+  return undefined;
 }
