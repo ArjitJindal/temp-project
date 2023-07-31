@@ -16,11 +16,31 @@ import {
   TransmitterContact,
 } from './schema'
 import { FincenJsonSchema } from './resources/EFL_SARXBatchSchema'
+import {
+  address,
+  amount,
+  partyNameByCompanyGeneralDetails,
+  partyNameByConsumerName,
+  dateToDate,
+  electronicAddressByEmail,
+  phoneByFax,
+  indicator,
+  phone,
+  electronicAddressByWebsite,
+} from './helpers/prepopulating'
 import { Case } from '@/@types/openapi-internal/Case'
 import { Account } from '@/@types/openapi-internal/Account'
 import { InternalTransaction } from '@/@types/openapi-internal/InternalTransaction'
 import { ReportParameters } from '@/@types/openapi-internal/ReportParameters'
 import { ReportSchema } from '@/@types/openapi-internal/ReportSchema'
+import {
+  Party,
+  SuspiciousActivityType,
+} from '@/services/sar/generators/US/SAR/resources/EFL_SARXBatchSchema.type'
+import { InternalBusinessUser } from '@/@types/openapi-internal/InternalBusinessUser'
+import { InternalConsumerUser } from '@/@types/openapi-internal/InternalConsumerUser'
+import dayjs from '@/utils/dayjs'
+import { getTargetCurrencyAmount } from '@/utils/currency-utils'
 
 const FINCEN_BINARY = path.join(
   __dirname,
@@ -37,18 +57,123 @@ export class UsSarReportGenerator implements ReportGenerator {
     }
   }
 
-  public getPopulatedSchema(
+  public async getPopulatedSchema(
     _reportId: string,
     _c: Case,
     transactions: InternalTransaction[],
     _reporter: Account
-  ): PopulatedSchema {
+  ): Promise<PopulatedSchema> {
+    const usersMap: Record<
+      string,
+      InternalConsumerUser | InternalBusinessUser
+    > = {}
+    for (const transaction of transactions) {
+      if (transaction.originUser != null) {
+        usersMap[transaction.originUser.userId] = transaction.originUser
+      }
+      if (transaction.destinationUser != null) {
+        usersMap[transaction.destinationUser.userId] =
+          transaction.destinationUser
+      }
+    }
+    const users: (InternalConsumerUser | InternalBusinessUser)[] =
+      Object.values(usersMap)
+
+    const subjects: Party[] = []
+    for (const user of users) {
+      const contactDetails =
+        user.type === 'CONSUMER'
+          ? user.contactDetails
+          : user.legalEntity.contactDetails
+
+      const sharedDetails: Partial<Party> = {
+        Address: contactDetails?.addresses?.map(address),
+        PhoneNumber: [
+          ...(contactDetails?.contactNumbers?.map(phone) ?? []),
+          ...(contactDetails?.faxNumbers?.map(phoneByFax) ?? []),
+        ],
+        ElectronicAddress: [
+          ...(contactDetails?.emailIds?.map(electronicAddressByEmail) ?? []),
+          ...(contactDetails?.websites?.map(electronicAddressByWebsite) ?? []),
+        ],
+      }
+
+      if (user.type === 'CONSUMER') {
+        subjects.push({
+          ...sharedDetails,
+          ActivityPartyTypeCode: '33',
+          BirthDateUnknownIndicator: indicator(
+            user.userDetails?.dateOfBirth == null
+          ),
+          IndividualBirthDateText: dateToDate(
+            dayjs(user.userDetails?.dateOfBirth, 'YYYY-MM-DD').toDate()
+          ),
+          PartyName:
+            user.userDetails != null
+              ? [partyNameByConsumerName(user.userDetails.name)]
+              : undefined,
+          FemaleGenderIndicator: indicator(user.userDetails?.gender === 'F'),
+          MaleGenderIndicator: indicator(user.userDetails?.gender === 'M'),
+          UnknownGenderIndicator: indicator(user.userDetails?.gender === 'NB'),
+        })
+      } else {
+        subjects.push({
+          ...sharedDetails,
+          ActivityPartyTypeCode: '33',
+          PartyName: [
+            partyNameByCompanyGeneralDetails(
+              user.legalEntity.companyGeneralDetails
+            ),
+          ],
+        })
+      }
+    }
+
+    let startDate = undefined
+    let endDate = undefined
+    let totalAmount = undefined
+    for (const transaction of transactions) {
+      startDate = startDate
+        ? Math.min(startDate, transaction.timestamp)
+        : transaction.timestamp
+      endDate = endDate
+        ? Math.max(endDate, transaction.timestamp)
+        : transaction.timestamp
+      if (transaction.destinationAmountDetails != null) {
+        const transactionAmount = await getTargetCurrencyAmount(
+          transaction.destinationAmountDetails,
+          'USD',
+          new Date(transaction.timestamp)
+        )
+        totalAmount = (totalAmount ?? 0) + transactionAmount.transactionAmount
+      }
+    }
+    let suspiciousActivity: SuspiciousActivityType | undefined = undefined
+    if (startDate != null && endDate != null) {
+      // todo: what is the difference between CumulativeTotalViolationAmountText and TotalSuspiciousAmountText
+      suspiciousActivity = {
+        CumulativeTotalViolationAmountText: totalAmount
+          ? amount(totalAmount)
+          : undefined,
+        TotalSuspiciousAmountText: totalAmount
+          ? amount(totalAmount)
+          : undefined,
+        NoAmountInvolvedIndicator: indicator(totalAmount == null),
+        SuspiciousActivityFromDateText: dateToDate(new Date(startDate)),
+        SuspiciousActivityToDateText: dateToDate(new Date(endDate)),
+      }
+    }
+
     const params = {
       report: {},
       transactions: transactions?.map((t) => {
         return { id: t.transactionId, transaction: {} }
       }),
       indicators: [],
+      transactionMetadata: {
+        subjects,
+        suspiciousActivity,
+      },
     }
     const schema: ReportSchema = {
       reportSchema: {

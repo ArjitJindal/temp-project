@@ -26,12 +26,12 @@ export class KenyaSARReportGenerator implements ReportGenerator {
     }
   }
 
-  public getPopulatedSchema(
+  public async getPopulatedSchema(
     reportId: string,
     c: Case,
     transactions: InternalTransaction[],
     _reporter: Account
-  ): PopulatedSchema {
+  ): Promise<PopulatedSchema> {
     const firstTxn =
       transactions && transactions.length > 0 ? transactions[0] : undefined
 

@@ -79,7 +79,7 @@ export class ReportService {
     const lastGeneratedReport =
       await this.reportRepository.getLastGeneratedReport(reportTypeId)
 
-    const populatedSchema = generator.getPopulatedSchema(
+    const populatedSchema = await generator.getPopulatedSchema(
       reportId,
       c,
       transactions,

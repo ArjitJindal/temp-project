@@ -19,7 +19,7 @@ export interface ReportGenerator {
     c: Case,
     transactions: InternalTransaction[],
     reporter: Account
-  ): PopulatedSchema
+  ): Promise<PopulatedSchema>
 
   // Generate the report (XML)
   generate(reportParams: ReportParameters): string

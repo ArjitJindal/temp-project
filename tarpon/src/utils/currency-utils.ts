@@ -4,6 +4,7 @@ import { TransactionAmountDetails } from '@/@types/openapi-public/TransactionAmo
 import { logger } from '@/core/logger'
 import { CurrencyCode } from '@/@types/openapi-public/CurrencyCode'
 import { addNewSubsegment } from '@/core/xray'
+import dayjs from '@/utils/dayjs'
 
 const MAX_CURRENCY_API_RETRY = 3
 
@@ -23,7 +24,8 @@ const cachedData: {
  */
 export async function getCurrencyExchangeRate(
   sourceCurrency: Currency,
-  targetCurrency: Currency
+  targetCurrency: Currency,
+  date?: Date
 ): Promise<number> {
   // TODO: Proper retry - FR-2724
   for (let i = 1; i <= MAX_CURRENCY_API_RETRY; i++) {
@@ -32,7 +34,8 @@ export async function getCurrencyExchangeRate(
     if (cachedData?.[sourceCurr]?.[targetCurr]) {
       return cachedData[sourceCurr][targetCurr]
     }
-    const apiUri = `https://cdn.jsdelivr.net/gh/fawazahmed0/currency-api@1/latest/currencies/${sourceCurr}/${targetCurr}.min.json`
+    const dateString = date ? dayjs(date).format('YYYY-MM-DD') : 'latest'
+    const apiUri = `https://cdn.jsdelivr.net/gh/fawazahmed0/currency-api@1/${dateString}/currencies/${sourceCurr}/${targetCurr}.min.json`
     const segment = await addNewSubsegment('Currency API', 'Fetch')
     try {
       const rate = (
@@ -57,13 +60,18 @@ export async function getCurrencyExchangeRate(
 
 export async function getTargetCurrencyAmount(
   transactionAmountDefails: TransactionAmountDetails,
-  targetCurrency: CurrencyCode
+  targetCurrency: CurrencyCode,
+  date?: Date
 ): Promise<TransactionAmountDetails> {
   const sourceCurrency = transactionAmountDefails.transactionCurrency
   if (sourceCurrency === targetCurrency) {
     return transactionAmountDefails
   }
-  const rate = await getCurrencyExchangeRate(sourceCurrency, targetCurrency)
+  const rate = await getCurrencyExchangeRate(
+    sourceCurrency,
+    targetCurrency,
+    date
+  )
   return {
     transactionAmount: transactionAmountDefails.transactionAmount * rate,
     transactionCurrency: targetCurrency,
