@@ -5,7 +5,7 @@ import PropertyInput from './PropertyInput';
 import { Props as LabelProps } from '@/components/library/Label';
 import InputField from '@/components/library/Form/InputField';
 import { useJsonSchemaEditorSettings } from '@/pages/rules/RuleConfigurationDrawer/JsonSchemaEditor/settings';
-import { humanizeSnakeCase } from '@/utils/humanize';
+import { humanizeAuto, humanizeCamelCase, humanizeSnakeCase } from '@/utils/humanize';
 import { useDeepEqualMemo } from '@/utils/hooks';
 import { neverReturn } from '@/utils/lang';
 import { dereferenceType } from '@/pages/rules/RuleConfigurationDrawer/JsonSchemaEditor/schema-utils';
@@ -32,6 +32,10 @@ export default function Property(props: Props) {
         return dontHumanize;
       case 'SNAKE_CASE':
         return humanizeSnakeCase;
+      case 'CAMEL_CASE':
+        return humanizeCamelCase;
+      case 'AUTO':
+        return humanizeAuto;
       default:
         return neverReturn(settings.propertyNameStyle, dontHumanize);
     }

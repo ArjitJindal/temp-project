@@ -18,7 +18,7 @@ import ReportStep from '@/components/Sar/SarReportDrawer/SarReportDrawerForm/Rep
 import TransactionStep from '@/components/Sar/SarReportDrawer/SarReportDrawerForm/TransactionStep';
 import AttachmentsStep from '@/components/Sar/SarReportDrawer/SarReportDrawerForm/AttachmentsStep';
 
-const settings: Partial<JsonSchemaEditorSettings> = { propertyNameStyle: 'SNAKE_CASE' };
+const settings: Partial<JsonSchemaEditorSettings> = {};
 
 export type FormState = Partial<{
   [REPORT_STEP]: unknown;

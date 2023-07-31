@@ -2,12 +2,12 @@ import React, { useContext } from 'react';
 import { useDeepEqualMemo } from '@/utils/hooks';
 
 export interface JsonSchemaEditorSettings {
-  propertyNameStyle: 'SNAKE_CASE' | 'AS_IS';
+  propertyNameStyle: 'SNAKE_CASE' | 'CAMEL_CASE' | 'AUTO' | 'AS_IS';
   showOptionalMark: boolean;
 }
 
 export const DEFAULT_FORM_SETTINGS: JsonSchemaEditorSettings = {
-  propertyNameStyle: 'AS_IS',
+  propertyNameStyle: 'AUTO',
   showOptionalMark: true,
 };
 export const JsonSchemaEditorSettingsContext =
