@@ -310,43 +310,29 @@ export class MongoDbTransactionRepository
       })
     }
 
-    if (
-      params.filterOriginUserId ||
-      params.filterDestinationUserId ||
-      params.filterUserId
-    ) {
-      let otherConditions = {}
-      if (conditions.length > 0) {
-        otherConditions = { $and: conditions }
-      }
-      const $or = []
-      if (params.filterUserId) {
-        $or.push(
+    if (params.filterUserId) {
+      conditions.push({
+        $or: [
           {
             originUserId: { $in: [params.filterUserId] },
-            ...otherConditions,
           },
           {
             destinationUserId: { $in: [params.filterUserId] },
-            ...otherConditions,
-          }
-        )
-      }
-      if (params.filterOriginUserId) {
-        $or.push({
-          originUserId: { $in: [params.filterOriginUserId] },
-          ...otherConditions,
-        })
-      }
-      if (params.filterDestinationUserId) {
-        $or.push({
-          destinationUserId: { $in: [params.filterDestinationUserId] },
-          ...otherConditions,
-        })
-      }
-      return {
-        $or,
-      }
+          },
+        ],
+      })
+    }
+
+    if (params.filterOriginUserId) {
+      conditions.push({
+        originUserId: { $in: [params.filterOriginUserId] },
+      })
+    }
+
+    if (params.filterDestinationUserId) {
+      conditions.push({
+        destinationUserId: { $in: [params.filterDestinationUserId] },
+      })
     }
 
     if (conditions.length === 0) {
