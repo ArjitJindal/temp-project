@@ -36,21 +36,28 @@ export default function CRMMonitoring(props: Props) {
     >
       {(crmResponse) => (
         <Card.Root className={s.root}>
-          <Card.Section>
-            <ScopeSelector
-              selectedSection={selectedSection}
-              setSelectedSection={setSelectedSection}
-              count={{
-                emails: crmResponse.engagements.length,
-                notes: crmResponse.notes.length,
-                tasks: crmResponse.tasks.length,
-              }}
-            />
-            {selectedSection === 'SUMMARY' && <Summary summary={crmResponse.summary} />}
-            {selectedSection === 'EMAILS' && <Emails emails={crmResponse.engagements} />}
-            {selectedSection === 'TASKS' && <Tasks tasks={crmResponse.tasks} />}
-            {selectedSection === 'NOTES' && <Notes notes={crmResponse.notes} />}
-          </Card.Section>
+          {crmResponse && (
+            <Card.Section>
+              <ScopeSelector
+                selectedSection={selectedSection}
+                setSelectedSection={setSelectedSection}
+                count={{
+                  emails: crmResponse.engagements.length,
+                  notes: crmResponse.notes.length,
+                  tasks: crmResponse.tasks.length,
+                }}
+              />
+              {selectedSection === 'SUMMARY' && <Summary summary={crmResponse.summary} />}
+              {selectedSection === 'EMAILS' && <Emails emails={crmResponse.engagements} />}
+              {selectedSection === 'TASKS' && <Tasks tasks={crmResponse.tasks} />}
+              {selectedSection === 'NOTES' && <Notes notes={crmResponse.notes} />}
+            </Card.Section>
+          )}
+          {!crmResponse && (
+            <Card.Root className={s.root}>
+              <Empty image={Empty.PRESENTED_IMAGE_SIMPLE} />
+            </Card.Root>
+          )}
         </Card.Root>
       )}
     </AsyncResourceRenderer>
