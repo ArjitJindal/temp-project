@@ -93,10 +93,10 @@ function CaseDetails(props: Props) {
                 {
                   tab: (
                     <div className={style.icon}>
-                      <BrainIcon /> <span>&nbsp; Insights</span>
+                      <BrainIcon /> <span>&nbsp; Merchant monitoring</span>
                     </div>
                   ),
-                  key: 'ai-insights',
+                  key: 'ai-merchant-monitoring',
                   children: <AIInsightsCard user={user as InternalBusinessUser} />,
                   isClosable: false,
                   isDisabled: false,

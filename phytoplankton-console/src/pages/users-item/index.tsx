@@ -154,7 +154,7 @@ export default function UserItem() {
                           <BrainIcon /> <span>&nbsp; Merchant monitoring</span>
                         </div>
                       ),
-                      key: 'ai-insights',
+                      key: 'ai-merchant-monitoring',
                       children: <AIInsightsCard user={user} />,
                       isClosable: false,
                       isDisabled: false,
