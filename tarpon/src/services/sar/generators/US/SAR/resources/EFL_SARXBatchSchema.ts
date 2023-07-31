@@ -2,12 +2,15 @@ export const FincenJsonSchema = {
   $id: 'schema.json',
   $schema: 'http://json-schema.org/draft-07/schema#',
   title:
-    'This JSON Schema file was generated from schema on Thu Jul 27 2023 23:21:38 GMT+0200 (Central European Summer Time).  For more information please see http://www.xsd2jsonschema.org',
+    'This JSON Schema file was generated from schema on Fri Jul 28 2023 20:04:16 GMT+0530 (India Standard Time).  For more information please see http://www.xsd2jsonschema.org',
   description:
     "Schema tag attributes: xmlns='www.fincen.gov/base' xmlns:xsd='http://www.w3.org/2001/XMLSchema' xmlns:vc='http://www.w3.org/2007/XMLSchema-versioning' xmlns:fc2='www.fincen.gov/base' xmlns:xsi='http://www.w3.org/2001/XMLSchema-instance' targetNamespace='www.fincen.gov/base' elementFormDefault='qualified' attributeFormDefault='unqualified' vc:minVersion='1.1'",
   properties: {
     EFilingBatchXML: {
       $ref: '#/definitions/EFilingBatchXML',
+      title: 'Batch acknowledgement',
+      description:
+        'This is the container for the contents of the batch acknowledgement file.',
     },
   },
   type: 'object',
@@ -17,6 +20,9 @@ export const FincenJsonSchema = {
       properties: {
         AccountNumberText: {
           $ref: '#/definitions/RestrictString40',
+          title: 'Account number',
+          description:
+            'This element identifies the account number involved in the suspicious activity related to the recorded subject.',
         },
       },
       type: 'object',
@@ -56,12 +62,21 @@ export const FincenJsonSchema = {
       properties: {
         ActivityIPAddressDateText: {
           $ref: '#/definitions/DateYYYYMMDDOrBlankType',
+          title: 'IP address (date)',
+          description:
+            'This element identifies the date of the activity associated with the reported IP address.',
         },
         ActivityIPAddressTimeStampText: {
           $ref: '#/definitions/ValidateTimeDataOrBlankType',
+          title: 'IP address (timestamp)',
+          description:
+            'This element identifies the UTC time of the first instance of the reported IP address.',
         },
         IPAddressText: {
           $ref: '#/definitions/RestrictString39',
+          title: 'IP address (text)',
+          description:
+            'This element identifies the IP address of the subject’s electronic internet based contact with the financial institution. example, this may be the IP address used to log into the institution’s online banking page or the IP address used to access an institution’s mobile application.',
         },
       },
       type: 'object',
@@ -71,9 +86,15 @@ export const FincenJsonSchema = {
       properties: {
         ActivityNarrativeSequenceNumber: {
           $ref: '#/definitions/ValidateActivityNarrativeSequenceNumber',
+          title: 'Narrative (sequence number)',
+          description:
+            'This element identifies the sequence in which the narrative text should be constructed in the event that multiple ActivityNarrativeInformation element blocks are needed to record the entire narrative',
         },
         ActivityNarrativeText: {
           $ref: '#/definitions/RestrictString4000',
+          title: 'Narrative (description)',
+          description:
+            'This element records the narrative description associated with the suspicious activity. The narrative must provide a clear, complete, and concise description of the activity, including what was unusual or irregular that caused suspicion. ',
         },
       },
       type: 'object',
@@ -83,6 +104,9 @@ export const FincenJsonSchema = {
       properties: {
         OriginalAttachmentFileName: {
           $ref: '#/definitions/RestrictString150',
+          title: 'Attachment file name',
+          description:
+            'This element declares the attachment file name included with the FinCEN SAR being filed.',
         },
       },
       type: 'object',
@@ -116,33 +140,63 @@ export const FincenJsonSchema = {
       properties: {
         CityUnknownIndicator: {
           $ref: '#/definitions/ValidateIndicatorType',
+          title: 'City unknown (indicator)',
+          description:
+            'This element declares that the city associated with the address of the party is unknown.',
         },
         CountryCodeUnknownIndicator: {
           $ref: '#/definitions/ValidateIndicatorType',
+          title: 'Country unknown (indicator)',
+          description:
+            'This element declares that country associated with the address of the party is unknown.',
         },
         RawCityText: {
           $ref: '#/definitions/RestrictString50',
+          title: 'City',
+          description:
+            'This element identifies the city associated with the address of the party.',
         },
         RawCountryCodeText: {
           $ref: '#/definitions/RestrictString2',
+          title: 'Country (code)',
+          description:
+            'This element identifies the country associated with the party.',
         },
         RawStateCodeText: {
           $ref: '#/definitions/RestrictString3',
+          title: 'State/Territory/Province (code)',
+          description:
+            'This element identifies the state/territory/province associated with the address of the party when the corresponding country is equal to US (United States), CA (Canada), MX (Mexico), or a U.S. Territory.',
         },
         RawStreetAddress1Text: {
           $ref: '#/definitions/RestrictString100',
+          title: 'Street address',
+          description:
+            'This element identifies the street address of the party.',
         },
         RawZIPCode: {
           $ref: '#/definitions/RestrictString9',
+          title: 'ZIP/Postal Code',
+          description:
+            'This element identifies the ZIP Code or foreign postal code associated with the address of the party.',
         },
         StateCodeUnknownIndicator: {
           $ref: '#/definitions/ValidateIndicatorType',
+          title: 'State unknown (indicator)',
+          description:
+            'This element declares that state associated with the address of the party is unknown when the corresponding country is equal to US (United States), CA (Canada), or MX (Mexico).',
         },
         StreetAddressUnknownIndicator: {
           $ref: '#/definitions/ValidateIndicatorType',
+          title: 'Street address unknown (indicator)',
+          description:
+            'This element declares that the street address of the party is unknown.',
         },
         ZIPCodeUnknownIndicator: {
           $ref: '#/definitions/ValidateIndicatorType',
+          title: 'ZIP/Postal Code unknown (indicator)',
+          description:
+            'This element declares that the ZIP Code or foreign postal code associated with the address of the party is unknown.',
         },
       },
       type: 'object',
@@ -152,9 +206,15 @@ export const FincenJsonSchema = {
       properties: {
         AssetAttributeDescriptionText: {
           $ref: '#/definitions/RestrictString50',
+          title: 'Asset attribute other',
+          description:
+            'This element provides a description of the reported asset attribute involved in the suspicious activity',
         },
         AssetAttributeTypeID: {
           $ref: '#/definitions/ValidateAssetAttributeTypeIDTypeCode',
+          title: 'Asset attribute type (code)',
+          description:
+            'This element identifies the type/category of asset attribute, specifically whether it is a type of commodity, product/instrument, market where traded, or CUSIP number',
         },
       },
       type: 'object',
@@ -164,12 +224,21 @@ export const FincenJsonSchema = {
       properties: {
         AssetSubtypeID: {
           $ref: '#/definitions/ValidateAssetSubtypeIDTypeCode',
+          title: 'Asset subtype',
+          description:
+            'This element identifies the specific type of asset involved in the suspicious activity, such as Bonds/Notes if a product type is involved, or Bank/cashier’s check if an instrument/payment mechanism is involved.',
         },
         AssetTypeID: {
           $ref: '#/definitions/ValidateAssetTypeIDTypeCode',
+          title: 'Asset type (code)',
+          description:
+            'This element identifies the type/category of assets, specifically whether it is associated with a product type or instrument/payment mechanism.',
         },
         OtherAssetSubtypeText: {
           $ref: '#/definitions/RestrictString50',
+          title: 'Asset other',
+          description:
+            'This element identifies the description of the other type of reported asset subtype.',
         },
       },
       type: 'object',
@@ -179,18 +248,32 @@ export const FincenJsonSchema = {
       properties: {
         CyberEventDateText: {
           $ref: '#/definitions/DateYYYYMMDDOrBlankType',
+          title: 'Cyber event (date)',
+          description:
+            'This element identifies the date of the first instance of the reported cyber event, specifically, when reporting a Command and Control IP address or Suspicious IP Address.',
         },
         CyberEventIndicatorsTypeCode: {
           $ref: '#/definitions/ValidateCyberEventIndicatorsTypeCode',
+          title: 'Cyber event indicator type (code)',
+          description: 'This element identifies the cyber event indicator type',
         },
         CyberEventTimeStampText: {
           $ref: '#/definitions/ValidateTimeDataOrBlankType',
+          title: 'Cyber event (timestamp)',
+          description:
+            'This element identifies the UTC time of the first instance of the reported cyber event, specifically, when reporting a Command and Control IP address or Suspicious IP Address.',
         },
         CyberEventTypeOtherText: {
           $ref: '#/definitions/RestrictString50',
+          title: 'Cyber event other',
+          description:
+            'This element identifies the description of the other type of reported cyber event.',
         },
         EventValueText: {
           $ref: '#/definitions/RestrictString4000',
+          title: 'Cyber event (value)',
+          description:
+            'This element identifies the event value associated with the reported cyber event',
         },
       },
       type: 'object',
@@ -200,9 +283,15 @@ export const FincenJsonSchema = {
       properties: {
         ElectronicAddressText: {
           $ref: '#/definitions/RestrictString517',
+          title: 'Electronic address',
+          description:
+            'This element identifies the subject`s email address or website URL (Uniform Resource Locator) address.',
         },
         ElectronicAddressTypeCode: {
           $ref: '#/definitions/ValidateElectronicAddressTypeCode',
+          title: 'Electronic address type (code)',
+          description:
+            'This element identifies the type of electronic address recorded for the subject; specifically whether it is an email address or a website URL (Uniform Resource Locator) address.',
         },
       },
       type: 'object',
@@ -212,15 +301,26 @@ export const FincenJsonSchema = {
       properties: {
         OrganizationSubtypeID: {
           $ref: '#/definitions/ValidateOrganizationSubtypeCodeType',
+          title: 'Institution subtype (code)',
+          description:
+            ' This element identifies the specific type of gaming or securities/futures institution',
         },
         OrganizationTypeID: {
           $ref: '#/definitions/ValidateOrganizationCodeType',
+          title: 'Institution type (code)',
+          description: 'This element identifies the type of institution.',
         },
         OtherOrganizationSubTypeText: {
           $ref: '#/definitions/RestrictString50',
+          title: 'Institution subtype other (description)',
+          description:
+            'This element identifies the other type of gaming or securities/futures institution.',
         },
         OtherOrganizationTypeText: {
           $ref: '#/definitions/RestrictString50',
+          title: 'Institution type other (description)',
+          description:
+            'This element identifies the description of the other gaming or securities/futures institution.',
         },
       },
       type: 'object',
@@ -230,9 +330,14 @@ export const FincenJsonSchema = {
       properties: {
         AccountClosedIndicator: {
           $ref: '#/definitions/ValidateIndicatorType',
+          title: 'Account closed (indicator)',
+          description:
+            'This element declares that the recorded account is closed.',
         },
         PartyAccountAssociationTypeCode: {
           $ref: '#/definitions/ValidatePartyAccountAssociationCodeType',
+          title: 'Party account association type (code)',
+          description: 'This element is for FinCEN purposes only.',
         },
       },
       type: 'object',
@@ -242,60 +347,117 @@ export const FincenJsonSchema = {
       properties: {
         AccountantIndicator: {
           $ref: '#/definitions/ValidateIndicatorType',
+          title: 'Accountant (indicator)',
+          description:
+            'This element declares that the subject’s relationship to the institution can be described as "Accountant".',
         },
         ActionTakenDateText: {
           $ref: '#/definitions/DateYYYYMMDDOrBlankType',
+          title: 'Action date',
+          description:
+            'This element identifies the date on which the action was taken in the event that the relationship no longer continues between the subject and the institution.',
         },
         AgentIndicator: {
           $ref: '#/definitions/ValidateIndicatorType',
+          title: 'Agent (indicator)',
+          description:
+            'This element declares that the subject’s relationship to the institution can be described as "Agent."',
         },
         AppraiserIndicator: {
           $ref: '#/definitions/ValidateIndicatorType',
+          title: 'Appraiser (indicator)',
+          description:
+            'This element declares that the subject’s relationship to the institution can be described as "Appraiser." ',
         },
         AttorneyIndicator: {
           $ref: '#/definitions/ValidateIndicatorType',
+          title: 'Attorney (indicator)',
+          description:
+            'This element declares that the subject’s relationship to the institution can be described as "Attorney."',
         },
         BorrowerIndicator: {
           $ref: '#/definitions/ValidateIndicatorType',
+          title: 'Borrower (indicator)',
+          description:
+            'This element declares that the subject’s relationship to the institution can be described as "Borrower."',
         },
         CustomerIndicator: {
           $ref: '#/definitions/ValidateIndicatorType',
+          title: 'Customer (indicator)',
+          description:
+            'This element declares that the subject’s relationship to the institution can be described as "Customer."',
         },
         DirectorIndicator: {
           $ref: '#/definitions/ValidateIndicatorType',
+          title: 'Director (indicator)',
+          description:
+            'This element declares that the subject’s relationship to the institution can be described as "Director." ',
         },
         EmployeeIndicator: {
           $ref: '#/definitions/ValidateIndicatorType',
+          title: 'Employee (indicator)',
+          description:
+            'This element declares that the subject’s relationship to the institution can be described as "Employee." ',
         },
         NoRelationshipToInstitutionIndicator: {
           $ref: '#/definitions/ValidateIndicatorType',
+          title: 'No relationship to institution (indicator)',
+          description:
+            'This element declares that the subject has no relationship with any of the financial institutions recorded in the FinCEN SAR.',
         },
         OfficerIndicator: {
           $ref: '#/definitions/ValidateIndicatorType',
+          title: 'Officer (indicator)',
+          description:
+            'This element declares that the subject’s relationship to the institution can be described as "Officer." ',
         },
         OtherPartyAssociationTypeText: {
           $ref: '#/definitions/RestrictString50',
+          title: 'Other relationship',
+          description:
+            'This element declares that the subject`s relationship to the institution is not covered by any of pre-defined options.',
         },
         OtherRelationshipIndicator: {
           $ref: '#/definitions/ValidateIndicatorType',
+          title: 'Other relationship (indicator)',
+          description:
+            ' This element describes the other type of relationship between the subject and the institution.',
         },
         OwnerShareholderIndicator: {
           $ref: '#/definitions/ValidateIndicatorType',
+          title: 'Owner or controlling shareholder (indicator)',
+          description:
+            ' This element declares that the subject’s relationship to the institution can be described as "Owner or controlling shareholder." ',
         },
         RelationshipContinuesIndicator: {
           $ref: '#/definitions/ValidateIndicatorType',
+          title: 'Relationship continues (indicator)',
+          description:
+            'This element declares that the status of the subject’s relationship to the institution can be described as "Relationship continues." ',
         },
         ResignedIndicator: {
           $ref: '#/definitions/ValidateIndicatorType',
+          title: 'Resigned (indicator)',
+          description:
+            'This element declares that the status of the subject’s relationship to the institution can be described as "Resigned." ',
         },
         SubjectRelationshipFinancialInstitutionTINText: {
           $ref: '#/definitions/RestrictString25',
+          title: 'Institution TIN',
+          description:
+            'This element identifies the TIN of the institution recorded in the FinCEN SAR that the subject has a relationship with.',
         },
         SuspendedBarredIndicator: {
           $ref: '#/definitions/ValidateIndicatorType',
+          title: 'Suspended/Barred (indicator)',
+          description:
+            'This element declares that the status of the subject’s relationship to the institution can be described as "Suspended/Barred." ',
         },
         TerminatedIndicator: {
           $ref: '#/definitions/ValidateIndicatorType',
+          title: 'Terminated (indicator)',
+          description:
+            'This element declares that the status of the subject’s relationship to the institution can be described as "Terminated." ',
         },
       },
       type: 'object',
@@ -305,24 +467,45 @@ export const FincenJsonSchema = {
       properties: {
         IdentificationPresentUnknownIndicator: {
           $ref: '#/definitions/ValidateIndicatorType',
+          title: 'Identification unknown (indicator)',
+          description:
+            'This element declares that the form of identification used to verify the identity of the subject is unknown',
         },
         OtherIssuerCountryText: {
           $ref: '#/definitions/RestrictString2',
+          title: 'Identification issuing country (code)',
+          description:
+            ' This element identifies the country where the identification was issued by (or in) associated with the subject.',
         },
         OtherIssuerStateText: {
           $ref: '#/definitions/RestrictString3',
+          title: 'Identification issuing state (code)',
+          description:
+            'This element identifies the state where the identification was issued by (or in) associated with the subject',
         },
         OtherPartyIdentificationTypeText: {
           $ref: '#/definitions/RestrictString50',
+          title: 'Identification type other description (text)',
+          description:
+            'This element identifies the other identification type associated with the party.',
         },
         PartyIdentificationNumberText: {
           $ref: '#/definitions/RestrictString25',
+          title: 'Identification number',
+          description:
+            'This element identifies the form of identification number associated with the party.',
         },
         PartyIdentificationTypeCode: {
           $ref: '#/definitions/ValidatePartyIdentificationCodeType',
+          title: 'Identification type (code)',
+          description:
+            'This element identifies the type of identification associated with the party.',
         },
         TINUnknownIndicator: {
           $ref: '#/definitions/ValidateIndicatorType',
+          title: 'TIN unknown (indicator)',
+          description:
+            'This element declares that the TIN associated with the party is unknown.',
         },
       },
       type: 'object',
@@ -332,27 +515,50 @@ export const FincenJsonSchema = {
       properties: {
         EntityLastNameUnknownIndicator: {
           $ref: '#/definitions/ValidateIndicatorType',
+          title: 'Entity name or Individual last name unknown (indicator)',
+          description:
+            'This element declares that the person legal name (if entity) or last name (if individual) is unknown.',
         },
         FirstNameUnknownIndicator: {
           $ref: '#/definitions/ValidateIndicatorType',
+          title: 'Individual first name unknown (indicator)',
+          description:
+            'This element declares that the first name of the subject is unknown.',
         },
         PartyNameTypeCode: {
           $ref: '#/definitions/ValidatePartyNameCodeType',
+          title: 'Party name type (code)',
+          description:
+            'This element identifies the type of name recorded for the party; specifically, legal name, doing business as (DBA) name, or also known as (AKA) name.',
         },
         RawEntityIndividualLastName: {
           $ref: '#/definitions/RestrictString150',
+          title: 'Entity name or Individual last name',
+          description:
+            'This element identifies the subject`s legal name, whether it be the legal name of the entity or the last name of the individual.',
         },
         RawIndividualFirstName: {
           $ref: '#/definitions/RestrictString35',
+          title: 'First name',
+          description: 'This element identifies the first name of the subject.',
         },
         RawIndividualMiddleName: {
           $ref: '#/definitions/RestrictString35',
+          title: 'Middle name',
+          description:
+            'This element identifies the middle name of the subject.',
         },
         RawIndividualNameSuffixText: {
           $ref: '#/definitions/RestrictString35',
+          title: 'Individual suffix name',
+          description:
+            'This element identifies the suffix name of the subject.',
         },
         RawPartyFullName: {
           $ref: '#/definitions/RestrictString150',
+          title: 'Party full name',
+          description:
+            'This element identifies the full name of the party, whether it be the legal name if the institution, or DBA/AKA name of the institution or individual.',
         },
       },
       type: 'object',
@@ -362,9 +568,15 @@ export const FincenJsonSchema = {
       properties: {
         NAICSCode: {
           $ref: '#/definitions/RestrictString6',
+          title: 'NAICS Code',
+          description:
+            'This element identifies the North American Industry Classification System (NAICS) code for the occupation or type of business of the subject.',
         },
         OccupationBusinessText: {
           $ref: '#/definitions/RestrictString50',
+          title: 'Occupation or type of business',
+          description:
+            'This element identifies the description of the occupation, profession, or type of business of the subject.',
         },
       },
       type: 'object',
@@ -374,6 +586,9 @@ export const FincenJsonSchema = {
       properties: {
         ActivityPartyTypeCode: {
           $ref: '#/definitions/ValidateActivityPartyCodeType',
+          title: 'Party type',
+          description:
+            'This element identifies the type of party associated with the FinCEN SAR; specifically, the branch where activity occurred.',
         },
         AdmissionConfessionNoIndicator: {
           $ref: '#/definitions/ValidateIndicatorType',
@@ -396,57 +611,112 @@ export const FincenJsonSchema = {
         BirthDateUnknownIndicator: {
           $ref: '#/definitions/ValidateIndicatorType',
           title: 'Date of birth unknown (indicator)',
+          description:
+            'This element identifies the date of birth associated with the subject.',
         },
         BothPurchaserSenderPayeeReceiveIndicator: {
           $ref: '#/definitions/ValidateIndicatorType',
+          title:
+            "Subject's role in suspicious activity (both Purchaser/Sender and Payee/Receiver)",
+          description:
+            'This element declares that the subject was both a purchaser/sender of the financial instrument(s) or product(s) involved in the suspicious activity and payee/receiver of the instrument(s) or product(s) involved in the suspicious activity.',
         },
         ContactDateText: {
           $ref: '#/definitions/DateYYYYMMDDOrBlankType',
+          title: ' LE contact date',
+          description:
+            'Law enforcement contact date (date). This element identifies the most-recent date the law enforcement agency was contacted about the suspicious activity.',
         },
         FemaleGenderIndicator: {
           $ref: '#/definitions/ValidateIndicatorType',
+          title: 'Gender (female)',
+          description:
+            'This element declares that the gender of the subject is female.',
         },
         IndividualBirthDateText: {
           $ref: '#/definitions/DateYYYYMMDDOrBlankTypeDOB',
+          title: 'Date of birth',
+          description:
+            'This element declares that the date of birth associated with the subject is unknown.',
         },
         LossToFinancialAmountText: {
           $ref: '#/definitions/RestrictString15',
+          title: 'Loss to financial institution (if applicable)',
+          description:
+            'This element identifies the dollar amount loss to the financial institution because of the suspicious activity.',
         },
         MaleGenderIndicator: {
           $ref: '#/definitions/ValidateIndicatorType',
+          title: 'Gender (male)',
+          description:
+            'This element declares that the gender of the subject is male.',
         },
         NoBranchActivityInvolvedIndicator: {
           $ref: '#/definitions/ValidateIndicatorType',
+          title: 'No branch activity involved',
+          description:
+            'This element declares that there is no branch location involved in the suspicious activity for the associated financial institution where activity occurred.',
         },
         NoKnownAccountInvolvedIndicator: {
           $ref: '#/definitions/ValidateIndicatorType',
+          title: 'No known account involved',
+          description:
+            'This element declares that no account related to the subject is involved in the suspicious activity.',
         },
         NonUSFinancialInstitutionIndicator: {
           $ref: '#/definitions/ValidateIndicatorType',
+          title: 'Non-U.S. financial institution (indicator)',
+          description:
+            'This element declares that the account is located at a foreign financial institution.',
         },
         PartyAsEntityOrganizationIndicator: {
           $ref: '#/definitions/ValidateIndicatorType',
+          title: 'Check if entity',
+          description: ' This element declares that the subject is an entity.',
         },
         PayeeReceiverIndicator: {
           $ref: '#/definitions/ValidateIndicatorType',
+          title: 'Subject’s role in suspicious activity (Payee/Receiver)',
+          description:
+            'This element declares that the subject was the payee or receiver of the instrument(s) or product(s).',
         },
         PayLocationIndicator: {
           $ref: '#/definitions/ValidateIndicatorType',
+          title:
+            'Financial institution’s role in transaction (Paying location)',
+          description:
+            'This element declares that the customer received payment from the financial institution where activity occurred for the products or instruments recorded in the FinCEN SAR',
         },
         PrimaryRegulatorTypeCode: {
           $ref: '#/definitions/ValidateFederalRegulatorCodeType',
+          title: 'Primary regulator type (code)',
+          description:
+            'This element identifies the primary federal regulator or BSA examiner of the financial institution where activity occurred as well as the filing institution.',
         },
         PurchaserSenderIndicator: {
           $ref: '#/definitions/ValidateIndicatorType',
+          title: 'Subject’s role in suspicious activity (Purchaser/Sender)',
+          description:
+            'This element declares that the subject purchased or sent the financial instrument(s) or product(s) involved in the suspicious activity.',
         },
         SellingLocationIndicator: {
           $ref: '#/definitions/ValidateIndicatorType',
+          title: 'Selling location (indicator)',
+          description:
+            'This element declares that the customer purchased at the financial institution where activity occurred the products or instruments recorded in the FinCEN SAR',
         },
         SellingPayingLocationIndicator: {
           $ref: '#/definitions/ValidateIndicatorType',
+          title:
+            'Financial Institution’s role in transaction: Both Selling and Paying location',
+          description:
+            'This element declares that the financial institution where activity occurred was both a paying and selling location for the products or instruments recorded in the FinCEN SAR',
         },
         UnknownGenderIndicator: {
           $ref: '#/definitions/ValidateIndicatorType',
+          title: 'Gender (unknown)',
+          description:
+            'This element declares that the gender of the subject is unknown.',
         },
       },
       type: 'object',
@@ -456,12 +726,21 @@ export const FincenJsonSchema = {
       properties: {
         PhoneNumberExtensionText: {
           $ref: '#/definitions/RestrictString6',
+          title: 'Telephone extension',
+          description:
+            'This element identifies the telephone extension associated with the telephone number of the party (if known)',
         },
         PhoneNumberText: {
           $ref: '#/definitions/RestrictString16',
+          title: 'Telephone number',
+          description:
+            'This element identifies the telephone number of the party.',
         },
         PhoneNumberTypeCode: {
           $ref: '#/definitions/ValidatePhoneNumberCodeType',
+          title: 'Telephone number type (code)',
+          description:
+            'This element identifies the telephone number type associated with the subject',
         },
       },
       type: 'object',
@@ -471,12 +750,21 @@ export const FincenJsonSchema = {
       properties: {
         OtherSuspiciousActivityTypeText: {
           $ref: '#/definitions/RestrictString50',
+          title: 'Suspicious activity other',
+          description:
+            'This element identifies the other description of the suspicious activity in the event that a type/category of activity applies (i.e. Structuring, Terrorist financing, etc.) but none of the subtype options apply. ',
         },
         SuspiciousActivitySubtypeID: {
           $ref: '#/definitions/ValidateSuspiciousActivitySubtypeID',
+          title: 'Suspicious activity subtype (code)',
+          description:
+            'This element identifies the suspicious activity subtype, such as the specific type of structuring or specific type of gaming activity',
         },
         SuspiciousActivityTypeID: {
           $ref: '#/definitions/ValidateSuspiciousActivityTypeID',
+          title: 'Suspicious activity type (code)',
+          description:
+            'This element identifies the type/category of suspicious activity, such as Structuring, Terrorist financing, Fraud, etc',
         },
       },
       type: 'object',
@@ -486,21 +774,40 @@ export const FincenJsonSchema = {
       properties: {
         AmountUnknownIndicator: {
           $ref: '#/definitions/ValidateIndicatorType',
+          title: 'Amount unknown (indicator)',
+          description:
+            'This element declares that the total dollar amount involved in the FinCEN SAR for the time period being reported is unknown.',
         },
         CumulativeTotalViolationAmountText: {
           $ref: '#/definitions/RestrictString15',
+          title: 'Cumulative amount',
+          description:
+            'This element identifies the cumulative amount (in whole U.S. dollars) involved in the suspicious activity',
         },
         NoAmountInvolvedIndicator: {
           $ref: '#/definitions/ValidateIndicatorType',
+          title: 'No amount involved (indicator).',
+          description:
+            'This element declares that there is no amount involved in the suspicious activity',
         },
         SuspiciousActivityFromDateText: {
           $ref: '#/definitions/DateYYYYMMDDType',
+          title: 'Date or start date of suspicious activity',
+          description:
+            'This element identifies either the date on which the suspicious activity occurred (in the event that the suspicious activity occurred on a single day) or the earliest date of suspicious activity (in the event that that suspicious activity occurred on multiple days). ',
         },
         SuspiciousActivityToDateText: {
           $ref: '#/definitions/DateYYYYMMDDOrBlankType',
+          title:
+            'End date of suspicious activity (when different from the start date)',
+          description:
+            'This element identifies the most recent date of suspicious activity (in the event that that suspicious activity occurred on multiple days).',
         },
         TotalSuspiciousAmountText: {
           $ref: '#/definitions/RestrictString15',
+          title: 'Total amount involved',
+          description:
+            'This element identifies the total amount (in whole U.S. dollars) involved in the suspicious activity for the time period of the report.',
         },
       },
       type: 'object',
@@ -550,6 +857,9 @@ export const FincenJsonSchema = {
         },
       },
       type: 'object',
+      title: 'Batch acknowledgement',
+      description:
+        'This is the container for the contents of the batch acknowledgement file.',
     },
     Activity: {
       type: 'object',
@@ -567,9 +877,15 @@ export const FincenJsonSchema = {
           properties: {
             ActivityAssociation: {
               $ref: '#/definitions/ActivityAssociationType',
+              title: 'Type of filing',
+              description:
+                'This element is the container for information about the type of filing associated with the FinCEN SAR.',
             },
             ActivitySupportDocument: {
               $ref: '#/definitions/ActivitySupportDocumentType',
+              title: 'Supporting Document',
+              description:
+                'This element is the container for information about the supporting document as an attachment to the FinCEN SAR being filed.',
             },
             Party: {
               items: {
@@ -578,6 +894,9 @@ export const FincenJsonSchema = {
               maxItems: 1203,
               minItems: 6,
               type: 'array',
+              title: 'Party',
+              description:
+                'This is the container for information about the individual or entity associated with the FinCEN SAR; specifically, the branch location where activity occurred.',
             },
             SuspiciousActivity: {
               $ref: '#/definitions/SuspiciousActivity',
@@ -588,6 +907,9 @@ export const FincenJsonSchema = {
               },
               maxItems: 99,
               type: 'array',
+              title: 'IP Address',
+              description:
+                'This element is the container for information about IP address involved in the suspicious activity',
             },
             CyberEventIndicators: {
               items: {
@@ -595,6 +917,9 @@ export const FincenJsonSchema = {
               },
               maxItems: 99,
               type: 'array',
+              title: 'Cyber Event',
+              description:
+                'This element is the container for information about cyber event involved in the suspicious activity',
             },
             Assets: {
               items: {
@@ -602,6 +927,9 @@ export const FincenJsonSchema = {
               },
               maxItems: 31,
               type: 'array',
+              title: 'Asset',
+              description:
+                'This element is the container for information about asset involved in the suspicious activity, specifically the product type, instrument type, and/or payment mechanism.',
             },
             AssetsAttribute: {
               items: {
@@ -609,6 +937,9 @@ export const FincenJsonSchema = {
               },
               maxItems: 396,
               type: 'array',
+              title: 'Asset Attribute',
+              description:
+                'This element is the container for information about the asset attribute involved in the suspicious activity, whether it be a type of commodity, product/instrument, market where traded, and/or CUSIP number',
             },
             ActivityNarrativeInformation: {
               items: {
@@ -616,6 +947,9 @@ export const FincenJsonSchema = {
               },
               maxItems: 5,
               type: 'array',
+              title: 'Narrative',
+              description:
+                'This element is the container for information about narrative description associated with the FinCEN SAR.',
             },
           },
         },
@@ -635,6 +969,9 @@ export const FincenJsonSchema = {
               },
               maxItems: 100,
               type: 'array',
+              title: 'Party name',
+              description:
+                'This is the container for information about the name of the party. The party name can be a legal name, doing business as (DBA) name, or also known as (AKA) name depending on the party type identified',
             },
             Address: {
               items: {
@@ -642,6 +979,9 @@ export const FincenJsonSchema = {
               },
               maxItems: 99,
               type: 'array',
+              title: 'Address',
+              description:
+                'This is the container for information about the address of the party.',
             },
             PhoneNumber: {
               items: {
@@ -649,6 +989,9 @@ export const FincenJsonSchema = {
               },
               maxItems: 99,
               type: 'array',
+              title: 'Telephone number',
+              description:
+                'This is the container for information about the telephone number of the party',
             },
             PartyIdentification: {
               items: {
@@ -656,6 +999,9 @@ export const FincenJsonSchema = {
               },
               maxItems: 100,
               type: 'array',
+              title: 'Party identification',
+              description:
+                'This is the container for information about the identification associated with the party.',
             },
             OrganizationClassificationTypeSubtype: {
               items: {
@@ -663,9 +1009,15 @@ export const FincenJsonSchema = {
               },
               maxItems: 15,
               type: 'array',
+              title: 'Institution type/subtype',
+              description:
+                'This is the container form information about the type and subtype of institution associated with the party.',
             },
             PartyOccupationBusiness: {
               $ref: '#/definitions/PartyOccupationBusinessType',
+              title: 'Occupation or type of business',
+              description:
+                'This is the container for information about the occupation or type of business of the subject.',
             },
             ElectronicAddress: {
               items: {
@@ -673,6 +1025,9 @@ export const FincenJsonSchema = {
               },
               maxItems: 198,
               type: 'array',
+              title: 'Electronic address',
+              description:
+                'This is the container for information about the subject`s e-mail address or website URL (Uniform Resource Locator). ',
             },
             PartyAssociation: {
               items: {
@@ -680,13 +1035,22 @@ export const FincenJsonSchema = {
               },
               maxItems: 99,
               type: 'array',
+              title: 'Party association',
+              description:
+                'This is the container for information about the subject`s relationship to the institution recorded in the FinCEN SAR, as well as information about the branch where activity occurred.',
             },
             PartyAccountAssociation: {
               $ref: '#/definitions/PartyAccountAssociation',
+              title: 'Party account association',
+              description:
+                'This is the container element for information about the financial institution and account(s) related to the subject.',
             },
           },
         },
       ],
+      title: 'Party',
+      description:
+        'This is the container for information about the individual or entity associated with the FinCEN SAR; specifically, the branch location where activity occurred.',
     },
     PartyAssociation: {
       type: 'object',
@@ -705,10 +1069,16 @@ export const FincenJsonSchema = {
                   type: 'array',
                 },
               ],
+              title: 'Party',
+              description:
+                'This is the container for information about the individual or entity associated with the FinCEN SAR; specifically, the branch location where activity occurred.',
             },
           },
         },
       ],
+      title: 'Party association',
+      description:
+        'This is the container for information about the subject`s relationship to the institution recorded in the FinCEN SAR, as well as information about the branch where activity occurred.',
     },
     PartyAccountAssociation: {
       type: 'object',
@@ -729,10 +1099,16 @@ export const FincenJsonSchema = {
                   type: 'array',
                 },
               ],
+              title: 'Party',
+              description:
+                'This is the container for information about the individual or entity associated with the FinCEN SAR; specifically, the branch location where activity occurred.',
             },
           },
         },
       ],
+      title: 'Party account association',
+      description:
+        'This is the container element for information about the financial institution and account(s) related to the subject.',
     },
     SuspiciousActivity: {
       type: 'object',
@@ -749,6 +1125,9 @@ export const FincenJsonSchema = {
               },
               maxItems: 99,
               type: 'array',
+              title: 'Suspicious activity classification',
+              description:
+                'This element is the container for information about the specific type of suspicious activity',
             },
           },
         },
