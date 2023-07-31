@@ -95,7 +95,8 @@
     "postman:integration:dev": "ENV=dev ts-node --transpileOnly scripts/run-integration-tests.ts",
     "postman:sync:collection": "ENV=local ts-node --transpileOnly scripts/sync-postman-collection.ts",
     "db:export": "ENV=dev ts-node --transpileOnly scripts/export-anon-tenant-data.ts",
-    "verify-remote-transactions": "ts-node scripts/debug-rule/verify-remote-transactions.ts",
+    "qa:clean": "ENV=local ts-node --transpileOnly scripts/qa-stack-cleanup.ts",
+    "verify-remote-transactions": "ts-node sxcripts/debug-rule/verify-remote-transactions.ts",
     "get-qa-api-key": "ts-node --transpileOnly scripts/print-qa-key.ts"
   },
   "repository": {
@@ -109,6 +110,7 @@
   },
   "homepage": "https://github.com/flagright/tarpon#readme",
   "devDependencies": {
+    "@aws-sdk/client-cloudformation": "^3.245.0",
     "@aws-sdk/credential-providers": "^3.245.0",
     "@faker-js/faker": "^7.6.0",
     "@openapitools/openapi-generator-cli": "^2.5.1",
@@ -167,6 +169,7 @@
     "mock-aws-s3": "^4.0.2",
     "mockdate": "^3.0.5",
     "npm-run-all": "^4.1.5",
+    "octokit": "^2.1.0",
     "prettier": "^2.5.1",
     "simple-git": "^3.13.0",
     "source-map-support": "^0.5.21",

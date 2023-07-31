@@ -28,7 +28,7 @@ jobs:
       - name: Use Node.js 16x
         uses: actions/setup-node@v3
         with:
-          node-version: 16.10.0
+          node-version: 16.20.1
           cache: "npm"
           cache-dependency-path: "tarpon/package-lock.json"
       - name: Cache jest results
