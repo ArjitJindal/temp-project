@@ -444,6 +444,11 @@ export const createMongoDBCollections = async (
 
     txnIndexes.push(
       {
+        destinationUserId: 1,
+        'executedRules.ruleInstanceId': 1,
+        timestamp: 1,
+      },
+      {
         transactionId: 1,
         timestamp: 1,
       },
