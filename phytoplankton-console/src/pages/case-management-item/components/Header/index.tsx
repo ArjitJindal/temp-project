@@ -1,8 +1,10 @@
 import React, { useMemo } from 'react';
 import _ from 'lodash';
+import { useMutation } from '@tanstack/react-query';
+import { CaseStatusWithDropDown } from '../../CaseStatusWithDropDown';
 import SubHeader from './SubHeader';
 import s from './index.module.less';
-import { Case, Comment } from '@/apis';
+import { Case, CaseStatus, Comment } from '@/apis';
 import { useApi } from '@/api';
 import BriefcaseLineIcon from '@/components/ui/icons/Remix/business/briefcase-line.react.svg';
 import * as Form from '@/components/ui/Form';
@@ -21,8 +23,8 @@ import {
   isInReviewCases,
   statusInReview,
 } from '@/utils/case-utils';
-import CaseStatusTag from '@/components/ui/CaseStatusTag';
 import { useAuth0User, useHasPermissions } from '@/utils/user-utils';
+import { CloseMessage, message } from '@/components/library/Message';
 
 interface Props {
   caseItem: Case;
@@ -62,6 +64,34 @@ export default function Header(props: Props) {
   }, [caseItem]);
 
   const isReview = useMemo(() => statusInReview(caseItem.caseStatus), [caseItem]);
+  let messageText: CloseMessage | undefined;
+  const statusChangeMutation = useMutation(
+    async (newStatus: CaseStatus) => {
+      if (caseId == null) {
+        throw new Error(`Case ID is not defined`);
+      }
+      messageText = message.loading('Changing case status...');
+      await api.patchCasesStatusChange({
+        CasesStatusUpdateRequest: {
+          caseIds: [caseId],
+          updates: {
+            reason: [],
+            caseStatus: newStatus,
+          },
+        },
+      });
+    },
+    {
+      onSuccess: () => {
+        onReload();
+        messageText?.();
+      },
+      onError: () => {
+        message.error('Failed to change case status');
+        messageText?.();
+      },
+    },
+  );
 
   return (
     <LegacyEntityHeader
@@ -116,6 +146,12 @@ export default function Header(props: Props) {
               caseStatus={caseItem.caseStatus}
               onSaved={onReload}
               isDisabled={caseItem.caseStatus === 'CLOSED' && !isReopenEnabled}
+              statusTransitions={{
+                OPEN_IN_PROGRESS: { status: 'CLOSED', actionLabel: 'Close' },
+                OPEN_ON_HOLD: { status: 'CLOSED', actionLabel: 'Close' },
+                ESCALATED_IN_PROGRESS: { status: 'CLOSED', actionLabel: 'Close' },
+                ESCALATED_ON_HOLD: { status: 'CLOSED', actionLabel: 'Close' },
+              }}
             />
           )}
           {escalationEnabled && !isReview && caseId && (
@@ -131,6 +167,16 @@ export default function Header(props: Props) {
                   actionLabel: 'Send back',
                 },
                 CLOSED: { status: 'ESCALATED', actionLabel: 'Escalate' },
+                OPEN_IN_PROGRESS: { status: 'ESCALATED', actionLabel: 'Escalate' },
+                OPEN_ON_HOLD: { status: 'ESCALATED', actionLabel: 'Escalate' },
+                ESCALATED_IN_PROGRESS: {
+                  status: caseClosedBefore ? 'REOPENED' : 'OPEN',
+                  actionLabel: 'Send back',
+                },
+                ESCALATED_ON_HOLD: {
+                  status: caseClosedBefore ? 'REOPENED' : 'OPEN',
+                  actionLabel: 'Send back',
+                },
               }}
             />
           )}
@@ -144,13 +190,24 @@ export default function Header(props: Props) {
           {user?.userId}
         </Id>
       </Form.Layout.Label>
-      <Form.Layout.Label
-        icon={<BriefcaseLineIcon />}
-        title={'Case Status'}
-        className={s.preventShrinkage}
-      >
-        <CaseStatusTag caseStatus={caseItem.caseStatus ?? 'OPEN'} previousStatus={previousStatus} />
-      </Form.Layout.Label>
+      {caseItem.caseStatus && (
+        <Form.Layout.Label
+          icon={<BriefcaseLineIcon />}
+          title={'Case Status'}
+          className={s.preventShrinkage}
+        >
+          <CaseStatusWithDropDown
+            caseStatus={caseItem.caseStatus}
+            statusChanges={caseItem.statusChanges ?? []}
+            previousStatus={previousStatus}
+            assignments={caseItem.assignments ?? []}
+            onSelect={(newStatus) => {
+              statusChangeMutation.mutate(newStatus);
+            }}
+          />
+        </Form.Layout.Label>
+      )}
+
       {caseItem.caseHierarchyDetails?.parentCaseId && (
         <Form.Layout.Label title={'Parent Case ID'}>
           <Id
@@ -163,6 +220,7 @@ export default function Header(props: Props) {
           </Id>
         </Form.Layout.Label>
       )}
+
       {caseItem.caseHierarchyDetails?.childCaseIds && (
         <Form.Layout.Label title={'Child Case IDs'}>
           {caseItem.caseHierarchyDetails?.childCaseIds.map((caseId) => (

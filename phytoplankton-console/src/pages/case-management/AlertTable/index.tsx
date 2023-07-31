@@ -7,11 +7,9 @@ import CreateCaseConfirmModal from './CreateCaseConfirmModal';
 import { usePaginatedQuery } from '@/utils/queries/hooks';
 import { useApi } from '@/api';
 import {
-  Account,
   AlertListResponseItem,
   AlertsAssignmentsUpdateRequest,
   AlertsReviewAssignmentsUpdateRequest,
-  AlertStatus,
   Assignment,
   RuleInstance,
 } from '@/apis';
@@ -29,7 +27,7 @@ import ExpandedRowRenderer from '@/pages/case-management/AlertTable/ExpandedRowR
 import { TableAlertItem } from '@/pages/case-management/AlertTable/types';
 import AlertsStatusChangeButton from '@/pages/case-management/components/AlertsStatusChangeButton';
 import AssignToButton from '@/pages/case-management/components/AssignToButton';
-import { useAuth0User, useUsers } from '@/utils/user-utils';
+import { useAuth0User } from '@/utils/user-utils';
 import { message } from '@/components/library/Message';
 import { TableSearchParams } from '@/pages/case-management/types';
 import { makeExtraFilters } from '@/pages/case-management/helpers';
@@ -46,13 +44,14 @@ import {
 import { useRules } from '@/utils/rules';
 import { ColumnHelper } from '@/components/library/Table/columnHelper';
 import { DefaultApiGetAlertListRequest } from '@/apis/types/ObjectParamAPI';
-import { neverReturn } from '@/utils/lang';
 import { SarButton as SarButton } from '@/components/Sar';
 import {
   canReviewCases,
   getSingleCaseStatusCurrent,
   getSingleCaseStatusPreviousForInReview,
+  getStatuses,
   isInReviewCases,
+  isOnHoldOrInProgress,
   statusInReview,
 } from '@/utils/case-utils';
 import { CASE_STATUSS } from '@/apis/models-custom/CaseStatus';
@@ -72,12 +71,12 @@ const getSelectedCaseIdsForAlerts = (selectedItems: Record<string, TableAlertIte
 };
 
 const mergedColumns = (
-  users: Record<string, Account>,
   hideUserColumns: boolean,
   hideAlertStatusFilters: boolean,
   handleAlertsAssignments: (updateRequest: AlertsAssignmentsUpdateRequest) => void,
   handleAlertsReviewAssignments: (updateRequest: AlertsReviewAssignmentsUpdateRequest) => void,
   userId: string,
+  reload: () => void,
 ): TableColumn<TableAlertItem>[] => {
   const helper = new ColumnHelper<TableAlertItem>();
   return helper.list([
@@ -159,8 +158,9 @@ const mergedColumns = (
       title: 'Alert status',
       key: 'alertStatus',
       filtering: !hideAlertStatusFilters,
-      type: CASE_STATUS({
+      type: CASE_STATUS<TableAlertItem>({
         statusesToShow: CASE_STATUSS,
+        reload,
       }),
     }),
     helper.simple<'caseCreatedTimestamp'>({
@@ -182,10 +182,11 @@ const mergedColumns = (
       type: {
         ...ASSIGNMENTS,
         render: (assignments, { item: entity }) => {
+          const otherStatuses = isOnHoldOrInProgress(entity.alertStatus!);
           return (
             <AssigneesDropdown
               assignments={assignments || []}
-              editing={!statusInReview(entity.alertStatus) ?? true}
+              editing={!(statusInReview(entity.alertStatus) || otherStatuses)}
               onChange={(assignees) => {
                 const assignments: Assignment[] = assignees.map((assignee) => ({
                   assigneeUserId: assignee,
@@ -254,7 +255,6 @@ export default function AlertTable(props: Props) {
   const api = useApi();
   const user = useAuth0User();
 
-  const [users] = useUsers({ includeBlockedUsers: true });
   const [selectedTxns, setSelectedTxns] = useState<{ [alertId: string]: string[] }>({});
   const [selectedAlerts, setSelectedAlerts] = useState<string[]>([]);
   const [internalParams, setInternalParams] = useState<AlertTableParams | null>(null);
@@ -334,26 +334,6 @@ export default function AlertTable(props: Props) {
 
       let filterAssignmentsIds: string[] | undefined = undefined;
 
-      let filterAlertStatus: AlertStatus[];
-      if (alertStatus == null) {
-        filterAlertStatus = [];
-      } else if (alertStatus === 'OPEN' || alertStatus === 'REOPENED') {
-        filterAlertStatus = ['OPEN', 'REOPENED'];
-      } else if (alertStatus === 'CLOSED') {
-        filterAlertStatus = ['CLOSED'];
-      } else if (alertStatus === 'ESCALATED') {
-        filterAlertStatus = ['ESCALATED'];
-      } else if (statusInReview(alertStatus)) {
-        filterAlertStatus = [
-          'IN_REVIEW_OPEN',
-          'IN_REVIEW_ESCALATED',
-          'IN_REVIEW_CLOSED',
-          'IN_REVIEW_REOPENED',
-        ];
-      } else {
-        filterAlertStatus = neverReturn(alertStatus, []);
-      }
-
       if (assignedTo?.length) {
         filterAssignmentsIds = assignedTo;
       }
@@ -363,7 +343,7 @@ export default function AlertTable(props: Props) {
         pageSize,
         filterAlertId: alertId,
         filterCaseId: caseId,
-        filterAlertStatus: filterAlertStatus,
+        filterAlertStatus: getStatuses(alertStatus),
         filterAssignmentsIds,
         filterBusinessIndustries:
           businessIndustryFilter && businessIndustryFilter.length > 0
@@ -447,20 +427,20 @@ export default function AlertTable(props: Props) {
   const columns = useMemo(
     () =>
       mergedColumns(
-        users,
         hideUserFilters,
         hideAlertStatusFilters,
         handleAlertAssignments,
         handleAlertsReviewAssignments,
         user.userId,
+        reloadTable,
       ),
     [
-      users,
       hideUserFilters,
       hideAlertStatusFilters,
       handleAlertAssignments,
       handleAlertsReviewAssignments,
       user.userId,
+      reloadTable,
     ],
   );
 
@@ -638,6 +618,10 @@ export default function AlertTable(props: Props) {
                     REOPENED: { status: 'ESCALATED', actionLabel: 'Escalate' },
                     ESCALATED: { status: 'OPEN', actionLabel: 'Send back' },
                     CLOSED: { status: 'ESCALATED', actionLabel: 'Escalate' },
+                    OPEN_IN_PROGRESS: { status: 'ESCALATED', actionLabel: 'Escalate' },
+                    OPEN_ON_HOLD: { status: 'ESCALATED', actionLabel: 'Escalate' },
+                    ESCALATED_IN_PROGRESS: { status: 'OPEN', actionLabel: 'Send back' },
+                    ESCALATED_ON_HOLD: { status: 'OPEN', actionLabel: 'Send back' },
                   }}
                   isDisabled={isDisabled}
                 />
@@ -699,6 +683,12 @@ export default function AlertTable(props: Props) {
                 status={status}
                 caseId={params.caseId}
                 isDisabled={isDisabled}
+                statusTransitions={{
+                  OPEN_ON_HOLD: { status: 'CLOSED', actionLabel: 'Close' },
+                  OPEN_IN_PROGRESS: { status: 'CLOSED', actionLabel: 'Close' },
+                  ESCALATED_IN_PROGRESS: { status: 'CLOSED', actionLabel: 'Close' },
+                  ESCALATED_ON_HOLD: { status: 'CLOSED', actionLabel: 'Close' },
+                }}
               />
             ) : null;
           },

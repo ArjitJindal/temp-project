@@ -1,6 +1,7 @@
 import React from 'react';
 import Component from './index';
 import { UseCase } from '@/pages/storybook/components';
+import CaseStatusTag from '@/components/library/CaseStatusTag';
 
 export default function (): JSX.Element {
   return (
@@ -16,6 +17,22 @@ export default function (): JSX.Element {
           }}
         >
           <div>Test</div>
+        </Component>
+      </UseCase>
+      <UseCase title={'With Tags'}>
+        <Component
+          options={[
+            { value: 'ON_HOLD', label: <CaseStatusTag caseStatus={'OPEN_ON_HOLD'} /> },
+            { value: 'IN_PROGRESS', label: <CaseStatusTag caseStatus={'OPEN_IN_PROGRESS'} /> },
+          ]}
+          onSelect={(option) => {
+            alert(option.value);
+          }}
+          arrow
+        >
+          <div>
+            <CaseStatusTag caseStatus={'OPEN_IN_PROGRESS'} />
+          </div>
         </Component>
       </UseCase>
     </>

@@ -85,16 +85,19 @@ function useOptions(params: TableSearchParams): DropdownOption[] {
   const entity = useEntity(params);
 
   if (entity === 'alerts' || entity === 'cases') {
-    const caseStatuses: (CaseStatus | 'IN_REVIEW_')[] = [
+    const caseStatuses: (CaseStatus | 'IN_REVIEW' | 'IN_PROGRESS' | 'ON_HOLD')[] = [
       'OPEN',
       'CLOSED',
-      ...(escalationEnabled ? (['ESCALATED', 'IN_REVIEW_'] as const) : []),
+      ...(escalationEnabled ? (['ESCALATED', 'IN_REVIEW'] as const) : []),
+      'IN_PROGRESS',
+      'ON_HOLD',
     ];
     return caseStatuses.map((status) => ({
       value: status,
       label: `${humanizeConstant(status)} ${entity}`,
     }));
   }
+
   if (entity === 'transactions') {
     const statuses: RuleAction[] = ['SUSPEND', 'ALLOW', 'BLOCK'];
     return statuses.map((status) => ({

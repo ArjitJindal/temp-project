@@ -3,24 +3,26 @@ import cn from 'clsx';
 import { Dropdown as AntDropdown, Menu as AntMenu } from 'antd';
 import { Placement } from '@ant-design/pro-form/lib/interface';
 import s from './index.module.less';
+import ArrowDownFilled from '@/components/ui/icons/Remix/system/arrow-down-s-fill.react.svg';
 
-export interface DropdownOption {
-  value: string;
+export interface DropdownOption<T extends string = string> {
+  value: T;
   label?: string | React.ReactNode;
   isDisabled?: boolean;
 }
 
-interface Props {
+interface Props<T extends string = string> {
   onSelect?: (option: DropdownOption) => void;
-  options: DropdownOption[];
+  options: DropdownOption<T>[];
   children: React.ReactNode;
   placement?: Placement;
   disabled?: boolean;
   extraBottomMargin?: boolean;
+  arrow?: boolean;
 }
 
-export default function Dropdown(props: Props) {
-  const { options, children, onSelect, placement, extraBottomMargin, disabled } = props;
+export default function Dropdown<T extends string = string>(props: Props<T>): JSX.Element {
+  const { options, children, onSelect, placement, extraBottomMargin, disabled, arrow } = props;
 
   const menu = (
     <AntMenu
@@ -42,7 +44,10 @@ export default function Dropdown(props: Props) {
   return (
     <div className={cn(s.root, extraBottomMargin && s.extraBottomMargin)}>
       <AntDropdown overlay={menu} trigger={['click']} placement={placement} disabled={disabled}>
-        {children}
+        <div className={cn(s.dropdown)}>
+          {children}
+          {arrow && <ArrowDownFilled className={s.arrow} />}
+        </div>
       </AntDropdown>
     </div>
   );

@@ -55,6 +55,7 @@ import {
   getSingleCaseStatusCurrent,
   getSingleCaseStatusPreviousForInReview,
   isInReviewCases,
+  isOnHoldOrInProgress,
   statusInReview,
 } from '@/utils/case-utils';
 import Id from '@/components/ui/Id';
@@ -224,10 +225,11 @@ export default function CaseTable(props: Props) {
               entity.caseStatus === 'ESCALATED' || isStatusInReview
                 ? entity.reviewAssignments
                 : entity.assignments;
+            const otherStatuses = isOnHoldOrInProgress(entity.caseStatus!);
             return (
               <AssigneesDropdown
                 assignments={assignments || []}
-                editing={!isStatusInReview}
+                editing={!(isStatusInReview || otherStatuses)}
                 onChange={(assignees) => {
                   const assignments = assignees.map((assigneeUserId) => ({
                     assignedByUserId: user.userId,
@@ -261,7 +263,9 @@ export default function CaseTable(props: Props) {
       helper.simple<'caseStatus'>({
         title: 'Case status',
         key: 'caseStatus',
-        type: CASE_STATUS(),
+        type: CASE_STATUS<TableItem>({
+          reload: reloadTable,
+        }),
       }),
       helper.display({
         title: 'Operations',
@@ -283,6 +287,12 @@ export default function CaseTable(props: Props) {
                   caseIds={[entity.caseId]}
                   caseStatus={entity.caseStatus}
                   onSaved={reloadTable}
+                  statusTransitions={{
+                    OPEN_IN_PROGRESS: { actionLabel: 'Close', status: 'CLOSED' },
+                    OPEN_ON_HOLD: { actionLabel: 'Close', status: 'CLOSED' },
+                    ESCALATED_IN_PROGRESS: { actionLabel: 'Close', status: 'CLOSED' },
+                    ESCALATED_ON_HOLD: { actionLabel: 'Close', status: 'CLOSED' },
+                  }}
                 />
               )}
               {entity?.caseId && isInReview && canReview && entity.caseStatus && (
@@ -445,6 +455,12 @@ export default function CaseTable(props: Props) {
                 onSaved={reloadTable}
                 caseStatus={params.caseStatus}
                 isDisabled={isDisabled}
+                statusTransitions={{
+                  OPEN_IN_PROGRESS: { actionLabel: 'Close', status: 'CLOSED' },
+                  OPEN_ON_HOLD: { actionLabel: 'Close', status: 'CLOSED' },
+                  ESCALATED_IN_PROGRESS: { actionLabel: 'Close', status: 'CLOSED' },
+                  ESCALATED_ON_HOLD: { actionLabel: 'Close', status: 'CLOSED' },
+                }}
               />
             )
           );
@@ -500,6 +516,16 @@ export default function CaseTable(props: Props) {
                     actionLabel: 'Send back',
                   },
                   CLOSED: { status: 'ESCALATED', actionLabel: 'Escalate' },
+                  OPEN_IN_PROGRESS: { status: 'ESCALATED', actionLabel: 'Escalate' },
+                  OPEN_ON_HOLD: { status: 'ESCALATED', actionLabel: 'Escalate' },
+                  ESCALATED_IN_PROGRESS: {
+                    status: caseClosedBefore ? 'REOPENED' : 'OPEN',
+                    actionLabel: 'Send back',
+                  },
+                  ESCALATED_ON_HOLD: {
+                    status: caseClosedBefore ? 'REOPENED' : 'OPEN',
+                    actionLabel: 'Send back',
+                  },
                 }}
               />
             )

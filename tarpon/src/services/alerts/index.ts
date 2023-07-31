@@ -667,8 +667,13 @@ export class AlertsService extends CaseAlertsCommonService {
 
     const alerts = await this.alertsRepository.getAlertsByIds(alertIds)
 
+    const isInProgressOrOnHold =
+      statusUpdateRequest.alertStatus.endsWith('ON_HOLD') ||
+      statusUpdateRequest.alertStatus.endsWith('IN_PROGRESS')
+
     if (
       userAccount.reviewerId &&
+      !isInProgressOrOnHold &&
       !skipReview &&
       !isStatusInReview(alerts[0]?.alertStatus) &&
       hasFeature('ESCALATION')
@@ -744,7 +749,8 @@ export class AlertsService extends CaseAlertsCommonService {
       if (
         caseIdsWithAllAlertsSameStatus.length &&
         cascadeCaseUpdates &&
-        response.caseStatusToChange
+        response.caseStatusToChange &&
+        !isInProgressOrOnHold
       ) {
         const otherReason = `All alerts of this case are ${startCase(
           toLower(response?.caseStatusToChange ?? '')

@@ -60,5 +60,5 @@ export function getUserName(
 }
 
 export function isStatusInReview(status: CaseStatus | undefined): boolean {
-  return status?.startsWith('IN_REVIEW_') ?? false
+  return status?.startsWith('IN_REVIEW') ?? false
 }

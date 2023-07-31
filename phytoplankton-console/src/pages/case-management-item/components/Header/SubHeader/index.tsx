@@ -2,7 +2,7 @@ import { useCallback, useMemo } from 'react';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import s from './index.module.less';
 import { message } from '@/components/library/Message';
-import { Assignment, Case } from '@/apis';
+import { Assignment, Case, CaseStatus } from '@/apis';
 import { useApi } from '@/api';
 import FileListLineIcon from '@/components/ui/icons/Remix/document/file-list-line.react.svg';
 import * as Form from '@/components/ui/Form';
@@ -16,7 +16,7 @@ import DynamicRiskDisplay from '@/pages/users-item/UserDetails/DynamicRiskDispla
 import { CASES_ITEM } from '@/utils/queries/keys';
 import { getErrorMessage } from '@/utils/lang';
 import { useUpdateCaseQueryData } from '@/utils/api/cases';
-import { statusInReview } from '@/utils/case-utils';
+import { isOnHoldOrInProgress, statusInReview } from '@/utils/case-utils';
 
 interface Props {
   caseItem: Case;
@@ -31,7 +31,11 @@ export default function SubHeader(props: Props) {
   const currentUserId = user.userId ?? undefined;
   const caseUser = caseItem.caseUsers?.origin ?? caseItem.caseUsers?.destination ?? undefined;
   const isCaseEscalated = caseItem.caseStatus === 'ESCALATED';
-  const isCaseInReview = statusInReview(caseItem.caseStatus);
+  const isCaseInReview = useMemo(() => statusInReview(caseItem.caseStatus), [caseItem.caseStatus]);
+  const otherStatuses = useMemo(
+    () => isOnHoldOrInProgress(caseItem.caseStatus as CaseStatus),
+    [caseItem.caseStatus],
+  );
 
   const assignments = useMemo(
     () => (isCaseEscalated || isCaseInReview ? caseItem.reviewAssignments : caseItem.assignments),
@@ -132,7 +136,7 @@ export default function SubHeader(props: Props) {
         <div style={{ marginLeft: 0, marginTop: 8 }}>
           <AssigneesDropdown
             assignments={assignments ?? []}
-            editing={!isCaseInReview}
+            editing={!(statusInReview(caseItem.caseStatus) || otherStatuses)}
             onChange={handleUpdateAssignments}
           />
         </div>

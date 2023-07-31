@@ -2,7 +2,7 @@ import React, { useMemo } from 'react';
 import { TableSearchParams } from './types';
 import CaseTable from './CaseTable';
 import { dayjs } from '@/utils/dayjs';
-import { Case, CaseStatus, RuleInstance } from '@/apis';
+import { Case, RuleInstance } from '@/apis';
 import { useApi } from '@/api';
 import { usePaginatedQuery } from '@/utils/queries/hooks';
 import { AllParams } from '@/components/library/Table/types';
@@ -10,8 +10,7 @@ import { CASES_LIST } from '@/utils/queries/keys';
 import { useRules } from '@/utils/rules';
 import { useApiTime } from '@/utils/tracker';
 import { useAuth0User } from '@/utils/user-utils';
-import { neverReturn } from '@/utils/lang';
-import { statusInReview } from '@/utils/case-utils';
+import { getStatuses } from '@/utils/case-utils';
 
 export default function CaseTableWrapper(props: {
   params: TableSearchParams;
@@ -57,28 +56,6 @@ export default function CaseTableWrapper(props: {
 
     const [sortField, sortOrder] = sort[0] ?? [];
 
-    let filterCaseStatus: CaseStatus[];
-    console.warn('caseStatus', caseStatus);
-    if (caseStatus == null) {
-      filterCaseStatus = [];
-    } else if (caseStatus === 'OPEN' || caseStatus === 'REOPENED') {
-      filterCaseStatus = ['OPEN', 'REOPENED'];
-    } else if (caseStatus === 'CLOSED') {
-      filterCaseStatus = ['CLOSED'];
-    } else if (caseStatus === 'ESCALATED') {
-      filterCaseStatus = ['ESCALATED'];
-    } else if (statusInReview(caseStatus)) {
-      console.warn('statusInReview', caseStatus);
-      filterCaseStatus = [
-        'IN_REVIEW_OPEN',
-        'IN_REVIEW_ESCALATED',
-        'IN_REVIEW_CLOSED',
-        'IN_REVIEW_REOPENED',
-      ];
-    } else {
-      filterCaseStatus = neverReturn(caseStatus, []);
-    }
-
     const response = await measure(
       () =>
         api.getCaseList({
@@ -101,7 +78,7 @@ export default function CaseTableWrapper(props: {
           filterId: caseId,
           filterRulesHit: rulesHitFilter,
           filterRulesExecuted: rulesExecutedFilter,
-          filterCaseStatus: filterCaseStatus,
+          filterCaseStatus: getStatuses(caseStatus),
           filterStatus: status,
           filterOriginCurrencies: originCurrenciesFilter,
           filterDestinationCurrencies: destinationCurrenciesFilter,

@@ -1,7 +1,9 @@
-import React from 'react';
+import React, { useMemo } from 'react';
 import { Switch, Tag as AntTag } from 'antd';
 import { uniqBy } from 'lodash';
+import { useMutation } from '@tanstack/react-query';
 import { ColumnDataType, FullColumnDataType } from '../types';
+import { CloseMessage, message } from '../../Message';
 import s from './index.module.less';
 import RiskLevelTag from '@/components/library/RiskLevelTag';
 import { RiskLevel } from '@/utils/risk-levels';
@@ -22,7 +24,6 @@ import {
   TransactionType,
   UserState,
   Case,
-  CaseStatusChange,
 } from '@/apis';
 import { getUserName } from '@/utils/api/users';
 import TransactionTypeTag from '@/components/library/TransactionTypeTag';
@@ -37,7 +38,6 @@ import { PaymentMethod } from '@/utils/payments';
 import { PaymentMethodTag } from '@/components/ui/PaymentTypeTag';
 import TimestampDisplay from '@/components/ui/TimestampDisplay';
 import UserLink from '@/components/UserLink';
-import CaseStatusTag from '@/components/library/CaseStatusTag';
 import { RuleActionTag } from '@/components/rules/RuleActionTag';
 import Money from '@/components/ui/Money';
 import UserKycStatusTag from '@/components/ui/UserKycStatusTag';
@@ -53,6 +53,10 @@ import { addBackUrlToRoute } from '@/utils/backUrl';
 import { makeUrl } from '@/utils/routing';
 import { findLastStatusForInReview, statusInReview } from '@/utils/case-utils';
 import { CASE_STATUSS } from '@/apis/models-custom/CaseStatus';
+import { useApi } from '@/api';
+import { CaseStatusWithDropDown } from '@/pages/case-management-item/CaseStatusWithDropDown';
+import { TableAlertItem } from '@/pages/case-management/AlertTable/types';
+import { TableItem } from '@/pages/case-management/CaseTable/types';
 
 export const UNKNOWN: Required<FullColumnDataType<unknown>> = {
   render: (value) => {
@@ -349,14 +353,82 @@ export const PAYMENT_METHOD: ColumnDataType<PaymentMethod> = {
   },
 };
 
-export const CASE_STATUS = (options?: {
+const StatusChangeDropDown = <T extends TableItem | TableAlertItem>(props: {
+  entity: T | null;
+  caseStatus: CaseStatus;
+  reload: () => void;
+}) => {
+  const { entity, caseStatus, reload } = props;
+  const api = useApi();
+  let messageState: CloseMessage | undefined;
+  const alertId = (entity as TableAlertItem)?.alertId;
+  const caseId = entity?.caseId;
+
+  const updateMutation = useMutation(
+    async (status: CaseStatus) => {
+      if (!alertId && caseId) {
+        messageState = message.loading('Updating case status...');
+        return await api.patchCasesStatusChange({
+          CasesStatusUpdateRequest: {
+            caseIds: [caseId],
+            updates: {
+              reason: [],
+              caseStatus: status,
+            },
+          },
+        });
+      } else if (alertId) {
+        messageState = message.loading('Updating alert status...');
+        return await api.alertsStatusChange({
+          AlertsStatusUpdateRequest: {
+            alertIds: [alertId],
+            updates: {
+              reason: [],
+              alertStatus: status,
+            },
+          },
+        });
+      }
+    },
+    {
+      onSuccess: () => {
+        message.success('Status updated');
+        messageState?.();
+        reload();
+      },
+      onError: (error: Error) => {
+        message.error(`Error updating status: ${error.message}`);
+        messageState?.();
+        reload();
+      },
+    },
+  );
+
+  const previousStatus = useMemo(() => {
+    return findLastStatusForInReview(entity?.statusChanges ?? []);
+  }, [entity?.statusChanges]);
+
+  return (
+    <CaseStatusWithDropDown
+      caseStatus={caseStatus}
+      previousStatus={previousStatus}
+      assignments={entity?.assignments ?? []}
+      onSelect={(status) => updateMutation.mutate(status)}
+      statusChanges={entity?.statusChanges ?? []}
+    />
+  );
+};
+
+export const CASE_STATUS = <T extends TableAlertItem | TableItem>(options?: {
   statusesToShow?: CaseStatus[];
-}): ColumnDataType<CaseStatus, { statusChanges?: CaseStatusChange[] }> => ({
+  reload: () => void;
+}): ColumnDataType<CaseStatus, T> => ({
   render: (caseStatus, { item: entity }) => {
     return caseStatus ? (
-      <CaseStatusTag
+      <StatusChangeDropDown<T>
+        entity={entity}
         caseStatus={caseStatus}
-        previousStatus={findLastStatusForInReview(entity?.statusChanges ?? [])}
+        reload={options?.reload ?? (() => {})}
       />
     ) : (
       <></>
@@ -367,7 +439,15 @@ export const CASE_STATUS = (options?: {
     options: uniqBy(
       (options?.statusesToShow ?? CASE_STATUSS).map((status) => ({
         value: status,
-        label: humanizeConstant(statusInReview(status) ? 'IN_REVIEW' : status),
+        label: humanizeConstant(
+          statusInReview(status)
+            ? 'IN_REVIEW'
+            : status.endsWith('IN_PROGRESS')
+            ? 'IN_PROGRESS'
+            : status.endsWith('ON_HOLD')
+            ? 'ON_HOLD'
+            : status,
+        ),
       })),
       'label',
     ),

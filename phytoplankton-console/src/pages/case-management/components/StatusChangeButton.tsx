@@ -20,6 +20,12 @@ export const statusToOperationName = (status: AlertStatus | CaseStatus) => {
     case 'IN_REVIEW_CLOSED':
     case 'IN_REVIEW_REOPENED':
       return 'In-Review';
+    case 'OPEN_IN_PROGRESS':
+    case 'ESCALATED_IN_PROGRESS':
+      return 'In-Progress';
+    case 'OPEN_ON_HOLD':
+    case 'ESCALATED_ON_HOLD':
+      return 'On-Hold';
     default:
       return neverReturn(status, humanizeConstant(status));
   }
@@ -34,6 +40,12 @@ const getNextStatus = (status: CaseStatus | AlertStatus | undefined): CaseStatus
     case 'OPEN':
     case 'ESCALATED':
       return 'CLOSED';
+    case 'OPEN_IN_PROGRESS':
+    case 'OPEN_ON_HOLD':
+      return 'OPEN';
+    case 'ESCALATED_IN_PROGRESS':
+    case 'ESCALATED_ON_HOLD':
+      return 'ESCALATED';
     case 'CLOSED':
       return 'REOPENED';
     case 'IN_REVIEW_OPEN':

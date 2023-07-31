@@ -226,12 +226,16 @@ export class CaseService extends CaseAlertsCommonService {
     const isLastInReview = isStatusInReview(
       cases[0].lastStatusChange?.caseStatus
     )
+    const isInProgressOrOnHold =
+      updates.caseStatus?.endsWith('IN_PROGRESS') ||
+      updates.caseStatus?.endsWith('ON_HOLD')
 
-    const isReviewRequired = accountUser?.reviewerId ?? false
     let isReview = false
+    const isReviewRequired = accountUser?.reviewerId ?? false
 
     if (
       isReviewRequired &&
+      !isInProgressOrOnHold &&
       !skipReview &&
       hasFeature('ESCALATION') &&
       !isLastInReview
@@ -280,7 +284,7 @@ export class CaseService extends CaseAlertsCommonService {
           : []),
       ])
 
-      if (updates.caseStatus && cascadeAlertsUpdate) {
+      if (updates.caseStatus && cascadeAlertsUpdate && !isInProgressOrOnHold) {
         const alerts = cases
           .flatMap((c) => c.alerts ?? [])
           .filter(

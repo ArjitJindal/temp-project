@@ -5372,6 +5372,10 @@ components:
         - IN_REVIEW_CLOSED
         - IN_REVIEW_REOPENED
         - IN_REVIEW_ESCALATED
+        - OPEN_IN_PROGRESS
+        - OPEN_ON_HOLD
+        - ESCALATED_IN_PROGRESS
+        - ESCALATED_ON_HOLD
     AlertStatus:
       type: string
       title: AlertStatus
@@ -5386,6 +5390,10 @@ components:
         - IN_REVIEW_CLOSED
         - IN_REVIEW_REOPENED
         - IN_REVIEW_ESCALATED
+        - OPEN_IN_PROGRESS
+        - OPEN_ON_HOLD
+        - ESCALATED_IN_PROGRESS
+        - ESCALATED_ON_HOLD
     FilterOperator:
       type: string
       title: FilterOperator

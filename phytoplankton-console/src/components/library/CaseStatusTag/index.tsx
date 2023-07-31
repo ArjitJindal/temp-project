@@ -6,10 +6,11 @@ import { CaseStatus } from '@/apis';
 import { neverReturn } from '@/utils/lang';
 import { humanizeConstant } from '@/utils/humanize';
 import { getNextStatusFromInReview, statusInReview } from '@/utils/case-utils';
+import { statusToOperationName } from '@/pages/case-management/components/StatusChangeButton';
 
 interface Props {
   caseStatus: CaseStatus;
-  previousStatus: CaseStatus;
+  previousStatus?: CaseStatus;
 }
 
 export default function CaseStatusTag(props: Props) {
@@ -32,7 +33,7 @@ export default function CaseStatusTag(props: Props) {
   ) : (
     <div className={cn(s.root)}>
       <div className={cn(s.body, getCaseStatusClassName(caseStatus))}>
-        {humanizeConstant(caseStatus)}
+        {statusToOperationName(caseStatus)}
       </div>
     </div>
   );
@@ -50,6 +51,12 @@ function getCaseStatusClassName(caseStatus: CaseStatus): string | null {
     case 'IN_REVIEW_ESCALATED':
     case 'IN_REVIEW_REOPENED':
       return s[`caseStatus-IN_REVIEW`];
+    case 'OPEN_IN_PROGRESS':
+    case 'ESCALATED_IN_PROGRESS':
+      return s[`caseStatus-IN_PROGRESS`];
+    case 'OPEN_ON_HOLD':
+    case 'ESCALATED_ON_HOLD':
+      return s[`caseStatus-ON_HOLD`];
   }
   return neverReturn(caseStatus, null);
 }

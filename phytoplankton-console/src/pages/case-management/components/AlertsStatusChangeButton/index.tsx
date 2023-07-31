@@ -20,7 +20,10 @@ interface Props {
   statusTransitions?: Partial<
     Record<
       AlertStatus,
-      { status: AlertStatus; actionLabel: 'Send back' | 'Escalate' | 'Approve' | 'Decline' }
+      {
+        status: AlertStatus;
+        actionLabel: 'Send back' | 'Escalate' | 'Approve' | 'Decline' | 'Close';
+      }
     >
   >;
   onSaved: () => void;

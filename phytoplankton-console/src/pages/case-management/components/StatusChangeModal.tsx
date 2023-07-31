@@ -62,7 +62,7 @@ export interface Props {
   entityIds: string[];
   oldStatus?: CaseStatus;
   newStatus: CaseStatus;
-  newStatusActionLabel?: 'Send back' | 'Escalate' | 'Approve' | 'Decline';
+  newStatusActionLabel?: 'Send back' | 'Escalate' | 'Approve' | 'Decline' | 'Close';
   defaultReasons?: CaseClosingReasons[];
   initialValues?: FormValues;
   onSaved: () => void;
