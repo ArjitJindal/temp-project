@@ -2,7 +2,7 @@ import React, { useContext } from 'react';
 import { useDeepEqualMemo } from '@/utils/hooks';
 
 export interface JsonSchemaEditorSettings {
-  propertyNameStyle: 'SNAKE_CASE' | 'CAMEL_CASE' | 'AUTO' | 'AS_IS';
+  propertyNameStyle: 'SNAKE_CASE' | 'AS_IS' | 'CAMEL_CASE' | 'AUTO';
   showOptionalMark: boolean;
 }
 

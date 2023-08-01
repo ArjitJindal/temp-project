@@ -7099,9 +7099,16 @@ components:
       x-stoplight:
         id: mqa9mvj3lig5w
       type: object
-      required:
-        - reportSchema
       properties:
+        settings:
+          type: object
+          properties:
+            propertyNameStyle:
+              type: string
+              enum:
+                - SNAKE_CASE
+                - AS_IS
+                - CAMEL_CASE
         reportSchema:
           type: object
         transactionMetadataSchema:
@@ -7216,8 +7223,6 @@ components:
           $ref: '#/components/schemas/ReportHierarchyDetails'
     ReportParameters:
       type: object
-      required:
-        - report
       properties:
         report:
           type: object

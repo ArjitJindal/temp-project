@@ -6,6 +6,8 @@ import { ReportSchema } from '@/@types/openapi-internal/ReportSchema'
 import { ReportParameters } from '@/@types/openapi-internal/ReportParameters'
 import { InternalTransaction } from '@/@types/openapi-internal/InternalTransaction'
 import { CountryCode } from '@/@types/openapi-internal/CountryCode'
+import { LithuaniaSTRReportGenerator } from '@/services/sar/generators/LT/STR'
+import { LithuaniaCTRReportGenerator } from '@/services/sar/generators/LT/CTR'
 
 export type PopulatedSchema = { params: ReportParameters; schema: ReportSchema }
 export type InternalReportType = { type: string; countryCode: CountryCode }
@@ -25,7 +27,12 @@ export interface ReportGenerator {
   generate(reportParams: ReportParameters): string
 }
 
-const reportGenerators = [KenyaSARReportGenerator, UsSarReportGenerator]
+const reportGenerators = [
+  KenyaSARReportGenerator,
+  UsSarReportGenerator,
+  LithuaniaSTRReportGenerator,
+  LithuaniaCTRReportGenerator,
+]
 export const REPORT_GENERATORS = new Map<string, ReportGenerator>(
   reportGenerators.map((rg) => {
     const generator = new rg()
@@ -35,11 +42,4 @@ export const REPORT_GENERATORS = new Map<string, ReportGenerator>(
   })
 )
 
-export const UNIMPLEMENTED_GENERATORS: [CountryCode, string][] = [
-  ['KE', 'STR'],
-  ['LT', 'SAR'],
-  ['LT', 'STR'],
-  ['LT', 'CTR'],
-  ['US', 'CTR'],
-  ['US', 'DOEP'],
-]
+export const UNIMPLEMENTED_GENERATORS: [CountryCode, string][] = [['KE', 'STR']]

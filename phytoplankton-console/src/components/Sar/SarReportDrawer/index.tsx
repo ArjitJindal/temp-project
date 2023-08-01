@@ -34,14 +34,16 @@ interface Props {
 
 export default function SarReportDrawer(props: Props) {
   const api = useApi();
+
   const steps = useMemo(
     () =>
       [
-        {
-          key: REPORT_STEP,
-          title: 'General Details',
-          description: 'Enter reporting entity, person and report details',
-        },
+        !isEmpty(props.initialReport.schema?.reportSchema) &&
+          props.initialReport.schema !== undefined && {
+            key: REPORT_STEP,
+            title: 'General Details',
+            description: 'Enter reporting entity, person and report details',
+          },
         !isEmpty(props.initialReport.schema?.transactionMetadataSchema) && {
           key: TRANSACTION_METADATA_STEP,
           title: 'Transaction Details',
@@ -63,11 +65,7 @@ export default function SarReportDrawer(props: Props) {
           description: 'Upload any supporting documents for your report',
         },
       ].filter(Boolean) as Step[],
-    [
-      props.initialReport.schema?.indicators,
-      props.initialReport.schema?.transactionMetadataSchema,
-      props.initialReport.schema?.transactionSchema,
-    ],
+    [props.initialReport.schema],
   );
   const [activeStep, setActiveStep] = useState<string>(steps[0].key);
   const [report, setReport] = useState(props.initialReport);

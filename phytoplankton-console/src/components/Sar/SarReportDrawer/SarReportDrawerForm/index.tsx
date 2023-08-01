@@ -1,4 +1,3 @@
-import { JsonSchemaEditorSettings } from '@/pages/rules/RuleConfigurationDrawer/JsonSchemaEditor/settings';
 import { StatePair } from '@/utils/state';
 import { FileInfo, Report } from '@/apis';
 import Form from '@/components/library/Form';
@@ -17,8 +16,6 @@ import IndicatorsStep from '@/components/Sar/SarReportDrawer/SarReportDrawerForm
 import ReportStep from '@/components/Sar/SarReportDrawer/SarReportDrawerForm/ReportStep';
 import TransactionStep from '@/components/Sar/SarReportDrawer/SarReportDrawerForm/TransactionStep';
 import AttachmentsStep from '@/components/Sar/SarReportDrawer/SarReportDrawerForm/AttachmentsStep';
-
-const settings: Partial<JsonSchemaEditorSettings> = {};
 
 export type FormState = Partial<{
   [REPORT_STEP]: unknown;
@@ -48,6 +45,9 @@ export default function SarReportDrawerForm(props: Props) {
   const [activeStep, setActiveStep] = activeStepState;
   const initialValues = deserializeFormState(report);
 
+  const settings = {
+    propertyNameStyle: report.schema?.settings?.propertyNameStyle || 'AS_IS',
+  };
   return (
     <Form
       id={formId}

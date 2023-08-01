@@ -49,17 +49,21 @@ export class ReportService {
     }
 
     // For demos, append some generators we want to implement.
-    return types.concat(
-      UNIMPLEMENTED_GENERATORS.map(
-        ([countryCode, type]): ReportType => ({
-          country: formatCountry(countryCode) || 'Unknown',
-          countryCode,
-          id: `${countryCode}-${type}`,
-          implemented: false,
-          type,
-        })
+    return types
+      .concat(
+        UNIMPLEMENTED_GENERATORS.map(
+          ([countryCode, type]): ReportType => ({
+            country: formatCountry(countryCode) || 'Unknown',
+            countryCode,
+            id: `${countryCode}-${type}`,
+            implemented: false,
+            type,
+          })
+        )
       )
-    )
+      .sort((a, b) => {
+        return `${a.country}-${a.type}` < `${b.country}-${b.type}` ? -1 : 1
+      })
   }
 
   public async getReportDraft(

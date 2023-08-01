@@ -45,6 +45,7 @@ const generator = function* (seed: number): Generator<InternalTransaction> {
       transactionId,
       originUserId,
       destinationUserId,
+      createdAt: timestamp,
       status: getAggregatedRuleStatus(hitRules.map((hr) => hr.ruleAction)),
       hitRules,
       destinationPaymentMethodId: getPaymentMethodId(
