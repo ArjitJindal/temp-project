@@ -9,6 +9,7 @@ import { LoadingCard } from '@/components/ui/Card';
 import { useApiTime, usePageViewTracker } from '@/utils/tracker';
 import Button from '@/components/library/Button';
 import SanctionsTable from '@/components/SanctionsTable';
+import { SanctionsSearchType } from '@/apis';
 
 function withKey<T>(array?: T[]): T[] {
   return array?.map((item, i) => ({ ...item, key: i })) || [];
@@ -19,6 +20,7 @@ interface TableSearchParams {
   fuzziness?: number;
   countryCodes?: Array<string>;
   yearOfBirth?: number;
+  types?: Array<SanctionsSearchType>;
 }
 
 interface Props {
@@ -71,6 +73,7 @@ export function SanctionsSearchTable(props: Props) {
           fuzziness: searchParams.fuzziness,
           countryCodes: searchParams.countryCodes,
           yearOfBirth: searchParams.yearOfBirth ? searchParams.yearOfBirth : undefined,
+          types: searchParams.types,
         },
       });
     },

@@ -16,6 +16,8 @@ import CountryDisplay from '@/components/ui/CountryDisplay';
 import { ColumnHelper } from '@/components/library/Table/columnHelper';
 import { FLOAT } from '@/components/library/Table/standardDataTypes';
 import { QueryResult } from '@/utils/queries/types';
+import { SANCTIONS_SEARCH_TYPES } from '@/apis/models-custom/SanctionsSearchType';
+import { humanizeSnakeCase } from '@/utils/humanize';
 
 interface TableSearchParams {
   searchTerm?: string;
@@ -169,6 +171,16 @@ export default function SanctionsTable(props: Props) {
         min: 0,
         max: 1,
         step: 0.1,
+      },
+    },
+    {
+      title: 'Matched type',
+      key: 'types',
+      renderer: {
+        kind: 'select',
+        options: SANCTIONS_SEARCH_TYPES.map((v) => ({ value: v, label: humanizeSnakeCase(v) })),
+        mode: 'MULTIPLE',
+        displayMode: 'select',
       },
     },
   ];
