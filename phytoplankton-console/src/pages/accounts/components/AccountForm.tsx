@@ -279,24 +279,22 @@ export default function AccountForm(props: Props) {
                   }}
                 />
               </Label>
-              {user.role === 'root' && (
-                <Label position="RIGHT" label="Requires review" level={2}>
-                  <Radio
-                    value={isReviewRequired}
-                    onChange={(value) => {
-                      setIsReviewRequired(true);
-                      setValues({
-                        ...values,
-                        isEscalationContact: value ? false : values.isEscalationContact,
-                      });
-                    }}
-                  />
-                </Label>
-              )}
+              <Label position="RIGHT" label="Requires review" level={2}>
+                <Radio
+                  value={isReviewRequired}
+                  onChange={(value) => {
+                    setIsReviewRequired(true);
+                    setValues({
+                      ...values,
+                      isEscalationContact: value ? false : values.isEscalationContact,
+                    });
+                  }}
+                />
+              </Label>
             </div>
           </div>
         </Feature>
-        {isReviewRequired && isLoading === false && isEscalationsEnabled && user.role === 'root' && (
+        {isReviewRequired && isLoading === false && isEscalationsEnabled && (
           <div style={{ marginTop: '1rem' }}>
             <Label label="Select a reviewer">
               <AssigneesDropdown
