@@ -174,4 +174,12 @@ export function useUser(userId: string | null | undefined): Account | null {
   return user;
 }
 
+export function useSortedUsers(): [Account[], boolean] {
+  const [users, loading] = useUsers();
+  return [
+    Object.values(users).sort((accountA, accountB) => accountA.name.localeCompare(accountB.name)),
+    loading,
+  ];
+}
+
 export const Context = React.createContext<{ user: FlagrightAuth0User } | null>(null);

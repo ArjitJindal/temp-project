@@ -2,7 +2,7 @@ import { Avatar, Select } from 'antd';
 import { LoadingOutlined } from '@ant-design/icons';
 import { colorSchema } from './utils';
 import s from './index.module.less';
-import { useUsers } from '@/utils/user-utils';
+import { useSortedUsers } from '@/utils/user-utils';
 import { Assignment } from '@/apis';
 import { Assignee } from '@/components/Assignee';
 
@@ -21,7 +21,7 @@ export const AssigneesDropdown: React.FC<Props> = ({
   maxAssignees,
   placeholder,
 }) => {
-  const [users, loadingUsers] = useUsers();
+  const [users, loadingUsers] = useSortedUsers();
 
   return editing ? (
     <>
@@ -54,7 +54,7 @@ export const AssigneesDropdown: React.FC<Props> = ({
                 .map((assignment) => assignment.assigneeUserId)
         }
       >
-        {Object.values(users).map((user, index) => (
+        {users.map((user, index) => (
           <Select.Option key={user.id}>
             <div className={s.item}>
               <Avatar

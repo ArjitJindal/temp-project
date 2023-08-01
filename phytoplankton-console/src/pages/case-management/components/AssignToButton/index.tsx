@@ -1,10 +1,9 @@
 import { Dropdown as AntDropdown, Menu as AntMenu } from 'antd';
-import React from 'react';
 import cn from 'clsx';
 import s from './index.module.less';
 import Button from '@/components/library/Button';
 import { Account } from '@/apis';
-import { useUsers } from '@/utils/user-utils';
+import { useSortedUsers } from '@/utils/user-utils';
 
 interface Props {
   onSelect: (account: Account) => void;
@@ -13,10 +12,10 @@ interface Props {
 
 export default function AssignToButton(props: Props) {
   const { onSelect } = props;
-  const [users] = useUsers();
+  const [sortedUsers] = useSortedUsers();
   const menu = (
     <AntMenu className={s.assigneeMenu}>
-      {Object.values(users).map((account) => (
+      {sortedUsers.map((account) => (
         <AntMenu.Item
           key={account.id}
           onClick={() => {
