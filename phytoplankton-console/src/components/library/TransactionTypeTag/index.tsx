@@ -6,7 +6,7 @@ import ArrowGoBackLineIcon from '@/components/ui/icons/Remix/system/arrow-go-bac
 import ArrowLeftRightLineIcon from '@/components/ui/icons/Remix/system/arrow-left-right-line.react.svg';
 
 import { TransactionType } from '@/apis/models/TransactionType';
-import { neverThrow } from '@/utils/lang';
+import { neverReturn } from '@/utils/lang';
 import { humanizeConstant } from '@/utils/humanize';
 
 interface Props {
@@ -32,7 +32,7 @@ export default function TransactionTypeTag({ transactionType }: Props) {
   } else if (transactionType === 'OTHER') {
     transactionTypeIcon = null;
   } else {
-    neverThrow(transactionType);
+    transactionTypeIcon = neverReturn(transactionType, null);
   }
 
   return (
