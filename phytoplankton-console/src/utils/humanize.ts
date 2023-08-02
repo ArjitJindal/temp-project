@@ -16,7 +16,7 @@ export function humanizeSnakeCase(name: string): string {
 }
 
 /*
-  BankSmartIBAN => Bank Smart IBAN
+  BankSmartIBAN => Bank smart IBAN
  */
 export function humanizeCamelCase(name: string): string {
   return name
@@ -78,4 +78,18 @@ export function firstLetterLower(str: string): string {
     return str;
   }
   return str[0].toLocaleLowerCase() + str.substring(1);
+}
+
+export function firstLetterUpper(str: string): string {
+  if (str.length < 1) {
+    return str;
+  }
+  return str[0].toUpperCase() + str.substring(1);
+}
+
+/*
+  "Some Property with ABREVIATION Inside" -> "Some property with ABREVIATION inside"
+ */
+export function normalizeCase(str: string): string {
+  return firstLetterUpper(str.replace(/([A-Z][a-z])/g, (x) => x.toLowerCase()));
 }

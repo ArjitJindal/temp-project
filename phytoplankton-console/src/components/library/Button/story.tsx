@@ -43,6 +43,14 @@ export default function (): JSX.Element {
           )}
         </PropertyMatrix>
       </UseCase>
+      <UseCase title="Icon only">
+        <PropertyMatrix<ButtonType, ButtonSize>
+          x={['PRIMARY', 'SECONDARY', 'TETRIARY', 'TEXT']}
+          y={['SMALL', 'MEDIUM', 'LARGE']}
+        >
+          {(type, size) => <Button type={type} size={size} icon={<Icon />} />}
+        </PropertyMatrix>
+      </UseCase>
       <UseCase title="Disabled">
         <PropertyMatrix<ButtonType, boolean>
           x={['PRIMARY', 'SECONDARY', 'TETRIARY', 'TEXT']}

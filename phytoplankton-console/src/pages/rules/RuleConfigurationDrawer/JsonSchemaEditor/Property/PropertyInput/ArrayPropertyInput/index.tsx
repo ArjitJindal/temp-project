@@ -14,9 +14,10 @@ import DeleteBin7LineIcon from '@/components/ui/icons/Remix/system/delete-bin-7-
 import { InputProps } from '@/components/library/Form';
 import { getUiSchema } from '@/pages/rules/RuleConfigurationDrawer/JsonSchemaEditor/utils';
 import SelectionGroup from '@/components/library/SelectionGroup';
+import * as Card from '@/components/ui/Card';
 import { useJsonSchemaEditorContext } from '@/pages/rules/RuleConfigurationDrawer/JsonSchemaEditor/context';
 import { PropertyContext } from '@/pages/rules/RuleConfigurationDrawer/JsonSchemaEditor/Property';
-import { firstLetterLower, humanizeAuto } from '@/utils/humanize';
+import { humanizeAuto, normalizeCase } from '@/utils/humanize';
 
 interface Props extends InputProps<unknown[]> {
   schema: ExtendedSchema;
@@ -84,30 +85,43 @@ export function GenericArrayPropertyInput(props: Props) {
     <div className={cn(s.root)}>
       <div className={s.items}>
         {value.map((item, i) => (
-          <React.Fragment key={i}>
-            <PropertyInput
-              value={item}
-              onChange={(newValue) => {
-                onChange?.(value.map((x, j) => (i === j ? newValue : x)));
-              }}
-              schema={schema.items as ExtendedSchema}
-            />
-            <Button
-              icon={<DeleteBin7LineIcon />}
-              type="TEXT"
-              onClick={() => {
-                const newValue = [...value];
-                newValue.splice(i, 1);
-                onChange?.(newValue);
-              }}
-            >
-              Delete
-            </Button>
-          </React.Fragment>
+          <Card.Root
+            key={i}
+            className={s.root}
+            isCollapsable={true}
+            isCollapsedByDefault={true}
+            header={{
+              title: normalizeCase(`${entityName ?? 'Item'} #${i + 1}`),
+              titleSize: 'SMALL',
+              link: (
+                <Button
+                  icon={<DeleteBin7LineIcon />}
+                  type="TEXT"
+                  size="SMALL"
+                  isDanger={true}
+                  onClick={() => {
+                    const newValue = [...value];
+                    newValue.splice(i, 1);
+                    onChange?.(newValue);
+                  }}
+                />
+              ),
+            }}
+          >
+            <Card.Section>
+              <PropertyInput
+                value={item}
+                onChange={(newValue) => {
+                  onChange?.(value.map((x, j) => (i === j ? newValue : x)));
+                }}
+                schema={schema.items as ExtendedSchema}
+              />
+            </Card.Section>
+          </Card.Root>
         ))}
         <div>
           <Button type="PRIMARY" onClick={handleClickAdd}>
-            Add {entityName ? ` ${entityName}` : ''}
+            {normalizeCase(`Add ${entityName ? ` ${entityName}` : ''}`)}
           </Button>
         </div>
       </div>
@@ -119,14 +133,14 @@ function useEntityName(schema: ExtendedSchema): string | undefined {
   const { rootSchema } = useJsonSchemaEditorContext();
   const propertyContext = useContext(PropertyContext);
   if (propertyContext != null) {
-    return firstLetterLower(humanizeAuto(pluralize.singular(propertyContext.item.name)));
+    return humanizeAuto(pluralize.singular(propertyContext.item.name));
   }
   if (schema.items == null) {
     return undefined;
   }
   const fullType = dereferenceType(schema.items, rootSchema);
   if (fullType.title != null) {
-    return firstLetterLower(fullType.title);
+    return fullType.title;
   }
   return undefined;
 }

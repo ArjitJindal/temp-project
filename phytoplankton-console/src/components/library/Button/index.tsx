@@ -66,6 +66,7 @@ function Button(props: Props, ref: React.Ref<HTMLButtonElement>) {
         s.root,
         s[`size-${size}`],
         s[`type-${type}${isDanger ? '-danger' : ''}`],
+        (children === '' || children == null) && s.iconOnly,
         className,
       )}
       onClick={handleClick}
