@@ -92,7 +92,7 @@ export const TRANSACTIONS_COLLECTION = (tenantId: string) => {
 }
 
 export const NARRATIVE_TEMPLATE_COLLECTION = (tenantId: string) => {
-  return `${tenantId}-narratives`
+  return `${tenantId}-narrative-templates`
 }
 
 export const CASES_COLLECTION = (tenandId: string) => {
