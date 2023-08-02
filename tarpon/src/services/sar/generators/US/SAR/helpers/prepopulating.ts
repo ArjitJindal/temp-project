@@ -1,11 +1,11 @@
 import {
   AddressType,
-  DateYYYYMMDDOrBlankTypeDOB,
+  DateOfBirth,
   ElectronicAddressType,
   PartyNameType,
   PhoneNumberType,
-  RestrictString15,
-  ValidateIndicatorType,
+  CumulativeAmount,
+  JointReportIndicator,
 } from '../resources/EFL_SARXBatchSchema.type'
 import { ConsumerName } from '@/@types/openapi-internal/ConsumerName'
 import { CompanyGeneralDetails } from '@/@types/openapi-internal/CompanyGeneralDetails'
@@ -26,7 +26,7 @@ import { neverReturn } from '@/utils/lang'
   Helpers to convert Flagright's data structures to FinCEN data structures
  */
 
-export function indicator(value: boolean): ValidateIndicatorType {
+export function indicator(value: boolean): JointReportIndicator {
   return value ? 'Y' : ''
 }
 
@@ -127,11 +127,11 @@ export function electronicAddressByWebsite(url: string): ElectronicAddressType {
   }
 }
 
-export function dateToDate(date: Date): DateYYYYMMDDOrBlankTypeDOB {
+export function dateToDate(date: Date): DateOfBirth {
   return dayjs(date).format('YYYYMMDD')
 }
 
-export function amount(number: number): RestrictString15 {
+export function amount(number: number): CumulativeAmount {
   // todo: which rounding we should use here?
   /*
   Monetary Amounts: Record all monetary amounts in U.S. Dollars rounded up to the next whole dollar. The

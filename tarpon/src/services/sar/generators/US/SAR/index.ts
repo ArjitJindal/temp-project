@@ -34,7 +34,7 @@ import { InternalTransaction } from '@/@types/openapi-internal/InternalTransacti
 import { ReportParameters } from '@/@types/openapi-internal/ReportParameters'
 import { ReportSchema } from '@/@types/openapi-internal/ReportSchema'
 import {
-  Party,
+  Party1,
   SuspiciousActivityType,
 } from '@/services/sar/generators/US/SAR/resources/EFL_SARXBatchSchema.type'
 import { InternalBusinessUser } from '@/@types/openapi-internal/InternalBusinessUser'
@@ -79,14 +79,14 @@ export class UsSarReportGenerator implements ReportGenerator {
     const users: (InternalConsumerUser | InternalBusinessUser)[] =
       Object.values(usersMap)
 
-    const subjects: Party[] = []
+    const subjects: Party1[] = []
     for (const user of users) {
       const contactDetails =
         user.type === 'CONSUMER'
           ? user.contactDetails
           : user.legalEntity.contactDetails
 
-      const sharedDetails: Partial<Party> = {
+      const sharedDetails: Partial<Party1> = {
         Address: contactDetails?.addresses?.map(address),
         PhoneNumber: [
           ...(contactDetails?.contactNumbers?.map(phone) ?? []),

@@ -6,55 +6,15 @@
  */
 
 export type Activity = ActivityType & {
-  ActivityAssociation: ActivityAssociationType
-  ActivitySupportDocument?: ActivitySupportDocumentType
-  /**
-   * @minItems 6
-   * @maxItems 1203
-   */
-  Party: [Party, Party, Party, Party, Party, Party, ...Party[]]
+  ActivityAssociation: TypeOfFiling
+  ActivitySupportDocument?: SupportingDocument
+  Party: Party
   SuspiciousActivity: SuspiciousActivity
-  /**
-   * @maxItems 99
-   */
-  ActivityIPAddress?: ActivityIPAddressType[]
-  /**
-   * @maxItems 99
-   */
-  CyberEventIndicators?: CyberEventIndicatorsType[]
-  /**
-   * @maxItems 31
-   */
-  Assets?: AssetsTableType[]
-  /**
-   * @maxItems 396
-   */
-  AssetsAttribute?: AssetsAttributeType[]
-  /**
-   * @maxItems 5
-   */
-  ActivityNarrativeInformation:
-    | []
-    | [ActivityNarrativeInformationType]
-    | [ActivityNarrativeInformationType, ActivityNarrativeInformationType]
-    | [
-        ActivityNarrativeInformationType,
-        ActivityNarrativeInformationType,
-        ActivityNarrativeInformationType
-      ]
-    | [
-        ActivityNarrativeInformationType,
-        ActivityNarrativeInformationType,
-        ActivityNarrativeInformationType,
-        ActivityNarrativeInformationType
-      ]
-    | [
-        ActivityNarrativeInformationType,
-        ActivityNarrativeInformationType,
-        ActivityNarrativeInformationType,
-        ActivityNarrativeInformationType,
-        ActivityNarrativeInformationType
-      ]
+  ActivityIPAddress?: IPAddress
+  CyberEventIndicators?: CyberEvent
+  Assets?: Asset
+  AssetsAttribute?: AssetAttribute
+  ActivityNarrativeInformation: Narrative
   [k: string]: unknown
 }
 /**
@@ -85,193 +45,44 @@ export type InitialReportIndicator = 'Y' | ''
  * This element declares that the FinCEN SAR is being filed jointly by two or morefinancial institutions.
  */
 export type JointReportIndicator = 'Y' | ''
-export type RestrictString150 = string
-export type Party = PartyType & {
-  /**
-   * @maxItems 100
-   */
-  PartyName?: PartyNameType[]
-  /**
-   * @maxItems 99
-   */
-  Address?: AddressType[]
-  /**
-   * @maxItems 99
-   */
-  PhoneNumber?: PhoneNumberType[]
-  /**
-   * @maxItems 100
-   */
-  PartyIdentification?: PartyIdentificationType[]
-  /**
-   * @maxItems 15
-   */
-  OrganizationClassificationTypeSubtype?:
-    | []
-    | [OrganizationClassificationTypeSubtypeType]
-    | [
-        OrganizationClassificationTypeSubtypeType,
-        OrganizationClassificationTypeSubtypeType
-      ]
-    | [
-        OrganizationClassificationTypeSubtypeType,
-        OrganizationClassificationTypeSubtypeType,
-        OrganizationClassificationTypeSubtypeType
-      ]
-    | [
-        OrganizationClassificationTypeSubtypeType,
-        OrganizationClassificationTypeSubtypeType,
-        OrganizationClassificationTypeSubtypeType,
-        OrganizationClassificationTypeSubtypeType
-      ]
-    | [
-        OrganizationClassificationTypeSubtypeType,
-        OrganizationClassificationTypeSubtypeType,
-        OrganizationClassificationTypeSubtypeType,
-        OrganizationClassificationTypeSubtypeType,
-        OrganizationClassificationTypeSubtypeType
-      ]
-    | [
-        OrganizationClassificationTypeSubtypeType,
-        OrganizationClassificationTypeSubtypeType,
-        OrganizationClassificationTypeSubtypeType,
-        OrganizationClassificationTypeSubtypeType,
-        OrganizationClassificationTypeSubtypeType,
-        OrganizationClassificationTypeSubtypeType
-      ]
-    | [
-        OrganizationClassificationTypeSubtypeType,
-        OrganizationClassificationTypeSubtypeType,
-        OrganizationClassificationTypeSubtypeType,
-        OrganizationClassificationTypeSubtypeType,
-        OrganizationClassificationTypeSubtypeType,
-        OrganizationClassificationTypeSubtypeType,
-        OrganizationClassificationTypeSubtypeType
-      ]
-    | [
-        OrganizationClassificationTypeSubtypeType,
-        OrganizationClassificationTypeSubtypeType,
-        OrganizationClassificationTypeSubtypeType,
-        OrganizationClassificationTypeSubtypeType,
-        OrganizationClassificationTypeSubtypeType,
-        OrganizationClassificationTypeSubtypeType,
-        OrganizationClassificationTypeSubtypeType,
-        OrganizationClassificationTypeSubtypeType
-      ]
-    | [
-        OrganizationClassificationTypeSubtypeType,
-        OrganizationClassificationTypeSubtypeType,
-        OrganizationClassificationTypeSubtypeType,
-        OrganizationClassificationTypeSubtypeType,
-        OrganizationClassificationTypeSubtypeType,
-        OrganizationClassificationTypeSubtypeType,
-        OrganizationClassificationTypeSubtypeType,
-        OrganizationClassificationTypeSubtypeType,
-        OrganizationClassificationTypeSubtypeType
-      ]
-    | [
-        OrganizationClassificationTypeSubtypeType,
-        OrganizationClassificationTypeSubtypeType,
-        OrganizationClassificationTypeSubtypeType,
-        OrganizationClassificationTypeSubtypeType,
-        OrganizationClassificationTypeSubtypeType,
-        OrganizationClassificationTypeSubtypeType,
-        OrganizationClassificationTypeSubtypeType,
-        OrganizationClassificationTypeSubtypeType,
-        OrganizationClassificationTypeSubtypeType,
-        OrganizationClassificationTypeSubtypeType
-      ]
-    | [
-        OrganizationClassificationTypeSubtypeType,
-        OrganizationClassificationTypeSubtypeType,
-        OrganizationClassificationTypeSubtypeType,
-        OrganizationClassificationTypeSubtypeType,
-        OrganizationClassificationTypeSubtypeType,
-        OrganizationClassificationTypeSubtypeType,
-        OrganizationClassificationTypeSubtypeType,
-        OrganizationClassificationTypeSubtypeType,
-        OrganizationClassificationTypeSubtypeType,
-        OrganizationClassificationTypeSubtypeType,
-        OrganizationClassificationTypeSubtypeType
-      ]
-    | [
-        OrganizationClassificationTypeSubtypeType,
-        OrganizationClassificationTypeSubtypeType,
-        OrganizationClassificationTypeSubtypeType,
-        OrganizationClassificationTypeSubtypeType,
-        OrganizationClassificationTypeSubtypeType,
-        OrganizationClassificationTypeSubtypeType,
-        OrganizationClassificationTypeSubtypeType,
-        OrganizationClassificationTypeSubtypeType,
-        OrganizationClassificationTypeSubtypeType,
-        OrganizationClassificationTypeSubtypeType,
-        OrganizationClassificationTypeSubtypeType,
-        OrganizationClassificationTypeSubtypeType
-      ]
-    | [
-        OrganizationClassificationTypeSubtypeType,
-        OrganizationClassificationTypeSubtypeType,
-        OrganizationClassificationTypeSubtypeType,
-        OrganizationClassificationTypeSubtypeType,
-        OrganizationClassificationTypeSubtypeType,
-        OrganizationClassificationTypeSubtypeType,
-        OrganizationClassificationTypeSubtypeType,
-        OrganizationClassificationTypeSubtypeType,
-        OrganizationClassificationTypeSubtypeType,
-        OrganizationClassificationTypeSubtypeType,
-        OrganizationClassificationTypeSubtypeType,
-        OrganizationClassificationTypeSubtypeType,
-        OrganizationClassificationTypeSubtypeType
-      ]
-    | [
-        OrganizationClassificationTypeSubtypeType,
-        OrganizationClassificationTypeSubtypeType,
-        OrganizationClassificationTypeSubtypeType,
-        OrganizationClassificationTypeSubtypeType,
-        OrganizationClassificationTypeSubtypeType,
-        OrganizationClassificationTypeSubtypeType,
-        OrganizationClassificationTypeSubtypeType,
-        OrganizationClassificationTypeSubtypeType,
-        OrganizationClassificationTypeSubtypeType,
-        OrganizationClassificationTypeSubtypeType,
-        OrganizationClassificationTypeSubtypeType,
-        OrganizationClassificationTypeSubtypeType,
-        OrganizationClassificationTypeSubtypeType,
-        OrganizationClassificationTypeSubtypeType
-      ]
-    | [
-        OrganizationClassificationTypeSubtypeType,
-        OrganizationClassificationTypeSubtypeType,
-        OrganizationClassificationTypeSubtypeType,
-        OrganizationClassificationTypeSubtypeType,
-        OrganizationClassificationTypeSubtypeType,
-        OrganizationClassificationTypeSubtypeType,
-        OrganizationClassificationTypeSubtypeType,
-        OrganizationClassificationTypeSubtypeType,
-        OrganizationClassificationTypeSubtypeType,
-        OrganizationClassificationTypeSubtypeType,
-        OrganizationClassificationTypeSubtypeType,
-        OrganizationClassificationTypeSubtypeType,
-        OrganizationClassificationTypeSubtypeType,
-        OrganizationClassificationTypeSubtypeType,
-        OrganizationClassificationTypeSubtypeType
-      ]
-  PartyOccupationBusiness?: PartyOccupationBusinessType
-  /**
-   * @maxItems 198
-   */
-  ElectronicAddress?: ElectronicAddressType[]
-  /**
-   * @maxItems 99
-   */
-  PartyAssociation?: PartyAssociation[]
+/**
+ * This element declares the attachment file name included with the FinCEN SAR being filed.
+ */
+export type AttachmentFileName = string
+/**
+ * This is the container for information about the individual or entity associated with the FinCEN SAR; specifically, the branch location where activity occurred.
+ *
+ * @minItems 6
+ * @maxItems 1203
+ */
+export type Party = [
+  Party1,
+  Party1,
+  Party1,
+  Party1,
+  Party1,
+  Party1,
+  ...Party1[]
+]
+/**
+ * This is the container for information about the individual or entity associated with the FinCEN SAR; specifically, the branch location where activity occurred.
+ */
+export type Party1 = PartyType & {
+  PartyName?: PartyName
+  Address?: Address
+  PhoneNumber?: TelephoneNumber
+  PartyIdentification?: PartyIdentification
+  OrganizationClassificationTypeSubtype?: InstitutionTypeSubtype
+  PartyOccupationBusiness?: OccupationOrTypeOfBusiness
+  ElectronicAddress?: ElectronicAddress
+  PartyAssociation?: PartyAssociation
   PartyAccountAssociation?: PartyAccountAssociation
   [k: string]: unknown
 }
 /**
- * Financial Institution in which account is held
+ * This element identifies the type of party associated with the FinCEN SAR; specifically, the branch where activity occurred.
  */
-export type ValidateActivityPartyCodeType =
+export type PartyType1 =
   | '35'
   | '37'
   | '30'
@@ -294,15 +105,63 @@ export type CorroborativeStatementToFilerYesIndicator = 'Y' | ''
  * This element declares that all critical subject information is unavailable
  */
 export type AllCriticalSubjectInformationUnavailableIndicator = 'Y' | ''
-export type DateOfBirthUnknownIndicator = 'Y' | ''
-export type ValidateIndicatorType = 'Y' | ''
-export type DateYYYYMMDDOrBlankType = string
-export type DateYYYYMMDDOrBlankTypeDOB = string
-export type RestrictString15 = string
 /**
- * Not applicable
+ * This element identifies the date of birth associated with the subject.
  */
-export type ValidateFederalRegulatorCodeType =
+export type DateOfBirthUnknownIndicator = 'Y' | ''
+/**
+ * This element declares that the subject was both a purchaser/sender of the financial instrument(s) or product(s) involved in the suspicious activity and payee/receiver of the instrument(s) or product(s) involved in the suspicious activity.
+ */
+export type SubjectSRoleInSuspiciousActivityBothPurchaserSenderAndPayeeReceiver =
+  'Y' | ''
+/**
+ * Law enforcement contact date (date). This element identifies the most-recent date the law enforcement agency was contacted about the suspicious activity.
+ */
+export type LEContactDate = string
+/**
+ * This element declares that the gender of the subject is female.
+ */
+export type GenderFemale = 'Y' | ''
+/**
+ * This element declares that the date of birth associated with the subject is unknown.
+ */
+export type DateOfBirth = string
+/**
+ * This element identifies the dollar amount loss to the financial institution because of the suspicious activity.
+ */
+export type LossToFinancialInstitutionIfApplicable = string
+/**
+ * This element declares that the gender of the subject is male.
+ */
+export type GenderMale = 'Y' | ''
+/**
+ * This element declares that there is no branch location involved in the suspicious activity for the associated financial institution where activity occurred.
+ */
+export type NoBranchActivityInvolved = 'Y' | ''
+/**
+ * This element declares that no account related to the subject is involved in the suspicious activity.
+ */
+export type NoKnownAccountInvolved = 'Y' | ''
+/**
+ * This element declares that the account is located at a foreign financial institution.
+ */
+export type NonUSFinancialInstitutionIndicator = 'Y' | ''
+/**
+ *  This element declares that the subject is an entity.
+ */
+export type CheckIfEntity = 'Y' | ''
+/**
+ * This element declares that the subject was the payee or receiver of the instrument(s) or product(s).
+ */
+export type SubjectSRoleInSuspiciousActivityPayeeReceiver = 'Y' | ''
+/**
+ * This element declares that the customer received payment from the financial institution where activity occurred for the products or instruments recorded in the FinCEN SAR
+ */
+export type FinancialInstitutionSRoleInTransactionPayingLocation = 'Y' | ''
+/**
+ * This element identifies the primary federal regulator or BSA examiner of the financial institution where activity occurred as well as the filing institution.
+ */
+export type PrimaryRegulatorTypeCode =
   | '9'
   | '1'
   | '2'
@@ -313,26 +172,148 @@ export type ValidateFederalRegulatorCodeType =
   | '13'
   | '99'
 /**
- * Doing business as (DBA)
+ * This element declares that the subject purchased or sent the financial instrument(s) or product(s) involved in the suspicious activity.
  */
-export type ValidatePartyNameCodeType = 'L' | 'AKA' | 'DBA'
-export type RestrictString35 = string
-export type RestrictString50 = string
-export type RestrictString2 = string
-export type RestrictString3 = string
-export type RestrictString100 = string
-export type RestrictString9 = string
-export type RestrictString6 = string
-export type RestrictString16 = string
+export type SubjectSRoleInSuspiciousActivityPurchaserSender = 'Y' | ''
 /**
- * Work
+ * This element declares that the customer purchased at the financial institution where activity occurred the products or instruments recorded in the FinCEN SAR
  */
-export type ValidatePhoneNumberCodeType = 'F' | 'M' | 'R' | 'W'
-export type RestrictString25 = string
+export type SellingLocationIndicator = 'Y' | ''
 /**
- * Other
+ * This element declares that the financial institution where activity occurred was both a paying and selling location for the products or instruments recorded in the FinCEN SAR
  */
-export type ValidatePartyIdentificationCodeType =
+export type FinancialInstitutionSRoleInTransactionBothSellingAndPayingLocation =
+  'Y' | ''
+/**
+ * This element declares that the gender of the subject is unknown.
+ */
+export type GenderUnknown = 'Y' | ''
+/**
+ * This element declares that the person legal name (if entity) or last name (if individual) is unknown.
+ */
+export type EntityNameOrIndividualLastNameUnknownIndicator = 'Y' | ''
+/**
+ * This element declares that the first name of the subject is unknown.
+ */
+export type IndividualFirstNameUnknownIndicator = 'Y' | ''
+/**
+ * This element identifies the type of name recorded for the party; specifically, legal name, doing business as (DBA) name, or also known as (AKA) name.
+ */
+export type PartyNameTypeCode = 'L' | 'AKA' | 'DBA'
+/**
+ * This element identifies the subject`s legal name, whether it be the legal name of the entity or the last name of the individual.
+ */
+export type EntityNameOrIndividualLastName = string
+/**
+ * This element identifies the first name of the subject.
+ */
+export type FirstName = string
+/**
+ * This element identifies the middle name of the subject.
+ */
+export type MiddleName = string
+/**
+ * This element identifies the suffix name of the subject.
+ */
+export type IndividualSuffixName = string
+/**
+ * This element identifies the full name of the party, whether it be the legal name if the institution, or DBA/AKA name of the institution or individual.
+ */
+export type PartyFullName = string
+/**
+ * This is the container for information about the name of the party. The party name can be a legal name, doing business as (DBA) name, or also known as (AKA) name depending on the party type identified
+ *
+ * @maxItems 100
+ */
+export type PartyName = PartyNameType[]
+/**
+ * This element declares that the city associated with the address of the party is unknown.
+ */
+export type CityUnknownIndicator = 'Y' | ''
+/**
+ * This element declares that country associated with the address of the party is unknown.
+ */
+export type CountryUnknownIndicator = 'Y' | ''
+/**
+ * This element identifies the city associated with the address of the party.
+ */
+export type City = string
+/**
+ * This element identifies the country associated with the party.
+ */
+export type CountryCode = string
+/**
+ * This element identifies the state/territory/province associated with the address of the party when the corresponding country is equal to US (United States), CA (Canada), MX (Mexico), or a U.S. Territory.
+ */
+export type StateTerritoryProvinceCode = string
+/**
+ * This element identifies the street address of the party.
+ */
+export type StreetAddress = string
+/**
+ * This element identifies the ZIP Code or foreign postal code associated with the address of the party.
+ */
+export type ZIPPostalCode = string
+/**
+ * This element declares that state associated with the address of the party is unknown when the corresponding country is equal to US (United States), CA (Canada), or MX (Mexico).
+ */
+export type StateUnknownIndicator = 'Y' | ''
+/**
+ * This element declares that the street address of the party is unknown.
+ */
+export type StreetAddressUnknownIndicator = 'Y' | ''
+/**
+ * This element declares that the ZIP Code or foreign postal code associated with the address of the party is unknown.
+ */
+export type ZIPPostalCodeUnknownIndicator = 'Y' | ''
+/**
+ * This is the container for information about the address of the party.
+ *
+ * @maxItems 99
+ */
+export type Address = AddressType[]
+/**
+ * This element identifies the telephone extension associated with the telephone number of the party (if known)
+ */
+export type TelephoneExtension = string
+/**
+ * This element identifies the telephone number of the party.
+ */
+export type TelephoneNumber1 = string
+/**
+ * This element identifies the telephone number type associated with the subject
+ */
+export type TelephoneNumberTypeCode = 'F' | 'M' | 'R' | 'W'
+/**
+ * This is the container for information about the telephone number of the party
+ *
+ * @maxItems 99
+ */
+export type TelephoneNumber = PhoneNumberType[]
+/**
+ * This element declares that the form of identification used to verify the identity of the subject is unknown
+ */
+export type IdentificationUnknownIndicator = 'Y' | ''
+/**
+ *  This element identifies the country where the identification was issued by (or in) associated with the subject.
+ */
+export type IdentificationIssuingCountryCode = string
+/**
+ * This element identifies the state where the identification was issued by (or in) associated with the subject
+ */
+export type IdentificationIssuingStateCode = string
+/**
+ * This element identifies the other identification type associated with the party.
+ */
+export type IdentificationTypeOtherDescriptionText = string
+/**
+ * This element identifies the form of identification number associated with the party.
+ */
+export type IdentificationNumber = string
+/**
+ * This element identifies the type of identification associated with the party.
+ */
+export type IdentificationTypeCode =
   | '1'
   | '2'
   | '4'
@@ -351,9 +332,174 @@ export type ValidatePartyIdentificationCodeType =
   | '29'
   | '999'
 /**
- * Other securities/futures
+ * This element declares that the TIN associated with the party is unknown.
  */
-export type ValidateOrganizationSubtypeCodeType =
+export type TINUnknownIndicator = 'Y' | ''
+/**
+ * This is the container for information about the identification associated with the party.
+ *
+ * @maxItems 100
+ */
+export type PartyIdentification = PartyIdentificationType[]
+/**
+ * This is the container form information about the type and subtype of institution associated with the party.
+ *
+ * @maxItems 15
+ */
+export type InstitutionTypeSubtype =
+  | []
+  | [OrganizationClassificationTypeSubtypeType]
+  | [
+      OrganizationClassificationTypeSubtypeType,
+      OrganizationClassificationTypeSubtypeType
+    ]
+  | [
+      OrganizationClassificationTypeSubtypeType,
+      OrganizationClassificationTypeSubtypeType,
+      OrganizationClassificationTypeSubtypeType
+    ]
+  | [
+      OrganizationClassificationTypeSubtypeType,
+      OrganizationClassificationTypeSubtypeType,
+      OrganizationClassificationTypeSubtypeType,
+      OrganizationClassificationTypeSubtypeType
+    ]
+  | [
+      OrganizationClassificationTypeSubtypeType,
+      OrganizationClassificationTypeSubtypeType,
+      OrganizationClassificationTypeSubtypeType,
+      OrganizationClassificationTypeSubtypeType,
+      OrganizationClassificationTypeSubtypeType
+    ]
+  | [
+      OrganizationClassificationTypeSubtypeType,
+      OrganizationClassificationTypeSubtypeType,
+      OrganizationClassificationTypeSubtypeType,
+      OrganizationClassificationTypeSubtypeType,
+      OrganizationClassificationTypeSubtypeType,
+      OrganizationClassificationTypeSubtypeType
+    ]
+  | [
+      OrganizationClassificationTypeSubtypeType,
+      OrganizationClassificationTypeSubtypeType,
+      OrganizationClassificationTypeSubtypeType,
+      OrganizationClassificationTypeSubtypeType,
+      OrganizationClassificationTypeSubtypeType,
+      OrganizationClassificationTypeSubtypeType,
+      OrganizationClassificationTypeSubtypeType
+    ]
+  | [
+      OrganizationClassificationTypeSubtypeType,
+      OrganizationClassificationTypeSubtypeType,
+      OrganizationClassificationTypeSubtypeType,
+      OrganizationClassificationTypeSubtypeType,
+      OrganizationClassificationTypeSubtypeType,
+      OrganizationClassificationTypeSubtypeType,
+      OrganizationClassificationTypeSubtypeType,
+      OrganizationClassificationTypeSubtypeType
+    ]
+  | [
+      OrganizationClassificationTypeSubtypeType,
+      OrganizationClassificationTypeSubtypeType,
+      OrganizationClassificationTypeSubtypeType,
+      OrganizationClassificationTypeSubtypeType,
+      OrganizationClassificationTypeSubtypeType,
+      OrganizationClassificationTypeSubtypeType,
+      OrganizationClassificationTypeSubtypeType,
+      OrganizationClassificationTypeSubtypeType,
+      OrganizationClassificationTypeSubtypeType
+    ]
+  | [
+      OrganizationClassificationTypeSubtypeType,
+      OrganizationClassificationTypeSubtypeType,
+      OrganizationClassificationTypeSubtypeType,
+      OrganizationClassificationTypeSubtypeType,
+      OrganizationClassificationTypeSubtypeType,
+      OrganizationClassificationTypeSubtypeType,
+      OrganizationClassificationTypeSubtypeType,
+      OrganizationClassificationTypeSubtypeType,
+      OrganizationClassificationTypeSubtypeType,
+      OrganizationClassificationTypeSubtypeType
+    ]
+  | [
+      OrganizationClassificationTypeSubtypeType,
+      OrganizationClassificationTypeSubtypeType,
+      OrganizationClassificationTypeSubtypeType,
+      OrganizationClassificationTypeSubtypeType,
+      OrganizationClassificationTypeSubtypeType,
+      OrganizationClassificationTypeSubtypeType,
+      OrganizationClassificationTypeSubtypeType,
+      OrganizationClassificationTypeSubtypeType,
+      OrganizationClassificationTypeSubtypeType,
+      OrganizationClassificationTypeSubtypeType,
+      OrganizationClassificationTypeSubtypeType
+    ]
+  | [
+      OrganizationClassificationTypeSubtypeType,
+      OrganizationClassificationTypeSubtypeType,
+      OrganizationClassificationTypeSubtypeType,
+      OrganizationClassificationTypeSubtypeType,
+      OrganizationClassificationTypeSubtypeType,
+      OrganizationClassificationTypeSubtypeType,
+      OrganizationClassificationTypeSubtypeType,
+      OrganizationClassificationTypeSubtypeType,
+      OrganizationClassificationTypeSubtypeType,
+      OrganizationClassificationTypeSubtypeType,
+      OrganizationClassificationTypeSubtypeType,
+      OrganizationClassificationTypeSubtypeType
+    ]
+  | [
+      OrganizationClassificationTypeSubtypeType,
+      OrganizationClassificationTypeSubtypeType,
+      OrganizationClassificationTypeSubtypeType,
+      OrganizationClassificationTypeSubtypeType,
+      OrganizationClassificationTypeSubtypeType,
+      OrganizationClassificationTypeSubtypeType,
+      OrganizationClassificationTypeSubtypeType,
+      OrganizationClassificationTypeSubtypeType,
+      OrganizationClassificationTypeSubtypeType,
+      OrganizationClassificationTypeSubtypeType,
+      OrganizationClassificationTypeSubtypeType,
+      OrganizationClassificationTypeSubtypeType,
+      OrganizationClassificationTypeSubtypeType
+    ]
+  | [
+      OrganizationClassificationTypeSubtypeType,
+      OrganizationClassificationTypeSubtypeType,
+      OrganizationClassificationTypeSubtypeType,
+      OrganizationClassificationTypeSubtypeType,
+      OrganizationClassificationTypeSubtypeType,
+      OrganizationClassificationTypeSubtypeType,
+      OrganizationClassificationTypeSubtypeType,
+      OrganizationClassificationTypeSubtypeType,
+      OrganizationClassificationTypeSubtypeType,
+      OrganizationClassificationTypeSubtypeType,
+      OrganizationClassificationTypeSubtypeType,
+      OrganizationClassificationTypeSubtypeType,
+      OrganizationClassificationTypeSubtypeType,
+      OrganizationClassificationTypeSubtypeType
+    ]
+  | [
+      OrganizationClassificationTypeSubtypeType,
+      OrganizationClassificationTypeSubtypeType,
+      OrganizationClassificationTypeSubtypeType,
+      OrganizationClassificationTypeSubtypeType,
+      OrganizationClassificationTypeSubtypeType,
+      OrganizationClassificationTypeSubtypeType,
+      OrganizationClassificationTypeSubtypeType,
+      OrganizationClassificationTypeSubtypeType,
+      OrganizationClassificationTypeSubtypeType,
+      OrganizationClassificationTypeSubtypeType,
+      OrganizationClassificationTypeSubtypeType,
+      OrganizationClassificationTypeSubtypeType,
+      OrganizationClassificationTypeSubtypeType,
+      OrganizationClassificationTypeSubtypeType,
+      OrganizationClassificationTypeSubtypeType
+    ]
+/**
+ *  This element identifies the specific type of gaming or securities/futures institution
+ */
+export type InstitutionSubtypeCode =
   | '101'
   | '102'
   | '103'
@@ -374,9 +520,9 @@ export type ValidateOrganizationSubtypeCodeType =
   | '1999'
   | '5999'
 /**
- * Other
+ * This element identifies the type of institution.
  */
-export type ValidateOrganizationCodeType =
+export type InstitutionTypeCode =
   | '1'
   | '2'
   | '3'
@@ -385,35 +531,184 @@ export type ValidateOrganizationCodeType =
   | '11'
   | '12'
   | '999'
-export type RestrictString517 = string
 /**
- * URL
+ * This element identifies the other type of gaming or securities/futures institution.
  */
-export type ValidateElectronicAddressTypeCode = 'E' | 'U'
-export type PartyAssociation = PartyAssociationType & {
-  Party?: unknown | unknown[]
+export type InstitutionSubtypeOtherDescription = string
+/**
+ * This element identifies the description of the other gaming or securities/futures institution.
+ */
+export type InstitutionTypeOtherDescription = string
+/**
+ * This element identifies the North American Industry Classification System (NAICS) code for the occupation or type of business of the subject.
+ */
+export type NAICSCode = string
+/**
+ * This element identifies the description of the occupation, profession, or type of business of the subject.
+ */
+export type OccupationOrTypeOfBusiness1 = string
+/**
+ * This element identifies the subject`s email address or website URL (Uniform Resource Locator) address.
+ */
+export type ElectronicAddress1 = string
+/**
+ * This element identifies the type of electronic address recorded for the subject; specifically whether it is an email address or a website URL (Uniform Resource Locator) address.
+ */
+export type ElectronicAddressTypeCode = 'E' | 'U'
+/**
+ * This is the container for information about the subject`s e-mail address or website URL (Uniform Resource Locator).
+ *
+ * @maxItems 198
+ */
+export type ElectronicAddress = ElectronicAddressType[]
+/**
+ * This is the container for information about the subject`s relationship to the institution recorded in the FinCEN SAR, as well as information about the branch where activity occurred.
+ */
+export type PartyAssociation1 = PartyAssociationType & {
+  Party?: Party2
   [k: string]: unknown
 }
+/**
+ * This element declares that the subject’s relationship to the institution can be described as "Accountant".
+ */
+export type AccountantIndicator = 'Y' | ''
+/**
+ * This element identifies the date on which the action was taken in the event that the relationship no longer continues between the subject and the institution.
+ */
+export type ActionDate = string
+/**
+ * This element declares that the subject’s relationship to the institution can be described as "Agent."
+ */
+export type AgentIndicator = 'Y' | ''
+/**
+ * This element declares that the subject’s relationship to the institution can be described as "Appraiser."
+ */
+export type AppraiserIndicator = 'Y' | ''
+/**
+ * This element declares that the subject’s relationship to the institution can be described as "Attorney."
+ */
+export type AttorneyIndicator = 'Y' | ''
+/**
+ * This element declares that the subject’s relationship to the institution can be described as "Borrower."
+ */
+export type BorrowerIndicator = 'Y' | ''
+/**
+ * This element declares that the subject’s relationship to the institution can be described as "Customer."
+ */
+export type CustomerIndicator = 'Y' | ''
+/**
+ * This element declares that the subject’s relationship to the institution can be described as "Director."
+ */
+export type DirectorIndicator = 'Y' | ''
+/**
+ * This element declares that the subject’s relationship to the institution can be described as "Employee."
+ */
+export type EmployeeIndicator = 'Y' | ''
+/**
+ * This element declares that the subject has no relationship with any of the financial institutions recorded in the FinCEN SAR.
+ */
+export type NoRelationshipToInstitutionIndicator = 'Y' | ''
+/**
+ * This element declares that the subject’s relationship to the institution can be described as "Officer."
+ */
+export type OfficerIndicator = 'Y' | ''
+/**
+ * This element declares that the subject`s relationship to the institution is not covered by any of pre-defined options.
+ */
+export type OtherRelationship = string
+/**
+ *  This element describes the other type of relationship between the subject and the institution.
+ */
+export type OtherRelationshipIndicator = 'Y' | ''
+/**
+ *  This element declares that the subject’s relationship to the institution can be described as "Owner or controlling shareholder."
+ */
+export type OwnerOrControllingShareholderIndicator = 'Y' | ''
+/**
+ * This element declares that the status of the subject’s relationship to the institution can be described as "Relationship continues."
+ */
+export type RelationshipContinuesIndicator = 'Y' | ''
+/**
+ * This element declares that the status of the subject’s relationship to the institution can be described as "Resigned."
+ */
+export type ResignedIndicator = 'Y' | ''
+/**
+ * This element identifies the TIN of the institution recorded in the FinCEN SAR that the subject has a relationship with.
+ */
+export type InstitutionTIN = string
+/**
+ * This element declares that the status of the subject’s relationship to the institution can be described as "Suspended/Barred."
+ */
+export type SuspendedBarredIndicator = 'Y' | ''
+/**
+ * This element declares that the status of the subject’s relationship to the institution can be described as "Terminated."
+ */
+export type TerminatedIndicator = 'Y' | ''
+/**
+ * This is the container for information about the individual or entity associated with the FinCEN SAR; specifically, the branch location where activity occurred.
+ */
+export type Party2 = unknown | unknown[]
+/**
+ * This is the container for information about the subject`s relationship to the institution recorded in the FinCEN SAR, as well as information about the branch where activity occurred.
+ *
+ * @maxItems 99
+ */
+export type PartyAssociation = PartyAssociation1[]
+/**
+ * This is the container element for information about the financial institution and account(s) related to the subject.
+ */
 export type PartyAccountAssociation = PartyAccountAssociationType & {
-  Party: unknown | [unknown, ...unknown[]]
+  Party: Party3
   [k: string]: unknown
 }
 /**
- * Activity affected account
+ * This element declares that the recorded account is closed.
  */
-export type ValidatePartyAccountAssociationCodeType = '5' | '7'
+export type AccountClosedIndicator = 'Y' | ''
+/**
+ * This element is for FinCEN purposes only.
+ */
+export type PartyAccountAssociationTypeCode = '5' | '7'
+/**
+ * This is the container for information about the individual or entity associated with the FinCEN SAR; specifically, the branch location where activity occurred.
+ */
+export type Party3 = unknown | [unknown, ...unknown[]]
 export type SuspiciousActivity = SuspiciousActivityType & {
-  /**
-   * @maxItems 99
-   */
-  SuspiciousActivityClassification: SuspiciousActivityClassificationType[]
+  SuspiciousActivityClassification: SuspiciousActivityClassification
   [k: string]: unknown
 }
-export type DateYYYYMMDDType = string
 /**
- * Other
+ * This element declares that the total dollar amount involved in the FinCEN SAR for the time period being reported is unknown.
  */
-export type ValidateSuspiciousActivitySubtypeID =
+export type AmountUnknownIndicator = 'Y' | ''
+/**
+ * This element identifies the cumulative amount (in whole U.S. dollars) involved in the suspicious activity
+ */
+export type CumulativeAmount = string
+/**
+ * This element declares that there is no amount involved in the suspicious activity
+ */
+export type NoAmountInvolvedIndicator = 'Y' | ''
+/**
+ * This element identifies either the date on which the suspicious activity occurred (in the event that the suspicious activity occurred on a single day) or the earliest date of suspicious activity (in the event that that suspicious activity occurred on multiple days).
+ */
+export type DateOrStartDateOfSuspiciousActivity = string
+/**
+ * This element identifies the most recent date of suspicious activity (in the event that that suspicious activity occurred on multiple days).
+ */
+export type EndDateOfSuspiciousActivityWhenDifferentFromTheStartDate = string
+/**
+ * This element identifies the total amount (in whole U.S. dollars) involved in the suspicious activity for the time period of the report.
+ */
+export type TotalAmountInvolved = string
+/**
+ * This element identifies the other description of the suspicious activity in the event that a type/category of activity applies (i.e. Structuring, Terrorist financing, etc.) but none of the subtype options apply.
+ */
+export type SuspiciousActivityOther = string
+/**
+ * This element identifies the suspicious activity subtype, such as the specific type of structuring or specific type of gaming activity
+ */
+export type SuspiciousActivitySubtypeCode =
   | '106'
   | '111'
   | '112'
@@ -505,9 +800,9 @@ export type ValidateSuspiciousActivitySubtypeID =
   | '11999'
   | '12999'
 /**
- * Cyber event
+ * This element identifies the type/category of suspicious activity, such as Structuring, Terrorist financing, Fraud, etc
  */
-export type ValidateSuspiciousActivityTypeID =
+export type SuspiciousActivityTypeCode =
   | '1'
   | '12'
   | '3'
@@ -519,12 +814,39 @@ export type ValidateSuspiciousActivityTypeID =
   | '9'
   | '10'
   | '11'
-export type ValidateTimeDataOrBlankType = string
-export type RestrictString39 = string
 /**
- * Other
+ * This element is the container for information about the specific type of suspicious activity
+ *
+ * @maxItems 99
  */
-export type ValidateCyberEventIndicatorsTypeCode =
+export type SuspiciousActivityClassification =
+  SuspiciousActivityClassificationType[]
+/**
+ * This element identifies the date of the activity associated with the reported IP address.
+ */
+export type IPAddressDate = string
+/**
+ * This element identifies the UTC time of the first instance of the reported IP address.
+ */
+export type IPAddressTimestamp = string
+/**
+ * This element identifies the IP address of the subject’s electronic internet based contact with the financial institution. example, this may be the IP address used to log into the institution’s online banking page or the IP address used to access an institution’s mobile application.
+ */
+export type IPAddressText = string
+/**
+ * This element is the container for information about IP address involved in the suspicious activity
+ *
+ * @maxItems 99
+ */
+export type IPAddress = ActivityIPAddressType[]
+/**
+ * This element identifies the date of the first instance of the reported cyber event, specifically, when reporting a Command and Control IP address or Suspicious IP Address.
+ */
+export type CyberEventDate = string
+/**
+ * This element identifies the cyber event indicator type
+ */
+export type CyberEventIndicatorTypeCode =
   | '1'
   | '2'
   | '3'
@@ -536,11 +858,28 @@ export type ValidateCyberEventIndicatorsTypeCode =
   | '9'
   | '10'
   | '999'
-export type RestrictString4000 = string
 /**
- * Microcap Securities
+ * This element identifies the UTC time of the first instance of the reported cyber event, specifically, when reporting a Command and Control IP address or Suspicious IP Address.
  */
-export type ValidateAssetSubtypeIDTypeCode =
+export type CyberEventTimestamp = string
+/**
+ * This element identifies the description of the other type of reported cyber event.
+ */
+export type CyberEventOther = string
+/**
+ * This element identifies the event value associated with the reported cyber event
+ */
+export type CyberEventValue = string
+/**
+ * This element is the container for information about cyber event involved in the suspicious activity
+ *
+ * @maxItems 99
+ */
+export type CyberEvent = CyberEventIndicatorsType[]
+/**
+ * This element identifies the specific type of asset involved in the suspicious activity, such as Bonds/Notes if a product type is involved, or Bank/cashier’s check if an instrument/payment mechanism is involved.
+ */
+export type AssetSubtype =
   | '1'
   | '2'
   | '3'
@@ -574,31 +913,80 @@ export type ValidateAssetSubtypeIDTypeCode =
   | '46'
   | '47'
 /**
- * Financial instrument or payment mechanism
+ * This element identifies the type/category of assets, specifically whether it is associated with a product type or instrument/payment mechanism.
  */
-export type ValidateAssetTypeIDTypeCode = '5' | '6'
+export type AssetTypeCode = '5' | '6'
 /**
- * Market Where Traded Code
+ * This element identifies the description of the other type of reported asset subtype.
  */
-export type ValidateAssetAttributeTypeIDTypeCode = '1' | '2' | '3' | '4'
+export type AssetOther = string
 /**
- * Fifth block of narrative text (character set 16001-17000, if needed)
+ * This element is the container for information about asset involved in the suspicious activity, specifically the product type, instrument type, and/or payment mechanism.
+ *
+ * @maxItems 31
  */
-export type ValidateActivityNarrativeSequenceNumber =
-  | '1'
-  | '2'
-  | '3'
-  | '4'
-  | '5'
+export type Asset = AssetsTableType[]
+/**
+ * This element provides a description of the reported asset attribute involved in the suspicious activity
+ */
+export type AssetAttributeOther = string
+/**
+ * This element identifies the type/category of asset attribute, specifically whether it is a type of commodity, product/instrument, market where traded, or CUSIP number
+ */
+export type AssetAttributeTypeCode = '1' | '2' | '3' | '4'
+/**
+ * This element is the container for information about the asset attribute involved in the suspicious activity, whether it be a type of commodity, product/instrument, market where traded, and/or CUSIP number
+ *
+ * @maxItems 396
+ */
+export type AssetAttribute = AssetsAttributeType[]
+/**
+ * This element is the container for information about narrative description associated with the FinCEN SAR.
+ *
+ * @maxItems 5
+ */
+export type Narrative =
+  | []
+  | [ActivityNarrativeInformationType]
+  | [ActivityNarrativeInformationType, ActivityNarrativeInformationType]
+  | [
+      ActivityNarrativeInformationType,
+      ActivityNarrativeInformationType,
+      ActivityNarrativeInformationType
+    ]
+  | [
+      ActivityNarrativeInformationType,
+      ActivityNarrativeInformationType,
+      ActivityNarrativeInformationType,
+      ActivityNarrativeInformationType
+    ]
+  | [
+      ActivityNarrativeInformationType,
+      ActivityNarrativeInformationType,
+      ActivityNarrativeInformationType,
+      ActivityNarrativeInformationType,
+      ActivityNarrativeInformationType
+    ]
+/**
+ * This element identifies the sequence in which the narrative text should be constructed in the event that multiple ActivityNarrativeInformation element blocks are needed to record the entire narrative
+ */
+export type NarrativeSequenceNumber = '1' | '2' | '3' | '4' | '5'
+/**
+ * This element records the narrative description associated with the suspicious activity. The narrative must provide a clear, complete, and concise description of the activity, including what was unusual or irregular that caused suspicion.
+ */
+export type NarrativeDescription = string
 
 /**
  * Schema tag attributes: xmlns='www.fincen.gov/base' xmlns:xsd='http://www.w3.org/2001/XMLSchema' xmlns:vc='http://www.w3.org/2007/XMLSchema-versioning' xmlns:fc2='www.fincen.gov/base' xmlns:xsi='http://www.w3.org/2001/XMLSchema-instance' targetNamespace='www.fincen.gov/base' elementFormDefault='qualified' attributeFormDefault='unqualified' vc:minVersion='1.1'
  */
-export interface ThisJSONSchemaFileWasGeneratedFromSchemaOnThuJul272023232138GMT0200CentralEuropeanSummerTimeForMoreInformationPleaseSeeHttpWwwXsd2JsonschemaOrg {
-  EFilingBatchXML?: EFilingBatchXML
+export interface ThisJSONSchemaFileWasGeneratedFromSchemaOnWedAug022023150333GMT0530IndiaStandardTimeForMoreInformationPleaseSeeHttpWwwXsd2JsonschemaOrg {
+  EFilingBatchXML?: BatchAcknowledgement
   [k: string]: unknown
 }
-export interface EFilingBatchXML {
+/**
+ * This is the container for the contents of the batch acknowledgement file.
+ */
+export interface BatchAcknowledgement {
   FormTypeCode: string
   Activity: Activity[]
   '@TotalAmount': number
@@ -615,7 +1003,10 @@ export interface ActivityType {
   '@SeqNum'?: undefined
   [k: string]: unknown
 }
-export interface ActivityAssociationType {
+/**
+ * This element is the container for information about the type of filing associated with the FinCEN SAR.
+ */
+export interface TypeOfFiling {
   ContinuingActivityReportIndicator?: ContinuingActivityReportIndicator
   CorrectsAmendsPriorReportIndicator?: CorrectsAmendsPriorReportIndicator
   InitialReportIndicator?: InitialReportIndicator
@@ -623,179 +1014,185 @@ export interface ActivityAssociationType {
   '@SeqNum'?: undefined
   [k: string]: unknown
 }
-export interface ActivitySupportDocumentType {
-  OriginalAttachmentFileName: RestrictString150
+/**
+ * This element is the container for information about the supporting document as an attachment to the FinCEN SAR being filed.
+ */
+export interface SupportingDocument {
+  OriginalAttachmentFileName: AttachmentFileName
   '@SeqNum'?: undefined
   [k: string]: unknown
 }
 export interface PartyType {
-  ActivityPartyTypeCode: ValidateActivityPartyCodeType
+  ActivityPartyTypeCode: PartyType1
   AdmissionConfessionNoIndicator?: CorroborativeStatementToFilerNoIndicator
   AdmissionConfessionYesIndicator?: CorroborativeStatementToFilerYesIndicator
   AllCriticalSubjectInformationUnavailableIndicator?: AllCriticalSubjectInformationUnavailableIndicator
   BirthDateUnknownIndicator?: DateOfBirthUnknownIndicator
-  BothPurchaserSenderPayeeReceiveIndicator?: ValidateIndicatorType
-  ContactDateText?: DateYYYYMMDDOrBlankType
-  FemaleGenderIndicator?: ValidateIndicatorType
-  IndividualBirthDateText?: DateYYYYMMDDOrBlankTypeDOB
-  LossToFinancialAmountText?: RestrictString15
-  MaleGenderIndicator?: ValidateIndicatorType
-  NoBranchActivityInvolvedIndicator?: ValidateIndicatorType
-  NoKnownAccountInvolvedIndicator?: ValidateIndicatorType
-  NonUSFinancialInstitutionIndicator?: ValidateIndicatorType
-  PartyAsEntityOrganizationIndicator?: ValidateIndicatorType
-  PayeeReceiverIndicator?: ValidateIndicatorType
-  PayLocationIndicator?: ValidateIndicatorType
-  PrimaryRegulatorTypeCode?: ValidateFederalRegulatorCodeType
-  PurchaserSenderIndicator?: ValidateIndicatorType
-  SellingLocationIndicator?: ValidateIndicatorType
-  SellingPayingLocationIndicator?: ValidateIndicatorType
-  UnknownGenderIndicator?: ValidateIndicatorType
+  BothPurchaserSenderPayeeReceiveIndicator?: SubjectSRoleInSuspiciousActivityBothPurchaserSenderAndPayeeReceiver
+  ContactDateText?: LEContactDate
+  FemaleGenderIndicator?: GenderFemale
+  IndividualBirthDateText?: DateOfBirth
+  LossToFinancialAmountText?: LossToFinancialInstitutionIfApplicable
+  MaleGenderIndicator?: GenderMale
+  NoBranchActivityInvolvedIndicator?: NoBranchActivityInvolved
+  NoKnownAccountInvolvedIndicator?: NoKnownAccountInvolved
+  NonUSFinancialInstitutionIndicator?: NonUSFinancialInstitutionIndicator
+  PartyAsEntityOrganizationIndicator?: CheckIfEntity
+  PayeeReceiverIndicator?: SubjectSRoleInSuspiciousActivityPayeeReceiver
+  PayLocationIndicator?: FinancialInstitutionSRoleInTransactionPayingLocation
+  PrimaryRegulatorTypeCode?: PrimaryRegulatorTypeCode
+  PurchaserSenderIndicator?: SubjectSRoleInSuspiciousActivityPurchaserSender
+  SellingLocationIndicator?: SellingLocationIndicator
+  SellingPayingLocationIndicator?: FinancialInstitutionSRoleInTransactionBothSellingAndPayingLocation
+  UnknownGenderIndicator?: GenderUnknown
   '@SeqNum'?: undefined
   [k: string]: unknown
 }
 export interface PartyNameType {
-  EntityLastNameUnknownIndicator?: ValidateIndicatorType
-  FirstNameUnknownIndicator?: ValidateIndicatorType
-  PartyNameTypeCode: ValidatePartyNameCodeType
-  RawEntityIndividualLastName?: RestrictString150
-  RawIndividualFirstName?: RestrictString35
-  RawIndividualMiddleName?: RestrictString35
-  RawIndividualNameSuffixText?: RestrictString35
-  RawPartyFullName?: RestrictString150
+  EntityLastNameUnknownIndicator?: EntityNameOrIndividualLastNameUnknownIndicator
+  FirstNameUnknownIndicator?: IndividualFirstNameUnknownIndicator
+  PartyNameTypeCode: PartyNameTypeCode
+  RawEntityIndividualLastName?: EntityNameOrIndividualLastName
+  RawIndividualFirstName?: FirstName
+  RawIndividualMiddleName?: MiddleName
+  RawIndividualNameSuffixText?: IndividualSuffixName
+  RawPartyFullName?: PartyFullName
   '@SeqNum'?: undefined
   [k: string]: unknown
 }
 export interface AddressType {
-  CityUnknownIndicator?: ValidateIndicatorType
-  CountryCodeUnknownIndicator?: ValidateIndicatorType
-  RawCityText?: RestrictString50
-  RawCountryCodeText?: RestrictString2
-  RawStateCodeText?: RestrictString3
-  RawStreetAddress1Text?: RestrictString100
-  RawZIPCode?: RestrictString9
-  StateCodeUnknownIndicator?: ValidateIndicatorType
-  StreetAddressUnknownIndicator?: ValidateIndicatorType
-  ZIPCodeUnknownIndicator?: ValidateIndicatorType
+  CityUnknownIndicator?: CityUnknownIndicator
+  CountryCodeUnknownIndicator?: CountryUnknownIndicator
+  RawCityText?: City
+  RawCountryCodeText?: CountryCode
+  RawStateCodeText?: StateTerritoryProvinceCode
+  RawStreetAddress1Text?: StreetAddress
+  RawZIPCode?: ZIPPostalCode
+  StateCodeUnknownIndicator?: StateUnknownIndicator
+  StreetAddressUnknownIndicator?: StreetAddressUnknownIndicator
+  ZIPCodeUnknownIndicator?: ZIPPostalCodeUnknownIndicator
   '@SeqNum'?: undefined
   [k: string]: unknown
 }
 export interface PhoneNumberType {
-  PhoneNumberExtensionText?: RestrictString6
-  PhoneNumberText?: RestrictString16
-  PhoneNumberTypeCode?: ValidatePhoneNumberCodeType
+  PhoneNumberExtensionText?: TelephoneExtension
+  PhoneNumberText?: TelephoneNumber1
+  PhoneNumberTypeCode?: TelephoneNumberTypeCode
   '@SeqNum'?: undefined
   [k: string]: unknown
 }
 export interface PartyIdentificationType {
-  IdentificationPresentUnknownIndicator?: ValidateIndicatorType
-  OtherIssuerCountryText?: RestrictString2
-  OtherIssuerStateText?: RestrictString3
-  OtherPartyIdentificationTypeText?: RestrictString50
-  PartyIdentificationNumberText?: RestrictString25
-  PartyIdentificationTypeCode?: ValidatePartyIdentificationCodeType
-  TINUnknownIndicator?: ValidateIndicatorType
+  IdentificationPresentUnknownIndicator?: IdentificationUnknownIndicator
+  OtherIssuerCountryText?: IdentificationIssuingCountryCode
+  OtherIssuerStateText?: IdentificationIssuingStateCode
+  OtherPartyIdentificationTypeText?: IdentificationTypeOtherDescriptionText
+  PartyIdentificationNumberText?: IdentificationNumber
+  PartyIdentificationTypeCode?: IdentificationTypeCode
+  TINUnknownIndicator?: TINUnknownIndicator
   '@SeqNum'?: undefined
   [k: string]: unknown
 }
 export interface OrganizationClassificationTypeSubtypeType {
-  OrganizationSubtypeID?: ValidateOrganizationSubtypeCodeType
-  OrganizationTypeID: ValidateOrganizationCodeType
-  OtherOrganizationSubTypeText?: RestrictString50
-  OtherOrganizationTypeText?: RestrictString50
+  OrganizationSubtypeID?: InstitutionSubtypeCode
+  OrganizationTypeID: InstitutionTypeCode
+  OtherOrganizationSubTypeText?: InstitutionSubtypeOtherDescription
+  OtherOrganizationTypeText?: InstitutionTypeOtherDescription
   '@SeqNum'?: undefined
   [k: string]: unknown
 }
-export interface PartyOccupationBusinessType {
-  NAICSCode?: RestrictString6
-  OccupationBusinessText?: RestrictString50
+/**
+ * This is the container for information about the occupation or type of business of the subject.
+ */
+export interface OccupationOrTypeOfBusiness {
+  NAICSCode?: NAICSCode
+  OccupationBusinessText?: OccupationOrTypeOfBusiness1
   '@SeqNum'?: undefined
   [k: string]: unknown
 }
 export interface ElectronicAddressType {
-  ElectronicAddressText: RestrictString517
-  ElectronicAddressTypeCode: ValidateElectronicAddressTypeCode
+  ElectronicAddressText: ElectronicAddress1
+  ElectronicAddressTypeCode: ElectronicAddressTypeCode
   '@SeqNum'?: undefined
   [k: string]: unknown
 }
 export interface PartyAssociationType {
-  AccountantIndicator?: ValidateIndicatorType
-  ActionTakenDateText?: DateYYYYMMDDOrBlankType
-  AgentIndicator?: ValidateIndicatorType
-  AppraiserIndicator?: ValidateIndicatorType
-  AttorneyIndicator?: ValidateIndicatorType
-  BorrowerIndicator?: ValidateIndicatorType
-  CustomerIndicator?: ValidateIndicatorType
-  DirectorIndicator?: ValidateIndicatorType
-  EmployeeIndicator?: ValidateIndicatorType
-  NoRelationshipToInstitutionIndicator?: ValidateIndicatorType
-  OfficerIndicator?: ValidateIndicatorType
-  OtherPartyAssociationTypeText?: RestrictString50
-  OtherRelationshipIndicator?: ValidateIndicatorType
-  OwnerShareholderIndicator?: ValidateIndicatorType
-  RelationshipContinuesIndicator?: ValidateIndicatorType
-  ResignedIndicator?: ValidateIndicatorType
-  SubjectRelationshipFinancialInstitutionTINText?: RestrictString25
-  SuspendedBarredIndicator?: ValidateIndicatorType
-  TerminatedIndicator?: ValidateIndicatorType
+  AccountantIndicator?: AccountantIndicator
+  ActionTakenDateText?: ActionDate
+  AgentIndicator?: AgentIndicator
+  AppraiserIndicator?: AppraiserIndicator
+  AttorneyIndicator?: AttorneyIndicator
+  BorrowerIndicator?: BorrowerIndicator
+  CustomerIndicator?: CustomerIndicator
+  DirectorIndicator?: DirectorIndicator
+  EmployeeIndicator?: EmployeeIndicator
+  NoRelationshipToInstitutionIndicator?: NoRelationshipToInstitutionIndicator
+  OfficerIndicator?: OfficerIndicator
+  OtherPartyAssociationTypeText?: OtherRelationship
+  OtherRelationshipIndicator?: OtherRelationshipIndicator
+  OwnerShareholderIndicator?: OwnerOrControllingShareholderIndicator
+  RelationshipContinuesIndicator?: RelationshipContinuesIndicator
+  ResignedIndicator?: ResignedIndicator
+  SubjectRelationshipFinancialInstitutionTINText?: InstitutionTIN
+  SuspendedBarredIndicator?: SuspendedBarredIndicator
+  TerminatedIndicator?: TerminatedIndicator
   '@SeqNum'?: undefined
   [k: string]: unknown
 }
 export interface PartyAccountAssociationType {
-  AccountClosedIndicator?: ValidateIndicatorType
-  PartyAccountAssociationTypeCode: ValidatePartyAccountAssociationCodeType
+  AccountClosedIndicator?: AccountClosedIndicator
+  PartyAccountAssociationTypeCode: PartyAccountAssociationTypeCode
   '@SeqNum'?: undefined
   [k: string]: unknown
 }
 export interface SuspiciousActivityType {
-  AmountUnknownIndicator?: ValidateIndicatorType
-  CumulativeTotalViolationAmountText?: RestrictString15
-  NoAmountInvolvedIndicator?: ValidateIndicatorType
-  SuspiciousActivityFromDateText: DateYYYYMMDDType
-  SuspiciousActivityToDateText?: DateYYYYMMDDOrBlankType
-  TotalSuspiciousAmountText?: RestrictString15
+  AmountUnknownIndicator?: AmountUnknownIndicator
+  CumulativeTotalViolationAmountText?: CumulativeAmount
+  NoAmountInvolvedIndicator?: NoAmountInvolvedIndicator
+  SuspiciousActivityFromDateText: DateOrStartDateOfSuspiciousActivity
+  SuspiciousActivityToDateText?: EndDateOfSuspiciousActivityWhenDifferentFromTheStartDate
+  TotalSuspiciousAmountText?: TotalAmountInvolved
   '@SeqNum'?: undefined
   [k: string]: unknown
 }
 export interface SuspiciousActivityClassificationType {
-  OtherSuspiciousActivityTypeText?: RestrictString50
-  SuspiciousActivitySubtypeID: ValidateSuspiciousActivitySubtypeID
-  SuspiciousActivityTypeID: ValidateSuspiciousActivityTypeID
+  OtherSuspiciousActivityTypeText?: SuspiciousActivityOther
+  SuspiciousActivitySubtypeID: SuspiciousActivitySubtypeCode
+  SuspiciousActivityTypeID: SuspiciousActivityTypeCode
   '@SeqNum'?: undefined
   [k: string]: unknown
 }
 export interface ActivityIPAddressType {
-  ActivityIPAddressDateText?: DateYYYYMMDDOrBlankType
-  ActivityIPAddressTimeStampText?: ValidateTimeDataOrBlankType
-  IPAddressText: RestrictString39
+  ActivityIPAddressDateText?: IPAddressDate
+  ActivityIPAddressTimeStampText?: IPAddressTimestamp
+  IPAddressText: IPAddressText
   '@SeqNum'?: undefined
   [k: string]: unknown
 }
 export interface CyberEventIndicatorsType {
-  CyberEventDateText?: DateYYYYMMDDOrBlankType
-  CyberEventIndicatorsTypeCode: ValidateCyberEventIndicatorsTypeCode
-  CyberEventTimeStampText?: ValidateTimeDataOrBlankType
-  CyberEventTypeOtherText?: RestrictString50
-  EventValueText: RestrictString4000
+  CyberEventDateText?: CyberEventDate
+  CyberEventIndicatorsTypeCode: CyberEventIndicatorTypeCode
+  CyberEventTimeStampText?: CyberEventTimestamp
+  CyberEventTypeOtherText?: CyberEventOther
+  EventValueText: CyberEventValue
   '@SeqNum'?: undefined
   [k: string]: unknown
 }
 export interface AssetsTableType {
-  AssetSubtypeID: ValidateAssetSubtypeIDTypeCode
-  AssetTypeID: ValidateAssetTypeIDTypeCode
-  OtherAssetSubtypeText?: RestrictString50
+  AssetSubtypeID: AssetSubtype
+  AssetTypeID: AssetTypeCode
+  OtherAssetSubtypeText?: AssetOther
   '@SeqNum'?: undefined
   [k: string]: unknown
 }
 export interface AssetsAttributeType {
-  AssetAttributeDescriptionText?: RestrictString50
-  AssetAttributeTypeID: ValidateAssetAttributeTypeIDTypeCode
+  AssetAttributeDescriptionText?: AssetAttributeOther
+  AssetAttributeTypeID: AssetAttributeTypeCode
   '@SeqNum'?: undefined
   [k: string]: unknown
 }
 export interface ActivityNarrativeInformationType {
-  ActivityNarrativeSequenceNumber: ValidateActivityNarrativeSequenceNumber
-  ActivityNarrativeText: RestrictString4000
+  ActivityNarrativeSequenceNumber: NarrativeSequenceNumber
+  ActivityNarrativeText: NarrativeDescription
   '@SeqNum'?: undefined
   [k: string]: unknown
 }
