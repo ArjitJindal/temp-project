@@ -33,7 +33,7 @@ export default function CaseStatusTag(props: Props) {
   ) : (
     <div className={cn(s.root)}>
       <div className={cn(s.body, getCaseStatusClassName(caseStatus))}>
-        {statusToOperationName(caseStatus)}
+        {statusToOperationName(caseStatus, true)}
       </div>
     </div>
   );

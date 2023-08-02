@@ -5,16 +5,16 @@ import { CaseClosingReasons } from '@/apis/models/CaseClosingReasons';
 import { neverReturn } from '@/utils/lang';
 import { humanizeConstant } from '@/utils/humanize';
 
-export const statusToOperationName = (status: AlertStatus | CaseStatus) => {
+export const statusToOperationName = (status: AlertStatus | CaseStatus, isPastTense = false) => {
   switch (status) {
     case 'OPEN':
       return 'Open';
     case 'CLOSED':
-      return 'Close';
+      return 'Close' + (isPastTense ? 'd' : '');
     case 'REOPENED':
-      return 'Re-Open';
+      return 'Re-Open' + (isPastTense ? 'ed' : '');
     case 'ESCALATED':
-      return 'Escalate';
+      return 'Escalate' + (isPastTense ? 'd' : '');
     case 'IN_REVIEW_OPEN':
     case 'IN_REVIEW_ESCALATED':
     case 'IN_REVIEW_CLOSED':
