@@ -1885,6 +1885,20 @@ paths:
           description: OK
         '403':
           description: Not enough privileges
+  /tenant/usageData:
+    get:
+      summary: Tenant - Get Usage Data
+      operationId: get-tenant-usage-data
+      x-flagright:
+        permissions:
+          - settings:developers:read
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TenantUsageData'
   '/accounts/{accountId}/settings':
     parameters:
       - schema:
@@ -4136,6 +4150,26 @@ components:
         - P2
         - P3
         - P4
+    TenantUsageData:
+      title: TenantUsageData
+      type: object
+      properties:
+        burstCapacity:
+          type: number
+        rateLimit:
+          type: number
+        quotaLimit:
+          type: string
+        quotaLeft:
+          type: string
+        quotaRenewalRate:
+          type: string
+      required:
+        - burstCapacity
+        - rateLimit
+        - quotaLimit
+        - quotaLeft
+        - quotaRenewalRate
     ImportRequest:
       title: ImportRequest
       type: object

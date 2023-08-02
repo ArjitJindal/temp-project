@@ -136,6 +136,14 @@ export const tenantsHandler = lambdaApi()(
       return
     })
 
+    handlers.registerGetTenantUsageData(
+      async (ctx) =>
+        await new TenantService(ctx.tenantId, {
+          dynamoDb: getDynamoDbClientByEvent(event),
+          mongoDb,
+        }).getUsagePlanData(ctx.tenantId)
+    )
+
     return await handlers.handle(event)
   }
 )

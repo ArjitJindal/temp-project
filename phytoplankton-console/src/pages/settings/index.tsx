@@ -10,6 +10,7 @@ import { RiskAlgorithmsSettings } from './components/RiskAlgorithmsSettings';
 import { OtherSettings } from './components/OtherSettings';
 import NarrativeTemplates from './components/NarrativeTemplates';
 import s from './styles.module.less';
+import { QuotaSettings } from './components/QuotaSettings';
 import ComplyAdvantageLogo from '@/branding/Comply-Advantage-logo.svg';
 import PageWrapper from '@/components/PageWrapper';
 import { useI18n } from '@/locales';
@@ -198,7 +199,16 @@ export default function SettingsPage() {
     },
     {
       name: 'DEVELOPERS',
-      menuItems: [{ name: 'Webhooks', content: <WebhookSettings /> }],
+      menuItems: [
+        {
+          name: 'Webhooks',
+          content: <WebhookSettings />,
+        },
+        {
+          name: 'Quotas',
+          content: <QuotaSettings />,
+        },
+      ],
     },
   ].filter(Boolean);
 

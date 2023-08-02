@@ -199,3 +199,5 @@ export const REPORTS_TEMPLATE = (params: AnyParameters): QueryKey => [
 ];
 
 export const SETTINGS = (): QueryKey => ['settings'];
+
+export const TENANT_USAGE_DATA = (): QueryKey => ['tenant-usage-data'];

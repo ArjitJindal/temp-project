@@ -7,6 +7,8 @@ import {
   GetRestApisCommand,
   GetUsagePlanKeysCommand,
   GetUsagePlansCommand,
+  UsagePlan,
+  GetUsageCommand,
 } from '@aws-sdk/client-api-gateway'
 import { StackConstants } from '@lib/constants'
 import { getAuth0TenantConfigs } from '@lib/configs/auth0/tenant-config'
@@ -23,6 +25,9 @@ import { getMongoDbClient } from '@/utils/mongoDBUtils'
 import { logger } from '@/core/logger'
 import { traceable } from '@/core/xray'
 import { TenantSettings } from '@/@types/openapi-internal/TenantSettings'
+import { TenantUsageData } from '@/@types/openapi-internal/TenantUsageData'
+import dayjs from '@/utils/dayjs'
+import { envIs } from '@/utils/env'
 
 export type TenantInfo = {
   tenant: Tenant
@@ -229,9 +234,9 @@ export class TenantService {
     return tenantDetails
   }
 
-  static async getAllUsagePlans(): Promise<AWS.APIGateway.UsagePlan[]> {
+  static async getAllUsagePlans(): Promise<UsagePlan[]> {
     const apigateway = new APIGatewayClient({
-      region: process.env.AWS_REGION,
+      region: envIs('local') ? 'eu-central-1' : process.env.AWS_REGION,
     })
     // TODO: handle for more than 500 usage plans
     const usagePlansCommand = new GetUsagePlansCommand({
@@ -265,7 +270,7 @@ export class TenantService {
 
   async getApiStages(): Promise<AWS.APIGateway.ApiStage[] | undefined> {
     const apigateway = new APIGatewayClient({
-      region: process.env.AWS_REGION,
+      region: envIs('local') ? 'eu-central-1' : process.env.AWS_REGION,
     })
 
     const apiGatewayCommand = new GetRestApisCommand({})
@@ -294,6 +299,53 @@ export class TenantService {
       }))
   }
 
+  private getUsagePlanName(tenantId: string, tenantName: string): string {
+    return `tarpon:${tenantId}:${tenantName}`
+  }
+
+  public async getUsagePlanData(tenantId: string): Promise<TenantUsageData> {
+    const usagePlans = await TenantService.getAllUsagePlans()
+    const usagePlan = usagePlans?.find(
+      (x) => x.name?.match(USAGE_PLAN_REGEX)?.[2] === tenantId
+    )
+
+    if (!usagePlan) {
+      throw new Error(`Usage plan for tenant ${tenantId} not found`)
+    }
+
+    const apigateway = new APIGatewayClient({
+      region: envIs('local') ? 'eu-central-1' : process.env.AWS_REGION,
+    })
+
+    const getUsageCommand = new GetUsageCommand({
+      usagePlanId: usagePlan.id,
+      startDate: dayjs().format('YYYY-MM-DD'),
+      endDate: dayjs().format('YYYY-MM-DD'),
+    })
+
+    const usage = await apigateway.send(getUsageCommand)
+
+    return {
+      burstCapacity: usagePlan.throttle?.burstLimit ?? 0,
+      rateLimit: usagePlan.throttle?.rateLimit ?? 0,
+      quotaLimit: process.env.ENV?.startsWith('prod')
+        ? 'UNLIMITED'
+        : usagePlan.quota?.limit?.toString() ?? '0',
+      quotaRenewalRate: process.env.ENV?.startsWith('prod')
+        ? 'N/A'
+        : usagePlan.quota?.period === 'DAY'
+        ? 'Daily'
+        : usagePlan.quota?.period === 'WEEK'
+        ? 'Weekly'
+        : usagePlan.quota?.period === 'MONTH'
+        ? 'Monthly'
+        : 'Unknown',
+      quotaLeft: process.env.ENV?.startsWith('prod')
+        ? 'UNLIMITED'
+        : Object.values(usage?.items ?? {})?.[0]?.[0]?.[1].toString() ?? '0',
+    }
+  }
+
   async createUsagePlan(
     tenantData: TenantCreationRequest,
     tenantId: string
@@ -311,7 +363,7 @@ export class TenantService {
     })
 
     const createdUsgaePlanCommand = new CreateUsagePlanCommand({
-      name: `tarpon:${tenantId}:${tenantData.tenantName}`,
+      name: this.getUsagePlanName(tenantId, tenantData.tenantName),
       throttle: throttleSettings,
       apiStages: await this.getApiStages(),
       description: tenantData.tenantWebsite,
