@@ -31,6 +31,7 @@ import { message } from '@/components/library/Message';
 import { DEFAULT_PARAMS_STATE } from '@/components/library/Table/consts';
 import { useScrollToFocus } from '@/utils/hooks';
 import { parseQueryString } from '@/utils/routing';
+import { RuleHitInsightsTag } from '@/components/ui/RuleHitInsightsTag';
 
 const DEFAULT_SORTING: SortingParamsItem = ['ruleId', 'ascend'];
 
@@ -180,11 +181,15 @@ const MyRule = (props: { simulationMode?: boolean }) => {
                 ? (ruleInstance.hitCount / ruleInstance.runCount) * 100
                 : 0;
             return (
-              <Tooltip
-                title={<>{`Hit: ${ruleInstance.hitCount} / Run: ${ruleInstance.runCount}`}</>}
-              >
-                {percent?.toFixed(2)}%
-              </Tooltip>
+              <>
+                <Tooltip
+                  title={<>{`Hit: ${ruleInstance.hitCount} / Run: ${ruleInstance.runCount}`}</>}
+                >
+                  {percent?.toFixed(2)}%
+                </Tooltip>
+
+                <RuleHitInsightsTag percentage={percent} runs={ruleInstance.runCount} />
+              </>
             );
           },
         },
