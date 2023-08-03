@@ -60,6 +60,7 @@ export default function KycStatusEditor({ user }: Props) {
       allowClear
       placeholder="Please select"
       isDisabled={!hasUserOveviewWritePermissions}
+      style={{ width: 132 }}
     />
   );
 }

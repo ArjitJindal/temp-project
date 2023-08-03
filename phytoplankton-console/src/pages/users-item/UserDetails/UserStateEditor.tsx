@@ -62,6 +62,7 @@ export default function UserStateEditor({ user }: Props) {
       onChange={handleChangeUserState}
       placeholder="Please select"
       isDisabled={!hasUserOveviewWritePermissions}
+      style={{ width: 120 }}
     />
   );
 }
