@@ -19,6 +19,7 @@ import { Address } from '@/@types/openapi-internal/Address'
 import { InternalConsumerUser } from '@/@types/openapi-internal/InternalConsumerUser'
 
 export class KenyaSARReportGenerator implements ReportGenerator {
+  tenantId!: string
   getType(): InternalReportType {
     return {
       countryCode: 'KE',

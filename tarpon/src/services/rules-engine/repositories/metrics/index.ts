@@ -108,4 +108,20 @@ export class MetricsRepository {
       userId,
     })
   }
+
+  public async getMetricsById(
+    userIds: string[],
+    transactionIds?: string[]
+  ): Promise<DeviceMetric[] | null> {
+    const db = this.mongoDb.db()
+    const collection = db.collection<DeviceMetric>(
+      DEVICE_DATA_COLLECTION(this.tenantId)
+    )
+    const filter = {
+      userId: { $in: userIds },
+      transactionId: { $in: transactionIds },
+    }
+    const result = await collection.find(filter).toArray()
+    return result
+  }
 }

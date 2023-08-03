@@ -33,13 +33,15 @@ import { Account } from '@/@types/openapi-internal/Account'
 import { InternalTransaction } from '@/@types/openapi-internal/InternalTransaction'
 import { ReportParameters } from '@/@types/openapi-internal/ReportParameters'
 import { ReportSchema } from '@/@types/openapi-internal/ReportSchema'
+import dayjs from '@/utils/dayjs'
+import { getMongoDbClient } from '@/utils/mongoDBUtils'
+import { MetricsRepository } from '@/services/rules-engine/repositories/metrics'
 import {
   Party1,
   SuspiciousActivityType,
 } from '@/services/sar/generators/US/SAR/resources/EFL_SARXBatchSchema.type'
 import { InternalBusinessUser } from '@/@types/openapi-internal/InternalBusinessUser'
 import { InternalConsumerUser } from '@/@types/openapi-internal/InternalConsumerUser'
-import dayjs from '@/utils/dayjs'
 import { getTargetCurrencyAmount } from '@/utils/currency-utils'
 
 const FINCEN_BINARY = path.join(
@@ -50,6 +52,7 @@ const FINCEN_BINARY = path.join(
 const VALIDATION_PREFIX = 'Error validating file: '
 
 export class UsSarReportGenerator implements ReportGenerator {
+  tenantId!: string
   getType(): InternalReportType {
     return {
       countryCode: 'US',
@@ -59,10 +62,11 @@ export class UsSarReportGenerator implements ReportGenerator {
 
   public async getPopulatedSchema(
     _reportId: string,
-    _c: Case,
+    c: Case,
     transactions: InternalTransaction[],
-    _reporter: Account
+    reporter: Account
   ): Promise<PopulatedSchema> {
+    const name = reporter.name
     const usersMap: Record<
       string,
       InternalConsumerUser | InternalBusinessUser
@@ -163,9 +167,35 @@ export class UsSarReportGenerator implements ReportGenerator {
         SuspiciousActivityToDateText: dateToDate(new Date(endDate)),
       }
     }
+    const userIds: string[] = []
+    if (c?.caseUsers?.origin?.userId) {
+      userIds.push(c.caseUsers.origin.userId)
+    }
+
+    if (c?.caseUsers?.destination?.userId) {
+      userIds.push(c.caseUsers.destination.userId)
+    }
+
+    const uniqueIPAddresses = await this.getIPAddresses(userIds, transactions)
+
+    const ActivityIPAddress = uniqueIPAddresses.map((ipAddress) => {
+      return {
+        IPAddressText: ipAddress,
+      }
+    })
 
     const params = {
-      report: {},
+      report: {
+        generalInfo: {
+          FilingDateText: dayjs().format('YYYYMMDD'),
+          ActivityIPAddress: ActivityIPAddress,
+        },
+        transmitter: {
+          PartyName: {
+            RawPartyFullName: name,
+          },
+        },
+      },
       transactions: transactions?.map((t) => {
         return { id: t.transactionId, transaction: {} }
       }),
@@ -280,5 +310,33 @@ export class UsSarReportGenerator implements ReportGenerator {
     }
     fs.rmSync(outputFile)
     return finalFileContent
+  }
+  public async getIPAddresses(
+    userIds: string[],
+    transactions: InternalTransaction[]
+  ) {
+    const mongoDb = await getMongoDbClient()
+    const metricsRepository = new MetricsRepository(this.tenantId, { mongoDb })
+
+    const transactionIds = transactions.map(
+      (transaction) => transaction.transactionId
+    )
+
+    const deviceData = await metricsRepository.getMetricsById(
+      userIds,
+      transactionIds
+    )
+    const IPAddressesByUser = deviceData
+      ? deviceData.map((data) => data.ipAddress).filter(Boolean)
+      : []
+
+    const IPAddressesByTransactions = transactions
+      .filter((transaction) => transaction.deviceData?.ipAddress)
+      .map((transaction) => transaction.deviceData?.ipAddress)
+    const uniqueIPAddresses = new Set([
+      ...IPAddressesByUser,
+      ...IPAddressesByTransactions,
+    ])
+    return [...uniqueIPAddresses]
   }
 }

@@ -18,9 +18,10 @@ import { Case } from '@/@types/openapi-internal/Case'
 import { InternalTransaction } from '@/@types/openapi-internal/InternalTransaction'
 import { DefaultApiGetReportsRequest } from '@/@types/openapi-internal/RequestParameters'
 import { formatCountry } from '@/utils/countries'
-
+import { mergeObjects } from '@/utils/object'
 export class ReportService {
   reportRepository!: ReportRepository
+  tenantId: string
 
   public static async fromEvent(
     event: APIGatewayProxyWithLambdaAuthorizerEvent<
@@ -33,6 +34,7 @@ export class ReportService {
   }
   constructor(tenantId: string, mongoDb: MongoClient) {
     this.reportRepository = new ReportRepository(tenantId, mongoDb)
+    this.tenantId = tenantId
   }
 
   public getTypes(): ReportType[] {
@@ -49,21 +51,17 @@ export class ReportService {
     }
 
     // For demos, append some generators we want to implement.
-    return types
-      .concat(
-        UNIMPLEMENTED_GENERATORS.map(
-          ([countryCode, type]): ReportType => ({
-            country: formatCountry(countryCode) || 'Unknown',
-            countryCode,
-            id: `${countryCode}-${type}`,
-            implemented: false,
-            type,
-          })
-        )
+    return types.concat(
+      UNIMPLEMENTED_GENERATORS.map(
+        ([countryCode, type]): ReportType => ({
+          country: formatCountry(countryCode) || 'Unknown',
+          countryCode,
+          id: `${countryCode}-${type}`,
+          implemented: false,
+          type,
+        })
       )
-      .sort((a, b) => {
-        return `${a.country}-${a.type}` < `${b.country}-${b.type}` ? -1 : 1
-      })
+    )
   }
 
   public async getReportDraft(
@@ -73,6 +71,7 @@ export class ReportService {
     transactions: InternalTransaction[]
   ): Promise<Report> {
     const reportId = await this.reportRepository.getId()
+
     const generator = REPORT_GENERATORS.get(reportTypeId)
     if (!c.caseId) {
       throw new NotFound(`No case ID`)
@@ -80,6 +79,7 @@ export class ReportService {
     if (!generator) {
       throw new NotFound(`Cannot find report generator`)
     }
+    generator.tenantId = this.tenantId
     const lastGeneratedReport =
       await this.reportRepository.getLastGeneratedReport(reportTypeId)
 
@@ -88,6 +88,10 @@ export class ReportService {
       c,
       transactions,
       reporter
+    )
+    const prefillReport = mergeObjects(
+      lastGeneratedReport?.parameters.report,
+      populatedSchema.params.report
     )
     const now = new Date().valueOf()
 
@@ -104,10 +108,7 @@ export class ReportService {
       status: 'draft',
       parameters: {
         ...populatedSchema.params,
-        report: {
-          ...(lastGeneratedReport?.parameters?.report || {}),
-          ...populatedSchema.params.report,
-        },
+        report: prefillReport,
       },
       comments: [],
       revisions: [],

@@ -12,6 +12,7 @@ import { LithuaniaCTRReportGenerator } from '@/services/sar/generators/LT/CTR'
 export type PopulatedSchema = { params: ReportParameters; schema: ReportSchema }
 export type InternalReportType = { type: string; countryCode: CountryCode }
 export interface ReportGenerator {
+  tenantId?: string
   // Metadata about the report type that this generates
   getType(): InternalReportType
 

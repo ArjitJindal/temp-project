@@ -156,7 +156,7 @@ export class ReportRepository {
 
     const report = await collection
       .find({
-        schemaId,
+        reportTypeId: schemaId,
         status: 'complete',
         createdById: (getContext()?.user as Account)?.id,
       })
