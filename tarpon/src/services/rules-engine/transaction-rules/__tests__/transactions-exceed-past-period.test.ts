@@ -12,34 +12,6 @@ import {
 } from '@/test-utils/rule-test-utils'
 import { dynamoDbSetupHook } from '@/test-utils/dynamodb-test-utils'
 
-const TEST_TRANSACTIONS = [
-  getTestTransaction({
-    originUserId: '2-1',
-    destinationUserId: '2-2',
-    timestamp: dayjs('2022-01-01T00:00:00.000Z').valueOf(),
-  }),
-  getTestTransaction({
-    originUserId: '2-1',
-    destinationUserId: '2-3',
-    timestamp: dayjs('2022-01-01T05:00:00.000Z').valueOf(),
-  }),
-  getTestTransaction({
-    originUserId: '2-1',
-    destinationUserId: '2-4',
-    timestamp: dayjs('2022-01-01T06:00:00.000Z').valueOf(),
-  }),
-  getTestTransaction({
-    originUserId: '2-1',
-    destinationUserId: '2-5',
-    timestamp: dayjs('2022-01-01T07:00:00.000Z').valueOf(),
-  }),
-  getTestTransaction({
-    originUserId: '2-1',
-    destinationUserId: '2-6',
-    timestamp: dayjs('2022-01-01T08:00:00.000Z').valueOf(),
-  }),
-]
-
 dynamoDbSetupHook()
 
 ruleVariantsTest(true, () => {
@@ -59,7 +31,7 @@ ruleVariantsTest(true, () => {
             units: 10,
             granularity: 'hour',
           },
-          minTransactionsInTimeWindow1: 4,
+          minTransactionsInTimeWindow2: 1,
           checkSender: 'all',
           checkReceiver: 'none',
         } as TransactionsExceedPastPeriodRuleParameters,
@@ -69,12 +41,32 @@ ruleVariantsTest(true, () => {
     testRuleDescriptionFormatting(
       'basic case',
       TEST_TENANT_ID,
-      TEST_TRANSACTIONS,
+      [
+        getTestTransaction({
+          originUserId: '1-1',
+          destinationUserId: '1-2',
+          timestamp: dayjs('2022-01-01T00:00:00.000Z').valueOf(),
+        }),
+        getTestTransaction({
+          originUserId: '1-1',
+          destinationUserId: '1-3',
+          timestamp: dayjs('2022-01-01T05:00:00.000Z').valueOf(),
+        }),
+        getTestTransaction({
+          originUserId: '1-1',
+          destinationUserId: '1-4',
+          timestamp: dayjs('2022-01-01T06:00:00.000Z').valueOf(),
+        }),
+        getTestTransaction({
+          originUserId: '1-1',
+          destinationUserId: '1-4',
+          timestamp: dayjs('2022-01-01T07:00:00.000Z').valueOf(),
+        }),
+      ],
       {
         descriptionTemplate: getRuleByRuleId('R-131').descriptionTemplate,
       },
       [
-        null,
         null,
         null,
         null,
@@ -90,7 +82,7 @@ ruleVariantsTest(true, () => {
         type: 'TRANSACTION',
         ruleImplementationName: 'transactions-exceed-past-period',
         defaultParameters: {
-          multiplierThreshold: 2,
+          multiplierThreshold: 1,
           timeWindow1: {
             units: 5,
             granularity: 'hour',
@@ -99,7 +91,9 @@ ruleVariantsTest(true, () => {
             units: 10,
             granularity: 'hour',
           },
-          minTransactionsInTimeWindow1: 4,
+          minTransactionsInTimeWindow1: 2,
+          minTransactionsInTimeWindow2: 1,
+          initialTransactions: 5,
           checkSender: 'all',
           checkReceiver: 'none',
         } as TransactionsExceedPastPeriodRuleParameters,
@@ -109,7 +103,33 @@ ruleVariantsTest(true, () => {
     describe.each<TransactionRuleTestCase>([
       {
         name: 'Exceeded transactions - hit',
-        transactions: TEST_TRANSACTIONS,
+        transactions: [
+          getTestTransaction({
+            originUserId: '1-1',
+            destinationUserId: '1-2',
+            timestamp: dayjs('2022-01-01T00:00:00.000Z').valueOf(),
+          }),
+          getTestTransaction({
+            originUserId: '1-1',
+            destinationUserId: '1-3',
+            timestamp: dayjs('2022-01-01T05:00:00.000Z').valueOf(),
+          }),
+          getTestTransaction({
+            originUserId: '1-1',
+            destinationUserId: '1-4',
+            timestamp: dayjs('2022-01-01T06:00:00.000Z').valueOf(),
+          }),
+          getTestTransaction({
+            originUserId: '1-1',
+            destinationUserId: '1-5',
+            timestamp: dayjs('2022-01-01T07:00:00.000Z').valueOf(),
+          }),
+          getTestTransaction({
+            originUserId: '1-1',
+            destinationUserId: '1-6',
+            timestamp: dayjs('2022-01-01T08:00:00.000Z').valueOf(),
+          }),
+        ],
         expectedHits: [false, false, false, false, true],
       },
     ])('', ({ name, transactions, expectedHits }) => {

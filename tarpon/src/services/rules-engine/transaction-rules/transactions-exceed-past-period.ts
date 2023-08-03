@@ -10,10 +10,12 @@ import {
   CHECK_SENDER_OPTIONAL_SCHEMA,
   TimeWindow,
   TIME_WINDOW_SCHEMA,
+  INITIAL_TRANSACTIONS_OPTIONAL_SCHEMA,
 } from '../utils/rule-parameter-schemas'
 import { TransactionHistoricalFilters } from '../filters'
 import { getTimestampRange } from '../utils/time-utils'
 import { RuleHitResultItem } from '../rule'
+import { MongoDbTransactionRepository } from '../repositories/mongodb-transaction-repository'
 import { TransactionAggregationRule } from './aggregation-rule'
 
 type AggregationData = {
@@ -22,10 +24,12 @@ type AggregationData = {
 
 export type TransactionsExceedPastPeriodRuleParameters = {
   minTransactionsInTimeWindow1?: number
+  minTransactionsInTimeWindow2?: number
   multiplierThreshold: number
   timeWindow1: TimeWindow
   timeWindow2: TimeWindow
 
+  initialTransactions?: number
   checkSender?: 'sending' | 'all' | 'none'
   checkReceiver?: 'receiving' | 'all' | 'none'
 }
@@ -51,13 +55,20 @@ export default class TransactionsExceedPastPeriodRule extends TransactionAggrega
           type: 'integer',
           title: 'Multiplier threshold',
           description:
-            'rule is run when the number of transactions of time period 2 is greater than the number of transactions of time period 1 multiplied by this threshold',
+            'Rule is run when the number of transactions of time period 1 is greater than the number of transactions of time period 2 multiplied by this threshold',
         },
         minTransactionsInTimeWindow1: {
           type: 'integer',
           title: 'Minimum number of transactions in time period 1',
           nullable: true,
         },
+        minTransactionsInTimeWindow2: {
+          type: 'integer',
+          title:
+            'Minimum number of transactions in time period 2 (time period 1 is excluded)',
+          nullable: true,
+        },
+        initialTransactions: INITIAL_TRANSACTIONS_OPTIONAL_SCHEMA(),
         checkSender: CHECK_SENDER_OPTIONAL_SCHEMA(),
         checkReceiver: CHECK_RECEIVER_OPTIONAL_SCHEMA(),
       },
@@ -95,14 +106,22 @@ export default class TransactionsExceedPastPeriodRule extends TransactionAggrega
       return
     }
 
-    const { transactionsCountP1, transactionsCountP2 } = await this.getData(
-      direction
-    )
+    const { transactionsCountP1, transactionsCountP2, totalTransactionCount } =
+      await this.getData(direction)
     const hasMinTransactionsInTimeWindow1 =
       !this.parameters.minTransactionsInTimeWindow1 ||
       transactionsCountP1 >= this.parameters.minTransactionsInTimeWindow1
+    const hasMinTransactionsInTimeWindow2 =
+      !this.parameters.minTransactionsInTimeWindow2 ||
+      transactionsCountP2 >= this.parameters.minTransactionsInTimeWindow2
+    const hasInitialTransactions = this.parameters.initialTransactions
+      ? totalTransactionCount >= this.parameters.initialTransactions
+      : true
+
     if (
       hasMinTransactionsInTimeWindow1 &&
+      hasMinTransactionsInTimeWindow2 &&
+      hasInitialTransactions &&
       transactionsCountP1 >
         this.parameters.multiplierThreshold * transactionsCountP2
     ) {
@@ -115,9 +134,11 @@ export default class TransactionsExceedPastPeriodRule extends TransactionAggrega
     }
   }
 
-  private async getData(
-    direction: 'origin' | 'destination'
-  ): Promise<{ transactionsCountP1: number; transactionsCountP2: number }> {
+  private async getData(direction: 'origin' | 'destination'): Promise<{
+    transactionsCountP1: number
+    transactionsCountP2: number
+    totalTransactionCount: number
+  }> {
     const { checkSender, checkReceiver, timeWindow1, timeWindow2 } =
       this.parameters
     const {
@@ -128,19 +149,23 @@ export default class TransactionsExceedPastPeriodRule extends TransactionAggrega
       this.transaction.timestamp!,
       timeWindow2
     )
-    const [userAggregationDataPeriod1, userAggregationDataPeriod2] =
-      await Promise.all([
-        this.getRuleAggregations<AggregationData>(
-          direction,
-          afterTimestamp1,
-          beforeTimestamp1
-        ),
-        this.getRuleAggregations<AggregationData>(
-          direction,
-          afterTimestamp2,
-          afterTimestamp1
-        ),
-      ])
+    const [
+      userAggregationDataPeriod1,
+      userAggregationDataPeriod2,
+      userTransactionCount,
+    ] = await Promise.all([
+      this.getRuleAggregations<AggregationData>(
+        direction,
+        afterTimestamp1,
+        beforeTimestamp1
+      ),
+      this.getRuleAggregations<AggregationData>(
+        direction,
+        afterTimestamp2,
+        afterTimestamp1
+      ),
+      this.getUserTransactionCount(direction),
+    ])
     if (userAggregationDataPeriod1 && userAggregationDataPeriod2) {
       const transactionsCountP1 =
         sumBy(userAggregationDataPeriod1, (data) => data.count || 0) + 1
@@ -151,6 +176,7 @@ export default class TransactionsExceedPastPeriodRule extends TransactionAggrega
       return {
         transactionsCountP1,
         transactionsCountP2,
+        totalTransactionCount: userTransactionCount,
       }
     }
 
@@ -201,7 +227,40 @@ export default class TransactionsExceedPastPeriodRule extends TransactionAggrega
     return {
       transactionsCountP1: transactionsCountP1,
       transactionsCountP2: transactionsCountP2 - transactionsCountP1,
+      totalTransactionCount: userTransactionCount,
     }
+  }
+
+  private async getUserTransactionCount(
+    direction: 'origin' | 'destination'
+  ): Promise<number> {
+    const userId =
+      direction === 'origin'
+        ? this.transaction.originUserId
+        : this.transaction.destinationUserId
+    if (!userId) {
+      return 0
+    }
+    if (this.aggregationRepository) {
+      const counts = await this.aggregationRepository.getUserTransactionsCount(
+        userId
+      )
+      return (
+        counts.receivingTransactionsCount + counts.sendingTransactionsCount + 1
+      )
+    }
+    const transactionRepository = this
+      .transactionRepository as MongoDbTransactionRepository
+    const [sendingTransactionsCount, receivingTransactionsCount] =
+      await Promise.all([
+        transactionRepository.getTransactionsCount({
+          filterOriginUserId: userId,
+        }),
+        transactionRepository.getTransactionsCount({
+          filterDestinationUserId: userId,
+        }),
+      ])
+    return sendingTransactionsCount + receivingTransactionsCount + 1
   }
 
   private async getTimeAggregatedResult(
