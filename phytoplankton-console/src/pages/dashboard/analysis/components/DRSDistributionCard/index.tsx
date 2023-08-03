@@ -130,18 +130,16 @@ export default function DRSDistributionCard() {
               title={header('User Distribution by CRA Risk Level')}
             >
               <Row>
-                <Col span={12}>
+                <Col span={24}>
                   <Card bordered={false} title={smallHeader('Breakdown by risk scores')}>
                     <Column {...config} />
                   </Card>
                 </Col>
-                <Col span={12}></Col>
               </Row>
             </Card>
           );
         }}
       </AsyncResourceRenderer>
-      ;
     </div>
   );
 }

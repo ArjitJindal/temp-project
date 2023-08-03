@@ -8,10 +8,19 @@ import { InputProps } from '@/components/library/Form';
 interface Props extends InputProps<boolean> {
   testName?: string;
   label?: string;
+  extraLeftLabelMargin?: boolean;
 }
 
 export default function Checkbox(props: Props) {
-  const { isDisabled, value, onChange, isError: _isError, testName, ...rest } = props;
+  const {
+    isDisabled,
+    value,
+    onChange,
+    isError: _isError,
+    testName,
+    extraLeftLabelMargin = false,
+    ...rest
+  } = props;
   const ref = useRef<HTMLInputElement>(null);
   return (
     <div className={s.container}>
@@ -33,7 +42,11 @@ export default function Checkbox(props: Props) {
           <CheckLineIcon className={s.icon} />
         </div>
       </div>
-      {props.label && <div className={s.label}>{props.label}</div>}
+      {props.label && (
+        <div className={cn(s[`label${extraLeftLabelMargin ? '-EXTRA_MARGIN' : ''}`])}>
+          {props.label}
+        </div>
+      )}
     </div>
   );
 }
