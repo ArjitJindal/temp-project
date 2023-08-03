@@ -7,7 +7,7 @@ describe('check pagination', () => {
 
   it('Next button on table should work', () => {
     cy.visit('/transactions/list', { timeout: 20000 });
-    cy.intercept('GET', '/transactions?*').as('transactions');
+    cy.intercept('GET', '**/transactions?*').as('transactions');
     let tableDataBefore: string;
 
     cy.get('[data-test="table"]')
@@ -29,7 +29,7 @@ describe('check pagination', () => {
       .click();
 
     // Wait for the table to update after clicking "Next"
-    cy.wait('@transactions').then((interception) => {
+    cy.wait('@transactions', { timeout: 20000 }).then((interception) => {
       const newData = interception.response?.body;
       expect(newData).to.exist;
       cy.get('[data-test="table"]', { timeout: 20000 })

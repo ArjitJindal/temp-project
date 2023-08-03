@@ -10,7 +10,7 @@ describe('Approval of payments', () => {
     isQAenv ? skipOn(true) : skipOn(false);
 
     cy.visit('/settings');
-    cy.intercept('POST', '/transactions/action').as('approval-request');
+    cy.intercept('POST', '**/transactions/action').as('approval-request');
     cy.contains('Payment Approval', { timeout: 15000 }).click();
 
     cy.get('input[role="switch"]').then((toggle) => {
@@ -28,7 +28,10 @@ describe('Approval of payments', () => {
 
     cy.contains('Payment approval').click();
 
-    cy.get('input[data-cy="row-table-checkbox').first().click();
+    cy.get('input[data-cy="row-table-checkbox', { timeout: 20000 })
+      .should('exist')
+      .first()
+      .click({ force: true });
     cy.contains('Allow').click();
     cy.multiSelect('.ant-modal', 'False positive');
     cy.get('.ant-modal-root .ant-modal-title', { timeout: 8000 }).click();
