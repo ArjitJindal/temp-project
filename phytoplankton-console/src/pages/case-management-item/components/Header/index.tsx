@@ -10,7 +10,6 @@ import BriefcaseLineIcon from '@/components/ui/icons/Remix/business/briefcase-li
 import * as Form from '@/components/ui/Form';
 import LegacyEntityHeader from '@/components/ui/entityPage/LegacyEntityHeader';
 import CasesStatusChangeButton from '@/pages/case-management/components/CasesStatusChangeButton';
-import { FalsePositiveTag } from '@/pages/case-management/components/FalsePositiveTag';
 import CommentButton from '@/components/CommentButton';
 import { getUserLink, getUserName } from '@/utils/api/users';
 import Id from '@/components/ui/Id';
@@ -42,6 +41,7 @@ export default function Header(props: Props) {
     : caseItem.caseUsers?.destination?.userId
     ? caseItem.caseUsers?.destination
     : undefined;
+
   const escalationEnabled = useFeatureEnabled('ESCALATION');
   const isReopenEnabled = useHasPermissions(['case-management:case-reopen:write']);
 
@@ -97,21 +97,6 @@ export default function Header(props: Props) {
     <LegacyEntityHeader
       stickyElRef={headerStickyElRef}
       idTitle={'Case ID'}
-      tag={
-        caseItem.falsePositiveDetails &&
-        caseId &&
-        caseItem.falsePositiveDetails.isFalsePositive && (
-          <FalsePositiveTag
-            caseIds={[caseId]}
-            onSaved={() => {
-              // todo: implement in-place update instead of reloading
-              onReload();
-            }}
-            newCaseStatus={caseItem.caseStatus === 'OPEN' ? 'CLOSED' : 'REOPENED'}
-            confidence={caseItem.falsePositiveDetails.confidenceScore}
-          />
-        )
-      }
       id={caseId}
       buttons={
         <>

@@ -21,7 +21,7 @@ export const FalsePositiveTag: React.FC<Props> = (props: Props) => {
 
   return (
     <>
-      <span className={style.falsePositiveTag}>
+      <div className={style.falsePositiveTag}>
         <Tooltip title={'Accuracy increases as you close more cases.'}>
           <Tag
             color={COLORS.navyBlue.base}
@@ -29,16 +29,16 @@ export const FalsePositiveTag: React.FC<Props> = (props: Props) => {
               setModalVisible(true);
             }}
             icon={
-              <span className={style.icon}>
+              <div className={style.tagIcon}>
                 <BrainIcon />
-              </span>
+              </div>
             }
             className={style.tagOnHover}
           >
             {confidence}% False Positive
           </Tag>
         </Tooltip>
-      </span>
+      </div>
       <CasesStatusChangeModal
         entityIds={caseIds}
         isVisible={isModalVisible}

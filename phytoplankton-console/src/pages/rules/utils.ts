@@ -103,7 +103,8 @@ export function ruleInstanceToFormValues(isPulseEnabled: boolean, ruleInstance?:
           alertCreationInterval: ruleInstance.alertCreationInterval,
           ruleLabels: ruleInstance.labels,
           ruleInstanceId: ruleInstance.id,
-        },
+          falsePositiveCheckEnabled: ruleInstance.falsePositiveCheckEnabled,
+        } as RuleConfigurationFormValues['basicDetailsStep'],
         standardFiltersStep: ruleInstance.filters,
         ruleParametersStep: isPulseEnabled
           ? {
@@ -152,6 +153,7 @@ export function formValuesToRuleInstance(
     alertCreationInterval: basicDetailsStep.alertCreationInterval,
     nature: basicDetailsStep.ruleNature,
     labels: basicDetailsStep.ruleLabels,
+    falsePositiveCheckEnabled: basicDetailsStep.falsePositiveCheckEnabled,
     ...(isPulseEnabled
       ? {
           riskLevelParameters: riskLevelParameters

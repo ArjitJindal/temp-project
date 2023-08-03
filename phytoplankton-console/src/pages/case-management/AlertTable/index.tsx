@@ -3,6 +3,7 @@ import pluralize from 'pluralize';
 import { useMutation } from '@tanstack/react-query';
 import { AssigneesDropdown } from '../components/AssigneesDropdown';
 import { ApproveSendBackButton } from '../components/ApproveSendBackButton';
+import { FalsePositiveTag } from '../components/FalsePositiveTag';
 import CreateCaseConfirmModal from './CreateCaseConfirmModal';
 import { usePaginatedQuery } from '@/utils/queries/hooks';
 import { useApi } from '@/api';
@@ -77,6 +78,7 @@ const mergedColumns = (
   handleAlertsReviewAssignments: (updateRequest: AlertsReviewAssignmentsUpdateRequest) => void,
   userId: string,
   reload: () => void,
+  falsePositiveEnabled: boolean,
 ): TableColumn<TableAlertItem>[] => {
   const helper = new ColumnHelper<TableAlertItem>();
   return helper.list([
@@ -88,17 +90,29 @@ const mergedColumns = (
       filtering: true,
       type: {
         render: (alertId, { item: entity }) => {
+          const falsePositiveDetails = entity?.ruleHitMeta?.falsePositiveDetails;
           return (
-            <Id
-              to={addBackUrlToRoute(
-                makeUrl(`/case-management/case/:caseId/:tab`, {
-                  caseId: entity.caseId,
-                  tab: 'alerts',
-                }),
+            <>
+              <Id
+                to={addBackUrlToRoute(
+                  makeUrl(`/case-management/case/:caseId/:tab`, {
+                    caseId: entity.caseId,
+                    tab: 'alerts',
+                  }),
+                )}
+              >
+                {alertId}
+              </Id>
+              {falsePositiveDetails && falsePositiveEnabled && (
+                <FalsePositiveTag
+                  caseIds={[entity.caseId!]}
+                  confidence={falsePositiveDetails.confidenceScore}
+                  newCaseStatus={'CLOSED'}
+                  onSaved={reload}
+                  rounded
+                />
               )}
-            >
-              {alertId}
-            </Id>
+            </>
           );
         },
       },
@@ -309,6 +323,8 @@ export default function AlertTable(props: Props) {
     },
   );
 
+  const isFalsePositiveEnabled = useFeatureEnabled('FALSE_POSITIVE_CHECK');
+
   const queryResults: QueryResult<TableData<TableAlertItem>> = usePaginatedQuery(
     ALERT_LIST(params),
     async () => {
@@ -433,6 +449,7 @@ export default function AlertTable(props: Props) {
         handleAlertsReviewAssignments,
         user.userId,
         reloadTable,
+        isFalsePositiveEnabled,
       ),
     [
       hideUserFilters,
@@ -441,6 +458,7 @@ export default function AlertTable(props: Props) {
       handleAlertsReviewAssignments,
       user.userId,
       reloadTable,
+      isFalsePositiveEnabled,
     ],
   );
 

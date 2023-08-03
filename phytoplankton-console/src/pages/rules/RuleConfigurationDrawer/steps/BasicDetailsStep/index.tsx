@@ -11,6 +11,8 @@ import { PropertyListLayout } from '@/pages/rules/RuleConfigurationDrawer/JsonSc
 import InputField from '@/components/library/Form/InputField';
 import Select from '@/components/library/Select';
 import TextArea from '@/components/library/TextArea';
+import Checkbox from '@/components/library/Checkbox';
+import { useFeatureEnabled } from '@/components/AppWrapper/Providers/SettingsProvider';
 
 export interface FormValues {
   ruleName: string | undefined;
@@ -22,6 +24,7 @@ export interface FormValues {
   alertCreationInterval?: AlertCreationInterval;
   simulationIterationName?: string;
   simulationIterationDescription?: string;
+  falsePositiveCheckEnabled?: boolean;
 }
 
 export const INITIAL_VALUES: FormValues = {
@@ -55,6 +58,7 @@ function RuleDetails(props: Props) {
   const { rule } = props;
   const [ruleNature, setRuleNature] = useState<RuleNature>(rule.defaultNature);
   const [ruleLabels, setRuleLabels] = useState<RuleLabels[]>(rule.labels);
+  const isFalsePositiveCheckEnabled = useFeatureEnabled('FALSE_POSITIVE_CHECK');
 
   useEffect(() => {
     setRuleLabels([]);
@@ -128,7 +132,15 @@ function RuleDetails(props: Props) {
         >
           {(inputProps) => <CreationIntervalInput {...inputProps} />}
         </InputField>
-
+        {rule.defaultFalsePositiveCheckEnabled != null && isFalsePositiveCheckEnabled && (
+          <InputField<FormValues, 'falsePositiveCheckEnabled'>
+            name={'falsePositiveCheckEnabled'}
+            label={'False positive check'}
+            labelProps={{ required: { value: false, showHint: true } }}
+          >
+            {(inputProps) => <Checkbox {...inputProps} value={inputProps.value ?? false} />}
+          </InputField>
+        )}
         <InputField<FormValues, 'casePriority'>
           name={'casePriority'}
           label={'Rule Severity'}

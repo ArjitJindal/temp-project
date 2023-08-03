@@ -5624,8 +5624,6 @@ components:
             type: string
         caseHierarchyDetails:
           $ref: '#/components/schemas/CaseHierarchyDetails'
-        falsePositiveDetails:
-          $ref: ../public/openapi-public-original.yaml#/components/schemas/FalsePositiveDetails
         caseTransactionsCount:
           type: number
     Alert:
@@ -5696,8 +5694,6 @@ components:
           type: array
           items:
             $ref: ../public/openapi-public-original.yaml#/components/schemas/PaymentMethod
-        falsePositiveDetails:
-          $ref: ../public/openapi-public-original.yaml#/components/schemas/FalsePositiveDetails
         comments:
           type: array
           items:
