@@ -327,7 +327,7 @@ export default function AlertTable(props: Props) {
 
   const queryResults: QueryResult<TableData<TableAlertItem>> = usePaginatedQuery(
     ALERT_LIST(params),
-    async () => {
+    async (paginationParams) => {
       const {
         sort,
         page,
@@ -357,6 +357,7 @@ export default function AlertTable(props: Props) {
       const preparedParams: DefaultApiGetAlertListRequest = {
         page,
         pageSize,
+        ...paginationParams,
         filterAlertId: alertId,
         filterCaseId: caseId,
         filterAlertStatus: getStatuses(alertStatus),
@@ -506,7 +507,6 @@ export default function AlertTable(props: Props) {
     },
     [isEmbedded, onChangeParams],
   );
-
   return (
     <>
       <QueryResultsTable<TableAlertItem, AlertTableParams>
