@@ -28,6 +28,7 @@ export const config: Config = {
     },
     TRANSACTION_LAMBDA: {
       PROVISIONED_CONCURRENCY: 5,
+      MEMORY_SIZE: 1024,
     },
     TRANSACTIONS_VIEW_LAMBDA: {
       PROVISIONED_CONCURRENCY: 3,
