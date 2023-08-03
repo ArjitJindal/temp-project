@@ -268,6 +268,7 @@ export class CdkTarponConsoleLambdaStack extends cdk.NestedStack {
               'arn:aws:apigateway:*::/usageplans/*/keys',
               'arn:aws:apigateway:*::/usageplans',
               'arn:aws:apigateway:*::/restapis',
+              'arn:aws:apigateway:*::/usageplans/*/usage',
             ],
           }),
         ],
