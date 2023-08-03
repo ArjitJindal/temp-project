@@ -72,7 +72,7 @@ export const config: Config = {
       'https://betteruptime.com/api/v1/aws-cloudwatch/webhook/b9EMVzubTbU3YRnn8tktYYnu',
     CONSOLE_URI: 'https://console.flagright.dev',
     SLACK_CLIENT_ID: '2800969986821.3797458092182',
-    SLACK_CLIENT_SECRET: 'b195cb611e873c4737863ce27e885d39',
+    SLACK_CLIENT_SECRET: '7e47e8df70f4bfade8d8679b743bac67',
     SLACK_REDIRECT_URI:
       'https://api.flagright.dev/console/slack/oauth_redirect',
     WEBHOOK_REQUEST_TIMEOUT_SEC: 10,
