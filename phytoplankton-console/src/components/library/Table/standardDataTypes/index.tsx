@@ -422,6 +422,7 @@ const StatusChangeDropDown = <T extends TableItem | TableAlertItem>(props: {
       assignments={entity?.assignments ?? []}
       onSelect={(status) => updateMutation.mutate(status)}
       statusChanges={entity?.statusChanges ?? []}
+      reviewAssignments={entity?.reviewAssignments ?? []}
     />
   );
 };

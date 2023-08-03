@@ -4673,6 +4673,10 @@ components:
           type: number
         closedBySystem:
           type: number
+        escalatedBy:
+          type: number
+        inProgress:
+          type: number
       required:
         - accountId
         - assignedTo

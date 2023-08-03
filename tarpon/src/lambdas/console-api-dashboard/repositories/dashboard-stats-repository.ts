@@ -1,5 +1,5 @@
 import { Db, MongoClient, WithId } from 'mongodb'
-import _ from 'lodash'
+import { keyBy, round } from 'lodash'
 import { getAffectedInterval, getTimeLabels } from '../utils'
 import { DashboardStatsDRSDistributionData } from './types'
 import dayjs from '@/utils/dayjs'
@@ -43,6 +43,11 @@ import { FLAGRIGHT_SYSTEM_USER } from '@/services/rules-engine/repositories/aler
 type TimeRange = {
   startTimestamp?: number
   endTimestamp?: number
+}
+
+interface TimestampCondition {
+  $gte?: number
+  $lte?: number
 }
 
 export type GranularityValuesType = 'HOUR' | 'MONTH' | 'DAY'
@@ -272,7 +277,7 @@ export class DashboardStatsRepository {
     const db = this.mongoDb.db()
     const casesCollection = db.collection<Case>(CASES_COLLECTION(this.tenantId))
 
-    let timestampCondition: { $gte: number; $lte: number } | null = null
+    let timestampCondition: TimestampCondition | null = null
     if (timeRange) {
       const { start, end } = getAffectedInterval(timeRange, 'HOUR')
       timestampCondition = {
@@ -282,10 +287,7 @@ export class DashboardStatsRepository {
     }
 
     const commonInvestigationTimePipeline = (
-      timestampCondition: {
-        $gte: number
-        $lte: number
-      } | null
+      timestampCondition: TimestampCondition | null
     ) => {
       return [
         {
@@ -421,22 +423,22 @@ export class DashboardStatsRepository {
         .collection(aggregationCollection)
         .createIndex({ date: -1, accountId: 1, status: 1 }, { unique: true })
 
-      // Closed by
       {
         const pipeline = [
-          ...(timestampCondition != null
-            ? [
-                {
-                  $match: {
-                    'statusChanges.timestamp': timestampCondition,
-                  },
-                },
-              ]
-            : []),
           {
             $match: {
-              'statusChanges.caseStatus': 'CLOSED',
+              ...(timestampCondition
+                ? { 'statusChanges.timestamp': timestampCondition }
+                : {}),
               'statusChanges.userId': { $ne: null, $exists: true },
+              'statusChanges.caseStatus': {
+                $in: [
+                  'CLOSED',
+                  'ESCALATED',
+                  'OPEN_IN_PROGRESS',
+                  'ESCALATED_IN_PROGRESS',
+                ],
+              },
             },
           },
           {
@@ -444,8 +446,15 @@ export class DashboardStatsRepository {
           },
           {
             $match: {
-              'statusChanges.caseStatus': 'CLOSED',
               'statusChanges.userId': { $ne: null, $exists: true },
+              'statusChanges.caseStatus': {
+                $in: [
+                  'CLOSED',
+                  'ESCALATED',
+                  'OPEN_IN_PROGRESS',
+                  'ESCALATED_IN_PROGRESS',
+                ],
+              },
             },
           },
           {
@@ -465,7 +474,36 @@ export class DashboardStatsRepository {
                 },
               },
               closedBy: {
-                $sum: 1,
+                $sum: {
+                  $cond: [
+                    { $eq: ['$statusChanges.caseStatus', 'CLOSED'] },
+                    1,
+                    0,
+                  ],
+                },
+              },
+              escalatedBy: {
+                $sum: {
+                  $cond: [
+                    { $eq: ['$statusChanges.caseStatus', 'ESCALATED'] },
+                    1,
+                    0,
+                  ],
+                },
+              },
+              inProgress: {
+                $sum: {
+                  $cond: [
+                    {
+                      $in: [
+                        '$statusChanges.caseStatus',
+                        ['OPEN_IN_PROGRESS', 'ESCALATED_IN_PROGRESS'],
+                      ],
+                    },
+                    1,
+                    0,
+                  ],
+                },
               },
             },
           },
@@ -475,7 +513,9 @@ export class DashboardStatsRepository {
               status: '$_id.status',
               accountId: '$_id.accountId',
               date: '$_id.date',
-              closedBy: true,
+              closedBy: 1,
+              escalatedBy: 1,
+              inProgress: 1,
             },
           },
           {
@@ -489,21 +529,15 @@ export class DashboardStatsRepository {
 
         await casesCollection.aggregate(pipeline).next()
       }
+
       // Assigned to
       {
         const pipeline = [
-          ...(timestampCondition != null
-            ? [
-                {
-                  $match: {
-                    'assignments.timestamp': timestampCondition,
-                  },
-                },
-              ]
-            : []),
           {
             $match: {
-              'assignments.assigneeUserId': { $ne: null, $exists: true },
+              ...(timestampCondition != null && {
+                'assignments.timestamp': timestampCondition,
+              }),
             },
           },
           {
@@ -544,6 +578,7 @@ export class DashboardStatsRepository {
               accountId: '$_id.accountId',
               date: '$_id.date',
               assignedTo: true,
+              inProgress: true,
             },
           },
           {
@@ -764,36 +799,34 @@ export class DashboardStatsRepository {
       await db
         .collection(aggregationCollection)
         .createIndex({ date: -1, accountId: 1, status: 1 }, { unique: true })
-      // Closed by
+
       {
-        const pipeline = [
-          ...(timestampCondition != null
-            ? [
-                {
-                  $match: {
-                    'alerts.statusChanges.timestamp': timestampCondition,
-                  },
-                },
-              ]
-            : []),
-          {
-            $match: {
-              'alerts.statusChanges.caseStatus': 'CLOSED',
-              'alerts.statusChanges.userId': { $ne: null, $exists: true },
+        const matchPipeline = {
+          $match: {
+            ...(timestampCondition != null
+              ? { 'alerts.statusChanges.timestamp': timestampCondition }
+              : {}),
+            'alerts.statusChanges.userId': { $ne: null, $exists: true },
+            'alerts.statusChanges.caseStatus': {
+              $in: [
+                'CLOSED',
+                'ESCALATED',
+                'ESCALATED_IN_PROGRESS',
+                'OPEN_IN_PROGRESS',
+              ],
             },
           },
+        }
+
+        const pipeline = [
+          matchPipeline,
           {
             $unwind: '$alerts',
           },
           {
             $unwind: '$alerts.statusChanges',
           },
-          {
-            $match: {
-              'alerts.statusChanges.caseStatus': 'CLOSED',
-              'alerts.statusChanges.userId': { $ne: null, $exists: true },
-            },
-          },
+          matchPipeline,
           {
             $group: {
               _id: {
@@ -811,17 +844,48 @@ export class DashboardStatsRepository {
                 },
               },
               closedBy: {
-                $sum: 1,
+                $sum: {
+                  $cond: [
+                    { $eq: ['$alerts.statusChanges.caseStatus', 'CLOSED'] },
+                    1,
+                    0,
+                  ],
+                },
+              },
+              escalatedBy: {
+                $sum: {
+                  $cond: [
+                    { $eq: ['$alerts.statusChanges.caseStatus', 'ESCALATED'] },
+                    1,
+                    0,
+                  ],
+                },
+              },
+              inProgress: {
+                $sum: {
+                  $cond: [
+                    {
+                      $in: [
+                        '$alerts.statusChanges.caseStatus',
+                        ['ESCALATED_IN_PROGRESS', 'OPEN_IN_PROGRESS'],
+                      ],
+                    },
+                    1,
+                    0,
+                  ],
+                },
               },
             },
           },
           {
             $project: {
               _id: false,
-              status: '$_id.status',
               accountId: '$_id.accountId',
+              status: '$_id.status',
               date: '$_id.date',
               closedBy: true,
+              escalatedBy: true,
+              inProgress: true,
             },
           },
           {
@@ -832,26 +896,20 @@ export class DashboardStatsRepository {
             },
           },
         ]
+
         await casesCollection.aggregate(pipeline).next()
       }
+
       // Assigned to
       {
         const pipeline = [
-          ...(timestampCondition != null
-            ? [
-                {
-                  $match: {
-                    'alerts.assignments.timestamp': timestampCondition,
-                  },
-                },
-              ]
-            : []),
           {
             $match: {
-              'alerts.assignments.assigneeUserId': { $ne: null, $exists: true },
+              ...(timestampCondition != null && {
+                'alerts.assignments.timestamp': timestampCondition,
+              }),
             },
           },
-
           {
             $unwind: '$alerts',
           },
@@ -944,9 +1002,7 @@ export class DashboardStatsRepository {
           {
             $match: {
               ...(timestampCondition != null
-                ? {
-                    'alerts.statusChanges.timestamp': timestampCondition,
-                  }
+                ? { 'alerts.statusChanges.timestamp': timestampCondition }
                 : {}),
               'alerts.statusChanges.caseStatus': 'CLOSED',
               'alerts.statusChanges.userId': FLAGRIGHT_SYSTEM_USER,
@@ -1397,7 +1453,7 @@ export class DashboardStatsRepository {
       .allowDiskUse()
       .toArray()
 
-    const dashboardStatsById = _.keyBy(dashboardStats, '_id')
+    const dashboardStatsById = keyBy(dashboardStats, '_id')
     return timeLabels.map((timeLabel) => {
       const stat = dashboardStatsById[timeLabel]
       return {
@@ -1508,7 +1564,7 @@ export class DashboardStatsRepository {
       rulesHit: x.rulesHit,
       casesCount: x.casesCount,
       openCasesCount: x.openCasesCount,
-      percentageTransactionsHit: _.round(
+      percentageTransactionsHit: round(
         (x.transactionsHit / totalTransactions) * 100,
         2
       ),
@@ -1687,6 +1743,12 @@ export class DashboardStatsRepository {
           closedBySystem: {
             $sum: '$closedBySystem',
           },
+          inProgress: {
+            $sum: '$inProgress',
+          },
+          escalatedBy: {
+            $sum: '$escalatedBy',
+          },
         },
       },
       {
@@ -1698,6 +1760,8 @@ export class DashboardStatsRepository {
           caseIds: true,
           investigationTime: true,
           closedBySystem: true,
+          inProgress: true,
+          escalatedBy: true,
         },
       },
     ]
@@ -1710,6 +1774,8 @@ export class DashboardStatsRepository {
         caseIds: string[]
         investigationTime: number
         closedBySystem: number
+        inProgress: number
+        escalatedBy: number
       }>(pipeline, { allowDiskUse: true })
       .toArray()
 

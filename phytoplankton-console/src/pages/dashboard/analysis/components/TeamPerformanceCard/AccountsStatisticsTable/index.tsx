@@ -27,6 +27,7 @@ const columns = (scope: 'CASES' | 'ALERTS') => {
       title: 'Closed by',
       defaultWidth: 100,
     }),
+
     helper.simple({
       key: 'closedBySystem',
       title: 'Closed by system',
@@ -36,6 +37,16 @@ const columns = (scope: 'CASES' | 'ALERTS') => {
           ? 'where all the alerts were closed by user'
           : 'where case was closed by user'
       }`,
+    }),
+    helper.simple({
+      key: 'escalatedBy',
+      title: 'Escalated by',
+      defaultWidth: 100,
+    }),
+    helper.simple({
+      key: 'inProgress',
+      title: 'In progress',
+      defaultWidth: 100,
     }),
     helper.simple({
       key: 'investigationTime',

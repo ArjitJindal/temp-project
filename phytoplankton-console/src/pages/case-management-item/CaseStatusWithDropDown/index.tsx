@@ -2,6 +2,7 @@ import { useMemo } from 'react';
 import { Assignment, CaseStatus, CaseStatusChange } from '@/apis';
 import CaseStatusTag from '@/components/library/CaseStatusTag';
 import Dropdown from '@/components/library/Dropdown';
+import { useAuth0User } from '@/utils/user-utils';
 
 type Props = {
   caseStatus: CaseStatus;
@@ -9,10 +10,12 @@ type Props = {
   onSelect: (status: CaseStatus) => void;
   previousStatus?: CaseStatus;
   statusChanges?: CaseStatusChange[];
+  reviewAssignments: Assignment[];
 };
 
 export const CaseStatusWithDropDown = (props: Props) => {
-  const { caseStatus, assignments, onSelect, previousStatus, statusChanges } = props;
+  const { caseStatus, assignments, reviewAssignments, onSelect, previousStatus, statusChanges } =
+    props;
 
   const isReopened = useMemo(() => {
     return statusChanges?.find((statusChange) => statusChange.caseStatus === 'CLOSED');
@@ -22,8 +25,15 @@ export const CaseStatusWithDropDown = (props: Props) => {
     return caseStatus.includes('ESCALATED');
   }, [caseStatus]);
 
+  const currentUser = useAuth0User();
+
+  const isCurrentUserAssignee = useMemo(() => {
+    const currAssignees = caseStatus.includes('ESCALATED') ? reviewAssignments : assignments;
+    return currAssignees?.find((assignment) => assignment.assigneeUserId === currentUser.userId);
+  }, [caseStatus, assignments, currentUser, reviewAssignments]);
+
   return (caseStatus.includes('OPEN') || caseStatus.includes('ESCALATED')) &&
-    assignments?.length ? (
+    isCurrentUserAssignee ? (
     <Dropdown<CaseStatus>
       options={(
         (ifCaseIsEscalated

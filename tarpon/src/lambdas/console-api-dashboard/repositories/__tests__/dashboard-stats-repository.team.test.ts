@@ -46,6 +46,8 @@ describe('Team statistic for cases', () => {
           caseIds: [],
           investigationTime: 0,
           closedBySystem: 0,
+          escalatedBy: 0,
+          inProgress: 0,
         },
       ])
       await expectCaseStats(
@@ -58,6 +60,8 @@ describe('Team statistic for cases', () => {
             caseIds: [],
             investigationTime: 0,
             closedBySystem: 0,
+            escalatedBy: 0,
+            inProgress: 0,
           },
         ],
         {
@@ -74,6 +78,8 @@ describe('Team statistic for cases', () => {
             caseIds: [],
             investigationTime: 0,
             closedBySystem: 0,
+            escalatedBy: 0,
+            inProgress: 0,
           },
         ],
         {
@@ -102,6 +108,8 @@ describe('Team statistic for cases', () => {
           caseIds: [],
           investigationTime: 0,
           closedBySystem: 0,
+          escalatedBy: 0,
+          inProgress: 0,
         },
       ])
     })
@@ -133,6 +141,8 @@ describe('Team statistic for cases', () => {
           caseIds: [],
           investigationTime: 0,
           closedBySystem: 0,
+          escalatedBy: 0,
+          inProgress: 0,
         },
       ])
     })
@@ -164,6 +174,8 @@ describe('Team statistic for cases', () => {
           caseIds: [],
           investigationTime: 0,
           closedBySystem: 0,
+          escalatedBy: 0,
+          inProgress: 0,
         },
       ])
     })
@@ -196,6 +208,8 @@ describe('Team statistic for cases', () => {
           caseIds: [],
           investigationTime: 0,
           closedBySystem: 0,
+          escalatedBy: 0,
+          inProgress: 0,
         },
         {
           accountId: TEST_ACCOUNT_ID_2,
@@ -204,6 +218,8 @@ describe('Team statistic for cases', () => {
           caseIds: [],
           investigationTime: 0,
           closedBySystem: 0,
+          escalatedBy: 0,
+          inProgress: 0,
         },
       ])
     })
@@ -239,6 +255,8 @@ describe('Team statistic for cases', () => {
             caseIds: [],
             investigationTime: 0,
             closedBySystem: 0,
+            escalatedBy: 0,
+            inProgress: 0,
           },
         ],
         {
@@ -268,6 +286,8 @@ describe('Team statistic for cases', () => {
           caseIds: [],
           investigationTime: 0,
           closedBySystem: 0,
+          escalatedBy: 0,
+          inProgress: 0,
         },
       ])
       await expectCaseStats(
@@ -280,6 +300,8 @@ describe('Team statistic for cases', () => {
             caseIds: [],
             investigationTime: 0,
             closedBySystem: 0,
+            escalatedBy: 0,
+            inProgress: 0,
           },
         ],
         {
@@ -296,6 +318,8 @@ describe('Team statistic for cases', () => {
             caseIds: [],
             investigationTime: 0,
             closedBySystem: 0,
+            escalatedBy: 0,
+            inProgress: 0,
           },
         ],
         {
@@ -334,6 +358,8 @@ describe('Team statistic for cases', () => {
           caseIds: [],
           investigationTime: 0,
           closedBySystem: 0,
+          escalatedBy: 0,
+          inProgress: 0,
         },
       ])
     })
@@ -370,6 +396,8 @@ describe('Team statistic for cases', () => {
           caseIds: [],
           investigationTime: 0,
           closedBySystem: 0,
+          escalatedBy: 0,
+          inProgress: 0,
         },
         {
           accountId: TEST_ACCOUNT_ID_2,
@@ -378,6 +406,8 @@ describe('Team statistic for cases', () => {
           caseIds: [],
           investigationTime: 0,
           closedBySystem: 0,
+          escalatedBy: 0,
+          inProgress: 0,
         },
       ])
     })
@@ -427,6 +457,8 @@ describe('Team statistic for cases', () => {
             caseIds: [],
             investigationTime: 0,
             closedBySystem: 0,
+            escalatedBy: 0,
+            inProgress: 0,
           },
           {
             accountId: TEST_ACCOUNT_ID_2,
@@ -435,6 +467,8 @@ describe('Team statistic for cases', () => {
             caseIds: [],
             investigationTime: 0,
             closedBySystem: 0,
+            escalatedBy: 0,
+            inProgress: 0,
           },
         ],
         {
@@ -451,6 +485,8 @@ describe('Team statistic for cases', () => {
             caseIds: [],
             investigationTime: 0,
             closedBySystem: 0,
+            escalatedBy: 0,
+            inProgress: 0,
           },
           {
             accountId: TEST_ACCOUNT_ID_2,
@@ -459,6 +495,8 @@ describe('Team statistic for cases', () => {
             caseIds: [],
             investigationTime: 0,
             closedBySystem: 0,
+            escalatedBy: 0,
+            inProgress: 0,
           },
         ],
         {
@@ -507,6 +545,8 @@ describe('Team statistic for cases', () => {
           caseIds: [],
           investigationTime: 0,
           closedBySystem: 0,
+          escalatedBy: 0,
+          inProgress: 0,
         },
         {
           accountId: TEST_ACCOUNT_ID_2,
@@ -515,6 +555,8 @@ describe('Team statistic for cases', () => {
           caseIds: [],
           investigationTime: 0,
           closedBySystem: 0,
+          escalatedBy: 0,
+          inProgress: 0,
         },
       ])
     })
@@ -576,6 +618,8 @@ describe('Team statistic for cases', () => {
             caseIds: [],
             investigationTime: 0,
             closedBySystem: 0,
+            escalatedBy: 0,
+            inProgress: 0,
           },
           {
             accountId: TEST_ACCOUNT_ID_2,
@@ -584,6 +628,8 @@ describe('Team statistic for cases', () => {
             caseIds: [],
             investigationTime: 0,
             closedBySystem: 0,
+            escalatedBy: 0,
+            inProgress: 0,
           },
         ],
         {
@@ -620,6 +666,8 @@ describe('Team statistic for alerts', () => {
           caseIds: [],
           investigationTime: 0,
           closedBySystem: 0,
+          escalatedBy: 0,
+          inProgress: 0,
         },
       ])
       await expectAlertStats(
@@ -632,6 +680,8 @@ describe('Team statistic for alerts', () => {
             caseIds: [],
             investigationTime: 0,
             closedBySystem: 0,
+            escalatedBy: 0,
+            inProgress: 0,
           },
         ],
         {
@@ -648,6 +698,8 @@ describe('Team statistic for alerts', () => {
             caseIds: [],
             investigationTime: 0,
             closedBySystem: 0,
+            escalatedBy: 0,
+            inProgress: 0,
           },
         ],
         {
@@ -685,6 +737,8 @@ describe('Team statistic for alerts', () => {
           caseIds: [],
           investigationTime: 0,
           closedBySystem: 0,
+          escalatedBy: 0,
+          inProgress: 0,
         },
       ])
       await expectAlertStats(
@@ -697,6 +751,8 @@ describe('Team statistic for alerts', () => {
             caseIds: [],
             investigationTime: 0,
             closedBySystem: 0,
+            escalatedBy: 0,
+            inProgress: 0,
           },
         ],
         {
@@ -730,6 +786,8 @@ describe('Team statistic for alerts', () => {
           caseIds: [],
           investigationTime: 0,
           closedBySystem: 0,
+          escalatedBy: 0,
+          inProgress: 0,
         },
       ])
     })
@@ -771,6 +829,8 @@ describe('Team statistic for alerts', () => {
           caseIds: [],
           investigationTime: 0,
           closedBySystem: 0,
+          escalatedBy: 0,
+          inProgress: 0,
         },
       ])
     })
@@ -813,6 +873,8 @@ describe('Team statistic for alerts', () => {
           caseIds: [],
           investigationTime: 0,
           closedBySystem: 0,
+          escalatedBy: 0,
+          inProgress: 0,
         },
         {
           accountId: TEST_ACCOUNT_ID_2,
@@ -821,6 +883,8 @@ describe('Team statistic for alerts', () => {
           caseIds: [],
           investigationTime: 0,
           closedBySystem: 0,
+          escalatedBy: 0,
+          inProgress: 0,
         },
       ])
     })
@@ -851,6 +915,8 @@ describe('Team statistic for alerts', () => {
           caseIds: [],
           investigationTime: 0,
           closedBySystem: 0,
+          escalatedBy: 0,
+          inProgress: 0,
         },
       ])
       await expectAlertStats(
@@ -863,6 +929,8 @@ describe('Team statistic for alerts', () => {
             caseIds: [],
             investigationTime: 0,
             closedBySystem: 0,
+            escalatedBy: 0,
+            inProgress: 0,
           },
         ],
         {
@@ -879,6 +947,8 @@ describe('Team statistic for alerts', () => {
             caseIds: [],
             investigationTime: 0,
             closedBySystem: 0,
+            escalatedBy: 0,
+            inProgress: 0,
           },
         ],
         {
@@ -919,6 +989,8 @@ describe('Team statistic for alerts', () => {
             caseIds: [],
             investigationTime: 0,
             closedBySystem: 0,
+            escalatedBy: 0,
+            inProgress: 0,
           },
         ],
         {
@@ -972,6 +1044,8 @@ describe('Team statistic for alerts', () => {
           caseIds: [],
           investigationTime: 0,
           closedBySystem: 0,
+          escalatedBy: 0,
+          inProgress: 0,
         },
       ])
     })
@@ -1024,6 +1098,8 @@ describe('Team statistic for alerts', () => {
           caseIds: [],
           investigationTime: 0,
           closedBySystem: 0,
+          escalatedBy: 0,
+          inProgress: 0,
         },
         {
           accountId: TEST_ACCOUNT_ID_2,
@@ -1032,6 +1108,8 @@ describe('Team statistic for alerts', () => {
           caseIds: [],
           investigationTime: 0,
           closedBySystem: 0,
+          escalatedBy: 0,
+          inProgress: 0,
         },
       ])
     })
@@ -1091,6 +1169,8 @@ describe('Team statistic for alerts', () => {
           caseIds: [],
           investigationTime: 0,
           closedBySystem: 0,
+          escalatedBy: 0,
+          inProgress: 0,
         },
         {
           accountId: TEST_ACCOUNT_ID_2,
@@ -1099,6 +1179,8 @@ describe('Team statistic for alerts', () => {
           caseIds: [],
           investigationTime: 0,
           closedBySystem: 0,
+          escalatedBy: 0,
+          inProgress: 0,
         },
       ])
     })
@@ -1138,6 +1220,8 @@ describe('Team statistic for alerts', () => {
           assignedTo: 0,
           closedBy: 2,
           closedBySystem: 0,
+          escalatedBy: 0,
+          inProgress: 0,
           caseIds: [],
           investigationTime: 0,
         },
@@ -1148,6 +1232,8 @@ describe('Team statistic for alerts', () => {
           closedBySystem: 2,
           caseIds: [],
           investigationTime: 0,
+          escalatedBy: 0,
+          inProgress: 0,
         },
       ])
     })
@@ -1187,12 +1273,16 @@ describe('Team statistic for alerts', () => {
           closedBySystem: 1,
           caseIds: [],
           investigationTime: 0,
+          escalatedBy: 0,
+          inProgress: 0,
         },
         {
           accountId: 'Flagright System',
           assignedTo: 0,
           closedBy: 1,
           closedBySystem: 0,
+          escalatedBy: 0,
+          inProgress: 0,
           caseIds: [],
           investigationTime: 0,
         },
@@ -1230,12 +1320,16 @@ describe('Team statistic for alerts', () => {
           closedBySystem: 1,
           caseIds: [],
           investigationTime: 0,
+          escalatedBy: 0,
+          inProgress: 0,
         },
         {
           accountId: 'Flagright System',
           assignedTo: 0,
           closedBy: 1,
           closedBySystem: 0,
+          escalatedBy: 0,
+          inProgress: 0,
           caseIds: [],
           investigationTime: 0,
         },
@@ -1269,6 +1363,8 @@ describe('Team statistic for alerts', () => {
           assignedTo: 1,
           closedBy: 0,
           closedBySystem: 0,
+          escalatedBy: 0,
+          inProgress: 0,
           caseIds: [],
           investigationTime: 0,
         },
@@ -1277,6 +1373,8 @@ describe('Team statistic for alerts', () => {
           assignedTo: 0,
           closedBy: 1,
           closedBySystem: 0,
+          escalatedBy: 0,
+          inProgress: 0,
           caseIds: [],
           investigationTime: 0,
         },
@@ -1305,8 +1403,47 @@ describe('Team statistic for alerts', () => {
           assignedTo: 1,
           closedBy: 1,
           closedBySystem: 0,
+          escalatedBy: 0,
+          inProgress: 1,
           caseIds: [expect.any(String)],
           investigationTime: 5000,
+        },
+      ])
+    })
+  })
+
+  describe('Test Escalated By', () => {
+    test('Escalated By Case', async () => {
+      const TENANT_ID = getTestTenantId()
+      const caseRepository = await getCaseRepo(TENANT_ID)
+      const statsRepository = await getStatsRepo(TENANT_ID)
+
+      await caseRepository.addCaseMongo({
+        ...emptyCase(),
+        caseStatus: 'ESCALATED_IN_PROGRESS',
+        statusChanges: [
+          escalated(TEST_ACCOUNT_ID_1, 0),
+          escalatedInProgress(TEST_ACCOUNT_ID_1, 1000),
+          escalated(TEST_ACCOUNT_ID_1, 2000),
+          escalatedInProgress(TEST_ACCOUNT_ID_1, 3000),
+          escalatedOnHold(TEST_ACCOUNT_ID_1, 4000),
+          escalated(TEST_ACCOUNT_ID_1, 5000),
+          closed(TEST_ACCOUNT_ID_1, 6000),
+          escalated(TEST_ACCOUNT_ID_1, 7000),
+        ],
+        assignments: [assignment(TEST_ACCOUNT_ID_1)],
+      })
+
+      await expectCaseStats(statsRepository, [
+        {
+          accountId: 'TEST_ACCOUNT_ID_1',
+          assignedTo: 1,
+          caseIds: [],
+          closedBy: 1,
+          closedBySystem: 0,
+          escalatedBy: 4,
+          inProgress: 2,
+          investigationTime: 0,
         },
       ])
     })
@@ -1363,6 +1500,8 @@ async function expectCaseStats(
     caseIds: Array<any>
     investigationTime: number
     closedBySystem: number
+    escalatedBy: number
+    inProgress: number
   }[],
   filters?: {
     startTimestamp?: number
@@ -1390,6 +1529,8 @@ async function expectAlertStats(
     caseIds: string[]
     investigationTime: number
     closedBySystem: number
+    escalatedBy: number
+    inProgress: number
   }[],
   dateFilter?: {
     startTimestamp?: number
@@ -1435,6 +1576,33 @@ function inProgressOpen(userId: string, timestamp?: number): CaseStatusChange {
   return {
     userId: userId,
     caseStatus: 'OPEN_IN_PROGRESS',
+    timestamp: timestamp ?? Date.now(),
+  }
+}
+
+function escalated(userId: string, timestamp?: number): CaseStatusChange {
+  return {
+    userId: userId,
+    caseStatus: 'ESCALATED',
+    timestamp: timestamp ?? Date.now(),
+  }
+}
+
+function escalatedInProgress(
+  userId: string,
+  timestamp?: number
+): CaseStatusChange {
+  return {
+    userId: userId,
+    caseStatus: 'ESCALATED_IN_PROGRESS',
+    timestamp: timestamp ?? Date.now(),
+  }
+}
+
+function escalatedOnHold(userId: string, timestamp?: number): CaseStatusChange {
+  return {
+    userId: userId,
+    caseStatus: 'ESCALATED_ON_HOLD',
     timestamp: timestamp ?? Date.now(),
   }
 }

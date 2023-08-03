@@ -186,6 +186,7 @@ export default function Header(props: Props) {
             statusChanges={caseItem.statusChanges ?? []}
             previousStatus={previousStatus}
             assignments={caseItem.assignments ?? []}
+            reviewAssignments={caseItem.reviewAssignments ?? []}
             onSelect={(newStatus) => {
               statusChangeMutation.mutate(newStatus);
             }}
