@@ -154,6 +154,29 @@ export const dashboardStatsHandler = lambdaApi()(
       )
     })
 
+    handlers.registerGetDashboardStatsOverview(async (ctx) => {
+      const client = await getMongoDbClient()
+      const { tenantId } = ctx
+      const dashboardStatsRepository = new DashboardStatsRepository(tenantId, {
+        mongoDb: client,
+      })
+      const accountsService = new AccountsService(
+        { auth0Domain: event.requestContext.authorizer.auth0Domain },
+        { mongoDb: client }
+      )
+      const organization = await accountsService.getAccountTenant(ctx.userId)
+      const accounts: Account[] = await accountsService.getTenantAccounts(
+        organization
+      )
+      const accountIds = accounts
+        .filter((account) => account.role !== 'root')
+        .map((account) => account.id)
+      if (shouldRefreshAll(event)) {
+        await dashboardStatsRepository.refreshAllStats()
+      }
+      return await dashboardStatsRepository.getOverviewStatistics(accountIds)
+    })
+
     return await handlers.handle(event)
   }
 )

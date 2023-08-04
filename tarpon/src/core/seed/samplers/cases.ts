@@ -11,6 +11,7 @@ import { InternalBusinessUser } from '@/@types/openapi-internal/InternalBusiness
 import { InternalConsumerUser } from '@/@types/openapi-internal/InternalConsumerUser'
 import { CaseClosingReasons } from '@/@types/openapi-internal/CaseClosingReasons'
 import { isStatusInReview } from '@/utils/helpers'
+import { AlertStatus } from '@/@types/openapi-internal/AlertStatus'
 
 let counter = 1
 let alertCounter = 1
@@ -160,16 +161,18 @@ export function sampleAlert(
   const createdTimestamp = sampleTimestamp(seed, 3600 * 24 * 1000 * 30)
   const alertId = `A-${alertCounter}`
   alertCounter++
+  const alertStatus = pickRandom(
+    ['OPEN', 'OPEN', 'OPEN', 'OPEN', 'OPEN', 'CLOSED', 'REOPENED'],
+    Math.random()
+  ) as AlertStatus
+
   return {
     ...params.ruleHit,
     alertId: alertId,
     createdTimestamp: createdTimestamp,
     latestTransactionArrivalTimestamp: createdTimestamp - 3600 * 1000,
     caseId: params.caseId,
-    alertStatus: pickRandom(
-      ['OPEN', 'OPEN', 'OPEN', 'OPEN', 'OPEN', 'CLOSED', 'REOPENED'],
-      Math.random()
-    ),
+    alertStatus,
     ruleInstanceId: params.ruleHit.ruleInstanceId,
     numberOfTransactionsHit: params.transactions.length,
     priority: pickRandom(['P1', 'P2', 'P3', 'P4'], Math.random()),

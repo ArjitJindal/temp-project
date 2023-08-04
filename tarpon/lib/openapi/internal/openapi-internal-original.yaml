@@ -1691,6 +1691,23 @@ paths:
               $ref: '#/components/schemas/CaseStatus'
           in: query
           name: caseStatus
+  /dashboard_stats/overview:
+    get:
+      summary: DashboardStats - Overview
+      tags: []
+      x-flagright:
+        permissions:
+          - dashboard:download-data:read
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DashboardStatsOverview'
+              examples: {}
+      operationId: get-dashboard-stats-overview
+      description: ''
   /tenants:
     get:
       summary: Tenant - List
@@ -4573,6 +4590,24 @@ components:
           type: number
       required:
         - data
+    DashboardStatsOverview:
+      type: object
+      x-examples: {}
+      title: DashboardStatsOverview
+      properties:
+        totalOpenCases:
+          type: number
+        totalOpenAlerts:
+          type: number
+        averageInvestigationTimeCases:
+          type: number
+        averageInvestigationTimeAlerts:
+          type: number
+      required:
+        - totalOpenCases
+        - totalOpenAlerts
+        - averageInvestigationTimeCases
+        - averageInvestigationTimeAlerts
     InternalConsumerUser:
       allOf:
         - $ref: ../public/openapi-public-original.yaml#/components/schemas/UserWithRulesResult

@@ -49,6 +49,10 @@ import { Case } from '@/@types/openapi-internal/Case'
 import { Assignment } from '@/@types/openapi-internal/Assignment'
 import { getRandomIntInclusive } from '@/scripts/utils'
 import { logger } from '@/core/logger'
+import { pickRandom } from '@/utils/prng'
+import dayjs from '@/utils/dayjs'
+import { CaseStatus } from '@/@types/openapi-internal/CaseStatus'
+import { CaseStatusChange } from '@/@types/openapi-internal/CaseStatusChange'
 
 const collections: [(tenantId: string) => string, Iterable<unknown>][] = [
   [TRANSACTIONS_COLLECTION, transactions],
@@ -137,26 +141,35 @@ export async function seedMongo(client: MongoClient, tenantId: string) {
 
   await Promise.all(
     casesToUpdate.map(async (c) => {
+      const caseAssignments = getRandomAssigneeObject(accounts)
+
       return await cases.replaceOne(
         { _id: c._id },
         {
           ...c,
-          assignments: accounts?.length
-            ? [getRandomAssigneeObject(accounts)]
-            : undefined,
+          statusChanges: getStatusChangesObject(
+            c.caseStatus ?? 'OPEN',
+            caseAssignments.assigneeUserId
+          ),
+          assignments: accounts?.length ? [caseAssignments] : undefined,
           reviewAssignments: accounts?.length
             ? [getRandomAssigneeObject(accounts)]
             : undefined,
-          alerts:
-            c.alerts?.map((a) => ({
+          alerts: c.alerts?.map((a) => {
+            const alertsAssignments = getRandomAssigneeObject(accounts)
+            return {
               ...a,
-              assignments: accounts?.length
-                ? [getRandomAssigneeObject(accounts)]
-                : undefined,
+              statusChanges: getStatusChangesObject(
+                a.alertStatus ?? 'OPEN',
+                alertsAssignments.assigneeUserId,
+                true
+              ),
+              assignments: accounts?.length ? [alertsAssignments] : undefined,
               reviewAssignments: accounts?.length
                 ? [getRandomAssigneeObject(accounts)]
                 : undefined,
-            })) ?? [],
+            }
+          }),
         }
       )
     })
@@ -167,6 +180,39 @@ export async function seedMongo(client: MongoClient, tenantId: string) {
   })
 
   await dashboardStatsRepository.refreshAllStats()
+}
+
+const getStatusChangesObject = (
+  caseStatus: CaseStatus,
+  userId: string,
+  alerts?: boolean
+): CaseStatusChange[] => {
+  const statusChanges: CaseStatusChange[] = []
+  if (caseStatus !== 'OPEN') {
+    let insterted = false
+    if (
+      pickRandom([true, false]) &&
+      caseStatus !== 'OPEN_IN_PROGRESS' &&
+      caseStatus.includes('OPEN')
+    ) {
+      statusChanges.push({
+        caseStatus: 'OPEN_IN_PROGRESS',
+        timestamp: dayjs()
+          .subtract(Math.floor(Math.random() * (alerts ? 150 : 400)), 'minute')
+          .valueOf(),
+        userId,
+      })
+      insterted = true
+    }
+    if (!insterted || caseStatus !== 'OPEN_IN_PROGRESS') {
+      statusChanges.push({
+        caseStatus: caseStatus,
+        timestamp: dayjs().valueOf(),
+        userId,
+      })
+    }
+  }
+  return statusChanges
 }
 
 const getRandomAssigneeObject = (accounts: Account[]): Assignment => {

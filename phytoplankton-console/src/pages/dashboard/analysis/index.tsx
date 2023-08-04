@@ -6,6 +6,7 @@ import RuleHitCard from './components/RulesHitCard';
 import TopUsersHitCard from './components/TopUsersHitCard';
 import DRSDistributionCard from './components/DRSDistributionCard';
 import TeamPerformanceCard from './components/TeamPerformanceCard';
+import OverviewCard from './components/OverviewCard';
 import PageWrapper from '@/components/PageWrapper';
 import { useFeatureEnabled } from '@/components/AppWrapper/Providers/SettingsProvider';
 import { usePageViewTracker } from '@/utils/tracker';
@@ -17,6 +18,7 @@ import Checkbox from '@/components/library/Checkbox';
 import { humanizeConstant } from '@/utils/humanize';
 
 type KeyValues =
+  | 'OVERVIEW'
   | 'TOP_USERS_BY_TRANSACTIONS_HITS'
   | 'TRANSACTIONS_BREAKDOWN_BY_RULE_ACTION'
   | 'TOP_RULE_HITS_BY_COUNT'
@@ -24,6 +26,7 @@ type KeyValues =
   | 'TEAM_OVERVIEW';
 
 const KEYS: KeyValues[] = [
+  'OVERVIEW',
   'TRANSACTIONS_BREAKDOWN_BY_RULE_ACTION',
   'TOP_USERS_BY_TRANSACTIONS_HITS',
   'TOP_RULE_HITS_BY_COUNT',
@@ -32,6 +35,7 @@ const KEYS: KeyValues[] = [
 ];
 
 const DEFAULT_VALUES = {
+  OVERVIEW: true,
   TOP_USERS_BY_TRANSACTIONS_HITS: true,
   TRANSACTIONS_BREAKDOWN_BY_RULE_ACTION: true,
   TOP_RULE_HITS_BY_COUNT: true,
@@ -73,6 +77,11 @@ function Analysis() {
       }
     >
       <Row gutter={[16, 16]}>
+        {settingsToDisplay.OVERVIEW && (
+          <Col span={24}>
+            <OverviewCard />
+          </Col>
+        )}
         {settingsToDisplay.TRANSACTIONS_BREAKDOWN_BY_RULE_ACTION && (
           <Col span={24}>
             <TransactionsChartCard />

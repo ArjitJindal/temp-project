@@ -39,6 +39,7 @@ import { AlertStatus } from '@/@types/openapi-internal/AlertStatus'
 import { InternalUser } from '@/@types/openapi-internal/InternalUser'
 import { DashboardStatsHitsPerUserData } from '@/@types/openapi-internal/DashboardStatsHitsPerUserData'
 import { FLAGRIGHT_SYSTEM_USER } from '@/services/rules-engine/repositories/alerts-repository'
+import { DashboardStatsOverview } from '@/@types/openapi-internal/DashboardStatsOverview'
 
 type TimeRange = {
   startTimestamp?: number
@@ -1689,8 +1690,9 @@ export class DashboardStatsRepository {
       scope === 'ALERTS'
         ? DASHBOARD_TEAM_ALERTS_STATS_HOURLY(this.tenantId)
         : DASHBOARD_TEAM_CASES_STATS_HOURLY(this.tenantId)
-    const collection =
-      db.collection<DashboardStatsDRSDistributionData>(collectionName)
+
+    const collection = db.collection<DashboardTeamStatsItem>(collectionName)
+
     let dateCondition: Record<string, unknown> | null = null
     if (startTimestamp != null || endTimestamp != null) {
       dateCondition = {}
@@ -1720,12 +1722,6 @@ export class DashboardStatsRepository {
         ? [{ $match: { $and: matchConditions } }]
         : []),
       {
-        $unwind: {
-          path: '$caseIds',
-          preserveNullAndEmptyArrays: true,
-        },
-      },
-      {
         $group: {
           _id: '$accountId',
           closedBy: {
@@ -1738,7 +1734,7 @@ export class DashboardStatsRepository {
             $sum: '$investigationTime',
           },
           caseIds: {
-            $addToSet: '$caseIds',
+            $push: '$caseIds',
           },
           closedBySystem: {
             $sum: '$closedBySystem',
@@ -1748,6 +1744,17 @@ export class DashboardStatsRepository {
           },
           escalatedBy: {
             $sum: '$escalatedBy',
+          },
+        },
+      },
+      {
+        $addFields: {
+          caseIds: {
+            $reduce: {
+              input: '$caseIds',
+              initialValue: [],
+              in: { $setUnion: ['$$value', '$$this'] },
+            },
           },
         },
       },
@@ -1780,5 +1787,114 @@ export class DashboardStatsRepository {
       .toArray()
 
     return result
+  }
+
+  async getOverviewStatistics(
+    accountIds: string[]
+  ): Promise<DashboardStatsOverview> {
+    const db = this.mongoDb.db()
+    const casesCollection = db.collection<Case>(CASES_COLLECTION(this.tenantId))
+
+    const casesCount = await casesCollection.countDocuments({
+      caseStatus: { $in: ['OPEN', 'REOPENED'] },
+    })
+
+    const alertsCount = await casesCollection
+      .aggregate([
+        {
+          $match: {
+            'alerts.alertStatus': {
+              $in: ['OPEN', 'REOPENED'],
+            },
+          },
+        },
+        {
+          $unwind: {
+            path: '$alerts',
+          },
+        },
+        {
+          $match: {
+            'alerts.alertStatus': {
+              $in: ['OPEN', 'REOPENED'],
+            },
+          },
+        },
+        {
+          $count: 'count',
+        },
+      ])
+      .toArray()
+
+    const dashboardCasesStatsHourlyCollection =
+      db.collection<DashboardTeamStatsItem>(
+        DASHBOARD_TEAM_CASES_STATS_HOURLY(this.tenantId)
+      )
+
+    const investigationTimePipeline = [
+      {
+        $match: {
+          accountId: { $in: accountIds },
+        },
+      },
+      {
+        $group: {
+          _id: null,
+          caseIds: {
+            $push: '$caseIds',
+          },
+          investigationTime: {
+            $sum: '$investigationTime',
+          },
+        },
+      },
+      {
+        $project: {
+          _id: false,
+          investigationTime: true,
+          caseIds: {
+            $reduce: {
+              input: '$caseIds',
+              initialValue: [],
+              in: { $setUnion: ['$$value', '$$this'] },
+            },
+          },
+        },
+      },
+      {
+        $project: {
+          _id: false,
+          avgInvestigationTime: {
+            $cond: {
+              if: { $gt: [{ $size: '$caseIds' }, 0] },
+              then: { $divide: ['$investigationTime', { $size: '$caseIds' }] },
+              else: 0,
+            },
+          },
+        },
+      },
+    ]
+
+    const dashboardCasesStatsTotal = await dashboardCasesStatsHourlyCollection
+      .aggregate<{ avgInvestigationTime: number }>(investigationTimePipeline)
+      .toArray()
+
+    const dashboardAlertsStatsCollection =
+      db.collection<DashboardTeamStatsItem>(
+        DASHBOARD_TEAM_ALERTS_STATS_HOURLY(this.tenantId)
+      )
+
+    const dashboardAlertsStatsTotal = await dashboardAlertsStatsCollection
+      .aggregate<{ avgInvestigationTime: number }>(investigationTimePipeline)
+      .toArray()
+
+    return {
+      totalOpenCases: casesCount,
+      totalOpenAlerts: alertsCount[0]?.count ?? 0,
+      averageInvestigationTimeCases:
+        dashboardCasesStatsTotal[0]?.avgInvestigationTime,
+      averageInvestigationTimeAlerts:
+        dashboardAlertsStatsTotal[0]?.avgInvestigationTime,
+    }
   }
 }

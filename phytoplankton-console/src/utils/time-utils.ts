@@ -34,5 +34,5 @@ export function formatDuration(duration: Partial<Duration>): string {
     duration?.seconds ? `${duration.seconds}${pluralize(' sec', duration.seconds)}` : '',
   ];
 
-  return parts.filter(Boolean).join(' ');
+  return parts.filter(Boolean).slice(0, 3).join(' ');
 }

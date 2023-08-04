@@ -75,15 +75,16 @@ export function H6(
 export function P(
   props: SharedProps &
     HTMLAttributes<HTMLParagraphElement> & {
-      variant?: 'big' | 'sml';
+      variant?: 'big' | 'sml' | 'xl' | '2xl';
       children?: React.ReactNode;
+      grey?: boolean;
     },
 ) {
   const { className, bold, variant, ...rest } = props;
   return (
     <p
       {...rest}
-      className={cn(s.p, bold && s.bold, s[`variant-${variant}`], className)}
+      className={cn(s.p, bold && s.bold, s[`variant-${variant}`], className, props.grey && s.grey)}
       style={props.style}
     >
       {props.children}
