@@ -1,8 +1,8 @@
 import {
   CreateTableCommand,
+  CreateTableInput,
   DeleteTableCommand,
 } from '@aws-sdk/client-dynamodb'
-import { DynamoDB } from 'aws-sdk'
 import _ from 'lodash'
 
 export const TEST_DYNAMODB_TABLE_NAME_PREFIX = '__test__'
@@ -54,7 +54,7 @@ async function deleteTable(tableName: string, silent = false) {
   }
 }
 
-function createSchema(tableName: string): DynamoDB.Types.CreateTableInput {
+function createSchema(tableName: string): CreateTableInput {
   return {
     TableName: tableName,
     AttributeDefinitions: [

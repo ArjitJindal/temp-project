@@ -2,11 +2,13 @@ import * as createError from 'http-errors'
 import { MongoClient } from 'mongodb'
 import { NotFound } from 'http-errors'
 import { DynamoDBDocumentClient } from '@aws-sdk/lib-dynamodb'
+import { S3, GetObjectCommand, CopyObjectCommand } from '@aws-sdk/client-s3'
 import {
   APIGatewayEventLambdaAuthorizerContext,
   APIGatewayProxyWithLambdaAuthorizerEvent,
 } from 'aws-lambda'
-import * as AWS from 'aws-sdk'
+import { Credentials } from '@aws-sdk/client-sts'
+import { getSignedUrl } from '@aws-sdk/s3-request-presigner'
 import { User } from '@/@types/openapi-public/User'
 import { FileInfo } from '@/@types/openapi-internal/FileInfo'
 import { UserRepository } from '@/services/users/repositories/user-repository'
@@ -37,7 +39,7 @@ import { traceable } from '@/core/xray'
 export class UserService {
   userRepository: UserRepository
   userEventRepository: UserEventRepository
-  s3: AWS.S3
+  s3: S3
   documentBucketName: string
   tmpBucketName: string
 
@@ -47,7 +49,7 @@ export class UserService {
       dynamoDb?: DynamoDBDocumentClient
       mongoDb?: MongoClient
     },
-    s3: AWS.S3,
+    s3: S3,
     tmpBucketName: string,
     documentBucketName: string
   ) {
@@ -66,7 +68,7 @@ export class UserService {
 
   public static async fromEvent(
     event: APIGatewayProxyWithLambdaAuthorizerEvent<
-      APIGatewayEventLambdaAuthorizerContext<AWS.STS.Credentials>
+      APIGatewayEventLambdaAuthorizerContext<Credentials>
     >
   ): Promise<UserService> {
     const { principalId: tenantId } = event.requestContext.authorizer
@@ -148,15 +150,21 @@ export class UserService {
     return user && this.getAugmentedUser<InternalConsumerUser>(user)
   }
 
+  private async getUpdatedFiles(files: FileInfo[] | undefined) {
+    return Promise.all(
+      (files ?? []).map(async (file) => ({
+        ...file,
+        downloadLink: await this.getDownloadLink(file),
+      }))
+    )
+  }
+
   private getAugmentedUser<
     T extends InternalConsumerUser | InternalBusinessUser
   >(user: InternalConsumerUser | InternalBusinessUser) {
     const commentsWithUrl = user.comments?.map((comment) => ({
       ...comment,
-      files: comment.files?.map((file) => ({
-        ...file,
-        downloadLink: this.getDownloadLink(file),
-      })),
+      files: this.getUpdatedFiles(comment.files),
     }))
     return { ...user, comments: commentsWithUrl } as T
   }
@@ -224,13 +232,17 @@ export class UserService {
     return
   }
 
-  private getDownloadLink(file: FileInfo): string {
-    return this.s3.getSignedUrl('getObject', {
+  private async getDownloadLink(file: FileInfo): Promise<string> {
+    const getObjectCommand = new GetObjectCommand({
       Bucket: this.documentBucketName,
       Key: file.s3Key,
-      Expires: 3600,
+    })
+
+    return await getSignedUrl(this.s3, getObjectCommand, {
+      expiresIn: 3600,
     })
   }
+
   public async getUniques(params: {
     field: UsersUniquesField
     filter?: string
@@ -239,28 +251,28 @@ export class UserService {
   }
   public async saveUserComment(userId: string, comment: Comment) {
     for (const file of comment.files || []) {
-      await this.s3
-        .copyObject({
-          CopySource: `${this.tmpBucketName}/${file.s3Key}`,
-          Bucket: this.documentBucketName,
-          Key: file.s3Key,
-        })
-        .promise()
+      const copyObjectCommand = new CopyObjectCommand({
+        CopySource: `${this.tmpBucketName}/${file.s3Key}`,
+        Bucket: this.documentBucketName,
+        Key: file.s3Key,
+      })
+
+      await this.s3.send(copyObjectCommand)
     }
+
     const files = (comment.files || []).map((file) => ({
       ...file,
       bucket: this.documentBucketName,
     }))
+
     const savedComment = await this.userRepository.saveUserComment(userId, {
       ...comment,
       files,
     })
+
     return {
       ...savedComment,
-      files: savedComment.files?.map((file) => ({
-        ...file,
-        downloadLink: this.getDownloadLink(file),
-      })),
+      files: await this.getUpdatedFiles(savedComment.files),
     }
   }
   public async deleteUserComment(userId: string, commentId: string) {

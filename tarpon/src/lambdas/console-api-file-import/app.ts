@@ -1,4 +1,6 @@
 import { v4 as uuidv4 } from 'uuid'
+import { getSignedUrl } from '@aws-sdk/s3-request-presigner'
+import { GetObjectCommand } from '@aws-sdk/client-s3'
 import {
   APIGatewayEventLambdaAuthorizerContext,
   APIGatewayProxyWithLambdaAuthorizerEvent,
@@ -66,9 +68,19 @@ export const getPresignedUrlHandler = lambdaApi()(
 
     handlers.registerPostGetPresignedUrl(async (ctx) => {
       const s3Key = `${ctx.tenantId}/${uuidv4()}`
-      const bucketParams = { Bucket: TMP_BUCKET, Key: s3Key, Expires: 3600 }
-      const presignedUrl = s3.getSignedUrl('putObject', bucketParams)
-      return { presignedUrl, s3Key }
+      const getObjectCommand = new GetObjectCommand({
+        Bucket: TMP_BUCKET,
+        Key: s3Key,
+      })
+
+      const url = await getSignedUrl(s3, getObjectCommand, {
+        expiresIn: 3600,
+      })
+
+      return {
+        presignedUrl: url,
+        s3Key,
+      }
     })
 
     return await handlers.handle(event)

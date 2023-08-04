@@ -1,5 +1,5 @@
 import { StackConstants } from '@lib/constants'
-import { UpdateCommand } from '@aws-sdk/lib-dynamodb'
+import { UpdateCommand, UpdateCommandInput } from '@aws-sdk/lib-dynamodb'
 import _ from 'lodash'
 import {
   getMigrationLastCompletedTimestamp,
@@ -72,7 +72,7 @@ export async function cleanupRuleHits(values: {
       transaction.transactionId
     )
 
-    const updateItemInput: AWS.DynamoDB.DocumentClient.UpdateItemInput = {
+    const updateItemInput: UpdateCommandInput = {
       TableName: StackConstants.TARPON_DYNAMODB_TABLE_NAME,
       Key: primaryKey,
       UpdateExpression: `set #executedRules = :executedRules, #hitRules = :hitRules`,

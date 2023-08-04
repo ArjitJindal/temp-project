@@ -8,11 +8,11 @@ import {
 import _ from 'lodash'
 import { MetricDatum } from '@aws-sdk/client-cloudwatch'
 import { DynamoDBClient } from '@aws-sdk/client-dynamodb'
+import { Credentials } from '@aws-sdk/client-sts'
 import { winstonLogger } from '../logger'
 import { Feature } from '@/@types/openapi-internal/Feature'
 import { getDynamoDbClient, getDynamoDbClientByEvent } from '@/utils/dynamodb'
 import { TenantRepository } from '@/services/tenants/repositories/tenant-repository'
-
 import { Account } from '@/@types/openapi-internal/Account'
 import { JWTAuthorizerResult } from '@/@types/jwt'
 import { Metric } from '@/core/cloudwatch/metrics'
@@ -44,7 +44,7 @@ export type Context = LogMetaData & {
 const asyncLocalStorage = new AsyncLocalStorage<Context>()
 type APIGatewayEvent = APIGatewayProxyWithLambdaAuthorizerEvent<
   APIGatewayEventLambdaAuthorizerContext<
-    Partial<AWS.STS.Credentials & JWTAuthorizerResult>
+    Partial<Credentials & JWTAuthorizerResult>
   >
 >
 
@@ -65,7 +65,7 @@ export async function getInitialContext(
     if (tenantId) {
       const dynamoDb = getDynamoDbClientByEvent(
         event as APIGatewayProxyWithLambdaAuthorizerEvent<
-          APIGatewayEventLambdaAuthorizerContext<AWS.STS.Credentials>
+          APIGatewayEventLambdaAuthorizerContext<Credentials>
         >
       )
       const tenantRepository = new TenantRepository(tenantId, { dynamoDb })

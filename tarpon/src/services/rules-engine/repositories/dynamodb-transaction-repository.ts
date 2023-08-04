@@ -1,14 +1,16 @@
 import { v4 as uuidv4 } from 'uuid'
 import _, { chunk } from 'lodash'
 import { StackConstants } from '@lib/constants'
-import { WriteRequest } from 'aws-sdk/clients/dynamodb'
 import {
   BatchGetCommand,
+  BatchGetCommandInput,
   BatchWriteCommand,
+  BatchWriteCommandInput,
   DynamoDBDocumentClient,
   GetCommand,
+  GetCommandInput,
+  QueryCommandInput,
 } from '@aws-sdk/lib-dynamodb'
-import * as AWS from 'aws-sdk'
 import {
   getNonUserReceiverKeys,
   getNonUserSenderKeys,
@@ -80,27 +82,26 @@ export class DynamoDbTransactionRepository
       transaction.transactionId
     )
 
-    const batchWriteItemParams: AWS.DynamoDB.DocumentClient.BatchWriteItemInput =
-      {
-        RequestItems: {
-          [StackConstants.TARPON_DYNAMODB_TABLE_NAME]: [
-            {
-              PutRequest: {
-                Item: {
-                  ...primaryKey,
-                  ...transaction,
-                  ...rulesResult,
-                },
+    const batchWriteItemParams: BatchWriteCommandInput = {
+      RequestItems: {
+        [StackConstants.TARPON_DYNAMODB_TABLE_NAME]: [
+          {
+            PutRequest: {
+              Item: {
+                ...primaryKey,
+                ...transaction,
+                ...rulesResult,
               },
             },
-            ...this.getTransactionAuxiliaryIndices(transaction).map((item) => ({
-              PutRequest: {
-                Item: item,
-              },
-            })),
-          ] as unknown as WriteRequest[],
-        },
-      }
+          },
+          ...this.getTransactionAuxiliaryIndices(transaction).map((item) => ({
+            PutRequest: {
+              Item: item,
+            },
+          })),
+        ],
+      },
+    }
     await this.dynamoDb.send(new BatchWriteCommand(batchWriteItemParams))
 
     if (runLocalChangeHandler()) {
@@ -208,7 +209,7 @@ export class DynamoDbTransactionRepository
   public async getTransactionById(
     transactionId: string
   ): Promise<TransactionWithRulesResult | null> {
-    const getItemInput: AWS.DynamoDB.DocumentClient.GetItemInput = {
+    const getItemInput: GetCommandInput = {
       TableName: StackConstants.TARPON_DYNAMODB_TABLE_NAME,
       Key: DynamoDbKeys.TRANSACTION(this.tenantId, transactionId),
     }
@@ -255,7 +256,7 @@ export class DynamoDbTransactionRepository
     const transactionAttributeNames = Transaction.getAttributeTypeMap().map(
       (attribute) => attribute.name
     )
-    const batchGetItemInput: AWS.DynamoDB.DocumentClient.BatchGetItemInput = {
+    const batchGetItemInput: BatchGetCommandInput = {
       RequestItems: {
         [StackConstants.TARPON_DYNAMODB_TABLE_NAME]: {
           Keys: Array.from(new Set(transactionIds)).map((transactionId) =>
@@ -305,7 +306,7 @@ export class DynamoDbTransactionRepository
       filterOptions,
       []
     )
-    const queryInput: AWS.DynamoDB.DocumentClient.QueryInput = {
+    const queryInput: QueryCommandInput = {
       TableName: StackConstants.TARPON_DYNAMODB_TABLE_NAME,
       KeyConditionExpression: 'PartitionKeyID = :pk',
       FilterExpression: transactionFilterQuery.FilterExpression,
@@ -385,7 +386,7 @@ export class DynamoDbTransactionRepository
       filterOptions,
       attributesToFetch
     )
-    const queryInput: AWS.DynamoDB.DocumentClient.QueryInput = {
+    const queryInput: QueryCommandInput = {
       TableName: StackConstants.TARPON_DYNAMODB_TABLE_NAME,
       KeyConditionExpression: 'PartitionKeyID = :pk',
       FilterExpression: transactionFilterQuery.FilterExpression,
@@ -723,28 +724,26 @@ export class DynamoDbTransactionRepository
     timeRange: TimeRange,
     filterOptions: TransactionsFilterOptions,
     attributesToFetch: Array<keyof AuxiliaryIndexTransaction>
-  ): AWS.DynamoDB.DocumentClient.QueryInput {
+  ): QueryCommandInput {
     const transactionFilterQuery = this.getTransactionFilterQueryInput(
       filterOptions,
       attributesToFetch
     )
 
-    const queryInput: AWS.DynamoDB.DocumentClient.QueryInput =
-      dynamoDbQueryHelper({
-        tableName: StackConstants.TARPON_DYNAMODB_TABLE_NAME,
-        filterExpression: transactionFilterQuery.FilterExpression,
-        expressionAttributeNames:
-          transactionFilterQuery.ExpressionAttributeNames,
-        expressionAttributeValues:
-          transactionFilterQuery.ExpressionAttributeValues,
-        scanIndexForward: false,
-        projectionExpression: transactionFilterQuery.ProjectionExpression,
-        partitionKey: partitionKeyId,
-        sortKey: {
-          from: `${timeRange.afterTimestamp}`,
-          to: `${timeRange.beforeTimestamp - 1}`,
-        },
-      })
+    const queryInput: QueryCommandInput = dynamoDbQueryHelper({
+      tableName: StackConstants.TARPON_DYNAMODB_TABLE_NAME,
+      filterExpression: transactionFilterQuery.FilterExpression,
+      expressionAttributeNames: transactionFilterQuery.ExpressionAttributeNames,
+      expressionAttributeValues:
+        transactionFilterQuery.ExpressionAttributeValues,
+      scanIndexForward: false,
+      projectionExpression: transactionFilterQuery.ProjectionExpression,
+      partitionKey: partitionKeyId,
+      sortKey: {
+        from: `${timeRange.afterTimestamp}`,
+        to: `${timeRange.beforeTimestamp - 1}`,
+      },
+    })
 
     return queryInput
   }
@@ -789,7 +788,7 @@ export class DynamoDbTransactionRepository
   private getTransactionFilterQueryInput(
     filterOptions: TransactionsFilterOptions = {},
     attributesToFetch: Array<keyof AuxiliaryIndexTransaction>
-  ): Partial<AWS.DynamoDB.DocumentClient.QueryInput> {
+  ): Partial<QueryCommandInput> {
     const transactionStatesParams = filterOptions.transactionStates?.map(
       (transactionState, index) => [
         `:transactionState${index}`,

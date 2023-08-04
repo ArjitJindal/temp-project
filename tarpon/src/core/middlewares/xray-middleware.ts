@@ -3,13 +3,13 @@ import {
   APIGatewayProxyResult,
   APIGatewayProxyWithLambdaAuthorizerHandler,
 } from 'aws-lambda'
+import { Credentials } from '@aws-sdk/client-sts'
 import { JWTAuthorizerResult } from '@/@types/jwt'
 import { addNewSubsegment } from '@/core/xray'
 import { determineApi } from '@/core/utils/api'
+
 type Handler = APIGatewayProxyWithLambdaAuthorizerHandler<
-  APIGatewayEventLambdaAuthorizerContext<
-    AWS.STS.Credentials & JWTAuthorizerResult
-  >
+  APIGatewayEventLambdaAuthorizerContext<Credentials & JWTAuthorizerResult>
 >
 
 export const xrayMiddleware =

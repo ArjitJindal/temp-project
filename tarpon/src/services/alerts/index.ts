@@ -1,4 +1,5 @@
 import { DynamoDBDocumentClient } from '@aws-sdk/lib-dynamodb'
+import { S3 } from '@aws-sdk/client-s3'
 import { MongoClient } from 'mongodb'
 import { NotFound, BadRequest, Forbidden } from 'http-errors'
 import {
@@ -81,11 +82,7 @@ export class AlertsService extends CaseAlertsCommonService {
     })
   }
 
-  constructor(
-    alertsRepository: AlertsRepository,
-    s3: AWS.S3,
-    s3Config: S3Config
-  ) {
+  constructor(alertsRepository: AlertsRepository, s3: S3, s3Config: S3Config) {
     super(s3, s3Config)
     this.alertsRepository = alertsRepository
     this.tenantId = alertsRepository.tenantId
@@ -161,21 +158,27 @@ export class AlertsService extends CaseAlertsCommonService {
       if (!alert || !isAlertAvailable(alert)) {
         throw new NotFound(`No alert for ${alertId}`)
       }
-      alert.comments = alert?.comments?.map((c) => {
-        if (!c.files) {
-          return c
-        }
-        const files = c.files?.map((f) => {
+
+      alert.comments = await Promise.all(
+        (alert.comments ?? []).map(async (c) => {
+          if (!c.files) {
+            return c
+          }
+          const files = await Promise.all(
+            (c.files ?? []).map(async (f) => {
+              return {
+                ...f,
+                downloadLink: await this.getDownloadLink(f),
+              }
+            })
+          )
           return {
-            ...f,
-            downloadLink: this.getDownloadLink(f),
+            ...c,
+            files,
           }
         })
-        return {
-          ...c,
-          files,
-        }
-      })
+      )
+
       return alert
     } finally {
       caseGetSegment?.close()
@@ -497,10 +500,7 @@ export class AlertsService extends CaseAlertsCommonService {
 
     return {
       ...savedComment,
-      files: savedComment.files?.map((file) => ({
-        ...file,
-        downloadLink: this.getDownloadLink(file),
-      })),
+      files: await this.getUpdatedFiles(savedComment.files),
     }
   }
 
@@ -519,10 +519,7 @@ export class AlertsService extends CaseAlertsCommonService {
 
     return {
       ...savedComment,
-      files: savedComment.files?.map((file) => ({
-        ...file,
-        downloadLink: this.getDownloadLink(file),
-      })),
+      files: await this.getUpdatedFiles(savedComment.files),
     }
   }
 

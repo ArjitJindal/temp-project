@@ -1,5 +1,5 @@
 import { MongoClient } from 'mongodb'
-import { CredentialsOptions } from 'aws-sdk/lib/credentials'
+import { Credentials } from 'aws-lambda'
 import { IMPORT_COLLECTION } from '@/utils/mongoDBUtils'
 import { FileImport } from '@/@types/openapi-internal/FileImport'
 import { ImportRequest } from '@/@types/openapi-internal/ImportRequest'
@@ -74,7 +74,7 @@ export class ImportRepository {
   public async postFileImport(
     importRequest: ImportRequest,
     tenantName: string,
-    awsCredentials?: CredentialsOptions
+    awsCredentials?: Credentials
   ) {
     await sendBatchJobCommand(this.tenantId, {
       type: 'FILE_IMPORT',

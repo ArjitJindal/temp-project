@@ -1,5 +1,4 @@
 import { StackConstants } from '@lib/constants'
-import { DocumentClient } from 'aws-sdk/lib/dynamodb/document_client'
 import { v4 as uuidv4 } from 'uuid'
 import {
   DeleteCommand,
@@ -14,8 +13,10 @@ import { ListHeader } from '@/@types/openapi-public/ListHeader'
 import { ListData } from '@/@types/openapi-public/ListData'
 import {
   batchWrite,
+  BatchWriteRequestInternal,
   CursorPaginatedResponse,
   paginateQuery,
+  PutRequestInternal,
 } from '@/utils/dynamodb'
 import { ListItem } from '@/@types/openapi-public/ListItem'
 import { neverReturn } from '@/utils/lang'
@@ -190,7 +191,8 @@ export class ListRepository {
     if (header == null) {
       throw new Error(`List doesn't exist`)
     }
-    const map: { [key: string]: DocumentClient.WriteRequest } = {}
+    const map: { [key: string]: BatchWriteRequestInternal } = {}
+
     for (const item of listItems) {
       map[item.key] = {
         PutRequest: {
@@ -198,7 +200,7 @@ export class ListRepository {
             ...DynamoDbKeys.LIST_ITEM(this.tenantId, listId, item.key),
             ...item,
           },
-        },
+        } as PutRequestInternal,
       }
     }
 

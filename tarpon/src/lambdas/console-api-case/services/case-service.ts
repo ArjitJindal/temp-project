@@ -4,7 +4,8 @@ import {
   APIGatewayEventLambdaAuthorizerContext,
   APIGatewayProxyWithLambdaAuthorizerEvent,
 } from 'aws-lambda'
-import * as AWS from 'aws-sdk'
+import { Credentials } from '@aws-sdk/client-sts'
+import { S3 } from '@aws-sdk/client-s3'
 import { capitalize, isEqual, isEmpty } from 'lodash'
 import { MongoClient } from 'mongodb'
 import { CasesAlertsAuditLogService } from './case-alerts-audit-log-service'
@@ -54,7 +55,7 @@ export class CaseService extends CaseAlertsCommonService {
 
   public static async fromEvent(
     event: APIGatewayProxyWithLambdaAuthorizerEvent<
-      APIGatewayEventLambdaAuthorizerContext<AWS.STS.Credentials>
+      APIGatewayEventLambdaAuthorizerContext<Credentials>
     >
   ): Promise<CaseService> {
     const { principalId: tenantId } = event.requestContext.authorizer
@@ -74,7 +75,7 @@ export class CaseService extends CaseAlertsCommonService {
     })
   }
 
-  constructor(caseRepository: CaseRepository, s3: AWS.S3, s3Config: S3Config) {
+  constructor(caseRepository: CaseRepository, s3: S3, s3Config: S3Config) {
     super(s3, s3Config)
     this.caseRepository = caseRepository
     this.tenantId = caseRepository.tenantId
@@ -97,8 +98,11 @@ export class CaseService extends CaseAlertsCommonService {
     params: DefaultApiGetCaseListRequest
   ): Promise<CasesListResponse> {
     const result = await this.caseRepository.getCases(params)
-    result.data = result.data.map((caseEntity) =>
-      this.getAugmentedCase(caseEntity)
+
+    result.data = await Promise.all(
+      result.data.map(
+        async (caseEntity) => await this.getAugmentedCase(caseEntity)
+      )
     )
     return result
   }
@@ -376,7 +380,7 @@ export class CaseService extends CaseAlertsCommonService {
     const case_ =
       (caseEntity &&
         isCaseAvailable(caseEntity) &&
-        this.getAugmentedCase(caseEntity)) ||
+        (await this.getAugmentedCase(caseEntity))) ||
       null
 
     if (case_ == null) {
@@ -400,10 +404,7 @@ export class CaseService extends CaseAlertsCommonService {
 
     return {
       ...savedComment,
-      files: savedComment.files?.map((file) => ({
-        ...file,
-        downloadLink: this.getDownloadLink(file),
-      })),
+      files: await this.getUpdatedFiles(savedComment.files),
     }
   }
 
@@ -417,10 +418,7 @@ export class CaseService extends CaseAlertsCommonService {
 
     return {
       ...savedComment,
-      files: savedComment.files?.map((file) => ({
-        ...file,
-        downloadLink: this.getDownloadLink(file),
-      })),
+      files: await this.getUpdatedFiles(savedComment.files),
     }
   }
 
@@ -467,14 +465,14 @@ export class CaseService extends CaseAlertsCommonService {
     )
   }
 
-  private getAugmentedCase(caseEntity: Case) {
-    const commentsWithUrl = caseEntity.comments?.map((comment) => ({
-      ...comment,
-      files: comment.files?.map((file) => ({
-        ...file,
-        downloadLink: this.getDownloadLink(file),
-      })),
-    }))
+  private async getAugmentedCase(caseEntity: Case) {
+    const commentsWithUrl = await Promise.all(
+      await (caseEntity.comments ?? []).map(async (comment) => ({
+        ...comment,
+        files: await this.getUpdatedFiles(comment.files),
+      }))
+    )
+
     return { ...caseEntity, comments: commentsWithUrl }
   }
 

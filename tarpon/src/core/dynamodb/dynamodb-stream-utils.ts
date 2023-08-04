@@ -4,7 +4,7 @@ import {
   KinesisStreamRecordPayload,
   StreamRecord,
 } from 'aws-lambda'
-import { DynamoDB } from 'aws-sdk'
+import { unmarshall } from '@aws-sdk/util-dynamodb'
 import { logger } from '../logger'
 import {
   TRANSACTION_EVENT_KEY_IDENTIFIER,
@@ -48,7 +48,7 @@ export type DynamoDbEntityUpdate = {
 function unMarshallDynamoDBStream(dataString: string) {
   const data = dataString.replace('"B":', '"S":')
   const parserd_json = JSON.parse(data)
-  return DynamoDB.Converter.unmarshall(parserd_json)
+  return unmarshall(parserd_json)
 }
 
 function getDynamoDbEntityMetadata(

@@ -1,14 +1,18 @@
 import { Filter, MongoClient, Document, FindCursor } from 'mongodb'
 import { StackConstants } from '@lib/constants'
-import { AttributeMap, ItemList } from 'aws-sdk/clients/dynamodb'
 import { v4 as uuidv4 } from 'uuid'
 import {
   BatchGetCommand,
+  BatchGetCommandInput,
   DeleteCommand,
+  DeleteCommandInput,
   DynamoDBDocumentClient,
   GetCommand,
+  GetCommandInput,
   PutCommand,
+  PutCommandInput,
   UpdateCommand,
+  UpdateCommandInput,
 } from '@aws-sdk/lib-dynamodb'
 import _ from 'lodash'
 import { Comment } from '@/@types/openapi-internal/Comment'
@@ -527,7 +531,7 @@ export class UserRepository {
     if (userIds.length === 0) {
       return []
     }
-    const batchGetItemInput: AWS.DynamoDB.DocumentClient.BatchGetItemInput = {
+    const batchGetItemInput: BatchGetCommandInput = {
       RequestItems: {
         [StackConstants.TARPON_DYNAMODB_TABLE_NAME]: {
           Keys: Array.from(new Set(userIds)).map((userId) =>
@@ -539,9 +543,10 @@ export class UserRepository {
     const result = await this.dynamoDb.send(
       new BatchGetCommand(batchGetItemInput)
     )
-    const users: ItemList =
-      result.Responses?.[StackConstants.TARPON_DYNAMODB_TABLE_NAME] || []
-    return users.map((user: AttributeMap) => {
+    const users =
+      result.Responses?.[StackConstants.TARPON_DYNAMODB_TABLE_NAME] ?? []
+
+    return users.map((user) => {
       const projectedUser = {
         ...user,
       }
@@ -592,7 +597,7 @@ export class UserRepository {
   }
 
   public async getUser<T>(userId: string): Promise<T | undefined> {
-    const getItemInput: AWS.DynamoDB.DocumentClient.GetItemInput = {
+    const getItemInput: GetCommandInput = {
       TableName: StackConstants.TARPON_DYNAMODB_TABLE_NAME,
       Key: DynamoDbKeys.USER(this.tenantId, userId),
     }
@@ -618,7 +623,7 @@ export class UserRepository {
     hitRulesResults: HitRulesDetails[]
   ): Promise<UserWithRulesResult | BusinessWithRulesResult> {
     const primaryKey = DynamoDbKeys.USER(this.tenantId, userId)
-    const updateItemInput: AWS.DynamoDB.DocumentClient.UpdateItemInput = {
+    const updateItemInput: UpdateCommandInput = {
       TableName: StackConstants.TARPON_DYNAMODB_TABLE_NAME,
       Key: primaryKey,
       UpdateExpression: `set #executedRules = :executedRules, #hitRules = :hitRules`,
@@ -701,7 +706,7 @@ export class UserRepository {
       type,
     }
     const primaryKey = DynamoDbKeys.USER(this.tenantId, userId)
-    const putItemInput: AWS.DynamoDB.DocumentClient.PutItemInput = {
+    const putItemInput: PutCommandInput = {
       TableName: StackConstants.TARPON_DYNAMODB_TABLE_NAME,
       Item: {
         ...primaryKey,
@@ -732,7 +737,7 @@ export class UserRepository {
   }
 
   public async deleteUser(userId: string): Promise<void> {
-    const deleteItemInput: AWS.DynamoDB.DocumentClient.DeleteItemInput = {
+    const deleteItemInput: DeleteCommandInput = {
       TableName: StackConstants.TARPON_DYNAMODB_TABLE_NAME,
       Key: DynamoDbKeys.USER(this.tenantId, userId),
     }

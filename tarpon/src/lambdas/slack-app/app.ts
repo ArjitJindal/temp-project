@@ -9,7 +9,7 @@ import {
 import fetch from 'node-fetch'
 import * as ejs from 'ejs'
 import { IncomingWebhook } from '@slack/webhook'
-import AWS from 'aws-sdk'
+import { Credentials } from '@aws-sdk/client-sts'
 import { OauthV2AccessResponse } from '@slack/web-api'
 import { lambdaApi } from '@/core/middlewares/lambda-api-middlewares'
 import { getMongoDbClient } from '@/utils/mongoDBUtils'
@@ -24,7 +24,7 @@ import { CaseRepository } from '@/services/rules-engine/repositories/case-reposi
 export const slackAppHandler = lambdaApi()(
   async (
     event: APIGatewayProxyWithLambdaAuthorizerEvent<
-      APIGatewayEventLambdaAuthorizerContext<AWS.STS.Credentials>
+      APIGatewayEventLambdaAuthorizerContext<Credentials>
     >
   ) => {
     if (

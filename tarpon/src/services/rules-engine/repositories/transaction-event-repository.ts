@@ -1,11 +1,12 @@
 import { v4 as uuidv4 } from 'uuid'
 import { MongoClient } from 'mongodb'
 import { StackConstants } from '@lib/constants'
-import { WriteRequest } from 'aws-sdk/clients/dynamodb'
 import {
   BatchWriteCommand,
+  BatchWriteCommandInput,
   DynamoDBDocumentClient,
   QueryCommand,
+  QueryCommandInput,
 } from '@aws-sdk/lib-dynamodb'
 import { DynamoDbKeys } from '@/core/dynamodb/dynamodb-keys'
 import { TransactionEvent } from '@/@types/openapi-public/TransactionEvent'
@@ -42,23 +43,23 @@ export class TransactionEventRepository {
       transactionEvent.transactionId,
       transactionEvent.timestamp
     )
-    const batchWriteItemParams: AWS.DynamoDB.DocumentClient.BatchWriteItemInput =
-      {
-        RequestItems: {
-          [StackConstants.TARPON_DYNAMODB_TABLE_NAME]: [
-            {
-              PutRequest: {
-                Item: {
-                  ...primaryKey,
-                  eventId,
-                  ...transactionEvent,
-                  ...rulesResult,
-                },
+    const batchWriteItemParams: BatchWriteCommandInput = {
+      RequestItems: {
+        [StackConstants.TARPON_DYNAMODB_TABLE_NAME]: [
+          {
+            PutRequest: {
+              Item: {
+                ...primaryKey,
+                eventId,
+                ...transactionEvent,
+                ...rulesResult,
               },
             },
-          ].filter(Boolean) as unknown as WriteRequest[],
-        },
-      }
+          },
+        ].filter(Boolean),
+      },
+    }
+
     await this.dynamoDb.send(new BatchWriteCommand(batchWriteItemParams))
     if (runLocalChangeHandler()) {
       const { localTarponChangeCaptureHandler } = await import(
@@ -77,7 +78,7 @@ export class TransactionEventRepository {
       transactionId
     ).PartitionKeyID
 
-    const queryInput: AWS.DynamoDB.DocumentClient.QueryInput = {
+    const queryInput: QueryCommandInput = {
       TableName: StackConstants.TARPON_DYNAMODB_TABLE_NAME,
       KeyConditionExpression: 'PartitionKeyID = :PartitionKeyID',
       ExpressionAttributeValues: {

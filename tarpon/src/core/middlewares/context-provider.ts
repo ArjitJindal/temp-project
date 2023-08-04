@@ -3,13 +3,12 @@ import {
   APIGatewayProxyResult,
   APIGatewayProxyWithLambdaAuthorizerHandler,
 } from 'aws-lambda'
+import { Credentials } from '@aws-sdk/client-sts'
 import { getContextStorage, getInitialContext } from '../utils/context'
 import { JWTAuthorizerResult } from '@/@types/jwt'
 
 type Handler = APIGatewayProxyWithLambdaAuthorizerHandler<
-  APIGatewayEventLambdaAuthorizerContext<
-    AWS.STS.Credentials & JWTAuthorizerResult
-  >
+  APIGatewayEventLambdaAuthorizerContext<Credentials & JWTAuthorizerResult>
 >
 
 export const contextProvider =

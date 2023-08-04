@@ -4,6 +4,7 @@ import {
 } from 'aws-lambda'
 import { NotFound, BadRequest } from 'http-errors'
 import { DynamoDBDocumentClient } from '@aws-sdk/lib-dynamodb'
+import { Credentials } from '@aws-sdk/client-sts'
 import { getDynamoDbClientByEvent } from '@/utils/dynamodb'
 import { lambdaApi } from '@/core/middlewares/lambda-api-middlewares'
 import {
@@ -127,7 +128,7 @@ async function getMissingRelatedTransactions(
 export const transactionHandler = lambdaApi()(
   async (
     event: APIGatewayProxyWithLambdaAuthorizerEvent<
-      APIGatewayEventLambdaAuthorizerContext<AWS.STS.Credentials>
+      APIGatewayEventLambdaAuthorizerContext<Credentials>
     >
   ) => {
     const { principalId: tenantId } = event.requestContext.authorizer
@@ -200,7 +201,7 @@ export const transactionHandler = lambdaApi()(
 export const transactionEventHandler = lambdaApi()(
   async (
     event: APIGatewayProxyWithLambdaAuthorizerEvent<
-      APIGatewayEventLambdaAuthorizerContext<AWS.STS.Credentials>
+      APIGatewayEventLambdaAuthorizerContext<Credentials>
     >
   ) => {
     const { principalId: tenantId } = event.requestContext.authorizer
@@ -233,7 +234,7 @@ export const transactionEventHandler = lambdaApi()(
 export const userEventsHandler = lambdaApi()(
   async (
     event: APIGatewayProxyWithLambdaAuthorizerEvent<
-      APIGatewayEventLambdaAuthorizerContext<AWS.STS.Credentials>
+      APIGatewayEventLambdaAuthorizerContext<Credentials>
     >
   ) => {
     const { principalId: tenantId } = event.requestContext.authorizer

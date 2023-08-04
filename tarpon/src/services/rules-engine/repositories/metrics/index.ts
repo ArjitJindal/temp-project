@@ -1,6 +1,10 @@
 import { Filter, MongoClient } from 'mongodb'
 import { StackConstants } from '@lib/constants'
-import { DynamoDBDocumentClient, PutCommand } from '@aws-sdk/lib-dynamodb'
+import {
+  DynamoDBDocumentClient,
+  PutCommand,
+  PutCommandInput,
+} from '@aws-sdk/lib-dynamodb'
 import { v4 as uuidv4 } from 'uuid'
 import { DynamoDbKeys } from '@/core/dynamodb/dynamodb-keys'
 import { DEVICE_DATA_COLLECTION } from '@/utils/mongoDBUtils'
@@ -63,7 +67,7 @@ export class MetricsRepository {
       type,
       timestamp
     )
-    const putItemInput: AWS.DynamoDB.DocumentClient.PutItemInput = {
+    const putItemInput: PutCommandInput = {
       TableName: StackConstants.TARPON_DYNAMODB_TABLE_NAME,
       Item: {
         ...primaryKey,

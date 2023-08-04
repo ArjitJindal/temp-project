@@ -1,6 +1,9 @@
 import * as csvFormat from '@fast-csv/format'
 import { customAlphabet } from 'nanoid'
+import { S3, GetObjectCommand } from '@aws-sdk/client-s3'
+import { Upload } from '@aws-sdk/lib-storage'
 import { AggregationCursor } from 'mongodb'
+import { getSignedUrl } from '@aws-sdk/s3-request-presigner'
 import dayjs from '@/utils/dayjs'
 
 type CsvAction<T> = T extends string | number | boolean
@@ -72,10 +75,10 @@ const nanoId = customAlphabet('1234567890abcdef', 8)
 
 export class ExportService<T> {
   entityName: string
-  s3: AWS.S3
+  s3: S3
   tmpBucketName: string
 
-  constructor(entityName: string, s3: AWS.S3, tmpBucketName: string) {
+  constructor(entityName: string, s3: S3, tmpBucketName: string) {
     this.entityName = entityName
     this.s3 = s3
     this.tmpBucketName = tmpBucketName
@@ -98,10 +101,13 @@ export class ExportService<T> {
       transform: (object: any) => makeRows(object, headerSettings),
     })
 
-    const uploadInfo = this.s3.upload({
-      Key: filename,
-      Bucket: bucket,
-      Body: stream,
+    const parallelUploadS3 = new Upload({
+      client: this.s3,
+      params: {
+        Bucket: bucket,
+        Key: filename,
+        Body: stream,
+      },
     })
 
     for await (const datum of cursor) {
@@ -109,25 +115,15 @@ export class ExportService<T> {
     }
     stream.end()
 
-    await uploadInfo.promise()
+    await parallelUploadS3.done()
 
-    const signedUrl = await new Promise<string>((resolve, reject) => {
-      this.s3.getSignedUrl(
-        'getObject',
-        {
-          Bucket: bucket,
-          Key: filename,
-          Expires: 3600,
-          ResponseContentDisposition: `attachment; filename="${filename}"`,
-        },
-        (err: unknown, url: string) => {
-          if (err) {
-            reject(err)
-          } else {
-            resolve(url)
-          }
-        }
-      )
+    const command = new GetObjectCommand({
+      Bucket: bucket,
+      Key: filename,
+    })
+
+    const signedUrl = await getSignedUrl(this.s3, command, {
+      expiresIn: 3600,
     })
 
     return {

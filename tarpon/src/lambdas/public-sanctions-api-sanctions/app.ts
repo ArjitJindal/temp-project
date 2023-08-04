@@ -4,6 +4,7 @@ import {
   APIGatewayProxyWithLambdaAuthorizerEvent,
 } from 'aws-lambda'
 import _ from 'lodash'
+import { Credentials } from '@aws-sdk/client-sts'
 import { lambdaApi } from '@/core/middlewares/lambda-api-middlewares'
 import { SanctionsService } from '@/services/sanctions'
 import { SanctionsBankSearchRequest } from '@/@types/openapi-public-sanctions/SanctionsBankSearchRequest'
@@ -33,7 +34,7 @@ function internalToPublicSearchResult(
 export const sanctionsHandler = lambdaApi({ requiredFeatures: ['SANCTIONS'] })(
   async (
     event: APIGatewayProxyWithLambdaAuthorizerEvent<
-      APIGatewayEventLambdaAuthorizerContext<AWS.STS.Credentials>
+      APIGatewayEventLambdaAuthorizerContext<Credentials>
     >
   ) => {
     const { principalId: tenantId } = event.requestContext.authorizer

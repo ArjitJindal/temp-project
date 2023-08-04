@@ -5,7 +5,10 @@ import { InternalServerError } from 'http-errors'
 import {
   DynamoDBDocumentClient,
   GetCommand,
+  GetCommandInput,
   PutCommand,
+  PutCommandInput,
+  QueryCommandInput,
 } from '@aws-sdk/lib-dynamodb'
 import { getRiskLevelFromScore, getRiskScoreFromLevel } from '../utils'
 import { DynamoDbKeys } from '@/core/dynamodb/dynamodb-keys'
@@ -77,7 +80,7 @@ export class RiskRepository {
   }
 
   async getKrsScore(userId: string): Promise<KrsScore | null> {
-    const getItemInput: AWS.DynamoDB.DocumentClient.GetItemInput = {
+    const getItemInput: GetCommandInput = {
       TableName: StackConstants.HAMMERHEAD_DYNAMODB_TABLE_NAME,
       Key: DynamoDbKeys.KRS_VALUE_ITEM(this.tenantId, userId, '1'), // will need to query after we implement versioning
     }
@@ -108,7 +111,7 @@ export class RiskRepository {
     }
     const primaryKey = DynamoDbKeys.KRS_VALUE_ITEM(this.tenantId, userId, '1')
 
-    const putItemInput: AWS.DynamoDB.DocumentClient.PutItemInput = {
+    const putItemInput: PutCommandInput = {
       TableName: StackConstants.HAMMERHEAD_DYNAMODB_TABLE_NAME,
       Item: {
         ...primaryKey,
@@ -144,7 +147,7 @@ export class RiskRepository {
       '1'
     )
 
-    const putItemInput: AWS.DynamoDB.DocumentClient.PutItemInput = {
+    const putItemInput: PutCommandInput = {
       TableName: StackConstants.HAMMERHEAD_DYNAMODB_TABLE_NAME,
       Item: {
         ...primaryKey,
@@ -161,7 +164,7 @@ export class RiskRepository {
 
   async getArsScore(transactionId: string): Promise<ArsScore | null> {
     try {
-      const getItemInput: AWS.DynamoDB.DocumentClient.GetItemInput = {
+      const getItemInput: GetCommandInput = {
         TableName: StackConstants.HAMMERHEAD_DYNAMODB_TABLE_NAME,
         Key: DynamoDbKeys.ARS_VALUE_ITEM(this.tenantId, transactionId, '1'),
       }
@@ -180,7 +183,7 @@ export class RiskRepository {
 
   async getDrsScore(userId: string): Promise<DrsScore | null> {
     try {
-      const getItemInput: AWS.DynamoDB.DocumentClient.GetItemInput = {
+      const getItemInput: GetCommandInput = {
         TableName: StackConstants.HAMMERHEAD_DYNAMODB_TABLE_NAME,
         Key: DynamoDbKeys.DRS_VALUE_ITEM(this.tenantId, userId, '1'), // will need to query after we implement versioning
       }
@@ -213,7 +216,7 @@ export class RiskRepository {
     }
     const primaryKey = DynamoDbKeys.DRS_VALUE_ITEM(this.tenantId, userId, '1')
 
-    const putItemInput: AWS.DynamoDB.DocumentClient.PutItemInput = {
+    const putItemInput: PutCommandInput = {
       TableName: StackConstants.HAMMERHEAD_DYNAMODB_TABLE_NAME,
       Item: {
         ...primaryKey,
@@ -231,7 +234,7 @@ export class RiskRepository {
   }
 
   async getRiskClassificationValues(): Promise<Array<RiskClassificationScore>> {
-    const queryInput: AWS.DynamoDB.DocumentClient.QueryInput = {
+    const queryInput: QueryCommandInput = {
       TableName: StackConstants.HAMMERHEAD_DYNAMODB_TABLE_NAME,
       KeyConditionExpression: 'PartitionKeyID = :pk',
 
@@ -259,7 +262,7 @@ export class RiskRepository {
       classificationValues: riskClassificationValues,
       updatedAt: now,
     }
-    const putItemInput: AWS.DynamoDB.DocumentClient.PutItemInput = {
+    const putItemInput: PutCommandInput = {
       TableName: StackConstants.HAMMERHEAD_DYNAMODB_TABLE_NAME,
       Item: {
         ...DynamoDbKeys.RISK_CLASSIFICATION(this.tenantId, 'LATEST'), // Version it later
@@ -303,7 +306,7 @@ export class RiskRepository {
       transactionId: 'MANUAL_UPDATE',
     }
     const primaryKey = DynamoDbKeys.DRS_VALUE_ITEM(this.tenantId, userId, '1')
-    const putItemInput: AWS.DynamoDB.DocumentClient.PutItemInput = {
+    const putItemInput: PutCommandInput = {
       TableName: StackConstants.HAMMERHEAD_DYNAMODB_TABLE_NAME,
       Item: {
         ...primaryKey,
@@ -323,7 +326,7 @@ export class RiskRepository {
   async createOrUpdateParameterRiskItem(
     parameterRiskLevels: ParameterAttributeRiskValues
   ) {
-    const putItemInput: AWS.DynamoDB.DocumentClient.PutItemInput = {
+    const putItemInput: PutCommandInput = {
       TableName: StackConstants.HAMMERHEAD_DYNAMODB_TABLE_NAME,
       Item: {
         ...parameterRiskLevels,
@@ -355,7 +358,7 @@ export class RiskRepository {
       ':sk': SortKeyID,
     }
 
-    const queryInput: AWS.DynamoDB.DocumentClient.QueryInput = {
+    const queryInput: QueryCommandInput = {
       TableName: StackConstants.HAMMERHEAD_DYNAMODB_TABLE_NAME,
       KeyConditionExpression: keyConditionExpr,
 
@@ -406,7 +409,7 @@ export class RiskRepository {
         .PartitionKeyID,
     }
 
-    const queryInput: AWS.DynamoDB.DocumentClient.QueryInput = {
+    const queryInput: QueryCommandInput = {
       TableName: StackConstants.HAMMERHEAD_DYNAMODB_TABLE_NAME,
       KeyConditionExpression: keyConditionExpr,
       ExpressionAttributeValues: expressionAttributeVals,

@@ -1,4 +1,4 @@
-import { FileInfo } from '@/@types/openapi-internal/FileInfo'
+import { S3 } from '@aws-sdk/client-s3'
 import { DefaultApiGetTransactionsListRequest } from '@/@types/openapi-internal/RequestParameters'
 import { MongoDbTransactionRepository } from '@/services/rules-engine/repositories/mongodb-transaction-repository'
 import { InternalTransaction } from '@/@types/openapi-internal/InternalTransaction'
@@ -14,7 +14,7 @@ import { OptionalPagination } from '@/utils/pagination'
 @traceable
 export class TransactionService {
   transactionRepository: MongoDbTransactionRepository
-  s3: AWS.S3
+  s3: S3
   documentBucketName: string
   tmpBucketName: string
   riskRepository: RiskRepository
@@ -22,7 +22,7 @@ export class TransactionService {
   constructor(
     transactionRepository: MongoDbTransactionRepository,
     riskRepository: RiskRepository,
-    s3: AWS.S3,
+    s3: S3,
     tmpBucketName: string,
     documentBucketName: string
   ) {
@@ -86,14 +86,6 @@ export class TransactionService {
       transactionId
     )
     return transaction
-  }
-
-  private getDownloadLink(file: FileInfo): string {
-    return this.s3.getSignedUrl('getObject', {
-      Bucket: this.documentBucketName,
-      Key: file.s3Key,
-      Expires: 3600,
-    })
   }
 
   public async getUniques(params: {

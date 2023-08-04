@@ -4,9 +4,10 @@ import {
   APIGatewayProxyResult,
   APIGatewayProxyWithLambdaAuthorizerHandler,
 } from 'aws-lambda'
+import { Credentials } from '@aws-sdk/client-sts'
 
 type Handler = APIGatewayProxyWithLambdaAuthorizerHandler<
-  APIGatewayEventLambdaAuthorizerContext<AWS.STS.Credentials>
+  APIGatewayEventLambdaAuthorizerContext<Credentials>
 >
 
 export const jsonSerializer =

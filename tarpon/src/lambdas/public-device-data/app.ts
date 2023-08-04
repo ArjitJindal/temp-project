@@ -3,6 +3,7 @@ import {
   APIGatewayProxyWithLambdaAuthorizerEvent,
 } from 'aws-lambda'
 import { BadRequest } from 'http-errors'
+import { Credentials } from '@aws-sdk/client-sts'
 import { updateLogMetadata } from '@/core/utils/context'
 import { logger } from '@/core/logger'
 import { lambdaApi } from '@/core/middlewares/lambda-api-middlewares'
@@ -13,7 +14,7 @@ import { getMongoDbClient } from '@/utils/mongoDBUtils'
 export const deviceDataHandler = lambdaApi()(
   async (
     event: APIGatewayProxyWithLambdaAuthorizerEvent<
-      APIGatewayEventLambdaAuthorizerContext<AWS.STS.Credentials>
+      APIGatewayEventLambdaAuthorizerContext<Credentials>
     >
   ) => {
     const { principalId: tenantId } = event.requestContext.authorizer

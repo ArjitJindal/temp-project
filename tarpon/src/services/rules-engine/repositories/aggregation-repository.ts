@@ -2,10 +2,13 @@ import { StackConstants } from '@lib/constants'
 import {
   DynamoDBDocumentClient,
   GetCommand,
+  GetCommandInput,
   PutCommand,
+  PutCommandInput,
+  QueryCommandInput,
   UpdateCommand,
+  UpdateCommandInput,
 } from '@aws-sdk/lib-dynamodb'
-import AWS from 'aws-sdk'
 import _ from 'lodash'
 import dayjs, { duration } from '@/utils/dayjs'
 import { DynamoDbKeys } from '@/core/dynamodb/dynamodb-keys'
@@ -13,6 +16,7 @@ import { PaymentDirection } from '@/@types/tranasction/payment-direction'
 import { TransactionAmountDetails } from '@/@types/openapi-public/TransactionAmountDetails'
 import { getTargetCurrencyAmount } from '@/utils/currency-utils'
 import {
+  BatchWriteRequestInternal,
   batchWrite,
   dynamoDbQueryHelper,
   paginateQuery,
@@ -62,7 +66,7 @@ export class AggregationRepository {
     direction: 'sendingFrom' | 'sendingTo' | 'receivingFrom' | 'receivingTo'
   ) {
     const attribute: keyof UserAggregationAttributes = `${direction}Countries`
-    const updateItemInput: AWS.DynamoDB.DocumentClient.UpdateItemInput = {
+    const updateItemInput: UpdateCommandInput = {
       TableName: StackConstants.TARPON_DYNAMODB_TABLE_NAME,
       Key: DynamoDbKeys.USER_AGGREGATION(this.tenantId, userId),
       UpdateExpression: `ADD ${attribute} :countries`,
@@ -71,6 +75,7 @@ export class AggregationRepository {
       },
       ReturnValues: 'UPDATED_NEW',
     }
+
     await this.dynamoDb.send(new UpdateCommand(updateItemInput))
   }
 
@@ -91,7 +96,7 @@ export class AggregationRepository {
       'sendingFromCountries',
       'sendingToCountries',
     ]
-    const getItemInput: AWS.DynamoDB.DocumentClient.GetItemInput = {
+    const getItemInput: GetCommandInput = {
       TableName: StackConstants.TARPON_DYNAMODB_TABLE_NAME,
       Key: DynamoDbKeys.USER_AGGREGATION(this.tenantId, userId),
       ProjectionExpression: attributes.join(','),
@@ -115,7 +120,7 @@ export class AggregationRepository {
     direction: PaymentDirection
   ) {
     const attribute: keyof UserAggregationAttributes = `${direction}Currencies`
-    const updateItemInput: AWS.DynamoDB.DocumentClient.UpdateItemInput = {
+    const updateItemInput: UpdateCommandInput = {
       TableName: StackConstants.TARPON_DYNAMODB_TABLE_NAME,
       Key: DynamoDbKeys.USER_AGGREGATION(this.tenantId, userId),
       UpdateExpression: `ADD ${attribute} :currencies`,
@@ -136,7 +141,7 @@ export class AggregationRepository {
       'receivingCurrencies',
       'sendingCurrencies',
     ]
-    const getItemInput: AWS.DynamoDB.DocumentClient.GetItemInput = {
+    const getItemInput: GetCommandInput = {
       TableName: StackConstants.TARPON_DYNAMODB_TABLE_NAME,
       Key: DynamoDbKeys.USER_AGGREGATION(this.tenantId, userId),
       ProjectionExpression: attributes.join(','),
@@ -157,7 +162,7 @@ export class AggregationRepository {
     direction: PaymentDirection
   ) {
     const attribute: keyof UserAggregationAttributes = `${direction}TransactionsCount`
-    const updateItemInput: AWS.DynamoDB.DocumentClient.UpdateItemInput = {
+    const updateItemInput: UpdateCommandInput = {
       TableName: StackConstants.TARPON_DYNAMODB_TABLE_NAME,
       Key: DynamoDbKeys.USER_AGGREGATION(this.tenantId, userId),
       UpdateExpression: `SET ${attribute} = if_not_exists(${attribute}, :start) + :inc`,
@@ -182,7 +187,7 @@ export class AggregationRepository {
       'receivingTransactionsCount',
       'sendingTransactionsCount',
     ]
-    const getItemInput: AWS.DynamoDB.DocumentClient.GetItemInput = {
+    const getItemInput: GetCommandInput = {
       TableName: StackConstants.TARPON_DYNAMODB_TABLE_NAME,
       Key: DynamoDbKeys.USER_AGGREGATION(this.tenantId, userId),
       ProjectionExpression: attributes.join(','),
@@ -232,7 +237,8 @@ export class AggregationRepository {
           },
         },
       }
-    })
+    }) as BatchWriteRequestInternal[]
+
     await batchWrite(
       this.dynamoDb,
       writeRequests,
@@ -323,7 +329,7 @@ export class AggregationRepository {
       Math.floor(Date.now() / 1000) +
       duration(1, 'year').asSeconds() +
       duration(7, 'day').asSeconds()
-    const updateItemInput: AWS.DynamoDB.DocumentClient.UpdateItemInput = {
+    const updateItemInput: UpdateCommandInput = {
       TableName: StackConstants.TARPON_DYNAMODB_TABLE_NAME,
       Key: DynamoDbKeys.USER_TIME_AGGREGATION(
         this.tenantId,
@@ -356,7 +362,7 @@ export class AggregationRepository {
       'receivingTransactionsAmount',
       'receivingTransactionsCount',
     ]
-    const getItemInput: AWS.DynamoDB.DocumentClient.GetItemInput = {
+    const getItemInput: GetCommandInput = {
       TableName: StackConstants.TARPON_DYNAMODB_TABLE_NAME,
       Key: DynamoDbKeys.USER_TIME_AGGREGATION(
         this.tenantId,
@@ -453,20 +459,19 @@ export class AggregationRepository {
     timeLabelFormat: string,
     version: string
   ): Promise<Array<T & { hour: string }> | undefined> {
-    const queryInput: AWS.DynamoDB.DocumentClient.QueryInput =
-      dynamoDbQueryHelper({
-        tableName: StackConstants.TARPON_DYNAMODB_TABLE_NAME,
-        sortKey: {
-          from: dayjs(afterTimestamp).format(timeLabelFormat),
-          to: dayjs(beforeTimestamp - 1).format(timeLabelFormat),
-        },
-        partitionKey: DynamoDbKeys.RULE_USER_TIME_AGGREGATION(
-          this.tenantId,
-          userKeyId,
-          ruleInstanceId,
-          version
-        ).PartitionKeyID,
-      })
+    const queryInput: QueryCommandInput = dynamoDbQueryHelper({
+      tableName: StackConstants.TARPON_DYNAMODB_TABLE_NAME,
+      sortKey: {
+        from: dayjs(afterTimestamp).format(timeLabelFormat),
+        to: dayjs(beforeTimestamp - 1).format(timeLabelFormat),
+      },
+      partitionKey: DynamoDbKeys.RULE_USER_TIME_AGGREGATION(
+        this.tenantId,
+        userKeyId,
+        ruleInstanceId,
+        version
+      ).PartitionKeyID,
+    })
 
     const result = await paginateQuery(this.dynamoDb, queryInput)
     const hasData = (result?.Items?.length || 0) > 0
@@ -495,7 +500,7 @@ export class AggregationRepository {
     ruleInstanceId: string,
     version: string
   ): Promise<boolean> {
-    const queryInput: AWS.DynamoDB.DocumentClient.QueryInput = {
+    const queryInput: QueryCommandInput = {
       TableName: StackConstants.TARPON_DYNAMODB_TABLE_NAME,
       KeyConditionExpression: 'PartitionKeyID = :pk',
       ExpressionAttributeValues: {
@@ -519,7 +524,7 @@ export class AggregationRepository {
     transactionId: string,
     ttl: number
   ): Promise<void> {
-    const putItemInput: AWS.DynamoDB.DocumentClient.PutItemInput = {
+    const putItemInput: PutCommandInput = {
       TableName: StackConstants.TARPON_DYNAMODB_TABLE_NAME,
       Item: {
         ...DynamoDbKeys.RULE_USER_TIME_AGGREGATION_MARKER(
@@ -541,7 +546,7 @@ export class AggregationRepository {
     version: string,
     transactionId: string
   ): Promise<boolean> {
-    const getItemInput: AWS.DynamoDB.DocumentClient.GetItemInput = {
+    const getItemInput: GetCommandInput = {
       TableName: StackConstants.TARPON_DYNAMODB_TABLE_NAME,
       Key: DynamoDbKeys.RULE_USER_TIME_AGGREGATION_MARKER(
         this.tenantId,

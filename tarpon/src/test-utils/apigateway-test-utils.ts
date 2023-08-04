@@ -3,6 +3,7 @@ import {
   APIGatewayProxyWithLambdaAuthorizerEvent,
   Handler,
 } from 'aws-lambda'
+import { Credentials } from '@aws-sdk/client-sts'
 import { getTestTenantId } from './tenant-test-utils'
 
 function getPathFromPathParams(
@@ -27,7 +28,7 @@ export function getApiGatewayGetEvent(
     queryStringParameters?: { [key: string]: string }
   }
 ): APIGatewayProxyWithLambdaAuthorizerEvent<
-  APIGatewayEventLambdaAuthorizerContext<AWS.STS.Credentials>
+  APIGatewayEventLambdaAuthorizerContext<Credentials>
 > {
   return {
     resource,
@@ -58,7 +59,7 @@ export function getApiGatewayPostEvent(
     queryStringParameters?: { [key: string]: string }
   }
 ): APIGatewayProxyWithLambdaAuthorizerEvent<
-  APIGatewayEventLambdaAuthorizerContext<AWS.STS.Credentials>
+  APIGatewayEventLambdaAuthorizerContext<Credentials>
 > {
   return {
     resource,
@@ -89,7 +90,7 @@ export function getApiGatewayPatchEvent(
     queryStringParameters?: { [key: string]: string }
   }
 ): APIGatewayProxyWithLambdaAuthorizerEvent<
-  APIGatewayEventLambdaAuthorizerContext<AWS.STS.Credentials>
+  APIGatewayEventLambdaAuthorizerContext<Credentials>
 > {
   return {
     resource,
@@ -119,7 +120,7 @@ export function getApiGatewayDeleteEvent(
     queryStringParameters?: { [key: string]: string }
   }
 ): APIGatewayProxyWithLambdaAuthorizerEvent<
-  APIGatewayEventLambdaAuthorizerContext<AWS.STS.Credentials>
+  APIGatewayEventLambdaAuthorizerContext<Credentials>
 > {
   return {
     resource,
@@ -150,7 +151,7 @@ export function getApiGatewayPutEvent(
     queryStringParameters?: { [key: string]: string }
   }
 ): APIGatewayProxyWithLambdaAuthorizerEvent<
-  APIGatewayEventLambdaAuthorizerContext<AWS.STS.Credentials>
+  APIGatewayEventLambdaAuthorizerContext<Credentials>
 > {
   return {
     resource,

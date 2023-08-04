@@ -1,9 +1,9 @@
 import { v4 as uuidv4 } from 'uuid'
 import { MongoClient } from 'mongodb'
 import { StackConstants } from '@lib/constants'
-import { WriteRequest } from 'aws-sdk/clients/dynamodb'
 import {
   BatchWriteCommand,
+  BatchWriteCommandInput,
   DynamoDBDocumentClient,
 } from '@aws-sdk/lib-dynamodb'
 import { DynamoDbKeys } from '@/core/dynamodb/dynamodb-keys'
@@ -49,22 +49,21 @@ export class UserEventRepository {
         userEvent.timestamp
       )
     }
-    const batchWriteItemParams: AWS.DynamoDB.DocumentClient.BatchWriteItemInput =
-      {
-        RequestItems: {
-          [StackConstants.TARPON_DYNAMODB_TABLE_NAME]: [
-            {
-              PutRequest: {
-                Item: {
-                  ...primaryKey,
-                  eventId,
-                  ...userEvent,
-                },
+    const batchWriteItemParams: BatchWriteCommandInput = {
+      RequestItems: {
+        [StackConstants.TARPON_DYNAMODB_TABLE_NAME]: [
+          {
+            PutRequest: {
+              Item: {
+                ...primaryKey,
+                eventId,
+                ...userEvent,
               },
             },
-          ].filter(Boolean) as WriteRequest[],
-        },
-      }
+          },
+        ].filter(Boolean),
+      },
+    }
     await this.dynamoDb.send(new BatchWriteCommand(batchWriteItemParams))
 
     if (runLocalChangeHandler()) {

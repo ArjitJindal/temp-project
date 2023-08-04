@@ -1,4 +1,4 @@
-import { CredentialsOptions } from 'aws-sdk/lib/credentials'
+import { Credentials } from 'aws-lambda'
 import { SimulationPulseParameters } from '../openapi-internal/SimulationPulseParameters'
 import { SimulationBeaconParameters } from '../openapi-internal/SimulationBeaconParameters'
 import { RuleInstance } from '../openapi-internal/RuleInstance'
@@ -16,7 +16,7 @@ export type FileImportBatchJob = {
   type: FileImportBatchJobType
   tenantId: string
   parameters: FileImportBatchJobParameters
-  awsCredentials?: CredentialsOptions
+  awsCredentials?: Credentials
 }
 
 /* Simulation (Pulse) */
@@ -25,7 +25,7 @@ export type SimulationPulseBatchJob = {
   type: SimulationPulseBatchJobType
   tenantId: string
   parameters: SimulationPulseParameters & { taskId: string; jobId: string }
-  awsCredentials?: CredentialsOptions
+  awsCredentials?: Credentials
 }
 
 /* Simulation (Beacon) */
@@ -38,7 +38,7 @@ export type SimulationBeaconBatchJob = {
     jobId: string
     defaultRuleInstance: RuleInstance
   }
-  awsCredentials?: CredentialsOptions
+  awsCredentials?: Credentials
 }
 
 /* Demo Mode Data Load */
@@ -46,7 +46,7 @@ type DemoModeDataLoadBatchJobType = 'DEMO_MODE_DATA_LOAD'
 export type DemoModeDataLoadBatchJob = {
   type: DemoModeDataLoadBatchJobType
   tenantId: string
-  awsCredentials?: CredentialsOptions
+  awsCredentials?: Credentials
 }
 
 /* Placeholder */
@@ -69,7 +69,7 @@ type PulseDataLoadBatchJobType = 'PULSE_USERS_BACKFILL_RISK_SCORE'
 export type PulseDataLoadBatchJob = {
   type: PulseDataLoadBatchJobType
   tenantId: string
-  awsCredentials?: CredentialsOptions
+  awsCredentials?: Credentials
 }
 
 /* Api Usage Metrics */

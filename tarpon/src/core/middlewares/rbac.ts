@@ -3,14 +3,13 @@ import {
   APIGatewayProxyResult,
   APIGatewayProxyWithLambdaAuthorizerHandler,
 } from 'aws-lambda'
+import { Credentials } from '@aws-sdk/client-sts'
 import { assertPermissions, JWTAuthorizerResult } from '@/@types/jwt'
 import { getApiRequiredPermissions as getInternalApiRequiredPermissions } from '@/@types/openapi-internal-custom/DefaultApi'
 import { determineApi } from '@/core/utils/api'
 
 type Handler = APIGatewayProxyWithLambdaAuthorizerHandler<
-  APIGatewayEventLambdaAuthorizerContext<
-    AWS.STS.Credentials & JWTAuthorizerResult
-  >
+  APIGatewayEventLambdaAuthorizerContext<Credentials & JWTAuthorizerResult>
 >
 
 export const rbacMiddleware =

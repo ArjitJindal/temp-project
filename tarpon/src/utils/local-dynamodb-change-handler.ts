@@ -4,7 +4,7 @@ import {
   KinesisStreamRecord,
 } from 'aws-lambda'
 import { StackConstants } from '@lib/constants'
-import { DynamoDB } from 'aws-sdk'
+import { marshall } from '@aws-sdk/util-dynamodb'
 import { GetCommand } from '@aws-sdk/lib-dynamodb'
 import { getDynamoDbClientByEvent } from './dynamodb'
 import { envIs } from './env'
@@ -42,8 +42,8 @@ export function createKinesisStreamEvent<T>(
       PartitionKeyID: { S: partitionKeyId },
       SortKeyID: { S: sortKeyId },
     },
-    OldImage: oldItem && DynamoDB.Converter.marshall(oldItem),
-    NewImage: newItem && DynamoDB.Converter.marshall(newItem),
+    OldImage: oldItem && marshall(oldItem),
+    NewImage: newItem && marshall(newItem),
   }
   const kinesisData = Buffer.from(
     JSON.stringify({ dynamodb: dynamodbStreamRecord }),

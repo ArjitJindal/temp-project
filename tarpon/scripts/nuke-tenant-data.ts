@@ -1,9 +1,12 @@
 import { exit } from 'process'
-import AWS from 'aws-sdk'
 import { program } from 'commander'
 import { StackConstants } from '@lib/constants'
 import { Db } from 'mongodb'
-import { DeleteCommand, DynamoDBDocumentClient } from '@aws-sdk/lib-dynamodb'
+import {
+  DeleteCommand,
+  DynamoDBDocumentClient,
+  QueryCommandInput,
+} from '@aws-sdk/lib-dynamodb'
 import { DynamoDbKeys } from '@/core/dynamodb/dynamodb-keys'
 import { getDynamoDbClient, paginateQueryGenerator } from '@/utils/dynamodb'
 import { Transaction } from '@/@types/openapi-public/Transaction'
@@ -109,7 +112,7 @@ async function deleteTransaction(transaction: Transaction) {
 }
 
 async function deleteTransactions() {
-  const transactionsQueryInput: AWS.DynamoDB.DocumentClient.QueryInput = {
+  const transactionsQueryInput: QueryCommandInput = {
     TableName: StackConstants.TARPON_DYNAMODB_TABLE_NAME,
     KeyConditionExpression: 'PartitionKeyID = :pk',
     ExpressionAttributeValues: {
@@ -156,7 +159,7 @@ async function deletePartition(
   partitionKeyId: string,
   tableName?: string
 ) {
-  const queryInput: AWS.DynamoDB.DocumentClient.QueryInput = {
+  const queryInput: QueryCommandInput = {
     TableName: tableName
       ? tableName
       : StackConstants.TARPON_DYNAMODB_TABLE_NAME,
@@ -210,7 +213,7 @@ async function deleteUser(userId: string) {
 }
 
 async function deleteUsers() {
-  const queryInput: AWS.DynamoDB.DocumentClient.QueryInput = {
+  const queryInput: QueryCommandInput = {
     TableName: StackConstants.TARPON_DYNAMODB_TABLE_NAME,
     KeyConditionExpression: 'PartitionKeyID = :pk',
     ExpressionAttributeValues: {
@@ -273,7 +276,7 @@ async function deleteRiskValue(userId: string) {
 }
 
 async function deleteKrsValues() {
-  const queryInput: AWS.DynamoDB.DocumentClient.QueryInput = {
+  const queryInput: QueryCommandInput = {
     TableName: StackConstants.TARPON_DYNAMODB_TABLE_NAME,
     KeyConditionExpression: 'PartitionKeyID = :pk',
     ExpressionAttributeValues: {

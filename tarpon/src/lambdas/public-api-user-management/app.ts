@@ -1,4 +1,4 @@
-import * as AWS from 'aws-sdk'
+import { Credentials } from '@aws-sdk/client-sts'
 import {
   APIGatewayEventLambdaAuthorizerContext,
   APIGatewayProxyWithLambdaAuthorizerEvent,
@@ -42,7 +42,7 @@ const handleRiskLevelParam = async (
 export const userHandler = lambdaApi()(
   async (
     event: APIGatewayProxyWithLambdaAuthorizerEvent<
-      APIGatewayEventLambdaAuthorizerContext<AWS.STS.Credentials>
+      APIGatewayEventLambdaAuthorizerContext<Credentials>
     >
   ) => {
     const { principalId: tenantId } = event.requestContext.authorizer

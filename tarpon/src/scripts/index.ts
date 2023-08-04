@@ -1,4 +1,4 @@
-import * as AWS from 'aws-sdk'
+import { fromIni } from '@aws-sdk/credential-providers'
 import { IBAN } from 'ibankit'
 
 import { DynamoDBDocumentClient } from '@aws-sdk/lib-dynamodb'
@@ -102,7 +102,7 @@ export const createAndUploadTestData = async (
   /* DB init */
   const dynamoDb = DynamoDBDocumentClient.from(
     new DynamoDBClient({
-      credentials: new AWS.SharedIniFileCredentials({
+      credentials: fromIni({
         profile: profileName,
       }),
     }),

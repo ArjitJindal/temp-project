@@ -2,13 +2,13 @@ import {
   APIGatewayEventLambdaAuthorizerContext,
   APIGatewayProxyWithLambdaAuthorizerEvent,
 } from 'aws-lambda'
+import { Credentials } from '@aws-sdk/client-sts'
 import { lambdaApi } from '@/core/middlewares/lambda-api-middlewares'
 import {
   getMongoDbClient,
   createMongoDBCollections,
 } from '@/utils/mongoDBUtils'
 import { TenantRepository } from '@/services/tenants/repositories/tenant-repository'
-
 import { getDynamoDbClient } from '@/utils/dynamodb'
 import { sendBatchJobCommand } from '@/services/batch-job'
 import { getCredentialsFromEvent } from '@/utils/credentials'
@@ -25,7 +25,7 @@ export type ApiKeyGeneratorQueryStringParameters = {
 export const apiKeyGeneratorHandler = lambdaApi()(
   async (
     event: APIGatewayProxyWithLambdaAuthorizerEvent<
-      APIGatewayEventLambdaAuthorizerContext<AWS.STS.Credentials>
+      APIGatewayEventLambdaAuthorizerContext<Credentials>
     >
   ) => {
     const { tenantId, usagePlanId, demoTenant } =

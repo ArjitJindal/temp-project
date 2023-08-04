@@ -5,12 +5,13 @@ import {
   APIGatewayProxyWithLambdaAuthorizerHandler,
 } from 'aws-lambda'
 import * as jwt from 'jsonwebtoken'
+import { Credentials } from '@aws-sdk/client-sts'
 import { getFullTenantId, getToken } from '@/lambdas/jwt-authorizer/app'
 import { JWTAuthorizerResult } from '@/@types/jwt'
 import { Permission } from '@/@types/openapi-internal/Permission'
 
 type Handler = APIGatewayProxyWithLambdaAuthorizerHandler<
-  APIGatewayEventLambdaAuthorizerContext<AWS.STS.Credentials>
+  APIGatewayEventLambdaAuthorizerContext<Credentials>
 >
 
 // todo: move to config

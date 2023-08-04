@@ -1,5 +1,5 @@
-import * as AWS from 'aws-sdk'
 import { Forbidden } from 'http-errors'
+import { Credentials } from '@aws-sdk/client-sts'
 import { ManagedRoleName } from '../openapi-internal/ManagedRoleName'
 import { Permission } from '@/@types/openapi-internal/Permission'
 import { ContextUser, currentUser, getContext } from '@/core/utils/context'
@@ -75,7 +75,7 @@ export function assertPermissions(requiredPermissions: Permission[]) {
   }
 }
 
-export interface JWTAuthorizerResult extends AWS.STS.Credentials {
+export interface JWTAuthorizerResult extends Credentials {
   principalId: string
   userId: string
   role: string

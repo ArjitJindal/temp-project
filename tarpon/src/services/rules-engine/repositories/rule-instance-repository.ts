@@ -2,10 +2,15 @@ import { StackConstants } from '@lib/constants'
 import { customAlphabet } from 'nanoid'
 import {
   DeleteCommand,
+  DeleteCommandInput,
   DynamoDBDocumentClient,
   GetCommand,
+  GetCommandInput,
   PutCommand,
+  PutCommandInput,
+  QueryCommandInput,
   UpdateCommand,
+  UpdateCommandInput,
 } from '@aws-sdk/lib-dynamodb'
 import { DynamoDbKeys } from '@/core/dynamodb/dynamodb-keys'
 import {
@@ -95,7 +100,7 @@ export class RuleInstanceRepository {
       hitCount: ruleInstance.hitCount || 0,
       alertCreationInterval: ruleInstance.alertCreationInterval,
     }
-    const putItemInput: AWS.DynamoDB.DocumentClient.PutItemInput = {
+    const putItemInput: PutCommandInput = {
       TableName: StackConstants.TARPON_RULE_DYNAMODB_TABLE_NAME,
       Item: {
         ...DynamoDbKeys.RULE_INSTANCE(this.tenantId, ruleInstanceId),
@@ -107,7 +112,7 @@ export class RuleInstanceRepository {
   }
 
   public async deleteRuleInstance(ruleInstanceId: string): Promise<void> {
-    const deleteItemInput: AWS.DynamoDB.DocumentClient.DeleteItemInput = {
+    const deleteItemInput: DeleteCommandInput = {
       TableName: StackConstants.TARPON_RULE_DYNAMODB_TABLE_NAME,
       Key: DynamoDbKeys.RULE_INSTANCE(this.tenantId, ruleInstanceId),
     }
@@ -138,7 +143,7 @@ export class RuleInstanceRepository {
   public async getRuleInstanceById(
     ruleInstanceId: string
   ): Promise<RuleInstance | null> {
-    const getItemInput: AWS.DynamoDB.DocumentClient.GetItemInput = {
+    const getItemInput: GetCommandInput = {
       TableName: StackConstants.TARPON_RULE_DYNAMODB_TABLE_NAME,
       Key: DynamoDbKeys.RULE_INSTANCE(this.tenantId, ruleInstanceId),
     }
@@ -162,9 +167,9 @@ export class RuleInstanceRepository {
   }
 
   private async getRuleInstances(
-    query: Partial<AWS.DynamoDB.DocumentClient.QueryInput>
+    query: Partial<QueryCommandInput>
   ): Promise<RuleInstance[]> {
-    const queryInput: AWS.DynamoDB.DocumentClient.QueryInput = {
+    const queryInput: QueryCommandInput = {
       ...query,
       TableName: StackConstants.TARPON_RULE_DYNAMODB_TABLE_NAME,
       KeyConditionExpression: 'PartitionKeyID = :pk',
@@ -200,7 +205,7 @@ export class RuleInstanceRepository {
     const hitRuleInstanceIdsSet = new Set(hitRuleInstanceIds)
     await Promise.all(
       runRuleInstanceIds.map((runRuleInstanceId) => {
-        const updateItemInput: AWS.DynamoDB.DocumentClient.UpdateItemInput = {
+        const updateItemInput: UpdateCommandInput = {
           TableName: StackConstants.TARPON_RULE_DYNAMODB_TABLE_NAME,
           Key: DynamoDbKeys.RULE_INSTANCE(this.tenantId, runRuleInstanceId),
           UpdateExpression: `SET runCount = runCount + :runCountInc, hitCount = hitCount + :hitCountInc`,

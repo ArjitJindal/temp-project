@@ -3,7 +3,9 @@ import { MongoClient } from 'mongodb'
 import {
   DynamoDBDocumentClient,
   GetCommand,
+  GetCommandInput,
   UpdateCommand,
+  UpdateCommandInput,
 } from '@aws-sdk/lib-dynamodb'
 import { TenantSettings } from '@/@types/openapi-internal/TenantSettings'
 import { DynamoDbKeys, TenantSettingName } from '@/core/dynamodb/dynamodb-keys'
@@ -34,7 +36,7 @@ export class TenantRepository {
   public async getTenantSettings(
     settingNames?: TenantSettingName[]
   ): Promise<Partial<TenantSettings>> {
-    const getItemInput: AWS.DynamoDB.DocumentClient.GetItemInput = {
+    const getItemInput: GetCommandInput = {
       TableName: StackConstants.TARPON_DYNAMODB_TABLE_NAME,
       Key: DynamoDbKeys.TENANT_SETTINGS(this.tenantId),
       ProjectionExpression: settingNames?.join(','),
@@ -57,7 +59,7 @@ export class TenantRepository {
   public async createOrUpdateTenantSettings(
     newTenantSettings: Partial<TenantSettings>
   ): Promise<Partial<TenantSettings>> {
-    const updateItemInput: AWS.DynamoDB.DocumentClient.UpdateItemInput = {
+    const updateItemInput: UpdateCommandInput = {
       TableName: StackConstants.TARPON_DYNAMODB_TABLE_NAME,
       Key: DynamoDbKeys.TENANT_SETTINGS(this.tenantId),
       ReturnValues: 'UPDATED_NEW',
@@ -71,7 +73,7 @@ export class TenantRepository {
   public async deleteTenantSettings(
     settingNames: TenantSettingName[]
   ): Promise<void> {
-    const updateItemInput: AWS.DynamoDB.DocumentClient.UpdateItemInput = {
+    const updateItemInput: UpdateCommandInput = {
       TableName: StackConstants.TARPON_DYNAMODB_TABLE_NAME,
       Key: DynamoDbKeys.TENANT_SETTINGS(this.tenantId),
       ReturnValues: 'UPDATED_NEW',

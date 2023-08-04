@@ -1,15 +1,13 @@
-import * as AWS from 'aws-sdk'
+import { S3 } from '@aws-sdk/client-s3'
+import { Credentials } from '@aws-sdk/client-sts'
 import {
   APIGatewayEventLambdaAuthorizerContext,
   APIGatewayProxyWithLambdaAuthorizerEvent,
-  Credentials,
+  Credentials as LambdaCredentials,
 } from 'aws-lambda'
-import { CredentialsOptions } from 'aws-sdk/lib/credentials'
 import { getCredentialsFromEvent } from './credentials'
 
-export function getS3Client(
-  credentials?: Credentials | CredentialsOptions
-): AWS.S3 {
+export function getS3Client(credentials?: LambdaCredentials): S3 {
   if (process.env.ENV === 'local') {
     // eslint-disable-next-line @typescript-eslint/no-var-requires
     const AWSMock = require('mock-aws-s3')
@@ -17,16 +15,15 @@ export function getS3Client(
     return AWSMock.S3()
   }
 
-  return new AWS.S3({
-    signatureVersion: 'v4',
+  return new S3({
     credentials,
   })
 }
 
 export function getS3ClientByEvent(
   event: APIGatewayProxyWithLambdaAuthorizerEvent<
-    APIGatewayEventLambdaAuthorizerContext<AWS.STS.Credentials>
+    APIGatewayEventLambdaAuthorizerContext<Credentials>
   >
-): AWS.S3 {
+): S3 {
   return getS3Client(getCredentialsFromEvent(event))
 }

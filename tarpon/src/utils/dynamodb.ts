@@ -1,17 +1,12 @@
-import * as AWS from 'aws-sdk'
+import { Credentials } from '@aws-sdk/client-sts'
 import { NodeHttpHandler } from '@aws-sdk/node-http-handler'
 import {
   APIGatewayEventLambdaAuthorizerContext,
   APIGatewayProxyWithLambdaAuthorizerEvent,
+  Credentials as LambdaCredentials,
 } from 'aws-lambda'
-import {
-  ExpressionAttributeValueMap,
-  UpdateExpression,
-} from 'aws-sdk/clients/dynamodb'
-import { DocumentClient } from 'aws-sdk/lib/dynamodb/document_client'
 import _, { chunk } from 'lodash'
 import { StackConstants } from '@lib/constants'
-import { Credentials, CredentialsOptions } from 'aws-sdk/lib/credentials'
 import {
   BatchGetCommand,
   BatchWriteCommand,
@@ -20,9 +15,19 @@ import {
   GetCommand,
   PutCommand,
   QueryCommand,
+  QueryCommandInput,
+  QueryCommandOutput,
   UpdateCommand,
 } from '@aws-sdk/lib-dynamodb'
-import { ConsumedCapacity, DynamoDBClient } from '@aws-sdk/client-dynamodb'
+import {
+  ConsumedCapacity,
+  DynamoDBClient,
+  AttributeValue,
+  WriteRequest,
+  PutRequest,
+  DeleteRequest,
+} from '@aws-sdk/client-dynamodb'
+import { NativeAttributeValue } from '@aws-sdk/util-dynamodb'
 import { getCredentialsFromEvent } from './credentials'
 import {
   DYNAMODB_READ_CAPACITY_METRIC,
@@ -32,6 +37,22 @@ import { logger } from '@/core/logger'
 import { addNewSubsegment } from '@/core/xray'
 import { getContext, publishMetric } from '@/core/utils/context'
 import { envIs, envIsNot } from '@/utils/env'
+
+export type PutRequestInternal = Omit<PutRequest, 'Item'> & {
+  Item: Record<string, NativeAttributeValue> | undefined
+}
+
+export type DeleteRequestInternal = Omit<DeleteRequest, 'Key'> & {
+  Key: Record<string, NativeAttributeValue> | undefined
+}
+
+export type BatchWriteRequestInternal = Record<
+  string,
+  Omit<WriteRequest, 'PutRequest' | 'DeleteRequest'> & {
+    PutRequest?: PutRequestInternal
+    DeleteRequest?: DeleteRequestInternal
+  }
+>
 
 function getAugmentedDynamoDBCommand(command: any): {
   type: 'READ' | 'WRITE' | null
@@ -125,7 +146,7 @@ export function withRetry(
 
 export function getDynamoDbClientByEvent(
   event: APIGatewayProxyWithLambdaAuthorizerEvent<
-    APIGatewayEventLambdaAuthorizerContext<AWS.STS.Credentials>
+    APIGatewayEventLambdaAuthorizerContext<Credentials>
   >
 ): DynamoDBDocumentClient {
   return getDynamoDbClient(
@@ -134,7 +155,7 @@ export function getDynamoDbClientByEvent(
 }
 
 export function getDynamoDbRawClient(
-  credentials?: Credentials | CredentialsOptions
+  credentials?: LambdaCredentials
 ): DynamoDBClient {
   const isLocal = envIs('local', 'test')
   const rawClient = new DynamoDBClient({
@@ -167,7 +188,7 @@ export function getDynamoDbRawClient(
 
 type DynamoOption = (client: DynamoDBDocumentClient) => DynamoDBDocumentClient
 export function getDynamoDbClient(
-  credentials?: Credentials | CredentialsOptions,
+  credentials?: LambdaCredentials,
   options?: { retry?: boolean }
 ): DynamoDBDocumentClient {
   const rawClient = getDynamoDbRawClient(credentials)
@@ -192,7 +213,7 @@ export function getDynamoDbClient(
 
 async function getLastEvaluatedKey(
   dynamoDb: DynamoDBDocumentClient,
-  query: AWS.DynamoDB.DocumentClient.QueryInput,
+  query: QueryCommandInput,
   count = 0
 ): Promise<{ PartitionKeyID: string; SortKeyID: string } | undefined> {
   const newQuery = {
@@ -224,9 +245,9 @@ async function getLastEvaluatedKey(
 
 export async function paginateQuery(
   dynamoDb: DynamoDBDocumentClient,
-  query: AWS.DynamoDB.DocumentClient.QueryInput,
+  query: QueryCommandInput,
   options?: { skip?: number; limit?: number; pagesLimit?: number }
-): Promise<AWS.DynamoDB.DocumentClient.QueryOutput> {
+): Promise<QueryCommandOutput> {
   const ruleInfo = getContext()?.metricDimensions?.ruleId
     ? ` , ${getContext()?.metricDimensions?.ruleId} (${
         getContext()?.metricDimensions?.ruleInstanceId
@@ -242,7 +263,7 @@ export async function paginateQuery(
   }
   let newQuery = query
   if (options?.skip) {
-    const skipQuery: AWS.DynamoDB.DocumentClient.QueryInput = {
+    const skipQuery: QueryCommandInput = {
       ...query,
       Limit: options.skip,
     }
@@ -268,10 +289,10 @@ export async function paginateQuery(
 
 async function paginateQueryInternal(
   dynamoDb: DynamoDBDocumentClient,
-  query: AWS.DynamoDB.DocumentClient.QueryInput,
+  query: QueryCommandInput,
   currentPage: number,
   options: { limit?: number; pagesLimit?: number }
-): Promise<AWS.DynamoDB.DocumentClient.QueryOutput> {
+): Promise<QueryCommandOutput> {
   const result = await dynamoDb.send(new QueryCommand(query))
   const limit = query.Limit || options.limit
   const leftLimit = limit ? limit - (result.Count as number) : Infinity
@@ -299,6 +320,8 @@ async function paginateQueryInternal(
         result.ScannedCount &&
         result.ScannedCount +
           (nextResult.ScannedCount ? nextResult.ScannedCount : 0),
+      LastEvaluatedKey: nextResult.LastEvaluatedKey,
+      $metadata: result.$metadata,
     }
   }
   delete result.LastEvaluatedKey
@@ -307,14 +330,14 @@ async function paginateQueryInternal(
 
 export async function* paginateQueryGenerator(
   dynamoDb: DynamoDBDocumentClient,
-  query: AWS.DynamoDB.DocumentClient.QueryInput,
+  query: QueryCommandInput,
   pagesLimit = Infinity
-): AsyncGenerator<AWS.DynamoDB.DocumentClient.QueryOutput> {
+): AsyncGenerator<QueryCommandOutput> {
   let lastEvaluateKey = undefined
   let currentPage = 0
 
   while (lastEvaluateKey !== null && currentPage <= pagesLimit) {
-    const paginatedQuery: AWS.DynamoDB.DocumentClient.QueryInput = {
+    const paginatedQuery: QueryCommandInput = {
       ...query,
       ExclusiveStartKey: lastEvaluateKey,
     }
@@ -327,7 +350,7 @@ export async function* paginateQueryGenerator(
 
 export async function batchWrite(
   dynamoDb: DynamoDBDocumentClient,
-  requests: DocumentClient.WriteRequest[],
+  requests: BatchWriteRequestInternal[],
   table: string = StackConstants.TARPON_DYNAMODB_TABLE_NAME
 ): Promise<void> {
   for (const nextChunk of chunk(requests, 25)) {
@@ -344,8 +367,8 @@ export async function batchWrite(
 export function getUpdateAttributesUpdateItemInput(attributes: {
   [key: string]: any
 }): {
-  UpdateExpression: UpdateExpression
-  ExpressionAttributeValues: ExpressionAttributeValueMap
+  UpdateExpression: string
+  ExpressionAttributeValues: Record<string, AttributeValue>
 } {
   const updateExpressions = []
   const expresssionValues: { [key: string]: any } = {}
@@ -362,16 +385,19 @@ export function getUpdateAttributesUpdateItemInput(attributes: {
 export function dynamoDbQueryHelper(query: {
   tableName: string
   filterExpression?: string
-  expressionAttributeNames?: AWS.DynamoDB.DocumentClient.ExpressionAttributeNameMap
+  expressionAttributeNames?: Record<string, string>
   sortKey: {
     from: string
     to: string
   }
-  expressionAttributeValues?: AWS.DynamoDB.DocumentClient.ExpressionAttributeValueMap
+  expressionAttributeValues?: Record<
+    string,
+    QueryCommandInput['ExpressionAttributeValues']
+  >
   partitionKey: string
   scanIndexForward?: boolean
   projectionExpression?: string
-}): AWS.DynamoDB.DocumentClient.QueryInput {
+}): QueryCommandInput {
   const {
     tableName,
     filterExpression,
@@ -383,7 +409,7 @@ export function dynamoDbQueryHelper(query: {
     expressionAttributeValues,
   } = query
 
-  const queryInput: AWS.DynamoDB.DocumentClient.QueryInput = {
+  const queryInput: QueryCommandInput = {
     TableName: tableName,
     ..._.omitBy(
       {

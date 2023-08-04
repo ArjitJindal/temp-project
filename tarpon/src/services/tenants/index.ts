@@ -3,10 +3,12 @@ import _ from 'lodash'
 import { DynamoDBDocumentClient } from '@aws-sdk/lib-dynamodb'
 import {
   APIGatewayClient,
+  ApiStage,
   CreateUsagePlanCommand,
   GetRestApisCommand,
   GetUsagePlanKeysCommand,
   GetUsagePlansCommand,
+  ThrottleSettings,
   UsagePlan,
   GetUsageCommand,
 } from '@aws-sdk/client-api-gateway'
@@ -268,7 +270,7 @@ export class TenantService {
     }
   }
 
-  async getApiStages(): Promise<AWS.APIGateway.ApiStage[] | undefined> {
+  async getApiStages(): Promise<ApiStage[] | undefined> {
     const apigateway = new APIGatewayClient({
       region: envIs('local') ? 'eu-central-1' : process.env.AWS_REGION,
     })
@@ -353,7 +355,7 @@ export class TenantService {
     tenantData: TenantCreationRequest,
     tenantId: string
   ): Promise<string> {
-    let throttleSettings: AWS.APIGateway.ThrottleSettings
+    let throttleSettings: ThrottleSettings
 
     if (process.env.ENV?.startsWith('prod')) {
       throttleSettings = { burstLimit: 200, rateLimit: 100 }

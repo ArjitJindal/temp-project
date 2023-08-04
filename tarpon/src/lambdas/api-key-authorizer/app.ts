@@ -1,6 +1,5 @@
-import * as AWS from 'aws-sdk'
 import * as ARN from '@aws-sdk/util-arn-parser'
-
+import { STSClient, AssumeRoleCommand, Credentials } from '@aws-sdk/client-sts'
 import {
   APIGatewayAuthorizerResult,
   APIGatewayAuthorizerResultContext,
@@ -21,28 +20,32 @@ async function getTenantScopeCredentials(
   tenantId: string,
   accountId: string,
   requestId: string
-): Promise<AWS.STS.Credentials> {
+): Promise<Credentials> {
   const subgement = await addNewSubsegment(
     'apiKeyAuthorizer',
     'getTenantScopeCredentials'
   )
-  const sts = new AWS.STS()
-  const assumeRoleResult = await sts
-    .assumeRole({
-      RoleArn: process.env.AUTHORIZER_BASE_ROLE_ARN as string,
-      RoleSessionName: requestId,
-      Policy: JSON.stringify(
-        new PolicyBuilder(tenantId)
-          .dynamoDb([
-            StackConstants.TARPON_DYNAMODB_TABLE_NAME,
-            StackConstants.TARPON_RULE_DYNAMODB_TABLE_NAME,
-            StackConstants.HAMMERHEAD_DYNAMODB_TABLE_NAME,
-          ])
-          .build()
-      ),
-      DurationSeconds: StackConstants.API_KEY_AUTHORIZER_CACHE_TTL_SECONDS,
-    })
-    .promise()
+  const sts = new STSClient({
+    region: process.env.AWS_REGION,
+  })
+
+  const command = new AssumeRoleCommand({
+    RoleArn: process.env.AUTHORIZER_BASE_ROLE_ARN as string,
+    RoleSessionName: requestId,
+    Policy: JSON.stringify(
+      new PolicyBuilder(tenantId)
+        .dynamoDb([
+          StackConstants.TARPON_DYNAMODB_TABLE_NAME,
+          StackConstants.TARPON_RULE_DYNAMODB_TABLE_NAME,
+          StackConstants.HAMMERHEAD_DYNAMODB_TABLE_NAME,
+        ])
+        .build()
+    ),
+    DurationSeconds: StackConstants.API_KEY_AUTHORIZER_CACHE_TTL_SECONDS,
+  })
+
+  const assumeRoleResult = await sts.send(command)
+
   if (!assumeRoleResult.Credentials) {
     const err = new Error('Got empty credentials from STS')
     subgement?.close(err)

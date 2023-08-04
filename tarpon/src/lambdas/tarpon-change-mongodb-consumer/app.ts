@@ -1,6 +1,6 @@
 import path from 'path'
 import { KinesisStreamEvent, SQSEvent } from 'aws-lambda'
-import * as AWS from 'aws-sdk'
+import { SQS, SendMessageCommand } from '@aws-sdk/client-sqs'
 import { CaseCreationService } from '../console-api-case/services/case-creation-service'
 import {
   getMongoDbClient,
@@ -36,7 +36,9 @@ import { InternalConsumerUserEvent } from '@/@types/openapi-internal/InternalCon
 import { InternalBusinessUserEvent } from '@/@types/openapi-internal/InternalBusinessUserEvent'
 import { InternalTransactionEvent } from '@/@types/openapi-internal/InternalTransactionEvent'
 
-const sqs = new AWS.SQS()
+const sqs = new SQS({
+  region: process.env.AWS_REGION,
+})
 
 async function handleNewCases(
   tenantId: string,
@@ -72,12 +74,12 @@ async function handleNewCases(
         tenantId,
         caseId: caseItem.caseId as string,
       }
-      await sqs
-        .sendMessage({
-          MessageBody: JSON.stringify(payload),
-          QueueUrl: process.env.SLACK_ALERT_QUEUE_URL as string,
-        })
-        .promise()
+      const sqsSendMessageCommand = new SendMessageCommand({
+        MessageBody: JSON.stringify(payload),
+        QueueUrl: process.env.SLACK_ALERT_QUEUE_URL as string,
+      })
+
+      await sqs.send(sqsSendMessageCommand)
     }
   }
 }

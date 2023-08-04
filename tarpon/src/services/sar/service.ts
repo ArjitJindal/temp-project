@@ -2,7 +2,7 @@ import {
   APIGatewayEventLambdaAuthorizerContext,
   APIGatewayProxyWithLambdaAuthorizerEvent,
 } from 'aws-lambda'
-import * as AWS from 'aws-sdk'
+import { Credentials } from '@aws-sdk/client-sts'
 import { MongoClient } from 'mongodb'
 import { NotFound } from 'http-errors'
 import { Account } from '../accounts'
@@ -25,7 +25,7 @@ export class ReportService {
 
   public static async fromEvent(
     event: APIGatewayProxyWithLambdaAuthorizerEvent<
-      APIGatewayEventLambdaAuthorizerContext<AWS.STS.Credentials>
+      APIGatewayEventLambdaAuthorizerContext<Credentials>
     >
   ): Promise<ReportService> {
     const { principalId: tenantId } = event.requestContext.authorizer

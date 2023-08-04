@@ -1,8 +1,11 @@
 import { StackConstants } from '@lib/constants'
 import {
   DeleteCommand,
+  DeleteCommandInput,
   DynamoDBDocumentClient,
   PutCommand,
+  PutCommandInput,
+  QueryCommandInput,
 } from '@aws-sdk/lib-dynamodb'
 import _ from 'lodash'
 import { Rule } from '@/@types/openapi-internal/Rule'
@@ -62,9 +65,9 @@ export class RuleRepository {
   }
 
   private async getRules(
-    query: Partial<AWS.DynamoDB.DocumentClient.QueryInput>
+    query: Partial<QueryCommandInput>
   ): Promise<Array<Rule>> {
-    const queryInput: AWS.DynamoDB.DocumentClient.QueryInput = {
+    const queryInput: QueryCommandInput = {
       ...query,
       TableName: StackConstants.TARPON_RULE_DYNAMODB_TABLE_NAME,
       KeyConditionExpression: 'PartitionKeyID = :pk',
@@ -97,7 +100,7 @@ export class RuleRepository {
       createdAt: rule.createdAt || now,
       updatedAt: now,
     }
-    const putItemInput: AWS.DynamoDB.DocumentClient.PutItemInput = {
+    const putItemInput: PutCommandInput = {
       TableName: StackConstants.TARPON_RULE_DYNAMODB_TABLE_NAME,
       Item: {
         ...DynamoDbKeys.RULE(rule.id),
@@ -109,7 +112,7 @@ export class RuleRepository {
   }
 
   async deleteRule(ruleId: string): Promise<void> {
-    const deleteItemInput: AWS.DynamoDB.DocumentClient.DeleteItemInput = {
+    const deleteItemInput: DeleteCommandInput = {
       TableName: StackConstants.TARPON_RULE_DYNAMODB_TABLE_NAME,
       Key: DynamoDbKeys.RULE(ruleId),
     }

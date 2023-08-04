@@ -1,19 +1,21 @@
 import {
   APIGatewayEventLambdaAuthorizerContext,
   APIGatewayProxyWithLambdaAuthorizerEvent,
+  Credentials as LambdaCredentials,
 } from 'aws-lambda'
-import { CredentialsOptions } from 'aws-sdk/lib/credentials'
+import { Credentials } from '@aws-sdk/client-sts'
 
 export function getCredentialsFromEvent(
   event: APIGatewayProxyWithLambdaAuthorizerEvent<
-    APIGatewayEventLambdaAuthorizerContext<AWS.STS.Credentials>
+    APIGatewayEventLambdaAuthorizerContext<Credentials>
   >
-): CredentialsOptions | undefined {
+): LambdaCredentials | undefined {
   if (process.env.ENV === 'local' || !event.requestContext.authorizer) {
     return undefined
   }
   const { AccessKeyId, SecretAccessKey, SessionToken } =
     event.requestContext.authorizer
+
   return {
     accessKeyId: AccessKeyId,
     secretAccessKey: SecretAccessKey,

@@ -1,6 +1,6 @@
 import _ from 'lodash'
 import { StackConstants } from '@lib/constants'
-import { UpdateCommand } from '@aws-sdk/lib-dynamodb'
+import { UpdateCommand, UpdateCommandInput } from '@aws-sdk/lib-dynamodb'
 import { migrateEntities } from '../utils/mongodb'
 import { migrateAllTenants } from '../utils/tenant'
 import {
@@ -35,7 +35,7 @@ async function migrateTenant(tenant: Tenant) {
 
   await migrateEntities<InternalConsumerUser>(cursor, async (usersBatch) => {
     for (const user of usersBatch) {
-      const updateItemInput: AWS.DynamoDB.DocumentClient.UpdateItemInput = {
+      const updateItemInput: UpdateCommandInput = {
         TableName: StackConstants.TARPON_DYNAMODB_TABLE_NAME,
         Key: DynamoDbKeys.USER(tenant.id, user.userId),
         UpdateExpression: `REMOVE legalEntity`,

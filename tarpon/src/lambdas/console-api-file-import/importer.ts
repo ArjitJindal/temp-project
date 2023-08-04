@@ -1,7 +1,8 @@
-import { parse } from '@fast-csv/parse'
+import { parseString } from '@fast-csv/parse'
 import * as createError from 'http-errors'
 import { MongoClient } from 'mongodb'
 import { DynamoDBDocumentClient } from '@aws-sdk/lib-dynamodb'
+import { CopyObjectCommand, S3 } from '@aws-sdk/client-s3'
 import { ConverterInterface } from './converter-interface'
 import { converters as transactionConverters } from './transaction'
 import { converters as userConverters } from './user'
@@ -23,7 +24,7 @@ export class Importer {
   connections: {
     dynamoDb: DynamoDBDocumentClient
     mongoDb: MongoClient
-    s3: AWS.S3
+    s3: S3
   }
   importTmpBucket: string
   importBucket: string
@@ -35,7 +36,7 @@ export class Importer {
     connections: {
       dynamoDb: DynamoDBDocumentClient
       mongoDb: MongoClient
-      s3: AWS.S3
+      s3: S3
     },
     importTmpBucket: string,
     importBucket: string
@@ -136,10 +137,11 @@ export class Importer {
       Bucket: this.importTmpBucket,
       Key: s3Key,
     }
-    const stream = this.connections.s3
-      .getObject(params)
-      .createReadStream()
-      .pipe(parse(converter.getCsvParserOptions()))
+
+    const getObj = await this.connections.s3.getObject(params)
+
+    const body = await getObj.Body?.transformToString()
+    const stream = parseString(body!, converter.getCsvParserOptions())
 
     for await (const rawItem of stream) {
       const validationResult = converter.validate(rawItem)
@@ -152,13 +154,15 @@ export class Importer {
         importedCount += 1
       }
     }
-    await this.connections.s3
-      .copyObject({
-        CopySource: `${this.importTmpBucket}/${s3Key}`,
-        Bucket: this.importBucket,
-        Key: s3Key,
-      })
-      .promise()
+
+    const copyObjectCommand = new CopyObjectCommand({
+      CopySource: `${this.importTmpBucket}/${s3Key}`,
+      Bucket: this.importBucket,
+      Key: s3Key,
+    })
+
+    await this.connections.s3.send(copyObjectCommand)
+
     return importedCount
   }
 

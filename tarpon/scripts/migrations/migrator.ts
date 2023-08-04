@@ -4,7 +4,7 @@ import path from 'path'
 import { exit } from 'process'
 import { SQSQueues, StackConstants } from '@lib/constants'
 import { Umzug, MongoDBStorage } from 'umzug'
-import AWS from 'aws-sdk'
+import { STS, AssumeRoleCommand } from '@aws-sdk/client-sts'
 import { syncMongoDbIndices } from './always-run/sync-mongodb-indices'
 import { syncRulesLibrary } from './always-run/sync-rules-library'
 import { loadConfigEnv } from './utils/config'
@@ -48,13 +48,17 @@ function refreshCredentialsPeriodically() {
   setInterval(
     async () => {
       try {
-        const sts = new AWS.STS()
-        const assumeRoleResult = await sts
-          .assumeRole({
-            RoleArn: process.env.ASSUME_ROLE_ARN as string,
-            RoleSessionName: 'migration',
-          })
-          .promise()
+        const sts = new STS({
+          region: process.env.AWS_REGION,
+        })
+
+        const assumeRoleCommand = new AssumeRoleCommand({
+          RoleArn: process.env.AUTHORIZER_BASE_ROLE_ARN as string,
+          RoleSessionName: 'migration',
+        })
+
+        const assumeRoleResult = await sts.send(assumeRoleCommand)
+
         process.env.AWS_ACCESS_KEY_ID =
           assumeRoleResult.Credentials?.AccessKeyId
         process.env.AWS_SECRET_ACCESS_KEY =
