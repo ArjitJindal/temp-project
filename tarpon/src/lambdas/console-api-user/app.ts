@@ -3,7 +3,7 @@ import {
   APIGatewayProxyWithLambdaAuthorizerEvent,
 } from 'aws-lambda'
 import { Forbidden, NotFound } from 'http-errors'
-import _ from 'lodash'
+import { compact } from 'lodash'
 import { UserService } from './services/user-service'
 import { UserAuditLogService } from './services/user-audit-log-service'
 import { JWTAuthorizerResult } from '@/@types/jwt'
@@ -16,6 +16,7 @@ import { hasFeature } from '@/core/utils/context'
 import { RuleInstanceRepository } from '@/services/rules-engine/repositories/rule-instance-repository'
 import { AlertsRepository } from '@/services/rules-engine/repositories/alerts-repository'
 import { Handlers } from '@/@types/openapi-internal-custom/DefaultApi'
+import { LinkerService } from '@/services/linker'
 
 export type UserViewConfig = {
   TMP_BUCKET: string
@@ -67,7 +68,7 @@ export const businessUsersViewHandler = lambdaApi()(
     )
 
     handlers.registerGetUsersUniques(async (ctx, request) =>
-      _.compact(await userService.getUniques(request))
+      compact(await userService.getUniques(request))
     )
 
     return await handlers.handle(event)
@@ -156,11 +157,15 @@ export const allUsersViewHandler = lambdaApi()(
     const ruleInstanceRepository = new RuleInstanceRepository(tenantId, {
       dynamoDb,
     })
+    const linkerService = new LinkerService(tenantId)
 
     const handlers = new Handlers()
 
     handlers.registerGetAllUsersList(
       async (ctx, request) => await userService.getUsers(request)
+    )
+    handlers.registerGetUsersItem(
+      async (ctx, request) => await userService.getUser(request.userId)
     )
 
     handlers.registerPostUserComments(
@@ -189,6 +194,18 @@ export const allUsersViewHandler = lambdaApi()(
         return null
       }
       return await new CrmService(tenantId).getAccount(crmAccountId)
+    })
+
+    handlers.registerGetUserEntity(async (ctx, request) => {
+      const entity = await linkerService.entity(request.userId)
+      return linkerService.visualisation(
+        request.userId,
+        entity.userLabels,
+        entity.emailLinked,
+        entity.addressLinked,
+        entity.phoneLinked,
+        entity.paymentMethodLinked
+      )
     })
 
     handlers.registerGetUserScreeningStatus(async (ctx, request) => {

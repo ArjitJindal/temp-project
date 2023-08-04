@@ -532,6 +532,19 @@ export const createMongoDBCollections = async (
       {
         'legalEntity.companyGeneralDetails.businessIndustry': 1,
       },
+      ...['', 'legalEntity.', 'directors.', 'shareHolders.'].flatMap(
+        (prefix) => [
+          {
+            [`${prefix}contactDetails.emailIds`]: 1,
+          },
+          {
+            [`${prefix}contactDetails.contactNumbers`]: 1,
+          },
+          {
+            [`${prefix}contactDetails.addresses.postcode`]: 1,
+          },
+        ]
+      ),
     ]
 
     await syncIndexes(usersCollection, userIndexes)

@@ -1,0 +1,34 @@
+import { Tag } from 'antd';
+import { sentenceCase } from '@antv/x6/es/util/string/format';
+import React from 'react';
+import * as Card from '@/components/ui/Card';
+import { PropertyColumns } from '@/pages/users-item/UserDetails/PropertyColumns';
+import * as Form from '@/components/ui/Form';
+
+type AttributePanelProps = {
+  attributeId: string;
+};
+export const AttributePanel = (props: AttributePanelProps) => {
+  const [type, value] = props.attributeId.split(':');
+  return (
+    <Card.Root>
+      <Card.Section>
+        <PropertyColumns>
+          <Form.Layout.Label title={'Link type'}>
+            <div>
+              <Tag
+                style={{
+                  backgroundColor: '#E6F8FF',
+                  borderColor: '#78CBEB',
+                }}
+              >
+                {sentenceCase(type)}
+              </Tag>
+            </div>
+          </Form.Layout.Label>
+          <Form.Layout.Label title={'Link Value'}>{value}</Form.Layout.Label>
+        </PropertyColumns>
+      </Card.Section>
+    </Card.Root>
+  );
+};

@@ -1067,6 +1067,28 @@ paths:
           name: userId
           in: path
           required: true
+  '/users/{userId}/entity':
+    get:
+      summary: Entity
+      x-flagright:
+        permissions:
+          - users:user-overview:read
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UserEntity'
+              examples: {}
+      operationId: get-user-entity
+      description: ''
+      parameters:
+        - schema:
+            type: string
+          name: userId
+          required: true
+          in: path
   '/users/{userId}/screening-status':
     get:
       summary: Screening Status
@@ -1419,6 +1441,30 @@ paths:
           in: query
           name: sortOrder
     parameters: []
+  '/users/{userId}':
+    get:
+      summary: Users - Item - Get
+      tags: []
+      x-flagright:
+        permissions:
+          - users:user-overview:read
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/InternalUser'
+              examples: {}
+      operationId: get-users-item
+      description: ''
+      parameters: []
+    parameters:
+      - schema:
+          type: string
+        name: userId
+        in: path
+        required: true
   '/business/users/{userId}':
     get:
       summary: Business Users - Item - Get
@@ -4292,6 +4338,37 @@ components:
         - good
         - bad
         - neutral
+    UserEntity:
+      title: UserEntity
+      type: object
+      properties:
+        nodes:
+          type: array
+          items:
+            type: object
+            required:
+              - id
+              - label
+            properties:
+              id:
+                type: string
+              label:
+                type: string
+        edges:
+          type: array
+          items:
+            type: object
+            required:
+              - id
+              - source
+              - target
+            properties:
+              id:
+                type: string
+              source:
+                type: string
+              target:
+                type: string
     CrmAccountResponse:
       title: CrmAccountResponse
       type: object
@@ -5354,6 +5431,7 @@ components:
         - DEMO_MODE
         - SIMULATOR
         - CRM
+        - ENTITY_LINKING
         - ESCALATION
         - IBAN_RESOLUTION
         - MACHINE_LEARNING_DEMO

@@ -2,6 +2,8 @@ import { uuid4 } from '@sentry/utils'
 import { sampleConsumerUserRiskScoreComponents } from '../samplers/risk_score_components'
 import {
   merchantMonitoringSummaries,
+  randomAddress,
+  randomPhoneNumber,
   sampleBusinessUser,
   sampleKycStatusDetails,
   sampleUserStateDetails,
@@ -83,6 +85,10 @@ const init = () => {
           },
           riskLevel: pickRandom(RISK_LEVEL1S, i),
           userStateDetails: sampleUserStateDetails(0.9 * i),
+          contactDetails: {
+            addresses: [randomAddress()],
+            contactNumbers: [randomPhoneNumber()],
+          },
           kycStatusDetails: sampleKycStatusDetails(0.9 * i),
           userDetails: {
             dateOfBirth: new Date(sampleTimestamp(i * 0.1)).toISOString(),

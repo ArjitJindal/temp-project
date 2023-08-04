@@ -12,14 +12,17 @@ import { CheckDetails } from '@/@types/openapi-public/CheckDetails'
 import { CountryCode } from '@/@types/openapi-internal/CountryCode'
 import { Address } from '@/@types/openapi-internal/Address'
 import { RULE_ACTIONS } from '@/@types/openapi-public-custom/RuleAction'
+import { randomPhoneNumber } from '@/core/seed/samplers/users'
 
 export function sampleTransaction(
   {
     originUserId,
+    destinationUserId,
     originCountry,
     destinationCountry,
   }: {
     originUserId?: string
+    destinationUserId?: string
     originCountry?: CountryCode
     destinationCountry?: CountryCode
   } = {},
@@ -36,6 +39,7 @@ export function sampleTransaction(
       transactionAmount: 50,
     },
     originUserId,
+    destinationUserId,
     productType: 'Payment link',
     transactionState: 'CREATED' as const,
     originAmountDetails: {
@@ -44,15 +48,23 @@ export function sampleTransaction(
       transactionAmount: 50,
     },
     timestamp: new Date().getTime(),
-    destinationPaymentDetails: samplePaymentDetails(seed + 0.1),
+    destinationPaymentDetails: randomPaymentMethod(),
     deviceData: {
       ipAddress: [...new Array(4)].map(() => randomInt(rnd(), 256)).join('.'),
     },
-    originPaymentDetails: samplePaymentDetails(seed),
+    originPaymentDetails: randomPaymentMethod(),
     hitRules: [],
     executedRules: [],
     status: pickRandom(RULE_ACTIONS),
   }
+}
+
+export const paymentMethods = [...Array(100)].map((i) =>
+  samplePaymentDetails(i)
+)
+
+export const randomPaymentMethod = () => {
+  return pickRandom(paymentMethods)
 }
 
 export function samplePaymentDetails(seed?: number) {
@@ -185,7 +197,7 @@ export function sampleACHDetails(seed?: number): ACHDetails {
   return {
     method: 'ACH',
     accountNumber: 'ACH' + randomInt(rnd()),
-    routingNumber: '123',
+    routingNumber: `${randomInt(rnd())}`,
   }
 }
 export function sampleSWIFTDetails(seed?: number): SWIFTDetails {
@@ -193,15 +205,16 @@ export function sampleSWIFTDetails(seed?: number): SWIFTDetails {
   return {
     method: 'SWIFT',
     accountNumber: 'SWIFT' + randomInt(rnd()),
-    swiftCode: '123',
+    swiftCode: `${randomInt(rnd())}`,
   }
 }
-export function sampleMpesaDetails(_seed?: number): MpesaDetails {
+export function sampleMpesaDetails(seed?: number): MpesaDetails {
+  const rnd = prng(seed)
   return {
     method: 'MPESA',
-    businessShortCode: '123',
+    businessShortCode: `${randomInt(rnd())}`,
     transactionType: 'SalaryPayment',
-    phoneNumber: '+4912345682999',
+    phoneNumber: randomPhoneNumber(),
   }
 }
 export function sampleUPIDetails(seed?: number): UPIDetails {
@@ -211,17 +224,19 @@ export function sampleUPIDetails(seed?: number): UPIDetails {
     upiID: 'UPI' + randomInt(rnd()),
   }
 }
-export function sampleWalletDetails(_seed?: number): WalletDetails {
+export function sampleWalletDetails(seed?: number): WalletDetails {
+  const rnd = prng(seed)
   return {
     method: 'WALLET',
     walletType: 'vault',
-    walletId: '123',
+    walletId: `${randomInt(rnd())}`,
   }
 }
-export function sampleCheckDetails(_seed?: number): CheckDetails {
+export function sampleCheckDetails(seed?: number): CheckDetails {
+  const rnd = prng(seed)
   return {
     method: 'CHECK',
-    checkIdentifier: '123',
-    checkNumber: '123',
+    checkIdentifier: `${randomInt(rnd())}`,
+    checkNumber: `${randomInt(rnd())}`,
   }
 }

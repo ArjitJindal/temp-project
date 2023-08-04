@@ -1,4 +1,5 @@
 import { uuid4 } from '@sentry/utils'
+import { addresses, phoneNumber } from '../data/address'
 import { sampleCountry } from './countries'
 import { sampleString } from './strings'
 import { sampleBusinessUserRiskScoreComponents } from './risk_score_components'
@@ -41,6 +42,22 @@ export function sampleKycStatusDetails(seed?: number): KYCStatusDetails {
   return {
     status: sampleKycStatus(seed),
   }
+}
+
+const emailSet = [...Array(100)].map(
+  () => `${randomName().toLowerCase()}@gmail.com`
+)
+
+export const randomEmail = () => {
+  return pickRandom(emailSet)
+}
+
+export const randomAddress = () => {
+  return pickRandom(addresses)
+}
+
+export const randomPhoneNumber = () => {
+  return pickRandom(phoneNumber)
 }
 
 const generateRandomTimestamp = () => {
@@ -177,25 +194,9 @@ export function sampleBusinessUser(
           legalDocuments: [legalDocument1, legalDocument2],
           contactDetails: {
             emailIds: company?.contactEmails || [],
-            contactNumbers: ['+4287878787', '+1 656 332134'],
             faxNumbers: ['+999999'],
             websites: [domain],
-            addresses: [
-              {
-                addressLines: ['Times Square 12B', 'App. 11'],
-                postcode: '88173',
-                city: 'New York',
-                state: 'New York',
-                country: 'USA',
-                tags: [tag1],
-              },
-              {
-                addressLines: ['Baker St. 55'],
-                postcode: '777',
-                city: 'London',
-                country: 'UK',
-              },
-            ],
+            addresses: [randomAddress()],
           },
           tags: [tag1],
         },
@@ -213,17 +214,8 @@ export function sampleBusinessUser(
         {
           legalDocuments: [legalDocument1, legalDocument2],
           contactDetails: {
-            emailIds: ['some@email.com'],
-            addresses: [
-              {
-                addressLines: ['Times Square 12B', 'App. 11'],
-                postcode: '88173',
-                city: 'New York',
-                state: 'New York',
-                country: 'USA',
-                tags: [tag1],
-              },
-            ],
+            emailIds: [randomEmail()],
+            addresses: [randomAddress()],
           },
           generalDetails: {
             gender: 'M',

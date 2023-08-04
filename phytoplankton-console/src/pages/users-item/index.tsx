@@ -6,6 +6,7 @@ import UserDetails from './UserDetails';
 import Header from './Header';
 import s from './index.module.less';
 import CRMMonitoring from './UserDetails/CRMMonitoring';
+import EntityLinking from './UserDetails/EntityLinking';
 import PageWrapper, { PAGE_WRAPPER_PADDING } from '@/components/PageWrapper';
 import { makeUrl } from '@/utils/routing';
 import { Comment, InternalBusinessUser, InternalConsumerUser } from '@/apis';
@@ -37,6 +38,7 @@ export default function UserItem() {
   const queryClient = useQueryClient();
   const isMLDemoEnabled = useFeatureEnabled('MACHINE_LEARNING_DEMO');
   const isCrmEnabled = useFeatureEnabled('CRM');
+  const isEntityLinkingEnabled = useFeatureEnabled('ENTITY_LINKING');
 
   const queryResult = useQuery<InternalConsumerUser | InternalBusinessUser>(
     USERS_ITEM_BY_TYPE(list as string, id as string),
@@ -140,6 +142,17 @@ export default function UserItem() {
                       ),
                       key: 'crm-monitoring',
                       children: <CRMMonitoring userId={user.userId} />,
+                      isClosable: false,
+                      isDisabled: false,
+                    },
+                  ]
+                : []),
+              ...(isEntityLinkingEnabled
+                ? [
+                    {
+                      tab: <div className={s.icon}>Entity Linking</div>,
+                      key: 'entity-linking',
+                      children: <EntityLinking userId={user.userId} />,
                       isClosable: false,
                       isDisabled: false,
                     },
