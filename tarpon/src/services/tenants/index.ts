@@ -306,7 +306,7 @@ export class TenantService {
   public async getUsagePlanData(tenantId: string): Promise<TenantUsageData> {
     const usagePlans = await TenantService.getAllUsagePlans()
     const usagePlan = usagePlans?.find(
-      (x) => x.name?.match(USAGE_PLAN_REGEX)?.[2] === tenantId
+      (x) => x.name?.match(USAGE_PLAN_REGEX)?.[1] === tenantId
     )
 
     if (!usagePlan) {
@@ -319,11 +319,14 @@ export class TenantService {
 
     const getUsageCommand = new GetUsageCommand({
       usagePlanId: usagePlan.id,
-      startDate: dayjs().format('YYYY-MM-DD'),
+      startDate: dayjs().subtract(1, 'day').format('YYYY-MM-DD'),
       endDate: dayjs().format('YYYY-MM-DD'),
     })
 
     const usage = await apigateway.send(getUsageCommand)
+
+    const quotaLeftData = Object.values(usage?.items ?? {})?.[0]
+    const quotaLeft = quotaLeftData?.[quotaLeftData.length - 1]?.[1]
 
     return {
       burstCapacity: usagePlan.throttle?.burstLimit ?? 0,
@@ -342,7 +345,7 @@ export class TenantService {
         : 'Unknown',
       quotaLeft: process.env.ENV?.startsWith('prod')
         ? 'UNLIMITED'
-        : Object.values(usage?.items ?? {})?.[0]?.[0]?.[1].toString() ?? '0',
+        : quotaLeft.toString() ?? '0',
     }
   }
 
