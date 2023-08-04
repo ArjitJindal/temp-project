@@ -1,11 +1,14 @@
-import fetch, { Response } from 'node-fetch'
 import { MOCK_IBAN_COM_VALIDATION_RESPONSE } from './resources/mock-iban-com-validation-response'
+import * as apiFetchModule from '@/utils/api-fetch'
 
 export function mockIbanComValidation() {
   process.env.IBAN_API_KEY = 'fake'
-  const mockFetch = fetch as jest.MockedFunction<typeof fetch>
+  const mockFetch = jest.spyOn(apiFetchModule, 'apiFetch')
+
   mockFetch.mockResolvedValue({
-    json: () => Promise.resolve(MOCK_IBAN_COM_VALIDATION_RESPONSE),
-  } as Response)
+    result: MOCK_IBAN_COM_VALIDATION_RESPONSE,
+    statusCode: 200,
+  })
+
   return mockFetch
 }

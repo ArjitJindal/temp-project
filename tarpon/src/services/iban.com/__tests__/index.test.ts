@@ -1,6 +1,5 @@
 import { URLSearchParams } from 'url'
 import _ from 'lodash'
-import { Response } from 'node-fetch'
 import { IBANService } from '..'
 import { IBANApiRepository } from '../repositories/iban-api-repository'
 import { getTestTenantId } from '@/test-utils/tenant-test-utils'
@@ -9,18 +8,18 @@ import { dynamoDbSetupHook } from '@/test-utils/dynamodb-test-utils'
 import { withFeatureHook } from '@/test-utils/feature-test-utils'
 import { getMongoDbClient } from '@/utils/mongoDBUtils'
 import { MOCK_IBAN_COM_VALIDATION_RESPONSE } from '@/test-utils/resources/mock-iban-com-validation-response'
+import * as apiFetchModule from '@/utils/api-fetch'
 
 dynamoDbSetupHook()
 withFeatureHook(['IBAN_RESOLUTION'])
-
-jest.mock('node-fetch')
-const mockFetch = mockIbanComValidation()
 
 const TEST_VALID_IBAN = 'DE75512108001245126199'
 const EXPECTED_RESPONSE = {
   iban: 'DE75512108001245126199',
   bankName: 'BARCLAYS BANK UK PLC',
 }
+
+const mockFetch = mockIbanComValidation()
 
 beforeEach(() => {
   mockFetch.mockClear()
@@ -82,13 +81,15 @@ describe('IBAN Validation', () => {
   test('throws error if we have account errors', async () => {
     const TEST_TENANT_ID = getTestTenantId()
     const service = new IBANService(TEST_TENANT_ID)
+    const mockFetch = jest.spyOn(apiFetchModule, 'apiFetch')
+
     mockFetch.mockResolvedValue({
-      json: () =>
-        Promise.resolve({
-          ...MOCK_IBAN_COM_VALIDATION_RESPONSE,
-          errors: [{ code: '303', message: 'No queries available' }],
-        }),
-    } as Response)
+      result: {
+        ...MOCK_IBAN_COM_VALIDATION_RESPONSE,
+        errors: [{ code: '303', message: 'No queries available' }],
+      },
+      statusCode: 303,
+    })
     await expect(
       service.resolveBankNames([{ iban: TEST_VALID_IBAN }])
     ).rejects.toThrow()

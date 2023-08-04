@@ -1,5 +1,4 @@
 import { v4 as uuidv4 } from 'uuid'
-import fetch, { RequestInfo, RequestInit, Response } from 'node-fetch'
 import { StackConstants } from '@lib/constants'
 import _ from 'lodash'
 import { TenantRepository } from '../tenants/repositories/tenant-repository'
@@ -17,9 +16,10 @@ import { SanctionsSearchMonitoring } from '@/@types/openapi-internal/SanctionsSe
 import { SanctionsSearchType } from '@/@types/openapi-internal/SanctionsSearchType'
 import { logger } from '@/core/logger'
 import { getDynamoDbClient } from '@/utils/dynamodb'
-import { addNewSubsegment, traceable } from '@/core/xray'
+import { traceable } from '@/core/xray'
 import { ComplyAdvantageSearchHitDoc } from '@/@types/openapi-internal/ComplyAdvantageSearchHitDoc'
 import { ComplyAdvantageSearchHit } from '@/@types/openapi-internal/ComplyAdvantageSearchHit'
+import { apiFetch } from '@/utils/api-fetch'
 
 const COMPLYADVANTAGE_SEARCH_API_URI =
   'https://api.complyadvantage.com/searches'
@@ -35,28 +35,6 @@ function getSanctionsSearchResponse(
     rawComplyAdvantageResponse,
     searchId,
   }
-}
-
-// TODO: Proper retry - FR-2724
-async function apiFetch(
-  url: RequestInfo,
-  init?: RequestInit
-): Promise<Response> {
-  const subsegment = await addNewSubsegment('apiFetch', url.toString())
-  let response: Response
-  for (let i = 0; i < 10; i++) {
-    response = await fetch(url, init)
-    if (response.status !== 429) {
-      subsegment?.close()
-      return response
-    }
-    // Too many requests
-    await new Promise((resolve) => {
-      setTimeout(() => resolve(null), 1000 + _.random(500))
-    })
-  }
-  subsegment?.close()
-  return response!
 }
 
 @traceable
@@ -240,45 +218,51 @@ export class SanctionsService {
     searchProfileId: string,
     request: SanctionsSearchRequest
   ): Promise<ComplyAdvantageSearchResponse> {
-    const rawComplyAdvantageResponse = (await (
-      await apiFetch(`${COMPLYADVANTAGE_SEARCH_API_URI}`, {
-        method: 'POST',
-        body: JSON.stringify({
-          search_term: request.searchTerm,
-          fuzziness: request.fuzziness,
-          search_profile: searchProfileId,
-          filters: {
-            country_codes: request.countryCodes,
-            birth_year: request.yearOfBirth,
+    const rawComplyAdvantageResponse =
+      await apiFetch<ComplyAdvantageSearchResponse>(
+        `${COMPLYADVANTAGE_SEARCH_API_URI}`,
+        {
+          method: 'POST',
+          body: JSON.stringify({
+            search_term: request.searchTerm,
+            fuzziness: request.fuzziness,
+            search_profile: searchProfileId,
+            filters: {
+              country_codes: request.countryCodes,
+              birth_year: request.yearOfBirth,
+            },
+          }),
+          headers: {
+            Authorization: `Token ${this.apiKey}`,
           },
-        }),
-        headers: {
-          Authorization: `Token ${this.apiKey}`,
-        },
-      })
-    ).json()) as ComplyAdvantageSearchResponse
-    if (rawComplyAdvantageResponse.status === 'failure') {
+        }
+      )
+
+    if (rawComplyAdvantageResponse.result.status === 'failure') {
       throw new Error((rawComplyAdvantageResponse as any).message)
     }
 
-    return rawComplyAdvantageResponse
+    return rawComplyAdvantageResponse.result
   }
 
   private async complyAdvantageMonitoredSearch(
     searchId: number
   ): Promise<ComplyAdvantageSearchResponse> {
-    const rawComplyAdvantageResponse = (await (
-      await apiFetch(`${COMPLYADVANTAGE_SEARCH_API_URI}/${searchId}/details`, {
-        method: 'GET',
-        headers: {
-          Authorization: `Token ${this.apiKey}`,
-        },
-      })
-    ).json()) as ComplyAdvantageSearchResponse
-    if (rawComplyAdvantageResponse.status === 'failure') {
+    const rawComplyAdvantageResponse =
+      await apiFetch<ComplyAdvantageSearchResponse>(
+        `${COMPLYADVANTAGE_SEARCH_API_URI}/${searchId}/details`,
+        {
+          method: 'GET',
+          headers: {
+            Authorization: `Token ${this.apiKey}`,
+          },
+        }
+      )
+
+    if (rawComplyAdvantageResponse.result.status === 'failure') {
       throw new Error((rawComplyAdvantageResponse as any).message)
     }
-    return rawComplyAdvantageResponse
+    return rawComplyAdvantageResponse.result
   }
 
   public async getSearchHistories(
@@ -326,22 +310,22 @@ export class SanctionsService {
     }
     const caSearchId =
       search.response?.rawComplyAdvantageResponse?.content?.data?.id
-    const monitorResponse = await (
-      await apiFetch(
-        `${COMPLYADVANTAGE_SEARCH_API_URI}/${caSearchId}/monitors`,
-        {
-          method: 'PATCH',
-          body: JSON.stringify({
-            is_monitored: update.enabled ?? false,
-          }),
-          headers: {
-            Authorization: `Token ${this.apiKey}`,
-          },
-        }
-      )
-    ).json()
-    if (monitorResponse.status === 'failure') {
-      throw new Error(monitorResponse.message)
+
+    const monitorResponse = await apiFetch<{
+      status: 'success' | 'failure'
+      message: string
+    }>(`${COMPLYADVANTAGE_SEARCH_API_URI}/${caSearchId}/monitors`, {
+      method: 'PATCH',
+      body: JSON.stringify({
+        is_monitored: update.enabled ?? false,
+      }),
+      headers: {
+        Authorization: `Token ${this.apiKey}`,
+      },
+    })
+
+    if (monitorResponse.result.status === 'failure') {
+      throw new Error(monitorResponse.result.message)
     }
     await this.sanctionsSearchRepository.updateSearchMonitoring(
       searchId,
@@ -363,14 +347,14 @@ export class SanctionsService {
       }
     )
 
-    if (response.status === 404) {
+    if (response.statusCode === 404) {
       logger.warn(`Search ${caSearchId} not found`)
-    } else if (response.status === 204) {
+    } else if (response.statusCode === 204) {
       logger.info(`Search ${caSearchId} deleted.`)
     } else {
       throw new Error(
-        `Failed to delete: status=${response.status} body=${JSON.stringify(
-          await response.json()
+        `Failed to delete: status=${response.statusCode} body=${JSON.stringify(
+          response
         )}`
       )
     }

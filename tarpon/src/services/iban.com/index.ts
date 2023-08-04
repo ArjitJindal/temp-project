@@ -1,8 +1,7 @@
 // API Reference: https://www.iban.com/validation-api
 
 import { URLSearchParams } from 'url'
-import fetch from 'node-fetch'
-import _ from 'lodash'
+import { isEmpty } from 'lodash'
 import { electronicFormatIBAN, isValidIBAN } from 'ibantools'
 import { IBANValidation, IBANValidationResponse } from './types'
 import { IBANApiRepository } from './repositories/iban-api-repository'
@@ -12,6 +11,7 @@ import { IBANDetails } from '@/@types/openapi-public/IBANDetails'
 import { logger } from '@/core/logger'
 import { hasFeature } from '@/core/utils/context'
 import { traceable } from '@/core/xray'
+import { apiFetch } from '@/utils/api-fetch'
 
 const IBAN_API_URI = 'https://api.iban.com/clients/api/v4/iban/'
 
@@ -21,7 +21,7 @@ function ibanValidationResponseToIBANDetails(
   iban: string,
   response: IBANValidationResponse
 ): IBANDetails | null {
-  if (_.isEmpty(response?.bank_data)) {
+  if (isEmpty(response?.bank_data)) {
     return null
   }
   return {
@@ -140,6 +140,7 @@ export class IBANService {
             const sanitized = sanitizeAndValidateIban(bankInfo.iban)
             if (sanitized) {
               const ibanDetail = await this.queryIban(sanitized)
+
               bankInfo.bankName = ibanDetail?.bankName
             }
           }
@@ -150,30 +151,36 @@ export class IBANService {
   }
 
   private async queryIban(iban: string): Promise<IBANDetails | null> {
-    const rawIbanResponse = (await (
-      await fetch(IBAN_API_URI, {
+    const rawIbanResponse = await apiFetch<IBANValidationResponse>(
+      IBAN_API_URI,
+      {
         method: 'POST',
-        headers: {
-          'User-Agent': 'IBAN API Client/0.0.1',
-        },
+        headers: { 'User-Agent': 'IBAN API Client/0.0.1' },
         body: this.getRequestBody({ iban }),
-      })
-    ).json()) as IBANValidationResponse
+      }
+    )
 
-    if (hasAccountError(rawIbanResponse.errors ?? [])) {
+    if (hasAccountError(rawIbanResponse.result.errors ?? [])) {
       throw new Error(
-        `Fail to access IBAN.com API: ${JSON.stringify(rawIbanResponse.errors)}`
+        `Fail to access IBAN.com API: ${JSON.stringify(
+          rawIbanResponse.result.errors
+        )}`
       )
     }
+
     await this.ibanApiRepository.saveIbanValidationHistory(
       iban,
-      rawIbanResponse
+      rawIbanResponse.result
     )
-    const result = ibanValidationResponseToIBANDetails(iban, rawIbanResponse)
+    const result = ibanValidationResponseToIBANDetails(
+      iban,
+      rawIbanResponse.result
+    )
+
     if (!result) {
       logger.error(
         `'${iban}' is not a valid IBAN (${JSON.stringify(
-          rawIbanResponse.validations
+          rawIbanResponse.result.validations
         )})`
       )
     }

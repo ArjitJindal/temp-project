@@ -8,7 +8,6 @@ import { mockComplyAdvantageSearch } from '@/test-utils/complyadvantage-test-uti
 import { ComplyAdvantageSearchHitDoc } from '@/@types/openapi-internal/ComplyAdvantageSearchHitDoc'
 import { dynamoDbSetupHook } from '@/test-utils/dynamodb-test-utils'
 
-jest.mock('node-fetch')
 const mockFetch = mockComplyAdvantageSearch()
 dynamoDbSetupHook()
 

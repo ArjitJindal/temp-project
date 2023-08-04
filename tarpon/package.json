@@ -133,7 +133,7 @@
     "@types/lodash": "^4.14.180",
     "@types/mkdirp": "^1.0.2",
     "@types/node": "^17.0.8",
-    "@types/node-fetch": "^2.6.2",
+    "@types/node-fetch": "^2.6.4",
     "@types/unidecode": "^0.1.1",
     "@types/uuid": "^8.3.4",
     "@typescript-eslint/eslint-plugin": "^5.9.1",
