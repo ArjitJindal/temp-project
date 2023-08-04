@@ -48,6 +48,7 @@ import { DefaultApiGetAlertListRequest } from '@/apis/types/ObjectParamAPI';
 import { SarButton as SarButton } from '@/components/Sar';
 import {
   canReviewCases,
+  findLastStatusForInReview,
   getSingleCaseStatusCurrent,
   getSingleCaseStatusPreviousForInReview,
   getStatuses,
@@ -79,6 +80,9 @@ const mergedColumns = (
   userId: string,
   reload: () => void,
   falsePositiveEnabled: boolean,
+  selectedTxns: {
+    [alertId: string]: string[];
+  },
 ): TableColumn<TableAlertItem>[] => {
   const helper = new ColumnHelper<TableAlertItem>();
   return helper.list([
@@ -230,6 +234,53 @@ const mergedColumns = (
             />
           );
         },
+      },
+    }),
+    helper.display({
+      title: 'Operations',
+      enableResizing: false,
+      defaultWidth: 200,
+      render: (entity) => {
+        if (!entity.alertId || !entity.caseId) {
+          return <></>;
+        }
+
+        const isInReview = isInReviewCases({ [entity.alertId]: entity }, true);
+
+        const canReview = canReviewCases({ [entity.alertId]: entity }, userId);
+        const previousStatus = findLastStatusForInReview(entity.statusChanges ?? []);
+
+        return (
+          <>
+            {entity?.caseId && !statusInReview(entity.alertStatus) && (
+              <AlertsStatusChangeButton
+                caseId={entity.caseId}
+                ids={[entity.alertId!]}
+                status={entity.alertStatus}
+                onSaved={reload}
+                statusTransitions={{
+                  OPEN_IN_PROGRESS: { actionLabel: 'Close', status: 'CLOSED' },
+                  OPEN_ON_HOLD: { actionLabel: 'Close', status: 'CLOSED' },
+                  ESCALATED_IN_PROGRESS: { actionLabel: 'Close', status: 'CLOSED' },
+                  ESCALATED_ON_HOLD: { actionLabel: 'Close', status: 'CLOSED' },
+                }}
+                transactionIds={selectedTxns}
+              />
+            )}
+            {entity?.caseId && isInReview && canReview && entity.alertStatus && (
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8 }}>
+                <ApproveSendBackButton
+                  ids={[entity.caseId]}
+                  onReload={reload}
+                  type="ALERT"
+                  previousStatus={previousStatus}
+                  status={entity.alertStatus}
+                  key={entity.caseId}
+                />
+              </div>
+            )}
+          </>
+        );
       },
     }),
     helper.simple<'updatedAt'>({
@@ -451,6 +502,7 @@ export default function AlertTable(props: Props) {
         user.userId,
         reloadTable,
         isFalsePositiveEnabled,
+        selectedTxns,
       ),
     [
       hideUserFilters,
@@ -460,6 +512,7 @@ export default function AlertTable(props: Props) {
       user.userId,
       reloadTable,
       isFalsePositiveEnabled,
+      selectedTxns,
     ],
   );
 

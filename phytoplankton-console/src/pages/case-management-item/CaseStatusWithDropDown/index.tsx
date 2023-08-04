@@ -32,8 +32,17 @@ export const CaseStatusWithDropDown = (props: Props) => {
     return currAssignees?.find((assignment) => assignment.assigneeUserId === currentUser.userId);
   }, [caseStatus, assignments, currentUser, reviewAssignments]);
 
-  return (caseStatus.includes('OPEN') || caseStatus.includes('ESCALATED')) &&
-    isCurrentUserAssignee ? (
+  return (
+    [
+      'OPEN',
+      'OPEN_IN_PROGRESS',
+      'OPEN_ON_HOLD',
+      'REOPENED',
+      'ESCALATED',
+      'ESCALATED_IN_PROGRESS',
+      'ESCALATED_ON_HOLD',
+    ] as CaseStatus[]
+  ).includes(caseStatus) && isCurrentUserAssignee ? (
     <Dropdown<CaseStatus>
       options={(
         (ifCaseIsEscalated

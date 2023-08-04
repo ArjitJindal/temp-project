@@ -270,6 +270,7 @@ export default function CaseTable(props: Props) {
       helper.display({
         title: 'Operations',
         enableResizing: false,
+        defaultWidth: 200,
         render: (entity) => {
           if (!entity.caseId) {
             return <></>;
@@ -296,14 +297,16 @@ export default function CaseTable(props: Props) {
                 />
               )}
               {entity?.caseId && isInReview && canReview && entity.caseStatus && (
-                <ApproveSendBackButton
-                  ids={[entity.caseId]}
-                  onReload={reloadTable}
-                  type="CASE"
-                  previousStatus={previousStatus}
-                  status={entity.caseStatus}
-                  key={entity.caseId}
-                />
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8 }}>
+                  <ApproveSendBackButton
+                    ids={[entity.caseId]}
+                    onReload={reloadTable}
+                    type="CASE"
+                    previousStatus={previousStatus}
+                    status={entity.caseStatus}
+                    key={entity.caseId}
+                  />
+                </div>
               )}
             </>
           );
