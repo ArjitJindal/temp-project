@@ -198,7 +198,9 @@ const Summaries = ({
             </div>
             <div className={s.summary}>
               <h3>Summary</h3>
-              <Card.Row>{summary.summary}</Card.Row>
+              <Card.Row>
+                <span data-cy="merchant-monitoring-user-summary">{summary.summary}</span>
+              </Card.Row>
             </div>
           </div>
         </Card.Section>
