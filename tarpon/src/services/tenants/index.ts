@@ -1,5 +1,5 @@
 import { MongoClient } from 'mongodb'
-import _ from 'lodash'
+import { compact, map } from 'lodash'
 import { DynamoDBDocumentClient } from '@aws-sdk/lib-dynamodb'
 import {
   APIGatewayClient,
@@ -185,7 +185,7 @@ export class TenantService {
 
     const allUsagePlans = await TenantService.getAllUsagePlans()
 
-    const usagePlanKeys = _.compact(
+    const usagePlanKeys = compact(
       await Promise.all(
         await allUsagePlans.map(async (usagePlan) => {
           const usagePlanKeysCommand = new GetUsagePlanKeysCommand({
@@ -209,8 +209,8 @@ export class TenantService {
       )
     )
 
-    const tenantDetails = _.compact(
-      _.map(usagePlanKeys, (usagePlan) => {
+    const tenantDetails = compact(
+      map(usagePlanKeys, (usagePlan) => {
         if (
           usagePlan.name &&
           USAGE_PLAN_REGEX.test(usagePlan.name) &&
@@ -347,7 +347,7 @@ export class TenantService {
         : 'Unknown',
       quotaLeft: process.env.ENV?.startsWith('prod')
         ? 'UNLIMITED'
-        : quotaLeft.toString() ?? '0',
+        : String(quotaLeft ?? usagePlan.quota?.limit ?? 0),
     }
   }
 
