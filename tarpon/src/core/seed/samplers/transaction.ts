@@ -10,6 +10,7 @@ import { UPIDetails } from '@/@types/openapi-public/UPIDetails'
 import { WalletDetails } from '@/@types/openapi-public/WalletDetails'
 import { CheckDetails } from '@/@types/openapi-public/CheckDetails'
 import { CountryCode } from '@/@types/openapi-internal/CountryCode'
+import { Address } from '@/@types/openapi-internal/Address'
 import { RULE_ACTIONS } from '@/@types/openapi-public-custom/RuleAction'
 
 export function sampleTransaction(
@@ -124,14 +125,60 @@ export function sampleIBANDetails(seed?: number): IBANDetails {
   }
 }
 
+export function sampleAddress(seed?: number): Address {
+  const rnd = prng(seed)
+  return pickRandom<Address>(
+    [
+      {
+        addressLines: ['Times Square 12B', `App. 28`],
+        postcode: '88173',
+        city: 'New York',
+        state: 'New York',
+        country: 'USA',
+      },
+      {
+        addressLines: ['2227 W', `App. 12`],
+        postcode: '60007',
+        city: 'Chicago',
+        state: 'IL',
+        country: 'USA',
+      },
+      {
+        addressLines: ['4 Manor Dr.', `App. 42`],
+        postcode: '10040',
+        city: 'New York',
+        state: 'New York',
+        country: 'USA',
+      },
+    ],
+    rnd()
+  )
+}
+
 export function sampleGenericBankAccountDetails(
   seed?: number
 ): GenericBankAccountDetails {
   const rnd = prng(seed)
-  return {
-    method: 'GENERIC_BANK_ACCOUNT',
-    accountNumber: 'BNK' + randomInt(rnd()),
-  }
+
+  return pickRandom<GenericBankAccountDetails>(
+    [
+      {
+        method: 'GENERIC_BANK_ACCOUNT',
+        bankName: 'Bank of America',
+        bankCode: 'BWEHRHRB',
+        name: 'Mark Schagal',
+        bankAddress: sampleAddress(seed),
+      },
+      {
+        method: 'GENERIC_BANK_ACCOUNT',
+        bankName: 'Citigroup',
+        bankCode: '123123',
+        name: 'John Dow',
+        bankAddress: sampleAddress(seed),
+      },
+    ],
+    rnd()
+  )
 }
 export function sampleACHDetails(seed?: number): ACHDetails {
   const rnd = prng(seed)

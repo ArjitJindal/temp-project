@@ -8,7 +8,13 @@
 export type Activity = ActivityType & {
   ActivityAssociation: TypeOfFiling
   ActivitySupportDocument?: SupportingDocument
-  Party: Party
+  /**
+   * This is the container for information about the individual or entity associated with the FinCEN SAR; specifically, the branch location where activity occurred.
+   *
+   * @minItems 6
+   * @maxItems 1203
+   */
+  Party: [Party, Party, Party, Party, Party, Party, ...Party[]]
   SuspiciousActivity: SuspiciousActivity
   ActivityIPAddress?: IPAddress
   CyberEventIndicators?: CyberEvent
@@ -51,23 +57,8 @@ export type JointReportIndicator = 'Y' | ''
 export type AttachmentFileName = string
 /**
  * This is the container for information about the individual or entity associated with the FinCEN SAR; specifically, the branch location where activity occurred.
- *
- * @minItems 6
- * @maxItems 1203
  */
-export type Party = [
-  Party1,
-  Party1,
-  Party1,
-  Party1,
-  Party1,
-  Party1,
-  ...Party1[]
-]
-/**
- * This is the container for information about the individual or entity associated with the FinCEN SAR; specifically, the branch location where activity occurred.
- */
-export type Party1 = PartyType & {
+export type Party = PartyType & {
   PartyName?: PartyName
   Address?: Address
   PhoneNumber?: TelephoneNumber
@@ -565,7 +556,10 @@ export type ElectronicAddress = ElectronicAddressType[]
  * This is the container for information about the subject`s relationship to the institution recorded in the FinCEN SAR, as well as information about the branch where activity occurred.
  */
 export type PartyAssociation1 = PartyAssociationType & {
-  Party?: Party2
+  /**
+   * This is the container for information about the individual or entity associated with the FinCEN SAR; specifically, the branch location where activity occurred.
+   */
+  Party?: unknown | unknown[]
   [k: string]: unknown
 }
 /**
@@ -645,10 +639,6 @@ export type SuspendedBarredIndicator = 'Y' | ''
  */
 export type TerminatedIndicator = 'Y' | ''
 /**
- * This is the container for information about the individual or entity associated with the FinCEN SAR; specifically, the branch location where activity occurred.
- */
-export type Party2 = unknown | unknown[]
-/**
  * This is the container for information about the subject`s relationship to the institution recorded in the FinCEN SAR, as well as information about the branch where activity occurred.
  *
  * @maxItems 99
@@ -658,7 +648,10 @@ export type PartyAssociation = PartyAssociation1[]
  * This is the container element for information about the financial institution and account(s) related to the subject.
  */
 export type PartyAccountAssociation = PartyAccountAssociationType & {
-  Party: Party3
+  /**
+   * This is the container for information about the individual or entity associated with the FinCEN SAR; specifically, the branch location where activity occurred.
+   */
+  Party: unknown | [unknown, ...unknown[]]
   [k: string]: unknown
 }
 /**
@@ -669,10 +662,6 @@ export type AccountClosedIndicator = 'Y' | ''
  * This element is for FinCEN purposes only.
  */
 export type PartyAccountAssociationTypeCode = '5' | '7'
-/**
- * This is the container for information about the individual or entity associated with the FinCEN SAR; specifically, the branch location where activity occurred.
- */
-export type Party3 = unknown | [unknown, ...unknown[]]
 export type SuspiciousActivity = SuspiciousActivityType & {
   SuspiciousActivityClassification: SuspiciousActivityClassification
   [k: string]: unknown
@@ -979,7 +968,7 @@ export type NarrativeDescription = string
 /**
  * Schema tag attributes: xmlns='www.fincen.gov/base' xmlns:xsd='http://www.w3.org/2001/XMLSchema' xmlns:vc='http://www.w3.org/2007/XMLSchema-versioning' xmlns:fc2='www.fincen.gov/base' xmlns:xsi='http://www.w3.org/2001/XMLSchema-instance' targetNamespace='www.fincen.gov/base' elementFormDefault='qualified' attributeFormDefault='unqualified' vc:minVersion='1.1'
  */
-export interface ThisJSONSchemaFileWasGeneratedFromSchemaOnWedAug022023150333GMT0530IndiaStandardTimeForMoreInformationPleaseSeeHttpWwwXsd2JsonschemaOrg {
+export interface ThisJSONSchemaFileWasGeneratedFromSchemaOnThuAug032023222724GMT0200CentralEuropeanSummerTimeForMoreInformationPleaseSeeHttpWwwXsd2JsonschemaOrg {
   EFilingBatchXML?: BatchAcknowledgement
   [k: string]: unknown
 }

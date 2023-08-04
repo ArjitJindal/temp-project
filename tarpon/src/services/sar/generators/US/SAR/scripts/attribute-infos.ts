@@ -450,7 +450,6 @@ export const AttributeInfos: {
       'This element declares that the status of the subject’s relationship to the institution can be described as "Terminated." ',
   },
   Party: {
-    title: 'Party',
     description:
       'This is the container for information about the individual or entity associated with the FinCEN SAR; specifically, the branch location where activity occurred.',
   },

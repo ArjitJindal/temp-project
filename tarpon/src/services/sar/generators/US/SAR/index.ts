@@ -4,11 +4,12 @@ import path from 'path'
 import os from 'os'
 import { BadRequest } from 'http-errors'
 import { XMLBuilder } from 'fast-xml-parser'
+import { isEqual } from 'lodash'
 import { InternalReportType, PopulatedSchema, ReportGenerator } from '../..'
 import {
   ContactOffice,
   FilingInstitution,
-  FinancialInstitution,
+  FinancialInstitutions,
   GeneralInfo,
   Subjects,
   SuspiciousActivity,
@@ -19,14 +20,15 @@ import { FincenJsonSchema } from './resources/EFL_SARXBatchSchema'
 import {
   address,
   amount,
-  partyNameByCompanyGeneralDetails,
-  partyNameByConsumerName,
   dateToDate,
   electronicAddressByEmail,
-  phoneByFax,
-  indicator,
-  phone,
   electronicAddressByWebsite,
+  financialInstitutionByPaymentDetails,
+  indicator,
+  partyNameByCompanyGeneralDetails,
+  partyNameByConsumerName,
+  phone,
+  phoneByFax,
 } from './helpers/prepopulating'
 import { Case } from '@/@types/openapi-internal/Case'
 import { Account } from '@/@types/openapi-internal/Account'
@@ -37,12 +39,14 @@ import dayjs from '@/utils/dayjs'
 import { getMongoDbClient } from '@/utils/mongoDBUtils'
 import { MetricsRepository } from '@/services/rules-engine/repositories/metrics'
 import {
-  Party1,
+  Party,
   SuspiciousActivityType,
 } from '@/services/sar/generators/US/SAR/resources/EFL_SARXBatchSchema.type'
 import { InternalBusinessUser } from '@/@types/openapi-internal/InternalBusinessUser'
 import { InternalConsumerUser } from '@/@types/openapi-internal/InternalConsumerUser'
 import { getTargetCurrencyAmount } from '@/utils/currency-utils'
+import { PaymentDetails } from '@/@types/tranasction/payment-type'
+import { RuleHitDirection } from '@/@types/openapi-internal/RuleHitDirection'
 
 const FINCEN_BINARY = path.join(
   __dirname,
@@ -83,14 +87,14 @@ export class UsSarReportGenerator implements ReportGenerator {
     const users: (InternalConsumerUser | InternalBusinessUser)[] =
       Object.values(usersMap)
 
-    const subjects: Party1[] = []
+    const subjects: Party[] = []
     for (const user of users) {
       const contactDetails =
         user.type === 'CONSUMER'
           ? user.contactDetails
           : user.legalEntity.contactDetails
 
-      const sharedDetails: Partial<Party1> = {
+      const sharedDetails: Partial<Party> = {
         Address: contactDetails?.addresses?.map(address),
         PhoneNumber: [
           ...(contactDetails?.contactNumbers?.map(phone) ?? []),
@@ -154,11 +158,8 @@ export class UsSarReportGenerator implements ReportGenerator {
     }
     let suspiciousActivity: SuspiciousActivityType | undefined = undefined
     if (startDate != null && endDate != null) {
-      // todo: what is the difference between CumulativeTotalViolationAmountText and TotalSuspiciousAmountText
       suspiciousActivity = {
-        CumulativeTotalViolationAmountText: totalAmount
-          ? amount(totalAmount)
-          : undefined,
+        CumulativeTotalViolationAmountText: undefined,
         TotalSuspiciousAmountText: totalAmount
           ? amount(totalAmount)
           : undefined,
@@ -184,6 +185,41 @@ export class UsSarReportGenerator implements ReportGenerator {
       }
     })
 
+    const uniquePaymentDetails: {
+      paymentDetails: PaymentDetails
+      directions: RuleHitDirection[]
+    }[] = []
+    for (const transaction of transactions) {
+      const toCheck = [
+        [transaction.originPaymentDetails, 'ORIGIN' as const],
+        [transaction.destinationPaymentDetails, 'DESTINATION' as const],
+      ] as const
+      for (const [paymentDetails, direction] of toCheck) {
+        if (paymentDetails != null) {
+          const item = uniquePaymentDetails.find((x) =>
+            isEqual(x.paymentDetails, paymentDetails)
+          )
+          if (item != null) {
+            item.directions.push(direction)
+          } else {
+            uniquePaymentDetails.push({
+              paymentDetails,
+              directions: [direction],
+            })
+          }
+        }
+      }
+    }
+    const financialInstitutions: Party[] = []
+    for (const { paymentDetails, directions } of uniquePaymentDetails) {
+      const party = financialInstitutionByPaymentDetails(paymentDetails, {
+        directions,
+      })
+      if ((party.PartyName?.length ?? 0) > 0) {
+        financialInstitutions.push(party)
+      }
+    }
+
     const params = {
       report: {
         generalInfo: {
@@ -203,6 +239,7 @@ export class UsSarReportGenerator implements ReportGenerator {
       transactionMetadata: {
         subjects,
         suspiciousActivity,
+        financialInstitutions,
       },
     }
     const schema: ReportSchema = {
@@ -229,7 +266,7 @@ export class UsSarReportGenerator implements ReportGenerator {
         properties: {
           subjects: Subjects,
           suspiciousActivity: SuspiciousActivity,
-          finantialInstitution: FinancialInstitution,
+          financialInstitutions: FinancialInstitutions,
         },
         required: ['subjects', 'suspiciousActivity', 'finantialInstitution'],
         definitions: FincenJsonSchema.definitions,
@@ -259,6 +296,9 @@ export class UsSarReportGenerator implements ReportGenerator {
         s,
         33,
       ]),
+      ...(reportParams.transactionMetadata?.financialInstitutions ?? []).map(
+        (s: any) => [s, 34]
+      ),
     ].map(([party, typeCode]) => ({
       ...party,
       ActivityPartyTypeCode: typeCode,

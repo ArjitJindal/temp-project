@@ -49,6 +49,13 @@ function pickPartyFields(fields: string[]) {
   )
 }
 
+function arraySchema(type: unknown) {
+  return {
+    type: 'array',
+    items: type,
+  }
+}
+
 function pickPartyNameFields(fields: string[]) {
   return {
     type: 'object',
@@ -187,11 +194,6 @@ export const ContactOffice = {
 export const FinancialInstitution = {
   type: 'object',
   title: 'Financial Institution Where Activity Occurred',
-  description:
-    'This is the financial institution where the suspicious activity occurred.',
-  'ui:schema': {
-    'ui:group': 'Financial institution where activity occurred ',
-  },
   properties: merge(
     pickPartyFields([
       'PayLocationIndicator',
@@ -204,25 +206,31 @@ export const FinancialInstitution = {
       'PartyAssociation',
     ]),
     {
-      PartyName: pickPartyNameFields([
-        'EntityLastNameUnknownIndicator',
-        'RawPartyFullName',
-      ]),
-      Address: pickAddressFields([
-        'CityUnknownIndicator',
-        'CountryCodeUnknownIndicator',
-        'RawCityText',
-        'RawCountryCodeText',
-        'RawStateCodeText',
-        'RawStreetAddress1Text',
-        'RawZIPCode',
-        'StreetAddressUnknownIndicator',
-        'ZIPCodeUnknownIndicator',
-      ]),
-      PartyIdentification: pickPartyIdentificationFields([
-        'PartyIdentificationNumberText',
-        'TINUnknownIndicator',
-      ]),
+      PartyName: arraySchema(
+        pickPartyNameFields([
+          'EntityLastNameUnknownIndicator',
+          'RawPartyFullName',
+        ])
+      ),
+      Address: arraySchema(
+        pickAddressFields([
+          'CityUnknownIndicator',
+          'CountryCodeUnknownIndicator',
+          'RawCityText',
+          'RawCountryCodeText',
+          'RawStateCodeText',
+          'RawStreetAddress1Text',
+          'RawZIPCode',
+          'StreetAddressUnknownIndicator',
+          'ZIPCodeUnknownIndicator',
+        ])
+      ),
+      PartyIdentification: arraySchema(
+        pickPartyIdentificationFields([
+          'PartyIdentificationNumberText',
+          'TINUnknownIndicator',
+        ])
+      ),
     }
   ),
   required: [
@@ -258,41 +266,49 @@ export const Subject = {
       'PartyAccountAssociation',
     ]),
     {
-      PartyName: pickPartyNameFields([
-        'EntityLastNameUnknownIndicator',
-        'FirstNameUnknownIndicator',
-        'RawEntityIndividualLastName',
-        'RawIndividualFirstName',
-        'RawIndividualMiddleName',
-        'RawIndividualNameSuffixText',
-      ]),
-      Address: pickAddressFields([
-        'CityUnknownIndicator',
-        'CountryCodeUnknownIndicator',
-        'RawCityText',
-        'RawCountryCodeText',
-        'RawStateCodeText',
-        'RawStreetAddress1Text',
-        'RawZIPCode',
-        'StateCodeUnknownIndicator',
-        'StreetAddressUnknownIndicator',
-        'ZIPCodeUnknownIndicator',
-      ]),
-      PhoneNumber: pickPhoneNumberFields([
-        'PhoneNumberExtensionText',
-        'PhoneNumberText',
-        'PhoneNumberTypeCode',
-      ]),
-      PartyIdentification: pickPartyIdentificationFields([
-        'PartyIdentificationNumberText',
-        'TINUnknownIndicator',
-        'IdentificationPresentUnknownIndicator',
-        'OtherIssuerCountryText',
-        'OtherIssuerStateText',
-        'OtherPartyIdentificationTypeText',
-        'PartyIdentificationNumberText',
-        'PartyIdentificationTypeCode',
-      ]),
+      PartyName: arraySchema(
+        pickPartyNameFields([
+          'EntityLastNameUnknownIndicator',
+          'FirstNameUnknownIndicator',
+          'RawEntityIndividualLastName',
+          'RawIndividualFirstName',
+          'RawIndividualMiddleName',
+          'RawIndividualNameSuffixText',
+        ])
+      ),
+      Address: arraySchema(
+        pickAddressFields([
+          'CityUnknownIndicator',
+          'CountryCodeUnknownIndicator',
+          'RawCityText',
+          'RawCountryCodeText',
+          'RawStateCodeText',
+          'RawStreetAddress1Text',
+          'RawZIPCode',
+          'StateCodeUnknownIndicator',
+          'StreetAddressUnknownIndicator',
+          'ZIPCodeUnknownIndicator',
+        ])
+      ),
+      PhoneNumber: arraySchema(
+        pickPhoneNumberFields([
+          'PhoneNumberExtensionText',
+          'PhoneNumberText',
+          'PhoneNumberTypeCode',
+        ])
+      ),
+      PartyIdentification: arraySchema(
+        pickPartyIdentificationFields([
+          'PartyIdentificationNumberText',
+          'TINUnknownIndicator',
+          'IdentificationPresentUnknownIndicator',
+          'OtherIssuerCountryText',
+          'OtherIssuerStateText',
+          'OtherPartyIdentificationTypeText',
+          'PartyIdentificationNumberText',
+          'PartyIdentificationTypeCode',
+        ])
+      ),
     }
   ),
   required: ['PartyName', 'Address', 'PartyIdentification'],
@@ -316,4 +332,15 @@ export const Subjects = {
   'ui:schema': {
     'ui:group': 'Subjects',
   },
+}
+
+export const FinancialInstitutions = {
+  type: 'array',
+  title: 'Financial Institution Where Activity Occurred',
+  description:
+    'This is the financial institution where the suspicious activity occurred.',
+  'ui:schema': {
+    'ui:group': 'Financial institution where activity occurred ',
+  },
+  items: FinancialInstitution,
 }

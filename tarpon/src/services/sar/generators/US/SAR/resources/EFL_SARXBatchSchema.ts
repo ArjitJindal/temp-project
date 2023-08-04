@@ -2,7 +2,7 @@ export const FincenJsonSchema = {
   $id: 'schema.json',
   $schema: 'http://json-schema.org/draft-07/schema#',
   title:
-    'This JSON Schema file was generated from schema on Wed Aug 02 2023 15:03:33 GMT+0530 (India Standard Time).  For more information please see http://www.xsd2jsonschema.org',
+    'This JSON Schema file was generated from schema on Thu Aug 03 2023 22:27:24 GMT+0200 (Central European Summer Time).  For more information please see http://www.xsd2jsonschema.org',
   description:
     "Schema tag attributes: xmlns='www.fincen.gov/base' xmlns:xsd='http://www.w3.org/2001/XMLSchema' xmlns:vc='http://www.w3.org/2007/XMLSchema-versioning' xmlns:fc2='www.fincen.gov/base' xmlns:xsi='http://www.w3.org/2001/XMLSchema-instance' targetNamespace='www.fincen.gov/base' elementFormDefault='qualified' attributeFormDefault='unqualified' vc:minVersion='1.1'",
   properties: {
@@ -894,7 +894,6 @@ export const FincenJsonSchema = {
               maxItems: 1203,
               minItems: 6,
               type: 'array',
-              title: 'Party',
               description:
                 'This is the container for information about the individual or entity associated with the FinCEN SAR; specifically, the branch location where activity occurred.',
             },
@@ -1048,7 +1047,6 @@ export const FincenJsonSchema = {
           },
         },
       ],
-      title: 'Party',
       description:
         'This is the container for information about the individual or entity associated with the FinCEN SAR; specifically, the branch location where activity occurred.',
     },
@@ -1069,7 +1067,6 @@ export const FincenJsonSchema = {
                   type: 'array',
                 },
               ],
-              title: 'Party',
               description:
                 'This is the container for information about the individual or entity associated with the FinCEN SAR; specifically, the branch location where activity occurred.',
             },
@@ -1099,7 +1096,6 @@ export const FincenJsonSchema = {
                   type: 'array',
                 },
               ],
-              title: 'Party',
               description:
                 'This is the container for information about the individual or entity associated with the FinCEN SAR; specifically, the branch location where activity occurred.',
             },
