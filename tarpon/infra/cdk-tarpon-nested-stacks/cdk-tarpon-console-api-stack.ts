@@ -164,7 +164,7 @@ export class CdkTarponConsoleLambdaStack extends cdk.NestedStack {
       functionProps
     )
 
-    createFunction(
+    const { alias: presignedUrlAlias } = createFunction(
       this,
       lambdaExecutionRole,
       {
@@ -173,6 +173,22 @@ export class CdkTarponConsoleLambdaStack extends cdk.NestedStack {
         batchJobQueue,
       },
       functionProps
+    )
+
+    presignedUrlAlias?.role?.attachInlinePolicy(
+      new Policy(this, getResourceNameForTarpon('PresignedUrlPolicy'), {
+        policyName: getResourceNameForTarpon('PresignedUrlPolicy'),
+        statements: [
+          new PolicyStatement({
+            effect: Effect.ALLOW,
+            actions: ['s3:PutObject', 's3:GetObject'],
+            resources: [
+              `arn:aws:s3:::${importBucketName}/*`,
+              `arn:aws:s3:::${documentBucketName}/*`,
+            ],
+          }),
+        ],
+      })
     )
 
     /* Rule Template */
