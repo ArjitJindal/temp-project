@@ -193,21 +193,24 @@ export class LinkerService {
 
     const users = await userCollection
       .find({
-        $or: prefixes.flatMap((prefix) => {
-          return [
-            { [`${prefix}contactDetails.emailIds`]: { $in: emailIds } },
-            {
-              [`${prefix}contactDetails.contactNumbers`]: {
-                $in: contactNumbers,
+        $or: [
+          ...prefixes.flatMap((prefix) => {
+            return [
+              { [`${prefix}contactDetails.emailIds`]: { $in: emailIds } },
+              {
+                [`${prefix}contactDetails.contactNumbers`]: {
+                  $in: contactNumbers,
+                },
               },
-            },
-            {
-              [`${prefix}contactDetails.addresses.postcode`]: {
-                $in: postcodes,
+              {
+                [`${prefix}contactDetails.addresses.postcode`]: {
+                  $in: postcodes,
+                },
               },
-            },
-          ]
-        }),
+            ]
+          }),
+          { userId },
+        ],
       })
       .toArray()
 

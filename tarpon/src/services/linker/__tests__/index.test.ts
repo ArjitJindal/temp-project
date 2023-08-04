@@ -10,6 +10,34 @@ import { sampleTransaction } from '@/core/seed/samplers/transaction'
 import { getTestTenantId } from '@/test-utils/tenant-test-utils'
 
 describe('Linker', () => {
+  test('Single user', async () => {
+    const tenantId = getTestTenantId()
+    const mongoClient = await getMongoDbClient()
+    const db = mongoClient.db()
+
+    const userCollection = db.collection<InternalUser>(
+      USERS_COLLECTION(tenantId)
+    )
+    await userCollection.insertMany([
+      {
+        type: 'BUSINESS',
+        userId: 'u1',
+        createdTimestamp: 0,
+        legalEntity: {
+          companyGeneralDetails: { legalName: 'Acme' },
+        },
+      },
+    ])
+
+    const ls = new LinkerService(tenantId)
+    const entity = await ls.entity('u1')
+    expect(entity.userLabels.size).toBe(1)
+    expect(entity.paymentMethodLinked.size).toBe(0)
+    expect(entity.addressLinked.size).toBe(0)
+    expect(entity.emailLinked.size).toBe(0)
+    expect(entity.phoneLinked.size).toBe(0)
+  })
+
   test('Users are linked by transaction payment methods', async () => {
     const tenantId = getTestTenantId()
     const mongoClient = await getMongoDbClient()
