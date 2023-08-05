@@ -1,4 +1,5 @@
 import { Collection } from 'mongodb'
+import { uniq } from 'lodash'
 import {
   getMongoDbClient,
   lookupPipelineStage,
@@ -34,15 +35,17 @@ export class LinkerService {
     const linkedEdges: UserEntityEdges[] = []
     const links: [string, Map<string, string[]>][] = [
       ['emailAddress', emailLinked],
-      ['paymentMethod', paymentMethodLinked],
+      ['paymentIdentifier', paymentMethodLinked],
       ['address', addressLinked],
       ['contactNumber', phoneLinked],
     ]
+
+    for (const [userId, label] of userLabels) {
+      nodeMap.set(`user:${userId}`, label)
+    }
+    userLabels.get(userId)
     links.forEach(([prefix, linked]) => {
       for (const [link, users] of linked.entries()) {
-        users.forEach((userId) =>
-          nodeMap.set(`user:${userId}`, userLabels.get(userId) || 'Unknown')
-        )
         nodeMap.set(`${prefix}:${link}`, '')
         linkedEdges.push(
           ...users.map((userId) => ({
@@ -83,9 +86,9 @@ export class LinkerService {
   ) {
     const existingLinks = map.get(link)
     if (existingLinks) {
-      map.set(link, [user.userId, ...existingLinks])
+      map.set(link, uniq([user.userId, ...existingLinks]))
     } else {
-      map.set(link, [user.userId])
+      map.set(link, uniq([user.userId]))
     }
   }
 
@@ -239,17 +242,19 @@ export class LinkerService {
     ;[originPaymentMethodLinks, destinationPaymentMethodLinks].forEach(
       (links) => {
         for (const link of links) {
-          const existingLinks = paymentMethodLinked.get(link._id)
-          if (existingLinks) {
-            paymentMethodLinked.set(link._id, [
-              ...link.users.map((u) => u.userId),
-              ...existingLinks,
-            ])
-          } else {
-            paymentMethodLinked.set(
-              link._id,
-              link.users.map((u) => u.userId)
-            )
+          if (link._id) {
+            const existingLinks = paymentMethodLinked.get(link._id)
+            if (existingLinks) {
+              paymentMethodLinked.set(link._id, [
+                ...link.users.map((u) => u.userId),
+                ...existingLinks,
+              ])
+            } else {
+              paymentMethodLinked.set(
+                link._id,
+                link.users.map((u) => u.userId)
+              )
+            }
           }
         }
       }
@@ -258,6 +263,10 @@ export class LinkerService {
     const maps = [emailLinked, addressLinked, phoneLinked, paymentMethodLinked]
     maps.forEach((map) => {
       for (const [key, entry] of map.entries()) {
+        if (!key) {
+          map.delete(key)
+        }
+
         if (
           !entry.some((thisUserId) => thisUserId === userId) ||
           entry.length <= 1

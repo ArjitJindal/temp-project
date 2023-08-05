@@ -25,6 +25,9 @@ describe('Linker', () => {
         createdTimestamp: 0,
         legalEntity: {
           companyGeneralDetails: { legalName: 'Acme' },
+          contactDetails: {
+            emailIds: ['tim@flagright.com'],
+          },
         },
       },
     ])
@@ -213,7 +216,7 @@ describe('Visualisation', () => {
     const emailLinked = new Map<string, string[]>([
       ['tim@flagright.com', ['u1', 'u2']],
     ])
-    const addressLInked = new Map<string, string[]>()
+    const addressLinked = new Map<string, string[]>()
     const phoneLinked = new Map<string, string[]>()
     const paymentMethodLinked = new Map<string, string[]>()
 
@@ -222,7 +225,7 @@ describe('Visualisation', () => {
         'u1',
         labels,
         emailLinked,
-        addressLInked,
+        addressLinked,
         phoneLinked,
         paymentMethodLinked
       )

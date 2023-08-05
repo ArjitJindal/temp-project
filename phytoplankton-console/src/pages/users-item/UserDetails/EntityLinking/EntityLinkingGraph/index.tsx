@@ -98,7 +98,7 @@ const getIcon = (id: string): string => {
   if (id.startsWith('emailAddress')) {
     return `/linking/email.png`;
   }
-  if (id.startsWith('paymentMethod')) {
+  if (id.startsWith('paymentIdentifier')) {
     return `/linking/card.png`;
   }
   if (id.startsWith('address')) {
