@@ -1,56 +1,46 @@
-import { backOff } from 'exponential-backoff'
-import fetch, { RequestInfo, RequestInit } from 'node-fetch'
-import { logger } from '@/core/logger'
+import fetchRetry, { RequestInitWithRetry } from 'fetch-retry'
+import createHttpError from 'http-errors'
+import fetch from 'isomorphic-fetch'
 import { addNewSubsegment } from '@/core/xray'
 
-const callApi = async (url: RequestInfo, init: RequestInit) => {
-  try {
-    const response = await fetch(url, init)
-    return response
-  } catch (error: any) {
-    logger.error(`Error while calling ${url}: ${error?.message}`)
-    throw error
-  }
-}
+const fetchWithRetry = fetchRetry(fetch, {
+  retryOn: [429, 500, 502, 503, 504],
+  retryDelay: (attempt) => {
+    return Math.pow(2, attempt) * 1000
+  },
+  retries: 6,
+})
 
 export const apiFetch = async <T>(
   url: RequestInfo,
-  init: RequestInit
-): Promise<{ result: T; statusCode: number }> => {
-  const subsegment = await addNewSubsegment('apiFetch', url.toString())
-  subsegment?.addMetadata('url', { url: url.toString(), init })
-  try {
-    let response = await callApi(url, init)
+  options?: RequestInitWithRetry
+): Promise<{ statusCode: number; result: T }> => {
+  const subsegment = await addNewSubsegment('ApiFetch', url.toString())
+  subsegment?.addMetadata('url', url.toString())
+  subsegment?.addMetadata('options', options)
+  const response = await fetchWithRetry(url, options)
 
-    if (response.status === 429) {
-      await new Promise((resolve) => setTimeout(resolve, 1000))
-      response = await backOff(() => callApi(url, init), {
-        startingDelay: 1000,
-        maxDelay: 100 * 1000,
-        jitter: 'full',
-      })
-    }
+  if (!response.ok) {
+    const responseData = response.headers
+      .get('content-type')
+      ?.includes('application/json')
+      ? await response.json()
+      : await response.text()
 
-    if (response.status >= 500) {
-      throw new Error(
-        `Error while calling ${url}: ${response.status} ${response.statusText}`
-      )
-    }
-
-    if (!response.headers.get('content-type')?.includes('application/json')) {
-      const text = await response.text()
-      throw new Error(
-        `Error while calling ${url}: ${response.status} ${response.statusText} ${text}`
-      )
-    }
-
-    const result = await response.json()
-    return { result, statusCode: response.status }
-  } catch (error: any) {
-    logger.error(`Error while calling ${url}: ${error?.message}`)
-    subsegment?.addError(error)
-    throw error
-  } finally {
+    subsegment?.addError(responseData)
     subsegment?.close()
+    throw createHttpError(response.status, {
+      response: responseData,
+      message: `Error ${response.statusText} for ${url}`,
+      name: 'ApiError',
+      stack: new Error().stack,
+    })
+  }
+
+  subsegment?.close()
+
+  return {
+    statusCode: response.status,
+    result: await response.json(),
   }
 }
