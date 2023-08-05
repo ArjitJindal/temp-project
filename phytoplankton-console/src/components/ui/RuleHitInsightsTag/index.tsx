@@ -49,7 +49,7 @@ export const RuleHitInsightsTag: React.FC<Props> = ({ percentage, runs }) => {
             </span>
           }
         >
-          {tooManyHits ? 'High hit rate' : noRuns ? 'Run not run' : 'No hits'}
+          {tooManyHits ? 'High hit rate' : noRuns ? 'Rule not run' : 'No hits'}
         </Tag>
       </span>
     </Tooltip>
