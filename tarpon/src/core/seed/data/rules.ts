@@ -1,3 +1,4 @@
+import * as _ from 'lodash'
 import { ExecutedRulesResult } from '@/@types/openapi-public/ExecutedRulesResult'
 import { pickRandom, randomArray } from '@/utils/prng'
 import { RuleInstance } from '@/@types/openapi-internal/RuleInstance'
@@ -268,6 +269,10 @@ export const rules: ExecutedRulesResult[] = ruleInstances.map((ri, i) => ({
   ruleDescription: ri.ruleDescriptionAlias as string,
   ruleHit: true,
   ruleHitMeta: {
+    falsePositiveDetails:
+      _.random(0, 10) < 0.2
+        ? { isFalsePositive: true, confidenceScore: _.random(59, 82) }
+        : { isFalsePositive: false, confidenceScore: 100 },
     hitDirections: i % 2 ? ['ORIGIN'] : ['DESTINATION'],
     sanctionsDetails:
       ri.nature === 'SCREENING'
