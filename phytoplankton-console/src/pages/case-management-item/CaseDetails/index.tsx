@@ -26,8 +26,10 @@ import { PAGE_WRAPPER_PADDING } from '@/components/PageWrapper';
 import { useElementSize } from '@/utils/browser';
 import ExpectedTransactionLimits from '@/pages/users-item/UserDetails/BusinessUserDetails/TransactionLimits';
 import BrainIcon from '@/components/ui/icons/brain-icon.react.svg';
+import EntityLinking from '@/pages/users-item/UserDetails/EntityLinking';
 import Tooltip from '@/components/library/Tooltip';
 import { getBranding } from '@/utils/branding';
+
 interface Props {
   caseItem: Case;
   onReload: () => void;
@@ -43,6 +45,7 @@ function CaseDetails(props: Props) {
   const settings = useSettings();
   const isMLDemoEnabled = useFeatureEnabled('MACHINE_LEARNING_DEMO');
   const navigate = useNavigate();
+  const isEntityLinkingEnabled = useFeatureEnabled('ENTITY_LINKING');
 
   const alertIds = (caseItem.alerts ?? [])
     .map(({ alertId }) => alertId)
@@ -92,6 +95,17 @@ function CaseDetails(props: Props) {
             isClosable: false,
             isDisabled: false,
           },
+          ...(user && isEntityLinkingEnabled
+            ? [
+                {
+                  tab: <div className={style.icon}>Entity Linking</div>,
+                  key: 'entity-linking',
+                  children: <EntityLinking userId={user.userId!} />,
+                  isClosable: false,
+                  isDisabled: false,
+                },
+              ]
+            : []),
           ...(user && 'type' in user && user?.type === 'BUSINESS' && isMLDemoEnabled
             ? [
                 {
