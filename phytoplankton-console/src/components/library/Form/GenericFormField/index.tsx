@@ -2,6 +2,7 @@ import React from 'react';
 import { NestedValidationResult } from '../utils/validation/types';
 import { useFieldState } from '@/components/library/Form/utils/hooks';
 import { InputProps } from '@/components/library/Form';
+import { FieldContext } from '@/components/library/Form/context';
 
 export interface FormFieldRenderProps<Value> extends InputProps<Value> {
   isValid: boolean;
@@ -24,6 +25,7 @@ export default function GenericFormField<
   Key extends keyof FormValues = keyof FormValues,
 >(props: Props<Key, FormValues[Key]>): JSX.Element {
   const { name, children } = props;
+  const fieldState = useFieldState<FormValues, Key>(name);
   const {
     value,
     onChange,
@@ -33,10 +35,10 @@ export default function GenericFormField<
     showError,
     validationResult,
     errorMessage,
-  } = useFieldState<FormValues, Key>(name);
+  } = fieldState;
 
   return (
-    <>
+    <FieldContext.Provider value={{ state: fieldState }}>
       {children({
         value,
         onChange,
@@ -53,6 +55,6 @@ export default function GenericFormField<
         validationResult,
         errorMessage,
       })}
-    </>
+    </FieldContext.Provider>
   );
 }

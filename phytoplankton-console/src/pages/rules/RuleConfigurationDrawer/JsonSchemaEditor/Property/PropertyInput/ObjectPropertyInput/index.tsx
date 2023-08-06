@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useContext, useState } from 'react';
 import PropertyList from '../../../PropertyList';
 import { ExtendedSchema } from '../../../types';
 import s from './style.module.less';
@@ -10,6 +10,8 @@ import { isSchema } from '@/pages/rules/RuleConfigurationDrawer/JsonSchemaEditor
 import { InputProps } from '@/components/library/Form';
 import { useFormContext } from '@/components/library/Form/utils/hooks';
 import { Props as LabelProps } from '@/components/library/Label';
+import { PropertyContext } from '@/pages/rules/RuleConfigurationDrawer/JsonSchemaEditor/Property';
+import { isArrayFieldValidator } from '@/components/library/Form/utils/validation/types';
 
 // todo: fix any
 interface Props extends InputProps<any> {
@@ -22,9 +24,16 @@ export default function GenericObjectInput(props: Props) {
   const properties = useOrderedProps(schema);
   const [fieldMeta, setFieldsMeta] = useState<{ [key: string]: FieldMeta }>({});
 
-  const { alwaysShowErrors } = useFormContext();
+  const { alwaysShowErrors, fieldValidators } = useFormContext();
+  const propertyContext = useContext(PropertyContext);
 
-  // todo: fix any
+  let subFieldValidator = fieldValidators?.[propertyContext?.item.name ?? ''];
+  if (subFieldValidator != null) {
+    if (isArrayFieldValidator(subFieldValidator)) {
+      subFieldValidator = subFieldValidator.itemValidator;
+    }
+  }
+
   const subContext: FormContextValue<any> = {
     alwaysShowErrors: alwaysShowErrors,
     meta: fieldMeta,
@@ -38,6 +47,7 @@ export default function GenericObjectInput(props: Props) {
     setValues: (newValue) => {
       onChange?.(newValue);
     },
+    fieldValidators: subFieldValidator,
   };
 
   return (

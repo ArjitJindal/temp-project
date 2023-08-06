@@ -66,6 +66,7 @@ export type UiSchema =
 
 export interface ExtendedSchema extends JSONSchema4 {
   'ui:schema'?: UiSchema;
+  items?: ExtendedSchema;
 }
 
 // todo: fix any?

@@ -1,8 +1,9 @@
-import _ from 'lodash';
 import {
+  $SELF_VALIDATION,
   FieldValidator,
   FieldValidators,
   FormValidators,
+  isArrayFieldValidator,
   isError,
   isSimpleFieldValidator,
   NestedValidationResult,
@@ -64,72 +65,36 @@ export function validateField<T>(
   if (isSimpleFieldValidator(fieldValidator)) {
     return fieldValidator(value);
   }
-  const objectValidator: ObjectFieldValidator<T> = fieldValidator;
-  if (
-    (_.isNil(value) || (_.isObject(value) && _.isEmpty(removeEmpty(value)))) &&
-    objectValidator.nullable
-  ) {
-    return null;
-  }
-
-  const nestedResult = {};
-  for (const key of Object.keys(objectValidator)) {
-    const subfieldValidator = objectValidator[key];
-    if (subfieldValidator != null) {
-      const result = validateField(subfieldValidator, value?.[key]);
-      if (result != null) {
-        nestedResult[key] = result;
+  let nestedResult;
+  if (isArrayFieldValidator(fieldValidator)) {
+    if (value != null && !Array.isArray(value)) {
+      console.warn(`Wrong value type, expected array: ${JSON.stringify(value)}`);
+    }
+    nestedResult = ((value as any) ?? []).map((x: any) =>
+      validateField(fieldValidator.itemValidator, removeEmpty(x)),
+    );
+  } else {
+    const objectValidator: ObjectFieldValidator<T> = fieldValidator;
+    nestedResult = {};
+    for (const key of Object.keys(objectValidator)) {
+      const subfieldValidator = objectValidator[key];
+      if (subfieldValidator != null) {
+        const result = validateField(subfieldValidator, removeEmpty(value?.[key]));
+        if (result != null) {
+          nestedResult[key] = result;
+        }
       }
     }
   }
-  return Object.keys(nestedResult).length === 0 ? null : nestedResult;
-}
-
-export function checkFormValid<FormValues>(
-  formValues: FormValues,
-  formValidators?: FormValidators<FormValues>,
-  fieldValidators?: FieldValidators<FormValues>,
-): boolean {
-  for (const validator of formValidators ?? []) {
-    if (validator(formValues) != null) {
-      return false;
-    }
+  if (fieldValidator[$SELF_VALIDATION] != null) {
+    nestedResult[$SELF_VALIDATION] = fieldValidator[$SELF_VALIDATION]?.(value);
   }
 
-  const fieldValidatorsEntries = Object.entries(fieldValidators ?? {}) as [
-    string,
-    FieldValidator<FormValues[keyof FormValues]> | undefined,
-  ][];
-  for (const [name, validator] of fieldValidatorsEntries) {
-    if (!checkFieldValid(validator, formValues[name])) {
-      return false;
-    }
+  if (nestedResult[$SELF_VALIDATION] != null || Object.keys(nestedResult).length > 0) {
+    return nestedResult;
   }
 
-  return true;
-}
-
-export function checkFieldValid<T>(
-  fieldValidator: FieldValidator<T> | undefined,
-  value: T,
-): boolean {
-  if (fieldValidator == null) {
-    return true;
-  }
-  if (isSimpleFieldValidator(fieldValidator)) {
-    return fieldValidator(value) == null;
-  }
-  const objectValidator: ObjectFieldValidator<T> = fieldValidator;
-  for (const key of Object.keys(objectValidator)) {
-    const subfieldValidator = objectValidator[key];
-    if (subfieldValidator != null) {
-      const result = validateField(subfieldValidator, value?.[key]);
-      if (result != null) {
-        return false;
-      }
-    }
-  }
-  return true;
+  return null;
 }
 
 export function validationResultToErrorMessage(
@@ -141,8 +106,9 @@ export function validationResultToErrorMessage(
   if (typeof validationResult === 'string') {
     return validationResult;
   }
-  return Object.entries(validationResult)
-    .map(([_, children]) => validationResultToErrorMessage(children))
-    .filter((x): x is string => x != null)
-    .join('; ');
+  const selfValidationResult = validationResult?.[$SELF_VALIDATION];
+  if (typeof selfValidationResult === 'string') {
+    return selfValidationResult;
+  }
+  return null;
 }

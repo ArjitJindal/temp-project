@@ -7,6 +7,7 @@ import {
   validationResultToErrorMessage,
 } from '@/components/library/Form/utils/validation/utils';
 import {
+  $SELF_VALIDATION,
   FieldValidator,
   NestedValidationResult,
 } from '@/components/library/Form/utils/validation/types';
@@ -36,7 +37,7 @@ export function useFormState<FormValues>(): FormState<FormValues> {
   };
 }
 
-interface FieldState<Value> {
+export interface FieldState<Value> {
   value: Value | undefined;
   onChange: (newValue: Value | undefined) => void;
   meta: FieldMeta;
@@ -79,7 +80,11 @@ export function useFieldState<FormValues, Key extends keyof FormValues = keyof F
     [name, setMeta],
   );
 
-  const isValid = validationResult == null;
+  let isValid = true;
+  if (typeof validationResult === 'string' || validationResult?.[$SELF_VALIDATION] != null) {
+    isValid = false;
+  }
+
   const showError = !isValid && (fieldMeta?.isVisited || alwaysShowErrors);
 
   return {

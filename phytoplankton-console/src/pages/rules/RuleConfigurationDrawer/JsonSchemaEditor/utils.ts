@@ -1,11 +1,16 @@
 import { ExtendedSchema, PropertyItem, PropertyItems, UiSchema } from './types';
 import { useJsonSchemaEditorContext } from './context';
 import {
+  dereferenceType,
   flattenAllOf,
   isArray,
   isObject,
 } from '@/pages/rules/RuleConfigurationDrawer/JsonSchemaEditor/schema-utils';
-import { ObjectFieldValidator } from '@/components/library/Form/utils/validation/types';
+import {
+  $IS_ARRAY_VALIDATOR,
+  $SELF_VALIDATION,
+  FieldValidator,
+} from '@/components/library/Form/utils/validation/types';
 import { notEmpty } from '@/components/library/Form/utils/validation/basicValidators';
 
 export function getUiSchema(schema: ExtendedSchema): UiSchema {
@@ -52,17 +57,34 @@ export function findRequiredProperty(propertyItems: PropertyItems, name: string)
   return propertyItem;
 }
 
-export function makeValidators<T>(props: PropertyItems): ObjectFieldValidator<T> {
-  return props.reduce((acc, prop): ObjectFieldValidator<T> => {
+export function makeValidators<T>(
+  props: PropertyItems,
+  rootSchema?: ExtendedSchema,
+): FieldValidator<T> {
+  return props.reduce((acc, prop): FieldValidator<T> => {
     let propValidators;
-    if (isObject(prop.schema)) {
-      const orderedProps = useOrderedProps(prop.schema);
-      const nestedValidators = makeValidators(orderedProps);
+    const schema = dereferenceType(prop.schema, rootSchema);
+    if (isObject(schema)) {
+      const orderedProps = getOrderedProps(schema, rootSchema);
+      const nestedValidators = makeValidators(orderedProps, rootSchema);
       if (Object.keys(nestedValidators).length > 0) {
         propValidators = nestedValidators;
-        propValidators.nullable = !prop.isRequired;
-      } else if (prop.isRequired) {
-        propValidators = notEmpty;
+      }
+      if (propValidators != null && prop.isRequired) {
+        propValidators[$SELF_VALIDATION] = notEmpty;
+      }
+    } else if (isArray(schema)) {
+      const itemsSchema = schema.items ? dereferenceType(schema.items, rootSchema) : undefined;
+      const orderedProps = getOrderedProps(itemsSchema, rootSchema);
+      const itemValidator = makeValidators(orderedProps, rootSchema);
+      if (itemValidator != null || prop.isRequired) {
+        propValidators = {
+          [$IS_ARRAY_VALIDATOR]: true,
+          itemValidator: itemValidator,
+        };
+        if (prop.isRequired) {
+          propValidators[$SELF_VALIDATION] = notEmpty;
+        }
       }
     } else if (prop.isRequired) {
       propValidators = notEmpty;

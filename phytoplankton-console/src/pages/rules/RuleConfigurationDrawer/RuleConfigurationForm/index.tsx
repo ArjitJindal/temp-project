@@ -33,6 +33,7 @@ import User3LineIcon from '@/components/ui/icons/Remix/user/user-3-line.react.sv
 import EarthLineIcon from '@/components/ui/icons/Remix/map/earth-line.react.svg';
 import { useFeatureEnabled } from '@/components/AppWrapper/Providers/SettingsProvider';
 import { ChangeJsonSchemaEditorSettings } from '@/pages/rules/RuleConfigurationDrawer/JsonSchemaEditor/settings';
+import { useJsonSchemaEditorContext } from '@/pages/rules/RuleConfigurationDrawer/JsonSchemaEditor/context';
 
 const BASIC_DETAILS_STEP = 'basic_details';
 const STANDARD_FILTERS_STEP = 'standard_filters';
@@ -90,7 +91,8 @@ const RuleConfigurationForm = (
   const [alwaysShowErrors, setAlwaysShowErrors] = useState(false);
 
   const formId = useId(`form-`);
-  const ruleParametersValidators = makeValidators(orderedProps);
+  const { rootSchema } = useJsonSchemaEditorContext();
+  const ruleParametersValidators = makeValidators(orderedProps, rootSchema);
   const fieldValidators = useMemo(() => {
     return {
       basicDetailsStep: {},

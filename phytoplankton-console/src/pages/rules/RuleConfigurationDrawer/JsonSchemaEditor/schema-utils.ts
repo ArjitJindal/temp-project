@@ -12,15 +12,11 @@ export function isSchema(
   return schema != null && typeof schema === 'object';
 }
 
-export function isObject(
-  schema: ExtendedSchema | boolean | null | undefined,
-): schema is ExtendedSchema {
+export function isObject(schema: ExtendedSchema | boolean | null | undefined): boolean {
   return schema != null && typeof schema === 'object' && schema.type === 'object';
 }
 
-export function isArray(
-  schema: ExtendedSchema | boolean | null | undefined,
-): schema is ExtendedSchema {
+export function isArray(schema: ExtendedSchema | boolean | null | undefined): boolean {
   return schema != null && typeof schema === 'object' && schema.type === 'array';
 }
 

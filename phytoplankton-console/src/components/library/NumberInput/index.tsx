@@ -9,7 +9,7 @@ interface Props extends Omit<TextInputProps, keyof InputProps<string>>, InputPro
 }
 
 export default function NumberInput(props: Props) {
-  const { value, onChange, min, max, step = 1, ...rest } = props;
+  const { value, onChange, min, max, step = 1, onBlur, ...rest } = props;
   const valueText = value != null ? `${value}` : undefined;
   const [localValue, setLocalValue] = useState<string | undefined>(valueText);
 
@@ -30,6 +30,7 @@ export default function NumberInput(props: Props) {
   }, [value]);
 
   const handleBlur = useCallback(() => {
+    onBlur?.();
     if (localValue == null || localValue === '') {
       handleConfirmChange(undefined);
       return;
@@ -44,7 +45,7 @@ export default function NumberInput(props: Props) {
     number = max != null ? Math.min(max, number) : number;
 
     handleConfirmChange(number);
-  }, [localValue, min, max, handleConfirmChange, handleCancelChange]);
+  }, [onBlur, localValue, min, max, handleConfirmChange, handleCancelChange]);
 
   const handleChange = (newValue: string | undefined) => {
     if (newValue == null) {

@@ -6,8 +6,8 @@ import {
   JsonSchemaEditorSettings,
 } from './settings';
 import { JsonSchemaEditorContext } from '@/pages/rules/RuleConfigurationDrawer/JsonSchemaEditor/context';
-import GenericObjectInput from '@/pages/rules/RuleConfigurationDrawer/JsonSchemaEditor/Property/PropertyInput/ObjectPropertyInput';
-import { useFormContext } from '@/components/library/Form/utils/hooks';
+import PropertyList from '@/pages/rules/RuleConfigurationDrawer/JsonSchemaEditor/PropertyList';
+import { getOrderedProps } from '@/pages/rules/RuleConfigurationDrawer/JsonSchemaEditor/utils';
 
 interface Props {
   settings?: Partial<JsonSchemaEditorSettings>;
@@ -16,17 +16,11 @@ interface Props {
 
 export default function JsonSchemaEditor(props: Props) {
   const { settings = DEFAULT_FORM_SETTINGS, parametersSchema } = props;
-  const { values, setValues } = useFormContext();
 
   return (
     <JsonSchemaEditorContext.Provider value={{ rootSchema: parametersSchema }}>
       <ChangeJsonSchemaEditorSettings settings={settings}>
-        <GenericObjectInput
-          schema={parametersSchema}
-          value={values}
-          onChange={setValues}
-          labelProps={{ level: 1 }}
-        />
+        <PropertyList items={getOrderedProps(parametersSchema)} />
       </ChangeJsonSchemaEditorSettings>
     </JsonSchemaEditorContext.Provider>
   );

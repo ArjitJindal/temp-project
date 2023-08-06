@@ -16,6 +16,9 @@ import IndicatorsStep from '@/components/Sar/SarReportDrawer/SarReportDrawerForm
 import ReportStep from '@/components/Sar/SarReportDrawer/SarReportDrawerForm/ReportStep';
 import TransactionStep from '@/components/Sar/SarReportDrawer/SarReportDrawerForm/TransactionStep';
 import AttachmentsStep from '@/components/Sar/SarReportDrawer/SarReportDrawerForm/AttachmentsStep';
+import { makeValidators } from '@/pages/rules/RuleConfigurationDrawer/JsonSchemaEditor/utils';
+import { PropertyItem } from '@/pages/rules/RuleConfigurationDrawer/JsonSchemaEditor/types';
+import { ObjectFieldValidator } from '@/components/library/Form/utils/validation/types';
 
 export type FormState = Partial<{
   [REPORT_STEP]: unknown;
@@ -48,9 +51,32 @@ export default function SarReportDrawerForm(props: Props) {
   const settings = {
     propertyNameStyle: report.schema?.settings?.propertyNameStyle || 'AS_IS',
   };
+
+  const orderedProps: PropertyItem[] = [
+    {
+      name: REPORT_STEP,
+      isRequired: false,
+      schema: report.schema?.reportSchema,
+    },
+    {
+      name: TRANSACTION_METADATA_STEP,
+      isRequired: false,
+      schema: report.schema?.transactionMetadataSchema,
+    },
+  ].filter((x) => x.schema != null);
+
+  const fieldValidators = makeValidators(orderedProps, {
+    definitions: {
+      type: 'object' as const,
+      ...report.schema?.reportSchema?.definitions,
+      ...report.schema?.transactionMetadataSchema?.definitions,
+    },
+  });
+
   return (
     <Form
       id={formId}
+      fieldValidators={fieldValidators as ObjectFieldValidator<FormState>}
       initialValues={initialValues}
       onChange={({ values }) => {
         onChange(serializeFormState(report, values));
@@ -60,32 +86,30 @@ export default function SarReportDrawerForm(props: Props) {
       }}
     >
       <Stepper steps={steps} active={activeStep} onChange={setActiveStep}>
-        {(activeStepKey) => {
-          return (
-            <NestedForm<any> name={activeStepKey}>
-              {activeStepKey == REPORT_STEP && (
-                <ReportStep parametersSchema={report.schema?.reportSchema} settings={settings} />
-              )}
-              {activeStepKey == TRANSACTION_METADATA_STEP && (
-                <ReportStep
-                  parametersSchema={report.schema?.transactionMetadataSchema}
-                  settings={settings}
-                />
-              )}
-              {activeStepKey === TRANSACTION_STEP && (
-                <TransactionStep settings={settings} report={report} />
-              )}
-              {activeStepKey === INDICATOR_STEP && (
-                <GenericFormField<any> name={'selection'}>
-                  {(props: FormFieldRenderProps<string[]>) => (
-                    <IndicatorsStep report={report} {...props} />
-                  )}
-                </GenericFormField>
-              )}
-              {activeStepKey === ATTACHMENTS_STEP && <AttachmentsStep />}
-            </NestedForm>
-          );
-        }}
+        {(activeStepKey) => (
+          <NestedForm<any> name={activeStepKey}>
+            {activeStepKey == REPORT_STEP && (
+              <ReportStep parametersSchema={report.schema?.reportSchema} settings={settings} />
+            )}
+            {activeStepKey == TRANSACTION_METADATA_STEP && (
+              <ReportStep
+                parametersSchema={report.schema?.transactionMetadataSchema}
+                settings={settings}
+              />
+            )}
+            {activeStepKey === TRANSACTION_STEP && (
+              <TransactionStep settings={settings} report={report} />
+            )}
+            {activeStepKey === INDICATOR_STEP && (
+              <GenericFormField<any> name={'selection'}>
+                {(props: FormFieldRenderProps<string[]>) => (
+                  <IndicatorsStep report={report} {...props} />
+                )}
+              </GenericFormField>
+            )}
+            {activeStepKey === ATTACHMENTS_STEP && <AttachmentsStep />}
+          </NestedForm>
+        )}
       </Stepper>
     </Form>
   );

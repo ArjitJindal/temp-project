@@ -2,13 +2,17 @@ import React from 'react';
 import { PropertyItem } from '../types';
 import { getUiSchema } from '../utils';
 import PropertyInput from './PropertyInput';
+import s from './style.module.less';
 import { Props as LabelProps } from '@/components/library/Label';
 import InputField from '@/components/library/Form/InputField';
 import { useJsonSchemaEditorSettings } from '@/pages/rules/RuleConfigurationDrawer/JsonSchemaEditor/settings';
 import { humanizeAuto, humanizeCamelCase, humanizeSnakeCase } from '@/utils/humanize';
 import { useDeepEqualMemo } from '@/utils/hooks';
 import { neverReturn } from '@/utils/lang';
-import { dereferenceType } from '@/pages/rules/RuleConfigurationDrawer/JsonSchemaEditor/schema-utils';
+import {
+  dereferenceType,
+  isObject,
+} from '@/pages/rules/RuleConfigurationDrawer/JsonSchemaEditor/schema-utils';
 import { useJsonSchemaEditorContext } from '@/pages/rules/RuleConfigurationDrawer/JsonSchemaEditor/context';
 import { useFeaturesEnabled } from '@/components/AppWrapper/Providers/SettingsProvider';
 
@@ -77,12 +81,23 @@ export default function Property(props: Props) {
         labelProps={{
           element: labelElement,
           position: labelPosition,
-          required: { value: item.isRequired, showHint: settings.showOptionalMark },
+          required: {
+            value: item.isRequired,
+            showHint: settings.showOptionalMark && !isObject(schema),
+          },
           ...labelProps,
           level: labelLevel,
         }}
       >
-        {(inputProps) => <PropertyInput {...inputProps} schema={schema} />}
+        {(inputProps) =>
+          schema.type === 'object' ? (
+            <div className={s.children}>
+              <PropertyInput {...inputProps} schema={schema} />
+            </div>
+          ) : (
+            <PropertyInput {...inputProps} schema={schema} />
+          )
+        }
       </InputField>
     </PropertyContext.Provider>
   ) : (
