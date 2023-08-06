@@ -43,6 +43,10 @@ export const apiKeyGeneratorHandler = lambdaApi()(
       const batchJob: DemoModeDataLoadBatchJob = {
         type: 'DEMO_MODE_DATA_LOAD',
         tenantId: fullTenantId,
+        parameters: {
+          tenantId: fullTenantId,
+          defaultTenantIdEndTest: fullTenantId.endsWith('test'),
+        },
         awsCredentials: getCredentialsFromEvent(event),
       }
       await sendBatchJobCommand(fullTenantId, batchJob)

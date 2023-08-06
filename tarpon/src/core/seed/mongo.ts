@@ -71,7 +71,11 @@ const collections: [(tenantId: string) => string, Iterable<unknown>][] = [
   [CRM_SUMMARY_COLLECTION, summaries],
 ]
 
-export async function seedMongo(client: MongoClient, tenantId: string) {
+export async function seedMongo(
+  client: MongoClient,
+  tenantId: string,
+  defaultTenantIdEndTest: boolean
+) {
   const db = await client.db()
 
   try {
@@ -132,7 +136,10 @@ export async function seedMongo(client: MongoClient, tenantId: string) {
     { mongoDb: client }
   )
 
-  const tenant = await accountsService.getTenantById(tenantId)
+  const tenant = await accountsService.getTenantById(
+    defaultTenantIdEndTest ? tenantId : tenantId.replace('-test', '')
+  ) // As we are appending -test to the tenantId, we need to remove it to get the real tenantId when in demo mode
+
   const accounts =
     tenant != null ? await accountsService.getTenantAccounts(tenant) : []
 

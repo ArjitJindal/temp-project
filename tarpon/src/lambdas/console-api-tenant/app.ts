@@ -65,10 +65,15 @@ export const tenantsHandler = lambdaApi()(
         request.TenantCreationRequest
       )
       if (envIsNot('prod')) {
+        const defaultTenantIdEndTest = response.tenantId.endsWith('test')
         const fullTenantId = getFullTenantId(tenantId, true)
         const batchJob: DemoModeDataLoadBatchJob = {
           type: 'DEMO_MODE_DATA_LOAD',
           tenantId: fullTenantId,
+          parameters: {
+            tenantId: fullTenantId,
+            defaultTenantIdEndTest,
+          },
           awsCredentials: getCredentialsFromEvent(event),
         }
         await sendBatchJobCommand(fullTenantId, batchJob)
@@ -123,12 +128,17 @@ export const tenantsHandler = lambdaApi()(
     handlers.registerGetSeedDemoData(async (ctx) => {
       if (envIsNot('prod')) {
         let fullTenantId = ctx.tenantId
+        const defaultTenantIdEndTest = ctx.tenantId.endsWith('-test')
         if (envIs('sandbox')) {
           fullTenantId = getFullTenantId(ctx.tenantId, true)
         }
         const batchJob: DemoModeDataLoadBatchJob = {
           type: 'DEMO_MODE_DATA_LOAD',
           tenantId: fullTenantId,
+          parameters: {
+            tenantId: fullTenantId,
+            defaultTenantIdEndTest,
+          },
           awsCredentials: getCredentialsFromEvent(event),
         }
         await sendBatchJobCommand(fullTenantId, batchJob)

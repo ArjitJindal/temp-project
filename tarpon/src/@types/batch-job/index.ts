@@ -46,6 +46,10 @@ type DemoModeDataLoadBatchJobType = 'DEMO_MODE_DATA_LOAD'
 export type DemoModeDataLoadBatchJob = {
   type: DemoModeDataLoadBatchJobType
   tenantId: string
+  parameters: {
+    tenantId: string
+    defaultTenantIdEndTest: boolean
+  }
   awsCredentials?: Credentials
 }
 
