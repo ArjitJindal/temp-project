@@ -107,15 +107,17 @@ const mergedColumns = (
               >
                 {alertId}
               </Id>
-              {falsePositiveDetails && falsePositiveEnabled && (
-                <FalsePositiveTag
-                  caseIds={[entity.caseId!]}
-                  confidence={falsePositiveDetails.confidenceScore}
-                  newCaseStatus={'CLOSED'}
-                  onSaved={reload}
-                  rounded
-                />
-              )}
+              {falsePositiveDetails &&
+                falsePositiveDetails.isFalsePositive &&
+                falsePositiveEnabled && (
+                  <FalsePositiveTag
+                    caseIds={[entity.caseId!]}
+                    confidence={falsePositiveDetails.confidenceScore}
+                    newCaseStatus={'CLOSED'}
+                    onSaved={reload}
+                    rounded
+                  />
+                )}
             </>
           );
         },
