@@ -97,7 +97,7 @@ const generator = function* (seed: number): Generator<InternalTransaction> {
         transactionCurrency: sampleCurrency(i + 1),
         transactionAmount,
       },
-      tags: i < 3 ? [sampleTag(i)] : [],
+      tags: [sampleTag()],
     }
     yield fullTransaction
   }

@@ -3,6 +3,7 @@ import { addresses, phoneNumber } from '../data/address'
 import { sampleCountry } from './countries'
 import { sampleString } from './strings'
 import { sampleBusinessUserRiskScoreComponents } from './risk_score_components'
+import { sampleTag } from './tag'
 import { KYCStatus } from '@/@types/openapi-internal/KYCStatus'
 import { KYCStatusDetails } from '@/@types/openapi-internal/KYCStatusDetails'
 import { UserState } from '@/@types/openapi-internal/UserState'
@@ -128,6 +129,7 @@ export function sampleBusinessUser(
           key: 'crmAccountId',
           value: uuid4(),
         },
+        sampleTag(),
       ],
       drsScore: {
         drsScore: drsScore,

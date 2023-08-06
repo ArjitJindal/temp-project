@@ -1,8 +1,11 @@
 import { Tag } from '@/@types/openapi-internal/Tag'
+import { pickRandom } from '@/utils/prng'
 
-export const sampleTag = (seed: number): Tag => {
+const entityValues = ['Capital Markets', 'Securities', 'Onshore', 'Offshore']
+
+export const sampleTag = (): Tag => {
   return {
-    key: `test_tag_${seed}`,
-    value: `Test tag #${seed}`,
+    key: `entity`,
+    value: pickRandom(entityValues),
   }
 }
