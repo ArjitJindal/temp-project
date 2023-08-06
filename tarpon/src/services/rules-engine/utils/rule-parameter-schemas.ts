@@ -556,6 +556,26 @@ export const TRANSACTION_AMOUNT_RANGE_OPTIONAL_SCHEMA = (
     nullable: true,
   } as const)
 
+export const KEY_VALUE_PAIR_SCHEMA = (options?: SchemaOptions) =>
+  ({
+    type: 'object',
+    ...uiSchema(options?.uiSchema, {
+      subtype: 'TRANSACTION_KEY_VALUE',
+    }),
+    title: options?.title || 'Transaction key value',
+    description: options?.description,
+    additionalProperties: {
+      type: 'string',
+    },
+    required: [],
+  } as const)
+
+export const KEY_VALUE_PAIR_OPTIONAL_SCHEMA = (options?: SchemaOptions) =>
+  ({
+    ...KEY_VALUE_PAIR_SCHEMA(options),
+    nullable: true,
+  } as const)
+
 export const INITIAL_TRANSACTIONS_SCHEMA = (options?: SchemaOptions) =>
   ({
     type: 'integer',
