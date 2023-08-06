@@ -300,6 +300,27 @@ export const CASEID_PRIORITY: ColumnDataType<string, Case> = {
   },
 };
 
+export const CASEID: ColumnDataType<string, Case> = {
+  render: (_value, { item: entity }) => {
+    return (
+      <>
+        {entity?.caseId && (
+          <Id
+            to={addBackUrlToRoute(
+              makeUrl(`/case-management/case/:caseId`, {
+                caseId: entity.caseId,
+              }),
+            )}
+            testName="case-id"
+          >
+            {entity.caseId}
+          </Id>
+        )}
+      </>
+    );
+  },
+};
+
 export const MONEY_AMOUNT: ColumnDataType<number> = {
   render: (value) => {
     if (value !== undefined) {

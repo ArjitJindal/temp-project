@@ -36,7 +36,7 @@ import { useFeatureEnabled } from '@/components/AppWrapper/Providers/SettingsPro
 import {
   ASSIGNMENTS,
   CASE_STATUS,
-  CASEID_PRIORITY,
+  CASEID,
   DATE,
   DATE_TIME,
   RULE_ACTION,
@@ -127,7 +127,7 @@ const mergedColumns = (
       title: 'Case ID',
       subtitle: 'Priority',
       key: 'caseId',
-      type: CASEID_PRIORITY,
+      type: CASEID,
     }),
     helper.simple<'createdTimestamp'>({
       title: 'Created at',
