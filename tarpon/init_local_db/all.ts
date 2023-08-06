@@ -29,7 +29,7 @@ async function main() {
   const client = await MongoClient.connect(
     `mongodb://localhost:27018/${DB_NAME}`
   )
-  await seedMongo(client, TENANT, false)
+  await seedMongo(client, TENANT)
   await client.close()
 }
 

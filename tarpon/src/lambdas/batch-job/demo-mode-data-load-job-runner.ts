@@ -8,15 +8,13 @@ import { getDynamoDbClient } from '@/utils/dynamodb'
 export class DemoModeDataLoadJobRunner extends BatchJobRunner {
   protected async run(job: DemoModeDataLoadBatchJob): Promise<any> {
     // Create collections
-    const {
-      parameters: { tenantId, defaultTenantIdEndTest },
-    } = job
+    const { tenantId } = job
 
     console.log('Generate collections names and S3 keys')
     const dynamo = await getDynamoDbClient()
     const mongoDb = await getMongoDbClient()
 
     await seedDynamo(dynamo, tenantId)
-    await seedMongo(mongoDb, tenantId, defaultTenantIdEndTest)
+    await seedMongo(mongoDb, tenantId)
   }
 }

@@ -71,11 +71,7 @@ const collections: [(tenantId: string) => string, Iterable<unknown>][] = [
   [CRM_SUMMARY_COLLECTION, summaries],
 ]
 
-export async function seedMongo(
-  client: MongoClient,
-  tenantId: string,
-  defaultTenantIdEndTest: boolean
-) {
+export async function seedMongo(client: MongoClient, tenantId: string) {
   const db = await client.db()
 
   try {
@@ -135,13 +131,22 @@ export async function seedMongo(
     { auth0Domain: process.env.AUTH0_DOMAIN as string },
     { mongoDb: client }
   )
+  logger.info(`TenantId: ${tenantId}`)
 
-  const tenant = await accountsService.getTenantById(
-    defaultTenantIdEndTest ? tenantId : tenantId.replace('-test', '')
+  let tenant = await accountsService.getTenantById(
+    tenantId.replace('-test', '')
   ) // As we are appending -test to the tenantId, we need to remove it to get the real tenantId when in demo mode
+
+  logger.info(`Tenant: ${JSON.stringify(tenant)}`)
+
+  if (tenant == null) {
+    tenant = await accountsService.getTenantById(tenantId)
+  }
 
   const accounts =
     tenant != null ? await accountsService.getTenantAccounts(tenant) : []
+
+  logger.info(`Accounts: ${JSON.stringify(accounts)}`)
 
   const cases = db.collection<Case>(CASES_COLLECTION(tenantId))
   const casesToUpdate = await cases.find().toArray()
