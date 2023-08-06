@@ -19,7 +19,7 @@ export function getErrorMessage(e: unknown) {
 
 export function isEqual<T>(a: T, b: T): boolean {
   if (a == null || b == null) {
-    return a === b;
+    return a == b; // For null to be equal to undefined
   }
   if (typeof a !== typeof b) {
     return false;
