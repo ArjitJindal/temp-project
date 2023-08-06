@@ -12,6 +12,7 @@ import { getUserName } from '@/utils/helpers'
 import { ContactDetails } from '@/@types/openapi-internal/ContactDetails'
 import { UserEntityNodes } from '@/@types/openapi-internal/UserEntityNodes'
 import { UserEntityEdges } from '@/@types/openapi-internal/UserEntityEdges'
+import { Address } from '@/@types/openapi-internal/Address'
 
 export class LinkerService {
   tenantId!: string
@@ -19,7 +20,6 @@ export class LinkerService {
   public constructor(tenantId: string) {
     this.tenantId = tenantId
   }
-
   public visualisation(
     userId: string,
     userLabels: Map<string, string>,
@@ -110,12 +110,15 @@ export class LinkerService {
 
     const originAccountNumbersPromise = txnCollection.distinct(
       'originPaymentMethodId',
-      { originUserId: userId }
+      { originUserId: userId, originPaymentMethodId: { $ne: undefined } }
     )
 
     const destinationAccountNumbersPromise = txnCollection.distinct(
       'destinationPaymentMethodId',
-      { destinationUserId: userId }
+      {
+        destinationUserId: userId,
+        destinationPaymentMethodId: { $ne: undefined },
+      }
     )
 
     const prefixes = ['', 'legalEntity.', 'directors.', 'shareHolders.']
@@ -133,6 +136,7 @@ export class LinkerService {
         destinationAccountNumbersPromise,
       ]),
     ])
+
     // Group together linking elements
     const emailIds = [...user[0], ...directors[0], ...shareHolders[0]]
     const contactNumbers = [...user[1], ...directors[1], ...shareHolders[1]]
@@ -228,7 +232,7 @@ export class LinkerService {
           this.processLink(user, emailId, emailLinked)
         )
         contactDetail.addresses?.forEach((address) =>
-          this.processLink(user, address.postcode, addressLinked)
+          this.processLink(user, addressLink(address), addressLinked)
         )
         contactDetail.contactNumbers?.forEach((contactNumber) =>
           this.processLink(user, contactNumber, phoneLinked)
@@ -238,7 +242,6 @@ export class LinkerService {
 
     // Merge origin and destination payment method links
     const paymentMethodLinked = new Map<string, string[]>()
-    //
     ;[originPaymentMethodLinks, destinationPaymentMethodLinks].forEach(
       (links) => {
         for (const link of links) {
@@ -295,6 +298,12 @@ export class LinkerService {
       userLabels,
     }
   }
+}
+
+function addressLink(address: Address): string {
+  const firstPart =
+    address.addressLines.length > 0 ? address.addressLines[0] : ''
+  return `${firstPart}, ${address.postcode}`
 }
 
 async function linkingElements(

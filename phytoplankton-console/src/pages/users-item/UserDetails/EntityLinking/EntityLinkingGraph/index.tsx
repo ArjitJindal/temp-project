@@ -51,6 +51,9 @@ export const EntityLinkingGraph = (props: EntityLinkingProps) => {
         ref={graphRef}
         edgeArrowPosition="none"
         labelType={'all'}
+        labelFontUrl={
+          'https://fonts.gstatic.com/s/notosans/v30/o-0IIpQlx3QUlC5A4PNr6DRASf6M7VBj.woff2'
+        }
         theme={{
           ...lightTheme,
           edge: { ...lightTheme.edge, activeFill: '#52c41a' },

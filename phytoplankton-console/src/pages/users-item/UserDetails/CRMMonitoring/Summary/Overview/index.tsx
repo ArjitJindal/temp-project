@@ -1,4 +1,5 @@
 import s from './index.module.less';
+import Tooltip from '@/components/library/Tooltip';
 
 type Props = {
   summary: string;
@@ -9,10 +10,15 @@ const Overview = (props: Props) => {
     <div className={s.overview}>
       <div className={s.header}>
         <span>Overview</span>
-        {/* <CompanyHeader /> */}
       </div>
       <p>{props.summary}</p>
-      <span>Sentiment Score - {props.sentiment}</span>
+      <Tooltip
+        title={
+          'Sentiment score is determined using AI and reflects how much attention this user requires based on their behaviour.'
+        }
+      >
+        <span>Sentiment Score - {props.sentiment}%</span>
+      </Tooltip>
     </div>
   );
 };

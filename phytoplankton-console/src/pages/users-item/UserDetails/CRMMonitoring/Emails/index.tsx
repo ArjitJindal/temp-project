@@ -3,7 +3,7 @@ import _ from 'lodash';
 import CRMCommunicationCard from '../CRMCommunicationCard';
 import s from './index.module.less';
 import { CrmAccountResponseEngagements } from '@/apis';
-import { DATE_TIME_ISO_FORMAT, dayjs } from '@/utils/dayjs';
+import { dayjs, DEFAULT_DATE_TIME_FORMAT } from '@/utils/dayjs';
 
 interface Props {
   emails: Array<CrmAccountResponseEngagements>;
@@ -26,7 +26,7 @@ const Emails = (props: Props) => {
                   </span>
                   {thisEmail.createdAt && (
                     <span className={s.greyText}>
-                      {dayjs(thisEmail.createdAt).format(DATE_TIME_ISO_FORMAT)}
+                      {dayjs(thisEmail.createdAt).format(DEFAULT_DATE_TIME_FORMAT)}
                     </span>
                   )}
                 </div>

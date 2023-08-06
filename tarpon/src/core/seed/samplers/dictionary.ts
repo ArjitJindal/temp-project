@@ -358,21 +358,6 @@ export const companies: CompanySeedData[] = [
     ],
   },
   {
-    name: 'BrightMinds',
-    industries: ['Education'],
-    website: 'www.brightminds.com',
-    contactEmails: ['info@brightminds.com', 'support@brightminds.com'],
-    countryCode: 'CA',
-    products: ['Educational Software', 'Online Tutoring'],
-    location: 'Toronto, Canada',
-    companySize: 200,
-    annualRevenue: 50000000,
-    summaries: [
-      'BrightMinds revolutionizes education through innovative educational software and personalized online tutoring, empowering learners worldwide.',
-      'At BrightMinds, we believe in the transformative power of education. Through our innovative educational software and personalized online tutoring, we nurture bright minds.',
-    ],
-  },
-  {
     name: 'SkyLink',
     industries: ['Aerospace'],
     website: 'www.skylink.com',
@@ -508,21 +493,6 @@ export const companies: CompanySeedData[] = [
     ],
   },
   {
-    name: 'FoodFusion',
-    industries: ['Food and Beverage'],
-    website: 'www.foodfusion.com',
-    contactEmails: ['info@foodfusion.com', 'support@foodfusion.com'],
-    countryCode: 'US',
-    products: ['Food Delivery', 'Catering Services'],
-    location: 'San Francisco, USA',
-    companySize: 200,
-    annualRevenue: 60000000,
-    summaries: [
-      'FoodFusion delights taste buds, offering convenient food delivery and exceptional catering services for a seamless dining experience.',
-      'At FoodFusion, we believe in the power of food to bring people together. Through our convenient food delivery and exceptional catering services, we create memorable dining experiences.',
-    ],
-  },
-  {
     name: 'TechGenius',
     industries: ['Technology Consulting'],
     website: 'www.techgenius.com',
@@ -595,21 +565,6 @@ export const companies: CompanySeedData[] = [
     summaries: [
       'MediaVibe captivates audiences, offering exceptional content creation and result-driven digital marketing strategies for brands in the digital era.',
       'With a passion for storytelling, MediaVibe delivers exceptional content creation and result-driven digital marketing strategies, helping brands captivate audiences in the digital era.',
-    ],
-  },
-  {
-    name: 'FutureTech',
-    industries: ['Technology Solutions'],
-    website: 'www.futuretech.com',
-    contactEmails: ['info@futuretech.com', 'support@futuretech.com'],
-    countryCode: 'US',
-    products: ['Artificial Intelligence', 'Internet of Things'],
-    location: 'Seattle, USA',
-    companySize: 400,
-    annualRevenue: 90000000,
-    summaries: [
-      'FutureTech pioneers transformative technology solutions, harnessing the power of artificial intelligence and the Internet of Things for a smarter world.',
-      'At FutureTech, we are committed to shaping the future. Through our transformative technology solutions, including artificial intelligence and the Internet of Things, we create a smarter world.',
     ],
   },
   {
@@ -883,21 +838,6 @@ export const companies: CompanySeedData[] = [
     ],
   },
   {
-    name: 'SecureNet',
-    industries: ['Cybersecurity'],
-    website: 'www.securenet.com',
-    contactEmails: ['info@securenet.com', 'support@securenet.com'],
-    countryCode: 'US',
-    products: ['Network Security', 'Data Encryption'],
-    location: 'Seattle, USA',
-    companySize: 150,
-    annualRevenue: 40000000,
-    summaries: [
-      'SecureNet protects digital assets, offering robust network security and state-of-the-art data encryption services to safeguard against cyber threats.',
-      'At SecureNet, we are committed to protecting digital assets. Through our robust network security and state-of-the-art data encryption services, we safeguard businesses against cyber threats.',
-    ],
-  },
-  {
     name: 'GreenLiving',
     industries: ['Sustainable Living'],
     website: 'www.greenliving.com',
@@ -940,21 +880,6 @@ export const companies: CompanySeedData[] = [
     summaries: [
       'HealthyHabits empowers healthy living, offering comprehensive wellness programs and valuable resources for individuals seeking holistic well-being.',
       'At HealthyHabits, we believe in the power of healthy living. Through our comprehensive wellness programs and valuable resources, we empower individuals to adopt healthy habits for a better life.',
-    ],
-  },
-  {
-    name: 'TechSolutions',
-    industries: ['Technology Consulting'],
-    website: 'www.techsolutions.com',
-    contactEmails: ['info@techsolutions.com', 'support@techsolutions.com'],
-    countryCode: 'US',
-    products: ['IT Strategy', 'Digital Transformation'],
-    location: 'Seattle, USA',
-    companySize: 200,
-    annualRevenue: 50000000,
-    summaries: [
-      'TechSolutions drives digital transformation, offering expert technology consulting and strategic IT solutions to propel businesses into the digital era.',
-      'At TechSolutions, we are dedicated to driving digital transformation. Through our expert technology consulting and strategic IT solutions, we help businesses thrive in the digital era.',
     ],
   },
   {
@@ -1111,21 +1036,6 @@ export const companies: CompanySeedData[] = [
     ],
   },
   {
-    name: 'DataTech',
-    industries: ['Data Analytics'],
-    website: 'www.datatech.com',
-    contactEmails: ['info@datatech.com', 'support@datatech.com'],
-    countryCode: 'US',
-    products: ['Data Visualization', 'Predictive Analytics'],
-    location: 'San Francisco, USA',
-    companySize: 150,
-    annualRevenue: 40000000,
-    summaries: [
-      'DataTech unlocks insights, offering advanced data visualization and predictive analytics solutions for data-driven decision-making and business success.',
-      'At DataTech, we unlock the power of data. Through our advanced data visualization and predictive analytics solutions, we enable data-driven decision-making and drive business success.',
-    ],
-  },
-  {
     name: 'MarketPro',
     industries: ['Marketing Services'],
     website: 'www.marketpro.com',
@@ -1138,21 +1048,6 @@ export const companies: CompanySeedData[] = [
     summaries: [
       'MarketPro drives brand success, offering strategic digital marketing and brand strategy services for impactful and targeted marketing campaigns.',
       'At MarketPro, we drive brand success. Through our strategic digital marketing and brand strategy services, we create impactful and targeted marketing campaigns for business growth.',
-    ],
-  },
-  {
-    name: 'EnergySolutions',
-    industries: ['Energy Services'],
-    website: 'www.energysolutions.com',
-    contactEmails: ['info@energysolutions.com', 'support@energysolutions.com'],
-    countryCode: 'US',
-    products: ['Energy Consulting', 'Renewable Solutions'],
-    location: 'Los Angeles, USA',
-    companySize: 150,
-    annualRevenue: 40000000,
-    summaries: [
-      'EnergySolutions powers sustainability, offering expert energy consulting and innovative renewable solutions for a greener and more efficient future.',
-      'At EnergySolutions, we are committed to powering sustainability. Through our expert energy consulting and innovative renewable solutions, we contribute to a greener and more efficient future.',
     ],
   },
   {

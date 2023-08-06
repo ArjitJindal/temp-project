@@ -12,7 +12,7 @@ import { CheckDetails } from '@/@types/openapi-public/CheckDetails'
 import { CountryCode } from '@/@types/openapi-internal/CountryCode'
 import { Address } from '@/@types/openapi-internal/Address'
 import { RULE_ACTIONS } from '@/@types/openapi-public-custom/RuleAction'
-import { randomPhoneNumber } from '@/core/seed/samplers/users'
+import { randomAddress } from '@/core/seed/samplers/users'
 
 export function sampleTransaction(
   {
@@ -59,7 +59,7 @@ export function sampleTransaction(
   }
 }
 
-export const paymentMethods = [...Array(750)].map((i) =>
+export const paymentMethods = [...Array(100000)].map((i) =>
   samplePaymentDetails(i)
 )
 
@@ -179,14 +179,14 @@ export function sampleGenericBankAccountDetails(
         bankName: 'Bank of America',
         bankCode: 'BWEHRHRB',
         name: 'Mark Schagal',
-        bankAddress: sampleAddress(seed),
+        bankAddress: randomAddress(),
       },
       {
         method: 'GENERIC_BANK_ACCOUNT',
         bankName: 'Citigroup',
         bankCode: '123123',
         name: 'John Dow',
-        bankAddress: sampleAddress(seed),
+        bankAddress: randomAddress(),
       },
     ],
     rnd()
@@ -214,7 +214,7 @@ export function sampleMpesaDetails(seed?: number): MpesaDetails {
     method: 'MPESA',
     businessShortCode: `${randomInt(rnd())}`,
     transactionType: 'SalaryPayment',
-    phoneNumber: randomPhoneNumber(),
+    phoneNumber: `+${randomInt(rnd(), 999999999999)}`,
   }
 }
 export function sampleUPIDetails(seed?: number): UPIDetails {

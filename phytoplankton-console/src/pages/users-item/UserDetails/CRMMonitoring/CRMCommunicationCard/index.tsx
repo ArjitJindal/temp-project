@@ -2,7 +2,7 @@ import { PaperClipOutlined } from '@ant-design/icons';
 import CompanyHeader from '../CompanyHeader';
 import styles from './index.module.less';
 import MarkdownViewer from '@/components/markdown/MarkdownViewer';
-import { DATE_TIME_ISO_FORMAT, dayjs } from '@/utils/dayjs';
+import { dayjs, DEFAULT_DATE_TIME_FORMAT } from '@/utils/dayjs';
 
 interface Props {
   title?: string;
@@ -18,7 +18,7 @@ interface Props {
 
 export default function CRMCommunicationCard(props: Props) {
   const { title, body, to, name, createdAt, link, tab, attachments } = props;
-  const date = createdAt ? dayjs(createdAt).format(DATE_TIME_ISO_FORMAT) : '';
+  const date = createdAt ? dayjs(createdAt).format(DEFAULT_DATE_TIME_FORMAT) : '';
   return (
     <div className={styles.root}>
       <div className={styles.header}>
