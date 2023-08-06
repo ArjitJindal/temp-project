@@ -76,7 +76,7 @@ export const config: Config = {
     SLACK_REDIRECT_URI:
       'https://api.flagright.dev/console/slack/oauth_redirect',
     WEBHOOK_REQUEST_TIMEOUT_SEC: 10,
-    INTEGRATION_TEST_API_KEY_ID: 'sawiwhmtql',
+    INTEGRATION_TEST_API_KEY_ID: 'hov2hklpll',
     GOOGLE_SHEETS_CLIENT_EMAIL: `google-sheets-api-usage-metric@linen-waters-385109.iam.gserviceaccount.com`,
     GOOGLE_SHEETS_PRIVATE_KEY: `arn:aws:secretsmanager:${region}:${account}:secret:GoogleSheetsPrivateKey-0WCDHP`,
     MERCHANT_MONITORING_SECRETS_ARN: `arn:aws:secretsmanager:${region}:${account}:secret:MerchantMonitoring-kr2u3Z`,
