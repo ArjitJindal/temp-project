@@ -125,7 +125,6 @@ const mergedColumns = (
     }),
     helper.simple<'caseId'>({
       title: 'Case ID',
-      subtitle: 'Priority',
       key: 'caseId',
       type: CASEID,
     }),
