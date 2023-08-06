@@ -185,6 +185,7 @@ export class MerchantMonitoringService {
       if (!this.scrapflyApiKey) {
         throw new Error('No scrapfly api key')
       }
+
       const options: AxiosRequestConfig = {
         method: 'GET',
         url: `https://api.scrapfly.io/scrape?key=scp-live-${
@@ -192,6 +193,7 @@ export class MerchantMonitoringService {
         }&url=${encodeURIComponent(website)}`,
       }
       const data = await this.axios.request(options)
+
       const text = convert(data.data.result.content, {
         wordwrap: 130,
       })
@@ -285,6 +287,10 @@ export class MerchantMonitoringService {
     try {
       if (!this.openAiApiKey) {
         throw new InternalServerError('No open ai api key')
+      }
+
+      if (!content) {
+        return undefined // Sometimes the source doesn't return anything hence the undefined
       }
 
       const configuration = new Configuration({

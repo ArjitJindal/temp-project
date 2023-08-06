@@ -18,7 +18,7 @@ import { QueryResult } from '@/utils/queries/types';
 import AsyncResourceRenderer from '@/components/common/AsyncResourceRenderer';
 import * as Card from '@/components/ui/Card';
 import { useApi } from '@/api';
-import { useFeatureEnabled } from '@/components/AppWrapper/Providers/SettingsProvider';
+import { useFeatureEnabled, useSettings } from '@/components/AppWrapper/Providers/SettingsProvider';
 import PageTabs, { TABS_LINE_HEIGHT } from '@/components/ui/PageTabs';
 import { keepBackUrl } from '@/utils/backUrl';
 import { makeUrl } from '@/utils/routing';
@@ -26,6 +26,8 @@ import { PAGE_WRAPPER_PADDING } from '@/components/PageWrapper';
 import { useElementSize } from '@/utils/browser';
 import ExpectedTransactionLimits from '@/pages/users-item/UserDetails/BusinessUserDetails/TransactionLimits';
 import BrainIcon from '@/components/ui/icons/brain-icon.react.svg';
+import Tooltip from '@/components/library/Tooltip';
+import { getBranding } from '@/utils/branding';
 interface Props {
   caseItem: Case;
   onReload: () => void;
@@ -38,6 +40,7 @@ function CaseDetails(props: Props) {
   const user = caseItem.caseUsers?.origin ?? caseItem.caseUsers?.destination ?? undefined;
   usePageViewTracker('User Case Details');
   useScrollToFocus();
+  const settings = useSettings();
   const isMLDemoEnabled = useFeatureEnabled('MACHINE_LEARNING_DEMO');
   const navigate = useNavigate();
 
@@ -45,6 +48,7 @@ function CaseDetails(props: Props) {
     .map(({ alertId }) => alertId)
     .filter((alertId): alertId is string => typeof alertId === 'string');
   const alertCommentsRes = useAlertsComments(alertIds);
+  const branding = getBranding();
 
   const rect = useElementSize(headerStickyElRef);
   const entityHeaderHeight = rect?.height ?? 0;
@@ -91,15 +95,24 @@ function CaseDetails(props: Props) {
           ...(user && 'type' in user && user?.type === 'BUSINESS' && isMLDemoEnabled
             ? [
                 {
-                  tab: (
+                  tab: !settings.isAiEnabled ? (
+                    <Tooltip
+                      title={`You need to enable ${branding.companyName} AI Features under Settings to view this tab`}
+                    >
+                      <div className={style.icon}>
+                        <BrainIcon /> <span>&nbsp; Merchant monitoring</span>
+                      </div>
+                    </Tooltip>
+                  ) : (
                     <div className={style.icon}>
                       <BrainIcon /> <span>&nbsp; Merchant monitoring</span>
                     </div>
                   ),
+
                   key: 'ai-merchant-monitoring',
                   children: <AIInsightsCard user={user as InternalBusinessUser} />,
                   isClosable: false,
-                  isDisabled: false,
+                  isDisabled: !settings.isAiEnabled,
                 },
               ]
             : []),

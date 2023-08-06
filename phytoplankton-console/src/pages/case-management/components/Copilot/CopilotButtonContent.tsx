@@ -8,20 +8,85 @@ import { useApi } from '@/api';
 import { message } from '@/components/library/Message';
 import CopilotSources from '@/pages/case-management/components/Copilot/CopilotSources';
 import Modal from '@/components/library/Modal';
+import { useSettings } from '@/components/AppWrapper/Providers/SettingsProvider';
+import Tooltip from '@/components/library/Tooltip';
+import { getBranding } from '@/utils/branding';
 
-export const CopilotButtonContent = ({
-  reasons,
-  caseId,
-  setCommentValue,
-}: {
+interface Props {
   reasons: CaseClosingReasons[];
   setCommentValue: (comment: string) => void;
   caseId: string;
+}
+
+export const CopilotButtonContent = ({ reasons, caseId, setCommentValue }: Props) => {
+  const [copilotResponse, setCopilotResponse] = useState<NarrativeResponse | undefined>();
+  const branding = getBranding();
+  const [showSources, setShowSources] = useState(false);
+  const settings = useSettings();
+
+  return (
+    <>
+      {!settings.isAiEnabled ? (
+        <Tooltip title={`Enable ${branding.companyName} AI Features to generate a narrative`}>
+          <CopilotWrapperContent
+            reasons={reasons}
+            caseId={caseId}
+            setCommentValue={setCommentValue}
+            copilotResponse={copilotResponse}
+            setShowSources={setShowSources}
+            setCopilotResponse={setCopilotResponse}
+          />
+        </Tooltip>
+      ) : (
+        <CopilotWrapperContent
+          reasons={reasons}
+          caseId={caseId}
+          setCommentValue={setCommentValue}
+          copilotResponse={copilotResponse}
+          setShowSources={setShowSources}
+          setCopilotResponse={setCopilotResponse}
+        />
+      )}
+      {copilotResponse?.userPrompts && copilotResponse?.userPrompts?.length > 0 && (
+        <div className={s.copilotPrompts}>
+          {copilotResponse?.userPrompts.map((p) => (
+            <a target="_blank" href={p.link}>
+              <Alert type="info">{p.text ?? ''}</Alert>
+            </a>
+          ))}
+        </div>
+      )}
+
+      <Modal
+        title="ⓘ Copilot Sources"
+        okText="Back"
+        isOpen={showSources}
+        onOk={() => setShowSources(false)}
+        hideFooter
+        onCancel={() => setShowSources(false)}
+      >
+        <CopilotSources attributes={copilotResponse?.attributes || []} />
+      </Modal>
+    </>
+  );
+};
+
+const CopilotWrapperContent = ({
+  reasons,
+  caseId,
+  copilotResponse,
+  setShowSources,
+  setCommentValue,
+  setCopilotResponse,
+}: Props & {
+  copilotResponse?: NarrativeResponse;
+  setShowSources: (show: boolean) => void;
+  setCopilotResponse: (response: NarrativeResponse | undefined) => void;
 }) => {
   const api = useApi();
   const [copilotLoading, setCopilotLoading] = useState(false);
-  const [copilotResponse, setCopilotResponse] = useState<NarrativeResponse | undefined>();
-  const [showSources, setShowSources] = useState(false);
+
+  const settings = useSettings();
 
   const onCopilotNarrative = async () => {
     try {
@@ -40,6 +105,7 @@ export const CopilotButtonContent = ({
       setCopilotLoading(false);
     }
   };
+
   return (
     <>
       {(reasons.length > 0 || (copilotResponse?.userPrompts?.length ?? 0) > 0) && (
@@ -51,6 +117,7 @@ export const CopilotButtonContent = ({
               onClick={onCopilotNarrative}
               type={'TEXT'}
               icon={<BrainLineIcon />}
+              isDisabled={!settings?.isAiEnabled}
             >
               {copilotLoading ? 'Loading...' : 'Ask Copilot'}
             </Button>
@@ -66,25 +133,6 @@ export const CopilotButtonContent = ({
           )}
         </div>
       )}
-      {copilotResponse?.userPrompts && copilotResponse?.userPrompts?.length > 0 && (
-        <div className={s.copilotPrompts}>
-          {copilotResponse?.userPrompts.map((p) => (
-            <a target="_blank" href={p.link}>
-              <Alert type="info">{p.text ?? ''}</Alert>
-            </a>
-          ))}
-        </div>
-      )}
-      <Modal
-        title="ⓘ Copilot Sources"
-        okText="Back"
-        isOpen={showSources}
-        onOk={() => setShowSources(false)}
-        hideFooter
-        onCancel={() => setShowSources(false)}
-      >
-        <CopilotSources attributes={copilotResponse?.attributes || []} />
-      </Modal>
     </>
   );
 };
