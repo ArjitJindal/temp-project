@@ -270,7 +270,7 @@ export const rules: ExecutedRulesResult[] = ruleInstances.map((ri, i) => ({
   ruleHit: true,
   ruleHitMeta: {
     falsePositiveDetails:
-      _.random(0, 10) < 0.2
+      _.random(0, 10) < 2
         ? { isFalsePositive: true, confidenceScore: _.random(59, 82) }
         : { isFalsePositive: false, confidenceScore: 100 },
     hitDirections: i % 2 ? ['ORIGIN'] : ['DESTINATION'],
