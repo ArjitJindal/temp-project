@@ -87,9 +87,9 @@ import {
   ConsumerUserSegmentRuleFilterParameter,
 } from './user-filters/user-consumer-segment'
 import {
-  TransactionProductTypeRuleFilter,
-  TransactionProductTypeRuleFilterParameter,
-} from './transaction-filters/transaction-product-type'
+  TransactionProductTypesRuleFilter,
+  TransactionProductTypesRuleFilterParameter,
+} from './transaction-filters/transaction-product-types'
 import {
   UserKycStatusRuleFilter,
   UserKycStatusRuleFilterParameter,
@@ -113,7 +113,7 @@ export type TransactionFilters = PaymentFilterRuleFilterParameter &
   TransactionCountryRuleFilterParameter &
   CheckDirectionRuleFilterParameter &
   TransactionAmountRuleFilterParameter &
-  TransactionProductTypeRuleFilterParameter &
+  TransactionProductTypesRuleFilterParameter &
   TransactionTagsRuleFilterParameter
 
 export type TransactionHistoricalFilters =
@@ -148,7 +148,7 @@ const _TRANSACTION_FILTERS = [
   TransactionCountryRuleFilter,
   TransactionAmountRuleFilter,
   CheckDirectionRuleFilter,
-  TransactionProductTypeRuleFilter,
+  TransactionProductTypesRuleFilter,
   TransactionTagsRuleFilter,
 ]
 

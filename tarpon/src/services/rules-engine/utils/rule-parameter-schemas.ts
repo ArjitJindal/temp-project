@@ -395,19 +395,22 @@ export const CARD_PAYMENT_CHANNELS_OPTIONAL_SCHEMA = (
     nullable: true,
   } as const)
 
-export const PRODUCT_TYPE_SCHEMA = (options?: SchemaOptions) =>
+export const PRODUCT_TYPES_SCHEMA = (options?: SchemaOptions) =>
   ({
-    type: 'string',
     ...uiSchema(options?.uiSchema, {
-      subtype: 'PRODUCT_TYPE',
+      subtype: 'PRODUCT_TYPES',
     }),
     title: options?.title || 'Product type',
     description: options?.description,
+    type: 'array',
+    items: {
+      type: 'string',
+    },
   } as const)
 
-export const PRODUCT_TYPE_SCHEMA_OPTIONAL = (options?: SchemaOptions) =>
+export const PRODUCT_TYPES_SCHEMA_OPTIONAL = (options?: SchemaOptions) =>
   ({
-    ...PRODUCT_TYPE_SCHEMA(options),
+    ...PRODUCT_TYPES_SCHEMA(options),
     nullable: true,
   } as const)
 

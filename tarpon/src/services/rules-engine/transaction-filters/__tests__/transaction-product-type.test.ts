@@ -1,4 +1,4 @@
-import { TransactionProductTypeRuleFilter } from '../transaction-product-type'
+import { TransactionProductTypesRuleFilter } from '../transaction-product-types'
 import { getTestTenantId } from '@/test-utils/tenant-test-utils'
 import { getDynamoDbClient } from '@/utils/dynamodb'
 import { getTestTransaction } from '@/test-utils/transaction-test-utils'
@@ -7,14 +7,14 @@ const dynamodb = getDynamoDbClient()
 
 test('Product type missing', async () => {
   expect(
-    await new TransactionProductTypeRuleFilter(
+    await new TransactionProductTypesRuleFilter(
       getTestTenantId(),
       {
         transaction: getTestTransaction({
           productType: undefined,
         }),
       },
-      { productType: 'ELECTRONICS' },
+      { productTypes: ['ELECTRONICS'] },
       dynamodb
     ).predicate()
   ).toBe(false)
@@ -22,14 +22,14 @@ test('Product type missing', async () => {
 
 test('Product type matches the filter', async () => {
   expect(
-    await new TransactionProductTypeRuleFilter(
+    await new TransactionProductTypesRuleFilter(
       getTestTenantId(),
       {
         transaction: getTestTransaction({
           productType: 'ELECTRONICS',
         }),
       },
-      { productType: 'ELECTRONICS' },
+      { productTypes: ['ELECTRONICS'] },
       dynamodb
     ).predicate()
   ).toBe(true)
@@ -37,21 +37,21 @@ test('Product type matches the filter', async () => {
 
 test("Product type doesn't match the filter", async () => {
   expect(
-    await new TransactionProductTypeRuleFilter(
+    await new TransactionProductTypesRuleFilter(
       getTestTenantId(),
       {
         transaction: getTestTransaction({
           productType: 'ELECTRONICS',
         }),
       },
-      { productType: 'FURNITURE' },
+      { productTypes: ['FURNITURE'] },
       dynamodb
     ).predicate()
   ).toBe(false)
 })
 test('Filter not specified, transaction product type exists', async () => {
   expect(
-    await new TransactionProductTypeRuleFilter(
+    await new TransactionProductTypesRuleFilter(
       getTestTenantId(),
       {
         transaction: getTestTransaction({
@@ -61,12 +61,12 @@ test('Filter not specified, transaction product type exists', async () => {
       {},
       dynamodb
     ).predicate()
-  ).toBe(false)
+  ).toBe(true)
 })
 
 test('Filter not specified, transaction product type missing', async () => {
   expect(
-    await new TransactionProductTypeRuleFilter(
+    await new TransactionProductTypesRuleFilter(
       getTestTenantId(),
       {
         transaction: getTestTransaction({
@@ -76,19 +76,19 @@ test('Filter not specified, transaction product type missing', async () => {
       {},
       dynamodb
     ).predicate()
-  ).toBe(false)
+  ).toBe(true)
 })
 
 test('Transaction product type matches a substring of the filter', async () => {
   expect(
-    await new TransactionProductTypeRuleFilter(
+    await new TransactionProductTypesRuleFilter(
       getTestTenantId(),
       {
         transaction: getTestTransaction({
           productType: 'ELECTRONICS',
         }),
       },
-      { productType: 'ELEC' },
+      { productTypes: ['ELEC'] },
       dynamodb
     ).predicate()
   ).toBe(false)
@@ -96,14 +96,14 @@ test('Transaction product type matches a substring of the filter', async () => {
 
 test('Transaction product type matches a different case of the filter', async () => {
   expect(
-    await new TransactionProductTypeRuleFilter(
+    await new TransactionProductTypesRuleFilter(
       getTestTenantId(),
       {
         transaction: getTestTransaction({
           productType: 'Electronics',
         }),
       },
-      { productType: 'electronics' },
+      { productTypes: ['ELECTRONICS'] },
       dynamodb
     ).predicate()
   ).toBe(false)
