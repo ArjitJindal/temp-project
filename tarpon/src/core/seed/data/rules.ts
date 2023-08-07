@@ -4,6 +4,9 @@ import { pickRandom, randomArray } from '@/utils/prng'
 import { RuleInstance } from '@/@types/openapi-internal/RuleInstance'
 import { RuleAction } from '@/@types/openapi-internal/RuleAction'
 import { SANCTIONS_DETAILS_ENTITY_TYPES } from '@/@types/openapi-internal-custom/SanctionsDetailsEntityType'
+import { SanctionsBusinessUserRuleParameters } from '@/services/rules-engine/user-rules/sanctions-business-user'
+import { SanctionsBankUserRuleParameters } from '@/services/rules-engine/user-rules/sanctions-bank-name'
+import { SanctionsConsumerUserRuleParameters } from '@/services/rules-engine/user-rules/sanctions-consumer-user'
 
 export const ruleInstances: RuleInstance[] = [
   {
@@ -111,27 +114,42 @@ export const ruleInstances: RuleInstance[] = [
         transactionAmountThreshold: {
           USD: 10000,
         },
-      },
+        fuzziness: 20,
+        ongoingScreening: false,
+        screeningTypes: ['PEP'],
+      } as SanctionsConsumerUserRuleParameters,
       HIGH: {
         transactionAmountThreshold: {
           USD: 10000,
         },
+        fuzziness: 20,
+        ongoingScreening: false,
+        screeningTypes: ['PEP'],
       },
       MEDIUM: {
         transactionAmountThreshold: {
           USD: 10000,
         },
+        fuzziness: 20,
+        ongoingScreening: false,
+        screeningTypes: ['PEP'],
       },
       LOW: {
         transactionAmountThreshold: {
           USD: 10000,
         },
+        fuzziness: 20,
+        ongoingScreening: false,
+        screeningTypes: ['PEP'],
       },
       VERY_LOW: {
         transactionAmountThreshold: {
           USD: 10000,
           ADA: 1000,
         },
+        fuzziness: 20,
+        ongoingScreening: false,
+        screeningTypes: ['PEP'],
       },
     },
     riskLevelActions: {
@@ -148,7 +166,7 @@ export const ruleInstances: RuleInstance[] = [
     updatedAt: 1688114634781,
     runCount: 295,
     hitCount: 102,
-  },
+  } as RuleInstance,
   {
     id: 'skn2ls',
     ruleId: 'R-32',
@@ -165,27 +183,47 @@ export const ruleInstances: RuleInstance[] = [
         transactionAmountThreshold: {
           USD: 10000,
         },
-      },
+        fuzziness: 20,
+        ongoingScreening: false,
+        screeningTypes: ['PEP'],
+        resolveIban: false,
+      } as SanctionsBankUserRuleParameters,
       HIGH: {
         transactionAmountThreshold: {
           USD: 10000,
         },
+        fuzziness: 20,
+        ongoingScreening: false,
+        screeningTypes: ['PEP'],
+        resolveIban: false,
       },
       MEDIUM: {
         transactionAmountThreshold: {
           USD: 10000,
         },
+        fuzziness: 20,
+        ongoingScreening: false,
+        screeningTypes: ['PEP'],
+        resolveIban: false,
       },
       LOW: {
         transactionAmountThreshold: {
           USD: 10000,
         },
+        fuzziness: 20,
+        ongoingScreening: false,
+        screeningTypes: ['PEP'],
+        resolveIban: false,
       },
       VERY_LOW: {
         transactionAmountThreshold: {
           USD: 10000,
           ADA: 1000,
         },
+        fuzziness: 20,
+        ongoingScreening: false,
+        screeningTypes: ['PEP'],
+        resolveIban: false,
       },
     },
     riskLevelActions: {
@@ -220,27 +258,42 @@ export const ruleInstances: RuleInstance[] = [
         transactionAmountThreshold: {
           USD: 10000,
         },
-      },
+        fuzziness: 20,
+        ongoingScreening: false,
+        screeningTypes: ['PEP', 'SANCTION', 'ADVERSE_MEDIA'],
+      } as SanctionsBusinessUserRuleParameters,
       HIGH: {
         transactionAmountThreshold: {
           USD: 10000,
         },
-      },
+        fuzziness: 20,
+        ongoingScreening: false,
+        screeningTypes: ['PEP', 'SANCTION', 'ADVERSE_MEDIA'],
+      } as SanctionsBusinessUserRuleParameters,
       MEDIUM: {
         transactionAmountThreshold: {
           USD: 10000,
         },
+        fuzziness: 20,
+        ongoingScreening: false,
+        screeningTypes: ['PEP', 'SANCTION', 'ADVERSE_MEDIA'],
       },
       LOW: {
         transactionAmountThreshold: {
           USD: 10000,
         },
+        fuzziness: 20,
+        ongoingScreening: false,
+        screeningTypes: ['PEP', 'SANCTION', 'ADVERSE_MEDIA'],
       },
       VERY_LOW: {
         transactionAmountThreshold: {
           USD: 10000,
           ADA: 1000,
         },
+        fuzziness: 20,
+        ongoingScreening: false,
+        screeningTypes: ['PEP', 'SANCTION', 'ADVERSE_MEDIA'],
       },
     },
     riskLevelActions: {

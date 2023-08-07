@@ -221,8 +221,29 @@ export class DashboardStatsRepository {
         },
       },
       {
+        $addFields: {
+          userHitRules: {
+            $concatArrays: [
+              {
+                $ifNull: ['$caseUsers.origin.hitRules', []],
+              },
+              {
+                $ifNull: ['$caseUsers.destination.hitRules', []],
+              },
+            ],
+          },
+        },
+      },
+      {
+        $addFields: {
+          allHitRules: {
+            $concatArrays: ['$caseTransactions.hitRules', '$userHitRules'],
+          },
+        },
+      },
+      {
         $unwind: {
-          path: '$caseTransactions.hitRules',
+          path: '$allHitRules',
           preserveNullAndEmptyArrays: false,
         },
       },
@@ -239,8 +260,8 @@ export class DashboardStatsRepository {
                 },
               },
             },
-            ruleId: '$caseTransactions.hitRules.ruleId',
-            ruleInstanceId: '$caseTransactions.hitRules.ruleInstanceId',
+            ruleId: '$allHitRules.ruleId',
+            ruleInstanceId: '$allHitRules.ruleInstanceId',
           },
           hitCount: {
             $sum: 1,
@@ -268,6 +289,7 @@ export class DashboardStatsRepository {
         },
       },
     ]
+
     await casesCollection.aggregate(pipeline).next()
   }
 

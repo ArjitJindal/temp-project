@@ -1,6 +1,6 @@
 import { data as users } from './users'
 import { transactions } from '@/core/seed/data/transactions'
-import { sampleUserCase } from '@/core/seed/samplers/cases'
+import { sampleTransactionUserCase } from '@/core/seed/samplers/cases'
 import { sampleTimestamp } from '@/core/seed/samplers/timestamp'
 import { Case } from '@/@types/openapi-internal/Case'
 import { InternalTransaction } from '@/@types/openapi-internal/InternalTransaction'
@@ -22,7 +22,7 @@ const init = () => {
         return t.destinationUserId === user.userId
       })
     const destinationCase: Case = {
-      ...sampleUserCase(
+      ...sampleTransactionUserCase(
         {
           transactions: transactionsForUserADestination,
           userId: user.userId,
@@ -34,7 +34,7 @@ const init = () => {
     }
 
     const originCase: Case = {
-      ...sampleUserCase(
+      ...sampleTransactionUserCase(
         {
           transactions: transactionsForUserAsOrigin,
           userId: user.userId,

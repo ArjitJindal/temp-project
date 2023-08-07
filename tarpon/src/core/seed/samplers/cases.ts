@@ -1,4 +1,5 @@
 import { uniq } from 'lodash'
+import { transactionRules, userRules } from '../data/rules'
 import { sampleTimestamp } from './timestamp'
 import { Case } from '@/@types/openapi-internal/Case'
 import { InternalTransaction } from '@/@types/openapi-internal/InternalTransaction'
@@ -64,7 +65,7 @@ Alerts were generated due to: ${ruleDescriptions
 ${footer}`
 }
 
-export function sampleUserCase(
+export function sampleTransactionUserCase(
   params: {
     transactions: InternalTransaction[]
     userId: string
@@ -75,27 +76,24 @@ export function sampleUserCase(
 ): Case {
   const { transactions, origin, destination } = params
 
-  const ruleHits = uniq(transactions.flatMap((t) => t.hitRules)).filter(
-    (rh) => {
-      if (rh.ruleHitMeta?.hitDirections?.includes('ORIGIN') && origin) {
-        return true
-      }
-      if (
-        rh.ruleHitMeta?.hitDirections?.includes('DESTINATION') &&
-        destination
-      ) {
-        return true
-      }
-      return false
+  let ruleHits = uniq(transactions.flatMap((t) => t.hitRules)).filter((rh) => {
+    if (rh.ruleHitMeta?.hitDirections?.includes('ORIGIN') && origin) {
+      return true
     }
-  )
+    if (rh.ruleHitMeta?.hitDirections?.includes('DESTINATION') && destination) {
+      return true
+    }
+    return false
+  })
 
   let user = destination
   if (origin) {
     user = origin
   }
 
+  ruleHits = ruleHits.concat(user?.hitRules ?? [])
   const caseId = `C-${counter}`
+
   counter++
   const caseStatus = pickRandom(
     CASE_STATUSS.filter((s) => !isStatusInReview(s)),
@@ -177,5 +175,8 @@ export function sampleAlert(
     numberOfTransactionsHit: params.transactions.length,
     priority: pickRandom(['P1', 'P2', 'P3', 'P4'], Math.random()),
     transactionIds: params.transactions.map((t) => t.transactionId),
+    ruleNature: userRules
+      .concat(transactionRules)
+      .find((p) => p.ruleInstanceId === params.ruleHit.ruleInstanceId)?.nature,
   }
 }
