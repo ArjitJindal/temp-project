@@ -1051,21 +1051,6 @@ export const companies: CompanySeedData[] = [
     ],
   },
   {
-    name: 'InnoTech',
-    industries: ['Technology Solutions'],
-    website: 'www.innotech.com',
-    contactEmails: ['info@innotech.com', 'support@innotech.com'],
-    countryCode: 'US',
-    products: ['Software Development', 'IT Consulting'],
-    location: 'Seattle, USA',
-    companySize: 150,
-    annualRevenue: 40000000,
-    summaries: [
-      'InnoTech drives innovation, offering cutting-edge software development and expert IT consulting services for businesses to thrive in the digital age.',
-      'At InnoTech, we believe in driving innovation. Through our cutting-edge software development and expert IT consulting services, we help businesses thrive in the digital age.',
-    ],
-  },
-  {
     name: 'HealthFit',
     industries: ['Health and Fitness'],
     website: 'www.healthfit.com',

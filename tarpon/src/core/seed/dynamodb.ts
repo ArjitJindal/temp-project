@@ -75,5 +75,7 @@ export async function seedDynamo(
   logger.info('Setting tenant settings...')
   await tenantRepo.createOrUpdateTenantSettings({
     features: FEATURES,
+    isAiEnabled: true,
+    isPaymentApprovalEnabled: true,
   })
 }

@@ -1,4 +1,5 @@
 import { uniq } from 'lodash'
+import { compile } from 'handlebars'
 import { transactionRules, userRules } from '../data/rules'
 import { sampleTimestamp } from './timestamp'
 import { Case } from '@/@types/openapi-internal/Case'
@@ -16,6 +17,25 @@ import { AlertStatus } from '@/@types/openapi-internal/AlertStatus'
 
 let counter = 1
 let alertCounter = 1
+
+const exampleNarrative = `This SAR is being filed due to suspicious activity involving unexplained large cash deposits and potential structuring of transactions, indicating possible illicit financial behavior. The following details highlight the suspicious nature of the activities observed:
+
+1. Unexplained Large Cash Deposits:
+Over the past six months, the subject, {{ name }}, has made a series of unusually large cash deposits into his personal bank account. These deposits, each exceeding $10,000, are significantly higher than his usual deposit amounts. The sources of these funds remain unexplained and raise suspicions of illicit activities such as money laundering or unreported income.
+
+2. Structuring of Transactions:
+{{ name }} has also engaged in a pattern of structuring transactions by consistently making multiple cash deposits just below the $10,000 threshold that triggers the reporting requirement for the bank. This behavior suggests an attempt to evade reporting and conceal the true nature and extent of his financial transactions.
+
+3. Inconsistent Business Activities:
+Upon investigation, it was discovered that {{ name }} is self-employed and operates a small retail business. However, the reported income from his business does not align with the significant cash deposits made into his personal account. The lack of a legitimate explanation for the substantial influx of funds raises suspicions regarding the true source of these deposits.
+
+4. Evasive Behavior:
+During routine inquiries by bank personnel, {{ name }} exhibited evasive behavior, providing vague or inconsistent explanations for the origin of the cash deposits. His reluctance to provide transparent and verifiable information further contributes to the suspicion surrounding his financial activities.
+
+5. Lack of Tangible Assets or Investments:
+Despite the substantial cash deposits, there is no evidence of corresponding investments, significant purchases, or other substantial financial transactions associated with {{ name }}. The absence of a valid explanation for the large cash influx raises concerns regarding potential money laundering or undisclosed income.
+Based on the aforementioned suspicious activity, there is reasonable suspicion that {{ name }} may be involved in illicit financial activities, such as money laundering or tax evasion. This report is being filed to notify the appropriate authorities and provide relevant information for further investigation into the matter.
+`
 
 export function generateNarrative(
   ruleDescriptions: string[],
@@ -35,21 +55,27 @@ export function generateNarrative(
     country = user.legalEntity.companyRegistrationDetails?.registrationCountry
     websites = user.legalEntity.contactDetails?.websites
   }
+
+  if (!reasons.includes('False positive')) {
+    const tpl = compile(exampleNarrative)
+    return tpl({ user: name })
+  }
+
   const footer = reasons
     .map((reason) => {
       switch (reason) {
         case 'Anti-money laundering':
-          return 'This case looks suspicious from an AML perspective.'
+          return 'This case looks suspicious from an AML perspective due to unexplained large cash deposits and the structuring of transactions.'
         case 'Documents collected':
-          return 'Documents have been collected from the user.'
+          return 'Identity and proof-of-fund documents have been collected from the user and align with our KYC checks.'
         case 'False positive':
           return 'This case can be closed as no significant suspicious activity was found upon investigation.'
         case 'Fraud':
-          return 'This case looks suspicious from a Fraud perspective.'
+          return 'This case looks suspicious from a Fraud perspective due to a steadily increasing transaction amount at the same time daily.'
         case 'Terrorist financing':
           return 'This user is potentially financing terrorism.'
         case 'Suspicious activity reported (SAR)':
-          return 'The case has been closed as an SAR has been raised.'
+          return 'The case has been closed as an SAR has been submitted to the FNTT.'
         default:
           return 'Investigation completed.'
       }
@@ -58,10 +84,7 @@ export function generateNarrative(
 
   return `The following case has been closed for ${name}, ${country}. ${
     websites && websites?.length > 0 ? `\nWebsites: ${websites?.join(',')}` : ''
-  }. ${narrativeStatements}
-Alerts were generated due to: ${ruleDescriptions
-    .map((r) => r.charAt(0).toLowerCase() + r.slice(1))
-    .join(', ')}.  
+  } ${narrativeStatements}. 
 ${footer}`
 }
 
