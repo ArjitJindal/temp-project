@@ -32,7 +32,9 @@ export const AssigneesDropdown: React.FC<Props> = ({
         allowClear
         filterOption={(input, option) => {
           const accountId = option?.value as string;
-          return users[accountId].name.includes(input) || users[accountId].email.includes(input);
+          return (
+            users[accountId]?.name?.includes(input) || users[accountId]?.email?.includes(input)
+          );
         }}
         style={{ width: '100%' }}
         disabled={loadingUsers}
