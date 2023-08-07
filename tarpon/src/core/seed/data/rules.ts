@@ -173,7 +173,7 @@ export const ruleInstances: RuleInstance[] = [
     casePriority: 'P1',
     parameters: {},
     action: 'SUSPEND',
-    type: 'TRANSACTION',
+    type: 'USER',
     ruleNameAlias: 'Screening on Bank name',
     ruleDescriptionAlias:
       'Sanctions/PEP/Adverse media screening on Bank names. IBAN number resolution option available in rule configuration.',
