@@ -26,7 +26,7 @@ export const RuleHitInsightsTag: React.FC<Props> = ({ percentage, runs }) => {
         tooManyHits
           ? 'This rule has too many hits. This potentially could lead to a large volume of false positives. Perhaps it is time to re-configure'
           : noRuns
-          ? 'This run has not run for any transactions or users. Perhaps you should have another look at the configuration.'
+          ? 'This rule has not run for any transactions or users. Perhaps you should have another look at the configuration.'
           : 'This rule has had no hits. You could re-check the configuration to make sure you are targeting the right attributes.'
       }
     >
