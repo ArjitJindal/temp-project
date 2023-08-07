@@ -1,3 +1,4 @@
+<?xml version="1.0" encoding="UTF-8"?>
 <!-- Official schema source: https://www.fincen.gov/sites/default/files/schema/base/EFL_SARXBatchSchema.xsd -->
 <!-- Official schema user guide: https://bsaefiling.fincen.treas.gov/docs/XMLUserGuide_FinCENSAR.pdf-->
 
@@ -5,17 +6,16 @@
 It just removes 'xsd:redefine' part from the official schema. -->
 
 
-<?xml version="1.0" encoding="UTF-8"?>
 <!-- edited with XMLSpy v2017 (http://www.altova.com) by FinCEN (Department of the Treasury - Financial Crimes Enforcement Network) -->
 <!-- current version: 1.2 (12/17/2021)-->
-<!-- Revision History: 
+<!-- Revision History:
 Version 1.2 (12/17/2021) -
-1. Changed the maximum character limit for the OccupationBusinessText element from 30 (RestrictString30) to 50 (RestrictString50); 
+1. Changed the maximum character limit for the OccupationBusinessText element from 30 (RestrictString30) to 50 (RestrictString50);
 2. Added a new retriction type for the IndividualBirthDatText element: DateYYYYMMDDOrBlankTypeDOB - which now allows "00" to be accepted for the month and/or day portion of a date of birth when the month and/or day of birth is unknown while the year is known.
-Version 1.1 (06/22/2018) - 
+Version 1.1 (06/22/2018) -
 1. Changed the ValidateCyberEventIndicatorsTypeCode enumeration code for "Other" from "11" to "999";
 2. Added new type "RestrictLong14" and assigned to the EFilingPriorDocumentNumber element to ensure that when this element is recorded, it must contain max 14-digit numeric value;
-3. Added the pattern "\S+( +\S+)*|" to the type restrictions associated with the following elements to ensure the value does not contain leading/trailing spaces, carriage returns (&#13;), line feeds (&#10;) and/or horizontal tabs (&#09;): 
+3. Added the pattern "\S+( +\S+)*|" to the type restrictions associated with the following elements to ensure the value does not contain leading/trailing spaces, carriage returns (&#13;), line feeds (&#10;) and/or horizontal tabs (&#09;):
   RestrictString2 = RawCountryCodeText, OtherIssuerCountryText
   RestrictString3 = RawStateCodeText, OtherIssuerStateText
   RestrictString6 = NAICSCode, PhoneNumberExtensionText
@@ -254,8 +254,8 @@ Version 1.0 (01/26/2018) - Initial version-->
 				<xsd:attribute name="SeqNum" type="xsd:long" use="required"/>
 	</xsd:complexType>
 	<!-- End of redefine -->
-	
-	
+
+
 	<xsd:element name="EFilingBatchXML">
 		<xsd:complexType>
 			<xsd:sequence>
@@ -286,7 +286,7 @@ Version 1.0 (01/26/2018) - Initial version-->
 						<xsd:element name="CyberEventIndicators" type="CyberEventIndicatorsType" minOccurs="0" maxOccurs="99"/>
 						<xsd:element name="Assets" type="AssetsTableType" minOccurs="0" maxOccurs="31"/>
 						<xsd:element name="AssetsAttribute" type="AssetsAttributeType" minOccurs="0" maxOccurs="396"/>
-						<xsd:element name="ActivityNarrativeInformation" type="ActivityNarrativeInformationType" maxOccurs="5"/>
+						<xsd:element name="ActivityNarrativeInformation" type="ActivityNarrativeInformationType"  maxOccurs="5"/>
 					</xsd:sequence>
 				</xsd:extension>
 			</xsd:complexContent>

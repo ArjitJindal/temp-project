@@ -16,6 +16,7 @@ import UserTypeInput from './custom/UserTypeInput';
 import CurrencyInput from './custom/CurrencyInput';
 import PaymentFiltersInput from './custom/PaymentFiltersInput';
 import TransactionAmountThresholdsInput from './custom/TransactionAmountThresholdsInput';
+import Indicator from './custom/fincen/Indicator';
 import { InputProps } from '@/components/library/Form';
 
 // todo: fix any
@@ -59,6 +60,9 @@ export default function PropertyInput(props: Props) {
   }
   if (uiSchema['ui:subtype'] === 'PAYMENT_CHANNELS') {
     return <PaymentChannelInput {...props} uiSchema={uiSchema} />;
+  }
+  if (uiSchema['ui:subtype'] === 'FINCEN_INDICATOR') {
+    return <Indicator {...props} uiSchema={uiSchema} />;
   }
 
   const schemaType = schema.oneOf ? 'object' : schema.type;

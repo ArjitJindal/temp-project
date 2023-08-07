@@ -23,8 +23,8 @@ import { RuleHitDirection } from '@/@types/openapi-public/RuleHitDirection'
   Helpers to convert Flagright's data structures to FinCEN data structures
  */
 
-export function indicator(value: boolean): JointReportIndicator {
-  return value ? 'Y' : ''
+export function indicator(value: boolean): JointReportIndicator | undefined {
+  return value ? 'Y' : undefined
 }
 
 export function partyNameByConsumerName(

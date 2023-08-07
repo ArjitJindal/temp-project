@@ -16,3 +16,19 @@ export const maxLength =
     }
     return null;
   };
+
+export const pattern = (pattern: string): Validator<unknown> => {
+  let re: RegExp;
+  try {
+    re = new RegExp(pattern);
+  } catch (e) {
+    console.warn(`Invalid regexp: ${pattern}`);
+    return () => null;
+  }
+  return (value) => {
+    if (typeof value === 'string' && !re.test(value)) {
+      return `This field should match pattern "${pattern}"`;
+    }
+    return null;
+  };
+};

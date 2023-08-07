@@ -46,6 +46,26 @@
     }
   }
 
+  &.isInvalid {
+    &,
+    &.isActive,
+    &.isPassed {
+      .stepNumber {
+        background-color: @fr-colors-v2-alert-critical;
+        color: white;
+      }
+    }
+
+    &.isActive {
+      .stepTitle {
+        &,
+        .optional {
+          color: @fr-colors-v2-alert-critical;
+        }
+      }
+    }
+  }
+
   &.isPassed,
   &.isActive {
     .stepNumber {

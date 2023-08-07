@@ -3,6 +3,7 @@ import Component from './index';
 import { UseCase } from '@/pages/storybook/components';
 import User3LineIcon from '@/components/ui/icons/Remix/user/user-3-line.react.svg';
 import EarthLineIcon from '@/components/ui/icons/Remix/map/earth-line.react.svg';
+import EBikeFillIcon from '@/components/ui/icons/Remix/map/e-bike-fill.react.svg';
 
 export default function (): JSX.Element {
   const [active, setActive] = useState('first_item');
@@ -21,6 +22,11 @@ export default function (): JSX.Element {
               key: 'second_item',
               title: 'Second item',
             },
+            {
+              key: 'third_item',
+              title: 'Invalid item',
+              isInvalid: true,
+            },
           ]}
         />
       </UseCase>
@@ -38,6 +44,12 @@ export default function (): JSX.Element {
               key: 'second_item',
               icon: <EarthLineIcon />,
               title: 'Second item',
+            },
+            {
+              key: 'third_item',
+              icon: <EBikeFillIcon />,
+              title: 'Invalid item',
+              isInvalid: true,
             },
           ]}
         />

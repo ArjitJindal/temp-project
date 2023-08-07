@@ -12,6 +12,7 @@ interface Props {
   noBorder?: boolean;
   isCollapsable?: boolean;
   isCollapsedByDefault?: boolean;
+  isInvalid?: boolean;
 }
 
 const Root = (props: Props) => {
@@ -23,18 +24,30 @@ const Root = (props: Props) => {
     noBorder = false,
     isCollapsable = false,
     isCollapsedByDefault = false,
+    isInvalid = false,
   } = props;
 
   const [isCollapsed, setCollapsed] = useState(isCollapsable && isCollapsedByDefault);
 
+  const showInvalidState = isInvalid && isCollapsed;
+
   return (
-    <div className={cn(s.root, className, disabled && s.disabled, noBorder && s.noBorder)}>
+    <div
+      className={cn(
+        s.root,
+        className,
+        disabled && s.disabled,
+        noBorder && s.noBorder,
+        showInvalidState && s.isInvalid,
+      )}
+    >
       <Column>
         {header && (
           <Header
             isCollapsable={isCollapsable}
             isCollapsed={isCollapsed}
             setCollapsed={setCollapsed}
+            isInvalid={showInvalidState}
             {...header}
           />
         )}

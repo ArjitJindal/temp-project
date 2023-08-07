@@ -9,6 +9,7 @@ type Step = {
   description: string;
   isOptional?: boolean;
   isUnfilled?: boolean;
+  isInvalid?: boolean;
 };
 interface Props {
   steps: Step[];
@@ -32,7 +33,7 @@ export default function Stepper(props: Props) {
         {steps.map((step, i) => {
           const isPassed = i < number;
           const isActive = active === step.key;
-          const isUnfilled = step.isUnfilled;
+          const { isUnfilled, isInvalid } = step;
           return (
             <div
               key={step.key}
@@ -40,11 +41,12 @@ export default function Stepper(props: Props) {
                 [s.isPassed]: isPassed,
                 [s.isActive]: isActive,
                 [s.inUnfilled]: isUnfilled,
+                [s.isInvalid]: isInvalid,
               })}
               onClick={() => handleStepClick(step.key)}
             >
               <div className={s.stepNumber}>
-                {isPassed && (isUnfilled ? <MoreLineIcon /> : <CheckLineIcon />)}
+                {isPassed && (isUnfilled || isInvalid ? <MoreLineIcon /> : <CheckLineIcon />)}
                 {!isPassed && i + 1}
               </div>
               <div>

@@ -5,21 +5,23 @@ import {
   FormValidators,
   isArrayFieldValidator,
   isError,
+  isResultValid,
   isSimpleFieldValidator,
   NestedValidationResult,
   ObjectFieldValidator,
   ValidationError,
 } from '@/components/library/Form/utils/validation/types';
-import { removeEmpty } from '@/utils/json';
+
+export interface FormValidationResult<FormValues> {
+  formValidationErrors?: ValidationError[];
+  fieldValidationErrors?: { [name in keyof FormValues]?: NestedValidationResult };
+}
 
 export function validateForm<FormValues>(
   formValues: FormValues,
   formValidators?: FormValidators<FormValues>,
   fieldValidators?: FieldValidators<FormValues>,
-): null | {
-  formValidationErrors?: ValidationError[];
-  fieldValidationErrors?: { [name in keyof FormValues]?: NestedValidationResult };
-} {
+): null | FormValidationResult<FormValues> {
   const formValidationErrors: ValidationError[] = (formValidators ?? [])
     .map((validator) => validator(formValues))
     .filter((x): x is ValidationError => x != null);
@@ -71,7 +73,7 @@ export function validateField<T>(
       console.warn(`Wrong value type, expected array: ${JSON.stringify(value)}`);
     }
     nestedResult = ((value as any) ?? []).map((x: any) =>
-      validateField(fieldValidator.itemValidator, removeEmpty(x)),
+      validateField(fieldValidator.itemValidator, x),
     );
   } else {
     const objectValidator: ObjectFieldValidator<T> = fieldValidator;
@@ -79,8 +81,8 @@ export function validateField<T>(
     for (const key of Object.keys(objectValidator)) {
       const subfieldValidator = objectValidator[key];
       if (subfieldValidator != null) {
-        const result = validateField(subfieldValidator, removeEmpty(value?.[key]));
-        if (result != null) {
+        const result = validateField(subfieldValidator, value?.[key]);
+        if (!isResultValid(result)) {
           nestedResult[key] = result;
         }
       }
@@ -90,11 +92,11 @@ export function validateField<T>(
     nestedResult[$SELF_VALIDATION] = fieldValidator[$SELF_VALIDATION]?.(value);
   }
 
-  if (nestedResult[$SELF_VALIDATION] != null || Object.keys(nestedResult).length > 0) {
-    return nestedResult;
+  if (isResultValid(nestedResult)) {
+    return null;
   }
 
-  return null;
+  return nestedResult;
 }
 
 export function validationResultToErrorMessage(

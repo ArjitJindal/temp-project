@@ -39,6 +39,7 @@ import dayjs from '@/utils/dayjs'
 import { getMongoDbClient } from '@/utils/mongoDBUtils'
 import { MetricsRepository } from '@/services/rules-engine/repositories/metrics'
 import {
+  OrganizationClassificationTypeSubtypeType,
   Party,
   SuspiciousActivityType,
 } from '@/services/sar/generators/US/SAR/resources/EFL_SARXBatchSchema.type'
@@ -54,6 +55,130 @@ const FINCEN_BINARY = path.join(
   os.platform() === 'darwin' ? 'fincen-amd64-darwin' : 'fincen-amd64-linux'
 )
 const VALIDATION_PREFIX = 'Error validating file: '
+
+const MOCK_DATA = {
+  partyName: {
+    PartyNameTypeCode: 'L',
+    RawPartyFullName: 'N/A',
+  },
+  activityNarrativeInformation: [
+    {
+      ActivityNarrativeSequenceNumber: '1' as const,
+      ActivityNarrativeText: 'Text narrative text' as const,
+    },
+  ],
+  ActivityAssociation: {
+    ContinuingActivityReportIndicator: indicator(true),
+  },
+  suspiciousActivity: {
+    SuspiciousActivityClassification: [
+      {
+        SuspiciousActivitySubtypeID: 9999,
+        SuspiciousActivityTypeID: 9,
+      },
+    ],
+  },
+  address: [
+    {
+      CityUnknownIndicator: indicator(true),
+      CountryCodeUnknownIndicator: indicator(true),
+      // RawCityText: indicator(true),
+      // RawCountryCodeText: indicator(true),
+      // RawStateCodeText: indicator(true),
+      // RawStreetAddress1Text: indicator(true),
+      // RawZIPCode: indicator(true),
+      StateCodeUnknownIndicator: indicator(true),
+      StreetAddressUnknownIndicator: indicator(true),
+      ZIPCodeUnknownIndicator: indicator(true),
+    },
+  ],
+  phone: [
+    {
+      PhoneNumberExtensionText: '5584' as const,
+      PhoneNumberText: '6194760276' as const,
+      PhoneNumberTypeCode: 'R' as const,
+    },
+  ],
+  partyIdentification: [
+    {
+      OtherIssuerCountryText: 'US' as const,
+      OtherIssuerStateText: 'CA' as const,
+      OtherPartyIdentificationTypeText: 'Student ID' as const,
+      PartyIdentificationNumberText: '660623559' as const,
+      PartyIdentificationTypeCode: '999' as const,
+    },
+  ],
+  partyIdentification2: [
+    {
+      PartyIdentificationNumberText: '458985215',
+      PartyIdentificationTypeCode: '4',
+    },
+    {
+      PartyIdentificationNumberText: '458985215',
+      PartyIdentificationTypeCode: '28',
+    },
+  ],
+  financialInstitution: {
+    PrimaryRegulatorTypeCode: '1' as const,
+    PartyIdentification: [
+      {
+        PartyIdentificationTypeCode: '2' as const,
+      },
+    ],
+    OrganizationClassificationTypeSubtype: [
+      {
+        OrganizationTypeID: '5' as const,
+      },
+    ] as [OrganizationClassificationTypeSubtypeType],
+    Address: [
+      {
+        CityUnknownIndicator: indicator(true),
+        CountryCodeUnknownIndicator: indicator(true),
+        // RawCityText: indicator(true),
+        // RawCountryCodeText: indicator(true),
+        // RawStateCodeText: indicator(true),
+        // RawStreetAddress1Text: indicator(true),
+        // RawZIPCode: indicator(true),
+        StateCodeUnknownIndicator: indicator(true),
+        StreetAddressUnknownIndicator: indicator(true),
+        ZIPCodeUnknownIndicator: indicator(true),
+      },
+    ],
+  },
+  filingInstitution: {
+    PrimaryRegulatorTypeCode: '1' as const,
+    PartyName: [
+      {
+        PartyNameTypeCode: 'L',
+        RawPartyFullName: 'N/A',
+      },
+    ],
+    Address: [
+      {
+        CityUnknownIndicator: indicator(true),
+        CountryCodeUnknownIndicator: indicator(true),
+        // RawCityText: indicator(true),
+        // RawCountryCodeText: indicator(true),
+        // RawStateCodeText: indicator(true),
+        // RawStreetAddress1Text: indicator(true),
+        // RawZIPCode: indicator(true),
+        StateCodeUnknownIndicator: indicator(true),
+        StreetAddressUnknownIndicator: indicator(true),
+        ZIPCodeUnknownIndicator: indicator(true),
+      },
+    ],
+    PartyIdentification: [
+      {
+        PartyIdentificationTypeCode: '2',
+      },
+    ],
+    OrganizationClassificationTypeSubtype: [
+      {
+        OrganizationTypeID: '5',
+      },
+    ],
+  },
+}
 
 export class UsSarReportGenerator implements ReportGenerator {
   tenantId!: string
@@ -104,6 +229,11 @@ export class UsSarReportGenerator implements ReportGenerator {
           ...(contactDetails?.emailIds?.map(electronicAddressByEmail) ?? []),
           ...(contactDetails?.websites?.map(electronicAddressByWebsite) ?? []),
         ],
+        PartyIdentification: MOCK_DATA.partyIdentification,
+      }
+
+      if ((sharedDetails.Address?.length ?? 0) === 0) {
+        sharedDetails.Address = MOCK_DATA.address
       }
 
       if (user.type === 'CONSUMER') {
@@ -168,6 +298,12 @@ export class UsSarReportGenerator implements ReportGenerator {
         SuspiciousActivityToDateText: dateToDate(new Date(endDate)),
       }
     }
+
+    suspiciousActivity = {
+      ...(suspiciousActivity ?? {}),
+      ...MOCK_DATA.suspiciousActivity,
+    } as SuspiciousActivityType
+
     const userIds: string[] = []
     if (c?.caseUsers?.origin?.userId) {
       userIds.push(c.caseUsers.origin.userId)
@@ -216,20 +352,43 @@ export class UsSarReportGenerator implements ReportGenerator {
         directions,
       })
       if ((party.PartyName?.length ?? 0) > 0) {
-        financialInstitutions.push(party)
+        financialInstitutions.push({
+          ...party,
+          ...MOCK_DATA.financialInstitution,
+        })
       }
     }
 
     const params = {
       report: {
         generalInfo: {
+          ActivityAssociation: MOCK_DATA.ActivityAssociation,
           FilingDateText: dayjs().format('YYYYMMDD'),
           ActivityIPAddress: ActivityIPAddress,
+          ActivityNarrativeInformation: MOCK_DATA.activityNarrativeInformation,
         },
         transmitter: {
           PartyName: {
-            RawPartyFullName: name,
+            PartyNameTypeCode: 'L',
+            RawPartyFullName: name ?? MOCK_DATA.partyName.RawPartyFullName,
           },
+          Address: MOCK_DATA.address,
+          PhoneNumber: MOCK_DATA.phone,
+          PartyIdentification: MOCK_DATA.partyIdentification2,
+        },
+        transmitterContact: {
+          PartyName: MOCK_DATA.partyName,
+        },
+        filingInstitution: {
+          ...MOCK_DATA.filingInstitution,
+          // PrimaryRegulatorTypeCode: MOCK_DATA.filingInstitution,
+          // PartyName: {},
+          // Address: MOCK_DATA.address,
+          // PartyIdentification: MOCK_DATA.partyIdentification,
+        },
+        contactOffice: {
+          PartyName: MOCK_DATA.partyName,
+          PhoneNumber: MOCK_DATA.phone[0],
         },
       },
       transactions: transactions?.map((t) => {
@@ -291,14 +450,13 @@ export class UsSarReportGenerator implements ReportGenerator {
       [reportParams.report.transmitterContact, 37],
       [reportParams.report.filingInstitution, 30],
       [reportParams.report.contactOffice, 8],
-      [reportParams.report.finantialInstitution, 34],
+      ...(reportParams.transactionMetadata?.financialInstitutions ?? []).map(
+        (s: any) => [s, 34]
+      ),
       ...(reportParams.transactionMetadata?.subjects ?? []).map((s: any) => [
         s,
         33,
       ]),
-      ...(reportParams.transactionMetadata?.financialInstitutions ?? []).map(
-        (s: any) => [s, 34]
-      ),
     ].map(([party, typeCode]) => ({
       ...party,
       ActivityPartyTypeCode: typeCode,
@@ -307,10 +465,18 @@ export class UsSarReportGenerator implements ReportGenerator {
     const fincenJson = {
       EFilingBatchXML: {
         Activity: {
+          ActivityAssociation: MOCK_DATA.ActivityAssociation,
           Party: parties,
           SuspiciousActivity:
             reportParams.transactionMetadata?.suspiciousActivity,
           ...reportParams.report.generalInfo,
+          EFilingPriorDocumentNumber: (
+            parseInt(
+              reportParams?.report?.generalInfo?.EFilingPriorDocumentNumber
+            ) || 0
+          )
+            .toString()
+            .padStart(14, '0'),
         },
         FormTypeCode: 'SARX',
       },

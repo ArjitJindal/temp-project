@@ -73,6 +73,27 @@ export default function SimplePropertyInput(props: Props) {
       return <Checkbox {...inputProps} value={inputProps.value ?? false} />;
     case 'number':
     case 'integer':
+      if (schema.enum != null) {
+        const enums = schema.enum ?? [];
+        const enumNames = schema.enumNames ?? [];
+
+        const displayOptions =
+          enumNames?.length && enumNames.length === enums.length
+            ? (enumNames as string[])
+            : (enums as string[]);
+
+        return (
+          <Select<number>
+            {...inputProps}
+            mode="SINGLE"
+            placeholder={`Select ${uiSchema['ui:entityName'] ?? 'option'}`}
+            options={(schema.enum ?? [])
+              .map((x) => Number.parseInt(`${x}`))
+              .filter((x): x is number => !Number.isNaN(x))
+              .map((item, i) => ({ value: item, label: displayOptions[i] ?? item }))}
+          />
+        );
+      }
       return (
         <NumberInput
           placeholder="Enter number"

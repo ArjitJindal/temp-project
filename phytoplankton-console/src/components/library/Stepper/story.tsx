@@ -21,6 +21,13 @@ export default function (): JSX.Element {
     },
     {
       key: 'third_item',
+      title: 'Third step',
+      description: 'This step is invalid',
+      isOptional: true,
+      isInvalid: true,
+    },
+    {
+      key: 'last_item',
       title: 'Last step',
       description: 'Some short description here',
       isOptional: true,

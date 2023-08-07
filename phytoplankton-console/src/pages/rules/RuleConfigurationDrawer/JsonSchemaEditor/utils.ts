@@ -11,7 +11,12 @@ import {
   $SELF_VALIDATION,
   FieldValidator,
 } from '@/components/library/Form/utils/validation/types';
-import { notEmpty } from '@/components/library/Form/utils/validation/basicValidators';
+import {
+  maxLength,
+  notEmpty,
+  pattern,
+} from '@/components/library/Form/utils/validation/basicValidators';
+import { and } from '@/components/library/Form/utils/validation/combinators';
 
 export function getUiSchema(schema: ExtendedSchema): UiSchema {
   return schema['ui:schema'] ?? {};
@@ -86,8 +91,22 @@ export function makeValidators<T>(
           propValidators[$SELF_VALIDATION] = notEmpty;
         }
       }
-    } else if (prop.isRequired) {
-      propValidators = notEmpty;
+    } else {
+      const validators = [];
+      if (prop.isRequired) {
+        validators.push(notEmpty);
+      }
+      if (schema.type === 'string') {
+        if (schema.maxLength != null) {
+          validators.push(maxLength(schema.maxLength));
+        }
+        if (schema.pattern != null) {
+          validators.push(pattern(schema.pattern));
+        }
+      }
+      if (validators.length > 0) {
+        propValidators = and(validators);
+      }
     }
 
     if (propValidators == null) {

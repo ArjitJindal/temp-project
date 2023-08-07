@@ -33,6 +33,22 @@
       color: black;
     }
   }
+
+  &.isInvalid {
+    &,
+    &.isActive {
+      border-left-color: @fr-colors-v2-alert-critical;
+    }
+
+    &.isActive {
+      background-color: @fr-colors-v2-risk-level-bg-very-high;
+
+      > .title,
+      > .icon {
+        color: @fr-colors-v2-alert-critical;
+      }
+    }
+  }
 }
 
 .title {

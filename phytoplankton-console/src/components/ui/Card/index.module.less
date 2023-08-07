@@ -51,6 +51,19 @@
     border: none;
   }
 
+  &.isInvalid {
+    border-color: @fr-colors-v2-alert-critical;
+
+    > .column,
+    > .row {
+      > * {
+        &:not(:last-child) {
+          border-color: @fr-colors-v2-alert-critical;
+        }
+      }
+    }
+  }
+
   .container {
     overflow: auto;
   }
@@ -79,16 +92,9 @@
     cursor: pointer;
   }
 
-  .collapseIcon {
-    display: flex;
-    align-items: center;
-    width: 20px;
-    color: @fr-colors-brandBlue;
-    transition: transform 300ms;
-    transform: rotate(180deg);
-
-    &.isCollapsed {
-      transform: none;
+  &.isInvalid {
+    > .title {
+      color: @fr-colors-v2-alert-critical;
     }
   }
 }

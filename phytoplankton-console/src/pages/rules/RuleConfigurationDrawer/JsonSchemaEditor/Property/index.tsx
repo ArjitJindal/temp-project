@@ -62,13 +62,14 @@ export default function Property(props: Props) {
       break;
   }
 
-  let labelPosition: 'TOP' | 'RIGHT' = 'TOP';
-  switch (schema.type) {
-    case 'boolean':
-      labelPosition = 'RIGHT';
-      break;
-  }
   const uiSchema = getUiSchema(schema);
+
+  let labelPosition: 'TOP' | 'RIGHT' = 'TOP';
+  if (schema.type === 'boolean') {
+    labelPosition = 'RIGHT';
+  } else if (uiSchema['ui:subtype'] === 'FINCEN_INDICATOR') {
+    labelPosition = 'RIGHT';
+  }
 
   const requiredFeatures = uiSchema['ui:requiredFeatures'] ?? [];
   const canShowProperty = useFeaturesEnabled(requiredFeatures);

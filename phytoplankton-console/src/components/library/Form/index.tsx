@@ -1,8 +1,11 @@
 import React, { useCallback, useImperativeHandle, useRef, useState } from 'react';
 import { FieldValidators, Validator } from './utils/validation/types';
 import { FieldMeta, FormContext, FormContextValue } from '@/components/library/Form/context';
-import { useDeepEqualEffect, useIsChanged } from '@/utils/hooks';
-import { validateForm } from '@/components/library/Form/utils/validation/utils';
+import { useDeepEqualEffect, useDeepEqualMemo, useIsChanged } from '@/utils/hooks';
+import {
+  FormValidationResult,
+  validateForm,
+} from '@/components/library/Form/utils/validation/utils';
 
 export interface FormRef<FormValues> {
   getValues: () => FormValues;
@@ -11,10 +14,14 @@ export interface FormRef<FormValues> {
   submit: () => void;
 }
 
+interface ChildrenProps<FormValues> {
+  validationResult: FormValidationResult<FormValues> | null;
+}
+
 interface Props<FormValues> {
   id?: string;
   initialValues: FormValues;
-  children: React.ReactNode;
+  children: React.ReactNode | ((props: ChildrenProps<FormValues>) => React.ReactNode);
   formValidators?: Validator<FormValues>[];
   fieldValidators?: FieldValidators<FormValues>;
   className?: string;
@@ -92,6 +99,10 @@ function Form<FormValues>(props: Props<FormValues>, ref: React.Ref<FormRef<FormV
     }
   }, [onChange, formValuesChanged, formValidChanged]);
 
+  const validationResult = useDeepEqualMemo(() => {
+    return validateForm(formValues, formValidators, fieldValidators);
+  }, [isFormValid, formValues, formValidators, fieldValidators]);
+
   useDeepEqualEffect(() => {
     const validationResult = validateForm(formValues, formValidators, fieldValidators);
     const isFormValidNew = validationResult == null;
@@ -111,7 +122,7 @@ function Form<FormValues>(props: Props<FormValues>, ref: React.Ref<FormRef<FormV
       }}
     >
       <FormContext.Provider value={formContext as FormContextValue<unknown>}>
-        {children}
+        {typeof children === 'function' ? children({ validationResult }) : children}
       </FormContext.Provider>
     </form>
   );

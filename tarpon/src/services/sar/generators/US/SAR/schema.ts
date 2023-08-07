@@ -26,7 +26,7 @@ export const GeneralInfo = {
     'ActivityNarrativeInformation',
     'EFilingPriorDocumentNumber',
     'FilingInstitutionNotetoFinCEN',
-    'ActivitySupportDocument',
+    // 'ActivitySupportDocument',
     'ActivityIPAddress',
     'CyberEventIndicators',
     'Assets',
@@ -36,6 +36,7 @@ export const GeneralInfo = {
     'FilingDateText',
     'ActivityAssociation',
     'ActivityNarrativeInformation',
+    // 'EFilingPriorDocumentNumber',
   ],
 }
 
@@ -263,7 +264,7 @@ export const Subject = {
       'PartyOccupationBusiness',
       'ElectronicAddress',
       'PartyAssociation',
-      'PartyAccountAssociation',
+      // 'PartyAccountAssociation',
     ]),
     {
       PartyName: arraySchema(

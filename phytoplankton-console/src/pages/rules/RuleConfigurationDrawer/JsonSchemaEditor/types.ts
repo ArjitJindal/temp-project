@@ -18,6 +18,10 @@ export interface UiSchemaCountries extends UiSchemaCommon {
   'ui:subtype': 'COUNTRIES';
 }
 
+export interface UiSchemaCountry extends UiSchemaCommon {
+  'ui:subtype': 'COUNTRY';
+}
+
 export interface UiSchemaAgeRange extends UiSchemaCommon {
   'ui:subtype': 'AGE_RANGE';
   'ui:defaultGranularity': 'day' | 'month' | 'year';
@@ -47,6 +51,10 @@ export interface UiSchemaCurrency extends UiSchemaCommon {
   'ui:subtype': 'CURRENCY';
 }
 
+export interface UiSchemaFincenIndicator extends UiSchemaCommon {
+  'ui:subtype': 'FINCEN_INDICATOR';
+}
+
 export interface UiSchemaUnknown extends UiSchemaCommon {
   'ui:subtype'?: undefined;
 }
@@ -55,6 +63,8 @@ export type UiSchema =
   | UiSchemaDayWindow
   | UiSchemaTimeWindow
   | UiSchemaCountries
+  | UiSchemaCountry
+  | UiSchemaFincenIndicator
   | UiSchemaAgeRange
   | UiSchemaTransactionAmountRange
   | UiSchemaTransactionAmountThresholds

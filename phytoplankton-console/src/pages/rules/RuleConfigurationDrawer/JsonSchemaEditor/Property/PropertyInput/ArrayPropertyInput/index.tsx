@@ -18,6 +18,12 @@ import * as Card from '@/components/ui/Card';
 import { useJsonSchemaEditorContext } from '@/pages/rules/RuleConfigurationDrawer/JsonSchemaEditor/context';
 import { PropertyContext } from '@/pages/rules/RuleConfigurationDrawer/JsonSchemaEditor/Property';
 import { humanizeAuto, normalizeCase } from '@/utils/humanize';
+import { useFormContext } from '@/components/library/Form/utils/hooks';
+import {
+  isArrayFieldValidator,
+  isResultValid,
+} from '@/components/library/Form/utils/validation/types';
+import { validateField } from '@/components/library/Form/utils/validation/utils';
 
 interface Props extends InputProps<unknown[]> {
   schema: ExtendedSchema;
@@ -76,6 +82,13 @@ export function GenericArrayPropertyInput(props: Props) {
   const value = useMemo(() => props.value ?? [], [props.value]);
   const entityName = useEntityName(schema);
 
+  const { alwaysShowErrors, fieldValidators } = useFormContext();
+  const propertyContext = useContext(PropertyContext);
+  let subFieldValidator = fieldValidators?.[propertyContext?.item.name ?? ''];
+  subFieldValidator = isArrayFieldValidator(subFieldValidator)
+    ? subFieldValidator.itemValidator
+    : null;
+
   const handleClickAdd = useCallback(() => {
     onChange?.([...value, newItem]);
     setNewItem(null);
@@ -90,6 +103,7 @@ export function GenericArrayPropertyInput(props: Props) {
             className={s.root}
             isCollapsable={true}
             isCollapsedByDefault={true}
+            isInvalid={alwaysShowErrors && !isResultValid(validateField(subFieldValidator, item))}
             header={{
               title: normalizeCase(`${entityName ?? 'Item'} #${i + 1}`),
               titleSize: 'SMALL',

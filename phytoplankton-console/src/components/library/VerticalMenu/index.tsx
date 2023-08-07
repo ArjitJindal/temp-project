@@ -8,6 +8,7 @@ interface Props {
     key: string;
     icon?: React.ReactNode;
     title: string;
+    isInvalid?: boolean;
   }[];
   active: string;
   onChange: (key: string) => void;
@@ -25,7 +26,7 @@ export default function VerticalMenu(props: Props) {
         {items.map((item) => (
           <div
             key={item.key}
-            className={cn(s.item, active === item.key && s.isActive)}
+            className={cn(s.item, active === item.key && s.isActive, item.isInvalid && s.isInvalid)}
             onClick={() => onChange(item.key)}
           >
             {item.icon && <div className={s.icon}>{item.icon}</div>}

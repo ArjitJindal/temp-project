@@ -1,3 +1,4 @@
+import { clone } from 'lodash';
 // Symbol to put field-level validation messages to validation
 // object and distinguish it from child validator
 export const $SELF_VALIDATION = Symbol();
@@ -54,7 +55,7 @@ export function isSimpleFieldValidator<T>(
 export function isObjectFieldValidator<T>(
   validator: FieldValidator<T>,
 ): validator is ObjectFieldValidator<T> {
-  return !isSimpleFieldValidator(validator);
+  return !isSimpleFieldValidator(validator) && !isArrayFieldValidator(validator);
 }
 
 export function isArrayFieldValidator<T>(
@@ -68,5 +69,31 @@ export type FieldValidators<FormValues> = GetFieldValidator<FormValues>;
 export type FormValidators<FormValues> = Validator<FormValues>[];
 
 export function isError(result: NestedValidationResult): result is ValidationError {
-  return result != null;
+  return !isResultValid(result);
+}
+
+export function isResultValid(result: NestedValidationResult): boolean {
+  if (result == null) {
+    return true;
+  }
+  if (typeof result === 'string') {
+    return false;
+  }
+  if ($SELF_VALIDATION in result) {
+    if (!isResultValid(result[$SELF_VALIDATION] ?? null)) {
+      return false;
+    }
+    result = clone(result) as NestedValidationResult;
+    // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+    // @ts-ignore
+    delete result[$SELF_VALIDATION];
+  }
+  if (Array.isArray(result)) {
+    return result.every((x) => isResultValid(x));
+  }
+  const keys = Object.keys(result as object);
+  if (keys.length === 0) {
+    return true;
+  }
+  return keys.every((key) => isResultValid(result?.[key]));
 }

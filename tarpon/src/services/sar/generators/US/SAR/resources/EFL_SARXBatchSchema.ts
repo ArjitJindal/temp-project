@@ -2,7 +2,7 @@ export const FincenJsonSchema = {
   $id: 'schema.json',
   $schema: 'http://json-schema.org/draft-07/schema#',
   title:
-    'This JSON Schema file was generated from schema on Thu Aug 03 2023 22:27:24 GMT+0200 (Central European Summer Time).  For more information please see http://www.xsd2jsonschema.org',
+    'This JSON Schema file was generated from schema on Mon Aug 07 2023 05:05:47 GMT+0200 (Central European Summer Time).  For more information please see http://www.xsd2jsonschema.org',
   description:
     "Schema tag attributes: xmlns='www.fincen.gov/base' xmlns:xsd='http://www.w3.org/2001/XMLSchema' xmlns:vc='http://www.w3.org/2007/XMLSchema-versioning' xmlns:fc2='www.fincen.gov/base' xmlns:xsi='http://www.w3.org/2001/XMLSchema-instance' targetNamespace='www.fincen.gov/base' elementFormDefault='qualified' attributeFormDefault='unqualified' vc:minVersion='1.1'",
   properties: {
@@ -1132,6 +1132,10 @@ export const FincenJsonSchema = {
     ValidateIndicatorType: {
       enum: ['Y', ''],
       type: 'string',
+      title: 'Indicator',
+      'ui:schema': {
+        'ui:subtype': 'FINCEN_INDICATOR',
+      },
     },
     DateYYYYMMDDType: {
       pattern: '(19|20)[0-9][0-9](0[1-9]|1[0-2])(0[1-9]|1[0-9]|2[0-9]|3[01])',

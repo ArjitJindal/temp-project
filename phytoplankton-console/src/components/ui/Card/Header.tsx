@@ -14,6 +14,7 @@ interface Props extends HeaderSettings {
   isCollapsable?: boolean;
   isCollapsed?: boolean;
   setCollapsed?: (isCollapsed: boolean) => void;
+  isInvalid?: boolean;
 }
 
 export default function Header(props: Props) {
@@ -21,6 +22,7 @@ export default function Header(props: Props) {
     title,
     titleSize = 'DEFAULT',
     isCollapsable = false,
+    isInvalid = false,
     isCollapsed,
     setCollapsed,
     link,
@@ -28,7 +30,7 @@ export default function Header(props: Props) {
   return (
     <Section>
       <div
-        className={cn(s.header, isCollapsable && s.isCollapsable)}
+        className={cn(s.header, isCollapsable && s.isCollapsable, isInvalid && s.isInvalid)}
         onClick={
           isCollapsable && setCollapsed
             ? () => {
@@ -37,7 +39,9 @@ export default function Header(props: Props) {
             : undefined
         }
       >
-        {isCollapsable && <ExpandIcon isExpanded={!isCollapsed} color="BLUE" size="BIG" />}
+        {isCollapsable && (
+          <ExpandIcon isExpanded={!isCollapsed} color="BLUE" size="BIG" isInvalid={isInvalid} />
+        )}
         <h3 className={cn(s.title, s[`size-${titleSize}`])}>{title}</h3>
         {link}
       </div>

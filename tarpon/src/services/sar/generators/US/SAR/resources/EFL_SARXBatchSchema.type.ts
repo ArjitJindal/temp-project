@@ -968,7 +968,7 @@ export type NarrativeDescription = string
 /**
  * Schema tag attributes: xmlns='www.fincen.gov/base' xmlns:xsd='http://www.w3.org/2001/XMLSchema' xmlns:vc='http://www.w3.org/2007/XMLSchema-versioning' xmlns:fc2='www.fincen.gov/base' xmlns:xsi='http://www.w3.org/2001/XMLSchema-instance' targetNamespace='www.fincen.gov/base' elementFormDefault='qualified' attributeFormDefault='unqualified' vc:minVersion='1.1'
  */
-export interface ThisJSONSchemaFileWasGeneratedFromSchemaOnThuAug032023222724GMT0200CentralEuropeanSummerTimeForMoreInformationPleaseSeeHttpWwwXsd2JsonschemaOrg {
+export interface ThisJSONSchemaFileWasGeneratedFromSchemaOnMonAug072023050547GMT0200CentralEuropeanSummerTimeForMoreInformationPleaseSeeHttpWwwXsd2JsonschemaOrg {
   EFilingBatchXML?: BatchAcknowledgement
   [k: string]: unknown
 }

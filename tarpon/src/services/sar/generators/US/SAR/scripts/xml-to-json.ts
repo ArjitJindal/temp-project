@@ -29,6 +29,9 @@ function augmentJsonSchema(
       if (attributesInfo[key]) {
         ;(localObj as any).title = attributesInfo[key].title
         ;(localObj as any).description = attributesInfo[key].description
+        ;(localObj as any)['ui:schema'] = (attributesInfo[key] as any)[
+          'ui:schema'
+        ]
       }
       // Remove '@SeqNum'. Will be auto-added when generating the XML
       if (key === '@SeqNum') {

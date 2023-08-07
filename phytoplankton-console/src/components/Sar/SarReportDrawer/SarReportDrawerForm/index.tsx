@@ -1,3 +1,4 @@
+import { useState } from 'react';
 import { StatePair } from '@/utils/state';
 import { FileInfo, Report } from '@/apis';
 import Form from '@/components/library/Form';
@@ -19,6 +20,7 @@ import AttachmentsStep from '@/components/Sar/SarReportDrawer/SarReportDrawerFor
 import { makeValidators } from '@/pages/rules/RuleConfigurationDrawer/JsonSchemaEditor/utils';
 import { PropertyItem } from '@/pages/rules/RuleConfigurationDrawer/JsonSchemaEditor/types';
 import { ObjectFieldValidator } from '@/components/library/Form/utils/validation/types';
+import { message } from '@/components/library/Message';
 
 export type FormState = Partial<{
   [REPORT_STEP]: unknown;
@@ -73,44 +75,73 @@ export default function SarReportDrawerForm(props: Props) {
     },
   });
 
+  const [alwaysShowErrors, setAlwaysShowErrors] = useState(false);
+
   return (
     <Form
       id={formId}
       fieldValidators={fieldValidators as ObjectFieldValidator<FormState>}
       initialValues={initialValues}
+      alwaysShowErrors={alwaysShowErrors}
       onChange={({ values }) => {
         onChange(serializeFormState(report, values));
       }}
-      onSubmit={(values) => {
-        onSubmit(serializeFormState(report, values));
+      onSubmit={(values, { isValid }) => {
+        if (isValid) {
+          onSubmit(serializeFormState(report, values));
+        } else {
+          message.warn(
+            'Please, make sure that all required fields are filled and values are valid!',
+          );
+          setAlwaysShowErrors(true);
+        }
       }}
     >
-      <Stepper steps={steps} active={activeStep} onChange={setActiveStep}>
-        {(activeStepKey) => (
-          <NestedForm<any> name={activeStepKey}>
-            {activeStepKey == REPORT_STEP && (
-              <ReportStep parametersSchema={report.schema?.reportSchema} settings={settings} />
-            )}
-            {activeStepKey == TRANSACTION_METADATA_STEP && (
-              <ReportStep
-                parametersSchema={report.schema?.transactionMetadataSchema}
-                settings={settings}
-              />
-            )}
-            {activeStepKey === TRANSACTION_STEP && (
-              <TransactionStep settings={settings} report={report} />
-            )}
-            {activeStepKey === INDICATOR_STEP && (
-              <GenericFormField<any> name={'selection'}>
-                {(props: FormFieldRenderProps<string[]>) => (
-                  <IndicatorsStep report={report} {...props} />
-                )}
-              </GenericFormField>
-            )}
-            {activeStepKey === ATTACHMENTS_STEP && <AttachmentsStep />}
-          </NestedForm>
-        )}
-      </Stepper>
+      {({ validationResult }) => (
+        <Stepper
+          steps={steps.map((step) => ({
+            ...step,
+            isInvalid:
+              alwaysShowErrors && validationResult?.fieldValidationErrors?.[step.key] != null,
+          }))}
+          active={activeStep}
+          onChange={setActiveStep}
+        >
+          {(activeStepKey) => (
+            <NestedForm<any> name={activeStepKey}>
+              {activeStepKey == REPORT_STEP && (
+                <ReportStep
+                  validationResult={validationResult?.fieldValidationErrors?.[REPORT_STEP]}
+                  parametersSchema={report.schema?.reportSchema}
+                  settings={settings}
+                  alwaysShowErrors={alwaysShowErrors}
+                />
+              )}
+              {activeStepKey == TRANSACTION_METADATA_STEP && (
+                <ReportStep
+                  validationResult={
+                    validationResult?.fieldValidationErrors?.[TRANSACTION_METADATA_STEP]
+                  }
+                  parametersSchema={report.schema?.transactionMetadataSchema}
+                  settings={settings}
+                  alwaysShowErrors={alwaysShowErrors}
+                />
+              )}
+              {activeStepKey === TRANSACTION_STEP && (
+                <TransactionStep settings={settings} report={report} />
+              )}
+              {activeStepKey === INDICATOR_STEP && (
+                <GenericFormField<any> name={'selection'}>
+                  {(props: FormFieldRenderProps<string[]>) => (
+                    <IndicatorsStep report={report} {...props} />
+                  )}
+                </GenericFormField>
+              )}
+              {activeStepKey === ATTACHMENTS_STEP && <AttachmentsStep />}
+            </NestedForm>
+          )}
+        </Stepper>
+      )}
     </Form>
   );
 }

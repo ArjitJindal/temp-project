@@ -4,27 +4,41 @@ import { JsonSchemaEditorSettings } from '@/pages/rules/RuleConfigurationDrawer/
 import JsonSchemaEditor from '@/pages/rules/RuleConfigurationDrawer/JsonSchemaEditor';
 import VerticalMenu from '@/components/library/VerticalMenu';
 import {
-  useOrderedProps,
   getUiSchema,
+  useOrderedProps,
 } from '@/pages/rules/RuleConfigurationDrawer/JsonSchemaEditor/utils';
 import { ExtendedSchema } from '@/pages/rules/RuleConfigurationDrawer/JsonSchemaEditor/types';
+import {
+  isResultValid,
+  NestedValidationResult,
+} from '@/components/library/Form/utils/validation/types';
 
 export default function ReportStep(props: {
   settings: Partial<JsonSchemaEditorSettings>;
   parametersSchema: ExtendedSchema;
+  validationResult?: NestedValidationResult | undefined;
+  alwaysShowErrors: boolean;
 }) {
-  const { settings, parametersSchema } = props;
+  const { settings, validationResult, parametersSchema, alwaysShowErrors } = props;
 
   const orderedProps = useOrderedProps(parametersSchema);
 
   const groups = Object.entries(
     groupBy(orderedProps, (property) => getUiSchema(property.schema)['ui:group']),
-  ).map(([group, properties]) => ({ group: group === 'undefined' ? 'Other' : group, properties }));
-
-  const menuItems = groups.map(({ group }) => ({
-    key: group,
-    title: group,
+  ).map(([group, properties]) => ({
+    group: group === 'undefined' ? 'Other' : group,
+    key: properties[0]?.name,
+    properties,
   }));
+
+  const menuItems = groups.map(({ key, group }) => {
+    const validationResultElement = validationResult?.[key];
+    return {
+      key: group,
+      title: group,
+      isInvalid: alwaysShowErrors && !isResultValid(validationResultElement),
+    };
+  });
 
   const [activeMenuItem, setActiveMenuItem] = useState<string>(groups[0]?.group ?? 'Other');
 
