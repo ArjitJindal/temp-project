@@ -1,7 +1,7 @@
 import { uuid4 } from '@sentry/utils'
 import { generateNarrative } from '../samplers/cases'
 import { data as users } from './users'
-import { rules } from './rules'
+import { transactionRules as rules } from './rules'
 import { prng, randomInt } from '@/utils/prng'
 import { AuditLog } from '@/@types/openapi-internal/AuditLog'
 

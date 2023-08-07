@@ -4,7 +4,10 @@ import { sampleTag } from '@/core/seed/samplers/tag'
 import { sampleCountry } from '@/core/seed/samplers/countries'
 import { InternalTransaction } from '@/@types/openapi-internal/InternalTransaction'
 import { pickRandom, prng, randomFloat, randomInt } from '@/utils/prng'
-import { randomRules, rules } from '@/core/seed/data/rules'
+import {
+  randomTransactionRules,
+  transactionRules,
+} from '@/core/seed/data/rules'
 import { sampleCurrency } from '@/core/seed/samplers/currencies'
 import { sampleTimestamp } from '@/core/seed/samplers/timestamp'
 import { RISK_LEVEL1S } from '@/@types/openapi-internal-custom/RiskLevel1'
@@ -25,8 +28,8 @@ const generator = function* (seed: number): Generator<InternalTransaction> {
     // Hack in some suspended transactions for payment approvals
     const hitRules =
       random() < 0.75
-        ? randomRules()
-        : rules.filter((r) => r.ruleAction === 'SUSPEND')
+        ? randomTransactionRules()
+        : transactionRules.filter((r) => r.ruleAction === 'SUSPEND')
 
     const transaction = sampleTransaction({}, i)
     const originUserId = users[randomInt(random(), users.length)].userId
@@ -86,7 +89,7 @@ const generator = function* (seed: number): Generator<InternalTransaction> {
           },
         ],
       },
-      executedRules: rules,
+      executedRules: transactionRules,
       originAmountDetails: {
         country: sampleCountry(i),
         transactionCurrency: sampleCurrency(i),

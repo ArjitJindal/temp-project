@@ -1,6 +1,7 @@
 import { uuid4 } from '@sentry/utils'
 import { sampleConsumerUserRiskScoreComponents } from '../samplers/risk_score_components'
 import { sampleTag } from '../samplers/tag'
+import { randomUserRules, userRules } from './rules'
 import {
   merchantMonitoringSummaries,
   randomAddress,
@@ -101,6 +102,8 @@ const init = () => {
               lastName: randomName(),
             },
           },
+          executedRules: userRules,
+          hitRules: randomUserRules(),
           createdTimestamp: sampleTimestamp(0.9 * i),
           tags: [sampleTag()],
         }
