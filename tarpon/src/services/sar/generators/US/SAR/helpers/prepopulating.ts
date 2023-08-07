@@ -1,13 +1,13 @@
 import {
   AddressType,
   CumulativeAmount,
-  DateOfBirth,
   ElectronicAddressType,
-  JointReportIndicator,
   OrganizationClassificationTypeSubtypeType,
-  Party,
   PartyNameType,
   PhoneNumberType,
+  JointReportIndicator,
+  DateOfBirth,
+  Party,
   InstitutionTypeCode,
 } from '../resources/EFL_SARXBatchSchema.type'
 import { ConsumerName } from '@/@types/openapi-internal/ConsumerName'
@@ -18,6 +18,10 @@ import { neverReturn } from '@/utils/lang'
 import { PaymentDetails } from '@/@types/tranasction/payment-type'
 import { CardMerchantDetails } from '@/@types/openapi-public/CardMerchantDetails'
 import { RuleHitDirection } from '@/@types/openapi-public/RuleHitDirection'
+
+export type PartySinglePartyName = Omit<Party, 'PartyName'> & {
+  PartyName: PartyNameType
+}
 
 /*
   Helpers to convert Flagright's data structures to FinCEN data structures
@@ -52,14 +56,14 @@ export function financialInstitutionByPaymentDetails(
   options: {
     directions?: RuleHitDirection[]
   } = {}
-): Party {
+): PartySinglePartyName {
   const { directions = [] } = options
   const partyName = partyNameByPaymentDetails(paymentDetails)
   const orgType = organizationClassificationByPaymentDetails(paymentDetails)
   const address = addressByPaymentDetails(paymentDetails)
   return {
     ActivityPartyTypeCode: '34',
-    PartyName: [partyName],
+    PartyName: partyName,
     PayLocationIndicator: indicator(directions.includes('ORIGIN')),
     SellingLocationIndicator: indicator(directions.includes('DESTINATION')),
     OrganizationClassificationTypeSubtype: orgType ? [orgType] : undefined,

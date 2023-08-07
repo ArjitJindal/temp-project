@@ -1,9 +1,7 @@
 // This mapping is manually curated and extracted from https://bsaefiling.fincen.treas.gov/docs/XMLUserGuide_FinCENSAR.pdf
 // (the title/description info is not in the XML schema)
 
-export const AttributeInfos: {
-  [key: string]: { title?: string; description?: string }
-} = {
+export const AttributeInfos = {
   EFilingPriorDocumentNumber: {
     title: 'Prior report BSA Identifier (number)',
     description:
@@ -660,4 +658,4 @@ export const AttributeInfos: {
     title: 'Indicator',
     'ui:schema': { 'ui:subtype': 'FINCEN_INDICATOR' },
   } as any,
-}
+} as const

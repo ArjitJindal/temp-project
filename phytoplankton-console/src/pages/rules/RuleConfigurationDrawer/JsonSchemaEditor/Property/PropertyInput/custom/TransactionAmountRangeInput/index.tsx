@@ -40,7 +40,6 @@ export default function TransactionAmountRangeInput(props: Props) {
       <Select<Currency>
         placeholder="Select currency"
         mode={'SINGLE'}
-        showSearch={true}
         value={newItem?.currency}
         onChange={(currency) => setNewItem((prevState) => ({ ...prevState, currency }))}
         options={CURRENCIES_SELECT_OPTIONS.map((option) => ({

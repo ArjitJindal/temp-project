@@ -10,4 +10,4 @@ src/@types/openapi*
 *.txt
 *.xsd
 **/bin/*
-*.go
+*.xml

@@ -9,10 +9,7 @@ import { useJsonSchemaEditorSettings } from '@/pages/rules/RuleConfigurationDraw
 import { humanizeAuto, humanizeCamelCase, humanizeSnakeCase } from '@/utils/humanize';
 import { useDeepEqualMemo } from '@/utils/hooks';
 import { neverReturn } from '@/utils/lang';
-import {
-  dereferenceType,
-  isObject,
-} from '@/pages/rules/RuleConfigurationDrawer/JsonSchemaEditor/schema-utils';
+import { dereferenceType } from '@/pages/rules/RuleConfigurationDrawer/JsonSchemaEditor/schema-utils';
 import { useJsonSchemaEditorContext } from '@/pages/rules/RuleConfigurationDrawer/JsonSchemaEditor/context';
 import { useFeaturesEnabled } from '@/components/AppWrapper/Providers/SettingsProvider';
 
@@ -84,7 +81,7 @@ export default function Property(props: Props) {
           position: labelPosition,
           required: {
             value: item.isRequired,
-            showHint: settings.showOptionalMark && !isObject(schema),
+            showHint: settings.showOptionalMark,
           },
           ...labelProps,
           level: labelLevel,

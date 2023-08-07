@@ -4,7 +4,7 @@ import path from 'path'
 import os from 'os'
 import { BadRequest } from 'http-errors'
 import { XMLBuilder } from 'fast-xml-parser'
-import { isEqual } from 'lodash'
+import { isEqual, omit, cloneDeep } from 'lodash'
 import { InternalReportType, PopulatedSchema, ReportGenerator } from '../..'
 import {
   ContactOffice,
@@ -13,11 +13,13 @@ import {
   GeneralInfo,
   Subjects,
   SuspiciousActivity,
+  SuspiciousActivityOtherInfo,
   Transmitter,
   TransmitterContact,
 } from './schema'
 import { FincenJsonSchema } from './resources/EFL_SARXBatchSchema'
 import {
+  PartySinglePartyName,
   address,
   amount,
   dateToDate,
@@ -147,12 +149,10 @@ const MOCK_DATA = {
   },
   filingInstitution: {
     PrimaryRegulatorTypeCode: '1' as const,
-    PartyName: [
-      {
-        PartyNameTypeCode: 'L',
-        RawPartyFullName: 'N/A',
-      },
-    ],
+    PartyName: {
+      PartyNameTypeCode: 'L',
+      RawPartyFullName: 'N/A',
+    },
     Address: [
       {
         CityUnknownIndicator: indicator(true),
@@ -178,6 +178,17 @@ const MOCK_DATA = {
       },
     ],
   },
+}
+
+function removeEmptyString<T>(object: T): T {
+  return JSON.parse(
+    JSON.stringify(object, (k, v) => {
+      if (v === '') {
+        return undefined
+      }
+      return v
+    })
+  )
 }
 
 export class UsSarReportGenerator implements ReportGenerator {
@@ -346,17 +357,15 @@ export class UsSarReportGenerator implements ReportGenerator {
         }
       }
     }
-    const financialInstitutions: Party[] = []
+    const financialInstitutions: PartySinglePartyName[] = []
     for (const { paymentDetails, directions } of uniquePaymentDetails) {
       const party = financialInstitutionByPaymentDetails(paymentDetails, {
         directions,
       })
-      if ((party.PartyName?.length ?? 0) > 0) {
-        financialInstitutions.push({
-          ...party,
-          ...MOCK_DATA.financialInstitution,
-        })
-      }
+      financialInstitutions.push({
+        ...party,
+        ...MOCK_DATA.financialInstitution,
+      })
     }
 
     const params = {
@@ -364,7 +373,6 @@ export class UsSarReportGenerator implements ReportGenerator {
         generalInfo: {
           ActivityAssociation: MOCK_DATA.ActivityAssociation,
           FilingDateText: dayjs().format('YYYYMMDD'),
-          ActivityIPAddress: ActivityIPAddress,
           ActivityNarrativeInformation: MOCK_DATA.activityNarrativeInformation,
         },
         transmitter: {
@@ -388,7 +396,7 @@ export class UsSarReportGenerator implements ReportGenerator {
         },
         contactOffice: {
           PartyName: MOCK_DATA.partyName,
-          PhoneNumber: MOCK_DATA.phone[0],
+          PhoneNumber: MOCK_DATA.phone,
         },
       },
       transactions: transactions?.map((t) => {
@@ -399,6 +407,7 @@ export class UsSarReportGenerator implements ReportGenerator {
         subjects,
         suspiciousActivity,
         financialInstitutions,
+        otherInfo: { ActivityIPAddress: ActivityIPAddress },
       },
     }
     const schema: ReportSchema = {
@@ -426,8 +435,9 @@ export class UsSarReportGenerator implements ReportGenerator {
           subjects: Subjects,
           suspiciousActivity: SuspiciousActivity,
           financialInstitutions: FinancialInstitutions,
+          otherInfo: SuspiciousActivityOtherInfo,
         },
-        required: ['subjects', 'suspiciousActivity', 'finantialInstitution'],
+        required: ['subjects', 'suspiciousActivity', 'financialInstitutions'],
         definitions: FincenJsonSchema.definitions,
       },
     }
@@ -437,32 +447,163 @@ export class UsSarReportGenerator implements ReportGenerator {
     }
   }
 
-  public generate(reportParams: ReportParameters): string {
-    const builder = new XMLBuilder({
-      attributeNamePrefix: '@',
-      ignoreAttributes: false,
+  private transform(reportParams: ReportParameters): object {
+    /**
+     * Transmitter
+     */
+    // Augment ActivityPartyTypeCode
+    reportParams.report.transmitter.ActivityPartyTypeCode = 35
+    // Augment PartyNameTypeCode
+    reportParams.report.transmitter.PartyName = [
+      {
+        ...reportParams.report.transmitter.PartyName,
+        PartyNameTypeCode: 'L',
+      },
+    ]
+    // Augment PartyIdentificationTypeCode
+    const transmitterPartyIdentifications = [
+      {
+        ...reportParams.report.transmitter.FlagrightPartyIdentificationTcc,
+        PartyIdentificationTypeCode: '28',
+      },
+      {
+        ...reportParams.report.transmitter.FlagrightPartyIdentificationTin,
+        PartyIdentificationTypeCode: '4',
+      },
+    ]
+    reportParams.report.transmitter = omit(
+      reportParams.report.transmitter,
+      'FlagrightPartyIdentificationTcc',
+      'FlagrightPartyIdentificationTin'
+    )
+    reportParams.report.transmitter.PartyIdentification =
+      transmitterPartyIdentifications
+
+    /**
+     * Transmitter contact
+     */
+    // Augment ActivityPartyTypeCode
+    reportParams.report.transmitterContact.ActivityPartyTypeCode = 37
+    // Augment PartyNameTypeCode
+    reportParams.report.transmitterContact.PartyName = [
+      {
+        ...reportParams.report.transmitterContact.PartyName,
+        PartyNameTypeCode: 'L',
+      },
+    ]
+
+    /**
+     * Filing institution
+     */
+    // Augment ActivityPartyTypeCode
+    reportParams.report.filingInstitution.ActivityPartyTypeCode = 30
+    // Augment PartyNameTypeCode
+    reportParams.report.filingInstitution.PartyName = [
+      {
+        ...reportParams.report.filingInstitution.PartyName,
+        PartyNameTypeCode: 'L',
+      },
+      reportParams.report.filingInstitution.FlagrightAlternatePartyName,
+    ].filter(Boolean)
+    // Augment PartyIdentificationTypeCode
+    reportParams.report.filingInstitution.PartyIdentification = [
+      reportParams.report.filingInstitution.FlagrightPartyIdentificationTin,
+      reportParams.report.filingInstitution
+        .FlagrightPartyIdentificationFilingInstitutionIdentification,
+      reportParams.report.filingInstitution
+        .FlagrightPartyIdentificationInternalControl
+        ? {
+            ...reportParams.report.filingInstitution
+              .FlagrightPartyIdentificationInternalControl,
+            PartyIdentificationTypeCode: '29',
+          }
+        : undefined,
+    ].filter(Boolean)
+    reportParams.report.filingInstitution = omit(
+      reportParams.report.filingInstitution,
+      'FlagrightAlternatePartyName',
+      'FlagrightPartyIdentificationTin',
+      'FlagrightPartyIdentificationFilingInstitutionIdentification',
+      'FlagrightPartyIdentificationInternalControl'
+    )
+
+    /**
+     * Contact office
+     */
+    // Augment ActivityPartyTypeCode
+    // Augment PartyNameTypeCode
+    reportParams.report.contactOffice.ActivityPartyTypeCode = 8
+    reportParams.report.contactOffice.PartyName = {
+      ...reportParams.report.contactOffice.PartyName,
+      PartyNameTypeCode: 'L',
+    }
+
+    /**
+     * Financial Institution Where Activity Occurred
+     */
+    reportParams.transactionMetadata.financialInstitutions = (
+      reportParams.transactionMetadata?.financialInstitutions ?? []
+    ).map((financialInstitution: any) => {
+      // Augment ActivityPartyTypeCode
+      financialInstitution.ActivityPartyTypeCode = 34
+      // Augment PartyNameTypeCode
+      financialInstitution.PartyName = [
+        {
+          ...(financialInstitution.PartyName[0] ??
+            financialInstitution.PartyName),
+          PartyNameTypeCode: 'L',
+        },
+        ...(financialInstitution.FlagrightAlternatePartyName ?? []),
+      ]
+      // Augment PartyIdentificationTypeCode
+      financialInstitution.PartyIdentification = [
+        financialInstitution.FlagrightPartyIdentificationTin,
+        financialInstitution.FlagrightPartyIdentificationFinancialInstitutionIdentification,
+        financialInstitution.FlagrightPartyIdentificationInternalControl
+          ? {
+              ...financialInstitution.FlagrightPartyIdentificationInternalControl,
+              PartyIdentificationTypeCode: '29',
+            }
+          : undefined,
+      ].filter(Boolean)
+      return omit(
+        financialInstitution,
+        'FlagrightAlternatePartyName',
+        'FlagrightPartyIdentificationTin',
+        'FlagrightPartyIdentificationFinancialInstitutionIdentification',
+        'FlagrightPartyIdentificationInternalControl'
+      )
     })
 
-    // Augment parties with ActivityPartyTypeCode
-    // TODO: Augment PartyNameTypeCode, PartyIdentificationTypeCode
-    const parties = [
-      [reportParams.report.transmitter, 35],
-      [reportParams.report.transmitterContact, 37],
-      [reportParams.report.filingInstitution, 30],
-      [reportParams.report.contactOffice, 8],
-      ...(reportParams.transactionMetadata?.financialInstitutions ?? []).map(
-        (s: any) => [s, 34]
-      ),
-      ...(reportParams.transactionMetadata?.subjects ?? []).map((s: any) => [
-        s,
-        33,
-      ]),
-    ].map(([party, typeCode]) => ({
-      ...party,
-      ActivityPartyTypeCode: typeCode,
-    }))
+    /**
+     * Subjects
+     */
+    reportParams.transactionMetadata.subjects = (
+      reportParams.transactionMetadata?.subjects ?? []
+    ).map((subject: any) => {
+      // Augment PartyNameTypeCode
+      subject.PartyName = [
+        subject.PartyName
+          ? {
+              ...(subject.PartyName[0] ?? subject.PartyName),
+              PartyNameTypeCode: 'L',
+            }
+          : undefined,
+        ...(subject.FlagrightAlternatePartyName ?? []),
+      ].filter(Boolean)
+      return omit(subject, 'FlagrightAlternatePartyName')
+    })
 
-    const fincenJson = {
+    const parties = [
+      reportParams.report.transmitter,
+      reportParams.report.transmitterContact,
+      reportParams.report.filingInstitution,
+      reportParams.report.contactOffice,
+      ...(reportParams.transactionMetadata?.subjects ?? []),
+      ...(reportParams.transactionMetadata?.financialInstitutions ?? []),
+    ]
+
+    return removeEmptyString({
       EFilingBatchXML: {
         Activity: {
           ActivityAssociation: MOCK_DATA.ActivityAssociation,
@@ -477,13 +618,21 @@ export class UsSarReportGenerator implements ReportGenerator {
           )
             .toString()
             .padStart(14, '0'),
+          ...reportParams.transactionMetadata.otherInfo,
         },
         FormTypeCode: 'SARX',
       },
-    }
+    })
+  }
+
+  public generate(reportParams: ReportParameters): string {
+    const builder = new XMLBuilder({
+      attributeNamePrefix: '@',
+      ignoreAttributes: false,
+    })
 
     // TODO: handle attachments: ActivitySupportDocument
-    const xmlContent = builder.build(fincenJson)
+    const xmlContent = builder.build(this.transform(cloneDeep(reportParams)))
     // NOTE: In aws lambda, we can only write files to /tmp
     const outputFile = `${path.join('/tmp', 'input.xml')}`
     fs.writeFileSync(outputFile, xmlContent)

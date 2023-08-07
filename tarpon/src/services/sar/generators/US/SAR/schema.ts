@@ -2,8 +2,9 @@
  * Party types: Page 25 of https://bsaefiling.fincen.treas.gov/docs/XMLUserGuide_FinCENSAR.pdf
  */
 
-import { pick, merge } from 'lodash'
+import { pick, merge, omit, isNumber, cloneDeep } from 'lodash'
 import { FincenJsonSchema } from './resources/EFL_SARXBatchSchema'
+import { AttributeInfos } from './scripts/attribute-infos'
 
 function pickActivityTypeFields(fields: string[]) {
   return pick(
@@ -26,18 +27,28 @@ export const GeneralInfo = {
     'ActivityNarrativeInformation',
     'EFilingPriorDocumentNumber',
     'FilingInstitutionNotetoFinCEN',
-    // 'ActivitySupportDocument',
-    'ActivityIPAddress',
-    'CyberEventIndicators',
-    'Assets',
-    'AssetsAttribute',
+    'ActivitySupportDocument',
   ]),
   required: [
     'FilingDateText',
     'ActivityAssociation',
     'ActivityNarrativeInformation',
-    // 'EFilingPriorDocumentNumber',
   ],
+}
+
+export const SuspiciousActivityOtherInfo = {
+  type: 'object',
+  title: 'Other information',
+  'ui:schema': {
+    'ui:group': 'Other information',
+  },
+  properties: pickActivityTypeFields([
+    'ActivityIPAddress',
+    'CyberEventIndicators',
+    'Assets',
+    'AssetsAttribute',
+  ]),
+  required: [],
 }
 
 function pickPartyFields(fields: string[]) {
@@ -57,43 +68,118 @@ function arraySchema(type: unknown) {
   }
 }
 
-function pickPartyNameFields(fields: string[]) {
+function pickPartyNameFields(
+  fields: string[],
+  requiredFields: string[],
+  overrides = {}
+) {
   return {
     type: 'object',
-    properties: pick(
-      FincenJsonSchema.definitions.PartyNameType.properties,
-      fields
-    ),
+    properties: {
+      ...pick(FincenJsonSchema.definitions.PartyNameType.properties, fields),
+      ...overrides,
+    },
+    required: requiredFields,
+    ...AttributeInfos.PartyName,
   }
 }
 
-function pickAddressFields(fields: string[]) {
+const FlagrightAlternatePartyName = {
+  ...pickPartyNameFields(['RawPartyFullName'], ['RawPartyFullName'], {
+    PartyNameTypeCode: pickPartyNameTypeCodeSubset(['AKA', 'DBA']),
+  }),
+  title: 'Alternate name',
+}
+
+function pickAddressFields(fields: string[], requiredFields: string[]) {
   return {
     type: 'object',
     properties: pick(
       FincenJsonSchema.definitions.AddressType.properties,
       fields
     ),
+    required: requiredFields,
+    ...AttributeInfos.Address,
   }
 }
 
-function pickPhoneNumberFields(fields: string[]) {
+function pickPhoneNumberFields(fields: string[], requiredFields: string[]) {
   return {
     type: 'object',
     properties: pick(
       FincenJsonSchema.definitions.PhoneNumberType.properties,
       fields
     ),
+    required: requiredFields,
+    ...AttributeInfos.PhoneNumber,
   }
 }
 
-function pickPartyIdentificationFields(fields: string[]) {
+function pickPartyIdentificationFields(
+  fields: string[],
+  requiredFields: string[],
+  overrides = {}
+) {
   return {
     type: 'object',
-    properties: pick(
-      FincenJsonSchema.definitions.PartyIdentificationType.properties,
-      fields
+    properties: {
+      ...pick(
+        FincenJsonSchema.definitions.PartyIdentificationType.properties,
+        fields
+      ),
+      ...overrides,
+    },
+    required: requiredFields,
+  }
+}
+
+// See page 62 in the pdf
+function pickPartyIdentificationTypeCodeSubset(codes: string[]) {
+  const newValidatePartyIdentificationCodeType = cloneDeep(
+    FincenJsonSchema.definitions.ValidatePartyIdentificationCodeType
+  )
+  const enumIndexes = newValidatePartyIdentificationCodeType.enum
+    .map((e, index) => (codes.includes(e) ? index : null))
+    .filter(isNumber)
+  newValidatePartyIdentificationCodeType.enum =
+    newValidatePartyIdentificationCodeType.enum.filter((_e, index) =>
+      enumIndexes.includes(index)
+    )
+  newValidatePartyIdentificationCodeType.enumNames =
+    newValidatePartyIdentificationCodeType.enumNames.filter((_e, index) =>
+      enumIndexes.includes(index)
+    )
+  return {
+    ...newValidatePartyIdentificationCodeType,
+    ...omit(
+      FincenJsonSchema.definitions.PartyIdentificationType.properties
+        .PartyIdentificationTypeCode,
+      '$ref'
     ),
+  }
+}
+
+function pickPartyNameTypeCodeSubset(codes: string[]) {
+  const newValidatePartyNameCodeType = cloneDeep(
+    FincenJsonSchema.definitions.ValidatePartyNameCodeType
+  )
+  const enumIndexes = newValidatePartyNameCodeType.enum
+    .map((e, index) => (codes.includes(e) ? index : null))
+    .filter(isNumber)
+  newValidatePartyNameCodeType.enum = newValidatePartyNameCodeType.enum.filter(
+    (_e, index) => enumIndexes.includes(index)
+  )
+  newValidatePartyNameCodeType.enumNames =
+    newValidatePartyNameCodeType.enumNames.filter((_e, index) =>
+      enumIndexes.includes(index)
+    )
+  return {
+    ...newValidatePartyNameCodeType,
+    ...omit(
+      FincenJsonSchema.definitions.PartyNameType.properties.PartyNameTypeCode,
+      '$ref'
+    ),
+    ...AttributeInfos.PartyIdentification,
   }
 }
 
@@ -107,20 +193,50 @@ export const Transmitter = {
     'ui:group': 'Transmitter information',
   },
   properties: {
-    PartyName: pickPartyNameFields(['RawPartyFullName']),
-    Address: pickAddressFields([
-      'RawCityText',
-      'RawCountryCodeText',
-      'RawStateCodeText',
-      'RawStreetAddress1Text',
-      'RawZIPCode',
-    ]),
-    PhoneNumber: pickPhoneNumberFields(['PhoneNumberText']),
-    PartyIdentification: pickPartyIdentificationFields([
-      'PartyIdentificationNumberText',
-    ]),
+    PartyName: pickPartyNameFields(['RawPartyFullName'], ['RawPartyFullName']),
+    Address: arraySchema(
+      pickAddressFields(
+        [
+          'RawCityText',
+          'RawCountryCodeText',
+          'RawStateCodeText',
+          'RawStreetAddress1Text',
+          'RawZIPCode',
+        ],
+        [
+          'RawCityText',
+          'RawCountryCodeText',
+          'RawStateCodeText',
+          'RawStreetAddress1Text',
+          'RawZIPCode',
+        ]
+      )
+    ),
+    PhoneNumber: arraySchema(
+      pickPhoneNumberFields(['PhoneNumberText'], ['PhoneNumberText'])
+    ),
+    FlagrightPartyIdentificationTcc: {
+      ...pickPartyIdentificationFields(
+        ['PartyIdentificationNumberText'],
+        ['PartyIdentificationNumberText']
+      ),
+      title: 'Transmitter Control Code (TCC)',
+    },
+    FlagrightPartyIdentificationTin: {
+      ...pickPartyIdentificationFields(
+        ['PartyIdentificationNumberText'],
+        ['PartyIdentificationNumberText']
+      ),
+      title: 'Taxpayer Identification Number (TIN)',
+    },
   },
-  required: ['PartyName', 'Address', 'PhoneNumber', 'PartyIdentification'],
+  required: [
+    'PartyName',
+    'Address',
+    'PhoneNumber',
+    'FlagrightPartyIdentificationTcc',
+    'FlagrightPartyIdentificationTin',
+  ],
 }
 
 // Search '37 = Transmitter Contact' in the pdf
@@ -131,7 +247,9 @@ export const TransmitterContact = {
   'ui:schema': {
     'ui:group': 'Transmitter contact information',
   },
-  properties: { PartyName: pickPartyNameFields(['RawPartyFullName']) },
+  properties: {
+    PartyName: pickPartyNameFields(['RawPartyFullName'], ['RawPartyFullName']),
+  },
   required: ['PartyName'],
 }
 
@@ -150,24 +268,74 @@ export const FilingInstitution = {
       'OrganizationClassificationTypeSubtype',
     ]),
     {
-      PartyName: pickPartyNameFields(['RawPartyFullName']),
-      Address: pickAddressFields([
-        'RawCityText',
-        'RawCountryCodeText',
-        'RawStateCodeText',
-        'RawStreetAddress1Text',
-        'RawZIPCode',
-      ]),
-      PartyIdentification: pickPartyIdentificationFields([
-        'PartyIdentificationNumberText',
-      ]),
+      PartyName: pickPartyNameFields(
+        ['RawPartyFullName'],
+        ['RawPartyFullName']
+      ),
+      FlagrightAlternatePartyName,
+      Address: arraySchema(
+        pickAddressFields(
+          [
+            'RawCityText',
+            'RawCountryCodeText',
+            'RawStateCodeText',
+            'RawStreetAddress1Text',
+            'RawZIPCode',
+          ],
+          [
+            'RawCityText',
+            'RawCountryCodeText',
+            'RawStateCodeText',
+            'RawStreetAddress1Text',
+            'RawZIPCode',
+          ]
+        )
+      ),
+      FlagrightPartyIdentificationTin: {
+        ...pickPartyIdentificationFields(
+          ['PartyIdentificationNumberText'],
+          ['PartyIdentificationNumberText', 'PartyIdentificationTypeCode'],
+          {
+            // ref: https://github.com/moov-io/fincen/blob/eeeed6e18ba6710474db14d0ec51441b26d75b1c/pkg/suspicious_activity/activity.go#L267
+            PartyIdentificationTypeCode: pickPartyIdentificationTypeCodeSubset([
+              '2',
+            ]),
+          }
+        ),
+        title: 'TIN',
+      },
+      FlagrightPartyIdentificationFilingInstitutionIdentification: {
+        ...pickPartyIdentificationFields(
+          ['PartyIdentificationNumberText'],
+          ['PartyIdentificationNumberText', 'PartyIdentificationTypeCode'],
+          {
+            PartyIdentificationTypeCode: pickPartyIdentificationTypeCodeSubset([
+              '10',
+              '11',
+              '12',
+              '13',
+              '14',
+              '32',
+              '33',
+            ]),
+          }
+        ),
+        title: 'Filing institution identification (CRD, IARD, etc.)',
+      },
+      FlagrightPartyIdentificationInternalControl: {
+        ...pickPartyIdentificationFields(
+          ['PartyIdentificationNumberText'],
+          ['PartyIdentificationNumberText']
+        ),
+        title: 'Internal control/file number',
+      },
     }
   ),
   required: [
     'PrimaryRegulatorTypeCode',
     'PartyName',
     'Address',
-    'PartyIdentification',
+    'FlagrightPartyIdentificationTin',
     'OrganizationClassificationTypeSubtype',
   ],
 }
@@ -182,11 +350,13 @@ export const ContactOffice = {
     'ui:group': 'Designated contact office',
   },
   properties: {
-    PartyName: pickPartyNameFields(['RawPartyFullName']),
-    PhoneNumber: pickPhoneNumberFields([
-      'PhoneNumberExtensionText',
-      'PhoneNumberText',
-    ]),
+    PartyName: pickPartyNameFields(['RawPartyFullName'], ['RawPartyFullName']),
+    PhoneNumber: arraySchema(
+      pickPhoneNumberFields(
+        ['PhoneNumberExtensionText', 'PhoneNumberText'],
+        ['PhoneNumberText']
+      )
+    ),
   },
   required: ['PartyName', 'PhoneNumber'],
 }
@@ -207,38 +377,72 @@ export const FinancialInstitution = {
       'PartyAssociation',
     ]),
     {
-      PartyName: arraySchema(
-        pickPartyNameFields([
-          'EntityLastNameUnknownIndicator',
-          'RawPartyFullName',
-        ])
+      PartyName: pickPartyNameFields(
+        ['EntityLastNameUnknownIndicator', 'RawPartyFullName'],
+        []
       ),
+      FlagrightAlternatePartyName: arraySchema(FlagrightAlternatePartyName),
       Address: arraySchema(
-        pickAddressFields([
-          'CityUnknownIndicator',
-          'CountryCodeUnknownIndicator',
-          'RawCityText',
-          'RawCountryCodeText',
-          'RawStateCodeText',
-          'RawStreetAddress1Text',
-          'RawZIPCode',
-          'StreetAddressUnknownIndicator',
-          'ZIPCodeUnknownIndicator',
-        ])
+        pickAddressFields(
+          [
+            'CityUnknownIndicator',
+            'CountryCodeUnknownIndicator',
+            'RawCityText',
+            'RawCountryCodeText',
+            'RawStateCodeText',
+            'RawStreetAddress1Text',
+            'RawZIPCode',
+            'StreetAddressUnknownIndicator',
+            'ZIPCodeUnknownIndicator',
+          ],
+          []
+        )
       ),
-      PartyIdentification: arraySchema(
-        pickPartyIdentificationFields([
-          'PartyIdentificationNumberText',
-          'TINUnknownIndicator',
-        ])
-      ),
+      FlagrightPartyIdentificationTin: {
+        ...pickPartyIdentificationFields(
+          ['PartyIdentificationNumberText', 'TINUnknownIndicator'],
+          ['PartyIdentificationTypeCode'],
+          {
+            // ref: https://github.com/moov-io/fincen/blob/eeeed6e18ba6710474db14d0ec51441b26d75b1c/pkg/suspicious_activity/activity.go#L288
+            PartyIdentificationTypeCode: pickPartyIdentificationTypeCodeSubset([
+              '2',
+            ]),
+          }
+        ),
+        title: 'TIN',
+      },
+      FlagrightPartyIdentificationFinancialInstitutionIdentification: {
+        ...pickPartyIdentificationFields(
+          ['PartyIdentificationNumberText'],
+          ['PartyIdentificationNumberText', 'PartyIdentificationTypeCode'],
+          {
+            PartyIdentificationTypeCode: pickPartyIdentificationTypeCodeSubset([
+              '10',
+              '11',
+              '12',
+              '13',
+              '14',
+              '32',
+              '33',
+            ]),
+          }
+        ),
+        title: 'Financial institution identification (CRD, IARD, etc.)',
+      },
+      FlagrightPartyIdentificationInternalControl: {
+        ...pickPartyIdentificationFields(
+          ['PartyIdentificationNumberText'],
+          ['PartyIdentificationNumberText']
+        ),
+        title: 'Internal control/file number',
+      },
     }
   ),
   required: [
     'PrimaryRegulatorTypeCode',
     'PartyName',
     'Address',
-    'PartyIdentification',
+    'FlagrightPartyIdentificationTin',
     'OrganizationClassificationTypeSubtype',
   ],
 }
@@ -264,55 +468,77 @@ export const Subject = {
       'PartyOccupationBusiness',
       'ElectronicAddress',
       'PartyAssociation',
+      // TODO: Fix PartyAccountAssociation
       // 'PartyAccountAssociation',
     ]),
     {
-      PartyName: arraySchema(
-        pickPartyNameFields([
+      PartyName: pickPartyNameFields(
+        [
           'EntityLastNameUnknownIndicator',
           'FirstNameUnknownIndicator',
           'RawEntityIndividualLastName',
           'RawIndividualFirstName',
           'RawIndividualMiddleName',
           'RawIndividualNameSuffixText',
-        ])
+        ],
+        []
       ),
+      FlagrightAlternatePartyName: arraySchema(FlagrightAlternatePartyName),
       Address: arraySchema(
-        pickAddressFields([
-          'CityUnknownIndicator',
-          'CountryCodeUnknownIndicator',
-          'RawCityText',
-          'RawCountryCodeText',
-          'RawStateCodeText',
-          'RawStreetAddress1Text',
-          'RawZIPCode',
-          'StateCodeUnknownIndicator',
-          'StreetAddressUnknownIndicator',
-          'ZIPCodeUnknownIndicator',
-        ])
+        pickAddressFields(
+          [
+            'CityUnknownIndicator',
+            'CountryCodeUnknownIndicator',
+            'RawCityText',
+            'RawCountryCodeText',
+            'RawStateCodeText',
+            'RawStreetAddress1Text',
+            'RawZIPCode',
+            'StateCodeUnknownIndicator',
+            'StreetAddressUnknownIndicator',
+            'ZIPCodeUnknownIndicator',
+          ],
+          []
+        )
       ),
       PhoneNumber: arraySchema(
-        pickPhoneNumberFields([
-          'PhoneNumberExtensionText',
-          'PhoneNumberText',
-          'PhoneNumberTypeCode',
-        ])
+        pickPhoneNumberFields(
+          [
+            'PhoneNumberExtensionText',
+            'PhoneNumberText',
+            'PhoneNumberTypeCode',
+          ],
+          []
+        )
       ),
-      PartyIdentification: arraySchema(
-        pickPartyIdentificationFields([
-          'PartyIdentificationNumberText',
-          'TINUnknownIndicator',
-          'IdentificationPresentUnknownIndicator',
-          'OtherIssuerCountryText',
-          'OtherIssuerStateText',
-          'OtherPartyIdentificationTypeText',
-          'PartyIdentificationNumberText',
-          'PartyIdentificationTypeCode',
-        ])
-      ),
+      PartyIdentification: arraySchema({
+        ...pickPartyIdentificationFields(
+          [
+            'PartyIdentificationNumberText',
+            'TINUnknownIndicator',
+            'IdentificationPresentUnknownIndicator',
+            'OtherIssuerCountryText',
+            'OtherIssuerStateText',
+            'OtherPartyIdentificationTypeText',
+            'PartyIdentificationNumberText',
+          ],
+          ['PartyIdentificationTypeCode'],
+          {
+            PartyIdentificationTypeCode: pickPartyIdentificationTypeCodeSubset([
+              '2',
+              '1',
+              '9',
+              '5',
+              '6',
+              '7',
+              '999',
+            ]),
+          }
+        ),
+      }),
     }
   ),
-  required: ['PartyName', 'Address', 'PartyIdentification'],
+  required: ['Address', 'PartyIdentification'],
 }
 
 export const SuspiciousActivity = {

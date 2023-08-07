@@ -1259,7 +1259,7 @@ export const FincenJsonSchema = {
       maximum: 2147483647,
       minimum: -2147483648,
       enum: ['1', '2', '3', '4', '5', '11', '12', '999'],
-      type: 'integer',
+      type: 'string',
       enumNames: [
         'Casino/Card club',
         'Depository institution',
@@ -1296,7 +1296,7 @@ export const FincenJsonSchema = {
         '1999',
         '5999',
       ],
-      type: 'integer',
+      type: 'string',
       enumNames: [
         'State licensed casino',
         'Tribal authorized casino',
@@ -1413,7 +1413,7 @@ export const FincenJsonSchema = {
       maximum: 2147483647,
       minimum: -2147483648,
       enum: ['1', '12', '3', '4', '5', '6', '7', '8', '9', '10', '11'],
-      type: 'integer',
+      type: 'string',
       enumNames: [
         'Structuring',
         'Gaming activities',
@@ -1524,7 +1524,7 @@ export const FincenJsonSchema = {
         '11999',
         '12999',
       ],
-      type: 'integer',
+      type: 'string',
       enumNames: [
         'Suspicious inquiry by customer regarding BSA reporting or recordkeeping requirements',
         'Alters or cancels transaction to avoid BSA recordkeeping requirement',
@@ -1656,7 +1656,7 @@ export const FincenJsonSchema = {
         '46',
         '47',
       ],
-      type: 'integer',
+      type: 'string',
       enumNames: [
         'Other Financial instrument, product or service',
         'Bonds/Notes',
@@ -1697,7 +1697,7 @@ export const FincenJsonSchema = {
       maximum: 9223372036854776000,
       minimum: -9223372036854776000,
       enum: ['5', '6'],
-      type: 'integer',
+      type: 'string',
       enumNames: [
         'Financial Product',
         'Financial instrument or payment mechanism',
@@ -1708,7 +1708,7 @@ export const FincenJsonSchema = {
       maximum: 9223372036854776000,
       minimum: -9223372036854776000,
       enum: ['1', '2', '3', '4'],
-      type: 'integer',
+      type: 'string',
       enumNames: [
         'CUSIP Number',
         'Commodity Type Description',
@@ -1740,7 +1740,7 @@ export const FincenJsonSchema = {
       maximum: 2147483647,
       minimum: -2147483648,
       enum: ['1', '2', '3', '4', '5'],
-      type: 'integer',
+      type: 'string',
       enumNames: [
         'First block of narrative text (character set 1-4000)',
         'Second block of narrative text (character set 4001-8000, if needed)',

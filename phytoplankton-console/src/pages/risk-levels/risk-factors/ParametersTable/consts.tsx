@@ -434,7 +434,6 @@ const MultipleSelect: React.FC<
       onChange={(value) => {
         onChange(riskValueMultiple((value as string[]).map((x) => riskValueLiteral(x))));
       }}
-      showSearch={true}
       isDisabled={disabled}
       options={options.map((x) => ({ ...x, isDisabled: disabledOptions.includes(x.value) }))}
       mode="TAGS"
@@ -459,7 +458,6 @@ const SingleSelect: React.FC<
       onChange={(value) => {
         onChange(riskValueLiteral(value));
       }}
-      showSearch={true}
       isDisabled={disabled}
       mode="SINGLE"
       options={options.map((x) => ({ ...x, isDisabled: disabledOptions.includes(x.value) }))}
@@ -666,7 +664,6 @@ export const INPUT_RENDERERS: { [key in DataType]: InputRenderer<any> } = {
               }
               options={timeValues}
               value={value?.startHour ?? 0}
-              showSearch
             />
           </Label>
         </div>
@@ -685,7 +682,6 @@ export const INPUT_RENDERERS: { [key in DataType]: InputRenderer<any> } = {
               }
               options={timeValues}
               value={value?.endHour ?? 0}
-              showSearch
             />
           </Label>
         </div>
@@ -704,7 +700,6 @@ export const INPUT_RENDERERS: { [key in DataType]: InputRenderer<any> } = {
               }
               options={timeZonesData}
               value={value?.timezone ?? currentTimeZone}
-              showSearch
             />
           </Label>
         </div>

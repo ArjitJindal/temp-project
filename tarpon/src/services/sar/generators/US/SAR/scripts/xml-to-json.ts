@@ -14,7 +14,7 @@ import { removeUnnecessaryOneOf } from '@/services/sar/generators/US/SAR/scripts
 function augmentJsonSchema(
   xml: any,
   object: any,
-  attributesInfo: typeof AttributeInfos
+  attributesInfo: { [key: string]: { title: string; description: string } }
 ) {
   if (!isObject(object)) {
     return
@@ -85,7 +85,13 @@ let jsonSchema = convertedSchemas['schema'].getJsonSchema()
 // EFilingBatchXML is the root element. We only need to keep 'EFilingBatchXML' in 'properties'.
 jsonSchema.properties = pick(jsonSchema.properties, 'EFilingBatchXML')
 jsonSchema = omit(jsonSchema, 'anyOf')
-jsonSchema = augmentJsonSchema(xml, jsonSchema, AttributeInfos)
+jsonSchema = augmentJsonSchema(
+  xml,
+  jsonSchema,
+  AttributeInfos as any as {
+    [key: string]: { title: string; description: string }
+  }
+)
 
 fs.writeFileSync(
   path.join(__dirname, '..', 'resources', 'EFL_SARXBatchSchema.ts'),
