@@ -11,6 +11,8 @@ import {
   ObjectFieldValidator,
   ValidationError,
 } from '@/components/library/Form/utils/validation/types';
+import { removeEmpty } from '@/utils/json';
+import { isEqual } from '@/utils/lang';
 
 export interface FormValidationResult<FormValues> {
   formValidationErrors?: ValidationError[];
@@ -78,12 +80,14 @@ export function validateField<T>(
   } else {
     const objectValidator: ObjectFieldValidator<T> = fieldValidator;
     nestedResult = {};
-    for (const key of Object.keys(objectValidator)) {
-      const subfieldValidator = objectValidator[key];
-      if (subfieldValidator != null) {
-        const result = validateField(subfieldValidator, value?.[key]);
-        if (!isResultValid(result)) {
-          nestedResult[key] = result;
+    if (!isEqual(removeEmpty(value), undefined)) {
+      for (const key of Object.keys(objectValidator)) {
+        const subfieldValidator = objectValidator[key];
+        if (subfieldValidator != null) {
+          const result = validateField(subfieldValidator, value?.[key]);
+          if (!isResultValid(result)) {
+            nestedResult[key] = result;
+          }
         }
       }
     }

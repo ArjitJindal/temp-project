@@ -28,7 +28,7 @@ function removeEmptyInplace(object: any) {
         delete object[key];
         return;
       }
-    } else if (_.isNil(localObj) || localObj === false) {
+    } else if (_.isNil(localObj) || localObj === false || localObj === '') {
       delete object[key];
       return;
     }

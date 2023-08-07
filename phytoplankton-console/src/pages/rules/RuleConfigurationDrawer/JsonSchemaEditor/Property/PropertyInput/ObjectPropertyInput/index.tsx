@@ -12,6 +12,7 @@ import { useFormContext } from '@/components/library/Form/utils/hooks';
 import { Props as LabelProps } from '@/components/library/Label';
 import { PropertyContext } from '@/pages/rules/RuleConfigurationDrawer/JsonSchemaEditor/Property';
 import { isArrayFieldValidator } from '@/components/library/Form/utils/validation/types';
+import { removeEmpty } from '@/utils/json';
 
 // todo: fix any
 interface Props extends InputProps<any> {
@@ -45,7 +46,7 @@ export default function GenericObjectInput(props: Props) {
     },
     values: value ?? {},
     setValues: (newValue) => {
-      onChange?.(newValue);
+      onChange?.(removeEmpty(newValue));
     },
     fieldValidators: subFieldValidator,
   };
