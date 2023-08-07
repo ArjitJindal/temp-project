@@ -29,6 +29,7 @@ import BrainIcon from '@/components/ui/icons/brain-icon.react.svg';
 import EntityLinking from '@/pages/users-item/UserDetails/EntityLinking';
 import Tooltip from '@/components/library/Tooltip';
 import { getBranding } from '@/utils/branding';
+import CRMMonitoring from '@/pages/users-item/UserDetails/CRMMonitoring';
 
 interface Props {
   caseItem: Case;
@@ -45,6 +46,7 @@ function CaseDetails(props: Props) {
   const settings = useSettings();
   const isMLDemoEnabled = useFeatureEnabled('MACHINE_LEARNING_DEMO');
   const navigate = useNavigate();
+  const isCrmEnabled = useFeatureEnabled('CRM');
   const isEntityLinkingEnabled = useFeatureEnabled('ENTITY_LINKING');
 
   const alertIds = (caseItem.alerts ?? [])
@@ -95,6 +97,22 @@ function CaseDetails(props: Props) {
             isClosable: false,
             isDisabled: false,
           },
+          ...(user && isCrmEnabled
+            ? [
+                {
+                  tab: (
+                    <div className={style.icon}>
+                      {' '}
+                      <BrainIcon /> <span>&nbsp; CRM data</span>
+                    </div>
+                  ),
+                  key: 'crm-monitoring',
+                  children: <CRMMonitoring userId={user.userId!} />,
+                  isClosable: false,
+                  isDisabled: false,
+                },
+              ]
+            : []),
           ...(user && isEntityLinkingEnabled
             ? [
                 {
