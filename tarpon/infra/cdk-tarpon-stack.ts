@@ -994,6 +994,11 @@ export class CdkTarponStack extends cdk.Stack {
 
     if (isDevUserStack) {
       const apiKey = ApiKey.fromApiKeyId(this, `api-key`, getQaApiKeyId())
+      const postManTenantApiKey = ApiKey.fromApiKeyId(
+        this,
+        'postman-tenant-api-key',
+        config.application.INTEGRATION_TEST_API_KEY_ID as string
+      )
       const qaSubdomain = process.env.QA_SUBDOMAIN as string
       const usagePlan = new UsagePlan(this, `usage-plan`, {
         name: `dev-${qaSubdomain}`,
@@ -1021,6 +1026,7 @@ export class CdkTarponStack extends cdk.Stack {
         ],
       })
       usagePlan.addApiKey(apiKey)
+      usagePlan.addApiKey(postManTenantApiKey)
     }
 
     /**
