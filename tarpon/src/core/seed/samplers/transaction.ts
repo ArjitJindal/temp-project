@@ -180,6 +180,7 @@ export function sampleGenericBankAccountDetails(
         bankCode: 'BWEHRHRB',
         name: 'Mark Schagal',
         bankAddress: randomAddress(),
+        accountNumber: `${randomInt(rnd())}`,
       },
       {
         method: 'GENERIC_BANK_ACCOUNT',
@@ -187,6 +188,7 @@ export function sampleGenericBankAccountDetails(
         bankCode: '123123',
         name: 'John Dow',
         bankAddress: randomAddress(),
+        accountNumber: `${randomInt(rnd())}`,
       },
     ],
     rnd()

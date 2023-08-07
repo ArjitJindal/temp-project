@@ -2,30 +2,32 @@ import { Spin } from 'antd';
 
 import React, { useEffect, useState } from 'react';
 import { uniqBy } from 'lodash';
-import s from './index.module.less';
+import { EdgeArrowPosition, EdgeInterpolation } from 'reagraph';
+import s from '../index.module.less';
+import { EntityLinkingGraph } from '../EntityLinkingGraph';
 import * as Card from '@/components/ui/Card';
-import { useApi } from '@/api';
-import { UserEntity, UserEntityEdges, UserEntityNodes } from '@/apis';
-import { EntityLinkingGraph } from '@/pages/users-item/UserDetails/EntityLinking/EntityLinkingGraph';
+import { Graph, GraphEdges, GraphNodes } from '@/apis';
 
 interface Props {
   userId: string;
+  getGraph: (user: string) => Promise<Graph>;
+  edgeInterpolation?: EdgeInterpolation;
+  edgeArrowPosition?: EdgeArrowPosition;
 }
 
-export default function EntityLinking(props: Props) {
-  const api = useApi();
+export default function UserGraph(props: Props) {
   const [userId, setUserId] = useState(props.userId);
-  const [entity, setEntity] = useState<UserEntity>();
+  const [entity, setEntity] = useState<Graph>();
   const [followed, setFollowed] = useState([props.userId]);
+  const { getGraph } = props;
 
-  const [nodes, setNodes] = useState<UserEntityNodes[]>([]);
-  const [edges, setEdges] = useState<UserEntityEdges[]>([]);
+  const [nodes, setNodes] = useState<GraphNodes[]>([]);
+  const [edges, setEdges] = useState<GraphEdges[]>([]);
   useEffect(() => {
-    api
-      .getUserEntity({ userId })
+    getGraph(userId)
       .then(setEntity)
       .then(() => setFollowed((followed) => [userId, ...followed]));
-  }, [api, userId]);
+  }, [getGraph, userId]);
 
   useEffect(() => {
     if (entity) {
@@ -35,7 +37,7 @@ export default function EntityLinking(props: Props) {
   }, [entity]);
 
   return (
-    <Card.Root className={s.root}>
+    <>
       {entity && (
         <Card.Section>
           <div className={s.graphContainer}>
@@ -47,6 +49,8 @@ export default function EntityLinking(props: Props) {
                 setUserId(userId);
               }}
               userId={props.userId}
+              edgeInterpolation={props.edgeInterpolation}
+              edgeArrowPosition={props.edgeArrowPosition}
             />
           </div>
         </Card.Section>
@@ -58,6 +62,6 @@ export default function EntityLinking(props: Props) {
           </div>
         </Card.Section>
       )}
-    </Card.Root>
+    </>
   );
 }

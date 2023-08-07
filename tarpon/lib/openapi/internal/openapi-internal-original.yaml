@@ -1079,9 +1079,31 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/UserEntity'
+                $ref: '#/components/schemas/Graph'
               examples: {}
       operationId: get-user-entity
+      description: ''
+      parameters:
+        - schema:
+            type: string
+          name: userId
+          required: true
+          in: path
+  '/users/{userId}/txn-links':
+    get:
+      summary: Transaction Linking
+      x-flagright:
+        permissions:
+          - users:user-overview:read
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Graph'
+              examples: {}
+      operationId: get-txn-linking
       description: ''
       parameters:
         - schema:
@@ -4338,8 +4360,8 @@ components:
         - good
         - bad
         - neutral
-    UserEntity:
-      title: UserEntity
+    Graph:
+      title: Graph
       type: object
       properties:
         nodes:
@@ -4369,6 +4391,10 @@ components:
                 type: string
               target:
                 type: string
+              label:
+                type: string
+              size:
+                type: number
     CrmAccountResponse:
       title: CrmAccountResponse
       type: object

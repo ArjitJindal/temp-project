@@ -3,11 +3,7 @@ import { sampleTransaction } from '@/core/seed/samplers/transaction'
 import { sampleTag } from '@/core/seed/samplers/tag'
 import { sampleCountry } from '@/core/seed/samplers/countries'
 import { InternalTransaction } from '@/@types/openapi-internal/InternalTransaction'
-import { pickRandom, prng, randomFloat, randomInt } from '@/utils/prng'
-import {
-  randomTransactionRules,
-  transactionRules,
-} from '@/core/seed/data/rules'
+import { pickRandom, prng, randomFloat, randomSubsetOfSize } from '@/utils/prng'
 import { sampleCurrency } from '@/core/seed/samplers/currencies'
 import { sampleTimestamp } from '@/core/seed/samplers/timestamp'
 import { RISK_LEVEL1S } from '@/@types/openapi-internal-custom/RiskLevel1'
@@ -15,27 +11,44 @@ import { getPaymentMethodId } from '@/core/dynamodb/dynamodb-keys'
 import { TRANSACTION_STATES } from '@/@types/openapi-internal-custom/TransactionState'
 import { TransactionWithRulesResult } from '@/@types/openapi-public/TransactionWithRulesResult'
 import { getAggregatedRuleStatus } from '@/services/rules-engine/utils'
+import {
+  randomTransactionRules,
+  transactionRules,
+} from '@/core/seed/data/rules'
+import { ExecutedRulesResult } from '@/@types/openapi-internal/ExecutedRulesResult'
 
 const TXN_COUNT = process.env.SEED_TRANSACTIONS_COUNT
   ? Number(process.env.SEED_TRANSACTIONS_COUNT)
-  : 1000
+  : 50
+
 const generator = function* (seed: number): Generator<InternalTransaction> {
+  const userTransactionMap = new Map<string, string[]>()
+  users.forEach((u, i) => {
+    const filteredUsers = users.filter((thisU) => thisU.userId !== u.userId)
+    const usersToTransactWith = randomSubsetOfSize(filteredUsers, 3, i)
+    userTransactionMap.set(
+      u.userId,
+      usersToTransactWith.map((u) => u.userId)
+    )
+  })
+
   for (let i = 0; i < TXN_COUNT; i += 1) {
     const random = prng(seed * i)
     const type =
       random() < 0.24 ? 'TRANSFER' : random() < 0.95 ? 'REFUND' : 'WITHDRAWAL'
 
     // Hack in some suspended transactions for payment approvals
-    const hitRules =
+    const hitRules: ExecutedRulesResult[] =
       random() < 0.75
         ? randomTransactionRules()
         : transactionRules.filter((r) => r.ruleAction === 'SUSPEND')
 
     const transaction = sampleTransaction({}, i)
-    const originUserId = users[randomInt(random(), users.length)].userId
-    const withoutOrigin = users.filter((u) => u.userId !== originUserId)
-    const destinationUserId =
-      withoutOrigin[randomInt(random(), withoutOrigin.length)].userId
+    const originUserId = users[i % users.length].userId
+    const destinationUserId = pickRandom(
+      userTransactionMap.get(originUserId) as string[],
+      i
+    )
 
     const transactionId = `T-${i + 1}`
     const timestamp = sampleTimestamp(i)

@@ -6,7 +6,7 @@ import UserDetails from './UserDetails';
 import Header from './Header';
 import s from './index.module.less';
 import CRMMonitoring from './UserDetails/CRMMonitoring';
-import EntityLinking from './UserDetails/EntityLinking';
+import Linking from './UserDetails/Linking';
 import PageWrapper, { PAGE_WRAPPER_PADDING } from '@/components/PageWrapper';
 import { makeUrl } from '@/utils/routing';
 import { Comment, InternalBusinessUser, InternalConsumerUser } from '@/apis';
@@ -152,7 +152,7 @@ export default function UserItem() {
                     {
                       tab: <div className={s.icon}>Entity Linking</div>,
                       key: 'entity-linking',
-                      children: <EntityLinking userId={user.userId} />,
+                      children: <Linking userId={user.userId} />,
                       isClosable: false,
                       isDisabled: false,
                     },

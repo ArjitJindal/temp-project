@@ -44,3 +44,16 @@ export function randomSubset<T>(variants: T[], seed?: number): T[] {
   }
   return output
 }
+
+export function randomSubsetOfSize<T>(
+  variants: T[],
+  size: number,
+  seed?: number
+): T[] {
+  const output = []
+  for (let i = 0; i < size; i++) {
+    const selected = randomInt(seed ?? 0.1, variants.length)
+    output.push(variants[selected])
+  }
+  return output
+}

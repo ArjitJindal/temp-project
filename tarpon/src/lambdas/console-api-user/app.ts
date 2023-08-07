@@ -208,6 +208,10 @@ export const allUsersViewHandler = lambdaApi()(
       )
     })
 
+    handlers.registerGetTxnLinking(async (ctx, request) => {
+      return linkerService.transactions(request.userId)
+    })
+
     handlers.registerGetUserScreeningStatus(async (ctx, request) => {
       const user = await userService.getUser(request.userId)
       const ruleInstances = await ruleInstanceRepository.getAllRuleInstances()

@@ -1,5 +1,5 @@
 import { Collection } from 'mongodb'
-import { uniq } from 'lodash'
+import { uniq, maxBy, max } from 'lodash'
 import {
   getMongoDbClient,
   lookupPipelineStage,
@@ -10,8 +10,8 @@ import { InternalTransaction } from '@/@types/openapi-internal/InternalTransacti
 import { InternalUser } from '@/@types/openapi-internal/InternalUser'
 import { getUserName } from '@/utils/helpers'
 import { ContactDetails } from '@/@types/openapi-internal/ContactDetails'
-import { UserEntityNodes } from '@/@types/openapi-internal/UserEntityNodes'
-import { UserEntityEdges } from '@/@types/openapi-internal/UserEntityEdges'
+import { GraphNodes } from '@/@types/openapi-internal/GraphNodes'
+import { GraphEdges } from '@/@types/openapi-internal/GraphEdges'
 import { Address } from '@/@types/openapi-internal/Address'
 
 export class LinkerService {
@@ -28,11 +28,11 @@ export class LinkerService {
     phoneLinked: Map<string, string[]>,
     paymentMethodLinked: Map<string, string[]>
   ): {
-    nodes: UserEntityNodes[]
-    edges: UserEntityEdges[]
+    nodes: GraphNodes[]
+    edges: GraphEdges[]
   } {
     const nodeMap: Map<string, string> = new Map()
-    const linkedEdges: UserEntityEdges[] = []
+    const linkedEdges: GraphEdges[] = []
     const links: [string, Map<string, string[]>][] = [
       ['emailAddress', emailLinked],
       ['paymentIdentifier', paymentMethodLinked],
@@ -89,6 +89,118 @@ export class LinkerService {
       map.set(link, uniq([user.userId, ...existingLinks]))
     } else {
       map.set(link, uniq([user.userId]))
+    }
+  }
+
+  public async transactions(userId: string): Promise<{
+    nodes: GraphNodes[]
+    edges: GraphEdges[]
+  }> {
+    const mongoClient = await getMongoDbClient()
+    const db = mongoClient.db()
+    const txnCollection = db.collection<InternalTransaction>(
+      TRANSACTIONS_COLLECTION(this.tenantId)
+    )
+    const userCollection = db.collection<InternalUser>(
+      USERS_COLLECTION(this.tenantId)
+    )
+    const [credit, debit, user] = await Promise.all([
+      txnCollection
+        .aggregate<{
+          _id: string
+          count: number
+          users: InternalUser[]
+        }>([
+          {
+            $match: {
+              originUserId: userId,
+            },
+          },
+          {
+            $group: {
+              _id: '$destinationUserId',
+              count: { $sum: 1 },
+            },
+          },
+          lookupPipelineStage({
+            from: USERS_COLLECTION(this.tenantId),
+            localField: '_id',
+            foreignField: 'userId',
+            as: 'users',
+          }),
+        ])
+        .toArray(),
+      txnCollection
+        .aggregate<{
+          _id: string
+          count: number
+          users: InternalUser[]
+        }>([
+          {
+            $match: {
+              destinationUserId: userId,
+            },
+          },
+          {
+            $group: {
+              _id: '$originUserId',
+              count: { $sum: 1 },
+            },
+          },
+          lookupPipelineStage({
+            from: USERS_COLLECTION(this.tenantId),
+            localField: '_id',
+            foreignField: 'userId',
+            as: 'users',
+          }),
+        ])
+        .toArray(),
+      userCollection.findOne({ userId }),
+    ])
+
+    const nodes: GraphNodes[] = [
+      {
+        id: `user:${userId}`,
+        label: getUserName(user),
+      },
+    ]
+    const edges: GraphEdges[] = []
+
+    const SCALE = 3 // How thick should our thickest line be for transaction volume
+    const maxCount =
+      max([maxBy(credit, 'count')?.count, maxBy(debit, 'count')?.count]) || 10
+
+    credit.forEach((userTxns) => {
+      nodes.push({
+        id: `user:${userTxns._id}`,
+        label: getUserName(userTxns.users[0]),
+      })
+      edges.push({
+        id: `${userTxns._id}-${userId}`,
+        source: `user:${userTxns._id}`,
+        target: `user:${userId}`,
+        size: (userTxns.count / maxCount) * SCALE,
+        label: `${userTxns.count}`,
+      })
+    })
+
+    debit.forEach((userTxns) => {
+      nodes.push({
+        id: `user:${userTxns._id}`,
+        label: getUserName(userTxns.users[0]),
+      })
+      edges.push({
+        id: `${userId}-${userTxns._id}`,
+        source: `user:${userId}`,
+        target: `user:${userTxns._id}`,
+        size: (userTxns.count / maxCount) * SCALE,
+        label: `${userTxns.count}`,
+      })
+    })
+
+    return {
+      nodes,
+      edges,
     }
   }
 

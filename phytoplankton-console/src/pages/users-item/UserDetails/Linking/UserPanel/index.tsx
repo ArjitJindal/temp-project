@@ -1,5 +1,6 @@
 import { useNavigate } from 'react-router';
 import React from 'react';
+import { UserCard } from '../UserCard';
 import { useApi } from '@/api';
 import { useApiTime } from '@/utils/tracker';
 import { useQuery } from '@/utils/queries/hooks';
@@ -9,7 +10,6 @@ import AsyncResourceRenderer from '@/components/common/AsyncResourceRenderer';
 import * as Card from '@/components/ui/Card';
 import Button from '@/components/library/Button';
 import { makeUrl } from '@/utils/routing';
-import { UserCard } from '@/pages/users-item/UserDetails/EntityLinking/UserCard';
 
 type UserPanelProps = {
   userId: string;

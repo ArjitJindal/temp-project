@@ -26,7 +26,7 @@ import { PAGE_WRAPPER_PADDING } from '@/components/PageWrapper';
 import { useElementSize } from '@/utils/browser';
 import ExpectedTransactionLimits from '@/pages/users-item/UserDetails/BusinessUserDetails/TransactionLimits';
 import BrainIcon from '@/components/ui/icons/brain-icon.react.svg';
-import EntityLinking from '@/pages/users-item/UserDetails/EntityLinking';
+import Linking from '@/pages/users-item/UserDetails/Linking';
 import Tooltip from '@/components/library/Tooltip';
 import { getBranding } from '@/utils/branding';
 import CRMMonitoring from '@/pages/users-item/UserDetails/CRMMonitoring';
@@ -118,7 +118,7 @@ function CaseDetails(props: Props) {
                 {
                   tab: <div className={style.icon}>Entity Linking</div>,
                   key: 'entity-linking',
-                  children: <EntityLinking userId={user.userId!} />,
+                  children: <Linking userId={user.userId!} />,
                   isClosable: false,
                   isDisabled: false,
                 },

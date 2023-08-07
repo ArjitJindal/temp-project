@@ -6,23 +6,35 @@ import {
   lightTheme,
   SphereWithIcon,
   useSelection,
+  EdgeInterpolation,
+  EdgeArrowPosition,
 } from 'reagraph';
 import s from '../index.module.less';
-import { UserEntityEdges, UserEntityNodes } from '@/apis';
-import { UserPanel } from '@/pages/users-item/UserDetails/EntityLinking/UserPanel';
-import { AttributePanel } from '@/pages/users-item/UserDetails/EntityLinking/AttributePanel';
+import { UserPanel } from '../UserPanel';
+import { AttributePanel } from '../AttributePanel';
+import { GraphEdges, GraphNodes } from '@/apis';
 
 type EntityLinkingProps = {
   userId: string;
   onFollow: (userId: string) => void;
-  nodes: UserEntityNodes[];
-  edges: UserEntityEdges[];
+  nodes: GraphNodes[];
+  edges: GraphEdges[];
   followed: string[];
+  edgeInterpolation?: EdgeInterpolation;
+  edgeArrowPosition?: EdgeArrowPosition;
 };
 export const EntityLinkingGraph = (props: EntityLinkingProps) => {
   const graphRef = useRef<GraphCanvasRef | null>(null);
 
-  const { nodes, edges, userId, followed, onFollow } = props;
+  const {
+    nodes,
+    edges,
+    userId,
+    followed,
+    onFollow,
+    edgeArrowPosition = 'none',
+    edgeInterpolation = 'linear',
+  } = props;
   const { selections, actives, onNodePointerOver, onNodePointerOut } = useSelection({
     ref: graphRef,
     pathHoverType: 'all',
@@ -49,7 +61,8 @@ export const EntityLinkingGraph = (props: EntityLinkingProps) => {
       )}
       <GraphCanvas
         ref={graphRef}
-        edgeArrowPosition="none"
+        edgeInterpolation={edgeInterpolation}
+        edgeArrowPosition={edgeArrowPosition}
         labelType={'all'}
         labelFontUrl={
           'https://fonts.gstatic.com/s/notosans/v30/o-0IIpQlx3QUlC5A4PNr6DRASf6M7VBj.woff2'
