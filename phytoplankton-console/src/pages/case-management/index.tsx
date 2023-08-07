@@ -38,6 +38,10 @@ export default function CaseManagementPage() {
         params.caseStatus = undefined;
       }
 
+      if (params.showCases === 'MY_ALERTS') {
+        params.assignedTo = undefined;
+      }
+
       navigate(makeUrl('/case-management/cases', {}, queryAdapter.serializer(params)), {
         replace: true,
       });
