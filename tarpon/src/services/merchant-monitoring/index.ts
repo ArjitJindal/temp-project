@@ -194,9 +194,13 @@ export class MerchantMonitoringService {
       }
       const data = await this.axios.request(options)
 
-      const text = convert(data.data.result.content, {
+      let text = convert(data.data.result.content, {
         wordwrap: 130,
       })
+
+      if (!text) {
+        text = data.data.result.content
+      }
 
       const summary = await this.summarise('SCRAPE', text)
       return {
