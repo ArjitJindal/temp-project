@@ -92,11 +92,14 @@ export class UserService {
     params: DefaultApiGetBusinessUsersListRequest
   ): Promise<BusinessUsersListResponse> {
     const result = await this.userRepository.getMongoBusinessUsers(params)
+    const data = await Promise.all(
+      result.data.map(
+        async (user) => await this.getAugmentedUser<InternalBusinessUser>(user)
+      )
+    )
     return {
       ...result,
-      data: result.data.map((user) =>
-        this.getAugmentedUser<InternalBusinessUser>(user)
-      ),
+      data,
     }
   }
 
@@ -104,11 +107,14 @@ export class UserService {
     params: DefaultApiGetConsumerUsersListRequest
   ): Promise<ConsumerUsersListResponse> {
     const result = await this.userRepository.getMongoConsumerUsers(params)
+    const data = await Promise.all(
+      result.data.map(
+        async (user) => await this.getAugmentedUser<InternalConsumerUser>(user)
+      )
+    )
     return {
       ...result,
-      data: result.data.map((user) =>
-        this.getAugmentedUser<InternalConsumerUser>(user)
-      ),
+      data,
     }
   }
 
@@ -116,11 +122,14 @@ export class UserService {
     params: DefaultApiGetAllUsersListRequest
   ): Promise<AllUsersListResponse> {
     const result = await this.userRepository.getMongoAllUsers(params)
+    const data = await Promise.all(
+      result.data.map(
+        async (user) => await this.getAugmentedUser<InternalUser>(user)
+      )
+    )
     return {
       ...result,
-      data: result.data.map((user) =>
-        this.getAugmentedUser<InternalUser>(user)
-      ),
+      data,
     }
   }
 
@@ -140,18 +149,18 @@ export class UserService {
     userId: string
   ): Promise<InternalBusinessUser | null> {
     const user = await this.userRepository.getMongoBusinessUser(userId)
-    return user && this.getAugmentedUser<InternalBusinessUser>(user)
+    return user && (await this.getAugmentedUser<InternalBusinessUser>(user))
   }
 
   public async getConsumerUser(
     userId: string
   ): Promise<InternalConsumerUser | null> {
     const user = await this.userRepository.getMongoConsumerUser(userId)
-    return user && this.getAugmentedUser<InternalConsumerUser>(user)
+    return user && (await this.getAugmentedUser<InternalConsumerUser>(user))
   }
 
   private async getUpdatedFiles(files: FileInfo[] | undefined) {
-    return Promise.all(
+    return await Promise.all(
       (files ?? []).map(async (file) => ({
         ...file,
         downloadLink: await this.getDownloadLink(file),
@@ -159,13 +168,15 @@ export class UserService {
     )
   }
 
-  private getAugmentedUser<
+  private async getAugmentedUser<
     T extends InternalConsumerUser | InternalBusinessUser
   >(user: InternalConsumerUser | InternalBusinessUser) {
-    const commentsWithUrl = user.comments?.map((comment) => ({
-      ...comment,
-      files: this.getUpdatedFiles(comment.files),
-    }))
+    const commentsWithUrl = await Promise.all(
+      (user.comments ?? []).map(async (comment) => ({
+        ...comment,
+        files: await this.getUpdatedFiles(comment.files),
+      }))
+    )
     return { ...user, comments: commentsWithUrl } as T
   }
 
@@ -264,7 +275,6 @@ export class UserService {
       ...file,
       bucket: this.documentBucketName,
     }))
-
     const savedComment = await this.userRepository.saveUserComment(userId, {
       ...comment,
       files,
