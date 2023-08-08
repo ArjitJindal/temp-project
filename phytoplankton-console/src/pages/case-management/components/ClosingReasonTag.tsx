@@ -16,7 +16,9 @@ export const ClosingReasonTag: React.FC<Props> = ({ closingReasons, otherReason 
     <>
       {closingReasons.map((closingReason, index) => (
         <span className={style.tag} key={index}>
-          <Tag color={COLORS.brandBlue.tint}>{closingReason}</Tag>
+          <Tag color={COLORS.brandBlue.tint} style={{ color: 'black' }}>
+            {closingReason}
+          </Tag>
         </span>
       ))}
       {otherReason && (
