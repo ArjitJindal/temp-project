@@ -117,18 +117,14 @@ export default function UserManualRiskPanel(props: Props) {
       <div className={s.root}>
         <RiskLevelSwitch
           isDisabled={isLocked || isLoading(syncState) || isFailed(syncState)}
-          value={
-            isLocked
-              ? undefined
-              : getOr(
-                  map(
-                    syncState,
-                    ({ manualRiskLevel, derivedRiskLevel }) =>
-                      manualRiskLevel || derivedRiskLevel || undefined,
-                  ),
-                  undefined,
-                )
-          }
+          value={getOr(
+            map(
+              syncState,
+              ({ manualRiskLevel, derivedRiskLevel }) =>
+                manualRiskLevel || derivedRiskLevel || undefined,
+            ),
+            undefined,
+          )}
           onChange={handleChangeRiskLevel}
         />
         <Tooltip
