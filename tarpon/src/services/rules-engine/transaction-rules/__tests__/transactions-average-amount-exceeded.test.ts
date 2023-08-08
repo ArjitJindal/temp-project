@@ -1,4 +1,3 @@
-import { TransactionsAverageExceededParameters } from '../transactions-average-exceeded-base'
 import dayjs from '@/utils/dayjs'
 import { getTestTenantId } from '@/test-utils/tenant-test-utils'
 import { getTestTransaction } from '@/test-utils/transaction-test-utils'
@@ -53,8 +52,16 @@ ruleVariantsTest(true, () => {
     const now = dayjs('2022-01-01T00:00:00.000Z')
 
     describe.each<
-      TransactionRuleTestCase<Partial<TransactionsAverageExceededParameters>>
+      TransactionRuleTestCase<
+        Partial<TransactionsAverageAmountExceededParameters>
+      >
     >([
+      {
+        name: 'No Transactions within the Periods',
+        transactions: [],
+        expectedHits: [],
+        ruleParams: getDefaultParams(),
+      },
       {
         name: 'Multiple transactions which keep the average the same do not trigger the rule',
         transactions: [
@@ -203,6 +210,300 @@ ruleVariantsTest(true, () => {
           },
         },
       },
+      {
+        name: 'Transaction with Different Currencies',
+        transactions: [
+          getTestTransaction({
+            originUserId: 'Nick',
+            destinationUserId: 'Mike',
+            originAmountDetails: {
+              transactionCurrency: 'USD',
+              transactionAmount: 105,
+            },
+            destinationAmountDetails: undefined,
+            timestamp: now.subtract(1, 'day').subtract(1, 'hour').valueOf(),
+          }),
+          getTestTransaction({
+            originUserId: 'Nick',
+            destinationUserId: 'Mike',
+            originAmountDetails: {
+              transactionCurrency: 'EUR',
+              transactionAmount: 100,
+            },
+            destinationAmountDetails: undefined,
+            timestamp: now.valueOf(),
+          }),
+        ],
+        expectedHits: [false, true],
+        ruleParams: getDefaultParams(),
+      },
+      {
+        name: 'Check multiplier threshold',
+        transactions: [
+          getTestTransaction({
+            transactionId: '111',
+            originUserId: 'Nick',
+            destinationUserId: 'Mike',
+            originAmountDetails: TEST_TRANSACTION_AMOUNT_100,
+            destinationAmountDetails: undefined,
+            timestamp: now.subtract(1, 'day').subtract(1, 'hour').valueOf(),
+          }),
+          getTestTransaction({
+            transactionId: '222',
+            originUserId: 'Nick',
+            destinationUserId: 'Mike',
+            originAmountDetails: TEST_TRANSACTION_AMOUNT_100,
+            destinationAmountDetails: undefined,
+            timestamp: now.subtract(1, 'day').subtract(1, 'hour').valueOf(),
+          }),
+          getTestTransaction({
+            transactionId: '333',
+            originUserId: 'Nick',
+            destinationUserId: 'Mike',
+            originAmountDetails: TEST_TRANSACTION_AMOUNT_300,
+            destinationAmountDetails: undefined,
+            timestamp: now.valueOf(),
+          }),
+        ],
+        expectedHits: [false, false, true],
+        ruleParams: {
+          ...getDefaultParams(),
+          multiplierThreshold: {
+            currency: 'EUR',
+            value: 120,
+          },
+        },
+      },
+      {
+        name: 'Transaction with Different Currencies and Multiplier threshold',
+        transactions: [
+          getTestTransaction({
+            transactionId: '111',
+            originUserId: 'Nick',
+            destinationUserId: 'Mike',
+            originAmountDetails: TEST_TRANSACTION_AMOUNT_100,
+            destinationAmountDetails: undefined,
+            timestamp: now.subtract(1, 'day').subtract(1, 'hour').valueOf(),
+          }),
+          getTestTransaction({
+            transactionId: '222',
+            originUserId: 'Nick',
+            destinationUserId: 'Mike',
+            originAmountDetails: {
+              transactionAmount: 280,
+              transactionCurrency: 'USD',
+            },
+            destinationAmountDetails: undefined,
+            timestamp: now.valueOf(),
+          }),
+        ],
+        expectedHits: [false, false],
+        ruleParams: {
+          ...getDefaultParams(),
+          multiplierThreshold: {
+            currency: 'EUR',
+            value: 200,
+          },
+        },
+      },
+      {
+        name: 'Multiple Transactions within Each Period',
+        transactions: [
+          getTestTransaction({
+            originUserId: 'Nick',
+            destinationUserId: 'Mike',
+            originAmountDetails: TEST_TRANSACTION_AMOUNT_300,
+            destinationAmountDetails: TEST_TRANSACTION_AMOUNT_300,
+            timestamp: now.subtract(7, 'day').valueOf(),
+          }),
+          getTestTransaction({
+            originUserId: 'Nick',
+            destinationUserId: 'Mike',
+            originAmountDetails: TEST_TRANSACTION_AMOUNT_100,
+            destinationAmountDetails: TEST_TRANSACTION_AMOUNT_100,
+            timestamp: now.subtract(6, 'day').valueOf(),
+          }),
+          getTestTransaction({
+            originUserId: 'Nick',
+            destinationUserId: 'Mike',
+            originAmountDetails: TEST_TRANSACTION_AMOUNT_100,
+            destinationAmountDetails: TEST_TRANSACTION_AMOUNT_100,
+            timestamp: now.subtract(5, 'day').valueOf(),
+          }),
+          getTestTransaction({
+            originUserId: 'Nick',
+            destinationUserId: 'Mike',
+            originAmountDetails: TEST_TRANSACTION_AMOUNT_100,
+            destinationAmountDetails: TEST_TRANSACTION_AMOUNT_100,
+            timestamp: now.subtract(4, 'day').valueOf(),
+          }),
+          getTestTransaction({
+            originUserId: 'Nick',
+            destinationUserId: 'Mike',
+            originAmountDetails: TEST_TRANSACTION_AMOUNT_100,
+            destinationAmountDetails: TEST_TRANSACTION_AMOUNT_100,
+            timestamp: now.subtract(3, 'day').valueOf(),
+          }),
+          getTestTransaction({
+            originUserId: 'Nick',
+            destinationUserId: 'Mike',
+            originAmountDetails: TEST_TRANSACTION_AMOUNT_100,
+            destinationAmountDetails: TEST_TRANSACTION_AMOUNT_300,
+            timestamp: now.subtract(1, 'day').valueOf(),
+          }),
+          getTestTransaction({
+            originUserId: 'Nick',
+            destinationUserId: 'Mike',
+            originAmountDetails: TEST_TRANSACTION_AMOUNT_100,
+            destinationAmountDetails: TEST_TRANSACTION_AMOUNT_100,
+            timestamp: now.subtract(1, 'hour').valueOf(),
+          }),
+          getTestTransaction({
+            originUserId: 'Nick',
+            destinationUserId: 'Mike',
+            originAmountDetails: TEST_TRANSACTION_AMOUNT_300,
+            destinationAmountDetails: TEST_TRANSACTION_AMOUNT_100,
+            timestamp: now.subtract(10, 'minute').valueOf(),
+          }),
+          getTestTransaction({
+            originUserId: 'Nick',
+            destinationUserId: 'Mike',
+            originAmountDetails: TEST_TRANSACTION_AMOUNT_300,
+            destinationAmountDetails: TEST_TRANSACTION_AMOUNT_300,
+            timestamp: now.subtract(1, 'minute').valueOf(),
+          }),
+          getTestTransaction({
+            originUserId: 'Nick',
+            destinationUserId: 'Mike',
+            originAmountDetails: TEST_TRANSACTION_AMOUNT_300,
+            destinationAmountDetails: TEST_TRANSACTION_AMOUNT_300,
+            timestamp: now.valueOf(),
+          }),
+        ],
+        expectedHits: [
+          false,
+          false,
+          false,
+          false,
+          false,
+          true,
+          true,
+          true,
+          true,
+          true,
+        ],
+        ruleParams: {
+          period1: {
+            granularity: 'day',
+            units: 2,
+            rollingBasis: true,
+          },
+          period2: {
+            granularity: 'day',
+            units: 7,
+            rollingBasis: true,
+          },
+        },
+      },
+      {
+        name: 'Multiple Transactions within Each Period - 2',
+        transactions: [
+          getTestTransaction({
+            originUserId: 'Nick',
+            destinationUserId: 'Mike',
+            originAmountDetails: TEST_TRANSACTION_AMOUNT_300,
+            destinationAmountDetails: TEST_TRANSACTION_AMOUNT_300,
+            timestamp: now.subtract(7, 'day').valueOf(),
+          }),
+          getTestTransaction({
+            originUserId: 'Nick',
+            destinationUserId: 'Mike',
+            originAmountDetails: TEST_TRANSACTION_AMOUNT_300,
+            destinationAmountDetails: TEST_TRANSACTION_AMOUNT_300,
+            timestamp: now.subtract(6, 'day').valueOf(),
+          }),
+          getTestTransaction({
+            originUserId: 'Nick',
+            destinationUserId: 'Mike',
+            originAmountDetails: TEST_TRANSACTION_AMOUNT_300,
+            destinationAmountDetails: TEST_TRANSACTION_AMOUNT_300,
+            timestamp: now.subtract(5, 'day').valueOf(),
+          }),
+          getTestTransaction({
+            originUserId: 'Nick',
+            destinationUserId: 'Mike',
+            originAmountDetails: TEST_TRANSACTION_AMOUNT_300,
+            destinationAmountDetails: TEST_TRANSACTION_AMOUNT_300,
+            timestamp: now.subtract(4, 'day').valueOf(),
+          }),
+          getTestTransaction({
+            originUserId: 'Nick',
+            destinationUserId: 'Mike',
+            originAmountDetails: TEST_TRANSACTION_AMOUNT_100,
+            destinationAmountDetails: TEST_TRANSACTION_AMOUNT_100,
+            timestamp: now.subtract(3, 'day').valueOf(),
+          }),
+          getTestTransaction({
+            originUserId: 'Nick',
+            destinationUserId: 'Mike',
+            originAmountDetails: TEST_TRANSACTION_AMOUNT_300,
+            destinationAmountDetails: TEST_TRANSACTION_AMOUNT_300,
+            timestamp: now.subtract(1, 'day').valueOf(),
+          }),
+          getTestTransaction({
+            originUserId: 'Nick',
+            destinationUserId: 'Mike',
+            originAmountDetails: TEST_TRANSACTION_AMOUNT_300,
+            destinationAmountDetails: TEST_TRANSACTION_AMOUNT_300,
+            timestamp: now.subtract(1, 'hour').valueOf(),
+          }),
+          getTestTransaction({
+            originUserId: 'Nick',
+            destinationUserId: 'Mike',
+            originAmountDetails: TEST_TRANSACTION_AMOUNT_300,
+            destinationAmountDetails: TEST_TRANSACTION_AMOUNT_300,
+            timestamp: now.subtract(10, 'minute').valueOf(),
+          }),
+          getTestTransaction({
+            originUserId: 'Nick',
+            destinationUserId: 'Mike',
+            originAmountDetails: TEST_TRANSACTION_AMOUNT_300,
+            destinationAmountDetails: TEST_TRANSACTION_AMOUNT_300,
+            timestamp: now.subtract(1, 'minute').valueOf(),
+          }),
+          getTestTransaction({
+            originUserId: 'Nick',
+            destinationUserId: 'Mike',
+            originAmountDetails: TEST_TRANSACTION_AMOUNT_100,
+            destinationAmountDetails: TEST_TRANSACTION_AMOUNT_100,
+            timestamp: now.valueOf(),
+          }),
+        ],
+        expectedHits: [
+          false,
+          false,
+          false,
+          false,
+          false,
+          false,
+          true,
+          true,
+          true,
+          false,
+        ],
+        ruleParams: {
+          period1: {
+            granularity: 'day',
+            units: 2,
+            rollingBasis: true,
+          },
+          period2: {
+            granularity: 'day',
+            units: 7,
+            rollingBasis: true,
+          },
+        },
+      },
     ])('', ({ name, transactions, expectedHits, ruleParams }) => {
       const TEST_TENANT_ID = getTestTenantId()
 
@@ -228,7 +529,9 @@ ruleVariantsTest(true, () => {
 
   describe('Filters', () => {
     describe.each<
-      TransactionRuleTestCase<Partial<TransactionsAverageExceededParameters>>
+      TransactionRuleTestCase<
+        Partial<TransactionsAverageAmountExceededParameters>
+      >
     >([
       {
         name: "Minimum transaction number in period2 wouldn't let rule to trigger",
@@ -292,7 +595,9 @@ ruleVariantsTest(true, () => {
     const now = dayjs('2022-01-01T00:00:00.000Z')
 
     describe.each<
-      TransactionRuleTestCase<Partial<TransactionsAverageExceededParameters>>
+      TransactionRuleTestCase<
+        Partial<TransactionsAverageAmountExceededParameters>
+      >
     >([
       {
         name: 'First and last transaction should trigger, but average threshold prevent it',
@@ -365,7 +670,9 @@ ruleVariantsTest(true, () => {
     const now = dayjs('2022-01-01T00:00:00.000Z')
 
     describe.each<
-      TransactionRuleTestCase<Partial<TransactionsAverageExceededParameters>>
+      TransactionRuleTestCase<
+        Partial<TransactionsAverageAmountExceededParameters>
+      >
     >([
       {
         name: 'Sender -> sending',
