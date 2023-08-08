@@ -316,24 +316,23 @@ export class MerchantMonitoringService {
         ],
         max_tokens: MAX_TOKEN_INPUT,
       })
-
       const output = completion.data.choices[0].message?.content
       const re = new RegExp(OUTPUT_REGEX, 'm')
       const result: string[] = re.exec(output as string) as string[]
-      if (result) {
-        if (result.length < 2) {
-          logger.info(output)
-        }
-        return {
-          source: { sourceType: source },
-          industry: result[1],
-          products: result[2].split(','),
-          location: result[3] ?? '',
-          employees: result[4] ?? '',
-          revenue: result[5] ?? '',
-          summary: result[6] ?? '',
-          raw: content,
-        }
+
+      if (!result || result.length < 2) {
+        throw new Error('Unable to extract information')
+      }
+
+      return {
+        source: { sourceType: source },
+        industry: result[1],
+        products: result[2].split(','),
+        location: result[3] ?? '',
+        employees: result[4] ?? '',
+        revenue: result[5] ?? '',
+        summary: result[6] ?? '',
+        raw: content,
       }
     } catch (e) {
       logger.error(e)
