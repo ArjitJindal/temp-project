@@ -159,7 +159,9 @@ export class MerchantMonitoringService {
     companyName: string,
     domain: string
   ): Promise<MerchantMonitoringSummary> {
-    const parsedUrl = `https://${domain.replace('https://', '')}`
+    const parsedUrl = `https://${domain
+      .replace('https://', '')
+      .replace('http://', '')}`
     const result = await this.scrape(parsedUrl)
     const mongoDb = await getMongoDbClient()
     const merchantRepository = new MerchantRepository(tenantId, {
@@ -190,7 +192,9 @@ export class MerchantMonitoringService {
         method: 'GET',
         url: `https://api.scrapfly.io/scrape?key=scp-live-${
           this.scrapflyApiKey
-        }&url=${encodeURIComponent(website)}`,
+        }&url=${encodeURIComponent(
+          website
+        )}&render_js=true&rendering_wait=1000`,
       }
       const data = await this.axios.request(options)
 
