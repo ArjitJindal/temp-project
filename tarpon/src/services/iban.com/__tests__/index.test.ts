@@ -62,11 +62,23 @@ describe('IBAN Validation', () => {
   test('Requesting same iban multiple times should only call the API once', async () => {
     const TEST_TENANT_ID = getTestTenantId()
     const service = new IBANService(TEST_TENANT_ID)
-    await service.resolveBankNames([{ iban: 'DE75512108001245126199' }])
-    await service.resolveBankNames([{ iban: '  DE75512108001245126199  ' }])
-    await service.resolveBankNames([{ iban: 'DE75 5121 0800 1245 1261 99' }])
-    await service.resolveBankNames([{ iban: ' DE75 5121 0800 1245 1261 99 ' }])
-    expect(mockFetch).toBeCalledTimes(1)
+    await service.resolveBankNames([
+      { iban: 'DE75512108001245126199' },
+      { iban: 'AT483200000012345864' },
+    ])
+    await service.resolveBankNames([
+      { iban: '  DE75512108001245126199  ' },
+      { iban: '  AT483200000012345864' },
+    ])
+    await service.resolveBankNames([
+      { iban: 'DE75 5121 0800 1245 1261 99' },
+      { iban: 'AT483200000012345864  ' },
+    ])
+    await service.resolveBankNames([
+      { iban: ' DE75 5121 0800 1245 1261 99 ' },
+      { iban: 'AT48 3200 0000 1234 5864' },
+    ])
+    expect(mockFetch).toBeCalledTimes(2)
   })
 
   test('Requesting invalid iban should not call the API', async () => {

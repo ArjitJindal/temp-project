@@ -54,7 +54,7 @@ export class IBANApiRepository {
     const results = await collection
       .find(
         { type: 'IBAN_VALIDATION', 'request.iban': { $in: ibans } },
-        { sort: { createdAt: -1 }, limit: 1 }
+        { sort: { createdAt: -1 } }
       )
       .toArray()
     return results ?? null
