@@ -31,10 +31,18 @@ export const AssigneesDropdown: React.FC<Props> = ({
         mode={'multiple'}
         allowClear
         filterOption={(input, option) => {
-          const accountId = option?.value as string;
-          return (
-            users[accountId]?.name?.includes(input) || users[accountId]?.email?.includes(input)
-          );
+          if (!input || !option) {
+            return false;
+          }
+
+          const accountId = option.value as string;
+          const selectedUser = users.find((user) => user.id === accountId);
+
+          if (!selectedUser) {
+            return false;
+          }
+
+          return selectedUser.name.includes(input) || selectedUser.email.includes(input);
         }}
         style={{ width: '100%' }}
         disabled={loadingUsers}
