@@ -106,3 +106,5 @@ Webhooks will be delivered from the following IP addresses:
 | Australia | 18.139.42.183  |
 | Australia | 3.104.94.7     |
 | Australia | 54.79.45.195   |
+
+For improved security, you can lock down your webhook endpoints to only accept the requests coming from the IP addresses specified above.

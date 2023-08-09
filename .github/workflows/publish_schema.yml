@@ -5,12 +5,16 @@ on:
     branches: [main]
     paths:
       # Push events on above branches when files matching the pattern below have changed
-      - 'tarpon/lib/openapi/**.yaml'
+      - "tarpon/lib/openapi/**.yaml"
+      - "tarpon/lib/openapi/**.md"
+      - "tarpon/lib/openapi/**/toc.json"
   pull_request:
     branches: [main]
     paths:
       # Push events on above branches when files matching the pattern below have changed
-      - 'tarpon/lib/openapi/**.yaml'
+      - "tarpon/lib/openapi/**.yaml"
+      - "tarpon/lib/openapi/**.md"
+      - "tarpon/lib/openapi/**/toc.json"
 jobs:
   build:
     name: Push to Stoplight
@@ -29,8 +33,8 @@ jobs:
       - name: Use Node.js 16
         uses: actions/setup-node@v3
         with:
-          node-version: '16'
-          cache: 'npm'
+          node-version: "16"
+          cache: "npm"
           cache-dependency-path: "tarpon/package-lock.json"
       - run: npm ci
         working-directory: "tarpon"
