@@ -1,5 +1,6 @@
 import { JSONSchemaType } from 'ajv'
 import { USER_TYPE_OPTIONAL_SCHEMA } from '../utils/rule-parameter-schemas'
+import { isBusinessUser, isConsumerUser } from '../utils/user-rule-utils'
 import { UserRuleFilter } from './filter'
 import { Business } from '@/@types/openapi-public/Business'
 import { User } from '@/@types/openapi-public/User'
@@ -31,16 +32,8 @@ export class UserTypeRuleFilter extends UserRuleFilter<UserTypeRuleFilterParamet
 
   private isUserType(user: User | Business, userType: UserType) {
     if (userType === 'CONSUMER') {
-      return this.isConsumerUser(user)
+      return isConsumerUser(user)
     }
-    return this.isBusinessUser(user)
-  }
-
-  private isConsumerUser(user: User | Business) {
-    return (user as User).userDetails !== undefined
-  }
-
-  private isBusinessUser(user: User | Business) {
-    return !this.isConsumerUser(user)
+    return isBusinessUser(user)
   }
 }
