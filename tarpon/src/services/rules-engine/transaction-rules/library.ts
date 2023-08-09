@@ -228,7 +228,7 @@ const _RULES_LIBRARY: Array<
       type: 'TRANSACTION',
       name: 'Too many inbound transactions under reporting limit',
       description:
-        '>= x number of low value incoming transactions just below (minus amount of z) a specific threshold (y) to a user (your user is receiving the funds). Very useful and common for structured money laundering attempts. This is a recommended rule.',
+        '>= x number of low value incoming transactions just below (minus amount of z) a specific threshold (y) to a user (your user is receiving the funds). Very useful and common for structured money laundering attempts.',
       descriptionTemplate:
         "{{ if-sender 'Sender' 'Receiver' }} sent {{ transactionCountDelta }} transactions just under the flagging limit",
       defaultParameters,
@@ -242,7 +242,7 @@ const _RULES_LIBRARY: Array<
       typologyDescription:
         'Conceal or disguise significant transactions to avoid disclosure for record purposes by executing frequent or several transactions such that each transaction by itself is below reporting thresholds',
       source:
-        '1) Guidelines to MAS Notice PS-N01 On Prevention of Money Laundering and Countering the Financing of Terrorism 2) AUSTRAC:Stored value cards: money laundering and terrorism financing risk assessment 2017',
+        '1) Guidelines to MAS Notice PS-N01 On Prevention of Money Laundering and Countering the Financing of Terrorism \n 2) AUSTRAC:Stored value cards: money laundering and terrorism financing risk assessment 2017',
     }
   },
   () => {
@@ -260,7 +260,7 @@ const _RULES_LIBRARY: Array<
       type: 'TRANSACTION',
       name: 'Too many outbound transactions under reporting limit',
       description:
-        '>= x number of low value outgoing transaction(s) just below (minus amount of z) a specific threshold (y) from a user (your user is sending the funds). Very useful and common for structured money laundering attempts. This is a recommended rule.',
+        '>= x number of low value outgoing transaction(s) just below (minus amount of z) a specific threshold (y) from a user (your user is sending the funds). Very useful and common for structured money laundering attempts.',
       descriptionTemplate: `{{ if-sender 'Sender' 'Receiver' }} sent {{ transactionCountDelta }} transaction(s) just under the flagging limit`,
       defaultParameters,
       defaultAction: 'FLAG',

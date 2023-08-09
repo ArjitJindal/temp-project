@@ -131,7 +131,7 @@ export const ruleInstances: ExecutedRulesResult[] = [
     ruleInstanceId: '8',
     ruleName: 'Too many inbound transactions under reporting limit',
     ruleDescription:
-      '>= x number of low value incoming transactions just below (minus amount of z) a specific threshold (y) to a user (your user is receiving the funds). Very useful and common for structured money laundering attempts. This is a recommended rule.',
+      '>= x number of low value incoming transactions just below (minus amount of z) a specific threshold (y) to a user (your user is receiving the funds). Very useful and common for structured money laundering attempts. ',
     ruleAction: 'FLAG',
     ruleHit: Math.random() < 0.5,
   },
@@ -140,7 +140,7 @@ export const ruleInstances: ExecutedRulesResult[] = [
     ruleInstanceId: '9',
     ruleName: 'Too many outbound transactions under reporting limit',
     ruleDescription:
-      '>= x number of low value outgoing transactions just below (minus amount of z) a specific threshold (y) from a user (your user is sending the funds). Very useful and common for structured money laundering attempts. This is a recommended rule.',
+      '>= x number of low value outgoing transactions just below (minus amount of z) a specific threshold (y) from a user (your user is sending the funds). Very useful and common for structured money laundering attempts.',
     ruleAction: 'FLAG',
     ruleHit: Math.random() < 0.5,
   },
