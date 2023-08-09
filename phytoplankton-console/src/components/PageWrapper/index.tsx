@@ -32,14 +32,18 @@ export interface PageWrapperProps {
 }
 
 export default function PageWrapper(props: PageWrapperProps) {
-  const [isSuperAdminMode] = useState(false);
+  const [isSuperAdminMode, setIsSuperAdminMode] = useState(false);
   usePageViewTimeTracker();
   usePageTimeLoadTracker();
 
   return (
     <PageWrapperContext.Provider value={{ superAdminMode: isSuperAdminMode }}>
       <div className={s.root} id="page-wrapper-root">
-        <Header {...props} />
+        <Header
+          {...props}
+          isSuperAdminMode={isSuperAdminMode}
+          onSuperAdminModeChange={setIsSuperAdminMode}
+        />
         <div
           className={cn(s.body, 'print-container')}
           style={{ padding: PAGE_WRAPPER_PADDING, paddingTop: 8 }}
@@ -51,8 +55,12 @@ export default function PageWrapper(props: PageWrapperProps) {
   );
 }
 
-function Header(props: PageWrapperProps) {
-  const [isSuperAdminMode, setIsSuperAdminMode] = useState(false);
+function Header(
+  props: PageWrapperProps & {
+    isSuperAdminMode: boolean;
+    onSuperAdminModeChange: (isSuperAdminMode: boolean) => void;
+  },
+) {
   const user = useAuth0User();
   const { header, title, description, backButton, actionButton, superAdminMode } = props;
   if (header != null) {
@@ -92,8 +100,8 @@ function Header(props: PageWrapperProps) {
                           uncheckedIcon={false}
                           checkedIcon={false}
                           onColor={COLORS.red.base}
-                          value={isSuperAdminMode}
-                          onChange={(v) => setIsSuperAdminMode(v as boolean)}
+                          value={props.isSuperAdminMode}
+                          onChange={(v) => props.onSuperAdminModeChange(v as boolean)}
                         />
                       </SuperAdminContainer>
                     )}
