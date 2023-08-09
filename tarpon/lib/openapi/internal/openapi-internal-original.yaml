@@ -5449,7 +5449,6 @@ components:
         - AUDIT_LOGS
         - SLACK_ALERTS
         - IMPORT_FILES
-        - LISTS
         - COPILOT
         - GOOGLE_SSO
         - SANCTIONS

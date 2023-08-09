@@ -9,9 +9,7 @@ import { JWTAuthorizerResult } from '@/@types/jwt'
 import { Handlers } from '@/@types/openapi-internal-custom/DefaultApi'
 import { ListType } from '@/@types/openapi-internal/ListType'
 
-export const listsHandler = lambdaApi({
-  requiredFeatures: ['LISTS'],
-})(
+export const listsHandler = lambdaApi()(
   async (
     event: APIGatewayProxyWithLambdaAuthorizerEvent<
       APIGatewayEventLambdaAuthorizerContext<JWTAuthorizerResult>

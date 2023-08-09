@@ -3,9 +3,6 @@ import {
   TestApiEndpoint,
   TestApiEndpointOptions,
 } from '@/test-utils/apigateway-test-utils'
-import { withFeatureHook } from '@/test-utils/feature-test-utils'
-
-withFeatureHook(['LISTS'])
 
 const testApiEndPoints = new TestApiEndpoint(listsHandler)
 

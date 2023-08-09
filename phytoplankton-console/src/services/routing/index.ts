@@ -35,7 +35,6 @@ import ReportsList from '@/pages/reports';
 export function useRoutes(): RouteItem[] {
   const isRiskLevelsEnabled = useFeatureEnabled('PULSE');
   const isImportFilesEnabled = useFeatureEnabled('IMPORT_FILES');
-  const isListsFeatureEnabled = useFeatureEnabled('LISTS');
   const isSanctionsEnabled = useFeatureEnabled('SANCTIONS');
   const isAuditLogEnabled = useFeatureEnabled('AUDIT_LOGS');
   const isSarEnabled = useFeatureEnabled('SAR');
@@ -286,7 +285,7 @@ export function useRoutes(): RouteItem[] {
           },
         ],
       },
-      isListsFeatureEnabled && {
+      {
         name: 'lists',
         path: '/lists',
         icon: 'lists',
@@ -399,7 +398,6 @@ export function useRoutes(): RouteItem[] {
     isRiskLevelsEnabled,
     isImportFilesEnabled,
     isSarEnabled,
-    isListsFeatureEnabled,
     lastActiveList,
     isSanctionsEnabled,
     isAuditLogEnabled,
