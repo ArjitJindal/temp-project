@@ -4,6 +4,7 @@ import {
   withTransaction,
 } from '@/utils/mongoDBUtils'
 import { ComplyAdvantageSearchHitDoc } from '@/@types/openapi-internal/ComplyAdvantageSearchHitDoc'
+import { traceable } from '@/core/xray'
 
 export type SanctionsWhitelistEntity = {
   createdAt: number
@@ -13,6 +14,7 @@ export type SanctionsWhitelistEntity = {
   comment?: string
 }
 
+@traceable
 export class SanctionsWhitelistEntityRepository {
   tenantId: string
   mongoDb: MongoClient

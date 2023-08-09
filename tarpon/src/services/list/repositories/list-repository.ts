@@ -22,7 +22,9 @@ import { ListItem } from '@/@types/openapi-public/ListItem'
 import { neverReturn } from '@/utils/lang'
 import { ListType } from '@/@types/openapi-public/ListType'
 import { ListSubtype } from '@/@types/openapi-public/ListSubtype'
+import { traceable } from '@/core/xray'
 
+@traceable
 export class ListRepository {
   dynamoDb: DynamoDBDocumentClient
   tenantId: string

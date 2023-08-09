@@ -5,7 +5,9 @@ import { FileImport } from '@/@types/openapi-internal/FileImport'
 import { ImportRequest } from '@/@types/openapi-internal/ImportRequest'
 import { sendBatchJobCommand } from '@/services/batch-job'
 import { FileImportBatchJob } from '@/@types/batch-job'
+import { traceable } from '@/core/xray'
 
+@traceable
 export class ImportRepository {
   mongoDb: MongoClient
   tenantId: string

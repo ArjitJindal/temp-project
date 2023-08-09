@@ -1,7 +1,9 @@
 import { MongoClient } from 'mongodb'
 import { IBANApiHistory, IBANValidationResponse } from '../types'
 import { IBAN_COM_COLLECTION } from '@/utils/mongoDBUtils'
+import { traceable } from '@/core/xray'
 
+@traceable
 export class IBANApiRepository {
   tenantId: string
   mongoDb: MongoClient

@@ -24,7 +24,9 @@ import { SimulationBeaconParametersRequest } from '@/@types/openapi-internal/Sim
 import { SimulationBeaconIteration } from '@/@types/openapi-internal/SimulationBeaconIteration'
 import { SimulationJob } from '@/@types/openapi-internal/SimulationJob'
 import { isCurrentUserAtLeastRole } from '@/@types/jwt'
+import { traceable } from '@/core/xray'
 
+@traceable
 export class SimulationTaskRepository {
   tenantId: string
   mongoDb: MongoClient

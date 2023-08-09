@@ -10,7 +10,9 @@ import { DynamoDbKeys } from '@/core/dynamodb/dynamodb-keys'
 import { DEVICE_DATA_COLLECTION } from '@/utils/mongoDBUtils'
 import { DeviceMetric } from '@/@types/openapi-public-device-data/DeviceMetric'
 import { runLocalChangeHandler } from '@/utils/local-dynamodb-change-handler'
+import { traceable } from '@/core/xray'
 
+@traceable
 export class MetricsRepository {
   dynamoDb: DynamoDBDocumentClient
   mongoDb: MongoClient

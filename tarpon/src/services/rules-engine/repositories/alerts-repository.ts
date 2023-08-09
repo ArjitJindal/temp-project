@@ -33,9 +33,11 @@ import { Assignment } from '@/@types/openapi-internal/Assignment'
 import { InternalTransaction } from '@/@types/openapi-internal/InternalTransaction'
 import { CaseStatus } from '@/@types/openapi-internal/CaseStatus'
 import { isStatusInReview } from '@/utils/helpers'
+import { traceable } from '@/core/xray'
 
 export const FLAGRIGHT_SYSTEM_USER = 'Flagright System'
 
+@traceable
 export class AlertsRepository {
   mongoDb: MongoClient
   dynamoDb: DynamoDBDocumentClient

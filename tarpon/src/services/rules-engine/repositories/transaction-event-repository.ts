@@ -14,7 +14,9 @@ import { TRANSACTION_EVENTS_COLLECTION } from '@/utils/mongoDBUtils'
 import { TransactionMonitoringResult } from '@/@types/openapi-public/TransactionMonitoringResult'
 import { Undefined } from '@/utils/lang'
 import { runLocalChangeHandler } from '@/utils/local-dynamodb-change-handler'
+import { traceable } from '@/core/xray'
 
+@traceable
 export class TransactionEventRepository {
   dynamoDb: DynamoDBDocumentClient
   mongoDb: MongoClient

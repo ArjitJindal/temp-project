@@ -6,9 +6,10 @@ import {
   GetCommand,
 } from '@aws-sdk/lib-dynamodb'
 import { StackConstants } from '@lib/constants'
+import { traceable } from '../xray'
 
 const DEFAULT_TTL_SECONDS = 2592000 // 30 days
-
+@traceable
 export class TransientRepository {
   dynamoDb: DynamoDBDocumentClient
   ttlSeconds?: number

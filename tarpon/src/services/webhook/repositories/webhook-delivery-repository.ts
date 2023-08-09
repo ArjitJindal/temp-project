@@ -1,7 +1,9 @@
 import { MongoClient } from 'mongodb'
 import { WEBHOOK_DELIVERY_COLLECTION } from '@/utils/mongoDBUtils'
 import { WebhookDeliveryAttempt } from '@/@types/openapi-internal/WebhookDeliveryAttempt'
+import { traceable } from '@/core/xray'
 
+@traceable
 export class WebhookDeliveryRepository {
   tenantId: string
   mongoDb: MongoClient

@@ -4,7 +4,9 @@ import {
   DeviceMetricTypeEnum,
 } from '@/@types/openapi-internal/DeviceMetric'
 import { DEVICE_DATA_COLLECTION } from '@/utils/mongoDBUtils'
+import { traceable } from '@/core/xray'
 
+@traceable
 export class DeviceDataRepository {
   tenantId: string
   connections: {

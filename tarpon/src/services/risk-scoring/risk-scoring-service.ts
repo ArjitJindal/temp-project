@@ -45,64 +45,61 @@ function matchParameterValue(
   valueToMatch: unknown,
   parameterValue: RiskParameterValue
 ): boolean {
-  const parameterValueContent = parameterValue.content
-  if (
-    parameterValueContent.kind === 'LITERAL' &&
-    parameterValueContent.content === valueToMatch
-  ) {
-    return true
-  }
-  if (
-    parameterValueContent.kind === 'MULTIPLE' &&
-    parameterValueContent.values.some((x) => x.content === valueToMatch)
-  ) {
-    return true
-  }
-  if (parameterValueContent.kind === 'RANGE') {
-    if (
-      typeof valueToMatch === 'number' &&
-      (parameterValueContent.start == null ||
-        valueToMatch >= parameterValueContent.start) &&
-      (parameterValueContent.end == null ||
-        valueToMatch <= parameterValueContent.end)
-    ) {
-      return true
-    }
-  }
-  if (parameterValueContent.kind === 'TIME_RANGE') {
-    // America/Adak (GMT-10:00) Time Zone Example
-    const utcOffset = parameterValueContent.timezone.split(' ')[0]
-    const timestamp = valueToMatch as number
-    const locationTimeHours = dayjs(timestamp).tz(utcOffset).hour()
-    if (
-      locationTimeHours >= parameterValueContent.startHour &&
-      locationTimeHours < parameterValueContent.endHour
-    ) {
-      return true
-    }
-  }
-  if (parameterValueContent.kind === 'DAY_RANGE') {
-    const days = valueToMatch as number
-    const start = convertToDays(
-      parameterValueContent.start,
-      parameterValueContent.startGranularity
-    )
-
-    if (parameterValueContent.endGranularity === 'INFINITE' && days >= start) {
-      return true
+  switch (parameterValue.content.kind) {
+    case 'LITERAL':
+      return parameterValue.content.content === valueToMatch
+    case 'MULTIPLE':
+      return parameterValue.content.values.some(
+        (x) => x.content === valueToMatch
+      )
+    case 'RANGE':
+      return (
+        typeof valueToMatch === 'number' &&
+        (parameterValue.content.start == null ||
+          valueToMatch >= parameterValue.content.start) &&
+        (parameterValue.content.end == null ||
+          valueToMatch <= parameterValue.content.end)
+      )
+    case 'TIME_RANGE': {
+      // America/Adak (GMT-10:00) Time Zone Example
+      const utcOffset = parameterValue.content.timezone.split(':')[0]
+      const utcOffsetNumber = parseInt(utcOffset, 10)
+      const utcOffsetInMinutes = utcOffsetNumber * 60
+      const utcOffsetInMilliseconds = utcOffsetInMinutes * 60 * 1000
+      const timestamp = valueToMatch as number
+      const locationTimeHours = dayjs(timestamp)
+        .utcOffset(utcOffsetInMilliseconds)
+        .hour()
+      return (
+        locationTimeHours >= parameterValue.content.startHour &&
+        locationTimeHours < parameterValue.content.endHour
+      )
     }
 
-    const end = convertToDays(
-      parameterValueContent.end,
-      parameterValueContent.endGranularity
-    )
+    case 'DAY_RANGE': {
+      const days = valueToMatch as number
+      const start = convertToDays(
+        parameterValue.content.start,
+        parameterValue.content.startGranularity
+      )
 
-    if (days >= start && days <= end) {
-      return true
+      if (
+        parameterValue.content.endGranularity === 'INFINITE' &&
+        days >= start
+      ) {
+        return true
+      }
+
+      const end = convertToDays(
+        parameterValue.content.end,
+        parameterValue.content.endGranularity
+      )
+
+      return days >= start && days <= end
     }
+    default:
+      return false
   }
-
-  return false
 }
 
 function getIterableAttributeRiskLevel(
@@ -244,12 +241,9 @@ export class RiskScoringService {
   }> {
     const isUserConsumerUser = isConsumerUser(user)
     const components = await this.getRiskFactorScores(
-      ['BUSINESS', 'CONSUMER_USER'],
+      isUserConsumerUser ? ['CONSUMER_USER'] : ['BUSINESS'],
       user,
-      riskFactors?.filter(
-        ({ riskEntityType }) =>
-          riskEntityType === (isUserConsumerUser ? 'CONSUMER_USER' : 'BUSINESS')
-      ) || [],
+      riskFactors || [],
       riskClassificationValues
     )
 
@@ -291,26 +285,30 @@ export class RiskScoringService {
   }
 
   public async updateInitialRiskScores(user: User | Business): Promise<number> {
-    const riskFactors = await this.riskRepository.getParameterRiskItems()
-    const riskClassificationValues =
-      await this.riskRepository.getRiskClassificationValues()
+    const [riskFactors, riskClassificationValues] = await Promise.all([
+      this.riskRepository.getParameterRiskItems(),
+      this.riskRepository.getRiskClassificationValues(),
+    ])
 
     const { score, components } = await this.calculateKrsScore(
       user,
       riskClassificationValues,
       riskFactors || []
     )
-    await this.riskRepository.createOrUpdateKrsScore(
-      user.userId,
-      score,
-      components
-    )
-    await this.riskRepository.createOrUpdateDrsScore(
-      user.userId,
-      score,
-      'FIRST_DRS',
-      components
-    )
+
+    await Promise.all([
+      this.riskRepository.createOrUpdateKrsScore(
+        user.userId,
+        score,
+        components
+      ),
+      this.riskRepository.createOrUpdateDrsScore(
+        user.userId,
+        score,
+        'FIRST_DRS',
+        components
+      ),
+    ])
 
     return score
   }
@@ -371,6 +369,7 @@ export class RiskScoringService {
           parameterAttributeDetails.isActive &&
           entityTypes.includes(parameterAttributeDetails.riskEntityType)
       ) ?? []
+
     const result: RiskScoreComponent[] = []
     for (const parameterAttributeDetails of relevantRiskFactors) {
       let matchedRiskLevels: {

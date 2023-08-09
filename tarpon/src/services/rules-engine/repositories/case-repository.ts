@@ -37,6 +37,7 @@ import { COUNT_QUERY_LIMIT, OptionalPagination } from '@/utils/pagination'
 import { PRIORITYS } from '@/@types/openapi-internal-custom/Priority'
 import { Assignment } from '@/@types/openapi-internal/Assignment'
 import { isStatusInReview } from '@/utils/helpers'
+import { traceable } from '@/core/xray'
 
 export const MAX_TRANSACTION_IN_A_CASE = 1000
 
@@ -44,6 +45,7 @@ export type CaseListOptions = {
   includeCaseTransactionIds?: boolean
 }
 
+@traceable
 export class CaseRepository {
   mongoDb: MongoClient
   tenantId: string

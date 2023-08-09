@@ -14,6 +14,7 @@ import { COUNT_QUERY_LIMIT } from '@/utils/pagination'
 import { SanctionsSearchMonitoring } from '@/@types/openapi-internal/SanctionsSearchMonitoring'
 import dayjs from '@/utils/dayjs'
 import { SanctionsSearchType } from '@/@types/openapi-internal/SanctionsSearchType'
+import { traceable } from '@/core/xray'
 
 const DEFAULT_EXPIRY_TIME = 168 // hours
 
@@ -28,6 +29,7 @@ function toComplyAdvantageType(type: SanctionsSearchType) {
   }
 }
 
+@traceable
 export class SanctionsSearchRepository {
   tenantId: string
   mongoDb: MongoClient

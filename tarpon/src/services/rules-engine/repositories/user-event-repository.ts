@@ -12,7 +12,9 @@ import { paginateQuery } from '@/utils/dynamodb'
 import { BusinessUserEvent } from '@/@types/openapi-public/BusinessUserEvent'
 import { UserType } from '@/@types/user/user-type'
 import { runLocalChangeHandler } from '@/utils/local-dynamodb-change-handler'
+import { traceable } from '@/core/xray'
 
+@traceable
 export class UserEventRepository {
   dynamoDb: DynamoDBDocumentClient
   mongoDb: MongoClient

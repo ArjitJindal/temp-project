@@ -22,6 +22,7 @@ import {
   paginateQuery,
 } from '@/utils/dynamodb'
 import { PaymentMethod } from '@/@types/tranasction/payment-type'
+import { traceable } from '@/core/xray'
 
 type UserAggregationAttributes = {
   sendingFromCountries: Set<string>
@@ -47,6 +48,7 @@ export type UserTimeAggregationAttributes = {
   receivingTransactionsCount: Map<PaymentMethod | 'ALL', number>
 }
 
+@traceable
 export class AggregationRepository {
   dynamoDb: DynamoDBDocumentClient
   tenantId: string

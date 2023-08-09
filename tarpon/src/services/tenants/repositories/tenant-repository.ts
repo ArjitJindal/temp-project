@@ -11,10 +11,12 @@ import { TenantSettings } from '@/@types/openapi-internal/TenantSettings'
 import { DynamoDbKeys, TenantSettingName } from '@/core/dynamodb/dynamodb-keys'
 import { getUpdateAttributesUpdateItemInput } from '@/utils/dynamodb'
 import { METADATA_COLLECTION } from '@/utils/mongoDBUtils'
+import { traceable } from '@/core/xray'
 
 type MetadataType = 'SLACK_WEBHOOK'
 type MetadataPayload = { slackWebhookURL: string; originalResponse: any }
 
+@traceable
 export class TenantRepository {
   tenantId: string
   dynamoDb: DynamoDBDocumentClient

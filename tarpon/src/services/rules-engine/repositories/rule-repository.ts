@@ -12,7 +12,9 @@ import { Rule } from '@/@types/openapi-internal/Rule'
 import { DynamoDbKeys } from '@/core/dynamodb/dynamodb-keys'
 import { paginateQuery } from '@/utils/dynamodb'
 import { FLAGRIGHT_TENANT_ID } from '@/core/constants'
+import { traceable } from '@/core/xray'
 
+@traceable
 export class RuleRepository {
   tenantId: string
   dynamoDb: DynamoDBDocumentClient

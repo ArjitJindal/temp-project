@@ -31,6 +31,7 @@ import { RiskEntityType } from '@/@types/openapi-internal/RiskEntityType'
 import { KrsScore } from '@/@types/openapi-internal/KrsScore'
 import { ArsScore } from '@/@types/openapi-internal/ArsScore'
 import { RiskScoreComponent } from '@/@types/openapi-internal/RiskScoreComponent'
+import { traceable } from '@/core/xray'
 
 export const DEFAULT_CLASSIFICATION_SETTINGS: RiskClassificationScore[] = [
   {
@@ -61,7 +62,7 @@ export const DEFAULT_CLASSIFICATION_SETTINGS: RiskClassificationScore[] = [
 ]
 
 const RISK_SCORE_HISTORY_ITEMS_TO_SHOW = 5
-
+@traceable
 export class RiskRepository {
   tenantId: string
   dynamoDb: DynamoDBDocumentClient

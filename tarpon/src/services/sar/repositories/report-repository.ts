@@ -10,7 +10,9 @@ import { DefaultApiGetReportsRequest } from '@/@types/openapi-internal/RequestPa
 import { EntityCounter } from '@/@types/openapi-internal/EntityCounter'
 import { Account } from '@/@types/openapi-internal/Account'
 import { getContext } from '@/core/utils/context'
+import { traceable } from '@/core/xray'
 
+@traceable
 export class ReportRepository {
   tenantId: string
   mongoDb: MongoClient

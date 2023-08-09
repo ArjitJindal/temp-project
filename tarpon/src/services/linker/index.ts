@@ -13,7 +13,9 @@ import { ContactDetails } from '@/@types/openapi-internal/ContactDetails'
 import { GraphNodes } from '@/@types/openapi-internal/GraphNodes'
 import { GraphEdges } from '@/@types/openapi-internal/GraphEdges'
 import { Address } from '@/@types/openapi-internal/Address'
+import { traceable } from '@/core/xray'
 
+@traceable
 export class LinkerService {
   tenantId!: string
 

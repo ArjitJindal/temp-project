@@ -30,7 +30,7 @@ import {
   DefaultApiGetAlertListRequest,
   DefaultApiGetAlertTransactionListRequest,
 } from '@/@types/openapi-internal/RequestParameters'
-import { addNewSubsegment } from '@/core/xray'
+import { addNewSubsegment, traceable } from '@/core/xray'
 import { CaseEscalationRequest } from '@/@types/openapi-internal/CaseEscalationRequest'
 import { CaseService } from '@/lambdas/console-api-case/services/case-service'
 import { getContext, hasFeature } from '@/core/utils/context'
@@ -59,6 +59,7 @@ import { CaseConfig } from '@/lambdas/console-api-case/app'
 import { JWTAuthorizerResult } from '@/@types/jwt'
 import { isStatusInReview } from '@/utils/helpers'
 
+@traceable
 export class AlertsService extends CaseAlertsCommonService {
   alertsRepository: AlertsRepository
   tenantId: string

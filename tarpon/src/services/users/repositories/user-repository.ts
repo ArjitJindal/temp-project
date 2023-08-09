@@ -59,7 +59,9 @@ import { RiskScoringService } from '@/services/risk-scoring'
 import { RiskScoreDetails } from '@/@types/openapi-public/RiskScoreDetails'
 import { BusinessResponse } from '@/@types/openapi-public/BusinessResponse'
 import { runLocalChangeHandler } from '@/utils/local-dynamodb-change-handler'
+import { traceable } from '@/core/xray'
 
+@traceable
 export class UserRepository {
   dynamoDb: DynamoDBDocumentClient
   mongoDb: MongoClient

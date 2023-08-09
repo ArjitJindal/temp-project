@@ -5,7 +5,9 @@ import { AuditLog } from '@/@types/openapi-internal/AuditLog'
 import { AUDITLOG_COLLECTION, paginatePipeline } from '@/utils/mongoDBUtils'
 import { DefaultApiGetAuditlogRequest } from '@/@types/openapi-internal/RequestParameters'
 import { COUNT_QUERY_LIMIT } from '@/utils/pagination'
+import { traceable } from '@/core/xray'
 
+@traceable
 export class AuditLogRepository {
   tenantId: string
   mongoDb: MongoClient

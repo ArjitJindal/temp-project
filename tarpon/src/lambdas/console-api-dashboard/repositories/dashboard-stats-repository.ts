@@ -40,6 +40,7 @@ import { InternalUser } from '@/@types/openapi-internal/InternalUser'
 import { DashboardStatsHitsPerUserData } from '@/@types/openapi-internal/DashboardStatsHitsPerUserData'
 import { FLAGRIGHT_SYSTEM_USER } from '@/services/rules-engine/repositories/alerts-repository'
 import { DashboardStatsOverview } from '@/@types/openapi-internal/DashboardStatsOverview'
+import { traceable } from '@/core/xray'
 
 type TimeRange = {
   startTimestamp?: number
@@ -89,6 +90,7 @@ const CASE_PROJECT_KEYS = {
   },
 }
 
+@traceable
 export class DashboardStatsRepository {
   mongoDb: MongoClient
   tenantId: string

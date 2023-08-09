@@ -6,7 +6,9 @@ import {
 } from '@/utils/mongoDBUtils'
 import { SimulationPulseResult } from '@/@types/openapi-internal/SimulationPulseResult'
 import { DefaultApiGetSimulationTaskIdResultRequest } from '@/@types/openapi-internal/RequestParameters'
+import { traceable } from '@/core/xray'
 
+@traceable
 export class SimulationResultRepository {
   tenantId: string
   mongoDb: MongoClient

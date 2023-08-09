@@ -20,6 +20,7 @@ import {
 import { RuleTypeEnum } from '@/@types/openapi-internal/Rule'
 import { paginateQuery } from '@/utils/dynamodb'
 import { DEFAULT_RISK_LEVEL } from '@/services/risk-scoring/utils'
+import { traceable } from '@/core/xray'
 
 const nanoId = customAlphabet('1234567890abcdef', 8)
 
@@ -49,6 +50,7 @@ function toRuleInstance(item: any): RuleInstance {
   }
 }
 
+@traceable
 export class RuleInstanceRepository {
   dynamoDb: DynamoDBDocumentClient
 

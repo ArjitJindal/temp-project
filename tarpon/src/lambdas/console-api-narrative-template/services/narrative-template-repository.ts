@@ -6,7 +6,9 @@ import {
 } from '@/utils/mongoDBUtils'
 import { NarrativeTemplateRequest } from '@/@types/openapi-internal/NarrativeTemplateRequest'
 import { DefaultApiGetNarrativesRequest } from '@/@types/openapi-internal/RequestParameters'
+import { traceable } from '@/core/xray'
 
+@traceable
 export class NarrativeRepository {
   private collection: Collection<NarrativeTemplate>
 

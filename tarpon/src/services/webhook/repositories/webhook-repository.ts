@@ -3,6 +3,9 @@ import { v4 as uuidv4 } from 'uuid'
 import { WEBHOOK_COLLECTION } from '@/utils/mongoDBUtils'
 import { WebhookEventType } from '@/@types/openapi-public/WebhookEventType'
 import { WebhookConfiguration } from '@/@types/openapi-internal/WebhookConfiguration'
+import { traceable } from '@/core/xray'
+
+@traceable
 export class WebhookRepository {
   tenantId: string
   mongoDb: MongoClient

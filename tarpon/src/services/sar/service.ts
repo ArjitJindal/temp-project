@@ -19,6 +19,9 @@ import { InternalTransaction } from '@/@types/openapi-internal/InternalTransacti
 import { DefaultApiGetReportsRequest } from '@/@types/openapi-internal/RequestParameters'
 import { formatCountry } from '@/utils/countries'
 import { mergeObjects } from '@/utils/object'
+import { traceable } from '@/core/xray'
+
+@traceable
 export class ReportService {
   reportRepository!: ReportRepository
   tenantId: string
