@@ -447,6 +447,13 @@ export const createMongoDBCollections = async (
         destinationUserId: 1,
         'executedRules.ruleInstanceId': 1,
         timestamp: 1,
+        _id: 1,
+      },
+      {
+        originUserId: 1,
+        'executedRules.ruleInstanceId': 1,
+        timestamp: 1,
+        _id: 1,
       },
       {
         transactionId: 1,
