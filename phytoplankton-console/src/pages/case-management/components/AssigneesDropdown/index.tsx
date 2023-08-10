@@ -1,10 +1,12 @@
 import { Avatar, Select } from 'antd';
+import cn from 'clsx';
 import { LoadingOutlined } from '@ant-design/icons';
 import { colorSchema } from './utils';
 import s from './index.module.less';
 import { useSortedUsers } from '@/utils/user-utils';
 import { Assignment } from '@/apis';
 import { Assignee } from '@/components/Assignee';
+import ArrowDropDownFill from '@/components/ui/icons/Remix/system/arrow-drop-down-fill.react.svg';
 
 interface Props {
   editing: boolean;
@@ -12,6 +14,7 @@ interface Props {
   onChange: (assignees: string[]) => void;
   maxAssignees?: number;
   placeholder?: string;
+  fixSelectorHeight?: boolean;
 }
 
 export const AssigneesDropdown: React.FC<Props> = ({
@@ -20,6 +23,7 @@ export const AssigneesDropdown: React.FC<Props> = ({
   onChange,
   maxAssignees,
   placeholder,
+  fixSelectorHeight = false,
 }) => {
   const [users, loadingUsers] = useSortedUsers();
 
@@ -27,7 +31,7 @@ export const AssigneesDropdown: React.FC<Props> = ({
     <>
       <Select<string[]>
         open={maxAssignees && assignments.length >= maxAssignees ? false : undefined}
-        className={s.select}
+        className={cn(s.select, fixSelectorHeight ? s.fixSelectorHeight : '')}
         mode={'multiple'}
         allowClear
         filterOption={(input, option) => {
@@ -63,6 +67,7 @@ export const AssigneesDropdown: React.FC<Props> = ({
                 .filter((assignment) => assignment.assigneeUserId !== undefined)
                 .map((assignment) => assignment.assigneeUserId)
         }
+        suffixIcon={<ArrowDropDownFill />}
       >
         {users.map((user, index) => (
           <Select.Option key={user.id}>

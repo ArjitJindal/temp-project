@@ -17,7 +17,7 @@ import { usePaginatedQuery } from '@/utils/queries/hooks';
 import { AUDIT_LOGS_LIST } from '@/utils/queries/keys';
 import { useApiTime } from '@/utils/tracker';
 import { ColumnHelper } from '@/components/library/Table/columnHelper';
-import { DATE } from '@/components/library/Table/standardDataTypes';
+import { DATE_TIME } from '@/components/library/Table/standardDataTypes';
 import EntityFilterButton from '@/pages/auditlog/components/EntityFilterButton';
 import ActionTakenByFilterButton from '@/pages/auditlog/components/ActionTakeByFilterButton';
 import { PageWrapperContentContainer, PageWrapperContext } from '@/components/PageWrapper';
@@ -147,7 +147,7 @@ export default function AuditLogTable() {
     helper.simple<'timestamp'>({
       title: 'Time of Action',
       key: 'timestamp',
-      type: DATE,
+      type: DATE_TIME,
     }),
   ]);
   return (

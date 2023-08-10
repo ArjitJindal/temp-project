@@ -4,7 +4,11 @@ import { useQuery } from './queries/hooks';
 import { RULES, RULE_INSTANCES } from './queries/keys';
 import { Rule, RuleAction, RuleInstance, TransactionState } from '@/apis';
 import { neverReturn } from '@/utils/lang';
-import COLORS from '@/components/ui/colors';
+import COLORS, {
+  COLORS_V2_ALERT_SUCCESS,
+  COLORS_V2_ALERT_WARNING,
+  COLORS_V2_RISK_LEVEL_BASE_HIGH,
+} from '@/components/ui/colors';
 import { useApi } from '@/api';
 
 export const RULE_ACTION_VALUES: RuleAction[] = ['ALLOW', 'FLAG', 'BLOCK', 'SUSPEND'];
@@ -37,7 +41,7 @@ export function isTransactionState(value: unknown): value is TransactionState {
   return neverReturn(asState, false);
 }
 
-export function getRuleActionColor(ruleAction: RuleAction): string {
+export function getRuleActionColorForDashboard(ruleAction: RuleAction): string {
   if (ruleAction === 'ALLOW') {
     return COLORS.brandBlue.base;
   }
@@ -49,6 +53,22 @@ export function getRuleActionColor(ruleAction: RuleAction): string {
   }
   if (ruleAction === 'FLAG') {
     return COLORS.orange.base;
+  }
+  return neverReturn(ruleAction, 'gray');
+}
+
+export function getRuleActionColor(ruleAction: RuleAction): string {
+  if (ruleAction === 'ALLOW') {
+    return COLORS_V2_ALERT_SUCCESS;
+  }
+  if (ruleAction === 'SUSPEND') {
+    return COLORS_V2_RISK_LEVEL_BASE_HIGH;
+  }
+  if (ruleAction === 'BLOCK') {
+    return COLORS.lightRed.base;
+  }
+  if (ruleAction === 'FLAG') {
+    return COLORS_V2_ALERT_WARNING;
   }
   return neverReturn(ruleAction, 'gray');
 }

@@ -2,12 +2,25 @@
 
 .root {
   display: flex;
-  flex-wrap: wrap;
   gap: 16px;
   justify-content: space-between;
 }
 
 .risks {
-  display: flex;
   gap: 12px;
+  display: grid;
+  grid-auto-columns: 1fr;
+  grid-auto-flow: column;
+}
+
+.attributes {
+  display: flex;
+  gap: 16px 24px;
+  flex: 1;
+  flex-wrap: wrap;
+}
+
+.attribute {
+  width: fit-content;
+  max-width: 250px;
 }

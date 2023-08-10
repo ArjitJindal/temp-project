@@ -5,7 +5,7 @@ import cn from 'clsx';
 import s from './index.module.less';
 import { Report } from '@/apis';
 import QueryResultsTable from '@/components/common/QueryResultsTable';
-import { DATE_TIME, LONG_TEXT } from '@/components/library/Table/standardDataTypes';
+import { DATE, LONG_TEXT } from '@/components/library/Table/standardDataTypes';
 import { ColumnHelper } from '@/components/library/Table/columnHelper';
 import { AllParams } from '@/components/library/Table/types';
 import { useUsers } from '@/utils/user-utils';
@@ -75,7 +75,7 @@ export default function ReportsTable() {
     helper.simple<'createdAt'>({
       title: 'Created on',
       key: 'createdAt',
-      type: DATE_TIME,
+      type: DATE,
     }),
     helper.simple<'status'>({
       key: 'status',
@@ -100,7 +100,7 @@ export default function ReportsTable() {
     helper.simple<'updatedAt'>({
       title: 'Last updated',
       key: 'updatedAt',
-      type: DATE_TIME,
+      type: DATE,
     }),
   ]);
 

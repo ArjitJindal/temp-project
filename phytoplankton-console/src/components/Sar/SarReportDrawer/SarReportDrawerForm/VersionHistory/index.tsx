@@ -1,7 +1,7 @@
 import React, { useMemo } from 'react';
 import { Report } from '@/apis';
 import Table from '@/components/library/Table';
-import { DATE_TIME, STRING } from '@/components/library/Table/standardDataTypes';
+import { DATE, STRING } from '@/components/library/Table/standardDataTypes';
 import { ColumnHelper } from '@/components/library/Table/columnHelper';
 
 export default function VersionHistory({ report }: { report: Report }) {
@@ -17,7 +17,7 @@ export default function VersionHistory({ report }: { report: Report }) {
     helper.simple<'createdAt'>({
       title: 'Created on',
       key: 'createdAt',
-      type: DATE_TIME,
+      type: DATE,
     }),
     helper.display({
       title: 'Link',

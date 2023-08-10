@@ -19,10 +19,20 @@ interface Props<T extends string = string> {
   disabled?: boolean;
   extraBottomMargin?: boolean;
   arrow?: boolean;
+  optionClassName?: string;
 }
 
 export default function Dropdown<T extends string = string>(props: Props<T>): JSX.Element {
-  const { options, children, onSelect, placement, extraBottomMargin, disabled, arrow } = props;
+  const {
+    options,
+    children,
+    onSelect,
+    placement,
+    extraBottomMargin,
+    disabled,
+    arrow,
+    optionClassName,
+  } = props;
 
   const menu = (
     <AntMenu
@@ -34,7 +44,11 @@ export default function Dropdown<T extends string = string>(props: Props<T>): JS
       }}
     >
       {options.map((option) => (
-        <AntMenu.Item key={option.value} disabled={option.isDisabled}>
+        <AntMenu.Item
+          key={option.value}
+          disabled={option.isDisabled}
+          className={cn(optionClassName)}
+        >
           {option.label ?? option.value}
         </AntMenu.Item>
       ))}

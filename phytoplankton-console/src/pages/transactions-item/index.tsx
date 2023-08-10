@@ -8,17 +8,10 @@ import SenderReceiverDetails from './SenderReceiverDetails';
 import PageWrapper from '@/components/PageWrapper';
 import AsyncResourceRenderer from '@/components/common/AsyncResourceRenderer';
 import * as Card from '@/components/ui/Card';
-import * as Form from '@/components/ui/Form';
-import TransactionState from '@/components/ui/TransactionStateTag';
-import { RuleActionStatus } from '@/components/ui/RuleActionStatus';
-import LegacyEntityHeader from '@/components/ui/entityPage/LegacyEntityHeader';
-import TransactionTypeTag from '@/components/library/TransactionTypeTag';
 import TransactionEventsCard from '@/pages/transactions-item/TransactionEventsCard';
 
 //utils and hooks
-import { dayjs, DEFAULT_DATE_TIME_FORMAT } from '@/utils/dayjs';
 import { makeUrl } from '@/utils/routing';
-import { useI18n } from '@/locales';
 import { AsyncResource, failed, init, isSuccess, loading, success } from '@/utils/asyncResource';
 import { ApiException, InternalTransaction } from '@/apis';
 import { useApi } from '@/api';
@@ -26,14 +19,14 @@ import { useApiTime, usePageViewTracker } from '@/utils/tracker';
 import PageTabs from '@/components/ui/PageTabs';
 import { keepBackUrl } from '@/utils/backUrl';
 import { useElementSize } from '@/utils/browser';
+import EntityHeader from '@/components/ui/entityPage/EntityHeader';
 
 export default function TransactionsItem() {
   usePageViewTracker('Transactions Item');
-  const i18n = useI18n();
   const [currentItem, setCurrentItem] = useState<AsyncResource<InternalTransaction>>(init());
   const currentTransactionId = isSuccess(currentItem) ? currentItem.value.transactionId : null;
   // const { id: transactionId } = useParams<'id'>();
-  const { tab = 'user-details' } = useParams<'tab'>();
+  const { tab = 'transaction-details' } = useParams<'tab'>();
   const { id: transactionId } = useParams<'id'>();
   const api = useApi();
   const measure = useApiTime();
@@ -85,87 +78,69 @@ export default function TransactionsItem() {
   const entityHeaderHeight = rect?.height ?? 0;
 
   return (
-    <PageWrapper
-      backButton={{
-        title: i18n('menu.transactions.transactions-list.item.back-button'),
-        url: makeUrl('/transactions/list'),
-      }}
-    >
-      <AsyncResourceRenderer resource={currentItem}>
-        {(transaction) => (
-          <>
+    <AsyncResourceRenderer resource={currentItem}>
+      {(transaction) => (
+        <PageWrapper
+          header={
             <Card.Root>
-              <LegacyEntityHeader
+              <EntityHeader
                 stickyElRef={setHeaderStickyElRef}
-                id={transaction.transactionId}
-                idTitle="Transaction ID"
+                breadcrumbItems={[
+                  {
+                    title: 'Transactions',
+                    to: '/transactions',
+                  },
+                  {
+                    title: transaction.transactionId,
+                  },
+                ]}
                 subHeader={<SubHeader transaction={transaction} />}
-              >
-                <Form.Layout.Label title="Time">
-                  {dayjs(transaction.timestamp).format(DEFAULT_DATE_TIME_FORMAT)}
-                </Form.Layout.Label>
-                <Form.Layout.Label title="State">
-                  <TransactionState transactionState={transaction.transactionState} />
-                </Form.Layout.Label>
-                <Form.Layout.Label title="Rule action">
-                  {transaction.status && <RuleActionStatus ruleAction={transaction.status} />}
-                </Form.Layout.Label>
-                <Form.Layout.Label title="Type">
-                  <TransactionTypeTag transactionType={transaction.type} />
-                </Form.Layout.Label>
-                <Form.Layout.Label title="Product Type">
-                  {transaction.productType ?? '-'}
-                </Form.Layout.Label>
-                <Form.Layout.Label title="Reference">
-                  {transaction.reference ?? '-'}
-                </Form.Layout.Label>
-              </LegacyEntityHeader>
+              />
             </Card.Root>
-            <>
-              <PageTabs
-                sticky={entityHeaderHeight}
-                activeKey={tab}
-                onTabClick={(newTab) => {
-                  navigate(
-                    keepBackUrl(
-                      makeUrl('/transactions/item/:id/:tab', { id: transactionId, tab: newTab }),
-                    ),
-                    {
-                      replace: true,
-                    },
-                  );
-                }}
+          }
+        >
+          <PageTabs
+            sticky={entityHeaderHeight}
+            activeKey={tab}
+            onTabClick={(newTab) => {
+              navigate(
+                keepBackUrl(
+                  makeUrl('/transactions/item/:id/:tab', { id: transactionId, tab: newTab }),
+                ),
+                {
+                  replace: true,
+                },
+              );
+            }}
+          >
+            {[
+              {
+                tab: 'Transaction Details',
+                key: 'transaction-details',
+                children: <SenderReceiverDetails transaction={transaction} />,
+                isClosable: false,
+                isDisabled: false,
+              },
+              {
+                tab: 'Transaction Events',
+                key: 'transaction-events',
+                children: <TransactionEventsCard events={transaction.events ?? []} />,
+                isClosable: false,
+                isDisabled: false,
+              },
+            ].map(({ tab, key, isDisabled, isClosable, children }) => (
+              <AntTabs.TabPane
+                key={key}
+                tab={tab}
+                closable={isClosable}
+                disabled={isDisabled ?? false}
               >
-                {[
-                  {
-                    tab: 'Transaction Details',
-                    key: 'user-details',
-                    children: <SenderReceiverDetails transaction={transaction} />,
-                    isClosable: false,
-                    isDisabled: false,
-                  },
-                  {
-                    tab: 'Transaction Events',
-                    key: 'transaction-events',
-                    children: <TransactionEventsCard events={transaction.events ?? []} />,
-                    isClosable: false,
-                    isDisabled: false,
-                  },
-                ].map(({ tab, key, isDisabled, isClosable, children }) => (
-                  <AntTabs.TabPane
-                    key={key}
-                    tab={tab}
-                    closable={isClosable}
-                    disabled={isDisabled ?? false}
-                  >
-                    <div>{children}</div>
-                  </AntTabs.TabPane>
-                ))}
-              </PageTabs>
-            </>
-          </>
-        )}
-      </AsyncResourceRenderer>
-    </PageWrapper>
+                <div>{children}</div>
+              </AntTabs.TabPane>
+            ))}
+          </PageTabs>
+        </PageWrapper>
+      )}
+    </AsyncResourceRenderer>
   );
 }

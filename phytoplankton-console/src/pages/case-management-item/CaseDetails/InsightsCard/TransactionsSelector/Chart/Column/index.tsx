@@ -4,7 +4,7 @@ import { CalculatedParams, DataItem, Series } from '../types';
 import s from './styles.module.less';
 import Popover from './Popover';
 import { RuleAction } from '@/apis';
-import { getRuleActionColor } from '@/utils/rules';
+import { getRuleActionColorForDashboard } from '@/utils/rules';
 import { Currency } from '@/utils/currencies';
 
 function Category(props: {
@@ -14,7 +14,7 @@ function Category(props: {
   currency: Currency | null;
 }) {
   const { ruleAction, value, total } = props;
-  const color = getRuleActionColor(ruleAction);
+  const color = getRuleActionColorForDashboard(ruleAction);
   return (
     <div
       className={cn(s.category)}

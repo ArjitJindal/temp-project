@@ -5,7 +5,7 @@ import s from './styles.module.less';
 import { P } from '@/components/ui/Typography';
 import { Currency } from '@/utils/currencies';
 import { ColorIndicator } from '@/pages/case-management-item/CaseDetails/InsightsCard/components/Legend';
-import { getRuleActionColor } from '@/utils/rules';
+import { getRuleActionColorForDashboard } from '@/utils/rules';
 import { RuleAction } from '@/apis';
 import Money from '@/components/ui/Money';
 import {
@@ -33,7 +33,7 @@ export default function Popover(props: Props) {
         {Object.entries(dataItem.values).map(([ruleAction, value]) => (
           <IndicatorRow
             key={ruleAction}
-            color={getRuleActionColor(ruleAction as RuleAction)}
+            color={getRuleActionColorForDashboard(ruleAction as RuleAction)}
             title={getRiskActionLabel(ruleAction as RuleAction, settings) || 'Unknown'}
             value={value}
             currency={currency}

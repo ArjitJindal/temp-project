@@ -27,8 +27,8 @@ import {
 } from '@/apis';
 import { getUserName } from '@/utils/api/users';
 import TransactionTypeTag from '@/components/library/TransactionTypeTag';
-import { paymethodOptions, transactionType } from '@/utils/tags';
-import { dayjs, DEFAULT_DATE_TIME_FORMAT } from '@/utils/dayjs';
+import { paymethodOptions, transactionState, transactionType } from '@/utils/tags';
+import { dayjs, DEFAULT_DATE_TIME_FORMAT, TIME_FORMAT_WITHOUT_SECONDS } from '@/utils/dayjs';
 import TransactionStateTag from '@/components/ui/TransactionStateTag';
 import CurrencySymbol from '@/components/ui/Currency';
 import CountryDisplay from '@/components/ui/CountryDisplay';
@@ -247,7 +247,7 @@ export const TRANSACTION_STATE: ColumnDataType<ApiTransactionState> = {
   stringify: (value) => `${value}`,
   autoFilterDataType: {
     kind: 'select',
-    options: transactionType,
+    options: transactionState,
     displayMode: 'list',
     mode: 'MULTIPLE',
   },
@@ -265,7 +265,9 @@ export const DURATION: ColumnDataType<number> = {
 };
 
 export const DATE: ColumnDataType<number> = {
-  render: (timestamp) => <TimestampDisplay timestamp={timestamp} />,
+  render: (timestamp) => (
+    <TimestampDisplay timestamp={timestamp} timeFormat={TIME_FORMAT_WITHOUT_SECONDS} />
+  ),
   stringify: (timestamp) => dayjs(timestamp).format(DEFAULT_DATE_TIME_FORMAT),
   autoFilterDataType: { kind: 'dateTimeRange' },
 };

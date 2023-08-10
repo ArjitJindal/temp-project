@@ -8,7 +8,7 @@ import { getUserName } from '@/utils/api/users';
 import User3Line from '@/components/ui/icons/Remix/user/user-3-line.react.svg';
 import GovernmentLineIcon from '@/components/ui/icons/Remix/buildings/government-line.react.svg';
 import TimerLineIcon from '@/components/ui/icons/Remix/system/timer-line.react.svg';
-import { dayjs, DEFAULT_DATE_TIME_FORMAT } from '@/utils/dayjs';
+import { DATE_TIME_FORMAT_WITHOUT_SECONDS, dayjs } from '@/utils/dayjs';
 
 type UserProps = {
   user: InternalBusinessUser | InternalConsumerUser;
@@ -43,7 +43,7 @@ export const UserCard = (props: UserProps) => {
         </Form.Layout.Label>
       )}
       <Form.Layout.Label icon={<TimerLineIcon />} title={'Created on'}>
-        {dayjs(user.createdTimestamp).format(DEFAULT_DATE_TIME_FORMAT)}
+        {dayjs(user.createdTimestamp).format(DATE_TIME_FORMAT_WITHOUT_SECONDS)}
       </Form.Layout.Label>
     </PropertyColumns>
   );

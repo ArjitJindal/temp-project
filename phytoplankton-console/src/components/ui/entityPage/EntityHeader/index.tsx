@@ -29,9 +29,11 @@ export default function EntityHeader(props: Props) {
               {chips != null && chips.length > 0 && (
                 <>
                   <div className={s.breadcrumbsSeparator} />
-                  {chips?.map((chip, i) => (
-                    <React.Fragment key={i}>{chip}</React.Fragment>
-                  ))}
+                  <div className={s.chips}>
+                    {chips?.map((chip, i) => (
+                      <React.Fragment key={i}>{chip}</React.Fragment>
+                    ))}
+                  </div>
                 </>
               )}
             </div>

@@ -8,7 +8,7 @@ import { each, groupBy } from 'lodash';
 import { Annotation } from '@antv/g2plot';
 import styles from '../style.module.less';
 import { header } from './dashboardutils';
-import { getRuleActionColor } from '@/utils/rules';
+import { getRuleActionColorForDashboard } from '@/utils/rules';
 import DatePicker from '@/components/ui/DatePicker';
 import { dayjs, Dayjs, YEAR_MONTH_DATE_FORMAT } from '@/utils/dayjs';
 import { useApi } from '@/api';
@@ -253,17 +253,17 @@ const TransactionsChartCard = () => {
                           color={({ type }) => {
                             if (key === 'totalTransactions') {
                               if (type === `${escapeHtml(suspendAlias ?? '')}`)
-                                return getRuleActionColor('SUSPEND');
+                                return getRuleActionColorForDashboard('SUSPEND');
                               if (type === `${escapeHtml(flagAlias ?? '')}`)
-                                return getRuleActionColor('FLAG');
+                                return getRuleActionColorForDashboard('FLAG');
                               if (type === `${escapeHtml(blockAlias ?? '')}`)
-                                return getRuleActionColor('BLOCK');
-                              return getRuleActionColor('ALLOW');
+                                return getRuleActionColorForDashboard('BLOCK');
+                              return getRuleActionColorForDashboard('ALLOW');
                             } else if (key === FLAGGED_TRANSACTIONS_KEY)
-                              return getRuleActionColor('FLAG');
+                              return getRuleActionColorForDashboard('FLAG');
                             else if (key === STOPPED_TRANSACTIONS_KEY)
-                              return getRuleActionColor('FLAG');
-                            return getRuleActionColor('SUSPEND');
+                              return getRuleActionColorForDashboard('FLAG');
+                            return getRuleActionColorForDashboard('SUSPEND');
                           }}
                           xAxis={{
                             label: {

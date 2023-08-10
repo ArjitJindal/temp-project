@@ -17,7 +17,7 @@ import { getListSubtypeTitle, stringifyListType } from '@/pages/lists/helpers';
 import { useApiTime } from '@/utils/tracker';
 import { useHasPermissions } from '@/utils/user-utils';
 import { ColumnHelper } from '@/components/library/Table/columnHelper';
-import { DATE_TIME } from '@/components/library/Table/standardDataTypes';
+import { DATE } from '@/components/library/Table/standardDataTypes';
 import { message } from '@/components/library/Message';
 
 export type ListTableRef = React.Ref<{
@@ -131,7 +131,7 @@ function ListTable(props: Props, ref: ListTableRef) {
     helper.simple<'createdTimestamp'>({
       key: 'createdTimestamp',
       title: 'Created On',
-      type: DATE_TIME,
+      type: DATE,
     }),
     helper.simple<'metadata.status'>({
       key: 'metadata.status',

@@ -7,11 +7,8 @@ import Header from './components/Header';
 import { Case, Comment } from '@/apis';
 import { useApi } from '@/api';
 import PageWrapper from '@/components/PageWrapper';
-import { useI18n } from '@/locales';
-import { makeUrl } from '@/utils/routing';
 import * as Card from '@/components/ui/Card';
 import { useQuery } from '@/utils/queries/hooks';
-import { useBackUrl } from '@/utils/backUrl';
 import AsyncResourceRenderer from '@/components/common/AsyncResourceRenderer';
 import { ALERT_LIST, CASES_ITEM } from '@/utils/queries/keys';
 import CaseDetails from '@/pages/case-management-item/CaseDetails';
@@ -77,37 +74,29 @@ function CaseManagementItemPage() {
   return (
     <AsyncResourceRenderer resource={caseData}>
       {(caseItem) => (
-        <>
-          <Card.Root>
-            <Header
-              headerStickyElRef={setHeaderStickyElRef}
-              caseItem={caseItem}
-              onReload={onReload}
-              onCommentAdded={handleCommentAdded}
-            />
-          </Card.Root>
+        <PageWrapper
+          header={
+            <Card.Root>
+              <Header
+                headerStickyElRef={setHeaderStickyElRef}
+                caseItem={caseItem}
+                onReload={onReload}
+                onCommentAdded={handleCommentAdded}
+              />
+            </Card.Root>
+          }
+        >
           <CaseDetails
             caseItem={caseItem}
             onReload={onReload}
             headerStickyElRef={headerStickyElRef}
           />
-        </>
+        </PageWrapper>
       )}
     </AsyncResourceRenderer>
   );
 }
 
 export default function CaseManagementItemPageWrapper() {
-  const i18n = useI18n();
-  const backUrl = useBackUrl();
-  return (
-    <PageWrapper
-      backButton={{
-        title: i18n('menu.case-management.item.back-button'),
-        url: backUrl ?? makeUrl('/case-management'),
-      }}
-    >
-      <CaseManagementItemPage />
-    </PageWrapper>
-  );
+  return <CaseManagementItemPage />;
 }

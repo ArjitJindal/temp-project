@@ -1,7 +1,7 @@
 import React from 'react';
 import { Tag } from 'antd';
 import s from './index.module.less';
-import { dayjs, DEFAULT_DATE_TIME_FORMAT } from '@/utils/dayjs';
+import { DATE_TIME_FORMAT_WITHOUT_SECONDS, dayjs } from '@/utils/dayjs';
 import { InternalConsumerUser } from '@/apis';
 import TimerLineIcon from '@/components/ui/icons/Remix/system/timer-line.react.svg';
 import Calender2LineIcon from '@/components/ui/icons/Remix/business/calendar-2-line.react.svg';
@@ -26,7 +26,7 @@ export default function UsersInfoCard(props: Props) {
       <div className={s.inner}>
         <Form.Layout.Label icon={<Calender2LineIcon />} title={'DOB'}>
           {user.userDetails?.dateOfBirth
-            ? dayjs(user.userDetails?.dateOfBirth).format(DEFAULT_DATE_TIME_FORMAT)
+            ? dayjs(user.userDetails?.dateOfBirth).format(DATE_TIME_FORMAT_WITHOUT_SECONDS)
             : '-'}
         </Form.Layout.Label>
         <Form.Layout.Label icon={<User3LineIcon />} title={'User Type'}>
@@ -50,7 +50,7 @@ export default function UsersInfoCard(props: Props) {
       </div>
       <div className={s.time}>
         <Form.Layout.Label icon={<TimerLineIcon />} title={'Created on'}>
-          {dayjs(user.createdTimestamp).format(DEFAULT_DATE_TIME_FORMAT)}
+          {dayjs(user.createdTimestamp).format(DATE_TIME_FORMAT_WITHOUT_SECONDS)}
         </Form.Layout.Label>
       </div>
       <div className={s.inner}>

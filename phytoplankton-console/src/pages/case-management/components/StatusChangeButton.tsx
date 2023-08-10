@@ -19,13 +19,13 @@ export const statusToOperationName = (status: AlertStatus | CaseStatus, isPastTe
     case 'IN_REVIEW_ESCALATED':
     case 'IN_REVIEW_CLOSED':
     case 'IN_REVIEW_REOPENED':
-      return 'In-Review';
+      return 'In review';
     case 'OPEN_IN_PROGRESS':
     case 'ESCALATED_IN_PROGRESS':
-      return 'In-Progress';
+      return 'In progress';
     case 'OPEN_ON_HOLD':
     case 'ESCALATED_ON_HOLD':
-      return 'On-Hold';
+      return 'On hold';
     default:
       return neverReturn(status, humanizeConstant(status));
   }
@@ -85,10 +85,19 @@ interface Props {
   statusTransitions?: Partial<Record<CaseStatus, { status: CaseStatus; actionLabel: string }>>;
   children: (childrenProps: ChildrenProps) => React.ReactNode;
   isDisabled?: boolean;
+  className?: string;
 }
 
 export default function StatusChangeButton(props: Props) {
-  const { ids, status, buttonProps = {}, children, statusTransitions, isDisabled = false } = props;
+  const {
+    ids,
+    status,
+    buttonProps = {},
+    children,
+    statusTransitions,
+    isDisabled = false,
+    className,
+  } = props;
   const [isModalVisible, setModalVisible] = useState(false);
   const overridenStatus = status ? statusTransitions?.[status] : null;
   const newStatus = overridenStatus?.status ?? getNextStatus(status);
@@ -108,6 +117,7 @@ export default function StatusChangeButton(props: Props) {
           style={{ width: 'max-content' }}
           testName="update-status-button"
           requiredPermissions={requiredPermissions}
+          className={className}
         >
           {overridenStatus?.actionLabel ?? statusToOperationName(newStatus)}
         </Button>

@@ -34,7 +34,7 @@ import { PaymentMethodTag } from '@/components/ui/PaymentTypeTag';
 import { useFeatureEnabled, useSettings } from '@/components/AppWrapper/Providers/SettingsProvider';
 import {
   COUNTRY,
-  DATE_TIME,
+  DATE,
   FLOAT,
   MONEY_AMOUNT,
   MONEY_CURRENCIES,
@@ -259,7 +259,7 @@ export default function TransactionsTable(props: Props) {
       helper.simple<'timestamp'>({
         title: 'Timestamp',
         key: 'timestamp',
-        type: DATE_TIME,
+        type: DATE,
         sorting: true,
         filtering: true,
       }),

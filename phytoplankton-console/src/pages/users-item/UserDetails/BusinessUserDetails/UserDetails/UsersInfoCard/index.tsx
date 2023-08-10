@@ -1,7 +1,7 @@
 import React from 'react';
 import { Tag } from 'antd';
 import s from './index.module.less';
-import { dayjs, DEFAULT_DATE_TIME_FORMAT } from '@/utils/dayjs';
+import { DATE_TIME_FORMAT_WITHOUT_SECONDS, dayjs } from '@/utils/dayjs';
 import { InternalBusinessUser } from '@/apis';
 import TimerLineIcon from '@/components/ui/icons/Remix/system/timer-line.react.svg';
 import User3Line from '@/components/ui/icons/Remix/user/user-3-line.react.svg';
@@ -74,7 +74,7 @@ export default function UsersInfoCard(props: Props) {
         </div>
       </Form.Layout.Label>
       <Form.Layout.Label icon={<TimerLineIcon />} title={'Created on'}>
-        {dayjs(user.createdTimestamp).format(DEFAULT_DATE_TIME_FORMAT)}
+        {dayjs(user.createdTimestamp).format(DATE_TIME_FORMAT_WITHOUT_SECONDS)}
       </Form.Layout.Label>
       <Form.Layout.Label icon={<DeleteBackLineIcon />} title={'Tags'}>
         <div>

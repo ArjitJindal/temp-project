@@ -15,7 +15,7 @@ type Props = {
   selectedCaseId?: string;
 };
 
-const APPROVE_STATUS_TRANSITIONS: Partial<
+export const APPROVE_STATUS_TRANSITIONS: Partial<
   Record<CaseStatus, { status: CaseStatus; actionLabel: 'Approve' }>
 > = {
   IN_REVIEW_OPEN: { status: 'OPEN', actionLabel: 'Approve' },
@@ -24,7 +24,7 @@ const APPROVE_STATUS_TRANSITIONS: Partial<
   IN_REVIEW_REOPENED: { status: 'REOPENED', actionLabel: 'Approve' },
 };
 
-const DECLINE_STATUS_TRANSITIONS: Partial<
+export const DECLINE_STATUS_TRANSITIONS: Partial<
   Record<CaseStatus, { status: CaseStatus; actionLabel: 'Decline' }>
 > = {
   OPEN: { status: 'OPEN', actionLabel: 'Decline' },

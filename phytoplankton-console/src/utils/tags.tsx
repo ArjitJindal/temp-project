@@ -4,6 +4,8 @@ import { getPaymentMethodTitle } from './payments';
 import TransactionTypeTag from '@/components/library/TransactionTypeTag';
 import { TRANSACTION_TYPES } from '@/apis/models-custom/TransactionType';
 import { PAYMENT_METHODS } from '@/apis/models-custom/PaymentMethod';
+import TransactionStateTag from '@/components/ui/TransactionStateTag';
+import { TRANSACTION_STATES } from '@/apis/models-custom/TransactionState';
 
 export const paymethodOptions = PAYMENT_METHODS.map((method) => ({
   value: method,
@@ -13,6 +15,11 @@ export const paymethodOptions = PAYMENT_METHODS.map((method) => ({
 export const transactionType = TRANSACTION_TYPES.map((type) => ({
   value: type,
   label: <TransactionTypeTag transactionType={type} />,
+}));
+
+export const transactionState = TRANSACTION_STATES.map((state) => ({
+  value: state,
+  label: <TransactionStateTag transactionState={state} />,
 }));
 
 export function capitalizeWords(text: string): string {

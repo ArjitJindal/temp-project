@@ -74,7 +74,7 @@ export default function TransactionsSelector(props: Props) {
                   });
                 }}
               >
-                <RuleActionStatus ruleAction={ruleAction} />
+                <RuleActionStatus ruleAction={ruleAction} isForChart />
               </SwitchButton>
             );
           })}

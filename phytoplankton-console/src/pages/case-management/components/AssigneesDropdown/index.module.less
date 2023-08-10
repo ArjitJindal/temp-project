@@ -21,3 +21,17 @@
 .avatar {
   flex-shrink: 0;
 }
+
+.fixSelectorHeight {
+  :global {
+    .ant-select-selector {
+      max-height: 40px;
+      width: 250px;
+      overflow-y: auto;
+      overflow-x: hidden;
+    }
+    .ant-select-selection-item-content {
+      max-width: 185px !important;
+    }
+  }
+}

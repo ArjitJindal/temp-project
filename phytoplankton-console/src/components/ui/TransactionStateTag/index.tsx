@@ -4,13 +4,13 @@ import s from './index.module.less';
 import { neverReturn } from '@/utils/lang';
 import { TransactionState as ApiTransactionState } from '@/apis';
 import CheckLineIcon from '@/components/ui/icons/Remix/system/check-line.react.svg';
-import RefreshLineIcon from '@/components/ui/icons/Remix/system/refresh-line.react.svg';
+import LoaderIcon from '@/components/ui/icons/Remix/system/loader-2-fill.react.svg';
 import SendPlaneLineIcon from '@/components/ui/icons/Remix/business/send-plane-line.react.svg';
-import TimeLineIcon from '@/components/ui/icons/Remix/system/time-line.react.svg';
-import PauseCircleLineIcon from '@/components/ui/icons/Remix/media/pause-circle-line.react.svg';
-import ExchangeDollarLineIcon from '@/components/ui/icons/Remix/finance/exchange-dollar-line.react.svg';
+import TimeLineIcon from '@/components/ui/icons/expire-icon.react.svg';
+import ErrorWarningLine from '@/components/ui/icons/Remix/system/error-warning-line.react.svg';
+import ArrowGoBackLineIcon from '@/components/ui/icons/Remix/system/arrow-go-back-line.react.svg';
 import CheckDoubleLineIcon from '@/components/ui/icons/Remix/system/check-double-line.react.svg';
-import CloseCircleLineIcon from '@/components/ui/icons/Remix/system/close-circle-line.react.svg';
+import CloseLineIcon from '@/components/ui/icons/Remix/system/close-fill.react.svg';
 import { useTransactionStateLabel } from '@/components/AppWrapper/Providers/SettingsProvider';
 
 interface Props {
@@ -37,17 +37,17 @@ export function getTransactionStateIcon(transactionState: ApiTransactionState): 
   if (transactionState === 'CREATED') {
     return <CheckLineIcon />;
   } else if (transactionState === 'PROCESSING') {
-    return <RefreshLineIcon />;
+    return <LoaderIcon />;
   } else if (transactionState === 'SENT') {
     return <SendPlaneLineIcon />;
   } else if (transactionState === 'EXPIRED') {
     return <TimeLineIcon />;
   } else if (transactionState === 'DECLINED') {
-    return <CloseCircleLineIcon />;
+    return <CloseLineIcon />;
   } else if (transactionState === 'SUSPENDED') {
-    return <PauseCircleLineIcon />;
+    return <ErrorWarningLine />;
   } else if (transactionState === 'REFUNDED') {
-    return <ExchangeDollarLineIcon />;
+    return <ArrowGoBackLineIcon />;
   } else if (transactionState === 'SUCCESSFUL') {
     return <CheckDoubleLineIcon />;
   }

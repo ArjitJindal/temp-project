@@ -10,7 +10,7 @@ import { usePaginatedQuery } from '@/utils/queries/hooks';
 import { SIMULATION_JOBS } from '@/utils/queries/keys';
 import { useUsers } from '@/utils/user-utils';
 import { ColumnHelper } from '@/components/library/Table/columnHelper';
-import { DATE_TIME, NUMBER } from '@/components/library/Table/standardDataTypes';
+import { DATE, NUMBER } from '@/components/library/Table/standardDataTypes';
 import { PageWrapperContentContainer, PageWrapperContext } from '@/components/PageWrapper';
 import { DefaultApiGetSimulationsRequest } from '@/apis/types/ObjectParamAPI';
 import { useRules } from '@/utils/rules';
@@ -96,7 +96,7 @@ export function SimulationHistoryTable() {
             title: 'Created on',
             key: 'createdAt',
             sorting: true,
-            type: DATE_TIME,
+            type: DATE,
           }),
           helper.simple<'createdBy'>({
             title: 'Created by',

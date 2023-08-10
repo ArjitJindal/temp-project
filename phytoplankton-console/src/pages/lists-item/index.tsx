@@ -3,7 +3,7 @@ import { useParams } from 'react-router';
 import { UnorderedListOutlined } from '@ant-design/icons';
 import s from './index.module.less';
 import ItemsTable from './ItemsTable';
-import { dayjs, DEFAULT_DATE_TIME_FORMAT } from '@/utils/dayjs';
+import { DATE_TIME_FORMAT_WITHOUT_SECONDS, dayjs } from '@/utils/dayjs';
 import PageWrapper from '@/components/PageWrapper';
 import { useI18n } from '@/locales';
 import { makeUrl } from '@/utils/routing';
@@ -74,7 +74,7 @@ export default function CreatedLists() {
                       {listHeader.metadata?.description}
                     </Form.Layout.Label>
                     <Form.Layout.Label icon={<TimeLineIcon />} title="Created on">
-                      {dayjs(listHeader.createdTimestamp).format(DEFAULT_DATE_TIME_FORMAT)}
+                      {dayjs(listHeader.createdTimestamp).format(DATE_TIME_FORMAT_WITHOUT_SECONDS)}
                     </Form.Layout.Label>
                   </Card.Section>
                   <Card.Section>

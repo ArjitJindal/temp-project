@@ -4,11 +4,8 @@ import s from './index.module.less';
 import { message } from '@/components/library/Message';
 import { Assignment, Case, CaseStatus } from '@/apis';
 import { useApi } from '@/api';
-import FileListLineIcon from '@/components/ui/icons/Remix/document/file-list-line.react.svg';
 import * as Form from '@/components/ui/Form';
 import { useAuth0User } from '@/utils/user-utils';
-import { ClosingReasonTag } from '@/pages/case-management/components/ClosingReasonTag';
-import UserShared2LineIcon from '@/components/ui/icons/Remix/user/user-shared-2-line.react.svg';
 import { AssigneesDropdown } from '@/pages/case-management/components/AssigneesDropdown';
 import { Feature } from '@/components/AppWrapper/Providers/SettingsProvider';
 import KycRiskDisplay from '@/pages/users-item/UserDetails/KycRiskDisplay';
@@ -17,6 +14,10 @@ import { CASES_ITEM } from '@/utils/queries/keys';
 import { getErrorMessage } from '@/utils/lang';
 import { useUpdateCaseQueryData } from '@/utils/api/cases';
 import { isOnHoldOrInProgress, statusInReview } from '@/utils/case-utils';
+import Id from '@/components/ui/Id';
+import { makeUrl } from '@/utils/routing';
+import { getUserLink, getUserName } from '@/utils/api/users';
+import { DATE_TIME_FORMAT_WITHOUT_SECONDS, dayjs } from '@/utils/dayjs';
 
 interface Props {
   caseItem: Case;
@@ -123,7 +124,67 @@ export default function SubHeader(props: Props) {
   );
 
   return (
-    <>
+    <div className={s.root}>
+      <div className={s.attributes}>
+        <Form.Layout.Label title={'User name'}>{getUserName(caseUser)}</Form.Layout.Label>
+
+        <Form.Layout.Label title={'User ID'}>
+          <Id to={getUserLink(caseUser)} toNewTab alwaysShowCopy>
+            {caseUser?.userId}
+          </Id>
+        </Form.Layout.Label>
+
+        <Form.Layout.Label title={'Created on'}>
+          {dayjs(caseItem.createdTimestamp).format(DATE_TIME_FORMAT_WITHOUT_SECONDS)}
+        </Form.Layout.Label>
+
+        <Form.Layout.Label title={'Last updated'}>
+          {dayjs(caseItem.updatedAt).format(DATE_TIME_FORMAT_WITHOUT_SECONDS)}
+        </Form.Layout.Label>
+
+        <Form.Layout.Label title={'Assigned to'}>
+          <AssigneesDropdown
+            assignments={assignments ?? []}
+            editing={!(statusInReview(caseItem.caseStatus) || otherStatuses)}
+            onChange={handleUpdateAssignments}
+            fixSelectorHeight
+          />
+        </Form.Layout.Label>
+
+        {caseItem.caseStatus === 'CLOSED' && caseItem.lastStatusChange && (
+          <Form.Layout.Label title={'Closure reason'}>
+            <div>
+              {caseItem?.lastStatusChange?.reason
+                ? caseItem.lastStatusChange.reason.join(', ')
+                : ''}
+            </div>
+          </Form.Layout.Label>
+        )}
+
+        {caseItem.caseStatus === 'ESCALATED' && caseItem.lastStatusChange && (
+          <Form.Layout.Label title={'Escalation reason'}>
+            <div>
+              {caseItem?.lastStatusChange?.reason
+                ? caseItem.lastStatusChange.reason.join(', ')
+                : ''}
+            </div>
+          </Form.Layout.Label>
+        )}
+
+        {caseItem.relatedCases && caseItem.relatedCases.length > 0 && (
+          <Form.Layout.Label title={'Parent Case ID'}>
+            {caseItem.relatedCases.map((caseId) => (
+              <Id
+                to={makeUrl(`/case-management/case/:caseId`, {
+                  caseId,
+                })}
+              >
+                {caseId}
+              </Id>
+            ))}
+          </Form.Layout.Label>
+        )}
+      </div>
       <Feature name="PULSE">
         {caseUser?.userId && (
           <div className={s.risks}>
@@ -132,35 +193,6 @@ export default function SubHeader(props: Props) {
           </div>
         )}
       </Feature>
-      <Form.Layout.Label icon={<UserShared2LineIcon />} title={'Assigned to'}>
-        <div style={{ marginLeft: 0, marginTop: 8 }}>
-          <AssigneesDropdown
-            assignments={assignments ?? []}
-            editing={!(statusInReview(caseItem.caseStatus) || otherStatuses)}
-            onChange={handleUpdateAssignments}
-          />
-        </div>
-      </Form.Layout.Label>
-      {caseItem.caseStatus === 'CLOSED' && caseItem.lastStatusChange && (
-        <Form.Layout.Label icon={<FileListLineIcon />} title={'Reason for closing'}>
-          <div>
-            <ClosingReasonTag
-              closingReasons={caseItem.lastStatusChange.reason}
-              otherReason={caseItem.lastStatusChange.otherReason}
-            />
-          </div>
-        </Form.Layout.Label>
-      )}
-      {caseItem.caseStatus === 'ESCALATED' && caseItem.lastStatusChange && (
-        <Form.Layout.Label icon={<FileListLineIcon />} title={'Reason for escalating'}>
-          <div>
-            <ClosingReasonTag
-              closingReasons={caseItem.lastStatusChange.reason}
-              otherReason={caseItem.lastStatusChange.otherReason}
-            />
-          </div>
-        </Form.Layout.Label>
-      )}
-    </>
+    </div>
   );
 }

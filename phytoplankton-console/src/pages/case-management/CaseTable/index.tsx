@@ -41,7 +41,6 @@ import {
   CASE_STATUS,
   CASEID_PRIORITY,
   DATE,
-  DATE_TIME,
   NUMBER,
   RISK_LEVEL,
   USER_NAME,
@@ -362,7 +361,7 @@ export default function CaseTable(props: Props) {
         helper.simple<'updatedAt'>({
           title: 'Last update time',
           key: 'updatedAt',
-          type: DATE_TIME,
+          type: DATE,
           filtering: true,
           sorting: true,
         }),

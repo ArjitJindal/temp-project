@@ -11,10 +11,11 @@ interface Props {
   to?: string;
   children: string | undefined;
   testName?: string;
+  toNewTab?: boolean;
 }
 
 export default function Id(props: Props) {
-  const { alwaysShowCopy, to, children, testName, onClick } = props;
+  const { alwaysShowCopy, to, children, testName, onClick, toNewTab = false } = props;
 
   const handleClickCopy = (e: React.MouseEvent<unknown>) => {
     e.preventDefault();
@@ -32,7 +33,13 @@ export default function Id(props: Props) {
 
   if (to != null) {
     return (
-      <Link className={style.root} to={to} title={children} data-cy={testName}>
+      <Link
+        className={style.root}
+        to={to}
+        target={toNewTab ? '_blank' : '_self'}
+        title={children}
+        data-cy={testName}
+      >
         {children}
         {alwaysShowCopy && <FileCopyLineIcon className={style.icon} onClick={handleClickCopy} />}
       </Link>
@@ -47,6 +54,7 @@ export default function Id(props: Props) {
         title={children}
         onClick={onClick || handleClickCopy}
         data-cy={testName}
+        target={toNewTab ? '_blank' : '_self'}
       >
         <div className={style.inner}>
           <span className={style.id}>{children}</span>

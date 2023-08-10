@@ -10,7 +10,7 @@ import { SIMULATION_JOBS } from '@/utils/queries/keys';
 import { RISK_LEVEL_LABELS, RISK_LEVELS } from '@/utils/risk-levels';
 import { useUsers } from '@/utils/user-utils';
 import { ColumnHelper } from '@/components/library/Table/columnHelper';
-import { DATE_TIME, NUMBER } from '@/components/library/Table/standardDataTypes';
+import { DATE, NUMBER } from '@/components/library/Table/standardDataTypes';
 import { PageWrapperContentContainer, PageWrapperContext } from '@/components/PageWrapper';
 import { DefaultApiGetSimulationsRequest } from '@/apis/types/ObjectParamAPI';
 
@@ -120,7 +120,7 @@ export default function SimulationHistory(props: SimulationHistoryProps) {
             key: 'createdAt',
             // dataIndex: 'createdAt',
             sorting: true,
-            type: DATE_TIME,
+            type: DATE,
           }),
           helper.simple<'createdBy'>({
             title: 'Created by',

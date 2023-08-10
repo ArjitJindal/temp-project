@@ -26,6 +26,7 @@ interface Props {
   onSaved: () => void;
   isDisabled?: boolean;
   skipReasonsModal?: boolean;
+  className?: string;
 }
 
 export default function CasesStatusChangeButton(props: Props) {
@@ -43,6 +44,7 @@ export default function CasesStatusChangeButton(props: Props) {
     buttonProps = {},
     statusTransitions,
     isDisabled = false,
+    className,
   } = props;
   return (
     <>
@@ -52,6 +54,7 @@ export default function CasesStatusChangeButton(props: Props) {
         buttonProps={buttonProps}
         statusTransitions={statusTransitions}
         isDisabled={isDisabled}
+        className={className}
       >
         {({ isVisible, setVisible, newStatus }) => (
           <CasesStatusChangeModal

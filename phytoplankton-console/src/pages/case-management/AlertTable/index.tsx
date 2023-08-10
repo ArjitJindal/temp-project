@@ -38,7 +38,6 @@ import {
   CASE_STATUS,
   CASEID,
   DATE,
-  DATE_TIME,
   RULE_ACTION,
   RULE_NATURE,
 } from '@/components/library/Table/standardDataTypes';
@@ -287,7 +286,7 @@ const mergedColumns = (
     helper.simple<'updatedAt'>({
       title: 'Last update time',
       key: 'updatedAt',
-      type: DATE_TIME,
+      type: DATE,
       filtering: true,
       sorting: true,
     }),
