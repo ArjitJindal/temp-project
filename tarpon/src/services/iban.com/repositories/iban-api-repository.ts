@@ -1,4 +1,5 @@
 import { MongoClient } from 'mongodb'
+import { uniqBy } from 'lodash'
 import { IBANApiHistory, IBANValidationResponse } from '../types'
 import { IBAN_COM_COLLECTION } from '@/utils/mongoDBUtils'
 import { traceable } from '@/core/xray'
@@ -54,9 +55,11 @@ export class IBANApiRepository {
     const results = await collection
       .find(
         { type: 'IBAN_VALIDATION', 'request.iban': { $in: ibans } },
+        // We'll only use the latest query result of a iban
         { sort: { createdAt: -1 } }
       )
+      .allowDiskUse()
       .toArray()
-    return results ?? null
+    return uniqBy(results, (item) => item.request.iban) ?? null
   }
 }

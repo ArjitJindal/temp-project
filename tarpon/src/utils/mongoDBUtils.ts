@@ -783,6 +783,18 @@ export const createMongoDBCollections = async (
   await syncIndexes(sanctionsSearchesCollection, sanctionsSearchesIndexes)
 
   try {
+    await db.createCollection(IBAN_COM_COLLECTION(tenantId))
+  } catch (e) {
+    // ignore already exists
+  }
+  const ibanComCollection = db.collection(IBAN_COM_COLLECTION(tenantId))
+  const ibanComCollectionIndexes: Document[] = [
+    { 'request.iban': 1, createdAt: 1 },
+  ]
+
+  await syncIndexes(ibanComCollection, ibanComCollectionIndexes)
+
+  try {
     await db.createCollection(SANCTIONS_WHITELIST_ENTITIES_COLLECTION(tenantId))
   } catch (e) {
     // ignore already exists
