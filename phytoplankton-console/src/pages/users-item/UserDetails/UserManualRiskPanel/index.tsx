@@ -1,10 +1,10 @@
 import { Form, Tooltip } from 'antd';
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import cn from 'clsx';
 import s from './index.module.less';
 import RiskLevelSwitch from '@/components/library/RiskLevelSwitch';
 import { useApi } from '@/api';
-import { RiskLevel } from '@/utils/risk-levels';
+import { RiskLevel, useRiskLevel } from '@/utils/risk-levels';
 import { message } from '@/components/library/Message';
 import {
   AsyncResource,
@@ -13,12 +13,15 @@ import {
   init,
   isFailed,
   isLoading,
+  isSuccess,
   loading,
   map,
   success,
 } from '@/utils/asyncResource';
 import { DrsScore } from '@/apis';
 import LockLineIcon from '@/components/ui/icons/Remix/system/lock-line.react.svg';
+import { useQuery } from '@/utils/queries/hooks';
+import { USERS_ITEM_RISKS_DRS } from '@/utils/queries/keys';
 
 interface Props {
   userId: string;
@@ -28,6 +31,12 @@ export default function UserManualRiskPanel(props: Props) {
   const { userId } = props;
   const api = useApi();
   const [isLocked, setIsLocked] = useState(false);
+  const queryResult = useQuery(USERS_ITEM_RISKS_DRS(userId), () => api.getDrsValue({ userId }));
+  const drsScore = useMemo(() => {
+    if (isSuccess(queryResult.data)) return queryResult.data.value;
+    return undefined;
+  }, [queryResult.data]);
+
   const [syncState, setSyncState] = useState<AsyncResource<DrsScore>>(init());
   useEffect(() => {
     let isCanceled = false;
@@ -123,7 +132,11 @@ export default function UserManualRiskPanel(props: Props) {
               ({ manualRiskLevel, derivedRiskLevel }) =>
                 manualRiskLevel || derivedRiskLevel || undefined,
             ),
-            undefined,
+            useRiskLevel(
+              (drsScore && drsScore.length
+                ? drsScore[drsScore.length - 1].drsScore
+                : undefined) as number,
+            ) ?? undefined,
           )}
           onChange={handleChangeRiskLevel}
         />
