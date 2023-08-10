@@ -11,7 +11,9 @@ async function migrateTenant(tenant: Tenant) {
 
   await casesCollection.updateMany(
     { caseType: { $exists: false } },
-    { caseType: 'SYSTEM' }
+    {
+      $set: { caseType: 'SYSTEM' },
+    }
   )
 }
 

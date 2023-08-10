@@ -669,11 +669,13 @@ export class AlertsService extends CaseAlertsCommonService {
       statusUpdateRequest.alertStatus.endsWith('ON_HOLD') ||
       statusUpdateRequest.alertStatus.endsWith('IN_PROGRESS')
 
+    const isLastInReview = isStatusInReview(alerts[0]?.alertStatus)
+
     if (
       userAccount.reviewerId &&
       !isInProgressOrOnHold &&
       !skipReview &&
-      !isStatusInReview(alerts[0]?.alertStatus) &&
+      !isLastInReview &&
       hasFeature('ESCALATION')
     ) {
       if (!userAccount.reviewerId) {

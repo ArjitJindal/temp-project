@@ -259,7 +259,11 @@ export class CaseService extends CaseAlertsCommonService {
 
     await withTransaction(async () => {
       await Promise.all([
-        this.caseRepository.updateStatusOfCases(caseIds, statusChange),
+        this.caseRepository.updateStatusOfCases(
+          caseIds,
+          statusChange,
+          isLastInReview
+        ),
         this.saveCasesComment(caseIds, {
           body: commentBody,
           files: updates.files,

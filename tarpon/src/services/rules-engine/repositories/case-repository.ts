@@ -721,35 +721,51 @@ export class CaseRepository {
     return { total: await total, data: await cursor.toArray() }
   }
 
-  public getUpdatePipeline(statusChange: CaseStatusChange): {
+  public getUpdatePipeline(
+    statusChange: CaseStatusChange,
+    isLastInReview?: boolean
+  ): {
     updatePipeline: UpdateFilter<Case>
   } {
     if (!statusChange.caseStatus) {
       throw new Error('Case status is required')
     }
-    const updatePipeline: UpdateFilter<Case> = {
-      $set: {
-        caseStatus: statusChange?.caseStatus,
-        lastStatusChange: statusChange,
-        updatedAt: Date.now(),
-      },
-      $push: {
-        statusChanges: statusChange,
-      },
+
+    const statusChangePipline = {
+      ...statusChange,
+      userId: isLastInReview ? '$lastStatusChange.userId' : statusChange.userId,
+      reviewerId: !isLastInReview ? undefined : statusChange.userId,
     }
+
+    const updatePipeline: UpdateFilter<Case> = [
+      {
+        $set: {
+          caseStatus: statusChange?.caseStatus,
+          lastStatusChange: statusChangePipline,
+          updatedAt: Date.now(),
+          statusChanges: {
+            $concatArrays: [
+              { $ifNull: ['$statusChanges', []] },
+              [statusChangePipline],
+            ],
+          },
+        },
+      },
+    ]
 
     return { updatePipeline }
   }
 
   public async updateStatusOfCases(
     caseIds: string[],
-    statusChange: CaseStatusChange
+    statusChange: CaseStatusChange,
+    isLastInReview?: boolean
   ) {
     const db = this.mongoDb.db()
     const collection = db.collection<Case>(CASES_COLLECTION(this.tenantId))
     await collection.updateMany(
       { caseId: { $in: caseIds } },
-      this.getUpdatePipeline(statusChange).updatePipeline
+      this.getUpdatePipeline(statusChange, isLastInReview).updatePipeline
     )
   }
 

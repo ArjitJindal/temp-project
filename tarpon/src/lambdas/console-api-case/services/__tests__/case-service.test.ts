@@ -2276,3 +2276,156 @@ describe('Test Review Approvals Send Back Flow', () => {
     })
   })
 })
+
+describe('Case/Alerts Service - Status Change Tests', () => {
+  const tenantId = nanoid()
+
+  test('Case Status Change - In review closed to closed', async () => {
+    const caseService = await getCaseService(tenantId)
+    const caseId = nanoid()
+
+    getContextMocker.mockReturnValue({
+      user: { id: TEST_ACCOUNT_3.id, role: 'REVIEWER' },
+    })
+
+    await caseService.caseRepository.addCaseMongo({
+      caseId,
+      caseType: 'MANUAL',
+      caseStatus: 'IN_REVIEW_CLOSED',
+      alerts: [TEST_ALERT_1],
+      statusChanges: [
+        {
+          userId: 'TEST_IN_REVIEW_USER',
+          caseStatus: 'IN_REVIEW_CLOSED',
+          reason: ['False positive'],
+          timestamp: Date.now(),
+        },
+      ],
+      lastStatusChange: {
+        userId: 'TEST_IN_REVIEW_USER',
+        caseStatus: 'IN_REVIEW_CLOSED',
+        reason: ['False positive'],
+        timestamp: Date.now(),
+      },
+    })
+
+    await caseService.updateCasesStatus([caseId], {
+      caseStatus: 'CLOSED',
+      reason: ['False positive'],
+    })
+
+    const updatedCase = await caseService.getCase(caseId)
+    expect(updatedCase).toMatchObject({
+      caseStatus: 'CLOSED',
+      statusChanges: [
+        {
+          userId: 'TEST_IN_REVIEW_USER',
+          caseStatus: 'IN_REVIEW_CLOSED',
+          reason: expect.any(Array),
+          timestamp: expect.any(Number),
+        },
+        {
+          userId: 'TEST_IN_REVIEW_USER',
+          timestamp: expect.any(Number),
+          reason: expect.any(Array),
+          caseStatus: 'CLOSED',
+          otherReason: null,
+          reviewerId: 'ACCOUNT-3',
+        },
+      ],
+      lastStatusChange: {
+        userId: 'TEST_IN_REVIEW_USER',
+        caseStatus: 'CLOSED',
+        reason: expect.any(Array),
+        timestamp: expect.any(Number),
+        otherReason: null,
+        reviewerId: 'ACCOUNT-3',
+      },
+      updatedAt: expect.any(Number),
+    })
+  })
+
+  test('Alerts Status Change - In review closed to closed', async () => {
+    const caseService = await getCaseService(tenantId)
+    const alertService = await getAlertsService(tenantId)
+    const caseId = nanoid()
+    const alertId = nanoid()
+
+    getContextMocker.mockReturnValue({
+      user: { id: TEST_ACCOUNT_3.id, role: 'REVIEWER' },
+    })
+
+    await caseService.caseRepository.addCaseMongo({
+      caseId,
+      caseStatus: 'CLOSED',
+      caseType: 'MANUAL',
+      alerts: [
+        {
+          ...TEST_ALERT_1,
+          alertId,
+          alertStatus: 'IN_REVIEW_CLOSED',
+          statusChanges: [
+            {
+              userId: 'TEST_IN_REVIEW_USER',
+              caseStatus: 'IN_REVIEW_CLOSED',
+              reason: ['False positive'],
+              timestamp: Date.now(),
+            },
+          ],
+          lastStatusChange: {
+            userId: 'TEST_IN_REVIEW_USER',
+            caseStatus: 'IN_REVIEW_CLOSED',
+            reason: ['False positive'],
+            timestamp: Date.now(),
+          },
+        },
+      ],
+    })
+
+    await alertService.updateAlertsStatus([alertId], {
+      alertStatus: 'CLOSED',
+      reason: ['False positive'],
+    })
+
+    const alert = await alertService.getAlert(alertId)
+    expect(alert).toMatchObject({
+      alertId,
+      alertStatus: 'CLOSED',
+      createdTimestamp: 0,
+      latestTransactionArrivalTimestamp: 0,
+      ruleInstanceId: 'rid-131',
+      ruleName: '',
+      ruleDescription: '',
+      ruleId: '',
+      ruleAction: 'FLAG',
+      numberOfTransactionsHit: 1,
+      priority: 'P1',
+      statusChanges: [
+        {
+          userId: 'TEST_IN_REVIEW_USER',
+          caseStatus: 'IN_REVIEW_CLOSED',
+          reason: expect.any(Array),
+          timestamp: expect.any(Number),
+        },
+        {
+          userId: 'ACCOUNT-3',
+          timestamp: expect.any(Number),
+          reason: expect.any(Array),
+          caseStatus: 'CLOSED',
+          otherReason: null,
+          reviewerId: null,
+        },
+      ],
+      lastStatusChange: {
+        userId: 'ACCOUNT-3',
+        timestamp: expect.any(Number),
+        reason: ['False positive'],
+        caseStatus: 'CLOSED',
+        otherReason: null,
+        reviewerId: null,
+      },
+      caseId,
+      updatedAt: expect.any(Number),
+    })
+  })
+})

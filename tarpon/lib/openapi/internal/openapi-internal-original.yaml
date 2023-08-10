@@ -6177,6 +6177,8 @@ components:
           $ref: '#/components/schemas/CaseStatus'
         otherReason:
           type: string
+        reviewerId:
+          type: string
       required:
         - userId
         - timestamp

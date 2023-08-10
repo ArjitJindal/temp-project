@@ -467,7 +467,8 @@ export class AlertsRepository {
   public async updateAlertsStatus(
     alertIds: string[],
     caseIds: string[],
-    statusChange: CaseStatusChange
+    statusChange: CaseStatusChange,
+    isLastInReview?: boolean
   ): Promise<{
     caseIdsWithAllAlertsSameStatus: string[]
     caseStatusToChange?: CaseStatus
@@ -477,32 +478,60 @@ export class AlertsRepository {
 
     const now = Date.now()
 
+    const statusChangePipline = {
+      ...statusChange,
+      userId: isLastInReview
+        ? '$$alert.lastStatusChange.userId'
+        : statusChange.userId,
+      reviewerId: isLastInReview ? statusChange.userId : undefined,
+    }
+
     await collection.updateMany(
       {
         caseId: {
           $in: caseIds,
         },
-      },
-      {
-        $set: {
-          'alerts.$[alert].alertStatus': statusChange.caseStatus,
-          'alerts.$[alert].lastStatusChange': statusChange,
-          updatedAt: now,
-          'alerts.$[alert].updatedAt': now,
-        },
-        $push: {
-          'alerts.$[alert].statusChanges': statusChange,
+        'alerts.alertId': {
+          $in: alertIds,
         },
       },
-      {
-        arrayFilters: [
-          {
-            'alert.alertId': {
-              $in: alertIds,
+      [
+        {
+          $set: {
+            alerts: {
+              $map: {
+                input: '$alerts',
+                as: 'alert',
+                in: {
+                  $cond: {
+                    if: {
+                      $in: ['$$alert.alertId', alertIds],
+                    },
+                    then: {
+                      $mergeObjects: [
+                        '$$alert',
+                        {
+                          alertStatus: statusChange.caseStatus,
+                          lastStatusChange: statusChangePipline,
+                          updatedAt: now,
+                          statusChanges: {
+                            $concatArrays: [
+                              { $ifNull: ['$$alert.statusChanges', []] },
+                              [statusChangePipline],
+                            ],
+                          },
+                        },
+                      ],
+                    },
+                    else: '$$alert',
+                  },
+                },
+              },
             },
+            updatedAt: now,
           },
-        ],
-      }
+        },
+      ]
     )
 
     const caseItems = await collection
