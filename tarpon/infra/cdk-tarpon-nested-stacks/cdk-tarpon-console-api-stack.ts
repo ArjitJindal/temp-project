@@ -410,7 +410,7 @@ export class CdkTarponConsoleLambdaStack extends cdk.NestedStack {
       this,
       lambdaExecutionRole,
       {
-        name: StackConstants.CONSOLE_API_WEBHOOKS_FUNCTION_NAME,
+        name: StackConstants.CONSOLE_API_INCOMING_WEBHOOKS_FUNCTION_NAME,
         auditLogTopic,
         batchJobQueue,
       },

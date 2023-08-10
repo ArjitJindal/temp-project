@@ -158,8 +158,8 @@ export const StackConstants = {
   CONSOLE_API_NARRATIVE_TEMPLATE_FUNCTION_NAME: getResourceNameForTarpon(
     'ConsoleApiNarrativeFunction'
   ),
-  CONSOLE_API_WEBHOOKS_FUNCTION_NAME: getResourceNameForTarpon(
-    'ConsoleApiWebhooksFunction'
+  CONSOLE_API_INCOMING_WEBHOOKS_FUNCTION_NAME: getResourceNameForTarpon(
+    'ConsoleApiIncomingWebhooksFunction'
   ),
   CONSOLE_API_SAR_FUNCTION_NAME: getResourceNameForTarpon(
     'ConsoleApiSarFunction'

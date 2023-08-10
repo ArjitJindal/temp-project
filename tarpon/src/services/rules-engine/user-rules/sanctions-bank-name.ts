@@ -51,7 +51,11 @@ export default class SanctionsBankUserRule extends UserRule<SanctionsBankUserRul
     const { fuzziness, resolveIban, screeningTypes, ongoingScreening } =
       this.parameters
 
-    if (_.isEmpty(screeningTypes) || !isBusinessUser(this.user)) {
+    if (
+      _.isEmpty(screeningTypes) ||
+      !isBusinessUser(this.user) ||
+      (this.ongoingScreeningMode && !ongoingScreening)
+    ) {
       return
     }
     const business = this.user as Business

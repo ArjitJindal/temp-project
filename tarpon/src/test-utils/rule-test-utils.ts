@@ -116,14 +116,15 @@ export async function bulkVerifyTransactions(
 
 export async function bulkVerifyUsers(
   tenantId: string,
-  users: Array<Business | User>
+  users: Array<Business | User>,
+  ongoingScreeningMode?: boolean
 ): Promise<UserMonitoringResult[]> {
   const dynamoDb = getDynamoDbClient()
   const mongoDb = await getMongoDbClient()
   const results = []
   const rulesEngine = new RulesEngineService(tenantId, dynamoDb, mongoDb)
   for (const user of users) {
-    results.push(await rulesEngine.verifyUser(user))
+    results.push(await rulesEngine.verifyUser(user, { ongoingScreeningMode }))
   }
   return results
 }
@@ -228,10 +229,11 @@ export function createUserRuleTestCase(
   tenantId: string,
   users: Array<Business | User>,
   expectetRuleHitMetadata: Array<RuleHitMeta | undefined>,
-  expectetRuleDescriptions?: Array<string | undefined>
+  expectetRuleDescriptions?: Array<string | undefined>,
+  ongoingScreeningMode?: boolean
 ) {
   test(testCaseName, async () => {
-    const results = await bulkVerifyUsers(tenantId, users)
+    const results = await bulkVerifyUsers(tenantId, users, ongoingScreeningMode)
     expect(getRuleHitMetadata(results)).toEqual(expectetRuleHitMetadata)
     if (expectetRuleDescriptions) {
       expect(getRuleDescriptions(results)).toEqual(expectetRuleDescriptions)

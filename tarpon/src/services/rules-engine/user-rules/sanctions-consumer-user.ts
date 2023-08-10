@@ -45,7 +45,8 @@ export default class SanctionsConsumerUserRule extends UserRule<SanctionsConsume
       _.isEmpty(screeningTypes) ||
       !isConsumerUser(this.user) ||
       !user.userDetails ||
-      !user.userDetails.name
+      !user.userDetails.name ||
+      (this.ongoingScreeningMode && !ongoingScreening)
     ) {
       return
     }

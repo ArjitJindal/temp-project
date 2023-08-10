@@ -340,7 +340,8 @@ export class RulesEngineService {
   }
 
   public async verifyUser(
-    user: UserWithRulesResult | BusinessWithRulesResult
+    user: UserWithRulesResult | BusinessWithRulesResult,
+    options?: { ongoingScreeningMode?: boolean }
   ): Promise<UserMonitoringResult> {
     const ruleInstances =
       await this.ruleInstanceRepository.getActiveRuleInstances('USER')
@@ -348,13 +349,14 @@ export class RulesEngineService {
     const rules = await this.ruleRepository.getRulesByIds(
       ruleInstances.map((ruleInstance) => ruleInstance.ruleId)
     )
-    return this.verifyUserByRules(user, ruleInstances, rules)
+    return this.verifyUserByRules(user, ruleInstances, rules, options)
   }
 
   public async verifyUserByRules(
     user: UserWithRulesResult | BusinessWithRulesResult,
     ruleInstances: readonly RuleInstance[],
-    rules: readonly Rule[]
+    rules: readonly Rule[],
+    options?: { ongoingScreeningMode?: boolean }
   ): Promise<UserMonitoringResult> {
     const rulesById = _.keyBy(rules, 'id')
     logger.info(`Running rules`)
@@ -367,6 +369,7 @@ export class RulesEngineService {
             ruleInstance,
             user,
             userRiskLevel,
+            ongoingScreeningMode: options?.ongoingScreeningMode,
           })
         )
       )
@@ -463,6 +466,7 @@ export class RulesEngineService {
     database: 'MONGODB' | 'DYNAMODB'
     senderUser?: User | Business
     receiverUser?: User | Business
+    ongoingScreeningMode?: boolean
     tracing?: boolean
   }) {
     const {
@@ -473,6 +477,7 @@ export class RulesEngineService {
       senderUser,
       receiverUser,
       database,
+      ongoingScreeningMode,
       tracing,
     } = options
     const { parameters, action } = this.getUserSpecificParameters(
@@ -506,7 +511,7 @@ export class RulesEngineService {
         )
       : new (RuleClass as typeof UserRuleBase)(
           this.tenantId,
-          { user: senderUser! },
+          { user: senderUser!, ongoingScreeningMode },
           { parameters, filters: ruleFilters },
           await getMongoDbClient(),
           this.dynamoDb
@@ -669,6 +674,7 @@ export class RulesEngineService {
     ruleInstance: RuleInstance
     userRiskLevel: RiskLevel | undefined
     user: User | Business
+    ongoingScreeningMode?: boolean
   }) {
     const context = _.cloneDeep(getContext() || {})
     return getContextStorage().run(context, async () => {
@@ -686,6 +692,7 @@ export class RulesEngineService {
           senderUser: options.user,
           senderUserRiskLevel: options.userRiskLevel,
           database: 'MONGODB',
+          ongoingScreeningMode: options.ongoingScreeningMode,
         })
         const ruleExecutionTimeMs = Date.now().valueOf() - startTime.valueOf()
         // Don't await publishing metric

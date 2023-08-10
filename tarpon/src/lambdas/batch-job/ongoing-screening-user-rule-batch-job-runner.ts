@@ -9,17 +9,39 @@ import { RuleInstanceRepository } from '@/services/rules-engine/repositories/rul
 import { RuleRepository } from '@/services/rules-engine/repositories/rule-repository'
 import { logger } from '@/core/logger'
 import { UserRepository } from '@/services/users/repositories/user-repository'
+import { tenantHasFeature } from '@/core/middlewares/tenant-has-feature'
+import { RuleInstance } from '@/@types/openapi-internal/RuleInstance'
 
 const CONCURRENT_BATCH_SIZE = 10
+
+export async function getOngoingScreeningUserRuleInstances(
+  tenantId: string
+): Promise<RuleInstance[]> {
+  const dynamoDb = await getDynamoDbClient()
+  const isPulseEnabled = await tenantHasFeature(tenantId, 'PULSE')
+  const ruleInstanceRepository = new RuleInstanceRepository(tenantId, {
+    dynamoDb,
+  })
+  const ruleInstances = (
+    await ruleInstanceRepository.getActiveRuleInstances('USER')
+  ).filter((ruleInstance) => {
+    if (isPulseEnabled) {
+      return Boolean(
+        Object.values(ruleInstance.riskLevelParameters ?? {}).find(
+          (parameters) => parameters?.ongoingScreening
+        )
+      )
+    }
+    return Boolean(ruleInstance.parameters?.ongoingScreening)
+  })
+  return ruleInstances
+}
 
 export class OngoingScreeningUserRuleBatchJobRunner extends BatchJobRunner {
   protected async run(job: OngoingScreeningUserRuleBatchJob): Promise<any> {
     const { tenantId, userIds } = job
     const mongoDb = await getMongoDbClient()
     const dynamoDb = getDynamoDbClient()
-    const ruleInstanceRepository = new RuleInstanceRepository(tenantId, {
-      dynamoDb,
-    })
     const ruleRepository = new RuleRepository(tenantId, {
       dynamoDb,
     })
@@ -27,16 +49,7 @@ export class OngoingScreeningUserRuleBatchJobRunner extends BatchJobRunner {
       mongoDb,
     })
 
-    const ruleInstances = (
-      await ruleInstanceRepository.getActiveRuleInstances('USER')
-    ).filter((ruleInstance) => {
-      return (
-        ruleInstance.parameters?.ongoingScreening ||
-        Object.values(ruleInstance.riskLevelParameters ?? {}).find(
-          (p) => p.ongoingScreening
-        )
-      )
-    })
+    const ruleInstances = await getOngoingScreeningUserRuleInstances(tenantId)
     if (ruleInstances.length === 0) {
       logger.info('No active ongoing screening user rule found. Abort.')
       return
@@ -56,7 +69,8 @@ export class OngoingScreeningUserRuleBatchJobRunner extends BatchJobRunner {
           const result = await rulesEngine.verifyUserByRules(
             user,
             ruleInstances,
-            rules
+            rules,
+            { ongoingScreeningMode: true }
           )
           if (
             !_.isEqual(user.executedRules || [], result.executedRules || []) ||

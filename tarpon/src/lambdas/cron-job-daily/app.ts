@@ -1,6 +1,6 @@
 import _ from 'lodash'
+import { getOngoingScreeningUserRuleInstances } from '../batch-job/ongoing-screening-user-rule-batch-job-runner'
 import { lambdaConsumer } from '@/core/middlewares/lambda-consumer-middlewares'
-import { getDynamoDbClient } from '@/utils/dynamodb'
 import { getMongoDbClient } from '@/utils/mongoDBUtils'
 import { TenantInfo, TenantService } from '@/services/tenants'
 import { sendBatchJobCommand } from '@/services/batch-job'
@@ -8,7 +8,6 @@ import {
   ApiUsageMetricsBatchJob,
   OngoingScreeningUserRuleBatchJob,
 } from '@/@types/batch-job'
-import { RuleInstanceRepository } from '@/services/rules-engine/repositories/rule-instance-repository'
 import { UserRepository } from '@/services/users/repositories/user-repository'
 import dayjs from '@/utils/dayjs'
 import { logger } from '@/core/logger'
@@ -35,29 +34,6 @@ export const cronJobDailyHandler = lambdaConsumer()(async () => {
     )
   }
 })
-
-async function shouldStartOngoingScreeningJob(
-  tenantId: string
-): Promise<boolean> {
-  const dynamoDb = await getDynamoDbClient()
-  const ruleInstanceRepository = new RuleInstanceRepository(tenantId, {
-    dynamoDb,
-  })
-  const ruleInstances = (
-    await ruleInstanceRepository.getActiveRuleInstances('USER')
-  ).filter((ruleInstance) => {
-    return (
-      ruleInstance.parameters?.ongoingScreening ||
-      Object.values(ruleInstance.riskLevelParameters ?? {}).find(
-        (parameters) => parameters?.ongoingScreening
-      )
-    )
-  })
-  if (ruleInstances.length === 0) {
-    return false
-  }
-  return true
-}
 
 async function createApiUsageJobs(tenantInfos: TenantInfo[]) {
   const basicTenants = await TenantService.getTenantInfoFromUsagePlans()
@@ -100,7 +76,7 @@ async function createOngoingScreeningJobs(tenantInfos: TenantInfo[]) {
   const mongoDb = await getMongoDbClient()
   for await (const tenant of tenantInfos) {
     const tenantId = tenant.tenant.id
-    if (await shouldStartOngoingScreeningJob(tenantId)) {
+    if ((await getOngoingScreeningUserRuleInstances(tenantId)).length > 0) {
       const userRepository = new UserRepository(tenantId, {
         mongoDb,
       })

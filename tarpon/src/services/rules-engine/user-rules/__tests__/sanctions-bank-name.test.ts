@@ -247,3 +247,48 @@ describe('IBAN resolution disabled', () => {
     createUserRuleTestCase(name, TEST_TENANT_ID, users, expectetRuleHitMetadata)
   })
 })
+
+describe('Skip if ongoing screening mode if on but ongoingScreening is false', () => {
+  setUpRulesHooks(TEST_TENANT_ID, [
+    {
+      id: 'R-32',
+      defaultParameters: {
+        resolveIban: true,
+        screeningTypes: ['SANCTIONS'],
+        fuzziness: 0.5,
+        ongoingScreening: false,
+      } as SanctionsBankUserRuleParameters,
+    },
+  ])
+
+  describe.each<UserRuleTestCase>([
+    {
+      name: '',
+      users: [
+        getTestBusiness({
+          legalEntity: {
+            companyGeneralDetails: {
+              legalName: 'Company Name',
+            },
+          },
+          savedPaymentDetails: [
+            {
+              method: 'IBAN',
+              IBAN: 'DE19500105178788668945',
+            },
+          ],
+        }),
+      ],
+      expectetRuleHitMetadata: [undefined],
+    },
+  ])('', ({ name, users, expectetRuleHitMetadata }) => {
+    createUserRuleTestCase(
+      name,
+      TEST_TENANT_ID,
+      users,
+      expectetRuleHitMetadata,
+      undefined,
+      true
+    )
+  })
+})

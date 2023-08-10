@@ -142,7 +142,7 @@ export const ConsoleApiPathToLambda: any = {
   '/users/{userId}/comments/{commentId}':
     StackConstants.CONSOLE_API_ALL_USERS_VIEW_FUNCTION_NAME,
   '/webhooks/complyadvantage':
-    StackConstants.CONSOLE_API_WEBHOOKS_FUNCTION_NAME,
+    StackConstants.CONSOLE_API_INCOMING_WEBHOOKS_FUNCTION_NAME,
   '/sanctions/search': StackConstants.CONSOLE_API_SANCTIONS_FUNCTION_NAME,
   '/sanctions/search/{searchId}':
     StackConstants.CONSOLE_API_SANCTIONS_FUNCTION_NAME,

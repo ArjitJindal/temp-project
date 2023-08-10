@@ -16,11 +16,13 @@ export abstract class UserRule<P, T extends object = object> extends Rule {
   filters: T
   mongoDb: MongoClient
   dynamoDb: DynamoDBDocumentClient
+  ongoingScreeningMode: boolean
 
   constructor(
     tenantId: string,
     data: {
       user: User | Business
+      ongoingScreeningMode?: boolean
     },
     params: {
       parameters: P
@@ -32,6 +34,7 @@ export abstract class UserRule<P, T extends object = object> extends Rule {
     super()
     this.tenantId = tenantId
     this.user = data.user
+    this.ongoingScreeningMode = data.ongoingScreeningMode ?? false
     this.parameters = params.parameters
     this.filters = params.filters || {}
     this.mongoDb = mongoDb

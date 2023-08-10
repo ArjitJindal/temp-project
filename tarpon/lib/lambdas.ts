@@ -289,8 +289,8 @@ export const LAMBDAS: {
     expectedMaxSeconds: DEFAULT_LAMBDA_EXPECTED_MAX_SECONDS,
     timeoutSeconds: DEFAULT_LAMBDA_TIMEOUT_SECONDS,
   },
-  [StackConstants.CONSOLE_API_WEBHOOKS_FUNCTION_NAME]: {
-    codePath: 'console-webhooks',
+  [StackConstants.CONSOLE_API_INCOMING_WEBHOOKS_FUNCTION_NAME]: {
+    codePath: 'incoming-webhooks',
     handlerName: 'webhooksHandler',
     expectedMaxSeconds: DEFAULT_LAMBDA_EXPECTED_MAX_SECONDS,
     timeoutSeconds: DEFAULT_LAMBDA_TIMEOUT_SECONDS,

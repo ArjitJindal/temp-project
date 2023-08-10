@@ -228,3 +228,43 @@ describe('Sanctions no hit', () => {
     createUserRuleTestCase(name, TEST_TENANT_ID, users, expectetRuleHitMetadata)
   })
 })
+
+describe('Skip if ongoing screening mode if on but ongoingScreening is false', () => {
+  const TEST_TENANT_ID = getTestTenantId()
+  setUpRulesHooks(TEST_TENANT_ID, [
+    {
+      id: 'R-128',
+      defaultParameters: {
+        entityTypes: ['LEGAL_NAME', 'DIRECTOR', 'SHAREHOLDER'],
+        screeningTypes: ['SANCTIONS'],
+        fuzziness: 0.5,
+      } as SanctionsBusinessUserRuleParameters,
+    },
+  ])
+
+  describe.each<UserRuleTestCase>([
+    {
+      name: '',
+      users: [
+        getTestBusiness({
+          userId: '1-1',
+          legalEntity: {
+            companyGeneralDetails: {
+              legalName: 'Company Name',
+            },
+          },
+        }),
+      ],
+      expectetRuleHitMetadata: [undefined],
+    },
+  ])('', ({ name, users, expectetRuleHitMetadata }) => {
+    createUserRuleTestCase(
+      name,
+      TEST_TENANT_ID,
+      users,
+      expectetRuleHitMetadata,
+      undefined,
+      true
+    )
+  })
+})

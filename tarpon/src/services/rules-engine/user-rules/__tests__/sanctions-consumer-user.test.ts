@@ -92,3 +92,42 @@ describe('Core logic', () => {
     createUserRuleTestCase(name, TEST_TENANT_ID, users, expectetRuleHitMetadata)
   })
 })
+
+describe('Skip if ongoing screening mode if on but ongoingScreening is false', () => {
+  const TEST_TENANT_ID = getTestTenantId()
+  setUpRulesHooks(TEST_TENANT_ID, [
+    {
+      id: 'R-16',
+      defaultParameters: {
+        screeningTypes: ['SANCTIONS'],
+        fuzziness: 0.5,
+      } as SanctionsConsumerUserRuleParameters,
+    },
+  ])
+
+  describe.each<UserRuleTestCase>([
+    {
+      name: '',
+      users: [
+        getTestUser({
+          userDetails: {
+            name: {
+              firstName: 'Vladimir',
+              lastName: 'Putin',
+            },
+          },
+        }),
+      ],
+      expectetRuleHitMetadata: [undefined],
+    },
+  ])('', ({ name, users, expectetRuleHitMetadata }) => {
+    createUserRuleTestCase(
+      name,
+      TEST_TENANT_ID,
+      users,
+      expectetRuleHitMetadata,
+      undefined,
+      true
+    )
+  })
+})

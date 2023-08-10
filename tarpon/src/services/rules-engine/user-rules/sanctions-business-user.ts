@@ -69,7 +69,8 @@ export default class SanctionsBusinessUserRule extends UserRule<SanctionsBusines
     if (
       _.isEmpty(entityTypes) ||
       _.isEmpty(screeningTypes) ||
-      !isBusinessUser(this.user)
+      !isBusinessUser(this.user) ||
+      (this.ongoingScreeningMode && !ongoingScreening)
     ) {
       return
     }
