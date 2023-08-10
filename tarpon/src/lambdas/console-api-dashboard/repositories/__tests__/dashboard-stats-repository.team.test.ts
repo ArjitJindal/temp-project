@@ -1456,6 +1456,7 @@ describe('Team statistic for alerts', () => {
 let counter = 0
 function emptyCase(): Case {
   return {
+    caseType: 'SYSTEM',
     caseId: `C-${counter++}`,
     caseStatus: 'OPEN',
     createdTimestamp: Date.now(),

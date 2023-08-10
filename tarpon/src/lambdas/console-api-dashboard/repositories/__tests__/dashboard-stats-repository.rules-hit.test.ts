@@ -42,6 +42,7 @@ describe('Verify case stats', () => {
     const createdTimestamp = dayjs('2022-01-30T12:00:00.000Z').valueOf()
     await caseRepository.addCaseMongo({
       caseId: 'C-1',
+      caseType: 'SYSTEM',
       createdTimestamp,
       caseTransactions: transactions,
       caseTransactionsIds: transactions.map((t) => t.transactionId),
@@ -88,17 +89,20 @@ test(`Multiple cases`, async () => {
   await caseRepository.addCaseMongo({
     caseId: 'C-1',
     createdTimestamp: timestamp,
+    caseType: 'SYSTEM',
     caseTransactions: [transaction],
     caseTransactionsIds: [transaction.transactionId],
   })
   await caseRepository.addCaseMongo({
     caseId: 'C-2',
     createdTimestamp: timestamp,
+    caseType: 'SYSTEM',
     caseTransactions: [transaction],
     caseTransactionsIds: [transaction.transactionId],
   })
   await caseRepository.addCaseMongo({
     caseId: 'C-3',
+    caseType: 'SYSTEM',
     createdTimestamp: timestamp,
     caseTransactions: [transaction],
     caseTransactionsIds: [transaction.transactionId],
@@ -142,11 +146,13 @@ test(`Multiple cases - opened and closed`, async () => {
   await caseRepository.addCaseMongo({
     caseId: 'C-1',
     createdTimestamp: timestamp,
+    caseType: 'SYSTEM',
     caseStatus: 'OPEN',
     caseTransactions: [transaction],
     caseTransactionsIds: [transaction.transactionId],
   })
   await caseRepository.addCaseMongo({
+    caseType: 'SYSTEM',
     caseId: 'C-2',
     createdTimestamp: timestamp,
     caseStatus: 'CLOSED',
@@ -155,6 +161,7 @@ test(`Multiple cases - opened and closed`, async () => {
   })
   await caseRepository.addCaseMongo({
     caseId: 'C-3',
+    caseType: 'SYSTEM',
     createdTimestamp: timestamp,
     caseStatus: 'OPEN',
     caseTransactions: [transaction],
@@ -162,6 +169,7 @@ test(`Multiple cases - opened and closed`, async () => {
   })
   await caseRepository.addCaseMongo({
     caseId: 'C-4',
+    caseType: 'SYSTEM',
     createdTimestamp: timestamp,
     caseStatus: 'REOPENED',
     caseTransactions: [transaction],

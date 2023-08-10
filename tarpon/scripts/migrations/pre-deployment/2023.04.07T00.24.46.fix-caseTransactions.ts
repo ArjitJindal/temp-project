@@ -3,6 +3,7 @@ import { migrateAllTenants } from '../utils/tenant'
 import { Case } from '@/@types/openapi-internal/Case'
 import { Tenant } from '@/services/accounts'
 import { CASES_COLLECTION, getMongoDbClient } from '@/utils/mongoDBUtils'
+import { CaseType } from '@/@types/openapi-internal/CaseType'
 
 async function migrateTenant(tenant: Tenant) {
   const mongodb = await getMongoDbClient()
@@ -40,6 +41,7 @@ async function migrateTenant(tenant: Tenant) {
       {
         ...caseObj,
         caseTransactions: newCaseTransactions,
+        caseType: (caseObj?.caseType ?? 'SYSTEM') as CaseType,
       }
     )
   }

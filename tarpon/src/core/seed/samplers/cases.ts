@@ -125,6 +125,7 @@ export function sampleTransactionUserCase(
   const reasons = randomSubset(CASE_CLOSING_REASONSS)
   return {
     caseId: caseId,
+    caseType: 'SYSTEM',
     caseStatus,
     createdTimestamp: sampleTimestamp(seed),
     latestTransactionArrivalTimestamp: sampleTimestamp(seed) + 3600 * 1000,

@@ -22,6 +22,7 @@ export function sampleTransactionCase(
     relatedCases: [],
     caseTransactionsIds: [transaction.transactionId!],
     caseTransactions: [transaction],
+    caseType: 'SYSTEM',
   }
 }
 
@@ -42,6 +43,7 @@ export function sampleUserCase(
   const createdAt = sampleTimestamp(seed)
   const caseId = `case-transaction-${sampleGuid(seed)}`
   return {
+    caseType: 'SYSTEM',
     caseId: `case-transaction-${sampleGuid(seed)}`,
     caseStatus: 'OPEN',
     createdTimestamp: createdAt,

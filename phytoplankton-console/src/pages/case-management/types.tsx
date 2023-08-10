@@ -2,6 +2,7 @@ import {
   AlertStatus,
   AuditLogType,
   CaseStatus,
+  CaseType,
   PaymentMethod,
   RiskLevel,
   RuleAction,
@@ -45,6 +46,7 @@ export type CommonCaseParams = {
   alertId: string;
   assignedTo: string[];
   updatedAt: string[];
+  caseType: CaseType;
 };
 
 export type TableSearchParams = CommonParams & {

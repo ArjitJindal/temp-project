@@ -208,6 +208,7 @@ describe('Case service', () => {
         assignments: [{ assigneeUserId: 'U-1', timestamp: t }],
         reviewAssignments: [],
         alerts: [TEST_ALERT_1, TEST_ALERT_2],
+        caseType: 'SYSTEM',
       })
 
       await caseService.escalateCase('C-1', {
@@ -269,6 +270,7 @@ describe('Case service', () => {
         assignments: [{ assigneeUserId: 'U-1', timestamp: t }],
         reviewAssignments: [{ assigneeUserId: 'U-2', timestamp: t }],
         alerts: [TEST_ALERT_1, TEST_ALERT_2],
+        caseType: 'SYSTEM',
       })
       await caseService.escalateCase('C-2', { reason: ['Documents collected'] })
       const c = await caseService.getCase('C-2')
@@ -304,6 +306,7 @@ describe('Case service', () => {
         caseHierarchyDetails: {
           childTransactionIds: ['T-101'],
         },
+        caseType: 'SYSTEM',
       })
 
       const alertsService = await getAlertsService(TEST_TENANT_ID)
@@ -385,6 +388,7 @@ describe('Case service', () => {
         createdTimestamp: Date.now(),
         alerts: [TEST_ALERT_1, TEST_ALERT_2],
         caseHierarchyDetails: { parentCaseId: 'parent-case-id' },
+        caseType: 'SYSTEM',
       }
       const childCase: Case = {
         caseId: childCaseId,
@@ -392,6 +396,7 @@ describe('Case service', () => {
         createdTimestamp: Date.now(),
         alerts: [],
         caseHierarchyDetails: { parentCaseId: parentCaseId },
+        caseType: 'SYSTEM',
       }
       await caseService.caseRepository.addCaseMongo(parentCase)
       await caseService.caseRepository.addCaseMongo(childCase)
@@ -412,6 +417,7 @@ describe('Case service', () => {
         assignments: [{ assigneeUserId: 'U-1', timestamp: t }],
         reviewAssignments: [],
         comments: [],
+        caseType: 'SYSTEM',
         alerts: [TEST_ALERT_1, TEST_ALERT_2],
       })
 
@@ -478,6 +484,7 @@ describe('Post APIs Alerts Tests', () => {
       caseId: 'C-1',
       createdTimestamp: Date.now(),
       caseStatus: 'OPEN',
+      caseType: 'SYSTEM',
       alerts: [TEST_ALERT_1, TEST_ALERT_2],
     })
 
@@ -571,6 +578,8 @@ describe('Post APIs Alerts Tests', () => {
       caseId: 'C-1',
       createdTimestamp: Date.now(),
       caseStatus: 'OPEN',
+      caseType: 'SYSTEM',
+
       alerts: [TEST_ALERT_1],
     })
 
@@ -663,6 +672,7 @@ describe('Post APIs Alerts Tests', () => {
       createdTimestamp: Date.now(),
       caseStatus: 'OPEN',
       alerts: [TEST_ALERT_1, TEST_ALERT_2],
+      caseType: 'SYSTEM',
     })
 
     await alertsService.updateAlertsStatus(['A-1'], {
@@ -763,6 +773,7 @@ describe('Post APIs Alerts Tests', () => {
       createdTimestamp: Date.now(),
       caseStatus: 'OPEN',
       alerts: [TEST_ALERT_1, TEST_ALERT_3],
+      caseType: 'SYSTEM',
     })
 
     await alertsService.updateAlertsStatus(['A-1'], {
@@ -830,6 +841,7 @@ describe('Post APIs Alerts Tests', () => {
       createdTimestamp: Date.now(),
       caseStatus: 'OPEN',
       alerts: [TEST_ALERT_1, TEST_ALERT_2],
+      caseType: 'SYSTEM',
     })
 
     const USER_ID_1 = nanoid()
@@ -881,6 +893,7 @@ describe('Case Service - Post Api Tests', () => {
       createdTimestamp: Date.now(),
       caseStatus: 'OPEN',
       alerts: [],
+      caseType: 'SYSTEM',
     })
 
     await caseService.updateCasesStatus(['C-1-2'], {
@@ -933,6 +946,7 @@ describe('Case Service - Post Api Tests', () => {
       createdTimestamp: Date.now(),
       caseStatus: 'OPEN',
       alerts: [TEST_ALERT_1, TEST_ALERT_3],
+      caseType: 'SYSTEM',
     })
 
     await caseService.updateCasesStatus(['C-1-1'], {
@@ -1030,6 +1044,7 @@ describe('Case Service - Post Api Tests', () => {
       alerts: [TEST_ALERT_1, TEST_ALERT_3],
       assignments: undefined,
       reviewAssignments: undefined,
+      caseType: 'SYSTEM',
     })
 
     await caseService.updateCasesAssignments(
@@ -1071,6 +1086,7 @@ describe('Case Service - Post Api Tests', () => {
       alerts: [TEST_ALERT_1, TEST_ALERT_3],
       assignments: undefined,
       reviewAssignments: undefined,
+      caseType: 'SYSTEM',
     })
 
     await caseService.updateCasesReviewAssignments(
@@ -1112,11 +1128,13 @@ describe('Case Service - Post Api Tests', () => {
       alerts: [TEST_ALERT_1, TEST_ALERT_3],
       assignments: undefined,
       reviewAssignments: undefined,
+      caseType: 'SYSTEM',
     })
 
     await caseService.caseRepository.addCaseMongo({
       caseId: 'C-1-5',
       createdTimestamp: Date.now(),
+      caseType: 'SYSTEM',
       caseStatus: 'OPEN',
       alerts: [TEST_ALERT_1, TEST_ALERT_3],
       assignments: undefined,
@@ -1179,6 +1197,7 @@ describe('Case Service - Post Api Tests', () => {
       alerts: [TEST_ALERT_1, TEST_ALERT_3],
       assignments: undefined,
       reviewAssignments: undefined,
+      caseType: 'SYSTEM',
     })
 
     await caseService.caseRepository.addCaseMongo({
@@ -1188,6 +1207,7 @@ describe('Case Service - Post Api Tests', () => {
       alerts: [TEST_ALERT_1, TEST_ALERT_3],
       assignments: undefined,
       reviewAssignments: undefined,
+      caseType: 'SYSTEM',
     })
 
     await caseService.updateCasesReviewAssignments(
@@ -1246,6 +1266,7 @@ describe('Case Service - Post Api Tests', () => {
       alerts: [TEST_ALERT_1, TEST_ALERT_3],
       assignments: undefined,
       reviewAssignments: undefined,
+      caseType: 'SYSTEM',
     })
 
     await caseService.updateCasesStatus(['C-1-6'], {
@@ -1444,6 +1465,7 @@ describe('Case Service - Post Api Tests', () => {
           assignedByUserId: 'ACCOUNT-2',
         },
       ],
+      caseType: 'SYSTEM',
     })
 
     // Add assignments to the case
@@ -1495,6 +1517,7 @@ describe('Case Service - Post Api Tests', () => {
           assignedByUserId: 'ACCOUNT-2',
         },
       ],
+      caseType: 'SYSTEM',
     })
 
     // Add assignments to the case
@@ -1546,6 +1569,7 @@ describe('Test Review Approvals Send Back Flow', () => {
       caseId: 'C-1-5',
       caseStatus: 'OPEN',
       alerts: [TEST_ALERT_1, TEST_ALERT_2],
+      caseType: 'SYSTEM',
     })
     await caseService.updateCasesStatus(['C-1-5'], {
       caseStatus: 'CLOSED',
@@ -1625,6 +1649,7 @@ describe('Test Review Approvals Send Back Flow', () => {
       caseId: 'C-1-5',
       caseStatus: 'OPEN',
       alerts: [TEST_ALERT_1, TEST_ALERT_2],
+      caseType: 'SYSTEM',
     })
     await caseService.escalateCase('C-1-5', {
       assignments: [
@@ -1722,6 +1747,7 @@ describe('Test Review Approvals Send Back Flow', () => {
       caseId,
       caseStatus: 'OPEN',
       alerts: [TEST_ALERT_1, TEST_ALERT_2],
+      caseType: 'SYSTEM',
     })
 
     await caseService.updateCasesStatus([caseId], {
@@ -1849,6 +1875,7 @@ describe('Test Review Approvals Send Back Flow', () => {
       caseId,
       caseStatus: 'OPEN',
       alerts: [TEST_ALERT_1, TEST_ALERT_2],
+      caseType: 'SYSTEM',
     })
     await caseService.updateCasesStatus([caseId], {
       caseStatus: 'CLOSED',
@@ -1885,6 +1912,7 @@ describe('Test Review Approvals Send Back Flow', () => {
           alertId: alertId2,
         },
       ],
+      caseType: 'SYSTEM',
     })
     await caseService.escalateCase(caseId, {
       reason: ['False positive'],
@@ -2000,6 +2028,7 @@ describe('Test Review Approvals Send Back Flow', () => {
       caseId,
       caseStatus: 'OPEN',
       alerts: [TEST_ALERT_1, TEST_ALERT_2],
+      caseType: 'SYSTEM',
     })
     await caseService.escalateCase(caseId, {
       reason: ['False positive'],
@@ -2091,6 +2120,7 @@ describe('Test Review Approvals Send Back Flow', () => {
           alertId: testAlertId2,
         },
       ],
+      caseType: 'SYSTEM',
     })
     await alertsService.updateAlertsStatus([testAlertId], {
       alertStatus: 'CLOSED',
@@ -2159,6 +2189,7 @@ describe('Test Review Approvals Send Back Flow', () => {
       caseId,
       caseStatus: 'OPEN',
       alerts: cloneDeep(testAlerts),
+      caseType: 'SYSTEM',
     })
 
     await alertsService.escalateAlerts(caseId, {
@@ -2186,6 +2217,7 @@ describe('Test Review Approvals Send Back Flow', () => {
         ...alert,
         alertId: alert.alertId + '2',
       })),
+      caseType: 'SYSTEM',
     })
 
     await alertsService.escalateAlerts(caseId2, {

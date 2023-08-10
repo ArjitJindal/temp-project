@@ -285,6 +285,7 @@ export class CaseCreationService {
   ): Case {
     const caseEntity: Case = {
       caseStatus: 'OPEN',
+      caseType: 'SYSTEM',
       caseUsers: {
         origin: direction === 'ORIGIN' ? user : undefined,
         destination: direction === 'DESTINATION' ? user : undefined,
@@ -339,6 +340,7 @@ export class CaseCreationService {
       alerts: newCaseAlerts,
       createdTimestamp: now,
       caseStatus: 'OPEN',
+      caseType: 'SYSTEM',
       priority:
         _.minBy(newCaseAlerts, 'priority')?.priority ?? _.last(PRIORITYS),
       relatedCases: sourceCase.caseId

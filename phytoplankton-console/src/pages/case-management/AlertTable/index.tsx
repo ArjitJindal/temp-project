@@ -829,6 +829,7 @@ function presentAlertData(data: AlertListResponseItem[]) {
       caseUserName: getUserName(user),
       age: pluralize('day', Math.floor(duration.asDays()), true),
       caseUserId: caseUsers?.origin?.userId ?? caseUsers?.destination?.userId ?? '',
+      caseType: rest.caseType,
     };
   });
 }

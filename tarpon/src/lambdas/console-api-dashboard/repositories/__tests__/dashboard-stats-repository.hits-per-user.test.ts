@@ -41,6 +41,7 @@ describe('Verify hits-per-user statistics', () => {
         origin: getTestUser({ userId: originUserId }),
         destination: getTestUser({ userId: destinationUserId }),
       },
+      caseType: 'SYSTEM',
     })
     await statsRepository.recalculateHitsByUser('ORIGIN', {
       startTimestamp: timestamp,
@@ -116,6 +117,7 @@ describe('Verify hits-per-user statistics', () => {
         origin: getTestUser({ userId: originUserId }),
         destination: getTestUser({ userId: destinationUserId }),
       },
+      caseType: 'SYSTEM',
     })
     await statsRepository.recalculateHitsByUser('ORIGIN', {
       startTimestamp: timestamp,
@@ -194,6 +196,7 @@ describe('Verify hits-per-user statistics', () => {
           origin: getTestUser({ userId: originUserId }),
           destination: getTestUser({ userId: destinationUserId }),
         },
+        caseType: 'SYSTEM',
       })
       await statsRepository.recalculateHitsByUser('ORIGIN', {
         startTimestamp: timestamp,
@@ -273,6 +276,7 @@ describe('Verify hits-per-user statistics', () => {
           origin: getTestUser({ userId: originUserId }),
           destination: getTestUser({ userId: destinationUserId }),
         },
+        caseType: 'SYSTEM',
       })
       await statsRepository.recalculateHitsByUser('ORIGIN', {
         startTimestamp: timestamp,
@@ -337,6 +341,7 @@ describe('Verify hits-per-user statistics', () => {
     }
 
     await caseRepository.addCaseMongo({
+      caseType: 'SYSTEM',
       caseId: 'C-1',
       caseTransactions: [transaction],
       caseTransactionsIds: [transaction.transactionId],
@@ -401,6 +406,7 @@ describe('Verify hits-per-user statistics', () => {
 
     const createdTimestamp = dayjs('2022-01-30T12:00:00.000Z').valueOf()
     await caseRepository.addCaseMongo({
+      caseType: 'SYSTEM',
       caseId: 'C-1',
       createdTimestamp,
       caseTransactions: transactions,

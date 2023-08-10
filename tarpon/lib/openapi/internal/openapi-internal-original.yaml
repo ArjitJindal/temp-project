@@ -5691,11 +5691,21 @@ components:
       properties:
         userId:
           type: string
+    CaseType:
+      title: CaseType
+      type: string
+      enum:
+        - MANUAL
+        - SYSTEM
     Case:
       title: Case
       type: object
       properties:
         caseId:
+          type: string
+        caseType:
+          $ref: '#/components/schemas/CaseType'
+        caseCreatedBy:
           type: string
         createdTimestamp:
           type: number
@@ -5768,6 +5778,8 @@ components:
           $ref: '#/components/schemas/CaseHierarchyDetails'
         caseTransactionsCount:
           type: number
+      required:
+        - caseType
     Alert:
       title: Alert
       type: object
@@ -5903,10 +5915,13 @@ components:
                     $ref: '#/components/schemas/RiskLevel'
                   destinationUserRiskLevel:
                     $ref: '#/components/schemas/RiskLevel'
+              caseType:
+                $ref: '#/components/schemas/CaseType'
             required:
               - alert
               - caseCreatedTimestamp
               - caseUsers
+              - caseType
       required:
         - total
         - data

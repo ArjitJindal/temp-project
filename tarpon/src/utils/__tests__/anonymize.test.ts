@@ -9,6 +9,7 @@ describe('Anonymizer', () => {
   test('Data is anonymized', () => {
     const anonymizedCase = anonymize<WithId<Case>>('cases', {
       _id: new ObjectId('734033c379f3c58f5d21f29d'),
+      caseType: 'SYSTEM',
       caseTransactions: [
         {
           transactionId: '12345',
