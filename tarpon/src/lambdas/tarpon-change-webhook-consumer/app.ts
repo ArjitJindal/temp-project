@@ -21,7 +21,7 @@ async function userHandler(
   const webhookTasks: ThinWebhookDeliveryTask<UserStateDetails>[] = []
   const diffResult = diff(oldUser || {}, newUser || {}) as Partial<GenericUser>
 
-  if (diffResult?.userStateDetails && newUser?.userStateDetails) {
+  if (oldUser && diffResult?.userStateDetails && newUser?.userStateDetails) {
     webhookTasks.push({
       event: 'USER_STATE_UPDATED',
       payload: {
@@ -30,7 +30,9 @@ async function userHandler(
       },
     })
   }
-  await sendWebhookTasks<UserStateDetails>(tenantId, webhookTasks)
+  if (webhookTasks?.length) {
+    await sendWebhookTasks<UserStateDetails>(tenantId, webhookTasks)
+  }
 }
 
 const builder = new StreamConsumerBuilder(

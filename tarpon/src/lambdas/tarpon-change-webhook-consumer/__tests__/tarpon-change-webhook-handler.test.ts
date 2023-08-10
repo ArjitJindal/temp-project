@@ -182,7 +182,13 @@ describe('Create webhook delivery tasks', () => {
     const event = createKinesisStreamEvent(
       `${TEST_TENANT_ID}#user#primary`,
       user.userId,
-      null,
+      getTestUser({
+        userId: user.userId,
+        userStateDetails: {
+          reason: 'reason',
+          state: 'ACTIVE',
+        },
+      }),
       user
     )
 
@@ -193,5 +199,38 @@ describe('Create webhook delivery tasks', () => {
       QueueUrl: MOCK_WEBHOOK_TARPON_CHANGE_CAPTURE_RETRY_QUEUE_URL,
       MessageBody: JSON.stringify(event.Records[0]),
     })
+  })
+
+  test('Not Called when inital user is null', async () => {
+    const TEST_TENANT_ID = getTestTenantId()
+    const webhookRepository = new WebhookRepository(
+      TEST_TENANT_ID,
+      await getMongoDbClient()
+    )
+    const user = getTestUser()
+    const event = createKinesisStreamEvent(
+      `${TEST_TENANT_ID}#user#primary`,
+      user.userId,
+      null,
+      {
+        ...user,
+        userStateDetails: {
+          reason: 'reason',
+          state: 'TERMINATED',
+        },
+      }
+    )
+    const webhook: WebhookConfiguration = {
+      _id: 'webhook_id',
+      createdAt: Date.now(),
+      webhookUrl: 'https://example.com',
+      events: ['USER_STATE_UPDATED'],
+      enabled: true,
+    }
+    await webhookRepository.saveWebhook(webhook)
+
+    await tarponChangeWebhookHandler(event)
+
+    expect(sqsMock).toHaveReceivedCommandTimes(SendMessageBatchCommand, 0)
   })
 })
