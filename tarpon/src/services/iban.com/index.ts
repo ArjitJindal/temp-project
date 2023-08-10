@@ -1,6 +1,7 @@
 // API Reference: https://www.iban.com/validation-api
 
 import { URLSearchParams } from 'url'
+import pLimit from 'p-limit'
 import { isEmpty } from 'lodash'
 import { electronicFormatIBAN, isValidIBAN } from 'ibantools'
 import { IBANValidation, IBANValidationResponse } from './types'
@@ -14,6 +15,8 @@ import { traceable } from '@/core/xray'
 import { apiFetch } from '@/utils/api-fetch'
 
 const IBAN_API_URI = 'https://api.iban.com/clients/api/v4/iban/'
+// NOTE: IBAN.com rate limit: 10 queries per second
+const ibanConcurrencyLimit = pLimit(10)
 
 export type BankInfo = { bankName?: string; iban?: string }
 
@@ -131,21 +134,23 @@ export class IBANService {
 
     // For all the input bankInfos, find the results in the map.
     return await Promise.all(
-      bankInfos.map(async (bankInfo) => {
-        if (bankInfo.iban) {
-          const ibanDetail = ibanDetails.get(bankInfo.iban)
-          if (ibanDetail) {
-            bankInfo.bankName = ibanDetail.bankName
-          } else {
-            const sanitized = sanitizeAndValidateIban(bankInfo.iban)
-            if (sanitized) {
-              const ibanDetail = await this.queryIban(sanitized)
+      bankInfos.map((bankInfo) => {
+        return ibanConcurrencyLimit(async () => {
+          if (bankInfo.iban) {
+            const ibanDetail = ibanDetails.get(bankInfo.iban)
+            if (ibanDetail) {
+              bankInfo.bankName = ibanDetail.bankName
+            } else {
+              const sanitized = sanitizeAndValidateIban(bankInfo.iban)
+              if (sanitized) {
+                const ibanDetail = await this.queryIban(sanitized)
 
-              bankInfo.bankName = ibanDetail?.bankName
+                bankInfo.bankName = ibanDetail?.bankName
+              }
             }
           }
-        }
-        return bankInfo
+          return bankInfo
+        })
       })
     )
   }
