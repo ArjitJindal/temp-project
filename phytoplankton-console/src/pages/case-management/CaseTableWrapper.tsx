@@ -136,6 +136,7 @@ export default function CaseTableWrapper(props: {
       onChangeParams={onChangeParams}
       queryResult={queryResults}
       rules={getRulesAndInstances}
+      hideAssignedToFilter={params.showCases === 'MY' ? true : false}
     />
   );
 }

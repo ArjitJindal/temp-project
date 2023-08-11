@@ -64,10 +64,11 @@ interface Props {
   queryResult: QueryResult<PaginatedData<Case>>;
   onChangeParams: (newState: AllParams<TableSearchParams>) => void;
   rules: { value: string; label: string }[];
+  hideAssignedToFilter?: boolean;
 }
 
 export default function CaseTable(props: Props) {
-  const { queryResult, params, onChangeParams } = props;
+  const { queryResult, params, onChangeParams, hideAssignedToFilter } = props;
 
   const tableQueryResult = useTableData(queryResult);
   const tableRef = useRef<TableRefType>(null);
@@ -400,7 +401,13 @@ export default function CaseTable(props: Props) {
       queryResults={tableQueryResult}
       params={params}
       onChangeParams={onChangeParams}
-      extraFilters={makeExtraFilters(isPulseEnabled, props.rules, false, 'CASES')}
+      extraFilters={makeExtraFilters(
+        isPulseEnabled,
+        props.rules,
+        false,
+        'CASES',
+        hideAssignedToFilter,
+      )}
       selectionInfo={
         selectedCases.length
           ? {

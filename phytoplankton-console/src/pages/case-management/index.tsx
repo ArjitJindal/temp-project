@@ -38,7 +38,7 @@ export default function CaseManagementPage() {
         params.caseStatus = undefined;
       }
 
-      if (params.showCases === 'MY_ALERTS') {
+      if (params.showCases === 'MY_ALERTS' || params.showCases === 'MY') {
         params.assignedTo = undefined;
       }
 
@@ -88,15 +88,21 @@ function getTable(
 ) {
   switch (params.showCases) {
     case 'MY_ALERTS':
+      return (
+        <AlertTable
+          hideAlertStatusFilters={true}
+          escalatedTransactionIds={[]}
+          params={params}
+          onChangeParams={handleChangeParams}
+          hideAssignedToFilter={true}
+        />
+      );
     case 'ALL_ALERTS':
       return (
         <AlertTable
           hideAlertStatusFilters={true}
           escalatedTransactionIds={[]}
-          params={{
-            ...params,
-            assignedTo: params.showCases === 'MY_ALERTS' ? [userId] : params.assignedTo,
-          }}
+          params={params}
           onChangeParams={handleChangeParams}
         />
       );

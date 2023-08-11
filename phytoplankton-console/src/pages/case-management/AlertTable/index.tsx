@@ -302,6 +302,7 @@ interface Props {
   caseId?: string;
   escalatedTransactionIds?: string[];
   expandTransactions?: boolean;
+  hideAssignedToFilter?: boolean;
 }
 
 export default function AlertTable(props: Props) {
@@ -313,6 +314,7 @@ export default function AlertTable(props: Props) {
     hideAlertStatusFilters = false,
     hideUserFilters = false,
     expandTransactions = true,
+    hideAssignedToFilter,
   } = props;
   const escalationEnabled = useFeatureEnabled('ESCALATION');
   const isPulseEnabled = useFeatureEnabled('PULSE');
@@ -391,6 +393,7 @@ export default function AlertTable(props: Props) {
         tagValue,
         caseId,
         assignedTo,
+        showCases,
         destinationMethodFilter,
         originMethodFilter,
         createdTimestamp,
@@ -399,12 +402,6 @@ export default function AlertTable(props: Props) {
       } = params;
       const [sortField, sortOrder] = sort[0] ?? [];
 
-      let filterAssignmentsIds: string[] | undefined = undefined;
-
-      if (assignedTo?.length) {
-        filterAssignmentsIds = assignedTo;
-      }
-
       const preparedParams: DefaultApiGetAlertListRequest = {
         page,
         pageSize,
@@ -412,7 +409,8 @@ export default function AlertTable(props: Props) {
         filterAlertId: alertId,
         filterCaseId: caseId,
         filterAlertStatus: getStatuses(alertStatus),
-        filterAssignmentsIds,
+        filterAssignmentsIds:
+          showCases === 'MY_ALERTS' ? [user.userId] : assignedTo?.length ? assignedTo : undefined,
         filterBusinessIndustries:
           businessIndustryFilter && businessIndustryFilter.length > 0
             ? businessIndustryFilter
@@ -529,8 +527,15 @@ export default function AlertTable(props: Props) {
   }, [rules.ruleInstances, rules.rules]);
 
   const extraFilters = useMemo(
-    () => makeExtraFilters(isPulseEnabled, ruleOptions, hideUserFilters, 'ALERTS'),
-    [isPulseEnabled, ruleOptions, hideUserFilters],
+    () =>
+      makeExtraFilters(
+        isPulseEnabled,
+        ruleOptions,
+        hideUserFilters,
+        'ALERTS',
+        hideAssignedToFilter,
+      ),
+    [isPulseEnabled, ruleOptions, hideUserFilters, hideAssignedToFilter],
   );
 
   const getSelectionInfo = () => {

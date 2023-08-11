@@ -116,6 +116,7 @@ export const makeExtraFilters = (
   ruleOptions: { value: string; label: string }[],
   hideUserFilters: boolean,
   table: 'ALERTS' | 'CASES',
+  hideAssignedToFilter?: boolean,
 ): ExtraFilter<TableSearchParams>[] =>
   denseArray([
     {
@@ -190,7 +191,7 @@ export const makeExtraFilters = (
         />
       ),
     },
-    {
+    !hideAssignedToFilter && {
       key: 'assignedTo',
       title: 'Assigned to',
       showFilterByDefault: false,
