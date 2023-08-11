@@ -7,11 +7,11 @@ import _ from 'lodash'
 import { Credentials } from '@aws-sdk/client-sts'
 import { lambdaApi } from '@/core/middlewares/lambda-api-middlewares'
 import { SanctionsService } from '@/services/sanctions'
-import { SanctionsBankSearchRequest } from '@/@types/openapi-public-sanctions/SanctionsBankSearchRequest'
 import { SanctionsSearch } from '@/@types/openapi-public-sanctions/SanctionsSearch'
 import { SanctionsSearchHistory } from '@/@types/openapi-internal/SanctionsSearchHistory'
 import { SanctionsSearchUpdateRequest } from '@/@types/openapi-public-sanctions/SanctionsSearchUpdateRequest'
 import dayjs from '@/utils/dayjs'
+import { SanctionsSearchRequest } from '@/@types/openapi-internal/SanctionsSearchRequest'
 
 function internalToPublicSearchResult(
   searchResult: SanctionsSearchHistory
@@ -41,27 +41,18 @@ export const sanctionsHandler = lambdaApi({ requiredFeatures: ['SANCTIONS'] })(
     const sanctionsService = new SanctionsService(tenantId)
     if (
       event.httpMethod === 'POST' &&
-      event.resource === '/searches/bank' &&
+      event.resource === '/searches' &&
       event.body
     ) {
-      const searchRequest = JSON.parse(event.body) as SanctionsBankSearchRequest
-      if (!searchRequest.bankName && !searchRequest.iban) {
-        throw new BadRequest(
-          `At least one of 'bankName' or 'iban' needs to be provided`
-        )
+      const searchRequest = JSON.parse(event.body) as SanctionsSearchRequest
+      if (!searchRequest.searchTerm) {
+        throw new BadRequest(`Search term must be provided`)
       }
-      const bankName = searchRequest.bankName || ''
+      const searchTerm = searchRequest.searchTerm || ''
       const countryCodes = searchRequest.countryCodes
-      if (!searchRequest.bankName) {
-        // TODO: resolve bank name and country code from searchRequest.iban
-        // https://www.notion.so/flagright/IBAN-com-integration-756aa106dd924212a204f1e32674db93
-      }
-      if (!bankName) {
-        throw new Error('Bank name cannot be empty')
-      }
 
       const searchResult = await sanctionsService.search({
-        searchTerm: bankName,
+        searchTerm: searchTerm,
         countryCodes: countryCodes,
         fuzziness: searchRequest.fuzziness,
         types: searchRequest.types,

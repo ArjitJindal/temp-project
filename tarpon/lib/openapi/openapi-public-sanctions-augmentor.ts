@@ -16,7 +16,7 @@ import { getAugmentedOpenapi } from './openapi-augmentor-util'
 const env = (process.env.ENV || 'prod').split(':')[0]
 
 export const PublicSanctionsApiPathToLambda: any = {
-  '/searches/bank': StackConstants.PUBLIC_SANCTIONS_API_FUNCTION_NAME,
+  '/searches': StackConstants.PUBLIC_SANCTIONS_API_FUNCTION_NAME,
   '/searches/{searchId}': StackConstants.PUBLIC_SANCTIONS_API_FUNCTION_NAME,
 }
 

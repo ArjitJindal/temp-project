@@ -8,14 +8,14 @@ info:
     email: support@flagright.com
     url: https://flagright.com
 servers:
-  - url: http://localhost:3000
+  - url: https://sandbox.api.flagright.com
 paths:
-  /searches/bank:
+  /searches:
     post:
       security:
         - x-api-key: []
-      summary: Search sanctions by bank
-      operationId: post-sanctions-searches-bank
+      summary: Search sanctions
+      operationId: post-sanctions-searches
       responses:
         '200':
           description: OK
@@ -27,7 +27,7 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/SanctionsBankSearchRequest'
+              $ref: '#/components/schemas/SanctionsSearchRequest'
       description: ''
   '/searches/{searchId}':
     parameters:
@@ -72,30 +72,40 @@ components:
         - SANCTIONS
         - PEP
         - ADVERSE_MEDIA
-    SanctionsBankSearchRequest:
-      title: SanctionsBankSearchRequest
-      type: object
+    SanctionsSearchRequest:
+      title: SanctionsSearchRequest
       x-stoplight:
-        id: 6bc9fe6940453
+        id: ldj2zpwhzk8s5
+      type: object
       properties:
-        bankName:
+        _id:
           type: string
-        countryCodes:
-          type: array
-          items:
-            $ref: ../public/openapi-public-original.yaml#/components/schemas/CountryCode
-        iban:
+        monitored:
+          type: boolean
+        searchTerm:
           type: string
-        monitoring:
-          $ref: '#/components/schemas/SanctionsMonitoring'
-        types:
-          type: array
-          items:
-            $ref: '#/components/schemas/SanctionsSearchType'
+        searchProfileId:
+          type: string
         fuzziness:
           type: number
           minimum: 0
           maximum: 1
+        countryCodes:
+          type: array
+          items:
+            $ref: ../public/openapi-public-original.yaml#/components/schemas/CountryCode
+        yearOfBirth:
+          type: number
+        types:
+          type: array
+          items:
+            $ref: '#/components/schemas/SanctionsSearchType'
+        monitoring:
+          $ref: '#/components/schemas/SanctionsMonitoring'
+        apiSearchRequest:
+          type: object
+      required:
+        - searchTerm
     SanctionsSearchUpdateRequest:
       title: SanctionsBankSearchUpdateRequest
       x-stoplight:
@@ -133,7 +143,7 @@ components:
           type: number
           minimum: 1262300400000
         request:
-          $ref: '#/components/schemas/SanctionsBankSearchRequest'
+          $ref: '#/components/schemas/SanctionsSearchRequest'
         response:
           type: object
       required:

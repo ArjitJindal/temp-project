@@ -9,6 +9,7 @@ import { mockComplyAdvantageSearch } from '@/test-utils/complyadvantage-test-uti
 import { withFeatureHook } from '@/test-utils/feature-test-utils'
 import { MOCK_CA_SEARCH_RESPONSE } from '@/test-utils/resources/mock-ca-search-response'
 import { dynamoDbSetupHook } from '@/test-utils/dynamodb-test-utils'
+import { SanctionsSearchRequest } from '@/@types/openapi-internal/SanctionsSearchRequest'
 
 jest.mock('node-fetch')
 const mockFetch = mockComplyAdvantageSearch()
@@ -16,8 +17,8 @@ dynamoDbSetupHook()
 
 describe('Public Sanctions API', () => {
   const TEST_TENANT_ID = getTestTenantId()
-  const TEST_REQUEST = {
-    bankName: 'ABC bank',
+  const TEST_REQUEST: SanctionsSearchRequest = {
+    searchTerm: 'ABC bank',
     countryCodes: ['DE'],
     monitoring: { enabled: true },
     types: ['SANCTIONS', 'PEP'],
@@ -31,9 +32,9 @@ describe('Public Sanctions API', () => {
     mockFetch.mockClear()
   })
 
-  test('POST /searches/bank', async () => {
+  test('POST /searches', async () => {
     const response = await sanctionsHandler(
-      getApiGatewayPostEvent(TEST_TENANT_ID, '/searches/bank', TEST_REQUEST),
+      getApiGatewayPostEvent(TEST_TENANT_ID, '/searches', TEST_REQUEST),
       null as any,
       null as any
     )
