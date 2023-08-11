@@ -297,7 +297,7 @@ export const createLambdaConsumerIteratorAgeAlarm = (
   }
   return new Alarm(context, `${lambdaName}IteratorAge`, {
     comparisonOperator: ComparisonOperator.GREATER_THAN_THRESHOLD,
-    threshold: 20000,
+    threshold: 120 * 1000,
     evaluationPeriods: 3,
     datapointsToAlarm: 3,
     alarmName: `Lambda-${lambdaName}IteratorAge`,
