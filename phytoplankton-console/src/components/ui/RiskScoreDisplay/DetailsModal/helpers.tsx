@@ -13,7 +13,8 @@ import { humanizeConstant } from '@/utils/humanize';
 import { CURRENCIES } from '@/utils/currencies';
 import {
   ALL_RISK_PARAMETERS,
-  USER_SEGMENT_OPTIONS,
+  BUSINESS_USER_SEGMENT_OPTIONS,
+  CONSUMER_USER_SEGMENT_OPTIONS,
 } from '@/pages/risk-levels/risk-factors/ParametersTable/consts';
 import TimestampDisplay from '@/components/ui/TimestampDisplay';
 
@@ -52,8 +53,11 @@ export const PARAMETER_RENDERERS: { [key in DataType]: ParameterRenderer<any> } 
   RESIDENCE_TYPES: CONSTANT_RENDERER,
   CONSUMER_USER_TYPE: CONSTANT_RENDERER,
   BUSINESS_USER_TYPE: CONSTANT_RENDERER,
-  USER_SEGMENT: (value) => {
-    return USER_SEGMENT_OPTIONS.find((x) => x.value === value)?.label ?? value;
+  BUSINESS_USER_SEGMENT: (value) => {
+    return BUSINESS_USER_SEGMENT_OPTIONS.find((x) => x.value === value)?.label ?? value;
+  },
+  CONSUMER_USER_SEGMENT: (value) => {
+    return CONSUMER_USER_SEGMENT_OPTIONS.find((x) => x.value === value)?.label ?? value;
   },
   USER_REGISTRATION_STATUS: DEFAULT_RENDERER,
   RANGE: DEFAULT_RENDERER,

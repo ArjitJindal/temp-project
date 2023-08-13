@@ -5412,6 +5412,7 @@ components:
             - cardIssuedCountry
             - legalEntity.companyGeneralDetails.userRegistrationStatus
             - legalEntity.companyGeneralDetails.userSegment
+            - userSegment
         isActive:
           type: boolean
         isDerived:

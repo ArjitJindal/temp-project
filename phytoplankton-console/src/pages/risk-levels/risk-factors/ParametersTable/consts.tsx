@@ -92,7 +92,8 @@ export const DATA_TYPE_TO_VALUE_TYPE: { [key in DataType]: RiskValueType } = {
   BUSINESS_INDUSTRY: 'MULTIPLE',
   TIME_RANGE: 'TIME_RANGE',
   BOOLEAN: 'LITERAL',
-  USER_SEGMENT: 'MULTIPLE',
+  BUSINESS_USER_SEGMENT: 'MULTIPLE',
+  CONSUMER_USER_SEGMENT: 'MULTIPLE',
   USER_REGISTRATION_STATUS: 'MULTIPLE',
 };
 
@@ -150,6 +151,15 @@ export const USER_RISK_PARAMETERS: RiskLevelTable = [
     isDerived: true,
     parameterType: 'VARIABLE',
   },
+  {
+    parameter: 'userSegment',
+    title: 'User Segment',
+    description: 'Risk based on consumer user segment',
+    entity: 'CONSUMER_USER',
+    dataType: 'CONSUMER_USER_SEGMENT',
+    isDerived: false,
+    parameterType: 'VARIABLE',
+  },
 ];
 
 const timeIn24HourFormat = (hour: number | undefined) => {
@@ -173,7 +183,7 @@ const currentTimeZone = Intl.DateTimeFormat().resolvedOptions().timeZone;
 
 const timeZonesDataMap = _.keyBy(timeZonesData, 'value');
 
-export const USER_SEGMENT_OPTIONS = [
+export const BUSINESS_USER_SEGMENT_OPTIONS = [
   { value: 'SOLE_PROPRIETORSHIP', label: 'Sole Proprietorship' },
   { value: 'LIMITED', label: 'Limited' },
   { value: 'SMB', label: 'SMB' },
@@ -181,6 +191,11 @@ export const USER_SEGMENT_OPTIONS = [
   { value: 'MEDIUM', label: 'Medium' },
   { value: 'LARGE', label: 'Large' },
   { value: 'UNKNOWN', label: 'Unknown' },
+];
+
+export const CONSUMER_USER_SEGMENT_OPTIONS = [
+  { value: 'RETAIL', label: 'Retail' },
+  { value: 'PROFESSIONAL', label: 'Professional' },
 ];
 
 export const BUSINESS_RISK_PARAMETERS: RiskLevelTable = [
@@ -245,7 +260,7 @@ export const BUSINESS_RISK_PARAMETERS: RiskLevelTable = [
     title: 'User Segment',
     description: 'Risk based on business user segment',
     entity: 'BUSINESS',
-    dataType: 'USER_SEGMENT',
+    dataType: 'BUSINESS_USER_SEGMENT',
     isDerived: false,
     parameterType: 'VARIABLE',
   },
@@ -507,8 +522,11 @@ export const INPUT_RENDERERS: { [key in DataType]: InputRenderer<any> } = {
   BUSINESS_USER_TYPE: ((props) => {
     return <MultipleSelect options={businessType} {...props} />;
   }) as InputRenderer<'MULTIPLE'>,
-  USER_SEGMENT: ((props) => {
-    return <MultipleSelect options={USER_SEGMENT_OPTIONS} {...props} />;
+  BUSINESS_USER_SEGMENT: ((props) => {
+    return <MultipleSelect options={BUSINESS_USER_SEGMENT_OPTIONS} {...props} />;
+  }) as InputRenderer<'MULTIPLE'>,
+  CONSUMER_USER_SEGMENT: ((props) => {
+    return <MultipleSelect options={CONSUMER_USER_SEGMENT_OPTIONS} {...props} />;
   }) as InputRenderer<'MULTIPLE'>,
   USER_REGISTRATION_STATUS: ((props) => {
     return <MultipleSelect options={USER_REGISTRATION_STATUS_OPTIONS} {...props} />;
@@ -890,7 +908,8 @@ export const VALUE_RENDERERS: { [key in DataType]: ValueRenderer<any> } = {
   }) as ValueRenderer<'MULTIPLE'>,
   CONSUMER_USER_TYPE: DEFAULT_MULTIPLE_RENDERER,
   BUSINESS_USER_TYPE: DEFAULT_MULTIPLE_RENDERER,
-  USER_SEGMENT: DEFAULT_MULTIPLE_RENDERER,
+  BUSINESS_USER_SEGMENT: DEFAULT_MULTIPLE_RENDERER,
+  CONSUMER_USER_SEGMENT: DEFAULT_MULTIPLE_RENDERER,
   USER_REGISTRATION_STATUS: DEFAULT_MULTIPLE_RENDERER,
   RANGE: DEFAULT_RANGE_RENDERER,
   DAY_RANGE: DEFAULT_DAY_RANGE_RENDERER,
