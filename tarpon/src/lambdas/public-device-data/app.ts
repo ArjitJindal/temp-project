@@ -10,6 +10,8 @@ import { lambdaApi } from '@/core/middlewares/lambda-api-middlewares'
 import { getDynamoDbClientByEvent } from '@/utils/dynamodb'
 import { MetricsRepository } from '@/services/rules-engine/repositories/metrics'
 import { getMongoDbClient } from '@/utils/mongoDBUtils'
+import { DeviceMetric } from '@/@types/openapi-internal/DeviceMetric'
+import { DeviceDataService } from '@/services/device-data'
 
 export const deviceDataHandler = lambdaApi()(
   async (
@@ -29,10 +31,15 @@ export const deviceDataHandler = lambdaApi()(
       event.resource === '/metrics' &&
       event.body
     ) {
-      const metricsPayload = JSON.parse(event.body)
+      const deviceDataService = new DeviceDataService(tenantId, {
+        mongoDb,
+        dynamoDb,
+      })
+
+      const metricsPayload = JSON.parse(event.body) as DeviceMetric
       updateLogMetadata({ userId: metricsPayload.userId })
       logger.info(`Processing User Metrics`)
-      await metricsRepository.saveMetric(metricsPayload)
+      await deviceDataService.saveDeviceData(metricsPayload)
       return true
     }
 
