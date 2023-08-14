@@ -1,4 +1,5 @@
 import { JSONSchemaType } from 'ajv'
+import pLimit from 'p-limit'
 import _ from 'lodash'
 import {
   FUZZINESS_SCHEMA,
@@ -15,6 +16,8 @@ import { Business } from '@/@types/openapi-public/Business'
 import { SanctionsDetails } from '@/@types/openapi-internal/SanctionsDetails'
 import { IBANService } from '@/services/iban.com'
 import { logger } from '@/core/logger'
+
+const caConcurrencyLimit = pLimit(10)
 
 type BankInfo = { bankName?: string; iban?: string }
 
@@ -95,27 +98,29 @@ export default class SanctionsBankUserRule extends UserRule<SanctionsBankUserRul
     const hitResult: RuleHitResult = []
     const sanctionsDetails: (SanctionsDetails | undefined)[] =
       await Promise.all(
-        bankInfosToCheck.map(async (bankInfo) => {
-          const bankName = bankInfo.bankName!
-          const result = await sanctionsService.search(
-            {
-              searchTerm: bankName,
-              types: screeningTypes,
-              fuzziness: fuzziness / 100,
-              monitoring: { enabled: ongoingScreening },
-            },
-            { userId: this.user.userId }
-          )
-          let sanctionsDetails: SanctionsDetails
-          if (result.data && result.data.length > 0) {
-            sanctionsDetails = {
-              name: bankName,
-              iban: bankInfo.iban,
-              searchId: result.searchId,
+        bankInfosToCheck.map((bankInfo) =>
+          caConcurrencyLimit(async () => {
+            const bankName = bankInfo.bankName!
+            const result = await sanctionsService.search(
+              {
+                searchTerm: bankName,
+                types: screeningTypes,
+                fuzziness: fuzziness / 100,
+                monitoring: { enabled: ongoingScreening },
+              },
+              { userId: this.user.userId }
+            )
+            let sanctionsDetails: SanctionsDetails
+            if (result.data && result.data.length > 0) {
+              sanctionsDetails = {
+                name: bankName,
+                iban: bankInfo.iban,
+                searchId: result.searchId,
+              }
+              return sanctionsDetails
             }
-            return sanctionsDetails
-          }
-        })
+          })
+        )
       )
 
     const filteredSanctionsDetails = sanctionsDetails.filter(

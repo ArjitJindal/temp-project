@@ -40,6 +40,7 @@ function getSanctionsSearchResponse(
 @traceable
 export class SanctionsService {
   apiKey!: string
+  complyAdvantageSearchProfileId: string | undefined
   sanctionsSearchRepository!: SanctionsSearchRepository
   sanctionsWhitelistEntityRepository!: SanctionsWhitelistEntityRepository
   tenantId: string
@@ -62,6 +63,13 @@ export class SanctionsService {
     this.sanctionsWhitelistEntityRepository =
       new SanctionsWhitelistEntityRepository(this.tenantId, mongoDb)
     this.apiKey = await this.getApiKey()
+
+    const tenantRepository = new TenantRepository(this.tenantId, {
+      dynamoDb: getDynamoDbClient(),
+    })
+    const settings = await tenantRepository.getTenantSettings()
+    this.complyAdvantageSearchProfileId =
+      settings.complyAdvantageSearchProfileId
   }
 
   private async getApiKey(): Promise<string> {
@@ -104,10 +112,6 @@ export class SanctionsService {
     }
   ): Promise<SanctionsSearchResponse> {
     await this.initialize()
-    const dynamoDb = getDynamoDbClient()
-    const tenantRepository = new TenantRepository(this.tenantId, { dynamoDb })
-
-    const settings = await tenantRepository.getTenantSettings()
 
     // Normalize search term
     request.searchTerm = _.startCase(request.searchTerm.toLowerCase())
@@ -122,7 +126,7 @@ export class SanctionsService {
 
     const searchId = options?.searchIdToReplace ?? uuidv4()
     const searchProfileId =
-      settings.complyAdvantageSearchProfileId ||
+      this.complyAdvantageSearchProfileId ||
       this.pickSearchProfileId(request.types) ||
       (process.env.COMPLYADVANTAGE_DEFAULT_SEARCH_PROFILE_ID as string)
 
