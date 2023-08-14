@@ -1,7 +1,7 @@
-import { Modal } from 'antd';
 import React, { useRef, useState } from 'react';
 import { useMutation } from '@tanstack/react-query';
 import { sentenceCase } from '@antv/x6/es/util/string/format';
+import Modal from '../../../../components/library/Modal/index';
 import s from './index.module.less';
 import { maxLength, notEmpty } from '@/components/library/Form/utils/validation/basicValidators';
 import { and } from '@/components/library/Form/utils/validation/combinators';
@@ -77,7 +77,7 @@ export default function PaymentApprovalModal({
     <Modal
       title={`${sentenceCase(action)} transaction`}
       okText={'Confirm'}
-      visible={visible}
+      isOpen={visible}
       onOk={() => formRef.current?.submit()}
       onCancel={hide}
     >
