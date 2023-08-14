@@ -53,6 +53,7 @@ export const sanctionsHandler = lambdaApi({ requiredFeatures: ['SANCTIONS'] })(
 
       const searchResult = await sanctionsService.search({
         searchTerm: searchTerm,
+        yearOfBirth: searchRequest.yearOfBirth,
         countryCodes: countryCodes,
         fuzziness: searchRequest.fuzziness,
         types: searchRequest.types,

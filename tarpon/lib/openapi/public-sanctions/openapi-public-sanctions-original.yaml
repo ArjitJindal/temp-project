@@ -8,7 +8,7 @@ info:
     email: support@flagright.com
     url: https://flagright.com
 servers:
-  - url: https://sandbox.api.flagright.com
+  - url: https://sandbox.api.flagright.com/sanctions
 paths:
   /searches:
     post:
@@ -80,8 +80,6 @@ components:
       properties:
         _id:
           type: string
-        monitored:
-          type: boolean
         searchTerm:
           type: string
         searchProfileId:
@@ -102,8 +100,6 @@ components:
             $ref: '#/components/schemas/SanctionsSearchType'
         monitoring:
           $ref: '#/components/schemas/SanctionsMonitoring'
-        apiSearchRequest:
-          type: object
       required:
         - searchTerm
     SanctionsSearchUpdateRequest:

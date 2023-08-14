@@ -6645,7 +6645,7 @@ components:
         id: ldj2zpwhak8s5
       type: object
       properties:
-        search_id:
+        searchId:
           type: number
         updated:
           type: array
@@ -6659,7 +6659,7 @@ components:
           type: array
           items:
             type: string
-        is_suspended:
+        isSuspended:
           type: boolean
     TransactionsUniquesField:
       title: TransactionsUniquesField

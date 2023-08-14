@@ -10,7 +10,7 @@ A webhook enables Flagright to push real-time notifications to your app. Flagrig
 - Create a webhook endpoint as an HTTP endpoint (URL) on your server.
 - Handle requests from Flagright by parsing each event object and returning 2xx response status codes.
 - Deploy your webhook endpoint so it’s a publicly accessible HTTPS URL.
-- Register your publicly accessible HTTPS URL in the Flagright console and store the secret signing key (for verifying the payload) in a secure place.
+- Register your publicly accessible HTTPS URL in the directly using the API `monitoring.webhookUrl` and store the secret signing key (for verifying the payload) in a secure place.
 
 Source IP Addresses: [List](https://docs.flagright.com/docs/flagright-api/0b0bb2cf007e5-webhooks-overview#source-ip-addresses)
 
@@ -18,24 +18,24 @@ Source IP Addresses: [List](https://docs.flagright.com/docs/flagright-api/0b0bb2
 
 The data payload is as follows:
 
-| PROPERTY     | DETAILS                                                                    |
-| ------------ | -------------------------------------------------------------------------- |
-| search_id    | The numeric ID of the search                                               |
-| type         | Event type (e.g., `MONITORED_SEARCH_UPDATED`).                             |
-| updated      | An array of the Entity IDs in the search result which have been modified.  |
-| new          | An array of the Entity IDs which have been added to the search result.     |
-| removed      | An array of the Entity IDs which have been removed from the search result. |
-| is_suspended | Indicates whether this monitored search has been suspended or not.         |
+| PROPERTY    | DETAILS                                                                    |
+| ----------- | -------------------------------------------------------------------------- |
+| searchId    | The numeric ID of the search                                               |
+| type        | Event type (e.g., `MONITORED_SEARCH_UPDATED`).                             |
+| updated     | An array of the Entity IDs in the search result which have been modified.  |
+| new         | An array of the Entity IDs which have been added to the search result.     |
+| removed     | An array of the Entity IDs which have been removed from the search result. |
+| isSuspended | Indicates whether this monitored search has been suspended or not.         |
 
 ### Sample event object
 
 ```json
 {
   "event": "MONITORED_SEARCH_UPDATE",
-  "search_id": 10117833,
+  "searchId": 10117833,
   "updated": ["8NMXF7QX4QV8LFD", "X4525MEAZKKPX0T", "73HBD537LCX5JT6"],
   "new": ["Q3OX4KS0KEMCVDH", "UCC60H79WVU94Z0"],
   "removed": ["9D1ETD0ADTT4HDH", "I38XC0R6Y1EQ083"],
-  "is_suspended": true
+  "isSuspended": true
 }
 ```
