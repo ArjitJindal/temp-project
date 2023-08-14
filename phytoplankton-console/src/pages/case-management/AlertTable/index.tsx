@@ -284,7 +284,7 @@ const mergedColumns = (
       },
     }),
     helper.simple<'updatedAt'>({
-      title: 'Last update time',
+      title: 'Last updated',
       key: 'updatedAt',
       type: DATE,
       filtering: true,

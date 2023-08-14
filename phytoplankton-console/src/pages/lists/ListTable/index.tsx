@@ -111,22 +111,22 @@ function ListTable(props: Props, ref: ListTableRef) {
     }),
     helper.simple<'subtype'>({
       key: 'subtype',
-      title: 'List Subtype',
+      title: 'List subtype',
       type: {
         render: (subtype) => (subtype ? <>{getListSubtypeTitle(subtype)}</> : <></>),
       },
     }),
     helper.simple<'metadata.name'>({
       key: 'metadata.name',
-      title: 'List Name',
+      title: 'List name',
     }),
     helper.simple<'metadata.description'>({
       key: 'metadata.description',
-      title: 'List Description',
+      title: 'List description',
     }),
     helper.simple<'size'>({
       key: 'size',
-      title: 'Total Records',
+      title: 'Total records',
     }),
     helper.simple<'createdTimestamp'>({
       key: 'createdTimestamp',

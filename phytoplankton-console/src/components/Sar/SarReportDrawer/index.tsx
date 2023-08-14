@@ -41,17 +41,17 @@ export default function SarReportDrawer(props: Props) {
         !isEmpty(props.initialReport.schema?.reportSchema) &&
           props.initialReport.schema !== undefined && {
             key: REPORT_STEP,
-            title: 'General Details',
+            title: 'General details',
             description: 'Enter reporting entity, person and report details',
           },
         !isEmpty(props.initialReport.schema?.transactionMetadataSchema) && {
           key: TRANSACTION_METADATA_STEP,
-          title: 'Transaction Details',
+          title: 'Transaction details',
           description: 'Enter details of transactions that you want to report',
         },
         !isEmpty(props.initialReport.schema?.transactionSchema) && {
           key: TRANSACTION_STEP,
-          title: 'Transaction Details',
+          title: 'Transaction details',
           description: 'Enter details of transactions that you want to report',
         },
         !isEmpty(props.initialReport.schema?.indicators) && {
@@ -152,7 +152,7 @@ export default function SarReportDrawer(props: Props) {
     <Drawer
       isVisible={props.isVisible}
       onChangeVisibility={props.onChangeVisibility}
-      title={'Report Generator'}
+      title={'Report generator'}
       footer={
         <div className={s.footer}>
           <StepButtons

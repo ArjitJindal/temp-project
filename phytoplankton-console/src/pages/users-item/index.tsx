@@ -150,7 +150,7 @@ export default function UserItem() {
               ...(isEntityLinkingEnabled
                 ? [
                     {
-                      tab: <div className={s.icon}>Entity Linking</div>,
+                      tab: <div className={s.icon}>Entity linking</div>,
                       key: 'entity-linking',
                       children: <Linking userId={user.userId} />,
                       isClosable: false,
@@ -175,7 +175,7 @@ export default function UserItem() {
                   ]
                 : []),
               {
-                tab: 'Expected Transaction Limits',
+                tab: 'Expected transaction limits',
                 key: 'expected-transaction-limits',
                 children: (
                   <Card.Root>
@@ -193,7 +193,7 @@ export default function UserItem() {
                 isDisabled: false,
               },
               {
-                tab: 'Transaction Insights',
+                tab: 'Transaction insights',
                 key: 'transaction-insights',
                 children: <InsightsCard userId={user.userId} />,
                 isClosable: false,

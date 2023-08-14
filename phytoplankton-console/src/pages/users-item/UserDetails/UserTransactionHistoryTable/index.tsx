@@ -152,7 +152,7 @@ export function Content(props: { userId: string }) {
             ]
           : []),
         helper.simple<'ruleName'>({
-          title: 'Rules Hit',
+          title: 'Rules hit',
           key: 'ruleName',
         }),
         helper.simple<'ruleDescription'>({

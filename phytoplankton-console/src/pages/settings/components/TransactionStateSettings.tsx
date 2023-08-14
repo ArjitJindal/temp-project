@@ -176,7 +176,7 @@ export const TransactionStateSettings: React.FC = () => {
   };
   return (
     <>
-      <H4>Default State</H4>
+      <H4>Default state</H4>
       <Table<TableItem>
         rowKey="state"
         columns={columns}

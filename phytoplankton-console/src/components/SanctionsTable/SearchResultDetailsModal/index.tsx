@@ -59,7 +59,7 @@ export default function SearchResultDetailsModal(props: Props) {
       <div ref={pdfRef}>
         <Card.Section>
           <LegacyEntityHeader idTitle={'Name'} id={hit.doc?.name}>
-            <Form.Layout.Label title="Matched Types">
+            <Form.Layout.Label title="Matched types">
               {hit.doc?.types?.map((matchType) => (
                 <Tag key={matchType} color="volcano">
                   {_.startCase(matchType)}

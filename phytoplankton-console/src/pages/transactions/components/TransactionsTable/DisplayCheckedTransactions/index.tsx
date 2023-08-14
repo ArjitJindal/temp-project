@@ -84,11 +84,11 @@ const DisplayCheckedTransactions = (props: Props) => {
             </div>
           </div>
           <div className={s.header} style={{ width: 'calc(25% - 20px)' }}>
-            <div className={s.headerContent}>Rule Name</div>
+            <div className={s.headerContent}>Rule name</div>
             <div className={s.content}>{alert.ruleName}</div>
           </div>
           <div className={s.header} style={{ width: 'calc(50% - 20px)' }}>
-            <div className={s.headerContent}>Rule Description</div>
+            <div className={s.headerContent}>Rule description</div>
             <div className={s.content}>{alert.ruleDescription}</div>
           </div>
         </div>

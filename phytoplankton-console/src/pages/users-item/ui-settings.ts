@@ -1,17 +1,17 @@
 export const UI_SETTINGS = {
-  title: 'User Details',
+  title: 'User details',
   key: 'user-details',
   cards: {
     USER_DETAILS: {
-      title: 'User Details',
+      title: 'User details',
       key: 'user-details-user-details',
     },
     LEGAL_DOCUMENTS: {
-      title: 'Legal Documents',
+      title: 'Legal documents',
       key: 'user-details-legal-documents',
     },
     EXPECTED_TRANSACTION_LIMITS: {
-      title: 'Expected Transaction Limits',
+      title: 'Expected transaction limits',
       key: 'user-details-expected-transaction-limits',
     },
     SHAREHOLDERS: {
@@ -23,11 +23,11 @@ export const UI_SETTINGS = {
       key: 'user-details-directors',
     },
     TRANSACTION_HISTORY: {
-      title: 'Transaction History',
+      title: 'Transaction history',
       key: 'user-details-transaction-history',
     },
     TRANSACTION_INSIGHTS: {
-      title: 'Transaction Insights',
+      title: 'Transaction insights',
       key: 'user-details-transaction-insights',
     },
     AI_INSIGHTS: {

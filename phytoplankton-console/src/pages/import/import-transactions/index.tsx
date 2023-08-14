@@ -42,7 +42,7 @@ const TableList: React.FC = () => {
     }),
     helper.simple<'createdAt'>({
       key: 'createdAt',
-      title: 'Created At',
+      title: 'Created at',
       type: {
         render: (date) => <TimestampDisplay timestamp={date?.getTime()} />,
         stringify: (date) => dayjs(date?.getTime()).format(DEFAULT_DATE_TIME_FORMAT),
@@ -51,11 +51,11 @@ const TableList: React.FC = () => {
     }),
     helper.simple<'totalTransactions'>({
       key: 'totalTransactions',
-      title: 'Total Transactions',
+      title: 'Total transactions',
     }),
     helper.simple<'importedTransactions'>({
       key: 'importedTransactions',
-      title: 'Imported Transactions',
+      title: 'Imported transactions',
     }),
     helper.simple<'status'>({
       key: 'status',

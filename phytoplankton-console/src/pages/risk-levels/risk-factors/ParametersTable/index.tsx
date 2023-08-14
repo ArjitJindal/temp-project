@@ -46,7 +46,7 @@ export default function ParametersTable(props: Props) {
       <Table<RiskLevelTableItem>
         rowKey="parameter"
         columns={columnHelper.list([
-          columnHelper.simple({ title: 'Parameter Name', key: 'title' }),
+          columnHelper.simple({ title: 'Parameter name', key: 'title' }),
           columnHelper.simple({
             title: 'Type',
             key: 'dataType',
@@ -73,7 +73,7 @@ export default function ParametersTable(props: Props) {
             },
           }),
           columnHelper.simple({
-            title: 'Parameter Description',
+            title: 'Parameter description',
             key: 'description',
             defaultWidth: 300,
             type: LONG_TEXT,

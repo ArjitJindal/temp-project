@@ -148,7 +148,7 @@ const RiskAlgorithmTable: React.FC = () => {
               </RcResizeObserver>
             </ProCard.TabPane>
 
-            <ProCard.TabPane key=" tab2 " tab="Business Users">
+            <ProCard.TabPane key=" tab2 " tab="Business users">
               <pre className={styles.pre}>
                 <div className={styles.header}>Formula</div>
                 <div> </div>

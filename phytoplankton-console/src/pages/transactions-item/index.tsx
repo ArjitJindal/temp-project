@@ -115,14 +115,14 @@ export default function TransactionsItem() {
           >
             {[
               {
-                tab: 'Transaction Details',
+                tab: 'Transaction details',
                 key: 'transaction-details',
                 children: <SenderReceiverDetails transaction={transaction} />,
                 isClosable: false,
                 isDisabled: false,
               },
               {
-                tab: 'Transaction Events',
+                tab: 'Transaction events',
                 key: 'transaction-events',
                 children: <TransactionEventsCard events={transaction.events ?? []} />,
                 isClosable: false,

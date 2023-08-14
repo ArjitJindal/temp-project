@@ -30,7 +30,7 @@ const columnHelper = new ColumnHelper<TableItem>();
 
 const columns = columnHelper.list([
   columnHelper.simple({
-    title: 'Value Type',
+    title: 'Value type',
     key: 'label',
   }),
   columnHelper.display({

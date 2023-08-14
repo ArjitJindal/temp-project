@@ -57,7 +57,7 @@ const TableTemplate = (props: TableTemplateProp) => {
       toolsOptions={false}
       columns={[
         helper.simple<'key'>({
-          title: 'Parameter Name',
+          title: 'Parameter name',
           key: 'key',
           defaultWidth: 250,
           type: {
@@ -67,7 +67,7 @@ const TableTemplate = (props: TableTemplateProp) => {
           },
         }),
         helper.simple<'oldImage'>({
-          title: 'Old Value',
+          title: 'Old value',
           key: 'oldImage',
           defaultWidth: 350,
           type: {
@@ -77,7 +77,7 @@ const TableTemplate = (props: TableTemplateProp) => {
           },
         }),
         helper.simple<'newImage'>({
-          title: 'New Value',
+          title: 'New value',
           key: 'newImage',
           defaultWidth: 350,
           type: {
@@ -147,7 +147,7 @@ const AuditLogModal = (props: Props) => {
           {changedDetails.length && (
             <>
               <Typography.Title level={3}>
-                {_.startCase(_.toLower(data.type))} Details Changed
+                {_.startCase(_.toLower(data.type))} details changed
               </Typography.Title>
               <TableTemplate details={changedDetails} />
             </>
@@ -156,7 +156,7 @@ const AuditLogModal = (props: Props) => {
             {notChangedDetails.length > 0 && (
               <div style={{ marginTop: changedDetails.length ? '2rem' : 'auto' }}>
                 <Typography.Title level={3}>
-                  {_.startCase(_.toLower(data.type))} Details Not Changed
+                  {_.startCase(_.toLower(data.type))} details not changed
                 </Typography.Title>
                 <TableTemplate details={notChangedDetails} />
               </div>

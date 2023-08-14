@@ -60,7 +60,7 @@ export default function SanctionsTable(props: Props) {
       },
     }),
     helper.derived<string>({
-      title: 'Date of Birth',
+      title: 'Date of birth',
       value: (item: ComplyAdvantageSearchHit): string | undefined => {
         const fields = item?.doc?.fields;
         const dob =
@@ -93,7 +93,7 @@ export default function SanctionsTable(props: Props) {
       sorting: true,
     }),
     helper.derived<string[]>({
-      title: 'Matched Types',
+      title: 'Matched types',
       value: (entity: ComplyAdvantageSearchHit) => {
         return entity.doc?.types;
       },
@@ -139,14 +139,14 @@ export default function SanctionsTable(props: Props) {
 
   const extraFilters: ExtraFilter<TableSearchParams>[] = [
     {
-      title: 'Search Term',
+      title: 'Search term',
       key: 'searchTerm',
       renderer: {
         kind: 'string',
       },
     },
     {
-      title: 'Year of Birth',
+      title: 'Year of birth',
       key: 'yearOfBirth',
       renderer: {
         kind: 'number',
@@ -154,7 +154,7 @@ export default function SanctionsTable(props: Props) {
       },
     },
     {
-      title: 'Country Codes',
+      title: 'Country codes',
       key: 'countryCodes',
       renderer: {
         kind: 'select',

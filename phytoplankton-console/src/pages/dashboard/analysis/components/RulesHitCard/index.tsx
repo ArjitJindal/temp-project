@@ -35,16 +35,16 @@ export default function RuleHitCard() {
       value: (stat) => getRuleInstanceDisplayId(stat.ruleId, stat.ruleInstanceId),
     }),
     helper.derived<string>({
-      title: 'Rule Name',
+      title: 'Rule name',
       value: (stat) =>
         getRuleInstanceDisplay(stat.ruleId, stat.ruleInstanceId, rules, ruleInstances),
     }),
     helper.simple<'hitCount'>({
-      title: 'Rules Hit',
+      title: 'Rules hit',
       key: 'hitCount',
     }),
     helper.display({
-      title: 'Open Cases',
+      title: 'Open cases',
       render: (entity) => {
         let startTimestamp;
         let endTimestamp;
@@ -94,7 +94,7 @@ export default function RuleHitCard() {
   });
 
   return (
-    <Card title={header('Top Rule Hits by Count')} bordered={false}>
+    <Card title={header('Top rule hits by count')} bordered={false}>
       <Row>
         <Col span={24}>
           <QueryResultsTable<DashboardStatsRulesCountData>

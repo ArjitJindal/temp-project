@@ -116,7 +116,7 @@ export default function PersonsTable(props: Props) {
           ],
         }),
         helper.group({
-          title: 'Contact Details',
+          title: 'Contact details',
           children: [
             helper.simple({
               key: 'contactDetails.emailIds',

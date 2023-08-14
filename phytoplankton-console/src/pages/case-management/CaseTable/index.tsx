@@ -160,14 +160,14 @@ export default function CaseTable(props: Props) {
         },
       }),
       helper.simple<'user'>({
-        title: 'User Name',
+        title: 'User name',
         id: '_userName',
         key: 'user',
         type: USER_NAME,
         sorting: true,
       }),
       helper.simple<'caseTransactionsCount'>({
-        title: 'Transactions Hit',
+        title: 'Transactions hit',
         type: NUMBER,
         key: 'caseTransactionsCount',
         sorting: true,
@@ -360,7 +360,7 @@ export default function CaseTable(props: Props) {
     mergedColumns.push(
       ...[
         helper.simple<'updatedAt'>({
-          title: 'Last update time',
+          title: 'Last updated',
           key: 'updatedAt',
           type: DATE,
           filtering: true,

@@ -42,7 +42,7 @@ const TableList: React.FC = () => {
     }),
     helper.simple<'createdAt'>({
       key: 'createdAt',
-      title: 'Created At',
+      title: 'Created at',
       type: {
         render: (date) => <TimestampDisplay timestamp={date?.getTime()} />,
         stringify: (date) => dayjs(date?.getDate()).format(DEFAULT_DATE_TIME_FORMAT),
@@ -98,8 +98,8 @@ const TableList: React.FC = () => {
           onChangeParams={setParams}
           queryResults={filesResult}
           extraTools={[
-            () => <FileImportButton type={'USER'} buttonText="Import (Consumer User)" />,
-            () => <FileImportButton type={'BUSINESS'} buttonText="Import (Business User)" />,
+            () => <FileImportButton type={'USER'} buttonText="Import (Consumer user)" />,
+            () => <FileImportButton type={'BUSINESS'} buttonText="Import (Business user)" />,
           ]}
           fitHeight
         />

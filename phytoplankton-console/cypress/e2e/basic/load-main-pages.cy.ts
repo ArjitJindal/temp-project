@@ -7,7 +7,7 @@ describe('navigate sidebar', () => {
   });
   it('should load main pages', () => {
     cy.visit('/case-management/cases');
-    cy.get('h2', { timeout: 8000 }).contains('Case Management');
+    cy.get('h2', { timeout: 8000 }).contains('Case management');
     cy.get(TABLE_SELECTOR, { timeout: 3000 });
     cy.visit('/transactions/list');
     cy.get('h2', { timeout: 3000 }).contains('Transactions');
@@ -19,10 +19,10 @@ describe('navigate sidebar', () => {
     cy.get('h2', { timeout: 3000 }).contains('Users');
     cy.visit('/rules/rules-library');
     cy.get(TABLE_SELECTOR, { timeout: 3000 });
-    cy.get('h2', { timeout: 3000 }).contains('Rules Library');
+    cy.get('h2', { timeout: 3000 }).contains('Rules library');
     cy.visit('/rules/my-rules');
     cy.get(TABLE_SELECTOR, { timeout: 3000 });
-    cy.get('h2', { timeout: 3000 }).contains('My Rules');
+    cy.get('h2', { timeout: 3000 }).contains('My rules');
   });
 
   it('should load entity details', () => {
@@ -39,7 +39,7 @@ describe('navigate sidebar', () => {
       .should('be.visible')
       .eq(0)
       .click({ force: true });
-    cy.contains('div[role="tab"]', 'Transaction Details').should('be.visible');
+    cy.contains('div[role="tab"]', 'Transaction details').should('be.visible');
 
     cy.visit('/case-management/cases', { timeout: 8000 });
     cy.get(TABLE_SELECTOR).should('exist');
@@ -69,7 +69,7 @@ describe('navigate sidebar', () => {
       .should('be.visible')
       .eq(0)
       .click({ force: true });
-    cy.contains('h3', 'User Details').should('be.visible');
+    cy.contains('h3', 'User details').should('be.visible');
 
     cy.visit('/users/list/business/all', { timeout: 8000 });
     cy.get(TABLE_SELECTOR).should('exist');
@@ -84,6 +84,6 @@ describe('navigate sidebar', () => {
       .should('be.visible')
       .eq(0)
       .click({ force: true });
-    cy.contains('h3', 'User Details').should('be.visible');
+    cy.contains('h3', 'User details').should('be.visible');
   });
 });

@@ -43,7 +43,7 @@ function getPulseColumns(): TableColumn<InternalUser>[] {
 
   return helper.list([
     helper.derived<RiskLevel>({
-      title: 'CRA Risk Level',
+      title: 'CRA risk level',
       // key: 'drsRiskLevel',
       type: RISK_LEVEL,
       tooltip: 'Customer risk assessment - accounts for both Base risk and action risk scores.',
@@ -53,25 +53,25 @@ function getPulseColumns(): TableColumn<InternalUser>[] {
     }),
     helper.simple<'drsScore.drsScore'>({
       key: 'drsScore.drsScore',
-      title: 'CRA Risk Score',
+      title: 'CRA risk score',
       type: FLOAT,
       tooltip: 'Customer risk assessment - accounts for both Base risk and action risk scores.',
     }),
     helper.simple<'drsScore.isUpdatable'>({
       key: 'drsScore.isUpdatable',
-      title: 'Is Locked',
+      title: 'Is locked',
       type: BOOLEAN,
       tooltip: 'Whether customer risk assessment score is locked',
     }),
     helper.simple<'krsScore.riskLevel'>({
       key: 'krsScore.riskLevel',
-      title: 'KRS Risk Level',
+      title: 'KRS risk level',
       type: RISK_LEVEL,
       tooltip: 'Know your customer - accounts for KYC Risk Level',
     }),
     helper.simple<'krsScore.krsScore'>({
       key: 'krsScore.krsScore',
-      title: 'KRS Risk Score',
+      title: 'KRS risk score',
       type: FLOAT,
       tooltip: 'Know your customer - accounts for KYC Risk Score',
     }),
@@ -273,13 +273,13 @@ export default function UsersList() {
           navigate(makeUrl(`/users/list/:list/all`, { list: key }), { replace: true });
         }}
       >
-        <Tabs.TabPane tab={'All Users'} key="all">
+        <Tabs.TabPane tab={'All users'} key="all">
           <UsersTab type={list} />
         </Tabs.TabPane>
-        <Tabs.TabPane tab="Consumer Users" key="consumer">
+        <Tabs.TabPane tab="Consumer users" key="consumer">
           <UsersTab type={list} />
         </Tabs.TabPane>
-        <Tabs.TabPane tab="Business Users" key="business">
+        <Tabs.TabPane tab="Business users" key="business">
           <UsersTab type={list} />
         </Tabs.TabPane>
       </PageTabs>

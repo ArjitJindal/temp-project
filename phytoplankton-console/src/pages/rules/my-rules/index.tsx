@@ -200,7 +200,7 @@ const MyRule = (props: { simulationMode?: boolean }) => {
       }),
       helper.simple<'createdAt'>({
         key: 'createdAt',
-        title: 'Created At',
+        title: 'Created at',
         type: DATE,
         sorting: 'desc',
       }),

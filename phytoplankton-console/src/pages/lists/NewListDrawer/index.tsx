@@ -80,7 +80,7 @@ export default function NewListDrawer(props: Props) {
 
   return (
     <Drawer
-      title={listType === 'WHITELIST' ? `Add a New Whitelist` : `Add a New Blacklist`}
+      title={listType === 'WHITELIST' ? `Add a new whitelist` : `Add a new blacklist`}
       visible={isOpen}
       onClose={onCancel}
       bodyStyle={{

@@ -17,7 +17,7 @@ export const PaymentApprovalSettings = () => {
 
   return (
     <div>
-      <h3>Payment Approval</h3>
+      <h3>Payment approval</h3>
       <p>
         Turn on manual approval for all transactions with ‘SUSPEND’ state rule action in case
         management for transaction rules.

@@ -242,7 +242,7 @@ export const Transmitter = {
 // Search '37 = Transmitter Contact' in the pdf
 export const TransmitterContact = {
   type: 'object',
-  title: 'Transmitter Contact',
+  title: 'Transmitter contact',
   description: 'This is the official contact for the transmitter.',
   'ui:schema': {
     'ui:group': 'Transmitter contact information',
@@ -253,10 +253,10 @@ export const TransmitterContact = {
   required: ['PartyName'],
 }
 
-// Search '30 = Filing Institution' in the pdf
+// Search '30 = Filing institution' in the pdf
 export const FilingInstitution = {
   type: 'object',
-  title: 'Filing Institution',
+  title: 'Filing institution',
   description:
     'This is the entity responsible for filing the FinCEN SAR, such as a reporting financial institution or a holding or other parent company filling for its subsidiaries.',
   'ui:schema': {
@@ -343,7 +343,7 @@ export const FilingInstitution = {
 // Search '8 = Contact Office' in the pdf
 export const ContactOffice = {
   type: 'object',
-  title: 'Designated Contact Office',
+  title: 'Designated contact office',
   description:
     'This is the administrative office that should be contacted to obtain additional information about the FinCEN SAR.',
   'ui:schema': {

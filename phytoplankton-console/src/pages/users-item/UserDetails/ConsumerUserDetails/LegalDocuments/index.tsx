@@ -29,7 +29,7 @@ export function LegalDocumentsTable(prop: Props) {
           }}
           columns={helper.list([
             helper.derived({
-              title: 'Document Details',
+              title: 'Document details',
               value: (document) => {
                 return {
                   documentType: document.documentType,
@@ -44,7 +44,7 @@ export function LegalDocumentsTable(prop: Props) {
             }),
             helper.simple({
               key: 'nameOnDocument',
-              title: 'Name on Document',
+              title: 'Name on document',
               type: {
                 render: (nameOnDocument) => (
                   <>{nameOnDocument ? formatConsumerName(nameOnDocument) : '-'}</>
@@ -55,17 +55,17 @@ export function LegalDocumentsTable(prop: Props) {
             }),
             helper.simple({
               key: 'documentIssuedDate',
-              title: 'Date of Issue',
+              title: 'Date of issue',
               type: DATE_TIME,
             }),
             helper.simple({
               key: 'documentExpirationDate',
-              title: 'Date of Expiry',
+              title: 'Date of expiry',
               type: DATE_TIME,
             }),
             helper.simple({
               key: 'documentIssuedCountry',
-              title: 'Country of Issue',
+              title: 'Country of issue',
               type: COUNTRY,
             }),
             helper.simple({

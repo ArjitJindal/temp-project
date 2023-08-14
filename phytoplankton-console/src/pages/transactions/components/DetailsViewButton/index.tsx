@@ -31,7 +31,7 @@ export default function DetailsViewButton(props: Props) {
           <div className={s.icon} role="presentation">
             <FileListIcon />
           </div>
-          <span className={s.content}>Detailed View </span>
+          <span className={s.content}>Detailed view </span>
         </button>
       </Tooltip>
     </div>

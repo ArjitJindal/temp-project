@@ -26,7 +26,7 @@ const SanctionsPage: React.FC = () => {
             <SanctionsSearchTable searchId={searchId} />
           </PageWrapperContentContainer>
         </Tabs.TabPane>
-        <Tabs.TabPane tab="Search History" key="search-history">
+        <Tabs.TabPane tab="Search history" key="search-history">
           <PageWrapperContentContainer>
             <SanctionsSearchHistoryTable />
           </PageWrapperContentContainer>

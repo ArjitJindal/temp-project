@@ -51,7 +51,7 @@ export default function HitsPerUserCard(props: Props) {
       },
     }),
     helper.derived<string>({
-      title: 'User Name',
+      title: 'User name',
       value: (entity: TableItem): string => getUserName(entity.user) ?? '',
     }),
     helper.simple<'transactionsHit'>({
@@ -65,7 +65,7 @@ export default function HitsPerUserCard(props: Props) {
     }),
     helper.simple<'user.type'>({
       key: 'user.type',
-      title: 'User Type',
+      title: 'User type',
       type: {
         render: (type) => {
           if (!type) {
@@ -80,7 +80,7 @@ export default function HitsPerUserCard(props: Props) {
       },
     }),
     helper.display({
-      title: 'Open Cases',
+      title: 'Open cases',
       render: (entity) => {
         let startTimestamp;
         let endTimestamp;

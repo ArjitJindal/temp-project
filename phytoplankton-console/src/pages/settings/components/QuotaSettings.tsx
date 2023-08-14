@@ -25,7 +25,7 @@ export function QuotaSettings() {
 
   const columns = columnHelper.list([
     columnHelper.simple({
-      title: 'Value Type',
+      title: 'Value type',
       key: 'key',
     }),
     columnHelper.simple({

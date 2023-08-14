@@ -43,7 +43,7 @@ export default function CreatedLists() {
                     }}
                     requiredPermissions={['lists:all:write']}
                   >
-                    Add New Whitelist
+                    Add new whitelist
                   </Button>
                   {/*<Button type="skeleton" size="large">*/}
                   {/*  Upload Whitelist*/}
@@ -59,7 +59,7 @@ export default function CreatedLists() {
                       setNewModalOpen(true);
                     }}
                   >
-                    Add New Blacklist
+                    Add new blacklist
                   </Button>
                   {/*<Button type="skeleton" size="large">*/}
                   {/*  Upload Blacklist*/}

@@ -15,7 +15,7 @@ export default function ActionTakenByFilterButton(props: Props) {
 
   return (
     <DefaultQuickFilter
-      title={'Action Taken By'}
+      title={'Action taken by'}
       analyticsName="action-taken-by"
       icon={<HighlightOutlined />}
       buttonText={

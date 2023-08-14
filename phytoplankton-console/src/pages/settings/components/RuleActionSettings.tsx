@@ -151,7 +151,7 @@ export const RuleActionSettings: React.FC = () => {
   };
   return (
     <>
-      <H4>Default Actions</H4>
+      <H4>Default actions</H4>
       <Table<TableItem>
         rowKey="action"
         columns={columns}

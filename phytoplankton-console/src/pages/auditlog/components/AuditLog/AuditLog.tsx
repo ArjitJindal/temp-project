@@ -92,7 +92,7 @@ export default function AuditLogTable() {
 
   const columns: TableColumn<TableItem>[] = helper.list([
     helper.simple<'auditlogId'>({
-      title: 'Audit Log ID',
+      title: 'Audit log ID',
       key: 'auditlogId',
     }),
     helper.derived({
@@ -133,7 +133,7 @@ export default function AuditLogTable() {
     }),
     helper.simple<'user.id'>({
       key: 'user.id',
-      title: 'Action Taken By',
+      title: 'Action taken by',
       type: {
         render: (userId) => {
           return (
@@ -145,7 +145,7 @@ export default function AuditLogTable() {
       },
     }),
     helper.simple<'timestamp'>({
-      title: 'Time of Action',
+      title: 'Time of action',
       key: 'timestamp',
       type: DATE_TIME,
     }),
@@ -177,7 +177,7 @@ export default function AuditLogTable() {
           },
           {
             key: 'filterActionTakenBy',
-            title: 'Action Taken By',
+            title: 'Action taken by',
             renderer: ({ params, setParams }) => (
               <ActionTakenByFilterButton
                 initialState={params.filterActionTakenBy ?? []}

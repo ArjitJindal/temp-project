@@ -35,7 +35,7 @@ export const FalsePositiveTag: React.FC<Props> = (props: Props) => {
             }
             className={style.tagOnHover}
           >
-            {confidence}% False Positive
+            {confidence}% False positive
           </Tag>
         </Tooltip>
       </div>

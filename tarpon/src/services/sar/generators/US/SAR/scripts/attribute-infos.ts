@@ -13,7 +13,7 @@ export const AttributeInfos = {
       'The date in which the FinCEN SAR is being filed electronically through FinCEN’s BSA E-Filing System. The value provided must adhere to the following requirements: 8 numeric characters in the format YYYYMMDD where YYYY = year, MM = month, and DD = day. Single digit days or months must be prefaced by a zero',
   },
   FilingInstitutionNotetoFinCEN: {
-    title: 'Filing Institution Note to FinCEN',
+    title: 'Filing institution note to FinCEN',
     description:
       'This element allows the filer to alert FinCEN that this FinCEN SAR is being filed in response to a current specific geographic targeting order (GTO) or advisory or other activity. The value provided must adhere to the following requirements: 50 characters or less.',
   },
@@ -551,7 +551,7 @@ export const AttributeInfos = {
       'This element identifies the IP address of the subject’s electronic internet based contact with the financial institution. example, this may be the IP address used to log into the institution’s online banking page or the IP address used to access an institution’s mobile application.',
   },
   CyberEventIndicators: {
-    title: 'Cyber Event',
+    title: 'Cyber event',
     description:
       'This element is the container for information about cyber event involved in the suspicious activity',
   },
@@ -640,7 +640,7 @@ export const AttributeInfos = {
       'This element is the container for information about the type of filing associated with the FinCEN SAR.',
   },
   ActivitySupportDocument: {
-    title: 'Supporting Document',
+    title: 'Supporting document',
     description:
       'This element is the container for information about the supporting document as an attachment to the FinCEN SAR being filed.',
   },

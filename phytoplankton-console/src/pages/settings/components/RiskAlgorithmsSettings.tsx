@@ -9,11 +9,11 @@ export const RiskAlgorithmsSettings = () => {
 
   return (
     <div>
-      <h3>Risk Algorithms</h3>
+      <h3>Risk algorithms</h3>
       <p>Select the algorithm type you want to use for transaction monitoring.</p>
       <br />
       <p>
-        <b>Algorithm Type</b>
+        <b>Algorithm type</b>
       </p>
       <SelectionGroup
         mode={'SINGLE'}

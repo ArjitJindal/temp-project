@@ -54,13 +54,13 @@ export function isPaymentMethod(value: unknown): value is PaymentMethod {
 
 export function getPaymentMethodTitle(paymentMethod: PaymentMethod) {
   if (paymentMethod === 'IBAN') {
-    return 'IBAN Transfer';
+    return 'IBAN transfer';
   } else if (paymentMethod === 'ACH') {
-    return 'ACH Transfer';
+    return 'ACH transfer';
   } else if (paymentMethod === 'SWIFT') {
-    return 'SWIFT Transfer';
+    return 'SWIFT transfer';
   } else if (paymentMethod === 'GENERIC_BANK_ACCOUNT') {
-    return 'Bank Transfer';
+    return 'Bank transfer';
   } else if (paymentMethod === 'WALLET') {
     return 'Wallet';
   } else if (paymentMethod === 'UPI') {

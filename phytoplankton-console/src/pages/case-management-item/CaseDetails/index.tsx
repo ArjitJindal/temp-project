@@ -116,7 +116,7 @@ function CaseDetails(props: Props) {
           ...(user && isEntityLinkingEnabled
             ? [
                 {
-                  tab: <div className={style.icon}>Entity Linking</div>,
+                  tab: <div className={style.icon}>Entity linking</div>,
                   key: 'entity-linking',
                   children: <Linking userId={user.userId!} />,
                   isClosable: false,
@@ -151,7 +151,7 @@ function CaseDetails(props: Props) {
           ...(user?.userId
             ? [
                 {
-                  tab: 'Transaction Insights',
+                  tab: 'Transaction insights',
                   key: 'transaction-insights',
                   children: (
                     <InsightsCard
@@ -165,7 +165,7 @@ function CaseDetails(props: Props) {
               ]
             : []),
           {
-            tab: 'Expected Transaction Limits',
+            tab: 'Expected transaction limits',
             key: 'expected-transaction-limits',
             children: (
               <Card.Root>

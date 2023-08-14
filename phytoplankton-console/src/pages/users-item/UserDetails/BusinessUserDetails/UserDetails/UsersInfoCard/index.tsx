@@ -100,7 +100,7 @@ export default function UsersInfoCard(props: Props) {
           </AsyncResourceRenderer>
         </div>
       </Form.Layout.Label>
-      <Form.Layout.Label icon={<StoreLineIcon />} title={'Acquisition Channel'}>
+      <Form.Layout.Label icon={<StoreLineIcon />} title={'Acquisition channel'}>
         {user.acquisitionChannel ?? '-'}
       </Form.Layout.Label>
     </PropertyColumns>

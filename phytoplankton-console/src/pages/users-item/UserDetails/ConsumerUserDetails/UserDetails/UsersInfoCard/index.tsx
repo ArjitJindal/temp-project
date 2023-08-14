@@ -29,7 +29,7 @@ export default function UsersInfoCard(props: Props) {
             ? dayjs(user.userDetails?.dateOfBirth).format(DATE_TIME_FORMAT_WITHOUT_SECONDS)
             : '-'}
         </Form.Layout.Label>
-        <Form.Layout.Label icon={<User3LineIcon />} title={'User Type'}>
+        <Form.Layout.Label icon={<User3LineIcon />} title={'User type'}>
           <div>
             <Tag
               style={{
@@ -54,12 +54,12 @@ export default function UsersInfoCard(props: Props) {
         </Form.Layout.Label>
       </div>
       <div className={s.inner}>
-        <Form.Layout.Label icon={<StoreLineIcon />} title={'Acquisition Channel'}>
+        <Form.Layout.Label icon={<StoreLineIcon />} title={'Acquisition channel'}>
           {user.acquisitionChannel ?? '-'}
         </Form.Layout.Label>
       </div>
       <div className={s.inner}>
-        <Form.Layout.Label icon={<BookmarkLineIcon />} title={'Consumer Segment'}>
+        <Form.Layout.Label icon={<BookmarkLineIcon />} title={'Consumer segment'}>
           {user.userSegment ?? '-'}
         </Form.Layout.Label>
       </div>

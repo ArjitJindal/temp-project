@@ -6,7 +6,7 @@ import HitsPerUserCard from './HitsPerUserCard';
 const TopUsersHitCard = () => {
   return (
     <Card
-      title={header('Top users by Transaction Hits')}
+      title={header('Top users by transaction hits')}
       bordered={false}
       bodyStyle={{ padding: 0 }}
       headStyle={{ borderBottom: 'none' }}

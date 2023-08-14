@@ -48,13 +48,13 @@ export const reports: Array<Report & { _id: string }> = [
               },
               FilingInstitutionNotetoFinCEN: {
                 $ref: '#/definitions/RestrictString50',
-                title: 'Filing Institution Note to FinCEN',
+                title: 'Filing institution note to FinCEN',
                 description:
                   'This element allows the filer to alert FinCEN that this FinCEN SAR is being filed in response to a current specific geographic targeting order (GTO) or advisory or other activity. The value provided must adhere to the following requirements: 50 characters or less.',
               },
               ActivitySupportDocument: {
                 $ref: '#/definitions/ActivitySupportDocumentType',
-                title: 'Supporting Document',
+                title: 'Supporting document',
                 description:
                   'This element is the container for information about the supporting document as an attachment to the FinCEN SAR being filed.',
               },
@@ -192,7 +192,7 @@ export const reports: Array<Report & { _id: string }> = [
           },
           transmitterContact: {
             type: 'object',
-            title: 'Transmitter Contact',
+            title: 'Transmitter contact',
             description: 'This is the official contact for the transmitter.',
             'ui:schema': {
               'ui:group': 'Transmitter contact information',
@@ -218,7 +218,7 @@ export const reports: Array<Report & { _id: string }> = [
           },
           filingInstitution: {
             type: 'object',
-            title: 'Filing Institution',
+            title: 'Filing institution',
             description:
               'This is the entity responsible for filing the FinCEN SAR, such as a reporting financial institution or a holding or other parent company filling for its subsidiaries.',
             'ui:schema': {
@@ -410,7 +410,7 @@ export const reports: Array<Report & { _id: string }> = [
           },
           contactOffice: {
             type: 'object',
-            title: 'Designated Contact Office',
+            title: 'Designated contact office',
             description:
               'This is the administrative office that should be contacted to obtain additional information about the FinCEN SAR.',
             'ui:schema': {
@@ -584,7 +584,7 @@ export const reports: Array<Report & { _id: string }> = [
               },
               FilingInstitutionNotetoFinCEN: {
                 $ref: '#/definitions/RestrictString50',
-                title: 'Filing Institution Note to FinCEN',
+                title: 'Filing institution note to FinCEN',
                 description:
                   'This element allows the filer to alert FinCEN that this FinCEN SAR is being filed in response to a current specific geographic targeting order (GTO) or advisory or other activity. The value provided must adhere to the following requirements: 50 characters or less.',
               },
@@ -596,7 +596,7 @@ export const reports: Array<Report & { _id: string }> = [
               },
               ActivitySupportDocument: {
                 $ref: '#/definitions/ActivitySupportDocumentType',
-                title: 'Supporting Document',
+                title: 'Supporting document',
                 description:
                   'This element is the container for information about the supporting document as an attachment to the FinCEN SAR being filed.',
               },
@@ -1505,7 +1505,7 @@ export const reports: Array<Report & { _id: string }> = [
                   },
                   ActivitySupportDocument: {
                     $ref: '#/definitions/ActivitySupportDocumentType',
-                    title: 'Supporting Document',
+                    title: 'Supporting document',
                     description:
                       'This element is the container for information about the supporting document as an attachment to the FinCEN SAR being filed.',
                   },
@@ -2740,7 +2740,7 @@ export const reports: Array<Report & { _id: string }> = [
             },
           },
           suspiciousActivity: {
-            title: 'Suspicious Activity',
+            title: 'Suspicious activity',
             description:
               'Information about the suspicious activity, such as the total amount involved and the type of suspicious activity.',
             'ui:schema': {
@@ -3208,7 +3208,7 @@ export const reports: Array<Report & { _id: string }> = [
               },
               FilingInstitutionNotetoFinCEN: {
                 $ref: '#/definitions/RestrictString50',
-                title: 'Filing Institution Note to FinCEN',
+                title: 'Filing institution note to FinCEN',
                 description:
                   'This element allows the filer to alert FinCEN that this FinCEN SAR is being filed in response to a current specific geographic targeting order (GTO) or advisory or other activity. The value provided must adhere to the following requirements: 50 characters or less.',
               },
@@ -3220,7 +3220,7 @@ export const reports: Array<Report & { _id: string }> = [
               },
               ActivitySupportDocument: {
                 $ref: '#/definitions/ActivitySupportDocumentType',
-                title: 'Supporting Document',
+                title: 'Supporting document',
                 description:
                   'This element is the container for information about the supporting document as an attachment to the FinCEN SAR being filed.',
               },
@@ -4129,7 +4129,7 @@ export const reports: Array<Report & { _id: string }> = [
                   },
                   ActivitySupportDocument: {
                     $ref: '#/definitions/ActivitySupportDocumentType',
-                    title: 'Supporting Document',
+                    title: 'Supporting document',
                     description:
                       'This element is the container for information about the supporting document as an attachment to the FinCEN SAR being filed.',
                   },
@@ -5306,13 +5306,13 @@ export const reports: Array<Report & { _id: string }> = [
               },
               FilingInstitutionNotetoFinCEN: {
                 $ref: '#/definitions/RestrictString50',
-                title: 'Filing Institution Note to FinCEN',
+                title: 'Filing institution note to FinCEN',
                 description:
                   'This element allows the filer to alert FinCEN that this FinCEN SAR is being filed in response to a current specific geographic targeting order (GTO) or advisory or other activity. The value provided must adhere to the following requirements: 50 characters or less.',
               },
               ActivitySupportDocument: {
                 $ref: '#/definitions/ActivitySupportDocumentType',
-                title: 'Supporting Document',
+                title: 'Supporting document',
                 description:
                   'This element is the container for information about the supporting document as an attachment to the FinCEN SAR being filed.',
               },
@@ -5450,7 +5450,7 @@ export const reports: Array<Report & { _id: string }> = [
           },
           transmitterContact: {
             type: 'object',
-            title: 'Transmitter Contact',
+            title: 'Transmitter contact',
             description: 'This is the official contact for the transmitter.',
             'ui:schema': {
               'ui:group': 'Transmitter contact information',
@@ -5476,7 +5476,7 @@ export const reports: Array<Report & { _id: string }> = [
           },
           filingInstitution: {
             type: 'object',
-            title: 'Filing Institution',
+            title: 'Filing institution',
             description:
               'This is the entity responsible for filing the FinCEN SAR, such as a reporting financial institution or a holding or other parent company filling for its subsidiaries.',
             'ui:schema': {
@@ -5668,7 +5668,7 @@ export const reports: Array<Report & { _id: string }> = [
           },
           contactOffice: {
             type: 'object',
-            title: 'Designated Contact Office',
+            title: 'Designated contact office',
             description:
               'This is the administrative office that should be contacted to obtain additional information about the FinCEN SAR.',
             'ui:schema': {
@@ -5842,7 +5842,7 @@ export const reports: Array<Report & { _id: string }> = [
               },
               FilingInstitutionNotetoFinCEN: {
                 $ref: '#/definitions/RestrictString50',
-                title: 'Filing Institution Note to FinCEN',
+                title: 'Filing institution note to FinCEN',
                 description:
                   'This element allows the filer to alert FinCEN that this FinCEN SAR is being filed in response to a current specific geographic targeting order (GTO) or advisory or other activity. The value provided must adhere to the following requirements: 50 characters or less.',
               },
@@ -5854,7 +5854,7 @@ export const reports: Array<Report & { _id: string }> = [
               },
               ActivitySupportDocument: {
                 $ref: '#/definitions/ActivitySupportDocumentType',
-                title: 'Supporting Document',
+                title: 'Supporting document',
                 description:
                   'This element is the container for information about the supporting document as an attachment to the FinCEN SAR being filed.',
               },
@@ -6763,7 +6763,7 @@ export const reports: Array<Report & { _id: string }> = [
                   },
                   ActivitySupportDocument: {
                     $ref: '#/definitions/ActivitySupportDocumentType',
-                    title: 'Supporting Document',
+                    title: 'Supporting document',
                     description:
                       'This element is the container for information about the supporting document as an attachment to the FinCEN SAR being filed.',
                   },
@@ -8466,7 +8466,7 @@ export const reports: Array<Report & { _id: string }> = [
               },
               FilingInstitutionNotetoFinCEN: {
                 $ref: '#/definitions/RestrictString50',
-                title: 'Filing Institution Note to FinCEN',
+                title: 'Filing institution note to FinCEN',
                 description:
                   'This element allows the filer to alert FinCEN that this FinCEN SAR is being filed in response to a current specific geographic targeting order (GTO) or advisory or other activity. The value provided must adhere to the following requirements: 50 characters or less.',
               },
@@ -8478,7 +8478,7 @@ export const reports: Array<Report & { _id: string }> = [
               },
               ActivitySupportDocument: {
                 $ref: '#/definitions/ActivitySupportDocumentType',
-                title: 'Supporting Document',
+                title: 'Supporting document',
                 description:
                   'This element is the container for information about the supporting document as an attachment to the FinCEN SAR being filed.',
               },
@@ -9387,7 +9387,7 @@ export const reports: Array<Report & { _id: string }> = [
                   },
                   ActivitySupportDocument: {
                     $ref: '#/definitions/ActivitySupportDocumentType',
-                    title: 'Supporting Document',
+                    title: 'Supporting document',
                     description:
                       'This element is the container for information about the supporting document as an attachment to the FinCEN SAR being filed.',
                   },

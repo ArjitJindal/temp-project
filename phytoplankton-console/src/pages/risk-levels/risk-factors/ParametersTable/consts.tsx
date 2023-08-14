@@ -117,7 +117,7 @@ const EXTENDED_DAY_RANGE_GRANULARITY = [
 export const USER_RISK_PARAMETERS: RiskLevelTable = [
   {
     parameter: 'type',
-    title: 'Customer Type',
+    title: 'Customer type',
     description: 'Risk value for consumer (individuals) users',
     entity: 'CONSUMER_USER',
     dataType: 'CONSUMER_USER_TYPE',
@@ -126,7 +126,7 @@ export const USER_RISK_PARAMETERS: RiskLevelTable = [
   },
   {
     parameter: 'userDetails.countryOfResidence',
-    title: 'Country of Residence',
+    title: 'Country of residence',
     description: 'Risk based on customer residence country',
     entity: 'CONSUMER_USER',
     dataType: 'COUNTRY',
@@ -135,7 +135,7 @@ export const USER_RISK_PARAMETERS: RiskLevelTable = [
   },
   {
     parameter: 'userDetails.countryOfNationality',
-    title: 'Country of Nationality',
+    title: 'Country of nationality',
     description: 'Risk based on customer nationality country',
     entity: 'CONSUMER_USER',
     dataType: 'COUNTRY',
@@ -144,7 +144,7 @@ export const USER_RISK_PARAMETERS: RiskLevelTable = [
   },
   {
     parameter: 'userDetails.dateOfBirth',
-    title: 'Customer Age',
+    title: 'Customer age',
     description: 'Risk based on customer age range (Years)',
     entity: 'CONSUMER_USER',
     dataType: 'RANGE',
@@ -201,7 +201,7 @@ export const CONSUMER_USER_SEGMENT_OPTIONS = [
 export const BUSINESS_RISK_PARAMETERS: RiskLevelTable = [
   {
     parameter: 'type',
-    title: 'Customer Type',
+    title: 'Customer type',
     description: 'Risk value for businesses (merchants/legal entities) users',
     entity: 'BUSINESS',
     dataType: 'BUSINESS_USER_TYPE',
@@ -210,7 +210,7 @@ export const BUSINESS_RISK_PARAMETERS: RiskLevelTable = [
   },
   {
     parameter: 'legalEntity.companyRegistrationDetails.registrationCountry',
-    title: 'Business Registration Country',
+    title: 'Business registration country',
     description: 'Risk value based on registration country of the business',
     entity: 'BUSINESS',
     dataType: 'COUNTRY',
@@ -219,7 +219,7 @@ export const BUSINESS_RISK_PARAMETERS: RiskLevelTable = [
   },
   {
     parameter: 'shareHolders',
-    title: 'Shareholders Country of Nationality',
+    title: 'Shareholders country of nationality',
     description: 'Risk value based on shareholder country of the nationality',
     entity: 'BUSINESS',
     dataType: 'COUNTRY',
@@ -229,7 +229,7 @@ export const BUSINESS_RISK_PARAMETERS: RiskLevelTable = [
   },
   {
     parameter: 'directors',
-    title: 'Directors Country of Nationality',
+    title: 'Directors country of nationality',
     description: 'Risk value based on director country of the nationality',
     entity: 'BUSINESS',
     dataType: 'COUNTRY',
@@ -239,7 +239,7 @@ export const BUSINESS_RISK_PARAMETERS: RiskLevelTable = [
   },
   {
     parameter: 'legalEntity.companyGeneralDetails.businessIndustry',
-    title: 'Business Industry',
+    title: 'Business industry',
     description: 'Risk value based on the industry in which the business operates',
     entity: 'BUSINESS',
     dataType: 'BUSINESS_INDUSTRY',
@@ -248,7 +248,7 @@ export const BUSINESS_RISK_PARAMETERS: RiskLevelTable = [
   },
   {
     parameter: 'legalEntity.companyRegistrationDetails.dateOfRegistration',
-    title: 'Company Age',
+    title: 'Company age',
     description: 'Risk based on business age range (Years)',
     entity: 'BUSINESS',
     dataType: 'RANGE',
@@ -257,7 +257,7 @@ export const BUSINESS_RISK_PARAMETERS: RiskLevelTable = [
   },
   {
     parameter: 'legalEntity.companyGeneralDetails.userSegment',
-    title: 'User Segment',
+    title: 'User segment',
     description: 'Risk based on business user segment',
     entity: 'BUSINESS',
     dataType: 'BUSINESS_USER_SEGMENT',
@@ -266,7 +266,7 @@ export const BUSINESS_RISK_PARAMETERS: RiskLevelTable = [
   },
   {
     parameter: 'legalEntity.companyGeneralDetails.userRegistrationStatus',
-    title: 'User Registration Status',
+    title: 'User registration status',
     description: 'Risk based on business user registration status',
     entity: 'BUSINESS',
     dataType: 'USER_REGISTRATION_STATUS',
@@ -278,7 +278,7 @@ export const BUSINESS_RISK_PARAMETERS: RiskLevelTable = [
 export const TRANSACTION_RISK_PARAMETERS: RiskLevelTable = [
   {
     parameter: 'originPaymentDetails.method',
-    title: 'Origin Payment Method',
+    title: 'Origin payment method',
     description: 'Risk based on transaction origin payment method',
     entity: 'TRANSACTION',
     dataType: 'PAYMENT_METHOD',
@@ -287,7 +287,7 @@ export const TRANSACTION_RISK_PARAMETERS: RiskLevelTable = [
   },
   {
     parameter: 'destinationPaymentDetails.method',
-    title: 'Destination Payment Method',
+    title: 'Destination payment method',
     description: 'Risk based on transaction destination payment method',
     entity: 'TRANSACTION',
     dataType: 'PAYMENT_METHOD',
@@ -296,7 +296,7 @@ export const TRANSACTION_RISK_PARAMETERS: RiskLevelTable = [
   },
   {
     parameter: 'originAmountDetails.country',
-    title: 'Origin Country',
+    title: 'Origin country',
     description: 'Risk based on transaction origin country',
     entity: 'TRANSACTION',
     dataType: 'COUNTRY',
@@ -305,7 +305,7 @@ export const TRANSACTION_RISK_PARAMETERS: RiskLevelTable = [
   },
   {
     parameter: 'destinationAmountDetails.country',
-    title: 'Destination Country',
+    title: 'Destination country',
     description: 'Risk based on transaction destination country',
     entity: 'TRANSACTION',
     dataType: 'COUNTRY',
@@ -314,7 +314,7 @@ export const TRANSACTION_RISK_PARAMETERS: RiskLevelTable = [
   },
   {
     parameter: 'originAmountDetails.transactionCurrency',
-    title: 'Origin Currency',
+    title: 'Origin currency',
     description: 'Risk based on transaction origin currency',
     entity: 'TRANSACTION',
     dataType: 'CURRENCY',
@@ -323,7 +323,7 @@ export const TRANSACTION_RISK_PARAMETERS: RiskLevelTable = [
   },
   {
     parameter: 'destinationAmountDetails.transactionCurrency',
-    title: 'Destination Currency',
+    title: 'Destination currency',
     description: 'Risk based on transaction destination currency',
     entity: 'TRANSACTION',
     dataType: 'CURRENCY',
@@ -332,7 +332,7 @@ export const TRANSACTION_RISK_PARAMETERS: RiskLevelTable = [
   },
   {
     parameter: 'createdTimestamp',
-    title: 'Consumer User age on Platform',
+    title: 'Consumer user age on platform',
     description: 'Risk based on how long a consumer has been using your platform (Days)',
     entity: 'TRANSACTION',
     dataType: 'DAY_RANGE',
@@ -341,7 +341,7 @@ export const TRANSACTION_RISK_PARAMETERS: RiskLevelTable = [
   },
   {
     parameter: 'ipAddressCountry',
-    title: 'IP Address Country',
+    title: 'IP Address country',
     description: 'Risk based on IP address country',
     entity: 'TRANSACTION',
     dataType: 'COUNTRY',
@@ -350,7 +350,7 @@ export const TRANSACTION_RISK_PARAMETERS: RiskLevelTable = [
   },
   {
     parameter: 'type',
-    title: 'Transaction Type',
+    title: 'Transaction type',
     description: 'Risk value based on type of transaction',
     entity: 'TRANSACTION',
     dataType: 'TRANSACTION_TYPES',
@@ -359,7 +359,7 @@ export const TRANSACTION_RISK_PARAMETERS: RiskLevelTable = [
   },
   {
     parameter: 'domesticOrForeignOriginCountryConsumer',
-    title: 'Foreign Origin Country (Consumer)',
+    title: 'Foreign origin country (Consumer)',
     description:
       'Risk value based on whether the user country of residence is same as transaction origin country',
     entity: 'TRANSACTION',
@@ -369,7 +369,7 @@ export const TRANSACTION_RISK_PARAMETERS: RiskLevelTable = [
   },
   {
     parameter: 'domesticOrForeignDestinationCountryConsumer',
-    title: 'Foreign Destination Country (Consumer)',
+    title: 'Foreign destination country (Consumer)',
     description:
       'Risk value based on whether the user country of residence is same as transaction destination country',
     entity: 'TRANSACTION',
@@ -379,7 +379,7 @@ export const TRANSACTION_RISK_PARAMETERS: RiskLevelTable = [
   },
   {
     parameter: 'domesticOrForeignOriginCountryBusiness',
-    title: 'Foreign Origin Country (Business)',
+    title: 'Foreign origin country (Business)',
     description:
       'Risk value based on whether the user country of registration is same as transaction origin country',
     entity: 'TRANSACTION',
@@ -389,7 +389,7 @@ export const TRANSACTION_RISK_PARAMETERS: RiskLevelTable = [
   },
   {
     parameter: 'domesticOrForeignDestinationCountryBusiness',
-    title: 'Foreign Destination Country (Business)',
+    title: 'Foreign destination country (Business)',
     description:
       'Risk value based on whether the user country of registration is same as transaction destination country',
     entity: 'TRANSACTION',
@@ -399,7 +399,7 @@ export const TRANSACTION_RISK_PARAMETERS: RiskLevelTable = [
   },
   {
     parameter: 'timestamp',
-    title: 'Transaction Time',
+    title: 'Transaction time',
     description: 'Risk value based on time of transaction',
     entity: 'TRANSACTION',
     dataType: 'TIME_RANGE',
@@ -418,7 +418,7 @@ export const TRANSACTION_RISK_PARAMETERS: RiskLevelTable = [
   },
   {
     parameter: 'cardIssuedCountry',
-    title: 'Card Issued Country',
+    title: 'Card issued country',
     description: 'Risk value based on card issued country',
     entity: 'TRANSACTION',
     dataType: 'COUNTRY',

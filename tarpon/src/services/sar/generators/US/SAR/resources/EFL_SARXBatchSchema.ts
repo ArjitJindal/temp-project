@@ -128,7 +128,7 @@ export const FincenJsonSchema = {
         },
         FilingInstitutionNotetoFinCEN: {
           $ref: '#/definitions/RestrictString50',
-          title: 'Filing Institution Note to FinCEN',
+          title: 'Filing institution note to FinCEN',
           description:
             'This element allows the filer to alert FinCEN that this FinCEN SAR is being filed in response to a current specific geographic targeting order (GTO) or advisory or other activity. The value provided must adhere to the following requirements: 50 characters or less.',
         },
@@ -883,7 +883,7 @@ export const FincenJsonSchema = {
             },
             ActivitySupportDocument: {
               $ref: '#/definitions/ActivitySupportDocumentType',
-              title: 'Supporting Document',
+              title: 'Supporting document',
               description:
                 'This element is the container for information about the supporting document as an attachment to the FinCEN SAR being filed.',
             },

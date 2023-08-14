@@ -127,7 +127,7 @@ export default function ValuesTable(props: Props) {
     <div className={style.root}>
       <div className={style.table}>
         <div className={style.header}>Variable</div>
-        <div className={style.header}>Risk Score</div>
+        <div className={style.header}>Risk score</div>
         <div className={style.header}>
           {item.dataType === 'COUNTRY' && (
             <Button onClick={() => handleSetDefaultValues()} size="small" type="primary" block>

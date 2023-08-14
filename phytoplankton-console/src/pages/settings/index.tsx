@@ -43,7 +43,7 @@ export default function SettingsPage() {
       name: 'ORGANIZATION',
       menuItems: [
         {
-          name: 'Default Values',
+          name: 'Default values',
           content: <DefaultValuesSettings />,
         },
         {
@@ -51,11 +51,11 @@ export default function SettingsPage() {
           content: <NarrativeTemplates />,
         },
         {
-          name: whiteLabeled ? 'AI Features' : 'Flagright AI Features',
+          name: whiteLabeled ? 'AI features' : 'Flagright AI features',
           content: <FlagrightAISettings />,
         },
         {
-          name: 'Payment Approval',
+          name: 'Payment approval',
           content: <PaymentApprovalSettings />,
         },
         {
@@ -74,7 +74,7 @@ export default function SettingsPage() {
           name: 'MACHINE LEARNING',
           menuItems: [
             {
-              name: 'Risk Algorithms',
+              name: 'Risk algorithms',
               content: <RiskAlgorithmsSettings />,
             },
           ],

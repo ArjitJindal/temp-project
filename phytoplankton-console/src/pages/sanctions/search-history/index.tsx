@@ -68,7 +68,7 @@ export const SanctionsSearchHistoryTable: React.FC = () => {
       type: DATE_TIME,
     }),
     helper.simple<'request.searchTerm'>({
-      title: 'Search Term',
+      title: 'Search term',
       key: 'request.searchTerm',
       type: {
         render: (searchTerm, { item: entity }) => (
@@ -79,14 +79,14 @@ export const SanctionsSearchHistoryTable: React.FC = () => {
   ];
   const extraFilters: ExtraFilter<TableSearchParams>[] = [
     {
-      title: 'Search Term',
+      title: 'Search term',
       key: 'searchTerm',
       renderer: {
         kind: 'string',
       },
     },
     {
-      title: 'Match Types',
+      title: 'Match types',
       key: 'types',
       renderer: {
         kind: 'select',

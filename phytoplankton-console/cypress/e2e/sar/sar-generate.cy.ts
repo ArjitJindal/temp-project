@@ -31,6 +31,6 @@ describe('SAR Generate', () => {
     cy.get('label[data-cy="sar-report-type-select"] input').click();
     cy.get('div[title="SAR"]').click();
     cy.get('button[data-cy="modal-ok"]').click();
-    cy.get('div[data-cy="drawer-title-report-generator"]').should('contain', 'Report Generator');
+    cy.get('div[data-cy="drawer-title-report-generator"]').should('contain', 'Report generator');
   });
 });

@@ -3,15 +3,15 @@ export const UI_SETTINGS = {
   key: 'user-case-details',
   cards: {
     USER_DETAILS: {
-      title: 'User Details',
+      title: 'User details',
       key: 'user-case-details-user-details',
     },
     LEGAL_DOCUMENTS: {
-      title: 'Legal Documents',
+      title: 'Legal documents',
       key: 'user-case-details-legal-documents',
     },
     EXPECTED_TRANSACTION_LIMITS: {
-      title: 'Expected Transaction Limits',
+      title: 'Expected transaction limits',
       key: 'user-case-details-expected-transaction-limits',
     },
     SHAREHOLDERS: {
@@ -23,7 +23,7 @@ export const UI_SETTINGS = {
       key: 'user-case-details-directors',
     },
     TRANSACTION_HISTORY: {
-      title: 'Transaction History',
+      title: 'Transaction history',
       key: 'user-case-details-transaction-history',
     },
     ALERTS: {
@@ -31,7 +31,7 @@ export const UI_SETTINGS = {
       key: 'user-case-details-alerts',
     },
     TRANSACTION_INSIGHTS: {
-      title: 'Transaction Insights',
+      title: 'Transaction insights',
       key: 'user-case-details-transaction-insights',
     },
     AI_INSIGHTS: {

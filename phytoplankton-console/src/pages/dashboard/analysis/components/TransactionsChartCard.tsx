@@ -163,7 +163,7 @@ const TransactionsChartCard = () => {
 
   return (
     <Card
-      title={header('Transaction Breakdown by Rule Action')}
+      title={header('Transaction breakdown by rule action')}
       extra={
         <div className={styles.salesExtraWrap}>
           <div className={styles.salesExtra}>
