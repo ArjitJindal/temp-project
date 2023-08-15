@@ -1,4 +1,5 @@
 import React, { useContext, useState } from 'react';
+import { isEmpty } from 'lodash';
 import PropertyList from '../../../PropertyList';
 import { ExtendedSchema } from '../../../types';
 import s from './style.module.less';
@@ -48,7 +49,8 @@ export default function GenericObjectInput(props: Props) {
     setValues: (newValue) => {
       onChange?.(removeEmpty(newValue));
     },
-    fieldValidators: subFieldValidator,
+    fieldValidators:
+      propertyContext?.item?.isRequired || !isEmpty(value) ? subFieldValidator : undefined,
   };
 
   return (
