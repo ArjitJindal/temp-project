@@ -17,7 +17,7 @@ script-src 'self' https://cdn.heapanalytics.com https://heapanalytics.com 'sha25
 style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://heapanalytics.com;
 object-src 'none';
 base-uri 'self';
-connect-src 'self' *.amazonaws.com https://api-js.mixpanel.com https://*.${domain} https://ipinfo.io https://*.ingest.sentry.io https://heapanalytics.com;
+connect-src 'self' *.amazonaws.com https://*.${domain} https://ipinfo.io https://*.ingest.sentry.io https://heapanalytics.com;
 font-src 'self' https://fonts.gstatic.com https://heapanalytics.com;
 frame-src 'self' https://*.${domain};
 img-src 'self' data: https://s.gravatar.com https://*.wp.com https://cdnjs.cloudflare.com https://platform.slack-edge.com https://heapanalytics.com;

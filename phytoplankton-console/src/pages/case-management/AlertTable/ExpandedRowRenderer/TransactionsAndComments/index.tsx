@@ -4,7 +4,6 @@ import Comments from './Comments';
 import { useCursorQuery, useQuery } from '@/utils/queries/hooks';
 import { ALERT_ITEM, ALERT_ITEM_TRANSACTION_LIST } from '@/utils/queries/keys';
 import { useApi } from '@/api';
-import { useApiTime } from '@/utils/tracker';
 import { DEFAULT_PARAMS_STATE } from '@/components/library/Table/consts';
 import TransactionsTable, {
   TransactionsTableParams,
@@ -29,7 +28,6 @@ export default function TransactionsAndComments(props: Props) {
   const alertId = alert.alertId;
 
   const api = useApi();
-  const measure = useApiTime();
 
   const [params, setParams] = useState<TransactionsTableParams>(DEFAULT_PARAMS_STATE);
 
@@ -41,37 +39,33 @@ export default function TransactionsAndComments(props: Props) {
       }
       const [sortField, sortOrder] = params.sort[0] ?? [];
 
-      return await measure(
-        () =>
-          api.getAlertTransactionList({
-            ...FIXED_API_PARAMS,
-            ...params,
-            alertId: alertId,
-            start: from,
-            page: params.page,
-            pageSize: params.pageSize,
-            userId: params.userFilterMode === 'ALL' ? params.userId : undefined,
-            originUserId: params.userFilterMode === 'ORIGIN' ? params.userId : undefined,
-            destinationUserId: params.userFilterMode === 'DESTINATION' ? params.userId : undefined,
-            sortField: sortField ?? undefined,
-            sortOrder: sortOrder ?? undefined,
-            filterOriginPaymentMethodId: params.originPaymentMethodId,
-            filterDestinationPaymentMethodId: params.destinationPaymentMethodId,
-            filterTransactionId: params.transactionId,
-            filterOriginCurrencies: params.originCurrenciesFilter as CurrencyCode[],
-            filterDestinationCurrencies: params.destinationCurrenciesFilter as CurrencyCode[],
-            filterOriginPaymentMethods: params.originMethodFilter
-              ? [params.originMethodFilter]
-              : undefined,
-            filterDestinationPaymentMethods: params.destinationMethodFilter
-              ? [params.destinationMethodFilter]
-              : undefined,
-            filterTransactionType: params.type as TransactionType,
-            beforeTimestamp: params.timestamp ? dayjs(params.timestamp[1]).valueOf() : undefined,
-            afterTimestamp: params.timestamp ? dayjs(params.timestamp[0]).valueOf() : undefined,
-          }),
-        'Get Alert Transactions',
-      );
+      return await api.getAlertTransactionList({
+        ...FIXED_API_PARAMS,
+        ...params,
+        alertId: alertId,
+        start: from,
+        page: params.page,
+        pageSize: params.pageSize,
+        userId: params.userFilterMode === 'ALL' ? params.userId : undefined,
+        originUserId: params.userFilterMode === 'ORIGIN' ? params.userId : undefined,
+        destinationUserId: params.userFilterMode === 'DESTINATION' ? params.userId : undefined,
+        sortField: sortField ?? undefined,
+        sortOrder: sortOrder ?? undefined,
+        filterOriginPaymentMethodId: params.originPaymentMethodId,
+        filterDestinationPaymentMethodId: params.destinationPaymentMethodId,
+        filterTransactionId: params.transactionId,
+        filterOriginCurrencies: params.originCurrenciesFilter as CurrencyCode[],
+        filterDestinationCurrencies: params.destinationCurrenciesFilter as CurrencyCode[],
+        filterOriginPaymentMethods: params.originMethodFilter
+          ? [params.originMethodFilter]
+          : undefined,
+        filterDestinationPaymentMethods: params.destinationMethodFilter
+          ? [params.destinationMethodFilter]
+          : undefined,
+        filterTransactionType: params.type as TransactionType,
+        beforeTimestamp: params.timestamp ? dayjs(params.timestamp[1]).valueOf() : undefined,
+        afterTimestamp: params.timestamp ? dayjs(params.timestamp[0]).valueOf() : undefined,
+      });
     },
   );
 
@@ -79,13 +73,9 @@ export default function TransactionsAndComments(props: Props) {
     if (alertId == null) {
       throw new Error(`Unable to fetch alert, id is empty`);
     }
-    const alert = await measure(
-      () =>
-        api.getAlert({
-          alertId,
-        }),
-      'Get Alert',
-    );
+    const alert = await api.getAlert({
+      alertId,
+    });
     return alert;
   });
 

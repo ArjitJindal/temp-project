@@ -8,7 +8,6 @@ import COLORS from '../ui/colors';
 import Toggle from '../library/Toggle';
 import s from './styles.module.less';
 import ArrowLeftSLine from '@/components/ui/icons/Remix/system/arrow-left-s-line.react.svg';
-import { usePageTimeLoadTracker, usePageViewTimeTracker } from '@/utils/tracker';
 import { isSuperAdmin, useAuth0User } from '@/utils/user-utils';
 
 export const PAGE_WRAPPER_PADDING = 16;
@@ -33,8 +32,6 @@ export interface PageWrapperProps {
 
 export default function PageWrapper(props: PageWrapperProps) {
   const [isSuperAdminMode, setIsSuperAdminMode] = useState(false);
-  usePageViewTimeTracker();
-  usePageTimeLoadTracker();
 
   return (
     <PageWrapperContext.Provider value={{ superAdminMode: isSuperAdminMode }}>

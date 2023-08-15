@@ -9,7 +9,6 @@ import { UI_SETTINGS } from './ui-settings';
 import style from './index.module.less';
 import { Comment as ApiComment, Case, InternalBusinessUser, InternalConsumerUser } from '@/apis';
 import UserDetails from '@/pages/users-item/UserDetails';
-import { usePageViewTracker } from '@/utils/tracker';
 import { useScrollToFocus } from '@/utils/hooks';
 import { useQueries } from '@/utils/queries/hooks';
 import { ALERT_ITEM_COMMENTS } from '@/utils/queries/keys';
@@ -41,7 +40,6 @@ function CaseDetails(props: Props) {
   const { tab = 'user-details' } = useParams<'list' | 'id' | 'tab'>();
   const { caseItem, headerStickyElRef } = props;
   const user = caseItem.caseUsers?.origin ?? caseItem.caseUsers?.destination ?? undefined;
-  usePageViewTracker('User Case Details');
   useScrollToFocus();
   const settings = useSettings();
   const isMLDemoEnabled = useFeatureEnabled('MACHINE_LEARNING_DEMO');

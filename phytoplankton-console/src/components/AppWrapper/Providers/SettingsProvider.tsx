@@ -11,7 +11,6 @@ import {
   RiskLevel,
 } from '@/apis';
 import { capitalizeWords } from '@/utils/tags';
-import { useApiTime } from '@/utils/tracker';
 import { useQuery } from '@/utils/queries/hooks';
 import { SETTINGS } from '@/utils/queries/keys';
 import { usePrevious } from '@/utils/hooks';
@@ -32,11 +31,10 @@ export default function SettingsProvider(props: {
 }) {
   const globalFeatures = props.globalFeatures;
   const api = useApi();
-  const measure = useApiTime();
 
   const queryResults = useQuery(
     SETTINGS(),
-    (): Promise<TenantSettings> => measure(() => api.getTenantsSettings(), 'Tenant Settings'),
+    (): Promise<TenantSettings> => api.getTenantsSettings(),
   );
 
   const previousQueryResults = usePrevious(queryResults);

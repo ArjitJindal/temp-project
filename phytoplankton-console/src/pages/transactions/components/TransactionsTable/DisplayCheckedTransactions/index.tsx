@@ -12,7 +12,6 @@ import TransactionsTable, {
 } from '@/pages/transactions/components/TransactionsTable';
 import { useCursorQuery } from '@/utils/queries/hooks';
 import { TRANSACTIONS_LIST } from '@/utils/queries/keys';
-import { useApiTime } from '@/utils/tracker';
 import InformationIcon from '@/components/ui/icons/Remix/system/information-line.react.svg';
 import COLORS from '@/components/ui/colors';
 import { RULE_ACTIONS } from '@/apis/models-custom/RuleAction';
@@ -34,27 +33,22 @@ const DisplayCheckedTransactions = (props: Props) => {
     return { value: action, label: action };
   });
   const api = useApi();
-  const measure = useApiTime();
 
   const queryResult = useCursorQuery(
     TRANSACTIONS_LIST({ ...params, caseUserId }),
     async ({ from }) => {
-      return await measure(
-        () =>
-          api.getTransactionsList({
-            ...transactionParamsToRequest(params),
-            start: from,
-            filterDestinationUserId: props.alert.ruleHitMeta?.hitDirections?.includes('DESTINATION')
-              ? caseUserId
-              : undefined,
-            filterOriginUserId: props.alert.ruleHitMeta?.hitDirections?.includes('ORIGIN')
-              ? caseUserId
-              : undefined,
-            filterUserId: !props.alert.ruleHitMeta?.hitDirections ? caseUserId : undefined,
-            filterRuleInstancesExecuted: [alert.ruleInstanceId],
-          }),
-        'Transactions List',
-      );
+      return await api.getTransactionsList({
+        ...transactionParamsToRequest(params),
+        start: from,
+        filterDestinationUserId: props.alert.ruleHitMeta?.hitDirections?.includes('DESTINATION')
+          ? caseUserId
+          : undefined,
+        filterOriginUserId: props.alert.ruleHitMeta?.hitDirections?.includes('ORIGIN')
+          ? caseUserId
+          : undefined,
+        filterUserId: !props.alert.ruleHitMeta?.hitDirections ? caseUserId : undefined,
+        filterRuleInstancesExecuted: [alert.ruleInstanceId],
+      });
     },
   );
   const count = useMemo(() => {

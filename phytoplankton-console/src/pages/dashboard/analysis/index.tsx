@@ -9,7 +9,6 @@ import TeamPerformanceCard from './components/TeamPerformanceCard';
 import OverviewCard from './components/OverviewCard';
 import PageWrapper from '@/components/PageWrapper';
 import { useFeatureEnabled } from '@/components/AppWrapper/Providers/SettingsProvider';
-import { usePageViewTracker } from '@/utils/tracker';
 import { useI18n } from '@/locales';
 import Button from '@/components/library/Button';
 import IconSetting from '@/components/ui/icons/Remix/system/settings-2-line.react.svg';
@@ -46,7 +45,6 @@ const DEFAULT_VALUES = {
 type DashboardSettings = Record<KeyValues, boolean>;
 
 function Analysis() {
-  usePageViewTracker('Dashboard Analysis Page');
   const isPulseEnabled = useFeatureEnabled('PULSE');
   const i18n = useI18n();
   const [drawerVisible, setDrawerVisible] = useState(false);

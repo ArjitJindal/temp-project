@@ -13,7 +13,6 @@ import { Comment, InternalBusinessUser, InternalConsumerUser } from '@/apis';
 import { useApi } from '@/api';
 import AsyncResourceRenderer from '@/components/common/AsyncResourceRenderer';
 import * as Card from '@/components/ui/Card';
-import { useApiTime, usePageViewTracker } from '@/utils/tracker';
 import { useQuery } from '@/utils/queries/hooks';
 import { UI_SETTINGS } from '@/pages/users-item/ui-settings';
 import { USERS_ITEM_BY_TYPE } from '@/utils/queries/keys';
@@ -31,10 +30,8 @@ import BrainIcon from '@/components/ui/icons/brain-icon.react.svg';
 
 export default function UserItem() {
   const { list, id, tab = 'user-details' } = useParams<'list' | 'id' | 'tab'>(); // todo: handle nulls properly
-  usePageViewTracker('User Item');
   const api = useApi();
 
-  const measure = useApiTime();
   const queryClient = useQueryClient();
   const isMLDemoEnabled = useFeatureEnabled('MACHINE_LEARNING_DEMO');
   const isCrmEnabled = useFeatureEnabled('CRM');
@@ -47,8 +44,8 @@ export default function UserItem() {
         throw new Error(`Id is not defined`);
       }
       return list === 'consumer'
-        ? measure(() => api.getConsumerUsersItem({ userId: id }), 'Consumer User Item')
-        : measure(() => api.getBusinessUsersItem({ userId: id }), 'Business User Item');
+        ? api.getConsumerUsersItem({ userId: id })
+        : api.getBusinessUsersItem({ userId: id });
     },
   );
 

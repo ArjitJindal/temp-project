@@ -6,7 +6,6 @@ import { AllParams } from '@/components/library/Table/types';
 import { DEFAULT_PARAMS_STATE } from '@/components/library/Table/consts';
 import { SANCTIONS_SEARCH, SANCTIONS_SEARCH_HISTORY } from '@/utils/queries/keys';
 import { LoadingCard } from '@/components/ui/Card';
-import { useApiTime, usePageViewTracker } from '@/utils/tracker';
 import Button from '@/components/library/Button';
 import SanctionsTable from '@/components/SanctionsTable';
 import { SanctionsSearchType } from '@/apis';
@@ -30,7 +29,6 @@ interface Props {
 export function SanctionsSearchTable(props: Props) {
   const { searchId } = props;
   const api = useApi();
-  usePageViewTracker('Sanctions Search Page');
 
   const showSearchHistory = Boolean(searchId);
   const searchHistoryQueryResults = useQuery(
@@ -39,10 +37,7 @@ export function SanctionsSearchTable(props: Props) {
       if (searchId == null) {
         throw new Error(`Unable to get search, searchId is empty!`);
       }
-      return measure(
-        () => api.getSanctionsSearchSearchId({ searchId: searchId }),
-        'Get Sanctions Search History by ID',
-      );
+      return api.getSanctionsSearchSearchId({ searchId: searchId });
     },
     { enabled: showSearchHistory },
   );
@@ -79,8 +74,6 @@ export function SanctionsSearchTable(props: Props) {
     },
     { enabled: searchEnabled },
   );
-  const measure = useApiTime();
-
   return showSearchHistory && isLoading(searchHistoryQueryResponse) ? (
     <LoadingCard />
   ) : (

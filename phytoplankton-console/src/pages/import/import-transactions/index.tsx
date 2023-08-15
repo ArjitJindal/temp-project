@@ -10,7 +10,6 @@ import { DEFAULT_PARAMS_STATE } from '@/components/library/Table/consts';
 import QueryResultsTable from '@/components/common/QueryResultsTable';
 import { useQuery } from '@/utils/queries/hooks';
 import { TRANSACTION_FILES } from '@/utils/queries/keys';
-import { usePageViewTracker } from '@/utils/tracker';
 import { ColumnHelper } from '@/components/library/Table/columnHelper';
 import TimestampDisplay from '@/components/ui/TimestampDisplay';
 import { dayjs, DEFAULT_DATE_TIME_FORMAT } from '@/utils/dayjs';
@@ -28,7 +27,6 @@ function getStatusColor(status: string): string {
 }
 
 const TableList: React.FC = () => {
-  usePageViewTracker('Import Transactions Page');
   const helper = new ColumnHelper<TableListItem>();
   const columns: TableColumn<TableListItem>[] = [
     helper.simple<'id'>({

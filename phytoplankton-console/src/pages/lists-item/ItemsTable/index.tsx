@@ -10,7 +10,6 @@ import { usePaginatedQuery } from '@/utils/queries/hooks';
 import { LISTS_ITEM_TYPE } from '@/utils/queries/keys';
 import { getListSubtypeTitle, Metadata } from '@/pages/lists/helpers';
 import NewValueInput from '@/pages/lists/NewListDrawer/NewValueInput';
-import { useApiTime } from '@/utils/tracker';
 import { CommonParams, TableRefType } from '@/components/library/Table/types';
 import { DEFAULT_PARAMS_STATE } from '@/components/library/Table/consts';
 import { ColumnHelper } from '@/components/library/Table/columnHelper';
@@ -157,10 +156,9 @@ export default function ItemsTable(props: Props) {
     [api, listId],
   );
   const [params, setParams] = useState<CommonParams>(DEFAULT_PARAMS_STATE);
-  const measure = useApiTime();
 
   const listResult = usePaginatedQuery(LISTS_ITEM_TYPE(listId, listType), async ({ page }) => {
-    const response = await measure(() => api.getListItems({ listId, page }), 'Get List Items');
+    const response = await api.getListItems({ listId, page });
     const data: TableItem[] = [
       ...response.map(
         ({ key, metadata }): TableItem => ({

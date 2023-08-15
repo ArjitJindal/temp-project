@@ -2,7 +2,6 @@ import React from 'react';
 import cn from 'clsx';
 import s from './style.module.less';
 import CloseLineIcon from '@/components/ui/icons/Remix/system/close-line.react.svg';
-import { useButtonTracker } from '@/utils/tracker';
 
 export interface Props {
   buttonText?: React.ReactNode;
@@ -15,16 +14,12 @@ export interface Props {
 }
 
 export default function QuickFilterButton(props: Props) {
-  const { icon, buttonText, analyticsName, onClick, isActive, onClear, children } = props;
-  const buttonTracker = useButtonTracker();
+  const { icon, buttonText, onClick, isActive, onClear, children } = props;
   return (
     <button
       className={cn(s.root, isActive && s.isActive)}
       onClick={() => {
         onClick?.();
-        if (analyticsName) {
-          buttonTracker(analyticsName);
-        }
       }}
     >
       {icon && <div className={s.icon}>{icon}</div>}

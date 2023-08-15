@@ -1,7 +1,6 @@
 import React from 'react';
 import { useNavigate, useParams } from 'react-router';
 import ReportsTable from './components/ReportsTable';
-import { useApiTime, usePageViewTracker } from '@/utils/tracker';
 import { useI18n } from '@/locales';
 import { useQuery } from '@/utils/queries/hooks';
 import { Report } from '@/apis';
@@ -12,10 +11,8 @@ import AsyncResourceRenderer from '@/components/common/AsyncResourceRenderer';
 import { useApi } from '@/api';
 
 const ReportsList = () => {
-  usePageViewTracker('Reports List Page');
   const i18n = useI18n();
   const api = useApi();
-  const measure = useApiTime();
 
   const navigate = useNavigate();
   const { reportId } = useParams<{ reportId: string }>();
@@ -24,13 +21,9 @@ const ReportsList = () => {
     if (reportId == null) {
       return null;
     }
-    return await measure(
-      () =>
-        api.getReportsReportId({
-          reportId,
-        }),
-      'Reports Item',
-    );
+    return await api.getReportsReportId({
+      reportId,
+    });
   });
 
   return (

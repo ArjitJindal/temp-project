@@ -17,10 +17,8 @@ import FontSizeIcon from '@/components/ui/icons/Remix/editor/font-size.react.svg
 import PulseLineIcon from '@/components/ui/icons/Remix/health/pulse-line.react.svg';
 import TimeLineIcon from '@/components/ui/icons/Remix/system/timer-line.react.svg';
 import { parseListType, stringifyListType } from '@/pages/lists/helpers';
-import { usePageViewTracker } from '@/utils/tracker';
 
 export default function CreatedLists() {
-  usePageViewTracker('Created List Item Page');
   const params = useParams<'id' | 'type'>();
   const listType = parseListType(params.type);
   const listId = params.id;

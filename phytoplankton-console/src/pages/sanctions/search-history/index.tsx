@@ -13,7 +13,6 @@ import { DEFAULT_PARAMS_STATE } from '@/components/library/Table/consts';
 import { SANCTIONS_SEARCH } from '@/utils/queries/keys';
 import { SanctionsSearchHistory } from '@/apis/models/SanctionsSearchHistory';
 import Id from '@/components/ui/Id';
-import { useApiTime, usePageViewTracker } from '@/utils/tracker';
 import { Dayjs } from '@/utils/dayjs';
 import DatePicker from '@/components/ui/DatePicker';
 import { ColumnHelper } from '@/components/library/Table/columnHelper';
@@ -29,28 +28,21 @@ type TableSearchParams = CommonParams & {
 };
 
 export const SanctionsSearchHistoryTable: React.FC = () => {
-  usePageViewTracker('Sanctions Search History Page');
   const api = useApi();
   const [params, setParams] = useState<AllParams<TableSearchParams>>(DEFAULT_PARAMS_STATE);
-
-  const measure = useApiTime();
 
   const queryResults = usePaginatedQuery<SanctionsSearchHistory>(
     SANCTIONS_SEARCH(params),
     async () => {
       const { createdAt, searchTerm, types, ...rest } = params;
       const [start, end] = createdAt ?? [];
-      const response = await measure(
-        () =>
-          api.getSanctionsSearch({
-            afterTimestamp: start ? start.startOf('day').valueOf() : 0,
-            beforeTimestamp: end ? end.endOf('day').valueOf() : Number.MAX_SAFE_INTEGER,
-            searchTerm,
-            types,
-            ...rest,
-          }),
-        'Get Sanctions Search',
-      );
+      const response = await api.getSanctionsSearch({
+        afterTimestamp: start ? start.startOf('day').valueOf() : 0,
+        beforeTimestamp: end ? end.endOf('day').valueOf() : Number.MAX_SAFE_INTEGER,
+        searchTerm,
+        types,
+        ...rest,
+      });
 
       return {
         total: response?.total || 0,

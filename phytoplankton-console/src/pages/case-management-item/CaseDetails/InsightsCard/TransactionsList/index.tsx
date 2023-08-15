@@ -9,7 +9,6 @@ import { useCursorQuery } from '@/utils/queries/hooks';
 import { TRANSACTIONS_LIST } from '@/utils/queries/keys';
 import { DEFAULT_PAGE_SIZE, DEFAULT_PARAMS_STATE } from '@/components/library/Table/consts';
 import { useDeepEqualEffect } from '@/utils/hooks';
-import { useApiTime } from '@/utils/tracker';
 
 interface Props {
   userId: string;
@@ -20,7 +19,6 @@ export default function TransactionsList(props: Props) {
   const { userId, selectorParams } = props;
   // todo: reset table params when selector params changed
   const [tableParams, setTableParams] = useState<TransactionsTableParams>(DEFAULT_PARAMS_STATE);
-  const measure = useApiTime();
   useDeepEqualEffect(() => {
     const pageSize = DEFAULT_PAGE_SIZE;
 
@@ -40,20 +38,16 @@ export default function TransactionsList(props: Props) {
     }),
 
     async ({ from }) => {
-      return await measure(
-        () =>
-          api.getTransactionsList({
-            ...FIXED_API_PARAMS,
-            ...tableParams,
-            pageSize: tableParams.pageSize,
-            start: from,
-            filterUserId: userId,
-            filterStatus: selectorParams.selectedRuleActions,
-            includeEvents: true,
-            includeUsers: true,
-          }),
-        'Get transactions list',
-      );
+      return await api.getTransactionsList({
+        ...FIXED_API_PARAMS,
+        ...tableParams,
+        pageSize: tableParams.pageSize,
+        start: from,
+        filterUserId: userId,
+        filterStatus: selectorParams.selectedRuleActions,
+        includeEvents: true,
+        includeUsers: true,
+      });
     },
   );
 

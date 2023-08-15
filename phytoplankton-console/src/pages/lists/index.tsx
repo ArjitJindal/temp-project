@@ -10,10 +10,8 @@ import { makeUrl } from '@/utils/routing';
 import Button from '@/components/library/Button';
 import NewListDrawer from '@/pages/lists/NewListDrawer';
 import { parseListType, stringifyListType } from '@/pages/lists/helpers';
-import { usePageViewTracker } from '@/utils/tracker';
 
 export default function CreatedLists() {
-  usePageViewTracker('Created Lists Page');
   const params = useParams<'type'>();
   const listType = parseListType(params.type);
 

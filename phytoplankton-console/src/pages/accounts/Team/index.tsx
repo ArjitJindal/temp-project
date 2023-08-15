@@ -9,7 +9,6 @@ import {
 } from '@ant-design/icons';
 import { Tag } from 'antd';
 import s from './index.module.less';
-import { useApiTime, useButtonTracker } from '@/utils/tracker';
 import {
   isAtLeastAdmin,
   parseUserRole,
@@ -38,7 +37,6 @@ import Confirm from '@/components/utils/Confirm';
 export default function Team() {
   const actionRef = useRef<TableRefType>(null);
   const user = useAuth0User();
-  const measure = useApiTime();
   const api = useApi();
 
   function refreshTable() {
@@ -47,7 +45,7 @@ export default function Team() {
     }
   }
   const accountsResult = usePaginatedQuery(ACCOUNT_LIST(), async () => {
-    const accounts = await measure(() => api.getAccounts(), 'Get accounts');
+    const accounts = await api.getAccounts();
     const filteredAccounts = accounts.filter(
       (account) => parseUserRole(account.role) !== UserRole.ROOT && !account.blocked,
     );
@@ -61,14 +59,7 @@ export default function Team() {
   const [isInviteVisible, setIsInviteVisible] = useState(false);
   const [editAccount, setEditAccount] = useState<Account | null>(null);
 
-  const buttonTracker = useButtonTracker();
   const [users, loadingUsers] = useUsers();
-
-  const handleClick = (analyticsName: string) => {
-    if (analyticsName) {
-      buttonTracker(analyticsName);
-    }
-  };
 
   const tagStyle = useMemo(
     () => ({
@@ -160,7 +151,6 @@ export default function Team() {
                   <DeleteOutlined
                     onClick={() => {
                       onClick();
-                      handleClick('Delete account');
                     }}
                   />
                 )}

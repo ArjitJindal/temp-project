@@ -2,7 +2,6 @@ import React from 'react';
 import SettingsProvider from './SettingsProvider';
 import AntConfigProvider from './AntConfigProvider';
 import QueryClientProvider from './QueryClientProvider';
-import MixPanelProvider from './MixPanelProvider';
 import SideBarProvider from './SidebarProvider';
 import DemoModeProvider from './DemoModeProvider';
 import FlagrightUserProvider from './FlagrightUserProvider';
@@ -37,9 +36,7 @@ export default function Providers(props: Props) {
           <FlagrightUserProvider>
             <SettingsProvider globalFeatures={FEATURES_ENABLED as Feature[]}>
               <SideBarProvider>
-                <MixPanelProvider>
-                  <DemoModeProvider>{props.children}</DemoModeProvider>
-                </MixPanelProvider>
+                <DemoModeProvider>{props.children}</DemoModeProvider>
               </SideBarProvider>
             </SettingsProvider>
           </FlagrightUserProvider>

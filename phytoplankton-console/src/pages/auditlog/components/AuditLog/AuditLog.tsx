@@ -15,7 +15,6 @@ import { AuditLog } from '@/apis';
 import QueryResultsTable from '@/components/common/QueryResultsTable';
 import { usePaginatedQuery } from '@/utils/queries/hooks';
 import { AUDIT_LOGS_LIST } from '@/utils/queries/keys';
-import { useApiTime } from '@/utils/tracker';
 import { ColumnHelper } from '@/components/library/Table/columnHelper';
 import { DATE_TIME } from '@/components/library/Table/standardDataTypes';
 import EntityFilterButton from '@/pages/auditlog/components/EntityFilterButton';
@@ -26,7 +25,6 @@ import { dayjs, Dayjs } from '@/utils/dayjs';
 
 export default function AuditLogTable() {
   const api = useApi();
-  const measure = useApiTime();
   const [params, setParams] = useState<AllParams<TableSearchParams>>(DEFAULT_PARAMS_STATE);
   const [isDatePickerOpen, setIsDatePickerOpen] = useState<boolean>(false);
   const context = useContext(PageWrapperContext);
@@ -55,23 +53,19 @@ export default function AuditLogTable() {
       const [sortField, sortOrder] = sort[0] ?? [];
       const [start, end] = createdTimestamp ?? [];
 
-      const response = await measure(
-        () =>
-          api.getAuditlog({
-            page,
-            ...paginationParams,
-            afterTimestamp: start ? start.startOf('day').valueOf() : 0,
-            beforeTimestamp: end ? end.endOf('day').valueOf() : Number.MAX_SAFE_INTEGER,
-            sortField: sortField ?? undefined,
-            sortOrder: sortOrder ?? undefined,
-            filterTypes,
-            filterActionTakenBy,
-            includeRootUserRecords,
-            searchEntityId,
-            filterActions,
-          }),
-        'Get Audit Logs',
-      );
+      const response = await api.getAuditlog({
+        page,
+        ...paginationParams,
+        afterTimestamp: start ? start.startOf('day').valueOf() : 0,
+        beforeTimestamp: end ? end.endOf('day').valueOf() : Number.MAX_SAFE_INTEGER,
+        sortField: sortField ?? undefined,
+        sortOrder: sortOrder ?? undefined,
+        filterTypes,
+        filterActionTakenBy,
+        includeRootUserRecords,
+        searchEntityId,
+        filterActions,
+      });
 
       return {
         total: response.total,

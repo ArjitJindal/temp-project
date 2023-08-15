@@ -14,16 +14,13 @@ import UserSearchButton from '@/pages/transactions/components/UserSearchButton';
 import TagSearchButton from '@/pages/transactions/components/TagSearchButton';
 import { TRANSACTIONS_LIST } from '@/utils/queries/keys';
 import { DEFAULT_PAGE_SIZE } from '@/components/library/Table/consts';
-import { useApiTime, usePageViewTracker } from '@/utils/tracker';
 import { makeUrl, parseQueryString } from '@/utils/routing';
 import { useDeepEqualEffect } from '@/utils/hooks';
 import { InternalTransaction } from '@/apis';
 
 const TableList = () => {
-  usePageViewTracker('Transactions List Page');
   const api = useApi();
   const i18n = useI18n();
-  const measure = useApiTime();
   const navigate = useNavigate();
 
   const parsedParams = queryAdapter.deserializer(parseQueryString(location.search));
@@ -55,14 +52,10 @@ const TableList = () => {
   const queryResult = useCursorQuery<InternalTransaction>(
     TRANSACTIONS_LIST(parsedParams),
     async ({ from }) => {
-      return await measure(
-        () =>
-          api.getTransactionsList({
-            start: from || parsedParams.from,
-            ...transactionParamsToRequest(parsedParams),
-          }),
-        'Transactions List',
-      );
+      return await api.getTransactionsList({
+        start: from || parsedParams.from,
+        ...transactionParamsToRequest(parsedParams),
+      });
     },
   );
 

@@ -14,7 +14,6 @@ import QueryResultsTable from '@/components/common/QueryResultsTable';
 import { LISTS_OF_TYPE } from '@/utils/queries/keys';
 import { map } from '@/utils/asyncResource';
 import { getListSubtypeTitle, stringifyListType } from '@/pages/lists/helpers';
-import { useApiTime } from '@/utils/tracker';
 import { useHasPermissions } from '@/utils/user-utils';
 import { ColumnHelper } from '@/components/library/Table/columnHelper';
 import { DATE } from '@/components/library/Table/standardDataTypes';
@@ -33,10 +32,7 @@ function ListTable(props: Props, ref: ListTableRef) {
   const api = useApi();
   const [listToDelete, setListToDelete] = useState<ListHeader | null>(null);
   const queryClient = useQueryClient();
-  const measure = useApiTime();
-  const queryResults = useQuery(LISTS_OF_TYPE(listType), () =>
-    measure(() => api.getLists({ listType }), `Get List ${stringifyListType(listType)}`),
-  );
+  const queryResults = useQuery(LISTS_OF_TYPE(listType), () => api.getLists({ listType }));
 
   const hasListWritePermissions = useHasPermissions(['lists:all:write']);
   useImperativeHandle(ref, () => ({

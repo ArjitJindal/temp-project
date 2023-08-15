@@ -17,7 +17,6 @@ import { useI18n } from '@/locales';
 import SidebarPanel, { MenuSection } from '@/components/ui/SidebarPanel';
 import Button from '@/components/library/Button';
 import { useFeatureEnabled } from '@/components/AppWrapper/Providers/SettingsProvider';
-import { usePageViewTracker } from '@/utils/tracker';
 import { getBranding, isWhiteLabeled } from '@/utils/branding';
 import { message } from '@/components/library/Message';
 
@@ -37,7 +36,6 @@ export default function SettingsPage() {
     downloadLink.click();
   };
 
-  usePageViewTracker('Settings');
   const menuSections: (MenuSection | boolean)[] = [
     {
       name: 'ORGANIZATION',

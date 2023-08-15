@@ -15,7 +15,6 @@ import { makeUrl } from '@/utils/routing';
 import { DefaultApiGetReportsRequest } from '@/apis/types/ObjectParamAPI';
 import { useApi } from '@/api';
 import { DEFAULT_PARAMS_STATE } from '@/components/library/Table/consts';
-import { useApiTime } from '@/utils/tracker';
 import { usePaginatedQuery } from '@/utils/queries/hooks';
 import { REPORTS_LIST } from '@/utils/queries/keys';
 
@@ -26,10 +25,9 @@ export default function ReportsTable() {
   const [users, loadingUsers] = useUsers({ includeBlockedUsers: true });
   const api = useApi();
   const [params, setParams] = useState<TableParams>(DEFAULT_PARAMS_STATE);
-  const measure = useApiTime();
 
   const queryResult = usePaginatedQuery<Report>(REPORTS_LIST(params), async (paginationParams) => {
-    return await measure(() => api.getReports({ ...params, ...paginationParams }), 'Reports List');
+    return await api.getReports({ ...params, ...paginationParams });
   });
 
   const columns = helper.list([

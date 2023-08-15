@@ -22,7 +22,6 @@ import UserSearchButton from '@/pages/transactions/components/UserSearchButton';
 import QueryResultsTable from '@/components/common/QueryResultsTable';
 import { USERS } from '@/utils/queries/keys';
 import { PaginatedData, usePaginatedQuery } from '@/utils/queries/hooks';
-import { useApiTime, usePageViewTracker } from '@/utils/tracker';
 import { useDeepEqualEffect } from '@/utils/hooks';
 import UserTagSearchButton from '@/pages/transactions/components/UserTagSearchButton';
 import { DEFAULT_PAGE_SIZE, DEFAULT_PARAMS_STATE } from '@/components/library/Table/consts';
@@ -157,11 +156,9 @@ const extraFilters = (list: 'business' | 'consumer' | 'all'): ExtraFilter<UserSe
 
 const UsersTab = (props: { type: 'business' | 'consumer' | 'all' }) => {
   const type = props.type;
-  usePageViewTracker(`Users List - ${type}`);
 
   const isPulseEnabled = useFeatureEnabled('PULSE');
   const api = useApi();
-  const measure = useApiTime();
   const navigate = useNavigate();
 
   const columns: TableColumn<InternalUser>[] =
@@ -226,10 +223,10 @@ const UsersTab = (props: { type: 'business' | 'consumer' | 'all' }) => {
 
       const response =
         type === 'business'
-          ? await measure(() => api.getBusinessUsersList(queryObj), `Get Business Users List`)
+          ? await api.getBusinessUsersList(queryObj)
           : type === 'consumer'
-          ? await measure(() => api.getConsumerUsersList(queryObj), `Get Consumer Users List`)
-          : await measure(() => api.getAllUsersList(queryObj), `Get Users List`);
+          ? await api.getConsumerUsersList(queryObj)
+          : await api.getAllUsersList(queryObj);
 
       return {
         items: response.data as InternalUser[],

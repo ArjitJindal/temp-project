@@ -15,7 +15,6 @@ import { useRules } from '@/utils/rules';
 import { usePaginatedQuery } from '@/utils/queries/hooks';
 import { HITS_PER_USER_STATS } from '@/utils/queries/keys';
 import QueryResultsTable from '@/components/common/QueryResultsTable';
-import { useApiTime } from '@/utils/tracker';
 import { ColumnHelper } from '@/components/library/Table/columnHelper';
 
 export default function RuleHitCard() {
@@ -26,7 +25,6 @@ export default function RuleHitCard() {
     dayjs(),
   ]);
   const { rules, ruleInstances } = useRules();
-  const measure = useApiTime();
 
   const helper = new ColumnHelper<DashboardStatsRulesCountData>();
   const columns: TableColumn<DashboardStatsRulesCountData>[] = helper.list([
@@ -82,10 +80,7 @@ export default function RuleHitCard() {
       startTimestamp = start.startOf('day').valueOf();
       endTimestamp = end.endOf('day').valueOf();
     }
-    const result = await measure(
-      () => api.getDashboardStatsRuleHit({ startTimestamp, endTimestamp }),
-      'Hits per user stats',
-    );
+    const result = await api.getDashboardStatsRuleHit({ startTimestamp, endTimestamp });
 
     return {
       total: result.data.length,

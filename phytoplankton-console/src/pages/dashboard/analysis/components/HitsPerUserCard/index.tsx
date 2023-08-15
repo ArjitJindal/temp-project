@@ -17,7 +17,6 @@ import { usePaginatedQuery } from '@/utils/queries/hooks';
 import { HITS_PER_USER } from '@/utils/queries/keys';
 import QueryResultsTable from '@/components/common/QueryResultsTable';
 import { makeUrl } from '@/utils/routing';
-import { useApiTime } from '@/utils/tracker';
 import { ColumnHelper } from '@/components/library/Table/columnHelper';
 
 interface Props {
@@ -32,8 +31,6 @@ export default function HitsPerUserCard(props: Props) {
     dayjs().subtract(1, 'week'),
     dayjs(),
   ]);
-
-  const measure = useApiTime();
 
   const helper = new ColumnHelper<TableItem>();
   const columns: TableColumn<TableItem>[] = helper.list([
@@ -120,15 +117,11 @@ export default function HitsPerUserCard(props: Props) {
       endTimestamp = end.endOf('day').valueOf();
     }
 
-    const result = await measure(
-      () =>
-        api.getDashboardStatsHitsPerUser({
-          startTimestamp,
-          endTimestamp,
-          direction,
-        }),
-      'Dashboard Stats Hits Per User',
-    );
+    const result = await api.getDashboardStatsHitsPerUser({
+      startTimestamp,
+      endTimestamp,
+      direction,
+    });
 
     return {
       total: result.data.length,

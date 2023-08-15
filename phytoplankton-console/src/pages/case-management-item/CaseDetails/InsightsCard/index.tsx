@@ -14,7 +14,6 @@ import { TRANSACTIONS_STATS } from '@/utils/queries/keys';
 import { SortOrder, TransactionsStatsByTypesResponseData } from '@/apis';
 import { QueryResult } from '@/utils/queries/types';
 import { Currency } from '@/utils/currencies';
-import { useApiTime } from '@/utils/tracker';
 import { useSettings } from '@/components/AppWrapper/Providers/SettingsProvider';
 
 export const FIXED_API_PARAMS = {
@@ -85,22 +84,16 @@ function useStatsQuery(
   referenceCurrency: Currency,
 ): QueryResult<TransactionsStatsByTypesResponseData[]> {
   const api = useApi();
-  const measure = useApiTime();
   return useQuery(
     TRANSACTIONS_STATS('by-type', { ...selectorParams, referenceCurrency, userId }),
     async (): Promise<TransactionsStatsByTypesResponseData[]> => {
-      const response = await measure(
-        () =>
-          api.getTransactionsStatsByType({
-            ...FIXED_API_PARAMS,
-            pageSize: selectorParams.transactionsCount,
-            filterUserId: userId,
-            filterStatus: selectorParams.selectedRuleActions,
-            referenceCurrency,
-          }),
-        'Get transactions stats by type',
-      );
-
+      const response = await api.getTransactionsStatsByType({
+        ...FIXED_API_PARAMS,
+        pageSize: selectorParams.transactionsCount,
+        filterUserId: userId,
+        filterStatus: selectorParams.selectedRuleActions,
+        referenceCurrency,
+      });
       return response.data;
     },
   );

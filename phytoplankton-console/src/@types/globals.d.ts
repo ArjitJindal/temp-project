@@ -12,7 +12,6 @@ declare global {
   declare const EXPORT_ENTRIES_LIMIT: number;
   declare const SENTRY_DSN: string;
   declare const SLACK_CLIENT_ID: string;
-  declare const MIXPANEL_TOKEN: string;
   declare const HEAP_APP_ID: string;
   declare const heap: any;
 }

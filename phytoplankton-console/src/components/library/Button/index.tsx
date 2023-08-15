@@ -1,7 +1,6 @@
 import React from 'react';
 import cn from 'clsx';
 import s from './index.module.less';
-import { useButtonTracker } from '@/utils/tracker';
 import { Permission } from '@/apis';
 import { useHasPermissions } from '@/utils/user-utils';
 
@@ -36,7 +35,6 @@ function Button(props: Props, ref: React.Ref<HTMLButtonElement>) {
     size = 'MEDIUM',
     onClick,
     children,
-    analyticsName,
     isDisabled,
     isLoading,
     htmlAttrs = {},
@@ -47,14 +45,10 @@ function Button(props: Props, ref: React.Ref<HTMLButtonElement>) {
     requiredPermissions = [],
     isDanger = false,
   } = props;
-  const buttonTracker = useButtonTracker();
   const hasUserPermissions = useHasPermissions(requiredPermissions);
   const handleClick = () => {
     if (onClick) {
       onClick();
-    }
-    if (analyticsName) {
-      buttonTracker(analyticsName);
     }
   };
 

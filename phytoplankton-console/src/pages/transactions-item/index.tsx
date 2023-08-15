@@ -15,21 +15,18 @@ import { makeUrl } from '@/utils/routing';
 import { AsyncResource, failed, init, isSuccess, loading, success } from '@/utils/asyncResource';
 import { ApiException, InternalTransaction } from '@/apis';
 import { useApi } from '@/api';
-import { useApiTime, usePageViewTracker } from '@/utils/tracker';
 import PageTabs from '@/components/ui/PageTabs';
 import { keepBackUrl } from '@/utils/backUrl';
 import { useElementSize } from '@/utils/browser';
 import EntityHeader from '@/components/ui/entityPage/EntityHeader';
 
 export default function TransactionsItem() {
-  usePageViewTracker('Transactions Item');
   const [currentItem, setCurrentItem] = useState<AsyncResource<InternalTransaction>>(init());
   const currentTransactionId = isSuccess(currentItem) ? currentItem.value.transactionId : null;
   // const { id: transactionId } = useParams<'id'>();
   const { tab = 'transaction-details' } = useParams<'tab'>();
   const { id: transactionId } = useParams<'id'>();
   const api = useApi();
-  const measure = useApiTime();
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -42,13 +39,11 @@ export default function TransactionsItem() {
     }
     setCurrentItem(loading());
     let isCanceled = false;
-    measure(
-      () =>
-        api.getTransaction({
-          transactionId,
-        }),
-      'Get Transaction',
-    )
+
+    api
+      .getTransaction({
+        transactionId,
+      })
       .then((transaction) => {
         if (isCanceled) {
           return;
@@ -71,7 +66,7 @@ export default function TransactionsItem() {
     return () => {
       isCanceled = true;
     };
-  }, [currentTransactionId, transactionId, api, measure]);
+  }, [currentTransactionId, transactionId, api]);
 
   const [headerStickyElRef, setHeaderStickyElRef] = useState<HTMLDivElement | null>(null);
   const rect = useElementSize(headerStickyElRef);

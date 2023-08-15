@@ -5,7 +5,6 @@ import AlertTable from './AlertTable';
 import s from './index.module.less';
 import PageWrapper, { PageWrapperContentContainer } from '@/components/PageWrapper';
 import { useI18n } from '@/locales';
-import { usePageViewTracker } from '@/utils/tracker';
 import { useCloseSidebarByDefault } from '@/components/AppWrapper/Providers/SidebarProvider';
 import { TableSearchParams } from '@/pages/case-management/types';
 import { makeUrl, parseQueryString } from '@/utils/routing';
@@ -20,7 +19,6 @@ import PaymentApprovalsTable from '@/pages/case-management/PaymentApprovalTable'
 
 export default function CaseManagementPage() {
   const i18n = useI18n();
-  usePageViewTracker(`Case Management Page`);
   useCloseSidebarByDefault();
 
   const user = useAuth0User();

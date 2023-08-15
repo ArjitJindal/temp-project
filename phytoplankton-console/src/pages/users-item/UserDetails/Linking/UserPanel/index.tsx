@@ -2,7 +2,6 @@ import { useNavigate } from 'react-router';
 import React from 'react';
 import { UserCard } from '../UserCard';
 import { useApi } from '@/api';
-import { useApiTime } from '@/utils/tracker';
 import { useQuery } from '@/utils/queries/hooks';
 import { InternalBusinessUser, InternalConsumerUser } from '@/apis';
 import { USERS_ITEM } from '@/utils/queries/keys';
@@ -19,7 +18,6 @@ type UserPanelProps = {
 
 export const UserPanel = (props: UserPanelProps) => {
   const api = useApi();
-  const measure = useApiTime();
   const navigate = useNavigate();
   const { followed, onFollow, userId } = props;
 
@@ -30,7 +28,7 @@ export const UserPanel = (props: UserPanelProps) => {
         throw new Error(`Id is not defined`);
       }
 
-      return measure(() => api.getUsersItem({ userId }), 'Consumer User Item');
+      return api.getUsersItem({ userId });
     },
   );
 

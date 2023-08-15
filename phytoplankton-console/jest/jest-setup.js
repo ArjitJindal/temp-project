@@ -3,7 +3,6 @@ import '@testing-library/jest-dom';
 import { beforeAll } from '@jest/globals';
 
 global.React = React;
-global.MIXPANEL_TOKEN = undefined;
 global.API_BASE_PATH = undefined;
 global.AUTH0_AUDIENCE = undefined;
 global.AUTH0_DOMAIN = undefined;

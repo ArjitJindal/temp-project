@@ -8,10 +8,8 @@ import PageWrapper from '@/components/PageWrapper';
 import { useI18n } from '@/locales';
 import PageTabs from '@/components/ui/PageTabs';
 import { makeUrl } from '@/utils/routing';
-import { usePageViewTracker } from '@/utils/tracker';
 
 export default function () {
-  usePageViewTracker('Accounts');
   const { section = 'team' } = useParams<'section'>() as {
     section: 'team' | 'roles';
   };

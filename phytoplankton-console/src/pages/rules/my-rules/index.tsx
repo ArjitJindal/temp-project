@@ -17,7 +17,6 @@ import { useRules } from '@/utils/rules';
 import { getMutationAsyncResource, usePaginatedQuery } from '@/utils/queries/hooks';
 import { GET_RULE_INSTANCES } from '@/utils/queries/keys';
 import QueryResultsTable from '@/components/common/QueryResultsTable';
-import { useApiTime, usePageViewTracker } from '@/utils/tracker';
 import RuleConfigurationDrawer, {
   RuleConfigurationSimulationDrawer,
 } from '@/pages/rules/RuleConfigurationDrawer';
@@ -36,7 +35,6 @@ import { RuleHitInsightsTag } from '@/components/ui/RuleHitInsightsTag';
 const DEFAULT_SORTING: SortingParamsItem = ['ruleId', 'ascend'];
 
 const MyRule = (props: { simulationMode?: boolean }) => {
-  usePageViewTracker('My Rule Page');
   useScrollToFocus();
   const [ruleReadOnly, setRuleReadOnly] = useState<boolean>(false);
   const api = useApi();
@@ -295,9 +293,8 @@ const MyRule = (props: { simulationMode?: boolean }) => {
     handleDeleteRuleInstanceMutation,
     onEditRule,
   ]);
-  const measure = useApiTime();
   const rulesResult = usePaginatedQuery(GET_RULE_INSTANCES(params), async () => {
-    const ruleInstances = await measure(() => api.getRuleInstances(), 'Get Rule Instances');
+    const ruleInstances = await api.getRuleInstances();
     if (focusId) {
       const ruleInstance = ruleInstances.find((r) => r.id === focusId);
       if (ruleInstance) {

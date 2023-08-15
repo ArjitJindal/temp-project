@@ -10,7 +10,6 @@ import { SimulationHistoryTable } from './SimulationHistoryTable';
 import { PageWrapperContentContainer } from '@/components/PageWrapper';
 import PageTabs from '@/components/ui/PageTabs';
 import { useI18n } from '@/locales';
-import { usePageViewTracker } from '@/utils/tracker';
 import RuleConfigurationDrawer, {
   RuleConfigurationSimulationDrawer,
 } from '@/pages/rules/RuleConfigurationDrawer';
@@ -19,7 +18,6 @@ import { useHasPermissions } from '@/utils/user-utils';
 import { SimulationPageWrapper } from '@/components/SimulationPageWrapper';
 
 const TableList = () => {
-  usePageViewTracker('Rules Page');
   const { rule = 'rules-library' } = useParams<'rule'>();
   const navigate = useNavigate();
   const [currentHeaderId, setCurrentHeaderId] = useState<string>(`menu.rules.${rule}`);

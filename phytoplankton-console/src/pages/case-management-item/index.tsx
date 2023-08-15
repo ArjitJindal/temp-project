@@ -12,7 +12,6 @@ import { useQuery } from '@/utils/queries/hooks';
 import AsyncResourceRenderer from '@/components/common/AsyncResourceRenderer';
 import { ALERT_LIST, CASES_ITEM } from '@/utils/queries/keys';
 import CaseDetails from '@/pages/case-management-item/CaseDetails';
-import { useApiTime, usePageViewTracker } from '@/utils/tracker';
 import { useCloseSidebarByDefault } from '@/components/AppWrapper/Providers/SidebarProvider';
 import { isSuccess } from '@/utils/asyncResource';
 import { useUpdateCaseQueryData } from '@/utils/api/cases';
@@ -22,22 +21,16 @@ const CASE_REFETCH_INTERVAL_SECONDS = 60;
 function CaseManagementItemPage() {
   const { id: caseId } = useParams<'id'>() as { id: string };
   const api = useApi();
-  const measure = useApiTime();
   const queryClient = useQueryClient();
-  usePageViewTracker('Single Case Management Item Page');
   useCloseSidebarByDefault();
 
   const updateCaseQueryData = useUpdateCaseQueryData();
   const queryResults = useQuery(
     CASES_ITEM(caseId),
     (): Promise<Case> =>
-      measure(
-        () =>
-          api.getCase({
-            caseId,
-          }),
-        'Get Case Details',
-      ),
+      api.getCase({
+        caseId,
+      }),
     {
       refetchInterval: CASE_REFETCH_INTERVAL_SECONDS * 1000,
     },
