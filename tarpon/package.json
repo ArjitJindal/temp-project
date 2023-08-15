@@ -97,7 +97,8 @@
     "db:export": "ENV=dev ts-node --transpileOnly scripts/export-anon-tenant-data.ts",
     "qa:clean": "ENV=local ts-node --transpileOnly scripts/qa-stack-cleanup.ts",
     "verify-remote-transactions": "ts-node sxcripts/debug-rule/verify-remote-transactions.ts",
-    "get-qa-api-key": "ts-node --transpileOnly scripts/print-qa-key.ts"
+    "get-qa-api-key": "ts-node --transpileOnly scripts/print-qa-key.ts",
+    "get-qa-integration-test-api-key": "ts-node --transpileOnly scripts/print-qa-integration-test-key.ts"
   },
   "repository": {
     "type": "git",

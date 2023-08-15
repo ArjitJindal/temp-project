@@ -6,7 +6,7 @@ defaults:
 
 on:
   issue_comment:
-    types: [ created ]
+    types: [created]
 
 jobs:
   deploy:
@@ -18,7 +18,7 @@ jobs:
       - uses: khan/pull-request-comment-trigger@v1.1.0
         id: check
         with:
-          trigger: '/deploy'
+          trigger: "/deploy"
           reaction: rocket
         env:
           GITHUB_TOKEN: ${{ secrets.DEPLOY_PAT }}
@@ -45,14 +45,14 @@ jobs:
         uses: actions/setup-node@v3
         with:
           node-version: ${{ matrix.node-version }}
-          cache: 'npm'
+          cache: "npm"
           cache-dependency-path: "phytoplankton-console/yarn.lock"
       - name: Use Node.js ${{ matrix.node-version }}
         if: steps.check.outputs.triggered == 'true'
         uses: actions/setup-node@v3
         with:
           node-version: ${{ matrix.node-version }}
-          cache: 'npm'
+          cache: "npm"
           cache-dependency-path: "tarpon/package-lock.json"
       - run: npm ci
         if: steps.check.outputs.triggered == 'true'
@@ -74,7 +74,7 @@ jobs:
           printf "[default]\nregion = eu-central-1\naws_access_key_id=${{ secrets.DEV_AWS_ACCESS_KEY_ID }}\naws_secret_access_key=${{ secrets.DEV_AWS_SECRET_ACCESS_KEY }}" > ~/.aws/credentials
           cat ~/.aws/credentials
           export QA_SUBDOMAIN="qa$(echo "${{ steps.comment-branch.outputs.head_ref }}" | shasum | head -c5)"
-          
+
           if $(git diff --quiet $(git merge-base HEAD origin/main) origin/main -- tarpon); then
             echo "Using dev API"
             echo "tarpon=api" >> $GITHUB_OUTPUT
@@ -89,10 +89,12 @@ jobs:
             
             export QA_API_KEY=$(npm --silent run get-qa-api-key)
             echo "api_key=${QA_API_KEY}" >> $GITHUB_OUTPUT
+            export QA_INTEGRATION_TEST_API_KEY=$(npm --silent run get-qa-integration-test-api-key)
+            echo "integration_test_api_key=${QA_INTEGRATION_TEST_API_KEY}" >> $GITHUB_OUTPUT
             
             cd ../
           fi
-          
+
           echo "Deploying Phytoplankton"
           cd phytoplankton-console
           yarn run deploy:qa
@@ -109,12 +111,12 @@ jobs:
             |--------|--------|
             | Frontend | https://${{ steps.deploy.outputs.phyto }}.console.flagright.dev/ |
             | Backend | https://${{ steps.deploy.outputs.tarpon }}.flagright.dev/ |
-            | API Key | `${{ steps.deploy.outputs.api_key }}` | 
+            | API Key | `${{ steps.deploy.outputs.api_key }}` |
       - name: Run integration tests
         if: steps.check.outputs.triggered == 'true' && steps.deploy.outputs.tarpon != 'api'
         run: |
           cd tarpon
-          QA_SUBDOMAIN=${{ steps.deploy.outputs.tarpon }} DOMAIN=https://${{ steps.deploy.outputs.tarpon }}.flagright.dev npm run postman:integration:dev
+          QA_SUBDOMAIN=${{ steps.deploy.outputs.tarpon }} DOMAIN=https://${{ steps.deploy.outputs.tarpon }}.flagright.dev API_KEY=${{ steps.deploy.outputs.integration_test_api_key }} npm run postman:integration:dev
       - name: Set latest commit status as ${{ job.status }}
         if: always() && steps.check.outputs.triggered == 'true'
         uses: myrotvorets/set-commit-status-action@master

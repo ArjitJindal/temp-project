@@ -9,8 +9,11 @@ loadConfigEnv()
 
 const config = getConfig()
 
-async function main() {
-  let apiKey: string
+async function getApiKey() {
+  if (process.env.API_KEY) {
+    return process.env.API_KEY as string
+  }
+
   const flagrightTenantApiKeyId = config.application.INTEGRATION_TEST_API_KEY_ID
 
   const apiGateway = new APIGatewayClient({
@@ -30,7 +33,7 @@ async function main() {
         throw new Error('Missing usage plan key')
       }
 
-      apiKey = usagePlanResponse.value as unknown as string
+      return usagePlanResponse.value as unknown as string
     } catch (e) {
       throw new Error('Failed to get usage plan key')
     }
@@ -39,7 +42,10 @@ async function main() {
       'Missing required environment variables INTEGRATION_TEST_API_KEY_ID'
     )
   }
+}
 
+async function main() {
+  const apiKey = await getApiKey()
   const transactionId = uuidv4()
   const domain: string =
     process.env.DOMAIN ?? config.application.AUTH0_AUDIENCE.slice(0, -1)

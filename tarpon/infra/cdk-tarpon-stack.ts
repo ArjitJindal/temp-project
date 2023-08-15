@@ -70,7 +70,7 @@ import {
 } from '@lib/lambdas'
 import { Config } from '@lib/configs/config'
 import { Metric } from 'aws-cdk-lib/aws-cloudwatch'
-import { getQaApiKeyId, isQaEnv } from '@lib/qa'
+import { getQaApiKeyId, getQaIntegrationTestApiKeyId, isQaEnv } from '@lib/qa'
 import {
   BATCH_JOB_PAYLOAD_RESULT_KEY,
   BATCH_JOB_RUN_TYPE_RESULT_KEY,
@@ -997,7 +997,7 @@ export class CdkTarponStack extends cdk.Stack {
       const postManTenantApiKey = ApiKey.fromApiKeyId(
         this,
         'postman-tenant-api-key',
-        config.application.INTEGRATION_TEST_API_KEY_ID as string
+        getQaIntegrationTestApiKeyId()
       )
       const qaSubdomain = process.env.QA_SUBDOMAIN as string
       const usagePlan = new UsagePlan(this, `usage-plan`, {
