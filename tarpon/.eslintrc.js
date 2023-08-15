@@ -25,6 +25,8 @@ module.exports = {
       },
     ],
     'import/order': 'error',
+    // TODO: to be changed to 'error' in FR-2981
+    'import/no-cycle': 'warn',
     '@typescript-eslint/no-floating-promises': ['error', { ignoreIIFE: true }],
     "@typescript-eslint/switch-exhaustiveness-check": "error"
   },

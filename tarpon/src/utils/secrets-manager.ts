@@ -4,12 +4,10 @@ import {
   GetSecretValueCommand,
   SecretsManagerClient,
 } from '@aws-sdk/client-secrets-manager'
-import { envIs } from './env'
 import { WrappedError } from '@/utils/errors'
-import { LOCAL_AWS_CONFIG } from '@/core/middlewares/local-dev'
 
 function getSecretManager() {
-  return new SecretsManagerClient(envIs('local') ? LOCAL_AWS_CONFIG : {})
+  return new SecretsManagerClient({})
 }
 
 export async function getSecret<T>(secretId: string): Promise<T> {

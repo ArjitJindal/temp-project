@@ -6,11 +6,9 @@ import {
   Credentials as LambdaCredentials,
 } from 'aws-lambda'
 import { getCredentialsFromEvent } from './credentials'
-import { envIs } from './env'
-import { LOCAL_AWS_CONFIG } from '@/core/middlewares/local-dev'
 
 export function getS3Client(credentials?: LambdaCredentials): S3 {
-  return new S3(envIs('local') ? LOCAL_AWS_CONFIG : { credentials })
+  return new S3({ credentials })
 }
 
 export function getS3ClientByEvent(
