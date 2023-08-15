@@ -5,7 +5,10 @@ import { CaseClosingReasons } from '@/apis/models/CaseClosingReasons';
 import { neverReturn } from '@/utils/lang';
 import { humanizeConstant } from '@/utils/humanize';
 
-export const statusToOperationName = (status: AlertStatus | CaseStatus, isPastTense = false) => {
+export const statusToOperationName = (
+  status: AlertStatus | CaseStatus | 'IN_REVIEW',
+  isPastTense = false,
+) => {
   switch (status) {
     case 'OPEN':
       return 'Open';
@@ -26,6 +29,8 @@ export const statusToOperationName = (status: AlertStatus | CaseStatus, isPastTe
     case 'OPEN_ON_HOLD':
     case 'ESCALATED_ON_HOLD':
       return 'On hold';
+    case 'IN_REVIEW':
+      return 'In review';
     default:
       return neverReturn(status, humanizeConstant(status));
   }

@@ -14,7 +14,7 @@ import { useQuery } from '@/utils/queries/hooks';
 import { DASHBOARD_TEAM_STATS } from '@/utils/queries/keys';
 import { CaseStatus, AlertStatus, DashboardTeamStatsItem } from '@/apis';
 import { AutoFilter } from '@/components/library/Table/Header/Filters/AutoFilter';
-import { humanizeConstant } from '@/utils/humanize';
+import { statusToOperationName } from '@/pages/case-management/components/StatusChangeButton';
 
 interface Params extends CommonParams {
   scope: 'CASES' | 'ALERTS';
@@ -115,7 +115,7 @@ export default function TeamPerformanceCard() {
               options: (['OPEN', 'CLOSED', 'REOPENED', 'ESCALATED', 'IN_REVIEW'] as const).map(
                 (caseStatus: CaseStatus | 'IN_REVIEW') => ({
                   value: caseStatus,
-                  label: humanizeConstant(caseStatus),
+                  label: statusToOperationName(caseStatus, true),
                 }),
               ),
               mode: 'MULTIPLE',
