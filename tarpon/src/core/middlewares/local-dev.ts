@@ -6,9 +6,17 @@ import {
 } from 'aws-lambda'
 import * as jwt from 'jsonwebtoken'
 import { Credentials } from '@aws-sdk/client-sts'
+import { fromIni } from '@aws-sdk/credential-providers'
 import { getFullTenantId, getToken } from '@/lambdas/jwt-authorizer/app'
 import { JWTAuthorizerResult } from '@/@types/jwt'
 import { Permission } from '@/@types/openapi-internal/Permission'
+
+export const LOCAL_AWS_CONFIG = {
+  region: 'eu-central-1',
+  credentials: fromIni({
+    profile: 'AWSAdministratorAccess-911899431626',
+  }),
+}
 
 type Handler = APIGatewayProxyWithLambdaAuthorizerHandler<
   APIGatewayEventLambdaAuthorizerContext<Credentials>

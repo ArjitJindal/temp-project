@@ -132,20 +132,6 @@ function CommentEditor(props: Props, ref: React.Ref<CommentEditorRef>) {
           }}
           customRequest={async ({ file: f, onError, onSuccess }) => {
             const file = f as File;
-            if (process.env.ENV_NAME === 'local') {
-              uploadedFiles.push({
-                s3Key: `fake-s3-key-${Date.now()}`,
-                bucket: 'fake-bucket-name',
-                filename: file.name,
-                size: file.size,
-                downloadLink: `https://example.com/fake-download-url/${Date.now()}`,
-              });
-              onChangeValues({
-                ...values,
-                files: [...values.files, ...uploadedFiles],
-              });
-              return;
-            }
             setUploadingCount((prevCount) => prevCount + 1);
             const hideMessage = message.loading('Uploading...');
             let fileS3Key = '';

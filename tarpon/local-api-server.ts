@@ -16,6 +16,9 @@ function loadConfigToEnvs() {
   Object.entries(config.application).forEach((entry) => {
     process.env[entry[0]] = entry[1] as any
   })
+  process.env.TMP_BUCKET = 'tarpon-tmp-dev-eu-central-1'
+  process.env.IMPORT_BUCKET = 'tarpon-import-dev-eu-central-1'
+  process.env.DOCUMENT_BUCKET = 'tarpon-document-dev-eu-central-1'
 }
 
 function getAllOperationIds(apiDefinition: any) {
