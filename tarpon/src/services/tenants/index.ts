@@ -181,6 +181,7 @@ export class TenantService {
   static async getTenantInfoFromUsagePlans(): Promise<TenantBasic[]> {
     const apigateway = new APIGatewayClient({
       region: process.env.AWS_REGION,
+      maxAttempts: 10,
     })
 
     const allUsagePlans = await TenantService.getAllUsagePlans()
