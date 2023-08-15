@@ -1,6 +1,6 @@
 import { DynamoDBDocumentClient } from '@aws-sdk/lib-dynamodb'
 import { NotFound, BadRequest } from 'http-errors'
-import { omit, mergeWith, isNil } from 'lodash'
+import { omit } from 'lodash'
 import { MongoClient } from 'mongodb'
 import { UserRepository } from '../users/repositories/user-repository'
 import { UserEventRepository } from '../rules-engine/repositories/user-event-repository'
@@ -14,7 +14,7 @@ import { BusinessEntityLink } from '@/@types/openapi-internal/BusinessEntityLink
 import { UserType } from '@/@types/user/user-type'
 import { BusinessWithRulesResult } from '@/@types/openapi-internal/BusinessWithRulesResult'
 import { UserWithRulesResult } from '@/@types/openapi-internal/UserWithRulesResult'
-import { mergeObjects, pickKnownEntityFields } from '@/utils/object'
+import { mergeEntities, pickKnownEntityFields } from '@/utils/object'
 import { BusinessBase } from '@/@types/openapi-public/BusinessBase'
 import { UserBase } from '@/@types/openapi-internal/UserBase'
 import { traceable } from '@/core/xray'
@@ -189,7 +189,7 @@ export class UserManagementService {
       user = pickKnownEntityFields(user, UserBase)
     }
 
-    const updatedConsumerUser: User = mergeObjects(
+    const updatedConsumerUser: User = mergeEntities(
       user,
       userEvent.updatedConsumerUserAttributes || {}
     ) as User
@@ -228,15 +228,9 @@ export class UserManagementService {
       user = pickKnownEntityFields(user, BusinessBase)
     }
 
-    const updatedBusinessUser: Business = mergeWith(
+    const updatedBusinessUser: Business = mergeEntities(
       user,
-      userEvent.updatedBusinessUserAttributes || {},
-      function (obj, src) {
-        if (!isNil(src)) {
-          return src
-        }
-        return obj
-      }
+      userEvent.updatedBusinessUserAttributes || {}
     )
     const updatedBusinessUserResult = {
       ...updatedBusinessUser,

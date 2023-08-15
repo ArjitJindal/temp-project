@@ -58,7 +58,7 @@ import { getMongoDbClient } from '@/utils/mongoDBUtils'
 import { UserMonitoringResult } from '@/@types/openapi-public/UserMonitoringResult'
 import { UserWithRulesResult } from '@/@types/openapi-internal/UserWithRulesResult'
 import { BusinessWithRulesResult } from '@/@types/openapi-internal/BusinessWithRulesResult'
-import { mergeObjects } from '@/utils/object'
+import { mergeEntities } from '@/utils/object'
 import { background } from '@/utils/background'
 import { JWTAuthorizerResult } from '@/@types/jwt'
 import { getDynamoDbClientByEvent } from '@/utils/dynamodb'
@@ -255,7 +255,7 @@ export class RulesEngineService {
       await this.transactionEventRepository.getTransactionEvents(
         transaction.transactionId
       )
-    const updatedTransaction = mergeObjects(
+    const updatedTransaction = mergeEntities(
       {
         ...transaction,
         transactionState: transactionEvent.transactionState,

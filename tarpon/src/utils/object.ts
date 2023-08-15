@@ -1,5 +1,5 @@
 import crypto from 'crypto'
-import _ from 'lodash'
+import { pick, merge, isArray, mergeWith } from 'lodash'
 import { stringify } from 'safe-stable-stringify'
 
 export const replaceMagicKeyword = (
@@ -26,7 +26,16 @@ export function mergeObjects<T>(
   object: NotPromiseType<T>,
   ...objects: Array<NotPromiseType<T>>
 ): NotPromiseType<T> {
-  return _.merge(object, ...objects)
+  return merge(object, ...objects)
+}
+
+export function mergeEntities<T>(object: T, ...objects: Array<object>): T {
+  return mergeWith(object, ...objects, (a: object, b: object) => {
+    if (isArray(b)) {
+      return b
+    }
+    return undefined
+  })
 }
 
 class Model {
@@ -44,7 +53,7 @@ export function pickKnownEntityFields<T>(
   entity: T,
   modelClass: typeof Model
 ): T {
-  return _.pick(
+  return pick(
     entity,
     modelClass.getAttributeTypeMap().map((v) => v.name)
   ) as T

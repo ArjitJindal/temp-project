@@ -4,7 +4,6 @@ import {
   getMigrationLastCompletedTimestamp,
   updateMigrationLastCompletedTimestamp,
 } from './migration-progress'
-import { mergeObjects } from '@/utils/object'
 import { InternalTransaction } from '@/@types/openapi-internal/InternalTransaction'
 import { Transaction } from '@/@types/openapi-public/Transaction'
 import { getDynamoDbClient } from '@/utils/dynamodb'
@@ -19,6 +18,7 @@ import { HitRulesDetails } from '@/@types/openapi-public/HitRulesDetails'
 import { logger } from '@/core/logger'
 import { DynamoDbTransactionRepository } from '@/services/rules-engine/repositories/dynamodb-transaction-repository'
 import { TransactionEventRepository } from '@/services/rules-engine/repositories/transaction-event-repository'
+import { mergeEntities } from '@/utils/object'
 
 export async function replayTransactionsAndEvents(
   tenantId: string,
@@ -94,7 +94,7 @@ export async function replayTransactionsAndEvents(
       hitRules: HitRulesDetails[]
     } = { executedRules: [], hitRules: [] }
     for (const transactionEvent of transactionEvents) {
-      currentTransaction = mergeObjects(
+      currentTransaction = mergeEntities(
         {
           ...currentTransaction,
           transactionState: transactionEvent.transactionState,
