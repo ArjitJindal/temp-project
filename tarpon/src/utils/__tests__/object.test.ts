@@ -33,6 +33,21 @@ describe('mergeEntities', () => {
       a: { b: 1, c: 1 },
     })
   })
+  test('shallow merge', async () => {
+    const obj1: any = {
+      a: { b: 1 },
+      tags: [],
+    }
+    const obj2: any = {
+      a: { c: 1 },
+      tags: [1, 2],
+    }
+
+    expect(mergeEntities(obj1, obj2, false)).toStrictEqual({
+      tags: [1, 2],
+      a: { c: 1 },
+    })
+  })
   test('empty array replaces', async () => {
     const obj1: any = {
       somearray: [1, 2],

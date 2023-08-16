@@ -29,12 +29,15 @@ export function mergeObjects<T>(
   return merge(object, ...objects)
 }
 
-export function mergeEntities<T>(object: T, ...objects: Array<object>): T {
-  return mergeWith(object, ...objects, (a: any, b: any) => {
+export function mergeEntities<T>(object: T, src: object, deep = true): T {
+  return mergeWith(object, src, (a: any, b: any) => {
     if (!isNil(b) && isArray(b)) {
       return b
     }
-    return undefined
+    if (deep) {
+      return undefined
+    }
+    return b
   })
 }
 

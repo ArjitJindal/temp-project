@@ -262,7 +262,8 @@ export class UserManagementService {
 
     const updatedBusinessUser: Business = mergeEntities(
       user,
-      userEvent.updatedBusinessUserAttributes || {}
+      userEvent.updatedBusinessUserAttributes || {},
+      false
     )
     const updatedBusinessUserResult = {
       ...updatedBusinessUser,
