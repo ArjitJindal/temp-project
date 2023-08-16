@@ -1,4 +1,4 @@
-import _ from 'lodash'
+import { keyBy } from 'lodash'
 import {
   ARS_USER_AGE_RISK_HANDLERS,
   KRS_USER_AGE_RISK_HANDLERS,
@@ -8,6 +8,7 @@ import { ARS_3DSDONE_RISK_HANDLERS } from './3dsDone'
 import { ARS_IPADDRESSCOUNTRY_RISK_HANDLERS } from './ipAddressCountry'
 import { ARS_CARD_ISSUED_COUNTRY_RISK_HANDLERS } from './card-issued-country'
 import { KRS_USER_TYPE_RISK_HANDLERS } from './user-type'
+import { ARS_BANK_NAME_RISK_HANDLERS } from './bank-name'
 import { User } from '@/@types/openapi-public/User'
 import { Business } from '@/@types/openapi-internal/Business'
 import { ParameterAttributeRiskValuesParameterEnum } from '@/@types/openapi-internal/ParameterAttributeRiskValues'
@@ -48,7 +49,7 @@ const USER_RISK_FACTOR_HANDLERS: Array<UserRiskFactorValueHandler<any>> = [
   ...KRS_USER_TYPE_RISK_HANDLERS,
 ]
 
-const USER_RISK_FACTOR_HANDLERS_MAP = _.keyBy(
+const USER_RISK_FACTOR_HANDLERS_MAP = keyBy(
   USER_RISK_FACTOR_HANDLERS,
   (entry) => getRiskFactorKey(entry.entityType, entry.parameter)
 )
@@ -61,9 +62,10 @@ const TRANSACTION_RISK_FACTOR_HANDLERS: Array<
   ...ARS_3DSDONE_RISK_HANDLERS,
   ...ARS_IPADDRESSCOUNTRY_RISK_HANDLERS,
   ...ARS_CARD_ISSUED_COUNTRY_RISK_HANDLERS,
+  ...ARS_BANK_NAME_RISK_HANDLERS,
 ]
 
-const TRANSACTION_RISK_FACTOR_HANDLERS_MAP = _.keyBy(
+const TRANSACTION_RISK_FACTOR_HANDLERS_MAP = keyBy(
   TRANSACTION_RISK_FACTOR_HANDLERS,
   (entry) => getRiskFactorKey(entry.entityType, entry.parameter)
 )

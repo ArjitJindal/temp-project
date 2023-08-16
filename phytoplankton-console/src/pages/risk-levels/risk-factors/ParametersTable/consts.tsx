@@ -40,7 +40,7 @@ import { isTransactionType } from '@/utils/api/transactions';
 import { RESIDENCE_TYPES } from '@/utils/residence-types';
 import { capitalizeWords } from '@/utils/tags';
 import { useApi } from '@/api';
-import { USERS_UNIQUES } from '@/utils/queries/keys';
+import { TRANSACTIONS_UNIQUES, USERS_UNIQUES } from '@/utils/queries/keys';
 import { useQuery } from '@/utils/queries/hooks';
 import { timezones } from '@/utils/timezones';
 import { _3DS_DONE_OPTIONS } from '@/utils/3dsOptions';
@@ -95,6 +95,7 @@ export const DATA_TYPE_TO_VALUE_TYPE: { [key in DataType]: RiskValueType } = {
   BUSINESS_USER_SEGMENT: 'MULTIPLE',
   CONSUMER_USER_SEGMENT: 'MULTIPLE',
   USER_REGISTRATION_STATUS: 'MULTIPLE',
+  BANK_NAMES: 'MULTIPLE',
 };
 
 const DAY_RANGE_GRANULARITY = [
@@ -425,6 +426,26 @@ export const TRANSACTION_RISK_PARAMETERS: RiskLevelTable = [
     isDerived: true,
     parameterType: 'VARIABLE',
   },
+  {
+    parameter: 'originPaymentDetails.bankName',
+    title: 'Origin bank name',
+    description:
+      'Risk value based on origin bank name under Generic bank account, ACH, IBAN and SWIFT',
+    entity: 'TRANSACTION',
+    dataType: 'BANK_NAMES',
+    isDerived: true,
+    parameterType: 'VARIABLE',
+  },
+  {
+    parameter: 'destinationPaymentDetails.bankName',
+    title: 'Destination bank name',
+    description:
+      'Risk value based on destination bank name under Generic bank account, ACH, IBAN and SWIFT',
+    entity: 'TRANSACTION',
+    dataType: 'BANK_NAMES',
+    isDerived: true,
+    parameterType: 'VARIABLE',
+  },
 ];
 
 export const ALL_RISK_PARAMETERS = [
@@ -501,6 +522,23 @@ export const INPUT_RENDERERS: { [key in DataType]: InputRenderer<any> } = {
     const result = useQuery(USERS_UNIQUES('BUSINESS_INDUSTRY'), () =>
       api.getUsersUniques({
         field: 'BUSINESS_INDUSTRY',
+      }),
+    );
+    return (
+      <MultipleSelect
+        options={getOr(result.data, []).map((entry) => ({
+          value: entry,
+          label: entry,
+        }))}
+        {...props}
+      />
+    );
+  }) as InputRenderer<'MULTIPLE'>,
+  BANK_NAMES: ((props) => {
+    const api = useApi();
+    const result = useQuery(TRANSACTIONS_UNIQUES('BANK_NAMES'), () =>
+      api.getTransactionsUniques({
+        field: 'BANK_NAMES',
       }),
     );
     return (
@@ -877,6 +915,7 @@ export const VALUE_RENDERERS: { [key in DataType]: ValueRenderer<any> } = {
     );
   }) as ValueRenderer<'MULTIPLE'>,
   BUSINESS_INDUSTRY: DEFAULT_MULTIPLE_RENDERER,
+  BANK_NAMES: DEFAULT_MULTIPLE_RENDERER,
   TRANSACTION_TYPES: (({ value }) => {
     if (value == null) {
       return null;

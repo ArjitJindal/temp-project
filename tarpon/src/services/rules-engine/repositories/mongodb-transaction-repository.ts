@@ -1,5 +1,5 @@
 import { AggregationCursor, Document, Filter, MongoClient } from 'mongodb'
-import _ from 'lodash'
+import { isEmpty, isNil, mapKeys, omitBy, uniq } from 'lodash'
 import { getReceiverKeyId, getSenderKeyId } from '../utils'
 import {
   AuxiliaryIndexTransaction,
@@ -624,6 +624,14 @@ export class MongoDbTransactionRepository
           [`${paymentDetailsPath}.method`]: 'CARD',
         })
         break
+      case 'BANK_NAMES':
+        fieldPath = `${paymentDetailsPath}.bankName`
+        filterConditions.push({
+          [`${paymentDetailsPath}.method`]: {
+            $in: ['GENERIC_BANK_ACCOUNT', 'SWIFT', 'ACH', 'IBAN'],
+          },
+        })
+        break
       case 'TAGS_KEY':
         fieldPath = 'tags.key'
         unwindPath = 'tags'
@@ -728,12 +736,13 @@ export class MongoDbTransactionRepository
       {
         $limit: 100,
       },
-    ].filter((stage) => !_.isEmpty(stage))
+    ].filter((stage) => !isEmpty(stage))
 
     const result: string[] = await collection
       .aggregate<{ _id: string }>(pipeline)
       .map(({ _id }) => _id)
       .toArray()
+
     return result
   }
   public async getStatsByType(
@@ -1033,8 +1042,8 @@ export class MongoDbTransactionRepository
     }
     return this.getRulesEngineTransactions(
       [
-        _.mapKeys(
-          _.omitBy({ method: paymentDetails.method, ...identifiers }, _.isNil),
+        mapKeys(
+          omitBy({ method: paymentDetails.method, ...identifiers }, isNil),
           (_value, key) => `originPaymentDetails.${key}`
         ),
       ],
@@ -1070,8 +1079,8 @@ export class MongoDbTransactionRepository
     }
     return this.getRulesEngineTransactions(
       [
-        _.mapKeys(
-          _.omitBy({ method: paymentDetails.method, ...identifiers }, _.isNil),
+        mapKeys(
+          omitBy({ method: paymentDetails.method, ...identifiers }, isNil),
           (_value, key) => `destinationPaymentDetails.${key}`
         ),
       ],
@@ -1158,8 +1167,8 @@ export class MongoDbTransactionRepository
     }
     return this.getRulesEngineTransactionsCount(
       [
-        _.mapKeys(
-          _.omitBy({ method: paymentDetails.method, ...identifiers }, _.isNil),
+        mapKeys(
+          omitBy({ method: paymentDetails.method, ...identifiers }, isNil),
           (_value, key) => `originPaymentDetails.${key}`
         ),
       ],
@@ -1179,8 +1188,8 @@ export class MongoDbTransactionRepository
     }
     return this.getRulesEngineTransactionsCount(
       [
-        _.mapKeys(
-          _.omitBy({ method: paymentDetails.method, ...identifiers }, _.isNil),
+        mapKeys(
+          omitBy({ method: paymentDetails.method, ...identifiers }, isNil),
           (_value, key) => `destinationPaymentDetails.${key}`
         ),
       ],
@@ -1222,7 +1231,7 @@ export class MongoDbTransactionRepository
     filterOptions: TransactionsFilterOptions
   ): Filter<InternalTransaction> {
     const additionalFilters = [...filters]
-    if (!_.isEmpty(filterOptions.transactionAmountRange)) {
+    if (!isEmpty(filterOptions.transactionAmountRange)) {
       additionalFilters.push({
         $or: Object.entries(filterOptions.transactionAmountRange).map(
           (entry) => ({
@@ -1283,7 +1292,7 @@ export class MongoDbTransactionRepository
     const collection = db.collection<InternalTransaction>(
       TRANSACTIONS_COLLECTION(this.tenantId)
     )
-    const finalAttributesToFetch = _.uniq<keyof AuxiliaryIndexTransaction>(
+    const finalAttributesToFetch = uniq<keyof AuxiliaryIndexTransaction>(
       attributesToFetch.concat([
         'timestamp',
         'originUserId',

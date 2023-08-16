@@ -3,6 +3,7 @@ import {
   APIGatewayProxyWithLambdaAuthorizerEvent,
 } from 'aws-lambda'
 import { InternalServerError, BadRequest, NotFound } from 'http-errors'
+import { compact } from 'lodash'
 import { TransactionService } from './services/transaction-service'
 import { JWTAuthorizerResult } from '@/@types/jwt'
 import { lambdaApi } from '@/core/middlewares/lambda-api-middlewares'
@@ -206,12 +207,23 @@ export const transactionsViewHandler = lambdaApi()(
 
     handlers.registerGetTransactionsUniques(async (context, request) => {
       const { field, filter } = request
-      const result = await transactionService.getUniques({
-        field,
-        direction: 'origin',
-        filter,
-      })
-      return result.filter((item) => item != null)
+
+      const [originResult, destinationResult] = await Promise.all([
+        transactionService.getUniques({
+          field,
+          direction: 'origin',
+          filter,
+        }),
+        transactionService.getUniques({
+          field,
+          direction: 'destination',
+          filter,
+        }),
+      ])
+
+      const result = [...new Set([...originResult, ...destinationResult])]
+
+      return compact(result)
     })
 
     handlers.registerGetTransaction(async (context, request) => {

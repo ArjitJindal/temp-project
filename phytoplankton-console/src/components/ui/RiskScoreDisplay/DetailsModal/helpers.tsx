@@ -53,6 +53,7 @@ export const PARAMETER_RENDERERS: { [key in DataType]: ParameterRenderer<any> } 
   RESIDENCE_TYPES: CONSTANT_RENDERER,
   CONSUMER_USER_TYPE: CONSTANT_RENDERER,
   BUSINESS_USER_TYPE: CONSTANT_RENDERER,
+  BANK_NAMES: CONSTANT_RENDERER,
   BUSINESS_USER_SEGMENT: (value) => {
     return BUSINESS_USER_SEGMENT_OPTIONS.find((x) => x.value === value)?.label ?? value;
   },
