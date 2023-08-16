@@ -13,13 +13,14 @@ interface Props {
   getGraph: (user: string) => Promise<Graph>;
   edgeInterpolation?: EdgeInterpolation;
   edgeArrowPosition?: EdgeArrowPosition;
+  isFollowEnabled: (id: string) => boolean;
 }
 
 export default function UserGraph(props: Props) {
   const [userId, setUserId] = useState(props.userId);
   const [entity, setEntity] = useState<Graph>();
   const [followed, setFollowed] = useState([props.userId]);
-  const { getGraph } = props;
+  const { getGraph, isFollowEnabled } = props;
 
   const [nodes, setNodes] = useState<GraphNodes[]>([]);
   const [edges, setEdges] = useState<GraphEdges[]>([]);
@@ -51,6 +52,7 @@ export default function UserGraph(props: Props) {
               userId={props.userId}
               edgeInterpolation={props.edgeInterpolation}
               edgeArrowPosition={props.edgeArrowPosition}
+              isFollowEnabled={isFollowEnabled}
             />
           </div>
         </Card.Section>

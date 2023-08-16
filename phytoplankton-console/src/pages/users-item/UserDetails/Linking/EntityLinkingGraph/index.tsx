@@ -1,4 +1,4 @@
-import React, { useRef, useState } from 'react';
+import React, { useMemo, useRef, useState } from 'react';
 import {
   GraphCanvas,
   GraphCanvasRef,
@@ -22,6 +22,7 @@ type EntityLinkingProps = {
   followed: string[];
   edgeInterpolation?: EdgeInterpolation;
   edgeArrowPosition?: EdgeArrowPosition;
+  isFollowEnabled: (id: string) => boolean;
 };
 export const EntityLinkingGraph = (props: EntityLinkingProps) => {
   const graphRef = useRef<GraphCanvasRef | null>(null);
@@ -34,6 +35,7 @@ export const EntityLinkingGraph = (props: EntityLinkingProps) => {
     onFollow,
     edgeArrowPosition = 'none',
     edgeInterpolation = 'linear',
+    isFollowEnabled,
   } = props;
   const { selections, actives, onNodePointerOver, onNodePointerOut } = useSelection({
     ref: graphRef,
@@ -41,7 +43,11 @@ export const EntityLinkingGraph = (props: EntityLinkingProps) => {
   });
 
   const [selectedNode, setSelectedNode] = useState<InternalGraphNode>();
-  const selectedUserId = selectedNode ? selectedNode.id.replace('user:', '') : '';
+
+  const selectedUserId = useMemo(
+    () => (selectedNode ? selectedNode.id.replace('user:', '') : ''),
+    [selectedNode],
+  );
 
   return (
     <>
@@ -49,12 +55,22 @@ export const EntityLinkingGraph = (props: EntityLinkingProps) => {
         <>
           {selectedNode.id.startsWith('user') && userId !== selectedUserId && (
             <div className={s.contextMenu}>
-              <UserPanel followed={followed} onFollow={onFollow} userId={selectedUserId} />
+              <UserPanel
+                followed={followed}
+                onFollow={onFollow}
+                userId={selectedUserId}
+                isFollowEnabled={isFollowEnabled(selectedNode.id || '')}
+              />
             </div>
           )}
           {!selectedNode.id.startsWith('user') && (
             <div className={s.contextMenu}>
-              <AttributePanel attributeId={selectedNode.id} />
+              <AttributePanel
+                attributeId={selectedNode.id}
+                isFollowEnabled={isFollowEnabled(selectedNode.id || '')}
+                followed={followed}
+                onFollow={onFollow}
+              />
             </div>
           )}
         </>
@@ -114,14 +130,14 @@ const getIcon = (id: string): string => {
   if (id.startsWith('emailAddress')) {
     return `/linking/email.png`;
   }
-  if (id.startsWith('paymentIdentifier')) {
-    return `/linking/card.png`;
-  }
   if (id.startsWith('address')) {
     return `/linking/location.png`;
   }
   if (id.startsWith('contactNumber')) {
     return `/linking/phone.png`;
+  }
+  if (id.startsWith('payment')) {
+    return `/linking/card.png`;
   }
   return '';
 };

@@ -14,12 +14,13 @@ type UserPanelProps = {
   userId: string;
   followed: string[];
   onFollow: (userId: string) => void;
+  isFollowEnabled: boolean;
 };
 
 export const UserPanel = (props: UserPanelProps) => {
   const api = useApi();
   const navigate = useNavigate();
-  const { followed, onFollow, userId } = props;
+  const { followed, onFollow, userId, isFollowEnabled } = props;
 
   const queryResult = useQuery<InternalConsumerUser | InternalBusinessUser>(
     USERS_ITEM(userId),
@@ -47,7 +48,7 @@ export const UserPanel = (props: UserPanelProps) => {
             >
               Go to user details
             </Button>
-            {!followed.includes(user.userId) && (
+            {!followed.includes(user.userId) && isFollowEnabled && (
               <Button type="SECONDARY" onClick={() => onFollow(user.userId)}>
                 Follow
               </Button>

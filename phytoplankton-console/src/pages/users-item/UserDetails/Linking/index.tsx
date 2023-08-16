@@ -32,6 +32,7 @@ const Linking = (props: Props) => {
           getGraph={(userId) => api.getUserEntity({ userId })}
           edgeInterpolation={'linear'}
           edgeArrowPosition={'none'}
+          isFollowEnabled={(id: string) => id.startsWith('user:')}
         />
       )}
       {scope === 'TXN' && (
@@ -40,6 +41,7 @@ const Linking = (props: Props) => {
           getGraph={(userId) => api.getTxnLinking({ userId })}
           edgeInterpolation={'curved'}
           edgeArrowPosition={'end'}
+          isFollowEnabled={(id: string) => id.startsWith('payment:') || id.startsWith('user:')}
         />
       )}
     </Card.Root>

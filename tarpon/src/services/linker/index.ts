@@ -1,5 +1,5 @@
 import { Collection } from 'mongodb'
-import { uniq, maxBy, max } from 'lodash'
+import { uniq, maxBy, max, compact } from 'lodash'
 import {
   getMongoDbClient,
   lookupPipelineStage,
@@ -106,22 +106,50 @@ export class LinkerService {
     const userCollection = db.collection<InternalUser>(
       USERS_COLLECTION(this.tenantId)
     )
+
+    const isPaymentId = userId.startsWith('payment:')
+    userId = userId.replace('payment:', '')
+
+    const projectPipelineStage = {
+      $project: {
+        _id: 1,
+        count: 1,
+        users: {
+          legalEntity: 1,
+          userDetails: 1,
+          userId: 1,
+          type: 1,
+        },
+        actualIds: 1,
+      },
+    }
+
     const [credit, debit, user] = await Promise.all([
       txnCollection
         .aggregate<{
           _id: string
           count: number
           users: InternalUser[]
+          actualIds: string[]
         }>([
           {
             $match: {
-              originUserId: userId,
+              ...(!isPaymentId
+                ? { originUserId: userId }
+                : { originPaymentMethodId: userId }),
             },
           },
           {
             $group: {
-              _id: '$destinationUserId',
+              _id: {
+                $ifNull: ['$destinationUserId', '$destinationPaymentMethodId'],
+              },
               count: { $sum: 1 },
+              actualIds: {
+                $addToSet: {
+                  $ifNull: ['$destinationUserId', null],
+                },
+              },
             },
           },
           lookupPipelineStage({
@@ -130,6 +158,7 @@ export class LinkerService {
             foreignField: 'userId',
             as: 'users',
           }),
+          projectPipelineStage,
         ])
         .toArray(),
       txnCollection
@@ -137,16 +166,26 @@ export class LinkerService {
           _id: string
           count: number
           users: InternalUser[]
+          actualIds: string[]
         }>([
           {
             $match: {
-              destinationUserId: userId,
+              ...(!isPaymentId
+                ? { destinationUserId: userId }
+                : { destinationPaymentMethodId: userId }),
             },
           },
           {
             $group: {
-              _id: '$originUserId',
+              _id: {
+                $ifNull: ['$originUserId', '$originPaymentMethodId'],
+              },
               count: { $sum: 1 },
+              actualIds: {
+                $addToSet: {
+                  $ifNull: ['$originUserId', null],
+                },
+              },
             },
           },
           lookupPipelineStage({
@@ -155,17 +194,27 @@ export class LinkerService {
             foreignField: 'userId',
             as: 'users',
           }),
+          projectPipelineStage,
         ])
         .toArray(),
       userCollection.findOne({ userId }),
     ])
 
+    const allUserIds = compact([
+      ...credit.flatMap((c) => c.actualIds),
+      ...debit.flatMap((d) => d.actualIds),
+      ...(isPaymentId ? [userId] : []),
+    ])
+
+    const userUpdatedId = `${isPaymentId ? 'payment' : 'user'}:${userId}`
+
     const nodes: GraphNodes[] = [
       {
-        id: `user:${userId}`,
-        label: getUserName(user),
+        id: userUpdatedId,
+        label: isPaymentId ? '' : getUserName(user),
       },
     ]
+
     const edges: GraphEdges[] = []
 
     const SCALE = 3 // How thick should our thickest line be for transaction volume
@@ -173,28 +222,40 @@ export class LinkerService {
       max([maxBy(credit, 'count')?.count, maxBy(debit, 'count')?.count]) || 10
 
     credit.forEach((userTxns) => {
+      const userSourceId = `${
+        allUserIds.includes(userTxns._id) ? 'user' : 'payment'
+      }:${userTxns._id}`
+
       nodes.push({
-        id: `user:${userTxns._id}`,
-        label: getUserName(userTxns.users[0]),
+        id: userSourceId,
+        label: allUserIds.includes(userTxns._id)
+          ? getUserName(userTxns.users[0])
+          : '',
       })
       edges.push({
         id: `${userTxns._id}-${userId}`,
-        source: `user:${userTxns._id}`,
-        target: `user:${userId}`,
+        source: userSourceId,
+        target: userUpdatedId,
         size: (userTxns.count / maxCount) * SCALE,
         label: `${userTxns.count}`,
       })
     })
 
     debit.forEach((userTxns) => {
+      const userTargetId = `${
+        allUserIds.includes(userTxns._id) ? 'user' : 'payment'
+      }:${userTxns._id}`
+
       nodes.push({
-        id: `user:${userTxns._id}`,
-        label: getUserName(userTxns.users[0]),
+        id: userTargetId,
+        label: allUserIds.includes(userTxns._id)
+          ? getUserName(userTxns.users[0])
+          : '',
       })
       edges.push({
         id: `${userId}-${userTxns._id}`,
-        source: `user:${userId}`,
-        target: `user:${userTxns._id}`,
+        source: userUpdatedId,
+        target: userTargetId,
         size: (userTxns.count / maxCount) * SCALE,
         label: `${userTxns.count}`,
       })
