@@ -62,14 +62,9 @@ function matchParameterValue(
       )
     case 'TIME_RANGE': {
       // America/Adak (GMT-10:00) Time Zone Example
-      const utcOffset = parameterValue.content.timezone.split(':')[0]
-      const utcOffsetNumber = parseInt(utcOffset, 10)
-      const utcOffsetInMinutes = utcOffsetNumber * 60
-      const utcOffsetInMilliseconds = utcOffsetInMinutes * 60 * 1000
+      const utcOffset = parameterValue.content.timezone.split(' ')[0]
       const timestamp = valueToMatch as number
-      const locationTimeHours = dayjs(timestamp)
-        .utcOffset(utcOffsetInMilliseconds)
-        .hour()
+      const locationTimeHours = dayjs(timestamp).tz(utcOffset).hour()
       return (
         locationTimeHours >= parameterValue.content.startHour &&
         locationTimeHours < parameterValue.content.endHour
