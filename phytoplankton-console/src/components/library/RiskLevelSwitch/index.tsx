@@ -29,6 +29,10 @@ export default function RiskLevelSwitch(props: Props): JSX.Element {
                     color: RISK_LEVEL_COLORS[level].text,
                     borderColor: RISK_LEVEL_COLORS[level].primary,
                   }
+                : isDisabled
+                ? {
+                    opacity: 0.5,
+                  }
                 : {}
             }
           >

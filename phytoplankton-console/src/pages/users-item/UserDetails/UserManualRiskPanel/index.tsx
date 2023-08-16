@@ -20,6 +20,7 @@ import {
 } from '@/utils/asyncResource';
 import { DrsScore } from '@/apis';
 import LockLineIcon from '@/components/ui/icons/Remix/system/lock-line.react.svg';
+import UnlockIcon from '@/components/ui/icons/Remix/system/lock-unlock-line.react.svg';
 import { useQuery } from '@/utils/queries/hooks';
 import { USERS_ITEM_RISKS_DRS } from '@/utils/queries/keys';
 
@@ -65,7 +66,6 @@ export default function UserManualRiskPanel(props: Props) {
   }, [userId, api]);
 
   const handleLockingAndUnlocking = () => {
-    setIsLocked(!isLocked);
     setSyncState(loading(getOr(syncState, null)));
     api
       .pulseManualRiskAssignment({
@@ -89,6 +89,7 @@ export default function UserManualRiskPanel(props: Props) {
           message.success('User risk level locked successfully!');
           setSyncState(success(response));
         }
+        setIsLocked(!isLocked);
       })
       .catch((e) => {
         console.error(e);
@@ -149,10 +150,11 @@ export default function UserManualRiskPanel(props: Props) {
           placement="bottomLeft"
           arrowPointAtCenter
         >
-          <LockLineIcon
-            className={cn(s.lockIcon, isLocked && s.isLocked)}
-            onClick={handleLockingAndUnlocking}
-          />
+          {isLocked ? (
+            <LockLineIcon className={cn(s.lockIcon)} onClick={handleLockingAndUnlocking} />
+          ) : (
+            <UnlockIcon className={cn(s.lockIcon)} onClick={handleLockingAndUnlocking} />
+          )}
         </Tooltip>
       </div>
     </Form.Item>
