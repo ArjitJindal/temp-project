@@ -76,9 +76,7 @@ export default function Header(props: Props) {
         },
       ]}
       chips={[
-        ...(caseItem.relatedCases && caseItem.relatedCases.length
-          ? [<CaseGenerationMethodTag method={'MANUAL'} />]
-          : []),
+        ...(caseItem.caseType === 'MANUAL' ? [<CaseGenerationMethodTag method={'MANUAL'} />] : []),
         ...(caseItem.caseStatus
           ? [
               <CaseStatusWithDropDown

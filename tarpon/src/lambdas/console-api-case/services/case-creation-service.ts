@@ -424,6 +424,7 @@ export class CaseCreationService {
           const casesHavingSameTransaction =
             await this.caseRepository.getCasesByUserId(userId, {
               filterTransactionId: filteredTransaction.transactionId,
+              filterCaseType: 'SYSTEM',
             })
           const casesHavingSameTransactionWithSameHitRules =
             casesHavingSameTransaction.filter((c) => {
@@ -476,6 +477,7 @@ export class CaseCreationService {
           filterAvailableAfterTimestamp: delayTimestampsGroups.map(
             ({ availableAfterTimestamp }) => availableAfterTimestamp
           ),
+          filterCaseType: 'SYSTEM',
         })
 
         for (const {

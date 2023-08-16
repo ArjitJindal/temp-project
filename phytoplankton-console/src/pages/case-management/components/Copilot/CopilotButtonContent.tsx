@@ -3,7 +3,7 @@ import s from './index.module.less';
 import Button from '@/components/library/Button';
 import BrainLineIcon from '@/components/ui/icons/Remix/health/brain-line.react.svg';
 import Alert from '@/components/library/Alert';
-import { CaseClosingReasons, NarrativeResponse } from '@/apis';
+import { CaseReasons, NarrativeResponse } from '@/apis';
 import { useApi } from '@/api';
 import { message } from '@/components/library/Message';
 import CopilotSources from '@/pages/case-management/components/Copilot/CopilotSources';
@@ -13,7 +13,7 @@ import Tooltip from '@/components/library/Tooltip';
 import { getBranding } from '@/utils/branding';
 
 interface Props {
-  reasons: CaseClosingReasons[];
+  reasons: CaseReasons[];
   setCommentValue: (comment: string) => void;
   caseId: string;
 }

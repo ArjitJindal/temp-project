@@ -1,5 +1,5 @@
 import {
-  CaseClosingReasons,
+  CaseReasons,
   Case,
   CaseStatusChange,
   InternalBusinessUser,
@@ -12,7 +12,7 @@ export type TableItem = Case & {
   user: InternalConsumerUser | InternalBusinessUser | null;
   lastStatusChange?: CaseStatusChange;
   lastStatusChangeReasons: {
-    reasons: CaseClosingReasons[];
+    reasons: CaseReasons[];
     otherReason: string | null;
   } | null;
 };

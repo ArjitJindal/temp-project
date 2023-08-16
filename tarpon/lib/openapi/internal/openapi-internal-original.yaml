@@ -3237,9 +3237,238 @@ paths:
         - schema:
             type: array
             items:
-              $ref: '#/components/schemas/CaseClosingReasons'
+              $ref: '#/components/schemas/CaseReasons'
           in: query
           name: filterCaseClosureReasons
+    post:
+      summary: Create a Manual Case
+      operationId: post-cases-manual
+      x-flagright:
+        permissions:
+          - case-management:case-overview:write
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Case'
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ManualCaseCreationDataRequest'
+        required: true
+  '/cases/{caseId}/transactions':
+    get:
+      summary: Get transactions for a case
+      tags: []
+      x-flagright:
+        permissions:
+          - case-management:case-overview:read
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TransactionsResponse'
+              examples: {}
+      operationId: get-case-transactions
+      description: ''
+      parameters:
+        - schema:
+            type: string
+          in: path
+          name: caseId
+          required: true
+        - schema:
+            type: string
+          in: query
+          name: field
+        - schema:
+            type: string
+          in: query
+          name: start
+        - schema:
+            type: string
+            enum:
+              - asc
+              - desc
+          in: query
+          name: order
+        - schema:
+            $ref: '#/components/schemas/PageSize'
+          in: query
+          name: pageSize
+        - schema:
+            $ref: '#/components/schemas/Page'
+          in: query
+          name: page
+        - schema:
+            type: number
+          in: query
+          name: afterTimestamp
+        - schema:
+            type: number
+          in: query
+          name: beforeTimestamp
+        - schema:
+            type: string
+          in: query
+          name: filterId
+        - schema:
+            type: array
+            items:
+              type: string
+          in: query
+          name: filterIdList
+        - schema:
+            $ref: '#/components/schemas/RuleAction'
+          in: query
+          name: filterOutStatus
+        - schema:
+            $ref: '#/components/schemas/CaseStatus'
+          in: query
+          name: filterOutCaseStatus
+        - schema:
+            type: array
+            items:
+              type: string
+          in: query
+          name: filterRulesExecuted
+        - schema:
+            type: array
+            items:
+              type: string
+          in: query
+          name: filterRuleInstancesExecuted
+        - schema:
+            type: array
+            items:
+              type: string
+          in: query
+          name: filterRulesHit
+        - schema:
+            type: string
+          in: query
+          name: filterRuleInstancesHit
+        - schema:
+            type: string
+          in: query
+          name: filterRuleInstanceId
+        - schema:
+            type: string
+          in: query
+          name: transactionType
+        - schema:
+            type: array
+            items:
+              type: string
+          in: query
+          name: filterOriginCurrencies
+        - schema:
+            type: array
+            items:
+              type: string
+          in: query
+          name: filterDestinationCurrencies
+        - schema:
+            type: array
+            items:
+              type: string
+          in: query
+          name: filterOriginCountries
+        - schema:
+            type: array
+            items:
+              type: string
+          in: query
+          name: filterDestinationCountries
+        - schema:
+            type: string
+          in: query
+          name: sortField
+        - schema:
+            $ref: '#/components/schemas/SortOrder'
+          in: query
+          name: sortOrder
+        - schema:
+            type: string
+          in: query
+          name: filterUserId
+        - schema:
+            type: string
+          in: query
+          name: filterOriginUserId
+        - schema:
+            type: string
+          in: query
+          name: filterDestinationUserId
+        - schema:
+            type: array
+            items:
+              $ref: '#/components/schemas/RuleAction'
+          in: query
+          name: filterStatus
+        - schema:
+            $ref: '#/components/schemas/CaseStatus'
+          in: query
+          name: filterCaseStatus
+        - schema:
+            type: string
+          in: query
+          name: filterTagKey
+        - schema:
+            type: string
+          in: query
+          name: filterTagValue
+        - schema:
+            type: boolean
+          in: query
+          name: includeUsers
+        - schema:
+            type: boolean
+          in: query
+          name: includeEvents
+        - schema:
+            type: array
+            items:
+              $ref: ../public/openapi-public-original.yaml#/components/schemas/PaymentMethod
+          in: query
+          name: filterOriginPaymentMethods
+        - schema:
+            type: array
+            items:
+              $ref: ../public/openapi-public-original.yaml#/components/schemas/PaymentMethod
+          in: query
+          name: filterDestinationPaymentMethods
+        - schema:
+            type: array
+            items:
+              $ref: ../public/openapi-public-original.yaml#/components/schemas/TransactionState
+          in: query
+          name: filterTransactionState
+        - schema:
+            type: array
+            items:
+              $ref: ../public/openapi-public-original.yaml#/components/schemas/TransactionType
+          in: query
+          name: filterTransactionTypes
+        - schema:
+            type: string
+          in: query
+          name: filterOriginPaymentMethodId
+        - schema:
+            type: string
+          in: query
+          name: filterDestinationPaymentMethodId
+        - schema:
+            type: array
+            items:
+              $ref: '#/components/schemas/RuleAction'
+          in: query
+          name: filterTransactionStatus
   /cases/statusChange:
     patch:
       summary: Cases - Update
@@ -4848,7 +5077,7 @@ components:
         reasons:
           type: array
           items:
-            $ref: '#/components/schemas/CaseClosingReasons'
+            $ref: '#/components/schemas/CaseReasons'
       required:
         - reasons
         - caseId
@@ -4889,7 +5118,7 @@ components:
         createdAt:
           type: number
         reason:
-          $ref: '#/components/schemas/CaseClosingReasons'
+          $ref: '#/components/schemas/CaseReasons'
       required:
         - caseId
         - narrative
@@ -4941,7 +5170,7 @@ components:
         reason:
           type: array
           items:
-            $ref: '#/components/schemas/CaseClosingReasons'
+            $ref: '#/components/schemas/CaseReasons'
       required:
         - comment
         - transactionIds
@@ -5464,6 +5693,7 @@ components:
         - IBAN_RESOLUTION
         - MACHINE_LEARNING_DEMO
         - SAR
+        - MANUAL_CASE_CREATION
       description: ''
     ManagedRoleName:
       type: string
@@ -5668,9 +5898,9 @@ components:
         - event
         - eventCreatedAt
         - request
-    CaseClosingReasons:
+    CaseReasons:
       type: string
-      title: CaseClosingReasons
+      title: CaseReasons
       x-stoplight:
         id: 54xyfgwxvubyx
       enum:
@@ -5688,6 +5918,8 @@ components:
         - Terrorist financing
         - User Blacklisted
         - User Terminated
+        - Internal referral
+        - External referral
     MissingUser:
       title: MissingUser
       type: object
@@ -5700,6 +5932,19 @@ components:
       enum:
         - MANUAL
         - SYSTEM
+    ManualCaseCreationDataRequest:
+      type: object
+      title: ManualCaseCreationDataRequest
+      properties:
+        manualCaseData:
+          $ref: '#/components/schemas/CaseStatusChange'
+        files:
+          type: array
+          items:
+            $ref: '#/components/schemas/FileInfo'
+      required:
+        - manualCaseData
+        - files
     Case:
       title: Case
       type: object
@@ -5708,7 +5953,7 @@ components:
           type: string
         caseType:
           $ref: '#/components/schemas/CaseType'
-        caseCreatedBy:
+        createdBy:
           type: string
         createdTimestamp:
           type: number
@@ -5971,7 +6216,7 @@ components:
         reason:
           type: array
           items:
-            $ref: '#/components/schemas/CaseClosingReasons'
+            $ref: '#/components/schemas/CaseReasons'
         caseStatus:
           $ref: '#/components/schemas/CaseStatus'
         priority:
@@ -6039,7 +6284,7 @@ components:
         reason:
           type: array
           items:
-            $ref: '#/components/schemas/CaseClosingReasons'
+            $ref: '#/components/schemas/CaseReasons'
         alertStatus:
           $ref: '#/components/schemas/AlertStatus'
         priority:
@@ -6173,7 +6418,7 @@ components:
         reason:
           type: array
           items:
-            $ref: '#/components/schemas/CaseClosingReasons'
+            $ref: '#/components/schemas/CaseReasons'
         timestamp:
           type: number
         caseStatus:
@@ -6181,6 +6426,8 @@ components:
         otherReason:
           type: string
         reviewerId:
+          type: string
+        comment:
           type: string
       required:
         - userId

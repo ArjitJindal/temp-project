@@ -123,6 +123,16 @@ export default function SubHeader(props: Props) {
     [handleUpdateCaseMutation, currentUserId],
   );
 
+  const manualCaseReason = useMemo(() => {
+    const reason = caseItem?.statusChanges
+      ?.sort((a, b) => a.timestamp - b.timestamp)
+      ?.find(
+        (statusChange) => statusChange.caseStatus === 'OPEN' && statusChange.reason?.length,
+      )?.reason;
+
+    return reason?.join(', ');
+  }, [caseItem]);
+
   return (
     <div className={s.root}>
       <div className={s.attributes}>
@@ -158,6 +168,12 @@ export default function SubHeader(props: Props) {
                 ? caseItem.lastStatusChange.reason.join(', ')
                 : ''}
             </div>
+          </Form.Layout.Label>
+        )}
+
+        {caseItem.caseType === 'MANUAL' && manualCaseReason && (
+          <Form.Layout.Label title={'Open reason'}>
+            <div>{manualCaseReason}</div>
           </Form.Layout.Label>
         )}
 

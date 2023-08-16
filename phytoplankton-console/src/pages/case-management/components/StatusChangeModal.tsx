@@ -7,7 +7,7 @@ import NarrativesSelectStatusChange from './NarrativesSelectStatusChange';
 import s from './index.module.less';
 import { CopilotButtonContent } from './Copilot/CopilotButtonContent';
 import { CaseStatus, FileInfo } from '@/apis';
-import { CaseClosingReasons } from '@/apis/models/CaseClosingReasons';
+import { CaseReasons } from '@/apis/models/CaseReasons';
 import { useFeatureEnabled } from '@/components/AppWrapper/Providers/SettingsProvider';
 import Modal from '@/components/library/Modal';
 import Form, { FormRef, InputProps } from '@/components/library/Form';
@@ -26,10 +26,10 @@ import { getMutationAsyncResource } from '@/utils/queries/hooks';
 import { useDeepEqualEffect } from '@/utils/hooks';
 import FilesInput, { RemoveAllFilesRef } from '@/components/ui/FilesInput';
 
-export const OTHER_REASON: CaseClosingReasons = 'Other';
+export const OTHER_REASON: CaseReasons = 'Other';
 export const COMMON_REASONS = [OTHER_REASON];
 // todo: need to take from tenant storage when we implement it
-export const CLOSING_REASONS: CaseClosingReasons[] = [
+export const CLOSING_REASONS: CaseReasons[] = [
   'False positive',
   'Investigation completed',
   'Documents collected',
@@ -42,14 +42,14 @@ export const CLOSING_REASONS: CaseClosingReasons[] = [
   'Escalated',
 ];
 
-export const ESCALATION_REASONS: CaseClosingReasons[] = [
+export const ESCALATION_REASONS: CaseReasons[] = [
   'Fraud',
   'Anti-money laundering',
   'Terrorist financing',
 ];
 
 export interface FormValues {
-  reasons: CaseClosingReasons[];
+  reasons: CaseReasons[];
   reasonOther: string | undefined;
   comment: string | undefined;
   files: FileInfo[];
@@ -63,7 +63,7 @@ export interface Props {
   oldStatus?: CaseStatus;
   newStatus: CaseStatus;
   newStatusActionLabel?: 'Send back' | 'Escalate' | 'Approve' | 'Decline' | 'Close';
-  defaultReasons?: CaseClosingReasons[];
+  defaultReasons?: CaseReasons[];
   initialValues?: FormValues;
   onSaved: () => void;
   onClose: () => void;
@@ -127,7 +127,7 @@ export default function StatusChangeModal(props: Props) {
     }));
   }, [fileList]);
 
-  const possibleReasons: CaseClosingReasons[] = [
+  const possibleReasons: CaseReasons[] = [
     ...(newStatus === 'ESCALATED' ? ESCALATION_REASONS : CLOSING_REASONS),
     ...COMMON_REASONS,
   ];
@@ -218,8 +218,8 @@ export default function StatusChangeModal(props: Props) {
               },
             }}
           >
-            {(inputProps: InputProps<CaseClosingReasons[]>) => (
-              <Select<CaseClosingReasons>
+            {(inputProps: InputProps<CaseReasons[]>) => (
+              <Select<CaseReasons>
                 {...inputProps}
                 mode="MULTIPLE"
                 options={possibleReasons.map((label) => ({ value: label, label }))}

@@ -38,6 +38,7 @@ import { PRIORITYS } from '@/@types/openapi-internal-custom/Priority'
 import { Assignment } from '@/@types/openapi-internal/Assignment'
 import { isStatusInReview } from '@/utils/helpers'
 import { traceable } from '@/core/xray'
+import { CaseType } from '@/@types/openapi-internal/CaseType'
 
 export const MAX_TRANSACTION_IN_A_CASE = 1000
 
@@ -930,6 +931,7 @@ export class CaseRepository {
       filterOutCaseStatus?: CaseStatus
       filterTransactionId?: string
       filterAvailableAfterTimestamp?: (number | undefined)[]
+      filterCaseType?: CaseType
     }
   ): Promise<Case[]> {
     const db = this.mongoDb.db()
@@ -954,6 +956,12 @@ export class CaseRepository {
         [`caseTransactionsIds.${params.filterMaxTransactions - 1}`]: {
           $exists: false,
         },
+      })
+    }
+
+    if (params.filterCaseType != null) {
+      filters.push({
+        caseType: params.filterCaseType,
       })
     }
 

@@ -6,6 +6,8 @@ import { useApi } from '@/api';
 import EntityHeader from '@/components/ui/entityPage/EntityHeader';
 import Id from '@/components/ui/Id';
 import { getUserName } from '@/utils/api/users';
+import { useFeatureEnabled } from '@/components/AppWrapper/Providers/SettingsProvider';
+import { ManualCaseCreationButton } from '@/pages/users-item/ManualCaseCreationButton';
 
 interface Props {
   headerStickyElRef?: React.RefCallback<HTMLDivElement>;
@@ -16,6 +18,7 @@ interface Props {
 export default function Header(props: Props) {
   const { user, headerStickyElRef, onNewComment } = props;
   const userId = user.userId;
+  const isManualCaseFeatureEnabled = useFeatureEnabled('MANUAL_CASE_CREATION');
 
   const api = useApi();
 
@@ -33,6 +36,7 @@ export default function Header(props: Props) {
         },
       ]}
       buttons={[
+        ...(isManualCaseFeatureEnabled ? [<ManualCaseCreationButton userId={userId} />] : []),
         <CommentButton
           onSuccess={onNewComment}
           submitRequest={async (commentFormValues) => {

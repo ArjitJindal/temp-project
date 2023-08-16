@@ -7,6 +7,7 @@ import AlertsCard from './AlertsCard';
 import InsightsCard from './InsightsCard';
 import { UI_SETTINGS } from './ui-settings';
 import style from './index.module.less';
+import { CaseTransactionsCard } from './CaseTransactionsCard';
 import { Comment as ApiComment, Case, InternalBusinessUser, InternalConsumerUser } from '@/apis';
 import UserDetails from '@/pages/users-item/UserDetails';
 import { useScrollToFocus } from '@/utils/hooks';
@@ -50,6 +51,7 @@ function CaseDetails(props: Props) {
   const alertIds = (caseItem.alerts ?? [])
     .map(({ alertId }) => alertId)
     .filter((alertId): alertId is string => typeof alertId === 'string');
+
   const alertCommentsRes = useAlertsComments(alertIds);
   const branding = getBranding();
 
@@ -88,13 +90,37 @@ function CaseDetails(props: Props) {
             isClosable: false,
             isDisabled: false,
           },
-          {
-            tab: 'Alerts',
-            key: 'alerts',
-            children: <AlertsCard caseItem={caseItem} title={UI_SETTINGS.cards.ALERTS.title} />,
-            isClosable: false,
-            isDisabled: false,
-          },
+          ...(caseItem.caseType === 'SYSTEM'
+            ? [
+                {
+                  tab: 'Alerts',
+                  key: 'alerts',
+                  children: (
+                    <AlertsCard caseItem={caseItem} title={UI_SETTINGS.cards.ALERTS.title} />
+                  ),
+                  isClosable: false,
+                  isDisabled: false,
+                },
+              ]
+            : []),
+          ...(caseItem.caseId && user
+            ? [
+                {
+                  tab: 'Case transactions',
+                  key: 'case-transactions',
+                  children: (
+                    <CaseTransactionsCard
+                      caseId={caseItem.caseId}
+                      caseTransactionsCount={caseItem.caseTransactionsCount ?? 0}
+                      caseType={caseItem.caseType}
+                      user={user}
+                    />
+                  ),
+                  isClosable: false,
+                  isDisabled: false,
+                },
+              ]
+            : []),
           ...(user && isCrmEnabled
             ? [
                 {

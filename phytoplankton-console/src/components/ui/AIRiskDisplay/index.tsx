@@ -193,16 +193,16 @@ const randomizedData = data.map((item): ExtendedValueItem => {
 });
 
 const aiText = 'The AI Risk score depends on these factors';
+const riskScoredata = shuffleArray(randomizedData);
 
 export default function AIRiskDisplay() {
-  const data = shuffleArray(randomizedData);
   return (
     <RiskScoreDisplay
       mainPanelCustomStyling={{
         background: COLORS_V2_AI_RISK_DISPLAY_BACKGROUND,
       }}
       factorExplanationText={aiText}
-      values={data.map((x) => ({
+      values={riskScoredata.map((x) => ({
         score: x.drsScore,
         createdAt: x.createdAt,
         components: x.components,

@@ -1,12 +1,13 @@
 import React, { useCallback, useImperativeHandle, useRef, useState } from 'react';
+import cn from 'clsx';
 import { FieldValidators, Validator } from './utils/validation/types';
+import s from './index.module.less';
 import { FieldMeta, FormContext, FormContextValue } from '@/components/library/Form/context';
 import { useDeepEqualEffect, useDeepEqualMemo, useIsChanged } from '@/utils/hooks';
 import {
   FormValidationResult,
   validateForm,
 } from '@/components/library/Form/utils/validation/utils';
-
 export interface FormRef<FormValues> {
   getValues: () => FormValues;
   setValues: (formValues: FormValues) => void;
@@ -115,7 +116,7 @@ function Form<FormValues>(props: Props<FormValues>, ref: React.Ref<FormRef<FormV
     <form
       id={id}
       ref={formRef}
-      className={className}
+      className={cn(s.form, className)}
       onSubmit={(e) => {
         e.preventDefault();
         handleSubmit();

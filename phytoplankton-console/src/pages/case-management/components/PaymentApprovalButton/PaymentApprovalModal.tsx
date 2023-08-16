@@ -8,8 +8,8 @@ import { and } from '@/components/library/Form/utils/validation/combinators';
 import { MAX_COMMENT_LENGTH } from '@/components/CommentEditor';
 import InputField from '@/components/library/Form/InputField';
 import Form, { FormRef, InputProps } from '@/components/library/Form';
-import { CaseClosingReasons, RuleAction } from '@/apis';
-import { CASE_CLOSING_REASONSS } from '@/apis/models-custom/CaseClosingReasons';
+import { CaseReasons, RuleAction } from '@/apis';
+import { CASE_REASONSS } from '@/apis/models-custom/CaseReasons';
 import { useApi } from '@/api';
 import { message } from '@/components/library/Message';
 import TextArea from '@/components/library/TextArea';
@@ -24,7 +24,7 @@ interface Props {
 }
 
 export interface FormValues {
-  reasons: CaseClosingReasons[];
+  reasons: CaseReasons[];
   comment: string;
 }
 export default function PaymentApprovalModal({
@@ -107,11 +107,11 @@ export default function PaymentApprovalModal({
             },
           }}
         >
-          {(inputProps: InputProps<CaseClosingReasons[]>) => (
-            <Select<CaseClosingReasons>
+          {(inputProps: InputProps<CaseReasons[]>) => (
+            <Select<CaseReasons>
               {...inputProps}
               mode="MULTIPLE"
-              options={CASE_CLOSING_REASONSS.map((label) => ({ value: label, label }))}
+              options={CASE_REASONSS.map((label) => ({ value: label, label }))}
             />
           )}
         </InputField>

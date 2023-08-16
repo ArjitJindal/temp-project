@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { AlertStatus, CaseStatus, FileInfo, Permission } from '@/apis';
 import Button, { ButtonSize } from '@/components/library/Button';
-import { CaseClosingReasons } from '@/apis/models/CaseClosingReasons';
+import { CaseReasons } from '@/apis/models/CaseReasons';
 import { neverReturn } from '@/utils/lang';
 import { humanizeConstant } from '@/utils/humanize';
 
@@ -67,7 +67,7 @@ const getNextStatus = (status: CaseStatus | AlertStatus | undefined): CaseStatus
 };
 
 export interface FormValues {
-  reasons: CaseClosingReasons[];
+  reasons: CaseReasons[];
   reasonOther: string | null;
   comment: string | null;
   files: FileInfo[];

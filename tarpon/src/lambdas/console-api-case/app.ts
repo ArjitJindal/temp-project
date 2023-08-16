@@ -158,6 +158,18 @@ export const casesHandler = lambdaApi()(
       async (ctx, request) => await alertsService.getAlerts(request)
     )
 
+    handlers.registerPostCasesManual(
+      async (ctx, request) =>
+        await caseService.createManualCaseFromUser(
+          request.ManualCaseCreationDataRequest.manualCaseData,
+          request.ManualCaseCreationDataRequest.files
+        )
+    )
+
+    handlers.registerGetCaseTransactions(
+      async (ctx, request) => await caseService.getCasesTransactions(request)
+    )
+
     handlers.registerAlertsStatusChange(async (ctx, request) => {
       const { alertIds, updates } = request.AlertsStatusUpdateRequest
       if (!alertIds?.length) {

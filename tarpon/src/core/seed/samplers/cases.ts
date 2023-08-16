@@ -7,11 +7,11 @@ import { InternalTransaction } from '@/@types/openapi-internal/InternalTransacti
 import { Alert } from '@/@types/openapi-internal/Alert'
 import { pickRandom, randomSubset } from '@/utils/prng'
 import { HitRulesDetails } from '@/@types/openapi-internal/HitRulesDetails'
-import { CASE_CLOSING_REASONSS } from '@/@types/openapi-internal-custom/CaseClosingReasons'
+import { CASE_REASONSS } from '@/@types/openapi-internal-custom/CaseReasons'
 import { CASE_STATUSS } from '@/@types/openapi-internal-custom/CaseStatus'
 import { InternalBusinessUser } from '@/@types/openapi-internal/InternalBusinessUser'
 import { InternalConsumerUser } from '@/@types/openapi-internal/InternalConsumerUser'
-import { CaseClosingReasons } from '@/@types/openapi-internal/CaseClosingReasons'
+import { CaseReasons } from '@/@types/openapi-internal/CaseReasons'
 import { isStatusInReview } from '@/utils/helpers'
 import { AlertStatus } from '@/@types/openapi-internal/AlertStatus'
 
@@ -39,7 +39,7 @@ Based on the aforementioned suspicious activity, there is reasonable suspicion t
 
 export function generateNarrative(
   ruleDescriptions: string[],
-  reasons: CaseClosingReasons[],
+  reasons: CaseReasons[],
   user: InternalBusinessUser | InternalConsumerUser,
   narrativeStatements?: string
 ) {
@@ -122,7 +122,7 @@ export function sampleTransactionUserCase(
     CASE_STATUSS.filter((s) => !isStatusInReview(s)),
     seed
   )
-  const reasons = randomSubset(CASE_CLOSING_REASONSS)
+  const reasons = randomSubset(CASE_REASONSS)
   return {
     caseId: caseId,
     caseType: 'SYSTEM',

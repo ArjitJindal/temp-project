@@ -10,7 +10,10 @@ import { capitalize, isEqual, isEmpty } from 'lodash'
 import { MongoClient } from 'mongodb'
 import { CasesAlertsAuditLogService } from './case-alerts-audit-log-service'
 import { Comment } from '@/@types/openapi-internal/Comment'
-import { DefaultApiGetCaseListRequest } from '@/@types/openapi-internal/RequestParameters'
+import {
+  DefaultApiGetCaseListRequest,
+  DefaultApiGetCaseTransactionsRequest,
+} from '@/@types/openapi-internal/RequestParameters'
 import { CaseRepository } from '@/services/rules-engine/repositories/case-repository'
 import { CasesListResponse } from '@/@types/openapi-internal/CasesListResponse'
 import { CaseStatusChange } from '@/@types/openapi-internal/CaseStatusChange'
@@ -45,6 +48,11 @@ import { AlertStatusUpdateRequest } from '@/@types/openapi-internal/AlertStatusU
 import { CaseStatus } from '@/@types/openapi-internal/CaseStatus'
 import { isStatusInReview } from '@/utils/helpers'
 import { WebhookEventType } from '@/@types/openapi-public/WebhookEventType'
+import { UserRepository } from '@/services/users/repositories/user-repository'
+import { FileInfo } from '@/@types/openapi-internal/FileInfo'
+import { InternalTransaction } from '@/@types/openapi-internal/InternalTransaction'
+import { MongoDbTransactionRepository } from '@/services/rules-engine/repositories/mongodb-transaction-repository'
+import { CursorPaginationResponse } from '@/utils/pagination'
 
 export class CaseService extends CaseAlertsCommonService {
   caseRepository: CaseRepository
@@ -92,6 +100,108 @@ export class CaseService extends CaseAlertsCommonService {
       mongoDb: this.mongoDb,
       dynamoDb: this.caseRepository.dynamoDb,
     })
+  }
+
+  private getManualCaseComment(
+    manualCaseData: CaseStatusChange,
+    caseId: string,
+    files: FileInfo[]
+  ): Comment {
+    const { comment, reason, otherReason } = manualCaseData
+    const { id: userId, email } = getContext()?.user as Account
+
+    const commentText = `Case ${caseId} is manually created by ${
+      email ?? userId
+    } with reason: ${reason}${
+      reason?.[0] === 'Other' ? `: ${otherReason}` : ''
+    }\n${comment}`
+
+    return {
+      body: commentText,
+      createdAt: Date.now(),
+      files,
+      updatedAt: Date.now(),
+      userId,
+    }
+  }
+
+  public async getCasesTransactions(
+    params: DefaultApiGetCaseTransactionsRequest
+  ): Promise<CursorPaginationResponse<InternalTransaction>> {
+    const { caseId, ...rest } = params
+    const case_ = await this.caseRepository.getCaseById(caseId)
+
+    if (!case_) {
+      throw new NotFound(`Case ${caseId} not found`)
+    }
+
+    const mongoDb = this.caseRepository.mongoDb
+    const transactionRepository = new MongoDbTransactionRepository(
+      this.tenantId,
+      mongoDb
+    )
+
+    const caseTransactionsIds = case_.caseTransactionsIds ?? []
+
+    return await transactionRepository.getTransactionsCursorPaginate({
+      ...rest,
+      filterIdList: caseTransactionsIds,
+    })
+  }
+
+  public async createManualCaseFromUser(
+    manualCaseData: CaseStatusChange,
+    files: FileInfo[]
+  ): Promise<Case> {
+    const { id: userId } = getContext()?.user as Account
+    const userRepository = new UserRepository(this.tenantId, {
+      mongoDb: this.mongoDb,
+      dynamoDb: this.caseRepository.dynamoDb,
+    })
+
+    const caseUser = await userRepository.getUserById(manualCaseData.userId)
+
+    if (!caseUser) {
+      throw new NotFound(`User ${manualCaseData.userId} not found`)
+    }
+
+    const statusChange: CaseStatusChange = {
+      ...manualCaseData,
+      caseStatus: 'OPEN',
+      userId,
+    }
+
+    const case_ = await this.caseRepository.addCaseMongo({
+      caseType: 'MANUAL',
+      caseStatus: 'OPEN',
+      caseTransactions: [],
+      caseUsers: {
+        origin: caseUser,
+        originUserRiskLevel:
+          caseUser.drsScore?.manualRiskLevel ??
+          caseUser.drsScore?.derivedRiskLevel,
+        originUserDrsScore: caseUser.drsScore?.drsScore,
+      },
+      alerts: [],
+      caseTransactionsCount: 0,
+      createdBy: manualCaseData.userId,
+      priority: 'P1',
+      updatedAt: Date.now(),
+      createdTimestamp: Date.now(),
+      caseTransactionsIds: [],
+      statusChanges: [statusChange],
+      lastStatusChange: statusChange,
+    })
+
+    const comment = this.getManualCaseComment(
+      manualCaseData,
+      case_.caseId!,
+      files
+    )
+
+    await this.caseRepository.saveCaseComment(case_.caseId!, comment)
+
+    return case_
   }
 
   public async getCases(
@@ -307,6 +417,10 @@ export class CaseService extends CaseAlertsCommonService {
             }
             return true
           })
+
+        if (!alerts.length) {
+          return
+        }
 
         if (updates.caseStatus === 'ESCALATED' && options?.reviewAssignments) {
           await this.alertsService.updateAlertsReviewAssignments(

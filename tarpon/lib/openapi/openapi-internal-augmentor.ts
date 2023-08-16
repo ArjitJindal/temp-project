@@ -117,6 +117,7 @@ export const ConsoleApiPathToLambda: any = {
     StackConstants.CONSOLE_API_RISK_LEVEL_AND_SCORE_FUNCTION_NAME,
   '/auditlog': StackConstants.CONSOLE_API_AUDIT_LOG_FUNCTION_NAME,
   '/cases': StackConstants.CONSOLE_API_CASE_FUNCTION_NAME,
+  '/cases/{caseId}/transactions': StackConstants.CONSOLE_API_CASE_FUNCTION_NAME,
   '/tenant/usageData': StackConstants.CONSOLE_API_TENANT_FUNCTION_NAME,
   '/cases/assignments': StackConstants.CONSOLE_API_CASE_FUNCTION_NAME,
   '/cases/reviewAssignments': StackConstants.CONSOLE_API_CASE_FUNCTION_NAME,

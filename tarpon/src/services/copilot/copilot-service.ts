@@ -3,7 +3,7 @@ import { Case } from '@/@types/openapi-internal/Case'
 import { InternalBusinessUser } from '@/@types/openapi-internal/InternalBusinessUser'
 import { InternalConsumerUser } from '@/@types/openapi-internal/InternalConsumerUser'
 import { generateNarrative } from '@/core/seed/samplers/cases'
-import { CaseClosingReasons } from '@/@types/openapi-internal/CaseClosingReasons'
+import { CaseReasons } from '@/@types/openapi-internal/CaseReasons'
 import {
   AttributeGenerator,
   DefaultAttributeBuilders,
@@ -14,7 +14,7 @@ type GenerateNarrative = {
   _case: Case
   user: InternalBusinessUser | InternalConsumerUser
   historicalCases: Case[]
-  reasons: CaseClosingReasons[]
+  reasons: CaseReasons[]
 }
 
 @traceable

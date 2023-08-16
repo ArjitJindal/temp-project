@@ -110,6 +110,7 @@ export function Content(props: { userId: string }) {
   );
 
   const helper = new ColumnHelper<DataItem>();
+  const isManualCaseFeatureEnabled = useFeatureEnabled('MANUAL_CASE_CREATION');
 
   return (
     <QueryResultsTable<DataItem>
@@ -251,6 +252,7 @@ export function Content(props: { userId: string }) {
       renderExpanded={(item) => <TransactionEventsTable events={item.events} />}
       fixedExpandedContainer={true}
       fitHeight={true}
+      selection={isManualCaseFeatureEnabled}
     />
   );
 }
