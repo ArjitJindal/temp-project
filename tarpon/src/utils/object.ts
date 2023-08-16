@@ -1,5 +1,5 @@
 import crypto from 'crypto'
-import { pick, merge, isArray, mergeWith } from 'lodash'
+import { pick, merge, mergeWith, isNil, isArray } from 'lodash'
 import { stringify } from 'safe-stable-stringify'
 
 export const replaceMagicKeyword = (
@@ -30,8 +30,8 @@ export function mergeObjects<T>(
 }
 
 export function mergeEntities<T>(object: T, ...objects: Array<object>): T {
-  return mergeWith(object, ...objects, (a: object, b: object) => {
-    if (isArray(b)) {
+  return mergeWith(object, ...objects, (a: any, b: any) => {
+    if (!isNil(b) && isArray(b)) {
       return b
     }
     return undefined
