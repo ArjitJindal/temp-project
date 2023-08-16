@@ -108,7 +108,7 @@ export const userHandler = lambdaApi()(
         const preDefinedRiskLevel = userPayload.riskLevel
 
         if (preDefinedRiskLevel) {
-          await riskScoringService.handleRiskLevelParam(
+          await riskScoringService.handleManualRiskLevel(
             userPayload as User | Business
           )
 

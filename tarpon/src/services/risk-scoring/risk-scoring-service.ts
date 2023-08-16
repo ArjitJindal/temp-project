@@ -255,7 +255,7 @@ export class RiskScoringService {
     }
   }
 
-  public async handleRiskLevelParam(userPayload: User | Business) {
+  public async handleManualRiskLevel(userPayload: User | Business) {
     await this.riskRepository.createOrUpdateManualDRSRiskItem(
       userPayload.userId,
       userPayload.riskLevel!

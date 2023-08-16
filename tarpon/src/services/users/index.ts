@@ -202,7 +202,7 @@ export class UserManagementService {
       const preDefinedRiskLevel = updatedConsumerUserAttributes?.riskLevel
 
       if (preDefinedRiskLevel) {
-        await this.riskScoringService.handleRiskLevelParam({
+        await this.riskScoringService.handleManualRiskLevel({
           ...updatedConsumerUserAttributes,
           userId,
         } as User | Business)
@@ -253,7 +253,7 @@ export class UserManagementService {
       const preDefinedRiskLevel = updatedBusinessUserAttributes?.riskLevel
 
       if (preDefinedRiskLevel) {
-        await this.riskScoringService.handleRiskLevelParam({
+        await this.riskScoringService.handleManualRiskLevel({
           ...updatedBusinessUserAttributes,
           userId,
         } as User | Business)
