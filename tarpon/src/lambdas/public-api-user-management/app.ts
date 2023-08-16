@@ -4,8 +4,6 @@ import {
   APIGatewayProxyWithLambdaAuthorizerEvent,
 } from 'aws-lambda'
 import { NotFound } from 'http-errors'
-import { DynamoDBDocumentClient } from '@aws-sdk/lib-dynamodb'
-import { MongoClient } from 'mongodb'
 import { logger } from '@/core/logger'
 import { UserRepository } from '@/services/users/repositories/user-repository'
 import { getDynamoDbClientByEvent } from '@/utils/dynamodb'
@@ -24,20 +22,6 @@ import {
 } from '@/services/risk-scoring/utils'
 import { RiskLevel } from '@/@types/openapi-internal/RiskLevel'
 import { ConsumerUsersResponse } from '@/@types/openapi-public/ConsumerUsersResponse'
-
-const handleRiskLevelParam = async (
-  tenantId: string,
-  dynamoDb: DynamoDBDocumentClient,
-  userPayload: User | Business,
-  mongoDb: MongoClient
-) => {
-  const riskRepository = new RiskRepository(tenantId, { dynamoDb, mongoDb })
-  await riskRepository.createOrUpdateManualDRSRiskItem(
-    userPayload.userId,
-    userPayload.riskLevel!
-  )
-  delete userPayload.riskLevel
-}
 
 export const userHandler = lambdaApi()(
   async (
@@ -124,11 +108,8 @@ export const userHandler = lambdaApi()(
         const preDefinedRiskLevel = userPayload.riskLevel
 
         if (preDefinedRiskLevel) {
-          await handleRiskLevelParam(
-            tenantId,
-            dynamoDb,
-            userPayload as User | Business,
-            mongoDb
+          await riskScoringService.handleRiskLevelParam(
+            userPayload as User | Business
           )
 
           craScore = getRiskScoreFromLevel(

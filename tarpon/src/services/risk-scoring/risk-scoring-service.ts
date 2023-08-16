@@ -255,6 +255,14 @@ export class RiskScoringService {
     }
   }
 
+  public async handleRiskLevelParam(userPayload: User | Business) {
+    await this.riskRepository.createOrUpdateManualDRSRiskItem(
+      userPayload.userId,
+      userPayload.riskLevel!
+    )
+    delete userPayload.riskLevel
+  }
+
   public async calculateArsScore(
     transaction: Transaction,
     riskClassificationValues: RiskClassificationScore[],

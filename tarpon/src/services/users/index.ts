@@ -18,6 +18,8 @@ import { mergeEntities, pickKnownEntityFields } from '@/utils/object'
 import { BusinessBase } from '@/@types/openapi-public/BusinessBase'
 import { UserBase } from '@/@types/openapi-internal/UserBase'
 import { traceable } from '@/core/xray'
+import { hasFeature } from '@/core/utils/context'
+import { RiskScoringService } from '@/services/risk-scoring'
 
 @traceable
 export class UserManagementService {
@@ -26,6 +28,7 @@ export class UserManagementService {
   rulesEngineService: RulesEngineService
   userRepository: UserRepository
   userEventRepository: UserEventRepository
+  riskScoringService: RiskScoringService
 
   constructor(
     tenantId: string,
@@ -39,6 +42,11 @@ export class UserManagementService {
       dynamoDb,
       mongoDb,
     })
+    this.riskScoringService = new RiskScoringService(tenantId, {
+      dynamoDb,
+      mongoDb,
+    })
+
     this.userEventRepository = new UserEventRepository(tenantId, { dynamoDb })
     this.rulesEngineService = new RulesEngineService(
       tenantId,
@@ -189,9 +197,21 @@ export class UserManagementService {
       user = pickKnownEntityFields(user, UserBase)
     }
 
+    const { userId, updatedConsumerUserAttributes } = userEvent
+    if (hasFeature('PULSE')) {
+      const preDefinedRiskLevel = updatedConsumerUserAttributes?.riskLevel
+
+      if (preDefinedRiskLevel) {
+        await this.riskScoringService.handleRiskLevelParam({
+          ...updatedConsumerUserAttributes,
+          userId,
+        } as User | Business)
+      }
+    }
+
     const updatedConsumerUser: User = mergeEntities(
       user,
-      userEvent.updatedConsumerUserAttributes || {}
+      updatedConsumerUserAttributes || {}
     ) as User
     const updatedConsumerUserResult = {
       ...updatedConsumerUser,
@@ -226,6 +246,18 @@ export class UserManagementService {
         )
       }
       user = pickKnownEntityFields(user, BusinessBase)
+    }
+
+    const { userId } = userEvent
+    if (hasFeature('PULSE')) {
+      const preDefinedRiskLevel = updatedBusinessUserAttributes?.riskLevel
+
+      if (preDefinedRiskLevel) {
+        await this.riskScoringService.handleRiskLevelParam({
+          ...updatedBusinessUserAttributes,
+          userId,
+        } as User | Business)
+      }
     }
 
     const updatedBusinessUser: Business = mergeEntities(
