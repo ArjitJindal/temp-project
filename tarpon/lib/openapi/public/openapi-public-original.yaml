@@ -1025,7 +1025,6 @@ components:
       title: Address
       required:
         - addressLines
-        - postcode
         - city
         - country
       type: object
