@@ -27,7 +27,8 @@ const Avatar = (props: Props) => {
   const { companyName } = branding;
   const brandingName = `${companyName} System`;
   const role = user?.role;
-  const systemDisplay = role === 'root' || brandingName === user?.name ? LOGO_URLS['bureau'] : null;
+  const systemDisplay =
+    role === 'root' || brandingName === user?.name ? LOGO_URLS[companyName.toLowerCase()] : null;
   return (
     <div
       className={cn(s.avatar, size === 'small' ? s.small : s.large)}
