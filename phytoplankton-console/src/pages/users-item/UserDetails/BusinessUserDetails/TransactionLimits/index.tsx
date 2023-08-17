@@ -1,8 +1,9 @@
-import { Drawer, Input, Row, Select, Space, Typography } from 'antd';
+import { Drawer, Row, Select, Space, Typography } from 'antd';
 import { DeleteOutlined, EditOutlined, PlusOutlined } from '@ant-design/icons';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import ProDescriptions from '@ant-design/pro-descriptions';
 import _ from 'lodash';
+import s from './styles.module.less';
 import { message } from '@/components/library/Message';
 import { removeNil } from '@/utils/json';
 import * as Card from '@/components/ui/Card';
@@ -29,6 +30,7 @@ import COLORS from '@/components/ui/colors';
 import { useHasPermissions } from '@/utils/user-utils';
 import { ColumnHelper } from '@/components/library/Table/columnHelper';
 import { PAYMENT_METHOD } from '@/components/library/Table/standardDataTypes';
+import NumberInput from '@/components/library/NumberInput';
 
 const timeFrames = ['day', 'week', 'month', 'year'];
 
@@ -188,18 +190,19 @@ const PaymentMethodLimitsEditor: React.FC<PaymentMethodLimitsEditorProps> = ({
               label={`Max transaction count / ${timeFrame}`}
               valueType="text"
             >
-              <Input
-                type="number"
-                min={0}
-                allowClear={true}
-                value={transactionCountLimit[timeFrame]}
-                onChange={(event) =>
-                  setUpdatedTransactionCountLimit((prev) => ({
-                    ...prev,
-                    [timeFrame]: event.target.value ? Number(event.target.value) : null,
-                  }))
-                }
-              />
+              <div className={s.numberInput}>
+                <NumberInput
+                  min={0}
+                  allowClear={true}
+                  value={transactionCountLimit[timeFrame]}
+                  onChange={(newValue) =>
+                    setUpdatedTransactionCountLimit((prev) => ({
+                      ...prev,
+                      [timeFrame]: newValue ? Number(newValue) : null,
+                    }))
+                  }
+                />
+              </div>
             </ProDescriptions.Item>
           ))}
           {timeFrames.map((timeFrame) => (
@@ -208,24 +211,25 @@ const PaymentMethodLimitsEditor: React.FC<PaymentMethodLimitsEditorProps> = ({
               label={`Max transaction amount / ${timeFrame}`}
               valueType="text"
             >
-              <Input
-                type="number"
-                min={0}
-                allowClear={true}
-                value={transactionAmountLimit[timeFrame]?.amountValue}
-                disabled={!currency}
-                onChange={(event) => {
-                  setUpdatedTransactionAmountLimit((prev) => ({
-                    ...prev,
-                    [timeFrame]: event.target.value
-                      ? {
-                          amountCurrency: currency!,
-                          amountValue: Number(event.target.value),
-                        }
-                      : null,
-                  }));
-                }}
-              />
+              <div className={s.numberInput}>
+                <NumberInput
+                  min={0}
+                  allowClear={true}
+                  value={transactionAmountLimit[timeFrame]?.amountValue}
+                  isDisabled={!currency}
+                  onChange={(newValue) => {
+                    setUpdatedTransactionAmountLimit((prev) => ({
+                      ...prev,
+                      [timeFrame]: newValue
+                        ? {
+                            amountCurrency: currency!,
+                            amountValue: newValue,
+                          }
+                        : null,
+                    }));
+                  }}
+                />
+              </div>
             </ProDescriptions.Item>
           ))}
           {timeFrames.map((timeFrame) => (
@@ -234,24 +238,25 @@ const PaymentMethodLimitsEditor: React.FC<PaymentMethodLimitsEditorProps> = ({
               label={`Avg transaction amount / ${timeFrame}`}
               valueType="text"
             >
-              <Input
-                type="number"
-                min={0}
-                allowClear={true}
-                value={averageTransactionAmountLimit[timeFrame]?.amountValue}
-                disabled={!currency}
-                onChange={(event) => {
-                  setUpdatedAverageTransactionAmountLimit((prev) => ({
-                    ...prev,
-                    [timeFrame]: event.target.value
-                      ? {
-                          amountCurrency: currency!,
-                          amountValue: Number(event.target.value),
-                        }
-                      : null,
-                  }));
-                }}
-              />
+              <div className={s.numberInput}>
+                <NumberInput
+                  min={0}
+                  allowClear={true}
+                  value={averageTransactionAmountLimit[timeFrame]?.amountValue}
+                  isDisabled={!currency}
+                  onChange={(newValue) => {
+                    setUpdatedAverageTransactionAmountLimit((prev) => ({
+                      ...prev,
+                      [timeFrame]: newValue
+                        ? {
+                            amountCurrency: currency!,
+                            amountValue: Number(newValue),
+                          }
+                        : null,
+                    }));
+                  }}
+                />
+              </div>
             </ProDescriptions.Item>
           ))}
         </ProDescriptions>
