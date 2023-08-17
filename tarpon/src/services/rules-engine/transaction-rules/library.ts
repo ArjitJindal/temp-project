@@ -40,6 +40,7 @@ import { BlacklistPaymentdetailsRuleParameters } from './blacklist-payment-detai
 import { TransactionsExceedPastPeriodRuleParameters } from './transactions-exceed-past-period'
 import { TransactionsOutflowInflowVolumeRuleParameters } from './transactions-outflow-inflow-volume'
 import { SanctionsCounterPartyRuleParameters } from './sanctions-counterparty'
+import { HighRiskCountryRuleParameters } from './high-risk-countries'
 import { TRANSACTION_RULES, TransactionRuleImplementationName } from './index'
 import { Rule } from '@/@types/openapi-internal/Rule'
 import { HighUnsuccessfullStateRateParameters } from '@/services/rules-engine/transaction-rules/high-unsuccessfull-state-rate'
@@ -366,6 +367,32 @@ const _RULES_LIBRARY: Array<
       typologyDescription:
         'Blocking transactions with certain merchants which are outside of risk appetite of the organization',
       source: 'Prohibited countries policy, Sanctions Policy',
+    }
+  },
+  () => {
+    const defaultParameters: HighRiskCountryRuleParameters = {
+      highRiskCountries: ['RU', 'SY', 'RO', 'UA'],
+    }
+
+    return {
+      id: 'R-14',
+      type: 'TRANSACTION',
+      name: 'High risk country',
+      description:
+        'Transaction to or from a country that is designated as high risk. This rule uses a customizable list.',
+      descriptionTemplate:
+        "{{ if-sender 'Sender’s' 'Receiver’s' }} country ({{ hitParty.amount.country }}) is a High Risk",
+      defaultParameters,
+      defaultAction: 'FLAG',
+      ruleImplementationName: 'high-risk-countries',
+      labels: [],
+      defaultNature: 'AML',
+      defaultCasePriority: 'P1',
+      typology: 'Account activity, inconsistent with customer profile',
+      typologyGroup: 'Unusual Behavior',
+      typologyDescription:
+        "The customer uses a country that does not fit with their profile or what is known about the customer's business.",
+      source: '',
     }
   },
   () => {

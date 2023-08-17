@@ -1,41 +1,31 @@
-import { HighRiskCurrencyRuleParameters } from '../high-risk-currency'
+import { HighRiskCountryRuleParameters } from '../high-risk-countries'
 import { getRuleByRuleId } from '../library'
-import { getTestTenantId } from '@/test-utils/tenant-test-utils'
-import { getTestTransaction } from '@/test-utils/transaction-test-utils'
+import { dynamoDbSetupHook } from '@/test-utils/dynamodb-test-utils'
 import {
-  setUpRulesHooks,
-  createTransactionRuleTestCase,
   TransactionRuleTestCase,
+  createTransactionRuleTestCase,
+  setUpRulesHooks,
   testRuleDescriptionFormatting,
 } from '@/test-utils/rule-test-utils'
-import { dynamoDbSetupHook } from '@/test-utils/dynamodb-test-utils'
+import { getTestTenantId } from '@/test-utils/tenant-test-utils'
+import { getTestTransaction } from '@/test-utils/transaction-test-utils'
 
 dynamoDbSetupHook()
 
-describe('Core logic', () => {
+describe('Core logic high-risk-countries', () => {
   const TEST_TENANT_ID = getTestTenantId()
   setUpRulesHooks(TEST_TENANT_ID, [
     {
       type: 'TRANSACTION',
-      ruleImplementationName: 'high-risk-currency',
+      ruleImplementationName: 'high-risk-countries',
       defaultParameters: {
-        highRiskCurrencies: [
-          'AFN',
-          'BTN',
-          'CNY',
-          'EGP',
-          'IQD',
-          'NGN',
-          'INR',
-          'USD',
-          'EUR',
-        ],
-      } as HighRiskCurrencyRuleParameters,
+        highRiskCountries: ['US', 'CN', 'RU', 'IR', 'IQ'],
+      } as HighRiskCountryRuleParameters,
       defaultAction: 'FLAG',
     },
   ])
 
-  describe('R-6 description formatting', () => {
+  describe('R-14 description formatting', () => {
     testRuleDescriptionFormatting(
       'sender',
       TEST_TENANT_ID,
@@ -46,17 +36,19 @@ describe('Core logic', () => {
           originAmountDetails: {
             transactionAmount: 800,
             transactionCurrency: 'EUR',
+            country: 'US',
           },
           destinationAmountDetails: {
             transactionAmount: 68351.34,
             transactionCurrency: 'TRY',
+            country: 'TR',
           },
         }),
       ],
       {
-        descriptionTemplate: getRuleByRuleId('R-6').descriptionTemplate,
+        descriptionTemplate: getRuleByRuleId('R-14').descriptionTemplate,
       },
-      ['Sender’s currency (EUR) is a High Risk.']
+      ['Sender’s country (United States of America) is a High Risk.']
     )
 
     testRuleDescriptionFormatting(
@@ -64,28 +56,57 @@ describe('Core logic', () => {
       TEST_TENANT_ID,
       [
         getTestTransaction({
-          originUserId: '4-1',
-          destinationUserId: '4-2',
+          originUserId: '1-1',
+          destinationUserId: '1-2',
           originAmountDetails: {
             transactionAmount: 800,
-            transactionCurrency: 'TWD',
+            transactionCurrency: 'EUR',
+            country: 'TR',
           },
           destinationAmountDetails: {
             transactionAmount: 68351.34,
-            transactionCurrency: 'INR',
+            transactionCurrency: 'TRY',
+            country: 'US',
           },
         }),
       ],
       {
-        descriptionTemplate: getRuleByRuleId('R-6').descriptionTemplate,
+        descriptionTemplate: getRuleByRuleId('R-14').descriptionTemplate,
       },
-      ['Receiver’s currency (INR) is a High Risk.']
+      ['Receiver’s country (United States of America) is a High Risk.']
+    )
+
+    testRuleDescriptionFormatting(
+      'sender and receiver',
+      TEST_TENANT_ID,
+      [
+        getTestTransaction({
+          originUserId: '1-1',
+          destinationUserId: '1-2',
+          originAmountDetails: {
+            transactionAmount: 800,
+            transactionCurrency: 'EUR',
+            country: 'US',
+          },
+          destinationAmountDetails: {
+            transactionAmount: 68351.34,
+            transactionCurrency: 'TRY',
+            country: 'US',
+          },
+        }),
+      ],
+      {
+        descriptionTemplate: getRuleByRuleId('R-14').descriptionTemplate,
+      },
+      [
+        'Sender’s country (United States of America) is a High Risk. Receiver’s country (United States of America) is a High Risk.',
+      ]
     )
   })
 
   describe.each<TransactionRuleTestCase>([
     {
-      name: 'Sender high/very high risk and receiver low/medium risk currency',
+      name: 'Sender high/very high risk and receiver low/medium risk country',
       transactions: [
         getTestTransaction({
           originUserId: '1-1',
@@ -93,68 +114,56 @@ describe('Core logic', () => {
           originAmountDetails: {
             transactionAmount: 800,
             transactionCurrency: 'EUR',
+            country: 'US',
           },
           destinationAmountDetails: {
             transactionAmount: 68351.34,
             transactionCurrency: 'TRY',
+            country: 'TR',
           },
         }),
       ],
       expectedHits: [true],
     },
     {
-      name: 'Sender low/medium risk and receiver high/very high risk currency',
+      name: 'Sender low/medium risk and receiver high/very high risk country',
       transactions: [
         getTestTransaction({
-          originUserId: '2-1',
-          destinationUserId: '2-2',
+          originUserId: '1-1',
+          destinationUserId: '1-2',
           originAmountDetails: {
             transactionAmount: 800,
-            transactionCurrency: 'THB',
+            transactionCurrency: 'EUR',
+            country: 'TR',
           },
           destinationAmountDetails: {
             transactionAmount: 68351.34,
-            transactionCurrency: 'INR',
+            transactionCurrency: 'TRY',
+            country: 'US',
           },
         }),
       ],
       expectedHits: [true],
     },
     {
-      name: 'Both sender and receiver, low/medium risk currency',
+      name: 'Both sender and receiver, No hit',
       transactions: [
         getTestTransaction({
-          originUserId: '3-1',
-          destinationUserId: '3-2',
+          originUserId: '1-1',
+          destinationUserId: '1-2',
           originAmountDetails: {
             transactionAmount: 800,
-            transactionCurrency: 'RWF',
+            transactionCurrency: 'EUR',
+            country: 'TR',
           },
           destinationAmountDetails: {
             transactionAmount: 68351.34,
             transactionCurrency: 'TRY',
+            country: 'TR',
           },
         }),
       ],
       expectedHits: [false],
-    },
-    {
-      name: 'Both sender and receiver, high/very high risk currency',
-      transactions: [
-        getTestTransaction({
-          originUserId: '4-1',
-          destinationUserId: '4-2',
-          originAmountDetails: {
-            transactionAmount: 800,
-            transactionCurrency: 'EUR',
-          },
-          destinationAmountDetails: {
-            transactionAmount: 68351.34,
-            transactionCurrency: 'INR',
-          },
-        }),
-      ],
-      expectedHits: [true],
     },
   ])('', ({ name, transactions, expectedHits }) => {
     createTransactionRuleTestCase(
