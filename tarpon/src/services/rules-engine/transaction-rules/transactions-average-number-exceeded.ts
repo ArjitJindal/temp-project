@@ -1,26 +1,30 @@
 import { JSONSchemaType } from 'ajv'
 import { mergeRuleSchemas } from '../utils/rule-schema-utils'
 import { PERCENT_SCHEMA } from '../utils/rule-parameter-schemas'
-import TransactionAverageExceededBaseRule, {
-  TransactionsAverageExceededParameters,
-} from './transactions-average-exceeded-base'
+import TransactionsExceededBaseRule, {
+  TransactionsExceededParameters,
+} from './transactions-exceeded-base'
 import { CurrencyCode } from '@/@types/openapi-public/CurrencyCode'
 
 type TransactionsAverageNumberExceededPartialParameters = {
   multiplierThreshold: number
-  averageThreshold?: {
+  valueThresholdPeriod1?: {
     min?: number
     max?: number
   }
 }
 
 export type TransactionsAverageNumberExceededParameters =
-  TransactionsAverageExceededParameters &
+  TransactionsExceededParameters &
     TransactionsAverageNumberExceededPartialParameters
 
-export default class TransactionAverageNumberExceededRule extends TransactionAverageExceededBaseRule<TransactionsAverageNumberExceededParameters> {
+export default class TransactionAverageNumberExceededRule extends TransactionsExceededBaseRule<TransactionsAverageNumberExceededParameters> {
+  protected getAggregatorMethod(): 'SUM' | 'AVG' {
+    return 'AVG'
+  }
+
   public static getSchema(): JSONSchemaType<TransactionsAverageNumberExceededParameters> {
-    const baseSchema = TransactionAverageExceededBaseRule.getBaseSchema()
+    const baseSchema = TransactionsExceededBaseRule.getBaseSchema()
     const partialSchema: JSONSchemaType<TransactionsAverageNumberExceededPartialParameters> =
       {
         type: 'object',
@@ -31,7 +35,7 @@ export default class TransactionAverageNumberExceededRule extends TransactionAve
               'For example, specifying 200 (%) means that period 1 average should be twice as big as period 2 average to trigger the rule',
             maximum: 'NO_MAXIMUM',
           }),
-          averageThreshold: {
+          valueThresholdPeriod1: {
             type: 'object',
             title: 'Average number threshold (period 1)',
             description:
@@ -63,7 +67,7 @@ export default class TransactionAverageNumberExceededRule extends TransactionAve
             'multiplierThreshold',
             'transactionsNumberThreshold',
             'transactionsNumberThreshold2',
-            'averageThreshold',
+            'valueThresholdPeriod1',
             'checkSender',
             'checkReceiver',
           ],
@@ -76,7 +80,7 @@ export default class TransactionAverageNumberExceededRule extends TransactionAve
     )
   }
 
-  protected getAvgMethod(): 'AMOUNT' | 'NUMBER' | 'DAILY_AMOUNT' {
+  protected getAggregationType(): 'AMOUNT' | 'NUMBER' | 'DAILY_AMOUNT' {
     return 'NUMBER'
   }
 

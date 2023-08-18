@@ -1,10 +1,11 @@
-import _ from 'lodash'
+import { inRange, random, sumBy } from 'lodash'
 import {
   CHECK_RECEIVER_SCHEMA,
   CHECK_SENDER_SCHEMA,
   DAY_WINDOW_SCHEMA,
   TimeWindow,
   DayWindow,
+  TRANSACTIONS_NUMBER_THRESHOLD_OPTIONAL_SCHEMA,
 } from '../utils/rule-parameter-schemas'
 import { TransactionHistoricalFilters } from '../filters'
 import {
@@ -29,7 +30,7 @@ type AggregationData = {
   receivingAmount?: number
 }
 
-export type TransactionsAverageExceededParameters = {
+export type TransactionsExceededParameters = {
   period1: DayWindow
   period2: DayWindow
   excludePeriod1?: boolean
@@ -43,20 +44,20 @@ export type TransactionsAverageExceededParameters = {
     min?: number
     max?: number
   }
-  averageThreshold?: {
+  valueThresholdPeriod1?: {
     min?: number
     max?: number
   }
 }
 
-export default abstract class TransactionAverageExceededBaseRule<
-  Params extends TransactionsAverageExceededParameters
+export default abstract class TransactionsExceededBaseRule<
+  Params extends TransactionsExceededParameters
 > extends TransactionAggregationRule<
   Params,
   TransactionHistoricalFilters,
   AggregationData
 > {
-  public static getBaseSchema(): ExtendedJSONSchemaType<TransactionsAverageExceededParameters> {
+  public static getBaseSchema(): ExtendedJSONSchemaType<TransactionsExceededParameters> {
     return {
       type: 'object',
       properties: {
@@ -71,40 +72,23 @@ export default abstract class TransactionAverageExceededBaseRule<
           title: 'Exclude transactions in period1 from period2',
           nullable: true,
         },
-        transactionsNumberThreshold: {
-          type: 'object',
-          title:
-            "Rule doesn't trigger if transactions number in period1 in less than 'Min' or more than 'Max'",
-          properties: {
-            min: { type: 'integer', title: 'Min', nullable: true },
-            max: { type: 'integer', title: 'Max', nullable: true },
-          },
-          required: [],
-          nullable: true,
-        },
-        transactionsNumberThreshold2: {
-          type: 'object',
-          title:
-            "Rule doesn't trigger if transactions number in period2 in less than 'Min' or more than 'Max'",
-          properties: {
-            min: { type: 'integer', title: 'Min', nullable: true },
-            max: { type: 'integer', title: 'Max', nullable: true },
-          },
-          required: [],
-          nullable: true,
-        },
-        averageThreshold: {
-          type: 'object',
-          title: 'Average threshold (period 1)',
+        transactionsNumberThreshold:
+          TRANSACTIONS_NUMBER_THRESHOLD_OPTIONAL_SCHEMA({
+            title: 'Transactions number threshold (period1)',
+            description:
+              "Rule doesn't trigger if transactions number in period1 in less than 'Min' or more than 'Max'",
+          }),
+        transactionsNumberThreshold2:
+          TRANSACTIONS_NUMBER_THRESHOLD_OPTIONAL_SCHEMA({
+            title: 'Transactions number threshold (period2)',
+            description:
+              "Rule doesn't trigger if transactions number in period2 in less than 'Min' or more than 'Max'",
+          }),
+        valueThresholdPeriod1: TRANSACTIONS_NUMBER_THRESHOLD_OPTIONAL_SCHEMA({
+          title: 'Average threshold (period1)',
           description:
             "Rule doesn't trigger if average in period1 in less than 'Min' or more than 'Max'",
-          properties: {
-            min: { type: 'integer', title: 'Min', nullable: true },
-            max: { type: 'integer', title: 'Max', nullable: true },
-          },
-          required: [],
-          nullable: true,
-        },
+        }),
         checkSender: CHECK_SENDER_SCHEMA(),
         checkReceiver: CHECK_RECEIVER_SCHEMA(),
       },
@@ -118,7 +102,7 @@ export default abstract class TransactionAverageExceededBaseRule<
           'checkReceiver',
           'transactionsNumberThreshold',
           'transactionsNumberThreshold2',
-          'averageThreshold',
+          'valueThresholdPeriod1',
         ],
       },
     }
@@ -129,7 +113,9 @@ export default abstract class TransactionAverageExceededBaseRule<
     value: number
   }
 
-  protected abstract getAvgMethod(): 'AMOUNT' | 'NUMBER' | 'DAILY_AMOUNT'
+  protected abstract getAggregationType(): 'AMOUNT' | 'NUMBER' | 'DAILY_AMOUNT'
+
+  protected abstract getAggregatorMethod(): 'SUM' | 'AVG'
 
   public async computeRule() {
     return await Promise.all([
@@ -153,10 +139,11 @@ export default abstract class TransactionAverageExceededBaseRule<
     const { period1, period2 } = await this.getData(direction)
 
     // Filter stage
-    const avgMethod = this.getAvgMethod()
+    const aggregationType = this.getAggregationType()
+    const aggregationMethod = this.getAggregatorMethod()
     const { units1, units2 } = this.getPeriodUnits()
     const {
-      averageThreshold,
+      valueThresholdPeriod1,
       transactionsNumberThreshold,
       transactionsNumberThreshold2,
     } = this.parameters
@@ -168,33 +155,31 @@ export default abstract class TransactionAverageExceededBaseRule<
       min: period2TransactionsNumberMin,
       max: period2TransactionsNumberMax,
     } = transactionsNumberThreshold2 ?? {}
-    const { min: avgMin, max: avgMax } = averageThreshold ?? {}
 
-    if (avgMethod === 'AMOUNT') {
-      const avg = period1.totalAmount! / period1.totalCount
-      if (
-        (avgMin != null && avg < avgMin) ||
-        (avgMax != null && avg > avgMax)
-      ) {
-        return
+    const { min = 0, max = Infinity } = valueThresholdPeriod1 ?? {}
+
+    let value = 0
+    if (aggregationMethod === 'AVG') {
+      if (aggregationType === 'AMOUNT') {
+        value = period1.totalAmount! / period1.totalCount
+      } else if (aggregationType === 'DAILY_AMOUNT') {
+        value = period1.totalAmount! / units1
+      } else {
+        value = period1.totalCount / units1
       }
-    } else if (avgMethod === 'DAILY_AMOUNT') {
-      const avg = period1.totalAmount! / units1
-      if (
-        (avgMin != null && avg < avgMin) ||
-        (avgMax != null && avg > avgMax)
-      ) {
-        return
-      }
-    } else {
-      const avg = period1.totalCount / units1
-      if (
-        (avgMin != null && avg < avgMin) ||
-        (avgMax != null && avg > avgMax)
-      ) {
-        return
+    } else if (aggregationMethod === 'SUM') {
+      if (aggregationType === 'AMOUNT' || aggregationType === 'DAILY_AMOUNT') {
+        value = period1.totalAmount!
+      } else {
+        value = period1.totalCount
       }
     }
+
+    // +1 because end of range is exclusive
+    if (!inRange(value, min, max + 1)) {
+      return
+    }
+
     if (
       (period1TransactionsNumberMin &&
         period1.totalCount < period1TransactionsNumberMin) ||
@@ -203,6 +188,7 @@ export default abstract class TransactionAverageExceededBaseRule<
     ) {
       return
     }
+
     if (
       (period2TransactionsNumberMin &&
         period2.totalCount < period2TransactionsNumberMin) ||
@@ -214,30 +200,54 @@ export default abstract class TransactionAverageExceededBaseRule<
 
     // Check against the real threshold
     const avgPeriod1 =
-      avgMethod === 'AMOUNT'
+      aggregationType === 'AMOUNT'
         ? period1.totalAmount! / period1.totalCount
-        : avgMethod === 'NUMBER'
+        : aggregationType === 'NUMBER'
         ? period1.totalCount / units1
         : period1.totalAmount! / units1
+
     const avgPeriod2 =
-      avgMethod === 'AMOUNT'
+      aggregationType === 'AMOUNT'
         ? period2.totalAmount! / period2.totalCount
-        : avgMethod === 'NUMBER'
+        : aggregationType === 'NUMBER'
         ? period2.totalCount / units2
         : period2.totalAmount! / units2
-    const multiplier = avgPeriod1 / avgPeriod2
+
+    const sumPeriod1 =
+      aggregationType === 'AMOUNT'
+        ? period1.totalAmount!
+        : aggregationType === 'NUMBER'
+        ? period1.totalCount
+        : period1.totalAmount!
+
+    const sumPeriod2 =
+      aggregationType === 'AMOUNT'
+        ? period2.totalAmount!
+        : aggregationType === 'NUMBER'
+        ? period2.totalCount
+        : period2.totalAmount!
+
+    const multiplier =
+      aggregationMethod === 'AVG'
+        ? avgPeriod1 / avgPeriod2
+        : period2.totalCount === 0
+        ? 0
+        : sumPeriod1 / sumPeriod2
+
     const { value: maxMultiplier, currency } = this.getMultiplierThresholds()
 
     if (multiplierToPercents(multiplier) > maxMultiplier) {
       let falsePositiveDetails
+
       if (this.ruleInstance.falsePositiveCheckEnabled) {
         if ((multiplier - maxMultiplier) / multiplier < 0.05) {
           falsePositiveDetails = {
             isFalsePositive: true,
-            confidenceScore: _.random(60, 80),
+            confidenceScore: random(60, 80),
           }
         }
       }
+
       const vars = {
         ...super.getTransactionVars(direction),
         period1: this.parameters.period1,
@@ -268,22 +278,28 @@ export default abstract class TransactionAverageExceededBaseRule<
       afterTimestamp: afterTimestampP1,
       beforeTimestamp: beforeTimestampP1,
     } = getTimestampRange(this.transaction.timestamp!, this.parameters.period1)
-    const avgMethod = this.getAvgMethod()
+
+    const aggregationType = this.getAggregationType()
+
     const { currency } = this.getMultiplierThresholds()
+
     const checkDirection =
       direction === 'origin'
         ? this.parameters.checkSender
         : this.parameters.checkReceiver
+
     const userAggregationDataP1 =
       await this.getRuleAggregations<AggregationData>(
         direction,
         afterTimestampP1,
         beforeTimestampP1
       )
+
     const {
       afterTimestamp: afterTimestampP2,
       beforeTimestamp: beforeTimestampP2,
     } = this.getPeriod2TimeRange()
+
     const userAggregationDataP2 =
       await this.getRuleAggregations<AggregationData>(
         direction,
@@ -294,19 +310,22 @@ export default abstract class TransactionAverageExceededBaseRule<
     if (userAggregationDataP1 && userAggregationDataP2) {
       let transactionsSendingCountPeriod1 =
         checkDirection !== 'receiving'
-          ? _.sumBy(userAggregationDataP1, (data) => data.sendingCount ?? 0)
+          ? sumBy(userAggregationDataP1, (data) => data.sendingCount ?? 0)
           : 0
+
       let transactionsSendingCountPeriod2 =
         checkDirection !== 'receiving'
-          ? _.sumBy(userAggregationDataP2, (data) => data.sendingCount ?? 0)
+          ? sumBy(userAggregationDataP2, (data) => data.sendingCount ?? 0)
           : 0
+
       let transactionsReceivingCountPeriod1 =
         checkDirection !== 'sending'
-          ? _.sumBy(userAggregationDataP1, (data) => data.receivingCount ?? 0)
+          ? sumBy(userAggregationDataP1, (data) => data.receivingCount ?? 0)
           : 0
+
       let transactionsReceivingCountPeriod2 =
         checkDirection !== 'sending'
-          ? _.sumBy(userAggregationDataP2, (data) => data.receivingCount ?? 0)
+          ? sumBy(userAggregationDataP2, (data) => data.receivingCount ?? 0)
           : 0
 
       if (direction === 'origin') {
@@ -320,16 +339,19 @@ export default abstract class TransactionAverageExceededBaseRule<
           transactionsReceivingCountPeriod2 += 1
         }
       }
+
       const transactionsCountPeriod1 =
         transactionsSendingCountPeriod1 + transactionsReceivingCountPeriod1
+
       const transactionsCountPeriod2 =
         transactionsSendingCountPeriod2 + transactionsReceivingCountPeriod2
 
-      if (avgMethod === 'AMOUNT' || avgMethod === 'DAILY_AMOUNT') {
+      if (aggregationType === 'AMOUNT' || aggregationType === 'DAILY_AMOUNT') {
         const amountDetails =
           direction === 'origin'
             ? this.transaction.originAmountDetails!
             : this.transaction.destinationAmountDetails!
+
         const currentAmount = amountDetails
           ? (
               await getTargetCurrencyAmount(
@@ -338,27 +360,25 @@ export default abstract class TransactionAverageExceededBaseRule<
               )
             ).transactionAmount
           : 0
+
         let transactionsSendingAmountPeriod1 =
           checkDirection !== 'receiving'
-            ? _.sumBy(userAggregationDataP1, (data) => data.sendingAmount ?? 0)
+            ? sumBy(userAggregationDataP1, (data) => data.sendingAmount ?? 0)
             : 0
+
         let transactionsSendingAmountPeriod2 =
           checkDirection !== 'receiving'
-            ? _.sumBy(userAggregationDataP2, (data) => data.sendingAmount ?? 0)
+            ? sumBy(userAggregationDataP2, (data) => data.sendingAmount ?? 0)
             : 0
+
         let transactionsReceivingAmountPeriod1 =
           checkDirection !== 'sending'
-            ? _.sumBy(
-                userAggregationDataP1,
-                (data) => data.receivingAmount ?? 0
-              )
+            ? sumBy(userAggregationDataP1, (data) => data.receivingAmount ?? 0)
             : 0
+
         let transactionsReceivingAmountPeriod2 =
           checkDirection !== 'sending'
-            ? _.sumBy(
-                userAggregationDataP2,
-                (data) => data.receivingAmount ?? 0
-              )
+            ? sumBy(userAggregationDataP2, (data) => data.receivingAmount ?? 0)
             : 0
 
         if (direction === 'origin') {
@@ -413,13 +433,16 @@ export default abstract class TransactionAverageExceededBaseRule<
         },
         ['timestamp', 'originAmountDetails', 'destinationAmountDetails']
       )
+
     const sendingTransactionsToCheck = [...sendingTransactions]
     const receivingTransactionsToCheck = [...receivingTransactions]
+
     if (direction === 'origin') {
       sendingTransactionsToCheck.push(this.transaction)
     } else {
       receivingTransactionsToCheck.push(this.transaction)
     }
+
     const period1AmountDetails = this.getPeriod1Transactions(
       sendingTransactionsToCheck
     )
@@ -429,6 +452,7 @@ export default abstract class TransactionAverageExceededBaseRule<
           (transaction) => transaction.destinationAmountDetails
         )
       )
+
     const period2AmountDetails = this.getPeriod2Transactions(
       sendingTransactionsToCheck
     )
@@ -450,7 +474,7 @@ export default abstract class TransactionAverageExceededBaseRule<
       period1: {
         totalCount: period1AmountDetails.length,
         totalAmount:
-          avgMethod === 'AMOUNT' || avgMethod === 'DAILY_AMOUNT'
+          aggregationType === 'AMOUNT' || aggregationType === 'DAILY_AMOUNT'
             ? (await getTransactionsTotalAmount(period1AmountDetails, currency))
                 .transactionAmount
             : undefined,
@@ -458,7 +482,7 @@ export default abstract class TransactionAverageExceededBaseRule<
       period2: {
         totalCount: period2AmountDetails.length,
         totalAmount:
-          avgMethod === 'AMOUNT' || avgMethod === 'DAILY_AMOUNT'
+          aggregationType === 'AMOUNT' || aggregationType === 'DAILY_AMOUNT'
             ? (await getTransactionsTotalAmount(period2AmountDetails, currency))
                 .transactionAmount
             : undefined,
@@ -529,7 +553,7 @@ export default abstract class TransactionAverageExceededBaseRule<
     if (!isTransactionFiltered) {
       return null
     }
-    const avgMethod = this.getAvgMethod()
+    const aggregationType = this.getAggregationType()
     const { currency } = this.getMultiplierThresholds()
     const data = {
       ...targetAggregationData,
@@ -541,7 +565,7 @@ export default abstract class TransactionAverageExceededBaseRule<
       data.receivingCount = (data.receivingCount ?? 0) + 1
     }
 
-    if (avgMethod === 'AMOUNT' || avgMethod === 'DAILY_AMOUNT') {
+    if (aggregationType === 'AMOUNT' || aggregationType === 'DAILY_AMOUNT') {
       if (direction === 'origin' && this.transaction.originAmountDetails) {
         data.sendingAmount =
           (data.sendingAmount ?? 0) +
@@ -582,8 +606,8 @@ export default abstract class TransactionAverageExceededBaseRule<
         async (group) => ({
           sendingCount: group.length,
           sendingAmount:
-            this.getAvgMethod() === 'AMOUNT' ||
-            this.getAvgMethod() === 'DAILY_AMOUNT'
+            this.getAggregationType() === 'AMOUNT' ||
+            this.getAggregationType() === 'DAILY_AMOUNT'
               ? (
                   await getTransactionsTotalAmount(
                     group.map((t) => t.originAmountDetails),
@@ -598,8 +622,8 @@ export default abstract class TransactionAverageExceededBaseRule<
         async (group) => ({
           receivingCount: group.length,
           receivingAmount:
-            this.getAvgMethod() === 'AMOUNT' ||
-            this.getAvgMethod() === 'DAILY_AMOUNT'
+            this.getAggregationType() === 'AMOUNT' ||
+            this.getAggregationType() === 'DAILY_AMOUNT'
               ? (
                   await getTransactionsTotalAmount(
                     group.map((t) => t.destinationAmountDetails),

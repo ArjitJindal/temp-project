@@ -1,4 +1,4 @@
-import { TransactionsAverageExceededParameters } from '../transactions-average-exceeded-base'
+import { TransactionsExceededParameters } from '../transactions-exceeded-base'
 import { getRuleByRuleId } from '../library'
 import dayjs from '@/utils/dayjs'
 import { getTestTenantId } from '@/test-utils/tenant-test-utils'
@@ -91,7 +91,7 @@ ruleVariantsTest(true, () => {
     const now = dayjs('2022-01-01T00:00:00.000Z')
 
     describe.each<
-      TransactionRuleTestCase<Partial<TransactionsAverageExceededParameters>>
+      TransactionRuleTestCase<Partial<TransactionsExceededParameters>>
     >([
       {
         name: 'Single transaction always trigger the rule',
@@ -279,7 +279,7 @@ ruleVariantsTest(true, () => {
 
   describe('Filters', () => {
     describe.each<
-      TransactionRuleTestCase<Partial<TransactionsAverageExceededParameters>>
+      TransactionRuleTestCase<Partial<TransactionsExceededParameters>>
     >([
       {
         name: "Minimum transaction number in period2 wouldn't let rule to trigger",
@@ -343,7 +343,7 @@ ruleVariantsTest(true, () => {
     const now = dayjs('2022-01-01T00:00:00.000Z')
 
     describe.each<
-      TransactionRuleTestCase<Partial<TransactionsAverageExceededParameters>>
+      TransactionRuleTestCase<Partial<TransactionsExceededParameters>>
     >([
       {
         name: 'First and last transaction should trigger, but average threshold prevent it',
@@ -382,7 +382,7 @@ ruleVariantsTest(true, () => {
           }),
         ],
         ruleParams: {
-          averageThreshold: {
+          valueThresholdPeriod1: {
             min: 250,
             max: 350,
           },
@@ -416,7 +416,7 @@ ruleVariantsTest(true, () => {
     const now = dayjs('2022-01-01T00:00:00.000Z')
 
     describe.each<
-      TransactionRuleTestCase<Partial<TransactionsAverageExceededParameters>>
+      TransactionRuleTestCase<Partial<TransactionsExceededParameters>>
     >([
       {
         name: 'Sender -> sending',

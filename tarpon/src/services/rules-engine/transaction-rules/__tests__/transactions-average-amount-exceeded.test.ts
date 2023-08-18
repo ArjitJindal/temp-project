@@ -636,7 +636,7 @@ ruleVariantsTest(true, () => {
           }),
         ],
         ruleParams: {
-          averageThreshold: {
+          valueThresholdPeriod1: {
             min: 150,
             max: 250,
           },

@@ -43,6 +43,7 @@ import BlacklistPaymentdetailsRule from './blacklist-payment-details'
 import TransactionsExceedPastPeriodRule from './transactions-exceed-past-period'
 import TransactionsOutflowInflowVolumeRule from './transactions-outflow-inflow-volume'
 import { SanctionsCounterPartyRule } from './sanctions-counterparty'
+import { TransactionVolumeExceedsTwoPeriodsRule } from './total-transactions-volume-exceeds'
 import HighRiskCountryRule from './high-risk-countries'
 import TestAlwaysHitRule from '@/services/rules-engine/transaction-rules/tests/test-always-hit-rule'
 import BlacklistTransactionMatchedValue from '@/services/rules-engine/transaction-rules/blacklist-transaction-related-value'
@@ -106,6 +107,7 @@ export const _TRANSACTION_RULES = {
   'machine-learning-anomaly-detection-model': MachineLearningGenericModel,
   'transactions-outflow-inflow-volume': TransactionsOutflowInflowVolumeRule,
   'sanctions-counterparty': SanctionsCounterPartyRule,
+  'total-transactions-volume-exceeds': TransactionVolumeExceedsTwoPeriodsRule,
   'high-risk-countries': HighRiskCountryRule,
 
   // TESTING-ONLY RULES

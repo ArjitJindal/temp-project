@@ -712,7 +712,7 @@ const SAMPLE_SCHEMAS: [string, ExtendedSchema][] = [
           'multiplierThreshold',
           'transactionsNumberThreshold',
           'transactionsNumberThreshold2',
-          'averageThreshold',
+          'valueThresholdPeriod1',
           'checkSender',
           'checkReceiver',
         ],
@@ -819,7 +819,7 @@ const SAMPLE_SCHEMAS: [string, ExtendedSchema][] = [
           },
           required: [],
         },
-        averageThreshold: {
+        valueThresholdPeriod1: {
           description:
             "Rule doesn't trigger if average transactions number in period1 in less than 'Min' or more than 'Max'",
           type: 'object',

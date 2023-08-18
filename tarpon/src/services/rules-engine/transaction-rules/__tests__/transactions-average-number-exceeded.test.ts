@@ -1,4 +1,4 @@
-import { TransactionsAverageExceededParameters } from '../transactions-average-exceeded-base'
+import { TransactionsExceededParameters } from '../transactions-exceeded-base'
 import { getRuleByRuleId } from '../library'
 import dayjs from '@/utils/dayjs'
 import { getTestTenantId } from '@/test-utils/tenant-test-utils'
@@ -82,7 +82,7 @@ ruleVariantsTest(true, () => {
     const now = dayjs('2022-01-01T00:00:00.000Z')
 
     describe.each<
-      TransactionRuleTestCase<Partial<TransactionsAverageExceededParameters>>
+      TransactionRuleTestCase<Partial<TransactionsExceededParameters>>
     >([
       {
         name: 'Single transaction always trigger the rule',
@@ -139,7 +139,7 @@ ruleVariantsTest(true, () => {
     const now = dayjs('2022-01-01T00:00:00.000Z')
 
     describe.each<
-      TransactionRuleTestCase<Partial<TransactionsAverageExceededParameters>>
+      TransactionRuleTestCase<Partial<TransactionsExceededParameters>>
     >([
       {
         name: "Minimum transaction number in period 2 wouldn't let rule to trigger",
@@ -184,7 +184,7 @@ ruleVariantsTest(true, () => {
     const now = dayjs('2022-01-01T00:00:00.000Z')
 
     describe.each<
-      TransactionRuleTestCase<Partial<TransactionsAverageExceededParameters>>
+      TransactionRuleTestCase<Partial<TransactionsExceededParameters>>
     >([
       {
         name: 'Sender -> sending',
@@ -325,7 +325,7 @@ ruleVariantsTest(true, () => {
     const now = dayjs('2022-01-01T00:00:00.000Z')
 
     describe.each<
-      TransactionRuleTestCase<Partial<TransactionsAverageExceededParameters>>
+      TransactionRuleTestCase<Partial<TransactionsExceededParameters>>
     >([
       {
         name: 'Sender -> sending',
@@ -359,7 +359,7 @@ ruleVariantsTest(true, () => {
         ruleParams: {
           checkSender: 'sending',
           checkReceiver: 'none',
-          averageThreshold: {
+          valueThresholdPeriod1: {
             min: 2,
             max: 2,
           },
@@ -418,7 +418,7 @@ ruleVariantsTest(true, () => {
             granularity: 'day',
             units: 1,
           },
-          averageThreshold: {},
+          valueThresholdPeriod1: {},
           multiplierThreshold: 200,
           checkReceiver: 'all',
         },

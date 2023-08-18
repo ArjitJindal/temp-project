@@ -1,8 +1,8 @@
 import { JSONSchemaType } from 'ajv'
-import TransactionAverageExceededBaseRule, {
-  TransactionsAverageExceededParameters,
-} from './transactions-average-exceeded-base'
 import TransactionAverageAmountExceededRule from './transactions-average-amount-exceeded'
+import TransactionsExceededBaseRule, {
+  TransactionsExceededParameters,
+} from './transactions-exceeded-base'
 import { CurrencyCode } from '@/@types/openapi-public/CurrencyCode'
 
 type TransactionsAverageAmountExceededPartialParameters = {
@@ -10,23 +10,27 @@ type TransactionsAverageAmountExceededPartialParameters = {
     currency: string
     value: number
   }
-  averageThreshold?: {
+  valueThresholdPeriod1?: {
     min?: number
     max?: number
   }
 }
 
 export type TransactionsAverageAmountExceededParameters =
-  TransactionsAverageExceededParameters &
+  TransactionsExceededParameters &
     TransactionsAverageAmountExceededPartialParameters
 
-export default class TransactionAverageDailyAmountExceededRule extends TransactionAverageExceededBaseRule<TransactionsAverageAmountExceededParameters> {
+export default class TransactionAverageDailyAmountExceededRule extends TransactionsExceededBaseRule<TransactionsAverageAmountExceededParameters> {
   public static getSchema(): JSONSchemaType<TransactionsAverageAmountExceededParameters> {
     return TransactionAverageAmountExceededRule.getSchema()
   }
 
-  protected getAvgMethod(): 'AMOUNT' | 'NUMBER' | 'DAILY_AMOUNT' {
+  protected getAggregationType(): 'AMOUNT' | 'NUMBER' | 'DAILY_AMOUNT' {
     return 'DAILY_AMOUNT'
+  }
+
+  protected getAggregatorMethod(): 'SUM' | 'AVG' {
+    return 'AVG'
   }
 
   protected getMultiplierThresholds(): {

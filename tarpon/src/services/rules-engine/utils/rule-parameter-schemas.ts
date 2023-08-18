@@ -173,6 +173,35 @@ export const DAY_WINDOW_SCHEMA = (options?: SchemaOptions) =>
     required: ['units', 'granularity'],
   } as const)
 
+export const TRANSACTIONS_NUMBER_THRESHOLD_SCHEMA = (options?: SchemaOptions) =>
+  ({
+    type: 'object',
+    title: options?.title || 'Transaction number threshold',
+    description:
+      options?.description ||
+      "Rule doesn't trigger if transactions number in period1 in less than 'Min' or more than 'Max'",
+    properties: {
+      min: {
+        type: 'integer',
+        title: 'Min',
+        nullable: true,
+      },
+      max: {
+        type: 'integer',
+        title: 'Max',
+        nullable: true,
+      },
+    },
+  } as const)
+
+export const TRANSACTIONS_NUMBER_THRESHOLD_OPTIONAL_SCHEMA = (
+  options?: SchemaOptions
+) =>
+  ({
+    ...TRANSACTIONS_NUMBER_THRESHOLD_SCHEMA(options),
+    nullable: true,
+  } as const)
+
 export const AGE_SCHEMA = (options?: SchemaOptions) =>
   ({
     type: 'object',

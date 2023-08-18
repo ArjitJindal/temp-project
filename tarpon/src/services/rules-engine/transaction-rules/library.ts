@@ -40,6 +40,7 @@ import { BlacklistPaymentdetailsRuleParameters } from './blacklist-payment-detai
 import { TransactionsExceedPastPeriodRuleParameters } from './transactions-exceed-past-period'
 import { TransactionsOutflowInflowVolumeRuleParameters } from './transactions-outflow-inflow-volume'
 import { SanctionsCounterPartyRuleParameters } from './sanctions-counterparty'
+import { TransactionVolumeExceedsTwoPeriodsRuleParameters } from './total-transactions-volume-exceeds'
 import { HighRiskCountryRuleParameters } from './high-risk-countries'
 import { TRANSACTION_RULES, TransactionRuleImplementationName } from './index'
 import { Rule } from '@/@types/openapi-internal/Rule'
@@ -976,6 +977,47 @@ const _RULES_LIBRARY: Array<
         'Typologies that identify transactional activity characteristics that are unexpected or uncommon for a customer.',
       source:
         'Guidelines to MAS Notice PS-N01 On Prevention of Money Laundering and Countering the Financing of Terrorism',
+    }
+  },
+  () => {
+    const defaultParameters: TransactionVolumeExceedsTwoPeriodsRuleParameters =
+      {
+        checkReceiver: 'receiving',
+        checkSender: 'sending',
+        multiplierThreshold: {
+          currency: 'USD',
+          value: 500,
+        },
+        period1: {
+          units: 7,
+          granularity: 'day',
+        },
+        period2: {
+          units: 30,
+          granularity: 'day',
+        },
+      }
+
+    return {
+      id: 'R-27',
+      name: 'Total transaction volume exceed past period total transaction volume',
+      type: 'TRANSACTION',
+      description:
+        'The total volume of transactions of a user in the last t1 days, is >= X times higher than total volume of transactions in t2 days',
+      descriptionTemplate: `{{ if-sender 'Sender' 'Receiver' }} made more then {{ to-fixed multiplier }} times value of transactions in last {{ format-time-window period1 }} than value of transactions in last {{ format-time-window period2 }}`,
+      defaultParameters,
+      defaultAction: 'FLAG',
+      defaultCasePriority: 'P1',
+      defaultNature: 'FRAUD',
+      labels: [],
+      ruleImplementationName: 'total-transactions-volume-exceeds',
+      defaultFalsePositiveCheckEnabled: true,
+      typology: 'Money Mules Acquiring Fraud Layering of funds',
+      typologyGroup: 'Money Mules Acquiring Fraud Layering',
+      typologyDescription:
+        '- Money Muling activity of wittingly or unwittingly performing a transaction for the benefit of 3rd parties to disguise the true source of funds. - Acquiring fraud - receiving money that are proceeds of fraud ( typically top-up from stolen card and/or APP fraud). - Layering- disguising the true nature of transactions via numerous transfers between financial institutions. ',
+      source:
+        'UK National risk assessment of money laundering and terrorist financing 2020',
     }
   },
   () => {

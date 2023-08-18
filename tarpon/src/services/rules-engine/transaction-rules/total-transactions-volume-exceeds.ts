@@ -1,15 +1,15 @@
 import { JSONSchemaType } from 'ajv'
-import { mergeRuleSchemas } from '../utils/rule-schema-utils'
 import {
   CURRENCY_SCHEMA,
   PERCENT_SCHEMA,
 } from '../utils/rule-parameter-schemas'
+import { mergeRuleSchemas } from '../utils/rule-schema-utils'
 import TransactionsExceededBaseRule, {
   TransactionsExceededParameters,
 } from './transactions-exceeded-base'
-import { CurrencyCode } from '@/@types/openapi-public/CurrencyCode'
+import { CurrencyCode } from '@/@types/openapi-internal/CurrencyCode'
 
-type TransactionsAverageAmountExceededPartialParameters = {
+type TransactionVolumeExceedsTwoPeriodsRulePartialParams = {
   multiplierThreshold: {
     currency: string
     value: number
@@ -18,38 +18,34 @@ type TransactionsAverageAmountExceededPartialParameters = {
     min?: number
     max?: number
   }
+  excludePeriod1?: boolean
 }
 
-export type TransactionsAverageAmountExceededParameters =
-  TransactionsExceededParameters &
-    TransactionsAverageAmountExceededPartialParameters
+export type TransactionVolumeExceedsTwoPeriodsRuleParameters =
+  TransactionVolumeExceedsTwoPeriodsRulePartialParams &
+    TransactionsExceededParameters
 
-export default class TransactionAverageAmountExceededRule extends TransactionsExceededBaseRule<TransactionsAverageAmountExceededParameters> {
-  protected getAggregatorMethod(): 'SUM' | 'AVG' {
-    return 'AVG'
-  }
-
-  public static getSchema(): JSONSchemaType<TransactionsAverageAmountExceededParameters> {
+export class TransactionVolumeExceedsTwoPeriodsRule extends TransactionsExceededBaseRule<TransactionVolumeExceedsTwoPeriodsRuleParameters> {
+  public static getSchema(): JSONSchemaType<TransactionVolumeExceedsTwoPeriodsRulePartialParams> {
     const baseSchema = TransactionsExceededBaseRule.getBaseSchema()
 
-    const partialSchema: JSONSchemaType<TransactionsAverageAmountExceededPartialParameters> =
+    const partialSchema: JSONSchemaType<TransactionVolumeExceedsTwoPeriodsRulePartialParams> =
       {
         type: 'object',
         properties: {
           multiplierThreshold: {
             type: 'object',
-            title: 'Maximum multiplier',
             properties: {
               currency: CURRENCY_SCHEMA({
                 title: 'Currency code to count amount',
                 description:
-                  'All the transactions in other currencies are converted to this currency before calculating the average',
+                  'All the transactions in this currencies are converted to this currency before calculating the sum',
               }),
               value: PERCENT_SCHEMA({
                 title: 'Multiplier as a percentage',
-                description:
-                  'For example, specifying 200 (%) means that period 1 average should be twice as big as period 2 average to trigger the rule',
                 maximum: 'NO_MAXIMUM',
+                description:
+                  'For example, specifying 200 (%) means that the period 1 sum should be twice as big as period 2 sum to trigger the rule',
               }),
             },
             required: ['currency', 'value'],
@@ -57,24 +53,32 @@ export default class TransactionAverageAmountExceededRule extends TransactionsEx
           },
           valueThresholdPeriod1: {
             type: 'object',
-            title: 'Average amount threshold (period 1)',
+            title: 'Total amount threshold (period 1)',
             description:
-              "Rule doesn't trigger if average transactions amount in period1 in less than 'Min' or more than 'Max' (All the transactions in other currencies are converted to the above currency before calculating the average)",
+              "Rule doesn't trigger if the total amount in period 1 is less than 'Min' or more than 'Max'",
             properties: {
               min: {
                 type: 'number',
                 title: 'Min',
-                minimum: 0,
+                description: 'Minimum total amount in period 1',
                 nullable: true,
+                minimum: 0,
               } as const,
               max: {
                 type: 'number',
                 title: 'Max',
-                minimum: 0,
+                description: 'Maximum total amount in period 1',
                 nullable: true,
+                minimum: 0,
               } as const,
             },
             required: [],
+            nullable: true,
+          },
+          excludePeriod1: {
+            type: 'boolean',
+            title:
+              'Exclude transactions in period1 from period2 (Recommended: enabled)',
             nullable: true,
           },
         },
@@ -93,7 +97,8 @@ export default class TransactionAverageAmountExceededRule extends TransactionsEx
           ],
         },
       }
-    return mergeRuleSchemas<TransactionsAverageAmountExceededParameters>(
+
+    return mergeRuleSchemas<TransactionVolumeExceedsTwoPeriodsRulePartialParams>(
       baseSchema,
       partialSchema
     )
@@ -101,6 +106,10 @@ export default class TransactionAverageAmountExceededRule extends TransactionsEx
 
   protected getAggregationType(): 'AMOUNT' | 'NUMBER' | 'DAILY_AMOUNT' {
     return 'AMOUNT'
+  }
+
+  protected getAggregatorMethod(): 'SUM' | 'AVG' {
+    return 'SUM'
   }
 
   protected getMultiplierThresholds(): {
