@@ -10,8 +10,7 @@ import { useQuery } from '@/utils/queries/hooks';
 import { getBranding } from '@/utils/branding';
 import { USER_INFO } from '@/utils/queries/keys';
 import { Permission } from '@/apis';
-// import heap from '@/@types/heap';
-// import  heap  from '@/@types/heap';
+import { IHeap } from '@/@types/heap';
 
 const branding = getBranding();
 
@@ -77,7 +76,7 @@ export default function FlagrightUserProvider(props: { children: React.ReactNode
         }
 
         if (user.name) {
-          heap.identify(user.name);
+          ((window as any).heap as IHeap)?.identify(user.name);
         }
         return <Context.Provider value={{ user: user }}>{props.children}</Context.Provider>;
       }}

@@ -13,7 +13,6 @@ declare global {
   declare const SENTRY_DSN: string;
   declare const SLACK_CLIENT_ID: string;
   declare const HEAP_APP_ID: string;
-  declare const heap: any;
 }
 
 // Patching Jest matcher types since we export 'expect' explicitly
