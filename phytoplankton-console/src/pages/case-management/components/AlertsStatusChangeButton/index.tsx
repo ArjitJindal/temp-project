@@ -11,7 +11,7 @@ interface Props {
   transactionIds: { [alertId: string]: string[] };
   caseId?: string;
   status?: AlertStatus;
-  initialValues?: FormValues;
+  initialValues?: Partial<FormValues>;
   buttonProps?: {
     size?: ButtonSize | undefined;
     isBlue?: boolean;

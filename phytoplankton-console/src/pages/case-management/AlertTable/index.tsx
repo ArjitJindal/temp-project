@@ -270,12 +270,13 @@ const mergedColumns = (
             {entity?.caseId && isInReview && canReview && entity.alertStatus && (
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8 }}>
                 <ApproveSendBackButton
-                  ids={[entity.caseId]}
+                  ids={[entity.alertId]}
                   onReload={reload}
                   type="ALERT"
                   previousStatus={previousStatus}
                   status={entity.alertStatus}
-                  key={entity.caseId}
+                  key={entity.alertId}
+                  selectedCaseId={entity.caseId}
                 />
               </div>
             )}

@@ -111,7 +111,7 @@ const columns = columnHelper.list([
   }),
   columnHelper.simple({
     id: 'filterCaseId',
-    key: 'caseId',
+    key: 'caseId' as const,
     title: 'Case ID',
     defaultWidth: 150,
     filtering: true,
@@ -126,13 +126,13 @@ const columns = columnHelper.list([
   }),
   columnHelper.simple({
     id: 'filterAlertId',
-    key: 'alertId',
+    key: 'alertId' as const,
     title: 'Alert ID',
     filtering: true,
     showFilterByDefault: true,
     defaultWidth: 150,
     type: {
-      render: (alertId, { item: alert }) => (
+      render: (alertId: string | undefined, { item: alert }) => (
         <Id
           to={
             alert.caseId

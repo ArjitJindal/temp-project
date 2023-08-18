@@ -549,10 +549,8 @@ export class AccountsService {
       {
         app_metadata: {
           ...user.app_metadata,
-          ...(patch.isEscalationContact != null
-            ? { isEscalationContact: patch.isEscalationContact }
-            : {}),
-          ...(patch.reviewerId != null ? { reviewerId: patch.reviewerId } : {}),
+          isEscalationContact: patch.isEscalationContact === true,
+          reviewerId: patch.reviewerId ?? null,
         },
       }
     )

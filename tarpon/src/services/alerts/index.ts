@@ -1,15 +1,15 @@
 import { DynamoDBDocumentClient } from '@aws-sdk/lib-dynamodb'
 import { S3 } from '@aws-sdk/client-s3'
 import { MongoClient } from 'mongodb'
-import { NotFound, BadRequest, Forbidden } from 'http-errors'
+import { BadRequest, Forbidden, NotFound } from 'http-errors'
 import {
-  isEmpty,
-  uniq,
-  compact,
-  omit,
   capitalize,
+  compact,
+  isEmpty,
+  omit,
   startCase,
   toLower,
+  uniq,
 } from 'lodash'
 import {
   APIGatewayEventLambdaAuthorizerContext,
@@ -21,7 +21,7 @@ import {
 } from '../rules-engine/repositories/alerts-repository'
 import { CaseAlertsCommonService, S3Config } from '../case-alerts-common'
 import { CaseRepository } from '../rules-engine/repositories/case-repository'
-import { ThinWebhookDeliveryTask, sendWebhookTasks } from '../webhook/utils'
+import { sendWebhookTasks, ThinWebhookDeliveryTask } from '../webhook/utils'
 import { SanctionsService } from '../sanctions'
 import { Alert } from '@/@types/openapi-internal/Alert'
 import { AlertListResponse } from '@/@types/openapi-internal/AlertListResponse'
@@ -286,6 +286,7 @@ export class AlertsService extends CaseAlertsCommonService {
           files: caseUpdateRequest?.files ?? [],
           otherReason: caseUpdateRequest?.otherReason ?? '',
           priority: caseUpdateRequest?.priority,
+          closeSourceCase: caseEscalationRequest.closeSourceCase,
         },
         { cascadeCaseUpdates: false }
       )
@@ -320,6 +321,9 @@ export class AlertsService extends CaseAlertsCommonService {
               ? 'IN_REVIEW_ESCALATED'
               : 'ESCALATED',
           timestamp: currentTimestamp,
+          meta: {
+            closeSourceCase: caseEscalationRequest.closeSourceCase,
+          },
         }
 
         const escalationAlertReq = alertEscalations!.find(
@@ -426,6 +430,14 @@ export class AlertsService extends CaseAlertsCommonService {
       }
     }
 
+    const closeSourceCase =
+      !isTransactionsEscalation &&
+      (caseEscalationRequest.closeSourceCase ||
+        escalatedAlerts?.some(
+          (alert) => alert.lastStatusChange?.meta?.closeSourceCase === true
+        ) ||
+        false)
+
     const newCase: Case = {
       ...mainCaseAttributes,
       caseId: childCaseId,
@@ -450,6 +462,20 @@ export class AlertsService extends CaseAlertsCommonService {
       caseHierarchyDetails: caseHierarchyDetailsForOriginalCase,
     }
 
+    if (closeSourceCase) {
+      const lastStatusChange = {
+        userId: currentUserId ?? '',
+        timestamp: Date.now(),
+        caseStatus: 'CLOSED' as const,
+      }
+      updatedExistingCase.lastStatusChange = lastStatusChange
+      updatedExistingCase.statusChanges = [
+        ...(updatedExistingCase.statusChanges ?? []),
+        lastStatusChange,
+      ]
+      updatedExistingCase.caseStatus = 'CLOSED'
+    }
+
     await caseRepository.addCaseMongo(omit(newCase, '_id'))
     await caseRepository.addCaseMongo(updatedExistingCase)
 
@@ -469,6 +495,7 @@ export class AlertsService extends CaseAlertsCommonService {
             files: caseUpdateRequest.files,
             otherReason: caseUpdateRequest.otherReason,
             priority: caseUpdateRequest.priority,
+            closeSourceCase: caseEscalationRequest.closeSourceCase,
           }
         )
       }
@@ -645,6 +672,9 @@ export class AlertsService extends CaseAlertsCommonService {
       reason: statusUpdateRequest.reason,
       caseStatus: statusUpdateRequest.alertStatus,
       otherReason: statusUpdateRequest.otherReason,
+      meta: {
+        closeSourceCase: statusUpdateRequest.closeSourceCase,
+      },
     }
 
     const caseRepository = new CaseRepository(this.tenantId, {

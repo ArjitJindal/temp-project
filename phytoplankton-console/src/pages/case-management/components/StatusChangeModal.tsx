@@ -1,5 +1,4 @@
 import React, { useCallback, useEffect, useRef, useState } from 'react';
-import _ from 'lodash';
 import pluralize from 'pluralize';
 import { UseMutationResult } from '@tanstack/react-query';
 import { statusToOperationName } from './StatusChangeButton';
@@ -23,7 +22,7 @@ import { maxLength, notEmpty } from '@/components/library/Form/utils/validation/
 import GenericFormField from '@/components/library/Form/GenericFormField';
 import { useFinishedSuccessfully } from '@/utils/asyncResource';
 import { getMutationAsyncResource } from '@/utils/queries/hooks';
-import { useDeepEqualEffect } from '@/utils/hooks';
+import { useDeepEqualEffect, useDeepEqualMemo } from '@/utils/hooks';
 import FilesInput, { RemoveAllFilesRef } from '@/components/ui/FilesInput';
 
 export const OTHER_REASON: CaseReasons = 'Other';
@@ -64,7 +63,7 @@ export interface Props {
   newStatus: CaseStatus;
   newStatusActionLabel?: 'Send back' | 'Escalate' | 'Approve' | 'Decline' | 'Close';
   defaultReasons?: CaseReasons[];
-  initialValues?: FormValues;
+  initialValues?: Partial<FormValues>;
   onSaved: () => void;
   onClose: () => void;
   updateMutation: UseMutationResult<unknown, unknown, FormValues>;
@@ -88,10 +87,6 @@ export default function StatusChangeModal(props: Props) {
     newStatus,
     isVisible,
     defaultReasons,
-    initialValues = {
-      ...DEFAULT_INITIAL_VALUES,
-      defaultReasons,
-    },
     onSaved,
     onClose,
     updateMutation,
@@ -99,6 +94,14 @@ export default function StatusChangeModal(props: Props) {
     displayCloseRelatedCases,
     skipReasonsModal = false,
   } = props;
+  const initialValues: FormValues = useDeepEqualMemo(
+    () => ({
+      ...DEFAULT_INITIAL_VALUES,
+      ...props.initialValues,
+      defaultReasons,
+    }),
+    [props.initialValues, defaultReasons],
+  );
   const [alwaysShowErrors, setAlwaysShowErrors] = useState(false);
   const [isAwaitingConfirmation, setAwaitingConfirmation] = useState(false);
   const [formState, setFormState] = useState<{ values: FormValues; isValid: boolean }>({

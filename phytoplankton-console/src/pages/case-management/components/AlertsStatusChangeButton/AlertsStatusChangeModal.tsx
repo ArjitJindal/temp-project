@@ -47,12 +47,10 @@ export default function AlertsStatusChangeModal(props: Props) {
       try {
         if (updates.alertStatus === 'ESCALATED' && props.caseId && !isChildCase) {
           const caseUpdateRequest: CaseStatusUpdate = updates;
-          if (formValues.closeRelatedCase) {
-            caseUpdateRequest.caseStatus = 'CLOSED';
-          }
           const { childCaseId, assigneeIds } = await api.postCasesCaseIdEscalate({
             caseId: props.caseId,
             CaseEscalationRequest: {
+              closeSourceCase: formValues.closeRelatedCase,
               caseUpdateRequest,
               alertEscalations: props.entityIds.map((alertId) => {
                 return {
@@ -96,13 +94,13 @@ export default function AlertsStatusChangeModal(props: Props) {
         }
         if (currentUser?.reviewerId) {
           message.warn(
-            `${pluralize('Case', props.entityIds.length, true)} ${props.entityIds.join(', ')} ${
+            `${pluralize('Alert', props.entityIds.length, true)} ${props.entityIds.join(', ')} ${
               props.entityIds.length > 1 ? 'are' : 'is'
             } sent to review ${
               users[currentUser.reviewerId]?.name ||
               users[currentUser.reviewerId]?.email ||
               currentUser?.reviewerId
-            }. Once approved your case action will be performed successfully.`,
+            }. Once approved your alert action will be performed successfully.`,
           );
           return;
         }

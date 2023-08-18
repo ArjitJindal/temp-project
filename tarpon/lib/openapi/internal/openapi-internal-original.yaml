@@ -6375,6 +6375,8 @@ components:
           type: array
           items:
             $ref: '#/components/schemas/FileInfo'
+        closeSourceCase:
+          type: boolean
       required:
         - alertStatus
         - reason
@@ -6507,6 +6509,11 @@ components:
           type: string
         comment:
           type: string
+        meta:
+          type: object
+          properties:
+            closeSourceCase:
+              type: boolean
       required:
         - userId
         - timestamp
