@@ -168,6 +168,10 @@ export const ConsoleApiPathToLambda: any = {
   '/reports': StackConstants.CONSOLE_API_SAR_FUNCTION_NAME,
   '/reports/{reportId}': StackConstants.CONSOLE_API_SAR_FUNCTION_NAME,
   '/reports/{reportId}/draft': StackConstants.CONSOLE_API_SAR_FUNCTION_NAME,
+  '/checklist-templates':
+    StackConstants.CONSOLE_API_CHECKLIST_TEMPLATE_FUNCTION_NAME,
+  '/checklist-templates/{checklistTemplateId}':
+    StackConstants.CONSOLE_API_CHECKLIST_TEMPLATE_FUNCTION_NAME,
 }
 
 const openapi = getAugmentedOpenapi(

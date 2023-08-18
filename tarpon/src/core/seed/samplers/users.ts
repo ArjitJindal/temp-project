@@ -1,4 +1,4 @@
-import { uuid4 } from '@sentry/utils'
+import { v4 as uuid4 } from 'uuid'
 import { addresses, phoneNumber } from '../data/address'
 import { sampleCountry } from './countries'
 import { sampleString } from './strings'

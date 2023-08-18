@@ -1,4 +1,4 @@
-import { uuid4 } from '@sentry/utils'
+import { v4 as uuid4 } from 'uuid'
 import { sampleConsumerUserRiskScoreComponents } from '../samplers/risk_score_components'
 import { sampleTag } from '../samplers/tag'
 import { randomUserRules, userRules } from './rules'

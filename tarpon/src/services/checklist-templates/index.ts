@@ -1,0 +1,48 @@
+import { MongoClient } from 'mongodb'
+import { NotFound, BadRequest } from 'http-errors'
+import { ChecklistTemplateRepository } from './repositories/checklist-templates-repository'
+import { traceable } from '@/core/xray'
+import { DefaultApiGetChecklistTemplatesRequest } from '@/@types/openapi-internal/RequestParameters'
+import { ChecklistTemplate } from '@/@types/openapi-internal/ChecklistTemplate'
+
+export type ChecklistTemplateWithId = ChecklistTemplate & { id: string }
+
+@traceable
+export class ChecklistTemplatesService {
+  tenantId: string
+  repository: ChecklistTemplateRepository
+
+  constructor(tenantId: string, mongoDb: MongoClient) {
+    this.tenantId = tenantId
+    this.repository = new ChecklistTemplateRepository(tenantId, mongoDb)
+  }
+
+  public async getChecklistTemplates(
+    params: DefaultApiGetChecklistTemplatesRequest
+  ) {
+    return this.repository.getChecklistTemplates(params)
+  }
+
+  public async createChecklistTemplate(template: ChecklistTemplate) {
+    if (
+      template.id &&
+      (await this.repository.getChecklistTemplate(template.id))
+    ) {
+      throw new BadRequest(`Checklist template ${template.id} already exists`)
+    }
+    return this.repository.createOrUpdateChecklistTemplate(template)
+  }
+
+  public async updateChecklistTemplate(template: ChecklistTemplateWithId) {
+    if (!(await this.repository.getChecklistTemplate(template.id))) {
+      throw new NotFound(`Checklist template ${template.id}  not found`)
+    }
+    return this.repository.createOrUpdateChecklistTemplate(template)
+  }
+  public async deleteChecklistTemplate(templateId: string) {
+    if (!(await this.repository.getChecklistTemplate(templateId))) {
+      throw new NotFound(`Checklist template ${templateId}  not found`)
+    }
+    return this.repository.deleteChecklistTemplate(templateId)
+  }
+}

@@ -1,4 +1,4 @@
-import { uuid4 } from '@sentry/utils'
+import { v4 as uuid4 } from 'uuid'
 import { generateNarrative } from '../samplers/cases'
 import { data as users } from './users'
 import { transactionRules as rules } from './rules'

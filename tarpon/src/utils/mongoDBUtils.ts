@@ -239,6 +239,10 @@ export const MERCHANT_MONITORING_DATA_COLLECTION = (tenantId: string) => {
   return `${tenantId}-merchant-monitoring`
 }
 
+export const CHECKLIST_TEMPLATE_COLLECTION = (tenantId: string) => {
+  return `${tenantId}-checklist-templates`
+}
+
 export const MIGRATION_TMP_COLLECTION = 'migration-tmp'
 
 export const MONTH_DATE_FORMAT = '%Y-%m'
@@ -887,6 +891,19 @@ export const createMongoDBCollections = async (
       // ignore already exists
     }
   }
+
+  try {
+    await db.createCollection(CHECKLIST_TEMPLATE_COLLECTION(tenantId))
+  } catch (e) {
+    // ignore already exists
+  }
+
+  const checklistTemplateCollection = db.collection(
+    CHECKLIST_TEMPLATE_COLLECTION(tenantId)
+  )
+  const checklistTemplateIndexes: Document[] = [{ id: 1 }, { createdAt: 1 }]
+
+  await syncIndexes(checklistTemplateCollection, checklistTemplateIndexes)
 }
 
 export async function allCollections(tenantId: string, db: Db) {

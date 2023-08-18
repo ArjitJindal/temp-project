@@ -4166,6 +4166,84 @@ paths:
             schema:
               $ref: '#/components/schemas/Report'
         required: true
+  /checklist-templates:
+    get:
+      summary: Get checklist templates
+      tags: []
+      x-flagright:
+        permissions:
+          - settings:organisation:read
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ChecklistTemplatesResponse'
+      operationId: get-checklist-templates
+      parameters:
+        - schema:
+            $ref: '#/components/schemas/PageSize'
+          in: query
+          name: pageSize
+        - schema:
+            $ref: '#/components/schemas/Page'
+          in: query
+          name: page
+    post:
+      summary: Create a checklist template
+      operationId: post-checklist-templates
+      x-flagright:
+        permissions:
+          - settings:organisation:write
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ChecklistTemplate'
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ChecklistTemplate'
+        required: true
+  '/checklist-templates/{checklistTemplateId}':
+    put:
+      summary: Update a checklist template
+      operationId: put-checklist-templates
+      x-flagright:
+        permissions:
+          - settings:organisation:write
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ChecklistTemplate'
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ChecklistTemplate'
+        required: true
+    parameters:
+      - schema:
+          type: string
+        name: checklistTemplateId
+        in: path
+        required: true
+    delete:
+      summary: Delete a checklist template
+      operationId: delete-checklist-template
+      x-flagright:
+        permissions:
+          - settings:organisation:write
+      responses:
+        '200':
+          description: OK
 components:
   schemas:
     KrsScore:
@@ -8114,6 +8192,70 @@ components:
       required:
         - type
         - day
+    ChecklistItem:
+      title: ChecklistItem
+      type: object
+      x-stoplight:
+        id: ebe1334bfcf1d
+      properties:
+        id:
+          type: string
+        name:
+          type: string
+        level:
+          $ref: '#/components/schemas/Priority'
+      required:
+        - name
+        - level
+    ChecklistCategory:
+      title: ChecklistCategory
+      type: object
+      x-stoplight:
+        id: ca9cefbb8996c
+      properties:
+        name:
+          type: string
+        checklistItems:
+          type: array
+          items:
+            $ref: '#/components/schemas/ChecklistItem'
+      required:
+        - name
+        - checklistItems
+    ChecklistTemplate:
+      type: object
+      properties:
+        id:
+          type: string
+        name:
+          type: string
+        description:
+          type: string
+        categories:
+          type: array
+          items:
+            $ref: '#/components/schemas/ChecklistCategory'
+      required:
+        - name
+        - categories
+      title: ChecklistTemplate
+      x-stoplight:
+        id: ca9cefbb8996c
+    ChecklistTemplatesResponse:
+      type: object
+      title: ChecklistTemplatesResponse
+      x-stoplight:
+        id: 7ff7dc9430407
+      properties:
+        total:
+          type: number
+        data:
+          type: array
+          items:
+            $ref: '#/components/schemas/ChecklistTemplate'
+      required:
+        - total
+        - data
   securitySchemes:
     Authorization:
       type: http

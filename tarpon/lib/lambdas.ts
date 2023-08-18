@@ -319,6 +319,12 @@ export const LAMBDAS: {
     expectedMaxSeconds: DEFAULT_LAMBDA_EXPECTED_MAX_SECONDS,
     timeoutSeconds: DEFAULT_LAMBDA_TIMEOUT_SECONDS,
   },
+  [StackConstants.CONSOLE_API_CHECKLIST_TEMPLATE_FUNCTION_NAME]: {
+    codePath: 'console-api-checklist-template',
+    handlerName: 'checklistTemplateHandler',
+    expectedMaxSeconds: DEFAULT_LAMBDA_EXPECTED_MAX_SECONDS,
+    timeoutSeconds: DEFAULT_LAMBDA_TIMEOUT_SECONDS,
+  },
   [StackConstants.BATCH_JOB_TRIGGER_CONSUMER_FUNCTION_NAME]: {
     codePath: 'batch-job',
     handlerName: 'jobTriggerHandler',
