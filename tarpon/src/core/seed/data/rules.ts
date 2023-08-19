@@ -327,7 +327,7 @@ export const transactionRules: ExecutedRulesResult[] = ruleInstances
     ruleHit: true,
     ruleHitMeta: {
       falsePositiveDetails:
-        _.random(0, 10) < 2
+        _.random(0, 10) < 4
           ? { isFalsePositive: true, confidenceScore: _.random(59, 82) }
           : { isFalsePositive: false, confidenceScore: 100 },
       hitDirections: i % 2 ? ['ORIGIN'] : ['DESTINATION'],

@@ -1,3 +1,4 @@
+import * as _ from 'lodash'
 import { data as users } from './users'
 import { sampleTransaction } from '@/core/seed/samplers/transaction'
 import { sampleTag } from '@/core/seed/samplers/tag'
@@ -42,7 +43,22 @@ const generator = function* (seed: number): Generator<InternalTransaction> {
       random() < 0.75
         ? randomTransactionRules()
         : transactionRules.filter((r) => r.ruleAction === 'SUSPEND')
-
+    const randomHitRules = hitRules.map((hitRule) => {
+      if (hitRule.ruleHitMeta?.falsePositiveDetails?.isFalsePositive === true) {
+        const modifiedHitRule = {
+          ...hitRule,
+          ruleHitMeta: {
+            ...hitRule.ruleHitMeta,
+            falsePositiveDetails: {
+              ...hitRule.ruleHitMeta.falsePositiveDetails,
+              confidenceScore: _.random(59, 82),
+            },
+          },
+        }
+        return modifiedHitRule
+      }
+      return hitRule
+    })
     const transaction = sampleTransaction({}, i)
     const originUserId = users[i % users.length].userId
     const destinationUserId = pickRandom(
@@ -63,7 +79,7 @@ const generator = function* (seed: number): Generator<InternalTransaction> {
       destinationUserId,
       createdAt: timestamp,
       status: getAggregatedRuleStatus(hitRules.map((hr) => hr.ruleAction)),
-      hitRules,
+      hitRules: randomHitRules,
       destinationPaymentMethodId: getPaymentMethodId(
         transaction?.destinationPaymentDetails
       ),
