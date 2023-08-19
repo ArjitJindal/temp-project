@@ -1,9 +1,10 @@
 <fc2:EFilingBatchXML TotalAmount="5052" PartyCount="2" ActivityCount="1" xsi:schemaLocation="www.fincen.gov/base https://www.fincen.gov/base/EFL_FinCENSARXBatchSchema.xsd" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:fc2="www.fincen.gov/base">
   <fc2:FormTypeCode>SARX</fc2:FormTypeCode>
   <fc2:Activity SeqNum="1">
+    <fc2:EFilingPriorDocumentNumber>00000000000001</fc2:EFilingPriorDocumentNumber>
     <fc2:FilingDateText>20230807</fc2:FilingDateText>
     <fc2:ActivityAssociation SeqNum="2">
-      <fc2:InitialReportIndicator>Y</fc2:InitialReportIndicator>
+      <fc2:CorrectsAmendsPriorReportIndicator>Y</fc2:CorrectsAmendsPriorReportIndicator>
     </fc2:ActivityAssociation>
     <fc2:ActivitySupportDocument SeqNum="3">
       <fc2:OriginalAttachmentFileName>test-attachment.pdf</fc2:OriginalAttachmentFileName>

@@ -6,8 +6,9 @@ const testInputParams = {
   report: {
     generalInfo: {
       FilingDateText: '20230807',
+      EFilingPriorDocumentNumber: '00000000000001',
       ActivityAssociation: {
-        InitialReportIndicator: 'Y',
+        CorrectsAmendsPriorReportIndicator: 'Y',
         JointReportIndicator: '',
       },
       ActivityNarrativeInformation: [
@@ -213,8 +214,7 @@ const testInputParams = {
   ],
 }
 
-// TODO: Unskip this in https://www.notion.so/flagright/FinCEN-Remove-hardcoded-demo-data-666c253f2fbf42c8abeadcc2371721f6?pvs=4
-describe.skip('FinCEN SAR Generation', () => {
+describe('FinCEN SAR Generation', () => {
   test('Should generate valid XML file', async () => {
     const generator = new UsSarReportGenerator()
     const xml = generator.generate(testInputParams)
