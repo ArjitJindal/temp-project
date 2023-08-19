@@ -2,7 +2,7 @@ import {
   APIGatewayEventLambdaAuthorizerContext,
   APIGatewayProxyWithLambdaAuthorizerEvent,
 } from 'aws-lambda'
-import { JWTAuthorizerResult, assertCurrentUserRole } from '@/@types/jwt'
+import { JWTAuthorizerResult } from '@/@types/jwt'
 import { lambdaApi } from '@/core/middlewares/lambda-api-middlewares'
 import { getMongoDbClient } from '@/utils/mongoDBUtils'
 import { AuditLogRepository } from '@/services/audit-log/repositories/auditlog-repository'
@@ -19,9 +19,6 @@ export const auditLogHandler = lambdaApi()(
 
     handlers.registerGetAuditlog(async (ctx, request) => {
       const { tenantId } = ctx
-      if (request?.includeRootUserRecords) {
-        assertCurrentUserRole('root')
-      }
       const auditLogRepository = new AuditLogRepository(tenantId, mongoDb)
       return await auditLogRepository.getAllAuditLogs(request)
     })

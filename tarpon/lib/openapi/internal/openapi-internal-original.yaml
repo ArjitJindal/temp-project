@@ -2339,9 +2339,15 @@ paths:
           in: query
           name: filterTypes
         - schema:
-            type: string
+            type: array
+            items:
+              type: string
           in: query
           name: searchEntityId
+        - schema:
+            type: string
+          in: query
+          name: filterCategory
         - schema:
             type: array
             items:
@@ -2358,6 +2364,18 @@ paths:
             type: boolean
           in: query
           name: includeRootUserRecords
+        - schema:
+            type: array
+            items:
+              $ref: '#/components/schemas/CaseStatus'
+          in: query
+          name: caseStatus
+        - schema:
+            type: array
+            items:
+              $ref: '#/components/schemas/AlertStatus'
+          in: query
+          name: alertStatus
       description: ''
   /pulse/risk-parameter:
     parameters: []
@@ -6307,6 +6325,12 @@ components:
           type: array
           items:
             $ref: '#/components/schemas/FileInfo'
+        alertCaseId:
+          type: string
+        updatedAlertIds:
+          type: array
+          items:
+            type: string
       required:
         - reason
       x-examples: {}
@@ -6375,6 +6399,12 @@ components:
           type: array
           items:
             $ref: '#/components/schemas/FileInfo'
+        alertCaseId:
+          type: string
+        updatedTransactions:
+          type: array
+          items:
+            type: string
         closeSourceCase:
           type: boolean
       required:
@@ -7087,6 +7117,9 @@ components:
             - RISK_CLASSIFICATION
             - DRS_RISK_LEVEL
             - PARAMETER_RISK_ITEM
+            - ASSIGNMENT
+            - CREATION
+            - STATUS_CHANGE
         action:
           $ref: '#/components/schemas/AuditLogActionEnum'
         timestamp:
@@ -7099,6 +7132,10 @@ components:
           type: object
         logMetadata:
           type: object
+        category:
+          type: string
+          enum:
+            - ACTIVITY_LOG
         user:
           $ref: '#/components/schemas/Account'
       required:
