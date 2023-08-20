@@ -33,8 +33,7 @@ describe('Add a comment to a user', () => {
     cy.get('[data-cy="comment-editor"]').should('not.be.visible');
 
     // Open comments and make sure that comment is created
-    cy.get('.ant-tabs-tab').contains('Activity').click();
-    cy.get('[data-cy="segmented-control-comments"]').click();
+    cy.get('.ant-tabs-tab').contains('Comments').click();
     cy.get('[data-cy="comment"]')
       .then(($elements) => {
         return $elements.filter((index, element) => {
