@@ -2,7 +2,7 @@ import React from 'react';
 import { Tabs as AntTabs } from 'antd';
 import { useNavigate, useParams } from 'react-router';
 import AIInsightsCard from './AIInsightsCard';
-import { CommentGroup } from './CommentsCard';
+import CommentsCard, { CommentGroup } from './CommentsCard';
 import AlertsCard from './AlertsCard';
 import InsightsCard from './InsightsCard';
 import { UI_SETTINGS } from './ui-settings';
@@ -30,7 +30,6 @@ import Linking from '@/pages/users-item/UserDetails/Linking';
 import Tooltip from '@/components/library/Tooltip';
 import { getBranding } from '@/utils/branding';
 import CRMMonitoring from '@/pages/users-item/UserDetails/CRMMonitoring';
-import ActivityCard from '@/components/ActivityCard';
 
 interface Props {
   caseItem: Case;
@@ -203,14 +202,13 @@ function CaseDetails(props: Props) {
             isDisabled: false,
           },
           {
-            tab: 'Activity',
-            key: 'activity',
+            tab: 'Comments',
+            key: 'comments',
             children: (
               <AsyncResourceRenderer resource={alertCommentsRes}>
                 {(alertCommentsGroups) => (
-                  <ActivityCard
-                    caseItems={[caseItem]}
-                    user={user as InternalBusinessUser | InternalConsumerUser}
+                  <CommentsCard
+                    id={caseItem.caseId}
                     comments={[
                       ...alertCommentsGroups,
                       {
@@ -220,7 +218,7 @@ function CaseDetails(props: Props) {
                         comments: caseItem.comments ?? [],
                       },
                     ]}
-                    type="CASE"
+                    title={UI_SETTINGS.cards.COMMENTS.title}
                   />
                 )}
               </AsyncResourceRenderer>
@@ -231,6 +229,7 @@ function CaseDetails(props: Props) {
         ].map(({ tab, key, isDisabled, isClosable, children }) => (
           <AntTabs.TabPane key={key} tab={tab} closable={isClosable} disabled={isDisabled ?? false}>
             <div
+              // className={s.sizeWrapper}
               style={{
                 minHeight: `calc(100vh - ${
                   entityHeaderHeight + TABS_LINE_HEIGHT + PAGE_WRAPPER_PADDING

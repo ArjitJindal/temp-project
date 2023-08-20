@@ -47,13 +47,6 @@ export class AuditLogRepository {
     filter: Filter<AuditLog>
   } {
     const conditions: Filter<AuditLog>[] = []
-    if (params.filterCategory) {
-      conditions.push({
-        category: {
-          $ne: 'ACTIVITY_LOG',
-        },
-      })
-    }
     conditions.push({
       timestamp: {
         $gte: params.afterTimestamp || 0,
@@ -76,41 +69,7 @@ export class AuditLogRepository {
 
     if (params.searchEntityId) {
       conditions.push({
-        entityId: {
-          $in: params.searchEntityId,
-        },
-      })
-    }
-
-    if (params.caseStatus && params.caseStatus.length) {
-      conditions.push({
-        $and: [
-          {
-            subtype: 'STATUS_CHANGE',
-          },
-          {
-            'newImage.caseStatus': {
-              $exists: true,
-              $in: params.caseStatus,
-            },
-          },
-        ],
-      })
-    }
-
-    if (params.alertStatus && params.alertStatus.length) {
-      conditions.push({
-        $and: [
-          {
-            subtype: 'STATUS_CHANGE',
-          },
-          {
-            'newImage.alertStatus': {
-              $exists: true,
-              $in: params.alertStatus,
-            },
-          },
-        ],
+        entityId: params.searchEntityId,
       })
     }
 

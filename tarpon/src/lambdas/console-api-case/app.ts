@@ -3,7 +3,6 @@ import {
   APIGatewayProxyWithLambdaAuthorizerEvent,
 } from 'aws-lambda'
 import { NotFound, BadRequest } from 'http-errors'
-import { flatten } from 'lodash'
 import { CaseService } from './services/case-service'
 import { CasesAlertsAuditLogService } from './services/case-alerts-audit-log-service'
 import { lambdaApi } from '@/core/middlewares/lambda-api-middlewares'
@@ -89,8 +88,7 @@ export const casesHandler = lambdaApi()(
       const updateResult = await caseService.updateCasesStatus(caseIds, updates)
       await casesAlertsAuditLogService.handleAuditLogForCaseUpdate(
         caseIds,
-        updates,
-        'STATUS_CHANGE'
+        updates
       )
       return updateResult
     })
@@ -100,8 +98,7 @@ export const casesHandler = lambdaApi()(
       await caseService.updateCasesAssignments(caseIds, assignments)
       return await casesAlertsAuditLogService.handleAuditLogForCaseUpdate(
         caseIds,
-        { assignments },
-        'ASSIGNMENT'
+        { assignments }
       )
     })
 
@@ -181,8 +178,7 @@ export const casesHandler = lambdaApi()(
       await alertsService.updateAlertsStatus(alertIds, updates)
       return await casesAlertsAuditLogService.handleAuditLogForAlertsUpdate(
         alertIds,
-        updates,
-        'STATUS_CHANGE'
+        updates
       )
     })
 
@@ -191,8 +187,7 @@ export const casesHandler = lambdaApi()(
       await alertsService.updateAlertsAssignments(alertIds, assignments)
       return await casesAlertsAuditLogService.handleAuditLogForAlertsUpdate(
         alertIds,
-        { assignments },
-        'ASSIGNMENT'
+        { assignments }
       )
     })
 
@@ -286,16 +281,6 @@ export const casesHandler = lambdaApi()(
           childCaseId: undefined,
           assigneeIds,
         }
-        const caseItem = await caseService.getCase(caseId)
-        await casesAlertsAuditLogService.handleAuditLogForCaseUpdate(
-          [caseId],
-          {
-            reason: escalationRequest.caseUpdateRequest.reason,
-            caseStatus: caseItem.caseStatus,
-          },
-          'STATUS_CHANGE',
-          'ACTIVITY_LOG'
-        )
         return response
       } else if (escalationRequest.alertEscalations) {
         const { childCaseId, assigneeIds } = await alertsService.escalateAlerts(
@@ -306,40 +291,6 @@ export const casesHandler = lambdaApi()(
           childCaseId,
           assigneeIds,
         }
-        const alertIds = escalationRequest.alertEscalations.map(
-          (escalationObject) => escalationObject.alertId
-        )
-        const updatedTransactions = escalationRequest.alertEscalations
-          .map((item) => item.transactionIds)
-          .filter((item) => item != undefined) as string[][]
-        const alertItem = await alertsService.getAlert(alertIds[0])
-        if (childCaseId) {
-          await casesAlertsAuditLogService.handleAuditLogForCaseUpdate(
-            [caseId],
-            {
-              files: escalationRequest.caseUpdateRequest?.files,
-              caseStatus: 'ESCALATED',
-              alertCaseId: childCaseId,
-              updatedAlertIds: alertIds,
-            },
-            'STATUS_CHANGE',
-            'ACTIVITY_LOG'
-          )
-        }
-        await casesAlertsAuditLogService.handleAuditLogForAlertsUpdate(
-          alertIds,
-          {
-            reason: escalationRequest.caseUpdateRequest?.reason,
-            files: escalationRequest.caseUpdateRequest?.files,
-            alertStatus: alertItem?.alertStatus,
-            alertCaseId: childCaseId,
-            updatedTransactions: flatten(updatedTransactions).length
-              ? flatten(updatedTransactions)
-              : undefined,
-          },
-          'STATUS_CHANGE',
-          'ACTIVITY_LOG'
-        )
         return response
       }
       throw new BadRequest('Invalid request of escalation')

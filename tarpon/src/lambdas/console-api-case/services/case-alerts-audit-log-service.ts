@@ -27,7 +27,6 @@ type AuditLogCreateRequest = {
   newImage?: any
   caseDetails?: Case | null
   subtype?: AuditLogSubtypeEnum
-  category?: 'ACTIVITY_LOG' | undefined
 }
 
 type AlertAuditLogCreateRequest = {
@@ -37,7 +36,6 @@ type AlertAuditLogCreateRequest = {
   newImage: any
   alertDetails?: Alert | null
   subtype?: AuditLogSubtypeEnum
-  category?: 'ACTIVITY_LOG' | undefined
 }
 
 @traceable
@@ -64,21 +62,11 @@ export class CasesAlertsAuditLogService {
       CaseStatusUpdate &
         CasesAssignmentsUpdateRequest &
         CasesReviewAssignmentsUpdateRequest
-    >,
-    subtype?: AuditLogSubtypeEnum,
-    category?: 'ACTIVITY_LOG' | undefined
+    >
   ): Promise<void> {
-    await Promise.all(
-      caseIds.map(async (caseId) => {
-        await this.handleCaseUpdateAuditLog(
-          caseId,
-          'UPDATE',
-          updates,
-          subtype,
-          category
-        )
-      })
-    )
+    for (const caseId of caseIds) {
+      await this.handleCaseUpdateAuditLog(caseId, 'UPDATE', updates)
+    }
   }
 
   public async handleAuditLogForAlertsUpdate(
@@ -87,9 +75,7 @@ export class CasesAlertsAuditLogService {
       AlertStatusUpdateRequest &
         AlertsAssignmentsUpdateRequest &
         AlertsReviewAssignmentsUpdateRequest
-    >,
-    subtype?: AuditLogSubtypeEnum,
-    category?: 'ACTIVITY_LOG' | undefined
+    >
   ): Promise<void> {
     const alertsRepository = new AlertsRepository(this.tenantId, {
       mongoDb: this.mongoDb,
@@ -111,8 +97,6 @@ export class CasesAlertsAuditLogService {
         oldImage: oldImage,
         newImage: updates,
         alertDetails: alertEntity,
-        subtype,
-        category,
       })
     }
   }
@@ -145,9 +129,7 @@ export class CasesAlertsAuditLogService {
   public async handleAuditLogForAlerts(
     caseId: string,
     oldAlerts: Alert[] | undefined,
-    newAlerts: Alert[] | undefined,
-    subtype?: AuditLogSubtypeEnum,
-    category?: 'ACTIVITY_LOG' | undefined
+    newAlerts: Alert[] | undefined
   ): Promise<void> {
     await this.createAuditLog({
       caseId,
@@ -158,21 +140,14 @@ export class CasesAlertsAuditLogService {
       oldImage: {
         alerts: oldAlerts,
       },
-      subtype,
-      category,
     })
   }
 
-  public async handleAuditLogForNewCase(
-    caseItem: Case,
-    category?: 'ACTIVITY_LOG' | undefined
-  ): Promise<void> {
+  public async handleAuditLogForNewCase(caseItem: Case): Promise<void> {
     await this.createAuditLog({
       caseId: caseItem.caseId ?? '',
       logAction: 'CREATE',
       newImage: caseItem,
-      subtype: 'CREATION',
-      category,
     })
   }
 
@@ -183,9 +158,7 @@ export class CasesAlertsAuditLogService {
       CaseStatusUpdate &
         CasesAssignmentsUpdateRequest &
         CasesReviewAssignmentsUpdateRequest
-    >,
-    subtype?: AuditLogSubtypeEnum,
-    category?: 'ACTIVITY_LOG' | undefined
+    >
   ) {
     const caseRepository = new CaseRepository(this.tenantId, {
       mongoDb: this.mongoDb,
@@ -207,8 +180,6 @@ export class CasesAlertsAuditLogService {
       oldImage: oldImage,
       newImage: updates,
       caseDetails: caseEntity,
-      subtype,
-      category,
     })
   }
 
@@ -220,15 +191,8 @@ export class CasesAlertsAuditLogService {
   }
 
   public async createAuditLog(auditLogCreateRequest: AuditLogCreateRequest) {
-    const {
-      caseId,
-      logAction,
-      oldImage,
-      newImage,
-      caseDetails,
-      subtype,
-      category,
-    } = auditLogCreateRequest
+    const { caseId, logAction, oldImage, newImage, caseDetails, subtype } =
+      auditLogCreateRequest
 
     const caseRepository = new CaseRepository(this.tenantId, {
       mongoDb: this.mongoDb,
@@ -250,7 +214,6 @@ export class CasesAlertsAuditLogService {
         caseCreationTimestamp: caseEntity?.createdTimestamp,
         casePriority: caseEntity?.priority,
       },
-      category: category,
     }
     await publishAuditLog(this.tenantId, auditLog)
   }
@@ -258,15 +221,8 @@ export class CasesAlertsAuditLogService {
   public async createAlertAuditLog(
     auditLogCreateRequest: AlertAuditLogCreateRequest
   ) {
-    const {
-      alertId,
-      logAction,
-      oldImage,
-      newImage,
-      alertDetails,
-      subtype,
-      category,
-    } = auditLogCreateRequest
+    const { alertId, logAction, oldImage, newImage, alertDetails, subtype } =
+      auditLogCreateRequest
 
     const alertsRepository = new AlertsRepository(this.tenantId, {
       mongoDb: this.mongoDb,
@@ -289,7 +245,6 @@ export class CasesAlertsAuditLogService {
         alertCreationTimestamp: alertEntity?.createdTimestamp,
         alertPriority: alertEntity?.priority,
       },
-      category: category,
     }
     await publishAuditLog(this.tenantId, auditLog)
   }
