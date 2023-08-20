@@ -42,6 +42,11 @@ export async function publishAuditLog(
       })
     )
   } catch (e) {
-    logger.error('Failed to publish audit log', e)
+    logger.error(
+      `Failed to publish audit log with Entity ID: ${
+        auditlog.entityId
+      }: ${JSON.stringify(e)}`,
+      e
+    )
   }
 }
