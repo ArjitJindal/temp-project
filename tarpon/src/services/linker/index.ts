@@ -14,6 +14,7 @@ import { GraphNodes } from '@/@types/openapi-internal/GraphNodes'
 import { GraphEdges } from '@/@types/openapi-internal/GraphEdges'
 import { Address } from '@/@types/openapi-internal/Address'
 import { traceable } from '@/core/xray'
+import dayjs from '@/utils/dayjs'
 
 @traceable
 export class LinkerService {
@@ -137,6 +138,7 @@ export class LinkerService {
               ...(!isPaymentId
                 ? { originUserId: userId }
                 : { originPaymentMethodId: userId }),
+              timestamp: { $gte: dayjs().subtract(30, 'day').valueOf() },
             },
           },
           {
@@ -293,6 +295,7 @@ export class LinkerService {
       {
         destinationUserId: userId,
         destinationPaymentMethodId: { $ne: undefined },
+        timestamp: { $gte: dayjs().subtract(30, 'day').valueOf() },
       }
     )
 
