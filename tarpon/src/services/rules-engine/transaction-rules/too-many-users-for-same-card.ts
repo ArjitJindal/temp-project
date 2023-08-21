@@ -42,6 +42,10 @@ export default class TooManyUsersForSameCardRule extends TransactionAggregationR
     }
   }
 
+  public async rebuildUserAggregation(): Promise<void> {
+    return
+  }
+
   public async computeRule() {
     if (
       this.transaction.originPaymentDetails?.method !== 'CARD' ||

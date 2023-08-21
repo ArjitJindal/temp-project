@@ -43,6 +43,10 @@ export default class SenderLocationChangesFrequencyRule extends TransactionAggre
     }
   }
 
+  public async rebuildUserAggregation(): Promise<void> {
+    return
+  }
+
   public async computeRule() {
     const ipAddress = this.transaction.deviceData?.ipAddress
     if (!this.transaction.originUserId || !ipAddress) {

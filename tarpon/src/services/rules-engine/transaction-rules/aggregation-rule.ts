@@ -1,14 +1,17 @@
-import _ from 'lodash'
+import { mapValues } from 'lodash'
 import { getReceiverKeyId, getSenderKeyId } from '../utils'
 import { TimeWindow } from '../utils/rule-parameter-schemas'
 import { TransactionRule } from './rule'
 import dayjs, { duration } from '@/utils/dayjs'
 import { logger } from '@/core/logger'
+import { hasFeature } from '@/core/utils/context'
 
 // NOTE: Increment this version to invalidate the existing aggregation data of all the rules
 const AGGREGATION_VERSION = '2'
 
 const AGGREGATION_TIME_FORMAT = 'YYYYMMDDHH'
+
+process.env.RULES_ENGINE_V2 = 'true'
 
 export abstract class TransactionAggregationRule<
   P,
@@ -27,6 +30,37 @@ export abstract class TransactionAggregationRule<
   // (from getAggregationVersion()). We need to bump the version whenver we update the
   // rule aggregation implementation if it'll make the existing aggregated data invalid.
   protected abstract getRuleAggregationVersion(): number
+
+  protected shouldUseRawData() {
+    return !hasFeature('RULES_ENGINE_V2') || !this.shouldUseAggregation()
+  }
+
+  public async hasAggregationData(
+    direction: 'origin' | 'destination'
+  ): Promise<boolean> {
+    if (!this.shouldUseAggregation() || !this.aggregationRepository) {
+      return false
+    }
+
+    const userKeyId = this.getUserKeyId(direction)
+    if (!userKeyId) {
+      return false
+    }
+
+    const targetAggregations =
+      await this.aggregationRepository.isUserRuleTimeAggregationsRebuilt(
+        userKeyId,
+        this.ruleInstance.id as string,
+        this.getAggregationVersion()
+      )
+
+    return targetAggregations
+  }
+
+  public abstract rebuildUserAggregation(
+    direction: 'origin' | 'destination',
+    isTransactionFiltered: boolean
+  ): Promise<void>
 
   protected getUserKeyId(direction: 'origin' | 'destination') {
     return direction === 'origin'
@@ -118,7 +152,7 @@ export abstract class TransactionAggregationRule<
     await this.aggregationRepository.rebuildUserRuleTimeAggregations(
       userKeyId,
       this.ruleInstance.id as string,
-      _.mapValues(data, (v) => ({ ...v, ttl })),
+      mapValues(data, (v) => ({ ...v, ttl })),
       this.getAggregationVersion()
     )
     logger.info('Rebuilt aggregations.')

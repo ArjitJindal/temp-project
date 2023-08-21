@@ -86,6 +86,10 @@ export default class TransactionsOutflowInflowVolumeRule extends TransactionAggr
     }
   }
 
+  public async rebuildUserAggregation(): Promise<void> {
+    return
+  }
+
   private getTargetCurrency(): CurrencyCode {
     return 'USD'
   }

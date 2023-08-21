@@ -5771,6 +5771,7 @@ components:
         - IBAN_RESOLUTION
         - MACHINE_LEARNING_DEMO
         - SAR
+        - RULES_ENGINE_V2
         - MANUAL_CASE_CREATION
       description: ''
     ManagedRoleName:

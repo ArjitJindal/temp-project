@@ -76,6 +76,10 @@ export default class TransactionsExceedPastPeriodRule extends TransactionAggrega
     }
   }
 
+  public async rebuildUserAggregation(): Promise<void> {
+    return
+  }
+
   override async getUpdatedTargetAggregation(
     _direction: 'origin' | 'destination',
     aggregation: AggregationData | undefined,

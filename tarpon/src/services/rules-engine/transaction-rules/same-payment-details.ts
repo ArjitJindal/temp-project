@@ -52,6 +52,10 @@ export default class SamePaymentDetailsRule extends TransactionAggregationRule<
     }
   }
 
+  public async rebuildUserAggregation(): Promise<void> {
+    return
+  }
+
   public async computeRule() {
     return await Promise.all([
       this.computeRuleUser('origin'),

@@ -70,6 +70,10 @@ export default class HighTrafficVolumeBetweenSameUsers extends TransactionAggreg
     }
   }
 
+  public async rebuildUserAggregation(): Promise<void> {
+    return
+  }
+
   public async computeRule() {
     const { transactionVolumeThreshold, transactionsLimit } = this.parameters
     const receiverKeyId = getReceiverKeyId(this.tenantId, this.transaction, {

@@ -144,6 +144,15 @@ export class CdkTarponStack extends cdk.Stack {
         retentionPeriod: Duration.days(7),
       }
     )
+    const transactionAggregationQueue = this.createQueue(
+      SQSQueues.TRANSACTION_AGGREGATION_QUEUE_NAME,
+      {
+        visibilityTimeout: DEFAULT_SQS_VISIBILITY_TIMEOUT,
+        maxReceiveCount: MAX_SQS_RECEIVE_COUNT,
+        fifo: true,
+        retentionPeriod: Duration.days(7),
+      }
+    )
 
     this.auditLogTopic = new Topic(this, StackConstants.AUDIT_LOG_TOPIC_NAME, {
       displayName: StackConstants.AUDIT_LOG_TOPIC_NAME,
@@ -388,6 +397,7 @@ export class CdkTarponStack extends cdk.Stack {
         AUTH0_DOMAIN: this.config.application.AUTH0_DOMAIN,
         AUTH0_AUDIENCE: this.config.application.AUTH0_AUDIENCE,
         WEBHOOK_DELIVERY_QUEUE_URL: webhookDeliveryQueue.queueUrl,
+        TRANSACTION_AGGREGATION_QUEUE_URL: transactionAggregationQueue.queueUrl,
         WEBHOOK_TARPON_CHANGE_CAPTURE_RETRY_QUEUE_URL:
           webhookTarponChangeCaptureRetryQueue.queueUrl,
         COMPLYADVANTAGE_API_KEY: process.env.COMPLYADVANTAGE_API_KEY as string,
@@ -460,6 +470,7 @@ export class CdkTarponStack extends cdk.Stack {
               hammerheadChangeCaptureRetryQueue.queueArn,
               webhookDeliveryQueue.queueArn,
               slackAlertQueue.queueArn,
+              transactionAggregationQueue.queueArn,
             ],
           }),
           new PolicyStatement({
@@ -646,6 +657,22 @@ export class CdkTarponStack extends cdk.Stack {
 
     webhookDelivererAlias.addEventSource(
       new SqsEventSource(webhookDeliveryQueue, { batchSize: 1 })
+    )
+
+    /* Transaction Aggregation */
+    const { alias: transactionAggregatorAlias } = createFunction(
+      this,
+      lambdaExecutionRole,
+      {
+        name: StackConstants.TRANSACTION_AGGREGATION_FUNCTION_NAME,
+        auditLogTopic: this.auditLogTopic,
+        batchJobQueue,
+      },
+      functionProps
+    )
+
+    transactionAggregatorAlias.addEventSource(
+      new SqsEventSource(transactionAggregationQueue)
     )
 
     /* Audit Log */

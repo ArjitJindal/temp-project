@@ -148,6 +148,9 @@ export const StackConstants = {
   WEBHOOK_DELIVERER_FUNCTION_NAME: getResourceNameForTarpon(
     'WebhookDelivererFunction'
   ),
+  TRANSACTION_AGGREGATION_FUNCTION_NAME: getResourceNameForTarpon(
+    'TransactionAggregationFunction'
+  ),
   WEBHOOK_TARPON_CHANGE_CAPTURE_KINESIS_CONSUMER_FUNCTION_NAME:
     getResourceNameForTarpon('WebhookTarponChangeCaptureFunction'),
   WEBHOOK_TARPON_CHANGE_CAPTURE_KINESIS_CONSUMER_RETRY_FUNCTION_NAME:
@@ -260,6 +263,8 @@ export const StackConstants = {
 
 export const SQSQueues = {
   AUDIT_LOG_QUEUE_NAME: getResourceName('AuditLogQueue'),
+  TRANSACTION_AGGREGATION_QUEUE_NAME:
+    getResourceName('TransactionAggregationQueue') + '.fifo',
   SLACK_ALERT_QUEUE_NAME: getResourceName('SlackAlertQueue'),
   WEBHOOK_DELIVERY_QUEUE_NAME: getResourceName('WebhookDeliveryQueue'),
   BATCH_JOB_QUEUE_NAME: getResourceName('BatchJobQueue'),

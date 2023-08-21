@@ -497,7 +497,7 @@ export class AggregationRepository {
       : undefined
   }
 
-  private async isUserRuleTimeAggregationsRebuilt(
+  public async isUserRuleTimeAggregationsRebuilt(
     userKeyId: string,
     ruleInstanceId: string,
     version: string

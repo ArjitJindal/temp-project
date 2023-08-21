@@ -106,6 +106,10 @@ export default class TransactionsVolumeRule extends TransactionAggregationRule<
     ])
   }
 
+  public async rebuildUserAggregation(): Promise<void> {
+    return
+  }
+
   protected async computeRuleUser(
     direction: 'origin' | 'destination'
   ): Promise<RuleHitResultItem | undefined> {

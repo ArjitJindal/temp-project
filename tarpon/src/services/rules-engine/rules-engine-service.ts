@@ -1,11 +1,22 @@
 import { DynamoDBDocumentClient } from '@aws-sdk/lib-dynamodb'
 import { NotFound } from 'http-errors'
-import _ from 'lodash'
+import {
+  compact,
+  map,
+  keyBy,
+  uniqBy,
+  isEmpty,
+  last,
+  cloneDeep,
+  isNil,
+  isObject,
+} from 'lodash'
 import { MongoClient } from 'mongodb'
 import {
   APIGatewayEventLambdaAuthorizerContext,
   APIGatewayProxyWithLambdaAuthorizerEvent,
 } from 'aws-lambda'
+import { SQSClient, SendMessageCommand } from '@aws-sdk/client-sqs'
 import { RiskRepository } from '../risk-scoring/repositories/risk-repository'
 import { UserRepository } from '../users/repositories/user-repository'
 import { DEFAULT_RISK_LEVEL } from '../risk-scoring/utils'
@@ -66,11 +77,22 @@ import { TransactionState } from '@/@types/openapi-public/TransactionState'
 import { getAggregatedRuleStatus } from '@/services/rules-engine/utils'
 import { TransactionStatusDetails } from '@/@types/openapi-public/TransactionStatusDetails'
 import { TransactionAction } from '@/@types/openapi-internal/TransactionAction'
+import { envIs } from '@/utils/env'
+import { handleTransactionAggregationTask } from '@/lambdas/transaction-aggregation/app'
 
 const ruleAscendingComparator = (
   rule1: HitRulesDetails,
   rule2: HitRulesDetails
 ) => (rule1.ruleId > rule2.ruleId ? 1 : -1)
+
+export type TransactionAggregationTask = {
+  transactionId: string
+  ruleInstanceId: string
+  userId?: string
+  direction: 'origin' | 'destination'
+  tenantId: string
+  isTransactionHistoricalFiltered: boolean
+}
 
 export function getExecutedAndHitRulesResult(
   ruleResults: ExecutedRulesResult[]
@@ -107,7 +129,7 @@ function mergeRules<T extends { ruleInstanceId: string }>(
   rulesA: Array<T>,
   rulesB: Array<T>
 ): Array<T> {
-  return _.uniqBy((rulesA ?? []).concat(rulesB ?? []), (r) => r.ruleInstanceId)
+  return uniqBy((rulesA ?? []).concat(rulesB ?? []), (r) => r.ruleInstanceId)
 }
 
 export type DuplicateTransactionReturnType = TransactionMonitoringResult & {
@@ -193,9 +215,8 @@ export class RulesEngineService {
         transaction.transactionId
       )
 
-    const { executedRules, hitRules } = await this.verifyTransactionInternal(
-      transaction
-    )
+    const { executedRules, hitRules, transactionAggregationTasks } =
+      await this.verifyTransactionInternal(transaction)
     const saveTransactionSegment = await addNewSubsegment(
       'Rules Engine',
       'Save Transaction/Event'
@@ -225,6 +246,13 @@ export class RulesEngineService {
         hitRules,
       }
     )
+
+    await background(
+      ...transactionAggregationTasks.map((sqsMessage) =>
+        this.sendTransactionAggregationTasks(sqsMessage)
+      )
+    )
+
     saveTransactionSegment?.close()
 
     await this.updateGlobalAggregation(
@@ -263,9 +291,8 @@ export class RulesEngineService {
       transactionEvent.updatedTransactionAttributes || {}
     ) as TransactionWithRulesResult
 
-    const { executedRules, hitRules } = await this.verifyTransactionInternal(
-      updatedTransaction
-    )
+    const { executedRules, hitRules, transactionAggregationTasks } =
+      await this.verifyTransactionInternal(updatedTransaction)
 
     const saveTransactionSegment = await addNewSubsegment(
       'Rules Engine',
@@ -305,6 +332,12 @@ export class RulesEngineService {
       executedRules: undefined,
       hitRules: undefined,
     }
+
+    await background(
+      ...transactionAggregationTasks.map((sqsMessage) =>
+        this.sendTransactionAggregationTasks(sqsMessage)
+      )
+    )
 
     return {
       eventId,
@@ -358,7 +391,7 @@ export class RulesEngineService {
     rules: readonly Rule[],
     options?: { ongoingScreeningMode?: boolean }
   ): Promise<UserMonitoringResult> {
-    const rulesById = _.keyBy(rules, 'id')
+    const rulesById = keyBy(rules, 'id')
     logger.info(`Running rules`)
     const userRiskLevel = await this.getUserRiskLevel(user)
     const ruleResults = (
@@ -397,6 +430,7 @@ export class RulesEngineService {
   private async verifyTransactionInternal(transaction: Transaction): Promise<{
     executedRules: ExecutedRulesResult[]
     hitRules: HitRulesDetails[]
+    transactionAggregationTasks: TransactionAggregationTask[]
   }> {
     const getInitialDataSegment = await addNewSubsegment(
       'Rules Engine',
@@ -411,7 +445,7 @@ export class RulesEngineService {
     const ruleInstances =
       await this.ruleInstanceRepository.getActiveRuleInstances('TRANSACTION')
 
-    const rulesById = _.keyBy(
+    const rulesById = keyBy(
       await this.ruleRepository.getRulesByIds(
         ruleInstances.map((ruleInstance) => ruleInstance.ruleId)
       ),
@@ -421,7 +455,8 @@ export class RulesEngineService {
 
     const runRulesSegment = await addNewSubsegment('Rules Engine', 'Run Rules')
     logger.info(`Running rules`)
-    const ruleResults = (
+
+    const verifyTransactionResults = compact(
       await Promise.all(
         ruleInstances.map(async (ruleInstance) =>
           this.verifyTransactionRule({
@@ -434,7 +469,12 @@ export class RulesEngineService {
           })
         )
       )
-    ).filter(Boolean) as ExecutedRulesResult[]
+    )
+
+    const ruleResults = compact(
+      map(verifyTransactionResults, (result) => result.result)
+    ) as ExecutedRulesResult[]
+
     runRulesSegment?.close()
 
     const updateStatsSegment = await addNewSubsegment(
@@ -454,8 +494,17 @@ export class RulesEngineService {
       )
     )
 
+    const executedAndHitRulesResult = getExecutedAndHitRulesResult(ruleResults)
+
+    const transactionAggregationTasks = verifyTransactionResults.flatMap(
+      (result) => compact(result.transactionAggregationTasks)
+    )
+
     updateStatsSegment?.close()
-    return getExecutedAndHitRulesResult(ruleResults)
+    return {
+      ...executedAndHitRulesResult,
+      transactionAggregationTasks,
+    }
   }
 
   private async verifyRuleIdempotent(options: {
@@ -519,7 +568,7 @@ export class RulesEngineService {
 
     const segmentNamespace = `Rules Engine - ${ruleInstance.ruleId} (${ruleInstance.id})`
     let filterSegment = undefined
-    if (!_.isEmpty(ruleFilters) && tracing) {
+    if (!isEmpty(ruleFilters) && tracing) {
       filterSegment = await addNewSubsegment(segmentNamespace, 'Rule Filtering')
     }
     const {
@@ -535,7 +584,7 @@ export class RulesEngineService {
     const shouldRunRule =
       isTransactionFiltered &&
       (isOriginUserFiltered || isDestinationUserFiltered)
-    if (!_.isEmpty(ruleFilters)) {
+    if (!isEmpty(ruleFilters)) {
       filterSegment?.close()
     }
 
@@ -580,7 +629,7 @@ export class RulesEngineService {
             )
           : [rule.description]
       ).map((description) =>
-        _.last(description) !== '.' ? `${description}.` : description
+        last(description) !== '.' ? `${description}.` : description
       )
       ruleDescription = Array.from(new Set(ruleDescriptions)).join(' ')
     }
@@ -622,9 +671,15 @@ export class RulesEngineService {
     transaction: Transaction
     senderUser?: User | Business
     receiverUser?: User | Business
-  }) {
+  }): Promise<
+    | {
+        result?: ExecutedRulesResult | undefined
+        transactionAggregationTasks?: TransactionAggregationTask[]
+      }
+    | undefined
+  > {
     const { rule, ruleInstance } = options
-    const context = _.cloneDeep(getContext() || {})
+    const context = cloneDeep(getContext() || {})
     context.metricDimensions = {
       ...context.metricDimensions,
       ruleId: ruleInstance.ruleId,
@@ -649,8 +704,39 @@ export class RulesEngineService {
         // Don't await publishing metric
         publishMetric(RULE_EXECUTION_TIME_MS_METRIC, ruleExecutionTimeMs)
         logger.info(`Completed rule`)
+        let originTransactionAggregationTask:
+          | TransactionAggregationTask
+          | undefined
+        let destinationTransactionAggregationTask:
+          | TransactionAggregationTask
+          | undefined
+        if (
+          hasFeature('RULES_ENGINE_V2') &&
+          ruleClassInstance instanceof TransactionAggregationRule
+        ) {
+          if (
+            ['transactions-velocity'].includes(rule.ruleImplementationName) &&
+            ruleInstance.id
+          ) {
+            originTransactionAggregationTask = {
+              userId: options.transaction.originUserId,
+              direction: 'origin',
+              transactionId: options.transaction.transactionId,
+              ruleInstanceId: ruleInstance.id,
+              tenantId: this.tenantId,
+              isTransactionHistoricalFiltered,
+            }
 
-        if (ruleClassInstance instanceof TransactionAggregationRule) {
+            destinationTransactionAggregationTask = {
+              userId: options.transaction.destinationUserId,
+              direction: 'destination',
+              transactionId: options.transaction.transactionId,
+              ruleInstanceId: ruleInstance.id,
+              tenantId: this.tenantId,
+              isTransactionHistoricalFiltered,
+            }
+          }
+        } else if (ruleClassInstance instanceof TransactionAggregationRule) {
           await background(
             ruleClassInstance.updateAggregation(
               'origin',
@@ -662,11 +748,40 @@ export class RulesEngineService {
             )
           )
         }
-        return result
+        return {
+          result,
+          transactionAggregationTasks: compact([
+            originTransactionAggregationTask,
+            destinationTransactionAggregationTask,
+          ]),
+        }
       } catch (e) {
         logger.error(e)
       }
     })
+  }
+
+  private async sendTransactionAggregationTasks(
+    task: TransactionAggregationTask
+  ) {
+    const sqs = new SQSClient({})
+
+    if (envIs('local') || envIs('test')) {
+      await handleTransactionAggregationTask(task)
+      return
+    }
+
+    const command = new SendMessageCommand({
+      MessageBody: JSON.stringify(task),
+      QueueUrl: process.env.TRANSACTION_AGGREGATION_QUEUE_URL!,
+      MessageGroupId: `${this.tenantId}:${task.userId}:${task.direction}:${task.ruleInstanceId}:${task.transactionId}`,
+      MessageDeduplicationId: `${this.tenantId}:${task.userId}:${task.direction}:${task.ruleInstanceId}:${task.transactionId}`,
+    })
+
+    updateLogMetadata(task)
+    logger.info(`Sending transaction aggregation task to SQS`)
+
+    await sqs.send(command)
   }
 
   private async verifyUserRule(options: {
@@ -676,7 +791,7 @@ export class RulesEngineService {
     user: User | Business
     ongoingScreeningMode?: boolean
   }) {
-    const context = _.cloneDeep(getContext() || {})
+    const context = cloneDeep(getContext() || {})
     return getContextStorage().run(context, async () => {
       try {
         updateLogMetadata({
@@ -741,10 +856,9 @@ export class RulesEngineService {
     for (const filterKey in ruleFilters) {
       const FilterClass = filters[filterKey]
       const filterParams = ruleFilters[filterKey]
-      const isEmpty =
-        _.isNil(filterParams) ||
-        (_.isObject(filterParams) && _.isEmpty(filterParams))
-      if (FilterClass && !isEmpty) {
+      const paramsIsEmpty =
+        isNil(filterParams) || (isObject(filterParams) && isEmpty(filterParams))
+      if (FilterClass && !paramsIsEmpty) {
         const isUserFilter = Boolean(USER_FILTERS[filterKey])
         if (isUserFilter && !(data as { user?: User | Business }).user) {
           promises.push(Promise.resolve(false))

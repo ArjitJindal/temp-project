@@ -41,6 +41,10 @@ export default class SameUserUsingTooManyCardsRule extends TransactionAggregatio
     }
   }
 
+  public async rebuildUserAggregation(): Promise<void> {
+    return
+  }
+
   public async computeRule() {
     const cardFingerprint = (
       this.transaction?.originPaymentDetails as CardDetails

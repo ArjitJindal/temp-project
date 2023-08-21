@@ -49,6 +49,10 @@ export default abstract class MultipleSendersWithinTimePeriodRuleBase extends Tr
 
   protected abstract getSenderReceiverTypes(): SenderReceiverTypes
 
+  public async rebuildUserAggregation(): Promise<void> {
+    return
+  }
+
   public async computeRule() {
     const { sendersCount } = this.parameters
     const data = await this.getData()

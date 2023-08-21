@@ -56,6 +56,10 @@ export default class HighTrafficBetweenSameParties extends TransactionAggregatio
     }
   }
 
+  public async rebuildUserAggregation(): Promise<void> {
+    return
+  }
+
   public async computeRule() {
     const { transactionsLimit } = this.parameters
     const receiverKeyId = getReceiverKeyId(this.tenantId, this.transaction, {

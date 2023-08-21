@@ -68,6 +68,10 @@ export default class HighUnsuccessfullStateRateRule extends TransactionAggregati
     }
   }
 
+  public async rebuildUserAggregation(): Promise<void> {
+    return
+  }
+
   public async computeRule() {
     if (
       !this.parameters.transactionStates.includes(

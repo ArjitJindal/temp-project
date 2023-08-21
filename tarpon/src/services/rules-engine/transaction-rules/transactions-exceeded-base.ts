@@ -108,6 +108,10 @@ export default abstract class TransactionsExceededBaseRule<
     }
   }
 
+  public async rebuildUserAggregation(): Promise<void> {
+    return
+  }
+
   protected abstract getMultiplierThresholds(): {
     currency: CurrencyCode
     value: number
