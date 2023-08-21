@@ -61,6 +61,9 @@ export const config: Config = {
     BATCH_JOB_LAMBDA: {
       MEMORY_SIZE: 1024,
     },
+    CRON_JOB_LAMBDA: {
+      MEMORY_SIZE: 1024,
+    },
     LAMBDA_VPC_ENABLED: true,
   },
   application: {

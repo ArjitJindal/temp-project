@@ -751,6 +751,7 @@ export class CdkTarponStack extends cdk.Stack {
           name: StackConstants.CRON_JOB_DAILY,
           auditLogTopic: this.auditLogTopic,
           batchJobQueue,
+          memorySize: config.resource.CRON_JOB_LAMBDA?.MEMORY_SIZE,
         },
         functionProps
       )

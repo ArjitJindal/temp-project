@@ -30,6 +30,9 @@ export type Config = {
     BATCH_JOB_LAMBDA?: {
       MEMORY_SIZE?: number
     }
+    CRON_JOB_LAMBDA?: {
+      MEMORY_SIZE?: number
+    }
     // Also used in sandbox for initial setup
     API_KEY_GENERATOR_LAMBDA?: {
       MEMORY_SIZE: number
