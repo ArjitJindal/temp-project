@@ -1,7 +1,9 @@
 import path from 'path'
 import { KinesisStreamEvent, SQSEvent } from 'aws-lambda'
 import { SQS, SendMessageCommand } from '@aws-sdk/client-sqs'
+import { flatten, pick } from 'lodash'
 import { CaseCreationService } from '../console-api-case/services/case-creation-service'
+import { CasesAlertsAuditLogService } from '../console-api-case/services/case-alerts-audit-log-service'
 import {
   getMongoDbClient,
   USER_EVENTS_COLLECTION,
@@ -58,10 +60,16 @@ async function handleNewCases(
       })
     )
   )
-
   const tenantRepository = new TenantRepository(tenantId, {
     mongoDb: await getMongoDbClient(),
   })
+
+  const newAlerts = flatten(cases.map((c) => c.alerts)).filter(
+    (alert) =>
+      alert &&
+      alert.createdTimestamp &&
+      alert.createdTimestamp >= timestampBeforeCasesCreation
+  )
   const newCases = cases.filter(
     (c) =>
       c.createdTimestamp && c.createdTimestamp >= timestampBeforeCasesCreation
@@ -82,6 +90,54 @@ async function handleNewCases(
       await sqs.send(sqsSendMessageCommand)
     }
   }
+  const dynamoDb = await getDynamoDbClient()
+  const casesAlertsAuditLogService = new CasesAlertsAuditLogService(tenantId, {
+    mongoDb,
+    dynamoDb,
+  })
+  const propertiesToPickForCase = [
+    'caseId',
+    'caseType',
+    'createdBy',
+    'createdTimestamp',
+    'availableAfterTimestamp',
+  ]
+  await Promise.all(
+    newCases.map(async (caseItem) => {
+      await casesAlertsAuditLogService.handleAuditLogForNewCase(
+        pick(caseItem, propertiesToPickForCase),
+        'ACTIVITY_LOG'
+      )
+    })
+  )
+  const propertiesToPickForAlert = [
+    'alertId',
+    'parentAlertId',
+    'createdTimestamp',
+    'availableAfterTimestamp',
+    'latestTransactionArrivalTimestamp',
+    'caseId',
+    'alertStatus',
+    'ruleInstanceId',
+    'ruleName',
+    'ruleDescription',
+    'ruleId',
+    'ruleAction',
+    'ruleNature',
+    'numberOfTransactionsHit',
+    'priority',
+    'statusChanges',
+    'lastStatusChange',
+    'updatedAt',
+  ]
+  await Promise.all(
+    newAlerts.map(async (alert) => {
+      await casesAlertsAuditLogService.handleAuditLogForNewAlert(
+        pick(alert, propertiesToPickForAlert),
+        'ACTIVITY_LOG'
+      )
+    })
+  )
 }
 
 async function transactionHandler(
@@ -129,9 +185,22 @@ async function transactionHandler(
     transaction
   )
 
+  const casesAlertsAuditLogService = new CasesAlertsAuditLogService(tenantId, {
+    mongoDb,
+    dynamoDb,
+  })
+
   logger.info(`Starting Case Creation`)
   const timestampBeforeCasesCreation = Date.now()
   const cases = await caseCreationService.handleTransaction(transactionInMongo)
+  await Promise.all(
+    cases.map(async (caseItem) => {
+      await casesAlertsAuditLogService.handleAuditLogForNewCase(
+        caseItem,
+        'ACTIVITY_LOG'
+      )
+    })
+  )
   logger.info(`Case Creation Completed`)
   if (await tenantHasFeature(tenantId, 'PULSE')) {
     logger.info(`Calculating ARS & DRS`)
@@ -235,9 +304,20 @@ async function userHandler(
     await dashboardStatsRepository.refreshUserStats()
     logger.info(`Refreshing DRS User distribution stats - completed`)
   }
-
+  const casesAlertsAuditLogService = new CasesAlertsAuditLogService(tenantId, {
+    mongoDb,
+    dynamoDb,
+  })
   const timestampBeforeCasesCreation = Date.now()
   const cases = await caseCreationService.handleUser(savedUser)
+  await Promise.all(
+    cases.map(async (caseItem) => {
+      await casesAlertsAuditLogService.handleAuditLogForNewCase(
+        caseItem,
+        'ACTIVITY_LOG'
+      )
+    })
+  )
   await handleNewCases(tenantId, timestampBeforeCasesCreation, cases)
   await casesRepo.updateUsersInCases(internalUser)
 

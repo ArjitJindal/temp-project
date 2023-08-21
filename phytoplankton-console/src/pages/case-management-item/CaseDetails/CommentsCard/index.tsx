@@ -23,7 +23,7 @@ export interface CommentGroup {
 interface Props {
   id?: string;
   comments: CommentGroup[];
-  title: string;
+  title?: string;
 }
 
 export default function CommentsCard(props: Props) {
@@ -96,7 +96,6 @@ export default function CommentsCard(props: Props) {
   );
 
   const totalCommentsLength = comments.reduce((acc, group) => acc + group.comments.length, 0);
-
   return (
     <>
       <Card.Root>
