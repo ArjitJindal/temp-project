@@ -42,9 +42,12 @@ export default function StandardFiltersStep(props: Props) {
                 propertyItems={props
                   .filter((x) => getUiSchema(x.schema)['ui:group'] === 'user')
                   .filter((x) => {
-                    const nameToFilter = 'consumerUserSegments';
-                    if (x.name === nameToFilter) {
+                    const consumerUserSegments = 'consumerUserSegments';
+                    const businessUserSegments = 'businessUserSegments';
+                    if (x.name === consumerUserSegments) {
                       return standardFilters?.userType?.includes('CONSUMER');
+                    } else if (x.name === businessUserSegments) {
+                      return standardFilters?.userType?.includes('BUSINESS');
                     }
                     return true;
                   })}

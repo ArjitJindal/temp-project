@@ -106,6 +106,10 @@ import {
   TransactionTagsRuleFilter,
   TransactionTagsRuleFilterParameter,
 } from './transaction-filters/transaction-tags'
+import {
+  BusinessUserSegmentRuleFilter,
+  BusinessUserSegmentRuleFilterParameter,
+} from './user-filters/user-business-consumer-segment'
 
 export type TransactionFilters = PaymentFilterRuleFilterParameter &
   TransactionTypeRuleFilterParameter &
@@ -133,6 +137,7 @@ export type UserFilters = WhitelistUsersRuleFilterParameter &
   UserCountryOfRegistrationRuleFilterParameter &
   UserAcquisitionChannelRuleFilterParameter &
   ConsumerUserSegmentRuleFilterParameter &
+  BusinessUserSegmentRuleFilterParameter &
   UserKycStatusRuleFilterParameter &
   UserStatusRuleFilterParameter &
   UserTagsRuleFilterParameter
@@ -164,6 +169,7 @@ const _TRANSACTION_HISTORICAL_FILTERS = [
 const _USER_FILTERS = [
   UserTypeRuleFilter,
   ConsumerUserSegmentRuleFilter,
+  BusinessUserSegmentRuleFilter,
   UserAgeRuleFilter,
   UserCreationAgeRuleFilter,
   WhitelistUsersRuleFilter,

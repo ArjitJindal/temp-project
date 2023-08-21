@@ -15,6 +15,7 @@ import { ACQUISITION_CHANNELS } from '@/@types/openapi-internal-custom/Acquisiti
 import { CONSUMER_USER_SEGMENTS } from '@/@types/openapi-internal-custom/ConsumerUserSegment'
 import { KYC_STATUSS } from '@/@types/openapi-public-custom/KYCStatus'
 import { USER_STATES } from '@/@types/openapi-internal-custom/UserState'
+import { BUSINESS_USER_SEGMENTS } from '@/@types/openapi-internal-custom/BusinessUserSegment'
 
 type SchemaOptions = {
   title?: string
@@ -546,6 +547,34 @@ export const CONSUMER_USER_SEGMENT_OPTIONAL_SCHEMA = (
 ) =>
   ({
     ...CONSUMER_USER_SEGMENT_SCHEMA(options),
+    nullable: true,
+  } as const)
+
+export const BUSINESS_USER_SEGMENT_SCHEMA = (options?: SchemaOptions) =>
+  ({
+    ...uiSchema(options?.uiSchema, {
+      subtype: 'CONSUMER_USER_SEGMENT',
+    }),
+    type: 'array',
+    title: options?.title || 'User consumer segment',
+    description:
+      options?.description ||
+      'Select one or more user consumer segments to target transactions with those consumer user segments',
+    items: {
+      type: 'string',
+      enum: BUSINESS_USER_SEGMENTS,
+      enumNames: BUSINESS_USER_SEGMENTS.map((segment) =>
+        _.startCase(segment.replace('_', ' ').toLowerCase())
+      ),
+    },
+    uniqueItems: true,
+  } as const)
+
+export const BUSINESS_USER_SEGMENT_OPTIONAL_SCHEMA = (
+  options?: SchemaOptions
+) =>
+  ({
+    ...BUSINESS_USER_SEGMENT_SCHEMA(options),
     nullable: true,
   } as const)
 

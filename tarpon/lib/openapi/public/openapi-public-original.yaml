@@ -2362,6 +2362,17 @@ components:
       enum:
         - REGISTERED
         - UNREGISTERED
+    BusinessUserSegment:
+      title: BusinessUserSegment
+      type: string
+      enum:
+        - SOLE_PROPRIETORSHIP
+        - LIMITED
+        - SMB
+        - SMALL
+        - MEDIUM
+        - LARGE
+        - UNKNOWN
     CompanyGeneralDetails:
       title: CompanyGeneralDetails
       type: object
@@ -2388,16 +2399,8 @@ components:
           items:
             type: string
         userSegment:
-          type: string
+          $ref: '#/components/schemas/BusinessUserSegment'
           description: Segmentation of the business user
-          enum:
-            - SOLE_PROPRIETORSHIP
-            - LIMITED
-            - SMB
-            - SMALL
-            - MEDIUM
-            - LARGE
-            - UNKNOWN
         userRegistrationStatus:
           $ref: '#/components/schemas/UserRegistrationStatus'
         tags:
