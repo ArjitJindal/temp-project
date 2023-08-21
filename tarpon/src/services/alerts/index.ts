@@ -812,13 +812,13 @@ export class AlertsService extends CaseAlertsCommonService {
       ) {
         await Promise.all(
           alertIds.map(async (alertId) => {
-            const alert = await this.getAlert(alertId)
-            if (!alert) {
+            const alert = alerts.find((alert) => alert.alertId === alertId)
+            const c = cases.find((c) => c.caseId === alert?.caseId)
+            if (!c || !alert) {
               return
             }
-            const c = await caseService.getCase(alert.caseId!)
             const userId =
-              c?.caseUsers?.origin?.userId ?? c?.caseUsers?.destination?.userId
+              c.caseUsers?.origin?.userId ?? c.caseUsers?.destination?.userId
             if (userId) {
               await this.whiltelistSanctionEntities(userId, [alert])
             }
@@ -908,6 +908,9 @@ export class AlertsService extends CaseAlertsCommonService {
         alert.ruleHitMeta?.sanctionsDetails?.map((v) => v.searchId)
       )
       .filter(Boolean) as string[]
+    if (searchIds.length === 0) {
+      return
+    }
 
     const searchs = await sanctionsService.getSearchHistoriesByIds(searchIds)
     const entities = searchs
