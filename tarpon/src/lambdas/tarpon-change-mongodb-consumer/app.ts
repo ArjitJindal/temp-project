@@ -185,22 +185,9 @@ async function transactionHandler(
     transaction
   )
 
-  const casesAlertsAuditLogService = new CasesAlertsAuditLogService(tenantId, {
-    mongoDb,
-    dynamoDb,
-  })
-
   logger.info(`Starting Case Creation`)
   const timestampBeforeCasesCreation = Date.now()
   const cases = await caseCreationService.handleTransaction(transactionInMongo)
-  await Promise.all(
-    cases.map(async (caseItem) => {
-      await casesAlertsAuditLogService.handleAuditLogForNewCase(
-        caseItem,
-        'ACTIVITY_LOG'
-      )
-    })
-  )
   logger.info(`Case Creation Completed`)
   if (await tenantHasFeature(tenantId, 'PULSE')) {
     logger.info(`Calculating ARS & DRS`)
@@ -304,20 +291,8 @@ async function userHandler(
     await dashboardStatsRepository.refreshUserStats()
     logger.info(`Refreshing DRS User distribution stats - completed`)
   }
-  const casesAlertsAuditLogService = new CasesAlertsAuditLogService(tenantId, {
-    mongoDb,
-    dynamoDb,
-  })
   const timestampBeforeCasesCreation = Date.now()
   const cases = await caseCreationService.handleUser(savedUser)
-  await Promise.all(
-    cases.map(async (caseItem) => {
-      await casesAlertsAuditLogService.handleAuditLogForNewCase(
-        caseItem,
-        'ACTIVITY_LOG'
-      )
-    })
-  )
   await handleNewCases(tenantId, timestampBeforeCasesCreation, cases)
   await casesRepo.updateUsersInCases(internalUser)
 
