@@ -14,6 +14,7 @@ import { isQaEnv } from '@lib/qa'
 
 export const TARPON_CUSTOM_METRIC_NAMESPACE = 'TarponCustom'
 const isDevUserStack = isQaEnv()
+const isDev = process.env.ENV === 'dev'
 
 export const createTarponOverallLambdaAlarm = (
   context: Construct,
@@ -297,7 +298,8 @@ export const createLambdaConsumerIteratorAgeAlarm = (
   }
   return new Alarm(context, `${lambdaName}IteratorAge`, {
     comparisonOperator: ComparisonOperator.GREATER_THAN_THRESHOLD,
-    threshold: 120 * 1000,
+    threshold:
+      (isDev ? Duration.minutes(30) : Duration.minutes(2)).toSeconds() * 1000,
     evaluationPeriods: 3,
     datapointsToAlarm: 3,
     alarmName: `Lambda-${lambdaName}IteratorAge`,
