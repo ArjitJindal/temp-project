@@ -104,6 +104,7 @@ export function ruleInstanceToFormValues(isPulseEnabled: boolean, ruleInstance?:
           ruleLabels: ruleInstance.labels,
           ruleInstanceId: ruleInstance.id,
           falsePositiveCheckEnabled: ruleInstance.falsePositiveCheckEnabled,
+          checklistTemplateId: ruleInstance.checklistTemplateId,
         } as RuleConfigurationFormValues['basicDetailsStep'],
         standardFiltersStep: ruleInstance.filters,
         ruleParametersStep: isPulseEnabled
@@ -154,6 +155,7 @@ export function formValuesToRuleInstance(
     nature: basicDetailsStep.ruleNature,
     labels: basicDetailsStep.ruleLabels,
     falsePositiveCheckEnabled: basicDetailsStep.falsePositiveCheckEnabled,
+    checklistTemplateId: basicDetailsStep.checklistTemplateId,
     ...(isPulseEnabled
       ? {
           riskLevelParameters: riskLevelParameters

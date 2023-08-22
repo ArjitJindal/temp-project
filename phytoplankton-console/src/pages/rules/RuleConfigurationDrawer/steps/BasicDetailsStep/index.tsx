@@ -1,9 +1,10 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
+import { useDebounce } from 'ahooks';
 import StepHeader from '../../StepHeader';
 import s from './style.module.less';
 import CreationIntervalInput, { AlertCreationInterval } from './CreationIntervalInput';
 import Label from '@/components/library/Label';
-import { Priority, Rule, RuleLabels, RuleNature } from '@/apis';
+import { ChecklistTemplatesResponse, Priority, Rule, RuleLabels, RuleNature } from '@/apis';
 import TextInput from '@/components/library/TextInput';
 import SelectionGroup from '@/components/library/SelectionGroup';
 import { RULE_CASE_PRIORITY, RULE_LABELS_OPTIONS, RULE_NATURE_OPTIONS } from '@/pages/rules/utils';
@@ -13,6 +14,11 @@ import Select from '@/components/library/Select';
 import TextArea from '@/components/library/TextArea';
 import Checkbox from '@/components/library/Checkbox';
 import { useFeatureEnabled } from '@/components/AppWrapper/Providers/SettingsProvider';
+import { useQuery } from '@/utils/queries/hooks';
+import { useApi } from '@/api';
+import { CHECKLIST_TEMPLATES } from '@/utils/queries/keys';
+import { isLoading, isSuccess } from '@/utils/asyncResource';
+import { useFormContext } from '@/components/library/Form/utils/hooks';
 
 export interface FormValues {
   ruleName: string | undefined;
@@ -25,6 +31,7 @@ export interface FormValues {
   simulationIterationName?: string;
   simulationIterationDescription?: string;
   falsePositiveCheckEnabled?: boolean;
+  checklistTemplateId?: string;
 }
 
 export const INITIAL_VALUES: FormValues = {
@@ -46,12 +53,17 @@ interface Props {
 
 export default function BasicDetailsStep(props: Props) {
   const { activeTab } = props;
+  const component = useMemo(() => {
+    if (activeTab === 'rule_details') {
+      return <RuleDetails {...props} />;
+    } else if (activeTab === 'simulation_details') {
+      return <SimulationIterationDetails />;
+    } else if (activeTab === 'checklist_details') {
+      return <ChecklistDetails />;
+    }
+  }, [activeTab, props]);
 
-  return (
-    <div className={s.root}>
-      {activeTab === 'rule_details' ? <RuleDetails {...props} /> : <SimulationIterationDetails />}
-    </div>
-  );
+  return <div className={s.root}>{component}</div>;
 }
 
 function RuleDetails(props: Props) {
@@ -176,6 +188,62 @@ function SimulationIterationDetails() {
           labelProps={{ required: { value: false, showHint: true } }}
         >
           {(inputProps) => <TextArea {...inputProps} placeholder={'Enter iteration description'} />}
+        </InputField>
+      </PropertyListLayout>
+    </>
+  );
+}
+
+function ChecklistDetails() {
+  const api = useApi();
+  const [searchTerm, setSearchTerm] = useState('');
+  const debouncedSearchTerm = useDebounce(searchTerm, { wait: 500 });
+  const {
+    values: { checklistTemplateId },
+  } = useFormContext<FormValues>();
+  const params = {
+    filterName: debouncedSearchTerm,
+    filterId: debouncedSearchTerm ? undefined : checklistTemplateId,
+  };
+  const queryResult = useQuery<ChecklistTemplatesResponse>(
+    CHECKLIST_TEMPLATES(params),
+    async () => {
+      return api.getChecklistTemplates(params);
+    },
+  );
+  const options = useMemo(() => {
+    return isSuccess(queryResult.data)
+      ? queryResult.data.value.data.map((checklist) => ({
+          label: checklist.name,
+          value: checklist.id!,
+        }))
+      : [];
+  }, [queryResult.data]);
+  return (
+    <>
+      <StepHeader
+        title={'Checklist details'}
+        description={
+          'Set the checklist for analysts to follow during the investigation when this rule is hit.'
+        }
+      />
+      <PropertyListLayout>
+        <InputField<FormValues, 'checklistTemplateId'>
+          name="checklistTemplateId"
+          label="Checklist template"
+        >
+          {(inputProps) => (
+            <Select
+              {...inputProps}
+              value={options.length ? inputProps.value : undefined}
+              options={options}
+              mode="SINGLE"
+              placeholder="Select checklist template"
+              onSearch={setSearchTerm}
+              isLoading={isLoading(queryResult.data)}
+              isDisabled={isLoading(queryResult.data)}
+            />
+          )}
         </InputField>
       </PropertyListLayout>
     </>

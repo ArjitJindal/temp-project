@@ -44,6 +44,7 @@ export default function Select<Value extends Comparable = string>(props: Props<V
     placeholder,
     size = 'DEFAULT',
     isError,
+    isLoading,
     onFocus,
     onBlur,
     className,
@@ -74,6 +75,7 @@ export default function Select<Value extends Comparable = string>(props: Props<V
     onChange: (newValue: Value | Value[] | undefined) => {
       props.onChange?.(newValue as (Value & Value[]) | undefined);
     },
+    onSearch: props.onSearch,
   };
 
   return (
@@ -81,7 +83,7 @@ export default function Select<Value extends Comparable = string>(props: Props<V
       className={cn(s.root, isError && s.isError, s[`size-${size}`], className)}
       style={props.style}
     >
-      <AntSelect {...antSelectProps} allowClear>
+      <AntSelect {...antSelectProps} allowClear loading={isLoading}>
         {options?.map((option) => (
           <AntSelect.Option
             key={key(option.value)}

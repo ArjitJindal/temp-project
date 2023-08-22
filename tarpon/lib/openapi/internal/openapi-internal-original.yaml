@@ -4263,6 +4263,14 @@ paths:
             $ref: '#/components/schemas/Page'
           in: query
           name: page
+        - schema:
+            type: string
+          in: query
+          name: filterName
+        - schema:
+            type: string
+          in: query
+          name: filterId
     post:
       summary: Create a checklist template
       operationId: post-checklist-templates
@@ -4561,6 +4569,8 @@ components:
             - $ref: '#/components/schemas/AlertCreationIntervalInstantly'
             - $ref: '#/components/schemas/AlertCreationIntervalWeekly'
             - $ref: '#/components/schemas/AlertCreationIntervalMonthly'
+        checklistTemplateId:
+          type: string
       required:
         - ruleId
         - casePriority

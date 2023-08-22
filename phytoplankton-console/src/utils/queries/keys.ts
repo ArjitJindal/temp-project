@@ -212,3 +212,6 @@ export const DASHBOARD_OVERVIEW = (): QueryKey => ['dashboard', 'overview'];
 export const SETTINGS = (): QueryKey => ['settings'];
 
 export const TENANT_USAGE_DATA = (): QueryKey => ['tenant-usage-data'];
+
+export const CHECKLIST_TEMPLATES = (params?: AnyParameters): QueryKey =>
+  ['checklist-templates', params].filter(Boolean);

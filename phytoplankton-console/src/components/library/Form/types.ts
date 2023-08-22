@@ -7,9 +7,11 @@ export interface FormState<FormValues> {
 
 export interface InputProps<Value> {
   isError?: boolean;
+  isLoading?: boolean;
   isDisabled?: boolean;
   value?: Value;
   onChange?: (newValue: Value | undefined) => void;
+  onSearch?: (value: string) => void;
   onFocus?: () => void;
   onBlur?: () => void;
 }

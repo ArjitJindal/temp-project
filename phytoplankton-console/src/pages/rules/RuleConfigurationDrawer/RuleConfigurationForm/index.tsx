@@ -134,6 +134,7 @@ const RuleConfigurationForm = (
         tabs: [
           ...(simulationMode ? [{ key: 'simulation_details', title: 'Simulation details' }] : []),
           { key: 'rule_details', title: 'Rule details' },
+          ...(simulationMode ? [] : [{ key: 'checklist_details', title: 'Checklist details' }]),
         ],
       },
       {

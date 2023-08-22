@@ -1,8 +1,11 @@
 import { MongoClient, AggregationCursor } from 'mongodb'
 import { v4 as uuid4 } from 'uuid'
+import { isNil, omitBy } from 'lodash'
 import {
   CHECKLIST_TEMPLATE_COLLECTION,
   paginatePipeline,
+  prefixRegexMatchFilter,
+  regexMatchFilter,
 } from '@/utils/mongoDBUtils'
 import { DefaultApiGetChecklistTemplatesRequest } from '@/@types/openapi-internal/RequestParameters'
 import { traceable } from '@/core/xray'
@@ -89,7 +92,27 @@ export class ChecklistTemplateRepository {
     const collection = db.collection<ChecklistTemplate>(
       CHECKLIST_TEMPLATE_COLLECTION(this.tenantId)
     )
+    const matchStage = [
+      omitBy(
+        {
+          $match: omitBy(
+            {
+              name: params.filterName
+                ? regexMatchFilter(params.filterName, true)
+                : undefined,
+              id: params.filterId
+                ? prefixRegexMatchFilter(params.filterId)
+                : undefined,
+            },
+            isNil
+          ),
+        },
+        isNil
+      ),
+    ]
+
     return collection.aggregate<ChecklistTemplate>([
+      ...matchStage,
       { $sort: { createdAt: -1 } },
       ...paginatePipeline(params),
     ])

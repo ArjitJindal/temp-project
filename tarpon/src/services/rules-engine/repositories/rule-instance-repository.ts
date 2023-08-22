@@ -47,6 +47,7 @@ function toRuleInstance(item: any): RuleInstance {
     nature: item.nature,
     labels: item.labels,
     alertCreationInterval: item.alertCreationInterval,
+    checklistTemplateId: item.checklistTemplateId,
   }
 }
 
