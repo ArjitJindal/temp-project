@@ -6,7 +6,7 @@ import s from './index.module.less';
 import { InternalBusinessUser, InternalConsumerUser, MissingUser } from '@/apis';
 import { Small } from '@/components/ui/Typography';
 import CommentsCard from '@/components/CommentsCard';
-import Authorized from '@/components/Authorized';
+import { Authorized } from '@/components/Authorized';
 import { useApi } from '@/api';
 import AsyncResourceRenderer from '@/components/common/AsyncResourceRenderer';
 import { useQuery } from '@/utils/queries/hooks';

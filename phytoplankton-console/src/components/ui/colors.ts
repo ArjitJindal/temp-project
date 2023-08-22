@@ -84,6 +84,7 @@ export const COLORS_V2_GRAY_8 = '#525252';
 export const COLORS_V2_GRAY_9 = '#393939';
 export const COLORS_V2_GRAY_10 = '#262626';
 export const COLORS_V2_GRAY_11 = '#161616';
+export const COLORS_V2_GRAY_12 = '#f9f9f9';
 export const COLORS_V2_PRIMARY_FLAGRIGHTBLUE = '#1169f9';
 export const COLORS_V2_HIGHLIGHT_FLAGRIGHTBLUE = '#f0f4fb';
 export const COLORS_V2_HIGHLIGHT_HIGHLIGHT_STROKE = '#DFE6F2';

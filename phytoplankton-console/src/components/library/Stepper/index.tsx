@@ -3,7 +3,8 @@ import cn from 'clsx';
 import s from './style.module.less';
 import CheckLineIcon from '@/components/ui/icons/Remix/system/check-line.react.svg';
 import MoreLineIcon from '@/components/ui/icons/Remix/system/more-line.react.svg';
-type Step = {
+
+export type Step = {
   key: string;
   title: string;
   description: string;

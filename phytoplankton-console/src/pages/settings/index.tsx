@@ -11,6 +11,7 @@ import { OtherSettings } from './components/OtherSettings';
 import NarrativeTemplates from './components/NarrativeTemplates';
 import s from './styles.module.less';
 import { QuotaSettings } from './components/QuotaSettings';
+import { ChecklistTemplatesSettings } from './components/ChecklistTemplatesSettings';
 import ComplyAdvantageLogo from '@/branding/Comply-Advantage-logo.svg';
 import PageWrapper from '@/components/PageWrapper';
 import { useI18n } from '@/locales';
@@ -47,6 +48,10 @@ export default function SettingsPage() {
         {
           name: 'Narrative templates',
           content: <NarrativeTemplates />,
+        },
+        {
+          name: 'Investigation checklist',
+          content: <ChecklistTemplatesSettings />,
         },
         {
           name: whiteLabeled ? 'AI features' : 'Flagright AI features',
@@ -212,7 +217,7 @@ export default function SettingsPage() {
 
   const i18n = useI18n();
   return (
-    <PageWrapper title={i18n('menu.settings')} description="Manage product settings.">
+    <PageWrapper title={i18n('menu.settings')} description="Manage system settings">
       <SidebarPanel menuSections={menuSections as MenuSection[]} />
     </PageWrapper>
   );

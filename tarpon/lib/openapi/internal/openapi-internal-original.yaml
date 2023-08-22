@@ -8371,6 +8371,10 @@ components:
           type: array
           items:
             $ref: '#/components/schemas/ChecklistCategory'
+        createdAt:
+          type: integer
+        updatedAt:
+          type: integer
       required:
         - name
         - categories

@@ -494,6 +494,18 @@ export class CdkTarponConsoleLambdaStack extends cdk.NestedStack {
       functionProps
     )
 
+    /* Checklist template function */
+    createFunction(
+      this,
+      lambdaExecutionRole,
+      {
+        name: StackConstants.CONSOLE_API_CHECKLIST_TEMPLATE_FUNCTION_NAME,
+        auditLogTopic,
+        batchJobQueue,
+      },
+      functionProps
+    )
+
     /* Get Risk Scores */
     createFunction(
       this,

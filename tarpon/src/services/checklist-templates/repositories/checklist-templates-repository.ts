@@ -89,6 +89,9 @@ export class ChecklistTemplateRepository {
     const collection = db.collection<ChecklistTemplate>(
       CHECKLIST_TEMPLATE_COLLECTION(this.tenantId)
     )
-    return collection.aggregate<ChecklistTemplate>(paginatePipeline(params))
+    return collection.aggregate<ChecklistTemplate>([
+      { $sort: { createdAt: -1 } },
+      ...paginatePipeline(params),
+    ])
   }
 }

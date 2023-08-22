@@ -30,14 +30,26 @@ export class ChecklistTemplatesService {
     ) {
       throw new BadRequest(`Checklist template ${template.id} already exists`)
     }
-    return this.repository.createOrUpdateChecklistTemplate(template)
+    const now = Date.now()
+    return this.repository.createOrUpdateChecklistTemplate({
+      ...template,
+      createdAt: now,
+      updatedAt: now,
+    })
   }
 
   public async updateChecklistTemplate(template: ChecklistTemplateWithId) {
-    if (!(await this.repository.getChecklistTemplate(template.id))) {
+    const existingTemplate = await this.repository.getChecklistTemplate(
+      template.id
+    )
+    if (!existingTemplate) {
       throw new NotFound(`Checklist template ${template.id}  not found`)
     }
-    return this.repository.createOrUpdateChecklistTemplate(template)
+    return this.repository.createOrUpdateChecklistTemplate({
+      ...template,
+      createdAt: existingTemplate.createdAt,
+      updatedAt: Date.now(),
+    })
   }
   public async deleteChecklistTemplate(templateId: string) {
     if (!(await this.repository.getChecklistTemplate(templateId))) {

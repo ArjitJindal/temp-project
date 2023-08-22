@@ -1,4 +1,4 @@
-import React from 'react';
+import Button, { ButtonProps } from '../Button';
 import s from './style.module.less';
 import ArrowLeftSLineIcon from '@/components/ui/icons/Remix/system/arrow-left-s-line.react.svg';
 import ArrowRightSLineIcon from '@/components/ui/icons/Remix/system/arrow-right-s-line.react.svg';
@@ -6,20 +6,53 @@ import ArrowRightSLineIcon from '@/components/ui/icons/Remix/system/arrow-right-
 interface Props {
   onNext: () => void;
   onPrevious: () => void;
+  actionProps?: {
+    actionText: string;
+    actionDisabled?: boolean;
+    onAction: () => void;
+    buttonExtraProps?: Partial<ButtonProps>;
+  };
   nextDisabled?: boolean;
   prevDisabled?: boolean;
+  hidePrev?: boolean;
 }
 
 export default function StepButtons(props: Props) {
-  const { nextDisabled, prevDisabled, onNext, onPrevious } = props;
+  const { nextDisabled, prevDisabled, actionProps, hidePrev, onNext, onPrevious } = props;
   return (
     <div className={s.root}>
-      <button className={s.button} disabled={prevDisabled} onClick={onPrevious}>
-        <ArrowLeftSLineIcon />
-      </button>
-      <button className={s.button} disabled={nextDisabled} onClick={onNext}>
-        <ArrowRightSLineIcon />
-      </button>
+      {!hidePrev && (
+        <Button
+          key="previous"
+          type="SECONDARY"
+          isDisabled={prevDisabled}
+          onClick={onPrevious}
+          icon={<ArrowLeftSLineIcon />}
+        >
+          Previous
+        </Button>
+      )}
+      {nextDisabled && actionProps ? (
+        <Button
+          key="submit"
+          type="PRIMARY"
+          onClick={actionProps.onAction}
+          isDisabled={actionProps.actionDisabled}
+          {...actionProps.buttonExtraProps}
+        >
+          {actionProps.actionText}
+        </Button>
+      ) : (
+        <Button
+          key="next"
+          type="SECONDARY"
+          isDisabled={nextDisabled}
+          onClick={onNext}
+          iconRight={<ArrowRightSLineIcon />}
+        >
+          Next
+        </Button>
+      )}
     </div>
   );
 }

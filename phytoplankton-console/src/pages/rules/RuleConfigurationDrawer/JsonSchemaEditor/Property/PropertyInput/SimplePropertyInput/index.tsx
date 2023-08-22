@@ -32,6 +32,7 @@ export default function SimplePropertyInput(props: Props) {
           <Select
             {...inputProps}
             mode="SINGLE"
+            isDisabled={schema.readOnly}
             placeholder={`Select ${uiSchema['ui:entityName'] ?? 'option'}`}
             options={(schema.enum ?? [])
               .filter((x): x is string => typeof x === 'string')
@@ -67,7 +68,7 @@ export default function SimplePropertyInput(props: Props) {
           />
         );
       }
-      return <TextInput placeholder="Enter text" {...inputProps} />;
+      return <TextInput {...inputProps} placeholder="Enter text" isDisabled={schema.readOnly} />;
     }
     case 'boolean':
       return <Checkbox {...inputProps} value={inputProps.value ?? false} />;

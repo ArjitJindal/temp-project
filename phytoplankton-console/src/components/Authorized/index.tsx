@@ -2,7 +2,7 @@ import React from 'react';
 import { usePermissions } from '@/utils/user-utils';
 import { Permission } from '@/apis';
 
-export default function ({
+export function Authorized({
   required,
   children,
 }: {

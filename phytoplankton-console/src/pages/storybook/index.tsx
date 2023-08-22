@@ -17,6 +17,7 @@ import Stepper from '@/components/library/Stepper/story';
 import Card from '@/components/ui/Card/story';
 import Form from '@/components/library/Form/story';
 import Drawer from '@/components/library/Drawer/story';
+import DrawerStepperJsonSchemaForm from '@/components/library/DrawerStepperJsonSchemaForm/story';
 import Alert from '@/components/library/Alert/story';
 import AlertComponent from '@/components/library/Alert';
 import QuickFilter from '@/components/library/QuickFilter/story';
@@ -31,6 +32,7 @@ import Tabs from '@/components/library/Tabs/story';
 import TextArea from '@/components/library/TextArea/story';
 import Slider from '@/components/library/Slider/story';
 import Table from '@/components/library/Table/story';
+import CrudEntitiesTable from '@/components/library/CrudEntitiesTable/story';
 import RiskScoreDisplay from '@/components/ui/RiskScoreDisplay/story';
 import RiskLevelTag from '@/components/library/RiskLevelTag/story';
 import RiskLevelSwitch from '@/components/library/RiskLevelSwitch/story';
@@ -39,6 +41,7 @@ import TransactionTypeTag from '@/components/library/TransactionTypeTag/story';
 import CaseStatusTag from '@/components/library/CaseStatusTag/story';
 import FilesDraggerInput from '@/components/ui/FilesDraggerInput/story';
 import FilesList from '@/components/files/FilesList/story';
+import EmptyDataInfo from '@/components/library/EmptyDataInfo/story';
 import CaseGenerationMethodTag from '@/components/library/CaseGenerationMethodTag/story';
 import { Category, Config } from '@/pages/storybook/types';
 import {
@@ -74,6 +77,10 @@ const config: Config = [
       {
         key: 'Table',
         story: Table,
+      },
+      {
+        key: 'CrudEntitiesTable',
+        story: CrudEntitiesTable,
       },
       {
         key: 'VerticalMenu',
@@ -164,6 +171,10 @@ const config: Config = [
         story: Drawer,
       },
       {
+        key: 'DrawerStepperJsonSchemaForm',
+        story: DrawerStepperJsonSchemaForm,
+      },
+      {
         key: 'Card',
         story: Card,
       },
@@ -178,6 +189,10 @@ const config: Config = [
       {
         key: 'Modal',
         story: Modal,
+      },
+      {
+        key: 'EmptyDataInfo',
+        story: EmptyDataInfo,
       },
     ],
   },

@@ -31,9 +31,10 @@ export const checklistTemplateHandler = lambdaApi()(
       return service.createChecklistTemplate(request.ChecklistTemplate)
     })
     handlers.registerPutChecklistTemplates(async (ctx, request) => {
-      return service.updateChecklistTemplate(
-        request.ChecklistTemplate as ChecklistTemplateWithId
-      )
+      return service.updateChecklistTemplate({
+        ...request.ChecklistTemplate,
+        id: request.checklistTemplateId,
+      } as ChecklistTemplateWithId)
     })
     handlers.registerDeleteChecklistTemplate(async (ctx, request) => {
       await service.deleteChecklistTemplate(request.checklistTemplateId)

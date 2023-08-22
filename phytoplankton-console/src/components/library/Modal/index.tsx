@@ -4,7 +4,7 @@ import { Modal as AntModal, Typography } from 'antd';
 import cn from 'clsx';
 import s from './style.module.less';
 import CloseCircleLineIcon from '@/components/ui/icons/Remix/system/close-fill.react.svg';
-import Button, { Props as ButtonProps } from '@/components/library/Button';
+import Button, { ButtonProps } from '@/components/library/Button';
 import Tabs, { TabItem } from '@/components/library/Tabs';
 
 export const MODAL_WIDTHS = ['S', 'M', 'L', 'XL'] as const;

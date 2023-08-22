@@ -5,6 +5,7 @@ import Sider from 'antd/es/layout/Sider';
 import Menu from 'antd/es/menu';
 import { useCallback, useMemo } from 'react';
 import { useLocalStorageState } from 'ahooks';
+import { COLORS_V2_GRAY_12 } from '../colors';
 import styles from './SidebarPanel.module.less';
 
 type MenuItem = {
@@ -85,9 +86,14 @@ export default function SidebarPanel({ menuSections }: Props): JSX.Element {
           {menuItems}
         </Menu>
       </Sider>
-
       <Content style={{ minHeight: 280 }}>
-        <Card bordered={false}>{contentByMenuItemKey.get(activeMenuItem)}</Card>
+        <Card
+          bordered={false}
+          style={{ height: '100%', backgroundColor: COLORS_V2_GRAY_12 }}
+          bodyStyle={{ height: '100%' }}
+        >
+          {contentByMenuItemKey.get(activeMenuItem)}
+        </Card>
       </Content>
     </Layout>
   );

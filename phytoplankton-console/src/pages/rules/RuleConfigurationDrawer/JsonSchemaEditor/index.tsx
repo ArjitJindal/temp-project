@@ -1,4 +1,5 @@
-import React from 'react';
+// TODO: Move JsonSchemaEditor/ to library
+
 import { ExtendedSchema } from './types';
 import {
   ChangeJsonSchemaEditorSettings,

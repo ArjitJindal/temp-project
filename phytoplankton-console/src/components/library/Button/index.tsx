@@ -8,7 +8,7 @@ export type ButtonType = 'PRIMARY' | 'SECONDARY' | 'TETRIARY' | 'TEXT';
 
 export type ButtonSize = 'SMALL' | 'MEDIUM' | 'LARGE';
 
-export interface Props {
+export interface ButtonProps {
   type?: ButtonType;
   icon?: React.ReactNode;
   size?: ButtonSize;
@@ -27,7 +27,7 @@ export interface Props {
   isDanger?: boolean;
 }
 
-function Button(props: Props, ref: React.Ref<HTMLButtonElement>) {
+function Button(props: ButtonProps, ref: React.Ref<HTMLButtonElement>) {
   const {
     type = 'PRIMARY',
     htmlType = 'button',
@@ -77,7 +77,7 @@ function Button(props: Props, ref: React.Ref<HTMLButtonElement>) {
 }
 
 const component: React.FunctionComponent<
-  Props & {
+  ButtonProps & {
     ref?: React.Ref<HTMLButtonElement>;
   }
 > = React.forwardRef<HTMLButtonElement>(Button);
