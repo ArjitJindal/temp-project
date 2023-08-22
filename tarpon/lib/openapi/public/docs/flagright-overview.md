@@ -2,7 +2,7 @@
 internal: true
 ---
 
-# 2. Overview
+# Overview
 
 Flagright is an API-first AML compliance platform with a no-code back office. We serve fintech startups with a focus on developers and compliance teams.
 

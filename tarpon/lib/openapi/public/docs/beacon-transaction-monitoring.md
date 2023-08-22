@@ -3,7 +3,7 @@ tags: [Anti money laundering, Fraud prevention, Real-time, KYT]
 internal: true
 ---
 
-# 3. Beacon: Real-time AML & Fraud Transaction Monitoring
+# Beacon: Real-time AML & Fraud Transaction Monitoring
 
 ## Overview
 

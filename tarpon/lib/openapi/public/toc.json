@@ -2,43 +2,48 @@
   "items": [
     {
       "type": "item",
-      "title": "1. API Reference",
-      "uri": "/docs/1.-api-reference.md"
+      "title": "API Reference",
+      "uri": "/docs/api-reference.md"
     },
     {
       "type": "item",
-      "title": "2. Flagright Overview",
-      "uri": "/docs/2.-flagright-overview.md"
+      "title": "SDKs",
+      "uri": "/docs/sdk.md"
     },
     {
       "type": "item",
-      "title": "3. Beacon: Transaction Monitoring",
-      "uri": "/docs/3.-beacon-transaction-monitoring.md"
+      "title": "Flagright Overview",
+      "uri": "/docs/flagright-overview.md"
     },
     {
       "type": "item",
-      "title": "4. Pulse: Risk Profiling",
-      "uri": "/docs/4.-pulse-risk-profiling.md"
+      "title": "Beacon: Transaction Monitoring",
+      "uri": "/docs/beacon-transaction-monitoring.md"
     },
     {
       "type": "item",
-      "title": "5. Why Risk-Based Transaction Monitoring?",
-      "uri": "/docs/5.-why-risk-based-transaction-monitoring.md"
+      "title": "Pulse: Risk Profiling",
+      "uri": "/docs/pulse-risk-profiling.md"
     },
     {
       "type": "item",
-      "title": "6. Using Modules Independently",
-      "uri": "/docs/6.-using-modules-independently.md"
+      "title": "Why Risk-Based Transaction Monitoring?",
+      "uri": "/docs/why-risk-based-transaction-monitoring.md"
     },
     {
       "type": "item",
-      "title": "7. Sonar: Bad Actor Database for Startups",
-      "uri": "/docs/7.-sonar.md"
+      "title": "Using Modules Independently",
+      "uri": "/docs/using-modules-independently.md"
     },
     {
       "type": "item",
-      "title": "8. Sonar Faq",
-      "uri": "/docs/8.-sonar-faq.md"
+      "title": "Sonar: Bad Actor Database for Startups",
+      "uri": "/docs/sonar.md"
+    },
+    {
+      "type": "item",
+      "title": "Sonar Faq",
+      "uri": "/docs/sonar-faq.md"
     },
     {
       "type": "group",

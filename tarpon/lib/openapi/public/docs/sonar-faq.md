@@ -3,7 +3,7 @@ tags: [faq, Fraud prevention, bad actors]
 internal: true
 ---
 
-# 8. Sonar FAQ
+# Sonar FAQ
 
 ## Is it free?
 

@@ -3,7 +3,7 @@ tags: [Fraud prevention, bad actors]
 internal: true
 ---
 
-# 7. Sonar: Known Bad Actor Database
+# Sonar: Known Bad Actor Database
 
 Flagright Sonar is a known bad actor database enabling fintech startups collaborate anonymously against chargebacks, fraud, and financial crime. It is a free (because you provide your data) with unlimited API calls and is built on trust that everyone in the community will contribute to it with accurate data of bad actors in their systems.
 

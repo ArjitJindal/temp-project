@@ -12,7 +12,7 @@ tags:
 internal: true
 ---
 
-# 4. Pulse: Dynamic Risk Scoring
+# Pulse: Dynamic Risk Scoring
 
 ## About this document
 

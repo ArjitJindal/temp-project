@@ -6,10 +6,12 @@ info:
   version: '1.0'
 servers:
   - url: https://sandbox.api.flagright.com
-    variables: {}
+    description: Sandbox API server
 paths:
   /transactions:
     post:
+      x-fern-sdk-group-name: transactions
+      x-fern-sdk-method-name: verify
       security:
         - x-api-key: []
       summary: Verify a Transaction
@@ -164,6 +166,8 @@ paths:
       tags: []
   '/transactions/{transactionId}':
     get:
+      x-fern-sdk-group-name: transactions
+      x-fern-sdk-method-name: get
       security:
         - x-api-key: []
       summary: Retrieve a Transaction
@@ -263,6 +267,8 @@ paths:
       tags: []
   /events/transaction:
     post:
+      x-fern-sdk-group-name: transaction_events
+      x-fern-sdk-method-name: create
       security:
         - x-api-key: []
       summary: Create a Transaction Event
@@ -407,6 +413,8 @@ paths:
       x-internal: false
   '/events/transaction/{eventId}':
     get:
+      x-fern-sdk-group-name: transaction_events
+      x-fern-sdk-method-name: get
       security:
         - x-api-key: []
       summary: Retrieve a Transaction Event
@@ -458,6 +466,8 @@ paths:
       x-internal: true
   /consumer/users:
     post:
+      x-fern-sdk-group-name: consumer_users
+      x-fern-sdk-method-name: create
       security:
         - x-api-key: []
       summary: Create a Consumer User
@@ -563,6 +573,8 @@ paths:
       tags: []
   '/consumer/users/{userId}':
     get:
+      x-fern-sdk-group-name: consumer_users
+      x-fern-sdk-method-name: get
       security:
         - x-api-key: []
       summary: Retrieve a Consumer User
@@ -650,6 +662,8 @@ paths:
       tags: []
   /business/users:
     post:
+      x-fern-sdk-group-name: business_users
+      x-fern-sdk-method-name: create
       security:
         - x-api-key: []
       summary: Create a Business User
@@ -716,6 +730,8 @@ paths:
       tags: []
   '/business/users/{userId}':
     get:
+      x-fern-sdk-group-name: business_users
+      x-fern-sdk-method-name: get
       security:
         - x-api-key: []
       summary: Retrieve a Business User
@@ -875,6 +891,8 @@ paths:
       tags: []
   /events/consumer/user:
     post:
+      x-fern-sdk-group-name: consumer_user_events
+      x-fern-sdk-method-name: create
       security:
         - x-api-key: []
       summary: Create a Consumer User Event
@@ -948,6 +966,8 @@ paths:
       x-internal: false
   /events/business/user:
     post:
+      x-fern-sdk-group-name: business_user_events
+      x-fern-sdk-method-name: create
       security:
         - x-api-key: []
       summary: Create a Business User Event

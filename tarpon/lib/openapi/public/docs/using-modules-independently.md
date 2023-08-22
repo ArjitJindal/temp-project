@@ -2,7 +2,7 @@
 internal: true
 ---
 
-# 6. Using Flagright modules independently
+# Using Flagright modules independently
 
 Flagright offers three modules to enable startups manage risk appetite in real-time and grow revenue while maintaining the integrity and reputation of the business. These modules work the best when used in an integrated manner as a full suite. However, each module can be deployed independently and can deliver extreme performance as a standalone product.
 
