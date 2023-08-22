@@ -8,6 +8,7 @@ import {
   DEFAULT_RISK_LEVEL,
   getRiskScoreFromLevel,
   riskLevelPrecendence,
+  getRiskLevelFromScore,
 } from './utils'
 import {
   getTransactionDerivedRiskFactorHandler,
@@ -488,6 +489,52 @@ export class RiskScoringService {
     await auditLogService.handleDrsUpdate(drsObject, newDrsObject, 'AUTOMATIC')
 
     return newDrsObject?.drsScore
+  }
+
+  public async calculateAndUpdateKRSAndDRS(
+    user: User | Business
+  ): Promise<{ riskLevel: RiskLevel }> {
+    const [riskFactors, riskClassificationValues] = await Promise.all([
+      this.riskRepository.getParameterRiskItems(),
+      this.riskRepository.getRiskClassificationValues(),
+    ])
+
+    const oldKrsScore = (await this.riskRepository.getKrsScore(user.userId))
+      ?.krsScore
+    const oldDrs = await this.riskRepository.getDrsScore(user.userId)
+    const { score: newKrsScore, components } = await this.calculateKrsScore(
+      user,
+      riskClassificationValues,
+      riskFactors || []
+    )
+    if (newKrsScore === oldKrsScore) {
+      return {
+        riskLevel: user.riskLevel!,
+      }
+    }
+    await this.riskRepository.createOrUpdateKrsScore(
+      user.userId,
+      newKrsScore,
+      components
+    )
+    if (!oldDrs?.isUpdatable) {
+      return {
+        riskLevel: user.riskLevel!,
+      }
+    }
+    const newDRSScore = _.mean([newKrsScore, oldDrs?.drsScore])
+    await this.riskRepository.createOrUpdateDrsScore(
+      user.userId,
+      newDRSScore,
+      'USER_UPDATED',
+      components
+    )
+
+    const riskLevel = getRiskLevelFromScore(
+      riskClassificationValues,
+      newDRSScore
+    )
+    return { riskLevel: riskLevel }
   }
 
   public async backfillUserRiskScores(): Promise<void> {

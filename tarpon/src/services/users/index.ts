@@ -5,6 +5,7 @@ import { MongoClient } from 'mongodb'
 import { UserRepository } from '../users/repositories/user-repository'
 import { UserEventRepository } from '../rules-engine/repositories/user-event-repository'
 import { RulesEngineService } from '../rules-engine'
+import { RiskScoringService } from '../risk-scoring'
 import { logger } from '@/core/logger'
 import { Business } from '@/@types/openapi-public/Business'
 import { User } from '@/@types/openapi-public/User'
@@ -19,7 +20,6 @@ import { BusinessBase } from '@/@types/openapi-public/BusinessBase'
 import { UserBase } from '@/@types/openapi-internal/UserBase'
 import { traceable } from '@/core/xray'
 import { hasFeature } from '@/core/utils/context'
-import { RiskScoringService } from '@/services/risk-scoring'
 
 @traceable
 export class UserManagementService {
@@ -53,6 +53,12 @@ export class UserManagementService {
       dynamoDb,
       mongoDb
     )
+    if (hasFeature('PULSE')) {
+      this.riskScoringService = new RiskScoringService(tenantId, {
+        dynamoDb,
+        mongoDb,
+      })
+    }
   }
 
   public async verifyUser(
@@ -213,6 +219,13 @@ export class UserManagementService {
       user,
       updatedConsumerUserAttributes || {}
     ) as User
+    if (hasFeature('PULSE')) {
+      const { riskLevel } =
+        await this.riskScoringService!.calculateAndUpdateKRSAndDRS(
+          updatedConsumerUser
+        )
+      updatedConsumerUser.riskLevel = riskLevel
+    }
     const updatedConsumerUserResult = {
       ...updatedConsumerUser,
       ...(await this.rulesEngineService.verifyUser(updatedConsumerUser)),
@@ -265,6 +278,13 @@ export class UserManagementService {
       userEvent.updatedBusinessUserAttributes || {},
       false
     )
+    if (hasFeature('PULSE')) {
+      const { riskLevel } =
+        await this.riskScoringService!.calculateAndUpdateKRSAndDRS(
+          updatedBusinessUser
+        )
+      updatedBusinessUser.riskLevel = riskLevel
+    }
     const updatedBusinessUserResult = {
       ...updatedBusinessUser,
       ...(await this.rulesEngineService.verifyUser(updatedBusinessUser)),
