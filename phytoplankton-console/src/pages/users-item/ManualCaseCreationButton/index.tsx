@@ -4,6 +4,8 @@ import Button from '@/components/library/Button';
 
 type Props = {
   userId: string;
+  type: 'CREATE' | 'EDIT';
+  transactionIds?: string[];
 };
 
 export const ManualCaseCreationButton = (props: Props) => {
@@ -16,12 +18,14 @@ export const ManualCaseCreationButton = (props: Props) => {
           setIsModalOpen(true);
         }}
       >
-        Create case
+        {props.type === 'CREATE' ? 'Create case' : 'Add to existing case'}
       </Button>
       <MannualCaseCreationModal
         isOpen={isModalOpen}
         setIsOpen={setIsModalOpen}
         userId={props.userId}
+        type={props.type}
+        transactionIds={props.transactionIds || []}
       />
     </>
   );

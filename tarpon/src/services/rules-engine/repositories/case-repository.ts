@@ -39,6 +39,7 @@ import { Assignment } from '@/@types/openapi-internal/Assignment'
 import { isStatusInReview } from '@/utils/helpers'
 import { traceable } from '@/core/xray'
 import { CaseType } from '@/@types/openapi-internal/CaseType'
+import { InternalTransaction } from '@/@types/openapi-internal/InternalTransaction'
 
 export const MAX_TRANSACTION_IN_A_CASE = 1000
 
@@ -72,6 +73,70 @@ export class CaseRepository {
         return prev
       }
     }, PRIORITYS[PRIORITYS.length - 1])
+  }
+
+  public async getCaseIdsByUserId(
+    userId: string,
+    params?: {
+      caseType?: CaseType
+    }
+  ): Promise<{ caseId?: string }[]> {
+    const db = this.mongoDb.db()
+    const casesCollection = db.collection<Case>(CASES_COLLECTION(this.tenantId))
+
+    const filters: Filter<Case>[] = []
+
+    if (params?.caseType != null) {
+      filters.push({
+        caseType: params.caseType,
+      })
+    }
+
+    filters.push({
+      $or: [
+        { 'caseUsers.origin.userId': userId },
+        { 'caseUsers.destination.userId': userId },
+      ],
+    })
+
+    const cases = await casesCollection
+      .find(
+        { $and: filters.length > 0 ? filters : [{}] },
+        { projection: { caseId: 1 } }
+      )
+      .toArray()
+
+    return cases as { caseId?: string }[]
+  }
+
+  public async updateManualCase(
+    caseId: string,
+    transactions: InternalTransaction[],
+    comment: Comment,
+    transactionsCount: number
+  ): Promise<Case | null> {
+    const db = this.mongoDb.db()
+    const collection = db.collection<Case>(CASES_COLLECTION(this.tenantId))
+
+    const updatedCase = await collection.findOneAndUpdate(
+      { caseId },
+      {
+        $push: {
+          caseTransactions: { $each: transactions },
+          comments: comment,
+          caseTransactionsIds: {
+            $each: transactions.map((transaction) => transaction.transactionId),
+          },
+        },
+        $set: {
+          updatedAt: Date.now(),
+          caseTransactionsCount: transactionsCount,
+        },
+      },
+      { returnDocument: 'after' }
+    )
+
+    return updatedCase.value
   }
 
   async addCaseMongo(caseEntity: Case): Promise<Case> {
@@ -295,6 +360,11 @@ export class CaseRepository {
     if (params.filterCaseStatus != null && params.filterCaseStatus.length > 0) {
       conditions.push({ caseStatus: { $in: params.filterCaseStatus } })
     }
+
+    if (params.filterCaseTypes != null) {
+      conditions.push({ caseType: { $in: params.filterCaseTypes } })
+    }
+
     if (params.filterUserId != null) {
       conditions.push({
         $or: [
@@ -576,6 +646,7 @@ export class CaseRepository {
         comments: 1,
         falsePositiveDetails: 1,
         alerts: 1,
+        caseType: 1,
         caseHierarchyDetails: 1,
         ...(options.includeCaseTransactionIds
           ? { caseTransactionsIds: 1 }

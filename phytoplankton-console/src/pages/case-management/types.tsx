@@ -46,7 +46,7 @@ export type CommonCaseParams = {
   alertId: string;
   assignedTo: string[];
   updatedAt: string[];
-  caseType: CaseType;
+  caseTypesFilter: CaseType[];
 };
 
 export type TableSearchParams = CommonParams & {

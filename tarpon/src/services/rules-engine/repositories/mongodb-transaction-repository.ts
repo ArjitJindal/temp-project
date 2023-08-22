@@ -499,6 +499,19 @@ export class MongoDbTransactionRepository
     return { total, data: await cursor.toArray() }
   }
 
+  public async getTransactionsByIds(
+    transactionIds: string[]
+  ): Promise<InternalTransaction[]> {
+    const db = this.mongoDb.db()
+    const collection = db.collection<InternalTransaction>(
+      TRANSACTIONS_COLLECTION(this.tenantId)
+    )
+    const query = { transactionId: { $in: transactionIds } }
+    const cursor = collection.find(query)
+
+    return await cursor.toArray()
+  }
+
   public async getTransactionsCursorPaginate(
     params: OptionalPagination<DefaultApiGetTransactionsListRequest>
   ): Promise<CursorPaginationResponse<InternalTransaction>> {

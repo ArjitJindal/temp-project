@@ -1,10 +1,12 @@
 import { useState } from 'react';
+import { ManualCaseCreationButton } from '../../ManualCaseCreationButton';
 import style from './style.module.less';
 import { prepareTableData } from './helpers';
 import * as Card from '@/components/ui/Card';
 import TransactionEventsTable from '@/pages/transactions-item/TransactionEventsTable';
 import {
   Amount,
+  CasesListResponse,
   RiskLevel,
   RuleAction,
   TransactionAmountDetails,
@@ -13,11 +15,11 @@ import {
 } from '@/apis';
 import { useApi } from '@/api';
 import { DefaultApiGetTransactionsListRequest } from '@/apis/types/ObjectParamAPI';
-import { useCursorQuery } from '@/utils/queries/hooks';
+import { useCursorQuery, useQuery } from '@/utils/queries/hooks';
 import QueryResultsTable from '@/components/common/QueryResultsTable';
 import { AllParams } from '@/components/library/Table/types';
 import { DEFAULT_PARAMS_STATE } from '@/components/library/Table/consts';
-import { USERS_ITEM_TRANSACTIONS_HISTORY } from '@/utils/queries/keys';
+import { CASES_LIST, USERS_ITEM_TRANSACTIONS_HISTORY } from '@/utils/queries/keys';
 import { useFeatureEnabled } from '@/components/AppWrapper/Providers/SettingsProvider';
 import { ColumnHelper } from '@/components/library/Table/columnHelper';
 import {
@@ -31,12 +33,12 @@ import {
 } from '@/components/library/Table/standardDataTypes';
 import { makeUrl } from '@/utils/routing';
 import Id from '@/components/ui/Id';
+import { getOr } from '@/utils/asyncResource';
 
 export type DataItem = {
   index: number;
   status?: RuleAction;
   rowKey: string;
-  lastRowKey: string;
   transactionId?: string;
   timestamp?: number;
   originAmountDetails?: TransactionAmountDetails;
@@ -58,6 +60,19 @@ export function Content(props: { userId: string }) {
     ...DEFAULT_PARAMS_STATE,
     includeEvents: true,
   });
+
+  const cases = useQuery(
+    CASES_LIST({
+      filterCaseTypes: ['MANUAL'],
+      filterUserId: userId,
+    }),
+    async () => {
+      return api.getCaseList({
+        filterCaseTypes: ['MANUAL'],
+        filterUserId: userId,
+      });
+    },
+  );
 
   const responseRes = useCursorQuery(
     USERS_ITEM_TRANSACTIONS_HISTORY(userId, params),
@@ -111,6 +126,10 @@ export function Content(props: { userId: string }) {
 
   const helper = new ColumnHelper<DataItem>();
   const isManualCaseFeatureEnabled = useFeatureEnabled('MANUAL_CASE_CREATION');
+
+  const casesList = getOr<CasesListResponse>(cases.data, { data: [], total: 0 }); // eslint-disable-line
+
+  const [selectedIds, setSelectedIds] = useState<string[]>([]);
 
   return (
     <QueryResultsTable<DataItem>
@@ -252,7 +271,29 @@ export function Content(props: { userId: string }) {
       renderExpanded={(item) => <TransactionEventsTable events={item.events} />}
       fixedExpandedContainer={true}
       fitHeight={true}
+      selectionActions={[
+        ({ selectedIds }) => {
+          return (
+            casesList.total > 0 && (
+              <ManualCaseCreationButton userId={userId} transactionIds={selectedIds} type="EDIT" />
+            )
+          );
+        },
+        ({ selectedIds }) => (
+          <ManualCaseCreationButton userId={userId} transactionIds={selectedIds} type="CREATE" />
+        ),
+      ]}
+      selectionInfo={
+        selectedIds.length > 0
+          ? {
+              entityCount: selectedIds.length,
+              entityName: 'transactions',
+            }
+          : undefined
+      }
       selection={isManualCaseFeatureEnabled}
+      selectedIds={selectedIds}
+      onSelect={setSelectedIds}
     />
   );
 }

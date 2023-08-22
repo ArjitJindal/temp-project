@@ -50,6 +50,7 @@ export default function CaseTableWrapper(props: {
       showCases,
       assignedTo,
       updatedAt,
+      caseTypesFilter,
     } = params;
 
     const [sortField, sortOrder] = sort[0] ?? [];
@@ -95,6 +96,7 @@ export default function CaseTableWrapper(props: {
       filterTransactionAmoutBelow: amountLessThanFilter,
       filterBusinessIndustries: businessIndustryFilter,
       filterRiskLevel: riskLevels,
+      filterCaseTypes: caseTypesFilter,
       filterUserState: userStates,
       filterAssignmentsIds:
         showCases === 'MY' ? [auth0user.userId] : assignedTo?.length ? assignedTo : undefined,

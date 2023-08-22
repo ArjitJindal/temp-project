@@ -3258,6 +3258,12 @@ paths:
               $ref: '#/components/schemas/CaseReasons'
           in: query
           name: filterCaseClosureReasons
+        - schema:
+            type: array
+            items:
+              $ref: '#/components/schemas/CaseType'
+          in: query
+          name: filterCaseTypes
     post:
       summary: Create a Manual Case
       operationId: post-cases-manual
@@ -3276,6 +3282,25 @@ paths:
           application/json:
             schema:
               $ref: '#/components/schemas/ManualCaseCreationDataRequest'
+        required: true
+    patch:
+      summary: Update a Manual Case
+      operationId: patch-cases-manual
+      x-flagright:
+        permissions:
+          - case-management:case-overview:write
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Case'
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ManualCasePatchRequest'
         required: true
   '/cases/{caseId}/transactions':
     get:
@@ -3487,6 +3512,36 @@ paths:
               $ref: '#/components/schemas/RuleAction'
           in: query
           name: filterTransactionStatus
+        - schema:
+            type: array
+            items:
+              $ref: '#/components/schemas/CaseType'
+          in: query
+          name: filterCaseType
+  '/cases/users/{userId}/caseIds':
+    get:
+      parameters:
+        - schema:
+            type: string
+          name: userId
+          in: path
+          required: true
+        - schema:
+            $ref: '#/components/schemas/CaseType'
+          in: query
+          name: filterCaseType
+      summary: Get caseIds for a user
+      operationId: get-caseIds
+      x-flagright:
+        permissions:
+          - case-management:case-overview:read
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CasesUsersUserIdResponse'
   /cases/statusChange:
     patch:
       summary: Cases - Update
@@ -6039,9 +6094,45 @@ components:
           type: array
           items:
             $ref: '#/components/schemas/FileInfo'
+        transactionIds:
+          type: array
+          items:
+            type: string
       required:
         - manualCaseData
         - files
+        - transactionIds
+    ManualCasePatchRequest:
+      type: object
+      title: ManualCasePatchRequest
+      properties:
+        caseId:
+          type: string
+        transactionIds:
+          type: array
+          items:
+            type: string
+        files:
+          type: array
+          items:
+            $ref: '#/components/schemas/FileInfo'
+        comment:
+          type: string
+      required:
+        - caseId
+        - transactionIds
+        - files
+        - comment
+    CasesUsersUserIdResponse:
+      title: CasesUsersUserIdResponse
+      type: object
+      properties:
+        caseIds:
+          type: array
+          items:
+            type: string
+      required:
+        - caseIds
     Case:
       title: Case
       type: object

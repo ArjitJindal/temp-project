@@ -59,6 +59,10 @@ import { TableAlertItem } from '@/pages/case-management/AlertTable/types';
 import { TableItem } from '@/pages/case-management/CaseTable/types';
 import { DurationDisplay } from '@/components/ui/DurationDisplay';
 import { getDuration, formatDuration } from '@/utils/time-utils';
+import {
+  COLORS_V2_HIGHLIGHT_FLAGRIGHTBLUE,
+  COLORS_V2_HIGHLIGHT_HIGHLIGHT_STROKE,
+} from '@/components/ui/colors';
 
 export const UNKNOWN: Required<FullColumnDataType<unknown>> = {
   render: (value) => {
@@ -282,6 +286,12 @@ export const MONEY: ColumnDataType<Amount> = {
 
 export const CASEID_PRIORITY: ColumnDataType<string, Case> = {
   render: (_value, { item: entity }) => {
+    const tagStyle = {
+      background: COLORS_V2_HIGHLIGHT_FLAGRIGHTBLUE,
+      borderColor: COLORS_V2_HIGHLIGHT_HIGHLIGHT_STROKE,
+      color: 'black',
+    };
+
     return (
       <>
         {entity?.caseId && (
@@ -296,10 +306,18 @@ export const CASEID_PRIORITY: ColumnDataType<string, Case> = {
             {entity.caseId}
           </Id>
         )}
-        {entity?.priority && <p style={{ marginBottom: 0 }}>Priority: {entity.priority}</p>}
+        <div className={s.casePriority}>
+          <div style={{ marginBottom: 0 }}>
+            {entity?.priority && <p style={{ marginBottom: 0 }}>Priority: {entity.priority}</p>}
+          </div>
+          <div style={{ marginBottom: 0 }}>
+            {entity?.caseType === 'MANUAL' && <AntTag style={tagStyle}>Manual</AntTag>}
+          </div>
+        </div>
       </>
     );
   },
+  defaultWrapMode: 'OVERFLOW',
 };
 
 export const CASEID: ColumnDataType<string, Case> = {

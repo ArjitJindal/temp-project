@@ -6,15 +6,19 @@ import {
 } from 'aws-lambda'
 import { Credentials } from '@aws-sdk/client-sts'
 import { S3 } from '@aws-sdk/client-s3'
-import { capitalize, isEqual, isEmpty } from 'lodash'
+import { capitalize, isEqual, isEmpty, compact } from 'lodash'
 import { MongoClient } from 'mongodb'
+import pluralize from 'pluralize'
 import { CasesAlertsAuditLogService } from './case-alerts-audit-log-service'
 import { Comment } from '@/@types/openapi-internal/Comment'
 import {
   DefaultApiGetCaseListRequest,
   DefaultApiGetCaseTransactionsRequest,
 } from '@/@types/openapi-internal/RequestParameters'
-import { CaseRepository } from '@/services/rules-engine/repositories/case-repository'
+import {
+  CaseRepository,
+  MAX_TRANSACTION_IN_A_CASE,
+} from '@/services/rules-engine/repositories/case-repository'
 import { CasesListResponse } from '@/@types/openapi-internal/CasesListResponse'
 import { CaseStatusChange } from '@/@types/openapi-internal/CaseStatusChange'
 import { DashboardStatsRepository } from '@/lambdas/console-api-dashboard/repositories/dashboard-stats-repository'
@@ -53,6 +57,8 @@ import { FileInfo } from '@/@types/openapi-internal/FileInfo'
 import { InternalTransaction } from '@/@types/openapi-internal/InternalTransaction'
 import { MongoDbTransactionRepository } from '@/services/rules-engine/repositories/mongodb-transaction-repository'
 import { CursorPaginationResponse } from '@/utils/pagination'
+import { CaseType } from '@/@types/openapi-internal/CaseType'
+import { ManualCasePatchRequest } from '@/@types/openapi-internal/ManualCasePatchRequest'
 
 export class CaseService extends CaseAlertsCommonService {
   caseRepository: CaseRepository
@@ -105,16 +111,41 @@ export class CaseService extends CaseAlertsCommonService {
   private getManualCaseComment(
     manualCaseData: CaseStatusChange,
     caseId: string,
-    files: FileInfo[]
+    files: FileInfo[],
+    transactionIds: string[]
   ): Comment {
     const { comment, reason, otherReason } = manualCaseData
     const { id: userId, email } = getContext()?.user as Account
 
-    const commentText = `Case ${caseId} is manually created by ${
+    const transactionsCount = transactionIds.length
+
+    // Break down string generation into smaller, more meaningful parts
+    const createdByText = `Case ${caseId} is manually created by ${
       email ?? userId
-    } with reason: ${reason}${
+    }`
+    const reasonText = `with reason: ${reason}${
       reason?.[0] === 'Other' ? `: ${otherReason}` : ''
-    }\n${comment}`
+    }`
+
+    // Individual components for transactionsText
+    const transactionsCountText = `${transactionsCount} ${pluralize(
+      'transaction',
+      transactionsCount
+    )}`
+
+    const transactionIdsText = `${pluralize(
+      'id',
+      transactionsCount
+    )} ${transactionIds.join(', ')}`
+
+    // Final transactionsText based on the condition
+    const transactionsText = transactionsCount
+      ? ` and ${transactionsCountText} with ${transactionIdsText}`
+      : ''
+
+    const optionalComment = comment ? `\n${comment}` : ''
+
+    const commentText = `${createdByText} ${reasonText}${transactionsText}${optionalComment}`
 
     return {
       body: commentText,
@@ -122,6 +153,43 @@ export class CaseService extends CaseAlertsCommonService {
       files,
       updatedAt: Date.now(),
       userId,
+    }
+  }
+
+  private getUpdateManualCaseComment(
+    caseId: string,
+    files: FileInfo[],
+    transactionIds: string[],
+    comment: string
+  ): Comment {
+    const { id: userId, email } = getContext()?.user as Account
+
+    const tranasctionsCount = transactionIds.length
+
+    const commentText = `Added ${tranasctionsCount} ${pluralize(
+      'transaction',
+      tranasctionsCount
+    )} with ${pluralize('id', tranasctionsCount)} ${transactionIds.join(
+      ', '
+    )} to case ${caseId} by ${email ?? userId} \n${comment}`
+
+    return {
+      body: commentText,
+      createdAt: Date.now(),
+      files,
+      updatedAt: Date.now(),
+      userId,
+    }
+  }
+
+  public async getCaseIdsByUserId(
+    userId: string,
+    params?: { caseType?: CaseType }
+  ): Promise<{ caseIds: string[] }> {
+    const cases = await this.caseRepository.getCaseIdsByUserId(userId, params)
+
+    return {
+      caseIds: compact(cases.map((c) => c.caseId)),
     }
   }
 
@@ -149,9 +217,70 @@ export class CaseService extends CaseAlertsCommonService {
     })
   }
 
+  public async updateManualCase(
+    caseData: ManualCasePatchRequest
+  ): Promise<Case> {
+    const { caseId, comment, files = [], transactionIds } = caseData
+
+    const case_ = await this.caseRepository.getCases(
+      { filterId: caseId, filterCaseTypes: ['MANUAL'] },
+      { includeCaseTransactionIds: true }
+    )
+
+    const transactionRepository = new MongoDbTransactionRepository(
+      this.tenantId,
+      this.mongoDb
+    )
+
+    if (!case_.data.length) {
+      throw new NotFound(`Case ${caseId} not found`)
+    }
+
+    const caseTransactionIds = case_.data[0].caseTransactionsIds ?? []
+
+    if (
+      caseTransactionIds.length + transactionIds.length >
+      MAX_TRANSACTION_IN_A_CASE
+    ) {
+      throw new BadRequest(`Case ${caseId} has too many transactions`)
+    }
+
+    const allTransactionIds = compact([
+      ...new Set([
+        ...(case_.data?.[0]?.caseTransactionsIds ?? []),
+        ...(transactionIds ?? []),
+      ]),
+    ])
+
+    const transactionsCount = allTransactionIds.length
+
+    const newTransactionIds = allTransactionIds.filter(
+      (id) => !caseTransactionIds.includes(id)
+    )
+
+    const transactions = await transactionRepository.getTransactionsByIds(
+      newTransactionIds
+    )
+
+    const updatedCase = await this.caseRepository.updateManualCase(
+      caseId,
+      transactions,
+      this.getUpdateManualCaseComment(
+        caseId,
+        files,
+        newTransactionIds,
+        comment
+      ),
+      transactionsCount
+    )
+
+    return updatedCase as Case
+  }
+
   public async createManualCaseFromUser(
     manualCaseData: CaseStatusChange,
-    files: FileInfo[]
+    files: FileInfo[],
+    transactionIds: string[]
   ): Promise<Case> {
     const { id: userId } = getContext()?.user as Account
     const userRepository = new UserRepository(this.tenantId, {
@@ -171,10 +300,21 @@ export class CaseService extends CaseAlertsCommonService {
       userId,
     }
 
+    const transactionRepository = new MongoDbTransactionRepository(
+      this.tenantId,
+      this.mongoDb
+    )
+
+    const transactions = compact(transactionIds).length
+      ? await transactionRepository.getTransactionsByIds(
+          compact(transactionIds)
+        )
+      : []
+
     const case_ = await this.caseRepository.addCaseMongo({
       caseType: 'MANUAL',
       caseStatus: 'OPEN',
-      caseTransactions: [],
+      caseTransactions: transactions,
       caseUsers: {
         origin: caseUser,
         originUserRiskLevel:
@@ -183,12 +323,12 @@ export class CaseService extends CaseAlertsCommonService {
         originUserDrsScore: caseUser.drsScore?.drsScore,
       },
       alerts: [],
-      caseTransactionsCount: 0,
+      caseTransactionsCount: transactions.length,
       createdBy: manualCaseData.userId,
       priority: 'P1',
       updatedAt: Date.now(),
       createdTimestamp: Date.now(),
-      caseTransactionsIds: [],
+      caseTransactionsIds: transactions.map((t) => t.transactionId),
       statusChanges: [statusChange],
       lastStatusChange: statusChange,
     })
@@ -196,7 +336,8 @@ export class CaseService extends CaseAlertsCommonService {
     const comment = this.getManualCaseComment(
       manualCaseData,
       case_.caseId!,
-      files
+      files,
+      transactions.map((t) => t.transactionId)
     )
 
     await this.caseRepository.saveCaseComment(case_.caseId!, comment)
@@ -404,6 +545,7 @@ export class CaseService extends CaseAlertsCommonService {
 
       if (updates.caseStatus && cascadeAlertsUpdate && !isInProgressOrOnHold) {
         const alerts = cases
+          .filter((c) => c.caseType === 'SYSTEM')
           .flatMap((c) => c.alerts ?? [])
           .filter(
             (alert) =>

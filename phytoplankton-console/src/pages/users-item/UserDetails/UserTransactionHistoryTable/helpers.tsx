@@ -7,11 +7,9 @@ export function prepareTableData(
   transactions: Array<InternalTransaction>,
 ): TableDataItem<DataItem>[] {
   return transactions.map((item, index): TableDataItem<DataItem> => {
-    const lastRowKey = `${item.transactionId}_last_row`;
     const dataItem: DataItem = {
       index,
-      rowKey: lastRowKey,
-      lastRowKey: lastRowKey,
+      rowKey: item.transactionId,
       transactionId: item.transactionId,
       timestamp: item.timestamp,
       originAmountDetails: item.originAmountDetails,
@@ -44,11 +42,10 @@ export function prepareTableData(
         'destinationPaymentMethodId',
         'originPaymentMethodId',
       ],
-      rows: item.hitRules.map((rule, i): DataItem => {
-        const isLastRow = i === item.hitRules.length - 1;
+      rows: item.hitRules.map((rule): DataItem => {
         return {
           ...dataItem,
-          rowKey: isLastRow ? lastRowKey : `${item.transactionId}#${i}`,
+          rowKey: item.transactionId,
           ruleName: rule.ruleName,
           ruleDescription: rule.ruleDescription,
         };

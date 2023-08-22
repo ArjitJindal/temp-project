@@ -18,6 +18,8 @@ import StackLineIcon from '@/components/ui/icons/Remix/business/stack-line.react
 import { denseArray } from '@/utils/lang';
 import { AlertStatus, CaseStatus, PaymentMethod } from '@/apis';
 import { ScopeSelectorValue } from '@/pages/case-management/components/ScopeSelector';
+import { CASE_TYPES } from '@/apis/models-custom/CaseType';
+import { humanizeConstant } from '@/utils/humanize';
 
 export const queryAdapter: Adapter<TableSearchParams> = {
   serializer: (params) => {
@@ -51,6 +53,7 @@ export const queryAdapter: Adapter<TableSearchParams> = {
       destinationCountryFilter: params.destinationCountryFilter,
       filterTypes: params.filterTypes?.join(','),
       businessIndustryFilter: params.businessIndustryFilter?.join(','),
+      caseTypesFilter: params.caseTypesFilter?.join(','),
       userStates: params.userStates?.join(','),
       riskLevels: params.riskLevels?.join(','),
       assignedTo: params.assignedTo?.join(','),
@@ -102,6 +105,9 @@ export const queryAdapter: Adapter<TableSearchParams> = {
       destinationCountryFilter: raw.destinationCountryFilter,
       filterTypes: raw.filterTypes?.split(',') as unknown as TableSearchParams['filterTypes'],
       businessIndustryFilter: raw.businessIndustryFilter?.split(','),
+      caseTypesFilter: raw.caseTypesFilter?.split(
+        ',',
+      ) as unknown as TableSearchParams['caseTypesFilter'],
       userStates: raw.userStates?.split(',') as unknown as TableSearchParams['userStates'],
       riskLevels: raw.riskLevels?.split(',') as unknown as TableSearchParams['riskLevels'],
       showCases: (showCases as ScopeSelectorValue | undefined) ?? 'ALL',
@@ -125,6 +131,17 @@ export const makeExtraFilters = (
       renderer: { kind: 'string' },
       showFilterByDefault: true,
       icon: <StackLineIcon />,
+    },
+    {
+      title: 'Case type',
+      key: 'caseTypesFilter',
+      renderer: {
+        kind: 'select',
+        mode: 'MULTIPLE',
+        displayMode: 'list',
+        options: CASE_TYPES.map((x) => ({ value: x, label: humanizeConstant(x) })),
+      },
+      showFilterByDefault: true,
     },
     {
       title: 'Rules',

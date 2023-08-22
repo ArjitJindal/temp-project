@@ -165,8 +165,21 @@ export const casesHandler = lambdaApi()(
       async (ctx, request) =>
         await caseService.createManualCaseFromUser(
           request.ManualCaseCreationDataRequest.manualCaseData,
-          request.ManualCaseCreationDataRequest.files
+          request.ManualCaseCreationDataRequest.files,
+          request.ManualCaseCreationDataRequest.transactionIds
         )
+    )
+
+    handlers.registerPatchCasesManual(
+      async (ctx, request) =>
+        await caseService.updateManualCase(request.ManualCasePatchRequest)
+    )
+
+    handlers.registerGetCaseIds(
+      async (ctx, request) =>
+        await caseService.getCaseIdsByUserId(request.userId, {
+          caseType: request.filterCaseType,
+        })
     )
 
     handlers.registerGetCaseTransactions(

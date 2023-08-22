@@ -36,7 +36,9 @@ export default function Header(props: Props) {
         },
       ]}
       buttons={[
-        ...(isManualCaseFeatureEnabled ? [<ManualCaseCreationButton userId={userId} />] : []),
+        ...(isManualCaseFeatureEnabled
+          ? [<ManualCaseCreationButton userId={userId} type={'CREATE'} />]
+          : []),
         <CommentButton
           onSuccess={onNewComment}
           submitRequest={async (commentFormValues) => {
