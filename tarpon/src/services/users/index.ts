@@ -220,11 +220,9 @@ export class UserManagementService {
       updatedConsumerUserAttributes || {}
     ) as User
     if (hasFeature('PULSE')) {
-      const { riskLevel } =
-        await this.riskScoringService!.calculateAndUpdateKRSAndDRS(
-          updatedConsumerUser
-        )
-      updatedConsumerUser.riskLevel = riskLevel
+      await this.riskScoringService!.calculateAndUpdateKRSAndDRS(
+        updatedConsumerUser
+      )
     }
     const updatedConsumerUserResult = {
       ...updatedConsumerUser,
@@ -279,11 +277,9 @@ export class UserManagementService {
       false
     )
     if (hasFeature('PULSE')) {
-      const { riskLevel } =
-        await this.riskScoringService!.calculateAndUpdateKRSAndDRS(
-          updatedBusinessUser
-        )
-      updatedBusinessUser.riskLevel = riskLevel
+      await this.riskScoringService!.calculateAndUpdateKRSAndDRS(
+        updatedBusinessUser
+      )
     }
     const updatedBusinessUserResult = {
       ...updatedBusinessUser,
