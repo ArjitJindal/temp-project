@@ -2,7 +2,7 @@
 
 ## Server-side SDKs
 
-Flagright maintains official API clients for Node/Typescript and Python. We recommend using these clients for faster and error-free integration with with Flagright APIs.
+Flagright maintains official API clients for Node/Typescript and Python. We recommend using these clients for faster and error-free integration with Flagright APIs.
 
 - [Node/Typescript SDK](https://www.npmjs.com/package/flagright) [![npm shield](https://img.shields.io/npm/v/flagright)](https://www.npmjs.com/package/flagright)
 
