@@ -1,4 +1,3 @@
-import React from 'react';
 import { Navigate, Route, Routes, useParams } from 'react-router';
 import s from './index.module.less';
 import CategoriesMenu from './CategoriesMenu';
@@ -52,6 +51,8 @@ import {
   ROOT_SEGMENT,
 } from '@/pages/storybook/routes';
 import { Component } from '@/pages/storybook/components';
+import Widget from '@/components/library/Widget/story';
+import WidgetGrid from '@/components/library/WidgetGrid/story';
 
 const config: Config = [
   {
@@ -193,6 +194,14 @@ const config: Config = [
       {
         key: 'EmptyDataInfo',
         story: EmptyDataInfo,
+      },
+      {
+        key: 'Widget',
+        story: Widget,
+      },
+      {
+        key: 'WidgetGrid',
+        story: WidgetGrid,
       },
     ],
   },

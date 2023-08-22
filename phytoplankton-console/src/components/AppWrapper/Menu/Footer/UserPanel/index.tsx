@@ -17,6 +17,7 @@ export default function UserPanel(props: Props) {
   const user = useAuth0User();
 
   const [isPopoverVisible, setPopoverVisible] = useState(false);
+  const title = `${user.name}` + (user.verifiedEmail ? ` (${user.verifiedEmail})` : '');
 
   return (
     <div className={cn(s.root, isCollapsed && s.isCollapsed)}>
@@ -32,7 +33,7 @@ export default function UserPanel(props: Props) {
             }
           }}
         >
-          <div className={s.avatarWrapper}>
+          <div className={s.avatarWrapper} title={title}>
             <Avatar />
           </div>
         </Popover>

@@ -55,7 +55,10 @@ function Button(props: { isCollapsed?: boolean }) {
             }}
           >
             {OPTIONS.map((option) => (
-              <div className={cn(s.item, option.value === isDemoMode && s.isActive)}>
+              <div
+                key={option.title}
+                className={cn(s.item, option.value === isDemoMode && s.isActive)}
+              >
                 {option.title}
               </div>
             ))}

@@ -141,9 +141,8 @@ function Analysis() {
         }
       >
         {KEYS.map((key) => (
-          <div style={{ marginBottom: 20 }}>
+          <div key={key} style={{ marginBottom: 20 }}>
             <Checkbox
-              key={key}
               value={updatedState[key] == null ? true : updatedState[key]}
               label={humanizeConstant(key)}
               onChange={(value) => {

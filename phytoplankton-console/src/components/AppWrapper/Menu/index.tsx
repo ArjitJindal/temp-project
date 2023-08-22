@@ -122,6 +122,7 @@ export default function Menu(props: {
             ...(branding.knowledgeBaseUrl
               ? [
                   <TopLevelLink
+                    key="help"
                     to={branding.knowledgeBaseUrl}
                     isExternal={true}
                     icon={<QuestionLineIcon />}

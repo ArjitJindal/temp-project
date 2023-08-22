@@ -1,0 +1,50 @@
+@import 'src/components/ui/colors.less';
+
+.root {
+  padding: 16px;
+  background: white;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  border-radius: 4px;
+
+  &.width-FULL {
+    grid-column: span 2;
+  }
+
+  &.width-HALF {
+    grid-column: span 1;
+  }
+}
+
+.header {
+  display: flex;
+  gap: 16px;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.title {
+  color: @fr-colors-v2-gray-10;
+  font-size: 14px;
+  font-weight: 600;
+  line-height: 24px;
+}
+
+.icon {
+  color: @fr-colors-v2-gray-10;
+  cursor: pointer;
+  width: 24px;
+  height: 24px;
+
+  &.isLoading {
+    pointer-events: none;
+    color: @fr-colors-v2-gray-4;
+  }
+}
+
+.controls {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}

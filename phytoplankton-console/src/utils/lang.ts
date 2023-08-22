@@ -11,6 +11,9 @@ export function neverReturn<T>(obj: never, defaultValue: T): T {
 }
 
 export function getErrorMessage(e: unknown) {
+  if (typeof e === 'string' && e !== '') {
+    return e;
+  }
   if (typeof e === 'object' && e != null && 'message' in e) {
     return (e as any).message ?? 'Unknown error';
   }
