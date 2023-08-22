@@ -1,10 +1,12 @@
+import { Auth0DevTenantConfig } from '@lib/configs/auth0/tenant-config-dev'
 import { getConfig } from './config'
 import { Tenant } from '@/services/accounts'
 import { getDynamoDbClient } from '@/utils/dynamodb'
 import { TenantRepository } from '@/services/tenants/repositories/tenant-repository'
-import { TenantService } from '@/services/tenants'
+import { TenantInfo, TenantService } from '@/services/tenants'
 import { FEATURES } from '@/@types/openapi-internal-custom/Feature'
 import { Feature } from '@/@types/openapi-internal/Feature'
+import { envIs } from '@/utils/env'
 
 const config = getConfig()
 
@@ -12,10 +14,27 @@ export async function migrateAllTenants(
   migrationCallback: (tenant: Tenant, auth0Domain: string) => Promise<void>
 ) {
   try {
-    const tenantInfos = await TenantService.getAllTenants(
-      config.stage,
-      config.region
-    )
+    let tenantInfos: TenantInfo[] = []
+    if (envIs('local')) {
+      tenantInfos = [
+        {
+          tenant: {
+            id: 'flagright',
+            name: 'Flagright',
+            orgId: '',
+            apiAudience: '',
+            region: 'local',
+          },
+          auth0Domain: 'dev-flagright.eu.auth0.com',
+          auth0TenantConfig: Auth0DevTenantConfig,
+        },
+      ]
+    } else {
+      tenantInfos = await TenantService.getAllTenants(
+        config.stage,
+        config.region
+      )
+    }
 
     if (tenantInfos.length === 0) {
       throw new Error(

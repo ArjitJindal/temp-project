@@ -1,8 +1,8 @@
 import { RetentionDays } from 'aws-cdk-lib/aws-logs'
 import { Config } from './config'
 
-const account = '911899431626'
-const region = 'eu-central-1'
+const account = '000000000000'
+const region = 'local'
 
 export const config: Config = {
   stage: 'local',

@@ -38,9 +38,6 @@ const migrationCollection =
     : 'migrations-post-deployment'
 
 loadConfigEnv()
-if (process.env.ENV === 'local') {
-  process.env.AWS_REGION = 'local'
-}
 
 function refreshCredentialsPeriodically() {
   // Refresh the AWS credentials before it expires (1 hour). We're using role chaining to
