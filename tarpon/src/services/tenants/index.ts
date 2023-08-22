@@ -11,6 +11,8 @@ import {
   ThrottleSettings,
   UsagePlan,
   GetUsageCommand,
+  GetApiKeyCommand,
+  ApiKey,
 } from '@aws-sdk/client-api-gateway'
 import { StackConstants } from '@lib/constants'
 import { getAuth0TenantConfigs } from '@lib/configs/auth0/tenant-config'
@@ -30,6 +32,7 @@ import { TenantSettings } from '@/@types/openapi-internal/TenantSettings'
 import { TenantUsageData } from '@/@types/openapi-internal/TenantUsageData'
 import dayjs from '@/utils/dayjs'
 import { envIs } from '@/utils/env'
+import { TenantApiKey } from '@/@types/openapi-internal/TenantApiKey'
 
 export type TenantInfo = {
   tenant: Tenant
@@ -304,6 +307,124 @@ export class TenantService {
 
   private getUsagePlanName(tenantId: string, tenantName: string): string {
     return `tarpon:${tenantId}:${tenantName}`
+  }
+
+  public async getApiKeys(unmaskingOptions?: {
+    unmask: boolean
+    apiKeyId: string
+  }): Promise<TenantApiKey[]> {
+    const allUsagePlans = await TenantService.getAllUsagePlans()
+    const usagePlan = allUsagePlans?.find(
+      (x) => x.name?.match(USAGE_PLAN_REGEX)?.[1] === this.tenantId
+    )
+
+    if (!usagePlan) {
+      throw new Error(`Usage plan for tenant ${this.tenantId} not found`)
+    }
+
+    const apigateway = new APIGatewayClient({
+      region: envIs('local') ? 'eu-central-1' : process.env.AWS_REGION,
+    })
+
+    const usagePlanKeysCommand = new GetUsagePlanKeysCommand({
+      usagePlanId: usagePlan.id,
+    })
+
+    const usagePlanKeys = await apigateway.send(usagePlanKeysCommand)
+
+    const allApiKeys: ApiKey[] = await Promise.all(
+      usagePlanKeys.items?.map(async (usagePlanKey) => {
+        const apiKeyCommand = new GetApiKeyCommand({
+          apiKey: usagePlanKey.id,
+          includeValue: true,
+        })
+
+        const apiKey = await apigateway.send(apiKeyCommand)
+
+        return apiKey
+      }) ?? []
+    )
+
+    const apiKeys: TenantApiKey[] = allApiKeys.map((x) => ({
+      id: x.id ?? '',
+      createdAt: dayjs(x.createdDate).valueOf(),
+      key: x.value ?? '',
+      updatedAt: dayjs(x.lastUpdatedDate).valueOf(),
+    }))
+
+    if (unmaskingOptions?.apiKeyId && unmaskingOptions.unmask) {
+      const apiKeysProcessed = await this.processApiKeys(
+        allApiKeys,
+        unmaskingOptions
+      )
+
+      return apiKeysProcessed
+    }
+
+    return apiKeys.map((x) => ({
+      id: x.id,
+      createdAt: x.createdAt,
+      key: x.key?.replace(/.(?=.{4})/g, '*'),
+      updatedAt: x.updatedAt,
+    }))
+  }
+
+  private async processApiKeys(
+    apiKeys: ApiKey[],
+    unmaskingOptions: {
+      unmask: boolean
+      apiKeyId: string
+    }
+  ): Promise<TenantApiKey[]> {
+    const tenantRepository = new TenantRepository(this.tenantId, {
+      dynamoDb: this.dynamoDb,
+    })
+
+    const tenantSettings = await tenantRepository.getTenantSettings()
+
+    const apiKeyViewTimes =
+      tenantSettings?.apiKeyViewData?.find(
+        (x) => x.apiKey === unmaskingOptions.apiKeyId
+      )?.count ?? 0
+
+    const apiKeysProcessed = apiKeys.map((x) => {
+      let value = x.value
+
+      if (
+        unmaskingOptions.unmask &&
+        apiKeyViewTimes >= (tenantSettings?.limits?.apiKeyView ?? 2)
+      ) {
+        value = x.value?.replace(/.(?=.{4})/g, '*')
+      }
+
+      return {
+        id: x.id ?? '',
+        createdAt: dayjs(x.createdDate).valueOf(),
+        key: value ?? '',
+        updatedAt: dayjs(x.lastUpdatedDate).valueOf(),
+      }
+    })
+
+    const apiKeyViewData = tenantSettings?.apiKeyViewData ?? []
+
+    const apiKeyViewDataIndex = apiKeyViewData.findIndex(
+      (x) => x.apiKey === unmaskingOptions.apiKeyId
+    )
+
+    if (apiKeyViewDataIndex > -1) {
+      apiKeyViewData[apiKeyViewDataIndex].count = apiKeyViewTimes + 1
+    } else {
+      apiKeyViewData.push({
+        apiKey: unmaskingOptions.apiKeyId,
+        count: apiKeyViewTimes + 1,
+      })
+    }
+
+    await tenantRepository.createOrUpdateTenantSettings({
+      apiKeyViewData,
+    })
+
+    return apiKeysProcessed
   }
 
   public async getUsagePlanData(tenantId: string): Promise<TenantUsageData> {

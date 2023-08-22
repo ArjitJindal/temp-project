@@ -98,7 +98,9 @@
     "qa:clean": "ENV=local ts-node --transpileOnly scripts/qa-stack-cleanup.ts",
     "verify-remote-transactions": "ts-node sxcripts/debug-rule/verify-remote-transactions.ts",
     "get-qa-api-key": "ts-node --transpileOnly scripts/print-qa-key.ts",
-    "get-qa-integration-test-api-key": "ts-node --transpileOnly scripts/print-qa-integration-test-key.ts"
+    "get-qa-integration-test-api-key": "ts-node --transpileOnly scripts/print-qa-integration-test-key.ts",
+    "playground": "ENV=local AWS_REGION=eu-central-1 ts-node --transpileOnly scripts/playground.ts",
+    "create:playground": "touch scripts/playground.ts"
   },
   "repository": {
     "type": "git",

@@ -185,6 +185,19 @@ export default function SuperAdminPanel() {
           </Label>
         </div>
         <div className={s.field}>
+          <Label
+            label="Maximum times api key can be viewed"
+            description="The maximum number of times the api key can be viewed by a tenant"
+            element="div"
+          >
+            <NumberInput
+              value={limits?.apiKeyView ?? 0}
+              onChange={(value) => setLimits({ ...limits, apiKeyView: value })}
+              isDisabled={false}
+            />
+          </Label>
+        </div>
+        <div className={s.field}>
           <Label label="CA Search Profile ID">
             <Input value={complyAdvantageSearchProfileId} onChange={handleChangeSearchProfileID} />
           </Label>

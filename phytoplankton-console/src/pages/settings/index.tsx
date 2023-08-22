@@ -11,6 +11,7 @@ import { OtherSettings } from './components/OtherSettings';
 import NarrativeTemplates from './components/NarrativeTemplates';
 import s from './styles.module.less';
 import { QuotaSettings } from './components/QuotaSettings';
+import { ApiKeysSettings } from './components/ApiKeysSettings';
 import { ChecklistTemplatesSettings } from './components/ChecklistTemplatesSettings';
 import ComplyAdvantageLogo from '@/branding/Comply-Advantage-logo.svg';
 import PageWrapper from '@/components/PageWrapper';
@@ -210,6 +211,10 @@ export default function SettingsPage() {
         {
           name: 'Quotas',
           content: <QuotaSettings />,
+        },
+        {
+          name: 'API keys',
+          content: <ApiKeysSettings />,
         },
       ],
     },

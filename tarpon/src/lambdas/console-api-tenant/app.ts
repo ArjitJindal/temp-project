@@ -144,6 +144,21 @@ export const tenantsHandler = lambdaApi()(
         }).getUsagePlanData(ctx.tenantId)
     )
 
+    handlers.registerGetTenantApiKeys(async (ctx, request) => {
+      console.log('request', request)
+      return await new TenantService(ctx.tenantId, {
+        dynamoDb: getDynamoDbClientByEvent(event),
+        mongoDb,
+      }).getApiKeys(
+        request.unmaskApiKeyId && request.unmask != null
+          ? {
+              apiKeyId: request.unmaskApiKeyId,
+              unmask: request.unmask,
+            }
+          : undefined
+      )
+    })
+
     return await handlers.handle(event)
   }
 )

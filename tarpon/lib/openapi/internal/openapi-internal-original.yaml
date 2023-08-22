@@ -1841,6 +1841,28 @@ paths:
         '200':
           description: OK
     parameters: []
+  /tenant/apiKeys:
+    get:
+      parameters:
+        - schema:
+            type: boolean
+          name: unmask
+          in: query
+        - schema:
+            type: string
+          name: unmaskApiKeyId
+          in: query
+      summary: Tenant - Get API Keys
+      operationId: get-tenant-api-keys
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/TenantApiKey'
   /roles:
     get:
       summary: Role - List
@@ -4727,6 +4749,23 @@ components:
         - items
         - hasNext
         - hasPrev
+    TenantApiKey:
+      title: TenantApiKey
+      type: object
+      properties:
+        id:
+          type: string
+        key:
+          type: string
+        createdAt:
+          type: number
+        updatedAt:
+          type: number
+      required:
+        - id
+        - key
+        - createdAt
+        - updatedAt
     CrmSummary:
       title: CrmSummary
       type: object
@@ -5500,12 +5539,23 @@ components:
           type: string
         isAiEnabled:
           type: boolean
+        apiKeyViewData:
+          type: array
+          items:
+            type: object
+            properties:
+              apiKey:
+                type: string
+              count:
+                type: number
         limits:
           type: object
           properties:
             simulations:
               type: number
             seats:
+              type: number
+            apiKeyView:
               type: number
         tenantTimezone:
           $ref: '#/components/schemas/Timezone'
