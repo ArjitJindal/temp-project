@@ -32,6 +32,8 @@ export default function KycRiskDisplay({ userId }: Props) {
           }
           icon={<Icon />}
           title="KYC risk score (KRS)"
+          riskScoreName="KRS"
+          showFormulaBackLink
         />
       )}
     </AsyncResourceRenderer>

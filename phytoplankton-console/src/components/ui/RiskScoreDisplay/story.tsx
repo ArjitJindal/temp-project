@@ -84,6 +84,7 @@ export default function (): JSX.Element {
                   },
                 ],
               }))}
+              riskScoreName="CRA risk score"
             />
           )}
         </PropertyMatrix>
@@ -98,10 +99,16 @@ export default function (): JSX.Element {
               createdAt: 0,
             },
           ]}
+          riskScoreName="CRA risk score"
         />
       </UseCase>
       <UseCase title={'Empty'}>
-        <Component title="CRA risk score" icon={<User3LineIcon />} values={[]} />
+        <Component
+          title="CRA risk score"
+          icon={<User3LineIcon />}
+          values={[]}
+          riskScoreName="CRA risk score"
+        />
       </UseCase>
     </>
   );

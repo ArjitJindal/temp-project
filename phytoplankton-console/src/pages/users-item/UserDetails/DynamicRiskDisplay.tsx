@@ -27,6 +27,8 @@ export default function DynamicRiskDisplay({ userId }: Props) {
           }))}
           icon={<User3LineIcon />}
           title="CRA risk score"
+          riskScoreName="CRA risk score"
+          showFormulaBackLink
         />
       )}
     </AsyncResourceRenderer>

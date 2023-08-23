@@ -192,7 +192,6 @@ const randomizedData = data.map((item): ExtendedValueItem => {
   return { ...item, drsScore, score: drsScore, createdAt, derivedRiskLevel, components };
 });
 
-const aiText = 'The AI Risk score depends on these factors';
 const riskScoredata = shuffleArray(randomizedData);
 
 export default function AIRiskDisplay() {
@@ -201,7 +200,6 @@ export default function AIRiskDisplay() {
       mainPanelCustomStyling={{
         background: COLORS_V2_AI_RISK_DISPLAY_BACKGROUND,
       }}
-      factorExplanationText={aiText}
       values={riskScoredata.map((x) => ({
         score: x.drsScore,
         createdAt: x.createdAt,
@@ -209,6 +207,7 @@ export default function AIRiskDisplay() {
       }))}
       icon={<AiLogoIcon />}
       title="AI risk score"
+      riskScoreName="AI risk score"
     />
   );
 }
