@@ -128,7 +128,7 @@ export const ApiKeysSettings = () => {
               );
 
               return timesLeft === 1 ? (
-                <Alert type="error">{`You can only view ${apiKey.id} key ${timesLeft} more time`}</Alert>
+                <Alert type="error">{`You can only view API key ${timesLeft} more time`}</Alert>
               ) : null;
             })}
           </>
