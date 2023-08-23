@@ -12,6 +12,8 @@ import {
 import { logger } from '@/core/logger'
 import { getSecret } from '@/utils/secrets-manager'
 
+process.env.AWS_REGION = 'eu-central-1'
+
 export class FatalError extends Error {}
 
 const cleanUp = async () => {
