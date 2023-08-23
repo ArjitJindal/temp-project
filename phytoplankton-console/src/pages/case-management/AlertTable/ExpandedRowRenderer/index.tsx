@@ -6,8 +6,8 @@ import ScreeningMatchList from '@/components/ScreeningMatchList';
 interface Props {
   alert: TableAlertItem;
   escalatedTransactionIds?: string[];
-  selectedTransactionIds: string[];
-  onTransactionSelect: (alertId: string, transactionIds: string[]) => void;
+  selectedTransactionIds?: string[];
+  onTransactionSelect?: (alertId: string, transactionIds: string[]) => void;
 }
 
 export default function ExpandedRowRenderer(props: Props) {

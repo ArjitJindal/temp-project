@@ -100,3 +100,16 @@ export function useRules(): { rules: RulesMap; ruleInstances: RuleInstanceMap } 
 
   return { rules: rulesMap, ruleInstances: ruleInstancesMap };
 }
+
+export function useRuleOptions() {
+  const rules = useRules();
+  return useMemo(() => {
+    return Object.values(rules.ruleInstances).map((rulesInstance: RuleInstance) => {
+      const ruleName = rulesInstance.ruleNameAlias || rules.rules[rulesInstance.ruleId]?.name;
+      return {
+        value: rulesInstance.id ?? '',
+        label: `${ruleName} ${rulesInstance.ruleId} (${rulesInstance.id})`,
+      };
+    });
+  }, [rules.ruleInstances, rules.rules]);
+}

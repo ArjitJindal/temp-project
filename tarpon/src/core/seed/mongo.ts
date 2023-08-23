@@ -1,4 +1,5 @@
 import { MongoClient } from 'mongodb'
+import { logger } from '../logger'
 import {
   allCollections,
   ARS_SCORES_COLLECTION,
@@ -51,15 +52,8 @@ import {
   data as transactionEvents,
 } from '@/core/seed/data/transaction_events'
 import { DashboardStatsRepository } from '@/lambdas/console-api-dashboard/repositories/dashboard-stats-repository'
-import { Account, AccountsService } from '@/services/accounts'
-import { Case } from '@/@types/openapi-internal/Case'
-import { Assignment } from '@/@types/openapi-internal/Assignment'
-import { getRandomIntInclusive } from '@/scripts/utils'
-import { logger } from '@/core/logger'
-import { pickRandom } from '@/utils/prng'
-import dayjs from '@/utils/dayjs'
-import { CaseStatus } from '@/@types/openapi-internal/CaseStatus'
-import { CaseStatusChange } from '@/@types/openapi-internal/CaseStatusChange'
+import { AccountsService } from '@/services/accounts'
+import { setAccounts } from '@/core/seed/samplers/accounts'
 
 const collections: [(tenantId: string) => string, Iterable<unknown>][] = [
   [TRANSACTIONS_COLLECTION, transactions],
@@ -82,6 +76,29 @@ const collections: [(tenantId: string) => string, Iterable<unknown>][] = [
 
 export async function seedMongo(client: MongoClient, tenantId: string) {
   const db = await client.db()
+
+  const accountsService = new AccountsService(
+    { auth0Domain: process.env.AUTH0_DOMAIN as string },
+    { mongoDb: client }
+  )
+  logger.info(`TenantId: ${tenantId}`)
+
+  let tenant = await accountsService.getTenantById(
+    tenantId.replace('-test', '')
+  ) // As we are appending -test to the tenantId, we need to remove it to get the real tenantId when in demo mode
+
+  logger.info(`Tenant: ${JSON.stringify(tenant)}`)
+
+  if (tenant == null) {
+    tenant = await accountsService.getTenantById(tenantId)
+  }
+
+  const accounts =
+    tenant != null ? await accountsService.getTenantAccounts(tenant) : []
+
+  logger.info(`Accounts: ${JSON.stringify(accounts)}`)
+
+  setAccounts(accounts)
 
   try {
     logger.info('Get all collections')
@@ -137,116 +154,9 @@ export async function seedMongo(client: MongoClient, tenantId: string) {
     } while (!result.done)
   }
 
-  // Apply some random assignments from auth0 users
-  const accountsService = new AccountsService(
-    { auth0Domain: process.env.AUTH0_DOMAIN as string },
-    { mongoDb: client }
-  )
-  logger.info(`TenantId: ${tenantId}`)
-
-  let tenant = await accountsService.getTenantById(
-    tenantId.replace('-test', '')
-  ) // As we are appending -test to the tenantId, we need to remove it to get the real tenantId when in demo mode
-
-  logger.info(`Tenant: ${JSON.stringify(tenant)}`)
-
-  if (tenant == null) {
-    tenant = await accountsService.getTenantById(tenantId)
-  }
-
-  const accounts =
-    tenant != null ? await accountsService.getTenantAccounts(tenant) : []
-
-  logger.info(`Accounts: ${JSON.stringify(accounts)}`)
-
-  const cases = db.collection<Case>(CASES_COLLECTION(tenantId))
-  const casesToUpdate = await cases.find().toArray()
-
-  await Promise.all(
-    casesToUpdate.map(async (c) => {
-      const caseAssignments = getRandomAssigneeObject(accounts)
-
-      return await cases.replaceOne(
-        { _id: c._id },
-        {
-          ...c,
-          statusChanges: getStatusChangesObject(
-            c.caseStatus ?? 'OPEN',
-            caseAssignments.assigneeUserId
-          ),
-          assignments: accounts?.length ? [caseAssignments] : undefined,
-          reviewAssignments: accounts?.length
-            ? [getRandomAssigneeObject(accounts)]
-            : undefined,
-          alerts: c.alerts?.map((a) => {
-            const alertsAssignments = getRandomAssigneeObject(accounts)
-            return {
-              ...a,
-              statusChanges: getStatusChangesObject(
-                a.alertStatus ?? 'OPEN',
-                alertsAssignments.assigneeUserId,
-                true
-              ),
-              assignments: accounts?.length ? [alertsAssignments] : undefined,
-              reviewAssignments: accounts?.length
-                ? [getRandomAssigneeObject(accounts)]
-                : undefined,
-            }
-          }),
-        }
-      )
-    })
-  )
-
   const dashboardStatsRepository = new DashboardStatsRepository(tenantId, {
     mongoDb: client,
   })
 
   await dashboardStatsRepository.refreshAllStats()
-}
-
-const getStatusChangesObject = (
-  caseStatus: CaseStatus,
-  userId: string,
-  alerts?: boolean
-): CaseStatusChange[] => {
-  const statusChanges: CaseStatusChange[] = []
-  if (caseStatus !== 'OPEN') {
-    let insterted = false
-    if (
-      pickRandom([true, false]) &&
-      caseStatus !== 'OPEN_IN_PROGRESS' &&
-      caseStatus.includes('OPEN')
-    ) {
-      statusChanges.push({
-        caseStatus: 'OPEN_IN_PROGRESS',
-        timestamp: dayjs()
-          .subtract(Math.floor(Math.random() * (alerts ? 150 : 400)), 'minute')
-          .valueOf(),
-        userId,
-      })
-      insterted = true
-    }
-    if (!insterted || caseStatus !== 'OPEN_IN_PROGRESS') {
-      statusChanges.push({
-        caseStatus: caseStatus,
-        timestamp: dayjs().valueOf(),
-        userId,
-      })
-    }
-  }
-  return statusChanges
-}
-
-const getRandomAssigneeObject = (accounts: Account[]): Assignment => {
-  const randomAccountIndex = getRandomIntInclusive(0, accounts.length - 1)
-  logger.info(
-    `Assigning to ${accounts[randomAccountIndex]?.id}, JSON: ${JSON.stringify(
-      accounts[randomAccountIndex]
-    )}`
-  )
-  return {
-    assigneeUserId: accounts[randomAccountIndex]?.id,
-    timestamp: Date.now(),
-  }
 }

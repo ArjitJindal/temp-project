@@ -142,6 +142,17 @@ export class AlertsRepository {
       })
     }
 
+    if (params.filterQaStatus) {
+      conditions.push({
+        'alerts.ruleQaStatus': params.filterQaStatus,
+      })
+    }
+    if (params.filterOutQaStatus) {
+      conditions.push({
+        'alerts.ruleQaStatus': { $nin: params.filterOutQaStatus },
+      })
+    }
+
     if (
       params.filterAlertBeforeCreatedTimestamp != null &&
       params.filterAlertAfterCreatedTimestamp != null

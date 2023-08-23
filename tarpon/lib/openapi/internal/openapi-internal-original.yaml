@@ -2749,6 +2749,20 @@ paths:
           in: query
           name: beforeTransactionTimestamp
         - schema:
+            $ref: '#/components/schemas/ChecklistStatus'
+          in: query
+          name: filterQaStatus
+        - schema:
+            type: array
+            items:
+              $ref: '#/components/schemas/ChecklistStatus'
+          in: query
+          name: filterOutQaStatus
+        - schema:
+            type: number
+          in: query
+          name: qaSampling
+        - schema:
             type: string
           in: query
           name: filterId
@@ -5906,6 +5920,7 @@ components:
         - SAR
         - RULES_ENGINE_V2
         - MANUAL_CASE_CREATION
+        - QA
       description: ''
     ManagedRoleName:
       type: string
@@ -6348,6 +6363,16 @@ components:
           type: array
           items:
             $ref: '#/components/schemas/Comment'
+        ruleQaStatus:
+          $ref: '#/components/schemas/ChecklistStatus'
+        ruleChecklist:
+          type: array
+          items:
+            $ref: '#/components/schemas/ChecklistItemValue'
+        qaAssignment:
+          type: array
+          items:
+            $ref: '#/components/schemas/Assignment'
       required:
         - createdTimestamp
         - ruleInstanceId
@@ -8388,6 +8413,35 @@ components:
       required:
         - type
         - day
+    ChecklistInfo:
+      type: object
+      title: ChecklistInfo
+      properties:
+        reason:
+          type: string
+        comment:
+          type: string
+        files:
+          type: array
+          items:
+            $ref: '#/components/schemas/FileInfo'
+    ChecklistStatus:
+      type: string
+      enum:
+        - PASS
+        - FAIL
+    ChecklistItemValue:
+      type: object
+      title: ChecklistItemValue
+      properties:
+        checklistItemId:
+          type: string
+        done:
+          type: boolean
+        status:
+          $ref: '#/components/schemas/ChecklistStatus'
+        info:
+          $ref: '#/components/schemas/ChecklistInfo'
     ChecklistItem:
       title: ChecklistItem
       type: object

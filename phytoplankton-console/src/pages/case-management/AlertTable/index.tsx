@@ -1,20 +1,17 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import pluralize from 'pluralize';
 import { useMutation } from '@tanstack/react-query';
 import { AssigneesDropdown } from '../components/AssigneesDropdown';
 import { ApproveSendBackButton } from '../components/ApproveSendBackButton';
 import { FalsePositiveTag } from '../components/FalsePositiveTag';
+import { useAlertQuery } from '../common';
 import CreateCaseConfirmModal from './CreateCaseConfirmModal';
-import { usePaginatedQuery } from '@/utils/queries/hooks';
 import { useApi } from '@/api';
 import {
-  AlertListResponseItem,
   AlertsAssignmentsUpdateRequest,
   AlertsReviewAssignmentsUpdateRequest,
   Assignment,
-  RuleInstance,
+  ChecklistStatus,
 } from '@/apis';
-import { ALERT_LIST } from '@/utils/queries/keys';
 import QueryResultsTable from '@/components/common/QueryResultsTable';
 import { AllParams, TableColumn, TableData, TableRefType } from '@/components/library/Table/types';
 import StackLineIcon from '@/components/ui/icons/Remix/business/stack-line.react.svg';
@@ -22,8 +19,6 @@ import { QueryResult } from '@/utils/queries/types';
 import Id from '@/components/ui/Id';
 import { addBackUrlToRoute } from '@/utils/backUrl';
 import { makeUrl } from '@/utils/routing';
-import dayjs from '@/utils/dayjs';
-import { getUserName } from '@/utils/api/users';
 import ExpandedRowRenderer from '@/pages/case-management/AlertTable/ExpandedRowRenderer';
 import { TableAlertItem } from '@/pages/case-management/AlertTable/types';
 import AlertsStatusChangeButton from '@/pages/case-management/components/AlertsStatusChangeButton';
@@ -41,23 +36,23 @@ import {
   RULE_ACTION,
   RULE_NATURE,
 } from '@/components/library/Table/standardDataTypes';
-import { useRules } from '@/utils/rules';
 import { ColumnHelper } from '@/components/library/Table/columnHelper';
-import { DefaultApiGetAlertListRequest } from '@/apis/types/ObjectParamAPI';
 import { SarButton as SarButton } from '@/components/Sar';
 import {
   canReviewCases,
   findLastStatusForInReview,
   getSingleCaseStatusCurrent,
   getSingleCaseStatusPreviousForInReview,
-  getStatuses,
   isInReviewCases,
   isOnHoldOrInProgress,
   statusInReview,
 } from '@/utils/case-utils';
 import { CASE_STATUSS } from '@/apis/models-custom/CaseStatus';
+import { useRuleOptions } from '@/utils/rules';
 
-export type AlertTableParams = AllParams<TableSearchParams>;
+export type AlertTableParams = AllParams<TableSearchParams> & {
+  filterQaStatus?: ChecklistStatus;
+};
 
 const getSelectedCaseIdsForAlerts = (selectedItems: Record<string, TableAlertItem>) => {
   const selectedCaseIds = [
@@ -379,84 +374,7 @@ export default function AlertTable(props: Props) {
 
   const isFalsePositiveEnabled = useFeatureEnabled('FALSE_POSITIVE_CHECK');
 
-  const queryResults: QueryResult<TableData<TableAlertItem>> = usePaginatedQuery(
-    ALERT_LIST(params),
-    async (paginationParams) => {
-      const {
-        sort,
-        page,
-        pageSize,
-        alertId,
-        alertStatus,
-        userId,
-        businessIndustryFilter,
-        tagKey,
-        tagValue,
-        caseId,
-        assignedTo,
-        showCases,
-        destinationMethodFilter,
-        originMethodFilter,
-        createdTimestamp,
-        caseCreatedTimestamp,
-        rulesHitFilter,
-      } = params;
-      const [sortField, sortOrder] = sort[0] ?? [];
-
-      const preparedParams: DefaultApiGetAlertListRequest = {
-        page,
-        pageSize,
-        ...paginationParams,
-        filterAlertId: alertId,
-        filterCaseId: caseId,
-        filterAlertStatus: getStatuses(alertStatus),
-        filterAssignmentsIds:
-          showCases === 'MY_ALERTS' ? [user.userId] : assignedTo?.length ? assignedTo : undefined,
-        filterBusinessIndustries:
-          businessIndustryFilter && businessIndustryFilter.length > 0
-            ? businessIndustryFilter
-            : undefined,
-        filterTransactionTagKey: tagKey,
-        filterTransactionTagValue: tagValue,
-        filterUserId: userId,
-        filterOriginPaymentMethods: originMethodFilter,
-        filterDestinationPaymentMethods: destinationMethodFilter,
-        filterRulesHit: rulesHitFilter,
-        sortField: sortField === 'age' ? 'createdTimestamp' : sortField,
-        sortOrder: sortOrder ?? undefined,
-        ...(createdTimestamp
-          ? {
-              filterAlertBeforeCreatedTimestamp: createdTimestamp
-                ? dayjs.dayjs(createdTimestamp[1]).valueOf()
-                : Number.MAX_SAFE_INTEGER,
-              filterAlertAfterCreatedTimestamp: createdTimestamp
-                ? dayjs.dayjs(createdTimestamp[0]).valueOf()
-                : 0,
-            }
-          : {}),
-        ...(caseCreatedTimestamp
-          ? {
-              filterCaseBeforeCreatedTimestamp: caseCreatedTimestamp
-                ? dayjs.dayjs(caseCreatedTimestamp[1]).valueOf()
-                : Number.MAX_SAFE_INTEGER,
-              filterCaseAfterCreatedTimestamp: caseCreatedTimestamp
-                ? dayjs.dayjs(caseCreatedTimestamp[0]).valueOf()
-                : 0,
-            }
-          : {}),
-      };
-      const result = await api.getAlertList(
-        Object.entries(preparedParams).reduce(
-          (acc, [key, value]) => ({ ...acc, [key]: value }),
-          {},
-        ),
-      );
-      return {
-        items: presentAlertData(result.data),
-        total: result.total,
-      };
-    },
-  );
+  const queryResults: QueryResult<TableData<TableAlertItem>> = useAlertQuery(params);
 
   const actionRef = useRef<TableRefType>(null);
   const reloadTable = useCallback(() => {
@@ -515,18 +433,7 @@ export default function AlertTable(props: Props) {
     ],
   );
 
-  const rules = useRules();
-
-  const ruleOptions = useMemo(() => {
-    return Object.values(rules.ruleInstances).map((rulesInstance: RuleInstance) => {
-      const ruleName = rulesInstance.ruleNameAlias || rules.rules[rulesInstance.ruleId]?.name;
-      return {
-        value: rulesInstance.id ?? '',
-        label: `${ruleName} ${rulesInstance.ruleId} (${rulesInstance.id})`,
-      };
-    });
-  }, [rules.ruleInstances, rules.rules]);
-
+  const ruleOptions = useRuleOptions();
   const extraFilters = useMemo(
     () =>
       makeExtraFilters(
@@ -789,7 +696,7 @@ export default function AlertTable(props: Props) {
             ? (alert) => (
                 <ExpandedRowRenderer
                   alert={alert ?? null}
-                  escalatedTransactionIds={props.escalatedTransactionIds}
+                  escalatedTransactionIds={props.escalatedTransactionIds || []}
                   selectedTransactionIds={selectedTxns[alert.alertId ?? ''] ?? []}
                   onTransactionSelect={(alertId, transactionIds) => {
                     setSelectedTxns((prevSelectedTxns) => ({
@@ -817,24 +724,4 @@ export default function AlertTable(props: Props) {
       />
     </>
   );
-}
-
-function presentAlertData(data: AlertListResponseItem[]) {
-  return data.map(({ alert, caseUsers, ...rest }) => {
-    const caseUser = caseUsers ?? {};
-    const user = caseUser?.origin?.userId
-      ? caseUser?.origin
-      : caseUser?.destination?.userId
-      ? caseUser?.destination
-      : undefined;
-    const duration = dayjs.duration(Date.now() - alert.createdTimestamp);
-    return {
-      ...alert,
-      caseCreatedTimestamp: rest.caseCreatedTimestamp,
-      caseUserName: getUserName(user),
-      age: pluralize('day', Math.floor(duration.asDays()), true),
-      caseUserId: caseUsers?.origin?.userId ?? caseUsers?.destination?.userId ?? '',
-      caseType: rest.caseType,
-    };
-  });
 }

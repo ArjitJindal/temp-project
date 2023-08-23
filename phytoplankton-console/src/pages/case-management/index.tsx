@@ -1,5 +1,6 @@
-import React, { useCallback, useState } from 'react';
+import React, { useCallback, useEffect, useState } from 'react';
 import { useNavigate } from 'react-router';
+import { useLocalStorageState } from 'ahooks';
 import CaseTableWrapper from './CaseTableWrapper';
 import AlertTable from './AlertTable';
 import s from './index.module.less';
@@ -12,22 +13,37 @@ import { queryAdapter } from '@/pages/case-management/helpers';
 import { AllParams } from '@/components/library/Table/types';
 import { DEFAULT_PAGE_SIZE, DEFAULT_PARAMS_STATE } from '@/components/library/Table/consts';
 import { useDeepEqualEffect } from '@/utils/hooks';
-import ScopeSelector from '@/pages/case-management/components/ScopeSelector';
+import ScopeSelector, {
+  ScopeSelectorValue,
+} from '@/pages/case-management/components/ScopeSelector';
 import StatusButtons from '@/pages/case-management/components/StatusButtons';
 import { useAuth0User } from '@/utils/user-utils';
 import PaymentApprovalsTable from '@/pages/case-management/PaymentApprovalTable';
+import Toggle from '@/components/library/Toggle';
+import { useFeatureEnabled, useSettings } from '@/components/AppWrapper/Providers/SettingsProvider';
+import { Item } from '@/components/library/SegmentedControl';
+import QaTable from '@/pages/case-management/QaTable';
 
 export default function CaseManagementPage() {
   const i18n = useI18n();
   useCloseSidebarByDefault();
-
+  const [qaMode, setQaMode] = useLocalStorageState<boolean>('QA_MODE', false);
   const user = useAuth0User();
   const navigate = useNavigate();
+  const hasQaEnabled = useFeatureEnabled('QA');
   const parsedParams = queryAdapter.deserializer(parseQueryString(location.search));
   const [params, setParams] = useState<AllParams<TableSearchParams>>({
     ...DEFAULT_PARAMS_STATE,
     ...parsedParams,
   });
+  useEffect(() => {
+    if (qaMode) {
+      setParams((params) => ({ ...params, showCases: 'QA_UNCHECKED_ALERTS' }));
+    } else {
+      setParams((params) => ({ ...params, showCases: 'ALL' }));
+    }
+  }, [qaMode]);
+
   const pushParamsToNavigation = useCallback(
     (params: TableSearchParams) => {
       if (params.showCases === 'ALL' || params.showCases === 'MY') {
@@ -51,6 +67,7 @@ export default function CaseManagementPage() {
     pushParamsToNavigation(newParams);
   };
 
+  const settings = useSettings();
   useDeepEqualEffect(() => {
     setParams((prevState: AllParams<TableSearchParams>) => ({
       ...prevState,
@@ -61,8 +78,35 @@ export default function CaseManagementPage() {
     }));
   }, [parsedParams]);
 
+  const normalModeItems: Item<ScopeSelectorValue>[] = [
+    { value: 'ALL', label: 'All cases' },
+    { value: 'MY', label: 'My cases' },
+    { value: 'ALL_ALERTS', label: 'All alerts' },
+    { value: 'MY_ALERTS', label: 'My alerts' },
+  ];
+
+  if (settings.isPaymentApprovalEnabled) {
+    normalModeItems.push({ value: 'PAYMENT_APPROVALS', label: 'Payment approval' });
+  }
+
+  const qaModeItems: Item<ScopeSelectorValue>[] = [
+    { value: 'QA_UNCHECKED_ALERTS', label: 'Closed alerts' },
+    { value: 'QA_PASSED_ALERTS', label: 'Passed alerts' },
+    { value: 'QA_FAILED_ALERTS', label: 'Failed alerts' },
+  ];
+
   return (
-    <PageWrapper title={i18n('menu.case-management')}>
+    <PageWrapper
+      title={i18n('menu.case-management')}
+      actionButton={
+        hasQaEnabled && (
+          <div className={s.qaSwitch}>
+            <p className={s.qaSwitchTitle}>QA</p>
+            <Toggle value={qaMode} onChange={(value) => setQaMode(!!value)} disabled={false} />
+          </div>
+        )
+      }
+    >
       <PageWrapperContentContainer>
         <div className={s.header}>
           <ScopeSelector<TableSearchParams>
@@ -70,8 +114,9 @@ export default function CaseManagementPage() {
             onChangeParams={(cb) => {
               handleChangeParams(cb(params));
             }}
+            values={!qaMode ? normalModeItems : qaModeItems}
           />
-          <StatusButtons params={params} onChangeParams={handleChangeParams} />
+          {qaMode || <StatusButtons params={params} onChangeParams={handleChangeParams} />}
         </div>
         {getTable(user.userId, params, handleChangeParams)}
       </PageWrapperContentContainer>
@@ -109,5 +154,30 @@ function getTable(
       return <CaseTableWrapper params={params} onChangeParams={handleChangeParams} />;
     case 'PAYMENT_APPROVALS':
       return <PaymentApprovalsTable filterStatus={params.status} />;
+    case 'QA_UNCHECKED_ALERTS':
+      return (
+        <QaTable
+          hideAlertStatusFilters={true}
+          escalatedTransactionIds={[]}
+          params={{ ...params, filterOutQaStatus: ['PASS', 'FAIL'], alertStatus: 'CLOSED' }}
+          onChangeParams={handleChangeParams}
+        />
+      );
+    case 'QA_PASSED_ALERTS':
+      return (
+        <QaTable
+          hideAlertStatusFilters={true}
+          params={{ ...params, filterQaStatus: 'PASS', alertStatus: 'CLOSED' }}
+          onChangeParams={handleChangeParams}
+        />
+      );
+    case 'QA_FAILED_ALERTS':
+      return (
+        <QaTable
+          hideAlertStatusFilters={true}
+          params={{ ...params, filterQaStatus: 'FAIL', alertStatus: 'CLOSED' }}
+          onChangeParams={handleChangeParams}
+        />
+      );
   }
 }

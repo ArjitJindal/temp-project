@@ -1,5 +1,7 @@
-import { uniq } from 'lodash'
+import { last, uniq } from 'lodash'
 import { compile } from 'handlebars'
+import { uuid4 } from '@sentry/utils'
+import { randomBool } from 'fp-ts/Random'
 import { transactionRules, userRules } from '../data/rules'
 import { sampleTimestamp } from './timestamp'
 import { Case } from '@/@types/openapi-internal/Case'
@@ -14,6 +16,11 @@ import { InternalConsumerUser } from '@/@types/openapi-internal/InternalConsumer
 import { CaseReasons } from '@/@types/openapi-internal/CaseReasons'
 import { isStatusInReview } from '@/utils/helpers'
 import { AlertStatus } from '@/@types/openapi-internal/AlertStatus'
+import { CHECKLIST_STATUSS } from '@/@types/openapi-internal-custom/ChecklistStatus'
+import { getRandomUser, getRandomUsers } from '@/core/seed/samplers/accounts'
+import { CaseStatus } from '@/@types/openapi-internal/CaseStatus'
+import { CaseStatusChange } from '@/@types/openapi-internal/CaseStatusChange'
+import dayjs from '@/utils/dayjs'
 
 let counter = 1
 let alertCounter = 1
@@ -131,8 +138,12 @@ export function sampleTransactionUserCase(
     latestTransactionArrivalTimestamp: sampleTimestamp(seed) + 3600 * 1000,
     comments: [],
     caseTransactionsCount: transactions.length,
-    assignments: [],
-    statusChanges: [],
+    statusChanges: getStatusChangesObject(
+      caseStatus ?? 'OPEN',
+      getRandomUser().assigneeUserId
+    ),
+    assignments: getRandomUsers(),
+    reviewAssignments: getRandomUsers(),
     lastStatusChange:
       caseStatus === 'CLOSED' && user
         ? {
@@ -188,6 +199,12 @@ export function sampleAlert(
     Math.random()
   ) as AlertStatus
 
+  const statusChanges = getStatusChangesObject(
+    alertStatus ?? 'OPEN',
+    getRandomUser().assigneeUserId,
+    true
+  )
+
   return {
     ...params.ruleHit,
     alertId: alertId,
@@ -199,8 +216,71 @@ export function sampleAlert(
     numberOfTransactionsHit: params.transactions.length,
     priority: pickRandom(['P1', 'P2', 'P3', 'P4'], Math.random()),
     transactionIds: params.transactions.map((t) => t.transactionId),
+    ruleQaStatus: pickRandom(CHECKLIST_STATUSS),
+    updatedAt: sampleTimestamp(),
+    statusChanges: getStatusChangesObject(
+      alertStatus ?? 'OPEN',
+      getRandomUser().assigneeUserId,
+      true
+    ),
+    lastStatusChange: last(statusChanges),
+    assignments: getRandomUsers(),
+    qaAssignment: getRandomUsers(),
+    reviewAssignments: getRandomUsers(),
+    ruleChecklist: [
+      {
+        checklistItemId: uuid4(),
+        done: randomBool(),
+        status: pickRandom(CHECKLIST_STATUSS),
+      },
+    ],
     ruleNature: userRules
       .concat(transactionRules)
       .find((p) => p.ruleInstanceId === params.ruleHit.ruleInstanceId)?.nature,
   }
+}
+
+const getStatusChangesObject = (
+  caseStatus: CaseStatus,
+  userId: string,
+  alerts?: boolean
+): CaseStatusChange[] => {
+  const statusChanges: CaseStatusChange[] = []
+  if (caseStatus === 'CLOSED') {
+    statusChanges.push({
+      caseStatus: 'CLOSED',
+      timestamp: dayjs()
+        .subtract(Math.floor(Math.random() * (alerts ? 150 : 400)), 'minute')
+        .valueOf(),
+      reason: randomSubset(CASE_REASONSS),
+      userId,
+    })
+    return statusChanges
+  }
+
+  if (caseStatus !== 'OPEN') {
+    let insterted = false
+    if (
+      pickRandom([true, false]) &&
+      caseStatus !== 'OPEN_IN_PROGRESS' &&
+      caseStatus.includes('OPEN')
+    ) {
+      statusChanges.push({
+        caseStatus: 'OPEN_IN_PROGRESS',
+        timestamp: dayjs()
+          .subtract(Math.floor(Math.random() * (alerts ? 150 : 400)), 'minute')
+          .valueOf(),
+        userId,
+      })
+      insterted = true
+    }
+    if (!insterted || caseStatus !== 'OPEN_IN_PROGRESS') {
+      statusChanges.push({
+        caseStatus: caseStatus,
+        timestamp: dayjs().valueOf(),
+        userId,
+      })
+    }
+  }
+  return statusChanges
 }

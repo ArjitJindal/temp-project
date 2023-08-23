@@ -340,6 +340,27 @@ export const CASEID: ColumnDataType<string, Case> = {
     );
   },
 };
+export const ALERT_ID: ColumnDataType<string, Case> = {
+  render: (alertId, { item: entity }) => {
+    return (
+      <>
+        {entity?.caseId && (
+          <Id
+            to={addBackUrlToRoute(
+              makeUrl(`/case-management/case/:caseId/:tab`, {
+                caseId: entity.caseId,
+                tab: 'alerts',
+              }),
+            )}
+            testName="alert-id"
+          >
+            {alertId}
+          </Id>
+        )}
+      </>
+    );
+  },
+};
 
 export const MONEY_AMOUNT: ColumnDataType<number> = {
   render: (value) => {

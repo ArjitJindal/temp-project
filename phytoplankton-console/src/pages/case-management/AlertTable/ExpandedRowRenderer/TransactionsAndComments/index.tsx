@@ -17,8 +17,8 @@ import { CurrencyCode, TransactionType } from '@/apis';
 
 interface Props {
   alert: TableAlertItem;
-  selectedTransactionIds: string[];
-  onTransactionSelect: (alertId: string, transactionIds: string[]) => void;
+  selectedTransactionIds?: string[];
+  onTransactionSelect?: (alertId: string, transactionIds: string[]) => void;
   escalatedTransactionIds?: string[];
 }
 
@@ -91,7 +91,7 @@ export default function TransactionsAndComments(props: Props) {
                 escalatedTransactions={escalatedTransactionIds}
                 selectedIds={selectedTransactionIds}
                 onSelect={(transactionIds) => {
-                  onTransactionSelect(alertId as string, transactionIds);
+                  onTransactionSelect && onTransactionSelect(alertId as string, transactionIds);
                 }}
                 queryResult={transactionsResponse}
                 params={params}

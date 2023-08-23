@@ -68,7 +68,13 @@ function useEntity(params: TableSearchParams): Entity {
   if (showCases === 'MY' || showCases === 'ALL') {
     return 'cases';
   }
-  if (showCases === 'ALL_ALERTS' || showCases === 'MY_ALERTS') {
+  if (
+    showCases === 'ALL_ALERTS' ||
+    showCases === 'MY_ALERTS' ||
+    showCases == 'QA_UNCHECKED_ALERTS' ||
+    showCases == 'QA_FAILED_ALERTS' ||
+    showCases == 'QA_PASSED_ALERTS'
+  ) {
     return 'alerts';
   }
   if (showCases === 'PAYMENT_APPROVALS') {
