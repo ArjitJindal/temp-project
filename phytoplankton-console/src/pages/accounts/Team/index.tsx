@@ -44,8 +44,8 @@ export default function Team() {
       actionRef.current?.reload();
     }
   }
-  const accountsResult = usePaginatedQuery(ACCOUNT_LIST(), async () => {
-    const accounts = await api.getAccounts();
+  const accountsResult = usePaginatedQuery(ACCOUNT_LIST(), async (paginationParams) => {
+    const accounts = await api.getAccounts({ ...paginationParams });
     const filteredAccounts = accounts.filter(
       (account) => parseUserRole(account.role) !== UserRole.ROOT && !account.blocked,
     );

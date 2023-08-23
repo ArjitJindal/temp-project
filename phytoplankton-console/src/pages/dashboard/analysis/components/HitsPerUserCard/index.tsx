@@ -107,27 +107,31 @@ export default function HitsPerUserCard(props: Props) {
     }),
   ]);
 
-  const hitsPerUserResult = usePaginatedQuery(HITS_PER_USER(dateRange, direction), async () => {
-    let startTimestamp = dayjs().subtract(1, 'day').valueOf();
-    let endTimestamp = Date.now();
+  const hitsPerUserResult = usePaginatedQuery(
+    HITS_PER_USER(dateRange, direction),
+    async (paginationParams) => {
+      let startTimestamp = dayjs().subtract(1, 'day').valueOf();
+      let endTimestamp = Date.now();
 
-    const [start, end] = dateRange ?? [];
-    if (start != null && end != null) {
-      startTimestamp = start.startOf('day').valueOf();
-      endTimestamp = end.endOf('day').valueOf();
-    }
+      const [start, end] = dateRange ?? [];
+      if (start != null && end != null) {
+        startTimestamp = start.startOf('day').valueOf();
+        endTimestamp = end.endOf('day').valueOf();
+      }
 
-    const result = await api.getDashboardStatsHitsPerUser({
-      startTimestamp,
-      endTimestamp,
-      direction,
-    });
+      const result = await api.getDashboardStatsHitsPerUser({
+        ...paginationParams,
+        startTimestamp,
+        endTimestamp,
+        direction,
+      });
 
-    return {
-      total: result.data.length,
-      items: result.data,
-    };
-  });
+      return {
+        total: result.data.length,
+        items: result.data,
+      };
+    },
+  );
 
   return (
     <Card bordered={false}>

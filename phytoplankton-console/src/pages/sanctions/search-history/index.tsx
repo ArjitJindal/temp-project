@@ -33,7 +33,7 @@ export const SanctionsSearchHistoryTable: React.FC = () => {
 
   const queryResults = usePaginatedQuery<SanctionsSearchHistory>(
     SANCTIONS_SEARCH(params),
-    async () => {
+    async (paginationParams) => {
       const { createdAt, searchTerm, types, ...rest } = params;
       const [start, end] = createdAt ?? [];
       const response = await api.getSanctionsSearch({
@@ -42,6 +42,7 @@ export const SanctionsSearchHistoryTable: React.FC = () => {
         searchTerm,
         types,
         ...rest,
+        ...paginationParams,
       });
 
       return {

@@ -71,22 +71,29 @@ export default function RuleHitCard() {
     }),
   ]);
 
-  const rulesHitResult = usePaginatedQuery(HITS_PER_USER_STATS(dateRange), async () => {
-    let startTimestamp = dayjs().subtract(1, 'day').valueOf();
-    let endTimestamp = Date.now();
+  const rulesHitResult = usePaginatedQuery(
+    HITS_PER_USER_STATS(dateRange),
+    async (paginationParams) => {
+      let startTimestamp = dayjs().subtract(1, 'day').valueOf();
+      let endTimestamp = Date.now();
 
-    const [start, end] = dateRange ?? [];
-    if (start != null && end != null) {
-      startTimestamp = start.startOf('day').valueOf();
-      endTimestamp = end.endOf('day').valueOf();
-    }
-    const result = await api.getDashboardStatsRuleHit({ startTimestamp, endTimestamp });
+      const [start, end] = dateRange ?? [];
+      if (start != null && end != null) {
+        startTimestamp = start.startOf('day').valueOf();
+        endTimestamp = end.endOf('day').valueOf();
+      }
+      const result = await api.getDashboardStatsRuleHit({
+        ...paginationParams,
+        startTimestamp,
+        endTimestamp,
+      });
 
-    return {
-      total: result.data.length,
-      items: result.data,
-    };
-  });
+      return {
+        total: result.data.length,
+        items: result.data,
+      };
+    },
+  );
 
   return (
     <Card title={header('Top rule hits by count')} bordered={false}>

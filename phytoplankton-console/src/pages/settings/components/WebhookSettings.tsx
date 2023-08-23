@@ -142,7 +142,7 @@ export const WebhookSettings: React.FC = () => {
     setSelectedWebhook({ webhookUrl: '', events: [], enabled: true });
   }, []);
 
-  const webhooksListResult = usePaginatedQuery(WEBHOOKS_LIST(), async () => {
+  const webhooksListResult = usePaginatedQuery(WEBHOOKS_LIST(), async (_paginationParams) => {
     const webhooks = await api.getWebhooks(100);
     return {
       items: webhooks,

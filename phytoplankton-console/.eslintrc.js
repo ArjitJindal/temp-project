@@ -1,0 +1,35 @@
+module.exports = {
+  parser: '@typescript-eslint/parser',
+  env: {
+    node: true,
+    es6: true,
+  },
+  extends: [
+    'eslint:recommended',
+    'plugin:@typescript-eslint/recommended',
+    'plugin:prettier/recommended',
+    'plugin:import/recommended',
+    'plugin:import/typescript',
+    'plugin:react-hooks/recommended',
+    'plugin:cypress/recommended',
+  ],
+  plugins: ['custom-rules'],
+  rules: {
+    'no-console': ['error', { allow: ['error', 'warn'] }],
+    '@typescript-eslint/no-empty-function': 'off',
+    '@typescript-eslint/no-empty-interface': 'off',
+    '@typescript-eslint/no-unused-vars': [
+      'error',
+      { argsIgnorePattern: '^_', varsIgnorePattern: '^_' },
+    ],
+    'import/no-unresolved': 'off',
+    'import/order': 'error',
+    'react-hooks/rules-of-hooks': 'error',
+    'react-hooks/exhaustive-deps': 'error',
+    'import/no-named-as-default': 'off',
+    '@typescript-eslint/no-explicit-any': 'off',
+    'import/no-duplicates': 'error',
+    '@typescript-eslint/no-non-null-assertion': 'off',
+    'custom-rules/enforce-paginated-query-params': 'error',
+  },
+};

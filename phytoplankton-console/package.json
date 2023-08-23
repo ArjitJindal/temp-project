@@ -182,7 +182,8 @@
     "stylelint": "^13.0.0",
     "tmp": "^0.2.1",
     "ts-node": "^10.8.2",
-    "typescript": "^4.2.2"
+    "typescript": "^4.2.2",
+    "eslint-plugin-custom-rules": "file:eslint-custom-rules"
   },
   "resolutions": {
     "**/@types/react": "^17.0.0"

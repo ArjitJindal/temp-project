@@ -152,7 +152,7 @@ export const RulesTable: React.FC<Props> = ({ onViewRule, onEditRule, simulation
     pagination: false,
   });
 
-  const rulesResult = usePaginatedQuery(GET_RULES(params), async () => {
+  const rulesResult = usePaginatedQuery(GET_RULES(params), async (_paginationParams) => {
     const rules = await api.getRules();
     const result = [...rules];
     if (params.sort.length > 0) {

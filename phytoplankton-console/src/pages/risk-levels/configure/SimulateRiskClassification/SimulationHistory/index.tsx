@@ -45,21 +45,25 @@ export default function SimulationHistory(props: SimulationHistoryProps) {
     () => ({ ...params, includeInternal: context?.superAdminMode }),
     [context?.superAdminMode, params],
   );
-  const allSimulationsQueryResult = usePaginatedQuery(SIMULATION_JOBS(finalParams), async () => {
-    const simulations = await api.getSimulations({
-      type: finalParams.type,
-      page: finalParams.page ?? 1,
-      pageSize: finalParams.pageSize,
-      sortField: finalParams.sort[0]?.[0],
-      sortOrder: finalParams.sort[0]?.[1] ?? 'ascend',
-      includeInternal: finalParams?.includeInternal,
-    });
+  const allSimulationsQueryResult = usePaginatedQuery(
+    SIMULATION_JOBS(finalParams),
+    async (paginationParams) => {
+      const simulations = await api.getSimulations({
+        type: finalParams.type,
+        page: finalParams.page ?? 1,
+        pageSize: finalParams.pageSize,
+        ...paginationParams,
+        sortField: finalParams.sort[0]?.[0],
+        sortOrder: finalParams.sort[0]?.[1] ?? 'ascend',
+        includeInternal: finalParams?.includeInternal,
+      });
 
-    return {
-      items: simulations.data as SimulationPulseJob[],
-      total: simulations.total,
-    };
-  });
+      return {
+        items: simulations.data as SimulationPulseJob[],
+        total: simulations.total,
+      };
+    },
+  );
   const actionRef = useRef<TableRefType>(null);
 
   const helper = new ColumnHelper<SimulationPulseJob>();

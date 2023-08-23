@@ -293,8 +293,8 @@ const MyRule = (props: { simulationMode?: boolean }) => {
     handleDeleteRuleInstanceMutation,
     onEditRule,
   ]);
-  const rulesResult = usePaginatedQuery(GET_RULE_INSTANCES(params), async () => {
-    const ruleInstances = await api.getRuleInstances();
+  const rulesResult = usePaginatedQuery(GET_RULE_INSTANCES(params), async (paginationParams) => {
+    const ruleInstances = await api.getRuleInstances({ ...paginationParams });
     if (focusId) {
       const ruleInstance = ruleInstances.find((r) => r.id === focusId);
       if (ruleInstance) {

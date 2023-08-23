@@ -30,8 +30,8 @@ export function SimulationHistoryTable() {
     () => ({ ...params, includeInternal: context?.superAdminMode }),
     [context?.superAdminMode, params],
   );
-  const queryResults = usePaginatedQuery(SIMULATION_JOBS(finalParams), async () => {
-    const simulations = await api.getSimulations(finalParams);
+  const queryResults = usePaginatedQuery(SIMULATION_JOBS(finalParams), async (paginationParams) => {
+    const simulations = await api.getSimulations({ ...finalParams, ...paginationParams });
     return {
       items: simulations.data as SimulationBeaconJob[],
       total: simulations.total,
