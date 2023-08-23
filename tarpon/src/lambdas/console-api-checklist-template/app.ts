@@ -24,6 +24,9 @@ export const checklistTemplateHandler = lambdaApi()(
     )
     const handlers = new Handlers()
 
+    handlers.registerGetChecklistTemplate(async (ctx, request) => {
+      return service.getChecklistTemplate(request.checklistTemplateId)
+    })
     handlers.registerGetChecklistTemplates(async (ctx, request) => {
       return service.getChecklistTemplates(request)
     })

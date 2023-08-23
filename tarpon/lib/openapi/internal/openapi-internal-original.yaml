@@ -2970,6 +2970,33 @@ paths:
             schema:
               $ref: '#/components/schemas/AlertsStatusUpdateRequest'
         required: true
+  '/alerts/{alertId}/qa/{checklistItemId}':
+    patch:
+      summary: Alerts - Qa Status
+      operationId: patch-alerts-qa-status
+      parameters:
+        - schema:
+            type: string
+          name: alertId
+          in: path
+          required: true
+        - schema:
+            type: string
+          name: checklistItemId
+          in: path
+          required: true
+      responses:
+        '200':
+          description: OK
+      x-flagright:
+        permissions:
+          - case-management:qa:write
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AlertChecklistQaUpdateRequest'
+        required: true
   /alerts/assignments:
     patch:
       summary: Alerts - Update
@@ -4327,6 +4354,25 @@ paths:
               $ref: '#/components/schemas/ChecklistTemplate'
         required: true
   '/checklist-templates/{checklistTemplateId}':
+    parameters:
+      - schema:
+          type: string
+        name: checklistTemplateId
+        in: path
+        required: true
+    get:
+      summary: Get a checklist template
+      operationId: get-checklist-template
+      x-flagright:
+        permissions:
+          - settings:organisation:read
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ChecklistTemplate'
     put:
       summary: Update a checklist template
       operationId: put-checklist-templates
@@ -4345,12 +4391,6 @@ paths:
           application/json:
             schema:
               $ref: '#/components/schemas/ChecklistTemplate'
-        required: true
-    parameters:
-      - schema:
-          type: string
-        name: checklistTemplateId
-        in: path
         required: true
     delete:
       summary: Delete a checklist template
@@ -4600,13 +4640,13 @@ components:
           type: string
         source:
           type: string
+        checklistTemplateId:
+          type: string
         alertCreationInterval:
           oneOf:
             - $ref: '#/components/schemas/AlertCreationIntervalInstantly'
             - $ref: '#/components/schemas/AlertCreationIntervalWeekly'
             - $ref: '#/components/schemas/AlertCreationIntervalMonthly'
-        checklistTemplateId:
-          type: string
       required:
         - ruleId
         - casePriority
@@ -5962,6 +6002,7 @@ components:
         - case-management:case-details:read
         - case-management:case-details:write
         - case-management:case-reopen:write
+        - case-management:qa:write
         - case-management:export:read
         - rules:my-rules:read
         - rules:my-rules:write
@@ -6369,6 +6410,8 @@ components:
           type: array
           items:
             $ref: '#/components/schemas/ChecklistItemValue'
+        ruleChecklistTemplateId:
+          type: string
         qaAssignment:
           type: array
           items:
@@ -6643,6 +6686,14 @@ components:
       required:
         - alertIds
         - updates
+    AlertChecklistQaUpdateRequest:
+      title: AlertChecklistQaUpdateRequest
+      type: object
+      properties:
+        status:
+          $ref: '#/components/schemas/ChecklistStatus'
+      required:
+        - status
     AlertsToNewCaseRequest:
       title: AlertsUpdateRequest
       type: object
@@ -8428,8 +8479,8 @@ components:
     ChecklistStatus:
       type: string
       enum:
-        - PASS
-        - FAIL
+        - PASSED
+        - FAILED
     ChecklistItemValue:
       type: object
       title: ChecklistItemValue
@@ -8442,6 +8493,8 @@ components:
           $ref: '#/components/schemas/ChecklistStatus'
         info:
           $ref: '#/components/schemas/ChecklistInfo'
+      required:
+        - status
     ChecklistItem:
       title: ChecklistItem
       type: object

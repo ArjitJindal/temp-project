@@ -19,6 +19,7 @@ import {
   CRM_SUMMARY_COLLECTION,
   REPORT_COLLECTION,
   SIMULATION_TASK_COLLECTION,
+  CHECKLIST_TEMPLATE_COLLECTION,
 } from '@/utils/mongoDBUtils'
 import { init as txnInit, transactions } from '@/core/seed/data/transactions'
 import { init as caseInit, data as cases } from '@/core/seed/data/cases'
@@ -54,6 +55,11 @@ import {
 import { DashboardStatsRepository } from '@/lambdas/console-api-dashboard/repositories/dashboard-stats-repository'
 import { AccountsService } from '@/services/accounts'
 import { setAccounts } from '@/core/seed/samplers/accounts'
+import {
+  checklistTemplates,
+  initChecklistTemplate,
+} from '@/core/seed/data/checklists'
+import { initRules } from '@/core/seed/data/rules'
 
 const collections: [(tenantId: string) => string, Iterable<unknown>][] = [
   [TRANSACTIONS_COLLECTION, transactions],
@@ -72,6 +78,7 @@ const collections: [(tenantId: string) => string, Iterable<unknown>][] = [
   [CRM_NOTES_COLLECTION, notes],
   [CRM_SUMMARY_COLLECTION, summaries],
   [SIMULATION_TASK_COLLECTION, simulation],
+  [CHECKLIST_TEMPLATE_COLLECTION, checklistTemplates],
 ]
 
 export async function seedMongo(client: MongoClient, tenantId: string) {
@@ -114,6 +121,8 @@ export async function seedMongo(client: MongoClient, tenantId: string) {
   logger.info('Init seed data')
   // TODO there will be a neater way of achieving this.
   userInit()
+  initChecklistTemplate()
+  initRules()
   txnInit()
   caseInit()
   auditLogInit()

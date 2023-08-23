@@ -17,12 +17,15 @@ export class ChecklistTemplatesService {
     this.repository = new ChecklistTemplateRepository(tenantId, mongoDb)
   }
 
+  public async getChecklistTemplate(checklistTemplateId: string) {
+    return this.repository.getChecklistTemplate(checklistTemplateId)
+  }
+
   public async getChecklistTemplates(
     params: DefaultApiGetChecklistTemplatesRequest
   ) {
     return this.repository.getChecklistTemplates(params)
   }
-
   public async createChecklistTemplate(template: ChecklistTemplate) {
     if (
       template.id &&

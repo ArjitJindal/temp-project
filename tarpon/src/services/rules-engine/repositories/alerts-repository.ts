@@ -395,6 +395,32 @@ export class AlertsRepository {
     return commentToSave
   }
 
+  public async saveAlert(caseId: string, alert: Alert): Promise<void> {
+    const db = this.mongoDb.db()
+    const collection = db.collection<Case>(CASES_COLLECTION(this.tenantId))
+    const now = Date.now()
+    alert.updatedAt = now
+
+    await collection.findOneAndUpdate(
+      {
+        caseId,
+      },
+      {
+        $set: {
+          'alerts.$[alert]': alert,
+          updatedAt: now,
+        },
+      },
+      {
+        arrayFilters: [
+          {
+            'alert.alertId': alert.alertId,
+          },
+        ],
+      }
+    )
+  }
+
   public async saveAlertsComment(
     alertIds: string[],
     caseIds: string[],

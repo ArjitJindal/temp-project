@@ -58,6 +58,7 @@ import { getS3ClientByEvent } from '@/utils/s3'
 import { CaseConfig } from '@/lambdas/console-api-case/app'
 import { JWTAuthorizerResult } from '@/@types/jwt'
 import { isStatusInReview } from '@/utils/helpers'
+import { ChecklistStatus } from '@/@types/openapi-internal/ChecklistStatus'
 
 @traceable
 export class AlertsService extends CaseAlertsCommonService {
@@ -918,5 +919,24 @@ export class AlertsService extends CaseAlertsCommonService {
       .map((v) => v?.doc)
       .filter(Boolean) as ComplyAdvantageSearchHitDoc[]
     await sanctionsService.addWhitelistEntities(entities, userId)
+  }
+
+  async updateAlertsQaStatus(
+    alertId: string,
+    checklistItemId: string,
+    status: ChecklistStatus
+  ): Promise<void> {
+    const alert = await this.alertsRepository.getAlertById(alertId)
+    if (!alert) {
+      throw new NotFound('No alert')
+    }
+    alert.ruleChecklist = alert.ruleChecklist?.map((checkListItem) => {
+      if (checkListItem.checklistItemId === checklistItemId) {
+        checkListItem.status = status
+      }
+      return checkListItem
+    })
+
+    await this.alertsRepository.saveAlert(alert.caseId!, alert)
   }
 }

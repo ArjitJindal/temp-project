@@ -1,6 +1,7 @@
-import React, { useState } from 'react';
+import React, { useMemo, useState } from 'react';
 import { TableAlertItem } from '../../types';
 import Comments from './Comments';
+import Checklist from './Checklist';
 import { useCursorQuery, useQuery } from '@/utils/queries/hooks';
 import { ALERT_ITEM, ALERT_ITEM_TRANSACTION_LIST } from '@/utils/queries/keys';
 import { useApi } from '@/api';
@@ -22,7 +23,7 @@ interface Props {
   escalatedTransactionIds?: string[];
 }
 
-export default function TransactionsAndComments(props: Props) {
+export default function AlertExpanded(props: Props) {
   const { selectedTransactionIds, alert, onTransactionSelect, escalatedTransactionIds } = props;
   const [isModalVisible, setIsModalVisible] = useState(false);
   const alertId = alert.alertId;
@@ -79,65 +80,82 @@ export default function TransactionsAndComments(props: Props) {
     return alert;
   });
 
-  return (
-    <Tabs
-      items={[
-        {
-          tab: 'Transactions details',
-          key: 'transactions',
-          children: (
-            <>
-              <TransactionsTable
-                escalatedTransactions={escalatedTransactionIds}
-                selectedIds={selectedTransactionIds}
-                onSelect={(transactionIds) => {
-                  onTransactionSelect && onTransactionSelect(alertId as string, transactionIds);
-                }}
-                queryResult={transactionsResponse}
-                params={params}
-                onChangeParams={setParams}
-                adjustPagination={true}
-                showCheckedTransactionsButton={true}
-                isModalVisible={isModalVisible}
-                setIsModalVisible={setIsModalVisible}
-                alert={alert}
-                extraFilters={[
-                  {
-                    key: 'userId',
-                    title: 'User ID/name',
-                    renderer: ({ params, setParams }) => (
-                      <UserSearchButton
-                        initialMode={params.userFilterMode ?? 'ALL'}
-                        userId={params.userId ?? null}
-                        onConfirm={(userId, mode) => {
-                          setParams((state) => ({
-                            ...state,
-                            userId: userId ?? undefined,
-                            userFilterMode: mode ?? undefined,
-                          }));
-                        }}
-                      />
-                    ),
-                  },
-                ]}
-              />
-              {isModalVisible && alert && (
-                <DisplayCheckedTransactions
-                  visible={isModalVisible}
-                  setVisible={setIsModalVisible}
-                  alert={alert}
-                  caseUserId={alert.caseUserId}
-                />
-              )}
-            </>
-          ),
-        },
-        {
-          tab: 'Comments',
-          key: 'comments',
-          children: <Comments alertId={alertId ?? null} alertsRes={alertResponse.data} />,
-        },
-      ]}
-    />
-  );
+  const items = useMemo(() => {
+    const tabs = [];
+    tabs.push({
+      tab: 'Transactions details',
+      key: 'transactions',
+      children: (
+        <>
+          <TransactionsTable
+            escalatedTransactions={escalatedTransactionIds}
+            selectedIds={selectedTransactionIds}
+            onSelect={(transactionIds) => {
+              onTransactionSelect && onTransactionSelect(alertId as string, transactionIds);
+            }}
+            queryResult={transactionsResponse}
+            params={params}
+            onChangeParams={setParams}
+            adjustPagination={true}
+            showCheckedTransactionsButton={true}
+            isModalVisible={isModalVisible}
+            setIsModalVisible={setIsModalVisible}
+            alert={alert}
+            extraFilters={[
+              {
+                key: 'userId',
+                title: 'User ID/name',
+                renderer: ({ params, setParams }) => (
+                  <UserSearchButton
+                    initialMode={params.userFilterMode ?? 'ALL'}
+                    userId={params.userId ?? null}
+                    onConfirm={(userId, mode) => {
+                      setParams((state) => ({
+                        ...state,
+                        userId: userId ?? undefined,
+                        userFilterMode: mode ?? undefined,
+                      }));
+                    }}
+                  />
+                ),
+              },
+            ]}
+          />
+          {isModalVisible && alert && (
+            <DisplayCheckedTransactions
+              visible={isModalVisible}
+              setVisible={setIsModalVisible}
+              alert={alert}
+              caseUserId={alert.caseUserId}
+            />
+          )}
+        </>
+      ),
+    });
+    if (alert.ruleChecklistTemplateId && alertId) {
+      tabs.push({
+        tab: 'Checklist',
+        key: 'checklist',
+        children: <Checklist alertId={alertId} />,
+      });
+    }
+    tabs.push({
+      tab: 'Comments',
+      key: 'comments',
+      children: <Comments alertId={alertId ?? null} alertsRes={alertResponse.data} />,
+    });
+    return tabs;
+  }, [
+    alert,
+    alertId,
+    alertResponse.data,
+    escalatedTransactionIds,
+    isModalVisible,
+    onTransactionSelect,
+    params,
+    selectedTransactionIds,
+    transactionsResponse,
+  ]);
+
+  return <Tabs items={items} />;
 }

@@ -174,6 +174,11 @@ export const SANCTIONS_SEARCH_LIST = (searchIds: string[]): QueryKey => [
   searchIds,
 ];
 export const ALERT_ITEM = (alertId: string): QueryKey => ['alerts', 'item', alertId];
+export const ALERT_CHECKLIST = (alertId: string | undefined): QueryKey => [
+  'alerts',
+  'checklist',
+  alertId,
+];
 export const SIMULATION_COUNT = (): QueryKey => ['simulation', 'count'];
 export const ALERT_ITEM_COMMENTS = (alertId: string): QueryKey => [
   'alerts',

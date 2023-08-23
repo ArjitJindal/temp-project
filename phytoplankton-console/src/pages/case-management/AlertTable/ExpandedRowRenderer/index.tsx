@@ -1,6 +1,6 @@
 import React from 'react';
 import { TableAlertItem } from '../types';
-import TransactionsAndComments from './TransactionsAndComments';
+import AlertExpanded from './AlertExpanded';
 import ScreeningMatchList from '@/components/ScreeningMatchList';
 
 interface Props {
@@ -18,7 +18,7 @@ export default function ExpandedRowRenderer(props: Props) {
   }
 
   return (
-    <TransactionsAndComments
+    <AlertExpanded
       alert={alert}
       selectedTransactionIds={selectedTransactionIds}
       onTransactionSelect={onTransactionSelect}

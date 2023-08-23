@@ -1,8 +1,7 @@
 import { last, uniq } from 'lodash'
 import { compile } from 'handlebars'
-import { uuid4 } from '@sentry/utils'
 import { randomBool } from 'fp-ts/Random'
-import { transactionRules, userRules } from '../data/rules'
+import { getRuleInstance, transactionRules, userRules } from '../data/rules'
 import { sampleTimestamp } from './timestamp'
 import { Case } from '@/@types/openapi-internal/Case'
 import { InternalTransaction } from '@/@types/openapi-internal/InternalTransaction'
@@ -21,6 +20,8 @@ import { getRandomUser, getRandomUsers } from '@/core/seed/samplers/accounts'
 import { CaseStatus } from '@/@types/openapi-internal/CaseStatus'
 import { CaseStatusChange } from '@/@types/openapi-internal/CaseStatusChange'
 import dayjs from '@/utils/dayjs'
+import { getChecklistTemplate } from '@/core/seed/data/checklists'
+import { ChecklistItemValue } from '@/@types/openapi-internal/ChecklistItemValue'
 
 let counter = 1
 let alertCounter = 1
@@ -204,6 +205,9 @@ export function sampleAlert(
     getRandomUser().assigneeUserId,
     true
   )
+  const checklistTemplateId = getRuleInstance(
+    params.ruleHit.ruleInstanceId
+  ).checklistTemplateId
 
   return {
     ...params.ruleHit,
@@ -227,13 +231,18 @@ export function sampleAlert(
     assignments: getRandomUsers(),
     qaAssignment: getRandomUsers(),
     reviewAssignments: getRandomUsers(),
-    ruleChecklist: [
-      {
-        checklistItemId: uuid4(),
-        done: randomBool(),
-        status: pickRandom(CHECKLIST_STATUSS),
-      },
-    ],
+    ruleChecklist: checklistTemplateId
+      ? getChecklistTemplate(checklistTemplateId).categories.flatMap(
+          (category): ChecklistItemValue[] =>
+            category.checklistItems.map(
+              (cli): ChecklistItemValue => ({
+                checklistItemId: cli.id,
+                done: randomBool(),
+                status: pickRandom(CHECKLIST_STATUSS),
+              })
+            )
+        )
+      : undefined,
     ruleNature: userRules
       .concat(transactionRules)
       .find((p) => p.ruleInstanceId === params.ruleHit.ruleInstanceId)?.nature,

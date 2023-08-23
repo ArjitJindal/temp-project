@@ -16,10 +16,11 @@ import {
 } from '@/core/seed/data/transactions'
 import { DynamoDbTransactionRepository } from '@/services/rules-engine/repositories/dynamodb-transaction-repository'
 import { RuleInstanceRepository } from '@/services/rules-engine/repositories/rule-instance-repository'
-import { ruleInstances } from '@/core/seed/data/rules'
+import { initRules, ruleInstances } from '@/core/seed/data/rules'
 import { disableLocalChangeHandler } from '@/utils/local-dynamodb-change-handler'
 import { HitRulesDetails } from '@/@types/openapi-public/HitRulesDetails'
 import { getAggregatedRuleStatus } from '@/services/rules-engine/utils'
+import { initChecklistTemplate } from '@/core/seed/data/checklists'
 
 export async function seedDynamo(
   dynamoDb: DynamoDBDocumentClient,
@@ -27,8 +28,11 @@ export async function seedDynamo(
 ) {
   disableLocalChangeHandler()
   userInit()
+  initChecklistTemplate()
+  initRules()
   listsInit()
   txnInit()
+
   const userRepo = new UserRepository(tenantId, {
     dynamoDb: dynamoDb,
   })

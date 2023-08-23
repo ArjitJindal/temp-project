@@ -159,7 +159,7 @@ function getTable(
         <QaTable
           hideAlertStatusFilters={true}
           escalatedTransactionIds={[]}
-          params={{ ...params, filterOutQaStatus: ['PASS', 'FAIL'], alertStatus: 'CLOSED' }}
+          params={{ ...params, filterOutQaStatus: ['PASSED', 'FAILED'], alertStatus: 'CLOSED' }}
           onChangeParams={handleChangeParams}
         />
       );
@@ -167,7 +167,7 @@ function getTable(
       return (
         <QaTable
           hideAlertStatusFilters={true}
-          params={{ ...params, filterQaStatus: 'PASS', alertStatus: 'CLOSED' }}
+          params={{ ...params, filterQaStatus: 'PASSED', alertStatus: 'CLOSED' }}
           onChangeParams={handleChangeParams}
         />
       );
@@ -175,7 +175,7 @@ function getTable(
       return (
         <QaTable
           hideAlertStatusFilters={true}
-          params={{ ...params, filterQaStatus: 'FAIL', alertStatus: 'CLOSED' }}
+          params={{ ...params, filterQaStatus: 'FAILED', alertStatus: 'CLOSED' }}
           onChangeParams={handleChangeParams}
         />
       );

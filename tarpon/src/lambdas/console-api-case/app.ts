@@ -94,6 +94,13 @@ export const casesHandler = lambdaApi()(
       )
       return updateResult
     })
+    handlers.registerPatchAlertsQaStatus((_ctx, request) =>
+      alertsService.updateAlertsQaStatus(
+        request.alertId,
+        request.checklistItemId,
+        request.AlertChecklistQaUpdateRequest.status
+      )
+    )
 
     handlers.registerPatchCasesAssignment(async (ctx, request) => {
       const { caseIds, assignments } = request.CasesAssignmentsUpdateRequest

@@ -1,0 +1,50 @@
+import { QueryResult } from './queries/types';
+import { ChecklistStatus, ChecklistItem as EmptyChecklistItem } from '@/apis';
+import { useApi } from '@/api';
+import { useQuery } from '@/utils/queries/hooks';
+import { ALERT_CHECKLIST } from '@/utils/queries/keys';
+
+export const useAlertChecklist = (alertId: string): QueryResult<HydratedChecklist> => {
+  const api = useApi();
+  return useQuery(ALERT_CHECKLIST(alertId), async () => {
+    const alert = await api.getAlert({ alertId });
+    const ruleInstances = await api.getRuleInstances({});
+    const ruleInstance = ruleInstances.find((ri) => ri.id === alert.ruleInstanceId);
+
+    if (!ruleInstance || !ruleInstance.checklistTemplateId) {
+      throw new Error('Could not resolve alert rule instance');
+    }
+    const template = await api.getChecklistTemplate({
+      checklistTemplateId: ruleInstance.checklistTemplateId as string,
+    });
+
+    return template.categories.map((category): ChecklistCategory => {
+      return {
+        name: category.name,
+        items: category.checklistItems.map((cli): ChecklistItem => {
+          const item = alert.ruleChecklist?.find((item) => item.checklistItemId === cli.id);
+          if (!item) {
+            throw new Error('Bad checklist item');
+          }
+          return {
+            id: cli.id as string,
+            name: cli.name,
+            level: cli.level,
+            qaStatus: item.status,
+          };
+        }),
+      };
+    });
+  });
+};
+
+export type ChecklistItem = EmptyChecklistItem & {
+  qaStatus: ChecklistStatus;
+};
+
+type ChecklistCategory = {
+  name: string;
+  items: ChecklistItem[];
+};
+
+export type HydratedChecklist = ChecklistCategory[];
