@@ -7,12 +7,13 @@ interface Props {
   icon: React.ReactNode;
   title: string;
   values: ValueItem[];
-  factorExplanationText?: string;
+  riskScoreName: string;
   mainPanelCustomStyling?: MainPanelCustomStyles;
+  showFormulaBackLink?: boolean;
 }
 
 export default function RiskScoreDisplay(props: Props) {
-  const { icon, title, values, factorExplanationText, mainPanelCustomStyling } = props;
+  const { icon, title, values, riskScoreName, mainPanelCustomStyling, showFormulaBackLink } = props;
   const [isModalOpen, setModalOpen] = useState(false);
   const lastValue = values.reduce<ValueItem | null>(
     (acc, x) => (acc == null || x.createdAt > acc.createdAt ? x : acc),
@@ -34,10 +35,11 @@ export default function RiskScoreDisplay(props: Props) {
         isOpen={isModalOpen}
         values={values}
         components={components}
-        factorExplanationText={factorExplanationText}
+        riskScoreName={riskScoreName}
         onCancel={() => {
           setModalOpen(false);
         }}
+        showFormulaBackLink={showFormulaBackLink}
       />
     </>
   );

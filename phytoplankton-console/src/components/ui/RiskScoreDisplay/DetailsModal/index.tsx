@@ -17,7 +17,8 @@ interface Props {
   title: string;
   values: ValueItem[];
   components?: Array<RiskScoreComponent>;
-  factorExplanationText?: string;
+  riskScoreName: string;
+  showFormulaBackLink?: boolean;
 }
 
 const VARIABLES = [
@@ -25,8 +26,9 @@ const VARIABLES = [
 ].map((_, i) => String.fromCodePoint(('a'.codePointAt(0) as number) + i));
 
 export default function DetailsModal(props: Props) {
-  const { icon, title, isOpen, values, onCancel, components, factorExplanationText } = props;
-  const explanationText = factorExplanationText || 'TRS =';
+  const { icon, title, isOpen, values, onCancel, components, riskScoreName, showFormulaBackLink } =
+    props;
+  const explanationText = riskScoreName || 'TRS';
   return (
     <Modal title={title} hideFooter={true} isOpen={isOpen} onCancel={onCancel} width="M">
       <div className={cn(s.root)}>
@@ -35,7 +37,7 @@ export default function DetailsModal(props: Props) {
           {components && (
             <div className={s.formulaWrapper}>
               <div className={s.formula}>
-                {`${explanationText} [ ${components.map((x, i) => VARIABLES[i]).join(' + ')} ]`}
+                {`The following factors are used in calculating ${explanationText} :`}
               </div>
               <div className={s.formulaLegend}>
                 {components.map(({ entityType, parameter }, i) => {
@@ -47,11 +49,19 @@ export default function DetailsModal(props: Props) {
                   return (
                     <React.Fragment key={variable}>
                       {i > 0 && <br />}
-                      {variable}: {parameterDescription?.title ?? parameter} risk
+                      {i + 1}. {parameterDescription?.title ?? parameter} risk
                     </React.Fragment>
                   );
                 })}
               </div>
+              {showFormulaBackLink ? (
+                <div className={s.formulaLink}>
+                  {`The complete formula for calculating ${explanationText} is `}
+                  <a href="/risk-levels/risk-algorithms"> here</a>
+                </div>
+              ) : (
+                <></>
+              )}
             </div>
           )}
         </div>

@@ -34,6 +34,8 @@ export default function ActionRiskDisplay({ transactionId }: Props) {
                 ]
               : []
           }
+          riskScoreName="TRS"
+          showFormulaBackLink
         />
       )}
     </AsyncResourceRenderer>
