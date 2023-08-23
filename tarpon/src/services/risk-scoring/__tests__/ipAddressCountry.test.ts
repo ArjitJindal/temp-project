@@ -1,4 +1,5 @@
 import { DEFAULT_CLASSIFICATION_SETTINGS } from '../repositories/risk-repository'
+import { DEFAULT_RISK_LEVEL } from '../utils'
 import { dynamoDbSetupHook } from '@/test-utils/dynamodb-test-utils'
 import { withFeatureHook } from '@/test-utils/feature-test-utils'
 import { getTestUser } from '@/test-utils/user-test-utils'
@@ -46,6 +47,7 @@ const RISK_FACTOR: (
     },
   ],
   parameterType: 'VARIABLE',
+  defaultRiskLevel: DEFAULT_RISK_LEVEL,
 })
 
 createArsRiskFactorTestCases(

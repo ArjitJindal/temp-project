@@ -80,6 +80,7 @@ export type ParameterValues = RiskParameterLevelKeyValue[];
 export type ParameterSettings = {
   isActive: boolean;
   values: ParameterValues;
+  defaultRiskLevel: RiskLevel;
 };
 
 export interface RiskLevelTableItem {
@@ -93,7 +94,9 @@ export interface RiskLevelTableItem {
   targetIterableParameter?: ParameterAttributeRiskValuesTargetIterableParameterEnum;
   risklevel?: RiskLevel;
   isNullableAllowed?: boolean;
+  defaultRiskLevel: RiskLevel;
 }
+
 export type RiskLevelTable = RiskLevelTableItem[];
 export type DataType =
   | 'STRING'

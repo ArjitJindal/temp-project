@@ -5930,12 +5930,15 @@ components:
             - generalDetails.countryOfNationality
         isNullableAllowed:
           type: boolean
+        defaultRiskLevel:
+          $ref: '#/components/schemas/RiskLevel'
       required:
         - parameter
         - isActive
         - isDerived
         - riskEntityType
         - riskLevelAssignmentValues
+        - defaultRiskLevel
     Feature:
       type: string
       title: Feature

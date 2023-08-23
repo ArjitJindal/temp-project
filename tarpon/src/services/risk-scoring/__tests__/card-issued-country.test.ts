@@ -47,6 +47,7 @@ const RISK_FACTOR: (
     },
   ],
   parameterType: 'VARIABLE',
+  defaultRiskLevel: 'LOW',
 })
 
 createArsRiskFactorTestCases(
@@ -89,6 +90,28 @@ createArsRiskFactorTestCases(
       }),
       users: [getTestUser()],
       expectedScore: 10,
+    },
+  ]
+)
+
+createArsRiskFactorTestCases(
+  'cardIssuedCountry',
+  DEFAULT_CLASSIFICATION_SETTINGS,
+  RISK_FACTOR('cardIssuedCountry'),
+  [
+    {
+      testName: 'Card issued Default Risk Level Test',
+      transaction: getTestTransaction({
+        originPaymentDetails: {
+          method: 'CARD',
+          cardFingerprint: uuidv4(),
+          cardIssuedCountry: 'FR',
+          transactionReferenceField: 'DEPOSIT',
+          '3dsDone': true,
+        },
+      }),
+      users: [getTestUser()],
+      expectedScore: 30,
     },
   ]
 )

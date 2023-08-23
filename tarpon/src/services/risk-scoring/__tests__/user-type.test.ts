@@ -1,3 +1,4 @@
+import { DEFAULT_RISK_LEVEL } from '../utils'
 import { RiskClassificationScore } from '@/@types/openapi-internal/RiskClassificationScore'
 import { dynamoDbSetupHook } from '@/test-utils/dynamodb-test-utils'
 import { withFeatureHook } from '@/test-utils/feature-test-utils'
@@ -24,6 +25,7 @@ createKrsRiskFactorTestCases(
   'type',
   CLASSFICATIONS,
   {
+    defaultRiskLevel: DEFAULT_RISK_LEVEL,
     parameter: 'type',
     isActive: true,
     isDerived: true,
@@ -63,6 +65,7 @@ createKrsRiskFactorTestCases(
   'type',
   CLASSFICATIONS,
   {
+    defaultRiskLevel: DEFAULT_RISK_LEVEL,
     parameter: 'type',
     isActive: true,
     isDerived: true,

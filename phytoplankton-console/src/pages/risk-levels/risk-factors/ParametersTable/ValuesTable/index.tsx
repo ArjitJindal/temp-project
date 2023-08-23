@@ -10,18 +10,30 @@ import {
   RiskLevelTableItem,
   RiskValueContent,
 } from '../types';
-import { INPUT_RENDERERS, NEW_VALUE_VALIDATIONS, VALUE_RENDERERS } from '../consts';
+import {
+  DEFAULT_RISK_LEVEL,
+  INPUT_RENDERERS,
+  NEW_VALUE_VALIDATIONS,
+  VALUE_RENDERERS,
+} from '../consts';
 import style from './style.module.less';
 import { RiskLevel } from '@/apis';
 import RiskLevelSwitch from '@/components/library/RiskLevelSwitch';
 import { AsyncResource, isLoading, useLastSuccessValue } from '@/utils/asyncResource';
 import { DEFAULT_COUNTRY_RISK_VALUES } from '@/utils/defaultCountriesRiskLevel';
 import { useHasPermissions } from '@/utils/user-utils';
+import { P } from '@/components/ui/Typography';
 
 interface Props {
   item: RiskLevelTableItem;
   currentValuesRes: AsyncResource<ParameterValues>;
-  onSave: (parameter: ParameterName, newValues: ParameterValues, entity: Entity) => void;
+  onSave: (
+    parameter: ParameterName,
+    newValues: ParameterValues,
+    entity: Entity,
+    defaultRiskLevel: RiskLevel,
+  ) => void;
+  currentDefaultRiskLevel: AsyncResource<RiskLevel>;
 }
 
 const labelsExist: { [key in DataType]?: { input: boolean; value: boolean } } = {
@@ -37,17 +49,24 @@ const labelExistsStyle = (dataType: DataType, type: 'input' | 'value'): React.CS
 };
 
 export default function ValuesTable(props: Props) {
-  const { currentValuesRes, item, onSave } = props;
+  const { currentValuesRes, item, onSave, currentDefaultRiskLevel } = props;
   const { parameter, dataType, entity } = item;
   const lastValues = useLastSuccessValue(currentValuesRes, []);
+  const lastDefaultRiskLevel = useLastSuccessValue(currentDefaultRiskLevel, DEFAULT_RISK_LEVEL);
   const [values, setValues] = useState(lastValues);
+  const [defaultRiskLevel, setDefaultRiskLevel] = useState(lastDefaultRiskLevel);
+
   const hasWritePermissions = useHasPermissions(['risk-scoring:risk-factors:write']);
 
   useEffect(() => {
     setValues(lastValues);
   }, [lastValues]);
 
-  const isEqual = _.isEqual(lastValues, values);
+  const isEqual = _.isEqual(
+    { values, defaultRiskLevel },
+    { values: lastValues, defaultRiskLevel: lastDefaultRiskLevel },
+  );
+
   const loading = isLoading(currentValuesRes);
 
   const [newValue, setNewValue] = useState<RiskValueContent | null>(null);
@@ -75,7 +94,7 @@ export default function ValuesTable(props: Props) {
   };
 
   const handleSave = () => {
-    onSave(parameter, values, entity);
+    onSave(parameter, values, entity, defaultRiskLevel);
   };
 
   const handleCancel = () => {
@@ -126,8 +145,29 @@ export default function ValuesTable(props: Props) {
   return (
     <div className={style.root}>
       <div className={style.table}>
-        <div className={style.header}>Variable</div>
-        <div className={style.header}>Risk score</div>
+        <div className={style.topHeader}>
+          <div className={style.header}>Default risk level</div>
+          <P grey variant="sml" className={style.description}>
+            Any value lacking an assigned risk level will be categorized under default risk level.
+            The system configuration designates the default value as 'VERY HIGH' when no specific
+            risk level is allocated.
+          </P>
+        </div>
+        <div className={style.risk}>
+          <RiskLevelSwitch
+            isDisabled={loading}
+            value={defaultRiskLevel}
+            onChange={(newRiskLevel) => {
+              if (newRiskLevel != null) {
+                setDefaultRiskLevel(newRiskLevel);
+              }
+            }}
+          />
+        </div>
+      </div>
+      <div className={style.table}>
+        <div className={style.header}>Value</div>
+        <div className={style.header}>Risk level</div>
         <div className={style.header}>
           {item.dataType === 'COUNTRY' && (
             <Button onClick={() => handleSetDefaultValues()} size="small" type="primary" block>
@@ -231,7 +271,7 @@ export default function ValuesTable(props: Props) {
           Cancel
         </Button>
         <Button
-          disabled={loading || isEqual || !hasWritePermissions}
+          disabled={loading || !hasWritePermissions || isEqual}
           onClick={handleSave}
           type="primary"
         >

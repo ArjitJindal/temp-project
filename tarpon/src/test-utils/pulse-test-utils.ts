@@ -12,12 +12,14 @@ import { RiskClassificationScore } from '@/@types/openapi-internal/RiskClassific
 import { RiskScoringService } from '@/services/risk-scoring'
 import { Transaction } from '@/@types/openapi-public/Transaction'
 import { getMongoDbClient } from '@/utils/mongoDBUtils'
+import { DEFAULT_RISK_LEVEL } from '@/services/risk-scoring/utils'
 
 export const TEST_VARIABLE_RISK_ITEM: ParameterAttributeRiskValues = {
   parameter: 'originAmountDetails.country',
   isActive: true,
   isDerived: false,
   riskEntityType: 'TRANSACTION',
+  defaultRiskLevel: DEFAULT_RISK_LEVEL,
   riskLevelAssignmentValues: [
     {
       parameterValue: {
@@ -43,6 +45,7 @@ export const TEST_ITERABLE_RISK_ITEM: ParameterAttributeRiskValues = {
   isActive: true,
   isDerived: false,
   riskEntityType: 'TRANSACTION',
+  defaultRiskLevel: DEFAULT_RISK_LEVEL,
   riskLevelAssignmentValues: [
     {
       parameterValue: {

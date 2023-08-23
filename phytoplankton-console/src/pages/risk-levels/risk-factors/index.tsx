@@ -5,6 +5,7 @@ import ParametersTable from './ParametersTable';
 import {
   ALL_RISK_PARAMETERS,
   BUSINESS_RISK_PARAMETERS,
+  DEFAULT_RISK_LEVEL,
   TRANSACTION_RISK_PARAMETERS,
   USER_RISK_PARAMETERS,
 } from './ParametersTable/consts';
@@ -25,6 +26,7 @@ import { getErrorMessage } from '@/utils/lang';
 import PageTabs from '@/components/ui/PageTabs';
 import { makeUrl } from '@/utils/routing';
 import { message } from '@/components/library/Message';
+import { RiskLevel } from '@/utils/risk-levels';
 
 export default function () {
   const i18n = useI18n();
@@ -80,6 +82,7 @@ export default function () {
               targetIterableParameter: riskLevelTableItem.targetIterableParameter,
               riskEntityType: riskLevelTableItem.entity,
               riskLevelAssignmentValues: settings.values,
+              defaultRiskLevel: settings.defaultRiskLevel,
             },
           },
         });
@@ -89,6 +92,7 @@ export default function () {
           success<ParameterSettings>({
             isActive: response.isActive,
             values: response.riskLevelAssignmentValues,
+            defaultRiskLevel: response.defaultRiskLevel,
           }),
         );
         message.success('Saved!');
@@ -107,7 +111,12 @@ export default function () {
   );
 
   const onSaveValues = useCallback(
-    async (parameter: ParameterName, newValues: ParameterValues, entityType: Entity) => {
+    async (
+      parameter: ParameterName,
+      newValues: ParameterValues,
+      entityType: Entity,
+      defaultRiskLevel: RiskLevel,
+    ) => {
       const currentParams = getOr<ParameterSettings | null>(
         valuesResources[entityType]?.[parameter] ?? init(),
         null,
@@ -116,6 +125,7 @@ export default function () {
         onUpdateParameter(entityType, parameter, {
           ...currentParams,
           values: newValues,
+          defaultRiskLevel: defaultRiskLevel,
         });
       }
     },
@@ -152,6 +162,7 @@ export default function () {
           success<ParameterSettings>({
             isActive: response?.isActive ?? false,
             values: response?.riskLevelAssignmentValues ?? [],
+            defaultRiskLevel: response?.defaultRiskLevel ?? DEFAULT_RISK_LEVEL,
           }),
         );
       } catch (e) {
@@ -162,12 +173,14 @@ export default function () {
           success<ParameterSettings>({
             isActive: false,
             values: [],
+            defaultRiskLevel: DEFAULT_RISK_LEVEL,
           }),
         );
       }
     },
     [api, updateValuesResources],
   );
+
   return (
     <Feature name="PULSE" fallback={'Not enabled'}>
       <PageWrapper

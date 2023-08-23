@@ -1,4 +1,5 @@
 import { DEFAULT_CLASSIFICATION_SETTINGS } from '../repositories/risk-repository'
+import { DEFAULT_RISK_LEVEL } from '../utils'
 import dayjs from '@/utils/dayjs'
 import { dynamoDbSetupHook } from '@/test-utils/dynamodb-test-utils'
 import { withFeatureHook } from '@/test-utils/feature-test-utils'
@@ -29,6 +30,7 @@ createKrsRiskFactorTestCases(
   'legalEntity.companyRegistrationDetails.dateOfRegistration',
   CLASSFICATIONS,
   {
+    defaultRiskLevel: DEFAULT_RISK_LEVEL,
     parameter: 'legalEntity.companyRegistrationDetails.dateOfRegistration',
     isActive: true,
     isDerived: true,
@@ -122,6 +124,7 @@ createKrsRiskFactorTestCases(
       },
     ],
     parameterType: 'VARIABLE',
+    defaultRiskLevel: DEFAULT_RISK_LEVEL,
   },
   [
     {
@@ -196,6 +199,7 @@ createArsRiskFactorTestCases(
       },
     ],
     parameterType: 'VARIABLE',
+    defaultRiskLevel: DEFAULT_RISK_LEVEL,
   },
   [
     {

@@ -31,13 +31,17 @@ import { RiskEntityType } from '@/@types/openapi-internal/RiskEntityType'
 import { RiskScoreComponent } from '@/@types/openapi-internal/RiskScoreComponent'
 import { traceable } from '@/core/xray'
 
-function getDefaultRiskValue(riskClassificationValues: Array<any>) {
+function getDefaultRiskValue(
+  riskClassificationValues: Array<RiskClassificationScore>
+): number {
   let riskScore = 75 // Make this configurable
+
   riskClassificationValues.map((value) => {
     if (value.riskLevel === DEFAULT_RISK_LEVEL) {
       riskScore = _.mean([value.upperBoundRiskScore, value.lowerBoundRiskScore])
     }
   })
+
   return riskScore
 }
 
@@ -120,7 +124,8 @@ function getIterableAttributeRiskLevel(
       individualRiskLevel = getSchemaAttributeRiskLevel(
         targetIterableParameter,
         value,
-        riskLevelAssignmentValues
+        riskLevelAssignmentValues,
+        parameterAttributeDetails.defaultRiskLevel ?? DEFAULT_RISK_LEVEL
       )
       if (
         riskLevelPrecendence[individualRiskLevel.riskLevel] >=
@@ -155,19 +160,21 @@ function getIterableAttributeRiskLevel(
       ? iterableMaxRiskLevel
       : {
           value: null,
-          riskLevel: DEFAULT_RISK_LEVEL,
+          riskLevel:
+            parameterAttributeDetails.defaultRiskLevel ?? DEFAULT_RISK_LEVEL,
         }
   }
   return {
     value: null,
-    riskLevel: DEFAULT_RISK_LEVEL,
+    riskLevel: parameterAttributeDetails.defaultRiskLevel ?? DEFAULT_RISK_LEVEL,
   }
 }
 
 function getDerivedAttributeRiskLevel(
   derivedValue: any,
   riskLevelAssignmentValues: Array<RiskParameterLevelKeyValue>,
-  isNullableAllowed: boolean | undefined
+  isNullableAllowed: boolean | undefined,
+  defaultRiskLevel: RiskLevel = DEFAULT_RISK_LEVEL
 ): RiskLevel {
   if (derivedValue || isNullableAllowed) {
     for (const { parameterValue, riskLevel } of riskLevelAssignmentValues) {
@@ -176,7 +183,7 @@ function getDerivedAttributeRiskLevel(
       }
     }
   }
-  return DEFAULT_RISK_LEVEL
+  return defaultRiskLevel
 }
 
 function getSchemaAttributeRiskLevel(
@@ -184,13 +191,14 @@ function getSchemaAttributeRiskLevel(
     | ParameterAttributeRiskValuesParameterEnum
     | ParameterAttributeRiskValuesTargetIterableParameterEnum,
   entity: User | Business | Transaction,
-  riskLevelAssignmentValues: Array<RiskParameterLevelKeyValue>
+  riskLevelAssignmentValues: Array<RiskParameterLevelKeyValue>,
+  defaultRiskLevel: RiskLevel
 ): {
   value: unknown
   riskLevel: RiskLevel
 } {
   let resultValue = null
-  let resultRiskLevel: RiskLevel = DEFAULT_RISK_LEVEL
+  let resultRiskLevel: RiskLevel = defaultRiskLevel
   const endValue = _.get(entity, paramName)
   if (endValue) {
     resultValue = endValue
@@ -409,7 +417,8 @@ export class RiskScoringService {
           riskLevel: getDerivedAttributeRiskLevel(
             derivedValue,
             parameterAttributeDetails.riskLevelAssignmentValues,
-            parameterAttributeDetails.isNullableAllowed
+            parameterAttributeDetails.isNullableAllowed,
+            parameterAttributeDetails.defaultRiskLevel ?? DEFAULT_RISK_LEVEL
           ),
         }))
       } else if (parameterAttributeDetails.parameterType == 'VARIABLE') {
@@ -417,7 +426,8 @@ export class RiskScoringService {
           getSchemaAttributeRiskLevel(
             parameterAttributeDetails.parameter,
             entity,
-            parameterAttributeDetails.riskLevelAssignmentValues
+            parameterAttributeDetails.riskLevelAssignmentValues,
+            parameterAttributeDetails.defaultRiskLevel ?? DEFAULT_RISK_LEVEL
           ),
         ]
       } else if (parameterAttributeDetails.parameterType == 'ITERABLE') {

@@ -1,6 +1,7 @@
 import _ from 'lodash'
 import dayjs from '@/utils/dayjs'
 import { RiskLevel } from '@/@types/openapi-public/RiskLevel'
+import { RiskClassificationScore } from '@/@types/openapi-internal/RiskClassificationScore'
 
 type OptionRequirements = Record<RiskLevel, number>
 
@@ -14,7 +15,7 @@ export const riskLevelPrecendence: OptionRequirements = {
 export const DEFAULT_RISK_LEVEL = 'VERY_HIGH' // defaults to very high risk for now - will be configurable in the future
 
 export const getRiskLevelFromScore = (
-  riskClassificationValues: Array<any>,
+  riskClassificationValues: Array<RiskClassificationScore>,
   riskScore: number | null
 ): RiskLevel => {
   if (riskScore === null) {

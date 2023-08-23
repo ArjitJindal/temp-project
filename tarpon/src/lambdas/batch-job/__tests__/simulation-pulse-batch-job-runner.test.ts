@@ -15,6 +15,7 @@ import { MongoDbTransactionRepository } from '@/services/rules-engine/repositori
 import { getTestTransaction } from '@/test-utils/transaction-test-utils'
 import { SimulationPulseParametersRequest } from '@/@types/openapi-internal/SimulationPulseParametersRequest'
 import { withFeatureHook } from '@/test-utils/feature-test-utils'
+import { DEFAULT_RISK_LEVEL } from '@/services/risk-scoring/utils'
 
 dynamoDbSetupHook()
 
@@ -329,6 +330,7 @@ describe('Simulation (Pulse) batch job runner', () => {
                 },
               ],
               parameterType: 'VARIABLE',
+              defaultRiskLevel: DEFAULT_RISK_LEVEL,
             },
             {
               parameter: 'originAmountDetails.country',
@@ -366,6 +368,7 @@ describe('Simulation (Pulse) batch job runner', () => {
                 },
               ],
               parameterType: 'VARIABLE',
+              defaultRiskLevel: DEFAULT_RISK_LEVEL,
             },
           ],
           sampling: {

@@ -14,10 +14,14 @@ import { AsyncResource, getOr, init, isLoading, map } from '@/utils/asyncResourc
 import { neverReturn } from '@/utils/lang';
 import ActivityIndicator from '@/pages/risk-levels/risk-factors/ParametersTable/ActivityIndicator';
 import Table from '@/components/library/Table';
-import { DATA_TYPE_TO_VALUE_TYPE } from '@/pages/risk-levels/risk-factors/ParametersTable/consts';
+import {
+  DATA_TYPE_TO_VALUE_TYPE,
+  DEFAULT_RISK_LEVEL,
+} from '@/pages/risk-levels/risk-factors/ParametersTable/consts';
 import { useHasPermissions } from '@/utils/user-utils';
 import { ColumnHelper } from '@/components/library/Table/columnHelper';
 import { LONG_TEXT } from '@/components/library/Table/standardDataTypes';
+import { RiskLevel } from '@/utils/risk-levels';
 
 interface Props {
   parameters: RiskLevelTable;
@@ -25,7 +29,12 @@ interface Props {
     [key in ParameterName]?: AsyncResource<ParameterSettings>;
   };
   onRefresh: (parameter: ParameterName, entity: Entity) => void;
-  onSaveValues: (parameter: ParameterName, newValues: ParameterValues, entityType: Entity) => void;
+  onSaveValues: (
+    parameter: ParameterName,
+    newValues: ParameterValues,
+    entityType: Entity,
+    defaultRiskLevel: RiskLevel,
+  ) => void;
   onActivate: (entityType: Entity, parameter: ParameterName, isActive: boolean) => void;
 }
 
@@ -46,7 +55,7 @@ export default function ParametersTable(props: Props) {
       <Table<RiskLevelTableItem>
         rowKey="parameter"
         columns={columnHelper.list([
-          columnHelper.simple({ title: 'Parameter name', key: 'title' }),
+          columnHelper.simple({ title: 'Factor name', key: 'title' }),
           columnHelper.simple({
             title: 'Type',
             key: 'dataType',
@@ -73,7 +82,7 @@ export default function ParametersTable(props: Props) {
             },
           }),
           columnHelper.simple({
-            title: 'Parameter description',
+            title: 'Factor description',
             key: 'description',
             defaultWidth: 300,
             type: LONG_TEXT,
@@ -125,9 +134,20 @@ export default function ParametersTable(props: Props) {
             item={item}
             currentValuesRes={map(
               (parameterSettings && parameterSettings[item.parameter]) ?? init<ParameterSettings>(),
-              (x) => x.values,
+              (x) => {
+                return x.values;
+              },
             )}
             onSave={onSaveValues}
+            currentDefaultRiskLevel={
+              map(
+                (parameterSettings && parameterSettings[item.parameter]) ??
+                  init<ParameterSettings>(),
+                (x) => {
+                  return x.defaultRiskLevel;
+                },
+              ) ?? DEFAULT_RISK_LEVEL
+            }
           />
         )}
         pagination={false}
