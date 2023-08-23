@@ -1,4 +1,4 @@
-import _ from 'lodash'
+import { compact, get } from 'lodash'
 import { getAgeFromTimestamp, getAgeInDaysFromTimestamp } from '../utils'
 import {
   TransactionRiskFactorValueHandler,
@@ -8,13 +8,17 @@ import { User } from '@/@types/openapi-public/User'
 import { Business } from '@/@types/openapi-internal/Business'
 import { ParameterAttributeRiskValuesParameterEnum } from '@/@types/openapi-internal/ParameterAttributeRiskValues'
 import dayjs from '@/utils/dayjs'
+import {
+  isBusinessUser,
+  isConsumerUser,
+} from '@/services/rules-engine/utils/user-rule-utils'
 
 function getDerivedAge(
   user: User | Business,
-  parameter: ParameterAttributeRiskValuesParameterEnum,
+  parameter: ParameterAttributeRiskValuesParameterEnum | 'createdTimestamp',
   granularity = 'YEAR'
 ): number | undefined {
-  const endValue = _.get(user, parameter)
+  const endValue = get(user, parameter)
   if (!endValue) {
     return
   }
@@ -47,10 +51,20 @@ export const ARS_USER_AGE_RISK_HANDLERS: Array<
 > = [
   {
     entityType: 'TRANSACTION',
-    parameter: 'createdTimestamp',
-    handler: async (_transaction, users, parameter) =>
-      [users.originUser, users.destinationUser]
-        .filter(Boolean)
-        .map((user) => getDerivedAge(user as User, parameter, 'DAY')),
+    parameter: 'consumerCreatedTimestamp',
+    handler: async (_transaction, users) =>
+      compact([users.originUser, users.destinationUser])
+        .filter((user) => isConsumerUser(user))
+        .map((user) => getDerivedAge(user as User, 'createdTimestamp', 'DAY')),
+  },
+  {
+    entityType: 'TRANSACTION',
+    parameter: 'businessCreatedTimestamp',
+    handler: async (_transaction, users) =>
+      compact([users.originUser, users.destinationUser])
+        .filter((user) => isBusinessUser(user))
+        .map((user) =>
+          getDerivedAge(user as Business, 'createdTimestamp', 'DAY')
+        ),
   },
 ]

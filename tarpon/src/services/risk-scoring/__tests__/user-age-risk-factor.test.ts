@@ -153,10 +153,10 @@ createKrsRiskFactorTestCases(
 )
 
 createArsRiskFactorTestCases(
-  'createdTimestamp',
+  'consumerCreatedTimestamp',
   DEFAULT_CLASSIFICATION_SETTINGS,
   {
-    parameter: 'createdTimestamp',
+    parameter: 'consumerCreatedTimestamp',
     isActive: true,
     isDerived: true,
     riskEntityType: 'TRANSACTION',
@@ -236,6 +236,104 @@ createArsRiskFactorTestCases(
       testName: 'Very High Risk',
       users: [
         getTestUser({
+          userId: '3',
+          createdTimestamp: dayjs().subtract(11, 'month').valueOf(),
+        }),
+      ],
+      transaction: {
+        transactionId: '3',
+        timestamp: dayjs().valueOf(),
+        originUserId: '3',
+      },
+      expectedScore: 90,
+    },
+  ]
+)
+
+createArsRiskFactorTestCases(
+  'businessCreatedTimestamp',
+  DEFAULT_CLASSIFICATION_SETTINGS,
+  {
+    parameter: 'businessCreatedTimestamp',
+    isActive: true,
+    isDerived: true,
+    riskEntityType: 'TRANSACTION',
+    riskLevelAssignmentValues: [
+      {
+        parameterValue: {
+          content: {
+            kind: 'DAY_RANGE',
+            start: 0,
+            end: 5,
+            startGranularity: 'DAYS',
+            endGranularity: 'MONTHS',
+          },
+        },
+        riskLevel: 'LOW',
+      },
+      {
+        parameterValue: {
+          content: {
+            kind: 'DAY_RANGE',
+            start: 5,
+            end: 10,
+            startGranularity: 'MONTHS',
+            endGranularity: 'MONTHS',
+          },
+        },
+        riskLevel: 'HIGH',
+      },
+      {
+        parameterValue: {
+          content: {
+            kind: 'DAY_RANGE',
+            start: 10,
+            end: 0,
+            startGranularity: 'MONTHS',
+            endGranularity: 'INFINITE',
+          },
+        },
+        riskLevel: 'VERY_HIGH',
+      },
+    ],
+    parameterType: 'VARIABLE',
+    defaultRiskLevel: DEFAULT_RISK_LEVEL,
+  },
+  [
+    {
+      testName: 'Low Risk',
+      users: [
+        getTestBusiness({
+          userId: '1',
+          createdTimestamp: dayjs().subtract(1, 'day').valueOf(),
+        }),
+      ],
+      transaction: {
+        transactionId: '1',
+        timestamp: dayjs().valueOf(),
+        originUserId: '1',
+      },
+      expectedScore: 30,
+    },
+    {
+      testName: 'High Risk',
+      users: [
+        getTestBusiness({
+          userId: '2',
+          createdTimestamp: dayjs().subtract(6, 'month').valueOf(),
+        }),
+      ],
+      transaction: {
+        transactionId: '2',
+        originUserId: '2',
+        timestamp: dayjs().valueOf(),
+      },
+      expectedScore: 70,
+    },
+    {
+      testName: 'Very High Risk',
+      users: [
+        getTestBusiness({
           userId: '3',
           createdTimestamp: dayjs().subtract(11, 'month').valueOf(),
         }),

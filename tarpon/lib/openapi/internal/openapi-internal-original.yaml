@@ -5896,6 +5896,8 @@ components:
             - legalEntity.companyGeneralDetails.businessIndustry
             - userDetails.dateOfBirth
             - legalEntity.companyRegistrationDetails.dateOfRegistration
+            - consumerCreatedTimestamp
+            - businessCreatedTimestamp
             - createdTimestamp
             - timestamp
             - domesticOrForeignOriginCountryConsumer

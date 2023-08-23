@@ -3,6 +3,8 @@ import { StackConstants } from '@lib/constants'
 import _ from 'lodash'
 import { InternalServerError } from 'http-errors'
 import {
+  DeleteCommand,
+  DeleteCommandInput,
   DynamoDBDocumentClient,
   GetCommand,
   GetCommandInput,
@@ -341,6 +343,24 @@ export class RiskRepository {
     }
     await this.dynamoDb.send(new PutCommand(putItemInput))
     return parameterRiskLevels
+  }
+
+  async deleteParameterRiskItem(
+    parameter: ParameterAttributeRiskValuesParameterEnum,
+    entityType: RiskEntityType
+  ) {
+    const primaryKey = DynamoDbKeys.PARAMETER_RISK_SCORES_DETAILS(
+      this.tenantId,
+      parameter,
+      entityType
+    )
+
+    const deleteItemInput: DeleteCommandInput = {
+      TableName: StackConstants.HAMMERHEAD_DYNAMODB_TABLE_NAME,
+      Key: primaryKey,
+    }
+
+    await this.dynamoDb.send(new DeleteCommand(deleteItemInput))
   }
 
   async getParameterRiskItem(
