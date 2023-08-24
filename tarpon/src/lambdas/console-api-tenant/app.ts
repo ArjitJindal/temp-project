@@ -145,7 +145,6 @@ export const tenantsHandler = lambdaApi()(
     )
 
     handlers.registerGetTenantApiKeys(async (ctx, request) => {
-      console.log('request', request)
       return await new TenantService(ctx.tenantId, {
         dynamoDb: getDynamoDbClientByEvent(event),
         mongoDb,

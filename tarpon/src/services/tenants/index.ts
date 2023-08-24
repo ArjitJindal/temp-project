@@ -314,12 +314,17 @@ export class TenantService {
     apiKeyId: string
   }): Promise<TenantApiKey[]> {
     const allUsagePlans = await TenantService.getAllUsagePlans()
+
+    const tenantId = this.tenantId.endsWith('-test')
+      ? this.tenantId.replace('-test', '')
+      : this.tenantId
+
     const usagePlan = allUsagePlans?.find(
-      (x) => x.name?.match(USAGE_PLAN_REGEX)?.[1] === this.tenantId
+      (x) => x.name?.match(USAGE_PLAN_REGEX)?.[1] === tenantId
     )
 
     if (!usagePlan) {
-      throw new Error(`Usage plan for tenant ${this.tenantId} not found`)
+      throw new Error(`Usage plan for tenant ${tenantId} not found`)
     }
 
     const apigateway = new APIGatewayClient({
@@ -429,6 +434,10 @@ export class TenantService {
 
   public async getUsagePlanData(tenantId: string): Promise<TenantUsageData> {
     const usagePlans = await TenantService.getAllUsagePlans()
+
+    if (tenantId.endsWith('-test')) {
+      tenantId = tenantId.replace('-test', '')
+    }
     const usagePlan = usagePlans?.find(
       (x) => x.name?.match(USAGE_PLAN_REGEX)?.[1] === tenantId
     )
