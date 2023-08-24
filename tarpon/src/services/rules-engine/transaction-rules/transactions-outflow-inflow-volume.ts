@@ -86,10 +86,6 @@ export default class TransactionsOutflowInflowVolumeRule extends TransactionAggr
     }
   }
 
-  public async rebuildUserAggregation(): Promise<void> {
-    return
-  }
-
   private getTargetCurrency(): CurrencyCode {
     return 'USD'
   }
@@ -277,6 +273,33 @@ export default class TransactionsOutflowInflowVolumeRule extends TransactionAggr
     } as RuleHitResultItem
   }
 
+  private async getRawTransactionsData(
+    direction: 'origin' | 'destination'
+  ): Promise<{
+    sendingTransactions: AuxiliaryIndexTransaction[]
+    receivingTransactions: AuxiliaryIndexTransaction[]
+  }> {
+    const { timeWindow } = this.parameters
+
+    return await getTransactionUserPastTransactionsByDirection(
+      this.transaction,
+      direction,
+      this.transactionRepository,
+      {
+        timeWindow,
+        checkDirection: 'all',
+        matchPaymentMethodDetails: false,
+        filters: this.filters,
+      },
+      [
+        'originAmountDetails',
+        'destinationAmountDetails',
+        'originPaymentDetails',
+        'destinationPaymentDetails',
+      ]
+    )
+  }
+
   private async getData(direction: 'origin' | 'destination'): Promise<Result> {
     const { timeWindow } = this.parameters
     const { beforeTimestamp, afterTimestamp } = getTimestampRange(
@@ -386,33 +409,66 @@ export default class TransactionsOutflowInflowVolumeRule extends TransactionAggr
     }
 
     // fallback
-    const { sendingTransactions, receivingTransactions } =
-      await getTransactionUserPastTransactionsByDirection(
-        this.transaction,
+
+    if (this.shouldUseRawData()) {
+      const { sendingTransactions, receivingTransactions } =
+        await this.getRawTransactionsData(direction)
+
+      // update aggregation
+      await this.rebuildRuleAggregations(
         direction,
-        this.transactionRepository,
-        {
-          timeWindow,
-          checkDirection: 'all',
-          matchPaymentMethodDetails: false,
-          filters: this.filters,
-        },
-        [
-          'originAmountDetails',
-          'destinationAmountDetails',
-          'originPaymentDetails',
-          'destinationPaymentDetails',
-        ]
+        await this.getTimeAggregatedResult(
+          sendingTransactions,
+          receivingTransactions
+        )
       )
 
-    // update aggregation
-    await this.rebuildRuleAggregations(
-      direction,
-      await this.getTimeAggregatedResult(
+      return await this.computeRawData(
+        direction,
         sendingTransactions,
         receivingTransactions
       )
+    } else {
+      return await this.computeRawData(direction)
+    }
+  }
+
+  public async rebuildUserAggregation(
+    direction: 'origin' | 'destination',
+    isTransactionFiltered: boolean
+  ): Promise<void> {
+    const { sendingTransactions, receivingTransactions } =
+      await this.getRawTransactionsData(direction)
+
+    const amountDetails =
+      direction === 'origin'
+        ? this.transaction.originAmountDetails
+        : this.transaction.destinationAmountDetails
+
+    if (isTransactionFiltered && amountDetails) {
+      const transaction = this.transaction
+
+      if (direction === 'origin') {
+        sendingTransactions.push(transaction)
+      } else {
+        receivingTransactions.push(transaction)
+      }
+    }
+
+    const timeAggregatedResult = await this.getTimeAggregatedResult(
+      sendingTransactions,
+      receivingTransactions
     )
+
+    await this.rebuildRuleAggregations(direction, timeAggregatedResult)
+  }
+
+  private async computeRawData(
+    direction: 'origin' | 'destination',
+    sendingTransactions: AuxiliaryIndexTransaction[] = [],
+    receivingTransactions: AuxiliaryIndexTransaction[] = []
+  ): Promise<Result> {
+    const transaction = this.transaction
 
     if (direction === 'origin') {
       sendingTransactions.push(transaction)

@@ -30,6 +30,17 @@ type AggregationData = {
   receivingAmount?: number
 }
 
+type AggregationResult = {
+  period1: {
+    totalAmount?: number
+    totalCount: number
+  }
+  period2: {
+    totalAmount?: number
+    totalCount: number
+  }
+}
+
 export type TransactionsExceededParameters = {
   period1: DayWindow
   period2: DayWindow
@@ -108,10 +119,6 @@ export default abstract class TransactionsExceededBaseRule<
     }
   }
 
-  public async rebuildUserAggregation(): Promise<void> {
-    return
-  }
-
   protected abstract getMultiplierThresholds(): {
     currency: CurrencyCode
     value: number
@@ -140,7 +147,13 @@ export default abstract class TransactionsExceededBaseRule<
       return
     }
 
-    const { period1, period2 } = await this.getData(direction)
+    const data = await this.getData(direction)
+
+    if (!data) {
+      return
+    }
+
+    const { period1, period2 } = data
 
     // Filter stage
     const aggregationType = this.getAggregationType()
@@ -268,24 +281,44 @@ export default abstract class TransactionsExceededBaseRule<
     }
   }
 
-  private async getData(direction: 'origin' | 'destination'): Promise<{
-    period1: {
-      totalAmount?: number
-      totalCount: number
-    }
-    period2: {
-      totalAmount?: number
-      totalCount: number
-    }
+  private async getRawTransactionsData(
+    direction: 'origin' | 'destination'
+  ): Promise<{
+    sendingTransactions: AuxiliaryIndexTransaction[]
+    receivingTransactions: AuxiliaryIndexTransaction[]
   }> {
+    const { checkReceiver, checkSender } = this.parameters
+
+    const checkDirection = direction === 'origin' ? checkSender : checkReceiver
+
+    const { sendingTransactions, receivingTransactions } =
+      await getTransactionUserPastTransactionsByDirection(
+        this.transaction,
+        direction,
+        this.transactionRepository,
+        {
+          timeWindow: this.parameters.period2,
+          checkDirection,
+          filters: this.filters,
+        },
+        ['timestamp', 'originAmountDetails', 'destinationAmountDetails']
+      )
+
+    return {
+      sendingTransactions,
+      receivingTransactions,
+    }
+  }
+
+  private async getData(
+    direction: 'origin' | 'destination'
+  ): Promise<AggregationResult | undefined> {
     const {
       afterTimestamp: afterTimestampP1,
       beforeTimestamp: beforeTimestampP1,
     } = getTimestampRange(this.transaction.timestamp!, this.parameters.period1)
 
     const aggregationType = this.getAggregationType()
-
-    const { currency } = this.getMultiplierThresholds()
 
     const checkDirection =
       direction === 'origin'
@@ -425,21 +458,37 @@ export default abstract class TransactionsExceededBaseRule<
     }
 
     // Fallback
-    const { sendingTransactions, receivingTransactions } =
-      await getTransactionUserPastTransactionsByDirection(
-        this.transaction,
-        direction,
-        this.transactionRepository,
-        {
-          timeWindow: this.parameters.period2,
-          checkDirection,
-          filters: this.filters,
-        },
-        ['timestamp', 'originAmountDetails', 'destinationAmountDetails']
+    if (this.shouldUseRawData()) {
+      const { sendingTransactions, receivingTransactions } =
+        await this.getRawTransactionsData(direction)
+
+      // Update aggregations
+      const aggregationResult = await this.getTimeAggregatedResult(
+        sendingTransactions,
+        receivingTransactions
       )
 
+      await this.rebuildRuleAggregations(direction, aggregationResult)
+
+      return await this.computeRawData(
+        direction,
+        sendingTransactions,
+        receivingTransactions
+      )
+    } else {
+      return await this.computeRawData(direction)
+    }
+  }
+
+  private async computeRawData(
+    direction: 'origin' | 'destination',
+    sendingTransactions: AuxiliaryIndexTransaction[] = [],
+    receivingTransactions: AuxiliaryIndexTransaction[] = []
+  ): Promise<AggregationResult> {
     const sendingTransactionsToCheck = [...sendingTransactions]
     const receivingTransactionsToCheck = [...receivingTransactions]
+    const aggregationType = this.getAggregationType()
+    const { currency } = this.getMultiplierThresholds()
 
     if (direction === 'origin') {
       sendingTransactionsToCheck.push(this.transaction)
@@ -467,13 +516,6 @@ export default abstract class TransactionsExceededBaseRule<
         )
       )
 
-    // Update aggregations
-    const aggregationResult = await this.getTimeAggregatedResult(
-      sendingTransactions,
-      receivingTransactions
-    )
-    await this.rebuildRuleAggregations(direction, aggregationResult)
-
     return {
       period1: {
         totalCount: period1AmountDetails.length,
@@ -492,6 +534,32 @@ export default abstract class TransactionsExceededBaseRule<
             : undefined,
       },
     }
+  }
+
+  public async rebuildUserAggregation(
+    direction: 'origin' | 'destination',
+    isTransactionHistoricalFiltered: boolean
+  ): Promise<void> {
+    const { sendingTransactions, receivingTransactions } =
+      await this.getRawTransactionsData(direction)
+
+    if (
+      isTransactionHistoricalFiltered &&
+      (this.transaction.originUserId || this.transaction.destinationUserId)
+    ) {
+      if (direction === 'origin') {
+        sendingTransactions.push(this.transaction)
+      } else {
+        receivingTransactions.push(this.transaction)
+      }
+    }
+
+    const timeAggregatedResult = await this.getTimeAggregatedResult(
+      sendingTransactions,
+      receivingTransactions
+    )
+
+    await this.rebuildRuleAggregations(direction, timeAggregatedResult)
   }
 
   private getPeriod1Transactions(

@@ -13,6 +13,9 @@ import {
 import { dynamoDbSetupHook } from '@/test-utils/dynamodb-test-utils'
 import { TransactionAmountDetails } from '@/@types/openapi-public/TransactionAmountDetails'
 import { IBANDetails } from '@/@types/openapi-public/IBANDetails'
+import { withFeatureHook } from '@/test-utils/feature-test-utils'
+
+withFeatureHook(['RULES_ENGINE_V2'])
 
 const TEST_TRANSACTION_AMOUNT_100: TransactionAmountDetails = {
   transactionCurrency: 'EUR',

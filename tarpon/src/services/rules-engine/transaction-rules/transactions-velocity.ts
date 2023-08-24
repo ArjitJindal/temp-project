@@ -145,9 +145,7 @@ export default class TransactionsVelocityRule extends TransactionAggregationRule
     await this.rebuildRuleAggregations(direction, timeAggregatedResult)
   }
 
-  private async getData(
-    direction: 'origin' | 'destination'
-  ): Promise<number | undefined> {
+  private async getData(direction: 'origin' | 'destination'): Promise<number> {
     const { timeWindow, checkSender, checkReceiver } = this.parameters
     const { afterTimestamp, beforeTimestamp } = getTimestampRange(
       this.transaction.timestamp!,
@@ -186,8 +184,9 @@ export default class TransactionsVelocityRule extends TransactionAggregationRule
       )
 
       return sendingTransactions.length + receivingTransactions.length
+    } else {
+      return 0
     }
-    return
   }
 
   private async getRawTransactionsData(

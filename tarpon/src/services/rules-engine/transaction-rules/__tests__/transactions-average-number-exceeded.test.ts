@@ -13,6 +13,7 @@ import {
 import { dynamoDbSetupHook } from '@/test-utils/dynamodb-test-utils'
 import { TransactionsAverageNumberExceededParameters } from '@/services/rules-engine/transaction-rules/transactions-average-number-exceeded'
 import { TransactionAmountDetails } from '@/@types/openapi-public/TransactionAmountDetails'
+import { withFeatureHook } from '@/test-utils/feature-test-utils'
 
 const TEST_TRANSACTION_AMOUNT_300: TransactionAmountDetails = {
   transactionCurrency: 'EUR',
@@ -20,6 +21,7 @@ const TEST_TRANSACTION_AMOUNT_300: TransactionAmountDetails = {
 }
 
 dynamoDbSetupHook()
+withFeatureHook(['RULES_ENGINE_V2'])
 
 function getDefaultParams(): TransactionsAverageNumberExceededParameters {
   return {

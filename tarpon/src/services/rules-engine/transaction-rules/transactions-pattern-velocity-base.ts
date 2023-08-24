@@ -58,10 +58,6 @@ export default abstract class TransactionsPatternVelocityBaseRule<
     }
   }
 
-  public async rebuildUserAggregation(): Promise<void> {
-    return
-  }
-
   public async computeRule() {
     return await Promise.all([
       this.computeRuleUser('origin'),
@@ -103,6 +99,37 @@ export default abstract class TransactionsPatternVelocityBaseRule<
     }
   }
 
+  private async getRawTransactionsData(
+    direction: 'origin' | 'destination'
+  ): Promise<{
+    sendingTransactions: AuxiliaryIndexTransaction[]
+    receivingTransactions: AuxiliaryIndexTransaction[]
+  }> {
+    const {
+      timeWindow,
+      checkReceiver = 'all',
+      checkSender = 'all',
+    } = this.parameters
+    const checkDirection = direction === 'origin' ? checkSender : checkReceiver
+
+    const { sendingTransactions, receivingTransactions } =
+      await getTransactionUserPastTransactionsByDirection(
+        this.transaction,
+        direction,
+        this.transactionRepository,
+        {
+          timeWindow,
+          checkDirection,
+          matchPaymentMethodDetails:
+            this.isMatchPaymentMethodDetailsEnabled(direction),
+          filters: this.filters,
+        },
+        this.getNeededTransactionFields()
+      )
+
+    return { sendingTransactions, receivingTransactions }
+  }
+
   private async getData(
     direction: 'origin' | 'destination'
   ): Promise<{ [groupKey: string]: number }> {
@@ -136,33 +163,65 @@ export default abstract class TransactionsPatternVelocityBaseRule<
       }
     }
 
-    // Fallback
-    const { sendingTransactions, receivingTransactions } =
-      await getTransactionUserPastTransactionsByDirection(
-        this.transaction,
-        direction,
-        this.transactionRepository,
-        {
-          timeWindow,
-          checkDirection,
-          matchPaymentMethodDetails:
-            this.isMatchPaymentMethodDetailsEnabled(direction),
-          filters: this.filters,
-        },
-        this.getNeededTransactionFields()
-      )
+    if (!this.shouldUseRawData() && this.isAggregationSupported()) {
+      return await this.computeRawData(direction)
+    } else {
+      const { sendingTransactions, receivingTransactions } =
+        await this.getRawTransactionsData(direction)
 
-    // Update aggregations
-    if (this.isAggregationSupported()) {
-      await this.rebuildRuleAggregations(
-        direction,
-        await this.getTimeAggregatedResult(
-          sendingTransactions,
-          receivingTransactions
+      // Update aggregations
+      if (this.isAggregationSupported() && this.shouldUseRawData()) {
+        await this.rebuildRuleAggregations(
+          direction,
+          await this.getTimeAggregatedResult(
+            sendingTransactions,
+            receivingTransactions
+          )
         )
+      }
+      return await this.computeRawData(
+        direction,
+        sendingTransactions,
+        receivingTransactions
       )
     }
+  }
 
+  public async rebuildUserAggregation(
+    direction: 'origin' | 'destination',
+    isTransactionFiltered: boolean
+  ): Promise<void> {
+    const { sendingTransactions, receivingTransactions } =
+      await this.getRawTransactionsData(direction)
+
+    if (
+      isTransactionFiltered &&
+      (this.transaction.originUserId || this.transaction.destinationUserId)
+    ) {
+      if (direction === 'origin') {
+        sendingTransactions.push(this.transaction)
+      } else {
+        receivingTransactions.push(this.transaction)
+      }
+
+      // Update aggregations
+      if (this.isAggregationSupported()) {
+        await this.rebuildRuleAggregations(
+          direction,
+          await this.getTimeAggregatedResult(
+            sendingTransactions,
+            receivingTransactions
+          )
+        )
+      }
+    }
+  }
+
+  private async computeRawData(
+    direction: 'origin' | 'destination',
+    sendingTransactions: AuxiliaryIndexTransaction[] = [],
+    receivingTransactions: AuxiliaryIndexTransaction[] = []
+  ): Promise<AggregationData> {
     if (direction === 'origin') {
       sendingTransactions.push(this.transaction)
     } else {

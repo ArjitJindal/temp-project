@@ -26,7 +26,11 @@ import { DynamoDbTransactionRepository } from './repositories/dynamodb-transacti
 import { TransactionEventRepository } from './repositories/transaction-event-repository'
 import { RuleRepository } from './repositories/rule-repository'
 import { RuleInstanceRepository } from './repositories/rule-instance-repository'
-import { TRANSACTION_RULES, TransactionRuleBase } from './transaction-rules'
+import {
+  TRANSACTION_RULES,
+  TransactionRuleBase,
+  TransactionRuleImplementationName,
+} from './transaction-rules'
 import { generateRuleDescription, Vars } from './utils/format-description'
 import { Aggregators } from './aggregator'
 import { TransactionAggregationRule } from './transaction-rules/aggregation-rule'
@@ -93,6 +97,21 @@ export type TransactionAggregationTask = {
   tenantId: string
   isTransactionHistoricalFiltered: boolean
 }
+
+const RULE_IMPELEMENTAIONS_V2: TransactionRuleImplementationName[] = [
+  'transactions-velocity',
+  'transactions-volume',
+  'transactions-average-amount-exceeded',
+  'transactions-average-daily-amount-exceeded',
+  'transactions-average-number-exceeded',
+  'total-transactions-volume-exceeds',
+  'too-many-counterparty-country',
+  'too-many-transactions-to-high-risk-country',
+  'transactions-round-value-velocity',
+  'multiple-counterparty-senders-within-time-period',
+  'multiple-user-senders-within-time-period',
+  'transactions-outflow-inflow-volume',
+]
 
 export function getExecutedAndHitRulesResult(
   ruleResults: ExecutedRulesResult[]
@@ -710,12 +729,15 @@ export class RulesEngineService {
         let destinationTransactionAggregationTask:
           | TransactionAggregationTask
           | undefined
+
         if (
           hasFeature('RULES_ENGINE_V2') &&
           ruleClassInstance instanceof TransactionAggregationRule
         ) {
           if (
-            ['transactions-velocity'].includes(rule.ruleImplementationName) &&
+            RULE_IMPELEMENTAIONS_V2.includes(
+              rule.ruleImplementationName as TransactionRuleImplementationName
+            ) &&
             ruleInstance.id
           ) {
             originTransactionAggregationTask = {

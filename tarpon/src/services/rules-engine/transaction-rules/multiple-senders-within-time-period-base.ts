@@ -49,10 +49,6 @@ export default abstract class MultipleSendersWithinTimePeriodRuleBase extends Tr
 
   protected abstract getSenderReceiverTypes(): SenderReceiverTypes
 
-  public async rebuildUserAggregation(): Promise<void> {
-    return
-  }
-
   public async computeRule() {
     const { sendersCount } = this.parameters
     const data = await this.getData()
@@ -80,7 +76,7 @@ export default abstract class MultipleSendersWithinTimePeriodRuleBase extends Tr
     return hitResult
   }
 
-  private async getTransactionSenderUserKey(): Promise<string | undefined> {
+  private getTransactionSenderUserKey(): string | undefined {
     const { senderTypes, receiverTypes } = this.getSenderReceiverTypes()
 
     let key = undefined
@@ -101,6 +97,74 @@ export default abstract class MultipleSendersWithinTimePeriodRuleBase extends Tr
     }
 
     return key
+  }
+
+  private async getTransactionsRawData(): Promise<AuxiliaryIndexTransaction[]> {
+    const { timeWindow } = this.parameters
+    let senderTransactions: AuxiliaryIndexTransaction[] = []
+
+    if (this.shouldFetchRawData()) {
+      const { receivingTransactions } =
+        await getTransactionUserPastTransactionsByDirection(
+          this.transaction,
+          'destination',
+          this.transactionRepository,
+          {
+            timeWindow,
+            checkDirection: 'receiving',
+            matchPaymentMethodDetails: this.transaction.destinationUserId
+              ? false
+              : true,
+            filters: this.filters,
+          },
+          ['senderKeyId', 'originUserId']
+        )
+
+      senderTransactions = receivingTransactions
+    }
+
+    return senderTransactions
+  }
+
+  public async rebuildUserAggregation(
+    direction: 'origin' | 'destination',
+    isTransactionFiltered: boolean
+  ): Promise<void> {
+    const senderTransactions = await this.getTransactionsRawData()
+
+    if (direction === 'destination' && isTransactionFiltered) {
+      senderTransactions.push({
+        ...this.transaction,
+        senderKeyId: this.getTransactionSenderUserKey(),
+      })
+    }
+
+    const timeAggregatedResult = await this.getTimeAggregatedResult(
+      senderTransactions
+    )
+
+    await this.rebuildRuleAggregations('destination', timeAggregatedResult)
+  }
+
+  private isCounterParty(): boolean {
+    const { receiverTypes } = this.getSenderReceiverTypes()
+
+    return Boolean(
+      receiverTypes.includes('NON_USER') &&
+        this.transaction.destinationPaymentDetails
+    )
+  }
+
+  private isUser(): boolean {
+    const { receiverTypes } = this.getSenderReceiverTypes()
+
+    return Boolean(
+      receiverTypes.includes('USER') && this.transaction.destinationUserId
+    )
+  }
+
+  private shouldFetchRawData(): boolean {
+    return this.isCounterParty() || this.isUser()
   }
 
   private async getData(): Promise<string[]> {
@@ -125,39 +189,25 @@ export default abstract class MultipleSendersWithinTimePeriodRuleBase extends Tr
     }
 
     // Fallback
-    const { receiverTypes } = this.getSenderReceiverTypes()
+    if (this.shouldUseRawData()) {
+      const senderTransactions = await this.getTransactionsRawData()
 
-    let senderTransactions: AuxiliaryIndexTransaction[] = []
-    if (
-      (receiverTypes.includes('USER') && this.transaction.destinationUserId) ||
-      (receiverTypes.includes('NON_USER') &&
-        this.transaction.destinationPaymentDetails)
-    ) {
-      const { receivingTransactions } =
-        await getTransactionUserPastTransactionsByDirection(
-          this.transaction,
-          'destination',
-          this.transactionRepository,
-          {
-            timeWindow,
-            checkDirection: 'receiving',
-            matchPaymentMethodDetails: this.transaction.destinationUserId
-              ? false
-              : true,
-            filters: this.filters,
-          },
-          ['senderKeyId', 'originUserId']
-        )
+      const timeAggregatedResult = await this.getTimeAggregatedResult(
+        senderTransactions
+      )
 
-      senderTransactions = receivingTransactions
+      await this.rebuildRuleAggregations('destination', timeAggregatedResult)
+
+      return this.getUniqueSendersKeys(senderTransactions)
+    } else {
+      const sendingUserKey = await this.getTransactionSenderUserKey()
+
+      if (!sendingUserKey) {
+        return []
+      }
+
+      return [sendingUserKey]
     }
-
-    await this.rebuildRuleAggregations(
-      'destination',
-      await this.getTimeAggregatedResult(senderTransactions)
-    )
-
-    return this.getUniqueSendersKeys(senderTransactions)
   }
 
   private async getTimeAggregatedResult(
