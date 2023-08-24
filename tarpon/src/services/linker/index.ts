@@ -141,6 +141,7 @@ export class LinkerService {
               timestamp: { $gte: dayjs().subtract(30, 'day').valueOf() },
             },
           },
+          { $limit: 10000 },
           {
             $group: {
               _id: {
@@ -175,8 +176,10 @@ export class LinkerService {
               ...(!isPaymentId
                 ? { destinationUserId: userId }
                 : { destinationPaymentMethodId: userId }),
+              timestamp: { $gte: dayjs().subtract(30, 'day').valueOf() },
             },
           },
+          { $limit: 10000 },
           {
             $group: {
               _id: {
