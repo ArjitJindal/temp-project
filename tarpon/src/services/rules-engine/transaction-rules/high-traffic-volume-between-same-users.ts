@@ -1,5 +1,6 @@
 import { JSONSchemaType } from 'ajv'
 import * as _ from 'lodash'
+import { random, sumBy } from 'lodash'
 import { AuxiliaryIndexTransaction } from '../repositories/transaction-repository-interface'
 import {
   getTransactionsTotalAmount,
@@ -125,7 +126,7 @@ export default class HighTrafficVolumeBetweenSameUsers extends TransactionAggreg
       ) {
         falsePositiveDetails = {
           isFalsePositive: true,
-          confidenceScore: _.random(60, 80),
+          confidenceScore: random(60, 80),
         }
       }
     }
@@ -172,7 +173,7 @@ export default class HighTrafficVolumeBetweenSameUsers extends TransactionAggreg
         this.getTargetCurrency()
       )
       const amountValue =
-        _.sumBy(userAggregationData, (data) => data[receiverKeyId] || 0) +
+        sumBy(userAggregationData, (data) => data[receiverKeyId] || 0) +
         amount.transactionAmount
       return {
         transactionAmount: amountValue,

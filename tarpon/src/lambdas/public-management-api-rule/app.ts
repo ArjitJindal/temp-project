@@ -3,7 +3,7 @@ import {
   APIGatewayProxyWithLambdaAuthorizerEvent,
 } from 'aws-lambda'
 import { NotFound } from 'http-errors'
-import _ from 'lodash'
+
 import { Credentials } from '@aws-sdk/client-sts'
 import { toPublicRule } from './utils'
 import { RuleService } from '@/services/rules-engine/rule-service'

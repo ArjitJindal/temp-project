@@ -1,5 +1,6 @@
 import { Filter } from 'mongodb'
-import _ from 'lodash'
+
+import { pick, sortBy } from 'lodash'
 import {
   getMigrationLastCompletedTimestamp,
   updateMigrationLastCompletedTimestamp,
@@ -7,7 +8,8 @@ import {
 import { InternalTransaction } from '@/@types/openapi-internal/InternalTransaction'
 import { Transaction } from '@/@types/openapi-public/Transaction'
 import { getDynamoDbClient } from '@/utils/dynamodb'
-import { TRANSACTIONS_COLLECTION, getMongoDbClient } from '@/utils/mongoDBUtils'
+import { getMongoDbClient } from '@/utils/mongodb-utils'
+import { TRANSACTIONS_COLLECTION } from '@/utils/mongodb-definitions'
 import {
   RulesEngineService,
   getExecutedAndHitRulesResult,
@@ -73,13 +75,13 @@ export async function replayTransactionsAndEvents(
   let processedTransactionCount = 0
 
   for await (const internalTransaction of cursor) {
-    const transaction = _.pick(
+    const transaction = pick(
       internalTransaction,
       transactionAttributeNames
     ) as Transaction
 
     // Step 1: Get all transaction events of the transaction in ascending order
-    const transactionEvents = _.sortBy(
+    const transactionEvents = sortBy(
       await transactionEventRepository.getTransactionEvents(
         transaction.transactionId
       ),

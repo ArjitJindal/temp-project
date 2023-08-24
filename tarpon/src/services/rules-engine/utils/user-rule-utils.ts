@@ -1,4 +1,5 @@
 import * as _ from 'lodash'
+import { inRange } from 'lodash'
 import dayjs from '@/utils/dayjs'
 import { User } from '@/@types/openapi-public/User'
 import { Business } from '@/@types/openapi-public/Business'
@@ -22,7 +23,7 @@ export function isUserBetweenAge(
       dayjs(consumerUser.userDetails.dateOfBirth),
       'year'
     )
-    return _.inRange(age, ageRange.minAge || 0, ageRange.maxAge || 200)
+    return inRange(age, ageRange.minAge || 0, ageRange.maxAge || 200)
   } else {
     if (
       !businessUser.legalEntity?.companyRegistrationDetails?.dateOfRegistration
@@ -35,7 +36,7 @@ export function isUserBetweenAge(
       ),
       'year'
     )
-    return _.inRange(age, ageRange.minAge || 0, ageRange.maxAge || 1000)
+    return inRange(age, ageRange.minAge || 0, ageRange.maxAge || 1000)
   }
 }
 

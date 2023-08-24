@@ -1,4 +1,3 @@
-import _ from 'lodash'
 import { migrateAllTenants } from '../utils/tenant'
 import { RuleRepository } from '@/services/rules-engine/repositories/rule-repository'
 import { Tenant } from '@/services/accounts'

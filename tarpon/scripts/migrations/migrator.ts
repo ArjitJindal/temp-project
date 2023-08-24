@@ -10,7 +10,7 @@ import { syncRulesLibrary } from './always-run/sync-rules-library'
 import { loadConfigEnv } from './utils/config'
 import { syncListLibrary } from './always-run/sync-list-library'
 import { syncFeatureFlags } from './utils/tenant'
-import { getMongoDbClient } from '@/utils/mongoDBUtils'
+import { getMongoDbClient } from '@/utils/mongodb-utils'
 
 const MIGRATION_TEMPLATE = `import { migrateAllTenants } from '../utils/tenant'
 import { Tenant } from '@/services/accounts'

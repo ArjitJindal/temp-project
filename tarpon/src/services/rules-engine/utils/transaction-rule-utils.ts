@@ -1,4 +1,5 @@
 import * as _ from 'lodash'
+import { groupBy, inRange, mapValues } from 'lodash'
 import {
   AuxiliaryIndexTransaction,
   RulesEngineTransactionRepositoryInterface,
@@ -21,7 +22,7 @@ export async function isTransactionAmountAboveThreshold(
 ): Promise<{ thresholdHit: ThresholdHit | null; isHit: boolean }> {
   const result = await checkTransactionAmountBetweenThreshold(
     transactionAmountDefails,
-    _.mapValues(thresholds, (threshold) => ({
+    mapValues(thresholds, (threshold) => ({
       min: threshold,
     }))
   )
@@ -36,7 +37,7 @@ export async function isTransactionAmountBelowThreshold(
 ): Promise<boolean> {
   const result = await checkTransactionAmountBetweenThreshold(
     transactionAmountDefails,
-    _.mapValues(thresholds, (threshold) => ({
+    mapValues(thresholds, (threshold) => ({
       max: threshold,
     }))
   )
@@ -68,7 +69,7 @@ export async function checkTransactionAmountBetweenThreshold(
   const { min, max } =
     thresholds[convertedTransactionAmount.transactionCurrency]
   if (
-    _.inRange(
+    inRange(
       convertedTransactionAmount.transactionAmount,
       min || -Infinity,
       max || Infinity
@@ -327,7 +328,7 @@ export async function groupTransactions<T>(
   iteratee: (transactions: AuxiliaryIndexTransaction) => string,
   aggregator: (transactions: AuxiliaryIndexTransaction[]) => Promise<T>
 ): Promise<{ [hourKey: string]: T }> {
-  const groups = _.groupBy(transactions, iteratee)
+  const groups = groupBy(transactions, iteratee)
   const newGroups: { [key: string]: T } = {}
   for (const group in groups) {
     newGroups[group] = await aggregator(groups[group])

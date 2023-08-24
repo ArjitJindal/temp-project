@@ -1,4 +1,3 @@
-import _ from 'lodash'
 import { TransactionRiskFactorValueHandler } from '.'
 import { User } from '@/@types/openapi-public/User'
 import { Business } from '@/@types/openapi-internal/Business'

@@ -1,4 +1,4 @@
-import _ from 'lodash'
+import { lowerCase, startCase } from 'lodash'
 import { TimeWindowFiscalYear, TimeWindowGranularity } from './time-utils'
 import { USER_TYPES } from '@/@types/user/user-type'
 import { COUNTRY_CODES } from '@/utils/countries'
@@ -510,7 +510,7 @@ export const ACQUISITION_CHANNEL_SCHEMA = (options?: SchemaOptions) =>
       type: 'string',
       enum: ACQUISITION_CHANNELS,
       enumNames: ACQUISITION_CHANNELS.map((channel) =>
-        _.startCase(channel.replace('_', ' ').toLowerCase())
+        startCase(channel.replace('_', ' ').toLowerCase())
       ),
     },
     uniqueItems: true,
@@ -536,7 +536,7 @@ export const CONSUMER_USER_SEGMENT_SCHEMA = (options?: SchemaOptions) =>
       type: 'string',
       enum: CONSUMER_USER_SEGMENTS,
       enumNames: CONSUMER_USER_SEGMENTS.map((segment) =>
-        _.startCase(segment.replace('_', ' ').toLowerCase())
+        startCase(segment.replace('_', ' ').toLowerCase())
       ),
     },
     uniqueItems: true,
@@ -564,7 +564,7 @@ export const BUSINESS_USER_SEGMENT_SCHEMA = (options?: SchemaOptions) =>
       type: 'string',
       enum: BUSINESS_USER_SEGMENTS,
       enumNames: BUSINESS_USER_SEGMENTS.map((segment) =>
-        _.startCase(segment.replace('_', ' ').toLowerCase())
+        startCase(segment.replace('_', ' ').toLowerCase())
       ),
     },
     uniqueItems: true,
@@ -772,7 +772,7 @@ export const SANCTIONS_SCREENING_TYPES_SCHEMA = (options?: SchemaOptions) =>
       type: 'string',
       enum: SANCTIONS_SEARCH_TYPES,
       enumNames: SANCTIONS_SEARCH_TYPES.map((type) =>
-        _.startCase(_.lowerCase(type))
+        startCase(lowerCase(type))
       ),
     },
     uniqueItems: true,
@@ -818,7 +818,7 @@ export const USER_KYC_STATUS_SCHEMA = (options?: SchemaOptions) =>
       type: 'string',
       enum: KYC_STATUSS,
       enumNames: KYC_STATUSS.map((segment) =>
-        _.startCase(segment.replace('_', ' ').toLowerCase())
+        startCase(segment.replace('_', ' ').toLowerCase())
       ),
     },
     uniqueItems: true,
@@ -844,7 +844,7 @@ export const USER_STATUS_SCHEMA = (options?: SchemaOptions) =>
       type: 'string',
       enum: USER_STATES,
       enumNames: USER_STATES.map((segment) =>
-        _.startCase(segment.replace('_', ' ').toLowerCase())
+        startCase(segment.replace('_', ' ').toLowerCase())
       ),
     },
     uniqueItems: true,

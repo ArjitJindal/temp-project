@@ -2,7 +2,7 @@ import { jobRunnerHandler } from '../app'
 import { SimulationPulseBatchJob } from '@/@types/batch-job'
 import { getTestTenantId } from '@/test-utils/tenant-test-utils'
 import { SimulationTaskRepository } from '@/lambdas/console-api-simulation/repositories/simulation-task-repository'
-import { getMongoDbClient } from '@/utils/mongoDBUtils'
+import { getMongoDbClient } from '@/utils/mongodb-utils'
 import { createConsumerUsers, getTestUser } from '@/test-utils/user-test-utils'
 import {
   DEFAULT_CLASSIFICATION_SETTINGS,

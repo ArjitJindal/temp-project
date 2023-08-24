@@ -1,4 +1,4 @@
-import _ from 'lodash'
+import { set } from 'lodash'
 import { RuleRepository } from '@/services/rules-engine/repositories/rule-repository'
 import { FLAGRIGHT_TENANT_ID } from '@/core/constants'
 import { RULES_LIBRARY } from '@/services/rules-engine/transaction-rules/library'
@@ -10,7 +10,7 @@ export async function syncRulesLibrary() {
   for (const rule of RULES_LIBRARY) {
     // If ui:order is not defined, set the order to be the order defined in each rule
     if (!rule.parametersSchema?.['ui:schema']?.['ui:order']) {
-      _.set(
+      set(
         rule.parametersSchema,
         `ui:schema.ui:order`,
         Object.keys(rule.parametersSchema.properties)

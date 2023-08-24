@@ -3,12 +3,12 @@ import {
   CreateTableInput,
   DeleteTableCommand,
 } from '@aws-sdk/client-dynamodb'
-import _ from 'lodash'
+import { range } from 'lodash'
 
 export const TEST_DYNAMODB_TABLE_NAME_PREFIX = '__test__'
 // We use a separate table for each jest worker. Then different test files running in parallel
 // won't interfere with each other.
-export const TEST_DYNAMODB_TABLE_NAMES = _.range(0, 4).map(
+export const TEST_DYNAMODB_TABLE_NAMES = range(0, 4).map(
   (i) => `${TEST_DYNAMODB_TABLE_NAME_PREFIX}${process.env.JEST_WORKER_ID}-${i}`
 )
 

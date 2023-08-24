@@ -4,7 +4,7 @@ import {
 } from 'aws-lambda'
 import { JWTAuthorizerResult } from '@/@types/jwt'
 import { lambdaApi } from '@/core/middlewares/lambda-api-middlewares'
-import { getMongoDbClient } from '@/utils/mongoDBUtils'
+import { getMongoDbClient } from '@/utils/mongodb-utils'
 import { AuditLogRepository } from '@/services/audit-log/repositories/auditlog-repository'
 import { Handlers } from '@/@types/openapi-internal-custom/DefaultApi'
 

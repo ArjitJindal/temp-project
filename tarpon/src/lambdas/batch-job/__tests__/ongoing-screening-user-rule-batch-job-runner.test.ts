@@ -12,7 +12,7 @@ import { setUpRulesHooks } from '@/test-utils/rule-test-utils'
 import { getTestTenantId } from '@/test-utils/tenant-test-utils'
 import { getTestUser, setUpUsersHooks } from '@/test-utils/user-test-utils'
 import { getDynamoDbClient } from '@/utils/dynamodb'
-import { getMongoDbClient } from '@/utils/mongoDBUtils'
+import { getMongoDbClient } from '@/utils/mongodb-utils'
 import { OngoingScreeningUserRuleBatchJob } from '@/@types/batch-job'
 import { UserWithRulesResult } from '@/@types/openapi-internal/UserWithRulesResult'
 

@@ -1,5 +1,6 @@
 import { JSONSchemaType } from 'ajv'
-import _ from 'lodash'
+
+import { isEmpty } from 'lodash'
 import {
   FUZZINESS_SCHEMA,
   ENABLE_ONGOING_SCREENING_SCHEMA,
@@ -67,8 +68,8 @@ export default class SanctionsBusinessUserRule extends UserRule<SanctionsBusines
       this.parameters
 
     if (
-      _.isEmpty(entityTypes) ||
-      _.isEmpty(screeningTypes) ||
+      isEmpty(entityTypes) ||
+      isEmpty(screeningTypes) ||
       !isBusinessUser(this.user) ||
       (this.ongoingScreeningMode && !ongoingScreening)
     ) {

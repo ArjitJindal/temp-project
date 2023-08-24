@@ -1,8 +1,10 @@
 import { MongoClient, Document, AggregationCursor, Filter } from 'mongodb'
 import { v4 as uuidv4 } from 'uuid'
-import _ from 'lodash'
+
+import { omit } from 'lodash'
 import { AuditLog } from '@/@types/openapi-internal/AuditLog'
-import { AUDITLOG_COLLECTION, paginatePipeline } from '@/utils/mongoDBUtils'
+import { paginatePipeline } from '@/utils/mongodb-utils'
+import { AUDITLOG_COLLECTION } from '@/utils/mongodb-definitions'
 import { DefaultApiGetAuditlogRequest } from '@/@types/openapi-internal/RequestParameters'
 import { COUNT_QUERY_LIMIT } from '@/utils/pagination'
 import { traceable } from '@/core/xray'
@@ -40,7 +42,7 @@ export class AuditLogRepository {
       AUDITLOG_COLLECTION(this.tenantId)
     )
     const auditLog = await collection.findOne({ _id: auditlogId as any })
-    return auditLog ? _.omit(auditLog, '_id') : null
+    return auditLog ? omit(auditLog, '_id') : null
   }
 
   private getAuditLogMongoQuery(params: DefaultApiGetAuditlogRequest): {

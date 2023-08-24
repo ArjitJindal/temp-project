@@ -1,5 +1,5 @@
-import _ from 'lodash'
 import { DynamoDBDocumentClient } from '@aws-sdk/lib-dynamodb'
+import { omit } from 'lodash'
 import { syncRulesLibrary } from '../../../scripts/migrations/always-run/sync-rules-library'
 import { logger } from '../logger'
 import { UserRepository } from '@/services/users/repositories/user-repository'
@@ -58,7 +58,7 @@ export async function seedDynamo(
 
   logger.info('Creating users...')
   for (const user of usersData) {
-    await userRepo.saveUser(_.omit(user, '_id'), (user as any).type as UserType)
+    await userRepo.saveUser(omit(user, '_id'), (user as any).type as UserType)
   }
   logger.info('Creating lists...')
   for (const list of listsData) {

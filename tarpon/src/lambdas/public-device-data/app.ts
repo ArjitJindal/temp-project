@@ -9,7 +9,7 @@ import { logger } from '@/core/logger'
 import { lambdaApi } from '@/core/middlewares/lambda-api-middlewares'
 import { getDynamoDbClientByEvent } from '@/utils/dynamodb'
 import { MetricsRepository } from '@/services/rules-engine/repositories/metrics'
-import { getMongoDbClient } from '@/utils/mongoDBUtils'
+import { getMongoDbClient } from '@/utils/mongodb-utils'
 import { DeviceMetric } from '@/@types/openapi-internal/DeviceMetric'
 import { DeviceDataService } from '@/services/device-data'
 

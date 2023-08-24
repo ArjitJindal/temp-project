@@ -69,7 +69,7 @@ import { TransactionEventMonitoringResult } from '@/@types/openapi-public/Transa
 import { TransactionWithRulesResult } from '@/@types/openapi-public/TransactionWithRulesResult'
 import { RULE_EXECUTION_TIME_MS_METRIC } from '@/core/cloudwatch/metrics'
 import { addNewSubsegment, traceable } from '@/core/xray'
-import { getMongoDbClient } from '@/utils/mongoDBUtils'
+import { getMongoDbClient } from '@/utils/mongodb-utils'
 import { UserMonitoringResult } from '@/@types/openapi-public/UserMonitoringResult'
 import { UserWithRulesResult } from '@/@types/openapi-internal/UserWithRulesResult'
 import { BusinessWithRulesResult } from '@/@types/openapi-internal/BusinessWithRulesResult'

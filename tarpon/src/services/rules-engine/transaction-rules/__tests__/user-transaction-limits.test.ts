@@ -1,4 +1,4 @@
-import _ from 'lodash'
+import { set } from 'lodash'
 import { getRuleByRuleId } from '../library'
 import { UserTransactionLimitsRuleParameter } from '../user-transaction-limits'
 import { getTestTenantId } from '@/test-utils/tenant-test-utils'
@@ -505,7 +505,7 @@ ruleVariantsTest(false, () => {
       ])
       setUpUsersHooks(TEST_TENANT_ID, [
         getTestUser(
-          _.set(
+          set(
             {
               userId: '1',
             },

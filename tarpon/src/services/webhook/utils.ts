@@ -7,7 +7,7 @@ import {
 } from '@/@types/webhook'
 import { createSecret, deleteSecret, getSecret } from '@/utils/secrets-manager'
 import { WebhookRepository } from '@/services/webhook/repositories/webhook-repository'
-import { getMongoDbClient } from '@/utils/mongoDBUtils'
+import { getMongoDbClient } from '@/utils/mongodb-utils'
 import { logger } from '@/core/logger'
 
 export function getWebhookSecretKey(tenantId: string, webhookId: string) {

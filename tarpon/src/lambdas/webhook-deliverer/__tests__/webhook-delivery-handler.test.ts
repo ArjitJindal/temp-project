@@ -12,7 +12,7 @@ import { WebhookDeliveryRepository } from '../../../services/webhook/repositorie
 import { WebhookRepository } from '../../../services/webhook/repositories/webhook-repository'
 import { webhookDeliveryHandler as handler } from '../app'
 import { getTestTenantId } from '@/test-utils/tenant-test-utils'
-import { getMongoDbClient } from '@/utils/mongoDBUtils'
+import { getMongoDbClient } from '@/utils/mongodb-utils'
 import { WebhookDeliveryAttempt } from '@/@types/openapi-internal/WebhookDeliveryAttempt'
 import { WebhookEvent } from '@/@types/openapi-public/WebhookEvent'
 import { WebhookDeliveryTask } from '@/@types/webhook'

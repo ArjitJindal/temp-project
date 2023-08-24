@@ -3,7 +3,7 @@ import {
   DeviceMetric,
   DeviceMetricTypeEnum,
 } from '@/@types/openapi-internal/DeviceMetric'
-import { DEVICE_DATA_COLLECTION } from '@/utils/mongoDBUtils'
+import { DEVICE_DATA_COLLECTION } from '@/utils/mongodb-definitions'
 import { traceable } from '@/core/xray'
 
 @traceable

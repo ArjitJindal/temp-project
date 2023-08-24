@@ -14,7 +14,7 @@ import { WebhookDeliveryRepository } from '../../services/webhook/repositories/w
 import { WebhookAuditLogService } from './services/webhook-audit-log-service'
 import { lambdaApi } from '@/core/middlewares/lambda-api-middlewares'
 import { JWTAuthorizerResult } from '@/@types/jwt'
-import { getMongoDbClient } from '@/utils/mongoDBUtils'
+import { getMongoDbClient } from '@/utils/mongodb-utils'
 import { WebhookSecrets } from '@/@types/openapi-internal/WebhookSecrets'
 import { Handlers } from '@/@types/openapi-internal-custom/DefaultApi'
 

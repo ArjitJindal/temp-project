@@ -2,7 +2,7 @@ import { SQSEvent } from 'aws-lambda'
 import { AuditLogRecord } from '@/@types/audit-log'
 import { lambdaConsumer } from '@/core/middlewares/lambda-consumer-middlewares'
 import { AuditLogRepository } from '@/services/audit-log/repositories/auditlog-repository'
-import { getMongoDbClient } from '@/utils/mongoDBUtils'
+import { getMongoDbClient } from '@/utils/mongodb-utils'
 import { logger } from '@/core/logger'
 
 export const auditLogConsumerHandler = lambdaConsumer()(

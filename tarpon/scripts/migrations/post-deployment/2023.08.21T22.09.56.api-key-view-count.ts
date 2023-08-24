@@ -2,7 +2,7 @@ import { migrateAllTenants } from '../utils/tenant'
 import { getDynamoDbClient } from '@/utils/dynamodb'
 import { Tenant } from '@/services/accounts'
 import { TenantRepository } from '@/services/tenants/repositories/tenant-repository'
-import { getMongoDbClient } from '@/utils/mongoDBUtils'
+import { getMongoDbClient } from '@/utils/mongodb-utils'
 
 async function migrateTenant(tenant: Tenant) {
   const dynamoDb = getDynamoDbClient()

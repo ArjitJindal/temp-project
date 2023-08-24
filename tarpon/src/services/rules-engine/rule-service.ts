@@ -1,6 +1,7 @@
 import Ajv, { ValidateFunction } from 'ajv'
 import createHttpError from 'http-errors'
-import _ from 'lodash'
+
+import { isEmpty } from 'lodash'
 import { DEFAULT_CURRENCY_KEYWORD } from './transaction-rules/library'
 import {
   TRANSACTION_FILTERS,
@@ -23,7 +24,7 @@ import { mergeObjects, replaceMagicKeyword } from '@/utils/object'
 import { hasFeatures } from '@/core/utils/context'
 import { traceable } from '@/core/xray'
 import { RuleFilters } from '@/@types/openapi-internal/RuleFilters'
-import { getMongoDbClient } from '@/utils/mongoDBUtils'
+import { getMongoDbClient } from '@/utils/mongodb-utils'
 
 const RISK_LEVELS = RiskLevelRuleParameters.attributeTypeMap.map(
   (attribute) => attribute.name
@@ -116,7 +117,7 @@ export class RuleService {
 
     return rules.filter(
       (rule) =>
-        _.isEmpty(rule.requiredFeatures) ||
+        isEmpty(rule.requiredFeatures) ||
         hasFeatures(rule.requiredFeatures || [])
     )
   }

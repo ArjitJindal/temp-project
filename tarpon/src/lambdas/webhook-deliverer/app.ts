@@ -8,7 +8,7 @@ import { abortableFetch } from 'abortcontroller-polyfill/dist/cjs-ponyfill'
 import fetch, { Response } from 'cross-fetch'
 import timeoutSignal from 'timeout-signal'
 import { v4 as uuidv4 } from 'uuid'
-import _ from 'lodash'
+
 import { getWebhookSecrets } from '../../services/webhook/utils'
 import { WebhookDeliveryRepository } from '../../services/webhook/repositories/webhook-delivery-repository'
 import { WebhookRepository } from '../../services/webhook/repositories/webhook-repository'
@@ -18,7 +18,7 @@ import {
 } from '@/@types/webhook'
 import { lambdaConsumer } from '@/core/middlewares/lambda-consumer-middlewares'
 import { logger } from '@/core/logger'
-import { getMongoDbClient } from '@/utils/mongoDBUtils'
+import { getMongoDbClient } from '@/utils/mongodb-utils'
 import { WebhookConfiguration } from '@/@types/openapi-internal/WebhookConfiguration'
 import { WebhookEvent } from '@/@types/openapi-public/WebhookEvent'
 import {

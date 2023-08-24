@@ -1,4 +1,4 @@
-import _ from 'lodash'
+import { sum } from 'lodash'
 
 const QA_API_KEY_IDS = [
   'c4fr2s8zmi',
@@ -37,7 +37,7 @@ function getQaApiKeyIdFromPool(apiKeyPool: string[]): string {
   // We use a pool of API keys to spread out the usage.
   const qaSubdomain = (process.env.QA_SUBDOMAIN as string) || ''
   const apiKeyIdIndex =
-    _.sum(qaSubdomain.split('').map((c) => c.charCodeAt(0))) % apiKeyPool.length
+    sum(qaSubdomain.split('').map((c) => c.charCodeAt(0))) % apiKeyPool.length
 
   return apiKeyPool[apiKeyIdIndex]
 }

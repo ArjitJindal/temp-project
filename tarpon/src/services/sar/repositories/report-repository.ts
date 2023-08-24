@@ -1,11 +1,12 @@
 import { Document, MongoClient, WithId } from 'mongodb'
-import _ from 'lodash'
+
+import { isUndefined, omit, omitBy } from 'lodash'
 import { Report } from '@/@types/openapi-internal/Report'
+import { paginatePipeline } from '@/utils/mongodb-utils'
 import {
   COUNTER_COLLECTION,
-  paginatePipeline,
   REPORT_COLLECTION,
-} from '@/utils/mongoDBUtils'
+} from '@/utils/mongodb-definitions'
 import { DefaultApiGetReportsRequest } from '@/@types/openapi-internal/RequestParameters'
 import { EntityCounter } from '@/@types/openapi-internal/EntityCounter'
 import { Account } from '@/@types/openapi-internal/Account'
@@ -109,7 +110,7 @@ export class ReportRepository {
       {
         _id: newReport.id as any,
       },
-      _.omit(newReport, '_id'),
+      omit(newReport, '_id'),
       {
         upsert: true,
       }
@@ -121,7 +122,7 @@ export class ReportRepository {
     const db = this.mongoDb.db()
     const collection = db.collection<Report>(REPORT_COLLECTION(this.tenantId))
     const report = await collection.findOne({ _id: reportId as any })
-    return report ? _.omit(report, '_id') : null
+    return report ? omit(report, '_id') : null
   }
 
   public async getReports(
@@ -129,11 +130,11 @@ export class ReportRepository {
   ): Promise<{ total: number; items: Report[] }> {
     const db = this.mongoDb.db()
     const collection = db.collection<Report>(REPORT_COLLECTION(this.tenantId))
-    const filter = _.omitBy(
+    const filter = omitBy(
       {
         caseId: params.caseId,
       },
-      _.isUndefined
+      isUndefined
     )
     const pipeline: Document[] = [
       { $match: filter },

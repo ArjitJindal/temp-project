@@ -1,6 +1,6 @@
 import { JSONSchemaType } from 'ajv'
 
-import _ from 'lodash'
+import { isEmpty } from 'lodash'
 import {
   TRANSACTION_AMOUNT_RANGE_OPTIONAL_SCHEMA,
   TransactionAmountRange,
@@ -14,7 +14,7 @@ export async function transactionAmountRuleFilterPredicate(
   transaction: Transaction,
   transactionAmountRange?: TransactionAmountRange
 ) {
-  if (!transactionAmountRange || _.isEmpty(transactionAmountRange)) {
+  if (!transactionAmountRange || isEmpty(transactionAmountRange)) {
     return true
   }
 

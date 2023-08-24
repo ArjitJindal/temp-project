@@ -11,7 +11,7 @@ import { getDynamoDbClient } from '@/utils/dynamodb'
 import { RiskClassificationScore } from '@/@types/openapi-internal/RiskClassificationScore'
 import { RiskScoringService } from '@/services/risk-scoring'
 import { Transaction } from '@/@types/openapi-public/Transaction'
-import { getMongoDbClient } from '@/utils/mongoDBUtils'
+import { getMongoDbClient } from '@/utils/mongodb-utils'
 import { DEFAULT_RISK_LEVEL } from '@/services/risk-scoring/utils'
 
 export const TEST_VARIABLE_RISK_ITEM: ParameterAttributeRiskValues = {

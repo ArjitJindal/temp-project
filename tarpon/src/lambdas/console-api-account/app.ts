@@ -5,7 +5,7 @@ import {
 import { AccountsService } from '../../services/accounts'
 import { lambdaApi } from '@/core/middlewares/lambda-api-middlewares'
 import { assertCurrentUserRole, JWTAuthorizerResult } from '@/@types/jwt'
-import { getMongoDbClient } from '@/utils/mongoDBUtils'
+import { getMongoDbClient } from '@/utils/mongodb-utils'
 import { Handlers } from '@/@types/openapi-internal-custom/DefaultApi'
 
 export const accountsHandler = lambdaApi()(

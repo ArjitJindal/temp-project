@@ -5,7 +5,8 @@ import {
   PutMetricDataCommand,
 } from '@aws-sdk/client-cloudwatch'
 import dayjs from 'dayjs'
-import _ from 'lodash'
+import { groupBy } from 'lodash'
+
 import unidecode from 'unidecode'
 
 export type Metric = {
@@ -120,7 +121,7 @@ export const publishMetrics = async (metrics: Array<MetricsData>) => {
     })
     .filter(Boolean) as Array<MetricDatum & { Namespace: string }>
 
-  const metricsByNamespace = _.groupBy(metricData, 'Namespace')
+  const metricsByNamespace = groupBy(metricData, 'Namespace')
 
   for (const [namespace, metrics] of Object.entries(metricsByNamespace)) {
     await cloudWatchClient.send(

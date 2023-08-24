@@ -4,8 +4,9 @@
 import path from 'path'
 import { execSync } from 'child_process'
 import fetch from 'node-fetch'
-import _ from 'lodash'
+
 import fs from 'fs-extra'
+import { omit } from 'lodash'
 import { syncRulesLibrary } from '../migrations/always-run/sync-rules-library'
 import { RuleInstance } from '@/@types/openapi-internal/RuleInstance'
 import { FLAGRIGHT_TENANT_ID } from '@/core/constants'
@@ -104,7 +105,7 @@ async function createUserLocally(userId: string) {
         'tenant-id': 'flagright',
       },
       body: JSON.stringify(
-        _.omit(user, '_id', 'PartitionKeyID', 'SortKeyID', 'type')
+        omit(user, '_id', 'PartitionKeyID', 'SortKeyID', 'type')
       ),
     })
   }
@@ -127,7 +128,7 @@ async function verifyTransactionLocally(transactionId: string) {
           'tenant-id': 'flagright',
         },
         body: JSON.stringify(
-          _.omit(
+          omit(
             transaction,
             '_id',
             'PartitionKeyID',

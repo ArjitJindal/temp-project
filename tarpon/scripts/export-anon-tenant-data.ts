@@ -3,7 +3,7 @@ import { program } from 'commander'
 import { StackConstants } from '@lib/constants'
 import { MongoClient } from 'mongodb'
 
-import { getMongoDbClient } from '@/utils/mongoDBUtils'
+import { getMongoDbClient } from '@/utils/mongodb-utils'
 import { logger } from '@/core/logger'
 import { copyCollections } from '@/utils/seed'
 import { anonymize } from '@/utils/anonymize'

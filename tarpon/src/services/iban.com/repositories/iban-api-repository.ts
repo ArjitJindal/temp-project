@@ -1,7 +1,7 @@
 import { MongoClient } from 'mongodb'
 import { uniqBy } from 'lodash'
 import { IBANApiHistory, IBANValidationResponse } from '../types'
-import { IBAN_COM_COLLECTION } from '@/utils/mongoDBUtils'
+import { IBAN_COM_COLLECTION } from '@/utils/mongodb-definitions'
 import { traceable } from '@/core/xray'
 
 @traceable

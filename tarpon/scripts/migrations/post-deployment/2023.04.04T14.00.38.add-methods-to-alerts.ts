@@ -1,7 +1,9 @@
 import { StackConstants } from '@lib/constants'
-import _ from 'lodash'
+
+import { uniq } from 'lodash'
 import { migrateAllTenants } from '../utils/tenant'
-import { CASES_COLLECTION, getMongoDbClient } from '@/utils/mongoDBUtils'
+import { getMongoDbClient } from '@/utils/mongodb-utils'
+import { CASES_COLLECTION } from '@/utils/mongodb-definitions'
 import { Case } from '@/@types/openapi-internal/Case'
 import { Tenant } from '@/services/accounts'
 import { PaymentMethod } from '@/@types/openapi-internal/PaymentMethod'
@@ -32,10 +34,10 @@ export async function addTxnIdsToAlerts(tenant: Tenant) {
         if (!a) {
           return
         }
-        a.originPaymentMethods = _.uniq(
+        a.originPaymentMethods = uniq(
           a.transactionIds?.map((t) => originMethods.get(t))
         ) as PaymentMethod[]
-        a.destinationPaymentMethods = _.uniq(
+        a.destinationPaymentMethods = uniq(
           a.transactionIds?.map((t) => destinationMethods.get(t))
         ) as PaymentMethod[]
 

@@ -1,5 +1,5 @@
 import { BatchJobRunner } from './batch-job-runner-base'
-import { getMongoDbClient } from '@/utils/mongoDBUtils'
+import { getMongoDbClient } from '@/utils/mongodb-utils'
 import { PulseDataLoadBatchJob } from '@/@types/batch-job'
 import { getDynamoDbClient } from '@/utils/dynamodb'
 import { RiskScoringService } from '@/services/risk-scoring'

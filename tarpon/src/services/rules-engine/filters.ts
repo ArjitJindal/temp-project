@@ -1,5 +1,6 @@
 import { JSONSchemaType } from 'ajv'
-import _ from 'lodash'
+
+import { isEmpty } from 'lodash'
 import {
   CheckDirectionRuleFilter,
   CheckDirectionRuleFilterParameter,
@@ -198,7 +199,7 @@ function createFiltersMap<T>(filters: Array<any>): { [key: string]: T } {
 
 function createDefaultValuesMap<T>(filters: Array<any>): { [key: string]: T } {
   const filteredDefaultValues = filters.filter(
-    (filter) => !_.isEmpty(filter?.getDefaultValues())
+    (filter) => !isEmpty(filter?.getDefaultValues())
   )
 
   return Object.fromEntries(

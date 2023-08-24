@@ -3,7 +3,8 @@ import { tenantHasFeature } from '@/core/middlewares/tenant-has-feature'
 import { Tenant } from '@/services/accounts'
 import { RiskScoringService } from '@/services/risk-scoring'
 import { getDynamoDbClient } from '@/utils/dynamodb'
-import { USERS_COLLECTION, getMongoDbClient } from '@/utils/mongoDBUtils'
+import { getMongoDbClient } from '@/utils/mongodb-utils'
+import { USERS_COLLECTION } from '@/utils/mongodb-definitions'
 
 const getCountOfUsersWithNoRiskScore = async (tenantId: string) => {
   const mongoDb = await getMongoDbClient()

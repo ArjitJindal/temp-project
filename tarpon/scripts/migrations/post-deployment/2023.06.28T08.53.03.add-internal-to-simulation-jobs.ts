@@ -1,9 +1,7 @@
-import _ from 'lodash'
+import { memoize } from 'lodash'
 import { migrateAllTenants } from '../utils/tenant'
-import {
-  SIMULATION_TASK_COLLECTION,
-  getMongoDbClient,
-} from '@/utils/mongoDBUtils'
+import { getMongoDbClient } from '@/utils/mongodb-utils'
+import { SIMULATION_TASK_COLLECTION } from '@/utils/mongodb-definitions'
 import { AccountsService, Tenant } from '@/services/accounts'
 import { SimulationPulseJob } from '@/@types/openapi-internal/SimulationPulseJob'
 import { SimulationBeaconJob } from '@/@types/openapi-internal/SimulationBeaconJob'
@@ -12,7 +10,7 @@ import { logger } from '@/core/logger'
 async function migrateTenant(tenant: Tenant, auth0Domain: string) {
   const mongoDb = await getMongoDbClient()
   const accountsService = new AccountsService({ auth0Domain }, { mongoDb })
-  const getAccount = _.memoize(async (accountId: string) => {
+  const getAccount = memoize(async (accountId: string) => {
     return accountsService.getAccount(accountId)
   })
 

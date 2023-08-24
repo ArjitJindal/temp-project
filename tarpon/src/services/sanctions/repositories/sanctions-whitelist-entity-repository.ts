@@ -1,8 +1,6 @@
 import { MongoClient } from 'mongodb'
-import {
-  SANCTIONS_WHITELIST_ENTITIES_COLLECTION,
-  withTransaction,
-} from '@/utils/mongoDBUtils'
+import { withTransaction } from '@/utils/mongodb-utils'
+import { SANCTIONS_WHITELIST_ENTITIES_COLLECTION } from '@/utils/mongodb-definitions'
 import { ComplyAdvantageSearchHitDoc } from '@/@types/openapi-internal/ComplyAdvantageSearchHitDoc'
 import { traceable } from '@/core/xray'
 

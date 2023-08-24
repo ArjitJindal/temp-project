@@ -4,7 +4,7 @@ import { Tenant } from '@/services/accounts'
 import {
   createMongoDBCollections,
   getMongoDbClient,
-} from '@/utils/mongoDBUtils'
+} from '@/utils/mongodb-utils'
 
 async function migrateTenant(tenant: Tenant) {
   const mongodb = await getMongoDbClient(StackConstants.MONGO_DB_DATABASE_NAME)

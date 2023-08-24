@@ -1,9 +1,9 @@
-import _ from 'lodash'
+import { countBy, isEmpty } from 'lodash'
 import { SimulationTaskRepository } from '../console-api-simulation/repositories/simulation-task-repository'
 import { SimulationResultRepository } from '../console-api-simulation/repositories/simulation-result-repository'
 import { BatchJobRunner } from './batch-job-runner-base'
 import { SimulationPulseBatchJob } from '@/@types/batch-job'
-import { getMongoDbClient } from '@/utils/mongoDBUtils'
+import { getMongoDbClient } from '@/utils/mongodb-utils'
 import { UserRepository } from '@/services/users/repositories/user-repository'
 import { RiskRepository } from '@/services/risk-scoring/repositories/risk-repository'
 import { getDynamoDbClient } from '@/utils/dynamodb'
@@ -63,7 +63,7 @@ export class SimulationPulseBatchJobRunner extends BatchJobRunner {
       let results: SimulationResult | undefined
       if (
         parameters.parameterAttributeRiskValues &&
-        !_.isEmpty(parameters.parameterAttributeRiskValues)
+        !isEmpty(parameters.parameterAttributeRiskValues)
       ) {
         results = await this.recalculateRiskScores(
           parameters.classificationValues,
@@ -72,7 +72,7 @@ export class SimulationPulseBatchJobRunner extends BatchJobRunner {
         )
       } else if (
         parameters.classificationValues &&
-        !_.isEmpty(parameters.classificationValues)
+        !isEmpty(parameters.classificationValues)
       ) {
         results = await this.mapNewRiskLevels(
           parameters.classificationValues,
@@ -111,7 +111,7 @@ export class SimulationPulseBatchJobRunner extends BatchJobRunner {
     riskType: 'KRS' | 'ARS' | 'DRS',
     riskLevels: RiskLevel[]
   ) {
-    return Object.entries(_.countBy(riskLevels)).map((entry) => ({
+    return Object.entries(countBy(riskLevels)).map((entry) => ({
       count: entry[1],
       riskType,
       riskLevel: entry[0] as RiskLevel,
@@ -255,7 +255,7 @@ export class SimulationPulseBatchJobRunner extends BatchJobRunner {
   ): Promise<SimulationResult> {
     const currentClassificationValues =
       await this.riskRepository!.getRiskClassificationValues()
-    const newClassificationValues = _.isEmpty(classificationValues)
+    const newClassificationValues = isEmpty(classificationValues)
       ? currentClassificationValues
       : (classificationValues as RiskClassificationScore[])
     const users = await this.usersRepository!.getMongoAllUsers({

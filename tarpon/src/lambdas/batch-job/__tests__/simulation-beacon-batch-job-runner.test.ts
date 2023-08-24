@@ -5,7 +5,7 @@ import { withFeatureHook } from '@/test-utils/feature-test-utils'
 import { getTestTenantId } from '@/test-utils/tenant-test-utils'
 import { createConsumerUsers, getTestUser } from '@/test-utils/user-test-utils'
 import { getDynamoDbClient } from '@/utils/dynamodb'
-import { getMongoDbClient } from '@/utils/mongoDBUtils'
+import { getMongoDbClient } from '@/utils/mongodb-utils'
 import { getTestTransaction } from '@/test-utils/transaction-test-utils'
 import { RuleInstanceRepository } from '@/services/rules-engine/repositories/rule-instance-repository'
 import {

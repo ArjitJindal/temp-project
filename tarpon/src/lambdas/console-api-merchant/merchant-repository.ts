@@ -1,5 +1,6 @@
 import { MongoClient } from 'mongodb'
-import { MERCHANT_MONITORING_DATA_COLLECTION } from '@/utils/mongoDBUtils'
+
+import { MERCHANT_MONITORING_DATA_COLLECTION } from '@/utils/mongodb-definitions'
 import { MerchantMonitoringSummary } from '@/@types/openapi-internal/MerchantMonitoringSummary'
 import { MerchantMonitoringSource } from '@/@types/openapi-internal/MerchantMonitoringSource'
 import { traceable } from '@/core/xray'

@@ -3,7 +3,7 @@ import { auditLogConsumerHandler as handler } from '../app'
 import { AuditLogRepository } from '@/services/audit-log/repositories/auditlog-repository'
 import { AuditLogRecord } from '@/@types/audit-log'
 import { getTestTenantId } from '@/test-utils/tenant-test-utils'
-import { getMongoDbClient } from '@/utils/mongoDBUtils'
+import { getMongoDbClient } from '@/utils/mongodb-utils'
 
 const auditLogConsumerHandler = handler as any as (event: SQSEvent) => void
 

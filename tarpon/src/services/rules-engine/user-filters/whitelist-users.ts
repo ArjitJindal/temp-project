@@ -1,6 +1,6 @@
 import { JSONSchemaType } from 'ajv'
 
-import _ from 'lodash'
+import { intersection } from 'lodash'
 import { UserRuleFilter } from './filter'
 import { uiSchema } from '@/services/rules-engine/utils/rule-schema-utils'
 import { ListRepository } from '@/services/list/repositories/list-repository'
@@ -50,7 +50,7 @@ export class WhitelistUsersRuleFilter extends UserRuleFilter<WhitelistUsersRuleF
   public async predicate(): Promise<boolean> {
     const { listIds, userIds } = this.parameters.whitelistUsers!
     const inputUserIds = [this.user.userId]
-    if (userIds && _.intersection(inputUserIds, userIds).length > 0) {
+    if (userIds && intersection(inputUserIds, userIds).length > 0) {
       return false
     }
     if (listIds) {

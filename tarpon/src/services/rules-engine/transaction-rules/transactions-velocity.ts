@@ -1,5 +1,6 @@
 import { JSONSchemaType } from 'ajv'
-import _ from 'lodash'
+
+import { sumBy } from 'lodash'
 import { TransactionHistoricalFilters } from '../filters'
 import { AuxiliaryIndexTransaction } from '../repositories/transaction-repository-interface'
 import {
@@ -158,7 +159,7 @@ export default class TransactionsVelocityRule extends TransactionAggregationRule
       beforeTimestamp
     )
     if (userAggregationData) {
-      const transactionsCount = _.sumBy(
+      const transactionsCount = sumBy(
         userAggregationData,
         (data) =>
           (checkDirection === 'sending'

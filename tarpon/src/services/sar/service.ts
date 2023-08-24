@@ -13,7 +13,7 @@ import {
   UNIMPLEMENTED_GENERATORS,
 } from '@/services/sar/generators'
 import { Report } from '@/@types/openapi-internal/Report'
-import { getMongoDbClient } from '@/utils/mongoDBUtils'
+import { getMongoDbClient } from '@/utils/mongodb-utils'
 import { Case } from '@/@types/openapi-internal/Case'
 import { InternalTransaction } from '@/@types/openapi-internal/InternalTransaction'
 import { DefaultApiGetReportsRequest } from '@/@types/openapi-internal/RequestParameters'

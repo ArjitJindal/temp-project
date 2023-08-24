@@ -1,7 +1,5 @@
-import {
-  MIGRATION_TMP_COLLECTION,
-  getMongoDbClient,
-} from '@/utils/mongoDBUtils'
+import { getMongoDbClient } from '@/utils/mongodb-utils'
+import { MIGRATION_TMP_COLLECTION } from '@/utils/mongodb-definitions'
 
 export async function getMigrationLastCompletedTimestamp(
   migrationKey: string

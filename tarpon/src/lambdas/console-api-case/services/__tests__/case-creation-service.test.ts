@@ -22,7 +22,7 @@ import {
 } from '@/test-utils/user-test-utils'
 import { Case } from '@/@types/openapi-internal/Case'
 import { RuleHitDirection } from '@/@types/openapi-public/RuleHitDirection'
-import { getMongoDbClient } from '@/utils/mongoDBUtils'
+import { getMongoDbClient } from '@/utils/mongodb-utils'
 import { Priority } from '@/@types/openapi-internal/Priority'
 import { Alert } from '@/@types/openapi-internal/Alert'
 import {

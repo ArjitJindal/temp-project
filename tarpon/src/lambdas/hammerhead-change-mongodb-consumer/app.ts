@@ -1,10 +1,10 @@
 import path from 'path'
 import { KinesisStreamEvent, SQSEvent } from 'aws-lambda'
+import { getMongoDbClient } from '@/utils/mongodb-utils'
 import {
-  getMongoDbClient,
   CASES_COLLECTION,
   TRANSACTIONS_COLLECTION,
-} from '@/utils/mongoDBUtils'
+} from '@/utils/mongodb-definitions'
 import { lambdaConsumer } from '@/core/middlewares/lambda-consumer-middlewares'
 import { logger } from '@/core/logger'
 import { StreamConsumerBuilder } from '@/core/dynamodb/dynamodb-stream-consumer-builder'

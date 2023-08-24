@@ -1,10 +1,9 @@
 import { MongoClient } from 'mongodb'
 import { logger } from '../logger'
+import { allCollections, createMongoDBCollections } from '@/utils/mongodb-utils'
 import {
-  allCollections,
   ARS_SCORES_COLLECTION,
   CASES_COLLECTION,
-  createMongoDBCollections,
   DRS_SCORES_COLLECTION,
   KRS_SCORES_COLLECTION,
   MERCHANT_MONITORING_DATA_COLLECTION,
@@ -20,7 +19,7 @@ import {
   REPORT_COLLECTION,
   SIMULATION_TASK_COLLECTION,
   CHECKLIST_TEMPLATE_COLLECTION,
-} from '@/utils/mongoDBUtils'
+} from '@/utils/mongodb-definitions'
 import { init as txnInit, transactions } from '@/core/seed/data/transactions'
 import { init as caseInit, data as cases } from '@/core/seed/data/cases'
 import {

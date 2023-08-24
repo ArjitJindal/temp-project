@@ -6,7 +6,7 @@ import { getDynamoDbClient } from '@/utils/dynamodb'
 import { getTestTenantId } from '@/test-utils/tenant-test-utils'
 import { ExecutedRulesResult } from '@/@types/openapi-internal/ExecutedRulesResult'
 import { HitRulesDetails } from '@/@types/openapi-internal/HitRulesDetails'
-import { getMongoDbClient } from '@/utils/mongoDBUtils'
+import { getMongoDbClient } from '@/utils/mongodb-utils'
 import {
   disableLocalChangeHandler,
   enableLocalChangeHandler,

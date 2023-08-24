@@ -1,6 +1,7 @@
 import { JSONSchemaType } from 'ajv'
 import pLimit from 'p-limit'
-import _ from 'lodash'
+
+import { isEmpty, uniqBy } from 'lodash'
 import {
   FUZZINESS_SCHEMA,
   ENABLE_ONGOING_SCREENING_SCHEMA,
@@ -55,7 +56,7 @@ export default class SanctionsBankUserRule extends UserRule<SanctionsBankUserRul
       this.parameters
 
     if (
-      _.isEmpty(screeningTypes) ||
+      isEmpty(screeningTypes) ||
       !isBusinessUser(this.user) ||
       (this.ongoingScreeningMode && !ongoingScreening)
     ) {
@@ -89,7 +90,7 @@ export default class SanctionsBankUserRule extends UserRule<SanctionsBankUserRul
         logger.error(e)
       }
     }
-    const bankInfosToCheck = _.uniqBy(
+    const bankInfosToCheck = uniqBy(
       bankInfos.filter((bankInfo) => bankInfo.bankName),
       (bankInfo) => JSON.stringify(bankInfo)
     )

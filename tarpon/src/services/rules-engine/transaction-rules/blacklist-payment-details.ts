@@ -1,5 +1,6 @@
 import { JSONSchemaType } from 'ajv'
-import _ from 'lodash'
+
+import { isEqual } from 'lodash'
 import { RuleHitResult } from '../rule'
 import { TransactionRule } from './rule'
 import { CardExpiry } from '@/@types/openapi-public/CardExpiry'
@@ -136,7 +137,7 @@ export default class BlacklistPaymentdetailsRule extends TransactionRule<Blackli
                 paymentDetails.cardFingerprint ||
               (cardPaymentDetail.cardLast4Digits ===
                 paymentDetails.cardLast4Digits &&
-                _.isEqual(
+                isEqual(
                   cardPaymentDetail.cardExpiry,
                   paymentDetails.cardExpiry
                 ) &&

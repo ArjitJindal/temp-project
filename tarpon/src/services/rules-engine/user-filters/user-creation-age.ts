@@ -1,6 +1,6 @@
 import { JSONSchemaType } from 'ajv'
 
-import _ from 'lodash'
+import { inRange } from 'lodash'
 import { AGE_RANGE_OPTIONAL_SCHEMA } from '../utils/rule-parameter-schemas'
 import { UserRuleFilter } from './filter'
 import dayjs, { duration } from '@/utils/dayjs'
@@ -44,7 +44,7 @@ export class UserCreationAgeRuleFilter extends UserRuleFilter<UserCreationAgeRul
   private isUserBetweenAge(user: User | Business): boolean {
     const { minAge, maxAge } = this.parameters.userCreationAgeRange!
     const creationAgeInMs = dayjs().diff(dayjs(user.createdTimestamp), 'ms')
-    return _.inRange(
+    return inRange(
       creationAgeInMs,
       minAge?.granularity && minAge?.units ? this.getAgeInMs(minAge) : 0,
       maxAge?.granularity && maxAge?.units

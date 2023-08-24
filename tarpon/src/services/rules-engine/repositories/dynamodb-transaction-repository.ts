@@ -1,5 +1,5 @@
 import { v4 as uuidv4 } from 'uuid'
-import _, { chunk } from 'lodash'
+import { chunk, get, isEmpty, omit, pickBy, set, sum } from 'lodash'
 import { StackConstants } from '@lib/constants'
 import {
   BatchGetCommand,
@@ -63,8 +63,8 @@ export class DynamoDbTransactionRepository
       'destinationAmountDetails.country',
     ]
     COUNTRY_FIELD_PATHS.forEach((path) => {
-      if (_.get(transaction, path) === 'N/A') {
-        _.set(transaction, path, undefined)
+      if (get(transaction, path) === 'N/A') {
+        set(transaction, path, undefined)
       }
     })
   }
@@ -401,7 +401,7 @@ export class DynamoDbTransactionRepository
     }
     const result = await paginateQuery(this.dynamoDb, queryInput)
     return (result.Items?.map((item) =>
-      _.omit(item, ['PartitionKeyID', 'SortKeyID'])
+      omit(item, ['PartitionKeyID', 'SortKeyID'])
     ) || []) as Array<AuxiliaryIndexTransaction>
   }
 
@@ -567,7 +567,7 @@ export class DynamoDbTransactionRepository
           )
       )
     )
-    return _.sum(results)
+    return sum(results)
   }
 
   public async getUserReceivingTransactionsCount(
@@ -590,7 +590,7 @@ export class DynamoDbTransactionRepository
           )
       )
     )
-    return _.sum(results)
+    return sum(results)
   }
 
   public async getNonUserSendingTransactionsCount(
@@ -617,7 +617,7 @@ export class DynamoDbTransactionRepository
         }
       )
     )
-    return _.sum(results)
+    return sum(results)
   }
 
   public async getNonUserReceivingTransactionsCount(
@@ -644,7 +644,7 @@ export class DynamoDbTransactionRepository
         }
       )
     )
-    return _.sum(results)
+    return sum(results)
   }
 
   public async getNonUserSendingTransactions(
@@ -764,7 +764,7 @@ export class DynamoDbTransactionRepository
       )
     )
     return (result.Items?.map((item) =>
-      _.omit(item, ['PartitionKeyID', 'SortKeyID'])
+      omit(item, ['PartitionKeyID', 'SortKeyID'])
     ) || []) as Array<AuxiliaryIndexTransaction>
   }
 
@@ -846,40 +846,40 @@ export class DynamoDbTransactionRepository
 
     const filters = [
       originPaymentMethodsKeys &&
-        !_.isEmpty(originPaymentMethodsKeys) &&
+        !isEmpty(originPaymentMethodsKeys) &&
         `#originPaymentDetails.#method IN (${originPaymentMethodsKeys.join(
           ','
         )})`,
       destinationPaymentMethodsKeys &&
-        !_.isEmpty(destinationPaymentMethodsKeys) &&
+        !isEmpty(destinationPaymentMethodsKeys) &&
         `#destinationPaymentDetails.#method IN (${destinationPaymentMethodsKeys.join(
           ','
         )})`,
       transactionStatesKeys &&
-        !_.isEmpty(transactionStatesKeys) &&
+        !isEmpty(transactionStatesKeys) &&
         `transactionState IN (${transactionStatesKeys.join(',')})`,
       originCountriesKeys &&
-        !_.isEmpty(originCountriesKeys) &&
+        !isEmpty(originCountriesKeys) &&
         `#originAmountDetails.#country IN (${originCountriesKeys.join(',')})`,
       destinationCountriesKeys &&
-        !_.isEmpty(destinationCountriesKeys) &&
+        !isEmpty(destinationCountriesKeys) &&
         `#destinationAmountDetails.#country IN (${destinationCountriesKeys.join(
           ','
         )})`,
       filterOptions.transactionAmountRange &&
-        !_.isEmpty(filterOptions.transactionAmountRange) &&
+        !isEmpty(filterOptions.transactionAmountRange) &&
         `${transactionAmountStatement}`,
     ].filter(Boolean)
 
-    if (_.isEmpty(filters) && _.isEmpty(attributesToFetch)) {
+    if (isEmpty(filters) && isEmpty(attributesToFetch)) {
       return {}
     }
 
-    const filterExpression = _.isEmpty(filters)
+    const filterExpression = isEmpty(filters)
       ? undefined
       : filters.map((v) => (filters.length > 1 ? `(${v})` : v)).join(' AND ')
     const expressionAttributeNames = mergeObjects(
-      _.pickBy(
+      pickBy(
         {
           '#originPaymentDetails': 'originPaymentDetails',
           '#destinationPaymentDetails': 'destinationPaymentDetails',
@@ -898,10 +898,10 @@ export class DynamoDbTransactionRepository
 
     return {
       FilterExpression: filterExpression,
-      ExpressionAttributeNames: _.isEmpty(expressionAttributeNames)
+      ExpressionAttributeNames: isEmpty(expressionAttributeNames)
         ? undefined
         : expressionAttributeNames,
-      ExpressionAttributeValues: _.isEmpty(filters)
+      ExpressionAttributeValues: isEmpty(filters)
         ? undefined
         : {
             ...Object.fromEntries(transactionStatesParams || []),
@@ -911,7 +911,7 @@ export class DynamoDbTransactionRepository
             ...Object.fromEntries(destinationCountriesParams || []),
             ...Object.fromEntries(transactionAmountParams || []),
           },
-      ProjectionExpression: _.isEmpty(attributesToFetch)
+      ProjectionExpression: isEmpty(attributesToFetch)
         ? undefined
         : attributesToFetch.map((name) => `#${name}`).join(', '),
     }
@@ -930,7 +930,7 @@ function sortTransactionsDescendingTimestamp(
 function getTransactionTypes(
   transactionTypes: TransactionType[] | undefined
 ): (TransactionType | undefined)[] {
-  return transactionTypes && !_.isEmpty(transactionTypes)
+  return transactionTypes && !isEmpty(transactionTypes)
     ? transactionTypes
     : [undefined]
 }

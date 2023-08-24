@@ -1,4 +1,5 @@
 import * as _ from 'lodash'
+import { random } from 'lodash'
 import { data as users } from './users'
 import { sampleTransaction } from '@/core/seed/samplers/transaction'
 import { sampleTag } from '@/core/seed/samplers/tag'
@@ -34,13 +35,17 @@ const generator = function* (seed: number): Generator<InternalTransaction> {
   })
 
   for (let i = 0; i < TXN_COUNT; i += 1) {
-    const random = prng(seed * i)
+    const randomGenerator = prng(seed * i)
     const type =
-      random() < 0.24 ? 'TRANSFER' : random() < 0.95 ? 'REFUND' : 'WITHDRAWAL'
+      randomGenerator() < 0.24
+        ? 'TRANSFER'
+        : randomGenerator() < 0.95
+        ? 'REFUND'
+        : 'WITHDRAWAL'
 
     // Hack in some suspended transactions for payment approvals
     const hitRules: ExecutedRulesResult[] =
-      random() < 0.75
+      randomGenerator() < 0.75
         ? randomTransactionRules()
         : transactionRules.filter((r) => r.ruleAction === 'SUSPEND')
     const randomHitRules = hitRules.map((hitRule) => {
@@ -51,7 +56,7 @@ const generator = function* (seed: number): Generator<InternalTransaction> {
             ...hitRule.ruleHitMeta,
             falsePositiveDetails: {
               ...hitRule.ruleHitMeta.falsePositiveDetails,
-              confidenceScore: _.random(59, 82),
+              confidenceScore: random(59, 82),
             },
           },
         }

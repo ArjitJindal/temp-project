@@ -1,5 +1,6 @@
 import { JSONSchemaType } from 'ajv'
 import * as _ from 'lodash'
+import { mapValues, random } from 'lodash'
 import { checkTransactionAmountBetweenThreshold } from '../utils/transaction-rule-utils'
 import { TRANSACTION_AMOUNT_THRESHOLDS_SCHEMA } from '../utils/rule-parameter-schemas'
 import { RuleHitResult } from '../rule'
@@ -27,7 +28,7 @@ export default class TransactionAmountRule extends TransactionRule<TransactionAm
 
     const thresholdHit = await checkTransactionAmountBetweenThreshold(
       this.transaction.originAmountDetails,
-      _.mapValues(transactionAmountThreshold, (threshold) => ({
+      mapValues(transactionAmountThreshold, (threshold) => ({
         min: threshold,
       }))
     )
@@ -46,7 +47,7 @@ export default class TransactionAmountRule extends TransactionRule<TransactionAm
         ) {
           falsePositiveDetails = {
             isFalsePositive: true,
-            confidenceScore: _.random(60, 80),
+            confidenceScore: random(60, 80),
           }
         }
       }

@@ -1,5 +1,5 @@
 import { migrateAllTenants } from '../utils/tenant'
-import { getMongoDbClient } from '@/utils/mongoDBUtils'
+import { getMongoDbClient } from '@/utils/mongodb-utils'
 import { Tenant } from '@/services/accounts'
 import { DashboardStatsRepository } from '@/lambdas/console-api-dashboard/repositories/dashboard-stats-repository'
 

@@ -1,9 +1,8 @@
 import { MongoClient } from 'mongodb'
-import _ from 'lodash'
-import {
-  SIMULATION_RESULT_COLLECTION,
-  paginateFindOptions,
-} from '@/utils/mongoDBUtils'
+
+import { omit } from 'lodash'
+import { paginateFindOptions } from '@/utils/mongodb-utils'
+import { SIMULATION_RESULT_COLLECTION } from '@/utils/mongodb-definitions'
 import { SimulationPulseResult } from '@/@types/openapi-internal/SimulationPulseResult'
 import { DefaultApiGetSimulationTaskIdResultRequest } from '@/@types/openapi-internal/RequestParameters'
 import { traceable } from '@/core/xray'
@@ -55,7 +54,7 @@ export class SimulationResultRepository {
     const count = await collection.countDocuments({ taskId: params.taskId })
 
     return {
-      items: items.map((result) => _.omit(result, '_id')),
+      items: items.map((result) => omit(result, '_id')),
       total: count,
     }
   }

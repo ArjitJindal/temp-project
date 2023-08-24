@@ -1,12 +1,13 @@
 import pMap from 'p-map'
-import _ from 'lodash'
+
+import { chain, uniqBy } from 'lodash'
 import { SimulationTaskRepository } from '../console-api-simulation/repositories/simulation-task-repository'
 import { BatchJobRunner } from './batch-job-runner-base'
 import { SimulationBeaconBatchJob } from '@/@types/batch-job'
 import { RulesEngineService } from '@/services/rules-engine'
 import { MongoDbTransactionRepository } from '@/services/rules-engine/repositories/mongodb-transaction-repository'
 import { getDynamoDbClient } from '@/utils/dynamodb'
-import { getMongoDbClient } from '@/utils/mongoDBUtils'
+import { getMongoDbClient } from '@/utils/mongodb-utils'
 import { InternalTransaction } from '@/@types/openapi-internal/InternalTransaction'
 import { SimulationBeaconParameters } from '@/@types/openapi-internal/SimulationBeaconParameters'
 import { ExecutedRulesResult } from '@/@types/openapi-internal/ExecutedRulesResult'
@@ -191,7 +192,7 @@ export class SimulationBeaconBatchJobRunner extends BatchJobRunner {
   private simulationUsersHit(
     executionDetails: SimulatedTransactionHit[]
   ): string[] {
-    return _.chain(executionDetails)
+    return chain(executionDetails)
       .flatMap(({ executedRules, transaction }) => {
         const ruleHitDirection = executedRules.ruleHitMeta?.hitDirections
         return [
@@ -244,10 +245,7 @@ export class SimulationBeaconBatchJobRunner extends BatchJobRunner {
             )
           : []
 
-      return _.uniqBy(
-        [...transactionsHit, ...transactionsMiss],
-        'transactionId'
-      )
+      return uniqBy([...transactionsHit, ...transactionsMiss], 'transactionId')
     }
     return []
   }

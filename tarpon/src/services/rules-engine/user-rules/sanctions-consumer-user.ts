@@ -1,5 +1,6 @@
 import { JSONSchemaType } from 'ajv'
-import _ from 'lodash'
+
+import { isEmpty } from 'lodash'
 import {
   FUZZINESS_SCHEMA,
   ENABLE_ONGOING_SCREENING_SCHEMA,
@@ -42,7 +43,7 @@ export default class SanctionsConsumerUserRule extends UserRule<SanctionsConsume
     const user = this.user as User
 
     if (
-      _.isEmpty(screeningTypes) ||
+      isEmpty(screeningTypes) ||
       !isConsumerUser(this.user) ||
       !user.userDetails ||
       !user.userDetails.name ||

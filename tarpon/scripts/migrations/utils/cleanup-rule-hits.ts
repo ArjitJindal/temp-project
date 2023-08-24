@@ -1,6 +1,7 @@
 import { StackConstants } from '@lib/constants'
 import { UpdateCommand, UpdateCommandInput } from '@aws-sdk/lib-dynamodb'
-import _ from 'lodash'
+
+import { compact, flatten, uniq } from 'lodash'
 import {
   getMigrationLastCompletedTimestamp,
   updateMigrationLastCompletedTimestamp,
@@ -9,12 +10,11 @@ import { Case } from '@/@types/openapi-internal/Case'
 import { InternalTransaction } from '@/@types/openapi-internal/InternalTransaction'
 import { DashboardStatsRepository } from '@/lambdas/console-api-dashboard/repositories/dashboard-stats-repository'
 import { getDynamoDbClient } from '@/utils/dynamodb'
+import { getMongoDbClient, withTransaction } from '@/utils/mongodb-utils'
 import {
   CASES_COLLECTION,
   TRANSACTIONS_COLLECTION,
-  getMongoDbClient,
-  withTransaction,
-} from '@/utils/mongoDBUtils'
+} from '@/utils/mongodb-definitions'
 import { logger } from '@/core/logger'
 import { DynamoDbKeys } from '@/core/dynamodb/dynamodb-keys'
 import { RuleInstanceRepository } from '@/services/rules-engine/repositories/rule-instance-repository'
@@ -109,8 +109,8 @@ export async function cleanupRuleHits(values: {
           )
           .filter((alert) => alert.transactionIds?.length)
 
-        const caseTransactionIds = _.compact(
-          _.uniq(_.flatten(alerts.map((alert) => alert?.transactionIds)))
+        const caseTransactionIds = compact(
+          uniq(flatten(alerts.map((alert) => alert?.transactionIds)))
         )
 
         const caseTransactions = caseItem.caseTransactions?.filter(

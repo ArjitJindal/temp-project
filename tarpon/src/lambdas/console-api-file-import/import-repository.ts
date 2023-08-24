@@ -1,6 +1,6 @@
 import { MongoClient } from 'mongodb'
 import { Credentials } from 'aws-lambda'
-import { IMPORT_COLLECTION } from '@/utils/mongoDBUtils'
+import { IMPORT_COLLECTION } from '@/utils/mongodb-definitions'
 import { FileImport } from '@/@types/openapi-internal/FileImport'
 import { ImportRequest } from '@/@types/openapi-internal/ImportRequest'
 import { sendBatchJobCommand } from '@/services/batch-job'

@@ -1,11 +1,10 @@
 import { Collection } from 'mongodb'
 import { uniq, maxBy, max, compact } from 'lodash'
+import { getMongoDbClient, lookupPipelineStage } from '@/utils/mongodb-utils'
 import {
-  getMongoDbClient,
-  lookupPipelineStage,
   TRANSACTIONS_COLLECTION,
   USERS_COLLECTION,
-} from '@/utils/mongoDBUtils'
+} from '@/utils/mongodb-definitions'
 import { InternalTransaction } from '@/@types/openapi-internal/InternalTransaction'
 import { InternalUser } from '@/@types/openapi-internal/InternalUser'
 import { getUserName } from '@/utils/helpers'

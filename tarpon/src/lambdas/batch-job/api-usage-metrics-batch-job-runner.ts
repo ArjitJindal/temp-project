@@ -2,7 +2,7 @@ import { BatchJobRunner } from './batch-job-runner-base'
 import { ApiUsageMetricsBatchJob } from '@/@types/batch-job'
 import { ApiUsageMetricsService } from '@/services/metrics/api-usage-metrics-service'
 import { getDynamoDbClient } from '@/utils/dynamodb'
-import { getMongoDbClient } from '@/utils/mongoDBUtils'
+import { getMongoDbClient } from '@/utils/mongodb-utils'
 
 export class ApiUsageMetricsBatchJobRunner extends BatchJobRunner {
   protected async run(job: ApiUsageMetricsBatchJob): Promise<any> {

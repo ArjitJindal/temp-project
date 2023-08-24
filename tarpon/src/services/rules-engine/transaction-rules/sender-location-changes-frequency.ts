@@ -1,5 +1,6 @@
 import { JSONSchemaType } from 'ajv'
-import _ from 'lodash'
+
+import { sumBy } from 'lodash'
 import { AuxiliaryIndexTransaction } from '../repositories/transaction-repository-interface'
 import { TransactionHistoricalFilters } from '../filters'
 import { RuleHitResult } from '../rule'
@@ -102,7 +103,7 @@ export default class SenderLocationChangesFrequencyRule extends TransactionAggre
         uniqueIpAddresses: new Set(
           userAggregationData.flatMap((v) => v.ipAddresses)
         ),
-        transactionsCount: _.sumBy(
+        transactionsCount: sumBy(
           userAggregationData,
           (data) => data.transactionsCount
         ),

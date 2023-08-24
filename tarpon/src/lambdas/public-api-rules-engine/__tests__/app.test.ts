@@ -29,7 +29,7 @@ import { ParameterAttributeRiskValuesParameterEnum } from '@/@types/openapi-inte
 import { withFeatureHook } from '@/test-utils/feature-test-utils'
 import { Feature } from '@/@types/openapi-internal/Feature'
 import { RiskScoringService } from '@/services/risk-scoring'
-import { getMongoDbClient } from '@/utils/mongoDBUtils'
+import { getMongoDbClient } from '@/utils/mongodb-utils'
 import { UserService } from '@/lambdas/console-api-user/services/user-service'
 import { UserRepository } from '@/services/users/repositories/user-repository'
 import { getS3Client } from '@/utils/s3'

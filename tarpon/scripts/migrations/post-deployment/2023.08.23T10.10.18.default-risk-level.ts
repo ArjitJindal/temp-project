@@ -1,7 +1,7 @@
 import { migrateAllTenants } from '../utils/tenant'
 import { getDynamoDbClient } from '@/utils/dynamodb'
 import { Tenant } from '@/services/accounts'
-import { getMongoDbClient } from '@/utils/mongoDBUtils'
+import { getMongoDbClient } from '@/utils/mongodb-utils'
 import { RiskRepository } from '@/services/risk-scoring/repositories/risk-repository'
 import { DEFAULT_RISK_LEVEL } from '@/services/risk-scoring/utils'
 

@@ -1,8 +1,6 @@
 import { migrateAllTenants } from '../utils/tenant'
-import {
-  NARRATIVE_TEMPLATE_COLLECTION,
-  getMongoDbClient,
-} from '@/utils/mongoDBUtils'
+import { getMongoDbClient } from '@/utils/mongodb-utils'
+import { NARRATIVE_TEMPLATE_COLLECTION } from '@/utils/mongodb-definitions'
 import { Tenant } from '@/services/accounts'
 
 async function migrateTenant(

@@ -1,6 +1,7 @@
 import { LeveledLogMethod, createLogger, format, transports } from 'winston'
 import * as Sentry from '@sentry/serverless'
-import _ from 'lodash'
+
+import { isPlainObject, wrap } from 'lodash'
 import { getContext } from '../utils/context'
 
 const isLocal = process.env.ENV === 'local'
@@ -24,7 +25,7 @@ export const winstonLogger = createLogger({
   transports: [new transports.Console({})],
 })
 
-winstonLogger.error = _.wrap(
+winstonLogger.error = wrap(
   winstonLogger.error,
   (func: any, arg: any, ...rest) => {
     let error = arg
@@ -32,7 +33,7 @@ winstonLogger.error = _.wrap(
       error = new Error(arg)
       error.name = arg
     }
-    const extra = rest.find(_.isPlainObject)
+    const extra = rest.find(isPlainObject)
     if (!isLocal) {
       Sentry.captureException(error, { extra })
     }

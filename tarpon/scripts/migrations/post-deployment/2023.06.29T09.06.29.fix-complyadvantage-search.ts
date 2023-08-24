@@ -2,10 +2,8 @@ import { round } from 'lodash'
 import { migrateAllTenants } from '../utils/tenant'
 import { Tenant } from '@/services/accounts'
 import { tenantHasFeature } from '@/core/middlewares/tenant-has-feature'
-import {
-  SANCTIONS_SEARCHES_COLLECTION,
-  getMongoDbClient,
-} from '@/utils/mongoDBUtils'
+import { getMongoDbClient } from '@/utils/mongodb-utils'
+import { SANCTIONS_SEARCHES_COLLECTION } from '@/utils/mongodb-definitions'
 import { SanctionsSearchHistory } from '@/@types/openapi-internal/SanctionsSearchHistory'
 import { logger } from '@/core/logger'
 

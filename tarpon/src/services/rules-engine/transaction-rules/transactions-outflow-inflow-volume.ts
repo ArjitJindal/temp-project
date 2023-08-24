@@ -1,5 +1,5 @@
-import _ from 'lodash'
 import { JSONSchemaType } from 'ajv'
+import { sumBy } from 'lodash'
 import {
   COMPARATOR_SCHEMA,
   Comparator,
@@ -330,12 +330,12 @@ export default class TransactionsOutflowInflowVolumeRule extends TransactionAggr
         currency = transaction.destinationAmountDetails.transactionCurrency
       }
 
-      const sumOutflowAmounts = _.sumBy(
+      const sumOutflowAmounts = sumBy(
         userAggregationData,
         (data) => data.outflowTransactionAmount ?? 0
       )
 
-      const sumInflowAmounts = _.sumBy(
+      const sumInflowAmounts = sumBy(
         userAggregationData,
         (data) => data.inflowTransactionAmount ?? 0
       )
@@ -358,22 +358,22 @@ export default class TransactionsOutflowInflowVolumeRule extends TransactionAggr
           ),
         ])
 
-      const sumOutflowTransactionCount = _.sumBy(
+      const sumOutflowTransactionCount = sumBy(
         userAggregationData,
         (data) => data.outflowTransactionCount ?? 0
       )
 
-      const sumInflowTransactionCount = _.sumBy(
+      const sumInflowTransactionCount = sumBy(
         userAggregationData,
         (data) => data.inflowTransactionCount ?? 0
       )
 
-      const sumOutflow3dsDoneTransactionCount = _.sumBy(
+      const sumOutflow3dsDoneTransactionCount = sumBy(
         userAggregationData,
         (data) => data.outflow3dsDoneTransactionCount ?? 0
       )
 
-      const sumInflow3dsDoneTransactionCount = _.sumBy(
+      const sumInflow3dsDoneTransactionCount = sumBy(
         userAggregationData,
         (data) => data.inflow3dsDoneTransactionCount ?? 0
       )

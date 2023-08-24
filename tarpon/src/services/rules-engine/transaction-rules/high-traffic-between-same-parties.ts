@@ -1,5 +1,6 @@
 import { JSONSchemaType } from 'ajv'
-import _ from 'lodash'
+
+import { sumBy } from 'lodash'
 import { AuxiliaryIndexTransaction } from '../repositories/transaction-repository-interface'
 import {
   TRANSACTIONS_THRESHOLD_SCHEMA,
@@ -106,9 +107,7 @@ export default class HighTrafficBetweenSameParties extends TransactionAggregatio
       beforeTimestamp
     )
     if (userAggregationData) {
-      return (
-        _.sumBy(userAggregationData, (data) => data[receiverKeyId] || 0) + 1
-      )
+      return sumBy(userAggregationData, (data) => data[receiverKeyId] || 0) + 1
     }
 
     // Fallback

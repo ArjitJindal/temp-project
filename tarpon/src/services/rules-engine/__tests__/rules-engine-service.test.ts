@@ -1,6 +1,6 @@
-import _ from 'lodash'
 import { ScanCommand } from '@aws-sdk/lib-dynamodb'
 import { StackConstants } from '@lib/constants'
+import { omit } from 'lodash'
 import { RulesEngineService } from '..'
 import { DynamoDbTransactionRepository } from '../repositories/dynamodb-transaction-repository'
 import { RiskRepository } from '../../risk-scoring/repositories/risk-repository'
@@ -15,7 +15,7 @@ import { getTestTransactionEvent } from '@/test-utils/transaction-event-test-uti
 import { getContextStorage } from '@/core/utils/context'
 import { getTestUser, setUpUsersHooks } from '@/test-utils/user-test-utils'
 import { getDynamoDbClient } from '@/utils/dynamodb'
-import { getMongoDbClient } from '@/utils/mongoDBUtils'
+import { getMongoDbClient } from '@/utils/mongodb-utils'
 import { TransactionEventRepository } from '@/services/rules-engine/repositories/transaction-event-repository'
 import { enableLocalChangeHandler } from '@/utils/local-dynamodb-change-handler'
 
@@ -296,7 +296,7 @@ describe('Verify Transaction Event', () => {
       )
       expect(result2).toEqual({
         eventId: transactionEvent.eventId,
-        transaction: _.omit(latestTransaction, ['executedRules', 'hitRules']),
+        transaction: omit(latestTransaction, ['executedRules', 'hitRules']),
         executedRules: result1.executedRules,
         hitRules: result1.hitRules,
       })
@@ -329,7 +329,7 @@ describe('Verify Transaction Event', () => {
       )
       expect(result2).toEqual({
         eventId: transactionEvent.eventId,
-        transaction: _.omit(latestTransaction, ['executedRules', 'hitRules']),
+        transaction: omit(latestTransaction, ['executedRules', 'hitRules']),
         executedRules: result1.executedRules,
         hitRules: result1.hitRules,
       })

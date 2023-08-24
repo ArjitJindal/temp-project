@@ -19,7 +19,7 @@ import { WebhookRepository } from '../../../services/webhook/repositories/webhoo
 import { tarponChangeWebhookHandler as handler } from '../app'
 import { getTestUser } from '@/test-utils/user-test-utils'
 import { createKinesisStreamEvent } from '@/utils/local-dynamodb-change-handler'
-import { getMongoDbClient } from '@/utils/mongoDBUtils'
+import { getMongoDbClient } from '@/utils/mongodb-utils'
 import { getTestTenantId } from '@/test-utils/tenant-test-utils'
 import { WebhookConfiguration } from '@/@types/openapi-internal/WebhookConfiguration'
 import { dynamoDbSetupHook } from '@/test-utils/dynamodb-test-utils'

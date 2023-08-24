@@ -12,13 +12,15 @@ import { Tag } from '@/@types/openapi-public/Tag'
 import {
   paginateFindOptions,
   paginatePipeline,
-  TRANSACTION_EVENTS_COLLECTION,
-  TRANSACTIONS_COLLECTION,
-  USERS_COLLECTION,
   prefixRegexMatchFilter,
   paginateCursor,
   lookupPipelineStage,
-} from '@/utils/mongoDBUtils'
+} from '@/utils/mongodb-utils'
+import {
+  TRANSACTIONS_COLLECTION,
+  TRANSACTION_EVENTS_COLLECTION,
+  USERS_COLLECTION,
+} from '@/utils/mongodb-definitions'
 import { InternalTransaction } from '@/@types/openapi-internal/InternalTransaction'
 import { DefaultApiGetTransactionsListRequest } from '@/@types/openapi-internal/RequestParameters'
 import { TransactionType } from '@/@types/openapi-public/TransactionType'
@@ -351,7 +353,7 @@ export class MongoDbTransactionRepository
     const collection = db.collection<InternalTransaction>(name)
     const result = await collection
       .find({ 'hitRules.ruleInstanceId': ruleInstanceId })
-      .sort({ createdTimestamp: -1 })
+      .sort({ timestamp: -1 })
       .allowDiskUse()
       .limit(value)
       .toArray()
@@ -371,7 +373,7 @@ export class MongoDbTransactionRepository
           ? { 'hitRules.ruleInstanceId': { $ne: excludeRuleInstanceId } }
           : {}
       )
-      .sort({ createdTimestamp: -1 })
+      .sort({ timestamp: -1 })
       .allowDiskUse()
       .limit(value)
       .toArray()

@@ -1,6 +1,6 @@
 import { migrateAllTenants } from '../utils/tenant'
 import { Tenant } from '@/services/accounts'
-import { getMongoDbClient } from '@/utils/mongoDBUtils'
+import { getMongoDbClient } from '@/utils/mongodb-utils'
 import { DashboardStatsRepository } from '@/lambdas/console-api-dashboard/repositories/dashboard-stats-repository'
 
 async function migrateTenant(tenant: Tenant) {

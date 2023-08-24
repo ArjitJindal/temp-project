@@ -1,5 +1,6 @@
 import * as _ from 'lodash'
 import { JSONSchemaType } from 'ajv'
+import { groupBy, isEmpty, memoize, random } from 'lodash'
 import {
   getTransactionsTotalAmount,
   isTransactionAmountAboveThreshold,
@@ -195,7 +196,7 @@ export default class UserTransactionLimitsRule extends TransactionRule<UserTrans
     const transactionLimitResults = []
 
     if (
-      _.isEmpty(onlyCheckTypes) ||
+      isEmpty(onlyCheckTypes) ||
       onlyCheckTypes?.includes('ALL_TRANSACTIONS')
     ) {
       // Check for maximum transaction limit
@@ -214,10 +215,7 @@ export default class UserTransactionLimitsRule extends TransactionRule<UserTrans
       )
     }
 
-    if (
-      _.isEmpty(onlyCheckTypes) ||
-      onlyCheckTypes?.includes('PAYMENT_METHOD')
-    ) {
+    if (isEmpty(onlyCheckTypes) || onlyCheckTypes?.includes('PAYMENT_METHOD')) {
       const paymentMethod =
         direction === 'origin'
           ? this.transaction.originPaymentDetails?.method
@@ -250,7 +248,7 @@ export default class UserTransactionLimitsRule extends TransactionRule<UserTrans
     }
   }
 
-  getStatsByGranularity = _.memoize(
+  getStatsByGranularity = memoize(
     async (
       direction: 'origin' | 'destination',
       granularity: 'day' | 'week' | 'month' | 'year'
@@ -309,11 +307,11 @@ export default class UserTransactionLimitsRule extends TransactionRule<UserTrans
       result.sendingTransactionsCount.set('ALL', sendingCount)
       result.receivingTransactionsAmount.set('ALL', receivingAmount)
       result.receivingTransactionsCount.set('ALL', receivingCount)
-      const sendingGroups = _.groupBy(
+      const sendingGroups = groupBy(
         sendingTransactions,
         (transaction) => transaction.originPaymentDetails?.method
       )
-      const receivingGroups = _.groupBy(
+      const receivingGroups = groupBy(
         receivingTransactions,
         (transaction) => transaction.destinationPaymentDetails?.method
       )
@@ -386,7 +384,7 @@ export default class UserTransactionLimitsRule extends TransactionRule<UserTrans
         ) {
           falsePositiveDetails = {
             isFalsePositive: true,
-            confidenceScore: _.random(60, 80),
+            confidenceScore: random(60, 80),
           }
         }
       }

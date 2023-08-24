@@ -1,13 +1,13 @@
 import { Engagement, Note, Task } from '@mergeapi/merge-sdk-typescript/dist/crm'
 import { CrmAccountResponse } from '@/@types/openapi-internal/CrmAccountResponse'
 import { traceable } from '@/core/xray'
+import { getMongoDbClient } from '@/utils/mongodb-utils'
 import {
   CRM_ENGAGEMENTS_COLLECTION,
   CRM_NOTES_COLLECTION,
   CRM_SUMMARY_COLLECTION,
   CRM_TASKS_COLLECTION,
-  getMongoDbClient,
-} from '@/utils/mongoDBUtils'
+} from '@/utils/mongodb-definitions'
 import { CrmSummary } from '@/@types/openapi-internal/CrmSummary'
 import { CrmAccountResponseEngagements } from '@/@types/openapi-internal/CrmAccountResponseEngagements'
 import { CrmAccountResponseNotes } from '@/@types/openapi-internal/CrmAccountResponseNotes'

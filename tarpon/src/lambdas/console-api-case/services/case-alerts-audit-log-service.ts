@@ -1,6 +1,6 @@
-import _ from 'lodash'
 import { MongoClient } from 'mongodb'
 import { DynamoDBDocumentClient } from '@aws-sdk/lib-dynamodb'
+import { get } from 'lodash'
 import {
   AuditLog,
   AuditLogSubtypeEnum,
@@ -100,7 +100,7 @@ export class CasesAlertsAuditLogService {
       const alertEntity = await alertsRepository.getAlertById(alertId)
       const oldImage: { [key: string]: string } = {}
       for (const field in Object.keys(updates)) {
-        const oldValue = _.get(alertEntity, field)
+        const oldValue = get(alertEntity, field)
         if (oldValue) {
           oldImage[field] = oldValue
         }
@@ -209,7 +209,7 @@ export class CasesAlertsAuditLogService {
 
     const oldImage: { [key: string]: string } = {}
     for (const field in Object.keys(updates)) {
-      const oldValue = _.get(caseEntity, field)
+      const oldValue = get(caseEntity, field)
       if (oldValue) {
         oldImage[field] = oldValue
       }

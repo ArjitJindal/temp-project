@@ -1,9 +1,7 @@
 import { Collection, MongoClient } from 'mongodb'
 import { NarrativeTemplate } from '@/@types/openapi-internal/NarrativeTemplate'
-import {
-  NARRATIVE_TEMPLATE_COLLECTION,
-  paginateCursor,
-} from '@/utils/mongoDBUtils'
+import { paginateCursor } from '@/utils/mongodb-utils'
+import { NARRATIVE_TEMPLATE_COLLECTION } from '@/utils/mongodb-definitions'
 import { NarrativeTemplateRequest } from '@/@types/openapi-internal/NarrativeTemplateRequest'
 import { DefaultApiGetNarrativesRequest } from '@/@types/openapi-internal/RequestParameters'
 import { traceable } from '@/core/xray'

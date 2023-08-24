@@ -7,7 +7,7 @@ import {
 } from '@aws-sdk/lib-dynamodb'
 import { v4 as uuidv4 } from 'uuid'
 import { DynamoDbKeys } from '@/core/dynamodb/dynamodb-keys'
-import { DEVICE_DATA_COLLECTION } from '@/utils/mongoDBUtils'
+import { DEVICE_DATA_COLLECTION } from '@/utils/mongodb-definitions'
 import { DeviceMetric } from '@/@types/openapi-public-device-data/DeviceMetric'
 import { runLocalChangeHandler } from '@/utils/local-dynamodb-change-handler'
 import { traceable } from '@/core/xray'

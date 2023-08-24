@@ -1,6 +1,6 @@
 import * as fs from 'fs'
 import * as yaml from 'js-yaml'
-import _ from 'lodash'
+import { cloneDeep, omit } from 'lodash'
 import { StackConstants } from '../constants'
 
 type PathToLambda = { [key: string]: string }
@@ -64,7 +64,7 @@ function flattenAndDeRefAllOf(schema: any, schemas: any) {
       s = flattenAndDeRefAllOf(s, schemas)
       newSchema.properties = {
         ...newSchema.properties,
-        ..._.cloneDeep(s.properties),
+        ...cloneDeep(s.properties),
       }
       if (s.required?.length > 0) {
         newSchema.required = (newSchema.required ?? []).concat(s.required)
@@ -89,7 +89,7 @@ export function getAugmentedOpenapi(
   assertValidLambdaMappings(openapi, pathToLambda)
 
   // Filter out not-yet-implemented paths
-  openapi.paths = _.omit(
+  openapi.paths = omit(
     openapi.paths,
     Object.keys(pathToLambda).filter((path) => !pathToLambda[path])
   )

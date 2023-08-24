@@ -1,5 +1,6 @@
 import { migrateAllTenants } from '../utils/tenant'
-import { METRICS_COLLECTION, getMongoDbClient } from '@/utils/mongoDBUtils'
+import { getMongoDbClient } from '@/utils/mongodb-utils'
+import { METRICS_COLLECTION } from '@/utils/mongodb-definitions'
 import { Tenant } from '@/services/accounts'
 import { ApiUsageMetrics } from '@/services/metrics/api-usage-metrics-service'
 import dayjs from '@/utils/dayjs'

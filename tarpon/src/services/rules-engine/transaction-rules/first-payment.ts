@@ -1,5 +1,6 @@
 import { JSONSchemaType } from 'ajv'
 import * as _ from 'lodash'
+import { mapValues } from 'lodash'
 import { RuleHitResult } from '../rule'
 import { TransactionHistoricalFilters } from '../filters'
 import { TRANSACTION_AMOUNT_THRESHOLDS_OPTIONAL_SCHEMA } from '../utils/rule-parameter-schemas'
@@ -33,7 +34,7 @@ export default class FirstPaymentRule extends TransactionRule<
     const thresholdHit = transactionAmountThreshold
       ? await checkTransactionAmountBetweenThreshold(
           this.transaction.originAmountDetails,
-          _.mapValues(transactionAmountThreshold, (threshold) => ({
+          mapValues(transactionAmountThreshold, (threshold) => ({
             min: threshold,
           }))
         )

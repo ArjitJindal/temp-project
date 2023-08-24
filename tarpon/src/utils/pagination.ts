@@ -1,3 +1,4 @@
+import { get, isEmpty } from 'lodash'
 import {
   Collection,
   Document,
@@ -7,7 +8,7 @@ import {
   SortDirection,
   WithId,
 } from 'mongodb'
-import _ from 'lodash'
+
 export type PageSize = number
 export const DEFAULT_PAGE_SIZE = 20
 export const MAX_PAGE_SIZE = 1000
@@ -219,7 +220,7 @@ function cursor<T>(item?: WithId<T>, sortField?: string): string {
   if (!item || !sortField) {
     return ''
   }
-  const raw = [_.get(item, sortField) ?? 'EMPTY', item._id].join(
+  const raw = [get(item, sortField) ?? 'EMPTY', item._id].join(
     PAGINATION_CURSOR_KEY_SEPERATOR
   )
   // Encode cursor
@@ -230,7 +231,7 @@ async function countDocuments<T extends Document>(
   collection: Collection<T>,
   filter: Filter<WithId<T>>
 ): Promise<number> {
-  if (_.isEmpty(filter)) {
+  if (isEmpty(filter)) {
     return await collection.estimatedDocumentCount()
   }
 

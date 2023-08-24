@@ -1,4 +1,3 @@
-import _ from 'lodash'
 import { migrateAllTenants } from '../utils/tenant'
 import { replayTransactionsAndEvents } from '../utils/transaction'
 import { Tenant } from '@/services/accounts'

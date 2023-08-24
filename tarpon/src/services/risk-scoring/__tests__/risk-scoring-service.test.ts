@@ -13,7 +13,7 @@ import {
   TEST_ITERABLE_RISK_ITEM,
   TEST_VARIABLE_RISK_ITEM,
 } from '@/test-utils/pulse-test-utils'
-import { getMongoDbClient } from '@/utils/mongoDBUtils'
+import { getMongoDbClient } from '@/utils/mongodb-utils'
 import { ParameterAttributeRiskValues } from '@/@types/openapi-internal/ParameterAttributeRiskValues'
 
 const dynamoDb = getDynamoDbClient()

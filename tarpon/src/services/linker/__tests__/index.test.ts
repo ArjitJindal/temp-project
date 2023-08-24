@@ -1,9 +1,9 @@
 import { LinkerService } from '@/services/linker'
+import { getMongoDbClient } from '@/utils/mongodb-utils'
 import {
-  getMongoDbClient,
   TRANSACTIONS_COLLECTION,
   USERS_COLLECTION,
-} from '@/utils/mongoDBUtils'
+} from '@/utils/mongodb-definitions'
 import { InternalTransaction } from '@/@types/openapi-internal/InternalTransaction'
 import { InternalUser } from '@/@types/openapi-internal/InternalUser'
 import { sampleTransaction } from '@/core/seed/samplers/transaction'

@@ -1,4 +1,4 @@
-import _ from 'lodash'
+import { omit } from 'lodash'
 import { RuleRepository } from '@/services/rules-engine/repositories/rule-repository'
 import { RuleInstanceRepository } from '@/services/rules-engine/repositories/rule-instance-repository'
 import { Rule } from '@/@types/openapi-internal/Rule'
@@ -16,7 +16,7 @@ import { RuleInstance } from '@/@types/openapi-internal/RuleInstance'
 import { Business } from '@/@types/openapi-public/Business'
 import { RuleHitMeta } from '@/@types/openapi-public/RuleHitMeta'
 import { getRuleByRuleId } from '@/services/rules-engine/transaction-rules/library'
-import { getMongoDbClient } from '@/utils/mongoDBUtils'
+import { getMongoDbClient } from '@/utils/mongodb-utils'
 
 const DEFAULT_DESCRIPTION = 'test rule description.'
 
@@ -190,7 +190,7 @@ export function setUpRulesHooks(
             ...libraryRule,
             ...rule,
           },
-          _.omit(rule, 'id')
+          omit(rule, 'id')
         )
       )
     }

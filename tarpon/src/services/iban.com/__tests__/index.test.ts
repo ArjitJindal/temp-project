@@ -1,12 +1,13 @@
 import { URLSearchParams } from 'url'
-import _ from 'lodash'
+
+import { isEmpty } from 'lodash'
 import { IBANService } from '..'
 import { IBANApiRepository } from '../repositories/iban-api-repository'
 import { getTestTenantId } from '@/test-utils/tenant-test-utils'
 import { mockIbanComValidation } from '@/test-utils/ibancom-test-utils'
 import { dynamoDbSetupHook } from '@/test-utils/dynamodb-test-utils'
 import { withFeatureHook } from '@/test-utils/feature-test-utils'
-import { getMongoDbClient } from '@/utils/mongoDBUtils'
+import { getMongoDbClient } from '@/utils/mongodb-utils'
 import { MOCK_IBAN_COM_VALIDATION_RESPONSE } from '@/test-utils/resources/mock-iban-com-validation-response'
 import * as apiFetchModule from '@/utils/api-fetch'
 
@@ -56,7 +57,7 @@ describe('IBAN Validation', () => {
       TEST_VALID_IBAN
     )
     expect(history?.request.iban).toBe(TEST_VALID_IBAN)
-    expect(_.isEmpty(history?.response)).toBe(false)
+    expect(isEmpty(history?.response)).toBe(false)
   })
 
   test('Requesting same iban multiple times should only call the API once', async () => {

@@ -7,16 +7,18 @@ import {
   UpdateFilter,
   UpdateResult,
 } from 'mongodb'
-import _ from 'lodash'
+
 import { DynamoDBDocumentClient } from '@aws-sdk/lib-dynamodb'
+import {
+  lookupPipelineStage,
+  paginatePipeline,
+  prefixRegexMatchFilter,
+} from '@/utils/mongodb-utils'
 import {
   ACCOUNTS_COLLECTION,
   CASES_COLLECTION,
   COUNTER_COLLECTION,
-  lookupPipelineStage,
-  paginatePipeline,
-  prefixRegexMatchFilter,
-} from '@/utils/mongoDBUtils'
+} from '@/utils/mongodb-definitions'
 import { Comment } from '@/@types/openapi-internal/Comment'
 import { DefaultApiGetCaseListRequest } from '@/@types/openapi-internal/RequestParameters'
 import { EntityCounter } from '@/@types/openapi-internal/EntityCounter'
@@ -1121,7 +1123,7 @@ export class CaseRepository {
     await Promise.all([
       collection.updateOne(
         {
-          caseTransactionsIds: { $elemMatch: { $eq: transactionId } },
+          'caseTransactions.transactionId': transactionId,
           'caseUsers.origin': { $ne: null },
         },
         {
@@ -1132,7 +1134,7 @@ export class CaseRepository {
       ),
       collection.updateOne(
         {
-          caseTransactionsIds: { $elemMatch: { $eq: transactionId } },
+          'caseTransactions.transactionId': transactionId,
           'caseUsers.destination': { $ne: null },
         },
         {

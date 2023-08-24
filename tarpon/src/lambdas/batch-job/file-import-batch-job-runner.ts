@@ -5,7 +5,7 @@ import { BatchJobRunner } from './batch-job-runner-base'
 import { FileImportBatchJob } from '@/@types/batch-job'
 import { getDynamoDbClient } from '@/utils/dynamodb'
 import { getS3Client } from '@/utils/s3'
-import { getMongoDbClient } from '@/utils/mongoDBUtils'
+import { getMongoDbClient } from '@/utils/mongodb-utils'
 import { assertPermissions } from '@/@types/jwt'
 import { assertUserError } from '@/utils/errors'
 

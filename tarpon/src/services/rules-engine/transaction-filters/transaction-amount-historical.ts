@@ -1,6 +1,5 @@
 import { JSONSchemaType } from 'ajv'
 
-import _ from 'lodash'
 import {
   TRANSACTION_AMOUNT_RANGE_OPTIONAL_SCHEMA,
   TransactionAmountRange,

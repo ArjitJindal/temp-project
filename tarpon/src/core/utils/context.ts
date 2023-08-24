@@ -5,10 +5,11 @@ import {
   APIGatewayProxyWithLambdaAuthorizerEvent,
   Context as LambdaContext,
 } from 'aws-lambda'
-import _ from 'lodash'
+
 import { MetricDatum } from '@aws-sdk/client-cloudwatch'
 import { DynamoDBClient } from '@aws-sdk/client-dynamodb'
 import { Credentials } from '@aws-sdk/client-sts'
+import { isNil, omitBy } from 'lodash'
 import { winstonLogger } from '../logger'
 import { Feature } from '@/@types/openapi-internal/Feature'
 import { getDynamoDbClient, getDynamoDbClientByEvent } from '@/utils/dynamodb'
@@ -141,12 +142,12 @@ export async function initializeTenantContext(tenantId: string) {
 export function updateLogMetadata(addedMetadata: { [key: string]: any }) {
   const context = asyncLocalStorage.getStore()
   if (context) {
-    context.logMetadata = _.omitBy(
+    context.logMetadata = omitBy(
       {
         ...context.logMetadata,
         ...addedMetadata,
       },
-      _.isNil
+      isNil
     )
     Sentry.withScope((scope) => {
       if (context.logMetadata) scope.setTags(context.logMetadata)

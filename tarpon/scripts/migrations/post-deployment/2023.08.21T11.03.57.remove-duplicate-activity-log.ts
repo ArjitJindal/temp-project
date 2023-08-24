@@ -1,6 +1,7 @@
 import { Filter } from 'mongodb'
 import { migrateAllTenants } from '../utils/tenant'
-import { AUDITLOG_COLLECTION, getMongoDbClient } from '@/utils/mongoDBUtils'
+import { getMongoDbClient } from '@/utils/mongodb-utils'
+import { AUDITLOG_COLLECTION } from '@/utils/mongodb-definitions'
 import { Tenant } from '@/services/accounts'
 import { AuditLog } from '@/@types/openapi-internal/AuditLog'
 

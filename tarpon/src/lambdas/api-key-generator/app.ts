@@ -7,7 +7,7 @@ import { lambdaApi } from '@/core/middlewares/lambda-api-middlewares'
 import {
   getMongoDbClient,
   createMongoDBCollections,
-} from '@/utils/mongoDBUtils'
+} from '@/utils/mongodb-utils'
 import { TenantRepository } from '@/services/tenants/repositories/tenant-repository'
 import { getDynamoDbClient } from '@/utils/dynamodb'
 import { sendBatchJobCommand } from '@/services/batch-job'

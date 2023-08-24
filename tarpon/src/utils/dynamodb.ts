@@ -5,7 +5,7 @@ import {
   APIGatewayProxyWithLambdaAuthorizerEvent,
   Credentials as LambdaCredentials,
 } from 'aws-lambda'
-import _, { chunk } from 'lodash'
+import { chunk, isNil, omitBy, wrap } from 'lodash'
 import { StackConstants } from '@lib/constants'
 import {
   BatchGetCommand,
@@ -86,7 +86,7 @@ function getAugmentedDynamoDBCommand(command: any): {
 export function withMetrics(
   client: DynamoDBDocumentClient
 ): DynamoDBDocumentClient {
-  client.send = _.wrap(
+  client.send = wrap(
     client.send.bind(client),
     async (func: any, command: any, ...args) => {
       const commandInfo = getAugmentedDynamoDBCommand(command)
@@ -118,7 +118,7 @@ export function withRetry(
     return client
   }
 
-  client.send = _.wrap(
+  client.send = wrap(
     client.send.bind(client),
     async (func: any, command: any, ...args) => {
       try {
@@ -411,14 +411,14 @@ export function dynamoDbQueryHelper(query: {
 
   const queryInput: QueryCommandInput = {
     TableName: tableName,
-    ..._.omitBy(
+    ...omitBy(
       {
         FilterExpression: filterExpression,
         ExpressionAttributeNames: expressionAttributeNames,
         ScanIndexForward: scanIndexForward,
         ProjectionExpression: projectionExpression,
       },
-      _.isNil
+      isNil
     ),
   }
 

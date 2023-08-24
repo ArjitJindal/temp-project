@@ -1,10 +1,9 @@
 import { Filter, MongoClient } from 'mongodb'
 import { v4 as uuidv4 } from 'uuid'
-import _ from 'lodash'
-import {
-  SIMULATION_TASK_COLLECTION,
-  paginatePipeline,
-} from '@/utils/mongoDBUtils'
+
+import { omit } from 'lodash'
+import { paginatePipeline } from '@/utils/mongodb-utils'
+import { SIMULATION_TASK_COLLECTION } from '@/utils/mongodb-definitions'
 import { SimulationPulseJob } from '@/@types/openapi-internal/SimulationPulseJob'
 import {
   TaskStatusChange,
@@ -251,7 +250,7 @@ export class SimulationTaskRepository {
       SIMULATION_TASK_COLLECTION(this.tenantId)
     )
     const task = await collection.findOne({ _id: jobId as any })
-    return _.omit(task, '_id')
+    return omit(task, '_id')
   }
 
   public async getSimulationJobs(
@@ -303,10 +302,10 @@ export class SimulationTaskRepository {
       data:
         params.type === 'PULSE'
           ? (simulationTasks.map((task) =>
-              _.omit(task, '_id')
+              omit(task, '_id')
             ) as SimulationPulseJob[])
           : (simulationTasks.map((task) =>
-              _.omit(task, '_id')
+              omit(task, '_id')
             ) as SimulationBeaconJob[]),
     }
   }

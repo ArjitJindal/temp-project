@@ -1,8 +1,9 @@
-import _ from 'lodash'
+import { reverse, uniqBy } from 'lodash'
 import { migrateAllTenants } from '../utils/tenant'
 import { Case } from '@/@types/openapi-internal/Case'
 import { Tenant } from '@/services/accounts'
-import { CASES_COLLECTION, getMongoDbClient } from '@/utils/mongoDBUtils'
+import { getMongoDbClient } from '@/utils/mongodb-utils'
+import { CASES_COLLECTION } from '@/utils/mongodb-definitions'
 import { CaseType } from '@/@types/openapi-internal/CaseType'
 
 async function migrateTenant(tenant: Tenant) {
@@ -32,8 +33,8 @@ async function migrateTenant(tenant: Tenant) {
   for await (const c of cursor) {
     const caseObj = await casesCollection.findOne({ _id: c._id })
     const caseTransactions = caseObj?.caseTransactions ?? []
-    const newCaseTransactions = _.uniqBy(
-      _.reverse(caseTransactions),
+    const newCaseTransactions = uniqBy(
+      reverse(caseTransactions),
       (t) => t.transactionId
     )
     await casesCollection.replaceOne(

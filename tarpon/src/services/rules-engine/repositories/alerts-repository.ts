@@ -1,17 +1,20 @@
 import { Document, Filter, MongoClient } from 'mongodb'
 import { DynamoDBDocumentClient } from '@aws-sdk/lib-dynamodb'
 import { v4 as uuidv4 } from 'uuid'
-import _ from 'lodash'
+
 import { NotFound } from 'http-errors'
+import { compact } from 'lodash'
 import { CaseRepository } from './case-repository'
 import { MongoDbTransactionRepository } from './mongodb-transaction-repository'
 import {
-  ACCOUNTS_COLLECTION,
-  CASES_COLLECTION,
   lookupPipelineStage,
   paginatePipeline,
   prefixRegexMatchFilter,
-} from '@/utils/mongoDBUtils'
+} from '@/utils/mongodb-utils'
+import {
+  ACCOUNTS_COLLECTION,
+  CASES_COLLECTION,
+} from '@/utils/mongodb-definitions'
 import {
   COUNT_QUERY_LIMIT,
   CursorPaginationResponse,
@@ -596,7 +599,7 @@ export class AlertsRepository {
       : []
 
     return {
-      caseIdsWithAllAlertsSameStatus: _.compact(caseIdsWithAllAlertsSameStatus),
+      caseIdsWithAllAlertsSameStatus: compact(caseIdsWithAllAlertsSameStatus),
       caseStatusToChange: caseStatusToCheck,
     }
   }

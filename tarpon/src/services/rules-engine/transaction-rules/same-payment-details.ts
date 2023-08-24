@@ -1,5 +1,6 @@
 import { JSONSchemaType } from 'ajv'
-import _ from 'lodash'
+
+import { sumBy } from 'lodash'
 import {
   CHECK_RECEIVER_SCHEMA,
   CHECK_SENDER_SCHEMA,
@@ -100,7 +101,7 @@ export default class SamePaymentDetailsRule extends TransactionAggregationRule<
       beforeTimestamp
     )
     if (userAggregationData) {
-      const transactionsCount = _.sumBy(
+      const transactionsCount = sumBy(
         userAggregationData,
         (data) =>
           (checkDirection === 'sending'

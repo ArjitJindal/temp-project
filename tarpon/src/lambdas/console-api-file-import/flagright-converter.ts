@@ -2,7 +2,8 @@ import * as yaml from 'js-yaml'
 import { unflatten } from 'flat'
 import fetch from 'node-fetch'
 import Ajv, { ValidateFunction } from 'ajv'
-import _ from 'lodash'
+
+import { trim } from 'lodash'
 import { ConverterInterface } from './converter-interface'
 
 export class FlagrightConverter<T> implements ConverterInterface<T> {
@@ -52,7 +53,7 @@ export class FlagrightConverter<T> implements ConverterInterface<T> {
     return (
       validate.errors?.map((error) => {
         const errorKey =
-          _.trim(error.instancePath, '/').replace('/', '.') ||
+          trim(error.instancePath, '/').replace('/', '.') ||
           error.params.additionalProperty
         return `${errorKey}: ${error.message}`
       }) || []

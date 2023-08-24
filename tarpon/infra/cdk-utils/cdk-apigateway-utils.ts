@@ -14,9 +14,9 @@ import {
 import { LogGroup } from 'aws-cdk-lib/aws-logs'
 import { Asset } from 'aws-cdk-lib/aws-s3-assets'
 import { Construct } from 'constructs'
-import _ from 'lodash'
 import { LAMBDAS } from '@lib/lambdas'
 import { isQaEnv } from '@lib/qa'
+import { random, range } from 'lodash'
 
 const isDevUserStack = isQaEnv()
 
@@ -146,7 +146,7 @@ export function createApiGateway(
   // NOTE: We add random spaces to the end of the validation response template (which won't affect the response) to make
   // the template get updated for every deployment (0.1% chance of conflict) to get around the template being reset for
   // unknown reasons.
-  const randomSpacesSuffix = _.range(_.random(1, 1000))
+  const randomSpacesSuffix = range(random(1, 1000))
     .map(() => '')
     .join(' ')
   const apiValidationErrorTemplate = {

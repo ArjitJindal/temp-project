@@ -9,7 +9,7 @@ import { ImportRepository } from './import-repository'
 import { getS3ClientByEvent } from '@/utils/s3'
 import { lambdaApi } from '@/core/middlewares/lambda-api-middlewares'
 import { JWTAuthorizerResult } from '@/@types/jwt'
-import { getMongoDbClient } from '@/utils/mongoDBUtils'
+import { getMongoDbClient } from '@/utils/mongodb-utils'
 import { Handlers } from '@/@types/openapi-internal-custom/DefaultApi'
 import { getCredentialsFromEvent } from '@/utils/credentials'
 

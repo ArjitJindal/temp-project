@@ -1,4 +1,4 @@
-import _ from 'lodash'
+import { last } from 'lodash'
 import { migrateAllTenants } from '../utils/tenant'
 import {
   getMigrationLastCompletedTimestamp,
@@ -6,7 +6,8 @@ import {
 } from '../utils/migration-progress'
 import { migrateEntities } from '../utils/mongodb'
 import { Tenant } from '@/services/accounts'
-import { USERS_COLLECTION, getMongoDbClient } from '@/utils/mongoDBUtils'
+import { getMongoDbClient } from '@/utils/mongodb-utils'
+import { USERS_COLLECTION } from '@/utils/mongodb-definitions'
 import { GlobalRuleAggregationRebuildBatchJob } from '@/@types/batch-job'
 import { sendBatchJobCommand } from '@/services/batch-job'
 import { InternalUser } from '@/@types/openapi-internal/InternalUser'
@@ -42,7 +43,7 @@ async function migrateTenant(tenant: Tenant) {
     }
     await updateMigrationLastCompletedTimestamp(
       migrationKey,
-      _.last(usersBatch)?.createdTimestamp ?? 0
+      last(usersBatch)?.createdTimestamp ?? 0
     )
   })
 }

@@ -35,7 +35,7 @@ import {
   S3Config,
 } from '@/services/case-alerts-common'
 import { getS3ClientByEvent } from '@/utils/s3'
-import { getMongoDbClient, withTransaction } from '@/utils/mongoDBUtils'
+import { getMongoDbClient, withTransaction } from '@/utils/mongodb-utils'
 import { getDynamoDbClientByEvent } from '@/utils/dynamodb'
 import { CaseConfig } from '@/lambdas/console-api-case/app'
 import { CaseEscalationsUpdateRequest } from '@/@types/openapi-internal/CaseEscalationsUpdateRequest'

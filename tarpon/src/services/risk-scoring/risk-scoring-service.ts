@@ -1,6 +1,7 @@
 import { DynamoDBDocumentClient } from '@aws-sdk/lib-dynamodb'
-import _ from 'lodash'
+
 import { FindCursor, MongoClient } from 'mongodb'
+import { get, mean, memoize } from 'lodash'
 import { UserRepository } from '../users/repositories/user-repository'
 import { isConsumerUser } from '../rules-engine/utils/user-rule-utils'
 import { RiskRepository } from './repositories/risk-repository'
@@ -38,7 +39,7 @@ function getDefaultRiskValue(
 
   riskClassificationValues.map((value) => {
     if (value.riskLevel === DEFAULT_RISK_LEVEL) {
-      riskScore = _.mean([value.upperBoundRiskScore, value.lowerBoundRiskScore])
+      riskScore = mean([value.upperBoundRiskScore, value.lowerBoundRiskScore])
     }
   })
 
@@ -110,7 +111,7 @@ function getIterableAttributeRiskLevel(
 } {
   const { parameter, targetIterableParameter, riskLevelAssignmentValues } =
     parameterAttributeDetails
-  const iterableValue = _.get(entity, parameter) as unknown as any[]
+  const iterableValue = get(entity, parameter) as unknown as any[]
   let individualRiskLevel
   let iterableMaxRiskLevel: {
     value: unknown
@@ -199,7 +200,7 @@ function getSchemaAttributeRiskLevel(
 } {
   let resultValue = null
   let resultRiskLevel: RiskLevel = defaultRiskLevel
-  const endValue = _.get(entity, paramName)
+  const endValue = get(entity, paramName)
   if (endValue) {
     resultValue = endValue
     for (const { parameterValue, riskLevel } of riskLevelAssignmentValues) {
@@ -252,7 +253,7 @@ export class RiskScoringService {
 
     return {
       score: components.length
-        ? _.mean(components.map(({ score }) => score))
+        ? mean(components.map(({ score }) => score))
         : getDefaultRiskValue(riskClassificationValues),
       components,
     }
@@ -282,7 +283,7 @@ export class RiskScoringService {
     )
     return {
       score: components.length
-        ? _.mean(components.map(({ score }) => score))
+        ? mean(components.map(({ score }) => score))
         : getDefaultRiskValue(riskClassificationValues),
       components,
     }
@@ -292,7 +293,7 @@ export class RiskScoringService {
     currentDrsScore: number,
     newArsScore: number
   ): number {
-    return _.mean([currentDrsScore, newArsScore])
+    return mean([currentDrsScore, newArsScore])
   }
 
   public async updateInitialRiskScores(user: User | Business): Promise<number> {
@@ -527,7 +528,7 @@ export class RiskScoringService {
     if (!oldDrs?.isUpdatable) {
       return
     }
-    const newDRSScore = _.mean([newKrsScore, oldDrs?.drsScore])
+    const newDRSScore = mean([newKrsScore, oldDrs?.drsScore])
     await this.riskRepository.createOrUpdateDrsScore(
       user.userId,
       newDRSScore,
@@ -548,7 +549,7 @@ export class RiskScoringService {
     }
   }
 
-  getUsersFromTransaction = _.memoize(
+  getUsersFromTransaction = memoize(
     async (transaction: Transaction) => {
       const userIds = [
         transaction.originUserId,

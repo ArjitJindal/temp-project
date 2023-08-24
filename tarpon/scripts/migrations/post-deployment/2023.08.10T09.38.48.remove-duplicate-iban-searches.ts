@@ -1,5 +1,6 @@
 import { migrateAllTenants } from '../utils/tenant'
-import { IBAN_COM_COLLECTION, getMongoDbClient } from '@/utils/mongoDBUtils'
+import { getMongoDbClient } from '@/utils/mongodb-utils'
+import { IBAN_COM_COLLECTION } from '@/utils/mongodb-definitions'
 import { Tenant } from '@/services/accounts'
 import { IBANApiHistory } from '@/services/iban.com/types'
 

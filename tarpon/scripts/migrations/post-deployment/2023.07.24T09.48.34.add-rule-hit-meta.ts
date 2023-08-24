@@ -1,6 +1,7 @@
 import { migrateAllTenants } from '../utils/tenant'
 import { Tenant } from '@/services/accounts'
-import { CASES_COLLECTION, getMongoDbClient } from '@/utils/mongoDBUtils'
+import { getMongoDbClient } from '@/utils/mongodb-utils'
+import { CASES_COLLECTION } from '@/utils/mongodb-definitions'
 import { Case } from '@/@types/openapi-internal/Case'
 
 async function migrateTenant(tenant: Tenant) {

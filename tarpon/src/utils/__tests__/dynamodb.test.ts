@@ -1,5 +1,5 @@
 import { StackConstants } from '@lib/constants'
-import _, { chunk } from 'lodash'
+import { chunk, range } from 'lodash'
 import { BatchWriteCommand } from '@aws-sdk/lib-dynamodb'
 import { getDynamoDbClient, paginateQuery } from '../dynamodb'
 import { dynamoDbSetupHook } from '@/test-utils/dynamodb-test-utils'
@@ -10,7 +10,7 @@ const MOCK_ATTRIBUTES = {
   attribute2: new Array(1000).fill(0),
   attribute3: new Array(1000).fill(0),
 }
-const MOCK_ITEMS = _.range(0, MOCK_RECORDS_COUNT)
+const MOCK_ITEMS = range(0, MOCK_RECORDS_COUNT)
   .map((i) => ({
     ...MOCK_ATTRIBUTES,
     PartitionKeyID: 'partition',
@@ -25,7 +25,7 @@ dynamoDbSetupHook()
 describe('paginateQuery', () => {
   beforeAll(async () => {
     // We need enough data to make query response paginated. Currently it'll result in 2 pages
-    for (const ck of chunk(_.range(0, MOCK_RECORDS_COUNT), 25)) {
+    for (const ck of chunk(range(0, MOCK_RECORDS_COUNT), 25)) {
       const putRequests = ck.map((i) => ({
         PutRequest: {
           Item: {

@@ -5,7 +5,7 @@ import {
 import { JWTAuthorizerResult } from '@/@types/jwt'
 import { lambdaApi } from '@/core/middlewares/lambda-api-middlewares'
 import { Handlers } from '@/@types/openapi-internal-custom/DefaultApi'
-import { getMongoDbClient } from '@/utils/mongoDBUtils'
+import { getMongoDbClient } from '@/utils/mongodb-utils'
 import {
   ChecklistTemplateWithId,
   ChecklistTemplatesService,

@@ -1,4 +1,3 @@
-import _ from 'lodash'
 import {
   MOCK_CA_SEARCH_NO_HIT_RESPONSE,
   MOCK_CA_SEARCH_RESPONSE,

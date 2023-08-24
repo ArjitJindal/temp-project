@@ -1,6 +1,7 @@
 import { migrateAllTenants } from '../utils/tenant'
 import { Tenant } from '@/services/accounts'
-import { getMongoDbClient, USERS_COLLECTION } from '@/utils/mongoDBUtils'
+import { getMongoDbClient } from '@/utils/mongodb-utils'
+import { USERS_COLLECTION } from '@/utils/mongodb-definitions'
 import { UserRepository } from '@/services/users/repositories/user-repository'
 import { getDynamoDbClient } from '@/utils/dynamodb'
 import { InternalUser } from '@/@types/openapi-internal/InternalUser'

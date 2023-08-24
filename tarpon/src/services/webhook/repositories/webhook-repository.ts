@@ -1,6 +1,6 @@
 import { MongoClient } from 'mongodb'
 import { v4 as uuidv4 } from 'uuid'
-import { WEBHOOK_COLLECTION } from '@/utils/mongoDBUtils'
+import { WEBHOOK_COLLECTION } from '@/utils/mongodb-definitions'
 import { WebhookEventType } from '@/@types/openapi-public/WebhookEventType'
 import { WebhookConfiguration } from '@/@types/openapi-internal/WebhookConfiguration'
 import { traceable } from '@/core/xray'

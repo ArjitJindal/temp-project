@@ -1,5 +1,5 @@
 import { Db, MongoClient } from 'mongodb'
-import { allCollections, createMongoDBCollections } from '@/utils/mongoDBUtils'
+import { allCollections, createMongoDBCollections } from '@/utils/mongodb-utils'
 import { logger } from '@/core/logger'
 
 const BATCH_SIZE = 1000

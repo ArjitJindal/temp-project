@@ -2,7 +2,8 @@ import * as Sentry from '@sentry/serverless'
 import * as createError from 'http-errors'
 
 import { RewriteFrames } from '@sentry/integrations'
-import _ from 'lodash'
+
+import { isEqual } from 'lodash'
 import { getContext } from '../utils/context'
 import { JWTAuthorizerResult } from '@/@types/jwt'
 import { SENTRY_DSN } from '@/core/constants'
@@ -34,7 +35,7 @@ export const initSentry =
         }
         const context = getContext()
         const lastError = context?.lastError
-        if (lastError && _.isEqual(error, lastError)) {
+        if (lastError && isEqual(error, lastError)) {
           console.warn('Found duplicated error. Skip sending to Sentry.')
           return null
         }

@@ -10,7 +10,7 @@ import {
 import { TenantSettings } from '@/@types/openapi-internal/TenantSettings'
 import { DynamoDbKeys, TenantSettingName } from '@/core/dynamodb/dynamodb-keys'
 import { getUpdateAttributesUpdateItemInput } from '@/utils/dynamodb'
-import { METADATA_COLLECTION } from '@/utils/mongoDBUtils'
+import { METADATA_COLLECTION } from '@/utils/mongodb-definitions'
 import { traceable } from '@/core/xray'
 
 type MetadataType = 'SLACK_WEBHOOK'

@@ -1,5 +1,5 @@
-import _ from 'lodash'
 import { JSONSchemaType } from 'ajv'
+import { isEmpty, mapValues, uniqBy } from 'lodash'
 import {
   FUZZINESS_SCHEMA,
   RESOLVE_IBAN_NUMBER_SCHEMA,
@@ -52,7 +52,7 @@ export class SanctionsCounterPartyRule extends TransactionRule<SanctionsCounterP
 
     if (
       (this.senderUser && this.receiverUser) ||
-      _.isEmpty(this.parameters?.screeningTypes)
+      isEmpty(this.parameters?.screeningTypes)
     ) {
       return hitRules
     }
@@ -60,7 +60,7 @@ export class SanctionsCounterPartyRule extends TransactionRule<SanctionsCounterP
     const isThresholdHit = this.parameters?.transactionAmountThreshold
       ? await checkTransactionAmountBetweenThreshold(
           this.transaction.originAmountDetails,
-          _.mapValues(
+          mapValues(
             this.parameters.transactionAmountThreshold,
             (threshold) => ({
               min: threshold,
@@ -81,7 +81,7 @@ export class SanctionsCounterPartyRule extends TransactionRule<SanctionsCounterP
         hitRules.push({
           direction: 'DESTINATION',
           vars: super.getTransactionVars('destination'),
-          sanctionsDetails: _.uniqBy(sanctionsDeatils, (detail) => detail.name),
+          sanctionsDetails: uniqBy(sanctionsDeatils, (detail) => detail.name),
         })
       }
     }
@@ -94,7 +94,7 @@ export class SanctionsCounterPartyRule extends TransactionRule<SanctionsCounterP
         hitRules.push({
           direction: 'ORIGIN',
           vars: super.getTransactionVars('origin'),
-          sanctionsDetails: _.uniqBy(sanctionsDeatils, (detail) => detail.name),
+          sanctionsDetails: uniqBy(sanctionsDeatils, (detail) => detail.name),
         })
       }
     }
@@ -183,7 +183,7 @@ export class SanctionsCounterPartyRule extends TransactionRule<SanctionsCounterP
         break
     }
 
-    const namesToSearchFiltered = _.uniqBy(namesToSearch, (item) => item.name)
+    const namesToSearchFiltered = uniqBy(namesToSearch, (item) => item.name)
     const sanctionsService = new SanctionsService(this.tenantId)
     const fuzziness = this.parameters.fuzziness
 

@@ -4,6 +4,13 @@ import { getAffectedInterval, getTimeLabels } from '../utils'
 import { DashboardStatsDRSDistributionData } from './types'
 import dayjs from '@/utils/dayjs'
 import {
+  lookupPipelineStage,
+  DAY_DATE_FORMAT_JS,
+  HOUR_DATE_FORMAT,
+  HOUR_DATE_FORMAT_JS,
+  MONTH_DATE_FORMAT_JS,
+} from '@/utils/mongodb-utils'
+import {
   CASES_COLLECTION,
   DASHBOARD_HITS_BY_USER_STATS_COLLECTION_HOURLY,
   DASHBOARD_RULE_HIT_STATS_COLLECTION_HOURLY,
@@ -12,15 +19,11 @@ import {
   DASHBOARD_TRANSACTIONS_STATS_COLLECTION_DAILY,
   DASHBOARD_TRANSACTIONS_STATS_COLLECTION_HOURLY,
   DASHBOARD_TRANSACTIONS_STATS_COLLECTION_MONTHLY,
-  DAY_DATE_FORMAT_JS,
   DRS_SCORES_DISTRIBUTION_STATS_COLLECTION,
-  HOUR_DATE_FORMAT,
-  HOUR_DATE_FORMAT_JS,
-  MONTH_DATE_FORMAT_JS,
   TRANSACTIONS_COLLECTION,
   USERS_COLLECTION,
-  lookupPipelineStage,
-} from '@/utils/mongoDBUtils'
+} from '@/utils/mongodb-definitions'
+
 import { InternalTransaction } from '@/@types/openapi-internal/InternalTransaction'
 import { InternalConsumerUser } from '@/@types/openapi-internal/InternalConsumerUser'
 import { InternalBusinessUser } from '@/@types/openapi-internal/InternalBusinessUser'

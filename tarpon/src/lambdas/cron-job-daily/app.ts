@@ -1,7 +1,7 @@
-import _ from 'lodash'
+import { chunk, groupBy, mapValues } from 'lodash'
 import { getOngoingScreeningUserRuleInstances } from '../batch-job/ongoing-screening-user-rule-batch-job-runner'
 import { lambdaConsumer } from '@/core/middlewares/lambda-consumer-middlewares'
-import { getMongoDbClient } from '@/utils/mongoDBUtils'
+import { getMongoDbClient } from '@/utils/mongodb-utils'
 import { TenantInfo, TenantService } from '@/services/tenants'
 import { sendBatchJobCommand } from '@/services/batch-job'
 import {
@@ -37,8 +37,8 @@ export const cronJobDailyHandler = lambdaConsumer()(async () => {
 
 async function createApiUsageJobs(tenantInfos: TenantInfo[]) {
   const basicTenants = await TenantService.getTenantInfoFromUsagePlans()
-  const tenantsBySheets = _.mapValues(
-    _.groupBy(basicTenants, (basicTenant) => {
+  const tenantsBySheets = mapValues(
+    groupBy(basicTenants, (basicTenant) => {
       const auth0Tenant = tenantInfos.find(
         (t) => t.tenant.id === basicTenant.id
       )
@@ -54,7 +54,7 @@ async function createApiUsageJobs(tenantInfos: TenantInfo[]) {
       })
   )
   for (const sheetId in tenantsBySheets) {
-    for (const tenants of _.chunk(tenantsBySheets[sheetId], 5)) {
+    for (const tenants of chunk(tenantsBySheets[sheetId], 5)) {
       const googleSheetIds = [
         process.env.API_USAGE_GOOGLE_SHEET_ID as string,
         sheetId,

@@ -1,5 +1,4 @@
-import _ from 'lodash'
-import { DAY_DATE_FORMAT, getMongoDbClient } from '@/utils/mongoDBUtils'
+import { DAY_DATE_FORMAT, getMongoDbClient } from '@/utils/mongodb-utils'
 import { Metric } from '@/core/cloudwatch/metrics'
 
 export type DailyStats = { [dayLabel: string]: number }

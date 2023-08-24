@@ -1,5 +1,6 @@
 import { JSONSchemaType } from 'ajv'
 import * as _ from 'lodash'
+import { chain, compact, flatMap, isEmpty, random, sumBy, uniq } from 'lodash'
 import { AuxiliaryIndexTransaction } from '../repositories/transaction-repository-interface'
 import {
   getTransactionsTotalAmount,
@@ -159,7 +160,7 @@ export default class TransactionsVolumeRule extends TransactionAggregationRule<
       return
     }
 
-    if (!_.isEmpty(transactionVolumeUpperThreshold)) {
+    if (!isEmpty(transactionVolumeUpperThreshold)) {
       const result = await isTransactionAmountAboveThreshold(
         totalAmount,
         transactionVolumeUpperThreshold
@@ -201,7 +202,7 @@ export default class TransactionsVolumeRule extends TransactionAggregationRule<
       ) {
         falsePositiveDetails = {
           isFalsePositive: true,
-          confidenceScore: _.random(60, 80),
+          confidenceScore: random(60, 80),
         }
       }
     }
@@ -282,7 +283,7 @@ export default class TransactionsVolumeRule extends TransactionAggregationRule<
       const checkDirection =
         direction === 'origin' ? checkSender : checkReceiver
 
-      const totalCount = _.sumBy(
+      const totalCount = sumBy(
         userAggregationData,
         (data) =>
           (checkDirection === 'sending'
@@ -292,14 +293,14 @@ export default class TransactionsVolumeRule extends TransactionAggregationRule<
             : (data.sendingCount ?? 0) + (data.receivingCount ?? 0)) ?? 0
       )
 
-      const userKeys = _.uniq(
-        _.flatMap(userAggregationData, (data) =>
+      const userKeys = uniq(
+        flatMap(userAggregationData, (data) =>
           checkDirection === 'sending'
             ? data.receiverKeys ?? []
             : checkDirection === 'receiving'
             ? data.senderKeys ?? []
-            : _.uniq(
-                _.compact<string>([
+            : uniq(
+                compact<string>([
                   ...(data.receiverKeys ?? []),
                   ...(data.senderKeys ?? []),
                 ])
@@ -307,7 +308,7 @@ export default class TransactionsVolumeRule extends TransactionAggregationRule<
         )
       )
 
-      const totalAmount = _.sumBy(
+      const totalAmount = sumBy(
         userAggregationData,
         (data) =>
           (checkDirection === 'sending'
@@ -339,8 +340,8 @@ export default class TransactionsVolumeRule extends TransactionAggregationRule<
             totalAmount + (currentAmount ? currentAmount.transactionAmount : 0),
           transactionCurrency: this.getTargetCurrency(),
         },
-        transactionsCounterPartiesCount: _.uniq(
-          _.compact<string>([...userKeys, currentUserId])
+        transactionsCounterPartiesCount: uniq(
+          compact<string>([...userKeys, currentUserId])
         ).length,
       }
     }
@@ -402,7 +403,7 @@ export default class TransactionsVolumeRule extends TransactionAggregationRule<
       targetCurrency
     )
 
-    const transactionsCounterPartiesCount = _.chain(timeAggregatedResult)
+    const transactionsCounterPartiesCount = chain(timeAggregatedResult)
       .flatMap(({ receiverKeys, senderKeys }) => [
         ...(receiverKeys ?? []),
         ...(senderKeys ?? []),
@@ -476,8 +477,8 @@ export default class TransactionsVolumeRule extends TransactionAggregationRule<
           ).transactionAmount,
           ...(this.parameters.transactionsCounterPartiesThreshold
             ? {
-                receiverKeys: _.uniq(
-                  _.compact<string>(
+                receiverKeys: uniq(
+                  compact<string>(
                     group.map((t) => this.getReceiverKeyId(t as Transaction))
                   )
                 ), // this is about the number of receivers a sender has sent transactions to
@@ -497,8 +498,8 @@ export default class TransactionsVolumeRule extends TransactionAggregationRule<
           ).transactionAmount,
           ...(this.parameters.transactionsCounterPartiesThreshold
             ? {
-                senderKeys: _.uniq(
-                  _.compact<string>(
+                senderKeys: uniq(
+                  compact<string>(
                     group.map((t) => this.getSenderKeyId(t as Transaction))
                   )
                 ),
@@ -533,8 +534,8 @@ export default class TransactionsVolumeRule extends TransactionAggregationRule<
       result.sendingCount = (result.sendingCount ?? 0) + 1
       result.sendingAmount =
         (result.sendingAmount ?? 0) + targetAmount.transactionAmount
-      result.receiverKeys = _.uniq(
-        _.compact<string>([
+      result.receiverKeys = uniq(
+        compact<string>([
           ...(result.receiverKeys ?? []),
           this.getReceiverKeyId(),
         ]) as string[]
@@ -543,8 +544,8 @@ export default class TransactionsVolumeRule extends TransactionAggregationRule<
       result.receivingCount = (result.receivingCount ?? 0) + 1
       result.receivingAmount =
         (result.receivingAmount ?? 0) + targetAmount.transactionAmount
-      result.senderKeys = _.uniq(
-        _.compact<string>([
+      result.senderKeys = uniq(
+        compact<string>([
           ...(result.senderKeys ?? []),
           this.getSenderKeyId(),
         ]) as string[]

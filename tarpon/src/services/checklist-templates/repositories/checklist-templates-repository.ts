@@ -2,11 +2,11 @@ import { MongoClient, AggregationCursor } from 'mongodb'
 import { v4 as uuid4 } from 'uuid'
 import { isNil, omitBy } from 'lodash'
 import {
-  CHECKLIST_TEMPLATE_COLLECTION,
   paginatePipeline,
   prefixRegexMatchFilter,
   regexMatchFilter,
-} from '@/utils/mongoDBUtils'
+} from '@/utils/mongodb-utils'
+import { CHECKLIST_TEMPLATE_COLLECTION } from '@/utils/mongodb-definitions'
 import { DefaultApiGetChecklistTemplatesRequest } from '@/@types/openapi-internal/RequestParameters'
 import { traceable } from '@/core/xray'
 import { ChecklistTemplate } from '@/@types/openapi-internal/ChecklistTemplate'

@@ -1,5 +1,6 @@
 import { JSONSchemaType } from 'ajv'
-import _ from 'lodash'
+
+import { mapValues } from 'lodash'
 import { isConsumerUser } from '../utils/user-rule-utils'
 import { checkTransactionAmountBetweenThreshold } from '../utils/transaction-rule-utils'
 import { TRANSACTION_AMOUNT_THRESHOLDS_OPTIONAL_SCHEMA } from '../utils/rule-parameter-schemas'
@@ -55,7 +56,7 @@ export default class IpAddressUnexpectedLocationRule extends TransactionRule<IpA
 
     const thresholdHit = await checkTransactionAmountBetweenThreshold(
       this.transaction.originAmountDetails,
-      _.mapValues(transactionAmountThreshold, (threshold) => ({
+      mapValues(transactionAmountThreshold, (threshold) => ({
         min: threshold,
       }))
     )

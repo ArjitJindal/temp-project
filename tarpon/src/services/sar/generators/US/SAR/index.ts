@@ -38,7 +38,7 @@ import { InternalTransaction } from '@/@types/openapi-internal/InternalTransacti
 import { ReportParameters } from '@/@types/openapi-internal/ReportParameters'
 import { ReportSchema } from '@/@types/openapi-internal/ReportSchema'
 import dayjs from '@/utils/dayjs'
-import { getMongoDbClient } from '@/utils/mongoDBUtils'
+import { getMongoDbClient } from '@/utils/mongodb-utils'
 import { MetricsRepository } from '@/services/rules-engine/repositories/metrics'
 import {
   Party,

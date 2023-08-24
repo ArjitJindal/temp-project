@@ -1,5 +1,6 @@
 import { JSONSchemaType } from 'ajv'
-import _ from 'lodash'
+
+import { chain, compact, uniq } from 'lodash'
 import { AuxiliaryIndexTransaction } from '../repositories/transaction-repository-interface'
 import { TimeWindow, TIME_WINDOW_SCHEMA } from '../utils/rule-parameter-schemas'
 import { TransactionHistoricalFilters } from '../filters'
@@ -181,7 +182,7 @@ export default abstract class MultipleSendersWithinTimePeriodRuleBase extends Tr
     )
 
     if (userAggregationData) {
-      return _.chain(userAggregationData)
+      return chain(userAggregationData)
         .flatMap((aggregationData) => aggregationData.senderKeys ?? [])
         .compact()
         .uniq()
@@ -239,7 +240,7 @@ export default abstract class MultipleSendersWithinTimePeriodRuleBase extends Tr
         .map((transaction) => transaction.senderKeyId)
     )
 
-    return _.compact([...uniqueSenders])
+    return compact([...uniqueSenders])
   }
 
   protected override async getUpdatedTargetAggregation(
@@ -259,7 +260,7 @@ export default abstract class MultipleSendersWithinTimePeriodRuleBase extends Tr
     }
 
     return {
-      senderKeys: _.uniq(senderUsers),
+      senderKeys: uniq(senderUsers),
     }
   }
 

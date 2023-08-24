@@ -1,12 +1,13 @@
 import { AnyBulkWriteOperation } from 'mongodb'
 import { migrateAllTenants } from '../utils/tenant'
+import { getMongoDbClient } from '@/utils/mongodb-utils'
 import {
   TRANSACTIONS_COLLECTION,
   TRANSACTION_EVENTS_COLLECTION,
   USERS_COLLECTION,
   USER_EVENTS_COLLECTION,
-  getMongoDbClient,
-} from '@/utils/mongoDBUtils'
+} from '@/utils/mongodb-definitions'
+
 import { Tenant } from '@/services/accounts'
 
 const thresholdTimestamp = new Date('2023-05-31T11:59:59.999Z').getTime()

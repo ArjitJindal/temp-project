@@ -1,13 +1,14 @@
 import { v4 as uuidv4 } from 'uuid'
 import { StackConstants } from '@lib/constants'
-import _ from 'lodash'
+
+import { isEqual, round, startCase } from 'lodash'
 import { TenantRepository } from '../tenants/repositories/tenant-repository'
 import { SanctionsSearchRepository } from './repositories/sanctions-search-repository'
 import { SanctionsWhitelistEntityRepository } from './repositories/sanctions-whitelist-entity-repository'
 import { SanctionsSearchRequest } from '@/@types/openapi-internal/SanctionsSearchRequest'
 import { SanctionsSearchResponse } from '@/@types/openapi-internal/SanctionsSearchResponse'
 import { ComplyAdvantageSearchResponse } from '@/@types/openapi-internal/ComplyAdvantageSearchResponse'
-import { getMongoDbClient } from '@/utils/mongoDBUtils'
+import { getMongoDbClient } from '@/utils/mongodb-utils'
 import { DefaultApiGetSanctionsSearchRequest } from '@/@types/openapi-internal/RequestParameters'
 import { SanctionsSearchHistory } from '@/@types/openapi-internal/SanctionsSearchHistory'
 import { getSecret } from '@/utils/secrets-manager'
@@ -114,7 +115,7 @@ export class SanctionsService {
     await this.initialize()
 
     // Normalize search term
-    request.searchTerm = _.startCase(request.searchTerm.toLowerCase())
+    request.searchTerm = startCase(request.searchTerm.toLowerCase())
     request.fuzziness = this.getSanitizedFuzziness(request.fuzziness)
 
     const result = options?.searchIdToReplace
@@ -215,7 +216,7 @@ export class SanctionsService {
     }
 
     // From ComplyAdvantage: Ensure that there are no more than 1 decimal places.
-    return _.round(fuzziness, 1)
+    return round(fuzziness, 1)
   }
 
   private async complyAdvantageSearch(
@@ -370,23 +371,21 @@ export class SanctionsService {
     if (process.env.ENV !== 'prod') {
       return
     }
-    if (_.isEqual(types, ['SANCTIONS'] as SanctionsSearchType[])) {
+    if (isEqual(types, ['SANCTIONS'] as SanctionsSearchType[])) {
       return '01c3b373-c01a-48b2-96f7-3fcf17dd0c91'
-    } else if (
-      _.isEqual(types, ['SANCTIONS', 'PEP'] as SanctionsSearchType[])
-    ) {
+    } else if (isEqual(types, ['SANCTIONS', 'PEP'] as SanctionsSearchType[])) {
       return '8b51ca9d-4b45-4de7-bac8-3bebcf6041ab'
     } else if (
-      _.isEqual(types, ['SANCTIONS', 'ADVERSE_MEDIA'] as SanctionsSearchType[])
+      isEqual(types, ['SANCTIONS', 'ADVERSE_MEDIA'] as SanctionsSearchType[])
     ) {
       return '919d1abb-2add-46c1-b73a-0fbae79aee6d'
-    } else if (_.isEqual(types, ['PEP'] as SanctionsSearchType[])) {
+    } else if (isEqual(types, ['PEP'] as SanctionsSearchType[])) {
       return 'a9b22101-e5d5-477c-b2c7-2f875ebbd5d8'
     } else if (
-      _.isEqual(types, ['PEP', 'ADVERSE_MEDIA'] as SanctionsSearchType[])
+      isEqual(types, ['PEP', 'ADVERSE_MEDIA'] as SanctionsSearchType[])
     ) {
       return 'e04c41ad-d3f0-4562-9b51-9d00a8965f16'
-    } else if (_.isEqual(types, ['ADVERSE_MEDIA'] as SanctionsSearchType[])) {
+    } else if (isEqual(types, ['ADVERSE_MEDIA'] as SanctionsSearchType[])) {
       return '5a67aa5f-4ec8-4a61-af3a-78e3c132a24d'
     }
   }

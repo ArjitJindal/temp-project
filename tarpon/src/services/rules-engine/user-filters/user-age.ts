@@ -1,6 +1,6 @@
 import { JSONSchemaType } from 'ajv'
 
-import _ from 'lodash'
+import { inRange } from 'lodash'
 import { AGE_RANGE_OPTIONAL_SCHEMA } from '../utils/rule-parameter-schemas'
 import { isConsumerUser } from '../utils/user-rule-utils'
 import { UserRuleFilter } from './filter'
@@ -60,7 +60,7 @@ export class UserAgeRuleFilter extends UserRuleFilter<UserAgeRuleFilterParameter
       )
     }
     const { minAge, maxAge } = this.parameters.userAgeRange!
-    return _.inRange(
+    return inRange(
       ageInMs,
       minAge?.granularity && minAge?.units ? this.getAgeInMs(minAge) : 0,
       maxAge?.granularity && maxAge?.units

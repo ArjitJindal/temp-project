@@ -12,7 +12,7 @@ import { IncomingWebhook } from '@slack/webhook'
 import { Credentials } from '@aws-sdk/client-sts'
 import { OauthV2AccessResponse } from '@slack/web-api'
 import { lambdaApi } from '@/core/middlewares/lambda-api-middlewares'
-import { getMongoDbClient } from '@/utils/mongoDBUtils'
+import { getMongoDbClient } from '@/utils/mongodb-utils'
 import { TenantRepository } from '@/services/tenants/repositories/tenant-repository'
 
 import { lambdaConsumer } from '@/core/middlewares/lambda-consumer-middlewares'

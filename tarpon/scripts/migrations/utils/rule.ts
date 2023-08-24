@@ -1,4 +1,4 @@
-import _ from 'lodash'
+import { get, keyBy, set, unset } from 'lodash'
 import { migrateAllTenants } from './tenant'
 import { FLAGRIGHT_TENANT_ID } from '@/core/constants'
 import { RuleRepository } from '@/services/rules-engine/repositories/rule-repository'
@@ -20,7 +20,7 @@ export async function getRulesById(): Promise<{ [key: string]: Rule }> {
   const dynamoDb = await getDynamoDbClient()
   const ruleRepository = new RuleRepository(FLAGRIGHT_TENANT_ID, { dynamoDb })
   const rules = await ruleRepository.getAllRules()
-  return _.keyBy(rules, 'id')
+  return keyBy(rules, 'id')
 }
 
 export async function renameRuleParameter(
@@ -85,9 +85,9 @@ async function renameRuleParameterPrivate(
     const parameters = isRule(rule)
       ? (rule as Rule).defaultParameters
       : (rule as RuleInstance).parameters
-    const targetParameter = _.get(parameters, oldParameterPath)
+    const targetParameter = get(parameters, oldParameterPath)
     if (targetParameter) {
-      _.set(
+      set(
         parameters,
         newParameterPath,
         converterCallback(targetParameter, parameters)
@@ -98,12 +98,12 @@ async function renameRuleParameterPrivate(
       ? (rule as Rule).defaultRiskLevelParameters
       : (rule as RuleInstance).riskLevelParameters
     for (const risk in riskParameters || {}) {
-      const targetParameter = _.get(
+      const targetParameter = get(
         (riskParameters as any)?.[risk],
         oldParameterPath
       )
       if (targetParameter) {
-        _.set(
+        set(
           (riskParameters as any)?.[risk],
           newParameterPath,
           converterCallback(targetParameter, (riskParameters as any)?.[risk])
@@ -182,9 +182,9 @@ async function deleteUnusedRuleParameterPrivate(
       : (rule as RuleInstance).parameters
 
     for (const parameterPath of parameterPaths) {
-      const targetParameter = _.get(parameters, parameterPath)
+      const targetParameter = get(parameters, parameterPath)
       if (targetParameter) {
-        _.unset(parameters, parameterPath)
+        unset(parameters, parameterPath)
         shouldSave = true
       }
     }
@@ -193,12 +193,12 @@ async function deleteUnusedRuleParameterPrivate(
       : (rule as RuleInstance).riskLevelParameters
     for (const risk in riskParameters || {}) {
       for (const parameterPath of parameterPaths) {
-        const targetParameter = _.get(
+        const targetParameter = get(
           (riskParameters as any)?.[risk],
           parameterPath
         )
         if (targetParameter) {
-          _.unset((riskParameters as any)?.[risk], parameterPath)
+          unset((riskParameters as any)?.[risk], parameterPath)
           shouldSave = true
         }
       }
@@ -294,10 +294,10 @@ async function renameRuleFilterPrivate(
   const ruleInstances = await ruleInstanceRepository.getAllRuleInstances()
   for (const ruleInstance of ruleInstances) {
     let shouldSave = false
-    const targetParameter = _.get(ruleInstance.filters, oldParameterPath)
+    const targetParameter = get(ruleInstance.filters, oldParameterPath)
     if (targetParameter) {
       shouldSave = true
-      _.set(
+      set(
         ruleInstance.filters,
         newParameterPath,
         converterCallback(targetParameter)
@@ -328,9 +328,9 @@ async function deleteUnusedFilterPrivate(
   for (const ruleInstance of ruleInstances) {
     let shouldSave = false
     for (const parameterPath of parameterPaths) {
-      const targetParameter = _.get(ruleInstance.filters, parameterPath)
+      const targetParameter = get(ruleInstance.filters, parameterPath)
       if (targetParameter) {
-        _.unset(ruleInstance.filters, parameterPath)
+        unset(ruleInstance.filters, parameterPath)
         shouldSave = true
       }
     }

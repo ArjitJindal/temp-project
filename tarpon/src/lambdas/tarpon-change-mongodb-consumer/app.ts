@@ -4,11 +4,11 @@ import { SQS, SendMessageCommand } from '@aws-sdk/client-sqs'
 import { flatten, pick } from 'lodash'
 import { CaseCreationService } from '../console-api-case/services/case-creation-service'
 import { CasesAlertsAuditLogService } from '../console-api-case/services/case-alerts-audit-log-service'
+import { getMongoDbClient } from '@/utils/mongodb-utils'
 import {
-  getMongoDbClient,
   USER_EVENTS_COLLECTION,
   TRANSACTION_EVENTS_COLLECTION,
-} from '@/utils/mongoDBUtils'
+} from '@/utils/mongodb-definitions'
 import { TransactionWithRulesResult } from '@/@types/openapi-public/TransactionWithRulesResult'
 import { DashboardStatsRepository } from '@/lambdas/console-api-dashboard/repositories/dashboard-stats-repository'
 import { lambdaConsumer } from '@/core/middlewares/lambda-consumer-middlewares'

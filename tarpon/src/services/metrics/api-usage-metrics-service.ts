@@ -10,7 +10,8 @@
 import { DynamoDBDocumentClient } from '@aws-sdk/lib-dynamodb'
 import { MongoClient } from 'mongodb'
 import { Dimension } from '@aws-sdk/client-cloudwatch'
-import _ from 'lodash'
+
+import { groupBy, mapValues, maxBy, mergeWith, sortBy, sumBy } from 'lodash'
 import {
   DailyMetricStats,
   DailyStats,
@@ -26,7 +27,7 @@ import {
   TRANSACTIONS_COLLECTION,
   TRANSACTION_EVENTS_COLLECTION,
   USERS_COLLECTION,
-} from '@/utils/mongoDBUtils'
+} from '@/utils/mongodb-definitions'
 import { RuleInstanceRepository } from '@/services/rules-engine/repositories/rule-instance-repository'
 import {
   publishMetrics,
@@ -96,32 +97,32 @@ export class ApiUsageMetricsService {
       'createdAt',
       timeRange
     )
-    const result: any = _.mergeWith(
-      _.mapValues(transactionsCounts, (v) => [
+    const result: any = mergeWith(
+      mapValues(transactionsCounts, (v) => [
         {
           metric: TRANSACTIONS_COUNT_METRIC,
           value: v,
         },
       ]),
-      _.mapValues(transactionEventsCounts, (v) => [
+      mapValues(transactionEventsCounts, (v) => [
         {
           metric: TRANSACTION_EVENTS_COUNT_METRIC,
           value: v,
         },
       ]),
-      _.mapValues(usersCounts, (v) => [
+      mapValues(usersCounts, (v) => [
         {
           metric: USERS_COUNT_METRIC,
           value: v,
         },
       ]),
-      _.mapValues(sanctionsChecksCounts, (v) => [
+      mapValues(sanctionsChecksCounts, (v) => [
         {
           metric: SANCTIONS_SEARCHES_COUNT_METRIC,
           value: v,
         },
       ]),
-      _.mapValues(ibanResolutinosCounts, (v) => [
+      mapValues(ibanResolutinosCounts, (v) => [
         {
           metric: IBAN_RESOLUTION_COUNT_METRIC,
           value: v,
@@ -134,7 +135,7 @@ export class ApiUsageMetricsService {
       await this.getCurrentActiveRuleInstancesCount(tenantInfo)
     const numberOfSeats = await this.getCurrentNumberOfSeats(tenantInfo)
 
-    return _.sortBy(
+    return sortBy(
       Object.entries(result).map((entry) => ({
         date: entry[0],
         values: (
@@ -162,14 +163,14 @@ export class ApiUsageMetricsService {
   public getMonthlyMetricValues(
     dailyMetrics: DailyMetricStats[]
   ): MonthlyMetricStats[] {
-    const monthlyMetrics = _.mapValues(
-      _.groupBy(dailyMetrics, (dailyMetric) =>
+    const monthlyMetrics = mapValues(
+      groupBy(dailyMetrics, (dailyMetric) =>
         dayjs(dailyMetric.date).format('YYYY-MM')
       ),
       (metrics) => {
         return Object.values(
-          _.mapValues(
-            _.groupBy(
+          mapValues(
+            groupBy(
               metrics.flatMap((metric) => metric.values),
               (metric) => metric.metric.name
             ),
@@ -177,13 +178,13 @@ export class ApiUsageMetricsService {
               if (metrics[0].metric.kind === 'GAUGE') {
                 return {
                   metric: metrics[0].metric,
-                  value: _.maxBy(metrics, (metric) => metric.value)
+                  value: maxBy(metrics, (metric) => metric.value)
                     ?.value as number,
                 }
               } else if (metrics[0].metric.kind === 'CULMULATIVE') {
                 return {
                   metric: metrics[0].metric,
-                  value: _.sumBy(metrics, (metric) => metric.value),
+                  value: sumBy(metrics, (metric) => metric.value),
                 }
               } else {
                 throw new Error(
@@ -195,7 +196,7 @@ export class ApiUsageMetricsService {
         )
       }
     )
-    return _.sortBy(
+    return sortBy(
       Object.entries(monthlyMetrics).map((entry) => ({
         month: entry[0],
         values: entry[1],
@@ -250,7 +251,7 @@ export class ApiUsageMetricsService {
       'createdAt',
       timeRange
     )
-    return _.mapValues(transactionEventsCounts, (value, key) =>
+    return mapValues(transactionEventsCounts, (value, key) =>
       Math.max(value - (dailyTransactionsCountsStats[key] ?? 0), 0)
     )
   }

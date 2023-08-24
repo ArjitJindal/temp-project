@@ -1,5 +1,6 @@
 import { JSONSchemaType } from 'ajv'
-import _ from 'lodash'
+
+import { sumBy } from 'lodash'
 import {
   TimeWindow,
   TIME_WINDOW_SCHEMA,
@@ -186,19 +187,19 @@ export default class HighUnsuccessfullStateRateRule extends TransactionAggregati
     if (originAggregationData) {
       checkSender = 'none'
       senderTransactionCounts = {
-        senderSendingFullCount: _.sumBy(
+        senderSendingFullCount: sumBy(
           originAggregationData,
           (data) => data.allSendingCount || 0
         ),
-        senderReceivingFullCount: _.sumBy(
+        senderReceivingFullCount: sumBy(
           originAggregationData,
           (data) => data.allReceivingCount || 0
         ),
-        senderSendingFilteredCount: _.sumBy(
+        senderSendingFilteredCount: sumBy(
           originAggregationData,
           (data) => data.filteredSendingCount || 0
         ),
-        senderReceivingFilteredCount: _.sumBy(
+        senderReceivingFilteredCount: sumBy(
           originAggregationData,
           (data) => data.filteredReceivingCount || 0
         ),
@@ -207,19 +208,19 @@ export default class HighUnsuccessfullStateRateRule extends TransactionAggregati
     if (destinationAggregationData) {
       checkReceiver = 'none'
       receiverTransactionCounts = {
-        receiverSendingFullCount: _.sumBy(
+        receiverSendingFullCount: sumBy(
           destinationAggregationData,
           (data) => data.allSendingCount || 0
         ),
-        receiverReceivingFullCount: _.sumBy(
+        receiverReceivingFullCount: sumBy(
           destinationAggregationData,
           (data) => data.allReceivingCount || 0
         ),
-        receiverSendingFilteredCount: _.sumBy(
+        receiverSendingFilteredCount: sumBy(
           destinationAggregationData,
           (data) => data.filteredSendingCount || 0
         ),
-        receiverReceivingFilteredCount: _.sumBy(
+        receiverReceivingFilteredCount: sumBy(
           destinationAggregationData,
           (data) => data.filteredReceivingCount || 0
         ),

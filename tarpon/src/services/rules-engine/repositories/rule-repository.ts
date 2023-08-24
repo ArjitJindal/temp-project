@@ -7,7 +7,8 @@ import {
   PutCommandInput,
   QueryCommandInput,
 } from '@aws-sdk/lib-dynamodb'
-import _ from 'lodash'
+
+import { omit } from 'lodash'
 import { Rule } from '@/@types/openapi-internal/Rule'
 import { DynamoDbKeys } from '@/core/dynamodb/dynamodb-keys'
 import { paginateQuery } from '@/utils/dynamodb'
@@ -85,7 +86,7 @@ export class RuleRepository {
       result.Items?.map(
         (item) =>
           ({
-            ..._.omit(item, ['PartitionKeyID', 'SortKeyID']),
+            ...omit(item, ['PartitionKeyID', 'SortKeyID']),
             tenantIds:
               this.tenantId === FLAGRIGHT_TENANT_ID
                 ? item.tenantIds

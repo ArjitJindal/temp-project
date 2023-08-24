@@ -3,7 +3,8 @@ import {
   APIGatewayEventLambdaAuthorizerContext,
   APIGatewayProxyWithLambdaAuthorizerEvent,
 } from 'aws-lambda'
-import _ from 'lodash'
+
+import { isEmpty } from 'lodash'
 import { SimulationTaskRepository } from './repositories/simulation-task-repository'
 import { SimulationResultRepository } from './repositories/simulation-result-repository'
 import { JWTAuthorizerResult } from '@/@types/jwt'
@@ -13,7 +14,7 @@ import {
   SimulationBeaconBatchJob,
   SimulationPulseBatchJob,
 } from '@/@types/batch-job'
-import { getMongoDbClient } from '@/utils/mongoDBUtils'
+import { getMongoDbClient } from '@/utils/mongodb-utils'
 import { getCredentialsFromEvent } from '@/utils/credentials'
 import { TenantRepository } from '@/services/tenants/repositories/tenant-repository'
 import { getDynamoDbClientByEvent } from '@/utils/dynamodb'
@@ -106,7 +107,7 @@ export const simulationHandler = lambdaApi({ requiredFeatures: ['SIMULATOR'] })(
       const data = await simulationTaskRepository.getSimulationJob(
         request.jobId
       )
-      if (_.isEmpty(data)) {
+      if (isEmpty(data)) {
         throw new NotFound(`Simulation job ${request.jobId} not found`)
       }
 

@@ -9,7 +9,8 @@ import {
   UpdateCommand,
   UpdateCommandInput,
 } from '@aws-sdk/lib-dynamodb'
-import _ from 'lodash'
+
+import { mapValues, omit } from 'lodash'
 import dayjs, { duration } from '@/utils/dayjs'
 import { DynamoDbKeys } from '@/core/dynamodb/dynamodb-keys'
 import { PaymentDirection } from '@/@types/tranasction/payment-direction'
@@ -224,7 +225,7 @@ export class AggregationRepository {
         entry[0],
         this.USER_TRANSACTION_STATS_VERSION
       )
-      const data = _.mapValues(
+      const data = mapValues(
         entry[1],
         (v) => v && Object.fromEntries(v.entries())
       )
@@ -491,7 +492,7 @@ export class AggregationRepository {
 
     return hasData
       ? result?.Items?.map((item) => ({
-          ...(_.omit(item, ['PartitionKeyID', 'SortKeyID']) as T),
+          ...(omit(item, ['PartitionKeyID', 'SortKeyID']) as T),
           hour: item.SortKeyID,
         }))
       : undefined

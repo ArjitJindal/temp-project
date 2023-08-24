@@ -5,7 +5,7 @@ import { RiskScoringService } from '@/services/risk-scoring'
 import { isConsumerUser } from '@/services/rules-engine/utils/user-rule-utils'
 import { UserRepository } from '@/services/users/repositories/user-repository'
 import { getDynamoDbClient } from '@/utils/dynamodb'
-import { getMongoDbClient } from '@/utils/mongoDBUtils'
+import { getMongoDbClient } from '@/utils/mongodb-utils'
 
 export function getTestUser(
   user: Partial<User | InternalUser> = {}

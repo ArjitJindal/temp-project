@@ -1,5 +1,5 @@
 import { JSONSchemaType } from 'ajv'
-import _ from 'lodash'
+
 import { TransactionRuleFilter } from './filter'
 import { uiSchema } from '@/services/rules-engine/utils/rule-schema-utils'
 

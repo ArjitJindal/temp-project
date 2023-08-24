@@ -10,7 +10,7 @@ import {
 } from '@aws-sdk/lib-dynamodb'
 import { DynamoDbKeys } from '@/core/dynamodb/dynamodb-keys'
 import { TransactionEvent } from '@/@types/openapi-public/TransactionEvent'
-import { TRANSACTION_EVENTS_COLLECTION } from '@/utils/mongoDBUtils'
+import { TRANSACTION_EVENTS_COLLECTION } from '@/utils/mongodb-definitions'
 import { TransactionMonitoringResult } from '@/@types/openapi-public/TransactionMonitoringResult'
 import { Undefined } from '@/utils/lang'
 import { runLocalChangeHandler } from '@/utils/local-dynamodb-change-handler'

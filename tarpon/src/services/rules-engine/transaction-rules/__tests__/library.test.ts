@@ -1,7 +1,8 @@
 import fs from 'fs'
 import path from 'path'
 import { simpleGit } from 'simple-git'
-import _ from 'lodash'
+
+import { keyBy } from 'lodash'
 import { TRANSACTION_RULES } from '..'
 import { RULES_LIBRARY } from '../library'
 import { USER_RULES } from '../../user-rules'
@@ -46,10 +47,7 @@ describe('', () => {
       LIBRARY_FILE_CONTENT
     )
     const originLibraryPath = '../.library'
-    originLibrary = _.keyBy(
-      (await import(originLibraryPath)).RULES_LIBRARY,
-      'id'
-    )
+    originLibrary = keyBy((await import(originLibraryPath)).RULES_LIBRARY, 'id')
   })
 
   describe.each(RULES_LIBRARY)(

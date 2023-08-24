@@ -1,5 +1,5 @@
 import { BatchJobRunner } from './batch-job-runner-base'
-import { getMongoDbClient } from '@/utils/mongoDBUtils'
+import { getMongoDbClient } from '@/utils/mongodb-utils'
 import { DemoModeDataLoadBatchJob } from '@/@types/batch-job'
 import { seedMongo } from '@/core/seed/mongo'
 import { seedDynamo } from '@/core/seed/dynamodb'

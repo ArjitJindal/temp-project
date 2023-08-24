@@ -21,7 +21,8 @@ import { TenantCreationRequest } from '@/@types/openapi-internal/TenantCreationR
 import { AccountPatchPayload } from '@/@types/openapi-internal/AccountPatchPayload'
 import { RoleService } from '@/services/roles'
 import { getContext, hasFeature } from '@/core/utils/context'
-import { ACCOUNTS_COLLECTION, getMongoDbClient } from '@/utils/mongoDBUtils'
+import { getMongoDbClient } from '@/utils/mongodb-utils'
+import { ACCOUNTS_COLLECTION } from '@/utils/mongodb-definitions'
 import { JWTAuthorizerResult } from '@/@types/jwt'
 import {
   DefaultApiAccountsChangeTenantRequest,

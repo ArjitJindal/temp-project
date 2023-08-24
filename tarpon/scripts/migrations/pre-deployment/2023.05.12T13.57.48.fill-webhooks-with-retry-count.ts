@@ -1,5 +1,6 @@
 import { migrateAllTenants } from '../utils/tenant'
-import { WEBHOOK_COLLECTION, getMongoDbClient } from '@/utils/mongoDBUtils'
+import { getMongoDbClient } from '@/utils/mongodb-utils'
+import { WEBHOOK_COLLECTION } from '@/utils/mongodb-definitions'
 import { Tenant } from '@/services/accounts'
 
 async function migrateTenant(tenant: Tenant) {

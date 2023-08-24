@@ -1,5 +1,6 @@
 import fetch from 'node-fetch'
-import _ from 'lodash'
+
+import { set } from 'lodash'
 import { TransactionAmountDetails } from '@/@types/openapi-public/TransactionAmountDetails'
 import { logger } from '@/core/logger'
 import { CurrencyCode } from '@/@types/openapi-public/CurrencyCode'
@@ -41,7 +42,7 @@ export async function getCurrencyExchangeRate(
       const rate = (
         (await (await fetch(apiUri)).json()) as { [key: string]: number }
       )[targetCurr]
-      _.set(cachedData, `${sourceCurr}.${targetCurr}`, rate)
+      set(cachedData, `${sourceCurr}.${targetCurr}`, rate)
       segment?.close()
       return rate
     } catch (e: any) {

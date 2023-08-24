@@ -1,11 +1,8 @@
 import { AggregationCursor, MongoClient, Document, Filter } from 'mongodb'
 import { isNil, omitBy } from 'lodash'
 import { SanctionsSearchHistory } from '@/@types/openapi-internal/SanctionsSearchHistory'
-import {
-  paginatePipeline,
-  prefixRegexMatchFilter,
-  SANCTIONS_SEARCHES_COLLECTION,
-} from '@/utils/mongoDBUtils'
+import { paginatePipeline, prefixRegexMatchFilter } from '@/utils/mongodb-utils'
+import { SANCTIONS_SEARCHES_COLLECTION } from '@/utils/mongodb-definitions'
 import { SanctionsSearchRequest } from '@/@types/openapi-internal/SanctionsSearchRequest'
 import { SanctionsSearchResponse } from '@/@types/openapi-internal/SanctionsSearchResponse'
 import { SanctionsSearchHistoryResponse } from '@/@types/openapi-internal/SanctionsSearchHistoryResponse'

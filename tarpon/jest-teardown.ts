@@ -2,7 +2,7 @@
 import 'tsconfig-paths/register'
 
 import { execSync } from 'child_process'
-import { getMongoDbClient } from '@/utils/mongoDBUtils'
+import { getMongoDbClient } from '@/utils/mongodb-utils'
 import { MONGO_TEST_DB_PREFIX } from '@/test-utils/mongo-test-utils'
 
 module.exports = async function () {

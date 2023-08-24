@@ -1,4 +1,3 @@
-import _ from 'lodash'
 import { FLAGRIGHT_TENANT_ID } from '@/core/constants'
 import { getDynamoDbClient } from '@/utils/dynamodb'
 import { ListRepository } from '@/services/list/repositories/list-repository'

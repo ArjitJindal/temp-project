@@ -18,17 +18,17 @@ import {
   getUserReceiverKeys,
   getUserSenderKeys,
 } from '@/services/rules-engine/utils'
+import { getMongoDbClient } from '@/utils/mongodb-utils'
 import {
   DASHBOARD_TRANSACTIONS_STATS_COLLECTION_DAILY,
   DASHBOARD_TRANSACTIONS_STATS_COLLECTION_HOURLY,
   DASHBOARD_TRANSACTIONS_STATS_COLLECTION_MONTHLY,
-  getMongoDbClient,
   IMPORT_COLLECTION,
   KRS_SCORES_COLLECTION,
   TRANSACTIONS_COLLECTION,
   USERS_COLLECTION,
   USER_EVENTS_COLLECTION,
-} from '@/utils/mongoDBUtils'
+} from '@/utils/mongodb-definitions'
 import { logger } from '@/core/logger'
 
 type DynamoDbKey = { PartitionKeyID: string; SortKeyID: string }

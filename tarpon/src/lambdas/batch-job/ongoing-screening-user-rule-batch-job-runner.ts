@@ -1,7 +1,8 @@
 import pMap from 'p-map'
-import _ from 'lodash'
+
+import { chunk, isEqual } from 'lodash'
 import { BatchJobRunner } from './batch-job-runner-base'
-import { getMongoDbClient } from '@/utils/mongoDBUtils'
+import { getMongoDbClient } from '@/utils/mongodb-utils'
 import { OngoingScreeningUserRuleBatchJob } from '@/@types/batch-job'
 import { cleanUpDynamoDbResources, getDynamoDbClient } from '@/utils/dynamodb'
 import { RulesEngineService } from '@/services/rules-engine'
@@ -59,7 +60,7 @@ export class OngoingScreeningUserRuleBatchJobRunner extends BatchJobRunner {
     )
     const users = await userRepository.getMongoUsersByIds(userIds)
     let processedUsers = 0
-    for (const usersChunk of _.chunk(users, CONCURRENT_BATCH_SIZE)) {
+    for (const usersChunk of chunk(users, CONCURRENT_BATCH_SIZE)) {
       const dynamoDb = getDynamoDbClient()
       const rulesEngine = new RulesEngineService(tenantId, dynamoDb, mongoDb)
       const userRepository = new UserRepository(tenantId, { dynamoDb })
@@ -73,8 +74,8 @@ export class OngoingScreeningUserRuleBatchJobRunner extends BatchJobRunner {
             { ongoingScreeningMode: true }
           )
           if (
-            !_.isEqual(user.executedRules || [], result.executedRules || []) ||
-            !_.isEqual(user.hitRules || [], result.hitRules || [])
+            !isEqual(user.executedRules || [], result.executedRules || []) ||
+            !isEqual(user.hitRules || [], result.hitRules || [])
           ) {
             await userRepository.updateUserWithExecutedRules(
               user.userId,

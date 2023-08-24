@@ -1,6 +1,6 @@
 import { MongoClient } from 'mongodb'
 import { StackConstants } from '@lib/constants'
-import _ from 'lodash'
+
 import { InternalServerError } from 'http-errors'
 import {
   DeleteCommand,
@@ -12,6 +12,7 @@ import {
   PutCommandInput,
   QueryCommandInput,
 } from '@aws-sdk/lib-dynamodb'
+import { omit } from 'lodash'
 import { getRiskLevelFromScore, getRiskScoreFromLevel } from '../utils'
 import { DynamoDbKeys } from '@/core/dynamodb/dynamodb-keys'
 import { paginateQuery } from '@/utils/dynamodb'
@@ -27,7 +28,7 @@ import {
   ARS_SCORES_COLLECTION,
   DRS_SCORES_COLLECTION,
   KRS_SCORES_COLLECTION,
-} from '@/utils/mongoDBUtils'
+} from '@/utils/mongodb-definitions'
 import { RiskClassificationConfig } from '@/@types/openapi-internal/RiskClassificationConfig'
 import { RiskEntityType } from '@/@types/openapi-internal/RiskEntityType'
 import { KrsScore } from '@/@types/openapi-internal/KrsScore'
@@ -392,7 +393,7 @@ export class RiskRepository {
         return null
       }
 
-      return _.omit(result.Items[0], [
+      return omit(result.Items[0], [
         'PartitionKeyID',
         'SortKeyID',
       ]) as ParameterAttributeRiskValues
@@ -439,7 +440,7 @@ export class RiskRepository {
       const result = await paginateQuery(this.dynamoDb, queryInput)
       return result.Items && result.Items.length > 0
         ? (result.Items.map((item) =>
-            _.omit(item, ['PartitionKeyID', 'SortKeyID'])
+            omit(item, ['PartitionKeyID', 'SortKeyID'])
           ) as ParameterAttributeRiskValues[])
         : null
     } catch (e) {

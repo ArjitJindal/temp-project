@@ -7,7 +7,6 @@
 
 import * as fs from 'fs'
 import * as yaml from 'js-yaml'
-import _ from 'lodash'
 import mkdirp from 'mkdirp'
 import { StackConstants } from '../constants'
 import { getAugmentedOpenapi } from './openapi-augmentor-util'

@@ -1,4 +1,4 @@
-import _ from 'lodash'
+import { mean } from 'lodash'
 import dayjs from '@/utils/dayjs'
 import { RiskLevel } from '@/@types/openapi-public/RiskLevel'
 import { RiskClassificationScore } from '@/@types/openapi-internal/RiskClassificationScore'
@@ -49,7 +49,7 @@ export const getRiskScoreFromLevel = (
   let calculatedRiskScore = 75
   riskClassificationValues.forEach((value) => {
     if (riskLevel == value.riskLevel) {
-      calculatedRiskScore = _.mean([
+      calculatedRiskScore = mean([
         value.upperBoundRiskScore,
         value.lowerBoundRiskScore,
       ])

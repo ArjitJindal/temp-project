@@ -1,4 +1,4 @@
-import _ from 'lodash'
+import { groupBy, last, minBy, uniq, uniqBy } from 'lodash'
 import {
   CaseRepository,
   MAX_TRANSACTION_IN_A_CASE,
@@ -223,7 +223,7 @@ export class CaseCreationService {
         numberOfTransactionsHit: transaction ? 1 : 0,
         transactionIds: transaction ? [transaction.transactionId] : [],
         priority: (ruleInstanceMatch?.casePriority ??
-          _.last(PRIORITYS)) as Priority,
+          last(PRIORITYS)) as Priority,
         originPaymentMethods: transaction?.originPaymentDetails?.method
           ? [transaction?.originPaymentDetails?.method]
           : [],
@@ -329,7 +329,7 @@ export class CaseCreationService {
       (x) => !transactionPredicate(x)
     )
 
-    const caseTransactionsIds = _.uniq(
+    const caseTransactionsIds = uniq(
       newCaseAlertsTransactions.map(({ transactionId }) => transactionId)
     )
 
@@ -341,8 +341,7 @@ export class CaseCreationService {
       createdTimestamp: now,
       caseStatus: 'OPEN',
       caseType: 'SYSTEM',
-      priority:
-        _.minBy(newCaseAlerts, 'priority')?.priority ?? _.last(PRIORITYS),
+      priority: minBy(newCaseAlerts, 'priority')?.priority ?? last(PRIORITYS),
       relatedCases: sourceCase.caseId
         ? [...(sourceCase.relatedCases ?? []), sourceCase.caseId]
         : sourceCase.relatedCases,
@@ -353,7 +352,7 @@ export class CaseCreationService {
       updatedAt: now,
     })
 
-    const oldCaseTransactionsIds = _.uniq(
+    const oldCaseTransactionsIds = uniq(
       oldCaseAlertsTransactions.map(({ transactionId }) => transactionId)
     )
 
@@ -364,8 +363,7 @@ export class CaseCreationService {
       caseTransactions: oldCaseAlertsTransactions,
       caseTransactionsIds: oldCaseTransactionsIds,
       caseTransactionsCount: oldCaseTransactionsIds.length,
-      priority:
-        _.minBy(oldCaseAlerts, 'priority')?.priority ?? _.last(PRIORITYS),
+      priority: minBy(oldCaseAlerts, 'priority')?.priority ?? last(PRIORITYS),
       updatedAt: now,
     })
     return newCase
@@ -463,7 +461,7 @@ export class CaseCreationService {
           }
         })
         const delayTimestampsGroups = Object.entries(
-          _.groupBy(delayTimestamps, (x) => x.availableAfterTimestamp)
+          groupBy(delayTimestamps, (x) => x.availableAfterTimestamp)
         ).map(([key, values]) => ({
           availableAfterTimestamp:
             key === 'undefined' ? undefined : parseInt(key),
@@ -509,7 +507,7 @@ export class CaseCreationService {
               params.latestTransactionArrivalTimestamp
             )
 
-            const caseTransactionsIds = _.uniq(
+            const caseTransactionsIds = uniq(
               [
                 ...(existedCase.caseTransactionsIds ?? []),
                 filteredTransaction?.transactionId as string,
@@ -522,7 +520,7 @@ export class CaseCreationService {
               latestTransactionArrivalTimestamp:
                 params.latestTransactionArrivalTimestamp,
               caseTransactionsIds,
-              caseTransactions: _.uniqBy(
+              caseTransactions: uniqBy(
                 // NOTE: filteredTransaction comes first to replace the existing transaction
                 [
                   filteredTransaction,
@@ -531,8 +529,7 @@ export class CaseCreationService {
                 (t) => t.transactionId
               ),
               caseTransactionsCount: caseTransactionsIds.length,
-              priority:
-                _.minBy(alerts, 'priority')?.priority ?? _.last(PRIORITYS),
+              priority: minBy(alerts, 'priority')?.priority ?? last(PRIORITYS),
               alerts,
               updatedAt: now,
             })

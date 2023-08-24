@@ -14,18 +14,18 @@ import {
   UpdateCommand,
   UpdateCommandInput,
 } from '@aws-sdk/lib-dynamodb'
-import _ from 'lodash'
+
+import { get, isEmpty, set } from 'lodash'
 import { Comment } from '@/@types/openapi-internal/Comment'
 import { User } from '@/@types/openapi-public/User'
 import { Business } from '@/@types/openapi-public/Business'
 import { DynamoDbKeys } from '@/core/dynamodb/dynamodb-keys'
 import {
-  CASES_COLLECTION,
   paginatePipeline,
   prefixRegexMatchFilter,
   regexMatchFilter,
-  USERS_COLLECTION,
-} from '@/utils/mongoDBUtils'
+} from '@/utils/mongodb-utils'
+import { CASES_COLLECTION, USERS_COLLECTION } from '@/utils/mongodb-definitions'
 import { InternalBusinessUser } from '@/@types/openapi-internal/InternalBusinessUser'
 import { InternalConsumerUser } from '@/@types/openapi-internal/InternalConsumerUser'
 import { UserType } from '@/@types/user/user-type'
@@ -684,8 +684,8 @@ export class UserRepository {
       'legalEntity.companyRegistrationDetails.registrationCountry',
     ]
     COUNTRY_FIELD_PATHS.forEach((path) => {
-      if (_.get(user, path) === 'N/A') {
-        _.set(user, path, undefined)
+      if (get(user, path) === 'N/A') {
+        set(user, path, undefined)
       }
     })
     if ((user as User).legalDocuments) {
@@ -809,7 +809,7 @@ export class UserRepository {
       {
         $limit: 100,
       },
-    ].filter((stage) => !_.isEmpty(stage))
+    ].filter((stage) => !isEmpty(stage))
 
     const result: string[] = await collection
       .aggregate<any>(pipeline)

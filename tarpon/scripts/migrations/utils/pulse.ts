@@ -1,9 +1,8 @@
-import _ from 'lodash'
 import { migrateAllTenants } from './tenant'
 import { getDynamoDbClient } from '@/utils/dynamodb'
 import { RiskRepository } from '@/services/risk-scoring/repositories/risk-repository'
 import { RiskEntityType } from '@/@types/openapi-internal/RiskEntityType'
-import { getMongoDbClient } from '@/utils/mongoDBUtils'
+import { getMongoDbClient } from '@/utils/mongodb-utils'
 import { ParameterAttributeRiskValuesParameterEnum } from '@/@types/openapi-internal/ParameterAttributeRiskValues'
 
 export type ParameterNewFieldRequest = {

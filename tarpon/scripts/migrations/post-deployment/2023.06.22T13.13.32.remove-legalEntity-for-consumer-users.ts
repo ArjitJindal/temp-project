@@ -1,13 +1,14 @@
-import _ from 'lodash'
 import { StackConstants } from '@lib/constants'
 import { UpdateCommand, UpdateCommandInput } from '@aws-sdk/lib-dynamodb'
+import { last } from 'lodash'
 import { migrateEntities } from '../utils/mongodb'
 import { migrateAllTenants } from '../utils/tenant'
 import {
   getMigrationLastCompletedTimestamp,
   updateMigrationLastCompletedTimestamp,
 } from '../utils/migration-progress'
-import { USERS_COLLECTION, getMongoDbClient } from '@/utils/mongoDBUtils'
+import { getMongoDbClient } from '@/utils/mongodb-utils'
+import { USERS_COLLECTION } from '@/utils/mongodb-definitions'
 import { Tenant } from '@/services/accounts'
 import { InternalConsumerUser } from '@/@types/openapi-internal/InternalConsumerUser'
 import { DynamoDbKeys } from '@/core/dynamodb/dynamodb-keys'
@@ -44,7 +45,7 @@ async function migrateTenant(tenant: Tenant) {
     }
     await updateMigrationLastCompletedTimestamp(
       migrationKey,
-      _.last(usersBatch)?.createdTimestamp ?? 0
+      last(usersBatch)?.createdTimestamp ?? 0
     )
   })
 }

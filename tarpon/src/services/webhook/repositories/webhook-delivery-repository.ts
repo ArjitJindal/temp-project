@@ -1,5 +1,5 @@
 import { MongoClient } from 'mongodb'
-import { WEBHOOK_DELIVERY_COLLECTION } from '@/utils/mongoDBUtils'
+import { WEBHOOK_DELIVERY_COLLECTION } from '@/utils/mongodb-definitions'
 import { WebhookDeliveryAttempt } from '@/@types/openapi-internal/WebhookDeliveryAttempt'
 import { traceable } from '@/core/xray'
 
