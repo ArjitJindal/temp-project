@@ -65,7 +65,6 @@ export default function AuditLogTable() {
         includeRootUserRecords,
         searchEntityId: searchEntityId ? [searchEntityId] : [],
         filterActions,
-        filterCategory: 'ACTIVITY_LOG',
       });
 
       return {

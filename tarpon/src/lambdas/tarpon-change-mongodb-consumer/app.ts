@@ -105,8 +105,7 @@ async function handleNewCases(
   await Promise.all(
     newCases.map(async (caseItem) => {
       await casesAlertsAuditLogService.handleAuditLogForNewCase(
-        pick(caseItem, propertiesToPickForCase),
-        'ACTIVITY_LOG'
+        pick(caseItem, propertiesToPickForCase)
       )
     })
   )
@@ -133,8 +132,7 @@ async function handleNewCases(
   await Promise.all(
     newAlerts.map(async (alert) => {
       await casesAlertsAuditLogService.handleAuditLogForNewAlert(
-        pick(alert, propertiesToPickForAlert),
-        'ACTIVITY_LOG'
+        pick(alert, propertiesToPickForAlert)
       )
     })
   )

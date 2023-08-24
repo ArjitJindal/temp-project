@@ -168,19 +168,54 @@ export const casesHandler = lambdaApi()(
       async (ctx, request) => await alertsService.getAlerts(request)
     )
 
-    handlers.registerPostCasesManual(
-      async (ctx, request) =>
-        await caseService.createManualCaseFromUser(
-          request.ManualCaseCreationDataRequest.manualCaseData,
-          request.ManualCaseCreationDataRequest.files,
-          request.ManualCaseCreationDataRequest.transactionIds
-        )
-    )
+    handlers.registerPostCasesManual(async (ctx, request) => {
+      const case_ = await caseService.createManualCaseFromUser(
+        request.ManualCaseCreationDataRequest.manualCaseData,
+        request.ManualCaseCreationDataRequest.files,
+        request.ManualCaseCreationDataRequest.transactionIds
+      )
 
-    handlers.registerPatchCasesManual(
-      async (ctx, request) =>
-        await caseService.updateManualCase(request.ManualCasePatchRequest)
-    )
+      await casesAlertsAuditLogService.createAuditLog({
+        caseId: case_?.caseId ?? '',
+        logAction: 'CREATE',
+        caseDetails: { ...case_, caseTransactions: undefined }, // Removed case transactions to prevent sqs message size limit
+        newImage: { ...case_, caseTransactions: undefined }, // Removed case transactions to prevent sqs message size limit
+        oldImage: {},
+        subtype: 'MANUAL_CASE_CREATION',
+      })
+
+      return case_
+    })
+
+    handlers.registerPatchCasesManual(async (ctx, request) => {
+      const case_ = await caseService.getCase(
+        request.ManualCasePatchRequest.caseId
+      )
+
+      const newCase = await caseService.updateManualCase(
+        request.ManualCasePatchRequest
+      )
+
+      await casesAlertsAuditLogService.createAuditLog({
+        caseId: case_?.caseId ?? '',
+        logAction: 'UPDATE',
+        caseDetails: {
+          ...newCase,
+          caseTransactions: undefined, // Removed case transactions to prevent sqs message size limit
+        },
+        newImage: {
+          ...newCase,
+          caseTransactions: undefined, // Removed case transactions to prevent sqs message size limit
+        },
+        oldImage: {
+          ...case_,
+          caseTransactions: undefined, // Removed case transactions to prevent sqs message size limit
+        },
+        subtype: 'MANUAL_CASE_TRANSACTIONS_ADDITION',
+      })
+
+      return newCase
+    })
 
     handlers.registerGetCaseIds(
       async (ctx, request) =>
@@ -313,8 +348,7 @@ export const casesHandler = lambdaApi()(
             reason: escalationRequest.caseUpdateRequest.reason,
             caseStatus: caseItem.caseStatus,
           },
-          'STATUS_CHANGE',
-          'ACTIVITY_LOG'
+          'STATUS_CHANGE'
         )
         return response
       } else if (escalationRequest.alertEscalations) {
@@ -342,8 +376,7 @@ export const casesHandler = lambdaApi()(
               alertCaseId: childCaseId,
               updatedAlertIds: alertIds,
             },
-            'STATUS_CHANGE',
-            'ACTIVITY_LOG'
+            'STATUS_CHANGE'
           )
         }
         await casesAlertsAuditLogService.handleAuditLogForAlertsUpdate(
@@ -357,8 +390,7 @@ export const casesHandler = lambdaApi()(
               ? flatten(updatedTransactions)
               : undefined,
           },
-          'STATUS_CHANGE',
-          'ACTIVITY_LOG'
+          'STATUS_CHANGE'
         )
         return response
       }

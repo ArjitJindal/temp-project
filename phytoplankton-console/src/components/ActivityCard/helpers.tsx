@@ -1,7 +1,7 @@
 import { ReactElement } from 'react';
 import { has } from 'lodash';
 import { LogItemData } from './LogItem';
-import { Account, AuditLog, CaseStatus } from '@/apis';
+import { Account, AuditLog, Case, CaseStatus } from '@/apis';
 import { DEFAULT_DATE_FORMAT, TIME_FORMAT_WITHOUT_SECONDS, dayjs } from '@/utils/dayjs';
 import { firstLetterUpper } from '@/utils/humanize';
 
@@ -56,7 +56,7 @@ export const getCreateStatement = (
   const userName = user ? (user.role === 'root' ? 'system' : user.name ?? user.email) : 'system';
   const entityType = log.type;
   const entityId = log.entityId;
-  const subtype = extractSubtype(log);
+  const subtype = extractSubtype(log) as AuditLog['subtype'];
   const assignees = getAssignee(log?.newImage, users) ?? [];
   switch (subtype) {
     case 'COMMENT': {
@@ -71,6 +71,37 @@ export const getCreateStatement = (
         <>
           A new {entityType.toLowerCase()} <b>{entityId}</b> is created by <b>{userName}</b> and is
           unassigned
+        </>
+      );
+    }
+    case 'MANUAL_CASE_CREATION': {
+      const numberOfTransactions = (log.newImage as Case).caseTransactionsIds?.length;
+      return (
+        <>
+          A new case <b>{entityId}</b> is created by <b>{userName}</b> with
+          {numberOfTransactions
+            ? ` ${numberOfTransactions} transactions with transaction ids ${(
+                <b>{log.newImage.caseTransactionsIds?.join(', ')}</b>
+              )}`
+            : ' no transactions'}
+        </>
+      );
+    }
+    case 'MANUAL_CASE_TRANSACTIONS_ADDITION': {
+      const oldCaseTransactionsIds = (log.oldImage as Case).caseTransactionsIds;
+      const newCaseTransactionsIds = (log.newImage as Case).caseTransactionsIds;
+
+      const addedTransactions = newCaseTransactionsIds?.filter(
+        (transactionId) => !oldCaseTransactionsIds?.includes(transactionId),
+      );
+
+      return (
+        <>
+          {addedTransactions?.length
+            ? `${addedTransactions.length} transactions with transaction ids ${(
+                <b>{addedTransactions.join(', ')}</b>
+              )} are added to case ${entityId} by ${userName}`
+            : `No transactions are added to case ${entityId} by ${userName}`}
         </>
       );
     }

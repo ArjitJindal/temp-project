@@ -10,7 +10,6 @@ async function migrateTenant(tenant: Tenant) {
   const db = mongoDb.db()
   const collection = db.collection<AuditLog>(AUDITLOG_COLLECTION(tenant.id))
   const deletionFilter: Filter<AuditLog> = {
-    category: 'ACTIVITY_LOG',
     subtype: 'CREATION',
     type: 'CASE',
   }

@@ -49,13 +49,7 @@ export class AuditLogRepository {
     filter: Filter<AuditLog>
   } {
     const conditions: Filter<AuditLog>[] = []
-    if (params.filterCategory) {
-      conditions.push({
-        category: {
-          $ne: 'ACTIVITY_LOG',
-        },
-      })
-    }
+
     conditions.push({
       timestamp: {
         $gte: params.afterTimestamp || 0,

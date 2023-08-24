@@ -2367,10 +2367,6 @@ paths:
           in: query
           name: searchEntityId
         - schema:
-            type: string
-          in: query
-          name: filterCategory
-        - schema:
             type: array
             items:
               $ref: '#/components/schemas/AuditLogActionEnum'
@@ -7353,6 +7349,8 @@ components:
             - ASSIGNMENT
             - CREATION
             - STATUS_CHANGE
+            - MANUAL_CASE_CREATION
+            - MANUAL_CASE_TRANSACTIONS_ADDITION
         action:
           $ref: '#/components/schemas/AuditLogActionEnum'
         timestamp:
@@ -7365,10 +7363,6 @@ components:
           type: object
         logMetadata:
           type: object
-        category:
-          type: string
-          enum:
-            - ACTIVITY_LOG
         user:
           $ref: '#/components/schemas/Account'
       required:
