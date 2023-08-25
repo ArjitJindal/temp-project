@@ -9,6 +9,7 @@ import {
 } from 'aws-lambda'
 import { Credentials } from '@aws-sdk/client-sts'
 import { getSignedUrl } from '@aws-sdk/s3-request-presigner'
+import { omit } from 'lodash'
 import { User } from '@/@types/openapi-public/User'
 import { FileInfo } from '@/@types/openapi-internal/FileInfo'
 import { UserRepository } from '@/services/users/repositories/user-repository'
@@ -29,12 +30,13 @@ import { UsersUniquesField } from '@/@types/openapi-internal/UsersUniquesField'
 import { Comment } from '@/@types/openapi-internal/Comment'
 import { Business } from '@/@types/openapi-public/Business'
 import { getS3ClientByEvent } from '@/utils/s3'
+import { getContext } from '@/core/utils/context'
 import { getMongoDbClient } from '@/utils/mongodb-utils'
 import { getDynamoDbClientByEvent } from '@/utils/dynamodb'
 import { UserViewConfig } from '@/lambdas/console-api-user/app'
 import { mergeObjects } from '@/utils/object'
 import { traceable } from '@/core/xray'
-
+import { Account } from '@/@types/openapi-internal/Account'
 @traceable
 export class UserService {
   userRepository: UserRepository
@@ -183,13 +185,13 @@ export class UserService {
   public async updateConsumerUser(
     userId: string,
     updateRequest: UserUpdateRequest
-  ) {
+  ): Promise<Comment> {
     const user = await this.userRepository.getConsumerUser(userId)
     if (!user) {
       throw new NotFound('User not found')
     }
     const updatedUser: User = {
-      ...(mergeObjects(user, updateRequest) as User),
+      ...(mergeObjects(user, omit(updateRequest, ['comment'])) as User),
       transactionLimits: updateRequest.transactionLimits
         ? {
             ...user.transactionLimits,
@@ -208,19 +210,20 @@ export class UserService {
       },
       'CONSUMER'
     )
-    return
+
+    return await this.userUpdateComment(updateRequest, userId)
   }
 
   public async updateBusinessUser(
     userId: string,
     updateRequest: UserUpdateRequest
-  ) {
+  ): Promise<Comment> {
     const user = await this.userRepository.getBusinessUser(userId)
     if (!user) {
       throw new NotFound('User not found')
     }
     const updatedUser: Business = {
-      ...(mergeObjects(user, updateRequest) as Business),
+      ...(mergeObjects(user, omit(updateRequest, ['comment'])) as Business),
       transactionLimits: updateRequest.transactionLimits
         ? {
             ...user.transactionLimits,
@@ -240,7 +243,19 @@ export class UserService {
       },
       'BUSINESS'
     )
-    return
+    return await this.userUpdateComment(updateRequest, userId)
+  }
+
+  public async userUpdateComment(
+    updateRequest: UserUpdateRequest,
+    userId: string
+  ) {
+    const { id: userCommentId } = getContext()?.user as Account
+    const userComment: Comment = {
+      ...updateRequest.comment!,
+      userId: userCommentId,
+    }
+    return await this.saveUserComment(userId, userComment)
   }
 
   private async getDownloadLink(file: FileInfo): Promise<string> {

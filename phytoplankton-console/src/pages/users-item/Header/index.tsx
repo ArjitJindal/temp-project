@@ -56,7 +56,7 @@ export default function Header(props: Props) {
           requiredPermissions={['users:user-comments:write']}
         />,
       ]}
-      subHeader={<SubHeader user={user} />}
+      subHeader={<SubHeader onNewComment={onNewComment} user={user} />}
     />
   );
 }

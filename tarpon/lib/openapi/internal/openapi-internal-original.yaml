@@ -1375,6 +1375,10 @@ paths:
       responses:
         '200':
           description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Comment'
       requestBody:
         content:
           application/json:
@@ -1520,6 +1524,10 @@ paths:
       responses:
         '200':
           description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Comment'
       requestBody:
         content:
           application/json:
@@ -5452,6 +5460,8 @@ components:
           $ref: ../public/openapi-public-original.yaml#/components/schemas/KYCStatusDetails
         transactionLimits:
           $ref: ../public/openapi-public-original.yaml#/components/schemas/TransactionLimits
+        comment:
+          $ref: '#/components/schemas/Comment'
     FileImport:
       title: FileImport
       type: object
@@ -5604,6 +5614,8 @@ components:
         complyAdvantageSearchProfileId:
           type: string
         isAiEnabled:
+          type: boolean
+        kycUserStatusLock:
           type: boolean
         apiKeyViewData:
           type: array

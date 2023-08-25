@@ -8,9 +8,8 @@
 
 .items {
   display: flex;
-  flex-wrap: wrap;
   gap: 16px;
-  flex: 1;
+  flex-direction: column;
 }
 
 .risks {
@@ -19,7 +18,12 @@
   grid-auto-columns: 1fr;
   grid-auto-flow: column;
 }
-
+.row-items {
+  display: flex;
+  gap: 24px;
+  flex-wrap: wrap;
+  flex: 1;
+}
 @media (max-width: 1024px) {
   .root {
     grid-template-columns: 1fr;
