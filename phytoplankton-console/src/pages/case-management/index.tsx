@@ -31,11 +31,15 @@ export default function CaseManagementPage() {
   const user = useAuth0User();
   const navigate = useNavigate();
   const hasQaEnabled = useFeatureEnabled('QA');
-  const parsedParams = queryAdapter.deserializer(parseQueryString(location.search));
+  const parsedParams = queryAdapter.deserializer({
+    showCases: qaMode ? 'QA_UNCHECKED_ALERTS' : 'ALL',
+    ...parseQueryString(location.search),
+  });
   const [params, setParams] = useState<AllParams<TableSearchParams>>({
     ...DEFAULT_PARAMS_STATE,
     ...parsedParams,
   });
+
   useEffect(() => {
     if (qaMode) {
       setParams((params) => ({ ...params, showCases: 'QA_UNCHECKED_ALERTS' }));
@@ -55,7 +59,6 @@ export default function CaseManagementPage() {
       if (params.showCases === 'MY_ALERTS' || params.showCases === 'MY') {
         params.assignedTo = undefined;
       }
-
       navigate(makeUrl('/case-management/cases', {}, queryAdapter.serializer(params)), {
         replace: true,
       });

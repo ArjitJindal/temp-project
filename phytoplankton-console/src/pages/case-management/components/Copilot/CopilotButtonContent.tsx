@@ -15,10 +15,10 @@ import { getBranding } from '@/utils/branding';
 interface Props {
   reasons: CaseReasons[];
   setCommentValue: (comment: string) => void;
-  caseId: string;
+  entityId?: string;
 }
 
-export const CopilotButtonContent = ({ reasons, caseId, setCommentValue }: Props) => {
+export const CopilotButtonContent = ({ reasons, entityId, setCommentValue }: Props) => {
   const [copilotResponse, setCopilotResponse] = useState<NarrativeResponse | undefined>();
   const branding = getBranding();
   const [showSources, setShowSources] = useState(false);
@@ -30,7 +30,7 @@ export const CopilotButtonContent = ({ reasons, caseId, setCommentValue }: Props
         <Tooltip title={`Enable ${branding.companyName} AI Features to generate a narrative`}>
           <CopilotWrapperContent
             reasons={reasons}
-            caseId={caseId}
+            entityId={entityId}
             setCommentValue={setCommentValue}
             copilotResponse={copilotResponse}
             setShowSources={setShowSources}
@@ -40,7 +40,7 @@ export const CopilotButtonContent = ({ reasons, caseId, setCommentValue }: Props
       ) : (
         <CopilotWrapperContent
           reasons={reasons}
-          caseId={caseId}
+          entityId={entityId}
           setCommentValue={setCommentValue}
           copilotResponse={copilotResponse}
           setShowSources={setShowSources}
@@ -73,7 +73,7 @@ export const CopilotButtonContent = ({ reasons, caseId, setCommentValue }: Props
 
 const CopilotWrapperContent = ({
   reasons,
-  caseId,
+  entityId,
   copilotResponse,
   setShowSources,
   setCommentValue,
@@ -93,7 +93,8 @@ const CopilotWrapperContent = ({
       setCopilotLoading(true);
       const response = await api.generateNarrative({
         NarrativeRequest: {
-          caseId,
+          // TODO refactor as entity ID
+          caseId: entityId || '',
           reasons: reasons,
         },
       });

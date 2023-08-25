@@ -15,6 +15,7 @@ import {
   APIGatewayEventLambdaAuthorizerContext,
   APIGatewayProxyWithLambdaAuthorizerEvent,
 } from 'aws-lambda'
+import { uuid4 } from '@sentry/utils'
 import {
   AlertsRepository,
   FLAGRIGHT_SYSTEM_USER,
@@ -59,6 +60,7 @@ import { CaseConfig } from '@/lambdas/console-api-case/app'
 import { JWTAuthorizerResult } from '@/@types/jwt'
 import { isStatusInReview } from '@/utils/helpers'
 import { ChecklistStatus } from '@/@types/openapi-internal/ChecklistStatus'
+import { AlertQaStatusUpdateRequest } from '@/@types/openapi-internal/AlertQaStatusUpdateRequest'
 
 @traceable
 export class AlertsService extends CaseAlertsCommonService {
@@ -921,7 +923,7 @@ export class AlertsService extends CaseAlertsCommonService {
     await sanctionsService.addWhitelistEntities(entities, userId)
   }
 
-  async updateAlertsQaStatus(
+  async updateAlertChecklistQaStatus(
     alertId: string,
     checklistItemId: string,
     status: ChecklistStatus
@@ -938,5 +940,56 @@ export class AlertsService extends CaseAlertsCommonService {
     })
 
     await this.alertsRepository.saveAlert(alert.caseId!, alert)
+  }
+  async updateAlertQaStatus(
+    userId: string,
+    update: AlertQaStatusUpdateRequest
+  ): Promise<void> {
+    const alerts = await this.alertsRepository.getAlertsByIds(update.alertIds)
+    await Promise.all(
+      alerts.map((alert) => {
+        if (update.checklistStatus === 'FAILED') {
+          // Find who closed the alert and reassign them
+          const originalAssignee = alert.statusChanges
+            ?.slice()
+            .reverse()
+            .find((sc) => sc.caseStatus === 'CLOSED')?.userId
+          if (originalAssignee) {
+            alert.assignments = [
+              {
+                assigneeUserId: originalAssignee,
+                assignedByUserId: userId,
+                timestamp: Date.now(),
+              },
+            ]
+          }
+        }
+
+        alert.ruleQaStatus = update.checklistStatus
+        if (!alert.comments) {
+          alert.comments = []
+        }
+        if (!alert.statusChanges) {
+          alert.statusChanges = []
+        }
+        alert.comments?.push({
+          body: `Alert QA status set to ${update.checklistStatus} with comment: ${update.comment}`,
+          createdAt: Date.now(),
+          files: update.files,
+          id: uuid4(),
+          updatedAt: Date.now(),
+          userId,
+        })
+        alert.statusChanges?.push({
+          caseStatus: 'REOPENED',
+          comment: update.comment,
+          otherReason: update.otherReason,
+          reason: update.reason,
+          timestamp: Date.now(),
+          userId,
+        })
+        return this.alertsRepository.saveAlert(alert.caseId!, alert)
+      })
+    )
   }
 }

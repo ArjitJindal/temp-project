@@ -9,7 +9,7 @@ import Modal from '@/components/library/Modal';
 import Select from '@/components/library/Select';
 import TextArea from '@/components/library/TextArea';
 import TextInput from '@/components/library/TextInput';
-import { OTHER_REASON } from '@/pages/case-management/components/StatusChangeModal';
+import { OTHER_REASON } from '@/components/Narrative';
 import FilesInput, { RemoveAllFilesRef } from '@/components/ui/FilesInput';
 import { useApi } from '@/api';
 import { CloseMessage, message } from '@/components/library/Message';

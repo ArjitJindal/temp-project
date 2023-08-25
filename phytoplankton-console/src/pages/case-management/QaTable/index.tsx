@@ -59,6 +59,14 @@ export default function QaTable(props: Props) {
     helper.simple<'ruleQaStatus'>({
       title: 'QA Status',
       key: 'ruleQaStatus',
+      type: {
+        render: (status) => {
+          if (status) {
+            return <>{status}</>;
+          }
+          return <>'-'</>;
+        },
+      },
     }),
     helper.simple<'ruleName'>({
       title: 'Rule name',

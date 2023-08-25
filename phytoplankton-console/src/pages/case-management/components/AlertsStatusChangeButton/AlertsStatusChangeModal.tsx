@@ -3,7 +3,6 @@ import _ from 'lodash';
 import pluralize from 'pluralize';
 import StatusChangeModal, {
   FormValues,
-  OTHER_REASON,
   Props as StatusChangeModalProps,
 } from '../StatusChangeModal';
 import { useApi } from '@/api';
@@ -12,6 +11,7 @@ import { message } from '@/components/library/Message';
 import { getErrorMessage } from '@/utils/lang';
 import { useAuth0User, useUsers } from '@/utils/user-utils';
 import { CASES_ITEM } from '@/utils/queries/keys';
+import { OTHER_REASON } from '@/components/Narrative';
 
 interface Props extends Omit<StatusChangeModalProps, 'entityName' | 'updateMutation'> {
   caseId?: string;

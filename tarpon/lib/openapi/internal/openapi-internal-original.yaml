@@ -2966,6 +2966,22 @@ paths:
             schema:
               $ref: '#/components/schemas/AlertsStatusUpdateRequest'
         required: true
+  /alerts/qaStatusChange:
+    patch:
+      summary: Alerts - QA Status Change
+      operationId: alerts-qa-status-change
+      responses:
+        '200':
+          description: OK
+      x-flagright:
+        permissions:
+          - case-management:qa:write
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AlertQaStatusUpdateRequest'
+        required: true
   '/alerts/{alertId}/qa/{checklistItemId}':
     patch:
       summary: Alerts - Qa Status
@@ -6600,6 +6616,32 @@ components:
               type: array
               items:
                 $ref: '#/components/schemas/Assignment'
+    AlertQaStatusUpdateRequest:
+      title: AlertQaStatusUpdateRequest
+      type: object
+      properties:
+        alertIds:
+          type: array
+          items:
+            type: string
+        reason:
+          type: array
+          items:
+            $ref: '#/components/schemas/CaseReasons'
+        checklistStatus:
+          $ref: '#/components/schemas/ChecklistStatus'
+        otherReason:
+          type: string
+        comment:
+          type: string
+        files:
+          type: array
+          items:
+            $ref: '#/components/schemas/FileInfo'
+      required:
+        - alertIds
+        - reason
+        - checklistStatus
     AlertStatusUpdateRequest:
       title: AlertStatusUpdateRequest
       type: object

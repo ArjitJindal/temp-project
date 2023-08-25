@@ -23,11 +23,15 @@ interface CommonProps<Value extends Comparable> {
   className?: string;
 }
 
-interface SingleProps<Value extends Comparable> extends CommonProps<Value>, InputProps<Value> {
+export interface SingleProps<Value extends Comparable>
+  extends CommonProps<Value>,
+    InputProps<Value> {
   mode?: 'SINGLE';
 }
 
-interface MultipleProps<Value extends Comparable> extends CommonProps<Value>, InputProps<Value[]> {
+export interface MultipleProps<Value extends Comparable>
+  extends CommonProps<Value>,
+    InputProps<Value[]> {
   mode: 'MULTIPLE';
 }
 

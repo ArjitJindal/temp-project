@@ -1,5 +1,6 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useMutation } from '@tanstack/react-query';
+import { useLocalStorageState } from 'ahooks';
 import { AssigneesDropdown } from '../components/AssigneesDropdown';
 import { ApproveSendBackButton } from '../components/ApproveSendBackButton';
 import { FalsePositiveTag } from '../components/FalsePositiveTag';
@@ -13,7 +14,13 @@ import {
   ChecklistStatus,
 } from '@/apis';
 import QueryResultsTable from '@/components/common/QueryResultsTable';
-import { AllParams, TableColumn, TableData, TableRefType } from '@/components/library/Table/types';
+import {
+  AllParams,
+  SelectionAction,
+  TableColumn,
+  TableData,
+  TableRefType,
+} from '@/components/library/Table/types';
 import StackLineIcon from '@/components/ui/icons/Remix/business/stack-line.react.svg';
 import { QueryResult } from '@/utils/queries/types';
 import Id from '@/components/ui/Id';
@@ -49,6 +56,7 @@ import {
 } from '@/utils/case-utils';
 import { CASE_STATUSS } from '@/apis/models-custom/CaseStatus';
 import { useRuleOptions } from '@/utils/rules';
+import QaStatusChangeModal from '@/pages/case-management/AlertTable/QaStatusChangeModal';
 
 export type AlertTableParams = AllParams<TableSearchParams> & {
   filterQaStatus?: ChecklistStatus;
@@ -315,6 +323,7 @@ export default function AlertTable(props: Props) {
   const escalationEnabled = useFeatureEnabled('ESCALATION');
   const isPulseEnabled = useFeatureEnabled('PULSE');
   const sarEnabled = useFeatureEnabled('SAR');
+  const [qaMode] = useLocalStorageState<boolean>('QA_MODE', false);
   const api = useApi();
   const user = useAuth0User();
 
@@ -473,6 +482,236 @@ export default function AlertTable(props: Props) {
     },
     [isEmbedded, onChangeParams],
   );
+
+  const selectionActions: SelectionAction<TableAlertItem, AlertTableParams>[] = [
+    ({ isDisabled }) => {
+      if (!sarEnabled) {
+        return;
+      }
+
+      if (!selectedTransactionIds.length) {
+        return;
+      }
+
+      if (!caseId) {
+        return;
+      }
+
+      return (
+        <SarButton
+          caseId={caseId}
+          transactionIds={selectedTransactionIds}
+          isDisabled={isDisabled}
+        />
+      );
+    },
+    ({ selectedIds, selectedItems, isDisabled }) => {
+      if (selectedTransactionIds.length) {
+        return;
+      }
+
+      const selectedAlertStatuses = new Set(
+        Object.values(selectedItems).map((item) => item.alertStatus),
+      );
+
+      if (selectedAlertStatuses.has('ESCALATED') && selectedAlertStatuses.size === 1) {
+        return (
+          <AssignToButton
+            onSelect={(account) =>
+              handleAlertsReviewAssignments({
+                alertIds: selectedIds,
+                reviewAssignments: [
+                  {
+                    assigneeUserId: account.id,
+                    assignedByUserId: user.userId,
+                    timestamp: Date.now(),
+                  },
+                ],
+              })
+            }
+            isDisabled={isDisabled}
+          />
+        );
+      } else if (!selectedAlertStatuses.has('ESCALATED')) {
+        return (
+          <AssignToButton
+            onSelect={(account) =>
+              handleAlertAssignments({
+                alertIds: selectedIds,
+                assignments: [
+                  {
+                    assigneeUserId: account.id,
+                    assignedByUserId: user.userId,
+                    timestamp: Date.now(),
+                  },
+                ],
+              })
+            }
+            isDisabled={isDisabled}
+          />
+        );
+      }
+    },
+    ({ selectedIds, selectedItems, params, isDisabled }) => {
+      const selectedAlertStatuses = [
+        ...new Set(
+          Object.values(selectedItems).map((item) =>
+            item.alertStatus === 'REOPENED' ? 'OPEN' : item.alertStatus,
+          ),
+        ),
+      ];
+      const selectedAlertStatus =
+        selectedAlertStatuses.length === 1 ? selectedAlertStatuses[0] : undefined;
+      const selectedCaseIds = getSelectedCaseIdsForAlerts(selectedItems);
+      const selectedCaseId = selectedCaseIds.length === 1 ? selectedCaseIds[0] : undefined;
+      const caseId = params.caseId ?? selectedCaseId;
+      const alertStatus = params.alertStatus ?? selectedAlertStatus;
+      if (alertStatus === 'ESCALATED' && selectedTransactionIds.length) {
+        return;
+      }
+
+      const isReviewAlerts = isInReviewCases(selectedItems, true);
+
+      return (
+        escalationEnabled &&
+        caseId &&
+        alertStatus &&
+        !isReviewAlerts && (
+          <AlertsStatusChangeButton
+            ids={selectedIds}
+            transactionIds={selectedTxns}
+            onSaved={() => {
+              reloadTable();
+              setSelectedTxns({});
+            }}
+            status={alertStatus}
+            caseId={caseId}
+            statusTransitions={{
+              OPEN: { status: 'ESCALATED', actionLabel: 'Escalate' },
+              REOPENED: { status: 'ESCALATED', actionLabel: 'Escalate' },
+              ESCALATED: { status: 'OPEN', actionLabel: 'Send back' },
+              CLOSED: { status: 'ESCALATED', actionLabel: 'Escalate' },
+              OPEN_IN_PROGRESS: { status: 'ESCALATED', actionLabel: 'Escalate' },
+              OPEN_ON_HOLD: { status: 'ESCALATED', actionLabel: 'Escalate' },
+              ESCALATED_IN_PROGRESS: { status: 'OPEN', actionLabel: 'Send back' },
+              ESCALATED_ON_HOLD: { status: 'OPEN', actionLabel: 'Send back' },
+            }}
+            isDisabled={isDisabled}
+          />
+        )
+      );
+    },
+    ({ selectedIds, selectedItems, isDisabled }) => {
+      const isReviewAlerts =
+        canReviewCases(selectedItems, user.userId) && isInReviewCases(selectedItems, true);
+      const [previousStatus, isSingle] = getSingleCaseStatusPreviousForInReview(selectedItems);
+      const [currentStatus, isSingleCurrent] = getSingleCaseStatusCurrent(selectedItems, true);
+      const selectedCaseIds = getSelectedCaseIdsForAlerts(selectedItems);
+      const selectedCaseId = selectedCaseIds.length === 1 ? selectedCaseIds[0] : undefined;
+
+      if (isReviewAlerts && selectedCaseId) {
+        return (
+          <ApproveSendBackButton
+            ids={selectedIds}
+            onReload={reloadTable}
+            type="ALERT"
+            isDisabled={isDisabled}
+            status={currentStatus}
+            previousStatus={previousStatus}
+            isDeclineHidden={!isSingle}
+            isApproveHidden={!isSingleCurrent}
+            selectedCaseId={selectedCaseId}
+          />
+        );
+      }
+    },
+    ({ selectedIds, selectedItems, params, isDisabled }) => {
+      const selectedStatuses = [
+        ...new Set(
+          Object.values(selectedItems).map((item) => {
+            return item.alertStatus === 'CLOSED' ? 'CLOSED' : 'OPEN';
+          }),
+        ),
+      ];
+      const isReviewAlerts = isInReviewCases(selectedItems, true);
+
+      if (isReviewAlerts) {
+        return;
+      }
+      const statusChangeButtonValue =
+        selectedStatuses.length === 1 ? selectedStatuses[0] : undefined;
+      if (selectedTransactionIds.length) {
+        return;
+      }
+      const status = params.alertStatus ?? statusChangeButtonValue;
+      return statusChangeButtonValue ? (
+        <AlertsStatusChangeButton
+          ids={selectedIds}
+          transactionIds={selectedTxns}
+          onSaved={reloadTable}
+          status={status}
+          caseId={params.caseId}
+          isDisabled={isDisabled}
+          statusTransitions={{
+            OPEN_ON_HOLD: { status: 'CLOSED', actionLabel: 'Close' },
+            OPEN_IN_PROGRESS: { status: 'CLOSED', actionLabel: 'Close' },
+            ESCALATED_IN_PROGRESS: { status: 'CLOSED', actionLabel: 'Close' },
+            ESCALATED_ON_HOLD: { status: 'CLOSED', actionLabel: 'Close' },
+          }}
+        />
+      ) : null;
+    },
+    ({ selectedIds, params, onResetSelection }) => {
+      if (selectedTransactionIds.length) {
+        return;
+      }
+      return (
+        params.caseId && (
+          <CreateCaseConfirmModal
+            selectedEntities={selectedIds}
+            caseId={params.caseId}
+            onResetSelection={onResetSelection}
+          />
+        )
+      );
+    },
+  ];
+
+  const qaModeSelectionActions: SelectionAction<TableAlertItem, AlertTableParams>[] = [
+    ({ selectedIds, params, onResetSelection }) => {
+      if (selectedTransactionIds.length) {
+        return;
+      }
+
+      return (
+        params.caseId && (
+          <QaStatusChangeModal
+            status={'PASSED'}
+            alertIds={selectedIds}
+            caseId={params.caseId}
+            onResetSelection={onResetSelection}
+            onSave={reloadTable}
+          />
+        )
+      );
+    },
+    ({ selectedIds, params, onResetSelection }) => {
+      if (selectedTransactionIds.length) {
+        return;
+      }
+      return (
+        params.caseId && (
+          <QaStatusChangeModal
+            status={'FAILED'}
+            alertIds={selectedIds}
+            caseId={params.caseId}
+            onResetSelection={onResetSelection}
+            onSave={reloadTable}
+          />
+        )
+      );
+    },
+  ];
   return (
     <>
       <QueryResultsTable<TableAlertItem, AlertTableParams>
@@ -494,203 +733,7 @@ export default function AlertTable(props: Props) {
         extraFilters={extraFilters}
         pagination={isEmbedded ? 'HIDE_FOR_ONE_PAGE' : true}
         selectionInfo={getSelectionInfo()}
-        selectionActions={[
-          ({ isDisabled }) => {
-            if (!sarEnabled) {
-              return;
-            }
-
-            if (!selectedTransactionIds.length) {
-              return;
-            }
-
-            if (!caseId) {
-              return;
-            }
-
-            return (
-              <SarButton
-                caseId={caseId}
-                transactionIds={selectedTransactionIds}
-                isDisabled={isDisabled}
-              />
-            );
-          },
-          ({ selectedIds, selectedItems, isDisabled }) => {
-            if (selectedTransactionIds.length) {
-              return;
-            }
-
-            const selectedAlertStatuses = new Set(
-              Object.values(selectedItems).map((item) => item.alertStatus),
-            );
-
-            if (selectedAlertStatuses.has('ESCALATED') && selectedAlertStatuses.size === 1) {
-              return (
-                <AssignToButton
-                  onSelect={(account) =>
-                    handleAlertsReviewAssignments({
-                      alertIds: selectedIds,
-                      reviewAssignments: [
-                        {
-                          assigneeUserId: account.id,
-                          assignedByUserId: user.userId,
-                          timestamp: Date.now(),
-                        },
-                      ],
-                    })
-                  }
-                  isDisabled={isDisabled}
-                />
-              );
-            } else if (!selectedAlertStatuses.has('ESCALATED')) {
-              return (
-                <AssignToButton
-                  onSelect={(account) =>
-                    handleAlertAssignments({
-                      alertIds: selectedIds,
-                      assignments: [
-                        {
-                          assigneeUserId: account.id,
-                          assignedByUserId: user.userId,
-                          timestamp: Date.now(),
-                        },
-                      ],
-                    })
-                  }
-                  isDisabled={isDisabled}
-                />
-              );
-            }
-          },
-          ({ selectedIds, selectedItems, params, isDisabled }) => {
-            const selectedAlertStatuses = [
-              ...new Set(
-                Object.values(selectedItems).map((item) =>
-                  item.alertStatus === 'REOPENED' ? 'OPEN' : item.alertStatus,
-                ),
-              ),
-            ];
-            const selectedAlertStatus =
-              selectedAlertStatuses.length === 1 ? selectedAlertStatuses[0] : undefined;
-            const selectedCaseIds = getSelectedCaseIdsForAlerts(selectedItems);
-            const selectedCaseId = selectedCaseIds.length === 1 ? selectedCaseIds[0] : undefined;
-            const caseId = params.caseId ?? selectedCaseId;
-            const alertStatus = params.alertStatus ?? selectedAlertStatus;
-            if (alertStatus === 'ESCALATED' && selectedTransactionIds.length) {
-              return;
-            }
-
-            const isReviewAlerts = isInReviewCases(selectedItems, true);
-
-            return (
-              escalationEnabled &&
-              caseId &&
-              alertStatus &&
-              !isReviewAlerts && (
-                <AlertsStatusChangeButton
-                  ids={selectedIds}
-                  transactionIds={selectedTxns}
-                  onSaved={() => {
-                    reloadTable();
-                    setSelectedTxns({});
-                  }}
-                  status={alertStatus}
-                  caseId={caseId}
-                  statusTransitions={{
-                    OPEN: { status: 'ESCALATED', actionLabel: 'Escalate' },
-                    REOPENED: { status: 'ESCALATED', actionLabel: 'Escalate' },
-                    ESCALATED: { status: 'OPEN', actionLabel: 'Send back' },
-                    CLOSED: { status: 'ESCALATED', actionLabel: 'Escalate' },
-                    OPEN_IN_PROGRESS: { status: 'ESCALATED', actionLabel: 'Escalate' },
-                    OPEN_ON_HOLD: { status: 'ESCALATED', actionLabel: 'Escalate' },
-                    ESCALATED_IN_PROGRESS: { status: 'OPEN', actionLabel: 'Send back' },
-                    ESCALATED_ON_HOLD: { status: 'OPEN', actionLabel: 'Send back' },
-                  }}
-                  isDisabled={isDisabled}
-                />
-              )
-            );
-          },
-          ({ selectedIds, selectedItems, isDisabled }) => {
-            const isReviewAlerts =
-              canReviewCases(selectedItems, user.userId) && isInReviewCases(selectedItems, true);
-            const [previousStatus, isSingle] =
-              getSingleCaseStatusPreviousForInReview(selectedItems);
-            const [currentStatus, isSingleCurrent] = getSingleCaseStatusCurrent(
-              selectedItems,
-              true,
-            );
-            const selectedCaseIds = getSelectedCaseIdsForAlerts(selectedItems);
-            const selectedCaseId = selectedCaseIds.length === 1 ? selectedCaseIds[0] : undefined;
-
-            if (isReviewAlerts && selectedCaseId) {
-              return (
-                <ApproveSendBackButton
-                  ids={selectedIds}
-                  onReload={reloadTable}
-                  type="ALERT"
-                  isDisabled={isDisabled}
-                  status={currentStatus}
-                  previousStatus={previousStatus}
-                  isDeclineHidden={!isSingle}
-                  isApproveHidden={!isSingleCurrent}
-                  selectedCaseId={selectedCaseId}
-                />
-              );
-            }
-          },
-          ({ selectedIds, selectedItems, params, isDisabled }) => {
-            const selectedStatuses = [
-              ...new Set(
-                Object.values(selectedItems).map((item) => {
-                  return item.alertStatus === 'CLOSED' ? 'CLOSED' : 'OPEN';
-                }),
-              ),
-            ];
-            const isReviewAlerts = isInReviewCases(selectedItems, true);
-
-            if (isReviewAlerts) {
-              return;
-            }
-            const statusChangeButtonValue =
-              selectedStatuses.length === 1 ? selectedStatuses[0] : undefined;
-            if (selectedTransactionIds.length) {
-              return;
-            }
-            const status = params.alertStatus ?? statusChangeButtonValue;
-            return statusChangeButtonValue ? (
-              <AlertsStatusChangeButton
-                ids={selectedIds}
-                transactionIds={selectedTxns}
-                onSaved={reloadTable}
-                status={status}
-                caseId={params.caseId}
-                isDisabled={isDisabled}
-                statusTransitions={{
-                  OPEN_ON_HOLD: { status: 'CLOSED', actionLabel: 'Close' },
-                  OPEN_IN_PROGRESS: { status: 'CLOSED', actionLabel: 'Close' },
-                  ESCALATED_IN_PROGRESS: { status: 'CLOSED', actionLabel: 'Close' },
-                  ESCALATED_ON_HOLD: { status: 'CLOSED', actionLabel: 'Close' },
-                }}
-              />
-            ) : null;
-          },
-          ({ selectedIds, params, onResetSelection }) => {
-            if (selectedTransactionIds.length) {
-              return;
-            }
-            return (
-              params.caseId && (
-                <CreateCaseConfirmModal
-                  selectedEntities={selectedIds}
-                  caseId={params.caseId}
-                  onResetSelection={onResetSelection}
-                />
-              )
-            );
-          },
-        ]}
+        selectionActions={qaMode ? qaModeSelectionActions : selectionActions}
         renderExpanded={
           expandTransactions
             ? (alert) => (
@@ -715,6 +758,12 @@ export default function AlertTable(props: Props) {
         partiallySelectedIds={Object.entries(selectedTxns)
           .filter(([id, txns]) => !selectedAlerts.includes(id) && txns.length > 0)
           .map(([id]) => id)}
+        selection={(row) => {
+          if (qaMode) {
+            return !row.content?.ruleQaStatus;
+          }
+          return true;
+        }}
         onSelect={(ids) => {
           setSelectedTxns((prevState) =>
             ids.reduce((acc, id) => ({ ...acc, [id]: [] }), prevState),

@@ -220,7 +220,8 @@ export function sampleAlert(
     numberOfTransactionsHit: params.transactions.length,
     priority: pickRandom(['P1', 'P2', 'P3', 'P4'], Math.random()),
     transactionIds: params.transactions.map((t) => t.transactionId),
-    ruleQaStatus: pickRandom(CHECKLIST_STATUSS),
+    ruleQaStatus: randomBool() ? pickRandom(CHECKLIST_STATUSS) : undefined,
+    ruleChecklistTemplateId: checklistTemplateId,
     updatedAt: sampleTimestamp(),
     statusChanges: getStatusChangesObject(
       alertStatus ?? 'OPEN',

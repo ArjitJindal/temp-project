@@ -3,7 +3,6 @@ import { useMutation } from '@tanstack/react-query';
 import pluralize from 'pluralize';
 import StatusChangeModal, {
   FormValues,
-  OTHER_REASON,
   Props as StatusChangeModalProps,
 } from '../StatusChangeModal';
 import { useApi } from '@/api';
@@ -11,6 +10,7 @@ import { CaseStatusUpdate } from '@/apis';
 import { message } from '@/components/library/Message';
 import { getErrorMessage } from '@/utils/lang';
 import { useAuth0User, useUsers } from '@/utils/user-utils';
+import { OTHER_REASON } from '@/components/Narrative';
 
 interface Props extends Omit<StatusChangeModalProps, 'entityName' | 'updateMutation'> {}
 
