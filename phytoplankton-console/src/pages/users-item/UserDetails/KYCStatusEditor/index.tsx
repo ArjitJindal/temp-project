@@ -38,7 +38,7 @@ export default function KycStatusEditor(props: Props) {
           ''
         )}
       </div>
-      <p>{humanizeConstant(kycChanged ? newKycStatus : user.kycStatusDetails!.status!)}</p>
+      <p>{humanizeConstant(kycChanged ? newKycStatus : user.kycStatusDetails?.status ?? '')}</p>
       <KYCChangeModal
         isVisible={modalVisible}
         onClose={() => setModalVisible(false)}

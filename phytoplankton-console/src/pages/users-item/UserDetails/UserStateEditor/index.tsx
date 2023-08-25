@@ -38,7 +38,9 @@ export default function UserStateEditor(props: Props) {
           ''
         )}
       </div>
-      <p>{humanizeConstant(userStatusChanged ? newUserStatus : user.userStateDetails!.state!)}</p>
+      <p>
+        {humanizeConstant(userStatusChanged ? newUserStatus : user.userStateDetails?.state ?? '')}
+      </p>
       <UserChangeModal
         isVisible={modalVisible}
         onOkay={(userStatus: UserState | '', comment: Comment): void => {
