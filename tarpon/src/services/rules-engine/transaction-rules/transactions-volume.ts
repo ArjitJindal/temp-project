@@ -433,7 +433,7 @@ export default class TransactionsVolumeRule extends TransactionAggregationRule<
     isTransactionHistoricalFiltered: boolean
   ): Promise<void> {
     const { sendingTransactions, receivingTransactions } =
-      await this.getRawTransactionsData('origin')
+      await this.getRawTransactionsData(direction)
 
     if (
       isTransactionHistoricalFiltered &&
