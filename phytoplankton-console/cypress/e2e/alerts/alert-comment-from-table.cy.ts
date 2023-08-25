@@ -12,7 +12,7 @@ describe('Comment Alerts from Table', () => {
     /* eslint-disable cypress/no-unnecessary-waiting */
     const comment = `This is a comment from cypress test ${uuid()}`;
     cy.get('button[data-cy="expand-icon"]', { timeout: 15000 }).eq(0).click();
-    cy.get('.ant-tabs-tab-btn', { timeout: 8000 }).eq(1).click();
+    cy.get('.ant-tabs-tab-btn', { timeout: 8000 }).eq(2).click();
     cy.get('.toastui-editor-contents', { timeout: 8000 }).last().type(comment);
     let length = 0;
     cy.get('.toastui-editor-contents', { timeout: 8000 }).then((el) => {
