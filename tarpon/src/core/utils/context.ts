@@ -1,5 +1,6 @@
 import { AsyncLocalStorage } from 'async_hooks'
 import * as Sentry from '@sentry/serverless'
+import { utils } from 'aws-xray-sdk-core'
 import {
   APIGatewayEventLambdaAuthorizerContext,
   APIGatewayProxyWithLambdaAuthorizerEvent,
@@ -80,6 +81,8 @@ export async function getInitialContext(
       ?.split(',')
       .forEach((p) => permissions.set(p as Permission, true))
 
+    const trace = utils.processTraceData(process.env._X_AMZN_TRACE_ID)
+
     const context: Context = {
       tenantId,
       requestId: (event as APIGatewayEvent).requestContext?.requestId,
@@ -87,6 +90,8 @@ export async function getInitialContext(
         tenantId,
         functionName: lambdaContext?.functionName,
         region: process.env.AWS_REGION,
+        requestId: lambdaContext.awsRequestId,
+        traceId: trace.sampled === '1' ? trace.root : undefined,
       },
       metrics: {},
       metricDimensions: {
