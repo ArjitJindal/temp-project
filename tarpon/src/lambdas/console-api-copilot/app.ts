@@ -16,22 +16,22 @@ export const copilotHandler = lambdaApi({ requiredFeatures: ['COPILOT'] })(
       APIGatewayEventLambdaAuthorizerContext<JWTAuthorizerResult>
     >
   ) => {
-    const copilotService = new CopilotService()
-    const caseService = await CaseService.fromEvent(event)
-    const userService = await UserService.fromEvent(event)
-
+    const [copilotService, caseService, userService] = await Promise.all([
+      CopilotService.new(),
+      CaseService.fromEvent(event),
+      UserService.fromEvent(event),
+    ])
     const handlers = new Handlers()
 
     handlers.registerGenerateNarrative(async (ctx, request) => {
-      const { caseId, reasons } = request.NarrativeRequest
-      const _case = await caseService.getCase(caseId)
+      const { entityId, reasons } = request.NarrativeRequest
+      const _case = await caseService.getCase(entityId)
       const user = await userService.getUser(
         _case?.caseUsers?.origin?.userId ||
           _case?.caseUsers?.destination?.userId ||
           ''
       )
 
-      // TODO figure out how to best engineer the prompt for more examples, currently just supplying one
       const caseResponse = await caseService.getCases({
         filterCaseStatus: ['CLOSED'],
         filterCaseClosureReasons: reasons,
@@ -44,7 +44,8 @@ export const copilotHandler = lambdaApi({ requiredFeatures: ['COPILOT'] })(
       if (_case) {
         return copilotService.getNarrative({
           _case,
-          historicalCases: caseResponse.data,
+          historicalCase:
+            caseResponse.data.length > 0 ? caseResponse.data[0] : undefined,
           user,
           reasons,
         })

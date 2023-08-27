@@ -27,7 +27,7 @@ export interface FormValues {
 }
 
 export interface Props {
-  entityName: string;
+  entityName: 'CASE' | 'ALERT' | 'TRANSACTION';
   isVisible: boolean;
   entityIds: string[];
   oldStatus?: CaseStatus;
@@ -136,7 +136,7 @@ export default function StatusChangeModal(props: Props) {
             displayCloseRelatedCases &&
             newStatus === 'ESCALATED' && (
               <Label
-                label={`Close related ${entityName === 'alert' ? 'cases' : 'alerts'}`}
+                label={`Close related ${entityName === 'ALERT' ? 'cases' : 'alerts'}`}
                 position={'RIGHT'}
               >
                 <Checkbox

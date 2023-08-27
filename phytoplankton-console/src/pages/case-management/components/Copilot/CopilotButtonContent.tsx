@@ -2,12 +2,9 @@ import React, { useState } from 'react';
 import s from './index.module.less';
 import Button from '@/components/library/Button';
 import BrainLineIcon from '@/components/ui/icons/Remix/health/brain-line.react.svg';
-import Alert from '@/components/library/Alert';
-import { CaseReasons, NarrativeResponse } from '@/apis';
+import { CaseReasons } from '@/apis';
 import { useApi } from '@/api';
 import { message } from '@/components/library/Message';
-import CopilotSources from '@/pages/case-management/components/Copilot/CopilotSources';
-import Modal from '@/components/library/Modal';
 import { useSettings } from '@/components/AppWrapper/Providers/SettingsProvider';
 import Tooltip from '@/components/library/Tooltip';
 import { getBranding } from '@/utils/branding';
@@ -15,14 +12,18 @@ import { getBranding } from '@/utils/branding';
 interface Props {
   reasons: CaseReasons[];
   setCommentValue: (comment: string) => void;
-  entityId?: string;
+  entityId: string;
+  entityType?: 'ALERT' | 'CASE' | 'TRANSACTION';
 }
 
-export const CopilotButtonContent = ({ reasons, entityId, setCommentValue }: Props) => {
-  const [copilotResponse, setCopilotResponse] = useState<NarrativeResponse | undefined>();
+export const CopilotButtonContent = ({ reasons, entityId, setCommentValue, entityType }: Props) => {
   const branding = getBranding();
-  const [showSources, setShowSources] = useState(false);
   const settings = useSettings();
+
+  // TODO We will support alerts and transactions in a later version.
+  if (entityType !== 'CASE') {
+    return <></>;
+  }
 
   return (
     <>
@@ -31,58 +32,23 @@ export const CopilotButtonContent = ({ reasons, entityId, setCommentValue }: Pro
           <CopilotWrapperContent
             reasons={reasons}
             entityId={entityId}
+            entityType={entityType}
             setCommentValue={setCommentValue}
-            copilotResponse={copilotResponse}
-            setShowSources={setShowSources}
-            setCopilotResponse={setCopilotResponse}
           />
         </Tooltip>
       ) : (
         <CopilotWrapperContent
           reasons={reasons}
           entityId={entityId}
+          entityType={entityType}
           setCommentValue={setCommentValue}
-          copilotResponse={copilotResponse}
-          setShowSources={setShowSources}
-          setCopilotResponse={setCopilotResponse}
         />
       )}
-      {copilotResponse?.userPrompts && copilotResponse?.userPrompts?.length > 0 && (
-        <div className={s.copilotPrompts}>
-          {copilotResponse?.userPrompts.map((p) => (
-            <a target="_blank" href={p.link}>
-              <Alert type="info">{p.text ?? ''}</Alert>
-            </a>
-          ))}
-        </div>
-      )}
-
-      <Modal
-        title="ⓘ Copilot Sources"
-        okText="Back"
-        isOpen={showSources}
-        onOk={() => setShowSources(false)}
-        hideFooter
-        onCancel={() => setShowSources(false)}
-      >
-        <CopilotSources attributes={copilotResponse?.attributes || []} />
-      </Modal>
     </>
   );
 };
 
-const CopilotWrapperContent = ({
-  reasons,
-  entityId,
-  copilotResponse,
-  setShowSources,
-  setCommentValue,
-  setCopilotResponse,
-}: Props & {
-  copilotResponse?: NarrativeResponse;
-  setShowSources: (show: boolean) => void;
-  setCopilotResponse: (response: NarrativeResponse | undefined) => void;
-}) => {
+const CopilotWrapperContent = ({ reasons, entityType, entityId, setCommentValue }: Props) => {
   const api = useApi();
   const [copilotLoading, setCopilotLoading] = useState(false);
 
@@ -93,12 +59,11 @@ const CopilotWrapperContent = ({
       setCopilotLoading(true);
       const response = await api.generateNarrative({
         NarrativeRequest: {
-          // TODO refactor as entity ID
-          caseId: entityId || '',
+          entityId,
+          entityType: entityType || 'CASE',
           reasons: reasons,
         },
       });
-      setCopilotResponse(response);
       setCommentValue(response.narrative);
     } catch (e) {
       message.error('Failed to generate narrative with AI');
@@ -109,7 +74,7 @@ const CopilotWrapperContent = ({
 
   return (
     <>
-      {(reasons.length > 0 || (copilotResponse?.userPrompts?.length ?? 0) > 0) && (
+      {reasons.length > 0 && (
         <div className={s.copilotWrapper}>
           {reasons.length > 0 && (
             <Button
@@ -121,15 +86,6 @@ const CopilotWrapperContent = ({
               isDisabled={!settings?.isAiEnabled}
             >
               {copilotLoading ? 'Loading...' : 'Ask Copilot'}
-            </Button>
-          )}
-          {(copilotResponse?.userPrompts?.length ?? 0) > 0 && (
-            <Button
-              className={s.copilotShowSourcesButton}
-              type={'TEXT'}
-              onClick={() => setShowSources(true)}
-            >
-              Check my sources
             </Button>
           )}
         </div>

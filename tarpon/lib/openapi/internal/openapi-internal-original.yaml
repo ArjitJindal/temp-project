@@ -5346,58 +5346,29 @@ components:
       title: NarrativeRequest
       type: object
       properties:
-        caseId:
+        entityId:
           type: string
+        entityType:
+          type: string
+          enum:
+            - ALERT
+            - CASE
+            - TRANSACTION
         reasons:
           type: array
           items:
             $ref: '#/components/schemas/CaseReasons'
       required:
         - reasons
-        - caseId
+        - entityId
     NarrativeResponse:
       title: NarrativeResponse
       type: object
       properties:
-        caseId:
-          type: string
         narrative:
           type: string
-        userPrompts:
-          type: array
-          items:
-            type: object
-            properties:
-              text:
-                type: string
-              link:
-                type: string
-        attributes:
-          type: array
-          items:
-            type: object
-            properties:
-              attribute:
-                type: string
-              value:
-                oneOf:
-                  - type: string
-                  - type: array
-                    items:
-                      type: string
-                  - type: integer
-            required:
-              - attribute
-              - value
-        createdAt:
-          type: number
-        reason:
-          $ref: '#/components/schemas/CaseReasons'
       required:
-        - caseId
         - narrative
-        - userPrompts
-        - attributes
     FileInfo:
       title: FileInfo
       type: object

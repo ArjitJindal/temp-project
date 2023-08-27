@@ -76,8 +76,6 @@ export function generateNarrative(
           return 'This case looks suspicious from an AML perspective due to unexplained large cash deposits and the structuring of transactions.'
         case 'Documents collected':
           return 'Identity and proof-of-fund documents have been collected from the user and align with our KYC checks.'
-        case 'False positive':
-          return 'This case can be closed as no significant suspicious activity was found upon investigation.'
         case 'Fraud':
           return 'This case looks suspicious from a Fraud perspective due to a steadily increasing transaction amount at the same time daily.'
         case 'Terrorist financing':
@@ -130,7 +128,13 @@ export function sampleTransactionUserCase(
     CASE_STATUSS.filter((s) => !isStatusInReview(s)),
     seed
   )
-  const reasons = randomSubset(CASE_REASONSS)
+  const reasons = randomSubset<CaseReasons>([
+    'Anti-money laundering',
+    'Documents collected',
+    'Fraud',
+    'Terrorist financing',
+    'Suspicious activity reported (SAR)',
+  ])
   return {
     caseId: caseId,
     caseType: 'SYSTEM',
@@ -151,7 +155,7 @@ export function sampleTransactionUserCase(
             reason: reasons,
             userId: params.userId,
             timestamp: sampleTimestamp(seed),
-            otherReason: generateNarrative(
+            comment: generateNarrative(
               ruleHits.map((r) => r.ruleDescription),
               reasons,
               user

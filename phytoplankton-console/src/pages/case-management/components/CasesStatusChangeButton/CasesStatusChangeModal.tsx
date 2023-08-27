@@ -112,7 +112,7 @@ export default function CasesStatusChangeModal(props: Props) {
     <StatusChangeModal
       {...props}
       key={String(props.isVisible)}
-      entityName="case"
+      entityName="CASE"
       updateMutation={updateMutation}
     />
   );

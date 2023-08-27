@@ -122,7 +122,7 @@ export default function AlertsStatusChangeModal(props: Props) {
       {...props}
       key={String(props.isVisible)}
       entityIds={entityIds}
-      entityName={_.isEmpty(transactionIds) ? 'alert' : 'transaction'}
+      entityName={_.isEmpty(transactionIds) ? 'ALERT' : 'TRANSACTION'}
       updateMutation={updateMutation}
       displayCloseRelatedCases={!isChildCase}
     />
