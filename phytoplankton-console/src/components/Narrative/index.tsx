@@ -1,4 +1,5 @@
 import React, { Dispatch, SetStateAction, useState } from 'react';
+import { uniqBy } from 'lodash';
 import s from './index.module.less';
 import { useFeatureEnabled } from '@/components/AppWrapper/Providers/SettingsProvider';
 import Form, { InputProps } from '@/components/library/Form';
@@ -85,7 +86,15 @@ export default function Narrative(props: NarrativeProps) {
         comment: and([notEmpty, maxLength(MAX_COMMENT_LENGTH)]),
         reasonOther: isOtherReason ? and([notEmpty, maxLength(500)]) : undefined,
       }}
-      onChange={onChange}
+      onChange={(values) => {
+        onChange((state) => ({
+          ...values,
+          values: {
+            ...values.values,
+            files: state.values.files,
+          },
+        }));
+      }}
       alwaysShowErrors={showErrors}
     >
       <InputField<FormValues, 'reasons'>
@@ -163,13 +172,28 @@ export default function Narrative(props: NarrativeProps) {
             {...inputProps}
             onChange={(value) => {
               if (value) {
-                onChange((state) => ({
-                  ...state,
-                  values: {
-                    ...state.values,
-                    files: [...state.values.files, ...value],
-                  },
-                }));
+                onChange((state) => {
+                  const fileAdded = value.filter(
+                    (v) =>
+                      !state.values.files.find((existingFile) => v.s3Key === existingFile.s3Key),
+                  );
+                  if (fileAdded.length > 0) {
+                    return {
+                      ...state,
+                      values: {
+                        ...state.values,
+                        files: uniqBy([...state.values.files, ...value], 's3Key'),
+                      },
+                    };
+                  }
+                  return {
+                    ...state,
+                    values: {
+                      ...state.values,
+                      files: value,
+                    },
+                  };
+                });
               }
             }}
             value={values.values.files}
