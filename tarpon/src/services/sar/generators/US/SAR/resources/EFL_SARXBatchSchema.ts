@@ -95,6 +95,7 @@ export const FincenJsonSchema = {
           title: 'Narrative (description)',
           description:
             'This element records the narrative description associated with the suspicious activity. The narrative must provide a clear, complete, and concise description of the activity, including what was unusual or irregular that caused suspicion. ',
+          'ui:schema': { 'ui:subtype': 'NARRATIVE' },
         },
       },
       type: 'object',

@@ -9,6 +9,27 @@ import { useSettings } from '@/components/AppWrapper/Providers/SettingsProvider'
 import Tooltip from '@/components/library/Tooltip';
 import { getBranding } from '@/utils/branding';
 
+type CopilotButtonProps = {
+  loading: boolean;
+  onClick: () => void;
+};
+
+export const CopilotButton = (props: CopilotButtonProps) => {
+  const settings = useSettings();
+  return (
+    <Button
+      isLoading={props.loading}
+      className={s.copilotButton}
+      onClick={props.onClick}
+      type={'TEXT'}
+      icon={<BrainLineIcon />}
+      isDisabled={!settings?.isAiEnabled}
+    >
+      {props.loading ? 'Loading...' : 'Ask Copilot'}
+    </Button>
+  );
+};
+
 interface Props {
   reasons: CaseReasons[];
   setCommentValue: (comment: string) => void;
@@ -52,8 +73,6 @@ const CopilotWrapperContent = ({ reasons, entityType, entityId, setCommentValue 
   const api = useApi();
   const [copilotLoading, setCopilotLoading] = useState(false);
 
-  const settings = useSettings();
-
   const onCopilotNarrative = async () => {
     try {
       setCopilotLoading(true);
@@ -77,16 +96,7 @@ const CopilotWrapperContent = ({ reasons, entityType, entityId, setCommentValue 
       {reasons.length > 0 && (
         <div className={s.copilotWrapper}>
           {reasons.length > 0 && (
-            <Button
-              isLoading={copilotLoading}
-              className={s.copilotButton}
-              onClick={onCopilotNarrative}
-              type={'TEXT'}
-              icon={<BrainLineIcon />}
-              isDisabled={!settings?.isAiEnabled}
-            >
-              {copilotLoading ? 'Loading...' : 'Ask Copilot'}
-            </Button>
+            <CopilotButton loading={copilotLoading} onClick={onCopilotNarrative} />
           )}
         </div>
       )}

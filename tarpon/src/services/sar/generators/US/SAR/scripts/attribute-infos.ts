@@ -626,6 +626,7 @@ export const AttributeInfos = {
   },
   ActivityNarrativeText: {
     title: 'Narrative (description)',
+    'ui:schema': { 'ui:subtype': 'NARRATIVE' },
     description:
       'This element records the narrative description associated with the suspicious activity. The narrative must provide a clear, complete, and concise description of the activity, including what was unusual or irregular that caused suspicion. ',
   },

@@ -620,6 +620,7 @@ const Definitions: AnySchemaObject = {
         maxLength: 4000,
         title: 'Reason',
         description: 'Why the subject is involved in the current report',
+        'ui:schema': { 'ui:subtype': 'NARRATIVE' },
       },
       comments: {
         type: 'string',
@@ -1380,12 +1381,14 @@ export const KenyaTransactionSchema: AnySchemaObject = {
       title: 'Transmode code',
       description:
         'How the transaction was conducted ie the Transaction Method',
+      'ui:schema': { 'ui:subtype': 'NARRATIVE' },
     },
     transmode_comment: {
       type: 'string',
       title: 'Transmode comment',
       maxLength: 50,
       description: 'More information on the Transaction Method',
+      'ui:schema': { 'ui:subtype': 'NARRATIVE' },
     },
     amount_local: {
       type: 'number',

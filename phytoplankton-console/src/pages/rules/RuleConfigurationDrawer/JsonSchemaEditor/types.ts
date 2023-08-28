@@ -55,6 +55,10 @@ export interface UiSchemaFincenIndicator extends UiSchemaCommon {
   'ui:subtype': 'FINCEN_INDICATOR';
 }
 
+export interface UiSchemaNarrative extends UiSchemaCommon {
+  'ui:subtype': 'NARRATIVE';
+}
+
 export interface UiSchemaUnknown extends UiSchemaCommon {
   'ui:subtype'?: undefined;
 }
@@ -72,7 +76,8 @@ export type UiSchema =
   | UiSchemaUserType
   | UiSchemaCurrency
   | UiSchemaPaymentFilters
-  | UiSchemaUnknown;
+  | UiSchemaUnknown
+  | UiSchemaNarrative;
 
 export interface ExtendedSchema extends JSONSchema4 {
   'ui:schema'?: UiSchema;

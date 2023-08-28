@@ -17,6 +17,7 @@ import CurrencyInput from './custom/CurrencyInput';
 import PaymentFiltersInput from './custom/PaymentFiltersInput';
 import TransactionAmountThresholdsInput from './custom/TransactionAmountThresholdsInput';
 import Indicator from './custom/fincen/Indicator';
+import NarrativeInput from './custom/NarrativeInput';
 import { InputProps } from '@/components/library/Form';
 
 // todo: fix any
@@ -33,6 +34,9 @@ export default function PropertyInput(props: Props) {
 
   if (uiSchema['ui:subtype'] === 'DAY_WINDOW') {
     return <DayWindowInput {...props} schema={schema} uiSchema={uiSchema} />;
+  }
+  if (uiSchema['ui:subtype'] === 'NARRATIVE') {
+    return <NarrativeInput {...props} schema={schema} uiSchema={uiSchema} />;
   }
   if (uiSchema['ui:subtype'] === 'PAYMENT_FILTERS') {
     return <PaymentFiltersInput {...props} uiSchema={uiSchema} />;
