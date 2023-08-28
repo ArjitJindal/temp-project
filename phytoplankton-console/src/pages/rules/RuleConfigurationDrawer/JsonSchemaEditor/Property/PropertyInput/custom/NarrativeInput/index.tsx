@@ -11,7 +11,22 @@ interface Props extends InputProps<any> {
   uiSchema: UiSchemaNarrative;
 }
 
-const DemoNarrative = `The customer received an inflow of NGN5 million on 13th October 20xx. This is the highest inflow received in the last one year. The customer has done a cumulative credit turnover of NGN300m in the last two and half months (from August to date) and this amounts to 41% of the cumulative credit turnover for the last one-year period reviewed. This shows that recent transactions on the account deviates from usual transaction dynamics. 4. The customer features occasionally on our one-to-many transfer to more than ten customer alerts. He made a transfer to 16 personal accounts on June 11, 20xx, amounting to a total of NGN1bn: and to 16 personal accounts on July 6, 20xx, amounting to a total of NGN8bn. Enhanced due diligence report showed that the customer deals in the supply of sea foods. The seafood industry in the landlocked country of jurisdiction A is a major source of sustenance.`;
+const DemoNarrative = `
+On July 30, 2023, a cash deposit of $9,800 was made into the account held by Falcon UrbanWheels at NextCentury Financial, Anytown, USA. This transaction is deemed suspicious due to the following factors:
+
+Unusual Transaction Amount: The deposit amount of $9,800 is just below the $10,000 threshold for Currency Transaction Report (CTR) reporting requirements. This suggests an attempt to avoid reporting.
+
+Frequent Structuring: Review of account activity shows a pattern of consistent cash deposits ranging from $9,000 to $9,800 over the past six weeks, all just below the CTR threshold. This structuring behavior raises suspicions of an intentional effort to evade reporting obligations.
+
+Rapid Changes in Deposit Frequency: Prior to this pattern, Falcon UrbanWheels' account exhibited sporadic deposits and was largely inactive. The sudden and consistent series of near-threshold cash deposits deviates from historical banking behavior.
+
+No Observable Source of Funds: There is no evident business or personal justification provided for the repeated cash deposits. Falcon UrbanWheels is not known to be involved in any cash-intensive professions.
+
+Recent Changes in Behavior: Falcon UrbanWheels has also initiated several large transfers to overseas accounts within the past month, without a clear business rationale. This international activity, coupled with unexplained domestic cash deposits, raises concerns about potential illicit financial activity.
+
+Given the observed transaction patterns, structured deposits, and unexplained international transfers, this activity warrants further investigation to determine whether it is indicative of money laundering or other financial improprieties. Law enforcement is advised to evaluate these patterns in context with any potential connections to illicit activities.
+
+`;
 
 export default function NarrativeInput(props: Props) {
   const { schema, ...inputProps } = props;
