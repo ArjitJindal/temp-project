@@ -5553,9 +5553,12 @@ components:
           type: string
         name:
           type: string
+        isProductionAccessDisabled:
+          type: boolean
       required:
         - id
         - name
+        - isProductionAccessDisabled
     TenantSettings:
       title: TenantSettings
       type: object
@@ -5585,6 +5588,8 @@ components:
           type: boolean
         complyAdvantageSearchProfileId:
           type: string
+        isProductionAccessEnabled:
+          type: boolean
         isAiEnabled:
           type: boolean
         kycUserStatusLock:

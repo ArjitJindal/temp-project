@@ -41,13 +41,16 @@ export const tenantsHandler = lambdaApi()(
 
     handlers.registerGetTenantsList(async () => {
       assertCurrentUserRole('root')
-      const tenants: Tenant[] = (await accountsService.getTenants()).map(
-        (tenant: Tenant): Tenant => ({
+      const tenants = await accountsService.getTenants()
+      const data = tenants.map(
+        (tenant): Tenant => ({
           id: tenant.id,
           name: tenant.name,
+          isProductionAccessDisabled:
+            tenant.isProductionAccessDisabled ?? false,
         })
       )
-      return tenants
+      return data
     })
 
     handlers.registerPostCreateTenant(async (ctx, request) => {
@@ -94,7 +97,11 @@ export const tenantsHandler = lambdaApi()(
       }
       assertCurrentUserRole('admin')
       const tenantSettingsCurrent = await tenantRepository.getTenantSettings()
-      const updatedResult = await tenantRepository.createOrUpdateTenantSettings(
+      const tenantService = new TenantService(ctx.tenantId, {
+        dynamoDb,
+        mongoDb,
+      })
+      const updatedResult = await tenantService.createOrUpdateTenantSettings(
         newTenantSettings
       )
       if (

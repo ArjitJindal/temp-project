@@ -63,6 +63,7 @@ export type Tenant = {
   orgId: string
   apiAudience: string
   region: string
+  isProductionAccessDisabled: boolean
 }
 
 export type TenantBasic = {
@@ -157,9 +158,34 @@ export class AccountsService {
       orgId: organization.id,
       apiAudience: organization.metadata?.apiAudience,
       region: organization.metadata?.region,
+      isProductionAccessDisabled:
+        organization.metadata?.isProductionAccessDisabled === 'true',
     }
   }
 
+  public async updateProductionAccessForTenant(
+    tenantId: string,
+    isProductionAccessDisabled: boolean
+  ): Promise<void> {
+    const tenant = await this.getTenantById(tenantId)
+    if (tenant == null) {
+      throw new BadRequest(`Unable to find tenant by id: ${tenantId}`)
+    }
+    const managementClient = new ManagementClient(await this.getAuth0Client())
+    const organization = await managementClient.organizations.getByID({
+      id: tenant.orgId,
+    })
+
+    await managementClient.organizations.update(
+      { id: tenant.orgId },
+      {
+        metadata: {
+          ...organization.metadata,
+          isProductionAccessDisabled: isProductionAccessDisabled.toString(),
+        },
+      }
+    )
+  }
   private static userToAccount(user: User<AppMetadata>): Account {
     const { app_metadata, user_id, email } = user
     if (user_id == null) {
@@ -621,6 +647,7 @@ export class AccountsService {
         consoleApiUrl: `https://${regionPrefix}${auth0Audience}console`,
         apiAudience: process.env.AUTH0_AUDIENCE as unknown as string,
         region: process.env.REGION,
+        isProductionAccessDisabled: false,
       },
     })
 
@@ -666,6 +693,8 @@ export class AccountsService {
           orgId: organization.id,
           apiAudience: organization.metadata?.apiAudience,
           region: organization.metadata?.region,
+          isProductionAccessDisabled:
+            organization.metadata?.isProductionAccessDisabled === 'true',
         },
         { email, role }
       )
@@ -677,6 +706,8 @@ export class AccountsService {
       orgId: organization.id,
       apiAudience: organization.metadata?.apiAudience as unknown as string,
       region: organization.metadata?.region as unknown as string,
+      isProductionAccessDisabled:
+        organization.metadata?.isProductionAccessDisabled === 'true',
     })
 
     await this.insertAuth0UserToMongo(

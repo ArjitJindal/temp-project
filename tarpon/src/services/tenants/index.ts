@@ -518,4 +518,29 @@ export class TenantService {
 
     return usagePlanId
   }
+
+  async createOrUpdateTenantSettings(
+    newTenantSettings: Partial<TenantSettings>
+  ): Promise<Partial<TenantSettings>> {
+    const tenantRepository = new TenantRepository(this.tenantId, {
+      dynamoDb: this.dynamoDb,
+      mongoDb: this.mongoDb,
+    })
+    const updatedResult = await tenantRepository.createOrUpdateTenantSettings(
+      newTenantSettings
+    )
+    if (newTenantSettings.isProductionAccessEnabled != null) {
+      const accountsService = new AccountsService(
+        { auth0Domain: process.env.AUTH0_DOMAIN as string },
+        { mongoDb: this.mongoDb }
+      )
+
+      await accountsService.updateProductionAccessForTenant(
+        this.tenantId,
+        !newTenantSettings.isProductionAccessEnabled
+      )
+    }
+
+    return updatedResult
+  }
 }

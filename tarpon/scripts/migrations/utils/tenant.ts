@@ -24,6 +24,7 @@ export async function migrateAllTenants(
             orgId: '',
             apiAudience: '',
             region: 'local',
+            isProductionAccessDisabled: false,
           },
           auth0Domain: 'dev-flagright.eu.auth0.com',
           auth0TenantConfig: Auth0DevTenantConfig,

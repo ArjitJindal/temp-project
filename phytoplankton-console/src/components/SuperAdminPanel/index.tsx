@@ -39,6 +39,7 @@ export default function SuperAdminPanel() {
     queryResult.data?.map((tenant) => ({
       value: tenant.id,
       label: `${tenant.name} (${tenant.id})`,
+      disabled: tenant.isProductionAccessDisabled ?? false,
     })) || [];
 
   const handleSeed = () => {

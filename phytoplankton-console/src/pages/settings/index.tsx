@@ -13,6 +13,7 @@ import { QuotaSettings } from './components/QuotaSettings';
 import { KYCUserStatusSettings } from './components/KYCUserStatusSettings';
 import { ApiKeysSettings } from './components/ApiKeysSettings';
 import { ChecklistTemplatesSettings } from './components/ChecklistTemplatesSettings';
+import { ProductionAccessControl } from './components/ProductionAccessControl';
 import ComplyAdvantageLogo from '@/branding/Comply-Advantage-logo.svg';
 import PageWrapper from '@/components/PageWrapper';
 import { useI18n } from '@/locales';
@@ -66,6 +67,14 @@ export default function SettingsPage() {
           name: 'KYC/user status lock',
           content: <KYCUserStatusSettings />,
         },
+        ...(process.env.ENV?.startsWith('prod')
+          ? [
+              {
+                name: 'Production access control',
+                content: <ProductionAccessControl />,
+              },
+            ]
+          : []),
         {
           name: 'Billing',
           content: <div>Billing</div>,
