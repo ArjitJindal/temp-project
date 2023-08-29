@@ -7,6 +7,7 @@ import {
 import Button from '@/components/library/Button';
 import Table from '@/components/library/Table';
 import { CURRENCIES_SELECT_OPTIONS } from '@/utils/currencies';
+import { TIMEZONES } from '@/utils/dayjs';
 import { ColumnHelper } from '@/components/library/Table/columnHelper';
 import { StatePair } from '@/utils/state';
 
@@ -123,6 +124,11 @@ export const DefaultValuesSettings = () => {
               valueType: 'currency',
               options: CURRENCIES_SELECT_OPTIONS,
               label: 'Currency',
+            },
+            {
+              valueType: 'tenantTimezone',
+              options: TIMEZONES.map((x) => ({ label: x, value: x })),
+              label: 'Time zone',
             },
           ],
         }}

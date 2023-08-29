@@ -7,7 +7,6 @@ import { RiskLevelSettings } from './components/RiskLevelSettings';
 import { FlagrightAISettings } from './components/FlagrightAISettings';
 import { DefaultValuesSettings } from './components/DefaultValuesSettings';
 import { RiskAlgorithmsSettings } from './components/RiskAlgorithmsSettings';
-import { OtherSettings } from './components/OtherSettings';
 import NarrativeTemplates from './components/NarrativeTemplates';
 import s from './styles.module.less';
 import { QuotaSettings } from './components/QuotaSettings';
@@ -66,10 +65,6 @@ export default function SettingsPage() {
         {
           name: 'KYC/user status lock',
           content: <KYCUserStatusSettings />,
-        },
-        {
-          name: 'Other settings',
-          content: <OtherSettings />,
         },
         {
           name: 'Billing',
@@ -227,7 +222,7 @@ export default function SettingsPage() {
 
   const i18n = useI18n();
   return (
-    <PageWrapper title={i18n('menu.settings')} description="Manage system settings">
+    <PageWrapper title={i18n('menu.settings')}>
       <SidebarPanel menuSections={menuSections as MenuSection[]} />
     </PageWrapper>
   );
