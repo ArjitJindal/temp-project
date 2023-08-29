@@ -68,7 +68,7 @@ ruleVariantsTest(false, () => {
           timestamp: dayjs('2022-01-01T00:00:00.000Z').valueOf(),
           deviceData: {
             // A Germany ip address
-            originIpAddress: '18.184.45.226',
+            ipAddress: '18.184.45.226',
           },
         }),
       ],
@@ -90,7 +90,7 @@ ruleVariantsTest(false, () => {
           timestamp: dayjs('2022-01-01T00:00:00.000Z').valueOf(),
           deviceData: {
             // A Germany ip address
-            originIpAddress: '18.184.45.226',
+            ipAddress: '18.184.45.226',
           },
         }),
       ],
@@ -105,7 +105,7 @@ ruleVariantsTest(false, () => {
           timestamp: dayjs('2022-01-01T00:00:00.000Z').valueOf(),
           deviceData: {
             // A Germany ip address
-            originIpAddress: '18.184.45.226',
+            ipAddress: '18.184.45.226',
           },
         }),
         getTestTransaction({
@@ -114,7 +114,7 @@ ruleVariantsTest(false, () => {
           timestamp: dayjs('2022-01-01T00:00:00.000Z').valueOf(),
           deviceData: {
             // A Germany ip address
-            originIpAddress: '18.184.45.226',
+            ipAddress: '18.184.45.226',
           },
         }),
         getTestTransaction({
@@ -122,7 +122,7 @@ ruleVariantsTest(false, () => {
           timestamp: dayjs('2022-01-01T00:00:10.000Z').valueOf(),
           deviceData: {
             // A Germany ip address
-            originIpAddress: '18.184.45.226',
+            ipAddress: '18.184.45.226',
           },
         }),
       ],
@@ -136,7 +136,7 @@ ruleVariantsTest(false, () => {
           timestamp: dayjs('2022-01-01T00:00:00.000Z').valueOf(),
           deviceData: {
             // A India ip address
-            originIpAddress: '49.136.0.0',
+            ipAddress: '49.136.0.0',
           },
         }),
       ],
@@ -150,7 +150,7 @@ ruleVariantsTest(false, () => {
           timestamp: dayjs('2022-01-01T00:00:00.000Z').valueOf(),
           deviceData: {
             // A Tukey ip address
-            originIpAddress: '109.228.192.0',
+            ipAddress: '109.228.192.0',
           },
         }),
       ],
@@ -163,7 +163,7 @@ ruleVariantsTest(false, () => {
           originUserId: '1',
           timestamp: dayjs('2022-01-01T00:00:00.000Z').valueOf(),
           deviceData: {
-            originIpAddress: 'bad.ip.address',
+            ipAddress: 'bad.ip.address',
           },
         }),
       ],
@@ -188,7 +188,7 @@ ruleVariantsTest(false, () => {
           timestamp: dayjs('2022-01-01T00:00:00.000Z').valueOf(),
           deviceData: {
             // A Germany ip address
-            originIpAddress: '18.184.45.226',
+            ipAddress: '18.184.45.226',
           },
           originAmountDetails: {
             transactionCurrency: 'EUR',
@@ -206,7 +206,7 @@ ruleVariantsTest(false, () => {
           timestamp: dayjs('2022-01-01T00:00:00.000Z').valueOf(),
           deviceData: {
             // A Tukey ip address
-            originIpAddress: '109.228.192.0',
+            ipAddress: '109.228.192.0',
           },
           originAmountDetails: {
             transactionCurrency: 'EUR',
@@ -224,7 +224,7 @@ ruleVariantsTest(false, () => {
           timestamp: dayjs('2022-01-01T00:00:00.000Z').valueOf(),
           deviceData: {
             // A Random ip address
-            originIpAddress: '24.184.45.226',
+            ipAddress: '24.184.45.226',
           },
           originAmountDetails: {
             transactionCurrency: 'EUR',
@@ -242,7 +242,7 @@ ruleVariantsTest(false, () => {
           timestamp: dayjs('2022-01-01T00:00:00.000Z').valueOf(),
           deviceData: {
             // A Tukey ip address
-            originIpAddress: '109.228.192.0',
+            ipAddress: '109.228.192.0',
           },
           originAmountDetails: {
             transactionCurrency: 'EUR',
@@ -294,7 +294,7 @@ ruleVariantsTest(false, () => {
             timestamp: dayjs('2022-01-01T00:00:00.000Z').valueOf(),
             deviceData: {
               // A Random ip address
-              originIpAddress: '14.228.192.0',
+              ipAddress: '14.228.192.0',
             },
           }),
         ],
@@ -308,7 +308,7 @@ ruleVariantsTest(false, () => {
             timestamp: dayjs('2022-01-01T00:00:00.000Z').valueOf(),
             deviceData: {
               // A Tukey ip address
-              originIpAddress: '109.228.192.0',
+              ipAddress: '109.228.192.0',
             },
           }),
         ],

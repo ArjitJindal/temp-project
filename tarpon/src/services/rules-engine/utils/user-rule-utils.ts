@@ -4,7 +4,6 @@ import dayjs from '@/utils/dayjs'
 import { User } from '@/@types/openapi-public/User'
 import { Business } from '@/@types/openapi-public/Business'
 import { DeviceData } from '@/@types/openapi-public/DeviceData'
-import { getOriginIpAddress } from '@/utils/ipAddress'
 
 export function isUserBetweenAge(
   user: User | Business | undefined,
@@ -56,8 +55,7 @@ export function isIpAddressInList(
   if (!ipAddresses || ipAddresses.length === 0) {
     return true
   }
-
-  const ipAddress = getOriginIpAddress(deviceData)
-
-  return deviceData && ipAddress ? ipAddresses.includes(ipAddress) : false
+  return deviceData && deviceData.ipAddress
+    ? ipAddresses.includes(deviceData.ipAddress)
+    : false
 }

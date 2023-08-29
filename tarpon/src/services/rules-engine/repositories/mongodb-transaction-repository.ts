@@ -629,12 +629,6 @@ export class MongoDbTransactionRepository
       params.direction === 'origin'
         ? 'originAmountDetails'
         : 'destinationAmountDetails'
-
-    const ipAddressPath =
-      params.direction === 'origin'
-        ? 'deviceData.originIpAddress'
-        : 'deviceData.destinationIpAddress'
-
     switch (params.field) {
       case 'TRANSACTION_STATE':
         fieldPath = 'transactionState'
@@ -706,9 +700,10 @@ export class MongoDbTransactionRepository
         })
         break
       case 'IP_ADDRESS':
-        fieldPath = ipAddressPath
+        fieldPath = 'deviceData.ipAddress'
         break
       case 'CURRENCY':
+        fieldPath = `${paymentDetailsPath}.upiID`
         fieldPath = `${amountDetailsPath}.transactionCurrency`
         break
       case 'COUNTRY':
@@ -718,10 +713,7 @@ export class MongoDbTransactionRepository
         throw neverThrow(params.field, `Unknown field: ${params.field}`)
     }
 
-    if (
-      params.filter &&
-      !(params.field === 'IP_ADDRESS' && params.direction === 'origin')
-    ) {
+    if (params.filter) {
       filterConditions.push({
         [fieldPath]: prefixRegexMatchFilter(params.filter),
       })
@@ -735,34 +727,6 @@ export class MongoDbTransactionRepository
             },
           }
         : {},
-      ...(params.field === 'IP_ADDRESS' && params.direction === 'origin'
-        ? [
-            {
-              $match: {
-                $or: [
-                  { 'deviceData.originIpAddress': { $exists: true } },
-                  { 'deviceData.ipAddress': { $exists: true } },
-                ],
-              },
-            },
-            {
-              $addFields: {
-                'deviceData.originIpAddress': {
-                  $ifNull: [
-                    '$deviceData.originIpAddress',
-                    '$deviceData.ipAddress',
-                  ],
-                },
-              },
-            },
-            {
-              $match: {
-                'deviceData.originIpAddress': { $ne: null },
-              },
-            },
-          ]
-        : []),
-
       // If we have filter conditions, it's for auto-complete. It's acceptable that
       // we don't filter all the documents for performance concerns.
       filterConditions.length > 0 ? { $limit: 10000 } : {},
@@ -1269,15 +1233,7 @@ export class MongoDbTransactionRepository
     attributesToFetch: Array<keyof AuxiliaryIndexTransaction>
   ): Promise<Array<AuxiliaryIndexTransaction>> {
     return this.getRulesEngineTransactions(
-      [
-        {
-          $or: [
-            { 'deviceData.originIpAddress': ipAddress },
-            { 'deviceData.ipAddress': ipAddress },
-            { 'deviceData.destinationIpAddress': ipAddress },
-          ],
-        },
-      ],
+      [{ 'deviceData.ipAddress': ipAddress }],
       timeRange,
       {},
       attributesToFetch

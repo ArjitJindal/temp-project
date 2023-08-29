@@ -36,7 +36,6 @@ import { mergeObjects } from '@/utils/object'
 import { TransactionMonitoringResult } from '@/@types/openapi-public/TransactionMonitoringResult'
 import { Undefined } from '@/utils/lang'
 import { runLocalChangeHandler } from '@/utils/local-dynamodb-change-handler'
-import { getOriginIpAddress } from '@/utils/ipAddress'
 
 export function getNewTransactionID(transaction: Transaction) {
   return (
@@ -144,7 +143,6 @@ export class DynamoDbTransactionRepository
     const nonUserReceiverKeysOfTransactionType =
       transaction.type &&
       getNonUserReceiverKeys(this.tenantId, transaction, transaction.type)
-    const originIpAddress = getOriginIpAddress(transaction.deviceData)
 
     // IMPORTANT: Added/Deleted keys here should be reflected in nuke-tenant-data.ts as well
     return [
@@ -188,19 +186,10 @@ export class DynamoDbTransactionRepository
         senderKeyId: senderKeysOfTransactionType?.PartitionKeyID,
         receiverKeyId: receiverKeysOfTransactionType?.PartitionKeyID,
       },
-      originIpAddress && {
+      transaction?.deviceData?.ipAddress && {
         ...DynamoDbKeys.IP_ADDRESS_TRANSACTION(
           this.tenantId,
-          originIpAddress,
-          transaction.timestamp
-        ),
-        senderKeyId: senderKeys?.PartitionKeyID,
-        receiverKeyId: receiverKeys?.PartitionKeyID,
-      },
-      transaction.deviceData?.destinationIpAddress && {
-        ...DynamoDbKeys.IP_ADDRESS_TRANSACTION(
-          this.tenantId,
-          transaction.deviceData.destinationIpAddress,
+          transaction.deviceData.ipAddress,
           transaction.timestamp
         ),
         senderKeyId: senderKeys?.PartitionKeyID,

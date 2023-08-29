@@ -58,8 +58,6 @@ export const TRANSACTION_EXPORT_HEADERS_SETTINGS: CsvHeaderSettings<InternalTran
       deviceLatitude: 'INCLUDE',
       deviceLongitude: 'INCLUDE',
       ipAddress: 'INCLUDE',
-      originIpAddress: 'INCLUDE',
-      destinationIpAddress: 'INCLUDE',
       deviceIdentifier: 'INCLUDE',
       vpnUsed: 'INCLUDE',
       operatingSystem: 'INCLUDE',

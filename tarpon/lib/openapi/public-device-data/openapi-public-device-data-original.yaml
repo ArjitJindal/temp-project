@@ -116,7 +116,6 @@ components:
           type: boolean
         ipAddress:
           type: string
-          description: Deprecated. Will be mapped as origin IP.
         location:
           $ref: '#/components/schemas/Location'
         totalNumberOfContacts:

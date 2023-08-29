@@ -30,7 +30,6 @@ import {
   USER_EVENTS_COLLECTION,
 } from '@/utils/mongodb-definitions'
 import { logger } from '@/core/logger'
-import { getOriginIpAddress } from '@/utils/ipAddress'
 
 type DynamoDbKey = { PartitionKeyID: string; SortKeyID: string }
 
@@ -84,8 +83,6 @@ async function deleteTransaction(transaction: Transaction) {
     ).PartitionKeyID
   )
 
-  const originIpAddress = getOriginIpAddress(transaction.deviceData)
-
   const keysToDelete = [
     getSenderKeys(tenantId, transaction),
     getSenderKeys(tenantId, transaction, transaction.type),
@@ -99,19 +96,12 @@ async function deleteTransaction(transaction: Transaction) {
     getUserReceiverKeys(tenantId, transaction, transaction.type),
     getNonUserReceiverKeys(tenantId, transaction),
     getNonUserReceiverKeys(tenantId, transaction, transaction.type),
-    originIpAddress &&
+    transaction?.deviceData?.ipAddress &&
       DynamoDbKeys.IP_ADDRESS_TRANSACTION(
         tenantId,
-        originIpAddress,
+        transaction.deviceData.ipAddress,
         transaction.timestamp
       ),
-    (transaction.deviceData?.destinationIpAddress &&
-      DynamoDbKeys.IP_ADDRESS_TRANSACTION(
-        tenantId,
-        transaction.deviceData.destinationIpAddress,
-        transaction.timestamp
-      ),
-    transaction.timestamp),
     // Always delete the primary transaction item at last to avoid having zombie indices that
     // can not be deleted.
     DynamoDbKeys.TRANSACTION(tenantId, transaction.transactionId),

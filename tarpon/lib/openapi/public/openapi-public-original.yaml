@@ -1866,19 +1866,7 @@ components:
           type: string
           description:
             IP address of the device at a given timestamp for an event or
-            transaction (deprecated)
-        originIpAddress:
-          minLength: 1
-          type: string
-          description:
-            IP address of the origin device at a given timestamp for an event
-            or transaction
-        destinationIpAddress:
-          minLength: 1
-          type: string
-          description:
-            IP address of the destination device at a given timestamp for an
-            event or transaction
+            transaction
         deviceIdentifier:
           minLength: 1
           type: string

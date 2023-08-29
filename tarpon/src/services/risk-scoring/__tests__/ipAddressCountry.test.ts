@@ -59,7 +59,7 @@ createArsRiskFactorTestCases(
       testName: 'IP address country is US',
       transaction: getTestTransaction({
         deviceData: {
-          originIpAddress: '69.162.81.155',
+          ipAddress: '69.162.81.155',
         },
       }),
       users: [getTestUser()],
@@ -77,7 +77,7 @@ createArsRiskFactorTestCases(
       testName: 'IP address country is DE',
       transaction: getTestTransaction({
         deviceData: {
-          originIpAddress: '101.33.10.0',
+          ipAddress: '101.33.10.0',
         },
       }),
       users: [getTestUser()],
