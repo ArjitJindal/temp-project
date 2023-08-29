@@ -12,6 +12,7 @@ import { UserService } from '@/lambdas/console-api-user/services/user-service'
 import { Handlers } from '@/@types/openapi-internal-custom/DefaultApi'
 import { ReportService } from '@/services/sar/service'
 import { getAddress, getUserName } from '@/utils/helpers'
+import { generateNarrative } from '@/core/seed/samplers/cases'
 
 export const copilotHandler = lambdaApi({ requiredFeatures: ['COPILOT'] })(
   async (
@@ -74,6 +75,18 @@ export const copilotHandler = lambdaApi({ requiredFeatures: ['COPILOT'] })(
           _case?.caseUsers?.destination?.userId ||
           ''
       )
+
+      // Demo mode
+      if (ctx.tenantId.endsWith('-test')) {
+        const narrative = generateNarrative(
+          _case.alerts?.map((a) => a.ruleDescription) || [],
+          request.NarrativeRequest.reasons,
+          user
+        )
+        return {
+          narrative,
+        }
+      }
 
       const caseResponse = await caseService.getCases({
         filterCaseStatus: ['CLOSED'],
