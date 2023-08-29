@@ -275,5 +275,9 @@
     "!(**/*.{js,ts,yaml})": [
       "prettier --write"
     ]
+  },
+  "engines": {
+    "node": "^16.16.0",
+    "npm": "^8.11.0"
   }
 }
