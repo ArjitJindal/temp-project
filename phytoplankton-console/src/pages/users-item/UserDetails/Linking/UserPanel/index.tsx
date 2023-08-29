@@ -1,5 +1,3 @@
-import { useNavigate } from 'react-router';
-import React from 'react';
 import { UserCard } from '../UserCard';
 import { useApi } from '@/api';
 import { useQuery } from '@/utils/queries/hooks';
@@ -19,7 +17,6 @@ type UserPanelProps = {
 
 export const UserPanel = (props: UserPanelProps) => {
   const api = useApi();
-  const navigate = useNavigate();
   const { followed, onFollow, userId, isFollowEnabled } = props;
 
   const queryResult = useQuery<InternalConsumerUser | InternalBusinessUser>(
@@ -43,7 +40,10 @@ export const UserPanel = (props: UserPanelProps) => {
           <Card.Section>
             <Button
               onClick={() =>
-                navigate(makeUrl(`/users/list/${user.type.toLowerCase()}/${user.userId}`, {}))
+                window.open(
+                  makeUrl(`/users/list/${user.type.toLowerCase()}/${user.userId}`),
+                  '_blank',
+                )
               }
             >
               Go to user details
