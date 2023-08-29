@@ -48,8 +48,7 @@ Based on the aforementioned suspicious activity, there is reasonable suspicion t
 export function generateNarrative(
   ruleDescriptions: string[],
   reasons: CaseReasons[],
-  user: InternalBusinessUser | InternalConsumerUser,
-  narrativeStatements?: string
+  user: InternalBusinessUser | InternalConsumerUser
 ) {
   let name: string
   let country: string | undefined
@@ -82,15 +81,19 @@ export function generateNarrative(
           return 'This user is potentially financing terrorism.'
         case 'Suspicious activity reported (SAR)':
           return 'The case has been closed as an SAR has been submitted to the FNTT.'
+        case 'Investigation completed':
+          return `The investigation was completed on ${new Date().toLocaleDateString()}.`
         default:
-          return 'Investigation completed.'
+          return `${reason}.`
       }
     })
     .join(' ')
 
   return `The following case has been closed for ${name}, ${country}. ${
-    websites && websites?.length > 0 ? `\nWebsites: ${websites?.join(',')}` : ''
-  } ${narrativeStatements}. 
+    websites && websites?.length > 0
+      ? `\nWebsites: ${websites?.join(',')}.`
+      : ''
+  } 
 ${footer}`
 }
 
