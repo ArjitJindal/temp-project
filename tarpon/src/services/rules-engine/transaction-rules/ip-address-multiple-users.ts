@@ -1,9 +1,11 @@
 import { JSONSchemaType } from 'ajv'
+import { isEmpty } from 'lodash'
 import { getSenderKeys } from '../utils'
 import { RuleHitResult } from '../rule'
 import { MissingRuleParameter } from './errors'
 import { TransactionRule } from './rule'
 import dayjs from '@/utils/dayjs'
+import { getOriginIpAddress } from '@/utils/ipAddress'
 
 export type IpAddressMultipleUsersRuleParameters = {
   uniqueUsersCountThreshold: number
@@ -39,13 +41,15 @@ export default class IpAddressMultipleUsersRule extends TransactionRule<IpAddres
       this.transaction
     )?.PartitionKeyID
 
-    if (!senderKeyId || !this.transaction.deviceData?.ipAddress) {
+    const originIpAddress = getOriginIpAddress(this.transaction.deviceData)
+
+    if (!senderKeyId || !originIpAddress) {
       return
     }
 
     const transactionsFromIpAddress =
       await this.transactionRepository.getIpAddressTransactions(
-        this.transaction.deviceData.ipAddress,
+        originIpAddress,
         {
           afterTimestamp: dayjs(this.transaction.timestamp)
             .subtract(timeWindowInDays, 'day')
@@ -54,8 +58,15 @@ export default class IpAddressMultipleUsersRule extends TransactionRule<IpAddres
         },
         ['senderKeyId', 'deviceData']
       )
+
+    const transactionsFromIpAddressUpdated = transactionsFromIpAddress.filter(
+      (transaction) => {
+        return !isEmpty(getOriginIpAddress(transaction.deviceData))
+      }
+    )
+
     const uniqueUsers = new Set(
-      transactionsFromIpAddress
+      transactionsFromIpAddressUpdated
         .map((transaction) => transaction.senderKeyId)
         .concat(senderKeyId)
     )
@@ -66,7 +77,7 @@ export default class IpAddressMultipleUsersRule extends TransactionRule<IpAddres
         direction: 'ORIGIN',
         vars: {
           ...super.getTransactionVars('origin'),
-          ipAddress: this.transaction.deviceData?.ipAddress,
+          ipAddress: originIpAddress,
           uniqueUsersCount: uniqueUsers.size,
         },
       })

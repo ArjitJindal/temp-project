@@ -50,6 +50,12 @@ export function sampleTransaction(
     destinationPaymentDetails: randomPaymentMethod(),
     deviceData: {
       ipAddress: [...new Array(4)].map(() => randomInt(rnd(), 256)).join('.'),
+      originIpAddress: [...new Array(4)]
+        .map(() => randomInt(rnd(), 256))
+        .join('.'),
+      destinationIpAddress: [...new Array(4)]
+        .map(() => randomInt(rnd(), 256))
+        .join('.'),
     },
     originPaymentDetails: randomPaymentMethod(),
     hitRules: [],

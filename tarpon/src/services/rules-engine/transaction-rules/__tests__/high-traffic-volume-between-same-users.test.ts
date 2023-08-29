@@ -66,7 +66,7 @@ ruleVariantsTest(true, () => {
           destinationAmountDetails: TEST_TRANSACTION_AMOUNT_100,
           timestamp: dayjs('2000-01-01T01:00:00.000Z').valueOf(),
           deviceData: {
-            ipAddress: '1.1.1.1',
+            originIpAddress: '1.1.1.1',
           },
         }),
         getTestTransaction({
@@ -77,7 +77,7 @@ ruleVariantsTest(true, () => {
           destinationAmountDetails: TEST_TRANSACTION_AMOUNT_100,
           timestamp: dayjs('2022-01-01T02:00:00.000Z').valueOf(),
           deviceData: {
-            ipAddress: '1.1.1.1',
+            originIpAddress: '1.1.1.1',
           },
         }),
         getTestTransaction({
@@ -88,7 +88,7 @@ ruleVariantsTest(true, () => {
           destinationAmountDetails: TEST_TRANSACTION_AMOUNT_100,
           timestamp: dayjs('2022-01-01T03:00:00.000Z').valueOf(),
           deviceData: {
-            ipAddress: '1.1.1.1',
+            originIpAddress: '1.1.1.1',
           },
         }),
         getTestTransaction({
@@ -100,7 +100,7 @@ ruleVariantsTest(true, () => {
           destinationAmountDetails: TEST_TRANSACTION_AMOUNT_100,
           timestamp: dayjs('2022-01-01T04:00:00.000Z').valueOf(),
           deviceData: {
-            ipAddress: '1.1.1.1',
+            originIpAddress: '1.1.1.1',
           },
         }),
         getTestTransaction({
@@ -112,7 +112,7 @@ ruleVariantsTest(true, () => {
           destinationAmountDetails: TEST_TRANSACTION_AMOUNT_100,
           timestamp: dayjs('2022-01-01T05:00:00.000Z').valueOf(),
           deviceData: {
-            ipAddress: '1.1.1.1',
+            originIpAddress: '1.1.1.1',
           },
         }),
         getTestTransaction({
@@ -124,7 +124,7 @@ ruleVariantsTest(true, () => {
           destinationAmountDetails: TEST_TRANSACTION_AMOUNT_100,
           timestamp: dayjs('2022-01-01T06:00:00.000Z').valueOf(),
           deviceData: {
-            ipAddress: '1.1.1.1',
+            originIpAddress: '1.1.1.1',
           },
         }),
       ],
@@ -172,7 +172,7 @@ ruleVariantsTest(true, () => {
             destinationAmountDetails: TEST_TRANSACTION_AMOUNT_100,
             timestamp: dayjs('2000-01-01T01:00:00.000Z').valueOf(),
             deviceData: {
-              ipAddress: '1.1.1.1',
+              originIpAddress: '1.1.1.1',
             },
           }),
           getTestTransaction({
@@ -183,7 +183,7 @@ ruleVariantsTest(true, () => {
             destinationAmountDetails: TEST_TRANSACTION_AMOUNT_100,
             timestamp: dayjs('2022-01-01T02:00:00.000Z').valueOf(),
             deviceData: {
-              ipAddress: '1.1.1.1',
+              originIpAddress: '1.1.1.1',
             },
           }),
           getTestTransaction({
@@ -194,7 +194,7 @@ ruleVariantsTest(true, () => {
             destinationAmountDetails: TEST_TRANSACTION_AMOUNT_100,
             timestamp: dayjs('2022-01-01T03:00:00.000Z').valueOf(),
             deviceData: {
-              ipAddress: '1.1.1.1',
+              originIpAddress: '1.1.1.1',
             },
           }),
           getTestTransaction({
@@ -206,7 +206,7 @@ ruleVariantsTest(true, () => {
             destinationAmountDetails: TEST_TRANSACTION_AMOUNT_100,
             timestamp: dayjs('2022-01-01T04:00:00.000Z').valueOf(),
             deviceData: {
-              ipAddress: '1.1.1.1',
+              originIpAddress: '1.1.1.1',
             },
           }),
           getTestTransaction({
@@ -218,7 +218,7 @@ ruleVariantsTest(true, () => {
             destinationAmountDetails: TEST_TRANSACTION_AMOUNT_100,
             timestamp: dayjs('2022-01-01T05:00:00.000Z').valueOf(),
             deviceData: {
-              ipAddress: '1.1.1.1',
+              originIpAddress: '1.1.1.1',
             },
           }),
           getTestTransaction({
@@ -230,7 +230,7 @@ ruleVariantsTest(true, () => {
             destinationAmountDetails: TEST_TRANSACTION_AMOUNT_100,
             timestamp: dayjs('2022-01-01T06:00:00.000Z').valueOf(),
             deviceData: {
-              ipAddress: '1.1.1.1',
+              originIpAddress: '1.1.1.1',
             },
           }),
         ],

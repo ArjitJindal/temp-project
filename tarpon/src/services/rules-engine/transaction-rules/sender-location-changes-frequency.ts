@@ -11,6 +11,7 @@ import {
 } from '../utils/transaction-rule-utils'
 import { TimeWindow } from '../utils/rule-parameter-schemas'
 import { TransactionAggregationRule } from './aggregation-rule'
+import { getOriginIpAddress } from '@/utils/ipAddress'
 
 type AggregationData = {
   ipAddresses: string[]
@@ -49,12 +50,14 @@ export default class SenderLocationChangesFrequencyRule extends TransactionAggre
   }
 
   public async computeRule() {
-    const ipAddress = this.transaction.deviceData?.ipAddress
+    const ipAddress = getOriginIpAddress(this.transaction.deviceData)
+
     if (!this.transaction.originUserId || !ipAddress) {
       return
     }
 
     const { uniqueIpAddresses, transactionsCount } = await this.getData()
+
     uniqueIpAddresses.add(ipAddress)
 
     const geoIp = await import('fast-geoip')
@@ -128,7 +131,7 @@ export default class SenderLocationChangesFrequencyRule extends TransactionAggre
         ['timestamp', 'deviceData']
       )
     const sendingTransactionsWithIpAddress = sendingTransactions.filter(
-      (transaction) => transaction.deviceData?.ipAddress
+      (transaction) => getOriginIpAddress(transaction.deviceData)
     )
 
     // Update aggregations
@@ -150,7 +153,7 @@ export default class SenderLocationChangesFrequencyRule extends TransactionAggre
   ): Set<string> {
     return new Set(
       transactions
-        .map((transaction) => transaction.deviceData?.ipAddress)
+        .map((transaction) => getOriginIpAddress(transaction.deviceData))
         .filter(Boolean)
     ) as Set<string>
   }
@@ -172,7 +175,8 @@ export default class SenderLocationChangesFrequencyRule extends TransactionAggre
     targetAggregationData: AggregationData | undefined,
     isTransactionFiltered: boolean
   ): Promise<AggregationData | null> {
-    const ipAddress = this.transaction.deviceData?.ipAddress
+    const ipAddress = getOriginIpAddress(this.transaction.deviceData)
+
     if (
       !isTransactionFiltered ||
       direction === 'destination' ||

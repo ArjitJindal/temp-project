@@ -62,6 +62,7 @@ export class DeviceDataService {
       deviceMaker: deviceMetric.manufacturer,
       deviceModel: deviceMetric.model,
       ipAddress: deviceMetric.ipAddress,
+      originIpAddress: deviceMetric.ipAddress,
       operatingSystem: deviceMetric.androidId,
     }
 
