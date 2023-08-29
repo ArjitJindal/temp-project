@@ -559,7 +559,7 @@ export const BUSINESS_USER_SEGMENT_SCHEMA = (options?: SchemaOptions) =>
     title: options?.title || 'User consumer segment',
     description:
       options?.description ||
-      'Select one or more user consumer segments to target transactions with those consumer user segments',
+      'Select one or more user business segments to target transactions with those business user segments',
     items: {
       type: 'string',
       enum: BUSINESS_USER_SEGMENTS,
