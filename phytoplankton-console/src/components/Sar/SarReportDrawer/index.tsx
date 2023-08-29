@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react';
+import { createContext, useMemo, useState } from 'react';
 import { isEmpty } from 'lodash';
 import { useMutation } from '@tanstack/react-query';
 import s from './style.module.less';
@@ -14,6 +14,7 @@ import { getErrorMessage } from '@/utils/lang';
 import { useId } from '@/utils/hooks';
 import SarReportDrawerForm from '@/components/Sar/SarReportDrawer/SarReportDrawerForm';
 
+export const SarContext = createContext<Report | null>(null);
 export const REPORT_STEP = 'REPORT_STEP';
 export const TRANSACTION_METADATA_STEP = 'TRANSACTION_METADATA_STEP';
 export const TRANSACTION_STEP = 'TRANSACTION_STEP';
@@ -145,65 +146,66 @@ export default function SarReportDrawer(props: Props) {
   );
 
   const activeStepIndex = steps.findIndex(({ key }) => key === activeStep);
-
   const formId = useId(`form-`);
 
   return (
-    <Drawer
-      isVisible={props.isVisible}
-      onChangeVisibility={props.onChangeVisibility}
-      title={'Report generator'}
-      footer={
-        <div className={s.footer}>
-          <StepButtons
-            nextDisabled={activeStepIndex === steps.length - 1}
-            prevDisabled={activeStepIndex === 0}
-            onNext={() => {
-              setActiveStep(steps[activeStepIndex + 1].key);
-            }}
-            onPrevious={() => {
-              setActiveStep(steps[activeStepIndex - 1].key);
-            }}
-          />
-          <div className={s.footerButtons}>
-            <Button
-              isLoading={saveDraftMutation.isLoading}
-              type="TETRIARY"
-              onClick={() => saveDraftMutation.mutate({ report: draft })}
-            >
-              {'Save draft'}
-            </Button>
-
-            <Button
-              isLoading={submitMutation.isLoading}
-              type="PRIMARY"
-              htmlAttrs={{
-                form: formId,
+    <SarContext.Provider value={props.initialReport}>
+      <Drawer
+        isVisible={props.isVisible}
+        onChangeVisibility={props.onChangeVisibility}
+        title={'Report generator'}
+        footer={
+          <div className={s.footer}>
+            <StepButtons
+              nextDisabled={activeStepIndex === steps.length - 1}
+              prevDisabled={activeStepIndex === 0}
+              onNext={() => {
+                setActiveStep(steps[activeStepIndex + 1].key);
               }}
-              htmlType={'submit'}
-              isDisabled={!dirty}
-            >
-              {'Generate report'}
-            </Button>
+              onPrevious={() => {
+                setActiveStep(steps[activeStepIndex - 1].key);
+              }}
+            />
+            <div className={s.footerButtons}>
+              <Button
+                isLoading={saveDraftMutation.isLoading}
+                type="TETRIARY"
+                onClick={() => saveDraftMutation.mutate({ report: draft })}
+              >
+                {'Save draft'}
+              </Button>
+
+              <Button
+                isLoading={submitMutation.isLoading}
+                type="PRIMARY"
+                htmlAttrs={{
+                  form: formId,
+                }}
+                htmlType={'submit'}
+                isDisabled={!dirty}
+              >
+                {'Generate report'}
+              </Button>
+            </div>
           </div>
-        </div>
-      }
-    >
-      <SarReportDrawerForm
-        report={report}
-        formId={formId}
-        steps={steps}
-        activeStepState={[activeStep, setActiveStep]}
-        onChange={(report) => {
-          setDirty(true);
-          setDraft(report);
-        }}
-        onSubmit={(report: Report) => {
-          submitMutation.mutate({
-            report,
-          });
-        }}
-      />
-    </Drawer>
+        }
+      >
+        <SarReportDrawerForm
+          report={report}
+          formId={formId}
+          steps={steps}
+          activeStepState={[activeStep, setActiveStep]}
+          onChange={(report) => {
+            setDirty(true);
+            setDraft(report);
+          }}
+          onSubmit={(report: Report) => {
+            submitMutation.mutate({
+              report,
+            });
+          }}
+        />
+      </Drawer>
+    </SarContext.Provider>
   );
 }

@@ -38,7 +38,6 @@ Closure Date: [Insert closure date]
 
 # Conclusion
 [This section could contain the end result of the investigation.]
-
 `
 const MAX_TOKEN_INPUT = 1000
 const MAX_TOKEN_OUTPUT = 4096

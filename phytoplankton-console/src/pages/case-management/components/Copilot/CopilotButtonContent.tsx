@@ -8,6 +8,7 @@ import { message } from '@/components/library/Message';
 import { useSettings } from '@/components/AppWrapper/Providers/SettingsProvider';
 import Tooltip from '@/components/library/Tooltip';
 import { getBranding } from '@/utils/branding';
+import { EntityType } from '@/components/Narrative';
 
 type CopilotButtonProps = {
   loading: boolean;
@@ -34,7 +35,7 @@ interface Props {
   reasons: CaseReasons[];
   setCommentValue: (comment: string) => void;
   entityId: string;
-  entityType?: 'ALERT' | 'CASE' | 'TRANSACTION';
+  entityType?: EntityType;
 }
 
 export const CopilotButtonContent = ({ reasons, entityId, setCommentValue, entityType }: Props) => {

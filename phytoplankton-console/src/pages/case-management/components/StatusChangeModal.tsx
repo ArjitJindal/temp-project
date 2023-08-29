@@ -132,6 +132,7 @@ export default function StatusChangeModal(props: Props) {
           values={formState}
           onChange={setFormState}
           alertMessage={alertMessage}
+          entityType={entityName}
           extraFields={
             displayCloseRelatedCases &&
             newStatus === 'ESCALATED' && (

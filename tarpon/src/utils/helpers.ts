@@ -59,6 +59,25 @@ export function getUserName(
   return neverReturn(user, '-')
 }
 
+export function getAddress(
+  user?: InternalConsumerUser | InternalBusinessUser | MissingUser | null
+): string {
+  if (user == null || !('type' in user)) {
+    return '-'
+  }
+  if (user.type === 'CONSUMER') {
+    return user.contactDetails?.addresses?.at(0)?.addressLines.join(', ') || ''
+  }
+  if (user.type === 'BUSINESS') {
+    return (
+      user.legalEntity.contactDetails?.addresses
+        ?.at(0)
+        ?.addressLines.join(', ') || ''
+    )
+  }
+  return ''
+}
+
 export function isStatusInReview(status: CaseStatus | undefined): boolean {
   return status?.startsWith('IN_REVIEW') ?? false
 }

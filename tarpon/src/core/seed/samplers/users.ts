@@ -152,6 +152,7 @@ export function sampleBusinessUser(
         contactDetails: {
           emailIds: company?.contactEmails || [],
           websites: company?.website ? [company.website] : [],
+          addresses: [randomAddress()],
         },
         companyFinancialDetails: {
           expectedTransactionAmountPerMonth: {

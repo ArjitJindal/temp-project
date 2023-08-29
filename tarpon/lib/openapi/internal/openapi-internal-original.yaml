@@ -5354,6 +5354,7 @@ components:
             - ALERT
             - CASE
             - TRANSACTION
+            - REPORT
         reasons:
           type: array
           items:

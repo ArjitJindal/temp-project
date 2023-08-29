@@ -83,6 +83,7 @@ export default function QaStatusChangeModal(props: ConfirmModalProps) {
           values={formState}
           onChange={setFormState}
           entityIds={alertIds}
+          entityType={'ALERT'}
           placeholder={'Enter your additional comments here, if any.'}
           possibleReasons={[...CLOSING_REASONS, OTHER_REASON]}
           onSubmit={onSubmit}

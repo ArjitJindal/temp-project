@@ -10,7 +10,6 @@ import { UPIDetails } from '@/@types/openapi-public/UPIDetails'
 import { WalletDetails } from '@/@types/openapi-public/WalletDetails'
 import { CheckDetails } from '@/@types/openapi-public/CheckDetails'
 import { CountryCode } from '@/@types/openapi-internal/CountryCode'
-import { Address } from '@/@types/openapi-internal/Address'
 import { RULE_ACTIONS } from '@/@types/openapi-public-custom/RuleAction'
 import { randomAddress } from '@/core/seed/samplers/users'
 
@@ -135,36 +134,6 @@ export function sampleIBANDetails(seed?: number): IBANDetails {
       [...new Array(8)].map(() => randomInt(rnd(), 9)).join('') +
       [...new Array(10)].map(() => randomInt(rnd(), 9)).join(''),
   }
-}
-
-export function sampleAddress(seed?: number): Address {
-  const rnd = prng(seed)
-  return pickRandom<Address>(
-    [
-      {
-        addressLines: ['Times Square 12B', `App. 28`],
-        postcode: '88173',
-        city: 'New York',
-        state: 'NY',
-        country: 'US',
-      },
-      {
-        addressLines: ['2227 W', `App. 12`],
-        postcode: '60007',
-        city: 'Chicago',
-        state: 'IL',
-        country: 'US',
-      },
-      {
-        addressLines: ['4 Manor Dr.', `App. 42`],
-        postcode: '10040',
-        city: 'New York',
-        state: 'NY',
-        country: 'USA',
-      },
-    ],
-    rnd()
-  )
 }
 
 export function sampleGenericBankAccountDetails(

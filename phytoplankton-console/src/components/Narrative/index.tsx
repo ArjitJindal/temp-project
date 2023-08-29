@@ -33,6 +33,8 @@ export const CLOSING_REASONS: CaseReasons[] = [
   'Escalated',
 ];
 
+export type EntityType = 'ALERT' | 'CASE' | 'TRANSACTION';
+
 export type FormValues = {
   reasons: CaseReasons[];
   reasonOther: string | undefined;
@@ -50,6 +52,7 @@ type NarrativeProps = {
   alertMessage?: string;
   entityIds?: string[];
   placeholder: string;
+  entityType: EntityType;
   possibleReasons: CaseReasons[];
   onSubmit: () => void;
   showErrors: boolean;
@@ -64,6 +67,7 @@ export default function Narrative(props: NarrativeProps) {
     extraFields,
     alertMessage,
     entityIds,
+    entityType,
     placeholder,
     showErrors,
   } = props;
@@ -161,6 +165,7 @@ export default function Narrative(props: NarrativeProps) {
                   props.onChange?.(value);
                 }}
                 entityId={entityIds && entityIds?.length > 0 ? entityIds[0] : ''}
+                entityType={entityType}
               />
             )}
           </GenericFormField>
