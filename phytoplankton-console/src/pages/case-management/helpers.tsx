@@ -57,6 +57,7 @@ export const queryAdapter: Adapter<TableSearchParams> = {
       userStates: params.userStates?.join(','),
       riskLevels: params.riskLevels?.join(','),
       assignedTo: params.assignedTo?.join(','),
+      qaAssignment: params.qaAssignment?.join(','),
       updatedAt: params['updatedAt']?.map((x) => dayjs(x).valueOf()).join(','),
     };
   },
@@ -112,6 +113,7 @@ export const queryAdapter: Adapter<TableSearchParams> = {
       riskLevels: raw.riskLevels?.split(',') as unknown as TableSearchParams['riskLevels'],
       showCases: (showCases as ScopeSelectorValue | undefined) ?? 'ALL',
       assignedTo: raw.assignedTo?.split(',') as unknown as TableSearchParams['assignedTo'],
+      qaAssignment: raw.qaAssignment?.split(',') as unknown as TableSearchParams['qaAssignment'],
       updatedAt: raw?.['updatedAt']?.split(',').map((x) => dayjs(parseInt(x)).format()),
     };
   },

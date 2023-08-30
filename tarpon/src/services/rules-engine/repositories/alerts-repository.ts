@@ -211,6 +211,16 @@ export class AlertsRepository {
       })
     }
 
+    if (params.filterQaAssignmentsIds?.length) {
+      conditions.push({
+        'alerts.qaAssignment': {
+          $elemMatch: {
+            assigneeUserId: { $in: params.filterQaAssignmentsIds },
+          },
+        },
+      })
+    }
+
     if (
       params.filterAssignmentsIds != null &&
       params.filterAssignmentsIds?.length

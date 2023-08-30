@@ -3,6 +3,7 @@ import {
   AuditLogType,
   CaseStatus,
   CaseType,
+  ChecklistStatus,
   PaymentMethod,
   RiskLevel,
   RuleAction,
@@ -45,8 +46,11 @@ export type CommonCaseParams = {
   riskLevels: RiskLevel[];
   alertId: string;
   assignedTo: string[];
+  qaAssignment: string[];
   updatedAt: string[];
   caseTypesFilter: CaseType[];
+  filterQaStatus?: ChecklistStatus;
+  filterOutQaStatus?: ChecklistStatus[];
 };
 
 export type TableSearchParams = CommonParams & {

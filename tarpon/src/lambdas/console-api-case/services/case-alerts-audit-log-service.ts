@@ -19,6 +19,8 @@ import { CasesReviewAssignmentsUpdateRequest } from '@/@types/openapi-internal/C
 import { AlertsRepository } from '@/services/rules-engine/repositories/alerts-repository'
 import { CaseRepository } from '@/services/rules-engine/repositories/case-repository'
 import { traceable } from '@/core/xray'
+import { ChecklistItemValue } from '@/@types/openapi-internal/ChecklistItemValue'
+import { AlertQaStatusUpdateRequest } from '@/@types/openapi-internal/AlertQaStatusUpdateRequest'
 
 type AuditLogCreateRequest = {
   caseId: string
@@ -104,6 +106,38 @@ export class CasesAlertsAuditLogService {
         subtype,
       })
     }
+  }
+  public async handleAuditLogForAlertChecklistUpdate(
+    alertId: string,
+    oldRuleChecklist: ChecklistItemValue[] | undefined,
+    ruleChecklist: ChecklistItemValue[] | undefined
+  ): Promise<void> {
+    await this.createAlertAuditLog({
+      alertId,
+      logAction: 'UPDATE',
+      subtype: 'CHECKLIST',
+      oldImage: { ruleChecklist: oldRuleChecklist },
+      newImage: { ruleChecklist: ruleChecklist },
+    })
+  }
+
+  public async handleAuditLogForAlertQaUpdate(
+    alertId: string,
+    update: AlertQaStatusUpdateRequest
+  ): Promise<void> {
+    await this.createAlertAuditLog({
+      alertId,
+      logAction: 'UPDATE',
+      subtype: 'CHECKLIST',
+      newImage: {
+        qaStatus: update.checklistStatus,
+        qaInfo: {
+          reason: update.reason,
+          comment: update.comment,
+          files: update.files,
+        },
+      },
+    })
   }
 
   public async handleAuditLogForComments(

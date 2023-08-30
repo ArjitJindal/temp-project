@@ -175,9 +175,11 @@ export const ConsoleApiPathToLambda: any = {
     StackConstants.CONSOLE_API_CHECKLIST_TEMPLATE_FUNCTION_NAME,
   '/checklist-templates/{checklistTemplateId}':
     StackConstants.CONSOLE_API_CHECKLIST_TEMPLATE_FUNCTION_NAME,
-  '/alerts/{alertId}/qa/{checklistItemId}':
-    StackConstants.CONSOLE_API_CASE_FUNCTION_NAME,
+  '/alerts/{alertId}/qa': StackConstants.CONSOLE_API_CASE_FUNCTION_NAME,
   '/alerts/qaStatusChange': StackConstants.CONSOLE_API_CASE_FUNCTION_NAME,
+  '/alerts/{alertId}/qaAssignment':
+    StackConstants.CONSOLE_API_CASE_FUNCTION_NAME,
+  '/alerts/{alertId}/checklist': StackConstants.CONSOLE_API_CASE_FUNCTION_NAME,
 }
 
 const openapi = getAugmentedOpenapi(

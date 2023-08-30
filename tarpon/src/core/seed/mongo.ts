@@ -102,7 +102,10 @@ export async function seedMongo(client: MongoClient, tenantId: string) {
   const allAccounts =
     tenant != null ? await accountsService.getTenantAccounts(tenant) : []
   const accounts = allAccounts.filter(
-    (account) => account.role !== 'root' && !account.blocked
+    (account) =>
+      account.role !== 'root' &&
+      !account.blocked &&
+      account.name.endsWith('flagright.com')
   )
 
   logger.info(`Accounts: ${JSON.stringify(accounts)}`)

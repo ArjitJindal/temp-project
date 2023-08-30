@@ -1,7 +1,8 @@
-import React, { useCallback, useMemo, useState } from 'react';
+import React, { useCallback, useMemo, useRef } from 'react';
 import { Tag } from 'antd';
+import { useMutation } from '@tanstack/react-query';
 import QueryResultsTable from '@/components/common/QueryResultsTable';
-import { AllParams, TableColumn, TableData } from '@/components/library/Table/types';
+import { AllParams, TableData, TableRefType } from '@/components/library/Table/types';
 import { QueryResult } from '@/utils/queries/types';
 import { TableAlertItem } from '@/pages/case-management/AlertTable/types';
 import { TableSearchParams } from '@/pages/case-management/types';
@@ -9,42 +10,33 @@ import { makeExtraFilters } from '@/pages/case-management/helpers';
 import { useFeatureEnabled } from '@/components/AppWrapper/Providers/SettingsProvider';
 import { ColumnHelper } from '@/components/library/Table/columnHelper';
 import StackLineIcon from '@/components/ui/icons/Remix/business/stack-line.react.svg';
-import { ALERT_ID, DATE, RULE_NATURE } from '@/components/library/Table/standardDataTypes';
+import {
+  ALERT_ID,
+  ASSIGNMENTS,
+  DATE,
+  RULE_NATURE,
+} from '@/components/library/Table/standardDataTypes';
 import { useAlertQuery } from '@/pages/case-management/common';
-import { ChecklistStatus } from '@/apis';
 import { useRuleOptions } from '@/utils/rules';
-
-export type AlertTableParams = AllParams<TableSearchParams> & {
-  filterQaStatus?: ChecklistStatus;
-  filterOutQaStatus?: ChecklistStatus[];
-};
+import { AssigneesDropdown } from '@/pages/case-management/components/AssigneesDropdown';
+import { message } from '@/components/library/Message';
+import { useAuth0User } from '@/utils/user-utils';
+import { useApi } from '@/api';
+import { DefaultApiPatchAlertsQaAssignmentsRequest } from '@/apis/types/ObjectParamAPI';
+import { AssignmentButton } from '@/pages/case-management/components/AssignmentButton';
 
 interface Props {
-  params: AlertTableParams;
-  onChangeParams?: (newState: AlertTableParams) => void;
-  isEmbedded?: boolean;
-  hideAlertStatusFilters?: boolean;
-  hideUserFilters?: boolean;
-  caseId?: string;
-  escalatedTransactionIds?: string[];
-  expandTransactions?: boolean;
-  hideAssignedToFilter?: boolean;
-  extraColumns?: TableColumn<TableAlertItem>[];
+  params: AllParams<TableSearchParams>;
+  onChangeParams: (newState: AllParams<TableSearchParams>) => void;
 }
 
 export default function QaTable(props: Props) {
-  const {
-    params: externalParams,
-    onChangeParams,
-    isEmbedded = false,
-    hideUserFilters = false,
-    hideAssignedToFilter,
-  } = props;
+  const { params, onChangeParams } = props;
   const isPulseEnabled = useFeatureEnabled('PULSE');
-  const [internalParams, setInternalParams] = useState<AlertTableParams | null>(null);
-  const params = useMemo(() => internalParams ?? externalParams, [externalParams, internalParams]);
-
   const queryResults: QueryResult<TableData<TableAlertItem>> = useAlertQuery(params);
+  const user = useAuth0User();
+  const tableRef = useRef<TableRefType>(null);
+  const assigneeUpdateMutation = useAlertQaAssignmentUpdateMutation(tableRef);
 
   const helper = new ColumnHelper<TableAlertItem>();
   const columns = helper.list([
@@ -61,10 +53,13 @@ export default function QaTable(props: Props) {
       key: 'ruleQaStatus',
       type: {
         render: (status) => {
-          if (status) {
-            return <>{status}</>;
+          if (status === 'PASSED') {
+            return <>QA pass</>;
           }
-          return <>'-'</>;
+          if (status === 'FAILED') {
+            return <>QA fail</>;
+          }
+          return <>Not QA'd</>;
         },
       },
     }),
@@ -101,46 +96,116 @@ export default function QaTable(props: Props) {
         );
       },
     }),
+    helper.simple<'assignments'>({
+      title: 'Assignees',
+      key: 'assignments',
+      id: '_assignmentName',
+      defaultWidth: 300,
+      enableResizing: false,
+      type: {
+        ...ASSIGNMENTS,
+        render: (__, { item: entity }) => {
+          const assignments = entity.qaAssignment || [];
+          return (
+            <AssigneesDropdown
+              assignments={assignments}
+              editing={!entity.ruleQaStatus}
+              onChange={(assignees) => {
+                if (entity.alertId) {
+                  assigneeUpdateMutation.mutate({
+                    alertId: entity.alertId,
+                    AlertQaAssignmentsUpdateRequest: {
+                      assignments: assignees.map((assigneeUserId) => ({
+                        assignedByUserId: user.userId,
+                        assigneeUserId,
+                        timestamp: Date.now(),
+                      })),
+                    },
+                  });
+                } else {
+                  message.fatal('Alert ID is missing');
+                  return;
+                }
+              }}
+            />
+          );
+        },
+      },
+    }),
   ]);
   const ruleOptions = useRuleOptions();
 
   const extraFilters = useMemo(
     () =>
-      makeExtraFilters(
-        isPulseEnabled,
-        ruleOptions,
-        hideUserFilters,
-        'ALERTS',
-        hideAssignedToFilter,
-      ),
-    [isPulseEnabled, ruleOptions, hideUserFilters, hideAssignedToFilter],
+      makeExtraFilters(isPulseEnabled, ruleOptions, false, 'ALERTS', true).concat({
+        key: 'qaAssignment',
+        title: 'QA Assigned to',
+        showFilterByDefault: true,
+        renderer: ({ params, setParams }) => (
+          <AssignmentButton
+            users={params.qaAssignment ?? []}
+            onConfirm={(value) => {
+              setParams((state) => ({
+                ...state,
+                qaAssignment: value ?? undefined,
+              }));
+            }}
+          />
+        ),
+      }),
+    [isPulseEnabled, ruleOptions],
   );
 
   const handleChangeParams = useCallback(
-    (params: AlertTableParams) => {
-      if (isEmbedded) {
-        setInternalParams(params);
-      } else if (onChangeParams) {
-        onChangeParams(params);
-      }
+    (params: AllParams<TableSearchParams>) => {
+      onChangeParams(params);
     },
-    [isEmbedded, onChangeParams],
+    [onChangeParams],
   );
 
   return (
     <>
-      <QueryResultsTable<TableAlertItem, AlertTableParams>
-        tableId={isEmbedded ? 'alerts-list-embedded' : 'alerts-list'}
+      <QueryResultsTable<TableAlertItem, AllParams<TableSearchParams>>
+        innerRef={tableRef}
+        tableId={'qa-alert-list'}
         rowKey={'alertId'}
-        fitHeight={isEmbedded ? 500 : true}
-        hideFilters={isEmbedded}
+        fitHeight={true}
+        hideFilters={false}
         columns={columns}
         queryResults={queryResults}
-        params={internalParams ?? params}
+        params={params}
         onChangeParams={handleChangeParams}
         extraFilters={extraFilters}
-        pagination={isEmbedded ? 'HIDE_FOR_ONE_PAGE' : true}
+        pagination={true}
       />
     </>
   );
 }
+
+const reloadTable = (ref: React.RefObject<TableRefType>) => {
+  if (ref.current) {
+    ref.current.reload();
+  }
+};
+export const useAlertQaAssignmentUpdateMutation = (ref: React.RefObject<TableRefType>) => {
+  const api = useApi();
+
+  return useMutation<unknown, Error, DefaultApiPatchAlertsQaAssignmentsRequest>(
+    async ({ alertId, AlertQaAssignmentsUpdateRequest: { assignments } }) =>
+      await api.patchAlertsQaAssignments({
+        alertId,
+        AlertQaAssignmentsUpdateRequest: {
+          assignments,
+        },
+      }),
+    {
+      onSuccess: () => {
+        reloadTable(ref);
+        message.success('Assignees updated successfully');
+      },
+      onError: () => {
+        message.fatal('Failed to update assignees');
+      },
+    },
+  );
+};

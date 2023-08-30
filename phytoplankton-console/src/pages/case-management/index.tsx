@@ -1,6 +1,5 @@
 import React, { useCallback, useEffect, useState } from 'react';
 import { useNavigate } from 'react-router';
-import { useLocalStorageState } from 'ahooks';
 import CaseTableWrapper from './CaseTableWrapper';
 import AlertTable from './AlertTable';
 import s from './index.module.less';
@@ -23,14 +22,15 @@ import Toggle from '@/components/library/Toggle';
 import { useFeatureEnabled, useSettings } from '@/components/AppWrapper/Providers/SettingsProvider';
 import { Item } from '@/components/library/SegmentedControl';
 import QaTable from '@/pages/case-management/QaTable';
+import { useQaMode } from '@/utils/qa-mode';
 
 export default function CaseManagementPage() {
   const i18n = useI18n();
   useCloseSidebarByDefault();
-  const [qaMode, setQaMode] = useLocalStorageState<boolean>('QA_MODE', false);
+  const [qaMode, setQaMode] = useQaMode();
+  const hasQaEnabled = useFeatureEnabled('QA');
   const user = useAuth0User();
   const navigate = useNavigate();
-  const hasQaEnabled = useFeatureEnabled('QA');
   const parsedParams = queryAdapter.deserializer({
     showCases: qaMode ? 'QA_UNCHECKED_ALERTS' : 'ALL',
     ...parseQueryString(location.search),
@@ -160,8 +160,6 @@ function getTable(
     case 'QA_UNCHECKED_ALERTS':
       return (
         <QaTable
-          hideAlertStatusFilters={true}
-          escalatedTransactionIds={[]}
           params={{ ...params, filterOutQaStatus: ['PASSED', 'FAILED'], alertStatus: 'CLOSED' }}
           onChangeParams={handleChangeParams}
         />
@@ -169,7 +167,6 @@ function getTable(
     case 'QA_PASSED_ALERTS':
       return (
         <QaTable
-          hideAlertStatusFilters={true}
           params={{ ...params, filterQaStatus: 'PASSED', alertStatus: 'CLOSED' }}
           onChangeParams={handleChangeParams}
         />
@@ -177,7 +174,6 @@ function getTable(
     case 'QA_FAILED_ALERTS':
       return (
         <QaTable
-          hideAlertStatusFilters={true}
           params={{ ...params, filterQaStatus: 'FAILED', alertStatus: 'CLOSED' }}
           onChangeParams={handleChangeParams}
         />

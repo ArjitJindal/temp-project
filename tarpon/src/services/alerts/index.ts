@@ -10,6 +10,8 @@ import {
   startCase,
   toLower,
   uniq,
+  isEqual,
+  cloneDeep,
 } from 'lodash'
 import {
   APIGatewayEventLambdaAuthorizerContext,
@@ -61,6 +63,7 @@ import { JWTAuthorizerResult } from '@/@types/jwt'
 import { isStatusInReview } from '@/utils/helpers'
 import { ChecklistStatus } from '@/@types/openapi-internal/ChecklistStatus'
 import { AlertQaStatusUpdateRequest } from '@/@types/openapi-internal/AlertQaStatusUpdateRequest'
+import { ChecklistTemplatesService } from '@/services/checklist-templates'
 
 @traceable
 export class AlertsService extends CaseAlertsCommonService {
@@ -80,6 +83,7 @@ export class AlertsService extends CaseAlertsCommonService {
     const dynamoDb = getDynamoDbClientByEvent(event)
     const repo = new AlertsRepository(tenantId, { mongoDb, dynamoDb })
     const { DOCUMENT_BUCKET, TMP_BUCKET } = process.env as CaseConfig
+
     return new AlertsService(repo, s3, {
       documentBucketName: DOCUMENT_BUCKET,
       tmpBucketName: TMP_BUCKET,
@@ -734,11 +738,6 @@ export class AlertsService extends CaseAlertsCommonService {
       alerts[0]?.alertStatus
     )
 
-    const casesAlertsAuditLogService = new CasesAlertsAuditLogService(
-      this.tenantId,
-      { mongoDb: this.mongoDb, dynamoDb: this.dynamoDb }
-    )
-
     const caseService = new CaseService(caseRepository, this.s3, this.s3Config)
 
     await withTransaction(async () => {
@@ -803,7 +802,7 @@ export class AlertsService extends CaseAlertsCommonService {
           { cascadeAlertsUpdate: false, account: userAccount }
         )
 
-        await casesAlertsAuditLogService.handleAuditLogForCaseUpdate(
+        await this.auditLogService().handleAuditLogForCaseUpdate(
           caseIdsWithAllAlertsSameStatus,
           caseUpdateStatus
         )
@@ -923,31 +922,92 @@ export class AlertsService extends CaseAlertsCommonService {
     await sanctionsService.addWhitelistEntities(entities, userId)
   }
 
+  async updateAlertChecklistStatus(
+    alertId: string,
+    checklistItemIds: string[],
+    done: boolean
+  ): Promise<void> {
+    const alert = await this.alertsRepository.getAlertById(alertId)
+    if (!alert) {
+      throw new NotFound('No alert')
+    }
+    if (!alert.ruleChecklistTemplateId) {
+      throw new NotFound('Alert has no checklist')
+    }
+    const originalChecklist = cloneDeep(alert.ruleChecklist)
+    const updatedChecklist = alert.ruleChecklist?.map((checkListItem) => {
+      if (
+        checkListItem.checklistItemId &&
+        checklistItemIds.includes(checkListItem.checklistItemId)
+      ) {
+        checkListItem.done = done
+      }
+      return checkListItem
+    })
+    if (isEqual(originalChecklist, updatedChecklist)) {
+      throw new BadRequest('No changes made to the checklist')
+    }
+    alert.ruleChecklist = updatedChecklist
+    await this.alertsRepository.saveAlert(alert.caseId!, alert)
+    await this.auditLogService().handleAuditLogForAlertChecklistUpdate(
+      alertId,
+      originalChecklist,
+      updatedChecklist
+    )
+  }
+
   async updateAlertChecklistQaStatus(
     alertId: string,
-    checklistItemId: string,
+    checklistItemIds: string[],
     status: ChecklistStatus
   ): Promise<void> {
     const alert = await this.alertsRepository.getAlertById(alertId)
     if (!alert) {
       throw new NotFound('No alert')
     }
-    alert.ruleChecklist = alert.ruleChecklist?.map((checkListItem) => {
-      if (checkListItem.checklistItemId === checklistItemId) {
+    if (!alert.ruleChecklistTemplateId) {
+      throw new NotFound('Alert has no checklist')
+    }
+    const originalChecklist = cloneDeep(alert.ruleChecklist)
+    const updatedChecklist = alert.ruleChecklist?.map((checkListItem) => {
+      if (
+        checkListItem.checklistItemId &&
+        checklistItemIds.includes(checkListItem.checklistItemId)
+      ) {
         checkListItem.status = status
       }
       return checkListItem
     })
+    if (isEqual(originalChecklist, updatedChecklist)) {
+      throw new BadRequest('No changes made to the checklist')
+    }
+
+    alert.ruleChecklist = updatedChecklist
 
     await this.alertsRepository.saveAlert(alert.caseId!, alert)
+    const { autoFail } = await this.acceptanceCriteria(alert)
+    if (autoFail) {
+      await this.updateAlertQaStatus(getContext()?.user?.id as string, {
+        alertIds: [alertId],
+        checklistStatus: 'FAILED',
+        reason: ['Other'],
+        comment: 'Alert QA status changed to FAILED automatically',
+      })
+    }
+    await this.auditLogService().handleAuditLogForAlertChecklistUpdate(
+      alertId,
+      originalChecklist,
+      updatedChecklist
+    )
   }
+
   async updateAlertQaStatus(
     userId: string,
     update: AlertQaStatusUpdateRequest
   ): Promise<void> {
     const alerts = await this.alertsRepository.getAlertsByIds(update.alertIds)
     await Promise.all(
-      alerts.map((alert) => {
+      alerts.map(async (alert) => {
         if (update.checklistStatus === 'FAILED') {
           // Find who closed the alert and reassign them
           const originalAssignee = alert.statusChanges
@@ -963,8 +1023,14 @@ export class AlertsService extends CaseAlertsCommonService {
               },
             ]
           }
+        } else {
+          const { canPass } = await this.acceptanceCriteria(alert)
+          if (!canPass) {
+            throw new BadRequest(
+              `${alert.alertId} does not meet the acceptance critera`
+            )
+          }
         }
-
         alert.ruleQaStatus = update.checklistStatus
         if (!alert.comments) {
           alert.comments = []
@@ -988,8 +1054,81 @@ export class AlertsService extends CaseAlertsCommonService {
           timestamp: Date.now(),
           userId,
         })
-        return this.alertsRepository.saveAlert(alert.caseId!, alert)
+        await this.alertsRepository.saveAlert(alert.caseId!, alert)
+        return this.auditLogService().handleAuditLogForAlertQaUpdate(
+          alert.alertId as string,
+          update
+        )
       })
     )
+  }
+
+  async updateAlertsQaAssignments(
+    alertId: string,
+    assignments: Assignment[]
+  ): Promise<void> {
+    const alert = await this.alertsRepository.getAlertById(alertId)
+    if (!alert) {
+      throw new NotFound('No alert')
+    }
+
+    alert.qaAssignment = assignments
+    await this.alertsRepository.saveAlert(alert.caseId!, alert)
+  }
+
+  // This is a static implementation of the following acceptance criteria:
+  // - An alert should fail QA if any P1 is failed
+  // - An alert should not be able to pass QA if 2 or more P2s are failed
+  // - An alert should not be able to pass QA if not all items are QA'd
+  private async acceptanceCriteria(
+    alert: Alert
+  ): Promise<{ autoFail: boolean; canPass: boolean }> {
+    const ruleChecklistTemplateId = alert.ruleChecklistTemplateId
+    if (!ruleChecklistTemplateId) {
+      throw new BadRequest('No checklist for alert')
+    }
+    const checklistTemplate =
+      await this.checklistTemplateService().getChecklistTemplate(
+        ruleChecklistTemplateId
+      )
+
+    let qaComplete = true
+    let noP1Failed = true
+    let p2sFailed = 0
+    checklistTemplate?.categories.forEach((category) => {
+      category.checklistItems.forEach((checklistItem) => {
+        const alertChecklistItem = alert.ruleChecklist?.find(
+          (rcli) => rcli.checklistItemId === checklistItem.id
+        )
+        if (!alertChecklistItem) {
+          qaComplete = false
+          return
+        }
+
+        if (alertChecklistItem.status === 'FAILED') {
+          if (checklistItem.level === 'P1') {
+            noP1Failed = false
+          }
+          if (checklistItem.level === 'P2') {
+            p2sFailed++
+          }
+        }
+      })
+    })
+
+    return {
+      canPass: qaComplete && noP1Failed && p2sFailed < 2,
+      autoFail: !noP1Failed,
+    }
+  }
+
+  private auditLogService(): CasesAlertsAuditLogService {
+    return new CasesAlertsAuditLogService(this.tenantId, {
+      mongoDb: this.mongoDb,
+      dynamoDb: this.dynamoDb,
+    })
+  }
+  private checklistTemplateService(): ChecklistTemplatesService {
+    return new ChecklistTemplatesService(this.tenantId, this.mongoDb)
   }
 }

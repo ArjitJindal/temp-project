@@ -1,6 +1,6 @@
 import pluralize from 'pluralize';
 import { QueryResult } from '@/utils/queries/types';
-import { TableData } from '@/components/library/Table/types';
+import { AllParams, TableData } from '@/components/library/Table/types';
 import { TableAlertItem } from '@/pages/case-management/AlertTable/types';
 import { useApi } from '@/api';
 import { useAuth0User } from '@/utils/user-utils';
@@ -9,11 +9,13 @@ import { ALERT_LIST } from '@/utils/queries/keys';
 import { DefaultApiGetAlertListRequest } from '@/apis/types/ObjectParamAPI';
 import { getStatuses } from '@/utils/case-utils';
 import { AlertListResponseItem } from '@/apis';
-import { AlertTableParams } from '@/pages/case-management/QaTable';
 import dayjs from '@/utils/dayjs';
 import { getUserName } from '@/utils/api/users';
+import { TableSearchParams } from '@/pages/case-management/types';
 
-export function useAlertQuery(params: AlertTableParams): QueryResult<TableData<TableAlertItem>> {
+export function useAlertQuery(
+  params: AllParams<TableSearchParams>,
+): QueryResult<TableData<TableAlertItem>> {
   const api = useApi();
   const user = useAuth0User();
   return usePaginatedQuery(ALERT_LIST(params), async (paginationParams) => {
@@ -37,6 +39,7 @@ export function useAlertQuery(params: AlertTableParams): QueryResult<TableData<T
       rulesHitFilter,
       filterQaStatus,
       filterOutQaStatus,
+      qaAssignment,
     } = params;
     const [sortField, sortOrder] = sort[0] ?? [];
 
@@ -51,6 +54,7 @@ export function useAlertQuery(params: AlertTableParams): QueryResult<TableData<T
       filterAlertStatus: getStatuses(alertStatus),
       filterAssignmentsIds:
         showCases === 'MY_ALERTS' ? [user.userId] : assignedTo?.length ? assignedTo : undefined,
+      filterQaAssignmentsIds: qaAssignment?.length ? qaAssignment : undefined,
       filterBusinessIndustries:
         businessIndustryFilter && businessIndustryFilter.length > 0
           ? businessIndustryFilter

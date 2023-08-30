@@ -30,6 +30,7 @@ export default function (): JSX.Element {
           possibleReasons={['Suspicious activity reported (SAR)', 'Terrorist financing']}
           onSubmit={onSubmit}
           showErrors={showErrors}
+          entityType={'CASE'}
         />
         {submitted && <>Submitted: {JSON.stringify(submitted)}</>}
       </UseCase>

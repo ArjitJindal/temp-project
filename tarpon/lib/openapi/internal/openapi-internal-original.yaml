@@ -2733,6 +2733,12 @@ paths:
           in: query
           name: filterAssignmentsIds
         - schema:
+            type: array
+            items:
+              type: string
+          in: query
+          name: filterQaAssignmentsIds
+        - schema:
             type: string
           in: query
           name: filterAlertId
@@ -2990,19 +2996,14 @@ paths:
             schema:
               $ref: '#/components/schemas/AlertQaStatusUpdateRequest'
         required: true
-  '/alerts/{alertId}/qa/{checklistItemId}':
+  '/alerts/{alertId}/qa':
     patch:
-      summary: Alerts - Qa Status
+      summary: Alerts - Item Qa Status
       operationId: patch-alerts-qa-status
       parameters:
         - schema:
             type: string
           name: alertId
-          in: path
-          required: true
-        - schema:
-            type: string
-          name: checklistItemId
           in: path
           required: true
       responses:
@@ -3016,6 +3017,50 @@ paths:
           application/json:
             schema:
               $ref: '#/components/schemas/AlertChecklistQaUpdateRequest'
+        required: true
+  '/alerts/{alertId}/checklist':
+    patch:
+      summary: Alerts - Qa Status
+      operationId: patch-alerts-checklist-status
+      parameters:
+        - schema:
+            type: string
+          name: alertId
+          in: path
+          required: true
+      responses:
+        '200':
+          description: OK
+      x-flagright:
+        permissions:
+          - case-management:case-details:write
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AlertChecklistUpdateRequest'
+        required: true
+  '/alerts/{alertId}/qaAssignment':
+    patch:
+      summary: Alerts - QA Assignments
+      operationId: patch-alerts-qa-assignments
+      parameters:
+        - schema:
+            type: string
+          name: alertId
+          in: path
+          required: true
+      responses:
+        '200':
+          description: OK
+      x-flagright:
+        permissions:
+          - case-management:qa:write
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AlertQaAssignmentsUpdateRequest'
         required: true
   /alerts/assignments:
     patch:
@@ -6008,6 +6053,7 @@ components:
         - case-management:case-details:read
         - case-management:case-details:write
         - case-management:case-reopen:write
+        - case-management:qa:read
         - case-management:qa:write
         - case-management:export:read
         - rules:my-rules:read
@@ -6677,6 +6723,16 @@ components:
       required:
         - alertIds
         - assignments
+    AlertQaAssignmentsUpdateRequest:
+      title: AlertQaAssignmentsUpdateRequest
+      type: object
+      properties:
+        assignments:
+          type: array
+          items:
+            $ref: '#/components/schemas/Assignment'
+      required:
+        - assignments
     AlertsReviewAssignmentsUpdateRequest:
       title: AlertsReviewAssignmentsUpdateRequest
       type: object
@@ -6722,10 +6778,28 @@ components:
       title: AlertChecklistQaUpdateRequest
       type: object
       properties:
+        checklistItemIds:
+          type: array
+          items:
+            type: string
         status:
           $ref: '#/components/schemas/ChecklistStatus'
       required:
         - status
+        - checklistItemIds
+    AlertChecklistUpdateRequest:
+      title: AlertChecklistUpdateRequest
+      type: object
+      properties:
+        checklistItemIds:
+          type: array
+          items:
+            type: string
+        done:
+          type: boolean
+      required:
+        - done
+        - checklistItemIds
     AlertsToNewCaseRequest:
       title: AlertsUpdateRequest
       type: object
@@ -7382,6 +7456,7 @@ components:
             - STATUS_CHANGE
             - MANUAL_CASE_CREATION
             - MANUAL_CASE_TRANSACTIONS_ADDITION
+            - CHECKLIST
         action:
           $ref: '#/components/schemas/AuditLogActionEnum'
         timestamp:

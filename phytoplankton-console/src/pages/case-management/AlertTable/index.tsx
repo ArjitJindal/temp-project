@@ -1,6 +1,5 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useMutation } from '@tanstack/react-query';
-import { useLocalStorageState } from 'ahooks';
 import { AssigneesDropdown } from '../components/AssigneesDropdown';
 import { ApproveSendBackButton } from '../components/ApproveSendBackButton';
 import { FalsePositiveTag } from '../components/FalsePositiveTag';
@@ -57,6 +56,7 @@ import {
 import { CASE_STATUSS } from '@/apis/models-custom/CaseStatus';
 import { useRuleOptions } from '@/utils/rules';
 import QaStatusChangeModal from '@/pages/case-management/AlertTable/QaStatusChangeModal';
+import { useQaMode } from '@/utils/qa-mode';
 
 export type AlertTableParams = AllParams<TableSearchParams> & {
   filterQaStatus?: ChecklistStatus;
@@ -323,7 +323,7 @@ export default function AlertTable(props: Props) {
   const escalationEnabled = useFeatureEnabled('ESCALATION');
   const isPulseEnabled = useFeatureEnabled('PULSE');
   const sarEnabled = useFeatureEnabled('SAR');
-  const [qaMode] = useLocalStorageState<boolean>('QA_MODE', false);
+  const [qaMode] = useQaMode();
   const api = useApi();
   const user = useAuth0User();
 

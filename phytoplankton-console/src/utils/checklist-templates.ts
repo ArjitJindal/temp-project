@@ -31,6 +31,7 @@ export const useAlertChecklist = (alertId: string): QueryResult<HydratedChecklis
             name: cli.name,
             level: cli.level,
             qaStatus: item.status,
+            done: item.done || false,
           };
         }),
       };
@@ -40,6 +41,7 @@ export const useAlertChecklist = (alertId: string): QueryResult<HydratedChecklis
 
 export type ChecklistItem = EmptyChecklistItem & {
   qaStatus: ChecklistStatus;
+  done: boolean;
 };
 
 type ChecklistCategory = {
