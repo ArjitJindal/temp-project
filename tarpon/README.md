@@ -300,27 +300,13 @@ Migrations are periodically deleted (archived). To find the archived migrations,
 
    Official GUI client for MongoDB - https://www.mongodb.com/products/compass
 
-### Create a New Tenant
+### Create a new tenant
 
-For now, we can use the script `onboard-tarpon-api.sh` to create a new tenant, its usage plan and API key, and it'll create a fixed set of rules if they're not yet created. After this script is run, we need to manually activate the rules for the tenant in the FDT console.
-
-Dev env:
-
-```bash
-bash src/scripts/onboard-tarpon-api.sh --tenantName sh-payment --tenantWebsite https://sh-payments.com/ --env dev
-```
-
-Sandbox env:
-
-```bash
-bash src/scripts/onboard-tarpon-api.sh --tenantName sh-payment --tenantWebsite https://sh-payments.com/ --env sandbox --auth0DisplayName flagright-sandbox --createAuth0Org true
-```
-
-Prod env (need to specify region):
-
-```bash
-bash src/scripts/onboard-tarpon-api.sh --tenantName sh-payment --tenantWebsite https://sh-payments.com/ --env prod-asia-1 --auth0DisplayName flagright-prod --createAuth0Org true
-```
+1. Go to Console
+2. Open the super admin panel
+3. Switch to the tenant of the target region (e.g 'Flagright (eu-2)')
+4. Click "Create New Tenant"
+5. Fill the form and click the "Create" button
 
 ### Creating a new rule
 
