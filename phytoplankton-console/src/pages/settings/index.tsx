@@ -67,14 +67,12 @@ export default function SettingsPage() {
           name: 'KYC/user status lock',
           content: <KYCUserStatusSettings />,
         },
-        ...(process.env.ENV?.startsWith('prod')
-          ? [
-              {
-                name: 'Production access control',
-                content: <ProductionAccessControl />,
-              },
-            ]
-          : []),
+
+        {
+          name: 'Production access control',
+          content: <ProductionAccessControl />,
+        },
+
         {
           name: 'Billing',
           content: <div>Billing</div>,

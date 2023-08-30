@@ -12,9 +12,9 @@ export const ProductionAccessControl = () => {
   const user = useAuth0User();
   const mutateTenantSettings = useUpdateTenantSettings();
   const handleDisable = () => {
-    if (user.tenantId === 'flagright' || !process.env.ENV?.startsWith('prod')) {
+    if (user.tenantId === 'flagright') {
       message.warn(
-        'Cannot disable production access control for Flagright tenant or in non-production environment',
+        'Cannot disable production access control for Flagright tenant. Please contact support.',
       );
       return;
     }
