@@ -169,7 +169,8 @@ export class AccountsService {
   ): Promise<void> {
     const tenant = await this.getTenantById(tenantId)
     if (tenant == null) {
-      throw new BadRequest(`Unable to find tenant by id: ${tenantId}`)
+      logger.error(`Unable to find tenant by id: ${tenantId}`)
+      return
     }
     const managementClient = new ManagementClient(await this.getAuth0Client())
     const organization = await managementClient.organizations.getByID({
