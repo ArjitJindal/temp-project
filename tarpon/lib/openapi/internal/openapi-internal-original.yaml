@@ -1784,6 +1784,14 @@ paths:
               examples: {}
       operationId: get-dashboard-stats-overview
       description: ''
+      parameters:
+        - schema:
+            type: string
+            enum:
+              - CASE
+              - ALERT
+          in: query
+          name: entity
   /tenants:
     get:
       summary: Tenant - List
@@ -5254,11 +5262,21 @@ components:
           type: number
         averageInvestigationTimeAlerts:
           type: number
+        closingReasonsData:
+          type: array
+          items:
+            type: object
+            properties:
+              reason:
+                type: string
+              value:
+                type: number
       required:
         - totalOpenCases
         - totalOpenAlerts
         - averageInvestigationTimeCases
         - averageInvestigationTimeAlerts
+        - closingReasonsData
     InternalConsumerUser:
       allOf:
         - $ref: ../public/openapi-public-original.yaml#/components/schemas/UserWithRulesResult

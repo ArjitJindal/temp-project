@@ -214,7 +214,7 @@ export const REPORTS_TEMPLATE = (params: AnyParameters): QueryKey => [
   params,
 ];
 
-export const DASHBOARD_OVERVIEW = (): QueryKey => ['dashboard', 'overview'];
+export const DASHBOARD_OVERVIEW = (entity: string): QueryKey => ['dashboard', 'overview', entity];
 
 export const SETTINGS = (): QueryKey => ['settings'];
 

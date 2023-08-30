@@ -154,9 +154,10 @@ export const dashboardStatsHandler = lambdaApi()(
       )
     })
 
-    handlers.registerGetDashboardStatsOverview(async (ctx) => {
+    handlers.registerGetDashboardStatsOverview(async (ctx, request) => {
       const client = await getMongoDbClient()
       const { tenantId } = ctx
+      const { entity } = request
       const dashboardStatsRepository = new DashboardStatsRepository(tenantId, {
         mongoDb: client,
       })
@@ -174,7 +175,10 @@ export const dashboardStatsHandler = lambdaApi()(
       if (shouldRefreshAll(event)) {
         await dashboardStatsRepository.refreshAllStats()
       }
-      return await dashboardStatsRepository.getOverviewStatistics(accountIds)
+      return await dashboardStatsRepository.getOverviewStatistics(
+        accountIds,
+        entity
+      )
     })
 
     return await handlers.handle(event)
