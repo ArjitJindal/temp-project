@@ -132,7 +132,7 @@ export default class SenderLocationChangesFrequencyRule extends TransactionAggre
     )
 
     // Update aggregations
-    await this.rebuildRuleAggregations(
+    await this.saveRebuiltRuleAggregations(
       'origin',
       await this.getTimeAggregatedResult(sendingTransactionsWithIpAddress)
     )

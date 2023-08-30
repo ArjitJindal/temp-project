@@ -110,7 +110,7 @@ export default class SameUserUsingTooManyCardsRule extends TransactionAggregatio
     )
 
     // Update aggregations
-    await this.rebuildRuleAggregations(
+    await this.saveRebuiltRuleAggregations(
       'origin',
       await this.getTimeAggregatedResult(sendingTransactionsWithCard)
     )

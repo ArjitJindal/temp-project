@@ -479,7 +479,7 @@ export class AggregationRepository {
     const result = await paginateQuery(this.dynamoDb, queryInput)
     const hasData = (result?.Items?.length || 0) > 0
     if (!hasData) {
-      const isRebuilt = await this.isUserRuleTimeAggregationsRebuilt(
+      const isRebuilt = await this.userRuleTimeAggregationsHasData(
         userKeyId,
         ruleInstanceId,
         version
@@ -498,7 +498,7 @@ export class AggregationRepository {
       : undefined
   }
 
-  public async isUserRuleTimeAggregationsRebuilt(
+  public async userRuleTimeAggregationsHasData(
     userKeyId: string,
     ruleInstanceId: string,
     version: string
@@ -561,5 +561,40 @@ export class AggregationRepository {
     }
     const result = await this.dynamoDb.send(new GetCommand(getItemInput))
     return Boolean(result.Item)
+  }
+
+  public async updateAvailableUserRuleTimeAggregationVersion(
+    userKeyId: string,
+    ruleInstanceId: string,
+    version: string
+  ): Promise<void> {
+    const putItemInput: PutCommandInput = {
+      TableName: StackConstants.TARPON_DYNAMODB_TABLE_NAME,
+      Item: {
+        ...DynamoDbKeys.RULE_USER_TIME_AGGREGATION_LATEST_AVAILABLE_VERSION(
+          this.tenantId,
+          ruleInstanceId,
+          userKeyId
+        ),
+        version,
+      },
+    }
+    await this.dynamoDb.send(new PutCommand(putItemInput))
+  }
+
+  public async getLatestAvailableUserRuleTimeAggregationVersion(
+    userKeyId: string,
+    ruleInstanceId: string
+  ): Promise<string | undefined> {
+    const getItemInput: GetCommandInput = {
+      TableName: StackConstants.TARPON_DYNAMODB_TABLE_NAME,
+      Key: DynamoDbKeys.RULE_USER_TIME_AGGREGATION_LATEST_AVAILABLE_VERSION(
+        this.tenantId,
+        ruleInstanceId,
+        userKeyId
+      ),
+    }
+    const result = await this.dynamoDb.send(new GetCommand(getItemInput))
+    return result.Item?.version
   }
 }

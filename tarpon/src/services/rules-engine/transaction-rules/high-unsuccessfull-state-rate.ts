@@ -264,7 +264,7 @@ export default class HighUnsuccessfullStateRateRule extends TransactionAggregati
     await Promise.all([
       originAggregationData
         ? Promise.resolve()
-        : this.rebuildRuleAggregations(
+        : this.saveRebuiltRuleAggregations(
             'origin',
             await this.getTimeAggregatedResult(
               senderSendingTransactions,
@@ -275,7 +275,7 @@ export default class HighUnsuccessfullStateRateRule extends TransactionAggregati
           ),
       destinationAggregationData
         ? Promise.resolve()
-        : this.rebuildRuleAggregations(
+        : this.saveRebuiltRuleAggregations(
             'destination',
             await this.getTimeAggregatedResult(
               receiverSendingTransactions,

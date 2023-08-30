@@ -54,8 +54,6 @@ export async function handleTransactionAggregationTask(
     return
   }
 
-  logger.info('Aggregattion started')
-
   const [originUser, destinationUser, rule, senderUserRisk] = await Promise.all(
     [
       transaction.originUserId
@@ -97,35 +95,30 @@ export async function handleTransactionAggregationTask(
     task.tenantId,
     { transaction, receiverUser: destinationUser, senderUser: originUser },
     { parameters, filters: ruleInstance.filters },
-    { ruleInstance },
+    { ruleInstance, rule },
     mode,
     dynamoDb,
     undefined
   )
 
   if (ruleInstanceClass instanceof TransactionAggregationRule) {
-    const hasAggregationData = await ruleInstanceClass.hasAggregationData(
-      task.direction
-    )
-
-    if (!hasAggregationData) {
-      logger.info('Rebuilding aggregation')
+    const isRebuilt = await ruleInstanceClass.isRebuilt(task.direction)
+    if (!isRebuilt) {
+      logger.info('Rebuilding aggregation...')
       await ruleInstanceClass.rebuildUserAggregation(
         task.direction,
         task.isTransactionHistoricalFiltered
       )
-      logger.info('Aggregation rebuilt')
+      logger.info('Rebuilt aggregation')
     } else {
-      logger.info('Updating aggregation')
+      logger.info('Updating aggregation...')
       await ruleInstanceClass.updateAggregation(
         task.direction,
         task.isTransactionHistoricalFiltered
       )
-      logger.info('Aggregation updated')
+      logger.info('Updated aggregation...')
     }
   }
-
-  logger.info('Aggregation finished')
 }
 
 export const transactionAggregationHandler = lambdaConsumer()(

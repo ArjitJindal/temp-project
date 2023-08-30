@@ -415,7 +415,7 @@ export default class TransactionsOutflowInflowVolumeRule extends TransactionAggr
         await this.getRawTransactionsData(direction)
 
       // update aggregation
-      await this.rebuildRuleAggregations(
+      await this.saveRebuiltRuleAggregations(
         direction,
         await this.getTimeAggregatedResult(
           sendingTransactions,
@@ -460,7 +460,7 @@ export default class TransactionsOutflowInflowVolumeRule extends TransactionAggr
       receivingTransactions
     )
 
-    await this.rebuildRuleAggregations(direction, timeAggregatedResult)
+    await this.saveRebuiltRuleAggregations(direction, timeAggregatedResult)
   }
 
   private async computeRawData(

@@ -33,7 +33,10 @@ import {
 } from './transaction-rules'
 import { generateRuleDescription, Vars } from './utils/format-description'
 import { Aggregators } from './aggregator'
-import { TransactionAggregationRule } from './transaction-rules/aggregation-rule'
+import {
+  RULE_IMPLEMENTATIONS_V2,
+  TransactionAggregationRule,
+} from './transaction-rules/aggregation-rule'
 import { RuleHitResult, RuleHitResultItem } from './rule'
 import {
   TransactionFilters,
@@ -97,21 +100,6 @@ export type TransactionAggregationTask = {
   tenantId: string
   isTransactionHistoricalFiltered: boolean
 }
-
-const RULE_IMPELEMENTAIONS_V2: TransactionRuleImplementationName[] = [
-  'transactions-velocity',
-  'transactions-volume',
-  'transactions-average-amount-exceeded',
-  'transactions-average-daily-amount-exceeded',
-  'transactions-average-number-exceeded',
-  'total-transactions-volume-exceeds',
-  'too-many-counterparty-country',
-  'too-many-transactions-to-high-risk-country',
-  'transactions-round-value-velocity',
-  'multiple-counterparty-senders-within-time-period',
-  'multiple-user-senders-within-time-period',
-  'transactions-outflow-inflow-volume',
-]
 
 export function getExecutedAndHitRulesResult(
   ruleResults: ExecutedRulesResult[]
@@ -572,7 +560,7 @@ export class RulesEngineService {
           this.tenantId,
           { transaction, senderUser, receiverUser },
           { parameters, filters: ruleFilters },
-          { ruleInstance },
+          { ruleInstance, rule },
           mode,
           this.dynamoDb,
           mode === 'MONGODB' ? await getMongoDbClient() : undefined
@@ -735,7 +723,7 @@ export class RulesEngineService {
           ruleClassInstance instanceof TransactionAggregationRule
         ) {
           if (
-            RULE_IMPELEMENTAIONS_V2.includes(
+            RULE_IMPLEMENTATIONS_V2.includes(
               rule.ruleImplementationName as TransactionRuleImplementationName
             ) &&
             ruleInstance.id

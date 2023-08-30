@@ -358,7 +358,7 @@ export default class TransactionsVolumeRule extends TransactionAggregationRule<
         receivingTransactions
       )
 
-      await this.rebuildRuleAggregations(direction, timeAggregatedResult)
+      await this.saveRebuiltRuleAggregations(direction, timeAggregatedResult)
 
       return await this.computeRawData(
         direction,
@@ -451,7 +451,7 @@ export default class TransactionsVolumeRule extends TransactionAggregationRule<
       receivingTransactions
     )
 
-    await this.rebuildRuleAggregations(direction, timeAggregatedResult)
+    await this.saveRebuiltRuleAggregations(direction, timeAggregatedResult)
   }
 
   private getTargetCurrency(): CurrencyCode {

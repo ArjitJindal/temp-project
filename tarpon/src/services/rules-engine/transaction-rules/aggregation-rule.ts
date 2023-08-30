@@ -1,10 +1,26 @@
-import { mapValues } from 'lodash'
+import { mapValues, memoize } from 'lodash'
 import { getReceiverKeyId, getSenderKeyId } from '../utils'
 import { TimeWindow } from '../utils/rule-parameter-schemas'
 import { TransactionRule } from './rule'
+import { TransactionRuleImplementationName } from '.'
 import dayjs, { duration } from '@/utils/dayjs'
 import { logger } from '@/core/logger'
 import { hasFeature } from '@/core/utils/context'
+
+export const RULE_IMPLEMENTATIONS_V2: TransactionRuleImplementationName[] = [
+  'transactions-velocity',
+  'transactions-volume',
+  'transactions-average-amount-exceeded',
+  'transactions-average-daily-amount-exceeded',
+  'transactions-average-number-exceeded',
+  'total-transactions-volume-exceeds',
+  'too-many-counterparty-country',
+  'too-many-transactions-to-high-risk-country',
+  'transactions-round-value-velocity',
+  'multiple-counterparty-senders-within-time-period',
+  'multiple-user-senders-within-time-period',
+  'transactions-outflow-inflow-volume',
+]
 
 // NOTE: Increment this version to invalidate the existing aggregation data of all the rules
 const AGGREGATION_VERSION = '2'
@@ -35,26 +51,23 @@ export abstract class TransactionAggregationRule<
     return !hasFeature('RULES_ENGINE_V2') || !this.shouldUseAggregation()
   }
 
-  public async hasAggregationData(
+  public async isRebuilt(
     direction: 'origin' | 'destination'
   ): Promise<boolean> {
-    if (!this.shouldUseAggregation() || !this.aggregationRepository) {
-      return false
-    }
-
     const userKeyId = this.getUserKeyId(direction)
-    if (!userKeyId) {
+    if (
+      !this.shouldUseAggregation() ||
+      !this.aggregationRepository ||
+      !userKeyId
+    ) {
       return false
     }
 
-    const targetAggregations =
-      await this.aggregationRepository.isUserRuleTimeAggregationsRebuilt(
-        userKeyId,
-        this.ruleInstance.id as string,
-        this.getAggregationVersion()
-      )
-
-    return targetAggregations
+    const availableVersion = await this.getLatestAvailableAggregationVersion(
+      userKeyId,
+      this.ruleInstance.id as string
+    )
+    return availableVersion === this.getLatestAggregationVersion()
   }
 
   public abstract rebuildUserAggregation(
@@ -79,15 +92,16 @@ export abstract class TransactionAggregationRule<
     if (!this.shouldUseAggregation() || !this.aggregationRepository) {
       return
     }
+    const version = this.getLatestAggregationVersion()
     const shouldSkipUpdateAggregation =
       await this.aggregationRepository.isTransactionApplied(
         this.ruleInstance.id!,
         direction,
-        this.getAggregationVersion(),
+        version,
         this.transaction.transactionId
       )
     if (shouldSkipUpdateAggregation) {
-      logger.info('Skip updating aggregations...')
+      logger.info('Skip updating aggregations.')
       return
     }
 
@@ -121,41 +135,48 @@ export abstract class TransactionAggregationRule<
       userKeyId,
       this.ruleInstance.id as string,
       { [targetHour]: { ...updatedAggregation, ttl } },
-      this.getAggregationVersion()
+      version
     )
     await this.aggregationRepository.markTransactionApplied(
       this.ruleInstance.id!,
       direction,
-      this.getAggregationVersion(),
+      version,
       this.transaction.transactionId,
       ttl
     )
     logger.info('Updated aggregation')
   }
 
-  protected async rebuildRuleAggregations<A>(
+  protected async saveRebuiltRuleAggregations<A>(
     direction: 'origin' | 'destination',
     data: {
       [key1: string]: A
     }
   ) {
-    if (!this.shouldUseAggregation() || !this.aggregationRepository) {
+    const userKeyId = this.getUserKeyId(direction)
+    if (
+      !this.shouldUseAggregation() ||
+      !this.aggregationRepository ||
+      !userKeyId
+    ) {
       return
     }
 
-    logger.info('Rebuilding aggregations...')
-    const userKeyId = this.getUserKeyId(direction)
-    if (!userKeyId) {
-      return
-    }
+    logger.info('Saving rebuilt aggregations...')
     const ttl = this.getUpdatedTTLAttribute()
+    const version = this.getLatestAggregationVersion()
     await this.aggregationRepository.rebuildUserRuleTimeAggregations(
       userKeyId,
       this.ruleInstance.id as string,
       mapValues(data, (v) => ({ ...v, ttl })),
-      this.getAggregationVersion()
+      version
     )
-    logger.info('Rebuilt aggregations.')
+    await this.aggregationRepository.updateAvailableUserRuleTimeAggregationVersion(
+      userKeyId,
+      this.ruleInstance.id as string,
+      version
+    )
+    logger.info('Saved rebuilt aggregations')
   }
 
   protected async getRuleAggregations<A>(
@@ -163,13 +184,20 @@ export abstract class TransactionAggregationRule<
     afterTimestamp: number,
     beforeTimestamp: number
   ) {
-    if (!this.shouldUseAggregation() || !this.aggregationRepository) {
+    const userKeyId = this.getUserKeyId(direction)
+    if (
+      !this.shouldUseAggregation() ||
+      !this.aggregationRepository ||
+      !userKeyId
+    ) {
       return
     }
 
-    const userKeyId = this.getUserKeyId(direction)
-
-    if (!userKeyId) {
+    const version = await this.getLatestAvailableAggregationVersion(
+      userKeyId,
+      this.ruleInstance.id as string
+    )
+    if (!version) {
       return
     }
 
@@ -179,14 +207,35 @@ export abstract class TransactionAggregationRule<
       afterTimestamp,
       beforeTimestamp,
       AGGREGATION_TIME_FORMAT,
-      this.getAggregationVersion()
+      version
     )
   }
 
-  private getAggregationVersion(): string {
+  private getLatestAggregationVersion(): string {
     const ruleInstanceVersion = this.ruleInstance.updatedAt!
     return `${AGGREGATION_VERSION}_${this.getRuleAggregationVersion()}_${ruleInstanceVersion}`
   }
+
+  getLatestAvailableAggregationVersion = memoize(
+    async (
+      userKeyId: string,
+      ruleInstanceId: string
+    ): Promise<string | undefined> => {
+      if (
+        hasFeature('RULES_ENGINE_V2') &&
+        RULE_IMPLEMENTATIONS_V2.includes(
+          this.rule.ruleImplementationName as TransactionRuleImplementationName
+        )
+      ) {
+        return this.aggregationRepository?.getLatestAvailableUserRuleTimeAggregationVersion(
+          userKeyId,
+          ruleInstanceId
+        )
+      }
+      return this.getLatestAggregationVersion()
+    },
+    (...args) => args.join('_')
+  )
 
   private getUpdatedTTLAttribute(): number {
     const units = this.getMaxTimeWindow().units

@@ -222,7 +222,7 @@ export default class TransactionsExceedPastPeriodRule extends TransactionAggrega
       )
 
     // Update aggregations
-    await this.rebuildRuleAggregations(
+    await this.saveRebuiltRuleAggregations(
       direction,
       await this.getTimeAggregatedResult(allTransactionsPeriod2)
     )

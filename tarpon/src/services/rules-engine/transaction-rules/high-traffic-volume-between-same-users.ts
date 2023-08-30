@@ -210,7 +210,7 @@ export default class HighTrafficVolumeBetweenSameUsers extends TransactionAggreg
       )
 
     // Update aggregations
-    await this.rebuildRuleAggregations(
+    await this.saveRebuiltRuleAggregations(
       'origin',
       await this.getTimeAggregatedResult(transactions)
     )
@@ -280,7 +280,10 @@ export default class HighTrafficVolumeBetweenSameUsers extends TransactionAggreg
         },
         filters: this.filters,
       },
-      { ruleInstance: { ...this.ruleInstance, id: `_${this.ruleInstance}` } },
+      {
+        ruleInstance: { ...this.ruleInstance, id: `_${this.ruleInstance}` },
+        rule: this.rule,
+      },
       this.mode,
       this.dynamoDb,
       this.mongoDb

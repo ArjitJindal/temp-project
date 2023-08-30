@@ -144,7 +144,7 @@ export default abstract class MultipleSendersWithinTimePeriodRuleBase extends Tr
       senderTransactions
     )
 
-    await this.rebuildRuleAggregations('destination', timeAggregatedResult)
+    await this.saveRebuiltRuleAggregations('destination', timeAggregatedResult)
   }
 
   private isCounterParty(): boolean {
@@ -197,8 +197,10 @@ export default abstract class MultipleSendersWithinTimePeriodRuleBase extends Tr
         senderTransactions
       )
 
-      await this.rebuildRuleAggregations('destination', timeAggregatedResult)
-
+      await this.saveRebuiltRuleAggregations(
+        'destination',
+        timeAggregatedResult
+      )
       return this.getUniqueSendersKeys(senderTransactions)
     } else {
       const sendingUserKey = await this.getTransactionSenderUserKey()

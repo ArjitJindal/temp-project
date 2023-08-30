@@ -468,7 +468,7 @@ export default abstract class TransactionsExceededBaseRule<
         receivingTransactions
       )
 
-      await this.rebuildRuleAggregations(direction, aggregationResult)
+      await this.saveRebuiltRuleAggregations(direction, aggregationResult)
 
       return await this.computeRawData(
         direction,
@@ -559,7 +559,7 @@ export default abstract class TransactionsExceededBaseRule<
       receivingTransactions
     )
 
-    await this.rebuildRuleAggregations(direction, timeAggregatedResult)
+    await this.saveRebuiltRuleAggregations(direction, timeAggregatedResult)
   }
 
   private getPeriod1Transactions(

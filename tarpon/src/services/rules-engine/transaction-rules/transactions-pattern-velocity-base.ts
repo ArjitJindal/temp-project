@@ -171,7 +171,7 @@ export default abstract class TransactionsPatternVelocityBaseRule<
 
       // Update aggregations
       if (this.isAggregationSupported() && this.shouldUseRawData()) {
-        await this.rebuildRuleAggregations(
+        await this.saveRebuiltRuleAggregations(
           direction,
           await this.getTimeAggregatedResult(
             sendingTransactions,
@@ -206,7 +206,7 @@ export default abstract class TransactionsPatternVelocityBaseRule<
 
       // Update aggregations
       if (this.isAggregationSupported()) {
-        await this.rebuildRuleAggregations(
+        await this.saveRebuiltRuleAggregations(
           direction,
           await this.getTimeAggregatedResult(
             sendingTransactions,

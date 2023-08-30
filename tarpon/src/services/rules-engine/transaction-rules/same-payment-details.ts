@@ -133,7 +133,7 @@ export default class SamePaymentDetailsRule extends TransactionAggregationRule<
       )
 
     // Update aggregations
-    await this.rebuildRuleAggregations(
+    await this.saveRebuiltRuleAggregations(
       direction,
       await this.getTimeAggregatedResult(
         sendingTransactions,

@@ -173,7 +173,7 @@ export default abstract class TransactionsPatternPercentageBaseRule<
     ]
 
     // Update aggregations
-    await this.rebuildRuleAggregations(
+    await this.saveRebuiltRuleAggregations(
       direction,
       await this.getTimeAggregatedResult(allTransactions, matchedTransactions)
     )

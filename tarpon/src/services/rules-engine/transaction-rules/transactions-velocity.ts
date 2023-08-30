@@ -143,7 +143,7 @@ export default class TransactionsVelocityRule extends TransactionAggregationRule
       receivingTransactions
     )
 
-    await this.rebuildRuleAggregations(direction, timeAggregatedResult)
+    await this.saveRebuiltRuleAggregations(direction, timeAggregatedResult)
   }
 
   private async getData(direction: 'origin' | 'destination'): Promise<number> {
@@ -176,7 +176,7 @@ export default class TransactionsVelocityRule extends TransactionAggregationRule
       const { sendingTransactions, receivingTransactions } =
         await this.getRawTransactionsData(direction)
 
-      await this.rebuildRuleAggregations(
+      await this.saveRebuiltRuleAggregations(
         direction,
         await this.getTimeAggregatedResult(
           sendingTransactions,

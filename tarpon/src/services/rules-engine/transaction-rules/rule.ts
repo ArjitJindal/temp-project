@@ -12,6 +12,7 @@ import { User } from '@/@types/openapi-public/User'
 import { formatCountry } from '@/utils/countries'
 import { CardDetails } from '@/@types/openapi-public/CardDetails'
 import { RuleInstance } from '@/@types/openapi-internal/RuleInstance'
+import { Rule as RuleModel } from '@/@types/openapi-internal/Rule'
 
 export interface PartyVars {
   type?: 'origin' | 'destination'
@@ -49,6 +50,7 @@ export abstract class TransactionRule<
   parameters: P
   filters: T
   ruleInstance: RuleInstance
+  rule: RuleModel
   dynamoDb: DynamoDBDocumentClient
   mongoDb?: MongoClient
   transactionRepository: RulesEngineTransactionRepositoryInterface
@@ -68,6 +70,7 @@ export abstract class TransactionRule<
     },
     context: {
       ruleInstance: RuleInstance
+      rule: RuleModel
     },
     mode: 'DYNAMODB' | 'MONGODB',
     dynamoDb: DynamoDBDocumentClient,
@@ -81,6 +84,7 @@ export abstract class TransactionRule<
     this.parameters = params.parameters
     this.filters = params.filters || {}
     this.ruleInstance = context.ruleInstance
+    this.rule = context.rule
     this.dynamoDb = dynamoDb
     this.mongoDb = mongoDb
     this.mode = mode
