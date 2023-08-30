@@ -75,7 +75,7 @@ export abstract class TransactionAggregationRule<
     isTransactionFiltered: boolean
   ): Promise<void>
 
-  protected getUserKeyId(direction: 'origin' | 'destination') {
+  public getUserKeyId(direction: 'origin' | 'destination') {
     return direction === 'origin'
       ? getSenderKeyId(this.tenantId, this.transaction, {
           disableDirection: true,
@@ -144,7 +144,6 @@ export abstract class TransactionAggregationRule<
       this.transaction.transactionId,
       ttl
     )
-    logger.info('Updated aggregation')
   }
 
   protected async saveRebuiltRuleAggregations<A>(

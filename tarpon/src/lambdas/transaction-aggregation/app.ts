@@ -12,7 +12,13 @@ import { DynamoDbTransactionRepository } from '@/services/rules-engine/repositor
 import { UserRepository } from '@/services/users/repositories/user-repository'
 import { RiskRepository } from '@/services/risk-scoring/repositories/risk-repository'
 import { DEFAULT_RISK_LEVEL } from '@/services/risk-scoring/utils'
-import { hasFeature, updateLogMetadata } from '@/core/utils/context'
+import {
+  getContext,
+  getContextStorage,
+  hasFeature,
+  initializeTenantContext,
+  updateLogMetadata,
+} from '@/core/utils/context'
 import { TransactionAggregationRule } from '@/services/rules-engine/transaction-rules/aggregation-rule'
 import { User } from '@/@types/openapi-internal/User'
 import { Business } from '@/@types/openapi-internal/Business'
@@ -116,7 +122,7 @@ export async function handleTransactionAggregationTask(
         task.direction,
         task.isTransactionHistoricalFiltered
       )
-      logger.info('Updated aggregation...')
+      logger.info('Updated aggregation')
     }
   }
 }
@@ -125,9 +131,11 @@ export const transactionAggregationHandler = lambdaConsumer()(
   async (event: SQSEvent) => {
     await Promise.all(
       event.Records.map(async (record) => {
-        await handleTransactionAggregationTask(
-          JSON.parse(record.body) as TransactionAggregationTask
-        )
+        const task = JSON.parse(record.body) as TransactionAggregationTask
+        await getContextStorage().run(getContext() || {}, async () => {
+          await initializeTenantContext(task.tenantId)
+          await handleTransactionAggregationTask(task)
+        })
       })
     )
   }

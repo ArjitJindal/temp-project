@@ -76,7 +76,7 @@ import { getMongoDbClient } from '@/utils/mongodb-utils'
 import { UserMonitoringResult } from '@/@types/openapi-public/UserMonitoringResult'
 import { UserWithRulesResult } from '@/@types/openapi-internal/UserWithRulesResult'
 import { BusinessWithRulesResult } from '@/@types/openapi-internal/BusinessWithRulesResult'
-import { mergeEntities } from '@/utils/object'
+import { generateChecksum, mergeEntities } from '@/utils/object'
 import { background } from '@/utils/background'
 import { JWTAuthorizerResult } from '@/@types/jwt'
 import { getDynamoDbClientByEvent } from '@/utils/dynamodb'
@@ -95,10 +95,13 @@ const ruleAscendingComparator = (
 export type TransactionAggregationTask = {
   transactionId: string
   ruleInstanceId: string
-  userId?: string
   direction: 'origin' | 'destination'
   tenantId: string
   isTransactionHistoricalFiltered: boolean
+}
+export type TransactionAggregationTaskEntry = {
+  userKeyId: string
+  payload: TransactionAggregationTask
 }
 
 export function getExecutedAndHitRulesResult(
@@ -255,8 +258,8 @@ export class RulesEngineService {
     )
 
     await background(
-      ...transactionAggregationTasks.map((sqsMessage) =>
-        this.sendTransactionAggregationTasks(sqsMessage)
+      ...transactionAggregationTasks.map((task) =>
+        this.sendTransactionAggregationTasks(task)
       )
     )
 
@@ -437,7 +440,7 @@ export class RulesEngineService {
   private async verifyTransactionInternal(transaction: Transaction): Promise<{
     executedRules: ExecutedRulesResult[]
     hitRules: HitRulesDetails[]
-    transactionAggregationTasks: TransactionAggregationTask[]
+    transactionAggregationTasks: TransactionAggregationTaskEntry[]
   }> {
     const getInitialDataSegment = await addNewSubsegment(
       'Rules Engine',
@@ -681,7 +684,7 @@ export class RulesEngineService {
   }): Promise<
     | {
         result?: ExecutedRulesResult | undefined
-        transactionAggregationTasks?: TransactionAggregationTask[]
+        transactionAggregationTasks?: TransactionAggregationTaskEntry[]
       }
     | undefined
   > {
@@ -712,10 +715,10 @@ export class RulesEngineService {
         publishMetric(RULE_EXECUTION_TIME_MS_METRIC, ruleExecutionTimeMs)
         logger.info(`Completed rule`)
         let originTransactionAggregationTask:
-          | TransactionAggregationTask
+          | TransactionAggregationTaskEntry
           | undefined
         let destinationTransactionAggregationTask:
-          | TransactionAggregationTask
+          | TransactionAggregationTaskEntry
           | undefined
 
         if (
@@ -728,23 +731,33 @@ export class RulesEngineService {
             ) &&
             ruleInstance.id
           ) {
-            originTransactionAggregationTask = {
-              userId: options.transaction.originUserId,
-              direction: 'origin',
-              transactionId: options.transaction.transactionId,
-              ruleInstanceId: ruleInstance.id,
-              tenantId: this.tenantId,
-              isTransactionHistoricalFiltered,
-            }
-
-            destinationTransactionAggregationTask = {
-              userId: options.transaction.destinationUserId,
-              direction: 'destination',
-              transactionId: options.transaction.transactionId,
-              ruleInstanceId: ruleInstance.id,
-              tenantId: this.tenantId,
-              isTransactionHistoricalFiltered,
-            }
+            const originUserKeyId = ruleClassInstance.getUserKeyId('origin')
+            originTransactionAggregationTask = originUserKeyId
+              ? {
+                  userKeyId: originUserKeyId,
+                  payload: {
+                    direction: 'origin',
+                    transactionId: options.transaction.transactionId,
+                    ruleInstanceId: ruleInstance.id,
+                    tenantId: this.tenantId,
+                    isTransactionHistoricalFiltered,
+                  },
+                }
+              : undefined
+            const destinationUserKeyId =
+              ruleClassInstance.getUserKeyId('destination')
+            destinationTransactionAggregationTask = destinationUserKeyId
+              ? {
+                  userKeyId: destinationUserKeyId,
+                  payload: {
+                    direction: 'destination',
+                    transactionId: options.transaction.transactionId,
+                    ruleInstanceId: ruleInstance.id,
+                    tenantId: this.tenantId,
+                    isTransactionHistoricalFiltered,
+                  },
+                }
+              : undefined
           }
         } else if (ruleClassInstance instanceof TransactionAggregationRule) {
           await background(
@@ -772,20 +785,24 @@ export class RulesEngineService {
   }
 
   private async sendTransactionAggregationTasks(
-    task: TransactionAggregationTask
+    task: TransactionAggregationTaskEntry
   ) {
     const sqs = new SQSClient({})
 
     if (envIs('local') || envIs('test')) {
-      await handleTransactionAggregationTask(task)
+      await handleTransactionAggregationTask(task.payload)
       return
     }
 
     const command = new SendMessageCommand({
-      MessageBody: JSON.stringify(task),
+      MessageBody: JSON.stringify(task.payload),
       QueueUrl: process.env.TRANSACTION_AGGREGATION_QUEUE_URL!,
-      MessageGroupId: `${this.tenantId}:${task.userId}:${task.direction}:${task.ruleInstanceId}:${task.transactionId}`,
-      MessageDeduplicationId: `${this.tenantId}:${task.userId}:${task.direction}:${task.ruleInstanceId}:${task.transactionId}`,
+      MessageGroupId: generateChecksum(
+        `${task.userKeyId}:${task.payload.ruleInstanceId}`
+      ),
+      MessageDeduplicationId: generateChecksum(
+        `${task.userKeyId}:${task.payload.ruleInstanceId}:${task.payload.transactionId}`
+      ),
     })
 
     updateLogMetadata(task)
