@@ -13,7 +13,7 @@ export interface ExternalState {
 const helper = new ColumnHelper<TableItem>();
 export const columns: TableColumn<TableItem>[] = helper.list([
   helper.simple({
-    title: 'Title',
+    title: 'Level',
     defaultWidth: 100,
     key: 'key',
     type: RISK_LEVEL,
@@ -31,7 +31,7 @@ export const columns: TableColumn<TableItem>[] = helper.list([
   }),
   helper.display({
     id: 'score_edit',
-    title: 'Score',
+    title: 'Range',
     defaultWidth: 300,
     render: (item, context) => {
       const externalState: ExternalState = context.external as ExternalState;
