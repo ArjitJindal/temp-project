@@ -53,6 +53,7 @@ import {
 import { Component } from '@/pages/storybook/components';
 import Widget from '@/components/library/Widget/story';
 import WidgetGrid from '@/components/library/WidgetGrid/story';
+import Narrative from '@/components/Narrative/story';
 
 const config: Config = [
   {
@@ -202,6 +203,10 @@ const config: Config = [
       {
         key: 'WidgetGrid',
         story: WidgetGrid,
+      },
+      {
+        key: 'Narrative',
+        story: Narrative,
       },
     ],
   },

@@ -9,7 +9,7 @@ const AuthenticationRequiredWrapper = withAuthenticationRequired(
 );
 
 const branding = getBranding();
-const providerConfig = {
+export const providerConfig = {
   domain: branding.auth0Domain,
   clientId: branding.auth0ClientId,
   scope: 'openid profile email',
