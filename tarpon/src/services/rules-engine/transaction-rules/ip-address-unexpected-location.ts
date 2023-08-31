@@ -27,8 +27,10 @@ export default class IpAddressUnexpectedLocationRule extends TransactionRule<IpA
   }
 
   public async computeRule() {
+    const ipAddress = this.transaction.originDeviceData?.ipAddress
+
     if (
-      !this.transaction.deviceData?.ipAddress ||
+      !ipAddress ||
       !this.senderUser ||
       !isConsumerUser(this.senderUser) ||
       (this.senderUser as User).userDetails == null
@@ -37,17 +39,19 @@ export default class IpAddressUnexpectedLocationRule extends TransactionRule<IpA
     }
 
     const geoIp = await import('fast-geoip')
-    const ipAddress = this.transaction.deviceData?.ipAddress as string
-    const ipInfo = await geoIp.lookup(ipAddress)
+    const ipInfo = await geoIp.lookup(ipAddress as string)
+
     if (!ipInfo?.country) {
       return
     }
+
     const { transactionAmountThreshold } = this.parameters
     const ipCountry = ipInfo.country
     const consumerUser = this.senderUser as User
 
     const pastTransactionCountries =
       await this.getUserPastTransactionCountries()
+
     const expectedCountries = [
       consumerUser.userDetails!.countryOfResidence,
       consumerUser.userDetails!.countryOfNationality,

@@ -1683,6 +1683,10 @@ components:
             transaction etc.
         deviceData:
           $ref: '#/components/schemas/DeviceData'
+        originDeviceData:
+          $ref: '#/components/schemas/DeviceData'
+        destinationDeviceData:
+          $ref: '#/components/schemas/DeviceData'
         tags:
           type: array
           description: Additional information that can be added via tags

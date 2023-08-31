@@ -7,6 +7,7 @@ import { DynamoDbTransactionRepository } from '../rules-engine/repositories/dyna
 import { DeviceMetric } from '@/@types/openapi-internal/DeviceMetric'
 import { traceable } from '@/core/xray'
 import { TransactionEvent } from '@/@types/openapi-internal/TransactionEvent'
+import { DeviceData } from '@/@types/openapi-public/DeviceData'
 
 @traceable
 export class DeviceDataService {
@@ -54,7 +55,7 @@ export class DeviceDataService {
       this.mongoDb
     )
 
-    const deviceDataMapping = {
+    const deviceDataMapping: DeviceData = {
       batteryLevel: deviceMetric.batteryLevel,
       deviceIdentifier: deviceMetric.deviceFingerprint,
       deviceLatitude: deviceMetric.location?.latitude,
@@ -78,6 +79,9 @@ export class DeviceDataService {
       eventDescription: `Event triggered by device data`,
       updatedTransactionAttributes: {
         deviceData: {
+          ...omitBy(deviceDataMapping, isEmpty),
+        },
+        originDeviceData: {
           ...omitBy(deviceDataMapping, isEmpty),
         },
       },

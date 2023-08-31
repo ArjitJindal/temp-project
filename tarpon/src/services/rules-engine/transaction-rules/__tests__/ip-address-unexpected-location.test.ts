@@ -66,7 +66,7 @@ ruleVariantsTest(false, () => {
         getTestTransaction({
           originUserId: '3',
           timestamp: dayjs('2022-01-01T00:00:00.000Z').valueOf(),
-          deviceData: {
+          originDeviceData: {
             // A Germany ip address
             ipAddress: '18.184.45.226',
           },
@@ -88,7 +88,7 @@ ruleVariantsTest(false, () => {
         getTestTransaction({
           originUserId: '1',
           timestamp: dayjs('2022-01-01T00:00:00.000Z').valueOf(),
-          deviceData: {
+          originDeviceData: {
             // A Germany ip address
             ipAddress: '18.184.45.226',
           },
@@ -103,7 +103,7 @@ ruleVariantsTest(false, () => {
           transactionState: 'CREATED',
           originUserId: '2',
           timestamp: dayjs('2022-01-01T00:00:00.000Z').valueOf(),
-          deviceData: {
+          originDeviceData: {
             // A Germany ip address
             ipAddress: '18.184.45.226',
           },
@@ -112,7 +112,7 @@ ruleVariantsTest(false, () => {
           transactionState: 'SUCCESSFUL',
           originUserId: '2',
           timestamp: dayjs('2022-01-01T00:00:00.000Z').valueOf(),
-          deviceData: {
+          originDeviceData: {
             // A Germany ip address
             ipAddress: '18.184.45.226',
           },
@@ -120,7 +120,7 @@ ruleVariantsTest(false, () => {
         getTestTransaction({
           originUserId: '2',
           timestamp: dayjs('2022-01-01T00:00:10.000Z').valueOf(),
-          deviceData: {
+          originDeviceData: {
             // A Germany ip address
             ipAddress: '18.184.45.226',
           },
@@ -134,7 +134,7 @@ ruleVariantsTest(false, () => {
         getTestTransaction({
           originUserId: '1',
           timestamp: dayjs('2022-01-01T00:00:00.000Z').valueOf(),
-          deviceData: {
+          originDeviceData: {
             // A India ip address
             ipAddress: '49.136.0.0',
           },
@@ -148,7 +148,7 @@ ruleVariantsTest(false, () => {
         getTestTransaction({
           originUserId: '1',
           timestamp: dayjs('2022-01-01T00:00:00.000Z').valueOf(),
-          deviceData: {
+          originDeviceData: {
             // A Tukey ip address
             ipAddress: '109.228.192.0',
           },
@@ -162,7 +162,7 @@ ruleVariantsTest(false, () => {
         getTestTransaction({
           originUserId: '1',
           timestamp: dayjs('2022-01-01T00:00:00.000Z').valueOf(),
-          deviceData: {
+          originDeviceData: {
             ipAddress: 'bad.ip.address',
           },
         }),
@@ -175,7 +175,7 @@ ruleVariantsTest(false, () => {
         getTestTransaction({
           originUserId: '1',
           timestamp: dayjs('2022-01-01T00:00:00.000Z').valueOf(),
-          deviceData: undefined,
+          originDeviceData: undefined,
         }),
       ],
       expectedHits: [false],
@@ -186,7 +186,7 @@ ruleVariantsTest(false, () => {
         getTestTransaction({
           originUserId: '1',
           timestamp: dayjs('2022-01-01T00:00:00.000Z').valueOf(),
-          deviceData: {
+          originDeviceData: {
             // A Germany ip address
             ipAddress: '18.184.45.226',
           },
@@ -204,7 +204,7 @@ ruleVariantsTest(false, () => {
         getTestTransaction({
           originUserId: '1',
           timestamp: dayjs('2022-01-01T00:00:00.000Z').valueOf(),
-          deviceData: {
+          originDeviceData: {
             // A Tukey ip address
             ipAddress: '109.228.192.0',
           },
@@ -222,7 +222,7 @@ ruleVariantsTest(false, () => {
         getTestTransaction({
           originUserId: '1',
           timestamp: dayjs('2022-01-01T00:00:00.000Z').valueOf(),
-          deviceData: {
+          originDeviceData: {
             // A Random ip address
             ipAddress: '24.184.45.226',
           },
@@ -240,7 +240,7 @@ ruleVariantsTest(false, () => {
         getTestTransaction({
           originUserId: '1',
           timestamp: dayjs('2022-01-01T00:00:00.000Z').valueOf(),
-          deviceData: {
+          originDeviceData: {
             // A Tukey ip address
             ipAddress: '109.228.192.0',
           },
@@ -292,7 +292,7 @@ ruleVariantsTest(false, () => {
           getTestTransaction({
             originUserId: '1',
             timestamp: dayjs('2022-01-01T00:00:00.000Z').valueOf(),
-            deviceData: {
+            originDeviceData: {
               // A Random ip address
               ipAddress: '14.228.192.0',
             },
@@ -306,7 +306,7 @@ ruleVariantsTest(false, () => {
           getTestTransaction({
             originUserId: '1',
             timestamp: dayjs('2022-01-01T00:00:00.000Z').valueOf(),
-            deviceData: {
+            originDeviceData: {
               // A Tukey ip address
               ipAddress: '109.228.192.0',
             },

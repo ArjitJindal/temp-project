@@ -4,7 +4,7 @@ import path from 'path'
 import os from 'os'
 import { BadRequest } from 'http-errors'
 import { XMLBuilder } from 'fast-xml-parser'
-import { isEqual, omit, cloneDeep } from 'lodash'
+import { isEqual, omit, cloneDeep, compact } from 'lodash'
 import { InternalReportType, PopulatedSchema, ReportGenerator } from '../..'
 import {
   ContactOffice,
@@ -49,6 +49,7 @@ import { InternalConsumerUser } from '@/@types/openapi-internal/InternalConsumer
 import { getTargetCurrencyAmount } from '@/utils/currency-utils'
 import { PaymentDetails } from '@/@types/tranasction/payment-type'
 import { RuleHitDirection } from '@/@types/openapi-internal/RuleHitDirection'
+import { getAllIpAddresses } from '@/utils/ipAddress'
 
 const FINCEN_BINARY = path.join(
   __dirname,
@@ -533,12 +534,18 @@ export class UsSarReportGenerator implements ReportGenerator {
       transactionIds
     )
     const IPAddressesByUser = deviceData
-      ? deviceData.map((data) => data.ipAddress).filter(Boolean)
+      ? compact(deviceData.map((data) => data.ipAddress))
       : []
 
     const IPAddressesByTransactions = transactions
-      .filter((transaction) => transaction.deviceData?.ipAddress)
-      .map((transaction) => transaction.deviceData?.ipAddress)
+      .filter(
+        (transaction) =>
+          transaction?.originDeviceData?.ipAddress ??
+          transaction.destinationDeviceData?.ipAddress
+      )
+      .map((transaction) => getAllIpAddresses(transaction))
+      .flat()
+
     const uniqueIPAddresses = new Set([
       ...IPAddressesByUser,
       ...IPAddressesByTransactions,

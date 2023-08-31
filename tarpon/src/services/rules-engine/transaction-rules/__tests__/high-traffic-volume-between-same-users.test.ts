@@ -67,7 +67,7 @@ ruleVariantsTest(true, () => {
           originAmountDetails: TEST_TRANSACTION_AMOUNT_100,
           destinationAmountDetails: TEST_TRANSACTION_AMOUNT_100,
           timestamp: dayjs('2000-01-01T01:00:00.000Z').valueOf(),
-          deviceData: {
+          originDeviceData: {
             ipAddress: '1.1.1.1',
           },
         }),
@@ -78,7 +78,7 @@ ruleVariantsTest(true, () => {
           originAmountDetails: TEST_TRANSACTION_AMOUNT_100,
           destinationAmountDetails: TEST_TRANSACTION_AMOUNT_100,
           timestamp: dayjs('2022-01-01T02:00:00.000Z').valueOf(),
-          deviceData: {
+          originDeviceData: {
             ipAddress: '1.1.1.1',
           },
         }),
@@ -89,7 +89,7 @@ ruleVariantsTest(true, () => {
           originAmountDetails: TEST_TRANSACTION_AMOUNT_100,
           destinationAmountDetails: TEST_TRANSACTION_AMOUNT_100,
           timestamp: dayjs('2022-01-01T03:00:00.000Z').valueOf(),
-          deviceData: {
+          originDeviceData: {
             ipAddress: '1.1.1.1',
           },
         }),
@@ -101,7 +101,7 @@ ruleVariantsTest(true, () => {
           originAmountDetails: TEST_TRANSACTION_AMOUNT_100,
           destinationAmountDetails: TEST_TRANSACTION_AMOUNT_100,
           timestamp: dayjs('2022-01-01T04:00:00.000Z').valueOf(),
-          deviceData: {
+          originDeviceData: {
             ipAddress: '1.1.1.1',
           },
         }),
@@ -113,7 +113,7 @@ ruleVariantsTest(true, () => {
           originAmountDetails: TEST_TRANSACTION_AMOUNT_100,
           destinationAmountDetails: TEST_TRANSACTION_AMOUNT_100,
           timestamp: dayjs('2022-01-01T05:00:00.000Z').valueOf(),
-          deviceData: {
+          originDeviceData: {
             ipAddress: '1.1.1.1',
           },
         }),
@@ -125,7 +125,7 @@ ruleVariantsTest(true, () => {
           originAmountDetails: TEST_TRANSACTION_AMOUNT_100,
           destinationAmountDetails: TEST_TRANSACTION_AMOUNT_100,
           timestamp: dayjs('2022-01-01T06:00:00.000Z').valueOf(),
-          deviceData: {
+          originDeviceData: {
             ipAddress: '1.1.1.1',
           },
         }),
@@ -173,7 +173,7 @@ ruleVariantsTest(true, () => {
             originAmountDetails: TEST_TRANSACTION_AMOUNT_100,
             destinationAmountDetails: TEST_TRANSACTION_AMOUNT_100,
             timestamp: dayjs('2000-01-01T01:00:00.000Z').valueOf(),
-            deviceData: {
+            originDeviceData: {
               ipAddress: '1.1.1.1',
             },
           }),
@@ -184,7 +184,7 @@ ruleVariantsTest(true, () => {
             originAmountDetails: TEST_TRANSACTION_AMOUNT_100,
             destinationAmountDetails: TEST_TRANSACTION_AMOUNT_100,
             timestamp: dayjs('2022-01-01T02:00:00.000Z').valueOf(),
-            deviceData: {
+            originDeviceData: {
               ipAddress: '1.1.1.1',
             },
           }),
@@ -195,7 +195,7 @@ ruleVariantsTest(true, () => {
             originAmountDetails: TEST_TRANSACTION_AMOUNT_100,
             destinationAmountDetails: TEST_TRANSACTION_AMOUNT_100,
             timestamp: dayjs('2022-01-01T03:00:00.000Z').valueOf(),
-            deviceData: {
+            originDeviceData: {
               ipAddress: '1.1.1.1',
             },
           }),
@@ -207,7 +207,7 @@ ruleVariantsTest(true, () => {
             originAmountDetails: TEST_TRANSACTION_AMOUNT_100,
             destinationAmountDetails: TEST_TRANSACTION_AMOUNT_100,
             timestamp: dayjs('2022-01-01T04:00:00.000Z').valueOf(),
-            deviceData: {
+            originDeviceData: {
               ipAddress: '1.1.1.1',
             },
           }),
@@ -219,7 +219,7 @@ ruleVariantsTest(true, () => {
             originAmountDetails: TEST_TRANSACTION_AMOUNT_100,
             destinationAmountDetails: TEST_TRANSACTION_AMOUNT_100,
             timestamp: dayjs('2022-01-01T05:00:00.000Z').valueOf(),
-            deviceData: {
+            originDeviceData: {
               ipAddress: '1.1.1.1',
             },
           }),
@@ -231,7 +231,7 @@ ruleVariantsTest(true, () => {
             originAmountDetails: TEST_TRANSACTION_AMOUNT_100,
             destinationAmountDetails: TEST_TRANSACTION_AMOUNT_100,
             timestamp: dayjs('2022-01-01T06:00:00.000Z').valueOf(),
-            deviceData: {
+            originDeviceData: {
               ipAddress: '1.1.1.1',
             },
           }),

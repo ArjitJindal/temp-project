@@ -8,6 +8,7 @@ import {
   QueryCommand,
   QueryCommandInput,
 } from '@aws-sdk/lib-dynamodb'
+import { isEmpty } from 'lodash'
 import { DynamoDbKeys } from '@/core/dynamodb/dynamodb-keys'
 import { TransactionEvent } from '@/@types/openapi-public/TransactionEvent'
 import { TRANSACTION_EVENTS_COLLECTION } from '@/utils/mongodb-definitions'
@@ -36,9 +37,18 @@ export class TransactionEventRepository {
 
   public async saveTransactionEvent(
     transactionEvent: TransactionEvent,
-    rulesResult: Undefined<TransactionMonitoringResult>
+    rulesResult: Undefined<TransactionMonitoringResult> = {}
   ): Promise<string> {
     const eventId = transactionEvent.eventId || uuidv4()
+
+    if (
+      transactionEvent.updatedTransactionAttributes &&
+      !isEmpty(transactionEvent.updatedTransactionAttributes.deviceData)
+    ) {
+      transactionEvent.updatedTransactionAttributes.originDeviceData =
+        transactionEvent.updatedTransactionAttributes.deviceData
+      transactionEvent.updatedTransactionAttributes.deviceData = undefined
+    }
 
     const primaryKey = DynamoDbKeys.TRANSACTION_EVENT(
       this.tenantId,

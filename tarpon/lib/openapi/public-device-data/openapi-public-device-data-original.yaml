@@ -116,6 +116,7 @@ components:
           type: boolean
         ipAddress:
           type: string
+          description: Will be mapped as origin IP.
         location:
           $ref: '#/components/schemas/Location'
         totalNumberOfContacts:

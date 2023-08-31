@@ -1,5 +1,4 @@
 import { JSONSchemaType } from 'ajv'
-
 import { sumBy } from 'lodash'
 import { AuxiliaryIndexTransaction } from '../repositories/transaction-repository-interface'
 import { TransactionHistoricalFilters } from '../filters'
@@ -45,12 +44,14 @@ export default class SenderLocationChangesFrequencyRule extends TransactionAggre
   }
 
   public async computeRule() {
-    const ipAddress = this.transaction.deviceData?.ipAddress
+    const ipAddress = this.transaction.originDeviceData?.ipAddress
+
     if (!this.transaction.originUserId || !ipAddress) {
       return
     }
 
     const { uniqueIpAddresses, transactionsCount } = await this.getData()
+
     uniqueIpAddresses.add(ipAddress)
 
     const geoIp = await import('fast-geoip')
@@ -92,7 +93,7 @@ export default class SenderLocationChangesFrequencyRule extends TransactionAggre
           checkDirection: 'sending',
           filters: this.filters,
         },
-        ['timestamp', 'deviceData']
+        ['timestamp', 'originDeviceData']
       )
 
     return sendingTransactions
@@ -132,7 +133,7 @@ export default class SenderLocationChangesFrequencyRule extends TransactionAggre
       const sendingTransactions = await this.getRawTransactionsData()
 
       const sendingTransactionsWithIpAddress = sendingTransactions.filter(
-        (transaction) => transaction.deviceData?.ipAddress
+        (transaction) => transaction.originDeviceData?.ipAddress
       )
 
       // Update aggregations
@@ -159,7 +160,7 @@ export default class SenderLocationChangesFrequencyRule extends TransactionAggre
     direction: 'origin' | 'destination',
     isTransactionFiltered: boolean
   ): Promise<void> {
-    const ipAddress = this.transaction.deviceData?.ipAddress
+    const ipAddress = this.transaction.originDeviceData?.ipAddress
     if (
       !isTransactionFiltered ||
       direction === 'destination' ||
@@ -185,7 +186,7 @@ export default class SenderLocationChangesFrequencyRule extends TransactionAggre
   ): Set<string> {
     return new Set(
       transactions
-        .map((transaction) => transaction.deviceData?.ipAddress)
+        .map((transaction) => transaction?.originDeviceData?.ipAddress)
         .filter(Boolean)
     ) as Set<string>
   }
@@ -207,7 +208,8 @@ export default class SenderLocationChangesFrequencyRule extends TransactionAggre
     targetAggregationData: AggregationData | undefined,
     isTransactionFiltered: boolean
   ): Promise<AggregationData | null> {
-    const ipAddress = this.transaction.deviceData?.ipAddress
+    const ipAddress = this.transaction.originDeviceData?.ipAddress
+
     if (
       !isTransactionFiltered ||
       direction === 'destination' ||

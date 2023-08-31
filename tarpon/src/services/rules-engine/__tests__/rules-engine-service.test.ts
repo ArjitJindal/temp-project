@@ -264,7 +264,7 @@ describe('Verify Transaction Event', () => {
       const rulesEngine = new RulesEngineService(TEST_TENANT_ID, dynamoDb)
       const transaction = getTestTransaction({
         transactionId: 'dummy',
-        deviceData: {
+        originDeviceData: {
           deviceIdentifier: 'deviceIdentifier',
         },
       })
@@ -275,7 +275,7 @@ describe('Verify Transaction Event', () => {
           await transactionRepository.getTransactionById(
             transaction.transactionId as string
           )
-        )?.deviceData
+        )?.originDeviceData
       ).toEqual({
         deviceIdentifier: 'deviceIdentifier',
       })
@@ -285,7 +285,7 @@ describe('Verify Transaction Event', () => {
         transactionId: transaction.transactionId,
         transactionState: 'SUCCESSFUL',
         updatedTransactionAttributes: {
-          deviceData: {
+          originDeviceData: {
             ipAddress: 'ipAddress',
           },
         },
@@ -300,7 +300,7 @@ describe('Verify Transaction Event', () => {
         executedRules: result1.executedRules,
         hitRules: result1.hitRules,
       })
-      expect(latestTransaction?.deviceData).toEqual({
+      expect(latestTransaction?.originDeviceData).toEqual({
         deviceIdentifier: 'deviceIdentifier',
         ipAddress: 'ipAddress',
       })

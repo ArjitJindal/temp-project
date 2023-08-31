@@ -77,6 +77,11 @@ export class DynamoDbTransactionRepository
     transaction.transactionId = getNewTransactionID(transaction)
     transaction.timestamp = transaction.timestamp || Date.now()
 
+    if (!isEmpty(transaction.deviceData)) {
+      transaction.originDeviceData = transaction.deviceData
+      transaction.deviceData = undefined
+    }
+
     const primaryKey = DynamoDbKeys.TRANSACTION(
       this.tenantId,
       transaction.transactionId
@@ -143,6 +148,8 @@ export class DynamoDbTransactionRepository
     const nonUserReceiverKeysOfTransactionType =
       transaction.type &&
       getNonUserReceiverKeys(this.tenantId, transaction, transaction.type)
+    const originIpAddress = transaction?.originDeviceData?.ipAddress
+    const destinationIpAddress = transaction?.destinationDeviceData?.ipAddress
 
     // IMPORTANT: Added/Deleted keys here should be reflected in nuke-tenant-data.ts as well
     return [
@@ -186,10 +193,19 @@ export class DynamoDbTransactionRepository
         senderKeyId: senderKeysOfTransactionType?.PartitionKeyID,
         receiverKeyId: receiverKeysOfTransactionType?.PartitionKeyID,
       },
-      transaction?.deviceData?.ipAddress && {
-        ...DynamoDbKeys.IP_ADDRESS_TRANSACTION(
+      originIpAddress && {
+        ...DynamoDbKeys.ORIGIN_IP_ADDRESS_TRANSACTION(
           this.tenantId,
-          transaction.deviceData.ipAddress,
+          originIpAddress,
+          transaction.timestamp
+        ),
+        senderKeyId: senderKeys?.PartitionKeyID,
+        receiverKeyId: receiverKeys?.PartitionKeyID,
+      },
+      destinationIpAddress && {
+        ...DynamoDbKeys.DESTINATION_IP_ADDRESS_TRANSACTION(
+          this.tenantId,
+          destinationIpAddress,
           transaction.timestamp
         ),
         senderKeyId: senderKeys?.PartitionKeyID,
@@ -710,13 +726,25 @@ export class DynamoDbTransactionRepository
     timeRange: TimeRange,
     attributesToFetch: Array<keyof AuxiliaryIndexTransaction>
   ): Promise<Array<AuxiliaryIndexTransaction>> {
-    return this.getDynamoDBTransactions(
-      DynamoDbKeys.IP_ADDRESS_TRANSACTION(this.tenantId, ipAddress)
+    const originTransactions = await this.getDynamoDBTransactions(
+      DynamoDbKeys.ORIGIN_IP_ADDRESS_TRANSACTION(this.tenantId, ipAddress)
         .PartitionKeyID,
       timeRange,
       {},
       attributesToFetch
     )
+
+    const destinationTransactions = await this.getDynamoDBTransactions(
+      DynamoDbKeys.DESTINATION_IP_ADDRESS_TRANSACTION(this.tenantId, ipAddress)
+        .PartitionKeyID,
+      timeRange,
+      {},
+      attributesToFetch
+    )
+
+    return sortTransactionsDescendingTimestamp([
+      ...new Set([...originTransactions, ...destinationTransactions]),
+    ])
   }
 
   private getTransactionsQuery(

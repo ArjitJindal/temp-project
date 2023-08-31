@@ -40,21 +40,21 @@ ruleVariantsTest(false, () => {
         getTestTransaction({
           originUserId: '1',
           timestamp: dayjs('2022-01-01T00:00:00.000Z').valueOf(),
-          deviceData: {
+          originDeviceData: {
             ipAddress: '1.1.1.1',
           },
         }),
         getTestTransaction({
           originUserId: '1',
           timestamp: dayjs('2022-01-01T01:00:00.000Z').valueOf(),
-          deviceData: {
+          originDeviceData: {
             ipAddress: '1.1.1.1',
           },
         }),
         getTestTransaction({
           originUserId: '2',
           timestamp: dayjs('2022-01-01T06:00:00.000Z').valueOf(),
-          deviceData: {
+          originDeviceData: {
             ipAddress: '1.1.1.1',
           },
         }),
@@ -73,35 +73,35 @@ ruleVariantsTest(false, () => {
         getTestTransaction({
           originUserId: '1',
           timestamp: dayjs('2022-01-01T00:00:00.000Z').valueOf(),
-          deviceData: {
+          originDeviceData: {
             ipAddress: '1.1.1.1',
           },
         }),
         getTestTransaction({
           originUserId: '1',
           timestamp: dayjs('2022-01-01T01:00:00.000Z').valueOf(),
-          deviceData: {
+          originDeviceData: {
             ipAddress: '1.1.1.1',
           },
         }),
         getTestTransaction({
           originUserId: '2',
           timestamp: dayjs('2022-01-01T06:00:00.000Z').valueOf(),
-          deviceData: {
+          originDeviceData: {
             ipAddress: '1.1.1.1',
           },
         }),
         getTestTransaction({
           originUserId: '2',
           timestamp: dayjs('2022-01-01T07:00:00.000Z').valueOf(),
-          deviceData: {
+          originDeviceData: {
             ipAddress: '1.1.1.1',
           },
         }),
         getTestTransaction({
           originUserId: '3',
           timestamp: dayjs('2022-01-07T07:00:00.000Z').valueOf(),
-          deviceData: {
+          originDeviceData: {
             ipAddress: '1.1.1.1',
           },
         }),
@@ -114,14 +114,14 @@ ruleVariantsTest(false, () => {
         getTestTransaction({
           originUserId: '1',
           timestamp: dayjs('2022-01-01T00:00:00.000Z').valueOf(),
-          deviceData: {
+          originDeviceData: {
             ipAddress: '2.1.1.1',
           },
         }),
         getTestTransaction({
           originUserId: '2',
           timestamp: dayjs('2022-01-07T00:00:00.000Z').valueOf(),
-          deviceData: {
+          originDeviceData: {
             ipAddress: '2.1.1.1',
           },
         }),
@@ -134,14 +134,14 @@ ruleVariantsTest(false, () => {
         getTestTransaction({
           originUserId: '1',
           timestamp: dayjs('2022-01-01T00:00:00.000Z').valueOf(),
-          deviceData: {
+          originDeviceData: {
             ipAddress: '3.1.1.1',
           },
         }),
         getTestTransaction({
           originUserId: '1',
           timestamp: dayjs('2022-01-01T06:00:00.000Z').valueOf(),
-          deviceData: {
+          originDeviceData: {
             ipAddress: '3.1.1.1',
           },
         }),
@@ -154,14 +154,14 @@ ruleVariantsTest(false, () => {
         getTestTransaction({
           originUserId: '1',
           timestamp: dayjs('2022-01-01T00:00:00.000Z').valueOf(),
-          deviceData: {
+          originDeviceData: {
             ipAddress: '4.1.1.1',
           },
         }),
         getTestTransaction({
           originUserId: '2',
           timestamp: dayjs('2022-01-01T06:00:00.000Z').valueOf(),
-          deviceData: {
+          originDeviceData: {
             ipAddress: '4.2.1.1',
           },
         }),
