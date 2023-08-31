@@ -7,6 +7,7 @@ export const reports: Array<Report & { _id: string }> = [
     name: 'C-17',
     description: 'SAR report for C-17',
     caseId: 'C-17',
+    caseUserId: '1',
     schema: {
       reportSchema: {
         type: 'object',
@@ -5263,6 +5264,7 @@ export const reports: Array<Report & { _id: string }> = [
     _id: 'RP-2',
     id: 'RP-2',
     name: 'C-17',
+    caseUserId: '1',
     description: 'SAR report for C-17',
     caseId: 'C-17',
     schema: {
@@ -24049,5 +24051,6 @@ export const reports: Array<Report & { _id: string }> = [
         },
       ],
     },
+    caseUserId: '1',
   },
 ]

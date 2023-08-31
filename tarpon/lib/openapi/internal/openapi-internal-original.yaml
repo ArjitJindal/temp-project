@@ -5975,6 +5975,8 @@ components:
             - userSegment
             - originPaymentDetails.bankName
             - destinationPaymentDetails.bankName
+            - originUserSarFiled
+            - destinationUserSarFiled
         isActive:
           type: boolean
         isDerived:
@@ -8091,6 +8093,7 @@ components:
         - parameters
         - comments
         - revisions
+        - caseUserId
       properties:
         id:
           type: string
@@ -8110,6 +8113,8 @@ components:
         schema:
           $ref: '#/components/schemas/ReportSchema'
           readOnly: true
+        caseUserId:
+          type: string
         createdById:
           type: string
         createdByName:

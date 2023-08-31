@@ -9,6 +9,7 @@ import { ARS_IPADDRESSCOUNTRY_RISK_HANDLERS } from './ipAddressCountry'
 import { ARS_CARD_ISSUED_COUNTRY_RISK_HANDLERS } from './card-issued-country'
 import { KRS_USER_TYPE_RISK_HANDLERS } from './user-type'
 import { ARS_BANK_NAME_RISK_HANDLERS } from './bank-name'
+import { ARS_SAR_FILED_RISK_HANDLERS } from './sar-filed'
 import { User } from '@/@types/openapi-public/User'
 import { Business } from '@/@types/openapi-internal/Business'
 import { ParameterAttributeRiskValuesParameterEnum } from '@/@types/openapi-internal/ParameterAttributeRiskValues'
@@ -40,7 +41,8 @@ export type TransactionRiskFactorValueHandler<T> = {
       originUser: Business | User | undefined
       destinationUser: Business | User | undefined
     },
-    parameter: ParameterAttributeRiskValuesParameterEnum
+    parameter: ParameterAttributeRiskValuesParameterEnum,
+    tenantId: string
   ) => Promise<Array<T | undefined>>
 }
 
@@ -63,6 +65,7 @@ const TRANSACTION_RISK_FACTOR_HANDLERS: Array<
   ...ARS_IPADDRESSCOUNTRY_RISK_HANDLERS,
   ...ARS_CARD_ISSUED_COUNTRY_RISK_HANDLERS,
   ...ARS_BANK_NAME_RISK_HANDLERS,
+  ...ARS_SAR_FILED_RISK_HANDLERS,
 ]
 
 const TRANSACTION_RISK_FACTOR_HANDLERS_MAP = keyBy(

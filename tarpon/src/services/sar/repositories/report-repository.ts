@@ -38,6 +38,22 @@ export class ReportRepository {
     return `RP-${reportCount?.count}`
   }
 
+  public async reportsFiledForUser(
+    userId: string,
+    project: Document = {}
+  ): Promise<{ total: number; items: Partial<Report>[] }> {
+    const db = this.mongoDb.db()
+    const collection = db.collection<Report>(REPORT_COLLECTION(this.tenantId))
+    const data = await collection
+      .find({ caseUserId: userId })
+      .project(project)
+      .toArray()
+    return {
+      total: data.length,
+      items: data,
+    }
+  }
+
   public async saveOrUpdateReport(reportPayload: Report): Promise<Report> {
     const db = this.mongoDb.db()
     const collection = db.collection<Report>(REPORT_COLLECTION(this.tenantId))

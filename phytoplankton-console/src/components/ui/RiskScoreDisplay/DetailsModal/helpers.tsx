@@ -67,6 +67,7 @@ export const PARAMETER_RENDERERS: { [key in DataType]: ParameterRenderer<any> } 
     return <TimestampDisplay timestamp={value} />;
   },
   BOOLEAN: DEFAULT_RENDERER,
+  _3DS_STATUS: DEFAULT_RENDERER,
 };
 
 export function findParameter(

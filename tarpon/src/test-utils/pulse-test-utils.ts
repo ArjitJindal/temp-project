@@ -125,7 +125,8 @@ export function createArsRiskFactorTestCases(
   parameter: ParameterAttributeRiskValuesParameterEnum,
   riskClassificationValues: RiskClassificationScore[],
   parameterRiskLevels: ParameterAttributeRiskValues,
-  testCases: Array<ArsTestCase>
+  testCases: Array<ArsTestCase>,
+  beforeAllHook?: (tenantId: string) => Promise<void>
 ) {
   describe(parameter, () => {
     const TEST_TENANT_ID = getTestTenantId()
@@ -146,6 +147,9 @@ export function createArsRiskFactorTestCases(
         riskClassificationValues
       )
       await riskRepository.createOrUpdateParameterRiskItem(parameterRiskLevels)
+      if (beforeAllHook) {
+        await beforeAllHook(TEST_TENANT_ID)
+      }
     })
 
     describe.each<ArsTestCase>(testCases)(

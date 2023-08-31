@@ -3,7 +3,7 @@ import {
   APIGatewayProxyWithLambdaAuthorizerEvent,
 } from 'aws-lambda'
 import { Credentials } from '@aws-sdk/client-sts'
-import { MongoClient } from 'mongodb'
+import { Document, MongoClient } from 'mongodb'
 import { NotFound } from 'http-errors'
 import { Account } from '../accounts'
 import { ReportRepository } from './repositories/report-repository'
@@ -115,6 +115,8 @@ export class ReportService {
       },
       comments: [],
       revisions: [],
+      caseUserId:
+        c.caseUsers?.origin?.userId ?? c.caseUsers?.destination?.userId ?? '',
     }
     return this.reportRepository.saveOrUpdateReport(report)
   }
@@ -141,6 +143,16 @@ export class ReportService {
       createdAt: Date.now(),
     })
     return await this.reportRepository.saveOrUpdateReport(report)
+  }
+
+  public async reportsFiledForUser(
+    userId: string,
+    project: Document = {}
+  ): Promise<{
+    total: number
+    items: Partial<Report>[]
+  }> {
+    return await this.reportRepository.reportsFiledForUser(userId, project)
   }
 
   async draftReport(report: Report): Promise<Report> {

@@ -51,8 +51,12 @@ function matchParameterValue(
   parameterValue: RiskParameterValue
 ): boolean {
   switch (parameterValue.content.kind) {
-    case 'LITERAL':
+    case 'LITERAL': {
+      if (valueToMatch === 'undefined') {
+        return parameterValue.content.content === undefined
+      }
       return parameterValue.content.content === valueToMatch
+    }
     case 'MULTIPLE':
       return parameterValue.content.values.some(
         (x) => x.content === valueToMatch
@@ -410,7 +414,8 @@ export class RiskScoringService {
           derivedValues = await handler(
             entity as Transaction,
             await this.getUsersFromTransaction(entity as Transaction),
-            parameterAttributeDetails.parameter
+            parameterAttributeDetails.parameter,
+            this.tenantId
           )
         }
         matchedRiskLevels = derivedValues.map((derivedValue) => ({

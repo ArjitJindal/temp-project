@@ -47,6 +47,7 @@ import { _3DS_DONE_OPTIONS } from '@/utils/3dsOptions';
 import { convertToDays } from '@/utils/dayjs';
 import NumberInput from '@/components/library/NumberInput';
 import { getOr } from '@/utils/asyncResource';
+import { BOOLEAN_OPTIONS } from '@/utils/booleanOptions';
 
 type InputRendererProps<T extends RiskValueType> = {
   disabled?: boolean;
@@ -96,6 +97,7 @@ export const DATA_TYPE_TO_VALUE_TYPE: { [key in DataType]: RiskValueType } = {
   CONSUMER_USER_SEGMENT: 'MULTIPLE',
   USER_REGISTRATION_STATUS: 'MULTIPLE',
   BANK_NAMES: 'MULTIPLE',
+  _3DS_STATUS: 'LITERAL',
 };
 
 export const DEFAULT_RISK_LEVEL = 'VERY_HIGH';
@@ -489,6 +491,28 @@ export const TRANSACTION_RISK_PARAMETERS: RiskLevelTable = [
     parameterType: 'VARIABLE',
     defaultRiskLevel: DEFAULT_RISK_LEVEL,
   },
+  {
+    parameter: 'originUserSarFiled',
+    title: 'Origin user SAR filed',
+    description: 'Risk value based on whether an SAR was filed for the origin user',
+    entity: 'TRANSACTION',
+    dataType: 'BOOLEAN',
+    isDerived: true,
+    parameterType: 'VARIABLE',
+    isNullableAllowed: true,
+    defaultRiskLevel: DEFAULT_RISK_LEVEL,
+  },
+  {
+    parameter: 'destinationUserSarFiled',
+    title: 'Destination user SAR filed',
+    description: 'Risk value based on whether an SAR was filed for the destination user',
+    entity: 'TRANSACTION',
+    dataType: '_3DS_STATUS',
+    isDerived: true,
+    parameterType: 'VARIABLE',
+    isNullableAllowed: true,
+    defaultRiskLevel: DEFAULT_RISK_LEVEL,
+  },
 ];
 
 export const ALL_RISK_PARAMETERS = [
@@ -805,8 +829,11 @@ export const INPUT_RENDERERS: { [key in DataType]: InputRenderer<any> } = {
       </div>
     );
   }) as InputRenderer<'TIME_RANGE'>,
-  BOOLEAN: ((props) => {
+  _3DS_STATUS: ((props) => {
     return <SingleSelect options={_3DS_DONE_OPTIONS} {...props} />;
+  }) as InputRenderer<'LITERAL'>,
+  BOOLEAN: ((props) => {
+    return <SingleSelect options={BOOLEAN_OPTIONS} {...props} />;
   }) as InputRenderer<'LITERAL'>,
 };
 
@@ -1008,10 +1035,13 @@ export const VALUE_RENDERERS: { [key in DataType]: ValueRenderer<any> } = {
       </div>
     );
   }) as ValueRenderer<'TIME_RANGE'>,
-  BOOLEAN: (({ value }) => {
+  _3DS_STATUS: (({ value }) => {
     return (
       <span>{value?.content === true ? 'Yes' : value?.content === false ? 'No' : 'Unknown'}</span>
     );
+  }) as ValueRenderer<'LITERAL'>,
+  BOOLEAN: (({ value }) => {
+    return <span>{value?.content === true ? 'Yes' : 'No'}</span>;
   }) as ValueRenderer<'LITERAL'>,
 };
 
