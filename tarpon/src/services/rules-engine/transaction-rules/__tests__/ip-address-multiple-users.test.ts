@@ -22,7 +22,11 @@ ruleVariantsTest(false, () => {
       ruleImplementationName: 'ip-address-multiple-users',
       defaultParameters: {
         uniqueUsersCountThreshold: 1,
-        timeWindowInDays: 1,
+        timeWindow: {
+          units: 1,
+          granularity: 'day',
+          rollingBasis: true,
+        },
       } as IpAddressMultipleUsersRuleParameters,
       defaultAction: 'FLAG',
     },

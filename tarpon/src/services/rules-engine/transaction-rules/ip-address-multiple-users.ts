@@ -1,13 +1,14 @@
 import { JSONSchemaType } from 'ajv'
 import { getSenderKeys } from '../utils'
 import { RuleHitResult } from '../rule'
+import { TIME_WINDOW_SCHEMA, TimeWindow } from '../utils/rule-parameter-schemas'
+import { getTimestampRange } from '../utils/time-utils'
 import { MissingRuleParameter } from './errors'
 import { TransactionRule } from './rule'
-import dayjs from '@/utils/dayjs'
 
 export type IpAddressMultipleUsersRuleParameters = {
   uniqueUsersCountThreshold: number
-  timeWindowInDays: number
+  timeWindow: TimeWindow
 }
 
 export default class IpAddressMultipleUsersRule extends TransactionRule<IpAddressMultipleUsersRuleParameters> {
@@ -19,18 +20,15 @@ export default class IpAddressMultipleUsersRule extends TransactionRule<IpAddres
           type: 'integer',
           title: 'Users count threshold',
         },
-        timeWindowInDays: { type: 'integer', title: 'Time Window (Days)' },
+        timeWindow: TIME_WINDOW_SCHEMA(),
       },
-      required: ['uniqueUsersCountThreshold', 'timeWindowInDays'],
+      required: ['uniqueUsersCountThreshold', 'timeWindow'],
     }
   }
 
   public async computeRule() {
-    const { uniqueUsersCountThreshold, timeWindowInDays } = this.parameters
-    if (
-      uniqueUsersCountThreshold === undefined ||
-      timeWindowInDays === undefined
-    ) {
+    const { uniqueUsersCountThreshold, timeWindow } = this.parameters
+    if (uniqueUsersCountThreshold === undefined || timeWindow === undefined) {
       throw new MissingRuleParameter()
     }
 
@@ -42,15 +40,16 @@ export default class IpAddressMultipleUsersRule extends TransactionRule<IpAddres
     if (!senderKeyId || !this.transaction.deviceData?.ipAddress) {
       return
     }
-
+    const { afterTimestamp, beforeTimestamp } = getTimestampRange(
+      this.transaction.timestamp!,
+      timeWindow
+    )
     const transactionsFromIpAddress =
       await this.transactionRepository.getIpAddressTransactions(
         this.transaction.deviceData.ipAddress,
         {
-          afterTimestamp: dayjs(this.transaction.timestamp)
-            .subtract(timeWindowInDays, 'day')
-            .valueOf(),
-          beforeTimestamp: this.transaction.timestamp!,
+          afterTimestamp: afterTimestamp,
+          beforeTimestamp: beforeTimestamp,
         },
         ['senderKeyId', 'deviceData']
       )

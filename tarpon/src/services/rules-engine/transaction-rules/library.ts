@@ -512,7 +512,10 @@ const _RULES_LIBRARY: Array<
   () => {
     const defaultParameters: IpAddressMultipleUsersRuleParameters = {
       uniqueUsersCountThreshold: 10,
-      timeWindowInDays: 1,
+      timeWindow: {
+        units: 1,
+        granularity: 'day',
+      },
     }
     return {
       id: 'R-52',

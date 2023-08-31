@@ -61,7 +61,8 @@ describe('', () => {
           rule.id === 'R-128' ||
           rule.id === 'R-32' ||
           rule.id === 'R-16' ||
-          rule.id === 'R-169'
+          rule.id === 'R-169' ||
+          rule.id === 'R-52'
         ) {
           // Breaking change for screeningType as a required field in mentioned rules
           // TODO: remove this in another PR later
