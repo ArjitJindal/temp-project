@@ -43,11 +43,11 @@ const columns = columnHelper.list([
       return (
         <Select
           value={value[record.valueType]}
-          onChange={(value) => {
-            setValue({
+          onChange={(selectedValue) => {
+            setValue((value) => ({
               ...value,
-              [record.valueType]: value,
-            });
+              [record.valueType]: selectedValue,
+            }));
           }}
           options={record.options}
           defaultValue={DEFAULT_VALUES[record.valueType]}
