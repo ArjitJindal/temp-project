@@ -12,6 +12,7 @@ import {
 } from '@/test-utils/rule-test-utils'
 import { dynamoDbSetupHook } from '@/test-utils/dynamodb-test-utils'
 import { TransactionAmountDetails } from '@/@types/openapi-public/TransactionAmountDetails'
+import { withFeatureHook } from '@/test-utils/feature-test-utils'
 
 const TEST_TRANSACTION_AMOUNT_100: TransactionAmountDetails = {
   transactionCurrency: 'EUR',
@@ -19,6 +20,7 @@ const TEST_TRANSACTION_AMOUNT_100: TransactionAmountDetails = {
 }
 
 dynamoDbSetupHook()
+withFeatureHook(['RULES_ENGINE_V2'])
 
 function getDefaultParams(): HighUnsuccessfullStateRateParameters {
   return {

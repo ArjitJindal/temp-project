@@ -15,6 +15,7 @@ import {
   PaymentDetails,
   PaymentMethod,
 } from '@/@types/tranasction/payment-type'
+import { withFeatureHook } from '@/test-utils/feature-test-utils'
 
 const PAYMENT_METHOD_1: PaymentMethod = 'CARD'
 
@@ -27,6 +28,7 @@ const PAYMENT_DETAILS_1 = {
 } as PaymentDetails
 
 dynamoDbSetupHook()
+withFeatureHook(['RULES_ENGINE_V2'])
 
 function getDefaultParams(): SamePaymentDetailsParameters {
   return {

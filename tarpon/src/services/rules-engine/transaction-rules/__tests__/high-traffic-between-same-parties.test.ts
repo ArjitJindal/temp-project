@@ -12,8 +12,10 @@ import {
 } from '@/test-utils/rule-test-utils'
 import { dynamoDbSetupHook } from '@/test-utils/dynamodb-test-utils'
 import { CardDetails } from '@/@types/openapi-public/CardDetails'
+import { withFeatureHook } from '@/test-utils/feature-test-utils'
 
 dynamoDbSetupHook()
+withFeatureHook(['RULES_ENGINE_V2'])
 
 const CARD_DETAILS_1: CardDetails = {
   method: 'CARD',

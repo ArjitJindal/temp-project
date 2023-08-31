@@ -1,5 +1,4 @@
 import { JSONSchemaType } from 'ajv'
-
 import { sumBy } from 'lodash'
 import {
   CHECK_RECEIVER_SCHEMA,
@@ -51,10 +50,6 @@ export default class SamePaymentDetailsRule extends TransactionAggregationRule<
       },
       required: ['timeWindow', 'threshold'],
     }
-  }
-
-  public async rebuildUserAggregation(): Promise<void> {
-    return
   }
 
   public async computeRule() {
@@ -114,6 +109,50 @@ export default class SamePaymentDetailsRule extends TransactionAggregationRule<
     }
 
     // Fallback
+    if (this.shouldUseRawData()) {
+      const { sendingTransactions, receivingTransactions } =
+        await this.getRawTransactionsData(direction)
+
+      await this.saveRebuiltRuleAggregations(
+        direction,
+        await this.getTimeAggregatedResult(
+          sendingTransactions,
+          receivingTransactions
+        )
+      )
+      return sendingTransactions.length + receivingTransactions.length
+    } else {
+      return 0
+    }
+  }
+
+  public async rebuildUserAggregation(
+    direction: 'origin' | 'destination',
+    isTransactionFiltered: boolean
+  ): Promise<void> {
+    if (!isTransactionFiltered) {
+      return
+    }
+    const { sendingTransactions, receivingTransactions } =
+      await this.getRawTransactionsData(direction)
+
+    if (direction === 'origin') {
+      sendingTransactions.push(this.transaction)
+    } else {
+      receivingTransactions.push(this.transaction)
+    }
+
+    await this.saveRebuiltRuleAggregations(
+      direction,
+      await this.getTimeAggregatedResult(
+        sendingTransactions,
+        receivingTransactions
+      )
+    )
+  }
+
+  private async getRawTransactionsData(direction: 'origin' | 'destination') {
+    const { timeWindow, checkReceiver, checkSender } = this.parameters
     const { sendingTransactions, receivingTransactions } =
       await getTransactionUserPastTransactionsByDirection(
         {
@@ -132,15 +171,10 @@ export default class SamePaymentDetailsRule extends TransactionAggregationRule<
         ['timestamp']
       )
 
-    // Update aggregations
-    await this.saveRebuiltRuleAggregations(
-      direction,
-      await this.getTimeAggregatedResult(
-        sendingTransactions,
-        receivingTransactions
-      )
-    )
-    return sendingTransactions.length + receivingTransactions.length
+    return {
+      sendingTransactions,
+      receivingTransactions,
+    }
   }
 
   private async getTimeAggregatedResult(

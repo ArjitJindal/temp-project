@@ -76,10 +76,6 @@ export default class TransactionsExceedPastPeriodRule extends TransactionAggrega
     }
   }
 
-  public async rebuildUserAggregation(): Promise<void> {
-    return
-  }
-
   override async getUpdatedTargetAggregation(
     _direction: 'origin' | 'destination',
     aggregation: AggregationData | undefined,
@@ -143,8 +139,8 @@ export default class TransactionsExceedPastPeriodRule extends TransactionAggrega
     transactionsCountP2: number
     totalTransactionCount: number
   }> {
-    const { checkSender, checkReceiver, timeWindow1, timeWindow2 } =
-      this.parameters
+    const { timeWindow1, timeWindow2 } = this.parameters
+
     const {
       afterTimestamp: afterTimestamp1,
       beforeTimestamp: beforeTimestamp1,
@@ -170,6 +166,7 @@ export default class TransactionsExceedPastPeriodRule extends TransactionAggrega
       ),
       this.getUserTransactionCount(direction),
     ])
+
     if (userAggregationDataPeriod1 && userAggregationDataPeriod2) {
       const transactionsCountP1 =
         sumBy(userAggregationDataPeriod1, (data) => data.count || 0) + 1
@@ -185,8 +182,44 @@ export default class TransactionsExceedPastPeriodRule extends TransactionAggrega
     }
 
     // Fallback
+    if (this.shouldUseRawData()) {
+      const {
+        transactionsPeriod1: allTransactionsPeriod1,
+        transactionsPeriod2: allTransactionsPeriod2,
+      } = await this.getRawTransactionsData(direction)
+
+      // Update aggregations
+      await this.saveRebuiltRuleAggregations(
+        direction,
+        await this.getTimeAggregatedResult(allTransactionsPeriod2)
+      )
+      const transactionsCountP1 = allTransactionsPeriod1.length + 1
+      const transactionsCountP2 = allTransactionsPeriod2.length + 1
+      return {
+        transactionsCountP1: transactionsCountP1,
+        transactionsCountP2: transactionsCountP2 - transactionsCountP1,
+        totalTransactionCount: userTransactionCount,
+      }
+    } else {
+      return {
+        transactionsCountP1: 1,
+        transactionsCountP2: 0,
+        totalTransactionCount: userTransactionCount,
+      }
+    }
+  }
+
+  private async getRawTransactionsData(
+    direction: 'origin' | 'destination'
+  ): Promise<{
+    transactionsPeriod1: AuxiliaryIndexTransaction[]
+    transactionsPeriod2: AuxiliaryIndexTransaction[]
+  }> {
+    const { checkSender, checkReceiver, timeWindow1, timeWindow2 } =
+      this.parameters
 
     const checkDirection = direction === 'origin' ? checkSender : checkReceiver
+
     const [transactionsPeriod1, transactionsPeriod2] = await Promise.all([
       getTransactionUserPastTransactionsByDirection(
         this.transaction,
@@ -212,27 +245,33 @@ export default class TransactionsExceedPastPeriodRule extends TransactionAggrega
       ),
     ])
 
-    const allTransactionsPeriod1 =
-      transactionsPeriod1.sendingTransactions.concat(
+    return {
+      transactionsPeriod1: transactionsPeriod1.sendingTransactions.concat(
         transactionsPeriod1.receivingTransactions
-      )
-    const allTransactionsPeriod2 =
-      transactionsPeriod2.sendingTransactions.concat(
+      ),
+      transactionsPeriod2: transactionsPeriod2.sendingTransactions.concat(
         transactionsPeriod2.receivingTransactions
-      )
+      ),
+    }
+  }
+
+  public async rebuildUserAggregation(
+    direction: 'origin' | 'destination',
+    isTransactionFiltered: boolean
+  ): Promise<void> {
+    if (!isTransactionFiltered) {
+      return
+    }
+
+    const { transactionsPeriod2 } = await this.getRawTransactionsData(direction)
+
+    transactionsPeriod2.push(this.transaction)
 
     // Update aggregations
     await this.saveRebuiltRuleAggregations(
       direction,
-      await this.getTimeAggregatedResult(allTransactionsPeriod2)
+      await this.getTimeAggregatedResult(transactionsPeriod2)
     )
-    const transactionsCountP1 = allTransactionsPeriod1.length + 1
-    const transactionsCountP2 = allTransactionsPeriod2.length + 1
-    return {
-      transactionsCountP1: transactionsCountP1,
-      transactionsCountP2: transactionsCountP2 - transactionsCountP1,
-      totalTransactionCount: userTransactionCount,
-    }
   }
 
   private async getUserTransactionCount(

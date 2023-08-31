@@ -69,10 +69,6 @@ export default class HighUnsuccessfullStateRateRule extends TransactionAggregati
     }
   }
 
-  public async rebuildUserAggregation(): Promise<void> {
-    return
-  }
-
   public async computeRule() {
     if (
       !this.parameters.transactionStates.includes(
@@ -145,6 +141,55 @@ export default class HighUnsuccessfullStateRateRule extends TransactionAggregati
     }
 
     return hitResult
+  }
+
+  private async getRawTransactionsData(
+    checkSender: 'sending' | 'all' | 'none' = this.parameters.checkSender,
+    checkReceiver: 'receiving' | 'all' | 'none' = this.parameters.checkReceiver
+  ) {
+    const {
+      senderSendingTransactions,
+      senderReceivingTransactions,
+      receiverSendingTransactions,
+      receiverReceivingTransactions,
+    } = await getTransactionUserPastTransactions(
+      this.transaction,
+      this.transactionRepository,
+      {
+        timeWindow: this.parameters.timeWindow,
+        checkSender,
+        checkReceiver,
+        filters: {},
+      },
+      ['timestamp']
+    )
+    const {
+      senderSendingTransactions: senderSendingTransactionsFiltered,
+      senderReceivingTransactions: senderReceivingTransactionsFiltered,
+      receiverSendingTransactions: receiverSendingTransactionsFiltered,
+      receiverReceivingTransactions: receiverReceivingTransactionsFiltered,
+    } = await getTransactionUserPastTransactions(
+      this.transaction,
+      this.transactionRepository,
+      {
+        timeWindow: this.parameters.timeWindow,
+        checkSender,
+        checkReceiver,
+        filters: this.filters,
+      },
+      ['timestamp']
+    )
+
+    return {
+      senderSendingTransactions,
+      senderReceivingTransactions,
+      receiverSendingTransactions,
+      receiverReceivingTransactions,
+      senderSendingTransactionsFiltered,
+      senderReceivingTransactionsFiltered,
+      receiverSendingTransactionsFiltered,
+      receiverReceivingTransactionsFiltered,
+    }
   }
 
   private async getTransactionCounts() {
@@ -227,77 +272,121 @@ export default class HighUnsuccessfullStateRateRule extends TransactionAggregati
       }
     }
 
+    if (this.shouldUseRawData()) {
+      const {
+        senderSendingTransactions,
+        senderReceivingTransactions,
+        receiverSendingTransactions,
+        receiverReceivingTransactions,
+        senderSendingTransactionsFiltered,
+        senderReceivingTransactionsFiltered,
+        receiverSendingTransactionsFiltered,
+        receiverReceivingTransactionsFiltered,
+      } = await this.getRawTransactionsData(checkSender, checkReceiver)
+
+      // Update aggregations
+      await Promise.all([
+        originAggregationData
+          ? Promise.resolve()
+          : this.saveRebuiltRuleAggregations(
+              'origin',
+              await this.getTimeAggregatedResult(
+                senderSendingTransactions,
+                senderReceivingTransactions,
+                senderSendingTransactionsFiltered,
+                senderReceivingTransactionsFiltered
+              )
+            ),
+        destinationAggregationData
+          ? Promise.resolve()
+          : this.saveRebuiltRuleAggregations(
+              'destination',
+              await this.getTimeAggregatedResult(
+                receiverSendingTransactions,
+                receiverReceivingTransactions,
+                receiverSendingTransactionsFiltered,
+                receiverReceivingTransactionsFiltered
+              )
+            ),
+      ])
+
+      return {
+        senderSendingFullCount: senderSendingTransactions.length,
+        senderReceivingFullCount: senderReceivingTransactions.length,
+        senderSendingFilteredCount: senderSendingTransactionsFiltered.length,
+        senderReceivingFilteredCount:
+          senderReceivingTransactionsFiltered.length,
+        receiverSendingFullCount: receiverSendingTransactions.length,
+        receiverReceivingFullCount: receiverReceivingTransactions.length,
+        receiverSendingFilteredCount:
+          receiverSendingTransactionsFiltered.length,
+        receiverReceivingFilteredCount:
+          receiverReceivingTransactionsFiltered.length,
+        ...senderTransactionCounts,
+        ...receiverTransactionCounts,
+      }
+    } else {
+      return {
+        senderSendingFullCount: 0,
+        senderReceivingFullCount: 0,
+        senderSendingFilteredCount: 0,
+        senderReceivingFilteredCount: 0,
+        receiverSendingFullCount: 0,
+        receiverReceivingFullCount: 0,
+        receiverSendingFilteredCount: 0,
+        receiverReceivingFilteredCount: 0,
+        ...senderTransactionCounts,
+        ...receiverTransactionCounts,
+      }
+    }
+  }
+
+  public async rebuildUserAggregation(
+    direction: 'origin' | 'destination',
+    isTransactionFiltered: boolean
+  ) {
+    if (!isTransactionFiltered) {
+      return
+    }
+
     const {
       senderSendingTransactions,
       senderReceivingTransactions,
       receiverSendingTransactions,
       receiverReceivingTransactions,
-    } = await getTransactionUserPastTransactions(
-      this.transaction,
-      this.transactionRepository,
-      {
-        timeWindow: this.parameters.timeWindow,
-        checkSender,
-        checkReceiver,
-        filters: {},
-      },
-      ['timestamp']
-    )
-    const {
-      senderSendingTransactions: senderSendingTransactionsFiltered,
-      senderReceivingTransactions: senderReceivingTransactionsFiltered,
-      receiverSendingTransactions: receiverSendingTransactionsFiltered,
-      receiverReceivingTransactions: receiverReceivingTransactionsFiltered,
-    } = await getTransactionUserPastTransactions(
-      this.transaction,
-      this.transactionRepository,
-      {
-        timeWindow: this.parameters.timeWindow,
-        checkSender,
-        checkReceiver,
-        filters: this.filters,
-      },
-      ['timestamp']
-    )
+      senderSendingTransactionsFiltered,
+      senderReceivingTransactionsFiltered,
+      receiverSendingTransactionsFiltered,
+      receiverReceivingTransactionsFiltered,
+    } = await this.getRawTransactionsData()
 
-    // Update aggregations
-    await Promise.all([
-      originAggregationData
-        ? Promise.resolve()
-        : this.saveRebuiltRuleAggregations(
-            'origin',
-            await this.getTimeAggregatedResult(
-              senderSendingTransactions,
-              senderReceivingTransactions,
-              senderSendingTransactionsFiltered,
-              senderReceivingTransactionsFiltered
-            )
-          ),
-      destinationAggregationData
-        ? Promise.resolve()
-        : this.saveRebuiltRuleAggregations(
-            'destination',
-            await this.getTimeAggregatedResult(
-              receiverSendingTransactions,
-              receiverReceivingTransactions,
-              receiverSendingTransactionsFiltered,
-              receiverReceivingTransactionsFiltered
-            )
-          ),
-    ])
+    if (direction === 'origin') {
+      senderSendingTransactions.push(this.transaction)
+    }
+    if (direction === 'destination') {
+      receiverReceivingTransactions.push(this.transaction)
+    }
 
-    return {
-      senderSendingFullCount: senderSendingTransactions.length,
-      senderReceivingFullCount: senderReceivingTransactions.length,
-      senderSendingFilteredCount: senderSendingTransactionsFiltered.length,
-      senderReceivingFilteredCount: senderReceivingTransactionsFiltered.length,
-      receiverSendingFullCount: receiverSendingTransactions.length,
-      receiverReceivingFullCount: receiverReceivingTransactions.length,
-      receiverSendingFilteredCount: receiverSendingTransactionsFiltered.length,
-      receiverReceivingFilteredCount:
-        receiverReceivingTransactionsFiltered.length,
-      ...senderTransactionCounts,
-      ...receiverTransactionCounts,
+    if (direction === 'origin') {
+      await this.saveRebuiltRuleAggregations(
+        direction,
+        await this.getTimeAggregatedResult(
+          senderSendingTransactions,
+          senderReceivingTransactions,
+          senderSendingTransactionsFiltered,
+          senderReceivingTransactionsFiltered
+        )
+      )
+    } else {
+      await this.saveRebuiltRuleAggregations(
+        direction,
+        await this.getTimeAggregatedResult(
+          receiverSendingTransactions,
+          receiverReceivingTransactions,
+          receiverSendingTransactionsFiltered,
+          receiverReceivingTransactionsFiltered
+        )
+      )
     }
   }
 

@@ -60,10 +60,6 @@ export default abstract class TransactionsPatternPercentageBaseRule<
     }
   }
 
-  public async rebuildUserAggregation(): Promise<void> {
-    return
-  }
-
   public async computeRule() {
     return await Promise.all([
       this.computeRuleUser('origin'),
@@ -120,15 +116,34 @@ export default abstract class TransactionsPatternPercentageBaseRule<
     }
   }
 
+  public async rebuildUserAggregation(
+    direction: 'origin' | 'destination',
+    isTransactionFiltered: boolean
+  ): Promise<void> {
+    if (!isTransactionFiltered) {
+      return
+    }
+
+    const { allTransactions, matchedTransactions } =
+      await this.getRawTransactionsData(direction)
+
+    if (this.matchPattern(this.transaction, direction)) {
+      matchedTransactions.push(this.transaction)
+    }
+
+    allTransactions.push(this.transaction)
+
+    await this.saveRebuiltRuleAggregations(
+      direction,
+      await this.getTimeAggregatedResult(allTransactions, matchedTransactions)
+    )
+  }
+
   private async getData(direction: 'origin' | 'destination'): Promise<{
     allTransactionsCount: number
     matchTransactionsCount: number
   }> {
-    const {
-      timeWindow,
-      checkSender = 'all',
-      checkReceiver = 'all',
-    } = this.parameters
+    const { timeWindow } = this.parameters
     const { afterTimestamp, beforeTimestamp } = getTimestampRange(
       this.transaction.timestamp!,
       timeWindow
@@ -149,6 +164,39 @@ export default abstract class TransactionsPatternPercentageBaseRule<
       }
     }
     // Fallback
+    if (this.shouldUseRawData()) {
+      const { allTransactions, matchedTransactions } =
+        await this.getRawTransactionsData(direction)
+
+      await this.saveRebuiltRuleAggregations(
+        direction,
+        await this.getTimeAggregatedResult(allTransactions, matchedTransactions)
+      )
+
+      return {
+        allTransactionsCount: allTransactions.length + 1,
+        matchTransactionsCount: matchedTransactions.length + 1,
+      }
+    } else {
+      return {
+        allTransactionsCount: 1,
+        matchTransactionsCount: 1,
+      }
+    }
+  }
+
+  private async getRawTransactionsData(
+    direction: 'origin' | 'destination'
+  ): Promise<{
+    allTransactions: AuxiliaryIndexTransaction[]
+    matchedTransactions: AuxiliaryIndexTransaction[]
+  }> {
+    const {
+      timeWindow,
+      checkSender = 'all',
+      checkReceiver = 'all',
+    } = this.parameters
+
     const { sendingTransactions, receivingTransactions } =
       await getTransactionUserPastTransactionsByDirection(
         this.transaction,
@@ -172,16 +220,7 @@ export default abstract class TransactionsPatternPercentageBaseRule<
       ),
     ]
 
-    // Update aggregations
-    await this.saveRebuiltRuleAggregations(
-      direction,
-      await this.getTimeAggregatedResult(allTransactions, matchedTransactions)
-    )
-
-    return {
-      allTransactionsCount: allTransactions.length + 1,
-      matchTransactionsCount: matchedTransactions.length + 1,
-    }
+    return { allTransactions, matchedTransactions }
   }
 
   private async getTimeAggregatedResult(

@@ -11,10 +11,12 @@ import {
   ruleVariantsTest,
 } from '@/test-utils/rule-test-utils'
 import { dynamoDbSetupHook } from '@/test-utils/dynamodb-test-utils'
+import { withFeatureHook } from '@/test-utils/feature-test-utils'
 
 const TEST_TENANT_ID = getTestTenantId()
 
 dynamoDbSetupHook()
+withFeatureHook(['RULES_ENGINE_V2'])
 
 setUpRulesHooks(TEST_TENANT_ID, [
   {

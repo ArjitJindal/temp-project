@@ -71,10 +71,6 @@ export default class HighTrafficVolumeBetweenSameUsers extends TransactionAggreg
     }
   }
 
-  public async rebuildUserAggregation(): Promise<void> {
-    return
-  }
-
   public async computeRule() {
     const { transactionVolumeThreshold, transactionsLimit } = this.parameters
     const receiverKeyId = getReceiverKeyId(this.tenantId, this.transaction, {
@@ -154,6 +150,37 @@ export default class HighTrafficVolumeBetweenSameUsers extends TransactionAggreg
     return hitResult
   }
 
+  private async getRawTransactionsData(): Promise<AuxiliaryIndexTransaction[]> {
+    const transactions =
+      await this.transactionRepository.getGenericUserSendingTransactions(
+        this.transaction.originUserId,
+        this.transaction.originPaymentDetails,
+        {
+          beforeTimestamp: this.transaction.timestamp,
+          afterTimestamp: subtractTime(
+            dayjs(this.transaction.timestamp),
+            this.parameters.timeWindow
+          ),
+        },
+        {
+          transactionStates: this.filters.transactionStatesHistorical,
+          originPaymentMethods: this.filters.paymentMethodsHistorical,
+          transactionTypes: this.filters.transactionTypesHistorical,
+          transactionAmountRange: this.filters.transactionAmountRangeHistorical,
+          originCountries: this.filters.transactionCountriesHistorical,
+        },
+        [
+          'timestamp',
+          'originAmountDetails',
+          'destinationUserId',
+          'destinationPaymentDetails',
+        ],
+        this.parameters.originMatchPaymentMethodDetails
+      )
+
+    return transactions
+  }
+
   private async getData(): Promise<TransactionAmountDetails> {
     const receiverKeyId = getReceiverKeyId(this.tenantId, this.transaction, {
       matchPaymentDetails: this.parameters.destinationMatchPaymentMethodDetails,
@@ -182,40 +209,28 @@ export default class HighTrafficVolumeBetweenSameUsers extends TransactionAggreg
     }
 
     // Fallback
-    const transactions =
-      await this.transactionRepository.getGenericUserSendingTransactions(
-        this.transaction.originUserId,
-        this.transaction.originPaymentDetails,
-        {
-          beforeTimestamp: this.transaction.timestamp,
-          afterTimestamp: subtractTime(
-            dayjs(this.transaction.timestamp),
-            this.parameters.timeWindow
-          ),
-        },
-        {
-          transactionStates: this.filters.transactionStatesHistorical,
-          originPaymentMethods: this.filters.paymentMethodsHistorical,
-          transactionTypes: this.filters.transactionTypesHistorical,
-          transactionAmountRange: this.filters.transactionAmountRangeHistorical,
-          originCountries: this.filters.transactionCountriesHistorical,
-        },
-        [
-          'timestamp',
-          'originAmountDetails',
-          'destinationUserId',
-          'destinationPaymentDetails',
-        ],
-        this.parameters.originMatchPaymentMethodDetails
+    if (this.shouldUseRawData()) {
+      const transactions = await this.getRawTransactionsData()
+
+      await this.saveRebuiltRuleAggregations(
+        'origin',
+        await this.getTimeAggregatedResult(transactions)
       )
 
-    // Update aggregations
-    await this.saveRebuiltRuleAggregations(
-      'origin',
-      await this.getTimeAggregatedResult(transactions)
-    )
+      return await this.computeRuleData(transactions)
+    } else {
+      return await this.computeRuleData()
+    }
+  }
 
-    return getTransactionsTotalAmount(
+  private async computeRuleData(
+    transactions: AuxiliaryIndexTransaction[] = []
+  ): Promise<TransactionAmountDetails> {
+    const receiverKeyId = getReceiverKeyId(this.tenantId, this.transaction, {
+      matchPaymentDetails: this.parameters.destinationMatchPaymentMethodDetails,
+    }) as string
+
+    return await getTransactionsTotalAmount(
       transactions
         .filter(
           (transaction) =>
@@ -228,6 +243,36 @@ export default class HighTrafficVolumeBetweenSameUsers extends TransactionAggreg
         .map((transaction) => transaction.originAmountDetails),
       this.getTargetCurrency()
     )
+  }
+
+  public async rebuildUserAggregation(
+    direction: 'origin' | 'destination',
+    isTransactionFiltered: boolean
+  ): Promise<void> {
+    if (!isTransactionFiltered || direction === 'destination') {
+      return
+    }
+
+    const transactions = await this.getRawTransactionsData()
+
+    transactions.push({
+      ...this.transaction,
+      receiverKeyId: getReceiverKeyId(this.tenantId, this.transaction, {
+        matchPaymentDetails:
+          this.parameters.destinationMatchPaymentMethodDetails,
+      }),
+    })
+
+    const data = await this.getTimeAggregatedResult(transactions)
+
+    await this.saveRebuiltRuleAggregations(direction, data)
+
+    if (Number.isFinite(this.parameters.transactionsLimit)) {
+      await this.getDependencyRule().rebuildUserAggregation(
+        direction,
+        isTransactionFiltered
+      )
+    }
   }
 
   private async getTimeAggregatedResult(

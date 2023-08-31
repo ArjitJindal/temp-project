@@ -41,10 +41,6 @@ export default class SameUserUsingTooManyCardsRule extends TransactionAggregatio
     }
   }
 
-  public async rebuildUserAggregation(): Promise<void> {
-    return
-  }
-
   public async computeRule() {
     const cardFingerprint = (
       this.transaction?.originPaymentDetails as CardDetails
@@ -69,6 +65,45 @@ export default class SameUserUsingTooManyCardsRule extends TransactionAggregatio
     return hitResult
   }
 
+  private async getRawTransactionsData(): Promise<AuxiliaryIndexTransaction[]> {
+    const { sendingTransactions } =
+      await getTransactionUserPastTransactionsByDirection(
+        this.transaction,
+        'origin',
+        this.transactionRepository,
+        {
+          timeWindow: {
+            units: this.parameters.timeWindowInDays,
+            granularity: 'day',
+            rollingBasis: true,
+          },
+          checkDirection: 'sending',
+          filters: this.filters,
+        },
+        ['timestamp', 'originPaymentDetails']
+      )
+
+    return sendingTransactions
+  }
+
+  public async rebuildUserAggregation(
+    direction: 'origin' | 'destination',
+    isTransactionFiltered: boolean
+  ): Promise<void> {
+    if (direction !== 'origin' || !isTransactionFiltered) {
+      return
+    }
+
+    const sendingTransactions = await this.getRawTransactionsData()
+
+    sendingTransactions.push(this.transaction)
+
+    await this.saveRebuiltRuleAggregations(
+      'origin',
+      await this.getTimeAggregatedResult(sendingTransactions)
+    )
+  }
+
   private async getData(): Promise<Set<string>> {
     const { afterTimestamp, beforeTimestamp } = getTimestampRange(
       this.transaction.timestamp!,
@@ -88,34 +123,23 @@ export default class SameUserUsingTooManyCardsRule extends TransactionAggregatio
     }
 
     // Fallback
-    const { sendingTransactions } =
-      await getTransactionUserPastTransactionsByDirection(
-        this.transaction,
-        'origin',
-        this.transactionRepository,
-        {
-          timeWindow: {
-            units: this.parameters.timeWindowInDays,
-            granularity: 'day',
-            rollingBasis: true,
-          },
-          checkDirection: 'sending',
-          filters: this.filters,
-        },
-        ['timestamp', 'originPaymentDetails']
+    if (this.shouldUseRawData()) {
+      const sendingTransactions = await this.getRawTransactionsData()
+      const sendingTransactionsWithCard = sendingTransactions.filter(
+        (transaction) =>
+          (transaction?.originPaymentDetails as CardDetails)?.cardFingerprint
       )
-    const sendingTransactionsWithCard = sendingTransactions.filter(
-      (transaction) =>
-        (transaction?.originPaymentDetails as CardDetails)?.cardFingerprint
-    )
 
-    // Update aggregations
-    await this.saveRebuiltRuleAggregations(
-      'origin',
-      await this.getTimeAggregatedResult(sendingTransactionsWithCard)
-    )
+      // Update aggregations
+      await this.saveRebuiltRuleAggregations(
+        'origin',
+        await this.getTimeAggregatedResult(sendingTransactionsWithCard)
+      )
 
-    return this.getUniqueCards(sendingTransactionsWithCard)
+      return this.getUniqueCards(sendingTransactionsWithCard)
+    } else {
+      return new Set()
+    }
   }
 
   private getUniqueCards(

@@ -26,17 +26,10 @@ import { DynamoDbTransactionRepository } from './repositories/dynamodb-transacti
 import { TransactionEventRepository } from './repositories/transaction-event-repository'
 import { RuleRepository } from './repositories/rule-repository'
 import { RuleInstanceRepository } from './repositories/rule-instance-repository'
-import {
-  TRANSACTION_RULES,
-  TransactionRuleBase,
-  TransactionRuleImplementationName,
-} from './transaction-rules'
+import { TRANSACTION_RULES, TransactionRuleBase } from './transaction-rules'
 import { generateRuleDescription, Vars } from './utils/format-description'
 import { Aggregators } from './aggregator'
-import {
-  RULE_IMPLEMENTATIONS_V2,
-  TransactionAggregationRule,
-} from './transaction-rules/aggregation-rule'
+import { TransactionAggregationRule } from './transaction-rules/aggregation-rule'
 import { RuleHitResult, RuleHitResultItem } from './rule'
 import {
   TransactionFilters,
@@ -725,12 +718,7 @@ export class RulesEngineService {
           hasFeature('RULES_ENGINE_V2') &&
           ruleClassInstance instanceof TransactionAggregationRule
         ) {
-          if (
-            RULE_IMPLEMENTATIONS_V2.includes(
-              rule.ruleImplementationName as TransactionRuleImplementationName
-            ) &&
-            ruleInstance.id
-          ) {
+          if (ruleInstance.id) {
             const originUserKeyId = ruleClassInstance.getUserKeyId('origin')
             originTransactionAggregationTask = originUserKeyId
               ? {

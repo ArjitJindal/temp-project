@@ -44,10 +44,6 @@ export default class SenderLocationChangesFrequencyRule extends TransactionAggre
     }
   }
 
-  public async rebuildUserAggregation(): Promise<void> {
-    return
-  }
-
   public async computeRule() {
     const ipAddress = this.transaction.deviceData?.ipAddress
     if (!this.transaction.originUserId || !ipAddress) {
@@ -81,6 +77,27 @@ export default class SenderLocationChangesFrequencyRule extends TransactionAggre
     return hitResult
   }
 
+  private async getRawTransactionsData(): Promise<AuxiliaryIndexTransaction[]> {
+    const { sendingTransactions } =
+      await getTransactionUserPastTransactionsByDirection(
+        this.transaction,
+        'origin',
+        this.transactionRepository,
+        {
+          timeWindow: {
+            units: this.parameters.timeWindowInDays,
+            granularity: 'day',
+            rollingBasis: true,
+          },
+          checkDirection: 'sending',
+          filters: this.filters,
+        },
+        ['timestamp', 'deviceData']
+      )
+
+    return sendingTransactions
+  }
+
   private async getData(): Promise<{
     uniqueIpAddresses: Set<string>
     transactionsCount: number
@@ -111,38 +128,56 @@ export default class SenderLocationChangesFrequencyRule extends TransactionAggre
     }
 
     // Fallback
-    const { sendingTransactions } =
-      await getTransactionUserPastTransactionsByDirection(
-        this.transaction,
-        'origin',
-        this.transactionRepository,
-        {
-          timeWindow: {
-            units: this.parameters.timeWindowInDays,
-            granularity: 'day',
-            rollingBasis: true,
-          },
-          checkDirection: 'sending',
-          filters: this.filters,
-        },
-        ['timestamp', 'deviceData']
+    if (this.shouldUseRawData()) {
+      const sendingTransactions = await this.getRawTransactionsData()
+
+      const sendingTransactionsWithIpAddress = sendingTransactions.filter(
+        (transaction) => transaction.deviceData?.ipAddress
       )
-    const sendingTransactionsWithIpAddress = sendingTransactions.filter(
-      (transaction) => transaction.deviceData?.ipAddress
-    )
+
+      // Update aggregations
+      await this.saveRebuiltRuleAggregations(
+        'origin',
+        await this.getTimeAggregatedResult(sendingTransactionsWithIpAddress)
+      )
+
+      return {
+        uniqueIpAddresses: this.getUniqueIpAddressses(
+          sendingTransactionsWithIpAddress
+        ),
+        transactionsCount: sendingTransactionsWithIpAddress.length,
+      }
+    } else {
+      return {
+        uniqueIpAddresses: new Set(),
+        transactionsCount: 0,
+      }
+    }
+  }
+
+  public async rebuildUserAggregation(
+    direction: 'origin' | 'destination',
+    isTransactionFiltered: boolean
+  ): Promise<void> {
+    const ipAddress = this.transaction.deviceData?.ipAddress
+    if (
+      !isTransactionFiltered ||
+      direction === 'destination' ||
+      !this.transaction.originUserId ||
+      !ipAddress
+    ) {
+      return
+    }
+
+    const transactions = await this.getRawTransactionsData()
+
+    transactions.push(this.transaction)
 
     // Update aggregations
     await this.saveRebuiltRuleAggregations(
       'origin',
-      await this.getTimeAggregatedResult(sendingTransactionsWithIpAddress)
+      await this.getTimeAggregatedResult(transactions)
     )
-
-    return {
-      uniqueIpAddresses: this.getUniqueIpAddressses(
-        sendingTransactionsWithIpAddress
-      ),
-      transactionsCount: sendingTransactionsWithIpAddress.length,
-    }
   }
 
   private getUniqueIpAddressses(

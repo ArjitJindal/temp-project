@@ -42,10 +42,6 @@ export default class TooManyUsersForSameCardRule extends TransactionAggregationR
     }
   }
 
-  public async rebuildUserAggregation(): Promise<void> {
-    return
-  }
-
   public async computeRule() {
     if (
       this.transaction.originPaymentDetails?.method !== 'CARD' ||
@@ -73,6 +69,49 @@ export default class TooManyUsersForSameCardRule extends TransactionAggregationR
     return hitResult
   }
 
+  private async getRawTransactionsData(): Promise<AuxiliaryIndexTransaction[]> {
+    const { sendingTransactions } =
+      await getTransactionUserPastTransactionsByDirection(
+        {
+          ...this.transaction,
+          originUserId: undefined, // to force search by payment details
+          destinationUserId: undefined,
+        },
+        'origin',
+        this.transactionRepository,
+        {
+          timeWindow: {
+            units: this.parameters.timeWindowInDays,
+            granularity: 'day',
+            rollingBasis: true,
+          },
+          checkDirection: 'sending',
+          filters: this.filters,
+        },
+        ['timestamp', 'originUserId']
+      )
+
+    return sendingTransactions
+  }
+
+  public async rebuildUserAggregation(
+    direction: 'origin' | 'destination',
+    isTransactionFiltered: boolean
+  ): Promise<void> {
+    if (direction !== 'origin' || !isTransactionFiltered) {
+      return
+    }
+
+    const sendingTransactions = await this.getRawTransactionsData()
+
+    sendingTransactions.push(this.transaction)
+
+    await this.saveRebuiltRuleAggregations(
+      direction,
+      await this.getTimeAggregatedResult(sendingTransactions)
+    )
+  }
+
   private async getData(): Promise<{
     userIds: Set<string>
   }> {
@@ -96,38 +135,27 @@ export default class TooManyUsersForSameCardRule extends TransactionAggregationR
     }
 
     // Fallback
-    const { sendingTransactions } =
-      await getTransactionUserPastTransactionsByDirection(
-        {
-          ...this.transaction,
-          originUserId: undefined, // to force search by payment details
-          destinationUserId: undefined,
-        },
-        'origin',
-        this.transactionRepository,
-        {
-          timeWindow: {
-            units: this.parameters.timeWindowInDays,
-            granularity: 'day',
-            rollingBasis: true,
-          },
-          checkDirection: 'sending',
-          filters: this.filters,
-        },
-        ['timestamp', 'originUserId']
+    if (this.shouldUseRawData()) {
+      const sendingTransactions = await this.getRawTransactionsData()
+      const sendingTransactionsWithOriginUserId = sendingTransactions.filter(
+        (transaction) => transaction.originUserId
       )
-    const sendingTransactionsWithOriginUserId = sendingTransactions.filter(
-      (transaction) => transaction.originUserId
-    )
 
-    // Update aggregations
-    await this.saveRebuiltRuleAggregations(
-      'origin',
-      await this.getTimeAggregatedResult(sendingTransactionsWithOriginUserId)
-    )
+      // Update aggregations
+      await this.saveRebuiltRuleAggregations(
+        'origin',
+        await this.getTimeAggregatedResult(sendingTransactionsWithOriginUserId)
+      )
 
-    return {
-      userIds: this.getUniqueOriginUserIds(sendingTransactionsWithOriginUserId),
+      return {
+        userIds: this.getUniqueOriginUserIds(
+          sendingTransactionsWithOriginUserId
+        ),
+      }
+    } else {
+      return {
+        userIds: new Set(),
+      }
     }
   }
 

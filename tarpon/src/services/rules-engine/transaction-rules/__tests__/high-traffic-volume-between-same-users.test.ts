@@ -13,6 +13,7 @@ import {
 import { dynamoDbSetupHook } from '@/test-utils/dynamodb-test-utils'
 import { TransactionAmountDetails } from '@/@types/openapi-public/TransactionAmountDetails'
 import { CardDetails } from '@/@types/openapi-public/CardDetails'
+import { withFeatureHook } from '@/test-utils/feature-test-utils'
 
 const CARD_DETAILS_1: CardDetails = {
   method: 'CARD',
@@ -34,6 +35,7 @@ const TEST_TRANSACTION_AMOUNT_100: TransactionAmountDetails = {
 }
 
 dynamoDbSetupHook()
+withFeatureHook(['RULES_ENGINE_V2'])
 
 ruleVariantsTest(true, () => {
   describe('R-126 description formatting', () => {

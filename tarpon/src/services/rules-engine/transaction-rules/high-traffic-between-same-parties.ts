@@ -57,10 +57,6 @@ export default class HighTrafficBetweenSameParties extends TransactionAggregatio
     }
   }
 
-  public async rebuildUserAggregation(): Promise<void> {
-    return
-  }
-
   public async computeRule() {
     const { transactionsLimit } = this.parameters
     const receiverKeyId = getReceiverKeyId(this.tenantId, this.transaction, {
@@ -93,26 +89,9 @@ export default class HighTrafficBetweenSameParties extends TransactionAggregatio
     return hitResult
   }
 
-  private async getData(): Promise<number> {
-    const receiverKeyId = getReceiverKeyId(this.tenantId, this.transaction, {
-      matchPaymentDetails: this.parameters.destinationMatchPaymentMethodDetails,
-    }) as string
-    const { afterTimestamp, beforeTimestamp } = getTimestampRange(
-      this.transaction.timestamp!,
-      this.parameters.timeWindow
-    )
-    const userAggregationData = await this.getRuleAggregations<AggregationData>(
-      'origin',
-      afterTimestamp,
-      beforeTimestamp
-    )
-    if (userAggregationData) {
-      return sumBy(userAggregationData, (data) => data[receiverKeyId] || 0) + 1
-    }
-
-    // Fallback
-    const { timeWindow } = this.parameters
+  private async getRawTransactionsData(): Promise<AuxiliaryIndexTransaction[]> {
     const { originUserId, timestamp } = this.transaction
+    const { timeWindow } = this.parameters
 
     const transactions =
       await this.transactionRepository.getGenericUserSendingTransactions(
@@ -133,20 +112,71 @@ export default class HighTrafficBetweenSameParties extends TransactionAggregatio
         this.parameters.originMatchPaymentMethodDetails
       )
 
-    // Update aggregations
-    await this.saveRebuiltRuleAggregations(
+    return transactions
+  }
+
+  private async getData(): Promise<number> {
+    const receiverKeyId = getReceiverKeyId(this.tenantId, this.transaction, {
+      matchPaymentDetails: this.parameters.destinationMatchPaymentMethodDetails,
+    }) as string
+
+    const { afterTimestamp, beforeTimestamp } = getTimestampRange(
+      this.transaction.timestamp!,
+      this.parameters.timeWindow
+    )
+
+    const userAggregationData = await this.getRuleAggregations<AggregationData>(
       'origin',
-      await this.getTimeAggregatedResult(transactions)
+      afterTimestamp,
+      beforeTimestamp
     )
-    return (
-      transactions.filter(
-        (transaction) =>
-          getReceiverKeyId(this.tenantId, transaction as Transaction, {
-            matchPaymentDetails:
-              this.parameters.destinationMatchPaymentMethodDetails,
-          }) === receiverKeyId
-      ).length + 1
-    )
+
+    if (userAggregationData) {
+      return sumBy(userAggregationData, (data) => data[receiverKeyId] || 0) + 1
+    }
+
+    if (this.shouldUseRawData()) {
+      const transactions = await this.getRawTransactionsData()
+      // Update aggregations
+      await this.saveRebuiltRuleAggregations(
+        'origin',
+        await this.getTimeAggregatedResult(transactions)
+      )
+
+      return (
+        transactions.filter(
+          (transaction) =>
+            getReceiverKeyId(this.tenantId, transaction as Transaction, {
+              matchPaymentDetails:
+                this.parameters.destinationMatchPaymentMethodDetails,
+            }) === receiverKeyId
+        ).length + 1
+      )
+    } else {
+      return 1
+    }
+  }
+
+  public async rebuildUserAggregation(
+    direction: 'origin' | 'destination',
+    isTransactionFiltered: boolean
+  ) {
+    if (!isTransactionFiltered || direction === 'destination') {
+      return
+    }
+    const transactions = await this.getRawTransactionsData()
+
+    transactions.push({
+      ...this.transaction,
+      receiverKeyId: getReceiverKeyId(this.tenantId, this.transaction, {
+        matchPaymentDetails:
+          this.parameters.destinationMatchPaymentMethodDetails,
+      }),
+    })
+
+    const data = await this.getTimeAggregatedResult(transactions)
+
+    await this.saveRebuiltRuleAggregations(direction, data)
   }
 
   private async getTimeAggregatedResult(
