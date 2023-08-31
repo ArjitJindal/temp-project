@@ -29,6 +29,7 @@ export const config: Config = {
     TRANSACTION_LAMBDA: {
       PROVISIONED_CONCURRENCY: 2, // 2 so we can have auto scaling
     },
+    TRANSACTION_AGGREGATION_LAMBDA: {},
     USER_LAMBDA: {
       PROVISIONED_CONCURRENCY: 0,
     },

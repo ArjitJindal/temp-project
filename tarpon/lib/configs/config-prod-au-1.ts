@@ -36,6 +36,9 @@ export const config: Config = {
       PROVISIONED_CONCURRENCY: 5,
       MEMORY_SIZE: 1024,
     },
+    TRANSACTION_AGGREGATION_LAMBDA: {
+      MEMORY_SIZE: 1024,
+    },
     TRANSACTIONS_VIEW_LAMBDA: {
       PROVISIONED_CONCURRENCY: 2,
     },

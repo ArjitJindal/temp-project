@@ -667,6 +667,8 @@ export class CdkTarponStack extends cdk.Stack {
         name: StackConstants.TRANSACTION_AGGREGATION_FUNCTION_NAME,
         auditLogTopic: this.auditLogTopic,
         batchJobQueue,
+        memorySize:
+          this.config.resource.TRANSACTION_AGGREGATION_LAMBDA?.MEMORY_SIZE,
       },
       functionProps
     )

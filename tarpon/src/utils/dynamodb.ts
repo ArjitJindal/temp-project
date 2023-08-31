@@ -5,7 +5,6 @@ import {
   APIGatewayProxyWithLambdaAuthorizerEvent,
   Credentials as LambdaCredentials,
 } from 'aws-lambda'
-import * as AWSXRay from 'aws-xray-sdk'
 import { chunk, isNil, omitBy, wrap } from 'lodash'
 import { StackConstants } from '@lib/constants'
 import {
@@ -194,15 +193,9 @@ export function getDynamoDbClient(
 ): DynamoDBDocumentClient {
   const rawClient = getDynamoDbRawClient(credentials)
 
-  const client = !(envIs('local') || envIs('test'))
-    ? AWSXRay.captureAWSv3Client(
-        DynamoDBDocumentClient.from(rawClient, {
-          marshallOptions: { removeUndefinedValues: true },
-        })
-      )
-    : DynamoDBDocumentClient.from(rawClient, {
-        marshallOptions: { removeUndefinedValues: true },
-      })
+  const client = DynamoDBDocumentClient.from(rawClient, {
+    marshallOptions: { removeUndefinedValues: true },
+  })
 
   const { retry = !!process.env.ASSUME_ROLE_ARN } = {
     ...options,

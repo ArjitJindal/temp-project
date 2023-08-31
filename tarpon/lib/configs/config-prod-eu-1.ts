@@ -34,7 +34,12 @@ export const config: Config = {
     },
     TRANSACTION_LAMBDA: {
       PROVISIONED_CONCURRENCY: 30,
-      MEMORY_SIZE: 4096,
+      // TODO: Change back go 1024 after https://github.com/flagright/orca/pull/2088 is deployed
+      MEMORY_SIZE: 8192,
+    },
+    TRANSACTION_AGGREGATION_LAMBDA: {
+      // TODO: Downscale after FR-2863
+      MEMORY_SIZE: 8192,
     },
     TRANSACTIONS_VIEW_LAMBDA: {
       PROVISIONED_CONCURRENCY: 5,
