@@ -47,8 +47,8 @@ export async function getCurrencyExchangeRate(
       return rate
     } catch (e: any) {
       segment?.close(e)
-      logger.error('Failed to fetch the exchange rate!')
       if (i === MAX_CURRENCY_API_RETRY) {
+        logger.error('Failed to fetch the exchange rate!')
         throw e
       } else {
         // Exponential retry
