@@ -44,7 +44,6 @@ export class UserService {
   s3: S3
   documentBucketName: string
   tmpBucketName: string
-
   constructor(
     tenantId: string,
     connections: {
@@ -245,7 +244,6 @@ export class UserService {
     )
     return await this.userUpdateComment(updateRequest, userId)
   }
-
   public async userUpdateComment(
     updateRequest: UserUpdateRequest,
     userId: string

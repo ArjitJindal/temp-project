@@ -2,6 +2,7 @@ import { AuditLog } from '@/@types/openapi-internal/AuditLog'
 import { publishAuditLog } from '@/services/audit-log'
 import { AuditLogActionEnum } from '@/@types/openapi-internal/AuditLogActionEnum'
 import { traceable } from '@/core/xray'
+import { UserUpdateRequest } from '@/@types/openapi-internal/UserUpdateRequest'
 
 @traceable
 export class UserAuditLogService {
@@ -13,6 +14,19 @@ export class UserAuditLogService {
 
   public async handleAuditLogForuserViewed(userId: string): Promise<void> {
     await this.createAuditLog(userId, 'VIEW')
+  }
+  public async handleAuditLogForUserUpdate(
+    updateRequest: UserUpdateRequest,
+    userId: string
+  ): Promise<void> {
+    const auditLog: AuditLog = {
+      type: 'USER',
+      action: 'UPDATE',
+      timestamp: Date.now(),
+      newImage: updateRequest,
+      entityId: userId,
+    }
+    await publishAuditLog(this.tenantId, auditLog)
   }
 
   private async createAuditLog(userId: string, logAction: AuditLogActionEnum) {

@@ -59,13 +59,17 @@ export const businessUsersViewHandler = lambdaApi()(
       return user
     })
 
-    handlers.registerPostBusinessUsersUserId(
-      async (ctx, request) =>
-        await userService.updateBusinessUser(
-          request.userId,
-          request.UserUpdateRequest
-        )
-    )
+    handlers.registerPostBusinessUsersUserId(async (ctx, request) => {
+      const userAuditLogService = new UserAuditLogService(tenantId)
+      await userAuditLogService.handleAuditLogForUserUpdate(
+        request.UserUpdateRequest,
+        request.userId
+      )
+      return await userService.updateBusinessUser(
+        request.userId,
+        request.UserUpdateRequest
+      )
+    })
 
     handlers.registerGetUsersUniques(async (ctx, request) =>
       compact(await userService.getUniques(request))
@@ -115,13 +119,17 @@ export const consumerUsersViewHandler = lambdaApi()(
       return user
     })
 
-    handlers.registerPostConsumerUsersUserId(
-      async (ctx, request) =>
-        await userService.updateConsumerUser(
-          request.userId,
-          request.UserUpdateRequest
-        )
-    )
+    handlers.registerPostConsumerUsersUserId(async (ctx, request) => {
+      const userAuditLogService = new UserAuditLogService(tenantId)
+      await userAuditLogService.handleAuditLogForUserUpdate(
+        request.UserUpdateRequest,
+        request.userId
+      )
+      return await userService.updateConsumerUser(
+        request.userId,
+        request.UserUpdateRequest
+      )
+    })
 
     return await handlers.handle(event)
   }
