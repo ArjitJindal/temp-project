@@ -61,6 +61,7 @@ interface RuleConfigurationFormProps {
   activeStepKey?: string;
   onActiveStepKeyChange: (key: string) => void;
   onSubmit: (formValues: RuleConfigurationFormValues) => void;
+  setIsValuesSame?: (isSame: boolean) => void;
 }
 
 const RuleConfigurationForm = (
@@ -76,6 +77,7 @@ const RuleConfigurationForm = (
     showValidationError = false,
     activeStepKey = BASIC_DETAILS_STEP,
     onActiveStepKeyChange,
+    setIsValuesSame,
   } = props;
   const isPulseEnabled = useFeatureEnabled('PULSE');
   const defaultInitialValues = useDefaultInitialValues(rule);
@@ -225,6 +227,7 @@ const RuleConfigurationForm = (
         alwaysShowErrors={alwaysShowErrors || showValidationError}
         onChange={({ values }) => {
           setFormState(values);
+          setIsValuesSame?.(JSON.stringify(values) === JSON.stringify(initialValues)); // Is Equal was not working
         }}
       >
         <Stepper

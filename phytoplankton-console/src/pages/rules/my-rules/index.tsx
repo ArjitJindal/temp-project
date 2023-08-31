@@ -31,12 +31,13 @@ import { DEFAULT_PARAMS_STATE } from '@/components/library/Table/consts';
 import { useScrollToFocus } from '@/utils/hooks';
 import { parseQueryString } from '@/utils/routing';
 import { RuleHitInsightsTag } from '@/components/ui/RuleHitInsightsTag';
+import FileCopyLineIcon from '@/components/ui/icons/Remix/document/file-copy-line.react.svg';
 
 const DEFAULT_SORTING: SortingParamsItem = ['ruleId', 'ascend'];
 
 const MyRule = (props: { simulationMode?: boolean }) => {
   useScrollToFocus();
-  const [ruleReadOnly, setRuleReadOnly] = useState<boolean>(false);
+  const [ruleState, setRuleState] = useState<'DUPLICATE' | 'EDIT' | 'READ'>('READ');
   const api = useApi();
   const canWriteRules = useHasPermissions(['rules:my-rules:write']);
   const [updatedRuleInstances, setUpdatedRuleInstances] = useState<{ [key: string]: RuleInstance }>(
@@ -52,18 +53,24 @@ const MyRule = (props: { simulationMode?: boolean }) => {
   const onViewRule = useCallback((entity) => {
     setCurrentRow(entity);
     setShowDetail(true);
-    setRuleReadOnly(true);
+    setRuleState('READ');
   }, []);
 
   const onEditRule = useCallback((entity) => {
     setCurrentRow(entity);
     setShowDetail(true);
-    setRuleReadOnly(false);
+    setRuleState('EDIT');
+  }, []);
+
+  const onDuplicateRule = useCallback((entity) => {
+    setCurrentRow(entity);
+    setShowDetail(true);
+    setRuleState('DUPLICATE');
   }, []);
 
   useEffect(() => {
     if (!showDetail) {
-      setRuleReadOnly(false);
+      setRuleState('EDIT');
     }
   }, [showDetail]);
 
@@ -225,7 +232,7 @@ const MyRule = (props: { simulationMode?: boolean }) => {
         id: 'actions',
         title: 'Action',
         defaultSticky: 'RIGHT',
-        defaultWidth: 250,
+        defaultWidth: 350,
         enableResizing: false,
         render: (entity) => {
           return props.simulationMode ? (
@@ -252,6 +259,21 @@ const MyRule = (props: { simulationMode?: boolean }) => {
                 isLoading={deleting}
               >
                 Edit
+              </Button>
+              <Button
+                type="SECONDARY"
+                size="MEDIUM"
+                onClick={() => {
+                  if (canWriteRules && !deleting && entity.id) {
+                    setRuleState('DUPLICATE');
+                    onDuplicateRule(entity);
+                  }
+                }}
+                icon={<FileCopyLineIcon />}
+                isDisabled={!canWriteRules}
+                isLoading={deleting}
+              >
+                Duplicate
               </Button>
               <Confirm
                 title={`Are you sure you want to delete this ${entity.ruleId} ${entity.id} rule?`}
@@ -292,6 +314,7 @@ const MyRule = (props: { simulationMode?: boolean }) => {
     deleting,
     handleDeleteRuleInstanceMutation,
     onEditRule,
+    onDuplicateRule,
   ]);
   const rulesResult = usePaginatedQuery(GET_RULE_INSTANCES(params), async (paginationParams) => {
     const ruleInstances = await api.getRuleInstances({ ...paginationParams });
@@ -360,19 +383,20 @@ const MyRule = (props: { simulationMode?: boolean }) => {
       ) : (
         <RuleConfigurationDrawer
           rule={rule}
-          readOnly={!canWriteRules || ruleReadOnly}
+          readOnly={!canWriteRules || ruleState === 'READ'}
           ruleInstance={ruleInstance}
           isVisible={showDetail}
           onChangeVisibility={setShowDetail}
           onRuleInstanceUpdated={(ruleInstance) => {
             handleRuleInstanceUpdate(ruleInstance);
             setShowDetail(false);
+            reloadTable();
           }}
-          isClickAwayEnabled={ruleReadOnly}
+          isClickAwayEnabled={ruleState === 'READ'}
           onChangeToEditMode={() => {
-            setRuleReadOnly(false);
+            setRuleState('EDIT');
           }}
-          type={'EDIT'}
+          type={ruleState === 'DUPLICATE' ? 'DUPLICATE' : 'EDIT'}
         />
       )}
     </>

@@ -2,7 +2,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { usePrevious } from 'ahooks';
 import { EditOutlined } from '@ant-design/icons';
 import { Tabs, Tooltip } from 'antd';
-import _ from 'lodash';
+import { cloneDeep, isEqual, merge } from 'lodash';
 import { useMutation } from '@tanstack/react-query';
 import {
   formValuesToRuleInstance,
@@ -53,7 +53,7 @@ interface RuleConfigurationDrawerProps {
   isClickAwayEnabled?: boolean;
   onChangeToEditMode?: () => void;
   onRuleInstanceUpdated?: (ruleInstance: RuleInstance) => void;
-  type: 'EDIT' | 'CREATE';
+  type: 'EDIT' | 'CREATE' | 'DUPLICATE' | 'READ';
 }
 
 export default function RuleConfigurationDrawer(props: RuleConfigurationDrawerProps) {
@@ -71,6 +71,9 @@ export default function RuleConfigurationDrawer(props: RuleConfigurationDrawerPr
   const formRef = useRef<FormRef<RuleConfigurationFormValues>>(null);
   const isPulseEnabled = useFeatureEnabled('PULSE');
   const formInitialValues = ruleInstanceToFormValues(isPulseEnabled, ruleInstance);
+  const [isValuesSame, setIsValuesSame] = useState(
+    isEqual(formInitialValues, formRef.current?.getValues()),
+  );
   const prevIsVisible = usePrevious(isVisible);
   const updateRuleInstanceMutation = useUpdateRuleInstance(onRuleInstanceUpdated);
   const createRuleInstanceMutation = useCreateRuleInstance(onRuleInstanceUpdated);
@@ -80,7 +83,7 @@ export default function RuleConfigurationDrawer(props: RuleConfigurationDrawerPr
         updateRuleInstanceMutation.mutate(
           formValuesToRuleInstance(ruleInstance, formValues, isPulseEnabled),
         );
-      } else if (type === 'CREATE' && rule) {
+      } else if ((type === 'CREATE' || type === 'DUPLICATE') && rule) {
         createRuleInstanceMutation.mutate(
           formValuesToRuleInstance({ ruleId: rule.id } as RuleInstance, formValues, isPulseEnabled),
         );
@@ -101,6 +104,10 @@ export default function RuleConfigurationDrawer(props: RuleConfigurationDrawerPr
     }
   }, [activeStepKey, isVisible, prevIsVisible]);
 
+  const isMutableOnly = useMemo(() => {
+    return ['CREATE', 'EDIT', 'DUPLICATE'].includes(type) && !readOnly;
+  }, [type, readOnly]);
+
   return (
     <Drawer
       isVisible={isVisible}
@@ -108,6 +115,8 @@ export default function RuleConfigurationDrawer(props: RuleConfigurationDrawerPr
       title={
         props.type === 'EDIT'
           ? `${rule?.id} (${formInitialValues?.basicDetailsStep?.ruleInstanceId})`
+          : props.type === 'DUPLICATE'
+          ? `Duplicate ${rule?.id} (${formInitialValues?.basicDetailsStep?.ruleName})`
           : 'Configure rule'
       }
       description={
@@ -121,7 +130,7 @@ export default function RuleConfigurationDrawer(props: RuleConfigurationDrawerPr
       }
       isClickAwayEnabled={props.isClickAwayEnabled}
       footer={
-        <div className={!readOnly && ['CREATE', 'EDIT'].includes(type) ? s.footerEnd : s.footer}>
+        <div className={isMutableOnly ? s.footerEnd : s.footer}>
           {type === 'EDIT' && readOnly && (
             <StepButtons
               nextDisabled={activeStepIndex === RULE_CONFIGURATION_STEPS.length - 1}
@@ -142,7 +151,7 @@ export default function RuleConfigurationDrawer(props: RuleConfigurationDrawerPr
                 Cancel
               </Button>
             )}
-            {!readOnly && ['CREATE', 'EDIT'].includes(type) && (
+            {isMutableOnly && (
               <Button
                 type="TETRIARY"
                 onClick={() => {
@@ -155,7 +164,7 @@ export default function RuleConfigurationDrawer(props: RuleConfigurationDrawerPr
                 Previous
               </Button>
             )}
-            {!readOnly && ['CREATE', 'EDIT'].includes(type) && activeStepIndex !== 2 && (
+            {isMutableOnly && activeStepIndex !== 2 && (
               <Button
                 type="SECONDARY"
                 onClick={() => {
@@ -168,19 +177,32 @@ export default function RuleConfigurationDrawer(props: RuleConfigurationDrawerPr
                 Next
               </Button>
             )}
-            {(!readOnly || type === 'CREATE') && activeStepIndex === 2 && (
-              <Button
-                htmlType="submit"
-                isLoading={
-                  updateRuleInstanceMutation.isLoading || createRuleInstanceMutation.isLoading
-                }
-                isDisabled={readOnly}
-                onClick={() => {
-                  formRef?.current?.submit();
-                }}
-              >
-                {props.type === 'CREATE' ? 'Done' : 'Save'}
-              </Button>
+            {(!readOnly || ['CREATE', 'DUPLICATE'].includes(type)) && activeStepIndex === 2 && (
+              <>
+                {isValuesSame && ['DUPLICATE'].includes(type) ? (
+                  <Tooltip
+                    placement="topRight"
+                    title="Rule parameters have not changed. To save the rule, please modify some rule parameters."
+                  >
+                    <div>
+                      <Button isDisabled={true}>{props.type === 'CREATE' ? 'Done' : 'Save'}</Button>
+                    </div>
+                  </Tooltip>
+                ) : (
+                  <Button
+                    htmlType="submit"
+                    isLoading={
+                      updateRuleInstanceMutation.isLoading || createRuleInstanceMutation.isLoading
+                    }
+                    isDisabled={readOnly}
+                    onClick={() => {
+                      formRef?.current?.submit();
+                    }}
+                  >
+                    {props.type === 'CREATE' ? 'Done' : 'Save'}
+                  </Button>
+                )}
+              </>
             )}
             {readOnly && type === 'EDIT' && (
               <Button
@@ -208,6 +230,7 @@ export default function RuleConfigurationDrawer(props: RuleConfigurationDrawerPr
         activeStepKey={activeStepKey}
         onSubmit={handleSubmit}
         onActiveStepKeyChange={setActiveStepKey}
+        setIsValuesSame={setIsValuesSame}
       />
     </Drawer>
   );
@@ -283,7 +306,7 @@ export function RuleConfigurationSimulationDrawer(props: RuleConfigurationSimula
     const newIterations = syncFormValues();
     const activeIteration = newIterations[activeTabIndex];
     if (activeIteration) {
-      setNewIterations([...newIterations, _.cloneDeep(activeIteration)]);
+      setNewIterations([...newIterations, cloneDeep(activeIteration)]);
     }
   }, [activeTabIndex, syncFormValues]);
   const handleChangeIterationTab = useCallback(
@@ -489,7 +512,7 @@ export function RuleConfigurationSimulationDrawer(props: RuleConfigurationSimula
                     readOnly={Boolean(jobId)}
                     ref={iterationFormRefs[i]}
                     rule={rule}
-                    formInitialValues={_.merge(
+                    formInitialValues={merge(
                       ruleInstanceToFormValues(isPulseEnabled, iteration.ruleInstance),
                       {
                         basicDetailsStep: {
