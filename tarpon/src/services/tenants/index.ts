@@ -452,7 +452,7 @@ export class TenantService {
 
     const getUsageCommand = new GetUsageCommand({
       usagePlanId: usagePlan.id,
-      startDate: dayjs().subtract(1, 'day').format('YYYY-MM-DD'),
+      startDate: dayjs().startOf('month').format('YYYY-MM-DD'),
       endDate: dayjs().format('YYYY-MM-DD'),
     })
 
