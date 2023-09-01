@@ -7,8 +7,10 @@ import { getDynamoDbClient } from '@/utils/dynamodb'
 import { DynamoDbTransactionRepository } from '@/services/rules-engine/repositories/dynamodb-transaction-repository'
 import { getMongoDbClient } from '@/utils/mongodb-utils'
 import { TRANSACTIONS_COLLECTION } from '@/utils/mongodb-definitions'
-import { Transaction } from '@/@types/openapi-public/Transaction'
+import { TransactionWithRulesResult } from '@/@types/openapi-public/TransactionWithRulesResult'
 import { Tenant } from '@/services/accounts'
+import { pickKnownEntityFields } from '@/utils/object'
+import { InternalTransaction } from '@/@types/openapi-internal/InternalTransaction'
 
 const elgibleTenantId = process.env.ENV?.startsWith('prod')
   ? 'VOLX1IP7NN'
@@ -31,7 +33,7 @@ async function migrateTenant(tenant: Tenant) {
   const lastCompletedTimestamp = await getMigrationLastCompletedTimestamp(
     migrationKey
   )
-  const transactionsCollection = db.collection<Transaction>(
+  const transactionsCollection = db.collection<InternalTransaction>(
     transactionsCollectionName
   )
   const indexExists = await transactionsCollection.indexExists('deviceData_1')
@@ -50,14 +52,16 @@ async function migrateTenant(tenant: Tenant) {
     })
 
   for await (const transaction of cursor) {
-    const deviceData = transaction.deviceData
-    delete (transaction as any)._id
+    const updatedTransaction = {
+      ...pickKnownEntityFields(
+        transaction as TransactionWithRulesResult,
+        TransactionWithRulesResult
+      ),
+      originDeviceData: transaction.deviceData,
+      deviceData: undefined,
+    }
     await Promise.all([
-      transactionRepository.saveTransaction({
-        ...transaction,
-        originDeviceData: deviceData,
-        deviceData: undefined,
-      }),
+      transactionRepository.saveTransaction(updatedTransaction),
       updateMigrationLastCompletedTimestamp(
         migrationKey,
         transaction.timestamp
