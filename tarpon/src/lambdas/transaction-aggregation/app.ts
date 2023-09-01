@@ -1,4 +1,6 @@
 import { SQSEvent } from 'aws-lambda'
+import { backOff } from 'exponential-backoff'
+import { BadRequest } from 'http-errors'
 import { lambdaConsumer } from '@/core/middlewares/lambda-consumer-middlewares'
 import { TransactionAggregationTask } from '@/services/rules-engine'
 import { RuleRepository } from '@/services/rules-engine/repositories/rule-repository'
@@ -48,13 +50,40 @@ export async function handleTransactionAggregationTask(
 
   const [ruleInstance, transaction] = await Promise.all([
     ruleInstanceRepository.getRuleInstanceById(task.ruleInstanceId),
-    transactionRepository.getTransactionById(task.transactionId),
+    backOff(
+      async () => {
+        const transactionId = task.transactionId
+        const transaction = await transactionRepository.getTransactionById(
+          transactionId
+        )
+        if (!transaction) {
+          throw new BadRequest(`Transaction ${transactionId} not found`)
+        }
+        return transaction
+      },
+      {
+        jitter: 'full',
+        numOfAttempts: 3,
+        startingDelay: 1000,
+        maxDelay: 5000,
+        retry: (e, attempt) => {
+          if (attempt === 3) {
+            logger.error(
+              `Failed to get transaction ${task.transactionId}: ${e.message}`
+            )
+
+            return false
+          }
+          logger.warn(
+            `Failed to get transaction ${task.transactionId}: ${e.message}`
+          )
+          return true
+        },
+      }
+    ),
   ])
+
   updateLogMetadata(task)
-  if (!transaction) {
-    logger.error(`Transaction ${task.transactionId} not found`)
-    return
-  }
   if (!ruleInstance) {
     logger.error(`Rule instance ${task.ruleInstanceId} not found`)
     return
