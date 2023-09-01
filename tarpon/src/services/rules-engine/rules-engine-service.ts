@@ -80,6 +80,8 @@ import { TransactionAction } from '@/@types/openapi-internal/TransactionAction'
 import { envIs } from '@/utils/env'
 import { handleTransactionAggregationTask } from '@/lambdas/transaction-aggregation/app'
 
+const sqs = new SQSClient({})
+
 const ruleAscendingComparator = (
   rule1: HitRulesDetails,
   rule2: HitRulesDetails
@@ -775,8 +777,6 @@ export class RulesEngineService {
   private async sendTransactionAggregationTasks(
     task: TransactionAggregationTaskEntry
   ) {
-    const sqs = new SQSClient({})
-
     if (envIs('local') || envIs('test')) {
       await handleTransactionAggregationTask(task.payload)
       return
@@ -792,9 +792,8 @@ export class RulesEngineService {
     })
 
     updateLogMetadata(task)
-    logger.info(`Sending transaction aggregation task to SQS`)
-
     await sqs.send(command)
+    logger.info(`Sent transaction aggregation task to SQS`)
   }
 
   private async verifyUserRule(options: {
