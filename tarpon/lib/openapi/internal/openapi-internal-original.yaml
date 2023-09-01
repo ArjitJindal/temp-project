@@ -7431,6 +7431,7 @@ components:
         - RISK_SCORING
         - ALERT
         - WEBHOOK
+        - API-KEY
     AuditLogActionEnum:
       title: AuditLogActionEnum
       type: string

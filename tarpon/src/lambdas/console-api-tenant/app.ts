@@ -152,7 +152,12 @@ export const tenantsHandler = lambdaApi()(
     )
 
     handlers.registerGetTenantApiKeys(async (ctx, request) => {
-      return await new TenantService(ctx.tenantId, {
+      const auditLog: AuditLog = {
+        type: 'API-KEY',
+        action: 'VIEW',
+        timestamp: Date.now(),
+      }
+      const apiKeys = await new TenantService(ctx.tenantId, {
         dynamoDb: getDynamoDbClientByEvent(event),
         mongoDb,
       }).getApiKeys(
@@ -163,6 +168,10 @@ export const tenantsHandler = lambdaApi()(
             }
           : undefined
       )
+      if (request.unmaskApiKeyId && request.unmask != null) {
+        await publishAuditLog(tenantId, auditLog)
+      }
+      return apiKeys
     })
 
     return await handlers.handle(event)
