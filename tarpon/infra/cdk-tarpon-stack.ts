@@ -674,7 +674,7 @@ export class CdkTarponStack extends cdk.Stack {
     )
 
     transactionAggregatorAlias.addEventSource(
-      new SqsEventSource(transactionAggregationQueue)
+      new SqsEventSource(transactionAggregationQueue, { batchSize: 1 })
     )
 
     /* Audit Log */
