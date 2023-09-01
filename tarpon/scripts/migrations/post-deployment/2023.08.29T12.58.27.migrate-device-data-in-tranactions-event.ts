@@ -2,19 +2,25 @@ import {
   getMigrationLastCompletedTimestamp,
   updateMigrationLastCompletedTimestamp,
 } from '../utils/migration-progress'
+import { migrateAllTenants } from '../utils/tenant'
 import { getDynamoDbClient } from '@/utils/dynamodb'
 import { getMongoDbClient } from '@/utils/mongodb-utils'
 import { TRANSACTION_EVENTS_COLLECTION } from '@/utils/mongodb-definitions'
 import { TransactionEventRepository } from '@/services/rules-engine/repositories/transaction-event-repository'
 import { TransactionEvent } from '@/@types/openapi-public/TransactionEvent'
+import { Tenant } from '@/services/accounts'
 
-export const up = async () => {
-  const tenantId = process.env.ENV?.startsWith('prod')
-    ? 'VOLX1IP7NN'
-    : 'flagright'
+const eligibleTenantId = process.env.ENV?.startsWith('prod')
+  ? 'VOLX1IP7NN'
+  : 'flagright'
+
+export const migrateTenant = async (tenant: Tenant) => {
+  if (tenant.id !== eligibleTenantId) {
+    return
+  }
   const dynamoDb = getDynamoDbClient()
   const mongoDb = await getMongoDbClient()
-
+  const tenantId = tenant.id
   const transactionRepository = new TransactionEventRepository(tenantId, {
     dynamoDb,
     mongoDb,
@@ -70,6 +76,10 @@ export const up = async () => {
       'updatedTransactionAttributes.deviceData_1'
     )
   }
+}
+
+export const up = async () => {
+  await migrateAllTenants(migrateTenant)
 }
 export const down = async () => {
   // skip
