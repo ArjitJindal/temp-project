@@ -7,7 +7,6 @@ import TopUsersHitCard from './components/TopUsersHitCard';
 import DRSDistributionCard from './components/DRSDistributionCard';
 import TeamPerformanceCard from './components/TeamPerformanceCard';
 import OverviewCard from './components/OverviewCard';
-import CaseClosingReasonCard from './components/CaseClosingReasonCard';
 import PageWrapper from '@/components/PageWrapper';
 import { useFeatureEnabled } from '@/components/AppWrapper/Providers/SettingsProvider';
 import { useI18n } from '@/locales';
@@ -16,10 +15,6 @@ import IconSetting from '@/components/ui/icons/Remix/system/settings-2-line.reac
 import Drawer from '@/components/library/Drawer';
 import Checkbox from '@/components/library/Checkbox';
 import { humanizeConstant } from '@/utils/humanize';
-import WidgetGrid from '@/components/library/WidgetGrid';
-import { DASHBOARD_OVERVIEW } from '@/utils/queries/keys';
-import { useQuery } from '@/utils/queries/hooks';
-import { useApi } from '@/api';
 
 type KeyValues =
   | 'OVERVIEW'
@@ -27,8 +22,7 @@ type KeyValues =
   | 'TRANSACTIONS_BREAKDOWN_BY_RULE_ACTION'
   | 'TOP_RULE_HITS_BY_COUNT'
   | 'USER_DISTIBUTION_BY_CRA_RISK_LEVEL'
-  | 'TEAM_OVERVIEW'
-  | 'DISTRIBUTION_BY_CLOSING_REASON';
+  | 'TEAM_OVERVIEW';
 
 const KEYS: KeyValues[] = [
   'OVERVIEW',
@@ -36,7 +30,6 @@ const KEYS: KeyValues[] = [
   'TOP_USERS_BY_TRANSACTIONS_HITS',
   'TOP_RULE_HITS_BY_COUNT',
   'USER_DISTIBUTION_BY_CRA_RISK_LEVEL',
-  'DISTRIBUTION_BY_CLOSING_REASON',
   'TEAM_OVERVIEW',
 ];
 
@@ -47,7 +40,6 @@ const DEFAULT_VALUES = {
   TOP_RULE_HITS_BY_COUNT: true,
   USER_DISTIBUTION_BY_CRA_RISK_LEVEL: true,
   TEAM_OVERVIEW: true,
-  DISTRIBUTION_BY_CLOSING_REASON: true,
 };
 
 type DashboardSettings = Record<KeyValues, boolean>;
@@ -59,19 +51,6 @@ function Analysis() {
   const [dashboardSettings, setDashboardSettings] = useLocalStorageState<DashboardSettings>(
     'DASHBOARD_SETTINGS',
     DEFAULT_VALUES,
-  );
-
-  const [selectedSectionInClosingReasonStats, setSelectedSectionInClosingReasonStats] =
-    useLocalStorageState('dashboard-closing-reason-active-tab', 'CASE');
-  const api = useApi();
-  const queryResult = useQuery(
-    DASHBOARD_OVERVIEW(selectedSectionInClosingReasonStats),
-    async () => {
-      const response = await api.getDashboardStatsOverview({
-        entity: selectedSectionInClosingReasonStats as 'CASE' | 'ALERT',
-      });
-      return response;
-    },
   );
 
   const [updatedState, setUpdatedState] = useState<DashboardSettings>({
@@ -98,7 +77,7 @@ function Analysis() {
       <Row gutter={[16, 16]}>
         {settingsToDisplay.OVERVIEW && (
           <Col span={24}>
-            <OverviewCard data={queryResult.data} />
+            <OverviewCard />
           </Col>
         )}
         {settingsToDisplay.TRANSACTIONS_BREAKDOWN_BY_RULE_ACTION && (
@@ -127,32 +106,6 @@ function Analysis() {
             </Col>
           </>
         )}
-        {
-          <Col span={24}>
-            <WidgetGrid
-              groups={[
-                {
-                  groupTitle: 'Case management',
-                  items: [
-                    ...(settingsToDisplay.DISTRIBUTION_BY_CLOSING_REASON
-                      ? [
-                          {
-                            id: 'distribution-by-closing reason',
-                            title: 'Distribution by closing reason',
-                            ...CaseClosingReasonCard({
-                              selectedSection: selectedSectionInClosingReasonStats,
-                              setSelectedSection: setSelectedSectionInClosingReasonStats,
-                              data: queryResult.data,
-                            }),
-                          },
-                        ]
-                      : []),
-                  ],
-                },
-              ]}
-            />
-          </Col>
-        }
         {settingsToDisplay.TEAM_OVERVIEW && (
           <Col span={24}>
             <TeamPerformanceCard />

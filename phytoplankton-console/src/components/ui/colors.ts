@@ -54,18 +54,6 @@ const NEW_COLORS = {
   gray10: '#262626',
   white: '#ffffff',
   gray6: '#8d8d8d',
-  // New colors for new dashboard charts
-  skyBlueAccent: '#6E94F3',
-  softBlueHaze: '#D3DFFA',
-  lavenderMist: '#D4D1FA',
-  sunsetYellow: '#EFC34F',
-  elegantPurple: '#9369B8',
-  tranquilBlue: '#8AC9E9',
-  copperSun: '#F2A25F',
-  mysticMauve: '#C396CE',
-  aquamarineGreen: '#56BE9F',
-  slateBlue: '#687695',
-  calmTeal: '#519898',
 };
 
 const SEMANTIC_COLORS = {

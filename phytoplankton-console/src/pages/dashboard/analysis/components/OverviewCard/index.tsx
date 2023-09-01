@@ -1,11 +1,13 @@
 import { Col, Row } from 'antd';
 import styles from './styles.module.less';
+import { useApi } from '@/api';
 import { DashboardStatsOverview } from '@/apis';
 import AsyncResourceRenderer from '@/components/common/AsyncResourceRenderer';
+import { useQuery } from '@/utils/queries/hooks';
+import { DASHBOARD_OVERVIEW } from '@/utils/queries/keys';
 import * as Card from '@/components/ui/Card';
 import { H4, P } from '@/components/ui/Typography';
 import { formatDuration, getDuration } from '@/utils/time-utils';
-import { AsyncResource } from '@/utils/asyncResource';
 
 const OverviewSingleCard = ({ title, value }: { title: string; value: number | string }) => (
   <Col span={6}>
@@ -18,15 +20,15 @@ const OverviewSingleCard = ({ title, value }: { title: string; value: number | s
   </Col>
 );
 
-interface Props {
-  data: AsyncResource<DashboardStatsOverview>;
-}
-
-export default function OverviewCard(props: Props) {
-  const { data } = props;
+export default function OverviewCard() {
+  const api = useApi();
+  const queryResults = useQuery(
+    DASHBOARD_OVERVIEW(),
+    async () => await api.getDashboardStatsOverview(),
+  );
 
   return (
-    <AsyncResourceRenderer<DashboardStatsOverview> resource={data}>
+    <AsyncResourceRenderer<DashboardStatsOverview> resource={queryResults.data}>
       {({
         totalOpenAlerts,
         totalOpenCases,
@@ -42,11 +44,11 @@ export default function OverviewCard(props: Props) {
             <OverviewSingleCard title="Open alerts" value={totalOpenAlerts || '0'} />
             <OverviewSingleCard
               title="Avg. investigation time/case"
-              value={formatDuration(getDuration(averageInvestigationTimeCases ?? 0)) || '0'}
+              value={formatDuration(getDuration(averageInvestigationTimeCases)) || '0'}
             />
             <OverviewSingleCard
               title="Avg. investigation time/alert"
-              value={formatDuration(getDuration(averageInvestigationTimeAlerts ?? 0)) || '0'}
+              value={formatDuration(getDuration(averageInvestigationTimeAlerts)) || '0'}
             />
           </Row>
         );

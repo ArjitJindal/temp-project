@@ -44,7 +44,6 @@ import { DashboardStatsHitsPerUserData } from '@/@types/openapi-internal/Dashboa
 import { FLAGRIGHT_SYSTEM_USER } from '@/services/rules-engine/repositories/alerts-repository'
 import { DashboardStatsOverview } from '@/@types/openapi-internal/DashboardStatsOverview'
 import { traceable } from '@/core/xray'
-import { DashboardStatsOverviewClosingReasonsData } from '@/@types/openapi-internal/DashboardStatsOverviewClosingReasonsData'
 
 type TimeRange = {
   startTimestamp?: number
@@ -1818,70 +1817,10 @@ export class DashboardStatsRepository {
   }
 
   async getOverviewStatistics(
-    accountIds: string[],
-    entity?: 'CASE' | 'ALERT'
+    accountIds: string[]
   ): Promise<DashboardStatsOverview> {
     const db = this.mongoDb.db()
     const casesCollection = db.collection<Case>(CASES_COLLECTION(this.tenantId))
-    const statusMap = new Map()
-    let closingReasonsData: DashboardStatsOverviewClosingReasonsData[] = []
-    if (entity === 'CASE') {
-      const cases = casesCollection.find({ caseStatus: 'CLOSED' })
-      for await (const caseItem of cases) {
-        const reasons = caseItem.lastStatusChange?.reason ?? []
-        reasons.map((reason) => {
-          if (statusMap.has(reason)) {
-            const prevCount = statusMap.get(reason)
-            statusMap.set(reason, prevCount + 1)
-          } else {
-            statusMap.set(reason, 1)
-          }
-        })
-      }
-      const data = Array.from(statusMap).map(([key, value]) => {
-        return {
-          reason: key,
-          value: value,
-        }
-      })
-      closingReasonsData = data
-    } else if (entity === 'ALERT') {
-      const alerts = casesCollection.aggregate([
-        {
-          $unwind: '$alerts',
-        },
-        {
-          $match: {
-            'alerts.alertStatus': 'CLOSED',
-          },
-        },
-        {
-          $project: {
-            _id: false,
-            alert: '$alerts',
-          },
-        },
-      ])
-      for await (const alert of alerts) {
-        const alertItem = alert.alert
-        const reasons = alertItem.lastStatusChange?.reason ?? []
-        reasons.map((reason: any) => {
-          if (statusMap.has(reason)) {
-            const prevCount = statusMap.get(reason)
-            statusMap.set(reason, prevCount + 1)
-          } else {
-            statusMap.set(reason, 1)
-          }
-        })
-      }
-      const data = Array.from(statusMap).map(([key, value]) => {
-        return {
-          reason: key,
-          value: value,
-        }
-      })
-      closingReasonsData = data
-    }
 
     const casesCount = await casesCollection.countDocuments({
       caseStatus: { $in: ['OPEN', 'REOPENED'] },
@@ -1983,7 +1922,6 @@ export class DashboardStatsRepository {
         dashboardCasesStatsTotal[0]?.avgInvestigationTime,
       averageInvestigationTimeAlerts:
         dashboardAlertsStatsTotal[0]?.avgInvestigationTime,
-      closingReasonsData,
     }
   }
 }

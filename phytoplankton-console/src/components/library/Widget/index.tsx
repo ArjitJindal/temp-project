@@ -1,7 +1,7 @@
 import cn from 'clsx';
 import React, { useCallback, useState } from 'react';
 import s from './index.module.less';
-import DownloadLineIcon from '@/components/ui/icons/Remix/system/download-2-line.react.svg';
+import DownloadLineIcon from '@/components/ui/icons/Remix/system/download-line.react.svg';
 import { download } from '@/utils/browser';
 import { message } from '@/components/library/Message';
 import { getErrorMessage } from '@/utils/lang';

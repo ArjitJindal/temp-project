@@ -15,20 +15,16 @@ export default function WidgetGrid(props: Props) {
   const { groups } = props;
   return (
     <div className={cn(s.root)}>
-      {groups.map(({ groupTitle, items }) => {
-        return items.length ? (
-          <div key={groupTitle} className={cn(s.group)}>
-            <div className={s.groupTitle}>{groupTitle}</div>
-            <div className={s.items}>
-              {items.map((item) => (
-                <Widget key={item.id} {...item} />
-              ))}
-            </div>
+      {groups.map(({ groupTitle, items }) => (
+        <div key={groupTitle} className={cn(s.group)}>
+          <div className={s.groupTitle}>{groupTitle}</div>
+          <div className={s.items}>
+            {items.map((item) => (
+              <Widget key={item.id} {...item} />
+            ))}
           </div>
-        ) : (
-          <></>
-        );
-      })}
+        </div>
+      ))}
     </div>
   );
 }
