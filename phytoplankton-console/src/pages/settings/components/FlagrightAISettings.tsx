@@ -25,8 +25,8 @@ export const FlagrightAISettings = () => {
   const displayText = <p>{statement}</p>;
   return (
     <div>
-      <h3>{whiteLabeled ? '' : 'Flagright'} AI Features</h3>
-      <p>Supercharge your productivity with AI Features including GPT.</p>
+      <h3>{whiteLabeled ? '' : 'Flagright'} AI features</h3>
+      <p>Supercharge your productivity with AI features including GPT.</p>
       <br />
 
       <Confirm title="Are you sure?" text={displayText} onConfirm={handleEnable}>

@@ -69,7 +69,7 @@ export default function PaymentDetails(props: Props) {
       <Card.Section>
         <div>
           <P variant="sml" bold>
-            Payment Details
+            Payment details
           </P>
         </div>
         {paymentDetails == null ? (

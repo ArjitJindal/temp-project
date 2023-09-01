@@ -101,7 +101,7 @@ Kind regards,
 We need a scan of passport from all your directors within the next few weeks please.
 Kind regards,
 `,
-    subject: 'Identity Documents Required',
+    subject: 'Identity documents required',
   },
 ]
 

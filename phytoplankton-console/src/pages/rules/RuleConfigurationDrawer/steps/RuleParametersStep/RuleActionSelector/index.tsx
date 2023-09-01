@@ -8,8 +8,8 @@ import { InputProps } from '@/components/library/Form';
 
 const DESCRIPTIONS: { [key in RuleAction]: string } = {
   ALLOW: '',
-  FLAG: 'Allow the transaction to continue but mark as FLAGGED. Recommended for AML Rules.',
-  BLOCK: 'Stop transaction from continuing. Recommended for Fraud Rules.',
+  FLAG: 'Allow the transaction to continue but mark as FLAGGED. Recommended for AML rules.',
+  BLOCK: 'Stop transaction from continuing. Recommended for fraud rules.',
   SUSPEND: 'Put the transaction on hold till investigation is complete.',
 };
 

@@ -26,7 +26,7 @@ export const CopilotButton = (props: CopilotButtonProps) => {
       icon={<BrainLineIcon />}
       isDisabled={!settings?.isAiEnabled}
     >
-      {props.loading ? 'Loading...' : 'Ask Copilot'}
+      {props.loading ? 'Loading...' : 'Ask copilot'}
     </Button>
   );
 };

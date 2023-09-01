@@ -61,37 +61,37 @@ In order to calculate risk algorithmically, Pulse quantifies the risk level in n
 
 <table>
   <tr>
-   <td>Risk Level
+   <td>Risk level
    </td>
-   <td>Risk Score
+   <td>Risk score
    </td>
   </tr>
   <tr>
-   <td>Very High Risk
+   <td>Very high risk
    </td>
    <td>100
    </td>
   </tr>
   <tr>
-   <td>High Risk
+   <td>High risk
    </td>
    <td>75
    </td>
   </tr>
   <tr>
-   <td>Medium Risk
+   <td>Medium risk
    </td>
    <td>50
    </td>
   </tr>
   <tr>
-   <td>Low Risk
+   <td>Low risk
    </td>
    <td>25
    </td>
   </tr>
   <tr>
-   <td>Very Low Risk
+   <td>Very low risk
    </td>
    <td>0
    </td>
@@ -104,11 +104,11 @@ In order to display a risk level based on DRS algorithm's numerical outputs, we 
 
 <table>
   <tr>
-   <td>Risk Score From
+   <td>Risk score from
    </td>
-   <td>Risk Score To
+   <td>Risk score to
    </td>
-   <td>Assign Risk Level
+   <td>Assign risk level
    </td>
   </tr>
   <tr>
@@ -116,7 +116,7 @@ In order to display a risk level based on DRS algorithm's numerical outputs, we 
    </td>
    <td>&lt; 75
    </td>
-   <td>Very High Risk
+   <td>Very high risk
    </td>
   </tr>
   <tr>
@@ -124,7 +124,7 @@ In order to display a risk level based on DRS algorithm's numerical outputs, we 
    </td>
    <td>&lt; 50
    </td>
-   <td>High Risk
+   <td>High risk
    </td>
   </tr>
   <tr>
@@ -132,7 +132,7 @@ In order to display a risk level based on DRS algorithm's numerical outputs, we 
    </td>
    <td>&lt; 25
    </td>
-   <td>Medium Risk
+   <td>Medium risk
    </td>
   </tr>
   <tr>
@@ -140,7 +140,7 @@ In order to display a risk level based on DRS algorithm's numerical outputs, we 
    </td>
    <td>&lt; 15
    </td>
-   <td>Low Risk
+   <td>Low risk
    </td>
   </tr>
   <tr>
@@ -148,7 +148,7 @@ In order to display a risk level based on DRS algorithm's numerical outputs, we 
    </td>
    <td>&lt;= 0
    </td>
-   <td>Very Low Risk
+   <td>Very low risk
    </td>
   </tr>
 </table>

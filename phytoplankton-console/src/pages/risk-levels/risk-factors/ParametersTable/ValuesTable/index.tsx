@@ -171,7 +171,7 @@ export default function ValuesTable(props: Props) {
         <div className={style.header}>
           {item.dataType === 'COUNTRY' && (
             <Button onClick={() => handleSetDefaultValues()} size="small" type="primary" block>
-              Load Default
+              Load default
             </Button>
           )}
         </div>

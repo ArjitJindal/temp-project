@@ -17,7 +17,7 @@ const Overview = (props: Props) => {
           'Sentiment score is determined using AI and reflects how much attention this user requires based on their behaviour.'
         }
       >
-        <span>Sentiment Score - {props.sentiment}%</span>
+        <span>Sentiment score - {props.sentiment}%</span>
       </Tooltip>
     </div>
   );

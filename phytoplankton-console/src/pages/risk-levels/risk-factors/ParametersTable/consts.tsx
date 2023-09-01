@@ -153,7 +153,7 @@ export const USER_RISK_PARAMETERS: RiskLevelTable = [
   {
     parameter: 'userDetails.dateOfBirth',
     title: 'Customer age',
-    description: 'Risk based on customer age range (Years)',
+    description: 'Risk based on customer age range (years)',
     entity: 'CONSUMER_USER',
     dataType: 'RANGE',
     isDerived: true,
@@ -162,7 +162,7 @@ export const USER_RISK_PARAMETERS: RiskLevelTable = [
   },
   {
     parameter: 'userSegment',
-    title: 'User Segment',
+    title: 'User segment',
     description: 'Risk based on consumer user segment',
     entity: 'CONSUMER_USER',
     dataType: 'CONSUMER_USER_SEGMENT',
@@ -264,7 +264,7 @@ export const BUSINESS_RISK_PARAMETERS: RiskLevelTable = [
   {
     parameter: 'legalEntity.companyRegistrationDetails.dateOfRegistration',
     title: 'Company age',
-    description: 'Risk based on business age range (Years)',
+    description: 'Risk based on business age range (years)',
     entity: 'BUSINESS',
     dataType: 'RANGE',
     isDerived: true,
@@ -357,7 +357,7 @@ export const TRANSACTION_RISK_PARAMETERS: RiskLevelTable = [
   {
     parameter: 'consumerCreatedTimestamp',
     title: 'Consumer user age on platform',
-    description: 'Risk based on how long a consumer has been using your platform (Days)',
+    description: 'Risk based on how long a consumer has been using your platform (days)',
     entity: 'TRANSACTION',
     dataType: 'DAY_RANGE',
     isDerived: true,
@@ -376,7 +376,7 @@ export const TRANSACTION_RISK_PARAMETERS: RiskLevelTable = [
   },
   {
     parameter: 'ipAddressCountry',
-    title: 'IP Address country',
+    title: 'IP address country',
     description: 'Risk based on IP address country',
     entity: 'TRANSACTION',
     dataType: 'COUNTRY',
@@ -473,7 +473,7 @@ export const TRANSACTION_RISK_PARAMETERS: RiskLevelTable = [
     parameter: 'originPaymentDetails.bankName',
     title: 'Origin bank name',
     description:
-      'Risk value based on origin bank name under Generic bank account, ACH, IBAN and SWIFT',
+      'Risk value based on origin bank name under generic bank account, ACH, IBAN and SWIFT',
     entity: 'TRANSACTION',
     dataType: 'BANK_NAMES',
     isDerived: true,
@@ -484,7 +484,7 @@ export const TRANSACTION_RISK_PARAMETERS: RiskLevelTable = [
     parameter: 'destinationPaymentDetails.bankName',
     title: 'Destination bank name',
     description:
-      'Risk value based on destination bank name under Generic bank account, ACH, IBAN and SWIFT',
+      'Risk value based on destination bank name under generic bank account, ACH, IBAN and SWIFT',
     entity: 'TRANSACTION',
     dataType: 'BANK_NAMES',
     isDerived: true,

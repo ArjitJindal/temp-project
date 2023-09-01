@@ -27,7 +27,7 @@ const RiskAlgorithmTable: React.FC = () => {
               </p>
             </li>
             <li>
-              <h3>How the Risk Level is converted to Risk Score?</h3>
+              <h3>How the risk level is converted to risk score?</h3>
               <p>
                 Risk levels are quantified into risk scores by taking the average of the lower and
                 upper bound score of risk levels configured in{' '}
@@ -37,11 +37,11 @@ const RiskAlgorithmTable: React.FC = () => {
               </p>
             </li>
             <li>
-              <h3>How the Risk Score is converted to Risk Level?</h3>
+              <h3>How the risk score is converted to risk level?</h3>
               <p>
-                A risk score is converted to Risk Level using the{' '}
+                A risk score is converted to risk level using the{' '}
                 <Link to={`/risk-levels/configure`}>risk levels </Link> configured. For example, if
-                the risk score range for Medium risk level is 60 - 80, a risk score of 65 would be
+                the risk score range for medium risk level is 60 - 80, a risk score of 65 would be
                 considered as medium risk level.
               </p>
             </li>
@@ -51,7 +51,7 @@ const RiskAlgorithmTable: React.FC = () => {
         <ProCard
           title={
             <>
-              <span className={styles.KRSheader}>Customer risk assessment (CRA)</span>
+              <span className={styles.KRSheader}>Customer Risk Assessment (CRA)</span>
               <div className={styles.KRSsubheader}>
                 Dynamic aggregate score of your customer based on their KRS and TRS.
               </div>
@@ -93,7 +93,7 @@ const RiskAlgorithmTable: React.FC = () => {
             bordered
             bodyStyle={{ border: 10 }}
           >
-            <ProCard.TabPane key=" tab1 " tab="Consumer Users">
+            <ProCard.TabPane key=" tab1 " tab="Consumer users">
               <RcResizeObserver
                 key="resize-observer"
                 onResize={(offset) => {
@@ -160,9 +160,9 @@ const RiskAlgorithmTable: React.FC = () => {
                 <div className="token-line ">where:</div>
                 <div className="token-line ">cReg: Business country of registration risk</div>
                 <div className="token-line ">
-                  directorNat: average risk score of director nationalities
+                  directorNat: Average risk score of director nationalities
                 </div>
-                <div className="token-line ">uboNat: average risk score of UBO nationalities</div>
+                <div className="token-line ">uboNat: Average risk score of UBO nationalities</div>
                 <div className="token-line ">rAge: Business age risk</div>
                 <div className="token-line ">
                   bizDomain: Risk of the business operating industry
@@ -175,7 +175,7 @@ const RiskAlgorithmTable: React.FC = () => {
         <ProCard
           title={
             <>
-              <span className={styles.KRSheader}>Transaction risk score (TRS)</span>
+              <span className={styles.KRSheader}>Transaction Risk Score (TRS)</span>
               <div className={styles.KRSsubheader}>
                 Risk score of your customer’s transaction activity. TRS changes corresponding to
                 user activity.
@@ -195,10 +195,10 @@ const RiskAlgorithmTable: React.FC = () => {
               </div>
               <div> </div>
               <div className="token-line ">where:</div>
-              <div className="token-line ">rORG: payment origin country risk</div>
-              <div className="token-line ">rDES: payment destination country risk</div>
+              <div className="token-line ">rORG: Payment origin country risk</div>
+              <div className="token-line ">rDES: Payment destination country risk</div>
               <div className="token-line ">rMER: Receiver merchant risk</div>
-              <div className="token-line ">rMET: payment method risk</div>
+              <div className="token-line ">rMET: Payment method risk</div>
               <div className="token-line ">
                 rPOMET: Receiving payment method risk (payout method)
               </div>

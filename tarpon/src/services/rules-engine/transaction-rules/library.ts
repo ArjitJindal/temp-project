@@ -76,7 +76,7 @@ const _RULES_LIBRARY: Array<
     defaultNature: 'AML',
     defaultCasePriority: 'P1',
     typology: 'Account activity, inconsistent with customer profile',
-    typologyGroup: 'Unusual Behaviour',
+    typologyGroup: 'Unusual behaviour',
     typologyDescription:
       'Typologies that identify transactional activity characteristics that are unexpected or uncommon for a customer.',
     source:
@@ -103,7 +103,7 @@ const _RULES_LIBRARY: Array<
       defaultCasePriority: 'P1',
       defaultFalsePositiveCheckEnabled: true,
       typology: 'Account activity, inconsistent with customer profile',
-      typologyGroup: 'Unusual Behavior',
+      typologyGroup: 'Unusual behavior',
       typologyDescription:
         'Typologies that identify transactional activity characteristics that are unexpected or uncommon for a customer.',
       source:
@@ -129,7 +129,7 @@ const _RULES_LIBRARY: Array<
       defaultNature: 'AML',
       defaultCasePriority: 'P1',
       typology: 'Account activity, inconsistent with customer profile ',
-      typologyGroup: 'Unusual Behaviour',
+      typologyGroup: 'Unusual behaviour',
       typologyDescription:
         'Typologies that identify transactional activity characteristics that are unexpected or uncommon for a customer.',
       source:
@@ -155,7 +155,7 @@ const _RULES_LIBRARY: Array<
       defaultNature: 'AML',
       defaultCasePriority: 'P1',
       typology: 'Account activity, inconsistent with customer profile',
-      typologyGroup: 'Unusual Behavior',
+      typologyGroup: 'Unusual behavior',
       typologyDescription:
         'Typologies that identify transactional activity characteristics that are unexpected or uncommon for a customer.',
       source:
@@ -182,7 +182,7 @@ const _RULES_LIBRARY: Array<
       defaultCasePriority: 'P1',
       typology:
         'Account activity, inconsistent with customer profile or Initial account was opened by a money mule ',
-      typologyGroup: 'Money Mules Unusual Behavior',
+      typologyGroup: 'Money mules, unusual behavior',
       typologyDescription:
         'UK National risk assessment of money laundering and terrorist financing 2021',
       source:
@@ -208,7 +208,7 @@ const _RULES_LIBRARY: Array<
       defaultNature: 'AML',
       defaultCasePriority: 'P1',
       typology: 'Account activity, inconsistent with customer profile',
-      typologyGroup: 'Unusual Behavior',
+      typologyGroup: 'Unusual behavior',
       typologyDescription:
         "The customer uses a currency that does not fit with their profile or what is known about the customer's business.",
       source:
@@ -299,9 +299,9 @@ const _RULES_LIBRARY: Array<
       defaultNature: 'AML',
       defaultCasePriority: 'P1',
       typology:
-        'Hidden / Unusual Relationships, Money Mules, Scams, Terrorist Financing',
+        'Hidden / unusual relationships, money mules, scams, terrorist financing',
       typologyGroup:
-        'Hidden / Unusual Relationships, Money Mules, Scams (Romance, Nigerian Price, Inheritance and etc.), Terrorist Financing',
+        'Hidden / unusual relationships, money mules, scams (romance, Nigerian Prince, inheritance and etc.), terrorist financing',
       typologyDescription:
         'Typologies identifying entities with shared connections or which may signify attempts to disguise or hide relationships. Money Muling activity of wittingly or unwittingly performing a transaction for the benefit of 3rd parties to disguise the true source of funds.',
       source:
@@ -332,9 +332,9 @@ const _RULES_LIBRARY: Array<
       defaultNature: 'AML',
       defaultCasePriority: 'P1',
       typology:
-        'Hidden / Unusual Relationships, Money Mules, Scams, Terrorist Financing',
+        'Hidden / unusual relationships, money mules, scams, terrorist financing',
       typologyGroup:
-        'Hidden / Unusual Relationships, Money Mules, Scams (Romance, Nigerian Price, Inheritance and etc.), Terrorist Financing',
+        'Hidden / unusual relationships, money mules, scams (romance, Nigerian Prince, inheritance and etc.), terrorist financing',
       typologyDescription:
         'Typologies identifying entities with shared connections or which may signify attempts to disguise or hide relationships. Money Muling activity of wittingly or unwittingly performing a transaction for the benefit of 3rd parties to disguise the true source of funds.',
       source:
@@ -364,7 +364,7 @@ const _RULES_LIBRARY: Array<
       defaultNature: 'FRAUD',
       defaultCasePriority: 'P1',
       typology: 'Prohibited merchants due to financial crime risks',
-      typologyGroup: 'Internal Blacklists',
+      typologyGroup: 'Internal blacklists',
       typologyDescription:
         'Blocking transactions with certain merchants which are outside of risk appetite of the organization',
       source: 'Prohibited countries policy, Sanctions Policy',
@@ -390,7 +390,7 @@ const _RULES_LIBRARY: Array<
       defaultNature: 'AML',
       defaultCasePriority: 'P1',
       typology: 'Account activity, inconsistent with customer profile',
-      typologyGroup: 'Unusual Behavior',
+      typologyGroup: 'Unusual behavior',
       typologyDescription:
         "The customer uses a country that does not fit with their profile or what is known about the customer's business.",
       source: '',
@@ -431,7 +431,7 @@ const _RULES_LIBRARY: Array<
       defaultCasePriority: 'P1',
       typology:
         'Prohibited countries of cards issued due to financial crime risks',
-      typologyGroup: 'Internal Blacklists',
+      typologyGroup: 'Internal blacklists',
       typologyDescription:
         'Blocking transactions with certain card issued in countries which are outside of risk appetite of the organization',
       source: 'Prohibited countries policy, Sanctions Policy',
@@ -471,7 +471,7 @@ const _RULES_LIBRARY: Array<
       defaultCasePriority: 'P1',
       typology:
         'Transactions with high-risk industries, potentially sanctioned entities, for potentially illicit purposes',
-      typologyGroup: 'Internal Blacklists',
+      typologyGroup: 'Internal blacklists',
       typologyDescription:
         "Identifying risky transactions by screening the reference field which might be outside of firm's risk appetite",
       source:
@@ -501,8 +501,8 @@ const _RULES_LIBRARY: Array<
       labels: [],
       defaultNature: 'FRAUD',
       defaultCasePriority: 'P1',
-      typology: 'Money Mules, Acquiring Fraud, Layering of funds',
-      typologyGroup: 'Money Mules, Acquiring Fraud, Layering',
+      typology: 'Money mules, acquiring fraud, layering of funds',
+      typologyGroup: 'Money mules, acquiring fraud, layering',
       typologyDescription:
         'Money Muling activity of wittingly or unwittingly performing a transaction for the benefit of 3rd parties to disguise the true source of funds. Acquiring fraud - receiving money that are proceeds of fraud ( typically top-up from stolen card and/or APP fraud). Layering - disguising the true nature of transactions via numerous transfers between financial institutions.',
       source:
@@ -530,9 +530,9 @@ const _RULES_LIBRARY: Array<
       labels: [],
       defaultNature: 'FRAUD',
       defaultCasePriority: 'P1',
-      typology: 'Money Mules, Account take over',
+      typology: 'Money mules, account take over',
       typologyGroup:
-        'Hidden / Unusual Relationships, Money Mules, Account Takeover Fraud',
+        'Hidden / unusual relationships, money mules, account takeover fraud',
       typologyDescription:
         'Use of different accounts opened in one institution by a perpetrator in order to perform the illicit activity. The same IP can be indicative of an account takeover attack, connected money mules, or money launderers.',
       source: 'NA',
@@ -563,7 +563,7 @@ const _RULES_LIBRARY: Array<
       defaultNature: 'FRAUD',
       defaultCasePriority: 'P1',
       typology: 'Acquiring Fraud',
-      typologyGroup: 'Card Fraud',
+      typologyGroup: 'Card fraud',
       typologyDescription:
         'Attempts to use a stolen card to perform a purchase/top-up wallet',
       source: 'Card Scheme Rules',
@@ -595,7 +595,7 @@ const _RULES_LIBRARY: Array<
       defaultNature: 'FRAUD',
       defaultCasePriority: 'P1',
       typology: 'Acquiring Fraud',
-      typologyGroup: 'Card Fraud',
+      typologyGroup: 'Card fraud',
       typologyDescription:
         'Attempts to use a multiple stolen cards to perform a purchase/top-up wallet',
       source: 'Card Scheme Rules',
@@ -630,7 +630,7 @@ const _RULES_LIBRARY: Array<
       defaultFalsePositiveCheckEnabled: true,
       typology:
         'Customer activity is not in line with profile based on available information',
-      typologyGroup: 'Unusual Behaviour',
+      typologyGroup: 'Unusual behaviour',
       typologyDescription:
         'Typologies that identify transactional activity characteristics that are unexpected or uncommon for a customer.',
       source: 'NA',
@@ -682,8 +682,8 @@ const _RULES_LIBRARY: Array<
       labels: [],
       defaultNature: 'AML',
       defaultCasePriority: 'P1',
-      typology: 'Account Takeover Fraud',
-      typologyGroup: 'Account Takeover Fraud',
+      typology: 'Account takeover fraud',
+      typologyGroup: 'Account takeover fraud',
       typologyDescription:
         'Access to account is compromised by a perpetrator and accessed from different IP in order to steal the funds',
       source: 'Japan Reference Cases on Suspicious Transactions 2020',
@@ -728,7 +728,7 @@ const _RULES_LIBRARY: Array<
       labels: [],
       defaultNature: 'AML',
       defaultCasePriority: 'P1',
-      typology: 'Account Takeover Fraud',
+      typology: 'Account takeover fraud',
       typologyGroup: 'Account takeover',
       typologyDescription:
         'Access to account is compromised by a perpetrator and accessed from different IP in order to steal the funds',
@@ -761,7 +761,7 @@ const _RULES_LIBRARY: Array<
       defaultCasePriority: 'P1',
       typology:
         'Transactions with high-risk industries, potentially sanctioned entities, for potentially illicit purposes',
-      typologyGroup: 'Internal Blacklists',
+      typologyGroup: 'Internal blacklists',
       typologyDescription:
         "Identifying risky transactions by screening the reference field which might be outside of firm's risk appetite",
       source:
@@ -819,8 +819,8 @@ const _RULES_LIBRARY: Array<
       labels: [],
       defaultNature: 'FRAUD',
       defaultCasePriority: 'P1',
-      typology: 'Acquiring Fraud',
-      typologyGroup: 'Card Fraud',
+      typology: 'Acquiring fraud',
+      typologyGroup: 'Card fraud',
       typologyDescription:
         'Attempts to use multiple stolen cards to perform a purchase/top-up wallet',
       source: 'Card Scheme Rules',
@@ -850,7 +850,7 @@ const _RULES_LIBRARY: Array<
       defaultCasePriority: 'P1',
       typology:
         'A high value of transactions between the same parties can be indicative of ML',
-      typologyGroup: 'Hidden / Unusual Relationships',
+      typologyGroup: 'Hidden / unusual relationships',
       typologyDescription:
         'Typologies identifying entities with shared connections or which may signify attempts to disguise or hide relationships.',
       source:
@@ -893,7 +893,7 @@ const _RULES_LIBRARY: Array<
       defaultFalsePositiveCheckEnabled: true,
       typology:
         'Change in behavior driven by an increase in a value of transactions',
-      typologyGroup: 'Unusual Behaviour',
+      typologyGroup: 'Unusual behaviour',
       typologyDescription:
         'Typologies that identify transactional activity characteristics that are unexpected or uncommon for a customer.',
       source:
@@ -932,7 +932,7 @@ const _RULES_LIBRARY: Array<
       defaultCasePriority: 'P1',
       typology:
         'Change in behavior driven by an increase in a number of transactions',
-      typologyGroup: 'Unusual Behaviour',
+      typologyGroup: 'Unusual behaviour',
       typologyDescription:
         'Typologies that identify transactional activity characteristics that are unexpected or uncommon for a customer.',
       source:
@@ -975,7 +975,7 @@ const _RULES_LIBRARY: Array<
       defaultFalsePositiveCheckEnabled: true,
       typology:
         'Change in behavior driven by an increase in a value of transactions',
-      typologyGroup: 'Unusual Behaviour',
+      typologyGroup: 'Unusual behaviour',
       typologyDescription:
         'Typologies that identify transactional activity characteristics that are unexpected or uncommon for a customer.',
       source:
@@ -1015,8 +1015,8 @@ const _RULES_LIBRARY: Array<
       labels: [],
       ruleImplementationName: 'total-transactions-volume-exceeds',
       defaultFalsePositiveCheckEnabled: true,
-      typology: 'Money Mules Acquiring Fraud Layering of funds',
-      typologyGroup: 'Money Mules Acquiring Fraud Layering',
+      typology: 'Money mules, acquiring fraud, layering of funds',
+      typologyGroup: 'Money mules acquiring fraud layering',
       typologyDescription:
         '- Money Muling activity of wittingly or unwittingly performing a transaction for the benefit of 3rd parties to disguise the true source of funds. - Acquiring fraud - receiving money that are proceeds of fraud ( typically top-up from stolen card and/or APP fraud). - Layering- disguising the true nature of transactions via numerous transfers between financial institutions. ',
       source:
@@ -1082,7 +1082,7 @@ const _RULES_LIBRARY: Array<
       defaultCasePriority: 'P1',
       typology:
         'Transactions in round amounts  which disguise the true nature of transaction and might be indicative of ML/TF',
-      typologyGroup: 'Structuring Unusual Behaviour',
+      typologyGroup: 'Structuring, unusual behaviour',
       typologyDescription:
         'Typologies that identify transactional activity characteristics that are unexpected or uncommon for a customer. Conceal or disguise the true nature of transactions  by executing frequent or several transactions such that each transaction is a rounded number which is not common for regular payment activity',
       source:
@@ -1115,8 +1115,8 @@ const _RULES_LIBRARY: Array<
       labels: [],
       defaultNature: 'AML',
       defaultCasePriority: 'P1',
-      typology: 'Acquiring Fraud, Issuing Fraud, Account takeover fraud',
-      typologyGroup: 'Card Fraud',
+      typology: 'Acquiring fraud, issuing fraud, account takeover fraud',
+      typologyGroup: 'Card fraud',
       typologyDescription: 'Unsuccessful attempts to use cards by fraudsters',
       source: 'Card Scheme Rules',
     }
@@ -1149,7 +1149,7 @@ const _RULES_LIBRARY: Array<
       defaultCasePriority: 'P1',
       typology:
         'Elevated ML/TF risks associated with transactions with high risk geography',
-      typologyGroup: 'High Risk Transactions',
+      typologyGroup: 'High risk transactions',
       typologyDescription:
         'Typologies that scrutinise a high-risk element of the transaction, such as geographic location or an attribute of the beneficiary or originator.',
       source:
@@ -1182,7 +1182,7 @@ const _RULES_LIBRARY: Array<
       defaultCasePriority: 'P1',
       typology:
         'Unusually high number of countries involved into transactional activity of the customer',
-      typologyGroup: 'Unusual Behaviour',
+      typologyGroup: 'Unusual behaviour',
       typologyDescription:
         'Typologies that identify transactional activity characteristics that are unexpected or uncommon for a customer.',
       source:
@@ -1213,7 +1213,7 @@ const _RULES_LIBRARY: Array<
       defaultCasePriority: 'P1',
       typology:
         'Transactions in round amounts which disguise the true nature of transaction and might be indicative of ML/TF',
-      typologyGroup: 'Structuring Unusual Behaviour',
+      typologyGroup: 'Structuring unusual behaviour',
       typologyDescription:
         'Typologies that identify transactional activity characteristics that are unexpected or uncommon for a customer. Conceal or disguise the true nature of transactions  by executing frequent or several transactions such that each transaction is a rounded number which is not common for regular payment activity',
       source:
@@ -1246,7 +1246,7 @@ const _RULES_LIBRARY: Array<
       defaultCasePriority: 'P1',
       typology:
         'A high value of transactions using the same payment details can be indicative of ML',
-      typologyGroup: 'Hidden / Unusual Relationships',
+      typologyGroup: 'Hidden / unusual relationships',
       typologyDescription:
         'Typologies identifying entities with shared connections or which may signify attempts to disguise or hide relationships.',
       source:
@@ -1271,7 +1271,7 @@ const _RULES_LIBRARY: Array<
       defaultNature: 'FRAUD',
       defaultCasePriority: 'P1',
       typology: 'Prohibited payment details due to financial crime risks',
-      typologyGroup: 'Internal Blacklists',
+      typologyGroup: 'Internal blacklists',
       typologyDescription:
         'Blocking transactions with certain cards issued in countries which are outside of risk appetite of the organization',
       source: 'Prohibited countries policy, Sanctions Policy',
@@ -1306,7 +1306,7 @@ const _RULES_LIBRARY: Array<
       defaultNature: 'FRAUD',
       defaultCasePriority: 'P1',
       typology: 'Account activity, inconsistent with customer profile ',
-      typologyGroup: 'Unusual Behaviour',
+      typologyGroup: 'Unusual behaviour',
       typologyDescription:
         'Typologies that identify transactional activity characteristics that are unexpected or uncommon for a customer.',
       source:
@@ -1332,10 +1332,10 @@ const _RULES_LIBRARY: Array<
       labels: [],
       defaultNature: 'FRAUD',
       defaultCasePriority: 'P3',
-      typology: 'Internal Blacklists',
-      typologyGroup: 'Internal Blacklists',
-      typologyDescription: 'Internal Blacklists',
-      source: 'Internal Blacklists',
+      typology: 'Internal blacklists',
+      typologyGroup: 'Internal blacklists',
+      typologyDescription: 'Internal blacklists',
+      source: 'Internal blacklists',
     }
   },
   () => {
@@ -1363,8 +1363,8 @@ const _RULES_LIBRARY: Array<
       labels: [],
       defaultNature: 'FRAUD',
       defaultCasePriority: 'P1',
-      typology: 'Money transit, Money Mules',
-      typologyGroup: 'Layering, Money Mules',
+      typology: 'Money transit, money mules',
+      typologyGroup: 'Layering, money mules',
       typologyDescription:
         'Money Muling activity of wittingly or unwittingly performing a transaction for the benefit of 3rd parties to disguise the true source of funds. Layering - disguising the true nature of transactions via numerous transfers between financial institutions.',
       source:

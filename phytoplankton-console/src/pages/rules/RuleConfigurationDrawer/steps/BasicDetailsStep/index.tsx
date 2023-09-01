@@ -155,7 +155,7 @@ function RuleDetails(props: Props) {
         )}
         <InputField<FormValues, 'casePriority'>
           name={'casePriority'}
-          label={'Rule Severity'}
+          label={'Rule severity'}
           description={'Define the severity of alerts created when this rule is hit.'}
         >
           {(inputProps) => (

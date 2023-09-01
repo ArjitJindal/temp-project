@@ -253,7 +253,7 @@ const NewSimulation = forwardRef((props: Props, ref: React.Ref<SimulationRef>) =
         }
       >
         <div className={s.basicDetailsContainer}>
-          <Label label="Iteration Name">
+          <Label label="Iteration name">
             <TextInput
               value={currentActive?.name}
               onChange={(value) => handleSetAKey('name', value)}

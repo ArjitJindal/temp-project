@@ -99,7 +99,7 @@ const Summaries = ({
               onChange={setScrapeDomain}
             />
             <Button type="PRIMARY" isLoading={scraping} onClick={requestData}>
-              Request Data
+              Request data
             </Button>
             <Button
               style={{ marginLeft: 'auto', width: '122px' }}
@@ -107,7 +107,7 @@ const Summaries = ({
               icon={<RefreshLine />}
               onClick={onRefresh}
             >
-              Refresh All
+              Refresh all
             </Button>
           </div>
         </Card.Row>
@@ -168,13 +168,13 @@ const Summaries = ({
           <div className={s.merchantDetails}>
             <div>
               <div className={cn(s.fields, s.form)}>
-                <Form.Layout.Label icon={<BriefcaseIcon />} title={'Business Industry'} />
+                <Form.Layout.Label icon={<BriefcaseIcon />} title={'Business industry'} />
                 {summary.industry ?? '-'}
               </div>
 
               <div className={cn(s.fields, s.form)}>
                 <>
-                  <Form.Layout.Label icon={<BriefcaseIcon />} title={'Products Sold'} />
+                  <Form.Layout.Label icon={<BriefcaseIcon />} title={'Products sold'} />
                 </>
                 <>{summary.products?.join(',') ?? '-'}</>
               </div>
@@ -186,13 +186,13 @@ const Summaries = ({
               </div>
 
               <div className={cn(s.fields, s.form)}>
-                <Form.Layout.Label icon={<UserGroupIcon />} title={'Company Size'} />
+                <Form.Layout.Label icon={<UserGroupIcon />} title={'Company size'} />
 
                 {summary.employees ?? '-'}
               </div>
 
               <div className={cn(s.fields, s.form)}>
-                <Form.Layout.Label icon={<MoneyIcon />} title={'Annual Revenue'} />
+                <Form.Layout.Label icon={<MoneyIcon />} title={'Annual revenue'} />
                 {summary.revenue ?? '-'}
               </div>
             </div>

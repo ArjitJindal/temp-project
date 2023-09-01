@@ -25,11 +25,11 @@ export const RISK_LEVELS: ApiRiskLevel[] = ['VERY_LOW', 'LOW', 'MEDIUM', 'HIGH',
 export type RiskLevel = ApiRiskLevel;
 
 export const RISK_LEVEL_LABELS: { [key in RiskLevel]: string } = {
-  VERY_LOW: 'Very Low Risk',
-  LOW: 'Low Risk',
-  MEDIUM: 'Medium Risk',
-  HIGH: 'High Risk',
-  VERY_HIGH: 'Very High Risk',
+  VERY_LOW: 'Very low risk',
+  LOW: 'Low risk',
+  MEDIUM: 'Medium risk',
+  HIGH: 'High risk',
+  VERY_HIGH: 'Very high risk',
 } as const;
 
 type RiskLevelColors = {

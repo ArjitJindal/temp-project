@@ -35,7 +35,7 @@ const NarrativeTemplateSelect = (props: Props) => {
         return (
           <Select
             className={s[`mode-${mode}`]}
-            placeholder="Narrative Templates"
+            placeholder="Narrative templates"
             options={narrativeTemplatesOptions}
             style={{ width: 180 }}
             value={templateValue}

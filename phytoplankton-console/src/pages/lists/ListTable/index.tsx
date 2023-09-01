@@ -126,7 +126,7 @@ function ListTable(props: Props, ref: ListTableRef) {
     }),
     helper.simple<'createdTimestamp'>({
       key: 'createdTimestamp',
-      title: 'Created On',
+      title: 'Created on',
       type: DATE,
     }),
     helper.simple<'metadata.status'>({

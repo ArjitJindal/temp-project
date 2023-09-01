@@ -15,7 +15,7 @@ export class UserTagsRuleFilter extends UserRuleFilter<UserTagsRuleFilterParamet
       type: 'object',
       properties: {
         userTags: KEY_VALUE_PAIR_OPTIONAL_SCHEMA({
-          title: 'User Tags',
+          title: 'User tags',
           description: 'Filter by user tags',
           uiSchema: {
             group: 'user',

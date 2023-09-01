@@ -35,6 +35,7 @@ import COLORS from '@/components/ui/colors';
 import { capitalizeWords } from '@/utils/tags';
 import { isSuccess } from '@/utils/asyncResource';
 import { ColumnHelper } from '@/components/library/Table/columnHelper';
+import { humanizeConstant } from '@/utils/humanize';
 
 type Props = {
   onClose: (toClose: boolean) => void;
@@ -88,7 +89,7 @@ const columns: TableColumn<SimulationPulseResult>[] = helper.list([
         type: {
           render: (riskLevel) => {
             if (riskLevel) {
-              return <>{capitalizeWords(riskLevel?.replace(/_/g, ' '))}</>;
+              return <>{humanizeConstant(riskLevel)}</>;
             } else {
               return <>{'-'}</>;
             }
@@ -102,7 +103,7 @@ const columns: TableColumn<SimulationPulseResult>[] = helper.list([
         type: {
           render: (riskLevel) => {
             if (riskLevel) {
-              return <>{capitalizeWords(riskLevel.replace(/_/g, ' '))}</>;
+              return <>{humanizeConstant(riskLevel)}</>;
             } else {
               return <>{'-'}</>;
             }
@@ -121,7 +122,7 @@ const columns: TableColumn<SimulationPulseResult>[] = helper.list([
         type: {
           render: (riskLevel) => {
             if (riskLevel) {
-              return <>{capitalizeWords(riskLevel?.replace(/_/g, ' '))}</>;
+              return <>{humanizeConstant(riskLevel)}</>;
             } else {
               return <>{'-'}</>;
             }
@@ -135,7 +136,7 @@ const columns: TableColumn<SimulationPulseResult>[] = helper.list([
         type: {
           render: (riskLevel) => {
             if (riskLevel) {
-              return <>{capitalizeWords(riskLevel?.replace(/_/g, ' '))}</>;
+              return <>{humanizeConstant(riskLevel)}</>;
             } else {
               return <>{'-'}</>;
             }

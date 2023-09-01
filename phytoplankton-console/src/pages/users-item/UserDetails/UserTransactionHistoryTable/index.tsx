@@ -176,7 +176,7 @@ export function Content(props: { userId: string }) {
           key: 'ruleName',
         }),
         helper.simple<'ruleDescription'>({
-          title: 'Rules Description',
+          title: 'Rules description',
           tooltip: 'Describes the conditions required for this rule to be hit.',
           key: 'ruleDescription',
         }),
@@ -187,7 +187,7 @@ export function Content(props: { userId: string }) {
           type: TRANSACTION_STATE,
         }),
         helper.simple<'timestamp'>({
-          title: 'Transaction Time',
+          title: 'Transaction time',
           key: 'timestamp',
           type: DATE,
         }),
@@ -199,7 +199,7 @@ export function Content(props: { userId: string }) {
           filtering: true,
         }),
         helper.simple<'direction'>({
-          title: 'Transaction Direction',
+          title: 'Transaction direction',
           key: 'direction',
           type: {
             autoFilterDataType: {
@@ -221,7 +221,7 @@ export function Content(props: { userId: string }) {
           children: helper.list([
             helper.derived<Amount>({
               id: 'originAmount',
-              title: 'Origin Amount',
+              title: 'Origin amount',
               value: (entity): Amount | undefined => {
                 if (entity.originAmountDetails == null) {
                   return undefined;
@@ -235,7 +235,7 @@ export function Content(props: { userId: string }) {
             }),
             helper.simple<'originAmountDetails.country'>({
               id: 'originCountry',
-              title: 'Origin Country',
+              title: 'Origin country',
               key: 'originAmountDetails.country',
               type: COUNTRY,
             }),

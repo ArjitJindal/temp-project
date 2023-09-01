@@ -16,6 +16,7 @@ import { SETTINGS } from '@/utils/queries/keys';
 import { usePrevious } from '@/utils/hooks';
 import { isSuccess } from '@/utils/asyncResource';
 import { message } from '@/components/library/Message';
+import { humanizeConstant } from '@/utils/humanize';
 
 interface ContextValue {
   features: FeatureName[];
@@ -126,7 +127,7 @@ export function useRiskActionLabel(ruleAction: RuleAction | undefined): string |
 }
 export function getRiskLevelLabel(riskLevel: RiskLevel, settings: TenantSettings): string {
   const alias = settings.riskLevelAlias?.find((item) => item.level === riskLevel)?.alias;
-  return alias || capitalizeWords(riskLevel);
+  return alias || humanizeConstant(riskLevel);
 }
 
 export function getRiskLevelFromAlias(riskLevelAlias: string, settings: TenantSettings): string {

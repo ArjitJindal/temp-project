@@ -134,7 +134,7 @@ const AuditLogModal = (props: Props) => {
           setIsModalVisible(true);
         }}
       >
-        View Changes
+        View changes
       </Typography.Text>
       <Modal
         isOpen={isModalVisible}

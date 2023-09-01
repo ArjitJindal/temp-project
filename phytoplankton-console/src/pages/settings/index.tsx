@@ -153,11 +153,11 @@ export default function SettingsPage() {
           ),
         },
         {
-          name: 'KYB & ID Verification',
+          name: 'KYB & ID verification',
           content: (
             <>
               <div style={{ marginTop: '200px' }}>
-                <h3>KYB & ID Verification{'     '}</h3>
+                <h3>KYB & ID verification{'     '}</h3>
                 <a href={`mailto:${branding.supportEmail}`}>
                   <Button type="PRIMARY">Request access</Button>
                 </a>

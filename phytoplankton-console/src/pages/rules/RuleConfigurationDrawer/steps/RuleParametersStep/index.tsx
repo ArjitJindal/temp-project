@@ -1,5 +1,6 @@
 import React from 'react';
 import { Tabs } from 'antd';
+import { capitalize, toLower } from 'lodash';
 import s from './style.module.less';
 import { RiskLevelRuleActions, RiskLevelRuleParameters, Rule, RuleAction } from '@/apis';
 import JsonSchemaEditor from '@/pages/rules/RuleConfigurationDrawer/JsonSchemaEditor';
@@ -95,7 +96,7 @@ function RiskBasedThresholds(props: Props) {
               tab={
                 <div className={s.riskLevelTabLabel}>
                   {/*{!isInitial && <CheckboxCircleFillIcon />}*/}
-                  {getRiskLevelLabel(riskLevel, settings)}
+                  {capitalize(getRiskLevelLabel(riskLevel, settings))}
                 </div>
               }
               key={riskLevel}
@@ -110,9 +111,8 @@ function RiskBasedThresholds(props: Props) {
                   <InputField<any>
                     name={riskLevel}
                     label={'Rule actions'}
-                    description={`Select the action to perform if this rule is hit for users of ${getRiskLevelLabel(
-                      riskLevel,
-                      settings,
+                    description={`Select the action to perform if this rule is hit for users of ${toLower(
+                      getRiskLevelLabel(riskLevel, settings),
                     )} risk level`}
                   >
                     {(inputProps) => <RuleActionSelector {...inputProps} />}

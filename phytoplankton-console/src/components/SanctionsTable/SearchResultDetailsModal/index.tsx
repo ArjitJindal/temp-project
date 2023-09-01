@@ -70,15 +70,15 @@ export default function SearchResultDetailsModal(props: Props) {
         </Card.Section>
         <Card.Root
           header={{
-            title: 'Key Information',
+            title: 'Key information',
           }}
         >
           <Card.Section>
             <ProDescriptions column={1} colon={false} layout="horizontal">
-              <ProDescriptions.Item label={<b>Full Name</b>} valueType="text">
+              <ProDescriptions.Item label={<b>Full name</b>} valueType="text">
                 {hit.doc?.name}
               </ProDescriptions.Item>
-              <ProDescriptions.Item label={<b>Entity Type</b>} valueType="text">
+              <ProDescriptions.Item label={<b>Entity type</b>} valueType="text">
                 {_.startCase(hit.doc?.entity_type)}
               </ProDescriptions.Item>
               <ProDescriptions.Item label={<b>AKA</b>} valueType="text">
@@ -131,7 +131,7 @@ export default function SearchResultDetailsModal(props: Props) {
                       </Tag>
                     </Space>
                   </ProDescriptions.Item>
-                  <ProDescriptions.Item label={<b>Listed Dates</b>}>
+                  <ProDescriptions.Item label={<b>Listed dates</b>}>
                     {listedTime}
                   </ProDescriptions.Item>
                   {source.fields.map((field) => (
