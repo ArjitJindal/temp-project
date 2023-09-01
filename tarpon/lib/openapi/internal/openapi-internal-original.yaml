@@ -5598,6 +5598,8 @@ components:
           type: string
         name:
           type: string
+        region:
+          type: string
         isProductionAccessDisabled:
           type: boolean
       required:

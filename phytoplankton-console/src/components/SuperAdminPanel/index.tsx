@@ -1,4 +1,4 @@
-import { Divider, Form, Input, Select } from 'antd';
+import { Divider, Form, Input, Select, Tag } from 'antd';
 import { ChangeEvent, useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { validate } from 'uuid';
@@ -38,7 +38,13 @@ export default function SuperAdminPanel() {
   const tenantOptions =
     queryResult.data?.map((tenant) => ({
       value: tenant.id,
-      label: `${tenant.name} (${tenant.id})`,
+      text: `${tenant.name} ${tenant.id} ${tenant.region}`,
+      label: (
+        <div>
+          {tenant.name} <Tag color="blue">id: {tenant.id} </Tag>
+          {tenant.region && <Tag color="orange">region: {tenant.region} </Tag>}
+        </div>
+      ),
       disabled: tenant.isProductionAccessDisabled ?? false,
     })) || [];
 
@@ -128,8 +134,7 @@ export default function SuperAdminPanel() {
               onChange={handleChangeTenant}
               value={user.tenantId}
               filterOption={(input, option) =>
-                (option?.label.toLowerCase() ?? '').includes(input.toLowerCase().trim()) ||
-                (option?.value.toLowerCase() ?? '').includes(input.toLowerCase().trim())
+                (option?.text?.toLowerCase() ?? '').includes(input.toLowerCase().trim())
               }
               showSearch={true}
             />

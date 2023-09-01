@@ -48,6 +48,7 @@ export const tenantsHandler = lambdaApi()(
           name: tenant.name,
           isProductionAccessDisabled:
             tenant.isProductionAccessDisabled ?? false,
+          region: tenant.region,
         })
       )
       return data
