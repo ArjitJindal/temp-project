@@ -35,7 +35,7 @@ export default function Footer<Item extends object, Params extends object>(
 
   return (
     <div className={s.tableSelectionFooter} data-cy="table-footer">
-      {selectionInfo && (
+      {selectionInfo && selectionInfo.entityCount > 0 && (
         <div className={s.selectionInfo}>
           {' '}
           <Checkbox value={true} />
