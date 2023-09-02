@@ -709,69 +709,62 @@ export class RulesEngineService {
         // Don't await publishing metric
         publishMetric(RULE_EXECUTION_TIME_MS_METRIC, ruleExecutionTimeMs)
         logger.info(`Completed rule`)
-        let originTransactionAggregationTask:
-          | TransactionAggregationTaskEntry
-          | undefined
-        let destinationTransactionAggregationTask:
-          | TransactionAggregationTaskEntry
-          | undefined
 
-        if (
-          hasFeature('RULES_ENGINE_V2') &&
+        const transactionAggregationTasks =
           ruleClassInstance instanceof TransactionAggregationRule
-        ) {
-          if (ruleInstance.id) {
-            const originUserKeyId = ruleClassInstance.getUserKeyId('origin')
-            originTransactionAggregationTask = originUserKeyId
-              ? {
-                  userKeyId: originUserKeyId,
-                  payload: {
-                    direction: 'origin',
-                    transactionId: options.transaction.transactionId,
-                    ruleInstanceId: ruleInstance.id,
-                    tenantId: this.tenantId,
-                    isTransactionHistoricalFiltered,
-                  },
-                }
-              : undefined
-            const destinationUserKeyId =
-              ruleClassInstance.getUserKeyId('destination')
-            destinationTransactionAggregationTask = destinationUserKeyId
-              ? {
-                  userKeyId: destinationUserKeyId,
-                  payload: {
-                    direction: 'destination',
-                    transactionId: options.transaction.transactionId,
-                    ruleInstanceId: ruleInstance.id,
-                    tenantId: this.tenantId,
-                    isTransactionHistoricalFiltered,
-                  },
-                }
-              : undefined
-          }
-        } else if (ruleClassInstance instanceof TransactionAggregationRule) {
-          await background(
-            ruleClassInstance.updateAggregation(
-              'origin',
-              isTransactionHistoricalFiltered
-            ),
-            ruleClassInstance.updateAggregation(
-              'destination',
-              isTransactionHistoricalFiltered
-            )
-          )
-        }
+            ? await this.handleTransactionRuleAggregation(
+                ruleClassInstance,
+                isTransactionHistoricalFiltered,
+                options.transaction.transactionId,
+                ruleInstance.id!
+              )
+            : []
         return {
           result,
-          transactionAggregationTasks: compact([
-            originTransactionAggregationTask,
-            destinationTransactionAggregationTask,
-          ]),
+          transactionAggregationTasks,
         }
       } catch (e) {
         logger.error(e)
       }
     })
+  }
+
+  private async handleTransactionRuleAggregation(
+    ruleClassInstance: TransactionAggregationRule<any, any>,
+    isTransactionHistoricalFiltered: boolean,
+    transactionId: string,
+    ruleInstanceId: string
+  ): Promise<TransactionAggregationTaskEntry[]> {
+    const directions = ['origin', 'destination'] as const
+    const transactionAggregationTasks: TransactionAggregationTaskEntry[] = []
+    for (const direction of directions) {
+      const userKeyId = ruleClassInstance.getUserKeyId(direction)
+      if (userKeyId) {
+        if (
+          hasFeature('RULES_ENGINE_V2') &&
+          !(await ruleClassInstance.isRebuilt(direction))
+        ) {
+          transactionAggregationTasks.push({
+            userKeyId,
+            payload: {
+              direction,
+              transactionId,
+              ruleInstanceId,
+              tenantId: this.tenantId,
+              isTransactionHistoricalFiltered,
+            },
+          })
+        } else {
+          await background(
+            ruleClassInstance.updateAggregation(
+              direction,
+              isTransactionHistoricalFiltered
+            )
+          )
+        }
+      }
+    }
+    return transactionAggregationTasks
   }
 
   private async sendTransactionAggregationTasks(
