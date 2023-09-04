@@ -7,7 +7,7 @@ describe('Approval of payments', () => {
   it('should change the status of a payment on approval', () => {
     const isQAenv = checkQAUrl();
     isQAenv ? skipOn(true) : skipOn(false);
-    cy.visit('/settings');
+    cy.visit('/settings/transactions');
     cy.intercept('POST', '**/transactions/action').as('approval-request');
     cy.contains('Payment approval', { timeout: 15000 }).click();
     cy.get('input[role="switch"]').then((toggle) => {
