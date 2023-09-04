@@ -9,7 +9,6 @@ describe('Approval of payments', () => {
     isQAenv ? skipOn(true) : skipOn(false);
     cy.visit('/settings/transactions');
     cy.intercept('POST', '**/transactions/action').as('approval-request');
-    cy.contains('Payment approval', { timeout: 15000 }).click();
     cy.get('input[role="switch"]').then((toggle) => {
       const isChecked = toggle.attr('aria-checked') === 'true';
       if (isChecked) {
