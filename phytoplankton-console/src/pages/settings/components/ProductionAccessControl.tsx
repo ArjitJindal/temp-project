@@ -1,10 +1,10 @@
+import SettingsCard from './SettingsCard';
 import {
   useSettings,
   useUpdateTenantSettings,
 } from '@/components/AppWrapper/Providers/SettingsProvider';
 import { message } from '@/components/library/Message';
 import Toggle from '@/components/library/Toggle';
-import { H3 } from '@/components/ui/Typography';
 import { useAuth0User } from '@/utils/user-utils';
 
 export const ProductionAccessControl = () => {
@@ -14,7 +14,7 @@ export const ProductionAccessControl = () => {
   const handleDisable = () => {
     if (user.tenantId === 'flagright') {
       message.warn(
-        'Cannot disable production access control for Flagright tenant. Please contact support.',
+        'Cannot disable production access control for Flagright tenant or in non-production environment. Please contact Flagright support.',
       );
       return;
     }
@@ -27,19 +27,15 @@ export const ProductionAccessControl = () => {
   };
 
   return (
-    <div>
-      <H3>Production access control</H3>
-      <p>
-        When enabled, Flagright support team can access the production environment for
-        troubleshooting & bug fixes.
-      </p>
-      <div style={{ marginTop: '2rem' }}>
-        <Toggle
-          onChange={!settings.isProductionAccessEnabled ? handleEnable : handleDisable}
-          value={settings.isProductionAccessEnabled}
-          loading={mutateTenantSettings.isLoading}
-        />
-      </div>
-    </div>
+    <SettingsCard
+      title="Production access control"
+      description="When enabled, Flagright support team can access the production environment for troubleshooting & bug fixes."
+    >
+      <Toggle
+        onChange={!settings.isProductionAccessEnabled ? handleEnable : handleDisable}
+        value={settings.isProductionAccessEnabled}
+        loading={mutateTenantSettings.isLoading}
+      />
+    </SettingsCard>
   );
 };

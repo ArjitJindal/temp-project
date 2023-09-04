@@ -1,3 +1,4 @@
+import SettingsCard from './SettingsCard';
 import Confirm from '@/components/utils/Confirm/index';
 import {
   useSettings,
@@ -25,19 +26,20 @@ export const FlagrightAISettings = () => {
   const displayText = <p>{statement}</p>;
   return (
     <div>
-      <h3>{whiteLabeled ? '' : 'Flagright'} AI features</h3>
-      <p>Supercharge your productivity with AI features including GPT.</p>
-      <br />
-
-      <Confirm title="Are you sure?" text={displayText} onConfirm={handleEnable}>
-        {({ onClick }) => (
-          <Toggle
-            value={settings.isAiEnabled}
-            onChange={!settings.isAiEnabled ? onClick : handleDisable}
-            loading={mutateTenantSettings.isLoading}
-          />
-        )}
-      </Confirm>
+      <SettingsCard
+        title={whiteLabeled ? 'AI Features' : 'Flagright AI features'}
+        description="Supercharge your productivity with AI Features including GPT."
+      >
+        <Confirm title="Are you sure?" text={displayText} onConfirm={handleEnable}>
+          {({ onClick }) => (
+            <Toggle
+              value={settings.isAiEnabled}
+              onChange={!settings.isAiEnabled ? onClick : handleDisable}
+              loading={mutateTenantSettings.isLoading}
+            />
+          )}
+        </Confirm>
+      </SettingsCard>
     </div>
   );
 };

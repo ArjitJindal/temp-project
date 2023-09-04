@@ -1,5 +1,6 @@
 import React, { useCallback, useMemo, useState } from 'react';
 import { Button, Input } from 'antd';
+import SettingsCard from './SettingsCard';
 import Table from '@/components/library/Table';
 import {
   useSettings,
@@ -7,7 +8,6 @@ import {
 } from '@/components/AppWrapper/Providers/SettingsProvider';
 import { RuleAction, RuleActionAlias } from '@/apis';
 import { TableColumn } from '@/components/library/Table/types';
-import { H4 } from '@/components/ui/Typography';
 import { ColumnHelper } from '@/components/library/Table/columnHelper';
 
 interface TableItem {
@@ -150,8 +150,10 @@ export const RuleActionSettings: React.FC = () => {
     onSaveAlias: handleSaveAlias,
   };
   return (
-    <>
-      <H4>Default actions</H4>
+    <SettingsCard
+      title="Rule action alias"
+      description="Configure rule actions display name in console"
+    >
       <Table<TableItem>
         rowKey="action"
         columns={columns}
@@ -162,6 +164,6 @@ export const RuleActionSettings: React.FC = () => {
         toolsOptions={false}
         externalState={externalState}
       />
-    </>
+    </SettingsCard>
   );
 };

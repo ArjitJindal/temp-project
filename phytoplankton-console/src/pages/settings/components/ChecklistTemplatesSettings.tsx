@@ -1,5 +1,5 @@
 import { JSONSchemaType } from 'ajv';
-import { SettingsContainer } from './SettingsContainer';
+import SettingsCard from './SettingsCard';
 import { useApi } from '@/api';
 import { ChecklistTemplate } from '@/apis';
 import { DefaultApiGetChecklistTemplatesRequest } from '@/apis/types/ObjectParamAPI';
@@ -49,7 +49,7 @@ export function ChecklistTemplatesSettings() {
     required: ['categories'],
   };
   return (
-    <SettingsContainer
+    <SettingsCard
       title="Investigation checklist"
       description="Define investigation checklist for analysts to refer while investigation an alert"
     >
@@ -102,6 +102,6 @@ export function ChecklistTemplatesSettings() {
           },
         ]}
       />
-    </SettingsContainer>
+    </SettingsCard>
   );
 }

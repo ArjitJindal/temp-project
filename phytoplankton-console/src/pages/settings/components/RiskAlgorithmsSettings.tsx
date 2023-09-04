@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import SettingsCard from './SettingsCard';
 import SelectionGroup from '@/components/library/SelectionGroup';
 import { getBranding } from '@/utils/branding';
 
@@ -8,10 +9,10 @@ export const RiskAlgorithmsSettings = () => {
   const branding = getBranding();
 
   return (
-    <div>
-      <h3>Risk algorithms</h3>
-      <p>Select the algorithm type you want to use for transaction monitoring.</p>
-      <br />
+    <SettingsCard
+      title="Risk algorithms"
+      description="Select the algorithm type you want to use for transaction monitoring."
+    >
       <p>
         <b>Algorithm type</b>
       </p>
@@ -72,6 +73,6 @@ export const RiskAlgorithmsSettings = () => {
           />
         </>
       )}
-    </div>
+    </SettingsCard>
   );
 };

@@ -1,4 +1,5 @@
 import React, { useCallback, useMemo, useState } from 'react';
+import SettingsCard from './SettingsCard';
 import Table from '@/components/library/Table';
 import {
   useSettings,
@@ -144,23 +145,28 @@ export const RiskLevelSettings: React.FC = () => {
     savedLevelToAlias,
   };
   return (
-    <Table<TableItem>
-      sizingMode="FULL_WIDTH"
-      rowKey="level"
-      columns={columns}
-      onEdit={(rowKey, newValue) => {
-        handleUpdateAlias(rowKey as RiskLevel, newValue.levelAlias ?? '');
-      }}
-      data={{
-        items: tableData,
-      }}
-      pagination={false}
-      toolsOptions={{
-        reload: false,
-        setting: false,
-        download: false,
-      }}
-      externalState={externalState}
-    />
+    <SettingsCard
+      title="Risk algorithms"
+      description="Select the algorithm type to be used for transaction monitoring"
+    >
+      <Table<TableItem>
+        sizingMode="FULL_WIDTH"
+        rowKey="level"
+        columns={columns}
+        onEdit={(rowKey, newValue) => {
+          handleUpdateAlias(rowKey as RiskLevel, newValue.levelAlias ?? '');
+        }}
+        data={{
+          items: tableData,
+        }}
+        pagination={false}
+        toolsOptions={{
+          reload: false,
+          setting: false,
+          download: false,
+        }}
+        externalState={externalState}
+      />
+    </SettingsCard>
   );
 };

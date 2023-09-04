@@ -1,5 +1,6 @@
 import React, { useCallback, useMemo, useState } from 'react';
 import { Button, Input } from 'antd';
+import SettingsCard from './SettingsCard';
 import Table from '@/components/library/Table';
 import {
   useSettings,
@@ -7,7 +8,6 @@ import {
 } from '@/components/AppWrapper/Providers/SettingsProvider';
 import { TransactionState, TransactionStateAlias } from '@/apis';
 import { TableColumn } from '@/components/library/Table/types';
-import { H4 } from '@/components/ui/Typography';
 import { ColumnHelper } from '@/components/library/Table/columnHelper';
 
 interface TableItem {
@@ -175,8 +175,10 @@ export const TransactionStateSettings: React.FC = () => {
     onSaveAlias: handleSaveAlias,
   };
   return (
-    <>
-      <H4>Default state</H4>
+    <SettingsCard
+      title="Transaction state alias"
+      description="Configure transaction states display name in console"
+    >
       <Table<TableItem>
         rowKey="state"
         columns={columns}
@@ -187,6 +189,6 @@ export const TransactionStateSettings: React.FC = () => {
         toolsOptions={false}
         externalState={externalState}
       />
-    </>
+    </SettingsCard>
   );
 };

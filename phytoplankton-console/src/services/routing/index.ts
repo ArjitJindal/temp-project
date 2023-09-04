@@ -356,7 +356,19 @@ export function useRoutes(): RouteItem[] {
         name: 'settings',
         position: 'bottom',
         permissions: ['settings:organisation:read'],
+        hideChildrenInMenu: true,
         component: SettingsPage,
+        routes: [
+          {
+            path: '/settings',
+            redirect: '/settings/system',
+          },
+          {
+            path: '/settings/:section',
+            name: 'settings-section',
+            component: SettingsPage,
+          },
+        ],
       },
       {
         path: '/accounts',

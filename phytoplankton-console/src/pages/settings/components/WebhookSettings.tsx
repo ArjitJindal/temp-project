@@ -3,6 +3,7 @@ import { useCallback, useRef, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { PlusOutlined } from '@ant-design/icons';
 import { WebhookDetails } from './WebhookDetails';
+import SettingsCard from './SettingsCard';
 import { WebhookConfiguration, WebhookEventType } from '@/apis';
 import { useApi } from '@/api';
 import Colors from '@/components/ui/colors';
@@ -151,7 +152,7 @@ export const WebhookSettings: React.FC = () => {
   });
 
   return (
-    <>
+    <SettingsCard title="Webhooks" description="">
       <QueryResultsTable<WebhookConfiguration>
         rowKey="_id"
         innerRef={actionRef}
@@ -183,6 +184,6 @@ export const WebhookSettings: React.FC = () => {
           />
         )}
       </Drawer>
-    </>
+    </SettingsCard>
   );
 };

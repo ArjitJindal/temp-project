@@ -1,5 +1,6 @@
 import { Select, SelectProps } from 'antd';
 import { useState, useEffect } from 'react';
+import SettingsCard from './SettingsCard';
 import {
   useSettings,
   useUpdateTenantSettings,
@@ -113,28 +114,33 @@ export const DefaultValuesSettings = () => {
   };
   return (
     <div>
-      <Table<TableItem>
-        rowKey="label"
-        sizingMode="FULL_WIDTH"
-        toolsOptions={false}
-        columns={columns}
-        data={{
-          items: [
-            {
-              valueType: 'currency',
-              options: CURRENCIES_SELECT_OPTIONS,
-              label: 'Currency',
-            },
-            {
-              valueType: 'tenantTimezone',
-              options: TIMEZONES.map((x) => ({ label: x, value: x })),
-              label: 'Time zone',
-            },
-          ],
-        }}
-        pagination={false}
-        externalState={externalState}
-      />
+      <SettingsCard
+        title="Default values"
+        description="Define values that are constant throughout the console."
+      >
+        <Table<TableItem>
+          rowKey="label"
+          sizingMode="FULL_WIDTH"
+          toolsOptions={false}
+          columns={columns}
+          data={{
+            items: [
+              {
+                valueType: 'currency',
+                options: CURRENCIES_SELECT_OPTIONS,
+                label: 'Currency',
+              },
+              {
+                valueType: 'tenantTimezone',
+                options: TIMEZONES.map((x) => ({ label: x, value: x })),
+                label: 'Time zone',
+              },
+            ],
+          }}
+          pagination={false}
+          externalState={externalState}
+        />
+      </SettingsCard>
     </div>
   );
 };

@@ -1,4 +1,5 @@
-import { AddToSlackButton } from '../case-management/components/AddToSlackButton';
+import { useNavigate, useParams } from 'react-router';
+import { Tabs } from 'antd';
 import { RuleActionSettings } from './components/RuleActionSettings';
 import { PaymentApprovalSettings } from './components/PaymentApprovalSettings';
 import { WebhookSettings } from './components/WebhookSettings';
@@ -8,229 +9,87 @@ import { FlagrightAISettings } from './components/FlagrightAISettings';
 import { DefaultValuesSettings } from './components/DefaultValuesSettings';
 import { RiskAlgorithmsSettings } from './components/RiskAlgorithmsSettings';
 import NarrativeTemplates from './components/NarrativeTemplates';
-import s from './styles.module.less';
 import { QuotaSettings } from './components/QuotaSettings';
 import { KYCUserStatusSettings } from './components/KYCUserStatusSettings';
 import { ApiKeysSettings } from './components/ApiKeysSettings';
 import { ChecklistTemplatesSettings } from './components/ChecklistTemplatesSettings';
+import { EmailNotificationsSettings } from './components/EmailNotificationsSettings';
+import { SlackNotificationsSettings } from './components/SlackNotificationsSettings';
+import { ProfessionalServicesSettings } from './components/ProfessionalServicesSettings';
+import { SanctionsSettings } from './components/SanctionsSettings';
 import { ProductionAccessControl } from './components/ProductionAccessControl';
-import ComplyAdvantageLogo from '@/branding/Comply-Advantage-logo.svg';
 import PageWrapper from '@/components/PageWrapper';
 import { useI18n } from '@/locales';
-import SidebarPanel, { MenuSection } from '@/components/ui/SidebarPanel';
-import Button from '@/components/library/Button';
 import { useFeatureEnabled } from '@/components/AppWrapper/Providers/SettingsProvider';
-import { getBranding, isWhiteLabeled } from '@/utils/branding';
-import { message } from '@/components/library/Message';
+import PageTabs from '@/components/ui/PageTabs';
+import { makeUrl } from '@/utils/routing';
 
-const branding = getBranding();
-const whiteLabeled = isWhiteLabeled();
 export default function SettingsPage() {
   const isMLDemoEnabled = useFeatureEnabled('MACHINE_LEARNING_DEMO');
-  const isSanctionsEnabled = useFeatureEnabled('SANCTIONS');
 
-  const handleDownload = () => {
-    message.success('Sanctions list download started');
-    const downloadLink = document.createElement('a');
-    downloadLink.href =
-      'https://phytoplankton-assets-sanctionslist.s3.eu-central-1.amazonaws.com/Data+Compliance+Overview+January+2023.xlsx';
-    // Sanctions list has been stored in a s3 bucket with the name 'phytoplankton-assets-sanctionslist'
-    downloadLink.download = 'File.xlsx';
-    downloadLink.click();
+  const { section = 'system' } = useParams<'section'>() as {
+    section:
+      | 'system'
+      | 'case-management'
+      | 'transactions'
+      | 'users'
+      | 'rules'
+      | 'risk-scoring'
+      | 'notifications'
+      | 'addons'
+      | 'developers';
   };
-
-  const menuSections: (MenuSection | boolean)[] = [
-    {
-      name: 'ORGANIZATION',
-      menuItems: [
-        {
-          name: 'Default values',
-          content: <DefaultValuesSettings />,
-        },
-        {
-          name: 'Narrative templates',
-          content: <NarrativeTemplates />,
-        },
-        {
-          name: 'Investigation checklist',
-          content: <ChecklistTemplatesSettings />,
-        },
-        {
-          name: whiteLabeled ? 'AI features' : 'Flagright AI features',
-          content: <FlagrightAISettings />,
-        },
-        {
-          name: 'Payment approval',
-          content: <PaymentApprovalSettings />,
-        },
-        {
-          name: 'KYC/user status lock',
-          content: <KYCUserStatusSettings />,
-        },
-
-        {
-          name: 'Production access control',
-          content: <ProductionAccessControl />,
-        },
-
-        {
-          name: 'Billing',
-          content: <div>Billing</div>,
-          disabled: true,
-        },
-      ],
-    },
-    isMLDemoEnabled
-      ? {
-          name: 'MACHINE LEARNING',
-          menuItems: [
-            {
-              name: 'Risk algorithms',
-              content: <RiskAlgorithmsSettings />,
-            },
-          ],
-        }
-      : false,
-    {
-      name: 'NOMENCLATURE',
-      menuItems: [
-        {
-          name: 'Rule actions',
-          content: <RuleActionSettings />,
-        },
-        {
-          name: 'Transaction states',
-          content: <TransactionStateSettings />,
-        },
-        {
-          name: 'Risk levels',
-          content: <RiskLevelSettings />,
-        },
-      ],
-    },
-    {
-      name: 'ADD-ONS',
-      menuItems: [
-        {
-          name: 'Sanctions/PEP/Adverse media screening',
-          content: isSanctionsEnabled ? (
-            <>
-              <div className={s.sanctionsModal}>
-                <div className={s.sanctionsLayout}>
-                  <h3 className={s.sanctionsHeading}>
-                    Sanctions list (as of the 31 January, 2023){'     '}
-                  </h3>
-                  <img src={ComplyAdvantageLogo} alt="Comply Advantage" />
-                </div>
-                <div className={s.sanctionsText}>
-                  ComplyAdvantage data provides a holistic solution to due diligence and compliance
-                  requirements. Their global data sources are continuously updated, reflecting the
-                  ever-changing risks to corporates and financial institutions in their dealings
-                  with global counterparties. The data includes millions of profiles on high-risk
-                  individuals and corporations worldwide.
-                </div>
-                <div className={s.sanctionsDownloadButton}>
-                  <Button
-                    type="PRIMARY"
-                    onClick={() => {
-                      handleDownload();
-                    }}
-                  >
-                    Download List
-                  </Button>
-                </div>
-              </div>
-            </>
-          ) : (
-            <>
-              <div>
-                <h3>Sanctions/PEP/Adverse media screening{'     '}</h3>
-                <a href={`mailto:${branding.supportEmail}`} className={s.sanctionsAccessButton}>
-                  <Button type="PRIMARY">Request access</Button>
-                </a>
-              </div>
-            </>
-          ),
-        },
-        {
-          name: 'KYB & ID verification',
-          content: (
-            <>
-              <div style={{ marginTop: '200px' }}>
-                <h3>KYB & ID verification{'     '}</h3>
-                <a href={`mailto:${branding.supportEmail}`}>
-                  <Button type="PRIMARY">Request access</Button>
-                </a>
-              </div>
-            </>
-          ),
-        },
-        {
-          name: 'Launchpad: Get expert support for fintech licensing',
-          content: (
-            <>
-              <div style={{ marginTop: '200px' }}>
-                <h3>Launchpad: Get expert support for fintech licensing{'     '}</h3>
-                <a href={`mailto:${branding.supportEmail}`}>
-                  <Button type="PRIMARY"> Request access</Button>
-                </a>
-              </div>
-            </>
-          ),
-        },
-      ],
-    },
-    {
-      name: 'ALERTS',
-      menuItems: [
-        {
-          name: 'Slack',
-          content: (
-            <>
-              <div style={{ marginTop: '200px' }}>
-                <h3>Slack{'     '}</h3>
-                <AddToSlackButton />{' '}
-              </div>
-            </>
-          ),
-        },
-        {
-          name: 'Email',
-          content: (
-            <>
-              <div style={{ marginTop: '200px' }}>
-                <a href={`mailto:${branding.supportEmail}`}>
-                  <Button type="PRIMARY">Request access</Button>
-                </a>
-              </div>
-            </>
-          ),
-        },
-      ],
-    },
-    {
-      name: 'DEVELOPERS',
-      menuItems: [
-        {
-          name: 'Webhooks',
-          content: <WebhookSettings />,
-        },
-        {
-          name: 'Quotas',
-          content: <QuotaSettings />,
-        },
-        {
-          name: 'API keys',
-          content: <ApiKeysSettings />,
-        },
-      ],
-    },
-  ].filter(Boolean);
-
+  const navigate = useNavigate();
   const i18n = useI18n();
   return (
     <PageWrapper title={i18n('menu.settings')}>
-      <SidebarPanel menuSections={menuSections as MenuSection[]} />
+      <PageTabs
+        activeKey={section}
+        onChange={(section) => {
+          navigate(makeUrl(`/settings/:section`, { section }), { replace: true });
+        }}
+      >
+        <Tabs.TabPane tab={i18n('menu.settings.system')} key={'system'}>
+          <DefaultValuesSettings />
+          <NarrativeTemplates />
+          <ProductionAccessControl />
+        </Tabs.TabPane>
+        <Tabs.TabPane tab={i18n('menu.settings.transactions')} key={'transactions'}>
+          <>
+            <PaymentApprovalSettings />
+            <TransactionStateSettings />
+          </>
+        </Tabs.TabPane>
+        <Tabs.TabPane tab={i18n('menu.settings.case-management')} key={'case-management'}>
+          <>
+            <ChecklistTemplatesSettings />
+          </>
+        </Tabs.TabPane>
+        <Tabs.TabPane tab={i18n('menu.settings.users')} key={'users'}>
+          <KYCUserStatusSettings />
+        </Tabs.TabPane>
+        <Tabs.TabPane tab={i18n('menu.settings.rules')} key={'rules'}>
+          <RuleActionSettings />
+        </Tabs.TabPane>
+        <Tabs.TabPane tab={i18n('menu.settings.risk-scoring')} key={'risk-scoring'}>
+          {isMLDemoEnabled ? <RiskAlgorithmsSettings /> : ''}
+          <RiskLevelSettings />
+        </Tabs.TabPane>
+        <Tabs.TabPane tab={i18n('menu.settings.notifications')} key={'notifications'}>
+          <SlackNotificationsSettings />
+          <EmailNotificationsSettings />
+        </Tabs.TabPane>
+        <Tabs.TabPane tab={i18n('menu.settings.addons')} key={'addons'}>
+          <FlagrightAISettings />
+          <ProfessionalServicesSettings />
+          <SanctionsSettings />
+        </Tabs.TabPane>
+        <Tabs.TabPane tab={i18n('menu.settings.developers')} key={'developers'}>
+          <ApiKeysSettings />
+          <QuotaSettings />
+          <WebhookSettings />
+        </Tabs.TabPane>
+      </PageTabs>
     </PageWrapper>
   );
 }

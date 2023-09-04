@@ -1,3 +1,4 @@
+import SettingsCard from './SettingsCard';
 import {
   useSettings,
   useUpdateTenantSettings,
@@ -17,18 +18,19 @@ export const PaymentApprovalSettings = () => {
 
   return (
     <div>
-      <h3>Payment approval</h3>
-      <p>
-        Turn on manual approval for all transactions with ‘SUSPEND’ state rule action in case
-        management for transaction rules.
-      </p>
-      <div style={{ marginTop: '2rem' }}>
-        <Toggle
-          onChange={!settings.isPaymentApprovalEnabled ? handleEnable : handleDisable}
-          value={settings.isPaymentApprovalEnabled}
-          loading={mutateTenantSettings.isLoading}
-        />
-      </div>
+      <SettingsCard
+        title="Payment approval"
+        description="Turn on manual approval for all transactions with ‘SUSPEND’ state rule action in case
+          management for transaction rules."
+      >
+        <div>
+          <Toggle
+            onChange={!settings.isPaymentApprovalEnabled ? handleEnable : handleDisable}
+            value={settings.isPaymentApprovalEnabled}
+            loading={mutateTenantSettings.isLoading}
+          />
+        </div>
+      </SettingsCard>
     </div>
   );
 };

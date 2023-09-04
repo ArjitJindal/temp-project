@@ -1,4 +1,4 @@
-import s from './index.module.less';
+import SettingsCard from '../SettingsCard';
 import {
   useSettings,
   useUpdateTenantSettings,
@@ -17,19 +17,15 @@ export const KYCUserStatusSettings = () => {
     mutateTenantSettings.mutate({ kycUserStatusLock: true });
   };
   return (
-    <div>
-      <h3>KYC/user status lock</h3>
-      <p className={s.description}>
-        When enabled, prevents editing of 'KYC status' and 'user status' fields on user details
-        page.
-      </p>
-      <br />
-
+    <SettingsCard
+      title="KYC/user status lock"
+      description="When enabled, prevents editing of 'KYC status' and 'User status' fields on user details page."
+    >
       <Toggle
         value={settings.kycUserStatusLock}
         onChange={settings.kycUserStatusLock ? handleDisable : handleEnable}
         loading={mutateTenantSettings.isLoading}
       />
-    </div>
+    </SettingsCard>
   );
 };

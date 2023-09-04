@@ -1,12 +1,11 @@
 import { useState } from 'react';
+import SettingsCard from '../SettingsCard';
 import s from './index.module.less';
 import { useApi } from '@/api';
 import { TenantApiKey } from '@/apis';
 import AsyncResourceRenderer from '@/components/common/AsyncResourceRenderer';
 import Table from '@/components/library/Table';
 import { ColumnHelper } from '@/components/library/Table/columnHelper';
-import { DATE_TIME } from '@/components/library/Table/standardDataTypes';
-import { H2, P } from '@/components/ui/Typography';
 import { useQuery } from '@/utils/queries/hooks';
 import EyeOutlined from '@/components/ui/icons/Remix/system/eye-line.react.svg';
 import FileCopyOutlined from '@/components/ui/icons/Remix/document/file-copy-line.react.svg';
@@ -14,6 +13,7 @@ import { message } from '@/components/library/Message';
 import Tooltip from '@/components/library/Tooltip';
 import { useReloadSettings, useSettings } from '@/components/AppWrapper/Providers/SettingsProvider';
 import Alert from '@/components/library/Alert';
+import { DATE_TIME_FORMAT_WITHOUT_SECONDS, dayjs } from '@/utils/dayjs';
 
 export const ApiKeysSettings = () => {
   const api = useApi();
@@ -38,11 +38,7 @@ export const ApiKeysSettings = () => {
   const columnHelper = new ColumnHelper<TenantApiKey>();
 
   return (
-    <>
-      <H2>API keys</H2>
-      <P grey variant="sml">
-        View your API keys
-      </P>
+    <SettingsCard title="API keys" description="View your API keys.">
       <AsyncResourceRenderer resource={queryResult.data}>
         {(apiKeys) => (
           <>
@@ -114,7 +110,18 @@ export const ApiKeysSettings = () => {
                   key: 'key',
                   defaultWidth: 600,
                 }),
-                columnHelper.simple({ title: 'Created on', key: 'createdAt', type: DATE_TIME }),
+                columnHelper.simple({
+                  title: 'Created on',
+                  key: 'createdAt',
+                  type: {
+                    render: (key, data) => {
+                      return (
+                        <>{dayjs(data.item.createdAt).format(DATE_TIME_FORMAT_WITHOUT_SECONDS)}</>
+                      );
+                    },
+                    defaultWrapMode: 'WRAP',
+                  },
+                }),
               ]}
               rowKey="id"
             />
@@ -134,6 +141,6 @@ export const ApiKeysSettings = () => {
           </>
         )}
       </AsyncResourceRenderer>
-    </>
+    </SettingsCard>
   );
 };
