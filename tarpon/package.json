@@ -75,7 +75,7 @@
     "create-local-ddb": "aws dynamodb create-table --endpoint-url http://localhost:8000 --table-name $npm_config_table --attribute-definitions AttributeName=PartitionKeyID,AttributeType=S AttributeName=SortKeyID,AttributeType=S --key-schema AttributeName=PartitionKeyID,KeyType=HASH AttributeName=SortKeyID,KeyType=RANGE --provisioned-throughput ReadCapacityUnits=1,WriteCapacityUnits=1 --region=us-east-2",
     "delete-local-ddb": "aws dynamodb delete-table --endpoint-url http://localhost:8000 --table-name $npm_config_table",
     "dev:databases": "docker-compose up",
-    "dev:databases:init": "AUTH0_DOMAIN=dev-flagright.eu.auth0.com ts-node ./init_local_db/all.ts",
+    "dev:databases:init": "AUTH0_DOMAIN=dev-flagright.eu.auth0.com ENV=local AWS_REGION=eu-central-1 ts-node ./init_local_db/all.ts",
     "dev:databases:reset": "rm -rf .local-mongodb-data/ .local-dynamodb-data/",
     "dev:api": "npm run start-local-api",
     "dev:api:public": "API=PUBLIC npm run start-local-api",

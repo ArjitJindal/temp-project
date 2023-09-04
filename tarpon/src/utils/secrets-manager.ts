@@ -4,10 +4,20 @@ import {
   GetSecretValueCommand,
   SecretsManagerClient,
 } from '@aws-sdk/client-secrets-manager'
+import { fromIni } from '@aws-sdk/credential-providers'
+import { envIs } from './env'
 import { WrappedError } from '@/utils/errors'
 
 function getSecretManager() {
-  return new SecretsManagerClient({})
+  return new SecretsManagerClient(
+    envIs('local')
+      ? {
+          credentials: fromIni({
+            profile: 'AWSAdministratorAccess-911899431626',
+          }),
+        }
+      : {}
+  )
 }
 
 export async function getSecret<T>(secretId: string): Promise<T> {
