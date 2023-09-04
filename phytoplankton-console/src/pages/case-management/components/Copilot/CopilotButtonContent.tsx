@@ -32,7 +32,7 @@ export const CopilotButton = (props: CopilotButtonProps) => {
 };
 
 interface Props {
-  reasons: CaseReasons[];
+  reasons: string[];
   setCommentValue: (comment: string) => void;
   entityId: string;
   entityType?: EntityType;
@@ -81,7 +81,8 @@ const CopilotWrapperContent = ({ reasons, entityType, entityId, setCommentValue 
         NarrativeRequest: {
           entityId,
           entityType: entityType || 'CASE',
-          reasons: reasons,
+          // TODO make this generic
+          reasons: reasons as CaseReasons[],
         },
       });
       setCommentValue(response.narrative);

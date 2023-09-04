@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { useMutation } from '@tanstack/react-query';
 import pluralize from 'pluralize';
 import Button from '@/components/library/Button';
-import { ChecklistStatus } from '@/apis';
+import { CaseReasons, ChecklistStatus } from '@/apis';
 import Modal from '@/components/library/Modal';
 import Narrative, { CLOSING_REASONS, FormValues, OTHER_REASON } from '@/components/Narrative';
 import { message } from '@/components/library/Message';
@@ -22,19 +22,21 @@ export default function QaStatusChangeModal(props: ConfirmModalProps) {
   const [isOpen, setIsOpen] = useState(false);
   const api = useApi();
 
-  const [formState, setFormState] = useState<{ values: FormValues; isValid: boolean }>({
-    values: {
-      reasons: [],
-      comment: '',
-      files: [],
-      reasonOther: '',
+  const [formState, setFormState] = useState<{ values: FormValues<CaseReasons>; isValid: boolean }>(
+    {
+      values: {
+        reasons: [],
+        comment: '',
+        files: [],
+        reasonOther: '',
+      },
+      isValid: false,
     },
-    isValid: false,
-  });
+  );
   const [showError, setShowError] = useState(false);
   const alerts = pluralize('Alert', alertIds.length);
   const mutation = useMutation(
-    async (values: FormValues) => {
+    async (values: FormValues<CaseReasons>) => {
       await api.alertsQaStatusChange({
         AlertQaStatusUpdateRequest: {
           alertIds,

@@ -35,30 +35,31 @@ export const CLOSING_REASONS: CaseReasons[] = [
 
 export type EntityType = 'ALERT' | 'CASE' | 'TRANSACTION';
 
-export type FormValues = {
-  reasons: CaseReasons[];
+export type FormValues<R> = {
+  reasons: R[];
   reasonOther: string | undefined;
   comment: string | undefined;
   files: FileInfo[];
 };
 
-export type NarrativeFormValues = {
-  values: FormValues;
+export type NarrativeFormValues<R> = {
+  values: FormValues<R>;
   isValid: boolean;
 };
-type NarrativeProps = {
-  values: NarrativeFormValues;
-  onChange: Dispatch<SetStateAction<NarrativeFormValues>>;
+type NarrativeProps<R> = {
+  values: NarrativeFormValues<R>;
+  onChange: Dispatch<SetStateAction<NarrativeFormValues<R>>>;
   alertMessage?: string;
   entityIds?: string[];
   placeholder: string;
   entityType: EntityType;
-  possibleReasons: CaseReasons[];
+  possibleReasons: R[];
   onSubmit: () => void;
   showErrors: boolean;
   extraFields?: React.ReactNode;
+  otherReason?: R;
 };
-export default function Narrative(props: NarrativeProps) {
+export default function Narrative<R extends string>(props: NarrativeProps<R>) {
   const {
     possibleReasons,
     onChange,
@@ -70,14 +71,15 @@ export default function Narrative(props: NarrativeProps) {
     entityType,
     placeholder,
     showErrors,
+    otherReason,
   } = props;
 
   const [uploadingCount, setUploadingCount] = useState(0);
   const showCopilot = useFeatureEnabled('COPILOT');
-  const isOtherReason = values.values.reasons?.includes(OTHER_REASON) ?? false;
+  const isOtherReason = otherReason ? values.values.reasons?.includes(otherReason) : false;
 
   return (
-    <Form<FormValues>
+    <Form<FormValues<R>>
       initialValues={values.values}
       className={s.root}
       onSubmit={(_, state) => {
@@ -101,7 +103,7 @@ export default function Narrative(props: NarrativeProps) {
       }}
       alwaysShowErrors={showErrors}
     >
-      <InputField<FormValues, 'reasons'>
+      <InputField<FormValues<R>, 'reasons'>
         name={'reasons'}
         label={'Reason'}
         labelProps={{
@@ -111,8 +113,8 @@ export default function Narrative(props: NarrativeProps) {
           },
         }}
       >
-        {(inputProps: InputProps<CaseReasons[]>) => (
-          <Select<CaseReasons>
+        {(inputProps: InputProps<R[]>) => (
+          <Select<R>
             {...inputProps}
             mode={'MULTIPLE'}
             options={possibleReasons.map((label) => ({ value: label, label }))}
@@ -120,7 +122,7 @@ export default function Narrative(props: NarrativeProps) {
         )}
       </InputField>
       {isOtherReason && (
-        <InputField<FormValues, 'reasonOther'>
+        <InputField<FormValues<R>, 'reasonOther'>
           name="reasonOther"
           label="Describe the reason"
           labelProps={{
@@ -134,7 +136,7 @@ export default function Narrative(props: NarrativeProps) {
         </InputField>
       )}
       <div className={s.comment}>
-        <InputField<FormValues, 'comment'>
+        <InputField<FormValues<R>, 'comment'>
           name={'comment'}
           label={'Comment'}
           labelProps={{
@@ -157,7 +159,7 @@ export default function Narrative(props: NarrativeProps) {
           )}
         </InputField>
         {showCopilot && (
-          <GenericFormField<FormValues, 'comment'> name="comment">
+          <GenericFormField<FormValues<R>, 'comment'> name="comment">
             {(props) => (
               <CopilotButtonContent
                 reasons={values.values.reasons ?? []}
@@ -171,7 +173,7 @@ export default function Narrative(props: NarrativeProps) {
           </GenericFormField>
         )}
       </div>
-      <InputField<FormValues, 'files'> name={'files'} label={'Attach documents'}>
+      <InputField<FormValues<R>, 'files'> name={'files'} label={'Attach documents'}>
         {(inputProps) => (
           <FilesInput
             {...inputProps}
