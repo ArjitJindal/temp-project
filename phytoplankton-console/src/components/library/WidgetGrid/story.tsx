@@ -1,6 +1,7 @@
 import React from 'react';
 import WidgetGrid from './index';
 import { UseCase } from '@/pages/storybook/components';
+import Widget from '@/components/library/Widget';
 
 export default function (): JSX.Element {
   return (
@@ -12,30 +13,45 @@ export default function (): JSX.Element {
               groupTitle: 'Consumer users',
               items: [
                 {
-                  id: 'user-krs-breakdown',
-                  title: 'User breakdown by KRS',
-                  children: <div>User breakdown by KRS widget content</div>,
-                  width: 'FULL',
+                  props: {
+                    id: 'user-krs-breakdown',
+                    title: 'User breakdown by KRS',
+                    children: <div>User breakdown by KRS widget content</div>,
+                    width: 'FULL',
+                  },
+                  component: Widget,
                 },
                 {
-                  id: 'user-cra-breakdown',
-                  title: 'Distribution by CRA',
-                  children: <div>Distribution by CRA widget content</div>,
+                  props: {
+                    id: 'user-cra-breakdown',
+                    title: 'Distribution by CRA',
+                    children: <div>Distribution by CRA widget content</div>,
+                  },
+                  component: Widget,
                 },
                 {
-                  id: 'top-10',
-                  title: 'Top 10 users by rule hits',
-                  children: <div>Top 10 users by rule hits widget content</div>,
+                  props: {
+                    id: 'top-10',
+                    title: 'Top 10 users by rule hits',
+                    children: <div>Top 10 users by rule hits widget content</div>,
+                  },
+                  component: Widget,
                 },
                 {
-                  id: 'user-status-distribution',
-                  title: 'Distribution by User status',
-                  children: <div>Distribution by User status widget content</div>,
+                  props: {
+                    id: 'user-status-distribution',
+                    title: 'Distribution by User status',
+                    children: <div>Distribution by User status widget content</div>,
+                  },
+                  component: Widget,
                 },
                 {
-                  id: 'user-kyc-distribution',
-                  title: 'Distribution by user KYC status',
-                  children: <div>Distribution by user KYC status widget content</div>,
+                  props: {
+                    id: 'user-kyc-distribution',
+                    title: 'Distribution by user KYC status',
+                    children: <div>Distribution by user KYC status widget content</div>,
+                  },
+                  component: Widget,
                 },
               ],
             },
@@ -43,30 +59,45 @@ export default function (): JSX.Element {
               groupTitle: 'Business users',
               items: [
                 {
-                  id: 'user-krs-breakdown',
-                  title: 'User breakdown by KRS',
-                  children: <div>User breakdown by KRS widget content</div>,
-                  width: 'FULL',
+                  props: {
+                    id: 'user-krs-breakdown',
+                    title: 'User breakdown by KRS',
+                    children: <div>User breakdown by KRS widget content</div>,
+                    width: 'FULL',
+                  },
+                  component: Widget,
                 },
                 {
-                  id: 'user-cra-breakdown',
-                  title: 'Distribution by CRA',
-                  children: <div>Distribution by CRA widget content</div>,
+                  props: {
+                    id: 'user-cra-breakdown',
+                    title: 'Distribution by CRA',
+                    children: <div>Distribution by CRA widget content</div>,
+                  },
+                  component: Widget,
                 },
                 {
-                  id: 'top-10',
-                  title: 'Top 10 users by rule hits',
-                  children: <div>Top 10 users by rule hits widget content</div>,
+                  props: {
+                    id: 'top-10',
+                    title: 'Top 10 users by rule hits',
+                    children: <div>Top 10 users by rule hits widget content</div>,
+                  },
+                  component: Widget,
                 },
                 {
-                  id: 'user-status-distribution',
-                  title: 'Distribution by User status',
-                  children: <div>Distribution by User status widget content</div>,
+                  props: {
+                    id: 'user-status-distribution',
+                    title: 'Distribution by User status',
+                    children: <div>Distribution by User status widget content</div>,
+                  },
+                  component: Widget,
                 },
                 {
-                  id: 'user-kyc-distribution',
-                  title: 'Distribution by user KYC status',
-                  children: <div>Distribution by user KYC status widget content</div>,
+                  props: {
+                    id: 'user-kyc-distribution',
+                    title: 'Distribution by user KYC status',
+                    children: <div>Distribution by user KYC status widget content</div>,
+                  },
+                  component: Widget,
                 },
               ],
             },

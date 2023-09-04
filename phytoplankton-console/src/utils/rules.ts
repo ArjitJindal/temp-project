@@ -1,12 +1,16 @@
 import _ from 'lodash';
 import { useMemo } from 'react';
 import { useQuery } from './queries/hooks';
-import { RULES, RULE_INSTANCES } from './queries/keys';
+import { RULE_INSTANCES, RULES } from './queries/keys';
 import { Rule, RuleAction, RuleInstance, TransactionState } from '@/apis';
 import { neverReturn } from '@/utils/lang';
 import COLORS, {
   COLORS_V2_ALERT_SUCCESS,
   COLORS_V2_ALERT_WARNING,
+  COLORS_V2_ANALYTICS_CHARTS_01,
+  COLORS_V2_ANALYTICS_CHARTS_02,
+  COLORS_V2_ANALYTICS_CHARTS_03,
+  COLORS_V2_ANALYTICS_CHARTS_04,
   COLORS_V2_RISK_LEVEL_BASE_HIGH,
 } from '@/components/ui/colors';
 import { useApi } from '@/api';
@@ -43,16 +47,16 @@ export function isTransactionState(value: unknown): value is TransactionState {
 
 export function getRuleActionColorForDashboard(ruleAction: RuleAction): string {
   if (ruleAction === 'ALLOW') {
-    return COLORS.brandBlue.base;
+    return COLORS_V2_ANALYTICS_CHARTS_01;
   }
   if (ruleAction === 'SUSPEND') {
-    return COLORS.yellow.base;
+    return COLORS_V2_ANALYTICS_CHARTS_03;
   }
   if (ruleAction === 'BLOCK') {
-    return COLORS.red.base;
+    return COLORS_V2_ANALYTICS_CHARTS_02;
   }
   if (ruleAction === 'FLAG') {
-    return COLORS.orange.base;
+    return COLORS_V2_ANALYTICS_CHARTS_04;
   }
   return neverReturn(ruleAction, 'gray');
 }

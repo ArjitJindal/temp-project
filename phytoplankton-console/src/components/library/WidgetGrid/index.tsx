@@ -1,13 +1,15 @@
 import cn from 'clsx';
-import Widget, { Props as WidgetProps } from '../Widget';
+import React from 'react';
 import s from './index.module.less';
-
-export type Item = WidgetProps;
+import { WidgetProps } from '@/components/library/Widget/types';
 
 interface Props {
   groups: {
     groupTitle: string;
-    items: Item[];
+    items: {
+      component: React.FunctionComponent<WidgetProps>;
+      props: WidgetProps;
+    }[];
   }[];
 }
 
@@ -19,9 +21,10 @@ export default function WidgetGrid(props: Props) {
         <div key={groupTitle} className={cn(s.group)}>
           <div className={s.groupTitle}>{groupTitle}</div>
           <div className={s.items}>
-            {items.map((item) => (
-              <Widget key={item.id} {...item} />
-            ))}
+            {items.map((item) => {
+              const Component = item.component;
+              return <Component key={item.props.id} {...item.props} />;
+            })}
           </div>
         </div>
       ))}

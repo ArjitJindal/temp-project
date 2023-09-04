@@ -1,0 +1,18 @@
+import React from 'react';
+
+export interface WidgetPropsRequired {
+  id: string;
+}
+
+export interface WidgetPropsOptional {
+  title: string;
+  width: 'FULL' | 'HALF';
+  onDownload: () => Promise<{
+    fileName: string;
+    data: string;
+  }>;
+  extraControls: React.ReactNode[];
+  children: React.ReactNode;
+}
+
+export type WidgetProps = WidgetPropsRequired & Partial<WidgetPropsOptional>;

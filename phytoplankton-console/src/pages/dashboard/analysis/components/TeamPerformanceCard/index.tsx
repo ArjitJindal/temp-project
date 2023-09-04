@@ -1,28 +1,28 @@
 import React, { useState } from 'react';
-import { Card } from 'antd';
 import { RangeValue } from 'rc-picker/es/interface';
 import AccountsStatisticsTable from './AccountsStatisticsTable';
 import s from './index.module.less';
-import { header } from '@/pages/dashboard/analysis/components/dashboardutils';
 import SegmentedControl from '@/components/library/SegmentedControl';
 import DatePicker from '@/components/ui/DatePicker';
 import { dayjs, Dayjs } from '@/utils/dayjs';
-import { AllParams, CommonParams } from '@/components/library/Table/types';
+import { AllParams, CommonParams as TableCommonParams } from '@/components/library/Table/types';
 import { DEFAULT_PARAMS_STATE } from '@/components/library/Table/consts';
 import { useApi } from '@/api';
 import { useQuery } from '@/utils/queries/hooks';
 import { DASHBOARD_TEAM_STATS } from '@/utils/queries/keys';
-import { CaseStatus, AlertStatus, DashboardTeamStatsItem } from '@/apis';
+import { AlertStatus, CaseStatus, DashboardTeamStatsItem } from '@/apis';
 import { AutoFilter } from '@/components/library/Table/Header/Filters/AutoFilter';
 import { statusToOperationName } from '@/pages/case-management/components/StatusChangeButton';
+import Widget from '@/components/library/Widget';
+import { WidgetProps } from '@/components/library/Widget/types';
 
-interface Params extends CommonParams {
+interface Params extends TableCommonParams {
   scope: 'CASES' | 'ALERTS';
   dateRange?: RangeValue<Dayjs>;
   caseStatus?: (CaseStatus | AlertStatus)[];
 }
 
-export default function TeamPerformanceCard() {
+export default function TeamPerformanceCard(props: WidgetProps) {
   const startTime = dayjs().subtract(1, 'day').startOf('day');
   const endTime = dayjs().endOf('day');
 
@@ -68,12 +68,9 @@ export default function TeamPerformanceCard() {
   );
 
   return (
-    <Card
-      title={header('Team overview')}
-      bordered={false}
-      headStyle={{ borderBottom: 'none' }}
-      className={s.root}
-      extra={
+    <Widget
+      {...props}
+      extraControls={[
         <DatePicker.RangePicker
           value={getDateRangeToShow(params.dateRange)}
           onChange={(value) => {
@@ -85,8 +82,8 @@ export default function TeamPerformanceCard() {
           onOpenChange={(state) => {
             setIsDatePickerOpen(state);
           }}
-        />
-      }
+        />,
+      ]}
     >
       <div className={s.header}>
         <SegmentedControl<Params['scope']>
@@ -130,6 +127,6 @@ export default function TeamPerformanceCard() {
         />
       </div>
       <AccountsStatisticsTable queryResult={queryResult} scope={params.scope} />
-    </Card>
+    </Widget>
   );
 }

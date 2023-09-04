@@ -1,9 +1,7 @@
 /* eslint-disable @typescript-eslint/no-var-requires */
-import { Card, Col, Row } from 'antd';
 import { useState } from 'react';
 import { RangeValue } from 'rc-picker/lib/interface';
 import { Link } from 'react-router-dom';
-import { header } from '../dashboardutils';
 import DatePicker from '@/components/ui/DatePicker';
 import { Dayjs, dayjs } from '@/utils/dayjs';
 import { DashboardStatsRulesCountData } from '@/apis';
@@ -96,25 +94,17 @@ export default function RuleHitCard() {
   );
 
   return (
-    <Card title={header('Top rule hits by count')} bordered={false}>
-      <Row>
-        <Col span={24}>
-          <QueryResultsTable<DashboardStatsRulesCountData>
-            rowKey="ruleId"
-            columns={columns}
-            extraTools={[
-              () => <DatePicker.RangePicker value={dateRange} onChange={setDateRange} />,
-            ]}
-            queryResults={rulesHitResult}
-            pagination={false}
-            sizingMode="FULL_WIDTH"
-            toolsOptions={{
-              setting: false,
-              reload: true,
-            }}
-          />
-        </Col>
-      </Row>
-    </Card>
+    <QueryResultsTable<DashboardStatsRulesCountData>
+      rowKey="ruleId"
+      columns={columns}
+      extraTools={[() => <DatePicker.RangePicker value={dateRange} onChange={setDateRange} />]}
+      queryResults={rulesHitResult}
+      pagination={false}
+      sizingMode="FULL_WIDTH"
+      toolsOptions={{
+        setting: false,
+        reload: true,
+      }}
+    />
   );
 }

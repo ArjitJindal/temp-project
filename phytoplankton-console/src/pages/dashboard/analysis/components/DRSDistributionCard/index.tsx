@@ -1,12 +1,10 @@
 /* eslint-disable @typescript-eslint/no-var-requires */
 import React, { useMemo } from 'react';
-import { Card, Col, Row } from 'antd';
 import _ from 'lodash';
 import { Column } from '@ant-design/charts';
-import { header, smallHeader } from '../dashboardutils';
 import s from './styles.module.less';
 import { useApi } from '@/api';
-import { RISK_LEVELS, RISK_LEVEL_COLORS } from '@/utils/risk-levels';
+import { RISK_LEVEL_COLORS, RISK_LEVELS } from '@/utils/risk-levels';
 import { useQuery } from '@/utils/queries/hooks';
 import { USERS_STATS } from '@/utils/queries/keys';
 import AsyncResourceRenderer from '@/components/common/AsyncResourceRenderer';
@@ -123,21 +121,7 @@ export default function DRSDistributionCard() {
             },
           };
 
-          return (
-            <Card
-              bordered={false}
-              bodyStyle={{ padding: 0 }}
-              title={header('User distribution by CRA risk level')}
-            >
-              <Row>
-                <Col span={24}>
-                  <Card bordered={false} title={smallHeader('Breakdown by risk scores')}>
-                    <Column {...config} />
-                  </Card>
-                </Col>
-              </Row>
-            </Card>
-          );
+          return <Column {...config} />;
         }}
       </AsyncResourceRenderer>
     </div>
