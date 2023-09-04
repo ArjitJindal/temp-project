@@ -125,7 +125,6 @@ export function Content(props: { userId: string }) {
   );
 
   const helper = new ColumnHelper<DataItem>();
-  const isManualCaseFeatureEnabled = useFeatureEnabled('MANUAL_CASE_CREATION');
 
   const casesList = getOr<CasesListResponse>(cases.data, { data: [], total: 0 }); // eslint-disable-line
 
@@ -291,7 +290,7 @@ export function Content(props: { userId: string }) {
             }
           : undefined
       }
-      selection={isManualCaseFeatureEnabled}
+      selection={true}
       selectedIds={selectedIds}
       onSelect={setSelectedIds}
     />

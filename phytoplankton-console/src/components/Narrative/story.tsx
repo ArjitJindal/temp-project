@@ -5,7 +5,7 @@ import Narrative, { NarrativeFormValues } from '@/components/Narrative';
 import { providerConfig } from '@/components/AppWrapper/Providers/AuthProvider';
 
 export default function (): JSX.Element {
-  const [values, setValues] = useState<NarrativeFormValues>({
+  const [values, setValues] = useState<NarrativeFormValues<any>>({
     isValid: false,
     values: {
       reasons: [],
@@ -14,7 +14,7 @@ export default function (): JSX.Element {
       comment: '',
     },
   });
-  const [submitted, setSubmitted] = useState<NarrativeFormValues | undefined>();
+  const [submitted, setSubmitted] = useState<NarrativeFormValues<any> | undefined>();
   const [showErrors, setShowErrors] = useState(false);
   const onSubmit = () => {
     setSubmitted(values);

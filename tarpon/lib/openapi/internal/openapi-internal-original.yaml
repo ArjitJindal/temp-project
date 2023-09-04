@@ -6014,7 +6014,6 @@ components:
         - MACHINE_LEARNING_DEMO
         - SAR
         - RULES_ENGINE_V2
-        - MANUAL_CASE_CREATION
         - QA
       description: ''
     ManagedRoleName:
