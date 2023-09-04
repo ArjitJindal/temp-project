@@ -8,12 +8,9 @@ import Form, { FormRef } from '../Form';
 import NestedForm from '../Form/NestedForm';
 
 import { message } from '../Message';
-import {
-  ExtendedSchema,
-  PropertyItem,
-} from '@/pages/rules/RuleConfigurationDrawer/JsonSchemaEditor/types';
-import JsonSchemaEditor from '@/pages/rules/RuleConfigurationDrawer/JsonSchemaEditor';
-import { makeValidators } from '@/pages/rules/RuleConfigurationDrawer/JsonSchemaEditor/utils';
+import { ExtendedSchema, PropertyItem } from '@/components/library/JsonSchemaEditor/types';
+import JsonSchemaEditor from '@/components/library/JsonSchemaEditor';
+import { makeValidators } from '@/components/library/JsonSchemaEditor/utils';
 import { usePrevious } from '@/utils/hooks';
 
 const FORM_ID = 'drawer-stepper-form';

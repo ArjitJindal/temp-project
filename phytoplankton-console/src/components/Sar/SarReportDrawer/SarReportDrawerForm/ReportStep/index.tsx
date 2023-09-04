@@ -1,13 +1,10 @@
 import { useState } from 'react';
 import { groupBy } from 'lodash';
-import { JsonSchemaEditorSettings } from '@/pages/rules/RuleConfigurationDrawer/JsonSchemaEditor/settings';
-import JsonSchemaEditor from '@/pages/rules/RuleConfigurationDrawer/JsonSchemaEditor';
+import { JsonSchemaEditorSettings } from '@/components/library/JsonSchemaEditor/settings';
+import JsonSchemaEditor from '@/components/library/JsonSchemaEditor';
 import VerticalMenu from '@/components/library/VerticalMenu';
-import {
-  getUiSchema,
-  useOrderedProps,
-} from '@/pages/rules/RuleConfigurationDrawer/JsonSchemaEditor/utils';
-import { ExtendedSchema } from '@/pages/rules/RuleConfigurationDrawer/JsonSchemaEditor/types';
+import { getUiSchema, useOrderedProps } from '@/components/library/JsonSchemaEditor/utils';
+import { ExtendedSchema } from '@/components/library/JsonSchemaEditor/types';
 import {
   isResultValid,
   NestedValidationResult,

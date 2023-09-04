@@ -4,7 +4,7 @@ import Label from '@/components/library/Label';
 import Slider from '@/components/library/Slider';
 import NumberInput from '@/components/library/NumberInput';
 import { InputProps } from '@/components/library/Form';
-import { UiSchemaAgeRange } from '@/pages/rules/RuleConfigurationDrawer/JsonSchemaEditor/types';
+import { UiSchemaAgeRange } from '@/components/library/JsonSchemaEditor/types';
 import Select from '@/components/library/Select';
 
 type ValueType = {

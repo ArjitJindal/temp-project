@@ -1,18 +1,12 @@
 import StepHeader from '../../StepHeader';
 import { Rule } from '@/apis';
-import PropertyList from '@/pages/rules/RuleConfigurationDrawer/JsonSchemaEditor/PropertyList';
+import PropertyList from '@/components/library/JsonSchemaEditor/PropertyList';
 import { useQuery } from '@/utils/queries/hooks';
 import { RULE_FILTERS } from '@/utils/queries/keys';
 import AsyncResourceRenderer from '@/components/common/AsyncResourceRenderer';
 import { useApi } from '@/api';
-import {
-  ExtendedSchema,
-  PropertyItems,
-} from '@/pages/rules/RuleConfigurationDrawer/JsonSchemaEditor/types';
-import {
-  getUiSchema,
-  getOrderedProps,
-} from '@/pages/rules/RuleConfigurationDrawer/JsonSchemaEditor/utils';
+import { ExtendedSchema, PropertyItems } from '@/components/library/JsonSchemaEditor/types';
+import { getUiSchema, getOrderedProps } from '@/components/library/JsonSchemaEditor/utils';
 
 export interface FormValues extends Record<string, any> {}
 

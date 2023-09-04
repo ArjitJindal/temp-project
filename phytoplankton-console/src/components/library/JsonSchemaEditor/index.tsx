@@ -6,9 +6,9 @@ import {
   DEFAULT_FORM_SETTINGS,
   JsonSchemaEditorSettings,
 } from './settings';
-import { JsonSchemaEditorContext } from '@/pages/rules/RuleConfigurationDrawer/JsonSchemaEditor/context';
-import PropertyList from '@/pages/rules/RuleConfigurationDrawer/JsonSchemaEditor/PropertyList';
-import { getOrderedProps } from '@/pages/rules/RuleConfigurationDrawer/JsonSchemaEditor/utils';
+import { JsonSchemaEditorContext } from '@/components/library/JsonSchemaEditor/context';
+import PropertyList from '@/components/library/JsonSchemaEditor/PropertyList';
+import { getOrderedProps } from '@/components/library/JsonSchemaEditor/utils';
 
 interface Props {
   settings?: Partial<JsonSchemaEditorSettings>;

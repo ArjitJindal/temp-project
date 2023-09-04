@@ -29,12 +29,12 @@ import {
   useOrderedProps,
   makeDefaultState,
   makeValidators,
-} from '@/pages/rules/RuleConfigurationDrawer/JsonSchemaEditor/utils';
+} from '@/components/library/JsonSchemaEditor/utils';
 import User3LineIcon from '@/components/ui/icons/Remix/user/user-3-line.react.svg';
 import EarthLineIcon from '@/components/ui/icons/Remix/map/earth-line.react.svg';
 import { useFeatureEnabled } from '@/components/AppWrapper/Providers/SettingsProvider';
-import { ChangeJsonSchemaEditorSettings } from '@/pages/rules/RuleConfigurationDrawer/JsonSchemaEditor/settings';
-import { useJsonSchemaEditorContext } from '@/pages/rules/RuleConfigurationDrawer/JsonSchemaEditor/context';
+import { ChangeJsonSchemaEditorSettings } from '@/components/library/JsonSchemaEditor/settings';
+import { useJsonSchemaEditorContext } from '@/components/library/JsonSchemaEditor/context';
 
 const BASIC_DETAILS_STEP = 'basic_details';
 const STANDARD_FILTERS_STEP = 'standard_filters';

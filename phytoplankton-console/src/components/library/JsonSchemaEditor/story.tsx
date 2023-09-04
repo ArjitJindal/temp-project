@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import Component from './index';
 import { UseCase } from '@/pages/storybook/components';
-import { ExtendedSchema } from '@/pages/rules/RuleConfigurationDrawer/JsonSchemaEditor/types';
+import { ExtendedSchema } from '@/components/library/JsonSchemaEditor/types';
 import Select from '@/components/library/Select';
 import Form from '@/components/library/Form';
 

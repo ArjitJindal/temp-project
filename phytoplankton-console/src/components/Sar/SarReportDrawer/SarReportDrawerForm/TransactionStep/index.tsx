@@ -1,7 +1,7 @@
 import { useState } from 'react';
-import { JsonSchemaEditorSettings } from '@/pages/rules/RuleConfigurationDrawer/JsonSchemaEditor/settings';
+import { JsonSchemaEditorSettings } from '@/components/library/JsonSchemaEditor/settings';
 import { Report } from '@/apis';
-import JsonSchemaEditor from '@/pages/rules/RuleConfigurationDrawer/JsonSchemaEditor';
+import JsonSchemaEditor from '@/components/library/JsonSchemaEditor';
 import VerticalMenu from '@/components/library/VerticalMenu';
 import NestedForm from '@/components/library/Form/NestedForm';
 

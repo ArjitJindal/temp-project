@@ -24,7 +24,7 @@ import Pagination from '@/components/library/Pagination/story';
 import Message from '@/components/library/Message/story';
 import Dropdown from '@/components/library/Dropdown/story';
 import SegmentedControl from '@/components/library/SegmentedControl/story';
-import JsonSchemaEditor from '@/pages/rules/RuleConfigurationDrawer/JsonSchemaEditor/story';
+import JsonSchemaEditor from '@/components/library/JsonSchemaEditor/story';
 import Tooltip from '@/components/library/Tooltip/story';
 import Toggle from '@/components/library/Toggle/story';
 import Tabs from '@/components/library/Tabs/story';
@@ -237,7 +237,7 @@ const config: Config = [
         story: RiskScoreDisplay,
       },
       {
-        key: '@/pages/rules/RuleConfigurationDrawer/RuleParametersStep/JsonSchemaEditor',
+        key: 'JsonSchemaEditor',
         story: JsonSchemaEditor,
       },
     ],

@@ -2,34 +2,29 @@ import React, { useState } from 'react';
 import s from './style.module.less';
 import NumberInput from '@/components/library/NumberInput';
 import { InputProps } from '@/components/library/Form';
-import Select from '@/components/library/Select';
-import { CURRENCIES_SELECT_OPTIONS, Currency } from '@/utils/currencies';
+import { Currency } from '@/utils/currencies';
 import Button from '@/components/library/Button';
 import Money from '@/components/ui/Money';
 import DeleteBin7LineIcon from '@/components/ui/icons/Remix/system/delete-bin-7-line.react.svg';
-import { UiSchemaTransactionAmountRange } from '@/pages/rules/RuleConfigurationDrawer/JsonSchemaEditor/types';
+import { UiSchemaTransactionAmountThresholds } from '@/components/library/JsonSchemaEditor/types';
+import CurrencyInput from '@/components/library/JsonSchemaEditor/Property/PropertyInput/custom/CurrencyInput';
 
-type ValueType = Record<Currency, { min?: number; max?: number }>;
+type ValueType = Record<Currency, number>;
 
 interface Props extends InputProps<ValueType> {
-  uiSchema: UiSchemaTransactionAmountRange;
+  uiSchema: UiSchemaTransactionAmountThresholds;
 }
 
-export default function TransactionAmountRangeInput(props: Props) {
-  const { value, onChange, ...rest } = props;
+export default function TransactionAmountThresholdsInput(props: Props) {
+  const { value, onChange, uiSchema: _uiSchema, ...rest } = props;
 
-  const [newItem, setNewItem] = useState<
-    Partial<{ currency: Currency; min?: number; max: number }>
-  >({});
-  const isAddDisabled = newItem?.currency == null || (newItem?.min == null && newItem?.min == null);
+  const [newItem, setNewItem] = useState<Partial<{ currency: Currency; amount?: number }>>({});
+  const isAddDisabled = newItem?.currency == null || newItem?.amount == null;
   const handleAdd = () => {
-    if (!isAddDisabled && newItem.currency) {
+    if (!isAddDisabled && newItem.currency && newItem.amount) {
       onChange?.({
         ...(value ?? ({} as ValueType)),
-        [newItem.currency]: {
-          min: newItem.min,
-          max: newItem.max,
-        },
+        [newItem.currency]: newItem.amount,
       });
       setNewItem({});
     }
@@ -37,40 +32,21 @@ export default function TransactionAmountRangeInput(props: Props) {
 
   return (
     <div className={s.root}>
-      <Select<Currency>
-        placeholder="Select currency"
-        mode={'SINGLE'}
+      <CurrencyInput
         value={newItem?.currency}
         onChange={(currency) => setNewItem((prevState) => ({ ...prevState, currency }))}
-        options={CURRENCIES_SELECT_OPTIONS.map((option) => ({
-          ...option,
-          isDisabled: value?.[option.value] != null,
-        }))}
         {...rest}
       />
       <NumberInput
-        placeholder="Min. amount"
-        value={newItem?.min}
-        onChange={(min) =>
+        placeholder="Amount"
+        value={newItem?.amount}
+        onChange={(amount) =>
           setNewItem((prevState) => ({
             ...prevState,
-            min,
+            amount,
           }))
         }
         min={0}
-        max={newItem?.max}
-        {...rest}
-      />
-      <NumberInput
-        placeholder="Max. amount"
-        value={newItem?.max}
-        onChange={(max) =>
-          setNewItem((prevState) => ({
-            ...prevState,
-            max,
-          }))
-        }
-        min={newItem?.min ?? 0}
         {...rest}
       />
       <Button type="PRIMARY" onClick={handleAdd} isDisabled={isAddDisabled}>
@@ -79,20 +55,18 @@ export default function TransactionAmountRangeInput(props: Props) {
       {value && Object.keys(value).length > 0 && (
         <>
           <div className={s.header}>Currency</div>
-          <div className={s.header}>Min. amount</div>
-          <div className={s.header}>Max. amount</div>
+          <div className={s.header}>Amount</div>
           <div className={s.header}></div>
         </>
       )}
       {value &&
         Object.entries(value ?? {}).map((entry, i) => {
           const currency = entry[0] as Currency;
-          const { min, max } = entry[1] ?? {};
+          const amount = entry[1];
           return (
             <React.Fragment key={i}>
               <div>{currency}</div>
-              <Money currency={currency} value={min} />
-              <Money currency={currency} value={max} />
+              <Money currency={currency} value={amount} />
               <Button
                 icon={<DeleteBin7LineIcon />}
                 type="TEXT"

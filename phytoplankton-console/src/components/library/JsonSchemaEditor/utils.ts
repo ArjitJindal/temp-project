@@ -5,7 +5,7 @@ import {
   flattenAllOf,
   isArray,
   isObject,
-} from '@/pages/rules/RuleConfigurationDrawer/JsonSchemaEditor/schema-utils';
+} from '@/components/library/JsonSchemaEditor/schema-utils';
 import {
   $IS_ARRAY_VALIDATOR,
   $SELF_VALIDATION,

@@ -2,10 +2,7 @@ import React, { useContext, useState } from 'react';
 import { InputProps } from '@/components/library/Form';
 import { CopilotButton } from '@/pages/case-management/components/Copilot/CopilotButtonContent';
 import TextArea from '@/components/library/TextArea';
-import {
-  ExtendedSchema,
-  UiSchemaNarrative,
-} from '@/pages/rules/RuleConfigurationDrawer/JsonSchemaEditor/types';
+import { ExtendedSchema, UiSchemaNarrative } from '@/components/library/JsonSchemaEditor/types';
 import { SarContext } from '@/components/Sar/SarReportDrawer';
 import { useApi } from '@/api';
 import { message } from '@/components/library/Message';

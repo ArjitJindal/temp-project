@@ -6,7 +6,7 @@ import Button from '../library/Button';
 import Select from '../library/Select';
 import Label from '../library/Label';
 import Modal from '@/components/library/Modal';
-import { PropertyListLayout } from '@/pages/rules/RuleConfigurationDrawer/JsonSchemaEditor/PropertyList';
+import { PropertyListLayout } from '@/components/library/JsonSchemaEditor/PropertyList';
 import ErrorWarningFillIcon from '@/components/ui/icons/Remix/system/error-warning-fill.react.svg';
 import { useApi } from '@/api';
 import SarReportDrawer from '@/components/Sar/SarReportDrawer';

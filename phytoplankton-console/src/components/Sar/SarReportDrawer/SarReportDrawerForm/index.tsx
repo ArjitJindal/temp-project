@@ -17,8 +17,8 @@ import IndicatorsStep from '@/components/Sar/SarReportDrawer/SarReportDrawerForm
 import ReportStep from '@/components/Sar/SarReportDrawer/SarReportDrawerForm/ReportStep';
 import TransactionStep from '@/components/Sar/SarReportDrawer/SarReportDrawerForm/TransactionStep';
 import AttachmentsStep from '@/components/Sar/SarReportDrawer/SarReportDrawerForm/AttachmentsStep';
-import { makeValidators } from '@/pages/rules/RuleConfigurationDrawer/JsonSchemaEditor/utils';
-import { PropertyItem } from '@/pages/rules/RuleConfigurationDrawer/JsonSchemaEditor/types';
+import { makeValidators } from '@/components/library/JsonSchemaEditor/utils';
+import { PropertyItem } from '@/components/library/JsonSchemaEditor/types';
 import { ObjectFieldValidator } from '@/components/library/Form/utils/validation/types';
 import { message } from '@/components/library/Message';
 

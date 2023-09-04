@@ -6,17 +6,14 @@ import PropertyInput from '../index';
 import s from './style.module.less';
 import Button from '@/components/library/Button';
 import Select from '@/components/library/Select';
-import {
-  dereferenceType,
-  isString,
-} from '@/pages/rules/RuleConfigurationDrawer/JsonSchemaEditor/schema-utils';
+import { dereferenceType, isString } from '@/components/library/JsonSchemaEditor/schema-utils';
 import DeleteBin7LineIcon from '@/components/ui/icons/Remix/system/delete-bin-7-line.react.svg';
 import { InputProps } from '@/components/library/Form';
-import { getUiSchema } from '@/pages/rules/RuleConfigurationDrawer/JsonSchemaEditor/utils';
+import { getUiSchema } from '@/components/library/JsonSchemaEditor/utils';
 import SelectionGroup from '@/components/library/SelectionGroup';
 import * as Card from '@/components/ui/Card';
-import { useJsonSchemaEditorContext } from '@/pages/rules/RuleConfigurationDrawer/JsonSchemaEditor/context';
-import { PropertyContext } from '@/pages/rules/RuleConfigurationDrawer/JsonSchemaEditor/Property';
+import { useJsonSchemaEditorContext } from '@/components/library/JsonSchemaEditor/context';
+import { PropertyContext } from '@/components/library/JsonSchemaEditor/Property';
 import { humanizeAuto, normalizeCase } from '@/utils/humanize';
 import { useFormContext } from '@/components/library/Form/utils/hooks';
 import {

@@ -6,12 +6,12 @@ import s from './style.module.less';
 import AdditionalProperties from './AdditionalProperties';
 import OneOf from './OneOf';
 import { FieldMeta, FormContext, FormContextValue } from '@/components/library/Form/context';
-import { useOrderedProps } from '@/pages/rules/RuleConfigurationDrawer/JsonSchemaEditor/utils';
-import { isSchema } from '@/pages/rules/RuleConfigurationDrawer/JsonSchemaEditor/schema-utils';
+import { useOrderedProps } from '@/components/library/JsonSchemaEditor/utils';
+import { isSchema } from '@/components/library/JsonSchemaEditor/schema-utils';
 import { InputProps } from '@/components/library/Form';
 import { useFormContext } from '@/components/library/Form/utils/hooks';
 import { Props as LabelProps } from '@/components/library/Label';
-import { PropertyContext } from '@/pages/rules/RuleConfigurationDrawer/JsonSchemaEditor/Property';
+import { PropertyContext } from '@/components/library/JsonSchemaEditor/Property';
 import { isArrayFieldValidator } from '@/components/library/Form/utils/validation/types';
 
 // todo: fix any
