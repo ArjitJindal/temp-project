@@ -150,6 +150,7 @@ const NarrativeTemplates = () => {
                   tableHelper.display({
                     id: 'id',
                     title: 'Status',
+                    defaultWidth: 250,
                     render: (entity) => (
                       <div className={s.actions}>
                         <Button
