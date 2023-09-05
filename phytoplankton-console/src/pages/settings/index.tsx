@@ -51,8 +51,13 @@ export default function SettingsPage() {
       >
         <Tabs.TabPane tab={i18n('menu.settings.system')} key={'system'}>
           <DefaultValuesSettings />
-          <NarrativeTemplates />
           <ProductionAccessControl />
+        </Tabs.TabPane>
+        <Tabs.TabPane tab={i18n('menu.settings.case-management')} key={'case-management'}>
+          <>
+            <NarrativeTemplates />
+            <ChecklistTemplatesSettings />
+          </>
         </Tabs.TabPane>
         <Tabs.TabPane tab={i18n('menu.settings.transactions')} key={'transactions'}>
           <>
@@ -60,11 +65,7 @@ export default function SettingsPage() {
             <TransactionStateSettings />
           </>
         </Tabs.TabPane>
-        <Tabs.TabPane tab={i18n('menu.settings.case-management')} key={'case-management'}>
-          <>
-            <ChecklistTemplatesSettings />
-          </>
-        </Tabs.TabPane>
+
         <Tabs.TabPane tab={i18n('menu.settings.users')} key={'users'}>
           <KYCUserStatusSettings />
         </Tabs.TabPane>
