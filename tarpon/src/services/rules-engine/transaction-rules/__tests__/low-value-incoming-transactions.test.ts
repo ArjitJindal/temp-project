@@ -133,7 +133,7 @@ ruleVariantsTest(false, () => {
           lowTransactionCount: 2,
         },
         filters: {
-          paymentFilters: {
+          originPaymentFilters: {
             cardPaymentChannels: ['ATM'],
             paymentMethods: ['CARD'],
           },

@@ -1,7 +1,7 @@
 import { JSONSchemaType } from 'ajv'
 import { COUNTRIES_OPTIONAL_SCHEMA } from '../utils/rule-parameter-schemas'
 import { TransactionRuleFilter } from './filter'
-import { transactionCountryRuleFilterPredicate } from './transaction-country'
+import { transactionCountryRuleFilterPredicate } from './transaction-country-base'
 
 export type TransactionCountryHistoricalRuleFilterParameter = {
   transactionCountriesHistorical?: string[]
@@ -25,9 +25,15 @@ export class TransactionCountryHistoricalRuleFilter extends TransactionRuleFilte
   }
 
   public async predicate(): Promise<boolean> {
-    return transactionCountryRuleFilterPredicate(
-      this.transaction,
-      this.parameters.transactionCountriesHistorical
+    return (
+      transactionCountryRuleFilterPredicate(
+        this.transaction.originAmountDetails,
+        this.parameters.transactionCountriesHistorical || []
+      ) ||
+      transactionCountryRuleFilterPredicate(
+        this.transaction.destinationAmountDetails,
+        this.parameters.transactionCountriesHistorical || []
+      )
     )
   }
 }

@@ -355,15 +355,6 @@ export const TRANSACTION_TYPES_OPTIONAL_SCHEMA = (options?: SchemaOptions) =>
     nullable: true,
   } as const)
 
-export const PAYMENT_METHOD_SCHEMA = (options?: SchemaOptions) =>
-  ({
-    type: 'string',
-    ...uiSchema(options?.uiSchema, { subtype: 'PAYMENT_METHOD' }),
-    title: options?.title || 'Payment method',
-    description: options?.description,
-    enum: PAYMENT_METHODS,
-  } as const)
-
 export const PAYMENT_METHODS_SCHEMA = (options?: SchemaOptions) =>
   ({
     type: 'array',

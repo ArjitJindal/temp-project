@@ -67,7 +67,7 @@ export class RuleInstanceRepository {
     this.tenantId = tenantId
   }
 
-  private async getNewRuleInstanceId(): Promise<string> {
+  public async getNewRuleInstanceId(): Promise<string> {
     // eslint-disable-next-line no-constant-condition
     while (true) {
       const newRuleInstanceId = nanoId()

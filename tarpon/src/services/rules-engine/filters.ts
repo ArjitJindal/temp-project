@@ -7,10 +7,6 @@ import {
 } from './transaction-filters/check-direction'
 import { TransactionRuleFilter } from './transaction-filters/filter'
 import {
-  PaymentFilterRuleFilter,
-  PaymentFilterRuleFilterParameter,
-} from './transaction-filters/payment-filters'
-import {
   PaymentMethodHistoricalRuleFilter,
   PaymentMethodHistoricalRuleFilterParameter,
 } from './transaction-filters/payment-method-historical'
@@ -18,10 +14,6 @@ import {
   TransactionAmountRuleFilter,
   TransactionAmountRuleFilterParameter,
 } from './transaction-filters/transaction-amount'
-import {
-  TransactionCountryRuleFilter,
-  TransactionCountryRuleFilterParameter,
-} from './transaction-filters/transaction-country'
 import {
   TransactionCountryHistoricalRuleFilter,
   TransactionCountryHistoricalRuleFilterParameter,
@@ -111,11 +103,25 @@ import {
   BusinessUserSegmentRuleFilter,
   BusinessUserSegmentRuleFilterParameter,
 } from './user-filters/user-business-consumer-segment'
+import { OriginPaymentFilterRuleFilter } from './transaction-filters/origin-payment-filter'
+import { DestinationPaymentFilterRuleFilter } from './transaction-filters/destination-payment-filter'
+import {
+  DestinationPaymentRuleFiltersParameters,
+  OriginPaymentRuleFiltersParameters,
+} from './transaction-filters/payment-filters-base'
+import { OriginTransactionCountryRuleFilter } from './transaction-filters/origin-transaction-country'
+import {
+  DestinationTransactionCountryRuleFilterParameter,
+  OriginTransactionCountryRuleFilterParameter,
+} from './transaction-filters/transaction-country-base'
+import { DestinationTransactionCountryRuleFilter } from './transaction-filters/destination-transaction-country'
 
-export type TransactionFilters = PaymentFilterRuleFilterParameter &
+export type TransactionFilters = OriginPaymentRuleFiltersParameters &
+  DestinationPaymentRuleFiltersParameters &
   TransactionTypeRuleFilterParameter &
   TransactionStateRuleFilterParameter &
-  TransactionCountryRuleFilterParameter &
+  OriginTransactionCountryRuleFilterParameter &
+  DestinationTransactionCountryRuleFilterParameter &
   CheckDirectionRuleFilterParameter &
   TransactionAmountRuleFilterParameter &
   TransactionProductTypesRuleFilterParameter &
@@ -148,10 +154,12 @@ export type TransactionHistoricalFilterKeys = keyof TransactionHistoricalFilters
 export type UserFilterKeys = keyof UserFilters
 
 const _TRANSACTION_FILTERS = [
-  PaymentFilterRuleFilter,
+  OriginPaymentFilterRuleFilter,
+  DestinationPaymentFilterRuleFilter,
   TransactionTypeRuleFilter,
   TransactionStateRuleFilter,
-  TransactionCountryRuleFilter,
+  OriginTransactionCountryRuleFilter,
+  DestinationTransactionCountryRuleFilter,
   TransactionAmountRuleFilter,
   CheckDirectionRuleFilter,
   TransactionProductTypesRuleFilter,
