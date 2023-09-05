@@ -372,7 +372,7 @@ export class CdkTarponStack extends cdk.Stack {
       this,
       StackConstants.FAST_GEOIP_LAYER_NAME,
       {
-        compatibleRuntimes: [Runtime.NODEJS_18_X],
+        compatibleRuntimes: [Runtime.NODEJS_16_X],
         code:
           process.env.INFRA_CI === 'true'
             ? Code.fromAsset('infra')

@@ -98,7 +98,7 @@ async function main() {
     entryPoints: entries,
     bundle: true,
     outdir: OUT_DIR,
-    target: 'node18.17.1',
+    target: 'node16.13.1',
     format: 'cjs',
     minify: true,
     metafile: true,
