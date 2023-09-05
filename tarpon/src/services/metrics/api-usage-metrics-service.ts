@@ -11,7 +11,15 @@ import { DynamoDBDocumentClient } from '@aws-sdk/lib-dynamodb'
 import { MongoClient } from 'mongodb'
 import { Dimension } from '@aws-sdk/client-cloudwatch'
 
-import { groupBy, mapValues, maxBy, mergeWith, sortBy, sumBy } from 'lodash'
+import {
+  groupBy,
+  mapValues,
+  maxBy,
+  mergeWith,
+  min,
+  sortBy,
+  sumBy,
+} from 'lodash'
 import {
   DailyMetricStats,
   DailyStats,
@@ -212,7 +220,8 @@ export class ApiUsageMetricsService {
   ): Promise<void> {
     const timeRange: TimeRange = {
       startTimestamp: dayjs(month).startOf('month').valueOf(),
-      endTimestamp: dayjs(month).endOf('month').valueOf(),
+      endTimestamp:
+        min([dayjs(month).endOf('month').valueOf(), Date.now()]) || Date.now(),
     }
     const dimensions = this.getDimensions(tenantInfo)
     const dailyValues = await this.getDailyMetricValues(tenantInfo, timeRange)
