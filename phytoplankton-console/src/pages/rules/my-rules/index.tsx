@@ -209,9 +209,16 @@ const MyRule = (props: { simulationMode?: boolean }) => {
         type: DATE,
         sorting: 'desc',
       }),
+      helper.simple<'updatedAt'>({
+        key: 'updatedAt',
+        title: 'Updated at',
+        sorting: true,
+        type: DATE,
+      }),
       helper.derived<boolean>({
-        id: 'status',
-        title: 'Status',
+        id: 'enabled',
+        title: 'Enabled',
+        defaultSticky: 'RIGHT',
         value: (row) => row.status === 'ACTIVE',
         defaultWidth: 70,
         type: {
@@ -325,6 +332,7 @@ const MyRule = (props: { simulationMode?: boolean }) => {
       }
     }
 
+    // TODO: To be refactored by FR-2677
     const result = [...ruleInstances];
     if (params.sort.length > 0) {
       const [key, order] = params.sort[0];
@@ -339,7 +347,11 @@ const MyRule = (props: { simulationMode?: boolean }) => {
         } else if (key === 'createdAt') {
           result =
             a.createdAt !== undefined && b.createdAt !== undefined ? a.createdAt - b.createdAt : -1;
+        } else if (key === 'updatedAt') {
+          result =
+            a.updatedAt !== undefined && b.updatedAt !== undefined ? a.updatedAt - b.updatedAt : -1;
         }
+
         result *= order === 'descend' ? -1 : 1;
         return result;
       });
