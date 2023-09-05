@@ -16,8 +16,8 @@ async function migrateTenant(tenant: Tenant) {
   const filteredRuleInstances = ruleInstances.filter((ruleInstance) => {
     const { filters } = ruleInstance
     if (
-      isEmpty(filters.transactionCountries) &&
-      isEmpty(filters.paymentFilters)
+      isEmpty(filters?.transactionCountries) &&
+      isEmpty(filters?.paymentFilters)
     ) {
       return false
     }
