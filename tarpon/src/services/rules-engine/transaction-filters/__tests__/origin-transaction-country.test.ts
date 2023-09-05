@@ -1,4 +1,4 @@
-import { TransactionCountryRuleFilter } from '../transaction-country'
+import { OriginTransactionCountryRuleFilter } from '../origin-transaction-country'
 import { getTestTenantId } from '@/test-utils/tenant-test-utils'
 import { getDynamoDbClient } from '@/utils/dynamodb'
 import { getTestTransaction } from '@/test-utils/transaction-test-utils'
@@ -7,7 +7,7 @@ const dynamodb = getDynamoDbClient()
 
 test('Transaction country matches the filter', async () => {
   expect(
-    await new TransactionCountryRuleFilter(
+    await new OriginTransactionCountryRuleFilter(
       getTestTenantId(),
       {
         transaction: getTestTransaction({
@@ -19,7 +19,7 @@ test('Transaction country matches the filter', async () => {
           destinationAmountDetails: undefined,
         }),
       },
-      { transactionCountries: ['IN'] },
+      { originTransactionCountries: ['IN'] },
       dynamodb
     ).predicate()
   ).toBe(true)
@@ -27,7 +27,7 @@ test('Transaction country matches the filter', async () => {
 
 test("Transaction country doesn't match the filter", async () => {
   expect(
-    await new TransactionCountryRuleFilter(
+    await new OriginTransactionCountryRuleFilter(
       getTestTenantId(),
       {
         transaction: getTestTransaction({
@@ -39,12 +39,12 @@ test("Transaction country doesn't match the filter", async () => {
           destinationAmountDetails: undefined,
         }),
       },
-      { transactionCountries: ['AF'] },
+      { originTransactionCountries: ['AF'] },
       dynamodb
     ).predicate()
   ).toBe(false)
   expect(
-    await new TransactionCountryRuleFilter(
+    await new OriginTransactionCountryRuleFilter(
       getTestTenantId(),
       {
         transaction: getTestTransaction({
@@ -52,7 +52,7 @@ test("Transaction country doesn't match the filter", async () => {
           destinationAmountDetails: undefined,
         }),
       },
-      { transactionCountries: ['BD'] },
+      { originTransactionCountries: ['BD'] },
       dynamodb
     ).predicate()
   ).toBe(false)
@@ -60,53 +60,24 @@ test("Transaction country doesn't match the filter", async () => {
 
 test('Transaction country matches the filter', async () => {
   expect(
-    await new TransactionCountryRuleFilter(
+    await new OriginTransactionCountryRuleFilter(
       getTestTenantId(),
       {
         transaction: getTestTransaction({
-          originAmountDetails: undefined,
-          destinationAmountDetails: {
+          originAmountDetails: {
             transactionAmount: 100,
             transactionCurrency: 'INR',
             country: 'IN',
           },
+          destinationAmountDetails: {
+            transactionAmount: 100,
+            transactionCurrency: 'INR',
+            country: 'US',
+          },
         }),
       },
-      { transactionCountries: ['IN'] },
+      { originTransactionCountries: ['IN'] },
       dynamodb
     ).predicate()
   ).toBe(true)
-})
-
-test("Transaction destination country doesn't match the filter", async () => {
-  expect(
-    await new TransactionCountryRuleFilter(
-      getTestTenantId(),
-      {
-        transaction: getTestTransaction({
-          originAmountDetails: undefined,
-          destinationAmountDetails: {
-            transactionAmount: 100,
-            transactionCurrency: 'INR',
-            country: 'IN',
-          },
-        }),
-      },
-      { transactionCountries: ['CN'] },
-      dynamodb
-    ).predicate()
-  ).toBe(false)
-  expect(
-    await new TransactionCountryRuleFilter(
-      getTestTenantId(),
-      {
-        transaction: getTestTransaction({
-          originAmountDetails: undefined,
-          destinationAmountDetails: undefined,
-        }),
-      },
-      { transactionCountries: ['CN'] },
-      dynamodb
-    ).predicate()
-  ).toBe(false)
 })

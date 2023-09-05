@@ -344,7 +344,7 @@ ruleVariantsTest(false, () => {
         } as TransactionNewCountryRuleParameters,
         defaultAction: 'FLAG',
         filters: {
-          paymentFilters: {
+          originPaymentFilters: {
             cardPaymentChannels: ['ATM'],
             paymentMethods: ['CARD'],
           },

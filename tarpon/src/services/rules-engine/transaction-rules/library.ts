@@ -4,7 +4,7 @@
  * Spreadsheet: https://docs.google.com/spreadsheets/d/1xAl3cqF6cGMyFTpiIOXguyq7P_EGlTldbOWCYj0lMA8
  */
 
-import { PaymentFilterRuleFilterParameter } from '../transaction-filters/payment-filters'
+import { OriginPaymentRuleFiltersParameters } from '../transaction-filters/payment-filters-base'
 import { TransactionFilters, UserFilters } from '../filters'
 import { USER_RULES, UserRuleImplementationName } from '../user-rules'
 import { SanctionsBusinessUserRuleParameters } from '../user-rules/sanctions-business-user'
@@ -346,7 +346,7 @@ const _RULES_LIBRARY: Array<
       merchantNames: [],
     }
     const defaultFilters: TransactionFilters = {
-      paymentFilters: {
+      originPaymentFilters: {
         paymentMethods: ['WALLET'],
       },
     }
@@ -410,11 +410,12 @@ const _RULES_LIBRARY: Array<
         'AF',
       ],
     }
-    const defaultFilters: PaymentFilterRuleFilterParameter = {
-      paymentFilters: {
+    const defaultFilters: OriginPaymentRuleFiltersParameters = {
+      originPaymentFilters: {
         paymentMethods: ['CARD'],
       },
     }
+
     return {
       id: 'R-22',
       type: 'TRANSACTION',
@@ -544,7 +545,7 @@ const _RULES_LIBRARY: Array<
       timeWindowInDays: 1,
     }
     const defaultFilters: TransactionFilters = {
-      paymentFilters: {
+      originPaymentFilters: {
         paymentMethods: ['CARD'],
       },
     }
@@ -575,7 +576,7 @@ const _RULES_LIBRARY: Array<
       timeWindowInDays: 1,
     }
     const defaultFilters: TransactionFilters = {
-      paymentFilters: {
+      originPaymentFilters: {
         paymentMethods: ['CARD'],
       },
     }
@@ -740,7 +741,7 @@ const _RULES_LIBRARY: Array<
       allowedCountries: [],
     }
     const defaultFilters: TransactionFilters = {
-      paymentFilters: {
+      originPaymentFilters: {
         paymentMethods: ['CARD'],
       },
     }
@@ -799,7 +800,7 @@ const _RULES_LIBRARY: Array<
       allowedDistancePercentage: 30,
     }
     const defaultFilters: TransactionFilters | UserFilters = {
-      paymentFilters: {
+      originPaymentFilters: {
         paymentMethods: ['CARD'],
       },
       userType: 'CONSUMER',

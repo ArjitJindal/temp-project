@@ -1,58 +1,13 @@
-import { PaymentFilterRuleFilter } from '../payment-filters'
+import { DestinationPaymentFilterRuleFilter } from '../destination-payment-filter'
 import { getTestTenantId } from '@/test-utils/tenant-test-utils'
 import { getDynamoDbClient } from '@/utils/dynamodb'
 import { getTestTransaction } from '@/test-utils/transaction-test-utils'
 
 const dynamodb = getDynamoDbClient()
 
-test('Transaction origin payment method matches the filter', async () => {
-  expect(
-    await new PaymentFilterRuleFilter(
-      getTestTenantId(),
-      {
-        transaction: getTestTransaction({
-          originPaymentDetails: { method: 'CARD' },
-          destinationPaymentDetails: undefined,
-        }),
-      },
-      { paymentFilters: { paymentMethods: ['CARD'] } },
-      dynamodb
-    ).predicate()
-  ).toBe(true)
-})
-
-test("Transaction origin payment method doesn't match the filter", async () => {
-  expect(
-    await new PaymentFilterRuleFilter(
-      getTestTenantId(),
-      {
-        transaction: getTestTransaction({
-          originPaymentDetails: { method: 'ACH' },
-          destinationPaymentDetails: undefined,
-        }),
-      },
-      { paymentFilters: { paymentMethods: ['CARD'] } },
-      dynamodb
-    ).predicate()
-  ).toBe(false)
-  expect(
-    await new PaymentFilterRuleFilter(
-      getTestTenantId(),
-      {
-        transaction: getTestTransaction({
-          originPaymentDetails: undefined,
-          destinationPaymentDetails: undefined,
-        }),
-      },
-      { paymentFilters: { paymentMethods: ['CARD'] } },
-      dynamodb
-    ).predicate()
-  ).toBe(false)
-})
-
 test('Transaction destination payment method matches the filter', async () => {
   expect(
-    await new PaymentFilterRuleFilter(
+    await new DestinationPaymentFilterRuleFilter(
       getTestTenantId(),
       {
         transaction: getTestTransaction({
@@ -60,7 +15,7 @@ test('Transaction destination payment method matches the filter', async () => {
           destinationPaymentDetails: { method: 'CARD' },
         }),
       },
-      { paymentFilters: { paymentMethods: ['CARD'] } },
+      { destinationPaymentFilters: { paymentMethods: ['CARD'] } },
       dynamodb
     ).predicate()
   ).toBe(true)
@@ -68,7 +23,7 @@ test('Transaction destination payment method matches the filter', async () => {
 
 test("Transaction destination payment method doesn't match the filter", async () => {
   expect(
-    await new PaymentFilterRuleFilter(
+    await new DestinationPaymentFilterRuleFilter(
       getTestTenantId(),
       {
         transaction: getTestTransaction({
@@ -76,12 +31,13 @@ test("Transaction destination payment method doesn't match the filter", async ()
           destinationPaymentDetails: { method: 'ACH' },
         }),
       },
-      { paymentFilters: { paymentMethods: ['CARD'] } },
+      { destinationPaymentFilters: { paymentMethods: ['CARD'] } },
       dynamodb
     ).predicate()
   ).toBe(false)
+
   expect(
-    await new PaymentFilterRuleFilter(
+    await new DestinationPaymentFilterRuleFilter(
       getTestTenantId(),
       {
         transaction: getTestTransaction({
@@ -89,15 +45,15 @@ test("Transaction destination payment method doesn't match the filter", async ()
           destinationPaymentDetails: undefined,
         }),
       },
-      { paymentFilters: { paymentMethods: ['CARD'] } },
+      { destinationPaymentFilters: { paymentMethods: ['CARD'] } },
       dynamodb
     ).predicate()
   ).toBe(false)
 })
 
-test('Transaction origin and destination payment methods match the filter and no payment method is specified', async () => {
+test('Transaction destination payment methods match the filter and no payment method is specified', async () => {
   expect(
-    await new PaymentFilterRuleFilter(
+    await new DestinationPaymentFilterRuleFilter(
       getTestTenantId(),
       {
         transaction: getTestTransaction({
@@ -105,7 +61,7 @@ test('Transaction origin and destination payment methods match the filter and no
           destinationPaymentDetails: { method: 'CARD' },
         }),
       },
-      { paymentFilters: { paymentMethods: [] } },
+      { destinationPaymentFilters: { paymentMethods: [] } },
       dynamodb
     ).predicate()
   ).toBe(true)
@@ -113,16 +69,19 @@ test('Transaction origin and destination payment methods match the filter and no
 
 test('Transaction Payment Channel matches the filter', async () => {
   expect(
-    await new PaymentFilterRuleFilter(
+    await new DestinationPaymentFilterRuleFilter(
       getTestTenantId(),
       {
         transaction: getTestTransaction({
-          originPaymentDetails: { method: 'CARD', paymentChannel: 'ONLINE' },
-          destinationPaymentDetails: undefined,
+          originPaymentDetails: undefined,
+          destinationPaymentDetails: {
+            method: 'CARD',
+            paymentChannel: 'ONLINE',
+          },
         }),
       },
       {
-        paymentFilters: {
+        destinationPaymentFilters: {
           paymentMethods: ['CARD'],
           cardPaymentChannels: ['ONLINE'],
         },
@@ -134,16 +93,19 @@ test('Transaction Payment Channel matches the filter', async () => {
 
 test("Transaction Payment Channel doesn't match the filter", async () => {
   expect(
-    await new PaymentFilterRuleFilter(
+    await new DestinationPaymentFilterRuleFilter(
       getTestTenantId(),
       {
         transaction: getTestTransaction({
-          originPaymentDetails: { method: 'CARD', paymentChannel: 'ONLINE' },
-          destinationPaymentDetails: undefined,
+          originPaymentDetails: undefined,
+          destinationPaymentDetails: {
+            method: 'CARD',
+            paymentChannel: 'ONLINE',
+          },
         }),
       },
       {
-        paymentFilters: {
+        destinationPaymentFilters: {
           paymentMethods: ['CARD'],
           cardPaymentChannels: ['IN_PERSON'],
         },
@@ -153,76 +115,9 @@ test("Transaction Payment Channel doesn't match the filter", async () => {
   ).toBe(false)
 })
 
-test('Transaction origin and destination payment channels match the filter and no payment channel is specified', async () => {
+test('Transaction destination payment channels match the filter and no payment channel is specified', async () => {
   expect(
-    await new PaymentFilterRuleFilter(
-      getTestTenantId(),
-      {
-        transaction: getTestTransaction({
-          originPaymentDetails: { method: 'CARD', paymentChannel: 'ONLINE' },
-          destinationPaymentDetails: {
-            method: 'CARD',
-            paymentChannel: 'ONLINE',
-          },
-        }),
-      },
-      {
-        paymentFilters: {
-          cardPaymentChannels: [],
-          paymentMethods: ['CARD'],
-        },
-      },
-      dynamodb
-    ).predicate()
-  ).toBe(true)
-})
-
-test('Transaction origin and destination payment channels match the filter and no payment channel is specified', async () => {
-  expect(
-    await new PaymentFilterRuleFilter(
-      getTestTenantId(),
-      {
-        transaction: getTestTransaction({
-          originPaymentDetails: { method: 'CARD', paymentChannel: 'ONLINE' },
-          destinationPaymentDetails: {
-            method: 'CARD',
-            paymentChannel: 'ONLINE',
-          },
-        }),
-      },
-      {
-        paymentFilters: {
-          cardPaymentChannels: [],
-          paymentMethods: ['CARD'],
-        },
-      },
-      dynamodb
-    ).predicate()
-  ).toBe(true)
-})
-
-test('Transaction origin and destination payment channels match the filter and no payment channel is specified', async () => {
-  expect(
-    await new PaymentFilterRuleFilter(
-      getTestTenantId(),
-      {
-        transaction: getTestTransaction({
-          originPaymentDetails: { method: 'CARD', paymentChannel: 'ONLINE' },
-          destinationPaymentDetails: {
-            method: 'CARD',
-            paymentChannel: 'ONLINE',
-          },
-        }),
-      },
-      { paymentFilters: { cardPaymentChannels: [], paymentMethods: ['CARD'] } },
-      dynamodb
-    ).predicate()
-  ).toBe(true)
-})
-
-test('Payment Method Filter is Wallet', async () => {
-  expect(
-    await new PaymentFilterRuleFilter(
+    await new DestinationPaymentFilterRuleFilter(
       getTestTenantId(),
       {
         transaction: getTestTransaction({
@@ -230,11 +125,38 @@ test('Payment Method Filter is Wallet', async () => {
             method: 'CARD',
             paymentChannel: 'ONLINE',
           },
-          destinationPaymentDetails: undefined,
+          destinationPaymentDetails: {
+            method: 'CARD',
+            paymentChannel: 'ONLINE',
+          },
         }),
       },
       {
-        paymentFilters: {
+        destinationPaymentFilters: {
+          cardPaymentChannels: [],
+          paymentMethods: ['CARD'],
+        },
+      },
+      dynamodb
+    ).predicate()
+  ).toBe(true)
+})
+
+test('Payment Method Filter is Wallet', async () => {
+  expect(
+    await new DestinationPaymentFilterRuleFilter(
+      getTestTenantId(),
+      {
+        transaction: getTestTransaction({
+          originPaymentDetails: undefined,
+          destinationPaymentDetails: {
+            method: 'CARD',
+            paymentChannel: 'ONLINE',
+          },
+        }),
+      },
+      {
+        destinationPaymentFilters: {
           paymentMethods: ['WALLET'],
           cardPaymentChannels: [],
         },
@@ -246,19 +168,19 @@ test('Payment Method Filter is Wallet', async () => {
 
 test('Payment Method Filter is Wallet and Payment Channel is Online', async () => {
   expect(
-    await new PaymentFilterRuleFilter(
+    await new DestinationPaymentFilterRuleFilter(
       getTestTenantId(),
       {
         transaction: getTestTransaction({
-          originPaymentDetails: {
+          originPaymentDetails: undefined,
+          destinationPaymentDetails: {
             method: 'CARD',
             paymentChannel: 'ONLINE',
           },
-          destinationPaymentDetails: undefined,
         }),
       },
       {
-        paymentFilters: {
+        destinationPaymentFilters: {
           paymentMethods: ['WALLET'],
           cardPaymentChannels: ['ONLINE'],
         },
@@ -270,19 +192,19 @@ test('Payment Method Filter is Wallet and Payment Channel is Online', async () =
 
 test('Payment Method Filter is Wallet and Wallet Provider is Apple Pay', async () => {
   expect(
-    await new PaymentFilterRuleFilter(
+    await new DestinationPaymentFilterRuleFilter(
       getTestTenantId(),
       {
         transaction: getTestTransaction({
-          originPaymentDetails: {
+          originPaymentDetails: undefined,
+          destinationPaymentDetails: {
             method: 'WALLET',
             walletType: 'APPLE_PAY',
           },
-          destinationPaymentDetails: undefined,
         }),
       },
       {
-        paymentFilters: {
+        destinationPaymentFilters: {
           paymentMethods: ['WALLET'],
           cardPaymentChannels: [],
           walletType: 'APPLE_PAY',
@@ -295,22 +217,22 @@ test('Payment Method Filter is Wallet and Wallet Provider is Apple Pay', async (
 
 test('Card Issued Country Matches But walltype is not but still returns true', async () => {
   expect(
-    await new PaymentFilterRuleFilter(
+    await new DestinationPaymentFilterRuleFilter(
       getTestTenantId(),
       {
         transaction: getTestTransaction({
           originPaymentDetails: {
-            method: 'CARD',
-            cardIssuedCountry: 'US',
-          },
-          destinationPaymentDetails: {
             method: 'WALLET',
             walletType: 'APPLE_PAY',
+          },
+          destinationPaymentDetails: {
+            method: 'CARD',
+            cardIssuedCountry: 'US',
           },
         }),
       },
       {
-        paymentFilters: {
+        destinationPaymentFilters: {
           paymentMethods: ['WALLET', 'CARD'],
           cardPaymentChannels: [],
           walletType: 'GOOGLE_PAY',

@@ -139,9 +139,9 @@ describe('Public Management API - Rule', () => {
     const returnedSchema = JSON.parse(response.body)
     expect(returnedSchema.type).toEqual('object')
     expect(returnedSchema.properties).toMatchObject({
-      paymentFilters: {
+      originPaymentFilters: {
         description:
-          'Filters payment methods, wallet types, card issued countries and payment channels inside the payment details on which the rule will be applied',
+          'Filters origin payment methods, wallet types, card issued countries and payment channels inside the payment details on which the rule will be applied',
         properties: {
           paymentMethods: {
             type: 'array',
