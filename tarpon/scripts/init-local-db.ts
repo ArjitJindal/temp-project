@@ -1,12 +1,13 @@
 #!/usr/bin/env ts-node
 import { execSync } from 'child_process'
 import { MongoClient } from 'mongodb'
-import { DB_NAME, TENANT } from './settings'
 import { seedMongo } from '@/core/seed/mongo'
 import { seedDynamo } from '@/core/seed/dynamodb'
 import { getDynamoDbClient } from '@/utils/dynamodb'
 
 process.env.ENV = process.env.ENV || 'local'
+const DB_NAME = `tarpon`
+const TENANT = process.env.TENANT || 'flagright'
 
 async function main() {
   console.log('Creating Dynamo tables...')

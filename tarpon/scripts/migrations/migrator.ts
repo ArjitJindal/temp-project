@@ -1,5 +1,4 @@
 process.env.AWS_XRAY_CONTEXT_MISSING = 'IGNORE_ERROR'
-
 import path from 'path'
 import { exit } from 'process'
 import { SQSQueues, StackConstants } from '@lib/constants'
@@ -10,7 +9,11 @@ import { syncRulesLibrary } from './always-run/sync-rules-library'
 import { loadConfigEnv } from './utils/config'
 import { syncListLibrary } from './always-run/sync-list-library'
 import { syncFeatureFlags } from './utils/tenant'
+import { envIs } from '@/utils/env'
 import { getMongoDbClient } from '@/utils/mongodb-utils'
+import { seedDynamo } from '@/core/seed/dynamodb'
+import { getDynamoDbClient } from '@/utils/dynamodb'
+import { seedMongo } from '@/core/seed/mongo'
 
 const MIGRATION_TEMPLATE = `import { migrateAllTenants } from '../utils/tenant'
 import { Tenant } from '@/services/accounts'
@@ -115,6 +118,18 @@ async function main() {
     await syncMongoDbIndices()
     await syncRulesLibrary()
     await syncListLibrary()
+
+    // Seed cypress tenant on dev
+    if (envIs('dev')) {
+      const tenant = 'cypress-tenant'
+      console.info('Seeding DynamoDB...')
+      await seedDynamo(getDynamoDbClient(), tenant)
+
+      console.info('Seeding MongoDB...')
+      const client = await getMongoDbClient()
+      await seedMongo(client, tenant)
+      await client.close()
+    }
   }
 }
 
