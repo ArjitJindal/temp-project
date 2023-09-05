@@ -104,7 +104,7 @@ function CaseDetails(props: Props) {
                 },
               ]
             : []),
-          ...(caseItem.caseId && user
+          ...(caseItem.caseId && user && caseItem.caseType === 'MANUAL'
             ? [
                 {
                   tab: 'Case transactions',
