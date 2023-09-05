@@ -1,6 +1,6 @@
 import { data as users } from './users'
 import { transactions } from '@/core/seed/data/transactions'
-import { sampleTransactionUserCase } from '@/core/seed/samplers/cases'
+import { sampleTransactionUserCases } from '@/core/seed/samplers/cases'
 import { sampleTimestamp } from '@/core/seed/samplers/timestamp'
 import { Case } from '@/@types/openapi-internal/Case'
 import { InternalTransaction } from '@/@types/openapi-internal/InternalTransaction'
@@ -21,36 +21,31 @@ const init = () => {
       transactions.filter((t) => {
         return t.destinationUserId === user.userId
       })
-    const destinationCase: Case = {
-      ...sampleTransactionUserCase(
-        {
-          transactions: transactionsForUserADestination,
-          userId: user.userId,
-          destination: user,
-        },
-        i * 0.001
-      ),
+    const destinationCases: Case[] = sampleTransactionUserCases(
+      {
+        transactions: transactionsForUserADestination,
+        userId: user.userId,
+        destination: user,
+      },
+      i * 0.001
+    ).map((c) => ({
+      ...c,
       createdTimestamp: sampleTimestamp(1) - 3600 * 1000 * i,
-    }
-
-    const originCase: Case = {
-      ...sampleTransactionUserCase(
-        {
-          transactions: transactionsForUserAsOrigin,
-          userId: user.userId,
-          origin: user,
-        },
-        i * 0.001
-      ),
+    }))
+    const originCases: Case[] = sampleTransactionUserCases(
+      {
+        transactions: transactionsForUserAsOrigin,
+        userId: user.userId,
+        origin: user,
+      },
+      i * 0.001
+    ).map((c) => ({
+      ...c,
       createdTimestamp: sampleTimestamp(1) - 3600 * 1000 * i,
-    }
+    }))
 
-    if (destinationCase.alerts && destinationCase.alerts?.length > 0) {
-      data.push(destinationCase)
-    }
-    if (originCase.alerts && originCase.alerts?.length > 0) {
-      data.push(originCase)
-    }
+    data.push(...destinationCases)
+    data.push(...originCases)
   }
 }
 

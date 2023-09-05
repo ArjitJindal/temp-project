@@ -1,3 +1,4 @@
+import { uniq } from 'lodash'
 import {
   AttributeBuilder,
   AttributeSet,
@@ -13,15 +14,20 @@ export class CaseAttributeBuilder implements AttributeBuilder {
   build(attributes: AttributeSet, inputData: InputData) {
     attributes.setAttribute(
       'ruleHitNames',
-      inputData._case?.alerts?.map((a) => a.ruleName) || []
+      uniq(inputData._case?.alerts?.map((a) => a.ruleName) || [])
     )
     attributes.setAttribute(
       'ruleHitNature',
-      inputData._case?.alerts?.pop()?.ruleNature
+      uniq(inputData._case?.alerts?.map((r) => r.ruleNature))
     )
     attributes.setAttribute(
-      'comments',
+      'caseComments',
       inputData._case?.comments?.map((c) => c.body) || []
     )
+    attributes.setAttribute(
+      'caseGenerationDate',
+      new Date(inputData._case?.createdTimestamp || 0).toISOString() || []
+    )
+    attributes.setAttribute('closureDate', new Date().toISOString())
   }
 }

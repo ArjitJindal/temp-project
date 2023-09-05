@@ -1,5 +1,6 @@
 import { Address } from '@/@types/openapi-internal/Address'
 import { pickRandom, prng } from '@/utils/prng'
+import { addresses } from '@/core/seed/data/address'
 
 export function sampleAddress(seed?: number): Address {
   const rnd = prng(seed)
@@ -29,4 +30,8 @@ export function sampleAddress(seed?: number): Address {
     ],
     rnd()
   )
+}
+
+export const randomAddress = () => {
+  return pickRandom(addresses)
 }

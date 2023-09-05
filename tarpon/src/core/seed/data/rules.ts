@@ -1,7 +1,7 @@
 import * as _ from 'lodash'
 import { random } from 'lodash'
 import { ExecutedRulesResult } from '@/@types/openapi-public/ExecutedRulesResult'
-import { pickRandom, randomArray } from '@/utils/prng'
+import { pickRandom, randomSubset } from '@/utils/prng'
 import { RuleInstance } from '@/@types/openapi-internal/RuleInstance'
 import { RuleAction } from '@/@types/openapi-internal/RuleAction'
 import { SANCTIONS_DETAILS_ENTITY_TYPES } from '@/@types/openapi-internal-custom/SanctionsDetailsEntityType'
@@ -401,9 +401,9 @@ export const transactionRules: ExecutedRulesResult[] = []
 export const userRules: ExecutedRulesResult[] = []
 
 export function randomTransactionRules(): ExecutedRulesResult[] {
-  return randomArray((i) => transactionRules[i], 0.1, transactionRules.length)
+  return randomSubset(transactionRules)
 }
 
 export function randomUserRules(): ExecutedRulesResult[] {
-  return randomArray((i) => userRules[i], 0.1, userRules.length)
+  return randomSubset(userRules)
 }

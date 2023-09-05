@@ -4,7 +4,6 @@ import { sampleTag } from '../samplers/tag'
 import { randomUserRules, userRules } from './rules'
 import {
   merchantMonitoringSummaries,
-  randomAddress,
   randomPhoneNumber,
   sampleBusinessUser,
   sampleKycStatusDetails,
@@ -20,6 +19,7 @@ import { RISK_LEVEL1S } from '@/@types/openapi-internal-custom/RiskLevel1'
 import { MerchantMonitoringSummary } from '@/@types/openapi-internal/MerchantMonitoringSummary'
 import { DrsScore } from '@/@types/openapi-internal/DrsScore'
 import { KrsScore } from '@/@types/openapi-internal/KrsScore'
+import { randomAddress } from '@/core/seed/samplers/address'
 
 const data: (InternalBusinessUser | InternalConsumerUser)[] = []
 const merchantMonitoring: MerchantMonitoringSummary[] = []
@@ -103,7 +103,9 @@ const init = () => {
             },
           },
           executedRules: userRules,
-          hitRules: randomUserRules(),
+          hitRules: randomUserRules().filter(
+            (r) => !r.ruleName.toLowerCase().includes('business')
+          ),
           createdTimestamp: sampleTimestamp(0.9 * i),
           tags: [sampleTag()],
         }

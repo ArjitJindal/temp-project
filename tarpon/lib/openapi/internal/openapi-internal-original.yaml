@@ -1307,7 +1307,7 @@ paths:
   /copilot/narrative:
     post:
       summary: Generate an AI narrative
-      operationId: generateNarrative
+      operationId: generate-narrative
       responses:
         '200':
           description: OK
@@ -1320,6 +1320,23 @@ paths:
           application/json:
             schema:
               $ref: '#/components/schemas/NarrativeRequest'
+        required: true
+  /copilot/format:
+    post:
+      summary: Format AI narrative
+      operationId: format-narrative
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/NarrativeResponse'
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/FormatRequest'
         required: true
   '/users/{userId}/comments/{commentId}':
     parameters:
@@ -4268,6 +4285,13 @@ paths:
           name: transactionIds
           required: true
         - schema:
+            type: array
+            items:
+              type: string
+          in: query
+          name: alertIds
+          required: true
+        - schema:
             type: string
           in: query
           name: caseId
@@ -5407,14 +5431,53 @@ components:
       required:
         - reasons
         - entityId
+    FormatRequest:
+      title: FormatRequest
+      type: object
+      properties:
+        entityId:
+          type: string
+        entityType:
+          type: string
+          enum:
+            - ALERT
+            - CASE
+            - TRANSACTION
+            - REPORT
+        narrative:
+          type: string
+      required:
+        - entityId
+        - entityType
+        - narrative
     NarrativeResponse:
       title: NarrativeResponse
       type: object
       properties:
         narrative:
           type: string
+        attributes:
+          type: array
+          items:
+            type: object
+            properties:
+              attribute:
+                type: string
+              secret:
+                type: boolean
+              value:
+                oneOf:
+                  - type: string
+                  - type: array
+                    items:
+                      type: string
+                  - type: integer
+            required:
+              - attribute
+              - value
       required:
         - narrative
+        - attributes
     FileInfo:
       title: FileInfo
       type: object

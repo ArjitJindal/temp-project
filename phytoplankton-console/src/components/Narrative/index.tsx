@@ -33,7 +33,7 @@ export const CLOSING_REASONS: CaseReasons[] = [
   'Escalated',
 ];
 
-export type EntityType = 'ALERT' | 'CASE' | 'TRANSACTION';
+export type EntityType = 'ALERT' | 'CASE' | 'TRANSACTION' | 'REPORT';
 
 export type FormValues<R> = {
   reasons: R[];
@@ -154,7 +154,13 @@ export default function Narrative<R extends string>(props: NarrativeProps<R>) {
                   inputProps?.onChange?.(value);
                 }}
               />
-              <TextArea {...inputProps} rows={4} placeholder={placeholder} />
+              <TextArea
+                {...inputProps}
+                rows={4}
+                placeholder={placeholder}
+                className={s.commentBox}
+                minHeight={'300px'}
+              />
             </>
           )}
         </InputField>
@@ -163,7 +169,8 @@ export default function Narrative<R extends string>(props: NarrativeProps<R>) {
             {(props) => (
               <CopilotButtonContent
                 reasons={values.values.reasons ?? []}
-                setCommentValue={(value) => {
+                narrative={props.value || ''}
+                setNarrativeValue={(value) => {
                   props.onChange?.(value);
                 }}
                 entityId={entityIds && entityIds?.length > 0 ? entityIds[0] : ''}

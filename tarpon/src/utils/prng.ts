@@ -22,15 +22,6 @@ export function randomFloat(seed?: number | undefined | null, max?: number) {
   return Math.random() * (max || 1)
 }
 
-export function randomArray<T>(
-  init: (index: number) => T,
-  seed?: number,
-  max?: number
-): T[] {
-  const arraySize = randomInt(seed, max ?? 100)
-  return [...new Array(arraySize)].map((_, i) => init(i))
-}
-
 export function pickRandom<T>(variants: T[], seed?: number): T {
   const index = randomInt(seed ?? 0.1, variants.length)
   return variants[index]

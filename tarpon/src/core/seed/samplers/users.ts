@@ -1,5 +1,5 @@
 import { v4 as uuid4 } from 'uuid'
-import { addresses, phoneNumber } from '../data/address'
+import { phoneNumber } from '../data/address'
 import { sampleCountry } from './countries'
 import { sampleString } from './strings'
 import { sampleBusinessUserRiskScoreComponents } from './risk_score_components'
@@ -8,7 +8,7 @@ import { KYCStatus } from '@/@types/openapi-internal/KYCStatus'
 import { KYCStatusDetails } from '@/@types/openapi-internal/KYCStatusDetails'
 import { UserState } from '@/@types/openapi-internal/UserState'
 import { UserStateDetails } from '@/@types/openapi-internal/UserStateDetails'
-import { pickRandom, randomFloat, randomInt } from '@/utils/prng'
+import { pickRandom, randomFloat, randomInt, randomSubset } from '@/utils/prng'
 import { USER_STATES } from '@/@types/openapi-internal-custom/UserState'
 import { KYC_STATUSS } from '@/@types/openapi-internal-custom/KYCStatus'
 import { sampleTimestamp } from '@/core/seed/samplers/timestamp'
@@ -24,6 +24,11 @@ import { MERCHANT_MONITORING_SOURCE_TYPES } from '@/@types/openapi-internal-cust
 import { DrsScore } from '@/@types/openapi-internal/DrsScore'
 import { RISK_LEVEL1S } from '@/@types/openapi-internal-custom/RiskLevel1'
 import { KrsScore } from '@/@types/openapi-internal/KrsScore'
+import { BUSINESS_USER_SEGMENTS } from '@/@types/openapi-internal-custom/BusinessUserSegment'
+import { PAYMENT_METHODS } from '@/@types/openapi-internal-custom/PaymentMethod'
+import { samplePaymentDetails } from '@/core/seed/samplers/transaction'
+import { randomAddress } from '@/core/seed/samplers/address'
+import { randomUserRules, userRules } from '@/core/seed/data/rules'
 
 export function sampleUserState(seed?: number): UserState {
   return USER_STATES[randomInt(seed, USER_STATES.length)]
@@ -51,10 +56,6 @@ const emailSet = [...Array(100)].map(
 
 export const randomEmail = () => {
   return pickRandom(emailSet)
-}
-
-export const randomAddress = () => {
-  return pickRandom(addresses)
 }
 
 export const randomPhoneNumber = () => {
@@ -120,6 +121,7 @@ export function sampleBusinessUser(
   const drsScore = Number((randomFloat() * 100).toFixed(2))
   const krsScore = Number((randomFloat() * 100).toFixed(2))
   const userId = uuid4()
+  const paymentMethod = samplePaymentDetails()
   return {
     user: {
       type: 'BUSINESS',
@@ -137,17 +139,19 @@ export function sampleBusinessUser(
         isUpdatable: true,
       },
       userStateDetails: sampleUserStateDetails(seed),
+      executedRules: userRules,
+      hitRules: randomUserRules().filter(
+        (r) => !r.ruleName.toLowerCase().includes('consumer')
+      ),
       krsScore: {
         krsScore: krsScore,
         createdAt: sampleTimestamp(seed),
       },
-      comments: [
-        {
-          body: 'User is behaving suspiciously',
-        },
-      ],
+      comments: [],
       kycStatusDetails: sampleKycStatusDetails(seed),
       createdTimestamp: sampleTimestamp(seed),
+      allowedPaymentMethods: randomSubset(PAYMENT_METHODS),
+      savedPaymentDetails: paymentMethod ? [paymentMethod] : [],
       legalEntity: {
         contactDetails: {
           emailIds: company?.contactEmails || [],
@@ -163,18 +167,25 @@ export function sampleBusinessUser(
             amountValue: Math.floor(Math.random() * 100000),
             amountCurrency: 'USD',
           },
+          tags: [{ key: 'Unit', value: 'S1300' }],
         },
+        reasonForAccountOpening: ['Expansion'],
         companyGeneralDetails: {
           legalName: name,
           businessIndustry: company?.industries || [],
+          mainProductsServicesSold: company?.products,
+          userSegment: pickRandom(BUSINESS_USER_SEGMENTS),
           userRegistrationStatus:
             Math.floor(Math.random() * 9 + 1) > 8
               ? 'UNREGISTERED'
               : 'REGISTERED',
         },
         companyRegistrationDetails: {
+          taxIdentifier: sampleString(seed),
+          legalEntityType: 'Corporation',
           registrationIdentifier: sampleString(seed),
           registrationCountry: country ?? sampleCountry(seed),
+          tags: [{ key: 'Unit', value: 'S1300' }],
         },
       },
       transactionLimits: {

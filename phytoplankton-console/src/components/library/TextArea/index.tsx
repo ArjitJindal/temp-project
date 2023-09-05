@@ -11,6 +11,7 @@ export interface Props extends InputProps<string> {
   rows?: number;
   placeholder?: string;
   ref?: React.Ref<TextAreaRef>;
+  minHeight?: string;
 }
 
 export default function TextArea(props: Props) {
@@ -26,6 +27,7 @@ export default function TextArea(props: Props) {
     isDisabled,
     onFocus,
     onBlur,
+    minHeight,
   } = props;
   return (
     <Input.TextArea
@@ -40,6 +42,7 @@ export default function TextArea(props: Props) {
       ref={props.ref}
       onFocus={onFocus ? () => onFocus() : undefined}
       onBlur={onBlur ? () => onBlur() : undefined}
+      style={{ minHeight }}
     />
   );
 }

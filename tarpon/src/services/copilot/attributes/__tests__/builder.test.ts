@@ -20,8 +20,6 @@ describe('Attribute generator', () => {
       ],
       user,
     })
-    expect(attributes.getAttribute('debtorSameCountryAsUserCount')).toEqual(3)
-    expect(attributes.getAttribute('distinctOriginUserCount')).toEqual(1)
-    expect(attributes.size).toEqual(43)
+    expect(attributes.getAttribute('transactionsCount')?.value).toEqual(5)
   })
 })

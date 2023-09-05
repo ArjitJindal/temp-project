@@ -11,7 +11,7 @@ import { WalletDetails } from '@/@types/openapi-public/WalletDetails'
 import { CheckDetails } from '@/@types/openapi-public/CheckDetails'
 import { CountryCode } from '@/@types/openapi-internal/CountryCode'
 import { RULE_ACTIONS } from '@/@types/openapi-public-custom/RuleAction'
-import { randomAddress } from '@/core/seed/samplers/users'
+import { randomAddress } from '@/core/seed/samplers/address'
 
 export function sampleTransaction(
   {

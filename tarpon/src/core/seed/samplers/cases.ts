@@ -1,4 +1,4 @@
-import { last, uniq } from 'lodash'
+import { last, uniqBy } from 'lodash'
 import { compile } from 'handlebars'
 import { randomBool } from 'fp-ts/Random'
 import { getRuleInstance, transactionRules, userRules } from '../data/rules'
@@ -13,7 +13,7 @@ import { CASE_STATUSS } from '@/@types/openapi-internal-custom/CaseStatus'
 import { InternalBusinessUser } from '@/@types/openapi-internal/InternalBusinessUser'
 import { InternalConsumerUser } from '@/@types/openapi-internal/InternalConsumerUser'
 import { CaseReasons } from '@/@types/openapi-internal/CaseReasons'
-import { isStatusInReview } from '@/utils/helpers'
+import { getUserName, isStatusInReview } from '@/utils/helpers'
 import { AlertStatus } from '@/@types/openapi-internal/AlertStatus'
 import { CHECKLIST_STATUSS } from '@/@types/openapi-internal-custom/ChecklistStatus'
 import { getRandomUser, getRandomUsers } from '@/core/seed/samplers/accounts'
@@ -22,6 +22,8 @@ import { CaseStatusChange } from '@/@types/openapi-internal/CaseStatusChange'
 import dayjs from '@/utils/dayjs'
 import { getChecklistTemplate } from '@/core/seed/data/checklists'
 import { ChecklistItemValue } from '@/@types/openapi-internal/ChecklistItemValue'
+import { RULE_NATURES } from '@/@types/openapi-internal-custom/RuleNature'
+import { SANCTIONS_DETAILS_ENTITY_TYPES } from '@/@types/openapi-internal-custom/SanctionsDetailsEntityType'
 
 let counter = 1
 let alertCounter = 1
@@ -97,7 +99,7 @@ export function generateNarrative(
 ${footer}`
 }
 
-export function sampleTransactionUserCase(
+export function sampleTransactionUserCases(
   params: {
     transactions: InternalTransaction[]
     userId: string
@@ -105,10 +107,13 @@ export function sampleTransactionUserCase(
     destination?: InternalBusinessUser | InternalConsumerUser
   },
   seed?: number
-): Case {
+): Case[] {
   const { transactions, origin, destination } = params
 
-  let ruleHits = uniq(transactions.flatMap((t) => t.hitRules)).filter((rh) => {
+  let ruleHits = uniqBy(
+    transactions.flatMap((t) => t.hitRules),
+    'ruleInstanceId'
+  ).filter((rh) => {
     if (rh.ruleHitMeta?.hitDirections?.includes('ORIGIN') && origin) {
       return true
     }
@@ -122,73 +127,97 @@ export function sampleTransactionUserCase(
   if (origin) {
     user = origin
   }
-
   ruleHits = ruleHits.concat(user?.hitRules ?? [])
-  const caseId = `C-${counter}`
 
-  counter++
-  const caseStatus = pickRandom(
-    CASE_STATUSS.filter((s) => !isStatusInReview(s)),
-    seed
-  )
-  const reasons = randomSubset<CaseReasons>([
-    'Anti-money laundering',
-    'Documents collected',
-    'Fraud',
-    'Terrorist financing',
-    'Suspicious activity reported (SAR)',
-  ])
-  return {
-    caseId: caseId,
-    caseType: 'SYSTEM',
-    caseStatus,
-    createdTimestamp: sampleTimestamp(seed),
-    latestTransactionArrivalTimestamp: sampleTimestamp(seed) + 3600 * 1000,
-    comments: [],
-    caseTransactionsCount: transactions.length,
-    statusChanges: getStatusChangesObject(
-      caseStatus ?? 'OPEN',
-      getRandomUser().assigneeUserId
-    ),
-    assignments: getRandomUsers(),
-    reviewAssignments: getRandomUsers(),
-    lastStatusChange:
-      caseStatus === 'CLOSED' && user
-        ? {
-            reason: reasons,
-            userId: params.userId,
-            timestamp: sampleTimestamp(seed),
-            comment: generateNarrative(
-              ruleHits.map((r) => r.ruleDescription),
-              reasons,
-              user
-            ),
+  return RULE_NATURES.map((nature): Case => {
+    const caseId = `C-${counter}`
+    counter++
+    const caseStatus = pickRandom(
+      CASE_STATUSS.filter((s) => !isStatusInReview(s)),
+      seed
+    )
+    const reasons = randomSubset<CaseReasons>([
+      'Anti-money laundering',
+      'Documents collected',
+      'Fraud',
+      'Terrorist financing',
+      'Suspicious activity reported (SAR)',
+    ])
+    return {
+      caseId: caseId,
+      caseType: 'SYSTEM',
+      caseStatus,
+      createdTimestamp: sampleTimestamp(seed),
+      latestTransactionArrivalTimestamp: sampleTimestamp(seed) + 3600 * 1000,
+      comments: [],
+      caseTransactionsCount: transactions.length,
+      statusChanges: getStatusChangesObject(
+        caseStatus ?? 'OPEN',
+        getRandomUser().assigneeUserId
+      ),
+      assignments: getRandomUsers(),
+      reviewAssignments: getRandomUsers(),
+      lastStatusChange:
+        caseStatus === 'CLOSED' && user
+          ? {
+              reason: reasons,
+              userId: params.userId,
+              timestamp: sampleTimestamp(seed),
+              comment: generateNarrative(
+                ruleHits.map((r) => r.ruleDescription),
+                reasons,
+                user
+              ),
+            }
+          : undefined,
+      priority: pickRandom(['P1', 'P2', 'P3', 'P4'], seed),
+      relatedCases: [],
+      caseUsers: {
+        origin,
+        destination,
+      },
+      caseTransactions: transactions,
+      caseTransactionsIds: transactions.map((t) => t.transactionId!),
+      alerts: ruleHits
+        .filter((rh) => rh.nature === nature)
+        .map((ruleHit) => {
+          return {
+            ...ruleHit,
+            sanctionsDetails:
+              ruleHit.nature === 'SCREENING'
+                ? [
+                    {
+                      name: getUserName(user),
+                      // IDs from the search responses in raw-data
+                      searchId: pickRandom([
+                        '229b87fa-05ab-4b1d-82f8-b2df32fdcab7',
+                        '6505dae6-0424-4677-935c-926317854a5f',
+                        'c3da5e59-b309-4916-ac21-171ccf5922bc',
+                      ]),
+                      iban: 'DE24500105178163255147',
+                      entityType: pickRandom(SANCTIONS_DETAILS_ENTITY_TYPES),
+                    },
+                  ]
+                : undefined,
           }
-        : undefined,
-    priority: pickRandom(['P1', 'P2', 'P3', 'P4'], seed),
-    relatedCases: [],
-    caseUsers: {
-      origin,
-      destination,
-    },
-    caseTransactions: transactions,
-    caseTransactionsIds: transactions.map((t) => t.transactionId!),
-    alerts: ruleHits.map((ruleHit, i) =>
-      sampleAlert(
-        {
-          caseId,
-          ruleHit,
-          transactions: transactions.filter(
-            (t) =>
-              !!t.hitRules.find(
-                (hr) => hr.ruleInstanceId === ruleHit.ruleInstanceId
-              )
-          ),
-        },
-        i * 0.001
-      )
-    ),
-  }
+        })
+        .map((ruleHit, i) =>
+          sampleAlert(
+            {
+              caseId,
+              ruleHit,
+              transactions: transactions.filter(
+                (t) =>
+                  !!t.hitRules.find(
+                    (hr) => hr.ruleInstanceId === ruleHit.ruleInstanceId
+                  )
+              ),
+            },
+            i * 0.001
+          )
+        ),
+    }
+  }).filter((c) => c.alerts && c.alerts.length > 0)
 }
 
 export function sampleAlert(

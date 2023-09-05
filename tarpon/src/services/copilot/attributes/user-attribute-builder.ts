@@ -33,15 +33,8 @@ function consumerAttributes(
   )
   attributes.setAttribute(
     'name',
-    `${user.userDetails?.name.firstName} ${user.userDetails?.name.middleName} ${user.userDetails?.name.lastName}`
-  )
-  attributes.set(
-    'documentsCollected',
-    user.legalDocuments?.map((l) => l.documentType)
-  )
-  attributes.set(
-    'pepHit',
-    user.pepStatus?.find((p) => p.isPepHit) !== undefined
+    `${user.userDetails?.name.firstName} ${user.userDetails?.name.middleName} ${user.userDetails?.name.lastName}`,
+    true
   )
 }
 function businessAttributes(
@@ -54,22 +47,21 @@ function businessAttributes(
   )
   attributes.setAttribute(
     'name',
-    user.legalEntity.companyGeneralDetails?.legalName
+    user.legalEntity.companyGeneralDetails?.legalName,
+    true
   )
   attributes.setAttribute(
     'websites',
-    user.legalEntity.contactDetails?.websites || []
+    user.legalEntity.contactDetails?.websites || [],
+    true
   )
   attributes.setAttribute(
-    'distinctContactNumbers',
-    user.legalEntity.contactDetails?.contactNumbers?.length || 0
+    'industry',
+    user.legalEntity.companyGeneralDetails.businessIndustry || []
   )
   attributes.setAttribute(
-    'distinctEmailAddresses',
-    user.legalEntity.contactDetails?.emailIds?.length || 0
+    'productsSold',
+    user.legalEntity.companyGeneralDetails.mainProductsServicesSold || []
   )
-  attributes.setAttribute(
-    'distinctFaxNumbers',
-    user.legalEntity.contactDetails?.faxNumbers?.length || 0
-  )
+  attributes.setAttribute('userComments', user.comments || [])
 }

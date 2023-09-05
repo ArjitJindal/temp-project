@@ -18,10 +18,12 @@ import { message } from '@/components/library/Message';
 import { getErrorMessage } from '@/utils/lang';
 export function SarButton({
   caseId,
+  alertIds,
   transactionIds,
   isDisabled,
 }: {
   caseId: string;
+  alertIds: string[];
   transactionIds: string[];
   isDisabled?: boolean;
 }) {
@@ -39,6 +41,7 @@ export function SarButton({
       return api.getReportsDraft({
         caseId,
         reportTypeId,
+        alertIds,
         transactionIds,
       });
     },

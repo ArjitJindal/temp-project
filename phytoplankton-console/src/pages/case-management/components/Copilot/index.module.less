@@ -2,8 +2,9 @@
   display: flex;
 }
 
-.copilotButton,
-.copilotShowSourcesButton {
+.copilotShowSourcesButton,
+.copilotAskButton,
+.copilotFormatButton {
   padding-left: 0;
   padding-right: 0;
   &:focus {
@@ -11,14 +12,8 @@
   }
 }
 
-.copilotShowSourcesButton {
-  margin-left: auto;
-}
-
-.copilotPrompts {
+.buttons {
   display: flex;
-  margin-top: 10px;
-  gap: 5px;
-  flex-direction: column;
-  margin-bottom: 10px;
+  justify-content: space-between;
+  width: 100%;
 }

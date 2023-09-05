@@ -27,9 +27,9 @@ export async function seedDynamo(
   tenantId: string
 ) {
   disableLocalChangeHandler()
-  userInit()
   initChecklistTemplate()
   initRules()
+  userInit()
   listsInit()
   txnInit()
 

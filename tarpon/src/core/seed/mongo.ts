@@ -125,9 +125,9 @@ export async function seedMongo(client: MongoClient, tenantId: string) {
 
   logger.info('Init seed data')
   // TODO there will be a neater way of achieving this.
-  userInit()
   initChecklistTemplate()
   initRules()
+  userInit()
   txnInit()
   caseInit()
   auditLogInit()

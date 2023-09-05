@@ -1,4 +1,8 @@
 import { Configuration, OpenAIApi } from 'openai'
+import {
+  AttributeGenerator,
+  DefaultAttributeBuilders,
+} from './attributes/builder'
 import { NarrativeResponse } from '@/@types/openapi-internal/NarrativeResponse'
 import { Case } from '@/@types/openapi-internal/Case'
 import { InternalBusinessUser } from '@/@types/openapi-internal/InternalBusinessUser'
@@ -6,45 +10,51 @@ import { InternalConsumerUser } from '@/@types/openapi-internal/InternalConsumer
 import { CaseReasons } from '@/@types/openapi-internal/CaseReasons'
 import { traceable } from '@/core/xray'
 import { logger } from '@/core/logger'
-import { getUserName } from '@/utils/helpers'
 import { getSecret } from '@/utils/secrets-manager'
+import { DefaultApiFormatNarrativeRequest } from '@/@types/openapi-internal/RequestParameters'
+import { ruleNarratives } from '@/services/copilot/rule-narratives'
+import { reasonNarratives } from '@/services/copilot/reason-narratives'
+import { InternalTransaction } from '@/@types/openapi-internal/InternalTransaction'
 
-type GenerateNarrative = {
+type GenerateCaseNarrative = {
   _case: Case
   user: InternalBusinessUser | InternalConsumerUser
-  historicalCase?: Case
+  reasons: CaseReasons[]
+}
+type GenerateSarNarrative = {
+  _case: Case
+  transactions: InternalTransaction[]
+  user: InternalBusinessUser | InternalConsumerUser
   reasons: CaseReasons[]
 }
 
-const PROMPT = `Please provide the same text but with placeholders to replace all the numerical data and qualitative decisions in the given format above. Please keep the exact same format for the text, without headers, explanations, or any additional content`
-const PLACEHOLDER_NARRATIVE = `# Overview
+const PROMPT = `Please provide the same text but use placeholders or data from the JSON blob below to replace all the numerical data and qualitative decisions in the given format above. Please keep the exact same format for the text, without headers, explanations, or any additional content`
+const PLACEHOLDER_NARRATIVE = `OVERVIEW
 User: [Insert user's name]
-Date of Case Generation: [Insert date]
-Reason for Case Generation: [Insert reasons for the case/alert]
-Investigation Period: [Insert start date] - [Insert end date]
+Date of Case Generation: [Insert today's date]
+Reason for Case Generation: [Summarise the rule hits]
+Investigation Period: [Insert investigation start date] - [Insert investigation end date]
 Closure Date: [Insert closure date]
 
-# Background
-[This section could contain general details about the user in question.]
+BACKGROUND
+[This section should contain general details about the user in question.]
 
-# Investigation
-[This section could detail the method of the investigation and the user's activities that took place during the investigation.]
+INVESTIGATION
+[This section should detail the method of the investigation and the user's activities that took place during the investigation.]
 
-# Findings and Assessment
-[This section could contain an analysis of the user's transactions and behaviors.]
+FINDINGS AND ASSESSMENT
+[This section should contain an analysis of the user's transactions and behaviors.]
 
-# Screening Details
-[This section could contain information about sanctions, politically exposed persons (PEP), or adverse media screening results, for example.]
+SCREENING DETAILS
+[This section should contain information about sanctions, politically exposed persons (PEP), or adverse media screening results, for example.]
 
-# Conclusion
-[This section could contain the end result of the investigation.]
-`
+CONCLUSION`
 const MAX_TOKEN_INPUT = 1000
 const MAX_TOKEN_OUTPUT = 4096
 
 @traceable
 export class CopilotService {
-  private readonly openAiApiKey!: string
+  private readonly openai!: OpenAIApi
 
   public static async new() {
     const openApi = await getSecret<{ apiKey: string }>(
@@ -53,47 +63,134 @@ export class CopilotService {
     return new this(openApi.apiKey)
   }
 
-  constructor(openApiKey: string) {
-    this.openAiApiKey = openApiKey
+  constructor(apiKey: string) {
+    this.openai = new OpenAIApi(
+      new Configuration({
+        apiKey,
+      })
+    )
   }
 
-  async getNarrative(request: GenerateNarrative): Promise<NarrativeResponse> {
-    try {
-      const exampleNarrative = `Our AI does not have past data from which to generate a narrative from. Instead, please refer to this example narrative which you can adjust for your purposes. \n\n${PLACEHOLDER_NARRATIVE.replace(
-        '{{ name }}',
-        getUserName(request.user)
-      )}`
+  async getSarNarrative(
+    request: GenerateSarNarrative
+  ): Promise<NarrativeResponse> {
+    const attributeBuilder = new AttributeGenerator(DefaultAttributeBuilders)
+    const attributes = attributeBuilder.getAttributes({
+      transactions: request.transactions || [],
+      user: request.user,
+      _case: request._case,
+    })
+    const ruleNarrs =
+      request._case.alerts?.map(
+        (a) => ruleNarratives.find((rn) => rn.id === a.ruleId)?.narrative
+      ) || []
 
-      if (!request.historicalCase?.lastStatusChange?.comment) {
+    if (ruleNarrs.length === 0) {
+      throw new Error('Unable to generate narrative for this SAR')
+    }
+
+    const content = `
+    The following is a template for suspicious activity report written by bank staff to justify why they are reporting a customer to the financial authorities.
+    
+    Example:
+    ${ruleNarrs.join(',')}"
+    
+    Please fill in the template above with relevant data from the following JSON blob maintaining the exact same structure and correct any spelling mistakes or grammatical errors:
+    
+    ${JSON.stringify([...attributes.entries()])}
+    `.slice(0, MAX_TOKEN_OUTPUT)
+
+    const response = await this.gpt(content)
+    return {
+      narrative: response.replace(PROMPT, ''),
+      attributes: [...attributes.entries()].map((f) => {
+        const [attribute, { value, secret }] = f
         return {
-          narrative: exampleNarrative,
+          attribute,
+          value,
+          secret,
         }
-      }
+      }),
+    }
+  }
 
-      const configuration = new Configuration({
-        apiKey: this.openAiApiKey,
-      })
-      const content =
-        `${request.historicalCase.lastStatusChange?.comment} ${PROMPT}`.slice(
-          0,
-          MAX_TOKEN_OUTPUT
-        )
-      const openai = new OpenAIApi(configuration)
-      const completion = await openai.createChatCompletion({
+  async getCaseNarrative(
+    request: GenerateCaseNarrative
+  ): Promise<NarrativeResponse> {
+    const attributeBuilder = new AttributeGenerator(DefaultAttributeBuilders)
+    const attributes = attributeBuilder.getAttributes({
+      transactions: request._case.caseTransactions || [],
+      user: request.user,
+      _case: request._case,
+    })
+
+    const reasonNarrs = request.reasons.map(
+      (reason) => reasonNarratives.find((rn) => rn.reason === reason)?.narrative
+    )
+
+    const content = `
+    The following is a template for document written by bank staff to justify why they have or have not reported a customer to the financial authorities.
+    
+    Example:
+    "${PLACEHOLDER_NARRATIVE}
+    ${reasonNarrs.join(',')}"
+    
+    The following text and data are various pieces of information relevant to a single customer who is under investigation by the bank staff, please rewrite this information so that it conforms to the template above and correct any spelling mistakes or grammatical errors.
+    
+    ${JSON.stringify([...attributes.entries()])}
+    `.slice(0, MAX_TOKEN_OUTPUT)
+
+    console.log(content)
+    const response = await this.gpt(content)
+    return {
+      narrative: response.replace(PROMPT, ''),
+      attributes: [...attributes.entries()].map((f) => {
+        const [attribute, entry] = f
+        return {
+          attribute,
+          value: entry.value,
+          secret: entry.secret,
+        }
+      }),
+    }
+  }
+
+  async formatNarrative(
+    request: DefaultApiFormatNarrativeRequest
+  ): Promise<NarrativeResponse> {
+    if (request.FormatRequest.entityType === 'CASE') {
+      const narrative = await this.gpt(
+        `${PLACEHOLDER_NARRATIVE}.\n Above is a template for a fraud or money laundering investigation. Please take the following input for a real case and format into this template without adding any additional content or context: \n${request.FormatRequest.narrative}`
+      )
+      return {
+        narrative,
+        attributes: [],
+      }
+    }
+    const narrative = await this.gpt(
+      `Please correct any spelling or grammatical errors in the following text and make it sound professional: "${request.FormatRequest.narrative}"`
+    )
+    return {
+      narrative,
+      attributes: [],
+    }
+  }
+
+  private async gpt(prompt: string): Promise<string> {
+    logger.info(prompt)
+    try {
+      const completion = await this.openai.createChatCompletion({
         model: 'gpt-3.5-turbo',
+        temperature: 0.5,
         messages: [
           {
-            content,
+            content: prompt,
             role: 'assistant',
           },
         ],
         max_tokens: MAX_TOKEN_INPUT,
       })
-      return {
-        narrative:
-          completion.data.choices[0].message?.content.replace(PROMPT, '') ||
-          exampleNarrative,
-      }
+      return completion.data.choices[0].message?.content || ''
     } catch (e) {
       logger.error(e)
       throw e

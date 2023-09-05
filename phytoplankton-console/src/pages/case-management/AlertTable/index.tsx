@@ -484,12 +484,12 @@ export default function AlertTable(props: Props) {
   );
 
   const selectionActions: SelectionAction<TableAlertItem, AlertTableParams>[] = [
-    ({ isDisabled }) => {
+    ({ selectedIds, isDisabled }) => {
       if (!sarEnabled) {
         return;
       }
 
-      if (!selectedTransactionIds.length) {
+      if (!selectedTransactionIds.length && !selectedIds.length) {
         return;
       }
 
@@ -500,6 +500,7 @@ export default function AlertTable(props: Props) {
       return (
         <SarButton
           caseId={caseId}
+          alertIds={selectedIds}
           transactionIds={selectedTransactionIds}
           isDisabled={isDisabled}
         />

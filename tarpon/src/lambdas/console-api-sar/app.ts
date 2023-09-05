@@ -30,21 +30,31 @@ export const sarHandler = lambdaApi()(
 
     handlers.registerGetReportsDraft(async (ctx, request) => {
       const { tenantId } = ctx
-      const { reportTypeId, caseId, transactionIds } = request
+      const { reportTypeId, caseId, alertIds } = request
+      let { transactionIds } = request
       if (transactionIds?.length > 20) {
         throw new NotFound(`Cant select more than 20 transactions`)
       }
+
       const caseRepository = new CaseRepository(tenantId, { mongoDb })
       const c = await caseRepository.getCaseById(caseId)
       if (!c) {
         throw new NotFound(`Cannot find case ${caseId}`)
       }
+      if (
+        (!transactionIds || transactionIds.length === 0) &&
+        alertIds?.length > 0
+      ) {
+        transactionIds = c.caseTransactionsIds || []
+      }
+
       const txpRepo = new MongoDbTransactionRepository(tenantId, mongoDb)
       const transactions = await txpRepo.getTransactions({
         filterIdList: transactionIds,
         includeUsers: true,
         pageSize: 20,
       })
+
       const account = getContext()?.user as Account
       return await reportService.getReportDraft(
         reportTypeId,
