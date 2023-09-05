@@ -110,6 +110,10 @@ export function sampleTransactionUserCases(
 ): Case[] {
   const { transactions, origin, destination } = params
 
+  if (transactions.length === 0) {
+    return []
+  }
+
   let ruleHits = uniqBy(
     transactions.flatMap((t) => t.hitRules),
     'ruleInstanceId'

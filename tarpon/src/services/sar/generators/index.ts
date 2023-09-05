@@ -30,9 +30,9 @@ export interface ReportGenerator {
 
 const reportGenerators = [
   KenyaSARReportGenerator,
-  UsSarReportGenerator,
   LithuaniaSTRReportGenerator,
   LithuaniaCTRReportGenerator,
+  UsSarReportGenerator,
 ]
 export const REPORT_GENERATORS = new Map<string, ReportGenerator>(
   reportGenerators.map((rg) => {

@@ -26,8 +26,9 @@ export class CaseAttributeBuilder implements AttributeBuilder {
     )
     attributes.setAttribute(
       'caseGenerationDate',
-      new Date(inputData._case?.createdTimestamp || 0).toISOString() || []
+      new Date(inputData._case?.createdTimestamp || 0).toLocaleDateString() ||
+        []
     )
-    attributes.setAttribute('closureDate', new Date().toISOString())
+    attributes.setAttribute('closureDate', new Date().toLocaleDateString())
   }
 }

@@ -31,10 +31,10 @@ type GenerateSarNarrative = {
 const PROMPT = `Please provide the same text but use placeholders or data from the JSON blob below to replace all the numerical data and qualitative decisions in the given format above. Please keep the exact same format for the text, without headers, explanations, or any additional content`
 const PLACEHOLDER_NARRATIVE = `OVERVIEW
 User: [Insert user's name]
-Date of Case Generation: [Insert today's date]
+Date of Case Generation: [Case generation date]
 Reason for Case Generation: [Summarise the rule hits]
 Investigation Period: [Insert investigation start date] - [Insert investigation end date]
-Closure Date: [Insert closure date]
+Closure Date: [Case closure date]
 
 BACKGROUND
 [This section should contain general details about the user in question.]
