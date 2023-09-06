@@ -342,9 +342,12 @@ export class AlertsRepository {
     const db = this.mongoDb.db()
     const collection = db.collection<Case>(CASES_COLLECTION(this.tenantId))
 
-    const result = await collection.findOne({
-      'alerts.alertId': alertId,
-    })
+    const result = await collection.findOne(
+      {
+        'alerts.alertId': alertId,
+      },
+      { projection: { alerts: 1 } }
+    )
 
     if (!result) {
       return null

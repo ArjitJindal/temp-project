@@ -972,9 +972,18 @@ export class CaseRepository {
     return caseItem ?? null
   }
 
-  public async getCaseById(caseId: string): Promise<Case | null> {
+  public async getCaseById(
+    caseId: string,
+    includeTransactions = true
+  ): Promise<Case | null> {
     const db = this.mongoDb.db()
     const collection = db.collection<Case>(CASES_COLLECTION(this.tenantId))
+    if (!includeTransactions) {
+      return await collection.findOne<Case>(
+        { caseId },
+        { projection: { caseTransactions: 0 } }
+      )
+    }
     return await collection.findOne<Case>({ caseId })
   }
 
