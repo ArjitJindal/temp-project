@@ -407,6 +407,15 @@ export const CARD_PAYMENT_CHANNELS_SCHEMA = (options?: SchemaOptions) =>
     },
     uniqueItems: true,
   } as const)
+export const BANKS_THRESHOLD_SCHEMA = (options?: SchemaOptions) =>
+  ({
+    type: 'integer',
+    ...uiSchema(options?.uiSchema, { subtype: 'BANKS_THRESHOLD' }),
+    title: options?.title || 'Banks count threshold',
+    description:
+      options?.description ||
+      'Rule is run when the number of different banks used for transactions per time window is greater than the threshold',
+  } as const)
 
 export const CARD_PAYMENT_CHANNELS_OPTIONAL_SCHEMA = (
   options?: SchemaOptions

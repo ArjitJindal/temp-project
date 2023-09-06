@@ -45,10 +45,10 @@ import TransactionsOutflowInflowVolumeRule from './transactions-outflow-inflow-v
 import { SanctionsCounterPartyRule } from './sanctions-counterparty'
 import { TransactionVolumeExceedsTwoPeriodsRule } from './total-transactions-volume-exceeds'
 import HighRiskCountryRule from './high-risk-countries'
+import UsingTooManyBanksToMakePaymentsRule from './using-too-many-banks-to-make-payments'
 import TestAlwaysHitRule from '@/services/rules-engine/transaction-rules/tests/test-always-hit-rule'
 import BlacklistTransactionMatchedValue from '@/services/rules-engine/transaction-rules/blacklist-transaction-related-value'
 import MachineLearningGenericModel from '@/services/rules-engine/transaction-rules/machine-learning-generic-model'
-
 export class TransactionRuleBase extends TransactionRule<unknown> {
   public async computeRule(): Promise<RuleHitResult | undefined> {
     // skip
@@ -57,6 +57,7 @@ export class TransactionRuleBase extends TransactionRule<unknown> {
 }
 
 export const _TRANSACTION_RULES = {
+  'using-too-many-banks-to-make-payments': UsingTooManyBanksToMakePaymentsRule,
   'card-issued-country': CardIssuedCountryRule,
   'first-activity-after-time-period': FirstActivityAfterLongTimeRule,
   'first-payment': FirstPaymentRule,

@@ -42,6 +42,7 @@ import { TransactionsOutflowInflowVolumeRuleParameters } from './transactions-ou
 import { SanctionsCounterPartyRuleParameters } from './sanctions-counterparty'
 import { TransactionVolumeExceedsTwoPeriodsRuleParameters } from './total-transactions-volume-exceeds'
 import { HighRiskCountryRuleParameters } from './high-risk-countries'
+import { UsingTooManyBanksToMakePaymentsRuleParameters } from './using-too-many-banks-to-make-payments'
 import { TRANSACTION_RULES, TransactionRuleImplementationName } from './index'
 import { Rule } from '@/@types/openapi-internal/Rule'
 import { HighUnsuccessfullStateRateParameters } from '@/services/rules-engine/transaction-rules/high-unsuccessfull-state-rate'
@@ -393,6 +394,37 @@ const _RULES_LIBRARY: Array<
       typologyGroup: 'Unusual behavior',
       typologyDescription:
         "The customer uses a country that does not fit with their profile or what is known about the customer's business.",
+      source: '',
+    }
+  },
+  () => {
+    const defaultParameters: UsingTooManyBanksToMakePaymentsRuleParameters = {
+      banksLimit: 20,
+      timeWindow: {
+        units: 1,
+        granularity: 'day',
+      },
+      checkSender: 'sending',
+      checkReceiver: 'receiving',
+    }
+    return {
+      id: 'R-15',
+      type: 'TRANSACTION',
+      name: 'Using too many banks to make payments',
+      description:
+        'A user is sending/receving payments from too many banks within unit time',
+      descriptionTemplate:
+        "{{ if-sender 'Sender' 'Receiver' }} used {{ banksDif }} more bank(s) above the limit of {{ parameters.banksLimit }} in {{ format-time-window parameters.timeWindow }}",
+      defaultParameters,
+      defaultAction: 'FLAG',
+      ruleImplementationName: 'using-too-many-banks-to-make-payments',
+      labels: [],
+      defaultNature: 'FRAUD',
+      defaultCasePriority: 'P2',
+      typology: 'Money Mules, Acquiring Fraud, Layering of funds',
+      typologyGroup: 'Money Mules, Acquiring Fraud, Layering',
+      typologyDescription:
+        'Money Muling activity of wittingly or unwittingly performing a transaction for the benefit of 3rd parties to disguise the true source of funds. Acquiring fraud - receiving money that are proceeds of fraud ( typically top-up from stolen card and/or APP fraud). Layering - disguising the true nature of transactions via numerous transfers between financial institutions.',
       source: '',
     }
   },

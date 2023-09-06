@@ -20,6 +20,7 @@ export const RULE_IMPLEMENTATIONS_V2: TransactionRuleImplementationName[] = [
   'multiple-counterparty-senders-within-time-period',
   'multiple-user-senders-within-time-period',
   'transactions-outflow-inflow-volume',
+  'using-too-many-banks-to-make-payments',
 ]
 
 // NOTE: Increment this version to invalidate the existing aggregation data of all the rules
