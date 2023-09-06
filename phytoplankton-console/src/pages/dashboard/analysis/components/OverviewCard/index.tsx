@@ -9,6 +9,7 @@ import { P } from '@/components/ui/Typography';
 import { formatDuration, getDuration } from '@/utils/time-utils';
 import { WidgetProps } from '@/components/library/Widget/types';
 import WidgetBase from '@/components/library/Widget/WidgetBase';
+import { useFeatureEnabled } from '@/components/AppWrapper/Providers/SettingsProvider';
 
 interface Props extends WidgetProps {}
 
@@ -17,7 +18,7 @@ export default function OverviewCard(props: Props) {
   const queryResult = useQuery(DASHBOARD_OVERVIEW_TOTAL(), async () => {
     return await api.getDashboardStatsOverview({});
   });
-
+  const isSarEnabled = useFeatureEnabled('SAR');
   return (
     <AsyncResourceRenderer<DashboardStatsOverview> resource={queryResult.data}>
       {({
@@ -25,6 +26,7 @@ export default function OverviewCard(props: Props) {
         totalOpenCases,
         averageInvestigationTimeAlerts,
         averageInvestigationTimeCases,
+        totalSarReported,
       }) => (
         <WidgetBase width={props.width}>
           <div className={s.root}>
@@ -38,6 +40,9 @@ export default function OverviewCard(props: Props) {
               title="Avg. investigation time/alert"
               value={formatDuration(getDuration(averageInvestigationTimeAlerts)) || '0'}
             />
+            {isSarEnabled && (
+              <OverviewSingleCard title={`SAR's reported`} value={totalSarReported || '0'} />
+            )}
           </div>
         </WidgetBase>
       )}

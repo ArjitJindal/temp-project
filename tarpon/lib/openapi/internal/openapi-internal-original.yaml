@@ -5278,11 +5278,14 @@ components:
           type: number
         averageInvestigationTimeAlerts:
           type: number
+        totalSarReported:
+          type: number
       required:
         - totalOpenCases
         - totalOpenAlerts
         - averageInvestigationTimeCases
         - averageInvestigationTimeAlerts
+        - totalSarReported
     InternalConsumerUser:
       allOf:
         - $ref: ../public/openapi-public-original.yaml#/components/schemas/UserWithRulesResult

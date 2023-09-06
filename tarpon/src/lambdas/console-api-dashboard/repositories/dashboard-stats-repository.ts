@@ -20,6 +20,7 @@ import {
   DASHBOARD_TRANSACTIONS_STATS_COLLECTION_HOURLY,
   DASHBOARD_TRANSACTIONS_STATS_COLLECTION_MONTHLY,
   DRS_SCORES_DISTRIBUTION_STATS_COLLECTION,
+  REPORT_COLLECTION,
   TRANSACTIONS_COLLECTION,
   USERS_COLLECTION,
 } from '@/utils/mongodb-definitions'
@@ -44,6 +45,8 @@ import { DashboardStatsHitsPerUserData } from '@/@types/openapi-internal/Dashboa
 import { FLAGRIGHT_SYSTEM_USER } from '@/services/rules-engine/repositories/alerts-repository'
 import { DashboardStatsOverview } from '@/@types/openapi-internal/DashboardStatsOverview'
 import { traceable } from '@/core/xray'
+import { hasFeature } from '@/core/utils/context'
+import { Report } from '@/@types/openapi-internal/Report'
 
 type TimeRange = {
   startTimestamp?: number
@@ -1914,7 +1917,14 @@ export class DashboardStatsRepository {
     const dashboardAlertsStatsTotal = await dashboardAlertsStatsCollection
       .aggregate<{ avgInvestigationTime: number }>(investigationTimePipeline)
       .toArray()
-
+    let totalSarReported = 0
+    if (hasFeature('SAR')) {
+      const reportsCollection = db.collection<Report>(
+        REPORT_COLLECTION(this.tenantId)
+      )
+      const queryFilter = { status: 'complete' }
+      totalSarReported = await reportsCollection.countDocuments(queryFilter)
+    }
     return {
       totalOpenCases: casesCount,
       totalOpenAlerts: alertsCount[0]?.count ?? 0,
@@ -1922,6 +1932,7 @@ export class DashboardStatsRepository {
         dashboardCasesStatsTotal[0]?.avgInvestigationTime,
       averageInvestigationTimeAlerts:
         dashboardAlertsStatsTotal[0]?.avgInvestigationTime,
+      totalSarReported,
     }
   }
 }
