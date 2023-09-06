@@ -95,6 +95,7 @@ export const DATA_TYPE_TO_VALUE_TYPE: { [key in DataType]: RiskValueType } = {
   BOOLEAN: 'LITERAL',
   BUSINESS_USER_SEGMENT: 'MULTIPLE',
   CONSUMER_USER_SEGMENT: 'MULTIPLE',
+  CONSUMER_EMPLOYMENT_STATUS: 'MULTIPLE',
   USER_REGISTRATION_STATUS: 'MULTIPLE',
   BANK_NAMES: 'MULTIPLE',
   _3DS_STATUS: 'LITERAL',
@@ -170,6 +171,16 @@ export const USER_RISK_PARAMETERS: RiskLevelTable = [
     parameterType: 'VARIABLE',
     defaultRiskLevel: DEFAULT_RISK_LEVEL,
   },
+  {
+    parameter: 'employmentStatus',
+    title: 'User employment status',
+    description: 'Risk based on consumer employment status',
+    entity: 'CONSUMER_USER',
+    dataType: 'CONSUMER_EMPLOYMENT_STATUS',
+    isDerived: false,
+    parameterType: 'VARIABLE',
+    defaultRiskLevel: DEFAULT_RISK_LEVEL,
+  },
 ];
 
 const timeIn24HourFormat = (hour: number | undefined) => {
@@ -206,6 +217,16 @@ export const BUSINESS_USER_SEGMENT_OPTIONS = [
 export const CONSUMER_USER_SEGMENT_OPTIONS = [
   { value: 'RETAIL', label: 'Retail' },
   { value: 'PROFESSIONAL', label: 'Professional' },
+];
+
+export const CONSUMER_EMPLOYMENT_STATUS_OPTIONS = [
+  { value: 'UNEMPLOYED', label: 'Unemployed' },
+  { value: 'STUDENT', label: 'Student' },
+  { value: 'FULL_TIME', label: 'Full-time' },
+  { value: 'PART_TIME', label: 'Part-time' },
+  { value: 'SOLE_PROPRIETOR', label: 'Sole proprietor' },
+  { value: 'PENSIONER', label: 'Pensioner' },
+  { value: 'COMPANY_OWNER', label: 'Company owner' },
 ];
 
 export const BUSINESS_RISK_PARAMETERS: RiskLevelTable = [
@@ -633,6 +654,9 @@ export const INPUT_RENDERERS: { [key in DataType]: InputRenderer<any> } = {
   CONSUMER_USER_SEGMENT: ((props) => {
     return <MultipleSelect options={CONSUMER_USER_SEGMENT_OPTIONS} {...props} />;
   }) as InputRenderer<'MULTIPLE'>,
+  CONSUMER_EMPLOYMENT_STATUS: ((props) => {
+    return <MultipleSelect options={CONSUMER_EMPLOYMENT_STATUS_OPTIONS} {...props} />;
+  }) as InputRenderer<'MULTIPLE'>,
   USER_REGISTRATION_STATUS: ((props) => {
     return <MultipleSelect options={USER_REGISTRATION_STATUS_OPTIONS} {...props} />;
   }) as InputRenderer<'MULTIPLE'>,
@@ -1019,6 +1043,7 @@ export const VALUE_RENDERERS: { [key in DataType]: ValueRenderer<any> } = {
   BUSINESS_USER_TYPE: DEFAULT_MULTIPLE_RENDERER,
   BUSINESS_USER_SEGMENT: DEFAULT_MULTIPLE_RENDERER,
   CONSUMER_USER_SEGMENT: DEFAULT_MULTIPLE_RENDERER,
+  CONSUMER_EMPLOYMENT_STATUS: DEFAULT_MULTIPLE_RENDERER,
   USER_REGISTRATION_STATUS: DEFAULT_MULTIPLE_RENDERER,
   RANGE: DEFAULT_RANGE_RENDERER,
   DAY_RANGE: DEFAULT_DAY_RANGE_RENDERER,

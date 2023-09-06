@@ -6024,6 +6024,7 @@ components:
             - destinationPaymentDetails.bankName
             - originUserSarFiled
             - destinationUserSarFiled
+            - employmentStatus
         isActive:
           type: boolean
         isDerived:

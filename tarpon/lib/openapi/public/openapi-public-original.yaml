@@ -1279,6 +1279,8 @@ components:
           $ref: '#/components/schemas/UserStateDetails'
         kycStatusDetails:
           $ref: '#/components/schemas/KYCStatusDetails'
+        employmentStatus:
+          $ref: '#/components/schemas/EmploymentStatus'
         legalDocuments:
           type: array
           description: User's legal identity documents - See Document Model for details
@@ -3923,19 +3925,26 @@ components:
     KYCStatus:
       type: string
       title: KYCStatus
-      x-stoplight:
-        id: ha9qqemmdqu1y
       enum:
         - SUCCESSFUL
         - FAILED
         - NOT_STARTED
         - IN_PROGRESS
         - MANUAL_REVIEW
+    EmploymentStatus:
+      type: string
+      title: EmploymentStatus
+      enum:
+        - UNEMPLOYED
+        - STUDENT
+        - FULL_TIME
+        - PART_TIME
+        - SOLE_PROPRIETOR
+        - PENSIONER
+        - COMPANY_OWNER
     PEPStatus:
       type: object
       title: PEPStatus
-      x-stoplight:
-        id: ha9qqemmdqu1y
       properties:
         isPepHit:
           type: boolean

@@ -14,6 +14,7 @@ import { CURRENCIES } from '@/utils/currencies';
 import {
   ALL_RISK_PARAMETERS,
   BUSINESS_USER_SEGMENT_OPTIONS,
+  CONSUMER_EMPLOYMENT_STATUS_OPTIONS,
   CONSUMER_USER_SEGMENT_OPTIONS,
 } from '@/pages/risk-levels/risk-factors/ParametersTable/consts';
 import TimestampDisplay from '@/components/ui/TimestampDisplay';
@@ -59,6 +60,9 @@ export const PARAMETER_RENDERERS: { [key in DataType]: ParameterRenderer<any> } 
   },
   CONSUMER_USER_SEGMENT: (value) => {
     return CONSUMER_USER_SEGMENT_OPTIONS.find((x) => x.value === value)?.label ?? value;
+  },
+  CONSUMER_EMPLOYMENT_STATUS: (value) => {
+    return CONSUMER_EMPLOYMENT_STATUS_OPTIONS.find((x) => x.value === value)?.label ?? value;
   },
   USER_REGISTRATION_STATUS: DEFAULT_RENDERER,
   RANGE: DEFAULT_RENDERER,
