@@ -93,7 +93,7 @@ export default function StatusChangeModal(props: Props) {
     ...COMMON_REASONS,
   ];
   const modalTitle = `${newStatusActionLabel ?? statusToOperationName(newStatus)} ${pluralize(
-    entityName,
+    entityName.toLowerCase(),
     entityIds.length,
     true,
   )}`;
