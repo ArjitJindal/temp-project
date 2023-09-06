@@ -4,10 +4,10 @@ import {
   MetricDatum,
   PutMetricDataCommand,
 } from '@aws-sdk/client-cloudwatch'
-import dayjs from 'dayjs'
 import { groupBy } from 'lodash'
 
 import unidecode from 'unidecode'
+import dayjs from '@/utils/dayjs'
 
 export type Metric = {
   namespace: string

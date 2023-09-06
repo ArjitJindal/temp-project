@@ -25,6 +25,7 @@ import {
   DailyStats,
   MonthlyMetricStats,
   getDailyUsage,
+  getMetricValues,
 } from './utils'
 import { SheetsApiUsageMetricsService } from './sheets-api-usage-metrics-service'
 import { logger } from '@/core/logger'
@@ -52,6 +53,7 @@ import {
 import { AccountsService, TenantBasic } from '@/services/accounts'
 import dayjs from '@/utils/dayjs'
 import { traceable } from '@/core/xray'
+import { MONTH_DATE_FORMAT_JS } from '@/utils/mongodb-utils'
 
 type TimeRange = { startTimestamp: number; endTimestamp: number }
 
@@ -105,6 +107,12 @@ export class ApiUsageMetricsService {
       'createdAt',
       timeRange
     )
+    const activeRuleInstanceCounts =
+      await this.getDailyActiveRuleInstancesCount(tenantInfo, timeRange)
+    const tenantSeatCounts = await this.getDailyNumberOfSeats(
+      tenantInfo,
+      timeRange
+    )
     const result: any = mergeWith(
       mapValues(transactionsCounts, (v) => [
         {
@@ -136,33 +144,30 @@ export class ApiUsageMetricsService {
           value: v,
         },
       ]),
+
+      // TODO: Support getting retorspective gauge metrics
+      mapValues(activeRuleInstanceCounts, (v) => [
+        {
+          metric: ACTIVE_RULE_INSTANCES_COUNT_METRIC,
+          value: v,
+        },
+      ]),
+      mapValues(tenantSeatCounts, (v) => [
+        {
+          metric: TENANT_SEATS_COUNT_METRIC,
+          value: v,
+        },
+      ]),
       (a: any[], b: any[]) => (a ?? []).concat(b ?? [])
     )
-
-    const activeRuleInstancesCount =
-      await this.getCurrentActiveRuleInstancesCount(tenantInfo)
-    const numberOfSeats = await this.getCurrentNumberOfSeats(tenantInfo)
 
     return sortBy(
       Object.entries(result).map((entry) => ({
         date: entry[0],
-        values: (
-          entry[1] as Array<{
-            metric: Metric
-            value: number
-          }>
-        )
-          // TODO: Support getting retorspective gauge metrics
-          .concat([
-            {
-              metric: ACTIVE_RULE_INSTANCES_COUNT_METRIC,
-              value: activeRuleInstancesCount,
-            },
-            {
-              metric: TENANT_SEATS_COUNT_METRIC,
-              value: numberOfSeats,
-            },
-          ]),
+        values: entry[1] as Array<{
+          metric: Metric
+          value: number
+        }>,
       })),
       (v) => v.date
     )
@@ -265,47 +270,59 @@ export class ApiUsageMetricsService {
     )
   }
 
-  private async getCurrentActiveRuleInstancesCount(
-    tenantInfo: TenantBasic
-  ): Promise<number> {
+  private async getDailyActiveRuleInstancesCount(
+    tenantInfo: TenantBasic,
+    timeRange: TimeRange
+  ): Promise<DailyStats> {
     const ruleInstanceRepository = new RuleInstanceRepository(tenantInfo.id, {
       dynamoDb: this.connections.dynamoDb,
     })
-
     const allInstances = await ruleInstanceRepository.getActiveRuleInstances(
       'TRANSACTION'
     )
-
-    return allInstances.length
+    const dailyValues = await getMetricValues(
+      tenantInfo.id,
+      ACTIVE_RULE_INSTANCES_COUNT_METRIC.name,
+      timeRange
+    )
+    return {
+      ...dailyValues,
+      [dayjs().format(MONTH_DATE_FORMAT_JS)]: allInstances.length,
+    }
   }
 
-  private async getCurrentNumberOfSeats(
-    tenantInfo: TenantBasic
-  ): Promise<number> {
+  private async getDailyNumberOfSeats(
+    tenantInfo: TenantBasic,
+    timeRange: TimeRange
+  ): Promise<DailyStats> {
     if (!tenantInfo.auth0Domain) {
-      return 0
+      return {}
     }
     const accountsService = new AccountsService(
       { auth0Domain: tenantInfo.auth0Domain },
       { mongoDb: this.connections.mongoDb }
     )
-
     const tenant = await accountsService.getTenantById(tenantInfo.id)
-
     if (!tenant) {
       logger.warn(
         `Tenant not found for getting seats: ${tenantInfo.id}, ${tenantInfo.name}`
       )
-      return 0
+      return {}
     }
-
     const account = await accountsService.getTenantAccounts(tenant)
-
     const filteredAccount = account.filter(
       (account) => account.role !== 'root' && !account.blocked
     )
+    const dailyValues = await getMetricValues(
+      tenantInfo.id,
+      TENANT_SEATS_COUNT_METRIC.name,
+      timeRange
+    )
 
-    return filteredAccount.length
+    return {
+      ...dailyValues,
+      [dayjs().format(MONTH_DATE_FORMAT_JS)]: filteredAccount.length,
+    }
   }
 
   private getDimensions(tenantInfo: TenantBasic): Dimension[] {

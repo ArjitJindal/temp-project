@@ -1,6 +1,5 @@
 import { NotFound, BadRequest } from 'http-errors'
 import { cloneDeep } from 'lodash'
-import dayjs from 'dayjs'
 import { ObjectId } from 'mongodb'
 import { nanoid } from 'nanoid'
 import { CaseService } from '../case-service'
@@ -24,6 +23,7 @@ import { Comment } from '@/@types/openapi-internal/Comment'
 import * as Context from '@/core/utils/context'
 import { AlertStatus } from '@/@types/openapi-internal/AlertStatus'
 import { withFeatureHook } from '@/test-utils/feature-test-utils'
+import dayjs from '@/utils/dayjs'
 
 const TEST_ACCOUNT_1: Account = {
   id: 'ACCOUNT-1',

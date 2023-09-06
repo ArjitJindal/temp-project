@@ -1,5 +1,12 @@
-import { DAY_DATE_FORMAT, getMongoDbClient } from '@/utils/mongodb-utils'
+import { ApiUsageMetrics } from './api-usage-metrics-service'
+import {
+  DAY_DATE_FORMAT,
+  MONTH_DATE_FORMAT_JS,
+  getMongoDbClient,
+} from '@/utils/mongodb-utils'
 import { Metric } from '@/core/cloudwatch/metrics'
+import { METRICS_COLLECTION } from '@/utils/mongodb-definitions'
+import dayjs from '@/utils/dayjs'
 
 export type DailyStats = { [dayLabel: string]: number }
 export type DailyMetricStats = {
@@ -54,4 +61,32 @@ export async function getDailyUsage(
     ])
     .toArray()
   return Object.fromEntries(result.map((item) => [item._id, item.count]))
+}
+
+export async function getMetricValues(
+  tenantId: string,
+  metricName: string,
+  timeRange: {
+    startTimestamp: number
+    endTimestamp: number
+  }
+): Promise<DailyStats> {
+  const db = (await getMongoDbClient()).db()
+  const casesCollection = db.collection(METRICS_COLLECTION(tenantId))
+  const result = await casesCollection
+    .aggregate<ApiUsageMetrics>([
+      {
+        $match: {
+          date: {
+            $gte: dayjs(timeRange.startTimestamp).format(MONTH_DATE_FORMAT_JS),
+            $lte: dayjs(timeRange.endTimestamp).format(MONTH_DATE_FORMAT_JS),
+          },
+          name: metricName,
+        },
+      },
+    ])
+    .toArray()
+  return Object.fromEntries(
+    result.map((item) => [item.date, item.value as number])
+  )
 }
