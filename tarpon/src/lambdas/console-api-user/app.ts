@@ -41,6 +41,7 @@ export const businessUsersViewHandler = lambdaApi()(
       TMP_BUCKET,
       DOCUMENT_BUCKET
     )
+    const userAuditLogService = new UserAuditLogService(tenantId)
     const handlers = new Handlers()
 
     handlers.registerGetBusinessUsersList(
@@ -52,15 +53,11 @@ export const businessUsersViewHandler = lambdaApi()(
       if (user == null) {
         throw new NotFound(`Unable to find user by id`)
       }
-      const CasesAlertsAuditLogService = new UserAuditLogService(tenantId)
-      await CasesAlertsAuditLogService.handleAuditLogForuserViewed(
-        request.userId
-      )
+      await userAuditLogService.handleAuditLogForUserViewed(request.userId)
       return user
     })
 
     handlers.registerPostBusinessUsersUserId(async (ctx, request) => {
-      const userAuditLogService = new UserAuditLogService(tenantId)
       await userAuditLogService.handleAuditLogForUserUpdate(
         request.UserUpdateRequest,
         request.userId
@@ -100,7 +97,7 @@ export const consumerUsersViewHandler = lambdaApi()(
       TMP_BUCKET,
       DOCUMENT_BUCKET
     )
-
+    const userAuditLogService = new UserAuditLogService(tenantId)
     const handlers = new Handlers()
 
     handlers.registerGetConsumerUsersList(
@@ -112,15 +109,11 @@ export const consumerUsersViewHandler = lambdaApi()(
       if (user == null) {
         throw new NotFound(`Unable to find user by id`)
       }
-      const CasesAlertsAuditLogService = new UserAuditLogService(tenantId)
-      await CasesAlertsAuditLogService.handleAuditLogForuserViewed(
-        request.userId
-      )
+      await userAuditLogService.handleAuditLogForUserViewed(request.userId)
       return user
     })
 
     handlers.registerPostConsumerUsersUserId(async (ctx, request) => {
-      const userAuditLogService = new UserAuditLogService(tenantId)
       await userAuditLogService.handleAuditLogForUserUpdate(
         request.UserUpdateRequest,
         request.userId
@@ -166,7 +159,7 @@ export const allUsersViewHandler = lambdaApi()(
       dynamoDb,
     })
     const linkerService = new LinkerService(tenantId)
-
+    const userAuditLogService = new UserAuditLogService(tenantId)
     const handlers = new Handlers()
 
     handlers.registerGetAllUsersList(
@@ -176,17 +169,37 @@ export const allUsersViewHandler = lambdaApi()(
       async (ctx, request) => await userService.getUser(request.userId)
     )
 
-    handlers.registerPostUserComments(
-      async (ctx, request) =>
-        await userService.saveUserComment(request.userId, {
-          ...request.Comment,
-          userId,
-        })
-    )
+    handlers.registerPostUserComments(async (ctx, request) => {
+      const comment = {
+        ...request.Comment,
+        userId,
+      }
+      const createdComment = await userService.saveUserComment(
+        request.userId,
+        comment
+      )
+      await userAuditLogService.handleAuditLogForAddComment(
+        userId,
+        createdComment
+      )
+      return createdComment
+    })
 
     handlers.registerDeleteUsersUserIdCommentsCommentId(
-      async (ctx, request) =>
+      async (ctx, request) => {
+        const comment = (
+          await userService.getUser(request.userId)
+        ).comments?.find((comment) => comment.id === request.commentId)
+
         await userService.deleteUserComment(request.userId, request.commentId)
+
+        if (comment) {
+          await userAuditLogService.handleAuditLogForDeleteComment(
+            userId,
+            comment
+          )
+        }
+      }
     )
 
     handlers.registerGetCrmAccount(async (ctx, request) => {

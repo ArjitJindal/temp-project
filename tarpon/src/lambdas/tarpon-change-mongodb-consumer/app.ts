@@ -37,6 +37,7 @@ import { InternalUser } from '@/@types/openapi-internal/InternalUser'
 import { InternalConsumerUserEvent } from '@/@types/openapi-internal/InternalConsumerUserEvent'
 import { InternalBusinessUserEvent } from '@/@types/openapi-internal/InternalBusinessUserEvent'
 import { InternalTransactionEvent } from '@/@types/openapi-internal/InternalTransactionEvent'
+import { INTERNAL_ONNLY_USER_ATTRIBUTES } from '@/services/users/utils/user-utils'
 
 const sqs = new SQS({
   region: process.env.AWS_REGION,
@@ -279,10 +280,11 @@ async function userHandler(
   }
 
   const existingUser = await usersRepo.getUserById(internalUser.userId)
-
   internalUser.createdAt = existingUser?.createdAt ?? Date.now()
-
-  const savedUser = await usersRepo.saveUserMongo(internalUser)
+  const savedUser = await usersRepo.saveUserMongo({
+    ...pick(existingUser, INTERNAL_ONNLY_USER_ATTRIBUTES),
+    ...internalUser,
+  })
 
   if (await tenantHasFeature(tenantId, 'PULSE')) {
     logger.info(`Refreshing DRS User distribution stats`)

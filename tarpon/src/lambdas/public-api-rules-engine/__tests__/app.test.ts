@@ -42,6 +42,9 @@ import {
   disableLocalChangeHandler,
   enableLocalChangeHandler,
 } from '@/utils/local-dynamodb-change-handler'
+import { pickKnownEntityFields } from '@/utils/object'
+import { User } from '@/@types/openapi-public/User'
+import { InternalUser } from '@/@types/openapi-internal/InternalUser'
 
 const features: Feature[] = ['PULSE']
 
@@ -388,6 +391,12 @@ describe('Public API - Create a Transaction Event', () => {
 })
 
 describe('Public API - Create a Consumer User Event', () => {
+  beforeAll(() => {
+    enableLocalChangeHandler()
+  })
+  afterAll(() => {
+    disableLocalChangeHandler()
+  })
   const TEST_TENANT_ID = getTestTenantId()
 
   test('throws if user not found', async () => {
@@ -415,6 +424,17 @@ describe('Public API - Create a Consumer User Event', () => {
       null as any,
       null as any
     )
+
+    const mongoDb = await getMongoDbClient()
+    const userRepository = new UserRepository(TEST_TENANT_ID, {
+      mongoDb,
+    })
+    const internalConsumerUser = await userRepository.getUserById('foo')
+    const internalConsumerUserWithComments = {
+      ...internalConsumerUser,
+      comments: [{ body: 'a comment' }],
+    } as InternalUser
+    await userRepository.saveUserMongo(internalConsumerUserWithComments)
     const userEvent = getTestUserEvent({
       eventId: '1',
       userId: 'foo',
@@ -433,11 +453,16 @@ describe('Public API - Create a Consumer User Event', () => {
     )
     expect(response?.statusCode).toBe(200)
     expect(JSON.parse(response?.body as string)).toEqual({
-      ...consumerUser,
+      ...pickKnownEntityFields(consumerUser, User),
       tags: [{ key: 'key', value: 'value' }],
       status: 'ALLOW',
       executedRules: [],
       hitRules: [],
+    })
+    const mongoUser = await userRepository.getUserById('foo')
+    expect(mongoUser).toEqual({
+      ...internalConsumerUserWithComments,
+      tags: [{ key: 'key', value: 'value' }],
     })
   })
 
