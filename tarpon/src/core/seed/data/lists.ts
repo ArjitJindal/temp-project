@@ -1,9 +1,11 @@
 import { ListType } from '@/@types/openapi-public/ListType'
 import { ListSubtype } from '@/@types/openapi-public/ListSubtype'
 import { ListData } from '@/@types/openapi-public/ListData'
+import { generateChecksum } from '@/utils/object'
 
 type ListTypeObject = {
   listType: ListType
+  listId: string
   subtype: ListSubtype
   data: ListData
 }
@@ -26,8 +28,9 @@ const init = () => {
       'UPI_IDENTIFYING_NUMBER',
       'IP_ADDRESS',
     ] as const
-  ).forEach((subtype) => {
+  ).forEach((subtype, i) => {
     data.push({
+      listId: generateChecksum(i).substring(0, 10),
       listType: 'BLACKLIST',
       subtype,
       data: {
