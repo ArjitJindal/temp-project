@@ -80,17 +80,15 @@ const WHITELABEL_BRANDING = {
     auth0Domain: 'login.tm.sandbox.bureau.id',
     auth0ClientId: 'JJHmTg7oupG4tUZRDpvAlghJvvVnbyoc',
   },
-  'qc-staging.api.regtank.com': {
+  'qc-staging.console.regtank.com': {
     ...REGTANK_BRANDING,
     auth0Domain: 'login.qc-staging.console.regtank.com',
-    // TODO: Fill client ID after deployment
-    auth0ClientId: '',
+    auth0ClientId: 'Nz37vE2YAvMRPAIsqLVXcfACo216CMXE',
   },
   'qc-live.console.regtank.com': {
     ...REGTANK_BRANDING,
     auth0Domain: 'login.qc-live.console.regtank.com',
-    // TODO: Fill client ID after deployment
-    auth0ClientId: '',
+    auth0ClientId: 'nVwFjIjOIyrzQfLtkUXo7sdxODGuHfvc',
   },
 };
 

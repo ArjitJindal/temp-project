@@ -70,7 +70,7 @@ export class TenantService {
     const regionOrDefault = region ?? process.env.REGION
     const tenantInfos: Array<TenantInfo> = []
     const mongoDb = await getMongoDbClient()
-    const auth0TenantConfigs = getAuth0TenantConfigs(stageOrDefault)
+    const auth0TenantConfigs = getAuth0TenantConfigs(stageOrDefault, region)
     for (const auth0TenantConfig of auth0TenantConfigs) {
       const auth0Domain = getAuth0Domain(
         auth0TenantConfig.tenantName,

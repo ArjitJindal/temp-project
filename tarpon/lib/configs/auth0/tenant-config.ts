@@ -8,7 +8,8 @@ import { Auth0SandboxRegtankTenantConfig } from './tenant-config-sandbox-regtank
 import { Auth0ProdRegtankTenantConfig } from './tenant-config-prod-regtank'
 
 export function getAuth0TenantConfigs(
-  stage: 'local' | 'dev' | 'sandbox' | 'prod'
+  stage: 'local' | 'dev' | 'sandbox' | 'prod',
+  region?: 'eu-1' | 'asia-1' | 'asia-2' | 'us-1' | 'eu-2' | 'au-1'
 ): Auth0TenantConfig[] {
   switch (stage) {
     case 'local': {
@@ -25,11 +26,13 @@ export function getAuth0TenantConfigs(
       ]
     }
     case 'prod': {
-      return [
-        Auth0ProdTenantConfig,
-        Auth0ProdBureauTenantConfig,
-        Auth0ProdRegtankTenantConfig,
-      ]
+      const tenantConfigs = [Auth0ProdTenantConfig]
+      if (region === 'asia-2') {
+        tenantConfigs.push(Auth0ProdBureauTenantConfig)
+      } else if (region === 'asia-1') {
+        tenantConfigs.push(Auth0ProdRegtankTenantConfig)
+      }
+      return tenantConfigs
     }
     default:
       return []
