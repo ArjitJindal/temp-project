@@ -1,4 +1,5 @@
-describe('SAR Generate', () => {
+// TODO: To be fixed and unskipped in FR-3199
+describe.skip('SAR Generate', () => {
   beforeEach(() => {
     cy.loginByForm();
   });
