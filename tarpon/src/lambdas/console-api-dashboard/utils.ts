@@ -1,6 +1,7 @@
 import { ManipulateType } from 'dayjs'
 import { isEmpty } from 'lodash'
 import dayjs from '@/utils/dayjs'
+import { neverThrow } from '@/utils/lang'
 
 export function getTimeLabels(
   formatType: string,
@@ -68,5 +69,5 @@ export function getAffectedInterval(
       : newStart.add(1, 'month')
     return { start: newStart.valueOf(), end: newEnd.valueOf() }
   }
-  throw new Error('Unhandled granularity')
+  throw neverThrow(granularity, 'Unhandled granularity')
 }

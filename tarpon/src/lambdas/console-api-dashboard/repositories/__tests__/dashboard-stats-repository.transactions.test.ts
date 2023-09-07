@@ -35,13 +35,13 @@ describe('Verify transactions counting statistics', () => {
       'DAY'
     )
     expect(stats).toEqual([
-      {
+      expect.objectContaining({
         _id: '2022-01-30',
         totalTransactions: 1,
         flaggedTransactions: 0,
         stoppedTransactions: 0,
         suspendedTransactions: 0,
-      },
+      }),
     ])
   })
   test('Single hit rule for each rule actions', async () => {
@@ -83,13 +83,13 @@ describe('Verify transactions counting statistics', () => {
       'DAY'
     )
     expect(stats).toEqual([
-      {
+      expect.objectContaining({
         _id: '2022-01-30',
         flaggedTransactions: 1,
         stoppedTransactions: 1,
         suspendedTransactions: 1,
         totalTransactions: 3,
-      },
+      }),
     ])
   })
   test('Hit result should be the most strict action', async () => {
@@ -122,13 +122,13 @@ describe('Verify transactions counting statistics', () => {
       'DAY'
     )
     expect(stats).toEqual([
-      {
+      expect.objectContaining({
         _id: '2022-01-30',
         flaggedTransactions: 0,
         stoppedTransactions: 1,
         suspendedTransactions: 0,
         totalTransactions: 1,
-      },
+      }),
     ])
   })
   test('Executed rules should not be counted', async () => {
@@ -154,13 +154,13 @@ describe('Verify transactions counting statistics', () => {
       'DAY'
     )
     expect(stats).toEqual([
-      {
+      expect.objectContaining({
         _id: '2022-01-30',
         flaggedTransactions: 0,
         stoppedTransactions: 0,
         suspendedTransactions: 0,
         totalTransactions: 1,
-      },
+      }),
     ])
   })
   test('One transaction every hour with no hits', async () => {
@@ -189,27 +189,27 @@ describe('Verify transactions counting statistics', () => {
       'HOUR'
     )
     expect(stats).toEqual([
-      {
+      expect.objectContaining({
         _id: '2022-01-30T01',
         totalTransactions: 1,
         flaggedTransactions: 0,
         stoppedTransactions: 0,
         suspendedTransactions: 0,
-      },
-      {
+      }),
+      expect.objectContaining({
         _id: '2022-01-30T02',
         totalTransactions: 1,
         flaggedTransactions: 0,
         stoppedTransactions: 0,
         suspendedTransactions: 0,
-      },
-      {
+      }),
+      expect.objectContaining({
         _id: '2022-01-30T03',
         totalTransactions: 1,
         flaggedTransactions: 0,
         stoppedTransactions: 0,
         suspendedTransactions: 0,
-      },
+      }),
     ])
   })
   test('One transaction every hour with hit', async () => {
@@ -240,27 +240,27 @@ describe('Verify transactions counting statistics', () => {
       'HOUR'
     )
     expect(stats).toEqual([
-      {
+      expect.objectContaining({
         _id: '2022-01-30T01',
         totalTransactions: 1,
         suspendedTransactions: 1,
         flaggedTransactions: 0,
         stoppedTransactions: 0,
-      },
-      {
+      }),
+      expect.objectContaining({
         _id: '2022-01-30T02',
         totalTransactions: 1,
         suspendedTransactions: 1,
         flaggedTransactions: 0,
         stoppedTransactions: 0,
-      },
-      {
+      }),
+      expect.objectContaining({
         _id: '2022-01-30T03',
         totalTransactions: 1,
         suspendedTransactions: 1,
         flaggedTransactions: 0,
         stoppedTransactions: 0,
-      },
+      }),
     ])
   })
 
@@ -291,41 +291,41 @@ describe('Verify transactions counting statistics', () => {
       'HOUR'
     )
     expect(hourlyStats).toEqual([
-      {
+      expect.objectContaining({
         _id: '2022-01-30T00',
         totalTransactions: 0,
         flaggedTransactions: 0,
         stoppedTransactions: 0,
         suspendedTransactions: 0,
-      },
-      {
+      }),
+      expect.objectContaining({
         _id: '2022-01-30T01',
         totalTransactions: 1,
         flaggedTransactions: 0,
         stoppedTransactions: 1,
         suspendedTransactions: 0,
-      },
-      {
+      }),
+      expect.objectContaining({
         _id: '2022-01-30T02',
         totalTransactions: 1,
         flaggedTransactions: 0,
         stoppedTransactions: 1,
         suspendedTransactions: 0,
-      },
-      {
+      }),
+      expect.objectContaining({
         _id: '2022-01-30T03',
         totalTransactions: 1,
         flaggedTransactions: 0,
         stoppedTransactions: 1,
         suspendedTransactions: 0,
-      },
-      {
+      }),
+      expect.objectContaining({
         _id: '2022-01-30T04',
         totalTransactions: 0,
         flaggedTransactions: 0,
         stoppedTransactions: 0,
         suspendedTransactions: 0,
-      },
+      }),
     ])
     const dailyStats = await statsRepository.getTransactionCountStats(
       dayjs('2022-01-29T00:00:00.000Z').valueOf(),
@@ -333,27 +333,27 @@ describe('Verify transactions counting statistics', () => {
       'DAY'
     )
     expect(dailyStats).toEqual([
-      {
+      expect.objectContaining({
         _id: '2022-01-29',
         totalTransactions: 0,
         flaggedTransactions: 0,
         stoppedTransactions: 0,
         suspendedTransactions: 0,
-      },
-      {
+      }),
+      expect.objectContaining({
         _id: '2022-01-30',
         totalTransactions: 3,
         flaggedTransactions: 0,
         stoppedTransactions: 3,
         suspendedTransactions: 0,
-      },
-      {
+      }),
+      expect.objectContaining({
         _id: '2022-01-31',
         totalTransactions: 0,
         flaggedTransactions: 0,
         stoppedTransactions: 0,
         suspendedTransactions: 0,
-      },
+      }),
     ])
     const monthlyStats = await statsRepository.getTransactionCountStats(
       dayjs('2022-01-01T00:00:00.000Z').valueOf(),
@@ -361,20 +361,20 @@ describe('Verify transactions counting statistics', () => {
       'MONTH'
     )
     expect(monthlyStats).toEqual([
-      {
+      expect.objectContaining({
         _id: '2022-01',
         totalTransactions: 3,
         flaggedTransactions: 0,
         stoppedTransactions: 3,
         suspendedTransactions: 0,
-      },
-      {
+      }),
+      expect.objectContaining({
         _id: '2022-02',
         totalTransactions: 0,
         flaggedTransactions: 0,
         stoppedTransactions: 0,
         suspendedTransactions: 0,
-      },
+      }),
     ])
   })
 })

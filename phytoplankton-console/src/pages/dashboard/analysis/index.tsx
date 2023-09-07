@@ -1,11 +1,13 @@
 import { useMemo, useState } from 'react';
 import { useLocalStorageState } from 'ahooks';
 import TransactionsChartWidget from './components/TransactionsChartWidget';
+import PaymentMethodDistributionWidget from './components/PaymentMethodDistributionWidget';
 import RuleHitCard from './components/RulesHitCard';
 import TopUsersHitCard from './components/TopUsersHitCard';
 import DRSDistributionCard from './components/DRSDistributionCard';
 import TeamPerformanceCard from './components/TeamPerformanceCard';
 import OverviewCard from './components/OverviewCard';
+import s from './style.module.less';
 import PageWrapper from '@/components/PageWrapper';
 import { useFeatureEnabled } from '@/components/AppWrapper/Providers/SettingsProvider';
 import { useI18n } from '@/locales';
@@ -16,6 +18,7 @@ import Checkbox from '@/components/library/Checkbox';
 import { humanizeConstant } from '@/utils/humanize';
 import WidgetGrid from '@/components/library/WidgetGrid';
 import Widget from '@/components/library/Widget';
+import Label from '@/components/library/Label';
 import { notEmpty } from '@/utils/array';
 
 type KeyValues =
@@ -24,7 +27,8 @@ type KeyValues =
   | 'TRANSACTIONS_BREAKDOWN_BY_RULE_ACTION'
   | 'TOP_RULE_HITS_BY_COUNT'
   | 'USER_DISTIBUTION_BY_CRA_RISK_LEVEL'
-  | 'TEAM_OVERVIEW';
+  | 'TEAM_OVERVIEW'
+  | 'DISTRIBUTION_BY_PAYMENT_METHOD';
 
 const KEYS: KeyValues[] = [
   'OVERVIEW',
@@ -33,6 +37,7 @@ const KEYS: KeyValues[] = [
   'TOP_RULE_HITS_BY_COUNT',
   'USER_DISTIBUTION_BY_CRA_RISK_LEVEL',
   'TEAM_OVERVIEW',
+  'DISTRIBUTION_BY_PAYMENT_METHOD',
 ];
 
 const DEFAULT_VALUES = {
@@ -42,7 +47,7 @@ const DEFAULT_VALUES = {
   TOP_RULE_HITS_BY_COUNT: true,
   USER_DISTIBUTION_BY_CRA_RISK_LEVEL: true,
   TEAM_OVERVIEW: true,
-  DISTRIBUTION_BY_CLOSING_REASON: true,
+  DISTRIBUTION_BY_PAYMENT_METHOD: true,
 };
 
 type DashboardSettings = Record<KeyValues, boolean>;
@@ -125,6 +130,13 @@ function Analysis() {
                 },
                 component: TransactionsChartWidget,
               },
+              settingsToDisplay.DISTRIBUTION_BY_PAYMENT_METHOD && {
+                props: {
+                  id: 'distribution_by_payment_method',
+                  title: 'Distribution by transaction payment method',
+                },
+                component: PaymentMethodDistributionWidget,
+              },
             ].filter(notEmpty),
           },
           {
@@ -183,21 +195,22 @@ function Analysis() {
           </div>
         }
       >
-        {KEYS.map((key) => (
-          <div key={key} style={{ marginBottom: 20 }}>
-            <Checkbox
-              value={updatedState[key] == null ? true : updatedState[key]}
-              label={humanizeConstant(key)}
-              onChange={(value) => {
-                setUpdatedState({
-                  ...updatedState,
-                  [key]: value,
-                });
-              }}
-              extraLeftLabelMargin
-            />
-          </div>
-        ))}
+        <div className={s.settingsDrawerRoot}>
+          {KEYS.map((key) => (
+            <Label key={key} label={humanizeConstant(key)} position="RIGHT" level={2}>
+              <Checkbox
+                value={updatedState[key] == null ? true : updatedState[key]}
+                onChange={(value) => {
+                  setUpdatedState({
+                    ...updatedState,
+                    [key]: value,
+                  });
+                }}
+                extraLeftLabelMargin
+              />
+            </Label>
+          ))}
+        </div>
       </Drawer>
     </PageWrapper>
   );

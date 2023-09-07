@@ -1,7 +1,7 @@
 /* eslint-disable @typescript-eslint/no-var-requires */
 import { Empty } from 'antd';
 import { Column } from '@ant-design/charts';
-import React, { useEffect, useState } from 'react';
+import React, { useState } from 'react';
 import { RangeValue } from 'rc-picker/es/interface';
 import { each, groupBy } from 'lodash';
 import { Annotation } from '@antv/g2plot';
@@ -10,13 +10,13 @@ import { getRuleActionColorForDashboard } from '@/utils/rules';
 import DatePicker from '@/components/ui/DatePicker';
 import { dayjs, Dayjs, YEAR_MONTH_DATE_FORMAT } from '@/utils/dayjs';
 import { useApi } from '@/api';
-import { AsyncResource, failed, getOr, init, loading, success } from '@/utils/asyncResource';
-import { DashboardStatsTransactionsCountData } from '@/apis';
 import { useRiskActionLabel } from '@/components/AppWrapper/Providers/SettingsProvider';
 import AsyncResourceRenderer from '@/components/common/AsyncResourceRenderer';
 import { escapeHtml } from '@/utils/browser';
 import Widget from '@/components/library/Widget';
 import { WidgetProps } from '@/components/library/Widget/types';
+import { useQuery } from '@/utils/queries/hooks';
+import { DASHBOARD_TRANSACTIONS_STATS } from '@/utils/queries/keys';
 
 export type timeframe = 'YEAR' | 'MONTH' | 'WEEK' | 'DAY' | null;
 
@@ -67,45 +67,25 @@ export default function TransactionsChartWidget(props: WidgetProps) {
 
   const [timeWindowType, setTimeWindowType] = useState<timeframe>('YEAR');
   const api = useApi();
-  const [transactionsCountData, setTransactionsCountData] = useState<
-    AsyncResource<DashboardStatsTransactionsCountData[]>
-  >(init());
-  useEffect(() => {
-    let isCanceled = false;
 
-    async function fetch() {
-      setTransactionsCountData((state) => loading(getOr(state, null)));
-      try {
-        let startTimestamp = dayjs().subtract(1, 'year').valueOf();
-        let endTimestamp = Date.now();
+  let startTimestamp = dayjs().subtract(1, 'year').valueOf();
+  let endTimestamp = Date.now();
 
-        const [start, end] = dateRange ?? [];
-        if (start != null && end != null) {
-          startTimestamp = start.startOf('day').valueOf();
-          endTimestamp = end.endOf('day').valueOf();
-        }
-        const transactionsCountResult = await api.getDashboardStatsTransactions({
-          startTimestamp,
-          endTimestamp,
-          granularity: granularity,
-        });
-        if (isCanceled) {
-          return;
-        }
-        setTransactionsCountData(success(transactionsCountResult.data));
-      } catch (e) {
-        setTransactionsCountData(failed('Unknown error')); // todo: get actual error message
-      }
-    }
+  const [start, end] = dateRange ?? [];
+  if (start != null && end != null) {
+    startTimestamp = start.startOf('day').valueOf();
+    endTimestamp = end.endOf('day').valueOf();
+  }
 
-    fetch().catch((e) => {
-      console.error(e);
-    });
+  const params = {
+    startTimestamp,
+    endTimestamp,
+    granularity: granularity,
+  };
 
-    return () => {
-      isCanceled = true;
-    };
-  }, [api, dateRange, timeWindowType, granularity]);
+  const queryResult = useQuery(DASHBOARD_TRANSACTIONS_STATS(params), async () => {
+    return await api.getDashboardStatsTransactions(params);
+  });
 
   return (
     <Widget
@@ -143,8 +123,8 @@ export default function TransactionsChartWidget(props: WidgetProps) {
       ]}
     >
       <div className={s.salesCard}>
-        <AsyncResourceRenderer resource={transactionsCountData}>
-          {(data) => {
+        <AsyncResourceRenderer resource={queryResult.data}>
+          {({ data }) => {
             const value: { _id: string; value: number; type: string }[] = [];
             data.map((item) => {
               value.push({

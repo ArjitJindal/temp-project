@@ -215,6 +215,20 @@ export const REPORTS_TEMPLATE = (params: AnyParameters): QueryKey => [
 ];
 
 export const DASHBOARD_OVERVIEW = (): QueryKey => ['dashboard', 'overview'];
+
+export const DASHBOARD_TRANSACTIONS_STATS = (params: AnyParameters): QueryKey => [
+  'dashboard',
+  'transactions',
+  params,
+];
+
+export const DASHBOARD_TRANSACTIONS_TOTAL_STATS = (params: AnyParameters): QueryKey => [
+  'dashboard',
+  'transactions',
+  'total',
+  params,
+];
+
 export const DASHBOARD_OVERVIEW_TOTAL = (): QueryKey => ['dashboard', 'overview-total'];
 
 export const SETTINGS = (): QueryKey => ['settings'];

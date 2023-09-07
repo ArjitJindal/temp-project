@@ -1664,6 +1664,38 @@ paths:
           in: query
           name: granularity
     parameters: []
+  /dashboard_stats/transactions/total:
+    get:
+      summary: DashboardStats - Transactions - Total
+      tags: []
+      x-flagright:
+        permissions:
+          - dashboard:download-data:read
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    $ref: '#/components/schemas/DashboardStatsTransactionsCountItem'
+                required:
+                  - data
+              examples: {}
+      operationId: get-dashboard-stats-transactions-total
+      description: ''
+      parameters:
+        - schema:
+            type: number
+          in: query
+          name: startTimestamp
+        - schema:
+            type: number
+          in: query
+          name: endTimestamp
+    parameters: []
   /dashboard_stats/rule_hit:
     get:
       summary: DashboardStats - Rule hit
@@ -5211,10 +5243,69 @@ components:
                 type: number
               suspendedTransactions:
                 type: number
+              paymentMethods_ACH:
+                type: number
+              paymentMethods_CARD:
+                type: number
+              paymentMethods_GENERIC_BANK_ACCOUNT:
+                type: number
+              paymentMethods_IBAN':
+                type: number
+              paymentMethods_SWIFT:
+                type: number
+              paymentMethods_UPI:
+                type: number
+              paymentMethods_WALLET:
+                type: number
+              paymentMethods_MPESA:
+                type: number
+              paymentMethods_CHECK:
+                type: number
             required:
               - _id
       required:
         - data
+    DashboardStatsTransactionsCountItem:
+      type: object
+      x-examples:
+        example-1:
+          data:
+            - _id: 2020-01-04
+              totalTransactions: 2344
+              flaggedTransactions: 121
+              stoppedTransactions: 33
+      title: DashboardStatsTransactionsCountItem
+      properties:
+        _id:
+          type: string
+        totalTransactions:
+          type: number
+        flaggedTransactions:
+          type: number
+        stoppedTransactions:
+          type: number
+        suspendedTransactions:
+          type: number
+        paymentMethods_ACH:
+          type: number
+        paymentMethods_CARD:
+          type: number
+        paymentMethods_GENERIC_BANK_ACCOUNT:
+          type: number
+        paymentMethods_IBAN':
+          type: number
+        paymentMethods_SWIFT:
+          type: number
+        paymentMethods_UPI:
+          type: number
+        paymentMethods_WALLET:
+          type: number
+        paymentMethods_MPESA:
+          type: number
+        paymentMethods_CHECK:
+          type: number
+      required:
+        - _id
     DashboardStatsRulesCount:
       type: object
       x-examples: {}

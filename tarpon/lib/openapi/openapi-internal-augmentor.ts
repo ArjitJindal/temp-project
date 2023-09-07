@@ -86,6 +86,8 @@ export const ConsoleApiPathToLambda: any = {
     StackConstants.CONSOLE_API_ALL_USERS_VIEW_FUNCTION_NAME,
   '/dashboard_stats/transactions':
     StackConstants.CONSOLE_API_DASHBOARD_STATS_FUNCTION_NAME,
+  '/dashboard_stats/transactions/total':
+    StackConstants.CONSOLE_API_DASHBOARD_STATS_FUNCTION_NAME,
   '/dashboard_stats/drs-distribution':
     StackConstants.CONSOLE_API_DASHBOARD_STATS_FUNCTION_NAME,
   '/dashboard_stats/hits_per_user':

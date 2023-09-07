@@ -17,17 +17,21 @@ export default function WidgetGrid(props: Props) {
   const { groups } = props;
   return (
     <div className={cn(s.root)}>
-      {groups.map(({ groupTitle, items }) => (
-        <div key={groupTitle} className={cn(s.group)}>
-          <div className={s.groupTitle}>{groupTitle}</div>
-          <div className={s.items}>
-            {items.map((item) => {
-              const Component = item.component;
-              return <Component key={item.props.id} {...item.props} />;
-            })}
+      {groups.map(({ groupTitle, items }) =>
+        items.length ? (
+          <div key={groupTitle} className={cn(s.group)}>
+            <div className={s.groupTitle}>{groupTitle}</div>
+            <div className={s.items}>
+              {items.map((item) => {
+                const Component = item.component;
+                return <Component key={item.props.id} {...item.props} />;
+              })}
+            </div>
           </div>
-        </div>
-      ))}
+        ) : (
+          <React.Fragment key={groupTitle} />
+        ),
+      )}
     </div>
   );
 }

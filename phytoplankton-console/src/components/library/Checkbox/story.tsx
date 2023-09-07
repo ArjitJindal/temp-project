@@ -24,7 +24,7 @@ export default function (): JSX.Element {
         <Component value={undefined} onChange={() => {}} />
       </UseCase>
       <UseCase title={'With label'}>
-        <Component value={value} onChange={setValue} label={'Label text'} />
+        <Component value={value} onChange={setValue} />
       </UseCase>
     </>
   );

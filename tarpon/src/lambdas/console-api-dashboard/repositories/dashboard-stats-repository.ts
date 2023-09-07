@@ -4,10 +4,10 @@ import { getAffectedInterval, getTimeLabels } from '../utils'
 import { DashboardStatsDRSDistributionData } from './types'
 import dayjs from '@/utils/dayjs'
 import {
-  lookupPipelineStage,
   DAY_DATE_FORMAT_JS,
   HOUR_DATE_FORMAT,
   HOUR_DATE_FORMAT_JS,
+  lookupPipelineStage,
   MONTH_DATE_FORMAT_JS,
 } from '@/utils/mongodb-utils'
 import {
@@ -44,6 +44,7 @@ import { InternalUser } from '@/@types/openapi-internal/InternalUser'
 import { DashboardStatsHitsPerUserData } from '@/@types/openapi-internal/DashboardStatsHitsPerUserData'
 import { FLAGRIGHT_SYSTEM_USER } from '@/services/rules-engine/repositories/alerts-repository'
 import { DashboardStatsOverview } from '@/@types/openapi-internal/DashboardStatsOverview'
+import { PAYMENT_METHODS } from '@/@types/openapi-internal-custom/PaymentMethod'
 import { traceable } from '@/core/xray'
 import { hasFeature } from '@/core/utils/context'
 import { Report } from '@/@types/openapi-internal/Report'
@@ -1214,7 +1215,7 @@ export class DashboardStatsRepository {
     const aggregatedMonthlyCollectionName =
       DASHBOARD_TRANSACTIONS_STATS_COLLECTION_MONTHLY(this.tenantId)
 
-    const getHourlyAggregationPipeline = (
+    const getHitRulesAggregationPipeline = (
       key: keyof DashboardStatsTransactionsCountData
     ) => {
       // Stages for calculating rules final action, which follows the same
@@ -1305,18 +1306,113 @@ export class DashboardStatsRepository {
       ]
     }
 
+    const getPaymentMethodAggregationPipeline = (
+      dateFormat: string,
+      aggregationCollection: string
+    ) => {
+      return [
+        {
+          $addFields: {
+            paymentMethods: [
+              '$originPaymentDetails.method',
+              '$destinationPaymentDetails.method',
+            ],
+          },
+        },
+        {
+          $unwind: {
+            path: '$paymentMethods',
+            preserveNullAndEmptyArrays: false,
+          },
+        },
+        {
+          $match: {
+            paymentMethods: {
+              $ne: null,
+            },
+          },
+        },
+        {
+          $group: {
+            _id: {
+              date: {
+                $dateToString: {
+                  format: dateFormat,
+                  date: {
+                    $toDate: {
+                      $toLong: '$timestamp',
+                    },
+                  },
+                },
+              },
+              method: {
+                $concat: ['paymentMethods_', '$paymentMethods'],
+              },
+            },
+            count: {
+              $count: {},
+            },
+          },
+        },
+        {
+          $group: {
+            _id: '$_id.date',
+            items: {
+              $addToSet: {
+                k: '$_id.method',
+                v: '$count',
+              },
+            },
+          },
+        },
+        {
+          $project: {
+            items: {
+              $arrayToObject: '$items',
+            },
+          },
+        },
+        {
+          $replaceRoot: {
+            newRoot: {
+              $mergeObjects: [
+                {
+                  _id: '$_id',
+                },
+                '$items',
+              ],
+            },
+          },
+        },
+        {
+          $merge: {
+            into: aggregationCollection,
+            whenMatched: 'merge',
+          },
+        },
+      ]
+    }
+
     // Hourly Stats
     await transactionsCollection
-      .aggregate(getHourlyAggregationPipeline('totalTransactions'))
+      .aggregate(getHitRulesAggregationPipeline('totalTransactions'))
       .next()
     await transactionsCollection
-      .aggregate(getHourlyAggregationPipeline('flaggedTransactions'))
+      .aggregate(getHitRulesAggregationPipeline('flaggedTransactions'))
       .next()
     await transactionsCollection
-      .aggregate(getHourlyAggregationPipeline('stoppedTransactions'))
+      .aggregate(getHitRulesAggregationPipeline('stoppedTransactions'))
       .next()
     await transactionsCollection
-      .aggregate(getHourlyAggregationPipeline('suspendedTransactions'))
+      .aggregate(getHitRulesAggregationPipeline('suspendedTransactions'))
+      .next()
+    await transactionsCollection
+      .aggregate(
+        getPaymentMethodAggregationPipeline(
+          HOUR_DATE_FORMAT,
+          aggregatedHourlyCollectionName
+        )
+      )
       .next()
 
     const getDerivedAggregationPipeline = (
@@ -1359,6 +1455,15 @@ export class DashboardStatsRepository {
             suspendedTransactions: {
               $sum: '$suspendedTransactions',
             },
+            ...PAYMENT_METHODS.reduce(
+              (acc, x) => ({
+                ...acc,
+                [`paymentMethods_${x}`]: {
+                  $sum: `$paymentMethods_${x}`,
+                },
+              }),
+              {}
+            ),
           },
         },
         {
@@ -1493,6 +1598,16 @@ export class DashboardStatsRepository {
         flaggedTransactions: stat?.flaggedTransactions ?? 0,
         stoppedTransactions: stat?.stoppedTransactions ?? 0,
         suspendedTransactions: stat?.suspendedTransactions ?? 0,
+        paymentMethods_ACH: stat?.paymentMethods_ACH ?? 0,
+        paymentMethods_CARD: stat?.paymentMethods_CARD ?? 0,
+        paymentMethods_GENERIC_BANK_ACCOUNT:
+          stat?.paymentMethods_GENERIC_BANK_ACCOUNT ?? 0,
+        paymentMethods_IBAN: stat?.paymentMethods_IBAN ?? 0,
+        paymentMethods_SWIFT: stat?.paymentMethods_SWIFT ?? 0,
+        paymentMethods_UPI: stat?.paymentMethods_UPI ?? 0,
+        paymentMethods_WALLET: stat?.paymentMethods_WALLET ?? 0,
+        paymentMethods_MPESA: stat?.paymentMethods_MPESA ?? 0,
+        paymentMethods_CHECK: stat?.paymentMethods_CHECK ?? 0,
       }
     })
   }

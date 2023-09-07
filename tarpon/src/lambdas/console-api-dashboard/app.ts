@@ -10,6 +10,7 @@ import { getMongoDbClient } from '@/utils/mongodb-utils'
 import { AccountsService } from '@/services/accounts'
 import { Account } from '@/@types/openapi-internal/Account'
 import { Handlers } from '@/@types/openapi-internal-custom/DefaultApi'
+import { DashboardStatsTransactionsCountItem } from '@/@types/openapi-internal/DashboardStatsTransactionsCountItem'
 
 export function shouldRefreshAll(
   event: APIGatewayProxyWithLambdaAuthorizerEvent<
@@ -59,6 +60,50 @@ export const dashboardStatsHandler = lambdaApi()(
         data,
       }
     })
+
+    handlers.registerGetDashboardStatsTransactionsTotal(
+      async (ctx, request) => {
+        const { tenantId } = ctx
+        const { startTimestamp, endTimestamp } = request
+        const client = await getMongoDbClient()
+        if (!endTimestamp) {
+          throw new BadRequest(`Wrong timestamp format: ${endTimestamp}`)
+        }
+        if (!startTimestamp) {
+          throw new BadRequest(`Wrong timestamp format: ${startTimestamp}`)
+        }
+        const dashboardStatsRepository = new DashboardStatsRepository(
+          tenantId,
+          {
+            mongoDb: client,
+          }
+        )
+        if (shouldRefreshAll(event)) {
+          await dashboardStatsRepository.refreshAllStats()
+        }
+        const data = await dashboardStatsRepository.getTransactionCountStats(
+          startTimestamp,
+          endTimestamp,
+          'DAY'
+        )
+        const result: { [key: string]: number } = {}
+        for (const dataItem of data) {
+          for (const key of Object.keys(dataItem)) {
+            const itemKey = key as keyof DashboardStatsTransactionsCountItem
+            const value = dataItem[itemKey]
+            if (typeof value === 'number') {
+              result[key] = (result[key] ?? 0) + value
+            }
+          }
+        }
+        return {
+          data: {
+            _id: 'TOTAL',
+            ...result,
+          },
+        }
+      }
+    )
 
     handlers.registerGetDashboardStatsHitsPerUser(async (ctx, request) => {
       const client = await getMongoDbClient()
