@@ -3219,6 +3219,8 @@ components:
         walletPhoneNumber:
           type: string
           description: Phone number associated with the wallet, if any
+        walletBalance:
+          $ref: '#/components/schemas/Amount'
       required:
         - method
         - walletType
