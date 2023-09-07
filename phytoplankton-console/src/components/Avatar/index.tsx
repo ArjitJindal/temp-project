@@ -3,8 +3,6 @@ import { COLORS_V2_GRAY_3 } from '../ui/colors';
 import s from './index.module.less';
 import { Account } from '@/apis';
 import { getBranding } from '@/utils/branding';
-import FlagrightNoTextLogo from '@/branding/flagright-no-text.svg';
-import BureauNoTextLogo from '@/branding/bureau-favicon.svg';
 
 interface Props {
   user: Account | null;
@@ -16,11 +14,6 @@ const DEFAULT_AVATAR_STYLE = {
   backgroundColor: COLORS_V2_GRAY_3,
 };
 
-const LOGO_URLS = {
-  flagright: FlagrightNoTextLogo,
-  bureau: BureauNoTextLogo,
-};
-
 const Avatar = (props: Props) => {
   const { user, size = 'small' } = props;
   const branding = getBranding();
@@ -28,7 +21,7 @@ const Avatar = (props: Props) => {
   const brandingName = `${companyName} System`;
   const role = user?.role;
   const systemDisplay =
-    role === 'root' || brandingName === user?.name ? LOGO_URLS[companyName.toLowerCase()] : null;
+    role === 'root' || brandingName === user?.name ? branding.systemAvatarUrl : null;
   return (
     <div
       className={cn(s.avatar, size === 'small' ? s.small : s.large)}

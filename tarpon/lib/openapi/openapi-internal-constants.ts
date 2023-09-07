@@ -4,6 +4,10 @@ export const WHITE_LABEL_ORIGINS = {
     sandbox: 'https://tm.sandbox.bureau.id',
     prod: 'https://tm.bureau.id',
   },
+  regtank: {
+    sandbox: 'https://qc-staging.console.regtank.com',
+    prod: 'https://qc-live.console.regtank.com',
+  },
 }
 export const ALLOWED_ORIGINS = {
   dev: ['*'],
