@@ -53,7 +53,7 @@ function refreshCredentialsPeriodically() {
         })
 
         const assumeRoleCommand = new AssumeRoleCommand({
-          RoleArn: process.env.AUTHORIZER_BASE_ROLE_ARN as string,
+          RoleArn: process.env.ASSUME_ROLE_ARN as string,
           RoleSessionName: 'migration',
         })
 
