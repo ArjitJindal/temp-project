@@ -69,8 +69,8 @@ export default function RuleConfigurationDrawer(props: RuleConfigurationDrawerPr
   const [activeStepKey, setActiveStepKey] = useState(RULE_CONFIGURATION_STEPS[0]);
   const activeStepIndex = RULE_CONFIGURATION_STEPS.findIndex((key) => key === activeStepKey);
   const formRef = useRef<FormRef<RuleConfigurationFormValues>>(null);
-  const isRiskLevelsEnabled = useFeatureEnabled('RISK_LEVELS');
-  const formInitialValues = ruleInstanceToFormValues(isRiskLevelsEnabled, ruleInstance);
+  const isPulseEnabled = useFeatureEnabled('PULSE');
+  const formInitialValues = ruleInstanceToFormValues(isPulseEnabled, ruleInstance);
   const [isValuesSame, setIsValuesSame] = useState(
     isEqual(formInitialValues, formRef.current?.getValues()),
   );
@@ -81,21 +81,17 @@ export default function RuleConfigurationDrawer(props: RuleConfigurationDrawerPr
     (formValues: RuleConfigurationFormValues) => {
       if (type === 'EDIT' && ruleInstance) {
         updateRuleInstanceMutation.mutate(
-          formValuesToRuleInstance(ruleInstance, formValues, isRiskLevelsEnabled),
+          formValuesToRuleInstance(ruleInstance, formValues, isPulseEnabled),
         );
       } else if ((type === 'CREATE' || type === 'DUPLICATE') && rule) {
         createRuleInstanceMutation.mutate(
-          formValuesToRuleInstance(
-            { ruleId: rule.id } as RuleInstance,
-            formValues,
-            isRiskLevelsEnabled,
-          ),
+          formValuesToRuleInstance({ ruleId: rule.id } as RuleInstance, formValues, isPulseEnabled),
         );
       }
     },
     [
       createRuleInstanceMutation,
-      isRiskLevelsEnabled,
+      isPulseEnabled,
       rule,
       ruleInstance,
       type,
@@ -269,7 +265,7 @@ interface RuleConfigurationSimulationDrawerProps {
 }
 export function RuleConfigurationSimulationDrawer(props: RuleConfigurationSimulationDrawerProps) {
   const { isVisible, ruleInstance, onChangeVisibility, onRuleInstanceUpdated, rule } = props;
-  const isRiskLevelsEnabled = useFeatureEnabled('RISK_LEVELS');
+  const isPulseEnabled = useFeatureEnabled('PULSE');
   const [showValidationError, setShowValidationError] = useState(false);
   const [activeTabIndex, setActiveTabIndex] = useState(0);
   const [activeStepKey, setActiveStepKey] = useState(RULE_CONFIGURATION_STEPS[0]);
@@ -298,14 +294,14 @@ export function RuleConfigurationSimulationDrawer(props: RuleConfigurationSimula
             name: formValues.basicDetailsStep.simulationIterationName || '',
             description: formValues.basicDetailsStep.simulationIterationDescription || '',
             ruleInstance: iterationFormRefs[i].current
-              ? formValuesToRuleInstance(ruleInstance, formValues, isRiskLevelsEnabled)
+              ? formValuesToRuleInstance(ruleInstance, formValues, isPulseEnabled)
               : iteration.ruleInstance ?? ruleInstance,
           }
         : iteration;
     });
     setNewIterations(updatedIterations);
     return updatedIterations;
-  }, [isRiskLevelsEnabled, iterationFormRefs, newIterations, ruleInstance]);
+  }, [isPulseEnabled, iterationFormRefs, newIterations, ruleInstance]);
   const handleDuplicate = useCallback(() => {
     const newIterations = syncFormValues();
     const activeIteration = newIterations[activeTabIndex];
@@ -369,7 +365,7 @@ export function RuleConfigurationSimulationDrawer(props: RuleConfigurationSimula
     const invalidIteration = newIterations.find(
       (iteration) =>
         !formRef.current?.validate(
-          ruleInstanceToFormValues(isRiskLevelsEnabled, iteration.ruleInstance),
+          ruleInstanceToFormValues(isPulseEnabled, iteration.ruleInstance),
         ),
     );
     if (invalidIteration) {
@@ -380,13 +376,7 @@ export function RuleConfigurationSimulationDrawer(props: RuleConfigurationSimula
     } else {
       startSimulationMutation.mutate(newIterations);
     }
-  }, [
-    activeTabIndex,
-    isRiskLevelsEnabled,
-    iterationFormRefs,
-    startSimulationMutation,
-    syncFormValues,
-  ]);
+  }, [activeTabIndex, isPulseEnabled, iterationFormRefs, startSimulationMutation, syncFormValues]);
 
   const prevIsVisible = usePrevious(isVisible);
   const prevRuleInstance = usePrevious(ruleInstance);
@@ -523,7 +513,7 @@ export function RuleConfigurationSimulationDrawer(props: RuleConfigurationSimula
                     ref={iterationFormRefs[i]}
                     rule={rule}
                     formInitialValues={merge(
-                      ruleInstanceToFormValues(isRiskLevelsEnabled, iteration.ruleInstance),
+                      ruleInstanceToFormValues(isPulseEnabled, iteration.ruleInstance),
                       {
                         basicDetailsStep: {
                           simulationIterationName: iteration.name,

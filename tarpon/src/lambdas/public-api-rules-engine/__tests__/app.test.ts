@@ -46,7 +46,7 @@ import { pickKnownEntityFields } from '@/utils/object'
 import { User } from '@/@types/openapi-public/User'
 import { InternalUser } from '@/@types/openapi-internal/InternalUser'
 
-const features: Feature[] = ['RISK_LEVELS', 'RISK_SCORING']
+const features: Feature[] = ['PULSE']
 
 withFeatureHook(features)
 dynamoDbSetupHook()

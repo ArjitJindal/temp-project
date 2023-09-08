@@ -171,7 +171,7 @@ export const getStatus = (
 
 export default function TransactionsTable(props: Props) {
   const [showDetailsView, setShowDetailsView] = useState<boolean>(false);
-  const isRiskScoringEnabled = useFeatureEnabled('RISK_SCORING');
+  const isPulseEnabled = useFeatureEnabled('PULSE');
   const escalationEnabled = useFeatureEnabled('ESCALATION');
   const sarEnabled = useFeatureEnabled('SAR');
 
@@ -222,7 +222,7 @@ export default function TransactionsTable(props: Props) {
           },
         },
       }),
-      ...(isRiskScoringEnabled
+      ...(isPulseEnabled
         ? [
             helper.simple<'arsScore.arsScore'>({
               title: 'TRS score',
@@ -374,7 +374,7 @@ export default function TransactionsTable(props: Props) {
         defaultVisibility: false,
       }),
     ]);
-  }, [alert, showDetailsView, isRiskScoringEnabled, escalatedTransactions]);
+  }, [alert, showDetailsView, isPulseEnabled, escalatedTransactions]);
 
   const fullExtraFilters: ExtraFilter<TransactionsTableParams>[] = [
     ...(extraFilters ?? []),

@@ -25,10 +25,7 @@ import { cleanUpDynamoDbResources, getDynamoDbClient } from '@/utils/dynamodb'
 import { UserRepository } from '@/services/users/repositories/user-repository'
 import { updateLogMetadata } from '@/core/utils/context'
 import { RiskScoringService } from '@/services/risk-scoring'
-import {
-  getTenantFeatures,
-  tenantHasFeature,
-} from '@/core/middlewares/tenant-has-feature'
+import { tenantHasFeature } from '@/core/middlewares/tenant-has-feature'
 import { DeviceMetric } from '@/@types/openapi-public-device-data/DeviceMetric'
 import { MetricsRepository } from '@/services/rules-engine/repositories/metrics'
 import { RiskRepository } from '@/services/risk-scoring/repositories/risk-repository'
@@ -39,8 +36,6 @@ import { InternalUser } from '@/@types/openapi-internal/InternalUser'
 import { InternalConsumerUserEvent } from '@/@types/openapi-internal/InternalConsumerUserEvent'
 import { InternalBusinessUserEvent } from '@/@types/openapi-internal/InternalBusinessUserEvent'
 import { InternalTransactionEvent } from '@/@types/openapi-internal/InternalTransactionEvent'
-import { KrsScore } from '@/@types/openapi-internal/KrsScore'
-import { DrsScore } from '@/@types/openapi-internal/DrsScore'
 import { INTERNAL_ONNLY_USER_ATTRIBUTES } from '@/services/users/utils/user-utils'
 import { sendBatchJobCommand } from '@/services/batch-job'
 
@@ -188,7 +183,7 @@ async function transactionHandler(
   const timestampBeforeCasesCreation = Date.now()
   const cases = await caseCreationService.handleTransaction(transactionInMongo)
   logger.info(`Case Creation Completed`)
-  if (await tenantHasFeature(tenantId, 'RISK_SCORING')) {
+  if (await tenantHasFeature(tenantId, 'PULSE')) {
     logger.info(`Calculating ARS & DRS`)
 
     const { originDrsScore, destinationDrsScore } =
@@ -256,37 +251,30 @@ async function userHandler(
     tenantSettings
   )
 
-  let krsScore: KrsScore | null = null
-  let drsScore: DrsScore | null = null
+  if (await tenantHasFeature(tenantId, 'PULSE')) {
+    const dynamoDb = await getDynamoDbClient()
+    const riskRepository = new RiskRepository(tenantId, { dynamoDb })
 
-  const riskRepository = new RiskRepository(tenantId, { dynamoDb })
-  const teanntFeatures = await getTenantFeatures(tenantId)
+    const krsScore = await riskRepository.getKrsScore(internalUser.userId)
+    const drsScore = await riskRepository.getDrsScore(internalUser.userId)
 
-  if (teanntFeatures.includes('RISK_SCORING')) {
-    krsScore = await riskRepository.getKrsScore(internalUser.userId)
-    if (!krsScore) {
+    if (!krsScore && !drsScore) {
       logger.error(
         new Error(
-          `KRS score is not available for user ${internalUser.userId} in tenant ${tenantId}`
+          `KRS and DRS scores are not available for user ${internalUser.userId} in tenant ${tenantId}`
         )
       )
     }
-  }
-  if (
-    teanntFeatures.includes('RISK_SCORING') ||
-    teanntFeatures.includes('RISK_LEVELS')
-  ) {
-    drsScore = await riskRepository.getDrsScore(internalUser.userId)
-  }
 
-  internalUser = {
-    ...internalUser,
-    ...(krsScore && { krsScore }),
-    ...(drsScore && { drsScore }),
-  }
+    internalUser = {
+      ...internalUser,
+      ...(krsScore && { krsScore }),
+      ...(drsScore && { drsScore }),
+    }
 
-  if (drsScore) {
-    await usersRepo.updateDrsScoreOfUserMongo(internalUser.userId, drsScore)
+    if (drsScore) {
+      await usersRepo.updateDrsScoreOfUserMongo(internalUser.userId, drsScore)
+    }
   }
 
   const existingUser = await usersRepo.getUserById(internalUser.userId)
@@ -296,7 +284,7 @@ async function userHandler(
     ...internalUser,
   })
 
-  if (teanntFeatures.includes('RISK_SCORING')) {
+  if (await tenantHasFeature(tenantId, 'PULSE')) {
     logger.info(`Refreshing DRS User distribution stats`)
     await sendBatchJobCommand({
       type: 'DASHBOARD_REFRESH',
@@ -306,7 +294,6 @@ async function userHandler(
       },
     })
   }
-
   const timestampBeforeCasesCreation = Date.now()
   const cases = await caseCreationService.handleUser(savedUser)
   await handleNewCases(tenantId, timestampBeforeCasesCreation, cases)

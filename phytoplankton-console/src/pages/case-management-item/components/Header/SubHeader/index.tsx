@@ -215,7 +215,7 @@ export default function SubHeader(props: Props) {
           </Form.Layout.Label>
         )}
       </div>
-      <Feature name="RISK_SCORING">
+      <Feature name="PULSE">
         {caseUser?.userId && (
           <div className={s.risks}>
             <KycRiskDisplay userId={caseUser.userId} />

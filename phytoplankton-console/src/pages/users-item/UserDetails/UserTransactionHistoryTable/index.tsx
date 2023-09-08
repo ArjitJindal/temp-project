@@ -54,7 +54,7 @@ export type DataItem = {
 export function Content(props: { userId: string }) {
   const { userId } = props;
   const api = useApi();
-  const isRiskScoringEnabled = useFeatureEnabled('RISK_SCORING');
+  const isPulseEnabled = useFeatureEnabled('PULSE');
 
   const [params, setParams] = useState<AllParams<DefaultApiGetTransactionsListRequest>>({
     ...DEFAULT_PARAMS_STATE,
@@ -152,7 +152,7 @@ export function Content(props: { userId: string }) {
             },
           },
         }),
-        ...(isRiskScoringEnabled
+        ...(isPulseEnabled
           ? [
               helper.simple({
                 title: 'TRS score',

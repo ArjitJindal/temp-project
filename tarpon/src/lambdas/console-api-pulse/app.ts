@@ -2,7 +2,7 @@ import {
   APIGatewayEventLambdaAuthorizerContext,
   APIGatewayProxyWithLambdaAuthorizerEvent,
 } from 'aws-lambda'
-import { Forbidden, BadRequest } from 'http-errors'
+import { BadRequest } from 'http-errors'
 import { StackConstants } from '@lib/constants'
 import { PulseAuditLogService } from './services/pulse-audit-log'
 import { lambdaApi } from '@/core/middlewares/lambda-api-middlewares'
@@ -13,10 +13,9 @@ import { RiskClassificationScore } from '@/@types/openapi-internal/RiskClassific
 import { getMongoDbClient } from '@/utils/mongodb-utils'
 import { Handlers } from '@/@types/openapi-internal-custom/DefaultApi'
 import { ParameterAttributeRiskValuesParameterEnum } from '@/@types/openapi-internal/ParameterAttributeRiskValues'
-import { hasFeature } from '@/core/utils/context'
 
 export const riskClassificationHandler = lambdaApi({
-  requiredFeatures: ['RISK_SCORING'],
+  requiredFeatures: ['PULSE'],
 })(
   async (
     event: APIGatewayProxyWithLambdaAuthorizerEvent<
@@ -73,7 +72,7 @@ export const validateClassificationRequest = (
 }
 
 export const parameterRiskAssignmentHandler = lambdaApi({
-  requiredFeatures: ['RISK_SCORING'],
+  requiredFeatures: ['PULSE'],
 })(
   async (
     event: APIGatewayProxyWithLambdaAuthorizerEvent<
@@ -122,7 +121,7 @@ export const parameterRiskAssignmentHandler = lambdaApi({
 )
 
 export const manualRiskAssignmentHandler = lambdaApi({
-  requiredFeatures: ['RISK_LEVELS'],
+  requiredFeatures: ['PULSE'],
 })(
   async (
     event: APIGatewayProxyWithLambdaAuthorizerEvent<
@@ -169,7 +168,9 @@ export const manualRiskAssignmentHandler = lambdaApi({
   }
 )
 
-export const riskLevelAndScoreHandler = lambdaApi()(
+export const riskLevelAndScoreHandler = lambdaApi({
+  requiredFeatures: ['PULSE'],
+})(
   async (
     event: APIGatewayProxyWithLambdaAuthorizerEvent<
       APIGatewayEventLambdaAuthorizerContext<JWTAuthorizerResult>
@@ -187,32 +188,20 @@ export const riskLevelAndScoreHandler = lambdaApi()(
 
     const handlers = new Handlers()
 
-    handlers.registerGetKrsValue(async (ctx, request) => {
-      if (!hasFeature('RISK_SCORING')) {
-        throw new Forbidden(
-          'Not allowed to access because of missing feature flags: RISK_SCORING'
-        )
-      }
-      return await riskRepository.getKrsValueFromMongo(request.userId)
-    })
+    handlers.registerGetKrsValue(
+      async (ctx, request) =>
+        await riskRepository.getKrsValueFromMongo(request.userId)
+    )
 
-    handlers.registerGetArsValue(async (ctx, request) => {
-      if (!hasFeature('RISK_SCORING')) {
-        throw new BadRequest(
-          'Not allowed to access because of missing feature flags: RISK_SCORING'
-        )
-      }
-      return await riskRepository.getArsValueFromMongo(request.transactionId)
-    })
+    handlers.registerGetArsValue(
+      async (ctx, request) =>
+        await riskRepository.getArsValueFromMongo(request.transactionId)
+    )
 
-    handlers.registerGetDrsValue(async (ctx, request) => {
-      if (!hasFeature('RISK_SCORING') && !hasFeature('RISK_LEVELS')) {
-        throw new BadRequest(
-          'Not allowed to access because of missing feature flags: RISK_SCORING, RISK_LEVELS'
-        )
-      }
-      return await riskRepository.getDrsValueFromMongo(request.userId)
-    })
+    handlers.registerGetDrsValue(
+      async (ctx, request) =>
+        await riskRepository.getDrsValueFromMongo(request.userId)
+    )
 
     return await handlers.handle(event)
   }

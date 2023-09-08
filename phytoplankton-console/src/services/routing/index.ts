@@ -33,7 +33,7 @@ import ForbiddenPage from '@/pages/403';
 import ReportsList from '@/pages/reports';
 
 export function useRoutes(): RouteItem[] {
-  const isRiskScoringEnabled = useFeatureEnabled('RISK_SCORING');
+  const isRiskLevelsEnabled = useFeatureEnabled('PULSE');
   const isImportFilesEnabled = useFeatureEnabled('IMPORT_FILES');
   const isSanctionsEnabled = useFeatureEnabled('SANCTIONS');
   const isAuditLogEnabled = useFeatureEnabled('AUDIT_LOGS');
@@ -224,7 +224,7 @@ export function useRoutes(): RouteItem[] {
           },
         ],
       },
-      isRiskScoringEnabled && {
+      isRiskLevelsEnabled && {
         path: '/risk-levels',
         icon: 'risk-scoring',
         name: 'risk-levels',
@@ -407,7 +407,7 @@ export function useRoutes(): RouteItem[] {
   }, [
     lastActiveTab,
     lastActiveRuleTab,
-    isRiskScoringEnabled,
+    isRiskLevelsEnabled,
     isImportFilesEnabled,
     isSarEnabled,
     lastActiveList,

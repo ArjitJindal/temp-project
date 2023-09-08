@@ -120,7 +120,7 @@ export const queryAdapter: Adapter<TableSearchParams> = {
 };
 
 export const makeExtraFilters = (
-  isRiskLevelsEnabled: boolean,
+  isPulseEnabled: boolean,
   ruleOptions: { value: string; label: string }[],
   hideUserFilters: boolean,
   table: 'ALERTS' | 'CASES',
@@ -260,7 +260,7 @@ export const makeExtraFilters = (
         />
       ),
     },
-    isRiskLevelsEnabled && {
+    isPulseEnabled && {
       key: 'riskLevels',
       title: 'CRA',
       renderer: ({ params, setParams }) => (

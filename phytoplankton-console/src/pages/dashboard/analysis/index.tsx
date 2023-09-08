@@ -61,7 +61,7 @@ const DEFAULT_VALUES = {
 type DashboardSettings = Record<KeyValues, boolean>;
 
 function Analysis() {
-  const isRiskScoringEnabled = useFeatureEnabled('RISK_SCORING');
+  const isPulseEnabled = useFeatureEnabled('PULSE');
   const i18n = useI18n();
   const [drawerVisible, setDrawerVisible] = useState(false);
   const [dashboardSettings, setDashboardSettings] = useLocalStorageState<DashboardSettings>(
@@ -114,7 +114,7 @@ function Analysis() {
                 },
                 component: Widget,
               },
-              isRiskScoringEnabled &&
+              isPulseEnabled &&
                 settingsToDisplay.USER_DISTIBUTION_BY_CRA_RISK_LEVEL && {
                   props: {
                     id: 'user_distibution_by_cra_risk_level',

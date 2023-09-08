@@ -321,7 +321,7 @@ export default function AlertTable(props: Props) {
     hideAssignedToFilter,
   } = props;
   const escalationEnabled = useFeatureEnabled('ESCALATION');
-  const isRiskLevelsEnabled = useFeatureEnabled('RISK_LEVELS');
+  const isPulseEnabled = useFeatureEnabled('PULSE');
   const sarEnabled = useFeatureEnabled('SAR');
   const [qaMode] = useQaMode();
   const api = useApi();
@@ -446,13 +446,13 @@ export default function AlertTable(props: Props) {
   const extraFilters = useMemo(
     () =>
       makeExtraFilters(
-        isRiskLevelsEnabled,
+        isPulseEnabled,
         ruleOptions,
         hideUserFilters,
         'ALERTS',
         hideAssignedToFilter,
       ),
-    [isRiskLevelsEnabled, ruleOptions, hideUserFilters, hideAssignedToFilter],
+    [isPulseEnabled, ruleOptions, hideUserFilters, hideAssignedToFilter],
   );
 
   const getSelectionInfo = () => {

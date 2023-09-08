@@ -53,10 +53,12 @@ export class UserManagementService {
       dynamoDb,
       mongoDb
     )
-    this.riskScoringService = new RiskScoringService(tenantId, {
-      dynamoDb,
-      mongoDb,
-    })
+    if (hasFeature('PULSE')) {
+      this.riskScoringService = new RiskScoringService(tenantId, {
+        dynamoDb,
+        mongoDb,
+      })
+    }
   }
 
   public async verifyUser(
@@ -202,7 +204,7 @@ export class UserManagementService {
     }
 
     const { userId, updatedConsumerUserAttributes } = userEvent
-    if (hasFeature('RISK_LEVELS')) {
+    if (hasFeature('PULSE')) {
       const preDefinedRiskLevel = updatedConsumerUserAttributes?.riskLevel
 
       if (preDefinedRiskLevel) {
@@ -217,7 +219,7 @@ export class UserManagementService {
       user,
       updatedConsumerUserAttributes || {}
     ) as User
-    if (hasFeature('RISK_SCORING')) {
+    if (hasFeature('PULSE')) {
       await this.riskScoringService!.calculateAndUpdateKRSAndDRS(
         updatedConsumerUser
       )
@@ -258,7 +260,7 @@ export class UserManagementService {
     }
 
     const { userId } = userEvent
-    if (hasFeature('RISK_LEVELS')) {
+    if (hasFeature('PULSE')) {
       const preDefinedRiskLevel = updatedBusinessUserAttributes?.riskLevel
 
       if (preDefinedRiskLevel) {
@@ -274,7 +276,7 @@ export class UserManagementService {
       userEvent.updatedBusinessUserAttributes || {},
       false
     )
-    if (hasFeature('RISK_SCORING')) {
+    if (hasFeature('PULSE')) {
       await this.riskScoringService!.calculateAndUpdateKRSAndDRS(
         updatedBusinessUser
       )

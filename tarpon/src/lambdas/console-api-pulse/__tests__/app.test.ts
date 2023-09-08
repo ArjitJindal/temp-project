@@ -5,7 +5,7 @@ import {
   TestApiEndpointOptions,
 } from '@/test-utils/apigateway-test-utils'
 
-withFeatureHook(['RISK_SCORING', 'RISK_LEVELS'])
+withFeatureHook(['PULSE'])
 
 const classificationEndpoints = new TestApiEndpoint(
   riskHandler.riskClassificationHandler

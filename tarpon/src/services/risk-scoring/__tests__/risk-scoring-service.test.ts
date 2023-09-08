@@ -17,7 +17,7 @@ import { getMongoDbClient } from '@/utils/mongodb-utils'
 import { ParameterAttributeRiskValues } from '@/@types/openapi-internal/ParameterAttributeRiskValues'
 
 const dynamoDb = getDynamoDbClient()
-withFeatureHook(['RISK_LEVELS', 'RISK_SCORING'])
+withFeatureHook(['PULSE'])
 dynamoDbSetupHook()
 
 const testUser1 = getTestUser({ userId: '1' })

@@ -79,7 +79,7 @@ const RuleConfigurationForm = (
     onActiveStepKeyChange,
     setIsValuesSame,
   } = props;
-  const isRiskLevelsEnabled = useFeatureEnabled('RISK_LEVELS');
+  const isPulseEnabled = useFeatureEnabled('PULSE');
   const defaultInitialValues = useDefaultInitialValues(rule);
   const orderedProps = useOrderedProps(rule?.parametersSchema);
   const initialValues: RuleConfigurationFormValues = formInitialValues
@@ -101,7 +101,7 @@ const RuleConfigurationForm = (
       basicDetailsStep: {},
       standardFiltersStep: {},
       ruleParametersStep: {
-        riskLevelActions: isRiskLevelsEnabled
+        riskLevelActions: isPulseEnabled
           ? {
               VERY_HIGH: notEmpty,
               HIGH: notEmpty,
@@ -110,9 +110,9 @@ const RuleConfigurationForm = (
               VERY_LOW: notEmpty,
             }
           : undefined,
-        ruleAction: isRiskLevelsEnabled ? undefined : notEmpty,
-        ruleParameters: isRiskLevelsEnabled ? undefined : ruleParametersValidators,
-        riskLevelParameters: isRiskLevelsEnabled
+        ruleAction: isPulseEnabled ? undefined : notEmpty,
+        ruleParameters: isPulseEnabled ? undefined : ruleParametersValidators,
+        riskLevelParameters: isPulseEnabled
           ? {
               VERY_HIGH: ruleParametersValidators,
               HIGH: ruleParametersValidators,
@@ -123,7 +123,7 @@ const RuleConfigurationForm = (
           : undefined,
       },
     };
-  }, [isRiskLevelsEnabled, ruleParametersValidators]);
+  }, [isPulseEnabled, ruleParametersValidators]);
   const [formState, setFormState] = useState<RuleConfigurationFormValues>(initialValues);
   const STEPS = useMemo(
     () => [
@@ -177,7 +177,7 @@ const RuleConfigurationForm = (
         isUnfilled:
           validateField(fieldValidators.ruleParametersStep, formState?.ruleParametersStep) != null,
         description: 'Configure filters & risk thresholds that are specific for this rule',
-        tabs: isRiskLevelsEnabled
+        tabs: isPulseEnabled
           ? [{ key: 'risk_based_thresholds', title: 'Risk-based thresholds' }]
           : [{ key: 'rule_specific_filters', title: 'Rule-specific filters' }],
       },
@@ -191,7 +191,7 @@ const RuleConfigurationForm = (
       formState?.ruleParametersStep,
       simulationMode,
       rule?.type,
-      isRiskLevelsEnabled,
+      isPulseEnabled,
     ],
   );
 
@@ -298,7 +298,7 @@ const RuleConfigurationForm = (
 export default React.forwardRef(RuleConfigurationForm);
 
 function useDefaultInitialValues(rule: Rule | undefined | null) {
-  const isRiskLevelsEnabled = useFeatureEnabled('RISK_LEVELS');
+  const isPulseEnabled = useFeatureEnabled('PULSE');
   const orderedProps = useOrderedProps(rule?.parametersSchema);
 
   return useMemo(() => {
@@ -306,7 +306,7 @@ function useDefaultInitialValues(rule: Rule | undefined | null) {
     const ruleParametersStep = {
       ...RULE_PARAMETERS_STEP_INITIAL_VALUES,
     };
-    if (isRiskLevelsEnabled) {
+    if (isPulseEnabled) {
       ruleParametersStep.riskLevelParameters = rule?.defaultRiskLevelParameters ?? {
         VERY_HIGH: rule?.defaultParameters ?? ruleParametersDefaultState,
         HIGH: rule?.defaultParameters ?? ruleParametersDefaultState,
@@ -341,7 +341,7 @@ function useDefaultInitialValues(rule: Rule | undefined | null) {
     };
   }, [
     orderedProps,
-    isRiskLevelsEnabled,
+    isPulseEnabled,
     rule?.name,
     rule?.description,
     rule?.defaultNature,

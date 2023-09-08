@@ -82,11 +82,16 @@ export const userHandler = lambdaApi()(
       let krsRiskLevel: RiskLevel | undefined
       let craRiskLevel: RiskLevel | undefined
 
-      if (hasFeature('RISK_LEVELS') || hasFeature('RISK_SCORING')) {
+      if (hasFeature('PULSE')) {
         const riskScoringService = new RiskScoringService(tenantId, {
           dynamoDb,
           mongoDb,
         })
+        const score = await riskScoringService.updateInitialRiskScores(
+          userPayload as User | Business
+        )
+
+        krsScore = craScore = score
         const riskRepository = new RiskRepository(tenantId, {
           dynamoDb,
           mongoDb,
@@ -95,20 +100,10 @@ export const userHandler = lambdaApi()(
         const riskClassificationValues =
           await riskRepository.getRiskClassificationValues()
 
-        if (hasFeature('RISK_SCORING')) {
-          const score = await riskScoringService.updateInitialRiskScores(
-            userPayload as User | Business
-          )
+        const riskLevel = getRiskLevelFromScore(riskClassificationValues, score)
 
-          krsScore = craScore = score
-
-          const riskLevel = getRiskLevelFromScore(
-            riskClassificationValues,
-            score
-          )
-
-          krsRiskLevel = craRiskLevel = riskLevel
-        }
+        krsRiskLevel = riskLevel
+        craRiskLevel = riskLevel
 
         const preDefinedRiskLevel = userPayload.riskLevel
 
@@ -139,16 +134,12 @@ export const userHandler = lambdaApi()(
 
       return {
         userId: user.userId,
-        ...((krsScore || craScore) && {
+        ...(krsScore && {
           riskScoreDetails: {
-            ...(krsRiskLevel && {
-              kycRiskLevel: krsRiskLevel,
-              kycRiskScore: krsScore,
-            }),
-            ...(craRiskLevel && {
-              craRiskLevel: craRiskLevel,
-              craRiskScore: craScore,
-            }),
+            kycRiskLevel: krsRiskLevel,
+            craRiskLevel: craRiskLevel,
+            kycRiskScore: krsScore,
+            craRiskScore: craScore,
           },
         }),
       } as ConsumerUsersResponse

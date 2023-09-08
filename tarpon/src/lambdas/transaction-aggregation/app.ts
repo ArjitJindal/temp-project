@@ -122,7 +122,7 @@ export async function handleTransactionAggregationTask(
   const mode = 'DYNAMODB'
 
   const parameters =
-    hasFeature('RISK_LEVELS') && ruleInstance.riskLevelParameters
+    hasFeature('PULSE') && ruleInstance.riskLevelParameters
       ? ruleInstance.riskLevelParameters[senderUserRiskLevel]
       : ruleInstance.parameters
 

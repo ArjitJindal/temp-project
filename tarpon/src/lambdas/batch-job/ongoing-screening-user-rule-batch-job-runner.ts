@@ -19,14 +19,14 @@ export async function getOngoingScreeningUserRuleInstances(
   tenantId: string
 ): Promise<RuleInstance[]> {
   const dynamoDb = await getDynamoDbClient()
-  const isRiskLevelsEnabled = await tenantHasFeature(tenantId, 'RISK_LEVELS')
+  const isPulseEnabled = await tenantHasFeature(tenantId, 'PULSE')
   const ruleInstanceRepository = new RuleInstanceRepository(tenantId, {
     dynamoDb,
   })
   const ruleInstances = (
     await ruleInstanceRepository.getActiveRuleInstances('USER')
   ).filter((ruleInstance) => {
-    if (isRiskLevelsEnabled) {
+    if (isPulseEnabled) {
       return Boolean(
         Object.values(ruleInstance.riskLevelParameters ?? {}).find(
           (parameters) => parameters?.ongoingScreening

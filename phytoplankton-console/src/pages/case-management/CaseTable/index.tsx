@@ -73,7 +73,7 @@ export default function CaseTable(props: Props) {
   const tableQueryResult = useTableData(queryResult);
   const tableRef = useRef<TableRefType>(null);
   const user = useAuth0User();
-  const isRiskLevelsEnabled = useFeatureEnabled('RISK_LEVELS');
+  const isPulseEnabled = useFeatureEnabled('PULSE');
   const [selectedCases, setSelectedCases] = useState<string[]>([]);
 
   const reloadTable = useCallback(() => {
@@ -199,7 +199,7 @@ export default function CaseTable(props: Props) {
           render: (value) => (value ? <UserKycStatusTag kycStatusDetails={value} /> : <></>),
         },
       }),
-      ...((isRiskLevelsEnabled
+      ...((isPulseEnabled
         ? [
             helper.derived<RiskLevel>({
               param: 'riskLevels',
@@ -376,7 +376,7 @@ export default function CaseTable(props: Props) {
     reloadTable,
     users,
     loadingUsers,
-    isRiskLevelsEnabled,
+    isPulseEnabled,
     caseAssignmentUpdateMutation,
     caseReviewAssignmentUpdateMutation,
   ]);
@@ -402,7 +402,7 @@ export default function CaseTable(props: Props) {
       params={params}
       onChangeParams={onChangeParams}
       extraFilters={makeExtraFilters(
-        isRiskLevelsEnabled,
+        isPulseEnabled,
         props.rules,
         false,
         'CASES',

@@ -7,7 +7,7 @@ import { Feature } from '@/components/AppWrapper/Providers/SettingsProvider';
 export default function () {
   const i18n = useI18n();
   return (
-    <Feature name="RISK_SCORING" fallback={'Not enabled'}>
+    <Feature name="PULSE" fallback={'Not enabled'}>
       <PageWrapper
         title={i18n('menu.risk-levels.risk-algorithms')}
         description={i18n('menu.risk-levels.risk-algorithms.description')}

@@ -6230,8 +6230,7 @@ components:
       x-stoplight:
         id: xc9jmvdpmvtof
       enum:
-        - RISK_LEVELS
-        - RISK_SCORING
+        - PULSE
         - AUDIT_LOGS
         - SLACK_ALERTS
         - IMPORT_FILES

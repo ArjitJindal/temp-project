@@ -10,7 +10,7 @@ import {
 } from '@/test-utils/pulse-test-utils'
 import { RiskClassificationScore } from '@/@types/openapi-internal/RiskClassificationScore'
 
-withFeatureHook(['RISK_LEVELS', 'RISK_SCORING'])
+withFeatureHook(['PULSE'])
 dynamoDbSetupHook()
 
 const CLASSFICATIONS: RiskClassificationScore[] = [

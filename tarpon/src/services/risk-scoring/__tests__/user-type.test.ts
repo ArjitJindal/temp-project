@@ -5,7 +5,7 @@ import { withFeatureHook } from '@/test-utils/feature-test-utils'
 import { createKrsRiskFactorTestCases } from '@/test-utils/pulse-test-utils'
 import { getTestBusiness, getTestUser } from '@/test-utils/user-test-utils'
 
-withFeatureHook(['RISK_LEVELS', 'RISK_SCORING'])
+withFeatureHook(['PULSE'])
 dynamoDbSetupHook()
 
 const CLASSFICATIONS: RiskClassificationScore[] = [

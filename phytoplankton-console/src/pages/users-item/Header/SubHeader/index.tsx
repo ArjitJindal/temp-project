@@ -22,7 +22,7 @@ export default function SubHeader(props: Props) {
   return (
     <div className={s.root}>
       <div className={s.items}>
-        <Feature name="RISK_LEVELS">
+        <Feature name="PULSE">
           <Form.Layout.Label orientation="horizontal" icon={<Spam2LineIcon />} title={'Risk level'}>
             <UserManualRiskPanel userId={userId} />
           </Form.Layout.Label>
@@ -32,7 +32,7 @@ export default function SubHeader(props: Props) {
           <UserStateEditor onNewComment={onNewComment} title={'User status'} user={user} />
         </div>
       </div>
-      <Feature name="RISK_SCORING">
+      <Feature name="PULSE">
         <div className={s.risks}>
           <KycRiskDisplay userId={user.userId} />
           <DynamicRiskDisplay userId={user.userId} />
