@@ -58,8 +58,5 @@ export const WEEKDAY_NUMBERS = {
 }
 
 export function getDefaultTimezone(): Timezone {
-  if (process.env.TZ != null) {
-    return process.env.TZ as Timezone
-  }
   return 'Etc/UTC'
 }
