@@ -1833,6 +1833,49 @@ paths:
               examples: {}
       operationId: get-dashboard-stats-overview
       description: ''
+  /dashboard_stats/closing_reason_distribution:
+    get:
+      summary: DashboardStats - ClosingReasonDistributionStats
+      tags: []
+      x-flagright:
+        permissions:
+          - dashboard:download-data:read
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DashboardStatsClosingReasonDistributionStats'
+              examples: {}
+      operationId: get-dashboard-stats-closing-reason-distribution-stats
+      description: ''
+      parameters:
+        - schema:
+            type: string
+            enum:
+              - CASE
+              - ALERT
+          in: query
+          name: entity
+    parameters: []
+  /dashboard_stats/alert_priority_distribution:
+    get:
+      summary: DashboardStats - AlertPriorityDistributionStats
+      tags: []
+      x-flagright:
+        permissions:
+          - dashboard:download-data:read
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DashboardStatsAlertPriorityDistributionStats'
+              examples: {}
+      operationId: get-dashboard-stats-alert-priority-distribution-stats
+      description: ''
   /tenants:
     get:
       summary: Tenant - List
@@ -5377,6 +5420,38 @@ components:
         - averageInvestigationTimeCases
         - averageInvestigationTimeAlerts
         - totalSarReported
+    DashboardStatsClosingReasonDistributionStats:
+      type: object
+      x-examples: {}
+      title: DashboardStatsClosingReasonDistributionStats
+      properties:
+        closingReasonsData:
+          type: array
+          items:
+            type: object
+            properties:
+              reason:
+                type: string
+              value:
+                type: number
+      required:
+        - closingReasonsData
+    DashboardStatsAlertPriorityDistributionStats:
+      type: object
+      x-examples: {}
+      title: DashboardStatsAlertPriorityDistributionStats
+      properties:
+        alertPriorityData:
+          type: array
+          items:
+            type: object
+            properties:
+              priority:
+                $ref: '#/components/schemas/Priority'
+              value:
+                type: number
+      required:
+        - alertPriorityData
     InternalConsumerUser:
       allOf:
         - $ref: ../public/openapi-public-original.yaml#/components/schemas/UserWithRulesResult

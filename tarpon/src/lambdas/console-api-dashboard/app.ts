@@ -222,6 +222,35 @@ export const dashboardStatsHandler = lambdaApi()(
       return await dashboardStatsRepository.getOverviewStatistics(accountIds)
     })
 
+    handlers.registerGetDashboardStatsClosingReasonDistributionStats(
+      async (ctx, request) => {
+        const client = await getMongoDbClient()
+        const { entity } = request
+        const dashboardStatsRepository = new DashboardStatsRepository(
+          ctx.tenantId,
+          { mongoDb: client }
+        )
+        if (shouldRefreshAll(event)) {
+          await dashboardStatsRepository.refreshAllStats()
+        }
+        return await dashboardStatsRepository.getClosingReasonDistributionStatistics(
+          entity
+        )
+      }
+    )
+    handlers.registerGetDashboardStatsAlertPriorityDistributionStats(
+      async (ctx) => {
+        const client = await getMongoDbClient()
+        const dashboardStatsRepository = new DashboardStatsRepository(
+          ctx.tenantId,
+          { mongoDb: client }
+        )
+        if (shouldRefreshAll(event)) {
+          await dashboardStatsRepository.refreshAllStats()
+        }
+        return await dashboardStatsRepository.getAlertPriorityDistributionStatistics()
+      }
+    )
     return await handlers.handle(event)
   }
 )

@@ -231,6 +231,14 @@ export const DASHBOARD_TRANSACTIONS_TOTAL_STATS = (params: AnyParameters): Query
 
 export const DASHBOARD_OVERVIEW_TOTAL = (): QueryKey => ['dashboard', 'overview-total'];
 
+export const CLOSING_REASON_DISTRIBUTION = (entity: string): QueryKey => [
+  'dashboard',
+  'case-management',
+  entity,
+];
+
+export const ALERT_PRIORITY_DISTRIBUTION = (): QueryKey => ['dashboard', 'case-management'];
+
 export const SETTINGS = (): QueryKey => ['settings'];
 
 export const TENANT_USAGE_DATA = (): QueryKey => ['tenant-usage-data'];

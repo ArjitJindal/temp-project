@@ -1,5 +1,5 @@
 import { Db, MongoClient, WithId } from 'mongodb'
-import { keyBy, round } from 'lodash'
+import { keyBy, round, sortBy } from 'lodash'
 import { getAffectedInterval, getTimeLabels } from '../utils'
 import { DashboardStatsDRSDistributionData } from './types'
 import dayjs from '@/utils/dayjs'
@@ -46,6 +46,9 @@ import { FLAGRIGHT_SYSTEM_USER } from '@/services/rules-engine/repositories/aler
 import { DashboardStatsOverview } from '@/@types/openapi-internal/DashboardStatsOverview'
 import { PAYMENT_METHODS } from '@/@types/openapi-internal-custom/PaymentMethod'
 import { traceable } from '@/core/xray'
+import { DashboardStatsClosingReasonDistributionStats } from '@/@types/openapi-internal/DashboardStatsClosingReasonDistributionStats'
+import { DashboardStatsAlertPriorityDistributionStats } from '@/@types/openapi-internal/DashboardStatsAlertPriorityDistributionStats'
+import { DashboardStatsClosingReasonDistributionStatsClosingReasonsData } from '@/@types/openapi-internal/DashboardStatsClosingReasonDistributionStatsClosingReasonsData'
 import { hasFeature } from '@/core/utils/context'
 import { Report } from '@/@types/openapi-internal/Report'
 
@@ -1970,12 +1973,10 @@ export class DashboardStatsRepository {
         },
       ])
       .toArray()
-
     const dashboardCasesStatsHourlyCollection =
       db.collection<DashboardTeamStatsItem>(
         DASHBOARD_TEAM_CASES_STATS_HOURLY(this.tenantId)
       )
-
     const investigationTimePipeline = [
       {
         $match: {
@@ -2019,16 +2020,13 @@ export class DashboardStatsRepository {
         },
       },
     ]
-
     const dashboardCasesStatsTotal = await dashboardCasesStatsHourlyCollection
       .aggregate<{ avgInvestigationTime: number }>(investigationTimePipeline)
       .toArray()
-
     const dashboardAlertsStatsCollection =
       db.collection<DashboardTeamStatsItem>(
         DASHBOARD_TEAM_ALERTS_STATS_HOURLY(this.tenantId)
       )
-
     const dashboardAlertsStatsTotal = await dashboardAlertsStatsCollection
       .aggregate<{ avgInvestigationTime: number }>(investigationTimePipeline)
       .toArray()
@@ -2048,6 +2046,123 @@ export class DashboardStatsRepository {
       averageInvestigationTimeAlerts:
         dashboardAlertsStatsTotal[0]?.avgInvestigationTime,
       totalSarReported,
+    }
+  }
+
+  async getClosingReasonDistributionStatistics(
+    entity?: 'CASE' | 'ALERT'
+  ): Promise<DashboardStatsClosingReasonDistributionStats> {
+    const db = this.mongoDb.db()
+    const casesCollection = db.collection<Case>(CASES_COLLECTION(this.tenantId))
+    let closingReasonsData: DashboardStatsClosingReasonDistributionStatsClosingReasonsData[] =
+      []
+    if (entity === 'CASE') {
+      const reasons = await casesCollection
+        .aggregate([
+          {
+            $match: { caseStatus: 'CLOSED' },
+          },
+          {
+            $unwind: '$lastStatusChange.reason',
+          },
+          {
+            $group: {
+              _id: '$lastStatusChange.reason',
+              count: { $sum: 1 },
+            },
+          },
+        ])
+        .toArray()
+      closingReasonsData = reasons.map((reason) => {
+        return {
+          reason: reason._id,
+          value: reason.count,
+        }
+      })
+    } else if (entity === 'ALERT') {
+      const reasons = await casesCollection
+        .aggregate([
+          {
+            $match: {
+              'alerts.alertStatus': 'CLOSED',
+              'alerts.lastStatusChange': { $ne: null },
+            },
+          },
+          {
+            $unwind: '$alerts',
+          },
+          {
+            $project: {
+              _id: false,
+              lastStatusChange: '$alerts.lastStatusChange',
+            },
+          },
+          {
+            $unwind: '$lastStatusChange.reason',
+          },
+          {
+            $group: {
+              _id: '$lastStatusChange.reason',
+              count: { $sum: 1 },
+            },
+          },
+        ])
+        .toArray()
+      closingReasonsData = reasons.map((reason) => {
+        return {
+          reason: reason._id,
+          value: reason.count,
+        }
+      })
+    }
+    return {
+      closingReasonsData: sortBy(closingReasonsData, 'reason'),
+    }
+  }
+  async getAlertPriorityDistributionStatistics(): Promise<DashboardStatsAlertPriorityDistributionStats> {
+    const db = this.mongoDb.db()
+    const casesCollection = db.collection<Case>(CASES_COLLECTION(this.tenantId))
+    const priorities = await casesCollection
+      .aggregate([
+        {
+          $match: {
+            'alerts.alertStatus': {
+              $in: ['OPEN', 'REOPENED'],
+            },
+          },
+        },
+        {
+          $unwind: '$alerts',
+        },
+        {
+          $match: {
+            'alerts.alertStatus': {
+              $in: ['OPEN', 'REOPENED'],
+            },
+          },
+        },
+        {
+          $project: {
+            _id: false,
+            alert: '$alerts',
+          },
+        },
+        {
+          $group: {
+            _id: '$alert.priority',
+            count: { $sum: 1 },
+          },
+        },
+      ])
+      .toArray()
+    const alertPriorityData = priorities.map((priority) => {
+      return {
+        priority: priority._id,
+        value: priority.count,
+      }
+    })
+    return {
+      alertPriorityData: sortBy(alertPriorityData, 'priority'),
     }
   }
 }

@@ -7,6 +7,8 @@ import TopUsersHitCard from './components/TopUsersHitCard';
 import DRSDistributionCard from './components/DRSDistributionCard';
 import TeamPerformanceCard from './components/TeamPerformanceCard';
 import OverviewCard from './components/OverviewCard';
+import CaseClosingReasonCard from './components/CaseManagement/CaseClosingReasonCard';
+import DistributionByAlertPriority from './components/CaseManagement/DistributionByAlertPriority';
 import s from './style.module.less';
 import PageWrapper from '@/components/PageWrapper';
 import { useFeatureEnabled } from '@/components/AppWrapper/Providers/SettingsProvider';
@@ -28,6 +30,8 @@ type KeyValues =
   | 'TOP_RULE_HITS_BY_COUNT'
   | 'USER_DISTIBUTION_BY_CRA_RISK_LEVEL'
   | 'TEAM_OVERVIEW'
+  | 'DISTRIBUTION_BY_CLOSING_REASON'
+  | 'DISTRIBUTION_BY_ALERT_PRIORITY'
   | 'DISTRIBUTION_BY_PAYMENT_METHOD';
 
 const KEYS: KeyValues[] = [
@@ -36,6 +40,8 @@ const KEYS: KeyValues[] = [
   'TOP_USERS_BY_TRANSACTIONS_HITS',
   'TOP_RULE_HITS_BY_COUNT',
   'USER_DISTIBUTION_BY_CRA_RISK_LEVEL',
+  'DISTRIBUTION_BY_CLOSING_REASON',
+  'DISTRIBUTION_BY_ALERT_PRIORITY',
   'TEAM_OVERVIEW',
   'DISTRIBUTION_BY_PAYMENT_METHOD',
 ];
@@ -47,6 +53,8 @@ const DEFAULT_VALUES = {
   TOP_RULE_HITS_BY_COUNT: true,
   USER_DISTIBUTION_BY_CRA_RISK_LEVEL: true,
   TEAM_OVERVIEW: true,
+  DISTRIBUTION_BY_CLOSING_REASON: true,
+  DISTRIBUTION_BY_ALERT_PRIORITY: true,
   DISTRIBUTION_BY_PAYMENT_METHOD: true,
 };
 
@@ -60,7 +68,6 @@ function Analysis() {
     'DASHBOARD_SETTINGS',
     DEFAULT_VALUES,
   );
-
   const [updatedState, setUpdatedState] = useState<DashboardSettings>({
     ...DEFAULT_VALUES,
     ...dashboardSettings,
@@ -152,6 +159,33 @@ function Analysis() {
                 component: Widget,
               },
             ].filter(notEmpty),
+          },
+          {
+            groupTitle: 'Case management',
+            items: [
+              ...(settingsToDisplay.DISTRIBUTION_BY_CLOSING_REASON
+                ? [
+                    {
+                      props: {
+                        id: 'distribution-by-closing reason',
+                        title: 'Distribution by closing reason',
+                      },
+                      component: CaseClosingReasonCard,
+                    },
+                  ]
+                : []),
+              ...(settingsToDisplay.DISTRIBUTION_BY_ALERT_PRIORITY
+                ? [
+                    {
+                      props: {
+                        id: 'distribution-by-alert-priority',
+                        title: 'Distribution by open alerts priority',
+                      },
+                      component: DistributionByAlertPriority,
+                    },
+                  ]
+                : []),
+            ],
           },
           {
             groupTitle: 'Team management',
