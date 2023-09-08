@@ -794,6 +794,29 @@ export class CdkTarponStack extends cdk.Stack {
       )
 
       apiMetricsRule.addTarget(new LambdaFunctionTarget(cronJobDailyHandler))
+      const { func: cronJobTenMinuteHandler } = createFunction(
+        this,
+        lambdaExecutionRole,
+        {
+          name: StackConstants.CRON_JOB_TEN_MINUTE,
+          auditLogTopic: this.auditLogTopic,
+          batchJobQueue,
+          memorySize: config.resource.CRON_JOB_LAMBDA?.MEMORY_SIZE,
+        },
+        functionProps
+      )
+
+      const everyTenMinuteRule = new Rule(
+        this,
+        getResourceNameForTarpon('EveryTenMinuteRule'),
+        {
+          schedule: Schedule.cron({ minute: '*/10' }),
+        }
+      )
+
+      everyTenMinuteRule.addTarget(
+        new LambdaFunctionTarget(cronJobTenMinuteHandler)
+      )
     }
 
     /* Tarpon Kinesis Change capture consumer */

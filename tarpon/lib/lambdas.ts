@@ -355,4 +355,10 @@ export const LAMBDAS: {
     expectedMaxSeconds: ASYNC_JOB_LAMBDA_EXPECTED_MAX_SECONDS,
     timeoutSeconds: DEFAULT_ASYNC_JOB_LAMBDA_TIMEOUT_SECONDS,
   },
+  [StackConstants.CRON_JOB_TEN_MINUTE]: {
+    codePath: 'cron-job-ten-minute',
+    handlerName: 'cronJobTenMinuteHandler',
+    expectedMaxSeconds: ASYNC_JOB_LAMBDA_EXPECTED_MAX_SECONDS,
+    timeoutSeconds: DEFAULT_ASYNC_JOB_LAMBDA_TIMEOUT_SECONDS,
+  },
 }

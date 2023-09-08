@@ -1,7 +1,7 @@
 import path from 'path'
 import { KinesisStreamEvent, SQSEvent } from 'aws-lambda'
 import { SQS, SendMessageCommand } from '@aws-sdk/client-sqs'
-import { flatten, min, pick } from 'lodash'
+import { flatten, pick } from 'lodash'
 import { CaseCreationService } from '../console-api-case/services/case-creation-service'
 import { CasesAlertsAuditLogService } from '../console-api-case/services/case-alerts-audit-log-service'
 import { getMongoDbClient } from '@/utils/mongodb-utils'
@@ -37,7 +37,6 @@ import { InternalConsumerUserEvent } from '@/@types/openapi-internal/InternalCon
 import { InternalBusinessUserEvent } from '@/@types/openapi-internal/InternalBusinessUserEvent'
 import { InternalTransactionEvent } from '@/@types/openapi-internal/InternalTransactionEvent'
 import { INTERNAL_ONNLY_USER_ATTRIBUTES } from '@/services/users/utils/user-utils'
-import { sendBatchJobCommand } from '@/services/batch-job'
 
 const sqs = new SQS({
   region: process.env.AWS_REGION,
@@ -50,15 +49,6 @@ async function handleNewCases(
 ) {
   const mongoDb = await getMongoDbClient()
 
-  await sendBatchJobCommand({
-    type: 'DASHBOARD_REFRESH',
-    tenantId,
-    parameters: {
-      cases: {
-        startTimestamp: min(cases.map((c) => c.createdTimestamp)),
-      },
-    },
-  })
   const tenantRepository = new TenantRepository(tenantId, {
     mongoDb: await getMongoDbClient(),
   })
@@ -200,15 +190,6 @@ async function transactionHandler(
     logger.info(`DRS Updated in Cases`)
   }
 
-  await sendBatchJobCommand({
-    type: 'DASHBOARD_REFRESH',
-    tenantId,
-    parameters: {
-      transactions: {
-        startTimestamp: transaction.timestamp,
-      },
-    },
-  })
   await handleNewCases(tenantId, timestampBeforeCasesCreation, cases)
 
   cleanUpDynamoDbResources()
@@ -284,16 +265,6 @@ async function userHandler(
     ...internalUser,
   })
 
-  if (await tenantHasFeature(tenantId, 'PULSE')) {
-    logger.info(`Refreshing DRS User distribution stats`)
-    await sendBatchJobCommand({
-      type: 'DASHBOARD_REFRESH',
-      tenantId,
-      parameters: {
-        users: true,
-      },
-    })
-  }
   const timestampBeforeCasesCreation = Date.now()
   const cases = await caseCreationService.handleUser(savedUser)
   await handleNewCases(tenantId, timestampBeforeCasesCreation, cases)

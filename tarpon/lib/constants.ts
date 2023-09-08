@@ -259,6 +259,7 @@ export const StackConstants = {
     'BatchJobRunnerFunction'
   ),
   CRON_JOB_DAILY: getResourceNameForTarpon('CronJobDailyFunction'),
+  CRON_JOB_TEN_MINUTE: getResourceNameForTarpon('CronJobTenMinuteFunction'),
 }
 
 export const SQSQueues = {
