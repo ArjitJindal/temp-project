@@ -82,16 +82,11 @@ export const userHandler = lambdaApi()(
       let krsRiskLevel: RiskLevel | undefined
       let craRiskLevel: RiskLevel | undefined
 
-      if (hasFeature('PULSE')) {
+      if (hasFeature('RISK_LEVELS') || hasFeature('RISK_SCORING')) {
         const riskScoringService = new RiskScoringService(tenantId, {
           dynamoDb,
           mongoDb,
         })
-        const score = await riskScoringService.updateInitialRiskScores(
-          userPayload as User | Business
-        )
-
-        krsScore = craScore = score
         const riskRepository = new RiskRepository(tenantId, {
           dynamoDb,
           mongoDb,
@@ -100,10 +95,20 @@ export const userHandler = lambdaApi()(
         const riskClassificationValues =
           await riskRepository.getRiskClassificationValues()
 
-        const riskLevel = getRiskLevelFromScore(riskClassificationValues, score)
+        if (hasFeature('RISK_SCORING')) {
+          const score = await riskScoringService.updateInitialRiskScores(
+            userPayload as User | Business
+          )
 
-        krsRiskLevel = riskLevel
-        craRiskLevel = riskLevel
+          krsScore = craScore = score
+
+          const riskLevel = getRiskLevelFromScore(
+            riskClassificationValues,
+            score
+          )
+
+          krsRiskLevel = craRiskLevel = riskLevel
+        }
 
         const preDefinedRiskLevel = userPayload.riskLevel
 
@@ -134,12 +139,16 @@ export const userHandler = lambdaApi()(
 
       return {
         userId: user.userId,
-        ...(krsScore && {
+        ...((krsScore || craScore) && {
           riskScoreDetails: {
-            kycRiskLevel: krsRiskLevel,
-            craRiskLevel: craRiskLevel,
-            kycRiskScore: krsScore,
-            craRiskScore: craScore,
+            ...(krsRiskLevel && {
+              kycRiskLevel: krsRiskLevel,
+              kycRiskScore: krsScore,
+            }),
+            ...(craRiskLevel && {
+              craRiskLevel: craRiskLevel,
+              craRiskScore: craScore,
+            }),
           },
         }),
       } as ConsumerUsersResponse

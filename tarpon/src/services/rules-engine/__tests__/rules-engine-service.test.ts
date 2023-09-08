@@ -362,7 +362,7 @@ describe('Verify Transaction Event', () => {
     setUpUsersHooks(TEST_TENANT_ID, [getTestUser({ userId: '1' })])
 
     test('returns risk-level action with PULSE feature flag', async () => {
-      await getContextStorage().run({ features: ['PULSE'] }, async () => {
+      await getContextStorage().run({ features: ['RISK_LEVELS'] }, async () => {
         const mongoDb = await getMongoDbClient()
         const riskRepository = new RiskRepository(TEST_TENANT_ID, {
           dynamoDb,

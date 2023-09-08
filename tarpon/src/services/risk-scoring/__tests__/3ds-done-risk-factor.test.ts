@@ -12,7 +12,7 @@ import {
 } from '@/@types/openapi-internal/ParameterAttributeRiskValues'
 import dayjs from '@/utils/dayjs'
 
-withFeatureHook(['PULSE'])
+withFeatureHook(['RISK_SCORING', 'RISK_LEVELS'])
 dynamoDbSetupHook()
 
 const CLASSFICATIONS: RiskClassificationScore[] = [

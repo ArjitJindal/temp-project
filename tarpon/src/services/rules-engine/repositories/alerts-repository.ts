@@ -657,7 +657,7 @@ export class AlertsRepository {
       dynamoDb: this.dynamoDb,
     })
 
-    if (hasFeature('PULSE')) {
+    if (hasFeature('RISK_SCORING')) {
       result.items = await riskRepository.augmentRiskLevel(result.items)
     }
 

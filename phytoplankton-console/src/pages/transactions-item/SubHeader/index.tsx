@@ -46,7 +46,7 @@ export default function SubHeader(props: Props) {
         </Form.Layout.Label>
       </div>
 
-      <Feature name="PULSE">
+      <Feature name="RISK_SCORING">
         <div className={s.risks}>
           <ActionRiskDisplay transactionId={transaction.transactionId} />
           <Feature name="MACHINE_LEARNING_DEMO">

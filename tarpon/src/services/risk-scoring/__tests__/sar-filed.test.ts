@@ -8,7 +8,7 @@ import { ReportRepository } from '@/services/sar/repositories/report-repository'
 import { withFeatureHook } from '@/test-utils/feature-test-utils'
 import { dynamoDbSetupHook } from '@/test-utils/dynamodb-test-utils'
 
-withFeatureHook(['PULSE'])
+withFeatureHook(['RISK_LEVELS', 'RISK_SCORING'])
 dynamoDbSetupHook()
 
 const RISK_FACTOR: ParameterAttributeRiskValues = {

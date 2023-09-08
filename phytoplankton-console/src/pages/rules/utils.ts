@@ -92,7 +92,10 @@ export const RULE_CASE_PRIORITY: { label: string; value: Priority }[] = [
   { label: 'P4', value: 'P4' },
 ];
 
-export function ruleInstanceToFormValues(isPulseEnabled: boolean, ruleInstance?: RuleInstance) {
+export function ruleInstanceToFormValues(
+  isRiskLevelsEnabled: boolean,
+  ruleInstance?: RuleInstance,
+) {
   return ruleInstance
     ? {
         basicDetailsStep: {
@@ -107,7 +110,7 @@ export function ruleInstanceToFormValues(isPulseEnabled: boolean, ruleInstance?:
           checklistTemplateId: ruleInstance.checklistTemplateId,
         } as RuleConfigurationFormValues['basicDetailsStep'],
         standardFiltersStep: ruleInstance.filters,
-        ruleParametersStep: isPulseEnabled
+        ruleParametersStep: isRiskLevelsEnabled
           ? {
               riskLevelParameters:
                 ruleInstance.riskLevelParameters ??
@@ -139,7 +142,7 @@ export function ruleInstanceToFormValues(isPulseEnabled: boolean, ruleInstance?:
 export function formValuesToRuleInstance(
   initialRuleInstance: RuleInstance,
   formValues: RuleConfigurationFormValues,
-  isPulseEnabled: boolean,
+  isRiskLevelsEnabled: boolean,
 ): RuleInstance {
   const { basicDetailsStep, standardFiltersStep, ruleParametersStep } = formValues;
   const { ruleAction, ruleParameters, riskLevelParameters, riskLevelActions } = ruleParametersStep;
@@ -156,7 +159,7 @@ export function formValuesToRuleInstance(
     labels: basicDetailsStep.ruleLabels,
     falsePositiveCheckEnabled: basicDetailsStep.falsePositiveCheckEnabled,
     checklistTemplateId: basicDetailsStep.checklistTemplateId,
-    ...(isPulseEnabled
+    ...(isRiskLevelsEnabled
       ? {
           riskLevelParameters: riskLevelParameters
             ? {

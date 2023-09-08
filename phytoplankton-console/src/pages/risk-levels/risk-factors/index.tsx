@@ -182,7 +182,7 @@ export default function () {
   );
 
   return (
-    <Feature name="PULSE" fallback={'Not enabled'}>
+    <Feature name="RISK_SCORING" fallback={'Not enabled'}>
       <PageWrapper
         title={i18n('menu.risk-levels.risk-factors')}
         description={i18n('menu.risk-levels.risk-factors.description')}

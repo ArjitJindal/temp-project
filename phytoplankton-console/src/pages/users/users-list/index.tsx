@@ -37,13 +37,12 @@ export interface UserSearchParams extends CommonParams {
   userRegistrationStatus?: UserRegistrationStatus[];
 }
 
-function getPulseColumns(): TableColumn<InternalUser>[] {
+function getRiskScoringColumns(): TableColumn<InternalUser>[] {
   const helper = new ColumnHelper<InternalUser>();
 
   return helper.list([
     helper.derived<RiskLevel>({
       title: 'CRA risk level',
-      // key: 'drsRiskLevel',
       type: RISK_LEVEL,
       tooltip: 'Customer risk assessment - accounts for both Base risk and action risk scores.',
       value: (entity): RiskLevel | undefined => {
@@ -157,7 +156,7 @@ const extraFilters = (list: 'business' | 'consumer' | 'all'): ExtraFilter<UserSe
 const UsersTab = (props: { type: 'business' | 'consumer' | 'all' }) => {
   const type = props.type;
 
-  const isPulseEnabled = useFeatureEnabled('PULSE');
+  const isRiskScoringEnabled = useFeatureEnabled('RISK_SCORING');
   const api = useApi();
   const navigate = useNavigate();
 
@@ -168,8 +167,8 @@ const UsersTab = (props: { type: 'business' | 'consumer' | 'all' }) => {
       ? (getConsumerUserColumns() as TableColumn<InternalUser>[])
       : (getAllUserColumns() as TableColumn<InternalUser>[]);
 
-  if (isPulseEnabled) {
-    columns.push(...getPulseColumns());
+  if (isRiskScoringEnabled) {
+    columns.push(...getRiskScoringColumns());
   }
 
   const [params, setParams] = useState<UserSearchParams>(DEFAULT_PARAMS_STATE);
