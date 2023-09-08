@@ -13,7 +13,7 @@ export type Auth0TenantConfig = {
     companyDisplayName: string
   }
   emailProvider: {
-    type: 'sendgrid'
+    type: 'sendgrid' | 'ses'
     credentialsAwsSecretName: string
     fromAddress: string
   }

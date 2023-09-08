@@ -648,7 +648,7 @@ export class AccountsService {
         consoleApiUrl: `https://${regionPrefix}${auth0Audience}console`,
         apiAudience: process.env.AUTH0_AUDIENCE as unknown as string,
         region: process.env.REGION,
-        isProductionAccessDisabled: false,
+        isProductionAccessDisabled: 'false',
       },
     })
 

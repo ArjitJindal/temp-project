@@ -276,6 +276,8 @@ export const createAuth0TenantResources = (
     switch (tenantConfig.emailProvider.type) {
       case 'sendgrid':
         return ['apiKey']
+      case 'ses':
+        return ['accessKeyId', 'secretAccessKey', 'region']
       default:
         return []
     }

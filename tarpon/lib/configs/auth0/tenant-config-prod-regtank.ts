@@ -17,8 +17,7 @@ export const Auth0ProdRegtankTenantConfig: Auth0TenantConfig = {
     companyDisplayName: 'Regtank Technology Pte Ltd',
   },
   emailProvider: {
-    type: 'sendgrid',
-    // TODO: Fill the secrets in AWS
+    type: 'ses',
     credentialsAwsSecretName: 'regtank/auth0EmailProviderCreds',
     // TBD
     fromAddress: 'support@regtank.com',
