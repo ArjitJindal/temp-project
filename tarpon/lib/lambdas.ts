@@ -38,19 +38,19 @@ export const LAMBDAS: {
     codePath: 'public-api-rules-engine',
     handlerName: 'transactionHandler',
     expectedMaxSeconds: DEFAULT_LAMBDA_EXPECTED_MAX_SECONDS,
-    timeoutSeconds: DEFAULT_LAMBDA_TIMEOUT_SECONDS,
+    timeoutSeconds: DEFAULT_ASYNC_JOB_LAMBDA_TIMEOUT_SECONDS,
   },
   [StackConstants.PUBLIC_API_TRANSACTION_EVENT_FUNCTION_NAME]: {
     codePath: 'public-api-rules-engine',
     handlerName: 'transactionEventHandler',
     expectedMaxSeconds: DEFAULT_LAMBDA_EXPECTED_MAX_SECONDS,
-    timeoutSeconds: DEFAULT_LAMBDA_TIMEOUT_SECONDS,
+    timeoutSeconds: DEFAULT_ASYNC_JOB_LAMBDA_TIMEOUT_SECONDS,
   },
   [StackConstants.PUBLIC_API_USER_EVENT_FUNCTION_NAME]: {
     codePath: 'public-api-rules-engine',
     handlerName: 'userEventsHandler',
     expectedMaxSeconds: DEFAULT_LAMBDA_EXPECTED_MAX_SECONDS,
-    timeoutSeconds: DEFAULT_LAMBDA_TIMEOUT_SECONDS,
+    timeoutSeconds: DEFAULT_ASYNC_JOB_LAMBDA_TIMEOUT_SECONDS,
   },
   [StackConstants.CONSOLE_API_FILE_IMPORT_FUNCTION_NAME]: {
     codePath: 'console-api-file-import',
@@ -152,7 +152,7 @@ export const LAMBDAS: {
     codePath: 'public-api-user-management',
     handlerName: 'userHandler',
     expectedMaxSeconds: DEFAULT_LAMBDA_EXPECTED_MAX_SECONDS,
-    timeoutSeconds: DEFAULT_LAMBDA_TIMEOUT_SECONDS,
+    timeoutSeconds: DEFAULT_ASYNC_JOB_LAMBDA_TIMEOUT_SECONDS,
   },
   [StackConstants.CONSOLE_API_LISTS_FUNCTION_NAME]: {
     codePath: 'console-api-list-importer',
