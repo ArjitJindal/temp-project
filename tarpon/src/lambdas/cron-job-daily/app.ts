@@ -4,10 +4,6 @@ import { lambdaConsumer } from '@/core/middlewares/lambda-consumer-middlewares'
 import { getMongoDbClient } from '@/utils/mongodb-utils'
 import { TenantInfo, TenantService } from '@/services/tenants'
 import { sendBatchJobCommand } from '@/services/batch-job'
-import {
-  ApiUsageMetricsBatchJob,
-  OngoingScreeningUserRuleBatchJob,
-} from '@/@types/batch-job'
 import { UserRepository } from '@/services/users/repositories/user-repository'
 import dayjs from '@/utils/dayjs'
 import { logger } from '@/core/logger'
@@ -60,14 +56,13 @@ async function createApiUsageJobs(tenantInfos: TenantInfo[]) {
         sheetId,
       ].filter(Boolean)
 
-      const job: ApiUsageMetricsBatchJob = {
+      await sendBatchJobCommand({
         type: 'API_USAGE_METRICS',
         tenantId: '',
         tenantInfos: tenants,
         targetMonth: dayjs().subtract(2, 'day').format('YYYY-MM'),
         googleSheetIds: googleSheetIds,
-      }
-      await sendBatchJobCommand('', job)
+      })
     }
   }
 }
@@ -85,22 +80,20 @@ async function createOngoingScreeningJobs(tenantInfos: TenantInfo[]) {
       for await (const item of await userRepository.getAllUserIdsCursor()) {
         userIdsBatch.push(item.userId)
         if (userIdsBatch.length === ONGOING_SCREENING_USERS_BATCH_SIZE) {
-          const job: OngoingScreeningUserRuleBatchJob = {
+          await sendBatchJobCommand({
             type: 'ONGOING_SCREENING_USER_RULE',
             tenantId,
             userIds: userIdsBatch,
-          }
-          await sendBatchJobCommand(tenantId, job)
+          })
           userIdsBatch = []
         }
       }
       if (userIdsBatch.length > 0) {
-        const job: OngoingScreeningUserRuleBatchJob = {
+        await sendBatchJobCommand({
           type: 'ONGOING_SCREENING_USER_RULE',
           tenantId,
           userIds: userIdsBatch,
-        }
-        await sendBatchJobCommand(tenantId, job)
+        })
       }
     }
   }

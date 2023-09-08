@@ -7,7 +7,7 @@ import {
   BatchRunType,
   LAMBDA_BATCH_JOB_RUN_TYPE,
 } from '@lib/cdk/constants'
-import { BatchJobRunnerFactory } from './batch-job-runner-factory'
+import { getBatchJobRunner } from './batch-job-runner-factory'
 import { lambdaConsumer } from '@/core/middlewares/lambda-consumer-middlewares'
 import { BatchJob } from '@/@types/batch-job'
 import { logger } from '@/core/logger'
@@ -59,12 +59,11 @@ export const jobDecisionHandler = async (
 
 export const jobRunnerHandler = initSentry()(async (job: BatchJob) => {
   logger.info(`Starting job - ${job.type}`, job)
-  const jobRunner = BatchJobRunnerFactory.getBatchJobRunner(job.type)
   return getContextStorage().run(getContext() || {}, async () => {
     await initializeTenantContext(job.tenantId)
     updateLogMetadata({
       type: job.type,
     })
-    return jobRunner.execute(job)
+    return getBatchJobRunner(job.type).execute(job)
   })
 })

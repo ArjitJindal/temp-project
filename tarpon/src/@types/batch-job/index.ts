@@ -5,33 +5,31 @@ import { RuleInstance } from '../openapi-internal/RuleInstance'
 import { ImportRequest } from '@/@types/openapi-internal/ImportRequest'
 import { AggregatorName } from '@/services/rules-engine/aggregator'
 import { TenantBasic } from '@/services/accounts'
+import { TimeRange } from '@/lambdas/console-api-dashboard/repositories/dashboard-stats-repository'
 
 /* File Import */
-type FileImportBatchJobType = 'FILE_IMPORT'
 type FileImportBatchJobParameters = {
   tenantName: string
   importRequest: ImportRequest
 }
 export type FileImportBatchJob = {
-  type: FileImportBatchJobType
+  type: 'FILE_IMPORT'
   tenantId: string
   parameters: FileImportBatchJobParameters
   awsCredentials?: Credentials
 }
 
 /* Simulation (Pulse) */
-type SimulationPulseBatchJobType = 'SIMULATION_PULSE'
 export type SimulationPulseBatchJob = {
-  type: SimulationPulseBatchJobType
+  type: 'SIMULATION_PULSE'
   tenantId: string
   parameters: SimulationPulseParameters & { taskId: string; jobId: string }
   awsCredentials?: Credentials
 }
 
 /* Simulation (Beacon) */
-type SimulationBeaconBatchJobType = 'SIMULATION_BEACON'
 export type SimulationBeaconBatchJob = {
-  type: SimulationBeaconBatchJobType
+  type: 'SIMULATION_BEACON'
   tenantId: string
   parameters: SimulationBeaconParameters & {
     taskId: string
@@ -42,40 +40,29 @@ export type SimulationBeaconBatchJob = {
 }
 
 /* Demo Mode Data Load */
-type DemoModeDataLoadBatchJobType = 'DEMO_MODE_DATA_LOAD'
 export type DemoModeDataLoadBatchJob = {
-  type: DemoModeDataLoadBatchJobType
+  type: 'DEMO_MODE_DATA_LOAD'
   tenantId: string
   awsCredentials?: Credentials
 }
 
-/* Placeholder */
-type PlaceholderBatchJobType = 'PLACEHOLDER'
-export type PlaceholderBatchJob = {
-  type: PlaceholderBatchJobType
-  tenantId: string
-}
-
 /* Sanctions Screening Rule */
-type OngoingScreeningUserRuleBatchJobType = 'ONGOING_SCREENING_USER_RULE'
 export type OngoingScreeningUserRuleBatchJob = {
-  type: OngoingScreeningUserRuleBatchJobType
+  type: 'ONGOING_SCREENING_USER_RULE'
   tenantId: string
   userIds: string[]
 }
 
 /* Pulse Backfill */
-type PulseDataLoadBatchJobType = 'PULSE_USERS_BACKFILL_RISK_SCORE'
 export type PulseDataLoadBatchJob = {
-  type: PulseDataLoadBatchJobType
+  type: 'PULSE_USERS_BACKFILL_RISK_SCORE'
   tenantId: string
   awsCredentials?: Credentials
 }
 
 /* Api Usage Metrics */
-type ApiUsageMetricsBatchJobType = 'API_USAGE_METRICS'
 export type ApiUsageMetricsBatchJob = {
-  type: ApiUsageMetricsBatchJobType
+  type: 'API_USAGE_METRICS'
   tenantId: string
   targetMonth: string
   tenantInfos: TenantBasic[]
@@ -83,36 +70,39 @@ export type ApiUsageMetricsBatchJob = {
 }
 
 /* Global rule aggregation */
-type GlobalRuleAggregationRebuildBatchJobType =
-  'GLOBAL_RULE_AGGREGATION_REBUILD'
 type GlobalRuleAggregationRebuildBatchJobParameters = {
   userId: string
   aggregatorName: AggregatorName
 }
 export type GlobalRuleAggregationRebuildBatchJob = {
-  type: GlobalRuleAggregationRebuildBatchJobType
+  type: 'GLOBAL_RULE_AGGREGATION_REBUILD'
   tenantId: string
   parameters: GlobalRuleAggregationRebuildBatchJobParameters
 }
 
-export type BatchJobType =
-  | FileImportBatchJobType
-  | SimulationPulseBatchJobType
-  | PlaceholderBatchJobType
-  | DemoModeDataLoadBatchJobType
-  | SimulationBeaconBatchJobType
-  | OngoingScreeningUserRuleBatchJobType
-  | PulseDataLoadBatchJobType
-  | ApiUsageMetricsBatchJobType
-  | GlobalRuleAggregationRebuildBatchJobType
+/* Dashboard refresh */
+type DashboardRefreshBatchJobParameters = {
+  transactions?: TimeRange
+  cases?: TimeRange
+  users?: boolean
+}
+export type DashboardRefreshBatchJob = {
+  type: 'DASHBOARD_REFRESH'
+  tenantId: string
+  parameters: DashboardRefreshBatchJobParameters
+}
 
 export type BatchJob =
   | FileImportBatchJob
   | SimulationPulseBatchJob
-  | PlaceholderBatchJob
   | DemoModeDataLoadBatchJob
   | SimulationBeaconBatchJob
   | OngoingScreeningUserRuleBatchJob
   | PulseDataLoadBatchJob
   | ApiUsageMetricsBatchJob
   | GlobalRuleAggregationRebuildBatchJob
+  | DashboardRefreshBatchJob
+
+export type BatchJobType = BatchJob['type']
+// Enforce they all have tenantId
+export type _ = BatchJob['tenantId']

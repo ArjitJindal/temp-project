@@ -12,7 +12,6 @@ import { TenantRepository } from '@/services/tenants/repositories/tenant-reposit
 import { getDynamoDbClient } from '@/utils/dynamodb'
 import { sendBatchJobCommand } from '@/services/batch-job'
 import { getCredentialsFromEvent } from '@/utils/credentials'
-import { DemoModeDataLoadBatchJob } from '@/@types/batch-job'
 import { getFullTenantId } from '@/lambdas/jwt-authorizer/app'
 import { createNewApiKeyForTenant } from '@/services/api-key'
 
@@ -40,12 +39,11 @@ export const apiKeyGeneratorHandler = lambdaApi()(
       await tenantRepository.createOrUpdateTenantSettings({
         features: ['DEMO_MODE'],
       })
-      const batchJob: DemoModeDataLoadBatchJob = {
+      await sendBatchJobCommand({
         type: 'DEMO_MODE_DATA_LOAD',
         tenantId: fullTenantId,
         awsCredentials: getCredentialsFromEvent(event),
-      }
-      await sendBatchJobCommand(fullTenantId, batchJob)
+      })
     }
     return createNewApiKeyForTenant(fullTenantId, usagePlanId)
   }

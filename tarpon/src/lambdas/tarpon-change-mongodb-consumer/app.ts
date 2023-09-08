@@ -1,7 +1,7 @@
 import path from 'path'
 import { KinesisStreamEvent, SQSEvent } from 'aws-lambda'
 import { SQS, SendMessageCommand } from '@aws-sdk/client-sqs'
-import { flatten, pick } from 'lodash'
+import { flatten, min, pick } from 'lodash'
 import { CaseCreationService } from '../console-api-case/services/case-creation-service'
 import { CasesAlertsAuditLogService } from '../console-api-case/services/case-alerts-audit-log-service'
 import { getMongoDbClient } from '@/utils/mongodb-utils'
@@ -10,7 +10,6 @@ import {
   TRANSACTION_EVENTS_COLLECTION,
 } from '@/utils/mongodb-definitions'
 import { TransactionWithRulesResult } from '@/@types/openapi-public/TransactionWithRulesResult'
-import { DashboardStatsRepository } from '@/lambdas/console-api-dashboard/repositories/dashboard-stats-repository'
 import { lambdaConsumer } from '@/core/middlewares/lambda-consumer-middlewares'
 import { MongoDbTransactionRepository } from '@/services/rules-engine/repositories/mongodb-transaction-repository'
 import { NewCaseAlertPayload } from '@/@types/alert/alert-payload'
@@ -38,6 +37,7 @@ import { InternalConsumerUserEvent } from '@/@types/openapi-internal/InternalCon
 import { InternalBusinessUserEvent } from '@/@types/openapi-internal/InternalBusinessUserEvent'
 import { InternalTransactionEvent } from '@/@types/openapi-internal/InternalTransactionEvent'
 import { INTERNAL_ONNLY_USER_ATTRIBUTES } from '@/services/users/utils/user-utils'
+import { sendBatchJobCommand } from '@/services/batch-job'
 
 const sqs = new SQS({
   region: process.env.AWS_REGION,
@@ -49,18 +49,16 @@ async function handleNewCases(
   cases: Case[]
 ) {
   const mongoDb = await getMongoDbClient()
-  const dashboardStatsRepository = new DashboardStatsRepository(tenantId, {
-    mongoDb,
-  })
 
-  // Update dashboard stats
-  await Promise.all(
-    cases.map((c) =>
-      dashboardStatsRepository.refreshCaseStats({
-        startTimestamp: c.createdTimestamp,
-      })
-    )
-  )
+  await sendBatchJobCommand({
+    type: 'DASHBOARD_REFRESH',
+    tenantId,
+    parameters: {
+      cases: {
+        startTimestamp: min(cases.map((c) => c.createdTimestamp)),
+      },
+    },
+  })
   const tenantRepository = new TenantRepository(tenantId, {
     mongoDb: await getMongoDbClient(),
   })
@@ -157,9 +155,6 @@ async function transactionHandler(
     mongoDb,
     dynamoDb,
   })
-  const dashboardStatsRepository = new DashboardStatsRepository(tenantId, {
-    mongoDb,
-  })
   const ruleInstancesRepo = new RuleInstanceRepository(tenantId, {
     dynamoDb,
   })
@@ -205,8 +200,14 @@ async function transactionHandler(
     logger.info(`DRS Updated in Cases`)
   }
 
-  await dashboardStatsRepository.refreshTransactionStats({
-    startTimestamp: transaction.timestamp,
+  await sendBatchJobCommand({
+    type: 'DASHBOARD_REFRESH',
+    tenantId,
+    parameters: {
+      transactions: {
+        startTimestamp: transaction.timestamp,
+      },
+    },
   })
   await handleNewCases(tenantId, timestampBeforeCasesCreation, cases)
 
@@ -230,9 +231,6 @@ async function userHandler(
   const casesRepo = new CaseRepository(tenantId, {
     mongoDb,
     dynamoDb,
-  })
-  const dashboardStatsRepository = new DashboardStatsRepository(tenantId, {
-    mongoDb,
   })
   const ruleInstancesRepo = new RuleInstanceRepository(tenantId, {
     dynamoDb,
@@ -288,8 +286,13 @@ async function userHandler(
 
   if (await tenantHasFeature(tenantId, 'PULSE')) {
     logger.info(`Refreshing DRS User distribution stats`)
-    await dashboardStatsRepository.refreshUserStats()
-    logger.info(`Refreshing DRS User distribution stats - completed`)
+    await sendBatchJobCommand({
+      type: 'DASHBOARD_REFRESH',
+      tenantId,
+      parameters: {
+        users: true,
+      },
+    })
   }
   const timestampBeforeCasesCreation = Date.now()
   const cases = await caseCreationService.handleUser(savedUser)

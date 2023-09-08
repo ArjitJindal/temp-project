@@ -8,7 +8,6 @@ import { migrateEntities } from '../utils/mongodb'
 import { Tenant } from '@/services/accounts'
 import { getMongoDbClient } from '@/utils/mongodb-utils'
 import { USERS_COLLECTION } from '@/utils/mongodb-definitions'
-import { GlobalRuleAggregationRebuildBatchJob } from '@/@types/batch-job'
 import { sendBatchJobCommand } from '@/services/batch-job'
 import { InternalUser } from '@/@types/openapi-internal/InternalUser'
 
@@ -31,15 +30,14 @@ async function migrateTenant(tenant: Tenant) {
 
   await migrateEntities<InternalUser>(cursor, async (usersBatch) => {
     for (const user of usersBatch) {
-      const batchJob: GlobalRuleAggregationRebuildBatchJob = {
+      await sendBatchJobCommand({
         type: 'GLOBAL_RULE_AGGREGATION_REBUILD',
         tenantId: tenant.id,
         parameters: {
           userId: user.userId,
           aggregatorName: 'UserTransactionStatsTimeGroup',
         },
-      }
-      await sendBatchJobCommand(tenant.id, batchJob)
+      })
     }
     await updateMigrationLastCompletedTimestamp(
       migrationKey,

@@ -6,7 +6,7 @@ import {
 } from 'aws-lambda'
 import { Credentials } from '@aws-sdk/client-sts'
 import { S3 } from '@aws-sdk/client-s3'
-import { capitalize, isEqual, isEmpty, compact } from 'lodash'
+import { capitalize, isEqual, isEmpty, compact, min } from 'lodash'
 import { MongoClient } from 'mongodb'
 import pluralize from 'pluralize'
 import { CasesAlertsAuditLogService } from './case-alerts-audit-log-service'
@@ -21,7 +21,6 @@ import {
 } from '@/services/rules-engine/repositories/case-repository'
 import { CasesListResponse } from '@/@types/openapi-internal/CasesListResponse'
 import { CaseStatusChange } from '@/@types/openapi-internal/CaseStatusChange'
-import { DashboardStatsRepository } from '@/lambdas/console-api-dashboard/repositories/dashboard-stats-repository'
 import {
   ThinWebhookDeliveryTask,
   sendWebhookTasks,
@@ -59,6 +58,7 @@ import { MongoDbTransactionRepository } from '@/services/rules-engine/repositori
 import { CursorPaginationResponse } from '@/utils/pagination'
 import { CaseType } from '@/@types/openapi-internal/CaseType'
 import { ManualCasePatchRequest } from '@/@types/openapi-internal/ManualCasePatchRequest'
+import { sendBatchJobCommand } from '@/services/batch-job'
 
 export class CaseService extends CaseAlertsCommonService {
   caseRepository: CaseRepository
@@ -459,11 +459,6 @@ export class CaseService extends CaseAlertsCommonService {
       skipReview = false,
       account,
     } = options ?? {}
-    const dashboardStatsRepository = new DashboardStatsRepository(
-      this.caseRepository.tenantId,
-      { mongoDb: this.caseRepository.mongoDb }
-    )
-
     const statusChange = this.getStatusChange(updates, {
       cascadeAlertsUpdate,
     })
@@ -599,13 +594,15 @@ export class CaseService extends CaseAlertsCommonService {
       }
     })
 
-    await Promise.all(
-      cases.map((c) =>
-        dashboardStatsRepository.refreshCaseStats({
-          startTimestamp: c.createdTimestamp,
-        })
-      )
-    )
+    await sendBatchJobCommand({
+      type: 'DASHBOARD_REFRESH',
+      tenantId: this.tenantId,
+      parameters: {
+        cases: {
+          startTimestamp: min(cases.map((c) => c.createdTimestamp)),
+        },
+      },
+    })
 
     if (updates.caseStatus === 'CLOSED') {
       await this.sendCasesClosedWebhook(cases, updates)

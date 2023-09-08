@@ -4,7 +4,6 @@ import { IMPORT_COLLECTION } from '@/utils/mongodb-definitions'
 import { FileImport } from '@/@types/openapi-internal/FileImport'
 import { ImportRequest } from '@/@types/openapi-internal/ImportRequest'
 import { sendBatchJobCommand } from '@/services/batch-job'
-import { FileImportBatchJob } from '@/@types/batch-job'
 import { traceable } from '@/core/xray'
 
 @traceable
@@ -78,13 +77,14 @@ export class ImportRepository {
     tenantName: string,
     awsCredentials?: Credentials
   ) {
-    await sendBatchJobCommand(this.tenantId, {
+    await sendBatchJobCommand({
       type: 'FILE_IMPORT',
+      tenantId: this.tenantId,
       parameters: {
         tenantName,
         importRequest,
       },
       awsCredentials,
-    } as FileImportBatchJob)
+    })
   }
 }

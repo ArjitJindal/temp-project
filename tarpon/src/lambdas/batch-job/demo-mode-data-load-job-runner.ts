@@ -6,7 +6,7 @@ import { seedDynamo } from '@/core/seed/dynamodb'
 import { getDynamoDbClient } from '@/utils/dynamodb'
 
 export class DemoModeDataLoadJobRunner extends BatchJobRunner {
-  protected async run(job: DemoModeDataLoadBatchJob): Promise<any> {
+  protected async run(job: DemoModeDataLoadBatchJob): Promise<void> {
     // Create collections
     const { tenantId } = job
 

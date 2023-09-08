@@ -38,7 +38,7 @@ export class SimulationBeaconBatchJobRunner extends BatchJobRunner {
     }, TIMEOUT)
   }
 
-  protected async run(job: SimulationBeaconBatchJob): Promise<any> {
+  protected async run(job: SimulationBeaconBatchJob): Promise<void> {
     this.startTimer()
     const { tenantId, awsCredentials, parameters } = job
     const dynamoDb = await getDynamoDbClient(awsCredentials)

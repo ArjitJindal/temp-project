@@ -39,7 +39,7 @@ export async function getOngoingScreeningUserRuleInstances(
 }
 
 export class OngoingScreeningUserRuleBatchJobRunner extends BatchJobRunner {
-  protected async run(job: OngoingScreeningUserRuleBatchJob): Promise<any> {
+  protected async run(job: OngoingScreeningUserRuleBatchJob): Promise<void> {
     const { tenantId, userIds } = job
     const mongoDb = await getMongoDbClient()
     const dynamoDb = getDynamoDbClient()

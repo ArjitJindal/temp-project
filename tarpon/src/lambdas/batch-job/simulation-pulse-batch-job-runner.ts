@@ -32,7 +32,7 @@ export class SimulationPulseBatchJobRunner extends BatchJobRunner {
   transactionRepository?: MongoDbTransactionRepository
   riskScoringService?: RiskScoringService
 
-  protected async run(job: SimulationPulseBatchJob): Promise<any> {
+  protected async run(job: SimulationPulseBatchJob): Promise<void> {
     const { tenantId, parameters, awsCredentials } = job
     const dynamoDb = getDynamoDbClient(awsCredentials)
     const mongoDb = await getMongoDbClient()

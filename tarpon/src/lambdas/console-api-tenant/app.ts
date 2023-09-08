@@ -13,10 +13,6 @@ import { TenantSettings } from '@/@types/openapi-internal/TenantSettings'
 import { TenantRepository } from '@/services/tenants/repositories/tenant-repository'
 import { getMongoDbClient } from '@/utils/mongodb-utils'
 import { getFullTenantId } from '@/lambdas/jwt-authorizer/app'
-import {
-  DemoModeDataLoadBatchJob,
-  PulseDataLoadBatchJob,
-} from '@/@types/batch-job'
 import { getCredentialsFromEvent } from '@/utils/credentials'
 import { sendBatchJobCommand } from '@/services/batch-job'
 import { publishAuditLog } from '@/services/audit-log'
@@ -70,12 +66,11 @@ export const tenantsHandler = lambdaApi()(
       )
       if (envIsNot('prod')) {
         const fullTenantId = getFullTenantId(tenantId, true)
-        const batchJob: DemoModeDataLoadBatchJob = {
+        await sendBatchJobCommand({
           type: 'DEMO_MODE_DATA_LOAD',
           tenantId: fullTenantId,
           awsCredentials: getCredentialsFromEvent(event),
-        }
-        await sendBatchJobCommand(fullTenantId, batchJob)
+        })
       }
       return response
     })
@@ -109,12 +104,11 @@ export const tenantsHandler = lambdaApi()(
         !tenantSettingsCurrent.features?.includes('PULSE') &&
         newTenantSettings.features?.includes('PULSE')
       ) {
-        const batchJob: PulseDataLoadBatchJob = {
+        await sendBatchJobCommand({
           type: 'PULSE_USERS_BACKFILL_RISK_SCORE',
           tenantId: tenantId,
           awsCredentials: getCredentialsFromEvent(event),
-        }
-        await sendBatchJobCommand(tenantId, batchJob)
+        })
       }
       const auditLog: AuditLog = {
         type: 'ACCOUNT',
@@ -134,12 +128,11 @@ export const tenantsHandler = lambdaApi()(
         if (envIs('sandbox')) {
           fullTenantId = getFullTenantId(ctx.tenantId, true)
         }
-        const batchJob: DemoModeDataLoadBatchJob = {
+        await sendBatchJobCommand({
           type: 'DEMO_MODE_DATA_LOAD',
           tenantId: fullTenantId,
           awsCredentials: getCredentialsFromEvent(event),
-        }
-        await sendBatchJobCommand(fullTenantId, batchJob)
+        })
       }
       return
     })

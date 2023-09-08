@@ -8,7 +8,6 @@ import {
 } from './migration-progress'
 import { Case } from '@/@types/openapi-internal/Case'
 import { InternalTransaction } from '@/@types/openapi-internal/InternalTransaction'
-import { DashboardStatsRepository } from '@/lambdas/console-api-dashboard/repositories/dashboard-stats-repository'
 import { getDynamoDbClient } from '@/utils/dynamodb'
 import { getMongoDbClient, withTransaction } from '@/utils/mongodb-utils'
 import {
@@ -18,6 +17,7 @@ import {
 import { logger } from '@/core/logger'
 import { DynamoDbKeys } from '@/core/dynamodb/dynamodb-keys'
 import { RuleInstanceRepository } from '@/services/rules-engine/repositories/rule-instance-repository'
+import { sendBatchJobCommand } from '@/services/batch-job'
 
 export async function cleanupRuleHits(values: {
   ruleInstanceId: string
@@ -154,15 +154,16 @@ export async function cleanupRuleHits(values: {
   }
 
   await withTransaction(async () => {
-    const dashboardStatsRepository = new DashboardStatsRepository(tenantId, {
-      mongoDb,
+    await sendBatchJobCommand({
+      type: 'DASHBOARD_REFRESH',
+      tenantId,
+      parameters: {
+        cases: {
+          startTimestamp: impactTimestamps?.start,
+          endTimestamp: impactTimestamps?.end,
+        },
+      },
     })
-
-    await dashboardStatsRepository.refreshCaseStats({
-      startTimestamp: impactTimestamps?.start,
-      endTimestamp: impactTimestamps?.end,
-    })
-
     const ruleInstanceRepository = new RuleInstanceRepository(tenantId, {
       dynamoDb,
     })

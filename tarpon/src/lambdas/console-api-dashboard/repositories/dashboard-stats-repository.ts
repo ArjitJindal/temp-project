@@ -52,7 +52,7 @@ import { DashboardStatsClosingReasonDistributionStatsClosingReasonsData } from '
 import { hasFeature } from '@/core/utils/context'
 import { Report } from '@/@types/openapi-internal/Report'
 
-type TimeRange = {
+export type TimeRange = {
   startTimestamp?: number
   endTimestamp?: number
 }

@@ -1,5 +1,4 @@
 import { FileImportBatchJobRunner } from './file-import-batch-job-runner'
-import { PlaceholderBatchJobRunner } from './placeholder-batch-job-runner'
 import { BatchJobRunner } from './batch-job-runner-base'
 import { SimulationPulseBatchJobRunner } from './simulation-pulse-batch-job-runner'
 import { OngoingScreeningUserRuleBatchJobRunner } from './ongoing-screening-user-rule-batch-job-runner'
@@ -9,34 +8,22 @@ import { PulseDataLoadJobRunner } from './pulse-data-load-job-runner'
 import { ApiUsageMetricsBatchJobRunner } from './api-usage-metrics-batch-job-runner'
 import { GlobalRuleAggregationRebuildBatchJobRunner } from './global-rule-aggregation-rebuild-batch-job-runner'
 import { BatchJobType } from '@/@types/batch-job'
-import { logger } from '@/core/logger'
-import { neverReturn } from '@/utils/lang'
+import { DashboardRefreshBatchJobRunner } from '@/lambdas/batch-job/dashboard-refresh-batch-job-runner'
 
-export class BatchJobRunnerFactory {
-  public static getBatchJobRunner(type: BatchJobType): BatchJobRunner {
-    switch (type) {
-      case 'FILE_IMPORT':
-        return new FileImportBatchJobRunner()
-      case 'SIMULATION_PULSE':
-        return new SimulationPulseBatchJobRunner()
-      case 'SIMULATION_BEACON':
-        return new SimulationBeaconBatchJobRunner()
-      case 'DEMO_MODE_DATA_LOAD':
-        return new DemoModeDataLoadJobRunner()
-      case 'PLACEHOLDER':
-        return new PlaceholderBatchJobRunner()
-      case 'ONGOING_SCREENING_USER_RULE':
-        return new OngoingScreeningUserRuleBatchJobRunner()
-      case 'PULSE_USERS_BACKFILL_RISK_SCORE':
-        return new PulseDataLoadJobRunner()
-      case 'API_USAGE_METRICS':
-        return new ApiUsageMetricsBatchJobRunner()
-      case 'GLOBAL_RULE_AGGREGATION_REBUILD':
-        return new GlobalRuleAggregationRebuildBatchJobRunner()
-      default: {
-        logger.warn(`Unknown batch job type ${type}. Do nothing.`)
-        return neverReturn(type, new PlaceholderBatchJobRunner())
-      }
-    }
+type JobRunnerMap = Record<BatchJobType, BatchJobRunner>
+
+export function getBatchJobRunner(type: BatchJobType) {
+  const jobRunnerMap: JobRunnerMap = {
+    DASHBOARD_REFRESH: new DashboardRefreshBatchJobRunner(),
+    API_USAGE_METRICS: new ApiUsageMetricsBatchJobRunner(),
+    DEMO_MODE_DATA_LOAD: new DemoModeDataLoadJobRunner(),
+    FILE_IMPORT: new FileImportBatchJobRunner(),
+    GLOBAL_RULE_AGGREGATION_REBUILD:
+      new GlobalRuleAggregationRebuildBatchJobRunner(),
+    ONGOING_SCREENING_USER_RULE: new OngoingScreeningUserRuleBatchJobRunner(),
+    PULSE_USERS_BACKFILL_RISK_SCORE: new PulseDataLoadJobRunner(),
+    SIMULATION_BEACON: new SimulationBeaconBatchJobRunner(),
+    SIMULATION_PULSE: new SimulationPulseBatchJobRunner(),
   }
+  return jobRunnerMap[type]
 }

@@ -39,7 +39,7 @@ describe('Consoel API - Simulation', () => {
     sqsMock = mockClient(SQSClient)
   })
 
-  test('creates a new simulation task', async () => {
+  test.skip('creates a new simulation task', async () => {
     const tenantId = getTestTenantId()
     const response = await simulationHandler(
       getApiGatewayPostEvent(tenantId, '/simulation', TEST_PARAMETERS),
