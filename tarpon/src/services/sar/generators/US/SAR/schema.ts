@@ -2,7 +2,7 @@
  * Party types: Page 25 of https://bsaefiling.fincen.treas.gov/docs/XMLUserGuide_FinCENSAR.pdf
  */
 
-import { pick, merge, omit, isNumber, cloneDeep } from 'lodash'
+import { pick, merge, omit, isNumber, cloneDeep, has } from 'lodash'
 import { FincenJsonSchema } from './resources/EFL_SARXBatchSchema'
 import { AttributeInfos } from './scripts/attribute-infos'
 
@@ -61,11 +61,50 @@ function pickPartyFields(fields: string[]) {
   )
 }
 
-function arraySchema(type: unknown) {
-  return {
+function arraySchema(type: any) {
+  let schema: any = {
     type: 'array',
-    items: type,
   }
+  if (has(type, 'title')) {
+    schema = {
+      ...schema,
+      title: type.title,
+    }
+  }
+  if (has(type, 'description')) {
+    schema = {
+      ...schema,
+      description: type.description,
+    }
+  }
+  if (has(type, 'properties')) {
+    schema = {
+      ...schema,
+      items: {
+        ...schema.items,
+        properties: type.properties,
+      },
+    }
+  }
+  if (has(type, 'required')) {
+    schema = {
+      ...schema,
+      items: {
+        ...schema.items,
+        required: type.required,
+      },
+    }
+  }
+  if (has(type, 'type')) {
+    schema = {
+      ...schema,
+      items: {
+        ...schema.items,
+        type: type.type,
+      },
+    }
+  }
+  return schema
 }
 
 function pickPartyNameFields(
@@ -130,6 +169,7 @@ function pickPartyIdentificationFields(
       ...overrides,
     },
     required: requiredFields,
+    ...AttributeInfos.PartyIdentification,
   }
 }
 
