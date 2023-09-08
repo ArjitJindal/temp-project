@@ -647,6 +647,7 @@ export class AccountsService {
         tenantId,
         consoleApiUrl: `https://${regionPrefix}${auth0Audience}console`,
         apiAudience: process.env.AUTH0_AUDIENCE as unknown as string,
+        auth0Domain: tenantData.auth0Domain,
         region: process.env.REGION,
         isProductionAccessDisabled: 'false',
       },
