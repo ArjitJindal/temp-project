@@ -17,14 +17,14 @@ import { getTestUser, setUpUsersHooks } from '@/test-utils/user-test-utils'
 import { getDynamoDbClient } from '@/utils/dynamodb'
 import { getMongoDbClient } from '@/utils/mongodb-utils'
 import { TransactionEventRepository } from '@/services/rules-engine/repositories/transaction-event-repository'
-import { enableLocalChangeHandler } from '@/utils/local-dynamodb-change-handler'
+import { withLocalChangeHandler } from '@/utils/local-dynamodb-change-handler'
 
 const RULE_INSTANCE_ID_MATCHER = expect.stringMatching(/^([a-z0-9]){8}$/)
 
 const dynamoDb = getDynamoDbClient()
 
 dynamoDbSetupHook()
-
+withLocalChangeHandler()
 describe('Verify Transaction', () => {
   test('Verify Transaction: returns empty executed rules if no rules are configured', async () => {
     const rulesEngine = new RulesEngineService(getTestTenantId(), dynamoDb)
@@ -520,7 +520,6 @@ describe('Verify Transaction for Simulation', () => {
   })
 
   test('Applies manual action to transaction', async () => {
-    enableLocalChangeHandler()
     const rulesEngine = new RulesEngineService(TEST_TENANT_ID, dynamoDb)
     const transaction = getTestTransaction({ status: 'SUSPEND' })
     transaction.transactionId = ''

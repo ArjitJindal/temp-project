@@ -5,10 +5,7 @@ import { getTestTenantId } from '@/test-utils/tenant-test-utils'
 import { getTestTransaction } from '@/test-utils/transaction-test-utils'
 import dayjs from '@/utils/dayjs'
 import { getDynamoDbClient } from '@/utils/dynamodb'
-import {
-  disableLocalChangeHandler,
-  enableLocalChangeHandler,
-} from '@/utils/local-dynamodb-change-handler'
+import { withLocalChangeHandler } from '@/utils/local-dynamodb-change-handler'
 
 function toMap(obj: object) {
   return new Map(Object.entries(obj))
@@ -17,12 +14,7 @@ function toMap(obj: object) {
 dynamoDbSetupHook()
 
 describe('UserTransactionStatsTimeGroup aggregator', () => {
-  beforeAll(() => {
-    enableLocalChangeHandler()
-  })
-  afterAll(() => {
-    disableLocalChangeHandler()
-  })
+  withLocalChangeHandler()
 
   test('Should rebuild the aggregation data for the user for the current year', async () => {
     const tenantId = getTestTenantId()

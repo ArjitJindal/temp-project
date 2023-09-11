@@ -18,10 +18,7 @@ import { SimulationBeaconBatchJob } from '@/@types/batch-job'
 import { RuleInstance } from '@/@types/openapi-internal/RuleInstance'
 import { SimulationBeaconParameters } from '@/@types/openapi-internal/SimulationBeaconParameters'
 import { TransactionAmountRuleParameters } from '@/services/rules-engine/transaction-rules/transaction-amount'
-import {
-  disableLocalChangeHandler,
-  enableLocalChangeHandler,
-} from '@/utils/local-dynamodb-change-handler'
+import { withLocalChangeHandler } from '@/utils/local-dynamodb-change-handler'
 
 dynamoDbSetupHook()
 
@@ -88,12 +85,7 @@ const getTransaction = (
 const tenantId = getTestTenantId()
 
 describe('Simulation Beacon Batch Job Runner', () => {
-  beforeAll(() => {
-    enableLocalChangeHandler()
-  })
-  afterAll(() => {
-    disableLocalChangeHandler()
-  })
+  withLocalChangeHandler()
 
   setUpRulesHooks(tenantId, [
     {

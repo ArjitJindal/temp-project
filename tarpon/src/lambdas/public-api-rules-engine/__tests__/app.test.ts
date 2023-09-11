@@ -1,3 +1,4 @@
+import { v4 as uuidv4 } from 'uuid'
 import {
   transactionEventHandler,
   transactionHandler,
@@ -38,27 +39,22 @@ import { UserEventRepository } from '@/services/rules-engine/repositories/user-e
 import { ConsumerUserEvent } from '@/@types/openapi-internal/ConsumerUserEvent'
 import { BusinessUserEvent } from '@/@types/openapi-internal/BusinessUserEvent'
 import { TransactionEventRepository } from '@/services/rules-engine/repositories/transaction-event-repository'
-import {
-  disableLocalChangeHandler,
-  enableLocalChangeHandler,
-} from '@/utils/local-dynamodb-change-handler'
+import { withLocalChangeHandler } from '@/utils/local-dynamodb-change-handler'
 import { pickKnownEntityFields } from '@/utils/object'
 import { User } from '@/@types/openapi-public/User'
 import { InternalUser } from '@/@types/openapi-internal/InternalUser'
+import { RulesEngineService } from '@/services/rules-engine'
+import { MongoDbTransactionRepository } from '@/services/rules-engine/repositories/mongodb-transaction-repository'
 
 const features: Feature[] = ['PULSE']
 
 withFeatureHook(features)
 dynamoDbSetupHook()
+withLocalChangeHandler()
 
 describe('Public API - Verify a transaction', () => {
   const TEST_TENANT_ID = getTestTenantId()
-  beforeAll(() => {
-    enableLocalChangeHandler()
-  })
-  afterAll(() => {
-    disableLocalChangeHandler()
-  })
+
   setUpUsersHooks(TEST_TENANT_ID, [
     getTestUser({ userId: '1' }),
     getTestUser({ userId: '2' }),
@@ -391,12 +387,6 @@ describe('Public API - Create a Transaction Event', () => {
 })
 
 describe('Public API - Create a Consumer User Event', () => {
-  beforeAll(() => {
-    enableLocalChangeHandler()
-  })
-  afterAll(() => {
-    disableLocalChangeHandler()
-  })
   const TEST_TENANT_ID = getTestTenantId()
 
   test('throws if user not found', async () => {
@@ -575,12 +565,7 @@ describe('Public API - Create a Consumer User Event', () => {
 
 describe('Public API - Create a Business User Event', () => {
   const TEST_TENANT_ID = getTestTenantId()
-  beforeAll(() => {
-    enableLocalChangeHandler()
-  })
-  afterAll(() => {
-    disableLocalChangeHandler()
-  })
+
   test('throws if user not found', async () => {
     const userEvent = getTestBusinessEvent({ userId: 'foo' })
     const response = await userEventsHandler(
@@ -768,12 +753,6 @@ describe('Public API - Create a Business User Event', () => {
 })
 
 describe('Risk Scoring Tests', () => {
-  beforeAll(() => {
-    enableLocalChangeHandler()
-  })
-  afterAll(() => {
-    disableLocalChangeHandler()
-  })
   const TEST_TENANT_ID = getTestTenantId()
   const dynamoDb = getDynamoDbClient()
 
@@ -876,5 +855,208 @@ describe('Risk Scoring Tests', () => {
         userId: testUser1.userId,
       })
     )
+  })
+})
+
+describe('Public API - Verify Transction and Transaction Event', () => {
+  const tenantId = getTestTenantId()
+  const userId1 = uuidv4()
+  const userId2 = uuidv4()
+
+  setUpUsersHooks(tenantId, [
+    getTestUser({ userId: userId1 }),
+    getTestUser({ userId: userId2 }),
+  ])
+
+  it('should match transaction and transaction event', async () => {
+    const transaction = getTestTransaction({
+      originUserId: userId1,
+      destinationUserId: userId2,
+    })
+
+    const dynamoDb = getDynamoDbClient()
+    const mongoDb = await getMongoDbClient()
+    const rulesEngine = new RulesEngineService(tenantId, dynamoDb, mongoDb)
+
+    await rulesEngine.verifyTransaction(transaction)
+
+    const dynamoDbTransactionRepository = new DynamoDbTransactionRepository(
+      tenantId,
+      dynamoDb
+    )
+
+    const transactionResult =
+      await dynamoDbTransactionRepository.getTransactionById(
+        transaction.transactionId
+      )
+
+    expect(transactionResult).toEqual({
+      ...transaction,
+      executedRules: [],
+      hitRules: [],
+      status: 'ALLOW',
+    })
+
+    const mongoDbTransactionRepository = new MongoDbTransactionRepository(
+      tenantId,
+      mongoDb
+    )
+
+    const mongoTransactionResult =
+      await mongoDbTransactionRepository.getTransactionById(
+        transaction.transactionId
+      )
+
+    expect(mongoTransactionResult).toMatchObject({
+      ...transaction,
+      executedRules: [],
+      hitRules: [],
+      status: 'ALLOW',
+    })
+
+    const transactionEvent = getTestTransactionEvent({
+      transactionId: transaction.transactionId,
+      transactionState: 'REFUNDED',
+      eventDescription: 'Refunded',
+      timestamp: Date.now(),
+      updatedTransactionAttributes: {
+        productType: 'test',
+        originPaymentDetails: {
+          method: 'ACH',
+        },
+        destinationAmountDetails: {
+          transactionAmount: 1000000,
+          transactionCurrency: 'INR',
+        },
+      },
+    })
+
+    await rulesEngine.verifyTransactionEvent(transactionEvent)
+
+    const transactionEventRepository = new TransactionEventRepository(
+      tenantId,
+      { dynamoDb, mongoDb }
+    )
+
+    const transactionEvents =
+      await transactionEventRepository.getTransactionEvents(
+        transaction.transactionId
+      )
+
+    expect(transactionEvents).toMatchObject([
+      {
+        updatedTransactionAttributes: {
+          destinationAmountDetails: {
+            country: 'IN',
+            transactionCurrency: 'INR',
+            transactionAmount: 68351.34,
+          },
+          originUserId: userId1,
+          originAmountDetails: {
+            country: 'DE',
+            transactionCurrency: 'EUR',
+            transactionAmount: 800,
+          },
+          destinationPaymentDetails: {
+            cardIssuedCountry: 'IN',
+            '3dsDone': true,
+            method: 'CARD',
+            transactionReferenceField: 'DEPOSIT',
+          },
+          transactionState: 'SUCCESSFUL',
+          transactionId: transaction.transactionId,
+          destinationUserId: userId2,
+          originPaymentDetails: {
+            cardIssuedCountry: 'US',
+            '3dsDone': true,
+            method: 'CARD',
+            transactionReferenceField: 'DEPOSIT',
+          },
+          promotionCodeUsed: true,
+          timestamp: expect.any(Number),
+        },
+        hitRules: [],
+        executedRules: [],
+        transactionState: 'SUCCESSFUL',
+        transactionId: transaction.transactionId,
+        timestamp: expect.any(Number),
+      },
+      {
+        updatedTransactionAttributes: {
+          destinationAmountDetails: {
+            transactionCurrency: 'INR',
+            transactionAmount: 1000000,
+          },
+          productType: 'test',
+          originPaymentDetails: {
+            method: 'ACH',
+          },
+        },
+        hitRules: [],
+        executedRules: [],
+        eventDescription: 'Refunded',
+        transactionState: 'REFUNDED',
+        transactionId: transaction.transactionId,
+        timestamp: expect.any(Number),
+      },
+    ])
+
+    const mongoTransactionAfterEvent =
+      await mongoDbTransactionRepository.getTransactionById(
+        transaction.transactionId
+      )
+
+    const toMatchObject = {
+      originAmountDetails: {
+        country: 'DE',
+        transactionCurrency: 'EUR',
+        transactionAmount: 800,
+      },
+      destinationPaymentDetails: {
+        cardIssuedCountry: 'IN',
+        cardFingerprint: expect.any(String),
+        '3dsDone': true,
+        method: 'CARD',
+        transactionReferenceField: 'DEPOSIT',
+      },
+      transactionId: transaction.transactionId,
+      destinationAmountDetails: {
+        country: 'IN',
+        transactionCurrency: 'INR',
+        transactionAmount: 1000000,
+      },
+      hitRules: [],
+      originUserId: userId1,
+      executedRules: [],
+      transactionState: 'REFUNDED',
+      destinationUserId: userId2,
+      originPaymentDetails: {
+        cardIssuedCountry: 'US',
+        cardFingerprint: expect.any(String),
+        '3dsDone': true,
+        method: 'ACH',
+        transactionReferenceField: 'DEPOSIT',
+      },
+      productType: 'test',
+      promotionCodeUsed: true,
+      timestamp: expect.any(Number),
+      status: 'ALLOW',
+      originPaymentMethodId: null,
+      destinationPaymentMethodId: expect.any(String),
+      createdAt: expect.any(Number),
+    }
+
+    expect(mongoTransactionAfterEvent).toMatchObject(toMatchObject)
+
+    const dynamoDbTransactionAfterEvent =
+      await dynamoDbTransactionRepository.getTransactionById(
+        transaction.transactionId
+      )
+
+    delete toMatchObject.createdAt
+    delete toMatchObject.destinationPaymentMethodId
+    delete (toMatchObject as any).originPaymentMethodId
+
+    expect(dynamoDbTransactionAfterEvent).toMatchObject(toMatchObject)
   })
 })

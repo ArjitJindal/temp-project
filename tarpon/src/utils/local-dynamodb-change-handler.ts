@@ -20,6 +20,16 @@ export function enableLocalChangeHandler() {
   localChangeHandlerDisabled = false
 }
 
+export function withLocalChangeHandler() {
+  beforeAll(() => {
+    enableLocalChangeHandler()
+  })
+
+  afterAll(() => {
+    disableLocalChangeHandler()
+  })
+}
+
 export function runLocalChangeHandler(): boolean {
   if (localChangeHandlerDisabled) {
     return false
