@@ -59,32 +59,6 @@ export const WebhookDetails: React.FC<Props> = ({
 
   return (
     <>
-      <Row justify="end" style={{ paddingBottom: 10 }}>
-        <Space>
-          <a href={branding.apiDocsLinks.webhooks} target="_blank">
-            Learn more about webhooks
-          </a>
-          <Button
-            type="PRIMARY"
-            size="SMALL"
-            onClick={() => handleSaveWebhook({ ...webhook, webhookUrl, events })}
-            isDisabled={!canSave}
-          >
-            Save
-          </Button>
-          {webhook._id && (
-            <Button
-              analyticsName="Delete"
-              icon={<DeleteOutlined />}
-              onClick={() => handleDeleteWebhook(webhook)}
-              size="SMALL"
-              type="TETRIARY"
-            >
-              Delete
-            </Button>
-          )}
-        </Space>
-      </Row>
       <ProDescriptions column={1}>
         <ProDescriptions.Item label="Endpoint URL" valueType="text">
           <Input
@@ -125,6 +99,32 @@ export const WebhookDetails: React.FC<Props> = ({
           <WebhookDeliveryAttemptsTable webhookId={webhook._id} />
         </>
       )}
+      <Row justify="end" style={{ paddingBottom: 10 }}>
+        <Space>
+          <a href={branding.apiDocsLinks.webhooks} target="_blank">
+            Learn more about webhooks
+          </a>
+          <Button
+            type="PRIMARY"
+            size="SMALL"
+            onClick={() => handleSaveWebhook({ ...webhook, webhookUrl, events })}
+            isDisabled={!canSave}
+          >
+            Save
+          </Button>
+          {webhook._id && (
+            <Button
+              analyticsName="Delete"
+              icon={<DeleteOutlined />}
+              onClick={() => handleDeleteWebhook(webhook)}
+              size="SMALL"
+              type="TETRIARY"
+            >
+              Delete
+            </Button>
+          )}
+        </Space>
+      </Row>
     </>
   );
 };

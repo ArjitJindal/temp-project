@@ -15,10 +15,9 @@ import { QueryResult } from '@/utils/queries/types';
 import { getOr, isLoading } from '@/utils/asyncResource';
 import { TRANSACTIONS_UNIQUES } from '@/utils/queries/keys';
 import { neverThrow } from '@/utils/lang';
+import { InputProps } from '@/components/library/Form';
 
-interface Props {
-  value?: string[];
-  onChange?: (newValue: string[]) => void;
+interface Props extends InputProps<string[]> {
   onChangeMeta?: (meta: Metadata) => void;
   listSubtype: ListSubtype;
 }

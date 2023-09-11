@@ -1,5 +1,5 @@
 import { InboxOutlined, LoadingOutlined, UploadOutlined } from '@ant-design/icons';
-import { Alert, Divider, Modal, Select } from 'antd';
+import { Alert, Divider, Select } from 'antd';
 import { useCallback, useState } from 'react';
 import Dragger from 'antd/es/upload/Dragger';
 import filesize from 'filesize';
@@ -11,6 +11,8 @@ import { useApi } from '@/api';
 import { sleep } from '@/utils/time-utils';
 import { useAuth0User } from '@/utils/user-utils';
 import { uploadFile } from '@/utils/file-uploader';
+import Modal from '@/components/library/Modal';
+import { humanizeConstant } from '@/utils/humanize';
 
 const EXAMPLE_FILE_URL: Record<ImportRequestTypeEnum, string> = {
   TRANSACTION:
@@ -101,11 +103,11 @@ export const FileImportButton: React.FC<FileImportButtonProps> = ({ type, button
         {buttonText || 'Import'}
       </Button>
       <Modal
-        title={`Import ${type}`}
-        visible={isModalVisible}
+        title={`Import ${humanizeConstant(type)}`}
+        isOpen={isModalVisible}
         okText="Import"
         onCancel={handleClose}
-        okButtonProps={{ disabled: !file, loading, danger: true }}
+        okProps={{ isDisabled: !file, isLoading: loading, isDanger: true }}
         onOk={handleImport}
       >
         <Select<ImportRequestFormatEnum> value={format} onChange={setFormat}>

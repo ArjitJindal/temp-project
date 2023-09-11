@@ -8,11 +8,13 @@ import {
   FormValidationResult,
   validateForm,
 } from '@/components/library/Form/utils/validation/utils';
+
 export interface FormRef<FormValues> {
   getValues: () => FormValues;
   setValues: (formValues: FormValues) => void;
   validate: (externalFormValues?: FormValues) => boolean;
   submit: () => void;
+  resetFields: () => void;
 }
 
 interface ChildrenProps<FormValues> {
@@ -68,6 +70,10 @@ function Form<FormValues>(props: Props<FormValues>, ref: React.Ref<FormRef<FormV
       },
       submit: () => {
         handleSubmit();
+      },
+      resetFields: () => {
+        setFormValues(initialValues);
+        setFieldsMeta({});
       },
     }),
   );

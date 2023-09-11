@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
-import Component from './index';
+import Component, { ToggleSize } from './index';
 import { UseCase } from '@/pages/storybook/components';
+import PropertyMatrix from '@/pages/storybook/components/PropertyMatrix';
 
 export default function (): JSX.Element {
   const onChecked = () => {};
@@ -50,17 +51,22 @@ export default function (): JSX.Element {
         </div>
       </UseCase>
 
-      <UseCase title={'Large size'}>
-        <div>
-          <div style={{ display: 'block' }}>
+      <UseCase title={'Sizes and colors'}>
+        <PropertyMatrix<ToggleSize, boolean>
+          x={['SMALL', 'DEFAULT', 'LARGE']}
+          y={[true, false]}
+          xLabel={'size'}
+          yLabel={'showOnOffLabel'}
+        >
+          {(x, y) => (
             <Component
-              large
-              showOnOffLabel
+              size={x}
+              showOnOffLabel={y}
               value={largeState}
               onChange={() => setLargeState(!largeState)}
             />
-          </div>
-        </div>
+          )}
+        </PropertyMatrix>
       </UseCase>
       <UseCase title={'Greens'}>
         <div

@@ -1,4 +1,4 @@
-import { Drawer, Switch, Tag, Space } from 'antd';
+import { Space, Switch, Tag } from 'antd';
 import { useCallback, useRef, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { PlusOutlined } from '@ant-design/icons';
@@ -14,6 +14,7 @@ import { usePaginatedQuery } from '@/utils/queries/hooks';
 import QueryResultsTable from '@/components/common/QueryResultsTable';
 import { ColumnHelper } from '@/components/library/Table/columnHelper';
 import { message } from '@/components/library/Message';
+import Drawer from '@/components/library/Drawer';
 
 export const WebhookSettings: React.FC = () => {
   const api = useApi();
@@ -169,12 +170,12 @@ export const WebhookSettings: React.FC = () => {
         ]}
       />
       <Drawer
-        width={960}
-        visible={Boolean(selectedWebhook)}
-        onClose={() => {
+        title="Add endpoint"
+        drawerMaxWidth="960px"
+        isVisible={Boolean(selectedWebhook)}
+        onChangeVisibility={() => {
           setSelectedWebhook(undefined);
         }}
-        closable={false}
       >
         {selectedWebhook && (
           <WebhookDetails

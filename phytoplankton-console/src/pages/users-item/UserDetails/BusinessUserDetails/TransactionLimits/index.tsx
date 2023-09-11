@@ -1,4 +1,4 @@
-import { Drawer, Row, Select, Space, Typography } from 'antd';
+import { Row, Select, Space, Typography } from 'antd';
 import { DeleteOutlined, EditOutlined, PlusOutlined } from '@ant-design/icons';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import ProDescriptions from '@ant-design/pro-descriptions';
@@ -31,6 +31,7 @@ import { useHasPermissions } from '@/utils/user-utils';
 import { ColumnHelper } from '@/components/library/Table/columnHelper';
 import { PAYMENT_METHOD } from '@/components/library/Table/standardDataTypes';
 import NumberInput from '@/components/library/NumberInput';
+import Drawer from '@/components/library/Drawer';
 
 const timeFrames = ['day', 'week', 'month', 'year'];
 
@@ -144,16 +145,14 @@ const PaymentMethodLimitsEditor: React.FC<PaymentMethodLimitsEditorProps> = ({
 
   return (
     <Drawer
-      title={<b>Expected transaction limits</b>}
-      width={500}
-      visible={editMode !== 'NONE'}
-      onClose={onClose}
-      extra={
-        <Space>
-          <Button type="PRIMARY" isDisabled={!paymentMethod} onClick={handleSave}>
-            {editMode === 'EDIT' ? 'Save limit' : 'Add limit'}
-          </Button>
-        </Space>
+      title={'Expected transaction limits'}
+      drawerMaxWidth="500px"
+      isVisible={editMode !== 'NONE'}
+      onChangeVisibility={onClose}
+      footer={
+        <Button type="PRIMARY" isDisabled={!paymentMethod} onClick={handleSave}>
+          {editMode === 'EDIT' ? 'Save limit' : 'Add limit'}
+        </Button>
       }
     >
       {editMode !== 'NONE' ? (

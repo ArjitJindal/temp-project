@@ -1,6 +1,6 @@
-import { useRef, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { nanoid } from 'nanoid';
-import { Drawer, Form, FormInstance, Input, Select, Switch } from 'antd';
+import { Select } from 'antd';
 import { useMutation } from '@tanstack/react-query';
 import s from './index.module.less';
 import NewValueInput from './NewValueInput';
@@ -8,8 +8,16 @@ import { useApi } from '@/api';
 import { getErrorMessage } from '@/utils/lang';
 import { ListSubtype, ListType } from '@/apis';
 import Button from '@/components/library/Button';
-import { getListSubtypeTitle, BLACKLIST_SUBTYPES, WHITELIST_SUBTYPES } from '@/pages/lists/helpers';
+import { BLACKLIST_SUBTYPES, getListSubtypeTitle, WHITELIST_SUBTYPES } from '@/pages/lists/helpers';
 import { message } from '@/components/library/Message';
+import Drawer from '@/components/library/Drawer';
+import Form, { FormRef } from '@/components/library/Form';
+import InputField from '@/components/library/Form/InputField';
+import TextInput from '@/components/library/TextInput';
+import TextArea from '@/components/library/TextArea';
+import Toggle from '@/components/library/Toggle';
+import { UseFormState } from '@/components/library/Form/utils';
+import { notEmpty } from '@/components/library/Form/utils/validation/basicValidators';
 
 interface FormValues {
   subtype: ListSubtype | null;
@@ -37,11 +45,15 @@ const INITIAL_FORM_STATE: FormValues = {
 export default function NewListDrawer(props: Props) {
   const { isOpen, listType, onCancel, onSuccess } = props;
 
-  const [form] = Form.useForm<FormValues>();
   const [formId] = useState(nanoid());
 
-  const formRef = useRef<FormInstance>(null);
-  const listSubtype = Form.useWatch<ListSubtype | null>('subtype', form);
+  const formRef = useRef<FormRef<FormValues>>(null);
+
+  useEffect(() => {
+    if (!isOpen) {
+      formRef.current?.resetFields();
+    }
+  }, [isOpen]);
 
   const api = useApi();
   const handleFinishMutation = useMutation<unknown, unknown, { values: FormValues }>(
@@ -68,7 +80,7 @@ export default function NewListDrawer(props: Props) {
     {
       retry: false,
       onSuccess: () => {
-        form.resetFields();
+        formRef.current?.resetFields(); // todo: implement
         onSuccess();
         message.success('List created');
       },
@@ -79,31 +91,48 @@ export default function NewListDrawer(props: Props) {
   );
 
   return (
-    <Drawer
-      title={listType === 'WHITELIST' ? `Add a new whitelist` : `Add a new blacklist`}
-      visible={isOpen}
-      onClose={onCancel}
-      bodyStyle={{
-        position: 'relative',
+    <Form<FormValues>
+      id={formId}
+      ref={formRef}
+      onSubmit={(values) => {
+        handleFinishMutation.mutate({ values });
+      }}
+      initialValues={INITIAL_FORM_STATE}
+      fieldValidators={{
+        subtype: notEmpty,
+        name: notEmpty,
       }}
     >
-      <Form<FormValues>
-        form={form}
-        id={formId}
-        ref={formRef}
-        layout="vertical"
-        onFinish={(values) => {
-          handleFinishMutation.mutate({ values });
-        }}
-        initialValues={INITIAL_FORM_STATE}
+      <Drawer
+        title={listType === 'WHITELIST' ? `Add a new whitelist` : `Add a new blacklist`}
+        isVisible={isOpen}
+        onChangeVisibility={onCancel}
+        drawerMaxWidth="800px"
+        footer={
+          <>
+            <UseFormState<FormValues>>
+              {({ isValid }) => (
+                <div className={s.buttons}>
+                  <Button
+                    isLoading={handleFinishMutation.isLoading}
+                    isDisabled={!isValid}
+                    htmlType={'submit'}
+                    htmlAttrs={{
+                      form: formId,
+                    }}
+                  >{`Add new ${listType === 'WHITELIST' ? 'whitelist' : 'blacklist'}`}</Button>
+                </div>
+              )}
+            </UseFormState>
+          </>
+        }
       >
         <div className={s.root}>
-          <div className={s.content}>
-            <Form.Item
-              name="subtype"
-              label={`${listType === 'WHITELIST' ? 'Whitelist' : 'Blacklist'} type`}
-              required
-            >
+          <InputField<FormValues, 'subtype'>
+            name="subtype"
+            label={`${listType === 'WHITELIST' ? 'Whitelist' : 'Blacklist'} type`}
+          >
+            {(inputProps) => (
               <Select
                 options={(listType === 'WHITELIST' ? WHITELIST_SUBTYPES : BLACKLIST_SUBTYPES).map(
                   (subtype) => ({
@@ -111,46 +140,43 @@ export default function NewListDrawer(props: Props) {
                     label: getListSubtypeTitle(subtype),
                   }),
                 )}
+                {...inputProps}
               />
-            </Form.Item>
-            {listSubtype != null && (
+            )}
+          </InputField>
+          <UseFormState<FormValues>>
+            {({ values: { subtype } }) => (
               <>
-                <Form.Item name="name" label="List name" required>
-                  <Input />
-                </Form.Item>
-                {listSubtype !== 'USER_ID' && (
-                  <Form.Item name="values" label={getListSubtypeTitle(listSubtype)}>
-                    <NewValueInput listSubtype={listSubtype} />
-                  </Form.Item>
+                {subtype != null && (
+                  <>
+                    <InputField<FormValues, 'name'> name="name" label={'List name'}>
+                      {(inputProps) => <TextInput {...inputProps} />}
+                    </InputField>
+                    {subtype !== 'USER_ID' && (
+                      <InputField<FormValues, 'values'>
+                        name="values"
+                        label={getListSubtypeTitle(subtype)}
+                      >
+                        {(inputProps) => <NewValueInput listSubtype={subtype} {...inputProps} />}
+                      </InputField>
+                    )}
+                    <InputField<FormValues, 'description'> name="description" label={'Description'}>
+                      {(inputProps) => <TextArea {...inputProps} />}
+                    </InputField>
+                    <InputField<FormValues, 'status'>
+                      name="status"
+                      label={'Status'}
+                      labelProps={{ position: 'RIGHT' }}
+                    >
+                      {(inputProps) => <Toggle size="SMALL" {...inputProps} />}
+                    </InputField>
+                  </>
                 )}
-                <Form.Item name="description" label="Description">
-                  <Input.TextArea />
-                </Form.Item>
-                <Form.Item name="status" label="Status" valuePropName="checked">
-                  <Switch />
-                </Form.Item>
               </>
             )}
-          </div>
-          {listSubtype != null && (
-            <div className={s.buttons}>
-              <Form.Item<FormValues> noStyle shouldUpdate>
-                {({ getFieldsValue }) => {
-                  const values = getFieldsValue();
-                  const isValid = !!values.name && !!values.subtype;
-                  return (
-                    <Button
-                      isLoading={handleFinishMutation.isLoading}
-                      isDisabled={!isValid}
-                      htmlType={'submit'}
-                    >{`Add new ${listType === 'WHITELIST' ? 'whitelist' : 'blacklist'}`}</Button>
-                  );
-                }}
-              </Form.Item>
-            </div>
-          )}
+          </UseFormState>
         </div>
-      </Form>
-    </Drawer>
+      </Drawer>
+    </Form>
   );
 }

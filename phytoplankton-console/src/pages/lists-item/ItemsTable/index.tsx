@@ -201,7 +201,7 @@ export default function ItemsTable(props: Props) {
                   onChange={(value) => {
                     setNewUserData((prevState) => ({
                       ...prevState,
-                      value: value,
+                      value: value ?? [],
                     }));
                   }}
                   onChangeMeta={(meta) => {
