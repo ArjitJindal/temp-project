@@ -1,10 +1,26 @@
 import { Pie } from '@ant-design/plots';
 
+type Position =
+  | 'right'
+  | 'top'
+  | 'top-left'
+  | 'top-right'
+  | 'right-top'
+  | 'right-bottom'
+  | 'left'
+  | 'left-top'
+  | 'left-bottom'
+  | 'bottom'
+  | 'bottom-left'
+  | 'bottom-right'
+  | undefined;
+
 interface Props {
   data: Record<string, any>[];
   COLORS: Record<string, string>;
   angleField: string;
   colorField: string;
+  position?: Position;
 }
 
 function Donut(props: Props) {
@@ -55,7 +71,7 @@ function Donut(props: Props) {
     <Pie
       {...config}
       legend={{
-        position: 'bottom',
+        position: props.position || 'bottom',
         sort: false,
       }}
     />

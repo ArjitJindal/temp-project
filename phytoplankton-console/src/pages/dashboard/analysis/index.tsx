@@ -7,6 +7,7 @@ import TopUsersHitCard from './components/TopUsersHitCard';
 import DRSDistributionCard from './components/DRSDistributionCard';
 import TeamPerformanceCard from './components/TeamPerformanceCard';
 import OverviewCard from './components/OverviewCard';
+import RulePrioritySplitCard from './components/RulePrioritySplitCard';
 import CaseClosingReasonCard from './components/CaseManagement/CaseClosingReasonCard';
 import DistributionByAlertPriority from './components/CaseManagement/DistributionByAlertPriority';
 import s from './style.module.less';
@@ -30,6 +31,7 @@ type KeyValues =
   | 'TOP_RULE_HITS_BY_COUNT'
   | 'USER_DISTIBUTION_BY_CRA_RISK_LEVEL'
   | 'TEAM_OVERVIEW'
+  | 'RULE_PRIORITY_SPLIT'
   | 'DISTRIBUTION_BY_CLOSING_REASON'
   | 'DISTRIBUTION_BY_ALERT_PRIORITY'
   | 'DISTRIBUTION_BY_PAYMENT_METHOD';
@@ -43,6 +45,7 @@ const KEYS: KeyValues[] = [
   'DISTRIBUTION_BY_CLOSING_REASON',
   'DISTRIBUTION_BY_ALERT_PRIORITY',
   'TEAM_OVERVIEW',
+  'RULE_PRIORITY_SPLIT',
   'DISTRIBUTION_BY_PAYMENT_METHOD',
 ];
 
@@ -53,6 +56,7 @@ const DEFAULT_VALUES = {
   TOP_RULE_HITS_BY_COUNT: true,
   USER_DISTIBUTION_BY_CRA_RISK_LEVEL: true,
   TEAM_OVERVIEW: true,
+  RULE_PRIORITY_SPLIT: true,
   DISTRIBUTION_BY_CLOSING_REASON: true,
   DISTRIBUTION_BY_ALERT_PRIORITY: true,
   DISTRIBUTION_BY_PAYMENT_METHOD: true,
@@ -63,7 +67,9 @@ type DashboardSettings = Record<KeyValues, boolean>;
 function Analysis() {
   const isPulseEnabled = useFeatureEnabled('PULSE');
   const i18n = useI18n();
+
   const [drawerVisible, setDrawerVisible] = useState(false);
+
   const [dashboardSettings, setDashboardSettings] = useLocalStorageState<DashboardSettings>(
     'DASHBOARD_SETTINGS',
     DEFAULT_VALUES,
@@ -149,15 +155,31 @@ function Analysis() {
           {
             groupTitle: 'Rules',
             items: [
-              settingsToDisplay.TOP_RULE_HITS_BY_COUNT && {
-                props: {
-                  id: 'top_rule_hits_by_count',
-                  // isLegacyComponent: true,
-                  title: 'Top rule hits by count',
-                  children: <RuleHitCard />,
-                },
-                component: Widget,
-              },
+              ...(settingsToDisplay.TOP_RULE_HITS_BY_COUNT
+                ? [
+                    {
+                      props: {
+                        id: 'top_rule_hits_by_count',
+                        // isLegacyComponent: true,
+                        title: 'Top rule hits by count',
+                        children: <RuleHitCard />,
+                      },
+                      component: Widget,
+                    },
+                  ]
+                : []),
+              ...(settingsToDisplay.RULE_PRIORITY_SPLIT
+                ? [
+                    {
+                      props: {
+                        id: 'tempId',
+                        title: 'Distribution by rule priority',
+                        width: 'HALF' as const,
+                      },
+                      component: RulePrioritySplitCard,
+                    },
+                  ]
+                : []),
             ].filter(notEmpty),
           },
           {

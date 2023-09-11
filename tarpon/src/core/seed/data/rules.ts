@@ -56,7 +56,7 @@ export const initRules = () => {
       id: 'a25685ad',
       checklistTemplateId: pickRandom(checklistTemplates).id,
       ruleId: 'R-2',
-      casePriority: 'P1',
+      casePriority: 'P2',
       parameters: {
         transactionAmountThreshold: {
           USD: 10000,
