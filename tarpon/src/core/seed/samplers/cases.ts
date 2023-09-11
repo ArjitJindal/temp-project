@@ -210,12 +210,15 @@ export function sampleTransactionUserCases(
             {
               caseId,
               ruleHit,
-              transactions: transactions.filter(
-                (t) =>
-                  !!t.hitRules.find(
-                    (hr) => hr.ruleInstanceId === ruleHit.ruleInstanceId
-                  )
-              ),
+              transactions:
+                ruleHit.nature === 'SCREENING'
+                  ? []
+                  : transactions.filter(
+                      (t) =>
+                        !!t.hitRules.find(
+                          (hr) => hr.ruleInstanceId === ruleHit.ruleInstanceId
+                        )
+                    ),
             },
             i * 0.001
           )
