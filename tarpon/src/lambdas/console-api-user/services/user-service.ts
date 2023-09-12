@@ -199,7 +199,9 @@ export class UserService {
           }
         : undefined,
     }
-    await this.userRepository.saveConsumerUser(updatedUser)
+    await this.userRepository.saveConsumerUser(updatedUser, {
+      isWebhookRequried: true,
+    })
     await this.userEventRepository.saveUserEvent(
       {
         timestamp: Date.now(),
@@ -231,7 +233,9 @@ export class UserService {
           }
         : undefined,
     }
-    await this.userRepository.saveBusinessUser(updatedUser)
+    await this.userRepository.saveBusinessUser(updatedUser, {
+      isWebhookRequried: true,
+    })
     // TODO: FDT-45236. Save business user event
     await this.userEventRepository.saveUserEvent(
       {

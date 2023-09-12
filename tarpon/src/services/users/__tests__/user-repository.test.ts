@@ -29,7 +29,11 @@ describe('Test Dynamo Db User Update', () => {
 
     const createdUser = await userRepository.saveUser(user, 'CONSUMER')
 
-    expect(createdUser).toEqual({ ...user, type: 'CONSUMER' })
+    expect(createdUser).toEqual({
+      ...user,
+      type: 'CONSUMER',
+      isWebhookRequried: false,
+    })
 
     const executedRules: ExecutedRulesResult[] = [
       {
@@ -77,6 +81,7 @@ describe('Test Dynamo Db User Update', () => {
       ...user,
       type: 'CONSUMER',
       executedRules,
+      isWebhookRequried: false,
       hitRules,
     })
 

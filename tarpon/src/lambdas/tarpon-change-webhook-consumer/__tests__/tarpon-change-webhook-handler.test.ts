@@ -43,18 +43,16 @@ describe('Create webhook delivery tasks', () => {
       await getMongoDbClient()
     )
     const user = getTestUser()
-    const event = createKinesisStreamEvent(
-      `${TEST_TENANT_ID}#user#primary`,
-      user.userId,
-      user,
-      {
-        ...user,
-        userStateDetails: {
-          reason: 'reason',
-          state: 'TERMINATED',
-        },
-      }
-    )
+    const event = createKinesisStreamEvent<
+      typeof user & { isWebhookRequried?: boolean }
+    >(`${TEST_TENANT_ID}#user#primary`, user.userId, user, {
+      ...user,
+      userStateDetails: {
+        reason: 'reason',
+        state: 'TERMINATED',
+      },
+      isWebhookRequried: true,
+    })
     const webhook: WebhookConfiguration = {
       _id: 'webhook_id',
       createdAt: Date.now(),
@@ -179,7 +177,9 @@ describe('Create webhook delivery tasks', () => {
         state: 'TERMINATED',
       },
     })
-    const event = createKinesisStreamEvent(
+    const event = createKinesisStreamEvent<
+      typeof user & { isWebhookRequried?: boolean }
+    >(
       `${TEST_TENANT_ID}#user#primary`,
       user.userId,
       getTestUser({
@@ -189,7 +189,7 @@ describe('Create webhook delivery tasks', () => {
           state: 'ACTIVE',
         },
       }),
-      user
+      { ...user, isWebhookRequried: true }
     )
 
     await tarponChangeWebhookHandler(event)

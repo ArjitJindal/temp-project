@@ -10,8 +10,9 @@ import {
   sendWebhookTasks,
   ThinWebhookDeliveryTask,
 } from '@/services/webhook/utils'
+import { UserOptions } from '@/services/users/repositories/user-repository'
 
-type GenericUser = Business | User
+type GenericUser = (Business | User) & UserOptions
 
 async function userHandler(
   tenantId: string,
@@ -21,7 +22,12 @@ async function userHandler(
   const webhookTasks: ThinWebhookDeliveryTask<UserStateDetails>[] = []
   const diffResult = diff(oldUser || {}, newUser || {}) as Partial<GenericUser>
 
-  if (oldUser && diffResult?.userStateDetails && newUser?.userStateDetails) {
+  if (
+    oldUser &&
+    diffResult?.userStateDetails &&
+    newUser?.userStateDetails &&
+    newUser?.isWebhookRequried
+  ) {
     webhookTasks.push({
       event: 'USER_STATE_UPDATED',
       payload: {

@@ -61,6 +61,14 @@ import { BusinessResponse } from '@/@types/openapi-public/BusinessResponse'
 import { runLocalChangeHandler } from '@/utils/local-dynamodb-change-handler'
 import { traceable } from '@/core/xray'
 
+export type UserOptions = {
+  isWebhookRequried?: boolean
+}
+
+const USER_OPTIONS_DEFAULTS: UserOptions = {
+  isWebhookRequried: false,
+}
+
 @traceable
 export class UserRepository {
   dynamoDb: DynamoDBDocumentClient
@@ -666,15 +674,25 @@ export class UserRepository {
   }
 
   public async saveBusinessUser(
-    user: BusinessWithRulesResult
+    user: BusinessWithRulesResult,
+    options: UserOptions = USER_OPTIONS_DEFAULTS
   ): Promise<BusinessWithRulesResult> {
-    return (await this.saveUser(user, 'BUSINESS')) as BusinessWithRulesResult
+    return (await this.saveUser(
+      user,
+      'BUSINESS',
+      options
+    )) as BusinessWithRulesResult
   }
 
   public async saveConsumerUser(
-    user: UserWithRulesResult
+    user: UserWithRulesResult,
+    options: UserOptions = USER_OPTIONS_DEFAULTS
   ): Promise<UserWithRulesResult> {
-    return (await this.saveUser(user, 'CONSUMER')) as UserWithRulesResult
+    return (await this.saveUser(
+      user,
+      'CONSUMER',
+      options
+    )) as UserWithRulesResult
   }
 
   private sanitizeUserInPlace(user: User | Business) {
@@ -699,7 +717,8 @@ export class UserRepository {
 
   public async saveUser(
     user: UserWithRulesResult | BusinessWithRulesResult,
-    type: UserType
+    type: UserType,
+    options: UserOptions = USER_OPTIONS_DEFAULTS
   ): Promise<UserWithRulesResult | BusinessWithRulesResult> {
     this.sanitizeUserInPlace(user)
     const userId = user.userId
@@ -707,6 +726,7 @@ export class UserRepository {
       ...user,
       userId,
       type,
+      isWebhookRequried: options.isWebhookRequried,
     }
     const primaryKey = DynamoDbKeys.USER(this.tenantId, userId)
     const putItemInput: PutCommandInput = {
