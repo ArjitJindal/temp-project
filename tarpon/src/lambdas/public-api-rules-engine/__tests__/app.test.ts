@@ -452,6 +452,7 @@ describe('Public API - Create a Consumer User Event', () => {
     const mongoUser = await userRepository.getUserById('foo')
     expect(mongoUser).toEqual({
       ...internalConsumerUserWithComments,
+      updatedAt: expect.any(Number),
       tags: [{ key: 'key', value: 'value' }],
     })
   })

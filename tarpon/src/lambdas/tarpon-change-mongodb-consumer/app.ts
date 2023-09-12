@@ -260,6 +260,8 @@ async function userHandler(
 
   const existingUser = await usersRepo.getUserById(internalUser.userId)
   internalUser.createdAt = existingUser?.createdAt ?? Date.now()
+  internalUser.updatedAt = Date.now()
+
   const savedUser = await usersRepo.saveUserMongo({
     ...pick(existingUser, INTERNAL_ONNLY_USER_ATTRIBUTES),
     ...internalUser,

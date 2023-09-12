@@ -282,7 +282,7 @@ export function getMongoDbIndexDefinitions(tenantId: string): {
               createdTimestamp: 1,
             },
             {
-              createdTimestamp: -1,
+              updatedAt: 1,
             },
             {
               createdAt: 1,

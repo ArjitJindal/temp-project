@@ -25,7 +25,7 @@ import { PaginatedData, usePaginatedQuery } from '@/utils/queries/hooks';
 import { useDeepEqualEffect } from '@/utils/hooks';
 import UserTagSearchButton from '@/pages/transactions/components/UserTagSearchButton';
 import { DEFAULT_PAGE_SIZE, DEFAULT_PARAMS_STATE } from '@/components/library/Table/consts';
-import { BOOLEAN, FLOAT, RISK_LEVEL } from '@/components/library/Table/standardDataTypes';
+import { BOOLEAN, DATE, FLOAT, RISK_LEVEL } from '@/components/library/Table/standardDataTypes';
 import { ColumnHelper } from '@/components/library/Table/columnHelper';
 
 export interface UserSearchParams extends CommonParams {
@@ -154,6 +154,16 @@ const extraFilters = (list: 'business' | 'consumer' | 'all'): ExtraFilter<UserSe
   return extraFilters;
 };
 
+function getLastUpdatedColumn(): TableColumn<InternalUser> {
+  const helper = new ColumnHelper<InternalUser>();
+  return helper.simple<'updatedAt'>({
+    key: 'updatedAt',
+    title: 'Last updated',
+    sorting: true,
+    type: DATE,
+  });
+}
+
 const UsersTab = (props: { type: 'business' | 'consumer' | 'all' }) => {
   const type = props.type;
 
@@ -171,7 +181,7 @@ const UsersTab = (props: { type: 'business' | 'consumer' | 'all' }) => {
   if (isPulseEnabled) {
     columns.push(...getPulseColumns());
   }
-
+  columns.push(getLastUpdatedColumn());
   const [params, setParams] = useState<UserSearchParams>(DEFAULT_PARAMS_STATE);
   const parsedParams = queryAdapter.deserializer(parseQueryString(location.search));
 
