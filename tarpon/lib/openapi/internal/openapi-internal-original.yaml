@@ -4565,8 +4565,139 @@ paths:
       responses:
         '200':
           description: OK
+  '/question/{questionId}/alert/{alertId}':
+    get:
+      summary: Get question
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/QuestionResponse'
+      operationId: get-question
+      description: ''
+      parameters:
+        - schema:
+            type: string
+          in: path
+          name: questionId
+          required: true
+        - schema:
+            type: string
+          in: path
+          name: alertId
+          required: true
+        - schema:
+            type: array
+            items:
+              type: object
+              properties:
+                name:
+                  type: string
+                value:
+                  oneOf:
+                    - type: string
+                    - type: number
+          in: query
+          name: variables
+          required: true
 components:
   schemas:
+    QuestionResponse:
+      title: QuestionResponse
+      type: object
+      properties:
+        questionId:
+          type: string
+        questionType:
+          type: string
+        variableOptions:
+          type: array
+          items:
+            $ref: '#/components/schemas/QuestionVariableOption'
+      oneOf:
+        - $ref: '#/components/schemas/Table'
+        - $ref: '#/components/schemas/Timeseries'
+        - $ref: '#/components/schemas/StackedBarchart'
+    QuestionVariableOption:
+      title: QuestionVariableOption
+      type: object
+      properties:
+        name:
+          type: string
+        variableType:
+          type: string
+          enum:
+            - DATETIME
+            - STRING
+            - INTEGER
+            - FLOAT
+    Table:
+      title: Table
+      type: object
+      properties:
+        headers:
+          type: array
+          items:
+            type: object
+            properties:
+              name:
+                type: string
+              columnType:
+                type: string
+                enum:
+                  - DATETIME
+                  - STRING
+        rows:
+          type: array
+          items:
+            type: array
+            items:
+              type: object
+              properties:
+                value:
+                  type: string
+    Timeseries:
+      title: Timeseries
+      type: object
+      properties:
+        timeseries:
+          type: array
+          items:
+            type: object
+            properties:
+              label:
+                type: string
+              values:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    time:
+                      type: number
+                    value:
+                      type: number
+    StackedBarchart:
+      title: StackedBarchart
+      type: object
+      properties:
+        series:
+          type: array
+          items:
+            type: object
+            properties:
+              label:
+                type: string
+              values:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    x:
+                      type: string
+                    y:
+                      type: number
     KrsScore:
       title: KrsScore
       type: object

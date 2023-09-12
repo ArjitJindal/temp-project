@@ -12,20 +12,20 @@ import { Handlers } from '@/@types/openapi-internal-custom/DefaultApi'
 import { ReportService } from '@/services/sar/service'
 import { InternalTransaction } from '@/@types/openapi-internal/InternalTransaction'
 
-export const copilotHandler = lambdaApi({ requiredFeatures: ['COPILOT'] })(
+export const copilotHandler = lambdaApi({})(
   async (
     event: APIGatewayProxyWithLambdaAuthorizerEvent<
       APIGatewayEventLambdaAuthorizerContext<JWTAuthorizerResult>
     >
   ) => {
-    const [copilotService, caseService, userService] = await Promise.all([
-      CopilotService.new(),
+    const [caseService, userService] = await Promise.all([
       CaseService.fromEvent(event),
       UserService.fromEvent(event),
     ])
     const handlers = new Handlers()
 
     handlers.registerGenerateNarrative(async (ctx, request) => {
+      const copilotService = await CopilotService.new()
       const { entityId, entityType, reasons } = request.NarrativeRequest
 
       if (entityType === 'REPORT') {
@@ -75,7 +75,130 @@ export const copilotHandler = lambdaApi({ requiredFeatures: ['COPILOT'] })(
     })
 
     handlers.registerFormatNarrative(async (_ctx, request) => {
+      const copilotService = await CopilotService.new()
       return copilotService.formatNarrative(request)
+    })
+
+    handlers.registerGetQuestion(async (_ctx, request) => {
+      if (request.questionId === 'TABLE') {
+        return {
+          questionId: request.questionId,
+          questionType: request.questionId,
+          variableOptions: [
+            { name: 'startTimestamp', variableType: 'DATETIME' },
+          ],
+          rows: [...Array(10).keys()].map((_) => [
+            'string',
+            new Date().valueOf(),
+            'some other string',
+          ]),
+          headers: [
+            {
+              name: 'column1',
+              columnType: 'STRING',
+            },
+            {
+              name: 'column2',
+              columnType: 'DATETIME',
+            },
+            {
+              name: 'column3',
+              columnType: 'STRING',
+            },
+          ],
+        }
+      }
+      if (request.questionId === 'STACKED_BARCHART') {
+        return {
+          questionId: request.questionId,
+          questionType: request.questionId,
+          variableOptions: [
+            { name: 'startTimestamp', variableType: 'DATETIME' },
+          ],
+          series: [
+            {
+              label: 'series1',
+              values: [
+                {
+                  x: 'thing1',
+                  y: 10,
+                },
+                {
+                  x: 'thing2',
+                  y: 5,
+                },
+                {
+                  x: 'thing3',
+                  y: 20,
+                },
+              ],
+            },
+            {
+              label: 'series2',
+              values: [
+                {
+                  x: 'thing1',
+                  y: 2,
+                },
+                {
+                  x: 'thing2',
+                  y: 1,
+                },
+                {
+                  x: 'thing3',
+                  y: 6,
+                },
+              ],
+            },
+          ],
+        }
+      }
+      if (request.questionId === 'TIMESERIES') {
+        return {
+          questionId: request.questionId,
+          questionType: request.questionId,
+          variableOptions: [
+            { name: 'startTimestamp', variableType: 'DATETIME' },
+          ],
+          timeseries: [
+            {
+              label: 'series1',
+              values: [
+                {
+                  time: new Date().setDate(new Date().getDate() - 2).valueOf(),
+                  value: 10,
+                },
+                {
+                  time: new Date().setDate(new Date().getDate() - 1).valueOf(),
+                  y: 5,
+                },
+                {
+                  time: new Date().valueOf(),
+                  y: 20,
+                },
+              ],
+            },
+            {
+              label: 'series2',
+              values: [
+                {
+                  time: new Date().setDate(new Date().getDate() - 2).valueOf(),
+                  value: 5,
+                },
+                {
+                  time: new Date().setDate(new Date().getDate() - 1).valueOf(),
+                  y: 10,
+                },
+                {
+                  time: new Date().valueOf(),
+                  y: 2,
+                },
+              ],
+            },
+          ],
+        }
+      }
+      throw new Error()
     })
 
     return await handlers.handle(event)
