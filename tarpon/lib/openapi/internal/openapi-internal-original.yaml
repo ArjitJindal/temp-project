@@ -1508,6 +1508,44 @@ paths:
         name: userId
         in: path
         required: true
+  '/users/{userId}/events':
+    get:
+      summary: Events - List
+      x-flagright:
+        permissions:
+          - users:user-overview:read
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/InternalUserEventsResponse'
+              examples: {}
+      operationId: get-events-list
+      description: ''
+      parameters:
+        - schema:
+            type: string
+          name: userId
+          in: path
+          required: true
+        - schema:
+            $ref: '#/components/schemas/PageSize'
+          in: query
+          name: pageSize
+        - schema:
+            $ref: '#/components/schemas/Page'
+          in: query
+          name: page
+        - schema:
+            type: string
+          in: query
+          name: sortField
+        - schema:
+            $ref: '#/components/schemas/SortOrder'
+          in: query
+          name: sortOrder
   '/business/users/{userId}':
     get:
       summary: Business Users - Item - Get
@@ -5325,6 +5363,26 @@ components:
           properties:
             createdAt:
               type: number
+    InternalUserEvent:
+      title: InternalUserEvent
+      oneOf:
+        - $ref: '#/components/schemas/InternalConsumerUserEvent'
+        - $ref: '#/components/schemas/InternalBusinessUserEvent'
+    InternalUserEventsResponse:
+      title: InternalUserEventsResponse
+      type: object
+      description: ''
+      x-examples: {}
+      properties:
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/InternalUserEvent'
+        total:
+          type: number
+      required:
+        - items
+        - total
     InternalTransaction:
       allOf:
         - $ref: ../public/openapi-public-original.yaml#/components/schemas/TransactionWithRulesResult

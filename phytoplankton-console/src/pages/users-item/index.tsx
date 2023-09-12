@@ -7,6 +7,7 @@ import Header from './Header';
 import s from './index.module.less';
 import CRMMonitoring from './UserDetails/CRMMonitoring';
 import Linking from './UserDetails/Linking';
+import { UserEvents } from './UserDetails/UserEvents';
 import PageWrapper, { PAGE_WRAPPER_PADDING } from '@/components/PageWrapper';
 import { makeUrl } from '@/utils/routing';
 import { CasesListResponse, Comment, InternalBusinessUser, InternalConsumerUser } from '@/apis';
@@ -131,6 +132,11 @@ export default function UserItem() {
                 ),
                 isClosable: false,
                 isDisabled: false,
+              },
+              {
+                tab: 'User events',
+                key: 'user-events',
+                children: <UserEvents userId={user.userId} />,
               },
               {
                 tab: 'Alerts',

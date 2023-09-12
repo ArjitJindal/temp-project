@@ -132,6 +132,11 @@ export const WEBHOOKS = (id?: string): QueryKey => ['webhooks', id].filter(Boole
 export const WEBHOOKS_LIST = (): QueryKey => ['webhooks', 'list'];
 export const USERS = (type: string, params?: AnyParameters): QueryKey =>
   ['users', type, params].filter(Boolean);
+export const USER_EVENTS_LIST = (params: AnyParameters): QueryKey => [
+  'user-events',
+  'list',
+  params,
+];
 export const USERS_ITEM = (userId: string): QueryKey => ['users', 'item', userId];
 export const USERS_ITEM_BY_TYPE = (type: string, userId: string): QueryKey => [
   'users',

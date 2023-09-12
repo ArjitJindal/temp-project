@@ -13,6 +13,10 @@ import { BusinessUserEvent } from '@/@types/openapi-public/BusinessUserEvent'
 import { UserType } from '@/@types/user/user-type'
 import { runLocalChangeHandler } from '@/utils/local-dynamodb-change-handler'
 import { traceable } from '@/core/xray'
+import { InternalUserEvent } from '@/@types/openapi-internal/InternalUserEvent'
+import { DefaultApiGetEventsListRequest } from '@/@types/openapi-internal/RequestParameters'
+import { USER_EVENTS_COLLECTION } from '@/utils/mongodb-definitions'
+import { DEFAULT_PAGE_SIZE } from '@/utils/pagination'
 
 @traceable
 export class UserEventRepository {
@@ -75,6 +79,41 @@ export class UserEventRepository {
       await localTarponChangeCaptureHandler(primaryKey)
     }
     return eventId
+  }
+
+  public async getMongoUserEvents(
+    data: DefaultApiGetEventsListRequest
+  ): Promise<Array<InternalUserEvent>> {
+    const {
+      userId,
+      page = 1,
+      pageSize = DEFAULT_PAGE_SIZE,
+      sortField = 'timestamp',
+      sortOrder = 'descend',
+    } = data
+
+    const userEventsCollectionName = USER_EVENTS_COLLECTION(this.tenantId)
+    const db = this.mongoDb.db()
+    const userEventsCollection = db.collection<InternalUserEvent>(
+      userEventsCollectionName
+    )
+
+    return userEventsCollection
+      .find({ userId })
+      .sort({ [sortField]: sortOrder === 'descend' ? -1 : 1 })
+      .skip((page - 1) * pageSize)
+      .limit(pageSize)
+      .toArray()
+  }
+
+  public async getUserEventsCount(userId: string): Promise<number> {
+    const userEventsCollectionName = USER_EVENTS_COLLECTION(this.tenantId)
+    const db = this.mongoDb.db()
+    const userEventsCollection = db.collection<InternalUserEvent>(
+      userEventsCollectionName
+    )
+
+    return userEventsCollection.countDocuments({ userId })
   }
 
   public async getConsumerUserEvents(

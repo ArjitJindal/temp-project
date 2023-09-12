@@ -17,6 +17,7 @@ import { RuleInstanceRepository } from '@/services/rules-engine/repositories/rul
 import { AlertsRepository } from '@/services/rules-engine/repositories/alerts-repository'
 import { Handlers } from '@/@types/openapi-internal-custom/DefaultApi'
 import { LinkerService } from '@/services/linker'
+import { UserEventRepository } from '@/services/rules-engine/repositories/user-event-repository'
 
 export type UserViewConfig = {
   TMP_BUCKET: string
@@ -150,6 +151,11 @@ export const allUsersViewHandler = lambdaApi()(
       DOCUMENT_BUCKET
     )
 
+    const userEventsRepository = new UserEventRepository(tenantId, {
+      dynamoDb,
+      mongoDb: client,
+    })
+
     const alertsRepository = new AlertsRepository(tenantId, {
       mongoDb: client,
       dynamoDb,
@@ -201,6 +207,18 @@ export const allUsersViewHandler = lambdaApi()(
         }
       }
     )
+
+    handlers.registerGetEventsList(async (ctx, request) => {
+      const userEvents = await userEventsRepository.getMongoUserEvents(request)
+      const count = await userEventsRepository.getUserEventsCount(
+        request.userId
+      )
+
+      return {
+        items: userEvents,
+        total: count,
+      }
+    })
 
     handlers.registerGetCrmAccount(async (ctx, request) => {
       if (!hasFeature('CRM')) {
