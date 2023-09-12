@@ -21,3 +21,12 @@ export async function tenantHasFeature(
     false
   )
 }
+
+export async function getTenantFeatures(tenantId: string): Promise<Feature[]> {
+  const tenantRepository = new TenantRepository(tenantId, {
+    dynamoDb: getDynamoDbClient(),
+  })
+  const features = (await tenantRepository.getTenantSettings(['features']))
+    ?.features
+  return features || []
+}

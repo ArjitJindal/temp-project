@@ -25,7 +25,10 @@ import { cleanUpDynamoDbResources, getDynamoDbClient } from '@/utils/dynamodb'
 import { UserRepository } from '@/services/users/repositories/user-repository'
 import { updateLogMetadata } from '@/core/utils/context'
 import { RiskScoringService } from '@/services/risk-scoring'
-import { tenantHasFeature } from '@/core/middlewares/tenant-has-feature'
+import {
+  getTenantFeatures,
+  tenantHasFeature,
+} from '@/core/middlewares/tenant-has-feature'
 import { DeviceMetric } from '@/@types/openapi-public-device-data/DeviceMetric'
 import { MetricsRepository } from '@/services/rules-engine/repositories/metrics'
 import { RiskRepository } from '@/services/risk-scoring/repositories/risk-repository'
@@ -36,6 +39,8 @@ import { InternalUser } from '@/@types/openapi-internal/InternalUser'
 import { InternalConsumerUserEvent } from '@/@types/openapi-internal/InternalConsumerUserEvent'
 import { InternalBusinessUserEvent } from '@/@types/openapi-internal/InternalBusinessUserEvent'
 import { InternalTransactionEvent } from '@/@types/openapi-internal/InternalTransactionEvent'
+import { KrsScore } from '@/@types/openapi-internal/KrsScore'
+import { DrsScore } from '@/@types/openapi-internal/DrsScore'
 import { INTERNAL_ONNLY_USER_ATTRIBUTES } from '@/services/users/utils/user-utils'
 
 const sqs = new SQS({
@@ -173,7 +178,7 @@ async function transactionHandler(
   const timestampBeforeCasesCreation = Date.now()
   const cases = await caseCreationService.handleTransaction(transactionInMongo)
   logger.info(`Case Creation Completed`)
-  if (await tenantHasFeature(tenantId, 'PULSE')) {
+  if (await tenantHasFeature(tenantId, 'RISK_SCORING')) {
     logger.info(`Calculating ARS & DRS`)
 
     const { originDrsScore, destinationDrsScore } =
@@ -232,30 +237,37 @@ async function userHandler(
     tenantSettings
   )
 
-  if (await tenantHasFeature(tenantId, 'PULSE')) {
-    const dynamoDb = await getDynamoDbClient()
-    const riskRepository = new RiskRepository(tenantId, { dynamoDb })
+  let krsScore: KrsScore | null = null
+  let drsScore: DrsScore | null = null
 
-    const krsScore = await riskRepository.getKrsScore(internalUser.userId)
-    const drsScore = await riskRepository.getDrsScore(internalUser.userId)
+  const riskRepository = new RiskRepository(tenantId, { dynamoDb })
+  const teanntFeatures = await getTenantFeatures(tenantId)
 
-    if (!krsScore && !drsScore) {
+  if (teanntFeatures.includes('RISK_SCORING')) {
+    krsScore = await riskRepository.getKrsScore(internalUser.userId)
+    if (!krsScore) {
       logger.error(
         new Error(
-          `KRS and DRS scores are not available for user ${internalUser.userId} in tenant ${tenantId}`
+          `KRS score is not available for user ${internalUser.userId} in tenant ${tenantId}`
         )
       )
     }
+  }
+  if (
+    teanntFeatures.includes('RISK_SCORING') ||
+    teanntFeatures.includes('RISK_LEVELS')
+  ) {
+    drsScore = await riskRepository.getDrsScore(internalUser.userId)
+  }
 
-    internalUser = {
-      ...internalUser,
-      ...(krsScore && { krsScore }),
-      ...(drsScore && { drsScore }),
-    }
+  internalUser = {
+    ...internalUser,
+    ...(krsScore && { krsScore }),
+    ...(drsScore && { drsScore }),
+  }
 
-    if (drsScore) {
-      await usersRepo.updateDrsScoreOfUserMongo(internalUser.userId, drsScore)
-    }
+  if (drsScore) {
+    await usersRepo.updateDrsScoreOfUserMongo(internalUser.userId, drsScore)
   }
 
   const existingUser = await usersRepo.getUserById(internalUser.userId)

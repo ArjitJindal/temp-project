@@ -1181,6 +1181,11 @@ export class DashboardStatsRepository {
       .aggregate(
         [
           {
+            $match: {
+              'drsScore.drsScore': { $exists: true, $nin: [null, ''] },
+            },
+          },
+          {
             $bucket: {
               groupBy: '$drsScore.drsScore',
               boundaries: sanitizedBounries,

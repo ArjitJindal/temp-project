@@ -51,8 +51,10 @@ export default function () {
     }
   }, [state, riskValuesQueryResults.data]);
 
+  /* Doubt to be clarified */
+
   return (
-    <Feature name="PULSE" fallback={'Not enabled'}>
+    <Feature name="RISK_SCORING" fallback={'Not enabled'}>
       <SimulationPageWrapper
         title={i18n(`menu.risk-levels.configure${isSimulationEnabled ? '.simulate' : ''}`)}
         description={

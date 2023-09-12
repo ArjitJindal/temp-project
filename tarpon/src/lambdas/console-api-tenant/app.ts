@@ -101,8 +101,8 @@ export const tenantsHandler = lambdaApi()(
         newTenantSettings
       )
       if (
-        !tenantSettingsCurrent.features?.includes('PULSE') &&
-        newTenantSettings.features?.includes('PULSE')
+        !tenantSettingsCurrent.features?.includes('RISK_SCORING') &&
+        newTenantSettings.features?.includes('RISK_SCORING')
       ) {
         await sendBatchJobCommand({
           type: 'PULSE_USERS_BACKFILL_RISK_SCORE',

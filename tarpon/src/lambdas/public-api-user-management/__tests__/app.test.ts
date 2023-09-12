@@ -11,7 +11,7 @@ import { getDynamoDbClient } from '@/utils/dynamodb'
 import { withFeatureHook } from '@/test-utils/feature-test-utils'
 
 dynamoDbSetupHook()
-withFeatureHook(['PULSE'])
+withFeatureHook(['RISK_SCORING', 'RISK_LEVELS'])
 
 const riskScoreDetails = {
   kycRiskLevel: 'VERY_HIGH',

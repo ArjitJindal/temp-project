@@ -32,7 +32,7 @@ interface Props {
 
 export default function QaTable(props: Props) {
   const { params, onChangeParams } = props;
-  const isPulseEnabled = useFeatureEnabled('PULSE');
+  const isRiskLevelsEnabled = useFeatureEnabled('RISK_LEVELS');
   const queryResults: QueryResult<TableData<TableAlertItem>> = useAlertQuery(params);
   const user = useAuth0User();
   const tableRef = useRef<TableRefType>(null);
@@ -137,7 +137,7 @@ export default function QaTable(props: Props) {
 
   const extraFilters = useMemo(
     () =>
-      makeExtraFilters(isPulseEnabled, ruleOptions, false, 'ALERTS', true).concat({
+      makeExtraFilters(isRiskLevelsEnabled, ruleOptions, false, 'ALERTS', true).concat({
         key: 'qaAssignment',
         title: 'QA Assigned to',
         showFilterByDefault: true,
@@ -153,7 +153,7 @@ export default function QaTable(props: Props) {
           />
         ),
       }),
-    [isPulseEnabled, ruleOptions],
+    [isRiskLevelsEnabled, ruleOptions],
   );
 
   const handleChangeParams = useCallback(

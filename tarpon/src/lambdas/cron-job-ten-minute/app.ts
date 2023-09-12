@@ -17,7 +17,7 @@ export const cronJobTenMinuteHandler = lambdaConsumer()(async () => {
 
     await Promise.all(
       tenantInfos.map(async (t) => {
-        const userRefresh = await tenantHasFeature(t.tenant.id, 'PULSE')
+        const userRefresh = await tenantHasFeature(t.tenant.id, 'RISK_SCORING')
         return sendBatchJobCommand({
           type: 'DASHBOARD_REFRESH',
           tenantId: t.tenant.id,

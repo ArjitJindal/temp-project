@@ -950,7 +950,7 @@ export class RulesEngineService {
   private async getUserRiskLevel(
     user: UserWithRulesResult | BusinessWithRulesResult | undefined
   ): Promise<RiskLevel | undefined> {
-    if (!user?.userId || !hasFeature('PULSE')) {
+    if (!user?.userId || !hasFeature('RISK_LEVELS')) {
       return undefined
     }
     const riskItem = await this.riskRepository.getDRSRiskItem(user?.userId)
@@ -964,7 +964,7 @@ export class RulesEngineService {
     parameters: object
     action: RuleAction
   } {
-    if (hasFeature('PULSE') && ruleInstance.riskLevelParameters) {
+    if (hasFeature('RISK_LEVELS') && ruleInstance.riskLevelParameters) {
       const riskLevel = userRiskLevel || DEFAULT_RISK_LEVEL
       return {
         parameters: ruleInstance.riskLevelParameters[riskLevel],

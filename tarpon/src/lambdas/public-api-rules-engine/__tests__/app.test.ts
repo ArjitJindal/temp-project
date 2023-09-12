@@ -46,7 +46,7 @@ import { InternalUser } from '@/@types/openapi-internal/InternalUser'
 import { RulesEngineService } from '@/services/rules-engine'
 import { MongoDbTransactionRepository } from '@/services/rules-engine/repositories/mongodb-transaction-repository'
 
-const features: Feature[] = ['PULSE']
+const features: Feature[] = ['RISK_LEVELS', 'RISK_SCORING']
 
 withFeatureHook(features)
 dynamoDbSetupHook()

@@ -175,7 +175,8 @@ export class UserRepository {
       InternalBusinessUser | InternalConsumerUser
     >[] = []
 
-    const isPulseEnabled = hasFeature('PULSE')
+    const isPulseEnabled =
+      hasFeature('RISK_LEVELS') || hasFeature('RISK_SCORING')
 
     if (params.filterId != null) {
       filterConditions.push({
@@ -470,12 +471,11 @@ export class UserRepository {
       craRiskScore ?? null
     )
 
-    return {
-      kycRiskScore,
-      craRiskScore,
-      kycRiskLevel,
-      craRiskLevel,
+    if (hasFeature('RISK_LEVELS') && !hasFeature('RISK_SCORING')) {
+      return { craRiskLevel, craRiskScore }
     }
+
+    return { kycRiskScore, craRiskScore, kycRiskLevel, craRiskLevel }
   }
 
   public async getConsumerUserWithRiskScores(
@@ -487,7 +487,7 @@ export class UserRepository {
       return
     }
 
-    if (!hasFeature('PULSE')) {
+    if (!hasFeature('RISK_SCORING') || !hasFeature('RISK_LEVELS')) {
       return user
     }
 
@@ -508,7 +508,7 @@ export class UserRepository {
       return
     }
 
-    if (!hasFeature('PULSE')) {
+    if (!hasFeature('RISK_SCORING') || !hasFeature('RISK_LEVELS')) {
       return user
     }
 

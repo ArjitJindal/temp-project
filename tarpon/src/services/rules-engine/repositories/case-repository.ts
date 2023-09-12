@@ -326,7 +326,7 @@ export class CaseRepository {
     if (
       riskLevelsRequired &&
       params.filterRiskLevel != null &&
-      hasFeature('PULSE')
+      hasFeature('RISK_LEVELS')
     ) {
       const riskRepository = new RiskRepository(this.tenantId, {
         dynamoDb: this.dynamoDb,
@@ -755,7 +755,7 @@ export class CaseRepository {
     let cursor = await this.getCasesCursor(params, options)
     const total = this.getCasesCount(params)
 
-    if (await hasFeature('PULSE')) {
+    if (await hasFeature('RISK_LEVELS')) {
       const riskRepository = new RiskRepository(this.tenantId, {
         dynamoDb: this.dynamoDb,
       })
