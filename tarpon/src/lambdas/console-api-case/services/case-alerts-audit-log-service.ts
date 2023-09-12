@@ -74,6 +74,23 @@ export class CasesAlertsAuditLogService {
     )
   }
 
+  public async handleAuditLogForCaseEscalation(
+    caseIds: string[],
+    updates: Partial<CaseStatusUpdate>,
+    subtype?: AuditLogSubtypeEnum
+  ): Promise<void> {
+    await Promise.all(
+      caseIds.map(async (caseId) => {
+        await this.handleCaseUpdateAuditLog(
+          caseId,
+          'ESCALATE',
+          updates,
+          subtype
+        )
+      })
+    )
+  }
+
   public async handleAuditLogForAlertsUpdate(
     alertIds: string[],
     updates: Partial<
@@ -107,6 +124,37 @@ export class CasesAlertsAuditLogService {
       })
     }
   }
+
+  public async handleAuditLogForAlertsEscalation(
+    alertIds: string[],
+    updates: Partial<AlertStatusUpdateRequest>,
+    subtype?: AuditLogSubtypeEnum
+  ): Promise<void> {
+    const alertsRepository = new AlertsRepository(this.tenantId, {
+      mongoDb: this.mongoDb,
+      dynamoDb: this.dynamoDb,
+    })
+
+    for (const alertId of alertIds) {
+      const alertEntity = await alertsRepository.getAlertById(alertId)
+      const oldImage: { [key: string]: string } = {}
+      for (const field in Object.keys(updates)) {
+        const oldValue = get(alertEntity, field)
+        if (oldValue) {
+          oldImage[field] = oldValue
+        }
+      }
+      await this.createAlertAuditLog({
+        alertId: alertId,
+        logAction: 'ESCALATE',
+        oldImage: oldImage,
+        newImage: updates,
+        alertDetails: alertEntity,
+        subtype,
+      })
+    }
+  }
+
   public async handleAuditLogForAlertChecklistUpdate(
     alertId: string,
     oldRuleChecklist: ChecklistItemValue[] | undefined,

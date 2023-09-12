@@ -32,6 +32,15 @@ export const useGetLogData = (
               statement: createStatement,
             }
           : null;
+      } else if (isActionEscalate(log)) {
+        return createStatement
+          ? {
+              time: time,
+              user: log.user,
+              icon: 'CASE',
+              statement: createStatement,
+            }
+          : null;
       }
       return null;
     })
@@ -45,6 +54,10 @@ export const isActionUpdate = (log: AuditLog): boolean => {
 
 export const isActionCreate = (log: AuditLog): boolean => {
   return log.action === 'CREATE';
+};
+
+export const isActionEscalate = (log: AuditLog): boolean => {
+  return log.action === 'ESCALATE';
 };
 
 export const getCreateStatement = (

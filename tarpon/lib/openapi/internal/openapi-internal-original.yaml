@@ -7794,6 +7794,7 @@ components:
         - DOWNLOAD
         - CALCULATE
         - UPDATE
+        - ESCALATE
     Page:
       title: Page
       type: number

@@ -361,7 +361,7 @@ export const casesHandler = lambdaApi()(
           assigneeIds,
         }
         const caseItem = await caseService.getCase(caseId)
-        await casesAlertsAuditLogService.handleAuditLogForCaseUpdate(
+        await casesAlertsAuditLogService.handleAuditLogForCaseEscalation(
           [caseId],
           {
             reason: escalationRequest.caseUpdateRequest.reason,
@@ -387,7 +387,7 @@ export const casesHandler = lambdaApi()(
           .filter((item) => item != undefined) as string[][]
         const alertItem = await alertsService.getAlert(alertIds[0])
         if (childCaseId) {
-          await casesAlertsAuditLogService.handleAuditLogForCaseUpdate(
+          await casesAlertsAuditLogService.handleAuditLogForCaseEscalation(
             [caseId],
             {
               files: escalationRequest.caseUpdateRequest?.files,
@@ -398,7 +398,7 @@ export const casesHandler = lambdaApi()(
             'STATUS_CHANGE'
           )
         }
-        await casesAlertsAuditLogService.handleAuditLogForAlertsUpdate(
+        await casesAlertsAuditLogService.handleAuditLogForAlertsEscalation(
           alertIds,
           {
             reason: escalationRequest.caseUpdateRequest?.reason,

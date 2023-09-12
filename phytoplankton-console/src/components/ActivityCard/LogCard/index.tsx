@@ -25,7 +25,7 @@ const LogCard = (props: Props) => {
       sortField: 'timestamp',
       sortOrder: 'descend',
       searchEntityId: alertId ? [alertId] : entityIds,
-      filterActions: ['CREATE', 'UPDATE'],
+      filterActions: ['CREATE', 'UPDATE', 'ESCALATE'],
       filterActionTakenBy: filterActivityBy,
       alertStatus: flatten(filterAlertStatus),
       caseStatus: flatten(filterCaseStatus),
