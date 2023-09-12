@@ -626,7 +626,10 @@ export const KEY_VALUE_PAIR_SCHEMA = (options?: SchemaOptions) =>
     title: options?.title || 'Transaction key value',
     description: options?.description,
     additionalProperties: {
-      type: 'string',
+      type: 'array',
+      items: {
+        type: 'string',
+      },
     },
     required: [],
   } as const)

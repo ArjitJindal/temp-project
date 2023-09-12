@@ -5,7 +5,7 @@ import { UserRuleFilter } from './filter'
 
 export type UserTagsRuleFilterParameter = {
   userTags?: {
-    [key: string]: string
+    [key: string]: string[]
   }
 }
 

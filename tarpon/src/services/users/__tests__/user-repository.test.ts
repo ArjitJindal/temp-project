@@ -118,7 +118,11 @@ describe('Test User Management Service', () => {
     )
 
     expect(mongoUserResult).toMatchObject({ ...user, type: 'CONSUMER' })
-    expect(userResult).toEqual({ ...user, type: 'CONSUMER' })
+    expect(userResult).toEqual({
+      ...user,
+      type: 'CONSUMER',
+      isWebhookRequried: false,
+    })
 
     await userRepository.saveUserComment(user.userId, {
       body: 'Test Comment',
@@ -168,6 +172,7 @@ describe('Test User Management Service', () => {
       executedRules: [],
       hitRules: [],
       status: 'ALLOW',
+      isWebhookRequried: false,
     }
 
     expect(userUpdated).toEqual(toBeCheckedData)
@@ -205,7 +210,11 @@ describe('Test Business User Management Service', () => {
     )
 
     expect(mongoUserResult).toMatchObject({ ...user, type: 'BUSINESS' })
-    expect(userResult).toEqual({ ...user, type: 'BUSINESS' })
+    expect(userResult).toEqual({
+      ...user,
+      type: 'BUSINESS',
+      isWebhookRequried: false,
+    })
 
     await userRepository.saveUserComment(user.userId, {
       body: 'Test Comment',
@@ -261,6 +270,7 @@ describe('Test Business User Management Service', () => {
       status: 'ALLOW',
       executedRules: [],
       hitRules: [],
+      isWebhookRequried: false,
     }
 
     expect(userUpdated).toEqual(toBeCheckedData)

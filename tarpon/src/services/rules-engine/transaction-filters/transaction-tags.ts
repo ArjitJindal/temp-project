@@ -5,7 +5,7 @@ import { TransactionRuleFilter } from './filter'
 
 export type TransactionTagsRuleFilterParameter = {
   transactionTags?: {
-    [key: string]: string
+    [key: string]: string[]
   }
 }
 

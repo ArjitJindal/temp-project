@@ -3,7 +3,7 @@ import { Tag } from '@/@types/openapi-public/Tag'
 
 export const tagsRuleFilter = (
   incomingTags: Tag[] | undefined,
-  filterTag: { [key: string]: string } | undefined
+  filterTag: { [key: string]: string[] } | undefined
 ): boolean => {
   if (isEmpty(filterTag) || !filterTag) {
     return true
@@ -20,7 +20,7 @@ export const tagsRuleFilter = (
       return
     }
 
-    if (filterTag[incomingTag.key] === incomingTag.value) {
+    if (filterTag[incomingTag.key].includes(incomingTag.value)) {
       isTagMatched = true
     }
   })

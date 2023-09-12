@@ -14,7 +14,7 @@ test('Transaction tags missing', async () => {
           tags: undefined,
         }),
       },
-      { transactionTags: { tag1: 'value1' } },
+      { transactionTags: { tag1: ['value1'] } },
       dynamodb
     ).predicate()
   ).toBe(false)
@@ -34,7 +34,7 @@ test('Transaction tags matches the filter', async () => {
           ],
         }),
       },
-      { transactionTags: { tag1: 'value1' } },
+      { transactionTags: { tag1: ['value1'] } },
       dynamodb
     ).predicate()
   ).toBe(true)
@@ -54,7 +54,7 @@ test('Transaction tags does not match the filter', async () => {
           ],
         }),
       },
-      { transactionTags: { tag1: 'value2' } },
+      { transactionTags: { tag1: ['value2'] } },
       dynamodb
     ).predicate()
   ).toBe(false)
@@ -78,7 +78,7 @@ test('Transaction tags matches the filter with multiple tags', async () => {
           ],
         }),
       },
-      { transactionTags: { tag1: 'value1', tag2: 'value3' } },
+      { transactionTags: { tag1: ['value1'], tag2: ['value3'] } },
       dynamodb
     ).predicate()
   ).toBe(true)
