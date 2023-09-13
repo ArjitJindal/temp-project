@@ -1,11 +1,9 @@
+@import '~antd/dist/antd.less';
+@import '../../../components/ui/colors';
 .root {
   :global {
-    > .ant-tabs-nav {
-      margin-bottom: 0 !important;
-    }
-
-    .ant-tabs-tabpane {
-      margin-top: 16px !important;
+    .ant-tabs-tab.ant-tabs-tab-disabled {
+      background-color: transparent !important;
     }
   }
 
@@ -15,5 +13,19 @@
         display: none !important;
       }
     }
+  }
+
+  &.tab_span {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+  &.tab_icon {
+    margin-right: 5px;
+  }
+  &.icon {
+    width: 16px;
+    line-height: 16px;
+    margin-right: 4px;
   }
 }

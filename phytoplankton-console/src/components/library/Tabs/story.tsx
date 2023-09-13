@@ -1,5 +1,7 @@
 import React, { useState } from 'react';
+import { PlusOutlined } from '@ant-design/icons';
 import Component, { TabItem } from './index';
+import Flask from '@/components/ui/icons/Remix/health/flask-line.react.svg';
 import { UseCase } from '@/pages/storybook/components';
 
 export default function (): JSX.Element {
@@ -12,6 +14,7 @@ export default function (): JSX.Element {
       children: 'Content of Tab 4',
       key: '4',
       isClosable: false,
+      Icon: <Flask />,
     },
     {
       tab: 'Iteration 5',
@@ -25,15 +28,76 @@ export default function (): JSX.Element {
       key: '6',
       isClosable: false,
       isDisabled: true,
+      Icon: <Flask />,
     },
   ]);
+  const [activeKey, setActiveKey] = useState(items[0].key);
+  const [counter, setcounter] = useState(items.length + 1);
+
+  const onChange = (newActiveKey: any) => {
+    setActiveKey(newActiveKey);
+  };
+
+  const add = () => {
+    const newActiveKey = `${Number(counter) + 1}`;
+    const newPanes = [...items];
+    newPanes.push({
+      tab: `Iteration ${newActiveKey}`,
+      children: `Content of Tab ${newActiveKey}`,
+      key: newActiveKey,
+      isClosable: true,
+      isDisabled: false,
+    });
+    setItems(newPanes);
+    setActiveKey(newActiveKey);
+    setcounter(counter + 1);
+  };
+
+  const remove = (targetKey: string) => {
+    let newActiveKey = activeKey;
+    let lastIndex = -1;
+    items.forEach((item, i) => {
+      if (item.key === targetKey) {
+        lastIndex = i - 1;
+      }
+    });
+    const newPanes = items.filter((item) => item.key !== targetKey);
+    if (newPanes.length && newActiveKey === targetKey) {
+      if (lastIndex >= 0) {
+        newActiveKey = newPanes[lastIndex].key;
+      } else {
+        newActiveKey = newPanes[0].key;
+      }
+    }
+    setItems(newPanes);
+    setActiveKey(newActiveKey);
+  };
+
+  const onEdit = (action: 'add' | 'remove', targetKey: any) => {
+    if (action === 'add') {
+      add();
+    } else {
+      remove(targetKey);
+    }
+  };
 
   return (
     <>
       <UseCase title={'Basic Card'}>
         <div>
           <div style={{ display: 'block' }}>
-            <Component type="card" items={items} />
+            <Component type="line" items={items} onChange={(key) => onChange(key)} />
+          </div>
+        </div>
+      </UseCase>
+      <UseCase title={'Card'}>
+        <div>
+          <div style={{ display: 'block' }}>
+            <Component
+              type="card"
+              items={items}
+              tabBarGutter={5} //The gap between tabs
+            />
           </div>
         </div>
       </UseCase>
@@ -43,20 +107,40 @@ export default function (): JSX.Element {
             <Component
               type="editable-card"
               items={items}
-              onEdit={(action, key) => {
-                if (action === 'add') {
-                  setItems((items) => [
-                    ...items,
-                    {
-                      key: `${items.length + 1}`,
-                      tab: `New tab #${items.length + 1}`,
-                      isClosable: true,
-                    },
-                  ]);
-                } else if (action === 'remove') {
-                  setItems((items) => items.filter((x) => x.key !== key));
-                }
-              }}
+              onEdit={(action, key) => onEdit(action, key)}
+            />
+          </div>
+        </div>
+      </UseCase>
+      <UseCase title={'Editable Card with custom add button'}>
+        <div>
+          <div style={{ display: 'block' }}>
+            <Component
+              addIcon={
+                <div>
+                  <PlusOutlined /> Add
+                </div>
+              }
+              type="editable-card"
+              items={items}
+              onEdit={(action, key) => onEdit(action, key)}
+            />
+          </div>
+        </div>
+      </UseCase>
+      <UseCase title={'Basic Card with large size'}>
+        <div>
+          <div style={{ display: 'block' }}>
+            <Component
+              size="large"
+              addIcon={
+                <div>
+                  <PlusOutlined /> Add
+                </div>
+              }
+              type="line"
+              items={items}
+              onEdit={(action, key) => onEdit(action, key)}
             />
           </div>
         </div>

@@ -34,6 +34,7 @@ export default function ScreeningMatchList(props: Props) {
 
           return (
             <Tabs
+              type="card"
               items={results.map(({ details, response }) => {
                 const queryResult = {
                   data: success({

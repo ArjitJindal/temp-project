@@ -2,47 +2,58 @@ import React from 'react';
 import { Tabs as AntTabs, TabsProps } from 'antd';
 import cn from 'clsx';
 import s from './index.module.less';
-import COLORS from '@/components/ui/colors';
 
 export interface TabItem {
-  tab: string;
+  tab: React.ReactNode;
   key: string;
   children?: React.ReactNode;
   isClosable?: boolean;
   isDisabled?: boolean;
+  Icon?: React.ReactNode;
 }
 
 interface Props extends Pick<TabsProps, 'type' | 'activeKey' | 'onChange'> {
   items: TabItem[];
+  addIcon?: React.ReactNode;
   tabHeight?: string | number;
+  size?: 'large' | 'middle' | 'small';
+  tabBarGutter?: number;
   onEdit?: (action: 'add' | 'remove', key?: string) => void;
+  onChange?: (key?: any) => void;
 }
 
 export default function Tabs(props: Props) {
-  const { items, onEdit, ...rest } = props;
-  const noChildren = items.every((x) => x.children == null);
+  const { items, addIcon, tabBarGutter, onEdit, onChange } = props;
+
   return (
     <AntTabs
-      {...rest}
-      color={COLORS.brandBlue.base}
-      className={cn(s.root, noChildren && s.noChildren)}
-      style={props.tabHeight ? { height: props.tabHeight } : {}}
+      type={props?.type}
+      size={props?.size}
+      className={cn(props.type === 'line' ? s.root : '')}
+      addIcon={addIcon}
+      defaultActiveKey="1"
+      tabBarGutter={tabBarGutter}
+      onChange={onChange ? (key) => onChange(key) : undefined}
       onEdit={
         onEdit
-          ? (e, action) => {
-              if (action === 'add') {
-                onEdit(action);
-              } else if (action === 'remove') {
-                onEdit(action, typeof e === 'string' ? e : undefined);
-              }
-            }
+          ? (key, action) => onEdit(action, typeof key === 'string' ? key : undefined)
           : undefined
       }
     >
       {items.map((item: TabItem) => {
-        const { tab, key, children, isClosable, isDisabled } = item;
+        const { tab, key, children, isClosable, isDisabled, Icon } = item;
         return (
-          <AntTabs.TabPane tab={tab} key={key} closable={isClosable} disabled={isDisabled ?? false}>
+          <AntTabs.TabPane
+            tab={
+              <span className={cn(s.root, s.tab_span)}>
+                {Icon && <div className={cn(s.root, s.icon)}>{Icon}</div>}
+                <span>{tab}</span>
+              </span>
+            }
+            key={key}
+            closable={isClosable}
+            disabled={isDisabled ?? false}
+          >
             {children ?? <></>}
           </AntTabs.TabPane>
         );

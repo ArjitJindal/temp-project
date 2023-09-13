@@ -410,9 +410,9 @@ export default function RiskClassificationSimulationResults(props: Props) {
               (item) => item.taskId === activeTab,
             )?.latestStatus?.status === 'SUCCESS' ? (
               <Tabs
+                type="card"
                 activeKey={activeTab}
                 items={items}
-                type="card"
                 tabHeight={'100%'}
                 onChange={(key) => {
                   setActiveTab(key);

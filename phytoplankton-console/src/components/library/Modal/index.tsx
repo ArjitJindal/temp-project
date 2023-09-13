@@ -74,8 +74,9 @@ export default function Modal(props: Props) {
             </div>
             {withTabs && (
               <Tabs
+                type="card"
                 activeKey={activeTab}
-                onChange={setActiveTab}
+                onChange={(key) => setActiveTab(key)}
                 items={tabs.map((tab) => ({ ...tab, children: undefined }))}
               />
             )}
