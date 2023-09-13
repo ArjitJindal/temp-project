@@ -236,6 +236,6 @@ export default class HighTrafficBetweenSameParties extends TransactionAggregatio
   }
 
   override getRuleAggregationVersion(): number {
-    return 1
+    return 2
   }
 }

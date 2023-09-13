@@ -226,6 +226,6 @@ export default class SamePaymentDetailsRule extends TransactionAggregationRule<
     return this.parameters.timeWindow
   }
   override getRuleAggregationVersion(): number {
-    return 2
+    return 3
   }
 }

@@ -385,6 +385,6 @@ export default class HighTrafficVolumeBetweenSameUsers extends TransactionAggreg
   }
 
   override getRuleAggregationVersion(): number {
-    return 1
+    return 2
   }
 }

@@ -251,6 +251,6 @@ export default abstract class TransactionsPatternPercentageBaseRule<
   protected abstract getNeededTransactionFields(): Array<keyof Transaction>
 
   override getRuleAggregationVersion(): number {
-    return 2
+    return 3
   }
 }

@@ -2,26 +2,9 @@ import { mapValues, memoize } from 'lodash'
 import { getReceiverKeyId, getSenderKeyId } from '../utils'
 import { TimeWindow } from '../utils/rule-parameter-schemas'
 import { TransactionRule } from './rule'
-import { TransactionRuleImplementationName } from '.'
 import dayjs, { duration } from '@/utils/dayjs'
 import { logger } from '@/core/logger'
 import { hasFeature } from '@/core/utils/context'
-
-export const RULE_IMPLEMENTATIONS_V2: TransactionRuleImplementationName[] = [
-  'transactions-velocity',
-  'transactions-volume',
-  'transactions-average-amount-exceeded',
-  'transactions-average-daily-amount-exceeded',
-  'transactions-average-number-exceeded',
-  'total-transactions-volume-exceeds',
-  'too-many-counterparty-country',
-  'too-many-transactions-to-high-risk-country',
-  'transactions-round-value-velocity',
-  'multiple-counterparty-senders-within-time-period',
-  'multiple-user-senders-within-time-period',
-  'transactions-outflow-inflow-volume',
-  'using-too-many-banks-to-make-payments',
-]
 
 // NOTE: Increment this version to invalidate the existing aggregation data of all the rules
 const AGGREGATION_VERSION = '2'
@@ -221,12 +204,7 @@ export abstract class TransactionAggregationRule<
       userKeyId: string,
       ruleInstanceId: string
     ): Promise<string | undefined> => {
-      if (
-        hasFeature('RULES_ENGINE_V2') &&
-        RULE_IMPLEMENTATIONS_V2.includes(
-          this.rule.ruleImplementationName as TransactionRuleImplementationName
-        )
-      ) {
+      if (hasFeature('RULES_ENGINE_V2')) {
         return this.aggregationRepository?.getLatestAvailableUserRuleTimeAggregationVersion(
           userKeyId,
           ruleInstanceId

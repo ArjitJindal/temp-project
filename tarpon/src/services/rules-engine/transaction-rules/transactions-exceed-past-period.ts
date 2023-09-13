@@ -322,6 +322,6 @@ export default class TransactionsExceedPastPeriodRule extends TransactionAggrega
   }
 
   override getRuleAggregationVersion(): number {
-    return 1
+    return 2
   }
 }

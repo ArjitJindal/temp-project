@@ -778,7 +778,7 @@ export class RulesEngineService {
     const command = new SendMessageCommand({
       MessageBody: JSON.stringify(task.payload),
       QueueUrl: process.env.TRANSACTION_AGGREGATION_QUEUE_URL!,
-      MessageGroupId: generateChecksum(this.tenantId),
+      MessageGroupId: generateChecksum(task.userKeyId),
       MessageDeduplicationId: generateChecksum(
         `${task.userKeyId}:${task.payload.ruleInstanceId}:${task.payload.transactionId}`
       ),

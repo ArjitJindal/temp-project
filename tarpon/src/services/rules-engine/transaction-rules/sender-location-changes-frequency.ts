@@ -234,6 +234,6 @@ export default class SenderLocationChangesFrequencyRule extends TransactionAggre
     }
   }
   protected getRuleAggregationVersion(): number {
-    return 1
+    return 2
   }
 }

@@ -220,6 +220,6 @@ export default class TooManyUsersForSameCardRule extends TransactionAggregationR
     }
   }
   protected getRuleAggregationVersion(): number {
-    return 1
+    return 2
   }
 }

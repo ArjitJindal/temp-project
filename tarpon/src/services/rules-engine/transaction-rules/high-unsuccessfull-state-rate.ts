@@ -458,6 +458,6 @@ export default class HighUnsuccessfullStateRateRule extends TransactionAggregati
   }
 
   override getRuleAggregationVersion(): number {
-    return 2
+    return 3
   }
 }
