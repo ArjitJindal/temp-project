@@ -26,7 +26,10 @@ const TYPE_PREFIX = 'type:'
 const RULE_INSTANCE_PREFIX = 'rule:'
 
 export type TimeGranularity = 'day' | 'month' | 'year'
-export type TenantSettingName = 'features' | 'ruleActionAliases'
+export type TenantSettingName =
+  | 'features'
+  | 'ruleActionAliases'
+  | 'aiFieldsEnabled'
 
 export const TRANSACTION_PRIMARY_KEY_IDENTIFIER = 'transaction#primary'
 export const USER_PRIMARY_KEY_IDENTIFIER = 'user#primary'

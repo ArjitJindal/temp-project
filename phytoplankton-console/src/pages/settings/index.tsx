@@ -18,9 +18,10 @@ import { SlackNotificationsSettings } from './components/SlackNotificationsSetti
 import { ProfessionalServicesSettings } from './components/ProfessionalServicesSettings';
 import { SanctionsSettings } from './components/SanctionsSettings';
 import { ProductionAccessControl } from './components/ProductionAccessControl';
+import { AISources } from './components/AISources';
 import PageWrapper from '@/components/PageWrapper';
 import { useI18n } from '@/locales';
-import { useFeatureEnabled } from '@/components/AppWrapper/Providers/SettingsProvider';
+import { Feature, useFeatureEnabled } from '@/components/AppWrapper/Providers/SettingsProvider';
 import PageTabs from '@/components/ui/PageTabs';
 import { makeUrl } from '@/utils/routing';
 
@@ -57,6 +58,9 @@ export default function SettingsPage() {
           <>
             <NarrativeTemplates />
             <ChecklistTemplatesSettings />
+            <Feature name="COPILOT">
+              <AISources />
+            </Feature>
           </>
         </Tabs.TabPane>
         <Tabs.TabPane tab={i18n('menu.settings.transactions')} key={'transactions'}>

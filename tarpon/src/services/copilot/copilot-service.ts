@@ -1,4 +1,12 @@
 import { Configuration, OpenAIApi } from 'openai'
+import { MongoClient } from 'mongodb'
+import { DynamoDBDocumentClient } from '@aws-sdk/lib-dynamodb'
+import {
+  APIGatewayEventLambdaAuthorizerContext,
+  APIGatewayProxyWithLambdaAuthorizerEvent,
+} from 'aws-lambda'
+import { Credentials } from '@aws-sdk/client-sts'
+import { TenantRepository } from '../tenants/repositories/tenant-repository'
 import {
   AttributeGenerator,
   DefaultAttributeBuilders,
@@ -15,6 +23,9 @@ import { DefaultApiFormatNarrativeRequest } from '@/@types/openapi-internal/Requ
 import { ruleNarratives } from '@/services/copilot/rule-narratives'
 import { reasonNarratives } from '@/services/copilot/reason-narratives'
 import { InternalTransaction } from '@/@types/openapi-internal/InternalTransaction'
+import { AIAttribute } from '@/@types/openapi-internal/AIAttribute'
+import { getMongoDbClient } from '@/utils/mongodb-utils'
+import { getDynamoDbClientByEvent } from '@/utils/dynamodb'
 
 type GenerateCaseNarrative = {
   _case: Case
@@ -55,15 +66,34 @@ const MAX_TOKEN_OUTPUT = 4096
 @traceable
 export class CopilotService {
   private readonly openai!: OpenAIApi
+  private readonly tenantId: string
+  private mongoDb: MongoClient
+  private dynamoDb: DynamoDBDocumentClient
 
-  public static async new() {
+  public static async new(
+    event: APIGatewayProxyWithLambdaAuthorizerEvent<
+      APIGatewayEventLambdaAuthorizerContext<Credentials>
+    >
+  ) {
     const openApi = await getSecret<{ apiKey: string }>(
       process.env.OPENAI_CREDENTIALS_SECRET_ARN as string
     )
-    return new this(openApi.apiKey)
+    const tenantId = event.requestContext.authorizer.principalId
+    const connections = {
+      mongoDb: await getMongoDbClient(),
+      dynamoDb: await getDynamoDbClientByEvent(event),
+    }
+    return new this(openApi.apiKey, tenantId, connections)
   }
 
-  constructor(apiKey: string) {
+  constructor(
+    apiKey: string,
+    tenantId: string,
+    connections: { mongoDb: MongoClient; dynamoDb: DynamoDBDocumentClient }
+  ) {
+    this.tenantId = tenantId
+    this.mongoDb = connections.mongoDb
+    this.dynamoDb = connections.dynamoDb
     this.openai = new OpenAIApi(
       new Configuration({
         apiKey,
@@ -89,6 +119,12 @@ export class CopilotService {
       throw new Error('Unable to generate narrative for this SAR')
     }
 
+    const aiFieldsEnabled = await this.getAllEnabledAttribues()
+
+    const attributesData = [...attributes.entries()].filter((f) =>
+      aiFieldsEnabled?.includes(f[0] as AIAttribute)
+    )
+
     const content = `
     The following is a template for suspicious activity report written by bank staff to justify why they are reporting a customer to the financial authorities.
     
@@ -97,10 +133,11 @@ export class CopilotService {
     
     Please fill in the template above with relevant data from the following JSON blob maintaining the exact same structure and correct any spelling mistakes or grammatical errors:
     
-    ${JSON.stringify([...attributes.entries()])}
+    ${JSON.stringify([...attributesData.entries()])}
     `.slice(0, MAX_TOKEN_OUTPUT)
 
     const response = await this.gpt(content)
+
     return {
       narrative: response.replace(PROMPT, ''),
       attributes: [...attributes.entries()].map((f) => {
@@ -108,10 +145,24 @@ export class CopilotService {
         return {
           attribute,
           value,
-          secret,
+          secret:
+            secret ?? !aiFieldsEnabled?.includes(attribute as AIAttribute),
         }
       }),
     }
+  }
+
+  private async getAllEnabledAttribues(): Promise<AIAttribute[]> {
+    const tenantRepository = new TenantRepository(this.tenantId, {
+      mongoDb: this.mongoDb,
+      dynamoDb: this.dynamoDb,
+    })
+
+    const tenantSettings = await tenantRepository.getTenantSettings([
+      'aiFieldsEnabled',
+    ])
+
+    return tenantSettings?.aiFieldsEnabled || []
   }
 
   async getCaseNarrative(
@@ -127,7 +178,11 @@ export class CopilotService {
     const reasonNarrs = request.reasons.map(
       (reason) => reasonNarratives.find((rn) => rn.reason === reason)?.narrative
     )
+    const aiFieldsEnabled = await this.getAllEnabledAttribues()
 
+    const attributesData = [...attributes.entries()].filter((f) =>
+      aiFieldsEnabled?.includes(f[0] as AIAttribute)
+    )
     const content = `
     The following is a template for document written by bank staff to justify why they have or have not reported a customer to the financial authorities.
     
@@ -137,10 +192,9 @@ export class CopilotService {
     
     The following text and data are various pieces of information relevant to a single customer who is under investigation by the bank staff, please rewrite this information so that it conforms to the template above and correct any spelling mistakes or grammatical errors.
     
-    ${JSON.stringify([...attributes.entries()])}
+    ${JSON.stringify([...attributesData.entries()])}
     `.slice(0, MAX_TOKEN_OUTPUT)
 
-    console.log(content)
     const response = await this.gpt(content)
     return {
       narrative: response.replace(PROMPT, ''),
@@ -149,7 +203,9 @@ export class CopilotService {
         return {
           attribute,
           value: entry.value,
-          secret: entry.secret,
+          secret:
+            entry.secret ??
+            !aiFieldsEnabled?.includes(attribute as AIAttribute),
         }
       }),
     }

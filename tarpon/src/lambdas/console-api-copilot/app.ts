@@ -25,7 +25,7 @@ export const copilotHandler = lambdaApi({})(
     const handlers = new Handlers()
 
     handlers.registerGenerateNarrative(async (ctx, request) => {
-      const copilotService = await CopilotService.new()
+      const copilotService = await CopilotService.new(event)
       const { entityId, entityType, reasons } = request.NarrativeRequest
 
       if (entityType === 'REPORT') {
@@ -75,7 +75,7 @@ export const copilotHandler = lambdaApi({})(
     })
 
     handlers.registerFormatNarrative(async (_ctx, request) => {
-      const copilotService = await CopilotService.new()
+      const copilotService = await CopilotService.new(event)
       return copilotService.formatNarrative(request)
     })
 

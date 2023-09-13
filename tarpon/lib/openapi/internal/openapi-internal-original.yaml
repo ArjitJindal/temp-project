@@ -6054,6 +6054,36 @@ components:
         - id
         - name
         - isProductionAccessDisabled
+    AIAttribute:
+      title: CoPilotAttribute
+      type: string
+      enum:
+        - userType
+        - country
+        - ruleHitNames
+        - ruleHitNature
+        - caseComments
+        - userComments
+        - caseGenerationDate
+        - firstPaymentAmount
+        - transactionsCount
+        - minAmount
+        - maxAmount
+        - totalTransactionAmount
+        - averageTransactionAmount
+        - name
+        - websites
+        - closureDate
+        - industry
+        - productsSold
+        - transactionIds
+    AIAttributeCategory:
+      title: CoPilotAttributeCategory
+      type: string
+      enum:
+        - CASE
+        - USER
+        - TRANSACTION
     TenantSettings:
       title: TenantSettings
       type: object
@@ -6079,6 +6109,10 @@ components:
           properties:
             currency:
               $ref: ../public/openapi-public-original.yaml#/components/schemas/CurrencyCode
+        aiFieldsEnabled:
+          type: array
+          items:
+            $ref: '#/components/schemas/AIAttribute'
         isPaymentApprovalEnabled:
           type: boolean
         complyAdvantageSearchProfileId:

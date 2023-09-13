@@ -1,4 +1,3 @@
-import { Attribute } from './attributes'
 import { InternalTransaction } from '@/@types/openapi-internal/InternalTransaction'
 import { InternalConsumerUser } from '@/@types/openapi-internal/InternalConsumerUser'
 import { InternalBusinessUser } from '@/@types/openapi-internal/InternalBusinessUser'
@@ -6,6 +5,7 @@ import { TransactionsBuilder } from '@/services/copilot/attributes/transactions-
 import { UserAttributeBuilder } from '@/services/copilot/attributes/user-attribute-builder'
 import { Case } from '@/@types/openapi-internal/Case'
 import { CaseAttributeBuilder } from '@/services/copilot/attributes/case-attribute-builder'
+import { AIAttribute } from '@/@types/openapi-internal/AIAttribute'
 
 export type InputData = {
   transactions: InternalTransaction[]
@@ -20,7 +20,7 @@ export interface AttributeBuilder {
 }
 
 export class AttributeSet extends Map<string, { value: any; secret: boolean }> {
-  getAttribute(key: Attribute) {
+  getAttribute(key: AIAttribute) {
     if (!this.has(key)) {
       throw new Error(
         `No value set for ${key}. Dependencies mapped incorrectly.`
@@ -28,7 +28,7 @@ export class AttributeSet extends Map<string, { value: any; secret: boolean }> {
     }
     return this.get(key)
   }
-  setAttribute(key: Attribute, value: any, secret = false) {
+  setAttribute(key: AIAttribute, value: any, secret = false) {
     if (this.has(key)) {
       throw new Error(
         `Value already set for ${key}. Dependencies mapped incorrectly.`
