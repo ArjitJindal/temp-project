@@ -3,6 +3,8 @@ import PopupContent from './PopupContent';
 import AlarmWarningFillIcon from '@/components/ui/icons/Remix/system/alarm-warning-fill.react.svg';
 import { RiskLevel } from '@/apis';
 import QuickFilterBase from '@/components/library/QuickFilter/QuickFilterBase';
+import { useSettings } from '@/components/AppWrapper/Providers/SettingsProvider';
+import { levelToAlias } from '@/utils/risk-levels';
 
 interface Props {
   riskLevels: RiskLevel[];
@@ -11,15 +13,19 @@ interface Props {
 
 export function RiskLevelButton(props: Props) {
   const { riskLevels, onConfirm } = props;
-
   const isEmpty = riskLevels.length === 0;
+  const configSetting = useSettings();
+  const configRiskLevelAlias = configSetting?.riskLevelAlias;
+  const riskLevelAlias = configRiskLevelAlias
+    ? riskLevels.map((level) => levelToAlias(level, configRiskLevelAlias))
+    : riskLevels;
 
   return (
     <QuickFilterBase
       icon={<AlarmWarningFillIcon />}
       analyticsName="risk-filter"
       title="CRA"
-      buttonText={isEmpty ? undefined : riskLevels.join(', ')}
+      buttonText={isEmpty ? undefined : riskLevelAlias.join(', ')}
       onClear={
         isEmpty
           ? undefined

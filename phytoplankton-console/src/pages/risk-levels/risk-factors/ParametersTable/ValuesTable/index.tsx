@@ -23,6 +23,8 @@ import { AsyncResource, isLoading, useLastSuccessValue } from '@/utils/asyncReso
 import { DEFAULT_COUNTRY_RISK_VALUES } from '@/utils/defaultCountriesRiskLevel';
 import { useHasPermissions } from '@/utils/user-utils';
 import { P } from '@/components/ui/Typography';
+import { useSettings } from '@/components/AppWrapper/Providers/SettingsProvider';
+import { levelToAlias } from '@/utils/risk-levels';
 
 interface Props {
   item: RiskLevelTableItem;
@@ -141,7 +143,10 @@ export default function ValuesTable(props: Props) {
     },
     [values, handleUpdateValues],
   );
-
+  const configSetting = useSettings();
+  const aliasForVeryHigh = configSetting?.riskLevelAlias
+    ? levelToAlias('VERY_HIGH', configSetting?.riskLevelAlias)
+    : 'VERY_HIGH';
   return (
     <div className={style.root}>
       <div className={style.table}>
@@ -149,8 +154,8 @@ export default function ValuesTable(props: Props) {
           <div className={style.header}>Default risk level</div>
           <P grey variant="sml" className={style.description}>
             Any value lacking an assigned risk level will be categorized under default risk level.
-            The system configuration designates the default value as 'VERY HIGH' when no specific
-            risk level is allocated.
+            The system configuration designates the default value as '{aliasForVeryHigh}' when no
+            specific risk level is allocated.
           </P>
         </div>
         <div className={style.risk}>

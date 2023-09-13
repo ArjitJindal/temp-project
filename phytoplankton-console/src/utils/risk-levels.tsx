@@ -1,6 +1,7 @@
 import {
   RiskClassificationScore as ApiRiskClassificationScore,
   RiskLevel as ApiRiskLevel,
+  RiskLevelAlias,
 } from '@/apis';
 import {
   COLORS_V2_GRAY_10,
@@ -86,3 +87,6 @@ export function useRiskLevel(score: number): RiskLevel | null {
   }
   return null;
 }
+
+export const levelToAlias = (level: string, configRiskLevelAlias: RiskLevelAlias[]) =>
+  configRiskLevelAlias?.find((item) => item.level === level)?.alias || level;
