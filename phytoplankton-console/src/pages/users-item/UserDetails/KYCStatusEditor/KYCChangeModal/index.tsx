@@ -31,7 +31,8 @@ type Reasons =
   | 'Sanctions hit'
   | 'Risky profile'
   | 'Other';
-const StatusChangeReasons: Reasons[] = [
+
+const InitialReasonsObject: Reasons[] = [
   'Fake document',
   'Blurry document',
   'Suspected fraud',
@@ -65,6 +66,8 @@ export default function KYCChangeModal(props: Props) {
     values: DEFAULT_INITIAL_VALUES,
     isValid: false,
   });
+  const [presentKycStatus, setpresentKycStatus] = useState<string>('');
+  const [StatusChangeReasons, setStatusChangeReasons] = useState<Reasons[]>(InitialReasonsObject);
   const uploadRef = useRef<RemoveAllFilesRef>(null);
   const isOtherReason = useMemo(() => {
     return formState.values.reason === 'Other';
@@ -87,6 +90,13 @@ export default function KYCChangeModal(props: Props) {
     uploadRef.current?.removeAllFiles();
   }, []);
   const api = useApi();
+
+  useEffect(() => {
+    if (presentKycStatus === 'SUCCESSFUL') setStatusChangeReasons(['Other']);
+    else {
+      setStatusChangeReasons(InitialReasonsObject);
+    }
+  }, [presentKycStatus]);
 
   let messageLoading: CloseMessage | undefined;
   const mutation = useMutation(
@@ -158,7 +168,10 @@ export default function KYCChangeModal(props: Props) {
         <Form<FormValues>
           initialValues={DEFAULT_INITIAL_VALUES}
           ref={ref}
-          onChange={setFormState}
+          onChange={(formValue) => {
+            setFormState(formValue);
+            setpresentKycStatus(formValue?.values?.kycStatus);
+          }}
           fieldValidators={{
             kycStatus: notEmpty,
             reason: notEmpty,
