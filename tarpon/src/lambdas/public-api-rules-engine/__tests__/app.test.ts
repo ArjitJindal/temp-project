@@ -448,7 +448,6 @@ describe('Public API - Create a Consumer User Event', () => {
       status: 'ALLOW',
       executedRules: [],
       hitRules: [],
-      isWebhookRequried: false,
     })
     const mongoUser = await userRepository.getUserById('foo')
     expect(mongoUser).toEqual({
@@ -627,7 +626,6 @@ describe('Public API - Create a Business User Event', () => {
       status: 'ALLOW',
       executedRules: [],
       hitRules: [],
-      isWebhookRequried: false,
     }
     expect(JSON.parse(response?.body as string)).toEqual(toMatchObject)
     const userService = new UserService(

@@ -29,11 +29,7 @@ describe('Test Dynamo Db User Update', () => {
 
     const createdUser = await userRepository.saveUser(user, 'CONSUMER')
 
-    expect(createdUser).toEqual({
-      ...user,
-      type: 'CONSUMER',
-      isWebhookRequried: false,
-    })
+    expect(createdUser).toEqual({ ...user, type: 'CONSUMER' })
 
     const executedRules: ExecutedRulesResult[] = [
       {
@@ -81,8 +77,8 @@ describe('Test Dynamo Db User Update', () => {
       ...user,
       type: 'CONSUMER',
       executedRules,
-      isWebhookRequried: false,
       hitRules,
+      isWebhookRequried: false,
     })
 
     const getUser = await userRepository.getMongoConsumerUser(userId)
@@ -121,7 +117,6 @@ describe('Test User Management Service', () => {
     expect(userResult).toEqual({
       ...user,
       type: 'CONSUMER',
-      isWebhookRequried: false,
     })
 
     await userRepository.saveUserComment(user.userId, {
@@ -172,7 +167,6 @@ describe('Test User Management Service', () => {
       executedRules: [],
       hitRules: [],
       status: 'ALLOW',
-      isWebhookRequried: false,
     }
 
     expect(userUpdated).toEqual(toBeCheckedData)
@@ -213,7 +207,6 @@ describe('Test Business User Management Service', () => {
     expect(userResult).toEqual({
       ...user,
       type: 'BUSINESS',
-      isWebhookRequried: false,
     })
 
     await userRepository.saveUserComment(user.userId, {
@@ -270,7 +263,6 @@ describe('Test Business User Management Service', () => {
       status: 'ALLOW',
       executedRules: [],
       hitRules: [],
-      isWebhookRequried: false,
     }
 
     expect(userUpdated).toEqual(toBeCheckedData)

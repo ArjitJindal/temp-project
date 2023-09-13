@@ -624,6 +624,7 @@ export class UserRepository {
     delete user.PartitionKeyID
     delete user.SortKeyID
     delete user.createdAt
+    delete user.isWebhookRequried
 
     return user as T
   }
@@ -744,6 +745,7 @@ export class UserRepository {
       )
       await localTarponChangeCaptureHandler(primaryKey)
     }
+    delete newUser.isWebhookRequried
     return newUser
   }
 
