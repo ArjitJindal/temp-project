@@ -18,27 +18,26 @@ type Position =
 interface Props {
   data: Record<string, any>[];
   COLORS: Record<string, string>;
-  angleField: string;
-  colorField: string;
   position?: Position;
+  shape?: 'CIRCLE' | 'SEMI_CIRCLE';
 }
 
 function Donut(props: Props) {
-  const { data, COLORS, angleField, colorField } = props;
+  const { data, COLORS, position, shape = 'SEMI_CIRCLE' } = props;
   const config = {
     appendPadding: 10,
     data,
-    angleField: angleField,
-    colorField: colorField,
-    color: (data: any) => COLORS[data.priority],
+    angleField: 'angleField',
+    colorField: 'colorField',
+    color: (data: any) => COLORS[data.colorField],
     radius: 1,
     innerRadius: 0.65,
-    startAngle: Math.PI,
+    startAngle: shape === 'CIRCLE' ? 0 : Math.PI,
     endAngle: 2 * Math.PI,
     label: {
       type: 'inner',
       offset: '-50%',
-      content: (item: any) => item.value,
+      content: (item: any) => item.angleField,
       autoRotate: false,
       style: {
         textAlign: 'center',
@@ -71,8 +70,7 @@ function Donut(props: Props) {
     <Pie
       {...config}
       legend={{
-        position: props.position || 'bottom',
-        sort: false,
+        position: position || 'bottom',
       }}
     />
   );

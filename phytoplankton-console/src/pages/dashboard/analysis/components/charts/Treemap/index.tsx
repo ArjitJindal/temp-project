@@ -46,7 +46,7 @@ export default function Treemap<Name extends string = string>(props: Props<Name>
         itemName: {
           formatter: formatTitle ? (formatTitle as unknown as any) : undefined,
         },
-        padding: [0, 0, 0, 75],
+        padding: [0, 0, 0, 50],
       }}
       rectStyle={{
         strokeOpacity: 0,

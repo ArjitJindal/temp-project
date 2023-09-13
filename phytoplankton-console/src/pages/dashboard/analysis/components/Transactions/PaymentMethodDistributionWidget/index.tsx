@@ -94,6 +94,7 @@ export default function PaymentMethodDistributionWidget(props: Props) {
             })
           : undefined
       }
+      width="HALF"
     >
       <AsyncResourceRenderer resource={preparedDataRes}>
         {(preparedData) => (

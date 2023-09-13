@@ -164,6 +164,12 @@ export const DEVICE_DATA_COLLECTION = (tenantId: string) => {
   return `${tenantId}-device-data-metrics`
 }
 
+export const TRANSACTION_TYPE_DISTRIBUTION_STATS_COLLECTION = (
+  tenantId: string
+) => {
+  return `${tenantId}-transaction-type-distribution`
+}
+
 export function getMongoDbIndexDefinitions(tenantId: string): {
   [collectionName: string]: Array<{
     getIndexes: () => Document[]

@@ -22,6 +22,7 @@ import {
   DRS_SCORES_DISTRIBUTION_STATS_COLLECTION,
   REPORT_COLLECTION,
   TRANSACTIONS_COLLECTION,
+  TRANSACTION_TYPE_DISTRIBUTION_STATS_COLLECTION,
   USERS_COLLECTION,
 } from '@/utils/mongodb-definitions'
 
@@ -51,6 +52,8 @@ import { DashboardStatsAlertPriorityDistributionStats } from '@/@types/openapi-i
 import { DashboardStatsClosingReasonDistributionStatsClosingReasonsData } from '@/@types/openapi-internal/DashboardStatsClosingReasonDistributionStatsClosingReasonsData'
 import { hasFeature } from '@/core/utils/context'
 import { Report } from '@/@types/openapi-internal/Report'
+import { DashboardStatsTransactionTypeDistributionStats } from '@/@types/openapi-internal/DashboardStatsTransactionTypeDistributionStats'
+import { DashboardStatsTransactionTypeDistributionStatsTransactionTypeData } from '@/@types/openapi-internal/DashboardStatsTransactionTypeDistributionStatsTransactionTypeData'
 
 export type TimeRange = {
   startTimestamp?: number
@@ -1515,7 +1518,10 @@ export class DashboardStatsRepository {
   public async refreshTransactionStats(timeRange?: TimeRange) {
     const db = this.mongoDb.db()
 
-    await Promise.all([this.recalculateTransactionsVolumeStats(db, timeRange)])
+    await Promise.all([
+      this.recalculateTransactionsVolumeStats(db, timeRange),
+      this.recalculateTransactionTypeDistribution(db, timeRange),
+    ])
   }
 
   public async refreshCaseStats(timeRange?: TimeRange) {
@@ -2168,6 +2174,89 @@ export class DashboardStatsRepository {
     })
     return {
       alertPriorityData: sortBy(alertPriorityData, 'priority'),
+    }
+  }
+  public async recalculateTransactionTypeDistribution(
+    db: Db,
+    timeRange?: TimeRange
+  ) {
+    const transactionsCollection = db.collection<InternalTransaction>(
+      TRANSACTIONS_COLLECTION(this.tenantId)
+    )
+    const aggregationCollection =
+      TRANSACTION_TYPE_DISTRIBUTION_STATS_COLLECTION(this.tenantId)
+
+    let timestampMatch = undefined
+    if (timeRange) {
+      const { start, end } = getAffectedInterval(timeRange, 'HOUR')
+      timestampMatch = {
+        timestamp: {
+          $gte: start,
+          $lt: end,
+        },
+      }
+    }
+    await db.collection(aggregationCollection).createIndex(
+      {
+        type: -1,
+        value: -1,
+      },
+      {
+        unique: true,
+      }
+    )
+    await transactionsCollection
+      .aggregate(
+        [
+          {
+            $match: {
+              ...timestampMatch,
+              type: { $exists: true, $ne: null },
+            },
+          },
+          {
+            $group: {
+              _id: '$type',
+              count: { $sum: 1 },
+            },
+          },
+          {
+            $project: {
+              _id: false,
+              type: '$_id',
+              value: '$count',
+            },
+          },
+          {
+            $merge: {
+              into: aggregationCollection,
+              on: ['type', 'value'],
+              whenMatched: 'merge',
+            },
+          },
+        ],
+        { allowDiskUse: true }
+      )
+      .next()
+
+    logger.info(`Aggregation done`)
+  }
+  async getTransactionTypeDistributionStatistics(): Promise<DashboardStatsTransactionTypeDistributionStats> {
+    const db = this.mongoDb.db()
+    const collection =
+      db.collection<DashboardStatsTransactionTypeDistributionStatsTransactionTypeData>(
+        TRANSACTION_TYPE_DISTRIBUTION_STATS_COLLECTION(this.tenantId)
+      )
+    const result = await collection.find({}).toArray()
+    const transactionTypeData: DashboardStatsTransactionTypeDistributionStatsTransactionTypeData[] =
+      result.map((item) => {
+        return {
+          type: item.type,
+          value: item.value,
+        }
+      })
+    return {
+      transactionTypeData,
     }
   }
 }

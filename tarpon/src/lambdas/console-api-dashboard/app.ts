@@ -251,6 +251,19 @@ export const dashboardStatsHandler = lambdaApi()(
         return await dashboardStatsRepository.getAlertPriorityDistributionStatistics()
       }
     )
+    handlers.registerGetDashboardStatsTransactionTypeDistributionStats(
+      async (ctx) => {
+        const client = await getMongoDbClient()
+        const dashboardStatsRepository = new DashboardStatsRepository(
+          ctx.tenantId,
+          { mongoDb: client }
+        )
+        if (shouldRefreshAll(event)) {
+          await dashboardStatsRepository.refreshAllStats()
+        }
+        return await dashboardStatsRepository.getTransactionTypeDistributionStatistics()
+      }
+    )
     return await handlers.handle(event)
   }
 )

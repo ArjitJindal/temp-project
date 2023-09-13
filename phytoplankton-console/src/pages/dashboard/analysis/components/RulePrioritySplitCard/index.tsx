@@ -57,13 +57,13 @@ export default function RulePrioritySplitCard(props: Props) {
 
           // Converting the frequency map into an array of objects
           const priorityData = Object.entries(priorityFrequency).map(([priority, value]) => ({
-            priority,
-            value,
+            colorField: priority,
+            angleField: value,
           }));
 
           const data = priorityData.sort((a, b) => {
-            const fa = a.priority.toLowerCase(),
-              fb = b.priority.toLowerCase();
+            const fa = a.colorField.toLowerCase(),
+              fb = b.colorField.toLowerCase();
 
             if (fa < fb) {
               return -1;
@@ -74,15 +74,7 @@ export default function RulePrioritySplitCard(props: Props) {
             return 0;
           });
 
-          return (
-            <Donut
-              data={data}
-              COLORS={gaugeColors}
-              angleField="value"
-              colorField="priority"
-              position="right"
-            />
-          );
+          return <Donut data={data} COLORS={gaugeColors} position="right" />;
         }}
       </AsyncResourceRenderer>
     </Widget>

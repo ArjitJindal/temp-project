@@ -244,6 +244,8 @@ export const CLOSING_REASON_DISTRIBUTION = (entity: string): QueryKey => [
 
 export const ALERT_PRIORITY_DISTRIBUTION = (): QueryKey => ['dashboard', 'case-management'];
 
+export const TRANSACTION_TYPE_DISTRIBUTION = (): QueryKey => ['dashboard', 'transactions'];
+
 export const SETTINGS = (): QueryKey => ['settings'];
 
 export const TENANT_USAGE_DATA = (): QueryKey => ['tenant-usage-data'];

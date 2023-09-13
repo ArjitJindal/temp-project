@@ -58,13 +58,11 @@ const DistributionByAlertPriority = (props: Props) => {
         {({ alertPriorityData }) => {
           const data = alertPriorityData.map(
             (item: DashboardStatsAlertPriorityDistributionStatsAlertPriorityData) => {
-              return { priority: item.priority, value: item.value };
+              return { colorField: item.priority, angleField: item.value };
             },
           );
 
-          return (
-            <Donut data={data} COLORS={PRIORITY_COLORS} angleField="value" colorField="priority" />
-          );
+          return <Donut data={data} COLORS={PRIORITY_COLORS} />;
         }}
       </AsyncResourceRenderer>
     </Widget>

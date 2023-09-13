@@ -1,7 +1,7 @@
 import { useMemo, useState } from 'react';
 import { useLocalStorageState } from 'ahooks';
 import TransactionsChartWidget from './components/TransactionsChartWidget';
-import PaymentMethodDistributionWidget from './components/PaymentMethodDistributionWidget';
+import PaymentMethodDistributionWidget from './components/Transactions/PaymentMethodDistributionWidget';
 import RuleHitCard from './components/RulesHitCard';
 import TopUsersHitCard from './components/TopUsersHitCard';
 import DRSDistributionCard from './components/DRSDistributionCard';
@@ -11,6 +11,7 @@ import RulePrioritySplitCard from './components/RulePrioritySplitCard';
 import CaseClosingReasonCard from './components/CaseManagement/CaseClosingReasonCard';
 import DistributionByAlertPriority from './components/CaseManagement/DistributionByAlertPriority';
 import s from './style.module.less';
+import TransactinTypeDistribution from './components/Transactions/TransactionTypeDistribution';
 import PageWrapper from '@/components/PageWrapper';
 import { useFeatureEnabled } from '@/components/AppWrapper/Providers/SettingsProvider';
 import { useI18n } from '@/locales';
@@ -34,7 +35,8 @@ type KeyValues =
   | 'RULE_PRIORITY_SPLIT'
   | 'DISTRIBUTION_BY_CLOSING_REASON'
   | 'DISTRIBUTION_BY_ALERT_PRIORITY'
-  | 'DISTRIBUTION_BY_PAYMENT_METHOD';
+  | 'DISTRIBUTION_BY_PAYMENT_METHOD'
+  | 'DISTRIBUTION_BY_TRANSACTION_TYPE';
 
 const KEYS: KeyValues[] = [
   'OVERVIEW',
@@ -47,6 +49,7 @@ const KEYS: KeyValues[] = [
   'TEAM_OVERVIEW',
   'RULE_PRIORITY_SPLIT',
   'DISTRIBUTION_BY_PAYMENT_METHOD',
+  'DISTRIBUTION_BY_TRANSACTION_TYPE',
 ];
 
 const DEFAULT_VALUES = {
@@ -60,6 +63,7 @@ const DEFAULT_VALUES = {
   DISTRIBUTION_BY_CLOSING_REASON: true,
   DISTRIBUTION_BY_ALERT_PRIORITY: true,
   DISTRIBUTION_BY_PAYMENT_METHOD: true,
+  DISTRIBUTION_BY_TRANSACTION_TYPE: true,
 };
 
 type DashboardSettings = Record<KeyValues, boolean>;
@@ -149,6 +153,13 @@ function Analysis() {
                   title: 'Distribution by transaction payment method',
                 },
                 component: PaymentMethodDistributionWidget,
+              },
+              settingsToDisplay.DISTRIBUTION_BY_TRANSACTION_TYPE && {
+                props: {
+                  id: 'distribution_by_transactions_type',
+                  title: 'Distribution by transaction type',
+                },
+                component: TransactinTypeDistribution,
               },
             ].filter(notEmpty),
           },
