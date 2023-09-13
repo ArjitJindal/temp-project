@@ -35,7 +35,11 @@ winstonLogger.error = wrap(
     }
     const extra = rest.find(isPlainObject)
     if (!isLocal) {
-      Sentry.captureException(error, { extra })
+      Sentry.withScope((scope) => {
+        const context = getContext()
+        if (context?.logMetadata) scope.setTags(context.logMetadata)
+        Sentry.captureException(error, { extra })
+      })
     }
     return func(error, ...rest)
   }

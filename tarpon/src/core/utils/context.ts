@@ -158,9 +158,7 @@ export function updateLogMetadata(addedMetadata: { [key: string]: any }) {
       },
       isNil
     )
-    Sentry.withScope((scope) => {
-      if (context.logMetadata) scope.setTags(context.logMetadata)
-    })
+    Sentry.setTags(context.logMetadata)
   }
 }
 
