@@ -120,7 +120,10 @@ export default function RuleConfigurationDrawer(props: RuleConfigurationDrawerPr
         props.type === 'EDIT'
           ? `${rule?.id} (${formInitialValues?.basicDetailsStep?.ruleInstanceId})`
           : props.type === 'DUPLICATE'
-          ? `Duplicate ${rule?.id} (${formInitialValues?.basicDetailsStep?.ruleName})`
+          ? `Duplicate ${rule?.id} (${formInitialValues?.basicDetailsStep?.ruleName})`.replace(
+              'Copy of ',
+              '',
+            )
           : 'Configure rule'
       }
       description={

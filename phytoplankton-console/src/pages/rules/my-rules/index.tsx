@@ -273,7 +273,10 @@ const MyRule = (props: { simulationMode?: boolean }) => {
                 onClick={() => {
                   if (canWriteRules && !deleting && entity.id) {
                     setRuleState('DUPLICATE');
-                    onDuplicateRule(entity);
+                    onDuplicateRule({
+                      ...entity,
+                      ruleNameAlias: `Copy of ${entity.ruleNameAlias}`,
+                    });
                   }
                 }}
                 icon={<FileCopyLineIcon />}
@@ -363,9 +366,13 @@ const MyRule = (props: { simulationMode?: boolean }) => {
     };
   });
 
-  const rule = currentRow && rules[currentRow?.ruleId];
-  const ruleInstance: RuleInstance | undefined =
-    currentRow && currentRow.id ? updatedRuleInstances[currentRow.id] || currentRow : undefined;
+  const rule = useMemo(() => currentRow && rules[currentRow?.ruleId], [currentRow, rules]);
+
+  const ruleInstance: RuleInstance | undefined = useMemo<RuleInstance | undefined>(() => {
+    return currentRow && currentRow.id
+      ? updatedRuleInstances[currentRow.id] || currentRow
+      : undefined;
+  }, [currentRow, updatedRuleInstances]);
 
   return (
     <>
