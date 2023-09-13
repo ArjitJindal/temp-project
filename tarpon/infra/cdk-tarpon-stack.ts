@@ -148,7 +148,6 @@ export class CdkTarponStack extends cdk.Stack {
       SQSQueues.TRANSACTION_AGGREGATION_QUEUE_NAME,
       {
         visibilityTimeout: CONSUMER_SQS_VISIBILITY_TIMEOUT,
-        maxReceiveCount: MAX_SQS_RECEIVE_COUNT,
         fifo: true,
         retentionPeriod: Duration.days(7),
       }
