@@ -515,7 +515,7 @@ export const TRANSACTION_RISK_PARAMETERS: RiskLevelTable = [
   {
     parameter: 'originUserSarFiled',
     title: 'Origin user SAR filed',
-    description: 'Risk value based on whether an SAR was filed for the origin user',
+    description: 'Risk value based on whether a SAR was filed for the origin user',
     entity: 'TRANSACTION',
     dataType: 'BOOLEAN',
     isDerived: true,
@@ -526,7 +526,7 @@ export const TRANSACTION_RISK_PARAMETERS: RiskLevelTable = [
   {
     parameter: 'destinationUserSarFiled',
     title: 'Destination user SAR filed',
-    description: 'Risk value based on whether an SAR was filed for the destination user',
+    description: 'Risk value based on whether a SAR was filed for the destination user',
     entity: 'TRANSACTION',
     dataType: '_3DS_STATUS',
     isDerived: true,
