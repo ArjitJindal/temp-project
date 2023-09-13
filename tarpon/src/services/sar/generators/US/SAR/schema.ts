@@ -255,13 +255,6 @@ export const Transmitter = {
     PhoneNumber: arraySchema(
       pickPhoneNumberFields(['PhoneNumberText'], ['PhoneNumberText'])
     ),
-    FlagrightPartyIdentificationTcc: {
-      ...pickPartyIdentificationFields(
-        ['PartyIdentificationNumberText'],
-        ['PartyIdentificationNumberText']
-      ),
-      title: 'Transmitter Control Code (TCC)',
-    },
     FlagrightPartyIdentificationTin: {
       ...pickPartyIdentificationFields(
         ['PartyIdentificationNumberText'],
@@ -274,7 +267,6 @@ export const Transmitter = {
     'PartyName',
     'Address',
     'PhoneNumber',
-    'FlagrightPartyIdentificationTcc',
     'FlagrightPartyIdentificationTin',
   ],
 }

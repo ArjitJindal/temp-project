@@ -4,7 +4,7 @@ import {
 } from 'aws-lambda'
 import { Credentials } from '@aws-sdk/client-sts'
 import { Document, MongoClient } from 'mongodb'
-import { NotFound } from 'http-errors'
+import { NotFound, BadRequest } from 'http-errors'
 import { Account } from '../accounts'
 import { ReportRepository } from './repositories/report-repository'
 import { ReportType } from '@/@types/openapi-internal/ReportType'
@@ -20,6 +20,16 @@ import { DefaultApiGetReportsRequest } from '@/@types/openapi-internal/RequestPa
 import { formatCountry } from '@/utils/countries'
 import { mergeObjects } from '@/utils/object'
 import { traceable } from '@/core/xray'
+import { ReportStatus } from '@/@types/openapi-internal/ReportStatus'
+import { logger } from '@/core/logger'
+
+function withSchema(report: Report): Report {
+  const generator = REPORT_GENERATORS.get(report.reportTypeId)
+  return {
+    ...report,
+    schema: generator?.getSchema(),
+  }
+}
 
 @traceable
 export class ReportService {
@@ -47,6 +57,7 @@ export class ReportService {
       types.push({
         country: formatCountry(type.countryCode) || 'Unknown',
         countryCode: type.countryCode,
+        directSubmission: type.directSubmission,
         id,
         implemented: true,
         type: type.type,
@@ -59,6 +70,7 @@ export class ReportService {
         ([countryCode, type]): ReportType => ({
           country: formatCountry(countryCode) || 'Unknown',
           countryCode,
+          directSubmission: false,
           id: `${countryCode}-${type}`,
           implemented: false,
           type,
@@ -73,8 +85,6 @@ export class ReportService {
     c: Case,
     transactions: InternalTransaction[]
   ): Promise<Report> {
-    const reportId = await this.reportRepository.getId()
-
     const generator = REPORT_GENERATORS.get(reportTypeId)
     if (!c.caseId) {
       throw new NotFound(`No case ID`)
@@ -86,43 +96,44 @@ export class ReportService {
     const lastGeneratedReport =
       await this.reportRepository.getLastGeneratedReport(reportTypeId)
 
-    const populatedSchema = await generator.getPopulatedSchema(
-      reportId,
+    const populatedParameters = await generator.getPopulatedParameters(
       c,
       transactions,
       reporter
     )
     const prefillReport = mergeObjects(
       lastGeneratedReport?.parameters.report,
-      populatedSchema.params.report
+      populatedParameters.report
     )
     const now = new Date().valueOf()
 
-    const report: Report = {
-      id: reportId,
+    return withSchema({
+      id: await this.reportRepository.getId(),
       name: c.caseId,
       description: `SAR report for ${c.caseId}`,
       caseId: c.caseId,
-      schema: populatedSchema.schema,
       reportTypeId,
       createdAt: now,
       updatedAt: now,
       createdById: reporter.id,
-      status: 'draft',
+      status: 'DRAFT',
       parameters: {
-        ...populatedSchema.params,
+        ...populatedParameters,
         report: prefillReport,
       },
       comments: [],
       revisions: [],
       caseUserId:
         c.caseUsers?.origin?.userId ?? c.caseUsers?.destination?.userId ?? '',
-    }
-    return this.reportRepository.saveOrUpdateReport(report)
+    })
   }
 
-  getReports(params: DefaultApiGetReportsRequest) {
-    return this.reportRepository.getReports(params)
+  async getReports(params: DefaultApiGetReportsRequest) {
+    const result = await this.reportRepository.getReports(params)
+    return {
+      ...result,
+      items: result.items.map(withSchema),
+    }
   }
 
   async getReport(reportId: string): Promise<Report> {
@@ -130,19 +141,34 @@ export class ReportService {
     if (!report) {
       throw new NotFound(`Cannot find report ${reportId}`)
     }
-    return report
+    return withSchema(report)
   }
 
   async completeReport(report: Report): Promise<Report> {
-    report.status = 'complete'
+    const generator = REPORT_GENERATORS.get(report.reportTypeId)
+    if (!generator) {
+      throw new BadRequest(
+        `No report generator found for ${report.reportTypeId}`
+      )
+    }
+    const { directSubmission } = generator.getType()
+
+    report.id = report.id ?? (await this.reportRepository.getId())
+    report.status = 'COMPLETE'
     report.revisions.push({
-      output:
-        REPORT_GENERATORS.get(report.reportTypeId)?.generate(
-          report.parameters
-        ) || '',
+      output: generator.generate(report.parameters, report) || '',
       createdAt: Date.now(),
     })
-    return await this.reportRepository.saveOrUpdateReport(report)
+
+    if (directSubmission && generator.submit) {
+      logger.info('Submitting report')
+      report.status = 'SUBMITTING'
+      report.statusInfo = await generator.submit(report)
+      logger.info('Submitted report')
+    }
+
+    const savedReport = await this.reportRepository.saveOrUpdateReport(report)
+    return withSchema(savedReport)
   }
 
   public async reportsFiledForUser(
@@ -156,8 +182,16 @@ export class ReportService {
   }
 
   async draftReport(report: Report): Promise<Report> {
-    report.status = 'draft'
+    report.status = 'DRAFT'
     report.updatedAt = Date.now()
-    return await this.reportRepository.saveOrUpdateReport(report)
+    return withSchema(await this.reportRepository.saveOrUpdateReport(report))
+  }
+
+  async updateReportStatus(
+    reportId: string,
+    status: ReportStatus,
+    statusInfo?: string
+  ): Promise<void> {
+    await this.reportRepository.updateReportStatus(reportId, status, statusInfo)
   }
 }

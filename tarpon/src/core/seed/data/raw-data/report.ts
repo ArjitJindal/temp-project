@@ -156,19 +156,6 @@ export const reports: Array<Report & { _id: string }> = [
                     'This is the container for information about the telephone number of the party',
                 },
               },
-              FlagrightPartyIdentificationTcc: {
-                type: 'object',
-                properties: {
-                  PartyIdentificationNumberText: {
-                    $ref: '#/definitions/RestrictString25',
-                    title: 'Identification number',
-                    description:
-                      'This element identifies the form of identification number associated with the party.',
-                  },
-                },
-                required: ['PartyIdentificationNumberText'],
-                title: 'Transmitter Control Code (TCC)',
-              },
               FlagrightPartyIdentificationTin: {
                 type: 'object',
                 properties: {
@@ -187,7 +174,6 @@ export const reports: Array<Report & { _id: string }> = [
               'PartyName',
               'Address',
               'PhoneNumber',
-              'FlagrightPartyIdentificationTcc',
               'FlagrightPartyIdentificationTin',
             ],
           },
@@ -5006,7 +4992,7 @@ export const reports: Array<Report & { _id: string }> = [
     createdAt: 1691431739370,
     updatedAt: 1691431739370,
     createdById: 'auth0|62264e7c30113900759b7d90',
-    status: 'complete',
+    status: 'COMPLETE',
     parameters: {
       report: {
         generalInfo: {
@@ -5057,9 +5043,6 @@ export const reports: Array<Report & { _id: string }> = [
               PartyIdentificationTypeCode: '28',
             },
           ],
-          FlagrightPartyIdentificationTcc: {
-            PartyIdentificationNumberText: '2131',
-          },
           FlagrightPartyIdentificationTin: {
             PartyIdentificationNumberText: '123123',
           },
@@ -5415,19 +5398,6 @@ export const reports: Array<Report & { _id: string }> = [
                     'This is the container for information about the telephone number of the party',
                 },
               },
-              FlagrightPartyIdentificationTcc: {
-                type: 'object',
-                properties: {
-                  PartyIdentificationNumberText: {
-                    $ref: '#/definitions/RestrictString25',
-                    title: 'Identification number',
-                    description:
-                      'This element identifies the form of identification number associated with the party.',
-                  },
-                },
-                required: ['PartyIdentificationNumberText'],
-                title: 'Transmitter Control Code (TCC)',
-              },
               FlagrightPartyIdentificationTin: {
                 type: 'object',
                 properties: {
@@ -5446,7 +5416,6 @@ export const reports: Array<Report & { _id: string }> = [
               'PartyName',
               'Address',
               'PhoneNumber',
-              'FlagrightPartyIdentificationTcc',
               'FlagrightPartyIdentificationTin',
             ],
           },
@@ -10265,7 +10234,7 @@ export const reports: Array<Report & { _id: string }> = [
     createdAt: 1691431739370,
     updatedAt: 1691431739370,
     createdById: 'auth0|62264e7c30113900759b7d90',
-    status: 'complete',
+    status: 'COMPLETE',
     parameters: {
       report: {
         generalInfo: {
@@ -10316,9 +10285,6 @@ export const reports: Array<Report & { _id: string }> = [
               PartyIdentificationTypeCode: '28',
             },
           ],
-          FlagrightPartyIdentificationTcc: {
-            PartyIdentificationNumberText: '2131',
-          },
           FlagrightPartyIdentificationTin: {
             PartyIdentificationNumberText: '123123',
           },
@@ -10519,7 +10485,7 @@ export const reports: Array<Report & { _id: string }> = [
     id: 'RP-6',
     name: 'C-7851',
     description: 'SAR report for C-7851',
-    status: 'complete',
+    status: 'COMPLETE',
     caseId: 'C-7851',
     reportTypeId: 'KE-SAR',
     createdById: 'auth0|644fbf0ac6779e5c9b7b0855',

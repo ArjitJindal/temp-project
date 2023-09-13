@@ -2,6 +2,7 @@ import {
   KenyaReportSchema,
   KenyaTransactionSchema,
 } from '@/services/sar/generators/KE/SAR/schema'
+import { Report } from '@/@types/openapi-internal/Report'
 import { KenyaSARReportGenerator } from '@/services/sar/generators/KE/SAR'
 describe.skip('SAR Generation', () => {
   describe('Dummy tests to log JSON schema to console for use on JSON schema form playground https://rjsf-team.github.io/react-jsonschema-form/', () => {
@@ -17,16 +18,19 @@ describe.skip('SAR Generation', () => {
 describe('Schema to XML', () => {
   test('Test that field order is maintained', async () => {
     const generator = new KenyaSARReportGenerator()
-    const xml = generator.generate({
-      indicators: [],
-      report: {
-        reentity_id: 'reentity_id',
-        submission_code: 'E',
+    const xml = generator.generate(
+      {
+        indicators: [],
+        report: {
+          reentity_id: 'reentity_id',
+          submission_code: 'E',
+        },
+        transactions: [],
       },
-      transactions: [],
-    })
+      { id: 'reportId' } as Report
+    )
     expect(xml).toEqual(expected)
   })
 })
 
-const expected = `<?xml version="1.0" encoding="UTF-8" standalone="yes"?><report><reentity_id>reentity_id</reentity_id><submission_code>E</submission_code><report_code>SAR</report_code></report>`
+const expected = `<?xml version="1.0" encoding="UTF-8" standalone="yes"?><report><reentity_id>reentity_id</reentity_id><submission_code>E</submission_code><report_code>SAR</report_code><entity_reference>reportId</entity_reference></report>`

@@ -12,6 +12,7 @@ import { EntityCounter } from '@/@types/openapi-internal/EntityCounter'
 import { Account } from '@/@types/openapi-internal/Account'
 import { getContext } from '@/core/utils/context'
 import { traceable } from '@/core/xray'
+import { ReportStatus } from '@/@types/openapi-internal/ReportStatus'
 
 @traceable
 export class ReportRepository {
@@ -65,18 +66,10 @@ export class ReportRepository {
 
     let newReport: Report
     if (existingReport) {
-      if (existingReport.status === 'draft') {
-        if (reportPayload.status === existingReport.status) {
-          newReport = {
-            ...existingReport,
-            ...reportPayload,
-          }
-        } else {
-          newReport = {
-            ...existingReport,
-            ...reportPayload,
-            status: 'complete',
-          }
+      if (existingReport.status === 'DRAFT') {
+        newReport = {
+          ...existingReport,
+          ...reportPayload,
         }
       } else {
         let topParent: WithId<Report> | null = existingReport
@@ -118,7 +111,7 @@ export class ReportRepository {
     } else {
       newReport = {
         ...reportPayload,
-        id: await this.getId(),
+        id: reportPayload.id ?? (await this.getId()),
       }
     }
 
@@ -176,7 +169,7 @@ export class ReportRepository {
     const report = await collection
       .find({
         reportTypeId: schemaId,
-        status: 'complete',
+        status: 'COMPLETE',
         createdById: (getContext()?.user as Account)?.id,
       })
       .sort({ createdAt: -1 })
@@ -184,5 +177,18 @@ export class ReportRepository {
       .toArray()
 
     return report.length > 0 ? report[0] : null
+  }
+
+  public async updateReportStatus(
+    reportId: string,
+    status: ReportStatus,
+    statusInfo = ''
+  ): Promise<void> {
+    const db = this.mongoDb.db()
+    const collection = db.collection<Report>(REPORT_COLLECTION(this.tenantId))
+    await collection.updateOne(
+      { id: reportId },
+      { $set: { status, statusInfo } }
+    )
   }
 }

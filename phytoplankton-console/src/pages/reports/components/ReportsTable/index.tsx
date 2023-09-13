@@ -1,14 +1,15 @@
 import React, { useState } from 'react';
-import { Tag } from 'antd';
+import { Space, Tag } from 'antd';
 import { sentenceCase } from '@antv/x6/es/util/string/format';
 import cn from 'clsx';
 import s from './index.module.less';
-import { Report } from '@/apis';
+import Modal from '@/components/library/Modal';
+import { Report, ReportStatus } from '@/apis';
 import QueryResultsTable from '@/components/common/QueryResultsTable';
 import { DATE, LONG_TEXT } from '@/components/library/Table/standardDataTypes';
 import { ColumnHelper } from '@/components/library/Table/columnHelper';
 import { AllParams } from '@/components/library/Table/types';
-import { useUsers } from '@/utils/user-utils';
+import { isSuperAdmin, useAuth0User, useUsers } from '@/utils/user-utils';
 import { ConsoleUserAvatar } from '@/pages/case-management/components/ConsoleUserAvatar';
 import Id from '@/components/ui/Id';
 import { makeUrl } from '@/utils/routing';
@@ -17,14 +18,25 @@ import { useApi } from '@/api';
 import { DEFAULT_PARAMS_STATE } from '@/components/library/Table/consts';
 import { usePaginatedQuery } from '@/utils/queries/hooks';
 import { REPORTS_LIST } from '@/utils/queries/keys';
+import { message } from '@/components/library/Message';
+import Select from '@/components/library/Select';
+import MarkdownViewer from '@/components/markdown/MarkdownViewer';
+import MarkdownEditor from '@/components/markdown/MarkdownEditor';
+import { REPORT_STATUSS } from '@/apis/models-custom/ReportStatus';
 
 type TableParams = AllParams<DefaultApiGetReportsRequest>;
+
+type StatusUpdate = { status: ReportStatus; statusInfo: string };
 
 export default function ReportsTable() {
   const helper = new ColumnHelper<Report>();
   const [users, loadingUsers] = useUsers({ includeBlockedUsers: true });
   const api = useApi();
   const [params, setParams] = useState<TableParams>(DEFAULT_PARAMS_STATE);
+  const [displayStatusInfoReport, setDisplayStatusInfoReport] = useState<Report | undefined>();
+  const [statusInfoEditing, setStatusInfoEditing] = useState<boolean>(false);
+  const [statusUpdate, setStatusUpdate] = useState<StatusUpdate | null>(null);
+  const user = useAuth0User();
 
   const queryResult = usePaginatedQuery<Report>(REPORTS_LIST(params), async (paginationParams) => {
     return await api.getReports({ ...params, ...paginationParams });
@@ -75,23 +87,23 @@ export default function ReportsTable() {
       key: 'createdAt',
       type: DATE,
     }),
-    helper.simple<'status'>({
-      key: 'status',
+    helper.derived<Report>({
       title: 'Status',
+      value: (report) => report,
       type: {
-        render: (status) => {
+        render: (report) => {
           return (
-            <div>
-              {status && (
-                <Tag className={cn('TEST', s.tag, s[`status-${status}`])}>
-                  {sentenceCase(status)}
+            <div className={s.status} onClick={() => setDisplayStatusInfoReport(report)}>
+              {report?.status && (
+                <Tag className={cn('TEST', s.tag, s[`status-${report.status}`])}>
+                  {sentenceCase(report.status)}
                 </Tag>
               )}
             </div>
           );
         },
-        stringify: (status) => {
-          return status || '';
+        stringify: (report) => {
+          return report?.status || '';
         },
       },
     }),
@@ -111,6 +123,81 @@ export default function ReportsTable() {
         params={params}
         onChangeParams={setParams}
       />
+      <Modal
+        title={
+          displayStatusInfoReport &&
+          `Report ${displayStatusInfoReport.id} status information (${sentenceCase(
+            displayStatusInfoReport.status,
+          )})`
+        }
+        isOpen={Boolean(displayStatusInfoReport)}
+        onCancel={() => {
+          setDisplayStatusInfoReport(undefined);
+          setStatusInfoEditing(false);
+        }}
+        onOk={async () => {
+          if (!displayStatusInfoReport) {
+            return;
+          }
+          if (!statusInfoEditing) {
+            setStatusInfoEditing(true);
+            setStatusUpdate({
+              status: displayStatusInfoReport.status,
+              statusInfo: displayStatusInfoReport.statusInfo || '',
+            });
+          } else {
+            try {
+              await api.postReportsReportIdStatus({
+                reportId: displayStatusInfoReport.id!,
+                ReportStatusUpdateRequest: statusUpdate!,
+              });
+              message.success('Saved');
+            } catch (e) {
+              message.error(`Failed to save: ${e}`);
+            }
+          }
+        }}
+        okText={statusInfoEditing ? 'Save' : 'Edit'}
+        hideFooter={!isSuperAdmin(user)}
+      >
+        {statusInfoEditing && isSuperAdmin(user) ? (
+          <Space direction="vertical" style={{ width: '100%' }}>
+            <Select
+              mode="SINGLE"
+              style={{ width: 200 }}
+              value={statusUpdate!.status}
+              options={REPORT_STATUSS.map((v) => ({ label: sentenceCase(v), value: v }))}
+              onChange={(v) => {
+                setStatusUpdate(
+                  (prev) =>
+                    prev && {
+                      ...prev,
+                      status: v!,
+                    },
+                );
+              }}
+            />
+            <MarkdownEditor
+              key={displayStatusInfoReport?.id}
+              initialValue={statusUpdate?.statusInfo || ''}
+              onChange={(v) =>
+                setStatusUpdate(
+                  (prev) =>
+                    prev && {
+                      ...prev,
+                      statusInfo: v || '',
+                    },
+                )
+              }
+            />
+          </Space>
+        ) : (
+          <MarkdownViewer
+            key={displayStatusInfoReport?.id}
+            value={displayStatusInfoReport?.statusInfo || 'No additional information'}
+          />
+        )}
+      </Modal>
     </>
   );
 }

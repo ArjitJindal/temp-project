@@ -3,7 +3,7 @@ import {
   APIGatewayProxyWithLambdaAuthorizerEvent,
 } from 'aws-lambda'
 import { NotFound } from 'http-errors'
-import { JWTAuthorizerResult } from '@/@types/jwt'
+import { JWTAuthorizerResult, assertCurrentUserRole } from '@/@types/jwt'
 import { lambdaApi } from '@/core/middlewares/lambda-api-middlewares'
 import { getMongoDbClient } from '@/utils/mongodb-utils'
 import { CaseRepository } from '@/services/rules-engine/repositories/case-repository'
@@ -12,6 +12,8 @@ import { Account } from '@/@types/openapi-internal/Account'
 import { MongoDbTransactionRepository } from '@/services/rules-engine/repositories/mongodb-transaction-repository'
 import { ReportService } from '@/services/sar/service'
 import { Handlers } from '@/@types/openapi-internal-custom/DefaultApi'
+import { ask } from '@/utils/openapi'
+import { logger } from '@/core/logger'
 
 export const sarHandler = lambdaApi()(
   async (
@@ -72,9 +74,37 @@ export const sarHandler = lambdaApi()(
       async (ctx, request) => await reportService.getReport(request.reportId)
     )
 
-    handlers.registerPostReports(
-      async (ctx, request) => await reportService.completeReport(request.Report)
-    )
+    handlers.registerPostReportsReportIdStatus(async (ctx, request) => {
+      // Only super admin can manually update a report's status for now
+      assertCurrentUserRole('root')
+      const status = request.ReportStatusUpdateRequest.status
+      let statusInfo = request.ReportStatusUpdateRequest.statusInfo
+      const report = await reportService.getReport(request.reportId)
+      if (
+        report.reportTypeId === 'US-SAR' &&
+        statusInfo.includes('BSAEFilingBatchMessages')
+      ) {
+        try {
+          const result = await ask(
+            `Please transform the following error messages in XML format into a human-readable format. Please only return the transformed output. And the output includes two sections - 1. Batch Status 2. Error Messages.\n---\n${statusInfo}`
+          )
+          statusInfo = result.substring(result.indexOf('Batch Status'))
+        } catch (e) {
+          logger.error(e)
+          statusInfo = `\`\`\`${statusInfo}\`\`\``
+        }
+      }
+
+      await reportService.updateReportStatus(
+        request.reportId,
+        status,
+        statusInfo
+      )
+    })
+
+    handlers.registerPostReports(async (ctx, request) => {
+      return await reportService.completeReport(request.Report)
+    })
 
     handlers.registerPostReportsReportIdDraft(
       async (ctx, request) => await reportService.draftReport(request.Report)

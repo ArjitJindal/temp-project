@@ -35,9 +35,6 @@ const testInputParams = {
       PhoneNumber: {
         PhoneNumberText: '0123456789',
       },
-      FlagrightPartyIdentificationTcc: {
-        PartyIdentificationNumberText: '111111111111',
-      },
       FlagrightPartyIdentificationTin: {
         PartyIdentificationNumberText: '111111111111',
       },

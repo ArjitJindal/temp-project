@@ -22,6 +22,7 @@ import { Permission } from '@/@types/openapi-internal/Permission'
 
 type LogMetaData = {
   tenantId?: string
+  tenantName?: string
 }
 export type ContextUser =
   | (Pick<Account, 'id' | 'role'> & { email?: string })
@@ -58,6 +59,7 @@ export async function getInitialContext(
     let features = undefined
     const {
       principalId: tenantId,
+      tenantName,
       verifiedEmail,
       userId,
       role,
@@ -85,9 +87,11 @@ export async function getInitialContext(
 
     const context: Context = {
       tenantId,
+      tenantName,
       requestId: (event as APIGatewayEvent).requestContext?.requestId,
       logMetadata: {
         tenantId,
+        tenantName,
         functionName: lambdaContext?.functionName,
         region: process.env.AWS_REGION,
         requestId: lambdaContext.awsRequestId,

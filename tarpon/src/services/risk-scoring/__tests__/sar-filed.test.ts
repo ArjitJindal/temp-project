@@ -74,7 +74,7 @@ createArsRiskFactorTestCases(
       parameters: {},
       reportTypeId: '1',
       revisions: [],
-      status: 'draft',
+      status: 'DRAFT',
       updatedAt: Date.now(),
     })
   }
@@ -113,7 +113,7 @@ createArsRiskFactorTestCases(
       parameters: {},
       reportTypeId: '1',
       revisions: [],
-      status: 'draft',
+      status: 'DRAFT',
       updatedAt: Date.now(),
     })
   }

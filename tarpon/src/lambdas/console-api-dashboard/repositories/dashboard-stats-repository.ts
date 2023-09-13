@@ -2040,7 +2040,7 @@ export class DashboardStatsRepository {
       const reportsCollection = db.collection<Report>(
         REPORT_COLLECTION(this.tenantId)
       )
-      const queryFilter = { status: 'complete' }
+      const queryFilter = { status: 'COMPLETE' }
       totalSarReported = await reportsCollection.countDocuments(queryFilter)
     }
     return {

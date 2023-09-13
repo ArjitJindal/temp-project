@@ -1,6 +1,7 @@
 import { XMLBuilder } from 'fast-xml-parser'
-import { InternalReportType, PopulatedSchema, ReportGenerator } from '../..'
+import { InternalReportType, ReportGenerator } from '../..'
 import { indicators, KenyaReportSchema, KenyaTransactionSchema } from './schema'
+import { Report } from '@/@types/openapi-internal/Report'
 import { Case } from '@/@types/openapi-internal/Case'
 import { Account } from '@/@types/openapi-internal/Account'
 import { InternalBusinessUser } from '@/@types/openapi-internal/InternalBusinessUser'
@@ -17,6 +18,7 @@ import { InternalTransaction } from '@/@types/openapi-internal/InternalTransacti
 import { ReportParameters } from '@/@types/openapi-internal/ReportParameters'
 import { Address } from '@/@types/openapi-internal/Address'
 import { InternalConsumerUser } from '@/@types/openapi-internal/InternalConsumerUser'
+import { ReportSchema } from '@/@types/openapi-internal/ReportSchema'
 
 export class KenyaSARReportGenerator implements ReportGenerator {
   tenantId!: string
@@ -24,15 +26,15 @@ export class KenyaSARReportGenerator implements ReportGenerator {
     return {
       countryCode: 'KE',
       type: 'SAR',
+      directSubmission: false,
     }
   }
 
-  public async getPopulatedSchema(
-    reportId: string,
-    c: Case,
+  public async getPopulatedParameters(
+    _c: Case,
     transactions: InternalTransaction[],
     _reporter: Account
-  ): Promise<PopulatedSchema> {
+  ): Promise<ReportParameters> {
     const firstTxn =
       transactions && transactions.length > 0 ? transactions[0] : undefined
 
@@ -47,7 +49,6 @@ export class KenyaSARReportGenerator implements ReportGenerator {
       report: {
         submission_code: 'E',
         report_code: 'SAR',
-        entity_reference: reportId,
         submission_date: new Date().toISOString(),
         currency_code_local:
           firstTxn && firstTxn?.originAmountDetails?.transactionCurrency,
@@ -91,27 +92,25 @@ export class KenyaSARReportGenerator implements ReportGenerator {
           }
         }) || [],
     }
+    return params
+  }
 
-    const schema = {
+  public getSchema(): ReportSchema {
+    return {
       transactionSchema: KenyaTransactionSchema,
       reportSchema: KenyaReportSchema,
       indicators,
     }
-
-    return {
-      params,
-      schema,
-    }
   }
 
-  public generate(reportParams: ReportParameters): string {
+  public generate(reportParams: ReportParameters, report: Report): string {
     const builder = new XMLBuilder()
     const xmlContent = builder.build({
       reentity_id: reportParams.report.reentity_id,
       reentity_branch: reportParams.report.reentity_branch,
       submission_code: reportParams.report.submission_code,
       report_code: 'SAR',
-      entity_reference: reportParams.report.entity_reference,
+      entity_reference: report.id,
       fiu_ref_number: reportParams.report.fiu_ref_number,
       submission_date: reportParams.report.submission_date,
       currency_code_local: reportParams.report.currency_code_local,

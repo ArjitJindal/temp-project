@@ -4468,7 +4468,7 @@ paths:
       tags: []
       x-flagright:
         permissions:
-          - reports:generated:read
+          - reports:generated:write
       responses:
         '200':
           description: OK
@@ -4503,6 +4503,29 @@ paths:
           application/json:
             schema:
               $ref: '#/components/schemas/Report'
+        required: true
+  '/reports/{reportId}/status':
+    parameters:
+      - schema:
+          type: string
+        name: reportId
+        in: path
+        required: true
+    post:
+      summary: Update report status
+      tags: []
+      x-flagright:
+        permissions:
+          - reports:generated:write
+      responses:
+        '200':
+          description: OK
+      operationId: post-reports-reportId-status
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ReportStatusUpdateRequest'
         required: true
   /checklist-templates:
     get:
@@ -8464,6 +8487,7 @@ components:
         - type
         - countryCode
         - country
+        - directSubmission
       properties:
         id:
           type: string
@@ -8475,6 +8499,8 @@ components:
           type: string
         countryCode:
           $ref: ../public/openapi-public-original.yaml#/components/schemas/CountryCode
+        directSubmission:
+          type: boolean
     ReportRevision:
       title: ReportRevision
       type: object
@@ -8488,6 +8514,16 @@ components:
           type: string
         createdAt:
           type: number
+    ReportStatus:
+      type: string
+      title: ReportStatus
+      enum:
+        - COMPLETE
+        - DRAFT
+        - SUBMITTING
+        - SUBMISSION_ACCEPTED
+        - SUBMISSION_REJECTED
+        - SUBMISSION_SUCCESSFUL
     Report:
       title: Report
       type: object
@@ -8514,10 +8550,9 @@ components:
         description:
           type: string
         status:
+          $ref: '#/components/schemas/ReportStatus'
+        statusInfo:
           type: string
-          enum:
-            - complete
-            - draft
         caseId:
           type: string
         reportTypeId:
@@ -8604,6 +8639,19 @@ components:
       required:
         - total
         - items
+    ReportStatusUpdateRequest:
+      title: ReportStatusUpdateRequest
+      type: object
+      x-stoplight:
+        id: 4ac3be9ec658b
+      required:
+        - status
+        - statusInfo
+      properties:
+        status:
+          $ref: '#/components/schemas/ReportStatus'
+        statusInfo:
+          type: string
     Timezone:
       type: string
       title: Timezone

@@ -267,7 +267,7 @@ export AWS_SESSION_TOKEN=...
 3. Run the migration with env vars `ENV`, `AWS_REGION`, `ATLAS_CREDENTIALS_SECRET_ARN` being set
 
 ```bash
-ENV=dev AWS_REGION=eu-central-1 ATLAS_CREDENTIALS_SECRET_ARN='arn:aws:secretsmanager:eu-central-1:911899431626:secret:mongoAtlasCreds-RvzMVI' npm run migration:pre:up
+ENV=dev npm run migration:pre:up
 ```
 
 ### Archived migrations

@@ -1,31 +1,36 @@
 import { KenyaSARReportGenerator } from './KE/SAR'
 import { UsSarReportGenerator } from './US/SAR'
+import { Report } from '@/@types/openapi-internal/Report'
 import { Account } from '@/@types/openapi-internal/Account'
 import { Case } from '@/@types/openapi-internal/Case'
-import { ReportSchema } from '@/@types/openapi-internal/ReportSchema'
 import { ReportParameters } from '@/@types/openapi-internal/ReportParameters'
 import { InternalTransaction } from '@/@types/openapi-internal/InternalTransaction'
 import { CountryCode } from '@/@types/openapi-internal/CountryCode'
 import { LithuaniaSTRReportGenerator } from '@/services/sar/generators/LT/STR'
 import { LithuaniaCTRReportGenerator } from '@/services/sar/generators/LT/CTR'
+import { ReportSchema } from '@/@types/openapi-internal/ReportSchema'
 
-export type PopulatedSchema = { params: ReportParameters; schema: ReportSchema }
-export type InternalReportType = { type: string; countryCode: CountryCode }
+export type InternalReportType = {
+  type: string
+  countryCode: CountryCode
+  directSubmission: boolean
+}
 export interface ReportGenerator {
   tenantId?: string
   // Metadata about the report type that this generates
   getType(): InternalReportType
 
   // Prepare the report data with what we already know about the suspicious user
-  getPopulatedSchema(
-    reportId: string,
+  getPopulatedParameters(
     c: Case,
     transactions: InternalTransaction[],
     reporter: Account
-  ): Promise<PopulatedSchema>
+  ): Promise<ReportParameters>
+  getSchema(): ReportSchema
 
   // Generate the report (XML)
-  generate(reportParams: ReportParameters): string
+  generate(reportParams: ReportParameters, report: Report): string
+  submit?(report: Report): Promise<string>
 }
 
 const reportGenerators = [

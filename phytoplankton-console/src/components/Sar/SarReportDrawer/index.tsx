@@ -1,9 +1,10 @@
 import { createContext, useMemo, useState } from 'react';
 import { isEmpty } from 'lodash';
 import { useMutation } from '@tanstack/react-query';
+import { useReportType } from '../utils';
 import s from './style.module.less';
 import Drawer from '@/components/library/Drawer';
-import { Report } from '@/apis';
+import { Report, ReportStatus } from '@/apis';
 import { useApi } from '@/api';
 import StepButtons from '@/components/library/StepButtons';
 import { dayjs, YEAR_MONTH_DATE_FORMAT } from '@/utils/dayjs';
@@ -13,6 +14,8 @@ import { message } from '@/components/library/Message';
 import { getErrorMessage } from '@/utils/lang';
 import { useId } from '@/utils/hooks';
 import SarReportDrawerForm from '@/components/Sar/SarReportDrawer/SarReportDrawerForm';
+
+const DISABLE_SUBMIT_STATUSES: ReportStatus[] = ['SUBMITTING', 'SUBMISSION_REJECTED'];
 
 export const SarContext = createContext<Report | null>(null);
 export const REPORT_STEP = 'REPORT_STEP';
@@ -33,9 +36,19 @@ interface Props {
   onChangeVisibility: (isVisible: boolean) => void;
 }
 
+function downloadReport(report: Report) {
+  const revision = report.revisions[report.revisions.length - 1];
+  const output = revision.output;
+  const reportName = `SAR-report-${dayjs(revision.createdAt).format(YEAR_MONTH_DATE_FORMAT)}.xml`;
+  if (output) {
+    download(reportName, output);
+  } else {
+    throw new Error(`XML output in response is empty, unable to download!`);
+  }
+}
+
 export default function SarReportDrawer(props: Props) {
   const api = useApi();
-
   const steps = useMemo(
     () =>
       [
@@ -68,10 +81,11 @@ export default function SarReportDrawer(props: Props) {
       ].filter(Boolean) as Step[],
     [props.initialReport.schema],
   );
+  const reportType = useReportType(props.initialReport.reportTypeId);
+  const directSumission = reportType?.directSubmission ?? false;
   const [activeStep, setActiveStep] = useState<string>(steps[0].key);
   const [report, setReport] = useState(props.initialReport);
   const [draft, setDraft] = useState<Report>(props.initialReport);
-  const [dirty, setDirty] = useState(props.initialReport.revisions.length === 0);
   const submitMutation = useMutation<
     Report,
     unknown,
@@ -80,20 +94,14 @@ export default function SarReportDrawer(props: Props) {
     }
   >(
     async (event) => {
-      const hideLoading = message.loading(`Generating...`);
+      const hideLoading = message.loading(directSumission ? 'Submitting...' : 'Generating...');
       try {
         const reportWithoutSchema = { ...event.report };
         reportWithoutSchema.schema = undefined;
         const result = await api.postReports({
           Report: reportWithoutSchema,
         });
-        const reportName = `SAR-report-${dayjs().format(YEAR_MONTH_DATE_FORMAT)}.xml`;
-        const output = result.revisions[result.revisions.length - 1].output;
-        if (output) {
-          download(reportName, output);
-        } else {
-          throw new Error(`XML output in response is empty, unable to download!`);
-        }
+        downloadReport(result);
         return result;
       } finally {
         hideLoading();
@@ -102,8 +110,9 @@ export default function SarReportDrawer(props: Props) {
     {
       onSuccess: (r) => {
         setReport(r);
-        setDirty(false);
-        message.success(`Report ${r.id} successfully generated`);
+        message.success(
+          `Report ${r.id} successfully ${directSumission ? 'submitted' : 'generated'}`,
+        );
       },
       onError: (e) => {
         message.fatal(`Failed to submit report: ${getErrorMessage(e)}`);
@@ -136,7 +145,6 @@ export default function SarReportDrawer(props: Props) {
       onSuccess: (r) => {
         setReport(r);
         setDraft(r);
-        setDirty(false);
         message.success(`Draft of report saved successfully!`);
       },
       onError: (e) => {
@@ -153,7 +161,7 @@ export default function SarReportDrawer(props: Props) {
       <Drawer
         isVisible={props.isVisible}
         onChangeVisibility={props.onChangeVisibility}
-        title={'Report generator'}
+        title={'SAR report'}
         footer={
           <div className={s.footer}>
             <StepButtons
@@ -167,12 +175,22 @@ export default function SarReportDrawer(props: Props) {
               }}
             />
             <div className={s.footerButtons}>
+              {!DISABLE_SUBMIT_STATUSES.includes(report.status) && (
+                <Button
+                  isLoading={saveDraftMutation.isLoading}
+                  type="TETRIARY"
+                  onClick={() => saveDraftMutation.mutate({ report: draft })}
+                >
+                  {'Save draft'}
+                </Button>
+              )}
+
               <Button
-                isLoading={saveDraftMutation.isLoading}
                 type="TETRIARY"
-                onClick={() => saveDraftMutation.mutate({ report: draft })}
+                isDisabled={props.initialReport.revisions.length === 0}
+                onClick={() => downloadReport(props.initialReport)}
               >
-                {'Save draft'}
+                Download
               </Button>
 
               <Button
@@ -182,9 +200,9 @@ export default function SarReportDrawer(props: Props) {
                   form: formId,
                 }}
                 htmlType={'submit'}
-                isDisabled={!dirty}
+                isDisabled={directSumission && DISABLE_SUBMIT_STATUSES.includes(report.status)}
               >
-                {'Generate report'}
+                {directSumission ? 'Submit' : 'Generate report'}
               </Button>
             </div>
           </div>
@@ -196,7 +214,6 @@ export default function SarReportDrawer(props: Props) {
           steps={steps}
           activeStepState={[activeStep, setActiveStep]}
           onChange={(report) => {
-            setDirty(true);
             setDraft(report);
           }}
           onSubmit={(report: Report) => {

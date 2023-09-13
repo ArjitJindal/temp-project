@@ -26,7 +26,7 @@
         <fc2:PhoneNumberText>0123456789</fc2:PhoneNumberText>
       </fc2:PhoneNumber>
       <fc2:PartyIdentification SeqNum="8">
-        <fc2:PartyIdentificationNumberText>111111111111</fc2:PartyIdentificationNumberText>
+        <fc2:PartyIdentificationNumberText>TBSATEST</fc2:PartyIdentificationNumberText>
         <fc2:PartyIdentificationTypeCode>28</fc2:PartyIdentificationTypeCode>
       </fc2:PartyIdentification>
       <fc2:PartyIdentification SeqNum="9">

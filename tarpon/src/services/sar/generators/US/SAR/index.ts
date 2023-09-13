@@ -2,10 +2,11 @@ import { execSync } from 'child_process'
 import * as fs from 'fs'
 import path from 'path'
 import os from 'os'
+import * as Sentry from '@sentry/serverless'
 import { BadRequest } from 'http-errors'
 import { XMLBuilder } from 'fast-xml-parser'
 import { isEqual, omit, cloneDeep, compact } from 'lodash'
-import { InternalReportType, PopulatedSchema, ReportGenerator } from '../..'
+import { InternalReportType, ReportGenerator } from '../..'
 import {
   ContactOffice,
   FilingInstitution,
@@ -32,6 +33,7 @@ import {
   phone,
   phoneByFax,
 } from './helpers/prepopulating'
+import { Report } from '@/@types/openapi-internal/Report'
 import { Case } from '@/@types/openapi-internal/Case'
 import { Account } from '@/@types/openapi-internal/Account'
 import { InternalTransaction } from '@/@types/openapi-internal/InternalTransaction'
@@ -50,6 +52,7 @@ import { getTargetCurrencyAmount } from '@/utils/currency-utils'
 import { PaymentDetails } from '@/@types/tranasction/payment-type'
 import { RuleHitDirection } from '@/@types/openapi-internal/RuleHitDirection'
 import { getAllIpAddresses } from '@/utils/ipAddress'
+import { envIs } from '@/utils/env'
 
 const FINCEN_BINARY = path.join(
   __dirname,
@@ -75,15 +78,15 @@ export class UsSarReportGenerator implements ReportGenerator {
     return {
       countryCode: 'US',
       type: 'SAR',
+      directSubmission: true,
     }
   }
 
-  public async getPopulatedSchema(
-    _reportId: string,
+  public async getPopulatedParameters(
     c: Case,
     transactions: InternalTransaction[],
     reporter: Account
-  ): Promise<PopulatedSchema> {
+  ): Promise<ReportParameters> {
     const name = reporter.name
     const usersMap: Record<
       string,
@@ -262,7 +265,11 @@ export class UsSarReportGenerator implements ReportGenerator {
         otherInfo: { ActivityIPAddress: ActivityIPAddress },
       },
     }
-    const schema: ReportSchema = {
+    return params
+  }
+
+  public getSchema(): ReportSchema {
+    return {
       reportSchema: {
         type: 'object',
         properties: {
@@ -293,10 +300,6 @@ export class UsSarReportGenerator implements ReportGenerator {
         definitions: FincenJsonSchema.definitions,
       },
     }
-    return {
-      params,
-      schema,
-    }
   }
 
   private transform(reportParams: ReportParameters): object {
@@ -315,7 +318,7 @@ export class UsSarReportGenerator implements ReportGenerator {
     // Augment PartyIdentificationTypeCode
     const transmitterPartyIdentifications = [
       {
-        ...reportParams.report.transmitter.FlagrightPartyIdentificationTcc,
+        PartyIdentificationNumberText: envIs('prod') ? 'PBSA8180' : 'TBSATEST',
         PartyIdentificationTypeCode: '28',
       },
       {
@@ -325,7 +328,6 @@ export class UsSarReportGenerator implements ReportGenerator {
     ]
     reportParams.report.transmitter = omit(
       reportParams.report.transmitter,
-      'FlagrightPartyIdentificationTcc',
       'FlagrightPartyIdentificationTin'
     )
     reportParams.report.transmitter.PartyIdentification =
@@ -551,5 +553,14 @@ export class UsSarReportGenerator implements ReportGenerator {
       ...IPAddressesByTransactions,
     ])
     return [...uniqueIPAddresses]
+  }
+
+  public async submit(report: Report) {
+    Sentry.withScope((scope) => {
+      scope.setTags({ reportId: report.id })
+      scope.setFingerprint([this.tenantId, report.id!])
+      Sentry.captureMessage(`[${report.id}] New FinCEN SAR report submitted`)
+    })
+    return ''
   }
 }
