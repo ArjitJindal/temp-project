@@ -26,6 +26,8 @@ import Treemap, {
 import DatePicker from '@/components/ui/DatePicker';
 import { dayjs, Dayjs } from '@/utils/dayjs';
 
+const DEFAULT_DATE_RANGE: [Dayjs, Dayjs] = [dayjs().subtract(1, 'year'), dayjs()];
+
 const TREEMAP_COLORS: { [key in PaymentMethod]: string } = {
   ACH: COLORS_V2_ANALYTICS_CHARTS_22,
   CARD: COLORS_V2_ANALYTICS_CHARTS_17,
@@ -41,23 +43,13 @@ const TREEMAP_COLORS: { [key in PaymentMethod]: string } = {
 interface Props extends WidgetProps {}
 
 export default function PaymentMethodDistributionWidget(props: Props) {
-  const [dateRange, setDateRange] = useState<RangeValue<Dayjs>>([
-    dayjs().subtract(1, 'year'),
-    dayjs(),
-  ]);
+  const [dateRange, setDateRange] = useState<RangeValue<Dayjs>>(DEFAULT_DATE_RANGE);
   const api = useApi();
-  let startTimestamp = dayjs().subtract(1, 'day').valueOf();
-  let endTimestamp = Date.now();
 
-  const [start, end] = dateRange ?? [];
-  if (start != null && end != null) {
-    startTimestamp = start.startOf('day').valueOf();
-    endTimestamp = end.endOf('day').valueOf();
-  }
-
+  const [start, end] = dateRange ?? DEFAULT_DATE_RANGE;
   const params = {
-    startTimestamp,
-    endTimestamp,
+    startTimestamp: start!.startOf('day').valueOf(),
+    endTimestamp: end!.endOf('day').valueOf(),
   };
 
   const queryResult = useQuery(DASHBOARD_TRANSACTIONS_TOTAL_STATS(params), async () => {
@@ -85,7 +77,12 @@ export default function PaymentMethodDistributionWidget(props: Props) {
   return (
     <Widget
       {...props}
-      extraControls={[<DatePicker.RangePicker value={dateRange} onChange={setDateRange} />]}
+      extraControls={[
+        <DatePicker.RangePicker
+          value={dateRange}
+          onChange={(e) => setDateRange(e ?? DEFAULT_DATE_RANGE)}
+        />,
+      ]}
       onDownload={
         isSuccess(preparedDataRes)
           ? async () => ({

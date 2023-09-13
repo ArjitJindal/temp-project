@@ -18,6 +18,8 @@ import { WidgetProps } from '@/components/library/Widget/types';
 import { useQuery } from '@/utils/queries/hooks';
 import { DASHBOARD_TRANSACTIONS_STATS } from '@/utils/queries/keys';
 
+const DEFAULT_DATE_RANGE: [Dayjs, Dayjs] = [dayjs().subtract(1, 'year'), dayjs()];
+
 export type timeframe = 'YEAR' | 'MONTH' | 'WEEK' | 'DAY' | null;
 
 export default function TransactionsChartWidget(props: WidgetProps) {
@@ -27,10 +29,7 @@ export default function TransactionsChartWidget(props: WidgetProps) {
   const suspendAlias = useRiskActionLabel('SUSPEND');
   const blockAlias = useRiskActionLabel('BLOCK');
   const flagAlias = useRiskActionLabel('FLAG');
-  const [dateRange, setDateRange] = useState<RangeValue<Dayjs>>([
-    dayjs().subtract(1, 'year'),
-    dayjs(),
-  ]);
+  const [dateRange, setDateRange] = useState<RangeValue<Dayjs>>(DEFAULT_DATE_RANGE);
   const [granularity, setGranularity] = useState<GranularityValuesType>(
     granularityValues.MONTH as GranularityValuesType,
   );
@@ -68,18 +67,10 @@ export default function TransactionsChartWidget(props: WidgetProps) {
   const [timeWindowType, setTimeWindowType] = useState<timeframe>('YEAR');
   const api = useApi();
 
-  let startTimestamp = dayjs().subtract(1, 'year').valueOf();
-  let endTimestamp = Date.now();
-
-  const [start, end] = dateRange ?? [];
-  if (start != null && end != null) {
-    startTimestamp = start.startOf('day').valueOf();
-    endTimestamp = end.endOf('day').valueOf();
-  }
-
+  const [start, end] = dateRange ?? DEFAULT_DATE_RANGE;
   const params = {
-    startTimestamp,
-    endTimestamp,
+    startTimestamp: start!.startOf('day').valueOf(),
+    endTimestamp: end!.endOf('day').valueOf(),
     granularity: granularity,
   };
 
@@ -115,7 +106,7 @@ export default function TransactionsChartWidget(props: WidgetProps) {
           <DatePicker.RangePicker
             value={dateRange}
             onChange={(e) => {
-              setDateRange(e);
+              setDateRange(e ?? DEFAULT_DATE_RANGE);
               setTimeWindowType(null);
             }}
           />
