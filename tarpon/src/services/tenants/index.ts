@@ -18,11 +18,11 @@ import { StackConstants } from '@lib/constants'
 import { getAuth0TenantConfigs } from '@lib/configs/auth0/tenant-config'
 import { BadRequest } from 'http-errors'
 import { Auth0TenantConfig } from '@lib/configs/auth0/type'
+import { createNewApiKeyForTenant } from '../api-key'
 import { TenantRepository } from './repositories/tenant-repository'
 import { TenantCreationResponse } from '@/@types/openapi-internal/TenantCreationResponse'
 import { TenantCreationRequest } from '@/@types/openapi-internal/TenantCreationRequest'
 import { AccountsService, Tenant, TenantBasic } from '@/services/accounts'
-import { createNewApiKeyForTenant } from '@/services/api-key'
 import { checkMultipleEmails } from '@/utils/helpers'
 import { getAuth0Domain } from '@/utils/auth0-utils'
 import { getMongoDbClient } from '@/utils/mongodb-utils'
@@ -175,7 +175,6 @@ export class TenantService {
     return {
       tenantId,
       tenantName: tenantData.tenantName,
-      apiKey,
       usagePlanId,
       ...(organization.id && { auth0OrganizationId: organization.id }),
     }

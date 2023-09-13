@@ -270,10 +270,6 @@ export const CreateTenantModal = (props: Props) => {
             {formDetails.auth0DisplayName}
           </Typography.Paragraph>
           <Typography.Paragraph>
-            <Typography.Text strong>Api Key: </Typography.Text>
-            {response.apiKey}
-          </Typography.Paragraph>
-          <Typography.Paragraph>
             <Typography.Text strong>Usage Plan ID: </Typography.Text>
             {response.usagePlanId}
           </Typography.Paragraph>

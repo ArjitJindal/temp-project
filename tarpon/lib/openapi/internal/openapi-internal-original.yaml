@@ -6153,14 +6153,11 @@ components:
           type: string
         auth0OrganizationId:
           type: string
-        apiKey:
-          type: string
         usagePlanId:
           type: string
       required:
         - tenantId
         - tenantName
-        - apiKey
         - usagePlanId
     RiskClassificationScore:
       description: ''
