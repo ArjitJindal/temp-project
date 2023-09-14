@@ -115,18 +115,10 @@ Run all the unit tests
 npm run test
 ```
 
-Run the unit tests related to rules only
+Re-run the changed tests automatically
 
 ```bash
-npm run test:rule
-npm run test:rule:watch
-```
-
-Run the unit tests not related to rules
-
-```bash
-npm run test:others
-npm run test:others:watch
+npm run test:watch
 ```
 
 ### Integration Tests

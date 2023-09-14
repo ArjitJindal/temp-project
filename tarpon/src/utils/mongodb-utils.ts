@@ -39,23 +39,25 @@ export async function getMongoDbClient(
   if (cacheClient) {
     return cacheClient
   }
+
   if (process.env.NODE_ENV === 'test') {
-    return await MongoClient.connect(
+    cacheClient = await MongoClient.connect(
       process.env.MONGO_URI || `mongodb://localhost:27018/${MONGO_TEST_DB_NAME}`
     )
+  } else if (process.env.ENV === 'local') {
+    cacheClient = await MongoClient.connect(
+      `mongodb://localhost:27018/${dbName}`
+    )
+  } else {
+    const credentials = await getSecret<DBCredentials>(
+      process.env.ATLAS_CREDENTIALS_SECRET_ARN as string
+    )
+    const DB_USERNAME = credentials['username']
+    const DB_PASSWORD = encodeURIComponent(credentials['password'])
+    const DB_HOST = credentials['host']
+    const DB_URL = `mongodb+srv://${DB_USERNAME}:${DB_PASSWORD}@${DB_HOST}/${dbName}`
+    cacheClient = await MongoClient.connect(DB_URL as string)
   }
-  if (process.env.ENV === 'local') {
-    return await MongoClient.connect(`mongodb://localhost:27018/${dbName}`)
-  }
-
-  const credentials = await getSecret<DBCredentials>(
-    process.env.ATLAS_CREDENTIALS_SECRET_ARN as string
-  )
-  const DB_USERNAME = credentials['username']
-  const DB_PASSWORD = encodeURIComponent(credentials['password'])
-  const DB_HOST = credentials['host']
-  const DB_URL = `mongodb+srv://${DB_USERNAME}:${DB_PASSWORD}@${DB_HOST}/${dbName}`
-  cacheClient = await MongoClient.connect(DB_URL as string)
   return cacheClient
 }
 
