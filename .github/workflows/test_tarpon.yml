@@ -19,7 +19,7 @@ on:
   workflow_call:
 jobs:
   test:
-    runs-on: [large]
+    runs-on: large
     name: test-tarpon
     steps:
       - uses: actions/checkout@v3
