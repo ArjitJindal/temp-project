@@ -18,11 +18,11 @@ import {
 import { logger } from '@/core/logger'
 import { DynamoDbKeys } from '@/core/dynamodb/dynamodb-keys'
 import { RuleInstanceRepository } from '@/services/rules-engine/repositories/rule-instance-repository'
-import { sendBatchJobCommand } from '@/services/batch-job'
+import { DashboardStatsRepository } from '@/lambdas/console-api-dashboard/repositories/dashboard-stats-repository'
 
-const TRANSACTIONS_PROCESS_BATCH_SIZE = 10
+const TRANSACTIONS_PROCESS_BATCH_SIZE = 20
 
-export async function cleanupRuleHits(values: {
+type Props = {
   ruleInstanceId: string
   tenantId: string
   impactTimestamps?: {
@@ -30,39 +30,59 @@ export async function cleanupRuleHits(values: {
     end: number
   }
   migrationKey?: string
-}) {
+}
+
+export async function cleanupRuleHits(values: Props) {
+  for (let i = 0; i < 100; i++) {
+    try {
+      await cleanupRuleHitsInternal(values)
+    } catch (e) {
+      if (!/cursor id \d+ not found/.test((e as Error)?.message)) {
+        throw e
+      }
+      logger.error(e)
+      logger.error('Retry..')
+    }
+  }
+}
+
+async function cleanupRuleHitsInternal(values: Props) {
   const { ruleInstanceId, tenantId, impactTimestamps, migrationKey } = values
   const mongoDb = await getMongoDbClient()
   const dynamoDb = getDynamoDbClient()
   const db = mongoDb.db()
+  const casesCollection = db.collection<Case>(CASES_COLLECTION(tenantId))
   const transactionsCollection = db.collection<InternalTransaction>(
     TRANSACTIONS_COLLECTION(tenantId)
   )
   const ruleInstanceRepository = new RuleInstanceRepository(tenantId, {
     dynamoDb,
   })
-
+  const dashboardStatsRepository = new DashboardStatsRepository(tenantId, {
+    mongoDb,
+  })
   const migrationLastCompletedTimestamp = migrationKey
     ? await getMigrationLastCompletedTimestamp(migrationKey)
     : undefined
-
-  const casesCollection = db.collection<Case>(CASES_COLLECTION(tenantId))
-
   const impactTimestampsStart =
     migrationLastCompletedTimestamp ?? impactTimestamps?.start ?? 0
   const cursor = await transactionsCollection
-    .find({
-      'hitRules.ruleInstanceId': ruleInstanceId,
-      createdAt: {
-        $gte: impactTimestampsStart,
-        $lte: impactTimestamps?.end ?? Number.MAX_SAFE_INTEGER,
+    .find(
+      {
+        'hitRules.ruleInstanceId': ruleInstanceId,
+        createdAt: {
+          $gte: impactTimestampsStart,
+          $lte: impactTimestamps?.end ?? Number.MAX_SAFE_INTEGER,
+        },
       },
-    })
+      { timeout: false }
+    )
     .sort({ createdAt: 1 })
     .allowDiskUse()
 
-  const totalTransactions = await cursor.count()
-  logger.info(`Found ${totalTransactions} transactions for tenant ${tenantId}`)
+  logger.info(
+    `Found ${await cursor.count()} transactions for tenant ${tenantId}`
+  )
 
   let startTimetsamp = impactTimestampsStart
   let migratedTransactionsCount = 0
@@ -181,26 +201,21 @@ export async function cleanupRuleHits(values: {
       // Refresh dashboard
       migratedTransactionsCount += TRANSACTIONS_PROCESS_BATCH_SIZE
       if (
-        migratedTransactionsCount % 1000 === 0 ||
+        migratedTransactionsCount % (TRANSACTIONS_PROCESS_BATCH_SIZE * 100) ===
+          0 ||
         transactions.length < TRANSACTIONS_PROCESS_BATCH_SIZE
       ) {
         const timeRange = {
           startTimestamp: startTimetsamp,
           endTimestamp: lastTransaction?.createdAt,
         }
-        await sendBatchJobCommand({
-          type: 'DASHBOARD_REFRESH',
-          tenantId,
-          parameters: {
-            cases: timeRange,
-            transactions: timeRange,
-          },
-        })
+        await dashboardStatsRepository.refreshCaseStats(timeRange)
+        await dashboardStatsRepository.refreshTransactionStats(timeRange)
         startTimetsamp = (lastTransaction?.createdAt ??
           lastTransaction?.timestamp) as number
         logger.info(`Refreshed dashboard`)
       }
     },
-    { processBatchSize: TRANSACTIONS_PROCESS_BATCH_SIZE }
+    { mongoBatchSize: 100, processBatchSize: TRANSACTIONS_PROCESS_BATCH_SIZE }
   )
 }
