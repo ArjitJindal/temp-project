@@ -9,6 +9,44 @@
     }
   }
 
+  &.height-FULL {
+    :global {
+      .ant-modal-content {
+        height: 100vh;
+      }
+
+      .ant-modal-body {
+        flex: 1;
+      }
+    }
+  }
+
+  &:not(.height-FULL) {
+    :global {
+      @media (min-height: 728px) {
+        .ant-modal-content {
+          max-height: 720px;
+        }
+      }
+    }
+  }
+
+  &.disablePadding {
+    :global {
+      .ant-modal-body {
+        padding: 0;
+      }
+    }
+  }
+
+  &:not(.disablePadding) {
+    :global {
+      .ant-modal-body {
+        padding: 16px;
+      }
+    }
+  }
+
   :global {
     @radius: 8px;
     @header-footer-height: 60px;
@@ -21,15 +59,11 @@
       overflow-y: auto;
     }
 
-    @media (min-height: 728px) {
-      .ant-modal-content {
-        max-height: 720px;
-      }
-    }
-
     .ant-modal-body {
-      padding: 16px;
       overflow-y: auto;
+      position: relative;
+      display: flex;
+      flex-direction: column;
     }
 
     .ant-modal-header {

@@ -9,6 +9,7 @@ import Tabs, { TabItem } from '@/components/library/Tabs';
 
 export const MODAL_WIDTHS = ['S', 'M', 'L', 'XL'] as const;
 export type ModalWidth = typeof MODAL_WIDTHS[number];
+export type ModalHeight = 'AUTO' | 'FULL';
 
 interface Props {
   title?: string;
@@ -23,8 +24,10 @@ interface Props {
   cancelText?: string;
   cancelProps?: ButtonProps;
   width?: ModalWidth;
+  height?: ModalHeight;
   tabs?: TabItem[];
   children?: React.ReactNode;
+  disablePadding?: boolean;
 }
 
 const WIDTH: { [K in ModalWidth]: number | string } = {
@@ -49,7 +52,9 @@ export default function Modal(props: Props) {
     hideFooter = false,
     hideHeader = false,
     width = 'M',
+    height = 'AUTO',
     tabs = [],
+    disablePadding = false,
   } = props;
 
   const [activeTab, setActiveTab] = useState<string>(tabs[0]?.key);
@@ -57,7 +62,12 @@ export default function Modal(props: Props) {
   const withTabs = tabs.length > 1;
   return (
     <AntModal
-      className={cn(s.root, withTabs && s.withTabs)}
+      className={cn(
+        s.root,
+        withTabs && s.withTabs,
+        disablePadding && s.disablePadding,
+        s[`height-${height}`],
+      )}
       title={
         !hideHeader ? (
           <div className={s.header}>

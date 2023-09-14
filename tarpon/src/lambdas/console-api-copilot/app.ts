@@ -87,22 +87,22 @@ export const copilotHandler = lambdaApi({})(
           variableOptions: [
             { name: 'startTimestamp', variableType: 'DATETIME' },
           ],
-          rows: [...Array(10).keys()].map((_) => [
-            'string',
-            new Date().valueOf(),
-            'some other string',
+          rows: [...Array(10).keys()].map((_, i) => [
+            `string#${i}`,
+            new Date().valueOf() - Math.round(24 * 3600 * 1000 * Math.random()),
+            'some other string#${i}',
           ]),
           headers: [
             {
-              name: 'column1',
+              name: 'str1',
               columnType: 'STRING',
             },
             {
-              name: 'column2',
+              name: 'date',
               columnType: 'DATETIME',
             },
             {
-              name: 'column3',
+              name: 'str2',
               columnType: 'STRING',
             },
           ],

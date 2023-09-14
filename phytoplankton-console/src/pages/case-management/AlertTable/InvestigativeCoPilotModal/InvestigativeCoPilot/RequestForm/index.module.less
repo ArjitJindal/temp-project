@@ -1,0 +1,46 @@
+@import 'src/components/ui/colors.less';
+@import 'src/components/ui/animation.less';
+
+.root {
+  background: white;
+  display: flex;
+  gap: 16px;
+  flex-direction: column;
+  padding: 16px;
+  box-shadow: 0 1px 7px -1px fade(black, 20%);
+  border-radius: 8px;
+  transition-duration: @default-animation-speed;
+  transition-timing-function: @default-animation-function;
+  transition-property: opacity;
+
+  &.isLoading {
+    opacity: 0.5;
+    pointer-events: none;
+    transition-delay: 100ms;
+  }
+}
+
+.form {
+  display: grid;
+  gap: 16px;
+}
+
+.suggestions {
+  display: flex;
+  gap: 12px;
+  flex-wrap: wrap;
+  overflow: hidden;
+  height: 30px;
+}
+
+.suggestion {
+  background: @fr-colors-navyBlueTint;
+  white-space: nowrap;
+  padding: 4px 8px;
+  border-radius: 4px;
+  max-width: 400px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  border: none;
+  cursor: pointer;
+}

@@ -94,6 +94,7 @@ async function buildCode(env, options) {
     // logLevel: "verbose",
     loader: {
       '.svg': 'file',
+      '.png': 'file',
     },
     define: {
       'process.env.RELEASE': JSON.stringify(release),

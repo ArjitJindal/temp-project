@@ -57,6 +57,8 @@ import { CASE_STATUSS } from '@/apis/models-custom/CaseStatus';
 import { useRuleOptions } from '@/utils/rules';
 import QaStatusChangeModal from '@/pages/case-management/AlertTable/QaStatusChangeModal';
 import { useQaMode } from '@/utils/qa-mode';
+import Button from '@/components/library/Button';
+import InvestigativeCoPilotModal from '@/pages/case-management/AlertTable/InvestigativeCoPilotModal';
 
 export type AlertTableParams = AllParams<TableSearchParams> & {
   filterQaStatus?: ChecklistStatus;
@@ -79,6 +81,7 @@ const mergedColumns = (
   hideAlertStatusFilters: boolean,
   handleAlertsAssignments: (updateRequest: AlertsAssignmentsUpdateRequest) => void,
   handleAlertsReviewAssignments: (updateRequest: AlertsReviewAssignmentsUpdateRequest) => void,
+  handleInvestigateAlert: ((alertId: string) => void) | undefined,
   userId: string,
   reload: () => void,
   falsePositiveEnabled: boolean,
@@ -254,7 +257,7 @@ const mergedColumns = (
         const previousStatus = findLastStatusForInReview(entity.statusChanges ?? []);
 
         return (
-          <>
+          <div style={{ display: 'flex', gap: '8px' }}>
             {entity?.caseId && !statusInReview(entity.alertStatus) && (
               <AlertsStatusChangeButton
                 caseId={entity.caseId}
@@ -283,7 +286,18 @@ const mergedColumns = (
                 />
               </div>
             )}
-          </>
+            {handleInvestigateAlert && (
+              <Button
+                onClick={() => {
+                  if (entity.alertId != null) {
+                    handleInvestigateAlert(entity.alertId);
+                  }
+                }}
+              >
+                Investigate
+              </Button>
+            )}
+          </div>
         );
       },
     }),
@@ -336,6 +350,7 @@ export default function AlertTable(props: Props) {
       .flatMap((v) => v)
       .filter(Boolean);
   }, [selectedTxns]);
+  const [investigativeAlertId, setInvestigativeAlertId] = useState<string>();
 
   const assignmentsToMutationAlerts = useMutation<unknown, Error, AlertsAssignmentsUpdateRequest>(
     async ({ alertIds, assignments }) => {
@@ -418,6 +433,7 @@ export default function AlertTable(props: Props) {
     [reviewAssignmentsToMutationAlerts],
   );
 
+  const icpEnabled = useFeatureEnabled('INVESTIGATIVE_COPILOT');
   const columns = useMemo(
     () =>
       mergedColumns(
@@ -425,6 +441,7 @@ export default function AlertTable(props: Props) {
         hideAlertStatusFilters,
         handleAlertAssignments,
         handleAlertsReviewAssignments,
+        icpEnabled ? setInvestigativeAlertId : undefined,
         user.userId,
         reloadTable,
         isFalsePositiveEnabled,
@@ -439,6 +456,7 @@ export default function AlertTable(props: Props) {
       reloadTable,
       isFalsePositiveEnabled,
       selectedTxns,
+      icpEnabled,
     ],
   );
 
@@ -770,6 +788,12 @@ export default function AlertTable(props: Props) {
             ids.reduce((acc, id) => ({ ...acc, [id]: [] }), prevState),
           );
           setSelectedAlerts(ids);
+        }}
+      />
+      <InvestigativeCoPilotModal
+        alertId={investigativeAlertId}
+        onClose={() => {
+          setInvestigativeAlertId(undefined);
         }}
       />
     </>

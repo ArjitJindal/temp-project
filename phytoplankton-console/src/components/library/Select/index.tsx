@@ -87,7 +87,12 @@ export default function Select<Value extends Comparable = string>(props: Props<V
       className={cn(s.root, isError && s.isError, s[`size-${size}`], className)}
       style={props.style}
     >
-      <AntSelect {...antSelectProps} allowClear loading={isLoading}>
+      <AntSelect
+        {...antSelectProps}
+        allowClear
+        loading={isLoading}
+        disabled={isDisabled || isLoading}
+      >
         {options?.map((option) => (
           <AntSelect.Option
             key={key(option.value)}

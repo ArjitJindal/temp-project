@@ -136,7 +136,7 @@ function Form<FormValues>(props: Props<FormValues>, ref: React.Ref<FormRef<FormV
 }
 
 export default React.forwardRef(Form) as <FormValues>(
-  props: Props<FormValues> & { ref?: React.Ref<FormRef<FormValues>> },
+  props: Props<FormValues> & { ref?: React.Ref<FormRef<FormValues> | undefined> },
 ) => JSX.Element;
 
 export { InputProps } from '@/components/library/Form/types';

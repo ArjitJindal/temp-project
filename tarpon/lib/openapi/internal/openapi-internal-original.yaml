@@ -6516,6 +6516,7 @@ components:
         - SLACK_ALERTS
         - IMPORT_FILES
         - COPILOT
+        - INVESTIGATIVE_COPILOT
         - GOOGLE_SSO
         - SANCTIONS
         - FALSE_POSITIVE_CHECK
