@@ -46,7 +46,9 @@ export default function InvestigativeCoPilot(props: Props) {
   );
 
   useLayoutEffect(() => {
-    rootRef.current?.scrollTo({ top: rootRef.current?.scrollHeight ?? 0, behavior: 'smooth' });
+    setTimeout(() => {
+      rootRef.current?.scrollTo({ top: rootRef.current?.scrollHeight ?? 0, behavior: 'smooth' });
+    }, 0);
   }, [history.length]);
 
   const alertQueryResult = useQuery(ALERT_ITEM(alertId), async () => {

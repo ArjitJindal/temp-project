@@ -2,6 +2,7 @@ import React from 'react';
 import { QuestionResponse } from '../types';
 import s from './index.module.less';
 import EmptyImg from './empty.png';
+import TableHistoryItem from './TableHistoryItem';
 
 interface Props {
   items: QuestionResponse[];
@@ -18,9 +19,9 @@ export default function History(props: Props) {
         </div>
       )}
       {items.map((item) => (
-        <div className={s.item} key={item.questionId}>
-          {JSON.stringify(item)}
-        </div>
+        <React.Fragment key={item.questionId}>
+          {item.questionType === 'TABLE' ? <TableHistoryItem item={item} /> : JSON.stringify(item)}
+        </React.Fragment>
       ))}
     </div>
   );
