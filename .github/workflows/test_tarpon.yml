@@ -40,11 +40,9 @@ jobs:
         working-directory: "tarpon"
       - run: npm run build:local
         working-directory: "tarpon"
-      - run: npm run tsc
+      - run: npm run tsc:ci
         working-directory: "tarpon"
-        env:
-          NODE_OPTIONS: "--max-old-space-size=8192"
-      - run: npm run lint
+      - run: npm run lint:ci
         working-directory: "tarpon"
       - run: npm run format:check
         working-directory: "tarpon"
@@ -59,8 +57,6 @@ jobs:
           mongodb-version: 5.0.18
           mongodb-port: 27018
       - name: Run Tests
-        env:
-          NODE_OPTIONS: --max-old-space-size=8192
         run: npm run test:ci
         working-directory: "tarpon"
       - name: Post to a Slack channel on failure
