@@ -16,7 +16,7 @@ export default function HistoryItemBase(props: Props) {
   return (
     <div className={s.root}>
       <div className={s.header}>
-        <div className={s.title}>{item.questionId} (TITLE MISSING, FIX!)</div>
+        <div className={s.title}>{item.questionId}</div>
         <BrainIcon
           className={s.brainIcon}
           onClick={() => {

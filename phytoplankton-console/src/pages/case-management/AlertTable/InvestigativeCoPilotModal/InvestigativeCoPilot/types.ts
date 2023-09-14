@@ -6,7 +6,7 @@ export interface QuestionResponseTable extends QuestionResponseBase, Api.Table {
   questionType: 'TABLE';
 }
 
-export interface QuestionResponseTimeseries extends QuestionResponseBase, Api.Timeseries {
+export interface QuestionResponseTimeSeries extends QuestionResponseBase, Api.Timeseries {
   questionType: 'TIME_SERIES';
 }
 
@@ -16,7 +16,7 @@ export interface QuestionResponseStackedBarchart extends QuestionResponseBase, A
 
 export type QuestionResponse =
   | QuestionResponseTable
-  | QuestionResponseTimeseries
+  | QuestionResponseTimeSeries
   | QuestionResponseStackedBarchart;
 
 export function parseQuestionResponse(response: Api.QuestionResponse): QuestionResponse {

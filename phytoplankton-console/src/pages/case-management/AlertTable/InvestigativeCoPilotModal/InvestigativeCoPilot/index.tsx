@@ -28,12 +28,12 @@ export default function InvestigativeCoPilot(props: Props) {
       await new Promise((resolve) => {
         setTimeout(resolve, Math.round(Math.random() * 2000));
       });
-      const newVar = await api.getQuestion({
+      const response = await api.getQuestion({
         questionId: searchString,
         alertId: alertId,
         variables: [],
       });
-      return parseQuestionResponse(newVar);
+      return parseQuestionResponse(response);
     },
     {
       onSuccess: (data) => {

@@ -14,7 +14,7 @@ interface Props {
   item: QuestionResponseTable;
 }
 
-export default function TableHistoryItem(props: Props) {
+export default function HistoryItemTable(props: Props) {
   const { item } = props;
 
   const columnHelper = new ColumnHelper();

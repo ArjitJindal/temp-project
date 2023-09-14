@@ -45,8 +45,8 @@ export function useElementSize(el: HTMLElement | null): { width: number; height:
   return rect;
 }
 
-export function escapeHtml(unsafe: string): string {
-  return unsafe
+export function escapeHtml(unsafe: unknown): string {
+  return `${unsafe}`
     .replaceAll('&', '&amp;')
     .replaceAll('<', '&lt;')
     .replaceAll('>', '&gt;')
