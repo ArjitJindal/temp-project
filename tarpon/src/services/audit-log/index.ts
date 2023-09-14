@@ -4,6 +4,7 @@ import { AuditLogRecord } from '@/@types/audit-log'
 import { getContext } from '@/core/utils/context'
 import { Account } from '@/@types/openapi-internal/Account'
 import { logger } from '@/core/logger'
+import { envIs } from '@/utils/env'
 
 const snsClient = new SNSClient({})
 
@@ -32,6 +33,8 @@ export async function publishAuditLog(
         {},
         {}
       )
+      return
+    } else if (envIs('test')) {
       return
     }
 

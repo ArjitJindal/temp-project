@@ -2,6 +2,7 @@ import {
   CreateTableCommand,
   CreateTableInput,
   DeleteTableCommand,
+  DynamoDBClient,
 } from '@aws-sdk/client-dynamodb'
 import { range } from 'lodash'
 
@@ -19,6 +20,14 @@ export function dynamoDbSetupHook() {
       await createTable(table)
     }
   })
+  afterAll(() => {
+    const __dynamoDbClientsForTesting__ =
+      // eslint-disable-next-line @typescript-eslint/no-var-requires
+      require('@/utils/dynamodb')
+        .__dynamoDbClientsForTesting__ as DynamoDBClient[]
+    __dynamoDbClientsForTesting__.forEach((c) => c.destroy())
+    __dynamoDbClientsForTesting__.length = 0
+  })
 }
 
 async function createTable(tableName: string) {
@@ -28,6 +37,7 @@ async function createTable(tableName: string) {
       const { getDynamoDbRawClient } = await import('@/utils/dynamodb')
       const dynamodb = getDynamoDbRawClient()
       await dynamodb.send(new CreateTableCommand(createSchema(tableName)))
+      dynamodb.destroy()
       return
     } catch (e: any) {
       error = e
@@ -45,6 +55,7 @@ async function deleteTable(tableName: string, silent = false) {
     const { getDynamoDbRawClient } = await import('@/utils/dynamodb')
     const dynamodb = getDynamoDbRawClient()
     await dynamodb.send(new DeleteTableCommand({ TableName: tableName }))
+    dynamodb.destroy()
   } catch (e: any) {
     if (!silent) {
       throw new Error(

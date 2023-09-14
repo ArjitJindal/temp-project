@@ -38,6 +38,8 @@ import { addNewSubsegment } from '@/core/xray'
 import { getContext, publishMetric } from '@/core/utils/context'
 import { envIs, envIsNot } from '@/utils/env'
 
+export const __dynamoDbClientsForTesting__: DynamoDBClient[] = []
+
 export type PutRequestInternal = Omit<PutRequest, 'Item'> & {
   Item: Record<string, NativeAttributeValue> | undefined
 }
@@ -183,6 +185,10 @@ export function getDynamoDbRawClient(
     context.dynamoDbClients.push(rawClient)
   }
 
+  if (envIs('test')) {
+    __dynamoDbClientsForTesting__.push(rawClient)
+  }
+
   return rawClient
 }
 
@@ -208,6 +214,7 @@ export function getDynamoDbClient(
   if (envIsNot('test') && envIsNot('local')) {
     opts.push(withMetrics)
   }
+  ;(client as any).__rawClient = rawClient
   return opts.reduce((client, opt) => opt(client), client)
 }
 

@@ -1,4 +1,5 @@
-import { omit } from 'lodash'
+import { omit, uniq } from 'lodash'
+import { createConsumerUser, getTestUser } from './user-test-utils'
 import { RuleRepository } from '@/services/rules-engine/repositories/rule-repository'
 import { RuleInstanceRepository } from '@/services/rules-engine/repositories/rule-instance-repository'
 import { Rule } from '@/@types/openapi-internal/Rule'
@@ -17,6 +18,7 @@ import { Business } from '@/@types/openapi-public/Business'
 import { RuleHitMeta } from '@/@types/openapi-public/RuleHitMeta'
 import { getRuleByRuleId } from '@/services/rules-engine/transaction-rules/library'
 import { getMongoDbClient } from '@/utils/mongodb-utils'
+import { UserRepository } from '@/services/users/repositories/user-repository'
 
 const DEFAULT_DESCRIPTION = 'test rule description.'
 
@@ -103,14 +105,40 @@ export async function getRule(
 
 export async function bulkVerifyTransactions(
   tenantId: string,
-  transactions: Transaction[]
+  transactions: Transaction[],
+  options?: {
+    autoCreateUser?: boolean
+  }
 ): Promise<TransactionMonitoringResult[] | DuplicateTransactionReturnType[]> {
   const dynamoDb = getDynamoDbClient()
+  let cleanUps: Array<() => Promise<void>> = []
+  if (options?.autoCreateUser) {
+    const userRepository = new UserRepository(tenantId, { dynamoDb })
+    const userIds = uniq(
+      transactions
+        .flatMap((t) => [t.originUserId, t.destinationUserId])
+        .filter(Boolean) as string[]
+    )
+    cleanUps = await Promise.all(
+      userIds.map(async (userId) => {
+        const user = await userRepository.getUser(userId)
+        if (!user) {
+          return await createConsumerUser(tenantId, getTestUser({ userId }))
+        }
+        return async () => {
+          return
+        }
+      })
+    )
+  }
+
   const results = []
   const rulesEngine = new RulesEngineService(tenantId, dynamoDb)
   for (const transaction of transactions) {
     results.push(await rulesEngine.verifyTransaction(transaction))
   }
+  await Promise.all(cleanUps.map((c) => c()))
+  ;(dynamoDb as any).__rawClient.destroy()
   return results
 }
 
@@ -212,10 +240,15 @@ export function createTransactionRuleTestCase(
   tenantId: string,
   transactions: Transaction[],
   expectedHits: boolean[],
-  expectetRuleDescriptions?: Array<string | undefined>
+  expectetRuleDescriptions?: Array<string | undefined>,
+  options?: {
+    autoCreateUser?: boolean
+  }
 ) {
   test(testCaseName, async () => {
-    const results = await bulkVerifyTransactions(tenantId, transactions)
+    const results = await bulkVerifyTransactions(tenantId, transactions, {
+      autoCreateUser: options?.autoCreateUser ?? true,
+    })
     const ruleHits = getRuleHits(results)
     expect(ruleHits).toEqual(expectedHits)
     if (expectetRuleDescriptions) {
@@ -252,7 +285,9 @@ export function testRuleDescriptionFormatting(
     const initialRule = await getRule(tenantId, SETUP_TEST_RULE_ID)
     await updateRule(tenantId, SETUP_TEST_RULE_ID, rulePatch)
 
-    const results = await bulkVerifyTransactions(tenantId, transactions)
+    const results = await bulkVerifyTransactions(tenantId, transactions, {
+      autoCreateUser: true,
+    })
     for (let i = 0; i < results.length; i += 1) {
       const result = results[i]
       const expectedDescription = expectedDescriptions[i]

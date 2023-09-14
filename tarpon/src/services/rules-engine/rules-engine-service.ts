@@ -553,10 +553,26 @@ export class RulesEngineService {
         ? 'MONGODB'
         : 'DYNAMODB'
 
-    const ruleClassInstance = transaction
+    // NOTE: We allow having origin/destination ID in a transaction even if the user with the
+    // user ID is not created (FR-1331). When running the rules, we identify a user either using
+    // user ID or the payment details, and it makes no sense to use the user ID without user entity
+    // becuase we only create a case for a known user or a payment identifier (external user).
+    // Thus we reset transaction user ID to undefined if no known user can be found.
+    const transactionWithValidUserId = transaction && {
+      ...transaction,
+      originUserId: senderUser ? transaction.originUserId : undefined,
+      destinationUserId: receiverUser
+        ? transaction.destinationUserId
+        : undefined,
+    }
+    const ruleClassInstance = transactionWithValidUserId
       ? new (RuleClass as typeof TransactionRuleBase)(
           this.tenantId,
-          { transaction, senderUser, receiverUser },
+          {
+            transaction: transactionWithValidUserId,
+            senderUser,
+            receiverUser,
+          },
           { parameters, filters: ruleFilters },
           { ruleInstance, rule },
           mode,

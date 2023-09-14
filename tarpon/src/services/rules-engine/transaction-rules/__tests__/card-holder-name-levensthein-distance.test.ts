@@ -202,6 +202,8 @@ describe.each<TransactionRuleTestCase>([
     name,
     TEST_TENANT_ID,
     transactions,
-    expectedHits
+    expectedHits,
+    undefined,
+    { autoCreateUser: false }
   )
 })
