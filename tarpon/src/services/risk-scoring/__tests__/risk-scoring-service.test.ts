@@ -11,6 +11,7 @@ import { getTestTransaction } from '@/test-utils/transaction-test-utils'
 import { withFeatureHook } from '@/test-utils/feature-test-utils'
 import {
   TEST_ITERABLE_RISK_ITEM,
+  TEST_TRANSACTION_RISK_PARAMETERS,
   TEST_VARIABLE_RISK_ITEM,
 } from '@/test-utils/pulse-test-utils'
 import { getMongoDbClient } from '@/utils/mongodb-utils'
@@ -19,7 +20,6 @@ import { ParameterAttributeRiskValues } from '@/@types/openapi-internal/Paramete
 const dynamoDb = getDynamoDbClient()
 withFeatureHook(['RISK_LEVELS', 'RISK_SCORING'])
 dynamoDbSetupHook()
-
 const testUser1 = getTestUser({ userId: '1' })
 const testUser2 = getTestUser({ userId: '2' })
 const testTenantId = getTestTenantId()
@@ -122,7 +122,6 @@ describe('Risk Scoring', () => {
       })
     )
   })
-
   it('VARIABLE risk factor', async () => {
     const mongoDb = await getMongoDbClient()
     const riskScoringService = new RiskScoringService(testTenantId, {
@@ -190,6 +189,62 @@ describe('Risk Scoring', () => {
   })
 })
 
+describe('Risk Scoring Service ARS ', () => {
+  beforeAll(async () => {
+    const riskRepository = await getRiskRepository()
+    await riskRepository.deleteParameterRiskItem(
+      TEST_ITERABLE_RISK_ITEM.parameter,
+      TEST_ITERABLE_RISK_ITEM.riskEntityType
+    )
+    await riskRepository.deleteParameterRiskItem(
+      TEST_VARIABLE_RISK_ITEM.parameter,
+      TEST_VARIABLE_RISK_ITEM.riskEntityType
+    )
+  })
+
+  describe.each(TEST_TRANSACTION_RISK_PARAMETERS)(
+    `testing parameters`,
+    (parameter) => {
+      const testTransaction = getTestTransaction({
+        originUserId: testUser1.userId,
+        destinationUserId: testUser2.userId,
+        originAmountDetails: {
+          country: 'IN',
+          transactionAmount: 10000000,
+          transactionCurrency: 'INR',
+        },
+        destinationAmountDetails: {
+          country: 'IN',
+          transactionAmount: 10000000,
+          transactionCurrency: 'INR',
+        },
+        originDeviceData: {
+          ipAddress: '69.162.81.155',
+        },
+        destinationDeviceData: {
+          ipAddress: '69.162.81.155',
+        },
+      })
+      test(`checking the ${parameter.parameter}`, async () => {
+        const mongoDb = await getMongoDbClient()
+        const riskScoringService = new RiskScoringService(testTenantId, {
+          dynamoDb,
+          mongoDb,
+        })
+        await (
+          await getRiskRepository()
+        ).createOrUpdateParameterRiskItem(parameter)
+        await riskScoringService.updateDynamicRiskScores(testTransaction)
+
+        const arsScore = await (
+          await getRiskRepository()
+        ).getArsScore(testTransaction.transactionId)
+        expect(arsScore?.arsScore).toEqual(50)
+      })
+    }
+  )
+})
+
 const TEST_PARAMETERS = [
   {
     parameterType: 'VARIABLE',
@@ -225,7 +280,30 @@ const TEST_PARAMETERS = [
             values: [
               {
                 kind: 'LITERAL',
-                content: 'IN',
+                content: 'RETAIL',
+              },
+            ],
+          },
+        },
+        riskLevel: 'MEDIUM',
+      },
+    ],
+    parameter: 'userSegment',
+    isActive: true,
+    riskEntityType: 'BUSINESS',
+  },
+  {
+    parameterType: 'VARIABLE',
+    isDerived: false,
+    riskLevelAssignmentValues: [
+      {
+        parameterValue: {
+          content: {
+            kind: 'MULTIPLE',
+            values: [
+              {
+                kind: 'LITERAL',
+                content: 'DE',
               },
             ],
           },
@@ -234,6 +312,53 @@ const TEST_PARAMETERS = [
       },
     ],
     parameter: 'legalEntity.companyRegistrationDetails.registrationCountry',
+    isActive: true,
+    riskEntityType: 'BUSINESS',
+  },
+  {
+    parameter: 'directors',
+    targetIterableParameter: 'generalDetails.countryOfNationality',
+    parameterType: 'ITERABLE',
+    riskLevelAssignmentValues: [
+      {
+        parameterValue: {
+          content: {
+            kind: 'MULTIPLE',
+            values: [
+              {
+                kind: 'LITERAL',
+                content: 'DE',
+              },
+            ],
+          },
+        },
+        riskLevel: 'LOW',
+      },
+    ],
+    isActive: true,
+    riskEntityType: 'BUSINESS',
+  },
+  {
+    parameter: 'shareHolders',
+    targetIterableParameter: 'generalDetails.countryOfNationality',
+    parameterType: 'ITERABLE',
+    isDerived: false,
+    riskLevelAssignmentValues: [
+      {
+        parameterValue: {
+          content: {
+            kind: 'MULTIPLE',
+            values: [
+              {
+                kind: 'LITERAL',
+                content: 'DE',
+              },
+            ],
+          },
+        },
+        riskLevel: 'LOW',
+      },
+    ],
     isActive: true,
     riskEntityType: 'BUSINESS',
   },
@@ -257,6 +382,30 @@ const TEST_PARAMETERS = [
       },
     ],
     parameter: 'type',
+    isActive: true,
+    riskEntityType: 'BUSINESS',
+  },
+  {
+    parameterType: 'ITERABLE',
+    isDerived: false,
+    riskLevelAssignmentValues: [
+      {
+        parameterValue: {
+          content: {
+            kind: 'MULTIPLE',
+            values: [
+              {
+                kind: 'LITERAL',
+                content: 'FARMING',
+              },
+            ],
+          },
+        },
+        riskLevel: 'LOW',
+        isNullableAllowed: true,
+      },
+    ],
+    parameter: 'legalEntity.companyGeneralDetails.businessIndustry',
     isActive: true,
     riskEntityType: 'BUSINESS',
   },
@@ -306,10 +455,79 @@ const TEST_PARAMETERS = [
     isActive: true,
     riskEntityType: 'CONSUMER_USER',
   },
+  {
+    parameterType: 'VARIABLE',
+    isDerived: false,
+    riskLevelAssignmentValues: [
+      {
+        parameterValue: {
+          content: {
+            kind: 'MULTIPLE',
+            values: [
+              {
+                kind: 'LITERAL',
+                content: 'PK',
+              },
+            ],
+          },
+        },
+        riskLevel: 'MEDIUM',
+      },
+    ],
+    parameter: 'userDetails.countryOfNationality',
+    isActive: true,
+    riskEntityType: 'CONSUMER_USER',
+  },
+  {
+    parameterType: 'VARIABLE',
+    isDerived: false,
+    riskLevelAssignmentValues: [
+      {
+        parameterValue: {
+          content: {
+            kind: 'MULTIPLE',
+            values: [
+              {
+                kind: 'LITERAL',
+                content: 'RETAIL',
+              },
+            ],
+          },
+        },
+        riskLevel: 'MEDIUM',
+      },
+    ],
+    parameter: 'userSegment',
+    isActive: true,
+    riskEntityType: 'CONSUMER_USER',
+  },
+  {
+    parameterType: 'VARIABLE',
+    isDerived: false,
+    riskLevelAssignmentValues: [
+      {
+        parameterValue: {
+          content: {
+            kind: 'MULTIPLE',
+            values: [
+              {
+                kind: 'LITERAL',
+                content: 'UNEMPLOYED',
+              },
+            ],
+          },
+        },
+        riskLevel: 'VERY_LOW',
+      },
+    ],
+    parameter: 'employmentStatus',
+    isActive: true,
+    riskEntityType: 'CONSUMER_USER',
+  },
 ] as ParameterAttributeRiskValues[]
 
 describe('Risk Scoring Service KRS', () => {
-  it('Should only check for Consumer Risk Score', async () => {
+  it('Should only check for Consumer User Risk Score', async () => {
     const dynamoDb = await getDynamoDbClient()
     const mongoDb = await getMongoDbClient()
 
@@ -322,6 +540,7 @@ describe('Risk Scoring Service KRS', () => {
       createdTimestamp: 1685969811000,
       userId: 'test-user-0',
       reasonForAccountOpening: ['Payment', 'Deposits'],
+      userSegment: 'RETAIL',
       userDetails: {
         name: {
           firstName: 'Aman Ji',
@@ -331,6 +550,7 @@ describe('Risk Scoring Service KRS', () => {
         countryOfResidence: 'IN',
         countryOfNationality: 'PK',
       },
+      employmentStatus: 'UNEMPLOYED',
       legalDocuments: [
         {
           documentType: 'passport',
@@ -354,7 +574,7 @@ describe('Risk Scoring Service KRS', () => {
       TEST_PARAMETERS
     )
 
-    expect(score).toEqual(70)
+    expect(score).toEqual(50)
     expect(components).toMatchObject([
       {
         entityType: 'CONSUMER_USER',
@@ -369,6 +589,159 @@ describe('Risk Scoring Service KRS', () => {
         riskLevel: 'VERY_HIGH',
         value: 'IN',
         score: 90,
+      },
+      {
+        entityType: 'CONSUMER_USER',
+        parameter: 'userDetails.countryOfNationality',
+        riskLevel: 'MEDIUM',
+        value: 'PK',
+        score: 50,
+      },
+      {
+        entityType: 'CONSUMER_USER',
+        parameter: 'userSegment',
+        riskLevel: 'MEDIUM',
+        value: 'RETAIL',
+        score: 50,
+      },
+      {
+        entityType: 'CONSUMER_USER',
+        parameter: 'employmentStatus',
+        riskLevel: 'VERY_LOW',
+        value: 'UNEMPLOYED',
+        score: 10,
+      },
+    ])
+  })
+  it('Should only check for Business User Risk Score', async () => {
+    const dynamoDb = await getDynamoDbClient()
+    const mongoDb = await getMongoDbClient()
+
+    const riskScoringService = new RiskScoringService(testTenantId, {
+      dynamoDb,
+      mongoDb,
+    })
+
+    const testUser = getTestUser({
+      createdTimestamp: 1685969811000,
+      type: 'BUSINESS',
+      userId: 'test-user-0',
+      reasonForAccountOpening: ['Payment', 'Deposits'],
+      userSegment: 'RETAIL',
+      legalEntity: {
+        companyGeneralDetails: {
+          legalName: 'Flag check',
+          businessIndustry: ['FARMING'],
+          userRegistrationStatus: 'REGISTERED',
+        },
+        companyRegistrationDetails: {
+          registrationCountry: 'DE',
+          registrationIdentifier: 'PSDSDADA',
+        },
+      },
+      shareHolders: [
+        {
+          generalDetails: {
+            name: {
+              firstName: 'kavish',
+            },
+            countryOfNationality: 'DE',
+          },
+        },
+      ],
+      directors: [
+        {
+          generalDetails: {
+            name: {
+              firstName: 'kavish',
+            },
+            countryOfNationality: 'DE',
+          },
+        },
+      ],
+      userDetails: {
+        name: {
+          firstName: 'Aman Ji',
+          lastName: 'Dugar',
+        },
+        dateOfBirth: '2007-01-15',
+        countryOfResidence: 'IN',
+        countryOfNationality: 'PK',
+      },
+      employmentStatus: 'UNEMPLOYED',
+      legalDocuments: [
+        {
+          documentType: 'passport',
+          documentNumber: 'CB33GME6',
+          documentIssuedDate: 1639939034,
+          documentExpirationDate: 1839939034,
+          documentIssuedCountry: 'US',
+        },
+      ],
+      tags: [
+        {
+          key: 'hello',
+          value: 'wallet',
+        },
+      ],
+    })
+
+    const { components, score } = await riskScoringService.calculateKrsScore(
+      testUser,
+      DEFAULT_CLASSIFICATION_SETTINGS,
+      TEST_PARAMETERS
+    )
+    expect(score).toEqual(30)
+    expect(components).toMatchObject([
+      {
+        entityType: 'BUSINESS',
+        parameter: 'legalEntity.companyGeneralDetails.userRegistrationStatus',
+        riskLevel: 'LOW',
+        value: 'REGISTERED',
+        score: 30,
+      },
+      {
+        entityType: 'BUSINESS',
+        parameter: 'userSegment',
+        riskLevel: 'MEDIUM',
+        value: 'RETAIL',
+        score: 50,
+      },
+
+      {
+        entityType: 'BUSINESS',
+        parameter: 'legalEntity.companyRegistrationDetails.registrationCountry',
+        riskLevel: 'VERY_LOW',
+        value: 'DE',
+        score: 10,
+      },
+      {
+        entityType: 'BUSINESS',
+        parameter: 'directors',
+        riskLevel: 'LOW',
+        value: 'DE',
+        score: 30,
+      },
+      {
+        entityType: 'BUSINESS',
+        parameter: 'shareHolders',
+        riskLevel: 'LOW',
+        value: 'DE',
+        score: 30,
+      },
+      {
+        entityType: 'BUSINESS',
+        parameter: 'type',
+        riskLevel: 'LOW',
+        value: 'BUSINESS',
+        score: 30,
+      },
+      {
+        entityType: 'BUSINESS',
+        parameter: 'legalEntity.companyGeneralDetails.businessIndustry',
+        riskLevel: 'LOW',
+        value: 'FARMING',
+        score: 30,
       },
     ])
   })

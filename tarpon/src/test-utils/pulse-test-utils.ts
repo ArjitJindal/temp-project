@@ -38,7 +38,237 @@ export const TEST_VARIABLE_RISK_ITEM: ParameterAttributeRiskValues = {
   ],
   parameterType: 'VARIABLE',
 }
-
+export const TEST_TRANSACTION_RISK_PARAMETERS: ParameterAttributeRiskValues[] =
+  [
+    {
+      parameter: 'originAmountDetails.country',
+      isActive: true,
+      isDerived: false,
+      riskEntityType: 'TRANSACTION',
+      defaultRiskLevel: DEFAULT_RISK_LEVEL,
+      riskLevelAssignmentValues: [
+        {
+          parameterValue: {
+            content: {
+              kind: 'MULTIPLE',
+              values: [
+                {
+                  kind: 'LITERAL',
+                  content: 'IN',
+                },
+              ],
+            },
+          },
+          riskLevel: 'MEDIUM',
+        },
+      ],
+      parameterType: 'VARIABLE',
+    },
+    {
+      parameter: 'destinationAmountDetails.country',
+      isActive: true,
+      isDerived: false,
+      riskEntityType: 'TRANSACTION',
+      defaultRiskLevel: DEFAULT_RISK_LEVEL,
+      riskLevelAssignmentValues: [
+        {
+          parameterValue: {
+            content: {
+              kind: 'MULTIPLE',
+              values: [
+                {
+                  kind: 'LITERAL',
+                  content: 'IN',
+                },
+              ],
+            },
+          },
+          riskLevel: 'MEDIUM',
+        },
+      ],
+      parameterType: 'VARIABLE',
+    },
+    {
+      parameter: 'destinationPaymentDetails.method',
+      isActive: true,
+      isDerived: false,
+      riskEntityType: 'TRANSACTION',
+      defaultRiskLevel: DEFAULT_RISK_LEVEL,
+      riskLevelAssignmentValues: [
+        {
+          parameterValue: {
+            content: {
+              kind: 'MULTIPLE',
+              values: [
+                {
+                  kind: 'LITERAL',
+                  content: 'CARD',
+                },
+              ],
+            },
+          },
+          riskLevel: 'MEDIUM',
+        },
+      ],
+      parameterType: 'VARIABLE',
+    },
+    {
+      parameter: 'originPaymentDetails.method',
+      isActive: true,
+      isDerived: false,
+      riskEntityType: 'TRANSACTION',
+      defaultRiskLevel: DEFAULT_RISK_LEVEL,
+      riskLevelAssignmentValues: [
+        {
+          parameterValue: {
+            content: {
+              kind: 'MULTIPLE',
+              values: [
+                {
+                  kind: 'LITERAL',
+                  content: 'CARD',
+                },
+              ],
+            },
+          },
+          riskLevel: 'MEDIUM',
+        },
+      ],
+      parameterType: 'VARIABLE',
+    },
+    {
+      parameter: 'originAmountDetails.transactionCurrency',
+      isActive: true,
+      isDerived: false,
+      riskEntityType: 'TRANSACTION',
+      defaultRiskLevel: DEFAULT_RISK_LEVEL,
+      riskLevelAssignmentValues: [
+        {
+          parameterValue: {
+            content: {
+              kind: 'MULTIPLE',
+              values: [
+                {
+                  kind: 'LITERAL',
+                  content: 'INR',
+                },
+              ],
+            },
+          },
+          riskLevel: 'MEDIUM',
+        },
+      ],
+      parameterType: 'VARIABLE',
+    },
+    {
+      parameter: 'destinationAmountDetails.transactionCurrency',
+      isActive: true,
+      isDerived: false,
+      riskEntityType: 'TRANSACTION',
+      defaultRiskLevel: DEFAULT_RISK_LEVEL,
+      riskLevelAssignmentValues: [
+        {
+          parameterValue: {
+            content: {
+              kind: 'MULTIPLE',
+              values: [
+                {
+                  kind: 'LITERAL',
+                  content: 'INR',
+                },
+              ],
+            },
+          },
+          riskLevel: 'MEDIUM',
+        },
+      ],
+      parameterType: 'VARIABLE',
+    },
+    {
+      parameter: 'ipAddressCountry',
+      isActive: true,
+      isDerived: true,
+      riskEntityType: 'TRANSACTION',
+      defaultRiskLevel: DEFAULT_RISK_LEVEL,
+      riskLevelAssignmentValues: [
+        {
+          parameterValue: {
+            content: {
+              kind: 'MULTIPLE',
+              values: [
+                {
+                  kind: 'LITERAL',
+                  content: 'US',
+                },
+              ],
+            },
+          },
+          riskLevel: 'MEDIUM',
+        },
+      ],
+      parameterType: 'VARIABLE',
+    },
+    {
+      parameter: '_3dsDone',
+      isActive: true,
+      isDerived: true,
+      riskEntityType: 'TRANSACTION',
+      defaultRiskLevel: DEFAULT_RISK_LEVEL,
+      riskLevelAssignmentValues: [
+        {
+          parameterValue: {
+            content: {
+              kind: 'LITERAL',
+              content: true,
+            },
+          },
+          riskLevel: 'MEDIUM',
+        },
+      ],
+      isNullableAllowed: true,
+      parameterType: 'VARIABLE',
+    },
+    {
+      parameter: 'originUserSarFiled',
+      isActive: true,
+      isDerived: true,
+      riskEntityType: 'TRANSACTION',
+      defaultRiskLevel: DEFAULT_RISK_LEVEL,
+      riskLevelAssignmentValues: [
+        {
+          parameterValue: {
+            content: {
+              kind: 'LITERAL',
+              content: false,
+            },
+          },
+          riskLevel: 'MEDIUM',
+        },
+      ],
+      isNullableAllowed: true,
+      parameterType: 'VARIABLE',
+    },
+    {
+      parameter: 'destinationUserSarFiled',
+      isActive: true,
+      isDerived: true,
+      riskEntityType: 'TRANSACTION',
+      defaultRiskLevel: DEFAULT_RISK_LEVEL,
+      riskLevelAssignmentValues: [
+        {
+          parameterValue: {
+            content: {
+              kind: 'LITERAL',
+              content: false,
+            },
+          },
+          riskLevel: 'MEDIUM',
+        },
+      ],
+      isNullableAllowed: true,
+      parameterType: 'VARIABLE',
+    },
+  ]
 export const TEST_ITERABLE_RISK_ITEM: ParameterAttributeRiskValues = {
   parameter: 'shareHolders',
   targetIterableParameter: 'generalDetails.countryOfNationality',
