@@ -12,8 +12,6 @@ import { ALERT_ITEM } from '@/utils/queries/keys';
 import AsyncResourceRenderer from '@/components/common/AsyncResourceRenderer';
 import * as Form from '@/components/ui/Form';
 
-const MOCK_QUESTION_IDS = ['TABLE', 'TIME_SERIES', 'STACKED_BARCHART'];
-
 interface Props {
   alertId: string;
 }
@@ -26,12 +24,12 @@ export default function InvestigativeCoPilot(props: Props) {
   const rootRef = useRef<HTMLDivElement>(null);
 
   const mutation = useMutation<QuestionResponse, unknown, FormValues>(
-    async (_variables) => {
+    async ({ searchString }) => {
       await new Promise((resolve) => {
         setTimeout(resolve, Math.round(Math.random() * 2000));
       });
       const newVar = await api.getQuestion({
-        questionId: MOCK_QUESTION_IDS[Math.floor(Math.random() * MOCK_QUESTION_IDS.length)],
+        questionId: searchString,
         alertId: alertId,
         variables: [],
       });

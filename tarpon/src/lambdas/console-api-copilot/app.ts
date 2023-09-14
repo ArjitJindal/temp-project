@@ -11,6 +11,8 @@ import { UserService } from '@/lambdas/console-api-user/services/user-service'
 import { Handlers } from '@/@types/openapi-internal-custom/DefaultApi'
 import { ReportService } from '@/services/sar/service'
 import { InternalTransaction } from '@/@types/openapi-internal/InternalTransaction'
+import { QuestionService } from '@/services/copilot/questions/question-service'
+import { AlertsService } from '@/services/alerts'
 
 export const copilotHandler = lambdaApi({})(
   async (
@@ -80,125 +82,21 @@ export const copilotHandler = lambdaApi({})(
     })
 
     handlers.registerGetQuestion(async (_ctx, request) => {
-      if (request.questionId === 'TABLE') {
-        return {
-          questionId: request.questionId,
-          questionType: request.questionId,
-          variableOptions: [
-            { name: 'startTimestamp', variableType: 'DATETIME' },
-          ],
-          rows: [...Array(10).keys()].map((_, i) => [
-            `string#${i}`,
-            new Date().valueOf() - Math.round(24 * 3600 * 1000 * Math.random()),
-            'some other string#${i}',
-          ]),
-          headers: [
-            {
-              name: 'str1',
-              columnType: 'STRING',
-            },
-            {
-              name: 'date',
-              columnType: 'DATETIME',
-            },
-            {
-              name: 'str2',
-              columnType: 'STRING',
-            },
-          ],
-        }
+      const questionService = new QuestionService()
+      const caseService = await CaseService.fromEvent(event)
+      const alertService = await AlertsService.fromEvent(event)
+      const alert = await alertService.getAlert(request.alertId)
+      if (!alert?.caseId) {
+        throw new Error(`Alert ${alert?.alertId} has no case ID`)
       }
-      if (request.questionId === 'STACKED_BARCHART') {
-        return {
-          questionId: request.questionId,
-          questionType: request.questionId,
-          variableOptions: [
-            { name: 'startTimestamp', variableType: 'DATETIME' },
-          ],
-          series: [
-            {
-              label: 'series1',
-              values: [
-                {
-                  x: 'thing1',
-                  y: 10,
-                },
-                {
-                  x: 'thing2',
-                  y: 5,
-                },
-                {
-                  x: 'thing3',
-                  y: 20,
-                },
-              ],
-            },
-            {
-              label: 'series2',
-              values: [
-                {
-                  x: 'thing1',
-                  y: 2,
-                },
-                {
-                  x: 'thing2',
-                  y: 1,
-                },
-                {
-                  x: 'thing3',
-                  y: 6,
-                },
-              ],
-            },
-          ],
-        }
-      }
-      if (request.questionId === 'TIMESERIES') {
-        return {
-          questionId: request.questionId,
-          questionType: request.questionId,
-          variableOptions: [
-            { name: 'startTimestamp', variableType: 'DATETIME' },
-          ],
-          timeseries: [
-            {
-              label: 'series1',
-              values: [
-                {
-                  time: new Date().setDate(new Date().getDate() - 2).valueOf(),
-                  value: 10,
-                },
-                {
-                  time: new Date().setDate(new Date().getDate() - 1).valueOf(),
-                  y: 5,
-                },
-                {
-                  time: new Date().valueOf(),
-                  y: 20,
-                },
-              ],
-            },
-            {
-              label: 'series2',
-              values: [
-                {
-                  time: new Date().setDate(new Date().getDate() - 2).valueOf(),
-                  value: 5,
-                },
-                {
-                  time: new Date().setDate(new Date().getDate() - 1).valueOf(),
-                  y: 10,
-                },
-                {
-                  time: new Date().valueOf(),
-                  y: 2,
-                },
-              ],
-            },
-          ],
-        }
-      }
-      throw new Error()
+      const c = await caseService.getCase(alert.caseId)
+
+      return questionService.answer(
+        request.questionId,
+        request.variables || [],
+        c,
+        alert
+      )
     })
 
     return await handlers.handle(event)

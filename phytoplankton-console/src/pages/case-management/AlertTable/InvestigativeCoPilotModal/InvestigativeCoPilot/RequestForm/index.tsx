@@ -15,18 +15,16 @@ interface Props {
 }
 
 const SUPPORTED_SEARCHES = [
-  'Case history',
   'Alert history',
-  'Transaction details',
-  'Tx’n distribution by type',
+  'Case history',
   'Which alerts have resulted in SARs?',
-  'Who are the top 10 users by total amount they have sent money to?',
-  'How does the TRS score change over the last week?',
-  'Which transactions resulted in this alert?',
-  'How are the transactions for this user distributed by type?',
-  'What different payment identifiers have been used by this user?',
   'How are the transactions for this user distributed by rule action?',
-  'What is the case history for this user?',
+  'How are the transactions for this user distributed by type?',
+  'How has the TRS score changed over the last week?',
+  'What are the top 10 payment identifiers they have received money from?',
+  'What are the top 10 payment identifiers they have send money to?',
+  'Who are the top 10 users they have received money from?',
+  'Who are the top 10 users they have sent money to?',
 ];
 
 export default function RequestForm(props: Props) {
@@ -35,7 +33,7 @@ export default function RequestForm(props: Props) {
 
   const [searchText, setSearchText] = useState<string | undefined>('');
   const filteredSuggestions = SUPPORTED_SEARCHES.filter((x) =>
-    searchText ? x.indexOf(searchText) !== -1 : true,
+    searchText ? x.toLowerCase().indexOf(searchText.toLowerCase()) !== -1 : true,
   );
 
   return (

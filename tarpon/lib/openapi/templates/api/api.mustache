@@ -19,6 +19,14 @@ import {DefaultApi{{#lambda.titlecase}}{{ nickname }}{{/lambda.titlecase}}Reques
 {{/operation}}
 {{/operations}}
 
+function tryParseJSONObject(jsonString: string) {
+  try {
+    return JSON.parse(jsonString);
+  } catch (e) {
+    return jsonString
+  }
+}
+
 export class Handlers {
 {{#operations}}
     {{#operation}}
@@ -64,9 +72,12 @@ export class Handlers {
                               {{#isNumber}}
                         {{paramName}}: (event.queryStringParameters?.{{paramName}} ? event.queryStringParameters.{{paramName}}.split(',').map(i => parseInt(i)) : undefined) as {{baseType}}[],
                               {{/isNumber}}
-                              {{^isNumber}}
+                              {{#isPrimitiveType}}
                         {{paramName}}: (event.queryStringParameters?.{{paramName}} ? event.queryStringParameters.{{paramName}}.split(',') : undefined) as {{baseType}}[],
-                              {{/isNumber}}
+                              {{/isPrimitiveType}}
+                              {{^isPrimitiveType}}
+                        {{paramName}}: (event.queryStringParameters?.{{paramName}} ? event.queryStringParameters.{{paramName}}.split(',').map(v => tryParseJSONObject(v)) : undefined) as {{baseType}}[],
+                              {{/isPrimitiveType}}
                             {{/isArray}}
                             {{^isArray}}
                                 {{#isNumber}}

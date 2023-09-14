@@ -4677,9 +4677,11 @@ paths:
                   oneOf:
                     - type: string
                     - type: number
+              required:
+                - name
+                - value
           in: query
           name: variables
-          required: true
 components:
   schemas:
     QuestionResponse:
