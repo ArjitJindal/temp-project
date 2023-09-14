@@ -110,14 +110,11 @@ async function main() {
     return
   }
 
-  if (migrationType === 'PRE_DEPLOYMENT') {
-    await syncFeatureFlags()
-  }
-
   if (migrationType === 'POST_DEPLOYMENT') {
     await syncMongoDbIndices()
     await syncRulesLibrary()
     await syncListLibrary()
+    await syncFeatureFlags()
 
     // Seed cypress tenant on dev
     if (envIs('dev')) {
