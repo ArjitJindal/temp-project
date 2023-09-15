@@ -14,13 +14,15 @@ export default function HistoryItemTimeSeries(props: Props) {
 
   const data: ColumnData<string, number, string> = (item.timeseries ?? []).flatMap((seriesItem) =>
     (seriesItem.values ?? []).map((valueItem) => ({
-      series: seriesItem.label ?? 'N/A',
+      series: seriesItem.label || 'Value',
       yValue: valueItem.value ?? 0,
       xValue: dayjs(valueItem.time).format(DEFAULT_DATE_FORMAT),
     })),
   );
 
-  const seriesLabels: string[] = (item.timeseries ?? []).map((x) => x.label).filter(notEmpty);
+  const seriesLabels: string[] = (item.timeseries ?? [])
+    .map((x) => x.label || 'Value')
+    .filter(notEmpty);
 
   return (
     <Column
@@ -30,6 +32,7 @@ export default function HistoryItemTimeSeries(props: Props) {
         {},
       )}
       height={200}
+      hideLegend={seriesLabels.length < 2}
     />
   );
 }

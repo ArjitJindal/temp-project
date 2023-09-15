@@ -13,6 +13,10 @@ export interface QuestionResponseTimeSeries extends QuestionResponseBase, Api.Ti
   questionType: 'TIME_SERIES';
 }
 
+export interface QuestionResponseBarchart extends QuestionResponseBase, Api.Barchart {
+  questionType: 'BARCHART';
+}
+
 export interface QuestionResponseStackedBarchart extends QuestionResponseBase, Api.StackedBarchart {
   questionType: 'STACKED_BARCHART';
 }
@@ -20,7 +24,8 @@ export interface QuestionResponseStackedBarchart extends QuestionResponseBase, A
 export type QuestionResponse =
   | QuestionResponseTable
   | QuestionResponseTimeSeries
-  | QuestionResponseStackedBarchart;
+  | QuestionResponseStackedBarchart
+  | QuestionResponseBarchart;
 
 export function parseQuestionResponse(response: Api.QuestionResponse): QuestionResponse {
   const { questionType, ...rest } = response;
@@ -42,5 +47,11 @@ export function parseQuestionResponse(response: Api.QuestionResponse): QuestionR
       ...rest,
     };
   }
-  throw new Error(`Not able to parse response`);
+  if (questionType === 'BARCHART') {
+    return {
+      questionType: 'BARCHART' as const,
+      ...rest,
+    };
+  }
+  throw new Error(`Not able to parse response. Unsupported question type: "${questionType}"`);
 }

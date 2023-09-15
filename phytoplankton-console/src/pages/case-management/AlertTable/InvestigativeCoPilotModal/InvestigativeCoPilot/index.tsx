@@ -1,4 +1,4 @@
-import React, { useLayoutEffect, useRef, useState } from 'react';
+import React, { useEffect, useLayoutEffect, useRef, useState } from 'react';
 import { useMutation } from '@tanstack/react-query';
 import RequestForm, { FormValues } from './RequestForm';
 import History from './History';
@@ -8,9 +8,10 @@ import { message } from '@/components/library/Message';
 import { getErrorMessage } from '@/utils/lang';
 import { useApi } from '@/api';
 import { useQuery } from '@/utils/queries/hooks';
-import { ALERT_ITEM } from '@/utils/queries/keys';
+import { ALERT_ITEM, COPILOT_ALERT_QUESTIONS } from '@/utils/queries/keys';
 import AsyncResourceRenderer from '@/components/common/AsyncResourceRenderer';
 import * as Form from '@/components/ui/Form';
+import { isSuccess, map, useFinishedSuccessfully } from '@/utils/asyncResource';
 
 interface Props {
   alertId: string;
@@ -23,11 +24,22 @@ export default function InvestigativeCoPilot(props: Props) {
 
   const rootRef = useRef<HTMLDivElement>(null);
 
+  const historyQuery = useQuery(COPILOT_ALERT_QUESTIONS(alertId), async () => {
+    return await api.getQuestions({
+      alertId: alertId,
+    });
+  });
+
+  const historyRes = map(historyQuery.data, ({ data }) => (data ?? []).map(parseQuestionResponse));
+  const isHistoryLoaded = useFinishedSuccessfully(historyRes);
+  useEffect(() => {
+    if (isHistoryLoaded && isSuccess(historyRes)) {
+      setHistory(historyRes.value);
+    }
+  }, [historyRes, isHistoryLoaded]);
+
   const mutation = useMutation<QuestionResponse, unknown, FormValues>(
     async ({ searchString }) => {
-      await api.getQuestions({
-        alertId: alertId,
-      });
       const response = await api.postQuestion({
         QuestionRequest: {
           questionId: searchString,
@@ -61,23 +73,27 @@ export default function InvestigativeCoPilot(props: Props) {
   });
 
   return (
-    <div className={s.root} ref={rootRef}>
-      <div className={s.alertInfo}>
-        <AsyncResourceRenderer resource={alertQueryResult.data}>
-          {(alert) => (
-            <>
-              <Form.Layout.Label title={'Alert ID'}>{alert.alertId}</Form.Layout.Label>
-              <Form.Layout.Label title={'Case ID'}>{alert.caseId}</Form.Layout.Label>
-            </>
-          )}
-        </AsyncResourceRenderer>
-      </div>
-      <div className={s.history}>
-        <History alertId={alertId} items={history} />
-      </div>
-      <div className={s.form}>
-        <RequestForm mutation={mutation} />
-      </div>
-    </div>
+    <AsyncResourceRenderer resource={historyRes}>
+      {() => (
+        <div className={s.root} ref={rootRef}>
+          <div className={s.alertInfo}>
+            <AsyncResourceRenderer resource={alertQueryResult.data}>
+              {(alert) => (
+                <>
+                  <Form.Layout.Label title={'Alert ID'}>{alert.alertId}</Form.Layout.Label>
+                  <Form.Layout.Label title={'Case ID'}>{alert.caseId}</Form.Layout.Label>
+                </>
+              )}
+            </AsyncResourceRenderer>
+          </div>
+          <div className={s.history}>
+            <History alertId={alertId} items={history} />
+          </div>
+          <div className={s.form}>
+            <RequestForm mutation={mutation} />
+          </div>
+        </div>
+      )}
+    </AsyncResourceRenderer>
   );
 }

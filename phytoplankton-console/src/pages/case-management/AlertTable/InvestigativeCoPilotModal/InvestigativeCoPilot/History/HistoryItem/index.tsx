@@ -11,6 +11,7 @@ import { useApi } from '@/api';
 import { message } from '@/components/library/Message';
 import { getMutationAsyncResource } from '@/utils/queries/hooks';
 import { isLoading } from '@/utils/asyncResource';
+import HistoryItemBarchart from '@/pages/case-management/AlertTable/InvestigativeCoPilotModal/InvestigativeCoPilot/History/HistoryItem/HistoryItemBarchart';
 
 interface Props {
   alertId: string;
@@ -69,6 +70,9 @@ function renderItem(item: QuestionResponse) {
   }
   if (item.questionType === 'TIME_SERIES') {
     return <HistoryItemTimeSeries item={item} />;
+  }
+  if (item.questionType === 'BARCHART') {
+    return <HistoryItemBarchart item={item} />;
   }
   return neverReturn(item, <>{JSON.stringify(item)}</>);
 }

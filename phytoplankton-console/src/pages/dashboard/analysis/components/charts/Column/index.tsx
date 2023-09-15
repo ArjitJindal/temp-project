@@ -19,10 +19,19 @@ interface Props<X, Y, Series> {
   formatSeries?: (value: Series) => string;
   height?: number;
   showTotals?: boolean;
+  hideLegend?: boolean;
 }
 
 export default function Column<Series = string, X = string>(props: Props<X, number, Series>) {
-  const { formatX, formatY, formatSeries, data, colors, showTotals = false } = props;
+  const {
+    formatX,
+    formatY,
+    formatSeries,
+    data,
+    colors,
+    showTotals = false,
+    hideLegend = false,
+  } = props;
 
   const annotations: Annotation[] | undefined = [];
   if (showTotals) {
@@ -107,12 +116,14 @@ export default function Column<Series = string, X = string>(props: Props<X, numb
         },
       }}
       annotations={annotations}
-      legend={{
-        layout: 'horizontal',
-        position: 'bottom',
-        reversed: true,
-        padding: [40, 0, 0, 0],
-      }}
+      legend={
+        !hideLegend && {
+          layout: 'horizontal',
+          position: 'bottom',
+          reversed: true,
+          padding: [40, 0, 0, 0],
+        }
+      }
     />
   );
 }

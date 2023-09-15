@@ -252,3 +252,11 @@ export const TENANT_USAGE_DATA = (): QueryKey => ['tenant-usage-data'];
 
 export const CHECKLIST_TEMPLATES = (params?: AnyParameters): QueryKey =>
   ['checklist-templates', params].filter(Boolean);
+
+export const COPILOT_ALERT_QUESTIONS = (alertId: string): QueryKey => [
+  'copilot',
+  'alert',
+  alertId,
+  'questions',
+  'list',
+];
