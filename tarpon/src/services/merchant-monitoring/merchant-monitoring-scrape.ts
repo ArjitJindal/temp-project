@@ -5,7 +5,6 @@ import { Configuration, OpenAIApi } from 'openai'
 import { NotFound, InternalServerError } from 'http-errors'
 import { MerchantMonitoringSummary } from '@/@types/openapi-internal/MerchantMonitoringSummary'
 import { getSecret } from '@/utils/secrets-manager'
-import { MerchantMonitoringSource } from '@/@types/openapi-internal/MerchantMonitoringSource'
 import { getMongoDbClient } from '@/utils/mongodb-utils'
 import { MerchantRepository } from '@/lambdas/console-api-merchant/merchant-repository'
 import { logger } from '@/core/logger'
@@ -37,7 +36,7 @@ type MerchantMonitoringSecrets = {
 }
 
 @traceable
-export class MerchantMonitoringService {
+export class MerchantMonitoringScrapeService {
   private openAiApiKey?: string
   private companiesHouseApiKey?: string
   private rapidApiKey?: string
@@ -65,7 +64,7 @@ export class MerchantMonitoringService {
     )
   }
 
-  public static async init(): Promise<MerchantMonitoringService> {
+  public static async init(): Promise<MerchantMonitoringScrapeService> {
     const [merchantMonitoringSecrets, openAiCredentials] = await Promise.all([
       getSecret<MerchantMonitoringSecrets>(
         process.env.MERCHANT_MONITORING_SECRETS_ARN as string
@@ -75,7 +74,7 @@ export class MerchantMonitoringService {
       ),
     ])
 
-    return new MerchantMonitoringService(
+    return new MerchantMonitoringScrapeService(
       openAiCredentials,
       merchantMonitoringSecrets
     )
@@ -170,17 +169,6 @@ export class MerchantMonitoringService {
     await merchantRepository.createMerchant(userId, domain, companyName, result)
     return result
   }
-  async getMerchantMonitoringHistory(
-    tenantId: string,
-    source: MerchantMonitoringSource,
-    userId: string
-  ): Promise<MerchantMonitoringSummary[]> {
-    const mongoDb = await getMongoDbClient()
-    const merchantRepository = new MerchantRepository(tenantId, {
-      mongoDb,
-    })
-    return await merchantRepository.getSummaryHistory(userId, source)
-  }
 
   private async scrape(website: string): Promise<MerchantMonitoringSummary> {
     try {
@@ -267,6 +255,7 @@ export class MerchantMonitoringService {
     const data = await this.axios.request(options)
     return this.summarise('LINKEDIN', JSON.stringify(data.data))
   }
+
   private async explorium(
     companyName: string
   ): Promise<MerchantMonitoringSummary | undefined> {

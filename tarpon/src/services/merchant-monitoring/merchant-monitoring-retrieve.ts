@@ -1,0 +1,34 @@
+import { Filter, MongoClient } from 'mongodb'
+import { MerchantMonitoringSource } from '@/@types/openapi-internal/MerchantMonitoringSource'
+import { MerchantMonitoringSourceType } from '@/@types/openapi-internal/MerchantMonitoringSourceType'
+import { MerchantMonitoringSummary } from '@/@types/openapi-internal/MerchantMonitoringSummary'
+import { MerchantRepository } from '@/lambdas/console-api-merchant/merchant-repository'
+
+export class MerchantMonitoringRetrieve {
+  private merchantRepository: MerchantRepository
+
+  constructor(tenantId: string, connections: { mongoDb: MongoClient }) {
+    this.merchantRepository = new MerchantRepository(tenantId, {
+      mongoDb: connections.mongoDb,
+    })
+  }
+
+  async getMerchantMonitoringHistory(
+    source: MerchantMonitoringSource,
+    userId: string
+  ): Promise<MerchantMonitoringSummary[]> {
+    return await this.merchantRepository.getSummaryHistory(userId, source)
+  }
+
+  async getMerchantMonitoringHistoryBySourceType(
+    sourceType: MerchantMonitoringSourceType,
+    userId: string,
+    filter?: Filter<MerchantMonitoringSummary>
+  ): Promise<MerchantMonitoringSummary[]> {
+    return await this.merchantRepository.getSummaryHistoryBySourceType(
+      userId,
+      sourceType,
+      filter
+    )
+  }
+}

@@ -1,4 +1,4 @@
-import { MongoClient } from 'mongodb'
+import { Filter, MongoClient } from 'mongodb'
 
 import { MERCHANT_MONITORING_DATA_COLLECTION } from '@/utils/mongodb-definitions'
 import { MerchantMonitoringSummary } from '@/@types/openapi-internal/MerchantMonitoringSummary'
@@ -94,12 +94,31 @@ export class MerchantRepository {
     const collection = db.collection<MerchantMonitoringSummary>(
       MERCHANT_MONITORING_DATA_COLLECTION(this.tenantId)
     )
+
     return await collection
+      .find({ userId, source })
+      .sort({ updatedAt: -1 })
+      .toArray()
+  }
+
+  public getSummaryHistoryBySourceType(
+    userId: string,
+    sourceType: MerchantMonitoringSource['sourceType'],
+    filter?: Filter<MerchantMonitoringSummary>
+  ): Promise<MerchantMonitoringSummary[]> {
+    const db = this.mongoDb.db()
+    const collection = db.collection<MerchantMonitoringSummary>(
+      MERCHANT_MONITORING_DATA_COLLECTION(this.tenantId)
+    )
+
+    return collection
       .find({
         userId,
-        source,
+        'source.sourceType': sourceType,
+        ...filter,
       })
       .sort({ updatedAt: -1 })
+      .limit(1)
       .toArray()
   }
 }

@@ -5,9 +5,11 @@ import {
 import { BadRequest } from 'http-errors'
 import { JWTAuthorizerResult } from '@/@types/jwt'
 import { lambdaApi } from '@/core/middlewares/lambda-api-middlewares'
-import { MerchantMonitoringService } from '@/services/merchant-monitoring'
+import { MerchantMonitoringScrapeService } from '@/services/merchant-monitoring/merchant-monitoring-scrape'
 import { UserService } from '@/lambdas/console-api-user/services/user-service'
 import { Handlers } from '@/@types/openapi-internal-custom/DefaultApi'
+import { MerchantMonitoringRetrieve } from '@/services/merchant-monitoring/merchant-monitoring-retrieve'
+import { getMongoDbClient } from '@/utils/mongodb-utils'
 
 export const merchantMonitoringHandler = lambdaApi()(
   async (
@@ -16,7 +18,11 @@ export const merchantMonitoringHandler = lambdaApi()(
     >
   ) => {
     const { principalId: tenantId } = event.requestContext.authorizer
-    const mms = await MerchantMonitoringService.init()
+    const mms = await MerchantMonitoringScrapeService.init()
+    const merchantMonitoringRetrieveService = new MerchantMonitoringRetrieve(
+      tenantId,
+      { mongoDb: await getMongoDbClient() }
+    )
     const userService = await UserService.fromEvent(event)
 
     const handlers = new Handlers()
@@ -49,7 +55,10 @@ export const merchantMonitoringHandler = lambdaApi()(
         throw new BadRequest('Missing userId or source')
       }
       return {
-        data: await mms.getMerchantMonitoringHistory(tenantId, source, userId),
+        data: await merchantMonitoringRetrieveService.getMerchantMonitoringHistory(
+          source,
+          userId
+        ),
       }
     })
 

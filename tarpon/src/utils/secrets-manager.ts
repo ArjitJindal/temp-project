@@ -22,7 +22,6 @@ function getSecretManager() {
 
 export async function getSecret<T>(secretId: string): Promise<T> {
   let secretString: string | undefined
-  console.log(`Getting secret ${secretId}`)
   try {
     secretString = (
       await getSecretManager().send(
