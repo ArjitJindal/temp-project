@@ -36,6 +36,7 @@ export async function cleanupRuleHits(values: Props) {
   for (let i = 0; i < 100; i++) {
     try {
       await cleanupRuleHitsInternal(values)
+      return
     } catch (e) {
       if (!/cursor id \d+ not found/.test((e as Error)?.message)) {
         throw e

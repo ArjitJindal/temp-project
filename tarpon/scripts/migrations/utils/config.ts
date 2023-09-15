@@ -13,7 +13,12 @@ export function getConfig() {
     process.env.ENV = 'local'
     console.warn("ENV unspecified. Using 'local'.")
   }
-  switch (process.env.ENV) {
+  let env = process.env.ENV
+  if (env === 'prod') {
+    env = `${env}:${process.env.REGION}`
+  }
+
+  switch (env) {
     case 'local':
       return localConfig
     case 'dev':
