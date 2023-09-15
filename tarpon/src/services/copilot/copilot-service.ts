@@ -121,10 +121,6 @@ export class CopilotService {
 
     const aiFieldsEnabled = await this.getAllEnabledAttribues()
 
-    const attributesData = [...attributes.entries()].filter((f) =>
-      aiFieldsEnabled?.includes(f[0] as AIAttribute)
-    )
-
     const content = `
     The following is a template for suspicious activity report written by bank staff to justify why they are reporting a customer to the financial authorities.
     
@@ -133,7 +129,7 @@ export class CopilotService {
     
     Please fill in the template above with relevant data from the following JSON blob maintaining the exact same structure and correct any spelling mistakes or grammatical errors:
     
-    ${JSON.stringify([...attributesData.entries()])}
+    ${JSON.stringify([...attributes.entries()])}
     `.slice(0, MAX_TOKEN_OUTPUT)
 
     const response = await this.gpt(content)
@@ -180,9 +176,6 @@ export class CopilotService {
     )
     const aiFieldsEnabled = await this.getAllEnabledAttribues()
 
-    const attributesData = [...attributes.entries()].filter((f) =>
-      aiFieldsEnabled?.includes(f[0] as AIAttribute)
-    )
     const content = `
     The following is a template for document written by bank staff to justify why they have or have not reported a customer to the financial authorities.
     
@@ -192,7 +185,7 @@ export class CopilotService {
     
     The following text and data are various pieces of information relevant to a single customer who is under investigation by the bank staff, please rewrite this information so that it conforms to the template above and correct any spelling mistakes or grammatical errors.
     
-    ${JSON.stringify([...attributesData.entries()])}
+    ${JSON.stringify([...attributes.entries()])}
     `.slice(0, MAX_TOKEN_OUTPUT)
 
     const response = await this.gpt(content)
