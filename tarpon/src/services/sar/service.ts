@@ -107,8 +107,7 @@ export class ReportService {
     )
     const now = new Date().valueOf()
 
-    return withSchema({
-      id: await this.reportRepository.getId(),
+    const report: Report = {
       name: c.caseId,
       description: `SAR report for ${c.caseId}`,
       caseId: c.caseId,
@@ -125,7 +124,9 @@ export class ReportService {
       revisions: [],
       caseUserId:
         c.caseUsers?.origin?.userId ?? c.caseUsers?.destination?.userId ?? '',
-    })
+    }
+    const savedReport = await this.reportRepository.saveOrUpdateReport(report)
+    return withSchema(savedReport)
   }
 
   async getReports(params: DefaultApiGetReportsRequest) {
