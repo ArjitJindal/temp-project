@@ -1,6 +1,5 @@
 import React from 'react';
-import { QuestionResponseStackedBarchart } from '../../types';
-import HistoryItemBase from '../HistoryItemBase';
+import { QuestionResponseStackedBarchart } from '../../../types';
 import Column, { ColumnData } from '@/pages/dashboard/analysis/components/charts/Column';
 import { notEmpty } from '@/utils/array';
 import { ALL_CHART_COLORS } from '@/components/ui/colors';
@@ -23,15 +22,13 @@ export default function HistoryItemStackedBarchart(props: Props) {
   const seriesLabels: string[] = (item.series ?? []).map((x) => x.label).filter(notEmpty);
 
   return (
-    <HistoryItemBase item={item}>
-      <Column
-        data={data}
-        colors={seriesLabels.reduce(
-          (acc, series, i) => ({ ...acc, [series]: ALL_CHART_COLORS[i % ALL_CHART_COLORS.length] }),
-          {},
-        )}
-        height={200}
-      />
-    </HistoryItemBase>
+    <Column
+      data={data}
+      colors={seriesLabels.reduce(
+        (acc, series, i) => ({ ...acc, [series]: ALL_CHART_COLORS[i % ALL_CHART_COLORS.length] }),
+        {},
+      )}
+      height={200}
+    />
   );
 }

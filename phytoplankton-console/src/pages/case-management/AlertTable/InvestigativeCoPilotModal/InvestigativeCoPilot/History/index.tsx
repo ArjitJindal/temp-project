@@ -2,17 +2,15 @@ import React from 'react';
 import { QuestionResponse } from '../types';
 import s from './index.module.less';
 import EmptyImg from './empty.png';
-import HistoryItemTable from './HistoryItemTable';
-import HistoryItemStackedBarchart from './HistoryItemStackedBarchart';
-import HistoryItemTimeSeries from './HistoryItemTimeSeries';
-import { neverReturn } from '@/utils/lang';
+import HistoryItem from '@/pages/case-management/AlertTable/InvestigativeCoPilotModal/InvestigativeCoPilot/History/HistoryItem';
 
 interface Props {
+  alertId: string;
   items: QuestionResponse[];
 }
 
 export default function History(props: Props) {
-  const { items } = props;
+  const { alertId, items } = props;
   return (
     <div className={s.root}>
       {items.length === 0 && (
@@ -22,21 +20,8 @@ export default function History(props: Props) {
         </div>
       )}
       {items.map((item) => (
-        <React.Fragment key={item.questionId}>{renderItem(item)}</React.Fragment>
+        <HistoryItem key={item.questionId} alertId={alertId} item={item} />
       ))}
     </div>
   );
-}
-
-function renderItem(item: QuestionResponse) {
-  if (item.questionType === 'TABLE') {
-    return <HistoryItemTable item={item} />;
-  }
-  if (item.questionType === 'STACKED_BARCHART') {
-    return <HistoryItemStackedBarchart item={item} />;
-  }
-  if (item.questionType === 'TIME_SERIES') {
-    return <HistoryItemTimeSeries item={item} />;
-  }
-  return neverReturn(item, <>{JSON.stringify(item)}</>);
 }

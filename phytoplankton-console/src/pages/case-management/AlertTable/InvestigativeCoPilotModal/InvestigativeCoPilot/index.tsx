@@ -25,9 +25,6 @@ export default function InvestigativeCoPilot(props: Props) {
 
   const mutation = useMutation<QuestionResponse, unknown, FormValues>(
     async ({ searchString }) => {
-      await new Promise((resolve) => {
-        setTimeout(resolve, Math.round(Math.random() * 2000));
-      });
       const response = await api.getQuestion({
         questionId: searchString,
         alertId: alertId,
@@ -71,7 +68,7 @@ export default function InvestigativeCoPilot(props: Props) {
         </AsyncResourceRenderer>
       </div>
       <div className={s.history}>
-        <History items={history} />
+        <History alertId={alertId} items={history} />
       </div>
       <div className={s.form}>
         <RequestForm mutation={mutation} />

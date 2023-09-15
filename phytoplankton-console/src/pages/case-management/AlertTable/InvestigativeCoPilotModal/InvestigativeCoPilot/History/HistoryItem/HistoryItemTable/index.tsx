@@ -1,6 +1,5 @@
 import React, { useMemo, useState } from 'react';
-import { QuestionResponseTable } from '../../types';
-import HistoryItemBase from '../HistoryItemBase';
+import { QuestionResponseTable } from '../../../types';
 import Table from '@/components/library/Table';
 import { ColumnHelper } from '@/components/library/Table/columnHelper';
 import { DATE_TIME, STRING, UNKNOWN } from '@/components/library/Table/standardDataTypes';
@@ -46,29 +45,27 @@ export default function HistoryItemTable(props: Props) {
   }, [page, item]);
 
   return (
-    <HistoryItemBase item={item}>
-      <Table<any>
-        params={params}
-        onChangeParams={setParams}
-        rowHeightMode={'AUTO'}
-        toolsOptions={false}
-        rowKey="index"
-        columns={(item.headers ?? []).map((header) => {
-          let type: ColumnDataType<any> = UNKNOWN;
-          if (header.columnType === 'DATETIME') {
-            type = DATE_TIME;
-          } else if (header.columnType === 'STRING') {
-            type = STRING;
-          }
-          return columnHelper.simple({
-            title: header.name as string,
-            key: header.name as string,
-            type: type,
-          });
-        })}
-        data={tableData}
-        pagination={'HIDE_FOR_ONE_PAGE'}
-      />
-    </HistoryItemBase>
+    <Table<any>
+      params={params}
+      onChangeParams={setParams}
+      rowHeightMode={'AUTO'}
+      toolsOptions={false}
+      rowKey="index"
+      columns={(item.headers ?? []).map((header) => {
+        let type: ColumnDataType<any> = UNKNOWN;
+        if (header.columnType === 'DATETIME') {
+          type = DATE_TIME;
+        } else if (header.columnType === 'STRING') {
+          type = STRING;
+        }
+        return columnHelper.simple({
+          title: header.name as string,
+          key: header.name as string,
+          type: type,
+        });
+      })}
+      data={tableData}
+      pagination={'HIDE_FOR_ONE_PAGE'}
+    />
   );
 }

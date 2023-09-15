@@ -1,0 +1,40 @@
+@import 'src/components/ui/colors.less';
+@import 'src/components/ui/animation.less';
+
+.root {
+  border-radius: 4px;
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  background: white;
+  z-index: 1;
+  transition-timing-function: @default-animation-function;
+  transition-duration: @default-animation-speed;
+  transition-property: opacity;
+
+  &.isLoading {
+    opacity: 0.5;
+    transition-delay: @default-animation-speed;
+  }
+}
+
+.header {
+  display: flex;
+  justify-content: space-between;
+}
+
+.title {
+  font-weight: 600;
+}
+
+.brainIcon {
+  width: 16px;
+  cursor: pointer;
+}
+
+.tools {
+  display: flex;
+  gap: 16px;
+  align-items: center;
+}

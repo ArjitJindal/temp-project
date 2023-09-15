@@ -1,6 +1,6 @@
 import * as Api from '@/apis';
 
-export type QuestionResponseBase = Pick<Api.QuestionResponse, 'questionId'>;
+export type QuestionResponseBase = Pick<Api.QuestionResponse, 'questionId' | 'variableOptions'>;
 
 export interface QuestionResponseTable extends QuestionResponseBase, Api.Table {
   questionType: 'TABLE';
