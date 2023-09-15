@@ -7,10 +7,21 @@ import {
 import { InternalTransaction } from '@/@types/openapi-internal/InternalTransaction'
 import { InternalUser } from '@/@types/openapi-internal/InternalUser'
 import { getUserName } from '@/utils/helpers'
+import {
+  humanReadablePeriod,
+  Period,
+  periodDefaults,
+  periodVars,
+} from '@/services/copilot/questions/definitions/util'
 
-export const UsersSentMoneyTo: TableQuestion<any> = {
+export const UsersSentMoneyTo: TableQuestion<Period & { top: number }> = {
   type: 'TABLE',
   questionId: 'Who are the top 10 users they have sent money to?',
+  title: (vars) => {
+    return `Top ${
+      vars.top
+    } users they have sent money to over ${humanReadablePeriod(vars)}`
+  },
   aggregationPipeline: async ({ tenantId, userId }) => {
     const client = await getMongoDbClient()
     const db = client.db()
@@ -51,5 +62,11 @@ export const UsersSentMoneyTo: TableQuestion<any> = {
     { name: 'Username', columnType: 'STRING' },
     { name: 'User type', columnType: 'STRING' },
   ],
-  variableOptions: {},
+  variableOptions: {
+    ...periodVars,
+    top: 'INTEGER',
+  },
+  defaults: () => {
+    return { ...periodDefaults(), top: 10 }
+  },
 }

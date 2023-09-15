@@ -10,6 +10,9 @@ import { InternalUser } from '@/@types/openapi-internal/InternalUser'
 export const SarsFiled: TableQuestion<any> = {
   type: 'TABLE',
   questionId: 'Which alerts have resulted in SARs?',
+  title: () => {
+    return `Alerts that results in SARs`
+  },
   aggregationPipeline: async ({ tenantId, userId }) => {
     const client = await getMongoDbClient()
     const db = client.db()

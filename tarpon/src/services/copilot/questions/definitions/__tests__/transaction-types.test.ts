@@ -20,8 +20,7 @@ describe('Transaction types', () => {
       },
       (data) => {
         expect(data.length).toEqual(1)
-        expect(data.at(0)?.values.at(0)?.x).toEqual('DEPOSIT')
-        expect(data.at(0)?.values.length).toEqual(1)
+        expect(data.at(0)?.x).toEqual('DEPOSIT')
       }
     )
   })

@@ -4,11 +4,20 @@ import { Case } from '@/@types/openapi-internal/Case'
 import { TRANSACTIONS_COLLECTION } from '@/utils/mongodb-definitions'
 import { RULE_ACTIONS } from '@/@types/rule/rule-actions'
 import { RuleAction } from '@/@types/openapi-public/RuleAction'
+import {
+  humanReadablePeriod,
+  Period,
+  periodDefaults,
+  periodVars,
+} from '@/services/copilot/questions/definitions/util'
 
-export const TransactionByRulesAction: StackedBarchartQuestion<any> = {
+export const TransactionByRulesAction: StackedBarchartQuestion<Period> = {
   type: 'STACKED_BARCHART',
   questionId:
     'How are the transactions for this user distributed by rule action?',
+  title: (vars) => {
+    return `Transactions by rule action for ${humanReadablePeriod(vars)}`
+  },
   aggregationPipeline: async ({ tenantId, userId }) => {
     const client = await getMongoDbClient()
     const db = client.db()
@@ -94,5 +103,10 @@ export const TransactionByRulesAction: StackedBarchartQuestion<any> = {
       return { label, values }
     })
   },
-  variableOptions: {},
+  variableOptions: {
+    ...periodVars,
+  },
+  defaults: () => {
+    return periodDefaults()
+  },
 }

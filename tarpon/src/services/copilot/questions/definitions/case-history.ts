@@ -2,10 +2,19 @@ import { TableQuestion } from '@/services/copilot/questions/types'
 import { getMongoDbClient } from '@/utils/mongodb-utils'
 import { Case } from '@/@types/openapi-internal/Case'
 import { CASES_COLLECTION } from '@/utils/mongodb-definitions'
+import {
+  humanReadablePeriod,
+  Period,
+  periodDefaults,
+  periodVars,
+} from '@/services/copilot/questions/definitions/util'
 
-export const CaseHistory: TableQuestion<any> = {
+export const CaseHistory: TableQuestion<Period> = {
   type: 'TABLE',
   questionId: 'Case history',
+  title: (vars) => {
+    return `Cases for this user for ${humanReadablePeriod(vars)}`
+  },
   aggregationPipeline: async ({ tenantId, userId }) => {
     const client = await getMongoDbClient()
     const db = client.db()
@@ -34,5 +43,10 @@ export const CaseHistory: TableQuestion<any> = {
     { name: 'Status', columnType: 'STRING' },
     { name: 'Closing reason', columnType: 'STRING' },
   ],
-  variableOptions: {},
+  variableOptions: {
+    ...periodVars,
+  },
+  defaults: () => {
+    return periodDefaults()
+  },
 }

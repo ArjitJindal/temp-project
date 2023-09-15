@@ -38,13 +38,19 @@ export class QuestionService {
       throw new Error()
     }
 
-    varObject = question.applyDefaults
-      ? question?.applyDefaults(varObject)
+    varObject = question.defaults
+      ? { ...varObject, ...question.defaults() }
       : varObject
+
+    const common = {
+      questionId,
+      questionType: question.type,
+      title: question.title ? question.title(varObject) : questionId,
+    }
+
     if (question.type === 'TABLE') {
       return {
-        questionId,
-        questionType: question.type,
+        ...common,
         rows: await question?.aggregationPipeline(
           { tenantId, userId, caseId, alertId },
           varObject
@@ -57,8 +63,7 @@ export class QuestionService {
     }
     if (question.type === 'STACKED_BARCHART') {
       return {
-        questionId,
-        questionType: question.type,
+        ...common,
         series: await question?.aggregationPipeline(
           { tenantId, userId, caseId, alertId },
           varObject
@@ -67,9 +72,17 @@ export class QuestionService {
     }
     if (question.type === 'TIME_SERIES') {
       return {
-        questionId,
-        questionType: question.type,
+        ...common,
         timeseries: await question?.aggregationPipeline(
+          { tenantId, userId, caseId, alertId },
+          varObject
+        ),
+      }
+    }
+    if (question.type === 'BARCHART') {
+      return {
+        ...common,
+        values: await question?.aggregationPipeline(
           { tenantId, userId, caseId, alertId },
           varObject
         ),

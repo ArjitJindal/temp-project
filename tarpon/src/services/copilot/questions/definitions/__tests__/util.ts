@@ -1,6 +1,5 @@
 import { MongoClient } from 'mongodb'
 import { Question } from '@/services/copilot/questions/types'
-import { AlertHistory } from '@/services/copilot/questions/definitions/alert-history'
 import { getTestTenantId } from '@/test-utils/tenant-test-utils'
 import { getMongoDbClient } from '@/utils/mongodb-utils'
 
@@ -20,7 +19,7 @@ export async function testQuestion<D>(
       alertId: 'A-1',
       userId: 'U-1',
     },
-    AlertHistory.applyDefaults ? AlertHistory.applyDefaults({}) : {}
+    q.defaults ? q.defaults() : {}
   )
 
   assertions(data)

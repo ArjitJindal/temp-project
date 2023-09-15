@@ -2,12 +2,19 @@ import { TimeseriesQuestion } from '@/services/copilot/questions/types'
 import { getMongoDbClient } from '@/utils/mongodb-utils'
 import { Case } from '@/@types/openapi-internal/Case'
 import { TRANSACTIONS_COLLECTION } from '@/utils/mongodb-definitions'
+import {
+  humanReadablePeriod,
+  Period,
+  periodDefaults,
+  periodVars,
+} from '@/services/copilot/questions/definitions/util'
 
-export const TrsScore: TimeseriesQuestion<{
-  startTimestamp?: number
-}> = {
+export const TrsScore: TimeseriesQuestion<Period> = {
   type: 'TIME_SERIES',
   questionId: 'How has the TRS score changed over the last week?',
+  title: (vars) => {
+    return `TRS score distribution for ${humanReadablePeriod(vars)}`
+  },
   aggregationPipeline: async ({ userId, tenantId }) => {
     const client = await getMongoDbClient()
     const db = client.db()
@@ -65,6 +72,9 @@ export const TrsScore: TimeseriesQuestion<{
     ]
   },
   variableOptions: {
-    startTimestamp: 'TIMESTAMP',
+    ...periodVars,
+  },
+  defaults: () => {
+    return periodDefaults()
   },
 }

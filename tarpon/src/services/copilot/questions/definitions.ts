@@ -1,3 +1,9 @@
+import {
+  StackedBarchartQuestion,
+  TableQuestion,
+  TimeseriesQuestion,
+  BarchartQuestion,
+} from './types'
 import { CaseHistory } from '@/services/copilot/questions/definitions/case-history'
 import { TrsScore } from '@/services/copilot/questions/definitions/trs-score'
 import { TransactionType } from '@/services/copilot/questions/definitions/transaction-type'
@@ -9,7 +15,12 @@ import { UsersReceivedMoneyFrom } from '@/services/copilot/questions/definitions
 import { UniquePaymentIdentifierSent } from '@/services/copilot/questions/definitions/unique-payment-identifier-sent'
 import { UniquePaymentIdentifierReceived } from '@/services/copilot/questions/definitions/unique-payment-identifier-received'
 
-export const questions = [
+export const questions: (
+  | TableQuestion<any>
+  | StackedBarchartQuestion<any>
+  | BarchartQuestion<any>
+  | TimeseriesQuestion<any>
+)[] = [
   AlertHistory,
   CaseHistory,
   SarsFiled,

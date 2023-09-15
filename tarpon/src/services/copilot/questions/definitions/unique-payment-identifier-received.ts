@@ -3,12 +3,27 @@ import { getMongoDbClient } from '@/utils/mongodb-utils'
 import { TRANSACTIONS_COLLECTION } from '@/utils/mongodb-definitions'
 import { InternalTransaction } from '@/@types/openapi-internal/InternalTransaction'
 import { PaymentMethod } from '@/@types/openapi-internal/PaymentMethod'
+import {
+  humanReadablePeriod,
+  Period,
+  periodDefaults,
+  periodVars,
+} from '@/services/copilot/questions/definitions/util'
 
-export const UniquePaymentIdentifierReceived: TableQuestion<any> = {
+export const UniquePaymentIdentifierReceived: TableQuestion<
+  Period & { top: number }
+> = {
   type: 'TABLE',
   questionId:
     'What are the top 10 payment identifiers they have received money from?',
-  aggregationPipeline: async ({ tenantId, userId }) => {
+  title: (vars) => {
+    return `Top ${
+      vars.top
+    } payment identifiers they have received from over ${humanReadablePeriod(
+      vars
+    )}`
+  },
+  aggregationPipeline: async ({ tenantId, userId }, { top }) => {
     const client = await getMongoDbClient()
     const db = client.db()
     const result = await db
@@ -34,7 +49,7 @@ export const UniquePaymentIdentifierReceived: TableQuestion<any> = {
           },
         },
         {
-          $limit: 10,
+          $limit: top,
         },
       ])
       .toArray()
@@ -47,5 +62,11 @@ export const UniquePaymentIdentifierReceived: TableQuestion<any> = {
     { name: 'Destination payment identifier', columnType: 'STRING' },
     { name: 'Payment type', columnType: 'STRING' },
   ],
-  variableOptions: {},
+  variableOptions: {
+    ...periodVars,
+    top: 'INTEGER',
+  },
+  defaults: () => {
+    return { ...periodDefaults(), top: 10 }
+  },
 }

@@ -22,12 +22,12 @@ export default function HistoryItemBase(props: Props) {
   const [showAiSummary, setShowAiSummary] = useState(false);
   const [addToNarrative, setAddToNarrative] = useState<boolean | undefined>(true);
 
-  const { questionId, variableOptions } = item;
+  const { variableOptions, title } = item;
 
   return (
     <div className={cn(s.root, isLoading && s.isLoading)}>
       <div className={s.header}>
-        <div className={s.title}>{questionId}</div>
+        <div className={s.title}>{title}</div>
         <div className={s.tools}>
           {variableOptions && variableOptions.length > 0 && (
             <VariablesPopover
