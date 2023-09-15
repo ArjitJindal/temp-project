@@ -4643,9 +4643,31 @@ paths:
       responses:
         '200':
           description: OK
-  '/question/{questionId}/alert/{alertId}':
+  '/alert/{alertId}/questions':
     get:
-      summary: Get question
+      summary: Get questions
+      operationId: get-questions
+      parameters:
+        - schema:
+            type: string
+          in: path
+          name: alertId
+          required: true
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GetQuestionsResponse'
+    post:
+      summary: Post question
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/QuestionRequest'
+        required: true
       responses:
         '200':
           description: OK
@@ -4653,37 +4675,44 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/QuestionResponse'
-      operationId: get-question
+      operationId: post-question
       description: ''
       parameters:
         - schema:
             type: string
           in: path
-          name: questionId
-          required: true
-        - schema:
-            type: string
-          in: path
           name: alertId
           required: true
-        - schema:
-            type: array
-            items:
-              type: object
-              properties:
-                name:
-                  type: string
-                value:
-                  oneOf:
-                    - type: string
-                    - type: number
-              required:
-                - name
-                - value
-          in: query
-          name: variables
 components:
   schemas:
+    QuestionRequest:
+      title: QuestionRequest
+      type: object
+      properties:
+        questionId:
+          type: string
+        variables:
+          type: array
+          items:
+            type: object
+            properties:
+              name:
+                type: string
+              value:
+                oneOf:
+                  - type: string
+                  - type: number
+            required:
+              - name
+              - value
+    GetQuestionsResponse:
+      title: GetQuestionsResponse
+      type: object
+      properties:
+        data:
+          type: array
+          items:
+            $ref: '#/components/schemas/QuestionResponse'
     QuestionResponse:
       title: QuestionResponse
       type: object

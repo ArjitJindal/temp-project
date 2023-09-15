@@ -25,10 +25,15 @@ export default function InvestigativeCoPilot(props: Props) {
 
   const mutation = useMutation<QuestionResponse, unknown, FormValues>(
     async ({ searchString }) => {
-      const response = await api.getQuestion({
-        questionId: searchString,
+      await api.getQuestions({
         alertId: alertId,
-        variables: [],
+      });
+      const response = await api.postQuestion({
+        QuestionRequest: {
+          questionId: searchString,
+          variables: [],
+        },
+        alertId: alertId,
       });
       return parseQuestionResponse(response);
     },

@@ -3,12 +3,12 @@ import { QuestionResponse } from '@/@types/openapi-internal/QuestionResponse'
 import { Alert } from '@/@types/openapi-internal/Alert'
 import { Case } from '@/@types/openapi-internal/Case'
 import { getContext } from '@/core/utils/context'
-import { Variables } from '@/@types/openapi-internal/Variables'
+import { QuestionRequestVariables } from '@/@types/openapi-internal/QuestionRequestVariables'
 
 export class QuestionService {
   async answer(
     questionId: string,
-    vars: Variables[],
+    vars: QuestionRequestVariables[],
     c: Case,
     a: Alert
   ): Promise<QuestionResponse> {

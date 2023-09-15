@@ -13,6 +13,7 @@ import { ReportService } from '@/services/sar/service'
 import { InternalTransaction } from '@/@types/openapi-internal/InternalTransaction'
 import { QuestionService } from '@/services/copilot/questions/question-service'
 import { AlertsService } from '@/services/alerts'
+import { questions } from '@/services/copilot/questions/definitions'
 
 export const copilotHandler = lambdaApi({})(
   async (
@@ -81,7 +82,25 @@ export const copilotHandler = lambdaApi({})(
       return copilotService.formatNarrative(request)
     })
 
-    handlers.registerGetQuestion(async (_ctx, request) => {
+    handlers.registerGetQuestions(async (_ctx, request) => {
+      const questionService = new QuestionService()
+      const caseService = await CaseService.fromEvent(event)
+      const alertService = await AlertsService.fromEvent(event)
+      const alert = await alertService.getAlert(request.alertId)
+      if (!alert?.caseId) {
+        throw new Error(`Alert ${alert?.alertId} has no case ID`)
+      }
+      const c = await caseService.getCase(alert.caseId)
+      return {
+        data: await Promise.all(
+          questions.map((q) => {
+            return questionService.answer(q.questionId, [], c, alert)
+          })
+        ),
+      }
+    })
+
+    handlers.registerPostQuestion(async (_ctx, request) => {
       const questionService = new QuestionService()
       const caseService = await CaseService.fromEvent(event)
       const alertService = await AlertsService.fromEvent(event)
@@ -92,8 +111,8 @@ export const copilotHandler = lambdaApi({})(
       const c = await caseService.getCase(alert.caseId)
 
       return questionService.answer(
-        request.questionId,
-        request.variables || [],
+        request.QuestionRequest.questionId || '',
+        request.QuestionRequest.variables || [],
         c,
         alert
       )
