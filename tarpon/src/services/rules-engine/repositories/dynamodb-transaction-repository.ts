@@ -868,7 +868,7 @@ export class DynamoDbTransactionRepository
           'OR',
           `(#destinationAmountDetails.#transactionCurrency = :${currency} AND (#destinationAmountDetails.#transactionAmount BETWEEN :${currency}_min AND :${currency}_max))`,
         ].join(' ')
-        return `(${statement})`
+        return statement
       })
       .join(' OR ')
 
@@ -896,7 +896,7 @@ export class DynamoDbTransactionRepository
         )})`,
       filterOptions.transactionAmountRange &&
         !isEmpty(filterOptions.transactionAmountRange) &&
-        `${transactionAmountStatement}`,
+        transactionAmountStatement,
     ].filter(Boolean)
 
     if (isEmpty(filters) && isEmpty(attributesToFetch)) {
