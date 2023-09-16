@@ -1,9 +1,11 @@
 import React, { useEffect, useLayoutEffect, useRef, useState } from 'react';
 import { useMutation } from '@tanstack/react-query';
+import pluralize from 'pluralize';
 import RequestForm, { FormValues } from './RequestForm';
 import History from './History';
 import { parseQuestionResponse, QuestionResponse } from './types';
 import s from './index.module.less';
+import dayjs, { TIME_FORMAT_WITHOUT_SECONDS } from '@/utils/dayjs';
 import { message } from '@/components/library/Message';
 import { getErrorMessage } from '@/utils/lang';
 import { useApi } from '@/api';
@@ -12,6 +14,8 @@ import { ALERT_ITEM, COPILOT_ALERT_QUESTIONS } from '@/utils/queries/keys';
 import AsyncResourceRenderer from '@/components/common/AsyncResourceRenderer';
 import * as Form from '@/components/ui/Form';
 import { isSuccess, map, useFinishedSuccessfully } from '@/utils/asyncResource';
+import TimestampDisplay from '@/components/ui/TimestampDisplay';
+import CaseStatusTag from '@/components/library/CaseStatusTag';
 
 interface Props {
   alertId: string;
@@ -82,6 +86,26 @@ export default function InvestigativeCoPilot(props: Props) {
                 <>
                   <Form.Layout.Label title={'Alert ID'}>{alert.alertId}</Form.Layout.Label>
                   <Form.Layout.Label title={'Case ID'}>{alert.caseId}</Form.Layout.Label>
+                  <Form.Layout.Label title={'Created at'}>
+                    <TimestampDisplay
+                      timestamp={alert.createdTimestamp}
+                      timeFormat={TIME_FORMAT_WITHOUT_SECONDS}
+                    />
+                  </Form.Layout.Label>
+                  <Form.Layout.Label title={'Priority'}>{alert.priority}</Form.Layout.Label>
+                  <Form.Layout.Label title={'Alert age'}>
+                    {pluralize(
+                      'day',
+                      Math.floor(dayjs.duration(Date.now() - alert.createdTimestamp).asDays()),
+                      true,
+                    )}
+                  </Form.Layout.Label>
+                  <Form.Layout.Label title={'TX#'}>
+                    {alert.numberOfTransactionsHit}
+                  </Form.Layout.Label>
+                  <Form.Layout.Label title={'Alert status'}>
+                    {alert.alertStatus ? <CaseStatusTag caseStatus={alert.alertStatus} /> : 'N/A'}
+                  </Form.Layout.Label>
                 </>
               )}
             </AsyncResourceRenderer>
