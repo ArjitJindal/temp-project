@@ -1317,93 +1317,100 @@ export class DashboardStatsRepository {
       ]
     }
 
-    // TODO: Uncomment after fixing the pipeline by using timeRange
-    // const getPaymentMethodAggregationPipeline = (
-    //   dateFormat: string,
-    //   aggregationCollection: string
-    // ) => {
-    //   return [
-    //     {
-    //       $addFields: {
-    //         paymentMethods: [
-    //           '$originPaymentDetails.method',
-    //           '$destinationPaymentDetails.method',
-    //         ],
-    //       },
-    //     },
-    //     {
-    //       $unwind: {
-    //         path: '$paymentMethods',
-    //         preserveNullAndEmptyArrays: false,
-    //       },
-    //     },
-    //     {
-    //       $match: {
-    //         paymentMethods: {
-    //           $ne: null,
-    //         },
-    //       },
-    //     },
-    //     {
-    //       $group: {
-    //         _id: {
-    //           date: {
-    //             $dateToString: {
-    //               format: dateFormat,
-    //               date: {
-    //                 $toDate: {
-    //                   $toLong: '$timestamp',
-    //                 },
-    //               },
-    //             },
-    //           },
-    //           method: {
-    //             $concat: ['paymentMethods_', '$paymentMethods'],
-    //           },
-    //         },
-    //         count: {
-    //           $count: {},
-    //         },
-    //       },
-    //     },
-    //     {
-    //       $group: {
-    //         _id: '$_id.date',
-    //         items: {
-    //           $addToSet: {
-    //             k: '$_id.method',
-    //             v: '$count',
-    //           },
-    //         },
-    //       },
-    //     },
-    //     {
-    //       $project: {
-    //         items: {
-    //           $arrayToObject: '$items',
-    //         },
-    //       },
-    //     },
-    //     {
-    //       $replaceRoot: {
-    //         newRoot: {
-    //           $mergeObjects: [
-    //             {
-    //               _id: '$_id',
-    //             },
-    //             '$items',
-    //           ],
-    //         },
-    //       },
-    //     },
-    //     {
-    //       $merge: {
-    //         into: aggregationCollection,
-    //         whenMatched: 'merge',
-    //       },
-    //     },
-    //   ]
-    // }
+    const getPaymentMethodAggregationPipeline = () => {
+      let timestampMatch = undefined
+      if (timeRange) {
+        const { start, end } = getAffectedInterval(timeRange, 'HOUR')
+        timestampMatch = {
+          timestamp: {
+            $gte: start,
+            $lt: end,
+          },
+        }
+      }
+      return [
+        ...(timestampMatch ? [{ $match: timestampMatch }] : []),
+        {
+          $addFields: {
+            paymentMethods: [
+              '$originPaymentDetails.method',
+              '$destinationPaymentDetails.method',
+            ],
+          },
+        },
+        {
+          $unwind: {
+            path: '$paymentMethods',
+            preserveNullAndEmptyArrays: false,
+          },
+        },
+        {
+          $match: {
+            paymentMethods: {
+              $ne: null,
+            },
+          },
+        },
+        {
+          $group: {
+            _id: {
+              date: {
+                $dateToString: {
+                  format: HOUR_DATE_FORMAT,
+                  date: {
+                    $toDate: {
+                      $toLong: '$timestamp',
+                    },
+                  },
+                },
+              },
+              method: {
+                $concat: ['paymentMethods_', '$paymentMethods'],
+              },
+            },
+            count: {
+              $count: {},
+            },
+          },
+        },
+        {
+          $group: {
+            _id: '$_id.date',
+            items: {
+              $addToSet: {
+                k: '$_id.method',
+                v: '$count',
+              },
+            },
+          },
+        },
+        {
+          $project: {
+            items: {
+              $arrayToObject: '$items',
+            },
+          },
+        },
+        {
+          $replaceRoot: {
+            newRoot: {
+              $mergeObjects: [
+                {
+                  _id: '$_id',
+                },
+                '$items',
+              ],
+            },
+          },
+        },
+        {
+          $merge: {
+            into: aggregatedHourlyCollectionName,
+            whenMatched: 'merge',
+          },
+        },
+      ]
+    }
 
     // Hourly Stats
     await transactionsCollection
@@ -1418,15 +1425,9 @@ export class DashboardStatsRepository {
     await transactionsCollection
       .aggregate(getHitRulesAggregationPipeline('suspendedTransactions'))
       .next()
-    // TODO: Uncomment after fixing the pipeline by using timeRange
-    // await transactionsCollection
-    //   .aggregate(
-    //     getPaymentMethodAggregationPipeline(
-    //       HOUR_DATE_FORMAT,
-    //       aggregatedHourlyCollectionName
-    //     )
-    //   )
-    //   .next()
+    await transactionsCollection
+      .aggregate(getPaymentMethodAggregationPipeline())
+      .next()
 
     const getDerivedAggregationPipeline = (
       granularity: 'DAY' | 'MONTH',
