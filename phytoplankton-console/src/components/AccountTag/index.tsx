@@ -8,7 +8,7 @@ interface Props {
   accountId?: string;
 }
 
-export function Assignee(props: Props) {
+export default function AccountTag(props: Props) {
   const { accountId } = props;
   const [users, loadingUsers] = useUsers({ includeBlockedUsers: true, includeRootUsers: true });
 

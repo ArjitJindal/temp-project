@@ -57,10 +57,6 @@ export function recognizeCase(
   const isSnakeCase = string.match(/^[a-z0-9]+(?:_[a-z0-9]+)*$/);
   const isCamelCase = string.match(/^([A-Z]*[a-z0-9]+)+$/);
   const isConstant = string.match(/^[A-Z0-9]+(_[A-Z0-9]+)*$/);
-  // If more than one match consider case unknown
-  if ([isSnakeCase, isCamelCase, isConstant].filter(Boolean).length > 1) {
-    return 'UNKNOWN';
-  }
   if (isSnakeCase) {
     return 'SNAKE_CASE';
   }

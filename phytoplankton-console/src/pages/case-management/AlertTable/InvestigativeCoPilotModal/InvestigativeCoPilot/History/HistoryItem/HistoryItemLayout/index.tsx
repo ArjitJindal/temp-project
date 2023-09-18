@@ -8,6 +8,7 @@ import Button from '@/components/library/Button';
 import VariablesPopover, {
   VariablesValues,
 } from '@/pages/case-management/AlertTable/InvestigativeCoPilotModal/InvestigativeCoPilot/History/HistoryItem/HistoryItemLayout/VariablesPopover';
+import MetaInfo from '@/pages/case-management/AlertTable/InvestigativeCoPilotModal/InvestigativeCoPilot/History/HistoryItem/HistoryItemLayout/MetaInfo';
 
 interface Props {
   item: QuestionResponseBase;
@@ -61,6 +62,7 @@ export default function HistoryItemBase(props: Props) {
           }
         />
       )}
+      <MetaInfo item={item} />
     </div>
   );
 }

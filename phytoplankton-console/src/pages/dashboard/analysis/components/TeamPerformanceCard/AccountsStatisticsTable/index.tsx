@@ -1,5 +1,5 @@
 import { ColumnHelper } from '@/components/library/Table/columnHelper';
-import { Assignee } from '@/components/Assignee';
+import AccountTag from '@/components/AccountTag';
 import { DashboardTeamStatsItem } from '@/apis';
 import { map, QueryResult } from '@/utils/queries/types';
 import QueryResultsTable from '@/components/common/QueryResultsTable';
@@ -14,7 +14,7 @@ const columns = (scope: 'CASES' | 'ALERTS') => {
       title: 'Team member',
       defaultWidth: 250,
       type: {
-        render: (accountId) => <Assignee accountId={accountId} />,
+        render: (accountId) => <AccountTag accountId={accountId} />,
       },
     }),
     helper.simple({

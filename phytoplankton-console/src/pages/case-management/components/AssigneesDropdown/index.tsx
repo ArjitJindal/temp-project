@@ -5,7 +5,7 @@ import { colorSchema } from './utils';
 import s from './index.module.less';
 import { useSortedUsers } from '@/utils/user-utils';
 import { Assignment } from '@/apis';
-import { Assignee } from '@/components/Assignee';
+import AccountTag from '@/components/AccountTag';
 import ArrowDropDownFill from '@/components/ui/icons/Remix/system/arrow-drop-down-fill.react.svg';
 
 interface Props {
@@ -92,7 +92,7 @@ export const AssigneesDropdown: React.FC<Props> = ({
   ) : (
     <>
       {assignments?.map((assignment) => (
-        <Assignee key={assignment.assigneeUserId} accountId={assignment.assigneeUserId} />
+        <AccountTag key={assignment.assigneeUserId} accountId={assignment.assigneeUserId} />
       ))}
     </>
   );

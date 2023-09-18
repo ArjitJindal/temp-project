@@ -7,7 +7,7 @@ import { flattenObject, getFlattenedObjectHumanReadableKey } from '@/utils/json'
 import Table from '@/components/library/Table';
 import { ColumnHelper } from '@/components/library/Table/columnHelper';
 import TimestampDisplay from '@/components/ui/TimestampDisplay';
-import { Assignee } from '@/components/Assignee';
+import AccountTag from '@/components/AccountTag';
 import Modal from '@/components/library/Modal';
 
 interface Props {
@@ -31,7 +31,7 @@ const RenderModalData = (value: any | undefined) => {
   } else if (typeof value === 'number' && UNIX_TIMESTAMP_MS_REGEX.test(String(value))) {
     return <TimestampDisplay timestamp={value} />;
   } else if (typeof value === 'string' && AUTH0_USER_ID_REGEX.test(value)) {
-    return <Assignee accountId={value} />;
+    return <AccountTag accountId={value} />;
   } else if (Array.isArray(value)) {
     if (value.length && typeof value[0] === 'object') {
       return <pre>{JSON.stringify(value, null, 2)}</pre>;

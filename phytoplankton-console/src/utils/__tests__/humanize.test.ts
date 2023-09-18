@@ -59,7 +59,7 @@ describe('recognize case', () => {
 
   test('unknown case', () => {
     expect(recognizeCase('simple text')).toEqual('UNKNOWN');
-    expect(recognizeCase('name')).toEqual('UNKNOWN');
-    expect(recognizeCase('a')).toEqual('UNKNOWN');
+    expect(recognizeCase('name')).toEqual('SNAKE_CASE');
+    expect(recognizeCase('a')).toEqual('SNAKE_CASE');
   });
 });

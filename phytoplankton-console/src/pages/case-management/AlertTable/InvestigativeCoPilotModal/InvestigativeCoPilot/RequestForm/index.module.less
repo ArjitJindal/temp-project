@@ -30,7 +30,11 @@
   gap: 12px;
   flex-wrap: wrap;
   overflow: hidden;
-  height: 30px;
+  position: relative;
+
+  &:not(.showMore) {
+    height: 30px;
+  }
 }
 
 .suggestion {
@@ -43,4 +47,13 @@
   text-overflow: ellipsis;
   border: none;
   cursor: pointer;
+}
+
+&.moreButton {
+  position: absolute;
+  top: 0;
+  right: 0;
+  display: flex;
+  align-items: center;
+  height: 30px;
 }

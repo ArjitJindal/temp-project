@@ -20,7 +20,7 @@ import { DATE_TIME } from '@/components/library/Table/standardDataTypes';
 import EntityFilterButton from '@/pages/auditlog/components/EntityFilterButton';
 import ActionTakenByFilterButton from '@/pages/auditlog/components/ActionTakeByFilterButton';
 import { PageWrapperContentContainer, PageWrapperContext } from '@/components/PageWrapper';
-import { Assignee } from '@/components/Assignee';
+import AccountTag from '@/components/AccountTag';
 import { dayjs, Dayjs } from '@/utils/dayjs';
 
 export default function AuditLogTable() {
@@ -132,7 +132,7 @@ export default function AuditLogTable() {
         render: (userId) => {
           return (
             <div style={{ overflowWrap: 'anywhere' }}>
-              <Assignee accountId={userId} />
+              <AccountTag accountId={userId} />
             </div>
           );
         },

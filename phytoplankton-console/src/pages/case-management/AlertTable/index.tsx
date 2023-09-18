@@ -294,6 +294,7 @@ const mergedColumns = (
             )}
             {handleInvestigateAlert && (
               <Button
+                type="TETRIARY"
                 onClick={() => {
                   if (entity.alertId != null) {
                     handleInvestigateAlert(entity.alertId);
