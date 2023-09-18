@@ -104,7 +104,7 @@ export default function Checklist(props: Props) {
           title: 'QA Status',
           defaultWidth: 160,
           tooltip:
-            "To pass 'QA', an analyst must have no more than 2 'P2' errors. P1 errors also result in automatic failure.",
+            "To pass 'QA', an analyst must have no more than two 'P2' errors. P1 errors should be qualified as 'Fail'.",
           type: {
             render: (status) => {
               let label = '-';
@@ -152,6 +152,7 @@ export default function Checklist(props: Props) {
                 entityCount: checklistItemIds.length,
                 entityName: 'task',
               }}
+              toolsOptions={false}
               selectionActions={
                 qaModeSet
                   ? [

@@ -18,6 +18,7 @@ import {
   SelectionAction,
   TableColumn,
   TableData,
+  TableDataSimpleItem,
   TableRefType,
 } from '@/components/library/Table/types';
 import StackLineIcon from '@/components/ui/icons/Remix/business/stack-line.react.svg';
@@ -60,6 +61,7 @@ import QaStatusChangeModal from '@/pages/case-management/AlertTable/QaStatusChan
 import { useQaMode } from '@/utils/qa-mode';
 import Button from '@/components/library/Button';
 import InvestigativeCoPilotModal from '@/pages/case-management/AlertTable/InvestigativeCoPilotModal';
+import { getOr } from '@/utils/asyncResource';
 
 export type AlertTableParams = AllParams<TableSearchParams> & {
   filterQaStatus?: ChecklistStatus;
@@ -405,6 +407,7 @@ export default function AlertTable(props: Props) {
   const queryResults: QueryResult<TableData<TableAlertItem>> = useAlertQuery(params);
 
   const actionRef = useRef<TableRefType>(null);
+
   const reloadTable = useCallback(() => {
     actionRef.current?.reload();
   }, []);
@@ -463,7 +466,13 @@ export default function AlertTable(props: Props) {
       icpEnabled,
     ],
   );
-
+  useEffect(() => {
+    const data = getOr(queryResults.data, { items: [] });
+    if (data.total === 1) {
+      const alertId = (data.items[0] as TableDataSimpleItem<TableAlertItem>).alertId;
+      actionRef.current?.expandRow(alertId);
+    }
+  }, [queryResults.data]);
   const ruleOptions = useRuleOptions();
   const extraFilters = useMemo(
     () =>

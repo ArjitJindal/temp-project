@@ -193,6 +193,9 @@ function Table<Item extends object, Params extends object = CommonParams>(
       toggleSelected: (value?: boolean) => {
         table.toggleAllRowsSelected(value);
       },
+      expandRow: (id: string | undefined) => {
+        if (id !== undefined) table.getRow(id).toggleExpanded(true);
+      },
     }),
     [handleReload, table],
   );

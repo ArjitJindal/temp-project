@@ -287,6 +287,7 @@ export type TableRefType = {
   isAllExpanded: () => boolean;
   toggleExpanded: (value?: boolean) => void;
   toggleSelected: (value?: boolean) => void;
+  expandRow: (id: string | undefined) => void;
 };
 
 /* Selection Info */
