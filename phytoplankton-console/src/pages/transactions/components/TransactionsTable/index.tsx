@@ -125,6 +125,7 @@ export const transactionParamsToRequest = (
       : undefined,
     filterTagKey: tagKey,
     filterTagValue: tagValue,
+    filterUserId: params.userFilterMode === 'ALL' ? params.userId : undefined,
     filterOriginUserId: params.userFilterMode === 'ORIGIN' ? params.userId : undefined,
     filterDestinationUserId: params.userFilterMode === 'DESTINATION' ? params.userId : undefined,
     filterOriginPaymentMethodId: params.originPaymentMethodId,
