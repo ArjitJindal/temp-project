@@ -1,10 +1,9 @@
 /* eslint-disable @typescript-eslint/no-var-requires */
 import React, { useMemo } from 'react';
 import _ from 'lodash';
-import { Column } from '@ant-design/charts';
-import s from './styles.module.less';
+import Column, { ColumnData } from '../charts/Column';
 import { useApi } from '@/api';
-import { RISK_LEVEL_COLORS, RISK_LEVELS } from '@/utils/risk-levels';
+import { RISK_LEVELS } from '@/utils/risk-levels';
 import { useQuery } from '@/utils/queries/hooks';
 import { USERS_STATS } from '@/utils/queries/keys';
 import AsyncResourceRenderer from '@/components/common/AsyncResourceRenderer';
@@ -16,6 +15,13 @@ import {
 } from '@/components/AppWrapper/Providers/SettingsProvider';
 import { map } from '@/utils/asyncResource';
 import { RiskLevel, TenantSettings } from '@/apis';
+import {
+  COLORS_V2_PRIMARY_SHADES_BLUE_100,
+  COLORS_V2_PRIMARY_SHADES_BLUE_300,
+  COLORS_V2_PRIMARY_SHADES_BLUE_50,
+  COLORS_V2_PRIMARY_SHADES_BLUE_600,
+  COLORS_V2_PRIMARY_TINTS_BLUE_900,
+} from '@/components/ui/colors';
 
 const getType = (riskLevel: RiskLevel, settings: TenantSettings) => {
   const data = getRiskLevelLabel(riskLevel, settings);
@@ -23,11 +29,24 @@ const getType = (riskLevel: RiskLevel, settings: TenantSettings) => {
   return RISK_LEVELS.includes(upperCase as RiskLevel) ? upperCase : data;
 };
 
-export default function DRSDistributionCard() {
+const RISK_LEVEL_COLORS = {
+  VERY_LOW: COLORS_V2_PRIMARY_SHADES_BLUE_50,
+  LOW: COLORS_V2_PRIMARY_SHADES_BLUE_100,
+  MEDIUM: COLORS_V2_PRIMARY_SHADES_BLUE_300,
+  HIGH: COLORS_V2_PRIMARY_SHADES_BLUE_600,
+  VERY_HIGH: COLORS_V2_PRIMARY_TINTS_BLUE_900,
+};
+
+interface Props {
+  userType: 'BUSINESS' | 'CONSUMER';
+}
+
+export default function DRSDistributionCard(props: Props) {
+  const { userType } = props;
   const api = useApi();
   const settings = useSettings();
-  const queryResult = useQuery(USERS_STATS(), async () => {
-    const response = await api.getDashboardStatsDrsDistribution();
+  const queryResult = useQuery(USERS_STATS(userType), async () => {
+    const response = await api.getDashboardStatsDrsDistribution({ userType });
     return {
       total: response.total,
       items: response.data,
@@ -70,58 +89,29 @@ export default function DRSDistributionCard() {
           if (response.total === 0) {
             return <NoData />;
           }
-          const config = {
-            data: response.items,
-            xField: 'type',
-            yField: 'percentage',
-            columnWidthRatio: 1,
-            xAxis: {
-              label: {
-                autoHide: true,
-                autoRotate: false,
-              },
-            },
-            color: (data: any) => {
-              return RISK_LEVEL_COLORS[getRiskLevelFromAlias(data.type, settings)].primary;
-            },
-            interactions: [
-              {
-                type: 'active-region',
-                enable: false,
-              },
-            ],
-            tooltip: {
-              title: 'Risk Distribution',
-              showMarkers: false,
-              customContent: (title: string, data: any) => {
-                return (
-                  <div className={s.drsTooltip}>
-                    <h3 className={s.drsTooltipTitle}>{title}</h3>
-                    <p className={s.drsTooltipElements}>
-                      Risk score range:{' '}
-                      <span className={s.drsTooltipValues}> {data[0]?.data.riskScoreRange}</span>
-                    </p>
-                    <p className={s.drsTooltipElements}>
-                      Users:{' '}
-                      <span className={s.drsTooltipValues}>
-                        {data[0]?.data.count} ({data[0]?.data.percentage}%)
-                      </span>
-                    </p>
-                  </div>
-                );
-              },
-            },
-            meta: {
-              type: {
-                alias: 'Risk Level',
-              },
-              sales: {
-                alias: 'Number of Users',
-              },
-            },
-          };
-
-          return <Column {...config} />;
+          const data: ColumnData<string, number, string> = response.items.map((item) => {
+            return {
+              xValue: item.type,
+              yValue: item.percentage,
+              series: item.type,
+            };
+          });
+          let COLORS = {};
+          response.items.map((item) => {
+            COLORS = {
+              ...COLORS,
+              [item.type]: RISK_LEVEL_COLORS[getRiskLevelFromAlias(item.type, settings)] as string,
+            };
+          });
+          return (
+            <Column
+              data={data}
+              colors={COLORS}
+              height={400}
+              hideLegend={true}
+              rotateLabel={false}
+            />
+          );
         }}
       </AsyncResourceRenderer>
     </div>

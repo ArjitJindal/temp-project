@@ -1,21 +1,38 @@
-import { Tabs } from 'antd';
-import styles from '../style.module.less';
+import { useLocalStorageState } from 'ahooks';
 import HitsPerUserCard from './HitsPerUserCard';
+import SegmentedControl from '@/components/library/SegmentedControl';
 
-const TopUsersHitCard = () => {
+interface Props {
+  userType: 'BUSINESS' | 'CONSUMER';
+}
+
+type ScopeSelectorValue = 'ALL' | 'ORIGIN' | 'DESTINATION';
+
+const TopUsersHitCard = (props: Props) => {
+  const { userType } = props;
+
+  const [selectedSection, setSelectedSection] = useLocalStorageState<ScopeSelectorValue>(
+    `dashboard-${userType}-user-active-tab`,
+    'ALL',
+  );
   return (
-    <div className={styles.salesCard}>
-      <Tabs defaultActiveKey="all" type="card">
-        <Tabs.TabPane tab="All users" key="all">
-          <HitsPerUserCard />
-        </Tabs.TabPane>
-        <Tabs.TabPane tab="Senders" key="senders">
-          <HitsPerUserCard direction="ORIGIN" />
-        </Tabs.TabPane>
-        <Tabs.TabPane tab="Receivers" key="receivers">
-          <HitsPerUserCard direction="DESTINATION" />
-        </Tabs.TabPane>
-      </Tabs>
+    <div>
+      <SegmentedControl<ScopeSelectorValue>
+        size="MEDIUM"
+        active={selectedSection as ScopeSelectorValue}
+        onChange={(newValue) => {
+          setSelectedSection(newValue);
+        }}
+        items={[
+          { value: 'ALL', label: `All users` },
+          { value: 'ORIGIN', label: `Senders` },
+          { value: 'DESTINATION', label: `Receivers` },
+        ]}
+      />
+      <HitsPerUserCard
+        direction={selectedSection !== 'ALL' ? selectedSection : undefined}
+        userType={userType}
+      />
     </div>
   );
 };

@@ -1778,7 +1778,15 @@ paths:
               examples: {}
       operationId: get-dashboard-stats-drs-distribution
       description: ''
-      parameters: []
+      parameters:
+        - schema:
+            type: string
+            enum:
+              - BUSINESS
+              - CONSUMER
+          in: query
+          name: userType
+          required: true
     parameters: []
   /dashboard_stats/hits_per_user:
     get:
@@ -1813,6 +1821,13 @@ paths:
               - DESTINATION
           in: query
           name: direction
+        - schema:
+            type: string
+            enum:
+              - BUSINESS
+              - CONSUMER
+          in: query
+          name: userType
   /dashboard_stats/team:
     get:
       summary: DashboardStats - Team
@@ -5833,12 +5848,12 @@ components:
                 type: number
               openCasesCount:
                 type: number
-              percentageTransactionsHit:
+              percentageRulesHit:
                 type: number
             required:
               - originUserId
               - transactionsHit
-              - percentageTransactionsHit
+              - percentageRulesHit
       required:
         - data
     DashboardTeamStatsItem:

@@ -54,6 +54,7 @@ import { hasFeature } from '@/core/utils/context'
 import { Report } from '@/@types/openapi-internal/Report'
 import { DashboardStatsTransactionTypeDistributionStats } from '@/@types/openapi-internal/DashboardStatsTransactionTypeDistributionStats'
 import { DashboardStatsTransactionTypeDistributionStatsTransactionTypeData } from '@/@types/openapi-internal/DashboardStatsTransactionTypeDistributionStatsTransactionTypeData'
+import { DashboardStatsDRSDistributionData as DRSDistributionStats } from '@/@types/openapi-internal/DashboardStatsDRSDistributionData'
 
 export type TimeRange = {
   startTimestamp?: number
@@ -1157,11 +1158,10 @@ export class DashboardStatsRepository {
     const usersCollection = db.collection<InternalUser>(
       USERS_COLLECTION(this.tenantId)
     )
+    const dynamoDb = getDynamoDbClient()
     const aggregationCollection = DRS_SCORES_DISTRIBUTION_STATS_COLLECTION(
       this.tenantId
     )
-    const dynamoDb = getDynamoDbClient()
-
     const riskRepository = new RiskRepository(this.tenantId, { dynamoDb })
     const riskClassificationValues =
       await riskRepository.getRiskClassificationValues()
@@ -1189,13 +1189,44 @@ export class DashboardStatsRepository {
             },
           },
           {
-            $bucket: {
-              groupBy: '$drsScore.drsScore',
-              boundaries: sanitizedBounries,
-              default: sanitizedBounries[sanitizedBounries.length - 1],
-              output: {
-                count: { $sum: 1 },
-              },
+            $facet: {
+              business: [
+                {
+                  $match: { type: 'BUSINESS' },
+                },
+                {
+                  $bucket: {
+                    groupBy: '$drsScore.drsScore',
+                    boundaries: sanitizedBounries,
+                    default: sanitizedBounries[sanitizedBounries.length - 1],
+                    output: {
+                      count: { $sum: 1 },
+                    },
+                  },
+                },
+              ],
+              consumer: [
+                {
+                  $match: { type: 'CONSUMER' },
+                },
+                {
+                  $bucket: {
+                    groupBy: '$drsScore.drsScore',
+                    boundaries: sanitizedBounries,
+                    default: sanitizedBounries[sanitizedBounries.length - 1],
+                    output: {
+                      count: { $sum: 1 },
+                    },
+                  },
+                },
+              ],
+            },
+          },
+          {
+            $group: {
+              _id: 'all',
+              business: { $first: '$business' },
+              consumer: { $first: '$consumer' },
             },
           },
           {
@@ -1632,13 +1663,13 @@ export class DashboardStatsRepository {
   public async getHitsByUserStats(
     startTimestamp: number,
     endTimestamp: number,
-    direction?: 'ORIGIN' | 'DESTINATION'
+    direction?: 'ORIGIN' | 'DESTINATION',
+    userType?: 'BUSINESS' | 'CONSUMER'
   ): Promise<DashboardStatsHitsPerUserData[]> {
     const db = this.mongoDb.db()
     const collection = db.collection<DashboardStatsTransactionsCountData>(
       DASHBOARD_HITS_BY_USER_STATS_COLLECTION_HOURLY(this.tenantId)
     )
-
     const startDate = dayjs(startTimestamp).format(HOUR_DATE_FORMAT_JS)
     const endDate = dayjs(endTimestamp).format(HOUR_DATE_FORMAT_JS)
 
@@ -1652,21 +1683,27 @@ export class DashboardStatsRepository {
       },
     }
 
-    const totalTransactions = await collection
+    const totalRulesHits = await collection
       .aggregate<{
         _id: null
-        totalTransactions: number
+        totalRulesHits: number
       }>([
         condition,
         {
           $group: {
             _id: null,
-            totalTransactions: { $sum: '$transactionsHit' },
+            totalRulesHits: { $sum: '$rulesHit' },
           },
         },
       ])
       .next()
-      .then((result) => result?.totalTransactions ?? 0)
+      .then((result) => result?.totalRulesHits ?? 0)
+
+    const userTypeCondition = {
+      $match: {
+        'user.type': userType,
+      },
+    }
 
     const result = await collection
       .aggregate<{
@@ -1689,14 +1726,11 @@ export class DashboardStatsRepository {
             },
           },
           {
-            $sort: { transactionsHit: -1 },
-          },
-          {
-            $limit: 10,
+            $sort: { rulesHit: -1 },
           },
           {
             $match: {
-              transactionsHit: {
+              rulesHit: {
                 $gte: 1,
               },
             },
@@ -1715,6 +1749,10 @@ export class DashboardStatsRepository {
               user: { $first: '$user' },
             },
           },
+          userTypeCondition,
+          {
+            $limit: 10,
+          },
         ],
         { allowDiskUse: true }
       )
@@ -1727,22 +1765,19 @@ export class DashboardStatsRepository {
       rulesHit: x.rulesHit,
       casesCount: x.casesCount,
       openCasesCount: x.openCasesCount,
-      percentageTransactionsHit: round(
-        (x.transactionsHit / totalTransactions) * 100,
-        2
-      ),
+      percentageRulesHit: round((x.rulesHit / totalRulesHits) * 100, 2),
     }))
   }
 
   private createDistributionItems(
     riskClassificationValues: RiskClassificationScore[],
-    buckets: WithId<DashboardStatsTransactionsCountData>[]
+    buckets: WithId<DashboardStatsDRSDistributionData>[]
   ) {
     let total = 0
     buckets.map((bucket: any) => {
       total += bucket.count
     })
-    const result: any = []
+    const result: DRSDistributionStats[] = []
     buckets.map((bucket: any) => {
       riskClassificationValues.map(
         (classificationValue: RiskClassificationScore) => {
@@ -1760,24 +1795,26 @@ export class DashboardStatsRepository {
     return result
   }
 
-  public async getDRSDistributionStats(): Promise<any> {
+  public async getDRSDistributionStats(
+    userType: 'BUSINESS' | 'CONSUMER'
+  ): Promise<any> {
     const db = this.mongoDb.db()
-
-    const collection = db.collection<DashboardStatsTransactionsCountData>(
-      DRS_SCORES_DISTRIBUTION_STATS_COLLECTION(this.tenantId)
-    )
-
+    const collection = db.collection<{
+      _id: string
+      business: DashboardStatsDRSDistributionData[]
+      consumer: DashboardStatsDRSDistributionData[]
+    }>(DRS_SCORES_DISTRIBUTION_STATS_COLLECTION(this.tenantId))
     const dynamoDb = getDynamoDbClient()
-
     const riskRepository = new RiskRepository(this.tenantId, { dynamoDb })
     const riskClassificationValues =
       await riskRepository.getRiskClassificationValues()
-
     const result = await collection.find({}).toArray()
-
+    const stats =
+      userType === 'BUSINESS' ? result[0]?.business : result[0]?.consumer
+    console.log(stats)
     const distributionItems = this.createDistributionItems(
       riskClassificationValues,
-      result
+      stats ?? []
     )
 
     return distributionItems

@@ -2,11 +2,12 @@ import { Column as AntColumn } from '@ant-design/charts';
 import { Annotation } from '@antv/g2plot';
 import { each, groupBy } from 'lodash';
 import { escapeHtml } from '@/utils/browser';
+import { humanizeAuto } from '@/utils/humanize';
 
 export interface ColumnDataItem<X, Y, Series> {
   xValue: X;
   yValue: Y;
-  series: Series;
+  series?: Series;
 }
 
 export type ColumnData<X, Y, Series> = ColumnDataItem<X, Y, Series>[];
@@ -19,6 +20,7 @@ interface Props<X, Y, Series> {
   formatSeries?: (value: Series) => string;
   height?: number;
   showTotals?: boolean;
+  rotateLabel?: boolean;
   hideLegend?: boolean;
 }
 
@@ -30,6 +32,8 @@ export default function Column<Series = string, X = string>(props: Props<X, numb
     data,
     colors,
     showTotals = false,
+    height,
+    rotateLabel = true,
     hideLegend = false,
   } = props;
 
@@ -54,7 +58,7 @@ export default function Column<Series = string, X = string>(props: Props<X, numb
   return (
     <AntColumn
       animation={false}
-      height={256}
+      height={height ?? 256}
       isStack={true}
       data={data}
       xField={'xValue'}
@@ -68,12 +72,15 @@ export default function Column<Series = string, X = string>(props: Props<X, numb
         label: {
           autoRotate: false,
           autoHide: true,
-          rotate: -Math.PI / 6,
+          rotate: rotateLabel ? -Math.PI / 6 : 0,
           offsetX: -10,
           offsetY: 10,
           style: {
-            textAlign: 'right',
+            textAlign: 'center',
             textBaseline: 'bottom',
+          },
+          formatter(text, _item, _index) {
+            return humanizeAuto(text);
           },
         },
         title: null,

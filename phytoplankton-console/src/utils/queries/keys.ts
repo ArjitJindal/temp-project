@@ -89,7 +89,11 @@ export const TRANSACTIONS_STATS = (
   type: 'by-type' | 'by-date',
   searchParams: AnyParameters,
 ): QueryKey => ['transactions', 'stats', type, searchParams];
-export const USERS_STATS = (): QueryKey => ['users', 'stats'];
+export const USERS_STATS = (userType?: 'BUSINESS' | 'CONSUMER'): QueryKey => [
+  'users',
+  'stats',
+  userType,
+];
 export const TRANSACTIONS_UNIQUES = (
   field: TransactionsUniquesField,
   params: {

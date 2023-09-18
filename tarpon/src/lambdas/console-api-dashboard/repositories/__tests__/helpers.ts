@@ -4,6 +4,7 @@ import { MongoDbTransactionRepository } from '@/services/rules-engine/repositori
 import { DashboardStatsRepository } from '@/lambdas/console-api-dashboard/repositories/dashboard-stats-repository'
 import { getMongoDbClient } from '@/utils/mongodb-utils'
 import { CaseRepository } from '@/services/rules-engine/repositories/case-repository'
+import { UserRepository } from '@/services/users/repositories/user-repository'
 
 export function hitRule(ruleAction: RuleAction = 'BLOCK'): ExecutedRulesResult {
   return {
@@ -44,6 +45,13 @@ export async function getCaseRepo(tenantId: string) {
 export async function getStatsRepo(tenantId: string) {
   const mongoDb = await getMongoDbClient()
   return new DashboardStatsRepository(tenantId, {
+    mongoDb,
+  })
+}
+
+export async function getUserRepo(tenantId: string) {
+  const mongoDb = await getMongoDbClient()
+  return new UserRepository(tenantId, {
     mongoDb,
   })
 }

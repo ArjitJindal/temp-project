@@ -1,15 +1,13 @@
 /* eslint-disable @typescript-eslint/no-var-requires */
 import React, { useState } from 'react';
 import { RangeValue } from 'rc-picker/es/interface';
-import { Card } from 'antd';
 import _ from 'lodash';
 import { Link } from 'react-router-dom';
-import s from './styles.module.less';
+import pluralize from 'pluralize';
 import { TableItem } from './types';
 import DatePicker from '@/components/ui/DatePicker';
 import { dayjs, Dayjs } from '@/utils/dayjs';
 import { useApi } from '@/api';
-import UserTypeIcon from '@/components/ui/UserTypeIcon';
 import UserLink from '@/components/UserLink';
 import { getUserName } from '@/utils/api/users';
 import { TableColumn } from '@/components/library/Table/types';
@@ -21,10 +19,11 @@ import { ColumnHelper } from '@/components/library/Table/columnHelper';
 
 interface Props {
   direction?: 'ORIGIN' | 'DESTINATION';
+  userType: 'BUSINESS' | 'CONSUMER';
 }
 
 export default function HitsPerUserCard(props: Props) {
-  const { direction } = props;
+  const { direction, userType } = props;
   const api = useApi();
 
   const [dateRange, setDateRange] = useState<RangeValue<Dayjs>>([
@@ -51,33 +50,18 @@ export default function HitsPerUserCard(props: Props) {
       title: 'User name',
       value: (entity: TableItem): string => getUserName(entity.user) ?? '',
     }),
-    helper.simple<'transactionsHit'>({
-      title: 'Transactions hit',
-      key: 'transactionsHit',
+    helper.simple<'rulesHit'>({
+      title: 'Rule hit',
+      key: 'rulesHit',
       type: {
-        render: (transactionsHit, { item: entity }) => {
-          return <>{`${transactionsHit} transactions (${entity.percentageTransactionsHit}%)`}</>;
-        },
-      },
-    }),
-    helper.simple<'user.type'>({
-      key: 'user.type',
-      title: 'User type',
-      type: {
-        render: (type) => {
-          if (!type) {
-            return <>-</>;
-          }
-          return (
-            <div className={s.userType}>
-              <UserTypeIcon type={type} /> <span>{_.capitalize(type)}</span>
-            </div>
-          );
+        render: (rulesHit, { item: entity }) => {
+          return <>{`${rulesHit} ${pluralize('hit', rulesHit)} (${entity.percentageRulesHit}%)`}</>;
         },
       },
     }),
     helper.display({
       title: 'Open cases',
+      enableResizing: false,
       render: (entity) => {
         let startTimestamp;
         let endTimestamp;
@@ -99,7 +83,7 @@ export default function HitsPerUserCard(props: Props) {
                 },
               )}
             >
-              {entity.casesCount} Cases
+              {entity.casesCount} Open {pluralize('case', entity.casesCount)}
             </Link>
           </>
         );
@@ -124,6 +108,7 @@ export default function HitsPerUserCard(props: Props) {
         startTimestamp,
         endTimestamp,
         direction,
+        userType,
       });
 
       return {
@@ -134,19 +119,18 @@ export default function HitsPerUserCard(props: Props) {
   );
 
   return (
-    <Card bordered={false}>
-      <QueryResultsTable<TableItem>
-        rowKey="userId"
-        columns={columns}
-        extraTools={[() => <DatePicker.RangePicker value={dateRange} onChange={setDateRange} />]}
-        queryResults={hitsPerUserResult}
-        pagination={false}
-        sizingMode="FULL_WIDTH"
-        toolsOptions={{
-          setting: false,
-          reload: true,
-        }}
-      />
-    </Card>
+    <QueryResultsTable<TableItem>
+      rowKey="userId"
+      columns={columns}
+      extraTools={[() => <DatePicker.RangePicker value={dateRange} onChange={setDateRange} />]}
+      queryResults={hitsPerUserResult}
+      pagination={false}
+      sizingMode="SCROLL"
+      toolsOptions={{
+        setting: false,
+        reload: true,
+      }}
+      fitHeight={300}
+    />
   );
 }

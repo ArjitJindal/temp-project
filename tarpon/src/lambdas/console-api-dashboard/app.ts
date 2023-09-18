@@ -108,7 +108,7 @@ export const dashboardStatsHandler = lambdaApi()(
     handlers.registerGetDashboardStatsHitsPerUser(async (ctx, request) => {
       const client = await getMongoDbClient()
       const { tenantId } = ctx
-      const { startTimestamp, endTimestamp, direction } = request
+      const { startTimestamp, endTimestamp, direction, userType } = request
       if (!endTimestamp) {
         throw new BadRequest(`Wrong timestamp format: ${endTimestamp}`)
       }
@@ -125,7 +125,8 @@ export const dashboardStatsHandler = lambdaApi()(
         data: await dashboardStatsRepository.getHitsByUserStats(
           startTimestamp,
           endTimestamp,
-          direction
+          direction,
+          userType
         ),
       }
     })
@@ -154,8 +155,9 @@ export const dashboardStatsHandler = lambdaApi()(
       }
     })
 
-    handlers.registerGetDashboardStatsDrsDistribution(async (ctx) => {
+    handlers.registerGetDashboardStatsDrsDistribution(async (ctx, request) => {
       const client = await getMongoDbClient()
+      const { userType } = request
       const dashboardStatsRepository = new DashboardStatsRepository(
         ctx.tenantId,
         { mongoDb: client }
@@ -163,7 +165,9 @@ export const dashboardStatsHandler = lambdaApi()(
       if (shouldRefreshAll(event)) {
         await dashboardStatsRepository.refreshAllStats()
       }
-      const data = await dashboardStatsRepository.getDRSDistributionStats()
+      const data = await dashboardStatsRepository.getDRSDistributionStats(
+        userType
+      )
       return {
         data,
       }

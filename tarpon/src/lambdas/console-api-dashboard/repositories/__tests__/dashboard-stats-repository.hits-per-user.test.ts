@@ -1,10 +1,17 @@
-import { getCaseRepo, getStatsRepo, hitRule, notHitRule } from './helpers'
+import {
+  getCaseRepo,
+  getStatsRepo,
+  getUserRepo,
+  hitRule,
+  notHitRule,
+} from './helpers'
 import dayjs from '@/utils/dayjs'
 import { dynamoDbSetupHook } from '@/test-utils/dynamodb-test-utils'
 import { getTestTransaction } from '@/test-utils/transaction-test-utils'
 import { getTestTenantId } from '@/test-utils/tenant-test-utils'
 import { createConsumerUsers, getTestUser } from '@/test-utils/user-test-utils'
 import { RuleAction } from '@/@types/openapi-public/RuleAction'
+import { InternalUser } from '@/@types/openapi-internal/InternalUser'
 
 dynamoDbSetupHook()
 
@@ -31,15 +38,27 @@ describe('Verify hits-per-user statistics', () => {
       originUserId,
       destinationUserId,
     }
-
+    const userRepository = await getUserRepo(TENANT_ID)
+    await userRepository.saveUserMongo(
+      getTestUser({ userId: originUserId, type: 'BUSINESS' }) as InternalUser
+    )
+    await userRepository.saveUserMongo(
+      getTestUser({
+        userId: destinationUserId,
+        type: 'BUSINESS',
+      }) as InternalUser
+    )
     await caseRepository.addCaseMongo({
       caseId: 'C-1',
       createdTimestamp: timestamp,
       caseTransactions: [transaction],
       caseTransactionsIds: [transaction.transactionId],
       caseUsers: {
-        origin: getTestUser({ userId: originUserId }),
-        destination: getTestUser({ userId: destinationUserId }),
+        origin: getTestUser({ userId: originUserId, type: 'BUSINESS' }),
+        destination: getTestUser({
+          userId: destinationUserId,
+          type: 'BUSINESS',
+        }),
       },
       caseType: 'SYSTEM',
     })
@@ -53,7 +72,8 @@ describe('Verify hits-per-user statistics', () => {
       const stats = await statsRepository.getHitsByUserStats(
         dayjs('2022-01-30T00:00:00.000Z').valueOf(),
         dayjs('2022-01-31T00:00:00.000Z').valueOf(),
-        'ORIGIN'
+        'ORIGIN',
+        'BUSINESS'
       )
       expect(stats).toEqual([
         expect.objectContaining({
@@ -69,7 +89,8 @@ describe('Verify hits-per-user statistics', () => {
       const stats = await statsRepository.getHitsByUserStats(
         dayjs('2022-01-30T00:00:00.000Z').valueOf(),
         dayjs('2022-01-31T00:00:00.000Z').valueOf(),
-        'DESTINATION'
+        'DESTINATION',
+        'BUSINESS'
       )
       expect(stats).toEqual([
         expect.objectContaining({
@@ -114,11 +135,24 @@ describe('Verify hits-per-user statistics', () => {
       caseTransactions: [transaction],
       caseTransactionsIds: [transaction.transactionId],
       caseUsers: {
-        origin: getTestUser({ userId: originUserId }),
-        destination: getTestUser({ userId: destinationUserId }),
+        origin: getTestUser({ userId: originUserId, type: 'BUSINESS' }),
+        destination: getTestUser({
+          userId: destinationUserId,
+          type: 'BUSINESS',
+        }),
       },
       caseType: 'SYSTEM',
     })
+    const userRepository = await getUserRepo(TENANT_ID)
+    await userRepository.saveUserMongo(
+      getTestUser({ userId: originUserId, type: 'BUSINESS' }) as InternalUser
+    )
+    await userRepository.saveUserMongo(
+      getTestUser({
+        userId: destinationUserId,
+        type: 'BUSINESS',
+      }) as InternalUser
+    )
     await statsRepository.recalculateHitsByUser('ORIGIN', {
       startTimestamp: timestamp,
     })
@@ -129,7 +163,8 @@ describe('Verify hits-per-user statistics', () => {
       const stats = await statsRepository.getHitsByUserStats(
         dayjs('2022-01-30T00:00:00.000Z').valueOf(),
         dayjs('2022-01-31T00:00:00.000Z').valueOf(),
-        'ORIGIN'
+        'ORIGIN',
+        'BUSINESS'
       )
       expect(stats).toEqual([
         expect.objectContaining({
@@ -145,7 +180,8 @@ describe('Verify hits-per-user statistics', () => {
       const stats = await statsRepository.getHitsByUserStats(
         dayjs('2022-01-30T00:00:00.000Z').valueOf(),
         dayjs('2022-01-31T00:00:00.000Z').valueOf(),
-        'DESTINATION'
+        'DESTINATION',
+        'BUSINESS'
       )
       expect(stats).toEqual([
         expect.objectContaining({
@@ -193,11 +229,24 @@ describe('Verify hits-per-user statistics', () => {
         caseTransactions: [transaction],
         caseTransactionsIds: [transaction.transactionId],
         caseUsers: {
-          origin: getTestUser({ userId: originUserId }),
-          destination: getTestUser({ userId: destinationUserId }),
+          origin: getTestUser({ userId: originUserId, type: 'BUSINESS' }),
+          destination: getTestUser({
+            userId: destinationUserId,
+            type: 'BUSINESS',
+          }),
         },
         caseType: 'SYSTEM',
       })
+      const userRepository = await getUserRepo(TENANT_ID)
+      await userRepository.saveUserMongo(
+        getTestUser({ userId: originUserId, type: 'BUSINESS' }) as InternalUser
+      )
+      await userRepository.saveUserMongo(
+        getTestUser({
+          userId: destinationUserId,
+          type: 'BUSINESS',
+        }) as InternalUser
+      )
       await statsRepository.recalculateHitsByUser('ORIGIN', {
         startTimestamp: timestamp,
       })
@@ -209,7 +258,8 @@ describe('Verify hits-per-user statistics', () => {
       const stats = await statsRepository.getHitsByUserStats(
         0,
         Number.MAX_SAFE_INTEGER,
-        'ORIGIN'
+        'ORIGIN',
+        'BUSINESS'
       )
       expect(stats).toEqual([
         expect.objectContaining({
@@ -225,7 +275,8 @@ describe('Verify hits-per-user statistics', () => {
       const stats = await statsRepository.getHitsByUserStats(
         0,
         Number.MAX_SAFE_INTEGER,
-        'DESTINATION'
+        'DESTINATION',
+        'BUSINESS'
       )
       expect(stats).toEqual([
         expect.objectContaining({
@@ -273,11 +324,24 @@ describe('Verify hits-per-user statistics', () => {
         caseTransactions: [transaction],
         caseTransactionsIds: [transaction.transactionId],
         caseUsers: {
-          origin: getTestUser({ userId: originUserId }),
-          destination: getTestUser({ userId: destinationUserId }),
+          origin: getTestUser({ userId: originUserId, type: 'BUSINESS' }),
+          destination: getTestUser({
+            userId: destinationUserId,
+            type: 'BUSINESS',
+          }),
         },
         caseType: 'SYSTEM',
       })
+      const userRepository = await getUserRepo(TENANT_ID)
+      await userRepository.saveUserMongo(
+        getTestUser({ userId: originUserId, type: 'BUSINESS' }) as InternalUser
+      )
+      await userRepository.saveUserMongo(
+        getTestUser({
+          userId: destinationUserId,
+          type: 'BUSINESS',
+        }) as InternalUser
+      )
       await statsRepository.recalculateHitsByUser('ORIGIN', {
         startTimestamp: timestamp,
       })
@@ -289,7 +353,8 @@ describe('Verify hits-per-user statistics', () => {
       const stats = await statsRepository.getHitsByUserStats(
         0,
         Number.MAX_SAFE_INTEGER,
-        'ORIGIN'
+        'ORIGIN',
+        'BUSINESS'
       )
       expect(stats).toEqual([
         expect.objectContaining({
@@ -305,7 +370,8 @@ describe('Verify hits-per-user statistics', () => {
       const stats = await statsRepository.getHitsByUserStats(
         0,
         Number.MAX_SAFE_INTEGER,
-        'DESTINATION'
+        'DESTINATION',
+        'BUSINESS'
       )
       expect(stats).toEqual([
         expect.objectContaining({
@@ -412,10 +478,23 @@ describe('Verify hits-per-user statistics', () => {
       caseTransactions: transactions,
       caseTransactionsIds: transactions.map((t) => t.transactionId),
       caseUsers: {
-        origin: getTestUser({ userId: originUserId }),
-        destination: getTestUser({ userId: destinationUserId }),
+        origin: getTestUser({ userId: originUserId, type: 'BUSINESS' }),
+        destination: getTestUser({
+          userId: destinationUserId,
+          type: 'BUSINESS',
+        }),
       },
     })
+    const userRepository = await getUserRepo(TENANT_ID)
+    await userRepository.saveUserMongo(
+      getTestUser({ userId: originUserId, type: 'BUSINESS' }) as InternalUser
+    )
+    await userRepository.saveUserMongo(
+      getTestUser({
+        userId: destinationUserId,
+        type: 'BUSINESS',
+      }) as InternalUser
+    )
     await statsRepository.recalculateHitsByUser('ORIGIN', {
       startTimestamp: createdTimestamp,
     })
@@ -426,7 +505,8 @@ describe('Verify hits-per-user statistics', () => {
       const stats = await statsRepository.getHitsByUserStats(
         dayjs('2022-01-30T11:00:00.000Z').valueOf(),
         dayjs('2022-01-30T13:00:00.000Z').valueOf(),
-        'ORIGIN'
+        'ORIGIN',
+        'BUSINESS'
       )
       expect(stats).toEqual([
         expect.objectContaining({
@@ -442,7 +522,8 @@ describe('Verify hits-per-user statistics', () => {
       const stats = await statsRepository.getHitsByUserStats(
         dayjs('2022-01-30T11:00:00.000Z').valueOf(),
         dayjs('2022-01-30T13:00:00.000Z').valueOf(),
-        'DESTINATION'
+        'DESTINATION',
+        'BUSINESS'
       )
       expect(stats).toEqual([
         expect.objectContaining({
