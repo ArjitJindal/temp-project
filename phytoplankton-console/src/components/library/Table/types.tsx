@@ -125,6 +125,7 @@ export interface BaseColumn {
   defaultEditState?: boolean;
   defaultVisibility?: boolean;
   enableResizing?: boolean;
+  disableColumnShuffling?: boolean;
 }
 
 export interface GroupColumn<Item extends object> extends BaseColumn {

@@ -25,7 +25,7 @@ import { useHasPermissions } from '@/utils/user-utils';
 import Confirm from '@/components/utils/Confirm';
 import Button from '@/components/library/Button';
 import { ColumnHelper } from '@/components/library/Table/columnHelper';
-import { BOOLEAN, DATE } from '@/components/library/Table/standardDataTypes';
+import { BOOLEAN, DATE, PRIORITY } from '@/components/library/Table/standardDataTypes';
 import { message } from '@/components/library/Message';
 import { DEFAULT_PARAMS_STATE } from '@/components/library/Table/consts';
 import { useScrollToFocus } from '@/utils/hooks';
@@ -122,6 +122,14 @@ const MyRule = (props: { simulationMode?: boolean }) => {
     const helper = new ColumnHelper<RuleInstance>();
 
     return helper.list([
+      helper.simple<'casePriority'>({
+        key: 'casePriority',
+        title: '',
+        disableColumnShuffling: true,
+        type: PRIORITY,
+        defaultWidth: 40,
+        enableResizing: false,
+      }),
       helper.simple<'ruleId'>({
         title: 'ID',
         key: 'ruleId',
@@ -198,10 +206,6 @@ const MyRule = (props: { simulationMode?: boolean }) => {
             );
           },
         },
-      }),
-      helper.simple<'casePriority'>({
-        key: 'casePriority',
-        title: 'Rule severity',
       }),
       helper.simple<'createdAt'>({
         key: 'createdAt',

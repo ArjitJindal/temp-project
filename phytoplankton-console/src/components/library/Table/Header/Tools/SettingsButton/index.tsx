@@ -101,30 +101,36 @@ function ColumnList<Item>(props: {
   const { table, columns, deepLevel = 0, dndState } = props;
   const extraTableContext = usePersistedSettingsContext();
   const [columnOrder] = extraTableContext.columnOrder;
-
+  const [columnOrderRestrictions] = extraTableContext.columnOrderRestrictions;
   const orderedColumns = useMemo(() => {
-    const result = [...columns.filter((column) => !SPECIAL_COLUMN_IDS.includes(column.id))];
+    const result = [
+      ...columns.filter(
+        (column) =>
+          !SPECIAL_COLUMN_IDS.includes(column.id) && !columnOrderRestrictions.includes(column.id),
+      ),
+    ];
     result.sort((x, y) => columnOrder.indexOf(x.id) - columnOrder.indexOf(y.id));
     return result;
-  }, [columns, columnOrder]);
-
+  }, [columns, columnOrder, columnOrderRestrictions]);
   return (
     <div className={s.columnList} style={{ paddingLeft: deepLevel * 24 }}>
-      {orderedColumns.map((column, i) => (
-        <React.Fragment key={column.id}>
-          {i === 0 && deepLevel === 0 && <ColumnDropTarget newIndex={i} dndState={dndState} />}
-          <Column deepLevel={deepLevel} column={column} dndState={dndState} />
-          {column.columns.length > 0 && (
-            <ColumnList
-              table={table}
-              columns={column.columns}
-              deepLevel={deepLevel + 1}
-              dndState={dndState}
-            />
-          )}
-          {deepLevel === 0 && <ColumnDropTarget newIndex={i + 1} dndState={dndState} />}
-        </React.Fragment>
-      ))}
+      {orderedColumns.map((column, i) => {
+        return (
+          <React.Fragment key={column.id}>
+            {i === 0 && deepLevel === 0 && <ColumnDropTarget newIndex={i} dndState={dndState} />}
+            <Column deepLevel={deepLevel} column={column} dndState={dndState} />
+            {column.columns.length > 0 && (
+              <ColumnList
+                table={table}
+                columns={column.columns}
+                deepLevel={deepLevel + 1}
+                dndState={dndState}
+              />
+            )}
+            {deepLevel === 0 && <ColumnDropTarget newIndex={i + 1} dndState={dndState} />}
+          </React.Fragment>
+        );
+      })}
     </div>
   );
 }

@@ -9,6 +9,7 @@ import { applyUpdater, StatePair } from '@/utils/state';
 
 export type ColumnOrder = string[];
 export type FiltersVisibility = string[];
+export type OrderRestirction = string[];
 
 export type PersistedSettingsContextValue = {
   reset: () => void;
@@ -18,6 +19,7 @@ export type PersistedSettingsContextValue = {
   columnSizing: StatePair<TanTable.ColumnSizingState>;
   columnVisibility: StatePair<TanTable.VisibilityState>;
   columnPinning: StatePair<TanTable.ColumnPinningState>;
+  columnOrderRestrictions: StatePair<OrderRestirction>;
 };
 
 export const PersistedSettingsContext = React.createContext<PersistedSettingsContextValue | null>(
@@ -65,6 +67,10 @@ export function PersistedSettingsProvider<Item extends object, Params>(props: {
         .map((column) => getColumnId(column))
         .filter((id) => id !== SELECT_COLUMN_ID)
         .filter((x): x is string => x != null),
+      columnOrderRestrictions: columns
+        .filter((column) => column.disableColumnShuffling)
+        .map((column) => getColumnId(column))
+        .filter((x): x is string => x != null),
     };
   }, [columns, allFilters]);
 
@@ -73,7 +79,6 @@ export function PersistedSettingsProvider<Item extends object, Params>(props: {
     getDefaultValue,
     nonResizableColumns,
   );
-
   const providerValue: PersistedSettingsContextValue = useMemo<PersistedSettingsContextValue>(
     () => ({
       reset: () => {
@@ -138,6 +143,17 @@ export function PersistedSettingsProvider<Item extends object, Params>(props: {
           });
         },
       ],
+      columnOrderRestrictions: [
+        persistedState.columnOrderRestrictions,
+        (updater: Updater<OrderRestirction>) => {
+          setPersistedState((prevState) => {
+            return {
+              ...prevState,
+              columnOrderRestrictions: applyUpdater(prevState.columnOrderRestrictions, updater),
+            };
+          });
+        },
+      ],
     }),
     [getDefaultValue, persistedState, setPersistedState],
   );
@@ -163,6 +179,7 @@ export interface PersistedState {
   columnSizing: TanTable.ColumnSizingState;
   columnVisibility: TanTable.VisibilityState;
   columnPinning: TanTable.ColumnPinningState;
+  columnOrderRestrictions: OrderRestirction;
 }
 
 export function usePersistedState(

@@ -39,6 +39,7 @@ import {
   CASE_STATUS,
   CASEID,
   DATE,
+  PRIORITY,
   RULE_ACTION,
   RULE_NATURE,
 } from '@/components/library/Table/standardDataTypes';
@@ -91,6 +92,14 @@ const mergedColumns = (
 ): TableColumn<TableAlertItem>[] => {
   const helper = new ColumnHelper<TableAlertItem>();
   return helper.list([
+    helper.simple<'priority'>({
+      title: '',
+      key: 'priority',
+      type: PRIORITY,
+      disableColumnShuffling: true,
+      defaultWidth: 40,
+      enableResizing: false,
+    }),
     helper.simple<'alertId'>({
       title: 'Alert ID',
       key: 'alertId',
@@ -139,11 +148,6 @@ const mergedColumns = (
       showFilterByDefault: true,
       sorting: true,
       type: DATE,
-    }),
-    helper.simple<'priority'>({
-      title: 'Priority',
-      key: 'priority',
-      sorting: true,
     }),
     helper.simple<'age'>({
       title: 'Alert age',

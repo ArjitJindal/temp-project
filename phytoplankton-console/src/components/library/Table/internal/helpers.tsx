@@ -12,6 +12,7 @@ import {
   getPaginationRowModel,
   RowSelectionState,
 } from '@tanstack/react-table';
+import { sortBy } from 'lodash';
 import {
   AllParams,
   applyFieldAccessor,
@@ -70,6 +71,21 @@ export function useLocalStorageOptionally<Value>(
               parsedValue.columnSizing[columnId] = defaultValues.columnSizing[columnId];
             });
           }
+          if (
+            !isEqual(
+              sortBy(parsedValue.columnOrderRestrictions),
+              sortBy(defaultValues.columnOrderRestrictions),
+            )
+          ) {
+            parsedValue.columnOrderRestrictions = defaultValues.columnOrderRestrictions;
+          }
+
+          if (!isEqual(sortBy(parsedValue.columnOrder), sortBy(defaultValues.columnOrder))) {
+            parsedValue.columnOrder = defaultValues.columnOrder;
+          }
+          parsedValue.columnOrder = parsedValue.columnOrder.filter(
+            (id: string) => !parsedValue.columnOrderRestrictions.includes(id),
+          );
           return {
             ...(defaultValues as Value),
             ...(parsedValue as Value),
@@ -140,6 +156,7 @@ export function useTanstackTable<
   const [columnPinning, setColumnPinning] = extraTableContext.columnPinning;
   const [columnSizing, setColumnSizing] = extraTableContext.columnSizing;
   const [columnVisibility, setColumnVisibility] = extraTableContext.columnVisibility;
+  const [columnOrderRestrictions] = extraTableContext.columnOrderRestrictions;
 
   const data = getOr(dataRes, { items: [] });
   const preparedData: TableRow<Item>[] = useMemo(() => {
@@ -287,20 +304,29 @@ export function useTanstackTable<
     return [
       ...(isAnythingExpandable ? [EXPAND_COLUMN_ID] : []),
       ...(isAnythingSelectable ? [SELECT_COLUMN_ID] : []),
+      ...columnOrderRestrictions,
       ...result,
     ];
-  }, [isAnythingSelectable, isAnythingExpandable, columnDefs, columnOrder]);
+  }, [
+    isAnythingSelectable,
+    isAnythingExpandable,
+    columnDefs,
+    columnOrder,
+    columnOrderRestrictions,
+  ]);
 
   const allColumns = useMemo(
     (): TanTable.ColumnDef<TableRow<Item>>[] => [
       ...(isAnythingExpandable ? [EXPAND_COLUMN as TanTable.ColumnDef<TableDataItem<Item>>] : []),
       ...(isAnythingSelectable ? [SELECT_COLUMN as TanTable.ColumnDef<TableDataItem<Item>>] : []),
-      ...(columnDefs as any), // todo: fix any
+      ...columnDefs.filter((column) => columnOrderRestrictions.includes(column.id as string)),
+      ...(columnDefs.filter(
+        (column) => !columnOrderRestrictions.includes(column.id as string),
+      ) as any),
       SPACER_COLUMN,
     ],
-    [isAnythingExpandable, isAnythingSelectable, columnDefs],
+    [isAnythingExpandable, isAnythingSelectable, columnDefs, columnOrderRestrictions],
   );
-
   const paginationState = {
     pageSize: params.pageSize,
     pageIndex: params.page ? params.page - 1 : 0,

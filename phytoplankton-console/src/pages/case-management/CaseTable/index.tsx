@@ -39,9 +39,10 @@ import { makeExtraFilters } from '@/pages/case-management/helpers';
 import {
   ASSIGNMENTS,
   CASE_STATUS,
-  CASEID_PRIORITY,
+  CASEID,
   DATE,
   NUMBER,
+  PRIORITY,
   RISK_LEVEL,
   USER_NAME,
 } from '@/components/library/Table/standardDataTypes';
@@ -128,11 +129,18 @@ export default function CaseTable(props: Props) {
   const columns: TableColumn<TableItem>[] = useMemo(() => {
     const helper = new ColumnHelper<TableItem>();
     const mergedColumns: TableColumn<TableItem>[] = [
+      helper.simple<'priority'>({
+        title: '',
+        key: 'priority',
+        type: PRIORITY,
+        defaultWidth: 40,
+        enableResizing: false,
+        disableColumnShuffling: true,
+      }),
       helper.simple<'caseId'>({
         title: 'Case ID',
-        subtitle: 'Priority',
         key: 'caseId',
-        type: CASEID_PRIORITY,
+        type: CASEID,
         sorting: true,
       }),
       helper.simple<'createdTimestamp'>({

@@ -4,6 +4,7 @@ import { uniqBy } from 'lodash';
 import { useMutation } from '@tanstack/react-query';
 import { ColumnDataType, FullColumnDataType } from '../types';
 import { CloseMessage, message } from '../../Message';
+import PriorityTag from '../../PriorityTag';
 import s from './index.module.less';
 import RiskLevelTag from '@/components/library/RiskLevelTag';
 import { RiskLevel } from '@/utils/risk-levels';
@@ -24,6 +25,7 @@ import {
   TransactionType,
   UserState,
   Case,
+  Priority,
 } from '@/apis';
 import { getUserName } from '@/utils/api/users';
 import TransactionTypeTag from '@/components/library/TransactionTypeTag';
@@ -639,5 +641,14 @@ export const ADDRESS: ColumnDataType<Address> = {
           ))}
       </p>
     );
+  },
+};
+
+export const PRIORITY: ColumnDataType<Priority> = {
+  render: (priority) => {
+    if (priority == null) {
+      return <></>;
+    }
+    return <PriorityTag priority={priority} />;
   },
 };
