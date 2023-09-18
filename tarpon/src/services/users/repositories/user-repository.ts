@@ -504,6 +504,8 @@ export class UserRepository {
     return {
       ...user,
       riskScoreDetails,
+      executedRules: user.executedRules ?? [],
+      hitRules: user.hitRules ?? [],
     }
   }
 
@@ -525,6 +527,8 @@ export class UserRepository {
     return {
       ...user,
       riskScoreDetails,
+      hitRules: user.hitRules ?? [],
+      executedRules: user.executedRules ?? [],
     }
   }
 

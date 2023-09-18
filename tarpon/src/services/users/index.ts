@@ -62,7 +62,7 @@ export class UserManagementService {
   public async verifyUser(
     userPayload: User | Business,
     type: UserType
-  ): Promise<User | Business> {
+  ): Promise<UserWithRulesResult | BusinessWithRulesResult> {
     const isConsumerUser = type === 'CONSUMER'
 
     if (!isConsumerUser && (userPayload as Business)?.linkedEntities) {
@@ -82,12 +82,13 @@ export class UserManagementService {
       ...(await this.rulesEngineService.verifyUser(userPayload)),
     }
 
-    const user = isConsumerUser
+    isConsumerUser
       ? await this.userRepository.saveConsumerUser(userResult)
       : await this.userRepository.saveBusinessUser(
           userResult as BusinessWithRulesResult
         )
-    return user
+
+    return userResult
   }
 
   public async validateLinkedEntitiesAndEmitEvent(

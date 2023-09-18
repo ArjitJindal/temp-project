@@ -73,6 +73,8 @@ export const userHandler = lambdaApi()(
             message:
               'The provided userId already exists. The user attribute updates are not saved. If you want to update the attributes of this user, please use user events instead.',
             riskScoreDetails: user.riskScoreDetails,
+            hitRules: user?.hitRules ?? [],
+            executedRules: user?.executedRules ?? [],
           }
         }
       }
@@ -151,6 +153,8 @@ export const userHandler = lambdaApi()(
             }),
           },
         }),
+        hitRules: user?.hitRules ?? [],
+        executedRules: user?.executedRules ?? [],
       } as ConsumerUsersResponse
     }
     return 'Unhandled request'

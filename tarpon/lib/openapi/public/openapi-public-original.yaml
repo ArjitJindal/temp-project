@@ -3027,6 +3027,14 @@ components:
           description: user ID the risk score pertains to
         riskScoreDetails:
           $ref: '#/components/schemas/RiskScoreDetails'
+        hitRules:
+          type: array
+          items:
+            $ref: '#/components/schemas/HitRulesDetails'
+        executedRules:
+          type: array
+          items:
+            $ref: '#/components/schemas/ExecutedRulesResult'
       required:
         - userId
     ConsumerUsersResponse:
@@ -3048,6 +3056,14 @@ components:
           description: user ID the risk score pertains to
         riskScoreDetails:
           $ref: '#/components/schemas/RiskScoreDetails'
+        hitRules:
+          type: array
+          items:
+            $ref: '#/components/schemas/HitRulesDetails'
+        executedRules:
+          type: array
+          items:
+            $ref: '#/components/schemas/ExecutedRulesResult'
       required:
         - userId
     CardDetails:
