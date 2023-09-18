@@ -1,5 +1,5 @@
-import { Collection } from 'mongodb'
-import { uniq, maxBy, max, compact } from 'lodash'
+import { Collection, Filter } from 'mongodb'
+import { uniq, maxBy, max, compact, isEmpty } from 'lodash'
 import { getMongoDbClient, lookupPipelineStage } from '@/utils/mongodb-utils'
 import {
   TRANSACTIONS_COLLECTION,
@@ -15,6 +15,16 @@ import { Address } from '@/@types/openapi-internal/Address'
 import { traceable } from '@/core/xray'
 import dayjs from '@/utils/dayjs'
 
+type UsersProjectedData = Pick<
+  InternalUser,
+  | 'userId'
+  | 'legalEntity'
+  | 'contactDetails'
+  | 'directors'
+  | 'shareHolders'
+  | 'userDetails'
+  | 'type'
+>
 @traceable
 export class LinkerService {
   tenantId!: string
@@ -59,16 +69,26 @@ export class LinkerService {
       }
     })
 
+    for (const [nodeId] of nodeMap.entries()) {
+      if (
+        !linkedEdges.some((e) => e.source === nodeId || e.target === nodeId)
+      ) {
+        nodeMap.delete(nodeId)
+      }
+    }
+
+    const nodes: GraphNodes[] = [...nodeMap.entries()].map(([id, label]) => ({
+      id,
+      label,
+    }))
+
     return {
-      nodes: Array(...nodeMap.entries()).map(([id, label]) => ({
-        id,
-        label,
-      })),
+      nodes,
       edges: linkedEdges,
     }
   }
 
-  private getAllContactDetails(user: InternalUser): ContactDetails[] {
+  private getAllContactDetails(user: UsersProjectedData): ContactDetails[] {
     const sharedHolders = user.shareHolders || []
     const directors = user.directors || []
     const contactDetails = [user.contactDetails] ?? []
@@ -82,7 +102,7 @@ export class LinkerService {
   }
 
   private processLink(
-    user: InternalUser,
+    user: UsersProjectedData,
     link: string,
     map: Map<string, string[]>
   ) {
@@ -148,9 +168,7 @@ export class LinkerService {
               },
               count: { $sum: 1 },
               actualIds: {
-                $addToSet: {
-                  $ifNull: ['$destinationUserId', null],
-                },
+                $addToSet: { $ifNull: ['$destinationUserId', null] },
               },
             },
           },
@@ -181,15 +199,9 @@ export class LinkerService {
           { $limit: 10000 },
           {
             $group: {
-              _id: {
-                $ifNull: ['$originUserId', '$originPaymentMethodId'],
-              },
+              _id: { $ifNull: ['$originUserId', '$originPaymentMethodId'] },
               count: { $sum: 1 },
-              actualIds: {
-                $addToSet: {
-                  $ifNull: ['$originUserId', null],
-                },
-              },
+              actualIds: { $addToSet: { $ifNull: ['$originUserId', null] } },
             },
           },
           lookupPipelineStage({
@@ -265,6 +277,10 @@ export class LinkerService {
       })
     })
 
+    // Remove any nodes that don't have any edges
+    const nodeIds = uniq(edges.flatMap((e) => [e.source, e.target]))
+    nodes.filter((n) => nodeIds.includes(n.id))
+
     return {
       nodes,
       edges,
@@ -289,7 +305,11 @@ export class LinkerService {
 
     const originAccountNumbersPromise = txnCollection.distinct(
       'originPaymentMethodId',
-      { originUserId: userId, originPaymentMethodId: { $ne: undefined } }
+      {
+        originUserId: userId,
+        originPaymentMethodId: { $ne: undefined },
+        timestamp: { $gte: dayjs().subtract(30, 'day').valueOf() },
+      }
     )
 
     const destinationAccountNumbersPromise = txnCollection.distinct(
@@ -303,7 +323,7 @@ export class LinkerService {
 
     const prefixes = ['', 'legalEntity.', 'directors.', 'shareHolders.']
     const [
-      [user, directors, shareHolders],
+      [user, legalEntity, directors, shareHolders],
       [originAccountNumbers, destinationAccountNumbers],
     ] = await Promise.all([
       Promise.all([
@@ -318,9 +338,30 @@ export class LinkerService {
     ])
 
     // Group together linking elements
-    const emailIds = [...user[0], ...directors[0], ...shareHolders[0]]
-    const contactNumbers = [...user[1], ...directors[1], ...shareHolders[1]]
-    const postcodes = [...user[2], ...directors[2], ...shareHolders[2]]
+    const emailIds = [
+      ...user[0],
+      ...legalEntity[0],
+      ...directors[0],
+      ...shareHolders[0],
+    ]
+    const contactNumbers = [
+      ...user[1],
+      ...directors[1],
+      ...shareHolders[1],
+      ...legalEntity[1],
+    ]
+    const postcodes = [
+      ...user[2],
+      ...directors[2],
+      ...shareHolders[2],
+      ...legalEntity[2],
+    ]
+    const addresses = [
+      ...user[3],
+      ...directors[3],
+      ...shareHolders[3],
+      ...legalEntity[3],
+    ]
 
     const paymentMethodIds = [
       ...originAccountNumbers,
@@ -333,11 +374,7 @@ export class LinkerService {
             _id: string
             users: InternalUser[]
           }>([
-            {
-              $match: {
-                originPaymentMethodId: { $in: paymentMethodIds },
-              },
-            },
+            { $match: { originPaymentMethodId: { $in: paymentMethodIds } } },
             {
               $group: {
                 _id: '$originPaymentMethodId',
@@ -358,9 +395,7 @@ export class LinkerService {
             users: InternalUser[]
           }>([
             {
-              $match: {
-                destinationPaymentMethodId: { $in: paymentMethodIds },
-              },
+              $match: { destinationPaymentMethodId: { $in: paymentMethodIds } },
             },
             {
               $group: {
@@ -377,27 +412,41 @@ export class LinkerService {
           ])
           .toArray(),
       ])
+    console.log('addressLinked', addresses)
+    const query: Filter<InternalUser> = {
+      $or: [
+        ...prefixes.flatMap((prefix) => {
+          return [
+            { [`${prefix}contactDetails.emailIds`]: { $in: emailIds } },
+            {
+              [`${prefix}contactDetails.contactNumbers`]: {
+                $in: contactNumbers,
+              },
+            },
+            {
+              [`${prefix}contactDetails.addresses.postcode`]: {
+                $in: postcodes,
+              },
+              [`${prefix}contactDetails.addresses.addressLines.0`]: {
+                $in: addresses,
+              },
+            },
+          ]
+        }),
+        { userId },
+      ],
+    }
 
     const users = await userCollection
-      .find({
-        $or: [
-          ...prefixes.flatMap((prefix) => {
-            return [
-              { [`${prefix}contactDetails.emailIds`]: { $in: emailIds } },
-              {
-                [`${prefix}contactDetails.contactNumbers`]: {
-                  $in: contactNumbers,
-                },
-              },
-              {
-                [`${prefix}contactDetails.addresses.postcode`]: {
-                  $in: postcodes,
-                },
-              },
-            ]
-          }),
-          { userId },
-        ],
+      .find(query)
+      .project<UsersProjectedData>({
+        shareHolders: 1,
+        directors: 1,
+        userId: 1,
+        legalEntity: 1,
+        contactDetails: 1,
+        userDetails: 1,
+        type: 1,
       })
       .toArray()
 
@@ -408,6 +457,9 @@ export class LinkerService {
     for (const user of users) {
       const contactDetails = this.getAllContactDetails(user)
       contactDetails.forEach((contactDetail) => {
+        if (isEmpty(contactDetail)) {
+          return
+        }
         contactDetail.emailIds?.forEach((emailId) =>
           this.processLink(user, emailId, emailLinked)
         )
@@ -460,7 +512,7 @@ export class LinkerService {
     })
 
     const userLabels = new Map<string, string>()
-    const allUsers: InternalUser[] = [
+    const allUsers: UsersProjectedData[] = [
       ...users,
       ...originPaymentMethodLinks.flatMap((pl) => pl.users),
       ...destinationPaymentMethodLinks.flatMap((pl) => pl.users),
@@ -490,15 +542,13 @@ async function linkingElements(
   prefix: string,
   userCollection: Collection<InternalUser>,
   userId: string
-): Promise<[string[], string[], string[]]> {
+): Promise<[string[], string[], string[], string[]]> {
   const emailIds = userCollection.distinct(`${prefix}contactDetails.emailIds`, {
     userId,
   })
   const contactNumbers = userCollection.distinct(
     `${prefix}contactDetails.contactNumbers`,
-    {
-      userId,
-    }
+    { userId }
   )
   const postcodes = userCollection.distinct(
     `${prefix}contactDetails.addresses.postcode`,
@@ -506,5 +556,14 @@ async function linkingElements(
       userId,
     }
   )
-  return [await emailIds, await contactNumbers, await postcodes]
+  const addressLines = userCollection.distinct(
+    `${prefix}contactDetails.addresses.addressLines.0`,
+    { userId }
+  )
+  return [
+    await emailIds,
+    await contactNumbers,
+    await postcodes,
+    await addressLines,
+  ]
 }

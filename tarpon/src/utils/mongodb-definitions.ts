@@ -227,33 +227,12 @@ export function getMongoDbIndexDefinitions(tenantId: string): {
               timestamp: 1,
               _id: 1,
             },
-            {
-              transactionId: 1,
-              timestamp: 1,
-            },
-            {
-              originUserId: 1,
-              timestamp: 1,
-              _id: 1,
-            },
-            {
-              destinationUserId: 1,
-              timestamp: 1,
-              _id: 1,
-            },
-            {
-              originUserId: 1,
-              timestamp: -1,
-              _id: -1,
-            },
-            {
-              destinationUserId: 1,
-              timestamp: -1,
-              _id: -1,
-            },
-            {
-              arsScore: 1,
-            }
+            { transactionId: 1, timestamp: 1 },
+            { originUserId: 1, timestamp: 1, _id: 1 },
+            { destinationUserId: 1, timestamp: 1, _id: 1 },
+            { originUserId: 1, timestamp: -1, _id: -1 },
+            { destinationUserId: 1, timestamp: -1, _id: -1 },
+            { arsScore: 1 }
           )
 
           // NOTE: These indexes are for running the rules in the Simulation mode
@@ -281,46 +260,23 @@ export function getMongoDbIndexDefinitions(tenantId: string): {
       {
         getIndexes: () => {
           return [
-            {
-              type: 1,
-            },
-            {
-              createdTimestamp: 1,
-            },
-            {
-              updatedAt: 1,
-            },
-            {
-              createdAt: 1,
-            },
-            {
-              userId: 1,
-            },
-            {
-              'userDetails.name.firstName': 1,
-            },
-            {
-              'userDetails.name.middleName': 1,
-            },
-            {
-              'userDetails.name.lastName': 1,
-            },
-            {
-              'legalEntity.companyGeneralDetails.legalName': 1,
-            },
-            {
-              'legalEntity.companyGeneralDetails.businessIndustry': 1,
-            },
+            { type: 1 },
+            { createdTimestamp: 1 },
+            { updatedAt: 1 },
+            { createdAt: 1 },
+            { userId: 1 },
+            { 'userDetails.name.firstName': 1 },
+            { 'userDetails.name.middleName': 1 },
+            { 'userDetails.name.lastName': 1 },
+            { 'legalEntity.companyGeneralDetails.legalName': 1 },
+            { 'legalEntity.companyGeneralDetails.businessIndustry': 1 },
             ...['', 'legalEntity.', 'directors.', 'shareHolders.'].flatMap(
               (prefix) => [
-                {
-                  [`${prefix}contactDetails.emailIds`]: 1,
-                },
-                {
-                  [`${prefix}contactDetails.contactNumbers`]: 1,
-                },
+                { [`${prefix}contactDetails.emailIds`]: 1 },
+                { [`${prefix}contactDetails.contactNumbers`]: 1 },
                 {
                   [`${prefix}contactDetails.addresses.postcode`]: 1,
+                  [`${prefix}contactDetails.addresses.addressLines`]: 1,
                 },
               ]
             ),
