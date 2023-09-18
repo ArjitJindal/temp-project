@@ -12,7 +12,7 @@ jobs:
   deploy:
     strategy:
       matrix:
-        node-version: [16.x, 18.x]
+        node-version: [18.x]
     runs-on: ubuntu-20.04
     steps:
       - uses: khan/pull-request-comment-trigger@v1.1.0
