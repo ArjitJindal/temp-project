@@ -13,7 +13,6 @@ import { ReportService } from '@/services/sar/service'
 import { InternalTransaction } from '@/@types/openapi-internal/InternalTransaction'
 import { QuestionService } from '@/services/copilot/questions/question-service'
 import { AlertsService } from '@/services/alerts'
-import { questions } from '@/services/copilot/questions/definitions'
 
 export const copilotHandler = lambdaApi({})(
   async (
@@ -83,7 +82,7 @@ export const copilotHandler = lambdaApi({})(
     })
 
     handlers.registerGetQuestions(async (_ctx, request) => {
-      const questionService = new QuestionService()
+      const questionService = await QuestionService.fromEvent(event)
       const caseService = await CaseService.fromEvent(event)
       const alertService = await AlertsService.fromEvent(event)
       const alert = await alertService.getAlert(request.alertId)
@@ -91,17 +90,11 @@ export const copilotHandler = lambdaApi({})(
         throw new Error(`Alert ${alert?.alertId} has no case ID`)
       }
       const c = await caseService.getCase(alert.caseId)
-      return {
-        data: await Promise.all(
-          questions.map((q) => {
-            return questionService.answer(q.questionId, [], c, alert)
-          })
-        ),
-      }
+      return await questionService.getQuestions(alert, c)
     })
 
-    handlers.registerPostQuestion(async (_ctx, request) => {
-      const questionService = new QuestionService()
+    handlers.registerPostQuestion(async (ctx, request) => {
+      const questionService = await QuestionService.fromEvent(event)
       const caseService = await CaseService.fromEvent(event)
       const alertService = await AlertsService.fromEvent(event)
       const alert = await alertService.getAlert(request.alertId)
@@ -109,8 +102,8 @@ export const copilotHandler = lambdaApi({})(
         throw new Error(`Alert ${alert?.alertId} has no case ID`)
       }
       const c = await caseService.getCase(alert.caseId)
-
-      return questionService.answer(
+      return questionService.addQuestion(
+        ctx.userId,
         request.QuestionRequest.questionId || '',
         request.QuestionRequest.variables || [],
         c,

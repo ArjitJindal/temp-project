@@ -10,8 +10,8 @@ export const periodDefaults = (days = 30): Period => {
 
 export type Period = { from: number; to: number }
 export const periodVars: VariableOptions<Period> = {
-  from: 'TIMESTAMP',
-  to: 'TIMESTAMP',
+  from: 'DATETIME',
+  to: 'DATETIME',
 }
 
 export function humanReadablePeriod(period: Period): string {

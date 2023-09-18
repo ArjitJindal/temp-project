@@ -1,11 +1,13 @@
+import { QuestionVariableOptionVariableTypeEnum } from '@/@types/openapi-internal/QuestionVariableOption'
+
 type ColumnType = 'STRING' | 'DATETIME' // ...
 
-type Variables = {
-  [key: string]: string | number | undefined
+export type Variables = {
+  [key: string]: string | number
 }
 
 export type VariableOptions<V> = {
-  [K in keyof V]: 'TIMESTAMP' | 'NUMBER' | 'STRING' | 'INTEGER'
+  [K in keyof V]: QuestionVariableOptionVariableTypeEnum
 }
 
 export type Question<V extends Variables, D> = {
@@ -40,3 +42,13 @@ export type StackedBarchartQuestion<V extends Variables> = {
 export type BarchartQuestion<V extends Variables> = {
   type: 'BARCHART'
 } & Question<V, { x: string; y: number }[]>
+
+export type Investigation = {
+  alertId: string
+  questions: {
+    questionId: string
+    variables: Variables
+    createdAt: number
+    createdById: string
+  }[]
+}

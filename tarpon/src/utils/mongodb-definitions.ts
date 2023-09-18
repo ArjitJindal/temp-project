@@ -153,6 +153,10 @@ export const MERCHANT_MONITORING_DATA_COLLECTION = (tenantId: string) => {
   return `${tenantId}-merchant-monitoring`
 }
 
+export const INVESTIGATION_COLLECTION = (tenantId: string) => {
+  return `${tenantId}-investigation`
+}
+
 export const CHECKLIST_TEMPLATE_COLLECTION = (tenantId: string) => {
   return `${tenantId}-checklist-templates`
 }

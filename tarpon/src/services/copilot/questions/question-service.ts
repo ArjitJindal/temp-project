@@ -1,24 +1,96 @@
+import {
+  APIGatewayEventLambdaAuthorizerContext,
+  APIGatewayProxyWithLambdaAuthorizerEvent,
+} from 'aws-lambda'
 import { questions } from './definitions'
+import { InvestigationRepository } from './investigation-repository'
+import { Variables } from './types'
 import { QuestionResponse } from '@/@types/openapi-internal/QuestionResponse'
 import { Alert } from '@/@types/openapi-internal/Alert'
 import { Case } from '@/@types/openapi-internal/Case'
 import { getContext } from '@/core/utils/context'
 import { QuestionRequestVariables } from '@/@types/openapi-internal/QuestionRequestVariables'
+import { getMongoDbClient } from '@/utils/mongodb-utils'
+import { JWTAuthorizerResult } from '@/@types/jwt'
+import { QuestionVariableOption } from '@/@types/openapi-internal/QuestionVariableOption'
+import { GetQuestionsResponse } from '@/@types/openapi-internal/GetQuestionsResponse'
 
 export class QuestionService {
-  async answer(
+  static async fromEvent(
+    event: APIGatewayProxyWithLambdaAuthorizerEvent<
+      APIGatewayEventLambdaAuthorizerContext<JWTAuthorizerResult>
+    >
+  ) {
+    const mongoClient = await getMongoDbClient()
+    const { principalId: tenantId } = event.requestContext.authorizer
+
+    return new QuestionService(
+      new InvestigationRepository(mongoClient, tenantId)
+    )
+  }
+  private investigationRepository: InvestigationRepository
+
+  constructor(investigationRepository: InvestigationRepository) {
+    this.investigationRepository = investigationRepository
+  }
+
+  async addQuestion(
+    createdById: string,
     questionId: string,
     vars: QuestionRequestVariables[],
     c: Case,
     a: Alert
   ): Promise<QuestionResponse> {
-    let varObject = vars.reduce<{ [key: string]: string | number }>(
-      (acc, v) => {
-        acc[v.name] = v.value
-        return acc
-      },
-      {}
+    if (!a.alertId) {
+      throw new Error('No alert ID')
+    }
+    const varObject = vars.reduce<Variables>((acc, v) => {
+      acc[v.name] = v.value
+      return acc
+    }, {})
+    const answer = await this.answer(questionId, varObject, c, a)
+    if (answer) {
+      const questionResponse = {
+        createdAt: Date.now().valueOf(),
+        createdById,
+        ...answer,
+      }
+      await this.investigationRepository.addQuestion(
+        { createdAt: Date.now().valueOf(), createdById, ...answer },
+        a.alertId,
+        varObject
+      )
+      return questionResponse
+    }
+    throw new Error(`Unsupported question type`)
+  }
+
+  async getQuestions(alert: Alert, c: Case): Promise<GetQuestionsResponse> {
+    if (!alert.alertId) {
+      throw new Error('No alert ID')
+    }
+    const investigation = await this.investigationRepository.getInvestigation(
+      alert.alertId
     )
+    return {
+      data: await Promise.all(
+        investigation.questions.map(async (q) => {
+          return {
+            createdById: q.createdById,
+            createdAt: q.createdAt,
+            ...(await this.answer(q.questionId, q.variables, c, alert)),
+          }
+        })
+      ),
+    }
+  }
+
+  private async answer(
+    questionId: string,
+    varObject: Variables,
+    c: Case,
+    a: Alert
+  ) {
     const question = questions.find((qt) => qt.questionId === questionId)
     if (!question) {
       throw new Error(`Cant resolve question from ${questionId}`)
@@ -44,6 +116,14 @@ export class QuestionService {
 
     const common = {
       questionId,
+      variableOptions: Object.entries(question.variableOptions).map(
+        ([name, variableType]): QuestionVariableOption => {
+          return {
+            name,
+            variableType,
+          }
+        }
+      ),
       questionType: question.type,
       title: question.title ? question.title(varObject) : questionId,
     }

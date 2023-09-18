@@ -4723,10 +4723,21 @@ components:
           type: string
         questionType:
           type: string
+        createdAt:
+          type: number
+        createdById:
+          type: string
         variableOptions:
           type: array
           items:
             $ref: '#/components/schemas/QuestionVariableOption'
+      required:
+        - questionId
+        - title
+        - questionType
+        - createdAt
+        - createdById
+        - variableOptions
       oneOf:
         - $ref: '#/components/schemas/Table'
         - $ref: '#/components/schemas/Timeseries'
