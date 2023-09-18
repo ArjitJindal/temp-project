@@ -1,3 +1,4 @@
+import { COUNTRY_CODES } from '@/@types/openapi-internal-custom/CountryCode'
 import { CURRENCY_CODES } from '@/@types/openapi-internal-custom/CurrencyCode'
 import { transactionTypes } from '@/services/sar/generators/LT/common'
 
@@ -27,8 +28,6 @@ export const schema = {
             type: 'object',
             required: [
               'TransactionDate',
-              'TransactionType',
-              'RegistrationNumber',
               'TransactionValue',
               'OperationType',
               'OperationDataItem',
@@ -54,44 +53,57 @@ export const schema = {
               OperationType: { type: 'string' },
               OperationDataItem: {
                 type: 'object',
+                required: ['ItemDirection', 'PersonClass', 'Country'],
                 properties: {
-                  ItemDirection: { type: 'string' },
-                  PersonClass: { type: 'string' },
+                  ItemDirection: {
+                    type: 'string',
+                    enum: ['GIVER', 'RECEIVER'],
+                    enumNames: ['Giver', 'Receiver'],
+                  },
+                  PersonClass: {
+                    type: 'string',
+                    enum: ['1', '2'],
+                    enumNames: ['Natural person', 'Legal entity'],
+                  },
                   Title: { type: 'string' },
                   FirstName: { type: 'string' },
                   LastName: { type: 'string' },
                   Code: { type: 'string' },
                   Address: { type: 'string' },
-                  Country: { type: 'string' },
+                  Country: { type: 'string', enum: COUNTRY_CODES },
                   DocumentNumber: { type: 'string' },
                   DocumentIssueDate: { format: 'date', type: 'string' },
-                  // Delegate: {
-                  //   type: 'object',
-                  //   properties: {
-                  //     FirstName: { type: 'string' },
-                  //     LastName: { type: 'string' },
-                  //     Code: { type: 'string' },
-                  //     Address: { type: 'string' },
-                  //     Country: { type: 'string' },
-                  //     Mandate: {
-                  //       type: 'object',
-                  //       properties: {
-                  //         Number: { type: 'string' },
-                  //         IssueDate: { format: 'date', type: 'string' },
-                  //       },
-                  //     },
-                  //   },
-                  // },
+                  Delegate: {
+                    type: 'object',
+                    required: ['FirstName', 'LastName', 'Country'],
+                    properties: {
+                      FirstName: { type: 'string' },
+                      LastName: { type: 'string' },
+                      Code: { type: 'string' },
+                      Address: { type: 'string' },
+                      Country: { type: 'string', enum: COUNTRY_CODES },
+                      Mandate: {
+                        type: 'object',
+                        required: ['Number', 'IssueDate'],
+                        properties: {
+                          Number: { type: 'string' },
+                          IssueDate: { format: 'date', type: 'string' },
+                        },
+                      },
+                    },
+                  },
                   OperationValue: {
                     type: 'object',
                     properties: {
                       Sum: { type: 'number' },
                       Currency: { type: 'string', enum: CURRENCY_CODES },
                     },
+                    required: ['Sum', 'Currency'],
                   },
                   Account: {
                     title: 'Account',
                     type: 'object',
+                    required: ['Bank', 'IBAN', 'AccountOwner'],
                     properties: {
                       Bank: { type: 'string' },
                       IBAN: { type: 'string' },
