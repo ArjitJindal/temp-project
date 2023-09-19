@@ -132,7 +132,7 @@ export async function bulkVerifyTransactions(
     )
   }
 
-  const results = []
+  const results: any[] = []
   const rulesEngine = new RulesEngineService(tenantId, dynamoDb)
   for (const transaction of transactions) {
     results.push(await rulesEngine.verifyTransaction(transaction))
@@ -149,7 +149,7 @@ export async function bulkVerifyUsers(
 ): Promise<UserMonitoringResult[]> {
   const dynamoDb = getDynamoDbClient()
   const mongoDb = await getMongoDbClient()
-  const results = []
+  const results: any[] = []
   const rulesEngine = new RulesEngineService(tenantId, dynamoDb, mongoDb)
   for (const user of users) {
     results.push(await rulesEngine.verifyUser(user, { ongoingScreeningMode }))

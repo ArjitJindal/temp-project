@@ -132,7 +132,7 @@ export const createAndUploadTestData = async (
     countryOne
   )
 
-  const dynamoDbResults = []
+  const dynamoDbResults: any[] = []
 
   for (let i = 0; i < numberOfTransactions; i++) {
     transactionObject = {

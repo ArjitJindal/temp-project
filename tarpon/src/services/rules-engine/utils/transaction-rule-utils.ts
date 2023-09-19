@@ -1,4 +1,3 @@
-import * as _ from 'lodash'
 import { groupBy, inRange, mapValues } from 'lodash'
 import {
   AuxiliaryIndexTransaction,

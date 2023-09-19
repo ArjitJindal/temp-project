@@ -350,8 +350,8 @@ export class RiskScoringService {
       components
     )
 
-    let originDrsScore = null
-    let destinationDrsScore = null
+    let originDrsScore: any = null
+    let destinationDrsScore: any = null
 
     if (transaction.originUserId) {
       originDrsScore = await this.calculateAndUpdateDRS(

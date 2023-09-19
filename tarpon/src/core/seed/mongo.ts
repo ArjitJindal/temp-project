@@ -148,7 +148,7 @@ export async function seedMongo(client: MongoClient, tenantId: string) {
       // ignore
     }
     const iterator = data[Symbol.iterator]()
-    let batch = []
+    let batch: any[] = []
     let i = 0
     let result
     do {

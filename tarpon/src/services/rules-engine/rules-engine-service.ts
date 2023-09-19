@@ -588,7 +588,7 @@ export class RulesEngineService {
         )
 
     const segmentNamespace = `Rules Engine - ${ruleInstance.ruleId} (${ruleInstance.id})`
-    let filterSegment = undefined
+    let filterSegment: any = undefined
     if (!isEmpty(ruleFilters) && tracing) {
       filterSegment = await addNewSubsegment(segmentNamespace, 'Rule Filtering')
     }
@@ -609,7 +609,7 @@ export class RulesEngineService {
       filterSegment?.close()
     }
 
-    let runSegment = undefined
+    let runSegment: any = undefined
     if (shouldRunRule && tracing) {
       runSegment = await addNewSubsegment(segmentNamespace, 'Rule Execution')
     }

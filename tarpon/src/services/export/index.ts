@@ -24,7 +24,7 @@ interface Row {
 }
 
 function makeHeader<T>(headerSettings: CsvHeaderSettings<T>): string[] {
-  const result = []
+  const result: any[] = []
   for (const [key, action] of Object.entries(headerSettings)) {
     if (action === 'SKIP') {
       continue

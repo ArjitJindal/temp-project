@@ -1,4 +1,3 @@
-import * as _ from 'lodash'
 import { JSONSchemaType } from 'ajv'
 import { groupBy, isEmpty, memoize, random } from 'lodash'
 import {
@@ -193,7 +192,7 @@ export default class UserTransactionLimitsRule extends TransactionRule<UserTrans
       limit: Amount
       granularity: 'day' | 'week' | 'month' | 'year'
     }>
-    const transactionLimitResults = []
+    const transactionLimitResults: any[] = []
 
     if (
       isEmpty(onlyCheckTypes) ||
@@ -373,7 +372,7 @@ export default class UserTransactionLimitsRule extends TransactionRule<UserTrans
     )
     if (transactionAmountHit.isHit) {
       const { thresholdHit } = transactionAmountHit
-      let falsePositiveDetails = undefined
+      let falsePositiveDetails: any = undefined
       if (this.ruleInstance.falsePositiveCheckEnabled && thresholdHit != null) {
         if (
           amountDetails &&

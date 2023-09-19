@@ -1,5 +1,5 @@
 {
-  "extends": "@tsconfig/node16/tsconfig.json",
+  "extends": "@tsconfig/node18/tsconfig.json",
   "include": ["**/*.ts"],
   "exclude": ["node_modules", "**/*.spec.ts", "cdk.out", "cdktf.out"],
   "compilerOptions": {
@@ -15,7 +15,9 @@
       "@lib/*": ["./lib/*"],
       "@cdktf/*": ["./.gen/*"]
     },
-    "experimentalDecorators": true
+    "experimentalDecorators": true,
+    "noImplicitAny": false,
+    "noPropertyAccessFromIndexSignature": false
   },
   "ts-node": {
     "require": ["tsconfig-paths/register"]

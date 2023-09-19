@@ -1,4 +1,3 @@
-import * as _ from 'lodash'
 import { random } from 'lodash'
 import { ExecutedRulesResult } from '@/@types/openapi-public/ExecutedRulesResult'
 import { pickRandom, randomSubset } from '@/utils/prng'
@@ -369,8 +368,8 @@ export const initRules = () => {
           ruleHit: true,
           ruleHitMeta: {
             falsePositiveDetails:
-              _.random(0, 10) < 2
-                ? { isFalsePositive: true, confidenceScore: _.random(59, 82) }
+              random(0, 10) < 2
+                ? { isFalsePositive: true, confidenceScore: random(59, 82) }
                 : { isFalsePositive: false, confidenceScore: 100 },
             hitDirections: i % 2 ? ['ORIGIN'] : ['DESTINATION'],
             sanctionsDetails:

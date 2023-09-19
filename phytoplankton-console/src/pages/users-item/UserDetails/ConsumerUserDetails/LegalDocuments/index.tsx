@@ -37,8 +37,12 @@ export function LegalDocumentsTable(prop: Props) {
                 };
               },
               type: {
-                render: ({ documentType, documentNumber }) => {
-                  return <DocumentDetails name={documentType} number={documentNumber} />;
+                render: (data) => {
+                  if (data) {
+                    const { documentType, documentNumber } = data;
+                    return <DocumentDetails name={documentType} number={documentNumber} />;
+                  }
+                  return <></>;
                 },
               },
             }),

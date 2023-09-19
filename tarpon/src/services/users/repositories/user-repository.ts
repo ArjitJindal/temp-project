@@ -790,7 +790,7 @@ export class UserRepository {
     const collection = db.collection<Business>(name)
     let fieldPath: string
     let unwindPath: string
-    const filterConditions = []
+    const filterConditions: any[] = []
     switch (params.field) {
       case 'BUSINESS_INDUSTRY':
         fieldPath = 'legalEntity.companyGeneralDetails.businessIndustry'

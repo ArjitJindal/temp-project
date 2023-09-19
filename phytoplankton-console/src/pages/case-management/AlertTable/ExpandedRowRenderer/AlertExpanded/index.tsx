@@ -81,7 +81,7 @@ export default function AlertExpanded(props: Props) {
   });
 
   const items = useMemo(() => {
-    const tabs = [];
+    const tabs: any[] = [];
     tabs.push({
       tab: 'Transactions details',
       key: 'transactions',

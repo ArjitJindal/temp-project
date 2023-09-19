@@ -301,8 +301,8 @@ describe('Verify list repository', () => {
       items: initialValues,
     })
 
-    let cursor = undefined
-    const readResult = []
+    let cursor: any = undefined
+    const readResult: any[] = []
     do {
       const r: CursorPaginatedResponse<ListItem> = await listRepo.getListItems(
         listId,
@@ -358,8 +358,8 @@ describe('Verify list repository', () => {
 })
 
 async function getAllListItems(listRepo: ListRepository, listId: string) {
-  const result = []
-  let nextCursor = undefined
+  const result: any[] = []
+  let nextCursor: any = undefined
   do {
     const response: CursorPaginatedResponse<ListItem> =
       await listRepo.getListItems(listId, {

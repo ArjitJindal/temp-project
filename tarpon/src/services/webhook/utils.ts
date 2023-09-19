@@ -84,7 +84,7 @@ export async function sendWebhookTasks<T extends object = object>(
   }
 
   const batchSize = 10
-  const groups = []
+  const groups: any[] = []
 
   for (let i = 0; i < entries.length; i += batchSize) {
     const chunk = entries.slice(i, i + batchSize)

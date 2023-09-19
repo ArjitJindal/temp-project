@@ -161,7 +161,7 @@ async function main() {
     await createRuleInstancesLocally(ruleInstanceIds)
   }
 
-  const results = []
+  const results: any[] = []
   for (let i = 0; i < transactionIds.length; i += 1) {
     const result = await verifyTransactionLocally(transactionIds[i])
     const hit = result?.hitRules?.length > 0

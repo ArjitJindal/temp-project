@@ -1,4 +1,3 @@
-import * as _ from 'lodash'
 import { random } from 'lodash'
 import { data as users } from './users'
 import { sampleTransaction } from '@/core/seed/samplers/transaction'

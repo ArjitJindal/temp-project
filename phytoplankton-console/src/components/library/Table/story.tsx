@@ -271,7 +271,7 @@ export default function (): JSX.Element {
               <Table<User>
                 pagination={true}
                 tableId="downloading"
-                rowKey="id"
+                rowKey="userId"
                 params={params}
                 onChangeParams={onChangeParams}
                 columns={helper.list([

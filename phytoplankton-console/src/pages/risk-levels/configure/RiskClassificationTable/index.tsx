@@ -37,7 +37,7 @@ export function prepareApiState(state: State): ApiState {
 }
 
 export function parseApiState(values: ApiState): State {
-  const result = [];
+  const result: any[] = [];
   for (let i = 0; i < RISK_LEVELS.length - 1; i += 1) {
     const level = RISK_LEVELS[i];
     const riskLevelEntry = values.find(({ riskLevel }) => riskLevel === level);

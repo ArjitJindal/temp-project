@@ -92,7 +92,7 @@ export function makeValidators<T>(
         }
       }
     } else {
-      const validators = [];
+      const validators: any[] = [];
       if (prop.isRequired) {
         validators.push(notEmpty);
       }

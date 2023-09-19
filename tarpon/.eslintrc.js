@@ -14,6 +14,9 @@ module.exports = {
   ignorePatterns: ['.eslintrc.js', 'cdk.out', 'dist', 'node_modules'],
   rules: {
     'no-console': 'off',
+    '@typescript-eslint/no-explicit-any': [
+        'warn'
+    ],
     '@typescript-eslint/no-unused-vars': [
       'error',
       { argsIgnorePattern: '^_', varsIgnorePattern: '^_' },

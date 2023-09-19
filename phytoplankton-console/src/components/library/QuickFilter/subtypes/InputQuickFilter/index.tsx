@@ -40,7 +40,7 @@ export default function InputQuickFilter<Value>(props: Props<Value>) {
     [debouncedOnChange],
   );
 
-  let buttonText = undefined;
+  let buttonText: any = undefined;
   if (Array.isArray(value)) {
     buttonText = joinReactNodes(value);
   } else if (value != null) {

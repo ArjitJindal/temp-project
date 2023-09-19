@@ -225,7 +225,7 @@ function prepareColumns<T extends object>(
   columns: TableColumn<T>[],
   prefix = '',
 ): (SimpleColumn<T, FieldAccessor<T>> | DerivedColumn<T>)[] {
-  const result = [];
+  const result: any[] = [];
   for (const column of columns) {
     const title = typeof column.title === 'string' ? column.title : '-';
     if (isGroupColumn(column)) {

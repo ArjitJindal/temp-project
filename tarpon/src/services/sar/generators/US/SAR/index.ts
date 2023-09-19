@@ -154,9 +154,9 @@ export class UsSarReportGenerator implements ReportGenerator {
       }
     }
 
-    let startDate = undefined
-    let endDate = undefined
-    let totalAmount = undefined
+    let startDate: any = undefined
+    let endDate: any = undefined
+    let totalAmount: any = undefined
     for (const transaction of transactions) {
       startDate = startDate
         ? Math.min(startDate, transaction.timestamp)

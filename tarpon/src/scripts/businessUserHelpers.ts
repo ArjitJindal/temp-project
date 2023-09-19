@@ -53,7 +53,7 @@ export const createLegalEntity = (
 
 export const createShareHolders = (country: CountryCode) => {
   const numberOfShareHolders = getRandomIntInclusive(0, 7)
-  const shareHolders = []
+  const shareHolders: any[] = []
   for (let i = 0; i < numberOfShareHolders; i++) {
     const shareHolder = {
       generalDetails: {

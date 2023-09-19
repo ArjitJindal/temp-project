@@ -80,24 +80,18 @@ export default abstract class MultipleSendersWithinTimePeriodRuleBase extends Tr
   private getTransactionSenderUserKey(): string | undefined {
     const { senderTypes, receiverTypes } = this.getSenderReceiverTypes()
 
-    let key = undefined
-
     if (
       (receiverTypes.includes('USER') && this.transaction.destinationUserId) ||
       (receiverTypes.includes('NON_USER') &&
         this.transaction.destinationPaymentDetails)
     ) {
       if (senderTypes.includes('USER') && this.senderUser) {
-        key = this.senderUser.userId
+        return this.senderUser.userId
       } else if (senderTypes.includes('NON_USER') && !this.senderUser) {
-        key = getNonUserSenderKeys(
-          this.tenantId,
-          this.transaction
-        )?.PartitionKeyID
+        return getNonUserSenderKeys(this.tenantId, this.transaction)
+          ?.PartitionKeyID
       }
     }
-
-    return key
   }
 
   private async getTransactionsRawData(): Promise<AuxiliaryIndexTransaction[]> {

@@ -1,5 +1,4 @@
 import { JSONSchemaType } from 'ajv'
-import * as _ from 'lodash'
 import { chain, compact, flatMap, isEmpty, random, sumBy, uniq } from 'lodash'
 import { AuxiliaryIndexTransaction } from '../repositories/transaction-repository-interface'
 import {

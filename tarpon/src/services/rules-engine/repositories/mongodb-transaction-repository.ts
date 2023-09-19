@@ -183,7 +183,7 @@ export class MongoDbTransactionRepository
       conditions.push({ caseStatus: { $in: [params.filterCaseStatus] } })
     }
 
-    const executedRulesFilters = []
+    const executedRulesFilters: Document[] = []
     if (params.filterRulesExecuted != null) {
       executedRulesFilters.push({
         $elemMatch: { ruleId: { $in: params.filterRulesExecuted } },

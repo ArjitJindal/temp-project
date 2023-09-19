@@ -56,7 +56,7 @@ export async function getInitialContext(
   lambdaContext: LambdaContext
 ): Promise<Context> {
   try {
-    let features = undefined
+    let features: any = undefined
     const {
       principalId: tenantId,
       tenantName,

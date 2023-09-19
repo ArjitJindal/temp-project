@@ -1,5 +1,4 @@
 import { JSONSchemaType } from 'ajv'
-import * as _ from 'lodash'
 import { mapValues } from 'lodash'
 import { RuleHitResult } from '../rule'
 import { TransactionHistoricalFilters } from '../filters'

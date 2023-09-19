@@ -58,7 +58,7 @@ export function grantSecretsManagerAccess(
   mode: 'READ' | 'WRITE' | 'READ_WRITE'
 ) {
   const aliasIdentifier = resource.node.id.replace(/:/g, '-')
-  const actions = []
+  const actions: string[] = []
   if (mode === 'READ' || mode === 'READ_WRITE') {
     actions.push('secretsmanager:GetSecretValue')
   }

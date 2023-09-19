@@ -1,5 +1,4 @@
 import { JSONSchemaType } from 'ajv'
-import * as _ from 'lodash'
 import { mergeRuleSchemas } from '../utils/rule-schema-utils'
 import { MATCH_PAYMENT_METHOD_DETAILS_OPTIONAL_SCHEMA } from '../utils/rule-parameter-schemas'
 import TransactionsPatternVelocityBaseRule, {

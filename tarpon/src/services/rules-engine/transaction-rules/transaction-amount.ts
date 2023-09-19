@@ -1,5 +1,4 @@
 import { JSONSchemaType } from 'ajv'
-import * as _ from 'lodash'
 import { mapValues, random } from 'lodash'
 import { checkTransactionAmountBetweenThreshold } from '../utils/transaction-rule-utils'
 import { TRANSACTION_AMOUNT_THRESHOLDS_SCHEMA } from '../utils/rule-parameter-schemas'

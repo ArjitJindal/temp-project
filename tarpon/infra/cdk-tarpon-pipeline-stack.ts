@@ -122,7 +122,7 @@ export class CdkTarponPipelineStack extends cdk.Stack {
         phases: {
           install: {
             'runtime-versions': {
-              nodejs: 16,
+              nodejs: 18,
             },
             commands: ['cd tarpon', 'npm ci'],
           },
@@ -189,11 +189,11 @@ export class CdkTarponPipelineStack extends cdk.Stack {
           phases: {
             install: {
               'runtime-versions': {
-                nodejs: 16,
+                nodejs: 18,
               },
               commands: [
                 'cd tarpon',
-                'npm install @tsconfig/node16@1.0.2 ts-node@10.9.1 typescript@4.5.5',
+                'npm install @tsconfig/node18@18.2.1 ts-node@10.9.1 typescript@4.5.5',
                 `export ATLAS_CREDENTIALS_SECRET_ARN=${config.application.ATLAS_CREDENTIALS_SECRET_ARN}`,
                 `export ENV=${env}`,
                 `export AWS_REGION=${config.env.region}`,

@@ -1,5 +1,4 @@
 import { JSONSchemaType } from 'ajv'
-import * as _ from 'lodash'
 import { random, sumBy } from 'lodash'
 import { AuxiliaryIndexTransaction } from '../repositories/transaction-repository-interface'
 import {
@@ -82,8 +81,8 @@ export default class HighTrafficVolumeBetweenSameUsers extends TransactionAggreg
 
     const transactionAmounts = await this.getData()
     const targetCurrency = this.getTargetCurrency()
-    let volumeDelta = null
-    let volumeThreshold = null
+    let volumeDelta: any = null
+    let volumeThreshold: any = null
     if (
       transactionAmounts != null &&
       transactionVolumeThreshold[targetCurrency] != null

@@ -18,7 +18,7 @@ export default function TransactionTypeTag({ transactionType }: Props) {
     return <>-</>;
   }
 
-  let transactionTypeIcon = null;
+  let transactionTypeIcon: any = null;
   if (transactionType === 'DEPOSIT') {
     transactionTypeIcon = <ArrowDownLineIcon className={style.icon} />;
   } else if (transactionType === 'EXTERNAL_PAYMENT') {

@@ -37,7 +37,7 @@ export async function copyCollections(
       await outputDB.collection(outputCollectionName).drop()
     }
 
-    let output = []
+    let output: any[] = []
     for await (const document of collectionData) {
       if (!document) continue
 

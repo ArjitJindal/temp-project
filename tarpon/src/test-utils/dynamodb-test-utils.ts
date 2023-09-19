@@ -31,7 +31,7 @@ export function dynamoDbSetupHook() {
 }
 
 async function createTable(tableName: string) {
-  let error = null
+  let error: any = null
   for (let i = 0; i < 5; i++) {
     try {
       const { getDynamoDbRawClient } = await import('@/utils/dynamodb')

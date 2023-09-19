@@ -142,7 +142,7 @@ export class DashboardStatsRepository {
       }
     )
 
-    let timestampMatch = undefined
+    let timestampMatch: any = undefined
     if (timeRange) {
       const { start, end } = getAffectedInterval(timeRange, 'HOUR')
       timestampMatch = {
@@ -218,7 +218,7 @@ export class DashboardStatsRepository {
     const aggregationCollection = DASHBOARD_RULE_HIT_STATS_COLLECTION_HOURLY(
       this.tenantId
     )
-    let timestampMatch = undefined
+    let timestampMatch: any = undefined
     if (timeRange) {
       const { start, end } = getAffectedInterval(timeRange, 'HOUR')
       timestampMatch = {
@@ -1315,7 +1315,7 @@ export class DashboardStatsRepository {
       ]
       const ruleAction = TRANSACTION_STATE_KEY_TO_RULE_ACTION.get(key)
       const ruleActionMatch = ruleAction && { hitRulesResult: ruleAction }
-      let timestampMatch = undefined
+      let timestampMatch: any = undefined
       if (timeRange) {
         const { start, end } = getAffectedInterval(timeRange, 'HOUR')
         timestampMatch = {
@@ -1349,7 +1349,7 @@ export class DashboardStatsRepository {
     }
 
     const getPaymentMethodAggregationPipeline = () => {
-      let timestampMatch = undefined
+      let timestampMatch: any = undefined
       if (timeRange) {
         const { start, end } = getAffectedInterval(timeRange, 'HOUR')
         timestampMatch = {
@@ -1464,7 +1464,7 @@ export class DashboardStatsRepository {
       granularity: 'DAY' | 'MONTH',
       timeRange?: TimeRange
     ) => {
-      let timestampMatch = undefined
+      let timestampMatch: any = undefined
       if (timeRange) {
         const { start, end } = getAffectedInterval(timeRange, granularity)
         const format =
@@ -2226,7 +2226,7 @@ export class DashboardStatsRepository {
     const aggregationCollection =
       TRANSACTION_TYPE_DISTRIBUTION_STATS_COLLECTION(this.tenantId)
 
-    let timestampMatch = undefined
+    let timestampMatch: object = {}
     if (timeRange) {
       const { start, end } = getAffectedInterval(timeRange, 'HOUR')
       timestampMatch = {

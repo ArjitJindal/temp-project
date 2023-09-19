@@ -36,7 +36,7 @@ export default class TransactionReferenceKeywordRule extends TransactionRule<Tra
       .trim()
       .split(/\s+/)
     const referenceWordsSet = new Set(referenceWords)
-    let hitWord = undefined
+    let hitWord: string | undefined = undefined
     if (allowedDistance != undefined) {
       hitWord = referenceWords.find((refrenceWord) => {
         return keywords.find((keyword) => {

@@ -261,7 +261,7 @@ export async function paginateQuery(
       })`
     : undefined
 
-  let paginateQuerySegment = undefined
+  let paginateQuerySegment: any = undefined
   if (ruleInfo) {
     paginateQuerySegment = await addNewSubsegment(
       `DynamoDB${ruleInfo}`,
@@ -340,7 +340,7 @@ export async function* paginateQueryGenerator(
   query: QueryCommandInput,
   pagesLimit = Infinity
 ): AsyncGenerator<QueryCommandOutput> {
-  let lastEvaluateKey = undefined
+  let lastEvaluateKey: any = undefined
   let currentPage = 0
 
   while (lastEvaluateKey !== null && currentPage <= pagesLimit) {
@@ -377,7 +377,7 @@ export function getUpdateAttributesUpdateItemInput(attributes: {
   UpdateExpression: string
   ExpressionAttributeValues: Record<string, AttributeValue>
 } {
-  const updateExpressions = []
+  const updateExpressions: string[] = []
   const expresssionValues: { [key: string]: any } = {}
   for (const key in attributes) {
     updateExpressions.push(`${key} = :${key}`)
