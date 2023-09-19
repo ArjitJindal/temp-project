@@ -22,7 +22,6 @@ import { IBANDetails } from '@/@types/openapi-public/IBANDetails'
 import { GenericBankAccountDetails } from '@/@types/openapi-public/GenericBankAccountDetails'
 import { ACHDetails } from '@/@types/openapi-public/ACHDetails'
 import { SWIFTDetails } from '@/@types/openapi-public/SWIFTDetails'
-import { PaymentDetails } from '@/@types/tranasction/payment-type'
 type AggregationData = {
   uniqueBanks?: string[]
 }
@@ -176,29 +175,23 @@ export default class UsingTooManyBanksToMakePaymentsRule extends TransactionAggr
         )
       )
       if (checkDirection === 'sending') {
-        return this.getUniqueBanks(sendingTransactions, direction).add(
-          (this.transaction.originPaymentDetails as AcceptedPaymentDetails)
-            .bankName!
+        return this.getUniqueBanks(
+          sendingTransactions.concat(this.transaction),
+          direction
         ).size
       } else if (checkDirection === 'receiving') {
-        return this.getUniqueBanks(receivingTransactions, direction).add(
-          (this.transaction.destinationPaymentDetails as AcceptedPaymentDetails)
-            .bankName!
+        return this.getUniqueBanks(
+          receivingTransactions.concat(this.transaction),
+          direction
         ).size
       } else {
-        const paymentDetails = this.getPaymentDetails(
-          this.transaction,
+        const uniqueBanks = this.getUniqueBanks(
+          sendingTransactions
+            .concat(receivingTransactions)
+            .concat(this.transaction),
           direction
         )
-        const uniqueBanks = this.getUniqueBanks(sendingTransactions, direction)
-        this.getUniqueBanks(receivingTransactions, direction).forEach((bank) =>
-          uniqueBanks.add(bank)
-        )
-        const updatedUniqueBanks = this.addBankNameIfValid(
-          paymentDetails,
-          uniqueBanks
-        )
-        return updatedUniqueBanks.size
+        return uniqueBanks.size
       }
     } else {
       return checkDirection != 'none'
@@ -328,12 +321,7 @@ export default class UsingTooManyBanksToMakePaymentsRule extends TransactionAggr
       compact(
         transactions.map(
           (transaction) =>
-            (
-              this.getPaymentDetails(
-                transaction,
-                direction
-              ) as AcceptedPaymentDetails
-            ).bankName
+            this.getPaymentDetails(transaction, direction)?.bankName
         )
       )
     ) as Set<string>
@@ -353,11 +341,14 @@ export default class UsingTooManyBanksToMakePaymentsRule extends TransactionAggr
   }
 
   private addBankNameIfValid = (
-    paymentDetails: PaymentDetails | undefined,
+    paymentDetails: AcceptedPaymentDetails | undefined,
     uniqueBanks: Set<string>
   ) => {
-    if (this.isTransactionMethodValid(paymentDetails?.method)) {
-      uniqueBanks.add((paymentDetails as AcceptedPaymentDetails).bankName!)
+    if (
+      paymentDetails?.bankName &&
+      this.isTransactionMethodValid(paymentDetails?.method)
+    ) {
+      uniqueBanks.add(paymentDetails.bankName)
     }
     return uniqueBanks
   }
@@ -377,9 +368,11 @@ export default class UsingTooManyBanksToMakePaymentsRule extends TransactionAggr
   private getPaymentDetails = (
     transaction: AuxiliaryIndexTransaction,
     direction: 'origin' | 'destination'
-  ) => {
-    return direction === 'origin'
-      ? transaction.originPaymentDetails
-      : transaction.destinationPaymentDetails
+  ): AcceptedPaymentDetails | undefined => {
+    const paymentDetails =
+      direction === 'origin'
+        ? transaction.originPaymentDetails
+        : transaction.destinationPaymentDetails
+    return paymentDetails as AcceptedPaymentDetails
   }
 }
