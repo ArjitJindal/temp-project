@@ -5612,6 +5612,16 @@ components:
                 type: number
               paymentMethods_CHECK:
                 type: number
+              arsRiskLevel_VERY_HIGH:
+                type: number
+              arsRiskLevel_HIGH:
+                type: number
+              arsRiskLevel_MEDIUM:
+                type: number
+              arsRiskLevel_LOW:
+                type: number
+              arsRiskLevel_VERY_LOW:
+                type: number
             required:
               - _id
       required:
@@ -5654,6 +5664,16 @@ components:
         paymentMethods_MPESA:
           type: number
         paymentMethods_CHECK:
+          type: number
+        arsRiskLevel_VERY_HIGH:
+          type: number
+        arsRiskLevel_HIGH:
+          type: number
+        arsRiskLevel_MEDIUM:
+          type: number
+        arsRiskLevel_LOW:
+          type: number
+        arsRiskLevel_VERY_LOW:
           type: number
       required:
         - _id

@@ -21,6 +21,7 @@ export default function Treemap<Name extends string = string>(props: Props<Name>
 
   return (
     <AntTreemap
+      animation={false}
       data={{
         name: 'root',
         children: data,

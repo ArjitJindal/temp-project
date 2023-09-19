@@ -1,3 +1,4 @@
+import { v4 as uuidv4 } from 'uuid'
 import {
   getStatsRepo,
   getTransactionsRepo,
@@ -8,6 +9,7 @@ import dayjs from '@/utils/dayjs'
 import { dynamoDbSetupHook } from '@/test-utils/dynamodb-test-utils'
 import { getTestTransaction } from '@/test-utils/transaction-test-utils'
 import { getTestTenantId } from '@/test-utils/tenant-test-utils'
+import { RISK_LEVELS } from '@/@types/openapi-public-custom/all'
 
 dynamoDbSetupHook()
 
@@ -374,6 +376,235 @@ describe('Verify transactions counting statistics', () => {
         flaggedTransactions: 0,
         stoppedTransactions: 0,
         suspendedTransactions: 0,
+      }),
+    ])
+  })
+})
+
+describe('Verify transactions counting ARS risk levels', () => {
+  test('Single transaction with very high risk level', async () => {
+    const TENANT_ID = getTestTenantId()
+    const transactionRepository = await getTransactionsRepo(TENANT_ID)
+    const statsRepository = await getStatsRepo(TENANT_ID)
+
+    const d = dayjs('2022-01-30T12:00:00.000Z')
+    const timestamp = d.valueOf()
+
+    await transactionRepository.addTransactionToMongo({
+      ...getTestTransaction({
+        timestamp: timestamp,
+        arsScore: {
+          createdAt: timestamp,
+          arsScore: 100,
+          riskLevel: 'VERY_HIGH',
+        },
+      }),
+      status: 'ALLOW',
+      hitRules: [],
+      executedRules: [],
+    })
+    await statsRepository.refreshTransactionStats({ startTimestamp: timestamp })
+    const stats = await statsRepository.getTransactionCountStats(
+      dayjs('2022-01-30T00:00:00.000Z').valueOf(),
+      dayjs('2022-01-30T18:00:00.000Z').valueOf(),
+      'DAY'
+    )
+    expect(stats).toEqual([
+      expect.objectContaining({
+        _id: '2022-01-30',
+        arsRiskLevel_VERY_HIGH: 1,
+        arsRiskLevel_HIGH: 0,
+        arsRiskLevel_MEDIUM: 0,
+        arsRiskLevel_LOW: 0,
+        arsRiskLevel_VERY_LOW: 0,
+      }),
+    ])
+  })
+  test('Every level with 5-4-3-2-1 count', async () => {
+    const TENANT_ID = getTestTenantId()
+    const transactionRepository = await getTransactionsRepo(TENANT_ID)
+    const statsRepository = await getStatsRepo(TENANT_ID)
+
+    const d = dayjs('2022-01-30T12:00:00.000Z')
+    const timestamp = d.valueOf()
+
+    for (let i = 0; i < RISK_LEVELS.length; i += 1) {
+      const risklevel = RISK_LEVELS[i]
+      for (let j = 0; j <= i; j += 1) {
+        await transactionRepository.addTransactionToMongo({
+          ...getTestTransaction({
+            timestamp: timestamp,
+            arsScore: {
+              createdAt: timestamp,
+              arsScore: 100,
+              riskLevel: risklevel,
+            },
+          }),
+          status: 'ALLOW',
+          hitRules: [],
+          executedRules: [],
+        })
+      }
+    }
+
+    await statsRepository.refreshTransactionStats({ startTimestamp: timestamp })
+    const stats = await statsRepository.getTransactionCountStats(
+      dayjs('2022-01-30T00:00:00.000Z').valueOf(),
+      dayjs('2022-01-30T18:00:00.000Z').valueOf(),
+      'DAY'
+    )
+    expect(stats).toEqual([
+      expect.objectContaining({
+        _id: '2022-01-30',
+        arsRiskLevel_VERY_HIGH: 1,
+        arsRiskLevel_HIGH: 2,
+        arsRiskLevel_MEDIUM: 3,
+        arsRiskLevel_LOW: 4,
+        arsRiskLevel_VERY_LOW: 5,
+      }),
+    ])
+  })
+})
+
+describe('Verify transactions counting payment methods', () => {
+  test('Single transaction with origin payment details', async () => {
+    const TENANT_ID = getTestTenantId()
+    const transactionRepository = await getTransactionsRepo(TENANT_ID)
+    const statsRepository = await getStatsRepo(TENANT_ID)
+
+    const d = dayjs('2022-01-30T12:00:00.000Z')
+    const timestamp = d.valueOf()
+
+    await transactionRepository.addTransactionToMongo({
+      ...getTestTransaction({
+        timestamp: timestamp,
+        originPaymentDetails: {
+          method: 'CARD',
+          cardFingerprint: uuidv4(),
+          cardIssuedCountry: 'US',
+          transactionReferenceField: 'DEPOSIT',
+          '3dsDone': true,
+        },
+        destinationPaymentDetails: undefined,
+      }),
+      status: 'ALLOW',
+      hitRules: [],
+      executedRules: [],
+    })
+    await statsRepository.refreshTransactionStats({ startTimestamp: timestamp })
+    const stats = await statsRepository.getTransactionCountStats(
+      dayjs('2022-01-30T00:00:00.000Z').valueOf(),
+      dayjs('2022-01-30T18:00:00.000Z').valueOf(),
+      'DAY'
+    )
+    expect(stats).toEqual([
+      expect.objectContaining({
+        _id: '2022-01-30',
+        paymentMethods_ACH: 0,
+        paymentMethods_CARD: 1,
+        paymentMethods_GENERIC_BANK_ACCOUNT: 0,
+        paymentMethods_IBAN: 0,
+        paymentMethods_SWIFT: 0,
+        paymentMethods_UPI: 0,
+        paymentMethods_WALLET: 0,
+        paymentMethods_MPESA: 0,
+        paymentMethods_CHECK: 0,
+      }),
+    ])
+  })
+  test('Single transaction with destination payment details', async () => {
+    const TENANT_ID = getTestTenantId()
+    const transactionRepository = await getTransactionsRepo(TENANT_ID)
+    const statsRepository = await getStatsRepo(TENANT_ID)
+
+    const d = dayjs('2022-01-30T12:00:00.000Z')
+    const timestamp = d.valueOf()
+
+    await transactionRepository.addTransactionToMongo({
+      ...getTestTransaction({
+        timestamp: timestamp,
+        originPaymentDetails: undefined,
+        destinationPaymentDetails: {
+          method: 'CARD',
+          cardFingerprint: uuidv4(),
+          cardIssuedCountry: 'US',
+          transactionReferenceField: 'DEPOSIT',
+          '3dsDone': true,
+        },
+      }),
+      status: 'ALLOW',
+      hitRules: [],
+      executedRules: [],
+    })
+    await statsRepository.refreshTransactionStats({ startTimestamp: timestamp })
+    const stats = await statsRepository.getTransactionCountStats(
+      dayjs('2022-01-30T00:00:00.000Z').valueOf(),
+      dayjs('2022-01-30T18:00:00.000Z').valueOf(),
+      'DAY'
+    )
+    expect(stats).toEqual([
+      expect.objectContaining({
+        _id: '2022-01-30',
+        paymentMethods_ACH: 0,
+        paymentMethods_CARD: 1,
+        paymentMethods_GENERIC_BANK_ACCOUNT: 0,
+        paymentMethods_IBAN: 0,
+        paymentMethods_SWIFT: 0,
+        paymentMethods_UPI: 0,
+        paymentMethods_WALLET: 0,
+        paymentMethods_MPESA: 0,
+        paymentMethods_CHECK: 0,
+      }),
+    ])
+  })
+  test('Single transaction with both payment details', async () => {
+    const TENANT_ID = getTestTenantId()
+    const transactionRepository = await getTransactionsRepo(TENANT_ID)
+    const statsRepository = await getStatsRepo(TENANT_ID)
+
+    const d = dayjs('2022-01-30T12:00:00.000Z')
+    const timestamp = d.valueOf()
+
+    await transactionRepository.addTransactionToMongo({
+      ...getTestTransaction({
+        timestamp: timestamp,
+        originPaymentDetails: {
+          method: 'CARD',
+          cardFingerprint: uuidv4(),
+          cardIssuedCountry: 'US',
+          transactionReferenceField: 'DEPOSIT',
+          '3dsDone': true,
+        },
+        destinationPaymentDetails: {
+          method: 'CARD',
+          cardFingerprint: uuidv4(),
+          cardIssuedCountry: 'US',
+          transactionReferenceField: 'DEPOSIT',
+          '3dsDone': true,
+        },
+      }),
+      status: 'ALLOW',
+      hitRules: [],
+      executedRules: [],
+    })
+    await statsRepository.refreshTransactionStats({ startTimestamp: timestamp })
+    const stats = await statsRepository.getTransactionCountStats(
+      dayjs('2022-01-30T00:00:00.000Z').valueOf(),
+      dayjs('2022-01-30T18:00:00.000Z').valueOf(),
+      'DAY'
+    )
+    expect(stats).toEqual([
+      expect.objectContaining({
+        _id: '2022-01-30',
+        paymentMethods_ACH: 0,
+        paymentMethods_CARD: 2,
+        paymentMethods_GENERIC_BANK_ACCOUNT: 0,
+        paymentMethods_IBAN: 0,
+        paymentMethods_SWIFT: 0,
+        paymentMethods_UPI: 0,
+        paymentMethods_WALLET: 0,
+        paymentMethods_MPESA: 0,
+        paymentMethods_CHECK: 0,
       }),
     ])
   })

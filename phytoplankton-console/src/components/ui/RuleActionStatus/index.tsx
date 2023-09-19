@@ -2,7 +2,7 @@ import _ from 'lodash';
 import cn from 'clsx';
 import s from './index.module.less';
 import { RuleAction } from '@/apis';
-import { useRiskActionLabel } from '@/components/AppWrapper/Providers/SettingsProvider';
+import { useRuleActionLabel } from '@/components/AppWrapper/Providers/SettingsProvider';
 import { getRuleActionColor, getRuleActionColorForDashboard } from '@/utils/rules';
 
 interface Props {
@@ -11,7 +11,7 @@ interface Props {
 }
 
 export const RuleActionStatus: React.FC<Props> = ({ ruleAction, isForChart = false }) => {
-  const ruleActionLabel = useRiskActionLabel(ruleAction);
+  const ruleActionLabel = useRuleActionLabel(ruleAction);
   return (
     <div className={s.root}>
       <div

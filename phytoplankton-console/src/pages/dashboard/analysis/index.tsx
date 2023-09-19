@@ -23,6 +23,7 @@ import WidgetGrid from '@/components/library/WidgetGrid';
 import Widget from '@/components/library/Widget';
 import Label from '@/components/library/Label';
 import { notEmpty } from '@/utils/array';
+import TransactionTRSChartCard from '@/pages/dashboard/analysis/components/TransactionTRSChartCard';
 
 type KeyValues =
   | 'OVERVIEW'
@@ -37,7 +38,8 @@ type KeyValues =
   | 'DISTRIBUTION_BY_CLOSING_REASON'
   | 'DISTRIBUTION_BY_ALERT_PRIORITY'
   | 'DISTRIBUTION_BY_PAYMENT_METHOD'
-  | 'DISTRIBUTION_BY_TRANSACTION_TYPE';
+  | 'DISTRIBUTION_BY_TRANSACTION_TYPE'
+  | 'TRANSACTIONS_BREAKDOWN_BY_KRS';
 
 const KEYS: KeyValues[] = [
   'OVERVIEW',
@@ -53,6 +55,7 @@ const KEYS: KeyValues[] = [
   'RULE_PRIORITY_SPLIT',
   'DISTRIBUTION_BY_PAYMENT_METHOD',
   'DISTRIBUTION_BY_TRANSACTION_TYPE',
+  'TRANSACTIONS_BREAKDOWN_BY_KRS',
 ];
 
 const DEFAULT_VALUES = {
@@ -69,6 +72,7 @@ const DEFAULT_VALUES = {
   DISTRIBUTION_BY_ALERT_PRIORITY: true,
   DISTRIBUTION_BY_PAYMENT_METHOD: true,
   DISTRIBUTION_BY_TRANSACTION_TYPE: true,
+  TRANSACTIONS_BREAKDOWN_BY_KRS: true,
 };
 
 type DashboardSettings = Record<KeyValues, boolean>;
@@ -189,6 +193,14 @@ function Analysis() {
               //   },
               //   component: TransactinTypeDistribution,
               // },
+              isRiskScoringEnabled &&
+                settingsToDisplay.TRANSACTIONS_BREAKDOWN_BY_KRS && {
+                  props: {
+                    id: 'transaction_breakdown_by_trs',
+                    title: 'Transaction breakdown by KRS',
+                  },
+                  component: TransactionTRSChartCard,
+                },
             ].filter(notEmpty),
           },
           {

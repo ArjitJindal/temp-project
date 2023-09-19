@@ -9,7 +9,7 @@ import { getRuleActionColorForDashboard } from '@/utils/rules';
 import { RuleAction } from '@/apis';
 import Money from '@/components/ui/Money';
 import {
-  getRiskActionLabel,
+  getRuleActionLabel,
   useSettings,
 } from '@/components/AppWrapper/Providers/SettingsProvider';
 
@@ -34,7 +34,7 @@ export default function Popover(props: Props) {
           <IndicatorRow
             key={ruleAction}
             color={getRuleActionColorForDashboard(ruleAction as RuleAction)}
-            title={getRiskActionLabel(ruleAction as RuleAction, settings) || 'Unknown'}
+            title={getRuleActionLabel(ruleAction as RuleAction, settings) || 'Unknown'}
             value={value}
             currency={currency}
           />

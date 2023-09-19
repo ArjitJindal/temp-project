@@ -21,8 +21,8 @@ import {
   DASHBOARD_TRANSACTIONS_STATS_COLLECTION_MONTHLY,
   DRS_SCORES_DISTRIBUTION_STATS_COLLECTION,
   REPORT_COLLECTION,
-  TRANSACTIONS_COLLECTION,
   TRANSACTION_TYPE_DISTRIBUTION_STATS_COLLECTION,
+  TRANSACTIONS_COLLECTION,
   USERS_COLLECTION,
 } from '@/utils/mongodb-definitions'
 
@@ -55,6 +55,7 @@ import { Report } from '@/@types/openapi-internal/Report'
 import { DashboardStatsTransactionTypeDistributionStats } from '@/@types/openapi-internal/DashboardStatsTransactionTypeDistributionStats'
 import { DashboardStatsTransactionTypeDistributionStatsTransactionTypeData } from '@/@types/openapi-internal/DashboardStatsTransactionTypeDistributionStatsTransactionTypeData'
 import { DashboardStatsDRSDistributionData as DRSDistributionStats } from '@/@types/openapi-internal/DashboardStatsDRSDistributionData'
+import { RISK_LEVELS } from '@/@types/openapi-internal-custom/all'
 
 export type TimeRange = {
   startTimestamp?: number
@@ -1443,6 +1444,88 @@ export class DashboardStatsRepository {
       ]
     }
 
+    const getTRSAggregationPipeline = (
+      dateFormat: string,
+      aggregationCollection: string
+    ) => {
+      let timestampMatch: Record<string, unknown> | undefined = undefined
+      if (timeRange) {
+        const { start, end } = getAffectedInterval(timeRange, 'HOUR')
+        timestampMatch = {
+          timestamp: {
+            $gte: start,
+            $lt: end,
+          },
+        }
+      }
+      return [
+        {
+          $match: {
+            ...timestampMatch,
+            'arsScore.riskLevel': {
+              $ne: null,
+            },
+          },
+        },
+        {
+          $group: {
+            _id: {
+              date: {
+                $dateToString: {
+                  format: dateFormat,
+                  date: {
+                    $toDate: {
+                      $toLong: '$timestamp',
+                    },
+                  },
+                },
+              },
+              riskScore: { $concat: ['arsRiskLevel_', '$arsScore.riskLevel'] },
+            },
+            count: {
+              $count: {},
+            },
+          },
+        },
+        {
+          $group: {
+            _id: '$_id.date',
+            items: {
+              $addToSet: {
+                k: '$_id.riskScore',
+                v: '$count',
+              },
+            },
+          },
+        },
+        {
+          $project: {
+            items: {
+              $arrayToObject: '$items',
+            },
+          },
+        },
+        {
+          $replaceRoot: {
+            newRoot: {
+              $mergeObjects: [
+                {
+                  _id: '$_id',
+                },
+                '$items',
+              ],
+            },
+          },
+        },
+        {
+          $merge: {
+            into: aggregationCollection,
+            whenMatched: 'merge',
+          },
+        },
+      ]
+    }
+
     // Hourly Stats
     await transactionsCollection
       .aggregate(getHitRulesAggregationPipeline('totalTransactions'))
@@ -1458,6 +1541,14 @@ export class DashboardStatsRepository {
       .next()
     await transactionsCollection
       .aggregate(getPaymentMethodAggregationPipeline())
+      .next()
+    await transactionsCollection
+      .aggregate(
+        getTRSAggregationPipeline(
+          HOUR_DATE_FORMAT,
+          aggregatedHourlyCollectionName
+        )
+      )
       .next()
 
     const getDerivedAggregationPipeline = (
@@ -1505,6 +1596,15 @@ export class DashboardStatsRepository {
                 ...acc,
                 [`paymentMethods_${x}`]: {
                   $sum: `$paymentMethods_${x}`,
+                },
+              }),
+              {}
+            ),
+            ...RISK_LEVELS.reduce(
+              (acc, x) => ({
+                ...acc,
+                [`arsRiskLevel_${x}`]: {
+                  $sum: `$arsRiskLevel_${x}`,
                 },
               }),
               {}
@@ -1656,6 +1756,11 @@ export class DashboardStatsRepository {
         paymentMethods_WALLET: stat?.paymentMethods_WALLET ?? 0,
         paymentMethods_MPESA: stat?.paymentMethods_MPESA ?? 0,
         paymentMethods_CHECK: stat?.paymentMethods_CHECK ?? 0,
+        arsRiskLevel_VERY_HIGH: stat?.arsRiskLevel_VERY_HIGH ?? 0,
+        arsRiskLevel_HIGH: stat?.arsRiskLevel_HIGH ?? 0,
+        arsRiskLevel_MEDIUM: stat?.arsRiskLevel_MEDIUM ?? 0,
+        arsRiskLevel_LOW: stat?.arsRiskLevel_LOW ?? 0,
+        arsRiskLevel_VERY_LOW: stat?.arsRiskLevel_VERY_LOW ?? 0,
       }
     })
   }

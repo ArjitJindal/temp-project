@@ -14,9 +14,10 @@ import { capitalizeWords } from '@/utils/tags';
 import { useQuery } from '@/utils/queries/hooks';
 import { SETTINGS } from '@/utils/queries/keys';
 import { usePrevious } from '@/utils/hooks';
-import { isSuccess } from '@/utils/asyncResource';
+import { isFailed, isSuccess } from '@/utils/asyncResource';
 import { message } from '@/components/library/Message';
 import { humanizeConstant } from '@/utils/humanize';
+import ErrorPage from '@/components/ErrorPage';
 
 interface ContextValue {
   features: FeatureName[];
@@ -58,6 +59,11 @@ export default function SettingsProvider(props: {
     queryResults.refetch();
   };
 
+  if (isFailed(queryResults.data)) {
+    return (
+      <ErrorPage title={'Unable to load user settings'}>{queryResults.data.message}</ErrorPage>
+    );
+  }
   if (features == null) {
     return <PageLoading />;
   }
@@ -110,7 +116,7 @@ export function Feature(props: {
   return isEnabled ? <>{props.children}</> : <>{props.fallback}</>;
 }
 
-export function getRiskActionLabel(
+export function getRuleActionLabel(
   ruleAction: RuleAction | undefined,
   settings: TenantSettings,
 ): string | undefined {
@@ -121,9 +127,9 @@ export function getRiskActionLabel(
   return alias || capitalizeWords(ruleAction);
 }
 
-export function useRiskActionLabel(ruleAction: RuleAction | undefined): string | undefined {
+export function useRuleActionLabel(ruleAction: RuleAction | undefined): string | undefined {
   const settings = useSettings();
-  return getRiskActionLabel(ruleAction, settings);
+  return getRuleActionLabel(ruleAction, settings);
 }
 export function getRiskLevelLabel(riskLevel: RiskLevel, settings: TenantSettings): string {
   const alias = settings.riskLevelAlias?.find((item) => item.level === riskLevel)?.alias;

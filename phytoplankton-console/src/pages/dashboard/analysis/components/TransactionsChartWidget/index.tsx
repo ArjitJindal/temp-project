@@ -1,34 +1,33 @@
 /* eslint-disable @typescript-eslint/no-var-requires */
 import { Empty } from 'antd';
-import { Column } from '@ant-design/charts';
 import React, { useState } from 'react';
 import { RangeValue } from 'rc-picker/es/interface';
-import { each, groupBy } from 'lodash';
-import { Annotation } from '@antv/g2plot';
 import s from './index.module.less';
 import { getRuleActionColorForDashboard } from '@/utils/rules';
 import DatePicker from '@/components/ui/DatePicker';
 import { dayjs, Dayjs, YEAR_MONTH_DATE_FORMAT } from '@/utils/dayjs';
 import { useApi } from '@/api';
-import { useRiskActionLabel } from '@/components/AppWrapper/Providers/SettingsProvider';
+import {
+  getRuleActionLabel,
+  useSettings,
+} from '@/components/AppWrapper/Providers/SettingsProvider';
 import AsyncResourceRenderer from '@/components/common/AsyncResourceRenderer';
-import { escapeHtml } from '@/utils/browser';
 import Widget from '@/components/library/Widget';
 import { WidgetProps } from '@/components/library/Widget/types';
 import { useQuery } from '@/utils/queries/hooks';
 import { DASHBOARD_TRANSACTIONS_STATS } from '@/utils/queries/keys';
+import Column, { ColumnData } from '@/pages/dashboard/analysis/components/charts/Column';
+import { RuleAction } from '@/apis';
 
 const DEFAULT_DATE_RANGE: [Dayjs, Dayjs] = [dayjs().subtract(1, 'year'), dayjs()];
 
 export type timeframe = 'YEAR' | 'MONTH' | 'WEEK' | 'DAY' | null;
+type GranularityValuesType = 'HOUR' | 'MONTH' | 'DAY';
+const granularityValues = { HOUR: 'HOUR', MONTH: 'MONTH', DAY: 'DAY' };
 
 export default function TransactionsChartWidget(props: WidgetProps) {
-  type GranularityValuesType = 'HOUR' | 'MONTH' | 'DAY';
-  const granularityValues = { HOUR: 'HOUR', MONTH: 'MONTH', DAY: 'DAY' };
+  const settings = useSettings();
 
-  const suspendAlias = useRiskActionLabel('SUSPEND');
-  const blockAlias = useRiskActionLabel('BLOCK');
-  const flagAlias = useRiskActionLabel('FLAG');
   const [dateRange, setDateRange] = useState<RangeValue<Dayjs>>(DEFAULT_DATE_RANGE);
   const [granularity, setGranularity] = useState<GranularityValuesType>(
     granularityValues.MONTH as GranularityValuesType,
@@ -67,10 +66,18 @@ export default function TransactionsChartWidget(props: WidgetProps) {
   const [timeWindowType, setTimeWindowType] = useState<timeframe>('YEAR');
   const api = useApi();
 
+  let startTimestamp = dayjs().subtract(1, 'year').valueOf();
+  let endTimestamp = Date.now();
+
   const [start, end] = dateRange ?? DEFAULT_DATE_RANGE;
+  if (start != null && end != null) {
+    startTimestamp = start.startOf('day').valueOf();
+    endTimestamp = end.endOf('day').valueOf();
+  }
+
   const params = {
-    startTimestamp: start!.startOf('day').valueOf(),
-    endTimestamp: end!.endOf('day').valueOf(),
+    startTimestamp,
+    endTimestamp,
     granularity: granularity,
   };
 
@@ -116,128 +123,54 @@ export default function TransactionsChartWidget(props: WidgetProps) {
       <div className={s.salesCard}>
         <AsyncResourceRenderer resource={queryResult.data}>
           {({ data }) => {
-            const value: { _id: string; value: number; type: string }[] = [];
-            data.map((item) => {
-              value.push({
-                _id: item._id,
-                value: item.stoppedTransactions ?? 0,
-                type: `${blockAlias}`,
-              });
-              value.push({
-                _id: item._id,
-                value: item.suspendedTransactions ?? 0,
-                type: `${suspendAlias}`,
-              });
-              value.push({
-                _id: item._id,
-                value: item.flaggedTransactions ?? 0,
-                type: `${flagAlias}`,
-              });
-              value.push({
-                _id: item._id,
-                value:
-                  (item.totalTransactions ?? 0) -
-                  (item.stoppedTransactions ?? 0) -
-                  (item.suspendedTransactions ?? 0) -
-                  (item.flaggedTransactions ?? 0),
-                type: 'Allow',
-              });
-            });
-            const annotations: Annotation[] | undefined = [];
-            each(groupBy(value, '_id'), (values, k) => {
-              const value = values.reduce((a, b) => a + b.value, 0);
-              annotations.push({
-                type: 'text',
-                position: [k, value],
-                content: escapeHtml(`${value}`),
-                style: {
-                  textAlign: 'center',
-                  fontSize: 14,
-                  fill: 'rgba(0,0,0,0.85)',
-                },
-                offsetY: -10,
-              });
-            });
-
-            const preparedData = value.map((item) => {
-              const _id = formatDate(item._id);
-              const value = item.value;
-              const type = item.type;
-              return {
-                _id,
-                value,
-                // required because of XSS issue inside of chart library: https://www.notion.so/flagright/Pen-Test-Fix-Cross-site-scripting-stored-62fcbe075a42476aac5963fc18e845f5?pvs=4
-                type: escapeHtml(type),
-              };
-            });
+            const preparedData: ColumnData<string, number, RuleAction> = data.flatMap(
+              (item): ColumnData<string, number, RuleAction> => {
+                return [
+                  {
+                    xValue: item._id,
+                    yValue: item.stoppedTransactions ?? 0,
+                    series: 'BLOCK',
+                  },
+                  {
+                    xValue: item._id,
+                    yValue: item.suspendedTransactions ?? 0,
+                    series: 'SUSPEND',
+                  },
+                  {
+                    xValue: item._id,
+                    yValue: item.flaggedTransactions ?? 0,
+                    series: 'FLAG',
+                  },
+                  {
+                    xValue: item._id,
+                    yValue:
+                      (item.totalTransactions ?? 0) -
+                      (item.stoppedTransactions ?? 0) -
+                      (item.suspendedTransactions ?? 0) -
+                      (item.flaggedTransactions ?? 0),
+                    series: 'ALLOW',
+                  },
+                ];
+              },
+            );
             return (
-              <div className={s.salesBar}>
+              <div>
                 {data.length === 0 ? (
-                  <Empty className={s.empty} description="No data available for selected period" />
+                  <Empty description="No data available for selected period" />
                 ) : (
-                  <Column
-                    height={256}
-                    isStack={true}
+                  <Column<RuleAction>
                     data={preparedData}
-                    xField={'_id'}
-                    yField={'value'}
-                    color={({ type }) => {
-                      if (type === `${escapeHtml(suspendAlias ?? '')}`)
-                        return getRuleActionColorForDashboard('SUSPEND');
-                      if (type === `${escapeHtml(flagAlias ?? '')}`)
-                        return getRuleActionColorForDashboard('FLAG');
-                      if (type === `${escapeHtml(blockAlias ?? '')}`)
-                        return getRuleActionColorForDashboard('BLOCK');
-                      return getRuleActionColorForDashboard('ALLOW');
+                    formatSeries={(action) => {
+                      return getRuleActionLabel(action, settings) ?? action;
                     }}
-                    xAxis={{
-                      label: {
-                        autoRotate: false,
-                        autoHide: true,
-                        rotate: -Math.PI / 6,
-                        offsetX: -10,
-                        offsetY: 10,
-                        style: {
-                          textAlign: 'right',
-                          textBaseline: 'bottom',
-                        },
-                      },
-                      title: null,
-                      grid: {
-                        line: {
-                          style: {
-                            stroke: 'transparent',
-                          },
-                        },
-                      },
+                    formatX={(xValue) => {
+                      return formatDate(xValue);
                     }}
-                    yAxis={{
-                      title: null,
-                      label: {
-                        formatter: (value) => {
-                          return value.toLocaleString();
-                        },
-                      },
-                      grid: {
-                        line: {
-                          style: {
-                            stroke: 'transparent',
-                          },
-                        },
-                      },
-                    }}
-                    meta={{
-                      y: {
-                        alias: 'Transaction Count',
-                      },
-                    }}
-                    seriesField={'type'}
-                    annotations={annotations}
-                    legend={{
-                      layout: 'horizontal',
-                      position: 'bottom',
-                      reversed: true,
-                      padding: [40, 0, 0, 0],
+                    colors={{
+                      SUSPEND: getRuleActionColorForDashboard('SUSPEND'),
+                      FLAG: getRuleActionColorForDashboard('FLAG'),
+                      BLOCK: getRuleActionColorForDashboard('BLOCK'),
+                      ALLOW: getRuleActionColorForDashboard('ALLOW'),
                     }}
                   />
                 )}

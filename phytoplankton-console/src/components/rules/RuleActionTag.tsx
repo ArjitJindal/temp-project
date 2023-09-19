@@ -1,6 +1,6 @@
 import { Badge } from 'antd';
 import React from 'react';
-import { useRiskActionLabel } from '../AppWrapper/Providers/SettingsProvider';
+import { useRuleActionLabel } from '../AppWrapper/Providers/SettingsProvider';
 import { getRuleActionColor } from '../../utils/rules';
 import { RuleAction } from '@/apis';
 
@@ -9,7 +9,7 @@ interface Props {
 }
 
 export const RuleActionTag: React.FC<Props> = ({ ruleAction }) => {
-  const ruleActionLabel = useRiskActionLabel(ruleAction);
+  const ruleActionLabel = useRuleActionLabel(ruleAction);
   return (
     <span>
       <Badge color={getRuleActionColor(ruleAction)} text={ruleActionLabel} />
