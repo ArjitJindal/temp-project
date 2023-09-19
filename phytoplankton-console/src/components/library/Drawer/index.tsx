@@ -68,7 +68,7 @@ export default function Drawer(props: Props) {
             {description && <div className={s.description}>{description}</div>}
           </div>
           <div className={s.headerSection}>
-            <CrossIcon className={s.icon} onClick={handleClose} />
+            <CrossIcon className={s.icon} onClick={handleClose} data-cy={`drawer-close-button`} />
           </div>
         </div>
 
