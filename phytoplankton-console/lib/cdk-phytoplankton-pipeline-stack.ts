@@ -71,7 +71,7 @@ export class CdkPhytoplanktonPipelineStack extends cdk.Stack {
           },
         }),
         environment: {
-          buildImage: codebuild.LinuxBuildImage.STANDARD_6_0,
+          buildImage: codebuild.LinuxBuildImage.STANDARD_7_0,
         },
         role: codeDeployRole,
       });
@@ -110,7 +110,7 @@ export class CdkPhytoplanktonPipelineStack extends cdk.Stack {
           },
         }),
         environment: {
-          buildImage: codebuild.LinuxBuildImage.STANDARD_6_0,
+          buildImage: codebuild.LinuxBuildImage.STANDARD_7_0,
         },
         role: codeDeployRole,
       });

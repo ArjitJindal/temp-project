@@ -144,7 +144,7 @@ export class CdkTarponPipelineStack extends cdk.Stack {
         env: devSandboxSentryReleaseSpec.env,
       }),
       environment: {
-        buildImage: codebuild.LinuxBuildImage.STANDARD_6_0,
+        buildImage: codebuild.LinuxBuildImage.STANDARD_7_0,
         computeType: ComputeType.LARGE,
       },
       role: codeDeployRole,
