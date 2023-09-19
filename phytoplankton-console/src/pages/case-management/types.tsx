@@ -5,6 +5,7 @@ import {
   CaseType,
   ChecklistStatus,
   PaymentMethod,
+  Priority,
   RiskLevel,
   RuleAction,
   TransactionState,
@@ -51,6 +52,7 @@ export type CommonCaseParams = {
   caseTypesFilter: CaseType[];
   filterQaStatus?: ChecklistStatus;
   filterOutQaStatus?: ChecklistStatus[];
+  alertPriority: Priority[];
 };
 
 export type TableSearchParams = CommonParams & {

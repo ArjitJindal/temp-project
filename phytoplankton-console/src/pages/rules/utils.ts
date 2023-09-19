@@ -7,6 +7,7 @@ import { removeEmpty } from '@/utils/json';
 import { RuleInstanceMap, RulesMap } from '@/utils/rules';
 import { message } from '@/components/library/Message';
 import { getErrorMessage } from '@/utils/lang';
+import { PRIORITYS } from '@/apis/models-custom/Priority';
 
 export const RULE_ACTION_OPTIONS: { label: string; value: RuleAction }[] = [
   { label: 'Flag', value: 'FLAG' },
@@ -85,12 +86,12 @@ export const RULE_LABELS_OPTIONS: {
   ],
 };
 
-export const RULE_CASE_PRIORITY: { label: string; value: Priority }[] = [
-  { label: 'P1', value: 'P1' },
-  { label: 'P2', value: 'P2' },
-  { label: 'P3', value: 'P3' },
-  { label: 'P4', value: 'P4' },
-];
+export const RULE_CASE_PRIORITY: { label: string; value: Priority }[] = PRIORITYS.map(
+  (priority) => ({
+    label: priority,
+    value: priority,
+  }),
+);
 
 export function ruleInstanceToFormValues(
   isRiskLevelsEnabled: boolean,

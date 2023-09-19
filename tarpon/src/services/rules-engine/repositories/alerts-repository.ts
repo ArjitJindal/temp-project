@@ -145,6 +145,14 @@ export class AlertsRepository {
       })
     }
 
+    if (params.filterAlertPriority?.length) {
+      conditions.push({
+        'alerts.priority': {
+          $in: params.filterAlertPriority,
+        },
+      })
+    }
+
     if (params.filterQaStatus) {
       conditions.push({
         'alerts.ruleQaStatus': params.filterQaStatus,

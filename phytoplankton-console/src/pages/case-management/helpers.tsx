@@ -20,6 +20,7 @@ import { AlertStatus, CaseStatus, PaymentMethod } from '@/apis';
 import { ScopeSelectorValue } from '@/pages/case-management/components/ScopeSelector';
 import { CASE_TYPES } from '@/apis/models-custom/CaseType';
 import { humanizeConstant } from '@/utils/humanize';
+import { PRIORITYS } from '@/apis/models-custom/Priority';
 
 export const queryAdapter: Adapter<TableSearchParams> = {
   serializer: (params) => {
@@ -59,6 +60,7 @@ export const queryAdapter: Adapter<TableSearchParams> = {
       assignedTo: params.assignedTo?.join(','),
       qaAssignment: params.qaAssignment?.join(','),
       updatedAt: params['updatedAt']?.map((x) => dayjs(x).valueOf()).join(','),
+      alertPriority: params.alertPriority?.join(','),
     };
   },
   deserializer: (raw): TableSearchParams => {
@@ -115,6 +117,9 @@ export const queryAdapter: Adapter<TableSearchParams> = {
       assignedTo: raw.assignedTo?.split(',') as unknown as TableSearchParams['assignedTo'],
       qaAssignment: raw.qaAssignment?.split(',') as unknown as TableSearchParams['qaAssignment'],
       updatedAt: raw?.['updatedAt']?.split(',').map((x) => dayjs(parseInt(x)).format()),
+      alertPriority: raw?.alertPriority?.split(
+        ',',
+      ) as unknown as TableSearchParams['alertPriority'],
     };
   },
 };
@@ -133,6 +138,17 @@ export const makeExtraFilters = (
       renderer: { kind: 'string' },
       showFilterByDefault: true,
       icon: <StackLineIcon />,
+    },
+    {
+      title: 'Alert priority',
+      key: 'alertPriority',
+      renderer: {
+        kind: 'select',
+        mode: 'MULTIPLE',
+        displayMode: 'select',
+        options: PRIORITYS.map((x) => ({ value: x, label: x })),
+      },
+      showFilterByDefault: true,
     },
     {
       title: 'Case type',

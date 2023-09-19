@@ -87,6 +87,7 @@ export function useAlertQuery(
               : 0,
           }
         : {}),
+      filterAlertPriority: params.alertPriority,
     };
     const result = await api.getAlertList(
       Object.entries(preparedParams).reduce((acc, [key, value]) => ({ ...acc, [key]: value }), {}),
