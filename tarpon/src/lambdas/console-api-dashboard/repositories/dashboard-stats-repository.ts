@@ -1811,7 +1811,6 @@ export class DashboardStatsRepository {
     const result = await collection.find({}).toArray()
     const stats =
       userType === 'BUSINESS' ? result[0]?.business : result[0]?.consumer
-    console.log(stats)
     const distributionItems = this.createDistributionItems(
       riskClassificationValues,
       stats ?? []
@@ -2216,6 +2215,7 @@ export class DashboardStatsRepository {
       alertPriorityData: sortBy(alertPriorityData, 'priority'),
     }
   }
+
   public async recalculateTransactionTypeDistribution(
     db: Db,
     timeRange?: TimeRange
@@ -2238,8 +2238,7 @@ export class DashboardStatsRepository {
     }
     await db.collection(aggregationCollection).createIndex(
       {
-        type: -1,
-        value: -1,
+        type: 1,
       },
       {
         unique: true,
@@ -2270,8 +2269,9 @@ export class DashboardStatsRepository {
           {
             $merge: {
               into: aggregationCollection,
-              on: ['type', 'value'],
+              on: ['type'],
               whenMatched: 'merge',
+              whenNotMatched: 'insert',
             },
           },
         ],
@@ -2281,6 +2281,7 @@ export class DashboardStatsRepository {
 
     logger.info(`Aggregation done`)
   }
+
   async getTransactionTypeDistributionStatistics(): Promise<DashboardStatsTransactionTypeDistributionStats> {
     const db = this.mongoDb.db()
     const collection =
