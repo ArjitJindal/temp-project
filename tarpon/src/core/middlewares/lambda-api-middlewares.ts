@@ -1,5 +1,5 @@
 import { compose } from './compose'
-import { contextProvider } from './context-provider'
+import { apiContextProvider } from './context-provider'
 import { featureProtected } from './feature-protected'
 import { httpErrorHandler } from './http-error-handler'
 import { jsonSerializer } from './json-serializer'
@@ -21,7 +21,7 @@ export const lambdaApi = (options?: { requiredFeatures?: Feature[] }) => {
     bgProcessingMiddleware(),
     httpErrorHandler(),
     jsonSerializer(),
-    contextProvider(),
+    apiContextProvider(),
     rbacMiddleware(),
     initSentry(),
     featureProtected(options?.requiredFeatures),

@@ -17,7 +17,6 @@ import {
   initializeTenantContext,
   updateLogMetadata,
 } from '@/core/utils/context'
-import { initSentry } from '@/core/middlewares/init-sentry'
 
 function getBatchJobName(batchJobPayload: BatchJob) {
   return `${uuidv4()}-${batchJobPayload.tenantId}-${
@@ -57,7 +56,7 @@ export const jobDecisionHandler = async (
   }
 }
 
-export const jobRunnerHandler = initSentry()(async (job: BatchJob) => {
+export const jobRunnerHandler = lambdaConsumer()(async (job: BatchJob) => {
   logger.info(`Starting job - ${job.type}`, job)
   return getContextStorage().run(getContext() || {}, async () => {
     await initializeTenantContext(job.tenantId)

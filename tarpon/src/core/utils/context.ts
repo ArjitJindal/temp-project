@@ -64,7 +64,7 @@ export async function getInitialContext(
       userId,
       role,
       encodedPermissions,
-    } = (event as APIGatewayEvent).requestContext?.authorizer || {}
+    } = (event as APIGatewayEvent)?.requestContext?.authorizer || {}
 
     if (tenantId) {
       const dynamoDb = getDynamoDbClientByEvent(

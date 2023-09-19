@@ -49,6 +49,7 @@ import { Peer, Port, SecurityGroup, SubnetType, Vpc } from 'aws-cdk-lib/aws-ec2'
 import {
   Choice,
   Condition,
+  JitterType,
   StateMachine,
   Succeed,
 } from 'aws-cdk-lib/aws-stepfunctions'
@@ -743,8 +744,12 @@ export class CdkTarponStack extends cdk.Stack {
                 inputPath: `$.Payload.${BATCH_JOB_PAYLOAD_RESULT_KEY}`,
               }
             )
-              // Use default retry settings for now. Configure RetryProps when needed
-              .addRetry({})
+              .addRetry({
+                interval: Duration.seconds(30),
+                maxDelay: Duration.hours(1),
+                maxAttempts: 15,
+                jitterStrategy: JitterType.FULL,
+              })
               .next(
                 new Succeed(
                   this,

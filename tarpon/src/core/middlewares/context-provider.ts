@@ -11,7 +11,7 @@ type Handler = APIGatewayProxyWithLambdaAuthorizerHandler<
   APIGatewayEventLambdaAuthorizerContext<Credentials & JWTAuthorizerResult>
 >
 
-export const contextProvider =
+export const apiContextProvider =
   () =>
   (handler: CallableFunction): Handler =>
   async (event, context, callback): Promise<APIGatewayProxyResult> => {
