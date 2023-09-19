@@ -128,7 +128,12 @@ export default function SarReportDrawerForm(props: Props) {
                 />
               )}
               {activeStepKey === TRANSACTION_STEP && (
-                <TransactionStep settings={settings} report={report} />
+                <TransactionStep
+                  settings={settings}
+                  report={report}
+                  validationResult={validationResult?.fieldValidationErrors?.[TRANSACTION_STEP]}
+                  alwaysShowErrors={alwaysShowErrors}
+                />
               )}
               {activeStepKey === INDICATOR_STEP && (
                 <GenericFormField<any> name={'selection'}>

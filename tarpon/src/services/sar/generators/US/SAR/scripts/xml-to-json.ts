@@ -7,7 +7,7 @@ import { isObject, keys, omit, pick } from 'lodash'
 import { compile } from 'json-schema-to-typescript'
 import { XMLParser } from 'fast-xml-parser'
 import { AttributeInfos } from './attribute-infos'
-import { removeUnnecessaryOneOf } from '@/services/sar/generators/US/SAR/scripts/augmentations/removeUnnecessaryOneOf'
+import { removeUnnecessaryOneOf } from '@/services/sar/utils/augmentations/removeUnnecessaryOneOf'
 
 // Augment the auto-generated json schema by adding additional information (e.g title) and
 // remove fields which should not be displayed to the users (e.g @SeqNum)

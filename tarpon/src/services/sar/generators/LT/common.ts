@@ -1,7 +1,10 @@
+import Ajv from 'ajv'
 import { InternalConsumerUser } from '@/@types/openapi-internal/InternalConsumerUser'
 import { InternalBusinessUser } from '@/@types/openapi-internal/InternalBusinessUser'
 import { PaymentDetails } from '@/@types/tranasction/payment-type'
 import { LegalDocument } from '@/@types/openapi-internal/LegalDocument'
+import dayjs from '@/utils/dayjs'
+import { DAY_DATE_FORMAT_JS } from '@/utils/mongodb-utils'
 
 // Currently unused
 export const transactionMethods = [
@@ -140,3 +143,16 @@ export function account(pm: PaymentDetails | undefined) {
   }
   return undefined
 }
+
+const ajv = new Ajv({
+  formats: {
+    date: (str) => {
+      return dayjs(str, DAY_DATE_FORMAT_JS).isValid()
+    },
+  },
+})
+
+ajv.addKeyword('ui:schema')
+ajv.addKeyword('enumNames')
+
+export const ajvLithuaniaValidator = ajv
