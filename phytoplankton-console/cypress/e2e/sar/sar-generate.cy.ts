@@ -36,7 +36,6 @@ describe('SAR Generate', () => {
         },
       ];
       SarCountrywithReports.map((item) => {
-        cy.get('button[data-cy="expand-icon"]').eq(0).click();
         cy.get('div[id="rc-tabs-1-panel-transactions"] input[data-cy="row-table-checkbox"]', {
           timeout: 15000,
         })
