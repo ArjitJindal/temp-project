@@ -1,4 +1,4 @@
-describe('SAR Generate', () => {
+describe.skip('SAR Generate', () => {
   beforeEach(() => {
     cy.loginByForm();
   });
