@@ -32,7 +32,6 @@ export const schema = {
               'ReportNumber',
               'ReportType',
               'OperationType',
-              'Description',
               'Suspicion',
               'TransactionValue',
               'TransactionSubject',
@@ -66,13 +65,8 @@ export const schema = {
               },
               TransactionSubject: {
                 type: 'object',
-                required: ['SubjectType', 'Country', 'Code'],
                 properties: {
-                  SubjectType: {
-                    type: 'string',
-                    enum: ['PERSON', 'COMPANY'],
-                    enumNames: ['Person', 'Company'],
-                  },
+                  SubjectType: { type: 'string' },
                   Country: { type: 'string' },
                   Citizenship: { type: 'string' },
                   Code: { type: 'string' },
@@ -99,7 +93,6 @@ export const schema = {
                   OtherInformation: { type: 'string' },
                   SubjectCode: { type: 'string' },
                 },
-                required: ['Bank', 'IBAN', 'AccountOwner', 'SubjectCode'],
               },
             },
           },
