@@ -1554,7 +1554,7 @@ export class DashboardStatsRepository {
 
     await Promise.all([
       this.recalculateTransactionsVolumeStats(db, timeRange),
-      this.recalculateTransactionTypeDistribution(db, timeRange),
+      // this.recalculateTransactionTypeDistribution(db, timeRange),
     ])
   }
 

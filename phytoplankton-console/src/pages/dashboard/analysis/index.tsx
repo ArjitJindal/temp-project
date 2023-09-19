@@ -11,7 +11,6 @@ import RulePrioritySplitCard from './components/RulePrioritySplitCard';
 import CaseClosingReasonCard from './components/CaseManagement/CaseClosingReasonCard';
 import DistributionByAlertPriority from './components/CaseManagement/DistributionByAlertPriority';
 import s from './style.module.less';
-import TransactinTypeDistribution from './components/Transactions/TransactionTypeDistribution';
 import PageWrapper from '@/components/PageWrapper';
 import { useFeatureEnabled } from '@/components/AppWrapper/Providers/SettingsProvider';
 import { useI18n } from '@/locales';
@@ -183,13 +182,13 @@ function Analysis() {
                 },
                 component: PaymentMethodDistributionWidget,
               },
-              settingsToDisplay.DISTRIBUTION_BY_TRANSACTION_TYPE && {
-                props: {
-                  id: 'distribution_by_transactions_type',
-                  title: 'Distribution by transaction type',
-                },
-                component: TransactinTypeDistribution,
-              },
+              // settingsToDisplay.DISTRIBUTION_BY_TRANSACTION_TYPE && {
+              //   props: {
+              //     id: 'distribution_by_transactions_type',
+              //     title: 'Distribution by transaction type',
+              //   },
+              //   component: TransactinTypeDistribution,
+              // },
             ].filter(notEmpty),
           },
           {
