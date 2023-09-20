@@ -60,12 +60,12 @@ export default function SarReportDrawer(props: Props) {
           },
         !isEmpty(props.initialReport.schema?.transactionMetadataSchema) && {
           key: TRANSACTION_METADATA_STEP,
-          title: 'Transaction details',
+          title: 'Suspicious activity details',
           description: 'Enter details of transactions that you want to report',
         },
         !isEmpty(props.initialReport.schema?.transactionSchema) && {
           key: TRANSACTION_STEP,
-          title: 'Transaction details',
+          title: 'Suspicious activity details',
           description: 'Enter details of transactions that you want to report',
         },
         !isEmpty(props.initialReport.schema?.indicators) && {
