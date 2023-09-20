@@ -9,6 +9,7 @@ import { RiskEntityType } from '@/apis';
 //components
 import RiskScoreDisplay from '@/components/ui/RiskScoreDisplay';
 import { COLORS_V2_AI_RISK_DISPLAY_BACKGROUND } from '@/components/ui/colors';
+import { useFeatureEnabled } from '@/components/AppWrapper/Providers/SettingsProvider';
 
 export interface ExtendedValueItem extends ValueItem {
   drsScore: number;
@@ -195,7 +196,8 @@ const randomizedData = data.map((item): ExtendedValueItem => {
 const riskScoredata = shuffleArray(randomizedData);
 
 export default function AIRiskDisplay() {
-  return (
+  const isAiRiskScoreEnabled = useFeatureEnabled('AI_RISK_SCORE');
+  return isAiRiskScoreEnabled ? (
     <RiskScoreDisplay
       mainPanelCustomStyling={{
         background: COLORS_V2_AI_RISK_DISPLAY_BACKGROUND,
@@ -209,5 +211,7 @@ export default function AIRiskDisplay() {
       title="AI risk score"
       riskScoreName="AI risk score"
     />
+  ) : (
+    <></>
   );
 }

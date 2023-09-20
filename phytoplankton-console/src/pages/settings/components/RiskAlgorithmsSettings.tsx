@@ -2,12 +2,13 @@ import { useState } from 'react';
 import SettingsCard from './SettingsCard';
 import SelectionGroup from '@/components/library/SelectionGroup';
 import { getBranding } from '@/utils/branding';
+import { useFeatureEnabled } from '@/components/AppWrapper/Providers/SettingsProvider';
 
 export const RiskAlgorithmsSettings = () => {
   const [value, setValue] = useState<string>('HEURISTIC');
   const [modelValue, setModalValue] = useState<string>('IF');
   const branding = getBranding();
-
+  const isAiRiskScoreEnabled = useFeatureEnabled('AI_RISK_SCORE');
   return (
     <SettingsCard
       title="Risk algorithms"
@@ -26,11 +27,15 @@ export const RiskAlgorithmsSettings = () => {
             description:
               'Use Heuristic based risk levels for your transaction monitoring. This risk score is calculated using your manually set risk factors.',
           },
-          {
-            label: `${branding.companyName} AI`,
-            value: 'AI',
-            description: `Use risk levels calculated by ${branding.companyName}'s AI model of your choice for your transaction monitoring`,
-          },
+          ...(isAiRiskScoreEnabled
+            ? [
+                {
+                  label: `${branding.companyName} AI`,
+                  value: 'AI',
+                  description: `Use risk levels calculated by ${branding.companyName}'s AI model of your choice for your transaction monitoring`,
+                },
+              ]
+            : []),
         ]}
         onChange={(newValue) => {
           setValue(newValue ?? 'AI');

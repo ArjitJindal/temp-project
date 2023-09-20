@@ -6629,6 +6629,7 @@ components:
         - SAR
         - RULES_ENGINE_V2
         - QA
+        - AI_RISK_SCORE
       description: ''
     ManagedRoleName:
       type: string
