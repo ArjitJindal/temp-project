@@ -5,8 +5,8 @@ import { InternalTransaction } from '@/@types/openapi-internal/InternalTransacti
 import { PaymentMethod } from '@/@types/openapi-internal/PaymentMethod'
 import {
   humanReadablePeriod,
+  matchPeriod,
   Period,
-  periodDefaults,
   periodVars,
 } from '@/services/copilot/questions/definitions/util'
 
@@ -14,23 +14,20 @@ export const UniquePaymentIdentifierSent: TableQuestion<
   Period & { top: number }
 > = {
   type: 'TABLE',
-  questionId:
-    'What are the top 10 payment identifiers they have send money to?',
-  title: (vars) => {
+  questionId: 'Payment identifiers receivers',
+  title: (_, vars) => {
     return `Top ${
       vars.top
-    } payment identifiers they have received from over ${humanReadablePeriod(
-      vars
-    )}`
+    } payment identifiers they have received ${humanReadablePeriod(vars)}`
   },
-  aggregationPipeline: async ({ tenantId, userId }) => {
+  aggregationPipeline: async ({ tenantId, userId }, { top, ...period }) => {
     const client = await getMongoDbClient()
     const db = client.db()
     const result = await db
       .collection<InternalTransaction>(TRANSACTIONS_COLLECTION(tenantId))
       .aggregate<{ _id: { paymentMethodId: string; type: PaymentMethod } }>([
         {
-          $match: { originUserId: userId },
+          $match: { originUserId: userId, ...matchPeriod('timestamp', period) },
         },
         {
           $group: {
@@ -49,7 +46,7 @@ export const UniquePaymentIdentifierSent: TableQuestion<
           },
         },
         {
-          $limit: 10,
+          $limit: top,
         },
       ])
       .toArray()
@@ -59,14 +56,14 @@ export const UniquePaymentIdentifierSent: TableQuestion<
     })
   },
   headers: [
-    { name: 'Destination payment identifier', columnType: 'STRING' },
-    { name: 'Payment type', columnType: 'STRING' },
+    { name: 'Destination payment identifier', columnType: 'ID' },
+    { name: 'Payment type', columnType: 'PAYMENT_METHOD' },
   ],
   variableOptions: {
     ...periodVars,
     top: 'INTEGER',
   },
   defaults: () => {
-    return { ...periodDefaults(), top: 10 }
+    return { top: 10 }
   },
 }

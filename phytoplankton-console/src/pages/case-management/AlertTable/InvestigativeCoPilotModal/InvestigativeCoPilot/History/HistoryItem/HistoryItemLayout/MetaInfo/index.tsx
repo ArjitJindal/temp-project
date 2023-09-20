@@ -24,7 +24,6 @@ function Item(props: { label: string; children: React.ReactNode }) {
   return (
     <div className={s.item}>
       <span className={s.label}>{props.label}</span>
-      {' - '}
       {props.children}
     </div>
   );

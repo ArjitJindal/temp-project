@@ -7,6 +7,7 @@ describe('Sars filed', () => {
   test('One sar returned', async () => {
     await testQuestion(
       SarsFiled,
+      {},
       async (tenantId, mongoDb) => {
         const db = mongoDb.db()
         const rr = new ReportRepository(tenantId, mongoDb)

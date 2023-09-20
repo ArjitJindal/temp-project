@@ -7,6 +7,8 @@ describe('Unique payment identifier received', () => {
   test('One payment identifier returned', async () => {
     await testQuestion(
       UniquePaymentIdentifierReceived,
+      {},
+
       async (tenantId, mongoDb) => {
         const db = mongoDb.db()
         await db

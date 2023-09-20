@@ -3,7 +3,10 @@ import { getMongoDbClient } from '@/utils/mongodb-utils'
 import { Case } from '@/@types/openapi-internal/Case'
 import { TRANSACTIONS_COLLECTION } from '@/utils/mongodb-definitions'
 import {
+  dates,
   humanReadablePeriod,
+  matchPeriod,
+  MONGO_DATE_FORMAT,
   Period,
   periodDefaults,
   periodVars,
@@ -11,63 +14,68 @@ import {
 
 export const TrsScore: TimeseriesQuestion<Period> = {
   type: 'TIME_SERIES',
-  questionId: 'How has the TRS score changed over the last week?',
-  title: (vars) => {
-    return `TRS score distribution for ${humanReadablePeriod(vars)}`
+  questionId: 'TRS score',
+  title: (_, vars) => {
+    return `TRS score distribution ${humanReadablePeriod(vars)}`
   },
-  aggregationPipeline: async ({ userId, tenantId }) => {
+  aggregationPipeline: async ({ userId, tenantId }, period) => {
     const client = await getMongoDbClient()
     const db = client.db()
+    const results = await db
+      .collection<Case>(TRANSACTIONS_COLLECTION(tenantId))
+      .aggregate<
+        { _id: { date: string } } & {
+          avg: number
+        }
+      >([
+        {
+          $match: {
+            $or: [
+              {
+                originUserId: userId,
+              },
+              {
+                destinationUserId: userId,
+              },
+            ],
+            ...matchPeriod('timestamp', period),
+          },
+        },
+        {
+          $project: {
+            date: {
+              $dateToString: {
+                format: MONGO_DATE_FORMAT,
+                date: { $toDate: '$timestamp' },
+              },
+            },
+            score: '$arsScore.arsScore',
+          },
+        },
+        {
+          $group: {
+            _id: {
+              date: '$date',
+            },
+            avg: {
+              $avg: '$score',
+            },
+          },
+        },
+      ])
+      .toArray()
+
+    const avgMap = new Map(results.map((item) => [item._id.date, item.avg]))
+
     return [
       {
         label: '',
-        values: (
-          await db
-            .collection<Case>(TRANSACTIONS_COLLECTION(tenantId))
-            .aggregate<
-              { _id: { date: string } } & {
-                avg: number
-              }
-            >([
-              {
-                $match: {
-                  $or: [
-                    {
-                      originUserId: userId,
-                    },
-                    {
-                      destinationUserId: userId,
-                    },
-                  ],
-                },
-              },
-              {
-                $project: {
-                  date: {
-                    $dateToString: {
-                      format: '%Y-%m-%d',
-                      date: { $toDate: '$timestamp' },
-                    },
-                  },
-                  score: '$arsScore.arsScore',
-                },
-              },
-              {
-                $group: {
-                  _id: {
-                    date: '$date',
-                  },
-                  avg: {
-                    $avg: '$score',
-                  },
-                },
-              },
-            ])
-            .toArray()
-        ).map((r) => ({
-          time: new Date(r._id.date).valueOf(),
-          value: r.avg,
-        })),
+        values: dates(period).map((d) => {
+          return {
+            time: new Date(d).valueOf(),
+            value: avgMap.get(d) || 0,
+          }
+        }),
       },
     ]
   },

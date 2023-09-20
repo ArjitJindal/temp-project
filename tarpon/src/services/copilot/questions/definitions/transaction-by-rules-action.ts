@@ -6,26 +6,28 @@ import { RULE_ACTIONS } from '@/@types/rule/rule-actions'
 import { RuleAction } from '@/@types/openapi-public/RuleAction'
 import {
   humanReadablePeriod,
+  dates,
+  MONGO_DATE_FORMAT,
   Period,
   periodDefaults,
   periodVars,
+  matchPeriod,
 } from '@/services/copilot/questions/definitions/util'
 
 export const TransactionByRulesAction: StackedBarchartQuestion<Period> = {
   type: 'STACKED_BARCHART',
-  questionId:
-    'How are the transactions for this user distributed by rule action?',
-  title: (vars) => {
-    return `Transactions by rule action for ${humanReadablePeriod(vars)}`
+  questionId: 'Transactions by rule action',
+  title: (_, vars) => {
+    return `Transactions by rule action ${humanReadablePeriod(vars)}`
   },
-  aggregationPipeline: async ({ tenantId, userId }) => {
+  aggregationPipeline: async ({ tenantId, userId }, period) => {
     const client = await getMongoDbClient()
     const db = client.db()
 
     const results = await db
       .collection<Case>(TRANSACTIONS_COLLECTION(tenantId))
       .aggregate<
-        { _id: { datetime: string } } & {
+        { _id: { date: string } } & {
           [key in RuleAction]: number
         }
       >([
@@ -39,16 +41,18 @@ export const TransactionByRulesAction: StackedBarchartQuestion<Period> = {
                 destinationUserId: userId,
               },
             ],
+            ...matchPeriod('timestamp', period),
           },
         },
         {
           $project: {
-            datetime: {
+            date: {
               $dateToString: {
-                format: '%Y-%m-%d %H:00',
+                format: MONGO_DATE_FORMAT,
                 date: { $toDate: '$timestamp' },
               },
             },
+            timestamp: '$timestamp',
             action: '$hitRules.ruleAction',
           },
         },
@@ -60,7 +64,7 @@ export const TransactionByRulesAction: StackedBarchartQuestion<Period> = {
         {
           $group: {
             _id: {
-              datetime: '$datetime',
+              date: '$date',
             },
             ...RULE_ACTIONS.reduce<{ [key in RuleAction]?: any }>(
               (acc, current) => {
@@ -82,26 +86,23 @@ export const TransactionByRulesAction: StackedBarchartQuestion<Period> = {
       ])
       .toArray()
 
-    return Object.entries(
-      results.reduce<{
-        [key: string]: { x: string; y: number }[]
-      }>((acc, curr) => {
-        RULE_ACTIONS.forEach((action) => {
-          const series = acc[action]
-          const data = curr[action]
-          const x = curr._id.datetime
+    const countsMap = new Map(results.map((item) => [item._id.date, item]))
 
-          if (series && series.length > 0) {
-            acc[action]?.push({ x, y: data.valueOf() })
-          } else {
-            acc[action] = [{ x, y: data.valueOf() }]
-          }
-        })
-        return acc
-      }, {})
-    ).map(([label, values]) => {
-      return { label, values }
-    })
+    const datesArray = dates(period)
+    return RULE_ACTIONS.map(
+      (ruleAction): { label: string; values: { x: string; y: number }[] } => {
+        return {
+          label: ruleAction,
+          values: datesArray.map((x) => {
+            const counts = countsMap.get(x)
+            if (counts) {
+              return { x, y: counts[ruleAction] }
+            }
+            return { x, y: 0 }
+          }),
+        }
+      }
+    )
   },
   variableOptions: {
     ...periodVars,

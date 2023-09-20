@@ -897,7 +897,7 @@ export class RulesEngineService {
     return this.allTrue(promises)
   }
 
-  private async computeRuleFilters(
+  public async computeRuleFilters(
     ruleFilters: { [key: string]: any },
     data: {
       transaction?: Transaction

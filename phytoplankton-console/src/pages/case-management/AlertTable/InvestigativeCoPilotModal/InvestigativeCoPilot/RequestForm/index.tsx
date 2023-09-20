@@ -18,14 +18,16 @@ interface Props {
 const SUPPORTED_SEARCHES = [
   'Alert history',
   'Case history',
-  'Which alerts have resulted in SARs?',
-  'How are the transactions for this user distributed by rule action?',
-  'How are the transactions for this user distributed by type?',
-  'How has the TRS score changed over the last week?',
-  'What are the top 10 payment identifiers they have received money from?',
-  'What are the top 10 payment identifiers they have send money to?',
-  'Who are the top 10 users they have received money from?',
-  'Who are the top 10 users they have sent money to?',
+  'Alerts that resulted in SAR',
+  'Transactions by rule action',
+  'Transactions by type',
+  'TRS score',
+  'Payment identifiers receivers',
+  'Payment identifier senders',
+  'Senders',
+  'Receivers',
+  'Alerts related to transaction',
+  'Transactions leading to rule hit',
 ];
 
 export default function RequestForm(props: Props) {

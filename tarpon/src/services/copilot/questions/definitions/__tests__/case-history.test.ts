@@ -6,6 +6,7 @@ describe('Case history', () => {
   test('One case returned', async () => {
     await testQuestion(
       CaseHistory,
+      {},
       async (tenantId, mongoDb) => {
         const cr = new CaseRepository(tenantId, {
           mongoDb,

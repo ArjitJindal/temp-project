@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { useMutation } from '@tanstack/react-query';
 import { parseQuestionResponse, QuestionResponse } from '../../types';
+import { variablesToApi } from '../../api';
 import HistoryItemTable from './HistoryItemTable';
 import HistoryItemStackedBarchart from './HistoryItemStackedBarchart';
 import HistoryItemTimeSeries from './HistoryItemTimeSeries';
@@ -33,7 +34,7 @@ export default function HistoryItem(props: Props) {
         alertId: alertId,
         QuestionRequest: {
           questionId,
-          variables: Object.entries(variables).map(([name, value]) => ({ name, value })),
+          variables: variablesToApi(variables, item.variableOptions),
         },
       });
       return parseQuestionResponse(response);

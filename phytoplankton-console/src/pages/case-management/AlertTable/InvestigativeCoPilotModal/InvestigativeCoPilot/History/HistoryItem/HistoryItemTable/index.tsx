@@ -2,7 +2,18 @@ import React, { useMemo, useState } from 'react';
 import { QuestionResponseTable } from '../../../types';
 import Table from '@/components/library/Table';
 import { ColumnHelper } from '@/components/library/Table/columnHelper';
-import { DATE_TIME, STRING, UNKNOWN } from '@/components/library/Table/standardDataTypes';
+import {
+  STRING,
+  NUMBER,
+  FLOAT,
+  LONG_TEXT,
+  BOOLEAN,
+  ID,
+  TRANSACTION_TYPE,
+  DATE_TIME,
+  PAYMENT_METHOD,
+  UNKNOWN,
+} from '@/components/library/Table/standardDataTypes';
 import { PaginatedData } from '@/utils/queries/hooks';
 import { ColumnDataType } from '@/components/library/Table/types';
 import { DEFAULT_PARAMS_STATE } from '@/components/library/Table/consts';
@@ -53,10 +64,24 @@ export default function HistoryItemTable(props: Props) {
       rowKey="index"
       columns={(item.headers ?? []).map((header) => {
         let type: ColumnDataType<any> = UNKNOWN;
-        if (header.columnType === 'DATETIME') {
-          type = DATE_TIME;
-        } else if (header.columnType === 'STRING') {
+        if (header.columnType === 'STRING') {
           type = STRING;
+        } else if (header.columnType === 'NUMBER') {
+          type = NUMBER;
+        } else if (header.columnType === 'FLOAT') {
+          type = FLOAT;
+        } else if (header.columnType === 'LONG_TEXT') {
+          type = LONG_TEXT;
+        } else if (header.columnType === 'BOOLEAN') {
+          type = BOOLEAN;
+        } else if (header.columnType === 'ID') {
+          type = ID;
+        } else if (header.columnType === 'TRANSACTION_TYPE') {
+          type = TRANSACTION_TYPE;
+        } else if (header.columnType === 'DATE_TIME') {
+          type = DATE_TIME;
+        } else if (header.columnType === 'PAYMENT_METHOD') {
+          type = PAYMENT_METHOD;
         }
         return columnHelper.simple({
           title: header.name as string,

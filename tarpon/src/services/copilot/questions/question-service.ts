@@ -4,14 +4,14 @@ import {
 } from 'aws-lambda'
 import { questions } from './definitions'
 import { InvestigationRepository } from './investigation-repository'
-import { Variables } from './types'
+import { InvestigationContext, Variables } from './types'
 import { QuestionResponse } from '@/@types/openapi-internal/QuestionResponse'
 import { Alert } from '@/@types/openapi-internal/Alert'
 import { Case } from '@/@types/openapi-internal/Case'
 import { getContext } from '@/core/utils/context'
-import { QuestionRequestVariables } from '@/@types/openapi-internal/QuestionRequestVariables'
 import { getMongoDbClient } from '@/utils/mongodb-utils'
 import { JWTAuthorizerResult } from '@/@types/jwt'
+import { QuestionVariable } from '@/@types/openapi-internal/QuestionVariable'
 import { QuestionVariableOption } from '@/@types/openapi-internal/QuestionVariableOption'
 import { GetQuestionsResponse } from '@/@types/openapi-internal/GetQuestionsResponse'
 
@@ -37,7 +37,7 @@ export class QuestionService {
   async addQuestion(
     createdById: string,
     questionId: string,
-    vars: QuestionRequestVariables[],
+    vars: QuestionVariable[],
     c: Case,
     a: Alert
   ): Promise<QuestionResponse> {
@@ -105,14 +105,20 @@ export class QuestionService {
     if (!tenantId || !userId || !caseId || !alertId) {
       throw new Error('Could not get context for question')
     }
+    const ctx: InvestigationContext = {
+      alert: a,
+      _case: c,
+      tenantId,
+      userId,
+      caseId,
+      alertId,
+    }
 
     if (!question?.type) {
       throw new Error()
     }
 
-    varObject = question.defaults
-      ? { ...varObject, ...question.defaults() }
-      : varObject
+    varObject = { ...question.defaults(ctx), ...varObject }
 
     const common = {
       questionId,
@@ -125,16 +131,19 @@ export class QuestionService {
         }
       ),
       questionType: question.type,
-      title: question.title ? question.title(varObject) : questionId,
+      title: question.title ? question.title(ctx, varObject) : questionId,
+      variables: Object.entries(varObject).map(([name, value]) => {
+        return {
+          name,
+          value,
+        }
+      }),
     }
 
     if (question.type === 'TABLE') {
       return {
         ...common,
-        rows: await question?.aggregationPipeline(
-          { tenantId, userId, caseId, alertId },
-          varObject
-        ),
+        rows: await question?.aggregationPipeline(ctx, varObject),
         headers: question.headers.map((c) => ({
           name: c.name,
           columnType: c.columnType,
@@ -144,28 +153,19 @@ export class QuestionService {
     if (question.type === 'STACKED_BARCHART') {
       return {
         ...common,
-        series: await question?.aggregationPipeline(
-          { tenantId, userId, caseId, alertId },
-          varObject
-        ),
+        series: await question?.aggregationPipeline(ctx, varObject),
       }
     }
     if (question.type === 'TIME_SERIES') {
       return {
         ...common,
-        timeseries: await question?.aggregationPipeline(
-          { tenantId, userId, caseId, alertId },
-          varObject
-        ),
+        timeseries: await question?.aggregationPipeline(ctx, varObject),
       }
     }
     if (question.type === 'BARCHART') {
       return {
         ...common,
-        values: await question?.aggregationPipeline(
-          { tenantId, userId, caseId, alertId },
-          varObject
-        ),
+        values: await question?.aggregationPipeline(ctx, varObject),
       }
     }
     throw new Error(`Unsupported question type`)

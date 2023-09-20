@@ -4,23 +4,24 @@ import { Case } from '@/@types/openapi-internal/Case'
 import { CASES_COLLECTION } from '@/utils/mongodb-definitions'
 import {
   humanReadablePeriod,
+  matchPeriod,
   Period,
-  periodDefaults,
   periodVars,
 } from '@/services/copilot/questions/definitions/util'
 
 export const CaseHistory: TableQuestion<Period> = {
   type: 'TABLE',
   questionId: 'Case history',
-  title: (vars) => {
-    return `Cases for this user for ${humanReadablePeriod(vars)}`
+  title: (_, vars) => {
+    return `Cases for this user ${humanReadablePeriod(vars)}`
   },
-  aggregationPipeline: async ({ tenantId, userId }) => {
+  aggregationPipeline: async ({ tenantId, userId }, period) => {
     const client = await getMongoDbClient()
     const db = client.db()
     const result = await db
       .collection<Case>(CASES_COLLECTION(tenantId))
       .find({
+        ...matchPeriod('createdTimestamp', period),
         $or: [
           { 'caseUsers.origin.userId': userId },
           { 'caseUsers.destination.userId': userId },
@@ -38,8 +39,8 @@ export const CaseHistory: TableQuestion<Period> = {
     })
   },
   headers: [
-    { name: 'Case ID', columnType: 'STRING' },
-    { name: 'Created on', columnType: 'DATETIME' },
+    { name: 'Case ID', columnType: 'ID' },
+    { name: 'Created on', columnType: 'DATE_TIME' },
     { name: 'Status', columnType: 'STRING' },
     { name: 'Closing reason', columnType: 'STRING' },
   ],
@@ -47,6 +48,6 @@ export const CaseHistory: TableQuestion<Period> = {
     ...periodVars,
   },
   defaults: () => {
-    return periodDefaults()
+    return {}
   },
 }

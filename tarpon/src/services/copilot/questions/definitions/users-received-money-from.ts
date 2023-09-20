@@ -9,33 +9,36 @@ import { InternalUser } from '@/@types/openapi-internal/InternalUser'
 import { getUserName } from '@/utils/helpers'
 import {
   humanReadablePeriod,
+  matchPeriod,
   Period,
-  periodDefaults,
   periodVars,
 } from '@/services/copilot/questions/definitions/util'
 
 export const UsersReceivedMoneyFrom: TableQuestion<Period & { top: number }> = {
   type: 'TABLE',
-  questionId: 'Who are the top 10 users they have received money from?',
-  title: (vars) => {
+  questionId: 'Senders',
+  title: (_, vars) => {
     return `Top ${
       vars.top
-    } users they have received money from over ${humanReadablePeriod(vars)}`
+    } users they have received money ${humanReadablePeriod(vars)}`
   },
-  aggregationPipeline: async ({ tenantId, userId }) => {
+  aggregationPipeline: async ({ tenantId, userId }, { top, ...period }) => {
     const client = await getMongoDbClient()
     const db = client.db()
     const result = await db
       .collection<InternalTransaction>(TRANSACTIONS_COLLECTION(tenantId))
       .aggregate<{ user: InternalUser }>([
         {
-          $match: { destinationUserId: userId },
+          $match: {
+            destinationUserId: userId,
+            ...matchPeriod('timestamp', period),
+          },
         },
         {
           $sortByCount: '$originUserId',
         },
         {
-          $limit: 10,
+          $limit: top,
         },
         {
           $lookup: {
@@ -58,7 +61,7 @@ export const UsersReceivedMoneyFrom: TableQuestion<Period & { top: number }> = {
     })
   },
   headers: [
-    { name: 'User ID', columnType: 'STRING' },
+    { name: 'User ID', columnType: 'ID' },
     { name: 'Username', columnType: 'STRING' },
     { name: 'User type', columnType: 'STRING' },
   ],
@@ -67,6 +70,6 @@ export const UsersReceivedMoneyFrom: TableQuestion<Period & { top: number }> = {
     top: 'INTEGER',
   },
   defaults: () => {
-    return { ...periodDefaults(), top: 10 }
+    return { top: 10 }
   },
 }

@@ -6,16 +6,17 @@ describe('Transaction types', () => {
   test('One transaction type returned', async () => {
     await testQuestion(
       TransactionType,
+      {},
       async (tenantId, mongoDb) => {
         const tr = new MongoDbTransactionRepository(tenantId, mongoDb)
         await tr.addTransactionToMongo({
           executedRules: [],
           hitRules: [],
           status: 'ALLOW',
-          timestamp: 0,
           transactionId: 'T-1',
           type: 'DEPOSIT',
           originUserId: 'U-1',
+          timestamp: new Date().valueOf(),
         })
       },
       (data) => {

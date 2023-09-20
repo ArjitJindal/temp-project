@@ -5,8 +5,8 @@ import { InternalTransaction } from '@/@types/openapi-internal/InternalTransacti
 import { PaymentMethod } from '@/@types/openapi-internal/PaymentMethod'
 import {
   humanReadablePeriod,
+  matchPeriod,
   Period,
-  periodDefaults,
   periodVars,
 } from '@/services/copilot/questions/definitions/util'
 
@@ -14,23 +14,23 @@ export const UniquePaymentIdentifierReceived: TableQuestion<
   Period & { top: number }
 > = {
   type: 'TABLE',
-  questionId:
-    'What are the top 10 payment identifiers they have received money from?',
-  title: (vars) => {
+  questionId: 'Payment identifier senders',
+  title: (_, vars) => {
     return `Top ${
       vars.top
-    } payment identifiers they have received from over ${humanReadablePeriod(
-      vars
-    )}`
+    } payment identifiers they have received from ${humanReadablePeriod(vars)}`
   },
-  aggregationPipeline: async ({ tenantId, userId }, { top }) => {
+  aggregationPipeline: async ({ tenantId, userId }, { top, ...period }) => {
     const client = await getMongoDbClient()
     const db = client.db()
     const result = await db
       .collection<InternalTransaction>(TRANSACTIONS_COLLECTION(tenantId))
       .aggregate<{ _id: { paymentMethodId: string; type: PaymentMethod } }>([
         {
-          $match: { destinationUserId: userId },
+          $match: {
+            destinationUserId: userId,
+            ...matchPeriod('timestamp', period),
+          },
         },
         {
           $group: {
@@ -59,14 +59,14 @@ export const UniquePaymentIdentifierReceived: TableQuestion<
     })
   },
   headers: [
-    { name: 'Destination payment identifier', columnType: 'STRING' },
-    { name: 'Payment type', columnType: 'STRING' },
+    { name: 'Destination payment identifier', columnType: 'ID' },
+    { name: 'Payment type', columnType: 'PAYMENT_METHOD' },
   ],
   variableOptions: {
     ...periodVars,
     top: 'INTEGER',
   },
   defaults: () => {
-    return { ...periodDefaults(), top: 10 }
+    return { top: 10 }
   },
 }

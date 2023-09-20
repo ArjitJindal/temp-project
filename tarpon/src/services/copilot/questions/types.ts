@@ -1,6 +1,7 @@
 import { QuestionVariableOptionVariableTypeEnum } from '@/@types/openapi-internal/QuestionVariableOption'
-
-type ColumnType = 'STRING' | 'DATETIME' // ...
+import { Case } from '@/@types/openapi-internal/Case'
+import { Alert } from '@/@types/openapi-internal/Alert'
+import { TableHeadersColumnTypeEnum } from '@/@types/openapi-internal/TableHeaders'
 
 export type Variables = {
   [key: string]: string | number
@@ -10,25 +11,29 @@ export type VariableOptions<V> = {
   [K in keyof V]: QuestionVariableOptionVariableTypeEnum
 }
 
+export type InvestigationContext = {
+  tenantId: string
+  caseId: string
+  alertId: string
+  userId: string
+  alert: Alert
+  _case: Case
+}
+
 export type Question<V extends Variables, D> = {
   questionId: string
-  title?: (variables: V) => string
+  title?: (ctx: InvestigationContext, variables: V) => string
   aggregationPipeline: (
-    context: {
-      tenantId: string
-      caseId: string
-      alertId: string
-      userId: string
-    },
+    context: InvestigationContext,
     variables: V
   ) => Promise<D>
   variableOptions: VariableOptions<V>
-  defaults?: () => V
+  defaults: (ctx: InvestigationContext) => V
 }
 
 export type TableQuestion<V extends Variables> = {
   type: 'TABLE'
-  headers: { name: string; columnType: ColumnType }[]
+  headers: { name: string; columnType: TableHeadersColumnTypeEnum }[]
 } & Question<V, (string | number | undefined)[][]>
 
 export type TimeseriesQuestion<V extends Variables> = {

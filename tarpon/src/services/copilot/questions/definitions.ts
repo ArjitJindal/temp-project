@@ -14,6 +14,8 @@ import { SarsFiled } from '@/services/copilot/questions/definitions/sars-filed'
 import { UsersReceivedMoneyFrom } from '@/services/copilot/questions/definitions/users-received-money-from'
 import { UniquePaymentIdentifierSent } from '@/services/copilot/questions/definitions/unique-payment-identifier-sent'
 import { UniquePaymentIdentifierReceived } from '@/services/copilot/questions/definitions/unique-payment-identifier-received'
+import { AlertsRelatedToTransaction } from '@/services/copilot/questions/definitions/alerts-related-to-transaction'
+import { TransactionLedRuleHit } from '@/services/copilot/questions/definitions/transaction-led-rule-hit'
 
 export const questions: (
   | TableQuestion<any>
@@ -22,6 +24,8 @@ export const questions: (
   | TimeseriesQuestion<any>
 )[] = [
   AlertHistory,
+  AlertsRelatedToTransaction,
+  TransactionLedRuleHit,
   CaseHistory,
   SarsFiled,
   TransactionByRulesAction,

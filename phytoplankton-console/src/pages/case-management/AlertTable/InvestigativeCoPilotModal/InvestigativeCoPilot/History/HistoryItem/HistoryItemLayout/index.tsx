@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import cn from 'clsx';
 import { QuestionResponseBase } from '../../../types';
+import { variablesFromApi } from '../../../api';
 import s from './index.module.less';
 import AISummary from './AISummary';
 import BrainIcon from '@/components/ui/icons/brain-icon-colored.react.svg';
@@ -19,7 +20,9 @@ interface Props {
 
 export default function HistoryItemBase(props: Props) {
   const { item, children, isLoading, onRefresh } = props;
-  const [initialVariablesState, setInitialVarsValues] = useState({});
+  const [initialVariablesState, setInitialVarsValues] = useState(
+    variablesFromApi(item.variables, item.variableOptions),
+  );
   const [showAiSummary, setShowAiSummary] = useState(false);
   const [addToNarrative, setAddToNarrative] = useState<boolean | undefined>(true);
 

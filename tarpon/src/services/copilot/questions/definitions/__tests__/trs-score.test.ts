@@ -7,6 +7,7 @@ describe('Average TRS score', () => {
   test('Average TRS score returned', async () => {
     await testQuestion(
       TrsScore,
+      {},
       async (tenantId, mongoDb) => {
         const db = mongoDb.db()
         await db
@@ -25,8 +26,8 @@ describe('Average TRS score', () => {
           })
       },
       (data) => {
-        expect(data.at(0)?.values.length).toEqual(1)
-        expect(data.at(0)?.values.at(0)?.value).toEqual(90)
+        expect(data.at(0)?.values.length).toEqual(31)
+        expect(data.at(0)?.values.at(30)?.value).toEqual(90)
       }
     )
   })

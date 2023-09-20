@@ -4706,6 +4706,18 @@ paths:
           required: true
 components:
   schemas:
+    QuestionVariable:
+      type: object
+      properties:
+        name:
+          type: string
+        value:
+          oneOf:
+            - type: string
+            - type: number
+      required:
+        - name
+        - value
     QuestionRequest:
       title: QuestionRequest
       type: object
@@ -4715,17 +4727,7 @@ components:
         variables:
           type: array
           items:
-            type: object
-            properties:
-              name:
-                type: string
-              value:
-                oneOf:
-                  - type: string
-                  - type: number
-            required:
-              - name
-              - value
+            $ref: '#/components/schemas/QuestionVariable'
     GetQuestionsResponse:
       title: GetQuestionsResponse
       type: object
@@ -4752,6 +4754,10 @@ components:
           type: array
           items:
             $ref: '#/components/schemas/QuestionVariableOption'
+        variables:
+          type: array
+          items:
+            $ref: '#/components/schemas/QuestionVariable'
       required:
         - questionId
         - title
@@ -4791,8 +4797,15 @@ components:
               columnType:
                 type: string
                 enum:
-                  - DATETIME
                   - STRING
+                  - NUMBER
+                  - FLOAT
+                  - LONG_TEXT
+                  - BOOLEAN
+                  - ID
+                  - TRANSACTION_TYPE
+                  - DATE_TIME
+                  - PAYMENT_METHOD
         rows:
           type: array
           items:

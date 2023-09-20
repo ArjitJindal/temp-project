@@ -11,6 +11,7 @@ describe('User sent money to', () => {
   test('One user returned', async () => {
     await testQuestion(
       UsersSentMoneyTo,
+      {},
       async (tenantId, mongoDb) => {
         const db = mongoDb.db()
         await db

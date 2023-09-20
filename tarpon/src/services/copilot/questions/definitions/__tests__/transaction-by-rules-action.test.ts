@@ -6,6 +6,10 @@ describe('Transaction by rules action', () => {
   test('One transaction returned', async () => {
     await testQuestion(
       TransactionByRulesAction,
+      {
+        from: new Date('2020-01-01T12:00:00').valueOf(),
+        to: new Date('2020-02-01T12:00:00').valueOf(),
+      },
       async (tenantId, mongoDb) => {
         const tr = new MongoDbTransactionRepository(tenantId, mongoDb)
         await tr.addTransactionToMongo({
@@ -20,7 +24,7 @@ describe('Transaction by rules action', () => {
             },
           ],
           status: 'ALLOW',
-          timestamp: new Date().valueOf(),
+          timestamp: new Date('2020-01-15T12:00:00').valueOf(),
           transactionId: 'T-1',
           type: 'DEPOSIT',
           originUserId: 'U-1',
@@ -28,9 +32,9 @@ describe('Transaction by rules action', () => {
       },
       (data) => {
         expect(data.length).toEqual(4)
-        expect(
-          data.find((d) => d.label === 'SUSPEND')?.values.at(0)?.y
-        ).toEqual(1)
+        const dataPoint = data.find((d) => d.label === 'SUSPEND')?.values.at(14)
+        expect(dataPoint?.x).toEqual('2020-01-15')
+        expect(dataPoint?.y).toEqual(1)
       }
     )
   })

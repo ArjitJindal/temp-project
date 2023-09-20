@@ -6,14 +6,19 @@ import {
 } from '@/utils/mongodb-definitions'
 import { Report } from '@/@types/openapi-internal/Report'
 import { InternalUser } from '@/@types/openapi-internal/InternalUser'
+import {
+  humanReadablePeriod,
+  matchPeriod,
+  Period,
+} from '@/services/copilot/questions/definitions/util'
 
-export const SarsFiled: TableQuestion<any> = {
+export const SarsFiled: TableQuestion<Period> = {
   type: 'TABLE',
-  questionId: 'Which alerts have resulted in SARs?',
-  title: () => {
-    return `Alerts that results in SARs`
+  questionId: 'Alerts that resulted in SAR',
+  title: (_, vars) => {
+    return `Alerts that results in SARs ${humanReadablePeriod(vars)}`
   },
-  aggregationPipeline: async ({ tenantId, userId }) => {
+  aggregationPipeline: async ({ tenantId, userId }, period) => {
     const client = await getMongoDbClient()
     const db = client.db()
     const result = await db
@@ -21,6 +26,7 @@ export const SarsFiled: TableQuestion<any> = {
       .aggregate<Report & { user: InternalUser }>([
         {
           $match: {
+            ...matchPeriod('createdTimestamp', period),
             caseUserId: userId,
           },
         },
@@ -41,14 +47,17 @@ export const SarsFiled: TableQuestion<any> = {
       .toArray()
 
     return result.map((r) => {
-      return [r.id, r.name, r.caseUserId, r.caseId]
+      return [r.id, r.description, r.caseUserId, r.caseId]
     })
   },
   headers: [
-    { name: 'SAR ID', columnType: 'STRING' },
-    { name: 'Description', columnType: 'DATETIME' },
+    { name: 'SAR ID', columnType: 'ID' },
+    { name: 'Description', columnType: 'STRING' },
     { name: 'Created By', columnType: 'STRING' },
-    { name: 'Related case', columnType: 'STRING' },
+    { name: 'Related case', columnType: 'ID' },
   ],
   variableOptions: {},
+  defaults: () => {
+    return {}
+  },
 }

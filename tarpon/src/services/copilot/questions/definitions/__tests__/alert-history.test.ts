@@ -6,6 +6,7 @@ describe('Alert history', () => {
   test('One alert returned', async () => {
     await testQuestion(
       AlertHistory,
+      {},
       async (tenantId, mongoDb) => {
         const cr = new CaseRepository(tenantId, {
           mongoDb,

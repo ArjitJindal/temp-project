@@ -4,6 +4,7 @@ import { Case } from '@/@types/openapi-internal/Case'
 import { TRANSACTIONS_COLLECTION } from '@/utils/mongodb-definitions'
 import {
   humanReadablePeriod,
+  matchPeriod,
   Period,
   periodDefaults,
   periodVars,
@@ -11,11 +12,11 @@ import {
 
 export const TransactionType: BarchartQuestion<Period> = {
   type: 'BARCHART',
-  questionId: 'How are the transactions for this user distributed by type?',
-  title: (vars) => {
-    return `Transactions by type for ${humanReadablePeriod(vars)}`
+  questionId: 'Transactions by type',
+  title: (_, vars) => {
+    return `Transactions by type ${humanReadablePeriod(vars)}`
   },
-  aggregationPipeline: async ({ tenantId, userId }) => {
+  aggregationPipeline: async ({ tenantId, userId }, period) => {
     const client = await getMongoDbClient()
     const db = client.db()
     const results = await db
@@ -31,6 +32,7 @@ export const TransactionType: BarchartQuestion<Period> = {
                 destinationUserId: userId,
               },
             ],
+            ...matchPeriod('timestamp', period),
           },
         },
         {
