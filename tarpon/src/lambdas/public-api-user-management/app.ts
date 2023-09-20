@@ -14,7 +14,7 @@ import { Business } from '@/@types/openapi-public/Business'
 import { RiskScoringService } from '@/services/risk-scoring'
 import { hasFeature, updateLogMetadata } from '@/core/utils/context'
 import { getMongoDbClient } from '@/utils/mongodb-utils'
-import { UserManagementService } from '@/services/users'
+import { UserManagementService } from '@/services/rules-engine/user-rules-engine-service'
 import { pickKnownEntityFields } from '@/utils/object'
 import {
   getRiskLevelFromScore,

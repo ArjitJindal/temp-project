@@ -4,7 +4,7 @@ import {
 } from 'aws-lambda'
 import { Forbidden, NotFound } from 'http-errors'
 import { compact } from 'lodash'
-import { UserService } from './services/user-service'
+import { UserService } from '../../services/users'
 import { UserAuditLogService } from './services/user-audit-log-service'
 import { JWTAuthorizerResult } from '@/@types/jwt'
 import { lambdaApi } from '@/core/middlewares/lambda-api-middlewares'
