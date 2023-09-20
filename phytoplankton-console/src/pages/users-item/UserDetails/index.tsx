@@ -5,38 +5,21 @@ import DeviceDataCard from './DeviceDataCard';
 import s from './index.module.less';
 import { InternalBusinessUser, InternalConsumerUser, MissingUser } from '@/apis';
 import { Small } from '@/components/ui/Typography';
-import CommentsCard from '@/components/CommentsCard';
 import { Authorized } from '@/components/Authorized';
 import { useApi } from '@/api';
 import AsyncResourceRenderer from '@/components/common/AsyncResourceRenderer';
 import { useQuery } from '@/utils/queries/hooks';
 import { DEVICE_DATA_USER } from '@/utils/queries/keys';
-import { useFeatureEnabled } from '@/components/AppWrapper/Providers/SettingsProvider';
-import AIInsightsCard from '@/pages/case-management-item/CaseDetails/AIInsightsCard';
 
 interface Props {
   user?: InternalConsumerUser | InternalBusinessUser | MissingUser;
-  isEmbedded?: boolean;
-  onUserUpdate?: (userItem: InternalBusinessUser | InternalConsumerUser) => void;
-  onReload: () => void;
-  showCommentEditor?: boolean;
-  hideExpectedTransactionLimits?: boolean;
-  hideAIInsights?: boolean;
   uiSettings: typeof UI_SETTINGS;
 }
 
 function UserDetails(props: Props) {
-  const {
-    user,
-    showCommentEditor = true,
-    onUserUpdate,
-    uiSettings,
-    hideExpectedTransactionLimits,
-    hideAIInsights,
-  } = props;
+  const { user, uiSettings } = props;
 
   const api = useApi();
-  const isMLDemoEnabled = useFeatureEnabled('MACHINE_LEARNING_DEMO');
 
   const deviceDataRes = useQuery(DEVICE_DATA_USER(user?.userId), async () => {
     if (user?.userId) {
@@ -50,6 +33,7 @@ function UserDetails(props: Props) {
   if (user == null || !('type' in user)) {
     return <Small>No user details found</Small>;
   }
+
   return (
     <div className={s.root}>
       <Authorized required={['users:user-details:read']}>
@@ -58,7 +42,7 @@ function UserDetails(props: Props) {
             <BusinessUserDetails
               user={user}
               uiSettings={uiSettings}
-              hideExpectedTransactionLimits={hideExpectedTransactionLimits}
+              hideExpectedTransactionLimits={true}
             />
           )}
           {user?.type === 'CONSUMER' && <ConsumerUserDetails user={user} uiSettings={uiSettings} />}
@@ -74,20 +58,6 @@ function UserDetails(props: Props) {
           </AsyncResourceRenderer>
         </>
       </Authorized>
-      {isMLDemoEnabled && user?.type === 'BUSINESS' && !hideAIInsights && (
-        <AIInsightsCard user={user} title={UI_SETTINGS.cards.AI_INSIGHTS.title} />
-      )}
-      {showCommentEditor && (
-        <CommentsCard
-          id={user.userId}
-          comments={user.comments ?? []}
-          onCommentsUpdate={(newComments) => {
-            onUserUpdate && onUserUpdate({ ...user, comments: newComments });
-          }}
-          commentType={'USER'}
-          title={UI_SETTINGS.cards.COMMENTS.title}
-        />
-      )}
     </div>
   );
 }

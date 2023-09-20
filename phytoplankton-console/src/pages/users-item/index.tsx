@@ -35,7 +35,7 @@ export default function UserItem() {
   const api = useApi();
 
   const queryClient = useQueryClient();
-  const isMLDemoEnabled = useFeatureEnabled('MACHINE_LEARNING_DEMO');
+  const isMerchantMonitoringEnabled = useFeatureEnabled('MERCHANT_MONITORING');
   const isCrmEnabled = useFeatureEnabled('CRM');
   const isEntityLinkingEnabled = useFeatureEnabled('ENTITY_LINKING');
 
@@ -119,17 +119,7 @@ export default function UserItem() {
               {
                 tab: 'User details',
                 key: 'user-details',
-                children: (
-                  <UserDetails
-                    user={user}
-                    onUserUpdate={handleUserUpdate}
-                    onReload={queryResult.refetch}
-                    uiSettings={UI_SETTINGS}
-                    hideExpectedTransactionLimits={true}
-                    hideAIInsights={true}
-                    showCommentEditor={false}
-                  />
-                ),
+                children: <UserDetails user={user} uiSettings={UI_SETTINGS} />,
                 isClosable: false,
                 isDisabled: false,
               },
@@ -172,7 +162,7 @@ export default function UserItem() {
                     },
                   ]
                 : []),
-              ...(user.type === 'BUSINESS' && isMLDemoEnabled
+              ...(user.type === 'BUSINESS' && isMerchantMonitoringEnabled
                 ? [
                     {
                       tab: (

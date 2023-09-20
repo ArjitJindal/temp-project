@@ -6639,6 +6639,7 @@ components:
         - ESCALATION
         - IBAN_RESOLUTION
         - MACHINE_LEARNING_DEMO
+        - MERCHANT_MONITORING
         - SAR
         - RULES_ENGINE_V2
         - QA

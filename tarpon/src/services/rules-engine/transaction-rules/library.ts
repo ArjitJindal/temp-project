@@ -1626,7 +1626,7 @@ const _RULES_LIBRARY: Array<
       labels: [],
       defaultNature: 'SCREENING',
       defaultCasePriority: 'P1',
-      requiredFeatures: ['MACHINE_LEARNING_DEMO'],
+      requiredFeatures: ['MERCHANT_MONITORING'],
     }
   },
 

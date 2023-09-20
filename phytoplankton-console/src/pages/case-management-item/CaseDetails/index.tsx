@@ -44,7 +44,7 @@ function CaseDetails(props: Props) {
   const user = caseItem.caseUsers?.origin ?? caseItem.caseUsers?.destination ?? undefined;
   useScrollToFocus();
   const settings = useSettings();
-  const isMLDemoEnabled = useFeatureEnabled('MACHINE_LEARNING_DEMO');
+  const isMerchantMonitoringEnabled = useFeatureEnabled('MERCHANT_MONITORING');
   const navigate = useNavigate();
   const isCrmEnabled = useFeatureEnabled('CRM');
   const isEntityLinkingEnabled = useFeatureEnabled('ENTITY_LINKING');
@@ -68,9 +68,7 @@ function CaseDetails(props: Props) {
             keepBackUrl(
               makeUrl('/case-management/case/:id/:tab', { id: caseItem.caseId, tab: newTab }),
             ),
-            {
-              replace: true,
-            },
+            { replace: true },
           );
         }}
       >
@@ -78,16 +76,7 @@ function CaseDetails(props: Props) {
           {
             tab: 'User details',
             key: 'user-details',
-            children: (
-              <UserDetails
-                user={user}
-                onReload={props.onReload}
-                showCommentEditor={false}
-                uiSettings={UI_SETTINGS}
-                hideAIInsights={true}
-                hideExpectedTransactionLimits={true}
-              />
-            ),
+            children: <UserDetails user={user} uiSettings={UI_SETTINGS} />,
             isClosable: false,
             isDisabled: false,
           },
@@ -149,7 +138,7 @@ function CaseDetails(props: Props) {
                 },
               ]
             : []),
-          ...(user && 'type' in user && user?.type === 'BUSINESS' && isMLDemoEnabled
+          ...(user && 'type' in user && user?.type === 'BUSINESS' && isMerchantMonitoringEnabled
             ? [
                 {
                   tab: !settings.isAiEnabled ? (
