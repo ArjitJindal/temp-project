@@ -170,8 +170,10 @@ export default function StatusChangeModal(props: Props) {
           onClose();
         }}
       >
-        Are you sure you want to <b>{newStatusActionLabel ?? statusToOperationName(newStatus)}</b>{' '}
-        {pluralize(entityName, entityIds.length, true)} <b>{entityIds.join(', ')}</b> ?
+        <span>
+          Are you sure you want to <b>{newStatusActionLabel ?? statusToOperationName(newStatus)}</b>{' '}
+          {pluralize(entityName, entityIds.length, true)} <b>{entityIds.join(', ')}</b> ?
+        </span>
       </Modal>
     </>
   );
