@@ -43,6 +43,7 @@ import { SanctionsCounterPartyRuleParameters } from './sanctions-counterparty'
 import { TransactionVolumeExceedsTwoPeriodsRuleParameters } from './total-transactions-volume-exceeds'
 import { HighRiskCountryRuleParameters } from './high-risk-countries'
 import { UsingTooManyBanksToMakePaymentsRuleParameters } from './using-too-many-banks-to-make-payments'
+import { HighRiskIpAddressCountriesParameters } from './high-risk-ip-address-countries'
 import { TRANSACTION_RULES, TransactionRuleImplementationName } from './index'
 import { Rule } from '@/@types/openapi-internal/Rule'
 import { HighUnsuccessfullStateRateParameters } from '@/services/rules-engine/transaction-rules/high-unsuccessfull-state-rate'
@@ -694,6 +695,32 @@ const _RULES_LIBRARY: Array<
       typologyDescription:
         'Objective reporting required by AML Laws and regulations for transactions meeting certain criteria',
       source: 'Local laws and regulations',
+    }
+  },
+  () => {
+    const defaultParameters: HighRiskIpAddressCountriesParameters = {
+      highRiskCountries: ['RU', 'SY', 'RO', 'UA'],
+    }
+
+    return {
+      id: 'R-87',
+      type: 'TRANSACTION',
+      name: 'High risk IP address countries',
+      description:
+        'Transaction is being sent from or received in a high risk country based on IP address.',
+      descriptionTemplate:
+        "{{ if-sender 'Sender’s' 'Receiver’s' }} ip-bases country ({{ format-country ipCountry }}) is a High Risk",
+      defaultParameters,
+      defaultAction: 'FLAG',
+      ruleImplementationName: 'high-risk-ip-address-countries',
+      labels: [],
+      defaultNature: 'FRAUD',
+      defaultCasePriority: 'P2',
+      typology: "Customer's IP address is in a high risk country",
+      typologyGroup: 'Unusual behavior',
+      typologyDescription:
+        "The customer's IP address is in a high risk country",
+      source: '',
     }
   },
   () => {

@@ -46,6 +46,7 @@ import { SanctionsCounterPartyRule } from './sanctions-counterparty'
 import { TransactionVolumeExceedsTwoPeriodsRule } from './total-transactions-volume-exceeds'
 import HighRiskCountryRule from './high-risk-countries'
 import UsingTooManyBanksToMakePaymentsRule from './using-too-many-banks-to-make-payments'
+import { HighRiskIpAddressCountries } from './high-risk-ip-address-countries'
 import TestAlwaysHitRule from '@/services/rules-engine/transaction-rules/tests/test-always-hit-rule'
 import BlacklistTransactionMatchedValue from '@/services/rules-engine/transaction-rules/blacklist-transaction-related-value'
 import MachineLearningGenericModel from '@/services/rules-engine/transaction-rules/machine-learning-generic-model'
@@ -110,6 +111,7 @@ export const _TRANSACTION_RULES = {
   'sanctions-counterparty': SanctionsCounterPartyRule,
   'total-transactions-volume-exceeds': TransactionVolumeExceedsTwoPeriodsRule,
   'high-risk-countries': HighRiskCountryRule,
+  'high-risk-ip-address-countries': HighRiskIpAddressCountries,
 
   // TESTING-ONLY RULES
   'tests/test-success-rule': TestSuccessRule,
