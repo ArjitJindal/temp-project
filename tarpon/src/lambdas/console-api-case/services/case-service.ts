@@ -609,7 +609,6 @@ export class CaseService extends CaseAlertsCommonService {
     }
 
     if (updates.caseStatus === 'CLOSED' && hasFeature('SANCTIONS')) {
-      const cases = await this.caseRepository.getCaseByIds(caseIds)
       await Promise.all(
         cases.map(async (c) => {
           const userId =
