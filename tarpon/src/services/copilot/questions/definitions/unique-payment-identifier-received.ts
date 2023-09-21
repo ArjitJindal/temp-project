@@ -14,7 +14,7 @@ export const UniquePaymentIdentifierReceived: TableQuestion<
   Period & { top: number }
 > = {
   type: 'TABLE',
-  questionId: 'Payment identifier senders',
+  questionId: 'Payment identifiers of senders',
   title: (_, vars) => {
     return `Top ${
       vars.top

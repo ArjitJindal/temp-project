@@ -39,7 +39,10 @@ export function humanReadablePeriod(period: Period): string {
       return `over the last week`
     }
     if (endDate.diff(startDate, 'days') <= 30) {
-      return `over the last ${endDate.diff(startDate, 'days')} days`
+      // If we are just one second shy of going over the next day, then we want to add an extra day.
+      // Useful for periods like "2022-01-01 00:00:00 - 2022-01-02 23:59:99"
+      // which makes more sense to say as 3 days, although it's technically 2 calendar days.
+      return `over the last ${endDate.add(1, 's').diff(startDate, 'days')} days`
     }
   }
   return `between ${startDate.format(DATE_GRAPH_FORMAT)} - ${endDate.format(

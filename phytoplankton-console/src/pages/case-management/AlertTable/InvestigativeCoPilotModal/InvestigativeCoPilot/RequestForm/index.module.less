@@ -37,7 +37,8 @@
   }
 }
 
-.suggestion {
+.suggestion,
+.askAi {
   background: @fr-colors-navyBlueTint;
   white-space: nowrap;
   padding: 4px 8px;
@@ -47,6 +48,11 @@
   text-overflow: ellipsis;
   border: none;
   cursor: pointer;
+}
+
+.askAi {
+  display: flex;
+  align-items: center;
 }
 
 &.moreButton {

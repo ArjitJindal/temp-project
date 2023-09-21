@@ -16,7 +16,7 @@ import {
 
 export const UsersReceivedMoneyFrom: TableQuestion<Period & { top: number }> = {
   type: 'TABLE',
-  questionId: 'Senders',
+  questionId: 'Users money received from',
   title: (_, vars) => {
     return `Top ${
       vars.top

@@ -16,6 +16,7 @@ import { UniquePaymentIdentifierSent } from '@/services/copilot/questions/defini
 import { UniquePaymentIdentifierReceived } from '@/services/copilot/questions/definitions/unique-payment-identifier-received'
 import { AlertsRelatedToTransaction } from '@/services/copilot/questions/definitions/alerts-related-to-transaction'
 import { TransactionLedRuleHit } from '@/services/copilot/questions/definitions/transaction-led-rule-hit'
+import { Transactions } from '@/services/copilot/questions/definitions/transactions'
 
 export const questions: (
   | TableQuestion<any>
@@ -26,6 +27,7 @@ export const questions: (
   AlertHistory,
   AlertsRelatedToTransaction,
   TransactionLedRuleHit,
+  Transactions,
   CaseHistory,
   SarsFiled,
   TransactionByRulesAction,
@@ -36,3 +38,10 @@ export const questions: (
   UniquePaymentIdentifierSent,
   UniquePaymentIdentifierReceived,
 ]
+
+export const queries = questions.map(({ questionId, variableOptions }) => {
+  return {
+    questionId,
+    variableOptions,
+  }
+})

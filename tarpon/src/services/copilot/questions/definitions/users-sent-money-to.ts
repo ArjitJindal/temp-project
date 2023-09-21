@@ -16,7 +16,7 @@ import {
 
 export const UsersSentMoneyTo: TableQuestion<Period & { top: number }> = {
   type: 'TABLE',
-  questionId: 'Receivers',
+  questionId: 'Users money sent to',
   title: (_, vars) => {
     return `Top ${vars.top} users they have sent money to ${humanReadablePeriod(
       vars

@@ -2,7 +2,8 @@ import {
   APIGatewayEventLambdaAuthorizerContext,
   APIGatewayProxyWithLambdaAuthorizerEvent,
 } from 'aws-lambda'
-import { questions } from './definitions'
+import { Configuration, OpenAIApi } from 'openai'
+import { queries, questions } from './definitions'
 import { InvestigationRepository } from './investigation-repository'
 import { InvestigationContext, Variables } from './types'
 import { QuestionResponse } from '@/@types/openapi-internal/QuestionResponse'
@@ -14,6 +15,8 @@ import { JWTAuthorizerResult } from '@/@types/jwt'
 import { QuestionVariable } from '@/@types/openapi-internal/QuestionVariable'
 import { QuestionVariableOption } from '@/@types/openapi-internal/QuestionVariableOption'
 import { GetQuestionsResponse } from '@/@types/openapi-internal/GetQuestionsResponse'
+import { logger } from '@/core/logger'
+import { getSecret } from '@/utils/secrets-manager'
 
 export class QuestionService {
   static async fromEvent(
@@ -21,17 +24,31 @@ export class QuestionService {
       APIGatewayEventLambdaAuthorizerContext<JWTAuthorizerResult>
     >
   ) {
+    const openApi = await getSecret<{ apiKey: string }>(
+      process.env.OPENAI_CREDENTIALS_SECRET_ARN as string
+    )
     const mongoClient = await getMongoDbClient()
     const { principalId: tenantId } = event.requestContext.authorizer
 
     return new QuestionService(
-      new InvestigationRepository(mongoClient, tenantId)
+      new InvestigationRepository(mongoClient, tenantId),
+      openApi.apiKey
     )
   }
+
+  private readonly openai!: OpenAIApi
   private investigationRepository: InvestigationRepository
 
-  constructor(investigationRepository: InvestigationRepository) {
+  constructor(
+    investigationRepository: InvestigationRepository,
+    openaiKey: string
+  ) {
     this.investigationRepository = investigationRepository
+    this.openai = new OpenAIApi(
+      new Configuration({
+        apiKey: openaiKey,
+      })
+    )
   }
 
   async addQuestion(
@@ -91,9 +108,13 @@ export class QuestionService {
     c: Case,
     a: Alert
   ) {
-    const question = questions.find((qt) => qt.questionId === questionId)
+    let question = questions.find((qt) => qt.questionId === questionId)
     if (!question) {
-      throw new Error(`Cant resolve question from ${questionId}`)
+      const { questionId: gptQuestionId, variables } = await this.gpt(
+        questionId
+      )
+      varObject = variables
+      question = questions.find((qt) => qt.questionId === gptQuestionId)
     }
 
     const userId =
@@ -169,5 +190,37 @@ export class QuestionService {
       }
     }
     throw new Error(`Unsupported question type`)
+  }
+
+  private async gpt(question: string): Promise<{
+    questionId: string
+    variables: Variables
+  }> {
+    const prompt = `
+    ${JSON.stringify(queries)}
+Please parse "${question}" to give the best matching query and variables values that should be set. The only output you will provide will be in the following format, defined in typescript, with no extra context or content. Dates should be output in ISO format, for example the datetime now is ${new Date().toISOString()}:
+{
+  questionId: string,
+  variables: {
+    [key: string]: string | number
+  }
+}`
+
+    try {
+      const completion = await this.openai.createChatCompletion({
+        model: 'gpt-3.5-turbo',
+        temperature: 0.5,
+        messages: [
+          {
+            content: prompt,
+            role: 'assistant',
+          },
+        ],
+      })
+      return JSON.parse(completion.data.choices[0].message?.content || '')
+    } catch (e) {
+      logger.error(e)
+      throw new Error('AI could not understand this query')
+    }
   }
 }

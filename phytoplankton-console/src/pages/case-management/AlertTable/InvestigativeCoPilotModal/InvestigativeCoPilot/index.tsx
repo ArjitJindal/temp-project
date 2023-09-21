@@ -114,7 +114,7 @@ export default function InvestigativeCoPilot(props: Props) {
             <History alertId={alertId} items={history} />
           </div>
           <div className={s.form}>
-            <RequestForm mutation={mutation} />
+            <RequestForm mutation={mutation} items={history} />
           </div>
         </div>
       )}
