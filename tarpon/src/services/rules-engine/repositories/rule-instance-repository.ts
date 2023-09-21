@@ -1,5 +1,4 @@
 import { StackConstants } from '@lib/constants'
-import { customAlphabet } from 'nanoid'
 import {
   DeleteCommand,
   DeleteCommandInput,
@@ -21,8 +20,7 @@ import { RuleTypeEnum } from '@/@types/openapi-internal/Rule'
 import { paginateQuery } from '@/utils/dynamodb'
 import { DEFAULT_RISK_LEVEL } from '@/services/risk-scoring/utils'
 import { traceable } from '@/core/xray'
-
-const nanoId = customAlphabet('1234567890abcdef', 8)
+import { shortId } from '@/utils/id'
 
 function toRuleInstance(item: any): RuleInstance {
   return {
@@ -48,6 +46,7 @@ function toRuleInstance(item: any): RuleInstance {
     labels: item.labels,
     alertCreationInterval: item.alertCreationInterval,
     checklistTemplateId: item.checklistTemplateId,
+    queueId: item.queueId,
   }
 }
 
@@ -70,7 +69,7 @@ export class RuleInstanceRepository {
   public async getNewRuleInstanceId(): Promise<string> {
     // eslint-disable-next-line no-constant-condition
     while (true) {
-      const newRuleInstanceId = nanoId()
+      const newRuleInstanceId = shortId()
       const existingRuleInstance = await this.getRuleInstanceById(
         newRuleInstanceId
       )
@@ -223,5 +222,17 @@ export class RuleInstanceRepository {
         return this.dynamoDb.send(new UpdateCommand(updateItemInput))
       })
     )
+  }
+  public async deleteRuleQueue(ruleQueueId: string) {
+    const ruleInstances = await this.getAllRuleInstances()
+    const targetRuleInstances = ruleInstances.filter(
+      (ruleInstance) => ruleInstance.queueId === ruleQueueId
+    )
+    for (const ruleInstance of targetRuleInstances) {
+      await this.createOrUpdateRuleInstance({
+        ...ruleInstance,
+        queueId: undefined,
+      })
+    }
   }
 }

@@ -2,7 +2,6 @@ import {
   APIGatewayEventLambdaAuthorizerContext,
   APIGatewayProxyWithLambdaAuthorizerEvent,
 } from 'aws-lambda'
-import { customAlphabet } from 'nanoid'
 import { AccountsService } from '../../services/accounts'
 import { lambdaApi } from '@/core/middlewares/lambda-api-middlewares'
 import { JWTAuthorizerResult, assertCurrentUserRole } from '@/@types/jwt'
@@ -19,6 +18,18 @@ import { publishAuditLog } from '@/services/audit-log'
 import { envIs, envIsNot } from '@/utils/env'
 import { Handlers } from '@/@types/openapi-internal-custom/DefaultApi'
 import { AuditLog } from '@/@types/openapi-internal/AuditLog'
+import { NarrativeService } from '@/services/tenants/narrative-template-service'
+import {
+  ChecklistTemplateWithId,
+  ChecklistTemplatesService,
+} from '@/services/tenants/checklist-template-service'
+import {
+  RuleQueueWithId,
+  RuleQueuesService,
+} from '@/services/tenants/rule-queue-service'
+import { shortId } from '@/utils/id'
+import { AlertsRepository } from '@/services/rules-engine/repositories/alerts-repository'
+import { RuleInstanceRepository } from '@/services/rules-engine/repositories/rule-instance-repository'
 
 const ROOT_ONLY_SETTINGS: Array<keyof TenantSettings> = ['features', 'limits']
 
@@ -52,10 +63,7 @@ export const tenantsHandler = lambdaApi()(
 
     handlers.registerPostCreateTenant(async (ctx, request) => {
       assertCurrentUserRole('root')
-      const newTenantId = customAlphabet(
-        '1234567890ABCDEFGHIJKLMNOPQRSTUVWXYZ',
-        10
-      )()
+      const newTenantId = shortId(10)
       const dynamoDb = getDynamoDbClient()
       const tenantService = new TenantService(
         request.TenantCreationRequest.tenantId ?? newTenantId,
@@ -166,6 +174,92 @@ export const tenantsHandler = lambdaApi()(
         await publishAuditLog(tenantId, auditLog)
       }
       return apiKeys
+    })
+
+    /** Narratives */
+    const narrativeService = new NarrativeService(tenantId, mongoDb)
+    handlers.registerGetNarratives(
+      async (ctx, request) =>
+        await narrativeService.getNarrativeTemplates({
+          page: request.page,
+          pageSize: request.pageSize,
+        })
+    )
+    handlers.registerGetNarrativeTemplate(
+      async (ctx, request) =>
+        await narrativeService.getNarrativeTemplate(request.narrativeTemplateId)
+    )
+    handlers.registerPutNarrativeTemplate(
+      async (ctx, request) =>
+        await narrativeService.updateNarrativeTemplate(
+          request.narrativeTemplateId,
+          request.NarrativeTemplateRequest
+        )
+    )
+    handlers.registerDeleteNarrativeTemplate(
+      async (ctx, request) =>
+        await narrativeService.deleteNarrativeTemplate(
+          request.narrativeTemplateId
+        )
+    )
+    handlers.registerPostNarrativeTemplate(
+      async (ctx, request) =>
+        await narrativeService.createNarrativeTemplate(
+          request.NarrativeTemplateRequest
+        )
+    )
+
+    /** Checklist templates */
+    const checklistService = new ChecklistTemplatesService(tenantId, mongoDb)
+    handlers.registerGetChecklistTemplate(async (ctx, request) => {
+      return checklistService.getChecklistTemplate(request.checklistTemplateId)
+    })
+    handlers.registerGetChecklistTemplates(async (ctx, request) => {
+      return checklistService.getChecklistTemplates(request)
+    })
+    handlers.registerPostChecklistTemplates(async (ctx, request) => {
+      return checklistService.createChecklistTemplate(request.ChecklistTemplate)
+    })
+    handlers.registerPutChecklistTemplates(async (ctx, request) => {
+      return checklistService.updateChecklistTemplate({
+        ...request.ChecklistTemplate,
+        id: request.checklistTemplateId,
+      } as ChecklistTemplateWithId)
+    })
+    handlers.registerDeleteChecklistTemplate(async (ctx, request) => {
+      await checklistService.deleteChecklistTemplate(
+        request.checklistTemplateId
+      )
+    })
+
+    /** Rule Queue */
+    const ruleQueueService = new RuleQueuesService(tenantId, mongoDb)
+    handlers.registerGetRuleQueue(async (ctx, request) => {
+      return ruleQueueService.getRuleQueue(request.ruleQueueId)
+    })
+    handlers.registerGetRuleQueues(async (ctx, request) => {
+      return ruleQueueService.getRuleQueues(request)
+    })
+    handlers.registerPostRuleQueue(async (ctx, request) => {
+      return ruleQueueService.createRuleQueue(request.RuleQueue)
+    })
+    handlers.registerPutRuleQueue(async (ctx, request) => {
+      return ruleQueueService.updateRuleQueue({
+        ...request.RuleQueue,
+        id: request.ruleQueueId,
+      } as RuleQueueWithId)
+    })
+    handlers.registerDeleteRuleQueue(async (ctx, request) => {
+      const dynamoDb = getDynamoDbClient()
+      const alertsRepository = new AlertsRepository(tenantId, {
+        mongoDb,
+      })
+      const ruleInstanceRepository = new RuleInstanceRepository(tenantId, {
+        dynamoDb,
+      })
+      await ruleQueueService.deleteRuleQueue(request.ruleQueueId)
+      await ruleInstanceRepository.deleteRuleQueue(request.ruleQueueId)
+      await alertsRepository.deleteRuleQueue(request.ruleQueueId)
     })
 
     return await handlers.handle(event)

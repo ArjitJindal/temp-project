@@ -71,7 +71,7 @@ export default function CreatedLists() {
                     <Form.Layout.Label icon={<PulseLineIcon />} title="List description">
                       {listHeader.metadata?.description}
                     </Form.Layout.Label>
-                    <Form.Layout.Label icon={<TimeLineIcon />} title="Created on">
+                    <Form.Layout.Label icon={<TimeLineIcon />} title="Created at">
                       {dayjs(listHeader.createdTimestamp).format(DATE_TIME_FORMAT_WITHOUT_SECONDS)}
                     </Form.Layout.Label>
                   </Card.Section>

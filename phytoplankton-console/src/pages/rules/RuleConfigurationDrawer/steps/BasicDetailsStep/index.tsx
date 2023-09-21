@@ -19,6 +19,7 @@ import { useApi } from '@/api';
 import { CHECKLIST_TEMPLATES } from '@/utils/queries/keys';
 import { isLoading, isSuccess } from '@/utils/asyncResource';
 import { useFormContext } from '@/components/library/Form/utils/hooks';
+import { useRuleQueues } from '@/components/rules/util';
 
 export interface FormValues {
   ruleName: string | undefined;
@@ -32,6 +33,7 @@ export interface FormValues {
   simulationIterationDescription?: string;
   falsePositiveCheckEnabled?: boolean;
   checklistTemplateId?: string;
+  queueId?: string;
 }
 
 export const INITIAL_VALUES: FormValues = {
@@ -162,8 +164,32 @@ function RuleDetails(props: Props) {
             <SelectionGroup<Priority> mode="SINGLE" options={RULE_CASE_PRIORITY} {...inputProps} />
           )}
         </InputField>
+        <RuleQueueInputField />
       </PropertyListLayout>
     </>
+  );
+}
+
+function RuleQueueInputField() {
+  const ruleQueues = useRuleQueues();
+  const options = useMemo(() => {
+    return ruleQueues.map((queue) => ({
+      label: queue.name,
+      value: queue.id!,
+    }));
+  }, [ruleQueues]);
+  return (
+    <InputField<FormValues, 'queueId'> name="queueId" label="Queue">
+      {(inputProps) => (
+        <Select
+          {...inputProps}
+          value={options.length ? inputProps.value : undefined}
+          options={options}
+          mode="SINGLE"
+          placeholder="Select queue"
+        />
+      )}
+    </InputField>
   );
 }
 

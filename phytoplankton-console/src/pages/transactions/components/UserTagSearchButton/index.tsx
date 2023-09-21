@@ -17,7 +17,7 @@ export default function TagSearchButton(props: Props) {
     <QuickFilter
       icon={<PriceTagIcon />}
       analyticsName="tag-filter"
-      title="Filter by tag"
+      title="Tag"
       buttonText={isEmpty ? undefined : `${initialState.key ?? '*'}:${initialState.value ?? '*'}`}
       onClear={
         isEmpty

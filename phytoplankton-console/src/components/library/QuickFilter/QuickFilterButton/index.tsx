@@ -1,6 +1,7 @@
 import React from 'react';
 import cn from 'clsx';
 import s from './style.module.less';
+import FilterDefaultIcon from '@/components/ui/icons/Remix/system/filter-line.react.svg';
 import CloseLineIcon from '@/components/ui/icons/Remix/system/close-line.react.svg';
 
 export interface Props {
@@ -22,7 +23,7 @@ export default function QuickFilterButton(props: Props) {
         onClick?.();
       }}
     >
-      {icon && <div className={s.icon}>{icon}</div>}
+      <div className={s.icon}>{icon ?? <FilterDefaultIcon />}</div>
       <div className={s.title}>{buttonText}</div>
       {onClear && (
         <CloseLineIcon

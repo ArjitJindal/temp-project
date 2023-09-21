@@ -111,7 +111,7 @@ export const ApiKeysSettings = () => {
                   defaultWidth: 600,
                 }),
                 columnHelper.simple({
-                  title: 'Created on',
+                  title: 'Created at',
                   key: 'createdAt',
                   type: {
                     render: (key, data) => {

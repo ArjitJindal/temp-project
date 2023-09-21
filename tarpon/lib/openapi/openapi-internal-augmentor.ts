@@ -18,6 +18,20 @@ const env = (process.env.ENV || 'prod').split(':')[0]
 export const ConsoleApiPathToLambda: any = {
   '/tenants': StackConstants.CONSOLE_API_TENANT_FUNCTION_NAME,
   '/tenants/settings': StackConstants.CONSOLE_API_TENANT_FUNCTION_NAME,
+  '/tenants/settings/narrative-template':
+    StackConstants.CONSOLE_API_TENANT_FUNCTION_NAME,
+  '/tenants/settings/narrative-template/{narrativeTemplateId}':
+    StackConstants.CONSOLE_API_TENANT_FUNCTION_NAME,
+  '/tenants/settings/narrative-templates':
+    StackConstants.CONSOLE_API_TENANT_FUNCTION_NAME,
+  '/tenants/settings/checklist-templates':
+    StackConstants.CONSOLE_API_TENANT_FUNCTION_NAME,
+  '/tenants/settings/checklist-templates/{checklistTemplateId}':
+    StackConstants.CONSOLE_API_TENANT_FUNCTION_NAME,
+  '/tenants/settings/rule-queues':
+    StackConstants.CONSOLE_API_TENANT_FUNCTION_NAME,
+  '/tenants/settings/rule-queues/{ruleQueueId}':
+    StackConstants.CONSOLE_API_TENANT_FUNCTION_NAME,
   '/tenants/seed': StackConstants.CONSOLE_API_TENANT_FUNCTION_NAME,
   '/accounts': StackConstants.CONSOLE_API_ACCOUNT_FUNCTION_NAME,
   '/accounts/{accountId}/change_tenant':
@@ -173,22 +187,12 @@ export const ConsoleApiPathToLambda: any = {
   '/device-data/transactions':
     StackConstants.CONSOLE_API_DEVICE_DATA_FUNCTION_NAME,
   '/device-data/users': StackConstants.CONSOLE_API_DEVICE_DATA_FUNCTION_NAME,
-  '/narrative-template':
-    StackConstants.CONSOLE_API_NARRATIVE_TEMPLATE_FUNCTION_NAME,
-  '/narrative-template/{narrativeTemplateId}':
-    StackConstants.CONSOLE_API_NARRATIVE_TEMPLATE_FUNCTION_NAME,
-  '/narrative-templates':
-    StackConstants.CONSOLE_API_NARRATIVE_TEMPLATE_FUNCTION_NAME,
   '/report-types': StackConstants.CONSOLE_API_SAR_FUNCTION_NAME,
   '/reports/draft': StackConstants.CONSOLE_API_SAR_FUNCTION_NAME,
   '/reports': StackConstants.CONSOLE_API_SAR_FUNCTION_NAME,
   '/reports/{reportId}': StackConstants.CONSOLE_API_SAR_FUNCTION_NAME,
   '/reports/{reportId}/draft': StackConstants.CONSOLE_API_SAR_FUNCTION_NAME,
   '/reports/{reportId}/status': StackConstants.CONSOLE_API_SAR_FUNCTION_NAME,
-  '/checklist-templates':
-    StackConstants.CONSOLE_API_CHECKLIST_TEMPLATE_FUNCTION_NAME,
-  '/checklist-templates/{checklistTemplateId}':
-    StackConstants.CONSOLE_API_CHECKLIST_TEMPLATE_FUNCTION_NAME,
   '/alerts/{alertId}/qa': StackConstants.CONSOLE_API_CASE_FUNCTION_NAME,
   '/alerts/qaStatusChange': StackConstants.CONSOLE_API_CASE_FUNCTION_NAME,
   '/alerts/{alertId}/qaAssignment':

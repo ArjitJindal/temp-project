@@ -120,7 +120,7 @@ export default function SimulationHistory(props: SimulationHistoryProps) {
             ),
           }),
           helper.simple<'createdAt'>({
-            title: 'Created on',
+            title: 'Created at',
             key: 'createdAt',
             // dataIndex: 'createdAt',
             sorting: true,

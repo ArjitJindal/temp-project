@@ -220,6 +220,7 @@ export class CaseCreationService {
         ruleAction: hitRule.ruleAction,
         ruleHitMeta: hitRule.ruleHitMeta,
         ruleNature: hitRule.nature,
+        ruleQueueId: ruleInstanceMatch?.queueId,
         numberOfTransactionsHit: transaction ? 1 : 0,
         transactionIds: transaction ? [transaction.transactionId] : [],
         priority: (ruleInstanceMatch?.casePriority ??

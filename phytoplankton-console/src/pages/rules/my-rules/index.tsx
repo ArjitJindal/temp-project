@@ -32,6 +32,7 @@ import { useScrollToFocus } from '@/utils/hooks';
 import { parseQueryString } from '@/utils/routing';
 import { RuleHitInsightsTag } from '@/components/ui/RuleHitInsightsTag';
 import FileCopyLineIcon from '@/components/ui/icons/Remix/document/file-copy-line.react.svg';
+import { RuleQueueTag } from '@/components/rules/RuleQueueTag';
 
 const DEFAULT_SORTING: SortingParamsItem = ['ruleId', 'ascend'];
 
@@ -207,6 +208,16 @@ const MyRule = (props: { simulationMode?: boolean }) => {
           },
         },
       }),
+      helper.simple<'queueId'>({
+        title: 'Queue',
+        key: 'queueId',
+        sorting: true,
+        type: {
+          render: (queueId) => {
+            return <RuleQueueTag queueId={queueId} />;
+          },
+        },
+      }),
       helper.simple<'createdAt'>({
         key: 'createdAt',
         title: 'Created at',
@@ -357,6 +368,8 @@ const MyRule = (props: { simulationMode?: boolean }) => {
         } else if (key === 'updatedAt') {
           result =
             a.updatedAt !== undefined && b.updatedAt !== undefined ? a.updatedAt - b.updatedAt : -1;
+        } else if (key === 'queueId') {
+          result = (b.queueId || 'default') > (a.queueId || 'default') ? 1 : -1;
         }
 
         result *= order === 'descend' ? -1 : 1;

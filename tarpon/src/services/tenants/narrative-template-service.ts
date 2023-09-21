@@ -1,7 +1,7 @@
 import { MongoClient } from 'mongodb'
 import { v4 as uuidv4 } from 'uuid'
 import { NotFound } from 'http-errors'
-import { NarrativeRepository } from './narrative-template-repository'
+import { NarrativeRepository } from './repositories/narrative-template-repository'
 import { NarrativeTemplate } from '@/@types/openapi-internal/NarrativeTemplate'
 import { NarrativeTemplateResponse } from '@/@types/openapi-internal/NarrativeTemplateResponse'
 import { NarrativeTemplateRequest } from '@/@types/openapi-internal/NarrativeTemplateRequest'

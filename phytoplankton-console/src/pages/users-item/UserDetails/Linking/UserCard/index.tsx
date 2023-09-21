@@ -42,7 +42,7 @@ export const UserCard = (props: UserProps) => {
           </div>
         </Form.Layout.Label>
       )}
-      <Form.Layout.Label icon={<TimerLineIcon />} title={'Created on'}>
+      <Form.Layout.Label icon={<TimerLineIcon />} title={'Created at'}>
         {dayjs(user.createdTimestamp).format(DATE_TIME_FORMAT_WITHOUT_SECONDS)}
       </Form.Layout.Label>
     </PropertyColumns>

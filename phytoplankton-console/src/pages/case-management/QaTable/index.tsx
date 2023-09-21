@@ -6,8 +6,7 @@ import { AllParams, TableData, TableRefType } from '@/components/library/Table/t
 import { QueryResult } from '@/utils/queries/types';
 import { TableAlertItem } from '@/pages/case-management/AlertTable/types';
 import { TableSearchParams } from '@/pages/case-management/types';
-import { makeExtraFilters } from '@/pages/case-management/helpers';
-import { useFeatureEnabled } from '@/components/AppWrapper/Providers/SettingsProvider';
+import { useCaseAlertFilters } from '@/pages/case-management/helpers';
 import { ColumnHelper } from '@/components/library/Table/columnHelper';
 import StackLineIcon from '@/components/ui/icons/Remix/business/stack-line.react.svg';
 import {
@@ -17,7 +16,6 @@ import {
   RULE_NATURE,
 } from '@/components/library/Table/standardDataTypes';
 import { useAlertQuery } from '@/pages/case-management/common';
-import { useRuleOptions } from '@/utils/rules';
 import { AssigneesDropdown } from '@/pages/case-management/components/AssigneesDropdown';
 import { message } from '@/components/library/Message';
 import { useAuth0User } from '@/utils/user-utils';
@@ -32,7 +30,6 @@ interface Props {
 
 export default function QaTable(props: Props) {
   const { params, onChangeParams } = props;
-  const isRiskLevelsEnabled = useFeatureEnabled('RISK_LEVELS');
   const queryResults: QueryResult<TableData<TableAlertItem>> = useAlertQuery(params);
   const user = useAuth0User();
   const tableRef = useRef<TableRefType>(null);
@@ -133,11 +130,11 @@ export default function QaTable(props: Props) {
       },
     }),
   ]);
-  const ruleOptions = useRuleOptions();
 
+  const filters = useCaseAlertFilters('ALERTS', false, true);
   const extraFilters = useMemo(
     () =>
-      makeExtraFilters(isRiskLevelsEnabled, ruleOptions, false, 'ALERTS', true).concat({
+      filters.concat({
         key: 'qaAssignment',
         title: 'QA Assigned to',
         showFilterByDefault: true,
@@ -153,7 +150,7 @@ export default function QaTable(props: Props) {
           />
         ),
       }),
-    [isRiskLevelsEnabled, ruleOptions],
+    [filters],
   );
 
   const handleChangeParams = useCallback(

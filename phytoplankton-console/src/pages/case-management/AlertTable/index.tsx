@@ -33,7 +33,7 @@ import AssignToButton from '@/pages/case-management/components/AssignToButton';
 import { useAuth0User } from '@/utils/user-utils';
 import { message } from '@/components/library/Message';
 import { TableSearchParams } from '@/pages/case-management/types';
-import { makeExtraFilters } from '@/pages/case-management/helpers';
+import { useCaseAlertFilters } from '@/pages/case-management/helpers';
 import { useFeatureEnabled } from '@/components/AppWrapper/Providers/SettingsProvider';
 import {
   ASSIGNMENTS,
@@ -56,12 +56,12 @@ import {
   statusInReview,
 } from '@/utils/case-utils';
 import { CASE_STATUSS } from '@/apis/models-custom/CaseStatus';
-import { useRuleOptions } from '@/utils/rules';
 import QaStatusChangeModal from '@/pages/case-management/AlertTable/QaStatusChangeModal';
 import { useQaMode } from '@/utils/qa-mode';
 import Button from '@/components/library/Button';
 import InvestigativeCoPilotModal from '@/pages/case-management/AlertTable/InvestigativeCoPilotModal';
 import { getOr } from '@/utils/asyncResource';
+import { RuleQueueTag } from '@/components/rules/RuleQueueTag';
 
 export type AlertTableParams = AllParams<TableSearchParams> & {
   filterQaStatus?: ChecklistStatus;
@@ -199,6 +199,13 @@ const mergedColumns = (
       type: DATE,
       sorting: true,
     }),
+    helper.simple<'updatedAt'>({
+      title: 'Last updated',
+      key: 'updatedAt',
+      type: DATE,
+      filtering: true,
+      sorting: true,
+    }),
     helper.derived({
       title: 'Assigned to',
       id: '_assigneeName',
@@ -245,6 +252,15 @@ const mergedColumns = (
               }}
             />
           );
+        },
+      },
+    }),
+    helper.simple<'ruleQueueId'>({
+      title: 'Queue',
+      key: 'ruleQueueId',
+      type: {
+        render: (ruleQueueId) => {
+          return <RuleQueueTag queueId={ruleQueueId} />;
         },
       },
     }),
@@ -308,13 +324,6 @@ const mergedColumns = (
         );
       },
     }),
-    helper.simple<'updatedAt'>({
-      title: 'Last updated',
-      key: 'updatedAt',
-      type: DATE,
-      filtering: true,
-      sorting: true,
-    }),
   ]);
 };
 
@@ -342,7 +351,6 @@ export default function AlertTable(props: Props) {
     hideAssignedToFilter,
   } = props;
   const escalationEnabled = useFeatureEnabled('ESCALATION');
-  const isRiskLevelsEnabled = useFeatureEnabled('RISK_LEVELS');
   const sarEnabled = useFeatureEnabled('SAR');
   const [qaMode] = useQaMode();
   const api = useApi();
@@ -474,18 +482,7 @@ export default function AlertTable(props: Props) {
       actionRef.current?.expandRow(alertId);
     }
   }, [queryResults.data]);
-  const ruleOptions = useRuleOptions();
-  const extraFilters = useMemo(
-    () =>
-      makeExtraFilters(
-        isRiskLevelsEnabled,
-        ruleOptions,
-        hideUserFilters,
-        'ALERTS',
-        hideAssignedToFilter,
-      ),
-    [isRiskLevelsEnabled, ruleOptions, hideUserFilters, hideAssignedToFilter],
-  );
+  const filters = useCaseAlertFilters('ALERTS', hideUserFilters, hideAssignedToFilter);
 
   const getSelectionInfo = () => {
     const selectedTransactions = [
@@ -763,7 +760,7 @@ export default function AlertTable(props: Props) {
             .filter(([_, txns]) => txns.length > 0)
             .map(([key]) => key),
         ]}
-        extraFilters={extraFilters}
+        extraFilters={filters}
         pagination={isEmbedded ? 'HIDE_FOR_ONE_PAGE' : true}
         selectionInfo={getSelectionInfo()}
         selectionActions={qaMode ? qaModeSelectionActions : selectionActions}

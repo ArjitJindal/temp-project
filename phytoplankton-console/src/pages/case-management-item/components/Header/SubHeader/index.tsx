@@ -144,7 +144,7 @@ export default function SubHeader(props: Props) {
           </Id>
         </Form.Layout.Label>
 
-        <Form.Layout.Label title={'Created on'}>
+        <Form.Layout.Label title={'Created at'}>
           {dayjs(caseItem.createdTimestamp).format(DATE_TIME_FORMAT_WITHOUT_SECONDS)}
         </Form.Layout.Label>
 

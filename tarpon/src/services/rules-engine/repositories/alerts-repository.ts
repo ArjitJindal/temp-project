@@ -4,7 +4,7 @@ import { v4 as uuidv4 } from 'uuid'
 
 import { NotFound } from 'http-errors'
 import { compact } from 'lodash'
-import { CaseRepository } from './case-repository'
+import { CaseRepository, getRuleQueueFilter } from './case-repository'
 import { MongoDbTransactionRepository } from './mongodb-transaction-repository'
 import {
   lookupPipelineStage,
@@ -258,6 +258,10 @@ export class AlertsRepository {
       conditions.push({
         'alerts.ruleInstanceId': { $in: params.filterRuleInstanceId },
       })
+    }
+
+    if (params.filterRuleQueueIds != null) {
+      conditions.push(getRuleQueueFilter(params.filterRuleQueueIds))
     }
 
     if (params.filterOutAlertStatus && params.filterOutAlertStatus.length > 0) {
@@ -778,6 +782,60 @@ export class AlertsRepository {
           {
             'alert.alertId': {
               $in: alertIds,
+            },
+          },
+        ],
+      }
+    )
+  }
+
+  public async updateRuleQueue(ruleInstanceId: string, ruleQueueId?: string) {
+    const db = this.mongoDb.db()
+    const collection = db.collection<Case>(CASES_COLLECTION(this.tenantId))
+
+    await collection.updateMany(
+      {
+        'alerts.ruleInstanceId': {
+          $eq: ruleInstanceId,
+        },
+      },
+      {
+        $set: {
+          'alerts.$[alert].ruleQueueId': ruleQueueId,
+        },
+      },
+      {
+        arrayFilters: [
+          {
+            'alert.ruleInstanceId': {
+              $eq: ruleInstanceId,
+            },
+          },
+        ],
+      }
+    )
+  }
+
+  public async deleteRuleQueue(ruleQueueId: string) {
+    const db = this.mongoDb.db()
+    const collection = db.collection<Case>(CASES_COLLECTION(this.tenantId))
+
+    await collection.updateMany(
+      {
+        'alerts.ruleQueueId': {
+          $eq: ruleQueueId,
+        },
+      },
+      {
+        $set: {
+          'alerts.$[alert].ruleQueueId': undefined,
+        },
+      },
+      {
+        arrayFilters: [
+          {
+            'alert.ruleQueueId': {
+              $eq: ruleQueueId,
             },
           },
         ],

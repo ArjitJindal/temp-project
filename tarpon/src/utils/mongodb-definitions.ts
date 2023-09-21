@@ -161,6 +161,10 @@ export const CHECKLIST_TEMPLATE_COLLECTION = (tenantId: string) => {
   return `${tenantId}-checklist-templates`
 }
 
+export const RULE_QUEUES_COLLECTION = (tenantId: string) => {
+  return `${tenantId}-rule-queues`
+}
+
 export const MIGRATION_TMP_COLLECTION = 'migration-tmp'
 
 /** Device DATA Metrics collection */
@@ -359,6 +363,7 @@ export function getMongoDbIndexDefinitions(tenantId: string): {
           { 'alerts.updatedAt': 1 },
           { 'alerts.alertId': 1 },
           { 'alerts.ruleInstanceId': 1 },
+          { 'alerts.ruleQueueId': 1 },
           { 'alerts.alertStatus': 1 },
           { 'alerts.assignments.assigneeUserId': 1 },
           { 'alerts.assignments.timestamp': 1 },

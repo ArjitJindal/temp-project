@@ -83,7 +83,7 @@ export default function ReportsTable() {
       },
     }),
     helper.simple<'createdAt'>({
-      title: 'Created on',
+      title: 'Created at',
       key: 'createdAt',
       type: DATE,
     }),

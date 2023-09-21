@@ -3132,6 +3132,12 @@ paths:
               type: string
           in: query
           name: filterRuleInstanceId
+        - schema:
+            type: array
+            items:
+              type: string
+          in: query
+          name: filterRuleQueueIds
   /alerts/statusChange:
     patch:
       summary: Alerts - Status Change
@@ -3560,6 +3566,12 @@ paths:
               $ref: '#/components/schemas/CaseType'
           in: query
           name: filterCaseTypes
+        - schema:
+            type: array
+            items:
+              type: string
+          in: query
+          name: filterRuleQueueIds
     post:
       summary: Create a Manual Case
       operationId: post-cases-manual
@@ -4279,7 +4291,7 @@ paths:
           in: query
           name: userId
           required: true
-  /narrative-templates:
+  /tenants/settings/narrative-templates:
     get:
       summary: Get narratives
       operationId: get-narratives
@@ -4303,7 +4315,7 @@ paths:
           in: query
           name: page
           required: true
-  /narrative-template:
+  /tenants/settings/narrative-template:
     post:
       summary: Create narrative
       operationId: post-narrative-template
@@ -4323,7 +4335,7 @@ paths:
             schema:
               $ref: '#/components/schemas/NarrativeTemplateRequest'
         required: true
-  '/narrative-template/{narrativeTemplateId}':
+  '/tenants/settings/narrative-template/{narrativeTemplateId}':
     get:
       summary: Get narrative
       operationId: get-narrative-template
@@ -4565,7 +4577,7 @@ paths:
             schema:
               $ref: '#/components/schemas/ReportStatusUpdateRequest'
         required: true
-  /checklist-templates:
+  /tenants/settings/checklist-templates:
     get:
       summary: Get checklist templates
       tags: []
@@ -4616,7 +4628,7 @@ paths:
             schema:
               $ref: '#/components/schemas/ChecklistTemplate'
         required: true
-  '/checklist-templates/{checklistTemplateId}':
+  '/tenants/settings/checklist-templates/{checklistTemplateId}':
     parameters:
       - schema:
           type: string
@@ -4658,6 +4670,105 @@ paths:
     delete:
       summary: Delete a checklist template
       operationId: delete-checklist-template
+      x-flagright:
+        permissions:
+          - settings:organisation:write
+      responses:
+        '200':
+          description: OK
+  /tenants/settings/rule-queues:
+    get:
+      summary: Get rule queues
+      tags: []
+      x-flagright:
+        permissions:
+          - settings:organisation:read
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RuleQueuesResponse'
+      operationId: get-rule-queues
+      parameters:
+        - schema:
+            $ref: '#/components/schemas/PageSize'
+          in: query
+          name: pageSize
+        - schema:
+            $ref: '#/components/schemas/Page'
+          in: query
+          name: page
+        - schema:
+            type: string
+          in: query
+          name: filterName
+        - schema:
+            type: string
+          in: query
+          name: filterId
+    post:
+      summary: Create a rule queue
+      operationId: post-rule-queue
+      x-flagright:
+        permissions:
+          - settings:organisation:write
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RuleQueue'
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RuleQueue'
+        required: true
+  '/tenants/settings/rule-queues/{ruleQueueId}':
+    parameters:
+      - schema:
+          type: string
+        name: ruleQueueId
+        in: path
+        required: true
+    get:
+      summary: Get a rule queue
+      operationId: get-rule-queue
+      x-flagright:
+        permissions:
+          - settings:organisation:read
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RuleQueue'
+    put:
+      summary: Update a rule queue
+      operationId: put-rule-queue
+      x-flagright:
+        permissions:
+          - settings:organisation:write
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RuleQueue'
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RuleQueue'
+        required: true
+    delete:
+      summary: Delete a rule queue
+      operationId: delete-rule-queue
       x-flagright:
         permissions:
           - settings:organisation:write
@@ -5106,6 +5217,8 @@ components:
         source:
           type: string
         checklistTemplateId:
+          type: string
+        queueId:
           type: string
         alertCreationInterval:
           oneOf:
@@ -7060,6 +7173,8 @@ components:
           $ref: ../public/openapi-public-original.yaml#/components/schemas/RuleNature
         ruleHitMeta:
           $ref: ../public/openapi-public-original.yaml#/components/schemas/RuleHitMeta
+        ruleQueueId:
+          type: string
         numberOfTransactionsHit:
           type: integer
         priority:
@@ -9327,6 +9442,41 @@ components:
           type: array
           items:
             $ref: '#/components/schemas/ChecklistTemplate'
+      required:
+        - total
+        - data
+    RuleQueue:
+      type: object
+      properties:
+        id:
+          type: string
+        name:
+          type: string
+        description:
+          type: string
+        createdAt:
+          type: integer
+        updatedAt:
+          type: integer
+        createdBy:
+          type: string
+      required:
+        - name
+      title: RuleQueue
+      x-stoplight:
+        id: ca9cefbb8996d
+    RuleQueuesResponse:
+      type: object
+      title: RuleQueuesResponse
+      x-stoplight:
+        id: 7ff7dc9430408
+      properties:
+        total:
+          type: number
+        data:
+          type: array
+          items:
+            $ref: '#/components/schemas/RuleQueue'
       required:
         - total
         - data

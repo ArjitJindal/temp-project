@@ -26,7 +26,7 @@ export default function SubHeader(props: Props) {
   return (
     <div className={s.root}>
       <div className={s.attributes}>
-        <Form.Layout.Label title="Created on" className={s.attribute}>
+        <Form.Layout.Label title="Created at" className={s.attribute}>
           {dayjs(transaction.timestamp).format(DATE_TIME_FORMAT_WITHOUT_SECONDS)}
         </Form.Layout.Label>
         <Form.Layout.Label title="State" className={s.attribute}>

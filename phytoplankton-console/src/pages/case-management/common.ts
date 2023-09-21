@@ -40,6 +40,7 @@ export function useAlertQuery(
       filterQaStatus,
       filterOutQaStatus,
       qaAssignment,
+      ruleQueueIds,
     } = params;
     const [sortField, sortOrder] = sort[0] ?? [];
 
@@ -65,6 +66,7 @@ export function useAlertQuery(
       filterOriginPaymentMethods: originMethodFilter,
       filterDestinationPaymentMethods: destinationMethodFilter,
       filterRulesHit: rulesHitFilter,
+      filterRuleQueueIds: ruleQueueIds,
       sortField: sortField === 'age' ? 'createdTimestamp' : sortField,
       sortOrder: sortOrder ?? undefined,
       ...(createdTimestamp

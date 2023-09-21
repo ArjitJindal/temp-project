@@ -158,17 +158,11 @@ export const StackConstants = {
   CONSOLE_API_SANCTIONS_FUNCTION_NAME: getResourceNameForTarpon(
     'ConsoleApiSanctionsFunction'
   ),
-  CONSOLE_API_NARRATIVE_TEMPLATE_FUNCTION_NAME: getResourceNameForTarpon(
-    'ConsoleApiNarrativeFunction'
-  ),
   CONSOLE_API_INCOMING_WEBHOOKS_FUNCTION_NAME: getResourceNameForTarpon(
     'ConsoleApiIncomingWebhooksFunction'
   ),
   CONSOLE_API_SAR_FUNCTION_NAME: getResourceNameForTarpon(
     'ConsoleApiSarFunction'
-  ),
-  CONSOLE_API_CHECKLIST_TEMPLATE_FUNCTION_NAME: getResourceNameForTarpon(
-    'ConsoleApiChecklistTemplateFunction'
   ),
   LAMBDA_LATEST_ALIAS_NAME: 'LATEST',
   JWT_AUTHORIZER_CACHE_TTL_SECONDS: 3600,

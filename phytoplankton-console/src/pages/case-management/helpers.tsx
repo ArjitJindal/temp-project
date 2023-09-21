@@ -5,7 +5,7 @@ import GavelIcon from './gavel.react.svg';
 import { dayjs } from '@/utils/dayjs';
 import '../../components/ui/colors';
 import { Adapter } from '@/utils/routing';
-import { isRuleAction, isTransactionState } from '@/utils/rules';
+import { isRuleAction, isTransactionState, useRuleOptions } from '@/utils/rules';
 import { TableSearchParams } from '@/pages/case-management/types';
 import { isMode } from '@/pages/transactions/components/UserSearchPopup/types';
 import { defaultQueryAdapter } from '@/components/library/Table/queryAdapter';
@@ -21,6 +21,8 @@ import { ScopeSelectorValue } from '@/pages/case-management/components/ScopeSele
 import { CASE_TYPES } from '@/apis/models-custom/CaseType';
 import { humanizeConstant } from '@/utils/humanize';
 import { PRIORITYS } from '@/apis/models-custom/Priority';
+import { useFeatureEnabled } from '@/components/AppWrapper/Providers/SettingsProvider';
+import { useRuleQueues } from '@/components/rules/util';
 
 export const queryAdapter: Adapter<TableSearchParams> = {
   serializer: (params) => {
@@ -61,6 +63,7 @@ export const queryAdapter: Adapter<TableSearchParams> = {
       qaAssignment: params.qaAssignment?.join(','),
       updatedAt: params['updatedAt']?.map((x) => dayjs(x).valueOf()).join(','),
       alertPriority: params.alertPriority?.join(','),
+      ruleQueueIds: params.ruleQueueIds?.join(','),
     };
   },
   deserializer: (raw): TableSearchParams => {
@@ -120,18 +123,20 @@ export const queryAdapter: Adapter<TableSearchParams> = {
       alertPriority: raw?.alertPriority?.split(
         ',',
       ) as unknown as TableSearchParams['alertPriority'],
+      ruleQueueIds: raw.ruleQueueIds?.split(','),
     };
   },
 };
 
-export const makeExtraFilters = (
-  isRiskLevelsEnabled: boolean,
-  ruleOptions: { value: string; label: string }[],
-  hideUserFilters: boolean,
+export const useCaseAlertFilters = (
   table: 'ALERTS' | 'CASES',
+  hideUserFilters: boolean,
   hideAssignedToFilter?: boolean,
-): ExtraFilter<TableSearchParams>[] =>
-  denseArray([
+): ExtraFilter<TableSearchParams>[] => {
+  const isRiskLevelsEnabled = useFeatureEnabled('RISK_LEVELS');
+  const ruleOptions = useRuleOptions();
+  const ruleQueues = useRuleQueues();
+  return denseArray([
     {
       title: 'Case ID',
       key: 'caseId',
@@ -291,4 +296,18 @@ export const makeExtraFilters = (
         />
       ),
     },
+    {
+      title: 'Queue',
+      key: 'ruleQueueIds',
+      renderer: {
+        kind: 'select',
+        mode: 'MULTIPLE',
+        displayMode: 'list',
+        options: [{ value: 'default', label: 'default' }].concat(
+          ruleQueues.map((v) => ({ value: v.id!, label: v.name })),
+        ),
+      },
+      showFilterByDefault: true,
+    },
   ]);
+};

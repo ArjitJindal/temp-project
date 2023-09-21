@@ -1,10 +1,10 @@
 import * as csvFormat from '@fast-csv/format'
-import { customAlphabet } from 'nanoid'
 import { S3, GetObjectCommand } from '@aws-sdk/client-s3'
 import { Upload } from '@aws-sdk/lib-storage'
 import { AggregationCursor } from 'mongodb'
 import { getSignedUrl } from '@aws-sdk/s3-request-presigner'
 import dayjs from '@/utils/dayjs'
+import { shortId } from '@/utils/id'
 
 type CsvAction<T> = T extends string | number | boolean
   ? 'INCLUDE' | 'SKIP'
@@ -71,8 +71,6 @@ export interface ExportInfo {
   downloadUrl: string
 }
 
-const nanoId = customAlphabet('1234567890abcdef', 8)
-
 export class ExportService<T> {
   entityName: string
   s3: S3
@@ -89,7 +87,7 @@ export class ExportService<T> {
     headerSettings: CsvHeaderSettings<T>
   ): Promise<ExportInfo> {
     const date = dayjs().format('YYYYMMDD-HHmmss')
-    const randomId = nanoId()
+    const randomId = shortId()
     const filename = `export-${this.entityName}-list-${date}-${randomId}.csv`
     const bucket = this.tmpBucketName
 

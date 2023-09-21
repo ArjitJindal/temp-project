@@ -12,6 +12,8 @@ import { RuleRepository } from '@/services/rules-engine/repositories/rule-reposi
 import { RuleInstanceRepository } from '@/services/rules-engine/repositories/rule-instance-repository'
 import { RuleAuditLogService } from '@/services/rules-engine/rules-audit-log-service'
 import { Handlers } from '@/@types/openapi-internal-custom/DefaultApi'
+import { AlertsRepository } from '@/services/rules-engine/repositories/alerts-repository'
+import { getMongoDbClient } from '@/utils/mongodb-utils'
 
 export const ruleHandler = lambdaApi()(
   async (
@@ -65,9 +67,13 @@ export const ruleInstanceHandler = lambdaApi()(
     const tenantId = (event.requestContext.authorizer?.principalId ||
       event.queryStringParameters?.tenantId) as string
     const dynamoDb = getDynamoDbClientByEvent(event)
+    const mongoDb = await getMongoDbClient()
     const ruleRepository = new RuleRepository(tenantId, { dynamoDb })
     const ruleInstanceRepository = new RuleInstanceRepository(tenantId, {
       dynamoDb,
+    })
+    const alertsRepository = new AlertsRepository(tenantId, {
+      mongoDb,
     })
     const ruleService = new RuleService(ruleRepository, ruleInstanceRepository)
     const rulesAuditLogService = new RuleAuditLogService(tenantId)
@@ -86,6 +92,12 @@ export const ruleInstanceHandler = lambdaApi()(
         id: request.ruleInstanceId,
         ...request.RuleInstance,
       })
+      if (oldRuleInstance?.queueId !== newRuleInstance.queueId) {
+        await alertsRepository.updateRuleQueue(
+          request.ruleInstanceId,
+          newRuleInstance.queueId
+        )
+      }
       await rulesAuditLogService.handleAuditLogForRuleInstanceUpdated(
         oldRuleInstance,
         newRuleInstance

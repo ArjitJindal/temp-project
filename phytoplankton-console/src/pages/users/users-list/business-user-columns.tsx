@@ -94,7 +94,7 @@ export function getBusinessUserColumns(): TableColumn<InternalBusinessUser>[] {
       type: TAGS,
     }),
     helper.simple<'createdTimestamp'>({
-      title: 'Created on',
+      title: 'Created at',
       type: DATE,
       key: 'createdTimestamp',
       sorting: true,

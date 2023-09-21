@@ -483,30 +483,6 @@ export class CdkTarponConsoleLambdaStack extends cdk.NestedStack {
       batchJobQueue,
     })
 
-    /* NarrativeTemplate function */
-    createFunction(
-      this,
-      lambdaExecutionRole,
-      {
-        name: StackConstants.CONSOLE_API_NARRATIVE_TEMPLATE_FUNCTION_NAME,
-        auditLogTopic,
-        batchJobQueue,
-      },
-      functionProps
-    )
-
-    /* Checklist template function */
-    createFunction(
-      this,
-      lambdaExecutionRole,
-      {
-        name: StackConstants.CONSOLE_API_CHECKLIST_TEMPLATE_FUNCTION_NAME,
-        auditLogTopic,
-        batchJobQueue,
-      },
-      functionProps
-    )
-
     /* Get Risk Scores */
     createFunction(
       this,

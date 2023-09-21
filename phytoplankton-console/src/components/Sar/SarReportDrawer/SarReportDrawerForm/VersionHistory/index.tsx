@@ -15,7 +15,7 @@ export default function VersionHistory({ report }: { report: Report }) {
       sorting: true,
     }),
     helper.simple<'createdAt'>({
-      title: 'Created on',
+      title: 'Created at',
       key: 'createdAt',
       type: DATE,
     }),

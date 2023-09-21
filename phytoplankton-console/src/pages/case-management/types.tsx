@@ -53,6 +53,7 @@ export type CommonCaseParams = {
   filterQaStatus?: ChecklistStatus;
   filterOutQaStatus?: ChecklistStatus[];
   alertPriority: Priority[];
+  ruleQueueIds?: string[];
 };
 
 export type TableSearchParams = CommonParams & {

@@ -9,6 +9,7 @@ import {
 } from 'mongodb'
 
 import { DynamoDBDocumentClient } from '@aws-sdk/lib-dynamodb'
+import { isEmpty } from 'lodash'
 import {
   lookupPipelineStage,
   paginatePipeline,
@@ -46,6 +47,21 @@ import { InternalTransaction } from '@/@types/openapi-internal/InternalTransacti
 type CaseWithoutCaseTransactions = Omit<Case, 'caseTransactions'>
 
 export const MAX_TRANSACTION_IN_A_CASE = 1000
+
+export function getRuleQueueFilter(ruleQueueIds: string[]) {
+  return {
+    $or: [
+      {
+        'alerts.ruleQueueId': { $in: ruleQueueIds },
+      },
+      ruleQueueIds.includes('default')
+        ? {
+            'alerts.ruleQueueId': { $eq: null },
+          }
+        : {},
+    ].filter((v) => !isEmpty(v)),
+  }
+}
 
 export type CaseListOptions = {
   includeCaseTransactionIds?: boolean
@@ -407,6 +423,10 @@ export class CaseRepository {
       conditions.push({
         'alerts.ruleInstanceId': { $in: params.filterRulesHit },
       })
+    }
+
+    if (params.filterRuleQueueIds != null) {
+      conditions.push(getRuleQueueFilter(params.filterRuleQueueIds))
     }
 
     if (params.filterOriginCurrencies != null) {

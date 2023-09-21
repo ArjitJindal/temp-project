@@ -52,7 +52,7 @@ export default function SearchQuickFilter<T extends ItemType>(props: Props<T>) {
           value={value}
           onChange={onChange}
           onSearch={onSearch}
-          searchPlaceholder={'Search user name or ID'}
+          searchPlaceholder={'Search'}
           messageRenderers={messageRenderers}
           renderItem={renderItem}
         />

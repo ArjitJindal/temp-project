@@ -108,6 +108,7 @@ export function ruleInstanceToFormValues(
           ruleLabels: ruleInstance.labels,
           ruleInstanceId: ruleInstance.id,
           falsePositiveCheckEnabled: ruleInstance.falsePositiveCheckEnabled,
+          queueId: ruleInstance.queueId,
           checklistTemplateId: ruleInstance.checklistTemplateId,
         } as RuleConfigurationFormValues['basicDetailsStep'],
         standardFiltersStep: ruleInstance.filters,
@@ -159,6 +160,7 @@ export function formValuesToRuleInstance(
     nature: basicDetailsStep.ruleNature,
     labels: basicDetailsStep.ruleLabels,
     falsePositiveCheckEnabled: basicDetailsStep.falsePositiveCheckEnabled,
+    queueId: basicDetailsStep.queueId,
     checklistTemplateId: basicDetailsStep.checklistTemplateId,
     ...(isRiskLevelsEnabled
       ? {

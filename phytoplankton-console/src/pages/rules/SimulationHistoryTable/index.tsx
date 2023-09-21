@@ -93,7 +93,7 @@ export function SimulationHistoryTable() {
             },
           }),
           helper.simple<'createdAt'>({
-            title: 'Created on',
+            title: 'Created at',
             key: 'createdAt',
             sorting: true,
             type: DATE,

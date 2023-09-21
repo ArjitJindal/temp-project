@@ -19,6 +19,7 @@ import { ProfessionalServicesSettings } from './components/ProfessionalServicesS
 import { SanctionsSettings } from './components/SanctionsSettings';
 import { ProductionAccessControl } from './components/ProductionAccessControl';
 import { AISources } from './components/AISources';
+import { RuleQueuesSettings } from './components/RuleQueuesSettings';
 import PageWrapper from '@/components/PageWrapper';
 import { useI18n } from '@/locales';
 import { Feature, useFeatureEnabled } from '@/components/AppWrapper/Providers/SettingsProvider';
@@ -58,6 +59,7 @@ export default function SettingsPage() {
           <>
             <NarrativeTemplates />
             <ChecklistTemplatesSettings />
+            <RuleQueuesSettings />
             <Feature name="COPILOT">
               <AISources />
             </Feature>

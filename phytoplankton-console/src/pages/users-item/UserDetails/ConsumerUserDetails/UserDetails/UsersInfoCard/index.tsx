@@ -49,7 +49,7 @@ export default function UsersInfoCard(props: Props) {
         </Form.Layout.Label>
       </div>
       <div className={s.time}>
-        <Form.Layout.Label icon={<TimerLineIcon />} title={'Created on'}>
+        <Form.Layout.Label icon={<TimerLineIcon />} title={'Created at'}>
           {dayjs(user.createdTimestamp).format(DATE_TIME_FORMAT_WITHOUT_SECONDS)}
         </Form.Layout.Label>
       </div>

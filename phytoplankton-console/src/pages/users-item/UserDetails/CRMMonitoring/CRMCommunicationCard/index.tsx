@@ -27,7 +27,7 @@ export default function CRMCommunicationCard(props: Props) {
           <div className={styles.commentHeader}>
             <span className={styles.bold}>{name ?? 'No name'}</span>
             {tab === 'tasks' && <span className={styles.greyText}>Edited on: {date}</span>}
-            {tab === 'notes' && <span className={styles.greyText}>Created on: {date}</span>}
+            {tab === 'notes' && <span className={styles.greyText}>Created at: {date}</span>}
             {tab === 'emails' && (
               <span className={styles.greyText}>
                 to{' '}

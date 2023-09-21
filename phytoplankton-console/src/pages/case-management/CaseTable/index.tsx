@@ -35,7 +35,7 @@ import CalendarLineIcon from '@/components/ui/icons/Remix/business/calendar-line
 import AssignToButton from '@/pages/case-management/components/AssignToButton';
 import { message } from '@/components/library/Message';
 import { useApi } from '@/api';
-import { makeExtraFilters } from '@/pages/case-management/helpers';
+import { useCaseAlertFilters } from '@/pages/case-management/helpers';
 import {
   ASSIGNMENTS,
   CASE_STATUS,
@@ -144,7 +144,7 @@ export default function CaseTable(props: Props) {
         sorting: true,
       }),
       helper.simple<'createdTimestamp'>({
-        title: 'Created on',
+        title: 'Created at',
         key: 'createdTimestamp',
         type: DATE,
         sorting: true,
@@ -275,6 +275,13 @@ export default function CaseTable(props: Props) {
           reload: reloadTable,
         }),
       }),
+      helper.simple<'updatedAt'>({
+        title: 'Last updated',
+        key: 'updatedAt',
+        type: DATE,
+        filtering: true,
+        sorting: true,
+      }),
       helper.display({
         title: 'Operations',
         enableResizing: false,
@@ -365,17 +372,6 @@ export default function CaseTable(props: Props) {
         ],
       );
     }
-    mergedColumns.push(
-      ...[
-        helper.simple<'updatedAt'>({
-          title: 'Last updated',
-          key: 'updatedAt',
-          type: DATE,
-          filtering: true,
-          sorting: true,
-        }),
-      ],
-    );
 
     return mergedColumns;
   }, [
@@ -390,6 +386,7 @@ export default function CaseTable(props: Props) {
   ]);
 
   const escalationEnabled = useFeatureEnabled('ESCALATION');
+  const filters = useCaseAlertFilters('CASES', false, hideAssignedToFilter);
   return (
     <QueryResultsTable<TableItem, TableSearchParams>
       innerRef={tableRef}
@@ -409,13 +406,7 @@ export default function CaseTable(props: Props) {
       queryResults={tableQueryResult}
       params={params}
       onChangeParams={onChangeParams}
-      extraFilters={makeExtraFilters(
-        isRiskLevelsEnabled,
-        props.rules,
-        false,
-        'CASES',
-        hideAssignedToFilter,
-      )}
+      extraFilters={filters}
       selectionInfo={
         selectedCases.length
           ? {

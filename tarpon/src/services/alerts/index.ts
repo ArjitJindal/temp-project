@@ -63,7 +63,7 @@ import { JWTAuthorizerResult } from '@/@types/jwt'
 import { isStatusInReview } from '@/utils/helpers'
 import { ChecklistStatus } from '@/@types/openapi-internal/ChecklistStatus'
 import { AlertQaStatusUpdateRequest } from '@/@types/openapi-internal/AlertQaStatusUpdateRequest'
-import { ChecklistTemplatesService } from '@/services/checklist-templates'
+import { ChecklistTemplatesService } from '@/services/tenants/checklist-template-service'
 
 @traceable
 export class AlertsService extends CaseAlertsCommonService {

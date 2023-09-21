@@ -70,7 +70,7 @@ export function getConsumerUserColumns(): TableColumn<InternalConsumerUser>[] {
       type: TAGS,
     }),
     helper.simple<'createdTimestamp'>({
-      title: 'Created on',
+      title: 'Created at',
       key: 'createdTimestamp',
       type: DATE,
       sorting: true,

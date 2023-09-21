@@ -232,12 +232,6 @@ export const LAMBDAS: {
     expectedMaxSeconds: DEFAULT_LAMBDA_EXPECTED_MAX_SECONDS,
     timeoutSeconds: DEFAULT_LAMBDA_TIMEOUT_SECONDS,
   },
-  [StackConstants.CONSOLE_API_NARRATIVE_TEMPLATE_FUNCTION_NAME]: {
-    codePath: 'console-api-narrative-template',
-    handlerName: 'narrativeTemplateHandler',
-    expectedMaxSeconds: DEFAULT_LAMBDA_EXPECTED_MAX_SECONDS,
-    timeoutSeconds: DEFAULT_LAMBDA_TIMEOUT_SECONDS,
-  },
   [StackConstants.CONSOLE_API_SIMULATION_FUNCTION_NAME]: {
     codePath: 'console-api-simulation',
     handlerName: 'simulationHandler',
@@ -322,12 +316,6 @@ export const LAMBDAS: {
   [StackConstants.CONSOLE_API_SAR_FUNCTION_NAME]: {
     codePath: 'console-api-sar',
     handlerName: 'sarHandler',
-    expectedMaxSeconds: DEFAULT_LAMBDA_EXPECTED_MAX_SECONDS,
-    timeoutSeconds: DEFAULT_LAMBDA_TIMEOUT_SECONDS,
-  },
-  [StackConstants.CONSOLE_API_CHECKLIST_TEMPLATE_FUNCTION_NAME]: {
-    codePath: 'console-api-checklist-template',
-    handlerName: 'checklistTemplateHandler',
     expectedMaxSeconds: DEFAULT_LAMBDA_EXPECTED_MAX_SECONDS,
     timeoutSeconds: DEFAULT_LAMBDA_TIMEOUT_SECONDS,
   },
