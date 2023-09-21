@@ -930,37 +930,6 @@ export type AssetAttributeTypeCode = '1' | '2' | '3' | '4'
  */
 export type AssetAttribute = AssetsAttributeType[]
 /**
- * This element is the container for information about narrative description associated with the FinCEN SAR.
- *
- * @maxItems 5
- */
-export type Narrative =
-  | []
-  | [ActivityNarrativeInformationType]
-  | [ActivityNarrativeInformationType, ActivityNarrativeInformationType]
-  | [
-      ActivityNarrativeInformationType,
-      ActivityNarrativeInformationType,
-      ActivityNarrativeInformationType
-    ]
-  | [
-      ActivityNarrativeInformationType,
-      ActivityNarrativeInformationType,
-      ActivityNarrativeInformationType,
-      ActivityNarrativeInformationType
-    ]
-  | [
-      ActivityNarrativeInformationType,
-      ActivityNarrativeInformationType,
-      ActivityNarrativeInformationType,
-      ActivityNarrativeInformationType,
-      ActivityNarrativeInformationType
-    ]
-/**
- * This element identifies the sequence in which the narrative text should be constructed in the event that multiple ActivityNarrativeInformation element blocks are needed to record the entire narrative
- */
-export type NarrativeSequenceNumber = '1' | '2' | '3' | '4' | '5'
-/**
  * This element records the narrative description associated with the suspicious activity. The narrative must provide a clear, complete, and concise description of the activity, including what was unusual or irregular that caused suspicion.
  */
 export type NarrativeDescription = string
@@ -968,7 +937,7 @@ export type NarrativeDescription = string
 /**
  * Schema tag attributes: xmlns='www.fincen.gov/base' xmlns:xsd='http://www.w3.org/2001/XMLSchema' xmlns:vc='http://www.w3.org/2007/XMLSchema-versioning' xmlns:fc2='www.fincen.gov/base' xmlns:xsi='http://www.w3.org/2001/XMLSchema-instance' targetNamespace='www.fincen.gov/base' elementFormDefault='qualified' attributeFormDefault='unqualified' vc:minVersion='1.1'
  */
-export interface ThisJSONSchemaFileWasGeneratedFromSchemaOnMonAug072023050547GMT0200CentralEuropeanSummerTimeForMoreInformationPleaseSeeHttpWwwXsd2JsonschemaOrg {
+export interface ThisJSONSchemaFileWasGeneratedFromSchemaOnThuSep212023132514GMT0530IndiaStandardTimeForMoreInformationPleaseSeeHttpWwwXsd2JsonschemaOrg {
   EFilingBatchXML?: BatchAcknowledgement
   [k: string]: unknown
 }
@@ -1179,9 +1148,10 @@ export interface AssetsAttributeType {
   '@SeqNum'?: undefined
   [k: string]: unknown
 }
-export interface ActivityNarrativeInformationType {
-  ActivityNarrativeSequenceNumber: NarrativeSequenceNumber
+/**
+ * This element is the container for information about narrative description associated with the FinCEN SAR.
+ */
+export interface Narrative {
   ActivityNarrativeText: NarrativeDescription
-  '@SeqNum'?: undefined
   [k: string]: unknown
 }

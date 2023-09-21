@@ -5,7 +5,7 @@ import os from 'os'
 import * as Sentry from '@sentry/serverless'
 import { BadRequest } from 'http-errors'
 import { XMLBuilder } from 'fast-xml-parser'
-import { isEqual, omit, cloneDeep, compact } from 'lodash'
+import { isEqual, omit, cloneDeep, compact, chunk } from 'lodash'
 import { InternalReportType, ReportGenerator } from '../..'
 import {
   ContactOffice,
@@ -71,7 +71,12 @@ function removeEmptyString<T>(object: T): T {
     })
   )
 }
-
+function createNarrativeBlocks(narrative: string) {
+  return chunk(narrative, 4000).map((c, i) => ({
+    ActivityNarrativeSequenceNumber: `${i + 1}`,
+    ActivityNarrativeText: c.join(''),
+  }))
+}
 export class UsSarReportGenerator implements ReportGenerator {
   tenantId!: string
   getType(): InternalReportType {
@@ -456,6 +461,13 @@ export class UsSarReportGenerator implements ReportGenerator {
       ...(reportParams.transactionMetadata?.subjects ?? []),
       ...(reportParams.transactionMetadata?.financialInstitutions ?? []),
     ]
+
+    // Autofilling ActivityNarrativeSequenceNumber
+    reportParams.report.generalInfo.ActivityNarrativeInformation =
+      createNarrativeBlocks(
+        reportParams.report?.generalInfo?.ActivityNarrativeInformation
+          ?.ActivityNarrativeText
+      )
 
     return removeEmptyString({
       EFilingBatchXML: {

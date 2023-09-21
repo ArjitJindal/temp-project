@@ -11,12 +11,9 @@ const testInputParams = {
         CorrectsAmendsPriorReportIndicator: 'Y',
         JointReportIndicator: '',
       },
-      ActivityNarrativeInformation: [
-        {
-          ActivityNarrativeSequenceNumber: '1',
-          ActivityNarrativeText: 'Test narrative',
-        },
-      ],
+      ActivityNarrativeInformation: {
+        ActivityNarrativeText: 'Test narrative',
+      },
       ActivitySupportDocument: {
         OriginalAttachmentFileName: 'test-attachment.pdf',
       },

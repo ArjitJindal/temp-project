@@ -7,6 +7,7 @@ import { isObject, keys, omit, pick } from 'lodash'
 import { compile } from 'json-schema-to-typescript'
 import { XMLParser } from 'fast-xml-parser'
 import { AttributeInfos } from './attribute-infos'
+import { removeActivityBlockOrder } from '@/services/sar/utils/augmentations/removeActivityBlockOrder'
 import { removeUnnecessaryOneOf } from '@/services/sar/utils/augmentations/removeUnnecessaryOneOf'
 
 // Augment the auto-generated json schema by adding additional information (e.g title) and
@@ -57,10 +58,10 @@ function augmentJsonSchema(
           }
         }
       }
-
       augmentJsonSchema(xml, localObj, attributesInfo)
     }
   })
+
   return object
 }
 
@@ -81,7 +82,6 @@ const convertedSchemas = xs2js.processAllSchemas({
   schemas: { schema: XML_SCHEMA },
 })
 let jsonSchema = convertedSchemas['schema'].getJsonSchema()
-
 // EFilingBatchXML is the root element. We only need to keep 'EFilingBatchXML' in 'properties'.
 jsonSchema.properties = pick(jsonSchema.properties, 'EFilingBatchXML')
 jsonSchema = omit(jsonSchema, 'anyOf')
@@ -92,7 +92,7 @@ jsonSchema = augmentJsonSchema(
     [key: string]: { title: string; description: string }
   }
 )
-
+jsonSchema = removeActivityBlockOrder(jsonSchema)
 fs.writeFileSync(
   path.join(__dirname, '..', 'resources', 'EFL_SARXBatchSchema.ts'),
   `export const FincenJsonSchema = ${JSON.stringify(jsonSchema, null, 2)}`

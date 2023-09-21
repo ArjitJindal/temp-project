@@ -2,7 +2,7 @@ export const FincenJsonSchema = {
   $id: 'schema.json',
   $schema: 'http://json-schema.org/draft-07/schema#',
   title:
-    'This JSON Schema file was generated from schema on Mon Aug 07 2023 05:05:47 GMT+0200 (Central European Summer Time).  For more information please see http://www.xsd2jsonschema.org',
+    'This JSON Schema file was generated from schema on Thu Sep 21 2023 13:25:14 GMT+0530 (India Standard Time).  For more information please see http://www.xsd2jsonschema.org',
   description:
     "Schema tag attributes: xmlns='www.fincen.gov/base' xmlns:xsd='http://www.w3.org/2001/XMLSchema' xmlns:vc='http://www.w3.org/2007/XMLSchema-versioning' xmlns:fc2='www.fincen.gov/base' xmlns:xsi='http://www.w3.org/2001/XMLSchema-instance' targetNamespace='www.fincen.gov/base' elementFormDefault='qualified' attributeFormDefault='unqualified' vc:minVersion='1.1'",
   properties: {
@@ -82,20 +82,17 @@ export const FincenJsonSchema = {
       type: 'object',
     },
     ActivityNarrativeInformationType: {
-      required: ['ActivityNarrativeSequenceNumber', 'ActivityNarrativeText'],
+      required: ['ActivityNarrativeText'],
       properties: {
-        ActivityNarrativeSequenceNumber: {
-          $ref: '#/definitions/ValidateActivityNarrativeSequenceNumber',
-          title: 'Narrative (sequence number)',
-          description:
-            'This element identifies the sequence in which the narrative text should be constructed in the event that multiple ActivityNarrativeInformation element blocks are needed to record the entire narrative',
-        },
         ActivityNarrativeText: {
-          $ref: '#/definitions/RestrictString4000',
+          maxLength: 16000,
+          type: 'string',
           title: 'Narrative (description)',
           description:
             'This element records the narrative description associated with the suspicious activity. The narrative must provide a clear, complete, and concise description of the activity, including what was unusual or irregular that caused suspicion. ',
-          'ui:schema': { 'ui:subtype': 'NARRATIVE' },
+          'ui:schema': {
+            'ui:subtype': 'NARRATIVE',
+          },
         },
       },
       type: 'object',
@@ -917,7 +914,7 @@ export const FincenJsonSchema = {
               },
               maxItems: 99,
               type: 'array',
-              title: 'Cyber Event',
+              title: 'Cyber event',
               description:
                 'This element is the container for information about cyber event involved in the suspicious activity',
             },
@@ -942,11 +939,7 @@ export const FincenJsonSchema = {
                 'This element is the container for information about the asset attribute involved in the suspicious activity, whether it be a type of commodity, product/instrument, market where traded, and/or CUSIP number',
             },
             ActivityNarrativeInformation: {
-              items: {
-                $ref: '#/definitions/ActivityNarrativeInformationType',
-              },
-              maxItems: 5,
-              type: 'array',
+              $ref: '#/definitions/ActivityNarrativeInformationType',
               title: 'Narrative',
               description:
                 'This element is the container for information about narrative description associated with the FinCEN SAR.',
@@ -1260,7 +1253,7 @@ export const FincenJsonSchema = {
       maximum: 2147483647,
       minimum: -2147483648,
       enum: ['1', '2', '3', '4', '5', '11', '12', '999'],
-      type: 'string',
+      type: 'integer',
       enumNames: [
         'Casino/Card club',
         'Depository institution',
@@ -1297,7 +1290,7 @@ export const FincenJsonSchema = {
         '1999',
         '5999',
       ],
-      type: 'string',
+      type: 'integer',
       enumNames: [
         'State licensed casino',
         'Tribal authorized casino',
@@ -1414,7 +1407,7 @@ export const FincenJsonSchema = {
       maximum: 2147483647,
       minimum: -2147483648,
       enum: ['1', '12', '3', '4', '5', '6', '7', '8', '9', '10', '11'],
-      type: 'string',
+      type: 'integer',
       enumNames: [
         'Structuring',
         'Gaming activities',
@@ -1525,7 +1518,7 @@ export const FincenJsonSchema = {
         '11999',
         '12999',
       ],
-      type: 'string',
+      type: 'integer',
       enumNames: [
         'Suspicious inquiry by customer regarding BSA reporting or recordkeeping requirements',
         'Alters or cancels transaction to avoid BSA recordkeeping requirement',
@@ -1657,7 +1650,7 @@ export const FincenJsonSchema = {
         '46',
         '47',
       ],
-      type: 'string',
+      type: 'integer',
       enumNames: [
         'Other Financial instrument, product or service',
         'Bonds/Notes',
@@ -1698,7 +1691,7 @@ export const FincenJsonSchema = {
       maximum: 9223372036854776000,
       minimum: -9223372036854776000,
       enum: ['5', '6'],
-      type: 'string',
+      type: 'integer',
       enumNames: [
         'Financial Product',
         'Financial instrument or payment mechanism',
@@ -1709,7 +1702,7 @@ export const FincenJsonSchema = {
       maximum: 9223372036854776000,
       minimum: -9223372036854776000,
       enum: ['1', '2', '3', '4'],
-      type: 'string',
+      type: 'integer',
       enumNames: [
         'CUSIP Number',
         'Commodity Type Description',
@@ -1741,7 +1734,7 @@ export const FincenJsonSchema = {
       maximum: 2147483647,
       minimum: -2147483648,
       enum: ['1', '2', '3', '4', '5'],
-      type: 'string',
+      type: 'integer',
       enumNames: [
         'First block of narrative text (character set 1-4000)',
         'Second block of narrative text (character set 4001-8000, if needed)',
