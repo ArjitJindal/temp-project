@@ -3,7 +3,6 @@ import { ManipulateType } from 'dayjs'
 import { phoneNumber } from '../data/address'
 import { sampleCountry } from './countries'
 import { sampleString } from './strings'
-import { sampleBusinessUserRiskScoreComponents } from './risk_score_components'
 import { sampleTag } from './tag'
 import { KYCStatus } from '@/@types/openapi-internal/KYCStatus'
 import { KYCStatusDetails } from '@/@types/openapi-internal/KYCStatusDetails'
@@ -21,18 +20,13 @@ import { CountryCode } from '@/@types/openapi-internal/CountryCode'
 import { MerchantMonitoringSummary } from '@/@types/openapi-internal/MerchantMonitoringSummary'
 import { MerchantMonitoringSourceType } from '@/@types/openapi-internal/MerchantMonitoringSourceType'
 import { MERCHANT_MONITORING_SOURCE_TYPES } from '@/@types/openapi-internal-custom/MerchantMonitoringSourceType'
-import { DrsScore } from '@/@types/openapi-internal/DrsScore'
-import { KrsScore } from '@/@types/openapi-internal/KrsScore'
 import { BUSINESS_USER_SEGMENTS } from '@/@types/openapi-internal-custom/BusinessUserSegment'
 import { PAYMENT_METHODS } from '@/@types/openapi-internal-custom/PaymentMethod'
 import { samplePaymentDetails } from '@/core/seed/samplers/transaction'
 import { randomAddress } from '@/core/seed/samplers/address'
 import { randomUserRules, userRules } from '@/core/seed/data/rules'
-import { getRiskLevelFromScore } from '@/services/risk-scoring/utils'
-import { DEFAULT_CLASSIFICATION_SETTINGS } from '@/services/risk-scoring/repositories/risk-repository'
 import { ACQUISITION_CHANNELS } from '@/@types/openapi-internal-custom/AcquisitionChannel'
 import dayjs from '@/utils/dayjs'
-
 import { Person } from '@/@types/openapi-internal/Person'
 import { ConsumerName } from '@/@types/openapi-public/ConsumerName'
 import { CURRENCY_CODES } from '@/@types/openapi-public-custom/CurrencyCode'
@@ -153,30 +147,12 @@ const legalDocument = (name: ConsumerName): LegalDocument => {
 export function sampleBusinessUser(
   { company, country }: { company?: CompanySeedData; country?: CountryCode },
   seed = 0.1
-): { user: InternalBusinessUser; drsScore: DrsScore; krsScore: KrsScore } {
+): { user: InternalBusinessUser } {
   const name = company?.name || randomName()
   const domain = name.toLowerCase().replace(' ', '').replace('&', '')
-  const drsScore = Number((randomFloat() * 100).toFixed(2))
-  const krsScore = Number((randomFloat() * 100).toFixed(2))
   const userId = uuid4()
   const paymentMethod = samplePaymentDetails()
-  const drsScoreData: DrsScore = {
-    createdAt: sampleTimestamp(),
-    userId: userId,
-    derivedRiskLevel: getRiskLevelFromScore(
-      DEFAULT_CLASSIFICATION_SETTINGS,
-      drsScore
-    ),
-    drsScore: drsScore,
-    isUpdatable: true,
-  }
-  const krsScoreData: KrsScore = {
-    createdAt: sampleTimestamp(),
-    krsScore: krsScore,
-    userId: userId,
-    riskLevel: getRiskLevelFromScore(DEFAULT_CLASSIFICATION_SETTINGS, krsScore),
-    components: sampleBusinessUserRiskScoreComponents(),
-  }
+
   const timestamp = sampleTimestamp(seed)
   const user: InternalBusinessUser = {
     type: 'BUSINESS',
@@ -188,13 +164,11 @@ export function sampleBusinessUser(
       },
       sampleTag(),
     ],
-    drsScore: drsScoreData,
     userStateDetails: sampleUserStateDetails(seed),
     executedRules: userRules,
     hitRules: randomUserRules().filter(
       (r) => !r.ruleName.toLowerCase().includes('consumer')
     ),
-    krsScore: krsScoreData,
     updatedAt: timestamp,
     comments: [],
     kycStatusDetails: sampleKycStatusDetails(seed),
@@ -313,8 +287,6 @@ export function sampleBusinessUser(
 
   return {
     user,
-    drsScore: drsScoreData,
-    krsScore: krsScoreData,
   }
 }
 

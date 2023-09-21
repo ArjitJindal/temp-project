@@ -1,5 +1,4 @@
 import { v4 as uuid4 } from 'uuid'
-import { sampleConsumerUserRiskScoreComponents } from '../samplers/risk_score_components'
 import { sampleTag } from '../samplers/tag'
 import { randomUserRules, userRules } from './rules'
 import {
@@ -12,23 +11,17 @@ import {
 import { sampleTimestamp } from '@/core/seed/samplers/timestamp'
 import { InternalBusinessUser } from '@/@types/openapi-internal/InternalBusinessUser'
 import { InternalConsumerUser } from '@/@types/openapi-internal/InternalConsumerUser'
-import { pickRandom, randomFloat } from '@/utils/prng'
+import { pickRandom } from '@/utils/prng'
 import { companies, randomName } from '@/core/seed/samplers/dictionary'
 import { COUNTRY_CODES } from '@/@types/openapi-internal-custom/CountryCode'
 import { RISK_LEVEL1S } from '@/@types/openapi-internal-custom/RiskLevel1'
 import { MerchantMonitoringSummary } from '@/@types/openapi-internal/MerchantMonitoringSummary'
-import { DrsScore } from '@/@types/openapi-internal/DrsScore'
-import { KrsScore } from '@/@types/openapi-internal/KrsScore'
 import { randomAddress } from '@/core/seed/samplers/address'
-import { DEFAULT_CLASSIFICATION_SETTINGS } from '@/services/risk-scoring/repositories/risk-repository'
-import { getRiskLevelFromScore } from '@/services/risk-scoring/utils'
 import { ACQUISITION_CHANNELS } from '@/@types/openapi-internal-custom/AcquisitionChannel'
 import { CONSUMER_USER_SEGMENTS } from '@/@types/openapi-internal-custom/ConsumerUserSegment'
 
 const data: (InternalBusinessUser | InternalConsumerUser)[] = []
 const merchantMonitoring: MerchantMonitoringSummary[] = []
-const drsData: DrsScore[] = []
-const krsData: KrsScore[] = []
 
 const init = () => {
   if (data.length > 0) {
@@ -42,9 +35,8 @@ const init = () => {
       user: InternalBusinessUser
       merchantMonitoring: MerchantMonitoringSummary[]
     } => {
-      const { user, drsScore, krsScore } = sampleBusinessUser({ company: c }, i)
-      drsData.push(drsScore)
-      krsData.push(krsScore)
+      const { user } = sampleBusinessUser({ company: c }, i)
+
       return {
         user,
         merchantMonitoring: merchantMonitoringSummaries(user.userId, c),
@@ -56,39 +48,15 @@ const init = () => {
     ...businessUserData.flatMap((b) => b.merchantMonitoring)
   )
 
-  const classificationValues = DEFAULT_CLASSIFICATION_SETTINGS
-
   data.push(
     ...[
       ...businessUserData.map((b) => b.user),
       ...[...new Array(30)].map((_, i): InternalConsumerUser => {
         const userId = uuid4()
-        const drsScore = Number((randomFloat(i * 2) * 100).toFixed(2))
-        const krsScore = Number((randomFloat(i * 2) * 100).toFixed(2))
-        const drsUserData = {
-          createdAt: sampleTimestamp(i),
-          userId: userId,
-          derivedRiskLevel: getRiskLevelFromScore(
-            classificationValues,
-            drsScore
-          ),
-          drsScore: drsScore,
-          isUpdatable: true,
-        } as DrsScore
-        drsData.push(drsUserData)
-        const krsUserData = {
-          createdAt: sampleTimestamp(i),
-          krsScore: krsScore,
-          userId: userId,
-          riskLevel: getRiskLevelFromScore(classificationValues, krsScore),
-          components: sampleConsumerUserRiskScoreComponents(),
-        } as KrsScore
-        krsData.push(krsUserData)
-        return {
+
+        const user: InternalConsumerUser = {
           type: 'CONSUMER' as const,
           userId,
-          drsScore: drsUserData,
-          krsScore: krsUserData,
           riskLevel: pickRandom(RISK_LEVEL1S, i),
           acquisitionChannel: pickRandom(ACQUISITION_CHANNELS),
           userSegment: pickRandom(CONSUMER_USER_SEGMENTS),
@@ -118,9 +86,11 @@ const init = () => {
           createdTimestamp: sampleTimestamp(0.9 * i),
           tags: [sampleTag()],
         }
+
+        return user
       }),
     ]
   )
 }
 
-export { init, data, merchantMonitoring, drsData, krsData }
+export { init, data, merchantMonitoring }

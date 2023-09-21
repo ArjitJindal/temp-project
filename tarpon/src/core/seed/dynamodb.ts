@@ -2,6 +2,7 @@ import { DynamoDBDocumentClient } from '@aws-sdk/lib-dynamodb'
 import { omit } from 'lodash'
 import { syncRulesLibrary } from '../../../scripts/migrations/always-run/sync-rules-library'
 import { logger } from '../logger'
+import { init as riskScoresInit } from './data/risk-scores'
 import { UserRepository } from '@/services/users/repositories/user-repository'
 import { TenantRepository } from '@/services/tenants/repositories/tenant-repository'
 import { init as userInit, data as usersData } from '@/core/seed/data/users'
@@ -32,6 +33,7 @@ export async function seedDynamo(
   userInit()
   listsInit()
   txnInit()
+  riskScoresInit()
 
   const userRepo = new UserRepository(tenantId, {
     dynamoDb: dynamoDb,

@@ -1,4 +1,5 @@
 import { random } from 'lodash'
+import { sampleTransactionRiskScoreComponents } from '../samplers/risk_score_components'
 import { data as users } from './users'
 import { sampleTransaction } from '@/core/seed/samplers/transaction'
 import { sampleTag } from '@/core/seed/samplers/tag'
@@ -98,29 +99,7 @@ const generator = function* (seed: number): Generator<InternalTransaction> {
         destinationUserId,
         riskLevel: pickRandom(RISK_LEVEL1S),
         arsScore: Number((randomFloat(i * 2) * 100).toFixed(2)),
-        components: [
-          {
-            entityType: 'TRANSACTION',
-            score: randomFloat(100),
-            parameter: 'some txn parameter',
-            riskLevel: pickRandom(RISK_LEVEL1S),
-            value: 'Some txn value',
-          },
-          {
-            entityType: 'CONSUMER_USER',
-            score: randomFloat(100),
-            parameter: 'Some user parameter',
-            riskLevel: pickRandom(RISK_LEVEL1S),
-            value: 'Some user value',
-          },
-          {
-            entityType: 'TRANSACTION',
-            score: randomFloat(100),
-            parameter: 'timestamp',
-            riskLevel: pickRandom(RISK_LEVEL1S),
-            value: timestamp,
-          },
-        ],
+        components: sampleTransactionRiskScoreComponents(transaction),
       },
       executedRules: transactionRules,
       originAmountDetails: {

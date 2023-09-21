@@ -43,6 +43,9 @@ export const columns = helper.list([
   helper.simple({
     title: 'Risk score',
     key: 'riskScore',
+    type: {
+      render: (value) => <>{Number((value ?? 0).toFixed(2))}</>,
+    },
   }),
   helper.simple({
     title: 'Risk level',

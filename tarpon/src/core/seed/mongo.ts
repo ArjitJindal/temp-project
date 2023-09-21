@@ -1,5 +1,10 @@
 import { MongoClient } from 'mongodb'
 import { logger } from '../logger'
+import {
+  drsScores,
+  krsScores,
+  init as riskScoresInit,
+} from './data/risk-scores'
 import { allCollections, createMongoDBCollections } from '@/utils/mongodb-utils'
 import {
   ARS_SCORES_COLLECTION,
@@ -25,8 +30,6 @@ import { init as caseInit, data as cases } from '@/core/seed/data/cases'
 import {
   init as userInit,
   data as users,
-  drsData as drs,
-  krsData as krs,
   merchantMonitoring,
 } from '@/core/seed/data/users'
 import { init as auditLogInit, auditlogs } from '@/core/seed/data/auditlogs'
@@ -64,10 +67,10 @@ const collections: [(tenantId: string) => string, Iterable<unknown>][] = [
   [TRANSACTIONS_COLLECTION, transactions],
   [CASES_COLLECTION, cases],
   [USERS_COLLECTION, users],
-  [KRS_SCORES_COLLECTION, krs],
+  [KRS_SCORES_COLLECTION, krsScores],
   [AUDITLOG_COLLECTION, auditlogs],
   [ARS_SCORES_COLLECTION, ars],
-  [DRS_SCORES_COLLECTION, drs],
+  [DRS_SCORES_COLLECTION, drsScores],
   [TRANSACTION_EVENTS_COLLECTION, transactionEvents],
   [MERCHANT_MONITORING_DATA_COLLECTION, merchantMonitoring],
   [SANCTIONS_SEARCHES_COLLECTION, sanctions],
@@ -129,6 +132,7 @@ export async function seedMongo(client: MongoClient, tenantId: string) {
   initRules()
   userInit()
   txnInit()
+  riskScoresInit()
   caseInit()
   auditLogInit()
   arsInit()
