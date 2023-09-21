@@ -89,20 +89,23 @@ export const TransactionByRulesAction: StackedBarchartQuestion<Period> = {
     const countsMap = new Map(results.map((item) => [item._id.date, item]))
 
     const datesArray = dates(period)
-    return RULE_ACTIONS.map(
-      (ruleAction): { label: string; values: { x: string; y: number }[] } => {
-        return {
-          label: ruleAction,
-          values: datesArray.map((x) => {
-            const counts = countsMap.get(x)
-            if (counts) {
-              return { x, y: counts[ruleAction] }
-            }
-            return { x, y: 0 }
-          }),
+    return {
+      data: RULE_ACTIONS.map(
+        (ruleAction): { label: string; values: { x: string; y: number }[] } => {
+          return {
+            label: ruleAction,
+            values: datesArray.map((x) => {
+              const counts = countsMap.get(x)
+              if (counts) {
+                return { x, y: counts[ruleAction] }
+              }
+              return { x, y: 0 }
+            }),
+          }
         }
-      }
-    )
+      ),
+      summary: '',
+    }
   },
   variableOptions: {
     ...periodVars,

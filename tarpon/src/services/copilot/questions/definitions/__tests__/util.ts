@@ -35,7 +35,7 @@ export async function testQuestion<V extends Variables, D>(
     _case: c,
     alert,
   }
-  const data = await q.aggregationPipeline(ctx, { ...q.defaults(ctx), ...v })
+  const result = await q.aggregationPipeline(ctx, { ...q.defaults(ctx), ...v })
 
-  assertions(data)
+  assertions(result.data)
 }

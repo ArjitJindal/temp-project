@@ -54,9 +54,12 @@ export const UniquePaymentIdentifierReceived: TableQuestion<
       ])
       .toArray()
 
-    return result.map((r) => {
-      return [r._id.paymentMethodId, r._id.type]
-    })
+    return {
+      data: result.map((r) => {
+        return [r._id.paymentMethodId, r._id.type]
+      }),
+      summary: '',
+    }
   },
   headers: [
     { name: 'Destination payment identifier', columnType: 'ID' },

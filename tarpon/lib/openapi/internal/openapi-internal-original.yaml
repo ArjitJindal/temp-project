@@ -4855,6 +4855,8 @@ components:
           type: string
         title:
           type: string
+        summary:
+          type: string
         questionType:
           type: string
         createdAt:

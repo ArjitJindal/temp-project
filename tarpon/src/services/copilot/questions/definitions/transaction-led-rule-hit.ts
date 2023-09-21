@@ -74,15 +74,18 @@ export const TransactionLedRuleHit: TableQuestion<any> = {
       }
     )
 
-    return sortBy(transactionsThatLedToRuleHit, 'timestamp')
-      .reverse()
-      .map((t) => {
-        return [
-          t.transactionId,
-          `${t.originAmountDetails?.transactionAmount}`,
-          t.timestamp,
-        ]
-      })
+    return {
+      data: sortBy(transactionsThatLedToRuleHit, 'timestamp')
+        .reverse()
+        .map((t) => {
+          return [
+            t.transactionId,
+            `${t.originAmountDetails?.transactionAmount}`,
+            t.timestamp,
+          ]
+        }),
+      summary: '',
+    }
   },
   variableOptions: {},
   defaults: () => {

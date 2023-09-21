@@ -46,9 +46,12 @@ export const SarsFiled: TableQuestion<Period> = {
       ])
       .toArray()
 
-    return result.map((r) => {
-      return [r.id, r.description, r.caseUserId, r.caseId]
-    })
+    return {
+      data: result.map((r) => {
+        return [r.id, r.description, r.caseUserId, r.caseId]
+      }),
+      summary: '',
+    }
   },
   headers: [
     { name: 'SAR ID', columnType: 'ID' },

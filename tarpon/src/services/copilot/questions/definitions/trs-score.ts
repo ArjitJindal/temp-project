@@ -67,17 +67,20 @@ export const TrsScore: TimeseriesQuestion<Period> = {
 
     const avgMap = new Map(results.map((item) => [item._id.date, item.avg]))
 
-    return [
-      {
-        label: '',
-        values: dates(period).map((d) => {
-          return {
-            time: new Date(d).valueOf(),
-            value: avgMap.get(d) || 0,
-          }
-        }),
-      },
-    ]
+    return {
+      data: [
+        {
+          label: '',
+          values: dates(period).map((d) => {
+            return {
+              time: new Date(d).valueOf(),
+              value: avgMap.get(d) || 0,
+            }
+          }),
+        },
+      ],
+      summary: '',
+    }
   },
   variableOptions: {
     ...periodVars,

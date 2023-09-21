@@ -140,9 +140,9 @@ export class QuestionService {
     }
 
     varObject = { ...question.defaults(ctx), ...varObject }
-
     const common = {
       questionId,
+      summary: '',
       variableOptions: Object.entries(question.variableOptions).map(
         ([name, variableType]): QuestionVariableOption => {
           return {
@@ -162,9 +162,11 @@ export class QuestionService {
     }
 
     if (question.type === 'TABLE') {
+      const result = await question.aggregationPipeline(ctx, varObject)
       return {
         ...common,
-        rows: await question?.aggregationPipeline(ctx, varObject),
+        rows: result.data,
+        summary: result.summary,
         headers: question.headers.map((c) => ({
           name: c.name,
           columnType: c.columnType,
@@ -172,21 +174,27 @@ export class QuestionService {
       }
     }
     if (question.type === 'STACKED_BARCHART') {
+      const result = await question.aggregationPipeline(ctx, varObject)
       return {
         ...common,
-        series: await question?.aggregationPipeline(ctx, varObject),
+        summary: result.summary,
+        series: result.data,
       }
     }
     if (question.type === 'TIME_SERIES') {
+      const result = await question.aggregationPipeline(ctx, varObject)
       return {
         ...common,
-        timeseries: await question?.aggregationPipeline(ctx, varObject),
+        summary: result.summary,
+        timeseries: result.data,
       }
     }
     if (question.type === 'BARCHART') {
+      const result = await question.aggregationPipeline(ctx, varObject)
       return {
         ...common,
-        values: await question?.aggregationPipeline(ctx, varObject),
+        summary: result.summary,
+        values: result.data,
       }
     }
     throw new Error(`Unsupported question type`)

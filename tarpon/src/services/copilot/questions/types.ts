@@ -26,7 +26,7 @@ export type Question<V extends Variables, D> = {
   aggregationPipeline: (
     context: InvestigationContext,
     variables: V
-  ) => Promise<D>
+  ) => Promise<{ data: D; summary: string }>
   variableOptions: VariableOptions<V>
   defaults: (ctx: InvestigationContext) => V
 }

@@ -56,9 +56,12 @@ export const UsersReceivedMoneyFrom: TableQuestion<Period & { top: number }> = {
       ])
       .toArray()
 
-    return result.map((r) => {
-      return [r.user.userId, getUserName(r.user), r.user.type]
-    })
+    return {
+      data: result.map((r) => {
+        return [r.user.userId, getUserName(r.user), r.user.type]
+      }),
+      summary: '',
+    }
   },
   headers: [
     { name: 'User ID', columnType: 'ID' },

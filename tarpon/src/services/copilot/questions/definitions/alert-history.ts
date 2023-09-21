@@ -29,16 +29,19 @@ export const AlertHistory: TableQuestion<Period> = {
       })
       .toArray()
 
-    return result.flatMap((r) => {
-      return (
-        r.alerts?.map((a) => [
-          a.alertId,
-          r.createdTimestamp,
-          r.caseStatus,
-          r.lastStatusChange?.reason?.join(', '),
-        ]) || []
-      )
-    })
+    return {
+      data: result.flatMap((r) => {
+        return (
+          r.alerts?.map((a) => [
+            a.alertId,
+            r.createdTimestamp,
+            r.caseStatus,
+            r.lastStatusChange?.reason?.join(', '),
+          ]) || []
+        )
+      }),
+      summary: '',
+    }
   },
   headers: [
     { name: 'Alert ID', columnType: 'ID' },

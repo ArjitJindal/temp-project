@@ -51,21 +51,24 @@ export const AlertsRelatedToTransaction: TableQuestion<
       ])
       .toArray()
 
-    return result.flatMap((r) => {
-      return r.alerts.map((a) => {
-        return [
-          a.alertId,
-          a.ruleId,
-          a.ruleDescription,
-          a.alertStatus,
-          a.createdTimestamp,
-          a.alertStatus === 'CLOSED'
-            ? a.lastStatusChange?.reason?.join(', ')
-            : '-',
-          r.reports.map((r) => r.id).join(', '),
-        ]
-      })
-    })
+    return {
+      data: result.flatMap((r) => {
+        return r.alerts.map((a) => {
+          return [
+            a.alertId,
+            a.ruleId,
+            a.ruleDescription,
+            a.alertStatus,
+            a.createdTimestamp,
+            a.alertStatus === 'CLOSED'
+              ? a.lastStatusChange?.reason?.join(', ')
+              : '-',
+            r.reports.map((r) => r.id).join(', '),
+          ]
+        })
+      }),
+      summary: '',
+    }
   },
   headers: [
     { name: 'Alert ID', columnType: 'ID' },

@@ -45,7 +45,7 @@ export const TransactionType: BarchartQuestion<Period> = {
         },
       ])
       .toArray()
-    return results.map((r) => ({ x: r._id, y: r.count }))
+    return { data: results.map((r) => ({ x: r._id, y: r.count })), summary: '' }
   },
   variableOptions: {
     ...periodVars,

@@ -29,14 +29,17 @@ export const CaseHistory: TableQuestion<Period> = {
       })
       .toArray()
 
-    return result.map((r) => {
-      return [
-        r.caseId,
-        r.createdTimestamp,
-        r.caseStatus,
-        r.lastStatusChange?.reason?.join(', '),
-      ]
-    })
+    return {
+      data: result.map((r) => {
+        return [
+          r.caseId,
+          r.createdTimestamp,
+          r.caseStatus,
+          r.lastStatusChange?.reason?.join(', '),
+        ]
+      }),
+      summary: '',
+    }
   },
   headers: [
     { name: 'Case ID', columnType: 'ID' },
