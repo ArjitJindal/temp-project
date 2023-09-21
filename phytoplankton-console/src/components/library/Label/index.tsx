@@ -6,7 +6,7 @@ import { InputProps } from '@/components/library/Form';
 export interface Props extends InputProps<string> {
   label: React.ReactNode;
   children: React.ReactNode;
-  position?: 'TOP' | 'RIGHT';
+  position?: 'TOP' | 'RIGHT' | 'LEFT';
   level?: 1 | 2 | 3 | 4;
   description?: string;
   element?: 'label' | 'div';
@@ -53,21 +53,30 @@ export default function Label(props: Props) {
       className: cn(s.root, s[`position-${position}`], s[`level-${level}`]),
       ['data-cy']: testId,
     },
-    position === 'RIGHT' ? (
-      <>
-        <div className={s.row}>
-          {children}
-          {labelEl}
-        </div>
-        {descriptionEl}
-      </>
-    ) : (
+    position === 'TOP' ? (
       <>
         <div className={s.labelDescription}>
           {labelEl}
           {descriptionEl}
         </div>
         {children}
+      </>
+    ) : (
+      <>
+        <div className={s.row}>
+          {position === 'RIGHT' ? (
+            <>
+              {children}
+              {labelEl}
+            </>
+          ) : (
+            <>
+              {labelEl}
+              {children}
+            </>
+          )}
+        </div>
+        {descriptionEl}
       </>
     ),
   );

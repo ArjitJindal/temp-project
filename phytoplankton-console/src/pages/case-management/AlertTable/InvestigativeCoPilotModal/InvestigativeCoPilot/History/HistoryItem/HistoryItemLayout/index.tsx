@@ -1,15 +1,11 @@
 import React, { useState } from 'react';
 import cn from 'clsx';
 import { QuestionResponseBase } from '../../../types';
-import { variablesFromApi } from '../../../api';
 import s from './index.module.less';
 import AISummary from './AISummary';
+import Variables, { VariablesValues } from './Variables';
+import MetaInfo from './MetaInfo';
 import BrainIcon from '@/components/ui/icons/brain-icon-colored.react.svg';
-import Button from '@/components/library/Button';
-import VariablesPopover, {
-  VariablesValues,
-} from '@/pages/case-management/AlertTable/InvestigativeCoPilotModal/InvestigativeCoPilot/History/HistoryItem/HistoryItemLayout/VariablesPopover';
-import MetaInfo from '@/pages/case-management/AlertTable/InvestigativeCoPilotModal/InvestigativeCoPilot/History/HistoryItem/HistoryItemLayout/MetaInfo';
 
 interface Props {
   item: QuestionResponseBase;
@@ -21,7 +17,7 @@ interface Props {
 export default function HistoryItemBase(props: Props) {
   const { item, children, isLoading, onRefresh } = props;
   const [initialVariablesState, setInitialVarsValues] = useState(
-    variablesFromApi(item.variables, item.variableOptions),
+    item.variables?.reduce((acc, x) => ({ ...acc, [x.name]: x.value }), {}) ?? {},
   );
   const [showAiSummary, setShowAiSummary] = useState(false);
   const [addToNarrative, setAddToNarrative] = useState<boolean | undefined>(true);
@@ -34,18 +30,14 @@ export default function HistoryItemBase(props: Props) {
         <div className={s.title}>{title}</div>
         <div className={s.tools}>
           {variableOptions && variableOptions.length > 0 && (
-            <VariablesPopover
+            <Variables
               initialValues={initialVariablesState}
               variables={variableOptions}
               onConfirm={(variablesValues) => {
                 setInitialVarsValues(variablesValues);
                 onRefresh(variablesValues);
               }}
-            >
-              <Button size="SMALL" type="TETRIARY">
-                Parameters
-              </Button>
-            </VariablesPopover>
+            />
           )}
           <BrainIcon
             className={s.brainIcon}

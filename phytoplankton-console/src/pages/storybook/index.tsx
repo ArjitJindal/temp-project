@@ -54,6 +54,7 @@ import { Component } from '@/pages/storybook/components';
 import Widget from '@/components/library/Widget/story';
 import WidgetGrid from '@/components/library/WidgetGrid/story';
 import Narrative from '@/components/Narrative/story';
+import Line from '@/pages/dashboard/analysis/components/charts/Line/story';
 
 const config: Config = [
   {
@@ -235,6 +236,10 @@ const config: Config = [
       {
         key: '@/components/ui/RiskScoreDisplay',
         story: RiskScoreDisplay,
+      },
+      {
+        key: '@/pages/dashboard/analysis/components/charts/Line/story',
+        story: Line,
       },
       {
         key: 'JsonSchemaEditor',
