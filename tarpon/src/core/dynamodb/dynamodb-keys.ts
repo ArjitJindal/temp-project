@@ -41,6 +41,20 @@ export const KRS_KEY_IDENTIFIER = '#krs-value'
 export const ARS_KEY_IDENTIFIER = '#ars-value'
 export const DRS_KEY_IDENTIFIER = '#drs-value'
 
+type AuxiliaryIndexTransactionSortKeyData = {
+  timestamp: number
+  transactionId: string
+}
+
+function getAuxiliaryIndexTransactionSortKey(
+  sortKeyData?: AuxiliaryIndexTransactionSortKeyData
+) {
+  if (!sortKeyData) {
+    return ''
+  }
+  return `${sortKeyData.timestamp}-${sortKeyData.transactionId}`
+}
+
 export const DynamoDbKeys = {
   // Attributes: refer to Transaction
   TRANSACTION: (tenantId: string, transactionId?: string) => ({
@@ -62,7 +76,7 @@ export const DynamoDbKeys = {
     paymentDetails: PaymentDetails | undefined,
     direction: 'sending' | 'receiving' | 'all',
     transactionType?: string,
-    timestamp?: number
+    sortKeyData?: AuxiliaryIndexTransactionSortKeyData
   ) => {
     return userId === undefined
       ? paymentDetails &&
@@ -71,14 +85,14 @@ export const DynamoDbKeys = {
             paymentDetails,
             direction,
             transactionType,
-            timestamp
+            sortKeyData
           )
       : DynamoDbKeys.USER_TRANSACTION(
           tenantId,
           userId,
           direction,
           transactionType,
-          timestamp
+          sortKeyData
         )
   },
   // Attributes: [transactionId]
@@ -87,7 +101,7 @@ export const DynamoDbKeys = {
     paymentDetails: PaymentDetails,
     direction: 'sending' | 'receiving' | 'all',
     transactionType?: string,
-    timestamp?: number
+    sortKeyData?: AuxiliaryIndexTransactionSortKeyData
   ) => {
     const tranasctionTypeKey = getTransactionTypeKey(transactionType)
     const identifiers = getPaymentDetailsIdentifiers(paymentDetails)
@@ -112,7 +126,7 @@ export const DynamoDbKeys = {
       }
       return {
         PartitionKeyID: `${tenantId}#transaction#${tranasctionTypeKey}#paymentDetails#${identifier}#${direction}`,
-        SortKeyID: `${timestamp}`,
+        SortKeyID: getAuxiliaryIndexTransactionSortKey(sortKeyData),
       }
     } else {
       const identifiersString = Object.entries(identifiers)
@@ -120,7 +134,7 @@ export const DynamoDbKeys = {
         .join('#')
       return {
         PartitionKeyID: `${tenantId}#transaction#${tranasctionTypeKey}#paymentDetails#${identifiersString}#${direction}`,
-        SortKeyID: `${timestamp}`,
+        SortKeyID: getAuxiliaryIndexTransactionSortKey(sortKeyData),
       }
     }
   },
@@ -130,29 +144,29 @@ export const DynamoDbKeys = {
     userId: string,
     direction: 'sending' | 'receiving' | 'all',
     transactionType?: string,
-    timestamp?: number
+    sortKeyData?: AuxiliaryIndexTransactionSortKeyData
   ) => {
     const tranasctionTypeKey = getTransactionTypeKey(transactionType)
     return {
       PartitionKeyID: `${tenantId}#transaction#${tranasctionTypeKey}#${USER_ID_PREFIX}${userId}#${direction}`,
-      SortKeyID: `${timestamp}`,
+      SortKeyID: getAuxiliaryIndexTransactionSortKey(sortKeyData),
     }
   },
   ORIGIN_IP_ADDRESS_TRANSACTION: (
     tenantId: string,
     ipAddress: string,
-    timestamp?: number
+    sortKeyData?: AuxiliaryIndexTransactionSortKeyData
   ) => ({
     PartitionKeyID: `${tenantId}#transaction#ip:${ipAddress}`,
-    SortKeyID: `${timestamp}`,
+    SortKeyID: getAuxiliaryIndexTransactionSortKey(sortKeyData),
   }),
   DESTINATION_IP_ADDRESS_TRANSACTION: (
     tenantId: string,
     ipAddress: string,
-    timestamp?: number
+    sortKeyData?: AuxiliaryIndexTransactionSortKeyData
   ) => ({
     PartitionKeyID: `${tenantId}#transaction#destination_ip:${ipAddress}`,
-    SortKeyID: `${timestamp}`,
+    SortKeyID: getAuxiliaryIndexTransactionSortKey(sortKeyData),
   }),
   // Attributes: refer to Rule
   RULE: (ruleId?: string) => ({

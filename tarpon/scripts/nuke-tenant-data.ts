@@ -100,16 +100,18 @@ async function deleteTransaction(transaction: Transaction) {
     getNonUserReceiverKeys(tenantId, transaction),
     getNonUserReceiverKeys(tenantId, transaction, transaction.type),
     originIpAddress &&
-      DynamoDbKeys.ORIGIN_IP_ADDRESS_TRANSACTION(
-        tenantId,
-        originIpAddress,
-        transaction.timestamp
-      ),
+      DynamoDbKeys.ORIGIN_IP_ADDRESS_TRANSACTION(tenantId, originIpAddress, {
+        timestamp: transaction.timestamp,
+        transactionId: transaction.transactionId,
+      }),
     destinationIpAddress &&
       DynamoDbKeys.DESTINATION_IP_ADDRESS_TRANSACTION(
         tenantId,
         destinationIpAddress,
-        transaction.timestamp
+        {
+          timestamp: transaction.timestamp,
+          transactionId: transaction.transactionId,
+        }
       ),
     transaction.timestamp,
     // Always delete the primary transaction item at last to avoid having zombie indices that

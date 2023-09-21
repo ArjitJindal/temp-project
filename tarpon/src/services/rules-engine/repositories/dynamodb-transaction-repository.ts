@@ -197,7 +197,10 @@ export class DynamoDbTransactionRepository
         ...DynamoDbKeys.ORIGIN_IP_ADDRESS_TRANSACTION(
           this.tenantId,
           originIpAddress,
-          transaction.timestamp
+          {
+            timestamp: transaction.timestamp,
+            transactionId: transaction.transactionId,
+          }
         ),
         senderKeyId: senderKeys?.PartitionKeyID,
         receiverKeyId: receiverKeys?.PartitionKeyID,
@@ -206,7 +209,10 @@ export class DynamoDbTransactionRepository
         ...DynamoDbKeys.DESTINATION_IP_ADDRESS_TRANSACTION(
           this.tenantId,
           destinationIpAddress,
-          transaction.timestamp
+          {
+            timestamp: transaction.timestamp,
+            transactionId: transaction.transactionId,
+          }
         ),
         senderKeyId: senderKeys?.PartitionKeyID,
         receiverKeyId: receiverKeys?.PartitionKeyID,

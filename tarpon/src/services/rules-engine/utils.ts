@@ -24,7 +24,10 @@ export function getSenderKeys(
     transaction.originPaymentDetails,
     options?.disableDirection ? 'all' : 'sending',
     transactionType,
-    transaction.timestamp
+    {
+      timestamp: transaction.timestamp,
+      transactionId: transaction.transactionId,
+    }
   )
 }
 
@@ -54,7 +57,10 @@ export function getUserSenderKeys(
         transaction.originUserId,
         'sending',
         transactionType,
-        transaction.timestamp
+        {
+          timestamp: transaction.timestamp,
+          transactionId: transaction.transactionId,
+        }
       )
     : null
 }
@@ -74,7 +80,10 @@ export function getNonUserSenderKeys(
         transaction.originPaymentDetails,
         disableDirection ? 'all' : 'sending',
         transactionType,
-        transaction.timestamp
+        {
+          timestamp: transaction.timestamp,
+          transactionId: transaction.transactionId,
+        }
       )
     : null
 }
@@ -100,7 +109,10 @@ export function getReceiverKeys(
     transaction.destinationPaymentDetails,
     options?.disableDirection ? 'all' : 'receiving',
     transactionType,
-    transaction.timestamp
+    {
+      timestamp: transaction.timestamp,
+      transactionId: transaction.transactionId,
+    }
   )
 }
 
@@ -130,7 +142,10 @@ export function getUserReceiverKeys(
         transaction.destinationUserId,
         'receiving',
         transactionType,
-        transaction.timestamp
+        {
+          timestamp: transaction.timestamp,
+          transactionId: transaction.transactionId,
+        }
       )
     : null
 }
@@ -150,7 +165,10 @@ export function getNonUserReceiverKeys(
         transaction.destinationPaymentDetails,
         disableDirection ? 'all' : 'receiving',
         transactionType,
-        transaction.timestamp
+        {
+          timestamp: transaction.timestamp,
+          transactionId: transaction.transactionId,
+        }
       )
     : null
 }

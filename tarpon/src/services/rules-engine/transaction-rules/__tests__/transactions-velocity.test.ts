@@ -322,7 +322,7 @@ ruleVariantsTest(true, () => {
         expectedHits: [false, false, false],
       },
       {
-        name: 'Transactions with same timestamp - not hit',
+        name: 'Transactions with same timestamp',
         transactions: [
           getTestTransaction({
             transactionId: '9-1',
@@ -334,16 +334,22 @@ ruleVariantsTest(true, () => {
             transactionId: '9-2',
             originUserId: '9-1',
             destinationUserId: '9-2',
-            timestamp: dayjs('2022-01-01T02:00:00.000Z').valueOf(),
+            timestamp: dayjs('2022-01-01T00:00:00.000Z').valueOf(),
           }),
           getTestTransaction({
             transactionId: '9-3',
             originUserId: '9-1',
             destinationUserId: '9-2',
-            timestamp: dayjs('2022-01-01T02:00:00.000Z').valueOf(),
+            timestamp: dayjs('2022-01-01T00:00:00.000Z').valueOf(),
+          }),
+          getTestTransaction({
+            transactionId: '9-4',
+            originUserId: '9-1',
+            destinationUserId: '9-2',
+            timestamp: dayjs('2022-01-01T01:00:00.000Z').valueOf(),
           }),
         ],
-        expectedHits: [false, false, false],
+        expectedHits: [false, false, false, true],
       },
     ])('', ({ name, transactions, expectedHits }) => {
       createTransactionRuleTestCase(
