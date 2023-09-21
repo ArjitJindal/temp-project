@@ -14,6 +14,7 @@ import {
   TAGS,
 } from '@/components/library/Table/standardDataTypes';
 import { array } from '@/components/library/Table/dataTypeHelpers';
+import { dayjs } from '@/utils/dayjs';
 
 export function expandedRowRender(person: Person) {
   const helper = new ColumnHelper<LegalDocument & { i: number }>();
@@ -44,11 +45,7 @@ export function expandedRowRender(person: Person) {
             key: 'documentIssuedDate',
             type: {
               render: (documentIssuedDate) => (
-                <>
-                  {documentIssuedDate
-                    ? new Date(documentIssuedDate * 1000).toLocaleDateString()
-                    : '-'}
-                </>
+                <>{documentIssuedDate ? dayjs(documentIssuedDate).format('DD/MM/YYYY') : '-'}</>
               ),
             },
           }),
@@ -59,7 +56,7 @@ export function expandedRowRender(person: Person) {
               render: (documentExpirationDate) => (
                 <>
                   {documentExpirationDate
-                    ? new Date(documentExpirationDate * 1000).toLocaleDateString()
+                    ? dayjs(documentExpirationDate).format('DD/MM/YYYY')
                     : '-'}
                 </>
               ),

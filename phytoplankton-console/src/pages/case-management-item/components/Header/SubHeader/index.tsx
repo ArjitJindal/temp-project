@@ -18,6 +18,7 @@ import Id from '@/components/ui/Id';
 import { makeUrl } from '@/utils/routing';
 import { getUserLink, getUserName } from '@/utils/api/users';
 import { DATE_TIME_FORMAT_WITHOUT_SECONDS, dayjs } from '@/utils/dayjs';
+import AIRiskDisplay from '@/components/ui/AIRiskDisplay';
 
 interface Props {
   caseItem: Case;
@@ -220,6 +221,9 @@ export default function SubHeader(props: Props) {
           <div className={s.risks}>
             <KycRiskDisplay userId={caseUser.userId} />
             <DynamicRiskDisplay userId={caseUser.userId} />
+            <Feature name="MACHINE_LEARNING_DEMO">
+              <AIRiskDisplay />
+            </Feature>
           </div>
         )}
       </Feature>

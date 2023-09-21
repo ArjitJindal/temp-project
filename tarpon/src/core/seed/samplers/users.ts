@@ -1,4 +1,5 @@
 import { v4 as uuid4 } from 'uuid'
+import { ManipulateType } from 'dayjs'
 import { phoneNumber } from '../data/address'
 import { sampleCountry } from './countries'
 import { sampleString } from './strings'
@@ -15,20 +16,26 @@ import { sampleTimestamp } from '@/core/seed/samplers/timestamp'
 import { CompanySeedData, randomName } from '@/core/seed/samplers/dictionary'
 import { COUNTRY_CODES } from '@/@types/openapi-internal-custom/CountryCode'
 import { LegalDocument } from '@/@types/openapi-internal/LegalDocument'
-import { Tag } from '@/@types/openapi-internal/Tag'
 import { InternalBusinessUser } from '@/@types/openapi-internal/InternalBusinessUser'
 import { CountryCode } from '@/@types/openapi-internal/CountryCode'
 import { MerchantMonitoringSummary } from '@/@types/openapi-internal/MerchantMonitoringSummary'
 import { MerchantMonitoringSourceType } from '@/@types/openapi-internal/MerchantMonitoringSourceType'
 import { MERCHANT_MONITORING_SOURCE_TYPES } from '@/@types/openapi-internal-custom/MerchantMonitoringSourceType'
 import { DrsScore } from '@/@types/openapi-internal/DrsScore'
-import { RISK_LEVEL1S } from '@/@types/openapi-internal-custom/RiskLevel1'
 import { KrsScore } from '@/@types/openapi-internal/KrsScore'
 import { BUSINESS_USER_SEGMENTS } from '@/@types/openapi-internal-custom/BusinessUserSegment'
 import { PAYMENT_METHODS } from '@/@types/openapi-internal-custom/PaymentMethod'
 import { samplePaymentDetails } from '@/core/seed/samplers/transaction'
 import { randomAddress } from '@/core/seed/samplers/address'
 import { randomUserRules, userRules } from '@/core/seed/data/rules'
+import { getRiskLevelFromScore } from '@/services/risk-scoring/utils'
+import { DEFAULT_CLASSIFICATION_SETTINGS } from '@/services/risk-scoring/repositories/risk-repository'
+import { ACQUISITION_CHANNELS } from '@/@types/openapi-internal-custom/AcquisitionChannel'
+import dayjs from '@/utils/dayjs'
+
+import { Person } from '@/@types/openapi-internal/Person'
+import { ConsumerName } from '@/@types/openapi-public/ConsumerName'
+import { CURRENCY_CODES } from '@/@types/openapi-public-custom/CurrencyCode'
 
 export function sampleUserState(seed?: number): UserState {
   return USER_STATES[randomInt(seed, USER_STATES.length)]
@@ -63,53 +70,84 @@ export const randomPhoneNumber = () => {
 }
 
 const generateRandomTimestamp = () => {
-  let rand = Math.random() * 100000
+  const minDate = '1947-01-01'
+  const maxDate = dayjs().format('YYYY-MM-DD')
 
-  rand = Math.floor(rand)
+  const min = dayjs(minDate).valueOf()
+  const max = dayjs(maxDate).valueOf()
+  const timestamp = randomFloat() ** 2 * (max - min) + min
 
-  return Date.now() - rand
+  return timestamp
 }
 
-const tag1: Tag = {
-  key: 'tag_1',
-  value: 'tag_1',
+const tagKeys = [
+  'internalConsumerId',
+  'crmAccountId',
+  'salesforceAccountId',
+  'internalChargebackId',
+  'internalDisputeId',
+  'internalTransactionId',
+  'internalPayoutId',
+  'internalRefundId',
+]
+
+const getNormalTag = () => {
+  return {
+    key: pickRandom(tagKeys),
+    value: uuid4(),
+  }
 }
 
-const documentTag1: Tag = {
-  key: 'tag_1',
-  value: 'Doc Tag #1',
+const documentKeys = [
+  'isExpired',
+  'isFake',
+  'isForged',
+  'isModified',
+  'isNotReadable',
+  'isNotValid',
+]
+
+const getDocumentTag = () => {
+  return {
+    key: pickRandom(documentKeys),
+    value: ['true', 'false'][Math.floor(Math.random() * 2)],
+  }
 }
 
-const documentTag2: Tag = {
-  key: 'tag_2',
-  value: 'Doc Tag #2',
-}
+const DOCUMENT_TYPES = [
+  'Passport',
+  'Driving License',
+  'National ID',
+  'Residence Permit',
+  'INN',
+  'Address Proof',
+  'Utility Bill',
+  'Bank Statement',
+  'Other',
+]
 
-const legalDocument1: LegalDocument = {
-  documentType: 'Passport',
-  documentNumber: '781939182',
-  documentIssuedDate: generateRandomTimestamp(),
-  documentExpirationDate: Date.now() + 3600000 * 24 * 365 * 4,
-  documentIssuedCountry: 'US',
-  tags: [documentTag1, documentTag2],
-  nameOnDocument: {
-    firstName: 'Share',
-    middleName: 'Holder',
-    lastName: 'Number-One',
-  },
-}
+const timeIntervals = ['day', 'week', 'month', 'year'] as ManipulateType[]
 
-const legalDocument2: LegalDocument = {
-  documentType: 'INN',
-  documentNumber: 'HDPNE233',
-  documentIssuedDate: generateRandomTimestamp(),
-  documentIssuedCountry: 'US',
-  tags: [documentTag1, documentTag2],
-  nameOnDocument: {
-    firstName: randomName(),
-    middleName: randomName(),
-    lastName: randomName(),
-  },
+const letters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ1234567890'
+
+const legalDocument = (name: ConsumerName): LegalDocument => {
+  const timestamp = generateRandomTimestamp()
+  const expiryDate = dayjs(timestamp)
+    .add(Math.ceil(Math.random() * 10), pickRandom(timeIntervals))
+    .valueOf()
+
+  return {
+    documentType: pickRandom(DOCUMENT_TYPES),
+    documentNumber: Array.from(
+      { length: Math.max(8, Math.ceil(Math.random() * 20)) },
+      () => letters[Math.ceil(Math.random() * letters.length)]
+    ).join(''),
+    documentIssuedDate: timestamp,
+    documentExpirationDate: expiryDate,
+    documentIssuedCountry: 'US',
+    tags: [...Array(Math.ceil(Math.random() * 2))].map(() => getDocumentTag()),
+    nameOnDocument: name,
+  }
 }
 
 export function sampleBusinessUser(
@@ -122,142 +160,161 @@ export function sampleBusinessUser(
   const krsScore = Number((randomFloat() * 100).toFixed(2))
   const userId = uuid4()
   const paymentMethod = samplePaymentDetails()
-  return {
-    user: {
-      type: 'BUSINESS',
-      userId: userId,
-      tags: [
-        {
-          key: 'crmAccountId',
-          value: uuid4(),
+  const drsScoreData: DrsScore = {
+    createdAt: sampleTimestamp(),
+    userId: userId,
+    derivedRiskLevel: getRiskLevelFromScore(
+      DEFAULT_CLASSIFICATION_SETTINGS,
+      drsScore
+    ),
+    drsScore: drsScore,
+    isUpdatable: true,
+  }
+  const krsScoreData: KrsScore = {
+    createdAt: sampleTimestamp(),
+    krsScore: krsScore,
+    userId: userId,
+    riskLevel: getRiskLevelFromScore(DEFAULT_CLASSIFICATION_SETTINGS, krsScore),
+    components: sampleBusinessUserRiskScoreComponents(),
+  }
+  const timestamp = sampleTimestamp(seed)
+  const user: InternalBusinessUser = {
+    type: 'BUSINESS',
+    userId: userId,
+    tags: [
+      {
+        key: 'crmAccountId',
+        value: uuid4(),
+      },
+      sampleTag(),
+    ],
+    drsScore: drsScoreData,
+    userStateDetails: sampleUserStateDetails(seed),
+    executedRules: userRules,
+    hitRules: randomUserRules().filter(
+      (r) => !r.ruleName.toLowerCase().includes('consumer')
+    ),
+    krsScore: krsScoreData,
+    updatedAt: timestamp,
+    comments: [],
+    kycStatusDetails: sampleKycStatusDetails(seed),
+    createdTimestamp: timestamp,
+    allowedPaymentMethods: randomSubset(PAYMENT_METHODS),
+    savedPaymentDetails: paymentMethod ? [paymentMethod] : [],
+    legalEntity: {
+      contactDetails: {
+        emailIds: company?.contactEmails || [randomEmail()],
+        websites: company?.website ? [company.website] : [],
+        addresses: [randomAddress()],
+      },
+      companyFinancialDetails: {
+        expectedTransactionAmountPerMonth: {
+          amountValue: Math.ceil(Math.random() * 10000),
+          amountCurrency: pickRandom(CURRENCY_CODES),
         },
-        sampleTag(),
+        expectedTurnoverPerMonth: {
+          amountValue: Math.ceil(Math.random() * 100000),
+          amountCurrency: pickRandom(CURRENCY_CODES),
+        },
+        tags: [{ key: 'Unit', value: 'S1300' }],
+      },
+      reasonForAccountOpening: [
+        pickRandom(['Expansion', 'New Business', 'Savings', 'Other']),
       ],
-      drsScore: {
-        drsScore: drsScore,
-        createdAt: Date.now(),
-        isUpdatable: true,
+      companyGeneralDetails: {
+        legalName: name,
+        businessIndustry: company?.industries || [],
+        mainProductsServicesSold: company?.products,
+        userSegment: pickRandom(BUSINESS_USER_SEGMENTS),
+        userRegistrationStatus:
+          Math.ceil(Math.random() * 9 + 1) > 8 ? 'UNREGISTERED' : 'REGISTERED',
       },
-      userStateDetails: sampleUserStateDetails(seed),
-      executedRules: userRules,
-      hitRules: randomUserRules().filter(
-        (r) => !r.ruleName.toLowerCase().includes('consumer')
-      ),
-      krsScore: {
-        krsScore: krsScore,
-        createdAt: sampleTimestamp(seed),
+      companyRegistrationDetails: {
+        taxIdentifier: sampleString(seed),
+        legalEntityType: pickRandom([
+          'LLC',
+          'Sole Proprietorship',
+          'Other',
+          'Corporation',
+        ]),
+        registrationIdentifier: sampleString(seed),
+        registrationCountry: country ?? sampleCountry(seed),
+        tags: [{ key: 'Unit', value: 'S1300' }],
       },
-      comments: [],
-      kycStatusDetails: sampleKycStatusDetails(seed),
-      createdTimestamp: sampleTimestamp(seed),
-      allowedPaymentMethods: randomSubset(PAYMENT_METHODS),
-      savedPaymentDetails: paymentMethod ? [paymentMethod] : [],
-      legalEntity: {
+    },
+    acquisitionChannel: pickRandom(ACQUISITION_CHANNELS),
+    transactionLimits: {
+      maximumDailyTransactionLimit: {
+        amountValue: Math.ceil(Math.random() * 10000),
+        amountCurrency: pickRandom(CURRENCY_CODES),
+      },
+    },
+    shareHolders: Array.from({ length: Math.ceil(Math.random() * 1) }, () => {
+      const name: ConsumerName = {
+        firstName: randomName(),
+        middleName: randomName(),
+        lastName: randomName(),
+      }
+
+      return {
+        generalDetails: {
+          name,
+          countryOfResidence: country ?? pickRandom(COUNTRY_CODES),
+          countryOfNationality: country ?? pickRandom(COUNTRY_CODES),
+          gender: pickRandom(['M', 'F', 'NB']),
+        },
+        legalDocuments: Array.from(
+          { length: Math.ceil(Math.random() * 4) },
+          () => legalDocument(name)
+        ),
         contactDetails: {
-          emailIds: company?.contactEmails || [],
-          websites: company?.website ? [company.website] : [],
+          emailIds: [name.firstName.toLowerCase() + '@gmail.com'].concat(
+            company?.contactEmails || []
+          ),
+          faxNumbers: [randomPhoneNumber()],
+          websites: [domain],
           addresses: [randomAddress()],
+          contactNumbers: [randomPhoneNumber()],
         },
-        companyFinancialDetails: {
-          expectedTransactionAmountPerMonth: {
-            amountValue: Math.floor(Math.random() * 10000),
-            amountCurrency: 'USD',
-          },
-          expectedTurnoverPerMonth: {
-            amountValue: Math.floor(Math.random() * 100000),
-            amountCurrency: 'USD',
-          },
-          tags: [{ key: 'Unit', value: 'S1300' }],
+        tags: [...Array(Math.ceil(Math.random() * 2))].map(() =>
+          getNormalTag()
+        ),
+      } as Person
+    }),
+    directors: Array.from({ length: Math.ceil(Math.random() * 2) }, () => {
+      const name: ConsumerName = {
+        firstName: randomName(),
+        middleName: randomName(),
+        lastName: randomName(),
+      }
+
+      return {
+        legalDocuments: Array.from(
+          { length: Math.ceil(Math.random() * 4) },
+          () => legalDocument(name)
+        ),
+        contactDetails: {
+          emailIds: [name.firstName.toLowerCase() + '@gmail.com'],
+          addresses: [randomAddress()],
+          contactNumbers: [randomPhoneNumber()],
+          faxNumbers: [randomPhoneNumber()],
+          websites: [domain],
         },
-        reasonForAccountOpening: ['Expansion'],
-        companyGeneralDetails: {
-          legalName: name,
-          businessIndustry: company?.industries || [],
-          mainProductsServicesSold: company?.products,
-          userSegment: pickRandom(BUSINESS_USER_SEGMENTS),
-          userRegistrationStatus:
-            Math.floor(Math.random() * 9 + 1) > 8
-              ? 'UNREGISTERED'
-              : 'REGISTERED',
+        generalDetails: {
+          gender: pickRandom(['M', 'F', 'NB']),
+          countryOfResidence: pickRandom(COUNTRY_CODES),
+          countryOfNationality: pickRandom(COUNTRY_CODES),
+          dateOfBirth: generateRandomTimestamp().toLocaleString(),
+          name,
         },
-        companyRegistrationDetails: {
-          taxIdentifier: sampleString(seed),
-          legalEntityType: 'Corporation',
-          registrationIdentifier: sampleString(seed),
-          registrationCountry: country ?? sampleCountry(seed),
-          tags: [{ key: 'Unit', value: 'S1300' }],
-        },
-      },
-      transactionLimits: {
-        maximumDailyTransactionLimit: {
-          amountValue: Math.floor(Math.random() * 10000),
-          amountCurrency: 'USD',
-        },
-      },
-      shareHolders: [
-        {
-          generalDetails: {
-            name: {
-              firstName: randomName(),
-              middleName: randomName(),
-              lastName: randomName(),
-            },
-            countryOfResidence: country ?? pickRandom(COUNTRY_CODES, seed),
-            countryOfNationality: country ?? pickRandom(COUNTRY_CODES, seed),
-          },
-          legalDocuments: [legalDocument1, legalDocument2],
-          contactDetails: {
-            emailIds: company?.contactEmails || [],
-            faxNumbers: ['+999999'],
-            websites: [domain],
-            addresses: [randomAddress()],
-          },
-          tags: [tag1],
-        },
-        {
-          generalDetails: {
-            name: {
-              firstName: randomName(),
-              middleName: randomName(),
-              lastName: randomName(),
-            },
-          },
-        },
-      ],
-      directors: [
-        {
-          legalDocuments: [legalDocument1, legalDocument2],
-          contactDetails: {
-            emailIds: [randomEmail()],
-            addresses: [randomAddress()],
-          },
-          generalDetails: {
-            gender: 'M',
-            countryOfResidence: 'AF',
-            dateOfBirth: new Date().toISOString(),
-            name: {
-              firstName: randomName(),
-              middleName: randomName(),
-              lastName: randomName(),
-            },
-          },
-        },
-      ],
-    },
-    drsScore: {
-      createdAt: sampleTimestamp(),
-      userId: userId,
-      derivedRiskLevel: pickRandom(RISK_LEVEL1S),
-      drsScore: drsScore,
-      isUpdatable: true,
-    },
-    krsScore: {
-      createdAt: sampleTimestamp(),
-      krsScore: krsScore,
-      userId: userId,
-      riskLevel: pickRandom(RISK_LEVEL1S),
-      components: sampleBusinessUserRiskScoreComponents(),
-    },
+      } as Person
+    }),
+  }
+
+  return {
+    user,
+    drsScore: drsScoreData,
+    krsScore: krsScoreData,
   }
 }
 

@@ -20,6 +20,10 @@ import { MerchantMonitoringSummary } from '@/@types/openapi-internal/MerchantMon
 import { DrsScore } from '@/@types/openapi-internal/DrsScore'
 import { KrsScore } from '@/@types/openapi-internal/KrsScore'
 import { randomAddress } from '@/core/seed/samplers/address'
+import { DEFAULT_CLASSIFICATION_SETTINGS } from '@/services/risk-scoring/repositories/risk-repository'
+import { getRiskLevelFromScore } from '@/services/risk-scoring/utils'
+import { ACQUISITION_CHANNELS } from '@/@types/openapi-internal-custom/AcquisitionChannel'
+import { CONSUMER_USER_SEGMENTS } from '@/@types/openapi-internal-custom/ConsumerUserSegment'
 
 const data: (InternalBusinessUser | InternalConsumerUser)[] = []
 const merchantMonitoring: MerchantMonitoringSummary[] = []
@@ -52,6 +56,8 @@ const init = () => {
     ...businessUserData.flatMap((b) => b.merchantMonitoring)
   )
 
+  const classificationValues = DEFAULT_CLASSIFICATION_SETTINGS
+
   data.push(
     ...[
       ...businessUserData.map((b) => b.user),
@@ -59,33 +65,36 @@ const init = () => {
         const userId = uuid4()
         const drsScore = Number((randomFloat(i * 2) * 100).toFixed(2))
         const krsScore = Number((randomFloat(i * 2) * 100).toFixed(2))
-        drsData.push({
+        const drsUserData = {
           createdAt: sampleTimestamp(i),
           userId: userId,
-          derivedRiskLevel: pickRandom(RISK_LEVEL1S),
+          derivedRiskLevel: getRiskLevelFromScore(
+            classificationValues,
+            drsScore
+          ),
           drsScore: drsScore,
           isUpdatable: true,
-        })
-        krsData.push({
+        } as DrsScore
+        drsData.push(drsUserData)
+        const krsUserData = {
           createdAt: sampleTimestamp(i),
           krsScore: krsScore,
           userId: userId,
-          riskLevel: pickRandom(RISK_LEVEL1S),
+          riskLevel: getRiskLevelFromScore(classificationValues, krsScore),
           components: sampleConsumerUserRiskScoreComponents(),
-        })
+        } as KrsScore
+        krsData.push(krsUserData)
         return {
           type: 'CONSUMER' as const,
           userId,
-          drsScore: {
-            drsScore: drsScore,
-            createdAt: Date.now(),
-            isUpdatable: true,
-          },
-          krsScore: {
-            krsScore: krsScore,
-            createdAt: Date.now(),
-          },
+          drsScore: drsUserData,
+          krsScore: krsUserData,
           riskLevel: pickRandom(RISK_LEVEL1S, i),
+          acquisitionChannel: pickRandom(ACQUISITION_CHANNELS),
+          userSegment: pickRandom(CONSUMER_USER_SEGMENTS),
+          reasonForAccountOpening: [
+            pickRandom(['Investment', 'Saving', 'Business', 'Other']),
+          ],
           userStateDetails: sampleUserStateDetails(0.9 * i),
           contactDetails: {
             addresses: [randomAddress()],

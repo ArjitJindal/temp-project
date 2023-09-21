@@ -179,6 +179,12 @@ export function sampleTransactionUserCases(
       caseUsers: {
         origin,
         destination,
+        originUserRiskLevel:
+          origin?.drsScore?.manualRiskLevel ??
+          origin?.drsScore?.derivedRiskLevel,
+        destinationUserRiskLevel:
+          destination?.drsScore?.manualRiskLevel ??
+          destination?.drsScore?.derivedRiskLevel,
       },
       caseTransactions: transactions,
       caseTransactionsIds: transactions.map((t) => t.transactionId!),
@@ -251,6 +257,11 @@ export function sampleAlert(
   const checklistTemplateId = getRuleInstance(
     params.ruleHit.ruleInstanceId
   ).checklistTemplateId
+  const isFirstPaymentRule = params.ruleHit.ruleId === 'R-1'
+  const transactions = params.transactions
+  const transactionIds = isFirstPaymentRule
+    ? [transactions[0].transactionId!]
+    : transactions.map((t) => t.transactionId!)
 
   return {
     ...params.ruleHit,
@@ -262,7 +273,7 @@ export function sampleAlert(
     ruleInstanceId: params.ruleHit.ruleInstanceId,
     numberOfTransactionsHit: params.transactions.length,
     priority: pickRandom(['P1', 'P2', 'P3', 'P4'], Math.random()),
-    transactionIds: params.transactions.map((t) => t.transactionId),
+    transactionIds,
     ruleQaStatus: randomBool() ? pickRandom(CHECKLIST_STATUSS) : undefined,
     ruleChecklistTemplateId: checklistTemplateId,
     updatedAt: sampleTimestamp(),
