@@ -156,6 +156,7 @@ type Props = {
   escalatedTransactions?: string[];
   selectionActions?: SelectionAction<InternalTransaction, TransactionsTableParams>[];
   selectionInfo?: SelectionInfo;
+  isExpandable?: boolean;
 };
 
 export const getStatus = (
@@ -194,6 +195,7 @@ export default function TransactionsTable(props: Props) {
     isModalVisible,
     setIsModalVisible,
     escalatedTransactions = [],
+    isExpandable = false,
   } = props;
 
   const columns: TableColumn<InternalTransaction>[] = useMemo(() => {
@@ -444,7 +446,9 @@ export default function TransactionsTable(props: Props) {
       fitHeight={fitHeight}
       paginationBorder
       fixedExpandedContainer={true}
-      isExpandable={(row) => isTransactionHasDetails(row.content, settings)}
+      isExpandable={
+        isExpandable ? (row) => isTransactionHasDetails(row.content, settings) : () => false
+      }
       renderExpanded={(entity) => <ExpandedRowRenderer transaction={entity} />}
       extraTools={[
         () => (
