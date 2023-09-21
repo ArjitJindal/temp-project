@@ -253,16 +253,13 @@ async function userHandler(
   let drsScore: DrsScore | null = null
 
   const riskRepository = new RiskRepository(tenantId, { dynamoDb })
-
   const isRiskScoringEnabled = await tenantHasFeature(tenantId, 'RISK_SCORING')
   const isRiskLevelsEnabled = await tenantHasFeature(tenantId, 'RISK_LEVELS')
   if (isRiskScoringEnabled) {
     krsScore = await riskRepository.getKrsScore(internalUser.userId)
     if (!krsScore) {
-      logger.error(
-        new Error(
-          `KRS score is not available for user ${internalUser.userId} in tenant ${tenantId}`
-        )
+      logger.warn(
+        `KRS score not found for user ${internalUser.userId} for tenant ${tenantId}`
       )
     }
   }
@@ -294,6 +291,14 @@ async function userHandler(
   const cases = await caseCreationService.handleUser(savedUser)
   await handleNewCases(tenantId, timestampBeforeCasesCreation, cases)
   await casesRepo.updateUsersInCases(internalUser)
+
+  if (!krsScore && isRiskScoringEnabled) {
+    // Will backfill KRS score for all users without KRS score
+    await sendBatchJobCommand({
+      type: 'PULSE_USERS_BACKFILL_RISK_SCORE',
+      tenantId,
+    })
+  }
 
   cleanUpDynamoDbResources()
 }
