@@ -26,7 +26,7 @@ export const SarsFiled: TableQuestion<Period> = {
       .aggregate<Report & { user: InternalUser }>([
         {
           $match: {
-            ...matchPeriod('createdTimestamp', period),
+            ...matchPeriod('createdAt', period),
             caseUserId: userId,
           },
         },

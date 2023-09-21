@@ -36,11 +36,8 @@ export const Transactions: TableQuestion<Period> = {
     const result = await db
       .collection<InternalTransaction>(TRANSACTIONS_COLLECTION(tenantId))
       .find({
-        ...matchPeriod('createdTimestamp', period),
-        $or: [
-          { 'caseUsers.origin.userId': userId },
-          { 'caseUsers.destination.userId': userId },
-        ],
+        ...matchPeriod('timestamp', period),
+        $or: [{ originUserId: userId }, { destinationUserId: userId }],
       })
       .toArray()
 

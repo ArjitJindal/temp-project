@@ -6,7 +6,6 @@ import { RuleInstanceRepository } from '@/services/rules-engine/repositories/rul
 import { getDynamoDbClient } from '@/utils/dynamodb'
 import { RulesEngineService } from '@/services/rules-engine'
 import { InternalTransaction } from '@/@types/openapi-internal/InternalTransaction'
-import { DynamoDbTransactionRepository } from '@/services/rules-engine/repositories/dynamodb-transaction-repository'
 
 export const TransactionLedRuleHit: TableQuestion<any> = {
   type: 'TABLE',
@@ -33,10 +32,6 @@ export const TransactionLedRuleHit: TableQuestion<any> = {
     const dynamoDb = getDynamoDbClient()
 
     const rir = new RuleInstanceRepository(tenantId, { dynamoDb })
-    const dynamoDbTransactionRepository = new DynamoDbTransactionRepository(
-      tenantId,
-      dynamoDb
-    )
 
     const ruleInstance = await rir.getRuleInstanceById(alert.ruleInstanceId)
     const rulesEngine = new RulesEngineService(tenantId, dynamoDb, client)
@@ -57,12 +52,11 @@ export const TransactionLedRuleHit: TableQuestion<any> = {
           $lt: alert.createdTimestamp,
         },
       })
+      .sort({ createdAt: -1 })
+      .limit(100)
       .toArray()
 
-    const dynamoTxn = await dynamoDbTransactionRepository.getTransactionsByIds(
-      transactionsBeforeHit.map((t) => t.transactionId)
-    )
-    const transactionsThatLedToRuleHit = dynamoTxn.filter(
+    const transactionsThatLedToRuleHit = transactionsBeforeHit.filter(
       async (transaction) => {
         const result = await rulesEngine.computeRuleFilters(
           ruleInstance?.filters,
