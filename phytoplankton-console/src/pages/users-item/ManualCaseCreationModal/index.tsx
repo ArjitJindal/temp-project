@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useMutation } from '@tanstack/react-query';
 import { compact } from 'lodash';
-import { Case, CaseReasons, CasesUsersUserIdResponse, FileInfo } from '@/apis';
+import { Case, CaseReasons, CasesUsersUserIdResponse, FileInfo, Priority } from '@/apis';
 import Form, { FormRef } from '@/components/library/Form';
 import InputField from '@/components/library/Form/InputField';
 import { notEmpty } from '@/components/library/Form/utils/validation/basicValidators';
@@ -16,6 +16,7 @@ import { CloseMessage, message } from '@/components/library/Message';
 import { CASES_USERS_CASEIDS } from '@/utils/queries/keys';
 import { getOr } from '@/utils/asyncResource';
 import { useQuery } from '@/utils/queries/hooks';
+import { PRIORITYS } from '@/apis/models-custom/Priority';
 
 type Props = {
   isOpen: boolean;
@@ -31,6 +32,7 @@ type FormValues = {
   files: FileInfo[];
   comment?: string;
   existingCaseId?: string;
+  priority?: Priority;
 };
 
 const INITIAL_VALUES: FormValues = {
@@ -38,6 +40,7 @@ const INITIAL_VALUES: FormValues = {
   otherReason: undefined,
   files: [],
   comment: undefined,
+  priority: undefined,
 };
 
 const MANUAL_CASE_CREATION_REASONSS: readonly CaseReasons[] = [
@@ -94,6 +97,7 @@ export const MannualCaseCreationModal = (props: Props) => {
           },
           files: files?.length ? files : [],
           transactionIds: transactionIds ?? [],
+          priority: values.priority,
         },
       });
 
@@ -231,6 +235,21 @@ export const MannualCaseCreationModal = (props: Props) => {
             }}
           >
             {(inputProps) => <TextInput {...inputProps} />}
+          </InputField>
+        )}
+
+        {type === 'CREATE' && (
+          <InputField<FormValues, 'priority'> name="priority" label="Priority">
+            {(inputProps) => (
+              <Select<Priority>
+                {...inputProps}
+                options={PRIORITYS.map((priority) => ({
+                  label: priority,
+                  value: priority,
+                }))}
+                mode="SINGLE"
+              />
+            )}
           </InputField>
         )}
 

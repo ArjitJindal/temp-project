@@ -191,7 +191,8 @@ export const casesHandler = lambdaApi()(
       const case_ = await caseService.createManualCaseFromUser(
         request.ManualCaseCreationDataRequest.manualCaseData,
         request.ManualCaseCreationDataRequest.files,
-        request.ManualCaseCreationDataRequest.transactionIds
+        request.ManualCaseCreationDataRequest.transactionIds,
+        request.ManualCaseCreationDataRequest.priority
       )
 
       await casesAlertsAuditLogService.createAuditLog({

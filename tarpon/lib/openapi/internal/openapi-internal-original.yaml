@@ -7010,6 +7010,8 @@ components:
           type: array
           items:
             $ref: '#/components/schemas/FileInfo'
+        priority:
+          $ref: '#/components/schemas/Priority'
         transactionIds:
           type: array
           items:

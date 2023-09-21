@@ -59,6 +59,7 @@ import { CursorPaginationResponse } from '@/utils/pagination'
 import { CaseType } from '@/@types/openapi-internal/CaseType'
 import { ManualCasePatchRequest } from '@/@types/openapi-internal/ManualCasePatchRequest'
 import { sendBatchJobCommand } from '@/services/batch-job'
+import { Priority } from '@/@types/openapi-internal/Priority'
 
 export class CaseService extends CaseAlertsCommonService {
   caseRepository: CaseRepository
@@ -280,7 +281,8 @@ export class CaseService extends CaseAlertsCommonService {
   public async createManualCaseFromUser(
     manualCaseData: CaseStatusChange,
     files: FileInfo[],
-    transactionIds: string[]
+    transactionIds: string[],
+    priority?: Priority
   ): Promise<Case> {
     const { id: userId } = getContext()?.user as Account
     const userRepository = new UserRepository(this.tenantId, {
@@ -325,7 +327,7 @@ export class CaseService extends CaseAlertsCommonService {
       alerts: [],
       caseTransactionsCount: transactions.length,
       createdBy: manualCaseData.userId,
-      priority: 'P1',
+      priority: priority ?? 'P1',
       updatedAt: Date.now(),
       createdTimestamp: Date.now(),
       caseTransactionsIds: transactions.map((t) => t.transactionId),
