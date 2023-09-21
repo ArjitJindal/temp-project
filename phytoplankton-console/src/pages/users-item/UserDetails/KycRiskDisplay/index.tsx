@@ -34,6 +34,7 @@ export default function KycRiskDisplay({ userId }: Props) {
           title="KYC risk score (KRS)"
           riskScoreName="KRS"
           showFormulaBackLink
+          riskScoreAlgo={(values) => values.score}
         />
       )}
     </AsyncResourceRenderer>

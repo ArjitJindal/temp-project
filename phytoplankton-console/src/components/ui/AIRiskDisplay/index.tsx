@@ -4,7 +4,7 @@ import React from 'react';
 import { ValueItem } from '../RiskScoreDisplay/types';
 import AiLogoIcon from './ai-logo.react.svg';
 import { RiskLevel } from '@/utils/risk-levels';
-import { RiskEntityType } from '@/apis';
+import { InternalTransaction, RiskEntityType } from '@/apis';
 
 //components
 import RiskScoreDisplay from '@/components/ui/RiskScoreDisplay';
@@ -16,26 +16,30 @@ export interface ExtendedValueItem extends ValueItem {
   derivedRiskLevel?: RiskLevel;
 }
 
-const data = [
+type Props = {
+  transaction?: InternalTransaction;
+};
+
+const data = (transaction?: InternalTransaction) => [
   {
     components: [
       {
-        value: 'CARD',
+        value: transaction?.destinationPaymentDetails?.method ?? 'CARD',
         entityType: 'TRANSACTION' as RiskEntityType,
         parameter: 'destinationPaymentDetails.method',
       },
       {
-        value: 'DE',
+        value: transaction?.originAmountDetails?.country ?? 'IN',
         entityType: 'TRANSACTION' as RiskEntityType,
         parameter: 'originAmountDetails.country',
       },
       {
-        value: 'EUR',
+        value: transaction?.originAmountDetails?.transactionCurrency ?? 'EUR',
         entityType: 'TRANSACTION' as RiskEntityType,
         parameter: 'originAmountDetails.transactionCurrency',
       },
       {
-        value: 'CARD',
+        value: transaction?.originPaymentDetails?.method ?? 'CARD',
         entityType: 'TRANSACTION' as RiskEntityType,
         parameter: 'originPaymentDetails.method',
       },
@@ -44,22 +48,22 @@ const data = [
   {
     components: [
       {
-        value: 10,
+        value: transaction?.timestamp ?? getRandomTimestamp(),
         entityType: 'TRANSACTION' as RiskEntityType,
-        parameter: 'createdTimestamp',
+        parameter: 'timestamp',
       },
       {
-        value: 'IN',
+        value: transaction?.destinationAmountDetails?.country ?? 'DE',
         entityType: 'TRANSACTION' as RiskEntityType,
         parameter: 'destinationAmountDetails.country',
       },
       {
-        value: 'INR',
+        value: transaction?.destinationAmountDetails?.transactionCurrency ?? 'EUR',
         entityType: 'TRANSACTION' as RiskEntityType,
         parameter: 'destinationAmountDetails.transactionCurrency',
       },
       {
-        value: 'CARD',
+        value: transaction?.originPaymentDetails?.method ?? 'CARD',
         entityType: 'TRANSACTION' as RiskEntityType,
         parameter: 'originPaymentDetails.method',
       },
@@ -68,17 +72,17 @@ const data = [
   {
     components: [
       {
-        value: 10,
+        value: transaction?.timestamp ?? getRandomTimestamp(),
         entityType: 'TRANSACTION' as RiskEntityType,
-        parameter: 'createdTimestamp',
+        parameter: 'timestamp',
       },
       {
-        value: 'EUR',
+        value: transaction?.originAmountDetails?.transactionCurrency ?? 'USD',
         entityType: 'TRANSACTION' as RiskEntityType,
         parameter: 'originAmountDetails.transactionCurrency',
       },
       {
-        value: 'CARD',
+        value: transaction?.originPaymentDetails?.method ?? 'CARD',
         entityType: 'TRANSACTION' as RiskEntityType,
         parameter: 'originPaymentDetails.method',
       },
@@ -88,37 +92,37 @@ const data = [
     manualRiskLevel: 'MEDIUM' as RiskLevel,
     components: [
       {
-        value: 10,
+        value: transaction?.timestamp ?? getRandomTimestamp(),
         entityType: 'TRANSACTION' as RiskEntityType,
-        parameter: 'createdTimestamp',
+        parameter: 'timestamp',
       },
       {
-        value: 'IN',
+        value: transaction?.destinationAmountDetails?.country ?? 'DE',
         entityType: 'TRANSACTION' as RiskEntityType,
         parameter: 'destinationAmountDetails.country',
       },
       {
-        value: 'INR',
+        value: transaction?.destinationAmountDetails?.transactionCurrency ?? 'EUR',
         entityType: 'TRANSACTION' as RiskEntityType,
         parameter: 'destinationAmountDetails.transactionCurrency',
       },
       {
-        value: 'CARD',
+        value: transaction?.destinationPaymentDetails?.method ?? 'CARD',
         entityType: 'TRANSACTION' as RiskEntityType,
         parameter: 'destinationPaymentDetails.method',
       },
       {
-        value: 'DE',
+        value: transaction?.originAmountDetails?.country ?? 'IN',
         entityType: 'TRANSACTION' as RiskEntityType,
         parameter: 'originAmountDetails.country',
       },
       {
-        value: 'EUR',
+        value: transaction?.originAmountDetails?.transactionCurrency ?? 'EUR',
         entityType: 'TRANSACTION' as RiskEntityType,
         parameter: 'originAmountDetails.transactionCurrency',
       },
       {
-        value: 'CARD',
+        value: transaction?.originPaymentDetails?.method ?? 'CARD',
         entityType: 'TRANSACTION' as RiskEntityType,
         parameter: 'originPaymentDetails.method',
       },
@@ -127,12 +131,12 @@ const data = [
   {
     components: [
       {
-        value: 10,
+        value: transaction?.timestamp ?? getRandomTimestamp(),
         entityType: 'TRANSACTION' as RiskEntityType,
-        parameter: 'createdTimestamp',
+        parameter: 'timestamp',
       },
       {
-        value: 'IN',
+        value: transaction?.destinationAmountDetails?.country ?? 'DE',
         entityType: 'TRANSACTION' as RiskEntityType,
         parameter: 'destinationAmountDetails.country',
       },
@@ -180,29 +184,31 @@ function shuffleArray(array: ExtendedValueItem[]): ExtendedValueItem[] {
   return array;
 }
 
-const randomizedData = data.map((item): ExtendedValueItem => {
-  const drsScore = Math.floor(Math.random() * 101); // Random value between 0 and 100
-  const derivedRiskLevel = getRiskLevel(drsScore);
-  const createdAt = getRandomTimestamp() as number;
-  const components = item.components?.map((component) => {
-    const score = Math.floor((Math.random() * drsScore * 2) % 100) as number; // Random value between 0 and 2 x drsScore
-    const riskLevel = getRiskLevel(score);
-    return { ...component, score, riskLevel };
+const randomizedData = (transaction?: InternalTransaction) =>
+  data(transaction).map((item): ExtendedValueItem => {
+    const drsScore = Math.floor(Math.random() * 101); // Random value between 0 and 100
+    const derivedRiskLevel = getRiskLevel(drsScore);
+    const createdAt = getRandomTimestamp() as number;
+    const components = item.components?.map((component) => {
+      const score = Math.floor((Math.random() * drsScore * 2) % 100) as number; // Random value between 0 and 2 x drsScore
+      const riskLevel = getRiskLevel(score);
+      return { ...component, score, riskLevel };
+    });
+
+    return { ...item, drsScore, score: drsScore, createdAt, derivedRiskLevel, components };
   });
 
-  return { ...item, drsScore, score: drsScore, createdAt, derivedRiskLevel, components };
-});
+const riskScoredata = (transaction?: InternalTransaction) =>
+  shuffleArray(randomizedData(transaction));
 
-const riskScoredata = shuffleArray(randomizedData);
-
-export default function AIRiskDisplay() {
+export default function AIRiskDisplay({ transaction }: Props) {
   const isAiRiskScoreEnabled = useFeatureEnabled('AI_RISK_SCORE');
   return isAiRiskScoreEnabled ? (
     <RiskScoreDisplay
       mainPanelCustomStyling={{
         background: COLORS_V2_AI_RISK_DISPLAY_BACKGROUND,
       }}
-      values={riskScoredata.map((x) => ({
+      values={riskScoredata(transaction).map((x) => ({
         score: x.drsScore,
         createdAt: x.createdAt,
         components: x.components,
@@ -210,6 +216,13 @@ export default function AIRiskDisplay() {
       icon={<AiLogoIcon />}
       title="AI risk score"
       riskScoreName="AI risk score"
+      riskScoreAlgo={(values) => {
+        const score =
+          (values.components ?? []).reduce((acc, curr) => acc + curr.score, 0) /
+          (values?.components?.length ?? 1);
+
+        return score;
+      }}
     />
   ) : (
     <></>

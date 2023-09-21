@@ -50,7 +50,7 @@ export default function SubHeader(props: Props) {
         <div className={s.risks}>
           <ActionRiskDisplay transactionId={transaction.transactionId} />
           <Feature name="MACHINE_LEARNING_DEMO">
-            <AIRiskDisplay />
+            <AIRiskDisplay transaction={transaction} />
           </Feature>
         </div>
       </Feature>

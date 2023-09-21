@@ -15,10 +15,12 @@ interface Props {
   isOpen: boolean;
   onCancel: () => void;
   title: string;
-  values: ValueItem[];
   components?: Array<RiskScoreComponent>;
   riskScoreName: string;
   showFormulaBackLink?: boolean;
+  riskScoreAlgo: (value: ValueItem) => number;
+  lastItem: ValueItem;
+  sortedItems: ValueItem[];
 }
 
 const VARIABLES = [
@@ -26,14 +28,31 @@ const VARIABLES = [
 ].map((_, i) => String.fromCodePoint(('a'.codePointAt(0) as number) + i));
 
 export default function DetailsModal(props: Props) {
-  const { icon, title, isOpen, values, onCancel, components, riskScoreName, showFormulaBackLink } =
-    props;
+  const {
+    icon,
+    title,
+    isOpen,
+    onCancel,
+    components,
+    riskScoreName,
+    showFormulaBackLink,
+    riskScoreAlgo,
+    lastItem,
+    sortedItems,
+  } = props;
+
   const explanationText = riskScoreName || 'TRS';
   return (
     <Modal title={title} hideFooter={true} isOpen={isOpen} onCancel={onCancel} width="M">
       <div className={cn(s.root)}>
         <div className={s.header}>
-          <MainPanel icon={icon} title={title} values={values} />
+          <MainPanel
+            icon={icon}
+            title={title}
+            lastItem={lastItem}
+            riskScoreAlgo={riskScoreAlgo}
+            sortedItems={sortedItems}
+          />
           {components && (
             <div className={s.formulaWrapper}>
               <div className={s.formula}>

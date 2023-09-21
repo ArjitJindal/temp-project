@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useMemo, useState } from 'react';
 import DetailsModal from './DetailsModal';
 import MainPanel, { MainPanelCustomStyles } from './MainPanel';
 import { ValueItem } from './types';
@@ -10,36 +10,54 @@ interface Props {
   riskScoreName: string;
   mainPanelCustomStyling?: MainPanelCustomStyles;
   showFormulaBackLink?: boolean;
+  riskScoreAlgo: (value: ValueItem) => number;
+}
+
+function sortByDate<T extends { createdAt: number }>(items: T[]): T[] {
+  const result = [...items];
+  result.sort((x, y) => x.createdAt - y.createdAt);
+  return result;
 }
 
 export default function RiskScoreDisplay(props: Props) {
-  const { icon, title, values, riskScoreName, mainPanelCustomStyling, showFormulaBackLink } = props;
+  const {
+    icon,
+    title,
+    values,
+    riskScoreName,
+    mainPanelCustomStyling,
+    showFormulaBackLink,
+    riskScoreAlgo,
+  } = props;
+
   const [isModalOpen, setModalOpen] = useState(false);
-  const lastValue = values.reduce<ValueItem | null>(
-    (acc, x) => (acc == null || x.createdAt > acc.createdAt ? x : acc),
-    null,
-  );
-  const components = lastValue?.components;
+  const sortedItems = useMemo(() => sortByDate(values), [values]);
+  const lastItem = sortedItems[values.length - 1];
+  const components = lastItem?.components;
   return (
     <>
       <MainPanel
         icon={icon}
         title={title}
-        values={values}
         onClickInfo={components && components.length > 0 ? () => setModalOpen(true) : undefined}
         customStyling={mainPanelCustomStyling}
+        sortedItems={sortedItems}
+        lastItem={lastItem}
+        riskScoreAlgo={riskScoreAlgo}
       />
       <DetailsModal
         icon={icon}
         title={title}
         isOpen={isModalOpen}
-        values={values}
         components={components}
         riskScoreName={riskScoreName}
         onCancel={() => {
           setModalOpen(false);
         }}
         showFormulaBackLink={showFormulaBackLink}
+        riskScoreAlgo={riskScoreAlgo}
+        lastItem={lastItem}
+        sortedItems={sortedItems}
       />
     </>
   );

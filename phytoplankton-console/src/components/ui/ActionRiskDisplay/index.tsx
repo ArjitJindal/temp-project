@@ -36,6 +36,7 @@ export default function ActionRiskDisplay({ transactionId }: Props) {
           }
           riskScoreName="TRS"
           showFormulaBackLink
+          riskScoreAlgo={(value) => value.score}
         />
       )}
     </AsyncResourceRenderer>

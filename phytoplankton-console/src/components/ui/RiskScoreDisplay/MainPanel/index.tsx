@@ -14,19 +14,19 @@ export type MainPanelCustomStyles = Partial<{
 interface Props {
   icon: React.ReactNode;
   title: string;
-  values: ValueItem[];
+  lastItem: ValueItem;
   onClickInfo?: () => void;
   customStyling?: MainPanelCustomStyles;
+  riskScoreAlgo: (value: ValueItem) => number;
+  sortedItems: ValueItem[];
 }
 
 export default function MainPanel(props: Props) {
-  const { title, values, icon, customStyling, onClickInfo } = props;
-  const sortedItems = useMemo(() => sortByDate(values), [values]);
+  const { title, lastItem, icon, customStyling, onClickInfo, riskScoreAlgo, sortedItems } = props;
   const sortedScores = useMemo(() => sortedItems.map(({ score }) => score), [sortedItems]);
-  const lastItem = sortedItems[values.length - 1];
-  const currentScore: number | null = lastItem?.score;
-  const manualRiskLevel = lastItem?.manualRiskLevel;
+  const currentScore: number | null = riskScoreAlgo(lastItem);
   const derivedRiskLevel = useRiskLevel(currentScore);
+  const manualRiskLevel = lastItem?.manualRiskLevel;
   const currentRiskLevel = manualRiskLevel ?? derivedRiskLevel ?? undefined;
   return (
     <div className={cn(s.root)} style={{ background: customStyling?.background }}>
@@ -121,10 +121,4 @@ function Chart(props: { values: number[]; riskLevel?: RiskLevel }) {
       ))}
     </svg>
   );
-}
-
-function sortByDate<T extends { createdAt: number }>(items: T[]): T[] {
-  const result = [...items];
-  result.sort((x, y) => x.createdAt - y.createdAt);
-  return result;
 }

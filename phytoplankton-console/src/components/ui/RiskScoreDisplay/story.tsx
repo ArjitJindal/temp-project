@@ -85,6 +85,7 @@ export default function (): JSX.Element {
                 ],
               }))}
               riskScoreName="CRA risk score"
+              riskScoreAlgo={(x) => x.score}
             />
           )}
         </PropertyMatrix>
@@ -100,6 +101,7 @@ export default function (): JSX.Element {
             },
           ]}
           riskScoreName="CRA risk score"
+          riskScoreAlgo={(x) => x.score}
         />
       </UseCase>
       <UseCase title={'Empty'}>
@@ -108,6 +110,7 @@ export default function (): JSX.Element {
           icon={<User3LineIcon />}
           values={[]}
           riskScoreName="CRA risk score"
+          riskScoreAlgo={(x) => x.score}
         />
       </UseCase>
     </>

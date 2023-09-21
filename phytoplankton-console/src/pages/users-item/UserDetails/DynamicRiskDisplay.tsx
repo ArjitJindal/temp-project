@@ -29,6 +29,7 @@ export default function DynamicRiskDisplay({ userId }: Props) {
           title="CRA risk score"
           riskScoreName="CRA risk score"
           showFormulaBackLink
+          riskScoreAlgo={(value) => value.score}
         />
       )}
     </AsyncResourceRenderer>
