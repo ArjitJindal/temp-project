@@ -33,6 +33,12 @@ interface DBCredentials {
 
 let cacheClient: MongoClient
 
+export async function getMongoDbClientDb(
+  dbName = StackConstants.MONGO_DB_DATABASE_NAME
+) {
+  return (await getMongoDbClient(dbName)).db()
+}
+
 export async function getMongoDbClient(
   dbName = StackConstants.MONGO_DB_DATABASE_NAME
 ) {

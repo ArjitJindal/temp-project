@@ -5,7 +5,7 @@ import { RuleInstance } from '../openapi-internal/RuleInstance'
 import { ImportRequest } from '@/@types/openapi-internal/ImportRequest'
 import { AggregatorName } from '@/services/rules-engine/aggregator'
 import { TenantBasic } from '@/services/accounts'
-import { TimeRange } from '@/lambdas/console-api-dashboard/repositories/dashboard-stats-repository'
+import { TimeRange } from '@/lambdas/console-api-dashboard/repositories/types'
 
 /* File Import */
 type FileImportBatchJobParameters = {

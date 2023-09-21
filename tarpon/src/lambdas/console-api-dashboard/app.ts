@@ -265,7 +265,7 @@ export const dashboardStatsHandler = lambdaApi()(
         if (shouldRefreshAll(event)) {
           await dashboardStatsRepository.refreshAllStats()
         }
-        return await dashboardStatsRepository.getTransactionTypeDistributionStatistics()
+        return null // TODO: to be re-enabled again by FR-3219
       }
     )
     return await handlers.handle(event)
