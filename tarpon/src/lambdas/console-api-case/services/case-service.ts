@@ -501,6 +501,11 @@ export class CaseService extends CaseAlertsCommonService {
       isReview = true
     }
 
+    const casesWithPreviousEscalations = cases.filter(
+      (c) =>
+        c.caseStatus === 'ESCALATED' || c.caseStatus === 'IN_REVIEW_ESCALATED'
+    )
+
     const currentStatus = cases[0].caseStatus
 
     const commentBody = this.getCaseCommentBody(updates, currentStatus)
@@ -535,6 +540,15 @@ export class CaseService extends CaseAlertsCommonService {
                     timestamp: Date.now(),
                   },
                 ]
+              ),
+            ]
+          : []),
+        ...(casesWithPreviousEscalations?.length &&
+        hasFeature('ESCALATION') &&
+        updates?.caseStatus === 'CLOSED'
+          ? [
+              this.caseRepository.updateReviewAssignmentsToAssignments(
+                casesWithPreviousEscalations.map((c) => c.caseId!)
               ),
             ]
           : []),

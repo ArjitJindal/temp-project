@@ -739,6 +739,11 @@ export class AlertsService extends CaseAlertsCommonService {
     )
 
     const caseService = new CaseService(caseRepository, this.s3, this.s3Config)
+    const alertsWithPreviousEscalations = alerts.filter(
+      (alert) =>
+        alert.alertStatus === 'ESCALATED' ||
+        alert.alertStatus === 'IN_REVIEW_ESCALATED'
+    )
 
     await withTransaction(async () => {
       const [response] = await Promise.all([
@@ -770,6 +775,15 @@ export class AlertsService extends CaseAlertsCommonService {
                     timestamp: Date.now(),
                   },
                 ]
+              ),
+            ]
+          : []),
+        ...(hasFeature('ESCALATION') &&
+        alertsWithPreviousEscalations.length &&
+        statusUpdateRequest?.alertStatus === 'CLOSED'
+          ? [
+              this.alertsRepository.updateReviewAssignmentsToAssignments(
+                alertsWithPreviousEscalations.map((alert) => alert.alertId!)
               ),
             ]
           : []),

@@ -723,6 +723,53 @@ export class AlertsRepository {
     )
   }
 
+  public async updateReviewAssignmentsToAssignments(
+    alertIds: string[]
+  ): Promise<void> {
+    const db = this.mongoDb.db()
+    const collection = db.collection<Case>(CASES_COLLECTION(this.tenantId))
+
+    const now = Date.now()
+
+    await collection.updateMany(
+      {
+        'alerts.alertId': {
+          $in: alertIds,
+        },
+      },
+      [
+        {
+          $set: {
+            alerts: {
+              $map: {
+                input: '$alerts',
+                as: 'alert',
+                in: {
+                  $cond: {
+                    if: {
+                      $in: ['$$alert.alertId', alertIds],
+                    },
+                    then: {
+                      $mergeObjects: [
+                        '$$alert',
+                        {
+                          assignments: '$$alert.reviewAssignments',
+                          updatedAt: now,
+                        },
+                      ],
+                    },
+                    else: '$$alert',
+                  },
+                },
+              },
+            },
+            updatedAt: now,
+          },
+        },
+      ]
+    )
+  }
+
   public async updateInReviewAssignemnts(
     alertIds: string[],
     assignments: Assignment[],

@@ -905,6 +905,22 @@ export class CaseRepository {
     )
   }
 
+  public async updateReviewAssignmentsToAssignments(
+    caseIds: string[]
+  ): Promise<void> {
+    const db = this.mongoDb.db()
+    const collection = db.collection<Case>(CASES_COLLECTION(this.tenantId))
+
+    await collection.updateMany({ caseId: { $in: caseIds } }, [
+      {
+        $set: {
+          assignments: '$reviewAssignments',
+          updatedAt: Date.now(),
+        },
+      },
+    ])
+  }
+
   public async saveCaseComment(
     caseId: string,
     comment: Comment
