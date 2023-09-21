@@ -44,13 +44,16 @@ export const Transactions: TableQuestion<Period> = {
       })
       .toArray()
 
-    return result.map((r) => {
-      return [
-        r.transactionId,
-        r.originAmountDetails?.transactionAmount,
-        r.timestamp,
-      ]
-    })
+    return {
+      data: result.map((r) => {
+        return [
+          r.transactionId,
+          r.originAmountDetails?.transactionAmount,
+          r.timestamp,
+        ]
+      }),
+      summary: '',
+    }
   },
   variableOptions: {},
   defaults: () => {
