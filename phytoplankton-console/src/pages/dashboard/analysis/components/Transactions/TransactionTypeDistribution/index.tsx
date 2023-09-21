@@ -6,12 +6,12 @@ import {
 } from '@/apis';
 import AsyncResourceRenderer from '@/components/common/AsyncResourceRenderer';
 import {
-  COLORS_V2_ANALYTICS_CHARTS_04,
   COLORS_V2_ANALYTICS_CHARTS_01,
   COLORS_V2_ANALYTICS_CHARTS_02,
-  COLORS_V2_ANALYTICS_CHARTS_10,
+  COLORS_V2_ANALYTICS_CHARTS_04,
   COLORS_V2_ANALYTICS_CHARTS_05,
   COLORS_V2_ANALYTICS_CHARTS_07,
+  COLORS_V2_ANALYTICS_CHARTS_10,
 } from '@/components/ui/colors';
 import { isSuccess } from '@/utils/asyncResource';
 import { WidgetProps } from '@/components/library/Widget/types';
@@ -47,8 +47,6 @@ const TransactinTypeDistribution = (props: Props) => {
       );
   return (
     <Widget
-      {...props}
-      width="HALF"
       onDownload={(): Promise<{ fileName: string; data: string }> => {
         return new Promise((resolve, _reject) => {
           const fileData = {
@@ -58,6 +56,8 @@ const TransactinTypeDistribution = (props: Props) => {
           resolve(fileData);
         });
       }}
+      resizing="FIXED"
+      {...props}
     >
       <AsyncResourceRenderer<DashboardStatsTransactionTypeDistributionStats> resource={data}>
         {({ transactionTypeData }) => {

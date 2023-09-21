@@ -5,8 +5,8 @@ import {
 } from '@/apis';
 import AsyncResourceRenderer from '@/components/common/AsyncResourceRenderer';
 import {
-  COLORS_V2_PRIMARY_SHADES_BLUE_300,
   COLORS_V2_PRIMARY_SHADES_BLUE_100,
+  COLORS_V2_PRIMARY_SHADES_BLUE_300,
   COLORS_V2_PRIMARY_SHADES_BLUE_600,
   COLORS_V2_PRIMARY_TINTS_BLUE_900,
 } from '@/components/ui/colors';
@@ -42,7 +42,6 @@ const DistributionByAlertPriority = (props: Props) => {
       );
   return (
     <Widget
-      {...props}
       width="HALF"
       onDownload={(): Promise<{ fileName: string; data: string }> => {
         return new Promise((resolve, _reject) => {
@@ -53,6 +52,8 @@ const DistributionByAlertPriority = (props: Props) => {
           resolve(fileData);
         });
       }}
+      resizing="FIXED"
+      {...props}
     >
       <AsyncResourceRenderer<DashboardStatsAlertPriorityDistributionStats> resource={data}>
         {({ alertPriorityData }) => {

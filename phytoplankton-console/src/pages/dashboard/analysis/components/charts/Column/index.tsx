@@ -58,7 +58,7 @@ export default function Column<Series = string, X = string>(props: Props<X, numb
   return (
     <AntColumn
       animation={false}
-      height={height ?? 256}
+      height={height}
       isStack={true}
       data={data}
       xField={'xValue'}

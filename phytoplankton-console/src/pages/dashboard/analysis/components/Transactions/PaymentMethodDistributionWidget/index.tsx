@@ -15,7 +15,6 @@ import AsyncResourceRenderer from '@/components/common/AsyncResourceRenderer';
 import { useApi } from '@/api';
 import { useQuery } from '@/utils/queries/hooks';
 import { DASHBOARD_TRANSACTIONS_TOTAL_STATS } from '@/utils/queries/keys';
-import Widget from '@/components/library/Widget';
 import { WidgetProps } from '@/components/library/Widget/types';
 import { getPaymentMethodTitle, PAYMENT_METHODS, PaymentMethod } from '@/utils/payments';
 import { isSuccess, map } from '@/utils/asyncResource';
@@ -25,6 +24,7 @@ import Treemap, {
 } from '@/pages/dashboard/analysis/components/charts/Treemap';
 import DatePicker from '@/components/ui/DatePicker';
 import { dayjs, Dayjs } from '@/utils/dayjs';
+import Widget from '@/components/library/Widget';
 
 const DEFAULT_DATE_RANGE: [Dayjs, Dayjs] = [dayjs().subtract(1, 'year'), dayjs()];
 
@@ -76,7 +76,6 @@ export default function PaymentMethodDistributionWidget(props: Props) {
 
   return (
     <Widget
-      {...props}
       extraControls={[
         <DatePicker.RangePicker
           value={dateRange}
@@ -91,7 +90,8 @@ export default function PaymentMethodDistributionWidget(props: Props) {
             })
           : undefined
       }
-      width="HALF"
+      resizing="FIXED"
+      {...props}
     >
       <AsyncResourceRenderer resource={preparedDataRes}>
         {(preparedData) => (

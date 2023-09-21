@@ -69,7 +69,6 @@ export default function TeamPerformanceCard(props: WidgetProps) {
 
   return (
     <Widget
-      {...props}
       extraControls={[
         <DatePicker.RangePicker
           value={getDateRangeToShow(params.dateRange)}
@@ -84,6 +83,7 @@ export default function TeamPerformanceCard(props: WidgetProps) {
           }}
         />,
       ]}
+      {...props}
     >
       <div className={s.header}>
         <SegmentedControl<Params['scope']>

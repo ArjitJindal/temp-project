@@ -180,6 +180,7 @@ function Analysis() {
                 props: {
                   id: 'transaction_breakdown_by_rule_action',
                   title: 'Transaction breakdown by rule action',
+                  width: 'FULL',
                 },
                 component: TransactionsChartWidget,
               },
@@ -187,6 +188,7 @@ function Analysis() {
                 props: {
                   id: 'distribution_by_payment_method',
                   title: 'Distribution by transaction payment method',
+                  width: 'HALF',
                 },
                 component: PaymentMethodDistributionWidget,
               },
@@ -194,6 +196,7 @@ function Analysis() {
               //   props: {
               //     id: 'distribution_by_transactions_type',
               //     title: 'Distribution by transaction type',
+              //     width: 'HALF',
               //   },
               //   component: TransactinTypeDistribution,
               // },

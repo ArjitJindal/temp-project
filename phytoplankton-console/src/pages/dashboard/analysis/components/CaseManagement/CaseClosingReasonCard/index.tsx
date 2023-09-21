@@ -94,8 +94,6 @@ const CaseClosingReasonCard = (props: Props) => {
       };
   return (
     <Widget
-      {...props}
-      width="HALF"
       onDownload={(): Promise<{ fileName: string; data: string }> => {
         return new Promise((resolve, _reject) => {
           const fileData = {
@@ -105,6 +103,8 @@ const CaseClosingReasonCard = (props: Props) => {
           resolve(fileData);
         });
       }}
+      resizing="FIXED"
+      {...props}
     >
       <AsyncResourceRenderer<DashboardStatsClosingReasonDistributionStats>
         resource={queryResult.data}

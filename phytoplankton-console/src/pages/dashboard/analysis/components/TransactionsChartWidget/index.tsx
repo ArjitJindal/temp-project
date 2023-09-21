@@ -87,7 +87,6 @@ export default function TransactionsChartWidget(props: WidgetProps) {
 
   return (
     <Widget
-      {...props}
       extraControls={[
         <div className={s.salesExtraWrap}>
           <div className={s.salesExtra}>
@@ -119,66 +118,66 @@ export default function TransactionsChartWidget(props: WidgetProps) {
           />
         </div>,
       ]}
+      resizing="FIXED"
+      {...props}
     >
-      <div className={s.salesCard}>
-        <AsyncResourceRenderer resource={queryResult.data}>
-          {({ data }) => {
-            const preparedData: ColumnData<string, number, RuleAction> = data.flatMap(
-              (item): ColumnData<string, number, RuleAction> => {
-                return [
-                  {
-                    xValue: item._id,
-                    yValue: item.stoppedTransactions ?? 0,
-                    series: 'BLOCK',
-                  },
-                  {
-                    xValue: item._id,
-                    yValue: item.suspendedTransactions ?? 0,
-                    series: 'SUSPEND',
-                  },
-                  {
-                    xValue: item._id,
-                    yValue: item.flaggedTransactions ?? 0,
-                    series: 'FLAG',
-                  },
-                  {
-                    xValue: item._id,
-                    yValue:
-                      (item.totalTransactions ?? 0) -
-                      (item.stoppedTransactions ?? 0) -
-                      (item.suspendedTransactions ?? 0) -
-                      (item.flaggedTransactions ?? 0),
-                    series: 'ALLOW',
-                  },
-                ];
-              },
-            );
-            return (
-              <div>
-                {data.length === 0 ? (
-                  <Empty description="No data available for selected period" />
-                ) : (
-                  <Column<RuleAction>
-                    data={preparedData}
-                    formatSeries={(action) => {
-                      return getRuleActionLabel(action, settings) ?? action;
-                    }}
-                    formatX={(xValue) => {
-                      return formatDate(xValue);
-                    }}
-                    colors={{
-                      SUSPEND: getRuleActionColorForDashboard('SUSPEND'),
-                      FLAG: getRuleActionColorForDashboard('FLAG'),
-                      BLOCK: getRuleActionColorForDashboard('BLOCK'),
-                      ALLOW: getRuleActionColorForDashboard('ALLOW'),
-                    }}
-                  />
-                )}
-              </div>
-            );
-          }}
-        </AsyncResourceRenderer>
-      </div>
+      <AsyncResourceRenderer resource={queryResult.data}>
+        {({ data }) => {
+          const preparedData: ColumnData<string, number, RuleAction> = data.flatMap(
+            (item): ColumnData<string, number, RuleAction> => {
+              return [
+                {
+                  xValue: item._id,
+                  yValue: item.stoppedTransactions ?? 0,
+                  series: 'BLOCK',
+                },
+                {
+                  xValue: item._id,
+                  yValue: item.suspendedTransactions ?? 0,
+                  series: 'SUSPEND',
+                },
+                {
+                  xValue: item._id,
+                  yValue: item.flaggedTransactions ?? 0,
+                  series: 'FLAG',
+                },
+                {
+                  xValue: item._id,
+                  yValue:
+                    (item.totalTransactions ?? 0) -
+                    (item.stoppedTransactions ?? 0) -
+                    (item.suspendedTransactions ?? 0) -
+                    (item.flaggedTransactions ?? 0),
+                  series: 'ALLOW',
+                },
+              ];
+            },
+          );
+          return (
+            <>
+              {data.length === 0 ? (
+                <Empty description="No data available for selected period" />
+              ) : (
+                <Column<RuleAction>
+                  data={preparedData}
+                  formatSeries={(action) => {
+                    return getRuleActionLabel(action, settings) ?? action;
+                  }}
+                  formatX={(xValue) => {
+                    return formatDate(xValue);
+                  }}
+                  colors={{
+                    SUSPEND: getRuleActionColorForDashboard('SUSPEND'),
+                    FLAG: getRuleActionColorForDashboard('FLAG'),
+                    BLOCK: getRuleActionColorForDashboard('BLOCK'),
+                    ALLOW: getRuleActionColorForDashboard('ALLOW'),
+                  }}
+                />
+              )}
+            </>
+          );
+        }}
+      </AsyncResourceRenderer>
     </Widget>
   );
 }

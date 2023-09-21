@@ -30,8 +30,6 @@ export default function RulePrioritySplitCard(props: Props) {
 
   return (
     <Widget
-      {...props}
-      width="HALF"
       onDownload={(): Promise<{ fileName: string; data: string }> => {
         return new Promise((resolve, _reject) => {
           const fileData = {
@@ -41,6 +39,8 @@ export default function RulePrioritySplitCard(props: Props) {
           resolve(fileData);
         });
       }}
+      resizing="FIXED"
+      {...props}
     >
       <AsyncResourceRenderer resource={ruleInstanceResults.data}>
         {(instance: RuleInstance[]) => {

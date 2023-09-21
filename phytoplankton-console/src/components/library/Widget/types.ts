@@ -7,6 +7,7 @@ export interface WidgetPropsRequired {
 export interface WidgetPropsOptional {
   title: string;
   width: 'FULL' | 'HALF';
+  resizing?: 'AUTO' | 'FIXED';
   onDownload: () => Promise<{
     fileName: string;
     data: string;
