@@ -11,6 +11,7 @@ import RulePrioritySplitCard from './components/RulePrioritySplitCard';
 import CaseClosingReasonCard from './components/CaseManagement/CaseClosingReasonCard';
 import DistributionByAlertPriority from './components/CaseManagement/DistributionByAlertPriority';
 import s from './style.module.less';
+import RuleActionSplitCard from './components/RuleActionSplitCard';
 import PageWrapper from '@/components/PageWrapper';
 import { useFeatureEnabled } from '@/components/AppWrapper/Providers/SettingsProvider';
 import { useI18n } from '@/locales';
@@ -39,6 +40,7 @@ type KeyValues =
   | 'DISTRIBUTION_BY_ALERT_PRIORITY'
   | 'DISTRIBUTION_BY_PAYMENT_METHOD'
   | 'DISTRIBUTION_BY_TRANSACTION_TYPE'
+  | 'RULE_ACTION_SPLIT'
   | 'TRANSACTIONS_BREAKDOWN_BY_KRS';
 
 const KEYS: KeyValues[] = [
@@ -56,6 +58,7 @@ const KEYS: KeyValues[] = [
   'DISTRIBUTION_BY_PAYMENT_METHOD',
   'DISTRIBUTION_BY_TRANSACTION_TYPE',
   'TRANSACTIONS_BREAKDOWN_BY_KRS',
+  'RULE_ACTION_SPLIT',
 ];
 
 const DEFAULT_VALUES = {
@@ -73,6 +76,7 @@ const DEFAULT_VALUES = {
   DISTRIBUTION_BY_PAYMENT_METHOD: true,
   DISTRIBUTION_BY_TRANSACTION_TYPE: true,
   TRANSACTIONS_BREAKDOWN_BY_KRS: true,
+  RULE_ACTION_SPLIT: true,
 };
 
 type DashboardSettings = Record<KeyValues, boolean>;
@@ -228,6 +232,18 @@ function Analysis() {
                         width: 'HALF' as const,
                       },
                       component: RulePrioritySplitCard,
+                    },
+                  ]
+                : []),
+              ...(settingsToDisplay.RULE_ACTION_SPLIT
+                ? [
+                    {
+                      props: {
+                        id: 'tempId',
+                        title: 'Distribution by rule action',
+                        width: 'HALF' as const,
+                      },
+                      component: RuleActionSplitCard,
                     },
                   ]
                 : []),
