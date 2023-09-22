@@ -16,6 +16,7 @@ import { QuestionVariableOption } from '@/@types/openapi-internal/QuestionVariab
 import { GetQuestionsResponse } from '@/@types/openapi-internal/GetQuestionsResponse'
 import { logger } from '@/core/logger'
 import { ask } from '@/utils/openapi'
+import { getUserName } from '@/utils/helpers'
 
 export class QuestionService {
   static async fromEvent(
@@ -105,6 +106,8 @@ export class QuestionService {
 
     const userId =
       c.caseUsers?.destination?.userId || c.caseUsers?.origin?.userId
+    const user = c.caseUsers?.destination || c.caseUsers?.origin
+    const username = getUserName(user)
     const tenantId = getContext()?.tenantId
     const caseId = c.caseId
     const alertId = a.alertId
@@ -119,6 +122,7 @@ export class QuestionService {
       userId,
       caseId,
       alertId,
+      username,
     }
 
     if (!question?.type) {

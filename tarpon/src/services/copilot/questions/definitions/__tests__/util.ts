@@ -33,6 +33,7 @@ export async function testQuestion<V extends Variables, D>(
     alertId: 'A-1',
     userId: 'U-1',
     _case: c,
+    username: 'John Smith',
     alert,
   }
   const result = await q.aggregationPipeline(ctx, { ...q.defaults(ctx), ...v })

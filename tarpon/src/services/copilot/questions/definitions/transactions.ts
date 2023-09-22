@@ -30,7 +30,7 @@ export const Transactions: TableQuestion<Period> = {
       columnType: 'DATE_TIME',
     },
   ],
-  aggregationPipeline: async ({ tenantId, userId }, period) => {
+  aggregationPipeline: async ({ tenantId, userId, username }, period) => {
     const client = await getMongoDbClient()
     const db = client.db()
     const result = await db
@@ -49,7 +49,9 @@ export const Transactions: TableQuestion<Period> = {
           r.timestamp,
         ]
       }),
-      summary: '',
+      summary: `There have been ${
+        result.length
+      } transactions for ${username} ${humanReadablePeriod(period)}.`,
     }
   },
   variableOptions: {},

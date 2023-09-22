@@ -19,8 +19,8 @@ interface Props {
 }
 
 const SUPPORTED_SEARCHES = [
-  'Alert history',
-  'Case history',
+  'Alerts',
+  'Cases',
   'Alerts that resulted in SAR',
   'Transactions by rule action',
   'Transactions by type',

@@ -11,11 +11,11 @@ import {
 
 export const CaseHistory: TableQuestion<Period> = {
   type: 'TABLE',
-  questionId: 'Case history',
+  questionId: 'Cases',
   title: (_, vars) => {
     return `Cases for this user ${humanReadablePeriod(vars)}`
   },
-  aggregationPipeline: async ({ tenantId, userId }, period) => {
+  aggregationPipeline: async ({ tenantId, userId, username }, period) => {
     const client = await getMongoDbClient()
     const db = client.db()
     const result = await db
@@ -38,7 +38,9 @@ export const CaseHistory: TableQuestion<Period> = {
           r.lastStatusChange?.reason?.join(', '),
         ]
       }),
-      summary: '',
+      summary: `There have been ${
+        result.length
+      } cases for ${username} ${humanReadablePeriod(period)}.`,
     }
   },
   headers: [

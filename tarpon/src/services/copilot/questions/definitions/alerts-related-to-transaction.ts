@@ -8,6 +8,7 @@ import {
 import { Alert } from '@/@types/openapi-internal/Alert'
 import { Report } from '@/@types/openapi-internal/Report'
 import {
+  humanReadablePeriod,
   matchPeriod,
   Period,
 } from '@/services/copilot/questions/definitions/util'
@@ -22,7 +23,10 @@ export const AlertsRelatedToTransaction: TableQuestion<
   title: (_, vars) => {
     return `Alerts related to transaction ${vars.transactionId}`
   },
-  aggregationPipeline: async ({ tenantId }, { transactionId, ...period }) => {
+  aggregationPipeline: async (
+    { tenantId, username },
+    { transactionId, ...period }
+  ) => {
     const client = await getMongoDbClient()
     const db = client.db()
     const result = await db
@@ -67,7 +71,9 @@ export const AlertsRelatedToTransaction: TableQuestion<
           ]
         })
       }),
-      summary: '',
+      summary: `There have been ${
+        result.flatMap((r) => r.alerts).length
+      } alerts for ${username} ${humanReadablePeriod(period)}.`,
     }
   },
   headers: [

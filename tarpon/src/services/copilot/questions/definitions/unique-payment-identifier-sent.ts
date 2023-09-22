@@ -20,12 +20,19 @@ export const UniquePaymentIdentifierSent: TableQuestion<
       vars.top
     } payment identifiers they have received ${humanReadablePeriod(vars)}`
   },
-  aggregationPipeline: async ({ tenantId, userId }, { top, ...period }) => {
+  aggregationPipeline: async (
+    { tenantId, userId, username },
+    { top, ...period }
+  ) => {
     const client = await getMongoDbClient()
     const db = client.db()
     const result = await db
       .collection<InternalTransaction>(TRANSACTIONS_COLLECTION(tenantId))
-      .aggregate<{ _id: { paymentMethodId: string; type: PaymentMethod } }>([
+      .aggregate<{
+        _id: { paymentMethodId: string; type: PaymentMethod }
+        amount: number
+        count: number
+      }>([
         {
           $match: { originUserId: userId, ...matchPeriod('timestamp', period) },
         },
@@ -38,6 +45,7 @@ export const UniquePaymentIdentifierSent: TableQuestion<
             count: {
               $sum: 1,
             },
+            amount: { $sum: '$originAmountDetails.transactionAmount' },
           },
         },
         {
@@ -53,14 +61,18 @@ export const UniquePaymentIdentifierSent: TableQuestion<
 
     return {
       data: result.map((r) => {
-        return [r._id.paymentMethodId, r._id.type]
+        return [r._id.paymentMethodId, r._id.type, r.count, r.amount]
       }),
-      summary: '',
+      summary: `The top payment identifier that ${username} sent money to was ${
+        result.at(0)?._id.paymentMethodId
+      } which was a ${result.at(0)?._id.type} method.`,
     }
   },
   headers: [
     { name: 'Destination payment identifier', columnType: 'ID' },
     { name: 'Payment type', columnType: 'PAYMENT_METHOD' },
+    { name: 'Transaction Count', columnType: 'NUMBER' },
+    { name: 'Total Amount', columnType: 'NUMBER' },
   ],
   variableOptions: {
     ...periodVars,

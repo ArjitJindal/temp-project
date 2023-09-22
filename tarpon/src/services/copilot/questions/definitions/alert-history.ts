@@ -11,11 +11,11 @@ import {
 
 export const AlertHistory: TableQuestion<Period> = {
   type: 'TABLE',
-  questionId: 'Alert history',
+  questionId: 'Alerts',
   title: (_, vars) => {
     return `Alerts for this user ${humanReadablePeriod(vars)}`
   },
-  aggregationPipeline: async ({ tenantId, userId }, period) => {
+  aggregationPipeline: async ({ tenantId, userId, username }, period) => {
     const client = await getMongoDbClient()
     const db = client.db()
     const result = await db
@@ -40,7 +40,9 @@ export const AlertHistory: TableQuestion<Period> = {
           ]) || []
         )
       }),
-      summary: '',
+      summary: `There have been ${
+        result.flatMap((r) => r.alerts).length
+      } alerts for ${username} ${humanReadablePeriod(period)}.`,
     }
   },
   headers: [

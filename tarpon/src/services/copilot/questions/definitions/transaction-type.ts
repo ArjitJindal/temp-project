@@ -16,12 +16,12 @@ export const TransactionType: BarchartQuestion<Period> = {
   title: (_, vars) => {
     return `Transactions by type ${humanReadablePeriod(vars)}`
   },
-  aggregationPipeline: async ({ tenantId, userId }, period) => {
+  aggregationPipeline: async ({ tenantId, userId, username }, period) => {
     const client = await getMongoDbClient()
     const db = client.db()
     const results = await db
       .collection<Case>(TRANSACTIONS_COLLECTION(tenantId))
-      .aggregate([
+      .aggregate<{ _id: string; count: number }>([
         {
           $match: {
             $or: [
@@ -45,7 +45,13 @@ export const TransactionType: BarchartQuestion<Period> = {
         },
       ])
       .toArray()
-    return { data: results.map((r) => ({ x: r._id, y: r.count })), summary: '' }
+    return {
+      data: results.map((r) => ({ x: r._id, y: r.count })),
+      summary: `There have been ${results.reduce((acc, curr) => {
+        acc += curr.count
+        return acc
+      }, 0)} transactions for ${username} ${humanReadablePeriod(period)}.`,
+    }
   },
   variableOptions: {
     ...periodVars,

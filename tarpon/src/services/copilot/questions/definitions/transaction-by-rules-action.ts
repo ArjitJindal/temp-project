@@ -20,7 +20,7 @@ export const TransactionByRulesAction: StackedBarchartQuestion<Period> = {
   title: (_, vars) => {
     return `Transactions by rule action ${humanReadablePeriod(vars)}`
   },
-  aggregationPipeline: async ({ tenantId, userId }, period) => {
+  aggregationPipeline: async ({ tenantId, userId, username }, period) => {
     const client = await getMongoDbClient()
     const db = client.db()
 
@@ -104,7 +104,9 @@ export const TransactionByRulesAction: StackedBarchartQuestion<Period> = {
           }
         }
       ),
-      summary: '',
+      summary: `There have been ${
+        results.length
+      } transactions filed for ${username} ${humanReadablePeriod(period)}.`,
     }
   },
   variableOptions: {

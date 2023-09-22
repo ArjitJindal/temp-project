@@ -27,7 +27,7 @@ export const TransactionLedRuleHit: TableQuestion<any> = {
       columnType: 'DATE_TIME',
     },
   ],
-  aggregationPipeline: async ({ tenantId, userId, alert }) => {
+  aggregationPipeline: async ({ tenantId, userId, alert, username }) => {
     const client = await getMongoDbClient()
     const dynamoDb = getDynamoDbClient()
 
@@ -78,7 +78,7 @@ export const TransactionLedRuleHit: TableQuestion<any> = {
             t.timestamp,
           ]
         }),
-      summary: '',
+      summary: `${transactionsThatLedToRuleHit.length} transactions were checked before the alert was created for ${username}.`,
     }
   },
   variableOptions: {},

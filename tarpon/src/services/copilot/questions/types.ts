@@ -18,6 +18,7 @@ export type InvestigationContext = {
   userId: string
   alert: Alert
   _case: Case
+  username: string
 }
 
 export type Question<V extends Variables, D> = {

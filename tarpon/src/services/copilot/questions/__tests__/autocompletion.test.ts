@@ -5,9 +5,9 @@ describe('Autocompletion', () => {
   test('3 suggestions returned', async () => {
     const suggestions = ac.autocomplete('Aerts')
     expect(suggestions).toEqual([
+      'Alerts',
       'Alerts related to transaction',
       'Alerts that resulted in SAR',
-      'Alert history',
     ])
   })
   test('10 returned with no input', async () => {

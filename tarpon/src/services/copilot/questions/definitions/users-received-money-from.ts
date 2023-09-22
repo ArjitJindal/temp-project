@@ -22,12 +22,15 @@ export const UsersReceivedMoneyFrom: TableQuestion<Period & { top: number }> = {
       vars.top
     } users they have received money ${humanReadablePeriod(vars)}`
   },
-  aggregationPipeline: async ({ tenantId, userId }, { top, ...period }) => {
+  aggregationPipeline: async (
+    { tenantId, userId, username },
+    { top, ...period }
+  ) => {
     const client = await getMongoDbClient()
     const db = client.db()
     const result = await db
       .collection<InternalTransaction>(TRANSACTIONS_COLLECTION(tenantId))
-      .aggregate<{ user: InternalUser }>([
+      .aggregate<{ user: InternalUser; count: number; amount: number }>([
         {
           $match: {
             destinationUserId: userId,
@@ -35,7 +38,16 @@ export const UsersReceivedMoneyFrom: TableQuestion<Period & { top: number }> = {
           },
         },
         {
-          $sortByCount: '$originUserId',
+          $group: {
+            _id: '$originUserId',
+            count: { $sum: 1 },
+            amount: { $sum: '$originAmountDetails.transactionAmount' },
+          },
+        },
+        {
+          $sort: {
+            count: -1, // Sort by count in descending order
+          },
         },
         {
           $limit: top,
@@ -58,15 +70,25 @@ export const UsersReceivedMoneyFrom: TableQuestion<Period & { top: number }> = {
 
     return {
       data: result.map((r) => {
-        return [r.user.userId, getUserName(r.user), r.user.type]
+        return [
+          r.user.userId,
+          getUserName(r.user),
+          r.user.type,
+          r.count,
+          r.amount,
+        ]
       }),
-      summary: '',
+      summary: `The top user that ${username} sent money to was ${getUserName(
+        result.at(0)?.user
+      )}.`,
     }
   },
   headers: [
     { name: 'User ID', columnType: 'ID' },
     { name: 'Username', columnType: 'STRING' },
     { name: 'User type', columnType: 'STRING' },
+    { name: 'Transaction Count', columnType: 'NUMBER' },
+    { name: 'Total Amount', columnType: 'NUMBER' },
   ],
   variableOptions: {
     ...periodVars,

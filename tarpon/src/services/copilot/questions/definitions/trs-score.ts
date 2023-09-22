@@ -79,7 +79,12 @@ export const TrsScore: TimeseriesQuestion<Period> = {
           }),
         },
       ],
-      summary: '',
+      summary: `The average TRS score was ${(
+        results.reduce((acc, curr) => {
+          acc += curr.avg
+          return acc
+        }, 0) / results.length
+      ).toFixed(2)} ${humanReadablePeriod(period)}.`,
     }
   },
   variableOptions: {

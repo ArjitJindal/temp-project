@@ -18,7 +18,7 @@ export const SarsFiled: TableQuestion<Period> = {
   title: (_, vars) => {
     return `Alerts that results in SARs ${humanReadablePeriod(vars)}`
   },
-  aggregationPipeline: async ({ tenantId, userId }, period) => {
+  aggregationPipeline: async ({ tenantId, userId, username }, period) => {
     const client = await getMongoDbClient()
     const db = client.db()
     const result = await db
@@ -50,7 +50,9 @@ export const SarsFiled: TableQuestion<Period> = {
       data: result.map((r) => {
         return [r.id, r.description, r.caseUserId, r.caseId]
       }),
-      summary: '',
+      summary: `There have been ${
+        result.length
+      } SARs filed for ${username} ${humanReadablePeriod(period)}.`,
     }
   },
   headers: [
