@@ -4775,6 +4775,23 @@ paths:
       responses:
         '200':
           description: OK
+  /questions/autocomplete:
+    get:
+      summary: Get question autocompletion
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/QuestionAutocompleteResponse'
+      operationId: get-question-autocomplete
+      parameters:
+        - schema:
+            type: string
+          in: query
+          name: question
+          required: true
   '/alert/{alertId}/questions':
     get:
       summary: Get questions
@@ -4817,6 +4834,14 @@ paths:
           required: true
 components:
   schemas:
+    QuestionAutocompleteResponse:
+      title: QuestionAutocompleteResponse
+      type: object
+      properties:
+        suggestions:
+          type: array
+          items:
+            type: string
     QuestionVariable:
       type: object
       properties:

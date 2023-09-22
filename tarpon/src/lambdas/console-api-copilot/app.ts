@@ -13,6 +13,7 @@ import { ReportService } from '@/services/sar/service'
 import { InternalTransaction } from '@/@types/openapi-internal/InternalTransaction'
 import { QuestionService } from '@/services/copilot/questions/question-service'
 import { AlertsService } from '@/services/alerts'
+import { AutocompleteService } from '@/services/copilot/questions/autocompletion-service'
 
 export const copilotHandler = lambdaApi({})(
   async (
@@ -109,6 +110,14 @@ export const copilotHandler = lambdaApi({})(
         c,
         alert
       )
+    })
+
+    handlers.registerGetQuestionAutocomplete(async (ctx, request) => {
+      const autocomplete = new AutocompleteService()
+
+      return {
+        suggestions: autocomplete.autocomplete(request.question),
+      }
     })
 
     return await handlers.handle(event)
