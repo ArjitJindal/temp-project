@@ -2,7 +2,6 @@ import {
   APIGatewayEventLambdaAuthorizerContext,
   APIGatewayProxyWithLambdaAuthorizerEvent,
 } from 'aws-lambda'
-import { Configuration, OpenAIApi } from 'openai'
 import { queries, questions } from './definitions'
 import { InvestigationRepository } from './investigation-repository'
 import { InvestigationContext, Variables } from './types'
@@ -16,7 +15,7 @@ import { QuestionVariable } from '@/@types/openapi-internal/QuestionVariable'
 import { QuestionVariableOption } from '@/@types/openapi-internal/QuestionVariableOption'
 import { GetQuestionsResponse } from '@/@types/openapi-internal/GetQuestionsResponse'
 import { logger } from '@/core/logger'
-import { getSecret } from '@/utils/secrets-manager'
+import { ask } from '@/utils/openapi'
 
 export class QuestionService {
   static async fromEvent(
@@ -24,31 +23,18 @@ export class QuestionService {
       APIGatewayEventLambdaAuthorizerContext<JWTAuthorizerResult>
     >
   ) {
-    const openApi = await getSecret<{ apiKey: string }>(
-      process.env.OPENAI_CREDENTIALS_SECRET_ARN as string
-    )
     const mongoClient = await getMongoDbClient()
     const { principalId: tenantId } = event.requestContext.authorizer
 
     return new QuestionService(
-      new InvestigationRepository(mongoClient, tenantId),
-      openApi.apiKey
+      new InvestigationRepository(mongoClient, tenantId)
     )
   }
 
-  private readonly openai!: OpenAIApi
   private investigationRepository: InvestigationRepository
 
-  constructor(
-    investigationRepository: InvestigationRepository,
-    openaiKey: string
-  ) {
+  constructor(investigationRepository: InvestigationRepository) {
     this.investigationRepository = investigationRepository
-    this.openai = new OpenAIApi(
-      new Configuration({
-        apiKey: openaiKey,
-      })
-    )
   }
 
   async addQuestion(
@@ -215,17 +201,7 @@ Please parse "${question}" to give the best matching query and variables values 
 }`
 
     try {
-      const completion = await this.openai.createChatCompletion({
-        model: 'gpt-3.5-turbo',
-        temperature: 0.5,
-        messages: [
-          {
-            content: prompt,
-            role: 'assistant',
-          },
-        ],
-      })
-      return JSON.parse(completion.data.choices[0].message?.content || '')
+      return JSON.parse(await ask(prompt))
     } catch (e) {
       logger.error(e)
       throw new Error('AI could not understand this query')

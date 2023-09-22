@@ -1,4 +1,3 @@
-import { Configuration, OpenAIApi } from 'openai'
 import { MongoClient } from 'mongodb'
 import { DynamoDBDocumentClient } from '@aws-sdk/lib-dynamodb'
 import {
@@ -18,7 +17,6 @@ import { InternalConsumerUser } from '@/@types/openapi-internal/InternalConsumer
 import { CaseReasons } from '@/@types/openapi-internal/CaseReasons'
 import { traceable } from '@/core/xray'
 import { logger } from '@/core/logger'
-import { getSecret } from '@/utils/secrets-manager'
 import { DefaultApiFormatNarrativeRequest } from '@/@types/openapi-internal/RequestParameters'
 import { ruleNarratives } from '@/services/copilot/rule-narratives'
 import { reasonNarratives } from '@/services/copilot/reason-narratives'
@@ -26,6 +24,7 @@ import { InternalTransaction } from '@/@types/openapi-internal/InternalTransacti
 import { AIAttribute } from '@/@types/openapi-internal/AIAttribute'
 import { getMongoDbClient } from '@/utils/mongodb-utils'
 import { getDynamoDbClientByEvent } from '@/utils/dynamodb'
+import { ask } from '@/utils/openapi'
 
 type GenerateCaseNarrative = {
   _case: Case
@@ -60,12 +59,10 @@ SCREENING DETAILS
 [This section should contain information about sanctions, politically exposed persons (PEP), or adverse media screening results, for example.]
 
 CONCLUSION`
-const MAX_TOKEN_INPUT = 1000
 const MAX_TOKEN_OUTPUT = 4096
 
 @traceable
 export class CopilotService {
-  private readonly openai!: OpenAIApi
   private readonly tenantId: string
   private mongoDb: MongoClient
   private dynamoDb: DynamoDBDocumentClient
@@ -75,30 +72,21 @@ export class CopilotService {
       APIGatewayEventLambdaAuthorizerContext<Credentials>
     >
   ) {
-    const openApi = await getSecret<{ apiKey: string }>(
-      process.env.OPENAI_CREDENTIALS_SECRET_ARN as string
-    )
     const tenantId = event.requestContext.authorizer.principalId
     const connections = {
       mongoDb: await getMongoDbClient(),
       dynamoDb: await getDynamoDbClientByEvent(event),
     }
-    return new this(openApi.apiKey, tenantId, connections)
+    return new this(tenantId, connections)
   }
 
   constructor(
-    apiKey: string,
     tenantId: string,
     connections: { mongoDb: MongoClient; dynamoDb: DynamoDBDocumentClient }
   ) {
     this.tenantId = tenantId
     this.mongoDb = connections.mongoDb
     this.dynamoDb = connections.dynamoDb
-    this.openai = new OpenAIApi(
-      new Configuration({
-        apiKey,
-      })
-    )
   }
 
   async getSarNarrative(
@@ -228,18 +216,7 @@ export class CopilotService {
   private async gpt(prompt: string): Promise<string> {
     logger.info(prompt)
     try {
-      const completion = await this.openai.createChatCompletion({
-        model: 'gpt-3.5-turbo',
-        temperature: 0.5,
-        messages: [
-          {
-            content: prompt,
-            role: 'assistant',
-          },
-        ],
-        max_tokens: MAX_TOKEN_INPUT,
-      })
-      return completion.data.choices[0].message?.content || ''
+      return ask(prompt)
     } catch (e) {
       logger.error(e)
       throw e

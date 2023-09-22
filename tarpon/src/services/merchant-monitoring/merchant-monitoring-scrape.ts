@@ -1,7 +1,6 @@
 import fetch, { Headers } from 'node-fetch'
 import axios, { AxiosRequestConfig, AxiosInstance } from 'axios'
 import { convert } from 'html-to-text'
-import { Configuration, OpenAIApi } from 'openai'
 import { NotFound, InternalServerError } from 'http-errors'
 import { MerchantMonitoringSummary } from '@/@types/openapi-internal/MerchantMonitoringSummary'
 import { getSecret } from '@/utils/secrets-manager'
@@ -10,6 +9,7 @@ import { MerchantRepository } from '@/lambdas/console-api-merchant/merchant-repo
 import { logger } from '@/core/logger'
 import { MerchantMonitoringSourceType } from '@/@types/openapi-internal/MerchantMonitoringSourceType'
 import { traceable } from '@/core/xray'
+import { ask } from '@/utils/openapi'
 
 const SUMMARY_PROMPT = `Please summarize a company from the following content outputting the industry the company operates in, the products they sell, their location, number of employees, revenue, summary. Please output as a comma separate list For example:
 
@@ -22,7 +22,6 @@ Summary: Acme is a textile company which sells shoes in Delhi, India and generat
 
 Here is the Input:`
 
-const MAX_TOKEN_INPUT = 1000
 const MAX_TOKEN_OUTPUT = 4096
 
 const OUTPUT_REGEX =
@@ -37,18 +36,13 @@ type MerchantMonitoringSecrets = {
 
 @traceable
 export class MerchantMonitoringScrapeService {
-  private openAiApiKey?: string
   private companiesHouseApiKey?: string
   private rapidApiKey?: string
   private scrapflyApiKey?: string
   private exploriumApiKey?: string
   private axios: AxiosInstance
 
-  constructor(
-    openAiCredentials: { apiKey: string },
-    merchantMonitoringSecrets: MerchantMonitoringSecrets
-  ) {
-    this.openAiApiKey = openAiCredentials.apiKey
+  constructor(merchantMonitoringSecrets: MerchantMonitoringSecrets) {
     this.companiesHouseApiKey = merchantMonitoringSecrets.companiesHouse
     this.rapidApiKey = merchantMonitoringSecrets.rapidApi
     this.scrapflyApiKey = merchantMonitoringSecrets.scrapfly
@@ -65,19 +59,12 @@ export class MerchantMonitoringScrapeService {
   }
 
   public static async init(): Promise<MerchantMonitoringScrapeService> {
-    const [merchantMonitoringSecrets, openAiCredentials] = await Promise.all([
-      getSecret<MerchantMonitoringSecrets>(
+    const merchantMonitoringSecrets =
+      await getSecret<MerchantMonitoringSecrets>(
         process.env.MERCHANT_MONITORING_SECRETS_ARN as string
-      ),
-      getSecret<{ apiKey: string }>(
-        process.env.OPENAI_CREDENTIALS_SECRET_ARN as string
-      ),
-    ])
+      )
 
-    return new MerchantMonitoringScrapeService(
-      openAiCredentials,
-      merchantMonitoringSecrets
-    )
+    return new MerchantMonitoringScrapeService(merchantMonitoringSecrets)
   }
 
   async getMerchantMonitoringSummaries(
@@ -282,30 +269,13 @@ export class MerchantMonitoringScrapeService {
     content: string
   ): Promise<MerchantMonitoringSummary | undefined> {
     try {
-      if (!this.openAiApiKey) {
-        throw new InternalServerError('No open ai api key')
-      }
-
       if (!content) {
         return undefined // Sometimes the source doesn't return anything hence the undefined
       }
 
-      const configuration = new Configuration({
-        apiKey: this.openAiApiKey,
-      })
-
-      const openai = new OpenAIApi(configuration)
-      const completion = await openai.createChatCompletion({
-        model: 'gpt-3.5-turbo',
-        messages: [
-          {
-            content: `${SUMMARY_PROMPT} ${content}`.slice(0, MAX_TOKEN_OUTPUT),
-            role: 'system',
-          },
-        ],
-        max_tokens: MAX_TOKEN_INPUT,
-      })
-      const output = completion.data.choices[0].message?.content
+      const output = await ask(
+        `${SUMMARY_PROMPT} ${content}`.slice(0, MAX_TOKEN_OUTPUT)
+      )
       const re = new RegExp(OUTPUT_REGEX, 'm')
       const result: string[] = re.exec(output as string) as string[]
 
