@@ -12,6 +12,7 @@ import { message } from '@/components/library/Message';
 import { getMutationAsyncResource } from '@/utils/queries/hooks';
 import { isLoading } from '@/utils/asyncResource';
 import HistoryItemBarchart from '@/pages/case-management/AlertTable/InvestigativeCoPilotModal/InvestigativeCoPilot/History/HistoryItem/HistoryItemBarchart';
+import { FormValues as CommentEditorFormValues } from '@/components/CommentEditor';
 
 interface Props {
   alertId: string;
@@ -50,8 +51,26 @@ export default function HistoryItem(props: Props) {
     },
   );
 
+  const commentSubmitMutation = useMutation<unknown, unknown, CommentEditorFormValues>(
+    async (values: CommentEditorFormValues) => {
+      return await api.createAlertsComment({
+        alertId,
+        Comment: { body: values.comment, files: values.files },
+      });
+    },
+    {
+      onSuccess: () => {
+        message.success('Comment successfully added!');
+      },
+      onError: (error) => {
+        message.fatal(`Unable to add comment! ${getErrorMessage(error)}`, error);
+      },
+    },
+  );
+
   return (
     <HistoryItemLayout
+      commentSubmitMutation={commentSubmitMutation}
       isLoading={isLoading(getMutationAsyncResource(updateVarsMutation))}
       item={itemState}
       onRefresh={(vars) => {

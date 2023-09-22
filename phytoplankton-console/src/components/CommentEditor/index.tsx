@@ -28,6 +28,8 @@ interface Props {
   onChangeValues: (newValues: FormValues) => void;
   onSubmit: (values: FormValues) => void;
   disabled?: boolean;
+  submitButtonTitle?: string;
+  hideNarrativeTemplateSelect?: boolean;
 }
 
 export interface CommentEditorRef {
@@ -37,7 +39,16 @@ export interface CommentEditorRef {
 let uploadedFiles: FileInfo[] = [];
 
 function CommentEditor(props: Props, ref: React.Ref<CommentEditorRef>) {
-  const { showFileList = true, values, submitRes, placeholder, onChangeValues, onSubmit } = props;
+  const {
+    showFileList = true,
+    values,
+    submitRes,
+    placeholder,
+    onChangeValues,
+    onSubmit,
+    submitButtonTitle = 'Add comment',
+    hideNarrativeTemplateSelect = false,
+  } = props;
   const api = useApi();
   const [uploadingCount, setUploadingCount] = useState(0);
   const [templateValue, setTemplateValue] = useState<string | undefined>(undefined);
@@ -101,7 +112,7 @@ function CommentEditor(props: Props, ref: React.Ref<CommentEditorRef>) {
       )}
       <div className={s.commentEditorActions}>
         <Button
-          analyticsName="Add Comment"
+          analyticsName={submitButtonTitle}
           htmlType="submit"
           isLoading={isLoading(submitRes) || uploadingCount > 0}
           onClick={() => {
@@ -114,7 +125,7 @@ function CommentEditor(props: Props, ref: React.Ref<CommentEditorRef>) {
             (values.files.length === 0 && !values.comment) || isCommentTooLong || props.disabled
           }
         >
-          Add Comment
+          {submitButtonTitle}
         </Button>
 
         <Upload
@@ -169,10 +180,12 @@ function CommentEditor(props: Props, ref: React.Ref<CommentEditorRef>) {
             />
           </div>
         </Upload>
-        <NarrativeTemplateSelect
-          setTemplateValue={setTemplateValue}
-          templateValue={templateValue}
-        />
+        {!hideNarrativeTemplateSelect && (
+          <NarrativeTemplateSelect
+            setTemplateValue={setTemplateValue}
+            templateValue={templateValue}
+          />
+        )}
       </div>
     </div>
   );

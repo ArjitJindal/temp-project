@@ -2,7 +2,7 @@ import * as Api from '@/apis';
 
 export type QuestionResponseBase = Pick<
   Api.QuestionResponse,
-  'questionId' | 'variableOptions' | 'title' | 'createdById' | 'createdAt' | 'variables'
+  'questionId' | 'variableOptions' | 'title' | 'createdById' | 'createdAt' | 'variables' | 'summary'
 >;
 
 export interface QuestionResponseTable extends QuestionResponseBase, Api.Table {

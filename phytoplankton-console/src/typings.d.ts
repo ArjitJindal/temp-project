@@ -5,7 +5,11 @@ declare module '*.scss';
 declare module '*.sass';
 declare module '*.react.svg' {
   import React from 'react';
-  const _default: (props: React.SVGAttributes<React.ReactSVGElement>) => JSX.Element;
+  const _default: (
+    props: React.SVGAttributes<React.ReactSVGElement> & {
+      ref?: React.MutableRefObject<unknown>;
+    },
+  ) => JSX.Element;
   export default _default;
 }
 declare module '*.svg' {
