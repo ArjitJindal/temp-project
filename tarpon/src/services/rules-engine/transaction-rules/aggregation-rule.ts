@@ -230,7 +230,7 @@ export abstract class TransactionAggregationRule<
     )
   }
 
-  private shouldUseAggregation(): boolean {
+  public shouldUseAggregation(): boolean {
     if (
       process.env.__INTERNAL_DISABLE_RULE_AGGREGATION__ ||
       !this.aggregationRepository

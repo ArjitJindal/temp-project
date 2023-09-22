@@ -751,6 +751,10 @@ export class RulesEngineService {
     transactionId: string,
     ruleInstanceId: string
   ): Promise<TransactionAggregationTaskEntry[]> {
+    if (!ruleClassInstance.shouldUseAggregation()) {
+      return []
+    }
+
     const directions = ['origin', 'destination'] as const
     const transactionAggregationTasks: TransactionAggregationTaskEntry[] = []
     for (const direction of directions) {
