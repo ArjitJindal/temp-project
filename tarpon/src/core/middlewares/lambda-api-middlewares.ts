@@ -17,11 +17,11 @@ export const lambdaApi = (options?: { requiredFeatures?: Feature[] }) => {
   registerUnhandledErrorHandler()
   const middlewares = [
     localDev(),
+    apiContextProvider(),
     xrayMiddleware(),
     bgProcessingMiddleware(),
     httpErrorHandler(),
     jsonSerializer(),
-    apiContextProvider(),
     rbacMiddleware(),
     initSentry(),
     featureProtected(options?.requiredFeatures),

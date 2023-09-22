@@ -101,7 +101,7 @@ export async function cursorPaginate<T extends Document>(
   const lastFindFilters = [filter]
 
   // Decode cursor from base64
-  const buff = new Buffer(fromRaw, 'base64')
+  const buff = Buffer.from(fromRaw, 'base64')
   const from = buff.toString('ascii')
 
   const [sortValue, id] = from.split(PAGINATION_CURSOR_KEY_SEPERATOR)
@@ -242,6 +242,6 @@ async function countDocuments<T extends Document>(
 }
 
 function encodeCursor(raw: string): string {
-  const buff = new Buffer(raw)
+  const buff = Buffer.from(raw)
   return buff.toString('base64')
 }

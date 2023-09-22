@@ -4,6 +4,7 @@ import {
   APIGatewayProxyWithLambdaAuthorizerHandler,
 } from 'aws-lambda'
 import { Credentials } from '@aws-sdk/client-sts'
+import { logger } from '../logger'
 import { JWTAuthorizerResult } from '@/@types/jwt'
 import { addNewSubsegment } from '@/core/xray'
 import { determineApi } from '@/core/utils/api'
@@ -34,6 +35,11 @@ export const xrayMiddleware =
       'pathParameters',
       JSON.stringify(event.pathParameters)
     )
+    logger.info(segmentName, {
+      httpMethod: event.httpMethod,
+      resouce: event.resource,
+      queryStringParameters: event.queryStringParameters,
+    })
 
     try {
       return await handler(event, ctx)
