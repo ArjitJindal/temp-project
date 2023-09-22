@@ -22,6 +22,7 @@ import { disableLocalChangeHandler } from '@/utils/local-dynamodb-change-handler
 import { HitRulesDetails } from '@/@types/openapi-public/HitRulesDetails'
 import { getAggregatedRuleStatus } from '@/services/rules-engine/utils'
 import { initChecklistTemplate } from '@/core/seed/data/checklists'
+import { Feature } from '@/@types/openapi-internal/Feature'
 
 export async function seedDynamo(
   dynamoDb: DynamoDBDocumentClient,
@@ -80,8 +81,10 @@ export async function seedDynamo(
 
   logger.info('Setting tenant settings...')
   await tenantRepo.createOrUpdateTenantSettings({
-    features: FEATURES,
+    features: FEATURES.filter((f) => DISABLED_FEATURES.indexOf(f) === -1),
     isAiEnabled: true,
     isPaymentApprovalEnabled: true,
   })
 }
+
+const DISABLED_FEATURES: Feature[] = ['IMPORT_FILES']
