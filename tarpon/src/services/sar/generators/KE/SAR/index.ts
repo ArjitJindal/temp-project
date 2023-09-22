@@ -102,6 +102,9 @@ export class KenyaSARReportGenerator implements ReportGenerator {
       indicators,
     }
   }
+  public getAugmentedReportParams(report: Report): ReportParameters {
+    return report.parameters
+  }
 
   public generate(reportParams: ReportParameters, report: Report): string {
     const builder = new XMLBuilder()

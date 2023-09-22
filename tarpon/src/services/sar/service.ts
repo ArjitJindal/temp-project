@@ -153,7 +153,8 @@ export class ReportService {
       )
     }
     const { directSubmission } = generator.getType()
-
+    report.parameters =
+      generator?.getAugmentedReportParams(report) ?? report.parameters
     report.id = report.id ?? (await this.reportRepository.getId())
     report.status = 'COMPLETE'
     report.revisions.push({
@@ -185,6 +186,10 @@ export class ReportService {
   async draftReport(report: Report): Promise<Report> {
     report.status = 'DRAFT'
     report.updatedAt = Date.now()
+    report.parameters =
+      REPORT_GENERATORS.get(report.reportTypeId)?.getAugmentedReportParams(
+        report
+      ) ?? report.parameters
     return withSchema(await this.reportRepository.saveOrUpdateReport(report))
   }
 

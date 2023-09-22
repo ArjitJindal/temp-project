@@ -11,10 +11,12 @@ import FilesList from '@/components/files/FilesList';
 import { usePrevious } from '@/utils/hooks';
 import { isEqual } from '@/utils/lang';
 
-interface Props extends InputProps<FileInfo[]> {}
+interface Props extends InputProps<FileInfo[]> {
+  singleFile?: boolean;
+}
 
 export default function FilesDraggerInput(props: Props) {
-  const { value, onChange } = props;
+  const { value, onChange, singleFile } = props;
   const [uploadingCount, setUploadingCount] = useState(0);
   const api = useApi();
 
@@ -38,7 +40,7 @@ export default function FilesDraggerInput(props: Props) {
     <div className={s.root}>
       <Upload.Dragger
         disabled={uploadingCount > 0}
-        multiple={true}
+        multiple={!singleFile}
         showUploadList={false}
         customRequest={async ({ file: f, onError, onSuccess }) => {
           setUploadingCount((count) => count + 1);

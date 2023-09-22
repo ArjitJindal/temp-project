@@ -12,6 +12,7 @@ import {
   subject,
 } from '@/services/sar/generators/LT/common'
 import { ReportSchema } from '@/@types/openapi-internal/ReportSchema'
+import { Report } from '@/@types/openapi-internal/Report'
 import dayjs from '@/utils/dayjs'
 import { DAY_DATE_FORMAT_JS } from '@/utils/mongodb-utils'
 
@@ -85,7 +86,9 @@ export class LithuaniaSTRReportGenerator implements ReportGenerator {
       },
     }
   }
-
+  public getAugmentedReportParams(report: Report): ReportParameters {
+    return report.parameters
+  }
   public generate(reportParams: ReportParameters): string {
     const builder = new XMLBuilder({
       attributeNamePrefix: '@_',

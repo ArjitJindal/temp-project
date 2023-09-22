@@ -28,6 +28,8 @@ export interface ReportGenerator {
   ): Promise<ReportParameters>
   getSchema(): ReportSchema
 
+  getAugmentedReportParams(report?: Report): ReportParameters
+
   // Generate the report (XML)
   generate(reportParams: ReportParameters, report: Report): string
   submit?(report: Report): Promise<string>

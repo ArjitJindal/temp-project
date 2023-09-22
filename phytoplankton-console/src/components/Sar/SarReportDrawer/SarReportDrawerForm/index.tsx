@@ -142,7 +142,9 @@ export default function SarReportDrawerForm(props: Props) {
                   )}
                 </GenericFormField>
               )}
-              {activeStepKey === ATTACHMENTS_STEP && <AttachmentsStep />}
+              {activeStepKey === ATTACHMENTS_STEP && (
+                <AttachmentsStep reportTypeId={report.reportTypeId} />
+              )}
             </NestedForm>
           )}
         </Stepper>

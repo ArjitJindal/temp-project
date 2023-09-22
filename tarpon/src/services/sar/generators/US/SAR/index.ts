@@ -251,6 +251,10 @@ export class UsSarReportGenerator implements ReportGenerator {
       report: {
         generalInfo: {
           FilingDateText: dayjs().format('YYYYMMDD'),
+          ActivitySupportDocument: undefined,
+          ActivityAssociation: {
+            InitialReportIndicator: 'Y',
+          },
         },
         transmitter: {
           PartyName: {
@@ -490,14 +494,30 @@ export class UsSarReportGenerator implements ReportGenerator {
       },
     })
   }
-
+  public getAugmentedReportParams(report: Report): ReportParameters {
+    const reportParams = report.parameters
+    const attachments = report.attachments
+    const fileName =
+      attachments && attachments.length ? attachments[0].filename : ''
+    const constructedReportParams: ReportParameters = {
+      ...reportParams,
+      report: {
+        ...reportParams.report,
+        generalInfo: {
+          ...reportParams.report.generalInfo,
+          ActivitySupportDocument: {
+            OriginalAttachmentFileName: fileName,
+          },
+        },
+      },
+    }
+    return constructedReportParams
+  }
   public generate(reportParams: ReportParameters): string {
     const builder = new XMLBuilder({
       attributeNamePrefix: '@',
       ignoreAttributes: false,
     })
-
-    // TODO: handle attachments: ActivitySupportDocument
     const xmlContent = builder.build(this.transform(cloneDeep(reportParams)))
     // NOTE: In aws lambda, we can only write files to /tmp
     const outputFile = `${path.join('/tmp', 'input.xml')}`
