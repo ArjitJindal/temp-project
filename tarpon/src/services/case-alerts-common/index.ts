@@ -5,6 +5,7 @@ import { Account } from '@/@types/openapi-internal/Account'
 import { Assignment } from '@/@types/openapi-internal/Assignment'
 import { FileInfo } from '@/@types/openapi-internal/FileInfo'
 import { traceable } from '@/core/xray'
+import { envIs } from '@/utils/env'
 
 export type S3Config = {
   tmpBucketName: string
@@ -38,6 +39,10 @@ export class CaseAlertsCommonService {
   }
 
   protected async copyFiles(files: FileInfo[]): Promise<FileInfo[]> {
+    if (envIs('test')) {
+      return files
+    }
+
     // Copy the files from tmp bucket to document bucket
     for (const file of files || []) {
       const copyObjectCommand = new CopyObjectCommand({
@@ -58,6 +63,10 @@ export class CaseAlertsCommonService {
   }
 
   protected async getDownloadLink(file: FileInfo) {
+    if (envIs('test')) {
+      return ''
+    }
+
     const getObjectCommand = new GetObjectCommand({
       Bucket: this.s3Config.documentBucketName,
       Key: file.s3Key,

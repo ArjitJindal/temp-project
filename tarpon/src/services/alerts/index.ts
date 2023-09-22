@@ -4,7 +4,6 @@ import { MongoClient } from 'mongodb'
 import { BadRequest, Forbidden, NotFound } from 'http-errors'
 import {
   capitalize,
-  compact,
   isEmpty,
   omit,
   startCase,
@@ -68,6 +67,7 @@ import { ChecklistTemplatesService } from '@/services/tenants/checklist-template
 @traceable
 export class AlertsService extends CaseAlertsCommonService {
   alertsRepository: AlertsRepository
+  auditLogService: CasesAlertsAuditLogService
   tenantId: string
   mongoDb: MongoClient
   dynamoDb: DynamoDBDocumentClient
@@ -96,6 +96,10 @@ export class AlertsService extends CaseAlertsCommonService {
     this.tenantId = alertsRepository.tenantId
     this.mongoDb = alertsRepository.mongoDb
     this.dynamoDb = alertsRepository.dynamoDb
+    this.auditLogService = new CasesAlertsAuditLogService(
+      alertsRepository.tenantId,
+      { mongoDb: this.mongoDb, dynamoDb: this.dynamoDb }
+    )
   }
 
   public static transactionsToAlerts(
@@ -229,26 +233,27 @@ export class AlertsService extends CaseAlertsCommonService {
     let { alertEscalations } = caseEscalationRequest
     const { caseUpdateRequest } = caseEscalationRequest
 
+    const alertIds = alertEscalations?.map((alert) => alert.alertId) || []
     const isTransactionsEscalation = alertEscalations?.some(
       (ae) => ae.transactionIds?.length ?? 0 > 0
     )
 
     // Hydrate escalation requests with the txn IDS if none were specified
-    alertEscalations = alertEscalations?.map((ae) => {
-      if (isEmpty(ae.transactionIds)) {
-        return ae
+    alertEscalations = alertEscalations?.map((alert) => {
+      if (isEmpty(alert.transactionIds)) {
+        return alert
       }
-      ae.transactionIds = ae.transactionIds?.filter(
+      alert.transactionIds = alert.transactionIds?.filter(
         (t) => !c.caseHierarchyDetails?.childTransactionIds?.includes(t)
       )
 
-      if (ae.transactionIds?.length === 0) {
+      if (alert.transactionIds?.length === 0) {
         throw new BadRequest(
-          `Cannot escalate ${ae.alertId} as all of its transactions have already been escalated.`
+          `Cannot escalate ${alert.alertId} as all of its transactions have already been escalated.`
         )
       }
 
-      return ae
+      return alert
     })
 
     const currentTimestamp = Date.now()
@@ -281,11 +286,10 @@ export class AlertsService extends CaseAlertsCommonService {
       isReviewRequired &&
       alertEscalations &&
       !isStatusInReview(remainingAlerts?.[0]?.alertStatus) &&
-      !isTransactionsEscalation &&
-      hasFeature('ESCALATION')
+      !isTransactionsEscalation
     ) {
       await this.updateAlertsStatus(
-        alertEscalations.map((ae) => ae.alertId),
+        alertIds,
         {
           alertStatus: 'ESCALATED',
           reason: caseUpdateRequest?.reason ?? [],
@@ -455,6 +459,9 @@ export class AlertsService extends CaseAlertsCommonService {
       caseTransactions: filteredTransactionsForNewCase,
       caseTransactionsIds: filteredTransactionIdsForNewCase,
       caseHierarchyDetails: { parentCaseId: caseId },
+      lastStatusChange: undefined,
+      statusChanges: [],
+      comments: [],
     }
 
     if (isTransactionsEscalation && isReviewRequired) {
@@ -486,31 +493,40 @@ export class AlertsService extends CaseAlertsCommonService {
     await caseRepository.addCaseMongo(omit(newCase, '_id'))
     await caseRepository.addCaseMongo(updatedExistingCase)
 
-    if (caseUpdateRequest && caseUpdateRequest.caseStatus) {
-      if (!isTransactionsEscalation) {
-        await caseService.updateCaseForEscalation(caseId, {
-          ...caseUpdateRequest,
-          comment: caseUpdateRequest.comment,
-        })
-      } else {
-        await this.updateAlertsStatus(
-          compact(escalatedAlerts?.map((alert) => alert.alertId)),
-          {
-            alertStatus: caseUpdateRequest.caseStatus,
-            comment: caseUpdateRequest.comment,
-            reason: caseUpdateRequest.reason,
-            files: caseUpdateRequest.files,
-            otherReason: caseUpdateRequest.otherReason,
-            priority: caseUpdateRequest.priority,
-            closeSourceCase: caseEscalationRequest.closeSourceCase,
-          }
-        )
-      }
-    }
+    await caseService.updateCasesStatus([newCase.caseId!], {
+      ...caseUpdateRequest,
+      caseStatus: newCase.caseStatus,
+    })
 
     const assigneeIds = reviewAssignments
       .map((v) => v.assigneeUserId)
       .filter(Boolean)
+
+    const updatedTransactions =
+      alertEscalations?.flatMap((item) => item.transactionIds ?? []) ?? []
+
+    if (childCaseId) {
+      await this.auditLogService.handleAuditLogForCaseEscalation(
+        [caseId],
+        {
+          ...caseUpdateRequest,
+          caseStatus: 'ESCALATED',
+          alertCaseId: childCaseId,
+          updatedAlertIds: alertIds,
+        },
+        'STATUS_CHANGE'
+      )
+    }
+    await this.auditLogService.handleAuditLogForAlertsEscalation(
+      alertIds,
+      {
+        ...caseUpdateRequest,
+        alertStatus: 'ESCALATED',
+        alertCaseId: childCaseId,
+        updatedTransactions,
+      },
+      'STATUS_CHANGE'
+    )
 
     return { childCaseId, assigneeIds }
   }
@@ -674,7 +690,7 @@ export class AlertsService extends CaseAlertsCommonService {
     } = options ?? {}
     const userId = getContext()?.user?.id
     const statusChange: CaseStatusChange = {
-      userId: !cascadeCaseUpdates ? FLAGRIGHT_SYSTEM_USER : userId!,
+      userId: userId ?? FLAGRIGHT_SYSTEM_USER,
       timestamp: Date.now(),
       reason: statusUpdateRequest.reason,
       caseStatus: statusUpdateRequest.alertStatus,
@@ -753,7 +769,7 @@ export class AlertsService extends CaseAlertsCommonService {
           statusChange
         ),
         this.saveAlertsComment(alertIds, caseIds, {
-          userId: cascadeCaseUpdates ? userId : FLAGRIGHT_SYSTEM_USER,
+          userId: userId ?? FLAGRIGHT_SYSTEM_USER,
           body: commentBody,
           files: statusUpdateRequest.files,
         }),
@@ -816,7 +832,7 @@ export class AlertsService extends CaseAlertsCommonService {
           { cascadeAlertsUpdate: false, account: userAccount }
         )
 
-        await this.auditLogService().handleAuditLogForCaseUpdate(
+        await this.auditLogService.handleAuditLogForCaseUpdate(
           caseIdsWithAllAlertsSameStatus,
           caseUpdateStatus
         )
@@ -963,7 +979,7 @@ export class AlertsService extends CaseAlertsCommonService {
     }
     alert.ruleChecklist = updatedChecklist
     await this.alertsRepository.saveAlert(alert.caseId!, alert)
-    await this.auditLogService().handleAuditLogForAlertChecklistUpdate(
+    await this.auditLogService.handleAuditLogForAlertChecklistUpdate(
       alertId,
       originalChecklist,
       updatedChecklist
@@ -1008,7 +1024,7 @@ export class AlertsService extends CaseAlertsCommonService {
         comment: 'Alert QA status changed to FAILED automatically',
       })
     }
-    await this.auditLogService().handleAuditLogForAlertChecklistUpdate(
+    await this.auditLogService.handleAuditLogForAlertChecklistUpdate(
       alertId,
       originalChecklist,
       updatedChecklist
@@ -1069,7 +1085,7 @@ export class AlertsService extends CaseAlertsCommonService {
           userId,
         })
         await this.alertsRepository.saveAlert(alert.caseId!, alert)
-        return this.auditLogService().handleAuditLogForAlertQaUpdate(
+        return this.auditLogService.handleAuditLogForAlertQaUpdate(
           alert.alertId as string,
           update
         )
@@ -1136,12 +1152,6 @@ export class AlertsService extends CaseAlertsCommonService {
     }
   }
 
-  private auditLogService(): CasesAlertsAuditLogService {
-    return new CasesAlertsAuditLogService(this.tenantId, {
-      mongoDb: this.mongoDb,
-      dynamoDb: this.dynamoDb,
-    })
-  }
   private checklistTemplateService(): ChecklistTemplatesService {
     return new ChecklistTemplatesService(this.tenantId, this.mongoDb)
   }

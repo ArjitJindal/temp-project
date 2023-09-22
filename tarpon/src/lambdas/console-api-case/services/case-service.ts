@@ -360,15 +360,10 @@ export class CaseService extends CaseAlertsCommonService {
     return result
   }
 
-  private getStatusChange(
-    updates: CaseStatusUpdate,
-    options?: { cascadeAlertsUpdate?: boolean }
-  ): CaseStatusChange {
-    const { cascadeAlertsUpdate = true } = options ?? {}
+  private getStatusChange(updates: CaseStatusUpdate): CaseStatusChange {
     const userId = (getContext()?.user as Account).id
-
     return {
-      userId: cascadeAlertsUpdate ? userId! : FLAGRIGHT_SYSTEM_USER,
+      userId: userId ?? FLAGRIGHT_SYSTEM_USER,
       timestamp: Date.now(),
       reason: updates.reason,
       caseStatus: updates.caseStatus,
@@ -461,9 +456,7 @@ export class CaseService extends CaseAlertsCommonService {
       skipReview = false,
       account,
     } = options ?? {}
-    const statusChange = this.getStatusChange(updates, {
-      cascadeAlertsUpdate,
-    })
+    const statusChange = this.getStatusChange(updates)
 
     const cases = await this.caseRepository.getCasesByIds(caseIds)
 
@@ -748,31 +741,6 @@ export class CaseService extends CaseAlertsCommonService {
     return { ...caseEntity, comments: commentsWithUrl }
   }
 
-  public async updateCaseForEscalation(
-    caseId: string,
-    caseUpdateRequest: CaseEscalationsUpdateRequest
-  ): Promise<void> {
-    const statusChange: CaseStatusUpdate = {
-      reason: caseUpdateRequest.reason,
-      caseStatus: caseUpdateRequest.caseStatus,
-      otherReason: caseUpdateRequest.otherReason,
-      comment: caseUpdateRequest.comment,
-      files: caseUpdateRequest.files,
-    }
-
-    await Promise.all([
-      this.updateCasesStatus([caseId], statusChange, {
-        cascadeAlertsUpdate: true,
-        reviewAssignments: caseUpdateRequest.reviewAssignments,
-        skipReview: true,
-      }),
-      this.updateCasesReviewAssignments(
-        [caseId],
-        caseUpdateRequest.reviewAssignments ?? []
-      ),
-    ])
-  }
-
   public async escalateCase(
     caseId: string,
     caseUpdateRequest: CaseEscalationsUpdateRequest
@@ -809,11 +777,9 @@ export class CaseService extends CaseAlertsCommonService {
       )
     }
 
-    caseUpdateRequest.caseStatus = 'ESCALATED'
-
     const statusChange: CaseStatusUpdate = {
       reason: caseUpdateRequest.reason,
-      caseStatus: caseUpdateRequest.caseStatus,
+      caseStatus: 'ESCALATED',
       otherReason: caseUpdateRequest.otherReason,
       comment: caseUpdateRequest.comment,
       files: caseUpdateRequest.files,

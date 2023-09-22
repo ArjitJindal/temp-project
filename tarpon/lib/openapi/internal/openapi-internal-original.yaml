@@ -7618,6 +7618,8 @@ components:
             $ref: '#/components/schemas/AlertEscalation'
         closeSourceCase:
           type: boolean
+      required:
+        - caseUpdateRequest
     CaseEscalationResponse:
       title: CaseEscalationResponse
       type: object

@@ -2,8 +2,7 @@ import {
   APIGatewayEventLambdaAuthorizerContext,
   APIGatewayProxyWithLambdaAuthorizerEvent,
 } from 'aws-lambda'
-import { NotFound, BadRequest } from 'http-errors'
-import { flatten } from 'lodash'
+import { NotFound, BadRequest, Forbidden } from 'http-errors'
 import { CaseService } from './services/case-service'
 import { CasesAlertsAuditLogService } from './services/case-alerts-audit-log-service'
 import { lambdaApi } from '@/core/middlewares/lambda-api-middlewares'
@@ -343,16 +342,13 @@ export const casesHandler = lambdaApi()(
 
     handlers.registerPostCasesCaseIdEscalate(async (ctx, request) => {
       if (!hasFeature('ESCALATION')) {
-        throw new BadRequest('Feature not enabled')
+        throw new Forbidden('Feature not enabled')
       }
       const { caseId, CaseEscalationRequest: escalationRequest } = request
       if (
         !escalationRequest.alertEscalations ||
         escalationRequest.alertEscalations.length === 0
       ) {
-        if (!escalationRequest.caseUpdateRequest) {
-          throw new BadRequest('Case update request not provided')
-        }
         const { assigneeIds } = await caseService.escalateCase(
           caseId,
           escalationRequest.caseUpdateRequest
@@ -380,38 +376,6 @@ export const casesHandler = lambdaApi()(
           childCaseId,
           assigneeIds,
         }
-        const alertIds = escalationRequest.alertEscalations.map(
-          (escalationObject) => escalationObject.alertId
-        )
-        const updatedTransactions = escalationRequest.alertEscalations
-          .map((item) => item.transactionIds)
-          .filter((item) => item != undefined) as string[][]
-        const alertItem = await alertsService.getAlert(alertIds[0])
-        if (childCaseId) {
-          await casesAlertsAuditLogService.handleAuditLogForCaseEscalation(
-            [caseId],
-            {
-              files: escalationRequest.caseUpdateRequest?.files,
-              caseStatus: 'ESCALATED',
-              alertCaseId: childCaseId,
-              updatedAlertIds: alertIds,
-            },
-            'STATUS_CHANGE'
-          )
-        }
-        await casesAlertsAuditLogService.handleAuditLogForAlertsEscalation(
-          alertIds,
-          {
-            reason: escalationRequest.caseUpdateRequest?.reason,
-            files: escalationRequest.caseUpdateRequest?.files,
-            alertStatus: alertItem?.alertStatus,
-            alertCaseId: childCaseId,
-            updatedTransactions: flatten(updatedTransactions).length
-              ? flatten(updatedTransactions)
-              : undefined,
-          },
-          'STATUS_CHANGE'
-        )
         return response
       }
       throw new BadRequest('Invalid request of escalation')
