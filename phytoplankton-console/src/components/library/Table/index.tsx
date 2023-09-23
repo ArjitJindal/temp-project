@@ -299,7 +299,11 @@ function Table<Item extends object, Params extends object = CommonParams>(
                   <>
                     {rows.length === 0 && (
                       <tr>
-                        <td className={s.noData} colSpan={table.getAllFlatColumns().length}>
+                        <td
+                          className={s.noData}
+                          style={{ paddingLeft: containerWidth / 2 }}
+                          colSpan={table.getAllFlatColumns().length}
+                        >
                           {isLoading(dataRes) ? <Spin /> : 'No data to display'}
                         </td>
                       </tr>

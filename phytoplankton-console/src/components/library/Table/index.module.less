@@ -4,18 +4,18 @@
 @border-radius: 4px;
 
 .root {
+  position: relative;
   display: flex;
+  flex: 1;
   flex-direction: column;
   width: 100%;
-  flex: 1;
-  position: relative;
 }
 
 .table {
-  box-shadow: 0 0 2px 2px rgba(0, 0, 0, 0.02);
-  min-width: 100%;
-  z-index: 1;
   position: relative;
+  z-index: 1;
+  min-width: 100%;
+  box-shadow: 0 0 2px 2px rgba(0, 0, 0, 0.02);
 
   &.fitHeight {
     position: absolute;
@@ -73,37 +73,37 @@
     z-index: 1;
 
     &::before {
-      content: ' ';
-      display: block;
       position: absolute;
-      height: 100%;
-      width: 20px;
       top: 0;
+      display: block;
+      width: 20px;
+      height: 100%;
       background: linear-gradient(-90deg, transparent, #0000000a);
+      content: ' ';
       pointer-events: none;
     }
   }
 
   &.pinned-left {
     &::before {
-      transform: translateX(100%);
       right: 0;
+      transform: translateX(100%);
     }
   }
 
   &.pinned-right {
     &::before {
-      transform: translateX(-100%) rotate(180deg);
       left: 0;
+      transform: translateX(-100%) rotate(180deg);
     }
   }
 }
 
 .tdExpanded {
-  background: @fr-colors-v2-unknown-3;
-  z-index: 1;
   position: relative;
+  z-index: 1;
   padding: 0;
+  background: @fr-colors-v2-unknown-3;
 }
 
 .tdExpandedContent {
@@ -116,17 +116,17 @@
 }
 
 .th {
-  background: @fr-colors-v2-gray-1;
-  font-size: 14px;
-  font-weight: 600;
-  min-height: 60px;
-  text-align: left;
   position: relative;
+  min-height: 60px;
+  font-weight: 600;
+  font-size: 14px;
+  text-align: left;
+  background: @fr-colors-v2-gray-1;
 
   &.grouped {
+    text-align: center;
     background: @fr-colors-v2-unknown-2;
     border: 1px solid @fr-colors-v2-unknown-1;
-    text-align: center;
     border-right-width: 2px;
 
     > .thContent {
@@ -141,23 +141,23 @@
 
   > .thContent {
     display: flex;
-    justify-content: space-between;
-    align-items: center;
     gap: 4px;
+    align-items: center;
+    justify-content: space-between;
 
     .titles {
       display: flex;
+      flex-direction: column;
       gap: 4px;
       align-items: flex-start;
-      flex-direction: column;
     }
 
     .tooltipIcon {
-      width: 16px;
-      color: @fr-colors-v2-gray-4;
       flex-shrink: 0;
       align-items: center;
+      width: 16px;
       margin: auto 0;
+      color: @fr-colors-v2-gray-4;
     }
 
     .title {
@@ -168,8 +168,8 @@
 
     .subtitle {
       color: @fr-colors-v2-gray-6;
-      font-size: 12px;
       font-weight: normal;
+      font-size: 12px;
     }
   }
 }
@@ -177,9 +177,9 @@
 .td {
   --bg-color: @fr-colors-v2-unknown-1;
 
+  position: relative;
   vertical-align: top;
   background: var(--bg-color);
-  position: relative;
 
   .tdContentWrapper {
     display: flex;
@@ -206,31 +206,31 @@
 
   &.wrapMode-OVERFLOW {
     .tdContent {
+      padding-right: 8px;
+      overflow: auto;
       white-space: nowrap;
       text-overflow: ellipsis;
-      overflow: auto;
-      padding-right: 8px;
     }
 
     &::after {
-      content: ' ';
-      display: block;
       position: absolute;
       top: 0;
       right: 0;
-      height: 100%;
+      display: block;
       width: 20px;
+      height: 100%;
       background: linear-gradient(90deg, transparent, var(--bg-color) 70%, var(--bg-color));
+      content: ' ';
       pointer-events: none;
     }
   }
 
   .tdContent {
     display: flex;
+    flex: 1;
+    flex-direction: column;
     gap: 4px;
     align-items: flex-start;
-    flex-direction: column;
-    flex: 1;
     min-height: 48px;
   }
 
@@ -240,21 +240,21 @@
 }
 
 .resizer {
+  position: absolute;
+  top: 0;
+  right: -4px;
+  z-index: 1;
   display: flex;
   justify-content: center;
-  position: absolute;
-  right: -4px;
-  top: 0;
   width: 8px;
   height: 100%;
-  z-index: 1;
   cursor: col-resize;
 
   &::before {
-    content: ' ';
     display: block;
     width: 4px;
     transition: background-color @default-animation-speed @default-animation-function;
+    content: ' ';
   }
 
   &:hover,
@@ -276,7 +276,7 @@
 
 .noData {
   padding: 20px;
-  text-align: center;
   color: @fr-colors-v2-gray-4;
+  text-align: start;
   background: white;
 }
