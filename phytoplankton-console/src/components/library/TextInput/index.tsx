@@ -11,6 +11,8 @@ export interface Props extends InputProps<string> {
   size?: 'DEFAULT' | 'LARGE';
   allowClear?: boolean;
   htmlAttrs?: InputHTMLAttributes<HTMLInputElement>;
+  onArrowUp?: () => void;
+  onArrowDown?: () => void;
 }
 
 export default function TextInput(props: Props) {
@@ -25,6 +27,8 @@ export default function TextInput(props: Props) {
     onChange,
     onFocus,
     onBlur,
+    onArrowUp,
+    onArrowDown,
   } = props;
 
   const ref = useRef<HTMLInputElement>(null);
@@ -44,6 +48,17 @@ export default function TextInput(props: Props) {
         }}
         onFocus={onFocus ? () => onFocus() : undefined}
         onBlur={onBlur ? () => onBlur() : undefined}
+        onKeyDown={
+          onArrowUp || onArrowDown
+            ? (e) => {
+                if (e.key === 'ArrowUp') {
+                  onArrowUp?.();
+                } else if (e.key === 'ArrowDown') {
+                  onArrowDown?.();
+                }
+              }
+            : undefined
+        }
       />
       {allowClear && (
         <CrossIcon

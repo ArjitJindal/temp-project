@@ -1,4 +1,5 @@
 import React, { useCallback, useState } from 'react';
+import cn from 'clsx';
 import { Popover } from 'antd';
 import s from './index.module.less';
 import { QuestionVariableOption } from '@/apis';
@@ -94,7 +95,7 @@ export function VariablesPopoverContent(
   const { variables, labelPosition } = props;
   const [varsValues, setVarsValues] = props.varsValuesState;
   return (
-    <div className={s.variables}>
+    <div className={cn(s.variables, variables.length === 1 && s.singleVariable)}>
       {variables.map((variable) => {
         const varName = variable.name;
         if (varName == null) {

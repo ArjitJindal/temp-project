@@ -20,7 +20,7 @@
   }
 }
 
-.form {
+.grid {
   display: grid;
   gap: 16px;
 }
@@ -31,14 +31,14 @@
   flex-wrap: wrap;
   overflow: hidden;
   position: relative;
+  padding-right: 24px;
 
   &:not(.showMore) {
-    height: 30px;
+    height: 32px;
   }
 }
 
-.suggestion,
-.askAi {
+.suggestion {
   background: @fr-colors-navyBlueTint;
   white-space: nowrap;
   padding: 4px 8px;
@@ -46,13 +46,14 @@
   max-width: 400px;
   overflow: hidden;
   text-overflow: ellipsis;
-  border: none;
+  border: 1px solid @fr-colors-navyBlueTint;
   cursor: pointer;
-}
 
-.askAi {
-  display: flex;
-  align-items: center;
+  &.isHighlighted {
+    background: @fr-colors-brandBlueTint;
+    color: @fr-colors-brandBlue;
+    border-color: @fr-colors-brandBlue;
+  }
 }
 
 &.moreButton {
@@ -62,4 +63,13 @@
   display: flex;
   align-items: center;
   height: 30px;
+}
+
+.form {
+  display: flex;
+  gap: 8px;
+}
+
+.textInput {
+  flex: 1;
 }

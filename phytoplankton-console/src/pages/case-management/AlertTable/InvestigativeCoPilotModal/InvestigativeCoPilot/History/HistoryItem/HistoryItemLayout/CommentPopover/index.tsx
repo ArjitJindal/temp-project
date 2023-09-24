@@ -63,6 +63,7 @@ export default function CommentPopover(props: Props) {
       content={
         <div className={s.commentPopover}>
           <CommentEditor
+            key={`${isPopoverVisible}`}
             ref={commentEditorRef}
             values={commentFormValues}
             submitRes={commentSubmitRes}
