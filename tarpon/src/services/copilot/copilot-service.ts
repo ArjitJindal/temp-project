@@ -195,15 +195,6 @@ export class CopilotService {
   async formatNarrative(
     request: DefaultApiFormatNarrativeRequest
   ): Promise<NarrativeResponse> {
-    if (request.FormatRequest.entityType === 'CASE') {
-      const narrative = await this.gpt(
-        `${PLACEHOLDER_NARRATIVE}.\n Above is a template for a fraud or money laundering investigation. Please take the following input for a real case and format into this template without adding any additional content or context: \n${request.FormatRequest.narrative}`
-      )
-      return {
-        narrative,
-        attributes: [],
-      }
-    }
     const narrative = await this.gpt(
       `Please correct any spelling or grammatical errors in the following text and make it sound professional: "${request.FormatRequest.narrative}"`
     )
