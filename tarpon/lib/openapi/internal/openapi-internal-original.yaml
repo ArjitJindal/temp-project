@@ -8914,6 +8914,10 @@ components:
             $ref: '#/components/schemas/FileInfo'
         hierarchy:
           $ref: '#/components/schemas/ReportHierarchyDetails'
+        caseUser:
+          oneOf:
+            - $ref: '#/components/schemas/InternalConsumerUser'
+            - $ref: '#/components/schemas/InternalBusinessUser'
     ReportParameters:
       type: object
       properties:

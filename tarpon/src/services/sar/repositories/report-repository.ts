@@ -6,6 +6,7 @@ import { paginatePipeline } from '@/utils/mongodb-utils'
 import {
   COUNTER_COLLECTION,
   REPORT_COLLECTION,
+  USERS_COLLECTION,
 } from '@/utils/mongodb-definitions'
 import { DefaultApiGetReportsRequest } from '@/@types/openapi-internal/RequestParameters'
 import { EntityCounter } from '@/@types/openapi-internal/EntityCounter'
@@ -149,6 +150,17 @@ export class ReportRepository {
       { $match: filter },
       { $sort: { createdAt: -1 } },
       ...paginatePipeline(params),
+      {
+        $lookup: {
+          from: USERS_COLLECTION(this.tenantId), // The name of the users collection
+          localField: 'caseUserId',
+          foreignField: 'userId', // Assuming 'caseUserId' refers to the '_id' field in the 'users' collection
+          as: 'caseUser', // Alias for the joined user document
+        },
+      },
+      {
+        $unwind: '$caseUser', // Convert 'user' array to a single document
+      },
     ]
     const [total, reports] = await Promise.all([
       collection.count(filter),

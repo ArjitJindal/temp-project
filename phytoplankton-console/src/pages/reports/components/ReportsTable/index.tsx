@@ -23,6 +23,7 @@ import Select from '@/components/library/Select';
 import MarkdownViewer from '@/components/markdown/MarkdownViewer';
 import MarkdownEditor from '@/components/markdown/MarkdownEditor';
 import { REPORT_STATUSS } from '@/apis/models-custom/ReportStatus';
+import { getUserLink, getUserName } from '@/utils/api/users';
 
 type TableParams = AllParams<DefaultApiGetReportsRequest>;
 
@@ -68,6 +69,30 @@ export default function ReportsTable() {
       key: 'description',
       defaultWidth: 200,
       type: LONG_TEXT,
+    }),
+    helper.simple<'caseUser'>({
+      title: 'Case user ID',
+      key: 'caseUser',
+      type: {
+        render: (caseUser) => {
+          if (caseUser === undefined) return <div>Not Found</div>;
+          return (
+            <div>
+              <Id to={getUserLink(caseUser)}>{caseUser.userId}</Id>
+            </div>
+          );
+        },
+      },
+    }),
+    helper.simple<'caseUser'>({
+      title: 'Case user name',
+      key: 'caseUser',
+      type: {
+        render: (caseUser) => {
+          if (caseUser === undefined) return <div>Not Found</div>;
+          return <div>{getUserName(caseUser)}</div>;
+        },
+      },
     }),
     helper.simple<'createdById'>({
       title: 'Created by',
