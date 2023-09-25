@@ -12,6 +12,7 @@ import { getErrorMessage } from '@/utils/lang';
 import { useAuth0User, useUsers } from '@/utils/user-utils';
 import { CASES_ITEM } from '@/utils/queries/keys';
 import { OTHER_REASON } from '@/components/Narrative';
+import { statusEscalated } from '@/utils/case-utils';
 
 interface Props extends Omit<StatusChangeModalProps, 'entityName' | 'updateMutation'> {
   caseId?: string;
@@ -45,7 +46,7 @@ export default function AlertsStatusChangeModal(props: Props) {
       }
 
       try {
-        if (updates.alertStatus === 'ESCALATED' && props.caseId && !isChildCase) {
+        if (statusEscalated(updates.alertStatus) && props.caseId && !isChildCase) {
           const caseUpdateRequest: CaseStatusUpdate = updates;
           const { childCaseId, assigneeIds } = await api.postCasesCaseIdEscalate({
             caseId: props.caseId,

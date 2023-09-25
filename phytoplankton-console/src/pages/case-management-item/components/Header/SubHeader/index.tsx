@@ -178,7 +178,7 @@ export default function SubHeader(props: Props) {
           </Form.Layout.Label>
         )}
 
-        {caseItem.caseStatus === 'ESCALATED' && caseItem.lastStatusChange && (
+        {statusEscalated(caseItem.caseStatus) && caseItem.lastStatusChange && (
           <Form.Layout.Label title={'Escalation reason'}>
             <div>
               {caseItem?.lastStatusChange?.reason

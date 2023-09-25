@@ -1,7 +1,7 @@
 import React from 'react';
+import CasesStatusChangeModal from './CasesStatusChangeModal';
 import { CaseStatus } from '@/apis';
 import { ButtonSize } from '@/components/library/Button';
-import CasesStatusChangeModal from '@/pages/case-management/components/CasesStatusChangeButton/CasesStatusChangeModal';
 import StatusChangeButton from '@/pages/case-management/components/StatusChangeButton';
 import { FormValues } from '@/pages/case-management/components/StatusChangeModal';
 

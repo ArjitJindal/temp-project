@@ -239,7 +239,7 @@ const mergedColumns = (
                   return;
                 }
 
-                if (entity.alertStatus === 'ESCALATED') {
+                if (statusEscalated(entity.alertStatus)) {
                   handleAlertsReviewAssignments({
                     alertIds: [alertId],
                     reviewAssignments: assignments,
@@ -597,7 +597,7 @@ export default function AlertTable(props: Props) {
       const selectedCaseId = selectedCaseIds.length === 1 ? selectedCaseIds[0] : undefined;
       const caseId = params.caseId ?? selectedCaseId;
       const alertStatus = params.alertStatus ?? selectedAlertStatus;
-      if (alertStatus === 'ESCALATED' && selectedTransactionIds.length) {
+      if (statusEscalated(alertStatus) && selectedTransactionIds.length) {
         return;
       }
 

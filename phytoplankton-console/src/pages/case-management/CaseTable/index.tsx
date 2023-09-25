@@ -56,6 +56,7 @@ import {
   getSingleCaseStatusPreviousForInReview,
   isInReviewCases,
   isOnHoldOrInProgress,
+  statusEscalated,
   statusInReview,
 } from '@/utils/case-utils';
 import Id from '@/components/ui/Id';
@@ -230,7 +231,7 @@ export default function CaseTable(props: Props) {
           render: (__, { item: entity }) => {
             const isStatusInReview = statusInReview(entity.caseStatus);
             const assignments =
-              entity.caseStatus === 'ESCALATED' || isStatusInReview
+              statusEscalated(entity.caseStatus) || isStatusInReview
                 ? entity.reviewAssignments
                 : entity.assignments;
             const otherStatuses = isOnHoldOrInProgress(entity.caseStatus!);
@@ -250,7 +251,7 @@ export default function CaseTable(props: Props) {
                     return;
                   }
 
-                  if (entity.caseStatus === 'ESCALATED') {
+                  if (statusEscalated(entity.caseStatus)) {
                     caseReviewAssignmentUpdateMutation.mutate({
                       caseIds: [entity.caseId],
                       reviewAssignments: assignments,

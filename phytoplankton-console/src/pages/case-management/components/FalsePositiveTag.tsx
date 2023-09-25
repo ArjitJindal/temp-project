@@ -1,10 +1,10 @@
 import { Tag, Tooltip } from 'antd';
 import { useState } from 'react';
 import style from './index.module.less';
+import CasesStatusChangeModal from './CasesStatusChangeButton/CasesStatusChangeModal';
 import BrainIcon from '@/components/ui/icons/brain-icon.react.svg';
 import COLORS from '@/components/ui/colors';
 import { CaseStatus } from '@/apis';
-import CasesStatusChangeModal from '@/pages/case-management/components/CasesStatusChangeButton/CasesStatusChangeModal';
 
 interface Props {
   confidence: number;

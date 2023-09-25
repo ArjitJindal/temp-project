@@ -11,6 +11,7 @@ import { message } from '@/components/library/Message';
 import { getErrorMessage } from '@/utils/lang';
 import { useAuth0User, useUsers } from '@/utils/user-utils';
 import { OTHER_REASON } from '@/components/Narrative';
+import { statusEscalated } from '@/utils/case-utils';
 
 interface Props extends Omit<StatusChangeModalProps, 'entityName' | 'updateMutation'> {}
 
@@ -39,7 +40,7 @@ export default function CasesStatusChangeModal(props: Props) {
       }
 
       try {
-        if (updates.caseStatus === 'ESCALATED') {
+        if (statusEscalated(updates.caseStatus)) {
           if (props.entityIds.length !== 1) {
             message.error('Can only escalate a single case at a time');
             return;

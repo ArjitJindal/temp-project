@@ -6,6 +6,7 @@ import { Case, CasesAssignmentsUpdateRequest, CasesReviewAssignmentsUpdateReques
 import { PaginatedData } from '@/utils/queries/hooks';
 import { useApi } from '@/api';
 import { message } from '@/components/library/Message';
+import { statusEscalated } from '@/utils/case-utils';
 
 export function useTableData(
   queryResult: QueryResult<PaginatedData<Case>>,
@@ -24,7 +25,7 @@ export function useTableData(
             otherReason: item.lastStatusChange?.otherReason ?? null,
           },
           ...item,
-          assignments: item.caseStatus === 'ESCALATED' ? item.reviewAssignments : item.assignments,
+          assignments: statusEscalated(item.caseStatus) ? item.reviewAssignments : item.assignments,
         };
         return dataItem;
       },

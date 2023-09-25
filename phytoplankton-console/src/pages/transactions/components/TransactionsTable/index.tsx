@@ -419,10 +419,7 @@ export default function TransactionsTable(props: Props) {
           return false;
         }
 
-        const alertNotClosed =
-          alert?.alertStatus === 'OPEN' ||
-          alert?.alertStatus === 'REOPENED' ||
-          alert?.alertStatus === 'ESCALATED';
+        const alertNotClosed = alert?.alertStatus !== 'CLOSED';
         const notEscalated = !escalatedTransactions?.includes(row.content.transactionId);
         if ((escalationEnabled || sarEnabled) && alertNotClosed && notEscalated) {
           return true;

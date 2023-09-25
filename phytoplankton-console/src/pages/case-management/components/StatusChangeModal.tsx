@@ -11,6 +11,7 @@ import { useFinishedSuccessfully } from '@/utils/asyncResource';
 import { getMutationAsyncResource } from '@/utils/queries/hooks';
 import Label from '@/components/library/Label';
 import { useDeepEqualMemo } from '@/utils/hooks';
+import { statusEscalated } from '@/utils/case-utils';
 
 export const ESCALATION_REASONS: CaseReasons[] = [
   'Fraud',
@@ -89,7 +90,7 @@ export default function StatusChangeModal(props: Props) {
   }, [isFinishedSuccessfully, initialValues, onSaved, onClose]);
 
   const possibleReasons: CaseReasons[] = [
-    ...(newStatus === 'ESCALATED' ? ESCALATION_REASONS : CLOSING_REASONS),
+    ...(statusEscalated(newStatus) ? ESCALATION_REASONS : CLOSING_REASONS),
     ...COMMON_REASONS,
   ];
   const modalTitle = `${newStatusActionLabel ?? statusToOperationName(newStatus)} ${pluralize(
@@ -135,7 +136,7 @@ export default function StatusChangeModal(props: Props) {
           entityType={entityName}
           extraFields={
             displayCloseRelatedCases &&
-            newStatus === 'ESCALATED' && (
+            statusEscalated(newStatus) && (
               <Label
                 label={`Close related ${entityName === 'ALERT' ? 'cases' : 'alerts'}`}
                 position={'RIGHT'}

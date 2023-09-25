@@ -15,7 +15,7 @@ export const statusInReview = (
 export const statusEscalated = (
   status: CaseStatus | undefined,
 ): status is 'ESCALATED' | 'ESCALATED_IN_PROGRESS' | 'ESCALATED_ON_HOLD' => {
-  return status?.includes('ESCALATED') ?? false;
+  return status?.startsWith('ESCALATED') ?? false;
 };
 
 export const findLastStatusForInReview = (statusChanges: CaseStatusChange[]): CaseStatus => {
