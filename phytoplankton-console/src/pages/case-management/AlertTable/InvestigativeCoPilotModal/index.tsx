@@ -4,11 +4,12 @@ import Modal from '@/components/library/Modal';
 
 interface Props {
   alertId: string | undefined;
+  caseUserName: string | undefined;
   onClose: () => void;
 }
 
 export default function InvestigativeCoPilotModal(props: Props) {
-  const { alertId, onClose } = props;
+  const { alertId, caseUserName, onClose } = props;
   return (
     <Modal
       title={'Investigative co-pilot'}
@@ -19,7 +20,9 @@ export default function InvestigativeCoPilotModal(props: Props) {
       width="XL"
       height="FULL"
     >
-      {alertId && <InvestigativeCoPilot alertId={alertId} />}
+      {alertId && caseUserName && (
+        <InvestigativeCoPilot alertId={alertId} caseUserName={caseUserName} />
+      )}
     </Modal>
   );
 }

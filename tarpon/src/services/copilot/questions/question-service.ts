@@ -17,6 +17,7 @@ import { GetQuestionsResponse } from '@/@types/openapi-internal/GetQuestionsResp
 import { logger } from '@/core/logger'
 import { ask } from '@/utils/openapi'
 import { getUserName } from '@/utils/helpers'
+import { AccountsService } from '@/services/accounts'
 
 export class QuestionService {
   static async fromEvent(
@@ -28,14 +29,20 @@ export class QuestionService {
     const { principalId: tenantId } = event.requestContext.authorizer
 
     return new QuestionService(
-      new InvestigationRepository(mongoClient, tenantId)
+      new InvestigationRepository(mongoClient, tenantId),
+      await AccountsService.fromEvent(event)
     )
   }
 
   private investigationRepository: InvestigationRepository
+  private accountsService: AccountsService
 
-  constructor(investigationRepository: InvestigationRepository) {
+  constructor(
+    investigationRepository: InvestigationRepository,
+    accountService: AccountsService
+  ) {
     this.investigationRepository = investigationRepository
+    this.accountsService = accountService
   }
 
   async addQuestion(
@@ -48,10 +55,12 @@ export class QuestionService {
     if (!a.alertId) {
       throw new Error('No alert ID')
     }
+
     const varObject = vars.reduce<Variables>((acc, v) => {
       acc[v.name] = v.value
       return acc
     }, {})
+
     const answer = await this.answer(questionId, varObject, c, a)
     if (answer) {
       const questionResponse = {
@@ -94,7 +103,7 @@ export class QuestionService {
     varObject: Variables,
     c: Case,
     a: Alert
-  ) {
+  ): Promise<Omit<QuestionResponse, 'createdAt' | 'createdById'>> {
     let question = questions.find((qt) => qt.questionId === questionId)
     if (!question) {
       const { questionId: gptQuestionId, variables } = await this.gpt(
@@ -123,6 +132,7 @@ export class QuestionService {
       caseId,
       alertId,
       username,
+      getAccounts: this.accountsService.getAccounts,
     }
 
     if (!question?.type) {
@@ -131,15 +141,24 @@ export class QuestionService {
 
     varObject = { ...question.defaults(ctx), ...varObject }
     const common = {
-      questionId,
-      summary: '',
-      variableOptions: Object.entries(question.variableOptions).map(
-        ([name, variableType]): QuestionVariableOption => {
-          return {
-            name,
-            variableType,
+      questionId: question.questionId,
+      variableOptions: await Promise.all(
+        Object.entries(question.variableOptions).map(
+          async ([name, variableType]): Promise<QuestionVariableOption> => {
+            if (typeof variableType === 'string') {
+              return {
+                name,
+                variableType,
+              }
+            }
+            return {
+              name,
+              variableType: variableType.type,
+              options:
+                variableType.options && (await variableType.options(ctx)),
+            }
           }
-        }
+        )
       ),
       questionType: question.type,
       title: question.title ? question.title(ctx, varObject) : questionId,
@@ -196,7 +215,9 @@ export class QuestionService {
   }> {
     const prompt = `
     ${JSON.stringify(queries)}
-Please parse "${question}" to give the best matching query and variables values that should be set. The only output you will provide will be in the following format, defined in typescript, with no extra context or content. Dates should be output in ISO format, for example the datetime now is ${new Date().toISOString()}:
+Please parse "${question}" to give the best matching query and variables values that should be set. The only output you will provide will be in the following format, defined in typescript, with no extra context or content. Dates and datetimes should be output in ISO format, for example the datetime now is ${new Date().toISOString()} and the date is ${new Date()
+      .toISOString()
+      .substring(0, 10)}:
 {
   questionId: string,
   variables: {

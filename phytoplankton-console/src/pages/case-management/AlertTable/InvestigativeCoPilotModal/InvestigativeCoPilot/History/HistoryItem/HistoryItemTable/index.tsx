@@ -13,6 +13,7 @@ import {
   DATE_TIME,
   PAYMENT_METHOD,
   UNKNOWN,
+  TAG,
 } from '@/components/library/Table/standardDataTypes';
 import { PaginatedData } from '@/utils/queries/hooks';
 import { ColumnDataType } from '@/components/library/Table/types';
@@ -82,6 +83,8 @@ export default function HistoryItemTable(props: Props) {
           type = DATE_TIME;
         } else if (header.columnType === 'PAYMENT_METHOD') {
           type = PAYMENT_METHOD;
+        } else if (header.columnType === 'TAG') {
+          type = TAG;
         }
         return columnHelper.simple({
           title: header.name as string,

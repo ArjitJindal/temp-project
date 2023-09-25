@@ -1,5 +1,9 @@
 import { MongoClient } from 'mongodb'
-import { Question, Variables } from '@/services/copilot/questions/types'
+import {
+  InvestigationContext,
+  Question,
+  Variables,
+} from '@/services/copilot/questions/types'
 import { getTestTenantId } from '@/test-utils/tenant-test-utils'
 import { getMongoDbClient } from '@/utils/mongodb-utils'
 import { Case } from '@/@types/openapi-internal/Case'
@@ -27,7 +31,7 @@ export async function testQuestion<V extends Variables, D>(
     ruleName: '',
     alertId: 'A-1',
   }
-  const ctx = {
+  const ctx: InvestigationContext = {
     tenantId,
     caseId: 'C-1',
     alertId: 'A-1',
@@ -35,6 +39,7 @@ export async function testQuestion<V extends Variables, D>(
     _case: c,
     username: 'John Smith',
     alert,
+    getAccounts: () => new Promise((resolve) => resolve([])),
   }
   const result = await q.aggregationPipeline(ctx, { ...q.defaults(ctx), ...v })
 

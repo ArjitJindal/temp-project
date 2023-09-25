@@ -1,6 +1,6 @@
 import React, { useCallback, useState } from 'react';
 import cn from 'clsx';
-import { Popover } from 'antd';
+import { AutoComplete, Popover } from 'antd';
 import s from './index.module.less';
 import { QuestionVariableOption } from '@/apis';
 import { humanizeAuto } from '@/utils/humanize';
@@ -140,6 +140,15 @@ function renderInput(variable: QuestionVariableOption, inputProps: InputProps<an
     );
   }
   if (variable.variableType === 'STRING') {
+    if (variable.options !== undefined) {
+      return (
+        <AutoComplete
+          {...inputProps}
+          className={s.autocomplete}
+          dataSource={variable.options.map((o) => ({ value: o, text: o }))}
+        />
+      );
+    }
     return <TextInput {...inputProps} />;
   }
   return <TextInput {...inputProps} />;

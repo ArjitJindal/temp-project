@@ -4914,6 +4914,10 @@ components:
       properties:
         name:
           type: string
+        options:
+          type: array
+          items:
+            type: string
         variableType:
           type: string
           enum:
@@ -4945,6 +4949,7 @@ components:
                   - TRANSACTION_TYPE
                   - DATE_TIME
                   - PAYMENT_METHOD
+                  - TAG
         rows:
           type: array
           items:

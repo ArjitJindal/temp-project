@@ -9,7 +9,7 @@ describe('Alerts related to transactions', () => {
     await testQuestion(
       AlertsRelatedToTransaction,
       {
-        transactionId: 'T-1',
+        transactionID: 'T-1',
       },
       async (tenantId, mongoDb) => {
         const cr = new CaseRepository(tenantId, {

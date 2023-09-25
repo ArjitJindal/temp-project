@@ -11,21 +11,22 @@ import {
   humanReadablePeriod,
   matchPeriod,
   Period,
+  periodVars,
 } from '@/services/copilot/questions/definitions/util'
 
 export const AlertsRelatedToTransaction: TableQuestion<
   {
-    transactionId: string
+    transactionID: string
   } & Period
 > = {
   type: 'TABLE',
   questionId: 'Alerts related to transaction',
   title: (_, vars) => {
-    return `Alerts related to transaction ${vars.transactionId}`
+    return `Alerts related to transaction ${vars.transactionID}`
   },
   aggregationPipeline: async (
     { tenantId, username },
-    { transactionId, ...period }
+    { transactionID, ...period }
   ) => {
     const client = await getMongoDbClient()
     const db = client.db()
@@ -35,7 +36,7 @@ export const AlertsRelatedToTransaction: TableQuestion<
         {
           $match: {
             ...matchPeriod('createdTimestamp', period),
-            caseTransactionsIds: transactionId,
+            caseTransactionsIds: transactionID,
           },
         },
         {
@@ -86,11 +87,17 @@ export const AlertsRelatedToTransaction: TableQuestion<
     { name: "SAR's filed", columnType: 'STRING' },
   ],
   variableOptions: {
-    transactionId: 'STRING',
+    transactionID: {
+      type: 'STRING',
+      options: async (ctx) => {
+        return ctx._case.caseTransactionsIds || []
+      },
+    },
+    ...periodVars,
   },
   defaults: ({ _case }) => {
     return {
-      transactionId: _case.caseTransactionsIds?.at(0) || '',
+      transactionID: _case.caseTransactionsIds?.at(0) || '',
     }
   },
 }

@@ -10,6 +10,7 @@ import {
   humanReadablePeriod,
   matchPeriod,
   Period,
+  periodVars,
 } from '@/services/copilot/questions/definitions/util'
 
 export const SarsFiled: TableQuestion<Period> = {
@@ -18,7 +19,10 @@ export const SarsFiled: TableQuestion<Period> = {
   title: (_, vars) => {
     return `Alerts that results in SARs ${humanReadablePeriod(vars)}`
   },
-  aggregationPipeline: async ({ tenantId, userId, username }, period) => {
+  aggregationPipeline: async (
+    { tenantId, userId, username, getAccounts },
+    period
+  ) => {
     const client = await getMongoDbClient()
     const db = client.db()
     const result = await db
@@ -46,9 +50,17 @@ export const SarsFiled: TableQuestion<Period> = {
       ])
       .toArray()
 
+    const accounts = await getAccounts(result.map((r) => r.createdById))
+
     return {
-      data: result.map((r) => {
-        return [r.id, r.description, r.caseUserId, r.caseId]
+      data: result.map((r, i) => {
+        return [
+          r.id,
+          r.description,
+          accounts.at(i)?.name,
+          r.caseId,
+          r.createdAt,
+        ]
       }),
       summary: `There have been ${
         result.length
@@ -58,10 +70,13 @@ export const SarsFiled: TableQuestion<Period> = {
   headers: [
     { name: 'SAR ID', columnType: 'ID' },
     { name: 'Description', columnType: 'STRING' },
-    { name: 'Created By', columnType: 'STRING' },
+    { name: 'Created by', columnType: 'STRING' },
     { name: 'Related case', columnType: 'ID' },
+    { name: 'Created at', columnType: 'DATE_TIME' },
   ],
-  variableOptions: {},
+  variableOptions: {
+    ...periodVars,
+  },
   defaults: () => {
     return {}
   },

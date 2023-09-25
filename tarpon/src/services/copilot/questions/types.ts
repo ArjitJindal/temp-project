@@ -2,13 +2,19 @@ import { QuestionVariableOptionVariableTypeEnum } from '@/@types/openapi-interna
 import { Case } from '@/@types/openapi-internal/Case'
 import { Alert } from '@/@types/openapi-internal/Alert'
 import { TableHeadersColumnTypeEnum } from '@/@types/openapi-internal/TableHeaders'
+import { Account } from '@/services/accounts'
 
 export type Variables = {
   [key: string]: string | number
 }
 
 export type VariableOptions<V> = {
-  [K in keyof V]: QuestionVariableOptionVariableTypeEnum
+  [K in keyof V]:
+    | QuestionVariableOptionVariableTypeEnum
+    | {
+        type: QuestionVariableOptionVariableTypeEnum
+        options?: (ctx: InvestigationContext) => Promise<string[]> | string[]
+      }
 }
 
 export type InvestigationContext = {
@@ -19,6 +25,7 @@ export type InvestigationContext = {
   alert: Alert
   _case: Case
   username: string
+  getAccounts: (ids: string[]) => Promise<Account[]>
 }
 
 export type Question<V extends Variables, D> = {

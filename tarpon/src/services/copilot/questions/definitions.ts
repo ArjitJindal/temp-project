@@ -17,6 +17,7 @@ import { UniquePaymentIdentifierReceived } from '@/services/copilot/questions/de
 import { AlertsRelatedToTransaction } from '@/services/copilot/questions/definitions/alerts-related-to-transaction'
 import { TransactionLedRuleHit } from '@/services/copilot/questions/definitions/transaction-led-rule-hit'
 import { Transactions } from '@/services/copilot/questions/definitions/transactions'
+import { LinkedUsers } from '@/services/copilot/questions/definitions/linked-users'
 
 export const questions: (
   | TableQuestion<any>
@@ -28,6 +29,7 @@ export const questions: (
   AlertsRelatedToTransaction,
   TransactionLedRuleHit,
   Transactions,
+  LinkedUsers,
   CaseHistory,
   SarsFiled,
   TransactionByRulesAction,

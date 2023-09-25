@@ -83,7 +83,7 @@ export const UsersSentMoneyTo: TableQuestion<Period & { top: number }> = {
   headers: [
     { name: 'User ID', columnType: 'ID' },
     { name: 'Username', columnType: 'STRING' },
-    { name: 'User type', columnType: 'STRING' },
+    { name: 'User type', columnType: 'TAG' },
     { name: 'Transaction Count', columnType: 'NUMBER' },
     { name: 'Total Amount', columnType: 'NUMBER' },
   ],

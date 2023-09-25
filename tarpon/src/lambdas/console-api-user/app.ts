@@ -236,15 +236,7 @@ export const allUsersViewHandler = lambdaApi()(
     })
 
     handlers.registerGetUserEntity(async (ctx, request) => {
-      const entity = await linkerService.entity(request.userId)
-      return linkerService.visualisation(
-        request.userId,
-        entity.userLabels,
-        entity.emailLinked,
-        entity.addressLinked,
-        entity.phoneLinked,
-        entity.paymentMethodLinked
-      )
+      return await linkerService.entityGraph(request.userId)
     })
 
     handlers.registerGetTxnLinking(async (ctx, request) => {

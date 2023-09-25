@@ -6,8 +6,13 @@ import { RuleInstanceRepository } from '@/services/rules-engine/repositories/rul
 import { getDynamoDbClient } from '@/utils/dynamodb'
 import { RulesEngineService } from '@/services/rules-engine'
 import { InternalTransaction } from '@/@types/openapi-internal/InternalTransaction'
+import {
+  matchPeriod,
+  Period,
+  periodVars,
+} from '@/services/copilot/questions/definitions/util'
 
-export const TransactionLedRuleHit: TableQuestion<any> = {
+export const TransactionLedRuleHit: TableQuestion<Period> = {
   type: 'TABLE',
   questionId: 'Transactions leading to rule hit',
   title: (ctx) => {
@@ -27,7 +32,10 @@ export const TransactionLedRuleHit: TableQuestion<any> = {
       columnType: 'DATE_TIME',
     },
   ],
-  aggregationPipeline: async ({ tenantId, userId, alert, username }) => {
+  aggregationPipeline: async (
+    { tenantId, userId, alert, username },
+    period
+  ) => {
     const client = await getMongoDbClient()
     const dynamoDb = getDynamoDbClient()
 
@@ -51,6 +59,7 @@ export const TransactionLedRuleHit: TableQuestion<any> = {
         createdAt: {
           $lt: alert.createdTimestamp,
         },
+        ...matchPeriod('createdAt', period),
       })
       .sort({ createdAt: -1 })
       .limit(100)
@@ -81,7 +90,9 @@ export const TransactionLedRuleHit: TableQuestion<any> = {
       summary: `${transactionsThatLedToRuleHit.length} transactions were checked before the alert was created for ${username}.`,
     }
   },
-  variableOptions: {},
+  variableOptions: {
+    ...periodVars,
+  },
   defaults: () => {
     return {}
   },

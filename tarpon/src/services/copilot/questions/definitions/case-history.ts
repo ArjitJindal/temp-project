@@ -34,8 +34,10 @@ export const CaseHistory: TableQuestion<Period> = {
         return [
           r.caseId,
           r.createdTimestamp,
+          r.caseTransactionsCount,
           r.caseStatus,
-          r.lastStatusChange?.reason?.join(', '),
+          r.updatedAt,
+          r.lastStatusChange?.reason?.join(', ') || '-',
         ]
       }),
       summary: `There have been ${
@@ -46,7 +48,9 @@ export const CaseHistory: TableQuestion<Period> = {
   headers: [
     { name: 'Case ID', columnType: 'ID' },
     { name: 'Created on', columnType: 'DATE_TIME' },
-    { name: 'Status', columnType: 'STRING' },
+    { name: 'Transactions hit', columnType: 'NUMBER' },
+    { name: 'Status', columnType: 'TAG' },
+    { name: 'Last updated at', columnType: 'DATE_TIME' },
     { name: 'Closing reason', columnType: 'STRING' },
   ],
   variableOptions: {

@@ -31,7 +31,9 @@ async function main() {
     `mongodb://localhost:27018/${DB_NAME}`
   )
   await seedMongo(client, TENANT)
+  console.info('Closing up mongo client')
   await client.close()
+  console.info('Finished seeding!')
 }
 
 main().catch((e) => {

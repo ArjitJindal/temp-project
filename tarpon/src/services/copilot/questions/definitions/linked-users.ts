@@ -1,0 +1,40 @@
+import { TableQuestion } from '@/services/copilot/questions/types'
+import { LinkerService } from '@/services/linker'
+import { USERS_COLLECTION } from '@/utils/mongodb-definitions'
+import { InternalUser } from '@/@types/openapi-internal/InternalUser'
+import { getMongoDbClient } from '@/utils/mongodb-utils'
+import { getUserName } from '@/utils/helpers'
+
+export const LinkedUsers: TableQuestion<any> = {
+  type: 'TABLE',
+  questionId: 'Linked users',
+  title: () => {
+    return `Linked users over the last 30 days`
+  },
+  aggregationPipeline: async ({ tenantId, userId, username }) => {
+    const linker = new LinkerService(tenantId)
+    const userIds = await linker.linkedUsers(userId)
+    const client = await getMongoDbClient()
+    const db = client.db()
+    const result = await db
+      .collection<InternalUser>(USERS_COLLECTION(tenantId))
+      .find({
+        userId: { $in: userIds },
+      })
+      .toArray()
+
+    return {
+      data: result.map((u) => [u.userId, getUserName(u), u.type]),
+      summary: `There have ${result.length} users linked to ${username}.`,
+    }
+  },
+  headers: [
+    { name: 'User ID', columnType: 'ID' },
+    { name: 'Username', columnType: 'STRING' },
+    { name: 'User type', columnType: 'TAG' },
+  ],
+  variableOptions: {},
+  defaults: () => {
+    return {}
+  },
+}

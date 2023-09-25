@@ -1,6 +1,5 @@
 import { StackedBarchartQuestion } from '@/services/copilot/questions/types'
 import { getMongoDbClient } from '@/utils/mongodb-utils'
-import { Case } from '@/@types/openapi-internal/Case'
 import { TRANSACTIONS_COLLECTION } from '@/utils/mongodb-definitions'
 import { RULE_ACTIONS } from '@/@types/rule/rule-actions'
 import { RuleAction } from '@/@types/openapi-public/RuleAction'
@@ -13,6 +12,7 @@ import {
   periodVars,
   matchPeriod,
 } from '@/services/copilot/questions/definitions/util'
+import { InternalTransaction } from '@/@types/openapi-internal/InternalTransaction'
 
 export const TransactionByRulesAction: StackedBarchartQuestion<Period> = {
   type: 'STACKED_BARCHART',
@@ -25,7 +25,7 @@ export const TransactionByRulesAction: StackedBarchartQuestion<Period> = {
     const db = client.db()
 
     const results = await db
-      .collection<Case>(TRANSACTIONS_COLLECTION(tenantId))
+      .collection<InternalTransaction>(TRANSACTIONS_COLLECTION(tenantId))
       .aggregate<
         { _id: { date: string } } & {
           [key in RuleAction]: number

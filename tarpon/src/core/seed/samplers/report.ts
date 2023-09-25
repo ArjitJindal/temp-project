@@ -2,6 +2,7 @@ import { Report } from '@/@types/openapi-internal/Report'
 import { UsSarReportGenerator } from '@/services/sar/generators/US/SAR'
 import { KenyaSARReportGenerator } from '@/services/sar/generators/KE/SAR'
 import { ReportStatus } from '@/@types/openapi-internal/ReportStatus'
+import { getRandomUser } from '@/core/seed/samplers/accounts'
 
 export function SampleKenyaReport(
   reportId: string,
@@ -16,7 +17,7 @@ export function SampleKenyaReport(
     status: 'COMPLETE',
     caseId,
     reportTypeId: 'KE-SAR',
-    createdById: 'auth0|644fbf0ac6779e5c9b7b0855',
+    createdById: getRandomUser().assigneeUserId,
     createdAt: 1690354040584,
     updatedAt: 1690354040584,
     parameters: {
@@ -197,7 +198,7 @@ export function SampleFincenReport(
     reportTypeId: 'US-SAR',
     createdAt: 1691431739370,
     updatedAt: 1691431739370,
-    createdById: 'auth0|62264e7c30113900759b7d90',
+    createdById: getRandomUser().assigneeUserId,
     status,
     parameters: {
       report: {

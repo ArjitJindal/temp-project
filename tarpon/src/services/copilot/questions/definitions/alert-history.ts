@@ -35,8 +35,16 @@ export const AlertHistory: TableQuestion<Period> = {
           r.alerts?.map((a) => [
             a.alertId,
             r.createdTimestamp,
+            a.numberOfTransactionsHit,
+            a.ruleId,
+            a.ruleName,
+            a.ruleDescription,
+            a.ruleAction,
+            a.ruleNature,
+            a.alertStatus,
             r.caseStatus,
             r.lastStatusChange?.reason?.join(', '),
+            a.updatedAt,
           ]) || []
         )
       }),
@@ -48,8 +56,16 @@ export const AlertHistory: TableQuestion<Period> = {
   headers: [
     { name: 'Alert ID', columnType: 'ID' },
     { name: 'Created on', columnType: 'DATE_TIME' },
-    { name: 'Status', columnType: 'STRING' },
+    { name: '#TX', columnType: 'NUMBER' },
+    { name: 'Rule ID', columnType: 'ID' },
+    { name: 'Rule name', columnType: 'STRING' },
+    { name: 'Rule description', columnType: 'STRING' },
+    { name: 'Rule action', columnType: 'TAG' },
+    { name: 'Rule nature', columnType: 'TAG' },
+    { name: 'Alert status', columnType: 'TAG' },
+    { name: 'Case status', columnType: 'TAG' },
     { name: 'Closing reason', columnType: 'STRING' },
+    { name: 'Last updated at', columnType: 'DATE_TIME' },
   ],
   variableOptions: {
     ...periodVars,

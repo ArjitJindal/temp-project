@@ -19,10 +19,11 @@ import CaseStatusTag from '@/components/library/CaseStatusTag';
 
 interface Props {
   alertId: string;
+  caseUserName: string;
 }
 
 export default function InvestigativeCoPilot(props: Props) {
-  const { alertId } = props;
+  const { alertId, caseUserName } = props;
   const api = useApi();
   const [history, setHistory] = useState<QuestionResponse[]>([]);
 
@@ -69,12 +70,11 @@ export default function InvestigativeCoPilot(props: Props) {
     }, 0);
   }, [history.length]);
 
-  const alertQueryResult = useQuery(ALERT_ITEM(alertId), async () => {
-    const alert = await api.getAlert({
+  const alertQueryResult = useQuery(ALERT_ITEM(alertId), async () =>
+    api.getAlert({
       alertId,
-    });
-    return alert;
-  });
+    }),
+  );
 
   return (
     <AsyncResourceRenderer resource={historyRes}>
@@ -84,6 +84,7 @@ export default function InvestigativeCoPilot(props: Props) {
             <AsyncResourceRenderer resource={alertQueryResult.data}>
               {(alert) => (
                 <>
+                  <Form.Layout.Label title={'User'}>{caseUserName}</Form.Layout.Label>
                   <Form.Layout.Label title={'Alert ID'}>{alert.alertId}</Form.Layout.Label>
                   <Form.Layout.Label title={'Case ID'}>{alert.caseId}</Form.Layout.Label>
                   <Form.Layout.Label title={'Created at'}>

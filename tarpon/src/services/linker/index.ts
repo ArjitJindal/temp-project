@@ -32,17 +32,19 @@ export class LinkerService {
   public constructor(tenantId: string) {
     this.tenantId = tenantId
   }
-  public visualisation(
-    userId: string,
-    userLabels: Map<string, string>,
-    emailLinked: Map<string, string[]>,
-    addressLinked: Map<string, string[]>,
-    phoneLinked: Map<string, string[]>,
-    paymentMethodLinked: Map<string, string[]>
-  ): {
+
+  public async entityGraph(userId: string): Promise<{
     nodes: GraphNodes[]
     edges: GraphEdges[]
-  } {
+  }> {
+    const {
+      linkedUsers,
+      emailLinked,
+      addressLinked,
+      phoneLinked,
+      paymentMethodLinked,
+    } = await this.entity(userId)
+
     const nodeMap: Map<string, string> = new Map()
     const linkedEdges: GraphEdges[] = []
     const links: [string, Map<string, string[]>][] = [
@@ -52,10 +54,9 @@ export class LinkerService {
       ['contactNumber', phoneLinked],
     ]
 
-    for (const [userId, label] of userLabels) {
+    for (const [userId, label] of linkedUsers) {
       nodeMap.set(`user:${userId}`, label)
     }
-    userLabels.get(userId)
     links.forEach(([prefix, linked]) => {
       for (const [link, users] of linked.entries()) {
         nodeMap.set(`${prefix}:${link}`, '')
@@ -287,12 +288,18 @@ export class LinkerService {
     }
   }
 
+  public async linkedUsers(userId: string): Promise<string[]> {
+    const entity = await this.entity(userId)
+    entity.linkedUsers.delete(userId)
+    return [...entity.linkedUsers.keys()]
+  }
+
   public async entity(userId: string): Promise<{
     emailLinked: Map<string, string[]>
     addressLinked: Map<string, string[]>
     phoneLinked: Map<string, string[]>
     paymentMethodLinked: Map<string, string[]>
-    userLabels: Map<string, string>
+    linkedUsers: Map<string, string>
   }> {
     const mongoClient = await getMongoDbClient()
     const db = mongoClient.db()
@@ -350,17 +357,11 @@ export class LinkerService {
       ...shareHolders[1],
       ...legalEntity[1],
     ]
-    const postcodes = [
+    const addresses = [
       ...user[2],
       ...directors[2],
       ...shareHolders[2],
       ...legalEntity[2],
-    ]
-    const addresses = [
-      ...user[3],
-      ...directors[3],
-      ...shareHolders[3],
-      ...legalEntity[3],
     ]
 
     const paymentMethodIds = [
@@ -412,7 +413,6 @@ export class LinkerService {
           ])
           .toArray(),
       ])
-    console.log('addressLinked', addresses)
     const query: Filter<InternalUser> = {
       $or: [
         ...prefixes.flatMap((prefix) => {
@@ -423,14 +423,13 @@ export class LinkerService {
                 $in: contactNumbers,
               },
             },
-            {
-              [`${prefix}contactDetails.addresses.postcode`]: {
-                $in: postcodes,
-              },
-              [`${prefix}contactDetails.addresses.addressLines.0`]: {
-                $in: addresses,
-              },
-            },
+            ...addresses.map((addressCombined) => {
+              const [address, postcode] = addressCombined.split(',')
+              return {
+                [`${prefix}contactDetails.addresses.postcode`]: postcode,
+                [`${prefix}contactDetails.addresses.addressLines.0`]: address,
+              }
+            }),
           ]
         }),
         { userId },
@@ -511,7 +510,7 @@ export class LinkerService {
       }
     })
 
-    const userLabels = new Map<string, string>()
+    const linkedUsers = new Map<string, string>()
     const allUsers: UsersProjectedData[] = [
       ...users,
       ...originPaymentMethodLinks.flatMap((pl) => pl.users),
@@ -519,7 +518,7 @@ export class LinkerService {
     ]
 
     allUsers.forEach((user) => {
-      userLabels.set(user.userId, getUserName(user))
+      linkedUsers.set(user.userId, getUserName(user))
     })
 
     return {
@@ -527,7 +526,7 @@ export class LinkerService {
       phoneLinked,
       addressLinked,
       paymentMethodLinked,
-      userLabels,
+      linkedUsers,
     }
   }
 }
@@ -542,7 +541,7 @@ async function linkingElements(
   prefix: string,
   userCollection: Collection<InternalUser>,
   userId: string
-): Promise<[string[], string[], string[], string[]]> {
+): Promise<[string[], string[], string[]]> {
   const emailIds = userCollection.distinct(`${prefix}contactDetails.emailIds`, {
     userId,
   })
@@ -550,20 +549,42 @@ async function linkingElements(
     `${prefix}contactDetails.contactNumbers`,
     { userId }
   )
-  const postcodes = userCollection.distinct(
-    `${prefix}contactDetails.addresses.postcode`,
-    {
-      userId,
-    }
-  )
-  const addressLines = userCollection.distinct(
-    `${prefix}contactDetails.addresses.addressLines.0`,
-    { userId }
-  )
+
+  const adddress = await userCollection
+    .aggregate<{ address: string }>([
+      {
+        $group: {
+          _id: {
+            postcode: `${prefix}contactDetails.addresses.postcode`,
+            address: `${prefix}contactDetails.addresses.addressLines.0`,
+          },
+        },
+      },
+      {
+        $project: {
+          _id: 0,
+          address: {
+            $concat: ['$_id.address', ',', '$_id.postcode'],
+          },
+        },
+      },
+      {
+        $group: {
+          _id: '$address',
+        },
+      },
+      {
+        $project: {
+          _id: 0,
+          address: '$_id',
+        },
+      },
+    ])
+    .toArray()
+
   return [
     await emailIds,
     await contactNumbers,
-    await postcodes,
-    await addressLines,
+    (await adddress).map((address) => address.address),
   ]
 }

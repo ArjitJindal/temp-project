@@ -172,9 +172,11 @@ export async function seedMongo(client: MongoClient, tenantId: string) {
     } while (!result.done)
   }
 
+  logger.info('Refreshing dashboard stats...')
   const dashboardStatsRepository = new DashboardStatsRepository(tenantId, {
     mongoDb: client,
   })
 
   await dashboardStatsRepository.refreshAllStats()
+  logger.info('Dashboard stats refreshed')
 }

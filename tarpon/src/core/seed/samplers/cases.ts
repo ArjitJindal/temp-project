@@ -161,6 +161,7 @@ export function sampleTransactionUserCases(
       ),
       assignments: getRandomUsers(),
       reviewAssignments: getRandomUsers(),
+      updatedAt: sampleTimestamp(),
       lastStatusChange:
         caseStatus === 'CLOSED' && user
           ? {

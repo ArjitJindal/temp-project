@@ -1,6 +1,6 @@
 import React, { useMemo } from 'react';
 import { Switch, Tag as AntTag } from 'antd';
-import { uniqBy } from 'lodash';
+import { capitalize, uniqBy } from 'lodash';
 import { useMutation } from '@tanstack/react-query';
 import { ColumnDataType, FullColumnDataType } from '../types';
 import { CloseMessage, message } from '../../Message';
@@ -569,6 +569,13 @@ export const USER_KYC_STATUS_TAG: ColumnDataType<KYCStatusDetails> = {
 export const USER_STATE_TAG: ColumnDataType<UserState> = {
   render: (value: UserState | undefined) => {
     return value ? <UserStateTag userState={value} /> : <></>;
+  },
+  stringify: (userState) => userState ?? '',
+};
+
+export const TAG: ColumnDataType<string> = {
+  render: (value: string | undefined) => {
+    return value ? <AntTag>{capitalize(value)}</AntTag> : <></>;
   },
   stringify: (userState) => userState ?? '',
 };

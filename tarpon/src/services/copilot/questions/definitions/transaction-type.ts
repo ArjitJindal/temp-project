@@ -1,6 +1,5 @@
 import { BarchartQuestion } from '@/services/copilot/questions/types'
 import { getMongoDbClient } from '@/utils/mongodb-utils'
-import { Case } from '@/@types/openapi-internal/Case'
 import { TRANSACTIONS_COLLECTION } from '@/utils/mongodb-definitions'
 import {
   humanReadablePeriod,
@@ -9,6 +8,7 @@ import {
   periodDefaults,
   periodVars,
 } from '@/services/copilot/questions/definitions/util'
+import { InternalTransaction } from '@/@types/openapi-internal/InternalTransaction'
 
 export const TransactionType: BarchartQuestion<Period> = {
   type: 'BARCHART',
@@ -20,7 +20,7 @@ export const TransactionType: BarchartQuestion<Period> = {
     const client = await getMongoDbClient()
     const db = client.db()
     const results = await db
-      .collection<Case>(TRANSACTIONS_COLLECTION(tenantId))
+      .collection<InternalTransaction>(TRANSACTIONS_COLLECTION(tenantId))
       .aggregate<{ _id: string; count: number }>([
         {
           $match: {

@@ -85,7 +85,9 @@ const mergedColumns = (
   hideAlertStatusFilters: boolean,
   handleAlertsAssignments: (updateRequest: AlertsAssignmentsUpdateRequest) => void,
   handleAlertsReviewAssignments: (updateRequest: AlertsReviewAssignmentsUpdateRequest) => void,
-  handleInvestigateAlert: ((alertId: string) => void) | undefined,
+  handleInvestigateAlert:
+    | ((alertInfo: { alertId: string; caseUserName: string }) => void)
+    | undefined,
   userId: string,
   reload: () => void,
   falsePositiveEnabled: boolean,
@@ -314,7 +316,10 @@ const mergedColumns = (
                 type="TETRIARY"
                 onClick={() => {
                   if (entity.alertId != null) {
-                    handleInvestigateAlert(entity.alertId);
+                    handleInvestigateAlert({
+                      alertId: entity.alertId,
+                      caseUserName: entity.caseUserName || '',
+                    });
                   }
                 }}
               >
@@ -366,7 +371,10 @@ export default function AlertTable(props: Props) {
       .flatMap((v) => v)
       .filter(Boolean);
   }, [selectedTxns]);
-  const [investigativeAlertId, setInvestigativeAlertId] = useState<string>();
+  const [investigativeAlert, setInvestigativeAlert] = useState<{
+    alertId: string;
+    caseUserName: string;
+  }>();
 
   const assignmentsToMutationAlerts = useMutation<unknown, Error, AlertsAssignmentsUpdateRequest>(
     async ({ alertIds, assignments }) => {
@@ -458,7 +466,7 @@ export default function AlertTable(props: Props) {
         hideAlertStatusFilters,
         handleAlertAssignments,
         handleAlertsReviewAssignments,
-        icpEnabled ? setInvestigativeAlertId : undefined,
+        icpEnabled ? setInvestigativeAlert : undefined,
         user.userId,
         reloadTable,
         isFalsePositiveEnabled,
@@ -803,9 +811,10 @@ export default function AlertTable(props: Props) {
         }}
       />
       <InvestigativeCoPilotModal
-        alertId={investigativeAlertId}
+        alertId={investigativeAlert?.alertId}
+        caseUserName={investigativeAlert?.caseUserName}
         onClose={() => {
-          setInvestigativeAlertId(undefined);
+          setInvestigativeAlert(undefined);
         }}
       />
     </>

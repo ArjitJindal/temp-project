@@ -34,7 +34,7 @@ describe('Linker', () => {
 
     const ls = new LinkerService(tenantId)
     const entity = await ls.entity('u1')
-    expect(entity.userLabels.size).toBe(1)
+    expect(entity.linkedUsers.size).toBe(1)
     expect(entity.paymentMethodLinked.size).toBe(0)
     expect(entity.addressLinked.size).toBe(0)
     expect(entity.emailLinked.size).toBe(0)
@@ -203,59 +203,5 @@ describe('Linker', () => {
     expect(entity.addressLinked.size).toBe(0)
     expect(entity.phoneLinked.size).toBe(1)
     expect(entity.phoneLinked.get('123456789')).toHaveLength(2)
-  })
-})
-
-describe('Visualisation', () => {
-  test('Users sharing email', async () => {
-    const ls = new LinkerService('tenantId')
-    const labels = new Map<string, string>([
-      ['u1', 'Tim Coulson'],
-      ['u2', 'Madhu Nadig'],
-    ])
-    const emailLinked = new Map<string, string[]>([
-      ['tim@flagright.com', ['u1', 'u2']],
-    ])
-    const addressLinked = new Map<string, string[]>()
-    const phoneLinked = new Map<string, string[]>()
-    const paymentMethodLinked = new Map<string, string[]>()
-
-    expect(
-      ls.visualisation(
-        'u1',
-        labels,
-        emailLinked,
-        addressLinked,
-        phoneLinked,
-        paymentMethodLinked
-      )
-    ).toEqual({
-      nodes: [
-        {
-          id: 'user:u1',
-          label: 'Tim Coulson',
-        },
-        {
-          id: 'user:u2',
-          label: 'Madhu Nadig',
-        },
-        {
-          id: 'emailAddress:tim@flagright.com',
-          label: '',
-        },
-      ],
-      edges: [
-        {
-          id: 'user:u1-emailAddress:tim@flagright.com',
-          source: 'user:u1',
-          target: 'emailAddress:tim@flagright.com',
-        },
-        {
-          id: 'user:u2-emailAddress:tim@flagright.com',
-          source: 'user:u2',
-          target: 'emailAddress:tim@flagright.com',
-        },
-      ],
-    })
   })
 })
