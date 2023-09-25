@@ -2,7 +2,7 @@ import { lambdaConsumer } from '@/core/middlewares/lambda-consumer-middlewares'
 import { TenantService } from '@/services/tenants'
 import { sendBatchJobCommand } from '@/services/batch-job'
 import { logger } from '@/core/logger'
-import { tenantHasFeature } from '@/core/middlewares/tenant-has-feature'
+import dayjs from '@/utils/dayjs'
 
 export const cronJobTenMinuteHandler = lambdaConsumer()(async () => {
   const tenantInfos = await TenantService.getAllTenants(
@@ -11,26 +11,20 @@ export const cronJobTenMinuteHandler = lambdaConsumer()(async () => {
   )
 
   try {
-    const minus10 = new Date()
-    const now = new Date()
-    minus10.setMinutes(minus10.getMinutes() - 10)
+    const now = dayjs()
+    const checkTimeRange = {
+      // NOTE: Make the time window to be larger then the cron frequency to avoid gaps
+      startTimestamp: now.subtract(30, 'minute').valueOf(),
+      endTimestamp: now.valueOf(),
+    }
 
     await Promise.all(
       tenantInfos.map(async (t) => {
-        const userRefresh = await tenantHasFeature(t.tenant.id, 'RISK_SCORING')
         return sendBatchJobCommand({
           type: 'DASHBOARD_REFRESH',
           tenantId: t.tenant.id,
           parameters: {
-            transactions: {
-              startTimestamp: minus10.valueOf(),
-              endTimestamp: now.valueOf(),
-            },
-            cases: {
-              startTimestamp: minus10.valueOf(),
-              endTimestamp: now.valueOf(),
-            },
-            users: userRefresh,
+            checkTimeRange,
           },
         })
       })

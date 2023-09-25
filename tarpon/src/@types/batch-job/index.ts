@@ -82,9 +82,7 @@ export type GlobalRuleAggregationRebuildBatchJob = {
 
 /* Dashboard refresh */
 type DashboardRefreshBatchJobParameters = {
-  transactions?: TimeRange
-  cases?: TimeRange
-  users?: boolean
+  checkTimeRange: TimeRange
 }
 export type DashboardRefreshBatchJob = {
   type: 'DASHBOARD_REFRESH'

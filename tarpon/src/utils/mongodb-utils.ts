@@ -98,6 +98,18 @@ export const MONTH_DATE_FORMAT_JS = 'YYYY-MM'
 export const DAY_DATE_FORMAT_JS = 'YYYY-MM-DD'
 export const HOUR_DATE_FORMAT_JS = 'YYYY-MM-DD[T]HH'
 
+export function getDateFormatByGranularity(
+  granularity: 'HOUR' | 'DAY' | 'MONTH'
+) {
+  if (granularity === 'HOUR') {
+    return HOUR_DATE_FORMAT_JS
+  } else if (granularity === 'DAY') {
+    return DAY_DATE_FORMAT
+  } else if (granularity === 'MONTH') {
+    return MONTH_DATE_FORMAT
+  }
+}
+
 /*
   Pagination
  */

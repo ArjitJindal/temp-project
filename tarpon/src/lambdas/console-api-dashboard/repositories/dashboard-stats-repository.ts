@@ -35,12 +35,12 @@ export class DashboardStatsRepository {
     this.tenantId = tenantId
   }
 
-  public async refreshAllStats() {
+  public async refreshAllStats(timeRange?: TimeRange) {
     await Promise.all([
-      this.refreshTransactionStats(),
-      this.refreshCaseStats(),
+      this.refreshTransactionStats(timeRange),
+      this.refreshCaseStats(timeRange),
       this.refreshUserStats(),
-      this.refreshTeamStats(),
+      this.refreshTeamStats(timeRange),
     ])
   }
 
@@ -83,12 +83,6 @@ export class DashboardStatsRepository {
     )
   }
 
-  private async recalculateTeamStats(
-    timeRange?: TimeRange,
-    scope: Array<'CASES' | 'ALERTS'> = ['CASES', 'ALERTS']
-  ) {
-    await TeamStatsDashboardMetric.refresh(this.tenantId, timeRange, scope)
-  }
   public async getTeamStatistics(
     scope: 'CASES' | 'ALERTS',
     startTimestamp?: number,
@@ -115,8 +109,11 @@ export class DashboardStatsRepository {
     return DrsDistributionStatsDashboardMetric.get(this.tenantId, userType)
   }
 
-  public async refreshTransactionStats(timeRange?: TimeRange) {
-    await TransactionStatsDashboardMetric.refresh(this.tenantId, timeRange)
+  public async refreshTransactionStats(timestampTimeRange?: TimeRange) {
+    await TransactionStatsDashboardMetric.refresh(
+      this.tenantId,
+      timestampTimeRange
+    )
   }
 
   public async getTransactionCountStats(
@@ -132,12 +129,11 @@ export class DashboardStatsRepository {
     )
   }
 
-  public async refreshCaseStats(timeRange?: TimeRange) {
+  public async refreshCaseStats(caseCreatedAtTimeRange?: TimeRange) {
     await Promise.all([
-      this.recalculateRuleHitStats(timeRange),
-      this.recalculateHitsByUser('ORIGIN', timeRange),
-      this.recalculateHitsByUser('DESTINATION', timeRange),
-      this.recalculateTeamStats(timeRange),
+      this.recalculateRuleHitStats(caseCreatedAtTimeRange),
+      this.recalculateHitsByUser('ORIGIN', caseCreatedAtTimeRange),
+      this.recalculateHitsByUser('DESTINATION', caseCreatedAtTimeRange),
     ])
   }
 
@@ -145,8 +141,11 @@ export class DashboardStatsRepository {
     await this.recalculateDRSDistributionStats()
   }
 
-  public async refreshTeamStats(timeRange?: TimeRange) {
-    await this.recalculateTeamStats(timeRange)
+  public async refreshTeamStats(caseUpdatedAtTimeRange?: TimeRange) {
+    await TeamStatsDashboardMetric.refresh(
+      this.tenantId,
+      caseUpdatedAtTimeRange
+    )
   }
 
   async getOverviewStatistics(

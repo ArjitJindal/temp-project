@@ -85,8 +85,6 @@ async function cleanupRuleHitsInternal(values: Props) {
     `Found ${await cursor.count()} transactions for tenant ${tenantId}`
   )
 
-  let startTimetsamp = impactTimestampsStart
-  let migratedTransactionsCount = 0
   await migrateEntities<InternalTransaction>(
     cursor,
     async (transactions) => {
@@ -198,25 +196,12 @@ async function cleanupRuleHitsInternal(values: Props) {
           )
         }
       }
-
-      // Refresh dashboard
-      migratedTransactionsCount += TRANSACTIONS_PROCESS_BATCH_SIZE
-      if (
-        migratedTransactionsCount % (TRANSACTIONS_PROCESS_BATCH_SIZE * 100) ===
-          0 ||
-        transactions.length < TRANSACTIONS_PROCESS_BATCH_SIZE
-      ) {
-        const timeRange = {
-          startTimestamp: startTimetsamp,
-          endTimestamp: lastTransaction?.createdAt,
-        }
-        await dashboardStatsRepository.refreshCaseStats(timeRange)
-        await dashboardStatsRepository.refreshTransactionStats(timeRange)
-        startTimetsamp = (lastTransaction?.createdAt ??
-          lastTransaction?.timestamp) as number
-        logger.info(`Refreshed dashboard`)
-      }
     },
     { mongoBatchSize: 100, processBatchSize: TRANSACTIONS_PROCESS_BATCH_SIZE }
   )
+
+  await dashboardStatsRepository.refreshAllStats({
+    startTimestamp: impactTimestampsStart,
+    endTimestamp: impactTimestamps?.end ?? Number.MAX_SAFE_INTEGER,
+  })
 }

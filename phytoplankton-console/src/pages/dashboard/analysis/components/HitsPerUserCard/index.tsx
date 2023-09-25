@@ -83,7 +83,7 @@ export default function HitsPerUserCard(props: Props) {
                 },
               )}
             >
-              {entity.casesCount} Open {pluralize('case', entity.casesCount)}
+              {entity.openCasesCount} Open {pluralize('case', entity.openCasesCount)}
             </Link>
           </>
         );

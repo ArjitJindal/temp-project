@@ -1,6 +1,7 @@
 import { round } from 'lodash'
 import { getAffectedInterval } from '../../utils'
 import { CASE_GROUP_KEYS, CASE_PROJECT_KEYS, TimeRange } from '../types'
+import { cleanUpStaleData, withUpdatedAt } from './utils'
 import dayjs from '@/utils/dayjs'
 import {
   HOUR_DATE_FORMAT,
@@ -112,7 +113,18 @@ export class HitsByUserStatsDashboardMetric {
         },
       },
     ]
-    await casesCollection.aggregate(pipeline).next()
+    const lastUpdatedAt = Date.now()
+    await casesCollection
+      .aggregate(withUpdatedAt(pipeline, lastUpdatedAt))
+      .next()
+    await cleanUpStaleData(
+      aggregationCollection,
+      'date',
+      lastUpdatedAt,
+      timeRange,
+      'HOUR',
+      { direction }
+    )
   }
 
   public static async get(

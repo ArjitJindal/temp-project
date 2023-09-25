@@ -81,6 +81,7 @@ export const TRANSACTION_EXPORT_HEADERS_SETTINGS: CsvHeaderSettings<InternalTran
     events: 'SKIP',
     arsScore: 'SKIP',
     createdAt: 'SKIP',
+    updatedAt: 'SKIP',
   }
 
 export const transactionsViewHandler = lambdaApi()(

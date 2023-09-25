@@ -5682,6 +5682,8 @@ components:
               $ref: '#/components/schemas/ArsScore'
             createdAt:
               type: number
+            updatedAt:
+              type: number
       title: InternalTransaction
     ConsumerUsersListResponse:
       title: ConsumerUsersListResponse

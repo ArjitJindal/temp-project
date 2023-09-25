@@ -6,7 +6,7 @@ import {
 } from 'aws-lambda'
 import { Credentials } from '@aws-sdk/client-sts'
 import { S3 } from '@aws-sdk/client-s3'
-import { capitalize, isEqual, isEmpty, compact, min } from 'lodash'
+import { capitalize, isEqual, isEmpty, compact } from 'lodash'
 import { MongoClient } from 'mongodb'
 import pluralize from 'pluralize'
 import { CasesAlertsAuditLogService } from './case-alerts-audit-log-service'
@@ -58,7 +58,6 @@ import { MongoDbTransactionRepository } from '@/services/rules-engine/repositori
 import { CursorPaginationResponse } from '@/utils/pagination'
 import { CaseType } from '@/@types/openapi-internal/CaseType'
 import { ManualCasePatchRequest } from '@/@types/openapi-internal/ManualCasePatchRequest'
-import { sendBatchJobCommand } from '@/services/batch-job'
 import { Priority } from '@/@types/openapi-internal/Priority'
 
 export class CaseService extends CaseAlertsCommonService {
@@ -601,16 +600,6 @@ export class CaseService extends CaseAlertsCommonService {
           }
         )
       }
-    })
-
-    await sendBatchJobCommand({
-      type: 'DASHBOARD_REFRESH',
-      tenantId: this.tenantId,
-      parameters: {
-        cases: {
-          startTimestamp: min(cases.map((c) => c.createdTimestamp)),
-        },
-      },
     })
 
     if (updates.caseStatus === 'CLOSED') {

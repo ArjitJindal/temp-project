@@ -1,5 +1,6 @@
 import { getAffectedInterval } from '../../utils'
 import { TimeRange } from '../types'
+import { cleanUpStaleData, withUpdatedAt } from './utils'
 import dayjs from '@/utils/dayjs'
 import {
   HOUR_DATE_FORMAT,
@@ -24,14 +25,15 @@ interface TimestampCondition {
 }
 
 export class TeamStatsDashboardMetric {
-  public static async refresh(
-    tenantId,
-    timeRange?: TimeRange,
-    scope: Array<'CASES' | 'ALERTS'> = ['CASES', 'ALERTS']
-  ): Promise<void> {
+  public static async refresh(tenantId, timeRange?: TimeRange): Promise<void> {
     const db = await getMongoDbClientDb()
     const casesCollection = db.collection<Case>(CASES_COLLECTION(tenantId))
+    const alertAggregationCollection =
+      DASHBOARD_TEAM_ALERTS_STATS_HOURLY(tenantId)
+    const caseAggregationCollection =
+      DASHBOARD_TEAM_CASES_STATS_HOURLY(tenantId)
 
+    const lastUpdatedAt = Date.now()
     let timestampCondition: TimestampCondition | null = null
     if (timeRange) {
       const { start, end } = getAffectedInterval(timeRange, 'HOUR')
@@ -169,11 +171,9 @@ export class TeamStatsDashboardMetric {
     }
 
     // Cases
-    if (scope.includes('CASES')) {
-      const aggregationCollection = DASHBOARD_TEAM_CASES_STATS_HOURLY(tenantId)
-
+    {
       await db
-        .collection(aggregationCollection)
+        .collection(caseAggregationCollection)
         .createIndex({ date: -1, accountId: 1, status: 1 }, { unique: true })
 
       {
@@ -273,14 +273,16 @@ export class TeamStatsDashboardMetric {
           },
           {
             $merge: {
-              into: aggregationCollection,
+              into: caseAggregationCollection,
               on: ['accountId', 'status', 'date'],
               whenMatched: 'merge',
             },
           },
         ]
 
-        await casesCollection.aggregate(pipeline).next()
+        await casesCollection
+          .aggregate(withUpdatedAt(pipeline, lastUpdatedAt))
+          .next()
       }
 
       // Assigned to
@@ -336,13 +338,15 @@ export class TeamStatsDashboardMetric {
           },
           {
             $merge: {
-              into: aggregationCollection,
+              into: caseAggregationCollection,
               on: ['accountId', 'status', 'date'],
               whenMatched: 'merge',
             },
           },
         ]
-        await casesCollection.aggregate(pipeline).next()
+        await casesCollection
+          .aggregate(withUpdatedAt(pipeline, lastUpdatedAt))
+          .next()
       }
       // Number of Cases Closed by system of result all the alerts are closed by same person
       {
@@ -494,14 +498,16 @@ export class TeamStatsDashboardMetric {
           },
           {
             $merge: {
-              into: aggregationCollection,
+              into: caseAggregationCollection,
               on: ['accountId', 'status', 'date'],
               whenMatched: 'merge',
             },
           },
         ]
 
-        await casesCollection.aggregate(pipeline).next()
+        await casesCollection
+          .aggregate(withUpdatedAt(pipeline, lastUpdatedAt))
+          .next()
       }
 
       // Investigation time
@@ -532,23 +538,23 @@ export class TeamStatsDashboardMetric {
           ...commonInvestigationTimePipeline(timestampCondition),
           {
             $merge: {
-              into: aggregationCollection,
+              into: caseAggregationCollection,
               on: ['accountId', 'status', 'date'],
               whenMatched: 'merge',
             },
           },
         ]
 
-        await casesCollection.aggregate(pipeline).next()
+        await casesCollection
+          .aggregate(withUpdatedAt(pipeline, lastUpdatedAt))
+          .next()
       }
     }
 
     // Alerts
-    if (scope.includes('ALERTS')) {
-      const aggregationCollection = DASHBOARD_TEAM_ALERTS_STATS_HOURLY(tenantId)
-
+    {
       await db
-        .collection(aggregationCollection)
+        .collection(alertAggregationCollection)
         .createIndex({ date: -1, accountId: 1, status: 1 }, { unique: true })
 
       {
@@ -641,14 +647,16 @@ export class TeamStatsDashboardMetric {
           },
           {
             $merge: {
-              into: aggregationCollection,
+              into: alertAggregationCollection,
               on: ['accountId', 'status', 'date'],
               whenMatched: 'merge',
             },
           },
         ]
 
-        await casesCollection.aggregate(pipeline).next()
+        await casesCollection
+          .aggregate(withUpdatedAt(pipeline, lastUpdatedAt))
+          .next()
       }
 
       // Assigned to
@@ -706,13 +714,15 @@ export class TeamStatsDashboardMetric {
           },
           {
             $merge: {
-              into: aggregationCollection,
+              into: alertAggregationCollection,
               on: ['accountId', 'status', 'date'],
               whenMatched: 'merge',
             },
           },
         ]
-        await casesCollection.aggregate(pipeline).next()
+        await casesCollection
+          .aggregate(withUpdatedAt(pipeline, lastUpdatedAt))
+          .next()
       }
 
       // Alerts Closed By System
@@ -791,14 +801,16 @@ export class TeamStatsDashboardMetric {
           },
           {
             $merge: {
-              into: aggregationCollection,
+              into: alertAggregationCollection,
               on: ['accountId', 'status', 'date'],
               whenMatched: 'merge',
             },
           },
         ]
 
-        await casesCollection.aggregate(pipeline).next()
+        await casesCollection
+          .aggregate(withUpdatedAt(pipeline, lastUpdatedAt))
+          .next()
       }
 
       // Investigation Time
@@ -837,16 +849,35 @@ export class TeamStatsDashboardMetric {
           ...commonInvestigationTimePipeline(timestampCondition),
           {
             $merge: {
-              into: aggregationCollection,
+              into: alertAggregationCollection,
               on: ['accountId', 'status', 'date'],
               whenMatched: 'merge',
             },
           },
         ]
 
-        await casesCollection.aggregate(pipeline).next()
+        await casesCollection
+          .aggregate(withUpdatedAt(pipeline, lastUpdatedAt))
+          .next()
       }
     }
+
+    await Promise.all([
+      cleanUpStaleData(
+        caseAggregationCollection,
+        'date',
+        lastUpdatedAt,
+        timeRange,
+        'HOUR'
+      ),
+      cleanUpStaleData(
+        alertAggregationCollection,
+        'date',
+        lastUpdatedAt,
+        timeRange,
+        'HOUR'
+      ),
+    ])
   }
 
   public static async get(

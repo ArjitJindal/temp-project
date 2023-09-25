@@ -33,7 +33,7 @@ export function getAffectedInterval(
   granularity: 'HOUR' | 'DAY' | 'MONTH'
 ) {
   if (isEmpty(timeRange)) {
-    return { start: 0, end: Number.MAX_SAFE_INTEGER }
+    return { start: 0, end: Date.now() }
   }
 
   const { startTimestamp, endTimestamp } = timeRange

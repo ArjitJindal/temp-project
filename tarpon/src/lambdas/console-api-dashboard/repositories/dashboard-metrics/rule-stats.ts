@@ -5,6 +5,7 @@ import {
   DashboardStatsDRSDistributionData,
   TimeRange,
 } from '../types'
+import { cleanUpStaleData, withUpdatedAt } from './utils'
 import dayjs from '@/utils/dayjs'
 import {
   HOUR_DATE_FORMAT,
@@ -113,7 +114,17 @@ export class RuleHitsStatsDashboardMetric {
       },
     ]
 
-    await casesCollection.aggregate(pipeline).next()
+    const lastUpdatedAt = Date.now()
+    await casesCollection
+      .aggregate(withUpdatedAt(pipeline, lastUpdatedAt))
+      .next()
+    await cleanUpStaleData(
+      aggregationCollection,
+      '_id',
+      lastUpdatedAt,
+      timeRange,
+      'HOUR'
+    )
   }
 
   public static async get(

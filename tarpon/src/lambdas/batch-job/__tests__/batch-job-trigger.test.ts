@@ -23,7 +23,7 @@ describe('Batch job trigger', () => {
     const batchJob: BatchJob = {
       tenantId: TEST_TENANT_ID,
       type: 'DASHBOARD_REFRESH',
-      parameters: {},
+      parameters: { checkTimeRange: {} },
     }
     await jobTriggerHandler(createSqsEvent([batchJob]))
 
@@ -40,7 +40,7 @@ describe('Batch job trigger', () => {
     const batchJob: BatchJob = {
       tenantId: TEST_TENANT_ID,
       type: 'DASHBOARD_REFRESH',
-      parameters: {},
+      parameters: { checkTimeRange: {} },
     }
     await jobTriggerHandler(createSqsEvent([batchJob, batchJob, batchJob]))
 

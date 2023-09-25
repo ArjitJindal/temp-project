@@ -1,34 +1,126 @@
+import { last, uniq } from 'lodash'
+import { TimeRange } from '../console-api-dashboard/repositories/types'
+import { getAffectedInterval } from '../console-api-dashboard/utils'
 import { BatchJobRunner } from './batch-job-runner-base'
 import { DashboardRefreshBatchJob } from '@/@types/batch-job'
 import { getMongoDbClient } from '@/utils/mongodb-utils'
 import { DashboardStatsRepository } from '@/lambdas/console-api-dashboard/repositories/dashboard-stats-repository'
+import { Case } from '@/@types/openapi-internal/Case'
+import {
+  CASES_COLLECTION,
+  TRANSACTIONS_COLLECTION,
+} from '@/utils/mongodb-definitions'
+import { InternalTransaction } from '@/@types/openapi-internal/InternalTransaction'
+import { logger } from '@/core/logger'
+import dayjs from '@/utils/dayjs'
+
+function getTargetTimeRanges(timestamps: number[]): TimeRange[] {
+  if (timestamps.length === 0) {
+    return []
+  }
+  const sortedHourTimeRanges: TimeRange[] = uniq(
+    timestamps.map(
+      (t) => getAffectedInterval({ startTimestamp: t }, 'HOUR').start
+    )
+  )
+    .sort()
+    .map((t) => ({
+      startTimestamp: t,
+      endTimestamp: dayjs(t).add(1, 'hour').valueOf(),
+    }))
+  const mergedTimeRanges: TimeRange[] = []
+  for (const timeRange of sortedHourTimeRanges) {
+    const lastTimeRange = last(mergedTimeRanges)
+    if (
+      lastTimeRange &&
+      timeRange.startTimestamp === lastTimeRange.endTimestamp
+    ) {
+      lastTimeRange.endTimestamp = timeRange.endTimestamp
+    } else {
+      mergedTimeRanges.push(timeRange)
+    }
+  }
+  return mergedTimeRanges
+}
 
 export class DashboardRefreshBatchJobRunner extends BatchJobRunner {
   protected async run(job: DashboardRefreshBatchJob): Promise<void> {
     const mongoDb = await getMongoDbClient()
+    const db = mongoDb.db()
     const dashboardStatsRepository = new DashboardStatsRepository(
       job.tenantId,
       {
         mongoDb,
       }
     )
-    const refreshJobs: Promise<void>[] = []
-
-    if (job.parameters.cases) {
-      refreshJobs.push(
-        dashboardStatsRepository.refreshCaseStats(job.parameters.cases)
-      )
-    }
-    if (job.parameters.transactions) {
-      refreshJobs.push(
-        dashboardStatsRepository.refreshTransactionStats(
-          job.parameters.transactions
+    const { checkTimeRange } = job.parameters
+    const refreshJobs = [
+      // Case stats
+      (async () => {
+        const casesCollection = db.collection<Case>(
+          CASES_COLLECTION(job.tenantId)
         )
-      )
-    }
-    if (job.parameters.users) {
-      refreshJobs.push(dashboardStatsRepository.refreshUserStats())
-    }
+        const cases = await (
+          await casesCollection.find(
+            {
+              updatedAt: {
+                $gte: checkTimeRange?.startTimestamp ?? 0,
+                $lt: checkTimeRange?.endTimestamp ?? Number.MAX_SAFE_INTEGER,
+              },
+            },
+            { projection: { createdTimestamp: 1 } }
+          )
+        ).toArray()
+        const targetTimeRanges = getTargetTimeRanges(
+          cases.map((c) => c.createdTimestamp!)
+        )
+
+        for (const timeRange of targetTimeRanges) {
+          await dashboardStatsRepository.refreshCaseStats(timeRange)
+          logger.info(`Refreshed case stats - ${JSON.stringify(timeRange)}`)
+        }
+      })(),
+
+      // Team stats
+      (async () => {
+        await dashboardStatsRepository.refreshTeamStats(checkTimeRange)
+        logger.info(`Refreshed team stats - ${JSON.stringify(checkTimeRange)}`)
+      })(),
+
+      // Transaction stats
+      (async () => {
+        const transactionsCollection = db.collection<InternalTransaction>(
+          TRANSACTIONS_COLLECTION(job.tenantId)
+        )
+        const transactions = await (
+          await transactionsCollection.find(
+            {
+              updatedAt: {
+                $gte: checkTimeRange?.startTimestamp ?? 0,
+                $lt: checkTimeRange?.endTimestamp ?? Number.MAX_SAFE_INTEGER,
+              },
+            },
+            { projection: { timestamp: 1 } }
+          )
+        ).toArray()
+        const targetTimeRanges = getTargetTimeRanges(
+          transactions.map((t) => t.timestamp)
+        )
+        for (const timeRange of targetTimeRanges) {
+          await dashboardStatsRepository.refreshTransactionStats(timeRange)
+          logger.info(
+            `Refreshed transaction stats - ${JSON.stringify(timeRange)}`
+          )
+        }
+      })(),
+
+      // User stats
+      (async () => {
+        await dashboardStatsRepository.refreshUserStats()
+        logger.info(`Refreshed user stats`)
+      })(),
+    ]
+
     await Promise.all(refreshJobs)
   }
 }

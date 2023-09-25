@@ -4,7 +4,6 @@ import { SQS, SendMessageCommand } from '@aws-sdk/client-sqs'
 import { flatten, pick } from 'lodash'
 import { CaseCreationService } from '../console-api-case/services/case-creation-service'
 import { CasesAlertsAuditLogService } from '../console-api-case/services/case-alerts-audit-log-service'
-import dayjs from '@/utils/dayjs'
 import { getMongoDbClient } from '@/utils/mongodb-utils'
 import {
   USER_EVENTS_COLLECTION,
@@ -192,19 +191,6 @@ async function transactionHandler(
     )
 
     logger.info(`DRS Updated in Cases`)
-  }
-
-  // Handling Back Date Transactions If the transaction is older than 10 minutes, we need to refresh the dashboard
-  if (transaction.timestamp < dayjs().subtract(10, 'minute').valueOf()) {
-    await sendBatchJobCommand({
-      type: 'DASHBOARD_REFRESH',
-      tenantId,
-      parameters: {
-        transactions: {
-          startTimestamp: transaction.timestamp,
-        },
-      },
-    })
   }
 
   await handleNewCases(tenantId, timestampBeforeCasesCreation, cases)

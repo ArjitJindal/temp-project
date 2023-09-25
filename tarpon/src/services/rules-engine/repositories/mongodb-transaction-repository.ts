@@ -78,7 +78,9 @@ export class MongoDbTransactionRepository
       transaction.transactionId
     )
 
-    internalTransaction.createdAt = existingTransaction?.createdAt ?? Date.now()
+    const now = Date.now()
+    internalTransaction.createdAt = existingTransaction?.createdAt ?? now
+    internalTransaction.updatedAt = now
 
     // TODO we are moving status to be populated in dynamo, however in the transition we may
     // process transactions without a status set.

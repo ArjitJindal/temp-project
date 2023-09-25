@@ -1,5 +1,6 @@
 import { WithId } from 'mongodb'
 import { DashboardStatsDRSDistributionData } from '../types'
+import { cleanUpStaleData, withUpdatedAt } from './utils'
 import { DashboardStatsDRSDistributionData as DRSDistributionStats } from '@/@types/openapi-internal/DashboardStatsDRSDistributionData'
 import { getMongoDbClientDb } from '@/utils/mongodb-utils'
 import {
@@ -11,6 +12,7 @@ import { InternalUser } from '@/@types/openapi-internal/InternalUser'
 import { getDynamoDbClient } from '@/utils/dynamodb'
 import { RiskRepository } from '@/services/risk-scoring/repositories/risk-repository'
 import { RiskClassificationScore } from '@/@types/openapi-internal/RiskClassificationScore'
+import { tenantHasFeature } from '@/core/middlewares/tenant-has-feature'
 
 function sanitizeBucketBoundry(riskIntervalBoundries: Array<number>) {
   if (!riskIntervalBoundries) {
@@ -57,6 +59,10 @@ function createDistributionItems(
 
 export class DrsDistributionStatsDashboardMetric {
   public static async refresh(tenantId): Promise<void> {
+    if (!(await tenantHasFeature(tenantId, 'RISK_SCORING'))) {
+      return
+    }
+
     const db = await getMongoDbClientDb()
     const usersCollection = db.collection<InternalUser>(
       USERS_COLLECTION(tenantId)
@@ -82,65 +88,65 @@ export class DrsDistributionStatsDashboardMetric {
       ...new Set(sanitizeBucketBoundry(riskIntervalBoundries)), // duplicate values are not allowed in bucket boundaries
     ]
 
+    const pipeline = [
+      {
+        $match: {
+          'drsScore.drsScore': { $exists: true, $nin: [null, ''] },
+        },
+      },
+      {
+        $facet: {
+          business: [
+            {
+              $match: { type: 'BUSINESS' },
+            },
+            {
+              $bucket: {
+                groupBy: '$drsScore.drsScore',
+                boundaries: sanitizedBounries,
+                default: sanitizedBounries[sanitizedBounries.length - 1],
+                output: {
+                  count: { $sum: 1 },
+                },
+              },
+            },
+          ],
+          consumer: [
+            {
+              $match: { type: 'CONSUMER' },
+            },
+            {
+              $bucket: {
+                groupBy: '$drsScore.drsScore',
+                boundaries: sanitizedBounries,
+                default: sanitizedBounries[sanitizedBounries.length - 1],
+                output: {
+                  count: { $sum: 1 },
+                },
+              },
+            },
+          ],
+        },
+      },
+      {
+        $group: {
+          _id: 'all',
+          business: { $first: '$business' },
+          consumer: { $first: '$consumer' },
+        },
+      },
+      {
+        $merge: {
+          into: aggregationCollection,
+          whenMatched: 'merge',
+        },
+      },
+    ]
+    const lastUpdatedAt = Date.now()
     await usersCollection
-      .aggregate(
-        [
-          {
-            $match: {
-              'drsScore.drsScore': { $exists: true, $nin: [null, ''] },
-            },
-          },
-          {
-            $facet: {
-              business: [
-                {
-                  $match: { type: 'BUSINESS' },
-                },
-                {
-                  $bucket: {
-                    groupBy: '$drsScore.drsScore',
-                    boundaries: sanitizedBounries,
-                    default: sanitizedBounries[sanitizedBounries.length - 1],
-                    output: {
-                      count: { $sum: 1 },
-                    },
-                  },
-                },
-              ],
-              consumer: [
-                {
-                  $match: { type: 'CONSUMER' },
-                },
-                {
-                  $bucket: {
-                    groupBy: '$drsScore.drsScore',
-                    boundaries: sanitizedBounries,
-                    default: sanitizedBounries[sanitizedBounries.length - 1],
-                    output: {
-                      count: { $sum: 1 },
-                    },
-                  },
-                },
-              ],
-            },
-          },
-          {
-            $group: {
-              _id: 'all',
-              business: { $first: '$business' },
-              consumer: { $first: '$consumer' },
-            },
-          },
-          {
-            $merge: {
-              into: aggregationCollection,
-              whenMatched: 'merge',
-            },
-          },
-        ],
-        { allowDiskUse: true }
-      )
+      .aggregate(withUpdatedAt(pipeline, lastUpdatedAt), { allowDiskUse: true })
       .next()
+    await cleanUpStaleData(aggregationCollection, 'date', lastUpdatedAt)
   }
 
   public static async get(

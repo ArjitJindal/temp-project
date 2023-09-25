@@ -1,6 +1,7 @@
 import { keyBy } from 'lodash'
 import { getAffectedInterval, getTimeLabels } from '../../utils'
 import { GranularityValuesType, TimeRange } from '../types'
+import { cleanUpStaleData, withUpdatedAt } from './utils'
 import dayjs from '@/utils/dayjs'
 import {
   DAY_DATE_FORMAT_JS,
@@ -35,6 +36,7 @@ const TRANSACTION_STATE_KEY_TO_RULE_ACTION: Map<
 export class TransactionStatsDashboardMetric {
   public static async refresh(tenantId, timeRange?: TimeRange): Promise<void> {
     const db = await getMongoDbClientDb()
+    const lastUpdatedAt = Date.now()
     const transactionsCollection = db.collection<InternalTransaction>(
       TRANSACTIONS_COLLECTION(tenantId)
     )
@@ -113,27 +115,30 @@ export class TransactionStatsDashboardMetric {
           },
         }
       }
-      return [
-        ...(ruleAction ? rulesResultPipeline : []),
-        { $match: { ...timestampMatch, ...ruleActionMatch } },
-        {
-          $group: {
-            _id: {
-              $dateToString: {
-                format: HOUR_DATE_FORMAT,
-                date: { $toDate: { $toLong: '$timestamp' } },
+      return withUpdatedAt(
+        [
+          ...(ruleAction ? rulesResultPipeline : []),
+          { $match: { ...timestampMatch, ...ruleActionMatch } },
+          {
+            $group: {
+              _id: {
+                $dateToString: {
+                  format: HOUR_DATE_FORMAT,
+                  date: { $toDate: { $toLong: '$timestamp' } },
+                },
               },
+              [key]: { $sum: 1 },
             },
-            [key]: { $sum: 1 },
           },
-        },
-        {
-          $merge: {
-            into: aggregatedHourlyCollectionName,
-            whenMatched: 'merge',
+          {
+            $merge: {
+              into: aggregatedHourlyCollectionName,
+              whenMatched: 'merge',
+            },
           },
-        },
-      ]
+        ],
+        lastUpdatedAt
+      )
     }
 
     const getPaymentMethodAggregationPipeline = () => {
@@ -147,88 +152,91 @@ export class TransactionStatsDashboardMetric {
           },
         }
       }
-      return [
-        ...(timestampMatch ? [{ $match: timestampMatch }] : []),
-        {
-          $addFields: {
-            paymentMethods: [
-              '$originPaymentDetails.method',
-              '$destinationPaymentDetails.method',
-            ],
-          },
-        },
-        {
-          $unwind: {
-            path: '$paymentMethods',
-            preserveNullAndEmptyArrays: false,
-          },
-        },
-        {
-          $match: {
-            paymentMethods: {
-              $ne: null,
-            },
-          },
-        },
-        {
-          $group: {
-            _id: {
-              date: {
-                $dateToString: {
-                  format: HOUR_DATE_FORMAT,
-                  date: {
-                    $toDate: {
-                      $toLong: '$timestamp',
-                    },
-                  },
-                },
-              },
-              method: {
-                $concat: ['paymentMethods_', '$paymentMethods'],
-              },
-            },
-            count: {
-              $count: {},
-            },
-          },
-        },
-        {
-          $group: {
-            _id: '$_id.date',
-            items: {
-              $addToSet: {
-                k: '$_id.method',
-                v: '$count',
-              },
-            },
-          },
-        },
-        {
-          $project: {
-            items: {
-              $arrayToObject: '$items',
-            },
-          },
-        },
-        {
-          $replaceRoot: {
-            newRoot: {
-              $mergeObjects: [
-                {
-                  _id: '$_id',
-                },
-                '$items',
+      return withUpdatedAt(
+        [
+          ...(timestampMatch ? [{ $match: timestampMatch }] : []),
+          {
+            $addFields: {
+              paymentMethods: [
+                '$originPaymentDetails.method',
+                '$destinationPaymentDetails.method',
               ],
             },
           },
-        },
-        {
-          $merge: {
-            into: aggregatedHourlyCollectionName,
-            whenMatched: 'merge',
+          {
+            $unwind: {
+              path: '$paymentMethods',
+              preserveNullAndEmptyArrays: false,
+            },
           },
-        },
-      ]
+          {
+            $match: {
+              paymentMethods: {
+                $ne: null,
+              },
+            },
+          },
+          {
+            $group: {
+              _id: {
+                date: {
+                  $dateToString: {
+                    format: HOUR_DATE_FORMAT,
+                    date: {
+                      $toDate: {
+                        $toLong: '$timestamp',
+                      },
+                    },
+                  },
+                },
+                method: {
+                  $concat: ['paymentMethods_', '$paymentMethods'],
+                },
+              },
+              count: {
+                $count: {},
+              },
+            },
+          },
+          {
+            $group: {
+              _id: '$_id.date',
+              items: {
+                $addToSet: {
+                  k: '$_id.method',
+                  v: '$count',
+                },
+              },
+            },
+          },
+          {
+            $project: {
+              items: {
+                $arrayToObject: '$items',
+              },
+            },
+          },
+          {
+            $replaceRoot: {
+              newRoot: {
+                $mergeObjects: [
+                  {
+                    _id: '$_id',
+                  },
+                  '$items',
+                ],
+              },
+            },
+          },
+          {
+            $merge: {
+              into: aggregatedHourlyCollectionName,
+              whenMatched: 'merge',
+            },
+          },
+        ],
+        lastUpdatedAt
+      )
     }
 
     const getTRSAggregationPipeline = (
@@ -245,72 +253,77 @@ export class TransactionStatsDashboardMetric {
           },
         }
       }
-      return [
-        {
-          $match: {
-            ...timestampMatch,
-            'arsScore.riskLevel': {
-              $ne: null,
+      return withUpdatedAt(
+        [
+          {
+            $match: {
+              ...timestampMatch,
+              'arsScore.riskLevel': {
+                $ne: null,
+              },
             },
           },
-        },
-        {
-          $group: {
-            _id: {
-              date: {
-                $dateToString: {
-                  format: dateFormat,
-                  date: {
-                    $toDate: {
-                      $toLong: '$timestamp',
+          {
+            $group: {
+              _id: {
+                date: {
+                  $dateToString: {
+                    format: dateFormat,
+                    date: {
+                      $toDate: {
+                        $toLong: '$timestamp',
+                      },
                     },
                   },
                 },
-              },
-              riskScore: { $concat: ['arsRiskLevel_', '$arsScore.riskLevel'] },
-            },
-            count: {
-              $count: {},
-            },
-          },
-        },
-        {
-          $group: {
-            _id: '$_id.date',
-            items: {
-              $addToSet: {
-                k: '$_id.riskScore',
-                v: '$count',
-              },
-            },
-          },
-        },
-        {
-          $project: {
-            items: {
-              $arrayToObject: '$items',
-            },
-          },
-        },
-        {
-          $replaceRoot: {
-            newRoot: {
-              $mergeObjects: [
-                {
-                  _id: '$_id',
+                riskScore: {
+                  $concat: ['arsRiskLevel_', '$arsScore.riskLevel'],
                 },
-                '$items',
-              ],
+              },
+              count: {
+                $count: {},
+              },
             },
           },
-        },
-        {
-          $merge: {
-            into: aggregationCollection,
-            whenMatched: 'merge',
+          {
+            $group: {
+              _id: '$_id.date',
+              items: {
+                $addToSet: {
+                  k: '$_id.riskScore',
+                  v: '$count',
+                },
+              },
+            },
           },
-        },
-      ]
+          {
+            $project: {
+              items: {
+                $arrayToObject: '$items',
+              },
+            },
+          },
+          {
+            $replaceRoot: {
+              newRoot: {
+                $mergeObjects: [
+                  {
+                    _id: '$_id',
+                  },
+                  '$items',
+                ],
+              },
+            },
+          },
+          {
+            $merge: {
+              into: aggregationCollection,
+              whenMatched: 'merge',
+            },
+          },
+        ],
+        lastUpdatedAt
+      )
     }
 
     // Hourly Stats
@@ -354,60 +367,63 @@ export class TransactionStatsDashboardMetric {
           },
         }
       }
-      return [
-        { $match: { ...timestampMatch } },
-        {
-          $addFields: {
-            time: {
-              $substr: ['$_id', 0, granularity === 'DAY' ? 10 : 7],
+      return withUpdatedAt(
+        [
+          { $match: { ...timestampMatch } },
+          {
+            $addFields: {
+              time: {
+                $substr: ['$_id', 0, granularity === 'DAY' ? 10 : 7],
+              },
             },
           },
-        },
-        {
-          $group: {
-            _id: '$time',
-            totalTransactions: {
-              $sum: '$totalTransactions',
+          {
+            $group: {
+              _id: '$time',
+              totalTransactions: {
+                $sum: '$totalTransactions',
+              },
+              flaggedTransactions: {
+                $sum: '$flaggedTransactions',
+              },
+              stoppedTransactions: {
+                $sum: '$stoppedTransactions',
+              },
+              suspendedTransactions: {
+                $sum: '$suspendedTransactions',
+              },
+              ...PAYMENT_METHODS.reduce(
+                (acc, x) => ({
+                  ...acc,
+                  [`paymentMethods_${x}`]: {
+                    $sum: `$paymentMethods_${x}`,
+                  },
+                }),
+                {}
+              ),
+              ...RISK_LEVELS.reduce(
+                (acc, x) => ({
+                  ...acc,
+                  [`arsRiskLevel_${x}`]: {
+                    $sum: `$arsRiskLevel_${x}`,
+                  },
+                }),
+                {}
+              ),
             },
-            flaggedTransactions: {
-              $sum: '$flaggedTransactions',
-            },
-            stoppedTransactions: {
-              $sum: '$stoppedTransactions',
-            },
-            suspendedTransactions: {
-              $sum: '$suspendedTransactions',
-            },
-            ...PAYMENT_METHODS.reduce(
-              (acc, x) => ({
-                ...acc,
-                [`paymentMethods_${x}`]: {
-                  $sum: `$paymentMethods_${x}`,
-                },
-              }),
-              {}
-            ),
-            ...RISK_LEVELS.reduce(
-              (acc, x) => ({
-                ...acc,
-                [`arsRiskLevel_${x}`]: {
-                  $sum: `$arsRiskLevel_${x}`,
-                },
-              }),
-              {}
-            ),
           },
-        },
-        {
-          $merge: {
-            into:
-              granularity === 'DAY'
-                ? aggregatedDailyCollectionName
-                : aggregatedMonthlyCollectionName,
-            whenMatched: 'merge',
+          {
+            $merge: {
+              into:
+                granularity === 'DAY'
+                  ? aggregatedDailyCollectionName
+                  : aggregatedMonthlyCollectionName,
+              whenMatched: 'merge',
+            },
           },
-        },
-      ]
+        ],
+        lastUpdatedAt
+      )
     }
 
     // Daily stats
@@ -425,6 +441,30 @@ export class TransactionStatsDashboardMetric {
       )
       .aggregate(getDerivedAggregationPipeline('MONTH', timeRange))
       .next()
+
+    await Promise.all([
+      cleanUpStaleData(
+        aggregatedHourlyCollectionName,
+        '_id',
+        lastUpdatedAt,
+        timeRange,
+        'HOUR'
+      ),
+      cleanUpStaleData(
+        aggregatedDailyCollectionName,
+        '_id',
+        lastUpdatedAt,
+        timeRange,
+        'DAY'
+      ),
+      cleanUpStaleData(
+        aggregatedMonthlyCollectionName,
+        '_id',
+        lastUpdatedAt,
+        timeRange,
+        'MONTH'
+      ),
+    ])
   }
 
   public static async get(
