@@ -35,7 +35,7 @@ import { CaseStatusChange } from '@/@types/openapi-internal/CaseStatusChange'
 import { Assignment } from '@/@types/openapi-internal/Assignment'
 import { InternalTransaction } from '@/@types/openapi-internal/InternalTransaction'
 import { CaseStatus } from '@/@types/openapi-internal/CaseStatus'
-import { isStatusInReview } from '@/utils/helpers'
+import { isStatusInReview, statusEscalated } from '@/utils/helpers'
 import { traceable } from '@/core/xray'
 
 export const FLAGRIGHT_SYSTEM_USER = 'Flagright System'
@@ -234,7 +234,7 @@ export class AlertsRepository {
       params.filterAssignmentsIds?.length
     ) {
       if (
-        params.filterAlertStatus?.includes('ESCALATED') ||
+        params.filterAlertStatus?.some((status) => statusEscalated(status)) ||
         params.filterAlertStatus?.some((status) => isStatusInReview(status))
       ) {
         conditions.push({

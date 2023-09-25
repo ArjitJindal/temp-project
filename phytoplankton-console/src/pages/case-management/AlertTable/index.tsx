@@ -53,6 +53,7 @@ import {
   getSingleCaseStatusPreviousForInReview,
   isInReviewCases,
   isOnHoldOrInProgress,
+  statusEscalated,
   statusInReview,
 } from '@/utils/case-utils';
 import { CASE_STATUSS } from '@/apis/models-custom/CaseStatus';
@@ -213,7 +214,7 @@ const mergedColumns = (
       defaultWidth: 300,
       enableResizing: false,
       value: (item) =>
-        item.alertStatus === 'ESCALATED' || statusInReview(item.alertStatus)
+        statusEscalated(item.alertStatus) || statusInReview(item.alertStatus)
           ? item.reviewAssignments
           : item.assignments,
       type: {

@@ -3,6 +3,7 @@ import { Assignment, CaseStatus, CaseStatusChange } from '@/apis';
 import CaseStatusTag from '@/components/library/CaseStatusTag';
 import Dropdown from '@/components/library/Dropdown';
 import { useAuth0User } from '@/utils/user-utils';
+import { statusEscalated } from '@/utils/case-utils';
 
 type Props = {
   caseStatus: CaseStatus;
@@ -22,13 +23,13 @@ export const CaseStatusWithDropDown = (props: Props) => {
   }, [statusChanges]);
 
   const ifCaseIsEscalated = useMemo(() => {
-    return caseStatus.includes('ESCALATED');
+    return statusEscalated(caseStatus);
   }, [caseStatus]);
 
   const currentUser = useAuth0User();
 
   const isCurrentUserAssignee = useMemo(() => {
-    const currAssignees = caseStatus.includes('ESCALATED') ? reviewAssignments : assignments;
+    const currAssignees = statusEscalated(caseStatus) ? reviewAssignments : assignments;
     return currAssignees?.find((assignment) => assignment.assigneeUserId === currentUser.userId);
   }, [caseStatus, assignments, currentUser, reviewAssignments]);
 

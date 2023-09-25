@@ -136,7 +136,7 @@ export default function QaTable(props: Props) {
     () =>
       filters.concat({
         key: 'qaAssignment',
-        title: 'QA Assigned to',
+        title: 'QA assigned to',
         showFilterByDefault: true,
         renderer: ({ params, setParams }) => (
           <AssignmentButton

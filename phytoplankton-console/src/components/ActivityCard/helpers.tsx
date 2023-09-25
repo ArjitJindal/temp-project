@@ -4,6 +4,7 @@ import { LogItemData } from './LogItem';
 import { Account, AuditLog, Case, CaseStatus } from '@/apis';
 import { DEFAULT_DATE_FORMAT, TIME_FORMAT_WITHOUT_SECONDS, dayjs } from '@/utils/dayjs';
 import { firstLetterUpper } from '@/utils/humanize';
+import { statusEscalated } from '@/utils/case-utils';
 
 export const useGetLogData = (
   logs: AuditLog[],
@@ -139,7 +140,7 @@ export const getCreateStatement = (
     }
     case 'STATUS_CHANGE': {
       const entityStatus = log?.newImage[`${entityType.toLowerCase()}Status`];
-      if (entityStatus.includes('ESCALATED')) {
+      if (statusEscalated(entityStatus)) {
         return handleEscalatedStatus(entityStatus, log, userName, type);
       } else if (entityStatus.includes('REOPENED')) {
         return handleRepoenedStatus(entityStatus, log, userName);

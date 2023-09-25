@@ -81,3 +81,7 @@ export function getAddress(
 export function isStatusInReview(status: CaseStatus | undefined): boolean {
   return status?.startsWith('IN_REVIEW') ?? false
 }
+
+export function statusEscalated(status: CaseStatus | undefined): boolean {
+  return status?.includes('ESCALATED') ?? false
+}

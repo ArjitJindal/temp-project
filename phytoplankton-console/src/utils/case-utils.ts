@@ -12,6 +12,12 @@ export const statusInReview = (
   return status?.startsWith('IN_REVIEW') ?? false;
 };
 
+export const statusEscalated = (
+  status: CaseStatus | undefined,
+): status is 'ESCALATED' | 'ESCALATED_IN_PROGRESS' | 'ESCALATED_ON_HOLD' => {
+  return status?.includes('ESCALATED') ?? false;
+};
+
 export const findLastStatusForInReview = (statusChanges: CaseStatusChange[]): CaseStatus => {
   const latestStatus = statusChanges
     .filter(
