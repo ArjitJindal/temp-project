@@ -181,6 +181,16 @@ export const USER_RISK_PARAMETERS: RiskLevelTable = [
     parameterType: 'VARIABLE',
     defaultRiskLevel: DEFAULT_RISK_LEVEL,
   },
+  {
+    parameter: 'occupation',
+    title: 'User occupation',
+    description: 'Risk based on consumer occupation',
+    entity: 'CONSUMER_USER',
+    dataType: 'STRING',
+    isDerived: false,
+    parameterType: 'VARIABLE',
+    defaultRiskLevel: DEFAULT_RISK_LEVEL,
+  },
 ];
 
 const timeIn24HourFormat = (hour: number | undefined) => {

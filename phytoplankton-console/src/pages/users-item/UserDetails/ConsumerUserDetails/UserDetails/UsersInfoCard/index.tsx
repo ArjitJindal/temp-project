@@ -10,6 +10,7 @@ import User3LineIcon from '@/components/ui/icons/Remix/user/user-3-line.react.sv
 import EarthLineIcon from '@/components/ui/icons/Remix/map/earth-line.react.svg';
 import Home4LineIcon from '@/components/ui/icons/Remix/buildings/home-4-line.react.svg';
 import DeleteBackLineIcon from '@/components/ui/icons/Remix/system/delete-back-line.react.svg';
+import SuitCaseLineIcon from '@/components/ui/icons/Remix/map/suitcase-line.react.svg';
 import StoreLineIcon from '@/components/ui/icons/Remix/buildings/store-3-line.react.svg';
 import * as Form from '@/components/ui/Form';
 import CountryDisplay from '@/components/ui/CountryDisplay';
@@ -56,6 +57,9 @@ export default function UsersInfoCard(props: Props) {
       <div className={s.inner}>
         <Form.Layout.Label icon={<StoreLineIcon />} title={'Acquisition channel'}>
           {user.acquisitionChannel ?? '-'}
+        </Form.Layout.Label>
+        <Form.Layout.Label icon={<SuitCaseLineIcon />} title={'Occupation'}>
+          {user?.occupation ?? '-'}
         </Form.Layout.Label>
       </div>
       <div className={s.inner}>

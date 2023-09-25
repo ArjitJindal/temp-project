@@ -6729,6 +6729,7 @@ components:
             - originUserSarFiled
             - destinationUserSarFiled
             - employmentStatus
+            - occupation
         isActive:
           type: boolean
         isDerived:

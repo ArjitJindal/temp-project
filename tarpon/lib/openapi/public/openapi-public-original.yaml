@@ -1281,6 +1281,8 @@ components:
           $ref: '#/components/schemas/KYCStatusDetails'
         employmentStatus:
           $ref: '#/components/schemas/EmploymentStatus'
+        occupation:
+          type: string
         legalDocuments:
           type: array
           description: User's legal identity documents - See Document Model for details
