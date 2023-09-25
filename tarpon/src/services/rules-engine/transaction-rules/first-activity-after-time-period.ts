@@ -1,4 +1,5 @@
 import { JSONSchemaType } from 'ajv'
+import { maxBy } from 'lodash'
 import { TransactionHistoricalFilters } from '../filters'
 import { RuleHitResult } from '../rule'
 import { TransactionRule } from './rule'
@@ -6,6 +7,7 @@ import dayjs from '@/utils/dayjs'
 
 export type FirstActivityAfterLongTimeRuleParameters = {
   dormancyPeriodDays: number
+  checkDirection?: 'sending' | 'all'
 }
 
 export default class FirstActivityAfterLongTimeRule extends TransactionRule<
@@ -20,45 +22,69 @@ export default class FirstActivityAfterLongTimeRule extends TransactionRule<
           type: 'integer',
           title: 'Dormancy period threshold (days)',
         },
+        checkDirection: {
+          type: 'string',
+          title: 'Transaction history scope options',
+          description:
+            "sending: only check the sender's past sending transactions; all: check the sender's past sending and receiving transactions",
+          enum: ['sending', 'all'],
+          nullable: true,
+        },
       },
       required: ['dormancyPeriodDays'],
     }
   }
 
   public async computeRule() {
+    const { dormancyPeriodDays } = this.parameters
+    const checkDirection = this.parameters.checkDirection ?? 'all'
     if (!this.senderUser) {
       return
     }
 
-    const { dormancyPeriodDays } = this.parameters
-
-    const lastSendingTransaction =
-      this.senderUser?.userId &&
-      (
-        await this.transactionRepository.getLastNUserSendingTransactions(
-          this.senderUser?.userId,
-          1,
-          {
-            transactionStates: this.filters.transactionStatesHistorical,
-            transactionTypes: this.filters.transactionTypesHistorical,
-            transactionAmountRange:
-              this.filters.transactionAmountRangeHistorical,
-            originPaymentMethods: this.filters.paymentMethodsHistorical,
-            originCountries: this.filters.transactionCountriesHistorical,
-          },
-          ['timestamp']
-        )
-      )[0]
+    const filters = {
+      transactionStates: this.filters.transactionStatesHistorical,
+      transactionTypes: this.filters.transactionTypesHistorical,
+      transactionAmountRange: this.filters.transactionAmountRangeHistorical,
+      originPaymentMethods: this.filters.paymentMethodsHistorical,
+      originCountries: this.filters.transactionCountriesHistorical,
+    }
+    const lastSendingTransaction = (
+      await this.transactionRepository.getLastNUserSendingTransactions(
+        this.senderUser.userId,
+        1,
+        filters,
+        ['timestamp']
+      )
+    )[0]
+    const lastReceivingTransaction =
+      checkDirection !== 'sending'
+        ? (
+            await this.transactionRepository.getLastNUserReceivingTransactions(
+              this.senderUser.userId,
+              1,
+              filters,
+              ['timestamp']
+            )
+          )[0]
+        : undefined
+    const latestTransaction = maxBy(
+      [lastSendingTransaction, lastReceivingTransaction].filter(Boolean),
+      (t) => t?.timestamp
+    )
 
     const hitResult: RuleHitResult = []
-    if (lastSendingTransaction) {
+    if (latestTransaction) {
       if (
         dayjs(this.transaction.timestamp).diff(
-          lastSendingTransaction.timestamp,
+          latestTransaction.timestamp,
           'day'
         ) > dormancyPeriodDays
       ) {
-        hitResult.push({ direction: 'ORIGIN', vars: {} })
+        hitResult.push({
+          direction: 'ORIGIN',
+          vars: {},
+        })
       }
     }
     return hitResult

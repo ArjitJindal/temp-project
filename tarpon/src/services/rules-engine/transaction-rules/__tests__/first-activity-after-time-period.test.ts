@@ -11,7 +11,6 @@ import {
   ruleVariantsTest,
 } from '@/test-utils/rule-test-utils'
 import { dynamoDbSetupHook } from '@/test-utils/dynamodb-test-utils'
-import { getTestUser, setUpUsersHooks } from '@/test-utils/user-test-utils'
 
 dynamoDbSetupHook()
 
@@ -24,21 +23,10 @@ ruleVariantsTest(false, () => {
         ruleImplementationName: 'first-activity-after-time-period',
         defaultParameters: {
           dormancyPeriodDays: 365,
+          checkDirection: 'sending',
         } as FirstActivityAfterLongTimeRuleParameters,
         defaultAction: 'FLAG',
       },
-    ])
-    setUpUsersHooks(TEST_TENANT_ID, [
-      getTestUser({
-        userId: '1-1',
-        userDetails: {
-          name: {
-            firstName: '1',
-          },
-          countryOfResidence: 'IN',
-          countryOfNationality: 'TR',
-        },
-      }),
     ])
 
     testRuleDescriptionFormatting(
@@ -68,24 +56,13 @@ ruleVariantsTest(false, () => {
 
   describe('Core logic', () => {
     const TEST_TENANT_ID = getTestTenantId()
-    setUpUsersHooks(TEST_TENANT_ID, [
-      getTestUser({
-        userId: '1-1',
-        userDetails: {
-          name: {
-            firstName: '1',
-          },
-          countryOfResidence: 'IN',
-          countryOfNationality: 'TR',
-        },
-      }),
-    ])
     setUpRulesHooks(TEST_TENANT_ID, [
       {
         type: 'TRANSACTION',
         ruleImplementationName: 'first-activity-after-time-period',
         defaultParameters: {
           dormancyPeriodDays: 365,
+          checkDirection: 'sending',
         } as FirstActivityAfterLongTimeRuleParameters,
         defaultAction: 'FLAG',
       },
@@ -158,5 +135,92 @@ ruleVariantsTest(false, () => {
         expectedHits
       )
     })
+  })
+})
+
+describe('Check sending', () => {
+  const TEST_TENANT_ID = getTestTenantId()
+  setUpRulesHooks(TEST_TENANT_ID, [
+    {
+      type: 'TRANSACTION',
+      ruleImplementationName: 'first-activity-after-time-period',
+      defaultParameters: {
+        dormancyPeriodDays: 365,
+        checkDirection: 'sending',
+      } as FirstActivityAfterLongTimeRuleParameters,
+      defaultAction: 'FLAG',
+    },
+  ])
+
+  describe.each<TransactionRuleTestCase>([
+    {
+      name: 'only check sending transactions',
+      transactions: [
+        getTestTransaction({
+          originUserId: '2-1',
+          destinationUserId: '2-2',
+          timestamp: dayjs('2021-01-01T00:00:00.000Z').valueOf(),
+        }),
+        getTestTransaction({
+          originUserId: '2-3',
+          destinationUserId: '2-1',
+          timestamp: dayjs('2022-02-01T00:00:00.000Z').valueOf(),
+        }),
+        getTestTransaction({
+          originUserId: '2-1',
+          destinationUserId: '2-2',
+          timestamp: dayjs('2022-02-01T00:00:00.000Z').valueOf(),
+        }),
+      ],
+      expectedHits: [false, false, true],
+    },
+  ])('', ({ name, transactions, expectedHits }) => {
+    createTransactionRuleTestCase(
+      name,
+      TEST_TENANT_ID,
+      transactions,
+      expectedHits
+    )
+  })
+})
+
+describe('Check both sending and receiving', () => {
+  const TEST_TENANT_ID = getTestTenantId()
+  setUpRulesHooks(TEST_TENANT_ID, [
+    {
+      type: 'TRANSACTION',
+      ruleImplementationName: 'first-activity-after-time-period',
+      defaultParameters: {
+        dormancyPeriodDays: 365,
+        checkDirection: 'all',
+      } as FirstActivityAfterLongTimeRuleParameters,
+      defaultAction: 'FLAG',
+    },
+  ])
+
+  describe.each<TransactionRuleTestCase>([
+    {
+      name: 'check both sending and receiving transactions',
+      transactions: [
+        getTestTransaction({
+          originUserId: '2',
+          destinationUserId: '1',
+          timestamp: dayjs('2021-01-01T00:00:00.000Z').valueOf(),
+        }),
+        getTestTransaction({
+          originUserId: '1',
+          destinationUserId: '3',
+          timestamp: dayjs('2022-02-01T00:00:00.000Z').valueOf(),
+        }),
+      ],
+      expectedHits: [false, true],
+    },
+  ])('', ({ name, transactions, expectedHits }) => {
+    createTransactionRuleTestCase(
+      name,
+      TEST_TENANT_ID,
+      transactions,
+      expectedHits
+    )
   })
 })

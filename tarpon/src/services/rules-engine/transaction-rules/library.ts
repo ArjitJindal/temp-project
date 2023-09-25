@@ -167,6 +167,7 @@ const _RULES_LIBRARY: Array<
   () => {
     const defaultParameters: FirstActivityAfterLongTimeRuleParameters = {
       dormancyPeriodDays: 360,
+      checkDirection: 'all',
     }
     return {
       id: 'R-5',
