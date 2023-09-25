@@ -193,6 +193,7 @@ export function getMongoDbIndexDefinitions(tenantId: string): {
             'arsScore.riskLevel',
             'caseStatus',
             'createdAt',
+            'updatedAt',
             'destinationAmountDetails.country',
             'destinationAmountDetails.transactionAmount',
             'destinationAmountDetails.transactionCurrency',
