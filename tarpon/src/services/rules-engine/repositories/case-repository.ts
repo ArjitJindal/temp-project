@@ -39,7 +39,7 @@ import { hasFeature } from '@/core/utils/context'
 import { COUNT_QUERY_LIMIT, OptionalPagination } from '@/utils/pagination'
 import { PRIORITYS } from '@/@types/openapi-internal-custom/Priority'
 import { Assignment } from '@/@types/openapi-internal/Assignment'
-import { isStatusInReview, statusEscalated } from '@/utils/helpers'
+import { shouldUseReviewAssignments } from '@/utils/helpers'
 import { traceable } from '@/core/xray'
 import { CaseType } from '@/@types/openapi-internal/CaseType'
 import { InternalTransaction } from '@/@types/openapi-internal/InternalTransaction'
@@ -233,25 +233,38 @@ export class CaseRepository {
       params.filterAssignmentsIds.length > 0 &&
       assignments
     ) {
+      const assignmentConditions: Filter<Case>[] = []
+
       if (
-        params.filterCaseStatus?.some((status) => statusEscalated(status)) ||
-        params.filterCaseStatus?.some((status) => isStatusInReview(status))
+        params.filterCaseStatus?.some((status) =>
+          shouldUseReviewAssignments(status)
+        )
       ) {
-        conditions.push({
+        assignmentConditions.push({
           reviewAssignments: {
             $elemMatch: {
               assigneeUserId: { $in: params.filterAssignmentsIds },
             },
           },
         })
-      } else {
-        conditions.push({
+      }
+
+      if (
+        params.filterCaseStatus?.some(
+          (status) => !shouldUseReviewAssignments(status)
+        )
+      ) {
+        assignmentConditions.push({
           assignments: {
             $elemMatch: {
               assigneeUserId: { $in: params.filterAssignmentsIds },
             },
           },
         })
+      }
+
+      if (assignmentConditions?.length) {
+        conditions.push({ $or: assignmentConditions })
       }
     }
 

@@ -35,7 +35,7 @@ import { CaseStatusChange } from '@/@types/openapi-internal/CaseStatusChange'
 import { Assignment } from '@/@types/openapi-internal/Assignment'
 import { InternalTransaction } from '@/@types/openapi-internal/InternalTransaction'
 import { CaseStatus } from '@/@types/openapi-internal/CaseStatus'
-import { isStatusInReview, statusEscalated } from '@/utils/helpers'
+import { shouldUseReviewAssignments } from '@/utils/helpers'
 import { traceable } from '@/core/xray'
 
 export const FLAGRIGHT_SYSTEM_USER = 'Flagright System'
@@ -233,24 +233,39 @@ export class AlertsRepository {
       params.filterAssignmentsIds != null &&
       params.filterAssignmentsIds?.length
     ) {
+      const assignmentsConditions: Filter<AlertListResponseItem>[] = []
+
       if (
-        params.filterAlertStatus?.some((status) => statusEscalated(status)) ||
-        params.filterAlertStatus?.some((status) => isStatusInReview(status))
+        params.filterAlertStatus?.some((status) =>
+          shouldUseReviewAssignments(status)
+        )
       ) {
-        conditions.push({
+        assignmentsConditions.push({
           'alerts.reviewAssignments': {
             $elemMatch: {
               assigneeUserId: { $in: params.filterAssignmentsIds },
             },
           },
         })
-      } else {
-        conditions.push({
+      }
+
+      if (
+        params.filterAlertStatus?.some(
+          (status) => !shouldUseReviewAssignments(status)
+        )
+      ) {
+        assignmentsConditions.push({
           'alerts.assignments': {
             $elemMatch: {
               assigneeUserId: { $in: params.filterAssignmentsIds },
             },
           },
+        })
+      }
+
+      if (assignmentsConditions?.length) {
+        conditions.push({
+          $or: assignmentsConditions,
         })
       }
     }

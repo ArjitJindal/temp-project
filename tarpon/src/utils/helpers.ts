@@ -85,3 +85,9 @@ export function isStatusInReview(status: CaseStatus | undefined): boolean {
 export function statusEscalated(status: CaseStatus | undefined): boolean {
   return status?.includes('ESCALATED') ?? false
 }
+
+export function shouldUseReviewAssignments(
+  status: CaseStatus | undefined
+): boolean {
+  return statusEscalated(status) || isStatusInReview(status)
+}
