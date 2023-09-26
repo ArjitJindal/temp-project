@@ -352,31 +352,17 @@ export default class HighUnsuccessfullStateRateRule extends TransactionAggregati
     direction: 'origin' | 'destination',
     isTransactionHistoricalFiltered: boolean
   ) {
-    const {
-      senderSendingTransactions,
-      senderReceivingTransactions,
-      receiverSendingTransactions,
-      receiverReceivingTransactions,
-      senderSendingTransactionsFiltered,
-      senderReceivingTransactionsFiltered,
-      receiverSendingTransactionsFiltered,
-      receiverReceivingTransactionsFiltered,
-    } = await this.getRawTransactionsData()
-
     if (direction === 'origin') {
+      const {
+        senderSendingTransactions,
+        senderReceivingTransactions,
+        senderSendingTransactionsFiltered,
+        senderReceivingTransactionsFiltered,
+      } = await this.getRawTransactionsData(this.parameters.checkSender, 'none')
       if (isTransactionHistoricalFiltered) {
         senderSendingTransactionsFiltered.push(this.transaction)
       }
       senderSendingTransactions.push(this.transaction)
-    }
-    if (direction === 'destination') {
-      if (isTransactionHistoricalFiltered) {
-        receiverReceivingTransactionsFiltered.push(this.transaction)
-      }
-      receiverReceivingTransactions.push(this.transaction)
-    }
-
-    if (direction === 'origin') {
       await this.saveRebuiltRuleAggregations(
         direction,
         await this.getTimeAggregatedResult(
@@ -387,6 +373,19 @@ export default class HighUnsuccessfullStateRateRule extends TransactionAggregati
         )
       )
     } else {
+      const {
+        receiverSendingTransactions,
+        receiverReceivingTransactions,
+        receiverSendingTransactionsFiltered,
+        receiverReceivingTransactionsFiltered,
+      } = await this.getRawTransactionsData(
+        'none',
+        this.parameters.checkReceiver
+      )
+      if (isTransactionHistoricalFiltered) {
+        receiverReceivingTransactionsFiltered.push(this.transaction)
+      }
+      receiverReceivingTransactions.push(this.transaction)
       await this.saveRebuiltRuleAggregations(
         direction,
         await this.getTimeAggregatedResult(

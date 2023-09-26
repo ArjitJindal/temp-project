@@ -12,6 +12,8 @@ import { RuleInstance } from '@/@types/openapi-internal/RuleInstance'
 import { FLAGRIGHT_TENANT_ID } from '@/core/constants'
 import { RuleInstanceRepository } from '@/services/rules-engine/repositories/rule-instance-repository'
 import { getDynamoDbClient } from '@/utils/dynamodb'
+import { TenantRepository } from '@/services/tenants/repositories/tenant-repository'
+import { FEATURES } from '@/@types/openapi-internal-custom/Feature'
 
 process.env.ENV = 'local'
 
@@ -153,6 +155,13 @@ async function main() {
 
   execSync('npm run recreate-local-ddb --table=Tarpon >/dev/null 2>&1')
   console.info('Recreated Tarpon DynamoDB table')
+
+  const tenantRepo = new TenantRepository('flagright', {
+    dynamoDb: getDynamoDbClient(),
+  })
+  await tenantRepo.createOrUpdateTenantSettings({
+    features: FEATURES,
+  })
 
   if (ruleInstanceIds.length > 0) {
     execSync('npm run recreate-local-ddb --table=TarponRule >/dev/null 2>&1')
