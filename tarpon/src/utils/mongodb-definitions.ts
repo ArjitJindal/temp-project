@@ -9,6 +9,10 @@ export const NARRATIVE_TEMPLATE_COLLECTION = (tenantId: string) => {
   return `${tenantId}-narrative-templates`
 }
 
+export const API_REQUEST_LOG = (tenantId: string) => {
+  return `${tenantId}-api-request-log`
+}
+
 export const CASES_COLLECTION = (tenandId: string) => {
   return `${tenandId}-cases`
 }
