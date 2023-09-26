@@ -731,7 +731,7 @@ export class RulesEngineService {
             ? await this.handleTransactionRuleAggregation(
                 ruleClassInstance,
                 isTransactionHistoricalFiltered,
-                options.transaction.transactionId,
+                options.transaction,
                 ruleInstance.id!
               )
             : []
@@ -748,7 +748,7 @@ export class RulesEngineService {
   private async handleTransactionRuleAggregation(
     ruleClassInstance: TransactionAggregationRule<any, any>,
     isTransactionHistoricalFiltered: boolean,
-    transactionId: string,
+    transaction: Transaction,
     ruleInstanceId: string
   ): Promise<TransactionAggregationTaskEntry[]> {
     if (!ruleClassInstance.shouldUseAggregation()) {
@@ -768,7 +768,7 @@ export class RulesEngineService {
             userKeyId,
             payload: {
               direction,
-              transactionId,
+              transactionId: transaction.transactionId,
               ruleInstanceId,
               tenantId: this.tenantId,
               isTransactionHistoricalFiltered,

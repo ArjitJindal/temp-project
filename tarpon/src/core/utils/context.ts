@@ -7,11 +7,15 @@ import {
   Context as LambdaContext,
 } from 'aws-lambda'
 
-import { MetricDatum } from '@aws-sdk/client-cloudwatch'
+import {
+  CloudWatchClient,
+  MetricDatum,
+  PutMetricDataCommand,
+} from '@aws-sdk/client-cloudwatch'
 import { DynamoDBClient } from '@aws-sdk/client-dynamodb'
 import { Credentials } from '@aws-sdk/client-sts'
-import { isNil, omitBy } from 'lodash'
-import { winstonLogger } from '../logger'
+import { cloneDeep, isNil, omitBy } from 'lodash'
+import { logger, winstonLogger } from '../logger'
 import { Feature } from '@/@types/openapi-internal/Feature'
 import { getDynamoDbClient, getDynamoDbClientByEvent } from '@/utils/dynamodb'
 import { TenantRepository } from '@/services/tenants/repositories/tenant-repository'
@@ -203,6 +207,42 @@ export function publishMetric(
     metricDatum,
     ...(context.metrics[metric.namespace] || []),
   ]
+}
+
+export async function publishContextMetrics() {
+  // Publish metrics for each namespace to cloudwatch
+  try {
+    const client = new CloudWatchClient({
+      region: process.env.AWS_REGION,
+    })
+    const metrics = getContext()?.metrics
+    if (metrics) {
+      await Promise.all(
+        Object.keys(metrics).map((ns) => {
+          return client.send(
+            new PutMetricDataCommand({
+              Namespace: ns,
+              MetricData: metrics[ns],
+            })
+          )
+        })
+      )
+    }
+  } catch (err) {
+    logger.warn(`Error sending metrics`, err)
+  }
+}
+
+export async function withContext<R>(
+  callback: () => Promise<R>,
+  context?: Context
+): Promise<R> {
+  const ctx = context ?? getContext() ?? {}
+  return getContextStorage().run(cloneDeep(ctx), async () => {
+    const response = await callback()
+    await publishContextMetrics()
+    return response
+  })
 }
 
 export function getContextStorage(): AsyncLocalStorage<Context> {

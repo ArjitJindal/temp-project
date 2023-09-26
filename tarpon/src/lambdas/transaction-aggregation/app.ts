@@ -1,6 +1,7 @@
 import { SQSEvent } from 'aws-lambda'
-import { backOff } from 'exponential-backoff'
+import { cloneDeep } from 'lodash'
 import { BadRequest } from 'http-errors'
+import { backOff } from 'exponential-backoff'
 import { lambdaConsumer } from '@/core/middlewares/lambda-consumer-middlewares'
 import { TransactionAggregationTask } from '@/services/rules-engine'
 import { RuleRepository } from '@/services/rules-engine/repositories/rule-repository'
@@ -10,21 +11,21 @@ import {
   TRANSACTION_RULES,
   TransactionRuleBase,
 } from '@/services/rules-engine/transaction-rules'
-import { DynamoDbTransactionRepository } from '@/services/rules-engine/repositories/dynamodb-transaction-repository'
 import { UserRepository } from '@/services/users/repositories/user-repository'
 import { RiskRepository } from '@/services/risk-scoring/repositories/risk-repository'
 import { DEFAULT_RISK_LEVEL } from '@/services/risk-scoring/utils'
 import {
   getContext,
-  getContextStorage,
   hasFeature,
   initializeTenantContext,
   updateLogMetadata,
+  withContext,
 } from '@/core/utils/context'
 import { TransactionAggregationRule } from '@/services/rules-engine/transaction-rules/aggregation-rule'
 import { User } from '@/@types/openapi-internal/User'
 import { Business } from '@/@types/openapi-internal/Business'
 import { logger } from '@/core/logger'
+import { DynamoDbTransactionRepository } from '@/services/rules-engine/repositories/dynamodb-transaction-repository'
 
 export async function handleTransactionAggregationTask(
   task: TransactionAggregationTask
@@ -39,7 +40,6 @@ export async function handleTransactionAggregationTask(
   const riskRepository = new RiskRepository(task.tenantId, {
     dynamoDb,
   })
-
   const transactionRepository = new DynamoDbTransactionRepository(
     task.tenantId,
     dynamoDb
@@ -128,7 +128,11 @@ export async function handleTransactionAggregationTask(
 
   const ruleInstanceClass = new (RuleClass as typeof TransactionRuleBase)(
     task.tenantId,
-    { transaction, receiverUser: destinationUser, senderUser: originUser },
+    {
+      transaction,
+      receiverUser: destinationUser,
+      senderUser: originUser,
+    },
     { parameters, filters: ruleInstance.filters },
     { ruleInstance, rule },
     mode,
@@ -161,10 +165,16 @@ export const transactionAggregationHandler = lambdaConsumer()(
     await Promise.all(
       event.Records.map(async (record) => {
         const task = JSON.parse(record.body) as TransactionAggregationTask
-        await getContextStorage().run(getContext() || {}, async () => {
+        const context = cloneDeep(getContext() || {})
+        context.tenantId = task.tenantId
+        context.metricDimensions = {
+          ...context.metricDimensions,
+          ruleInstanceId: task.ruleInstanceId,
+        }
+        await withContext(async () => {
           await initializeTenantContext(task.tenantId)
           await handleTransactionAggregationTask(task)
-        })
+        }, context)
       })
     )
   }
