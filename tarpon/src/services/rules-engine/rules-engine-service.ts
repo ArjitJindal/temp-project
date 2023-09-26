@@ -758,29 +758,36 @@ export class RulesEngineService {
     const directions = ['origin', 'destination'] as const
     const transactionAggregationTasks: TransactionAggregationTaskEntry[] = []
     for (const direction of directions) {
-      const userKeyId = ruleClassInstance.getUserKeyId(direction)
-      if (userKeyId) {
-        if (
-          hasFeature('RULES_ENGINE_V2') &&
-          !(await ruleClassInstance.isRebuilt(direction))
-        ) {
-          transactionAggregationTasks.push({
-            userKeyId,
-            payload: {
-              direction,
-              transactionId: transaction.transactionId,
-              ruleInstanceId,
-              tenantId: this.tenantId,
-              isTransactionHistoricalFiltered,
-            },
-          })
-        } else {
-          await background(
-            ruleClassInstance.updateAggregation(
-              direction,
-              isTransactionHistoricalFiltered
+      const shouldUpdateAggregation =
+        ruleClassInstance.shouldUpdateUserAggregation(
+          direction,
+          isTransactionHistoricalFiltered
+        )
+      if (shouldUpdateAggregation) {
+        const userKeyId = ruleClassInstance.getUserKeyId(direction)
+        if (userKeyId) {
+          if (
+            hasFeature('RULES_ENGINE_V2') &&
+            !(await ruleClassInstance.isRebuilt(direction))
+          ) {
+            transactionAggregationTasks.push({
+              userKeyId,
+              payload: {
+                direction,
+                transactionId: transaction.transactionId,
+                ruleInstanceId,
+                tenantId: this.tenantId,
+                isTransactionHistoricalFiltered,
+              },
+            })
+          } else {
+            await background(
+              ruleClassInstance.updateAggregation(
+                direction,
+                isTransactionHistoricalFiltered
+              )
             )
-          )
+          }
         }
       }
     }

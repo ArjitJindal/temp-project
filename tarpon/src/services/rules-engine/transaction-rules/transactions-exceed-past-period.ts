@@ -78,12 +78,8 @@ export default class TransactionsExceedPastPeriodRule extends TransactionAggrega
 
   override async getUpdatedTargetAggregation(
     _direction: 'origin' | 'destination',
-    aggregation: AggregationData | undefined,
-    isTransactionFiltered: boolean
+    aggregation: AggregationData | undefined
   ): Promise<AggregationData | null> {
-    if (!isTransactionFiltered) {
-      return null
-    }
     return {
       count: (aggregation?.count || 0) + 1,
     }
@@ -255,14 +251,16 @@ export default class TransactionsExceedPastPeriodRule extends TransactionAggrega
     }
   }
 
-  public async rebuildUserAggregation(
-    direction: 'origin' | 'destination',
+  public shouldUpdateUserAggregation(
+    _direction: 'origin' | 'destination',
     isTransactionFiltered: boolean
-  ): Promise<void> {
-    if (!isTransactionFiltered) {
-      return
-    }
+  ): boolean {
+    return isTransactionFiltered
+  }
 
+  public async rebuildUserAggregation(
+    direction: 'origin' | 'destination'
+  ): Promise<void> {
     const { transactionsPeriod2 } = await this.getRawTransactionsData(direction)
 
     transactionsPeriod2.push(this.transaction)

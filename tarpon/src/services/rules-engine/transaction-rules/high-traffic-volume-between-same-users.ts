@@ -244,14 +244,16 @@ export default class HighTrafficVolumeBetweenSameUsers extends TransactionAggreg
     )
   }
 
-  public async rebuildUserAggregation(
+  public shouldUpdateUserAggregation(
     direction: 'origin' | 'destination',
     isTransactionFiltered: boolean
-  ): Promise<void> {
-    if (!isTransactionFiltered || direction === 'destination') {
-      return
-    }
+  ): boolean {
+    return isTransactionFiltered && direction === 'origin'
+  }
 
+  public async rebuildUserAggregation(
+    direction: 'origin' | 'destination'
+  ): Promise<void> {
     const transactions = await this.getRawTransactionsData()
 
     transactions.push({
@@ -267,10 +269,7 @@ export default class HighTrafficVolumeBetweenSameUsers extends TransactionAggreg
     await this.saveRebuiltRuleAggregations(direction, data)
 
     if (Number.isFinite(this.parameters.transactionsLimit)) {
-      await this.getDependencyRule().rebuildUserAggregation(
-        direction,
-        isTransactionFiltered
-      )
+      await this.getDependencyRule().rebuildUserAggregation(direction)
     }
   }
 
@@ -341,13 +340,9 @@ export default class HighTrafficVolumeBetweenSameUsers extends TransactionAggreg
   }
 
   override async getUpdatedTargetAggregation(
-    direction: 'origin' | 'destination',
-    targetAggregationData: AggregationData | undefined,
-    isTransactionFiltered: boolean
+    _direction: 'origin' | 'destination',
+    targetAggregationData: AggregationData | undefined
   ): Promise<AggregationData | null> {
-    if (!isTransactionFiltered || direction === 'destination') {
-      return null
-    }
     const receiverKeyId = getReceiverKeyId(this.tenantId, this.transaction, {
       matchPaymentDetails: this.parameters.destinationMatchPaymentMethodDetails,
     })

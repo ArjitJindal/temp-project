@@ -157,13 +157,14 @@ export default class HighTrafficBetweenSameParties extends TransactionAggregatio
     }
   }
 
-  public async rebuildUserAggregation(
+  public shouldUpdateUserAggregation(
     direction: 'origin' | 'destination',
-    isTransactionFiltered: boolean
-  ) {
-    if (!isTransactionFiltered || direction === 'destination') {
-      return
-    }
+    isTransactionHistoricalFiltered: boolean
+  ): boolean {
+    return isTransactionHistoricalFiltered && direction === 'origin'
+  }
+
+  public async rebuildUserAggregation(direction: 'origin' | 'destination') {
     const transactions = await this.getRawTransactionsData()
 
     transactions.push({
@@ -199,13 +200,9 @@ export default class HighTrafficBetweenSameParties extends TransactionAggregatio
   }
 
   override async getUpdatedTargetAggregation(
-    direction: 'origin' | 'destination',
-    targetAggregationData: AggregationData | undefined,
-    isTransactionFiltered: boolean
+    _direction: 'origin' | 'destination',
+    targetAggregationData: AggregationData | undefined
   ): Promise<AggregationData | null> {
-    if (!isTransactionFiltered || direction === 'destination') {
-      return null
-    }
     const receiverKeyId = getReceiverKeyId(this.tenantId, this.transaction, {
       matchPaymentDetails: this.parameters.destinationMatchPaymentMethodDetails,
     })

@@ -126,7 +126,7 @@ export async function handleTransactionAggregationTask(
       ? ruleInstance.riskLevelParameters[senderUserRiskLevel]
       : ruleInstance.parameters
 
-  const ruleInstanceClass = new (RuleClass as typeof TransactionRuleBase)(
+  const ruleClassInstance = new (RuleClass as typeof TransactionRuleBase)(
     task.tenantId,
     {
       transaction,
@@ -139,24 +139,33 @@ export async function handleTransactionAggregationTask(
     dynamoDb,
     undefined
   )
+  if (!(ruleClassInstance instanceof TransactionAggregationRule)) {
+    return
+  }
 
-  if (ruleInstanceClass instanceof TransactionAggregationRule) {
-    const isRebuilt = await ruleInstanceClass.isRebuilt(task.direction)
-    if (!isRebuilt) {
-      logger.info('Rebuilding aggregation...')
-      await ruleInstanceClass.rebuildUserAggregation(
-        task.direction,
-        task.isTransactionHistoricalFiltered
-      )
-      logger.info('Rebuilt aggregation')
-    } else {
-      logger.info('Updating aggregation...')
-      await ruleInstanceClass.updateAggregation(
-        task.direction,
-        task.isTransactionHistoricalFiltered
-      )
-      logger.info('Updated aggregation')
-    }
+  const shouldUpdateAggregation = ruleClassInstance.shouldUpdateUserAggregation(
+    task.direction,
+    task.isTransactionHistoricalFiltered
+  )
+  if (!shouldUpdateAggregation) {
+    return
+  }
+
+  const isRebuilt = await ruleClassInstance.isRebuilt(task.direction)
+  if (!isRebuilt) {
+    logger.info('Rebuilding aggregation...')
+    await ruleClassInstance.rebuildUserAggregation(
+      task.direction,
+      task.isTransactionHistoricalFiltered
+    )
+    logger.info('Rebuilt aggregation')
+  } else {
+    logger.info('Updating aggregation...')
+    await ruleClassInstance.updateAggregation(
+      task.direction,
+      task.isTransactionHistoricalFiltered
+    )
+    logger.info('Updated aggregation')
   }
 }
 

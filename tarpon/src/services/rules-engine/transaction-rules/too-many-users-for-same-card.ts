@@ -94,14 +94,21 @@ export default class TooManyUsersForSameCardRule extends TransactionAggregationR
     return sendingTransactions
   }
 
-  public async rebuildUserAggregation(
+  public shouldUpdateUserAggregation(
     direction: 'origin' | 'destination',
-    isTransactionFiltered: boolean
-  ): Promise<void> {
-    if (direction !== 'origin' || !isTransactionFiltered) {
-      return
-    }
+    isTransactionHistoricalFiltered: boolean
+  ): boolean {
+    return Boolean(
+      direction === 'origin' &&
+        isTransactionHistoricalFiltered &&
+        this.transaction.originUserId &&
+        this.transaction.originPaymentDetails?.method === 'CARD'
+    )
+  }
 
+  public async rebuildUserAggregation(
+    direction: 'origin' | 'destination'
+  ): Promise<void> {
     const sendingTransactions = await this.getRawTransactionsData()
 
     sendingTransactions.push(this.transaction)
@@ -181,24 +188,14 @@ export default class TooManyUsersForSameCardRule extends TransactionAggregationR
   }
 
   override async getUpdatedTargetAggregation(
-    direction: 'origin' | 'destination',
-    targetAggregationData: AggregationData | undefined,
-    isTransactionFiltered: boolean
+    _direction: 'origin' | 'destination',
+    targetAggregationData: AggregationData | undefined
   ): Promise<AggregationData | null> {
-    if (
-      !isTransactionFiltered ||
-      direction === 'destination' ||
-      !this.transaction.originUserId ||
-      this.transaction.originPaymentDetails?.method !== 'CARD'
-    ) {
-      return null
-    }
-
     return {
       userIds: Array.from(
         new Set(
           (targetAggregationData?.userIds ?? []).concat(
-            this.transaction.originUserId
+            this.transaction.originUserId!
           )
         )
       ),

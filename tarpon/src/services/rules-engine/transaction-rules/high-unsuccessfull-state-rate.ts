@@ -341,14 +341,17 @@ export default class HighUnsuccessfullStateRateRule extends TransactionAggregati
     }
   }
 
+  public shouldUpdateUserAggregation(
+    _direction: 'origin' | 'destination',
+    _isTransactionHistoricalFiltered: boolean
+  ): boolean {
+    return true
+  }
+
   public async rebuildUserAggregation(
     direction: 'origin' | 'destination',
-    isTransactionFiltered: boolean
+    isTransactionHistoricalFiltered: boolean
   ) {
-    if (!isTransactionFiltered) {
-      return
-    }
-
     const {
       senderSendingTransactions,
       senderReceivingTransactions,
@@ -361,9 +364,15 @@ export default class HighUnsuccessfullStateRateRule extends TransactionAggregati
     } = await this.getRawTransactionsData()
 
     if (direction === 'origin') {
+      if (isTransactionHistoricalFiltered) {
+        senderSendingTransactionsFiltered.push(this.transaction)
+      }
       senderSendingTransactions.push(this.transaction)
     }
     if (direction === 'destination') {
+      if (isTransactionHistoricalFiltered) {
+        receiverReceivingTransactionsFiltered.push(this.transaction)
+      }
       receiverReceivingTransactions.push(this.transaction)
     }
 
@@ -427,13 +436,13 @@ export default class HighUnsuccessfullStateRateRule extends TransactionAggregati
   override async getUpdatedTargetAggregation(
     direction: 'origin' | 'destination',
     targetAggregationData: AggregationData | undefined,
-    isTransactionFiltered: boolean
+    isTransactionHistoricalFiltered: boolean
   ): Promise<AggregationData> {
     const data = {
       ...targetAggregationData,
     }
     if (
-      isTransactionFiltered &&
+      isTransactionHistoricalFiltered &&
       this.transaction.transactionState &&
       this.parameters.transactionStates.includes(
         this.transaction.transactionState

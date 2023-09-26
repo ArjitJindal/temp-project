@@ -156,20 +156,21 @@ export default class SenderLocationChangesFrequencyRule extends TransactionAggre
     }
   }
 
-  public async rebuildUserAggregation(
+  public shouldUpdateUserAggregation(
     direction: 'origin' | 'destination',
-    isTransactionFiltered: boolean
-  ): Promise<void> {
+    isTransactionHistoricalFiltered: boolean
+  ): boolean {
     const ipAddress = this.transaction.originDeviceData?.ipAddress
-    if (
-      !isTransactionFiltered ||
-      direction === 'destination' ||
-      !this.transaction.originUserId ||
-      !ipAddress
-    ) {
-      return
-    }
 
+    return Boolean(
+      isTransactionHistoricalFiltered &&
+        direction === 'origin' &&
+        this.transaction.originUserId &&
+        ipAddress
+    )
+  }
+
+  public async rebuildUserAggregation(): Promise<void> {
     const transactions = await this.getRawTransactionsData()
 
     transactions.push(this.transaction)
@@ -204,24 +205,16 @@ export default class SenderLocationChangesFrequencyRule extends TransactionAggre
   }
 
   override async getUpdatedTargetAggregation(
-    direction: 'origin' | 'destination',
-    targetAggregationData: AggregationData | undefined,
-    isTransactionFiltered: boolean
+    _direction: 'origin' | 'destination',
+    targetAggregationData: AggregationData | undefined
   ): Promise<AggregationData | null> {
-    const ipAddress = this.transaction.originDeviceData?.ipAddress
-
-    if (
-      !isTransactionFiltered ||
-      direction === 'destination' ||
-      !this.transaction.originUserId ||
-      !ipAddress
-    ) {
-      return null
-    }
-
     return {
       ipAddresses: Array.from(
-        new Set((targetAggregationData?.ipAddresses ?? []).concat(ipAddress))
+        new Set(
+          (targetAggregationData?.ipAddresses ?? []).concat(
+            this.transaction?.originDeviceData?.ipAddress || []
+          )
+        )
       ),
       transactionsCount: (targetAggregationData?.transactionsCount ?? 0) + 1,
     }

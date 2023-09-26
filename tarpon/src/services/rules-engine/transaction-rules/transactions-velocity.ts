@@ -120,17 +120,20 @@ export default class TransactionsVelocityRule extends TransactionAggregationRule
     }
   }
 
-  public async rebuildUserAggregation(
-    direction: 'origin' | 'destination',
+  public shouldUpdateUserAggregation(
+    _direction: 'origin' | 'destination',
     isTransactionHistoricalFiltered: boolean
+  ): boolean {
+    return isTransactionHistoricalFiltered
+  }
+
+  public async rebuildUserAggregation(
+    direction: 'origin' | 'destination'
   ): Promise<void> {
     const { sendingTransactions, receivingTransactions } =
       await this.getRawTransactionsData(direction)
 
-    if (
-      isTransactionHistoricalFiltered &&
-      (this.transaction.originUserId || this.transaction.destinationUserId)
-    ) {
+    if (this.transaction.originUserId || this.transaction.destinationUserId) {
       if (direction === 'origin') {
         sendingTransactions.push(this.transaction)
       } else {
@@ -258,12 +261,8 @@ export default class TransactionsVelocityRule extends TransactionAggregationRule
 
   override async getUpdatedTargetAggregation(
     direction: 'origin' | 'destination',
-    targetAggregationData: AggregationData | undefined,
-    isTransactionFiltered: boolean
+    targetAggregationData: AggregationData | undefined
   ): Promise<AggregationData | null> {
-    if (!isTransactionFiltered) {
-      return null
-    }
     if (
       this.parameters.onlyCheckKnownUsers &&
       (!this.transaction.originUserId || !this.transaction.destinationUserId)

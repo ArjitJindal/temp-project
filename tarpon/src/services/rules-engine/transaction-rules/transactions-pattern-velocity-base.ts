@@ -187,17 +187,30 @@ export default abstract class TransactionsPatternVelocityBaseRule<
     }
   }
 
-  public async rebuildUserAggregation(
+  public shouldUpdateUserAggregation(
     direction: 'origin' | 'destination',
-    isTransactionFiltered: boolean
+    isTransactionHistoricalFiltered: boolean
+  ): boolean {
+    const matchPattern = this.matchPattern(
+      this.transaction,
+      direction,
+      direction === 'origin' ? 'sender' : 'receiver',
+      true
+    )
+    return (
+      isTransactionHistoricalFiltered &&
+      matchPattern &&
+      this.isAggregationSupported()
+    )
+  }
+
+  public async rebuildUserAggregation(
+    direction: 'origin' | 'destination'
   ): Promise<void> {
     const { sendingTransactions, receivingTransactions } =
       await this.getRawTransactionsData(direction)
 
-    if (
-      isTransactionFiltered &&
-      (this.transaction.originUserId || this.transaction.destinationUserId)
-    ) {
+    if (this.transaction.originUserId || this.transaction.destinationUserId) {
       if (direction === 'origin') {
         sendingTransactions.push(this.transaction)
       } else {
@@ -284,22 +297,8 @@ export default abstract class TransactionsPatternVelocityBaseRule<
 
   override async getUpdatedTargetAggregation(
     direction: 'origin' | 'destination',
-    targetAggregationData: AggregationData | undefined,
-    isTransactionFiltered: boolean
+    targetAggregationData: AggregationData | undefined
   ): Promise<AggregationData | null> {
-    const matchPattern = this.matchPattern(
-      this.transaction,
-      direction,
-      direction === 'origin' ? 'sender' : 'receiver',
-      true
-    )
-    if (
-      !isTransactionFiltered ||
-      !matchPattern ||
-      !this.isAggregationSupported()
-    ) {
-      return null
-    }
     if (direction === 'origin') {
       return {
         ...targetAggregationData,

@@ -125,14 +125,16 @@ export default class SamePaymentDetailsRule extends TransactionAggregationRule<
       return 0
     }
   }
+  public shouldUpdateUserAggregation(
+    _direction: 'origin' | 'destination',
+    isTransactionFiltered: boolean
+  ): boolean {
+    return isTransactionFiltered
+  }
 
   public async rebuildUserAggregation(
-    direction: 'origin' | 'destination',
-    isTransactionFiltered: boolean
+    direction: 'origin' | 'destination'
   ): Promise<void> {
-    if (!isTransactionFiltered) {
-      return
-    }
     const { sendingTransactions, receivingTransactions } =
       await this.getRawTransactionsData(direction)
 
@@ -199,12 +201,8 @@ export default class SamePaymentDetailsRule extends TransactionAggregationRule<
 
   override async getUpdatedTargetAggregation(
     direction: 'origin' | 'destination',
-    targetAggregationData: AggregationData | undefined,
-    isTransactionFiltered: boolean
+    targetAggregationData: AggregationData | undefined
   ): Promise<AggregationData | null> {
-    if (!isTransactionFiltered) {
-      return null
-    }
     const result = targetAggregationData ?? {}
     if (direction === 'origin') {
       result.sendingCount = (result.sendingCount ?? 0) + 1

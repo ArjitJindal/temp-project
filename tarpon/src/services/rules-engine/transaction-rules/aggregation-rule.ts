@@ -54,6 +54,11 @@ export abstract class TransactionAggregationRule<
     return availableVersion === this.getLatestAggregationVersion()
   }
 
+  public abstract shouldUpdateUserAggregation(
+    direction: 'origin' | 'destination',
+    isTransactionFiltered: boolean
+  ): boolean
+
   public abstract rebuildUserAggregation(
     direction: 'origin' | 'destination',
     isTransactionFiltered: boolean
@@ -73,7 +78,11 @@ export abstract class TransactionAggregationRule<
     direction: 'origin' | 'destination',
     isTransactionFiltered: boolean
   ) {
-    if (!this.shouldUseAggregation() || !this.aggregationRepository) {
+    if (
+      !this.shouldUseAggregation() ||
+      !this.aggregationRepository ||
+      !this.shouldUpdateUserAggregation(direction, isTransactionFiltered)
+    ) {
       return
     }
     const version = this.getLatestAggregationVersion()

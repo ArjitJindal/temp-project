@@ -69,12 +69,8 @@ export default abstract class TransactionsPatternPercentageBaseRule<
 
   override async getUpdatedTargetAggregation(
     direction: 'origin' | 'destination',
-    targetAggregationData: AggregationData | undefined,
-    isTransactionFiltered: boolean
+    targetAggregationData: AggregationData | undefined
   ): Promise<AggregationData | null> {
-    if (!isTransactionFiltered) {
-      return null
-    }
     return {
       all: (targetAggregationData?.all || 0) + 1,
       match:
@@ -116,14 +112,16 @@ export default abstract class TransactionsPatternPercentageBaseRule<
     }
   }
 
-  public async rebuildUserAggregation(
-    direction: 'origin' | 'destination',
-    isTransactionFiltered: boolean
-  ): Promise<void> {
-    if (!isTransactionFiltered) {
-      return
-    }
+  public shouldUpdateUserAggregation(
+    _direction: 'origin' | 'destination',
+    isTransactionHistoricalFiltered: boolean
+  ): boolean {
+    return isTransactionHistoricalFiltered
+  }
 
+  public async rebuildUserAggregation(
+    direction: 'origin' | 'destination'
+  ): Promise<void> {
     const { allTransactions, matchedTransactions } =
       await this.getRawTransactionsData(direction)
 

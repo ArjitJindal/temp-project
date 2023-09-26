@@ -121,18 +121,19 @@ export default abstract class MultipleSendersWithinTimePeriodRuleBase extends Tr
     return senderTransactions
   }
 
-  public async rebuildUserAggregation(
+  public shouldUpdateUserAggregation(
     direction: 'origin' | 'destination',
-    isTransactionFiltered: boolean
-  ): Promise<void> {
-    const senderTransactions = await this.getTransactionsRawData()
+    isTransactionHistoricalFiltered: boolean
+  ): boolean {
+    return isTransactionHistoricalFiltered && direction === 'destination'
+  }
 
-    if (direction === 'destination' && isTransactionFiltered) {
-      senderTransactions.push({
-        ...this.transaction,
-        senderKeyId: this.getTransactionSenderUserKey(),
-      })
-    }
+  public async rebuildUserAggregation(): Promise<void> {
+    const senderTransactions = await this.getTransactionsRawData()
+    senderTransactions.push({
+      ...this.transaction,
+      senderKeyId: this.getTransactionSenderUserKey(),
+    })
 
     const timeAggregatedResult = await this.getTimeAggregatedResult(
       senderTransactions
@@ -240,14 +241,9 @@ export default abstract class MultipleSendersWithinTimePeriodRuleBase extends Tr
   }
 
   protected override async getUpdatedTargetAggregation(
-    direction: 'origin' | 'destination',
-    aggregation: AggregationData | undefined,
-    isTransactionFiltered: boolean
+    _direction: 'origin' | 'destination',
+    aggregation: AggregationData | undefined
   ): Promise<AggregationData | null> {
-    if (!isTransactionFiltered || direction === 'origin') {
-      return null
-    }
-
     const senderUsers = aggregation?.senderKeys ?? []
 
     const key = await this.getTransactionSenderUserKey()

@@ -86,14 +86,14 @@ export default class SameUserUsingTooManyCardsRule extends TransactionAggregatio
     return sendingTransactions
   }
 
-  public async rebuildUserAggregation(
+  public shouldUpdateUserAggregation(
     direction: 'origin' | 'destination',
     isTransactionFiltered: boolean
-  ): Promise<void> {
-    if (direction !== 'origin' || !isTransactionFiltered) {
-      return
-    }
+  ): boolean {
+    return isTransactionFiltered && direction === 'origin'
+  }
 
+  public async rebuildUserAggregation(): Promise<void> {
     const sendingTransactions = await this.getRawTransactionsData()
 
     sendingTransactions.push(this.transaction)
@@ -167,19 +167,14 @@ export default class SameUserUsingTooManyCardsRule extends TransactionAggregatio
   }
 
   override async getUpdatedTargetAggregation(
-    direction: 'origin' | 'destination',
-    targetAggregationData: AggregationData | undefined,
-    isTransactionFiltered: boolean
+    _direction: 'origin' | 'destination',
+    targetAggregationData: AggregationData | undefined
   ): Promise<AggregationData | null> {
     const cardFingerprint = (
       this.transaction?.originPaymentDetails as CardDetails
     )?.cardFingerprint
 
-    if (
-      !isTransactionFiltered ||
-      direction === 'destination' ||
-      !cardFingerprint
-    ) {
+    if (!cardFingerprint) {
       return null
     }
     return {

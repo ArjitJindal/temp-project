@@ -100,13 +100,8 @@ export default class TransactionsOutflowInflowVolumeRule extends TransactionAggr
 
   protected override async getUpdatedTargetAggregation(
     direction: 'origin' | 'destination',
-    aggregation: AggregationData | undefined,
-    isTransactionFiltered: boolean
+    aggregation: AggregationData | undefined
   ): Promise<AggregationData | null> {
-    if (!isTransactionFiltered) {
-      return null
-    }
-
     const amountDetails =
       direction === 'origin'
         ? this.transaction.originAmountDetails
@@ -433,9 +428,15 @@ export default class TransactionsOutflowInflowVolumeRule extends TransactionAggr
     }
   }
 
+  public shouldUpdateUserAggregation(
+    _direction: 'origin' | 'destination',
+    isTransactionHistoricalFiltered: boolean
+  ): boolean {
+    return isTransactionHistoricalFiltered
+  }
+
   public async rebuildUserAggregation(
-    direction: 'origin' | 'destination',
-    isTransactionFiltered: boolean
+    direction: 'origin' | 'destination'
   ): Promise<void> {
     const { sendingTransactions, receivingTransactions } =
       await this.getRawTransactionsData(direction)
@@ -445,7 +446,7 @@ export default class TransactionsOutflowInflowVolumeRule extends TransactionAggr
         ? this.transaction.originAmountDetails
         : this.transaction.destinationAmountDetails
 
-    if (isTransactionFiltered && amountDetails) {
+    if (amountDetails) {
       const transaction = this.transaction
 
       if (direction === 'origin') {
