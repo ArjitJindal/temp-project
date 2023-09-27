@@ -108,14 +108,24 @@ export function useUsers(
   const api = useApi();
 
   const usersQueryResult = useQuery(ACCOUNT_LIST(), async () => {
-    return await api.getAccounts();
+    const accounts = await api.getAccounts();
+
+    return {
+      items: accounts,
+      success: true,
+      total: accounts.length,
+    };
   });
 
-  const users = getOr(usersQueryResult.data, []);
+  const users = getOr(usersQueryResult.data, {
+    items: [],
+    success: true,
+    total: 0,
+  });
 
   const isSuperAdmin = isAtLeast(user, UserRole.ROOT);
 
-  let tempUsers = users;
+  let tempUsers = users.items;
 
   if (!options.includeRootUsers && !isSuperAdmin) {
     tempUsers = tempUsers.filter((user) => parseUserRole(user.role) !== UserRole.ROOT);
