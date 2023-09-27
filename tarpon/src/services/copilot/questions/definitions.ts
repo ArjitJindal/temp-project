@@ -26,6 +26,8 @@ import { Directors } from '@/services/copilot/questions/definitions/directors'
 import { Website } from '@/services/copilot/questions/definitions/website'
 import { Linkedin } from '@/services/copilot/questions/definitions/linkedin'
 import { EntityLinking } from '@/services/copilot/questions/definitions/entity-linking'
+import { TransactionSummary } from '@/services/copilot/questions/definitions/transaction-summary'
+import { CrmInsights } from '@/services/copilot/questions/definitions/crm-insights'
 
 export const questions: (
   | TableQuestion<any>
@@ -39,6 +41,8 @@ export const questions: (
   AlertsRelatedToTransaction,
   TransactionLedRuleHit,
   Transactions,
+  TransactionSummary,
+  CrmInsights,
   LinkedUsers,
   CaseHistory,
   SarsFiled,

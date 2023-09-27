@@ -147,7 +147,7 @@ export default function RequestForm(props: Props) {
               onClick={async () => {
                 setSearchText('');
                 await Promise.all(
-                  randomSubset(suggestions, 3).map(async (search) =>
+                  ['User details', 'TRS score', 'Transactions'].map(async (search) =>
                     mutation.mutate({ searchString: search }),
                   ),
                 );
