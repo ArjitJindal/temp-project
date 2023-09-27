@@ -14,6 +14,7 @@ import { isLoading } from '@/utils/asyncResource';
 import HistoryItemBarchart from '@/pages/case-management/AlertTable/InvestigativeCoPilotModal/InvestigativeCoPilot/History/HistoryItem/HistoryItemBarchart';
 import { FormValues as CommentEditorFormValues } from '@/components/CommentEditor';
 import HistoryItemProperties from '@/pages/case-management/AlertTable/InvestigativeCoPilotModal/InvestigativeCoPilot/History/HistoryItem/HistoryItemProperties';
+import HistoryItemEmbedded from '@/pages/case-management/AlertTable/InvestigativeCoPilotModal/InvestigativeCoPilot/History/HistoryItem/HistoryItemEmbedded';
 
 interface Props {
   alertId: string;
@@ -71,6 +72,7 @@ export default function HistoryItem(props: Props) {
 
   return (
     <HistoryItemLayout
+      questionId={questionId}
       commentSubmitMutation={commentSubmitMutation}
       isLoading={isLoading(getMutationAsyncResource(updateVarsMutation))}
       item={itemState}
@@ -98,6 +100,9 @@ function renderItem(item: QuestionResponse) {
   }
   if (item.questionType === 'PROPERTIES') {
     return <HistoryItemProperties item={item} />;
+  }
+  if (item.questionType === 'EMBEDDED') {
+    return <HistoryItemEmbedded item={item} />;
   }
   return neverReturn(item, <>{JSON.stringify(item)}</>);
 }

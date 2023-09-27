@@ -1,7 +1,7 @@
 import { MongoClient } from 'mongodb'
 import {
+  AggregationQuestion,
   InvestigationContext,
-  Question,
   Variables,
 } from '@/services/copilot/questions/types'
 import { getTestTenantId } from '@/test-utils/tenant-test-utils'
@@ -13,7 +13,7 @@ import { InternalConsumerUser } from '@/@types/openapi-internal/InternalConsumer
 jest.mock('@/services/accounts')
 
 export async function testQuestion<V extends Variables, D>(
-  q: Question<V, D>,
+  q: AggregationQuestion<V, D>,
   v: Partial<V> = {},
   seed: (tenantId: string, mongoDb: MongoClient) => Promise<void>,
   assertions: (data: D) => void

@@ -4,6 +4,7 @@ import {
   TimeseriesQuestion,
   BarchartQuestion,
   PropertiesQuestion,
+  EmbeddedQuestion,
 } from './types'
 import { CaseHistory } from '@/services/copilot/questions/definitions/case-history'
 import { TrsScore } from '@/services/copilot/questions/definitions/trs-score'
@@ -24,6 +25,7 @@ import { Shareholders } from '@/services/copilot/questions/definitions/sharehold
 import { Directors } from '@/services/copilot/questions/definitions/directors'
 import { Website } from '@/services/copilot/questions/definitions/website'
 import { Linkedin } from '@/services/copilot/questions/definitions/linkedin'
+import { EntityLinking } from '@/services/copilot/questions/definitions/entity-linking'
 
 export const questions: (
   | TableQuestion<any>
@@ -31,6 +33,7 @@ export const questions: (
   | BarchartQuestion<any>
   | TimeseriesQuestion<any>
   | PropertiesQuestion<any>
+  | EmbeddedQuestion<any>
 )[] = [
   AlertHistory,
   AlertsRelatedToTransaction,
@@ -51,6 +54,7 @@ export const questions: (
   UserDetails,
   Website,
   Linkedin,
+  EntityLinking,
 ]
 
 export const queries = questions.map(({ questionId, variableOptions }) => {

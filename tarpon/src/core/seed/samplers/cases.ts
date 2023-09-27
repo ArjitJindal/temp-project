@@ -13,7 +13,7 @@ import { CASE_STATUSS } from '@/@types/openapi-internal-custom/CaseStatus'
 import { InternalBusinessUser } from '@/@types/openapi-internal/InternalBusinessUser'
 import { InternalConsumerUser } from '@/@types/openapi-internal/InternalConsumerUser'
 import { CaseReasons } from '@/@types/openapi-internal/CaseReasons'
-import { getUserName, isStatusInReview } from '@/utils/helpers'
+import { isStatusInReview } from '@/utils/helpers'
 import { AlertStatus } from '@/@types/openapi-internal/AlertStatus'
 import { CHECKLIST_STATUSS } from '@/@types/openapi-internal-custom/ChecklistStatus'
 import { getRandomUser, getRandomUsers } from '@/core/seed/samplers/accounts'
@@ -23,7 +23,6 @@ import dayjs from '@/utils/dayjs'
 import { getChecklistTemplate } from '@/core/seed/data/checklists'
 import { ChecklistItemValue } from '@/@types/openapi-internal/ChecklistItemValue'
 import { RULE_NATURES } from '@/@types/openapi-internal-custom/RuleNature'
-import { SANCTIONS_DETAILS_ENTITY_TYPES } from '@/@types/openapi-internal-custom/SanctionsDetailsEntityType'
 
 let counter = 1
 let alertCounter = 1
@@ -191,27 +190,6 @@ export function sampleTransactionUserCases(
       caseTransactionsIds: transactions.map((t) => t.transactionId!),
       alerts: ruleHits
         .filter((rh) => rh.nature === nature)
-        .map((ruleHit) => {
-          return {
-            ...ruleHit,
-            sanctionsDetails:
-              ruleHit.nature === 'SCREENING'
-                ? [
-                    {
-                      name: getUserName(user),
-                      // IDs from the search responses in raw-data
-                      searchId: pickRandom([
-                        '229b87fa-05ab-4b1d-82f8-b2df32fdcab7',
-                        '6505dae6-0424-4677-935c-926317854a5f',
-                        'c3da5e59-b309-4916-ac21-171ccf5922bc',
-                      ]),
-                      iban: 'DE24500105178163255147',
-                      entityType: pickRandom(SANCTIONS_DETAILS_ENTITY_TYPES),
-                    },
-                  ]
-                : undefined,
-          }
-        })
         .map((ruleHit, i) =>
           sampleAlert(
             {

@@ -1,6 +1,6 @@
 import { PropertiesQuestion } from '@/services/copilot/questions/types'
 import { MerchantMonitoringScrapeService } from '@/services/merchant-monitoring/merchant-monitoring-scrape'
-import { summaryToProperties } from '@/services/copilot/questions/definitions/transformers/merchant-monitoring'
+import { summaryToProperties } from '@/services/copilot/questions/definitions/common/merchant-monitoring'
 
 export const Linkedin: PropertiesQuestion<{
   companyName: string

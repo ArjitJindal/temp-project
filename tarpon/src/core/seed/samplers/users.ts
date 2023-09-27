@@ -1,6 +1,7 @@
 import { v4 as uuid4 } from 'uuid'
 import { ManipulateType } from 'dayjs'
 import { phoneNumber } from '../data/address'
+import { data as sanctionsHits } from '../data/sanctions'
 import { sampleCountry } from './countries'
 import { sampleString } from './strings'
 import { sampleTag } from './tag'
@@ -12,7 +13,11 @@ import { pickRandom, randomFloat, randomInt, randomSubset } from '@/utils/prng'
 import { USER_STATES } from '@/@types/openapi-internal-custom/UserState'
 import { KYC_STATUSS } from '@/@types/openapi-internal-custom/KYCStatus'
 import { sampleTimestamp } from '@/core/seed/samplers/timestamp'
-import { CompanySeedData, randomName } from '@/core/seed/samplers/dictionary'
+import {
+  CompanySeedData,
+  randomConsumerName,
+  randomName,
+} from '@/core/seed/samplers/dictionary'
 import { COUNTRY_CODES } from '@/@types/openapi-internal-custom/CountryCode'
 import { LegalDocument } from '@/@types/openapi-internal/LegalDocument'
 import { InternalBusinessUser } from '@/@types/openapi-internal/InternalBusinessUser'
@@ -30,6 +35,13 @@ import dayjs from '@/utils/dayjs'
 import { Person } from '@/@types/openapi-internal/Person'
 import { ConsumerName } from '@/@types/openapi-public/ConsumerName'
 import { CURRENCY_CODES } from '@/@types/openapi-public-custom/CurrencyCode'
+import {
+  businessSanctionsSearch,
+  consumerSanctionsSearch,
+} from '@/core/seed/data/raw-data/sanctions-search'
+import { InternalConsumerUser } from '@/@types/openapi-internal/InternalConsumerUser'
+import { RISK_LEVEL1S } from '@/@types/openapi-internal-custom/RiskLevel1'
+import { CONSUMER_USER_SEGMENTS } from '@/@types/openapi-internal-custom/ConsumerUserSegment'
 
 export function sampleUserState(seed?: number): UserState {
   return USER_STATES[randomInt(seed, USER_STATES.length)]
@@ -144,13 +156,84 @@ const legalDocument = (name: ConsumerName): LegalDocument => {
   }
 }
 
+export function getUserRules(username: string, type: 'CONSUMER' | 'BUSINESS') {
+  const hitRules =
+    randomFloat() < 0.2
+      ? randomUserRules().filter((r) =>
+          r.ruleName.toLowerCase().includes(type.toLowerCase())
+        )
+      : []
+
+  return hitRules.map((r) => {
+    if (!r.ruleHitMeta) {
+      return r
+    }
+
+    // Seed a sanctions response
+    const sanctionsSearchResult =
+      type === 'CONSUMER'
+        ? consumerSanctionsSearch(username)
+        : businessSanctionsSearch(username)
+    sanctionsHits.push(sanctionsSearchResult)
+
+    r.ruleHitMeta.sanctionsDetails = [
+      {
+        name: username,
+        searchId: sanctionsSearchResult._id,
+        entityType: type === 'CONSUMER' ? 'CONSUMER_NAME' : 'LEGAL_NAME',
+      },
+    ]
+    return r
+  })
+}
+
+let userCounter = 1
+
+export function sampleConsumerUser() {
+  const userId = `U-${userCounter}`
+  userCounter++
+  const name = randomConsumerName()
+  const user: InternalConsumerUser = {
+    type: 'CONSUMER' as const,
+    userId,
+    riskLevel: pickRandom(RISK_LEVEL1S),
+    acquisitionChannel: pickRandom(ACQUISITION_CHANNELS),
+    userSegment: pickRandom(CONSUMER_USER_SEGMENTS),
+    reasonForAccountOpening: [
+      pickRandom(['Investment', 'Saving', 'Business', 'Other']),
+    ],
+    userStateDetails: sampleUserStateDetails(),
+    contactDetails: {
+      addresses: [randomAddress()],
+      contactNumbers: [randomPhoneNumber()],
+    },
+    kycStatusDetails: sampleKycStatusDetails(),
+    userDetails: {
+      dateOfBirth: new Date(sampleTimestamp()).toISOString(),
+      countryOfResidence: pickRandom(COUNTRY_CODES),
+      countryOfNationality: pickRandom(COUNTRY_CODES),
+      name,
+    },
+    executedRules: userRules,
+    hitRules: getUserRules(
+      `${name.firstName} ${name.middleName} ${name.lastName}`,
+      'CONSUMER'
+    ),
+    createdTimestamp: sampleTimestamp(),
+    tags: [sampleTag()],
+  }
+
+  return user
+}
+
 export function sampleBusinessUser(
   { company, country }: { company?: CompanySeedData; country?: CountryCode },
   seed = 0.1
 ): { user: InternalBusinessUser } {
   const name = company?.name || randomName()
   const domain = name.toLowerCase().replace(' ', '').replace('&', '')
-  const userId = uuid4()
+  const userId = `U-${userCounter}`
+  userCounter++
   const paymentMethod = samplePaymentDetails()
 
   const timestamp = sampleTimestamp(seed)
@@ -166,9 +249,7 @@ export function sampleBusinessUser(
     ],
     userStateDetails: sampleUserStateDetails(seed),
     executedRules: userRules,
-    hitRules: randomUserRules().filter(
-      (r) => !r.ruleName.toLowerCase().includes('consumer')
-    ),
+    hitRules: getUserRules(name, 'BUSINESS'),
     updatedAt: timestamp,
     comments: [],
     kycStatusDetails: sampleKycStatusDetails(seed),
@@ -224,11 +305,7 @@ export function sampleBusinessUser(
       },
     },
     shareHolders: Array.from({ length: Math.ceil(Math.random() * 1) }, () => {
-      const name: ConsumerName = {
-        firstName: randomName(),
-        middleName: randomName(),
-        lastName: randomName(),
-      }
+      const name: ConsumerName = randomConsumerName()
 
       return {
         generalDetails: {
@@ -257,11 +334,7 @@ export function sampleBusinessUser(
       } as Person
     }),
     directors: Array.from({ length: Math.ceil(Math.random() * 2) }, () => {
-      const name: ConsumerName = {
-        firstName: randomName(),
-        middleName: randomName(),
-        lastName: randomName(),
-      }
+      const name: ConsumerName = randomConsumerName()
 
       return {
         legalDocuments: Array.from(

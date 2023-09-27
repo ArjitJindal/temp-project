@@ -159,11 +159,14 @@ export class QuestionService {
                 variableType,
               }
             }
+
             return {
               name,
               variableType: variableType.type,
               options:
-                variableType.options && (await variableType.options(ctx)),
+                variableType.type === 'AUTOCOMPLETE'
+                  ? variableType.options && (await variableType.options(ctx))
+                  : undefined,
             }
           }
         )
@@ -218,9 +221,11 @@ export class QuestionService {
       const result = await question.aggregationPipeline(ctx, varObject)
       return {
         ...common,
-        summary: result.summary,
-        values: result.data,
+        ...result,
       }
+    }
+    if (question.type === 'EMBEDDED') {
+      return common
     }
     throw new Error(`Unsupported question type`)
   }
@@ -276,5 +281,26 @@ Dates and datetimes should be output in ISO format, for example the datetime now
       logger.error(e)
       throw new BadRequest('AI could not understand this query')
     }
+  }
+
+  async autocompleteVariable(
+    questionId: string,
+    variable: string,
+    search: string
+  ) {
+    const tenantId = getContext()?.tenantId
+
+    const variableOption = questions.find((q) => q.questionId === questionId)
+      ?.variableOptions[variable]
+    // TODO make the typing here a bit nicer.
+    if (
+      tenantId &&
+      variableOption &&
+      typeof variableOption !== 'string' &&
+      variableOption.type === 'SEARCH'
+    ) {
+      return variableOption.search(tenantId, search)
+    }
+    return []
   }
 }

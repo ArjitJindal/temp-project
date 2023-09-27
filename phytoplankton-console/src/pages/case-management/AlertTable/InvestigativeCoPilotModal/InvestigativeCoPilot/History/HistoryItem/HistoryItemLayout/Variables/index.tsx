@@ -1,6 +1,7 @@
 import React, { useCallback, useState } from 'react';
 import cn from 'clsx';
 import { AutoComplete, Popover } from 'antd';
+import { DataSourceItemType } from 'antd/lib/auto-complete';
 import s from './index.module.less';
 import { QuestionVariableOption } from '@/apis';
 import { humanizeAuto } from '@/utils/humanize';
@@ -13,10 +14,12 @@ import { dayjs, Dayjs } from '@/utils/dayjs';
 import Button from '@/components/library/Button';
 import { useDeepEqualEffect } from '@/utils/hooks';
 import { applyUpdater, StatePair, Updater } from '@/utils/state';
+import { useApi } from '@/api';
 
 export type VariablesValues = Record<string, any>;
 
 interface Props {
+  questionId: string;
   variables: QuestionVariableOption[];
   initialValues: VariablesValues;
   onConfirm: (values: VariablesValues) => void;
@@ -92,7 +95,7 @@ export default function Variables(props: Props) {
 export function VariablesPopoverContent(
   props: Props & { varsValuesState: StatePair<VariablesValues>; modal: boolean },
 ) {
-  const { variables, modal } = props;
+  const { variables, modal, questionId } = props;
   const labelPosition = modal ? 'TOP' : 'LEFT';
   const [varsValues, setVarsValues] = props.varsValuesState;
   return (
@@ -110,7 +113,7 @@ export function VariablesPopoverContent(
         return (
           <Label key={varName} label={humanizeAuto(varName ?? 'N/A')} position={labelPosition}>
             <div className={s.input}>
-              {renderInput(variable, {
+              {renderInput(questionId, variable, {
                 value: varsValues[varName],
                 onBlur: () => props.onConfirm(varsValues),
                 onChange: (newValue) => {
@@ -128,7 +131,11 @@ export function VariablesPopoverContent(
   );
 }
 
-function renderInput(variable: QuestionVariableOption, inputProps: InputProps<any>) {
+function renderInput(
+  questionId: string,
+  variable: QuestionVariableOption,
+  inputProps: InputProps<any>,
+) {
   if (variable.variableType === 'INTEGER' || variable.variableType === 'FLOAT') {
     return <NumberInput {...inputProps} />;
   }
@@ -148,7 +155,7 @@ function renderInput(variable: QuestionVariableOption, inputProps: InputProps<an
       />
     );
   }
-  if (variable.variableType === 'STRING') {
+  if (variable.variableType === 'AUTOCOMPLETE') {
     if (variable.options !== undefined) {
       return (
         <AutoComplete
@@ -160,5 +167,39 @@ function renderInput(variable: QuestionVariableOption, inputProps: InputProps<an
     }
     return <TextInput {...inputProps} />;
   }
+  if (variable.variableType === 'SEARCH') {
+    return <Search questionId={questionId} variable={variable} inputProps={inputProps} />;
+  }
   return <TextInput {...inputProps} />;
 }
+
+const Search = ({
+  questionId,
+  variable,
+  inputProps,
+}: {
+  questionId: string;
+  variable: QuestionVariableOption;
+  inputProps: InputProps<any>;
+}) => {
+  const api = useApi();
+  const variableKey = variable.name || '';
+  const [dataSource, setDatasource] = useState<DataSourceItemType[]>();
+  const onSearch = async (search: string) => {
+    const results = await api.getQuestionVariableAutocomplete({
+      questionId,
+      variableKey,
+      search,
+    });
+    setDatasource(results.suggestions?.map((s) => ({ value: s, text: s })));
+  };
+
+  return (
+    <AutoComplete
+      {...inputProps}
+      onSearch={onSearch}
+      className={s.autocomplete}
+      dataSource={dataSource}
+    />
+  );
+};

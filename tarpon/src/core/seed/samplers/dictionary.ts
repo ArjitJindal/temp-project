@@ -1,5 +1,6 @@
 import { randInt } from 'ibankit/lib/randInt'
 import { CountryCode } from '@/@types/openapi-internal/CountryCode'
+import { randomSubsetOfSize } from '@/utils/prng'
 
 const names = [
   'James',
@@ -1263,4 +1264,16 @@ export const companies: CompanySeedData[] = [
 ]
 export function randomName(): string {
   return names[randInt(names.length - 1, 0)]
+}
+export function randomConsumerName(): {
+  firstName: string
+  middleName: string
+  lastName: string
+} {
+  const [firstName, middleName, lastName] = randomSubsetOfSize(names, 3)
+  return {
+    firstName,
+    middleName,
+    lastName,
+  }
 }

@@ -6,7 +6,8 @@ import { InternalBusinessUser } from '@/@types/openapi-internal/InternalBusiness
 import {
   personColumns,
   personToRow,
-} from '@/services/copilot/questions/definitions/transformers/person'
+} from '@/services/copilot/questions/definitions/common/person'
+import { searchUser } from '@/services/copilot/questions/definitions/common/search'
 
 export const Shareholders: TableQuestion<{ userId: string }> = {
   type: 'TABLE',
@@ -32,7 +33,10 @@ export const Shareholders: TableQuestion<{ userId: string }> = {
     }
   },
   variableOptions: {
-    userId: 'STRING',
+    userId: {
+      type: 'SEARCH',
+      search: searchUser,
+    },
   },
   headers: personColumns,
   defaults: ({ userId }) => {

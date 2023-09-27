@@ -264,6 +264,7 @@ export const COPILOT_ALERT_QUESTIONS = (alertId: string): QueryKey => [
   'questions',
   'list',
 ];
+
 export const COPILOT_SUGGESTIONS = (requestString: string): QueryKey => [
   'copilot',
   'suggestions',

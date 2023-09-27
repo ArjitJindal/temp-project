@@ -9,6 +9,7 @@ import { FormValues as CommentEditorFormValues } from '@/components/CommentEdito
 import CommentPopover from '@/pages/case-management/AlertTable/InvestigativeCoPilotModal/InvestigativeCoPilot/History/HistoryItem/HistoryItemLayout/CommentPopover';
 
 interface Props {
+  questionId: string;
   commentSubmitMutation: UseMutationResult<unknown, unknown, CommentEditorFormValues>;
   item: QuestionResponseBase;
   children: React.ReactNode;
@@ -17,7 +18,7 @@ interface Props {
 }
 
 export default function HistoryItemLayout(props: Props) {
-  const { commentSubmitMutation, item, children, isLoading, onRefresh } = props;
+  const { commentSubmitMutation, item, children, isLoading, onRefresh, questionId } = props;
   const { variableOptions, title } = item;
 
   const [initialVariablesState, setInitialVarsValues] = useState(
@@ -31,6 +32,7 @@ export default function HistoryItemLayout(props: Props) {
         <div className={s.tools}>
           {variableOptions && variableOptions.length > 0 && (
             <Variables
+              questionId={questionId}
               initialValues={initialVariablesState}
               variables={variableOptions}
               onConfirm={(variablesValues) => {

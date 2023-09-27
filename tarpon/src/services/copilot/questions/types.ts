@@ -15,8 +15,15 @@ export type VariableOptions<V> = {
   [K in keyof V]:
     | QuestionVariableOptionVariableTypeEnum
     | {
-        type: QuestionVariableOptionVariableTypeEnum
-        options?: (ctx: InvestigationContext) => Promise<string[]> | string[]
+        type: 'AUTOCOMPLETE'
+        options: (ctx: InvestigationContext) => Promise<string[]> | string[]
+      }
+    | {
+        type: 'SEARCH'
+        search: (
+          tenantId: string,
+          search: string
+        ) => Promise<string[]> | string[]
       }
 }
 
@@ -32,37 +39,50 @@ export type InvestigationContext = {
   accountService: AccountsService
 }
 
-export type Question<V extends Variables, D> = {
+export type Question<V extends Variables> = {
   questionId: string
   title?: (ctx: InvestigationContext, variables: V) => string
+  variableOptions: VariableOptions<V>
+  defaults: (ctx: InvestigationContext) => V
+}
+
+export type AggregationQuestion<V extends Variables, D> = Question<any> & {
   aggregationPipeline: (
     context: InvestigationContext,
     variables: V
   ) => Promise<{ data: D; summary: string }>
-  variableOptions: VariableOptions<V>
-  defaults: (ctx: InvestigationContext) => V
 }
 
 export type TableQuestion<V extends Variables> = {
   type: 'TABLE'
   headers: { name: string; columnType: TableHeadersColumnTypeEnum }[]
-} & Question<V, (string | number | undefined)[][]>
+} & AggregationQuestion<V, (string | number | undefined)[][]>
 
 export type TimeseriesQuestion<V extends Variables> = {
   type: 'TIME_SERIES'
-} & Question<V, { label: string; values: { time: number; value: number }[] }[]>
+} & AggregationQuestion<
+  V,
+  { label: string; values: { time: number; value: number }[] }[]
+>
 
 export type StackedBarchartQuestion<V extends Variables> = {
   type: 'STACKED_BARCHART'
-} & Question<V, { label: string; values: { x: string; y: number }[] }[]>
+} & AggregationQuestion<
+  V,
+  { label: string; values: { x: string; y: number }[] }[]
+>
 
 export type BarchartQuestion<V extends Variables> = {
   type: 'BARCHART'
-} & Question<V, { x: string; y: number }[]>
+} & AggregationQuestion<V, { x: string; y: number }[]>
 
 export type PropertiesQuestion<V extends Variables> = {
   type: 'PROPERTIES'
-} & Question<V, PropertiesProperties[]>
+} & AggregationQuestion<V, PropertiesProperties[]>
+
+export type EmbeddedQuestion<V extends Variables> = {
+  type: 'EMBEDDED'
+} & Question<V>
 
 export type Investigation = {
   alertId: string

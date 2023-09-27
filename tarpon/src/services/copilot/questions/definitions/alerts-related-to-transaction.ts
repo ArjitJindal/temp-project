@@ -94,7 +94,7 @@ export const AlertsRelatedToTransaction: TableQuestion<
   ],
   variableOptions: {
     transactionId: {
-      type: 'STRING',
+      type: 'AUTOCOMPLETE',
       options: async (ctx) => {
         return ctx._case.caseTransactionsIds || []
       },

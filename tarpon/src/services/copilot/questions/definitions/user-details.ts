@@ -5,6 +5,7 @@ import { getUserName } from '@/utils/helpers'
 import { InternalConsumerUser } from '@/@types/openapi-internal/InternalConsumerUser'
 import { InternalBusinessUser } from '@/@types/openapi-internal/InternalBusinessUser'
 import { ContactDetails } from '@/@types/openapi-internal/ContactDetails'
+import { searchUser } from '@/services/copilot/questions/definitions/common/search'
 
 export const UserDetails: PropertiesQuestion<{ userId: string }> = {
   type: 'PROPERTIES',
@@ -172,7 +173,10 @@ export const UserDetails: PropertiesQuestion<{ userId: string }> = {
     }
   },
   variableOptions: {
-    userId: 'STRING',
+    userId: {
+      type: 'SEARCH',
+      search: searchUser,
+    },
   },
   defaults: ({ userId }) => {
     return {

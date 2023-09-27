@@ -94,8 +94,8 @@ export const copilotHandler = lambdaApi({})(
       return await questionService.getQuestions(alert, c)
     })
 
+    const questionService = await QuestionService.fromEvent(event)
     handlers.registerPostQuestion(async (ctx, request) => {
-      const questionService = await QuestionService.fromEvent(event)
       const caseService = await CaseService.fromEvent(event)
       const alertService = await AlertsService.fromEvent(event)
       const alert = await alertService.getAlert(request.alertId)
@@ -112,11 +112,20 @@ export const copilotHandler = lambdaApi({})(
       )
     })
 
+    handlers.registerGetQuestionVariableAutocomplete(async (ctx, request) => {
+      return {
+        suggestions: await questionService.autocompleteVariable(
+          request.questionId,
+          request.variableKey,
+          request.search
+        ),
+      }
+    })
+
     handlers.registerGetQuestionAutocomplete(async (ctx, request) => {
       const autocomplete = new AutocompleteService()
-
       return {
-        suggestions: autocomplete.autocomplete(request.question),
+        suggestions: autocomplete.autocomplete(request.question || ''),
       }
     })
 

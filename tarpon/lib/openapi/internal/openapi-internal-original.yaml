@@ -4829,6 +4829,33 @@ paths:
             type: string
           in: query
           name: question
+          required: false
+  '/questions/{questionId}/{variableKey}/autocomplete':
+    get:
+      summary: Get question variable autocompletion
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/QuestionAutocompleteResponse'
+      operationId: get-question-variable-autocomplete
+      parameters:
+        - schema:
+            type: string
+          in: path
+          name: questionId
+          required: true
+        - schema:
+            type: string
+          in: path
+          name: variableKey
+          required: true
+        - schema:
+            type: string
+          in: query
+          name: search
           required: true
   '/alert/{alertId}/questions':
     get:
@@ -4965,6 +4992,8 @@ components:
             - STRING
             - INTEGER
             - FLOAT
+            - AUTOCOMPLETE
+            - SEARCH
     Table:
       title: Table
       type: object

@@ -1,9 +1,8 @@
-import { random } from 'lodash'
+import { random, cloneDeep } from 'lodash'
 import { ExecutedRulesResult } from '@/@types/openapi-public/ExecutedRulesResult'
 import { pickRandom, randomSubset } from '@/utils/prng'
 import { RuleInstance } from '@/@types/openapi-internal/RuleInstance'
 import { RuleAction } from '@/@types/openapi-internal/RuleAction'
-import { SANCTIONS_DETAILS_ENTITY_TYPES } from '@/@types/openapi-internal-custom/SanctionsDetailsEntityType'
 import { SanctionsBusinessUserRuleParameters } from '@/services/rules-engine/user-rules/sanctions-business-user'
 import { SanctionsBankUserRuleParameters } from '@/services/rules-engine/user-rules/sanctions-bank-name'
 import { SanctionsConsumerUserRuleParameters } from '@/services/rules-engine/user-rules/sanctions-consumer-user'
@@ -372,22 +371,6 @@ export const initRules = () => {
                 ? { isFalsePositive: true, confidenceScore: random(59, 82) }
                 : { isFalsePositive: false, confidenceScore: 100 },
             hitDirections: i % 2 ? ['ORIGIN'] : ['DESTINATION'],
-            sanctionsDetails:
-              ri.nature === 'SCREENING'
-                ? [
-                    {
-                      name: 'John Smith',
-                      // IDs from the search responses in raw-data
-                      searchId: pickRandom([
-                        '229b87fa-05ab-4b1d-82f8-b2df32fdcab7',
-                        '6505dae6-0424-4677-935c-926317854a5f',
-                        'c3da5e59-b309-4916-ac21-171ccf5922bc',
-                      ]),
-                      iban: 'DE24500105178163255147',
-                      entityType: pickRandom(SANCTIONS_DETAILS_ENTITY_TYPES),
-                    },
-                  ]
-                : undefined,
           },
         })
       )
@@ -400,9 +383,9 @@ export const transactionRules: ExecutedRulesResult[] = []
 export const userRules: ExecutedRulesResult[] = []
 
 export function randomTransactionRules(): ExecutedRulesResult[] {
-  return randomSubset(transactionRules)
+  return cloneDeep(randomSubset(transactionRules))
 }
 
 export function randomUserRules(): ExecutedRulesResult[] {
-  return randomSubset(userRules)
+  return cloneDeep(randomSubset(userRules))
 }
