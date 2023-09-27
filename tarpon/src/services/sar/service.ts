@@ -6,6 +6,7 @@ import { Credentials } from '@aws-sdk/client-sts'
 import { Document, MongoClient } from 'mongodb'
 import { NotFound, BadRequest } from 'http-errors'
 import { Account } from '../accounts'
+import { CaseWithoutCaseTransactions } from '../rules-engine/repositories/case-repository'
 import { ReportRepository } from './repositories/report-repository'
 import { ReportType } from '@/@types/openapi-internal/ReportType'
 import {
@@ -14,7 +15,6 @@ import {
 } from '@/services/sar/generators'
 import { Report } from '@/@types/openapi-internal/Report'
 import { getMongoDbClient } from '@/utils/mongodb-utils'
-import { Case } from '@/@types/openapi-internal/Case'
 import { InternalTransaction } from '@/@types/openapi-internal/InternalTransaction'
 import { DefaultApiGetReportsRequest } from '@/@types/openapi-internal/RequestParameters'
 import { formatCountry } from '@/utils/countries'
@@ -82,7 +82,7 @@ export class ReportService {
   public async getReportDraft(
     reportTypeId: string,
     reporter: Account,
-    c: Case,
+    c: CaseWithoutCaseTransactions,
     transactions: InternalTransaction[]
   ): Promise<Report> {
     const generator = REPORT_GENERATORS.get(reportTypeId)

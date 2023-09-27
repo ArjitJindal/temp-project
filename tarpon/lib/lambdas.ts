@@ -164,7 +164,7 @@ export const LAMBDAS: {
     codePath: 'console-api-case',
     handlerName: 'casesHandler',
     expectedMaxSeconds: DEFAULT_LAMBDA_EXPECTED_MAX_SECONDS,
-    timeoutSeconds: DEFAULT_LAMBDA_TIMEOUT_SECONDS,
+    timeoutSeconds: DEFAULT_ASYNC_JOB_LAMBDA_TIMEOUT_SECONDS,
   },
   [StackConstants.CONSOLE_API_COPILOT_FUNCTION_NAME]: {
     codePath: 'console-api-copilot',

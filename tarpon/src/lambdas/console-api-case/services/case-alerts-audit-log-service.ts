@@ -304,8 +304,7 @@ export class CasesAlertsAuditLogService {
       dynamoDb: this.dynamoDb,
     })
 
-    const caseEntity =
-      caseDetails ?? (await caseRepository.getCaseById(caseId, false))
+    const caseEntity = caseDetails ?? (await caseRepository.getCaseById(caseId))
 
     const auditLog: AuditLog = {
       type: 'CASE',

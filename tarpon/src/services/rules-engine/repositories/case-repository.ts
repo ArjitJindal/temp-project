@@ -44,7 +44,7 @@ import { traceable } from '@/core/xray'
 import { CaseType } from '@/@types/openapi-internal/CaseType'
 import { InternalTransaction } from '@/@types/openapi-internal/InternalTransaction'
 
-type CaseWithoutCaseTransactions = Omit<Case, 'caseTransactions'>
+export type CaseWithoutCaseTransactions = Omit<Case, 'caseTransactions'>
 
 export const MAX_TRANSACTION_IN_A_CASE = 1000
 
@@ -1014,37 +1014,29 @@ export class CaseRepository {
     )
   }
 
-  public async getCaseByAlertId(alertId: string): Promise<Case | null> {
-    const db = this.mongoDb.db()
-    const collection = db.collection<Case>(CASES_COLLECTION(this.tenantId))
-    const caseItem = await collection.findOne({
-      'alerts.alertId': alertId,
-    })
-    return caseItem ?? null
-  }
-
   public async getCaseById(
-    caseId: string,
-    includeTransactions = true
+    caseId: string
   ): Promise<CaseWithoutCaseTransactions | null> {
     const db = this.mongoDb.db()
     const collection = db.collection<Case>(CASES_COLLECTION(this.tenantId))
-    if (!includeTransactions) {
-      return await collection.findOne<Case>(
-        { caseId },
-        { projection: { caseTransactions: 0 } }
-      )
-    }
-    return await collection.findOne<Case>({ caseId })
+    return await collection.findOne<Case>(
+      { caseId },
+      { projection: { caseTransactions: 0 } }
+    )
   }
 
-  public async getCasesByAlertIds(alertIds: string[]): Promise<Case[]> {
+  public async getCasesByAlertIds(
+    alertIds: string[]
+  ): Promise<CaseWithoutCaseTransactions[]> {
     const db = this.mongoDb.db()
     const collection = db.collection<Case>(CASES_COLLECTION(this.tenantId))
     const cases = await collection
-      .find({
-        'alerts.alertId': { $in: alertIds },
-      })
+      .find(
+        {
+          'alerts.alertId': { $in: alertIds },
+        },
+        { projection: { caseTransactions: 0 } }
+      )
       .toArray()
 
     return cases
