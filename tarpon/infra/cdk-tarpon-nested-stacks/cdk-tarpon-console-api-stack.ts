@@ -477,11 +477,16 @@ export class CdkTarponConsoleLambdaStack extends cdk.NestedStack {
       functionProps
     )
     /* Parameter risk level assignment function */
-    createFunction(this, lambdaExecutionRole, {
-      name: StackConstants.CONSOLE_API_PARAMETER_RISK_ASSIGNMENT_FUNCTION_NAME,
-      auditLogTopic,
-      batchJobQueue,
-    })
+    createFunction(
+      this,
+      lambdaExecutionRole,
+      {
+        name: StackConstants.CONSOLE_API_PARAMETER_RISK_ASSIGNMENT_FUNCTION_NAME,
+        auditLogTopic,
+        batchJobQueue,
+      },
+      functionProps
+    )
 
     /* Get Risk Scores */
     createFunction(
